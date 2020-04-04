@@ -405,7 +405,9 @@ class CRatings extends CAllRatings
 			";
 		}
 
-		$DB->Query("TRUNCATE TABLE b_rating_prepare", false, $err_mess.__LINE__);
+//		$DB->Query("TRUNCATE TABLE b_rating_prepare", false, $err_mess.__LINE__);
+		$DB->Query("DELETE FROM b_rating_prepare", false, $err_mess.__LINE__);
+
 		if ($bAllGroups || empty($arGroups))
 		{
 			$strSql .= "
@@ -677,7 +679,7 @@ class CRatings extends CAllRatings
 	{
 		global $DB, $USER;
 
-		$externalAuthTypes = array_diff(\Bitrix\Main\UserTable::getExternalUserTypes(), array('email'));
+		$externalAuthTypes = array_diff(\Bitrix\Main\UserTable::getExternalUserTypes(), array('email', 'replica'));
 
 		return "
 			SELECT
@@ -708,7 +710,7 @@ class CRatings extends CAllRatings
 	{
 		global $DB, $USER;
 
-		$externalAuthTypes = array_diff(\Bitrix\Main\UserTable::getExternalUserTypes(), array('email'));
+		$externalAuthTypes = array_diff(\Bitrix\Main\UserTable::getExternalUserTypes(), array('email', 'replica'));
 
 		return "
 			SELECT

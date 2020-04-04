@@ -37,7 +37,7 @@ $arResult['WORKFLOW_OPTION'] = CVoxImplantConfig::GetLeadWorkflowExecution();
 
 $arResult['COMBINATION_INTERCEPT_GROUP'] = CVoxImplantConfig::GetCombinationInterceptGroup();
 
-$arResult['SHOW_AUTOPAY'] = \Bitrix\Voximplant\Limits::isRestOnly() && \Bitrix\Main\ModuleManager::isModuleInstalled('bitrix24') && !in_array($account->GetAccountLang(), array('ru', 'ua', 'kz', 'by'));
+$arResult['SHOW_AUTOPAY'] = !\Bitrix\Voximplant\Limits::isRestOnly() && \Bitrix\Main\ModuleManager::isModuleInstalled('bitrix24') && !in_array($account->GetAccountLang(), array('ru', 'ua', 'kz', 'by'));
 if($arResult['SHOW_AUTOPAY'])
 {
 	$arResult['AUTOPAY_ALLOWED'] = CVoxImplantConfig::isAutoPayAllowed();

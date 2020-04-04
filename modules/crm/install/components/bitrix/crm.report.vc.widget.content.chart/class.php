@@ -100,7 +100,9 @@ class CrmReportVcWidgetContentChartComponent extends VisualConstructor\Views\Com
 			? (new DateTime($filterRequest['TIME_PERIOD_to']))
 			: (new DateTime());
 
-		$sources = empty($filterRequest['SOURCE_CODE']) ? [] : $filterRequest['SOURCE_CODE'];
+		$sources = (empty($filterRequest['SOURCE_CODE']) || !is_array($filterRequest['SOURCE_CODE']))
+			? []
+			: $filterRequest['SOURCE_CODE'];
 
 		/** @var DateTime $periodFrom */
 		$this->arResult['DATA'] = $this->getComparedData($sources, $periodFrom, $periodTo);
@@ -112,7 +114,7 @@ class CrmReportVcWidgetContentChartComponent extends VisualConstructor\Views\Com
 			}
 			else
 			{
-				$this->arResult['GRID'] = $this->getGridData($periodFrom, $periodTo);
+				$this->arResult['GRID'] = $this->getGridData($sources, $periodFrom, $periodTo);
 			}
 		}
 
@@ -359,7 +361,7 @@ class CrmReportVcWidgetContentChartComponent extends VisualConstructor\Views\Com
 		];
 	}
 
-	protected function getGridData(DateTime $periodFrom, DateTime $periodTo)
+	protected function getGridData(array $sources, DateTime $periodFrom, DateTime $periodTo)
 	{
 		$rows = [];
 
@@ -560,8 +562,12 @@ class CrmReportVcWidgetContentChartComponent extends VisualConstructor\Views\Com
 		//$summaryAd['ROI'] = null;
 		/******* /SUMMARY AD ********/
 
-		$rows[] = $summaryAd;
-		$rows[] = $organic;
+		if (count($sources) === 0 || in_array('organic', $sources))
+		{
+			$rows[] = $summaryAd;
+			$rows[] = $organic;
+		}
+
 		$rows[] = $summary;
 
 		$columns = [
@@ -712,6 +718,8 @@ class CrmReportVcWidgetContentChartComponent extends VisualConstructor\Views\Com
 		$emptyItem = $this->getEmptyItem();
 		$sourceList = [];
 
+		$sourceIds = array_column(Tracking\Provider::getActualSources(), 'ID');
+
 		$this->dataProvider
 			->setSourceId($sources)
 			->groupByTrackingSource($groupBySource)
@@ -733,6 +741,13 @@ class CrmReportVcWidgetContentChartComponent extends VisualConstructor\Views\Com
 			foreach ($stage->getData() as $row)
 			{
 				$sourceCode = $row[Tracking\Analytics\Provider\Base::TrackingSourceId] ?: 0;
+
+				// fixed: if source deleted, but traces exists.
+				if ($sourceCode && is_numeric($sourceCode) && !in_array($sourceCode, $sourceIds))
+				{
+					continue;
+				}
+
 				$assigned = $row[Tracking\Analytics\Provider\Base::Assigned] ?: 0;
 				$stageSum = $row['SUM'] ?: 0;
 				$stageQuantity = $row['CNT'] ?: 0;
@@ -980,10 +995,15 @@ class CrmReportVcWidgetContentChartComponent extends VisualConstructor\Views\Com
 		$baseDataSum = $baseData['sum'];
 		foreach ($dataList as $index => $data)
 		{
-			$data['cost'] = (int) ($data['quantity']
+			$data['cost'] = round($data['quantity']
 				? $baseDataSum / $data['quantity']
-				: 0
+				: 0,
+			1
 			);
+			if ($data['cost'] >= 10)
+			{
+				$data['cost'] = (int) $data['cost'];
+			}
 
 			$dataList[$index] = $data;
 		}

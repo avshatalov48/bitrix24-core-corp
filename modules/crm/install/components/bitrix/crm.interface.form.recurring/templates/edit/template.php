@@ -39,14 +39,13 @@ $data = $arParams['DATA'];
 <?
 if ($arResult['RESTRICTED_LICENCE'] == 'Y')
 {
-	CBitrix24::initLicenseInfoPopupJS();
 	?>
-		<img  class='crm-recur-checkbox-blocked-image' src="<?=$this->GetFolder();?>/images/lock.png">
+		<span class="tariff-lock"></span>
 	</label>
 	</div>
 	<script type="text/javascript">
 		BX.bind(BX('crm-recur-edit-replication-block'), 'click', function(e){
-			B24.licenseInfoPopup.show('crm-invoice-recurring-block', "<?=CUtil::JSEscape($arResult["TRIAL_TEXT"]['TITLE'])?>", "<?=CUtil::JSEscape($arResult["TRIAL_TEXT"]['TEXT'])?>");
+			<?=$arResult["TRIAL_TEXT"]['LOCK_SCRIPT']?>
 		});
 	</script>
 
@@ -56,7 +55,7 @@ if ($arResult['RESTRICTED_LICENCE'] == 'Y')
 ?>
 	</label>
 	<div id="crm-recur-edit-recurring-panel"
-		 class="crm-recur-options-repeat crm-recur-openable-block<?= ($data['RECURRING_SWITCHER'] == 'Y' ? '' : ' crm-recur-invisible') ?>">
+		 class="crm-recur-options-repeat crm-recur-openable-block<?= ($data['RECURRING_SWITCHER'] == 'Y' || $arParams['IS_RECURRING']==='Y'? '' : ' crm-recur-invisible') ?>">
 		<div id="bx-component-scope-<?=htmlspecialcharsbx($templateId)?>" class="crm-recur-options-repeat">
 			<div class="crm-recur-options-field">
 				<span class="crm-recur-option-fn"><?=Loc::getMessage('CRM_RECURRING_FILTER_REPEAT_TYPE')?></span>
@@ -536,7 +535,7 @@ if ($arResult['RESTRICTED_LICENCE'] == 'Y')
 						<span class="crm-recur-option-fn"><?=Loc::getMessage('CRM_RECURRING_FILTER_DATE_PAYMENT_AFTER_EXPOSING')?></span>
 					</div>
 				</div>
-				<div id="crm-recur-email-block"	class="<?= (strlen($arResult['EMAIL_LIST'][0]['text']) > 0 && (int)$data['RECURRING_EMAIL_ID'] > 0) ? "" : " crm-recur-invisible"?>">
+				<div id="crm-recur-email-block"	class="<?= (strlen($arResult['EMAIL_LIST'][0]['text']) > 0) ? "" : " crm-recur-invisible"?>">
 					<div id="crm-recurring-empty-owner-email" class="errortext"></div>
 
 					<label for="crm-recurring-email">

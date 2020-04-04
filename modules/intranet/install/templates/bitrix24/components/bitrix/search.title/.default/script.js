@@ -484,9 +484,10 @@ BX.B24SearchTitle = function(arParams)
 			if (!this.arParams.GLOBAL_SEARCH_CATEGORIES.hasOwnProperty(i))
 				continue;
 
+			var limited = this.arParams.GLOBAL_SEARCH_CATEGORIES[i].limited === true;
 			var item = {
 				"NAME": this.arParams.GLOBAL_SEARCH_CATEGORIES[i].text,
-				"URL": this.arParams.GLOBAL_SEARCH_CATEGORIES[i].url + this.INPUT.value,
+				"URL": this.arParams.GLOBAL_SEARCH_CATEGORIES[i].url + (limited ? "" : this.INPUT.value),
 				"ITEM_ID" : i
 			};
 
@@ -551,204 +552,220 @@ BX.B24SearchTitle = function(arParams)
 		var crmContactMore = false, crmCompanyMore = false, crmDealMore = false, crmLeadMore = false,
 			crmInvoiceMore = false, crmQuoteMore = false, diskMore = false, taskMore = false;
 
-		if (typeof result.data.items == "object")
+		var itemsData = result && result.data && BX.type.isArray(result.data.items) ? result.data.items : [];
+		for (var i = 0; i < itemsData.length; i++)
 		{
-			for (var i in result.data.items)
+			var itemData = result.data.items[i];
+
+			var item = {
+				"NAME": BX.util.htmlspecialchars(itemData.title),
+				"URL": itemData.links.show,
+				"ITEM_ID" : itemData.type + itemData.id
+			};
+
+			if (itemData.type === "CONTACT")
 			{
-				if (!result.data.items.hasOwnProperty(i))
-					break;
-
-				var itemData = result.data.items[i];
-
-				var item = {
-					"NAME": BX.util.htmlspecialchars(itemData.title),
-					"URL": itemData.links.show,
-					"ITEM_ID" : itemData.type + itemData.id
-				};
-
-				if (itemData.type == "CONTACT")
+				if (crmContact.length < 10)
 				{
-					if (crmContact.length < 10)
-					{
-						crmContact.push(item);
-					}
-					else
-					{
-						crmContactMore = true;
-					}
+					crmContact.push(item);
 				}
-				else if (itemData.type == "COMPANY")
+				else
 				{
-					if (crmCompany.length < 10)
-					{
-						crmCompany.push(item);
-					}
-					else
-					{
-						crmCompanyMore = true;
-					}
-				}
-				else if (itemData.type == "DEAL")
-				{
-					if (crmDeal.length < 10)
-					{
-						crmDeal.push(item);
-					}
-					else
-					{
-						crmDealMore = true;
-					}
-				}
-				else if (itemData.type == "LEAD")
-				{
-					if (crmLead.length < 10)
-					{
-						crmLead.push(item);
-					}
-					else
-					{
-						crmLeadMore = true;
-					}
-				}
-				else if (itemData.type == "QUOTE")
-				{
-					if (crmQuote.length < 10)
-					{
-						crmQuote.push(item);
-					}
-					else
-					{
-						crmQuoteMore = true;
-					}
-				}
-				else if (itemData.type == "INVOICE")
-				{
-					if (crmInvoice.length < 10)
-					{
-						crmInvoice.push(item);
-					}
-					else
-					{
-						crmInvoiceMore = true;
-					}
-				}
-				else if (itemData.module == "disk")
-				{
-					if (diskItems.length < 10)
-					{
-						diskItems.push(item);
-					}
-					else
-					{
-						diskMore = true;
-					}
-				}
-				else if (itemData.type == "TASK")
-				{
-					if (taskItems.length < 10)
-					{
-						taskItems.push(item);
-					}
-					else
-					{
-						taskMore = true;
-					}
+					crmContactMore = true;
 				}
 			}
+			else if (itemData.type === "COMPANY")
+			{
+				if (crmCompany.length < 10)
+				{
+					crmCompany.push(item);
+				}
+				else
+				{
+					crmCompanyMore = true;
+				}
+			}
+			else if (itemData.type === "DEAL")
+			{
+				if (crmDeal.length < 10)
+				{
+					crmDeal.push(item);
+				}
+				else
+				{
+					crmDealMore = true;
+				}
+			}
+			else if (itemData.type === "LEAD")
+			{
+				if (crmLead.length < 10)
+				{
+					crmLead.push(item);
+				}
+				else
+				{
+					crmLeadMore = true;
+				}
+			}
+			else if (itemData.type === "QUOTE")
+			{
+				if (crmQuote.length < 10)
+				{
+					crmQuote.push(item);
+				}
+				else
+				{
+					crmQuoteMore = true;
+				}
+			}
+			else if (itemData.type === "INVOICE")
+			{
+				if (crmInvoice.length < 10)
+				{
+					crmInvoice.push(item);
+				}
+				else
+				{
+					crmInvoiceMore = true;
+				}
+			}
+			else if (itemData.module === "disk")
+			{
+				if (diskItems.length < 10)
+				{
+					diskItems.push(item);
+				}
+				else
+				{
+					diskMore = true;
+				}
+			}
+			else if (itemData.type === "TASK")
+			{
+				if (taskItems.length < 10)
+				{
+					taskItems.push(item);
+				}
+				else
+				{
+					taskMore = true;
+				}
+			}
+		}
 
-			this.BuildEntityBlock(crmDeal, "CRM: " + BX.message("SEARCH_CRM_DEAL"), "deal");
-			if (crmDealMore)
-			{
-				item = {
-					"URL": this.arParams.GLOBAL_SEARCH_CATEGORIES["deal"]["url"] + this.INPUT.value,
-					"ITEM_ID": "deal_more"
-				};
-				var moreBlock = this.BuildMoreBlock(item);
-				BX.firstChild(_this.RESULT).insertBefore(moreBlock, BX("search-title-block-tools"));
-			}
-			this.BuildEntityBlock(crmContact, "CRM: " + BX.message("SEARCH_CRM_CONTACT"), "contact");
-			if (crmContactMore)
-			{
-				item = {
-					"URL": this.arParams.GLOBAL_SEARCH_CATEGORIES["contact"]["url"] + this.INPUT.value,
-					"ITEM_ID": "contact_more"
-				};
-				var moreBlock = this.BuildMoreBlock(item);
-				BX.firstChild(_this.RESULT).insertBefore(moreBlock, BX("search-title-block-tools"));
-			}
+		var limits = {};
+		if (result && result.data && BX.type.isArray(result.data.limits))
+		{
+			result.data.limits.forEach(function(limit) {
 
-			this.BuildEntityBlock(crmCompany, "CRM: " + BX.message("SEARCH_CRM_COMPANY"), "company");
-			if (crmCompanyMore)
-			{
-				item = {
-					"URL": this.arParams.GLOBAL_SEARCH_CATEGORIES["company"]["url"] + this.INPUT.value,
-					"ITEM_ID": "company_more"
-				};
-				var moreBlock = this.BuildMoreBlock(item);
-				BX.firstChild(_this.RESULT).insertBefore(moreBlock, BX("search-title-block-tools"));
-			}
+				if (!BX.type.isPlainObject(limit))
+				{
+					return;
+				}
 
-			this.BuildEntityBlock(crmLead, "CRM: " + BX.message("SEARCH_CRM_LEAD"), "lead");
-			if (crmLeadMore)
-			{
-				item = {
-					"URL": this.arParams.GLOBAL_SEARCH_CATEGORIES["lead"]["url"] + this.INPUT.value,
-					"ITEM_ID": "lead_more"
-				};
-				var moreBlock = this.BuildMoreBlock(item);
-				BX.firstChild(_this.RESULT).insertBefore(moreBlock, BX("search-title-block-tools"));
-			}
+				if (BX.type.isNotEmptyString(limit.type))
+				{
+					limits[limit.type.toLowerCase()] = limit;
+				}
+				else if (BX.type.isNotEmptyString(limit.module))
+				{
+					limits[limit.module.toLowerCase()] = limit;
+				}
+			});
+		}
 
-			this.BuildEntityBlock(crmInvoice, "CRM: " + BX.message("SEARCH_CRM_INVOICE"), "invoice");
-			if (crmInvoiceMore)
-			{
-				item = {
-					"URL": this.arParams.GLOBAL_SEARCH_CATEGORIES["invoice"]["url"] + this.INPUT.value,
-					"ITEM_ID": "invoice_more"
-				};
-				var moreBlock = this.BuildMoreBlock(item);
-				BX.firstChild(_this.RESULT).insertBefore(moreBlock, BX("search-title-block-tools"));
-			}
+		this.BuildEntityBlock(crmDeal, "CRM: " + BX.message("SEARCH_CRM_DEAL"), "deal", limits.deal);
+		if (crmDealMore)
+		{
+			item = {
+				"URL": this.arParams.GLOBAL_SEARCH_CATEGORIES["deal"]["url"] + this.INPUT.value,
+				"ITEM_ID": "deal_more"
+			};
+			var moreBlock = this.BuildMoreBlock(item);
+			BX.firstChild(_this.RESULT).insertBefore(moreBlock, BX("search-title-block-tools"));
+		}
+		this.BuildEntityBlock(crmContact, "CRM: " + BX.message("SEARCH_CRM_CONTACT"), "contact", limits.contact);
+		if (crmContactMore)
+		{
+			item = {
+				"URL": this.arParams.GLOBAL_SEARCH_CATEGORIES["contact"]["url"] + this.INPUT.value,
+				"ITEM_ID": "contact_more"
+			};
+			var moreBlock = this.BuildMoreBlock(item);
+			BX.firstChild(_this.RESULT).insertBefore(moreBlock, BX("search-title-block-tools"));
+		}
 
-			this.BuildEntityBlock(crmQuote, "CRM: " + BX.message("SEARCH_CRM_QUOTE"), "quote");
-			if (crmQuoteMore)
-			{
-				item = {
-					"URL": this.arParams.GLOBAL_SEARCH_CATEGORIES["quote"]["url"] + this.INPUT.value,
-					"ITEM_ID": "quote_more"
-				};
-				var moreBlock = this.BuildMoreBlock(item);
-				BX.firstChild(_this.RESULT).insertBefore(moreBlock, BX("search-title-block-tools"));
-			}
+		this.BuildEntityBlock(crmCompany, "CRM: " + BX.message("SEARCH_CRM_COMPANY"), "company", limits.company);
+		if (crmCompanyMore)
+		{
+			item = {
+				"URL": this.arParams.GLOBAL_SEARCH_CATEGORIES["company"]["url"] + this.INPUT.value,
+				"ITEM_ID": "company_more"
+			};
+			var moreBlock = this.BuildMoreBlock(item);
+			BX.firstChild(_this.RESULT).insertBefore(moreBlock, BX("search-title-block-tools"));
+		}
 
-			this.BuildEntityBlock(diskItems, BX.message("SEARCH_DISK"), "disk");
-			if (diskMore)
-			{
-				item = {
-					"URL": this.arParams.GLOBAL_SEARCH_CATEGORIES["disk"]["url"] + this.INPUT.value,
-					"ITEM_ID": "disk_more"
-				};
-				var moreBlock = this.BuildMoreBlock(item);
-				BX.firstChild(_this.RESULT).insertBefore(moreBlock, BX("search-title-block-tools"));
-			}
+		this.BuildEntityBlock(crmLead, "CRM: " + BX.message("SEARCH_CRM_LEAD"), "lead", limits.lead);
+		if (crmLeadMore)
+		{
+			item = {
+				"URL": this.arParams.GLOBAL_SEARCH_CATEGORIES["lead"]["url"] + this.INPUT.value,
+				"ITEM_ID": "lead_more"
+			};
+			var moreBlock = this.BuildMoreBlock(item);
+			BX.firstChild(_this.RESULT).insertBefore(moreBlock, BX("search-title-block-tools"));
+		}
 
-			this.BuildEntityBlock(taskItems, BX.message("SEARCH_TASKS"), "task");
-			if (taskMore)
-			{
-				item = {
-					"URL": this.arParams.GLOBAL_SEARCH_CATEGORIES["tasks"]["url"] + this.INPUT.value,
-					"ITEM_ID": "task_more"
-				};
-				var moreBlock = this.BuildMoreBlock(item);
-				BX.firstChild(_this.RESULT).insertBefore(moreBlock, BX("search-title-block-tools"));
-			}
+		this.BuildEntityBlock(crmInvoice, "CRM: " + BX.message("SEARCH_CRM_INVOICE"), "invoice", limits.invoice);
+		if (crmInvoiceMore)
+		{
+			item = {
+				"URL": this.arParams.GLOBAL_SEARCH_CATEGORIES["invoice"]["url"] + this.INPUT.value,
+				"ITEM_ID": "invoice_more"
+			};
+			var moreBlock = this.BuildMoreBlock(item);
+			BX.firstChild(_this.RESULT).insertBefore(moreBlock, BX("search-title-block-tools"));
+		}
+
+		this.BuildEntityBlock(crmQuote, "CRM: " + BX.message("SEARCH_CRM_QUOTE"), "quote", limits.quote);
+		if (crmQuoteMore)
+		{
+			item = {
+				"URL": this.arParams.GLOBAL_SEARCH_CATEGORIES["quote"]["url"] + this.INPUT.value,
+				"ITEM_ID": "quote_more"
+			};
+			var moreBlock = this.BuildMoreBlock(item);
+			BX.firstChild(_this.RESULT).insertBefore(moreBlock, BX("search-title-block-tools"));
+		}
+
+		this.BuildEntityBlock(diskItems, BX.message("SEARCH_DISK"), "disk", limits.disk);
+		if (diskMore)
+		{
+			item = {
+				"URL": this.arParams.GLOBAL_SEARCH_CATEGORIES["disk"]["url"] + this.INPUT.value,
+				"ITEM_ID": "disk_more"
+			};
+			var moreBlock = this.BuildMoreBlock(item);
+			BX.firstChild(_this.RESULT).insertBefore(moreBlock, BX("search-title-block-tools"));
+		}
+
+		this.BuildEntityBlock(taskItems, BX.message("SEARCH_TASKS"), "task", limits.task);
+		if (taskMore)
+		{
+			item = {
+				"URL": this.arParams.GLOBAL_SEARCH_CATEGORIES["tasks"]["url"] + this.INPUT.value,
+				"ITEM_ID": "task_more"
+			};
+			var moreBlock = this.BuildMoreBlock(item);
+			BX.firstChild(_this.RESULT).insertBefore(moreBlock, BX("search-title-block-tools"));
 		}
 
 		BX("title-search-waiter").style.display = "none";
 		_this.checkSelectedItem();
 	};
 
-	this.BuildEntityBlock = function (items, blockTitle, entityType)
+	this.BuildEntityBlock = function (items, blockTitle, entityType, limits)
 	{
 		if (items.length > 0)
 		{
@@ -763,6 +780,10 @@ BX.B24SearchTitle = function(arParams)
 			{
 				this.BuildEntity(crmBlocks, blockTitle, entityType);
 			}
+		}
+		else if (BX.type.isPlainObject(limits))
+		{
+			this.buildLimits(limits, blockTitle);
 		}
 	};
 
@@ -800,6 +821,46 @@ BX.B24SearchTitle = function(arParams)
 		}));
 
 		BX.firstChild(_this.RESULT).insertBefore(crmSection, BX("search-title-block-tools"));
+	};
+
+	this.buildLimits = function(limits, blockTitle)
+	{
+		var limitsSection = BX.create('div', {
+			attrs: {
+				"className": "search-title-top-block search-title-top-block-section"
+			},
+			html:
+			'<div class="search-title-top-subtitle">' +
+				'<div class="search-title-top-subtitle-text">' + blockTitle + '</div>' +
+			'</div>' +
+			'<div class="search-title-top-list-wrap">' +
+				'<div class="search-title-top-list">' +
+					'<div class="search-title-top-list-limits">' +
+						'<div class="search-title-top-list-limits-block">' +
+							'<span class="search-title-top-list-limits-icon"></span>' +
+						'</div>' +
+						'<div class="search-title-top-list-limits-block">' +
+							'<div class="search-title-top-list-limits-name">' +
+								(BX.type.isString(limits.title) ? limits.title : '') +
+							'</div>' +
+							'<div class="search-title-top-list-limits-content">' +
+								(BX.type.isString(limits.description) ? limits.description : '') +
+							'</div>' +
+							(
+								BX.type.isArray(limits.buttons) && limits.buttons.length > 0
+								?
+									'<div class="ui-btn-container ui-btn-container-center">' +
+										limits.buttons.join('') +
+									'</div>'
+								: ''
+							) +
+						'</div>' +
+					'</div>' +
+				'</div>' +
+			'</div>'
+		});
+
+		BX.firstChild(_this.RESULT).insertBefore(limitsSection, BX("search-title-block-tools"));
 	};
 
 	this.checkSelectedItem = function ()
@@ -959,6 +1020,7 @@ BX.B24SearchTitle = function(arParams)
 						}
 						BX.onCustomEvent(_this, 'onFinderAjaxSuccess', [ ajaxDbEntities, _this.ITEMS, 'sonetgroups' ]);
 					}
+/*
 					else if (_this.arParams.CATEGORIES_ALL[i].CODE == 'custom_users')
 					{
 						ajaxDbEntities = {};
@@ -969,10 +1031,11 @@ BX.B24SearchTitle = function(arParams)
 						}
 						BX.onCustomEvent(_this, 'onFinderAjaxSuccess', [ ajaxDbEntities, _this.ITEMS, 'users' ]);
 					}
+*/
 				}
 
 				var z = 0;
-
+/*
 				if (
 					_this.arParams.CATEGORIES_ALL[i].CODE == 'custom_users'
 					&& BX.type.isNotEmptyString(searchString)
@@ -1000,7 +1063,7 @@ BX.B24SearchTitle = function(arParams)
 						]);
 					}
 				}
-
+*/
 				if (
 					_this.arParams.CATEGORIES_ALL[i].CODE == 'custom_sonetgroups'
 					&& BX.type.isNotEmptyString(searchString)

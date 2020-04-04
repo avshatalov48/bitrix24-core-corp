@@ -17,7 +17,7 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 ?>
 
 <script>
-	BX.message(<?=\Bitrix\Main\Web\Json::encode($arResult['MESSAGES'])?>);
+	BX.message(<?=\CUtil::PhpToJSObject($arResult['MESSAGES'])?>);
 </script>
 
 <?

@@ -35,4 +35,20 @@ return array(
 		"title" => Loc::getMessage('OP_NAME_TM_SETTINGS'),
 		"description" => Loc::getMessage('OP_DESC_TM_SETTINGS'),
 	),
+	"TM_READ_SCHEDULES_ALL" => array(
+		"title" => Loc::getMessage('OP_NAME_TM_READ_SCHEDULES_ALL'),
+		"description" => Loc::getMessage('OP_DESC_TM_READ_SCHEDULES_ALL'),
+	),
+	"TM_READ_SHIFT_PLANS_ALL" => array(
+		"title" => Loc::getMessage('OP_NAME_TM_READ_SHIFT_PLANS_ALL'),
+		"description" => Loc::getMessage('OP_DESC_TM_READ_SHIFT_PLANS_ALL'),
+	),
+	"TM_UPDATE_SCHEDULES_ALL" => array(
+		"title" => Loc::getMessage('OP_NAME_TM_UPDATE_SCHEDULES_ALL'),
+		"description" => Loc::getMessage('OP_DESC_TM_UPDATE_SCHEDULES_ALL'),
+	),
+	"TM_UPDATE_SHIFT_PLANS_ALL" => array(
+		"title" => Loc::getMessage('OP_NAME_TM_UPDATE_SHIFT_PLANS_ALL'),
+		"description" => Loc::getMessage('OP_DESC_TM_UPDATE_SHIFT_PLANS_ALL'),
+	),
 );

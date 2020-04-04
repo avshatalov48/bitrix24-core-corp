@@ -239,7 +239,6 @@ class CCrmOrderCheckListComponent extends \CBitrixComponent
 		$this->arResult = array_merge($this->arResult, $resultPrepared);
 
 		$this->IncludeComponentTemplate();
-		include_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/components/bitrix/crm.order/include/nav.php');
 		return $this->arResult['ROWS_COUNT'];
 	}
 

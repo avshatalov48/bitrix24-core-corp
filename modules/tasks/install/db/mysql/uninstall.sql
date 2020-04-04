@@ -24,7 +24,15 @@ DROP TABLE IF EXISTS b_tasks_filters;
 
 DROP TABLE IF EXISTS b_tasks_checklist_items;
 
+DROP TABLE IF EXISTS b_tasks_checklist_items_tree;
+
+DROP TABLE IF EXISTS b_tasks_checklist_items_member;
+
 DROP TABLE IF EXISTS b_tasks_template_chl_item;
+
+DROP TABLE IF EXISTS b_tasks_template_chl_item_tree;
+
+DROP TABLE IF EXISTS b_tasks_template_chl_item_member;
 
 DROP TABLE IF EXISTS b_tasks_files_temporary;
 
@@ -59,3 +67,5 @@ DROP TABLE IF EXISTS b_tasks_counters;
 DROP TABLE IF EXISTS b_tasks_effective;
 
 DROP TABLE IF EXISTS b_tasks_search_index;
+
+DROP TABLE IF EXISTS b_tasks_sprint2;

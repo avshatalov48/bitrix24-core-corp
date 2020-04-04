@@ -31,7 +31,7 @@ if ($publicMode) $canViewUserList = false;
 
 $adminListTableID = 'tbl_catalog_round_rules';
 
-$adminSort = new CAdminSorting($adminListTableID, 'ID', 'ASC');
+$adminSort = new CAdminUiSorting($adminListTableID, 'ID', 'ASC');
 $adminList = new CAdminUiList($adminListTableID, $adminSort);
 
 $listType = array('' => Loc::getMessage('PRICE_ROUND_LIST_FILTER_PRICE_TYPE_ANY'));

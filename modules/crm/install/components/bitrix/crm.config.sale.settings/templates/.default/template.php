@@ -4,6 +4,8 @@ CUtil::InitJSCore(array("amcharts", "amcharts_funnel", "amcharts_serial"));
 Bitrix\Main\Page\Asset::getInstance()->addCss("/bitrix/js/crm/css/crm.css");
 Bitrix\Main\Page\Asset::getInstance()->addJs($this->GetFolder()."/drag_and_drop.js");
 
+\Bitrix\Main\UI\Extension::load("popup");
+
 $settingsId = $arResult["SETTINGS_ID"];
 $settings = $arResult["SETTINGS"];
 $pageSettings = $arResult["PAGE_SETTINGS"];

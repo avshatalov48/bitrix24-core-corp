@@ -36,4 +36,35 @@ final class SqlHelper
 			$connection->queryExecute("INSERT INTO {$tableName} ({$prefix}) VALUES {$query}");
 		}
 	}
+
+	public static function upsertBatch($tableName, array $items, array $updateFields)
+	{
+		if (!$items)
+		{
+			return;
+		}
+
+		$connection = Application::getConnection();
+		$sqlHelper = $connection->getSqlHelper();
+
+		$query = $prefix = '';
+		list($update) = $sqlHelper->prepareUpdate($tableName, $updateFields);
+
+		foreach ($items as $item)
+		{
+			list($prefix, $values) = $sqlHelper->prepareInsert($tableName, $item);
+
+			$query .= ($query ? ', ' : ' ') . '(' . $values . ')';
+			if (strlen($query) > self::MAX_LENGTH_BATCH_MYSQL_QUERY)
+			{
+				$connection->queryExecute("INSERT INTO {$tableName} ({$prefix}) VALUES {$query} ON DUPLICATE KEY UPDATE {$update}");
+				$query = '';
+			}
+		}
+
+		if ($query && $prefix && $update)
+		{
+			$connection->queryExecute("INSERT INTO {$tableName} ({$prefix}) VALUES {$query} ON DUPLICATE KEY UPDATE {$update}");
+		}
+	}
 }

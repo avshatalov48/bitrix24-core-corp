@@ -67,25 +67,22 @@ final class Context
 			$regionData = Driver::getInstance()->getRegionsList()[$region];
 			if($regionData)
 			{
-				$regionData['CHARSET'] = 'UTF-8';
-				$culture = new Culture($regionData);
+				$culture = new Culture();
+				$culture->setFormatDate($regionData['FORMAT_DATE'])
+					->setFormatDatetime($regionData['FORMAT_DATETIME'])
+					->setFormatName($regionData['FORMAT_NAME'])
+					->setCharset('UTF-8');
 			}
 		}
 		elseif(is_string($region) && !empty($region))
 		{
-			$data = CultureTable::getList(['filter' => ['CODE' => $region]])->fetch();
-			if($data)
-			{
-				$culture = new Culture($data);
-			}
+			$culture = CultureTable::getList(['filter' => ['=CODE' => $region]])->fetchObject();
 		}
 
-		if(!$culture)
+		if($culture)
 		{
-			$culture = Application::getInstance()->getContext()->getCulture();
+			$this->culture = $culture;
 		}
-
-		$this->culture = $culture;
 
 		return $this;
 	}

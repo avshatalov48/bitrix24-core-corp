@@ -17,19 +17,26 @@ class Text extends \Bitrix\Landing\Node
 	 * @param \Bitrix\Landing\Block &$block Block instance.
 	 * @param string $selector Selector.
 	 * @param array $data Data array.
+	 * @param array $additional Additional prams for save.
 	 * @return void
 	 */
-	public static function saveNode(\Bitrix\Landing\Block &$block, $selector, array $data)
+	public static function saveNode(\Bitrix\Landing\Block &$block, $selector, array $data, $additional = [])
 	{
 		$doc = $block->getDom();
 		$resultList = $doc->querySelectorAll($selector);
+		$additional['sanitize'] = !isset($additional['sanitize']) ||
+								  isset($additional['sanitize']) &&
+								  $additional['sanitize'] === true;
 
 		foreach ($data as $pos => $value)
 		{
 			$value = trim($value);
 			if (isset($resultList[$pos]))
 			{
-				$value = \Bitrix\Landing\Manager::sanitize($value, $bad);
+				if ($additional['sanitize'])
+				{
+					$value = \Bitrix\Landing\Manager::sanitize($value, $bad);
+				}
 				// clear some amp
 				$value = preg_replace('/&amp;([^\s]{1})/is', '&$1', $value);
 				$value = str_replace(
@@ -60,6 +67,9 @@ class Text extends \Bitrix\Landing\Node
 			$data[$pos] = str_replace(
 				' style="',
 				' bxstyle="',
+				$data[$pos]
+			);
+			$data[$pos] = \Bitrix\Main\Text\Emoji::encode(
 				$data[$pos]
 			);
 		}

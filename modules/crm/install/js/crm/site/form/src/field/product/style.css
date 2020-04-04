@@ -1,0 +1,120 @@
+.b24-form-control-product-info {
+	position: relative;
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	-webkit-box-pack: justify;
+	-ms-flex-pack: justify;
+	justify-content: space-between;
+	-webkit-box-align: center;
+	-ms-flex-align: center;
+	align-items: center;
+	border: 1px solid rgba(0, 0, 0, .1);
+	border: 1px solid var(--b24-field-border-color);
+	border-top: none;
+	text-align: center;
+	min-height: 58px;
+	border-radius: 0 0 4px 4px;
+}
+
+.b24-form-control-product-icon {
+	background: rgba(0, 0, 0, .08);
+	background: var(--b24-field-background-color);
+	height: 56px;
+	width: 56px;
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	-webkit-box-align: center;
+	-ms-flex-align: center;
+	align-items: center;
+	-webkit-box-pack: center;
+	-ms-flex-pack: center;
+	justify-content: center;
+	border-radius: 0 0 0 4px;
+}
+
+.b24-form-control-product-icon svg g {
+	fill: #000;
+	fill: var(--b24-text-color);
+}
+
+.b24-form-control-product-price {
+	font: 17px/23px "Helvetica Neue", Helvetica, Arial, sans-serif;;
+	font: 17px/23px var(--b24-font-family);
+	padding-right: 8px;
+	min-width: 56px;
+}
+
+.b24-form-control-product-price-old {
+	text-align: right;
+	text-decoration: line-through;
+	font-size: 15px;
+	color: #000;
+	color: var(--b24-text-color);
+	opacity: .5;
+}
+
+.b24-form-control-product-price-current {
+	text-align: right;
+	font-weight: bold;
+	color: #0F58D0;
+	color: var(--b24-primary-color);
+}
+
+.b24-form-control-product-quantity {
+	font-size: 16px;
+	color: #000;
+	color: var(--b24-text-color);
+	text-align: center;
+	display: flex;
+	align-items: center;
+}
+
+.b24-form-control-product-quantity-add,
+.b24-form-control-product-quantity-remove {
+	cursor: pointer;
+	width: 28px;
+	height: 28px;
+	border-radius: 50%;
+	background-color: #0F58D0;
+	background-color: var(--b24-primary-color);
+	position: relative;
+}
+
+.b24-form-control-product-quantity-add:before,
+.b24-form-control-product-quantity-add:after,
+.b24-form-control-product-quantity-remove:after {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	display: block;
+	content: '';
+	background: #fff;
+	background: var(--b24-primary-text-color);
+	border-radius: 1.5px;
+	transform: translate(-50%, -50%);
+}
+
+.b24-form-control-product-quantity-add:after,
+.b24-form-control-product-quantity-remove:after {
+	height: 3px;
+	width: 14px;
+}
+
+.b24-form-control-product-quantity-add:before {
+	height: 14px;
+	width: 3px;
+}
+
+.b24-form-control-product-quantity-counter {
+	font-size: 16px;
+	color: #000;
+	color: var(--b24-text-color);
+	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;;
+	font-family: var(--b24-font-family);
+	text-align: center;
+	padding: 0 10px;
+}
+
+.b24-form-field-product .b24-form-control.b24-form-control-not-empty { border-radius: 4px 4px 0 0; }

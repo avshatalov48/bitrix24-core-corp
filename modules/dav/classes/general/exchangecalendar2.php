@@ -648,6 +648,27 @@ if (!class_exists("CDavExchangeCalendar"))
 				$arFields["PROPERTY_SENSITIVITY"] = "Private";
 			}
 
+			if (isset($arFields['ACCESSIBILITY']))
+			{
+				$arFields['ACCESSIBILITY'] = strtolower($arFields['ACCESSIBILITY']);
+				if ($arFields['ACCESSIBILITY'] == "absent")
+				{
+					$arFields["PROPERTY_FREEBUSY"] = "OOF";
+				}
+				else if ($arFields['ACCESSIBILITY'] == "free")
+				{
+					$arFields["PROPERTY_FREEBUSY"] = "Free";
+				}
+				else if ($arFields['ACCESSIBILITY'] == "quest")
+				{
+					$arFields["PROPERTY_FREEBUSY"] = "Tentative";
+				}
+				else
+				{
+					$arFields["PROPERTY_FREEBUSY"] = "Busy";
+				}
+			}
+
 			if (isset($arFields['RRULE']))
 			{
 				$rrule = $arFields["RRULE"];
@@ -1247,7 +1268,7 @@ if (!class_exists("CDavExchangeCalendar"))
 
 				$GLOBALS["USER_FIELD_MANAGER"]->Update("USER", $arUser["ID"], array("UF_BXDAVEX_CALSYNC" => ConvertTimeStamp(time(), FULL)));
 
-				$mailbox = (($exchangeUseLogin == "Y") ? $arUser["LOGIN"].$exchangeMailbox : $arUser["UF_BXDAVEX_MAILBOX"]);
+				$mailbox = (($exchangeUseLogin == "Y") ? $arUser["LOGIN"].$exchangeMailbox : trim($arUser["UF_BXDAVEX_MAILBOX"]));
 				if (empty($mailbox))
 				{
 					$lastError = GetMessage("DAV_EC_EMPTY_MAILBOX");
@@ -1341,12 +1362,33 @@ if (!class_exists("CDavExchangeCalendar"))
 										"DATE_TO" => $modifiedItem["ACTIVE_TO"],
 										"SKIP_TIME" => $modifiedItem["SKIP_TIME"],
 										"PROPERTY_IMPORTANCE" => $modifiedItem["PROPERTY_IMPORTANCE"],
-										"PROPERTY_ACCESSIBILITY" => $modifiedItem["PROPERTY_FREEBUSY"],
 										"PROPERTY_REMIND_SETTINGS" => $modifiedItem["PROPERTY_REMIND_SETTINGS"],
 										"PROPERTY_PERIOD_TYPE" => "NONE",
 										"PROPERTY_BXDAVEX_LABEL" => $modifiedItem["MODIFICATION_LABEL"],
 										"PRIVATE_EVENT" => strtolower($modifiedItem["PROPERTY_SENSITIVITY"]) == 'private'
 									);
+
+									if ($modifiedItem["PROPERTY_FREEBUSY"])
+									{
+										$modifiedItem["PROPERTY_FREEBUSY"] = strtolower($modifiedItem["PROPERTY_FREEBUSY"]);
+										if ($modifiedItem["PROPERTY_FREEBUSY"] == "oof")
+										{
+											$modifyEventFields["PROPERTY_ACCESSIBILITY"] = "absent";
+										}
+										else if ($modifiedItem["PROPERTY_FREEBUSY"] == "free")
+										{
+											$modifyEventFields["PROPERTY_ACCESSIBILITY"] = "free";
+										}
+										else if ($modifiedItem["PROPERTY_FREEBUSY"] == "tentative")
+										{
+											$modifyEventFields["PROPERTY_ACCESSIBILITY"] = "quest";
+										}
+										else
+										{
+											$modifyEventFields["PROPERTY_ACCESSIBILITY"] = "busy";
+										}
+									}
+
 
 									if ($modifiedItem["IS_RECURRING"])
 									{

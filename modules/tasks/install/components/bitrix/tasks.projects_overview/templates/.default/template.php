@@ -9,8 +9,9 @@ Loc::loadMessages(__FILE__);
 
 $helper = $arResult['HELPER'];
 $arParams =& $helper->getComponent()->arParams; // make $arParams the same variable as $this->__component->arParams, as it really should be
-?>
 
+$isIFrame = $_REQUEST['IFRAME'] == 'Y';
+?>
 <?php $APPLICATION->IncludeComponent(
 	'bitrix:tasks.interface.topmenu',
 	'',
@@ -151,5 +152,3 @@ $arParams =& $helper->getComponent()->arParams; // make $arParams the same varia
 	<?$helper->initializeExtension();?>
 
 <?endif?>
-
-

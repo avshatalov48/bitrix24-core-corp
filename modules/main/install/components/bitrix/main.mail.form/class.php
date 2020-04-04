@@ -73,7 +73,10 @@ class MainMailFormComponent extends CBitrixComponent
 				'type'        => 'from',
 				'name'        => 'from',
 				'title'       => Loc::getMessage('MAIN_MAIL_FORM_FROM_FIELD'),
-				'placeholder' => Loc::getMessage('MAIN_MAIL_FORM_FROM_FIELD_HINT'),
+				'placeholders' => array(
+					'default' => Loc::getMessage('MAIN_MAIL_FORM_FROM_FIELD_HINT'),
+					'required' => Loc::getMessage('MAIN_MAIL_FORM_FROM_FIELD_REQUIRED_HINT'),
+				),
 			),
 			'rcpt' => array(
 				'type'        => 'rcpt',
@@ -131,6 +134,13 @@ class MainMailFormComponent extends CBitrixComponent
 
 	protected function prepareField($formId, &$field)
 	{
+		if (!array_key_exists('placeholder', $field) && array_key_exists('placeholders', $field))
+		{
+			$field['placeholder'] = empty($field['required'])
+				? $field['placeholders']['default']
+				: $field['placeholders']['required'];
+		}
+
 		if (empty($field['type']) || !trim($field['type']))
 			$field['type'] = 'text';
 
@@ -160,8 +170,8 @@ class MainMailFormComponent extends CBitrixComponent
 			}
 			case 'from':
 			{
-				\CBitrixComponent::includeComponentClass('bitrix:main.mail.confirm');
-				$field['mailboxes'] = \MainMailConfirmComponent::prepareMailboxes();
+				$field['mailboxes'] = \Bitrix\Main\Mail\Sender::prepareUserMailboxes();
+
 				if($this->arParams['USE_SIGNATURES'])
 				{
 					$field['signatures'] = $this->loadSignatures($field['mailboxes']);

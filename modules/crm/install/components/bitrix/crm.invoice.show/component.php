@@ -654,7 +654,6 @@ $arResult['FIELDS']['tab_1'][] = array(
 	'colspan' => true,
 	'value' => $recurringHtml,
 	'isTactile' => true,
-	'required' => true,
 	'isHidden' => $arParams['IS_RECURRING'] !== 'Y'
 );
 

@@ -609,7 +609,7 @@ class CVoxImplantMain
 				<li class="hide-features-list-item">'.GetMessage('VI_TRIAL_FEATURES_3').'</li>
 				<li class="hide-features-list-item">'.GetMessage('VI_TRIAL_FEATURES_4').'</li>
 				<li class="hide-features-list-item">'.GetMessage('VI_TRIAL_FEATURES_5').' <sup class="hide-features-soon">'.GetMessage('VI_TRIAL_SOON').'</sup></li>
-				<li class="hide-features-list-item">'.GetMessage('VI_TRIAL_FEATURES_6_2').'</li>';
+				<li class="hide-features-list-item">'.GetMessage('VI_TRIAL_FEATURES_6_3').'</li>';
 		if($transcriptionLimited)
 		{
 			$text .= '<li class="hide-features-list-item">'.GetMessage('VI_TRIAL_FEATURES_7').'</li>';
@@ -692,6 +692,15 @@ class CVoxImplantMain
 	}
 
 	/**
+	 * @return string
+	 */
+	public static function GetRedirectToBuyLink()
+	{
+		return "/bitrix/tools/voximplant/redirect_billing.php";
+	}
+
+	/**
+	 * @deprecated
 	 * @return string
 	 */
 	public static function GetBuyLink()

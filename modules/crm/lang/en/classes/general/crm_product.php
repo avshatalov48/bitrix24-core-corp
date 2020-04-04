@@ -16,5 +16,9 @@ $MESS["CRM_PRODUCT_FIELD_XML_ID"] = "External ID";
 $MESS["CRM_PRODUCT_FIELD_PREVIEW_PICTURE"] = "Preview image";
 $MESS["CRM_PRODUCT_FIELD_DETAIL_PICTURE"] = "Full image";
 $MESS["CRM_PRODUCT_FIELD_ORIGIN_ID"] = "Item ID in data source";
+$MESS["CRM_PRODUCT_FIELD_DATE_CREATE"] = "Created on";
+$MESS["CRM_PRODUCT_FIELD_TIMESTAMP_X"] = "Modified on";
+$MESS["CRM_PRODUCT_FIELD_CREATED_BY"] = "Created by";
+$MESS["CRM_PRODUCT_FIELD_MODIFIED_BY"] = "Modified by";
 $MESS["CRM_COULD_NOT_DELETE_PRODUCT_ROWS_EXIST"] = "Cannot delete \"#NAME#\" because this product exists in a deal, lead, offer or an invoice.";
 ?>

@@ -7,7 +7,7 @@ use Bitrix\Crm\Agent\AgentBase;
 
 abstract class EntitySearchContentRebuildAgent extends AgentBase
 {
-	const ITEM_LIMIT = 20;
+	const ITEM_LIMIT = 50;
 
 	/**
 	 * @return EntitySearchContentRebuildAgent|null
@@ -104,6 +104,11 @@ abstract class EntitySearchContentRebuildAgent extends AgentBase
 		$instance->rebuild($itemIDs);
 
 		$processedItemQty += $itemQty;
+		if($totalItemQty < $processedItemQty)
+		{
+			$totalItemQty = $instance->getTotalCount();
+		}
+
 		$progressData['LAST_ITEM_ID'] = $itemIDs[$itemQty - 1];
 		$progressData['PROCESSED_ITEMS'] = $processedItemQty;
 		$progressData['TOTAL_ITEMS'] = $totalItemQty;

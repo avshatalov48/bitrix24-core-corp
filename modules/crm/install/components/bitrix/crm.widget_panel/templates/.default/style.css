@@ -3012,6 +3012,8 @@ div.field-container-period span.select-container-period-month { width: 145px; }
 
 .crm-start-channel-graph-half {
 	float: left;
+	display: flex;
+	justify-content: flex-end;
 	width: calc(50% - 2px);
 	height: 100%;
 	white-space: nowrap;
@@ -3021,17 +3023,16 @@ div.field-container-period span.select-container-period-month { width: 145px; }
 .crm-start-channel-graph-half-right {
 	float: right;
 	text-align: left;
+	justify-content: flex-start;
 }
 
 .crm-start-channel-graph-line {
-	display: inline-block;
-	vertical-align: top;
+	flex: 1;
 	min-width: 6px;
 	max-width: calc(100% - 30px);
 	height: 28px;
 	background: #56d1e0;
 	border-radius: 2px 0 0 2px;
-	-webkit-transition: .2s;
 	transition: .2s;
 	margin: 5px 0;
 }
@@ -3048,15 +3049,15 @@ div.field-container-period span.select-container-period-month { width: 145px; }
 }
 
 .crm-start-channel-graph-total {
-	display: inline-block;
-	vertical-align: middle;
+	flex-shrink: 1;
+	flex-basis: auto;
 	overflow: hidden;
 	white-space: nowrap;
 	text-overflow: ellipsis;
 	height: 100%;
-	width: 25px;
+	padding: 0 2px;
 	opacity: .7;
-	text-align: center;
+	text-align: right;
 	font-size: 11px;
 	color: #333;
 }
@@ -3074,6 +3075,7 @@ div.field-container-period span.select-container-period-month { width: 145px; }
 	background: #9dcf00;
 }
 
+.crm-start-channel-graph-half-right .crm-start-channel-graph-total,
 .crm-widget-activity-dynamic-graph-half-right .crm-start-channel-graph-total {
 	text-align: left;
 }

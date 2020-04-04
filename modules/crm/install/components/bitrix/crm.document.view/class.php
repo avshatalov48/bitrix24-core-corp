@@ -37,6 +37,12 @@ class CrmDocumentViewComponent extends \Bitrix\DocumentGenerator\Components\View
 		}
 		if($this->document->ID > 0 && $this->arParams['MODE'] == 'edit')
 		{
+			if(!\Bitrix\DocumentGenerator\Driver::getInstance()->getUserPermissions()->canModifyDocument($this->document))
+			{
+				$this->arResult['ERRORS'] = [Loc::getMessage('DOCGEN_DOCUMENT_VIEW_ACCESS_ERROR')];
+				$this->includeComponentTemplate();
+				return;
+			}
 			$this->arResult['FIELDS'] = $this->document->getFields([], true, true);
 			$this->includeComponentTemplate('edit');
 			return;
@@ -75,19 +81,20 @@ class CrmDocumentViewComponent extends \Bitrix\DocumentGenerator\Components\View
 		{
 			$isNewDocument = false;
 		}
-		$emptyFields = $this->document->checkFields();
-		if((!empty($emptyFields) && !$this->document->ID && $this->arParams['MODE'] !== 'change') || $this->arParams['EDIT'])
-		{
-			$this->arResult['FIELDS'] = $this->document->getFields([], false, true);
-			$this->includeComponentTemplate('edit');
-			return;
-		}
-		if($this->arParams['MODE'] === 'change' && $this->document->ID > 0)
+//		$emptyFields = $this->document->checkFields();
+//		if((!empty($emptyFields) && !$this->document->ID && $this->arParams['MODE'] !== 'change') || $this->arParams['EDIT'] && \Bitrix\DocumentGenerator\Driver::getInstance()->getUserPermissions()->canModifyDocument($this->document))
+//		{
+//			$this->arResult['FIELDS'] = $this->document->getFields([], false, true);
+//			$this->includeComponentTemplate('edit');
+//			return;
+//		}
+		if($this->arParams['MODE'] === 'change' && $this->document->ID > 0 && \Bitrix\DocumentGenerator\Driver::getInstance()->getUserPermissions()->canModifyDocument($this->document))
 		{
 			$result = $this->document->update($this->arParams['VALUES']);
 		}
 		else
 		{
+			\Bitrix\DocumentGenerator\CreationMethod::markDocumentAsCreatedByPublic($this->document);
 			$result = $this->document->getFile();
 		}
 		$this->arResult = $result->getData();
@@ -147,12 +154,17 @@ class CrmDocumentViewComponent extends \Bitrix\DocumentGenerator\Components\View
 	}
 
 	/**
-	 * @return string
+	 * @return string|false
 	 */
 	protected function getEditDocumentUrl()
 	{
-		$uri = new Uri(Application::getInstance()->getContext()->getRequest()->getRequestUri());
-		return $uri->deleteParams(['mode', 'templateId', 'values', 'value', 'provider'])->addParams(['documentId' => $this->document->ID, 'mode' => 'edit'])->getLocator();
+		if(\Bitrix\DocumentGenerator\Driver::getInstance()->getUserPermissions()->canModifyDocument($this->document))
+		{
+			$uri = new Uri(Application::getInstance()->getContext()->getRequest()->getRequestUri());
+			return $uri->deleteParams(['mode', 'templateId', 'values', 'value', 'provider'])->addParams(['documentId' => $this->document->ID, 'mode' => 'edit'])->getLocator();
+		}
+
+		return false;
 	}
 
 	/**
@@ -256,5 +268,29 @@ class CrmDocumentViewComponent extends \Bitrix\DocumentGenerator\Components\View
 	{
 		$uri = new Uri(Application::getInstance()->getContext()->getRequest()->getRequestUri());
 		return $uri->deleteParams(['mode', 'templateId', 'values', 'value', 'provider'])->addParams(['documentId' => $this->document->ID])->getLocator();
+	}
+
+	/**
+	 * @return bool|string
+	 */
+	protected function getEditTemplateUrl()
+	{
+		if($this->template && !$this->template->isDeleted())
+		{
+			if(!\Bitrix\DocumentGenerator\Driver::getInstance()->getUserPermissions()->canModifyTemplate($this->template->ID))
+			{
+				return true;
+			}
+			$addUrl = \Bitrix\Crm\Integration\DocumentGeneratorManager::getInstance()->getAddTemplateUrl();
+			if($addUrl)
+			{
+				$editUrl = new Uri($addUrl);
+				$editUrl->addParams(['ID' => $this->template->ID, 'UPLOAD' => 'Y']);
+
+				return $editUrl->getLocator();
+			}
+		}
+
+		return false;
 	}
 }

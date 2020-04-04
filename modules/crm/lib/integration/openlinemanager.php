@@ -96,7 +96,7 @@ class OpenLineManager
 				  AND ( M.ID+0 <= S.END_ID OR S.END_ID = 0 ) 
 				  AND M.AUTHOR_ID > 0
 			WHERE S.ID = ".$sessionID."
-			ORDER BY M.ID ASC
+			ORDER BY M.ID+0 ASC
 		";
 
 		$connection = \Bitrix\Main\Application::getConnection();

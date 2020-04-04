@@ -1073,13 +1073,13 @@ class BizProcDocument
 
 		$userIds = array();
 
-		$filter = array("ACTIVE" => "Y");
+		$filter = ['ACTIVE' => 'Y', 'IS_REAL_USER' => true];
 		if($group != 2)
 		{
 			$filter["GROUPS_ID"] = $group;
 		}
 
-		$query = \CUser::getList(($b = "ID"), ($o = "ASC"), $filter);
+		$query = \CUser::getList(($b = "ID"), ($o = "ASC"), $filter, ['FIELDS' => ['ID']]);
 		while($user = $query->fetch())
 		{
 			$userIds[] = $user["ID"];

@@ -45,6 +45,7 @@ define('REGISTRY_TYPE_CRM_QUOTE', 'CRM_QUOTE');
 define('ENTITY_CRM_COMPANY', 'ENTITY_CRM_COMPANY');
 define('ENTITY_CRM_CONTACT', 'ENTITY_CRM_CONTACT');
 define('ENTITY_CRM_CONTACT_COMPANY_COLLECTION', 'ENTITY_CRM_CONTACT_COMPANY_COLLECTION');
+define('ENTITY_CRM_ORDER_DEAL_BINDING', 'ENTITY_CRM_ORDER_DEAL_BINDING');
 
 global $APPLICATION, $DBType, $DB;
 
@@ -93,11 +94,6 @@ CModule::AddAutoloadClasses(
 		'\Bitrix\Crm\StatusTable' => 'lib/status.php',
 		'\Bitrix\Crm\EventTable' => 'lib/event.php',
 		'\Bitrix\Crm\EventRelationsTable' => 'lib/event.php',
-		'\Bitrix\Crm\DealTable' => 'lib/deal.php',
-		'\Bitrix\Crm\LeadTable' => 'lib/lead.php',
-		'\Bitrix\Crm\ContactTable' => 'lib/contact.php',
-		'\Bitrix\Crm\CompanyTable' => 'lib/company.php',
-		'\Bitrix\Crm\StatusTable' => 'lib/status.php',
 		'\Bitrix\Crm\DealTable' => 'lib/deal.php',
 		'\Bitrix\Crm\LeadTable' => 'lib/lead.php',
 		'\Bitrix\Crm\ContactTable' => 'lib/contact.php',
@@ -163,7 +159,6 @@ CModule::AddAutoloadClasses(
 		'CCrmDateTimeHelper' => 'classes/general/datetime_helper.php',
 		'CCrmEMailCodeAllocation' => 'classes/general/crm_email.php',
 		'CCrmActivityCalendarSettings' => 'classes/general/crm_activity.php',
-		'CCrmActivityCalendarSettings' => 'classes/general/crm_activity.php',
 		'CCrmProductReportHelper' => 'classes/general/crm_report_helper.php',
 		'CCrmReportManager' => 'classes/general/crm_report_helper.php',
 		'CCrmCallToUrl' => 'classes/general/crm_url_util.php',
@@ -185,6 +180,7 @@ CModule::AddAutoloadClasses(
 		'CCrmLocations' => 'classes/general/crm_locations.php',
 		'CCrmPaySystem' => 'classes/general/crm_pay_system.php',
 		'CCrmRestService' => 'classes/general/restservice.php',
+		'CCrmRestHelper' => 'classes/general/restservice.php',
 		'ICrmRestProxy' => 'classes/general/restservice.php',
 		'CCrmRestEventDispatcher' => 'classes/general/restservice.php',
 		'CCrmFieldInfo' => 'classes/general/field_info.php',
@@ -194,6 +190,7 @@ CModule::AddAutoloadClasses(
 		'CCrmProductSectionDbResult' => 'classes/general/crm_product_section.php',
 		'CCrmActivityDbResult' => 'classes/general/crm_activity.php',
 		'CCrmInvoiceRestService' => 'classes/general/restservice_invoice.php',
+		'CCrmRestHelper' => 'classes/general/restservice.php',
 		'CCrmInvoiceEvent' => 'classes/general/crm_invoice_event.php',
 		'CCrmInvoiceEventFormat' => 'classes/general/crm_invoice_event.php',
 		'CCrmLeadReportHelper' => 'classes/general/crm_report_helper.php',
@@ -300,7 +297,6 @@ CModule::AddAutoloadClasses(
 		'\Bitrix\Crm\Preview\Product' => 'lib/preview/product.php',
 		'\Bitrix\Crm\Preview\Quote' => 'lib/preview/quote.php',
 		'\Bitrix\Crm\Preview\Route' => 'lib/preview/route.php',
-		'\Bitrix\Crm\Order\Manager' => 'lib/order/manager.php',
 		'\Bitrix\Crm\AddressTable' => 'lib/address.php',
 		'\Bitrix\Crm\UtmTable' => 'lib/utm.php',
 

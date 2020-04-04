@@ -90,6 +90,7 @@ class Sender
 		$this->checkStatusStep = (int) Option::get('sender', 'send_check_status_step', $this->checkStatusStep);
 
 		$this->message = $letter->getMessage();
+		$this->message->getConfiguration()->set('LETTER_ID', $this->letter->getId());
 	}
 
 	/**
@@ -335,6 +336,35 @@ class Sender
 	protected function sendToRecipient($recipient)
 	{
 		self::applyRecipientToMessage($this->message, $recipient);
+
+		// event before sending
+		$eventSendParams = [
+			'FIELDS' => $this->message->getFields(),
+			'TRACK_READ' => $this->message->getReadTracker()->getArray(),
+			'TRACK_CLICK' => $this->message->getClickTracker()->getArray(),
+			'MAILING_CHAIN_ID' => $this->letter->getId()
+		];
+		$event = new Main\Event('sender', 'OnBeforePostingSendRecipient', [$eventSendParams]);
+		$event->send();
+		foreach ($event->getResults() as $eventResult)
+		{
+			if($eventResult->getType() == Main\EventResult::ERROR)
+			{
+				return false;
+			}
+
+			if(is_array($eventResult->getParameters()))
+			{
+				$eventSendParams = array_merge($eventSendParams, $eventResult->getParameters());
+			}
+		}
+		if (count($event->getResults()) > 0)
+		{
+			$this->message->setFields($eventSendParams['FIELDS']);
+			$this->message->getReadTracker()->setArray($eventSendParams['TRACK_READ']);
+			$this->message->getReadTracker()->setArray($eventSendParams['TRACK_CLICK']);
+		}
+
 
 		try
 		{

@@ -254,7 +254,7 @@ class CCrmProductPropsHelper
 				{
 					$arFilter[$i] = array(
 						'id' => $propID,
-						'name' => htmlspecialcharsex($arProp['NAME']),
+						'name' => $arProp['NAME'],
 						'type' => 'custom',
 						'enable_settings' => false,
 						'value' => call_user_func_array(
@@ -286,7 +286,7 @@ class CCrmProductPropsHelper
 				{
 					$arFilter[$i] = array(
 						"id" => $propID,
-						"name" => htmlspecialcharsex($arProp["NAME"]),
+						"name" => $arProp["NAME"],
 						"type" => "number",
 					);
 					$arFilterable[$propID] = "";
@@ -301,7 +301,7 @@ class CCrmProductPropsHelper
 
 					$arFilter[$i] = array(
 						"id" => $propID,
-						"name" => htmlspecialcharsex($arProp["NAME"]),
+						"name" => $arProp["NAME"],
 						"type" => "list",
 						"items" => $items,
 						"params" => array("size"=>5, "multiple"=>"multiple"),
@@ -314,7 +314,7 @@ class CCrmProductPropsHelper
 					//Should be handled in template
 					$arFilter[$i] = array(
 						"id" => $propID,
-						"name" => htmlspecialcharsex($arProp["NAME"]),
+						"name" => $arProp["NAME"],
 						"type" => "propertyE",
 						"value" => ""
 					);
@@ -334,7 +334,7 @@ class CCrmProductPropsHelper
 
 					$arFilter[$i] = array(
 						"id" => $propID,
-						"name" => htmlspecialcharsex($arProp["NAME"]),
+						"name" => $arProp["NAME"],
 						"type" => "list",
 						"items" => $items,
 						"params" => array("size"=>5, "multiple"=>"multiple"),
@@ -346,7 +346,7 @@ class CCrmProductPropsHelper
 				{
 					$arFilter[$i] = array(
 						"id" => $propID,
-						"name" => htmlspecialcharsex($arProp["NAME"]),
+						"name" => $arProp["NAME"],
 					);
 					$arFilterable[$propID] = "?";
 				}
@@ -354,7 +354,7 @@ class CCrmProductPropsHelper
 				{
 					$arFilter[$i] = array(
 						"id" => $propID,
-						"name" => htmlspecialcharsex($arProp["NAME"]),
+						"name" => $arProp["NAME"],
 					);
 					$arFilterable[$propID] = "";
 				}

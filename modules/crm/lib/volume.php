@@ -4,6 +4,7 @@ namespace Bitrix\Crm;
 
 use Bitrix\Crm;
 use Bitrix\Main;
+use Bitrix\Main\ORM;
 use Bitrix\Crm\Volume;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\Entity;
@@ -48,7 +49,7 @@ use Bitrix\Main\Entity;
  **/
 
 
-class VolumeTable extends Entity\DataManager
+class VolumeTable extends ORM\Data\DataManager
 {
 	/**
 	 * Returns DB table name for entity

@@ -146,7 +146,7 @@ foreach($arResult['INVOICE'] as $sKey =>  $arInvoice)
 		$arActions[] = array(
 			'TITLE' => GetMessage('CRM_INVOICE_INTERNAL_ADD_BTN_TITLE'),
 			'TEXT' => GetMessage('CRM_INVOICE_INTERNAL_ADD_BTN_TITLE'),
-			'ONCLICK' => "jsUtils.Redirect([], '".CUtil::JSEscape(CHTTP::urlAddParams(
+			'ONCLICK' => "window.open('".CUtil::JSEscape(CHTTP::urlAddParams(
 					$arInvoice['PATH_TO_INVOICE_EDIT'],
 					array('expose' => 'Y')
 				))."');"
@@ -306,10 +306,13 @@ if($enableToolbar)
 		$toolbarButtons[] = $addButton;
 	}
 
-	$toolbarButtons[] = array(
-		'LABEL' => true,
-		'TEXT' => $arResult['TOOLBAR_LABEL_TEXT']
-	);
+	if (is_string($arResult['TOOLBAR_LABEL_TEXT']) && $arResult['TOOLBAR_LABEL_TEXT'] !== '')
+	{
+		$toolbarButtons[] = array(
+			'LABEL' => true,
+			'TEXT' => $arResult['TOOLBAR_LABEL_TEXT']
+		);
+	}
 
 	$APPLICATION->IncludeComponent(
 		'bitrix:crm.interface.toolbar',
@@ -526,7 +529,10 @@ $APPLICATION->IncludeComponent(
 				'GET_FIELD' => '/bitrix/components/bitrix/crm.invoice.list/filter.ajax.php?action=field&filter_id='.urlencode($arResult['GRID_ID']).'&is_recurring='.$arParams['IS_RECURRING'].'&siteID='.SITE_ID.'&'.bitrix_sessid_get(),
 			)
 		),
+		'LIVE_SEARCH_LIMIT_INFO' => isset($arResult['LIVE_SEARCH_LIMIT_INFO'])
+			? $arResult['LIVE_SEARCH_LIMIT_INFO'] : null,
 		'ENABLE_LIVE_SEARCH' => true,
+		'DISABLE_NAVIGATION_BAR' => $arResult['DISABLE_NAVIGATION_BAR'],
 		'ACTION_PANEL' => $controlPanel,
 		'ENABLE_ROW_COUNT_LOADER' => true,
 		'PAGINATION' => isset($arResult['PAGINATION']) && is_array($arResult['PAGINATION'])
@@ -546,13 +552,6 @@ $APPLICATION->IncludeComponent(
 					'name' => GetMessage('CRM_INVOICE_LIST_FILTER_NAV_BUTTON_LIST'),
 					'active' => true,
 					'url' => $arParams['PATH_TO_INVOICE_LIST']
-				),
-				array(
-					//'icon' => 'chart',
-					'id' => 'widget',
-					'name' => GetMessage('CRM_INVOICE_LIST_FILTER_NAV_BUTTON_WIDGET'),
-					'active' => false,
-					'url' => $arParams['PATH_TO_INVOICE_WIDGET']
 				)
 			),
 			'BINDING' => array(

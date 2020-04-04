@@ -1,4 +1,16 @@
 <?if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+/** @var CBitrixComponent $this */
+/** @var array $arParams */
+/** @var array $arResult */
+/** @var string $componentPath */
+/** @var string $componentName */
+/** @var string $componentTemplate */
+/** @global CDatabase $DB */
+/** @global CUser $USER */
+/** @global CMain $APPLICATION */
+/** @global CCacheManager $CACHE_MANAGER */
+/** @global CUserTypeManager $USER_FIELD_MANAGER */
+global $USER, $CACHE_MANAGER, $USER_FIELD_MANAGER;
 
 if (
 	!$arResult["FatalError"]
@@ -17,14 +29,20 @@ if (!$arResult["FatalError"])
 		//&& $arResult["User"]["EXTERNAL_AUTH_ID"] != 'email'
 	);
 
-	if(!IsModuleInstalled("bitrix24") && CModule::IncludeModule("socialnetwork") && $USER->IsAdmin($USER->GetID())
+	if(!IsModuleInstalled("bitrix24") && CModule::IncludeModule("socialnetwork") && $USER->isAdmin()
 	)
 	{
 		$arResult['CAN_EDIT_USER'] = $arResult['CAN_EDIT_USER'] && CSocNetUser::IsCurrentUserModuleAdmin();
 	}
 
 	// subordinate
-	if((!CModule::IncludeModule("extranet") || !CExtranet::IsExtranetSite() || CExtranet::IsIntranetUser()) && CModule::IncludeModule("iblock")
+	if(
+		(
+			!CModule::IncludeModule("extranet")
+			|| !CExtranet::IsExtranetSite()
+			|| CExtranet::IsIntranetUser()
+		)
+		&& CModule::IncludeModule("iblock")
 	)
 	{
 		$subordinate_users = array();
@@ -61,7 +79,7 @@ if (!$arResult["FatalError"])
 		$arResult["User"]["ACTIVITY_STATUS"] = "admin";
 	}
 
-	if (IsModuleInstalled("bitrix24") && \CBitrix24::isIntegrator($arResult["User"]['ID']))
+	if (IsModuleInstalled("bitrix24") && \Bitrix\Bitrix24\Integrator::isIntegrator($arResult["User"]['ID']))
 	{
 		$arResult["User"]["ACTIVITY_STATUS"] = "integrator";
 	}
@@ -97,7 +115,7 @@ if (!$arResult["FatalError"])
 	}
 
 	if(
-		$arResult["User"]["ID"] == $GLOBALS["USER"]->GetID()
+		$arResult["User"]["ID"] == $USER->GetID()
 		&& CSocNetUser::IsCurrentUserModuleAdmin(SITE_ID, false)
 		&& !isset($_SESSION["SONET_ADMIN"])
 	)

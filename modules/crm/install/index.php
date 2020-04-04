@@ -51,9 +51,7 @@ Class crm extends CModule
 		AddEventHandler("main", "OnUserTypeBuildList", array("CUserTypeCrm", "GetUserTypeDescription"));
 		require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/crm/classes/general/crm_usertypecrm.php");
 
-		$strPath2Lang = str_replace("\\", "/", __FILE__);
-		$strPath2Lang = substr($strPath2Lang, 0, strlen($strPath2Lang)-strlen('/install/index.php')).'/lang/';
-		$arMess = self::__GetMessagesForAllLang($strPath2Lang,'/install/index.php',array('CRM_UF_NAME','CRM_UF_NAME_CAL','CRM_UF_NAME_LF_TYPE','CRM_UF_NAME_LF_ID'));
+		$arMess = self::__GetMessagesForAllLang(__FILE__, array('CRM_UF_NAME','CRM_UF_NAME_CAL','CRM_UF_NAME_LF_TYPE','CRM_UF_NAME_LF_ID'));
 
 		if ('all' == $moduleId)
 		{
@@ -666,7 +664,7 @@ Class crm extends CModule
 			if($arGroup = $dbGroup->Fetch())
 			{
 				$CCrmRole->SetRelation(
-					array('G'.$arGroup['ID'] => array($managerRoleID))
+					array('G'.$arGroup['ID'] => array($adminRoleID))
 				);
 			}
 		}
@@ -783,6 +781,11 @@ Class crm extends CModule
 			{
 				\Bitrix\Main\Config\Option::set("main", "~ft_b_crm_invoice", serialize(array("SEARCH_CONTENT" => true)));
 			}
+
+			if($DB->Query("CREATE FULLTEXT INDEX IX_B_CRM_TIMELINE_SEARCH ON b_crm_timeline_search(SEARCH_CONTENT)", true))
+			{
+				\Bitrix\Main\Config\Option::set("main", "~ft_b_crm_timeline_search", serialize(array("SEARCH_CONTENT" => true)));
+			}
 		}
 		//endregion
 
@@ -800,7 +803,6 @@ Class crm extends CModule
 		RegisterModuleDependences('report', 'OnReportUpdate', 'crm', 'CCrmReportHelper', 'clearMenuCache');
 		RegisterModuleDependences('report', 'OnReportDelete', 'crm', 'CCrmReportHelper', 'clearMenuCache');
 		RegisterModuleDependences('iblock', 'OnIBlockDelete', 'crm', 'CAllCrmCatalog', 'OnIBlockDelete');
-		RegisterModuleDependences('iblock', 'OnAfterIBlockElementDelete', 'crm', 'CCrmProduct', 'OnIBlockElementDelete');
 		RegisterModuleDependences('iblock', 'OnAfterIBlockElementDelete', 'crm', '\Bitrix\Crm\Order\Import\Instagram', 'onAfterIblockElementDelete');
 
 		RegisterModuleDependences('socialnetwork', 'OnFillSocNetLogEvents', 'crm', 'CCrmExternalSaleImport', 'OnFillSocNetLogEvents');
@@ -848,8 +850,9 @@ Class crm extends CModule
 
 		RegisterModuleDependences("main", "OnAfterRegisterModule", "main", "crm", "InstallUserFields", 100, "/modules/crm/install/index.php"); // check crm UF
 
-		RegisterModuleDependences('crm', 'OnAfterCrmInvoiceSetStatus', 'crm', '\Bitrix\Crm\Automation\Trigger\InvoiceTrigger', 'onAfterCrmInvoiceSetStatus');
 		RegisterModuleDependences('disk', 'onBuildAdditionalConnectorList', 'crm', '\Bitrix\Crm\Integration\DiskManager', 'onBuildConnectorList');
+
+		RegisterModuleDependences('intranet', 'OnTransferEMailUser', 'intranet', '\Bitrix\Crm\Integration\Intranet\InviteDialog', 'onTransferEMailUser');
 
 		$eventManager = \Bitrix\Main\EventManager::getInstance();
 		$eventManager->registerEventHandler('main', 'OnAfterSetOption_~crm_webform_max_activated', 'crm', '\Bitrix\Crm\WebForm\Form', 'onAfterSetOptionCrmWebFormMaxActivated');
@@ -865,6 +868,20 @@ Class crm extends CModule
 		$eventManager->registerEventHandler('sale', 'OnSaleGetHandlerDescription', 'crm', '\CCrmPaySystem', 'getHandlerDescriptionEx');
 
 		$eventManager->registerEventHandler('iblock', 'OnIBlockPropertyBuildList', 'crm', '\Bitrix\Crm\Integration\IBlockElementProperty', 'getUserTypeDescription');
+		$eventManager->registerEventHandlerCompatible(
+			'iblock',
+			'OnBeforeIBlockElementDelete',
+			'crm',
+			'CCrmProduct',
+			'HandlerOnBeforeIBlockElementDelete'
+		);
+		$eventManager->registerEventHandlerCompatible(
+			'iblock',
+			'OnAfterIBlockElementDelete',
+			'crm',
+			'CCrmProduct',
+			'HandlerOnAfterIBlockElementDelete'
+		);
 
 		$eventManager->registerEventHandler('socialnetwork', 'onUserProfileRedirectGetUrl', 'crm', '\Bitrix\Crm\Integration\Socialnetwork', 'onUserProfileRedirectGetUrl');
 		$eventManager->registerEventHandler('main', 'OnUserConsentProviderList', 'crm', '\Bitrix\Crm\Integration\UserConsent', 'onProviderList');
@@ -873,11 +890,12 @@ Class crm extends CModule
 		$eventManager->registerEventHandler('main', 'OnAfterUserTypeAdd', 'crm', '\Bitrix\Crm\UserField\UserFieldHistory', 'onAdd');
 		$eventManager->registerEventHandler('main', 'OnAfterUserTypeUpdate', 'crm', '\Bitrix\Crm\UserField\UserFieldHistory', 'onUpdate');
 		$eventManager->registerEventHandler('main', 'OnAfterUserTypeDelete', 'crm', '\Bitrix\Crm\UserField\UserFieldHistory', 'onDelete');
-		
+
 		$eventManager->registerEventHandler('documentgenerator', 'onGetDataProviderList', 'crm', '\Bitrix\Crm\Integration\DocumentGeneratorManager', 'getDataProviders');
 		$eventManager->registerEventHandler('documentgenerator', 'onCreateDocument', 'crm', '\Bitrix\Crm\Integration\DocumentGeneratorManager', 'onCreateDocument');
 		$eventManager->registerEventHandler('documentgenerator', 'onUpdateDocument', 'crm', '\Bitrix\Crm\Integration\DocumentGeneratorManager', 'onUpdateDocument');
 		$eventManager->registerEventHandler('documentgenerator', '\Bitrix\DocumentGenerator\Model\Document::OnBeforeDelete', 'crm', '\Bitrix\Crm\Integration\DocumentGeneratorManager', 'onDeleteDocument');
+		$eventManager->registerEventHandler('documentgenerator', 'onPublicView', 'crm', '\Bitrix\Crm\Integration\DocumentGeneratorManager', 'onPublicView');
 
 		$eventManager->registerEventHandler('main', 'onNumberGeneratorsClassesCollect', 'crm', '\Bitrix\Crm\Integration\Numerator\QuoteUserQuotesNumberGenerator', 'onGeneratorClassesCollect');
 		$eventManager->registerEventHandler('main', 'onNumberGeneratorsClassesCollect', 'crm', '\Bitrix\Crm\Integration\Numerator\QuoteIdNumberGenerator', 'onGeneratorClassesCollect');
@@ -920,6 +938,12 @@ Class crm extends CModule
 
 		$eventManager->registerEventHandler('im', 'OnChatUserAddEntityTypeCrm', 'crm', '\Bitrix\Crm\Integration\Im\Chat', 'onAddChatUser');
 
+		$eventManager->registerEventHandler('main', 'OnUISelectorGetProviderByEntityType', 'crm', '\Bitrix\Crm\Integration\Main\UISelector\Handler', 'OnUISelectorGetProviderByEntityType');
+		$eventManager->registerEventHandler('main', 'OnUISelectorBeforeSave', 'crm', '\Bitrix\Crm\Integration\Main\UISelector\Handler', 'OnUISelectorBeforeSave');
+		$eventManager->registerEventHandler('main', 'OnUISelectorFillLastDestination', 'crm', '\Bitrix\Crm\Integration\Main\UISelector\Handler', 'OnUISelectorFillLastDestination');
+
+		$eventManager->registerEventHandler('ml', 'onModelStateChange', 'crm', '\Bitrix\Crm\Ml\Scoring', 'onMlModelStateChange');
+
 		//region Search Content
 		$startTime = ConvertTimeStamp(time() + \CTimeZone::GetOffset() + 60, 'FULL');
 		if(COption::GetOptionString('crm', '~CRM_REBUILD_LEAD_SEARCH_CONTENT', 'N') === 'Y')
@@ -946,6 +970,10 @@ Class crm extends CModule
 		{
 			CAgent::AddAgent('Bitrix\Crm\Agent\Search\InvoiceSearchContentRebuildAgent::run();', 'crm', 'Y', 0, '', 'Y', $startTime, 100, false, false);
 		}
+		if(COption::GetOptionString('crm', '~CRM_REBUILD_ORDER_SEARCH_CONTENT', 'N') === 'Y')
+		{
+			CAgent::AddAgent('Bitrix\Crm\Agent\Search\OrderSearchContentRebuildAgent::run();', 'crm', 'Y', 0, '', 'Y', $startTime, 100, false, false);
+		}
 		//endregion
 
 
@@ -955,6 +983,7 @@ Class crm extends CModule
 		$eventManager->registerEventHandler('socialnetwork', 'onCommentAuxGetCommentTypeList', 'crm', '\Bitrix\Crm\Integration\Socialnetwork', 'onCommentAuxGetCommentTypeList');
 		$eventManager->registerEventHandler('socialnetwork', 'onCommentAuxInitJs', 'crm', '\Bitrix\Crm\Integration\Socialnetwork', 'onCommentAuxInitJs');
 
+		$eventManager->registerEventHandler('voximplant', 'onCallEnd', 'crm', '\Bitrix\Crm\Integration\VoxImplant\EventHandler', 'onCallEnd');
 		$eventManager->registerEventHandler(
 			'recyclebin',
 			'OnModuleSurvey',
@@ -962,6 +991,9 @@ Class crm extends CModule
 			'\Bitrix\Crm\Integration\Recyclebin\RecyclingManager',
 			'OnModuleSurvey'
 		);
+
+		CAgent::AddAgent('\Bitrix\Crm\Ml\PredictionQueue::processQueue();', 'crm', 'N', 300);
+		CAgent::AddAgent('\Bitrix\Crm\Ml\Agent\Retraining::run();', 'crm', 'N', 86400);
 
 		if (is_array($this->errors))
 		{
@@ -975,7 +1007,7 @@ Class crm extends CModule
 
 	function UnInstallDB($arParams = array())
 	{
-		global $DB, $APPLICATION, $stackCacheManager, $USER_FIELD_MANAGER;
+		global $DB, $APPLICATION, $CACHE_MANAGER, $stackCacheManager, $USER_FIELD_MANAGER;
 		$this->errors = false;
 
 		//region ModuleDependences
@@ -990,8 +1022,6 @@ Class crm extends CModule
 		UnRegisterModuleDependences('report', 'OnReportUpdate', 'crm', 'CCrmReportHelper', 'clearMenuCache');
 		UnRegisterModuleDependences('report', 'OnReportDelete', 'crm', 'CCrmReportHelper', 'clearMenuCache');
 		UnRegisterModuleDependences('iblock', 'OnIBlockDelete', 'crm', 'CCrmCatalog', 'OnIBlockDelete');
-		UnRegisterModuleDependences('iblock', 'OnAfterIBlockElementDelete', 'crm', 'CAllCrmProduct', 'OnIBlockElementDelete');
-		UnRegisterModuleDependences('iblock', 'OnAfterIBlockElementDelete', 'crm', 'CCrmProduct', 'OnIBlockElementDelete');
 		UnRegisterModuleDependences('iblock', 'OnAfterIBlockElementDelete', 'crm', '\Bitrix\Crm\Order\Import\Instagram', 'onAfterIblockElementDelete');
 
 		UnRegisterModuleDependences("socialnetwork", "OnFillSocNetLogEvents", "crm", "CCrmExternalSaleImport", "OnFillSocNetLogEvents");
@@ -1036,8 +1066,9 @@ Class crm extends CModule
 
 		UnRegisterModuleDependences("main", "OnAfterRegisterModule", "main", "crm", "InstallUserFields", "/modules/crm/install/index.php"); // check crm UF
 
-		UnRegisterModuleDependences('crm', 'OnAfterCrmInvoiceSetStatus', 'crm', '\Bitrix\Crm\Automation\Trigger\InvoiceTrigger', 'onAfterCrmInvoiceSetStatus');
 		UnRegisterModuleDependences('disk', 'onBuildAdditionalConnectorList', 'crm', '\Bitrix\Crm\Integration\DiskManager', 'onBuildConnectorList');
+
+		UnRegisterModuleDependences('intranet', 'OnTransferEMailUser', 'intranet', '\Bitrix\Crm\Integration\Intranet\InviteDialog', 'onTransferEMailUser');
 
 		$eventManager = \Bitrix\Main\EventManager::getInstance();
 		$eventManager->unRegisterEventHandler('main', 'OnAfterSetOption_~crm_webform_max_activated', 'crm', '\Bitrix\Crm\WebForm\Form', 'onAfterSetOptionCrmWebFormMaxActivated');
@@ -1051,6 +1082,20 @@ Class crm extends CModule
 		$eventManager->unregisterEventHandler('sale', 'OnSalePsServiceProcessRequestBeforePaid', 'crm', '\Bitrix\Crm\InvoiceTable', 'redeterminePaySystem');
 
 		$eventManager->unRegisterEventHandler('iblock', 'OnIBlockPropertyBuildList', 'crm', '\Bitrix\Crm\Integration\IBlockElementProperty', 'getUserTypeDescription');
+		$eventManager->unRegisterEventHandler(
+			'iblock',
+			'OnBeforeIBlockElementDelete',
+			'crm',
+			'CCrmProduct',
+			'HandlerOnBeforeIBlockElementDelete'
+		);
+		$eventManager->unRegisterEventHandler(
+			'iblock',
+			'OnAfterIBlockElementDelete',
+			'crm',
+			'CCrmProduct',
+			'HandlerOnAfterIBlockElementDelete'
+		);
 
 		$eventManager->unRegisterEventHandler('socialnetwork', 'onUserProfileRedirectGetUrl', 'crm', '\Bitrix\Crm\Integration\Socialnetwork', 'onUserProfileRedirectGetUrl');
 		$eventManager->unRegisterEventHandler('main', 'OnUserConsentProviderList', 'crm', '\Bitrix\Crm\Integration\UserConsent', 'onProviderList');
@@ -1063,6 +1108,8 @@ Class crm extends CModule
 		$eventManager->unRegisterEventHandler('documentgenerator', 'onCreateDocument', 'crm', '\Bitrix\Crm\Integration\DocumentGeneratorManager', 'onCreateDocument');
 		$eventManager->unRegisterEventHandler('documentgenerator', 'onUpdateDocument', 'crm', '\Bitrix\Crm\Integration\DocumentGeneratorManager', 'onUpdateDocument');
 		$eventManager->unRegisterEventHandler('documentgenerator', '\Bitrix\DocumentGenerator\Model\Document::OnBeforeDelete', 'crm', '\Bitrix\Crm\Integration\DocumentGeneratorManager', 'onDeleteDocument');
+		$eventManager->unRegisterEventHandler('documentgenerator', 'onPublicView', 'crm', '\Bitrix\Crm\Integration\DocumentGeneratorManager', 'onPublicView');
+
 		$eventManager->unRegisterEventHandler('main', 'onNumberGeneratorsClassesCollect', 'crm', '\Bitrix\Crm\Integration\Numerator\QuoteUserQuotesNumberGenerator', 'onGeneratorClassesCollect');
 		$eventManager->unRegisterEventHandler('main', 'onNumberGeneratorsClassesCollect', 'crm', '\Bitrix\Crm\Integration\Numerator\QuoteIdNumberGenerator', 'onGeneratorClassesCollect');
 		$eventManager->unRegisterEventHandler('main', 'onNumberGeneratorsClassesCollect', 'crm', '\Bitrix\Crm\Integration\Numerator\InvoiceIdNumberGenerator', 'onGeneratorClassesCollect');
@@ -1074,7 +1121,7 @@ Class crm extends CModule
 		$eventManager->unRegisterEventHandler('main', 'OnAfterUserTypeUpdate', 'crm', 'CCrmRestEventDispatcher', 'onUserFieldUpdate');
 		$eventManager->unRegisterEventHandler('main', 'OnAfterUserTypeDelete', 'crm', 'CCrmRestEventDispatcher', 'onUserFieldDelete');
 		$eventManager->unRegisterEventHandler('main', 'onAfterSetEnumValues', 'crm', 'CCrmRestEventDispatcher', 'onUserFieldSetEnumValues');
-		
+
 		$eventManager->unRegisterEventHandler('main', 'onAfterSetEnumValues', 'crm', '\Bitrix\Crm\Order\Matcher\FieldSynchronizer', 'onAfterSetEnumValues');
 		$eventManager->unRegisterEventHandler('main', 'OnUserLoginExternal', 'crm', '\Bitrix\Crm\Order\Buyer', 'onUserLoginExternalHandler');
 		$eventManager->unRegisterEventHandler('main', 'OnBeforeUserAdd', 'crm', '\Bitrix\Crm\Order\Buyer', 'onBeforeUserAddHandler');
@@ -1100,6 +1147,13 @@ Class crm extends CModule
 		$eventManager->unRegisterEventHandler('main', 'OnAfterUserTypeUpdate', 'crm', '\Bitrix\Crm\Attribute\FieldAttributeManager', 'onUserFieldUpdate');
 		$eventManager->unRegisterEventHandler('main', 'OnAfterUserTypeDelete', 'crm', '\Bitrix\Crm\Attribute\FieldAttributeManager', 'onUserFieldDelete');
 		$eventManager->unRegisterEventHandler('sale', 'OnModuleUnInstall', 'crm', '', 'CrmOnModuleUnInstallSale');
+		$eventManager->unRegisterEventHandler('voximplant', 'onCallEnd', 'crm', '\Bitrix\Crm\Integration\VoxImplant\EventHandler', 'onCallEnd');
+
+		$eventManager->unRegisterEventHandler('main', 'OnUISelectorGetProviderByEntityType', 'crm', '\Bitrix\Crm\Integration\Main\UISelector\Handler', 'OnUISelectorGetProviderByEntityType');
+		$eventManager->unRegisterEventHandler('main', 'OnUISelectorBeforeSave', 'crm', '\Bitrix\Crm\Integration\Main\UISelector\Handler', 'OnUISelectorBeforeSave');
+		$eventManager->unRegisterEventHandler('main', 'OnUISelectorFillLastDestination', 'crm', '\Bitrix\Crm\Integration\Main\UISelector\Handler', 'OnUISelectorFillLastDestination');
+
+		$eventManager->unRegisterEventHandler('ml', 'onModelStateChange', 'crm', '\Bitrix\Crm\Ml\Scoring', 'onMlModelStateChange');
 
 		$eventManager->UnRegisterEventHandler(
 			'recyclebin',
@@ -1109,6 +1163,9 @@ Class crm extends CModule
 			'OnModuleSurvey'
 		);
 		//endregion
+
+		CAgent::RemoveAgent('\Bitrix\Crm\Ml\PredictionQueue::processQueue();', 'crm');
+		CAgent::RemoveAgent('\Bitrix\Crm\Ml\Agent\Retraining::run();', 'crm');
 
 		if (!array_key_exists('savedata', $arParams) || $arParams['savedata'] != 'Y')
 		{
@@ -1157,6 +1214,9 @@ Class crm extends CModule
 					}
 				}
 			}
+
+			$DB->Query("DELETE FROM b_user_counter WHERE CODE LIKE 'crm_%'");
+			$CACHE_MANAGER->CleanDir("user_counter");
 		}
 
 		COption::RemoveOption('crm');
@@ -1170,7 +1230,7 @@ Class crm extends CModule
 		CAgent::RemoveModuleAgents('crm');
 		UnRegisterModule('crm');
 
-		if ($this->errors !== false)
+		if (is_array($this->errors))
 		{
 			$APPLICATION->ThrowException(implode('<br />', $this->errors));
 			return false;
@@ -1405,18 +1465,16 @@ Class crm extends CModule
 	function DoInstall()
 	{
 		global $DB, $APPLICATION, $step;
-
 		$step = IntVal($step);
+
 		if (!CBXFeatures::IsFeatureEditable('crm'))
 		{
-			$this->errors[] = Loc::getMessage('MAIN_FEATURE_ERROR_EDITABLE');
-			$GLOBALS['errors'] = $this->errors;
+			$this->errors = Loc::getMessage('MAIN_FEATURE_ERROR_EDITABLE');
 			$APPLICATION->IncludeAdminFile(Loc::getMessage('CRM_INSTALL_TITLE'), $_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/crm/install/step3.php');
 		}
 		elseif(!IsModuleInstalled('sale'))
 		{
-			$this->errors[] = Loc::getMessage('CRM_UNINS_MODULE_SALE');
-			$GLOBALS['errors'] = $this->errors;
+			$this->errors = Loc::getMessage('CRM_UNINS_MODULE_SALE');
 			$APPLICATION->IncludeAdminFile(Loc::getMessage('CRM_INSTALL_TITLE'), $_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/crm/install/step3.php');
 		}
 		elseif($step < 2)
@@ -1441,6 +1499,11 @@ Class crm extends CModule
 			echo mydump($step);
 			die();
 		} */
+
+		if($this->errors !== false)
+		{
+			$GLOBALS['errors'] = [$this->errors];
+		}
 	}
 
 	function DoUninstall()
@@ -1464,7 +1527,14 @@ Class crm extends CModule
 		}
 	}
 
-	private static function __GetMessagesForAllLang($strBefore,$strAfter,$MessID,$strDefMess = false,$arLangList = array())
+	public function migrateToBox()
+	{
+		\Bitrix\Main\Loader::includeModule('crm');
+		\Bitrix\Crm\Restriction\RestrictionManager::onMigrateToBox();
+		\CCrmExternalSale::OnMigrateToBox();
+	}
+
+	private static function __GetMessagesForAllLang($file, $MessID, $strDefMess = false, $arLangList = array())
 	{
 		$arResult = false;
 
@@ -1475,16 +1545,16 @@ Class crm extends CModule
 
 		if (empty($arLangList))
 		{
-			$rsLangs = CLanguage::GetList(($by="LID"), ($order="ASC"), array("ACTIVE" => "Y"));
+			$rsLangs = CLanguage::GetList($by="LID", $order="ASC", array("ACTIVE" => "Y"));
 			while ($arLang = $rsLangs->Fetch())
 			{
 				$arLangList[] = $arLang['LID'];
 			}
 		}
-		foreach ($arLangList as &$strLID)
+		foreach ($arLangList as $strLID)
 		{
-			$MESS = \Bitrix\Main\Localization\Loc::loadFile($strBefore.'/'. $strLID.'/' . $strAfter, $strLID);
-			foreach ($MessID as &$strMessID)
+			$MESS = \Bitrix\Main\Localization\Loc::loadLanguageFile($file, $strLID);
+			foreach ($MessID as $strMessID)
 			{
 				if (0 >= strlen($strMessID))
 					continue;
@@ -1494,4 +1564,3 @@ Class crm extends CModule
 		return $arResult;
 	}
 }
-?>

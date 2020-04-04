@@ -25,7 +25,7 @@ return [
 	],
 	'style' => [
 		'block' => [
-			'type' => ['block-default-wo-background-vh-animation']
+			'type' => ['block-default-wo-background-vh-animation', 'block-border']
 		],
 		'nodes' => [],
 	],

@@ -26,6 +26,7 @@ class Library
 	const ID_FBINSTAGRAM_CONNECTOR = 'fbinstagram';
 	const ID_VIBER_CONNECTOR = 'viber';
 	const ID_YANDEX_CONNECTOR = 'yandex';
+	const ID_WECHAT_CONNECTOR = 'wechat';
 	const ID_NETWORK_CONNECTOR = 'network';
 	const ID_FB_COMMENTS_CONNECTOR = 'facebookcomments';
 
@@ -55,6 +56,7 @@ class Library
 	const ERROR_CONNECTOR_PROXY_NO_ADD_USER = "CONNECTOR_PROXY_NO_ADD_USER";//Failed to create or retrieve a user system associated with a user of the remote messenger
 	const ERROR_IMCONNECTOR_NOT_SPECIFIED_CORRECT_CONNECTOR = "IMCONNECTOR_NOT_SPECIFIED_CORRECT_CONNECTOR";//Not specified connector
 	const ERROR_IMCONNECTOR_NOT_SPECIFIED_CORRECT_COMMAND = "IMCONNECTOR_NOT_SPECIFIED_CORRECT_COMMAND";//Not a valid command
+	const ERROR_IMCONNECTOR_NOT_ACTIVE_LINE = 'NOT_ACTIVE_LINE';//Not active or not exists line
 	const ERROR_IMCONNECTOR_NOT_ALL_THE_REQUIRED_DATA = "IMCONNECTOR_NOT_ALL_THE_REQUIRED_DATA";//Passed not all the required data
 	const ERROR_IMCONNECTOR_EMPTY_PARAMETRS = 'IMCONNECTOR_EMPTY_PARAMETRS';//Passed empty parameters
 	const ERROR_NOT_AVAILABLE_CONNECTOR = 'NOT_AVAILABLE_CONNECTOR';//Try to access non-existent or non-active connector
@@ -870,7 +872,9 @@ class Library
 		'application/vnd.handheld-entertainment+xml' => '.zmm',
 		'application/vnd.zzazz.deck+xml' => '.zaz',
 		'image/*' => '.jpg',
-		'video/*' => '.mp4'
+		'video/*' => '.mp4',
+		'video/mpeg4' => '.mp4',
+		'audio/amr' => '.amr'
 	);
 
 	/**

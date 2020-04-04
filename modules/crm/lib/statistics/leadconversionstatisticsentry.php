@@ -93,13 +93,24 @@ class LeadConversionStatisticsEntry
 			$options = array();
 		}
 
+		$latest = self::getLatest($ownerID);
+
 		$isNew = isset($options['IS_NEW']) ? (bool)$options['IS_NEW'] : false;
 		/** @var Date $createdDate */
 		$createdDate = self::parseDateString(isset($entityFields['DATE_CREATE']) ? $entityFields['DATE_CREATE'] : '');
 		/** @var Date $lastChangeDate */
 		$lastChangeDate = self::parseDateString(isset($entityFields['DATE_MODIFY']) ? $entityFields['DATE_MODIFY'] : '');
+
 		/** @var Date $date */
-		$date = isset($options['DATE']) ? $options['DATE'] : null;
+		$date = null;
+		if(is_array($latest) && isset($latest['ENTRY_DATE']))
+		{
+			$date = $latest['ENTRY_DATE'];
+		}
+		if($date === null && isset($options['DATE']))
+		{
+			$date = $options['DATE'];
+		}
 		if($date === null)
 		{
 			$date = $lastChangeDate !== null ? $lastChangeDate : new Date();
@@ -139,7 +150,6 @@ class LeadConversionStatisticsEntry
 		$dealQty = self::getBindingCount($ownerID, \CCrmOwnerType::Deal);
 		//endregion
 
-		$latest = self::getLatest($ownerID);
 		if(is_array($latest))
 		{
 			//Update responsible user in all related records

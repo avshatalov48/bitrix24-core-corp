@@ -458,15 +458,9 @@ class CDiskVolumeComponent extends BaseComponent
 			Volume\FolderDeleted::getIndicatorId(),
 		);
 
-		// long running indicators
-		$heavyIndicatorList = array(
-			Volume\Duplicate::getIndicatorId(),
-			Volume\Storage\Uploaded::getIndicatorId(),
-		);
-
 		foreach ($indicatorIdList as $indicatorId => $indicatorIdClass)
 		{
-			if (in_array($indicatorId, $accessoryIndicatorList) || in_array($indicatorId, $heavyIndicatorList))
+			if (in_array($indicatorId, $accessoryIndicatorList))
 			{
 				continue;
 			}
@@ -501,7 +495,12 @@ class CDiskVolumeComponent extends BaseComponent
 			$listIndicator = $this->listFullScanIndicator();
 			foreach ($listIndicator as $indicatorParameters)
 			{
+				/** @var \Bitrix\Disk\Volume\IVolumeIndicator $ind */
+				$ind = $this->getIndicator($indicatorParameters['indicatorId']);
+
+				$indicatorParameters['subTaskCount'] = count($ind->getMeasureStages());
 				$indicatorParameters['action'] = self::ACTION_MEASURE;
+
 				$queueList[] = $indicatorParameters;
 			}
 			$queueList[] = array(
@@ -719,6 +718,7 @@ class CDiskVolumeComponent extends BaseComponent
 
 			return false;
 		}
+
 		// continue queue
 		if ($actionName !== self::ACTION_DEFAULT && !is_null($this->getQueueStep()))
 		{
@@ -872,9 +872,9 @@ class CDiskVolumeComponent extends BaseComponent
 			$this->arResult = array_merge($this->arResult, $this->getTotals());
 
 			if (
-				$this->arResult['TrashCan']['FILE_COUNT'] > 0 ||
-				$this->arResult['Storage']['FILE_COUNT'] > 0 ||
-				count($this->arResult['MODULES']['LIST']) > 0
+				(isset($this->arResult['TrashCan'], $this->arResult['TrashCan']['FILE_COUNT']) && $this->arResult['TrashCan']['FILE_COUNT'] > 0) ||
+				(isset($this->arResult['Storage'], $this->arResult['Storage']['FILE_COUNT']) && $this->arResult['Storage']['FILE_COUNT'] > 0) ||
+				(is_array($this->arResult['MODULES']['LIST']) && count($this->arResult['MODULES']['LIST']) > 0)
 			)
 			{
 				$this->arResult['DATA_COLLECTED'] = true;
@@ -1685,18 +1685,27 @@ class CDiskVolumeComponent extends BaseComponent
 					array(
 						'=STORAGE_ID' => $this->storageId,
 					),
-					$this->filterId
+					$this->filterId,
+					true
 				);
 
 
-				$this->purify($folderIndicatorId, array(
-					'=STORAGE_ID' => $this->storageId,
-				));
-				$this->measure($folderIndicatorId, array(
-					'=STORAGE_ID' => $this->storageId,
-					'=PARENT_ID' => $this->folderId,
-					'=FOLDER_ID' => $this->folderId,
-				));
+				$this->purify(
+					$folderIndicatorId,
+					array(
+						'=STORAGE_ID' => $this->storageId,
+					)
+				);
+				$this->measure(
+					$folderIndicatorId,
+					array(
+						'=STORAGE_ID' => $this->storageId,
+						'=PARENT_ID' => $this->folderId,
+						'=FOLDER_ID' => $this->folderId,
+					),
+					-1,
+					true
+				);
 
 				$this->reload(Volume\FileType::getIndicatorId(), array(
 					'=STORAGE_ID' => $this->storageId,
@@ -1704,20 +1713,37 @@ class CDiskVolumeComponent extends BaseComponent
 
 				if ($storageIndicatorType != Volume\Storage\TrashCan::className())
 				{
-					$this->reload(Volume\Storage\TrashCan::getIndicatorId(), array(
-						'=STORAGE_ID' => $this->storageId,
-					));
+					$this->reload(
+						Volume\Storage\TrashCan::getIndicatorId(),
+						array(
+							'=STORAGE_ID' => $this->storageId,
+						),
+						-1,
+						true
+					);
 				}
 
-				$this->reload($fileIndicatorId, array(
-					'=STORAGE_ID' => $this->storageId,
-					'=PARENT_ID' => $this->folderId,
-				));
+				$this->reload(
+					$fileIndicatorId,
+					array(
+						'=STORAGE_ID' => $this->storageId,
+						'=PARENT_ID' => $this->folderId,
+					),
+					-1,
+					true
+				);
 
-				$this->reload($fileIndicatorId, array(
-					'=STORAGE_ID' => $this->storageId,
-					'=FOLDER_ID' => $this->folderId,
-				));
+				$this->reload(
+					$fileIndicatorId,
+					array(
+						'=STORAGE_ID' => $this->storageId,
+						'=FOLDER_ID' => $this->folderId,
+					),
+					-1,
+					true
+				);
+
+				$this->clearQueueStep();
 
 				if ($this->filterId > 0)
 				{
@@ -1895,33 +1921,27 @@ class CDiskVolumeComponent extends BaseComponent
 		{
 			try
 			{
-				/*
-				$this->purify(Volume\Folder::getIndicatorId(), array(
-					'STORAGE_ID' => $this->storageId
-				));
-				$this->measure(Volume\Folder::getIndicatorId(), array(
-					'STORAGE_ID' => $this->storageId,
-					'PARENT_ID' => $this->folderId
-				));
+				$this->reload(
+					Volume\File::getIndicatorId(),
+					array(
+						'=STORAGE_ID' => $this->storageId,
+						'=PARENT_ID' => $this->folderId
+					),
+					-1,
+					true
+				);
 
-				$this->reload(Volume\FileType::getIndicatorId(), array(
-					'STORAGE_ID' => $this->storageId,
-				));
+				$this->reload(
+					Volume\File::getIndicatorId(),
+					array(
+						'=STORAGE_ID' => $this->storageId,
+						'=FOLDER_ID' => $this->folderId
+					),
+					-1,
+					true
+				);
 
-				$this->reload(Volume\Storage\TrashCan::getIndicatorId(), array(
-					'STORAGE_ID' => $this->storageId
-				));
-				*/
-
-				$this->reload(Volume\File::getIndicatorId(), array(
-					'=STORAGE_ID' => $this->storageId,
-					'=PARENT_ID' => $this->folderId
-				));
-
-				$this->reload(Volume\File::getIndicatorId(), array(
-					'=STORAGE_ID' => $this->storageId,
-					'=FOLDER_ID' => $this->folderId
-				));
+				$this->clearQueueStep();
 
 				if ($this->filterId > 0)
 				{
@@ -2212,11 +2232,12 @@ class CDiskVolumeComponent extends BaseComponent
 	 * @param string $indicatorType - Indicator class name
 	 * @param array $filter
 	 * @param integer $filterId Saved filter row id.
+	 * @param boolean $suppressTimeout Do not use break down operation by timeout.
 	 *
 	 * @return String Status code STATUS_SUCCESS | STATUS_ERROR.
 	 * @throws \Bitrix\Main\SystemException
 	 */
-	public function purify($indicatorType, $filter = array(), $filterId = -1)
+	public function purify($indicatorType, $filter = array(), $filterId = -1, $suppressTimeout = false)
 	{
 		$fullClearFilter = array(
 			'=OWNER_ID' => $this->getUser()->getId(),
@@ -2268,10 +2289,11 @@ class CDiskVolumeComponent extends BaseComponent
 	 * @param string $indicatorType Indicator class name.
 	 * @param array $filter parameter for indicator.
 	 * @param integer $filterId Saved filter row id.
+	 * @param boolean $suppressTimeout Do not use break down operation by timeout.
 	 *
 	 * @return String Status code STATUS_SUCCESS | STATUS_ERROR | STATUS_TIMEOUT.
 	 */
-	public function measure($indicatorType, $filter = array(), $filterId = -1)
+	public function measure($indicatorType, $filter = array(), $filterId = -1, $suppressTimeout = false)
 	{
 		$indicator = $this->getIndicator($indicatorType);
 		if ($filterId > 0)
@@ -2301,15 +2323,20 @@ class CDiskVolumeComponent extends BaseComponent
 			$indicator->addFilter($key, $val);
 		}
 
-		if ($indicator instanceof \Bitrix\Disk\Volume\IVolumeTimeLimit)
+		if ($suppressTimeout !== true && $indicator instanceof \Bitrix\Disk\Volume\IVolumeTimeLimit)
 		{
 			$indicator->startTimer();
+
 			if ($this->getQueueStepParam('subTask') !== null)
 			{
-				$indicator->setStepId($this->getQueueStepParam('subTask'));
+				$indicator->setStage($this->getQueueStepParam('subTask'));
 			}
+
 			$indicator->measure();
-			$this->setQueueStepParam('subTask', $indicator->getStepId());
+
+			// go next
+			$this->setQueueStepParam('subTask', $indicator->getStage());
+
 			if ($indicator->hasTimeLimitReached())
 			{
 				return self::STATUS_TIMEOUT;
@@ -2372,18 +2399,19 @@ class CDiskVolumeComponent extends BaseComponent
 	 * @param string $indicatorType Indicator class name.
 	 * @param array $filter Filter parameter for indicator.
 	 * @param integer $filterId Saved filter row id.
+	 * @param boolean $suppressTimeout Do not use break down operation by timeout.
 	 *
 	 * @return String Status code STATUS_SUCCESS | STATUS_ERROR | STATUS_TIMEOUT.
 	 * @throws \Bitrix\Main\SystemException
 	 */
-	public function reload($indicatorType, $filter = array(), $filterId = -1)
+	public function reload($indicatorType, $filter = array(), $filterId = -1, $suppressTimeout = false)
 	{
 		if ($filterId <= 0)
 		{
-			$this->purify($indicatorType, $filter, $filterId);
+			$this->purify($indicatorType, $filter, $filterId, $suppressTimeout);
 		}
 
-		return $this->measure($indicatorType, $filter, $filterId);
+		return $this->measure($indicatorType, $filter, $filterId, $suppressTimeout);
 	}
 
 
@@ -3119,7 +3147,7 @@ class CDiskVolumeComponent extends BaseComponent
 	 */
 	public function getQueueStep()
 	{
-		if (isset($_SESSION[self::SETTING_QUEUE_STEP]))
+		if (!empty($_SESSION[self::SETTING_QUEUE_STEP]))
 		{
 			return $_SESSION[self::SETTING_QUEUE_STEP];
 		}
@@ -3141,7 +3169,18 @@ class CDiskVolumeComponent extends BaseComponent
 		{
 			$_SESSION[self::SETTING_QUEUE_STEP] = array();
 		}
-		$_SESSION[self::SETTING_QUEUE_STEP][$key] = $value;
+		if ($value === null)
+		{
+			unset($_SESSION[self::SETTING_QUEUE_STEP][$key]);
+		}
+		else
+		{
+			$_SESSION[self::SETTING_QUEUE_STEP][$key] = $value;
+		}
+		if (empty($_SESSION[self::SETTING_QUEUE_STEP]))
+		{
+			$this->clearQueueStep();
+		}
 	}
 
 	/**
@@ -3448,14 +3487,6 @@ class CDiskVolumeComponent extends BaseComponent
 		{
 			$row['STYLE'] = 'User';
 
-			/*
-			$userId = $storage->getEntityId();
-			$user = \Bitrix\Main\UserTable::getByPrimary($userId, array('select' => array('PERSONAL_PHOTO')))->fetch();
-			if ($user && (int)$user['PERSONAL_PHOTO'] > 0)
-			{
-				$row['PICTURE'] = \Bitrix\Disk\Ui\Avatar::getSrc($user['PERSONAL_PHOTO'], $width, $height);
-			}
-			*/
 			if ($storage instanceof \Bitrix\Disk\Storage)
 			{
 				$proxyType = $storage->getProxyType();
@@ -3476,14 +3507,6 @@ class CDiskVolumeComponent extends BaseComponent
 		{
 			$row['STYLE'] = 'Group';
 
-			/*
-			$groupId = $storage->getEntityId();
-			$group = \Bitrix\Socialnetwork\WorkgroupTable::getByPrimary($groupId, array('select' => array('IMAGE_ID')))->fetch();
-			if ($group && (int)$group['IMAGE_ID'] > 0)
-			{
-				$row['PICTURE'] = \Bitrix\Disk\Ui\Avatar::getSrc($group['IMAGE_ID'], $width, $height);
-			}
-			*/
 			if ($storage instanceof \Bitrix\Disk\Storage)
 			{
 				$proxyType = $storage->getProxyType();
@@ -3497,10 +3520,6 @@ class CDiskVolumeComponent extends BaseComponent
 		elseif ($entityType == \Bitrix\Disk\ProxyType\Common::className())
 		{
 			$row['STYLE'] = 'Common';
-		}
-		elseif (in_array($entityType, \Bitrix\Disk\Volume\Module\Im::getEntityType()))
-		{
-			$row['STYLE'] = 'Im';
 		}
 	}
 
@@ -4141,40 +4160,43 @@ class CDiskVolumeComponent extends BaseComponent
 					{
 						$messageId = 'DISK_VOLUME_EMPTY_FOLDER_CONFIRM';
 					}
-					if ($fragment->getFileCount() <= self::SETUP_CLEANER_FILE_THRESHOLD_COUNT)
+					if ($this->isAllowClearFolder($row))
 					{
-						$actions[] = array(
-							"text" => Loc::getMessage('DISK_VOLUME_ACTION_EMPTY_FOLDER'),
-							'onclick' => 'BX.Disk.measureManager.openConfirm('.\CUtil::PhpToJSObject(array(
-									'messageConfirmId' => $messageId,
-									'name' => $row['TITLE'],
-									'payload' => self::ACTION_EMPTY_FOLDER,
-									'metric' => self::METRIC_MARK_CERTAIN_FOLDER_CLEAN,
-									'indicatorId' => \Bitrix\Disk\Volume\Folder::getIndicatorId(),
-									'storageId' => (int)$row['STORAGE_ID'],
-									'folderId' => (int)$row['FOLDER_ID'],
-									'filterId' => (int)$row['ID'],
-									'before' => 'BX.Disk.measureManager.showAlertSetupProcess',
-								)).');'
-						);
-					}
-					else
-					{
-						$actions[] = array(
-							"text" => Loc::getMessage('DISK_VOLUME_ACTION_EMPTY_FOLDER'),
-							'onclick' => 'BX.Disk.measureManager.openConfirm('.\CUtil::PhpToJSObject(array(
-									'messageConfirmId' => $messageId,
-									'name' => $row['TITLE'],
-									'payload' => 'callAction',
-									'action' => self::ACTION_SETUP_CLEANER_JOB,
-									'metric' => self::METRIC_MARK_CERTAIN_FOLDER_CLEAN,
-									self::ACTION_EMPTY_FOLDER => 'Y',
-									'storageId' => (int)$row['STORAGE_ID'],
-									'folderId' => (int)$row['FOLDER_ID'],
-									'filterId' => (int)$row['ID'],
-									'before' => 'BX.Disk.measureManager.showAlertSetupProcess',
-								)).');'
-						);
+						if ($fragment->getFileCount() <= self::SETUP_CLEANER_FILE_THRESHOLD_COUNT)
+						{
+							$actions[] = array(
+								"text" => Loc::getMessage('DISK_VOLUME_ACTION_EMPTY_FOLDER'),
+								'onclick' => 'BX.Disk.measureManager.openConfirm('.\CUtil::PhpToJSObject(array(
+										'messageConfirmId' => $messageId,
+										'name' => $row['TITLE'],
+										'payload' => self::ACTION_EMPTY_FOLDER,
+										'metric' => self::METRIC_MARK_CERTAIN_FOLDER_CLEAN,
+										'indicatorId' => \Bitrix\Disk\Volume\Folder::getIndicatorId(),
+										'storageId' => (int)$row['STORAGE_ID'],
+										'folderId' => (int)$row['FOLDER_ID'],
+										'filterId' => (int)$row['ID'],
+										'before' => 'BX.Disk.measureManager.showAlertSetupProcess',
+									)).');'
+							);
+						}
+						else
+						{
+							$actions[] = array(
+								"text" => Loc::getMessage('DISK_VOLUME_ACTION_EMPTY_FOLDER'),
+								'onclick' => 'BX.Disk.measureManager.openConfirm('.\CUtil::PhpToJSObject(array(
+										'messageConfirmId' => $messageId,
+										'name' => $row['TITLE'],
+										'payload' => 'callAction',
+										'action' => self::ACTION_SETUP_CLEANER_JOB,
+										'metric' => self::METRIC_MARK_CERTAIN_FOLDER_CLEAN,
+										self::ACTION_EMPTY_FOLDER => 'Y',
+										'storageId' => (int)$row['STORAGE_ID'],
+										'folderId' => (int)$row['FOLDER_ID'],
+										'filterId' => (int)$row['ID'],
+										'before' => 'BX.Disk.measureManager.showAlertSetupProcess',
+									)).');'
+							);
+						}
 					}
 
 					if ($this->isAllowDeleteFolder($row))
@@ -4275,17 +4297,21 @@ class CDiskVolumeComponent extends BaseComponent
 								)).');'
 						);
 					}
-					$actions[] = array(
-						"text" => Loc::getMessage('DISK_VOLUME_ACTION_DELETE_FILE'),
-						'onclick' => 'BX.Disk.measureManager.openConfirm('.\CUtil::PhpToJSObject(array(
-								'messageConfirmId' => 'DISK_VOLUME_DELETE_FILE_CONFIRM',
-								'payload' => self::ACTION_DELETE_FILE,
-								'doNotShowModalAlert' => true,
-								'name' => $row['TITLE'],
-								'storageId' => (int)$row['STORAGE_ID'],
-								'fileId' => (int)$fragment->getFileId()
-							)).');'
-					);
+
+					if ($this->isAllowClearFolder($row))
+					{
+						$actions[] = array(
+							"text" => Loc::getMessage('DISK_VOLUME_ACTION_DELETE_FILE'),
+							'onclick' => 'BX.Disk.measureManager.openConfirm('.\CUtil::PhpToJSObject(array(
+									'messageConfirmId' => 'DISK_VOLUME_DELETE_FILE_CONFIRM',
+									'payload' => self::ACTION_DELETE_FILE,
+									'doNotShowModalAlert' => true,
+									'name' => $row['TITLE'],
+									'storageId' => (int)$row['STORAGE_ID'],
+									'fileId' => (int)$fragment->getFileId()
+								)).');'
+						);
+					}
 				}
 				if (isset($row['URL']))
 				{
@@ -4295,7 +4321,7 @@ class CDiskVolumeComponent extends BaseComponent
 					);
 					$actions[] = array(
 						"text" => Loc::getMessage('DISK_VOLUME_OPEN_HISTORY'),
-						'href' => $row['URL'].'#tab-history',
+						'href' => $row['URL']. '#hl-'. (int)$fragment->getFileId(). '!history',
 					);
 				}
 			}
@@ -4345,7 +4371,7 @@ class CDiskVolumeComponent extends BaseComponent
 					);
 					$actions[] = array(
 						"text" => Loc::getMessage('DISK_VOLUME_OPEN_HISTORY'),
-						'href' => $row['URL'].'#tab-history',
+						'href' => $row['URL']. '#hl-'. (int)$fragment->getFileId(). '!history',
 					);
 				}
 			}
@@ -4401,6 +4427,51 @@ class CDiskVolumeComponent extends BaseComponent
 		}
 
 		return $allowDrop;
+	}
+
+	/**
+	 * Check ability to empty folder.
+	 *
+	 * @param array $row Result row.
+	 *
+	 * @return boolean
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	public function isAllowClearFolder(&$row)
+	{
+		$allowClear = true;
+
+		/** @var \Bitrix\Disk\Volume\IClearFolderConstraint[] $clearFolderConstraintList */
+		static $clearFolderConstraintList;
+		if (empty($clearFolderConstraintList))
+		{
+			$clearFolderConstraintList = array();
+
+			// full list available indicators
+			$constraintIdList = \Bitrix\Disk\Volume\Base::listClearFolderConstraint();
+			foreach ($constraintIdList as $indicatorId => $indicatorIdClass)
+			{
+				$clearFolderConstraintList[$indicatorId] = new $indicatorIdClass();
+			}
+		}
+
+		/** @var \Bitrix\Disk\Volume\Fragment $fragment */
+		$fragment = $this->getFragmentResult($row);
+
+		$folder = $fragment->getFolder();
+
+		if ($folder instanceof \Bitrix\Disk\Folder)
+		{
+			foreach ($clearFolderConstraintList as $indicatorId => $indicator)
+			{
+				if (!$indicator->isAllowClearFolder($folder))
+				{
+					$allowClear = false;
+				}
+			}
+		}
+
+		return $allowClear;
 	}
 
 	/**

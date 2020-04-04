@@ -532,6 +532,7 @@ if(typeof(BX.Crm.RequisiteFormManager) === "undefined")
 		this._presetLastSelectedId = 0;
 		this._presetSelectHandler = BX.delegate(this.onPresetSelect, this);
 		this._pseudoIdSequence = 0;
+		this._pseudoIdStartNumber = 0;
 		this._fieldNameTemplate = "";
 		this._enableFieldMasquerading = false;
 		this._formCreateHandler = BX.delegate(this.onFormCreate, this);
@@ -565,6 +566,9 @@ if(typeof(BX.Crm.RequisiteFormManager) === "undefined")
 			{
 				throw "BX.Crm.RequisiteFormManager: Could not find parameter 'serviceUrl' in settings.";
 			}
+
+			this._pseudoIdSequence = parseInt(this.getSetting("pseudoIdStartNumber", 0));
+			this._pseudoIdStartNumber = this._pseudoIdSequence;
 
 			this._fieldNameTemplate = this.getSetting("fieldNameTemplate", "");
 			this._enableFieldMasquerading = this._fieldNameTemplate !== "";
@@ -648,6 +652,12 @@ if(typeof(BX.Crm.RequisiteFormManager) === "undefined")
 			var elementId = BX.type.isNumber(eventArgs["elementId"])
 				? eventArgs["elementId"] : 0;
 
+			var pseudoIdNumber = 0;
+			if (BX.type.isString(eventArgs["pseudoId"]) && eventArgs["pseudoId"].length > 1)
+			{
+				pseudoIdNumber = parseInt(eventArgs["pseudoId"].substr(1));
+			}
+
 			var enableFieldMasquerading = BX.type.isBoolean(eventArgs["enableFieldMasquerading"])
 				? eventArgs["enableFieldMasquerading"] : this._enableFieldMasquerading;
 			var fieldNameTemplate = BX.type.isNotEmptyString(eventArgs["fieldNameTemplate"])
@@ -662,6 +672,9 @@ if(typeof(BX.Crm.RequisiteFormManager) === "undefined")
 			var enableClientResolution = BX.type.isBoolean(eventArgs["enableClientResolution"])
 				? eventArgs["enableClientResolution"] : false;
 
+			var externalRequisiteSearchConfig = BX.type.isPlainObject(eventArgs["externalRequisiteSearchConfig"]) ?
+				eventArgs["externalRequisiteSearchConfig"] : {};
+
 			var form = BX.Crm.RequisiteInnerForm.create(
 				formId,
 				{
@@ -669,6 +682,7 @@ if(typeof(BX.Crm.RequisiteFormManager) === "undefined")
 					settingManagerId: formId.toLowerCase(),
 					countryId: countryId,
 					enableClientResolution: enableClientResolution,
+					externalRequisiteSearchConfig: externalRequisiteSearchConfig,
 					containerId: containerId,
 					elementId: elementId,
 					enableFieldMasquerading: enableFieldMasquerading,
@@ -678,19 +692,12 @@ if(typeof(BX.Crm.RequisiteFormManager) === "undefined")
 			);
 
 			//Move new element to up.
-			if(elementId <= 0)
+			if(elementId <= 0 && pseudoIdNumber >= this._pseudoIdStartNumber)
 			{
 				var topForm = this.getTopmostForm();
 				if(topForm)
 				{
 					this._container.insertBefore(form.getWrapper(), topForm.getWrapper());
-					var sort = topForm.getSort();
-					if(sort > 0)
-					{
-						sort--;
-					}
-
-					form.setSort(sort);
 				}
 			}
 
@@ -852,6 +859,7 @@ if(typeof(BX.Crm.RequisiteInnerForm) === "undefined")
 		this._settingManagerFormReloadHandler = BX.delegate(this.onFormSettingManagerFormReload, this);
 		this._addressCreateHandler = BX.delegate(this.onAddressCreate, this);
 		this._isMarkedAsDeleted = false;
+		this._requisiteExternalSearchManager = null;
 	};
 	BX.Crm.RequisiteInnerForm.prototype =
 	{
@@ -910,12 +918,21 @@ if(typeof(BX.Crm.RequisiteInnerForm) === "undefined")
 					break;
 			}
 
+			var externalRequisiteSearchConfig = this.getSetting("externalRequisiteSearchConfig", null);
+			var isExternalRequisiteSearchEnabled = (
+				BX.type.isPlainObject(externalRequisiteSearchConfig)
+				&& externalRequisiteSearchConfig.hasOwnProperty("enabled")
+				&& externalRequisiteSearchConfig["enabled"]
+			);
+			var defaultFieldControllers = [];
+
+			var controller;
 			if (inputName.length > 0)
 			{
 				var input =  this.getFieldControl(inputName);
 				if(input && this._enableClientResolution)
 				{
-					BX.Crm.RequisiteFieldController.create(
+					controller = BX.Crm.RequisiteFieldController.create(
 						inputName,
 						{
 							countryId: this._countryId,
@@ -925,7 +942,28 @@ if(typeof(BX.Crm.RequisiteInnerForm) === "undefined")
 							callbacks: { onFieldsLoad: BX.delegate(this.setupFields, this) }
 						}
 					);
+					if (isExternalRequisiteSearchEnabled)
+					{
+						defaultFieldControllers.push({
+							fieldId: "REQUISITE." + externalRequisiteSearchConfig["requisitePseudoId"] +
+								"." + inputName,
+							controller: controller
+						});
+					}
 				}
+			}
+
+			this.destroyRequisiteExternalSearchManager();
+			if (isExternalRequisiteSearchEnabled)
+			{
+				externalRequisiteSearchConfig["containerId"] = this._containerId;
+				externalRequisiteSearchConfig["countryId"] = this._countryId;
+				externalRequisiteSearchConfig["addressOriginatorId"] = this.getId();
+				externalRequisiteSearchConfig["defaultFieldControllers"] = defaultFieldControllers;
+				this._requisiteExternalSearchManager = BX.Crm.RequisiteExternalSearchManager.create(
+					null,
+					externalRequisiteSearchConfig
+				);
 			}
 
 			var editors = BX.CrmMultipleAddressEditor.getItemsByFormId(this._id);
@@ -1167,6 +1205,8 @@ if(typeof(BX.Crm.RequisiteInnerForm) === "undefined")
 
 			this._isMarkedAsDeleted = true;
 
+			this.destroyRequisiteExternalSearchManager();
+
 			var container = this.getContainer();
 			if(container)
 			{
@@ -1251,8 +1291,17 @@ if(typeof(BX.Crm.RequisiteInnerForm) === "undefined")
 			{
 				address.setupByEntity(entityTypeId, entityId);
 			}
+		},
+		destroyRequisiteExternalSearchManager: function()
+		{
+			if (this._requisiteExternalSearchManager)
+			{
+				BX.Crm.RequisiteExternalSearchManager.delete(this._requisiteExternalSearchManager.getId());
+				this._requisiteExternalSearchManager = null;
+			}
 		}
-	};
+
+};
 	BX.Crm.RequisiteInnerForm.create = function(id, settings)
 	{
 		var self = new BX.Crm.RequisiteInnerForm();

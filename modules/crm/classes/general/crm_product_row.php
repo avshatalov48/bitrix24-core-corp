@@ -1,4 +1,5 @@
 <?php
+
 class CAllCrmProductRow
 {
 	const CACHE_NAME = 'CRM_PRODUCT_ROW_CACHE';
@@ -998,15 +999,15 @@ class CAllCrmProductRow
 				{
 					$measureInfo = $measureInfos[$productID][0];
 					$safeRow['MEASURE_CODE'] = $measureInfo['CODE'];
-					$safeRow['MEASURE_NAME'] = $measureInfo['SYMBOL'];
+					$safeRow['MEASURE_NAME'] = isset($measureInfo['SYMBOL']) ? $measureInfo['SYMBOL'] : '';
 				}
 				elseif($defaultMeasureInfo !== null)
 				{
 					$safeRow['MEASURE_CODE'] = $defaultMeasureInfo['CODE'];
-					$safeRow['MEASURE_NAME'] = $defaultMeasureInfo['SYMBOL'];
+					$safeRow['MEASURE_NAME'] = isset($defaultMeasureInfo['SYMBOL']) ? $defaultMeasureInfo['SYMBOL'] : '';
 				}
 
-				if($safeRow['MEASURE_NAME'] === '')
+				if(!isset($safeRow['MEASURE_NAME']) || $safeRow['MEASURE_NAME'] === '')
 				{
 					$safeRow['MEASURE_NAME'] = '-';
 				}
@@ -1743,6 +1744,23 @@ class CAllCrmProductRow
 			"UPDATE {$tableName} SET OWNER_TYPE = '{$newOwnerType}', OWNER_ID = {$newOwnerID} 
 					WHERE OWNER_TYPE = '{$oldOwnerType}' AND OWNER_ID = {$oldOwnerID}"
 		);
+	}
+	public static function AreEquals(array $leftRows, array $rightRows)
+	{
+		if(count($leftRows) !== count($rightRows))
+		{
+			return false;
+		}
+
+		$comparer = new \Bitrix\Crm\Comparer\ProductRowComparer();
+		for($i = 0, $length = count($leftRows); $i < $length; $i++)
+		{
+			if(!$comparer->areEquals($leftRows[$i], $rightRows[$i]))
+			{
+				return false;
+			}
+		}
+		return true;
 	}
 	public static function GetDiff(array $from, array $to)
 	{

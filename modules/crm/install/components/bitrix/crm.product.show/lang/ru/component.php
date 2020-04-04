@@ -6,6 +6,7 @@ $MESS['CRM_SECTION_PRODUCT_INFO'] = 'Информация о товаре';
 $MESS['CRM_PRODUCT_FIELD_NAME'] = 'Название';
 $MESS['CRM_FIELD_DESCRIPTION'] = 'Описание';
 $MESS['CRM_FIELD_ACTIVE'] = 'Активен';
+$MESS["CRM_FIELD_CURRENCY"] = "Валюта";
 $MESS['CRM_FIELD_PRICE'] = 'Цена';
 $MESS['CRM_FIELD_MEASURE'] = 'Единица измерения';
 $MESS['CRM_FIELD_VAT_ID'] = 'Ставка НДС';

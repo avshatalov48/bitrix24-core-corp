@@ -42,8 +42,12 @@
 		this.closeButton = new BX.Landing.UI.Button.BaseButton("close", {
 			className: "landing-ui-panel-content-close",
 			onClick: this.hide.bind(this),
-			attrs: {title: BX.message("LANDING_TITLE_OF_SLIDER_CLOSE")}
+			attrs: {title: BX.Landing.Loc.getMessage("LANDING_TITLE_OF_SLIDER_CLOSE")}
 		});
+		this.shouldAdjustTopPanelControls = (
+			this.shouldAdjustTopPanelControls !== false
+			&& BX.Landing.Env.getInstance().getType() !== 'EXTERNAL'
+		);
 
 		if (!!data && typeof data.className === "string")
 		{
@@ -464,6 +468,12 @@
 		{
 			if (!this.isShown())
 			{
+				if (this.shouldAdjustTopPanelControls)
+				{
+					BX.Landing.UI.Panel.Top.getInstance().disableHistory();
+					BX.Landing.UI.Panel.Top.getInstance().disableDevices();
+				}
+
 				void BX.Landing.Utils.Show(this.overlay);
 				return BX.Landing.Utils.Show(this.layout)
 					.then(function() {
@@ -483,6 +493,12 @@
 			var promise = Promise.resolve(true);
 			if (this.isShown())
 			{
+				if (this.shouldAdjustTopPanelControls)
+				{
+					BX.Landing.UI.Panel.Top.getInstance().enableHistory();
+					BX.Landing.UI.Panel.Top.getInstance().enableDevices();
+				}
+
 				void BX.Landing.Utils.Hide(this.overlay);
 				return BX.Landing.Utils.Hide(this.layout)
 					.then(function() {

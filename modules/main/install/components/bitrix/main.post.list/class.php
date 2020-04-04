@@ -15,6 +15,7 @@ final class MainPostList extends CBitrixComponent
 	private $scope;
 	private $sign;
 	static $users = array();
+	public $exemplarId;
 
 	public function __construct($component = null)
 	{
@@ -36,6 +37,12 @@ final class MainPostList extends CBitrixComponent
 		}
 
 		$this->sign = (new \Bitrix\Main\Security\Sign\Signer());
+		if ($this->request->get("EXEMPLAR_ID"))
+			$this->exemplarId = $this->request->get("EXEMPLAR_ID");
+		else if ($this->request->isPost())
+			$this->exemplarId = implode("_", [$this->getUser()->getId(), randString(6)]);
+		else
+			$this->exemplarId = implode("_", [$this->getUser()->getId(), $this->randString(6)]);
 	}
 
 	protected function isWeb()
@@ -76,7 +83,7 @@ final class MainPostList extends CBitrixComponent
 					\CPullWatch::Add($this->getUser()->getId(), 'UNICOMMENTSEXTENDED'.$this->arParams["ENTITY_XML_ID"]);
 					$text = <<<HTML
 						<script>
-							BX.ready(function(){BX.PULL.extendWatch("UNICOMMENTSEXTENDED{$this->arParams["ENTITY_XML_ID"]}");});
+							BX.ready(function(){if (BX.PULL) { BX.PULL.extendWatch("UNICOMMENTSEXTENDED{$this->arParams["ENTITY_XML_ID"]}"); }});
 						</script>
 HTML;
 				}
@@ -85,7 +92,7 @@ HTML;
 					\CPullWatch::Add($this->getUser()->GetId(), 'UNICOMMENTS'.$this->arParams["ENTITY_XML_ID"]);
 					$text = <<<HTML
 						<script>
-							BX.ready(function(){BX.PULL.extendWatch("UNICOMMENTS{$this->arParams["ENTITY_XML_ID"]}");});
+							BX.ready(function(){if (BX.PULL) { BX.PULL.extendWatch("UNICOMMENTS{$this->arParams["ENTITY_XML_ID"]}"); }});
 						</script>
 HTML;
 				}
@@ -143,8 +150,8 @@ HTML;
 					$comment["POST_CONTENT_TYPE_ID"] = (!empty($arParams["POST_CONTENT_TYPE_ID"]) ? $arParams["POST_CONTENT_TYPE_ID"] : '');
 					$comment["COMMENT_CONTENT_TYPE_ID"] = (!empty($arParams["COMMENT_CONTENT_TYPE_ID"]) ? $arParams["COMMENT_CONTENT_TYPE_ID"] : '');
 					$comment["USER_ID"] = (isset($arParams["PUSH&PULL"]) && isset($arParams["PUSH&PULL"]["AUTHOR_ID"]) && intval($arParams["PUSH&PULL"]["AUTHOR_ID"]) > 0 ? intval($arParams["PUSH&PULL"]["AUTHOR_ID"]) : $this->getUser()->getId());
-					if ($this->request->getPost("EXEMPLAR_ID") !== null)
-						$comment["EXEMPLAR_ID"] = $this->request->getPost("EXEMPLAR_ID");
+					$comment["EXEMPLAR_ID"] = $this->exemplarId;
+					$comment["OPERATION_ID"] = $this->request->get("OPERATION_ID") ?: $this->exemplarId;
 					if ($this->request->getPost("COMMENT_EXEMPLAR_ID") !== null)
 						$comment["COMMENT_EXEMPLAR_ID"] = $this->request->getPost("COMMENT_EXEMPLAR_ID");
 
@@ -165,7 +172,7 @@ HTML;
 							)
 						);
 					}
-					else if ($comment["ACTION"] == "MODERATE")
+					else if ($comment["ACTION"] == "MODERATE" || $comment["ACTION"] == "HIDE")
 					{
 						\CPullWatch::AddToStack('UNICOMMENTS'.$arParams["ENTITY_XML_ID"],
 							array(
@@ -201,7 +208,7 @@ HTML;
 								)
 							);
 						}
-						else if ($comment["ACTION"] == "MODERATE")
+						else if ($comment["ACTION"] == "MODERATE" || $comment["ACTION"] == "HIDE")
 						{
 							\CPullWatch::AddToStack('UNICOMMENTSMOBILE'.$arParams["ENTITY_XML_ID"],
 								Array(
@@ -229,6 +236,8 @@ HTML;
 						'params' => array(
 							"ID" => $arParams["PUSH&PULL"]["ID"],
 							"ENTITY_XML_ID" => $arParams["ENTITY_XML_ID"],
+							"EXEMPLAR_ID" => $this->exemplarId,
+							"OPERATION_ID" => $this->request->get("OPERATION_ID") ?: $this->exemplarId,
 							"ACTION" => "DELETE",
 							"USER_ID" => $this->getUser()->getId()
 						)
@@ -241,6 +250,8 @@ HTML;
 						'params' => array(
 							"ID" => $arParams["PUSH&PULL"]["ID"],
 							"ENTITY_XML_ID" => $arParams["ENTITY_XML_ID"],
+							"EXEMPLAR_ID" => $this->exemplarId,
+							"OPERATION_ID" => $this->request->get("OPERATION_ID") ?: $this->exemplarId,
 							"ACTION" => "DELETE",
 							"USER_ID" => $this->getUser()->getId()
 						)
@@ -256,6 +267,8 @@ HTML;
 							'params' => array(
 								"ID" => $arParams["PUSH&PULL"]["ID"],
 								"ENTITY_XML_ID" => $arParams["ENTITY_XML_ID"],
+								"EXEMPLAR_ID" => $this->exemplarId,
+								"OPERATION_ID" => $this->request->get("OPERATION_ID") ?: $this->exemplarId,
 								"ACTION" => "DELETE",
 								"USER_ID" => $this->getUser()->getId()
 							)
@@ -268,6 +281,8 @@ HTML;
 							'params' => array(
 								"ID" => $arParams["PUSH&PULL"]["ID"],
 								"ENTITY_XML_ID" => $arParams["ENTITY_XML_ID"],
+								"EXEMPLAR_ID" => $this->exemplarId,
+								"OPERATION_ID" => $this->request->get("OPERATION_ID") ?: $this->exemplarId,
 								"ACTION" => "DELETE",
 								"USER_ID" => $this->getUser()->getId()
 							)
@@ -736,6 +751,8 @@ HTML;
 		$replacement = array(
 			"#ID#" =>
 				$res["ID"],
+			"#EXEMPLAR_ID#" =>
+				$this->exemplarId,
 			"#FULL_ID#" =>
 				$arParams["ENTITY_XML_ID"]."-".$res["ID"],
 			"#CONTENT_ID#" =>
@@ -856,6 +873,7 @@ HTML;
 		/*@param string $arParams["mfi"] contains hash of something to add new uploaded file into session array */
 		$arParams["mfi"] = trim($arParams["mfi"]);
 		// List params
+		$arParams["EXEMPLAR_ID"] = trim($this->exemplarId);
 		/*@param string $arParams["ENTITY_XML_ID"] main param that means ID */
 		$arParams["ENTITY_XML_ID"] = trim($arParams["ENTITY_XML_ID"]);
 		/*@param array $arParams["RECORDS"] contains data to view */
@@ -889,7 +907,8 @@ HTML;
 		$arParams["NAME_TEMPLATE"] = (!!$_REQUEST["NAME_TEMPLATE"] ? $_REQUEST["NAME_TEMPLATE"] : (!!$arParams["NAME_TEMPLATE"] ? $arParams["NAME_TEMPLATE"] : \CSite::GetNameFormat()));
 		$arParams["SHOW_LOGIN"] = ($_REQUEST["SHOW_LOGIN"] == "Y" ? "Y" : ($arParams["SHOW_LOGIN"] == "Y" ? "Y" : "N"));
 		$arParams["DATE_TIME_FORMAT"] = trim($arParams["DATE_TIME_FORMAT"]);
-		$arParams["SHOW_POST_FORM"] = ($arParams["SHOW_POST_FORM"] == "Y" ? "Y" : "N");
+		$arParams["FORM_ID"] = trim($arParams["FORM_ID"]);
+		$arParams["SHOW_POST_FORM"] = ($arParams["SHOW_POST_FORM"] == "Y" || strlen($arParams["FORM_ID"]) > 0 ? "Y" : "N");
 		$arParams["BIND_VIEWER"] = ($arParams["BIND_VIEWER"] == "N" ? "N" : "Y");
 		$arParams["SIGN"] = $this->sign->sign($arParams["ENTITY_XML_ID"], "main.post.list");
 
@@ -931,7 +950,10 @@ HTML;
 				for ($ii = 0; $ii < $arParams["VISIBLE_RECORDS_COUNT"]; $ii++)
 				{
 					$res = array_shift($arParams["RECORDS"]);
-					$list[$res["ID"]] = $res;
+					if (!empty($res))
+					{
+						$list[$res["ID"]] = $res;
+					}
 				}
 
 				$arParams["RECORDS"] = $list;
@@ -1099,7 +1121,10 @@ HTML;
 	private function parseHTML($response, $mode = "RECORD")
 	{
 		include_once(__DIR__."/html_parser.php");
-		$JSResult = array();
+		$JSResult = array(
+			"exemplarId" => $this->exemplarId,
+			"operationId" => $this->request->get("OPERATION_ID")
+		);
 		$FHParser = new MPLSimpleHTMLParser($response);
 		$SHParser = new MPLSimpleHTMLParser($this->getApplication()->GetHeadStrings());
 		$arParams = &$this->arParams;

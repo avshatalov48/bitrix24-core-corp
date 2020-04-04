@@ -12,6 +12,7 @@
 
 namespace Bitrix\Tasks\Manager;
 
+use Bitrix\Main\Data\Cache;
 use Bitrix\Tasks\Integration\SocialNetwork\Group;
 use Bitrix\Tasks\Internals\Task\ParameterTable;
 use Bitrix\Tasks\Manager\Task\Accomplice;
@@ -29,6 +30,7 @@ use Bitrix\Tasks\Manager\Task\Reminder;
 use Bitrix\Tasks\Manager\Task\Responsible;
 use Bitrix\Tasks\Manager\Task\Tag;
 use Bitrix\Tasks\Manager\Task\Template;
+use Bitrix\Tasks\CheckList\Task\TaskCheckListFacade;
 use Bitrix\Tasks\Util\User;
 use Bitrix\Tasks\Util\Error\Collection;
 use Bitrix\Tasks\Util\UserField\Task as UserField;
@@ -130,6 +132,9 @@ final class Task extends \Bitrix\Tasks\Manager
 
 		if ($taskId)
 		{
+			$cache = Cache::createInstance();
+			$cache->clean(\CTasks::FILTER_LIMIT_CACHE_KEY, \CTasks::CACHE_TASKS_COUNT_DIR_NAME);
+
 			if (!\Bitrix\Tasks\Integration\Extranet\User::isExtranet($userId) && $data[ "ADD_TO_TIMEMAN" ] == "Y")
 			{
 				// add the task to planner only if the user this method executed under is current and responsible for the task
@@ -160,7 +165,7 @@ final class Task extends \Bitrix\Tasks\Manager
 
 			if (array_key_exists(Checklist::getCode(true), $data))
 			{
-				Checklist::manageSet($userId, $taskId, $data[ Checklist::getCode(true) ], $subEntityParams);
+				TaskCheckListFacade::merge($taskId, $userId, $data[CheckList::getCode(true)]);
 			}
 
 			if (array_key_exists('SE_PARAMETER', $data))
@@ -314,6 +319,7 @@ final class Task extends \Bitrix\Tasks\Manager
 				'TASK_ACTION_UPDATE_PARAMETERS' => array(
 					'THROTTLE_MESSAGES' => $parameters[ 'THROTTLE_MESSAGES' ]
 				),
+				'DONT_SAVE_CHECKLIST' => $parameters['DONT_SAVE_CHECKLIST'],
 				'PUBLIC_MODE' => $parameters[ 'PUBLIC_MODE' ],
 				'ERRORS' => $errors
 			);
@@ -416,9 +422,9 @@ final class Task extends \Bitrix\Tasks\Manager
 			ProjectDependence::manageSet($continueAs, $taskId, $data[ ProjectDependence::getCode(true) ], $subEntityParams);
 		}
 
-		if (array_key_exists(Checklist::getCode(true), $data))
+		if (!$parameters['DONT_SAVE_CHECKLIST'] && array_key_exists(Checklist::getCode(true), $data))
 		{
-			Checklist::manageSet($continueAs, $taskId, $data[ Checklist::getCode(true) ], $subEntityParams);
+			TaskCheckListFacade::merge($taskId, $continueAs, $data[Checklist::getCode(true)]);
 		}
 
 		if (array_key_exists('SE_PARAMETER', $data))
@@ -517,11 +523,12 @@ final class Task extends \Bitrix\Tasks\Manager
 			$code = Checklist::getCode(true);
 			if (isset($entitySelect[ 'CHECKLIST' ]))
 			{
-				$mgrResult = CheckList::getListByParentEntity($userId, $taskId, $parameters);
-				$data[ $code ] = $mgrResult[ 'DATA' ];
-				if (!empty($mgrResult[ 'CAN' ]))
+				$mgrResult = TaskCheckListFacade::getItemsForEntity($taskId, $userId);
+
+				$data[$code] = $mgrResult;
+				foreach ($mgrResult as $id => $item)
 				{
-					$can[ $code ] = $mgrResult[ 'CAN' ];
+					$can[$code][$id]['ACTION'] = $item['ACTION'];
 				}
 			}
 

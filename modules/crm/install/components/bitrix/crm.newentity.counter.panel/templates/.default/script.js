@@ -32,6 +32,9 @@ if(typeof(BX.CrmNewEntityCounterPanel) === "undefined")
 		this._resetSuccessCallback = BX.delegate(this.onResetSuccess, this);
 		this._clickCallback = BX.delegate(this.onClick, this);
 
+		this._gridReloadCallback = BX.delegate(this.onGridReload, this);
+		this._pullCallback = BX.delegate(this.onPullEvent, this);
+
 		this._isShown = false;
 		this._hasLayout = false;
 	};
@@ -78,16 +81,25 @@ if(typeof(BX.CrmNewEntityCounterPanel) === "undefined")
 			this._pullCommands = BX.prop.getObject(this._settings, "pullCommands", []);
 			if(this._pullTagName !== "")
 			{
-				BX.addCustomEvent("onPullEvent-crm", BX.delegate(this.onPullEvent, this));
+				BX.addCustomEvent("onPullEvent-crm", this._pullCallback);
 				this.extendWatch();
 			}
 
 			if(this._gridId !== "")
 			{
-				BX.addCustomEvent(window, "Grid::beforeRequest", BX.delegate(this.onGridReload, this));
+				BX.addCustomEvent(window, "Grid::beforeRequest", this._gridReloadCallback);
 			}
 
 			this.layout();
+		},
+		release: function()
+		{
+			BX.removeCustomEvent("onPullEvent-crm", this._pullCallback);
+			BX.removeCustomEvent(window, "Grid::beforeRequest", this._gridReloadCallback);
+		},
+		getId: function()
+		{
+			return this._id;
 		},
 		resolveEntityCommand: function(pullCommand)
 		{
@@ -356,11 +368,27 @@ if(typeof(BX.CrmNewEntityCounterPanel) === "undefined")
 			this.reloadGrid();
 		}
 	};
+	BX.CrmNewEntityCounterPanel.items = {};
+	BX.CrmNewEntityCounterPanel.getItem = function(id)
+	{
+		return this.items.hasOwnProperty(id) ? this.items[id] : null;
+	};
+	BX.CrmNewEntityCounterPanel.removeItemById = function(id)
+	{
+		if(!this.items.hasOwnProperty(id))
+		{
+			return;
+		}
 
+		this.items[id].release();
+		delete this.items[id];
+	};
 	BX.CrmNewEntityCounterPanel.create = function(id, settings)
 	{
 		var self = new BX.CrmNewEntityCounterPanel();
 		self.initialize(id, settings);
+
+		this.items[self.getId()] = self;
 		return self;
 	};
 }

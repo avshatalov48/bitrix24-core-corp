@@ -6,6 +6,7 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm\Counter\EntityCounter;
 use Bitrix\Crm\Counter\EntityCounterType;
 use Bitrix\Crm\Counter\EntityCounterFactory;
+use Bitrix\Crm\Security\EntityAuthorization;
 
 Loc::loadMessages(__FILE__);
 
@@ -89,6 +90,11 @@ class CCrmEntityCounterPanelComponent extends CBitrixComponent
 		if(isset($this->arParams['EXTRAS']) && is_array($this->arParams['EXTRAS']))
 		{
 			$this->extras = $this->arParams['EXTRAS'];
+		}
+
+		if(!EntityAuthorization::checkReadPermission($this->entityTypeID, 0, null, $this->extras))
+		{
+			$this->isVisible = false;
 		}
 
 		if(isset($this->arParams['PATH_TO_ENTITY_LIST']))

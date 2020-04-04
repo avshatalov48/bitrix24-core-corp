@@ -445,6 +445,6 @@ abstract class BaseEntityMatcher
 			$entityId = $this->create();
 		}
 
-		return $entityId;
+		return $entityId ? $entityId : null;
 	}
 }

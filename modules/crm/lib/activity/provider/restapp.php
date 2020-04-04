@@ -1,6 +1,7 @@
 <?php
 namespace Bitrix\Crm\Activity\Provider;
 
+use Bitrix\Crm\Activity\Entity\AppTypeTable;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 
@@ -65,5 +66,15 @@ class RestApp extends Base
 				<div class="webform-small-button webform-small-button-blue crm-task-list-chat-button" onclick="BX.rest.AppLayout.openApplication('.$appId.', {action: \'view_activity\', activity_id: '.$id.'});">'.Loc::getMessage('CRM_ACTIVITY_PROVIDER_REST_APP_OPEN_BUTTON').'</div>
 			</div>
 		</div>';
+	}
+
+	public static function getTypeInfo($appId, $typeId)
+	{
+		return AppTypeTable::getList(array(
+			'filter' => array(
+				'=APP_ID' => $appId,
+				'=TYPE_ID' => $typeId
+			)
+		))->fetch();
 	}
 }

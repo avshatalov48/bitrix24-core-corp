@@ -73,6 +73,12 @@ foreach ($jsTemplates->getChildren() as $jsTemplate)
 					<?
 				}
 				?>
+				<? if(!empty($arResult['EXTERNAL_LINK']['ID'])): ?>
+				<tr>
+					<td class="disk-detail-properties-table-param"><?= Loc::getMessage('DISK_FILE_VIEW_FILE_DOWNLOAD_COUNT_BY_EXT_LINK') ?>:</td>
+					<td class="disk-detail-properties-table-value"><?= $arResult['EXTERNAL_LINK']['DOWNLOAD_COUNT'] ?></td>
+				</tr>
+				<? endif; ?>
 			</table>
 			<div class="disk-detail-properties-owner">
 				<div class="disk-detail-properties-owner-avatar" style="background-image: url(<?= $arResult['FILE']['CREATE_USER']['AVA'] ?>);"></div>

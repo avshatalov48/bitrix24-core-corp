@@ -10,6 +10,7 @@ return array(
 	'block' => array(
 		'name' => Loc::getMessage('LANDING_BLOCK_35.5.HEADER_NAME_NEW'),
 		'section' => array('menu'),
+		'dynamic' => false,
 		'type' => 'store',
 	),
 	'cards' => array(

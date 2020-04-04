@@ -104,7 +104,7 @@ $stages = isset($arParams['TEMPLATE_DATA']['DATA']['STAGES']) ? $arParams['TEMPL
 			<div class="task-detail-sidebar-item task-detail-sidebar-item-robot">
 				<div class="task-detail-sidebar-item-title"><?=Loc::getMessage('TASKS_SIDEBAR_AUTOMATION')?>:</div>
 				<div class="task-detail-sidebar-item-value">
-					<span onclick="BX.SidePanel.Instance.open('/bitrix/components/bitrix/tasks.automation/slider.php?site_id='+BX.message('SITE_ID')+'&amp;project_id=<?=(int)$taskData['GROUP_ID']?>&amp;task_id=<?=(int)$taskData['ID']?>')"><?=Loc::getMessage('TASKS_SIDEBAR_ROBOTS')?></span>
+					<span onclick="BX.SidePanel.Instance.open('/bitrix/components/bitrix/tasks.automation/slider.php?site_id='+BX.message('SITE_ID')+'&amp;project_id=<?=(int)$taskData['GROUP_ID']?>&amp;task_id=<?=(int)$taskData['ID']?>')"><?=Loc::getMessage('TASKS_SIDEBAR_ROBOTS_1')?></span>
 				</div>
 			</div>
 		<?endif;?>
@@ -347,6 +347,7 @@ if(\Bitrix\Main\Loader::includeModule('rest'))
 					'PLACEMENT' => \CTaskRestService::PLACEMENT_TASK_VIEW_SIDEBAR,
 					'PLACEMENT_ID' => $app['ID'],
 					"PLACEMENT_OPTIONS" => ['taskId'=>$taskData["ID"]],
+					'SET_TITLE' => 'N'
 				],
 				null,
 				array('HIDE_ICONS' => 'Y')

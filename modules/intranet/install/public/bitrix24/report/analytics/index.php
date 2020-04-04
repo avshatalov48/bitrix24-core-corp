@@ -26,7 +26,8 @@ $APPLICATION->IncludeComponent(
 		],
 		//'PLAIN_VIEW' => true,
 		'USE_PADDING' => false,
-		'PAGE_MODE' => false
+		'PAGE_MODE' => false,
+		'PAGE_MODE_OFF_BACK_URL'=>'/crm/',
 	]
 );
 

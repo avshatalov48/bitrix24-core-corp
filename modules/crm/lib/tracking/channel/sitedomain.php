@@ -12,7 +12,7 @@ namespace Bitrix\Crm\Tracking\Channel;
  *
  * @package Bitrix\Crm\Tracking\Channel
  */
-class SiteDomain extends Base implements iSite
+class SiteDomain extends Base implements Features\Site
 {
 	protected $code = self::SiteDomain;
 

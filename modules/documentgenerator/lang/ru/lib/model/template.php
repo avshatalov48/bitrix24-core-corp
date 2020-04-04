@@ -1,2 +1,3 @@
 <?php
 $MESS['DOCUMENTGENERATOR_MODEL_TEMPLATE_CLASS_VALIDATION'] = 'Класс #CLASSNAME# не является наследником #PARENT#';
+$MESS['DOCUMENTGENERATOR_MODEL_TEMPLATE_SIZE_IS_EXCEEDED'] = 'Файл шаблона не может быть больше #SIZE#';

@@ -8,8 +8,9 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
 /** @var array $arResult*/
 /** @var array $arParams*/
 
-global $APPLICATION;
+include __DIR__ . '/common/menu.php';
 
+global $APPLICATION;
 $APPLICATION->IncludeComponent(
 	'bitrix:ui.sidepanel.wrapper',
 	'',

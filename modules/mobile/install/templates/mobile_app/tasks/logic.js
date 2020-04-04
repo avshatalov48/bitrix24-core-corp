@@ -581,9 +581,13 @@ BX.merge(BX.Mobile.Tasks.page.prototype, {
 			if(BX.type.isNotEmptyString(title) && this.option('setTitle'))
 			{
 				// setting up default menu
-				this.resetMenu(this.getDefaultMenu());
-				var taskTitle = (this.task && this.task.TITLE ? this.task.TITLE : title);
-				window.BXMobileApp.UI.Page.TopBar.title.setText(taskTitle);
+
+				if (Application.getApiVersion() < 31)
+				{
+					this.resetMenu(this.getDefaultMenu());
+				}
+
+				window.BXMobileApp.UI.Page.TopBar.title.setText(title);
 				window.BXMobileApp.UI.Page.TopBar.title.show();
 			}
 		}
@@ -595,7 +599,7 @@ BX.merge(BX.Mobile.Tasks.page.prototype, {
 		else if (this.option('setPullDown'))
 		{
 			window.app.pullDown({
-				enable:   true,
+				enable:   false,
 				pulltext: BX.message('MB_TASKS_PULLDOWN_PULL'),
 				downtext: BX.message('MB_TASKS_PULLDOWN_DOWN'),
 				loadtext: BX.message('MB_TASKS_PULLDOWN_LOADING'),

@@ -13,15 +13,16 @@ global $APPLICATION, $DB;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Application;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Tasks\Template;
-use Bitrix\Tasks\Util\User;
+use Bitrix\Main\NotImplementedException;
+use Bitrix\Tasks\CheckList\Template\TemplateCheckListFacade;
 use Bitrix\Tasks\Item\Access;
 use Bitrix\Tasks\Item\SystemLog;
 use Bitrix\Tasks\Integration;
-use Bitrix\Tasks\Internals\Task\TemplateTable;
-use Bitrix\Tasks\Internals\Task\Template\CheckListTable;
-use Bitrix\Tasks\Internals\Task\Template\DependenceTable;
 use Bitrix\Tasks\Internals\DataBase\Tree\TargetNodeNotFoundException;
+use Bitrix\Tasks\Internals\Task\TemplateTable;
+use Bitrix\Tasks\Internals\Task\Template\DependenceTable;
+use Bitrix\Tasks\Template;
+use Bitrix\Tasks\Util\User;
 
 Loc::loadMessages(__FILE__);
 
@@ -888,7 +889,7 @@ class CTaskTemplates
 	 *
 	 * @param $template
 	 * @param $params
-	 * @throws \Bitrix\Main\NotImplementedException
+	 * @throws NotImplementedException
 	 * @throws Exception
 	 */
 	private static function doUnsafeDelete($template, $params)
@@ -923,11 +924,7 @@ class CTaskTemplates
 		}
 
 		// delete checklist
-		$checkListDbResult = CheckListTable::getListByTemplateDependency($id, ['select' => ['ID']]);
-		while ($checkListItem = $checkListDbResult->fetch())
-		{
-			CheckListTable::delete($checkListItem['ID']);
-		}
+		TemplateCheckListFacade::deleteByEntityIdOnLowLevel($id);
 
 		// delete access rights
 		Access\Task\Template::revokeAll($id, array('CHECK_RIGHTS' => false));

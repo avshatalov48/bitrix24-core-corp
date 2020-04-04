@@ -32,19 +32,6 @@ if(!$httpRequest->getQuery('action'))
 	die;
 }
 
-if(strtolower($httpRequest->getQuery('action')) === strtolower('downloadTestZipArchive'))
-{
-	$controller = new \Bitrix\Disk\ZipNginx\TestDownloadController;
-	$controller
-		->setActionName('downloadTestZipArchive')
-		->exec()
-	;
-
-	\CMain::finalActions();
-	die;
-}
-
-
 $oauthToken = $httpRequest->getQuery('auth');
 if($oauthToken && \Bitrix\Main\Loader::includeModule('rest'))
 {

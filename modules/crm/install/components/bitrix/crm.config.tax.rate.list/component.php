@@ -166,14 +166,22 @@ $dbPersonType = \Bitrix\Crm\Invoice\PersonType::getList([
 ]);
 while ($arPersonType = $dbPersonType->fetch())
 {
-	$arPersonTypeList[$arPersonType["ID"]] = array(
-		"ID" => $arPersonType["ID"],
-		"CODE" => htmlspecialcharsEx($arPersonType["CODE"]),
-		"LID" => implode(", ", $arPersonType["LIDS"])
-	);
+	if (isset($arPersonTypeList[$arPersonType["ID"]]))
+	{
+		$arPersonTypeList[$arPersonType["ID"]]['LID'] .= ', '.$arPersonType["LIDS"];
+	}
+	else
+	{
+		$arPersonTypeList[$arPersonType["ID"]] = array(
+			"ID" => $arPersonType["ID"],
+			"CODE" => htmlspecialcharsEx($arPersonType["CODE"]),
+			"LID" => $arPersonType["LIDS"]
+		);
+	}
 }
 
 $arRates = array();
+$arTaxRates = [];
 $arRates = CCrmTax::GetRatesById($arResult['TAX_ID']);
 
 foreach($arRates as $k => $v)
@@ -231,7 +239,7 @@ foreach($arRates as $k => $v)
 	$arTaxRates[] = $rate;
 }
 
-if(is_array($arTaxRates) && is_array($sort) && count($sort) > 0)
+if(count($arTaxRates) > 0 && is_array($sort) && count($sort) > 0)
 {
 	// Process only first expression
 	reset($sort);

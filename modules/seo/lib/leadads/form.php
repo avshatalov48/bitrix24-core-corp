@@ -221,8 +221,11 @@ abstract class Form extends BaseApiObject
 		$langId = Context::getCurrent()->getLanguage();
 		switch ($langId)
 		{
-			case 'ru':
 			case 'ua':
+			case 'ru':
+			case 'kz':
+			case 'by':
+				return "https://www.bitrix24.{$langId}/about/privacy.php";
 			case 'de':
 				return "https://www.bitrix24.{$langId}/privacy/";
 

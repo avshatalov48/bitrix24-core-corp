@@ -94,6 +94,33 @@ if(!BX.Disk.pathToUser)
 		BX.addCustomEvent('onPullEvent-disk', onPullDiskEvent);
 		BX.addCustomEvent('onTooltipShow', insertInTooltipLockedInfo);
 		BX.addCustomEvent('onTooltipInsertData', insertInTooltipLockedInfo);
+		BX.addCustomEvent('BX.UI.Viewer.Controller:onBeforeShow', function(viewer, index){
+			var item = viewer.getItemByIndex(index);
+			if (!item)
+			{
+				return;
+			}
+			var actions = item.getActions().filter(function(action){
+				if (action.id !== 'edit')
+				{
+					return true;
+				}
+				if (!action.buttonIconClass)
+				{
+					action.buttonIconClass = '';
+				}
+				action.buttonIconClass += ' disk-viewer-panel-icon-' + BX.Disk.getDocumentService();
+
+				if (!action.params || !action.params.dependsOnService)
+				{
+					return true;
+				}
+
+				return action.params.dependsOnService === BX.Disk.getDocumentService();
+			});
+
+			item.setActions(actions);
+		});
 
 		BX.addCustomEvent('onTooltipHide', function(tooltip){
 			if(!tooltip.RealAnchor ||  !BX.hasClass(tooltip.RealAnchor, 'js-disk-locked-document-tooltip'))
@@ -188,109 +215,6 @@ if(!BX.Disk.pathToUser)
 
 				return this.loader;
 			},
-			runAction: function (action, config)
-			{
-				return BX.ajax.runAction(action, config).then(function (response) {
-					if(!response.assets)
-					{
-						return response;
-					}
-
-					var componentPromise = new BX.Promise();
-					if (response.assets['css'].length)
-					{
-						BX.load(response.assets['css'], function () {
-							if (response.assets['js'].length)
-							{
-								BX.load(response.assets['js'], function () {
-									if (response.assets['string'].length)
-									{
-										for (var i = 0; i < response.assets['string'].length; i++)
-										{
-											BX.html(null, response.assets['string'][i]);
-										}
-										componentPromise.fulfill(response);
-									}
-									else
-									{
-										componentPromise.fulfill(response);
-									}
-								});
-							}
-							else
-							{
-								if (response.assets['string'].length)
-								{
-									if (response.assets['string'].length)
-									{
-										for (var i = 0; i < response.assets['string'].length; i++)
-										{
-											BX.html(null, response.assets['string'][i]);
-										}
-										componentPromise.fulfill(response);
-									}
-									else
-									{
-										componentPromise.fulfill(response);
-									}
-								}
-								else
-								{
-									componentPromise.fulfill(response);
-								}
-							}
-						});
-					}
-					else if (response.assets['js'].length)
-					{
-						BX.load(response.assets['js'], function () {
-							if (response.assets['string'].length)
-							{
-								if (response.assets['string'].length)
-								{
-									for (var i = 0; i < response.assets['string'].length; i++)
-									{
-										BX.html(null, response.assets['string'][i]);
-									}
-									componentPromise.fulfill(response);
-								}
-								else
-								{
-									componentPromise.fulfill(response);
-								}
-							}
-							else
-							{
-								componentPromise.fulfill(response);
-							}
-						});
-					}
-					else
-					{
-						if (response.assets['string'].length)
-						{
-							if (response.assets['string'].length)
-							{
-								for (var i = 0; i < response.assets['string'].length; i++)
-								{
-									BX.html(null, response.assets['string'][i]);
-								}
-								componentPromise.fulfill(response);
-							}
-							else
-							{
-								componentPromise.fulfill(response);
-							}
-						}
-						else
-						{
-							componentPromise.fulfill(response);
-						}
-					}
-
-					return componentPromise;
-				});
-			},
 			ajax: function (config)
 			{
 				return BX.ajax(modifyAjaxConfig(config));
@@ -328,9 +252,10 @@ if(!BX.Disk.pathToUser)
 			},
 			_keyPress: function (e)
 			{
+				var destDialog = BX.SocNetLogDestination && (BX.SocNetLogDestination.isOpenDialog() || BX.SocNetLogDestination.isOpenSearch());
 				var key = (e || window.event).keyCode || (e || window.event).charCode;
 				//enter
-				if (key == 13 && firstButtonInModalWindow) {
+				if (key == 13 && firstButtonInModalWindow && !destDialog) {
 					BX.fireEvent(firstButtonInModalWindow.buttonNode, 'click');
 					return BX.PreventDefault(e);
 				}
@@ -352,6 +277,11 @@ if(!BX.Disk.pathToUser)
 				params.buttons = params.buttons || false;
 				params.events = params.events || {};
 				params.withoutWindowManager = !!params.withoutWindowManager || false;
+
+				if (!BX.type.isArray(params.content))
+				{
+					params.content = [params.content];
+				}
 
 				var contentDialogChildren = [];
 				if (params.withoutContentWrap) {
@@ -873,9 +803,9 @@ if(!BX.Disk.pathToUser)
 					BX.userOptions.save('disk', 'doc_service', 'default', serviceCode);
 				}
 				BX.message({disk_document_service: serviceCode});
-				BX.userOptions.send(null);
-
 				BX.onCustomEvent('Disk:onChangeDocumentService', [BX.message('disk_document_service')]);
+
+				BX.userOptions.send(null);
 			},
 
 			getDownloadDesktop: function ()

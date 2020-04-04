@@ -5,7 +5,8 @@ use \Bitrix\Main\Localization\Loc;
 use \Bitrix\ImConnector\Result,
 	\Bitrix\ImConnector\Error,
 	\Bitrix\ImConnector\Connector,
-	\Bitrix\ImConnector\Library;
+	\Bitrix\ImConnector\Library,
+	\Bitrix\ImConnector\Status;
 
 Loc::loadMessages(__FILE__);
 Library::loadMessages();
@@ -39,16 +40,25 @@ class Router
 		{
 			if(!is_array($data))
 				$data = array($data);
-			
+
 			switch ($command)
 			{
 				case 'testConnect'://Test connection
 					$result->setResult('OK');
 					break;
 				case 'receivingMessage'://To receive the message
-					$receivingHandlers = new ReceivingMessage($connector, $line, $data);
-					$receivingHandlers->receiving();
-					break;
+					$lineStatus = Status::getInstance($connector, $line);
+					if ($lineStatus->isStatus())
+					{
+						$receivingHandlers = new ReceivingMessage($connector, $line, $data);
+						$receivingHandlers->receiving();
+						break;
+					}
+					else
+					{
+						$result->addError(new Error(Loc::getMessage('IMCONNECTOR_NOT_ACTIVE_LINE'), Library::ERROR_IMCONNECTOR_NOT_ACTIVE_LINE, __METHOD__, array('$command' => $command, '$connector' => $connector, '$line' => $line, '$data' => $data)));
+						break;
+					}
 				case 'receivingStatusDelivery'://To receive a delivery status
 					$receivingHandlers = new ReceivingStatusDelivery($connector, $line, $data);
 					$receivingHandlers->receiving();

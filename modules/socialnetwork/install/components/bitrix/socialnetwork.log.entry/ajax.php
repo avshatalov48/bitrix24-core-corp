@@ -692,11 +692,34 @@ if(CModule::IncludeModule("socialnetwork"))
 				: array("CHECK_RIGHTS" => "Y", "USE_SUBSCRIBE" => "N")
 		);
 
-		if (
-			intval($log_tmp_id) > 0
-			&& ($rsLog = CSocNetLog::GetList(array(), array("ID" => $log_tmp_id), false, false, array("ID", "EVENT_ID", "SOURCE_ID", "RATING_TYPE_ID", "RATING_ENTITY_ID"), $arListParams))
-			&& ($arLog = $rsLog->Fetch())
-		)
+		$arLog = [];
+		if (intval($log_tmp_id) > 0)
+		{
+			$rsLog = CSocNetLog::GetList(array(), array("ID" => $log_tmp_id), false, false, array("ID", "EVENT_ID", "SOURCE_ID", "RATING_TYPE_ID", "RATING_ENTITY_ID"), $arListParams);
+			if ($rsLog)
+			{
+				$arLog = $rsLog->Fetch();
+			}
+
+			if (
+				empty($arLog)
+				&& !empty($arListParams['IS_CRM'])
+				&& $arListParams['IS_CRM'] == 'Y'
+			)
+			{
+				$arListParams = [
+					'CHECK_RIGHTS' => 'Y',
+					'USE_SUBSCRIBE' => 'N'
+				];
+				$rsLog = CSocNetLog::GetList(array(), array("ID" => $log_tmp_id), false, false, array("ID", "EVENT_ID", "SOURCE_ID", "RATING_TYPE_ID", "RATING_ENTITY_ID"), $arListParams);
+				if ($rsLog)
+				{
+					$arLog = $rsLog->Fetch();
+				}
+			}
+		}
+
+		if (!empty($arLog))
 		{
 			$postContentTypeId = $commentContentTypeId = $commentEntitySuffix = '';
 			$contentId = \Bitrix\Socialnetwork\Livefeed\Provider::getContentId($arLog);

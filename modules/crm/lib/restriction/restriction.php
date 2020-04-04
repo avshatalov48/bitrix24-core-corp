@@ -29,9 +29,18 @@ abstract class Restriction
 		$this->name = (string)$name;
 	}
 	/**
+	* @deprecated No longer used by internal code and not recommended. Please use isPersistent.
 	* @return bool
 	*/
 	public function isPersitent()
+	{
+		return $this->isPersistent;
+	}
+
+	/**
+	 * @return bool
+	 */
+	public function isPersistent()
 	{
 		return $this->isPersistent;
 	}

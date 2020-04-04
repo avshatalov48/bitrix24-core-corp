@@ -73,6 +73,7 @@ class Guest
 				break;
 
 			case 'storeTrace':
+			case 'registerOrder':
 				if (!empty($data['trace']))
 				{
 					Tracking\Trace::create($data['trace'])->save();
@@ -131,11 +132,6 @@ class Guest
 		if (!$gid)
 		{
 			return self::getCookieGuestId();
-		}
-
-		if ($data)
-		{
-
 		}
 
 		$cookieParts = explode('_', self::getCookieName());

@@ -43,6 +43,7 @@ $APPLICATION->IncludeComponent(
 		'FILTER' => $filter,
 		'FILTER_FIELDS' => $gridFilter,
 		'FILTER_PRESETS' => $presets,
+		'LIMITS' => isset($arResult['LIVE_SEARCH_LIMIT_INFO']) ? $arResult['LIVE_SEARCH_LIMIT_INFO'] : null,
 		'ENABLE_LIVE_SEARCH' => true,
 		'NAVIGATION_BAR' => $arParams['NAVIGATION_BAR'],
 		'LAZY_LOAD' => $lasyLoadParams

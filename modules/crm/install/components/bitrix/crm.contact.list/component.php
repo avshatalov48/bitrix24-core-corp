@@ -68,7 +68,7 @@ $isStExportAllFields = (isset($arParams['STEXPORT_INITIAL_OPTIONS']['EXPORT_ALL_
 $arResult['STEXPORT_EXPORT_ALL_FIELDS'] = ($isStExport && $isStExportAllFields) ? 'Y' : 'N';
 
 $isStExportRequisiteMultiline = (isset($arParams['STEXPORT_INITIAL_OPTIONS']['REQUISITE_MULTILINE'])
-								 && $arParams['STEXPORT_INITIAL_OPTIONS']['REQUISITE_MULTILINE'] === 'Y');
+								&& $arParams['STEXPORT_INITIAL_OPTIONS']['REQUISITE_MULTILINE'] === 'Y');
 $arResult['STEXPORT_REQUISITE_MULTILINE'] = ($isStExport && $isStExportRequisiteMultiline) ? 'Y' : 'N';
 
 $arResult['STEXPORT_MODE'] = $isStExport ? 'Y' : 'N';
@@ -307,8 +307,8 @@ if (!$bInternal)
 	$currentUserID = $arResult['CURRENT_USER_ID'];
 	$currentUserName = CCrmViewHelper::GetFormattedUserName($currentUserID, $arParams['NAME_TEMPLATE']);
 	$arResult['FILTER_PRESETS'] = array(
-		'filter_my' => array('name' => GetMessage('CRM_PRESET_MY'), 'fields' => array('ASSIGNED_BY_ID_name' => $currentUserName, 'ASSIGNED_BY_ID' => $currentUserID)),
-		'filter_change_my' => array('name' => GetMessage('CRM_PRESET_CHANGE_MY'), 'fields' => array('MODIFY_BY_ID_name' => $currentUserName, 'MODIFY_BY_ID' => $currentUserID))
+		'filter_my' => array('name' => GetMessage('CRM_PRESET_MY'), 'disallow_for_all' => true, 'fields' => array('ASSIGNED_BY_ID_name' => $currentUserName, 'ASSIGNED_BY_ID' => $currentUserID)),
+		'filter_change_my' => array('name' => GetMessage('CRM_PRESET_CHANGE_MY'), 'disallow_for_all' => true, 'fields' => array('MODIFY_BY_ID_name' => $currentUserName, 'MODIFY_BY_ID' => $currentUserID))
 	);
 }
 //endregion
@@ -323,6 +323,10 @@ if ($arParams['CONTACT_COUNT'] <= 0)
 }
 $arNavParams = $gridOptions->GetNavParams(array('nPageSize' => $arParams['CONTACT_COUNT']));
 $arNavParams['bShowAll'] = false;
+if(isset($arNavParams['nPageSize']) && $arNavParams['nPageSize'] > 100)
+{
+	$arNavParams['nPageSize'] = 100;
+}
 //endregion
 
 //region Filter initialization
@@ -735,8 +739,19 @@ $CCrmUserType->PrepareListFilterValues($arResult['FILTER'], $arFilter, $arResult
 
 $USER_FIELD_MANAGER->AdminListAddFilter(CCrmContact::$sUFEntityID, $arFilter);
 
-// converts data from filter
-Bitrix\Crm\Search\SearchEnvironment::convertEntityFilterValues(CCrmOwnerType::Contact, $arFilter);
+//region Apply Search Restrictions
+$searchRestriction = \Bitrix\Crm\Restriction\RestrictionManager::getSearchLimitRestriction();
+if(!$searchRestriction->isExceeded(CCrmOwnerType::Contact))
+{
+	Bitrix\Crm\Search\SearchEnvironment::convertEntityFilterValues(CCrmOwnerType::Contact, $arFilter);
+}
+else
+{
+	$arResult['LIVE_SEARCH_LIMIT_INFO'] = $searchRestriction->prepareStubInfo(
+		array('ENTITY_TYPE_ID' => CCrmOwnerType::Contact)
+	);
+}
+//endregion
 
 //region Activity Counter Filter
 if(isset($arFilter['ACTIVITY_COUNTER']))
@@ -865,6 +880,12 @@ foreach ($arFilter as $k => $v)
 			$v = CCrmDateTimeHelper::SetMaxDayTime($v);
 		}
 		\Bitrix\Crm\UI\Filter\Range::prepareTo($arFilter, $arMatch[1], $v);
+	}
+	elseif($k === 'COMPANY_TITLE')
+	{
+		//Rename field for support of multiple company bindings. See \CCrmContact::__AfterPrepareSql
+		$arFilter['ASSOCIATED_COMPANY_TITLE'] = $arFilter['COMPANY_TITLE'];
+		unset($arFilter['COMPANY_TITLE']);
 	}
 	elseif (in_array($k, $arResult['FILTER2LOGIC']))
 	{

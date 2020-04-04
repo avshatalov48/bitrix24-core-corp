@@ -19,12 +19,26 @@
 			BX('imconnector-livechat-open-block').value='';
 	};
 
+	window.toggleOpenPhrases = function()
+	{
+		BX.toggleClass(BX('imconnector-livechat-open-phrases'), 'imconnector-livechat-public-open');
+		if(BX('imconnector-livechat-open-block-phrases').value == '')
+			BX('imconnector-livechat-open-block-phrases').value='Y';
+		else
+			BX('imconnector-livechat-open-block-phrases').value='';
+	};
+
 	BX.ready(function() {
 		backgroundImagesChange();
 		BX.bind(
 			BX('imconnector-livechat-public-link-settings-toggle'),
 			'click',
 			toggleOpen
+		);
+		BX.bind(
+			BX('imconnector-livechat-phrases-config-toggle'),
+			'click',
+			toggleOpenPhrases
 		);
 		BX.bindDelegate(
 			document.body,

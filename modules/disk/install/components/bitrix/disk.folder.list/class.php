@@ -1,7 +1,11 @@
 <?php
 
 use Bitrix\Disk\Configuration;
+use Bitrix\Disk\Document\DocumentHandler;
 use Bitrix\Disk\Integration\Bitrix24Manager;
+use Bitrix\Disk\Search\Reindex\BaseObjectIndex;
+use Bitrix\Disk\Search\Reindex\ExtendedIndex;
+use Bitrix\Disk\Search\Reindex\HeadIndex;
 use Bitrix\Disk\Ui\FileAttributes;
 use Bitrix\Disk\ZipNginx;
 use Bitrix\Disk\Document\Contract;
@@ -66,6 +70,7 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 
 	protected function processBeforeAction($actionName)
 	{
+		Loader::includeModule('ui');
 		parent::processBeforeAction($actionName);
 
 		$this->findFolder();
@@ -353,28 +358,27 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 		$nav = $this->gridOptions->getNavigation();
 		$nav->initFromUri();
 
-		$parameters = array(
-			'with' => $this->buildWithByVisibleColumns($visibleColumns),
-			'filter' => array(),
-		);
-		if($isEnabledObjectLock && !$this->isTrashMode())
-		{
-			$parameters['with'][] = 'LOCK';
-		}
 		$parameters = Driver::getInstance()->getRightsManager()->addRightsCheck(
 			$securityContext,
-			$parameters,
+			[],
 			array('ID', 'CREATED_BY')
 		);
 
 		$parameters['order'] = $this->gridOptions->getOrderForOrm();
 		$parameters = $this->modifyByFilter($parameters);
 
-		$parameters['select'] = ['*', 'FILE_CONTENT_TYPE' => 'FILE_CONTENT.CONTENT_TYPE'];
+		$parameters['select'] = ['ID'];
 		$parameters['limit'] = $pageSize + 1; // +1 because we want to know about existence next page
 		$parameters['offset'] = $nav->getOffset();
 
-		$this->folder->preloadOperationsForChildren($securityContext);
+		$objectIds = [];
+		foreach (ObjectTable::getList($parameters) as $row)
+		{
+			$objectIds[] = $row['ID'];
+		}
+
+		$this->folder->preloadOperationsForSpecifiedObjects($objectIds, $securityContext);
+		$isShowFromDifferentLevels = $this->isShowFromDifferentLevels($parameters['filter']);
 		$sharedObjectIds = [];
 		if (!$this->isTrashMode())
 		{
@@ -405,7 +409,19 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 			$relativePath = '/';
 		}
 
-		$isShowFromDifferentLevels = $this->isShowFromDifferentLevels($parameters['filter']);
+		$parameters = [
+			'select' => ['*', 'FILE_CONTENT_TYPE' => 'FILE_CONTENT.CONTENT_TYPE'],
+			'with' => $this->buildWithByVisibleColumns($visibleColumns),
+			'filter' => [
+				'@ID' => $objectIds?: [0],
+			],
+			'order' => $parameters['order'],
+		];
+		if ($isEnabledObjectLock && !$this->isTrashMode())
+		{
+			$parameters['with'][] = 'LOCK';
+		}
+
 		$rows = array();
 		foreach ($this->folder->getList($parameters) as $row)
 		{
@@ -530,7 +546,7 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 					);
 				}
 
-				if ($isFile && $object->canUpdate($securityContext) && \Bitrix\Disk\Document\DocumentHandler::isEditable($object->getExtension()))
+				if ($isFile && $object->canUpdate($securityContext) && DocumentHandler::isEditable($object->getExtension()))
 				{
 					$actions[] = array(
 						'id' => 'edit',
@@ -554,12 +570,16 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 				}
 
 				$actionToShare = [];
-				if(!$object->isDeleted() && Configuration::isEnabledExternalLink())
+				if(!$object->isDeleted() && Configuration::isPossibleToShowExternalLinkControl())
 				{
 					$actionToShare[] = array(
 						"text" => Loc::getMessage('DISK_FOLDER_LIST_ACT_GET_EXT_LINK'),
 						'className' => 'disk-folder-list-context-menu-item',
-						"onclick" => "BX.Disk['FolderListClass_{$this->componentId}'].openExternalLinkDetailSettingsWithEditing({$objectId});",
+						"onclick" =>
+							$this->filterB24Feature(
+								"disk_manual_external_link",
+								"BX.Disk['FolderListClass_{$this->componentId}'].openExternalLinkDetailSettingsWithEditing({$objectId});"
+							),
 					);
 				}
 
@@ -617,7 +637,7 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 						"text" => Loc::getMessage('DISK_FOLDER_LIST_ACT_SHOW_SHARING_DETAIL_2'),
 						"onclick" =>
 							$this->filterB24Feature(
-								'disk_folder_sharing',
+								$isFolder? 'disk_folder_sharing' : 'disk_file_sharing',
 								"BX.Disk.showSharingDetailWithoutEdit({
 									ajaxUrl: '/bitrix/components/bitrix/disk.folder.list/ajax.php',
 									object: {
@@ -625,8 +645,7 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 										name: '{$name}',
 										isFolder: " . ($isFolder? 'true' : 'false') . "
 									 }
-								})",
-								$isFile
+								})"
 							),
 					);
 				}
@@ -638,15 +657,14 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 						"text" => Loc::getMessage('DISK_FOLDER_LIST_ACT_SHOW_SHARING_DETAIL_2'),
 						"onclick" =>
 							$this->filterB24Feature(
-								'disk_folder_sharing',
+								$isFolder? 'disk_folder_sharing' : 'disk_file_sharing',
 								"BX.Disk['FolderListClass_{$this->componentId}'].showSharingDetailWithChangeRights({
 									object: {
 										id: {$objectId},
 										name: '{$name}',
 										isFolder: " . ($isFolder? 'true' : 'false') . "
 									 }
-								})",
-								$isFile
+								})"
 							),
 					);
 				}
@@ -658,15 +676,14 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 						"text" => Loc::getMessage('DISK_FOLDER_LIST_ACT_SHOW_SHARING_DETAIL_2'),
 						"onclick" =>
 							$this->filterB24Feature(
-								'disk_folder_sharing',
+								$isFolder? 'disk_folder_sharing' : 'disk_file_sharing',
 								"BX.Disk['FolderListClass_{$this->componentId}'].showSharingDetailWithSharing({
 									object: {
 										id: {$objectId},
 										name: '{$name}',
 										isFolder: " . ($isFolder? 'true' : 'false') . "
 									 }
-								})",
-								$isFile
+								})"
 							),
 					);
 				}
@@ -674,6 +691,7 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 				if ($actionToShare)
 				{
 					$actions[] = array(
+						'id' => 'share-section',
 						'text' => Loc::getMessage('DISK_FOLDER_LIST_ACT_SHARE_COMPLEX'),
 						'icon' => '/bitrix/js/ui/actionpanel/images/ui_icon_actionpanel_share.svg',
 						'className' => 'disk-folder-list-context-menu-item',
@@ -853,6 +871,7 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 					'ID' => $object->getFileId(),
 					'CONTENT_TYPE' => $row['FILE_CONTENT_TYPE'],
 					'ORIGINAL_NAME' => $object->getName(),
+					'FILE_SIZE' => $object->getSize(),
 				];
 				$attr = $this->buildItemAttributes($object, $sourceUri, $fileData)
 					->setTitle($object->getName())
@@ -872,23 +891,29 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 					])
 				;
 
-				if ($isFile && $object->canUpdate($securityContext) && \Bitrix\Disk\Document\DocumentHandler::isEditable($object->getExtension()))
+				if ($isFile && $object->canUpdate($securityContext))
 				{
 					$documentName = \CUtil::JSEscape($name);
 					$items = [];
-					foreach ($this->getDocumentHandlersForEditingFile() as $handlerData)
+					if (DocumentHandler::isEditable($object->getExtension()))
 					{
-						$items[] = [
-							'text' => $handlerData['name'],
-							'onclick' => "BX.Disk.Viewer.Actions.runActionEdit({name: '{$documentName}', objectId: {$objectId}, serviceCode: '{$handlerData['code']}'})",
-						];
+						foreach ($this->getDocumentHandlersForEditingFile() as $handlerData)
+						{
+							$items[] = [
+								'text' => $handlerData['name'],
+								'onclick' => "BX.Disk.Viewer.Actions.runActionEdit({name: '{$documentName}', objectId: {$objectId}, serviceCode: '{$handlerData['code']}'})",
+							];
+						}
 					}
+
 					$attr->addAction([
 						'type' => 'edit',
+						'buttonIconClass' => ' ',
 						'action' => 'BX.Disk.Viewer.Actions.runActionDefaultEdit',
 						'params' => [
 							'objectId' => $objectId,
 							'name' => $documentName,
+							'dependsOnService' => $items? null : LocalDocumentController::getCode(),
 						],
 						'items' => $items,
 					]);
@@ -896,10 +921,11 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 
 				$attr->addAction([
 					'type' => 'info',
-					'action' => "BX.Disk['FolderListClass_{$this->componentId}'].runActionInfo",
+					'action' => 'BX.Disk.Viewer.Actions.runActionInfo',
 					'params' => [
 						'objectId' => $objectId,
 					],
+					'extension' => 'disk.viewer.actions',
 				]);
 
 
@@ -1278,27 +1304,17 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 		}
 
 		$fulltextContent = null;
-		$operation = '*%';
 		if (array_key_exists('FIND', $filterData) && !empty($filterData['FIND']))
 		{
 			$fulltextContent = \Bitrix\Disk\Search\FullTextBuilder::create()
 				->addText(trim($filterData['FIND']))
 				->getSearchValue()
 			;
-
-			if (
-				Content::canUseFulltextSearch($fulltextContent) &&
-				ObjectTable::getEntity()->fullTextIndexEnabled('SEARCH_INDEX')
-			)
-			{
-				$operation = '*';
-			}
 		}
 
 		if (
 			!array_key_exists('FILTER_APPLIED', $filterData) ||
-			$filterData['FILTER_APPLIED'] != true ||
-			is_string($fulltextContent) && strlen($fulltextContent) < Filter\Helper::getMinTokenSize()
+			$filterData['FILTER_APPLIED'] != true
 		)
 		{
 			$parameters['filter'] = array_merge($parameters['filter'], $filter);
@@ -1315,9 +1331,29 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 		//when we are searching we use only this way to sort data
 		$parameters['order'] = $this->gridOptions->getDefaultSorting();
 
-		if ($fulltextContent)
+		if ($fulltextContent && Content::canUseFulltextSearch($fulltextContent))
 		{
-			$filter["{$operation}SEARCH_INDEX"] = $fulltextContent;
+			if (HeadIndex::isReady() && empty($filterData['SEARCH_BY_CONTENT']))
+			{
+				$filter["*HEAD_INDEX.SEARCH_INDEX"] = $fulltextContent;
+			}
+			elseif
+			(
+				!empty($filterData['SEARCH_BY_CONTENT']) &&
+				Configuration::allowUseExtendedFullText() &&
+				ExtendedIndex::isReady()
+			)
+			{
+				$filter["*EXTENDED_INDEX.SEARCH_INDEX"] = $fulltextContent;
+			}
+			elseif
+			(
+				(!empty($filterData['SEARCH_BY_CONTENT']) || !HeadIndex::isReady()) &&
+				BaseObjectIndex::isReady()
+			)
+			{
+				$filter["*SEARCH_INDEX"] = $fulltextContent;
+			}
 		}
 
 		if (!empty($filterData['SEARCH_IN_CURRENT_FOLDER']))
@@ -1763,7 +1799,7 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 	}
 
 	/**
-	 * @return \Bitrix\Disk\Document\DocumentHandler[]
+	 * @return DocumentHandler[]
 	 */
 	private function listCloudHandlersForCreatingFile()
 	{
@@ -2149,7 +2185,7 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 	{
 		return array(
 			'FILTER_ID' => $this->gridOptions->getGridId(),
-			'FILTER' => array(
+			'FILTER' => array_filter(array(
 				array(
 					'id' => 'NAME',
 					'name' => Loc::getMessage('DISK_FOLDER_FILTER_NAME'),
@@ -2177,6 +2213,13 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 					'type' => 'date',
 					'time' => true,
 				),
+				Configuration::allowUseExtendedFullText() && ExtendedIndex::isReady()? array(
+					'id' => 'SEARCH_BY_CONTENT',
+					'name' => Loc::getMessage('DISK_FOLDER_FILTER_SEARCH_BY_CONTENT'),
+					'type' => 'checkbox',
+					'default' => true,
+					'valueType' => 'numeric',
+				) : null,
 				array(
 					'id' => 'SEARCH_IN_CURRENT_FOLDER',
 					'name' => Loc::getMessage('DISK_FOLDER_FILTER_SEARCH_IN_CURRENT_FOLDER'),
@@ -2203,7 +2246,7 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 						self::FILTER_SHARED_TO_ME => Loc::getMessage('DISK_FOLDER_FILTER_SHARED_TO_ME'),
 					),
 				),
-			),
+			)),
 			'FILTER_PRESETS' => $this->getPresetFields(),
 			'ENABLE_LIVE_SEARCH' => true,
 			'ENABLE_LABEL' => true,
@@ -2320,6 +2363,12 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 
 	private function getConfigurationOfCloudDocument()
 	{
+		static $conf = null;
+		if ($conf !== null)
+		{
+			return $conf;
+		}
+
 		if (!\Bitrix\Disk\Configuration::canCreateFileByCloud())
 		{
 			return array();
@@ -2354,7 +2403,7 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 
 		$urlManager = Driver::getInstance()->getUrlManager();
 
-		return array(
+		$conf = array(
 			'DEFAULT_SERVICE' => $documentHandlerCode,
 			'DEFAULT_SERVICE_LABEL' => $documentHandlerName,
 			'CREATE_BLANK_FILE_URL' => $urlManager->getUrlForStartCreateFile('docx', $documentHandlerCode),
@@ -2363,6 +2412,8 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 				array('document_action' => 'rename')
 			),
 		);
+
+		return $conf;
 	}
 
 	protected function getGridHeaders()

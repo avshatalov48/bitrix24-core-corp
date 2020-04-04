@@ -203,6 +203,22 @@ foreach (['TITLE', 'DESCRIPTION', 'RESPONSIBLE_ID', 'DEADLINE'] as $fieldId)
 					<?=htmlspecialcharsbx($field['Name'])?>
 				</label>
 			</div>
+			<?php if ($fieldId === 'ALLOW_TIME_TRACKING'):?>
+				<div class="bizproc-automation-popup-settings" style="padding-left: 20px; margin-top: 10px">
+					<span class="bizproc-automation-popup-settings-title bizproc-automation-popup-settings-title-autocomplete"><?=GetMessage('BPTA1A_TIME_TRACKING_H')?>: </span>
+					<input name="TIME_ESTIMATE_H" type="text" class="bizproc-automation-popup-input bizproc-automation-popup-input-numeric"
+						   value="<?=htmlspecialcharsbx($arCurrentValues['TIME_ESTIMATE_H'])?>"
+						   data-role="inline-selector-target"
+					>
+				</div>
+				<div class="bizproc-automation-popup-settings" style="padding-left: 20px">
+					<span class="bizproc-automation-popup-settings-title bizproc-automation-popup-settings-title-autocomplete"><?=GetMessage('BPTA1A_TIME_TRACKING_M')?>: </span>
+					<input name="TIME_ESTIMATE_M" type="text" class="bizproc-automation-popup-input bizproc-automation-popup-input-numeric"
+						   value="<?=htmlspecialcharsbx($arCurrentValues['TIME_ESTIMATE_M'])?>"
+						   data-role="inline-selector-target"
+					>
+				</div>
+			<?php endif;?>
 		<?endforeach;?>
 		<?if ($dialog->getDocumentType()[0] === 'tasks'):?>
 			<div class="bizproc-automation-popup-checkbox-item">

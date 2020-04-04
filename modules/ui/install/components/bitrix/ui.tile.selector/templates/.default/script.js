@@ -61,7 +61,7 @@
 	TileSelector.getById = function (id)
 	{
 		var filtered = selectorList.filter(function (item) {
-			return item.id === id;
+			return (item.id === id && document.body.contains(item.context));
 		});
 		return filtered.length > 0 ? filtered[0] : null;
 	};
@@ -127,6 +127,15 @@
 			BX.bind(this.input, 'blur', this.onInputEnd.bind(this));
 			Helper.handleKeyEnter(this.input, this.onInputEnd.bind(this));
 		}
+
+		BX.bind(this.input, 'keydown', function (e) {
+			if (e.key === 'Enter')
+			{
+				e.preventDefault();
+				e.stopPropagation();
+				return false;
+			}
+		});
 	};
 	TileSelector.prototype.getSearchInput = function ()
 	{
@@ -357,7 +366,7 @@
 
 		template = Helper.replace(template, {
 			'id': BX.util.htmlspecialchars(id + ''),
-			'name': name,
+			'name': BX.util.htmlspecialchars(name),
 			'data': BX.util.htmlspecialchars(JSON.stringify(data)),
 			'style': style,
 			'type': type,

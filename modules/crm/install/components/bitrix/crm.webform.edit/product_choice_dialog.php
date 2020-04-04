@@ -13,7 +13,7 @@ global $USER, $APPLICATION;
 
 \Bitrix\Main\Localization\Loc::loadMessages(__FILE__);
 
-if (!$USER->IsAuthorized() || !check_bitrix_sessid() || $_SERVER['REQUEST_METHOD'] != 'GET')
+if (!$USER->IsAuthorized() || $_SERVER['REQUEST_METHOD'] != 'GET')
 {
 	ShowError(GetMessage('CRM_LOAD_DIALOG_ERROR'));
 	return;
@@ -22,6 +22,8 @@ if (!$USER->IsAuthorized() || !check_bitrix_sessid() || $_SERVER['REQUEST_METHOD
 $jsEventsManagerId = isset($_GET['JS_EVENTS_MANAGER_ID'])? strval($_GET['JS_EVENTS_MANAGER_ID']) : '';
 if ($jsEventsManagerId === '')
 	return;
+
+CUtil::JSPostUnescape();
 
 $APPLICATION->ShowAjaxHead();
 

@@ -1,21 +1,23 @@
 <?
+if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/extranet/public/.top.menu.php");
 $aMenuLinks = Array(
 	Array(
-		"Главная", 
+		GetMessage("EXTRANET_TOP_MENU_MAIN"),
 		"#SITE_DIR#index.php", 
 		Array(), 
 		Array(), 
 		"" 
 	),
 	Array(
-		"Рабочие группы", 
+		GetMessage("EXTRANET_TOP_MENU_WORKGROUPS"),
 		"#SITE_DIR#workgroups/", 
 		Array(), 
 		Array(), 
 		"CBXFeatures::IsFeatureEnabled('Workgroups')" 
 	),
 	Array(
-		"Контакты", 
+		GetMessage("EXTRANET_TOP_MENU_CONTACTS"),
 		"#SITE_DIR#contacts/", 
 		Array(), 
 		Array(), 

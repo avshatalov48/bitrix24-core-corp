@@ -61,18 +61,22 @@ else
 		);
 	}
 	*/
-	
+
 	$APPLICATION->IncludeComponent(
-		'bitrix:crm.order.list',
+		'bitrix:ui.sidepanel.wrapper',
 		'',
-		array(
-			'ORDER_COUNT' => '20',
-			'PATH_TO_ORDER_SHOW' => $arResult['PATH_TO_ORDER_SHOW'],
-			'PATH_TO_ORDER_EDIT' => $arResult['PATH_TO_ORDER_EDIT'],
-			'PATH_TO_ORDER_KANBAN' => $arResult['PATH_TO_ORDER_KANBAN'],
-			'NAME_TEMPLATE' => $arParams['NAME_TEMPLATE'],
-			'NAVIGATION_CONTEXT_ID' => $arResult['NAVIGATION_CONTEXT_ID'],
-		),
+		[
+			'POPUP_COMPONENT_NAME' => 'bitrix:crm.order.list',
+			'POPUP_COMPONENT_TEMPLATE_NAME' => '',
+			'POPUP_COMPONENT_PARAMS' => [
+				'ORDER_COUNT' => '20',
+				'PATH_TO_ORDER_SHOW' => $arResult['PATH_TO_ORDER_SHOW'],
+				'PATH_TO_ORDER_EDIT' => $arResult['PATH_TO_ORDER_EDIT'],
+				'PATH_TO_ORDER_KANBAN' => $arResult['PATH_TO_ORDER_KANBAN'],
+				'NAME_TEMPLATE' => $arParams['NAME_TEMPLATE'],
+				'NAVIGATION_CONTEXT_ID' => $arResult['NAVIGATION_CONTEXT_ID'],
+			]
+		],
 		$component
 	);
 }

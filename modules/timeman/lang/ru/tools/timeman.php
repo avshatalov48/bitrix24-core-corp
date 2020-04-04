@@ -31,5 +31,6 @@ $MESS["TM_CALENDAR_CHOOSE"] = "Выберите календарь";
 $MESS["TM_CONFIRM_LATE_OPEN"] = "Вы уверены, что хотите начать рабочий день в #TIME#?";
 $MESS["TM_IN"] = "через";
 $MESS["TM_TILL"] = "#today# до #time#";
+$MESS["TM_CLOCK_SELECT_DATE_LINK"] = "Изменить день";
 $MESS["TM_DAY_CLOSED_ADMIN"] = "Рабочий день закрыт руководителем";
 ?>

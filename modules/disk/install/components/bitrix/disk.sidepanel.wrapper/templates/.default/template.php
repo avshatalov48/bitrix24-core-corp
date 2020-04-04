@@ -19,6 +19,7 @@ CJSCore::Init(array('sidepanel'));
 		}
 	</script>
 	<?$APPLICATION->ShowHead();?>
+	<title><?$APPLICATION->ShowTitle()?></title>
 </head>
 <body class="disk-slider-frame-popup template-<?= SITE_TEMPLATE_ID ?> <? $APPLICATION->ShowProperty('BodyClass'); ?>">
 	<div class="disk-pagetitle-wrap">

@@ -2,6 +2,7 @@
 
 namespace Bitrix\Tasks\Rest\Controllers;
 
+use Bitrix\Main\Engine\ActionFilter\CloseSession;
 use Bitrix\Main\Engine\AutoWire\ExactParameter;
 use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Engine\Response;
@@ -16,6 +17,7 @@ use Bitrix\Tasks\Ui\Avatar;
 use Bitrix\Tasks\Util;
 use Bitrix\Tasks\Util\Type\DateTime;
 use TasksException;
+use Bitrix\Tasks\Integration\SocialNetwork;
 
 final class Task extends Base
 {
@@ -23,7 +25,8 @@ final class Task extends Base
 	{
 		return [
 			'search' => [
-				'class' => Action\SearchAction::class
+				'class' => Action\SearchAction::class,
+				'+prefilters' => [new CloseSession()]
 			]
 		];
 	}
@@ -62,6 +65,11 @@ final class Task extends Base
 	 */
 	public function addAction(array $fields, array $params = array())
 	{
+        if( $fields['DEADLINE'] )
+        {
+            $fields['DEADLINE'] = date('d.m.Y H:i:s', strtotime($fields['DEADLINE']));
+        }
+
 		$task = \CTaskItem::add($fields, $this->getCurrentUser()->getId(), $params);
 
 		return $this->getAction($task);
@@ -95,6 +103,21 @@ final class Task extends Base
 		}
 	}
 
+	private function formatGroupInfo(&$row)
+	{
+		if (array_key_exists('GROUP_ID', $row))
+		{
+			try
+			{
+				$row['GROUP'] = self::getGroupInfo($row['GROUP_ID']);
+			}
+			catch (\Exception $e)
+			{
+				$row['GROUP']['ID'] = $row['GROUP_ID'];
+			}
+		}
+	}
+
 	/**
 	 * Get task item data
 	 *
@@ -106,6 +129,11 @@ final class Task extends Base
 	 */
 	public function getAction(\CTaskItem $task, array $select = array(), array $params = array())
 	{
+	    if(!empty($select))
+        {
+            $select[] = 'FAVORITE';
+        }
+
 		$params['select'] = $this->prepareSelect($select);
 		$row = $task->getData(false, $params);
 
@@ -115,31 +143,9 @@ final class Task extends Base
 			unset($row['REAL_STATUS']);
 		}
 
+		$this->formatGroupInfo($row);
 		$this->formatUserInfo($row);
 		$this->formatDateFields($row);
-
-		$str = $row['VIEWED_DATE'] ? $row['VIEWED_DATE'] : $row['CREATED_DATE'];
-
-		$filterLog[] = [
-			'>CREATED_DATE' => $str,
-			'TASK_ID'       => $row['ID']
-		];
-
-		$_result = LogTable::getList(
-			[
-				'select' => ['TASK_ID', 'FIELD', 'FROM_VALUE', 'TO_VALUE'],
-				'filter' => [
-					'!USER_ID' => $this->getCurrentUser()->getId(),
-					'FIELD'    => ['COMMENT'],
-					$filterLog
-				]
-			]
-		);
-
-		while ($_row = $_result->fetch())
-		{
-			$row['NEW_COMMENTS_COUNT']++;
-		}
 
 		$action = $this->getAccessAction($task);
 		$row['action'] = $action['allowedActions'][$this->getCurrentUser()->getId()];
@@ -168,7 +174,8 @@ final class Task extends Base
 		{
 			$dateFields = array_filter(
 				\CTasks::getFieldsInfo(),
-				function ($item) {// [2]
+				static function ($item)
+				{
 					if ($item['type'] == 'datetime')
 					{
 						return $item;
@@ -178,13 +185,18 @@ final class Task extends Base
 				}
 			);
 		}
+
 		foreach ($dateFields as $fieldName => $fieldData)
 		{
 			if (array_key_exists($fieldName, $row))
 			{
 				if ($row[$fieldName])
 				{
-					$row[$fieldName] = date('c', strtotime($row[$fieldName]));
+				    $date = new \Bitrix\Main\Type\DateTime($row[$fieldName]);
+				    if($date)
+                    {
+                        $row[$fieldName] = $date->format('c');
+                    }
 				}
 			}
 		}
@@ -207,8 +219,7 @@ final class Task extends Base
 		}
 
 		$returnAsString = !array_key_exists('AS_STRING', $params) ||
-						  array_key_exists('AS_STRING', $params) &&
-						  $params['AS_STRING'] != 'N';
+                            (array_key_exists('AS_STRING', $params) && $params['AS_STRING'] != 'N');
 
 		$list = [];
 		foreach ($users as $userId)
@@ -337,6 +348,12 @@ final class Task extends Base
 	{
 		$filter = $this->getFilter($filter);
 
+		if(!$this->checkOrderKeys($order))
+        {
+            $this->addError(new Error(GetMessage('TASKS_FAILED_WRONG_ORDER_FIELD')));
+            return null;
+        }
+
 		$params['USE_MINIMAL_SELECT_LEGACY'] = 'N'; // VERY VERY BAD HACK! DONT REPEAT IT !
 
 		if (!isset($params['RETURN_ACCESS']))
@@ -397,6 +414,7 @@ final class Task extends Base
 				unset($row['REAL_STATUS']);
 			}
 
+			$this->formatGroupInfo($row);
 			$this->formatUserInfo($row);
 			$this->formatDateFields($row);
 
@@ -423,8 +441,35 @@ final class Task extends Base
 
 	}
 
+	private function checkOrderKeys($order)
+    {
+        $orderKeys = array_keys(array_change_key_case($order, CASE_UPPER));
+        $availableKeys = \CTasks::getAvailableOrderFields();
+
+        if(array_diff($orderKeys, $availableKeys))
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+	/**
+	 * Parses source filter.
+	 *
+	 * @param array $filter
+	 * @return mixed
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ArgumentNullException
+	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
+	 * @throws \Bitrix\Main\SystemException
+	 */
 	private function getFilter($filter)
 	{
+		$filter = (is_array($filter) && !empty($filter) ? $filter : []);
+		$userId = ($filter['MEMBER'] ?? $this->getCurrentUser()->getId());
+		$roleId = (array_key_exists('ROLE', $filter) ? $filter['ROLE'] : '');
+
 		if (!empty($filter))
 		{
 			if (array_key_exists('SEARCH_INDEX', $filter))
@@ -435,43 +480,36 @@ final class Task extends Base
 				$filter['::SUBFILTER-FULL_SEARCH_INDEX'][$operator . 'FULL_SEARCH_INDEX'] = $searchValue;
 			}
 
-			$roleId = '';
-			if (array_key_exists('ROLE', $filter))
+			if (array_key_exists('WO_DEADLINE', $filter) && $filter['WO_DEADLINE'] === 'Y')
 			{
-				$roleId = $filter['ROLE'];
-			}
-
-			if (array_key_exists('WO_DEADLINE', $filter) && $filter['WO_DEADLINE'] == 'Y')
-			{
-
 				switch ($roleId)
 				{
 					case 'R':
-						$filter['!CREATED_BY'] = $this->getCurrentUser()->getId();
+						$filter['!CREATED_BY'] = $userId;
 						break;
-					case 'O':
-						$filter['!RESPONSIBLE_ID'] = $this->getCurrentUser()->getId();
-						break;
-					default:
-						$f = array();
 
+					case 'O':
+						$filter['!RESPONSIBLE_ID'] = $userId;
+						break;
+
+					default:
 						if (array_key_exists('GROUP_ID', $filter))
 						{
 							$filter['!REFERENCE:RESPONSIBLE_ID'] = 'CREATED_BY';
 						}
 						else
 						{
-							$f['::LOGIC'] = 'OR';
-							$f['::SUBFILTER-R'] = [
-								'!CREATED_BY'    => $this->getCurrentUser()->getId(),
-								'RESPONSIBLE_ID' => $this->getCurrentUser()->getId()
+							$filter['::SUBFILTER-OR'] = [
+								'::LOGIC' => 'OR',
+								'::SUBFILTER-R' => [
+									'!CREATED_BY' => $userId,
+									'RESPONSIBLE_ID' => $userId,
+								],
+								'::SUBFILTER-O' => [
+									'CREATED_BY' => $userId,
+									'!RESPONSIBLE_ID' => $userId,
+								],
 							];
-							$f['::SUBFILTER-O'] = [
-								'CREATED_BY'      => $this->getCurrentUser()->getId(),
-								'!RESPONSIBLE_ID' => $this->getCurrentUser()->getId()
-							];
-
-							$filter['::SUBFILTER-OR'] = $f;
 						}
 						break;
 				}
@@ -479,38 +517,39 @@ final class Task extends Base
 				$filter['DEADLINE'] = '';
 			}
 
-			if (array_key_exists('NOT_VIEWED', $filter) && $filter['NOT_VIEWED'] == 'Y')
+			if (array_key_exists('NOT_VIEWED', $filter) && $filter['NOT_VIEWED'] === 'Y')
 			{
 				$filter['VIEWED'] = 0;
-				$filter['VIEWED_BY'] = $filter['MEMBER'];
+				$filter['VIEWED_BY'] = $userId;
+				$filter['!CREATED_BY'] = $userId;
 
-				$f = [];
-				$filter['!CREATED_BY'] = $filter['MEMBER'];
 				switch ($roleId)
 				{
 					default:
 					case '': // view all
-						$f['::LOGIC'] = 'OR';
-						$f['::SUBFILTER-R'] = [
-							'RESPONSIBLE_ID' => $filter['MEMBER']
+						$filter['::SUBFILTER-OR-NW'] = [
+							'::LOGIC' => 'OR',
+							'::SUBFILTER-R' => [
+								'RESPONSIBLE_ID' => $userId,
+							],
+							'::SUBFILTER-A' => [
+								'=ACCOMPLICE' => $userId,
+							],
 						];
-						$f['::SUBFILTER-A'] = [
-							'=ACCOMPLICE' => $filter['MEMBER']
-						];
-						$filter['::SUBFILTER-OR-NW'] = $f;
 						break;
+
 					case 'A':
 						$filter['::SUBFILTER-R'] = [
-							'=ACCOMPLICE' => $filter['MEMBER']
+							'=ACCOMPLICE' => $userId,
 						];
 						break;
+
 					case 'U':
 						$filter['::SUBFILTER-R'] = [
-							'=AUDITOR' => $filter['MEMBER']
+							'=AUDITOR' => $userId,
 						];
 						break;
 				}
-
 			}
 
 			if (array_key_exists('STATUS', $filter))
@@ -520,47 +559,45 @@ final class Task extends Base
 			}
 		}
 
-		if (array_key_exists('ROLE', $filter))
+		if ($roleId)
 		{
-			switch ($filter['ROLE'])
+			switch ($roleId)
 			{
 				default:
 					if (array_key_exists('GROUP_ID', $filter))
 					{
-						$filter['MEMBER'] = $this->getCurrentUser()->getId();
+						$filter['MEMBER'] = $userId;
 					}
 
-					$f = [];
-					$f['::LOGIC'] = 'OR';
-					$f['::SUBFILTER-1'] = [
-						'REAL_STATUS' => $filter['REAL_STATUS']
+					$filter['::SUBFILTER-OR-ORIGIN'] = [
+						'::LOGIC' => 'OR',
+						'::SUBFILTER-1' => [
+							'REAL_STATUS' => $filter['REAL_STATUS'],
+						],
+						'::SUBFILTER-2' => [
+							'=CREATED_BY' => $userId,
+							'REAL_STATUS' => \CTasks::STATE_SUPPOSEDLY_COMPLETED,
+						],
 					];
 					unset($filter['REAL_STATUS']);
-
-					$f['::SUBFILTER-2'] = [
-						'=CREATED_BY' => $this->getCurrentUser()->getId(),
-						'REAL_STATUS' => \CTasks::STATE_SUPPOSEDLY_COMPLETED
-					];
-					$filter['::SUBFILTER-OR-ORIGIN'] = $f;
 					break;
 
 				case 'R':
-					$filter['=RESPONSIBLE_ID'] = $this->getCurrentUser()->getId();
-					break;
-				case 'A':
-					$filter['=ACCOMPLICE'] = $this->getCurrentUser()->getId();
-					break;
-				case 'U':
-					$filter['=AUDITOR'] = $this->getCurrentUser()->getId();
-					break;
-				case 'O':
-					if (!array_key_exists('GROUP_ID', $filter))
-					{
-						$filter['!REFERENCE:RESPONSIBLE_ID'] = 'CREATED_BY';
-						$filter['=CREATED_BY'] = $this->getCurrentUser()->getId();
-					}
+					$filter['=RESPONSIBLE_ID'] = $userId;
 					break;
 
+				case 'A':
+					$filter['=ACCOMPLICE'] = $userId;
+					break;
+
+				case 'U':
+					$filter['=AUDITOR'] = $userId;
+					break;
+
+				case 'O':
+					$filter['=CREATED_BY'] = $userId;
+					$filter['!REFERENCE:RESPONSIBLE_ID'] = 'CREATED_BY';
+					break;
 			}
 
 			unset($filter['ROLE']);
@@ -830,6 +867,29 @@ final class Task extends Base
 
 		return $this->getAction($task);
 	}
+
+	private static function getGroupInfo($groupId)
+    {
+        static $groups = [];
+
+        if($groupId) {
+            if (!$groups[$groupId]) {
+                $group = SocialNetwork\Group::getData([$groupId]);
+                $group = $group[$groupId];
+
+                $groups[$groupId] = [
+                    'ID' => $groupId,
+                    'NAME' => $group['NAME']
+                ];
+            }
+        }
+        else
+        {
+            $groups[$groupId] = [];
+        }
+
+        return $groups[$groupId];
+    }
 
 	/**
 	 * @param $userId

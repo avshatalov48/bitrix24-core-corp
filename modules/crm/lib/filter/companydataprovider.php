@@ -64,15 +64,15 @@ class CompanyDataProvider extends EntityDataProvider
 			),
 			'ASSIGNED_BY_ID' => $this->createField(
 				'ASSIGNED_BY_ID',
-				array('type' => 'custom_entity', 'default' => true, 'partial' => true)
+				array('type' => 'dest_selector', 'default' => true, 'partial' => true)
 			),
 			'CREATED_BY_ID' => $this->createField(
 				'CREATED_BY_ID',
-				array('type' => 'custom_entity', 'partial' => true)
+				array('type' => 'dest_selector', 'partial' => true)
 			),
 			'MODIFY_BY_ID' => $this->createField(
 				'MODIFY_BY_ID',
-				array('type' => 'custom_entity', 'partial' => true)
+				array('type' => 'dest_selector', 'partial' => true)
 			),
 			'ACTIVITY_COUNTER' => $this->createField(
 				'ACTIVITY_COUNTER',
@@ -244,30 +244,51 @@ class CompanyDataProvider extends EntityDataProvider
 		elseif($fieldID === 'ASSIGNED_BY_ID')
 		{
 			return array(
-				'params' => array('multiple' => 'Y'),
-				'selector' => array(
-					'TYPE' => 'user',
-					'DATA' => array('ID' => 'assigned_by', 'FIELD_ID' => 'ASSIGNED_BY_ID')
+				'params' => array(
+					'context' => 'CRM_COMPANY_FILTER_ASSIGNED_BY_ID',
+					'multiple' => 'Y',
+					'contextCode' => 'U',
+					'enableAll' => 'N',
+					'enableSonetgroups' => 'N',
+					'allowEmailInvitation' => 'N',
+					'allowSearchEmailUsers' => 'N',
+					'departmentSelectDisable' => 'Y',
+					'isNumeric' => 'Y',
+					'prefix' => 'U'
 				)
 			);
 		}
 		elseif($fieldID === 'CREATED_BY_ID')
 		{
 			return array(
-				'params' => array('multiple' => 'Y'),
-				'selector' => array(
-					'TYPE' => 'user',
-					'DATA' => array('ID' => 'created_by', 'FIELD_ID' => 'CREATED_BY_ID')
+				'params' => array(
+					'context' => 'CRM_COMPANY_FILTER_CREATED_BY_ID',
+					'multiple' => 'Y',
+					'contextCode' => 'U',
+					'enableAll' => 'N',
+					'enableSonetgroups' => 'N',
+					'allowEmailInvitation' => 'N',
+					'allowSearchEmailUsers' => 'N',
+					'departmentSelectDisable' => 'Y',
+					'isNumeric' => 'Y',
+					'prefix' => 'U'
 				)
 			);
 		}
 		elseif($fieldID === 'MODIFY_BY_ID')
 		{
 			return array(
-				'params' => array('multiple' => 'Y'),
-				'selector' => array(
-					'TYPE' => 'user',
-					'DATA' => array('ID' => 'modify_by', 'FIELD_ID' => 'MODIFY_BY_ID')
+				'params' => array(
+					'context' => 'CRM_COMPANY_FILTER_MODIFY_BY_ID',
+					'multiple' => 'Y',
+					'contextCode' => 'U',
+					'enableAll' => 'N',
+					'enableSonetgroups' => 'N',
+					'allowEmailInvitation' => 'N',
+					'allowSearchEmailUsers' => 'N',
+					'departmentSelectDisable' => 'Y',
+					'isNumeric' => 'Y',
+					'prefix' => 'U'
 				)
 			);
 		}

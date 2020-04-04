@@ -122,7 +122,7 @@
 	{
 		var dragButton = new BX.Landing.UI.Button.EditorAction("drag", {
 			html: "<strong class=\"landing-ui-drag\">&nbsp;</strong>",
-			attrs: {title: BX.message("LANDING_TITLE_OF_EDITOR_ACTION_DRAG")}
+			attrs: {title: BX.Landing.Loc.getMessage("LANDING_TITLE_OF_EDITOR_ACTION_DRAG")}
 		});
 
 		dragButton.layout.onbxdrag = onDrag.bind(this);
@@ -168,78 +168,84 @@
 	{
 		editor.addButton(new BX.Landing.UI.Button.EditorAction("bold", {
 			html: "<span class=\"landing-ui-icon-editor-bold\"></span>",
-			attrs: {title: BX.message("LANDING_TITLE_OF_EDITOR_ACTION_BOLD")},
+			attrs: {title: BX.Landing.Loc.getMessage("LANDING_TITLE_OF_EDITOR_ACTION_BOLD")},
 			onClick: proxy(editor.adjustButtonsState, editor)
 		}));
 
 		editor.addButton(new BX.Landing.UI.Button.EditorAction("italic", {
 			html: "<span class=\"landing-ui-icon-editor-italic\"></span>",
-			attrs: {title: BX.message("LANDING_TITLE_OF_EDITOR_ACTION_ITALIC")},
+			attrs: {title: BX.Landing.Loc.getMessage("LANDING_TITLE_OF_EDITOR_ACTION_ITALIC")},
 			onClick: proxy(editor.adjustButtonsState, editor)
 		}));
 
 		editor.addButton(new BX.Landing.UI.Button.EditorAction("underline", {
 			html: "<span class=\"landing-ui-icon-editor-underline\"></span>",
-			attrs: {title: BX.message("LANDING_TITLE_OF_EDITOR_ACTION_UNDERLINE")},
+			attrs: {title: BX.Landing.Loc.getMessage("LANDING_TITLE_OF_EDITOR_ACTION_UNDERLINE")},
 			onClick: proxy(editor.adjustButtonsState, editor)
 		}));
 
 		editor.addButton(new BX.Landing.UI.Button.EditorAction("strikeThrough", {
 			html: "<span class=\"landing-ui-icon-editor-strike\"></span>",
-			attrs: {title: BX.message("LANDING_TITLE_OF_EDITOR_ACTION_STRIKE")},
+			attrs: {title: BX.Landing.Loc.getMessage("LANDING_TITLE_OF_EDITOR_ACTION_STRIKE")},
 			onClick: proxy(editor.adjustButtonsState, editor)
 		}));
 
 		editor.addButton(new BX.Landing.UI.Button.EditorAction("justifyLeft", {
 			html: "<span class=\"landing-ui-icon-editor-left\"></span>",
-			attrs: {title: BX.message("LANDING_TITLE_OF_EDITOR_ACTION_ALIGN_LEFT")},
+			attrs: {title: BX.Landing.Loc.getMessage("LANDING_TITLE_OF_EDITOR_ACTION_ALIGN_LEFT")},
 			onClick: proxy(editor.adjustButtonsState, editor)
 		}));
 
 		editor.addButton(new BX.Landing.UI.Button.EditorAction("justifyCenter", {
 			html: "<span class=\"landing-ui-icon-editor-center\"></span>",
-			attrs: {title: BX.message("LANDING_TITLE_OF_EDITOR_ACTION_ALIGN_CENTER")},
+			attrs: {title: BX.Landing.Loc.getMessage("LANDING_TITLE_OF_EDITOR_ACTION_ALIGN_CENTER")},
 			onClick: proxy(editor.adjustButtonsState, editor)
 		}));
 
 		editor.addButton(new BX.Landing.UI.Button.EditorAction("justifyRight", {
 			html: "<span class=\"landing-ui-icon-editor-right\"></span>",
-			attrs: {title: BX.message("LANDING_TITLE_OF_EDITOR_ACTION_ALIGN_RIGHT")},
+			attrs: {title: BX.Landing.Loc.getMessage("LANDING_TITLE_OF_EDITOR_ACTION_ALIGN_RIGHT")},
 			onClick: proxy(editor.adjustButtonsState, editor)
 		}));
 
 		editor.addButton(new BX.Landing.UI.Button.EditorAction("justifyFull", {
 			html: "<span class=\"landing-ui-icon-editor-justify\"></span>",
-			attrs: {title: BX.message("LANDING_TITLE_OF_EDITOR_ACTION_ALIGN_JUSTIFY")},
+			attrs: {title: BX.Landing.Loc.getMessage("LANDING_TITLE_OF_EDITOR_ACTION_ALIGN_JUSTIFY")},
 			onClick: proxy(editor.adjustButtonsState, editor)
 		}));
 
 		editor.addButton(new BX.Landing.UI.Button.CreateLink("createLink", {
 			html: "<span class=\"landing-ui-icon-editor-link\"></span>",
-			attrs: {title: BX.message("LANDING_TITLE_OF_EDITOR_ACTION_CREATE_LINK")},
+			attrs: {title: BX.Landing.Loc.getMessage("LANDING_TITLE_OF_EDITOR_ACTION_CREATE_LINK")},
 			onClick: proxy(editor.adjustButtonsState, editor)
 		}));
 
 		editor.addButton(new BX.Landing.UI.Button.EditorAction("unlink", {
 			html: "<span class=\"landing-ui-icon-editor-unlink\"></span>",
-			attrs: {title: BX.message("LANDING_TITLE_OF_EDITOR_ACTION_UNLINK")},
+			attrs: {title: BX.Landing.Loc.getMessage("LANDING_TITLE_OF_EDITOR_ACTION_UNLINK")},
 			onClick: proxy(editor.adjustButtonsState, editor)
 		}));
 
 		// editor.addButton(new BX.Landing.UI.Button.FontAction("font", {
-		// 	html: BX.message("EDITOR_ACTION_FONT"),
-		// 	attrs: {title: BX.message("LANDING_TITLE_OF_EDITOR_ACTION_FONT")}
+		// 	html: BX.Landing.Loc.getMessage("EDITOR_ACTION_FONT"),
+		// 	attrs: {title: BX.Landing.Loc.getMessage("LANDING_TITLE_OF_EDITOR_ACTION_FONT")}
 		// }));
 
 		editor.addButton(new BX.Landing.UI.Button.EditorAction("removeFormat", {
 			html: "<span class=\"landing-ui-icon-editor-eraser\"></span>",
-			attrs: {title: BX.message("LANDING_TITLE_OF_EDITOR_ACTION_CLEAR")},
+			attrs: {title: BX.Landing.Loc.getMessage("LANDING_TITLE_OF_EDITOR_ACTION_CLEAR")},
 			onClick: proxy(editor.adjustButtonsState, editor)
 		}));
 
 		editor.addButton(new BX.Landing.UI.Button.ColorAction("foreColor", {
-			text: BX.message("EDITOR_ACTION_SET_FORE_COLOR"),
-			attrs: {title: BX.message("LANDING_TITLE_OF_EDITOR_ACTION_COLOR")},
+			text: BX.Landing.Loc.getMessage("EDITOR_ACTION_SET_FORE_COLOR"),
+			attrs: {title: BX.Landing.Loc.getMessage("LANDING_TITLE_OF_EDITOR_ACTION_COLOR")},
+			onClick: proxy(editor.adjustButtonsState, editor)
+		}));
+
+		editor.addButton(new BX.Landing.UI.Button.TextBackgroundAction("hiliteColor", {
+			html: "<span class=\"landing-ui-icon-editor-text-background\"></span>",
+			attrs: {title: BX.Landing.Loc.getMessage("LANDING_TITLE_OF_EDITOR_ACTION_TEXT_BACKGROUND")},
 			onClick: proxy(editor.adjustButtonsState, editor)
 		}));
 	}

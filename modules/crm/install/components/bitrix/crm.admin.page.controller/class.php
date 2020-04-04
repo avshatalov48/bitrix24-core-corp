@@ -49,14 +49,7 @@ class CCrmAdminPageController extends \CBitrixComponent
 		{
 			$this->checkRequiredParams();
 
-			$menu = $this->getMenu();
-
-			$this->setPageList($menu);
-			$additionalList = $this->getAdditionalList();
-			$this->setPageList($additionalList);
-
-			$this->setListMenuItems(array_merge($additionalList, $menu["items"]));
-			$this->sortListMenuItems();
+			$this->prepareMenuToRender();
 
 			$this->formatResult();
 
@@ -66,6 +59,60 @@ class CCrmAdminPageController extends \CBitrixComponent
 		{
 			ShowError($e->getMessage());
 		}
+	}
+
+	/**
+	 * The method sets the parameters, such as SELF_FOLDER or if you want to get an url of additional store pages.
+	 *
+	 * @param $params
+	 */
+	public function prepareComponentParams($params)
+	{
+		$this->arParams = $this->onPrepareComponentParams($params);
+	}
+
+	/**
+	 * The method returns a list of all store pages.
+	 *
+	 * @return array List shop urls.
+	 */
+	public function getShopUrls()
+	{
+		$this->prepareMenuToRender();
+
+		$finalMenu = $this->getFinalMenu();
+
+		return $this->getUrlsFromMenu($finalMenu);
+	}
+
+	private function prepareMenuToRender()
+	{
+		$menu = $this->getMenu();
+
+		$this->setPageList($menu);
+		$additionalList = $this->getAdditionalList();
+		$this->setPageList($additionalList);
+
+		$this->setListMenuItems(array_merge($additionalList, $menu["items"]));
+		$this->sortListMenuItems();
+	}
+
+	private function getUrlsFromMenu(array $menu)
+	{
+		$shopUrls = [];
+
+		foreach ($menu as $itemId => $item)
+		{
+			if (!empty($item["URL"]))
+			{
+				$shopUrls[$item["ID"]] = $item["URL"];
+			}
+			if (!empty($item["ITEMS"]))
+			{
+				$shopUrls = $shopUrls + $this->getUrlsFromMenu($item["ITEMS"]);
+			}
+		}
+		return $shopUrls;
 	}
 
 	/**

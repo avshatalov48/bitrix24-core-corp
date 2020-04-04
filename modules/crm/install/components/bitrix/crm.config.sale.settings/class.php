@@ -26,7 +26,7 @@ class CCrmConfigSaleSettings extends \CBitrixComponent implements Controllerable
 {
 	protected $optionPrefix = "csc_sale_";
 	protected $listSiteId = [];
-	
+
 	public function configureActions()
 	{
 		return array();
@@ -205,6 +205,45 @@ class CCrmConfigSaleSettings extends \CBitrixComponent implements Controllerable
 								}
 							}
 							break;
+
+						case "tracking_check_switch":
+
+							$tSwitch = $post[$fieldName] == 'Y' ? 'Y' : 'N';
+							Option::set('sale', 'tracking_check_switch', $tSwitch);
+
+							if($tSwitch == 'Y')
+							{
+								$CHECK_PERIOD = 6;
+								Option::set('sale', 'tracking_check_period', $CHECK_PERIOD);
+
+								$agentName = '\Bitrix\Sale\Delivery\Tracking\Manager::startRefreshingStatuses();';
+								$res = \CAgent::GetList(array(), array('NAME' => $agentName));
+
+								if($agent = $res->Fetch())
+								{
+									\CAgent::Update($agent['ID'], array('AGENT_INTERVAL' => $CHECK_PERIOD*60*60));
+								}
+								else
+								{
+									\CAgent::AddAgent(
+										$agentName,
+										'sale',
+										"Y",
+										$CHECK_PERIOD*60*60,
+										"",
+										"Y"
+									);
+								}
+							}
+							else
+							{
+								\CAgent::RemoveAgent(
+									$agentName,
+									'sale'
+								);
+							}
+
+							break;
 						default:
 							if (is_string($post[$fieldName]))
 							{
@@ -328,9 +367,13 @@ class CCrmConfigSaleSettings extends \CBitrixComponent implements Controllerable
 
 							$newFields = array(
 								'ID' => $statusID,
-								'COLOR' => 'N',
 								'TYPE' => $type
 							);
+
+							if (isset($field['COLOR']))
+							{
+								$newFields['COLOR'] = $field['COLOR'];
+							}
 
 							if ((int)$arAdd['SORT'] > 0)
 							{
@@ -348,16 +391,18 @@ class CCrmConfigSaleSettings extends \CBitrixComponent implements Controllerable
 						else
 						{
 							$arCurrentData = $this->GetStatusById($entityId, $id);
-							if (trim($field["VALUE"]) != $arCurrentData["NAME"] ||
-								intval($field["SORT"]) != $arCurrentData["SORT"])
+							if (trim($field["VALUE"]) != $arCurrentData["NAME"]
+								|| intval($field["SORT"]) != $arCurrentData["SORT"]
+								|| trim($field["COLOR"]) != $arCurrentData["COLOR"]
+							)
 							{
 								$arUpdate["NAME"] = trim($field["VALUE"]);
 								$arUpdate["SORT"] = $field["SORT"];
 
-								if ((int)$arUpdate['SORT'] > 0)
-								{
-									\Bitrix\Sale\Internals\StatusTable::update($arCurrentData['STATUS_ID'], ['SORT' => $arUpdate['SORT']]);
-								}
+								\Bitrix\Sale\Internals\StatusTable::update($arCurrentData['STATUS_ID'], [
+									'SORT' => (int)$arUpdate['SORT'],
+									'COLOR' => $field["COLOR"],
+								]);
 
 								if (isset($arUpdate['NAME']))
 								{
@@ -730,12 +775,13 @@ class CCrmConfigSaleSettings extends \CBitrixComponent implements Controllerable
 			"name" => Loc::getMessage("CRM_CF_VALUE_PRECISION"),
 			"type" => "list",
 			"items" => array(
+				"0" => Loc::getMessage("CRM_CF_VALUE_PRECISION_0"),
 				"1" => Loc::getMessage("CRM_CF_VALUE_PRECISION_1"),
 				"2" => Loc::getMessage("CRM_CF_VALUE_PRECISION_2"),
 				"3" => Loc::getMessage("CRM_CF_VALUE_PRECISION_3"),
 				"4" => Loc::getMessage("CRM_CF_VALUE_PRECISION_4")
 			),
-			"value" => Option::get("sale", "value_precision", SALE_VALUE_PRECISION)
+			"value" => Option::get("sale", "value_precision", 2)
 		);
 		$options[] = array(
 			"id" => $this->optionPrefix."count_delivery_tax",
@@ -770,6 +816,12 @@ class CCrmConfigSaleSettings extends \CBitrixComponent implements Controllerable
 			"type" => "label",
 			"value" => $this->getOrderDefaultResponsibleIdContent(),
 		);
+		$options[] = array(
+			"id" => $this->optionPrefix.'tracking_check_switch',
+			"name" => Loc::getMessage("CRM_CF_ORDER_TRACKING_AUTOCHECK"),
+			"type" => "checkbox",
+			"value" => Option::get("sale", "tracking_check_switch", "N")
+		);
 
 		/* Check section */
 		$options[] = array(
@@ -778,10 +830,15 @@ class CCrmConfigSaleSettings extends \CBitrixComponent implements Controllerable
 			"type" => "section"
 		);
 		$options[] = array(
-			"id" => $this->optionPrefix."use_advance_check_by_default",
-			"name" => Loc::getMessage("CRM_CF_USE_ADVANCE_CHECK_BY_DEFAULT"),
-			"type" => "checkbox",
-			"value" => Option::get("sale", "use_advance_check_by_default", "N")
+			"id" => $this->optionPrefix."check_type_on_pay",
+			"name" => Loc::getMessage("CRM_CHECK_TYPE_ON_PAY"),
+			"type" => "list",
+			"items" => [
+				'sell' => Loc::getMessage('CRM_CHECK_TYPE_ON_PAY_SELL'),
+				'prepayment' => Loc::getMessage('CRM_CHECK_TYPE_ON_PAY_PREPAYMENT'),
+				'advance' => Loc::getMessage('CRM_CHECK_TYPE_ON_PAY_ADVANCE')
+			],
+			"value" => Option::get("sale", "check_type_on_pay", "sell")
 		);
 
 		/* Reserve section */
@@ -1009,7 +1066,7 @@ class CCrmConfigSaleSettings extends \CBitrixComponent implements Controllerable
 		$content .= '<div class="crm-sale-settings-option-block">';
 		$content .= '<div class="crm-sale-settings-option-label">'.Loc::getMessage("CRM_CF_LOCATION_ZIP").'</div>';
 		$content .= '<div><input type="text" name="location_zip['.$siteId.']" 
-			value="'.$address["location_zip"].'"></div>';
+			value="'.HtmlFilter::encode($address["location_zip"]).'"></div>';
 		$content .= '</div>';
 
 		$content .= '<div class="crm-sale-settings-option-content">';
@@ -1140,9 +1197,9 @@ class CCrmConfigSaleSettings extends \CBitrixComponent implements Controllerable
 		return array(
 			"sale" => array(
 				"format_quantity", "value_precision", "product_reserve_condition",
-				"product_reserve_clear_period", "count_delivery_tax", "use_advance_check_by_default",
+				"product_reserve_clear_period", "count_delivery_tax", "check_type_on_pay",
 				"default_currency", "SHOP_SITE", "hideNumeratorSettings", "subscribe_prod", "ADDRESS_different_set",
-				"SALE_ADMIN_NEW_PRODUCT", "WEIGHT_different_set"
+				"SALE_ADMIN_NEW_PRODUCT", "WEIGHT_different_set", "tracking_check_switch"
 			),
 			"catalog" => array(
 				"default_use_store_control", "enable_reservation", "default_product_vat_included",
@@ -1171,6 +1228,11 @@ class CCrmConfigSaleSettings extends \CBitrixComponent implements Controllerable
 		$statusList = Order\OrderStatus::getListInCrmFormat();
 		foreach ($statusList as $status)
 		{
+			$color = $colorData[$status['STATUS_ID']]['COLOR'];
+			if (!empty($color))
+			{
+				$status['COLOR'] = $color;
+			}
 			$data[$status['ID']] = $status;
 		}
 
@@ -1225,10 +1287,15 @@ class CCrmConfigSaleSettings extends \CBitrixComponent implements Controllerable
 		$statusList = Order\DeliveryStatus::getListInCrmFormat();
 		foreach ($statusList as $status)
 		{
+			$color = $colorData[$status['STATUS_ID']]['COLOR'];
+			if (!empty($color))
+			{
+				$status['COLOR'] = $color;
+			}
 			$data[$status['ID']] = $status;
 		}
 
-		$semanticInfo["FINAL_SORT"] = Order\OrderStatus::getFinalStatusSort();
+		$semanticInfo["FINAL_SORT"] = Order\DeliveryStatus::getFinalStatusSort();
 
 		return array(
 			"ID" => Order\DeliveryStatus::NAME,

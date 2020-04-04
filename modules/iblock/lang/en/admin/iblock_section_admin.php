@@ -44,4 +44,6 @@ $MESS["IBSEC_A_NOT_TREE_TITLE"] = "Show sections as list";
 $MESS["IBSEC_A_UP"] = "One level up";
 $MESS["IBSEC_A_UP_TITLE"] = "Click to browse higher level";
 $MESS["IBSEC_A_ADD"] = "Add";
+$MESS["IBSEC_A_PICTURE"] = "Picture";
+$MESS["IBSEC_A_DETAIL_PICTURE"] = "Detailed image";
 ?>

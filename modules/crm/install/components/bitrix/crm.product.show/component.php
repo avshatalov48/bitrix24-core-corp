@@ -70,6 +70,9 @@ if(!$product)
 }
 
 // Product properties
+$arPropUserTypeList = CCrmProductPropsHelper::GetPropsTypesByOperations(false, 'edit');
+$arResult['EDITABLE_PROP_USER_TYPES'] = $arPropUserTypeList;
+$arResult['EDITABLE_PROPS'] = CCrmProductPropsHelper::GetProps($catalogID, $arPropUserTypeList);
 $arPropUserTypeList = CCrmProductPropsHelper::GetPropsTypesByOperations(false, 'view');
 $arResult['PROP_USER_TYPES'] = $arPropUserTypeList;
 $arProps = CCrmProductPropsHelper::GetProps($catalogID, $arPropUserTypeList);
@@ -245,18 +248,17 @@ $arResult['FIELDS']['tab_1'][] = array(
 	'isTactile' => true
 );
 
-if(isset($product['~DESCRIPTION']) && strlen($product['~DESCRIPTION']) > 0)
-{
-	$arResult['FIELDS']['tab_1'][] = array(
-		'id' => 'DESCRIPTION',
-		'name' => GetMessage('CRM_FIELD_DESCRIPTION'),
-		'type' => 'custom',
-		'value' => (isset($product['DESCRIPTION_TYPE']) && $product['DESCRIPTION_TYPE'] === 'text') ?
-			$product['DESCRIPTION'] : $product['~DESCRIPTION'],
-		'params' => array(),
-		'isTactile' => true
-	);
-}
+$arResult['FIELDS']['tab_1'][] = array(
+	'id' => 'DESCRIPTION',
+	'name' => GetMessage('CRM_FIELD_DESCRIPTION'),
+	'type' => 'custom',
+	'value' => (isset($product['DESCRIPTION_TYPE']) && $product['DESCRIPTION_TYPE'] === 'text') ?
+		$product['DESCRIPTION'] : $product['~DESCRIPTION'],
+	'params' => array(),
+	'isTactile' => true,
+	'isHidden' => !(isset($product['~DESCRIPTION']) && strlen($product['~DESCRIPTION']) > 0)
+
+);
 
 $arResult['FIELDS']['tab_1'][] = array(
 	'id' => 'ACTIVE',
@@ -265,6 +267,16 @@ $arResult['FIELDS']['tab_1'][] = array(
 	'params' => array(),
 	'value' => GetMessage(isset($product['ACTIVE']) && $product['ACTIVE'] == 'Y' ? 'MAIN_YES' : 'MAIN_NO'),
 	'isTactile' => true
+);
+
+$arResult['FIELDS']['tab_1'][] = array(
+	'id' => 'CURRENCY',
+	'name' => GetMessage('CRM_FIELD_CURRENCY'),
+	'type' => 'label',
+	'params' => array(),
+	'value' => '',
+	'isTactile' => true,
+	'isHidden' => true
 );
 
 $price = CCrmProduct::FormatPrice($product);
@@ -347,6 +359,7 @@ $html = '';
 $obFileControl = $obFile = null;
 foreach ($arFields as $fieldID => $fieldName)
 {
+	$html = '';
 	if (isset($product['~'.$fieldID]))
 	{
 		$obFile = new CCrmProductFile(
@@ -366,15 +379,15 @@ foreach ($arFields as $fieldID => $fieldName)
 				'a_title' => GetMessage('CRM_PRODUCT_PROP_ENLARGE'),
 				'download_text' => GetMessage("CRM_PRODUCT_PROP_DOWNLOAD"),
 			)).'</nobr>';
-
-		$arResult['FIELDS']['tab_1'][] = array(
-			'id' => $fieldID,
-			'name' => $fieldName,
-			'type' => 'custom',
-			'value' => $html,
-			'isTactile' => true
-		);
 	}
+	$arResult['FIELDS']['tab_1'][] = array(
+		'id' => $fieldID,
+		'name' => $fieldName,
+		'type' => 'custom',
+		'value' => $html,
+		'isTactile' => true,
+		'isHidden' => !(strlen($html) > 0)
+	);
 }
 unset($arFields, $fieldID, $fieldName, $obFile, $obFileControl, $html);
 

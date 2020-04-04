@@ -6,9 +6,9 @@ use Bitrix\Disk\BaseObject;
 use Bitrix\Disk\Bitrix24Disk\Legacy\Exceptions\UnexpectedNextIdException;
 use Bitrix\Disk\Bitrix24Disk\PageState;
 use Bitrix\Disk\Bitrix24Disk\TreeNode;
+use Bitrix\Disk\Driver;
 use Bitrix\Disk\Folder;
 use Bitrix\Disk\Internals\Collection\CustomHeap;
-use Bitrix\Disk\Internals\DeletedLogTable;
 use Bitrix\Disk\Internals\Collection\FixedArray;
 use Bitrix\Disk\Internals\ObjectTable;
 use Bitrix\Disk\ObjectLock;
@@ -32,20 +32,8 @@ class NewDiskStorage extends DiskStorage
 
 	/** @var TreeNode[] */
 	private $treeData = array();
-	/** @var array */
-	private $sharedData = array();
-	/** @var \Bitrix\Main\DB\Connection */
-	private $connection;
 	/** @var bool */
 	private $isLoadedTree = false;
-	/** @var bool */
-	private $isLoadedSharedStatuses = false;
-
-	public function __construct($user = null)
-	{
-		parent::__construct($user);
-		$this->connection = Application::getConnection();
-	}
 
 	public function getSnapshot($version = 0, PageState $pageState = null, PageState &$nextPageState = null)
 	{
@@ -357,7 +345,7 @@ class NewDiskStorage extends DiskStorage
 			'isDirectory' => true,
 			'isShared' => (bool)$this->isSharedObject($row['ID']),
 			'isSymlinkDirectory' => $isLink,
-			'isDeleted' => false,
+			'isDeleted' => !empty($row['DELETED_TYPE']),
 			'storageId' => $this->getStringStorageId(),
 			'path' => '/' . trim($path, '/'),
 			'name' => (string)$name,
@@ -397,11 +385,14 @@ class NewDiskStorage extends DiskStorage
 			return array();
 		}
 
+		$isLink = !empty($row['REAL_OBJECT_ID']) && $row['REAL_OBJECT_ID'] != $row['ID'];
 		$name = Ui\Text::cleanTrashCanSuffix($row['NAME']);
 		$result = array(
 			'id' => $this->generateId(array('FILE' => true, 'ID' => $row['ID'])),
 			'isDirectory' => false,
-			'isDeleted' => false,
+			'isShared' => (bool)$this->isSharedObject($row['ID']),
+			'isSymlinkFile' => $isLink,
+			'isDeleted' => !empty($row['DELETED_TYPE']),
 			'storageId' => $this->getStringStorageId(),
 			'path' => $path === '/'? '/' . $name : '/' . trim($path, '/') . '/' . $name,
 			'name' => (string)$name,
@@ -686,7 +677,10 @@ class NewDiskStorage extends DiskStorage
 		$cursor = $pageState->getCursor()?: $internalVersion;
 		$expectedFirstId = $pageState->getNextId();
 
-		$query = new Internals\Entity\Query(DeletedLogTable::getEntity());
+		$deletedLogManager = Driver::getInstance()->getDeletedLogManager();
+		$deletedLogTable = $deletedLogManager->getLogTable();
+
+		$query = new Internals\Entity\Query($deletedLogTable::getEntity());
 		$query
 			->addSelect('*')
 			->addFilter('STORAGE_ID', $this->storage->getId())
@@ -895,66 +889,6 @@ class NewDiskStorage extends DiskStorage
 		}
 
 		$this->isLoadedTree = true;
-	}
-
-	/**
-	 * Loads data which tells the object is shared or not by current user.
-	 *
-	 * @return void
-	 */
-	private function loadSharedData()
-	{
-		if($this->isLoadedSharedStatuses)
-		{
-			return;
-		}
-
-		$cache = Data\Cache::createInstance();
-		if($cache->initCache(15768000, 'storage_isshared_' . $this->storage->getId(), 'disk'))
-		{
-			list($this->sharedData,) = $cache->getVars();
-		}
-		else
-		{
-			$this->buildSharedData();
-
-			$cache->startDataCache();
-			$cache->endDataCache(array($this->sharedData,));
-		}
-
-		$this->isLoadedSharedStatuses = true;
-	}
-
-	private function buildSharedData()
-	{
-		$storageId = $this->storage->getId();
-		$rootObjectId = $this->storage->getRootObjectId();
-		$fromEntity = $this->connection->getSqlHelper()->forSql(Sharing::CODE_USER . $this->storage->getEntityId());
-
-		$query = new Internals\Entity\Query(Internals\SharingTable::getEntity());
-		$query->addSelect('PATH.OBJECT_ID', 'OBJECT_ID');
-		$query->registerRuntimeField('',
-			new ReferenceField('PATH',
-				Internals\ObjectPathTable::getEntity(),
-				array('=this.REAL_OBJECT_ID' => 'ref.OBJECT_ID'),
-				array('join_type' => 'INNER')
-			)
-		);
-		$query->addFilter('REAL_STORAGE_ID', $storageId);
-		$query->addFilter('PATH.PARENT_ID', $rootObjectId);
-		$query->addFilter('=FROM_ENTITY', $fromEntity);
-		$query->addFilter('!==TO_ENTITY', $fromEntity);
-
-		foreach($query->exec() as $sharedRow)
-		{
-			$this->sharedData[$sharedRow['OBJECT_ID']] = true;
-		}
-
-	}
-
-	private function isSharedObject($objectId)
-	{
-		return isset($this->sharedData[$objectId]);
 	}
 
 	private function buildTree()

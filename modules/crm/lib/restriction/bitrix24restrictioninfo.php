@@ -23,6 +23,24 @@ class Bitrix24RestrictionInfo
 	}
 
 	/**
+	 * @param array|null $params
+	 * @return array|null
+	 */
+	public function prepareStubInfo(array $params = null)
+	{
+		if($params === null)
+		{
+			$params = array();
+		}
+
+		if($this->popupInfo !== null)
+		{
+			$params = array_merge($this->popupInfo, $params);
+		}
+		return Integration\Bitrix24Manager::prepareStubInfo($params);
+	}
+
+	/**
 	* @return string
 	*/
 	public function preparePopupScript()

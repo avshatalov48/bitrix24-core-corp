@@ -1,3 +1,3 @@
 <?
-$MESS["LICENSE_TITLE"] = "License key";
+$MESS["LICENSE_TITLE"] = "License Key";
 ?>

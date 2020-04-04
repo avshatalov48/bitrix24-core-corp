@@ -3,18 +3,22 @@
 namespace Bitrix\Crm\Volume;
 
 use Bitrix\Crm;
+use Bitrix\Crm\Volume;
 use Bitrix\Main;
 use Bitrix\Main\ORM;
-use Bitrix\Main\Entity;
 use Bitrix\Main\Localization\Loc;
 
 
-class Company extends Crm\Volume\Base implements Crm\Volume\IVolumeClear, Crm\Volume\IVolumeClearActivity, Crm\Volume\IVolumeClearEvent, Crm\Volume\IVolumeUrl
+class Company
+	extends Volume\Base
+	implements Volume\IVolumeClear, Volume\IVolumeClearActivity, Volume\IVolumeClearEvent, Volume\IVolumeUrl
 {
+	use Volume\ClearEvent;
+	use Volume\ClearActivity;
+
 	/** @var array */
 	protected static $entityList = array(
 		Crm\CompanyTable::class,
-		//Crm\FieldMultiTable::class,
 		Crm\Statistics\Entity\CompanyActivityMarkStatisticsTable::class,
 		Crm\Statistics\Entity\CompanyActivityStatisticsTable::class,
 		Crm\Statistics\Entity\CompanyActivityStreamStatisticsTable::class,
@@ -137,27 +141,6 @@ class Company extends Crm\Volume\Base implements Crm\Volume\IVolumeClear, Crm\Vo
 		return true;
 	}
 
-	/**
-	 * Returns availability to drop entity activities.
-	 *
-	 * @return boolean
-	 */
-	public function canClearActivity()
-	{
-		$activityVolume = new Crm\Volume\Activity();
-		return $activityVolume->canClearEntity();
-	}
-
-	/**
-	 * Returns availability to drop entity event.
-	 *
-	 * @return boolean
-	 */
-	public function canClearEvent()
-	{
-		$eventVolume = new Crm\Volume\Event();
-		return $eventVolume->canClearEntity();
-	}
 
 	/**
 	 * Can filter applied to the indicator.
@@ -217,11 +200,9 @@ class Company extends Crm\Volume\Base implements Crm\Volume\IVolumeClear, Crm\Vo
 	{
 		$query = Crm\CompanyTable::query();
 
-		/** @global \CDatabase $DB */
-		global $DB;
 		$dayField = new ORM\Fields\ExpressionField(
 			'DATE_CREATE_SHORT',
-			$DB->datetimeToDateFunction('%s'),
+			'DATE(%s)',
 			'DATE_CREATE'
 		);
 		$query->registerRuntimeField($dayField);
@@ -518,7 +499,7 @@ class Company extends Crm\Volume\Base implements Crm\Volume\IVolumeClear, Crm\Vo
 	{
 		self::loadTablesInformation();
 
-		$querySql = $this->prepareActivityQuery(array(
+		$querySql = $this->prepareActivityRelationQuerySql(array(
 			'DATE_CREATE' => 'DATE_CREATED_SHORT',
 		));
 
@@ -563,6 +544,7 @@ class Company extends Crm\Volume\Base implements Crm\Volume\IVolumeClear, Crm\Vo
 
 	/**
 	 * Runs measure test for events.
+	 * @see Crm\Volume\IVolumeClearEvent::measureEvent
 	 * @param array $additionEventFilter Filter for event list.
 	 * @return self
 	 */
@@ -570,8 +552,8 @@ class Company extends Crm\Volume\Base implements Crm\Volume\IVolumeClear, Crm\Vo
 	{
 		self::loadTablesInformation();
 
-		$querySql = $this->prepareEventQuery(array(
-			'DATE_CREATE' => 'DATE_CREATED_SHORT',
+		$querySql = $this->prepareEventRelationQuerySql(array(
+			'EVENT_DATE_CREATED' => 'DATE_CREATED_SHORT',
 		));
 
 		if ($querySql != '')
@@ -583,7 +565,7 @@ class Company extends Crm\Volume\Base implements Crm\Volume\IVolumeClear, Crm\Vo
 						'".static::getIndicatorId()."' as INDICATOR_TYPE,
 						'".$this->getOwner()."' as OWNER_ID,
 						'-' as STAGE_SEMANTIC_ID,
-						DATE_CREATE,
+						EVENT_DATE_CREATED as DATE_CREATE,
 						(	FILE_SIZE +
 							EVENT_COUNT * {$avgEventTableRowLength} ) as EVENT_SIZE,
 						EVENT_COUNT
@@ -754,7 +736,7 @@ class Company extends Crm\Volume\Base implements Crm\Volume\IVolumeClear, Crm\Vo
 
 		$userPermissions = \CCrmPerms::GetUserPermissions($this->getOwner());
 
-		$activityVolume = new Crm\Volume\Activity();
+		$activityVolume = new Volume\Activity();
 		$activityVolume->setFilter($this->getFilter());
 
 		$query = $activityVolume->prepareQuery();
@@ -816,11 +798,12 @@ class Company extends Crm\Volume\Base implements Crm\Volume\IVolumeClear, Crm\Vo
 	 * Returns count of events.
 	 * @param array $additionEventFilter Filter for events list.
 	 * @return int
+	 * @see \Bitrix\Crm\Volume\ClearEvent::countEvent
 	 */
 	public function countEvent($additionEventFilter = array())
 	{
-		$additionEventFilter['=ENTITY_TYPE'] = \CCrmOwnerType::ContactName;
-		return parent::countEvent($additionEventFilter);
+		$additionEventFilter['=ENTITY_TYPE'] = \CCrmOwnerType::CompanyName;
+		return $this->countRelationEvent($additionEventFilter);
 	}
 
 	/**
@@ -835,24 +818,24 @@ class Company extends Crm\Volume\Base implements Crm\Volume\IVolumeClear, Crm\Vo
 			return false;
 		}
 
-		$eventVolume = new Crm\Volume\Event();
+		$eventVolume = new Volume\Event();
 		$eventVolume->setFilter($this->getFilter());
 
-		$query = $eventVolume->prepareQuery();
+		$query = $eventVolume->prepareRelationQuery(static::className());
 
 		$success = true;
 
 		if ($eventVolume->prepareFilter($query))
 		{
 			$query
-				->addSelect('ID', 'RELATION_ID')
+				->addSelect('EVENT_ID')
 				->where('ENTITY_TYPE', '=', \CCrmOwnerType::CompanyName)
 				->setLimit(self::MAX_ENTITY_PER_INTERACTION)
-				->setOrder(array('RELATION_ID' => 'ASC'));
+				->setOrder(array('EVENT_ID' => 'ASC'));
 
 			if ($this->getProcessOffset() > 0)
 			{
-				$query->where('RELATION_ID', '>', $this->getProcessOffset());
+				$query->where('EVENT_ID', '>', $this->getProcessOffset());
 			}
 
 			$res = $query->exec();
@@ -860,15 +843,15 @@ class Company extends Crm\Volume\Base implements Crm\Volume\IVolumeClear, Crm\Vo
 			$entity = new \CCrmEvent();
 			while ($event = $res->fetch())
 			{
-				$this->setProcessOffset($event['RELATION_ID']);
+				$this->setProcessOffset($event['EVENT_ID']);
 
-				if ($entity->Delete($event['RELATION_ID'], array('CURRENT_USER' => $this->getOwner())) !== false)
+				if ($entity->Delete($event['EVENT_ID'], array('CURRENT_USER' => $this->getOwner())) !== false)
 				{
 					$this->incrementDroppedEventCount();
 				}
 				else
 				{
-					$this->collectError(new Main\Error('Deletion failed with event #'.$event['RELATION_ID'], self::ERROR_DELETION_FAILED));
+					$this->collectError(new Main\Error('Deletion failed with event #'.$event['EVENT_ID'], self::ERROR_DELETION_FAILED));
 					$this->incrementFailCount();
 				}
 

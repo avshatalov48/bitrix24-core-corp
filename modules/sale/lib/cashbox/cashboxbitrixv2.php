@@ -53,26 +53,26 @@ class CashboxBitrixV2 extends CashboxBitrix
 			$client = $phone;
 		}
 
-		$result = array(
+		$result = [
 			'type' => $check::getCalculatedSign() === Check::CALCULATED_SIGN_INCOME ? 'sell' : 'sellReturn',
 			'timestamp' => $dateTime->format('d.m.Y H:i:s'),
 			'external_id' => static::buildUuid(static::UUID_TYPE_CHECK, $data['unique_id']),
 			'taxationType' => $this->getValueFromSettings('TAX', 'SNO'),
-			'zn' => $this->getField('NUMBER_KKM'),
+			'zn' => (string)$this->getField('NUMBER_KKM'),
 			'clientInfo' => [
 				'emailOrPhone' => $client,
 			],
-			'payments' => array(),
-			'items' => array(),
+			'payments' => [],
+			'items' => [],
 			'total' => (float)$data['total_sum']
-		);
+		];
 
 		foreach ($data['payments'] as $payment)
 		{
-			$result['payments'][] = array(
+			$result['payments'][] = [
 				'type' => $this->getValueFromSettings('PAYMENT_TYPE', $payment['type']),
 				'sum' => (float)$payment['sum']
-			);
+			];
 		}
 
 		$checkTypeMap = $this->getCheckTypeMap();
@@ -85,17 +85,24 @@ class CashboxBitrixV2 extends CashboxBitrix
 				$vat = $this->getValueFromSettings('VAT', 'NOT_VAT');
 			}
 
-			$result['items'][] = array(
+			$position = [
 				'name' => $item['name'],
 				'price' => (float)$item['base_price'],
 				'quantity' => $item['quantity'],
 				'amount' => (float)$item['sum'],
 				'paymentMethod' => $checkTypeMap[$check::getType()],
 				'paymentObject' => $paymentObjectMap[$item['payment_object']],
-				'tax' => array(
+				'tax' => [
 					'type' => $vat
-				),
-			);
+				],
+			];
+
+			if (isset($item['nomenclature_code']))
+			{
+				$position['nomenclatureCode'] = base64_encode($item['nomenclature_code']);
+			}
+
+			$result['items'][] = $position;
 		}
 
 		return $result;
@@ -129,7 +136,7 @@ class CashboxBitrixV2 extends CashboxBitrix
 	 */
 	protected function getCheckTypeMap()
 	{
-		return array(
+		return [
 			SellCheck::getType() => 'fullPayment',
 			SellReturnCashCheck::getType() => 'fullPayment',
 			SellReturnCheck::getType() => 'fullPayment',
@@ -145,7 +152,7 @@ class CashboxBitrixV2 extends CashboxBitrix
 			FullPrepaymentCheck::getType() => 'fullPrepayment',
 			FullPrepaymentReturnCheck::getType() => 'fullPrepayment',
 			FullPrepaymentReturnCashCheck::getType() => 'fullPrepayment',
-		);
+		];
 	}
 
 	/**
@@ -159,40 +166,40 @@ class CashboxBitrixV2 extends CashboxBitrix
 		$kkmList = static::getSupportedKkmModels();
 		if (isset($kkmList[$modelId]))
 		{
-			$settings['TAX'] = array(
+			$settings['TAX'] = [
 				'LABEL' => Localization\Loc::getMessage('SALE_CASHBOX_BITRIX_V2_SETTINGS_SNO'),
 				'REQUIRED' => 'Y',
-				'ITEMS' => array(
-					'SNO' => array(
+				'ITEMS' => [
+					'SNO' => [
 						'TYPE' => 'ENUM',
 						'LABEL' => Localization\Loc::getMessage('SALE_CASHBOX_BITRIX_V2_SETTINGS_SNO_LABEL'),
 						'VALUE' => 'osn',
-						'OPTIONS' => array(
+						'OPTIONS' => [
 							'osn' => Localization\Loc::getMessage('SALE_CASHBOX_BITRIX_V2_SNO_OSN'),
-							'usn_income' => Localization\Loc::getMessage('SALE_CASHBOX_BITRIX_V2_SNO_UI'),
-							'usn_income_outcome' => Localization\Loc::getMessage('SALE_CASHBOX_BITRIX_V2_SNO_UIO'),
+							'usnIncome' => Localization\Loc::getMessage('SALE_CASHBOX_BITRIX_V2_SNO_UI'),
+							'usnIncomeOutcome' => Localization\Loc::getMessage('SALE_CASHBOX_BITRIX_V2_SNO_UIO'),
 							'envd' => Localization\Loc::getMessage('SALE_CASHBOX_BITRIX_V2_SNO_ENVD'),
 							'esn' => Localization\Loc::getMessage('SALE_CASHBOX_BITRIX_V2_SNO_ESN'),
 							'patent' => Localization\Loc::getMessage('SALE_CASHBOX_BITRIX_V2_SNO_PATENT')
-						)
-					)
-				)
-			);
+						]
+					]
+				]
+			];
 		}
 
 		$settings['CLIENT'] = [
 			'LABEL' => Localization\Loc::getMessage('SALE_CASHBOX_BITRIX_V2_SETTINGS_CLIENT'),
-			'ITEMS' => array(
-				'INFO' => array(
+			'ITEMS' => [
+				'INFO' => [
 					'TYPE' => 'ENUM',
 					'VALUE' => 'NONE',
 					'LABEL' => Localization\Loc::getMessage('SALE_CASHBOX_BITRIX_V2_SETTINGS_CLIENT_INFO'),
-					'OPTIONS' => array(
+					'OPTIONS' => [
 						'EMAIL' => Localization\Loc::getMessage('SALE_CASHBOX_BITRIX_V2_SETTINGS_CLIENT_EMAIL'),
 						'PHONE' => Localization\Loc::getMessage('SALE_CASHBOX_BITRIX_V2_SETTINGS_CLIENT_PHONE'),
-					)
-				),
-			)
+					]
+				],
+			]
 		];
 
 		return $settings;

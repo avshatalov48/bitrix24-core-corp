@@ -16,6 +16,8 @@ if ($dialog->getCurrentValue('message_text_encoded'))
 $emailType = $map['EmailType'];
 $emailTypeValue = $dialog->getCurrentValue($emailType['FieldName'], '');
 
+$useLinkTracker = $map['UseLinkTracker'];
+
 $messageType = $dialog->getCurrentValue(
 	$map['MessageTextType']['FieldName'],
 	\CBPCrmSendEmailActivity::TEXT_TYPE_BBCODE
@@ -158,6 +160,12 @@ endif;
 			), $fileValues, true, \Bitrix\Bizproc\FieldType::RENDER_MODE_DESIGNER);
 		?>
 		</div>
+	</td>
+</tr>
+<tr>
+	<td align="right" width="40%"><?=htmlspecialcharsbx($useLinkTracker['Name'])?>:</td>
+	<td width="60%">
+		<?= $dialog->renderFieldControl($useLinkTracker); ?>
 	</td>
 </tr>
 <script>

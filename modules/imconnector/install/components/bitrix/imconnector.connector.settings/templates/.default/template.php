@@ -100,7 +100,13 @@ if (empty($arResult['RELOAD']) && empty($arResult['URL_RELOAD']))
 									?>
 									<script>
 										BX.ready(function () {
-											new BX.ImConnectorLinesMenu({
+											BX.message({
+												IMCONNECTOR_COMPONENT_CONNECTOR_LINE_ACTIVATION_TITLE: '<?=GetMessageJS('IMCONNECTOR_COMPONENT_CONNECTOR_LINE_ACTIVATION_TITLE')?>',
+												IMCONNECTOR_COMPONENT_CONNECTOR_LINE_ACTIVATION_DESCRIPTION: '<?=GetMessageJS('IMCONNECTOR_COMPONENT_CONNECTOR_LINE_ACTIVATION_DESCRIPTION')?>',
+												IMCONNECTOR_COMPONENT_CONNECTOR_LINE_ACTIVATION_BUTTON_ACTIVE: '<?=GetMessageJS('IMCONNECTOR_COMPONENT_CONNECTOR_LINE_ACTIVATION_BUTTON_ACTIVE')?>',
+												IMCONNECTOR_COMPONENT_CONNECTOR_LINE_ACTIVATION_BUTTON_NO: '<?=GetMessageJS('IMCONNECTOR_COMPONENT_CONNECTOR_LINE_ACTIVATION_BUTTON_NO')?>',
+											});
+											BX.OpenLinesConfigEdit.initConfigMenu({
 												element: 'imconnector-lines-list',
 												bindElement: 'imconnector-lines-list',
 												items: <?=CUtil::PhpToJSObject($arResult['LIST_LINE'])?>,
@@ -116,7 +122,7 @@ if (empty($arResult['RELOAD']) && empty($arResult['URL_RELOAD']))
 										?>
 										<button onclick="BX.SidePanel.Instance.open(
 												'<?= CUtil::JSEscape($arResult['ACTIVE_LINE']['URL_EDIT']) ?>',
-												{width: 996, loader: '/bitrix/components/bitrix/imopenlines.lines.edit/templates/.default/images/imopenlines-view.svg'})"
+												{width: 996, loader: '/bitrix/components/bitrix/imopenlines.lines.edit/templates/.default/images/imopenlines-view.svg', allowChangeHistory: false})"
 												class="ui-btn ui-btn-link imopenlines-settings-button">
 											<?= Loc::getMessage('IMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_CONFIGURE') ?>
 										</button>
@@ -206,9 +212,26 @@ if (empty($arResult['RELOAD']) && empty($arResult['URL_RELOAD']))
 						<?
 					}
 					?>
+
+					<?
+					if (\Bitrix\ImOpenlines\Security\Helper::isSettingsMenuEnabled())
+					{
+						?>
+						<div class="imconnector-field-box imconnector-field-user-box box-rights">
+							<div class="imconnector-field-box-subtitle box-rights">
+								<?= Loc::getMessage('IMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_PERMISSIONS') ?>
+							</div>
+							<a href="javascript:void(0)"
+							   onclick="BX.SidePanel.Instance.open('<?=\Bitrix\ImOpenLines\Common::getPublicFolder() . 'permissions.php'?>', {allowChangeHistory: false})"
+							   class="bx-destination-add imconnector-field-link-grey">
+								<?= Loc::getMessage('IMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_CONFIGURE') ?>
+							</a>
+						</div>
+						<?
+					}
+					?>
 				</div>
 			</div>
-
 			<?
 			if (count($arResult['LIST_LINE']) > 0)
 			{

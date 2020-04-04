@@ -4,6 +4,7 @@
 		return;
 
 	var destinationInstance = null;
+	var configMenu = null;
 
 	var destination = function(params, type) {
 		this.p = (!!params ? params : {});
@@ -506,10 +507,24 @@
 								destinationInstance.select(newUsers[i], 'users', false, false, destinationId);
 							}
 						}
+						else if (event.getEventId() === "ImOpenlines:updateLinesSubmit")
+						{
+							if (configMenu !== null)
+							{
+								var lineId = event.getData();
+								setTimeout(function(){
+									configMenu.reloadItem(lineId);
+								}, 500);
+							}
+						}
 					},
 					this
 				)
 			);
+		},
+		initConfigMenu : function(params)
+		{
+			configMenu = new BX.ImConnectorLinesMenu(params);
 		}
 	};
 
@@ -711,10 +726,20 @@
 		{
 			var newItem = {};
 
+			newItem.id = item.ID;
 			newItem.title = item.NAME;
 			newItem.text = item.NAME;
 			newItem.delimiterAfter = item.DELIMITER_AFTER;
 			newItem.delimiterBefore = item.DELIMITER_BEFORE;
+
+			if (item.IS_LINE_ACTIVE === 'Y')
+			{
+				newItem.className = 'imconnector-line-status-active';
+			}
+			else if (item.IS_LINE_ACTIVE === 'N')
+			{
+				newItem.className = 'imconnector-line-status-inactive';
+			}
 
 			if (item.URL)
 			{
@@ -727,9 +752,14 @@
 						}
 						else if (isIframe)
 						{
-							BX.SidePanel.Instance.close();
-							var options = BX.SidePanel.Instance.getSliderByWindow(window).options;
-							BX.SidePanel.Instance.open(item.URL, options);
+							if (item.IS_LINE_ACTIVE === 'N')
+							{
+								this.activatePopupShow(item);
+							}
+							else
+							{
+								this.changeLine(item.URL);
+							}
 						}
 						else
 						{
@@ -744,6 +774,116 @@
 
 			return newItem;
 		},
+
+		changeLine: function(url)
+		{
+			BX.SidePanel.Instance.close();
+			var lastSlider = BX.SidePanel.Instance.getSliderByWindow(window),
+				options = lastSlider.options;
+			BX.SidePanel.Instance.open(url, options);
+			lastSlider.destroy();
+		},
+
+		activateLine: function(lineId)
+		{
+			BX.ajax.runComponentAction('bitrix:imconnector.connector.settings', 'activateLine', {
+				mode: 'ajax',
+				data: {
+					lineId: lineId
+				}
+			  }).then(BX.proxy(function(data){
+				if (data.data.result === false && data.data.error)
+				{
+					alert(data.data.error);
+				}
+			}, this)).then(BX.proxy(function(data){
+
+			}, this));
+		},
+
+		activatePopupShow: function(item)
+		{
+			var lineId = item.ID,
+				url = item.URL;
+			var popupShowTrue = new BX.PopupWindow('uid-config-activate-' + lineId, null, {
+				closeIcon: { right : '5px', top : '5px'},
+				titleBar: BX.message('IMCONNECTOR_COMPONENT_CONNECTOR_LINE_ACTIVATION_TITLE'),
+				closeByEsc : true,
+				autoHide : true,
+				content: '<p class=\"imconnector-popup-text\">' + BX.message('IMCONNECTOR_COMPONENT_CONNECTOR_LINE_ACTIVATION_DESCRIPTION') + '</p>',
+				overlay: {
+					backgroundColor: 'black', opacity: '80'
+				},
+				buttons: [
+					new BX.PopupWindowButton({
+						text: BX.message('IMCONNECTOR_COMPONENT_CONNECTOR_LINE_ACTIVATION_BUTTON_ACTIVE'),
+						className : 'popup-window-button-accept',
+						events:{
+							click: BX.proxy(function() {
+								this.activateLine(lineId);
+								setTimeout(
+									BX.delegate(
+										function(){
+											this.changeLine(url);
+										}, this),
+									200
+								);
+								//this.popupWindow.close();
+							}, this)
+						}
+					}),
+					new BX.PopupWindowButton({
+						text: BX.message('IMCONNECTOR_COMPONENT_CONNECTOR_LINE_ACTIVATION_BUTTON_NO'),
+						className : 'popup-window-button-link',
+						events:{
+							click: BX.proxy(function() {
+								this.changeLine(url);
+								//this.popupWindow.close();
+							}, this)
+						}
+					})
+				]
+			});
+			popupShowTrue.show();
+		},
+
+		reloadItem: function(lineId)
+		{
+			BX.ajax.runComponentAction('bitrix:imconnector.connector.settings', 'getConfigItem', {
+				mode: 'ajax',
+				data: {
+					lineId: lineId
+				}
+			}).then(BX.proxy(function(data){
+				if (data.data.ID)
+				{
+					var itemData = data.data;
+					itemData.URL = window.location.href;
+
+					var item = this.prepareItem(itemData);
+					if (item.id && item.id == lineId)
+					{
+						var curPosition = this.menu.getMenuItemPosition(lineId);
+						this.menu.removeMenuItem(lineId);
+						var itemAfter = this.menu.menuItems[curPosition];
+
+						if (itemAfter.id)
+						{
+							this.menu.addMenuItem(item, itemAfter.id);
+						}
+						else
+						{
+							this.menu.addMenuItem(item);
+						}
+
+						var titleBlock = document.getElementById('imconnector-lines-list');
+						titleBlock.innerHTML = item.title;
+					}
+				}
+			}, this)).then(BX.proxy(function(data){
+
+			}, this));
+		}
 	};
 
 })(window);

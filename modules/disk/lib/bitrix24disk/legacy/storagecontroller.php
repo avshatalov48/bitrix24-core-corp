@@ -9,6 +9,7 @@ use Bitrix\Disk\Desktop;
 use Bitrix\Disk\Driver;
 use Bitrix\Disk\File;
 use Bitrix\Disk\Folder;
+use Bitrix\Disk\Internals\ObjectTable;
 use Bitrix\Disk\ProxyType;
 use Bitrix\Disk\Internals\Controller;
 use Bitrix\Disk\Internals\Error\Error;
@@ -35,7 +36,7 @@ Loc::loadMessages(__FILE__);
 
 class StorageController extends Controller
 {
-	const VERSION                               = 801;
+	const VERSION                               = 901;
 	const MIN_API_DISK_VERSION                  = 29;
 	const MIN_API_DISK_VERSION_FOR_NEW_SNAPSHOT = 37;
 
@@ -383,11 +384,18 @@ class StorageController extends Controller
 
 		$file = $storage->getFile($id, $extra);
 		//not found or we have new version
-		if( !$file || (!isset($file['version']) || $storage->compareVersion($file['version'], $version) != 0) )
+		if (!$file || !isset($file['version']))
 		{
 			$this->sendJsonResponse(array(
 				'status' => static::STATUS_NOT_FOUND,
 			));
+		}
+		elseif ($storage->compareVersion($file['version'], $version) != 0)
+		{
+			$this->sendJsonResponse([
+				'status' => static::STATUS_NOT_FOUND,
+				'file' => $file,
+			]);
 		}
 		else
 		{
@@ -465,6 +473,7 @@ class StorageController extends Controller
 			$this->sendJsonErrorResponse();
 		}
 
+		$directoryType = $this->request->getPost('directoryType');
 		$folderName = $this->request->getPost('name');
 		$inRoot = $this->request->getPost('inRoot') == 'true';
 		$isUpdate = $this->request->getPost('update') == 'true';
@@ -538,7 +547,10 @@ class StorageController extends Controller
 		else
 		{
 			//todo folder may make in storage root, but parentFolder not exist
-			$item = $storage->addDirectory($folderName, $parentFolderId, array('originalTimestamp' => $this->request->getPost('originalTimestamp')));
+			$item = $storage->addDirectory($folderName, $parentFolderId, array(
+				'originalTimestamp' => $this->request->getPost('originalTimestamp'),
+				'code' => $directoryType,
+			));
 		}
 
 		if(empty($item))
@@ -597,13 +609,18 @@ class StorageController extends Controller
 		$this->sendJsonSuccessResponse();
 	}
 
-	protected function processActionGetMaxUploadSize()
+	protected function getMaxUploadSize()
 	{
 		$maxUploadSize = min(CUtil::unformat(ini_get('post_max_size')), CUtil::unformat(ini_get('upload_max_filesize')));
 		$maxUploadSize -= 1024 * 200;
 
+		return $maxUploadSize;
+	}
+
+	protected function processActionGetMaxUploadSize()
+	{
 		$this->sendJsonSuccessResponse(array(
-			'size' => $maxUploadSize
+			'size' => $this->getMaxUploadSize()
 		));
 	}
 
@@ -661,7 +678,6 @@ class StorageController extends Controller
 			}
 
 			$parentFolderExtra = $storage->parseElementExtra($this->request->getPost('parentExtra'));
-			$targetSectionId = $parentFolderExtra['id'];
 			$parentFolderId = $parentFolderExtra['id'];
 
 			$folder = Folder::loadById($parentFolderId);
@@ -678,7 +694,7 @@ class StorageController extends Controller
 			{
 				$this->sendJsonErrorResponse();
 			}
-			
+
 			$version = $this->request->getPost('version');
 			$fileExtra = $storage->parseElementExtra($this->request->getPost('extra'));
 			$elementId = $fileExtra['id'];
@@ -737,7 +753,6 @@ class StorageController extends Controller
 					$this->sendJsonSuccessResponse($file);
 				}
 			}
-			unset($file);
 
 			if($tmpFile) //update content
 			{
@@ -773,22 +788,33 @@ class StorageController extends Controller
 					'message'=> 'Error in updateFile',
 				));
 			}
+
+			$this->sendJsonSuccessResponse($file);
 		}
 		elseif($tmpFile)
 		{
-			if(!$storage->isUnique($filename, $targetSectionId, $opponentId))
+			if(!$storage->isUnique($filename, $parentFolderId, $opponentId))
 			{
 				$opponentFile = array();
-				if($opponentId)
+				$fixedBadFile = false;
+				if ($opponentId)
 				{
-					$opponentFile = $storage->getFile(null, array('id' => $opponentId), true);
+					$fixedBadFile = $this->tryToFixInvalidDeletedFile($opponentId);
 				}
-				$opponentFile['status'] = static::STATUS_OLD_VERSION;
 
-				$this->sendJsonResponse($opponentFile);
+				if (!$fixedBadFile)
+				{
+					if($opponentId)
+					{
+						$opponentFile = $storage->getFile(null, array('id' => $opponentId), true);
+					}
+					$opponentFile['status'] = static::STATUS_OLD_VERSION;
+
+					$this->sendJsonResponse($opponentFile);
+				}
 			}
 
-			$newFile = $storage->addFile($filename, $targetSectionId, $tmpFile, array('originalTimestamp' => $this->request->getPost('originalTimestamp')));
+			$newFile = $storage->addFile($filename, $parentFolderId, $tmpFile, array('originalTimestamp' => $this->request->getPost('originalTimestamp')));
 			$tmpFile->delete();
 
 			if($newFile)
@@ -805,6 +831,23 @@ class StorageController extends Controller
 			'status' => static::STATUS_DENIED,
 			'message'=> 'Error in add/update file',
 		));
+	}
+
+	protected function tryToFixInvalidDeletedFile($fileId)
+	{
+		$file = File::loadById($fileId);
+		if ($file && $file->getDeletedType() == ObjectTable::DELETED_TYPE_CHILD)
+		{
+			$parentFolder = $file->getParent();
+			if ($parentFolder && $parentFolder->getDeletedType() != ObjectTable::DELETED_TYPE_ROOT)
+			{
+				$file->markDeleted($file->getDeletedBy());
+
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	protected function processActionInitialize()
@@ -844,6 +887,7 @@ class StorageController extends Controller
 			'token_sid' => bitrix_sessid(),
 
 			'defaultChunkSize' => Bitrix24Disk\UploadFileManager::DEFAULT_CHUNK_SIZE,
+			'maxChunkSize' => $this->getMaxUploadSize(),
 		));
 	}
 
@@ -868,12 +912,12 @@ class StorageController extends Controller
 			'diskSpace' => (float)COption::getOptionInt('main', 'disk_space', 0)*1024*1024,
 		));
 	}
-	
+
 	protected function processActionGetDiskQuota()
 	{
 		$this->sendJsonResponse($this->getDiskQuotaData());
 	}
-	
+
 	private function getPathToDiscuss(User $userModel)
 	{
 		$pathToDiscuss = '/';
@@ -952,7 +996,7 @@ class StorageController extends Controller
 		   'link' => $publicLink,
 		));
 	}
-	
+
 	protected function processActionLock()
 	{
 		$this->checkRequiredPostParams(array('id', 'extra', 'storageExtra', 'storageId'));

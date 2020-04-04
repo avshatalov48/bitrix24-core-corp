@@ -20,6 +20,7 @@ if (!Main\Loader::includeModule('sale'))
 class Order extends Sale\Order
 {
 	protected $contactCompanyCollection = null;
+	protected $dealBinding = null;
 
 	private $requisiteList = [];
 
@@ -70,6 +71,12 @@ class Order extends Sale\Order
 			}
 
 			$this->setContactCompanyRequisites();
+		}
+
+		$dealBinding = $this->getDealBinding();
+		if(!$dealBinding->isExist())
+		{
+			$dealBinding->create();
 		}
 
 		$this->addTimelineEntryOnCreate();
@@ -224,6 +231,12 @@ class Order extends Sale\Order
 			);
 		}
 
+		if ($this->getDealBinding()->isExist())
+		{
+			$this->getDealBinding()->onAfterOrderSave();
+		}
+
+		Crm\Search\SearchContentBuilderFactory::create(\CCrmOwnerType::Order)->build($this->getId());
 		return $result;
 	}
 
@@ -262,6 +275,20 @@ class Order extends Sale\Order
 	 */
 	private function addTimelineEntryOnCreate()
 	{
+		$contactBindings = [];
+		foreach($this->getContactCompanyCollection()->getContacts() as $contact)
+		{
+			$contactBindings[] = [
+				'CONTACT_ID' => $contact->getId(),
+			];
+		}
+		$companyId = null;
+		$company = $this->getContactCompanyCollection()->getPrimaryCompany();
+		if($company)
+		{
+			$companyId = $company->getId();
+		}
+
 		Crm\Timeline\OrderController::getInstance()->onCreate(
 			$this->getId(),
 			[
@@ -271,8 +298,11 @@ class Order extends Sale\Order
 					'RESPONSIBLE_ID' => $this->getField('RESPONSIBLE_ID'),
 					'DATE_INSERT' => $this->getField('DATE_INSERT'),
 					'PRICE' => $this->getField('PRICE'),
-					'CURRENCY' => $this->getField('CURRENCY')
-				]
+					'CURRENCY' => $this->getField('CURRENCY'),
+					'DEAL_ID' => $this->getDealBinding()->getDealId(),
+					'CONTACT_BINDINGS' => $contactBindings,
+					'COMPANY_ID' => $companyId,
+				],
 			]
 		);
 	}
@@ -397,30 +427,39 @@ class Order extends Sale\Order
 			$result->addErrors($r->getErrors());
 		}
 
+		$dealBinding = $this->getDealBinding();
+		$r = $dealBinding->save();
+		if(!$r->isSuccess())
+		{
+			$result->addErrors($r->getErrors());
+		}
+
 		return $result;
 	}
 
 	/**
-	 * @param $oderId
+	 * @param $orderId
 	 * @return Sale\Result
 	 * @throws Main\ArgumentException
 	 * @throws Main\ObjectPropertyException
 	 * @throws Main\SystemException
 	 */
-	protected static function deleteEntitiesNoDemand($oderId)
+	protected static function deleteEntitiesNoDemand($orderId)
 	{
-		$result = parent::deleteEntitiesNoDemand($oderId);
+		$result = parent::deleteEntitiesNoDemand($orderId);
 
 		$registry = Sale\Registry::getInstance(static::getRegistryType());
 
 		/** @var ContactCompanyCollection $contactCompanyCollection */
 		$contactCompanyCollection = $registry->get(ENTITY_CRM_CONTACT_COMPANY_COLLECTION);
 
-		$r = $contactCompanyCollection::deleteNoDemand($oderId);
+		$r = $contactCompanyCollection::deleteNoDemand($orderId);
 		if (!$r->isSuccess())
 		{
 			$result->addErrors($r->getErrors());
 		}
+
+		Crm\Binding\OrderDealTable::deleteByOrderId($orderId);
 
 		return $result;
 	}
@@ -448,6 +487,8 @@ class Order extends Sale\Order
 					$entity->delete();
 				}
 			}
+
+			Crm\Binding\OrderDealTable::deleteByOrderId($order->getId());
 		}
 	}
 
@@ -703,11 +744,40 @@ class Order extends Sale\Order
 				ENTITY_CRM_COMPANY => 'Bitrix\Crm\Order\Company',
 				ENTITY_CRM_CONTACT => 'Bitrix\Crm\Order\Contact',
 				ENTITY_CRM_CONTACT_COMPANY_COLLECTION => 'Bitrix\Crm\Order\ContactCompanyCollection',
+				ENTITY_CRM_ORDER_DEAL_BINDING => 'Bitrix\Crm\Order\DealBinding',
 				Sale\Registry::ENTITY_TRADE_BINDING_COLLECTION => 'Bitrix\Crm\Order\TradeBindingCollection',
 				Sale\Registry::ENTITY_TRADE_BINDING_ENTITY => 'Bitrix\Crm\Order\TradeBindingEntity',
 			)
 		);
 
 		return new EventResult(EventResult::SUCCESS, $registry);
+	}
+
+	/**
+	 * @return DealBinding
+	 * @throws Main\ArgumentException
+	 * @throws Main\SystemException
+	 */
+	public function getDealBinding()
+	{
+		if (!$this->dealBinding)
+		{
+			$this->dealBinding = $this->loadDealBinding();
+		}
+
+		return $this->dealBinding;
+	}
+
+	/**
+	 * @return DealBinding
+	 * @throws Main\ArgumentException
+	 * @throws Main\SystemException
+	 */
+	protected function loadDealBinding()
+	{
+		$registry = Sale\Registry::getInstance(static::getRegistryType());
+
+		$dealBindingClassName = $registry->get(ENTITY_CRM_ORDER_DEAL_BINDING);
+		return new $dealBindingClassName($this);
 	}
 }

@@ -48,9 +48,12 @@ class Helper
 	}
 
 	/**
+	 * Returns true if user is portal admin.
+	 *
+	 * @param int $userId Id of the user.
 	 * @return bool
 	 */
-	public static function isAdmin()
+	public static function isAdmin($userId = null)
 	{
 		global $USER;
 
@@ -59,13 +62,29 @@ class Helper
 			return false;
 		}
 
+		if(!$userId || $userId == $USER->getId())
+		{
+			if(Loader::includeModule('bitrix24'))
+			{
+				return $USER->CanDoOperation('bitrix24_config');
+			}
+			else
+			{
+				return $USER->IsAdmin();
+			}
+		}
+
 		if(Loader::includeModule('bitrix24'))
 		{
-			return $USER->CanDoOperation('bitrix24_config');
+			// Bitrix24 context new style check
+			return \CBitrix24::IsPortalAdmin($userId);
 		}
 		else
 		{
-			return $USER->IsAdmin();
+			//Check user group 1 ('Admins')
+			$user = new \CUser();
+			$userGroups = $user->getUserGroup($userId);
+			return in_array(1, $userGroups);
 		}
 	}
 
@@ -78,13 +97,22 @@ class Helper
 		if(!Loader::includeModule('intranet'))
 			return array();
 
-		$result = array();
+		$colleagues = array();
 		$cursor = \CIntranetUtils::getDepartmentColleagues($userId, true);
-
 		while ($row = $cursor->Fetch())
 		{
-			$result[] = (int)$row['ID'];
+			$colleagues[] = (int)$row['ID'];
 		}
+
+		$subordinateEmployees = [];
+		$cursor =\CIntranetUtils::getSubordinateEmployees($userId, true);
+		while ($row = $cursor->Fetch())
+		{
+			$subordinateEmployees[] = (int)$row['ID'];
+		}
+
+		$result = array_merge($colleagues, $subordinateEmployees);
+
 		return $result;
 	}
 
@@ -217,7 +245,38 @@ class Helper
 		if($checkCursor->fetch())
 			return false;
 
-		$defaultRoles = array(
+		$roleIds = array();
+		foreach (static::getDefaultRoles() as $roleCode => $role)
+		{
+			$addResult = \Bitrix\Voximplant\Model\RoleTable::add(array(
+				'NAME' => $role['NAME'],
+			));
+
+			$roleId = $addResult->getId();
+			if($roleId)
+			{
+				$roleIds[$roleCode] = $roleId;
+				RoleManager::setRolePermissions($roleId, $role['PERMISSIONS']);
+			}
+		}
+
+		foreach (static::getDefaultRoleAccess() as $roleAccess)
+		{
+			if(isset($roleIds[$roleAccess['ROLE']]))
+			{
+				Model\RoleAccessTable::add(array(
+					'ROLE_ID' => $roleIds[$roleAccess['ROLE']],
+					'ACCESS_CODE' => $roleAccess['ACCESS_CODE']
+				));
+			}
+		}
+
+		return true;
+	}
+
+	public static function getDefaultRoles()
+	{
+		return $defaultRoles = array(
 			'admin' => array(
 				'NAME' => Loc::getMessage('VOXIMPLANT_ROLE_ADMIN'),
 				'PERMISSIONS' => array(
@@ -284,44 +343,31 @@ class Helper
 				)
 			)
 		);
+	}
 
-		$roleIds = array();
-		foreach ($defaultRoles as $roleCode => $role)
-		{
-			$addResult = \Bitrix\Voximplant\Model\RoleTable::add(array(
-				'NAME' => $role['NAME'],
-			));
+	public static function getDefaultRoleAccess()
+	{
+		$result = [];
 
-			$roleId = $addResult->getId();
-			if($roleId)
-			{
-				$roleIds[$roleCode] = $roleId;
-				\Bitrix\Voximplant\Security\RoleManager::setRolePermissions($roleId, $role['PERMISSIONS']);
-			}
-		}
+		$result[] = [
+			'ROLE' => 'admin',
+			'ACCESS_CODE' => 'G1'
+		];
 
-		if(isset($roleIds['admin']))
-		{
-			\Bitrix\Voximplant\Model\RoleAccessTable::add(array(
-				'ROLE_ID' => $roleIds['admin'],
-				'ACCESS_CODE' => 'G1'
-			));
-		}
-
-		if(isset($roleIds['manager']) && \Bitrix\Main\Loader::includeModule('intranet'))
+		if(\Bitrix\Main\Loader::includeModule('intranet'))
 		{
 			$departmentTree = \CIntranetUtils::GetDeparmentsTree();
 			$rootDepartment = (int)$departmentTree[0][0];
 
 			if($rootDepartment > 0)
 			{
-				\Bitrix\Voximplant\Model\RoleAccessTable::add(array(
-					'ROLE_ID' => $roleIds['manager'],
+				$result[] = [
+					'ROLE' => 'manager',
 					'ACCESS_CODE' => 'DR'.$rootDepartment
-				));
+				];
 			}
 		}
 
-		return true;
+		return $result;
 	}
 }

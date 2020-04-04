@@ -5895,15 +5895,22 @@ class logTextParser extends CTextParser
 		$this->pathToSmile = $pathToSmile;
 
 		if($CACHE_MANAGER->Read(604800, "b_sonet_smile"))
+		{
 			$arSmiles = $CACHE_MANAGER->Get("b_sonet_smile");
+		}
 		else
 		{
+			$arSmiles = [];
 			$db_res = CSocNetSmile::GetList(array("SORT" => "ASC"), array("SMILE_TYPE" => "S"/*, "LANG_LID" => $strLang*/), false, false, Array("LANG_LID", "ID", "IMAGE", "DESCRIPTION", "TYPING", "SMILE_TYPE", "SORT"));
 			while ($res = $db_res->Fetch())
 			{
 				$tok = strtok($res['TYPING'], " ");
 				while ($tok !== false)
 				{
+					if (!isset($arSmiles[$res['LANG_LID']]))
+					{
+						$arSmiles[$res['LANG_LID']] = [];
+					}
 					$arSmiles[$res['LANG_LID']][] = array(
 						'TYPING' => $tok,
 						'IMAGE'  => stripslashes($res['IMAGE']), // stripslashes is not needed here

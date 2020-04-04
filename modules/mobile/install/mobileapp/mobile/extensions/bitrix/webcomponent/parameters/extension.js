@@ -9,22 +9,22 @@
 BX.componentParameters =
 {
     init:() => {
-    	let promise = new BX.Promise();
+    	return new Promise((resolve, reject) => {
 
-    	BXMobileApp.UI.Page.params.get({callback: (data) => {
-    		for (let name in data)
-			{
-				if (data.hasOwnProperty(name))
+			BXMobileApp.UI.Page.params.get({callback: (data) => {
+				for (let name in data)
 				{
-					BX.componentParameters.set(name, data[name]);
+					if (data.hasOwnProperty(name))
+					{
+						BX.componentParameters.set(name, data[name]);
+					}
 				}
-			}
 
-			console.info("BX.componentParameters: page params inited", data);
-			promise.fulfill(data);
-		}});
+				console.info("BX.componentParameters: page params inited", data);
+				resolve(data);
+			}});
 
-    	return promise;
+		});
 	},
 
     get:(name, defaultValue) =>

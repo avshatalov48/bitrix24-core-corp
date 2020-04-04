@@ -146,4 +146,6 @@ $MESS["INTR_OPTION_MAIL_ALLOW_YES"] = "да";
 $MESS["INTR_OPTION_MAIL_CHECK_PERIOD"] = "Периодичность проверки в минутах";
 $MESS["INTR_OPT_OTHER"] = "Другие настройки";
 $MESS["INTR_OPTION_BLOCK_NEW_USER_LF"] = "Выключить добавление в живую ленту записи о принятии на работу нового сотрудника";
+$MESS["INTR_OPTION_VACATION_TYPES"] = "Какие типы отсутствий считаются отпуском";
+$MESS["INTR_OPTION_STRESSLEVEL_AVAILABLE"] = "Разрешить замер и показ уровня стресса в профиле сотрудников";
 ?>

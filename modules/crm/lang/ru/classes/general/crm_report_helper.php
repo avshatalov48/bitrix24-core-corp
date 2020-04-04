@@ -66,6 +66,7 @@ $MESS["CRM_REPORT_OWNER_TITLE_CRM_PRODUCT_ROW"] = "Товар";
 $MESS["REPORT_crm_product_row_DEAL_OWNER"] = "Сделка";
 $MESS["REPORT_POPUP_COLUMN_TITLE_CRM_LEAD"] = "Лид";
 $MESS["REPORT_crm_lead_COLUMN_TREE_STATUS_SUB"] = "В статусе";
+$MESS["REPORT_crm_lead_COLUMN_TREE_PRODUCT_ROW"] = "Товар";
 $MESS["REPORT_POPUP_COLUMN_TITLE_CRM_INVOICE"] = "Счёт";
 $MESS["REPORT_crm_invoice_COLUMN_TREE_STATUS_SUB"] = "В статусе";
 $MESS["REPORT_crm_invoice_COLUMN_TREE_PRICE_SUB"] = "Сумма в статусе";

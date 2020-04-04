@@ -4,6 +4,8 @@ $MESS["USER_DISK_CONFIRM_NO"] = "No";
 $MESS["USER_DISK_CONFIRM_YES"] = "Yes";
 $MESS["USER_DISK_EMPTY_FOLDER"] = "Folder is empty";
 $MESS["USER_DISK_ERROR"] = "Cannot get file list. Something went wrong.";
+$MESS["USER_DISK_FILE_NOT_SEND"] = "Error sending file";
+$MESS["USER_DISK_FILE_SENT"] = "File has been sent to the user";
 $MESS["USER_DISK_GET_PUBLIC_LINK"] = "Public link";
 $MESS["USER_DISK_LINK_COPIED"] = "Public link has been copied to the Clipboard";
 $MESS["USER_DISK_LINK_COPIED_FAIL"] = "Unfortunately we were unable to create a public link. Please try again later.";
@@ -20,4 +22,7 @@ $MESS["USER_DISK_REMOVE"] = "Delete";
 $MESS["USER_DISK_REMOVE_FILE_CONFIRM"] = "Do you want to move the file \"%@\" to the Recycle Bin?";
 $MESS["USER_DISK_REMOVE_FOLDER_CONFIRM"] = "Do you want to move the folder \"%@\" to the Recycle Bin?";
 $MESS["USER_DISK_ROLLBACK"] = "Recover deleted item \"%@\"?";
+$MESS["USER_DISK_SEND_TO_USER"] = "Share with user";
+$MESS["USER_DISK_SHARE"] = "Share";
+$MESS["RECENT_SEARCH"] = "Recent search";
 ?>

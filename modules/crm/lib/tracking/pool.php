@@ -81,6 +81,28 @@ class Pool
 	}
 
 	/**
+	 * Get using by number.
+	 *
+	 * @param int $typeId Type ID.
+	 * @param string $value Value.
+	 * @return array
+	 */
+	public function getUsingByValue($typeId, $value)
+	{
+		switch ($typeId)
+		{
+			case Communication\Type::EMAIL:
+				return [];
+
+			case Communication\Type::PHONE:
+				return Internals\PhoneNumberTable::getUsingByNumber($value);
+
+			default:
+				throw new ArgumentException("Unknown type `$typeId`.");
+		}
+	}
+
+	/**
 	 * Get phones.
 	 *
 	 * @return array
@@ -91,23 +113,27 @@ class Pool
 
 		if (Loader::includeModule('voximplant'))
 		{
-			$numbers = \CVoxImplantConfig::GetCallbackNumbers();
-			foreach ($numbers as $numberCode => $numberName)
+			$numbers = \CVoxImplantConfig::GetLinesEx([
+				"showRestApps" => true,
+				"showInboundOnly" => true
+			]);
+			foreach ($numbers as $numberCode => $numberData)
 			{
-				if (!$numberCode)
+				$numberName = $numberData['SHORT_NAME']; // TODO: change to LINE_NUMBER when normalization will disabled
+				if (!$numberCode || !$numberName)
 				{
 					continue;
 				}
 
-				$numberCode = Communication\Normalizer::normalizePhone($numberCode);
-				if (!Communication\Validator::validatePhone($numberCode))
+				$numberName = Communication\Normalizer::normalizePhone($numberName);
+				if (!Communication\Validator::validatePhone($numberName))
 				{
 					continue;
 				}
 
 				$list[] = [
 					'NAME' => $numberName,
-					'VALUE' => $numberCode,
+					'VALUE' => $numberName,
 					'CAN_REMOVE' => false
 				];
 			}
@@ -121,6 +147,12 @@ class Pool
 				'VALUE' => $numberCode,
 				'CAN_REMOVE' => true
 			];
+		}
+
+		foreach ($list as $index => $item)
+		{
+			$item['USING'] = $this->getUsingByValue(Communication\Type::PHONE, $item['VALUE']);
+			$list[$index] = $item;
 		}
 
 		return $list;

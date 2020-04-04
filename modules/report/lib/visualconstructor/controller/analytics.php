@@ -41,25 +41,25 @@ class Analytics extends Base
 			'pageControlsParams' => $analyticBoard->getButtonsContent()
 
 		];
+		$componentTemplateName = '';
 		if ($analyticBoard->isDisabled())
 		{
 			$componentName = 'bitrix:report.analytics.empty';
 			$params = [];
 		}
+		elseif ($analyticBoard->isLimited())
+		{
+			$componentName = $analyticBoard->getLimitComponentName();
+			$componentTemplateName = $analyticBoard->getLimitComponentTemplateName();
+			$params = $analyticBoard->getLimitComponentParams();
+		}
 		else
 		{
-			$componentName = 'bitrix:report.visualconstructor.board.base';
-			$params = [
-				'BOARD_ID' => $boardKey,
-				'IS_DEFAULT_MODE_DEMO' => false,
-				'IS_BOARD_DEFAULT' => true,
-				'FILTER' => $analyticBoard->getFilter(),
-				'IS_ENABLED_STEPPER' => $analyticBoard->isStepperEnabled(),
-				'STEPPER_IDS' => $analyticBoard->getSteperIds()
-			];
+			$componentName = $analyticBoard->getDisplayComponentName();
+			$params = $analyticBoard->getDisplayComponentParams();
 		}
 
-		return new Component($componentName, '', $params, $additionalParams);
+		return new Component($componentName, $componentTemplateName, $params, $additionalParams);
 	}
 
 	/**
@@ -90,7 +90,6 @@ class Analytics extends Base
 			return false;
 		}
 
-
 		global $USER;
 		$userId = $USER->getId();
 		$dashboardForUser = Dashboard::loadByBoardKeyAndUserId($boardKey, $userId);
@@ -99,17 +98,24 @@ class Analytics extends Base
 			$dashboardForUser->delete();
 		}
 
-
+		$defaultDashboard = Dashboard::loadByBoardKeyAndUserId($boardKey, 0);
+		if($defaultDashboard)
+		{
+			$defaultDashboard->delete();
+		}
 
 		if (!empty($analyticBoard))
 		{
 			$filter = $analyticBoard->getFilter();
-			$filterId = $filter->getFilterParameters()['FILTER_ID'];
+			if($filter)
+			{
+				$filterId = $filter->getFilterParameters()['FILTER_ID'];
 
-			$options = new Options($filterId, $filter::getPresetsList());
-			$options->restore($filter::getPresetsList());
-			$options->save();
-
+				$options = new Options($filterId, $filter::getPresetsList());
+				$options->restore($filter::getPresetsList());
+				$options->save();
+			}
+			$analyticBoard->resetToDefault();;
 		}
 
 		$additionalParams = [

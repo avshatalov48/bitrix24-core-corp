@@ -482,7 +482,7 @@ if($enableInstantEdit)
 
 $arResult['FIELDS']['tab_details'][] = array(
 	'id' => 'BEGINDATE',
-	'name' => GetMessage('CRM_FIELD_BEGINDATE'),
+	'name' => GetMessage('CRM_FIELD_BEGINDATE_1'),
 	'params' => array('size' => 20),
 	'type' => 'label',
 	'value' => !empty($arResult['ELEMENT']['BEGINDATE']) ? CCrmComponentHelper::TrimDateTimeString(ConvertTimeStamp(MakeTimeStamp($arResult['ELEMENT']['BEGINDATE']), 'SHORT', SITE_ID)) : '',

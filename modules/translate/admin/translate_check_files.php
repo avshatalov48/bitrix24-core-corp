@@ -3,11 +3,12 @@
 require_once $_SERVER['DOCUMENT_ROOT']. '/bitrix/modules/main/include/prolog_admin_before.php';
 require_once $_SERVER['DOCUMENT_ROOT']. '/bitrix/modules/translate/prolog.php';
 
+use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 
 Loc::loadLanguageFile(__FILE__);
 
-if (!\Bitrix\Main\Loader::includeModule('translate'))
+if (!Main\Loader::includeModule('translate'))
 {
 	require $_SERVER['DOCUMENT_ROOT']. '/bitrix/modules/main/include/prolog_admin_after.php';
 
@@ -93,18 +94,6 @@ $aTabs = array(
 $tabControl = new CAdminTabControl("tabControl", $aTabs);
 
 
-$aMenu = array();
-
-$aMenu[] = Array(
-	"TEXT"	=> GetMessage("TRANS_LIST"),
-	"LINK"	=> "/bitrix/admin/translate_list.php?lang=".LANGUAGE_ID."&path=/".implode("/",$arPath)."/",
-	"TITLE"	=> GetMessage("TRANS_LIST_TITLE"),
-	"ICON"	=> "btn_list"
-	);
-
-$context = new CAdminContextMenu($aMenu);
-$context->Show();
-
 
 
 
@@ -143,6 +132,19 @@ if($strError == "")
 		}
 	}
 }
+
+
+$aMenu = array();
+$aMenu[] = Array(
+	"TEXT"	=> GetMessage("TRANS_LIST"),
+	"LINK"	=> "/bitrix/admin/translate_list.php?lang=".LANGUAGE_ID."&path=/".implode("/",$arPath)."/",
+	"TITLE"	=> GetMessage("TRANS_LIST_TITLE"),
+	"ICON"	=> "btn_list"
+);
+
+$context = new CAdminContextMenu($aMenu);
+$context->Show();
+
 ?>
 <p><?=$chain?></p>
 <?

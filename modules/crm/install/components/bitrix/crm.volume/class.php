@@ -6,8 +6,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Crm;
+use Bitrix\Crm\Volume;
 
-Loc::loadMessages(__FILE__);
 
 class CrmVolumeComponent extends \CBitrixComponent
 {
@@ -46,7 +47,7 @@ class CrmVolumeComponent extends \CBitrixComponent
 	/** @var int */
 	private $queueLength = -1;
 
-	/** \Bitrix\Main\ErrorCollection */
+	/** Main\ErrorCollection */
 	protected $errorCollection;
 
 	/**
@@ -132,7 +133,7 @@ class CrmVolumeComponent extends \CBitrixComponent
 			}
 			else
 			{
-				ShowError(Loc::getMessage('CRM_VOLUME_MODULE_NOT_INSTALLED'));
+				\ShowError(Loc::getMessage('CRM_VOLUME_MODULE_NOT_INSTALLED'));
 			}
 
 			return;
@@ -147,7 +148,7 @@ class CrmVolumeComponent extends \CBitrixComponent
 			}
 			else
 			{
-				ShowError(Loc::getMessage('CRM_VOLUME_ERROR_ACCESS_DENIED'));
+				\ShowError(Loc::getMessage('CRM_VOLUME_ERROR_ACCESS_DENIED'));
 			}
 
 			return;
@@ -180,7 +181,7 @@ class CrmVolumeComponent extends \CBitrixComponent
 			}
 			else
 			{
-				ShowError(Loc::getMessage('CRM_VOLUME_ERROR_ACCESS_DENIED'));
+				\ShowError(Loc::getMessage('CRM_VOLUME_ERROR_ACCESS_DENIED'));
 			}
 
 			return;
@@ -188,7 +189,7 @@ class CrmVolumeComponent extends \CBitrixComponent
 
 		if ($checkAjaxRequest && !$this->isAjaxRequest())
 		{
-			ShowError(Loc::getMessage('CRM_VOLUME_ERROR_WRONG_ACTION'));
+			\ShowError(Loc::getMessage('CRM_VOLUME_ERROR_WRONG_ACTION'));
 
 			return;
 		}
@@ -212,7 +213,7 @@ class CrmVolumeComponent extends \CBitrixComponent
 				{
 					$this->getIndicator($this->indicatorId);
 				}
-				catch(\Bitrix\Main\ObjectException $ex)
+				catch(Main\ObjectException $ex)
 				{
 					$this->sendJsonResponse(new Main\Error('Undefined parameter: indicatorId', self::STATUS_ERROR));
 					return;
@@ -231,7 +232,7 @@ class CrmVolumeComponent extends \CBitrixComponent
 					$result['queueStep'] = $this->queueStep;
 				}
 
-				\Bitrix\Crm\Volume\Cleaner::clearProgressInfo($this->getUser()->getId());
+				Volume\Cleaner::clearProgressInfo($this->getUser()->getId());
 				$result['stepper'] = '';
 
 				$this->sendJsonResponse($result);
@@ -245,7 +246,7 @@ class CrmVolumeComponent extends \CBitrixComponent
 					$result['queueStep'] = $this->queueStep;
 				}
 
-				\Bitrix\Crm\Volume\Cleaner::clearProgressInfo($this->getUser()->getId());
+				Volume\Cleaner::clearProgressInfo($this->getUser()->getId());
 				$result['stepper'] = '';
 
 				$this->sendJsonResponse($result);
@@ -394,7 +395,7 @@ class CrmVolumeComponent extends \CBitrixComponent
 			foreach ($this->errorCollection->toArray() as $error)
 			{
 				/** @var Main\Error $error */
-				if ($error->getCode() === \Bitrix\Crm\Volume\Base::ERROR_PERMISSION_DENIED)
+				if ($error->getCode() === Volume\Base::ERROR_PERMISSION_DENIED)
 				{
 					$message = Loc::getMessage('CRM_PERMISSION_DENIED');
 				}
@@ -452,12 +453,12 @@ class CrmVolumeComponent extends \CBitrixComponent
 	/**
 	 * @param string $indicatorId - Indicator class name
 	 *
-	 * @return \Bitrix\Crm\Volume\IVolumeIndicator
+	 * @return Volume\IVolumeIndicator
 	 * @throws Main\ObjectException
 	 */
 	public function getIndicator($indicatorId)
 	{
-		return \Bitrix\Crm\Volume\Base::getIndicator($indicatorId);
+		return Volume\Base::getIndicator($indicatorId);
 	}
 
 
@@ -481,9 +482,9 @@ class CrmVolumeComponent extends \CBitrixComponent
 
 		try
 		{
-			/** @var \Bitrix\Crm\Volume\IVolumeIndicator $indicator */
+			/** @var Volume\IVolumeIndicator $indicator */
 			$indicator = $this->getIndicator($this->indicatorId);
-			if ($indicator instanceof \Bitrix\Crm\Volume\IVolumeIndicator)
+			if ($indicator instanceof Volume\IVolumeIndicator)
 			{
 				$indicator->setOwner($this->getUser()->getId());
 				if ($isFilterApplied)
@@ -494,45 +495,45 @@ class CrmVolumeComponent extends \CBitrixComponent
 
 			if ($this->request->get(self::TASK_CLEAR) === 'Y')
 			{
-				$taskParams[\Bitrix\Crm\Volume\Cleaner::DROP_ENTITY] = true;
-				if (!\Bitrix\Crm\Volume\Cleaner::addWorker($taskParams, $indicator))
+				$taskParams[Volume\Cleaner::DROP_ENTITY] = true;
+				if (!Volume\Cleaner::addWorker($taskParams, $indicator))
 				{
-					$this->errorCollection->add(array(new \Bitrix\Main\Error('Agent add fail')));
+					$this->errorCollection->add(array(new Main\Error('Agent add fail')));
 				}
-				unset($taskParams[\Bitrix\Crm\Volume\Cleaner::DROP_ENTITY]);
+				unset($taskParams[Volume\Cleaner::DROP_ENTITY]);
 			}
 			if ($this->request->get(self::TASK_CLEAR_FILE) === 'Y')
 			{
-				$taskParams[\Bitrix\Crm\Volume\Cleaner::DROP_FILE] = true;
-				if (!\Bitrix\Crm\Volume\Cleaner::addWorker($taskParams, $indicator))
+				$taskParams[Volume\Cleaner::DROP_FILE] = true;
+				if (!Volume\Cleaner::addWorker($taskParams, $indicator))
 				{
-					$this->errorCollection->add(array(new \Bitrix\Main\Error('Agent add fail')));
+					$this->errorCollection->add(array(new Main\Error('Agent add fail')));
 				}
-				unset($taskParams[\Bitrix\Crm\Volume\Cleaner::DROP_FILE]);
+				unset($taskParams[Volume\Cleaner::DROP_FILE]);
 			}
 			if ($this->request->get(self::TASK_CLEAR_EVENT) === 'Y')
 			{
-				$taskParams[\Bitrix\Crm\Volume\Cleaner::DROP_EVENT] = true;
-				if (!\Bitrix\Crm\Volume\Cleaner::addWorker($taskParams, $indicator))
+				$taskParams[Volume\Cleaner::DROP_EVENT] = true;
+				if (!Volume\Cleaner::addWorker($taskParams, $indicator))
 				{
-					$this->errorCollection->add(array(new \Bitrix\Main\Error('Agent add fail')));
+					$this->errorCollection->add(array(new Main\Error('Agent add fail')));
 				}
-				unset($taskParams[\Bitrix\Crm\Volume\Cleaner::DROP_EVENT]);
+				unset($taskParams[Volume\Cleaner::DROP_EVENT]);
 			}
 			if ($this->request->get(self::TASK_CLEAR_ACTIVITY) === 'Y')
 			{
-				$taskParams[\Bitrix\Crm\Volume\Cleaner::DROP_ACTIVITY] = true;
-				if (!\Bitrix\Crm\Volume\Cleaner::addWorker($taskParams, $indicator))
+				$taskParams[Volume\Cleaner::DROP_ACTIVITY] = true;
+				if (!Volume\Cleaner::addWorker($taskParams, $indicator))
 				{
-					$this->errorCollection->add(array(new \Bitrix\Main\Error('Agent add fail')));
+					$this->errorCollection->add(array(new Main\Error('Agent add fail')));
 				}
-				unset($taskParams[\Bitrix\Crm\Volume\Cleaner::DROP_ACTIVITY]);
+				unset($taskParams[Volume\Cleaner::DROP_ACTIVITY]);
 			}
 
 		}
 		catch(Main\SystemException $exception)
 		{
-			$this->errorCollection->add(array(new \Bitrix\Main\Error($exception->getMessage(), $exception->getCode())));
+			$this->errorCollection->add(array(new Main\Error($exception->getMessage(), $exception->getCode())));
 		}
 
 		$result['stepper'] = $this->getProgressBar();
@@ -548,12 +549,12 @@ class CrmVolumeComponent extends \CBitrixComponent
 		$result = array();
 		try
 		{
-			\Bitrix\Crm\VolumeTable::deleteBatch(array('=OWNER_ID' => $this->getUser()->getId()));
-			\Bitrix\Crm\VolumeTmpTable::clearTemporally();
+			Crm\VolumeTable::deleteBatch(array('=OWNER_ID' => $this->getUser()->getId()));
+			Crm\VolumeTmpTable::clearTemporally();
 		}
 		catch(Main\SystemException $exception)
 		{
-			$this->errorCollection->add(array(new \Bitrix\Main\Error($exception->getMessage(), $exception->getCode())));
+			$this->errorCollection->add(array(new Main\Error($exception->getMessage(), $exception->getCode())));
 		}
 
 		return $result;
@@ -569,9 +570,9 @@ class CrmVolumeComponent extends \CBitrixComponent
 
 		try
 		{
-			/** @var \Bitrix\Crm\Volume\IVolumeIndicator $indicator */
+			/** @var Volume\IVolumeIndicator $indicator */
 			$indicator = $this->getIndicator($this->indicatorId);
-			if ($indicator instanceof \Bitrix\Crm\Volume\IVolumeIndicator)
+			if ($indicator instanceof Volume\IVolumeIndicator)
 			{
 				$indicator->setOwner($this->getUser()->getId());
 
@@ -579,8 +580,8 @@ class CrmVolumeComponent extends \CBitrixComponent
 				if ($this->request->get('period') !== null)
 				{
 					$period = explode('-', $this->request->get('period'));
-					$indicator->addFilter('>=DATE_CREATE', new \Bitrix\Main\Type\DateTime($period[0].'.01', 'Y.m.d'));
-					$indicator->addFilter('<DATE_CREATE', new \Bitrix\Main\Type\DateTime($period[1].'.01', 'Y.m.d'));
+					$indicator->addFilter('>=DATE_CREATE', new Main\Type\DateTime($period[0].'.01', 'Y.m.d'));
+					$indicator->addFilter('<DATE_CREATE', new Main\Type\DateTime($period[1].'.01', 'Y.m.d'));
 				}
 
 				if ($this->request->get('range') !== null)
@@ -596,18 +597,21 @@ class CrmVolumeComponent extends \CBitrixComponent
 					}
 				}
 
-				call_user_func(array($indicator, $method));
+				if (is_callable(array($indicator, $method)))
+				{
+					call_user_func(array($indicator, $method));
+				}
 			}
 		}
 		catch(Main\SystemException $exception)
 		{
 			if ($exception instanceof \Bitrix\Rest\AccessException)
 			{
-				$this->errorCollection->add(array(new \Bitrix\Main\Error(Loc::getMessage('CRM_PERMISSION_DENIED'), self::STATUS_DENIED)));
+				$this->errorCollection->add(array(new Main\Error(Loc::getMessage('CRM_PERMISSION_DENIED'), self::STATUS_DENIED)));
 			}
 			else
 			{
-				$this->errorCollection->add(array(new \Bitrix\Main\Error($exception->getMessage(), $exception->getCode())));
+				$this->errorCollection->add(array(new Main\Error($exception->getMessage(), $exception->getCode())));
 			}
 		}
 
@@ -644,7 +648,7 @@ class CrmVolumeComponent extends \CBitrixComponent
 		$this->arResult['GRID_ID'] = self::GRID_ID;
 		$this->arResult['HEADERS'] = $this->getHeaderDefinition();
 
-		$gridOptions = new \Bitrix\Main\Grid\Options(self::GRID_ID);
+		$gridOptions = new Main\Grid\Options(self::GRID_ID);
 
 		$this->arResult['FILTER'] = $this->getFilterDefinition();
 		$this->arResult['FILTER_PRESETS'] = $this->getFilterPresetsDefinition();
@@ -677,11 +681,11 @@ class CrmVolumeComponent extends \CBitrixComponent
 			'EVENT_COUNT' => 0,
 		);
 
-		$indicatorList = \Bitrix\Crm\Volume\Base::getListIndicator();
+		$indicatorList = Volume\Base::getListIndicator();
 
-		$otherIndicatorList = \Bitrix\Crm\Volume\Other::getSubIndicatorList();
+		$otherIndicatorList = Volume\Other::getSubIndicatorList();
 
-		/** @var \Bitrix\Crm\Volume\IVolumeIndicator $indicatorType */
+		/** @var Volume\IVolumeIndicator $indicatorType */
 		foreach ($indicatorList as $indicatorType)
 		{
 			if (in_array($indicatorType, $otherIndicatorList))
@@ -691,10 +695,10 @@ class CrmVolumeComponent extends \CBitrixComponent
 
 			try
 			{
-				/** @var \Bitrix\Crm\Volume\IVolumeIndicator $indicator */
+				/** @var Volume\IVolumeIndicator $indicator */
 				$indicator = new $indicatorType();
 				$indicator->setOwner($this->getUser()->getId());
-				if ($indicator instanceof \Bitrix\Crm\Volume\IVolumeIndicator)
+				if ($indicator instanceof Volume\IVolumeIndicator)
 				{
 					if ($isFilterApplied)
 					{
@@ -765,7 +769,7 @@ class CrmVolumeComponent extends \CBitrixComponent
 						}
 					}
 				}
-				if ($indicator instanceof \Bitrix\Crm\Volume\IVolumeUrl)
+				if ($indicator instanceof Volume\IVolumeUrl)
 				{
 					$this->arResult['REPORTS'][$id]['LIST_URL'] = $indicator->getUrl();
 					$this->arResult['REPORTS'][$id]['LIST_FILTER_PARAM'] = $this->getEntityFilterParam($indicator);
@@ -775,26 +779,26 @@ class CrmVolumeComponent extends \CBitrixComponent
 					$this->arResult['REPORTS'][$id]['GRID_ID'] = $gridFilterReset['GRID_ID'];
 					$this->arResult['REPORTS'][$id]['FILTER_FIELDS'] = $gridFilterReset['FILTER_FIELDS'];
 				}
-				if ($indicator instanceof \Bitrix\Crm\Volume\IVolumeClear)
+				if ($indicator instanceof Volume\IVolumeClear)
 				{
 					$this->arResult['REPORTS'][$id]['CAN_CLEAR_ENTITY'] = $indicator->canClearEntity();
 				}
-				if ($indicator instanceof \Bitrix\Crm\Volume\IVolumeClearFile)
+				if ($indicator instanceof Volume\IVolumeClearFile)
 				{
 					$this->arResult['REPORTS'][$id]['CAN_CLEAR_FILE'] = $indicator->canClearFile();
 				}
-				if ($indicator instanceof \Bitrix\Crm\Volume\IVolumeClearActivity)
+				if ($indicator instanceof Volume\IVolumeClearActivity)
 				{
 					$this->arResult['REPORTS'][$id]['CAN_CLEAR_ACTIVITY'] = $indicator->canClearActivity();
 				}
-				if ($indicator instanceof \Bitrix\Crm\Volume\IVolumeClearEvent)
+				if ($indicator instanceof Volume\IVolumeClearEvent)
 				{
 					$this->arResult['REPORTS'][$id]['CAN_CLEAR_EVENT'] = $indicator->canClearEvent();
 				}
 
 				if (
-					$indicator instanceof \Bitrix\Crm\Volume\Activity ||
-					$indicator instanceof \Bitrix\Crm\Volume\Event
+					$indicator instanceof Volume\Activity ||
+					$indicator instanceof Volume\Event
 				)
 				{
 					$this->arResult['REPORTS'][$id]['ACTIVITY_NAN'] = true;
@@ -906,11 +910,11 @@ class CrmVolumeComponent extends \CBitrixComponent
 		$filter = array(
 			'=OWNER_ID' => $this->getUser()->getId(),
 			'=AGENT_LOCK' => array(
-				\Bitrix\Crm\Volume\Cleaner::TASK_STATUS_RUNNING,
-				\Bitrix\Crm\Volume\Cleaner::TASK_STATUS_WAIT,
+				Volume\Cleaner::TASK_STATUS_RUNNING,
+				Volume\Cleaner::TASK_STATUS_WAIT,
 			),
 		);
-		$workerResult = \Bitrix\Crm\VolumeTable::getList(array(
+		$workerResult = Crm\VolumeTable::getList(array(
 			'select' => array('ID'),
 			'filter' => $filter,
 			'limit' => 1,
@@ -928,8 +932,8 @@ class CrmVolumeComponent extends \CBitrixComponent
 			'=OWNER_ID' => $this->getUser()->getId(),
 			array(
 				'=AGENT_LOCK' => array(
-					\Bitrix\Crm\Volume\Cleaner::TASK_STATUS_DONE,
-					\Bitrix\Crm\Volume\Cleaner::TASK_STATUS_CANCEL,
+					Volume\Cleaner::TASK_STATUS_DONE,
+					Volume\Cleaner::TASK_STATUS_CANCEL,
 				),
 				array(
 					'LOGIC' => 'OR',
@@ -941,7 +945,7 @@ class CrmVolumeComponent extends \CBitrixComponent
 				)
 			),
 		);
-		$workerResult = \Bitrix\Crm\VolumeTable::getList(array(
+		$workerResult = Crm\VolumeTable::getList(array(
 			'select' => array('ID'),
 			'filter' => $filter,
 			'limit' => 1,
@@ -959,12 +963,12 @@ class CrmVolumeComponent extends \CBitrixComponent
 			'=OWNER_ID' => $this->getUser()->getId(),
 			array(
 				'=AGENT_LOCK' => array(
-					\Bitrix\Crm\Volume\Cleaner::TASK_STATUS_NONE,
+					Volume\Cleaner::TASK_STATUS_NONE,
 				),
-				'<TIMESTAMP_X' => new \Bitrix\Main\Type\DateTime(date('Y-m-d H:i:s', strtotime('-1 days')), 'Y-m-d H:i:s'),
+				'<TIMESTAMP_X' => new Main\Type\DateTime(date('Y-m-d H:i:s', strtotime('-1 days')), 'Y-m-d H:i:s'),
 			),
 		);
-		$workerResult = \Bitrix\Crm\VolumeTable::getList(array(
+		$workerResult = Crm\VolumeTable::getList(array(
 			'select' => array('ID'),
 			'filter' => $filter,
 			'order' => array('TIMESTAMP_X' => 'DESC'),
@@ -987,7 +991,7 @@ class CrmVolumeComponent extends \CBitrixComponent
 	 */
 	private function hasDataCollected()
 	{
-		$query = \Bitrix\Crm\VolumeTable::query();
+		$query = Crm\VolumeTable::query();
 
 		$filter = array(
 			'=OWNER_ID' => $this->getUser()->getId(),
@@ -995,7 +999,7 @@ class CrmVolumeComponent extends \CBitrixComponent
 
 		$query
 			->setFilter($filter)
-			->registerRuntimeField('', new \Bitrix\Main\Entity\ExpressionField('CNT', 'COUNT(*)'))
+			->registerRuntimeField('', new Main\Entity\ExpressionField('CNT', 'COUNT(*)'))
 			->addSelect('CNT')
 		;
 
@@ -1016,7 +1020,7 @@ class CrmVolumeComponent extends \CBitrixComponent
 	 */
 	public function hasWorkerInProcess()
 	{
-		$option = \Bitrix\Crm\Volume\Cleaner::getProgressInfo($this->getUser()->getId());
+		$option = Volume\Cleaner::getProgressInfo($this->getUser()->getId());
 		if (!empty($option))
 		{
 			return (bool)($option['count'] > 0 && $option['steps'] < $option['count']);
@@ -1032,11 +1036,11 @@ class CrmVolumeComponent extends \CBitrixComponent
 	private function getProgressBar()
 	{
 		$res = array();
-		$res['crm'] = array(\Bitrix\Crm\Volume\Cleaner::class. $this->getUser()->getId());
+		$res['crm'] = array(Volume\Cleaner::class. $this->getUser()->getId());
 
 		\CJSCore::Init(array('update_stepper'));
 
-		return \Bitrix\Main\Update\Stepper::getHtml(
+		return Main\Update\Stepper::getHtml(
 			$res,
 			Loc::getMessage('CRM_VOLUME_AGENT_STEPPER')
 		);
@@ -1050,8 +1054,8 @@ class CrmVolumeComponent extends \CBitrixComponent
 	{
 		$result = array();
 
-		\Bitrix\Crm\Volume\Cleaner::cancelWorker($this->getUser()->getId());
-		\Bitrix\Crm\Volume\Cleaner::clearProgressInfo($this->getUser()->getId());
+		Volume\Cleaner::cancelWorker($this->getUser()->getId());
+		Volume\Cleaner::clearProgressInfo($this->getUser()->getId());
 
 		return $result;
 	}
@@ -1065,11 +1069,11 @@ class CrmVolumeComponent extends \CBitrixComponent
 		$isFilterApplied = false;
 
 		$filterPresetList = $this->getFilterPresetsDefinition();
-		$filterOptions = new \Bitrix\Main\UI\Filter\Options(self::FILTER_ID, $filterPresetList);
+		$filterOptions = new Main\UI\Filter\Options(self::FILTER_ID, $filterPresetList);
 		$filterDefinition = $this->getFilterDefinition();
 		$filterInp = $filterOptions->getFilter($filterDefinition);
 
-		if (isset($filterInp['FILTER_APPLIED']) && $filterInp['FILTER_APPLIED'] === '1')
+		if (isset($filterInp['FILTER_APPLIED']) && $filterInp['FILTER_APPLIED'])
 		{
 			foreach ($filterDefinition as $field)
 			{
@@ -1077,7 +1081,7 @@ class CrmVolumeComponent extends \CBitrixComponent
 
 				if ($field['type'] === 'date')
 				{
-					$dateCreate = \Bitrix\Main\UI\Filter\Options::fetchDateFieldValue($alias, $filterInp);
+					$dateCreate = Main\UI\Filter\Options::fetchDateFieldValue($alias, $filterInp);
 					if (
 						!empty($dateCreate["{$alias}"]) ||
 						!empty($dateCreate["{$alias}_from"]) ||
@@ -1107,7 +1111,7 @@ class CrmVolumeComponent extends \CBitrixComponent
 		$filter = array();
 
 		$filterPresetList = $this->getFilterPresetsDefinition();
-		$filterOptions = new \Bitrix\Main\UI\Filter\Options(self::FILTER_ID, $filterPresetList);
+		$filterOptions = new Main\UI\Filter\Options(self::FILTER_ID, $filterPresetList);
 		$filterDefinition = $this->getFilterDefinition();
 		$filterInp = $filterOptions->getFilter($filterDefinition);
 
@@ -1120,8 +1124,8 @@ class CrmVolumeComponent extends \CBitrixComponent
 
 			if ($field['type'] === 'date')
 			{
-				$dateCreate = \Bitrix\Main\UI\Filter\Options::fetchDateFieldValue($alias, $filterInp);
-				$format = \Bitrix\Main\Type\DateTime::getFormat();
+				$dateCreate = Main\UI\Filter\Options::fetchDateFieldValue($alias, $filterInp);
+				$format = Main\Type\DateTime::getFormat();
 				/*
 				[DATE_CREATE] =>
 				[DATE_CREATE_datesel] => LAST_30_DAYS
@@ -1133,18 +1137,18 @@ class CrmVolumeComponent extends \CBitrixComponent
 				*/
 				if (!empty($dateCreate["{$alias}_datesel"]))
 				{
-					$isRange[$alias] = ($dateCreate["{$alias}_datesel"] === \Bitrix\Main\UI\Filter\DateType::RANGE);
+					$isRange[$alias] = ($dateCreate["{$alias}_datesel"] === Main\UI\Filter\DateType::RANGE);
 				}
 				if (!empty($dateCreate["{$alias}"]))
 				{
 					$dateField[] = "<={$alias}";
-					$filter["<={$alias}"] = new \Bitrix\Main\Type\DateTime($dateCreate["{$alias}"], $format);
+					$filter["<={$alias}"] = new Main\Type\DateTime($dateCreate["{$alias}"], $format);
 				}
 				if (!empty($dateCreate["{$alias}_from"]))
 				{
 					$dateField[] = ">={$alias}";
 
-					$dt = new \Bitrix\Main\Type\DateTime($dateCreate["{$alias}_from"], $format);
+					$dt = new Main\Type\DateTime($dateCreate["{$alias}_from"], $format);
 					if ($isRange[$alias])
 					{
 						$dt->add('+1 seconds');
@@ -1155,7 +1159,7 @@ class CrmVolumeComponent extends \CBitrixComponent
 				{
 					$filter["<={$alias}"] = $dt;
 
-					$dt = new \Bitrix\Main\Type\DateTime($dateCreate["{$alias}_to"], $format);
+					$dt = new Main\Type\DateTime($dateCreate["{$alias}_to"], $format);
 					if ($isRange[$alias])
 					{
 						$dt->add('+1 seconds');
@@ -1208,29 +1212,29 @@ class CrmVolumeComponent extends \CBitrixComponent
 
 	/**
 	 * Get params to filter entity list.
-	 * \Bitrix\Crm\Volume\IVolumeUrl $indicator
+	 * Volume\IVolumeUrl $indicator
 	 * @return array|null
 	 */
 	private function getEntityFilterParam($indicator)
 	{
-		/** @var \Bitrix\Crm\Volume\IVolumeUrl $indicator */
-		if (!($indicator instanceof \Bitrix\Crm\Volume\IVolumeUrl))
+		/** @var Volume\IVolumeUrl $indicator */
+		if (!($indicator instanceof Volume\IVolumeUrl))
 		{
 			return null;
 		}
 
 		$params = array();
 
-		if ($indicator instanceof \Bitrix\Crm\Volume\Callrecord)
+		if ($indicator instanceof Volume\Callrecord)
 		{
-			$params['TYPE_ID'][] = strval(\CCrmActivityType::Call). '.'. strval(\CCrmActivityDirection::Incoming);
-			$params['TYPE_ID'][] = strval(\CCrmActivityType::Call). '.'. strval(\CCrmActivityDirection::Outgoing);
+			$params['TYPE_ID'][] = (string)\CCrmActivityType::Call. '.'. (string)\CCrmActivityDirection::Incoming;
+			$params['TYPE_ID'][] = (string)\CCrmActivityType::Call. '.'. (string)\CCrmActivityDirection::Outgoing;
 		}
 
-		if ($indicator instanceof \Bitrix\Crm\Volume\EmailAttachment)
+		if ($indicator instanceof Volume\EmailAttachment)
 		{
-			$params['TYPE_ID'][] = strval(\CCrmActivityType::Email). '.'. strval(\CCrmActivityDirection::Incoming);
-			$params['TYPE_ID'][] = strval(\CCrmActivityType::Email). '.'. strval(\CCrmActivityDirection::Outgoing);
+			$params['TYPE_ID'][] = (string)\CCrmActivityType::Email. '.'. (string)\CCrmActivityDirection::Incoming;
+			$params['TYPE_ID'][] = (string)\CCrmActivityType::Email. '.'. (string)\CCrmActivityDirection::Outgoing;
 		}
 
 		if (!$this->isFilterApplied())
@@ -1245,7 +1249,7 @@ class CrmVolumeComponent extends \CBitrixComponent
 		}
 
 		$filterPresetList = $this->getFilterPresetsDefinition();
-		$filterOptions = new \Bitrix\Main\UI\Filter\Options(self::FILTER_ID, $filterPresetList);
+		$filterOptions = new Main\UI\Filter\Options(self::FILTER_ID, $filterPresetList);
 		$filterDefinition = $this->getFilterDefinition();
 		$filterInp = $filterOptions->getFilter($filterDefinition);
 
@@ -1269,9 +1273,9 @@ class CrmVolumeComponent extends \CBitrixComponent
 			}
 			elseif ($field['type'] === 'date')
 			{
-				$dateCreate = \Bitrix\Main\UI\Filter\Options::fetchDateFieldValue($alias, $filterInp);
-				$dateTimeFormat = \Bitrix\Main\Type\DateTime::getFormat();
-				$dateFormat = \Bitrix\Main\Type\Date::getFormat();
+				$dateCreate = Main\UI\Filter\Options::fetchDateFieldValue($alias, $filterInp);
+				$dateTimeFormat = Main\Type\DateTime::getFormat();
+				$dateFormat = Main\Type\Date::getFormat();
 
 				/*
 				[DATE_CREATE] =>
@@ -1284,20 +1288,20 @@ class CrmVolumeComponent extends \CBitrixComponent
 				*/
 				if (!empty($dateCreate["{$alias}_from"]) || !empty($dateCreate["{$alias}_to"]))
 				{
-					if ($dateCreate["{$alias}_datesel"] === \Bitrix\Main\UI\Filter\DateType::RANGE)
+					if ($dateCreate["{$alias}_datesel"] === Main\UI\Filter\DateType::RANGE)
 					{
-						$params["{$target}_datesel"] = \Bitrix\Main\UI\Filter\DateType::RANGE;
+						$params["{$target}_datesel"] = Main\UI\Filter\DateType::RANGE;
 
-						$from = new \Bitrix\Main\Type\DateTime($dateCreate["{$alias}_from"], $dateTimeFormat);
+						$from = new Main\Type\DateTime($dateCreate["{$alias}_from"], $dateTimeFormat);
 						$params["{$target}_from"] = htmlspecialcharsbx($from->format($dateFormat));
 
-						$to = new \Bitrix\Main\Type\DateTime($dateCreate["{$alias}_to"], $dateTimeFormat);
+						$to = new Main\Type\DateTime($dateCreate["{$alias}_to"], $dateTimeFormat);
 						$params["{$target}_to"] = htmlspecialcharsbx($to->format($dateFormat));
 					}
 					elseif (!empty($dateCreate["{$alias}_from"]))
 					{
-						$params["{$target}_datesel"] = \Bitrix\Main\UI\Filter\DateType::RANGE;
-						$dt = new \Bitrix\Main\Type\DateTime($dateCreate["{$alias}_from"], $dateTimeFormat);
+						$params["{$target}_datesel"] = Main\UI\Filter\DateType::RANGE;
+						$dt = new Main\Type\DateTime($dateCreate["{$alias}_from"], $dateTimeFormat);
 						$dt->add('-1 seconds');
 
 						$params["{$target}_to"] = htmlspecialcharsbx($dt->format($dateFormat));
@@ -1466,19 +1470,19 @@ class CrmVolumeComponent extends \CBitrixComponent
 		$filter = array();
 
 		$excludeDate = array(
-			//\Bitrix\Main\UI\Filter\DateType::NONE,
-			//\Bitrix\Main\UI\Filter\DateType::EXACT,
-			\Bitrix\Main\UI\Filter\DateType::YESTERDAY,
-			\Bitrix\Main\UI\Filter\DateType::CURRENT_DAY,
-			\Bitrix\Main\UI\Filter\DateType::TOMORROW,
-			\Bitrix\Main\UI\Filter\DateType::NEXT_DAYS,
-			\Bitrix\Main\UI\Filter\DateType::NEXT_WEEK,
-			\Bitrix\Main\UI\Filter\DateType::NEXT_MONTH,
-			\Bitrix\Main\UI\Filter\DateType::LAST_WEEK,
-			\Bitrix\Main\UI\Filter\DateType::LAST_MONTH,
+			//Main\UI\Filter\DateType::NONE,
+			//Main\UI\Filter\DateType::EXACT,
+			Main\UI\Filter\DateType::YESTERDAY,
+			Main\UI\Filter\DateType::CURRENT_DAY,
+			Main\UI\Filter\DateType::TOMORROW,
+			Main\UI\Filter\DateType::NEXT_DAYS,
+			Main\UI\Filter\DateType::NEXT_WEEK,
+			Main\UI\Filter\DateType::NEXT_MONTH,
+			Main\UI\Filter\DateType::LAST_WEEK,
+			Main\UI\Filter\DateType::LAST_MONTH,
 		);
 
-		$stageFilter  = \Bitrix\Crm\PhaseSemantics::getListFilterInfo(
+		$stageFilter  = Crm\PhaseSemantics::getListFilterInfo(
 			false,
 			array(
 				'id' => 'STAGE_SEMANTIC_ID',
@@ -1486,9 +1490,9 @@ class CrmVolumeComponent extends \CBitrixComponent
 				'default' => true,
 				'params' => array('multiple' => 'Y'),
 				'exclude' => array(
-					//\Bitrix\Crm\PhaseSemantics::PROCESS,
-					//\Bitrix\Crm\PhaseSemantics::SUCCESS,
-					//\Bitrix\Crm\PhaseSemantics::FAILURE,
+					//Crm\PhaseSemantics::PROCESS,
+					//Crm\PhaseSemantics::SUCCESS,
+					//Crm\PhaseSemantics::FAILURE,
 				),
 			),
 			true
@@ -1508,6 +1512,24 @@ class CrmVolumeComponent extends \CBitrixComponent
 			'default' => true,
 			'type' => 'date',
 			'exclude' => $excludeDate,
+			'messages' => array(
+				'MAIN_UI_FILTER_FIELD_SUBTYPE_NONE' => Loc::getMessage('CRM_VOLUME_DATE_PERIOD_NONE'),
+				'MAIN_UI_FILTER_FIELD_SUBTYPE_EXACT' => Loc::getMessage('CRM_VOLUME_DATE_PERIOD_EXACT'),
+				'MAIN_UI_FILTER_FIELD_SUBTYPE_CURRENT_WEEK' => Loc::getMessage('CRM_VOLUME_DATE_PERIOD_CURRENT_WEEK'),
+				'MAIN_UI_FILTER_FIELD_SUBTYPE_CURRENT_MONTH' => Loc::getMessage('CRM_VOLUME_DATE_PERIOD_CURRENT_MONTH'),
+				'MAIN_UI_FILTER_FIELD_SUBTYPE_CURRENT_QUARTER' => Loc::getMessage('CRM_VOLUME_DATE_PERIOD_CURRENT_QUARTER'),
+				'MAIN_UI_FILTER_FIELD_SUBTYPE_LAST_7_DAYS' => Loc::getMessage('CRM_VOLUME_DATE_PERIOD_LAST_7_DAYS'),
+				'MAIN_UI_FILTER_FIELD_SUBTYPE_LAST_30_DAYS' => Loc::getMessage('CRM_VOLUME_DATE_PERIOD_LAST_30_DAYS'),
+				'MAIN_UI_FILTER_FIELD_SUBTYPE_LAST_60_DAYS' => Loc::getMessage('CRM_VOLUME_DATE_PERIOD_LAST_60_DAYS'),
+				'MAIN_UI_FILTER_FIELD_SUBTYPE_LAST_90_DAYS' => Loc::getMessage('CRM_VOLUME_DATE_PERIOD_LAST_90_DAYS'),
+				'MAIN_UI_FILTER_FIELD_SUBTYPE_PREV_DAYS' => Loc::getMessage('CRM_VOLUME_DATE_PERIOD_PREV_DAYS'),
+				'MAIN_UI_FILTER_FIELD_SUBTYPE_MONTH' => Loc::getMessage('CRM_VOLUME_DATE_PERIOD_MONTH'),
+				'MAIN_UI_FILTER_FIELD_SUBTYPE_QUARTER' => Loc::getMessage('CRM_VOLUME_DATE_PERIOD_QUARTER'),
+				'MAIN_UI_FILTER_FIELD_SUBTYPE_YEAR' => Loc::getMessage('CRM_VOLUME_DATE_PERIOD_YEAR'),
+				'MAIN_UI_FILTER_FIELD_SUBTYPE_LAST_WEEK' => Loc::getMessage('CRM_VOLUME_DATE_PERIOD_LAST_WEEK'),
+				'MAIN_UI_FILTER_FIELD_SUBTYPE_LAST_MONTH' => Loc::getMessage('CRM_VOLUME_DATE_PERIOD_LAST_MONTH'),
+				'MAIN_UI_FILTER__DATE_PREV_DAYS_LABEL' => Loc::getMessage('CRM_VOLUME_DATE_PERIOD_PREV_DAYS_LABEL'),
+			),
 		);
 
 		return $filter;
@@ -1840,9 +1862,9 @@ class CrmVolumeComponent extends \CBitrixComponent
 			'action' => self::ACTION_PURIFY,
 		);
 
-		$indicatorList = \Bitrix\Crm\Volume\Base::getListIndicator();
+		$indicatorList = Volume\Base::getListIndicator();
 
-		$otherIndicatorList = \Bitrix\Crm\Volume\Other::getSubIndicatorList();
+		$otherIndicatorList = Volume\Other::getSubIndicatorList();
 
 		$componentCommandAlias = array(
 			'MEASURE_ENTITY' => self::ACTION_MEASURE,
@@ -1851,7 +1873,7 @@ class CrmVolumeComponent extends \CBitrixComponent
 			'MEASURE_EVENT' => self::ACTION_MEASURE_EVENT,
 		);
 
-		/** @var \Bitrix\Crm\Volume\IVolumeIndicator $indicatorType */
+		/** @var Volume\IVolumeIndicator $indicatorType */
 		foreach ($indicatorList as $indicatorType)
 		{
 			if (in_array($indicatorType, $otherIndicatorList))
@@ -1866,7 +1888,7 @@ class CrmVolumeComponent extends \CBitrixComponent
 		}
 
 		$queueList[] = array(
-			'indicatorId' => \Bitrix\Crm\Volume\Other::getIndicatorId(),
+			'indicatorId' => Volume\Other::getIndicatorId(),
 			'action' => self::ACTION_MEASURE,
 		);
 

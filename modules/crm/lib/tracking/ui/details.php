@@ -88,9 +88,10 @@ class Details
 	 * @param int $entityTypeId Entity type ID.
 	 * @param int $entityId Entity ID.
 	 * @param array $data Entity data.
+	 * @param bool $isNew Is new.
 	 * @return void
 	 */
-	public static function saveEntityData($entityTypeId, $entityId, array $data)
+	public static function saveEntityData($entityTypeId, $entityId, array $data, $isNew = false)
 	{
 		if (!array_key_exists(self::SourceId, $data))
 		{
@@ -109,7 +110,7 @@ class Details
 		}
 
 		$row = Tracking\Internals\TraceEntityTable::getRowByEntity($entityTypeId, $entityId);
-		if ($row)
+		if ($row && !$isNew)
 		{
 			$trace = Tracking\Internals\TraceTable::getRow([
 				'select' => ['ID', 'SOURCE_ID'],

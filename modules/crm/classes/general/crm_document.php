@@ -424,7 +424,11 @@ class CCrmDocument
 						}
 						$arUserFieldType = $USER_FIELD_MANAGER->GetUserType($sType);
 
+						$fields = $USER_FIELD_MANAGER->GetUserFields('CRM_'.$arDocumentID['TYPE']);
+						$ufId = isset($fields[$fieldNameName]) ? $fields[$fieldNameName]['ID'] : null;
+
 						$arUserField = array(
+							'ID' => $ufId,
 							'ENTITY_ID' => 'CRM_'.$arDocumentID['TYPE'],
 							'FIELD_NAME' => $arFieldName['Field'],
 							'USER_TYPE_ID' => $sType,
@@ -1567,6 +1571,7 @@ class CCrmDocument
 			//communications
 			$typeId = \CCrmOwnerType::ResolveID($arDocumentID['TYPE']);
 			$objDocument += static::getCommunicationFieldsValues($typeId, $arDocumentID['ID']);
+			\Bitrix\Crm\WebForm\Internals\BPDocument::fill($typeId, $arDocumentID['ID'], $objDocument);
 
 			switch ($arDocumentID['TYPE'])
 			{
@@ -1746,7 +1751,7 @@ class CCrmDocument
 		else
 		{
 			//Set "empty" value
-			$fields[$name] = null;
+			$fields[$name] = $isMultiple ? [] : null;
 		}
 	}
 
@@ -2194,9 +2199,17 @@ class CCrmDocument
 			return array();
 
 		$arResult = array();
-		$dbUsersList = CUser::GetList(($b = 'ID'), ($o = 'ASC'), array('GROUPS_ID' => $group, 'ACTIVE' => 'Y'));
+		$dbUsersList = CUser::GetList(
+			($b = 'ID'),
+			($o = 'ASC'),
+			['GROUPS_ID' => $group, 'ACTIVE' => 'Y', 'IS_REAL_USER' => true],
+			['FIELDS' => ['ID']]
+		);
+
 		while ($arUser = $dbUsersList->Fetch())
+		{
 			$arResult[] = $arUser['ID'];
+		}
 
 		return $arResult;
 	}
@@ -2361,6 +2374,11 @@ class CCrmDocument
 				$arFieldsTmp['USER_TYPE_ID'] = 'string';
 				break;
 			}
+			case 'bool':
+			{
+				$arFieldsTmp['USER_TYPE_ID'] = 'boolean';
+				break;
+			}
 			case 'int':
 			{
 				$arFieldsTmp['USER_TYPE_ID'] = 'integer';
@@ -2503,6 +2521,24 @@ class CCrmDocument
 		--- Var.#5 (invalid) ---
 		'PHONE' => '111'
 		)
+		--- Var.#6 (invalid) ---
+		'PHONE' =>
+			array(
+				0 => array(
+					'PHONE' => array(
+						'n1' => array(
+							'VALUE' => array(
+								'n02690' => array(
+									'VALUE' => '111',
+									'VALUE_TYPE' => 'WORK'
+								),
+								...
+							),
+							'VALUE_TYPE' => 'WORK'
+						)
+					)
+				)
+			)
 		*/
 
 		if(!isset($arFields[$typeName]))
@@ -2526,6 +2562,16 @@ class CCrmDocument
 				return;
 			}
 		}
+		elseif(isset($srcData[0]) && isset($srcData[0][$typeName]))
+		{
+			//Var.#6
+			$srcData = $srcData[0][$typeName];
+			if(!is_array($srcData))
+			{
+				return;
+			}
+		}
+
 
 		$dstData = array();
 		self::ExtractEntityMultiFieldData($srcData, $dstData, $typeName === 'IM' ? 'OTHER' : 'WORK');
@@ -2768,10 +2814,16 @@ class CCrmDocument
 			$fields[$code] = [
 				'Name' => $name,
 				'Type' => 'string',
+				'Editable' => true
 			];
 		}
 
 		return $fields;
+	}
+
+	protected static function getSiteFormFields(int $entityTypeId = null): array
+	{
+		return \Bitrix\Crm\WebForm\Internals\BPDocument::getFields($entityTypeId);
 	}
 
 	protected static function getCommunicationFields()

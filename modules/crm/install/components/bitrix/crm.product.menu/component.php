@@ -20,6 +20,8 @@ $arResult['LIST_SECTION_ID'] =
 		? intval($_REQUEST['list_section_id'])
 		: (isset($arParams['SECTION_ID']) ? intval($arParams['SECTION_ID']) : 0);
 
+$isCopyMode = $arResult['IS_COPY_MODE'] = (isset($_REQUEST['copy']) && !empty($_REQUEST['copy']));
+
 $arParams['PRODUCT_COUNT'] = isset($arParams['PRODUCT_COUNT']) ? (int)$arParams['PRODUCT_COUNT'] : 20;
 $arParams['PATH_TO_PRODUCT_LIST'] = CrmCheckPath('PATH_TO_PRODUCT_LIST', $arParams['PATH_TO_PRODUCT_LIST'], '?#section_id#');
 $arParams['PATH_TO_PRODUCT_SHOW'] = CrmCheckPath('PATH_TO_PRODUCT_SHOW', $arParams['PATH_TO_PRODUCT_SHOW'], '?product_id=#product_id#&show');
@@ -43,7 +45,7 @@ $productID = isset($arParams['PRODUCT_ID']) ? intval($arParams['PRODUCT_ID']) : 
 
 $CrmPerms = new CCrmPerms($USER->GetID());
 
-$productAdd = $sectionAdd = $productEdit = $productDelete = $bImport = $CrmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE');
+$productAdd = $sectionAdd = $productEdit = $productCopy = $productDelete = $bImport = $CrmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE');
 $productShow = $sectionShow = $permToExport = $CrmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'READ');
 
 $exists = $productID > 0 && CCrmProduct::Exists($productID);
@@ -156,7 +158,7 @@ else
 		);
 	}
 
-	if ($productEdit && $arParams['TYPE'] == 'show' && $exists)
+	if ($productEdit && $arParams['TYPE'] == 'show' && $exists && !$isCopyMode)
 	{
 		$arResult['BUTTONS'][] = array(
 			'TEXT' => GetMessage('CRM_PRODUCT_EDIT'),
@@ -172,7 +174,7 @@ else
 		);
 	}
 
-	if ($productShow && $arParams['TYPE'] == 'edit' && $exists)
+	if ($productShow && $arParams['TYPE'] == 'edit' && $exists && !$isCopyMode)
 	{
 		$arResult['BUTTONS'][] = array(
 			'TEXT' => GetMessage('CRM_PRODUCT_SHOW'),
@@ -188,7 +190,26 @@ else
 		);
 	}
 
-	if ($productDelete && ($arParams['TYPE'] == 'edit' || $arParams['TYPE'] == 'show') && $exists)
+	if ($productCopy && !$isCopyMode && ($arParams['TYPE'] == 'edit' || $arParams['TYPE'] == 'show') && $exists)
+	{
+		$arResult['BUTTONS'][] = array(
+			'TEXT' => GetMessage('CRM_PRODUCT_COPY'),
+			'TITLE' => GetMessage('CRM_PRODUCT_COPY_TITLE'),
+			'LINK' => CHTTP::urlAddParams(
+				CComponentEngine::MakePathFromTemplate(
+					$arParams['PATH_TO_PRODUCT_EDIT'],
+					array('product_id' => $productID)
+				),
+				array(
+					'list_section_id' => isset($arResult['LIST_SECTION_ID']) ? intval($arResult['LIST_SECTION_ID']) : 0,
+					'copy' => 1
+				)
+			),
+			'ICON' => 'btn-copy'
+		);
+	}
+
+	if ($productDelete && !$isCopyMode && ($arParams['TYPE'] == 'edit' || $arParams['TYPE'] == 'show') && $exists)
 	{
 		$arResult['BUTTONS'][] = array(
 			'TEXT' => GetMessage('CRM_PRODUCT_DELETE'),

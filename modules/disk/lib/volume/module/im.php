@@ -13,7 +13,8 @@ use Bitrix\Disk\Internals\ObjectTable;
  * Disk storage volume measurement class.
  * @package Bitrix\Disk\Volume
  */
-class Im extends Volume\Module\Module implements Volume\IVolumeIndicatorLink, Volume\IDeleteConstraint, Volume\IClearConstraint
+class Im extends Volume\Module\Module
+	implements Volume\IDeleteConstraint, Volume\IClearConstraint
 {
 	/** @var string */
 	protected static $moduleId = 'im';
@@ -117,30 +118,6 @@ class Im extends Volume\Module\Module implements Volume\IVolumeIndicatorLink, Vo
 				->purify()
 				->measure(array(self::DISK_FILE));
 		}
-
-		/*
-		// collect files statistics
-		if (count($storageList) > 0)
-		{
-			foreach ($storageList as $storage)
-			{
-				$folders = $this->getFolderList($storage);
-				if (count($folders) > 0)
-				{
-					foreach ($folders as $folder)
-					{
-						$agr = new Volume\File();
-						$agr
-							->setOwner($this->getOwner())
-							->addFilter('STORAGE_ID', $storage->getId())
-							->addFilter('PARENT_ID', $folder->getId())
-							->purify()
-							->measure();
-					}
-				}
-			}
-		}
-		*/
 
 		return $this;
 	}
@@ -246,12 +223,6 @@ class Im extends Volume\Module\Module implements Volume\IVolumeIndicatorLink, Vo
 	 */
 	public function isAllowDeleteFolder(\Bitrix\Disk\Folder $folder)
 	{
-		/*
-		if (!$this->isMeasureAvailable())
-		{
-			return true;
-		}
-		*/
 		if ($folder->isDeleted())
 		{
 			return true;
@@ -486,31 +457,5 @@ class Im extends Volume\Module\Module implements Volume\IVolumeIndicatorLink, Vo
 		}
 
 		return $timestampUpdate;
-	}
-
-
-	/**
-	 * @param Volume\Fragment $fragment Folder entity object.
-	 * @return string|null
-	 * @throws ArgumentTypeException
-	 */
-	public static function getUrl(Volume\Fragment $fragment)
-	{
-		$url = null;
-		/*
-		if($fragment->getIndicatorType() == Volume\Folder::className())
-		{
-			$folder = $fragment->getFolder();
-			if (!$folder instanceof \Bitrix\Disk\Folder)
-			{
-				throw new ArgumentTypeException('Fragment must be subclass of '.\Bitrix\Disk\Folder::className());
-			}
-			$urlManager = \Bitrix\Disk\Driver::getInstance()->getUrlManager();
-
-			$url = $urlManager->getUrlFocusController('openFolderList', array('folderId' => $folder->getId()));
-		}
-		*/
-
-		return $url;
 	}
 }

@@ -15,7 +15,6 @@ Loc::loadMessages($_SERVER['DOCUMENT_ROOT'].'/bitrix/components/bitrix/crm.invoi
 // if not isset
 $arResult['PATH_TO_INVOICE_EDIT'] = isset($arResult['PATH_TO_INVOICE_EDIT']) ? $arResult['PATH_TO_INVOICE_EDIT'] : '';
 $arResult['PATH_TO_INVOICE_LIST'] = isset($arResult['PATH_TO_INVOICE_LIST']) ? $arResult['PATH_TO_INVOICE_LIST'] : '';
-$arResult['PATH_TO_INVOICE_WIDGET'] = isset($arResult['PATH_TO_INVOICE_WIDGET']) ? $arResult['PATH_TO_INVOICE_WIDGET'] : '';
 $arResult['PATH_TO_INVOICE_KANBAN'] = isset($arResult['PATH_TO_INVOICE_KANBAN']) ? $arResult['PATH_TO_INVOICE_KANBAN'] : '';
 
 // csv and excel delegate to list
@@ -97,6 +96,7 @@ else
 		array(
 			'PATH_TO_INVOICE_LIST' => $arResult['PATH_TO_INVOICE_LIST'],
 			'PATH_TO_INVOICE_EDIT' => $arResult['PATH_TO_INVOICE_EDIT'],
+			'PATH_TO_INVOICE_RECUR' => $arResult['PATH_TO_INVOICE_RECUR'],
 			'ELEMENT_ID' => 0,
 			'TYPE' => 'list',
 			'DISABLE_EXPORT' => 'Y'
@@ -125,13 +125,6 @@ else
 						'name' => Loc::getMessage('CRM_INVOICE_LIST_FILTER_NAV_BUTTON_LIST'),
 						'active' => 0,
 						'url' => $arResult['PATH_TO_INVOICE_LIST']
-					),
-					array(
-						//'icon' => 'chart',
-						'id' => 'widget',
-						'name' => Loc::getMessage('CRM_INVOICE_LIST_FILTER_NAV_BUTTON_WIDGET'),
-						'active' => 0,
-						'url' => $arResult['PATH_TO_INVOICE_WIDGET']
 					)
 				),
 				'BINDING' => array(

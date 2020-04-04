@@ -264,7 +264,7 @@ class OrderPaymentController extends EntityController
 				$dateInsert = \CCrmComponentHelper::TrimDateTimeString(ConvertTimeStamp(MakeTimeStamp($data['DATE_INSERT']),'SHORT'));
 			}
 
-			$data['ASSOCIATED_ENTITY']['TITLE'] = Loc::getMessage(
+			$data['ASSOCIATED_ENTITY']['HTML_TITLE'] = Loc::getMessage(
 				'CRM_PAYMENT_CREATION_MESSAGE',
 				[
 					'#ACCOUNT_NUMBER#' => $title,
@@ -273,14 +273,10 @@ class OrderPaymentController extends EntityController
 			);
 			if (!empty($fields['SUM']) && !empty($fields['CURRENCY']))
 			{
-				$sum = \CCrmCurrency::MoneyToString($fields['SUM'], $fields['CURRENCY']);
-				if (strlen($sum) > 0)
-				{
-					$data['ASSOCIATED_ENTITY']['TITLE'] .= " ".Loc::getMessage(
-							'CRM_PAYMENT_CREATION_MESSAGE_SUM',
-							['#SUM_WITH_CURRENCY#' => $sum]
-						);
-				}
+				$data['ASSOCIATED_ENTITY']['HTML_TITLE'] .= " ".Loc::getMessage(
+					'CRM_PAYMENT_CREATION_MESSAGE_SUM',
+					['#SUM_WITH_CURRENCY#' => \CCrmCurrency::MoneyToString($fields['SUM'], $fields['CURRENCY'])]
+				);
 			}
 
 			unset($data['SETTINGS']);

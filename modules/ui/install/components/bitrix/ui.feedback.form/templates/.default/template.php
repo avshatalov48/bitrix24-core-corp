@@ -17,7 +17,7 @@ if ($arParams['VIEW_TARGET'])
 }
 ?>
 
-<div id="<?=htmlspecialcharsbx($buttonId)?>" class="ui-btn ui-btn-light-border">
+<div id="<?=htmlspecialcharsbx($buttonId)?>" class="ui-btn ui-btn-themes ui-btn-light-border">
 	<?=htmlspecialcharsbx($title);?>
 </div>
 <script>

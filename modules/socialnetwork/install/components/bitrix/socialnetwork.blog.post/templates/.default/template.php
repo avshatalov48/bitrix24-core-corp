@@ -25,6 +25,7 @@ $voteId = false;
 $extensions = array('ajax', 'viewer', 'popup', 'clipboard');
 if ($arResult["bTasksAvailable"])
 {
+	$extensions[] = 'tasks_util_base';
 	$extensions[] = 'tasks_util_query';
 }
 
@@ -373,7 +374,13 @@ else
 						?></noindex><?
 					}
 
-					if (!empty($arResult["Post"]["SPERM_SHOW"]))
+					if (
+						!empty($arResult["Post"]["SPERM_SHOW"])
+						&& (
+							empty($arParams['MODE'])
+							|| $arParams['MODE'] != 'LANDING'
+						)
+					)
 					{
 						?><span class="feed-add-post-destination-cont<?=($arResult["Post"]["LIMITED_VIEW"] ? ' feed-add-post-destination-limited-view' : '')?>"><?
 
@@ -495,7 +502,7 @@ else
 									&& !$arResult["bPublicPage"]
 								)
 								{
-									?><a href="<?=$val["URL"]?>" class="feed-add-post-destination-new<?=(array_key_exists("IS_EXTRANET", $val) && $val["IS_EXTRANET"] == "Y" ? " feed-add-post-destination-new-extranet" : "")?>"><?=$val["NAME"]?></a><?
+									?><a href="<?=$val["URL"]?>" class="feed-add-post-destination-new<?=(array_key_exists("IS_EXTRANET", $val) && $val["IS_EXTRANET"] == "Y" ? " feed-add-post-destination-new-extranet" : "")?>" target="_top"><?=$val["NAME"]?></a><?
 								}
 								else
 								{
@@ -529,7 +536,7 @@ else
 									&& !$arResult["bExtranetSite"]
 								)
 								{
-									?><a href="<?=$val["URL"]?>" class="feed-add-post-destination-new"><?=$val["NAME"]?></a><?
+									?><a href="<?=$val["URL"]?>" class="feed-add-post-destination-new" target="_top"><?=$val["NAME"]?></a><?
 								}
 								else
 								{
@@ -537,6 +544,7 @@ else
 								}
 							}
 						}
+
 						if(!empty($arResult["Post"]["SPERM_SHOW"]["CRMCONTACT"]))
 						{
 							foreach($arResult["Post"]["SPERM_SHOW"]["CRMCONTACT"] as $id => $val)
@@ -571,7 +579,7 @@ else
 									&& !$arResult["bPublicPage"]
 								)
 								{
-									?><a href="<?=$val["URL"]?>" class="feed-add-post-destination-new"><?=$val["NAME"]?></a><?
+									?><a href="<?=$val["URL"]?>" class="feed-add-post-destination-new" target="_top"><?=$val["NAME"]?></a><?
 								}
 								else
 								{
@@ -609,7 +617,11 @@ else
 					}
 
 					if(
-						strlen($arResult["urlToEdit"]) > 0
+					(
+						empty($arParams['MODE'])
+						|| $arParams['MODE'] != 'LANDING'
+					)
+					&& strlen($arResult["urlToEdit"]) > 0
 						&& (
 							$arResult["PostPerm"] > BLOG_PERMS_MODERATE
 							|| (
@@ -619,7 +631,7 @@ else
 						)
 					)
 					{
-						?><a href="<?=$arResult["urlToEdit"]?>" title="<?=GetMessage("BLOG_BLOG_BLOG_EDIT")?>"><span class="feed-destination-edit" onclick="BX.addClass(this, 'feed-destination-edit-pressed');"></span></a><?
+						?><a href="<?=$arResult["urlToEdit"]?>" title="<?=GetMessage("BLOG_BLOG_BLOG_EDIT")?>" target="_top"><span class="feed-destination-edit" onclick="BX.addClass(this, 'feed-destination-edit-pressed');"></span></a><?
 					}
 
 					$datetime_detail = CComponentUtil::GetDateTimeFormatted(array(
@@ -636,7 +648,7 @@ else
 						}
 						else
 						{
-							?><a href="<?=$arResult["Post"]["urlToPost"]?>"><div class="feed-time"><?=$datetime_detail?></div></a><?
+							?><a href="<?=$arResult["Post"]["urlToPost"]?>" target="_top"><div class="feed-time"><?=$datetime_detail?></div></a><?
 						}
 					?></div><?
 
@@ -714,7 +726,7 @@ else
 							</div>
 							<script type="text/javascript">
 								BX.ready(function(){
-									var sbpimp<?=$arResult["Post"]["ID"]?> =  new SBPImpPostCounter(
+									var sbpimp<?=$arResult["Post"]["ID"]?> =  new top.SBPImpPostCounter(
 										BX('blog-post-readers-count-<?=$arResult["Post"]["ID"]?>'),
 										<?=$arResult["Post"]["ID"]?>, { 'pathToUser' : '<?=CUtil::JSEscape($arParams["~PATH_TO_USER"])?>', 'nameTemplate' : '<?=CUtil::JSEscape($arParams["NAME_TEMPLATE"])?>' }
 									);
@@ -847,10 +859,10 @@ else
 										$avatar = $arGratUser["AVATAR_SRC"];
 									}
 									?><span class="feed-user-name-wrap">
-										<div class="feed-user-avatar"
+										<div class="feed-user-avatar">
 											<? if ($avatar):?>
-												style="background: url('<?=$avatar?>'); background-size: cover;"
-											<? endif ?>>
+												<img src="<?=$avatar?>" alt="<?=CUser::FormatName($arParams['NAME_TEMPLATE'], $arGratUser)?>">
+											<? endif ?>
 										</div>
 										<div class="feed-user-name-wrap-inner"><?
 											?><a class="feed-workday-user-name" href="<?=($arGratUser['URL'] ? $arGratUser['URL'] : 'javascript:void(0);')?>"
@@ -920,119 +932,32 @@ else
 				}
 				?><div id="blg-post-destcont-<?=$arResult["Post"]["ID"]?>"></div><?
 
-				$separatorClassName = 'feed-post-informers';
+				if (
+					empty($arParams['MODE'])
+					|| $arParams['MODE'] != 'LANDING'
+				)
+				{
+					?><div class="feed-post-informers" id="blg-post-inform-<?=$arResult["Post"]["ID"]?>"><div class="feed-post-informers-cont"><?
 
-				?><div class="<?=$separatorClassName?>" id="blg-post-inform-<?=$arResult["Post"]["ID"]?>"><div class="feed-post-informers-cont"><?
-
-					$voteId = false;
-					if ($arParams["SHOW_RATING"] == "Y")
-					{
-						$voteId = "BLOG_POST".'_'.$arResult["Post"]["ID"].'-'.(time()+rand(0, 1000));
-						$emotion = (!empty($arResult["RATING"][$arResult["Post"]["ID"]]["USER_REACTION"]) ? strtoupper($arResult["RATING"][$arResult["Post"]["ID"]]["USER_REACTION"]) : 'LIKE');
-
-
-						if ($arResult["bIntranetInstalled"])
+						$voteId = false;
+						if ($arParams["SHOW_RATING"] == "Y")
 						{
-							?><span id="bx-ilike-button-<?=htmlspecialcharsbx($voteId)?>" class="feed-inform-ilike feed-new-like"><?
-							?><span class="bx-ilike-left-wrap<?=(isset($arResult["RATING"]) && isset($arResult["RATING"][$arResult["Post"]["ID"]]) && isset($arResult["RATING"][$arResult["Post"]["ID"]]["USER_HAS_VOTED"]) && $arResult["RATING"][$arResult["Post"]["ID"]]["USER_HAS_VOTED"] == "Y" ? ' bx-you-like-button' : '')?>"><a href="#like" class="bx-ilike-text"><?=\CRatingsComponentsMain::getRatingLikeMessage($emotion)?></a></span><?
-							?></span><?
-						}
-						else
-						{
-							?><span class="feed-inform-ilike"><?
-							$APPLICATION->IncludeComponent(
-								"bitrix:rating.vote",
-								$arParams["RATING_TYPE"],
-								array(
-									"ENTITY_TYPE_ID" => "BLOG_POST",
-									"ENTITY_ID" => $arResult["Post"]["ID"],
-									"OWNER_ID" => $arResult["Post"]["AUTHOR_ID"],
-									"USER_VOTE" => $arResult["RATING"][$arResult["Post"]["ID"]]["USER_VOTE"],
-									"USER_REACTION" => $arResult["RATING"][$arResult["Post"]["ID"]]["USER_REACTION"],
-									"USER_HAS_VOTED" => $arResult["RATING"][$arResult["Post"]["ID"]]["USER_HAS_VOTED"],
-									"TOTAL_VOTES" => $arResult["RATING"][$arResult["Post"]["ID"]]["TOTAL_VOTES"],
-									"TOTAL_POSITIVE_VOTES" => $arResult["RATING"][$arResult["Post"]["ID"]]["TOTAL_POSITIVE_VOTES"],
-									"TOTAL_NEGATIVE_VOTES" => $arResult["RATING"][$arResult["Post"]["ID"]]["TOTAL_NEGATIVE_VOTES"],
-									"TOTAL_VALUE" => $arResult["RATING"][$arResult["Post"]["ID"]]["TOTAL_VALUE"],
-									"PATH_TO_USER_PROFILE" => $arParams["~PATH_TO_USER"],
-								),
-								$component,
-								array("HIDE_ICONS" => "Y")
-							);
-							?></span><?
-						}
-					}
+							$voteId = "BLOG_POST".'_'.$arResult["Post"]["ID"].'-'.(time()+rand(0, 1000));
+							$emotion = (!empty($arResult["RATING"][$arResult["Post"]["ID"]]["USER_REACTION"]) ? strtoupper($arResult["RATING"][$arResult["Post"]["ID"]]["USER_REACTION"]) : 'LIKE');
 
-					if(!in_array($arParams["TYPE"], array("DRAFT", "MODERATION")))
-					{
-						$bHasComments = (IntVal($arResult["PostSrc"]["NUM_COMMENTS"]) > 0);
-						?><span class="feed-inform-comments"><?
-							?><a href="javascript:void(0);" id="blog-post-addc-add-<?=$arResult["Post"]["ID"]?>"><?=GetMessage("BLOG_COMMENTS_ADD")?></a><?
-						?></span><?
-					}
 
-					if (
-						!$arResult["ReadOnly"]
-						&& array_key_exists("FOLLOW", $arParams)
-						&& strlen($arParams["FOLLOW"]) > 0
-						&& intval($arParams["LOG_ID"]) > 0
-					)
-					{
-						?><span class="feed-inform-follow" data-follow="<?=($arParams["FOLLOW"] == "Y" ? "Y" : "N")?>" id="log_entry_follow_<?=intval($arParams["LOG_ID"])?>" onclick="__blogPostSetFollow(<?=intval($arParams["LOG_ID"])?>)"><a href="javascript:void(0);"><?=GetMessage("BLOG_POST_FOLLOW_".($arParams["FOLLOW"] == "Y" ? "Y" : "N"))?></a></span><?
-					}
-
-					?><a id="feed-post-menuanchor-<?=$arResult["Post"]["ID"]?>" href="#" class="feed-post-more-link"><span class="feed-post-more-text" id="feed-post-more-<?=$arResult["Post"]["ID"]?>"><?=GetMessage("BLOG_POST_BUTTON_MORE")?></span><span class="feed-post-more-arrow"></span></a><?
-					?><script>
-						BX.bind(BX('feed-post-menuanchor-<?=$arResult["Post"]["ID"]?>'), 'click', function(e) {
-							BX.SBPostMenu.showMenu({
-								event: e,
-								bindNode: this,
-								postId: <?=$arResult["Post"]["ID"]?>,
-								pathToPost: '<?=CUtil::JSEscape($arParams["PATH_TO_POST"])?>',
-								publicPage: <?=($arResult["bPublicPage"] ? 'true' : 'false')?>,
-								tasksAvailable: <?=($arResult["bTasksAvailable"] ? 'true' : 'false')?>,
-								urlToEdit: '<?=(strlen($arResult["urlToEdit"]) > 0 ? CUtil::JSEscape($arResult["urlToEdit"]) : '')?>',
-								urlToHide: '<?=(strlen($arResult["urlToHide"]) > 0 ? CUtil::JSEscape($arResult["urlToHide"]) : '')?>',
-								urlToDelete: '<?=(!$arResult["bFromList"] && strlen($arResult["urlToDelete"]) > 0 ? CUtil::JSEscape($arResult["urlToDelete"]) : '')?>',
-								voteId: <?=(intval($voteId) > 0 ? intval($voteId) : 'false')?>,
-								postType: '<?=CUtil::JSEscape($arParams["TYPE"])?>',
-								group_readonly: <?=($arResult["ReadOnly"] ? 'true' : 'false')?>,
-								serverName: '<?=CUtil::JSEscape((CMain::IsHTTPS() ? "https" : "http")."://".((defined("SITE_SERVER_NAME") && strlen(SITE_SERVER_NAME) > 0) ? SITE_SERVER_NAME : COption::GetOptionString("main", "server_name", "")))?>',
-								items: <?=\CUtil::phpToJSObject(!empty($arParams["ADIT_MENU"]) ? $arParams["ADIT_MENU"] : array())?>
-							});
-							return BX.PreventDefault(e);
-						});
-					</script><?
-
-					?><span class="feed-post-time-wrap"><?
-						if (
-							!$arResult["bPublicPage"]
-							&& isset($arResult["CONTENT_ID"])
-						)
-						{
-							$APPLICATION->IncludeComponent(
-								"bitrix:socialnetwork.contentview.count", "",
-								Array(
-									"CONTENT_ID" => $arResult["CONTENT_ID"],
-									"CONTENT_VIEW_CNT" => (isset($arResult["CONTENT_VIEW_CNT"]) ? $arResult["CONTENT_VIEW_CNT"] : 0),
-									"PATH_TO_USER_PROFILE" => $arParams["PATH_TO_USER"]
-								),
-								$component,
-								array("HIDE_ICONS" => "Y")
-							);
-						}
-					?></span><?
-
-					if (
-						$arResult["bIntranetInstalled"]
-						&& $arParams["SHOW_RATING"] == "Y"
-					)
-					{
-						?><div class="feed-post-emoji-top-panel-outer"><?
-							?><div id="feed-post-emoji-top-panel-container-<?=htmlspecialcharsbx($voteId)?>" class="feed-post-emoji-top-panel-box <?=(intval($arResult["RATING"][$arResult["Post"]["ID"]]["TOTAL_POSITIVE_VOTES"]) > 0 ? 'feed-post-emoji-top-panel-container-active' : '')?>"><?
+							if ($arResult["bIntranetInstalled"])
+							{
+								?><span id="bx-ilike-button-<?=htmlspecialcharsbx($voteId)?>" class="feed-inform-ilike feed-new-like"><?
+								?><span class="bx-ilike-left-wrap<?=(isset($arResult["RATING"]) && isset($arResult["RATING"][$arResult["Post"]["ID"]]) && isset($arResult["RATING"][$arResult["Post"]["ID"]]["USER_HAS_VOTED"]) && $arResult["RATING"][$arResult["Post"]["ID"]]["USER_HAS_VOTED"] == "Y" ? ' bx-you-like-button' : '')?>"><a href="#like" class="bx-ilike-text"><?=\CRatingsComponentsMain::getRatingLikeMessage($emotion)?></a></span><?
+								?></span><?
+							}
+							else
+							{
+								?><span class="feed-inform-ilike"><?
 								$APPLICATION->IncludeComponent(
 									"bitrix:rating.vote",
-									"like_react",
+									$arParams["RATING_TYPE"],
 									array(
 										"ENTITY_TYPE_ID" => "BLOG_POST",
 										"ENTITY_ID" => $arResult["Post"]["ID"],
@@ -1044,23 +969,119 @@ else
 										"TOTAL_POSITIVE_VOTES" => $arResult["RATING"][$arResult["Post"]["ID"]]["TOTAL_POSITIVE_VOTES"],
 										"TOTAL_NEGATIVE_VOTES" => $arResult["RATING"][$arResult["Post"]["ID"]]["TOTAL_NEGATIVE_VOTES"],
 										"TOTAL_VALUE" => $arResult["RATING"][$arResult["Post"]["ID"]]["TOTAL_VALUE"],
-										"REACTIONS_LIST" => $arResult["RATING"][$arResult["Post"]["ID"]]["REACTIONS_LIST"],
 										"PATH_TO_USER_PROFILE" => $arParams["~PATH_TO_USER"],
-										'TOP_DATA' => (!empty($arResult['TOP_RATING_DATA']) ? $arResult['TOP_RATING_DATA'] : false),
-										'VOTE_ID' => $voteId
 									),
 									$component,
 									array("HIDE_ICONS" => "Y")
 								);
+								?></span><?
+							}
+						}
+
+						if(!in_array($arParams["TYPE"], array("DRAFT", "MODERATION")))
+						{
+							$bHasComments = (IntVal($arResult["PostSrc"]["NUM_COMMENTS"]) > 0);
+							?><span class="feed-inform-comments"><?
+							?><a href="javascript:void(0);" id="blog-post-addc-add-<?=$arResult["Post"]["ID"]?>"><?=GetMessage("BLOG_COMMENTS_ADD")?></a><?
+							?></span><?
+						}
+
+						if (
+							!$arResult["ReadOnly"]
+							&& array_key_exists("FOLLOW", $arParams)
+							&& strlen($arParams["FOLLOW"]) > 0
+							&& intval($arParams["LOG_ID"]) > 0
+						)
+						{
+							?><span class="feed-inform-follow" data-follow="<?=($arParams["FOLLOW"] == "Y" ? "Y" : "N")?>" id="log_entry_follow_<?=intval($arParams["LOG_ID"])?>" onclick="__blogPostSetFollow(<?=intval($arParams["LOG_ID"])?>)"><a href="javascript:void(0);"><?=GetMessage("BLOG_POST_FOLLOW_".($arParams["FOLLOW"] == "Y" ? "Y" : "N"))?></a></span><?
+						}
+
+						?><a id="feed-post-menuanchor-<?=$arResult["Post"]["ID"]?>" href="#" class="feed-post-more-link"><span class="feed-post-more-text" id="feed-post-more-<?=$arResult["Post"]["ID"]?>"><?=GetMessage("BLOG_POST_BUTTON_MORE")?></span><span class="feed-post-more-arrow"></span></a><?
+						?><script>
+							BX.bind(BX('feed-post-menuanchor-<?=$arResult["Post"]["ID"]?>'), 'click', function(e) {
+								BX.SBPostMenu.showMenu({
+									event: e,
+									bindNode: this,
+									postId: <?=$arResult["Post"]["ID"]?>,
+									pathToPost: '<?=CUtil::JSEscape($arParams["PATH_TO_POST"])?>',
+									publicPage: <?=($arResult["bPublicPage"] ? 'true' : 'false')?>,
+									tasksAvailable: <?=($arResult["bTasksAvailable"] ? 'true' : 'false')?>,
+									urlToEdit: '<?=(strlen($arResult["urlToEdit"]) > 0 ? CUtil::JSEscape($arResult["urlToEdit"]) : '')?>',
+									urlToHide: '<?=(strlen($arResult["urlToHide"]) > 0 ? CUtil::JSEscape($arResult["urlToHide"]) : '')?>',
+									urlToDelete: '<?=(!$arResult["bFromList"] && strlen($arResult["urlToDelete"]) > 0 ? CUtil::JSEscape($arResult["urlToDelete"]) : '')?>',
+									voteId: <?=(intval($voteId) > 0 ? intval($voteId) : 'false')?>,
+									postType: '<?=CUtil::JSEscape($arParams["TYPE"])?>',
+									group_readonly: <?=($arResult["ReadOnly"] ? 'true' : 'false')?>,
+									serverName: '<?=CUtil::JSEscape((CMain::IsHTTPS() ? "https" : "http")."://".((defined("SITE_SERVER_NAME") && strlen(SITE_SERVER_NAME) > 0) ? SITE_SERVER_NAME : COption::GetOptionString("main", "server_name", "")))?>',
+									items: <?=\CUtil::phpToJSObject(!empty($arParams["ADIT_MENU"]) ? $arParams["ADIT_MENU"] : array())?>
+								});
+								return BX.PreventDefault(e);
+							});
+						</script><?
+
+						?><span class="feed-post-time-wrap"><?
+							if (
+								!$arResult["bPublicPage"]
+								&& isset($arResult["CONTENT_ID"])
+							)
+							{
+								$APPLICATION->IncludeComponent(
+									"bitrix:socialnetwork.contentview.count", "",
+									Array(
+										"CONTENT_ID" => $arResult["CONTENT_ID"],
+										"CONTENT_VIEW_CNT" => (isset($arResult["CONTENT_VIEW_CNT"]) ? $arResult["CONTENT_VIEW_CNT"] : 0),
+										"PATH_TO_USER_PROFILE" => $arParams["PATH_TO_USER"]
+									),
+									$component,
+									array("HIDE_ICONS" => "Y")
+								);
+							}
+							?></span><?
+
+						if (
+							$arResult["bIntranetInstalled"]
+							&& $arParams["SHOW_RATING"] == "Y"
+						)
+						{
+							?><div class="feed-post-emoji-top-panel-outer"><?
+							?><div id="feed-post-emoji-top-panel-container-<?=htmlspecialcharsbx($voteId)?>" class="feed-post-emoji-top-panel-box <?=(intval($arResult["RATING"][$arResult["Post"]["ID"]]["TOTAL_POSITIVE_VOTES"]) > 0 ? 'feed-post-emoji-top-panel-container-active' : '')?>"><?
+							$APPLICATION->IncludeComponent(
+								"bitrix:rating.vote",
+								"like_react",
+								array(
+									"ENTITY_TYPE_ID" => "BLOG_POST",
+									"ENTITY_ID" => $arResult["Post"]["ID"],
+									"OWNER_ID" => $arResult["Post"]["AUTHOR_ID"],
+									"USER_VOTE" => $arResult["RATING"][$arResult["Post"]["ID"]]["USER_VOTE"],
+									"USER_REACTION" => $arResult["RATING"][$arResult["Post"]["ID"]]["USER_REACTION"],
+									"USER_HAS_VOTED" => $arResult["RATING"][$arResult["Post"]["ID"]]["USER_HAS_VOTED"],
+									"TOTAL_VOTES" => $arResult["RATING"][$arResult["Post"]["ID"]]["TOTAL_VOTES"],
+									"TOTAL_POSITIVE_VOTES" => $arResult["RATING"][$arResult["Post"]["ID"]]["TOTAL_POSITIVE_VOTES"],
+									"TOTAL_NEGATIVE_VOTES" => $arResult["RATING"][$arResult["Post"]["ID"]]["TOTAL_NEGATIVE_VOTES"],
+									"TOTAL_VALUE" => $arResult["RATING"][$arResult["Post"]["ID"]]["TOTAL_VALUE"],
+									"REACTIONS_LIST" => $arResult["RATING"][$arResult["Post"]["ID"]]["REACTIONS_LIST"],
+									"PATH_TO_USER_PROFILE" => $arParams["~PATH_TO_USER"],
+									'TOP_DATA' => (!empty($arResult['TOP_RATING_DATA']) ? $arResult['TOP_RATING_DATA'] : false),
+									'VOTE_ID' => $voteId
+								),
+								$component,
+								array("HIDE_ICONS" => "Y")
+							);
 							?></div><?
-						?></div><?
-					}
-				?></div><?
+							?></div><?
+						}
+					?></div></div><?
+				}
+			?></div><?
 
-			?></div></div><?
 
-
-		if (!in_array($arParams["TYPE"], array("DRAFT", "MODERATION")))
+		if (
+			!in_array($arParams["TYPE"], array("DRAFT", "MODERATION"))
+			&& (
+				empty($arParams['MODE'])
+				|| $arParams['MODE'] != 'LANDING'
+			)
+		)
 		{
 			if (
 				!$arResult["bPublicPage"]

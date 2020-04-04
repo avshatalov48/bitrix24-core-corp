@@ -13,7 +13,7 @@ class Helper
 	 */
 	public static function getLicensePopupHeader()
 	{
-		return Loc::getMessage('IVR_LICENSE_POPUP_HEADER');
+		return Loc::getMessage('IVR_LICENSE_POPUP_HEADER_2');
 	}
 
 	/**
@@ -31,7 +31,7 @@ class Helper
 			 	<li class="hide-features-list-item">'.GetMessage("IVR_LICENSE_POPUP_ITEM_5").'</li>
 			</ul>
 				<a href="'.\CVoxImplantMain::GetProLink().'" target="_blank" class="hide-features-more">'.GetMessage('IVR_LICENSE_POPUP_MORE').'</a>
-			<strong>'.GetMessage('IVR_LICENSE_POPUP_FOOTER').'</strong>';
+			<strong>'.GetMessage('IVR_LICENSE_POPUP_FOOTER_2').'</strong>';
 		return $text;
 	}
 }

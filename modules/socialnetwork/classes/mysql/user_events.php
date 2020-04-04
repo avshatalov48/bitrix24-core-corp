@@ -112,7 +112,7 @@ class CSocNetUserEvents extends CAllSocNetUserEvents
 			}
 			else
 			{
-				// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ MYSQL!!! ï¿½ï¿½ï¿½ ORACLE ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½
+				// ÒÎËÜÊÎ ÄËß MYSQL!!! ÄËß ORACLE ÄÐÓÃÎÉ ÊÎÄ
 				$cnt = $dbRes->SelectedRowsCount();
 			}
 

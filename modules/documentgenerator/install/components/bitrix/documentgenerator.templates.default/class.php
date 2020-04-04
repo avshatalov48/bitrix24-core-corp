@@ -21,7 +21,6 @@ class DocumentsDefaultTemplatesComponent extends CBitrixComponent
 
 	public function executeComponent()
 	{
-		Loc::loadLanguageFile(__FILE__);
 		if(!\Bitrix\Main\Loader::includeModule('documentgenerator'))
 		{
 			ShowError(Loc::getMessage('DOCGEN_TEMPLATES_DEFAULT_ERROR_MODULE'));
@@ -31,6 +30,11 @@ class DocumentsDefaultTemplatesComponent extends CBitrixComponent
 		if(!$this->includeModule())
 		{
 			ShowError(Loc::getMessage('DOCGEN_TEMPLATES_DEFAULT_MODULE_ERROR', ['MODULE_ID' => $this->arParams['MODULE_ID']]));
+			return;
+		}
+		if(!\Bitrix\DocumentGenerator\Driver::getInstance()->getUserPermissions()->canModifyTemplates())
+		{
+			ShowError(Loc::getMessage('DOCGEN_TEMPLATES_PERMISSIONS_ERROR'));
 			return;
 		}
 		$request = \Bitrix\Main\Application::getInstance()->getContext()->getRequest();

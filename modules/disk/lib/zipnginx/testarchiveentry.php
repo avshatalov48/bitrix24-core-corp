@@ -36,7 +36,7 @@ class TestArchiveEntry extends ArchiveEntry
 	 *
 	 * @return static
 	 */
-	public static function createFromFile(File $file, $name = null)
+	public static function createFromFileModel(File $file, $name = null)
 	{
 		return new static;
 	}

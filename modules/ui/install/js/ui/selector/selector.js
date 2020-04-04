@@ -58,6 +58,7 @@ BX.UI.Selector = function(params)
 		ajax: []
 	}; // tmpSearchResult
 	this.callback = (BX.type.isNotEmptyObject(params.callback) ? params.callback : {});
+	this.callbackBefore = (BX.type.isNotEmptyObject(params.callbackBefore) ? params.callbackBefore : {});
 	this.searchXhr = null;
 	this.searchRequestId = null;
 	this.timeouts = {
@@ -99,6 +100,8 @@ BX.UI.Selector.create = function(params)
 {
 	var selectorInstance = new BX.UI.Selector(params);
 	BX.UI.SelectorManager.instances[params.id] = selectorInstance;
+
+	BX.onCustomEvent('BX.UI.SelectorManager:onCreate', [ params.id ]);
 
 	return selectorInstance;
 };
@@ -149,6 +152,56 @@ BX.UI.Selector.prototype.getPopupBind = function()
 
 BX.UI.Selector.prototype.openDialog = function()
 {
+	var popupBind = this.getPopupBind();
+	if (
+		BX.type.isDomNode(popupBind)
+		&& !document.body.contains(popupBind)
+	)
+	{
+		return;
+	}
+
+	var isPromiseReturned = false;
+	var promise = null;
+
+	if (typeof this.callbackBefore.openDialog == 'function')
+	{
+		if (BX.type.isNotEmptyObject(this.callbackBefore.context))
+		{
+			promise = this.callbackBefore.openDialog.bind(this.callbackBefore.context)();
+			isPromiseReturned =
+				promise &&
+				(
+					Object.prototype.toString.call(promise) === "[object Promise]" ||
+					promise.toString() === "[object BX.Promise]"
+				)
+			;
+		}
+	}
+
+	if (!isPromiseReturned)
+	{
+		promise = Promise.resolve();
+	}
+
+	promise.then(
+		this.openDialogPromiseFulfilled.bind(this),
+		this.openDialogPromiseRejected.bind(this)
+	);
+};
+
+BX.UI.Selector.prototype.openDialogPromiseFulfilled = function(result)
+{
+	var popupBind = this.getPopupBind();
+
+	if (
+		BX.type.isDomNode(popupBind)
+		&& !document.body.contains(popupBind)
+	)
+	{
+		return;
+	}
+
 	if (this.getOption('useContainer') == 'Y') // obUseContainer
 	{
 		if (!this.openContainer())
@@ -179,12 +232,14 @@ BX.UI.Selector.prototype.openDialog = function()
 		}
 
 		this.popups.container.setAngle({});
-		this.popups.container.setBindElement(this.getPopupBind());
+		this.popups.container.setBindElement(popupBind);
 		this.popups.container.show();
 	}
 	else
 	{
-		this.popups.main = new BX.PopupWindow('bx-selector-dialog-' + this.id, this.getPopupBind(), {
+		this.popups.main = new BX.PopupWindow({
+			id: 'bx-selector-dialog-' + this.id,
+			bindElement: popupBind,
 			autoHide: true,
 			zIndex: 1200,
 			className: this.getRenderInstance().class.popup,
@@ -278,9 +333,18 @@ BX.UI.Selector.prototype.openDialog = function()
 	});
 };
 
+BX.UI.Selector.prototype.openDialogPromiseRejected = function(reason)
+{
+	this.callback.closeDialog({
+		selectorId: this.id
+	});
+};
+
 BX.UI.Selector.prototype.openContainer = function()
 {
-	this.popups.container = new BX.PopupWindow('bx-selector-dialog-' + this.id + '-container', this.getPopupBind(), {
+	this.popups.container = new BX.PopupWindow({
+		id: 'bx-selector-dialog-' + this.id + '-container',
+		bindElement: this.getPopupBind(),
 		autoHide: true,
 		zIndex: 1200,
 		className: this.getRenderInstance().class.popup,
@@ -397,7 +461,9 @@ BX.UI.Selector.prototype.openSearch = function(params)
 	}
 	else
 	{
-		this.popups.search = new BX.PopupWindow('bx-selector-dialog-' + this.id + '-search', this.getPopupBind(), {
+		this.popups.search = new BX.PopupWindow({
+			id: 'bx-selector-dialog-' + this.id + '-search',
+			bindElement: this.getPopupBind(),
 			autoHide: true,
 			zIndex: 1200,
 			className: this.getRenderInstance().class.popup,
@@ -810,14 +876,28 @@ BX.UI.Selector.prototype.switchTab = function(params)
 		BX.focus(this.input);
 	}
 
-	if (this.getOption('useContainer') == 'Y')
-	{
-		this.popups.container.adjustPosition();
-	}
-	else
-	{
-		this.popups.main.adjustPosition();
-	}
+
+	var popup = (this.getOption('useContainer') == 'Y' ? this.popups.container : this.popups.main);
+
+	setTimeout(function () {
+		popup.bindOptions.forceTop = true;
+		popup.bindOptions.position = this.getPopupPosition(popup);
+		popup.adjustPosition();
+		popup.bindOptions.forceTop = false;
+	}.bind(this), 0);
+};
+
+BX.UI.Selector.prototype.getPopupPosition = function(popup)
+{
+	var
+		popupPos = BX.pos(popup.getPopupContainer(), false),
+		bindElementPos = BX.pos(popup.bindElement, false);
+
+	return (
+		popupPos.top < bindElementPos.top
+			? 'top'
+			: 'bottom'
+	);
 };
 
 BX.UI.Selector.prototype.setOption = function(optionId, value, entityType)
@@ -1902,7 +1982,10 @@ BX.UI.Selector.prototype.getTreeItemRelationCallback = function(params)
 	// add leaves
 	for(i in relationItems)
 	{
-		if (relationItems.hasOwnProperty(i))
+		if (
+			relationItems.hasOwnProperty(i)
+			&& BX.type.isNotEmptyObject(this.entities[leafEntityType])
+		)
 		{
 			if (!BX.type.isNotEmptyObject(this.entities[leafEntityType].items[i]))
 			{
@@ -1967,7 +2050,7 @@ BX.UI.Selector.prototype.drawItem = function(params)
 
 	var
 		itemName = item.name,
-		itemDesc = '';
+		itemDesc = (BX.type.isNotEmptyString(item.desc) ? item.desc : '');
 
 	if(
 		this.getOption('emailDescMode') != 'Y'
@@ -2068,7 +2151,8 @@ BX.UI.Selector.prototype.drawItem = function(params)
 						: ''
 				) + ' ' +
 				(
-					this.getOption('showVacations') == 'Y'
+					entityType.toLowerCase() == 'users'
+					&& this.getOption('showVacations') == 'Y'
 					&& BX.type.isNotEmptyObject(this.entities[entityType].additionalData)
 					&& BX.type.isNotEmptyObject(this.entities[entityType].additionalData['USERS_VACATION'])
 					&& BX.type.isNotEmptyString(this.entities[entityType].additionalData['USERS_VACATION'][item.entityId])
@@ -2266,6 +2350,62 @@ BX.UI.Selector.prototype.selectItem = function(params)
 		return false;
 	}
 
+	var isPromiseReturned = false;
+	var promise = null;
+
+	if (typeof this.callbackBefore.select == 'function')
+	{
+		if (BX.type.isNotEmptyObject(this.callbackBefore.context))
+		{
+			promise = this.callbackBefore.select.bind(this.callbackBefore.context)(itemId);
+			isPromiseReturned =
+				promise &&
+				(
+					Object.prototype.toString.call(promise) === "[object Promise]" ||
+					promise.toString() === "[object BX.Promise]"
+				)
+			;
+		}
+	}
+
+	if (!isPromiseReturned)
+	{
+		promise = Promise.resolve();
+	}
+
+	promise.then(
+		function(result)
+		{
+			this.selectItemPromiseFulfilled({
+				itemId: itemId,
+				entityType: entityType,
+				itemNode: itemNode,
+				className: className,
+				tab: tab
+			});
+		}.bind(this),
+		function(reason)
+		{
+			this.selectItemPromiseRejected({
+				itemId: itemId,
+				entityType: entityType,
+				itemNode: itemNode,
+				className: className,
+				tab: tab
+			});
+		}.bind(this)
+	);
+};
+
+BX.UI.Selector.prototype.selectItemPromiseFulfilled = function(data)
+{
+	var
+		itemId = data.itemId,
+		entityType = data.entityType,
+		itemNode = data.itemNode,
+		className = data.className,
+		tab = data.tab;
+
 	if (this.getOption('focusInputOnSelectItem') != 'N')
 	{
 		BX.focus(this.input);
@@ -2303,7 +2443,7 @@ BX.UI.Selector.prototype.selectItem = function(params)
 
 	BX.onCustomEvent('BX.UI.Selector:onSelectItem', [ {
 		selectorId: this.id,
-		itemId: params.itemId
+		itemId: itemId
 	} ]);
 
 	if (this.callback.select)
@@ -2338,9 +2478,10 @@ BX.UI.Selector.prototype.selectItem = function(params)
 	}
 
 	this.getSearchInstance().abortSearchRequest();
+};
 
-	return false;
-
+BX.UI.Selector.prototype.selectItemPromiseRejected = function(data)
+{
 };
 
 BX.UI.Selector.prototype.deleteSelectedItem = function(params)

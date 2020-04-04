@@ -2,6 +2,7 @@
 namespace Bitrix\Socialnetwork\Integration\Main\UISelector;
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\ModuleManager;
 use Bitrix\Socialnetwork\UserToGroupTable;
 use Bitrix\Socialnetwork\WorkgroupTable;
 
@@ -45,6 +46,14 @@ class SonetGroups extends \Bitrix\Main\UI\Selector\EntityBase
 			$filter['siteId'] = $options['siteId'];
 		}
 
+		if (
+			!empty($options['landing'])
+			&& ModuleManager::isModuleInstalled('landing')
+		)
+		{
+			$filter['landing'] = $options['landing'];
+		}
+
 		$sonetGroupsList = \Bitrix\Socialnetwork\ComponentHelper::getSonetGroupAvailable($filter, $limitReached);
 
 		if (
@@ -83,6 +92,13 @@ class SonetGroups extends \Bitrix\Main\UI\Selector\EntityBase
 				'id' => $lastSonetGroupsList,
 				'useProjects' => (!empty($options['enableProjects']) ? $options['enableProjects'] : 'N')
 			);
+			if (
+				!empty($options['landing'])
+				&& ModuleManager::isModuleInstalled('landing')
+			)
+			{
+				$filter['landing'] = $options['landing'];
+			}
 			if (!empty($options['siteId']))
 			{
 				$filter['site_id'] = $options['siteId'];
@@ -111,6 +127,13 @@ class SonetGroups extends \Bitrix\Main\UI\Selector\EntityBase
 				'id' => $selectedSonetGroupsList,
 				'useProjects' => (!empty($options['enableProjects']) ? $options['enableProjects'] : 'N')
 			);
+			if (
+				!empty($options['landing'])
+				&& ModuleManager::isModuleInstalled('landing')
+			)
+			{
+				$filter['landing'] = $options['landing'];
+			}
 			if (!empty($options['siteId']))
 			{
 				$filter['site_id'] = $options['siteId'];
@@ -234,7 +257,8 @@ class SonetGroups extends \Bitrix\Main\UI\Selector\EntityBase
 		{
 			$filter = array(
 				"SEARCH" => $requestFields['searchString'],
-				"FEATURES" => (!empty($entityOptions['searchFeatures']) ? $entityOptions['searchFeatures'] : false)
+				"FEATURES" => (!empty($entityOptions['searchFeatures']) ? $entityOptions['searchFeatures'] : false),
+				"LANDING" => (!empty($entityOptions['landing']) && ModuleManager::isModuleInstalled('landing') && $entityOptions['landing'] == 'Y' ? 'Y' : 'N')
 			);
 			if (!empty($entityOptions['siteId']))
 			{

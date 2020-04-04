@@ -21,6 +21,11 @@ class CIntranetInviteDialog
 	public static function ShowInviteDialogLink($arParams = array())
 	{
 		CJSCore::Init(array('popup'));
+		if (Loader::includeModule("bitrix24") && !CBitrix24::isMoreUserAvailable())
+		{
+			CBitrix24::initLicenseInfoPopupJS();
+		}
+
 		$arParams["MESS"] = array(
 			"BX24_INVITE_TITLE_INVITE" => GetMessage("BX24_INVITE_TITLE_INVITE"),
 			"BX24_INVITE_TITLE_ADD" => GetMessage("BX24_INVITE_TITLE_ADD"),
@@ -70,10 +75,10 @@ class CIntranetInviteDialog
 
 			if (Loader::includeModule('socialnetwork'))
 			{
-				$externalAuthIdList = Socialnetwork\ComponentHelper::checkPredefinedAuthIdList(array('bot', 'imconnector', 'replica'));
+				$externalAuthIdList = Socialnetwork\ComponentHelper::checkPredefinedAuthIdList(array('bot', 'imconnector', 'replica', 'sale', 'shop', 'saleanonymous'));
 				if (!empty($externalAuthIdList))
 				{
-					$filter['!=EXTERNAL_AUTH_ID'] = $externalAuthIdList;
+					$filter['!@EXTERNAL_AUTH_ID'] = $externalAuthIdList;
 				}
 			}
 
@@ -376,10 +381,10 @@ class CIntranetInviteDialog
 
 					if (Loader::includeModule('socialnetwork'))
 					{
-						$externalAuthIdList = Socialnetwork\ComponentHelper::checkPredefinedAuthIdList(array('bot', 'imconnector', 'replica'));
+						$externalAuthIdList = Socialnetwork\ComponentHelper::checkPredefinedAuthIdList(array('bot', 'imconnector', 'replica', 'sale', 'shop', 'saleanonymous'));
 						if (!empty($externalAuthIdList))
 						{
-							$filter['!=USER.EXTERNAL_AUTH_ID'] = $externalAuthIdList;
+							$filter['!@USER.EXTERNAL_AUTH_ID'] = $externalAuthIdList;
 						}
 					}
 
@@ -396,10 +401,10 @@ class CIntranetInviteDialog
 
 					if (Loader::includeModule('socialnetwork'))
 					{
-						$externalAuthIdList = Socialnetwork\ComponentHelper::checkPredefinedAuthIdList(array('bot', 'imconnector', 'replica'));
+						$externalAuthIdList = Socialnetwork\ComponentHelper::checkPredefinedAuthIdList(array('bot', 'imconnector', 'replica', 'sale', 'shop', 'saleanonymous'));
 						if (!empty($externalAuthIdList))
 						{
-							$filter['!=EXTERNAL_AUTH_ID'] = $externalAuthIdList;
+							$filter['!@EXTERNAL_AUTH_ID'] = $externalAuthIdList;
 						}
 					}
 
@@ -750,7 +755,7 @@ class CIntranetInviteDialog
 
 		$filter = array(
 			"=LOGIN"=> $email,
-			"!=EXTERNAL_AUTH_ID" => array("imconnector")
+			"!=EXTERNAL_AUTH_ID" => "imconnector"
 		);
 
 		$rsUser = UserTable::getList(array(
@@ -763,6 +768,7 @@ class CIntranetInviteDialog
 			if (empty($arUser["CONFIRM_CODE"]))
 			{
 				$strError = GetMessage("BX24_INVITE_DIALOG_USER_EXIST_ERROR1", array("#EMAIL#" => $email));
+				return false;
 			}
 			else
 			{
@@ -806,7 +812,7 @@ class CIntranetInviteDialog
 			$arGroups = self::getAdminGroups($SITE_ID);
 			if (CModule::IncludeModule('bitrix24'))
 			{
-				$integratorGroupId = \CBitrix24::getIntegratorGroupId();
+				$integratorGroupId = \Bitrix\Bitrix24\Integrator::getIntegratorGroupId();
 				$arGroups[] = $integratorGroupId;
 			}
 			//register users
@@ -888,7 +894,7 @@ class CIntranetInviteDialog
 		if (CModule::IncludeModule("bitrix24"))
 		{
 			$UserMaxCount = intval(COption::GetOptionString("main", "PARAM_MAX_USERS"));
-			$currentUserCount = CBitrix24::ActiveUserCount();
+			$currentUserCount = CBitrix24::getActiveUserCount();
 			return $UserMaxCount <= 0 || $cnt <= $UserMaxCount - $currentUserCount;
 		}
 		return true;
@@ -912,6 +918,7 @@ class CIntranetInviteDialog
 		if(isset($userData['PHONE_NUMBER']))
 		{
 			$arUser['PHONE_NUMBER'] = $userData['PHONE_NUMBER'];
+			$arUser['PERSONAL_MOBILE'] = $userData['PHONE_NUMBER'];
 		}
 
 		if(isset($userData["ACTIVE"]))
@@ -1631,5 +1638,24 @@ class CIntranetInviteDialog
 				? $userMessageText
 				: GetMessage("BX24_INVITE_DIALOG_INVITE_MESSAGE_TEXT_1")
 		);
+	}
+
+	public static function logAction($arUserId, $module, $action, $label)
+	{
+		if (function_exists('AddEventToStatFile'))
+		{
+			if (!is_array($arUserId))
+			{
+				$arUserId = array($arUserId);
+			}
+
+			foreach ($arUserId as $userId)
+			{
+				if ($userId > 0)
+				{
+					AddEventToStatFile($module, $action, $label, $userId);
+				}
+			}
+		}
 	}
 }

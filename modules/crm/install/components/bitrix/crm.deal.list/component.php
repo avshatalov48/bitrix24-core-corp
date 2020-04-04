@@ -127,6 +127,7 @@ use Bitrix\Crm\Category\DealCategory;
 use Bitrix\Crm\Settings\HistorySettings;
 use Bitrix\Crm\WebForm\Manager as WebFormManager;
 use Bitrix\Crm\Settings\LayoutSettings;
+use Bitrix\Main\Context;
 
 
 $CCrmDeal = new CCrmDeal(false);
@@ -169,6 +170,7 @@ $arResult['ADD_EVENT_NAME'] = $arParams['ADD_EVENT_NAME'] !== ''
 $arResult['IS_AJAX_CALL'] = isset($_REQUEST['AJAX_CALL']) || isset($_REQUEST['ajax_request']) || !!CAjax::GetSession();
 $arResult['SESSION_ID'] = bitrix_sessid();
 $arResult['NAVIGATION_CONTEXT_ID'] = isset($arParams['NAVIGATION_CONTEXT_ID']) ? $arParams['NAVIGATION_CONTEXT_ID'] : '';
+$arResult['DISABLE_NAVIGATION_BAR'] = isset($arParams['DISABLE_NAVIGATION_BAR']) ? $arParams['DISABLE_NAVIGATION_BAR'] : 'N';
 $arResult['PRESERVE_HISTORY'] = isset($arParams['PRESERVE_HISTORY']) ? $arParams['PRESERVE_HISTORY'] : false;
 
 $arResult['HAVE_CUSTOM_CATEGORIES'] = DealCategory::isCustomized();
@@ -377,16 +379,31 @@ if(!$bInternal && isset($_REQUEST['counter']))
 		}
 	}
 }
-
-$enableReportFilter = Main\Application::getInstance()->getContext()->getRequest()->getQuery('from_analytics');
-
-if ($enableReportFilter === 'Y')
+$request = Main\Application::getInstance()->getContext()->getRequest();
+$fromAnalytics = $request->getQuery('from_analytics') === 'Y';
+$enableReportFilter = false;
+if($fromAnalytics)
 {
-	$boardId = Main\Application::getInstance()->getContext()->getRequest()->getQuery('board_id');
-	$externalFilterId = 'report_board_' . $boardId . '_filter';
+	$reportId = Bitrix\Main\Context::getCurrent()->getRequest()['report_id'];
+	if($reportId != '')
+	{
+		$reportHandler = Crm\Integration\Report\ReportHandlerFactory::createWithReportId($reportId);
+		$reportFilter = $reportHandler ? $reportHandler->prepareEntityListFilter(Bitrix\Main\Context::getCurrent()->getRequest()) : null;
+
+		if(is_array($reportFilter) && !empty($reportFilter))
+		{
+			$arFilter = $reportFilter;
+			$enableReportFilter = true;
+		}
+	}
+	else
+	{
+		$boardId = Main\Application::getInstance()->getContext()->getRequest()->getQuery('board_id');
+		$externalFilterId = 'report_board_' . $boardId . '_filter';
+	}
 }
 
-$arResult['IS_EXTERNAL_FILTER'] = ($enableWidgetFilter || $enableCounterFilter);
+$arResult['IS_EXTERNAL_FILTER'] = ($enableWidgetFilter || $enableCounterFilter || $enableReportFilter);
 
 $CCrmUserType = new CCrmUserType($USER_FIELD_MANAGER, CCrmDeal::$sUFEntityID);
 
@@ -471,6 +488,7 @@ if (!$bInternal && $arParams['IS_RECURRING'] !== 'Y')
 		),
 		'filter_my' => array(
 			'name' => GetMessage('CRM_PRESET_MY'),
+			'disallow_for_all' => true,
 			'fields' => array(
 				'ASSIGNED_BY_ID_name' => $currentUserName,
 				'ASSIGNED_BY_ID' => $currentUserID,
@@ -485,7 +503,8 @@ if (!$bInternal && $arParams['IS_RECURRING'] !== 'Y')
 }
 //endregion
 
-$gridOptions = new \Bitrix\Main\Grid\Options($arResult['GRID_ID'], $arResult['FILTER_PRESETS']);
+
+
 
 if (!empty($externalFilterId))
 {
@@ -497,6 +516,8 @@ else
 {
 	$filterOptions = new \Bitrix\Main\UI\Filter\Options($arResult['GRID_ID'], $arResult['FILTER_PRESETS']);
 }
+
+$gridOptions = new \Bitrix\Main\Grid\Options($arResult['GRID_ID'], $arResult['FILTER_PRESETS']);
 //region Navigation Params
 if ($arParams['DEAL_COUNT'] <= 0)
 {
@@ -504,6 +525,10 @@ if ($arParams['DEAL_COUNT'] <= 0)
 }
 $arNavParams = $gridOptions->GetNavParams(array('nPageSize' => $arParams['DEAL_COUNT']));
 $arNavParams['bShowAll'] = false;
+if(isset($arNavParams['nPageSize']) && $arNavParams['nPageSize'] > 100)
+{
+	$arNavParams['nPageSize'] = 100;
+}
 //endregion
 
 //region Filter initialization
@@ -604,7 +629,7 @@ $arResult['HEADERS'] = array(
 
 if ($arParams['IS_RECURRING'] !== 'Y')
 {
-	if($arResult['CATEGORY_ID'] >= 0)
+	if($arResult['CATEGORY_ID'] >= 0 || !DealCategory::isCustomized())
 	{
 		$arResult['HEADERS'][] = array(
 			'id' => 'STAGE_ID',
@@ -622,7 +647,7 @@ if ($arParams['IS_RECURRING'] !== 'Y')
 		$arResult['HEADERS'][] = array(
 			'id' => 'STAGE_ID',
 			'name' => GetMessage('CRM_COLUMN_STAGE_ID'),
-			'sort' => 'stage_sort',
+			'sort' => false,
 			'width' => 200,
 			'default' => true,
 			'prevent_default' => false,
@@ -673,7 +698,7 @@ if ($arParams['IS_RECURRING'] === 'Y')
 			array('id' => 'CREATED_BY', 'name' => GetMessage('CRM_COLUMN_CREATED_BY'), 'sort' => 'created_by', 'editable' => false, 'class' => 'username'),
 			array('id' => 'DATE_MODIFY', 'name' => GetMessage('CRM_COLUMN_DATE_MODIFY'), 'sort' => 'date_modify', 'first_order' => 'desc', 'class' => 'date'),
 			array('id' => 'MODIFY_BY', 'name' => GetMessage('CRM_COLUMN_MODIFY_BY'), 'sort' => 'modify_by', 'editable' => false, 'class' => 'username'),
-			array('id' => 'BEGINDATE', 'name' => GetMessage('CRM_COLUMN_BEGINDATE'), 'sort' => 'begindate', 'editable' => true, 'type' => 'date', 'class' => 'date'),
+			array('id' => 'BEGINDATE', 'name' => GetMessage('CRM_COLUMN_BEGINDATE_1'), 'sort' => 'begindate', 'editable' => true, 'type' => 'date', 'class' => 'date'),
 			array('id' => 'PRODUCT_ID', 'name' => GetMessage('CRM_COLUMN_PRODUCT_ID'), 'sort' => false, 'default' => $isInExportMode, 'editable' => false, 'type' => 'list'),
 			array('id' => 'COMMENTS', 'name' => GetMessage('CRM_COLUMN_COMMENTS'), 'sort' => false /*because of MSSQL*/, 'editable' => false)
 		)
@@ -705,7 +730,7 @@ else
 			array('id' => 'CREATED_BY', 'name' => GetMessage('CRM_COLUMN_CREATED_BY'), 'sort' => 'created_by', 'editable' => false, 'class' => 'username'),
 			array('id' => 'DATE_MODIFY', 'name' => GetMessage('CRM_COLUMN_DATE_MODIFY'), 'sort' => 'date_modify', 'first_order' => 'desc', 'class' => 'date'),
 			array('id' => 'MODIFY_BY', 'name' => GetMessage('CRM_COLUMN_MODIFY_BY'), 'sort' => 'modify_by', 'editable' => false, 'class' => 'username'),
-			array('id' => 'BEGINDATE', 'name' => GetMessage('CRM_COLUMN_BEGINDATE'), 'sort' => 'begindate', 'editable' => true, 'type' => 'date', 'class' => 'date'),
+			array('id' => 'BEGINDATE', 'name' => GetMessage('CRM_COLUMN_BEGINDATE_1'), 'sort' => 'begindate', 'editable' => true, 'type' => 'date', 'class' => 'date'),
 			array('id' => 'CLOSEDATE', 'name' => GetMessage('CRM_COLUMN_CLOSEDATE'), 'sort' => 'closedate', 'editable' => true, 'type' => 'date'),
 			array('id' => 'PRODUCT_ID', 'name' => GetMessage('CRM_COLUMN_PRODUCT_ID'), 'sort' => false, 'default' => $isInExportMode, 'editable' => false, 'type' => 'list'),
 			array('id' => 'COMMENTS', 'name' => GetMessage('CRM_COLUMN_COMMENTS'), 'sort' => false /*because of MSSQL*/, 'editable' => false),
@@ -953,8 +978,19 @@ if(isset($arFilter['CLOSEDATE_datesel']) && $arFilter['CLOSEDATE_datesel'] === '
 $CCrmUserType->PrepareListFilterValues($arResult['FILTER'], $arFilter, $arResult['GRID_ID']);
 $USER_FIELD_MANAGER->AdminListAddFilter(CCrmDeal::$sUFEntityID, $arFilter);
 
-// converts data from filter
-Bitrix\Crm\Search\SearchEnvironment::convertEntityFilterValues(CCrmOwnerType::Deal, $arFilter);
+//region Apply Search Restrictions
+$searchRestriction = \Bitrix\Crm\Restriction\RestrictionManager::getSearchLimitRestriction();
+if(!$searchRestriction->isExceeded(CCrmOwnerType::Deal))
+{
+	Bitrix\Crm\Search\SearchEnvironment::convertEntityFilterValues(CCrmOwnerType::Deal, $arFilter);
+}
+else
+{
+	$arResult['LIVE_SEARCH_LIMIT_INFO'] = $searchRestriction->prepareStubInfo(
+		array('ENTITY_TYPE_ID' => CCrmOwnerType::Deal)
+	);
+}
+//endregion
 
 $arFilter['=IS_RECURRING'] = ($arParams['IS_RECURRING'] === 'Y') ? "Y" : 'N';
 
@@ -1860,8 +1896,17 @@ if (!in_array('ASSIGNED_BY_SECOND_NAME', $arSelect))
 	$arSelect[] =  'ASSIGNED_BY_SECOND_NAME';
 
 // For calendar view
-if (!in_array('CLOSEDATE', $arSelect))
-	$arSelect[] = 'CLOSEDATE';
+if (isset($arParams['CALENDAR_MODE_LIST']))
+{
+	if (!in_array('CLOSEDATE', $arSelect))
+	{
+		$arSelect[] = 'CLOSEDATE';
+	}
+	if (!in_array('DATE_CREATE', $arSelect))
+	{
+		$arSelect[] = 'DATE_CREATE';
+	}
+}
 
 // ID must present in select
 if(!in_array('ID', $arSelect))
@@ -2012,6 +2057,20 @@ if($arSort['date_create'])
 	unset($arSort['date_create']);
 }
 
+if ($arParams['IS_RECURRING'] === 'Y')
+{
+	$arOptions['FIELD_OPTIONS']['ADDITIONAL_FIELDS'][] = 'RECURRING';
+	$recurringSortedFields = array('active', 'counter_repeat', 'next_execution', 'start_date', 'limit_date', 'limit_repeat');
+	foreach ($recurringSortedFields as $fieldName)
+	{
+		if (isset($arSort[$fieldName]))
+		{
+			$arSort['crm_deal_recurring_'.$fieldName] = $arSort[$fieldName];
+			unset($arSort[$fieldName]);
+		}
+	}
+}
+
 if(!empty($arSort) && !isset($arSort['id']))
 {
 	$arSort['id'] = reset($arSort);
@@ -2123,20 +2182,6 @@ if ($isInExportMode && $isStExport)
 		$limit = $total - $processed;
 	}
 	unset($total, $processed);
-}
-
-if ($arParams['IS_RECURRING'] === 'Y')
-{
-	$arOptions['FIELD_OPTIONS']['ADDITIONAL_FIELDS'][] = 'RECURRING';
-	$recurringSortedFields = array('active', 'counter_repeat', 'next_execution', 'start_date', 'limit_date', 'limit_repeat');
-	foreach ($recurringSortedFields as $fieldName)
-	{
-		if (isset($arSort[$fieldName]))
-		{
-			$arSort['crm_deal_recurring_'.$fieldName] = $arSort[$fieldName];
-			unset($arSort[$fieldName]);
-		}
-	}
 }
 
 if(!isset($arSort['nearest_activity']))
@@ -2901,10 +2946,16 @@ if (!$isInExportMode)
 			$arResult['NEED_FOR_REBUILD_SEARCH_CONTENT'] = true;
 		}
 
+		if(\Bitrix\Crm\Agent\Semantics\DealSemanticsRebuildAgent::getInstance()->isEnabled())
+		{
+			$arResult['NEED_FOR_REBUILD_DEAL_SEMANTICS'] = true;
+		}
+
 		$arResult['NEED_FOR_BUILD_TIMELINE'] = $arParams['IS_RECURRING'] === 'Y'
 			? \Bitrix\Crm\Agent\Timeline\RecurringDealTimelineBuildAgent::getInstance()->isEnabled()
 			: \Bitrix\Crm\Agent\Timeline\DealTimelineBuildAgent::getInstance()->isEnabled();
 
+		$arResult['NEED_FOR_REBUILD_TIMELINE_SEARCH_CONTENT'] = \Bitrix\Crm\Agent\Search\TimelineSearchContentRebuildAgent::getInstance()->isEnabled();
 		$arResult['NEED_FOR_REFRESH_ACCOUNTING'] = \Bitrix\Crm\Agent\Accounting\DealAccountSyncAgent::getInstance()->isEnabled();
 
 		if(CCrmPerms::IsAdmin())
@@ -2913,10 +2964,6 @@ if (!$isInExportMode)
 			{
 				$arResult['PATH_TO_PRM_LIST'] = CComponentEngine::MakePathFromTemplate(COption::GetOptionString('crm', 'path_to_perm_list'));
 				$arResult['NEED_FOR_REBUILD_DEAL_ATTRS'] = true;
-			}
-			if(COption::GetOptionString('crm', '~CRM_REBUILD_DEAL_SEMANTICS', 'N') === 'Y')
-			{
-				$arResult['NEED_FOR_REBUILD_DEAL_SEMANTICS'] = true;
 			}
 		}
 	}

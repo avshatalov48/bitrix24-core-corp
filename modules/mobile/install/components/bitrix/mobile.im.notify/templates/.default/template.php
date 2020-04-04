@@ -29,11 +29,11 @@ if(empty($arResult['NOTIFY'])):?>
 			$data['text'] = preg_replace("/\[USER=([0-9]{1,})\](.*?)\[\/USER\]/i", "$2", $data['text']);
 			$data['text'] = preg_replace("/\[RATING=([1-5]{1})\]/i", "$1", $data['text']);
 			$data['text'] = preg_replace("/\[CHAT=(imol\|)?([0-9]{1,})\](.*?)\[\/CHAT\]/i", "$3", $data['text']);
-			$data['text'] = strip_tags($data['text'], '<br>');
-
 			$data['text'] = preg_replace("/\[LIKE\]/i", '<span class="bx-smile bx-im-smile-like"></span>', $data['text']);
 			$data['text'] = preg_replace("/\[DISLIKE\]/i", '<span class="bx-smile bx-im-smile-dislike"></span>', $data['text']);
+			$data['text'] = CMobileHelper::prepareNotificationText($data['text'], $data['originalTag']);
 			$data['link'] = CMobileHelper::createLink($data['originalTag']);
+
 
 			if ($data['read'] == 'N' && !$newFlag || $data['read'] == 'Y' && $newFlag):
 				$newFlag = $newFlag? false: true;
@@ -46,7 +46,11 @@ if(empty($arResult['NOTIFY'])):?>
 			<div id="notify<?=$data['id']?>"  ontouchstart="onTouch(this, <?=$data['link']? "true":"false"?>, event)" class="notif-block">
 				<script>
 					BX.bind(BX("notify<?=$data['id']?>"), "click", function(event){
-						if(BX.hasClass(event.target, "notif-fold-button") || BX.hasClass(event.target, "notif-delete"))
+						if(
+							BX.hasClass(event.target, "notif-fold-button")
+							|| BX.hasClass(event.target, "notif-delete")
+							|| event.target.tagName === 'A'
+						)
 						{
 							return;
 						}
@@ -58,7 +62,7 @@ if(empty($arResult['NOTIFY'])):?>
 				</div>
 				<div class="notif-cont">
 					<div class="notif-header">
-						<div class="notif-title"><?=$data['userName']?> </div>
+						<div class="notif-title"><?=$data['userName']? $data['userName']: GetMessage('NM_SYSTEM_USER');?> </div>
 						<div class="notif-delete" data-id="<?=$data['id']?>" onclick="deleteNotification(event)"></div>
 					</div>
 
@@ -273,7 +277,12 @@ if(empty($arResult['NOTIFY'])):?>
 
 		function onTouch(object, link, event)
 		{
-			if(BX.hasClass(event.target, "notif-fold-button"))
+			if (event.target.tagName === 'A')
+			{
+				return;
+			}
+
+			if (BX.hasClass(event.target, "notif-fold-button"))
 			{
 				return;
 			}
@@ -373,7 +382,7 @@ function getNotifyParamsHtml($params)
 				foreach ($attach['LINK'] as $linkNode)
 				{
 					$subResult .= '<span class="bx-messenger-attach-link bx-messenger-attach-link-with-preview">
-						<span class="bx-messenger-attach-link-name">'.($linkNode['NAME']? $linkNode['NAME']: $linkNode['LINK']).'</span>
+						<a class="bx-messenger-attach-link-name" href="'.$linkNode['LINK'].'">'.($linkNode['NAME']? $linkNode['NAME']: $linkNode['LINK']).'</a>
 						'.(!$linkNode['PREVIEW']? '': '<span class="bx-messenger-file-image-src"><img src="'.$linkNode['PREVIEW'].'" class="bx-messenger-file-image-text"></span>').'
 					</span>';
 				}

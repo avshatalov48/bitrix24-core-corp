@@ -121,7 +121,8 @@ $APPLICATION->IncludeComponent(
 		'TIMELINE' => array(
 			'GUID' => "{$guid}_timeline",
 			'ENABLE_WAIT' => true,
-			'WAIT_TARGET_DATES' => $arResult['WAIT_TARGET_DATES']
+			'WAIT_TARGET_DATES' => $arResult['WAIT_TARGET_DATES'],
+			'ENABLE_SALESCENTER' => false,
 		),
 		'ENABLE_PROGRESS_BAR' => true,
 		'ENABLE_PROGRESS_CHANGE' => $arResult['ENABLE_PROGRESS_CHANGE'],

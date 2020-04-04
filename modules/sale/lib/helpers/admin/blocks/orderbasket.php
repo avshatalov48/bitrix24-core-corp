@@ -116,7 +116,7 @@ class OrderBasket
 				<table class="adm-s-order-table-ddi-table" style="width: 100%;" id="'.$this->idPrefix.'sale_order_edit_product_table">
 					<thead style="text-align: left;">
 					<tr>
-						<td>
+						<td class="adm-s-order-table-context-menu-column">
 							<span class="adm-s-order-table-title-icon"
 								title="'.Loc::getMessage("SALE_ORDER_BASKET_SETTINGS_BUTTON_TITLE").'"
 								onclick="'.$this->jsObjName.'.onHeadMenu(this);"
@@ -298,7 +298,7 @@ class OrderBasket
 		{
 			$couponMessage = '';
 			if ($this->order->getId() > 0 && !($this->order instanceof Sale\Archive\Order))
-				$couponMessage = '<div class="bx-adm-pc-section">'.Loc::getMessage('SALE_ORDER_BASKET_COUPONS_NOTE').'</div>';
+				$couponMessage = '<br><div class="bx-adm-pc-section" style="font-size: smaller;">'.Loc::getMessage('SALE_ORDER_BASKET_COUPONS_NOTE').'</div>';
 
 			$result =  '
 				<div class="adm-s-result-container-promo">
@@ -309,12 +309,12 @@ class OrderBasket
 								'<div class="bx-adm-pc-inputs-container">
 									<input type="text" class="bx-adm-pc-inout-text" id="sale-admin-order-coupons">
 									<input  type="submit" class="bx-adm-pc-input-submit" value='.Loc::getMessage("SALE_ORDER_BASKET_ADD").' onclick="BX.Sale.Admin.OrderBasketCoupons.onAddCoupons(); return false;">
-								</div>' : '').
+								</div>'.$couponMessage : '').
 						'</div>
 						<div class="bx-adm-pc-section">
 							<ul class="bx-adm-pc-sale-list" id="sale-admin-order-coupons-container">
 							</ul>
-						</div>'.$couponMessage.'						
+						</div>
 					</div>
 				</div>';
 			unset($couponMessage);
@@ -2042,6 +2042,7 @@ class OrderBasket
 						{
 							\Bitrix\Sale\Helpers\Admin\OrderEdit::setProviderTrustData($item, $this->order, $providerData[$basketCode]);
 							$params["PROVIDER_DATA"] = serialize($providerData[$basketCode]);
+							$params["IS_ENABLED"] = $providerData[$basketCode]['CAN_BUY'] === 'N' ? 'N' : 'Y';
 						}
 					}
 				}
@@ -2052,6 +2053,7 @@ class OrderBasket
 					if(is_array($providerData) && !empty($providerData))
 					{
 						$params["PROVIDER_DATA"] = serialize($providerData);
+						$params["IS_ENABLED"] = $providerData[$basketCode]['CAN_BUY'] === 'N' ? 'N' : 'Y';
 					}
 				}
 
@@ -2080,6 +2082,8 @@ class OrderBasket
 								$fields["OFFER_ID"] = $fields["PRODUCT_ID"];
 							}
 
+							$fields["IS_ENABLED"] = ($fields['CAN_BUY'] === 'N') ? 'N' : 'Y';
+
 							$setItems[$idx] = $fields;
 						}
 
@@ -2101,6 +2105,7 @@ class OrderBasket
 							$childFields["OFFER_ID"] = $child->getProductId();
 							$childFields["IS_SET_ITEM"] = "Y";
 							$childFields["IS_SET_PARENT"] = "N";
+							$childFields["IS_ENABLED"] = ($childFields['CAN_BUY'] === 'N') ? 'N' : 'Y';
 							$params["SET_ITEMS"][] = $childFields;
 						}
 					}

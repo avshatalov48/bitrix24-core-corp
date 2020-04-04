@@ -55,7 +55,9 @@ class Grid
 				'ENTITY_TYPE_ID' => $entityTypeId,
 				'ENTITY_ID' => $entityId,
 				'ONLY_SOURCE_ICON' => true
-			]
+			],
+			null,
+			["HIDE_ICONS"=>"Y"]
 		);
 
 		$adsSource = ob_get_clean();
@@ -85,7 +87,9 @@ class Grid
 			[
 				'ENTITY_TYPE_ID' => $entityTypeId,
 				'ENTITY_ID' => $entityId,
-			]
+			],
+			null,
+			["HIDE_ICONS"=>"Y"]
 		);
 
 		$rows[self::COLUMN_TRACKING_PATH] = ob_get_clean();

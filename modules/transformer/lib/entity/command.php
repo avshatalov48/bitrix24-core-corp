@@ -18,6 +18,7 @@ use Bitrix\Main;
  * <li> PARAMS string mandatory
  * <li> FILE string
  * <li> ERROR string(255)
+ * <li> ERROR_CODE string(255)
  * <li> UPDATE_TIME datetime mandatory
  * </ul>
  *
@@ -56,7 +57,14 @@ class CommandTable extends Main\Entity\DataManager
 			new Main\Entity\StringField('PARAMS', array('required' => true)),
 			new Main\Entity\StringField('FILE'),
 			new Main\Entity\StringField('ERROR'),
-			new Main\Entity\DatetimeField('UPDATE_TIME', array('default_value' => new Main\Type\DateTime())),
+			new Main\Entity\IntegerField('ERROR_CODE'),
+			new Main\Entity\DatetimeField('UPDATE_TIME', array('default_value' => function()
+			{
+				$date = new Main\Type\DateTime();
+				$date->setTime($date->format('H'), $date->format('i'), $date->format('s'));
+				return $date;
+			}
+			)),
 		);
 	}
 }

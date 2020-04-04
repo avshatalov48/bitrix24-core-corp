@@ -87,63 +87,6 @@ if (!empty($arResult['ERROR_MESSAGE']))
 <script type="text/javascript">
 	BX(function () {
 
-		<?
-		/*
-		// filter-preset-buttons
-		BX.bindDelegate(
-			BX('disk-volume-filter-preset-buttons'),
-			'click',
-			{
-				tagName: 'A',
-				className: 'main-buttons-item-link'
-			},
-			function(event){
-				event.preventDefault();
-				event.stopPropagation();
-
-				var target = event.srcElement || event.target;
-				target = BX.findParent(target, {className: 'disk-volume-menu-right-item'}, true, false);
-				var presetId = BX.data(target, 'id');
-
-				var link = BX.findChild(target, {"tag": 'a'});
-				if(link)
-				{
-					var sefLink = link.getAttribute('href');
-				}
-
-				BX.Filter.Utils.getByClass(BX('disk-volume-filter-preset-buttons'), 'disk-volume-menu-right-item', true).forEach(function(node) {
-					BX.removeClass(node, 'main-buttons-item-active');
-				}, this);
-
-				BX.addClass(target, 'main-buttons-item-active');
-
-				var filter = BX.Main.filterManager.getById("<?= $arResult['FILTER_ID'] ?>");
-				var search = filter.getSearch();
-				var presets = filter.getPreset();
-
-				search.clearInput();
-				search.removePreset();
-				presets.deactivateAllPresets();
-				presets.resetPreset(true);
-				search.hideClearButton();
-				search.adjustPlaceholder();
-
-				presets.applyPreset(presetId);
-				presets.activatePreset(presetId);
-				filter.applyFilter(true,true);
-
-				if(sefLink){
-					if(typeof(window.history.pushState) === "function"){
-						window.history.pushState({path:sefLink},'',sefLink);
-					}
-				}
-
-				return BX.PreventDefault(event);
-			}
-		);
-		*/
-		?>
-
 		BX.bindDelegate(
 			BX('disk-volume-disk-grid-<?= $component->getComponentId() ?>'),
 			'click',
@@ -152,24 +95,33 @@ if (!empty($arResult['ERROR_MESSAGE']))
 				className: 'disk-volume-storage-link'
 			},
 			function(event){
-				if(BX.data(this,'collected') !== '1')
+				var isLeftClick  = (BX.getEventButton(event) === BX.MSLEFT);
+				if(isLeftClick && BX.data(this,'collected') !== '1')
 				{
+					event.stopPropagation();
+					event.preventDefault();
+
 					var storageId = parseInt(BX.data(this, 'storageId'));
 					var filterId = parseInt(BX.data(this, 'filterId'));
 					if(storageId > 0)
 					{
 						BX.Disk.showActionModal({
 							text: BX.message('DISK_VOLUME_PERFORMING_MEASURE_DATA'),
-							showLoaderIcon: true,
+							//showLoaderIcon: true,
 							autoHide: false
 						});
+
+						BX.Disk.measureManager.getGrid().getLoader().show();
+
 						BX.Disk.measureManager.callAction({
 							action: '<?= $component::ACTION_MEASURE_STORAGE ?>',
 							storageId: storageId,
 							filterId: filterId
 						});
-						event.stopPropagation();
-						event.preventDefault();
+
+
+						BX.data(this,'collected', '1');
+
 						return true;
 					}
 				}
@@ -177,13 +129,19 @@ if (!empty($arResult['ERROR_MESSAGE']))
 			}
 		);
 
-		<?
-		/*
-		// hints
-		BX.addCustomEvent(window, "Grid::updated", BX.proxy(BX.Disk.measureManager.initGridHeadHints, BX.Disk.measureManager));
-		BX.Disk.measureManager.initGridHeadHints();
-		*/
-		?>
+		BX.bindDelegate(
+			BX('disk-volume-disk-grid-<?= $component->getComponentId() ?>'),
+			'dblclick',
+			{
+				tagName: 'A',
+				className: 'disk-volume-storage-link'
+			},
+			function(event){
+				event.stopPropagation();
+				event.preventDefault();
+				return true;
+			}
+		);
 
 		var onBeforeApplyFilter = function ()
 		{

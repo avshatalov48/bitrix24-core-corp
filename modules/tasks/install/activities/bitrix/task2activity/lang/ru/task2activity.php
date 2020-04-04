@@ -26,4 +26,6 @@ $MESS["BPSA_TRACK_CLOSED"] = "Задача завершена #DATE#";
 $MESS["BPSA_TRACK_DELETED"] = "Задача была удалена";
 $MESS["BPSA_CYCLING_ERROR"] = "Задача не создана. Подозрение на зацикливание действия";
 $MESS["BPSA_CHECK_LIST_ITEMS"] = "Чек-лист";
+$MESS["BPTA1A_TIME_TRACKING_H"] = "Время выполнения, часов";
+$MESS["BPTA1A_TIME_TRACKING_M"] = "Время выполнения, минут";
 ?>

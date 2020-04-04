@@ -36,6 +36,8 @@ BX.Disk.FileViewClass = (function ()
 
 		this.render();
 
+		this.workWithLocationHash();
+
 		BX.ajax.runAction('disk.api.file.showSharingEntities', {
 			analyticsLabel: 'file.view',
 			data: {
@@ -783,6 +785,38 @@ BX.Disk.FileViewClass = (function ()
 		sharingItem.save();
 
 		document.querySelector('.disk-detail-sidebar-user-access-section').appendChild(sharingItem.getContainer());
+	};
+
+	FileViewClass.prototype.workWithLocationHash = function()
+	{
+		setTimeout(BX.delegate(function(){
+			this.onHashChange();
+		}, this), 350);
+	};
+
+	FileViewClass.prototype.onHashChange = function()
+	{
+		var matches = document.location.hash.match(/hl-([0-9]+)/g);
+		if(matches)
+		{
+			var command = (document.location.hash.match(/!([a-zA-Z]+)/g) || []).pop();
+			for (var i in matches) {
+				if (!matches.hasOwnProperty(i)) {
+					continue;
+				}
+				var hl = matches[i];
+				var number = hl.match(/hl-([0-9]+)/);
+				if(number && number[1] && command)
+				{
+					switch (command.toLowerCase())
+					{
+						case '!history':
+							this.openSlider(this.urls.fileHistory);
+							break;
+					}
+				}
+			}
+		}
 	};
 
 	return FileViewClass;

@@ -251,6 +251,7 @@ if (isset($arAllowableMethods["DELETE"])) unset($arAllowableMethods["DELETE"]);
 			$response->AddLine('<h1>'.$this->GetDavPoweredBy().' '.$s."</h1>");
 
 			$n = 0;
+			$class = 'row2';
 			foreach ($arResources as $resource)
 			{
 				$arResourceProps = $resource->GetProperties();
@@ -375,7 +376,7 @@ if (isset($arAllowableMethods["DELETE"])) unset($arAllowableMethods["DELETE"]);
 	protected function PUT(&$arResult)
 	{
 		$arRequestPath = self::ParsePath($this->request->GetPath());
-		if (!$arRequestPath["id"] || !$arRequestPath["account"] || !in_array($arRequestPath["application"], array('addressbook', 'calendar', 'infolog', 'principals')))
+		if (!$arRequestPath["id"] || !$arRequestPath["account"] || !in_array($arRequestPath["application"], array('addressbook', 'calendar', 'infolog')))
 			return '404 Not Found';
 
 		if ($handler = $this->GetApplicationHandler($arRequestPath["application"]))

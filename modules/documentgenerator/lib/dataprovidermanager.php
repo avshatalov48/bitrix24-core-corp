@@ -375,7 +375,11 @@ final class DataProviderManager
 	 */
 	protected function getValueByType($value, $type, $format)
 	{
-		if(empty($value))
+		if(empty($value) && !is_numeric($value))
+		{
+			return $value;
+		}
+		if($value instanceof Value)
 		{
 			return $value;
 		}
@@ -460,6 +464,7 @@ final class DataProviderManager
 	 *
 	 * @param DataProvider $dataProvider
 	 * @param array $params
+	 * @param array $stack
 	 * @return array
 	 * @internal
 	 */
@@ -859,13 +864,18 @@ final class DataProviderManager
 		$result = [];
 		foreach($values as $name => $value)
 		{
+			$isForChildValue = false;
 			$nameParts = explode('.', $name);
 			if(count($nameParts) > 1 && $nameParts[0] == $placeholder)
 			{
 				array_shift($nameParts);
 				$name = implode('.', $nameParts);
+				$isForChildValue = true;
 			}
-			$result[$name] = $value;
+			if($isForChildValue || (!$isForChildValue && !isset($result[$name])))
+			{
+				$result[$name] = $value;
+			}
 		}
 
 		return $result;

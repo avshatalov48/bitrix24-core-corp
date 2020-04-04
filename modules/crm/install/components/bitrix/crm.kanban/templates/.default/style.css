@@ -14,3 +14,7 @@
     max-height: 300px;
     overflow: auto;
 }
+
+.crm-kanban-popup-border {
+	padding-top: 10px;
+}

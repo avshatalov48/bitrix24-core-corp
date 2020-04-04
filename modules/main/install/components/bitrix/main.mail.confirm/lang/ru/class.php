@@ -42,3 +42,6 @@ $MESS['MAIN_MAIL_CONFIRM_SMTP_WARNING'] = 'Важно! Будьте внимат
 
 $MESS["MAIN_MAIL_CONFIRM_DELETE_SENDER_CONFIRM"] = "Вы действительно хотите удалить отправителя?";
 $MESS["MAIN_MAIL_DELETE_SENDER_ERROR"] = "Ошибка удаления отправителя";
+
+$MESS['MAIN_MAIL_CONFIRM_MENU_PLACEHOLDER'] = 'Отправитель по умолчанию';
+$MESS['MAIN_MAIL_CONFIRM_MENU_UNKNOWN'] = 'Выбрать отправителя';

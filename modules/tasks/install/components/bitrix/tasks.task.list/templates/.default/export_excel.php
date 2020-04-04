@@ -73,7 +73,7 @@ $columnsToIgnore = ['FLAG_COMPLETE', 'RESPONSIBLE_ID', 'CREATED_BY'];
 						// due to http://jabber.bx/view.php?id=39850
 						if (!array_key_exists('__LEVEL', $task) && preg_match('/^[0-9 \t]*$/', $columnValue))
 						{
-							$columnValue = "'" . $task[$field];
+							$columnValue = $task[$field] . ' ';
 						}
 						break;
 

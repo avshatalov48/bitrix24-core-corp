@@ -61,6 +61,10 @@ class RestorationEntry extends TimelineEntry
 			$bindings[] = array('ENTITY_TYPE_ID' => $entityTypeID, 'ENTITY_ID' => $entityID);
 		}
 		self::registerBindings($ID, $bindings);
+		if($entityTypeID === \CCrmOwnerType::Activity)
+		{
+			self::buildSearchContent($ID);
+		}
 		return $ID;
 	}
 	public static function attach($srcEntityTypeID, $srcEntityID, $targEntityTypeID, $targEntityID)

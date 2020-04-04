@@ -45,6 +45,11 @@ class MetaRobots extends \Bitrix\Landing\Hook\Page
 	 */
 	public function exec()
 	{
+		if ($this->execCustom())
+		{
+			return;
+		}
+
 		if (\Bitrix\Landing\Landing::getPreviewMode())
 		{
 			$use = 'N';

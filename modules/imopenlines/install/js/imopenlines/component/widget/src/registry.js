@@ -16,6 +16,7 @@ import 'pull.components.status';
 import 'ui.vue.components.smiles';
 import 'im.component.dialog';
 import 'im.component.textarea';
+import 'im.component.quotepanel';
 import 'imopenlines.component.message';
 
 // widget files

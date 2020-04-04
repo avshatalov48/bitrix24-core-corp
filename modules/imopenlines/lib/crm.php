@@ -1,5 +1,4 @@
 <?php
-
 namespace Bitrix\ImOpenLines;
 
 use \Bitrix\Main\Loader,
@@ -7,15 +6,16 @@ use \Bitrix\Main\Loader,
 	\Bitrix\Main\Localization\Loc;
 
 use \Bitrix\Crm\Tracking,
-	\Bitrix\Crm\Settings\LeadSettings,
 	\Bitrix\Crm\EntityManageFacility,
+	\Bitrix\Crm\Settings\LeadSettings,
 	\Bitrix\Crm\Automation\Trigger\OpenLineTrigger,
-	\Bitrix\Crm\Automation\Trigger\OpenLineMessageTrigger,
-	\Bitrix\Crm\Integration\Channel\IMOpenLineTracker;
+	\Bitrix\Crm\Integration\Channel\IMOpenLineTracker,
+	\Bitrix\Crm\Automation\Trigger\OpenLineMessageTrigger;
 
 use \Bitrix\Im\User as ImUser;
 
-use \Bitrix\Imopenlines\Widget,
+use \Bitrix\ImOpenLines\Queue,
+	\Bitrix\Imopenlines\Widget,
 	\Bitrix\ImOpenLines\Crm\Fields,
 	\Bitrix\ImOpenLines\Im\Messages,
 	\Bitrix\ImOpenLines\Crm\Activity,
@@ -971,7 +971,7 @@ class Crm
 			{
 				if($type != Crm::ENTITY_DEAL && $type != Crm::ENTITY_COMPANY)
 				{
-					if(empty($entity['NAME']) || ($entity['NAME'] != $personName && LiveChat::getDefaultGuestName() != $personName))
+					if(empty($entity['NAME']) && LiveChat::getDefaultGuestName() != $personName)
 					{
 						$updateFields['NAME'] = $personName;
 					}
@@ -982,7 +982,7 @@ class Crm
 			{
 				if($type != Crm::ENTITY_DEAL && $type != Crm::ENTITY_COMPANY)
 				{
-					if(empty($entity['LAST_NAME']) || ($entity['LAST_NAME'] != $personLastName && LiveChat::getDefaultGuestName() != $personLastName))
+					if(empty($entity['LAST_NAME']) && LiveChat::getDefaultGuestName() != $personLastName)
 					{
 						$updateFields['LAST_NAME'] = $personLastName;
 					}
@@ -993,7 +993,7 @@ class Crm
 			{
 				if($type != Crm::ENTITY_DEAL && $type != Crm::ENTITY_COMPANY)
 				{
-					if(empty($entity['SECOND_NAME']) || ($entity['SECOND_NAME'] != $personSecondName && LiveChat::getDefaultGuestName() != $personSecondName))
+					if(empty($entity['SECOND_NAME']) && LiveChat::getDefaultGuestName() != $personSecondName)
 					{
 						$updateFields['SECOND_NAME'] = $personSecondName;
 					}
@@ -1006,7 +1006,7 @@ class Crm
 				{
 					if($type != Crm::ENTITY_COMPANY)
 					{
-						if(empty($entity['SOURCE_DESCRIPTION']) || $entity['SOURCE_DESCRIPTION'] != $personWebsite)
+						if(empty($entity['SOURCE_DESCRIPTION']))
 						{
 							$updateFields['SOURCE_DESCRIPTION'] = $personWebsite;
 						}
@@ -1101,7 +1101,7 @@ class Crm
 							'module_id' => 'im',
 							'command' => 'updateUser',
 							'params' => Array(
-								'user' => \Bitrix\Im\User::getInstance($session->getData('USER_ID'))->getFields()
+								'user' => ImUser::getInstance($session->getData('USER_ID'))->getFields()
 							),
 							'extra' => \Bitrix\Im\Common::getPullExtra()
 						));
@@ -1182,6 +1182,10 @@ class Crm
 
 	/**
 	 * @return int
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\LoaderException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
 	 */
 	public function getResponsibleCrmId()
 	{
@@ -1197,8 +1201,24 @@ class Crm
 			}
 			else
 			{
-				//TODO: temporary fix
-				$queueUserList = $session->getQueue()['USER_LIST'];
+				//TODO: fix
+				$session->getConfig('ID');
+				$res = Queue::getList([
+					'select' => [
+						'USER_ID'
+					],
+					'filter' => [
+						'=CONFIG_ID' => $session->getConfig('ID')
+					]
+				]);
+
+				while($queueUser = $res->fetch())
+				{
+					if(ImUser::getInstance($queueUser['USER_ID'])->isActive())
+					{
+						$queueUserList[] = $queueUser['USER_ID'];
+					}
+				}
 
 				if(!empty($queueUserList) && is_array($queueUserList))
 				{
@@ -1214,7 +1234,7 @@ class Crm
 						$result = current($adminList);
 					}
 				}
-				//TODO: END temporary fix
+				//TODO: END fix
 
 				if(empty($result))
 				{
@@ -1398,6 +1418,11 @@ class Crm
 	{
 		$result = new Result();
 
+		if (!\Bitrix\Crm\Automation\Factory::canUseAutomation())
+		{
+			return $result;
+		}
+
 		if($this->isSkipAutomationTrigger() != true)
 		{
 			if(is_array($bindings) || is_array($data))
@@ -1422,6 +1447,11 @@ class Crm
 	public function executeAutomationMessageTrigger($bindings, $data)
 	{
 		$result = new Result();
+
+		if (!\Bitrix\Crm\Automation\Factory::canUseAutomation())
+		{
+			return $result;
+		}
 
 		if($this->isSkipAutomationTrigger() != true)
 		{

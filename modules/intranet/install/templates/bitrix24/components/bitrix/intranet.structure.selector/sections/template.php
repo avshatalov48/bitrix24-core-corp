@@ -69,6 +69,7 @@ if (intval($arResult['SECTION_DATA']["USER_COUNT"]) > 0):
 		<div class="department-titles"><?=GetMessage("INTR_IS_TPL_EMPLOYEES")?><?echo " (".$arResult['SECTION_DATA']["USER_COUNT"].")"?></div>
 	<?
 	if ($arResult["CURRENT_SECTION"]):
+		unset($arParams['LIST_URL']);
 		$APPLICATION->IncludeComponent("bitrix:intranet.structure.list", "list", $arParams, $component);
 	endif;    
 	?>

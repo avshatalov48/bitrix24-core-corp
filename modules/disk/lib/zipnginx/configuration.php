@@ -5,12 +5,12 @@ namespace Bitrix\Disk\ZipNginx;
 
 use Bitrix\Disk\Driver;
 use Bitrix\Main\Config\Option;
+use Bitrix\Main\Engine\UrlManager;
+use Bitrix\Main\ModuleManager;
 use Bitrix\Main\Web\HttpClient;
 
 final class Configuration
 {
-	const TEST_URL = '/bitrix/services/disk/index.php?action=downloadTestZipArchive';
-
 	/**
 	 * Returns true if work with mod_zip is enabled.
 	 *
@@ -19,6 +19,11 @@ final class Configuration
 	 */
 	public static function isEnabled()
 	{
+		if (ModuleManager::isModuleInstalled('bitrix24'))
+		{
+			return true;
+		}
+
 		return Option::get(Driver::INTERNAL_MODULE_ID, 'disk_nginx_mod_zip_enabled', 'N') === 'Y';
 	}
 
@@ -55,7 +60,7 @@ final class Configuration
 			'version' => HttpClient::HTTP_1_1,
 		));
 
-		if($http->get(Driver::getInstance()->getUrlManager()->getHostUrl() . static::TEST_URL) === false)
+		if($http->get(UrlManager::getInstance()->create('disk.testZipNginxDownload.download', [], true)) === false)
 		{
 			return false;
 		}

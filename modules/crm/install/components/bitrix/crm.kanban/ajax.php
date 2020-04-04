@@ -129,6 +129,7 @@ if ($version == 2)
 					'color' => $column['color'],
 					'name' => htmlspecialcharsback($column['name']),
 					'canSort' => !($column['type'] == 'WIN'),
+					'canAddItem' => $column['canAddItem'],
 					'data' => array(
 						'sort' => $column['sort'],
 						'type' => $column['type'],

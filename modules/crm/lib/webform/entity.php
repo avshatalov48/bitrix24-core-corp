@@ -26,6 +26,12 @@ class Entity
 
 	public static function getMap($entityTypeName = null)
 	{
+		static $invoiceDefaultStatusId = null;
+		if ($invoiceDefaultStatusId === null)
+		{
+			$invoiceDefaultStatusId = \CAllCrmInvoice::getDefaultStatusId();
+		}
+
 		$entityTypeMap =  array(
 			\CCrmOwnerType::LeadName => array(
 				'CLASS_NAME' => 'CCrmLead',
@@ -118,7 +124,7 @@ class Entity
 						'TEMPLATE' => Loc::getMessage('CRM_WEBFORM_ENTITY_FIELD_NAME_TEMPLATE'),
 					),
 					'STATUS_ID' => array(
-						'TEMPLATE' => \CAllCrmInvoice::getDefaultStatusId(),
+						'TEMPLATE' => $invoiceDefaultStatusId,
 					),
 				)
 			),
@@ -259,8 +265,8 @@ class Entity
 			self::ENUM_ENTITY_SCHEME_CONTACT => array(
 				'NAME' => Loc::getMessage('CRM_WEBFORM_ENTITY_SCHEME_CLIENT'),
 				'ENTITIES' => array(
-					\CCrmOwnerType::CompanyName,
 					\CCrmOwnerType::ContactName,
+					\CCrmOwnerType::CompanyName,
 				),
 				'DESCRIPTION' => Loc::getMessage('CRM_WEBFORM_ENTITY_SCHEME_CLIENT_DESC')
 			),
@@ -323,6 +329,23 @@ class Entity
 		}
 	}
 
+	/**
+	 * Return true if scheme support entity.
+	 *
+	 * @param int $schemeId Scheme ID.
+	 * @param int $entityTypeId Entity type ID.
+	 * @return bool
+	 */
+	public static function isSchemeSupportEntity(int $schemeId, int $entityTypeId): bool
+	{
+		$scheme = Entity::getSchemes((int) $schemeId);
+		$entityName = \CCrmOwnerType::ResolveName((int) $entityTypeId);
+
+		return (
+			$entityName && $scheme
+			&& in_array($entityName, $scheme['ENTITIES'], true));
+	}
+
 	public static function getNames()
 	{
 		return array_keys(static::getList());
@@ -342,7 +365,12 @@ class Entity
 
 	public static function getFieldCaption($entityName, $fieldId)
 	{
-		$map = static::getMap();
+		static $map = null;
+		if ($map === null)
+		{
+			$map = static::getMap();
+		}
+
 		$entity = $map[$entityName];
 		/**@var $className \CCrmInvoice*/
 		$className = $entity['CLASS_NAME'];

@@ -2429,9 +2429,18 @@ if(typeof(BX.CrmDedupeEntityLoader) === "undefined")
 			}
 			this._callback = BX.type.isFunction(params["callback"]) ? params["callback"] : null;
 
+			//Trace information
+			var url = BX.util.add_url_param(
+				this._serviceUrl,
+				BX.mergeEx(
+					{ TYPE_NAME: BX.type.isNotEmptyString(params["indexTypeName"]) ? params["indexTypeName"] : "" },
+					typeof(params["indexMatches"]) !== "undefined" ? params["indexMatches"] : {}
+				)
+			);
+
 			BX.ajax(
 				{
-					url: this._serviceUrl,
+					url: url,
 					method: "POST",
 					dataType: "json",
 					data:

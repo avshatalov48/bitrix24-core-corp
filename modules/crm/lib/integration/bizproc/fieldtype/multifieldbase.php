@@ -198,4 +198,9 @@ class MultiFieldBase extends BaseType\Base
 
 		return $result;
 	}
+
+	public static function extractValueMultiple(FieldType $fieldType, array $field, array $request)
+	{
+		return static::extractValueSingle($fieldType, $field, $request);
+	}
 }

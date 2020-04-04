@@ -273,22 +273,94 @@ class Helper
 				'ICON' => $row['ICON'],
 			);
 
-			if (isset($row['ICON_DISABLED']))
+			if (isset($row['ICON_DISABLED']) && $row['ICON_DISABLED'] !== false)
+			{
 				$result[$row['ID_CONNECTOR']]['ICON_DISABLED'] = $row['ICON_DISABLED'];
+			}
+
 			if (isset($row['DEL_EXTERNAL_MESSAGES']))
-				$result[$row['ID_CONNECTOR']]['DEL_EXTERNAL_MESSAGES'] = $row['DEL_EXTERNAL_MESSAGES'];
+			{
+				if($row['DEL_EXTERNAL_MESSAGES'] == 'Y')
+				{
+					$result[$row['ID_CONNECTOR']]['DEL_EXTERNAL_MESSAGES'] = true;
+				}
+				elseif($row['DEL_EXTERNAL_MESSAGES'] == 'N')
+				{
+					$result[$row['ID_CONNECTOR']]['DEL_EXTERNAL_MESSAGES'] = false;
+				}
+			}
+
 			if (isset($row['EDIT_INTERNAL_MESSAGES']))
-				$result[$row['ID_CONNECTOR']]['EDIT_INTERNAL_MESSAGES'] = $row['EDIT_INTERNAL_MESSAGES'];
+			{
+				if($row['EDIT_INTERNAL_MESSAGES'] == 'Y')
+				{
+					$result[$row['ID_CONNECTOR']]['EDIT_INTERNAL_MESSAGES'] = true;
+				}
+				elseif($row['EDIT_INTERNAL_MESSAGES'] == 'N')
+				{
+					$result[$row['ID_CONNECTOR']]['EDIT_INTERNAL_MESSAGES'] = false;
+				}
+			}
+
 			if (isset($row['DEL_INTERNAL_MESSAGES']))
-				$result[$row['ID_CONNECTOR']]['DEL_INTERNAL_MESSAGES'] = $row['DEL_INTERNAL_MESSAGES'];
+			{
+				if($row['DEL_INTERNAL_MESSAGES'] == 'Y')
+				{
+					$result[$row['ID_CONNECTOR']]['DEL_INTERNAL_MESSAGES'] = true;
+				}
+				elseif($row['DEL_INTERNAL_MESSAGES'] == 'N')
+				{
+					$result[$row['ID_CONNECTOR']]['DEL_INTERNAL_MESSAGES'] = false;
+				}
+			}
+
 			if (isset($row['NEWSLETTER']))
-				$result[$row['ID_CONNECTOR']]['NEWSLETTER'] = $row['NEWSLETTER'];
+			{
+				if($row['NEWSLETTER'] == 'Y')
+				{
+					$result[$row['ID_CONNECTOR']]['NEWSLETTER'] = true;
+				}
+				elseif($row['NEWSLETTER'] == 'N')
+				{
+					$result[$row['ID_CONNECTOR']]['NEWSLETTER'] = false;
+				}
+			}
+
 			if (isset($row['NEED_SYSTEM_MESSAGES']))
-				$result[$row['ID_CONNECTOR']]['NEED_SYSTEM_MESSAGES'] = $row['NEED_SYSTEM_MESSAGES'];
+			{
+				if($row['NEED_SYSTEM_MESSAGES'] == 'Y')
+				{
+					$result[$row['ID_CONNECTOR']]['NEED_SYSTEM_MESSAGES'] = true;
+				}
+				elseif($row['NEED_SYSTEM_MESSAGES'] == 'N')
+				{
+					$result[$row['ID_CONNECTOR']]['NEED_SYSTEM_MESSAGES'] = false;
+				}
+			}
+
 			if (isset($row['NEED_SIGNATURE']))
-				$result[$row['ID_CONNECTOR']]['NEED_SIGNATURE'] = $row['NEED_SIGNATURE'];
+			{
+				if($row['NEED_SIGNATURE'] == 'Y')
+				{
+					$result[$row['ID_CONNECTOR']]['NEED_SIGNATURE'] = true;
+				}
+				elseif($row['NEED_SIGNATURE'] == 'N')
+				{
+					$result[$row['ID_CONNECTOR']]['NEED_SIGNATURE'] = false;
+				}
+			}
+
 			if (isset($row['CHAT_GROUP']))
-				$result[$row['ID_CONNECTOR']]['CHAT_GROUP'] = $row['CHAT_GROUP'];
+			{
+				if($row['CHAT_GROUP'] == 'Y')
+				{
+					$result[$row['ID_CONNECTOR']]['CHAT_GROUP'] = true;
+				}
+				elseif($row['NEED_SIGNATURE'] == 'N')
+				{
+					$result[$row['ID_CONNECTOR']]['CHAT_GROUP'] = false;
+				}
+			}
 		}
 
 		return $result;

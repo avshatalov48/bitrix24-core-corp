@@ -2,6 +2,7 @@
 namespace Bitrix\Crm\Filter;
 
 use Bitrix\Main;
+use Bitrix\Main\Config\Option;
 use Bitrix\Main\Localization\Loc;
 
 use Bitrix\Crm;
@@ -9,6 +10,7 @@ use Bitrix\Crm\EntityAddress;
 use Bitrix\Crm\Category\DealCategory;
 use Bitrix\Crm\Counter\EntityCounterType;
 use Bitrix\Crm\PhaseSemantics;
+use Bitrix\Report\VisualConstructor\Helper\Analytic;
 
 Loc::loadMessages(__FILE__);
 
@@ -76,7 +78,7 @@ class DealDataProvider extends EntityDataProvider
 			'TITLE' => $this->createField('TITLE'),
 			'ASSIGNED_BY_ID' => $this->createField(
 				'ASSIGNED_BY_ID',
-				array('type' => 'custom_entity', 'default' => true, 'partial' => true)
+				array('type' => 'dest_selector', 'default' => true, 'partial' => true)
 			),
 			'OPPORTUNITY' => $this->createField(
 				'OPPORTUNITY',
@@ -175,12 +177,12 @@ class DealDataProvider extends EntityDataProvider
 		$result += array(
 			'CONTACT_ID' => $this->createField(
 				'CONTACT_ID',
-				array('type' => 'custom_entity', 'default' => true, 'partial' => true)
+				array('type' => 'dest_selector', 'default' => true, 'partial' => true)
 			),
 			'CONTACT_FULL_NAME' => $this->createField('CONTACT_FULL_NAME'),
 			'COMPANY_ID' => $this->createField(
 				'COMPANY_ID',
-				array('type' => 'custom_entity', 'default' => true, 'partial' => true)
+				array('type' => 'dest_selector', 'default' => true, 'partial' => true)
 			),
 			'COMPANY_TITLE' => $this->createField('COMPANY_TITLE'),
 			'COMMENTS' => $this->createField('COMMENTS'),
@@ -198,11 +200,11 @@ class DealDataProvider extends EntityDataProvider
 			),
 			'CREATED_BY_ID' => $this->createField(
 				'CREATED_BY_ID',
-				array('type' => 'custom_entity', 'partial' => true)
+				array('type' => 'dest_selector', 'partial' => true)
 			),
 			'MODIFY_BY_ID' => $this->createField(
 				'MODIFY_BY_ID',
-				array('type' => 'custom_entity', 'partial' => true)
+				array('type' => 'dest_selector', 'partial' => true)
 			)
 		);
 
@@ -210,7 +212,7 @@ class DealDataProvider extends EntityDataProvider
 		{
 			$result['PRODUCT_ROW_PRODUCT_ID'] = $this->createField(
 				'PRODUCT_ROW_PRODUCT_ID',
-				array('type' => 'custom_entity', 'partial' => true)
+				array('type' => 'dest_selector', 'partial' => true)
 			);
 
 			$result['ORIGINATOR_ID'] = $this->createField(
@@ -273,6 +275,22 @@ class DealDataProvider extends EntityDataProvider
 				'type' => 'date'
 			)
 		);
+
+		$result['STAGE_ID_FROM_HISTORY'] = $this->createField(
+			'STAGE_ID_FROM_HISTORY',
+			array('type' => 'list', 'default' => true, 'partial' => true)
+		);
+
+		$result['STAGE_ID_FROM_SUPPOSED_HISTORY'] = $this->createField(
+			'STAGE_ID_FROM_SUPPOSED_HISTORY',
+			array('type' => 'list', 'default' => true, 'partial' => true)
+		);
+
+		$result['STAGE_SEMANTIC_ID_FROM_HISTORY'] = $this->createField(
+			'STAGE_SEMANTIC_ID_FROM_HISTORY',
+			array('type' => 'list', 'default' => true, 'partial' => true)
+		);
+
 		return $result;
 	}
 
@@ -302,14 +320,22 @@ class DealDataProvider extends EntityDataProvider
 		elseif($fieldID === 'ASSIGNED_BY_ID')
 		{
 			return array(
-				'params' => array('multiple' => 'Y'),
-				'selector' => array(
-					'TYPE' => 'user',
-					'DATA' => array('ID' => 'assigned_by', 'FIELD_ID' => 'ASSIGNED_BY_ID')
+				'params' => array(
+					'apiVersion' => 3,
+					'context' => 'CRM_DEAL_FILTER_ASSIGNED_BY_ID',
+					'multiple' => 'Y',
+					'contextCode' => 'U',
+					'enableAll' => 'N',
+					'enableSonetgroups' => 'N',
+					'allowEmailInvitation' => 'N',
+					'allowSearchEmailUsers' => 'N',
+					'departmentSelectDisable' => 'Y',
+					'isNumeric' => 'Y',
+					'prefix' => 'U'
 				)
 			);
 		}
-		elseif($fieldID === 'STAGE_ID')
+		elseif($fieldID === 'STAGE_ID' || $fieldID === 'STAGE_ID_FROM_HISTORY' || $fieldID === 'STAGE_ID_FROM_SUPPOSED_HISTORY')
 		{
 			$categoryID = $this->getCategoryID();
 			return array(
@@ -317,7 +343,7 @@ class DealDataProvider extends EntityDataProvider
 				'items' => DealCategory::getStageList(max($categoryID, 0))
 			);
 		}
-		elseif($fieldID === 'STAGE_SEMANTIC_ID')
+		elseif($fieldID === 'STAGE_SEMANTIC_ID' || $fieldID === 'STAGE_SEMANTIC_ID_FROM_HISTORY')
 		{
 			return PhaseSemantics::getListFilterInfo(
 				\CCrmOwnerType::Deal,
@@ -343,49 +369,79 @@ class DealDataProvider extends EntityDataProvider
 		elseif($fieldID === 'CONTACT_ID')
 		{
 			return array(
-				//'params' => array('multiple' => 'Y'),
-				'selector' => array(
-					'TYPE' => 'crm_entity',
-					'DATA' => array(
-						'ID' => 'contact',
-						'FIELD_ID' => 'CONTACT_ID',
-						'FIELD_ALIAS' => 'ASSOCIATED_CONTACT_ID',
-						'ENTITY_TYPE_NAMES' => array(\CCrmOwnerType::ContactName)
-						//'IS_MULTIPLE' => true
-					)
+				'alias' => 'ASSOCIATED_CONTACT_ID',
+				'params' => array(
+					'apiVersion' => 3,
+					'context' => 'CRM_DEAL_FILTER_CONTACT_ID',
+					'contextCode' => 'CRM',
+					'useClientDatabase' => 'N',
+					'enableAll' => 'N',
+					'enableDepartments' => 'N',
+					'enableUsers' => 'N',
+					'enableSonetgroups' => 'N',
+					'allowEmailInvitation' => 'N',
+					'allowSearchEmailUsers' => 'N',
+					'departmentSelectDisable' => 'Y',
+					'enableCrm' => 'Y',
+					'enableCrmContacts' => 'Y',
+					'convertJson' => 'Y'
 				)
 			);
 		}
 		elseif($fieldID === 'COMPANY_ID')
 		{
 			return array(
-				'selector' => array(
-					'TYPE' => 'crm_entity',
-					'DATA' => array(
-						'ID' => 'company',
-						'FIELD_ID' => 'COMPANY_ID',
-						'ENTITY_TYPE_NAMES' => array(\CCrmOwnerType::CompanyName)
-					)
+				'params' => array(
+					'apiVersion' => 3,
+					'context' => 'CRM_DEAL_FILTER_COMPANY_ID',
+					'contextCode' => 'CRM',
+					'useClientDatabase' => 'N',
+					'enableAll' => 'N',
+					'enableDepartments' => 'N',
+					'enableUsers' => 'N',
+					'enableSonetgroups' => 'N',
+					'allowEmailInvitation' => 'N',
+					'allowSearchEmailUsers' => 'N',
+					'departmentSelectDisable' => 'Y',
+					'enableCrm' => 'Y',
+					'enableCrmCompanies' => 'Y',
+					'convertJson' => 'Y'
 				)
 			);
 		}
 		elseif($fieldID === 'CREATED_BY_ID')
 		{
 			return array(
-				'params' => array('multiple' => 'Y'),
-				'selector' => array(
-					'TYPE' => 'user',
-					'DATA' => array('ID' => 'created_by', 'FIELD_ID' => 'CREATED_BY_ID')
+				'params' => array(
+					'apiVersion' => 3,
+					'context' => 'CRM_DEAL_FILTER_CREATED_BY_ID',
+					'multiple' => 'Y',
+					'contextCode' => 'U',
+					'enableAll' => 'N',
+					'enableSonetgroups' => 'N',
+					'allowEmailInvitation' => 'N',
+					'allowSearchEmailUsers' => 'N',
+					'departmentSelectDisable' => 'Y',
+					'isNumeric' => 'Y',
+					'prefix' => 'U'
 				)
 			);
 		}
 		elseif($fieldID === 'MODIFY_BY_ID')
 		{
 			return array(
-				'params' => array('multiple' => 'Y'),
-				'selector' => array(
-					'TYPE' => 'user',
-					'DATA' => array('ID' => 'modify_by', 'FIELD_ID' => 'MODIFY_BY_ID')
+				'params' => array(
+					'apiVersion' => 3,
+					'context' => 'CRM_DEAL_FILTER_MODIFY_BY_ID',
+					'multiple' => 'Y',
+					'contextCode' => 'U',
+					'enableAll' => 'N',
+					'enableSonetgroups' => 'N',
+					'allowEmailInvitation' => 'N',
+					'allowSearchEmailUsers' => 'N',
+					'departmentSelectDisable' => 'Y',
+					'isNumeric' => 'Y',
+					'prefix' => 'U'
 				)
 			);
 		}
@@ -403,15 +459,21 @@ class DealDataProvider extends EntityDataProvider
 		elseif($fieldID === 'PRODUCT_ROW_PRODUCT_ID')
 		{
 			return array(
-				'params' => array('multiple' => 'N'),
-				'selector' => array(
-					'TYPE' => 'crm_entity',
-					'DATA' => array(
-						'ID' => 'product',
-						'FIELD_ID' => 'PRODUCT_ROW_PRODUCT_ID',
-						'ENTITY_TYPE_NAMES' => array('PRODUCT'),
-						'IS_MULTIPLE' => false
-					)
+				'params' => array(
+					'apiVersion' => 3,
+					'context' => 'CRM_DEAL_FILTER_PRODUCT_ID',
+					'contextCode' => 'CRM',
+					'useClientDatabase' => 'N',
+					'enableAll' => 'N',
+					'enableDepartments' => 'N',
+					'enableUsers' => 'N',
+					'enableSonetgroups' => 'N',
+					'allowEmailInvitation' => 'N',
+					'allowSearchEmailUsers' => 'N',
+					'departmentSelectDisable' => 'Y',
+					'enableCrm' => 'Y',
+					'enableCrmProducts' => 'Y',
+					'convertJson' => 'Y'
 				)
 			);
 		}

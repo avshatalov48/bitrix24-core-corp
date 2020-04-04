@@ -1,18 +1,19 @@
 /**
-* @bxjs_lang_path component.php
-*/
-(function(){
+ * @bxjs_lang_path component.php
+ */
+(function ()
+{
+	window.version = 1.0;
 	let items = [];
 	let sections = [];
 	let SITE_ID = BX.componentParameters.get("SITE_ID", "s1");
-	BX.listeners = {};
-
 
 	/**
 	 * @let  BaseList menu
 	 */
 
 	let More = {
+		updated: false,
 		findIn: function (items, query)
 		{
 			query = query.toUpperCase();
@@ -22,14 +23,16 @@
 				if (item.title && item.title.toUpperCase().indexOf(
 					query) >= 0 || section && section.title && section.title.toUpperCase().indexOf(query) >= 0)
 				{
-					if(!item.type || (item.type != "button" && item.type != "userinfo"))
+					if (!item.type || (item.type != "button" && item.type != "userinfo"))
+					{
 						return item;
+					}
 				}
 			})
 				.map(item =>
 				{
 					let section = sections.find(section => section.id === item.sectionCode);
-					item.subtitle = section ? section.title: "";
+					item.subtitle = section ? section.title : "";
 					item.useLetterImage = true;
 					return item;
 				});
@@ -75,17 +78,21 @@
 				Application.setBadges({more: totalCount});
 			}
 		},
-		initCache:function(){
+		initCache: function ()
+		{
 			let cachedResult = this.getCache();
 
-			if(cachedResult)
+			if (cachedResult)
+			{
 				this.handleResult(cachedResult);
+			}
 			else
+			{
 				this.handleResult(result);
-
+			}
 
 		},
-		getCache:function()
+		getCache: function ()
 		{
 			let result = null;
 			try
@@ -99,105 +106,73 @@
 
 			return result;
 		},
-		updateMenu:function(){
-			BX.ajax({url: component.resultUrl, dataType:"json"})
-				.then(result => {
-					if(result.menu)
+		updateMenu: function ()
+		{
+			BX.ajax({url: component.resultUrl, dataType: "json"})
+				.then(result =>
+				{
+					if (result.menu)
 					{
+						BX.onCustomEvent("onMenuResultUpdated", [result]);
+						More.updated = true;
 						Application.sharedStorage().set("more", JSON.stringify(result));
-						console.log(result);
 						this.handleResult(result);
-						this.redraw();
+						setTimeout(()=>this.redraw(), 100);
 					}
 				})
 				.catch(e => console.error(e));
 		},
-		redraw:function(){
-			this.drawPopupMenu();
-			menu.setItems(items, sections);
-			setTimeout(() =>
+		redraw: function ()
+		{
+			BX.onViewLoaded(()=>
 			{
-				let cachedCounters = Application.sharedStorage().get('userCounters');
-				if (cachedCounters)
+				this.drawPopupMenu();
+				menu.setItems(items, sections);
+				setTimeout(() =>
 				{
-					try
+					let cachedCounters = Application.sharedStorage().get('userCounters');
+					if (cachedCounters)
 					{
-						let counters = JSON.parse(cachedCounters);
-						if (counters[SITE_ID])
+						try
 						{
-							this.updateCounters(counters[SITE_ID]);
+							let counters = JSON.parse(cachedCounters);
+							if (counters[SITE_ID])
+							{
+								this.updateCounters(counters[SITE_ID]);
+							}
+
 						}
-
+						catch (e)
+						{
+							//do nothing
+						}
 					}
-					catch (e)
-					{
-						//do nothing
-					}
-				}
 
-			}, 0);
+				}, 0);
+			});
 		},
 
-		drawPopupMenu:function()
+		drawPopupMenu: function ()
 		{
-			if(!this.popup)
-			{
-				BX.addCustomEvent("onViewShown", ()=>{
-					if(!Application.storage.getBoolean("menu_already_seen", false))
-					{
-
-						dialogs.showActionSheet({
-							title:BX.message("MENU_SETTINGS_INFO"),
-							"callback": item =>{
-								this.popup.show([{id:"settings", blink:true}]);
-							},
-							"items":[
-								{title: BX.message("MENU_SETTINGS_INFO_YES"), code: "code"},
-							]
-						});
-
-						Application.storage.setBoolean("menu_already_seen", true);
-					}
-				});
-
-				this.popup = dialogs.createPopupMenu();
-			}
-
 			let popupPoints = this.popupMenuItems;
 			this.popup = dialogs.createPopupMenu();
-			this.popup.setData(popupPoints,[{id: "menu", title: ""}], (event, item)=>{
-				if(event === "onItemSelected")
+			this.popup.setData(popupPoints, [{id: "menu", title: ""}], (event, item) =>
+			{
+				if (event === "onItemSelected")
 				{
-					console.log(event, item);
-					if(item.id === "settings")
+					let menuItem = this.popupMenuItems.find(menuItem => menuItem.id === item.id);
+					if (menuItem.onclick)
 					{
-						PageManager.openComponent("JSStackComponent",
-							{
-								scriptPath:availableComponents["settings"]["publicUrl"],
-								componentCode: "settings.config",
-								params: {
-									"USER_ID": env.userId,
-									"SITE_ID": env.siteId,
-									"LANGUAGE_ID": env.languageId,
-								},
-								rootWidget:{
-									name:"settings",
-									settings:{
-										objectName: "settings",
-										title: item.title
-									}
-								}
-							});
-					}
-					else if(item.id === "switch_account")
-					{
-						Application.exit();
+						(function ()
+						{
+							eval(menuItem.onclick);
+						}).bind(item)();
 					}
 				}
 			});
 
 			let buttons = [];
-			if(Application.getPlatform() !== "ios")
+			if (Application.getPlatform() !== "ios")
 			{
 				buttons.push({type: "search", callback: () => menu.showSearchBar()});
 			}
@@ -205,73 +180,75 @@
 			buttons.push({type: "more", callback: () => this.popup.show()});
 			menu.setRightButtons(buttons);
 		},
-		handleResult:function(result)
+		handleResult: function (result)
 		{
 			let menuStructure = result.menu;
-			if(result.counterList)
+			if (result.counterList)
 			{
 				this.counterList = result.counterList;
 			}
-			if(result.popupMenuItems)
+			if (result.popupMenuItems)
 			{
 				this.popupMenuItems = result.popupMenuItems;
 			}
 
-			if(menuStructure)
+			if (menuStructure)
 			{
 				items = [];
 				sections = [];
-				menuStructure.forEach(
-					sec => {
-						if (
-							sec.min_api_version && sec.min_api_version > Application.getApiVersion()
-							|| sec.hidden == true
-						)
+				menuStructure
+					.filter(
+						section => !(typeof section != "object"
+							|| (typeof section["items"] == "undefined")
+							|| (section["min_api_version"] && section["min_api_version"] > Application.getApiVersion())
+							|| section.hidden == true
+						))
+					.forEach(
+						section =>
 						{
-							return;
-						}
 
-						let sectionCode = "section_" + sec.sort;
-						let sectionItems = [];
-						if (sec.items)
-						{
-							sectionItems = sec.items
-								.filter(item => !item.hidden)
-								.map(item =>
-								{
-									if (item.params && item.params.counter)
+							let sectionCode = "section_" + section.sort;
+							let sectionItems = [];
+							if (section.items)
+							{
+								sectionItems = section.items
+									.filter(item => !item.hidden)
+									.map(item =>
 									{
-										this.counterList.push(item.params.counter);
-										if(typeof this.currentCounters[item.params.counter] != "undefined")
+										if (item.params && item.params.counter)
 										{
-											item.messageCount = this.currentCounters[item.params.counter]
+											this.counterList.push(item.params.counter);
+											if (typeof this.currentCounters[item.params.counter] != "undefined")
+											{
+												item.messageCount = this.currentCounters[item.params.counter]
+											}
 										}
-									}
 
-									return item;
-								});
-						}
+										return item;
+									});
+							}
 
-						sections.push({
-							title: sec.title,
-							id: sectionCode
+							sections.push({
+								title: section.title,
+								// height: 36,
+								styles: {
+									title: {font: {size: 13, fontStyle: "semibold"}}
+								},
+
+								id: sectionCode
+							});
+
+							items = items.concat(sectionItems)
 						});
-
-						items = items.concat(sectionItems)
-					});
 			}
 
 		},
 		init: function ()
 		{
-			let lastSavedVersion = Application.sharedStorage().get('version');
-			let needToUpdate = (component.version == lastSavedVersion);
-			Application.sharedStorage().set("version", component.version);
-
-			menu.setListener((eventName, data)=>this.listener(eventName, data));
-			items = items.filter((item) => item != false).map((item) =>
+			menu.setListener((eventName, data) => this.listener(eventName, data));
+			items = items.filter((item) => item !== false).map((item) =>
 			{
-				if (item.type != "destruct")
+				if (item.type !== "destruct")
 				{
 					item.styles =
 						{
@@ -308,16 +285,10 @@
 				}
 			});
 
-
 			BX.addCustomEvent("shouldReloadMenu", () => this.updateMenu());
 			this.initCache();
-
-			BX.onViewLoaded(() =>
-			{
-				this.redraw();
-				if(needToUpdate)
-					this.updateMenu();
-			});
+			this.redraw();
+			this.updateMenu();
 		},
 		listener: function (eventName, data)
 		{
@@ -355,7 +326,8 @@
 				}
 				else if (item.params.onclick)
 				{
-					(function(){
+					(function ()
+					{
 						eval(item.params.onclick);
 					}).call(item);
 				}
@@ -371,10 +343,24 @@
 					}
 					else
 					{
+						let backdrop = undefined;
+						if (typeof item.params.backdrop == "object")
+						{
+							if (Object.keys(item.params.backdrop).length > 0)
+							{
+								backdrop = item.params.backdrop;
+							}
+							else
+							{
+								backdrop = {};
+							}
+						}
+
 						PageManager.openPage({
 							url: item.params.url,
 							title: item.title,
-							cache: (item.params.cache !== false)
+							cache: (item.params.cache !== false),
+							backdrop: backdrop
 						});
 					}
 				}
@@ -391,5 +377,11 @@
 
 	More.init();
 
-})();
+	window.updateMenuItem = (id, data) => {
+		menu.updateItems([
+			{ filter: {id: id}, element: data }
+		]);
+	};
+	BX.onCustomEvent("onMenuLoaded", [this.result]);
+}).bind(this)();
 

@@ -1,14 +1,21 @@
 <?php
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
-define('NO_KEEP_STATISTIC', 'Y');
-define('NO_AGENT_STATISTIC','Y');
-define('NO_AGENT_CHECK', true);
-define('DisableEventsCheck', true);
+/**
+ * @var array $arParams
+ * @var array $arResult
+ * @var \CBitrixComponentTemplate $this
+ * @global \CMain $APPLICATION
+ * @global \CUser $USER
+ * @global \CDatabase $DB
+ */
 
-if (!is_array($arResult['DEAL']) || !($USERS_CNT = count($arResult['DEAL'])))
+$isStExport = (isset($arResult['STEXPORT_MODE']) && $arResult['STEXPORT_MODE'] === 'Y');
+$isStExportFirstPage = (isset($arResult['STEXPORT_IS_FIRST_PAGE']) && $arResult['STEXPORT_IS_FIRST_PAGE'] === 'Y');
+
+if ((!is_array($arResult['ORDER']) || count($arResult['ORDER']) <= 0) && (!$isStExport || $isStExportFirstPage))
 {
-	echo(GetMessage('ERROR_DEAL_IS_EMPTY_2'));
+	echo GetMessage('ERROR_ORDER_IS_EMPTY_2');
 }
 else
 {
@@ -19,169 +26,185 @@ else
 		$arHeaders[$arHead['id']] = $arHead;
 	}
 
+	// Special logic for ENTITIES_LINKS headers: expand in 3 columns
 	$showProductRows = false;
-	// Display headers
-	foreach($arResult['SELECTED_HEADERS'] as $headerID)
+	foreach ($arResult['SELECTED_HEADERS'] as $headerID)
 	{
-		$arHead = isset($arHeaders[$headerID]) ? $arHeaders[$headerID] : null;
-		if(!$arHead)
-		{
-			continue;
-		}
-
-		// Special logic for PRODUCT_ROWS headers: expand product in 3 columns
-		if($headerID === 'PRODUCT_ID')
+		if (isset($arHeaders[$headerID]) && $headerID === 'ENTITIES_LINKS')
 		{
 			$showProductRows = true;
-			echo '"', GetMessage('CRM_COLUMN_PRODUCT_NAME'),'";';
-			echo '"', GetMessage('CRM_COLUMN_PRODUCT_PRICE'),'";';
-			echo '"', GetMessage('CRM_COLUMN_PRODUCT_QUANTITY') ,'";';
-		}
-		else
-		{
-			echo '"', str_replace('"', '""', $arHead['name']),'";';
 		}
 	}
-	echo "\n";
 
-	// Display data
-	foreach ($arResult['DEAL'] as $i => &$arDeal)
+	if (!$isStExport || $isStExportFirstPage)
 	{
-		// Serialize each product row as deal with single product
-		$productRows = $showProductRows && isset($arDeal['PRODUCT_ROWS']) ? $arDeal['PRODUCT_ROWS'] : array();
-		$hasProducts = !empty($productRows);
-		if(!$hasProducts)
+		// Display headers
+		foreach ($arResult['SELECTED_HEADERS'] as $headerID)
 		{
-			// Deal has no product rows (or they are not displayed) - we have to create dummy for next loop by product rows only
+			$arHead = isset($arHeaders[$headerID]) ? $arHeaders[$headerID] : null;
+			if (!$arHead)
+			{
+				continue;
+			}
+			echo '"'.$arHead['name'].'";';
+		}
+		echo "\n";
+	}
+
+	$arPersonTypes = \CCrmPaySystem::getPersonTypesList();
+	$arPaySystems = array();
+	foreach (array_keys($arPersonTypes) as $personTypeId)
+	{
+		$arPaySystems[$personTypeId] = \CCrmPaySystem::GetPaySystemsListItems($personTypeId, true);
+	}
+	unset($personTypeId);
+	foreach ($arResult['ORDER'] as $i => &$orderFields)
+	{
+		// Serialize each product row as invoice with single product
+		$productRows = $showProductRows && isset($orderFields['PRODUCT_ROWS']) ? $orderFields['PRODUCT_ROWS'] : array();
+		if (count($productRows) == 0)
+		{
+			// Invoice has no product rows (or they are not displayed) - we have to create dummy for next loop by product rows only
 			$productRows[] = array();
 		}
-
-		$dealData = array();
-		foreach($productRows as $productRow)
+		$orderData = array();
+		$personTypeId = $orderFields['PERSON_TYPE_ID'];
+		foreach ($productRows as $productRow)
 		{
-			foreach($arResult['SELECTED_HEADERS'] as $headerID)
+			foreach ($arResult['SELECTED_HEADERS'] as $headerID)
 			{
 				$arHead = isset($arHeaders[$headerID]) ? $arHeaders[$headerID] : null;
-				if(!$arHead)
+				if (!$arHead)
 				{
 					continue;
 				}
 
 				$headerID = $arHead['id'];
-				if($headerID === 'PRODUCT_ID')
+				if (!isset($orderData[$headerID]))
 				{
-					// Special logic for PRODUCT_ROWS: expand product in 3 columns
-					echo '"', isset($productRow['PRODUCT_NAME']) ? str_replace('"', '""', $productRow['PRODUCT_NAME']) : '', '";';
-					echo '"', CCrmProductRow::GetPrice($productRow, ''), '";';
-					echo '"', CCrmProductRow::GetQuantity($productRow, ''), '";';
-
-					continue;
-				}
-				elseif($headerID === 'OPPORTUNITY')
-				{
-					// Special logic for OPPORTUNITY: replace it by product row sum if it specified
-					if($hasProducts)
+					switch ($arHead['id'])
 					{
-						echo '"', round(CCrmProductRow::GetPrice($productRow) * CCrmProductRow::GetQuantity($productRow), 2), '";';
-					}
-					else
-					{
-						echo '"', isset($arDeal['OPPORTUNITY']) ? strval($arDeal['OPPORTUNITY']) : '', '";';
-					}
-
-					continue;
-				}
-
-				if(!isset($dealData[$headerID]))
-				{
-					switch($headerID)
-					{
-						case 'CATEGORY_ID':
-						{
-							$categoryID = !empty($arDeal['CATEGORY_ID']) ? $arDeal['CATEGORY_ID'] : 0;
-							$dealData['CATEGORY_ID'] = isset($arDeal['DEAL_CATEGORY_NAME']) ? $arDeal['DEAL_CATEGORY_NAME'] : $categoryID;
+						case 'SOURCE':
+							$orderData['SOURCE'] = htmlspecialcharsbx(trim($arPersonTypes[$orderFields['SOURCE']]));
 							break;
-						}
-						case 'STAGE_ID':
-						{
-							$stageID = !empty($arDeal['STAGE_ID']) ? $arDeal['STAGE_ID'] : '';
-							$dealData['STAGE_ID'] = isset($arDeal['DEAL_STAGE_NAME']) ? $arDeal['DEAL_STAGE_NAME'] : $stageID;
+						case 'USER':
+							$orderData['USER_ID'] = isset($orderFields['USER_FORMATTED_NAME']) ? $orderFields['USER_FORMATTED_NAME'] : '';
 							break;
-						}
-						case 'STATE_ID':
-						{
-							$stateID = !empty($arDeal['STATE_ID']) ? $arDeal['STATE_ID'] : '';
-							$dealData['STATE_ID'] = isset($arResult['STATE_LIST'][$stateID]) ? $arResult['STATE_LIST'][$stateID] : $stateID;
-							break;
-						}
-						case 'TYPE_ID':
-						{
-							$typeID = !empty($arDeal['TYPE_ID']) ? $arDeal['TYPE_ID'] : '';
-							$dealData['TYPE_ID'] = isset($arResult['TYPE_LIST'][$typeID]) ? $arResult['TYPE_LIST'][$typeID] : $typeID;
-							break;
-						}
-						case 'CURRENCY_ID':
-						{
-							$dealData['CURRENCY_ID'] = CCrmCurrency::GetCurrencyName($arDeal['CURRENCY_ID']);
-							break;
-						}
-						case 'EVENT_ID':
-						{
-							$eventID = !empty($arDeal['EVENT_ID']) ? $arDeal['EVENT_ID'] : '';
-							$dealData['EVENT_ID'] = isset($arResult['EVENT_LIST'][$eventID]) ? $arResult['EVENT_LIST'][$eventID] : $eventID;
-							break;
-						}
-						case 'COMPANY_ID':
-						{
-							$dealData['COMPANY_ID'] = isset($arDeal['COMPANY_TITLE']) ? $arDeal['COMPANY_TITLE'] : '';
-							break;
-						}
-						case 'CONTACT_ID':
-						{
-							$dealData['CONTACT_ID'] = isset($arDeal['CONTACT_FULL_NAME']) ? $arDeal['CONTACT_FULL_NAME'] : '';
-							break;
-						}
 						case 'CREATED_BY':
-						{
-							$dealData['CREATED_BY'] = isset($arDeal['CREATED_BY_FORMATTED_NAME']) ? $arDeal['CREATED_BY_FORMATTED_NAME'] : '';
+							$orderData['CREATED_BY'] = isset($orderFields['CREATED_BY_FORMATTED_NAME']) ? $orderFields['CREATED_BY_FORMATTED_NAME'] : '';
 							break;
-						}
-						case 'MODIFY_BY':
-						{
-							$dealData['MODIFY_BY'] = isset($arDeal['MODIFY_BY_FORMATTED_NAME']) ? $arDeal['MODIFY_BY_FORMATTED_NAME'] : '';
+						case 'EMP_PAYED_ID':
+							$orderData['EMP_PAYED_ID'] = isset($orderFields['EMP_PAYED_ID_FORMATTED_NAME']) ? $orderFields['EMP_PAYED_ID_FORMATTED_NAME'] : '';
 							break;
-						}
-						case 'CLOSED':
-						{
-							$closed = !empty($arDeal['CLOSED']) ? $arDeal['CLOSED'] : 'N';
-							$dealData['CLOSED'] = isset($arResult['CLOSED_LIST'][$closed]) ? $arResult['CLOSED_LIST'][$closed] : $closed;
+						case 'EMP_CANCELED_ID':
+							$orderData['EMP_CANCELED_ID'] = isset($orderFields['EMP_CANCELED_ID_FORMATTED_NAME']) ? $orderFields['EMP_CANCELED_ID_FORMATTED_NAME'] : '';
 							break;
-						}
-						default:
-						{
-							if(isset($arResult['DEAL_UF'][$i]) && isset($arResult['DEAL_UF'][$i][$headerID]))
-							{
-								$dealData[$headerID] = $arResult['DEAL_UF'][$i][$headerID];
-							}
-							elseif (is_array($arDeal[$headerID]))
-							{
-								$dealData[$headerID] = implode(', ', $arDeal[$headerID]);
-							}
+						case 'EMP_STATUS_ID':
+							$orderData['EMP_STATUS_ID'] = isset($orderFields['EMP_STATUS_ID_FORMATTED_NAME']) ? $orderFields['EMP_STATUS_ID_FORMATTED_NAME'] : '';
+							break;
+						case 'EMP_ALLOW_DELIVERY_ID':
+							$orderData['EMP_ALLOW_DELIVERY_ID'] = isset($orderFields['EMP_ALLOW_DELIVERY_ID_FORMATTED_NAME']) ? $orderFields['EMP_ALLOW_DELIVERY_ID_FORMATTED_NAME'] : '';
+							break;
+						case 'EMP_DEDUCTED_ID':
+							$orderData['EMP_ALLOW_DELIVERY_ID'] = isset($orderFields['EMP_DEDUCTED_ID_FORMATTED_NAME']) ? $orderFields['EMP_DEDUCTED_ID_FORMATTED_NAME'] : '';
+							break;
+						case 'STATUS_ID':
+							$statusID = !empty($orderFields['STATUS_ID']) ? $orderFields['STATUS_ID'] : '';
+							$orderData['STATUS_ID'] = isset($arResult['STATUS_LIST'][$statusID]) ? $arResult['STATUS_LIST'][$statusID] : $statusID;
+							break;
+						case 'CURRENCY':
+							$orderData['CURRENCY'] = CCrmCurrency::GetCurrencyName($orderFields['CURRENCY']);
+							break ;
+						case 'RESPONSIBLE':
+							$orderData['RESPONSIBLE_ID'] = $orderFields['RESPONSIBLE_BY'];
+							break ;
+						case 'DATE_INSERT':
+						case 'DATE_PAYED':
+						case 'DATE_CANCELED':
+						case 'DATE_ALLOW_DELIVERY':
+						case 'DATE_DEDUCTED':
+						case 'DATE_STATUS':
+						case 'DATE_UPDATE':
+							$site = new CSite();
+							if (!empty($orderFields[$arHead['id']]))
+								$orderData[$arHead['id']] = htmlspecialcharsbx(FormatDate('SHORT', MakeTimeStamp($orderFields[$arHead['id']], $site->GetDateFormat('FULL'))));
 							else
+								$orderData[$arHead['id']] = '';
+							unset($site);
+							break;
+						case 'PERSON_TYPE_ID':
+							$orderData['PERSON_TYPE_ID'] = htmlspecialcharsbx(trim($arPersonTypes[$orderFields['PERSON_TYPE_ID']]));
+							break;
+						case 'PAY_SYSTEM_ID':
+							$orderData['PAY_SYSTEM_ID'] = htmlspecialcharsbx(trim($arPaySystems[$personTypeId][$orderFields['PAY_SYSTEM_ID']]));
+							break;
+						case 'PROPS':
+							$preparedProps = [];
+							if (is_array($orderFields[$headerID]))
 							{
-								$dealData[$headerID] = strval($arDeal[$headerID]);
+								foreach ($orderFields[$headerID] as $groupProperty)
+								{
+									$groupItems = $groupProperty['ITEMS'];
+									if (!empty($groupItems) && is_array($groupItems))
+									{
+										foreach ($groupItems as $property)
+										{
+											if ($property['VALUE'] !== '')
+											{
+												$preparedProps[] = "{$property['NAME']}: {$property['VALUE']}";
+											}
+										}
+									}
+								}
 							}
-						}
+							$orderData[$headerID] = !empty($preparedProps) ? implode(', ', $preparedProps) : '';
+							break;
+						case 'PAYMENT':
+							$paymentsData = [];
+							if (is_array($orderFields[$headerID]))
+							{
+								foreach ($orderFields[$headerID] as $payment)
+								{
+									$paymentsData[] = "{$payment['PAY_SYSTEM_NAME']} ({$payment['SUM']})";
+								}
+							}
+							$orderData[$headerID] = !empty($paymentsData) ? implode(', ', $paymentsData) : '';
+							break;
+						case 'SHIPMENT':
+							$shipmentData = [];
+							if (is_array($orderFields[$headerID]))
+							{
+								foreach ($orderFields[$headerID] as $shipment)
+								{
+									$shipmentData[] = "{$shipment['DELIVERY_NAME']} ({$shipment['PRICE_DELIVERY']})";
+								}
+							}
+							$orderData[$headerID] = !empty($shipmentData) ? implode(', ', $shipmentData) : '';
+							break;
+						case 'BASKET':
+							$preparedBasket = [];
+							if (is_array($orderFields[$headerID]))
+							{
+								foreach ($orderFields[$headerID] as $basketItem)
+								{
+									$preparedBasket[] = "[{$basketItem['PRODUCT_ID']}] {$basketItem['NAME']} - {$basketItem['QUANTITY']} ({$basketItem['PRICE']})";
+								}
+							}
+							$orderData[$headerID] = !empty($preparedBasket) ? implode(', ', $preparedBasket) : '';
+							break;
+						default:
+							if (is_array($orderFields[$headerID]))
+								$orderData[$headerID] = implode(', ', $orderFields[$headerID]);
+							else
+								$orderData[$headerID] = strval($orderFields[$headerID]);
 					}
 				}
-
-				if(isset($dealData[$headerID]))
+				if (isset($orderData[$headerID]))
 				{
-					echo '"', str_replace('"', '""', htmlspecialcharsback($dealData[$headerID])), '";';
+					echo ($orderData[$headerID] != '') ? '"'.str_replace('"', '""', htmlspecialcharsback($orderData[$headerID])).'";' : ';';
 				}
 			}
 			echo "\n";
 		}
 	}
 }
-?>

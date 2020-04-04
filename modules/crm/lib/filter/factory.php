@@ -77,6 +77,10 @@ class Factory
 				array(new UserFieldDataProvider($settings))
 			);
 		}
+		elseif($settings instanceof TimelineSettings)
+		{
+			return new Filter($filterID, new TimelineDataProvider($settings));
+		}
 		else
 		{
 			$entityTypeName = \CCrmOwnerType::ResolveName($settings->getEntityTypeID());

@@ -13,7 +13,7 @@ class CVoxImplantOutgoing
 	const INFOCALL_MODE_TEXT = 'text';
 	const INFOCALL_MODE_URL = 'url';
 
-	public static function GetConfig($userId, $lineId = '', $phoneNumber = '')
+	public static function GetConfig($userId, $lineId = '')
 	{
 		$userId = intval($userId);
 
@@ -23,9 +23,13 @@ class CVoxImplantOutgoing
 		$viUser = new CVoxImplantUser();
 		$userInfo = $viUser->GetUserInfo($userId);
 
+		if(!$userInfo)
+			return array('error' => array('code' => $viUser->GetError()->code, 'msg' => $viUser->GetError()->msg));
+
 		if($userInfo['user_extranet'])
 			return array('error' => array('code' => 'EXTRANAET', 'msg' => 'Extranet user (or user hasnt department) can not use telephony'));
 
+		$isPaid = CVoxImplantAccount::GetPayedFlag() === "Y";
 		$portalLines = CVoxImplantConfig::GetLines(true, false);
 
 		$userDefaultLine = $userInfo['user_backphone'];
@@ -41,15 +45,20 @@ class CVoxImplantOutgoing
 				reset($portalLines);
 				$userDefaultLine = key($portalLines);
 			}
+			else if(!$isPaid)
+			{
+				return array(
+					'PORTAL_MODE' => CVoxImplantConfig::MODE_FAKE,
+					'PORTAL_URL' => CVoxImplantHttp::GetPortalUrl(),
+					'PORTAL_SIGN' => CVoxImplantHttp::GetPortalSign(),
+					'USER_ID' => $userId,
+					'USER_DIRECT_CODE' => $userInfo['user_innerphone'],
+				);
+			}
 			else
 			{
 				return array('error' => array('code' => 'NEED_RENT_ERROR', 'msg' => 'No available lines found'));
 			}
-		}
-
-		if($lineId == '' && $phoneNumber != '')
-		{
-			$lineId = (string)static::findLineId($phoneNumber);
 		}
 
 		if($lineId != '')
@@ -168,9 +177,9 @@ class CVoxImplantOutgoing
 				'CALL_ID' => $params['CALL_ID'],
 				'SESSION_ID' => (int)$params['SESSION_ID'],
 				'CRM' => $params['CRM'],
-				'CRM_ACTIVITY_ID' => ($params['CRM_ACTIVITY_ID'] ? $params['CRM_ACTIVITY_ID'] : null),
-				'CRM_CALL_LIST' => ($params['CRM_CALL_LIST'] ? $params['CRM_CALL_LIST'] : null),
-				'CRM_BINDINGS' => ($params['CRM_BINDINGS'] ? $params['CRM_BINDINGS'] : array()),
+				'CRM_ACTIVITY_ID' => $params['CRM_ACTIVITY_ID'] ?? null,
+				'CRM_CALL_LIST' => $params['CRM_CALL_LIST'] ?? null,
+				'CRM_BINDINGS' => $params['CRM_BINDINGS'] ?? [],
 				'USER_ID' => $params['USER_ID'],
 				'CALLER_ID' => $params['PHONE_NUMBER'],
 				'STATUS' => VI\Model\CallTable::STATUS_WAITING,
@@ -334,6 +343,7 @@ class CVoxImplantOutgoing
 				$config["showCrmCard"] = ($call->isCrmEnabled());
 				$config["crmEntityType"] = $call->getPrimaryEntityType();
 				$config["crmEntityId"] = $call->getPrimaryEntityId();
+				$config["crmBindings"] = CVoxImplantCrmHelper::resolveBindingNames($call->getCrmBindings());
 			}
 
 			$push['send_immediately'] = 'Y';

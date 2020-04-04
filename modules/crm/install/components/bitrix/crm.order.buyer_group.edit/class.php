@@ -187,18 +187,37 @@ class CrmBuyerGroupsEdit extends \CBitrixComponent
 			return false;
 		}
 
+		$id = 0;
+		$groupEntity = new \CGroup();
+		
 		if ($this->isNewGroup())
 		{
 			$group['IS_SYSTEM'] = 'N';
+			$group['USER_ID'] = [];
 
-			$result = \Bitrix\Main\GroupTable::add($group);
+			$result = $groupEntity->add($group);
+			
+			if ($result)
+			{
+				$id = $result;
+			}
 		}
 		else
 		{
-			$result = \Bitrix\Main\GroupTable::update($group['ID'], array_diff_key($group, ['ID' => true]));
+			$result = $groupEntity->update($group['ID'], array_diff_key($group, ['ID' => true]));
+			
+			if ($result)
+			{
+				$id = $group['ID'];
+			}
+		}
+		
+		if (!$result)
+		{
+			$this->errorCollection[] = new \Bitrix\Main\Error($groupEntity->LAST_ERROR);
 		}
 
-		return $result->isSuccess() ? $result->getId() : 0;
+		return $id;
 	}
 
 	public function saveFormAjaxAction()
@@ -217,7 +236,7 @@ class CrmBuyerGroupsEdit extends \CBitrixComponent
 		{
 			$response['redirectUrl'] = $this->getDetailUrl($groupId);
 		}
-		else
+		elseif ($this->errorCollection->isEmpty())
 		{
 			$this->errorCollection[] = new \Bitrix\Main\Error(Loc::getMessage('CRM_ORDER_BUYER_GROUP_EDIT_SAVE_ERROR'));
 		}

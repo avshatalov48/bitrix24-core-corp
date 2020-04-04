@@ -5,7 +5,7 @@ CJSCore::Init(array('mobile_crm'));
 use \Bitrix\Crm\Conversion\QuoteConversionScheme;
 
 $mode = $arResult['MODE'];
-$formTitle = GetMessage("M_CRM_QUOTE_EDIT_{$mode}_TITLE");
+$formTitle = GetMessageJS("M_CRM_QUOTE_EDIT_{$mode}_TITLE");
 $formId = "MOBILE_CRM_QUOTE_EDIT_".$arResult['ENTITY_ID'];
 $ajaxPath = '/mobile/?mobile_action=mobile_crm_quote_actions';
 

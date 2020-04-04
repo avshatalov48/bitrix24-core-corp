@@ -13,12 +13,19 @@ class Component
 {
 
 	const VERSION = 2;
+	protected static $modificationDates = [];
 
 	protected $path;
 	protected $jsfile;
 	protected $name;
 	protected $namespace;
 	protected $directory;
+
+	private $version;
+	/**
+	 * @var array
+	 */
+	private $dependencies;
 
 	/**
 	 * Component constructor.
@@ -66,8 +73,8 @@ class Component
 	public static function createInstanceByName($name, $namespace = "bitrix")
 	{
 		$info = Utils::extractEntityDescription($name, $namespace);
-		$componentData = Manager::getInstance()->availableComponents[$info["defaultFullname"]];
-		if (Manager::getInstance()->availableComponents[$info["defaultFullname"]])
+		$componentData = Manager::getAvailableComponents()[$info["defaultFullname"]];
+		if (Manager::getAvailableComponents()[$info["defaultFullname"]])
 		{
 			return new Component($componentData["path"]);
 		}
@@ -110,7 +117,7 @@ class Component
 			$langPhrases = Localization\Loc::loadLanguageFile($this->path . "/component.php");
 			$lang = Utils::jsonEncode($langPhrases, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE);
 			$object = Utils::jsonEncode($this->getInfo());
-			$componentList = Utils::jsonEncode(Manager::getInstance()->availableComponents);
+			$componentList = Utils::jsonEncode(Manager::getAvailableComponents());
 
 
 			$isExtranetModuleInstalled = \Bitrix\Main\Loader::includeModule("extranet");
@@ -200,27 +207,67 @@ JS;
 		];
 	}
 
+	public function getModificationTime()
+	{
+		if(self::$modificationDates[$this->name])
+		{
+			return self::$modificationDates[$this->name];
+		}
+
+		$dates = [$this->jsfile->getModificationTime()];
+		$componentFile = new File($this->path . "/component.php");
+		if($componentFile->isExists())
+		{
+			$dates[] = $componentFile->getModificationTime();
+		}
+
+		$deps = $this->getDependencies();
+		foreach ($deps as $ext)
+		{
+			$extension = new Extension($ext);
+			$dates[] = $extension->getModificationTime();
+		}
+
+		$langDirectory = new Directory($this->path."/lang/");
+
+		if($langDirectory->isExists())
+		{
+			$langs = $langDirectory->getChildren();
+			foreach ($langs as $lang)
+			{
+				if($lang->isDirectory())
+				{
+					$langFile = new File($lang->getPath()."/component.php");
+					if($langFile->isExists())
+						$dates[] = $langFile->getModificationTime();
+				}
+			}
+		}
+
+		$value = max($dates);
+		self::$modificationDates[$this->name] = $value;
+		return $value;
+	}
+
 	public function getVersion()
 	{
-		$versionFile = new File($this->directory->getPath() . "/version.php");
-		$componentPhpFile = new File($this->directory->getPath() . "/component.php");
-		$version = 1;
-
-		if ($versionFile->isExists())
+		if(!$this->version)
 		{
-			$versionDesc = include($versionFile->getPath());
-			$version = $versionDesc["version"];
-			$version .= "." . self::VERSION;
+			$versionFile = new File($this->directory->getPath() . "/version.php");
+			$this->version = 1;
+
+			if ($versionFile->isExists())
+			{
+				$versionDesc = include($versionFile->getPath());
+				$this->version = $versionDesc["version"];
+				$this->version .= "." . self::VERSION;
+			}
+
+			$this->version .= "_" . $this->getModificationTime();
 		}
 
-		$version .= "_" . $this->jsfile->getModificationTime();
-		if ($componentPhpFile->isExists())
-		{
-			$version .= "_" . $componentPhpFile->getModificationTime();
-		}
 
-
-		return $version;
+		return $this->version;
 	}
 
 	public function getPublicPath()
@@ -228,18 +275,26 @@ JS;
 		return "/mobileapp/jn/{$this->name}/?version=" . $this->getVersion();
 	}
 
+	/**
+	 * @return array|null
+	 */
 	public function getDependencies()
 	{
-		$file = new File($this->directory->getPath() . "/deps.php");
-		$rootDeps = include($file->getPath());
-		$deps = [];
+		if($this->dependencies == null)
+		{
+			$file = new File($this->directory->getPath() . "/deps.php");
+			$rootDeps = include($file->getPath());
+			$deps = [];
 
-		array_walk($rootDeps, function ($ext) use (&$deps) {
-			$list = Extension::getResolvedDependencyList($ext);
-			$deps = array_merge($deps, $list);
-		});
+			array_walk($rootDeps, function ($ext) use (&$deps) {
+				$list = Extension::getResolvedDependencyList($ext);
+				$deps = array_merge($deps, $list);
+			});
 
-		return array_unique($deps);
+			$this->dependencies = array_unique($deps);
+		}
+
+		return $this->dependencies;
 	}
 
 	private function getExtensionsContent($lazyLoad = false)

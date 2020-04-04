@@ -7,6 +7,7 @@ $MESS["CRM_PRODUCT_LIST_FILTER_CHECKBOX_NO"] = "Нет";
 $MESS['CRM_COLUMN_ID'] = 'ID';
 $MESS['CRM_COLUMN_XML_ID'] = 'Внешний код';
 $MESS['CRM_COLUMN_NAME'] = 'Название';
+$MESS['CRM_COLUMN_CODE'] = 'Символьный код';
 $MESS['CRM_COLUMN_CATALOG_ID'] = 'Каталог';
 $MESS['CRM_COLUMN_SORT'] = 'Сорт.';
 $MESS['CRM_COLUMN_PRICE'] = 'Цена';

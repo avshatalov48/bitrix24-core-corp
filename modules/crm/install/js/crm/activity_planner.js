@@ -324,7 +324,7 @@ BX.namespace('BX.Crm.Activity');
 		params.ajax_action = 'ACTIVITY_EDIT';
 		params.activity_id = params['ID'] || 0;
 
-		top.BX.Bitrix24.Slider.open(
+		top.BX.SidePanel.Instance.open(
 			'/bitrix/components/bitrix/crm.activity.planner/slider.php?site_id=' + BX.message('SITE_ID')
 			+ '&' + BX.ajax.prepareData(params),
 			{
@@ -651,7 +651,7 @@ BX.namespace('BX.Crm.Activity');
 	{
 		var me = this;
 
-		if (top.BX.Bitrix24 && top.BX.Bitrix24.Slider)
+		if (top.BX.SidePanel)
 		{
 			this._createEditSlider(params, me.prepareEditLayout.bind(this));
 		}
@@ -2164,8 +2164,14 @@ BX.namespace('BX.Crm.Activity');
 
 				if (mode == BX.CrmDialogMode.edit)
 				{
-					if (top.BX.Bitrix24 && top.BX.Bitrix24.Slider && self.getType() == BX.CrmActivityType.email)
+					if (top.BX.SidePanel && self.getType() == BX.CrmActivityType.email)
 					{
+						try
+						{
+							params.context = BX.Crm.Page.context;
+						}
+						catch (err) {}
+
 						params.ajax_action = 'ACTIVITY_EDIT';
 						params.activity_id = id;
 
@@ -2220,7 +2226,7 @@ BX.namespace('BX.Crm.Activity');
 								params['STORAGE_ELEMENT_IDS'] = storageElementIds;
 							}
 						}
-						top.BX.Bitrix24.Slider.open(
+						top.BX.SidePanel.Instance.open(
 							'/bitrix/components/bitrix/crm.activity.planner/slider.php?site_id=' + BX.message('SITE_ID')
 							+ '&' + BX.ajax.prepareData(params),
 							sliderOptions
@@ -2239,7 +2245,7 @@ BX.namespace('BX.Crm.Activity');
 				params.ajax_action = 'ACTIVITY_VIEW';
 				params.activity_id = id;
 
-				if (top.BX.Bitrix24 && top.BX.Bitrix24.Slider)
+				if (top.BX.SidePanel)
 				{
 					var sliderOptions = {
 						compatibleEvents: true,
@@ -2268,7 +2274,7 @@ BX.namespace('BX.Crm.Activity');
 						sliderOptions.typeLoader = 'view-mail-loader';
 						sliderOptions.width = 1080;
 					}
-					top.BX.Bitrix24.Slider.open(
+					top.BX.SidePanel.Instance.open(
 						'/bitrix/components/bitrix/crm.activity.planner/slider.php?site_id=' + BX.message('SITE_ID')
 						+ '&' + BX.ajax.prepareData(params),
 						sliderOptions

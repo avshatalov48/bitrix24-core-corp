@@ -102,6 +102,8 @@ if($mode === 'GET_CLIENT_INFO')
 	$nameTemplate = isset($params['NAME_TEMPLATE'])
 		? $params['NAME_TEMPLATE'] : \Bitrix\Crm\Format\PersonNameFormatter::getFormat();
 
+	$normalizeMultifields = isset($params['NORMALIZE_MULTIFIELDS']) && $params['NORMALIZE_MULTIFIELDS'] === 'Y';
+
 	$isReadPermitted = CCrmCompany::CheckReadPermission($entityID, $userPermissions);
 	$data = CCrmEntitySelectorHelper::PrepareEntityInfo(
 		CCrmOwnerType::ContactName,
@@ -110,7 +112,9 @@ if($mode === 'GET_CLIENT_INFO')
 			'ENTITY_EDITOR_FORMAT' => true,
 			'REQUIRE_REQUISITE_DATA' => $isReadPermitted,
 			'REQUIRE_MULTIFIELDS' => $isReadPermitted,
-			'NAME_TEMPLATE' => $nameTemplate
+			'USER_PERMISSIONS' => $userPermissions,
+			'NAME_TEMPLATE' => $nameTemplate,
+			'NORMALIZE_MULTIFIELDS' => $normalizeMultifields
 		)
 	);
 
@@ -183,7 +187,8 @@ if($mode === 'GET_CLIENT_INFOS')
 				'ENTITY_EDITOR_FORMAT' => true,
 				'REQUIRE_REQUISITE_DATA' => $isReadPermitted,
 				'REQUIRE_MULTIFIELDS' => $isReadPermitted,
-				'NAME_TEMPLATE' => $nameTemplate
+				'USER_PERMISSIONS' => $userPermissions,
+				'NAME_TEMPLATE' => $nameTemplate,
 			)
 		);
 	}

@@ -2190,25 +2190,31 @@ class PSRequisiteConverter
 		if ($connection->isTableExists('b_sale_pay_system_action')
 			&& !$connection->isTableExists('b_sale_pay_system_ac_bu'))
 		{
-			$strSql = '';
+			$sql = [];
 			if ($connection instanceof Main\DB\MysqlCommonConnection)
 			{
-				$strSql = /** @lang MySQL */
-					"CREATE TABLE b_sale_pay_system_ac_bu AS SELECT * FROM b_sale_pay_system_action";
+				$sql[] = /** @lang MySQL */
+					"CREATE TABLE b_sale_pay_system_ac_bu AS SELECT * FROM b_sale_pay_system_action LIMIT 0";
+				/** @noinspection SqlInsertValues */
+				$sql[] = /** @lang MySQL */
+					"INSERT INTO b_sale_pay_system_ac_bu SELECT * FROM b_sale_pay_system_action";
 			}
 			elseif ($connection instanceof Main\DB\MssqlConnection)
 			{
-				$strSql = /** @lang TSQL */
+				$sql[] = /** @lang TSQL */
 					"SELECT * INTO B_SALE_PAY_SYSTEM_AC_BU FROM B_SALE_PAY_SYSTEM_ACTION";
 			}
 			elseif ($connection instanceof Main\DB\OracleConnection)
 			{
-				$strSql = /** @lang Oracle */
+				$sql[] = /** @lang Oracle */
 					"CREATE TABLE B_SALE_PAY_SYSTEM_AC_BU AS SELECT * FROM B_SALE_PAY_SYSTEM_ACTION";
 			}
-			if (!empty($strSql))
+			if (!empty($sql))
 			{
-				$connection->queryExecute($strSql);
+				foreach ($sql as $sqlStr)
+				{
+					$connection->queryExecute($sqlStr);
+				}
 			}
 		}
 

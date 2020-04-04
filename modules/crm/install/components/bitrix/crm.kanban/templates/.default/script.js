@@ -86,6 +86,31 @@ BX.Crm.KanbanComponent.collectFieldsPopup = function(containerId)
  */
 BX.Crm.KanbanComponent.showPopup = function(containerId, handlerData, handlerType)
 {
+	if (containerId === "crm_kanban_lead_win")
+	{
+		var itemData = handlerData.item.getData();
+		var items = BX.findChildren(
+			BX(containerId),
+			{
+				className: "kanban-converttype"
+			},
+			true,
+			true
+		);
+		for (var i = 0, c = items.length; i < c; i++)
+		{
+			if (itemData.return)
+			{
+				items[i].style.display = (BX.data(items[i], 'type') === "deal")
+										? "block" : "none";
+			}
+			else
+			{
+				items[i].style.display = "block";
+			}
+		}
+	}
+
 	BX.Crm.KanbanComponent.currentPopupItem = handlerData.item;
 	this.currentPopup = new BX.PopupWindow(
 		"kanban_column_popup",
@@ -342,6 +367,8 @@ BX.Crm.KanbanComponent.onPopupClose = function(popupWindow)
 {
 	// detect lead converter cancel (second step)
 	if (
+		popupWindow &&
+		typeof popupWindow.uniquePopupId !== "undefined" &&
 		popupWindow.uniquePopupId === "CRM-lead_converter-popup" &&
 		BX.Crm.KanbanComponent.currentPopupItem !== null
 	)

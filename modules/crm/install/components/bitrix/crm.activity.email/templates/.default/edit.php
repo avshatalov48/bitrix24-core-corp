@@ -160,7 +160,8 @@ if (!empty($arParams['TEMPLATES']))
 
 ?>
 
-<form id="<?=htmlspecialcharsbx($formId) ?>" action="/bitrix/components/bitrix/crm.activity.editor/ajax.php?action=save_email" method="POST">
+<form id="<?=htmlspecialcharsbx($formId) ?>" method="POST"
+	action="/bitrix/components/bitrix/crm.activity.editor/ajax.php?action=save_email&context=<?=rawurlencode($_REQUEST['context']) ?>">
 	<span id="crm_act_email_create_hidden" style="display: none; "></span>
 	<?=bitrix_sessid_post() ?>
 	<input type="hidden" name="ACTION" value="SAVE_EMAIL">
@@ -264,6 +265,12 @@ if (!empty($arParams['TEMPLATES']))
 		);
 	}
 
+	$fromValue = \CUserOptions::getOption('crm', 'activity_email_addresser', '');
+	if ('RE' == $activity['__message_type'] && !empty($activity['__parent']['SETTINGS']['EMAIL_META']['__email']))
+	{
+		$fromValue = $activity['__parent']['SETTINGS']['EMAIL_META']['__email'];
+	}
+
 	$APPLICATION->includeComponent(
 		'bitrix:main.mail.form', '',
 		array(
@@ -278,8 +285,10 @@ if (!empty($arParams['TEMPLATES']))
 					'name'     => 'DATA[from]',
 					'title'    => getMessage('CRM_ACT_EMAIL_CREATE_FROM'),
 					'type'     => 'from',
-					'value'    => \CUserOptions::getOption('crm', 'activity_email_addresser', ''),
+					'value'    => $fromValue,
+					'isFormatted' => true,
 					'required' => true,
+					'copy' => 'DATA[from_copy]',
 				),
 				array(
 					'type' => 'separator',
@@ -384,12 +393,6 @@ BX.ready(function ()
 		var mailForm = BXMainMailForm.getForm('<?=\CUtil::jsEscape($formId) ?>');
 
 		mailForm.init();
-		<? if ('RE' == $activity['__message_type'] && !empty($activity['__parent']['SETTINGS']['EMAIL_META']['__email'])): ?>
-		mailForm.getField('DATA[from]').setValue('<?=\CUtil::jsEscape(sprintf(
-			empty($arParams['USER_FULL_NAME']) ? '%s%s' : '%s <%s>',
-			$arParams['USER_FULL_NAME'], $activity['__parent']['SETTINGS']['EMAIL_META']['__email']
-		)) ?>');
-		<? endif ?>
 
 		BX.bind(BX('crm_act_email_create_batch'), 'change', function ()
 		{

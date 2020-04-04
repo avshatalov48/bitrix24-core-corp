@@ -9,7 +9,7 @@ use Bitrix\Seo\Retargeting;
  *
  * @package Bitrix\Seo\LeadAds
  */
-abstract class Account extends Retargeting\BaseApiObject
+abstract class Account extends Retargeting\Account
 {
 	const URL_ACCOUNT_LIST = '';
 	const URL_INFO = '';
@@ -87,18 +87,4 @@ abstract class Account extends Retargeting\BaseApiObject
 
 		return $adapter;
 	}
-
-	/**
-	 * Get list.
-	 *
-	 * @return Retargeting\Response
-	 */
-	abstract public function getList();
-
-	/**
-	 * Get profile.
-	 *
-	 * @return Retargeting\Response
-	 */
-	abstract public function getProfile();
 }

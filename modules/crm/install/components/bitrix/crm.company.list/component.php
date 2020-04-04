@@ -320,8 +320,8 @@ if (!$bInternal)
 	$currentUserID = $arResult['CURRENT_USER_ID'];
 	$currentUserName = CCrmViewHelper::GetFormattedUserName($currentUserID, $arParams['NAME_TEMPLATE']);
 	$arResult['FILTER_PRESETS'] = array(
-		'filter_my' => array('name' => GetMessage('CRM_PRESET_MY'), 'fields' => array('ASSIGNED_BY_ID_name' => $currentUserName, 'ASSIGNED_BY_ID' => $currentUserID)),
-		'filter_change_my' => array('name' => GetMessage('CRM_PRESET_CHANGE_MY'), 'fields' => array('MODIFY_BY_ID_name' => $currentUserName, 'MODIFY_BY_ID' => $currentUserID))
+		'filter_my' => array('name' => GetMessage('CRM_PRESET_MY'), 'disallow_for_all' => true, 'fields' => array('ASSIGNED_BY_ID_name' => $currentUserName, 'ASSIGNED_BY_ID' => $currentUserID)),
+		'filter_change_my' => array('name' => GetMessage('CRM_PRESET_CHANGE_MY'), 'disallow_for_all' => true, 'fields' => array('MODIFY_BY_ID_name' => $currentUserName, 'MODIFY_BY_ID' => $currentUserID))
 	);
 }
 //endregion
@@ -336,6 +336,10 @@ if ($arParams['COMPANY_COUNT'] <= 0)
 }
 $arNavParams = $gridOptions->GetNavParams(array('nPageSize' => $arParams['COMPANY_COUNT']));
 $arNavParams['bShowAll'] = false;
+if(isset($arNavParams['nPageSize']) && $arNavParams['nPageSize'] > 100)
+{
+	$arNavParams['nPageSize'] = 100;
+}
 //endregion
 
 //region Filter initialization
@@ -689,8 +693,19 @@ if(!$arResult['IS_EXTERNAL_FILTER'])
 $CCrmUserType->PrepareListFilterValues($arResult['FILTER'], $arFilter, $arResult['GRID_ID']);
 $USER_FIELD_MANAGER->AdminListAddFilter(CCrmCompany::$sUFEntityID, $arFilter);
 
-// converts data from filter
-Bitrix\Crm\Search\SearchEnvironment::convertEntityFilterValues(CCrmOwnerType::Company, $arFilter);
+//region Apply Search Restrictions
+$searchRestriction = \Bitrix\Crm\Restriction\RestrictionManager::getSearchLimitRestriction();
+if(!$searchRestriction->isExceeded(CCrmOwnerType::Company))
+{
+	Bitrix\Crm\Search\SearchEnvironment::convertEntityFilterValues(CCrmOwnerType::Company, $arFilter);
+}
+else
+{
+	$arResult['LIVE_SEARCH_LIMIT_INFO'] = $searchRestriction->prepareStubInfo(
+		array('ENTITY_TYPE_ID' => CCrmOwnerType::Company)
+	);
+}
+//endregion
 
 //region Activity Counter Filter
 if(isset($arFilter['ACTIVITY_COUNTER']))

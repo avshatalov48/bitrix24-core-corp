@@ -136,34 +136,20 @@ class Base
 	}
 
 	/**
-	 * Temporary dirty hack. It is here while we do not solve the problem of race conditions in b_file managed cache.
 	 * Get file data from b_file on $fileId.
 	 *
 	 * @param int $fileId
-	 * @param bool $cacheCleaned
 	 * @return array|false
 	 */
-	protected function getFileData($fileId, $cacheCleaned = false)
+	protected function getFileData($fileId)
 	{
 		$fileId = (int)$fileId;
 		if($fileId > 0)
 		{
-			$fileData = \CFile::getByID($fileId)->fetch();
-			if($fileData === false && !$cacheCleaned)
-			{
-				global $DB;
-				$strSql = "SELECT ID FROM b_file WHERE ID=".$fileId;
-				$dbResult = $DB->Query($strSql, false, "FILE: ".__FILE__."<br>LINE: ".__LINE__);
-				if($dbData = $dbResult->Fetch())
-				{
-					\CFile::CleanCache($fileId);
-					return $this->getFileData($fileId, true);
-				}
-			}
-
-			return $fileData;
+			return \CFile::getByID($fileId)->fetch();
 		}
 
+		return false;
 	}
 
 	/**

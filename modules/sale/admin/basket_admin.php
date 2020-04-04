@@ -17,7 +17,7 @@ $saleModulePermissions = $APPLICATION->GetGroupRight("sale");
 if ($saleModulePermissions=="D")
 	$APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
 
-require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/sale/include.php");
+Main\Loader::includeModule('sale');
 
 if(!CBXFeatures::IsFeatureEnabled('SaleAccounts'))
 {
@@ -352,7 +352,7 @@ while ($arBasket = $dbResultList->Fetch())
 	{
 		if (CSaleBasketHelper::isSetItem($arB))
 			continue;
-		
+
 		$productId .= "&product[]=".$arB["PRODUCT_ID"];
 		if ($bNeedLine)
 		{
@@ -421,9 +421,9 @@ while ($arBasket = $dbResultList->Fetch())
 	);
 	if ($publicMode)
 	{
-		$orderAction["ACTION"] = "top.BX.adminSidePanel.onOpenPage('/shop/orders/details/0/?USER_ID=".
-			CUtil::JSEscape($arBasket["USER_ID"])."&lang=".LANGUAGE_ID."&SITE_ID=".CUtil::JSEscape($arBasket["LID"]).
-			CUtil::JSEscape($productId)."');";
+		$orderAction["ACTION"] = "top.BX.adminSidePanel.onOpenPage('/shop/orders/details/0/?FUSER_ID=".
+			CUtil::JSEscape($arBasket["FUSER_ID"])."&lang=".LANGUAGE_ID."&SITE_ID=".CUtil::JSEscape($arBasket["LID"]).
+			"&USER_ID=".$arBasket["USER_ID"]."');";
 	}
 	$arActions[] = $orderAction;
 
@@ -450,9 +450,14 @@ require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/sale/prolog.php");
 
 $APPLICATION->SetTitle(GetMessage("SB_TITLE"));
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_after.php");
-
-$lAdmin->DisplayFilter($filterFields);
-$lAdmin->DisplayList();
-
+if (!$publicMode && \Bitrix\Sale\Update\CrmEntityCreatorStepper::isNeedStub())
+{
+	$APPLICATION->IncludeComponent("bitrix:sale.admin.page.stub", ".default");
+}
+else
+{
+	$lAdmin->DisplayFilter($filterFields);
+	$lAdmin->DisplayList();
+}
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/epilog_admin.php");
 ?>

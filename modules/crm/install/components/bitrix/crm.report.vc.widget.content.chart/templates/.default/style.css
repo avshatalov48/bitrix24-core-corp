@@ -267,7 +267,13 @@
     margin: 0 11px 0 0;
     width: 16px;
     height: 16px;
+    min-width: 16px;
     background-repeat: no-repeat;
+}
+.crm-report-chart-modal-title-text {
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
 }
 .crm-report-chart-modal-subtitle {
     display: block;

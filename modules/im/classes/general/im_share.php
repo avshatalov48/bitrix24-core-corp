@@ -517,7 +517,6 @@ class CIMShare
 				'TO_USER_ID' => $quoteMessage['AUTHOR_ID'],
 				'MESSAGE' => $sendMessage,
 				'PARAMS' => $messageParams,
-				'SYSTEM' => 'Y',
 				'URL_PREVIEW' => 'N',
 				'SKIP_CONNECTOR' => 'Y',
 				'SKIP_COMMAND' => 'Y',
@@ -526,16 +525,33 @@ class CIMShare
 		}
 		else
 		{
-			$messageId = CIMChat::AddMessage(Array(
-				'TO_CHAT_ID' => $quoteMessage['CHAT_ID'],
-				'MESSAGE' => $sendMessage,
-				'PARAMS' => $messageParams,
-				'SYSTEM' => 'Y',
-				'URL_PREVIEW' => 'N',
-				'SKIP_CONNECTOR' => 'Y',
-				'SKIP_COMMAND' => 'Y',
-				'SILENT_CONNECTOR' => 'Y',
-			));
+			$chat = \Bitrix\Im\Model\ChatTable::getById($quoteMessage['CHAT_ID'])->fetch();
+			if ($chat['ENTITY_TYPE'] === 'ANNOUNCEMENT')
+			{
+				$messageId = CIMMessage::Add(Array(
+					'FROM_USER_ID' => $this->user_id,
+					'TO_USER_ID' => $this->user_id,
+					'MESSAGE' => $sendMessage,
+					'PARAMS' => $messageParams,
+					'URL_PREVIEW' => 'N',
+					'SKIP_CONNECTOR' => 'Y',
+					'SKIP_COMMAND' => 'Y',
+					'SILENT_CONNECTOR' => 'Y',
+				));
+			}
+			else
+			{
+				$messageId = CIMChat::AddMessage(Array(
+					'TO_CHAT_ID' => $quoteMessage['CHAT_ID'],
+					'MESSAGE' => $sendMessage,
+					'PARAMS' => $messageParams,
+					'SYSTEM' => 'Y',
+					'URL_PREVIEW' => 'N',
+					'SKIP_CONNECTOR' => 'Y',
+					'SKIP_COMMAND' => 'Y',
+					'SILENT_CONNECTOR' => 'Y',
+				));
+			}
 		}
 
 		return $messageId;

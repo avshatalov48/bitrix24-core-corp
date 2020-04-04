@@ -15,9 +15,12 @@ use Bitrix\Main\UI\Extension;
 
 $bodyClass = $APPLICATION->GetPageProperty("BodyClass");
 $APPLICATION->SetPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "") . "no-all-paddings no-background");
-Extension::load(["ui.buttons", "ui.buttons.icons", "ui.alerts", "ui.icons", "ui.forms"]);
-\CJSCore::init("color_picker");
-\CJSCore::Init(['sidepanel']);
+Extension::load([
+	"ui.buttons", "ui.buttons.icons", "ui.alerts", "ui.icons", "ui.forms",
+	"color_picker", "sidepanel",
+	"seo.ads.client_selector"
+]);
+
 $this->addExternalCss($this->GetFolder() . '/utm.css');
 
 $name = htmlspecialcharsbx($arResult['ROW']['NAME']);
@@ -110,7 +113,7 @@ $containerId = 'crm-analytics-source-ads-editor';
 							<?if (!$arResult['AD_ACCESSIBLE']):?>
 								<br>
 								<span class="ui-alert ui-alert-warning">
-									<?=Loc::getMessage('CRM_TRACKING_SOURCE_EDIT_UNAVAILABLE')?>
+									<?=Loc::getMessage('CRM_TRACKING_SOURCE_EDIT_INSTALL_SEO')?>
 								</span>
 							<?endif;?>
 						</span>
@@ -156,25 +159,13 @@ $containerId = 'crm-analytics-source-ads-editor';
 					<div class="crm-analytics-source-section">
 						<div class="crm-analytics-source-header"><?=Loc::getMessage('CRM_TRACKING_SOURCE_EDIT_CONNECTED', ['%name%' => $name])?></div>
 						<div class="crm-analytics-source-desc">
-							<div class="crm-analytics-source-user">
-								<a data-role="crm/tracking/profile/link"
-									href="<?=htmlspecialcharsbx($arResult['PROVIDER']['PROFILE']['LINK'])?>"
-									target="_top" class="crm-analytics-source-user-link"
-								>
-									<span data-role="crm/tracking/profile/pic"
-										class="crm-analytics-source-user-img"
-										<?if($arResult['PROVIDER']['PROFILE']['PICTURE']):?>
-										style="background-image: url(<?=htmlspecialcharsbx($arResult['PROVIDER']['PROFILE']['PICTURE'])?>)"
-										<?endif;?>
-									></span>
+							<input type="hidden"
+								name="AD_CLIENT_ID"
+								data-role="crm/tracking/ad/client"
+								value="<?=htmlspecialcharsbx($arResult['ROW']['AD_CLIENT_ID'])?>"
+							>
+							<div data-role="crm/tracking/profile" class="crm-analytics-source-user">
 
-									<span data-role="crm/tracking/profile/name" class="crm-analytics-source-user-name">
-										<?=htmlspecialcharsbx($arResult['PROVIDER']['PROFILE']['NAME'])?>
-									</span>
-								</a>
-								<button data-role="crm/tracking/profile/disconnect" type="button"
-									class="ui-btn ui-btn-light-border ui-btn-sm"
-								><?=Loc::getMessage('CRM_TRACKING_SOURCE_EDIT_DISCONNECT')?></button>
 							</div>
 						</div>
 					</div>
@@ -182,22 +173,6 @@ $containerId = 'crm-analytics-source-ads-editor';
 			<?endif;?>
 		<?else:?>
 
-			<div class="crm-analytics-source-block crm-analytics-source-block-utm">
-				<div class="crm-analytics-utm-editor-block">
-					<div class="crm-analytics-utm-editor-field">
-						<div class="crm-analytics-utm-editor-subject">
-							<span class="crm-analytics-utm-editor-subject-text"><?= Loc::getMessage("CRM_TRACKING_SOURCE_EDIT_UTM_NAME") ?></span>
-						</div>
-						<div class="crm-analytics-utm-editor-field-input-block">
-							<input class="crm-analytics-utm-editor-field-input"
-								name="NAME" type="text" placeholder=""
-								value="<?=htmlspecialcharsbx($arResult['ROW']['NAME'])?>"
-							>
-						</div>
-						<div class="crm-analytics-utm-editor-field-decs"><?= Loc::getMessage("CRM_TRACKING_SOURCE_EDIT_UTM_NAME_DESC") ?></div>
-					</div>
-				</div>
-			</div>
 
 		<?endif;?>
 
@@ -217,8 +192,8 @@ $containerId = 'crm-analytics-source-ads-editor';
 					<select
 						data-role="crm/tracking/ad/accounts/view"
 						class="ui-ctl-element"
+						disabled=""
 					>
-						<option><?=Loc::getMessage('CRM_TRACKING_SOURCE_EDIT_LOADING')?>...</option>
 					</select>
 					<input type="hidden"
 						name="AD_ACCOUNT_ID"
@@ -233,14 +208,44 @@ $containerId = 'crm-analytics-source-ads-editor';
 			<div class="crm-analytics-utm-editor-block">
 				<div class="crm-analytics-utm-editor-field">
 					<div class="crm-analytics-utm-editor-subject">
+						<span class="crm-analytics-utm-editor-subject-text"><?= Loc::getMessage("CRM_TRACKING_SOURCE_EDIT_UTM_NAME") ?></span>
+					</div>
+					<div class="crm-analytics-utm-editor-field-input-block">
+						<input class="crm-analytics-utm-editor-field-input"
+							name="NAME" type="text" placeholder=""
+							value="<?=htmlspecialcharsbx($arResult['ROW']['NAME'])?>"
+						>
+					</div>
+					<div class="crm-analytics-utm-editor-field-decs"><?= Loc::getMessage("CRM_TRACKING_SOURCE_EDIT_UTM_NAME_DESC") ?></div>
+				</div>
+			</div>
+		</div>
+
+		<div class="crm-analytics-source-block crm-analytics-source-block-utm">
+			<div class="crm-analytics-utm-editor-block">
+				<div class="crm-analytics-utm-editor-field">
+					<div class="crm-analytics-utm-editor-subject">
 						<span class="crm-analytics-utm-editor-subject-text"><?= Loc::getMessage("CRM_TRACKING_SOURCE_EDIT_UTM_TAGS") ?></span>
 					</div>
 					<div class="crm-analytics-utm-editor-field-input-block">
 						<div class="crm-analytics-utm-editor-field-input-decs">utm_source</div>
-						<input name="UTM_SOURCE" class="crm-analytics-utm-editor-field-input"
-							type="text" placeholder=""
-							value="<?=htmlspecialcharsbx($arResult['ROW']['UTM_SOURCE'])?>"
-						>
+						<?
+						$GLOBALS['APPLICATION']->includeComponent(
+							'bitrix:ui.tile.selector',
+							'',
+							array(
+								'ID' => 'utm-source',
+								'INPUT_NAME'=> "UTM_SOURCE",
+								'MULTIPLE' => true,
+								'LIST' => $arResult['ROW']['UTM_SOURCE'],
+								'CAN_REMOVE_TILES' => true,
+								'SHOW_BUTTON_SELECT' => true,
+								'SHOW_BUTTON_ADD' => false,
+								'BUTTON_SELECT_CAPTION' => Loc::getMessage('CRM_TRACKING_SOURCE_EDIT_UTM_SOURCE_BTN_ADD'),
+								'BUTTON_SELECT_CAPTION_MORE' => Loc::getMessage('CRM_TRACKING_SOURCE_EDIT_UTM_SOURCE_BTN_ADD'),
+							)
+						);
+						?>
 					</div>
 					<div class="crm-analytics-utm-editor-field-decs"><?= Loc::getMessage("CRM_TRACKING_SOURCE_EDIT_UTM_SOURCE_DESC") ?></div>
 				</div>
@@ -368,11 +373,13 @@ $containerId = 'crm-analytics-source-ads-editor';
 		<?$APPLICATION->IncludeComponent('bitrix:ui.button.panel', '', [
 			'BUTTONS' => [
 				'save', 'cancel' => $arParams['PATH_TO_LIST'],
-				($arResult['ROW']['ID'] && !$arResult['ROW']['CODE']) ? [
-					'TYPE' => 'remove',
-					'NAME' => 'archive',
-					'CAPTION' => Loc::getMessage('CRM_TRACKING_SOURCE_EDIT_ARCHIVE'),
-				] : null,
+				(
+					$arResult['ROW']['ID'] &&
+					!$arResult['ROW']['CODE'] &&
+					$arResult['ROW']['ACTIVE'] != 'N'
+				)
+					? ['TYPE' => 'remove', 'NAME' => 'archive', 'CAPTION' => Loc::getMessage('CRM_TRACKING_SOURCE_EDIT_ARCHIVE'),]
+					: null,
 			]
 		]);?>
 
@@ -390,6 +397,7 @@ $containerId = 'crm-analytics-source-ads-editor';
 					'errorAction' => Loc::getMessage('CRM_ADS_RTG_ERROR_ACTION'),
 					'dlgBtnClose' => Loc::getMessage('CRM_ADS_RTG_CLOSE'),
 					'dlgBtnCancel' => Loc::getMessage('CRM_ADS_RTG_APPLY'),
+					'loading' => Loc::getMessage('CRM_TRACKING_SOURCE_EDIT_LOADING'),
 				)
 			))?>);
 		});

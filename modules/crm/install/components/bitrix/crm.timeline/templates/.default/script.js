@@ -119,6 +119,8 @@ if(typeof(BX.CrmTimelineManager) === "undefined")
 					activityEditor: this._activityEditor,
 					itemData: this.getSetting("historyData"),
 					navigation: this.getSetting("historyNavigation", {}),
+					filterId: BX.prop.getString(this._settings, "historyFilterId", this._id),
+					isFilterApplied: BX.prop.getBoolean(this._settings, "isHistoryFilterApplied", false),
 					isStubMode: this._ownerId <= 0,
 					ajaxId: ajaxId,
 					serviceUrl: serviceUrl,
@@ -334,6 +336,10 @@ if(typeof(BX.CrmTimelineManager) === "undefined")
 			{
 				this.processBizprocStatus(params);
 			}
+			else if(command === "timeline_scoring_add")
+			{
+				this.processScoringExternalAdd(params);
+			}
 		},
 		processChatCreate: function(params)
 		{
@@ -357,7 +363,7 @@ if(typeof(BX.CrmTimelineManager) === "undefined")
 				historyItemData["ASSOCIATED_ENTITY"] = entityData;
 			}
 
-			if(scheduleItemData !== null)
+			if(scheduleItemData !== null && this._schedule.getItemByData(scheduleItemData) === null)
 			{
 				scheduleItem = this.addScheduleItem(scheduleItemData);
 				scheduleItem.addWrapperClass("crm-entity-stream-section-updated", 1000);
@@ -752,6 +758,16 @@ if(typeof(BX.CrmTimelineManager) === "undefined")
 				BX.CrmTimelineItemExpand.create(historyItem.getWrapper(), null).run();
 			}
 		},
+		processScoringExternalAdd: function(params)
+		{
+			var historyItemData, historyItem;
+			historyItemData = BX.prop.getObject(params, "HISTORY_ITEM", null);
+			if(historyItemData !== null)
+			{
+				historyItem = this.addHistoryItem(historyItemData);
+				BX.CrmTimelineItemExpand.create(historyItem.getWrapper(), null).run();
+			}
+		},
 		onEntityProgressChange: function(sender, eventArgs)
 		{
 			if(BX.prop.getInteger(eventArgs, "entityTypeId", 0) !== this._ownerTypeId
@@ -879,8 +895,12 @@ if(typeof(BX.CrmTimelineManager) === "undefined")
 
 			return item;
 		},
-		loadMediaPlayer: function(id, filePath, mediaType, node)
+		loadMediaPlayer: function(id, filePath, mediaType, node, duration)
 		{
+			if(!duration)
+			{
+				duration = 0;
+			}
 			var player = new BX.Fileman.Player(id, {
 				sources: [
 					{
@@ -892,6 +912,7 @@ if(typeof(BX.CrmTimelineManager) === "undefined")
 				skin: 'vjs-timeline_player-skin',
 				width: 350,
 				height: 30,
+				duration: duration,
 				onInit: function(player)
 				{
 					player.vjsPlayer.controlBar.removeChild('timeDivider');
@@ -1112,6 +1133,7 @@ if(typeof(BX.CrmHistory) === "undefined")
 		this._items = [];
 		this._wrapper = null;
 		this._fixedHistory = null;
+		this._emptySection = null;
 		this._currentDaySection = null;
 		this._lastDaySection = null;
 		this._lastDate = null;
@@ -1119,9 +1141,18 @@ if(typeof(BX.CrmHistory) === "undefined")
 		this._history = this;
 		this._enableLoading = false;
 		this._navigation = null;
-		this._scrollHandler = BX.delegate(this.onWindowScroll, this);
+		this._scrollHandler = null;
 		this._loadingWaiter = null;
+
+		this._filterId = "";
+		this._isFilterApplied = false;
+		this._isFilterShown = false;
+
 		this._isRequestRunning = false;
+
+		this._filterButton = null;
+		this._filterWrapper = null;
+		this._filterResultStub = null;
 	};
 	BX.extend(BX.CrmHistory, BX.CrmTimeline);
 	BX.CrmHistory.prototype.doInitialize = function()
@@ -1146,6 +1177,14 @@ if(typeof(BX.CrmHistory) === "undefined")
 			}
 
 			this._navigation = this.getSetting("navigation", {});
+
+			this._filterWrapper = BX("timeline-filter");
+			this._filterId = BX.prop.getString(this._settings, "filterId", this._id);
+			this._isFilterShown = this._filterWrapper
+				&& BX.hasClass(this._filterWrapper, "crm-entity-stream-section-filter-show");
+			this._isFilterApplied = BX.prop.getBoolean(this._settings, "isFilterApplied", false);
+
+			BX.addCustomEvent("BX.Main.Filter:apply", this.onFilterApply.bind(this));
 		}
 	};
 	BX.CrmHistory.prototype.layout = function()
@@ -1158,6 +1197,15 @@ if(typeof(BX.CrmHistory) === "undefined")
 
 		if(!this.isStubMode())
 		{
+			if(this._filterWrapper)
+			{
+				var closeFilterButton = this._filterWrapper.querySelector(".crm-entity-stream-filter-close");
+				if(closeFilterButton)
+				{
+					BX.bind(closeFilterButton, "click", this.onFilterClose.bind(this));
+				}
+			}
+
 			for(i = 0, length = this._items.length; i < length; i++)
 			{
 				item = this._items[i];
@@ -1184,13 +1232,7 @@ if(typeof(BX.CrmHistory) === "undefined")
 				item.layout();
 			}
 
-			length = this._items.length;
-			if(length)
-			{
-				this._loadingWaiter = this._items[length - 1].getWrapper();
-				this._enableLoading = true;
-				BX.bind(window, "scroll", this._scrollHandler);
-			}
+			this.enableLoading(this._items.length > 0);
 			this.refreshLayout();
 		}
 		else
@@ -1242,21 +1284,48 @@ if(typeof(BX.CrmHistory) === "undefined")
 	};
 	BX.CrmHistory.prototype.refreshLayout = function()
 	{
+		if(this._filterWrapper)
+		{
+			if(this._wrapper.firstChild && this._filterWrapper !== this._wrapper.firstChild)
+			{
+				this._wrapper.insertBefore(this._filterWrapper, this._wrapper.firstChild);
+			}
+			else if(!this._wrapper.firstChild && this._filterWrapper.parentNode !== this._wrapper)
+			{
+				this._wrapper.appendChild(this._filterWrapper);
+			}
+		}
+
+		this.adjustFilterButton();
+
 		var length = this._items.length;
+		if(length === 0 && this._isFilterApplied)
+		{
+			if(!this._filterEmptyResultSection)
+			{
+				this._filterEmptyResultSection = this.createFilterEmptyResultSection();
+			}
+			this._wrapper.appendChild(this._filterEmptyResultSection);
+
+			return;
+		}
+
+		if(this._filterEmptyResultSection)
+		{
+			this._filterEmptyResultSection = BX.remove(this._filterEmptyResultSection);
+		}
+
 		if(length === 0)
 		{
 			return;
 		}
 
-		if(length > 1)
+		for(var i = 0;  i < (length - 1); i++)
 		{
-			for(var i = 0;  i < (length - 1); i++)
+			var item = this._items[i];
+			if(item.isTerminated())
 			{
-				var item = this._items[i];
-				if(item.isTerminated())
-				{
-					item.markAsTerminated(false);
-				}
+				item.markAsTerminated(false);
 			}
 		}
 
@@ -1269,6 +1338,10 @@ if(typeof(BX.CrmHistory) === "undefined")
 	BX.CrmHistory.prototype.checkItemForTermination = function(item)
 	{
 		return this.getLastItem() === item;
+	};
+	BX.CrmHistory.prototype.hasContent = function()
+	{
+		return(this._items.length > 0 || this._isFilterApplied || this._isStubMode);
 	};
 	BX.CrmHistory.prototype.getLastItem = function()
 	{
@@ -1341,6 +1414,157 @@ if(typeof(BX.CrmHistory) === "undefined")
 		}
 		return null;
 	};
+	BX.CrmHistory.prototype.createFilterEmptyResultSection = function()
+	{
+		return BX.create("DIV",
+			{
+				attrs: { className: "crm-entity-stream-section crm-entity-stream-section-filter-empty" },
+				children:
+					[
+						BX.create("DIV",
+							{
+								attrs: { className: "crm-entity-stream-section-content" },
+								children:
+									[
+										BX.create("DIV",
+											{
+												attrs: { className: "crm-entity-stream-filter-empty" },
+												children:
+													[
+														BX.create("DIV",
+															{
+																attrs: { className: "crm-entity-stream-filter-empty-img" }
+															}
+														),
+														BX.create("DIV",
+															{
+																attrs: { className: "crm-entity-stream-filter-empty-text" },
+																text: this.getMessage("filterEmptyResultStub")
+															}
+														)
+													]
+											}
+										)
+									]
+							}
+						)
+					]
+			}
+		);
+	};
+	BX.CrmHistory.prototype.adjustFilterButton = function()
+	{
+		if(!this._filterWrapper)
+		{
+			return;
+		}
+
+		if(!this._isFilterShown && this._items.length === 0)
+		{
+			if(!this._emptySection)
+			{
+				this._emptySection = this.createEmptySection();
+			}
+			this._wrapper.insertBefore(this._emptySection, this._filterWrapper);
+		}
+		else if(this._emptySection)
+		{
+			this._emptySection = BX.remove(this._emptySection);
+		}
+
+		if(!this._filterButton)
+		{
+			this._filterButton = BX.create("BUTTON",
+				{
+					attrs: { className: "crm-entity-stream-filter-label" },
+					text: this.getMessage("filterButtonCaption")
+				}
+			);
+
+			BX.bind(this._filterButton, "click", function(e){ this.showFilter(); }.bind(this));
+		}
+
+		var section = this._wrapper.querySelector(".crm-entity-stream-section-today-label, .crm-entity-stream-section-planned-label, .crm-entity-stream-section-history-label");
+		if(section)
+		{
+			var sectionWrapper = section.querySelector(".crm-entity-stream-section-content");
+			if(sectionWrapper)
+			{
+				if(this._filterButton.parentNode !== sectionWrapper)
+				{
+					sectionWrapper.appendChild(this._filterButton);
+				}
+			}
+		}
+
+		if(this._isFilterApplied)
+		{
+			BX.addClass(this._filterButton, "crm-entity-stream-filter-label-active");
+		}
+		else
+		{
+			BX.removeClass(this._filterButton, "crm-entity-stream-filter-label-active");
+		}
+	};
+	BX.CrmHistory.prototype.showFilter = function(params)
+	{
+		if(!this._filterWrapper)
+		{
+			return;
+		}
+
+		BX.removeClass(this._filterWrapper, "crm-entity-stream-section-filter-hide");
+		BX.addClass(this._filterWrapper, "crm-entity-stream-section-filter-show");
+
+		this._isFilterShown = true;
+
+		if(BX.prop.getBoolean(params, "enableAdjust", true))
+		{
+			this.adjustFilterButton();
+		}
+	};
+	BX.CrmHistory.prototype.hideFilter = function(params)
+	{
+		if(!this._filterWrapper)
+		{
+			return;
+		}
+
+		BX.removeClass(this._filterWrapper, "crm-entity-stream-section-filter-show");
+		BX.addClass(this._filterWrapper, "crm-entity-stream-section-filter-hide");
+
+		this._isFilterShown = false;
+
+		if(BX.prop.getBoolean(params, "enableAdjust", true))
+		{
+			this.adjustFilterButton();
+		}
+	};
+	BX.CrmHistory.prototype.onFilterClose = function(e)
+	{
+		this.hideFilter();
+
+		window.setTimeout(
+			function()
+			{
+				var filter = BX.Main.filterManager.getById(this._filterId);
+				if(filter)
+				{
+					filter.resetFilter();
+				}
+			}.bind(this),
+			500
+		);
+	};
+	BX.CrmHistory.prototype.createEmptySection = function()
+	{
+		return BX.create("DIV",
+			{
+				attrs: { className: "crm-entity-stream-section crm-entity-stream-section-planned-label" },
+				children: [ BX.create("DIV", { attrs: { className: "crm-entity-stream-section-content" } }) ]
+			}
+		);
+	};
 	BX.CrmHistory.prototype.createCurrentDaySection = function()
 	{
 		return BX.create("DIV",
@@ -1393,6 +1617,11 @@ if(typeof(BX.CrmHistory) === "undefined")
 	};
 	BX.CrmHistory.prototype.createAnchor = function(index)
 	{
+		if(this._emptySection)
+		{
+			this._emptySection = BX.remove(this._emptySection);
+		}
+
 		if(this._currentDaySection === null)
 		{
 			this._currentDaySection = this.createCurrentDaySection();
@@ -1583,6 +1812,41 @@ if(typeof(BX.CrmHistory) === "undefined")
 			}
 		);
 	};
+	BX.CrmHistory.prototype.createOrderEntityItem = function(data)
+	{
+		var entityId = BX.prop.getInteger(data, "ASSOCIATED_ENTITY_TYPE_ID", 0);
+		var typeId = BX.prop.getInteger(data, "TYPE_CATEGORY_ID", 0);
+
+		if(entityId !== BX.CrmEntityType.enumeration.order)
+		{
+			return null;
+		}
+
+		if (typeId === BX.CrmTimelineType.creation)
+		{
+			return BX.CrmHistoryItemOrderCreation.create(
+				data["ID"],
+				{
+					history: this._history,
+					container: this._wrapper,
+					activityEditor: this._activityEditor,
+					data: data
+				}
+			);
+		}
+		if (typeId === BX.CrmTimelineType.modification)
+		{
+			return BX.CrmHistoryItemOrderModification.create(
+				data["ID"],
+				{
+					history: this._history,
+					container: this._wrapper,
+					activityEditor: this._activityEditor,
+					data: data
+				}
+			);
+		}
+	};
 	BX.CrmHistory.prototype.createItem = function(data)
 	{
 		var typeId = BX.prop.getInteger(data, "TYPE_ID", BX.CrmTimelineType.undefined);
@@ -1591,6 +1855,22 @@ if(typeof(BX.CrmHistory) === "undefined")
 		if(typeId === BX.CrmTimelineType.activity)
 		{
 			return this.createActivityItem(data);
+		}
+		else if(typeId === BX.CrmTimelineType.order)
+		{
+			return this.createOrderEntityItem(data);
+		}
+		else if(typeId === BX.CrmTimelineType.orderCheck)
+		{
+			return BX.CrmHistoryItemOrcderCheck.create(
+				data["ID"],
+				{
+					history: this._history,
+					container: this._wrapper,
+					activityEditor: this._activityEditor,
+					data: data
+				}
+			);
 		}
 		else if(typeId === BX.CrmTimelineType.creation)
 		{
@@ -1727,6 +2007,19 @@ if(typeof(BX.CrmHistory) === "undefined")
 				}
 			);
 		}
+		else if(typeId === BX.CrmTimelineType.scoring)
+		{
+			return BX.CrmHistoryItemScoring.create(
+				data["ID"],
+				{
+					history: this._history,
+					fixedHistory: this._fixedHistory,
+					container: this._wrapper,
+					activityEditor: this._activityEditor,
+					data: data
+				}
+			);
+		}
 
 		return BX.CrmHistoryItem.create(
 			data["ID"],
@@ -1772,6 +2065,37 @@ if(typeof(BX.CrmHistory) === "undefined")
 		this.refreshLayout();
 		this._manager.processHistoryLayoutChange();
 	};
+	BX.CrmHistory.prototype.resetLayout = function()
+	{
+		var i;
+
+		for(i = (this._items.length - 1); i >= 0; i--)
+		{
+			this._items[i].clearLayout();
+		}
+
+		this._items = [];
+
+		this._currentDaySection = this._lastDaySection = this._emptySection  = this._filterEmptyResultSection = null;
+		this._anchor = null;
+		this._lastDate = null;
+
+		//Clean wrapper. Skip filter for prevent trembling.
+		var children = [];
+		var child;
+		for(i = 0; child = this._wrapper.children[i]; i++)
+		{
+			if(child !== this._filterWrapper)
+			{
+				children.push(child);
+			}
+		}
+
+		for(i = 0; child = children[i]; i++)
+		{
+			this._wrapper.removeChild(child);
+		}
+	};
 	BX.CrmHistory.prototype.onWindowScroll = function(e)
 	{
 		if(!this._loadingWaiter || !this._enableLoading || this._isRequestRunning)
@@ -1785,16 +2109,64 @@ if(typeof(BX.CrmHistory) === "undefined")
 			this.loadItems();
 		}
 	};
-	BX.CrmHistory.prototype.onItemsLoad = function(sender, result)
+	BX.CrmHistory.prototype.onFilterApply = function(id, data, ctx, promise, params)
 	{
-		var now = BX.prop.extractDate(new Date());
-		var itemData = BX.prop.getArray(result, "HISTORY_ITEMS");
-		var navigation = BX.prop.getObject(result, "HISTORY_NAVIGATION", {});
+		if(id !== this._filterId)
+		{
+			return;
+		}
 
-		var i, length, item;
+		params.autoResolve = false;
+		this._isFilterApplied = BX.prop.getString(data, "action", "") === "apply";
+		this._isRequestRunning = true;
+
+		BX.CrmDataLoader.create(
+			this._id,
+			{
+				serviceUrl: this.getSetting("serviceUrl", ""),
+				action: "GET_HISTORY_ITEMS",
+				params:
+					{
+						"GUID": this._id,
+						"OWNER_TYPE_ID" : this._manager.getOwnerTypeId(),
+						"OWNER_ID": this._manager.getOwnerId()
+					}
+			}
+		).load(
+			function(sender, result)
+			{
+				this.resetLayout();
+				this.bulkCreateItems(BX.prop.getArray(result, "HISTORY_ITEMS", []));
+				this.setNavigation(BX.prop.getObject(result, "HISTORY_NAVIGATION", {}));
+
+				this.refreshLayout();
+				if(this._items.length > 0)
+				{
+					this._manager.processHistoryLayoutChange();
+				}
+
+				promise.fulfill();
+				this._isRequestRunning = false;
+			}.bind(this)
+		);
+	};
+	BX.CrmHistory.prototype.bulkCreateItems = function(itemData)
+	{
+		var length = itemData.length;
+		if(length === 0)
+		{
+			return;
+		}
+
+		if(this._filterEmptyResultSection)
+		{
+			this._filterEmptyResultSection = BX.remove(this._filterEmptyResultSection);
+		}
+
+		var now = BX.prop.extractDate(new Date());
+		var i, item;
 		var lastItemTime = "";
-		var processedCount = 0;
-		for(i = 0, length = itemData.length; i < length; i++)
+		for(i = 0; i < length; i++)
 		{
 			var itemId = BX.prop.getInteger(itemData[i], "ID", 0);
 			if(itemId <= 0)
@@ -1827,31 +2199,7 @@ if(typeof(BX.CrmHistory) === "undefined")
 				}
 			}
 			item.layout();
-			processedCount++;
 		}
-
-		this._navigation = navigation;
-		if(BX.prop.getString(this._navigation, "OFFSET_TIMESTAMP", "") !== "")
-		{
-			if(this._items.length > 0)
-			{
-				this._loadingWaiter = this._items[this._items.length - 1].getWrapper();
-			}
-		}
-		else
-		{
-			this._loadingWaiter = null;
-			this._enableLoading = false;
-			BX.unbind(window, "scroll", this._scrollHandler);
-		}
-
-		if(processedCount > 0)
-		{
-			this.refreshLayout();
-			this._manager.processHistoryLayoutChange();
-		}
-
-		this._isRequestRunning = false;
 	};
 	BX.CrmHistory.prototype.loadItems = function()
 	{
@@ -1863,12 +2211,82 @@ if(typeof(BX.CrmHistory) === "undefined")
 				action: "GET_HISTORY_ITEMS",
 				params:
 					{
+						"GUID": this._id,
 						"OWNER_TYPE_ID" : this._manager.getOwnerTypeId(),
 						"OWNER_ID": this._manager.getOwnerId(),
 						"NAVIGATION" : this._navigation
 					}
 			}
-		).load(BX.delegate(this.onItemsLoad, this));
+		).load(
+			function(sender, result)
+			{
+				this.bulkCreateItems(BX.prop.getArray(result, "HISTORY_ITEMS", []));
+				this.setNavigation(BX.prop.getObject(result, "HISTORY_NAVIGATION", {}));
+
+				this.refreshLayout();
+				if(this._items.length > 0)
+				{
+					this._manager.processHistoryLayoutChange();
+				}
+
+				this._isRequestRunning = false;
+			}.bind(this)
+		);
+	};
+	BX.CrmHistory.prototype.getNavigation = function()
+	{
+		return this._navigation;
+	};
+	BX.CrmHistory.prototype.setNavigation = function(navigation)
+	{
+		if(!BX.type.isPlainObject(navigation))
+		{
+			navigation = {};
+		}
+
+		this._navigation = navigation;
+		this.enableLoading(
+			BX.prop.getString(this._navigation, "OFFSET_TIMESTAMP", "") !== ""
+		);
+	};
+	BX.CrmHistory.prototype.isLoadingEnabled = function()
+	{
+		return this._enableLoading;
+	};
+	BX.CrmHistory.prototype.enableLoading = function(enable)
+	{
+		enable = !!enable;
+
+		if(this._enableLoading === enable)
+		{
+			return;
+		}
+
+		this._enableLoading = enable;
+
+		if(this._enableLoading)
+		{
+			if(this._items.length > 0)
+			{
+				this._loadingWaiter = this._items[this._items.length - 1].getWrapper();
+			}
+
+			if(!this._scrollHandler)
+			{
+				this._scrollHandler = BX.delegate(this.onWindowScroll, this);
+				BX.bind(window, "scroll", this._scrollHandler);
+			}
+		}
+		else
+		{
+			this._loadingWaiter = null;
+
+			if(this._scrollHandler)
+			{
+				BX.unbind(window, "scroll", this._scrollHandler);
+				this._scrollHandler = null;
+			}
+		}
 	};
 	BX.CrmHistory.prototype.getMessage = function(name)
 	{
@@ -2095,12 +2513,10 @@ if(typeof BX.CrmSchedule === "undefined")
 	BX.CrmSchedule.prototype.refreshLayout = function()
 	{
 		var length = this._items.length;
-		var historyItemCount = this._history ? this._history.getItemCount() : 0;
 		if(length === 0)
 		{
 			this.addStub();
-
-			if(historyItemCount > 0 || this._history.isStubMode())
+			if(this._history && this._history.hasContent())
 			{
 				BX.removeClass(this._stub, "crm-entity-stream-section-last");
 			}
@@ -2125,7 +2541,7 @@ if(typeof BX.CrmSchedule === "undefined")
 		}
 
 		var i, item;
-		if(historyItemCount > 0)
+		if(this._history && this._history.hasContent())
 		{
 			for(i = 0;  i < length; i++)
 			{
@@ -2247,6 +2663,18 @@ if(typeof BX.CrmSchedule === "undefined")
 			}
 		}
 		return null;
+	};
+	BX.CrmSchedule.prototype.getItemByData = function(itemData)
+	{
+		if(!BX.type.isPlainObject(itemData))
+		{
+			return null;
+		}
+
+		return this.getItemByAssociatedEntity(
+			BX.prop.getInteger(itemData, "ASSOCIATED_ENTITY_TYPE_ID", 0),
+			BX.prop.getInteger(itemData, "ASSOCIATED_ENTITY_ID", 0)
+		);
 	};
 	BX.CrmSchedule.prototype.getItemIndex = function(item)
 	{
@@ -2516,6 +2944,8 @@ if(typeof BX.CrmSchedule === "undefined")
 	};
 	BX.CrmSchedule.prototype.onTransferComplete = function()
 	{
+		this._history.refreshLayout();
+
 		if(this._items.length === 0)
 		{
 			this.addStub();
@@ -2747,7 +3177,6 @@ if(typeof BX.CrmEntityChat === "undefined")
 			)
 		);
 
-		//debugger;
 		this._userWrapper = BX.create("div", { props: { className: "crm-entity-stream-live-im-user-avatars" } });
 		this._contentWrapper.appendChild(
 			BX.create("div",
@@ -3267,7 +3696,7 @@ if(typeof BX.CrmTimelineBaseEditor === "undefined")
 				parseInt(computedStyle.borderTopWidth) +
 				parseInt(computedStyle.borderBottomWidth) || 0;
 
-			ghost.innerHTML = this._input.value.replace(/[\r\n]{1}/g, '<br>');
+			ghost.innerHTML = BX.util.htmlspecialchars(this._input.value.replace(/[\r\n]{1}/g, '<br>'));
 			this._input.style.minHeight = ghost.scrollHeight + diff + 'px'
 		}
 	};
@@ -3308,29 +3737,8 @@ if(typeof BX.CrmTimelineCommentEditor === "undefined")
 	};
 	BX.CrmTimelineCommentEditor.prototype.onLoadEditorSuccess = function(result)
 	{
-		var assets = BX.prop.getObject(BX.prop.getObject(result, "data", {}), "assets", {});
-		var promise = new Promise(function(resolve, reject) {
-			BX.html(null, BX.prop.getString(assets, "css", '')).then(
-				(function(){
-					BX.loadScript(
-						BX.prop.getArray(assets, "js", []),
-						resolve
-					);
-				}).bind(this)
-			);
-		});
-		promise.then(
-			BX.delegate(function(){
-				var strings = BX.prop.getArray(assets, 'string', []);
-				var stringAsset = strings.join('\n');
-				BX.html(null, stringAsset).then(
-					BX.delegate(function(){
-						var html = BX.prop.getString(BX.prop.getObject(result, "data", {}), "html", '');
-						BX.html(this._editorContainer, html).then(BX.delegate(this.showEditor,this));
-					},this)
-				)
-			},this)			
-		);
+		var html = BX.prop.getString(BX.prop.getObject(result, "data", {}), "html", '');
+		BX.html(this._editorContainer, html).then(BX.delegate(this.showEditor,this));
 	};
 	BX.CrmTimelineCommentEditor.prototype.showEditor = function()
 	{
@@ -3428,7 +3836,7 @@ if(typeof BX.CrmTimelineCommentEditor === "undefined")
 						content: BX.message('CRM_TIMELINE_EMPTY_COMMENT_MESSAGE'),
 						darkMode: true,
 						autoHide: true,
-						zIndex: 1200,
+						zIndex: 990,
 						angle: {position: 'top', offset: 77},
 						closeByEsc: true,
 						bindOptions: { forceBindPosition: true}
@@ -3521,10 +3929,14 @@ if(typeof BX.CrmTimelineCommentEditor === "undefined")
 	{
 		this._isLocked = false;
 		BX.removeClass(this._container, "focus");
+
 		this._input.style.minHeight = "";
 		this._manager.processEditingCompletion(this);
+
 		this.release();
+
 		this._history._anchor = null;
+		this._history.refreshLayout();
 	};
 	BX.CrmTimelineCommentEditor.items = {};
 	BX.CrmTimelineCommentEditor.create = function(id, settings)
@@ -4061,6 +4473,7 @@ if(typeof BX.CrmTimelineSmsEditor === "undefined")
 		this._menu = null;
 		this._isMenuShown = false;
 		this._shownMenuId = null;
+		this._documentSelector = null;
 	};
 	BX.extend(BX.CrmTimelineSmsEditor, BX.CrmTimelineBaseEditor);
 	BX.CrmTimelineSmsEditor.prototype.doInitialize = function()
@@ -4078,6 +4491,19 @@ if(typeof BX.CrmTimelineSmsEditor === "undefined")
 		this._senders = BX.prop.getArray(config, "senders", []);
 		this._defaults = BX.prop.getObject(config, "defaults", {senderId:null,from:null});
 		this._communications = BX.prop.getArray(config, "communications", []);
+		this._isSalescenterEnabled = BX.prop.getBoolean(config, "isSalescenterEnabled", false);
+		this._isDocumentsEnabled = BX.prop.getBoolean(config, "isDocumentsEnabled", false);
+		if(this._isDocumentsEnabled)
+		{
+			this._documentsProvider = BX.prop.getString(config, "documentsProvider", '');
+			this._documentsValue = BX.prop.getString(config, "documentsValue", '');
+		}
+		this._isFilesEnabled = BX.prop.getBoolean(config, "isFilesEnabled", false);
+		if(this._isFilesEnabled)
+		{
+			this._diskUrls = BX.prop.getObject(config, "diskUrls");
+			this._isFilesExternalLinkEnabled = BX.prop.getBoolean(config, "isFilesExternalLinkEnabled", true);
+		}
 
 		this._senderSelectorNode = this._container.querySelector('[data-role="sender-selector"]');
 		this._fromContainerNode = this._container.querySelector('[data-role="from-container"]');
@@ -4086,17 +4512,59 @@ if(typeof BX.CrmTimelineSmsEditor === "undefined")
 		this._clientSelectorNode = this._container.querySelector('[data-role="client-selector"]');
 		this._toSelectorNode = this._container.querySelector('[data-role="to-selector"]');
 		this._messageLengthCounterNode = this._container.querySelector('[data-role="message-length-counter"]');
+		this._salescenterStarter = this._container.querySelector('[data-role="salescenter-starter"]');
+		this._smsDetailSwitcher = this._container.querySelector('[data-role="sms-detail-switcher"]');
+		this._smsDetail = this._container.querySelector('[data-role="sms-detail"]');
+		this._documentSelectorButton = this._container.querySelector('[data-role="sms-document-selector"]');
+		this._fileSelectorButton = this._container.querySelector('[data-role="sms-file-selector"]');
+		this._fileUploadZone = this._container.querySelector('[data-role="sms-file-upload-zone"]');
+		this._fileUploadLabel = this._container.querySelector('[data-role="sms-file-upload-label"]');
+		this._fileSelectorBitrix = this._container.querySelector('[data-role="sms-file-selector-bitrix"]');
+		this._fileExternalLinkDisabledContent = this._container.querySelector('[data-role="sms-file-external-link-disabled"]');
 
 		if (this._canUse && this._canSendMessage)
 		{
+			this.initDetailSwitcher();
 			this.initSenderSelector();
 			this.initFromSelector();
 			this.initClientContainer();
 			this.initClientSelector();
 			this.initToSelector();
 			this.initMessageLengthCounter();
+			this.setMessageLengthCounter();
+			if(this._isDocumentsEnabled)
+			{
+				this.initDocumentSelector();
+			}
+			if(this._isFilesEnabled)
+			{
+				this.initFileSelector();
+			}
+		}
+
+		if(this._isSalescenterEnabled)
+		{
+			this.initSalescenterApplication();
 		}
 	};
+
+	BX.CrmTimelineSmsEditor.prototype.initDetailSwitcher = function()
+	{
+		BX.bind(this._smsDetailSwitcher, 'click', function()
+		{
+			if(this._smsDetail.classList.contains('hidden'))
+			{
+				this._smsDetail.classList.remove('hidden');
+				this._smsDetailSwitcher.innerText = BX.message('CRM_TIMELINE_COLLAPSE');
+			}
+			else
+			{
+				this._smsDetail.classList.add('hidden');
+				this._smsDetailSwitcher.innerText = BX.message('CRM_TIMELINE_DETAILS');
+			}
+		}.bind(this));
+	};
+
 	BX.CrmTimelineSmsEditor.prototype.initSenderSelector = function()
 	{
 		var defaultSenderId = this._defaults.senderId ;
@@ -4373,6 +4841,9 @@ if(typeof BX.CrmTimelineSmsEditor === "undefined")
 
 		var classFn = length >= this._messageLengthMax ? 'addClass' : 'removeClass';
 		BX[classFn](this._messageLengthCounterNode, 'crm-entity-stream-content-sms-symbol-counter-number-overhead');
+
+		classFn = length <= 0 ? 'addClass' : 'removeClass';
+		BX[classFn](this._saveButton, 'ui-btn-disabled');
 	};
 	BX.CrmTimelineSmsEditor.prototype.save = function()
 	{
@@ -4449,6 +4920,289 @@ if(typeof BX.CrmTimelineSmsEditor === "undefined")
 	{
 		this._isRequestRunning = this._isLocked = false;
 	};
+	BX.CrmTimelineSmsEditor.prototype.initSalescenterApplication = function()
+	{
+		BX.bind(this._salescenterStarter, 'click', this.startSalescenterApplication.bind(this));
+	};
+	BX.CrmTimelineSmsEditor.prototype.startSalescenterApplication = function()
+	{
+		BX.loadExt('salescenter.manager').then(function()
+		{
+			BX.Salescenter.Manager.openApplication({
+				disableSendButton: this._canSendMessage ? '' : 'y',
+				context: 'sms',
+				ownerTypeId: this._ownerTypeId,
+				ownerId: this._ownerId
+			}).then(function(result)
+			{
+				if(result && result.get('action'))
+				{
+					if(result.get('action') === 'sendPage' && result.get('page') && result.get('page').url)
+					{
+						this._input.focus();
+						this._input.value = this._input.value + result.get('page').name + ' ' + result.get('page').url;
+						this.setMessageLengthCounter();
+					}
+					else if (result.get('action') === 'sendPayment' && result.get('order'))
+					{
+						this._input.focus();
+						this._input.value = this._input.value + result.get('order').title + ' ' + result.get('order').url;
+						this.setMessageLengthCounter();
+					}
+				}
+			}.bind(this));
+		}.bind(this));
+	};
+	BX.CrmTimelineSmsEditor.prototype.initDocumentSelector = function()
+	{
+		BX.bind(this._documentSelectorButton, 'click', this.onDocumentSelectorClick.bind(this));
+	};
+
+	BX.CrmTimelineSmsEditor.prototype.onDocumentSelectorClick = function()
+	{
+		if(!this._documentSelector)
+		{
+			BX.loadExt('documentgenerator.selector').then(function()
+			{
+				this._documentSelector = new BX.DocumentGenerator.Selector.Menu({
+					node: this._documentSelectorButton,
+					moduleId: 'crm',
+					provider: this._documentsProvider,
+					value: this._documentsValue,
+					analyticsLabelPrefix: 'crmTimelineSmsEditor'
+				});
+				this.selectPublicUrl();
+			}.bind(this));
+		}
+		else
+		{
+			this.selectPublicUrl();
+		}
+	};
+
+	BX.CrmTimelineSmsEditor.prototype.selectPublicUrl = function()
+	{
+		if(!this._documentSelector)
+		{
+			return;
+		}
+		this._documentSelector.show().then(function(object)
+		{
+			if(object instanceof BX.DocumentGenerator.Selector.Template)
+			{
+				this._documentSelector.createDocument(object).then(function(document)
+				{
+					this.pasteDocumentUrl(document);
+				}.bind(this)).catch(function(error)
+				{
+					console.error(error);
+				}.bind(this));
+			}
+			else if(object instanceof BX.DocumentGenerator.Selector.Document)
+			{
+				this.pasteDocumentUrl(object);
+			}
+		}.bind(this)).catch(function(error)
+		{
+			console.error(error);
+		}.bind(this));
+	};
+
+	BX.CrmTimelineSmsEditor.prototype.pasteDocumentUrl = function(document)
+	{
+		this._documentSelector.getDocumentPublicUrl(document).then(function(publicUrl)
+		{
+			this._input.focus();
+			this._input.value = this._input.value + ' ' + document.getTitle() + ' ' + publicUrl;
+			this.setMessageLengthCounter();
+		}.bind(this)).catch(function(error)
+		{
+			console.error(error);
+		}.bind(this));
+	};
+
+	BX.CrmTimelineSmsEditor.prototype.initFileSelector = function()
+	{
+		BX.bind(this._fileSelectorButton, 'click', this.onFileSelectorClick.bind(this));
+	};
+
+	BX.CrmTimelineSmsEditor.prototype.closeFileSelector = function()
+	{
+		BX.PopupMenu.destroy('sms-file-selector');
+	};
+
+	BX.CrmTimelineSmsEditor.prototype.onFileSelectorClick = function()
+	{
+		BX.PopupMenu.show('sms-file-selector', this._fileSelectorButton, [
+			{
+				text: BX.message('CRM_TIMELINE_SMS_UPLOAD_FILE'),
+				onclick: this.uploadFile.bind(this),
+				className: this._isFilesExternalLinkEnabled ? '' : 'crm-entity-stream-content-sms-menu-item-with-lock'
+			},
+			{
+				text: BX.message('CRM_TIMELINE_SMS_FIND_FILE'),
+				onclick: this.findFile.bind(this),
+				className: this._isFilesExternalLinkEnabled ? '' : 'crm-entity-stream-content-sms-menu-item-with-lock'
+			}
+		])
+	};
+
+	BX.CrmTimelineSmsEditor.prototype.getFileUploadInput = function()
+	{
+		return document.getElementById(this._fileUploadLabel.getAttribute('for'));
+	};
+
+	BX.CrmTimelineSmsEditor.prototype.uploadFile = function()
+	{
+		this.closeFileSelector();
+		if(this._isFilesExternalLinkEnabled)
+		{
+			this.initDiskUF();
+			BX.fireEvent(this.getFileUploadInput(), 'click');
+		}
+		else
+		{
+			this.showFilesExternalLinkFeaturePopup();
+		}
+	};
+
+	BX.CrmTimelineSmsEditor.prototype.findFile = function()
+	{
+		this.closeFileSelector();
+		if(this._isFilesExternalLinkEnabled)
+		{
+			this.initDiskUF();
+			BX.fireEvent(this._fileSelectorBitrix, 'click');
+		}
+		else
+		{
+			this.showFilesExternalLinkFeaturePopup();
+		}
+	};
+
+	BX.CrmTimelineSmsEditor.prototype.getLoader = function()
+	{
+		if(!this.loader)
+		{
+			this.loader = new BX.Loader(
+			{
+				size: 50
+			});
+		}
+
+		return this.loader;
+	};
+
+	BX.CrmTimelineSmsEditor.prototype.showLoader = function(node)
+	{
+		if(node && !this.getLoader().isShown())
+		{
+			this.getLoader().show(node);
+		}
+	};
+
+	BX.CrmTimelineSmsEditor.prototype.hideLoader = function()
+	{
+		if(this.getLoader().isShown())
+		{
+			this.getLoader().hide();
+		}
+	};
+
+	BX.CrmTimelineSmsEditor.prototype.initDiskUF = function()
+	{
+		if(this.isDiskFileUploaderInited || !this._isFilesEnabled)
+		{
+			return;
+		}
+		this.isDiskFileUploaderInited = true;
+		BX.addCustomEvent(this._fileUploadZone, 'OnFileUploadSuccess', this.OnFileUploadSuccess.bind(this));
+		BX.addCustomEvent(this._fileUploadZone, 'DiskDLoadFormControllerInit', function(uf)
+		{
+			uf._onUploadProgress = function()
+			{
+				this.showLoader(this._fileSelectorButton.parentNode.parentNode);
+			}.bind(this);
+		}.bind(this));
+
+		BX.Disk.UF.add({
+			UID: this._fileUploadZone.getAttribute('data-node-id'),
+			controlName: this._fileUploadLabel.getAttribute('for'),
+			hideSelectDialog: false,
+			urlSelect: this._diskUrls.urlSelect,
+			urlRenameFile: this._diskUrls.urlRenameFile,
+			urlDeleteFile: this._diskUrls.urlDeleteFile,
+			urlUpload: this._diskUrls.urlUpload
+		});
+
+		BX.onCustomEvent(
+			this._fileUploadZone,
+			'DiskLoadFormController',
+			['show']
+		);
+	};
+
+	BX.CrmTimelineSmsEditor.prototype.OnFileUploadSuccess = function(fileResult, uf, file, uploaderFile)
+	{
+		this.hideLoader();
+		var diskFileId = parseInt(fileResult.element_id.replace('n', ''));
+		var fileName = fileResult.element_name;
+		this.pasteFileUrl(diskFileId, fileName);
+	};
+
+	BX.CrmTimelineSmsEditor.prototype.pasteFileUrl = function(diskFileId, fileName)
+	{
+		this.showLoader(this._fileSelectorButton.parentNode.parentNode);
+		BX.ajax.runAction('disk.file.generateExternalLink', {
+			analyticsLabel: 'crmTimelineSmsEditorGetFilePublicUrl',
+			data: {
+				fileId: diskFileId
+			}
+		}).then(function(response)
+		{
+			this.hideLoader();
+			if(response.data.externalLink && response.data.externalLink.link)
+			{
+				this._input.focus();
+				this._input.value = this._input.value + ' ' + fileName + ' ' + response.data.externalLink.link;
+				this.setMessageLengthCounter();
+			}
+		}.bind(this)).catch(function(response)
+		{
+			console.error(response.errors.pop().message);
+		});
+	};
+
+	BX.CrmTimelineSmsEditor.prototype.getFeaturePopup = function(content)
+	{
+		if(this.featurePopup != null)
+		{
+			return this.featurePopup;
+		}
+		this.featurePopup = new BX.PopupWindow('bx-popup-crm-sms-editor-feature-popup', null, {
+			zIndex: 200,
+			autoHide: true,
+			closeByEsc: true,
+			closeIcon: true,
+			overlay : true,
+			events : {
+				onPopupDestroy : function()
+				{
+					this.featurePopup = null;
+				}.bind(this)
+			},
+			content : content,
+			contentColor: 'white'
+		});
+
+		return this.featurePopup;
+	};
+
+	BX.CrmTimelineSmsEditor.prototype.showFilesExternalLinkFeaturePopup = function()
+	{
+		this.getFeaturePopup(this._fileExternalLinkDisabledContent).show();
+	};
+
 	BX.CrmTimelineSmsEditor.items = {};
 	BX.CrmTimelineSmsEditor.create = function(id, settings)
 	{
@@ -4854,7 +5608,10 @@ if(typeof(BX.CrmTimelineType) === "undefined")
 		conversion: 10,
 		sender: 11,
 		document: 12,
-		restoration: 13
+		restoration: 13,
+		order: 14,
+		orderCheck: 15,
+		scoring: 16
 	};
 }
 
@@ -6271,6 +7028,10 @@ if(typeof(BX.CrmHistoryItem) === "undefined")
 	{
 		return this._history.isReadOnly();
 	};
+	BX.CrmHistoryItem.prototype.isEditable = function()
+	{
+		return !this.isReadOnly();
+	};
 	BX.CrmHistoryItem.prototype.isDone = function()
 	{
 		var typeId = this.getTypeId();
@@ -6298,7 +7059,7 @@ if(typeof(BX.CrmHistoryItem) === "undefined")
 						content: BX.message('CRM_TIMELINE_FASTEN_LIMIT_MESSAGE'),
 						darkMode: true,
 						autoHide: true,
-						zIndex: 1200,
+						zIndex: 990,
 						angle: true,
 						closeByEsc: true,
 						bindOptions: { forceBindPosition: true}
@@ -6573,7 +7334,7 @@ if(typeof(BX.CrmHistoryItem) === "undefined")
 					targetVertex: "middle-center",
 					lightMode: false,
 					id: "CRM_TIMELINE_FASTEN_SWITCHER",
-					zIndex: 1000,
+					zIndex: 900,
 					top: -3,
 					left: -1,
 					autoSave: true,
@@ -6830,7 +7591,10 @@ if(typeof(BX.CrmHistoryItemActivity) === "undefined")
 
 		if (!this.isReadOnly())
 		{
-			menuItems.push({ id: "edit", text: this.getMessage("menuEdit"), onclick: BX.delegate(this.edit, this)});
+			if (this.isEditable())
+			{
+				menuItems.push({ id: "edit", text: this.getMessage("menuEdit"), onclick: BX.delegate(this.edit, this)});
+			}
 			menuItems.push({ id: "remove", text: this.getMessage("menuDelete"), onclick: BX.delegate(this.processRemoval, this)});
 
 			if (this.isFixed() || this._fixedHistory.findItemById(this._id))
@@ -7252,38 +8016,11 @@ if(typeof(BX.CrmHistoryItemComment) === "undefined")
 	};
 	BX.CrmHistoryItemComment.prototype.onLoadEditorSuccess = function(result)
 	{
-		var errors = BX.prop.getArray(result, "errors", []);
-		if (errors.length > 0)
-		{
-			this.switchToViewMode();
-			return;
-		}
 		if (!BX.type.isDomNode(this._editorContainer))
 			this._editorContainer = BX.create("div", {attrs: {className: "crm-entity-stream-section-comment-editor"}});
 
-		var assets = BX.prop.getObject(BX.prop.getObject(result, "data", {}), "assets", {});
-		var promise = new Promise(function(resolve, reject) {
-			BX.html(null, BX.prop.getString(assets, "css", '')).then(
-				(function(){
-					BX.loadScript(
-						BX.prop.getArray(assets, "js", []),
-						resolve
-					);
-				}).bind(this)
-			);
-		});
-		promise.then(
-			BX.delegate(function(){
-				var strings = BX.prop.getArray(assets, 'string', []);
-				var stringAsset = strings.join('\n');
-				BX.html(null, stringAsset).then(
-					BX.delegate(function(){
-						var html = BX.prop.getString(BX.prop.getObject(result, "data", {}), "html", '');
-						BX.html(this._editorContainer, html).then(BX.delegate(this.showEditor,this));
-					},this)
-				)
-			},this)
-		);
+		var html = BX.prop.getString(BX.prop.getObject(result, "data", {}), "html", '');
+		BX.html(this._editorContainer, html).then(BX.delegate(this.showEditor,this));
 	};
 	BX.CrmHistoryItemComment.prototype.showEditor = function()
 	{
@@ -7455,7 +8192,7 @@ if(typeof(BX.CrmHistoryItemComment) === "undefined")
 						content: BX.message('CRM_TIMELINE_EMPTY_COMMENT_MESSAGE'),
 						darkMode: true,
 						autoHide: true,
-						zIndex: 1200,
+						zIndex: 990,
 						angle: {position: 'top', offset: 77},
 						closeByEsc: true,
 						bindOptions: { forceBindPosition: true}
@@ -7584,6 +8321,8 @@ if(typeof(BX.CrmHistoryItemComment) === "undefined")
 			updateItem._id = BX.prop.getString(itemData, "ID");
 			updateItem.switchToViewMode();
 		}
+
+		this._postForm = null;
 	};
 
 	BX.CrmHistoryItemComment.prototype.onRemoveSuccess = function(data)
@@ -8123,18 +8862,25 @@ if(typeof(BX.CrmHistoryItemCreation) === "undefined")
 			return [ link ];
 		}
 
-		var title = BX.prop.getString(entityData, "TITLE");
+		var title = BX.prop.getString(entityData, "TITLE", "");
+		var htmlTitle = BX.prop.getString(entityData, "HTML_TITLE", "");
 		var showUrl = BX.prop.getString(entityData, "SHOW_URL", "");
-		if(title !== "")
+		if(title !== "" || htmlTitle !== "")
 		{
 			var nodes = [];
 			if(showUrl === "" || (entityTypeId === this.getOwnerTypeId() && entityId === this.getOwnerId()))
 			{
-				nodes.push(BX.create("SPAN", { text: title }));
+				var spanAttrs = (htmlTitle !== "") ? { html: htmlTitle } : { text: title };
+				nodes.push(BX.create("SPAN", spanAttrs));
 			}
 			else
 			{
-				nodes.push(BX.create("A", { attrs: { href: showUrl }, text: title }));
+				var linkAttrs = { attrs: { href: showUrl }, text: title };
+				if (htmlTitle !== "")
+				{
+					linkAttrs = { attrs: { href: showUrl }, html: htmlTitle };
+				}
+				nodes.push(BX.create("A", linkAttrs));
 			}
 
 			var legend = this.getTextDataParam("LEGEND");
@@ -8349,7 +9095,8 @@ if(typeof(BX.CrmHistoryItemEmail) === "undefined")
 	};
 	BX.CrmHistoryItemEmail.prototype.getRemoveMessage = function()
 	{
-		return this.getMessage('emailRemove').replace("#TITLE#", this.getTitle());
+		var title = BX.util.htmlspecialchars(this.getTitle());
+		return this.getMessage('emailRemove').replace("#TITLE#", title);
 	};
 	BX.CrmHistoryItemEmail.prototype.prepareContent = function()
 	{
@@ -8783,7 +9530,7 @@ if(typeof(BX.CrmHistoryItemCall) === "undefined")
 				detailWrapper.appendChild(BX.create("DIV",
 					{
 						attrs: { className: "crm-entity-stream-content-detail-description"},
-						text: BX.util.htmlspecialchars(callComment)
+						text: callComment
 					}
 				));
 			}
@@ -8875,7 +9622,8 @@ if(typeof(BX.CrmHistoryItemCall) === "undefined")
 		var entityData = this.getAssociatedEntityData();
 		var direction = BX.prop.getInteger(entityData, "DIRECTION", 0);
 		var messageName =  (direction === BX.CrmActivityDirection.incoming) ? 'incomingCallRemove' : 'outgoingCallRemove';
-		return this.getMessage(messageName).replace("#TITLE#", this.getTitle());
+		var title = BX.util.htmlspecialchars(this.getTitle());
+		return this.getMessage(messageName).replace("#TITLE#", title);
 	};
 	BX.CrmHistoryItemCall.prototype.onPlayerDummyClick = function(e)
 	{
@@ -8889,7 +9637,8 @@ if(typeof(BX.CrmHistoryItemCall) === "undefined")
 			"history_" + this.getId(),
 			this._mediaFileInfo["URL"],
 			this._mediaFileInfo["TYPE"],
-			this._playerWrapper
+			this._playerWrapper,
+			this._mediaFileInfo["DURATION"]
 		);
 	};
 	BX.CrmHistoryItemCall.create = function(id, settings)
@@ -9039,7 +9788,8 @@ if(typeof(BX.CrmHistoryItemMeeting) === "undefined")
 	};
 	BX.CrmHistoryItemMeeting.prototype.getRemoveMessage = function()
 	{
-		return this.getMessage('meetingRemove').replace("#TITLE#", this.getTitle());
+		var title = BX.util.htmlspecialchars(this.getTitle());
+		return this.getMessage('meetingRemove').replace("#TITLE#", title);
 	};
 	BX.CrmHistoryItemMeeting.prototype.prepareActions = function()
 	{
@@ -9198,7 +9948,8 @@ if(typeof(BX.CrmHistoryItemTask) === "undefined")
 	};
 	BX.CrmHistoryItemTask.prototype.getRemoveMessage = function()
 	{
-		return this.getMessage('taskRemove').replace("#TITLE#", this.getTitle());
+		var title = BX.util.htmlspecialchars(this.getTitle());
+		return this.getMessage('taskRemove').replace("#TITLE#", title);
 	};
 	BX.CrmHistoryItemTask.prototype.showActions = function(show)
 	{
@@ -9632,19 +10383,26 @@ if(typeof(BX.CrmHistoryItemDocument) === "undefined")
 						"OWNER_ID": this.getOwnerId(),
 						"ID": this.getId()
 					},
-				onsuccess: BX.delegate(function()
+				onsuccess: BX.delegate(function(result)
 				{
 					this._isRequestRunning = false;
-					var deleteItem = this._history.findItemById(this._id);
-					if (deleteItem instanceof BX.CrmHistoryItemDocument)
+					if(BX.type.isNotEmptyString(result.ERROR))
 					{
-						deleteItem.clearAnimate();
+						alert(result.ERROR);
 					}
-
-					var deleteFixedItem = this._fixedHistory.findItemById(this._id);
-					if (deleteFixedItem instanceof BX.CrmHistoryItemDocument)
+					else
 					{
-						deleteFixedItem.clearAnimate();
+						var deleteItem = this._history.findItemById(this._id);
+						if (deleteItem instanceof BX.CrmHistoryItemDocument)
+						{
+							deleteItem.clearAnimate();
+						}
+
+						var deleteFixedItem = this._fixedHistory.findItemById(this._id);
+						if (deleteFixedItem instanceof BX.CrmHistoryItemDocument)
+						{
+							deleteFixedItem.clearAnimate();
+						}
 					}
 				}, this),
 				onfailure: BX.delegate(function()
@@ -10293,6 +11051,10 @@ if(typeof(BX.CrmHistoryItemActivityRequest) === "undefined")
 			this._actionContainer.style.display = show ? "" : "none";
 		}
 	};
+	BX.CrmHistoryItemActivityRequest.prototype.isEditable = function()
+	{
+		return false;
+	};
 	BX.CrmHistoryItemActivityRequest.create = function(id, settings)
 	{
 		var self = new BX.CrmHistoryItemActivityRequest();
@@ -10316,6 +11078,16 @@ if(typeof(BX.CrmHistoryItemActivityRestApplication) === "undefined")
 
 		return header;
 	};
+	BX.CrmHistoryItemActivityRestApplication.prototype.getTypeDescription = function()
+	{
+		var entityData = this.getAssociatedEntityData();
+		if (entityData['APP_TYPE'] && entityData['APP_TYPE']['NAME'])
+		{
+			return entityData['APP_TYPE']['NAME'];
+		}
+
+		return BX.CrmHistoryItemActivityRestApplication.superclass.getTypeDescription.apply(this);
+	};
 	BX.CrmHistoryItemActivityRestApplication.prototype.prepareContent = function()
 	{
 		var entityData = this.getAssociatedEntityData();
@@ -10330,9 +11102,18 @@ if(typeof(BX.CrmHistoryItemActivityRestApplication) === "undefined")
 		//var entityData = this.getAssociatedEntityData();
 		var wrapper = BX.create("DIV", { attrs: { className: "crm-entity-stream-section crm-entity-stream-section-today crm-entity-stream-section-rest" } });
 
-		wrapper.appendChild(
-			BX.create("DIV", { attrs: { className: "crm-entity-stream-section-icon crm-entity-stream-section-icon-rest" } })
-		);
+		var iconNode = BX.create("DIV", { attrs: { className: "crm-entity-stream-section-icon crm-entity-stream-section-icon-rest" } });
+
+		wrapper.appendChild(iconNode);
+
+		if (entityData['APP_TYPE'] && entityData['APP_TYPE']['ICON_SRC'])
+		{
+			if (iconNode)
+			{
+				iconNode.style.backgroundImage = "url(" +  entityData['APP_TYPE']['ICON_SRC'] + ")";
+				iconNode.style.backgroundPosition = "center center";
+			}
+		}
 
 		if (this.isFixed())
 			BX.addClass(wrapper, 'crm-entity-stream-section-top-fixed');
@@ -10834,6 +11615,13 @@ if(typeof(BX.CrmHistoryItemVisit) === "undefined")
 		var header = this.prepareHeaderLayout();
 		wrapper.appendChild(header);
 
+		//region Context Menu
+		if(this.isContextMenuEnabled())
+		{
+			wrapper.appendChild(this.prepareContextMenuButton());
+		}
+		//endregion
+
 		//Details
 		var detailWrapper = BX.create("DIV",
 			{
@@ -10942,7 +11730,8 @@ if(typeof(BX.CrmHistoryItemVisit) === "undefined")
 			"history_" + this.getId(),
 			this._mediaFileInfo["URL"],
 			this._mediaFileInfo["TYPE"],
-			this._playerWrapper
+			this._playerWrapper,
+			this._mediaFileInfo["DURATION"]
 		);
 	};
 
@@ -10958,6 +11747,741 @@ if(typeof(BX.CrmHistoryItemVisit) === "undefined")
 	};
 }
 
+if(typeof(BX.CrmHistoryItemScoring) === "undefined")
+{
+	BX.CrmHistoryItemScoring = function()
+	{
+		BX.CrmHistoryItemScoring.superclass.constructor.apply(this);
+	};
+	BX.extend(BX.CrmHistoryItemScoring, BX.CrmHistoryItem);
+	BX.CrmHistoryItemScoring.prototype.prepareContent = function()
+	{
+		var outerWrapper = BX.create("DIV", {
+			attrs: {
+				className: "crm-entity-stream-section crm-entity-stream-section-history crm-entity-stream-section-scoring"
+			},
+			events: {
+				click: function()
+				{
+					var url = "/crm/ml/#entity#/#id#/detail";
+					var ownerTypeId = this.getOwnerTypeId();
+					var ownerId = this.getOwnerId();
+
+					var ownerType;
+					if(ownerTypeId == 1)
+					{
+						ownerType = "lead";
+					}
+					else if(ownerTypeId == 2)
+					{
+						ownerType = "deal";
+					}
+					else
+					{
+						return;
+					}
+
+					url = url.replace("#entity#", ownerType);
+					url = url.replace("#id#", ownerId);
+
+					if(BX.SidePanel)
+					{
+						BX.SidePanel.Instance.open(url, {width: 840});
+					}
+					else
+					{
+						top.location.href = url;
+					}
+				}.bind(this)
+			}
+			});
+
+		var scoringInfo = BX.prop.getObject(this._data, "SCORING_INFO", null);
+		if(!scoringInfo)
+		{
+			return outerWrapper;
+		}
+
+		var score = BX.prop.getNumber(scoringInfo, "SCORE", 0);
+		var scoreDelta = BX.prop.getNumber(scoringInfo, "SCORE_DELTA", 0);
+		score = Math.round(score * 100);
+		scoreDelta = Math.round(scoreDelta * 100);
+
+		var result = BX.create("DIV",
+			{
+				attrs: { className: "crm-entity-stream-content-scoring-total-result" },
+				text: score + "%"
+			});
+
+		var iconClass = "crm-entity-stream-content-scoring-total-icon";
+		if (score < 50)
+		{
+			iconClass += " crm-entity-stream-content-scoring-total-icon-fail";
+		}
+		else if (score < 75)
+		{
+			iconClass += " crm-entity-stream-content-scoring-total-icon-middle";
+		}
+		else
+		{
+			iconClass += " crm-entity-stream-content-scoring-total-icon-success";
+		}
+
+		var icon = BX.create("DIV",
+			{
+				attrs: { className: iconClass }
+			}
+			);
+
+		outerWrapper.appendChild(
+			BX.create("DIV",
+				{
+					attrs: { className: "crm-entity-stream-section-content" },
+					children: [
+						BX.create("DIV",
+							{
+								attrs: { className: "crm-entity-stream-content-scoring-total" },
+								children: [
+									BX.create("DIV",
+										{
+											attrs: { className: "crm-entity-stream-content-scoring-total-text" },
+											text: BX.message("CRM_TIMELINE_SCORING_TITLE_2")
+										}
+									),
+									result,
+									icon
+								]
+							}
+						),
+						BX.create("DIV",
+							{
+								attrs: { className: "crm-entity-stream-content-scoring-event" },
+								children: [
+									(
+										scoreDelta !== 0 ?
+											BX.create("DIV",
+												{
+													attrs: { className: "crm-entity-stream-content-scoring-event-offset" },
+													text: (scoreDelta > 0 ? "+" : "") + scoreDelta + "%"
+												}
+											)
+											:
+											null
+									),
+									/*BX.create("DIV",
+										{
+											attrs: { className: "crm-entity-stream-content-scoring-event-detail" },
+											text: "<activity subject>"
+										}
+									)*/
+								]
+							}
+						)
+					]
+
+				}
+			)
+		);
+
+		return outerWrapper;
+	};
+	BX.CrmHistoryItemScoring.create = function(id, settings)
+	{
+		var self = new BX.CrmHistoryItemScoring();
+		self.initialize(id, settings);
+		return self;
+	};
+}
+
+if(typeof(BX.CrmHistoryItemOrderCreation) === "undefined")
+{
+	BX.CrmHistoryItemOrderCreation = function()
+	{
+		BX.CrmHistoryItemOrderCreation.superclass.constructor.apply(this);
+	};
+	BX.extend(BX.CrmHistoryItemOrderCreation, BX.CrmHistoryItem);
+	BX.CrmHistoryItemOrderCreation.prototype.doInitialize = function()
+	{
+		BX.CrmHistoryItemOrderCreation.superclass.doInitialize.apply(this);
+		if(!(this._activityEditor instanceof BX.CrmActivityEditor))
+		{
+			throw "BX.CrmHistoryItemOrderCreation. The field 'activityEditor' is not assigned.";
+		}
+	};
+	BX.CrmHistoryItemOrderCreation.prototype.getTitle = function()
+	{
+		var msg = this.getMessage(BX.CrmEntityType.resolveName(this.getAssociatedEntityTypeId()).toLowerCase());
+		if(!BX.type.isNotEmptyString(msg))
+		{
+			msg = this.getTextDataParam("TITLE");
+		}
+
+		return msg;
+	};
+	BX.CrmHistoryItemOrderCreation.prototype.getWrapperClassName = function()
+	{
+		return "crm-entity-stream-section-createOrderEntity";
+	};
+	BX.CrmHistoryItemOrderCreation.prototype.getHeaderChildren = function()
+	{
+		var statusMessage = this.getMessage("unpaid");
+		var statusClass = "crm-entity-stream-content-event-not-paid";
+		var fields = this.getObjectDataParam('FIELDS');
+
+		if (BX.prop.get(fields, 'DONE') === 'Y')
+		{
+			statusMessage = this.getMessage("done");
+			statusClass = "crm-entity-stream-content-event-done";
+		}
+		else if (BX.prop.get(fields, 'CANCELED') === 'Y')
+		{
+			statusMessage = this.getMessage("canceled");
+			statusClass = "crm-entity-stream-content-event-canceled";
+		}
+		else if (BX.prop.get(fields, 'PAID') === 'Y')
+		{
+			statusMessage = this.getMessage("paid");
+			statusClass = "crm-entity-stream-content-event-paid";
+		}
+
+		return [
+			BX.create("DIV",
+				{
+					attrs: { className: "crm-entity-stream-content-event-title" },
+					children:
+						[
+							BX.create("A",
+								{
+									attrs: { href: "#" },
+									events: { click: this._headerClickHandler },
+									text: this.getTitle()
+								}
+							)
+						]
+				}
+			),
+			BX.create("SPAN",
+				{
+					attrs: { className: statusClass },
+					text: statusMessage
+				}
+			),
+			BX.create("SPAN",
+				{
+					attrs: { className: "crm-entity-stream-content-event-time" },
+					text: this.formatTime(this.getCreatedTime())
+				}
+			)
+		];
+	};
+	BX.CrmHistoryItemOrderCreation.prototype.prepareContentDetails = function()
+	{
+		var entityData = this.getAssociatedEntityData();
+		var entityTypeId = this.getAssociatedEntityTypeId();
+		var entityId = this.getAssociatedEntityId();
+		var title = BX.prop.getString(entityData, "TITLE");
+		var showUrl = BX.prop.getString(entityData, "SHOW_URL", "");
+		var nodes = [];
+		if(title !== "")
+		{
+			if(showUrl === "" || (entityTypeId === this.getOwnerTypeId() && entityId === this.getOwnerId()))
+			{
+				nodes.push(BX.create("SPAN", { text: title }));
+			}
+			else
+			{
+				nodes.push(BX.create("A", { attrs: { href: showUrl }, text: title }));
+			}
+
+			var legend =  BX.prop.getString(entityData, "LEGEND", "");
+			if(legend !== "")
+			{
+				nodes.push(BX.create("SPAN", { html: " " + legend }));
+			}
+		}
+		return nodes;
+	};
+	BX.CrmHistoryItemOrderCreation.prototype.getIconClassName = function()
+	{
+		return "crm-entity-stream-section-icon crm-entity-stream-section-icon-store";
+	};
+	BX.CrmHistoryItemOrderCreation.prototype.prepareContent = function()
+	{
+		wrapperClassName = "crm-entity-stream-section crm-entity-stream-section-history";
+		var wrapper = BX.create("DIV", { attrs: { className: wrapperClassName } });
+		wrapper.appendChild(BX.create("DIV", { attrs: { className: this.getIconClassName() } }));
+
+		var contentWrapper = BX.create("DIV", { attrs: { className: "crm-entity-stream-content-event" } });
+		wrapper.appendChild(
+			BX.create("DIV",
+				{ attrs: { className: "crm-entity-stream-section-content" }, children: [ contentWrapper ] }
+			)
+		);
+
+		var header = BX.create("DIV",
+			{
+				attrs: { className: "crm-entity-stream-content-header" },
+				children: this.getHeaderChildren()
+			}
+		);
+		contentWrapper.appendChild(header);
+
+		contentWrapper.appendChild(
+			BX.create("DIV",
+				{
+					attrs: { className: "crm-entity-stream-content-detail" },
+					children: this.prepareContentDetails()
+				}
+			)
+		);
+
+		//region Author
+		var authorNode = this.prepareAuthorLayout();
+		if(authorNode)
+		{
+			contentWrapper.appendChild(authorNode);
+		}
+		//endregion
+
+		return wrapper;
+	};
+	BX.CrmHistoryItemOrderCreation.prototype.getMessage = function(name)
+	{
+		var m = BX.CrmHistoryItemOrderCreation.messages;
+		return m.hasOwnProperty(name) ? m[name] : name;
+	};
+	if(typeof(BX.CrmHistoryItemOrderCreation.messages) === "undefined")
+	{
+		BX.CrmHistoryItemOrderCreation.messages = {};
+	}
+	BX.CrmHistoryItemOrderCreation.create = function(id, settings)
+	{
+		var self = new BX.CrmHistoryItemOrderCreation();
+		self.initialize(id, settings);
+		return self;
+	};
+}
+
+if(typeof(BX.CrmHistoryItemOrderModification) === "undefined")
+{
+	BX.CrmHistoryItemOrderModification = function()
+	{
+		BX.CrmHistoryItemOrderModification.superclass.constructor.apply(this);
+	};
+	BX.extend(BX.CrmHistoryItemOrderModification, BX.CrmHistoryItem);
+	BX.CrmHistoryItemOrderModification.prototype.getMessage = function(name)
+	{
+		var m = BX.CrmHistoryItemOrderModification.messages;
+		return m.hasOwnProperty(name) ? m[name] : name;
+	};
+	BX.CrmHistoryItemOrderModification.prototype.getTitle = function()
+	{
+		return this.getTextDataParam("TITLE");
+	};
+	BX.CrmHistoryItemOrderModification.prototype.getStatusInfo = function()
+	{
+		var statusInfo = {};
+		var value =
+			classCode = null;
+		var fieldName = this.getTextDataParam("CHANGED_ENTITY");
+		var fields = this.getObjectDataParam('FIELDS');
+		if (fieldName === BX.CrmEntityType.names.order)
+		{
+			if (BX.prop.get(fields, 'ORDER_CANCELED') === 'Y')
+			{
+				value = "canceled";
+				classCode  = "not-paid";
+			}
+			else if (BX.prop.get(fields, 'ORDER_DONE') === 'Y')
+			{
+				value = "done";
+				classCode  = "done";
+			}
+		}
+		if (fieldName === BX.CrmEntityType.names.orderpayment)
+		{
+			value = BX.prop.get(fields, 'ORDER_PAID') === 'Y' ? "paid" : "unpaid";
+			classCode  = BX.prop.get(fields, 'ORDER_PAID') === 'Y' ? "paid" : "not-paid";
+		}
+		else if (fieldName === BX.CrmEntityType.names.ordershipment)
+		{
+			value = BX.prop.get(fields, 'ORDER_DEDUCTED') === 'Y' ? "deducted" : "unshipped";
+			classCode  = BX.prop.get(fields, 'ORDER_DEDUCTED') === 'Y' ? "shipped" : "not-shipped";
+		}
+
+		if (value)
+		{
+			statusInfo.className = "crm-entity-stream-content-event-" + classCode;
+			statusInfo.message = this.getMessage(value);
+		}
+
+		return statusInfo;
+	};
+	BX.CrmHistoryItemOrderModification.prototype.getHeaderChildren = function()
+	{
+		var children = [
+			BX.create("DIV",
+				{
+					attrs: { className: "crm-entity-stream-content-event-title" },
+					children:
+						[
+							BX.create("A",
+								{
+									attrs: { href: "#" },
+									events: { click: this._headerClickHandler },
+									text: this.getTitle()
+								}
+							)
+						]
+				}
+			)
+		];
+		var statusInfo = this.getStatusInfo();
+		if (BX.type.isNotEmptyObject(statusInfo))
+		{
+			children.push(
+				BX.create("SPAN",
+				{
+					attrs: { className: statusInfo.className },
+					text: statusInfo.message
+				}
+			));
+		}
+		children.push(
+			BX.create("SPAN",
+			{
+				attrs: { className: "crm-entity-stream-content-event-time" },
+				text: this.formatTime(this.getCreatedTime())
+			}
+		));
+		return children;
+	};
+	BX.CrmHistoryItemOrderModification.prototype.prepareContentDetails = function()
+	{
+		var entityData = this.getAssociatedEntityData();
+		var entityTypeId = this.getAssociatedEntityTypeId();
+		var entityId = this.getAssociatedEntityId();
+		var title = BX.prop.getString(entityData, "TITLE");
+		var showUrl = BX.prop.getString(entityData, "SHOW_URL", "");
+		var nodes = [];
+		if(title !== "")
+		{
+			var descriptionNode = BX.create("DIV", { attrs: { className: "crm-entity-stream-content-detail-description"}});
+			if(showUrl === "" || (entityTypeId === this.getOwnerTypeId() && entityId === this.getOwnerId()))
+			{
+				descriptionNode.appendChild(BX.create("SPAN", { text: title }));
+			}
+			else
+			{
+				descriptionNode.appendChild(BX.create("A", { attrs: { href: showUrl }, text: title }));
+			}
+			var legend = BX.prop.getString(entityData, "LEGEND");
+			if(legend !== "")
+			{
+				descriptionNode.appendChild(BX.create("SPAN", { html: " " + legend }));
+			}
+			nodes.push(descriptionNode);
+		}
+
+		nodes = nodes.concat(this.prepareAdditionalContent());
+		return nodes;
+	};
+	BX.CrmHistoryItemOrderModification.prototype.prepareAdditionalContent = function()
+	{
+		var entityData = this.getAssociatedEntityData();
+		var fields =
+			subnodes = [];
+		var sublegend = '';
+		var fieldName = this.getTextDataParam("CHANGED_ENTITY");
+
+		if (fieldName === BX.CrmEntityType.names.orderpayment || fieldName === BX.CrmEntityType.names.order)
+		{
+			var paymentsInfo = BX.prop.get(entityData, "PAYMENTS_INFO", {});
+			fields = this.getObjectDataParam('FIELDS');
+			var payments = BX.prop.getObject(fields, 'PAYMENTS_FIELDS');
+			for (var id in payments)
+			{
+				if (!payments.hasOwnProperty(id))
+				{
+					continue;
+				}
+
+				if (BX.type.isNotEmptyObject(paymentsInfo[id]))
+				{
+					payment = paymentsInfo[id];
+					messageCode = (BX.prop.getString(payments[id], "PAID") === "Y") ? "orderPaymentLegendPaid" : "orderPaymentLegendUnpaid";
+					sublegend = " " + this.getMessage(messageCode);
+					sublegend = sublegend
+						.replace("#SUM_WITH_CURRENCY#", BX.prop.getString(payment, 'SUM_WITH_CURRENCY'))
+						.replace("#PAY_SYSTEM_NAME#", BX.util.htmlspecialchars(BX.prop.getString(payment, 'PAY_SYSTEM_NAME')));
+					paymentNode = BX.create("DIV", {
+						attrs: { className: 'crm-entity-stream-content-detail-payment-info' },
+						children: [
+							BX.create("A", {
+								attrs: { href: BX.prop.getString(payment, "SHOW_URL") },
+								text: this.getMessage("orderPayment")
+							}),
+							BX.create("SPAN", {
+								html: sublegend
+							})
+						]
+					});
+
+					subnodes.push(paymentNode);
+				}
+			}
+		}
+		else if (fieldName === BX.CrmEntityType.names.ordershipment)
+		{
+			var shipmentsInfo = BX.prop.get(entityData, "SHIPMENTS_INFO", {});
+			fields = this.getObjectDataParam('FIELDS');
+			var shipments = BX.prop.getObject(fields, 'SHIPMENTS_FIELDS');
+			for (var id in shipments)
+			{
+				if (!shipments.hasOwnProperty(id))
+				{
+					continue;
+				}
+
+				if (BX.type.isNotEmptyObject(shipmentsInfo[id]))
+				{
+					var shipment = shipmentsInfo[id];
+					messageCode = (BX.prop.getString(shipments[id], "DEDUCTED") === "Y") ? "orderShipmentLegendDeducted" : "orderShipmentLegendUnshipped";
+					deliveryName = BX.util.htmlspecialchars( BX.prop.getString(shipment, 'DELIVERY_NAME'));
+					sublegend = " " + this.getMessage(messageCode).replace("#DELIVERY_NAME#", deliveryName);
+					shipmentNode = BX.create("DIV", {
+						attrs: { className: 'crm-entity-stream-content-detail-payment-info' },
+						children: [
+							BX.create("A", {
+								attrs: { href: BX.prop.getString(shipment, "SHOW_URL") },
+								text: this.getMessage("orderShipment")
+							}),
+							BX.create("SPAN", {
+								html: sublegend
+							})
+						]
+					});
+					subnodes.push(shipmentNode);
+				}
+			}
+		}
+		return subnodes;
+	};
+	BX.CrmHistoryItemOrderModification.prototype.prepareContent = function()
+	{
+		var wrapper = BX.create("DIV", { attrs: { className: "crm-entity-stream-section crm-entity-stream-section-history" } });
+
+		wrapper.appendChild(
+			BX.create("DIV", { attrs: { className: "crm-entity-stream-section-icon crm-entity-stream-section-icon-store" } })
+		);
+
+		var content = BX.create("DIV", { attrs: { className: "crm-entity-stream-content-event" } });
+		var header = BX.create("DIV",
+		{
+			attrs: { className: "crm-entity-stream-content-header" },
+			children: this.getHeaderChildren()
+		});
+
+		var contentChildren = this.prepareContentDetails();
+		content.appendChild(header);
+		content.appendChild(
+			BX.create("DIV",
+				{
+					attrs: { className: "crm-entity-stream-content-detail" },
+					children: contentChildren
+				})
+		);
+
+		//region Author
+		var authorNode = this.prepareAuthorLayout();
+		if(authorNode)
+		{
+			content.appendChild(authorNode);
+		}
+		//endregion
+
+		wrapper.appendChild(
+			BX.create("DIV", { attrs: { className: "crm-entity-stream-section-content" }, children: [ content ] })
+		);
+
+		return wrapper;
+	};
+	if(typeof(BX.CrmHistoryItemOrderModification.messages) === "undefined")
+	{
+		BX.CrmHistoryItemOrderModification.messages = {};
+	}
+	BX.CrmHistoryItemOrderModification.create = function(id, settings)
+	{
+		var self = new BX.CrmHistoryItemOrderModification();
+		self.initialize(id, settings);
+		return self;
+	};
+}
+
+if(typeof(BX.CrmHistoryItemOrcderCheck) === "undefined")
+{
+	BX.CrmHistoryItemOrcderCheck = function()
+	{
+		BX.CrmHistoryItemOrcderCheck.superclass.constructor.apply(this);
+	};
+	BX.extend(BX.CrmHistoryItemOrcderCheck, BX.CrmHistoryItem);
+	BX.CrmHistoryItemOrcderCheck.prototype.doInitialize = function()
+	{
+		BX.CrmHistoryItemOrcderCheck.superclass.doInitialize.apply(this);
+		if(!(this._activityEditor instanceof BX.CrmActivityEditor))
+		{
+			throw "BX.CrmHistoryItemOrcderCheck. The field 'activityEditor' is not assigned.";
+		}
+	};
+	BX.CrmHistoryItemOrcderCheck.prototype.getTitle = function()
+	{
+		return this.getMessage('orderCheck');
+	};
+	BX.CrmHistoryItemOrcderCheck.prototype.getWrapperClassName = function()
+	{
+		return "crm-entity-stream-section-createOrderEntity";
+	};
+	BX.CrmHistoryItemOrcderCheck.prototype.getHeaderChildren = function()
+	{
+		var statusMessage = this.getMessage("printed");
+		var statusClass = "crm-entity-stream-content-event-successful";
+		if (this.getTextDataParam("PRINTED") !== 'Y')
+		{
+			statusMessage = this.getMessage("unprinted");
+			statusClass = "crm-entity-stream-content-event-missing";
+		}
+
+		return [
+			BX.create("DIV",
+				{
+					attrs: { className: "crm-entity-stream-content-event-title" },
+					children:
+						[
+							BX.create("A",
+								{
+									attrs: { href: "#" },
+									events: { click: this._headerClickHandler },
+									text: this.getTitle()
+								}
+							)
+						]
+				}
+			),
+			BX.create("SPAN",
+				{
+					attrs: { className: statusClass },
+					text: statusMessage
+				}
+			),
+			BX.create("SPAN",
+				{
+					attrs: { className: "crm-entity-stream-content-event-time" },
+					text: this.formatTime(this.getCreatedTime())
+				}
+			)
+		];
+	};
+	BX.CrmHistoryItemOrcderCheck.prototype.prepareContentDetails = function()
+	{
+		var entityData = this.getAssociatedEntityData();
+		var title = this.getTextDataParam("TITLE");
+		var showUrl = BX.prop.getString(entityData, "SHOW_URL", '');
+		var nodes = [];
+		if(title !== "")
+		{
+			var descriptionNode = BX.create("DIV", { attrs: { className: 'crm-entity-stream-content-detail-description' } });
+			descriptionNode.appendChild(BX.create("A", {
+				attrs: { href: showUrl},
+				events: {
+					click: BX.delegate(function(e) {
+						BX.Crm.Page.openSlider(showUrl, { width: 500 });
+						e.preventDefault ? e.preventDefault() : (e.returnValue = false);
+					}, this)
+				},
+				text: title
+			}));
+
+			var legend =  this.getTextDataParam("LEGEND");
+			if(legend !== "")
+			{
+				descriptionNode.appendChild(BX.create("SPAN", { text: " " + legend }));
+			}
+
+			nodes.push(descriptionNode);
+		}
+
+		var listUrl = BX.prop.getString(entityData, "LIST_URL", "");
+		if(listUrl)
+		{
+			nodes.push(
+				BX.create("DIV", {
+					attrs: { className: 'crm-entity-stream-content-detail-payment-info' },
+					children: [
+						BX.create("A", { attrs: { href: listUrl }, text: this.getMessage('listLink') })
+					]
+				})
+			);
+		}
+
+		return nodes;
+	};
+	BX.CrmHistoryItemOrcderCheck.prototype.prepareContent = function()
+	{
+		var entityData = this.getAssociatedEntityData();
+		wrapperClassName = "crm-entity-stream-section crm-entity-stream-section-history crm-entity-stream-section-createOrderEntity";
+		var wrapper = BX.create("DIV", { attrs: { className: wrapperClassName } });
+		wrapper.appendChild(BX.create("DIV", { attrs: { className: this.getIconClassName() } }));
+
+		var contentWrapper = BX.create("DIV", { attrs: { className: "crm-entity-stream-content-event" } });
+		wrapper.appendChild(
+			BX.create("DIV",
+				{ attrs: { className: "crm-entity-stream-section-content" }, children: [ contentWrapper ] }
+			)
+		);
+
+		var header = BX.create("DIV",
+			{
+				attrs: { className: "crm-entity-stream-content-header" },
+				children: this.getHeaderChildren()
+			}
+		);
+		contentWrapper.appendChild(header);
+
+		contentWrapper.appendChild(
+			BX.create("DIV",
+				{
+					attrs: { className: "crm-entity-stream-content-detail" },
+					children: this.prepareContentDetails()
+				}
+			)
+		);
+
+		//region Author
+		var authorNode = this.prepareAuthorLayout();
+		if(authorNode)
+		{
+			contentWrapper.appendChild(authorNode);
+		}
+		//endregion
+
+		return wrapper;
+	};
+	BX.CrmHistoryItemOrcderCheck.prototype.getMessage = function(name)
+	{
+		var m = BX.CrmHistoryItemOrcderCheck.messages;
+		return m.hasOwnProperty(name) ? m[name] : name;
+	};
+	if(typeof(BX.CrmHistoryItemOrcderCheck.messages) === "undefined")
+	{
+		BX.CrmHistoryItemOrcderCheck.messages = {};
+	}
+	BX.CrmHistoryItemOrcderCheck.create = function(id, settings)
+	{
+		var self = new BX.CrmHistoryItemOrcderCheck();
+		self.initialize(id, settings);
+		return self;
+	};
+}
 //endregion
 
 //region Schedule Items
@@ -11071,6 +12595,10 @@ if(typeof(BX.CrmScheduleItem) === "undefined")
 	BX.CrmScheduleItem.prototype.isReadOnly = function()
 	{
 		return this._schedule.isReadOnly();
+	};
+	BX.CrmScheduleItem.prototype.isEditable = function()
+	{
+		return !this.isReadOnly();
 	};
 	BX.CrmScheduleItem.prototype.canPostpone = function()
 	{
@@ -11582,7 +13110,11 @@ if(typeof(BX.CrmScheduleItemActivity) === "undefined")
 
 		if (!this.isReadOnly())
 		{
-			menuItems.push({ id: "edit", text: this.getMessage("menuEdit"), onclick: BX.delegate(this.edit, this)});
+			if (this.isEditable())
+			{
+				menuItems.push({ id: "edit", text: this.getMessage("menuEdit"), onclick: BX.delegate(this.edit, this)});
+			}
+
 			menuItems.push({ id: "remove", text: this.getMessage("menuDelete"), onclick: BX.delegate(this.processRemoval, this)});
 		}
 
@@ -11667,7 +13199,12 @@ if(typeof(BX.CrmScheduleItemEmail) === "undefined")
 	{
 		var entityData = this.getAssociatedEntityData();
 		var title = BX.prop.getString(entityData, "SUBJECT", "");
+		title = BX.util.htmlspecialchars(title);
 		return this.getMessage('emailRemove').replace("#TITLE#", title);
+	};
+	BX.CrmScheduleItemEmail.prototype.isEditable = function()
+	{
+		return false;
 	};
 	BX.CrmScheduleItemEmail.create = function(id, settings)
 	{
@@ -11730,6 +13267,7 @@ if(typeof(BX.CrmScheduleItemCall) === "undefined")
 		var direction = BX.prop.getInteger(entityData, "DIRECTION", 0);
 		var title = BX.prop.getString(entityData, "SUBJECT", "");
 		var messageName = (direction === BX.CrmActivityDirection.incoming) ? 'incomingCallRemove' : 'outgoingCallRemove';
+		title = BX.util.htmlspecialchars(title);
 		return this.getMessage(messageName).replace("#TITLE#", title);
 	};
 	BX.CrmScheduleItemCall.create = function(id, settings)
@@ -11766,6 +13304,7 @@ if(typeof(BX.CrmScheduleItemMeeting) === "undefined")
 	{
 		var entityData = this.getAssociatedEntityData();
 		var title = BX.prop.getString(entityData, "SUBJECT", "");
+		title = BX.util.htmlspecialchars(title);
 		return this.getMessage('meetingRemove').replace("#TITLE#", title);
 	};
 	BX.CrmScheduleItemMeeting.prototype.getTypeDescription = function()
@@ -11807,6 +13346,7 @@ if(typeof(BX.CrmScheduleItemTask) === "undefined")
 	{
 		var entityData = this.getAssociatedEntityData();
 		var title = BX.prop.getString(entityData, "SUBJECT", "");
+		title = BX.util.htmlspecialchars(title);
 		return this.getMessage('taskRemove').replace("#TITLE#", title);
 	};
 	BX.CrmScheduleItemTask.create = function(id, settings)
@@ -12163,6 +13703,10 @@ if(typeof(BX.CrmScheduleItemActivityRequest) === "undefined")
 	{
 		return this.getMessage("activityRequest");
 	};
+	BX.CrmScheduleItemActivityRequest.prototype.isEditable = function()
+	{
+		return false;
+	};
 	BX.CrmScheduleItemActivityRequest.create = function(id, settings)
 	{
 		var self = new BX.CrmScheduleItemActivityRequest();
@@ -12186,8 +13730,31 @@ if(typeof(BX.CrmScheduleItemActivityRestApplication) === "undefined")
 	{
 		return "crm-entity-stream-section-icon crm-entity-stream-section-icon-rest";
 	};
+	BX.CrmScheduleItemActivityRestApplication.prototype.prepareContent = function(options)
+	{
+		var wrapper = BX.CrmScheduleItemActivityRestApplication.superclass.prepareContent.apply(this, options);
+		var data = this.getAssociatedEntityData();
+
+		if (data['APP_TYPE'] && data['APP_TYPE']['ICON_SRC'])
+		{
+			var iconNode = wrapper.querySelector('[class="'+this.getIconClassName()+'"]');
+			if (iconNode)
+			{
+				iconNode.style.backgroundImage = "url(" +  data['APP_TYPE']['ICON_SRC'] + ")";
+				iconNode.style.backgroundPosition = "center center";
+			}
+		}
+
+		return wrapper;
+	};
 	BX.CrmScheduleItemActivityRestApplication.prototype.getTypeDescription = function()
 	{
+		var entityData = this.getAssociatedEntityData();
+		if (entityData['APP_TYPE'] && entityData['APP_TYPE']['NAME'])
+		{
+			return entityData['APP_TYPE']['NAME'];
+		}
+
 		return this.getMessage("restApplication");
 	};
 	BX.CrmScheduleItemActivityRestApplication.create = function(id, settings)
@@ -12553,7 +14120,7 @@ if(typeof(BX.CrmTimelineItemAnimationNew) === "undefined")
 			this._node.style.height = this._startPosition.height + "px";
 			this._node.style.top = this._startPosition.top + "px";
 			this._node.style.left = this._startPosition.left + "px";
-			this._node.style.zIndex = 1100;
+			this._node.style.zIndex = 960;
 
 
 			document.body.appendChild(this._node);
@@ -12857,7 +14424,7 @@ if(typeof(BX.CrmCommentAnimation) === "undefined")
 			this._node.style.top = this._startPosition.top - 30 + "px";
 			this._node.style.left = this._startPosition.left + "px";
 			this._node.style.opacity = 0;
-			this._node.style.zIndex = 1100;
+			this._node.style.zIndex = 960;
 
 			document.body.appendChild(this._node);
 
@@ -12985,7 +14552,7 @@ if(typeof(BX.CrmTimelineItemFasten) === "undefined")
 			this._clone.style.height = _cloneHeight + "px";
 			this._clone.style.top = this._startPosition.top + "px";
 			this._clone.style.left = this._startPosition.left + "px";
-			this._clone.style.zIndex = 1100;
+			this._clone.style.zIndex = 960;
 
 			document.body.appendChild(this._clone);
 

@@ -313,9 +313,6 @@ if (strlen($arResult["FatalErrorMessage"]) <= 0 && !$arParams['COUNTERS_ONLY'])
 			"TASK" => CComponentEngine::MakePathFromTemplate($arParams["TASK_EDIT_URL"], $arRecord)
 		);
 
-		if (array_key_exists("DESCRIPTION", $arRecord))
-			$arRecord["DESCRIPTION"] = nl2br($arRecord["DESCRIPTION"]);
-
 		if (isset($arRecord['WORKFLOW_TEMPLATE_NAME']))
 			$arRecord["WORKFLOW_NAME"] = $arRecord["WORKFLOW_TEMPLATE_NAME"]; // compatibility
 		if (isset($arRecord['WORKFLOW_STARTED']))

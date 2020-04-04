@@ -15,6 +15,7 @@ use Bitrix\Main\Result;
 use Bitrix\Main\Error;
 use Bitrix\Main\Mail;
 
+use Bitrix\Main\SystemException;
 use Bitrix\Main\Web\DOM\Document;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Web\DOM\StyleInliner;
@@ -25,6 +26,7 @@ use Bitrix\Sender\Transport;
 use Bitrix\Sender\Message;
 use Bitrix\Sender\Entity;
 use Bitrix\Sender\Templates;
+use Bitrix\Sender\Posting;
 
 use Bitrix\Sender\PostingRecipientTable;
 
@@ -289,9 +291,20 @@ class MessageMail implements Message\iBase, Message\iMailable
 	{
 		$this->configuration = $configuration;
 
-		if (Integration\Bitrix24\Service::isCloud())
+		try
 		{
 			$mailBody = $this->getMailBody();
+		}
+		catch (SystemException $exception)
+		{
+			$result = new Result();
+			$result->addError(new Error($exception->getMessage()));
+
+			return $result;
+		}
+
+		if (Integration\Bitrix24\Service::isCloud())
+		{
 			if ($mailBody && strpos($mailBody, '#UNSUBSCRIBE_LINK#') === false)
 			{
 				$result = new Result();
@@ -377,9 +390,17 @@ class MessageMail implements Message\iBase, Message\iMailable
 
 		$document = new Document;
 		$document->loadHTML($templateHtml);
-		if(!Block\Content\Engine::create($document)->setContent($msg)->fill())
+
+		try
 		{
-			return '';
+			if(!Block\Content\Engine::create($document)->setContent($msg)->fill())
+			{
+				return '';
+			}
+		}
+		catch (SystemException $exception)
+		{
+			throw new Posting\StopException($exception->getMessage());
 		}
 
 		StyleInliner::inlineDocument($document);

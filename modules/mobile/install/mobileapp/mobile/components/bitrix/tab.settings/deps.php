@@ -1,0 +1,5 @@
+<?
+return [
+	"rest",
+	"notify"
+];

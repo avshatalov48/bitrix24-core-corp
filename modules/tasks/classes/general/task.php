@@ -22,11 +22,12 @@ use Bitrix\Main\Entity\Query;
 use Bitrix\Main\Entity\Query\Join;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UserTable;
+use Bitrix\Tasks\CheckList\Internals\CheckList;
+use Bitrix\Tasks\CheckList\Task\TaskCheckListFacade;
 use Bitrix\Tasks\Integration;
 use Bitrix\Tasks\Internals\Counter;
 use Bitrix\Tasks\Internals\Helper\Task\Dependence;
 use Bitrix\Tasks\Internals\SearchIndex;
-use Bitrix\Tasks\Internals\Task\CheckListTable;
 use Bitrix\Tasks\Internals\Task\FavoriteTable;
 use Bitrix\Tasks\Internals\Task\MemberTable;
 use Bitrix\Tasks\Internals\Task\ParameterTable;
@@ -41,6 +42,7 @@ use Bitrix\Tasks\Util\Type;
 use Bitrix\Tasks\Util\Type\DateTime;
 use Bitrix\Tasks\Util\User;
 use Bitrix\Tasks\Util\UserField;
+use \Bitrix\Main\Data\Cache;
 
 class CTasks
 {
@@ -77,6 +79,9 @@ class CTasks
 	const PARAMETER_COMPLETE_TASK_FROM_SUBTASKS = 0x02;
 
 	const MAX_INT = 2147483647;
+
+	const FILTER_LIMIT_CACHE_KEY = 'FILTER_LIMIT_CACHE_KEY';
+	const CACHE_TASKS_COUNT_DIR_NAME = '/bx_tasks_count';
 
 	private $_errors = array();
 	private $lastOperationResultData = array();
@@ -412,6 +417,19 @@ class CTasks
 		Type::checkYNKey($arFields, 'MATCH_WORK_TIME');
 		Type::checkYNKey($arFields, 'REPLICATE');
 
+        if (!$ID && array_key_exists('GUID', $arFields) && trim($arFields['GUID'])) // !$ID for check only add function
+        {
+            global $DB;
+            $res = $DB->Query("SELECT COUNT(ID) as cnt FROM b_tasks WHERE GUID='".$DB->ForSql($arFields['GUID'])."'");
+            if($res && ($result = $res->Fetch()) && $result['cnt'] > 0)
+            {
+                $this->_errors[] = array(
+                    "text" => GetMessage("ERROR_TASKS_GUID_NON_UNIQUE"),
+                    "id"   => "ERROR_TASKS_GUID_NON_UNIQUE"
+                );
+            }
+        }
+
 		if (!empty($this->_errors))
 		{
 			$e = new CAdminException($this->_errors);
@@ -631,6 +649,7 @@ class CTasks
 					\CTimeZone::enable();
 				}
 
+				/** @var $DB \CDatabaseMysql */
 				$ID = $DB->Add("b_tasks", $arFields, array("DESCRIPTION"), "tasks");
 
 				if ($disabled)
@@ -2035,12 +2054,12 @@ class CTasks
 				FavoriteTable::deleteByTaskId($taskId, ['LOW_LEVEL' => true]);
 				SortingTable::deleteByTaskId($taskId);
 				TaskStageTable::clearTask($taskId);
+				TaskCheckListFacade::deleteByEntityIdOnLowLevel($taskId);
 
 				$tablesToClear = [
 					ViewedTable::class => ['TASK_ID', 'USER_ID'],
 					ParameterTable::class => ['ID'],
-					CheckListTable::class => ['ID'],
-					SearchIndexTable::class => ['ID']
+					SearchIndexTable::class => ['ID'],
 				];
 
 				foreach ($tablesToClear as $table => $select)
@@ -2494,18 +2513,18 @@ class CTasks
 							$arConds[] = "(".$sAliasPrefix."TT.NAME = '".$DB->ForSql($tag)."')";
 						}
 					}
-					if (sizeof($arConds))
+					if (count($arConds))
 					{
-						$arSqlSearch[] = "EXISTS(
+						$arSqlSearch[] = trim($sAliasPrefix."T.ID IN(
 							SELECT
-								'x'
+								".$sAliasPrefix."TT.TASK_ID
 							FROM
 								b_tasks_tag ".$sAliasPrefix."TT
 							WHERE
 								(".implode(" OR ", $arConds).")
 							AND
 								".$sAliasPrefix."TT.TASK_ID = ".$sAliasPrefix."T.ID
-						)";
+						)");
 					}
 					break;
 
@@ -4141,12 +4160,7 @@ class CTasks
 
 				if (in_array('CHECKLIST', $select) || in_array('*', $select))
 				{
-					$rsCheckList = \CTaskCheckListItem::getByTaskId($ID);
-					$task["CHECKLIST"] = array();
-					while ($arCheckListItem = $rsCheckList->Fetch())
-					{
-						$task["CHECKLIST"][] = $arCheckListItem;
-					}
+					$task["CHECKLIST"] = TaskCheckListFacade::getByEntityId($ID);
 				}
 
 				if (in_array('FILES', $select) || in_array('*', $select))
@@ -4619,6 +4633,14 @@ class CTasks
 				'default' => 0
 			],
 
+			"ALLOW_CHANGE_DEADLINE" => [
+				'type'    => 'enum',
+				'values'  => [
+					'Y' => Loc::getMessage('TASKS_FIELDS_Y'),
+					'N' => Loc::getMessage('TASKS_FIELDS_N'),
+				],
+				'default' => 'N',
+			],
 			"TASK_CONTROL"          => [
 				'type'    => 'enum',
 				'values'  => [
@@ -4672,6 +4694,14 @@ class CTasks
 				],
 				'default' => null
 			],
+			"FAVORITE"    => [
+				'type'    => 'enum',
+				'values'  => [
+					'Y' => Loc::getMessage('TASKS_FIELDS_Y'),
+					'N' => Loc::getMessage('TASKS_FIELDS_N'),
+				],
+				'default' => null
+			],
 
 			"EXCHANGE_MODIFIED" => [
 				'type'    => 'datetime',
@@ -4699,6 +4729,9 @@ class CTasks
 			],
 			"DURATION_FACT" => [
 				'type' => 'integer',
+			],
+			"CHECKLIST" => [
+				'type' => 'array',
 			],
 			"DURATION_TYPE" => [
 				'type'    => 'enum',
@@ -5187,7 +5220,7 @@ class CTasks
 		}
 
 		$disableAccessOptimization = (is_array($arParams) && $arParams['DISABLE_ACCESS_OPTIMIZATION'] === true);
-		$useAccessAsJoin = !$disableAccessOptimization;
+		$useAccessAsWhere = !$disableAccessOptimization;
 
 		// First level logic MUST be 'AND', because of backward compatibility
 		// and some requests for checking rights, attached at first level of filter.
@@ -5234,10 +5267,11 @@ class CTasks
 
 		// GET ACCESS SQL
 		$accessSql = '';
-		if ($useAccessAsJoin && static::needAccessRestriction($arFilter, $arParams))
+		if ($useAccessAsWhere && static::needAccessRestriction($arFilter, $arParams))
 		{
 			$buildAccessSql = true;
 			$arParams['APPLY_FILTER'] = static::makePossibleForwardedFilter($arFilter);
+			$arParams['PUT_SELECT_INTO_WHERE'] = true;
 
 			if ($arParams['MAKE_ACCESS_FILTER'])
 			{
@@ -5289,6 +5323,11 @@ class CTasks
 			$arSqlSearch[] = " T.ZOMBIE = 'N' ";
 		}
 
+		if ($accessSql !== '')
+		{
+			$arSqlSearch[] = $accessSql;
+		}
+
 		$userFieldsJoin = false;
 		$r = $obUserFieldsSql->GetFilter();
 		if (strlen($r) > 0)
@@ -5329,7 +5368,6 @@ class CTasks
 
 		$strFrom = "
 			FROM b_tasks T
-			" . $accessSql . "
 			" . $optimizedJoins . "
 			" . implode("\n", $relatedJoins) . "
 			" . $obUserFieldsSql->GetJoin("T.ID") . "
@@ -5342,7 +5380,6 @@ class CTasks
 
 		$strFromForCount = "
 			FROM b_tasks T
-			" . $accessSql . "
 			" . $optimizedJoins . "
 			" . implode("\n", $relatedJoinsForCount) . "
 			" . ($userFieldsJoin? $obUserFieldsSql->GetJoin("T.ID") : "") . "
@@ -5395,6 +5432,36 @@ class CTasks
 
 		return $res;
 	}
+
+	public static function getAvailableOrderFields()
+    {
+        return [
+            'ID',
+            'TITLE',
+            'TIME_SPENT_IN_LOGS',
+            'DATE_START',
+            'CREATED_DATE',
+            'CHANGED_DATE',
+            'CLOSED_DATE',
+            'START_DATE_PLAN',
+            'END_DATE_PLAN',
+            'DEADLINE',
+            'REAL_STATUS',
+            'STATUS_COMPLETE',
+            'PRIORITY',
+            'MARK',
+            'CREATED_BY_LAST_NAME',
+            'RESPONSIBLE_LAST_NAME',
+            'GROUP_ID',
+            'TIME_ESTIMATE',
+            'ALLOW_CHANGE_DEADLINE',
+            'ALLOW_TIME_TRACKING',
+            'MATCH_WORK_TIME',
+            'FAVORITE',
+            'SORTING',
+            'MESSAGE_ID'
+        ];
+    }
 
 	/**
 	 * Checks if we need to build access sql
@@ -6461,15 +6528,20 @@ class CTasks
 				b_tasks_viewed TV ON TV.TASK_ID = T.ID AND TV.USER_ID = " . $viewedBy;
 		}
 
-		$useAccessAsJoin = !$disableAccessOptimization;
-
-		// put access check into the join
-		if($useAccessAsJoin && static::needAccessRestriction($arFilter, $fParams))
+		$useAccessAsWhere = !$disableAccessOptimization;
+		if ($useAccessAsWhere && static::needAccessRestriction($arFilter, $fParams))
 		{
 			$fParams['APPLY_MEMBER_FILTER'] = static::makePossibleForwardedMemberFilter($sourceFilter);
 			$fParams['APPLY_FILTER'] = static::makePossibleForwardedFilter($sourceFilter);
+			$fParams['PUT_SELECT_INTO_WHERE'] = true;
 
-			$strSql = static::appendJoinRights($strSql, $fParams);
+			$accessSql = '';
+			$accessSql = static::appendJoinRights($accessSql, $fParams);
+
+			if ($accessSql !== '')
+			{
+				$arSqlSearch[] = $accessSql;
+			}
 		}
 
 		$strSql .= "
@@ -6522,12 +6594,20 @@ class CTasks
 	private static function appendJoinRights($sql, $arParams)
 	{
 		$arParams['THIS_TABLE_ALIAS'] = 'T';
-		$arParams['PUT_SELECT_INTO_JOIN'] = true; // this means that $access['type'] will be always "join" or "none"
-		$access = \Bitrix\Tasks\Internals\RunTime\Task::getAccessCheckSql($arParams);
 
-		if($access['sql'] != '')
+		$access = \Bitrix\Tasks\Internals\RunTime\Task::getAccessCheckSql($arParams);
+		$accessSql = $access['sql'];
+
+		if ($accessSql != '')
 		{
-			$sql .= "\n\n/*access BEGIN*/\n\n inner join (".$access['sql'].") TASKS_ACCESS on T.ID = TASKS_ACCESS.TASK_ID\n\n/*access END*/\n\n";
+			if (isset($arParams['PUT_SELECT_INTO_WHERE']) && $arParams['PUT_SELECT_INTO_WHERE'])
+			{
+				$sql .= "T.ID IN ($accessSql)";
+			}
+			else
+			{
+				$sql .= "\n\n/*access BEGIN*/\n\n inner join ($accessSql) TASKS_ACCESS on T.ID = TASKS_ACCESS.TASK_ID\n\n/*access END*/\n\n";
+			}
 		}
 
 		return $sql;

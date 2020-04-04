@@ -107,32 +107,35 @@ class Input
 	 */
 	public function reception()
 	{
-		try
+		if($this->result->isSuccess())
 		{
-			if(!is_array($this->params['DATA']))
+			try
 			{
-				$this->params['DATA'] = array($this->params['DATA']);
-			}
+				if (!is_array($this->params['DATA']))
+				{
+					$this->params['DATA'] = array($this->params['DATA']);
+				}
 
-			$result = Router::receiving($this->params['BX_COMMAND'], $this->params['CONNECTOR'], $this->params['LINE'], $this->params['DATA']);
-			if(!is_object($result))
-			{
-				if(!is_array($result))
-					$this->result->setResult($result);
+				$result = Router::receiving($this->params['BX_COMMAND'], $this->params['CONNECTOR'], $this->params['LINE'], $this->params['DATA']);
+				if (!is_object($result))
+				{
+					if (!is_array($result))
+						$this->result->setResult($result);
+					else
+						$this->result->setData($result);
+				}
 				else
-					$this->result->setData($result);
-			}
-			else
-			{
-				if(!$result->isSuccess())
-					$this->result->addErrors($result->getErrors());
+				{
+					if (!$result->isSuccess())
+						$this->result->addErrors($result->getErrors());
 
-				$this->result->setData($result->getData());
+					$this->result->setData($result->getData());
+				}
 			}
-		}
-		catch (\Exception $e)
-		{
-			$this->result->addError(new Error($e->getMessage(), $e->getCode(), __METHOD__));
+			catch (\Exception $e)
+			{
+				$this->result->addError(new Error($e->getMessage(), $e->getCode(), __METHOD__));
+			}
 		}
 
 		return $this->result;

@@ -8,10 +8,72 @@ use Bitrix\Disk\Volume;
  * Disk storage volume measurement class.
  * @package Bitrix\Disk\Volume
  */
-class Mail extends Volume\Module\Module
+class Mail
+	extends Volume\Module\Module
 {
 	/** @var string */
 	protected static $moduleId = 'mail';
+
+	/** @var \Bitrix\Disk\Storage[] */
+	private $storageList = array();
+
+	/** @var \Bitrix\Disk\Folder[] */
+	private $folderList = array();
+
+	/**
+	 * Returns entity type list.
+	 * @return string[]
+	 */
+	public static function getEntityType()
+	{
+		return array(
+			'Bitrix\\Mail\\Disk\\ProxyType\\Mail'
+		);
+	}
+
+	/**
+	 * Returns module storage.
+	 * @see \Bitrix\Mail\Helper\Attachment\Storage::getStorage
+	 * @return \Bitrix\Disk\Storage[]|array
+	 */
+	public function getStorageList()
+	{
+		if (count($this->storageList) == 0 || !$this->storageList[0] instanceof \Bitrix\Disk\Storage)
+		{
+			$entityTypes = self::getEntityType();
+			$storage = \Bitrix\Disk\Storage::load(array(
+				'MODULE_ID' => self::getModuleId(),
+				'ENTITY_TYPE' => $entityTypes[0]
+			));
+
+			if ($storage instanceof \Bitrix\Disk\Storage)
+			{
+				$this->storageList[] = $storage;
+			}
+		}
+
+		return $this->storageList;
+	}
+
+	/**
+	 * Returns folder list corresponding to module.
+	 * @param \Bitrix\Disk\Storage $storage Module's storage.
+	 * @return \Bitrix\Disk\Folder[]|array
+	 */
+	public function getFolderList($storage)
+	{
+		if ($storage instanceof \Bitrix\Disk\Storage && count($this->folderList[$storage->getId()]) == 0)
+		{
+			if ($this->isMeasureAvailable())
+			{
+				$this->folderList[$storage->getId()][] = $storage->getRootObject();
+
+				return $this->folderList[$storage->getId()];
+			}
+		}
+
+		return array();
+	}
 
 	/**
 	 * Runs measure test to get volumes of selecting objects.
@@ -30,6 +92,18 @@ class Mail extends Volume\Module\Module
 		$indicatorType = $connection->getSqlHelper()->forSql(static::className());
 		$ownerId = (string)$this->getOwner();
 
+		// collect disk statistics
+		$this
+			->addFilter(0, array(
+				'LOGIC' => 'OR',
+				'MODULE_ID' => self::getModuleId(),
+				'ENTITY_TYPE' => \Bitrix\Mail\Disk\ProxyType\Mail::className(),
+			))
+			->addFilter('DELETED_TYPE', \Bitrix\Disk\Internals\ObjectTable::DELETED_TYPE_NONE);
+
+		parent::measure();
+
+		// collect none disk statistics
 		$querySql = "
 			SELECT 
 				'{$indicatorType}' as INDICATOR_TYPE,

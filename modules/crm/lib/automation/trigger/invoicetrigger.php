@@ -22,13 +22,21 @@ class InvoiceTrigger extends BaseTrigger
 		return Loc::getMessage('CRM_AUTOMATION_TRIGGER_INVOICE_NAME');
 	}
 
+	/**
+	 * @deprecated
+	 * @param $params
+	 */
 	public static function onAfterCrmInvoiceSetStatus($params)
 	{
-		if (\CCrmStatusInvoice::isStatusSuccess($params['STATUS_ID']))
+	}
+
+	public static function onInvoiceStatusChanged($id, $statusId)
+	{
+		if (\CCrmStatusInvoice::isStatusSuccess($statusId))
 		{
 			$iterator = \CCrmInvoice::GetList(
 				array(),
-				array('ID' => $params['ID'], 'CHECK_PERMISSIONS' => 'N'),
+				array('ID' => $id, 'CHECK_PERMISSIONS' => 'N'),
 				false,
 				false,
 				array('ID', 'UF_DEAL_ID')
@@ -45,7 +53,7 @@ class InvoiceTrigger extends BaseTrigger
 				static::execute(array(array(
 					'OWNER_TYPE_ID' => \CCrmOwnerType::Deal,
 					'OWNER_ID' => $dealId
-				)), array('INVOICE_ID' => $params['ID']));
+				)), array('INVOICE_ID' => $id));
 			}
 		}
 	}

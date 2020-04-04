@@ -1,11 +1,15 @@
 <?php
 namespace Bitrix\Crm\Conversion;
+
+use Bitrix\Main;
+
+use Bitrix\Crm;
 use Bitrix\Crm\Synchronization\UserFieldSynchronizer;
 use Bitrix\Crm\Settings\ConversionSettings;
 use Bitrix\Crm\EntityRequisite;
 use Bitrix\Crm\Requisite\EntityLink;
 use Bitrix\Crm\Binding\EntityBinding;
-use Bitrix\Main;
+
 class QuoteConverter extends EntityConverter
 {
 	/** @var array */
@@ -406,6 +410,18 @@ class QuoteConverter extends EntityConverter
 					);
 				}
 				unset($requisiteIdLinked, $bankDetailIdLinked, $mcRequisiteIdLinked, $mcBankDetailIdLinked);
+
+				//region BizProcess
+				$arErrors = array();
+				\CCrmBizProcHelper::AutoStartWorkflows(
+					\CCrmOwnerType::Deal,
+					$entityID,
+					\CCrmBizProcEventType::Create,
+					$arErrors
+				);
+
+				Crm\Automation\Factory::runOnAdd(\CCrmOwnerType::Deal, $entityID);
+				//endregion
 
 				$this->resultData[\CCrmOwnerType::DealName] = $entityID;
 			}

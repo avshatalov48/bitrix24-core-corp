@@ -63,12 +63,12 @@ while (list($key,$value)=each($arrMess))
 {
 	$arr[] = array("COLOR"=> $arrColor[$key], "COUNTER" => $arrMess[$key]);
 }
-// пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+// создаем изображение
 $ImageHendle = CreateImageHandle($diameter, $diameter);
 
-// пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+// рисуем круговую диаграмму
 Circular_Diagram($ImageHendle, $arr, "FFFFFF", $diameter, $diameter/2, $diameter/2);
 
-// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+// отображаем
 ShowImageHeader($ImageHendle);
 ?>

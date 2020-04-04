@@ -10,7 +10,7 @@ return array(
 	'block' => array(
 		'name' => Loc::getMessage('LD_BLOCK_HTML_NAME'),
 		'section' => array('other'),
-		'html' => false,
+		'html' => false
 	),
 	'nodes' => array(
 		'bitrix:landing.blocks.html' => array(
@@ -19,15 +19,21 @@ return array(
 			'extra' => array(
 				'editable' => array(
 					'HTML_CODE' => array(
-						'type' => 'html',
+						'type' => 'html'
 					),
-				),
-			),
-		),
+					'SKIP_MOVING_FALSE' => array()
+				)
+			)
+		)
 	),
 	'style' => array(
 		'block' => array(
-			'type' => array('block-default'),
+			'type' => array('block-default')
 		),
 	),
+	'assets' => array(
+		'css' => array(
+			'/bitrix/components/bitrix/landing.blocks.message/templates/locked/style.css'
+		)
+	)
 );

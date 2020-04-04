@@ -19,7 +19,7 @@ these protocols. Software support is provided by Mozilla Sunbird, eM Client and 
 
 To set up your Apple device to support CardDAV:
 <ol>
-<li>Click <b>Settings</b> and select <b>Mail, Contacts, Calendars>Accounts</b>.</li>
+<li>Click <b>Settings</b> and select <b>Passwords & Accounts</b>.</li>
 <li>Click <b>Add Account</b>.</li>
 <li>Select <b>Other</b> &gt; <b>Add CardDAV Account</b>.</li>
 <li>Specify this website address as server (#SERVER#). Use your login and password.</li>
@@ -41,7 +41,7 @@ and select <b>Synchronize </b>in the menu.
 
 To set up your Apple device to support CalDAV:
 <ol>
-<li>On your Apple device, open the menu <b>Settings</b> &gt; <b>Accounts & Passwords</b>.</li>
+<li>On your Apple device, open the menu <b>Settings</b> &gt; <b>Passwords & Accounts</b>.</li>
 <li>Select <b>Add Account</b> under the account list.</li>
 <li>Select CalDAV as account type (<b>Other</b> &gt; <b>CalDAV Account</b>).</li>
 <li>Specify this website address as server (#SERVER#). Use your login and password.</li>

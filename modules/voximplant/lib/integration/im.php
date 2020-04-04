@@ -103,7 +103,7 @@ class Im
 	protected static function replaceLinkMacros($link)
 	{
 		$replacements = array(
-			'#BALANCE_TOP_UP#' =>  \CVoxImplantMain::GetBuyLink()
+			'#BALANCE_TOP_UP#' =>  \CVoxImplantMain::GetRedirectToBuyLink()
 		);
 
 		if(strpos($link, '#BASE_NUMBER_EDIT#') !== false)

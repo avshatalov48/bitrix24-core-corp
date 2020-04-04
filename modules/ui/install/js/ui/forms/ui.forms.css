@@ -402,52 +402,56 @@ div.ui-ctl-element { line-height: calc(var(--ui-field-size) - 2px); }
 
 /*region Befores & Afters*/
 .ui-ctl-before,
-.ui-ctl-after {
+.ui-ctl-after,
+.ui-ctl-ext-after {
 	position: absolute;
-	top: 0;
+	top: 1px;
 	z-index: 10;
 	display: block;
 	border: none;
 	background-color: transparent;
-}
-
-.ui-ctl-before { left: 0; }
-
-.ui-ctl-after { right: 0; }
-
-.ui-ctl-before,
-.ui-ctl-after {
 	width: var(--ui-field-size);
-	height: var(--ui-field-size);
+	height: calc(var(--ui-field-size) - 2px);
 }
 
-.ui-ctl-before-icon .ui-ctl-element { padding-left: var(--ui-field-size); }
+.ui-ctl-before { left: 1px; }
 
-.ui-ctl-after-icon .ui-ctl-element { padding-right: var(--ui-field-size); }
+.ui-ctl-after,
+.ui-ctl-ext-after{ right: 1px; }
+
+.ui-ctl-before-icon .ui-ctl-element { padding-left: var(--ui-field-size) !important; }
+
+.ui-ctl-ext-after-icon,
+.ui-ctl-after-icon .ui-ctl-element { padding-right: var(--ui-field-size) !important; }
 
 /*region Fix for IE*/
 .bx-ie .ui-ctl-before,
 .bx-ie .ui-ctl-after,
+.bx-ie .ui-ctl-ext-after,
 .bx-ie .ui-ctl-md .ui-ctl-before,
-.bx-ie .ui-ctl-md .ui-ctl-after {
+.bx-ie .ui-ctl-md .ui-ctl-after,
+.bx-ie .ui-ctl-md .ui-ctl-ext-after {
 	width: 37px;
 	height: 37px;
 }
 
 .bx-ie .ui-ctl-lg .ui-ctl-before,
-.bx-ie .ui-ctl-lg .ui-ctl-after {
+.bx-ie .ui-ctl-lg .ui-ctl-after,
+.bx-ie .ui-ctl-lg .ui-ctl-ext-after {
 	width: 45px;
 	height: 45px;
 }
 
 .bx-ie .ui-ctl-sm .ui-ctl-before,
-.bx-ie .ui-ctl-sm .ui-ctl-after {
+.bx-ie .ui-ctl-sm .ui-ctl-after,
+.bx-ie .ui-ctl-sm .ui-ctl-ext-after {
 	width: 29px;
 	height: 29px;
 }
 
 .bx-ie .ui-ctl-xs .ui-ctl-before,
-.bx-ie .ui-ctl-xs .ui-ctl-after {
+.bx-ie .ui-ctl-xs .ui-ctl-after,
+.bx-ie .ui-ctl-xs .ui-ctl-ext-after {
 	width: 24px;
 	height: 24px;
 }
@@ -462,12 +466,17 @@ div.ui-ctl-element { line-height: calc(var(--ui-field-size) - 2px); }
 .bx-ie .ui-ctl-xs.ui-ctl-before-icon .ui-ctl-element { padding-left: 24px; }
 
 .bx-ie .ui-ctl-after-icon .ui-ctl-element,
+.bx-ie .ui-ctl-ext-after-icon,
+.bx-ie .ui-ctl-md.ui-ctl-ext-after-icon,
 .bx-ie .ui-ctl-md.ui-ctl-after-icon .ui-ctl-element { padding-right: 37px; }
 
+.bx-ie .ui-ctl-lg.ui-ctl-ext-after-icon,
 .bx-ie .ui-ctl-lg.ui-ctl-after-icon .ui-ctl-element { padding-right: 45px; }
 
+.bx-ie .ui-ctl-sm.ui-ctl-ext-after-icon,
 .bx-ie .ui-ctl-sm.ui-ctl-after-icon .ui-ctl-element { padding-right: 29px; }
 
+.bx-ie .ui-ctl-xs.ui-ctl-ext-after-icon,
 .bx-ie .ui-ctl-xs.ui-ctl-after-icon .ui-ctl-element { padding-right: 24px; }
 
 /*endregion*/
@@ -475,8 +484,9 @@ div.ui-ctl-element { line-height: calc(var(--ui-field-size) - 2px); }
 /*endregion*/
 
 /*region icons*/
+.ui-ctl-after[class*=ui-ctl-icon-],
 .ui-ctl-before[class*=ui-ctl-icon-],
-.ui-ctl-after[class*=ui-ctl-icon-] {
+.ui-ctl-ext-after[class*=ui-ctl-icon-] {
 	background-position: center;
 	background-size: 16px auto;
 	background-repeat: no-repeat;
@@ -491,16 +501,26 @@ div.ui-ctl-element { line-height: calc(var(--ui-field-size) - 2px); }
 	100% { opacity: .78; }
 }
 
-.ui-ctl:hover .ui-ctl-before[class*=ui-control-icon-],
-.ui-ctl:hover .ui-ctl-after[class*=ui-control-icon-] { opacity: 1; }
+.ui-ctl:hover .ui-ctl-before[class*=ui-ctl-icon-],
+.ui-ctl:hover .ui-ctl-after[class*=ui-ctl-icon-] ,
+.ui-ctl:hover .ui-ctl-ext-after[class*=ui-ctl-icon-] { opacity: 1; }
 
 .ui-ctl-icon-btn,
 button.ui-ctl-before,
-button.ui-ctl-after {
+button.ui-ctl-after,
+button.ui-ctl-ext-after {
 	outline: none !important;
 	cursor: pointer;
 	pointer-events: auto !important;
 }
+
+button.ui-ctl-before,
+button.ui-ctl-after:focus
+button.ui-ctl-before,
+button.ui-ctl-after:active { background-color: #e0e5ea; }
+
+/*calendar*/
+.ui-ctl-icon-dots { background-image: url(/bitrix/js/ui/forms/images/dots.svg); }
 
 /*calendar*/
 .ui-ctl-icon-calendar { background-image: url(/bitrix/js/ui/forms/images/calendar.svg); }
@@ -633,6 +653,16 @@ button.ui-ctl-after {
 	padding: 0 11px;
 	height: 18.5px;
 	transition: 250ms linear all;
+}
+
+.ui-ctl-multiple-select {
+	min-height: calc(var(--ui-field-size) * 3);
+	height: calc(var(--ui-field-size) * 3);
+}
+
+.ui-ctl-multiple-select select.ui-ctl-element{
+	min-height: calc(var(--ui-field-size) * 3 - 2px);
+	height: calc(var(--ui-field-size) * 3 - 2px);
 }
 
 /*endregion*/

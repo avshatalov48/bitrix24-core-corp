@@ -18,7 +18,7 @@ class LayoutSettings
 
 	function __construct()
 	{
-		$this->enableSlider = new BooleanSetting('enable_slider', false);
+		$this->enableSlider = new BooleanSetting('enable_slider', true);
 		$this->enableSimpleTimeFormat = new BooleanSetting('enable_simple_time_format', true);
 		$this->enableUserNameSorting = new BooleanSetting('enable_user_name_sorting', false);
 		$this->clientLayoutType = new IntegerSetting(

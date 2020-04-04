@@ -175,7 +175,7 @@ class RequisiteListComponent extends \CBitrixComponent
 		// entity id
 		$this->entityId = isset($_REQUEST['eid']) ? intval($_REQUEST['eid']) : 0;
 		if (isset($this->arParams['ENTITY_ID']))
-			$this->entityTypeId = intval($this->arParams['ENTITY_ID']);
+			$this->entityId = intval($this->arParams['ENTITY_ID']);
 
 		$skipContext = false;
 		if ($this->entityTypeId > 0 && $this->entityId > 0)

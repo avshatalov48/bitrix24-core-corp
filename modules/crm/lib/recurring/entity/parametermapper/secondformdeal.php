@@ -51,15 +51,14 @@ class SecondFormDeal extends DealMap
 
 	public function fillMap(array $params = [])
 	{
-		if ((int)$params[self::FIELD_MODE_NAME] === Manager::SINGLE_EXECUTION)
+		$this->mode = (int)$params[self::FIELD_MODE_NAME];
+		if ($this->mode === Manager::SINGLE_EXECUTION)
 		{
-			$this->mode = Manager::SINGLE_EXECUTION;
 			$this->unitType = (int)$params[self::FIELD_SINGLE_TYPE_NAME];
 			$this->interval = (int)$params[self::FIELD_SINGLE_INTERVAL_NAME];
 		}
 		else
 		{
-			$this->mode = Manager::MULTIPLY_EXECUTION;
 			$this->unitType = (int)$params[self::FIELD_MULTIPLE_TYPE_NAME];
 			$this->interval = 1;
 			if ($this->unitType === Calculator::SALE_TYPE_CUSTOM_OFFSET)

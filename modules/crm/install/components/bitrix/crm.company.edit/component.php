@@ -596,17 +596,21 @@ else
 						if (is_array($requisiteForm['BANK_DETAILS']) && !empty($requisiteForm['BANK_DETAILS']))
 						{
 							$bankDetailFormData[$requisiteID] = array();
-							foreach ($requisiteForm['BANK_DETAILS'] as $pseudoId => $bankDetailForm)
+							$formBankDetails = array_reverse($requisiteForm['BANK_DETAILS'], true);
+							foreach ($formBankDetails as $pseudoId => $bankDetailForm)
 							{
-								$bankDetailFields = \Bitrix\Crm\EntityBankDetail::parseFormData($bankDetailForm);
+								$bankDetailFields = EntityBankDetail::parseFormData($bankDetailForm);
 								if (is_array($bankDetailFields) && !empty($bankDetailFields))
+								{
 									$bankDetailFormData[$requisiteID][$pseudoId] = $bankDetailFields;
+								}
 
 								if(isset($bankDetailForm['DELETED']) && $bankDetailForm['DELETED'] === 'Y')
 								{
 									$deletedBankDetailIDs[$requisiteID][$pseudoId] = true;
 								}
 							}
+							unset($formBankDetails, $pseudoId, $bankDetailForm, $bankDetailFields);
 						}
 					}
 				}
@@ -1337,7 +1341,11 @@ foreach ($bankDetailFormData as $requisiteId => $requisiteBankDetails)
 					$bankDetailFields[$fName] = $fValue->toString();
 			}
 			$bankDetailId = (isset($bankDetailFields['ID']) && $bankDetailFields['ID'] > 0) ?
-				$bankDetailFields['ID'] : 'n'.$n++;
+				(int)$bankDetailFields['ID'] : ( $pseudoId > 0 ? (int)$pseudoId : 'n'.$n++);
+			if ($bankDetailId > 0 && !isset($bankDetailFields['ID']))
+			{
+				$bankDetailFields['ID'] = $bankDetailId;
+			}
 			$requisiteFormData[$requisiteId]['BANK_DETAILS'][$bankDetailId] = $bankDetailFields;
 		}
 	}

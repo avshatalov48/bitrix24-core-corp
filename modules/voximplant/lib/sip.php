@@ -107,11 +107,6 @@ class SipTable extends Entity\DataManager
 				'validation' => array(__CLASS__, 'validateIncomingPassword'),
 				'title' => Loc::getMessage('SIP_CONFIG_ENTITY_INCOMING_PASSWORD_FIELD'),
 			),
-			'INCOMING_PASSWORD' => array(
-				'data_type' => 'string',
-				'validation' => array(__CLASS__, 'validateIncomingPassword'),
-				'title' => Loc::getMessage('SIP_CONFIG_ENTITY_INCOMING_PASSWORD_FIELD'),
-			),
 			'AUTH_USER' => array(
 				'data_type' => 'string',
 				'validation' => array(__CLASS__, 'validateIncomingPassword'),
@@ -121,6 +116,13 @@ class SipTable extends Entity\DataManager
 				'data_type' => 'string',
 				'validation' => array(__CLASS__, 'validateIncomingPassword'),
 				'title' => Loc::getMessage('SIP_CONFIG_ENTITY_OUTBOUND_PROXY_FIELD'),
+			),
+			'DETECT_LINE_NUMBER' => array(
+				'data_type' => 'boolean',
+				'values' => ['N', 'Y'],
+			),
+			'LINE_DETECT_HEADER_ORDER' => array(
+				'data_type' => 'string',
 			),
 			'CONFIG' => array(
 				'data_type' => 'Bitrix\Voximplant\Config',

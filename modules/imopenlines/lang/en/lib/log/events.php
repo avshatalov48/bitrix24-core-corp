@@ -1,0 +1,5 @@
+<?
+$MESS["IMOL_EVENTLOG_EMPTY_LINE_ID_ERROR"] = "Empty Open Channel ID";
+$MESS["IMOL_EVENTLOG_NOT_ACTUAL_EVENT_ERROR"] = "Unregistered event #EVENT#";
+$MESS["IMOL_EVENTLOG_WRONG_FIELD_RESULT_TYPE_EXCEPTION"] = "Invalid value type passed";
+?>

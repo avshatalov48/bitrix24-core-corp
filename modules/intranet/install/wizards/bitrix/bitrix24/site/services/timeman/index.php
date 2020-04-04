@@ -27,11 +27,22 @@ while ($arRes = $dbRes->Fetch())
 $arTasksForModule = array();
 foreach ($arAccessRights as $group => $letter)
 {
-	$APPLICATION->SetGroupRight('timeman', $group, $letter);
-	$arTasksForModule[$group] = array('ID' => $arTaskIDs[$letter]);
+	$code = 'G' . $group;
+	$taskId = $arTaskIDs[$letter];
+	$exist = \Bitrix\Timeman\Model\Security\TaskAccessCodeTable::query()
+		->addSelect('*')
+		->where('ACCESS_CODE', $code)
+		->where('TASK_ID', $taskId)
+		->exec()
+		->fetch();
+	if (!$exist)
+	{
+		\Bitrix\Timeman\Model\Security\TaskAccessCodeTable::add([
+			'ACCESS_CODE' => $code,
+			'TASK_ID' => $taskId,
+		]);
+	}
 }
-
-CGroup::SetTasksForModule('timeman', $arTasksForModule);
 
 if (CModule::IncludeModule('iblock'))
 {

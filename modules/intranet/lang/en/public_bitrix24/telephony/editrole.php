@@ -1,3 +1,3 @@
 <?
-$MESS["VI_PAGE_EDIT_ROLE_TITLE"] = "Edit role";
+$MESS["VI_PAGE_EDIT_ROLE_TITLE"] = "Edit Role";
 ?>

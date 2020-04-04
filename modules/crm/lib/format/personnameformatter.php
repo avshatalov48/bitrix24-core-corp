@@ -133,6 +133,18 @@ class PersonNameFormatter
 		}
 		return self::$formatString;
 	}
+	public static function hasFirstName($format)
+	{
+		return stripos($format, '#NAME#') !== false;
+	}
+	public static function hasSecondName($format)
+	{
+		return stripos($format, '#SECOND_NAME#') !== false;
+	}
+	public static function hasLastName($format)
+	{
+		return stripos($format, '#LAST_NAME#') !== false;
+	}
 	public static function tryParseFormatID($format, $defaultFormatID = '')
 	{
 		$format = str_replace(
@@ -230,12 +242,31 @@ class PersonNameFormatter
 			return true;
 		}
 
+		$parts = preg_split('/[\s]+/', $name);
+		if(!empty($parts))
+		{
+			if($formatID === self::FirstLast || $formatID === self::FirstSecondLast)
+			{
+				$nameParts['NAME'] = array_shift($parts);
+				$nameParts['LAST_NAME'] = implode(' ', $parts);
+			}
+			else//if($formatID === self::LastFirst || $formatID === self::LastFirstSecond
+			{
+				$nameParts['NAME'] = array_pop($parts);
+				$nameParts['LAST_NAME'] = implode(' ', $parts);
+			}
+
+			return true;
+		}
+
 		if($formatID === self::FirstLast || $formatID === self::FirstSecondLast)
 		{
 			$nameParts['NAME'] = $name;
+			$nameParts['LAST_NAME'] = '';
 		}
 		else//if($formatID === self::LastFirst || $formatID === self::LastFirstSecond
 		{
+			$nameParts['NAME'] = '';
 			$nameParts['LAST_NAME'] = $name;
 		}
 

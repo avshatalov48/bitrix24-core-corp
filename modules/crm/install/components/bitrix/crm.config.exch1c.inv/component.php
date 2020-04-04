@@ -181,17 +181,24 @@ if($_SERVER['REQUEST_METHOD'] == "POST" && $_POST['save'] != "" && check_bitrix_
 	{
 		$tabNumber = $arAllOptions[$i][5];
 		$name = $arAllOptions[$i][0];
-		if (isset($arAllOptions[$i][4]) && $arAllOptions[$i][4] === "hidden")
+		if (isset($arAllOptions[$i][4]) && $arAllOptions[$i][4] === 'hidden')
+		{
 			$val = $arAllOptions[$i][2];
+		}
 		else
+		{
 			$val = $_REQUEST[$tabNumber.'_'.$name];
-		if($arAllOptions[$i][3][0]=="checkbox" && $val!="Y")
+		}
+		if($arAllOptions[$i][3][0] === 'checkbox' && $val != 'Y')
+		{
 			$val = "N";
-		if($arAllOptions[$i][3][0]=="mlist")
-			$val = implode(",", $val);
+		}
+		if($arAllOptions[$i][3][0] === 'mlist')
+		{
+			$val = is_array($val) ? implode(',', $val) : '';
+		}
 		COption::SetOptionString("sale", $name, $val, $arAllOptions[$i][1]);
 	}
-
 
 	$personTypes = \Bitrix\Sale\BusinessValue::getPersonTypes();
 	foreach ($personTypes as $personTypeId => $personType)
@@ -391,14 +398,13 @@ foreach ($arPersonTypes as $personTypeId)
 	}
 }
 
-$tabNumber = 2;
-
 $arLastFieldInfo = array();
 $arEmptyFields = array();
 foreach (array_keys($arAgentInfo) as $type)
 {
 	$fields = array();
 	$personTypeId = $arPersonTypes[$type];
+	$tabNumber = $personTypeTabNumbers[$personTypeId];
 	$lastId = false;
 	foreach ($arAgentInfo[$type] as $id => $name)
 	{
@@ -442,7 +448,6 @@ foreach (array_keys($arAgentInfo) as $type)
 	$tabName = ($type === 'COMPANY') ? 'tab_invoice_prof_com' : (($type === 'CONTACT') ? 'tab_invoice_prof_con' : 0);
 	if (!empty($tabName) && count($fields) > 0)
 		$arResult['FIELDS'][$tabName] = $fields;
-	$tabNumber++;
 }
 
 $arResult['EXCH1C_MAN_SETTINGS'] = array(

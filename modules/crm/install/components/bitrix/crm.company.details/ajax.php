@@ -6,10 +6,8 @@ define('DisableEventsCheck', true);
 
 require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/prolog_before.php');
 
-use Bitrix\Crm\Synchronization\UserFieldSynchronizer;
-use Bitrix\Crm\Conversion\DealConversionConfig;
-use Bitrix\Crm\Conversion\DealConversionWizard;
-use Bitrix\Crm\Recurring;
+use Bitrix\Main;
+use Bitrix\Crm;
 
 if (!CModule::IncludeModule('crm'))
 {
@@ -176,6 +174,7 @@ if($action === 'SAVE')
 		{
 			$fields[$name] = $_POST[$name];
 
+			/*
 			if($name === 'CONTACT_ID')
 			{
 				$entityIDs = $fields[$name] !== '' ? explode(',', $fields[$name]) : array();
@@ -183,7 +182,8 @@ if($action === 'SAVE')
 					? array_values(array_unique($entityIDs, SORT_NUMERIC))
 					: $entityIDs;
 			}
-			else if($name === 'LOGO')
+			*/
+			if($name === 'LOGO')
 			{
 				if(!(isset($presentFields[$name]) && $presentFields[$name] == $fields[$name]))
 				{
@@ -234,6 +234,93 @@ if($action === 'SAVE')
 		$fields['IS_MY_COMPANY'] = 'Y';
 	}
 
+	//region CLIENT
+	$clientData = null;
+	if(isset($_POST['CLIENT_DATA']) && $_POST['CLIENT_DATA'] !== '')
+	{
+		try
+		{
+			$clientData = Main\Web\Json::decode(
+				Main\Text\Encoding::convertEncoding($_POST['CLIENT_DATA'], LANG_CHARSET, 'UTF-8')
+			);
+		}
+		catch (Main\SystemException $e)
+		{
+		}
+	}
+
+	if(!is_array($clientData))
+	{
+		$clientData = array();
+	}
+
+	$createdEntities = array();
+	$updateEntityInfos = array();
+
+	if(isset($clientData['CONTACT_DATA']) && is_array($clientData['CONTACT_DATA']))
+	{
+		$contactIDs = array();
+		$contactData = $clientData['CONTACT_DATA'];
+		foreach($contactData as $contactItem)
+		{
+			$contactID = isset($contactItem['id']) ? (int)$contactItem['id'] : 0;
+			if($contactID <= 0)
+			{
+				$contactID = \Bitrix\Crm\Component\EntityDetails\BaseComponent::createEntity(
+					\CCrmOwnerType::Contact,
+					$contactItem,
+					array(
+						'userPermissions' => $currentUserPermissions,
+						'startWorkFlows' => true
+					)
+				);
+
+				if($contactID > 0)
+				{
+					if(!isset($createdEntities[CCrmOwnerType::Contact]))
+					{
+						$createdEntities[CCrmOwnerType::Contact] = array();
+					}
+					$createdEntities[CCrmOwnerType::Contact][] = $contactID;
+				}
+			}
+			elseif($contactItem['title'] || (isset($contactItem['multifields']) && is_array($contactItem['multifields'])))
+			{
+				if(!isset($updateEntityInfos[CCrmOwnerType::Contact]))
+				{
+					$updateEntityInfos[CCrmOwnerType::Contact] = array();
+				}
+				$updateEntityInfos[CCrmOwnerType::Contact][$contactID] = $contactItem;
+			}
+
+			if($contactID > 0)
+			{
+				$contactIDs[] = $contactID;
+			}
+		}
+
+		if(!empty($contactIDs))
+		{
+			$contactIDs = array_unique($contactIDs);
+		}
+
+		$fields['CONTACT_ID'] = $contactIDs;
+		if(!empty($fields['CONTACT_ID']))
+		{
+			$contactBindings = array();
+			foreach($fields['CONTACT_ID'] as $contactID)
+			{
+				$contactBindings[] = array('ENTITY_TYPE_ID' => CCrmOwnerType::Contact, 'ENTITY_ID' => $contactID);
+			}
+			Crm\Controller\Entity::addLastRecentlyUsedItems(
+				'crm.company.details',
+				'contact',
+				$contactBindings
+			);
+		}
+	}
+	//endregion
+
 	//region Requisites
 	$entityRequisites = array();
 	$entityBankDetails = array();
@@ -262,69 +349,106 @@ if($action === 'SAVE')
 		$conversionWizard->prepareDataForSave(CCrmOwnerType::Company, $fields);
 	}
 
-	if(!empty($fields) || !empty($entityRequisites) || !empty($entityBankDetails))
+	$errorMessage = '';
+	if(!empty($fields) || !empty($updateEntityInfos) || !empty($entityRequisites) || !empty($entityBankDetails))
 	{
-		if(isset($fields['ASSIGNED_BY_ID']) && $fields['ASSIGNED_BY_ID'] > 0)
+		if(!empty($fields))
 		{
-			\Bitrix\Crm\Entity\EntityEditor::registerSelectedUser($fields['ASSIGNED_BY_ID']);
+			if(isset($fields['ASSIGNED_BY_ID']) && $fields['ASSIGNED_BY_ID'] > 0)
+			{
+				\Bitrix\Crm\Entity\EntityEditor::registerSelectedUser($fields['ASSIGNED_BY_ID']);
+			}
+
+			if($isCopyMode)
+			{
+				if(!isset($fields['ASSIGNED_BY_ID']))
+				{
+					$fields['ASSIGNED_BY_ID'] = $currentUserID;
+				}
+
+				\Bitrix\Crm\Entity\EntityEditor::prepareForCopy($fields, $userType);
+				$merger = new \Bitrix\Crm\Merger\CompanyMerger($currentUserID, false);
+				//Merge with disabling of multiple user fields (SKIP_MULTIPLE_USER_FIELDS = TRUE)
+				$merger->mergeFields(
+					$sourceFields,
+					$fields,
+					true,
+					array('SKIP_MULTIPLE_USER_FIELDS' => true)
+				);
+			}
+
+			if(isset($fields['COMMENTS']))
+			{
+				$fields['COMMENTS'] = \Bitrix\Crm\Format\TextHelper::sanitizeHtml($fields['COMMENTS']);
+			}
+
+			$entity = new \CCrmCompany(false);
+			if($isNew)
+			{
+				if(!isset($fields['COMPANY_TYPE']))
+				{
+					$fields['COMPANY_TYPE'] = \CCrmStatus::GetFirstStatusID('COMPANY_TYPE');
+				}
+
+				if(!isset($fields['INDUSTRY']))
+				{
+					$fields['INDUSTRY'] = \CCrmStatus::GetFirstStatusID('INDUSTRY');
+				}
+
+				if(!isset($fields['EMPLOYEES']))
+				{
+					$fields['EMPLOYEES'] = \CCrmStatus::GetFirstStatusID('EMPLOYEES');
+				}
+
+				if(!isset($fields['OPENED']))
+				{
+					$fields['OPENED'] = \Bitrix\Crm\Settings\CompanySettings::getCurrent()->getOpenedFlag() ? 'Y' : 'N';
+				}
+
+				$ID = $entity->Add($fields, true, array('REGISTER_SONET_EVENT' => true));
+				if($ID <= 0)
+				{
+					$errorMessage = $entity->LAST_ERROR;
+				}
+			}
+			else
+			{
+				if(!$entity->Update($ID, $fields, true, true,  array('REGISTER_SONET_EVENT' => true)))
+				{
+					$errorMessage = $entity->LAST_ERROR;
+				}
+			}
 		}
 
-		if($isCopyMode)
+		if($errorMessage !== '')
 		{
-			if(!isset($fields['ASSIGNED_BY_ID']))
+			//Deletion early created entities
+			foreach($createdEntities as $entityTypeID => $entityIDs)
 			{
-				$fields['ASSIGNED_BY_ID'] = $currentUserID;
+				foreach($entityIDs as $entityID)
+				{
+					\Bitrix\Crm\Component\EntityDetails\BaseComponent::deleteEntity($entityTypeID, $entityID);
+				}
 			}
-
-			$merger = new \Bitrix\Crm\Merger\CompanyMerger($currentUserID, false);
-			//Merge with disabling of multiple user fields (SKIP_MULTIPLE_USER_FIELDS = TRUE)
-			$merger->mergeFields(
-				$sourceFields,
-				$fields,
-				true,
-				array('SKIP_MULTIPLE_USER_FIELDS' => true)
-			);
+			__CrmCompanyDetailsEndJsonResonse(array('ERROR' => $errorMessage));
 		}
 
-		if(isset($fields['COMMENTS']))
+		if(!empty($updateEntityInfos))
 		{
-			$fields['COMMENTS'] = \Bitrix\Crm\Format\TextHelper::sanitizeHtml($fields['COMMENTS']);
-		}
-
-		$entity = new \CCrmCompany(false);
-		if($isNew)
-		{
-			if(!isset($fields['COMPANY_TYPE']))
+			foreach($updateEntityInfos as $entityTypeID => $entityInfos)
 			{
-				$fields['COMPANY_TYPE'] = \CCrmStatus::GetFirstStatusID('COMPANY_TYPE');
-			}
-
-			if(!isset($fields['INDUSTRY']))
-			{
-				$fields['INDUSTRY'] = \CCrmStatus::GetFirstStatusID('INDUSTRY');
-			}
-
-			if(!isset($fields['EMPLOYEES']))
-			{
-				$fields['EMPLOYEES'] = \CCrmStatus::GetFirstStatusID('EMPLOYEES');
-			}
-
-			if(!isset($fields['OPENED']))
-			{
-				$fields['OPENED'] = \Bitrix\Crm\Settings\CompanySettings::getCurrent()->getOpenedFlag() ? 'Y' : 'N';
-			}
-
-			$ID = $entity->Add($fields, true, array('REGISTER_SONET_EVENT' => true));
-			if($ID <= 0)
-			{
-				__CrmCompanyDetailsEndJsonResonse(array('ERROR' => $entity->LAST_ERROR));
-			}
-		}
-		else
-		{
-			if(!$entity->Update($ID, $fields, true, true,  array('REGISTER_SONET_EVENT' => true)))
-			{
-				__CrmCompanyDetailsEndJsonResonse(array('ERROR' => $entity->LAST_ERROR));
+				foreach($entityInfos as $entityID => $entityInfo)
+				{
+					\Bitrix\Crm\Component\EntityDetails\BaseComponent::updateEntity(
+						$entityTypeID,
+						$entityID,
+						$entityInfo,
+						array(
+							'userPermissions' => $currentUserPermissions,
+							'startWorkFlows' => true
+						)
+					);
+				}
 			}
 		}
 
@@ -401,7 +525,8 @@ if($action === 'SAVE')
 		\Bitrix\Crm\Tracking\UI\Details::saveEntityData(
 			\CCrmOwnerType::Company,
 			$ID,
-			$_POST
+			$_POST,
+			$isNew
 		);
 
 		$arErrors = array();

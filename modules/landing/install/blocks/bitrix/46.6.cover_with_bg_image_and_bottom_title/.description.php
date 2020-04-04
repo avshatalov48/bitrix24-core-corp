@@ -10,6 +10,7 @@ return array(
 	'block' => array(
 		'name' => Loc::getMessage('LANDING_BLOCK_46.6.COVER_WITH_SLIDER_BGIMG_NAME'),
 		'section' => array('cover'),
+		'dynamic' => false,
 	),
 	'cards' => array(
 		'.landing-block-node-card' => array(
@@ -67,13 +68,9 @@ return array(
 				'name' => Loc::getMessage('LANDING_BLOCK_46.6.COVER_WITH_SLIDER_BGIMG_CARDS_LANDINGBLOCKNODECARD'),
 				'type' => array('height-vh','background-overlay'),
 			),
-			'.landing-block-node-card-bgimg' => array(
-				'name' => Loc::getMessage('LANDING_BLOCK_46.6.COVER_WITH_SLIDER_BGIMG_NODES_LANDINGBLOCKNODECARDBGIMG'),
-				'type' => 'height-vh',
-			),
 		),
 	),
 	'assets' => array(
-		'ext' => array('landing_carousel'),
+		'ext' => array('landing_carousel', 'landing_inline_video'),
 	),
 );

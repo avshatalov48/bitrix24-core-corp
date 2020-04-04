@@ -24,7 +24,7 @@
 
 	BX.Landing.UI.PropertyMap.prototype = {
 		margin: {
-			title: BX.message("BLOCK_STYLE_MARGIN"),
+			title: BX.Landing.Loc.getMessage("BLOCK_STYLE_MARGIN"),
 			unit: "px",
 			min: 0,
 			max: 250,
@@ -35,7 +35,7 @@
 		},
 
 		'margin-left': {
-			title: BX.message("BLOCK_STYLE_MARGIN-LEFT"),
+			title: BX.Landing.Loc.getMessage("BLOCK_STYLE_MARGIN-LEFT"),
 			unit: "px",
 			min: 0,
 			max: 250,
@@ -46,7 +46,7 @@
 		},
 
 		'margin-right': {
-			title: BX.message("BLOCK_STYLE_MARGIN-RIGHT"),
+			title: BX.Landing.Loc.getMessage("BLOCK_STYLE_MARGIN-RIGHT"),
 			unit: "px",
 			min: 0,
 			max: 250,
@@ -57,7 +57,7 @@
 		},
 
 		'margin-top': {
-			title: BX.message("BLOCK_STYLE_MARGIN-TOP"),
+			title: BX.Landing.Loc.getMessage("BLOCK_STYLE_MARGIN-TOP"),
 			unit: "px",
 			min: 0,
 			max: 250,
@@ -68,7 +68,7 @@
 		},
 
 		'margin-bottom': {
-			title: BX.message("BLOCK_STYLE_MARGIN-BOTTOM"),
+			title: BX.Landing.Loc.getMessage("BLOCK_STYLE_MARGIN-BOTTOM"),
 			unit: "px",
 			min: 0,
 			max: 250,
@@ -80,7 +80,7 @@
 
 
 		padding: {
-			title: BX.message("BLOCK_STYLE_PADDING"),
+			title: BX.Landing.Loc.getMessage("BLOCK_STYLE_PADDING"),
 			unit: "px",
 			min: 0,
 			max: 250,
@@ -91,7 +91,7 @@
 		},
 
 		'padding-left': {
-			title: BX.message("BLOCK_STYLE_PADDING-LEFT"),
+			title: BX.Landing.Loc.getMessage("BLOCK_STYLE_PADDING-LEFT"),
 			unit: "px",
 			min: 0,
 			max: 250,
@@ -102,7 +102,7 @@
 		},
 
 		'padding-right': {
-			title: BX.message("BLOCK_STYLE_PADDING-RIGHT"),
+			title: BX.Landing.Loc.getMessage("BLOCK_STYLE_PADDING-RIGHT"),
 			unit: "px",
 			min: 0,
 			max: 250,
@@ -113,7 +113,7 @@
 		},
 
 		'padding-top': {
-			title: BX.message("BLOCK_STYLE_PADDING-TOP"),
+			title: BX.Landing.Loc.getMessage("BLOCK_STYLE_PADDING-TOP"),
 			unit: "px",
 			min: 0,
 			max: 250,
@@ -124,7 +124,7 @@
 		},
 
 		'padding-bottom': {
-			title: BX.message("BLOCK_STYLE_PADDING-BOTTOM"),
+			title: BX.Landing.Loc.getMessage("BLOCK_STYLE_PADDING-BOTTOM"),
 			unit: "px",
 			min: 0,
 			max: 250,
@@ -135,7 +135,7 @@
 		},
 
 		'border': {
-			title: BX.message("BLOCK_STYLE_BORDER"),
+			title: BX.Landing.Loc.getMessage("BLOCK_STYLE_BORDER"),
 			unit: "",
 			min: 0,
 			max: 250,
@@ -146,7 +146,7 @@
 		},
 
 		'font-size': {
-			title: BX.message("BLOCK_STYLE_FONT-SIZE"),
+			title: BX.Landing.Loc.getMessage("BLOCK_STYLE_FONT-SIZE"),
 			unit: "px",
 			min: 0,
 			max: 48,
@@ -157,7 +157,7 @@
 		},
 
 		'font-family': {
-			title: BX.message("BLOCK_STYLE_FONT-FAMILY"),
+			title: BX.Landing.Loc.getMessage("BLOCK_STYLE_FONT-FAMILY"),
 			unit: "px",
 			min: 0,
 			max: 250,

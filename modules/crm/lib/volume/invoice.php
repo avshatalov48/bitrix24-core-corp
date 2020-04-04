@@ -3,23 +3,43 @@
 namespace Bitrix\Crm\Volume;
 
 use Bitrix\Crm;
+use Bitrix\Crm\Volume;
 use Bitrix\Main;
 use Bitrix\Main\ORM;
-use Bitrix\Main\Entity;
 use Bitrix\Main\Localization\Loc;
 
 
-class Invoice extends Crm\Volume\Base implements Crm\Volume\IVolumeClear, Crm\Volume\IVolumeClearActivity, Crm\Volume\IVolumeClearEvent, Crm\Volume\IVolumeUrl
+class Invoice
+	extends Volume\Base
+	implements Volume\IVolumeClear, Volume\IVolumeClearActivity, Volume\IVolumeClearEvent, Volume\IVolumeUrl
 {
+	use Volume\ClearEvent;
+	use Volume\ClearActivity;
+
 	/** @var array */
 	protected static $entityList = array(
-		//\Bitrix\Sale\Internals\OrderTable::class;
 		Crm\InvoiceTable::class,
 		Crm\InvoiceSpecTable::class,
 		Crm\InvoiceStUtsTable::class,
 		Crm\InvoiceRecurTable::class,
-		Crm\Statistics\Entity\InvoiceSumStatisticsTable::class,
+		Crm\Invoice\Internals\InvoiceChangeTable::class,
+		Crm\Invoice\Internals\InvoiceRulesDescrTable::class,
+		Crm\Invoice\Internals\InvoicePropsValueTable::class,
+		Crm\Invoice\Internals\InvoiceRoundTable::class,
+		Crm\Invoice\Internals\PaymentTable::class,
+		Crm\Invoice\Internals\ShipmentTable::class,
+		Crm\Invoice\Internals\ShipmentItemTable::class,
+		Crm\Invoice\Internals\TaxTable::class,
+		Crm\Invoice\Internals\BasketTable::class,
+		Crm\Invoice\Internals\BasketPropertyTable::class,
+		Crm\Invoice\Internals\EntityMarkerTable::class,
+		Crm\Invoice\Internals\InvoiceCouponsTable::class,
+		Crm\Invoice\Internals\InvoiceDiscountTable::class,
+		Crm\Invoice\Internals\InvoiceDiscountDataTable::class,
+		Crm\Invoice\Internals\InvoiceModulesTable::class,
+		Crm\Invoice\Internals\InvoiceRulesTable::class,
 		Crm\History\Entity\InvoiceStatusHistoryTable::class,
+		Crm\Statistics\Entity\InvoiceSumStatisticsTable::class,
 	);
 
 	/** @var array */
@@ -95,8 +115,9 @@ class Invoice extends Crm\Volume\Base implements Crm\Volume\IVolumeClear, Crm\Vo
 	{
 		return array(
 			'DATE_CREATE' => 'DATE_INSERT',
-			'STAGE_SEMANTIC_ID' => function(&$param, $filterInp){
-				$statuses = Crm\Volume\Invoice::getStatusSemantics($filterInp);
+			'STAGE_SEMANTIC_ID' => function(&$param, $filterInp)
+			{
+				$statuses = Volume\Invoice::getStatusSemantics($filterInp);
 				foreach ($statuses as $status)
 				{
 					if (is_array($param))
@@ -190,28 +211,6 @@ class Invoice extends Crm\Volume\Base implements Crm\Volume\IVolumeClear, Crm\Vo
 		return true;
 	}
 
-	/**
-	 * Returns availability to drop entity activities.
-	 *
-	 * @return boolean
-	 */
-	public function canClearActivity()
-	{
-		$activityVolume = new Crm\Volume\Activity();
-		return $activityVolume->canClearEntity();
-	}
-
-	/**
-	 * Returns availability to drop entity event.
-	 *
-	 * @return boolean
-	 */
-	public function canClearEvent()
-	{
-		$eventVolume = new Crm\Volume\Event();
-		return $eventVolume->canClearEntity();
-	}
-
 
 	/**
 	 * Returns query.
@@ -223,11 +222,9 @@ class Invoice extends Crm\Volume\Base implements Crm\Volume\IVolumeClear, Crm\Vo
 
 		self::registerStageField($query);
 
-		/** @global \CDatabase $DB */
-		global $DB;
 		$dayField = new ORM\Fields\ExpressionField(
 			'DATE_CREATE_SHORT',
-			$DB->datetimeToDateFunction('%s'),
+			'DATE(%s)',
 			'DATE_INSERT'
 		);
 		$query->registerRuntimeField($dayField);
@@ -256,7 +253,7 @@ class Invoice extends Crm\Volume\Base implements Crm\Volume\IVolumeClear, Crm\Vo
 		}
 		$stageField = new ORM\Fields\ExpressionField(
 			$fieldAlias,
-			"CASE %s {$caseSql} ELSE '-' END",
+			"CASE %s {$caseSql} ELSE NULL END",
 			($sourceAlias != '' ? "{$sourceAlias}.STATUS_ID" : 'STATUS_ID')
 		);
 
@@ -578,7 +575,7 @@ class Invoice extends Crm\Volume\Base implements Crm\Volume\IVolumeClear, Crm\Vo
 	{
 		self::loadTablesInformation();
 
-		$querySql = $this->prepareActivityQuery(array(
+		$querySql = $this->prepareActivityRelationQuerySql(array(
 			'DATE_CREATE' => 'DATE_CREATED_SHORT',
 			'INVOICE_STAGE_SEMANTIC' => 'STAGE_SEMANTIC_ID',
 		));
@@ -631,8 +628,8 @@ class Invoice extends Crm\Volume\Base implements Crm\Volume\IVolumeClear, Crm\Vo
 	{
 		self::loadTablesInformation();
 
-		$querySql = $this->prepareEventQuery(array(
-			'DATE_CREATE' => 'INVOICE_DATE_CREATE_SHORT',
+		$querySql = $this->prepareEventRelationQuerySql(array(
+			'EVENT_DATE_CREATE' => 'INVOICE_DATE_CREATE_SHORT',
 			'INVOICE_STAGE_SEMANTIC_ID' => 'INVOICE_STAGE_SEMANTIC_ID',
 		));
 
@@ -644,7 +641,7 @@ class Invoice extends Crm\Volume\Base implements Crm\Volume\IVolumeClear, Crm\Vo
 				SELECT 
 					'".static::getIndicatorId()."' as INDICATOR_TYPE,
 					'".$this->getOwner()."' as OWNER_ID,
-					DATE_CREATE,
+					EVENT_DATE_CREATE as DATE_CREATE,
 					INVOICE_STAGE_SEMANTIC_ID, 
 					(	FILE_SIZE +
 						EVENT_COUNT * {$avgEventTableRowLength} ) as EVENT_SIZE,
@@ -816,7 +813,7 @@ class Invoice extends Crm\Volume\Base implements Crm\Volume\IVolumeClear, Crm\Vo
 
 		$userPermissions = \CCrmPerms::GetUserPermissions($this->getOwner());
 
-		$activityVolume = new Crm\Volume\Activity();
+		$activityVolume = new Volume\Activity();
 		$activityVolume->setFilter($this->getFilter());
 
 		$query = $activityVolume->prepareQuery();
@@ -881,7 +878,7 @@ class Invoice extends Crm\Volume\Base implements Crm\Volume\IVolumeClear, Crm\Vo
 	public function countEvent($additionEventFilter = array())
 	{
 		$additionEventFilter['=ENTITY_TYPE'] = \CCrmOwnerType::InvoiceName;
-		return parent::countEvent($additionEventFilter);
+		return $this->countRelationEvent($additionEventFilter);
 	}
 
 	/**
@@ -896,24 +893,24 @@ class Invoice extends Crm\Volume\Base implements Crm\Volume\IVolumeClear, Crm\Vo
 			return false;
 		}
 
-		$eventVolume = new Crm\Volume\Event();
+		$eventVolume = new Volume\Event();
 		$eventVolume->setFilter($this->getFilter());
 
-		$query = $eventVolume->prepareQuery();
+		$query = $eventVolume->prepareRelationQuery(static::className());
 
 		$success = true;
 
 		if ($eventVolume->prepareFilter($query))
 		{
 			$query
-				->addSelect('ID', 'RELATION_ID')
+				->addSelect( 'EVENT_ID')
 				->where('ENTITY_TYPE', '=', \CCrmOwnerType::InvoiceName)
 				->setLimit(self::MAX_ENTITY_PER_INTERACTION)
-				->setOrder(array('RELATION_ID' => 'ASC'));
+				->setOrder(array('EVENT_ID' => 'ASC'));
 
 			if ($this->getProcessOffset() > 0)
 			{
-				$query->where('RELATION_ID', '>', $this->getProcessOffset());
+				$query->where('EVENT_ID', '>', $this->getProcessOffset());
 			}
 
 			$res = $query->exec();
@@ -921,15 +918,15 @@ class Invoice extends Crm\Volume\Base implements Crm\Volume\IVolumeClear, Crm\Vo
 			$entity = new \CCrmEvent();
 			while ($event = $res->fetch())
 			{
-				$this->setProcessOffset($event['RELATION_ID']);
+				$this->setProcessOffset($event['EVENT_ID']);
 
-				if ($entity->Delete($event['RELATION_ID'], array('CURRENT_USER' => $this->getOwner())) !== false)
+				if ($entity->Delete($event['EVENT_ID'], array('CURRENT_USER' => $this->getOwner())) !== false)
 				{
 					$this->incrementDroppedEventCount();
 				}
 				else
 				{
-					$this->collectError(new Main\Error('Deletion failed with event #'.$event['RELATION_ID'], self::ERROR_DELETION_FAILED));
+					$this->collectError(new Main\Error('Deletion failed with event #'.$event['EVENT_ID'], self::ERROR_DELETION_FAILED));
 					$this->incrementFailCount();
 				}
 

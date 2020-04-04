@@ -57,7 +57,7 @@ if(!empty($moreItems))
 			}
 		);
 	</script>
-	<button id="<?=htmlspecialcharsbx($buttonID)?>" class="ui-btn ui-btn-md ui-btn-light-border ui-btn-themes ui-btn-icon-setting"></button>
+	<button id="<?=htmlspecialcharsbx($buttonID)?>" class="ui-btn ui-btn-light-border ui-btn-themes ui-btn-icon-setting"></button>
 	<?
 }
 $itemCount = count($items);
@@ -66,8 +66,8 @@ for($i = 0; $i < $itemCount; $i++)
 	$item = $items[$i];
 
 	$type = isset($item['TYPE']) ? $item['TYPE'] : '';
-	$text = isset($item['TEXT']) ? htmlspecialcharsbx($item['TEXT']) : '';
-	$title = isset($item['TITLE']) ? htmlspecialcharsbx($item['TITLE']) : '';
+	$text = isset($item['TEXT']) ? htmlspecialcharsbx(strip_tags($item['TEXT'])) : '';
+	$title = isset($item['TITLE']) ? htmlspecialcharsbx(strip_tags($item['TITLE'])) : '';
 	$link = isset($item['LINK']) ? htmlspecialcharsbx($item['LINK']) : '#';
 	$icon = isset($item['ICON']) ? htmlspecialcharsbx($item['ICON']) : '';
 	$onClick = isset($item['ONCLICK']) ? htmlspecialcharsbx($item['ONCLICK']) : '';

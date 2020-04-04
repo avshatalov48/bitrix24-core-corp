@@ -91,6 +91,7 @@
 	width: 20px;
 	height: 20px;
 	border-radius: 50%;
+	box-shadow: 0 2px 4px rgba(0, 0, 0, .1);
 	background: #97c70f url(data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2212%22%20height%3D%229%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M4.627%205.81L10.402%200%2012%201.607%204.652%209l-.025-.025L4.602%209%200%204.373l1.598-1.607z%22%20fill%3D%22%23FFF%22%20fill-rule%3D%22evenodd%22/%3E%3C/svg%3E)
 	no-repeat center;
 	content: '';

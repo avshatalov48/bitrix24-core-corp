@@ -108,6 +108,9 @@ if($REQUEST_METHOD=="POST" && strlen($Update.$Apply.$RestoreDefaults)>0 && check
 		COption::SetOptionString('intranet', 'tz_transition_daylight', $tz_transition_daylight);
 
 		COption::SetOptionString("intranet", "BLOCK_NEW_USER_LF", ($_REQUEST['BLOCK_NEW_USER_LF'] == "Y" ? "Y" : "N"));
+		COption::SetOptionString("intranet", "stresslevel_available", (isset($_REQUEST['STRESSLEVEL_AVAILABLE']) && $_REQUEST['STRESSLEVEL_AVAILABLE'] == "Y" ? "Y" : "N"));
+
+		\Bitrix\Intranet\UserAbsence::saveActiveVacationTypes($_POST['VACATION_TYPES']);
 
 		foreach ($arSiteSettings as $param_name)
 		{
@@ -198,6 +201,8 @@ while ($arIBType = $dbIBlockType->Fetch())
 	}
 }
 
+$vacationTypes = \Bitrix\Intranet\UserAbsence::getVacationTypes();
+
 $dbIBlock = CIBlock::GetList(array('SORT' => 'ASC'), array('ACTIVE' => 'Y'));
 while ($arIBlock = $dbIBlock->Fetch())
 {
@@ -227,6 +232,7 @@ $tz_transition_standard = COption::GetOptionString('intranet', 'tz_transition_st
 $tz_transition_daylight = COption::GetOptionString('intranet', 'tz_transition_daylight', '');
 
 $block_new_user_lf = COption::GetOptionString("intranet", "BLOCK_NEW_USER_LF", "N");
+$stresslevel_available = COption::GetOptionString("intranet", "stresslevel_available", "Y");
 
 $ws_contacts_get_images = COption::GetOptionString('intranet', 'ws_contacts_get_images', 'Y');
 
@@ -399,6 +405,20 @@ endif;
 	<tr>
 		<td valign="top" width="50%"><?php echo GetMessage("INTR_OPTION_BLOCK_NEW_USER_LF")?></td>
 		<td valign="top" width="50%"><input type="checkbox" name="BLOCK_NEW_USER_LF" value="Y" <?php echo ($block_new_user_lf == "Y" ? " checked" : "")?> /></td>
+	</tr>
+	<tr>
+		<td valign="top" width="50%"><?php echo GetMessage("INTR_OPTION_VACATION_TYPES")?></td>
+		<td valign="top" width="50%">
+			<select name="VACATION_TYPES[]" multiple size="4">
+			<?foreach($vacationTypes as $type):?>
+				<option value="<?=$type['ID']?>" <?=($type['ACTIVE']?' selected':'')?>><?='['.strtolower($type['ID']).'] '.$type['NAME']?></option>
+			<?endforeach;?>
+			</select>
+		</td>
+	</tr>
+	<tr>
+		<td valign="top" width="50%"><?php echo GetMessage("INTR_OPTION_STRESSLEVEL_AVAILABLE")?></td>
+		<td valign="top" width="50%"><input type="checkbox" name="STRESSLEVEL_AVAILABLE" value="Y" <?php echo ($stresslevel_available == "Y" ? " checked" : "")?> /></td>
 	</tr>
 </table>
 <?

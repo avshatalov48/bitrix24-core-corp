@@ -55,6 +55,14 @@ if(!empty($id))
 	$uploadedFile = $httpRequest->getFile('file');
 	if($uploadedFile)
 	{
+		if(isset($uploadedFile['error']) && $uploadedFile['error'] > 0)
+		{
+			$message = 'client web-server error uploading file part';
+			echo Json::encode(array(
+				'error' => $message,
+			));
+			return;
+		}
 		$file = fopen($uploadedFile['tmp_name'], 'rb');
 		if($file)
 		{
@@ -90,8 +98,17 @@ if(!empty($id))
 		return;
 	}
 	$error = $httpRequest->getPost('error');
-	if($error)
+	$errorCode = intval($httpRequest->getPost('errorCode'));
+	if($error || $errorCode)
 	{
+		if($errorCode && !$error)
+		{
+			$error = $errorCode;
+		}
+		if(!$errorCode)
+		{
+			$errorCode = Command::ERROR_CONTROLLER_UNKNOWN_ERROR;
+		}
 		\Bitrix\Transformer\Log::write('Error on server: '.$error);
 		$result = $httpRequest->getPost('result');
 		if(is_array($result['files']))
@@ -102,7 +119,7 @@ if(!empty($id))
 				$file->delete();
 			}
 		}
-		$command->updateStatus(Command::STATUS_ERROR, $error);
+		$command->updateStatus(Command::STATUS_ERROR, $error, $errorCode);
 		$command->callback(array('error' => $error));
 		echo Json::encode(array(
 			'success' => 'error received'
@@ -137,9 +154,9 @@ if(!empty($id))
 			}
 			else
 			{
-				$command->updateStatus(Command::STATUS_ERROR);
+				$command->updateStatus(Command::STATUS_ERROR, 'Callback error', Command::ERROR_CALLBACK);
 				echo Json::encode(array(
-					'error' => 'Error of the callback'
+					'error' => 'Error of the callback',
 				));
 			}
 		}

@@ -122,7 +122,7 @@ if (!function_exists('prepareProjectRowTitle'))
 		$out .= '</div>';
 
 		$out .= '<div class="tasks-project-overview-title">';
-		$out .= '<a class="tasks-project-overview-title-link" href="'.$row['PATHES']['TO_GROUP'].'">'.htmlspecialcharsbx($row['NAME']).'</a>';
+		$out .= '<a class="tasks-project-overview-title-link" target="_top"  href="'.$row['PATHES']['TO_GROUP'].'">'.htmlspecialcharsbx($row['NAME']).'</a>';
 
 		$out .= '<span class="tasks-project-overview-members">';
 

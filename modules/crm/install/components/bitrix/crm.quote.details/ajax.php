@@ -187,21 +187,33 @@ elseif($action === 'SAVE')
 	//endregion
 
 	//region PRODUCT ROWS
-	$enableProductRows = !array_key_exists('QUOTE_PRODUCT_DATA_INVALIDATE', $_POST) && array_key_exists('QUOTE_PRODUCT_DATA', $_POST);
+	$enableProductRows = false;
+	$originalProductRows = !$isNew ? \CCrmQuote::LoadProductRows($ID) : array();
+
 	$productRows = array();
 	$productRowSettings = array();
-	if($enableProductRows)
+	if(isset($_POST['QUOTE_PRODUCT_DATA'])
+		&& !(isset($_POST['SKIP_PRODUCT_DATA']) && strcasecmp($_POST['SKIP_PRODUCT_DATA'], 'Y') === 0)
+	)
 	{
-		if(isset($_POST['QUOTE_PRODUCT_DATA']) && $_POST['QUOTE_PRODUCT_DATA'] !== '')
-		{
-			$productRows = \CUtil::JsObjectToPhp($_POST['QUOTE_PRODUCT_DATA']);
-		}
-
+		$productRows = \CUtil::JsObjectToPhp($_POST['QUOTE_PRODUCT_DATA']);
 		if(!is_array($productRows))
 		{
 			$productRows = array();
 		}
 
+		$enableProductRows = true;
+		if(!$isNew
+			&& !$isCopyMode
+			&& \CCrmProductRow::AreEquals($productRows, $originalProductRows)
+		)
+		{
+			$enableProductRows = false;
+		}
+	}
+
+	if($enableProductRows)
+	{
 		if(!empty($productRows))
 		{
 			if($isCopyMode)
@@ -236,20 +248,9 @@ elseif($action === 'SAVE')
 		else
 		{
 			$fields['TAX_VALUE'] = 0.0;
-			if(!isset($fields['OPPORTUNITY']))
+			if(!isset($fields['OPPORTUNITY']) && ($isNew || !empty($originalProductRows)))
 			{
-				if($isNew)
-				{
-					$fields['OPPORTUNITY'] = 0.0;
-				}
-				else
-				{
-					$originalProductRows = \CCrmQuote::LoadProductRows($ID);
-					if(!empty($originalProductRows))
-					{
-						$fields['OPPORTUNITY'] = 0.0;
-					}
-				}
+				$fields['OPPORTUNITY'] = 0.0;
 			}
 		}
 
@@ -428,7 +429,8 @@ elseif($action === 'SAVE')
 		\Bitrix\Crm\Tracking\UI\Details::saveEntityData(
 			\CCrmOwnerType::Quote,
 			$ID,
-			$_POST
+			$_POST,
+			$isNew
 		);
 
 		if($primaryClientID > 0 && $primaryClientTypeID === \CCrmOwnerType::Company)

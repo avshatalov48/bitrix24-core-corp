@@ -15,13 +15,19 @@ class PixelVk extends \Bitrix\Landing\Hook\Page
 	 */
 	protected function getMap()
 	{
+		$helpUrl = \Bitrix\Landing\Help::getHelpUrl('PIXEL');
 		return array(
 			'USE' => new Field\Checkbox('USE', array(
 				'title' => Loc::getMessage('LANDING_HOOK_PIXEL_VK_USE')
 			)),
 			'COUNTER' => new Field\Text('COUNTER', array(
 				'title' => Loc::getMessage('LANDING_HOOK_PIXEL_VK_COUNTER'),
-				'placeholder' => Loc::getMessage('LANDING_HOOK_PIXEL_VK_PLACEHOLDER2')
+				'placeholder' => Loc::getMessage('LANDING_HOOK_PIXEL_VK_PLACEHOLDER2'),
+				'help' => $helpUrl
+					? '<a href="' . $helpUrl . '" target="_blank">' .
+				  			Loc::getMessage('LANDING_HOOK_PIXEL_FB_HELP') .
+				  		'</a>'
+					: ''
 			))
 		);
 	}
@@ -32,6 +38,11 @@ class PixelVk extends \Bitrix\Landing\Hook\Page
 	 */
 	public function enabled()
 	{
+		if ($this->issetCustomExec())
+		{
+			return true;
+		}
+
 		return $this->fields['USE']->getValue() == 'Y';
 	}
 
@@ -41,12 +52,17 @@ class PixelVk extends \Bitrix\Landing\Hook\Page
 	 */
 	public function exec()
 	{
+		if ($this->execCustom())
+		{
+			return;
+		}
+
 		$counter = \htmlspecialcharsbx(trim($this->fields['COUNTER']));
 		$counter = \CUtil::jsEscape($counter);
 		if ($counter)
 		{
 			Manager::setPageView('AfterHeadOpen',
-								 '<script type="text/javascript" data-skip-moving="true">
+				'<script type="text/javascript" data-skip-moving="true">
 					!function(){
 						var t=document.createElement("script");
 						t.type="text/javascript",

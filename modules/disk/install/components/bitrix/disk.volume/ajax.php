@@ -75,6 +75,12 @@ class DiskVolumeController extends \Bitrix\Disk\Internals\Controller
 	/** @var int */
 	private $queueLength = -1;
 
+	/** string */
+	private $subTask = null;
+
+	/** @var int */
+	private $subStep = null;
+
 	/** @var bool */
 	private $reload = false;
 
@@ -215,6 +221,15 @@ class DiskVolumeController extends \Bitrix\Disk\Internals\Controller
 		{
 			$this->queueLength = (int)$this->request->get('queueLength');
 			$this->component->setQueueStepParam('queueLength', $this->queueLength);
+		}
+		if (!is_null($this->request->get('subTask')))
+		{
+			$this->subTask = $this->request->get('subTask');
+			$this->component->setQueueStepParam('subTask', $this->subTask);
+		}
+		if (!is_null($this->request->get('subStep')))
+		{
+			$this->subStep = (int)$this->request->get('subStep');
 		}
 		// cancel queue
 		if (!is_null($this->request->get('queueStop')))
@@ -358,7 +373,15 @@ class DiskVolumeController extends \Bitrix\Disk\Internals\Controller
 		elseif ($actionName === \CDiskVolumeComponent::ACTION_MEASURE_STORAGE)
 		{
 			$this->folder = $this->storage->getRootObject();
-			$this->folderId = $this->folder->getId();
+			if (!$this->folder instanceof \Bitrix\Disk\Folder)
+			{
+				$this->errorCollection->add(array(new Error("Could not find root folder of the storage {$this->storageId}")));
+				$this->sendJsonErrorResponse();
+			}
+			else
+			{
+				$this->folderId = $this->folder->getId();
+			}
 		}
 
 		if (
@@ -438,6 +461,11 @@ class DiskVolumeController extends \Bitrix\Disk\Internals\Controller
 
 		$cleaner = new Volume\Cleaner($this->getUser()->getId());
 
+		if (!$cleaner->isAllowClearFolder($this->file->getParent()))
+		{
+			$this->sendJsonAccessDeniedResponse(Loc::getMessage('DISK_VOLUME_ERROR_BAD_RIGHTS_FILE'));
+		}
+
 		if(!$cleaner->deleteFile($this->file))
 		{
 			$this->errorCollection->add($cleaner->getErrors());
@@ -512,6 +540,12 @@ class DiskVolumeController extends \Bitrix\Disk\Internals\Controller
 
 			$securityContext = $this->getSecurityContextByObject($file);
 			if(!$file->canDelete($securityContext))
+			{
+				$this->errorCollection->add(array(new Error("Could not delete file {$fileId}")));
+				continue;
+			}
+
+			if (!$cleaner->isAllowClearFolder($file->getParent()))
 			{
 				$this->errorCollection->add(array(new Error("Could not delete file {$fileId}")));
 				continue;
@@ -633,6 +667,12 @@ class DiskVolumeController extends \Bitrix\Disk\Internals\Controller
 		}
 
 		$cleaner = new Volume\Cleaner($this->getUser()->getId());
+
+		if (!$cleaner->isAllowClearFolder($this->folder))
+		{
+			$this->sendJsonAccessDeniedResponse(Loc::getMessage('DISK_VOLUME_ERROR_BAD_RIGHTS_FOLDER'));
+		}
+
 		$cleaner->startTimer();
 
 		if(!$cleaner->deleteFolder($this->folder))
@@ -673,6 +713,12 @@ class DiskVolumeController extends \Bitrix\Disk\Internals\Controller
 		}
 
 		$cleaner = new Volume\Cleaner($this->getUser()->getId());
+
+		if (!$cleaner->isAllowClearFolder($this->folder))
+		{
+			$this->sendJsonAccessDeniedResponse(Loc::getMessage('DISK_VOLUME_ERROR_BAD_RIGHTS_FOLDER'));
+		}
+
 		$cleaner->startTimer();
 
 		if(!$cleaner->deleteFolder($this->folder, true))
@@ -1060,6 +1106,8 @@ class DiskVolumeController extends \Bitrix\Disk\Internals\Controller
 			$filter['STORAGE_ID'] = $this->storageId;
 		}
 
+		$responseParams = array();
+
 		if ($this->queueLength > 0 && $this->queueStep > 0)
 		{
 			$retStatus = $this->measure($this->indicatorId, $filter);
@@ -1070,36 +1118,36 @@ class DiskVolumeController extends \Bitrix\Disk\Internals\Controller
 			}
 			elseif ($retStatus === self::STATUS_TIMEOUT)
 			{
-				$this->sendJsonSuccessResponse(array(
-					'queueStep' => $this->queueStep,
-					'timeout' => 'Y',
-				));
+				$responseParams['timeout'] = 'Y';
+				$responseParams['queueStep'] = $this->queueStep;
+
+				if (!empty($this->subTask))
+				{
+					$responseParams['subTask'] = $this->subTask;
+
+					$this->subStep ++;
+					$responseParams['subStep'] = $this->subStep;
+				}
 			}
 			else
 			{
+				$responseParams['queueStep'] = $this->queueStep;
 				if ($this->queueStep >= $this->queueLength)
 				{
 					$this->component->clearQueueStep();
-					$this->sendJsonSuccessResponse(array(
-						'url' => $this->getActionUrl(array()),
-						'queueStep' => $this->queueStep,
-					));
+					$responseParams['url'] = $this->getActionUrl(array());
 				}
 				else
 				{
-					$this->sendJsonSuccessResponse(array(
-						'message' => Loc::getMessage('DISK_VOLUME_PERFORMING_QUEUE', array(
+					$responseParams['message'] = Loc::getMessage('DISK_VOLUME_PERFORMING_QUEUE', array(
 							'#QUEUE_STEP#' => $this->queueStep,
 							'#QUEUE_LENGTH#' => $this->queueLength,
-						)),
-						'queueStep' => $this->queueStep,
 					));
 				}
 			}
 		}
 		else
 		{
-			//$retStatus = $this->reload($this->indicatorId, $filter);
 			$retStatus = $this->measure($this->indicatorId, $filter);
 
 			if ($retStatus === self::STATUS_ERROR)
@@ -1108,17 +1156,16 @@ class DiskVolumeController extends \Bitrix\Disk\Internals\Controller
 			}
 			elseif ($retStatus === self::STATUS_TIMEOUT)
 			{
-				$this->sendJsonSuccessResponse(array(
-					'timeout' => 'Y',
-				));
+				$responseParams['timeout'] = 'Y';
 			}
 			else
 			{
-				$this->sendJsonSuccessResponse(array(
-					'url' => $this->getActionUrl(array('indicatorId' => $this->indicatorId, 'action' => 'report')),
-				));
+				$this->component->clearQueueStep();
+				$responseParams['url'] = $this->getActionUrl(array('indicatorId' => $this->indicatorId, 'action' => 'report'));
 			}
 		}
+
+		$this->sendJsonSuccessResponse($responseParams);
 	}
 
 
@@ -1134,12 +1181,10 @@ class DiskVolumeController extends \Bitrix\Disk\Internals\Controller
 
 		$subTaskDone = true;
 
-		$subTask = \CDiskVolumeComponent::ACTION_PURIFY;
-		$subStep = 1;
-		if (!is_null($this->request->get('subTask')) && $this->request->get('subTask') != '')
+		if (empty($this->subTask))
 		{
-			$subTask = $this->request->get('subTask');
-			$subStep = (int)$this->request->get('subStep');
+			$this->subTask = \CDiskVolumeComponent::ACTION_PURIFY;
+			$this->subStep = 1;
 		}
 
 		$row = \Bitrix\Disk\Internals\VolumeTable::getByPrimary($this->filterId, array('select' => array('INDICATOR_TYPE')))->fetch();
@@ -1167,24 +1212,7 @@ class DiskVolumeController extends \Bitrix\Disk\Internals\Controller
 
 		do
 		{
-			/*
-			if ($subTask === 'prepare')
-			{
-				$this->prepareData(Volume\Folder::getIndicatorId(), array(
-					'STORAGE_ID' => $this->storageId
-				));
-
-				$subTask = \CDiskVolumeComponent::ACTION_PURIFY;
-				$subStep ++;
-				if (!$timer->checkTimeEnd())
-				{
-					$subTaskDone = false;
-					break;
-				}
-			}
-			*/
-
-			if ($subTask === \CDiskVolumeComponent::ACTION_PURIFY)
+			if ($this->subTask === \CDiskVolumeComponent::ACTION_PURIFY)
 			{
 				$this->purify(
 					$folderIndicatorId,
@@ -1193,8 +1221,8 @@ class DiskVolumeController extends \Bitrix\Disk\Internals\Controller
 					)
 				);
 
-				$subTask = 'storage';
-				$subStep ++;
+				$this->subTask = 'storage:purify';
+				$this->subStep ++;
 				if (!$timer->checkTimeEnd())
 				{
 					$subTaskDone = false;
@@ -1202,18 +1230,42 @@ class DiskVolumeController extends \Bitrix\Disk\Internals\Controller
 				}
 			}
 
-			if ($subTask === 'storage')
+			if (strpos($this->subTask, 'storage:') === 0)
 			{
-				$this->reload(
+				$storageSubTask = str_replace('storage:', '', $this->subTask);
+
+				if ($storageSubTask == 'purify')
+				{
+					$this->purify(
+						$storageIndicatorId,
+						array(
+							'=STORAGE_ID' => $this->storageId
+						),
+						$this->filterId
+					);
+
+					$storageSubTask = null;
+				}
+
+				$this->component->setQueueStepParam('subTask', $storageSubTask);
+
+				$this->measure(
 					$storageIndicatorId,
 					array(
 						'=STORAGE_ID' => $this->storageId,
-					),
-					$this->filterId
+					)
 				);
 
-				$subTask = 'folder';
-				$subStep ++;
+				if ($this->component->getQueueStepParam('subTask') !== null)
+				{
+					$this->subTask = 'storage:'. $this->component->getQueueStepParam('subTask');
+					$subTaskDone = false;
+					break;
+				}
+
+				// next
+				$this->subTask = 'folder';
+				$this->subStep ++;
 				if (!$timer->checkTimeEnd())
 				{
 					$subTaskDone = false;
@@ -1221,7 +1273,7 @@ class DiskVolumeController extends \Bitrix\Disk\Internals\Controller
 				}
 			}
 
-			if ($subTask === 'folder')
+			if ($this->subTask === 'folder')
 			{
 				$this->reload(
 					$folderIndicatorId,
@@ -1232,8 +1284,8 @@ class DiskVolumeController extends \Bitrix\Disk\Internals\Controller
 					)
 				);
 
-				$subTask = 'fileType';
-				$subStep ++;
+				$this->subTask = 'fileType';
+				$this->subStep ++;
 				if (!$timer->checkTimeEnd())
 				{
 					$subTaskDone = false;
@@ -1241,7 +1293,7 @@ class DiskVolumeController extends \Bitrix\Disk\Internals\Controller
 				}
 			}
 
-			if ($subTask === 'fileType')
+			if ($this->subTask === 'fileType')
 			{
 				$this->reload(
 					Volume\FileType::getIndicatorId(),
@@ -1250,8 +1302,8 @@ class DiskVolumeController extends \Bitrix\Disk\Internals\Controller
 					)
 				);
 
-				$subTask = 'trashcan';
-				$subStep ++;
+				$this->subTask = 'trashcan:purify';
+				$this->subStep ++;
 				if (!$timer->checkTimeEnd())
 				{
 					$subTaskDone = false;
@@ -1259,20 +1311,45 @@ class DiskVolumeController extends \Bitrix\Disk\Internals\Controller
 				}
 			}
 
-			if ($subTask === 'trashcan')
+
+			if (strpos($this->subTask, 'trashcan:') === 0)
 			{
+				$storageSubTask = str_replace('trashcan:', '', $this->subTask);
+
 				if ($storageIndicatorType != Volume\Storage\TrashCan::className())
 				{
-					$this->reload(
+					if ($storageSubTask == 'purify')
+					{
+						$this->purify(
+							Volume\Storage\TrashCan::getIndicatorId(),
+							array(
+								'=STORAGE_ID' => $this->storageId
+							)
+						);
+
+						$storageSubTask = null;
+					}
+
+					$this->component->setQueueStepParam('subTask', $storageSubTask);
+
+					$this->measure(
 						Volume\Storage\TrashCan::getIndicatorId(),
 						array(
-							'=STORAGE_ID' => $this->storageId
+							'=STORAGE_ID' => $this->storageId,
 						)
 					);
+
+					if ($this->component->getQueueStepParam('subTask') !== null)
+					{
+						$this->subTask = 'trashcan:'. $this->component->getQueueStepParam('subTask');
+						$subTaskDone = false;
+						break;
+					}
 				}
 
-				$subTask = 'fileStorage';
-				$subStep ++;
+				// next
+				$this->subTask = 'fileStorage';
+				$this->subStep ++;
 				if (!$timer->checkTimeEnd())
 				{
 					$subTaskDone = false;
@@ -1280,7 +1357,7 @@ class DiskVolumeController extends \Bitrix\Disk\Internals\Controller
 				}
 			}
 
-			if ($subTask === 'fileStorage')
+			if ($this->subTask === 'fileStorage')
 			{
 				$this->reload(
 					$fileIndicatorId,
@@ -1290,8 +1367,8 @@ class DiskVolumeController extends \Bitrix\Disk\Internals\Controller
 					)
 				);
 
-				$subTask = 'fileFolder';
-				$subStep ++;
+				$this->subTask = 'fileFolder';
+				$this->subStep ++;
 				if (!$timer->checkTimeEnd())
 				{
 					$subTaskDone = false;
@@ -1299,9 +1376,9 @@ class DiskVolumeController extends \Bitrix\Disk\Internals\Controller
 				}
 			}
 
-			if ($subTask === 'fileFolder')
+			if ($this->subTask === 'fileFolder')
 			{
-				$subStep ++;
+				$this->subStep ++;
 				$this->reload(
 					$fileIndicatorId,
 					array(
@@ -1311,7 +1388,7 @@ class DiskVolumeController extends \Bitrix\Disk\Internals\Controller
 				);
 			}
 
-			$subTask = '';
+			$this->subTask = null;
 
 			if ($this->filterId > 0)
 			{
@@ -1321,7 +1398,7 @@ class DiskVolumeController extends \Bitrix\Disk\Internals\Controller
 		while(false);
 
 		$responseParams = array(
-			'subStep' => $subStep,
+			'subStep' => $this->subStep,
 		);
 		if ($subTaskDone)
 		{
@@ -1329,6 +1406,7 @@ class DiskVolumeController extends \Bitrix\Disk\Internals\Controller
 			if ($this->queueLength > 0 && $this->queueStep > 0)
 			{
 				$this->component->setQueueStepParam('subTask', null);
+
 				if ($this->queueStep >= $this->queueLength)
 				{
 					$this->component->clearQueueStep();
@@ -1347,6 +1425,8 @@ class DiskVolumeController extends \Bitrix\Disk\Internals\Controller
 			}
 			else
 			{
+				$this->component->clearQueueStep();
+
 				if ($this->component->isAdminMode() || $this->component->isExpertMode())
 				{
 					if ($storageIndicatorType == Volume\Storage\TrashCan::className())
@@ -1373,10 +1453,10 @@ class DiskVolumeController extends \Bitrix\Disk\Internals\Controller
 		else
 		{
 			$responseParams['timeout'] = 'Y';
-			$responseParams['subTask'] = $subTask;
+			$responseParams['subTask'] = $this->subTask;
 			if ($this->queueLength > 0 && $this->queueStep > 0)
 			{
-				$this->component->setQueueStepParam('subTask', $subTask);
+				$this->component->setQueueStepParam('subTask', $this->subTask);
 				$responseParams['queueStep'] = $this->queueStep;
 			}
 		}
@@ -1396,59 +1476,24 @@ class DiskVolumeController extends \Bitrix\Disk\Internals\Controller
 
 		$subTaskDone = true;
 
-		$subTask = 'fileFolder';
-		$subStep = 1;
-		if (!is_null($this->request->get('subTask')) && $this->request->get('subTask') !== '')
+		if (empty($this->subTask))
 		{
-			$subTask = $this->request->get('subTask');
-			$subStep = (int)$this->request->get('subStep');
+			$this->subTask = 'fileFolder';
+			$this->subStep = 1;
 		}
 
 		do
 		{
-			/*
-			if ($subTask == 'fileType')
+			if ($this->subTask === 'fileFolder')
 			{
-				$this->reload(Volume\FileType::getIndicatorId(), array(
-					'STORAGE_ID' => $this->storageId,
-					'PARENT_ID' => $this->folderId
-				));
-
-				$subTask = 'fileStorage';
-				if (!$timer->checkTimeEnd())
-				{
-					$subTaskDone = false;
-					break;
-				}
-			}
-
-			if ($subTask === 'fileType')
-			{
-				$this->reload(Volume\File::getIndicatorId(), array(
-					'=STORAGE_ID' => $this->storageId,
-					'=PARENT_ID' => $this->folderId
-				));
-
-				$subTask = 'fileFolder';
-				$subStep ++;
-				if (!$timer->checkTimeEnd())
-				{
-					$subTaskDone = false;
-					break;
-				}
-			}
-			*/
-
-			if ($subTask === 'fileFolder')
-			{
-				$subStep ++;
+				$this->subStep ++;
 				$this->reload(Volume\File::getIndicatorId(), array(
 					'STORAGE_ID' => $this->storageId,
 					'FOLDER_ID' => $this->folderId
 				));
 			}
 
-			$subTask = '';
+			$this->subTask = '';
 
 			if ($this->filterId > 0)
 			{
@@ -1458,7 +1503,7 @@ class DiskVolumeController extends \Bitrix\Disk\Internals\Controller
 		while(false);
 
 		$responseParams = array(
-			'subStep' => $subStep,
+			'subStep' => $this->subStep,
 		);
 		if ($subTaskDone)
 		{
@@ -1492,16 +1537,17 @@ class DiskVolumeController extends \Bitrix\Disk\Internals\Controller
 			}
 			else
 			{
+				$this->component->clearQueueStep();
 				$responseParams['url'] = $this->getActionUrl($urlParams);
 			}
 		}
 		else
 		{
 			$responseParams['timeout'] = 'Y';
-			$responseParams['subTask'] = $subTask;
+			$responseParams['subTask'] = $this->subTask;
 			if ($this->queueLength > 0 && $this->queueStep > 0)
 			{
-				$this->component->setQueueStepParam('subTask', $subTask);
+				$this->component->setQueueStepParam('subTask', $this->subTask);
 				$responseParams['queueStep'] = $this->queueStep;
 			}
 		}
@@ -1543,6 +1589,8 @@ class DiskVolumeController extends \Bitrix\Disk\Internals\Controller
 		{
 			$this->errorCollection->add($this->component->getErrors());
 		}
+
+		$this->subTask = $this->component->getQueueStepParam('subTask');
 
 		return $retStatus;
 	}

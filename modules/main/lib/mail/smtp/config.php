@@ -5,7 +5,7 @@ namespace Bitrix\Main\Mail\Smtp;
 class Config
 {
 
-	protected $from, $host, $port, $login, $password;
+	protected $from, $host, $port, $protocol, $login, $password;
 
 	public function __construct(array $params = null)
 	{
@@ -38,6 +38,12 @@ class Config
 		return $this;
 	}
 
+	public function setProtocol($protocol)
+	{
+		$this->protocol = $protocol;
+		return $this;
+	}
+
 	public function setLogin($login)
 	{
 		$this->login = $login;
@@ -63,6 +69,11 @@ class Config
 	public function getPort()
 	{
 		return $this->port;
+	}
+
+	public function getProtocol()
+	{
+		return $this->protocol;
 	}
 
 	public function getLogin()

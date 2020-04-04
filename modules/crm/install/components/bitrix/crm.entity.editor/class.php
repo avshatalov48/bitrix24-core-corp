@@ -57,17 +57,26 @@ class CCrmEntityEditorComponent extends CBitrixComponent
 		$this->arResult['ENABLE_MODE_TOGGLE'] = !isset($this->arParams['~ENABLE_MODE_TOGGLE'])
 			|| $this->arParams['~ENABLE_MODE_TOGGLE'];
 
+		$this->arResult['ENABLE_VISIBILITY_POLICY'] = !isset($this->arParams['~ENABLE_VISIBILITY_POLICY'])
+			|| $this->arParams['~ENABLE_VISIBILITY_POLICY'];
+
 		$this->arResult['ENABLE_TOOL_PANEL'] = !isset($this->arParams['~ENABLE_TOOL_PANEL'])
 			|| $this->arParams['~ENABLE_TOOL_PANEL'];
 
 		$this->arResult['ENABLE_BOTTOM_PANEL'] = !isset($this->arParams['~ENABLE_BOTTOM_PANEL'])
 			|| $this->arParams['~ENABLE_BOTTOM_PANEL'];
 
+		$this->arResult['ENABLE_FIELDS_CONTEXT_MENU'] = !isset($this->arParams['~ENABLE_FIELDS_CONTEXT_MENU'])
+			|| $this->arParams['~ENABLE_FIELDS_CONTEXT_MENU'];
+
 		$this->arResult['ENABLE_PAGE_TITLE_CONTROLS'] = !isset($this->arParams['~ENABLE_PAGE_TITLE_CONTROLS'])
 			|| $this->arParams['~ENABLE_PAGE_TITLE_CONTROLS'];
 
 		$this->arResult['ENABLE_REQUIRED_FIELDS_INJECTION'] = !isset($this->arParams['~ENABLE_REQUIRED_FIELDS_INJECTION'])
 			|| $this->arParams['~ENABLE_REQUIRED_FIELDS_INJECTION'];
+
+		$this->arResult['SHOW_EMPTY_FIELDS'] = isset($this->arParams['~SHOW_EMPTY_FIELDS'])
+			&& $this->arParams['~SHOW_EMPTY_FIELDS'];
 
 		$this->entityTypeID = isset($this->arParams['ENTITY_TYPE_ID'])
 			? (int)$this->arParams['ENTITY_TYPE_ID'] : CCrmOwnerType::Undefined;
@@ -88,10 +97,16 @@ class CCrmEntityEditorComponent extends CBitrixComponent
 
 		$this->arResult['DETAIL_MANAGER_ID'] = isset($this->arParams['~DETAIL_MANAGER_ID']) ? $this->arParams['~DETAIL_MANAGER_ID'] : '';
 
+		$scopePrefix = isset($this->arParams['~SCOPE_PREFIX']) ? $this->arParams['~SCOPE_PREFIX'] : '';
+		if($scopePrefix === '')
+		{
+			$scopePrefix = strtolower($this->configID);
+		}
+
 		$config = null;
 		$configScope = CUserOptions::GetOption(
 			'crm.entity.editor',
-			"{$this->configID}_scope",
+			"{$scopePrefix}_scope",
 			EntityEditorConfigScope::UNDEFINED
 		);
 
@@ -291,62 +306,64 @@ class CCrmEntityEditorComponent extends CBitrixComponent
 		}
 
 		//Add section 'Required Fields'
-		if(!empty($requiredFields)
-			&& !$this->arResult['READ_ONLY']
-			&& $this->arResult['ENABLE_REQUIRED_FIELDS_INJECTION']
-		)
+		if(!$this->arResult['READ_ONLY'])
 		{
-			$schemeElements = array();
-			if($serviceSectionIndex >= 0)
-			{
-				$configItem = $config[$serviceSectionIndex];
-				if(isset($scheme[$serviceSectionIndex]['elements'])
-					&& is_array($scheme[$serviceSectionIndex]['elements'])
-				)
-				{
-					$schemeElements = $scheme[$serviceSectionIndex]['elements'];
-				}
-			}
-			else
-			{
-				$configItem = array(
-					'name' => 'required',
-					'title' => Loc::getMessage('CRM_ENTITY_ED_REQUIRED_FIELD_SECTION'),
-					'type' => 'section',
-					'elements' => array()
-				);
-
-				$serviceSectionIndex = $primarySectionIndex + 1;
-				array_splice(
-					$config,
-					$serviceSectionIndex,
-					0,
-					array($configItem)
-				);
-
-				array_splice(
-					$scheme,
-					$serviceSectionIndex,
-					0,
-					array(array_merge($configItem, array('elements' => array())))
-				);
-			}
-
-			foreach($requiredFields as $fieldName => $fieldInfo)
-			{
-				$configItem['elements'][] = array('name' => $fieldName);
-				$schemeElements[] = $fieldInfo;
-			}
-
-			$scheme[$serviceSectionIndex]['elements'] = $schemeElements;
-
 			//Force Edit mode if empty required fields are found.
 			if($hasEmptyRequiredFields)
 			{
 				$this->arResult['INITIAL_MODE'] = 'edit';
 			}
+
+			if(!empty($requiredFields) && $this->arResult['ENABLE_REQUIRED_FIELDS_INJECTION'])
+			{
+				$schemeElements = array();
+				if($serviceSectionIndex >= 0)
+				{
+					$configItem = $config[$serviceSectionIndex];
+					if(isset($scheme[$serviceSectionIndex]['elements'])
+						&& is_array($scheme[$serviceSectionIndex]['elements'])
+					)
+					{
+						$schemeElements = $scheme[$serviceSectionIndex]['elements'];
+					}
+				}
+				else
+				{
+					$configItem = array(
+						'name' => 'required',
+						'title' => Loc::getMessage('CRM_ENTITY_ED_REQUIRED_FIELD_SECTION'),
+						'type' => 'section',
+						'elements' => array()
+					);
+
+					$serviceSectionIndex = $primarySectionIndex + 1;
+					array_splice(
+						$config,
+						$serviceSectionIndex,
+						0,
+						array($configItem)
+					);
+
+					array_splice(
+						$scheme,
+						$serviceSectionIndex,
+						0,
+						array(array_merge($configItem, array('elements' => array())))
+					);
+				}
+
+				foreach($requiredFields as $fieldName => $fieldInfo)
+				{
+					$configItem['elements'][] = array('name' => $fieldName);
+					$schemeElements[] = $fieldInfo;
+				}
+
+				$scheme[$serviceSectionIndex]['elements'] = $schemeElements;
+			}
 		}
 
+		$this->arResult['ENABLE_CONFIG_SCOPE_TOGGLE'] = !isset($this->arParams['~ENABLE_CONFIG_SCOPE_TOGGLE'])
+			|| $this->arParams['~ENABLE_CONFIG_SCOPE_TOGGLE'];
 		$this->arResult['ENTITY_CONFIG_SCOPE'] = $configScope;
 		$this->arResult['ENTITY_CONFIG'] = $config;
 		$this->arResult['ENTITY_SCHEME'] = $scheme;
@@ -370,14 +387,35 @@ class CCrmEntityEditorComponent extends CBitrixComponent
 			? $this->arParams['~USER_FIELD_CREATE_SIGNATURE'] : '';
 
 		$this->arResult['ENABLE_SETTINGS_FOR_ALL'] = CCrmAuthorizationHelper::CanEditOtherSettings();
-		$this->arResult['CAN_UPDATE_CONFIGURATION'] = CCrmAuthorizationHelper::CheckConfigurationUpdatePermission();
-		if($this->arResult['CAN_UPDATE_CONFIGURATION']
-			&& isset($this->arParams['~ENABLE_CONFIGURATION_UPDATE'])
-			&& !$this->arParams['~ENABLE_CONFIGURATION_UPDATE']
-		)
+
+		//region CAN_UPDATE_PERSONAL_CONFIGURATION && CAN_UPDATE_COMMON_CONFIGURATION
+		$this->arResult['CAN_UPDATE_PERSONAL_CONFIGURATION'] = true;
+		$this->arResult['CAN_UPDATE_COMMON_CONFIGURATION'] = CCrmAuthorizationHelper::CheckConfigurationUpdatePermission();
+
+		if(!isset($this->arParams['~ENABLE_CONFIGURATION_UPDATE']))
 		{
-			$this->arResult['CAN_UPDATE_CONFIGURATION'] = false;
+			if(isset($this->arParams['~ENABLE_PERSONAL_CONFIGURATION_UPDATE']))
+			{
+				$this->arResult['CAN_UPDATE_PERSONAL_CONFIGURATION'] = $this->arParams['~ENABLE_PERSONAL_CONFIGURATION_UPDATE'];
+			}
+
+			if($this->arResult['CAN_UPDATE_COMMON_CONFIGURATION']
+				&& isset($this->arParams['~ENABLE_COMMON_CONFIGURATION_UPDATE'])
+				&& !$this->arParams['~ENABLE_COMMON_CONFIGURATION_UPDATE']
+			)
+			{
+				$this->arResult['CAN_UPDATE_COMMON_CONFIGURATION'] = false;
+			}
 		}
+		elseif(!$this->arParams['~ENABLE_CONFIGURATION_UPDATE'])
+		{
+			$this->arResult['CAN_UPDATE_PERSONAL_CONFIGURATION'] = false;
+			if($this->arResult['CAN_UPDATE_COMMON_CONFIGURATION'])
+			{
+				$this->arResult['CAN_UPDATE_COMMON_CONFIGURATION'] = false;
+			}
+		}
+		//endregion
 
 		$this->arResult['ENABLE_SECTION_EDIT'] = isset($this->arParams['~ENABLE_SECTION_EDIT'])
 			&& $this->arParams['~ENABLE_SECTION_EDIT'];
@@ -409,6 +447,14 @@ class CCrmEntityEditorComponent extends CBitrixComponent
 			),
 			array('contact_id' => 0)
 		);
+		$this->arResult['PATH_TO_CONTACT_EDIT'] = CComponentEngine::makePathFromTemplate(
+			\CrmCheckPath(
+				'PATH_TO_CONTACT_DETAILS',
+				isset($this->arParams['~PATH_TO_CONTACT_DETAILS']) ? $this->arParams['~PATH_TO_CONTACT_DETAILS'] : '',
+				$APPLICATION->GetCurPage().'?contact_id=#contact_id#&details'
+			),
+			array('contact_id' => '#id#')
+		);
 		$this->arResult['PATH_TO_CONTACT_REQUISITE_SELECT'] = \CrmCheckPath(
 			'PATH_TO_CONTACT_REQUISITE_SELECT',
 			isset($this->arParams['~PATH_TO_CONTACT_REQUISITE_SELECT']) ? $this->arParams['~PATH_TO_CONTACT_REQUISITE_SELECT'] : '',
@@ -421,6 +467,14 @@ class CCrmEntityEditorComponent extends CBitrixComponent
 				$APPLICATION->GetCurPage().'?company_id=#company_id#&details'
 			),
 			array('company_id' => 0)
+		);
+		$this->arResult['PATH_TO_COMPANY_EDIT'] = CComponentEngine::makePathFromTemplate(
+			\CrmCheckPath(
+				'PATH_TO_COMPANY_DETAILS',
+				isset($this->arParams['~PATH_TO_COMPANY_DETAILS']) ? $this->arParams['~PATH_TO_COMPANY_DETAILS'] : '',
+				$APPLICATION->GetCurPage().'?company_id=#company_id#&details'
+			),
+			array('company_id' => "#id#")
 		);
 		$this->arResult['PATH_TO_COMPANY_REQUISITE_SELECT'] = \CrmCheckPath(
 			'PATH_TO_COMPANY_REQUISITE_SELECT',
@@ -446,15 +500,19 @@ class CCrmEntityEditorComponent extends CBitrixComponent
 		//endregion
 
 		//region Attribute configuration
-		$this->arResult['ATTRIBUTE_CONFIG'] = isset($this->arParams['~ATTRIBUTE_CONFIG']) && is_array($this->arParams['~ATTRIBUTE_CONFIG'])
-			? $this->arParams['~ATTRIBUTE_CONFIG'] : null;
-		if(isset($this->arResult['ATTRIBUTE_CONFIG']))
+		$this->arResult['ATTRIBUTE_CONFIG'] = null;
+		if(CCrmAuthorizationHelper::CheckConfigurationUpdatePermission())
 		{
-			$restriction = RestrictionManager::getAttributeConfigRestriction();
-			$this->arResult['ATTRIBUTE_CONFIG']['IS_PERMITTED'] = $restriction->hasPermission();
-			if(!$this->arResult['ATTRIBUTE_CONFIG']['IS_PERMITTED'])
+			$this->arResult['ATTRIBUTE_CONFIG'] = isset($this->arParams['~ATTRIBUTE_CONFIG']) && is_array($this->arParams['~ATTRIBUTE_CONFIG'])
+				? $this->arParams['~ATTRIBUTE_CONFIG'] : null;
+			if(isset($this->arResult['ATTRIBUTE_CONFIG']))
 			{
-				$this->arResult['ATTRIBUTE_CONFIG']['LOCK_SCRIPT'] = $restriction->preparePopupScript();
+				$restriction = RestrictionManager::getAttributeConfigRestriction();
+				$this->arResult['ATTRIBUTE_CONFIG']['IS_PERMITTED'] = $restriction->hasPermission();
+				if(!$this->arResult['ATTRIBUTE_CONFIG']['IS_PERMITTED'])
+				{
+					$this->arResult['ATTRIBUTE_CONFIG']['LOCK_SCRIPT'] = $restriction->preparePopupScript();
+				}
 			}
 		}
 		//endregion
@@ -504,9 +562,14 @@ class CCrmEntityEditorComponent extends CBitrixComponent
 		}
 		//end Rest placement and userfield types
 
+		$optionPrefix = isset($this->arParams['~OPTION_PREFIX']) ? $this->arParams['~OPTION_PREFIX'] : '';
+		if($optionPrefix === '')
+		{
+			$optionPrefix = strtolower($this->configID);
+		}
 		if($configScope === EntityEditorConfigScope::COMMON)
 		{
-			$this->optionID = $this->arResult['OPTION_ID'] = strtolower($this->configID).'_common_opts';
+			$this->optionID = $this->arResult['OPTION_ID'] = "{$optionPrefix}_common_opts";
 			$this->arResult['ENTITY_CONFIG_OPTIONS'] = \CUserOptions::GetOption(
 				'crm.entity.editor',
 				$this->optionID,
@@ -516,7 +579,7 @@ class CCrmEntityEditorComponent extends CBitrixComponent
 		}
 		else
 		{
-			$this->optionID = $this->arResult['OPTION_ID'] =strtolower($this->configID).'_opts';
+			$this->optionID = $this->arResult['OPTION_ID'] = "{$optionPrefix}_opts";
 			$this->arResult['ENTITY_CONFIG_OPTIONS'] = \CUserOptions::GetOption(
 				'crm.entity.editor',
 				$this->optionID,

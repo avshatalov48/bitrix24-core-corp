@@ -1,5 +1,6 @@
 <?php
 $MESS["DOCGEN_DOCUMENTS_MODULE_DOCGEN_ERROR"] = "Модуль \"Генератор документов\" не установлен";
+$MESS["DOCGEN_DOCUMENTS_PERMISSIONS_ERROR"] = "У вас недостаточно прав для просмотра документов";
 $MESS["DOCGEN_DOCUMENTS_MODULE_EMPTY"] = "Не указан модуль";
 $MESS["DOCGEN_DOCUMENTS_MODULE_ERROR"] = "Модуль #MODULE_ID# не установлен";
 $MESS["DOCGEN_DOCUMENTS_TITLE"] = "Список документов";

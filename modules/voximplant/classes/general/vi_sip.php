@@ -22,6 +22,9 @@ class CVoxImplantSip
 	const REG_STATUS_IN_PROGRESS = 'in_progress';
 	const REG_STATUS_WAIT = 'wait';
 
+	const HEADER_ORDER_DIVERSION_TO = "diversion;to";
+	const HEADER_ORDER_TO_DIVERSION = "to;diversion";
+
 	const MAX_CLOUD_PBX = 10;
 
 	function __construct()
@@ -356,6 +359,14 @@ class CVoxImplantSip
 		{
 			$result['OUTBOUND_PROXY'] = $fields['OUTBOUND_PROXY'];
 		}
+		if(isset($fields['DETECT_LINE_NUMBER']))
+		{
+			$result['DETECT_LINE_NUMBER'] = $fields['DETECT_LINE_NUMBER'];
+		}
+		if(isset($fields['LINE_DETECT_HEADER_ORDER']))
+		{
+			$result['LINE_DETECT_HEADER_ORDER'] = $fields['LINE_DETECT_HEADER_ORDER'];
+		}
 
 		if (count($errors) > 0)
 		{
@@ -447,7 +458,6 @@ class CVoxImplantSip
 			unset($row['REG_ID']);
 		}
 
-		unset($row['ID']);
 		return $row;
 	}
 
@@ -520,6 +530,40 @@ class CVoxImplantSip
 	public function GetError()
 	{
 		return $this->error;
+	}
+
+	/**
+	 * @return string
+	 */
+	public static function getBuyLink()
+	{
+		if (IsModuleInstalled('bitrix24'))
+		{
+			return '/settings/license_phone_sip.php';
+		}
+		else
+		{
+			if (LANGUAGE_ID == 'ru')
+			{
+				return 'http://www.1c-bitrix.ru/buy/intranet.php#tab-call-link';
+			}
+			else if (LANGUAGE_ID == 'ua')
+			{
+				return 'http://www.1c-bitrix.ua/buy/intranet.php#tab-call-link';
+			}
+			else if (LANGUAGE_ID == 'kz')
+			{
+				return 'https://www.1c-bitrix.kz/buy/intranet.php#tab-call-link';
+			}
+			else if (LANGUAGE_ID == 'de')
+			{
+				return 'https://www.bitrix24.de/prices/self-hosted-telephony.php';
+			}
+			else
+			{
+				return 'https://www.bitrix24.com/prices/self-hosted-telephony.php';
+			}
+		}
 	}
 }
 ?>

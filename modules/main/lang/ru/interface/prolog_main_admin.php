@@ -40,7 +40,7 @@ $MESS["TRIAL_ATTENTION_TEXT4_1c_bitrix_gossite"] = "Срок работы про
 $MESS["TRIAL_ATTENTION_TEXT5_1c_bitrix_gossite"] = "Вы можете купить полнофункциональную версию продукта по адресу <a href=\"http://www.1c-bitrix.ru/buy/?r1=bsm7trial&amp;r2=expiried\">http://www.1c-bitrix.ru/buy/</a>";
 $MESS["MAIN_PR_ADMIN_FAV_ADD"] = "Добавить в избранное";
 $MESS["MAIN_PR_ADMIN_FAV_DEL"] = "Удалить из избранного";
-$MESS["admin_panel_browser"] = "Административная панель не поддерживает Internet Explorer версии 7 и ниже. Установите современный браузер <a href=\"http://www.firefox.com\">Firefox</a>, <a href=\"http://www.google.com/chrome/\">Chrome</a>, <a href=\"http://www.opera.com\">Opera</a> или <a href=\"http://www.microsoft.com/windows/internet-explorer/\">Internet Explorer 9</a>.";
+$MESS["admin_panel_browser"] = "Административная панель не поддерживает Internet Explorer версии 7 и ниже. Установите современный браузер <a href=\"http://www.firefox.com\">Firefox</a>, <a href=\"http://www.google.com/chrome/\">Chrome</a>, <a href=\"http://www.opera.com\">Opera</a> или <a href=\"http://www.microsoft.com/windows/edge/\">Microsoft Edge</a>.";
 $MESS["MAIN_PR_ADMIN_FAV"] = "Избранное";
 $MESS["prolog_main_support_wit"] = "Что это такое?";
 $MESS["prolog_main_support_wit_descr1"] = "Что означает окончание срока «Стандартной лицензии»?";

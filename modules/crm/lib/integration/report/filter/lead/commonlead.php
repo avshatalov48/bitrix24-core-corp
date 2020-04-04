@@ -35,6 +35,19 @@ class CommonLead extends Base
 			'default' => true,
 		];
 
+		$presets['filter_current_month'] = [
+			'name' => Loc::getMessage('CRM_REPORT_FILTER_CURRENT_MONTH_PRESET_TITLE'),
+			'fields' => array(
+				'TIME_PERIOD_datesel' => DateType::CURRENT_MONTH,
+			),
+		];
+
+		$presets['filter_last_month'] = [
+			'name' => Loc::getMessage('CRM_REPORT_FILTER_LAST_MONTH_PRESET_TITLE'),
+			'fields' => array(
+				'TIME_PERIOD_datesel' => DateType::LAST_MONTH,
+			),
+		];
 		return $presets;
 	}
 }

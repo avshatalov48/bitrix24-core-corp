@@ -46,6 +46,7 @@ BX.Tasks.Kanban.Grid.prototype = {
 	ajax: function(data, onsuccess, onfailure)
 	{
 		var url = this.getAjaxHandlerPath();
+		var gridData = this.getData();
 		
 		data.sessid = BX.bitrix_sessid();
 		data.params = this.getData().params;
@@ -54,7 +55,14 @@ BX.Tasks.Kanban.Grid.prototype = {
 		{
 			url += url.indexOf("?") === -1 ? "?" : "&";
 			url += "action=" + data.action;
-			url += "&personal=" + data.params.PERSONAL;
+			if (gridData.kanbanType === "TL")
+			{
+				url += "&timeline=Y";
+			}
+			else
+			{
+				url += "&personal=" + data.params.PERSONAL;
+			}
 		}
 
 		BX.ajax({
@@ -106,6 +114,48 @@ BX.Tasks.Kanban.Grid.prototype = {
 		this.setDragMode(BX.Kanban.DragMode.ITEM);
 		
 		var gridData = this.getData();
+		var itemData = item.getData();
+
+		if (gridData.kanbanType === "TL")
+		{
+			BX.Kanban.Grid.prototype.onItemDragStart.apply(this, arguments);
+			// disable another columns
+			this.getColumns().forEach(function(/*BX.Kanban.Column*/column) {
+				if (!column.canAddItems())
+				{
+					column.disableDropping();
+				}
+				else if (
+					!itemData.allow_change_deadline &&
+					column.getId() !== item.getColumn().getId()
+				)
+				{
+					column.disableDropping();
+				}
+			});
+			// disable another items
+			var items = this.getItems();
+			for (var itemId in items)
+			{
+				if (items[itemId].getColumn().getId() !== item.getColumn().getId())
+				{
+					if (
+						!itemData.allow_change_deadline ||
+						!items[itemId].getColumn().canAddItems()
+					)
+					{
+						items[itemId].disableDropping();
+					}
+				}
+			}
+			if (!itemData.allow_change_deadline)
+			{
+				item.getDragElement().appendChild(this.createAlertBlock(
+					BX.message("TASKS_KANBAN_ME_DISABLE_DEADLINE_PART2")
+				));
+			}
+			return;
+		}
 
 		if (!gridData.rights.canSortItem)
 		{
@@ -113,6 +163,18 @@ BX.Tasks.Kanban.Grid.prototype = {
 		}
 
 		BX.Kanban.Grid.prototype.onItemDragStart.apply(this, arguments);
+	},
+
+	createAlertBlock: function (message)
+	{
+
+		return BX.create("div", {
+			props: {
+				className: "tasks-kanban-item-alert"
+			},
+			text: message
+		});
+
 	},
 	
 	/**
@@ -371,6 +433,7 @@ BX.Tasks.Kanban.Grid.prototype = {
 		var afterItemId = 0;
 		var beforeItemId = beforeItem ? beforeItem.getId() : 0;
 		var targetColumnId = targetColumn ? targetColumn.getId() : 0;
+		var gridData = this.getData();
 
 		if (beforeItemId === 0)
 		{
@@ -393,6 +456,22 @@ BX.Tasks.Kanban.Grid.prototype = {
 				if (data && !data.error)
 				{
 					this.updateItem(itemId, data);
+					if (gridData.kanbanType === "TL")
+					{
+						var deadlineText = item.getDeadline();
+						BX.UI.Notification.Center.notify({
+							content: deadlineText
+									? BX.message("MAIN_KANBAN_NOTIFY_CHANGE_DEADLINE").replace("#date#", deadlineText)
+									: BX.message("MAIN_KANBAN_NOTIFY_REMOVE_DEADLINE")
+						});
+					}
+					if (
+						typeof data.data !== "undefined" &&
+						data.data.hiddenByFilter === true
+					)
+					{
+						this.removeItem(item);
+					}
 				}
 				else if (data)
 				{
@@ -550,6 +629,10 @@ BX.Tasks.Kanban.Grid.prototype = {
 		// replace groupId var
 		var gridData = this.getData();
 		gridData.params.GROUP_ID = currentGroup.id;
+		if (currentGroup.sprintId)
+		{
+			gridData.params.SPRINT_ID = currentGroup.sprintId;
+		}
 		this.setData(gridData);
 		// remove all columns
 		var columns = this.getColumns();

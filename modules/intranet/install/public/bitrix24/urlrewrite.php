@@ -62,7 +62,7 @@ $arUrlRewrite = array(
 	array(
 		"CONDITION" => "#^/pub/form/([0-9a-z_]+?)/([0-9a-z]+?)/.*#",
 		"RULE" => "form_code=\$1&sec=\$2",
-		"ID" => "bitrix:crm.webform.fill",
+		"ID" => "",
 		"PATH" => "/pub/form.php",
 	),
 	array(
@@ -85,7 +85,6 @@ $arUrlRewrite = array(
 	array(
 		"CONDITION" => "#^/tasks/getfile/(\\d+)/(\\d+)/([^/]+)#",
 		"RULE" => "taskid=\$1&fileid=\$2&filename=\$3",
-		"ID" => "bitrix:tasks_tools_getfile",
 		"PATH" => "/tasks/getfile.php",
 	),
 	array(
@@ -318,7 +317,7 @@ $arUrlRewrite = array(
 	array(
 		"CONDITION" => "#^/crm/webform/#",
 		"RULE" => "",
-		"ID" => "bitrix:crm.webform",
+		"ID" => "",
 		"PATH" => "/crm/webform/index.php",
 	),
 	array(
@@ -360,7 +359,7 @@ $arUrlRewrite = array(
 	array(
 		"CONDITION" => "#^/crm/button/#",
 		"RULE" => "",
-		"ID" => "bitrix:crm.button",
+		"ID" => "",
 		"PATH" => "/crm/button/index.php",
 	),
 	array(
@@ -497,7 +496,7 @@ $arUrlRewrite = array(
 	array(
 		"CONDITION" => "#^/settings/configs/userconsent/#",
 		"RULE" => "",
-		"ID" => "bitrix:intranet.userconsent",
+		"ID" => "",
 		"PATH" => "/settings/configs/userconsent.php",
 	),
 	array(
@@ -505,8 +504,8 @@ $arUrlRewrite = array(
 		"RULE" => "",
 		"ID" => "bitrix:landing.start",
 		"PATH" => "/sites/index.php",
-	),
-	array(
+  	),
+  	array (
 		"CONDITION" => "#^/stores/#",
 		"RULE" => "",
 		"ID" => "bitrix:landing.start",
@@ -524,7 +523,7 @@ $arUrlRewrite = array(
 		"ID" => "",
 		"PATH" => "/bitrix/services/mobile/webcomponent.php",
 	),
-	array(
+  	array (
 		"CONDITION" => "#^\\/?\\/mobile/jn\\/(.*)\\/.*#",
 		"RULE" => "componentName=$1",
 		"ID" => "",
@@ -626,6 +625,29 @@ $arUrlRewrite = array(
 		"ID" => "",
 		"PATH" => "/crm/tracking/index.php",
 	),
+	array(
+		"CONDITION" => "#^/timeman/schedules/#",
+		"RULE" => "",
+		"ID" => "bitrix:timeman.schedules",
+		"PATH" => "/timeman/schedules.php",
+	),
+	array(
+		"CONDITION" => "#^/timeman/settings/#",
+		"RULE" => "",
+		"ID" => "bitrix:timeman.settings",
+		"PATH" => "/timeman/settings.php",
+	),
+	array(
+		"CONDITION" => "#^/timeman/worktime/#",
+		"RULE" => "",
+		"ID" => "bitrix:timeman.worktime",
+		"PATH" => "/timeman/worktime.php",
+	),
+	array(
+		"CONDITION" => "#^/crm/ml/#",
+		"RULE" => "",
+		"ID" => "bitrix:crm.ml",
+		"PATH" => "/crm/ml/index.php",
+	),
 );
-
 ?>

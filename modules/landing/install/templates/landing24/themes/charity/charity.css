@@ -1604,6 +1604,202 @@ Instead this colors was be added new navbar color themes in /custom/_navbar.scss
   overflow: hidden;
 }
 
+/* Button Light Gray */
+.u-btn-gray {
+  color: #fff;
+  background-color: #999;
+}
+
+.u-btn-gray:hover, .u-btn-gray.active {
+  border-color: #b3b3b3;
+  background-color: #b3b3b3;
+}
+
+.u-btn-gray:hover, .u-btn-gray:focus, .u-btn-gray.active {
+  color: #fff;
+}
+
+.u-btn-gray.g-btn-hover-reset:hover, .u-btn-gray.g-btn-hover-reset.active {
+  background-color: #999;
+  border-color: #999;
+}
+
+.u-btn-gray.u-btn-hover-v1-1 {
+  overflow: hidden;
+}
+
+.u-btn-gray.u-btn-hover-v1-1::after, .u-btn-gray.u-btn-hover-v1-1:hover::after {
+  background-color: #a6a6a6;
+}
+
+.u-btn-gray.u-btn-hover-v1-1:hover {
+  background-color: #999;
+  overflow: hidden;
+}
+
+.u-btn-gray.u-btn-hover-v1-2 {
+  overflow: hidden;
+}
+
+.u-btn-gray.u-btn-hover-v1-2::after, .u-btn-gray.u-btn-hover-v1-2:hover::after {
+  background-color: #a6a6a6;
+}
+
+.u-btn-gray.u-btn-hover-v1-2:hover {
+  background-color: #999;
+  overflow: hidden;
+}
+
+.u-btn-gray.u-btn-hover-v1-3 {
+  overflow: hidden;
+}
+
+.u-btn-gray.u-btn-hover-v1-3::after, .u-btn-gray.u-btn-hover-v1-3:hover::after {
+  background-color: #a6a6a6;
+}
+
+.u-btn-gray.u-btn-hover-v1-3:hover {
+  background-color: #999;
+  overflow: hidden;
+}
+
+.u-btn-gray.u-btn-hover-v1-4 {
+  overflow: hidden;
+}
+
+.u-btn-gray.u-btn-hover-v1-4::after, .u-btn-gray.u-btn-hover-v1-4:hover::after {
+  background-color: #a6a6a6;
+}
+
+.u-btn-gray.u-btn-hover-v1-4:hover {
+  background-color: #999;
+  overflow: hidden;
+}
+
+.u-btn-gray.u-btn-hover-v2-1 {
+  overflow: hidden;
+}
+
+.u-btn-gray.u-btn-hover-v2-1::after, .u-btn-gray.u-btn-hover-v2-1:hover::after {
+  background-color: #a6a6a6;
+}
+
+.u-btn-gray.u-btn-hover-v2-1:hover {
+  background-color: #999;
+  overflow: hidden;
+}
+
+.u-btn-gray.u-btn-hover-v2-2 {
+  overflow: hidden;
+}
+
+.u-btn-gray.u-btn-hover-v2-2::after, .u-btn-gray.u-btn-hover-v2-2:hover::after {
+  background-color: #a6a6a6;
+}
+
+.u-btn-gray.u-btn-hover-v2-2:hover {
+  background-color: #999;
+  overflow: hidden;
+}
+
+/* Button Light Gray */
+.u-btn-lightgray {
+  color: #fff;
+  background-color: #eee;
+}
+
+.u-btn-lightgray:hover, .u-btn-lightgray.active {
+  border-color: white;
+  background-color: white;
+}
+
+.u-btn-lightgray:hover, .u-btn-lightgray:focus, .u-btn-lightgray.active {
+  color: #fff;
+}
+
+.u-btn-lightgray.g-btn-hover-reset:hover, .u-btn-lightgray.g-btn-hover-reset.active {
+  background-color: #eee;
+  border-color: #eee;
+}
+
+.u-btn-lightgray.u-btn-hover-v1-1 {
+  overflow: hidden;
+}
+
+.u-btn-lightgray.u-btn-hover-v1-1::after, .u-btn-lightgray.u-btn-hover-v1-1:hover::after {
+  background-color: #fbfbfb;
+}
+
+.u-btn-lightgray.u-btn-hover-v1-1:hover {
+  background-color: #eee;
+  overflow: hidden;
+}
+
+.u-btn-lightgray.u-btn-hover-v1-2 {
+  overflow: hidden;
+}
+
+.u-btn-lightgray.u-btn-hover-v1-2::after, .u-btn-lightgray.u-btn-hover-v1-2:hover::after {
+  background-color: #fbfbfb;
+}
+
+.u-btn-lightgray.u-btn-hover-v1-2:hover {
+  background-color: #eee;
+  overflow: hidden;
+}
+
+.u-btn-lightgray.u-btn-hover-v1-3 {
+  overflow: hidden;
+}
+
+.u-btn-lightgray.u-btn-hover-v1-3::after, .u-btn-lightgray.u-btn-hover-v1-3:hover::after {
+  background-color: #fbfbfb;
+}
+
+.u-btn-lightgray.u-btn-hover-v1-3:hover {
+  background-color: #eee;
+  overflow: hidden;
+}
+
+.u-btn-lightgray.u-btn-hover-v1-4 {
+  overflow: hidden;
+}
+
+.u-btn-lightgray.u-btn-hover-v1-4::after, .u-btn-lightgray.u-btn-hover-v1-4:hover::after {
+  background-color: #fbfbfb;
+}
+
+.u-btn-lightgray.u-btn-hover-v1-4:hover {
+  background-color: #eee;
+  overflow: hidden;
+}
+
+.u-btn-lightgray.u-btn-hover-v2-1 {
+  overflow: hidden;
+}
+
+.u-btn-lightgray.u-btn-hover-v2-1::after, .u-btn-lightgray.u-btn-hover-v2-1:hover::after {
+  background-color: #fbfbfb;
+}
+
+.u-btn-lightgray.u-btn-hover-v2-1:hover {
+  background-color: #eee;
+  overflow: hidden;
+}
+
+.u-btn-lightgray.u-btn-hover-v2-2 {
+  overflow: hidden;
+}
+
+.u-btn-lightgray.u-btn-hover-v2-2::after, .u-btn-lightgray.u-btn-hover-v2-2:hover::after {
+  background-color: #fbfbfb;
+}
+
+.u-btn-lightgray.u-btn-hover-v2-2:hover {
+  background-color: #eee;
+  overflow: hidden;
+}
+
 /* Button Red */
 .u-btn-red {
   color: #fff;
@@ -3666,19 +3862,114 @@ Instead this colors was be added new navbar color themes in /custom/_navbar.scss
 }
 
 /* Outline Button Light Gray */
+.u-btn-outline-gray {
+  color: #eee;
+  border-color: #999;
+  background-color: transparent;
+}
+
+.u-btn-outline-gray:focus, .u-btn-outline-gray.active {
+  color: #fff;
+  background-color: #999;
+}
+
+.u-btn-outline-gray:hover {
+  color: #fff;
+  background-color: #999;
+}
+
+.u-btn-outline-gray.u-btn-hover-v1-1 {
+  overflow: hidden;
+}
+
+.u-btn-outline-gray.u-btn-hover-v1-1::after, .u-btn-outline-gray.u-btn-hover-v1-1:hover::after {
+  background-color: #a6a6a6;
+}
+
+.u-btn-outline-gray.u-btn-hover-v1-1:hover {
+  overflow: hidden;
+  background-color: transparent;
+}
+
+.u-btn-outline-gray.u-btn-hover-v1-2 {
+  overflow: hidden;
+}
+
+.u-btn-outline-gray.u-btn-hover-v1-2::after, .u-btn-outline-gray.u-btn-hover-v1-2:hover::after {
+  background-color: #a6a6a6;
+}
+
+.u-btn-outline-gray.u-btn-hover-v1-2:hover {
+  overflow: hidden;
+  background-color: transparent;
+}
+
+.u-btn-outline-gray.u-btn-hover-v1-3 {
+  overflow: hidden;
+}
+
+.u-btn-outline-gray.u-btn-hover-v1-3::after, .u-btn-outline-gray.u-btn-hover-v1-3:hover::after {
+  background-color: #a6a6a6;
+}
+
+.u-btn-outline-gray.u-btn-hover-v1-3:hover {
+  overflow: hidden;
+  background-color: transparent;
+}
+
+.u-btn-outline-gray.u-btn-hover-v1-4 {
+  overflow: hidden;
+}
+
+.u-btn-outline-gray.u-btn-hover-v1-4::after, .u-btn-outline-gray.u-btn-hover-v1-4:hover::after {
+  background-color: #a6a6a6;
+}
+
+.u-btn-outline-gray.u-btn-hover-v1-4:hover {
+  overflow: hidden;
+  background-color: transparent;
+}
+
+.u-btn-outline-gray.u-btn-hover-v2-1 {
+  overflow: hidden;
+}
+
+.u-btn-outline-gray.u-btn-hover-v2-1::after, .u-btn-outline-gray.u-btn-hover-v2-1:hover::after {
+  background-color: #a6a6a6;
+}
+
+.u-btn-outline-gray.u-btn-hover-v2-1:hover {
+  overflow: hidden;
+  background-color: transparent;
+}
+
+.u-btn-outline-gray.u-btn-hover-v2-2 {
+  overflow: hidden;
+}
+
+.u-btn-outline-gray.u-btn-hover-v2-2::after, .u-btn-outline-gray.u-btn-hover-v2-2:hover::after {
+  background-color: #a6a6a6;
+}
+
+.u-btn-outline-gray.u-btn-hover-v2-2:hover {
+  overflow: hidden;
+  background-color: transparent;
+}
+
+/* Outline Button Light Gray */
 .u-btn-outline-lightgray {
-  color: #999;
+  color: #eee;
   border-color: #eee;
   background-color: transparent;
 }
 
 .u-btn-outline-lightgray:focus, .u-btn-outline-lightgray.active {
-  color: #999;
+  color: #fff;
   background-color: #eee;
 }
 
 .u-btn-outline-lightgray:hover {
-  color: #999;
+  color: #fff;
   background-color: #eee;
 }
 
@@ -5502,7 +5793,7 @@ button.u-btn-floating {
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background-color: #ddd;
+  background-color: #ccc;
   opacity: .7;
 }
 
@@ -8000,103 +8291,7 @@ img.u-block-hover__main--magnifier-top-left {
 /*------------------------------------
   Custom Bootstrap
 ------------------------------------*/
-.container-semiboxed {
-  box-sizing: border-box;
-  max-width: 100%;
-  padding-left: 15px;
-  padding-right: 15px;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-@media (min-width: 576px) {
-  .container-semiboxed {
-    width: 540px;
-  }
-}
-
-@media (min-width: 768px) {
-  .container-semiboxed {
-    width: 720px;
-  }
-}
-
-@media (min-width: 992px) {
-  .container-semiboxed {
-    width: 960px;
-  }
-}
-
-@media (min-width: 1200px) {
-  .container-semiboxed {
-    width: 1140px;
-  }
-}
-
-@media (min-width: 1400px) {
-  .container-semiboxed {
-    width: 1340px;
-  }
-}
-
-.text-muted {
-  color: #999 !important;
-}
-
-.list-group-item {
-  border-color: #eee;
-}
-
-.list-group-item-action:hover {
-  background-color: #f7f7f7;
-}
-
-.list-group-item.active {
-  background-color: #f5f219;
-  border-color: #f5f219;
-}
-
-.list-group-border-0 .list-group-item:first-child,
-.list-group-border-0 .list-group-item:last-child {
-  border-radius: 0;
-}
-
 /* Paginations */
-.page-link {
-  color: #f5f219;
-}
-
-.page-link:focus, .page-link:hover {
-  color: #f5f219;
-}
-
-.page-item.active .page-link,
-.page-item.active .page-link:focus,
-.page-item.active .page-link:hover {
-  border-color: #f5f219;
-  background-color: #f5f219;
-}
-
-.nav-pills .nav-item.show .nav-link,
-.nav-pills .nav-link.active {
-  background-color: #f5f219;
-}
-
-.nav-tabs {
-  border-bottom: 1px solid #eee;
-}
-
-.nav-tabs .nav-link:focus,
-.nav-tabs .nav-link:hover {
-  border-color: transparent;
-}
-
-.nav-tabs .nav-link.active,
-.nav-tabs .nav-item.show .nav-link {
-  color: #999;
-  border-color: #eee #eee #fff;
-}
-
 .progress {
   font-size: 1rem;
   line-height: inherit;
@@ -8172,174 +8367,6 @@ img.u-block-hover__main--magnifier-top-left {
 
 .card-block {
   padding: 1.07143rem;
-}
-
-.form-control {
-  border-color: #ccc;
-}
-
-.form-control-md {
-  padding: .8rem 1rem .6rem;
-}
-
-.input-group-lg > .input-group-btn > select.btn:not([size]):not([multiple]), .input-group-lg > select.form-control:not([size]):not([multiple]), .input-group-lg > select.input-group-addon:not([size]):not([multiple]), select.form-control-lg:not([size]):not([multiple]) {
-  height: calc(2.3125rem + 10px);
-}
-
-.form-control,
-.form-control:focus {
-  color: #999;
-}
-
-.form-control:focus,
-.custom-select:focus {
-  border-color: #f5f219;
-  box-shadow: none;
-}
-
-.form-control:-ms-input-placeholder {
-  color: inherit;
-  opacity: .5;
-}
-
-.form-control::placeholder {
-  color: inherit;
-  opacity: .5;
-}
-
-.has-success .col-form-label,
-.has-success .custom-control,
-.has-success .form-check-label,
-.has-success .form-control-feedback,
-.has-success .form-control-label {
-  color: #5cb85c;
-}
-
-.has-success .form-control {
-  border-color: #5cb85c;
-}
-
-.has-warning .col-form-label,
-.has-warning .custom-control,
-.has-warning .form-check-label,
-.has-warning .form-control-feedback,
-.has-warning .form-control-label {
-  color: #f0ad4e;
-}
-
-.has-warning .form-control {
-  border-color: #f0ad4e;
-}
-
-.has-danger .col-form-label,
-.has-danger .custom-control,
-.has-danger .form-check-label,
-.has-danger .form-control-feedback,
-.has-danger .form-control-label {
-  color: #d9534f;
-}
-
-.has-danger .form-control {
-  border-color: #d9534f;
-}
-
-.input-group-addon {
-  min-width: 38px;
-  background-color: transparent;
-  border-color: #ccc;
-  transition: border-color .15s ease-in-out 0s;
-}
-
-.input-group-addon > * {
-  white-space: normal;
-}
-
-.input-group-addon i {
-  margin: 0 auto;
-}
-
-.input-group .form-control:active,
-.input-group .form-control:focus,
-.input-group .form-control:hover {
-  z-index: auto;
-}
-
-.btn-group {
-  display: block;
-}
-
-.input-group-addon + .input-group-addon {
-  border-left: solid 1px #ccc;
-}
-
-.table-striped tbody tr:nth-of-type(2n+1) {
-  background-color: #f7f7f7;
-}
-
-.table-striped tbody td {
-  border-top: none;
-}
-
-@media (min-width: 768px) {
-  .btn-group {
-    display: -ms-inline-flexbox;
-    display: inline-flex;
-  }
-  .justified-content {
-    display: table;
-    width: 100%;
-    table-layout: fixed;
-  }
-  .justified-content > * {
-    display: table-cell;
-    width: 1%;
-    float: none;
-  }
-}
-
-.dropdown-menu {
-  min-width: 15rem;
-  padding: 0;
-}
-
-.dropdown-toggle::before {
-  display: none;
-}
-
-.dropdown-toggle::after {
-  content: "\e900";
-  position: relative;
-  top: 0.21429rem;
-  font-family: "hs-icons" !important;
-  font-size: 10px;
-  display: inline;
-  border: none;
-  margin-left: 0.5rem;
-}
-
-.dropdown-item {
-  padding: 0.21429rem 1.07143rem;
-}
-
-.dropdown-item:focus, .dropdown-item:hover {
-  background: rgba(0, 0, 0, 0.03);
-}
-
-.dropdown-item.active, .dropdown-item:active {
-  background: rgba(0, 0, 0, 0.05);
-  color: inherit !important;
-}
-
-.dropdown-item.active > a, .dropdown-item:active > a {
-  color: inherit !important;
-}
-
-.dropdown-item.active > a::before, .dropdown-item.active > a::after, .dropdown-item:active > a::before, .dropdown-item:active > a::after {
-  background-color: #fff;
-}
-
-.u-header__section--dark .dropdown-item.active > a, .u-header__section--dark .dropdown-item:active > a {
-  color: #fff !important;
 }
 
 /*--------------------------------------------------
@@ -11064,8 +11091,6 @@ a:hover, a:active, a:focus {
   transform: translate3d(0, -17px, 0) rotate(-90deg);
 }
 
-/* Main navigation */
-/* Background */
 /* Carousel */
 .u-carousel-v5 .js-slide.slick-active::after {
   opacity: 0;

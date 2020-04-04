@@ -2,6 +2,7 @@
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Tasks\CheckList\Template\TemplateCheckListFacade;
 use Bitrix\Tasks\Integration;
 use Bitrix\Tasks\Util\Result;
 use Bitrix\Tasks\Util\User;
@@ -14,45 +15,60 @@ $arParams =& $helper->getComponent()->arParams;
 
 /** @var \Bitrix\Tasks\Item\Task\Template $template */
 $template = $arResult['ITEM'];
+
 $toList = str_replace("#user_id#", $arParams["USER_ID"], $arParams["PATH_TO_USER_TASKS_TEMPLATES"]);
 ?>
 
 <?if($arParams["ENABLE_MENU_TOOLBAR"]):?>
 
-	<?php $APPLICATION->IncludeComponent(
-		'bitrix:tasks.interface.topmenu',
-		'',
-		array(
-			'USER_ID' => $arParams[ 'USER_ID' ],
+	<?php
+    if(!$_REQUEST['IFRAME']) {
+        $APPLICATION->IncludeComponent(
+            'bitrix:tasks.interface.topmenu',
+            '',
+            array(
+                'USER_ID' => $arParams['USER_ID'],
 
-			'GROUP_ID' => $arParams[ 'GROUP_ID' ],
-			'SECTION_URL_PREFIX' => '',
+                'GROUP_ID' => $arParams['GROUP_ID'],
+                'SECTION_URL_PREFIX' => '',
 
-			'PATH_TO_GROUP_TASKS' => $arParams[ 'PATH_TO_GROUP_TASKS' ],
-			'PATH_TO_GROUP_TASKS_TASK' => $arParams[ 'PATH_TO_GROUP_TASKS_TASK' ],
-			'PATH_TO_GROUP_TASKS_VIEW' => $arParams[ 'PATH_TO_GROUP_TASKS_VIEW' ],
-			'PATH_TO_GROUP_TASKS_REPORT' => $arParams[ 'PATH_TO_GROUP_TASKS_REPORT' ],
+                'PATH_TO_GROUP_TASKS' => $arParams['PATH_TO_GROUP_TASKS'],
+                'PATH_TO_GROUP_TASKS_TASK' => $arParams['PATH_TO_GROUP_TASKS_TASK'],
+                'PATH_TO_GROUP_TASKS_VIEW' => $arParams['PATH_TO_GROUP_TASKS_VIEW'],
+                'PATH_TO_GROUP_TASKS_REPORT' => $arParams['PATH_TO_GROUP_TASKS_REPORT'],
 
-			'PATH_TO_USER_TASKS' => $arParams[ 'PATH_TO_USER_TASKS' ],
-			'PATH_TO_USER_TASKS_TASK' => $arParams[ 'PATH_TO_USER_TASKS_TASK' ],
-			'PATH_TO_USER_TASKS_VIEW' => $arParams[ 'PATH_TO_USER_TASKS_VIEW' ],
-			'PATH_TO_USER_TASKS_REPORT' => $arParams[ 'PATH_TO_USER_TASKS_REPORT' ],
-			'PATH_TO_USER_TASKS_TEMPLATES' => $arParams[ 'PATH_TO_USER_TASKS_TEMPLATES' ],
-			'PATH_TO_USER_TASKS_PROJECTS_OVERVIEW' => $arParams[ 'PATH_TO_USER_TASKS_PROJECTS_OVERVIEW' ],
+                'PATH_TO_USER_TASKS' => $arParams['PATH_TO_USER_TASKS'],
+                'PATH_TO_USER_TASKS_TASK' => $arParams['PATH_TO_USER_TASKS_TASK'],
+                'PATH_TO_USER_TASKS_VIEW' => $arParams['PATH_TO_USER_TASKS_VIEW'],
+                'PATH_TO_USER_TASKS_REPORT' => $arParams['PATH_TO_USER_TASKS_REPORT'],
+                'PATH_TO_USER_TASKS_TEMPLATES' => $arParams['PATH_TO_USER_TASKS_TEMPLATES'],
+                'PATH_TO_USER_TASKS_PROJECTS_OVERVIEW' => $arParams['PATH_TO_USER_TASKS_PROJECTS_OVERVIEW'],
 
-			'PATH_TO_CONPANY_DEPARTMENT' => $arParams[ 'PATH_TO_CONPANY_DEPARTMENT' ],
+                'PATH_TO_CONPANY_DEPARTMENT' => $arParams['PATH_TO_CONPANY_DEPARTMENT'],
 
-			'MARK_TEMPLATES' => 'Y',
-			'MARK_ACTIVE_ROLE'=>'N'
-		),
-		$component,
-		array('HIDE_ICONS' => true)
-	); ?>
+                'MARK_TEMPLATES' => 'Y',
+                'MARK_ACTIVE_ROLE' => 'N'
+            ),
+            $component,
+            array('HIDE_ICONS' => true)
+        );
+    }?>
 
 	<?$this->SetViewTarget("pagetitle", 100);?>
 	<div class="task-list-toolbar">
 		<div class="task-list-toolbar-actions">
-			<a href="<?=htmlspecialcharsbx($toList)?>" class="task-list-back"><?=Loc::getMessage('TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_TO_LIST');?></a>
+            <?php if (!$_REQUEST['IFRAME'])
+            {
+            	?><a href="<?=htmlspecialcharsbx($toList)?>" class="task-list-back"><?=Loc::getMessage('TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_TO_LIST')?></a><?php
+            }
+
+			$APPLICATION->IncludeComponent(
+				'bitrix:ui.feedback.form',
+				'',
+				$arResult['DATA']['FEEDBACK_FORM_PARAMETERS']
+			);
+            ?>
+			<button class="ui-btn ui-btn-light-border ui-btn-themes ui-btn-icon-setting webform-cogwheel" id="templateViewPopupMenuOptions"></button>
 			<?if(!$helper->checkHasFatals()):?>
 				<a class="webform-small-button webform-small-button-blue bx24-top-toolbar-add" href="<?=htmlspecialcharsbx($arParams["PATH_TO_TASKS_TEMPLATE_CREATE_SUB"])?>"><span class="webform-small-button-left"></span><span class="webform-small-button-icon"></span><span class="webform-small-button-text"><?=Loc::getMessage('TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_ADD_SUBTEMPLATE')?></span><span class="webform-small-button-right"></span></a>
 			<?endif?>
@@ -96,33 +112,29 @@ $toList = str_replace("#user_id#", $arParams["USER_ID"], $arParams["PATH_TO_USER
 				</div>
 			</div>
 			<div class="task-detail-content">
-				<? if (strlen($template["DESCRIPTION"])):
-					$extraDesc =
-						$canUpdate ||
-						!empty($template["SE_CHECKLIST"]) ||
-						(isset($userFields[$diskUfCode]) && !Bitrix\Tasks\Util\UserField::isValueEmpty($userFields[$diskUfCode]["VALUE"]))
+				<?
+				$checkListItems = $templateData['SE_CHECKLIST'];
+
+				if (strlen($template["DESCRIPTION"])):
+					$extraDesc = $canUpdate || !empty($checkListItems)
+						|| (isset($userFields[$diskUfCode]) && !UserField::isValueEmpty($userFields[$diskUfCode]["VALUE"]))
 					?>
 					<div class="task-detail-description<?if (!$extraDesc):?> task-detail-description-only<?endif?>"
 					     id="task-detail-description"><?=$template["DESCRIPTION"]?></div>
 				<? endif ?>
 
-				<?$checklist = $template["SE_CHECKLIST"];?>
-
-				<?if ($canUpdate || $template["SE_CHECKLIST"]->count()):?>
+				<?if ($canUpdate || !empty($checkListItems)):?>
 					<div class="task-detail-checklist">
 						<?$APPLICATION->IncludeComponent(
-							'bitrix:tasks.widget.checklist',
+							'bitrix:tasks.widget.checklist.new',
 							'',
 							array(
-								'TEMPLATE_CONTROLLER_ID' => $helper->getId().'-checklist',
-								'INPUT_PREFIX' => $inputPrefix.'['.$blockName.']',
-								'DATA' => $template['SE_CHECKLIST'],
-								'CAN_ADD' => $canUpdate,
-								'CAN_REORDER' => $canUpdate,
 								'ENTITY_ID' => $template->getId(),
-								'ENTITY_ROUTE' => 'task.template',
-								'ENABLE_SYNC' => true,
-								'CONFIRM_DELETE' => true
+								'ENTITY_TYPE' => 'TEMPLATE',
+								'DATA' => $checkListItems,
+								'PATH_TO_USER_PROFILE' => $arParams['PATH_TO_USER_PROFILE'],
+								'CONVERTED' => $arResult['CHECKLIST_CONVERTED'],
+								'CAN_ADD_ACCOMPLICE' => $canUpdate,
 							),
 							null,
 							array("HIDE_ICONS" => "Y", "ACTIVE_COMPONENT" => "Y")
@@ -247,6 +259,7 @@ $toList = str_replace("#user_id#", $arParams["USER_ID"], $arParams["PATH_TO_USER
 							'TITLE' => Loc::getMessage('TASKS_COMMON_EDIT'),
 							'TYPE' => 'link',
 							'URL' => $arParams['PATH_TO_TASKS_TEMPLATE_EDIT'],
+                            'KEEP_SLIDER'=>true
 						)
 					)
 				),
@@ -351,6 +364,21 @@ $toList = str_replace("#user_id#", $arParams["USER_ID"], $arParams["PATH_TO_USER
 			}
 		}
 		?>
+
+		<div class="task-footer-wrap" id="footerWrap">
+			<?$APPLICATION->IncludeComponent('bitrix:ui.button.panel', '', [
+				'BUTTONS' => [
+					[
+						'TYPE' => 'save',
+						'ID' => 'saveButton',
+					],
+					[
+						'TYPE' => 'custom',
+						'LAYOUT' => '<a class="ui-btn ui-btn-link" id="cancelButton">'.Loc::getMessage("TASKS_TTV_CANCEL_BUTTON_TEXT").'</a>',
+					],
+				],
+			]);?>
+		</div>
 
 	</div>
 
@@ -558,3 +586,4 @@ $toList = str_replace("#user_id#", $arParams["USER_ID"], $arParams["PATH_TO_USER
 	<?$helper->initializeExtension();?>
 
 <?endif?>
+</div>

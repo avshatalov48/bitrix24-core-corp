@@ -1,5 +1,6 @@
 <?php
 
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm\Integration\StorageManager;
 use Bitrix\Crm\Integration\Channel;
 use Bitrix\Crm\Settings\ActivitySettings;
@@ -36,7 +37,8 @@ class CCrmEMail
 		return array(
 			'ID'          => 'crm_imap',
 			'NAME'        => GetMessage('CRM_ADD_MESSAGE'),
-			'ACTION_FUNC' => Array('CCrmEMail', 'imapEmailMessageAdd')
+			'ACTION_FUNC' => Array('CCrmEMail', 'imapEmailMessageAdd'),
+			'LAZY_ATTACHMENTS' => true,
 		);
 	}
 
@@ -406,9 +408,11 @@ class CCrmEMail
 		return $adminList;
 	}
 
-	public static function imapEmailMessageAdd($msgFields)
+	public static function imapEmailMessageAdd($msgFields, $actionVars = null, &$error = null)
 	{
 		global $DB;
+
+		$error = null;
 
 		if (!\CModule::includeModule('crm'))
 			return false;
@@ -518,9 +522,6 @@ class CCrmEMail
 		}
 
 		$subject   = trim($msgFields['SUBJECT']) ?: getMessage('CRM_EMAIL_DEFAULT_SUBJECT');
-		$body      = isset($msgFields['BODY']) ? $msgFields['BODY'] : '';
-		$body_bb   = isset($msgFields['BODY_BB']) ? $msgFields['BODY_BB'] : '';
-		$body_html = isset($msgFields['BODY_HTML']) ? $msgFields['BODY_HTML'] : '';
 
 		$emailFacility = new Bitrix\Crm\Activity\EmailFacility();
 
@@ -588,7 +589,10 @@ class CCrmEMail
 				{
 					$departments = empty($employee['UF_DEPARTMENT']) ? array() : (array) $employee['UF_DEPARTMENT'];
 					if (reset($departments) > 0)
+					{
+						$error = new \Bitrix\Main\Error(Loc::getMessage('CRM_EMAIL_IMAP_ERROR_EMPLOYE_IN'));
 						return false;
+					}
 				}
 
 				if (CModule::includeModule('mail'))
@@ -608,7 +612,10 @@ class CCrmEMail
 					))->fetch();
 
 					if (!empty($employee))
+					{
+						$error = new \Bitrix\Main\Error(Loc::getMessage('CRM_EMAIL_IMAP_ERROR_EMPLOYE_IN'));
 						return false;
+					}
 				}
 			}
 			else
@@ -623,7 +630,10 @@ class CCrmEMail
 				$employeesEmails = array_unique(array_map('strtolower', $employeesEmails));
 
 				if (count($employeesEmails) >= count($rcpt))
+				{
+					$error = new \Bitrix\Main\Error(Loc::getMessage('CRM_EMAIL_IMAP_ERROR_EMPLOYE_OUT'));
 					return false;
+				}
 
 				if (CModule::includeModule('mail'))
 				{
@@ -646,7 +656,10 @@ class CCrmEMail
 					$employeesEmails = array_unique(array_map('strtolower', $employeesEmails));
 
 					if (count($employeesEmails) >= count($rcpt))
+					{
+						$error = new \Bitrix\Main\Error(Loc::getMessage('CRM_EMAIL_IMAP_ERROR_EMPLOYE_OUT'));
 						return false;
+					}
 				}
 			}
 		}
@@ -753,7 +766,7 @@ class CCrmEMail
 						'select' => array('ID', 'ASSIGNED_BY_ID'),
 						'filter' => array(
 							'=ID' => $targetActivity['OWNER_ID'],
-							'@ASSIGNED_BY_ID' => $respQueue,
+							$publicBindings ? array() : array('@ASSIGNED_BY_ID' => $respQueue),
 							'=STAGE_SEMANTIC_ID' => \Bitrix\Crm\PhaseSemantics::PROCESS,
 						),
 					))->fetch();
@@ -763,7 +776,7 @@ class CCrmEMail
 						'select' => array('ID', 'ASSIGNED_BY_ID'),
 						'filter' => array(
 							'=ID' => $targetActivity['OWNER_ID'],
-							'@ASSIGNED_BY_ID' => $respQueue,
+							$publicBindings ? array() : array('@ASSIGNED_BY_ID' => $respQueue),
 							'=STATUS_SEMANTIC_ID' => \Bitrix\Crm\PhaseSemantics::PROCESS,
 						),
 					))->fetch();
@@ -879,6 +892,8 @@ class CCrmEMail
 				{
 					if ($isIncome)
 					{
+						$selector = $itemSelector;
+
 						break;
 					}
 					else
@@ -1103,6 +1118,19 @@ class CCrmEMail
 		$attachmentMaxSizeMb = (int) \COption::getOptionString('crm', 'email_attachment_max_size', 24);
 		$attachmentMaxSize = $attachmentMaxSizeMb > 0 ? $attachmentMaxSizeMb*1024*1024 : 0;
 
+		// @TODO: update $msgFields
+		if (\Bitrix\Mail\Helper\Message::ensureAttachments($msgFields) > 0)
+		{
+			if ($message = \CMailMessage::getById($messageId)->fetch())
+			{
+				$msgFields = $message + $msgFields;
+			}
+		}
+
+		$body = isset($msgFields['BODY']) ? $msgFields['BODY'] : '';
+		$body_bb = isset($msgFields['BODY_BB']) ? $msgFields['BODY_BB'] : '';
+		$body_html = isset($msgFields['BODY_HTML']) ? $msgFields['BODY_HTML'] : '';
+
 		$filesData = array();
 		$bannedAttachments = array();
 		$res = \CMailAttachment::getList(array(), array('MESSAGE_ID' => $messageId));
@@ -1177,7 +1205,7 @@ class CCrmEMail
 		$crmEvent = new \CCrmEvent();
 		$crmEvent->add(
 			array(
-				'USER_ID'      => $userId,
+				'USER_ID'      => $mailbox['USER_ID'],
 				'ENTITY'       => $eventBindings,
 				'ENTITY_TYPE'  => \CCrmOwnerType::resolveName($ownerTypeId),
 				'ENTITY_ID'    => $ownerId,
@@ -1255,20 +1283,31 @@ class CCrmEMail
 			$completed = 'Y';
 		}
 
-		$datetime = $deadline = !empty($msgFields['FIELD_DATE']) && $DB->isDate($msgFields['FIELD_DATE'], FORMAT_DATETIME)
-			? $msgFields['FIELD_DATE'] : convertTimeStamp(time()+\CTimeZone::getOffset(), 'FULL', $siteId);
-		//if ($isIncome)
-		{
-			$deadline = convertTimeStamp(strtotime('tomorrow'), 'FULL', $siteId);
-			if (CModule::includeModule('calendar'))
-			{
-				$calendarSettings = \CCalendar::getSettings();
+		$currentUserOffset = \CTimeZone::getOffset();
+		$userOffset = \CTimeZone::getOffset($userId);
 
-				$dummyDeadline = new \Bitrix\Main\Type\DateTime();
-				$nowTimestamp = $dummyDeadline->getTimestamp();
-				$dummyDeadline->setTime($calendarSettings['work_time_end'] > 0 ? $calendarSettings['work_time_end'] : 19, 0, 0);
-				if ($dummyDeadline->getTimestamp() > $nowTimestamp)
-					$deadline = $dummyDeadline->format(\Bitrix\Main\Type\DateTime::convertFormatToPhp(FORMAT_DATETIME));
+		$nowTimestamp = time();
+
+		$datetime = convertTimeStamp($nowTimestamp + $currentUserOffset, 'FULL', $siteId);
+		if (!empty($msgFields['FIELD_DATE']) && $DB->isDate($msgFields['FIELD_DATE'], FORMAT_DATETIME))
+		{
+			$datetime = $msgFields['FIELD_DATE'];
+		}
+
+		$deadline = convertTimeStamp(strtotime('tomorrow') + $currentUserOffset - $userOffset, 'FULL', $siteId);
+		if (CModule::includeModule('calendar'))
+		{
+			$calendarSettings = \CCalendar::getSettings();
+
+			$dummyDeadline = new \Bitrix\Main\Type\DateTime();
+			$dummyDeadline->setTime(
+				$calendarSettings['work_time_end'] > 0 ? $calendarSettings['work_time_end'] : 19,
+				0,
+				$currentUserOffset - $userOffset
+			);
+			if ($dummyDeadline->getTimestamp() > $nowTimestamp + $currentUserOffset)
+			{
+				$deadline = $dummyDeadline->format(\Bitrix\Main\Type\DateTime::convertFormatToPhp(FORMAT_DATETIME));
 			}
 		}
 
@@ -1381,7 +1420,7 @@ class CCrmEMail
 			$res = \Bitrix\Crm\Activity\MailMetaTable::getList(array(
 				'select' => array('ACTIVITY_ID'),
 				'filter' => array(
-					'MSG_INREPLY_HASH' => md5(strtolower($msgId)),
+					'=MSG_INREPLY_HASH' => md5(strtolower($msgId)),
 				),
 			));
 			while ($mailMeta = $res->fetch())
@@ -2598,15 +2637,22 @@ class CCrmEMail
 		$eventText .= "\n\r";
 		$eventText .= $body;
 
-		// Register event only for owner
+		$eventBindings = array();
+		foreach($arBindings as $item)
+		{
+			$bindingEntityID = $item['OWNER_ID'];
+			$bindingEntityTypeID = $item['OWNER_TYPE_ID'];
+			$bindingEntityTypeName = \CCrmOwnerType::resolveName($bindingEntityTypeID);
+
+			$eventBindings["{$bindingEntityTypeName}_{$bindingEntityID}"] = array(
+				'ENTITY_TYPE' => $bindingEntityTypeName,
+				'ENTITY_ID' => $bindingEntityID
+			);
+		}
+
 		$crmEvent->Add(
 			array(
-				'ENTITY' => array(
-					$ownerId => array(
-						'ENTITY_TYPE' => \CCrmOwnerType::resolveName($ownerTypeId),
-						'ENTITY_ID' => $ownerId
-					)
-				),
+				'ENTITY' => $eventBindings,
 				'EVENT_ID' => 'MESSAGE',
 				'EVENT_NAME' => $subject,
 				'EVENT_TEXT_1' => $eventText,
@@ -2833,7 +2879,7 @@ class CCrmEMail
 			{
 				$mailMeta = \Bitrix\Crm\Activity\MailMetaTable::getList(array(
 					'select' => array('HASH' => 'MSG_HEADER_HASH'),
-					'filter' => array('ACTIVITY_ID' => $current['ID']),
+					'filter' => array('=ACTIVITY_ID' => $current['ID']),
 				))->fetch();
 
 				if ($mailMeta && \CModule::includeModule('mail'))
@@ -2916,11 +2962,17 @@ class CCrmEMail
 				),
 				false,
 				false,
-				array('ID')
+				array('ID', 'SETTINGS')
 			)->fetch();
 
 			if (!empty($activity))
 			{
+				if (empty($activity['SETTINGS']['CLICK_CONFIRMED']) || $activity['SETTINGS']['CLICK_CONFIRMED'] <= 0)
+				{
+					$activity['SETTINGS']['CLICK_CONFIRMED'] = time();
+					\CCrmActivity::update($activity['ID'], array('SETTINGS' => $activity['SETTINGS']), false, false);
+				}
+
 				//Execute automation trigger - EmailLinkTrigger
 				$bindings = \CCrmActivity::GetBindings($activity['ID']);
 				if ($bindings)

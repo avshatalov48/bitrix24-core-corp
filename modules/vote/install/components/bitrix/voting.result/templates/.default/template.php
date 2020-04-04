@@ -97,9 +97,9 @@ foreach ($arResult["QUESTIONS"] as $arQuestion):
 							<tr>
 								<td width="24%">
 									<? if (trim($arAnswer["MESSAGE"]) != '') { ?>
-										<span class='vote-answer-lolight'><?=htmlspecialcharsbx($arAnswer["~MESSAGE"])?>:&nbsp;</span>
+										<span class='vote-answer-lolight'><?=htmlspecialcharsbx($arAnswer["MESSAGE"])?>:&nbsp;</span>
 									<? } ?>
-									<?=htmlspecialcharsbx($arGroupAnswer["~MESSAGE"])?>
+									<?=htmlspecialcharsbx($arGroupAnswer["MESSAGE"])?>
 								</td>
 								<td><div class="vote-answer-bar" style="width:<?=$percent?>%;background-color:#<?=htmlspecialcharsbx($arAnswer["COLOR"])?>"></div>
 								<span class="vote-answer-counter"><nobr><?=($arGroupAnswer["COUNTER"] > 0?'&nbsp;':'')?><?=$arGroupAnswer["COUNTER"]?> (<?=$arGroupAnswer["PERCENT"]?>%)</nobr></span></td>

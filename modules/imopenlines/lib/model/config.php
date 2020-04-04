@@ -1,56 +1,20 @@
 <?php
 namespace Bitrix\ImOpenLines\Model;
 
-use Bitrix\Main,
-	Bitrix\Main\Localization\Loc;
+use \Bitrix\Main,
+	\Bitrix\Main\Type\DateTime,
+	\Bitrix\Main\Localization\Loc,
+	\Bitrix\Main\Entity\Validator,
+	\Bitrix\Main\ORM\Fields\StringField,
+	\Bitrix\Main\ORM\Fields\BooleanField,
+	\Bitrix\Main\ORM\Fields\IntegerField;
+
+use \Bitrix\ImOpenLines\Config;
+
 Loc::loadMessages(__FILE__);
 
 /**
  * Class ConfigTable
- *
- * Fields:
- * <ul>
- * <li> ID int mandatory
- * <li> ACTIVE bool optional default 'Y'
- * <li> LINE_NAME string(255) optional
- * <li> CRM bool optional default 'Y'
- * <li> CRM_FORWARD bool optional default 'Y'
- * <li> CRM_TRANSFER_CHANGE bool optional default 'Y'
- * <li> CRM_CREATE string(50) optional default 'none'
- * <li> CRM_SOURCE string(50) optional default 'create'
- * <li> QUEUE_TIME int optional
- * <li> QUEUE_TYPE string(50) optional default 'evenly'
- * <li> TIMEMAN bool optional default 'N'
- * <li> CHECKING_OFFLINE bool optional default 'N'
- * <li> NO_ANSWER_RULE string(50) optional default 'form'
- * <li> NO_ANSWER_FORM_ID int optional
- * <li> NO_ANSWER_BOT_ID int optional
- * <li> NO_ANSWER_TEXT string optional
- * <li> WORKTIME_ENABLE bool optional default 'N'
- * <li> WORKTIME_FROM string(5) optional
- * <li> WORKTIME_TO string(5) optional
- * <li> WORKTIME_TIMEZONE string(50) optional
- * <li> WORKTIME_HOLIDAYS string(2000) optional
- * <li> WORKTIME_DAYOFF string(20) optional
- * <li> WORKTIME_DAYOFF_RULE string(50) optional default 'form'
- * <li> WORKTIME_DAYOFF_FORM_ID int optional
- * <li> WORKTIME_DAYOFF_BOT_ID int optional
- * <li> WORKTIME_DAYOFF_TEXT string optional
- * <li> CLOSE_RULE string(50) optional default 'form'
- * <li> CLOSE_FORM_ID int optional
- * <li> CLOSE_BOT_ID int optional
- * <li> CLOSE_TEXT string optional
- * <li> AUTO_CLOSE_RULE string(50) optional default 'none'
- * <li> AUTO_CLOSE_FORM_ID int optional
- * <li> AUTO_CLOSE_BOT_ID int optional
- * <li> AUTO_CLOSE_TIME int optional
- * <li> AUTO_CLOSE_TEXT string optional
- * <li> AUTO_EXPIRE_TIME int optional
- * <li> TEMPORARY bool optional default 'Y'
- * <li> QUICK_ANSWERS_IBLOCK_ID int optional
- * <li> TYPE_MAX_CHAT string(50) optional
- * <li> MAX_CHAT int optional
- * </ul>
  *
  * @package Bitrix\Imopenlines
  **/
@@ -71,6 +35,7 @@ class ConfigTable extends Main\Entity\DataManager
 	 * Returns entity map definition.
 	 *
 	 * @return array
+	 * @throws Main\SystemException
 	 */
 	public static function getMap()
 	{
@@ -81,104 +46,84 @@ class ConfigTable extends Main\Entity\DataManager
 				'autocomplete' => true,
 				'title' => Loc::getMessage('CONFIG_ENTITY_ID_FIELD'),
 			),
-			'ACTIVE' => array(
-				'data_type' => 'boolean',
-				'values' => array('N', 'Y'),
-				'title' => Loc::getMessage('CONFIG_ENTITY_CRM_FIELD'),
+			new BooleanField('ACTIVE', [
+				'values' => ['N', 'Y'],
+				'title' => Loc::getMessage('CONFIG_ENTITY_ACTIVE_FIELD'),
 				'default_value' => 'Y',
-			),
-			'LINE_NAME' => array(
-				'data_type' => 'string',
-				'validation' => array(__CLASS__, 'validateLineName'),
+			]),
+			new StringField('LINE_NAME', [
+				'validation' => [__CLASS__, 'validateText255'],
 				'title' => Loc::getMessage('CONFIG_ENTITY_LINE_NAME_FIELD'),
-			),
-			'CRM' => array(
-				'data_type' => 'boolean',
-				'values' => array('N', 'Y'),
+			]),
+			new BooleanField('CRM', [
+				'values' => ['N', 'Y'],
 				'title' => Loc::getMessage('CONFIG_ENTITY_CRM_FIELD'),
 				'default_value' => 'Y',
-			),
-			'CRM_CREATE' => array(
-				'data_type' => 'string',
-				'validation' => array(__CLASS__, 'validateCrmCreateField'),
+			]),
+			new StringField('CRM_CREATE', [
+				'validation' => [__CLASS__, 'validateText50'],
 				'title' => Loc::getMessage('CONFIG_ENTITY_CRM_CREATE_FIELD'),
 				'default_value' => 'lead',
-			),
-			'CRM_FORWARD' => array(
-				'data_type' => 'boolean',
-				'values' => array('N', 'Y'),
+			]),
+			new BooleanField('CRM_FORWARD', [
+				'values' => ['N', 'Y'],
 				'title' => Loc::getMessage('CONFIG_ENTITY_CRM_FORWARD_FIELD'),
 				'default_value' => 'Y',
-			),
-			'CRM_TRANSFER_CHANGE' => array(
-				'data_type' => 'boolean',
-				'values' => array('N', 'Y'),
+			]),
+			new BooleanField('CRM_TRANSFER_CHANGE', [
+				'values' => ['N', 'Y'],
 				'title' => Loc::getMessage('CONFIG_ENTITY_CRM_TRANSFER_CHANGE_FIELD'),
 				'default_value' => 'Y',
-			),
-			'CRM_SOURCE' => array(
-				'data_type' => 'string',
-				'validation' => array(__CLASS__, 'validateCrmSource'),
+			]),
+			new StringField('CRM_SOURCE', [
+				'validation' => [__CLASS__, 'validateText50'],
 				'title' => Loc::getMessage('CONFIG_ENTITY_CRM_SOURCE_FIELD'),
 				'default_value' => 'create',
-			),
+			]),
 			'QUEUE_TIME' => array(
 				'data_type' => 'integer',
 				'title' => Loc::getMessage('CONFIG_ENTITY_QUEUE_TIME_FIELD_NEW'),
 				'default_value' => '60',
 			),
-			'QUEUE_TYPE' => array(
-				'data_type' => 'string',
-				'validation' => array(__CLASS__, 'validateQueueType'),
+			'NO_ANSWER_TIME' => [
+				'data_type' => 'integer',
+				'title' => Loc::getMessage('CONFIG_ENTITY_NO_ANSWER_TIME_FIELD'),
+				'default_value' => '60',
+			],
+			new StringField('QUEUE_TYPE', [
+				'validation' => [__CLASS__, 'validateText50'],
 				'title' => Loc::getMessage('CONFIG_ENTITY_QUEUE_TYPE_FIELD'),
 				'default_value' => 'all',
-			),
-			'TIMEMAN' => array(
-				'data_type' => 'boolean',
-				'values' => array('N', 'Y'),
-				'title' => Loc::getMessage('CONFIG_ENTITY_TIMEMAN_FIELD'),
+			]),
+			new BooleanField('CHECK_AVAILABLE', [
+				'values' => ['N', 'Y'],
+				'title' => Loc::getMessage('CONFIG_ENTITY_CHECK_AVAILABLE_FIELD'),
 				'default_value' => 'N',
-			),
-			'CHECKING_OFFLINE' => array(
-				'data_type' => 'boolean',
-				'values' => array('N', 'Y'),
-				'title' => Loc::getMessage('CONFIG_ENTITY_CHECKING_OFFLINE_FIELD_NEW'),
-				'default_value' => 'N',
-			),
-			'CHECK_ONLINE' => array(
-				'data_type' => 'boolean',
-				'values' => array('N', 'Y'),
-				'title' => Loc::getMessage('CONFIG_ENTITY_CHECK_ONLINE_FIELD_NEW'),
-				'default_value' => 'Y',
-			),
-			'WELCOME_BOT_ENABLE' => array(
-				'data_type' => 'boolean',
-				'values' => array('N', 'Y'),
+			]),
+			new BooleanField('WELCOME_BOT_ENABLE', [
+				'values' => ['N', 'Y'],
 				'title' => Loc::getMessage('CONFIG_ENTITY_WELCOME_BOT_ENABLE_FIELD'),
 				'default_value' => 'N',
-			),
-			'WELCOME_MESSAGE' => array(
-				'data_type' => 'boolean',
-				'values' => array('N', 'Y'),
+			]),
+			new BooleanField('WELCOME_MESSAGE', [
+				'values' => ['N', 'Y'],
 				'title' => Loc::getMessage('CONFIG_ENTITY_WELCOME_MESSAGE_FIELD'),
 				'default_value' => 'Y',
-			),
+			]),
 			'WELCOME_MESSAGE_TEXT' => array(
 				'data_type' => 'text',
 				'title' => Loc::getMessage('CONFIG_ENTITY_WELCOME_MESSAGE_TEXT_FIELD_NEW'),
 			),
-			'VOTE_MESSAGE' => array(
-				'data_type' => 'boolean',
-				'values' => array('N', 'Y'),
+			new BooleanField('VOTE_MESSAGE', [
+				'values' => ['N', 'Y'],
 				'title' => Loc::getMessage('CONFIG_ENTITY_VOTE_MESSAGE_FIELD'),
 				'default_value' => 'Y',
-			),
-			'VOTE_CLOSING_DELAY' => array(
-				'data_type' => 'boolean',
-				'values' => array('N', 'Y'),
+			]),
+			new BooleanField('VOTE_CLOSING_DELAY', [
+				'values' => ['N', 'Y'],
 				'title' => Loc::getMessage('CONFIG_ENTITY_VOTE_CLOSING_DELAY_FIELD_NEW'),
 				'default_value' => 'N',
-			),
+			]),
 			'VOTE_MESSAGE_1_TEXT' => array(
 				'data_type' => 'text',
 				'title' => Loc::getMessage('CONFIG_ENTITY_VOTE_MESSAGE_1_TEXT_FIELD'),
@@ -203,32 +148,29 @@ class ConfigTable extends Main\Entity\DataManager
 				'data_type' => 'text',
 				'title' => Loc::getMessage('CONFIG_ENTITY_VOTE_MESSAGE_2_DISLIKE_FIELD'),
 			),
-			'AGREEMENT_MESSAGE' => array(
-				'data_type' => 'boolean',
-				'values' => array('N', 'Y'),
+			new BooleanField('AGREEMENT_MESSAGE', [
+				'values' => ['N', 'Y'],
 				'default_value' => 'N',
-			),
+			]),
 			'AGREEMENT_ID' => array(
 				'data_type' => 'integer',
 				'default_value' => '0',
 			),
-			'CATEGORY_ENABLE' => array(
-				'data_type' => 'boolean',
-				'values' => array('N', 'Y'),
+			new BooleanField('CATEGORY_ENABLE', [
+				'values' => ['N', 'Y'],
 				'title' => Loc::getMessage('CONFIG_ENTITY_CATEGORY_ENABLE_FIELD'),
 				'default_value' => 'N',
-			),
+			]),
 			'CATEGORY_ID' => array(
 				'data_type' => 'integer',
 				'title' => Loc::getMessage('CONFIG_ENTITY_CATEGORY_ID_FIELD'),
 				'default_value' => '0',
 			),
-			'WELCOME_BOT_JOIN' => array(
-				'data_type' => 'string',
-				'validation' => array(__CLASS__, 'validateQueueType'),
+			new StringField('WELCOME_BOT_JOIN', [
+				'validation' => [__CLASS__, 'validateText50'],
 				'title' => Loc::getMessage('CONFIG_ENTITY_WELCOME_BOT_JOIN_FIELD'),
 				'default_value' => 'first',
-			),
+			]),
 			'WELCOME_BOT_ID' => array(
 				'data_type' => 'integer',
 				'title' => Loc::getMessage('CONFIG_ENTITY_BOT_ID_FIELD'),
@@ -239,18 +181,30 @@ class ConfigTable extends Main\Entity\DataManager
 				'title' => Loc::getMessage('CONFIG_ENTITY_BOT_TIME_FIELD'),
 				'default_value' => '600',
 			),
-			'WELCOME_BOT_LEFT' => array(
-				'data_type' => 'string',
-				'validation' => array(__CLASS__, 'validateQueueType'),
+			new StringField('WELCOME_BOT_LEFT', [
+				'validation' => [__CLASS__, 'validateText50'],
 				'title' => Loc::getMessage('CONFIG_ENTITY_WELCOME_BOT_LEFT_FIELD'),
 				'default_value' => 'queue',
-			),
-			'NO_ANSWER_RULE' => array(
-				'data_type' => 'string',
-				'validation' => array(__CLASS__, 'validateNoAnswerRule'),
+			]),
+			new StringField('NO_ANSWER_RULE', [
+				'validation' => [__CLASS__, 'validateText50'],
 				'title' => Loc::getMessage('CONFIG_ENTITY_NO_ANSWER_RULE_FIELD'),
-				'default_value' => 'form',
-			),
+				'default_value' => Config::RULE_NONE,
+				'fetch_data_modification' => function ()
+				{
+					return [
+						function ($value)
+						{
+							if(Config::RULE_FORM == $value || Config::RULE_QUEUE == $value)
+							{
+								$value = Config::RULE_NONE;
+							}
+
+							return $value;
+						}
+					];
+				}
+			]),
 			'NO_ANSWER_FORM_ID' => array(
 				'data_type' => 'integer',
 				'title' => Loc::getMessage('CONFIG_ENTITY_NO_ANSWER_FORM_ID_FIELD'),
@@ -265,45 +219,38 @@ class ConfigTable extends Main\Entity\DataManager
 				'data_type' => 'text',
 				'title' => Loc::getMessage('CONFIG_ENTITY_NO_ANSWER_TEXT_FIELD'),
 			),
-			'WORKTIME_ENABLE' => array(
-				'data_type' => 'boolean',
-				'values' => array('N', 'Y'),
+			new BooleanField('WORKTIME_ENABLE', [
+				'values' => ['N', 'Y'],
 				'title' => Loc::getMessage('CONFIG_ENTITY_WORKTIME_ENABLE_FIELD'),
 				'default_value' => 'N',
-			),
-			'WORKTIME_FROM' => array(
-				'data_type' => 'string',
-				'validation' => array(__CLASS__, 'validateWorktimeFrom'),
+			]),
+			new StringField('WORKTIME_FROM', [
+				'validation' => [__CLASS__, 'validateText5'],
 				'title' => Loc::getMessage('CONFIG_ENTITY_WORKTIME_FROM_FIELD'),
 				'default_value' => '9',
-			),
-			'WORKTIME_TO' => array(
-				'data_type' => 'string',
-				'validation' => array(__CLASS__, 'validateWorktimeTo'),
+			]),
+			new StringField('WORKTIME_TO', [
+				'validation' => [__CLASS__, 'validateText5'],
 				'title' => Loc::getMessage('CONFIG_ENTITY_WORKTIME_TO_FIELD'),
 				'default_value' => '18.30',
-			),
-			'WORKTIME_TIMEZONE' => array(
-				'data_type' => 'string',
-				'validation' => array(__CLASS__, 'validateWorktimeTimezone'),
+			]),
+			new StringField('WORKTIME_TIMEZONE', [
+				'validation' => [__CLASS__, 'validateText50'],
 				'title' => Loc::getMessage('CONFIG_ENTITY_WORKTIME_TIMEZONE_FIELD'),
-			),
-			'WORKTIME_HOLIDAYS' => array(
-				'data_type' => 'string',
-				'validation' => array(__CLASS__, 'validateWorktimeHolidays'),
+			]),
+			new StringField('WORKTIME_HOLIDAYS', [
+				'validation' => [__CLASS__, 'validateText2000'],
 				'title' => Loc::getMessage('CONFIG_ENTITY_WORKTIME_HOLIDAYS_FIELD'),
-			),
-			'WORKTIME_DAYOFF' => array(
-				'data_type' => 'string',
-				'validation' => array(__CLASS__, 'validateWorktimeDayoff'),
+			]),
+			new StringField('WORKTIME_DAYOFF', [
+				'validation' => [__CLASS__, 'validateText20'],
 				'title' => Loc::getMessage('CONFIG_ENTITY_WORKTIME_DAYOFF_FIELD'),
-			),
-			'WORKTIME_DAYOFF_RULE' => array(
-				'data_type' => 'string',
-				'validation' => array(__CLASS__, 'validateWorktimeDayoffRule'),
+			]),
+			new StringField('WORKTIME_DAYOFF_RULE', [
+				'validation' => [__CLASS__, 'validateText50'],
 				'title' => Loc::getMessage('CONFIG_ENTITY_WORKTIME_DAYOFF_RULE_FIELD'),
 				'default_value' => 'form',
-			),
+			]),
 			'WORKTIME_DAYOFF_FORM_ID' => array(
 				'data_type' => 'integer',
 				'title' => Loc::getMessage('CONFIG_ENTITY_WORKTIME_DAYOFF_FORM_ID_FIELD'),
@@ -318,12 +265,11 @@ class ConfigTable extends Main\Entity\DataManager
 				'data_type' => 'text',
 				'title' => Loc::getMessage('CONFIG_ENTITY_WORKTIME_DAYOFF_TEXT_FIELD'),
 			),
-			'CLOSE_RULE' => array(
-				'data_type' => 'string',
-				'validation' => array(__CLASS__, 'validateCloseRule'),
+			new StringField('CLOSE_RULE', [
+				'validation' => [__CLASS__, 'validateText50'],
 				'title' => Loc::getMessage('CONFIG_ENTITY_CLOSE_RULE_FIELD'),
 				'default_value' => 'text',
-			),
+			]),
 			'CLOSE_FORM_ID' => array(
 				'data_type' => 'integer',
 				'title' => Loc::getMessage('CONFIG_ENTITY_CLOSE_FORM_ID_FIELD'),
@@ -343,12 +289,11 @@ class ConfigTable extends Main\Entity\DataManager
 				'title' => Loc::getMessage('CONFIG_ENTITY_FULL_CLOSE_TIME_FIELD'),
 				'default_value' => '10',
 			),
-			'AUTO_CLOSE_RULE' => array(
-				'data_type' => 'string',
-				'validation' => array(__CLASS__, 'validateAutoCloseRule'),
+			new StringField('AUTO_CLOSE_RULE', [
+				'validation' => [__CLASS__, 'validateText50'],
 				'title' => Loc::getMessage('CONFIG_ENTITY_AUTO_CLOSE_RULE_FIELD'),
 				'default_value' => 'none',
-			),
+			]),
 			'AUTO_CLOSE_FORM_ID' => array(
 				'data_type' => 'integer',
 				'title' => Loc::getMessage('CONFIG_ENTITY_AUTO_CLOSE_FORM_ID_FIELD'),
@@ -388,20 +333,17 @@ class ConfigTable extends Main\Entity\DataManager
 				'required' => true,
 				'title' => Loc::getMessage('CONFIG_ENTITY_MODIFY_USER_ID_FIELD'),
 			),
-			'TEMPORARY' => array(
-				'data_type' => 'boolean',
-				'values' => array('N', 'Y'),
+			new BooleanField('TEMPORARY', [
+				'values' => ['N', 'Y'],
 				'title' => Loc::getMessage('CONFIG_ENTITY_TEMPORARY_FIELD'),
 				'default_value' => 'Y',
-			),
-			'XML_ID' => array(
-				'data_type' => 'string',
-				'validation' => array(__CLASS__, 'validateXmlId'),
-			),
-			'LANGUAGE_ID' => array(
-				'data_type' => 'string',
-				'validation' => array(__CLASS__, 'validateLanguageId'),
-			),
+			]),
+			new StringField('XML_ID', [
+				'validation' => [__CLASS__, 'validateText255'],
+			]),
+			new StringField('LANGUAGE_ID', [
+				'validation' => [__CLASS__, 'validateText2'],
+			]),
 			'STATISTIC' => array(
 				'data_type' => 'Bitrix\ImOpenLines\Model\ConfigStatistic',
 				'reference' => array('=this.ID' => 'ref.CONFIG_ID')
@@ -413,214 +355,150 @@ class ConfigTable extends Main\Entity\DataManager
 				'data_type' => 'integer',
 				'default_value' => 0,
 			),
-			'TYPE_MAX_CHAT' => array(
-				'data_type' => 'string',
-				'validation' => array(__CLASS__, 'validateTypeMaxChat'),
+			new StringField('TYPE_MAX_CHAT', [
+				'validation' => [__CLASS__, 'validateText50'],
 				'default_value' => 'ANSWERED_NEW',
-			),
+			]),
 			'MAX_CHAT' => array(
 				'data_type' => 'integer',
 				'default_value' => '0',
 			),
-			'OPERATOR_DATA' => array(
-				'data_type' => 'string',
-				'validation' => array(__CLASS__, 'validateQueueType'),
+			new StringField('OPERATOR_DATA', [
+				'validation' => [__CLASS__, 'validateText50'],
 				'title' => Loc::getMessage('CONFIG_ENTITY_OPERATOR_DATA_FIELD'),
 				'default_value' => 'profile',
-			),
-			'DEFAULT_OPERATOR_DATA' => array(
-				'data_type' => 'string',
+			]),
+			new StringField('DEFAULT_OPERATOR_DATA', [
 				'title' => Loc::getMessage('CONFIG_ENTITY_DEFAULT_OPERATOR_DATA_FIELD'),
 				'serialized' => true
-			)
+			]),
+			'KPI_FIRST_ANSWER_TIME' => array(
+				'data_type' => 'integer',
+				'title' => Loc::getMessage('CONFIG_ENTITY_KPI_FIRST_ANSWER_TIME'),
+				'default_value' => 0,
+			),
+			new BooleanField('KPI_FIRST_ANSWER_ALERT', [
+				'values' => ['N', 'Y'],
+				'title' => Loc::getMessage('CONFIG_ENTITY_KPI_ANSWER_ALERT'),
+				'default_value' => 'N',
+			]),
+			'KPI_FIRST_ANSWER_LIST' => array(
+				'data_type' => 'string',
+				'title' => Loc::getMessage('CONFIG_ENTITY_KPI_ANSWER_LIST'),
+				'serialized' => true,
+			),
+			'KPI_FIRST_ANSWER_TEXT' => array(
+				'data_type' => 'string',
+				'title' => Loc::getMessage('CONFIG_ENTITY_KPI_ANSWER_TEXT')
+			),
+			'KPI_FURTHER_ANSWER_TIME' => array(
+				'data_type' => 'integer',
+				'title' => Loc::getMessage('CONFIG_ENTITY_KPI_FURTHER_ANSWER_TIME'),
+				'default_value' => 0,
+			),
+			new BooleanField('KPI_FURTHER_ANSWER_ALERT', [
+				'values' => ['N', 'Y'],
+				'title' => Loc::getMessage('CONFIG_ENTITY_KPI_ANSWER_ALERT'),
+				'default_value' => 'N',
+			]),
+			'KPI_FURTHER_ANSWER_LIST' => array(
+				'data_type' => 'string',
+				'title' => Loc::getMessage('CONFIG_ENTITY_KPI_ANSWER_LIST'),
+				'serialized' => true,
+			),
+			'KPI_FURTHER_ANSWER_TEXT' => array(
+				'data_type' => 'string',
+				'title' => Loc::getMessage('CONFIG_ENTITY_KPI_ANSWER_TEXT')
+			),
+			new BooleanField('KPI_CHECK_OPERATOR_ACTIVITY', [
+				'values' => ['N', 'Y'],
+				'title' => Loc::getMessage('CONFIG_ENTITY_KPI_CHECK_OPERATOR_ACTIVITY'),
+				'default_value' => 'N',
+			])
 		);
 	}
+
 	/**
-	 * Returns validators for LINE_NAME field.
+	 * Returns validators for a text field of up to 2000 characters.
 	 *
 	 * @return array
+	 * @throws Main\ArgumentTypeException
 	 */
-	public static function validateLineName()
+	public static function validateText2000()
 	{
-		return array(
-			new Main\Entity\Validator\Length(null, 255),
-		);
+		return [
+			new Validator\Length(null, 2000),
+		];
 	}
 	/**
-	 * Returns validators for CRM_SOURCE field.
+	 * Returns validators for a text field of up to 255 characters.
 	 *
 	 * @return array
+	 * @throws Main\ArgumentTypeException
 	 */
-	public static function validateCrmSource()
+	public static function validateText255()
 	{
-		return array(
-			new Main\Entity\Validator\Length(null, 50),
-		);
+		return [
+			new Validator\Length(null, 255),
+		];
 	}
 	/**
-	 * Returns validators for CRM_CREATE field.
+	 * Returns validators for a text field of up to 50 characters.
 	 *
 	 * @return array
+	 * @throws Main\ArgumentTypeException
 	 */
-	public static function validateCrmCreateField()
+	public static function validateText50()
 	{
-		return array(
-			new Main\Entity\Validator\Length(null, 50),
-		);
+		return [
+			new Validator\Length(null, 50),
+		];
 	}
 	/**
-	 * Returns validators for QUEUE_TYPE field.
+	 * Returns validators for a text field of up to 20 characters.
 	 *
 	 * @return array
+	 * @throws Main\ArgumentTypeException
 	 */
-	public static function validateQueueType()
+	public static function validateText20()
 	{
-		return array(
-			new Main\Entity\Validator\Length(null, 50),
-		);
+		return [
+			new Validator\Length(null, 20),
+		];
 	}
 	/**
-	 * Returns validators for NO_ANSWER_RULE field.
+	 * Returns validators for a text field of up to 5 characters.
 	 *
 	 * @return array
+	 * @throws Main\ArgumentTypeException
 	 */
-	public static function validateNoAnswerRule()
+	public static function validateText5()
 	{
-		return array(
-			new Main\Entity\Validator\Length(null, 50),
-		);
+		return [
+			new Validator\Length(null, 5),
+		];
 	}
 	/**
-	 * Returns validators for WORKTIME_FROM field.
+	 * Returns validators for a text field of up to 2 characters.
 	 *
 	 * @return array
+	 * @throws Main\ArgumentTypeException
 	 */
-	public static function validateWorktimeFrom()
+	public static function validateText2()
 	{
-		return array(
-			new Main\Entity\Validator\Length(null, 5),
-		);
-	}
-	/**
-	 * Returns validators for WORKTIME_TO field.
-	 *
-	 * @return array
-	 */
-	public static function validateWorktimeTo()
-	{
-		return array(
-			new Main\Entity\Validator\Length(null, 5),
-		);
-	}
-	/**
-	 * Returns validators for WORKTIME_TIMEZONE field.
-	 *
-	 * @return array
-	 */
-	public static function validateWorktimeTimezone()
-	{
-		return array(
-			new Main\Entity\Validator\Length(null, 50),
-		);
-	}
-	/**
-	 * Returns validators for WORKTIME_HOLIDAYS field.
-	 *
-	 * @return array
-	 */
-	public static function validateWorktimeHolidays()
-	{
-		return array(
-			new Main\Entity\Validator\Length(null, 2000),
-		);
-	}
-	/**
-	 * Returns validators for WORKTIME_DAYOFF field.
-	 *
-	 * @return array
-	 */
-	public static function validateWorktimeDayoff()
-	{
-		return array(
-			new Main\Entity\Validator\Length(null, 20),
-		);
-	}
-	/**
-	 * Returns validators for WORKTIME_DAYOFF_RULE field.
-	 *
-	 * @return array
-	 */
-	public static function validateWorktimeDayoffRule()
-	{
-		return array(
-			new Main\Entity\Validator\Length(null, 50),
-		);
-	}
-	/**
-	 * Returns validators for CLOSE_RULE field.
-	 *
-	 * @return array
-	 */
-	public static function validateCloseRule()
-	{
-		return array(
-			new Main\Entity\Validator\Length(null, 50),
-		);
-	}
-	/**
-	 * Returns validators for AUTO_CLOSE_RULE field.
-	 *
-	 * @return array
-	 */
-	public static function validateAutoCloseRule()
-	{
-		return array(
-			new Main\Entity\Validator\Length(null, 50),
-		);
-	}
-	/**
-	 * Returns validators for XML_ID field.
-	 *
-	 * @return array
-	 */
-	public static function validateXmlId()
-	{
-		return array(
-			new Main\Entity\Validator\Length(null, 255),
-		);
-	}
-	/**
-	 * Returns validators for LANGUAGE_ID field.
-	 *
-	 * @return array
-	 */
-	public static function validateLanguageId()
-	{
-		return array(
-			new Main\Entity\Validator\Length(null, 2),
-		);
+		return [
+			new Validator\Length(null, 2),
+		];
 	}
 
 	/**
 	 * Return current date for DATE_CREATE field.
 	 *
-	 * @return array
+	 * @return DateTime
+	 * @throws Main\ObjectException
 	 */
 	public static function getCurrentDate()
 	{
-		return new \Bitrix\Main\Type\DateTime();
-	}
-
-	/**
-	 * Returns validators for TYPE_MAX_CHAT field.
-	 *
-	 * @return array
-	 * @throws Main\ArgumentTypeException
-	 */
-	public static function validateTypeMaxChat()
-	{
-		return array(
-			new Main\Entity\Validator\Length(null, 50),
-		);
+		return new DateTime();
 	}
 }

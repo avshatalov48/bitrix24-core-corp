@@ -206,4 +206,5 @@ $MESS["TASKS_TTV_TEMPLATE_INACCESSIBLE"] = "шаблон недоступен д
 $MESS["TASKS_TTV_TASK_INACCESSIBLE"] = "задача недоступна для просмотра";
 $MESS["TASKS_TTDP_PROJECT_TASK_IN"] = "Задача в проекте (группе)";
 $MESS["TASKS_TTV_SUB_TITLE"] = "Шаблон задачи № #ID#";
+$MESS["TASKS_TTV_CANCEL_BUTTON_TEXT"] = "Отменить";
 ?>

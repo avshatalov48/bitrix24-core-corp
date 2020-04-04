@@ -17,6 +17,7 @@ $MESS["IMCONNECTOR_FAILED_TO_LOAD_MODULE_OPEN_LINES"] = "Не удалось з�
 $MESS["IMCONNECTOR_FAILED_TO_SAVE_SETTINGS_CONNECTOR"] = "Не удалось сохранить настройки коннектора";
 $MESS["IMCONNECTOR_FAILED_TO_TEST_CONNECTOR"] = "Не удалось протестировать соединение коннектора";
 $MESS["IMCONNECTOR_FAILED_REGISTER_CONNECTOR"] = "Не удалось зарегистрировать коннектор";
+$MESS["IMCONNECTOR_NOT_ACTIVE_LINE"] = "Линия c таким ID неактивна или не существует";
 
 $MESS["IMCONNECTOR_REST_APPLICATION_REGISTRATION_ERROR"] = "Ошибка регистрации приложения";
 $MESS["IMCONNECTOR_REST_APPLICATION_REGISTRATION_ERROR_POINT"] = "Ошибка регистрации приложения. В идентификаторе коннектора недопустимо использовать точку.";

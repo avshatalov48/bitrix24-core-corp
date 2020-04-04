@@ -22,10 +22,6 @@ if ($iQuoteId > 0)
 	\Bitrix\Main\Localization\Loc::loadMessages(__FILE__);
 
 	global $APPLICATION;
-	$arParams['PATH_TO_QUOTE_SHOW'] = CrmCheckPath('PATH_TO_QUOTE_SHOW', $arParams['PATH_TO_QUOTE_SHOW'], $APPLICATION->GetCurPage().'?quote_id=#quote_id#&show');
-	$arParams['PATH_TO_QUOTE_EDIT'] = CrmCheckPath('PATH_TO_QUOTE_EDIT', $arParams['PATH_TO_QUOTE_EDIT'], $APPLICATION->GetCurPage().'?quote_id=#quote_id#&edit');
-	$arParams['PATH_TO_CONTACT_SHOW'] = CrmCheckPath('PATH_TO_CONTACT_SHOW', $arParams['PATH_TO_CONTACT_SHOW'], $APPLICATION->GetCurPage().'?contact_id=#contact_id#&show');
-	$arParams['PATH_TO_COMPANY_SHOW'] = CrmCheckPath('PATH_TO_COMPANY_SHOW', $arParams['PATH_TO_COMPANY_SHOW'], $APPLICATION->GetCurPage().'?company_id=#company_id#&show');
 
 	$arResult['STATUS_LIST'] = CCrmStatus::GetStatusListEx('QUOTE_STATUS');
 
@@ -38,26 +34,10 @@ if ($iQuoteId > 0)
 		if (empty($arQuote[$ar['COMPLEX_ID']]))
 			$arQuote[$ar['COMPLEX_ID']] = CCrmFieldMulti::GetTemplateByComplex($ar['COMPLEX_ID'], $ar['VALUE']);
 
-	$arQuote['PATH_TO_QUOTE_SHOW'] = CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_QUOTE_SHOW'],
-		array(
-			'quote_id' => $iQuoteId
-		)
-	);
-	$arQuote['PATH_TO_QUOTE_EDIT'] = CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_QUOTE_EDIT'],
-		array(
-			'quote_id' => $iQuoteId
-		)
-	);
-	$arQuote['PATH_TO_CONTACT_SHOW'] = CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_CONTACT_SHOW'],
-		array(
-			'contact_id' => $arQuote['CONTACT_ID']
-		)
-	);
-	$arQuote['PATH_TO_COMPANY_SHOW'] = CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_COMPANY_SHOW'],
-		array(
-			'company_id' => $arQuote['COMPANY_ID']
-		)
-	);
+	$arQuote['PATH_TO_QUOTE_SHOW'] = \CCrmOwnerType::GetEntityShowPath(\CCrmOwnerType::Quote, $iQuoteId, false);
+	$arQuote['PATH_TO_QUOTE_EDIT'] = \CCrmOwnerType::GetEntityEditPath(\CCrmOwnerType::Quote, $iQuoteId, false);
+	$arQuote['PATH_TO_CONTACT_SHOW'] = \CCrmOwnerType::GetEntityShowPath(\CCrmOwnerType::Contact, $arQuote['CONTACT_ID'], false);
+	$arQuote['PATH_TO_COMPANY_SHOW'] = \CCrmOwnerType::GetEntityShowPath(\CCrmOwnerType::Company, $arQuote['COMPANY_ID'], false);
 
 	$arQuote['CONTACT_FORMATTED_NAME'] = $arQuote['CONTACT_ID'] <= 0 ? ''
 		: CCrmContact::PrepareFormattedName(
@@ -164,7 +144,7 @@ if ($iQuoteId > 0)
 </div>';
 	}
 
-	$strPhoto = '<a href="'.$arQuote['PATH_TO_QUOTE_SHOW'].'" class="bx-user-info-data-photo no-photo"></a>';
+	$strPhoto = '<a href="'.$arQuote['PATH_TO_QUOTE_SHOW'].'" class="bx-ui-tooltip-info-data-photo no-photo"></a>';
 
 	$strToolbar2 = '
 <div class="bx-user-info-data-separator"></div>

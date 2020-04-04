@@ -381,9 +381,12 @@ class EntityAddress
 		$connection = Main\Application::getConnection();
 		$helper = $connection->getSqlHelper();
 		$tableName = AddressTable::getTableName();
+		$typeSlug = implode(',', EntityAddressType::getAllIDs());
 		$conditionSql = implode(
 			' AND ',
 			array(
+				//HACK: DEFINE TYPE_ID IN WHERE CONDITION FOR MAKE MYSQL USE PK IN EFFECTIVE WAY
+				"TYPE_ID IN({$typeSlug})",
 				$helper->prepareAssignment($tableName, 'ENTITY_TYPE_ID', $entityTypeID),
 				$helper->prepareAssignment($tableName, 'ENTITY_ID', $entityID)
 			)
@@ -825,7 +828,7 @@ class EntityAddress
 
 		$fields = $lb->GetFields();
 		$entityAlias = $lb->GetTableAlias();
-		$join = 'INNER JOIN b_crm_addr ADDR_S ON '.$entityAlias.'.ID = ADDR_S.ENTITY_ID AND ADDR_S.TYPE_ID = '.$typeID.' AND ADDR_S.ENTITY_TYPE_ID = '.$entityTypeID;
+		$join = 'LEFT JOIN b_crm_addr ADDR_S ON '.$entityAlias.'.ID = ADDR_S.ENTITY_ID AND ADDR_S.TYPE_ID = '.$typeID.' AND ADDR_S.ENTITY_TYPE_ID = '.$entityTypeID;
 
 		$listSort = array();
 		foreach($sort as $fieldName => $order)

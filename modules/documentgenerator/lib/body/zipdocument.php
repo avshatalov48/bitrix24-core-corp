@@ -55,7 +55,7 @@ abstract class ZipDocument extends Body
 	 * Tries to open zip archive.
 	 * Returns true on success.
 	 *
-	 * @return bool|int
+	 * @return bool
 	 */
 	protected function open()
 	{

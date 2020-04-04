@@ -28,11 +28,13 @@ class VoximplantStartComponent extends \CBitrixComponent
 	{
 		$this->arResult['SHOW_LINES'] = $this->permissions->canPerform(\Bitrix\Voximplant\Security\Permissions::ENTITY_LINE, \Bitrix\Voximplant\Security\Permissions::ACTION_MODIFY);
 		$this->arResult['SHOW_STATISTICS'] = $this->permissions->canPerform(\Bitrix\Voximplant\Security\Permissions::ENTITY_CALL_DETAIL, \Bitrix\Voximplant\Security\Permissions::ACTION_VIEW);
-		$this->arResult['SHOW_PAY_BUTTON'	] = \Bitrix\Voximplant\Security\Helper::isAdmin() && !\Bitrix\Voximplant\Limits::isRestOnly();
-		$this->arResult['LINK_TO_BUY'] = CVoxImplantMain::GetBuyLink();
+		$this->arResult['SHOW_PAY_BUTTON'] = \Bitrix\Voximplant\Security\Helper::isAdmin() && !\Bitrix\Voximplant\Limits::isRestOnly();
+		$this->arResult['LINK_TO_BUY_SIP'] = CVoxImplantSip::getBuyLink();
 		$this->arResult['IS_REST_ONLY'] = \Bitrix\Voximplant\Limits::isRestOnly();
 		$this->arResult["MARKETPLACE_DETAIL_URL_TPL"] = $this->arParams["MARKETPLACE_DETAIL_URL_TPL"] ?: SITE_DIR . "marketplace/detail/#app#/";
 		$this->arResult['NUMBERS_LIST'] = [];
+		$userOptions = CUserOptions::GetOption("voximplant", "start", []);
+		$this->arResult['BALANCE_TYPE'] = $userOptions["balance_type"] === "sip" ? "sip" : "balance";
 
 		if(!$this->isRestOnly())
 		{
@@ -44,8 +46,7 @@ class VoximplantStartComponent extends \CBitrixComponent
 
 			if(!$accountInfo)
 			{
-				$arResult['ERROR_MESSAGE'] = $apiClient->GetError()->msg;
-
+				$this->arResult['ERROR_MESSAGE'] = $apiClient->GetError()->msg;
 				$this->includeComponentTemplate();
 				return false;
 			}
@@ -53,7 +54,10 @@ class VoximplantStartComponent extends \CBitrixComponent
 			$this->account->UpdateAccountInfo($accountInfo);
 			$rentedNumbers = CVoxImplantPhone::PrepareNumberFields($accountInfo->numbers);
 
-			if(count($rentedNumbers) != CVoxImplantPhone::GetRentedNumbersCount())
+			$numbersNumbersKeys = array_keys($rentedNumbers);
+			sort($numbersNumbersKeys, SORT_STRING);
+			$hash = md5(join("", $numbersNumbersKeys));
+			if($hash != CVoxImplantPhone::getRentedNumbersHash())
 			{
 				CVoxImplantPhone::syncWithController([
 					'numbers' => $rentedNumbers,
@@ -71,8 +75,12 @@ class VoximplantStartComponent extends \CBitrixComponent
 					'DESCRIPTION' => CVoxImplantPhone::getNumberDescription($rentedNumber)
 				];
 			}
+			$callerIds = CVoxImplantPhone::PrepareCallerIdFields($accountInfo->caller_ids);
 
-			$callerIds = array_values(CVoxImplantPhone::PrepareCallerIdFields($accountInfo->caller_ids));
+			CVoxImplantPhone::syncCallerIds([
+				'callerIds' => $callerIds
+			]);
+
 			foreach ($callerIds as $callerId)
 			{
 				$this->arResult['NUMBERS_LIST'][] = [
@@ -193,7 +201,7 @@ class VoximplantStartComponent extends \CBitrixComponent
 
 	public function canAddCallerId()
 	{
-		return (!in_array($this->account->GetAccountLang(), ['ua', 'kz', 'by']));
+		return false;
 	}
 
 	public function getMenuItems()
@@ -255,6 +263,16 @@ class VoximplantStartComponent extends \CBitrixComponent
 				'className' => 'voximplant-start-logo-bind-number',
 				'selected' => ($this->hasCallerIds() ? ' voximplant-tile-item-selected' : ''),
 				'onclick' => 'BX.Voximplant.Start.onAddCallerIdButtonClick();'
+			];
+		}
+
+		if($this->areContractorDocumentsAvailable())
+		{
+			$result[] = [
+				'id' => 7,
+				'title' => Loc::getMessage("VOX_START_CONTRACTOR_DOCUMENTS"),
+				'className' => 'voximplat-start-logo-contractor-documents',
+				'onclick' => 'BX.Voximplant.Start.onShowInvoicesButtonClick();'
 			];
 		}
 
@@ -332,6 +350,13 @@ class VoximplantStartComponent extends \CBitrixComponent
 		}
 
 		return $result;
+	}
+
+	public function areContractorDocumentsAvailable()
+	{
+		$account = new CVoxImplantAccount();
+
+		return $account->GetAccountLang(false) === 'ru';
 	}
 
 	public function getInstalledApps()
@@ -466,16 +491,21 @@ class VoximplantStartComponent extends \CBitrixComponent
 		$result = [];
 		$marketplaceItems = $this->getPartnerApps();
 
-		foreach ($marketplaceItems['ITEMS'] as $item)
+		if (is_array($marketplaceItems['ITEMS']))
 		{
-			if(is_null($item['INSTALLED_APP']))
-			$result[] = [
-				'id' => $item['ID'],
-				//'title' => $item['NAME'],
-				'description' => $item['SHORT_DESC'],
-				'image' => $item['ICON_PRIORITY'] ?: '',
-				'onclick' => 'BX.Voximplant.Start.showRestApplication(\''. $item['CODE'] .'\')'
-			];
+			foreach ($marketplaceItems['ITEMS'] as $item)
+			{
+				if(is_null($item['INSTALLED_APP']))
+				{
+					$result[] = [
+						'id' => $item['ID'],
+						//'title' => $item['NAME'],
+						'description' => $item['SHORT_DESC'],
+						'image' => $item['ICON_PRIORITY'] ?: '',
+						'onclick' => 'BX.Voximplant.Start.showRestApplication(\''. $item['CODE'] .'\')'
+					];
+				}
+			}
 		}
 
 		$telephonyAppsCount = $this->getTelephonyAppsCount();

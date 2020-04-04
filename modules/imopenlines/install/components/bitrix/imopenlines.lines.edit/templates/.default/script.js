@@ -12,6 +12,38 @@
 			BX.OpenLinesConfigEdit.bindEvents();
 			BX.OpenLinesConfigEdit.onLoad();
 		},
+		loadKpiTimeMenus : function(params)
+		{
+			if (params)
+			{
+				if (params.kpiFirstAnswer)
+				{
+					BX.ready(function(){
+						new BX.ImolKpiTimeMenu({
+							element: params.kpiFirstAnswer.element,
+							bindElement: params.kpiFirstAnswer.bindElement,
+							inputElement: params.kpiFirstAnswer.inputElement,
+							items: params.kpiFirstAnswer.items,
+							customInputId: 'imol_kpi_first_answer_time_custom_input',
+							fullBlockName: 'imol_kpi_first_answer_full_block'
+						});
+					});
+				}
+				if (params.kpiFurtherAnswer)
+				{
+					BX.ready(function(){
+						new BX.ImolKpiTimeMenu({
+							element: params.kpiFurtherAnswer.element,
+							bindElement: params.kpiFurtherAnswer.bindElement,
+							inputElement: params.kpiFurtherAnswer.inputElement,
+							items: params.kpiFurtherAnswer.items,
+							customInputId: 'imol_kpi_further_answer_time_custom_input',
+							fullBlockName: 'imol_kpi_further_answer_full_block'
+						});
+					});
+				}
+			}
+		},
 		initDestination : function(nodes, inputs, params)
 		{
 			if (destinationInstance === null)
@@ -20,6 +52,11 @@
 			destinationInstance.setUserDataInput(BX(nodes.userDataInputNode), inputs.userDataInputName);
 			destinationInstance.setDefaultUserDataInput(BX(nodes.defaultUserDataInputNode));
 		},
+		formSubmitAction : function()
+		{
+			BX.OpenLinesConfigEdit.sendUsersData();
+			BX.OpenLinesConfigEdit.updateLinesList();
+		},
 		sendUsersData : function()
 		{
 			if (destinationInstance !== null)
@@ -27,6 +64,11 @@
 				var selectedUsers = destinationInstance.params.selectedForMessage;
 				BX.SidePanel.Instance.postMessage(window, 'ImOpenlines:reloadUsersList', selectedUsers);
 			}
+		},
+		updateLinesList : function()
+		{
+			var configId = BX('imol_config_id').value;
+			BX.SidePanel.Instance.postMessage(window, 'ImOpenlines:updateLinesSubmit', configId);
 		},
 		addEventForTooltip : function()
 		{
@@ -105,8 +147,8 @@
 			var params = {
 				'PAGE': page
 			};
-
-			this.changeHistory(params);
+			BX('imol_config_current_page').value = page;
+			//this.changeHistory(params);
 		},
 		changeRatingRequest: function(ratingRequest)
 		{
@@ -149,35 +191,37 @@
 				BX('imol_action_auto_close_text')
 			);
 		},
-		changeNoAnswerValue: function(selector)
+		changeQueueTypeValue: function(selector)
 		{
-			var noAnswerInput = BX('imol_no_answer_rule_hidden');
-			if (!!noAnswerInput)
-			{
-				if (noAnswerInput.value == 'queue' && selector.options[selector.selectedIndex].value != 'evenly')
-				{
-					noAnswerInput.value = 'text';
-				}
-			}
-
 			if (selector.options[selector.selectedIndex].value == 'all')
 			{
 				BX.animationHandler.fadeSlideToggleByClass(BX('imol_limitation_max_chat_block'), false);
-				BX('imol_queue_time_title').innerHTML = BX.message('IMOL_CONFIG_EDIT_NA_TIME_NEW');
+				BX.animationHandler.fadeSlideToggleByClass(BX('imol_workers_time_block'), false);
 			}
-			else if (BX('imol_queue_time_title').innerHTML != BX.message('IMOL_CONFIG_EDIT_QUEUE_TIME'))
+			else
 			{
-				BX.animationHandler.fadeSlideToggleByClass(BX('imol_limitation_max_chat_block'), true);
-				BX('imol_queue_time_title').innerHTML = BX.message('IMOL_CONFIG_EDIT_QUEUE_TIME');
+				if(BX.hasClass(BX('imol_workers_time_block'), 'invisible'))
+				{
+					BX.animationHandler.fadeSlideToggleByClass(BX('imol_limitation_max_chat_block'), true);
+					if(BX('imol_limitation_max_chat').checked == true)
+					{
+						BX.animationHandler.fadeSlideToggleByClass(BX('imol_max_chat'), true);
+					}
+					BX.animationHandler.fadeSlideToggleByClass(BX('imol_workers_time_block'), true);
+				}
 			}
+		},
+		toggleKpiFirstBlock: function()
+		{
+			BX.animationHandler.fadeSlideToggleByClass(BX('imol_kpi_first_answer_inner_block'))
+		},
+		toggleKpiFurtherBlock: function()
+		{
+			BX.animationHandler.fadeSlideToggleByClass(BX('imol_kpi_further_answer_inner_block'))
 		},
 		toggleCrmBlock: function()
 		{
 			BX.animationHandler.fadeSlideToggleByClass(BX('imol_crm_block'))
-		},
-		toggleCheckOnlineBlock: function()
-		{
-			BX.animationHandler.fadeSlideToggleByClass(BX('imol_check_online_block'))
 		},
 		toggleCrmSourceRule: function()
 		{
@@ -207,10 +251,13 @@
 		},
 		toggleVoteBlock: function()
 		{
-			BX.animationHandler.fadeSlideToggleByClass(BX('imol_vote_message_block'));
+			if(BX('imol_vote_message').getAttribute('data-limit') != 'Y')
+			{
+				BX.animationHandler.fadeSlideToggleByClass(BX('imol_vote_message_block'));
 
-			var ratingRequest = BX(this).checked === true ? 'Y' : 'N';
-			BX.OpenLinesConfigEdit.changeRatingRequest(ratingRequest);
+				var ratingRequest = BX(this).checked === true ? 'Y' : 'N';
+				BX.OpenLinesConfigEdit.changeRatingRequest(ratingRequest);
+			}
 		},
 		toggleBotBlock: function()
 		{
@@ -253,6 +300,52 @@
 				BX('imol_worktime_dayoff_rule_form'),
 				BX('imol_worktime_dayoff_rule_text')
 			);
+		},
+		deleteOpenLine: function()
+		{
+			var configId = BX('imol_config_id').value;
+			BX.ajax.runComponentAction('bitrix:imopenlines.lines.edit', 'deleteOpenLine', {
+				mode: 'ajax',
+				data: {
+					configId: configId
+				}
+			}).then(function (response) {
+				BX.SidePanel.Instance.closeAll();
+				window.top.BX.UI.Notification.Center.notify({
+					content: BX.message('IMOL_CONFIG_EDIT_DELETE_NOTIFICATION_SUCCESS'),
+				});
+				location.href = BX.SidePanel.Instance.pageUrl;
+			}, function (response) {
+				BX('imol-alert-popup-text').innerHTML = BX.message('IMOL_CONFIG_EDIT_DELETE_FAIL');
+			});
+
+		},
+		showPopupDeleteConfirm: function()
+		{
+			var popup = new BX.PopupWindow({
+				closeByEsc: true,
+				content: BX('imol_delete_openline_popup'),
+				closeIcon: true,
+				className: 'imopenlines-control-alert-popup',
+				buttons: [
+					new BX.UI.Button({
+						text : BX.message('IMOL_CONFIG_EDIT_DELETE_THIS_OPENLINE_BUTTON'),
+						color: BX.UI.Button.Color.DANGER,
+						onclick: function(button, event) {
+							BX.addClass(button.button, "ui-btn-wait");
+							BX.OpenLinesConfigEdit.deleteOpenLine();
+						}
+					}),
+					new BX.UI.CancelButton({
+						events: {
+							click: function(button){
+								button.getContext().close();
+							}
+						}
+					}),
+				]
+			});
+			popup.show();
 		},
 
 		//toggle providers
@@ -348,7 +441,7 @@
 			BX.bind(
 				BX('imol_config_edit_form'),
 				'submit',
-				BX.OpenLinesConfigEdit.sendUsersData
+				BX.OpenLinesConfigEdit.formSubmitAction
 			);
 			BX.bind(
 				BX('imol_crm_create'),
@@ -401,11 +494,6 @@
 				BX.OpenLinesConfigEdit.toggleQueueUsersBlock
 			);
 			BX.bind(
-				BX('imol_check_online'),
-				'change',
-				BX.OpenLinesConfigEdit.toggleCheckOnlineBlock
-			);
-			BX.bind(
 				BX('imol_welcome_message'),
 				'change',
 				BX.OpenLinesConfigEdit.toggleAutoMessageBlock
@@ -425,10 +513,20 @@
 				'change',
 				BX.OpenLinesConfigEdit.actionAutoClose
 			);
+			BX.bind(
+				BX('imol_kpi_first_answer_alert'),
+				'change',
+				BX.OpenLinesConfigEdit.toggleKpiFirstBlock
+			);
+			BX.bind(
+				BX('imol_kpi_further_answer_alert'),
+				'change',
+				BX.OpenLinesConfigEdit.toggleKpiFurtherBlock
+			);
 			BX.bind(BX('imol_queue_type'),
 				'change',
 				function(e) {
-					BX.OpenLinesConfigEdit.changeNoAnswerValue(this);
+					BX.OpenLinesConfigEdit.changeQueueTypeValue(this);
 				}
 			);
 			BX.bind(
@@ -437,12 +535,41 @@
 				BX.OpenLinesConfigEdit.toggleQueueMaxChat
 			);
 			BX.bind(
+				BX('imol_active_checkbox'),
+				'change',
+				function (e) {
+					var configId = BX('imol_config_id').value;
+					if (this.checked)
+					{
+						BX.ajax.runComponentAction('bitrix:imopenlines.lines.edit', 'checkCanActiveLine', {
+							mode: 'ajax',
+							data: {
+								configId: configId
+							}
+						}).then(BX.proxy(function(data){
+							if (data.data === false)
+							{
+								this.checked = false;
+								alert(BX.message('IMOL_CONFIG_EDIT_POPUP_LIMITED_ACTIVE'));
+							}
+						}, this)).then(BX.proxy(function(data){
+							this.checked = false;
+						}, this));
+					}
+				}
+			);
+			BX.bind(
 				BX('imol_quick_answer_manage'),
 				'click',
 				function (e) {
 					e.preventDefault();
 					BX.OpenLinesConfigEdit.openQuickAnswers(this);
 				}
+			);
+			BX.bind(
+				BX('imol_delete_openline'),
+				'click',
+				BX.proxy(this.showPopupDeleteConfirm, this)
 			);
 			BX.bindDelegate(
 				document.body,
@@ -1463,7 +1590,7 @@
 		{
 			this.nodes = {
 				inputBox : BX(this.id + '-input-box'),
-				input : BX(this.id + '-input'),
+				//input : BX(this.id + '-input'),
 				container : BX(this.id + '-container'),
 				button : BX(this.id + '-add-button')
 			};
@@ -1544,7 +1671,7 @@
 			}
 			BX.onCustomEvent('onChangeDestination', [selectedId]);
 
-			this.nodes.input.innerHTML = '';
+			//this.nodes.input.innerHTML = '';
 			this.nodes.button.innerHTML = (BX.SocNetLogDestination.getSelectedCount(this.id) <= 0 ? BX.message("LM_ADD1") : BX.message("LM_ADD2"));
 		},
 		showAvatarPopup : function ()
@@ -1886,150 +2013,175 @@
 		}
 	};
 
-	/*var ImolAjax = function(signedParameters, componentName)
+	BX.ImolKpiTimeMenu = function(params)
 	{
-		this.signedParameters = signedParameters;
-		this.componentName = componentName;
-		this.loader = new ImolLoader();
+		this.element = params.element;
+		this.bindElement = document.getElementById(params.bindElement);
+		this.inputElement = document.getElementById(params.inputElement);
+		this.items = this.prepareItems(params.items);
+		this.fullBlockName = params.fullBlockName;
+		this.customInputId = params.customInputId;
 
 		this.init();
 	};
 
-	ImolAjax.prototype =
+	BX.ImolKpiTimeMenu.prototype =
 	{
 		init: function ()
-		{
-			BX.bindDelegate(
-				document.body,
-				'click',
-				{className: 'ui-sidepanel-menu-link'},
-				BX.proxy(this.reloadHandler, this)
-			);
-		},
-		reloadHandler: function (e)
-		{
-			e.preventDefault();
-			var context = BX.proxy_context;
-			var pageParams = this.getPageParam(context.getAttribute('href').toString());
-			this.reload(pageParams);
+		  {
+			  var params = {
+				  maxHeight: 600,
+				  minWidth: this.bindElement.offsetWidth
+			  };
 
-		},
-		reload: function (pageParams)
-		{
-			this.loader.show();
-			var page = pageParams.PAGE || 'queue-crm';
-			var id = pageParams.ID || 0;
+			  this.menu = new BX.PopupMenuWindow(
+				  this.element,
+				  this.bindElement,
+				  this.items,
+				  params
+			  );
 
-			BX.ajax.runComponentAction(this.componentName, 'loadPage', {
-				mode: 'class',
-				signedParameters: this.signedParameters,
-				data: {
-					ID: id,
-					PAGE: page
-				}
-			}).then(
-				BX.delegate(
-					function(response) {
-						var elem = BX.create('div');
-						elem.innerHTML = response.data.html;
-						BX('imol_config_edit_page').innerHTML = elem.querySelector('#imol_config_edit_page').innerHTML;
-						BX.remove(elem);
-						this.pageReloadActions(page);
-						this.loader.hide();
-					},
-					this
-				),
-				BX.delegate(
-					function(response) {
-						this.loader.hide();
-					},
-					this
-				)
-			);
-		},
-		pageReloadActions: function (page)
+			  BX.bind(this.bindElement, 'click', BX.delegate(this.show, this));
+		  },
+
+		show: function()
+		  {
+			  this.menu.show();
+		  },
+
+		close: function()
+		   {
+			   this.menu.close();
+		   },
+
+		prepareItems: function (items)
+		  {
+			  if (typeof items === "object")
+			  {
+				  items = Object.values(items)
+			  }
+
+			  var newItems = [];
+			  var newItem;
+
+			  for (var i = 0; i < items.length; i++)
+			  {
+				  newItem = this.prepareItem(items[i]);
+
+				  if (newItem.delimiterBefore)
+				  {
+					  newItems.push({delimiter: true});
+				  }
+
+				  newItems.push(newItem);
+
+				  if (newItem.delimiterAfter)
+				  {
+					  newItems.push({delimiter: true});
+				  }
+			  }
+
+			  return newItems;
+		  },
+
+		prepareItem: function (item)
+		 {
+			 var newItem = {};
+			 newItem.title = item.NAME;
+			 newItem.text = item.TITLE || item.NAME;
+			 newItem.delimiterAfter = item.DELIMITER_AFTER;
+			 newItem.delimiterBefore = item.DELIMITER_BEFORE;
+
+			 newItem.onclick = BX.delegate(
+				 function (event) {
+					 if (item.CUSTOM === 'Y')
+					 {
+						 var customParamWin = new BX.PopupWindow(null, event.target, {
+							 offsetLeft: event.target.offsetWidth,
+							 offsetTop: -event.target.offsetHeight,
+							 className: 'imopenlines-lines-edit-popup',
+							 autoHide: true,
+							 buttons: [
+								 new BX.PopupWindowButton({
+									 text: BX.message('IMOL_CONFIG_EDIT_KPI_ANSWER_TIME_SET'),
+									 className: 'ui-btn ui-btn-sm ui-btn-primary',
+									 events: {
+										 click: BX.proxy(function() {
+										 	var value = BX(this.customInputId).value;
+										 	 var innerHTML = value + ' ';
+										 	 innerHTML += item.TYPE == 'further' ? BX.message('IMOL_CONFIG_EDIT_KPI_ANSWER_TIME_MINUTES') : BX.message('IMOL_CONFIG_EDIT_KPI_ANSWER_TIME_SECONDS');
+											 this.bindElement.innerHTML = innerHTML;
+										 	 this.inputElement.value = item.TYPE == 'further' ? 60 * value : value;
+											 this.changeKpiBlock(value);
+											 customParamWin.destroy();
+											 this.close();
+										 }, this)
+									 }
+								 })
+							 ],
+							 events: {
+								 onPopupClose: function() { customParamWin.destroy(); }
+							 },
+							 contentNoPaddings: true,
+							 contentColor: 'white',
+							 content: BX.create('div', {
+								 props: {
+									 className: 'imopenlines-lines-edit-popup-content'
+								 },
+								 children: [
+									 BX.create('div', {
+										 props: {
+											 className: 'ui-ctl ui-ctl-textbox ui-ctl-inline'
+										 },
+										 style: {
+											 maxWidth: '45px'
+										 },
+										 children: [
+											 BX.create('input', {
+												 props: {
+													 type: 'number',
+													 className: 'ui-ctl-element imopenlines-lines-edit-popup-input-number',
+													 id: this.customInputId
+												 },
+												 style: {
+													 textAlign: 'center'
+												 }
+											 })
+										 ]
+									 }),
+									 BX.create('span', {
+										 props: {
+											 className: 'imopenlines-lines-edit-popup-text'
+										 },
+										 text: item.TYPE == 'further' ? BX.message('IMOL_CONFIG_EDIT_KPI_ANSWER_TIME_MINUTES') : BX.message('IMOL_CONFIG_EDIT_KPI_ANSWER_TIME_SECONDS')
+									 })
+								 ]
+							 })
+						 });
+
+						 customParamWin.show();
+					 }
+					 else
+					 {
+						 this.bindElement.innerHTML = item.NAME;
+						 this.inputElement.value = item.VALUE;
+						 this.changeKpiBlock(item.VALUE);
+						 this.close();
+					 }
+				 },
+				 this
+			 );
+
+			 return newItem;
+		 },
+
+		changeKpiBlock: function(value)
 		{
-			BX.OpenLinesConfigEdit.unbindAll();
-			BX.OpenLinesConfigEdit.init(page, this.signedParameters, this.componentName);
-			var arr = BX('imol_config_edit_page').getElementsByTagName('script');
-			for (var n = 0; n < arr.length; n++)
+			if (this.fullBlockName)
 			{
-				if (arr[n].getAttribute('type') !== 'text/html')
-				{
-					eval(arr[n].innerHTML);
-				}
+				var way = value != 0;
+				BX.animationHandler.fadeSlideToggleByClass(BX(this.fullBlockName), way);
 			}
-			this.loader.setSizeDelegated();
 		},
-		getPageParam: function (url)
-		{
-			var result = {};
-			if (url.charAt(0) === '/')
-			{
-				url = window.location.protocol + '//' + window.location.host + url;
-			}
-
-			var objUrl = new URL(url);
-			result.ID = objUrl.searchParams.get('ID');
-			result.PAGE = objUrl.searchParams.get('PAGE');
-
-			return result;
-		}
 	};
-
-	var ImolLoader = function()
-	{
-		this.parentNode = document.querySelector("#imopenlines-field-container");
-		this.blockNode = document.querySelector("#imol_config_edit_form");
-		this.body = BX.create("div", {
-			props: {
-				className: "imopenlines-side-panel-overlay"
-			},
-			children: [
-				BX.create("div", {
-					props: {
-						className: "side-panel-default-loader-container"
-					},
-					html:
-						'<svg class="side-panel-default-loader-circular" viewBox="25 25 50 50">' +
-						'<circle ' +
-						'class="side-panel-default-loader-path" ' +
-						'cx="50" cy="50" r="20" fill="none" stroke-miterlimit="10"' +
-						'/>' +
-						'</svg>'
-				})
-			]
-		});
-
-		this.setSizeDelegated();
-		this.bindResize();
-	};
-
-	ImolLoader.prototype =
-	{
-		show: function ()
-		{
-			this.parentNode.insertBefore(this.body, this.blockNode);
-		},
-		hide: function ()
-		{
-			this.parentNode.removeChild(this.body);
-		},
-		setSize: function () {
-			this.body.style.width = this.blockNode.clientWidth + "px";
-			this.body.style.height = this.blockNode.clientHeight + "px";
-		},
-		setSizeDelegated: function () {
-			setTimeout(
-				BX.delegate(function(event) {
-					this.setSize();
-				}, this),
-				100
-			)
-		},
-		bindResize: function ()
-		{
-			BX.bind(window, 'resize', this.setSizeDelegated.bind(this));
-		}
-	};*/
 })(window);

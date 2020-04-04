@@ -33,24 +33,19 @@ class Transferor
 		}
 
 		$parentConfig = $parentCall->getConfig();
-		$transferLineId = $parentConfig['ID'];
-		if($parentConfig['FORWARD_LINE'] != \CVoxImplantConfig::FORWARD_LINE_DEFAULT)
+		if(is_array($parentConfig['FORWARD_LINE']))
 		{
-			$row = ConfigTable::getRow([
-				'filter' => [
-					'=SEARCH_ID' => $parentConfig['FORWARD_LINE']
-				]
-			]);
-			if($row)
-			{
-				$transferLineId = $row['ID'];
-			}
+			$forwardConfig = $parentConfig['FORWARD_LINE'];
+		}
+		else
+		{
+			$forwardConfig = \CVoxImplantConfig::GetBriefConfig(['ID' => $parentConfig['ID']]);
 		}
 
 		$transferCall = Call::create([
 			'CALL_ID' => static::createCallId(),
 			'PARENT_CALL_ID' => $parentCallId,
-			'CONFIG_ID' => $transferLineId,
+			'CONFIG_ID' => $forwardConfig['ID'],
 			'USER_ID' => $userId,
 			'INCOMING' => \CVoxImplantMain::CALL_OUTGOING,
 			'CALLER_ID' => static::createCallerId($targetType, $targetId),
@@ -65,7 +60,7 @@ class Transferor
 
 		$transferCall->addUsers([$userId], CallUserTable::ROLE_CALLER, CallUserTable::STATUS_CONNECTED);
 
-		$transferCall->getScenario()->sendStartTransfer($userId, $transferCall->getCallId(), \CVoxImplantConfig::GetBriefConfig(['ID' => $transferLineId]));
+		$transferCall->getScenario()->sendStartTransfer($userId, $transferCall->getCallId(), $forwardConfig);
 		return $result;
 	}
 

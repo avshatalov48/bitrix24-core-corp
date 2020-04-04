@@ -3,14 +3,20 @@
 namespace Bitrix\Crm\Volume;
 
 use Bitrix\Crm;
+use Bitrix\Crm\Volume;
 use Bitrix\Main;
-use Bitrix\Main\Entity;
 use Bitrix\Main\ORM;
 use Bitrix\Main\Localization\Loc;
 
 
-class Event extends Crm\Volume\Base implements Crm\Volume\IVolumeClear, Crm\Volume\IVolumeClearFile, Crm\Volume\IVolumeUrl
+class Event
+	extends Volume\Base
+	implements Volume\IVolumeClear, Volume\IVolumeClearFile, Volume\IVolumeUrl
 {
+
+	// todo: remove it
+	//use Volume\ClearEvent;
+
 	/** @var array */
 	protected static $entityList = array(
 		Crm\EventTable::class,
@@ -30,9 +36,9 @@ class Event extends Crm\Volume\Base implements Crm\Volume\IVolumeClear, Crm\Volu
 		'DEAL_DATE_CLOSE' => 'DEAL.CLOSEDATE',
 		'LEAD_DATE_CLOSE' => 'LEAD.DATE_CLOSED',
 		'QUOTE_DATE_CLOSE' => 'QUOTE.CLOSEDATE',
-		'DATE_CREATE' => 'EVENT_BY.DATE_CREATE',
+		'DATE_CREATE' => 'DATE_CREATE',
 		'DATE_CREATED_SHORT' => 'DATE_CREATED_SHORT',
-		'SORT_ID' => 'EVENT_BY.ID',
+		'SORT_ID' => 'EVENT_ID',
 	);
 
 	/**
@@ -97,7 +103,7 @@ class Event extends Crm\Volume\Base implements Crm\Volume\IVolumeClear, Crm\Volu
 		if($entityListPath === null)
 		{
 			$entityListPath = \CComponentEngine::MakePathFromTemplate(
-				\Bitrix\Main\Config\Option::get('crm', 'path_to_event_list', '/crm/events/')
+				Main\Config\Option::get('crm', 'path_to_event_list', '/crm/events/')
 			);
 		}
 
@@ -154,39 +160,84 @@ class Event extends Crm\Volume\Base implements Crm\Volume\IVolumeClear, Crm\Volu
 	 */
 	public function prepareQuery($indicator = '')
 	{
+		if ($indicator !== '' && $indicator !== Volume\Event::className())
+		{
+			return $this->prepareRelationQuery($indicator);
+		}
+
+		$query = Crm\EventTable::query();
+
+		$relations = new ORM\Fields\Relations\Reference(
+			'RELATIONS',
+			Crm\EventRelationsTable::class,
+			ORM\Query\Join::on('this.ID', 'ref.EVENT_ID'),
+			array('join_type' => 'LEFT')
+		);
+		$query->registerRuntimeField($relations);
+
+
+		$query->registerRuntimeField(new ORM\Fields\ExpressionField(
+			'EVENT_ID',
+			'%s',
+			'ID'
+		));
+
+		$query->registerRuntimeField(new ORM\Fields\ExpressionField(
+			'DATE_CREATED_SHORT',
+			'DATE(%s)',
+			'DATE_CREATE'
+		));
+
+		return $query;
+	}
+
+	/**
+	 * Returns query.
+	 *
+	 * @param string $indicatorType Volume indicator class name.
+	 *
+	 * @return ORM\Query\Query
+	 */
+	public function prepareRelationQuery($indicatorType)
+	{
 		$query = Crm\EventRelationsTable::query();
 
-		/** @global \CDatabase $DB */
-		global $DB;
-
-		$dayField = new ORM\Fields\ExpressionField(
-			'DATE_CREATED_SHORT',
-			$DB->datetimeToDateFunction('%s'),
-			'EVENT_BY.DATE_CREATE'
+		$query->registerRuntimeField(
+			(new ORM\Fields\ExpressionField(
+				'DATE_CREATE',
+				'%s',
+				'EVENT_BY.DATE_CREATE'
+			))
+			->configureValueType(ORM\Fields\DatetimeField::class)
 		);
-		$query->registerRuntimeField($dayField);
+
+		$query->registerRuntimeField(new ORM\Fields\ExpressionField(
+			'DATE_CREATED_SHORT',
+			'DATE(%s)',
+			'DATE_CREATE'
+		));
 
 		if (
-			$indicator == Crm\Volume\Company::class
+			$indicatorType == Crm\Volume\Company::class
 		)
 		{
 			$companyRelation = new ORM\Fields\Relations\Reference(
 				'COMPANY',
 				Crm\CompanyTable::class,
 				ORM\Query\Join::on('this.ENTITY_ID', 'ref.ID')->where('this.ENTITY_TYPE', \CCrmOwnerType::CompanyName),
-				array('join_type' => ($indicator == Crm\Volume\Company::class ? 'INNER' : 'LEFT'))
+				array('join_type' => ($indicatorType == Crm\Volume\Company::class ? 'INNER' : 'LEFT'))
 			);
 			$query->registerRuntimeField($companyRelation);
 		}
 		elseif (
-			$indicator == Crm\Volume\Contact::class
+			$indicatorType == Crm\Volume\Contact::class
 		)
 		{
 			$leadRelation = new ORM\Fields\Relations\Reference(
 				'CONTACT',
 				Crm\ContactTable::class,
 				ORM\Query\Join::on('this.ENTITY_ID', 'ref.ID')->where('this.ENTITY_TYPE', \CCrmOwnerType::ContactName),
-				array('join_type' => ($indicator == Crm\Volume\Contact::class ? 'INNER' : 'LEFT'))
+				array('join_type' => ($indicatorType == Crm\Volume\Contact::class ? 'INNER' : 'LEFT'))
 			);
 			$query->registerRuntimeField($leadRelation);
 		}
@@ -196,7 +247,7 @@ class Event extends Crm\Volume\Base implements Crm\Volume\IVolumeClear, Crm\Volu
 				'DEAL',
 				Crm\DealTable::class,
 				ORM\Query\Join::on('this.ENTITY_ID', 'ref.ID')->where('this.ENTITY_TYPE', \CCrmOwnerType::DealName),
-				array('join_type' => ($indicator == Crm\Volume\Deal::class ? 'INNER' : 'LEFT'))
+				array('join_type' => ($indicatorType == Crm\Volume\Deal::class ? 'INNER' : 'LEFT'))
 			);
 			$query->registerRuntimeField($dealRelation);
 
@@ -204,7 +255,7 @@ class Event extends Crm\Volume\Base implements Crm\Volume\IVolumeClear, Crm\Volu
 				'LEAD',
 				Crm\LeadTable::class,
 				ORM\Query\Join::on('this.ENTITY_ID', 'ref.ID')->where('this.ENTITY_TYPE', \CCrmOwnerType::LeadName),
-				array('join_type' => ($indicator == Crm\Volume\Lead::class ? 'INNER' : 'LEFT'))
+				array('join_type' => ($indicatorType == Crm\Volume\Lead::class ? 'INNER' : 'LEFT'))
 			);
 			$query->registerRuntimeField($leadRelation);
 
@@ -212,7 +263,7 @@ class Event extends Crm\Volume\Base implements Crm\Volume\IVolumeClear, Crm\Volu
 				'QUOTE',
 				Crm\QuoteTable::class,
 				ORM\Query\Join::on('this.ENTITY_ID', 'ref.ID')->where('this.ENTITY_TYPE', \CCrmOwnerType::QuoteName),
-				array('join_type' => ($indicator == Crm\Volume\Quote::class ? 'INNER' : 'LEFT'))
+				array('join_type' => ($indicatorType == Crm\Volume\Quote::class ? 'INNER' : 'LEFT'))
 			);
 			$query->registerRuntimeField($leadRelation);
 
@@ -223,13 +274,13 @@ class Event extends Crm\Volume\Base implements Crm\Volume\IVolumeClear, Crm\Volu
 				'INVOICE',
 				Crm\InvoiceTable::class,
 				ORM\Query\Join::on('this.ENTITY_ID', 'ref.ID')->where('this.ENTITY_TYPE', \CCrmOwnerType::InvoiceName),
-				array('join_type' => ($indicator == Crm\Volume\Invoice::class ? 'INNER' : 'LEFT'))
+				array('join_type' => ($indicatorType == Crm\Volume\Invoice::class ? 'INNER' : 'LEFT'))
 			);
 			$query->registerRuntimeField($leadRelation);
 
 			$dayField = new ORM\Fields\ExpressionField(
 				'INVOICE_DATE_CREATE_SHORT',
-				$DB->datetimeToDateFunction('%s'),
+				'DATE(%s)',
 				'INVOICE.DATE_INSERT'
 			);
 			$query->registerRuntimeField($dayField);
@@ -277,7 +328,7 @@ class Event extends Crm\Volume\Base implements Crm\Volume\IVolumeClear, Crm\Volu
 				continue;
 			}
 			$key0 = trim($key, '<>!=');
-			if ($key0 == 'STAGE_SEMANTIC_ID')
+			if ($key0 == 'STAGE_SEMANTIC_ID' && $query->getEntity()->hasField($key0))
 			{
 				$query->where(ORM\Query\Query::filter()
 					->logic('or')
@@ -329,10 +380,16 @@ class Event extends Crm\Volume\Base implements Crm\Volume\IVolumeClear, Crm\Volu
 	{
 		if (!class_exists('\\Bitrix\\Crm\\Volume\\EventFileReferenceTable'))
 		{
-			$connection = \Bitrix\Main\Application::getConnection();
+			$connection = Main\Application::getConnection();
 			$helper = $connection->getSqlHelper();
 
 			$eventTable = $helper->quote(Crm\EventTable::getTableName());
+
+			for ($i = 2, $auxiliaries = ['1 as n']; $i <= 50; $i++)
+			{
+				$auxiliaries[] = $i;
+			}
+			$auxiliarySql = implode(' union select ', $auxiliaries);
 
 			// analise b_crm_event with non empty field FILES
 			$querySql = "(
@@ -340,26 +397,7 @@ class Event extends Crm\Volume\Base implements Crm\Volume\IVolumeClear, Crm\Volu
 					src.ID AS EVENT_ID,
 					CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(src.fids, ' ', NS.n), ' ', -1) AS UNSIGNED) as FILE_ID
 				from (
-					select 1 as n union
-					select 2 union
-					select 3 union
-					select 4 union
-					select 5 union
-					select 6 union
-					select 7 union
-					select 8 union
-					select 9 union
-					select 10 union
-					select 11 union
-					select 12 union
-					select 13 union
-					select 14 union
-					select 15 union
-					select 16 union
-					select 17 union
-					select 18 union
-					select 19 union
-					select 20
+					select {$auxiliarySql}
 				) NS
 				inner join
 				(
@@ -376,19 +414,11 @@ class Event extends Crm\Volume\Base implements Crm\Volume\IVolumeClear, Crm\Volu
 				ON NS.n <= src.len
 			)";
 
-			\Bitrix\Main\ORM\Entity::compileEntity(
+			Main\ORM\Entity::compileEntity(
 				'EventFileReference',
 				array(
 					'EVENT_ID' => array('data_type' => 'integer'),
 					'FILE_ID' => array('data_type' => 'integer'),
-					/*
-					new ORM\Fields\Relations\Reference(
-						'EVENT',
-						Crm\EventTable::class,
-						array('=this.EVENT_ID' => 'ref.ID'),
-						array('join_type' => 'INNER')
-					),
-					*/
 					new ORM\Fields\Relations\Reference(
 						'FILE',
 						Main\FileTable::class,
@@ -400,9 +430,7 @@ class Event extends Crm\Volume\Base implements Crm\Volume\IVolumeClear, Crm\Volu
 			);
 		}
 
-		/** @var \Bitrix\Main\ORM\Query\Query $query */
-		//$query = Crm\Volume\EventFileReferenceTable::query();
-
+		/** @var Main\ORM\Query\Query $query */
 		$query = $this->prepareQuery($indicator);
 		$this->prepareFilter($query);
 
@@ -410,7 +438,7 @@ class Event extends Crm\Volume\Base implements Crm\Volume\IVolumeClear, Crm\Volu
 		$fileRef = new ORM\Fields\Relations\Reference(
 			'FILEREF',
 			Crm\Volume\EventFileReferenceTable::class,
-			ORM\Query\Join::on('this.EVENT_ID', 'ref.EVENT_ID'),
+			ORM\Query\Join::on('this.ID', 'ref.EVENT_ID'),
 			array('join_type' => 'INNER')
 		);
 		$query->registerRuntimeField($fileRef);
@@ -451,15 +479,14 @@ class Event extends Crm\Volume\Base implements Crm\Volume\IVolumeClear, Crm\Volu
 			$avgEventTableRowLength = (double)self::$tablesInformation[Crm\EventTable::getTableName()]['AVG_SIZE'];
 			$avgEventRelationsTableRowLength = (double)self::$tablesInformation[Crm\EventRelationsTable::getTableName()]['AVG_SIZE'];
 
-			$connection = \Bitrix\Main\Application::getConnection();
+			$connection = Main\Application::getConnection();
 
 			$this->checkTemporally();
 
 			$data = array(
 				'INDICATOR_TYPE' => '',
 				'OWNER_ID' => '',
-				'DATE_CREATE' => new \Bitrix\Main\Type\Date(),
-				'STAGE_SEMANTIC_ID' => '',
+				'DATE_CREATE' => new Main\Type\Date(),
 				'ENTITY_COUNT' => '',
 				'ENTITY_SIZE' => '',
 			);
@@ -476,20 +503,16 @@ class Event extends Crm\Volume\Base implements Crm\Volume\IVolumeClear, Crm\Volu
 				->addSelect('OWNER_ID')
 
 				//date
-				->addSelect('DATE_CREATED_SHORT', 'DATE_CREATE')
+				->addSelect('DATE_CREATED_SHORT')
 				->addGroup('DATE_CREATED_SHORT')
 
-				// STAGE_SEMANTIC_ID
-				->addSelect('STAGE_SEMANTIC_ID')
-				->addGroup('STAGE_SEMANTIC_ID')
-
-				->registerRuntimeField(new ORM\Fields\ExpressionField('ENTITY_COUNT', 'COUNT(DISTINCT %s)', 'EVENT_BY.ID'))
+				->registerRuntimeField(new ORM\Fields\ExpressionField('ENTITY_COUNT', 'COUNT(DISTINCT %s)', 'EVENT_ID'))
 				->addSelect('ENTITY_COUNT')
 
 				->registerRuntimeField(new ORM\Fields\ExpressionField(
 					'ENTITY_SIZE',
 					'COUNT(DISTINCT %s) * '.$avgEventTableRowLength. ' + COUNT(%s) * '.$avgEventRelationsTableRowLength,
-					array('EVENT_BY.ID', 'EVENT_ID')
+					array('ID', 'RELATIONS.ID')
 				))
 				->addSelect('ENTITY_SIZE');
 
@@ -510,30 +533,35 @@ class Event extends Crm\Volume\Base implements Crm\Volume\IVolumeClear, Crm\Volu
 	 */
 	public function measureFiles()
 	{
-		$querySql = $this->prepareEventQuery(array(
-			'DATE_CREATE' => 'DATE_CREATED_SHORT',
-			'STAGE_SEMANTIC_ID' => 'STAGE_SEMANTIC_ID',
-		));
-
-		if ($querySql != '')
+		$eventQuery = $this->prepareQuery();
+		if ($this->prepareFilter($eventQuery))
 		{
+			$entityGroupField = array(
+				'DATE_CREATED_SHORT' => 'DATE_CREATED_SHORT',
+			);
+
+			$eventFileQuery = $this->getEventFileMeasureQuery();
+			foreach ($entityGroupField as $alias => $field)
+			{
+				$eventFileQuery->addSelect($field, $alias);
+				$eventFileQuery->addGroup($field);
+			}
+
+			$querySql = $eventFileQuery->getQuery();
+
 			$querySql = "
 				SELECT 
 					'".static::getIndicatorId()."' as INDICATOR_TYPE,
 					'".$this->getOwner()."' as OWNER_ID,
-					DATE_CREATE,
-					STAGE_SEMANTIC_ID, 
+					DATE_CREATED_SHORT as DATE_CREATE,
 					SUM(FILE_SIZE) as FILE_SIZE,
-					SUM(FILE_COUNT) as FILE_COUNT,
-					0 as DISK_SIZE,
-					0 as DISK_COUNT
+					SUM(FILE_COUNT) as FILE_COUNT
 				FROM 
 				(
 					{$querySql}
 				) src
 				GROUP BY
-					DATE_CREATE,
-					STAGE_SEMANTIC_ID
+					DATE_CREATE
 				HAVING 
 					SUM(FILE_COUNT) > 0
 			";
@@ -543,14 +571,11 @@ class Event extends Crm\Volume\Base implements Crm\Volume\IVolumeClear, Crm\Volu
 				array(
 					'FILE_SIZE' => 'destination.FILE_SIZE + source.FILE_SIZE',
 					'FILE_COUNT' => 'destination.FILE_COUNT + source.FILE_COUNT',
-					'DISK_SIZE' => 'destination.DISK_SIZE + source.DISK_SIZE',
-					'DISK_COUNT' => 'destination.DISK_COUNT + source.DISK_COUNT',
 				),
 				array(
 					'INDICATOR_TYPE',
 					'OWNER_ID',
 					'DATE_CREATE',
-					'STAGE_SEMANTIC_ID',
 				)
 			);
 		}
@@ -568,15 +593,15 @@ class Event extends Crm\Volume\Base implements Crm\Volume\IVolumeClear, Crm\Volu
 	{
 		$count = -1;
 
-		if (count($this->getFilter()) === 0)
+		if (count($this->getFilter()) > 0)
 		{
-			$query = Crm\EventTable::query();
-			$countField = new ORM\Fields\ExpressionField('CNT', 'COUNT(%s)', 'ID');
+			$query = $this->prepareQuery();
+			$countField = new ORM\Fields\ExpressionField('CNT', 'COUNT(DISTINCT %s)', 'EVENT_ID');
 		}
 		else
 		{
-			$query = $this->prepareQuery();
-			$countField = new ORM\Fields\ExpressionField('CNT', 'COUNT(DISTINCT %s)', 'EVENT_BY.ID');
+			$query = Crm\EventTable::query();
+			$countField = new ORM\Fields\ExpressionField('CNT', 'COUNT(%s)', 'ID');
 		}
 
 		if ($this->prepareFilter($query))
@@ -606,18 +631,15 @@ class Event extends Crm\Volume\Base implements Crm\Volume\IVolumeClear, Crm\Volu
 	{
 		$count = -1;
 
-		if (count($this->getFilter()) === 0)
+		if (count($this->getFilter()) > 0)
 		{
-			$query = Crm\EventTable::query();
-			$countField = new ORM\Fields\ExpressionField('CNT', 'COUNT(%s)', 'ID');
+			$query = $this->prepareQuery();
+			$countField = new ORM\Fields\ExpressionField('CNT', 'COUNT(DISTINCT %s)', 'EVENT_ID');
 		}
 		else
 		{
-			$query = $this->prepareQuery();
-			$countField = new ORM\Fields\ExpressionField('CNT', 'COUNT(DISTINCT %s)', 'EVENT_BY.ID');
-
-			$filesFieldAlias = new ORM\Fields\ExpressionField('FILES', '%s', 'EVENT_BY.FILES');
-			$query->registerRuntimeField($filesFieldAlias);
+			$query = Crm\EventTable::query();
+			$countField = new ORM\Fields\ExpressionField('CNT', 'COUNT(%s)', 'ID');
 		}
 
 		if ($this->prepareFilter($query))
@@ -651,25 +673,25 @@ class Event extends Crm\Volume\Base implements Crm\Volume\IVolumeClear, Crm\Volu
 			return false;
 		}
 
-		if (count($this->getFilter()) === 0)
+		if (count($this->getFilter()) > 0)
 		{
-			$query = Crm\EventRelationsTable::query();
+			$query = $this->prepareQuery();
 		}
 		else
 		{
-			$query = $this->prepareQuery();
+			$query = Crm\EventTable::query();
 		}
 
 		if ($this->prepareFilter($query))
 		{
 			$query
-				->addSelect('ID', 'RELATION_ID')
+				->addSelect('ID')
 				->setLimit(self::MAX_ENTITY_PER_INTERACTION)
-				->setOrder(array('RELATION_ID' => 'ASC'));
+				->setOrder(array('ID' => 'ASC'));
 
 			if ($this->getProcessOffset() > 0)
 			{
-				$query->where('RELATION_ID', '>', $this->getProcessOffset());
+				$query->where('ID', '>', $this->getProcessOffset());
 			}
 
 			$res = $query->exec();
@@ -678,15 +700,15 @@ class Event extends Crm\Volume\Base implements Crm\Volume\IVolumeClear, Crm\Volu
 			$entity = new \CCrmEvent();
 			while ($event = $res->fetch())
 			{
-				$this->setProcessOffset($event['RELATION_ID']);
+				$this->setProcessOffset($event['ID']);
 
-				if ($entity->Delete($event['RELATION_ID'], array('CURRENT_USER' => $this->getOwner())) !== false)
+				if ($entity->Delete($event['ID'], array('CURRENT_USER' => $this->getOwner())) !== false)
 				{
 					$this->incrementDroppedEntityCount();
 				}
 				else
 				{
-					$this->collectError(new Main\Error('Deletion failed with event #'.$event['RELATION_ID'], self::ERROR_DELETION_FAILED));
+					$this->collectError(new Main\Error('Deletion failed with event #'.$event['ID'], self::ERROR_DELETION_FAILED));
 					$this->incrementFailCount();
 				}
 
@@ -712,38 +734,27 @@ class Event extends Crm\Volume\Base implements Crm\Volume\IVolumeClear, Crm\Volu
 			return false;
 		}
 
-		if (count($this->getFilter()) === 0)
+		if (count($this->getFilter()) > 0)
 		{
-			$query = Crm\EventRelationsTable::query();
+			$query = $this->prepareQuery();
 		}
 		else
 		{
-			$query = $this->prepareQuery();
+			$query = Crm\EventTable::query();
 		}
 
 		if ($this->prepareFilter($query))
 		{
-			$eventIds = new ORM\Fields\ExpressionField('EID', 'DISTINCT %s', 'EVENT_BY.ID');
-
 			$query
-				->registerRuntimeField($eventIds)
-				->addSelect('EID')
-				->addSelect('EVENT_BY.FILES', 'FILES')
+				->addSelect('ID')
+				->addSelect('FILES')
 				->setLimit(self::MAX_FILE_PER_INTERACTION)
-				->setOrder(array('EVENT_BY.ID' => 'ASC'))
-				//->where('FILES', '>', 6)// length of serialized string 'a:0:{}'
-				->whereNotNull('EVENT_BY.FILES')
+				->setOrder(array('ID' => 'ASC'))
+				->whereNotNull('FILES')
 			;
-			/*
-			$query
-				->whereNotNull('EVENT_BY.FILES')
-				->where('EVENT_BY.FILES', '!=', '')
-				->where('EVENT_BY.FILES', '!=', 'a:0:{}');
-			*/
-
 			if ($this->getProcessOffset() > 0)
 			{
-				$query->where('EVENT_BY.ID', '>', $this->getProcessOffset());
+				$query->where('ID', '>', $this->getProcessOffset());
 			}
 
 			$result = $query->exec();
@@ -751,10 +762,10 @@ class Event extends Crm\Volume\Base implements Crm\Volume\IVolumeClear, Crm\Volu
 			$success = true;
 			while ($event = $result->fetch())
 			{
-				$files = unserialize($event['FILES']);
+				$files = unserialize($event['FILES'], [false]);
 				if (!is_array($files))
 				{
-					$this->setProcessOffset($event['EID']);
+					$this->setProcessOffset($event['ID']);
 					continue;
 				}
 
@@ -776,11 +787,11 @@ class Event extends Crm\Volume\Base implements Crm\Volume\IVolumeClear, Crm\Volu
 
 				if (count($files) > 0)
 				{
-					$res = Crm\EventTable::update($event['EID'], array('FILES' => serialize($files)));
+					$res = Crm\EventTable::update($event['ID'], array('FILES' => serialize($files)));
 				}
 				else
 				{
-					$res = Crm\EventTable::update($event['EID'], array('FILES' => null));
+					$res = Crm\EventTable::update($event['ID'], array('FILES' => null));
 				}
 				if ($res->isSuccess())
 				{
@@ -797,7 +808,7 @@ class Event extends Crm\Volume\Base implements Crm\Volume\IVolumeClear, Crm\Volu
 					break;
 				}
 
-				$this->setProcessOffset($event['EID']);
+				$this->setProcessOffset($event['ID']);
 			}
 		}
 

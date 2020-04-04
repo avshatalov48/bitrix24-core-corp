@@ -446,7 +446,7 @@ class CIntranetEventHandlers
 		if ($arParams['IBLOCK_ID'] == COption::GetOptionInt('intranet', 'iblock_structure', 0))
 		{
 			if(!array_key_exists("IBLOCK_SECTION_ID", $arParams)
-				|| count($arParams['IBLOCK_SECTION_ID']) <= 0
+				|| (is_array($arParams['IBLOCK_SECTION_ID']) && count($arParams['IBLOCK_SECTION_ID']) <= 0)
 				|| $arParams['IBLOCK_SECTION_ID'] <= 0)
 			{
 				$dbRes = CIBlockSection::GetList(array(), array('IBLOCK_ID' => $arParams['IBLOCK_ID'], 'SECTION_ID' => 0));
@@ -467,7 +467,7 @@ class CIntranetEventHandlers
 			$arParams['IBLOCK_ID'] == COption::GetOptionInt('intranet', 'iblock_structure', 0)
 			&& array_key_exists("IBLOCK_SECTION_ID", $arParams)
 			&& (
-				count($arParams['IBLOCK_SECTION_ID']) <= 0
+				(is_array($arParams['IBLOCK_SECTION_ID']) && count($arParams['IBLOCK_SECTION_ID']) <= 0)
 				|| $arParams['IBLOCK_SECTION_ID'] <= 0
 			)
 		)
@@ -1039,10 +1039,17 @@ class CIntranetEventHandlers
 
 	function OnAfterUserAdd($arUser)
 	{
-		if ($arUser['ID'] > 0 && $arUser['ACTIVE'] == 'Y'
+		static
+			$processedIdListIblock = [],
+			$processedIdListDepartment = [];
+
+		if (
+			$arUser['ID'] > 0
+			&& $arUser['ACTIVE'] == 'Y'
 			&& !in_array($arUser['EXTERNAL_AUTH_ID'], array('replica', 'email', 'bot', 'imconnector'))
 			&& !defined('INTR_SKIP_EVENT_ADD')
 			&& ($IBLOCK_ID = COption::GetOptionInt('intranet', 'iblock_state_history', ''))
+			&& !in_array($arUser['ID'], $processedIdListIblock)
 		)
 		{
 			static $ACCEPTED_ENUM_ID = null;
@@ -1086,12 +1093,19 @@ class CIntranetEventHandlers
 			{
 				CIntranetNotify::NewUserMessage($arUser['ID']);
 			}
+
+			$processedIdListIblock[] = $arUser['ID'];
 		}
 
-		if(array_key_exists('UF_DEPARTMENT', $arUser))
+		if(
+			array_key_exists('UF_DEPARTMENT', $arUser)
+			&& !in_array($arUser['ID'], $processedIdListDepartment)
+		)
 		{
 			\Bitrix\Intranet\Internals\UserSubordinationTable::reInitialize();
 			\Bitrix\Intranet\Internals\UserToDepartmentTable::reInitialize();
+
+			$processedIdListDepartment[] = $arUser['ID'];
 		}
 	}
 
@@ -1331,6 +1345,7 @@ RegisterModuleDependences('iblock', 'OnAfterIBlockSectionUpdate', 'intranet', 'C
 		}
 	}
 
+	// unregistered
 	public static function OnBeforeProlog()
 	{
 		$conditionList = array();
@@ -1409,6 +1424,11 @@ RegisterModuleDependences('main', 'OnBeforeProlog', 'intranet', 'CIntranetEventH
 		if(defined("ADMIN_SECTION") && ADMIN_SECTION == true)
 			return;
 
+		if (self::isSkipWizardButton())
+		{
+			return;
+		}
+
 		if($USER->IsAdmin())
 		{
 			$hint = GetMessage('INTR_SET_BUT_HINT');
@@ -1461,6 +1481,26 @@ RegisterModuleDependences('main', 'OnBeforeProlog', 'intranet', 'CIntranetEventH
 
 			$APPLICATION->AddPanelButton($arButton);
 		}
+	}
+
+	/**
+	 * @return bool
+	 * @throws \Bitrix\Main\ArgumentNullException
+	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
+	 */
+	private static function isSkipWizardButton()
+	{
+		if (\Bitrix\Main\Config\Option::get("sale", "~IS_SALE_CRM_SITE_MASTER_FINISH") === "Y"
+			|| \Bitrix\Main\Config\Option::get("sale", "~IS_SALE_BSM_SITE_MASTER_FINISH") === "Y"
+		)
+		{
+			if (\Bitrix\Main\Config\Option::get("main", "wizard_solution", "bitrix:portal", SITE_ID) != "bitrix:portal")
+			{
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	public static function GetEntity_News($arFields, $bMail)
@@ -1924,6 +1964,40 @@ RegisterModuleDependences('main', 'OnBeforeProlog', 'intranet', 'CIntranetEventH
 				global $CACHE_MANAGER;
 				$CACHE_MANAGER->ClearByTag("bitrix24_left_menu");
 			}
+		}
+	}
+
+	public static function OnAfterSocServUserAdd($event)
+	{
+		global $USER;
+		$userId = 0;
+		$authId = '';
+		if ($event instanceof \Bitrix\Main\Entity\Event)
+		{
+			$fields = $event->getParameter("fields");
+			$userId = $fields["USER_ID"];
+			$authId = $fields["EXTERNAL_AUTH_ID"];
+		}
+		elseif (is_array($event))
+		{
+			$userId = $event["USER_ID"];
+			$authId = $event["EXTERNAL_AUTH_ID"];
+		}
+
+		if ($userId > 0 && $authId == CSocServBitrix24Net::ID)
+		{
+			if (is_object($USER) && $USER->isAuthorized() && $userId == $USER->getId())
+			{
+				$arGroups = $USER->GetUserGroupArray();
+			}
+			else
+			{
+				$obUser = new CUser();
+				$arGroups = $obUser->GetUserGroup(intval($userId));
+			}
+			$isAdmin = in_array(1, $arGroups);
+
+			CIntranetInviteDialog::logAction($userId, 'socialservices', 'user_init', $isAdmin? 'is_admin': 'is_user');
 		}
 	}
 }

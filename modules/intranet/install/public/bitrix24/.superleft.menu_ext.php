@@ -62,7 +62,15 @@ $arMenu = array(
 	)
 );
 
-if (\Bitrix\Main\ModuleManager::isModuleInstalled("landing"))
+if (
+	\Bitrix\Main\Loader::includeModule("landing") &&
+	(
+		!is_callable(["\Bitrix\Landing\Rights", "hasAdditionalRight"]) ||
+		\Bitrix\Landing\Rights::hasAdditionalRight(
+			\Bitrix\Landing\Rights::ADDITIONAL_RIGHTS["menu24"]
+		)
+	)
+)
 {
 	$arMenu[] = array(
 		GetMessage("MENU_SITES"),
@@ -170,7 +178,6 @@ if (CModule::IncludeModule("crm") && \Bitrix\Crm\Tracking\Manager::isAccessible(
 		array(),
 		array(
 			"menu_item_id" => "menu_crm_tracking",
-			"is_beta" => true
 		),
 		""
 	);
@@ -178,6 +185,25 @@ if (CModule::IncludeModule("crm") && \Bitrix\Crm\Tracking\Manager::isAccessible(
 
 if (CModule::IncludeModule("crm") && CCrmSaleHelper::isShopAccess())
 {
+	if(\Bitrix\Main\Loader::includeModule('salescenter') && \Bitrix\SalesCenter\Driver::getInstance()->isEnabled())
+	{
+		$arMenu[] = array(
+			GetMessage("MENU_SALESCENTER_SECTION"),
+			"/saleshub/",
+			array(),
+			array(
+				"real_link" => getLeftMenuItemLink(
+					"top_menu_id_saleshub",
+					"/saleshub/"
+				),
+				"menu_item_id" => "menu-sale-center",
+				"top_menu_id" => "top_menu_id_saleshub",
+				"is_beta" => true,
+			),
+			""
+		);
+	}
+
 	$arMenu[] = array(
 		GetMessage("MENU_SHOP"),
 		"/shop/menu/",
@@ -208,7 +234,6 @@ if (CModule::IncludeModule("sender") && \Bitrix\Sender\Security\User::current()-
 				"/marketing/"
 			),
 			"menu_item_id" => "menu_marketing",
-			"is_beta" => true
 		),
 		""
 	);
@@ -341,6 +366,26 @@ if (IsModuleInstalled("bitrix24") &&  in_array($licensePrefix, array('ru', 'kz',
 	}
 }
 
+if (\Bitrix\Main\Loader::includeModule('report') && \Bitrix\Report\VisualConstructor\Helper\Analytic::isEnable())
+{
+	\Bitrix\Main\UI\Extension::load('report.js.analytics');
+	$arMenu[] = array(
+		GetMessage("MENU_REPORT_ANALYTICS"),
+		"/report/analytics/",
+		array(),
+		array(
+			"real_link" => getLeftMenuItemLink(
+				"top_menu_id_analytics",
+				"/report/analytics/"
+			),
+			"menu_item_id" => "menu_analytics",
+			"top_menu_id" => "top_menu_id_analytics",
+			"is_beta" => true
+		),
+		""
+	);
+}
+
 $arMenu[] = array(
 	GetMessage("MENU_EMPLOYEE"),
 	"/company/",
@@ -372,7 +417,7 @@ $arMenu[] = array(
 	""
 );
 
-if (CModule::IncludeModule("imopenlines") && \Bitrix\ImOpenlines\Security\Helper::isMainMenuEnabled())
+/*if (CModule::IncludeModule("imopenlines") && \Bitrix\ImOpenlines\Security\Helper::isMainMenuEnabled())
 {
 	$arMenu[] = array(
 		GetMessage("MENU_OPENLINES_LINES_SINGLE"),
@@ -388,7 +433,7 @@ if (CModule::IncludeModule("imopenlines") && \Bitrix\ImOpenlines\Security\Helper
 		),
 		""
 	);
-}
+}*/
 
 if (CModule::IncludeModule('voximplant') && \Bitrix\Voximplant\Security\Helper::isMainMenuEnabled())
 {
@@ -483,24 +528,6 @@ $arMenu[] = array(
 );
 
 
-if (\Bitrix\Main\Loader::includeModule('report') && \Bitrix\Report\VisualConstructor\Helper\Analytic::isEnable())
-{
-	\Bitrix\Main\UI\Extension::load('report.js.analytics');
-	$arMenu[] = array(
-		GetMessage("MENU_REPORT_ANALYTICS"),
-		"/report/analytics/",
-		array(),
-		array(
-			"real_link" => getLeftMenuItemLink(
-				"top_menu_id_analytics",
-				"/report/analytics/"
-			),
-			"menu_item_id" => "menu_analytics",
-			"top_menu_id" => "top_menu_id_analytics"
-		),
-		""
-	);
-}
 
 
 $aMenuLinks = $arMenu;

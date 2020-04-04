@@ -2,6 +2,7 @@
 use Bitrix\Disk\Configuration;
 use Bitrix\Disk\Document\LocalDocumentController;
 use Bitrix\Disk\Driver;
+use Bitrix\Disk\Integration\Bitrix24Manager;
 use Bitrix\Disk\Internals\DiskComponent;
 use Bitrix\Disk\Internals\Engine\Contract\SidePanelWrappable;
 use Bitrix\Disk\Internals\ExternalLinkTable;
@@ -117,14 +118,6 @@ class CDiskFileViewComponent extends DiskComponent implements Controllerable, Si
 			$this->setTemplateName('properties');
 		}
 
-		if (Bitrix\Main\Grid\Context::isInternalRequest() && $this->request->get('grid_id') === 'file_version_list')
-		{
-			if ($this->request->get('grid_action') == 'showpage')
-			{
-				return $this->processActionShowVersion();
-			}
-		}
-
 		$securityContext = $this->storage->getCurrentUserSecurityContext();
 		$urlManager = Driver::getInstance()->getUrlManager();
 
@@ -139,6 +132,7 @@ class CDiskFileViewComponent extends DiskComponent implements Controllerable, Si
 		{
 			$externalLinkData['ID'] = $externalLink->getId();
 			$externalLinkData['OBJECT_ID'] = $externalLink->getObjectId();
+			$externalLinkData['DOWNLOAD_COUNT'] = $externalLink->getDownloadCount();
 			$externalLinkData['HAS_PASSWORD'] = $externalLink->hasPassword();
 			$externalLinkData['HAS_DEATH_TIME'] = $externalLink->hasDeathTime();
 			$externalLinkData['DEATH_TIME_TIMESTAMP'] = $externalLink->hasDeathTime()? $externalLink->getDeathTime()->getTimestamp() : null;
@@ -166,7 +160,7 @@ class CDiskFileViewComponent extends DiskComponent implements Controllerable, Si
 
 		$isEnabledObjectLock = Configuration::isEnabledObjectLock();
 		$additionalParams = array('canUpdate' => $canUpdate);
-		
+
 		if($isEnabledObjectLock && $this->file->getLock())
 		{
 			$additionalParams['lockedBy'] = $this->file->getLock()->getCreatedBy();
@@ -250,7 +244,7 @@ class CDiskFileViewComponent extends DiskComponent implements Controllerable, Si
 			'CAN_UPDATE' => $canUpdate,
 			'CAN_DELETE' => $this->file->canDelete($securityContext),
 			'CAN_RESTORE' => $this->file->canRestore($securityContext),
-			'CAN_SHARE' => $this->file->canShare($securityContext),
+			'CAN_SHARE' => $this->file->canShare($securityContext) && Bitrix24Manager::isFeatureEnabled('disk_file_sharing'),
 			'CAN_CHANGE_RIGHTS' => $this->file->canChangeRights($securityContext),
 			'PATH_TO_FILE_VIEW' => $viewFile,
 			'PATH_TO_TRASHCAN_LIST' => $this->file->getStorage()->getProxyType()->getBaseUrlTashcanList(),

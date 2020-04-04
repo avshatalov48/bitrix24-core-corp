@@ -11,6 +11,12 @@
 	padding-bottom: 10px;
 }
 
+.landing-form-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: baseline;
+}
+
 
 .landing-ui-form-header + .landing-ui-form-body {
 	margin-top: 12px;
@@ -54,4 +60,50 @@
 
 .landing-ui-panel-content-edit .landing-ui-form + .popup-window {
 	margin-bottom: 40px;
+}
+
+.landing-form-header-checkbox-label {
+	font-family: Helvetica Neue, Helvetica, Arial, sans-serif;
+	font-size: 13px;
+	color: #525C69;
+	line-height: normal;
+	font-weight: normal;
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+	margin-bottom: -2px;
+}
+
+.landing-form-header-checkbox-wrapper {
+	display: flex;
+	align-items: center;
+}
+
+.landing-form-header-checkbox-input {
+	margin-right: 7px;
+}
+
+.landing-form-header-checkbox-help {
+	position: relative;
+	width: 13px;
+	margin-left: 13px;
+	cursor: pointer;
+}
+
+.landing-form-header-checkbox-help::before {
+	content: '';
+	width: 13px;
+	height: 13px;
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate3d(-53%, -37%, 0);
+	background: url("/bitrix/images/landing/help.svg");
+	opacity: .8;
+	transition: opacity 200ms ease;
+}
+
+.landing-form-header-checkbox-help:hover::before {
+	opacity: 1;
 }

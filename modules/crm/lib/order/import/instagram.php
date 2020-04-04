@@ -338,7 +338,8 @@ class Instagram
 
 	public static function isAvailable()
 	{
-		return Option::get('crm', self::ENABLED_OPTION, 'Y') === 'Y';
+		return Option::get('crm', 'crm_shop_enabled', 'N') === 'Y'
+			&& Option::get('crm', self::ENABLED_OPTION, 'Y') === 'Y';
 	}
 
 	public static function isSiteTemplateImportable($siteTemplate)

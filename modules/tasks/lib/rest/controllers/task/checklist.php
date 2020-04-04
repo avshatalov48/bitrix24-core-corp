@@ -2,175 +2,372 @@
 
 namespace Bitrix\Tasks\Rest\Controllers\Task;
 
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\Db\SqlQueryException;
 use Bitrix\Main\Engine\AutoWire\ExactParameter;
-use Bitrix\Main\Engine\AutoWire\Parameter;
 use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Error;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\NotImplementedException;
+use Bitrix\Main\ObjectException;
+use Bitrix\Main\ObjectPropertyException;
+use Bitrix\Main\SystemException;
 use Bitrix\Tasks\Exception;
-use Bitrix\Tasks\Internals\Task\CheckListTable;
+use Bitrix\Tasks\CheckList\Internals\CheckList as CheckListItem;
+use Bitrix\Tasks\CheckList\Task\TaskCheckListFacade;
 use Bitrix\Tasks\Rest\Controllers\Base;
+use Bitrix\Tasks\Util\Result;
 
+use CAdminException;
+use CTaskItem;
+use TasksException;
+
+Loc::loadMessages(__FILE__);
+
+/**
+ * Class Checklist
+ *
+ * @package Bitrix\Tasks\Rest\Controllers\Task
+ */
 class Checklist extends Base
 {
-	const ACCESS_CREATE = 100;
-	const ACCESS_READ = 200;
-	const ACCESS_UPDATE = 300;
-	const ACCESS_DELETE = 400;
-
-	const ACCESS_SORT = 500;
-
 	/**
 	 * @return array;
 	 */
 	public function getAutoWiredParameters()
 	{
 		return [
-			new Parameter(
-				\CTaskItem::class, function ($className, $id) {
-				$userId = CurrentUser::get()->getId();
-
-				/** @var \CTaskItem $className */
-				return new $className($id, $userId);
-			}
-			),
 			new ExactParameter(
-				\CTaskCheckListItem::class, 'checkListItem', function ($className, $taskId, $checkListItemId) {
-				$userId = CurrentUser::get()->getId();
-				$task = new \CTaskItem($taskId, $userId);
+				CheckListItem::class,
+				'checkListItem',
+				static function ($className, $checkListItemId)
+				{
+					$userId = CurrentUser::get()->getId();
+					$fields = TaskCheckListFacade::getList([], ['ID' => $checkListItemId])[$checkListItemId];
 
-				/** @var \CTaskChecklistItem $className */
-				return new $className($task, $checkListItemId);
-			}
+					/** @var ChecklistItem $className */
+					return new $className(0, $userId, TaskCheckListFacade::class, $fields);
+				}
 			),
 		];
 	}
 
 	/**
-	 * Return all fields of checklist item
-	 *
-	 * @return array
+	 * @param $taskId
+	 * @param CheckListItem $checkListItem
+	 * @return array|null
 	 */
-	public function fieldsAction()
+	public function getAction($taskId, CheckListItem $checkListItem)
 	{
-		return [];
+		$task = new CTaskItem($taskId, CurrentUser::get()->getId());
+		if (!$task->checkCanRead())
+		{
+			$this->errorCollection->add([new Error(Loc::getMessage('TASKS_REST_TASK_CHECKLIST_ACCESS_DENIED'))]);
+			return null;
+		}
+
+		return $this->getReturnValue($checkListItem);
 	}
 
 	/**
-	 *  Add checklist item to task
-	 *
-	 * @param \CTaskItem $task Number of task (id)
-	 * @param array $fields
-	 *
-	 * @return array
-	 * @throws \TasksException
-	 */
-	public function addAction(\CTaskItem $task, array $fields)
-	{
-		$result = \CTaskCheckListItem::add($task, $fields);
-
-		return ['item' => $result->getData(false)];
-	}
-
-	/**
-	 * Remove existing checklist item
-	 *
-	 * @param \CTaskCheckListItem $checkListItem
-	 *
-	 * @return array
-	 * @throws \TasksException
-	 */
-	public function deleteAction(\CTaskCheckListItem $checkListItem)
-	{
-		$checkListItem->delete();
-
-		return ['item' => true];
-	}
-
-	/**
-	 * Get list all task checklist item
-	 *
-	 * @param \CTaskItem $task
+	 * @param $taskId
 	 * @param array $filter
-	 *
 	 * @param array $select
 	 * @param array $order
-	 *
-	 * @return array
-	 * @throws \TasksException
-	 */
-	public function listAction(\CTaskItem $task, array $filter = array(), array $select = array(), array $order = array())
-	{
-		$filter['=TASK_ID']=$task->getId();
-
-		$list = \CTaskCheckListItem::getList([
-			'filter'=>$filter,
-			'select'=>$select,
-			'order'=>$order
-		]);
-
-		return ['items'=>$list];
-	}
-
-	/**
-	 * @param \CTaskCheckListItem $checkListItem
-	 *
 	 * @return array|null
-	 * @throws \TasksException
+	 * @throws ArgumentException
+	 * @throws SystemException
 	 */
-	public function completeAction(\CTaskCheckListItem $checkListItem)
+	public function listAction($taskId, array $filter = [], array $select = [], array $order = [])
 	{
-		$checkListItem->complete();
+		$task = new CTaskItem($taskId, CurrentUser::get()->getId());
+		if (!$task->checkCanRead())
+		{
+			$this->errorCollection->add([new Error(Loc::getMessage('TASKS_REST_TASK_CHECKLIST_ACCESS_DENIED'))]);
+			return null;
+		}
 
-		return ['item' => $checkListItem->getData(false)];
+		$filter['TASK_ID'] = $taskId;
+		$items = TaskCheckListFacade::getList($select, $filter, $order);
+
+		foreach (array_keys($items) as $id)
+		{
+			unset($items[$id]['ENTITY_ID'], $items[$id]['UF_CHECKLIST_FILES']);
+		}
+
+		return ['checkListItems' => $this->convertKeysToCamelCase($items)];
 	}
 
 	/**
-	 * @param \CTaskCheckListItem $checkListItem
-	 *
-	 * @return array|null
-	 * @throws \TasksException
-	 */
-	public function renewAction(\CTaskCheckListItem $checkListItem)
-	{
-		$checkListItem->renew();
-
-		return ['item' => $checkListItem->getData(false)];
-	}
-
-	/***************************************** ACTIONS ****************************************************************/
-
-	/**
-	 * Update task checklist item
-	 *
-	 * @param \CTaskCheckListItem $checkListItem
+	 * @param $taskId
 	 * @param array $fields
-	 *
 	 * @return array|null
-	 * @throws \Bitrix\Main\ObjectException
-	 * @throws \CTaskAssertException
-	 * @throws \TasksException
+	 * @throws ObjectException
+	 * @throws SystemException
 	 */
-	public function updateAction(\CTaskCheckListItem $checkListItem, array $fields)
+	public function addAction($taskId, array $fields)
 	{
-		$checkListItem->update($fields);
-
-		return ['item' => $checkListItem->getData(false)];
+		$addResult = TaskCheckListFacade::add($taskId, CurrentUser::get()->getId(), $fields);
+		return $this->getReturn($addResult);
 	}
 
 	/**
-	 * @param \CTaskCheckListItem $checkListItem
-	 * @param int $afterItemId
-	 *
-	 * @return bool
-	 * @throws \TasksException
+	 * @param $taskId
+	 * @param CheckListItem $checkListItem
+	 * @param array $fields
+	 * @return array|null
+	 * @throws ArgumentException
+	 * @throws NotImplementedException
+	 * @throws ObjectException
+	 * @throws SqlQueryException
+	 * @throws SystemException
+	 * @throws ObjectPropertyException
 	 */
-	public function moveAfterAction(\CTaskCheckListItem $checkListItem, $afterItemId)
+	public function updateAction($taskId, CheckListItem $checkListItem, array $fields)
 	{
-		$checkListItem->moveAfterItem($afterItemId);
-
-		return true;
+		$updateResult = TaskCheckListFacade::update($taskId, CurrentUser::get()->getId(), $checkListItem, $fields);
+		return $this->getReturn($updateResult);
 	}
 
+	/**
+	 * @param $taskId
+	 * @param CheckListItem $checkListItem
+	 * @return bool|null
+	 * @throws ArgumentException
+	 * @throws NotImplementedException
+	 * @throws SystemException
+	 */
+	public function deleteAction($taskId, CheckListItem $checkListItem)
+	{
+		$deleteResult = TaskCheckListFacade::delete($taskId, CurrentUser::get()->getId(), $checkListItem);
+
+		if ($deleteResult->isSuccess())
+		{
+			return true;
+		}
+
+		if ($deleteResult->getErrors())
+		{
+			$this->errorCollection[] = new Error($deleteResult->getErrors()->getMessages()[0]);
+		}
+
+		return null;
+	}
+
+	/**
+	 * @param $taskId
+	 * @param CheckListItem $checkListItem
+	 * @return array|null
+	 * @throws ArgumentException
+	 * @throws NotImplementedException
+	 * @throws ObjectException
+	 * @throws ObjectPropertyException
+	 * @throws SqlQueryException
+	 * @throws SystemException
+	 */
+	public function completeAction($taskId, CheckListItem $checkListItem)
+	{
+		$completeResult = TaskCheckListFacade::complete($taskId, CurrentUser::get()->getId(), $checkListItem);
+		return $this->getReturn($completeResult);
+	}
+
+	/**
+	 * @param $taskId
+	 * @param CheckListItem $checkListItem
+	 * @return array|null
+	 * @throws ArgumentException
+	 * @throws NotImplementedException
+	 * @throws ObjectException
+	 * @throws ObjectPropertyException
+	 * @throws SqlQueryException
+	 * @throws SystemException
+	 */
+	public function renewAction($taskId, CheckListItem $checkListItem)
+	{
+		$renewResult = TaskCheckListFacade::renew($taskId, CurrentUser::get()->getId(), $checkListItem);
+		return $this->getReturn($renewResult);
+	}
+
+	/**
+	 * @param $taskId
+	 * @param CheckListItem $checkListItem
+	 * @param $beforeItemId
+	 * @return array|null
+	 * @throws ArgumentException
+	 * @throws SystemException
+	 */
+	public function moveBeforeAction($taskId, CheckListItem $checkListItem, $beforeItemId)
+	{
+		$userId = CurrentUser::get()->getId();
+		$position = TaskCheckListFacade::MOVING_POSITION_BEFORE;
+		$moveResult = TaskCheckListFacade::moveItem($taskId, $userId, $checkListItem, $beforeItemId, $position);
+
+		return $this->getReturn($moveResult);
+	}
+
+	/**
+	 * @param $taskId
+	 * @param CheckListItem $checkListItem
+	 * @param $afterItemId
+	 * @return array|null
+	 * @throws ArgumentException
+	 * @throws SystemException
+	 */
+	public function moveAfterAction($taskId, CheckListItem $checkListItem, $afterItemId)
+	{
+		$userId = CurrentUser::get()->getId();
+		$position = TaskCheckListFacade::MOVING_POSITION_AFTER;
+		$moveResult = TaskCheckListFacade::moveItem($taskId, $userId, $checkListItem, $afterItemId, $position);
+
+		return $this->getReturn($moveResult);
+	}
+
+	/**
+	 * @param $taskId
+	 * @param CheckListItem $checkListItem
+	 * @param array $members
+	 * @return array|null
+	 * @throws ObjectException
+	 * @throws SystemException
+	 */
+	public function addMembersAction($taskId, CheckListItem $checkListItem, array $members)
+	{
+		$userId = CurrentUser::get()->getId();
+		$addMembersResult = TaskCheckListFacade::addMembers($taskId, $userId, $checkListItem, $members);
+
+		return $this->getReturn($addMembersResult);
+	}
+
+	/**
+	 * @param $taskId
+	 * @param CheckListItem $checkListItem
+	 * @param array $membersIds
+	 * @return array|null
+	 * @throws ObjectException
+	 * @throws SystemException
+	 */
+	public function removeMembersAction($taskId, CheckListItem $checkListItem, array $membersIds)
+	{
+		$userId = CurrentUser::get()->getId();
+		$removeMembersResult = TaskCheckListFacade::removeMembers($taskId, $userId, $checkListItem, $membersIds);
+
+		return $this->getReturn($removeMembersResult);
+	}
+
+	/**
+	 * @param $taskId
+	 * @param CheckListItem $checkListItem
+	 * @param array $attachmentParameters
+	 * @return array|null
+	 */
+	public function addAttachmentByContentAction($taskId, CheckListItem $checkListItem, array $attachmentParameters)
+	{
+		$addAttachmentResult = TaskCheckListFacade::addAttachmentByContent(
+			$taskId,
+			CurrentUser::get()->getId(),
+			$checkListItem,
+			$attachmentParameters
+		);
+
+		return $this->getReturn($addAttachmentResult);
+	}
+
+	/**
+	 * @param $taskId
+	 * @param CheckListItem $checkListItem
+	 * @param array $filesIds
+	 * @return array|null
+	 * @throws ArgumentException
+	 * @throws NotImplementedException
+	 * @throws ObjectException
+	 * @throws ObjectPropertyException
+	 * @throws SqlQueryException
+	 * @throws SystemException
+	 */
+	public function addAttachmentsFromDiskAction($taskId, CheckListItem $checkListItem, array $filesIds)
+	{
+		$addAttachmentsResult = TaskCheckListFacade::addAttachmentsFromDisk(
+			$taskId,
+			CurrentUser::get()->getId(),
+			$checkListItem,
+			$filesIds
+		);
+
+		return $this->getReturn($addAttachmentsResult);
+	}
+
+	/**
+	 * @param $taskId
+	 * @param CheckListItem $checkListItem
+	 * @param array $attachmentsIds
+	 * @return array|null
+	 * @throws ArgumentException
+	 * @throws NotImplementedException
+	 * @throws ObjectException
+	 * @throws ObjectPropertyException
+	 * @throws SqlQueryException
+	 * @throws SystemException
+	 */
+	public function removeAttachmentsAction($taskId, CheckListItem $checkListItem, array $attachmentsIds)
+	{
+		$removeAttachmentsResult = TaskCheckListFacade::removeAttachments(
+			$taskId,
+			CurrentUser::get()->getId(),
+			$checkListItem,
+			$attachmentsIds
+		);
+
+		return $this->getReturn($removeAttachmentsResult);
+	}
+
+	/**
+	 * @param Result $result
+	 * @return array|null
+	 */
+	private function getReturn(Result $result)
+	{
+		if ($result->isSuccess())
+		{
+			return $this->getReturnValue($result);
+		}
+
+		if ($errors = $result->getErrors())
+		{
+			$this->errorCollection[] = new Error($errors->getMessages()[0]);
+		}
+
+		return null;
+	}
+
+	/**
+	 * @param $value
+	 * @return array
+	 */
+	private function getReturnValue($value)
+	{
+		$checkListItemData = [];
+
+		if ($value instanceof Result)
+		{
+			/** @var CheckListItem $checkListItem */
+			$checkListItem = $value->getData()['ITEM'];
+			$checkListItemData = $checkListItem->getFields();
+		}
+		else if ($value instanceof CheckListItem)
+		{
+			$checkListItemData = $value->getFields();
+		}
+
+		$checkListItemData['TASK_ID'] = $checkListItemData['ENTITY_ID'];
+		unset($checkListItemData['ENTITY_ID']);
+
+		return ['checkListItem' => $this->convertKeysToCamelCase($checkListItemData)];
+	}
+
+	/**
+	 * @param \Exception $exception
+	 * @return Error
+	 */
 	protected function buildErrorFromException(\Exception $exception)
 	{
 		if (!($exception instanceof Exception))
@@ -178,9 +375,10 @@ class Checklist extends Base
 			return parent::buildErrorFromException($exception);
 		}
 
-		if ($exception instanceof \TasksException)
+		/** @noinspection PhpDeprecationInspection */
+		if ($exception instanceof TasksException)
 		{
-			/** @var \CAdminException $orig */
+			/** @var CAdminException $orig */
 			$orig = $exception->getMessageOrigin();
 			foreach ($orig->GetMessages() as $message)
 			{

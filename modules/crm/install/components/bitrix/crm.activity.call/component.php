@@ -28,7 +28,7 @@ $call = Bitrix\VoxImplant\StatisticTable::getList(array(
 $arResult["RECORDS"] = array();
 if (is_array($activity["STORAGE_ELEMENT_IDS"]) && count($activity["STORAGE_ELEMENT_IDS"]) > 0)
 {
-	$mediaExtensions = array("flv", "mp3", "mp4", "vp6", "aac");
+	$mediaExtensions = array("flv", "mp3", "mp4", "vp6", "aac", "wav");
 	foreach($activity["STORAGE_ELEMENT_IDS"] as $elementID)
 	{
 		$info = Bitrix\Crm\Integration\StorageManager::getFileInfo(

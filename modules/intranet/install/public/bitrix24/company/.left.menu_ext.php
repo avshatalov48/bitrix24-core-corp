@@ -23,7 +23,7 @@ if (IsModuleInstalled("lists"))
 {
 	if (
 		!IsModuleInstalled("bitrix24")
-		|| CModule::IncludeModule("bitrix24") && \Bitrix\Bitrix24\Feature::isFeatureEnabled("lists_processes")
+		|| CModule::IncludeModule("lists") && CLists::isFeatureEnabled("lists")
 	)
 	{
 		$aMenuLinks[] = Array(

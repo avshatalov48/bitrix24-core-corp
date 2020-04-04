@@ -5,6 +5,13 @@ use Bitrix\Disk\Folder;
 use Bitrix\Disk\Internals\Error\Error;
 use Bitrix\Disk\BaseObject;
 use Bitrix\Disk\Storage;
+use Bitrix\Disk\Security\DiskSecurityContext;
+use Bitrix\Disk\Security\FakeSecurityContext;
+use Bitrix\Disk\ProxyType;
+use Bitrix\Disk\User;
+use Bitrix\Main\Loader;
+use Bitrix\Main\Text\Encoding;
+use Bitrix\Main\Localization\Loc;
 
 IncludeModuleLangFile(__FILE__);
 
@@ -13,6 +20,8 @@ class CDavWebDavServer
 {
 	static $FORBIDDEN_SYMBOLS = array("/", "\\", ":", "*", "?", "\"", "'", "<", ">", "|", "#", "{", "}", "%", "&", "~", "+");
 	static $ALLOWED_SYMBOLS = array("#", "+");
+	private $titleGroupStoragesQuote = '';
+	private $titleUserStoragesQuote = '';
 
 	public function __construct($request)
 	{
@@ -24,6 +33,9 @@ class CDavWebDavServer
 			$realm = "Bitrix Site Manager";
 
 		$this->SetDavPoweredBy($realm);
+
+		$this->titleGroupStoragesQuote = preg_quote(Loc::getMessage('DAV_GROUP_STORAGES'), '#');
+		$this->titleUserStoragesQuote = preg_quote(Loc::getMessage('DAV_USER_STORAGES'), '#');
 	}
 
 	public function CheckAuth($authType, $phpAuthUser, $phpAuthPw)
@@ -94,12 +106,14 @@ class CDavWebDavServer
 			$storagePath = trim($storage['path'], '/');
 
 			$patterns[] = array('docs', sprintf('^/%s/path(.*)$', $storagePath), $storage['id']);
-			$patterns[] = array('docs', sprintf('^/%s(.*)$', $storagePath), $storage['id']);
+			$patterns[] = array('docs', sprintf('^/%s/(.*)$', $storagePath), $storage['id']);
 		}
 
 		// @TODO: aggregator
-		$patterns[] = array('docs', '^/docs/path(.*)$', 'shared_files_s1');
-		$patterns[] = array('docs', '^/docs(.*)$', 'shared_files_s1');
+		$patterns[] = array('all', '^(/docs/path/[^/]+)(/.*)', 'all');
+		$patterns[] = array('all', '^(/docs/'.$this->titleGroupStoragesQuote.'/[^/]+)(/.*)', 'all');
+		$patterns[] = array('all', '^(/docs/'.$this->titleUserStoragesQuote.'/[^/]+)(/.*)', 'all');
+		$patterns[] = array('all', '^(/docs/[^/]+)(/.*)', 'all');
 
 		$type = null;
 		$id   = null;
@@ -110,26 +124,51 @@ class CDavWebDavServer
 			if (preg_match('#'.$pattern[1].'#i', $requestUri, $matches))
 			{
 				$type = $pattern[0];
-				list($id, $path) = ($type == 'docs')
+				if ($type === 'all')
+				{
+					$storage = null;
+					$storageId = $this->getStorageId($matches[1]);
+					$storage = Storage::loadById($storageId);
+
+					if (!$storage)
+					{
+						return [null, null];
+					}
+
+					$id = $storage->getEntityId();
+					$path = $matches[2];
+					$type = $this->getEntityType($storage);
+
+					break;
+				}
+
+				list($id, $path) = ($type === 'docs')
 					? array($pattern[2], $matches[1])
 					: array($matches[1], $matches[2]);
-
 				break;
 			}
 		}
-
 		/** @var Storage $storage */
 
 		$storage = null;
-		if ($type == 'user')
+		if ($type === 'user')
+		{
 			$storage = Driver::getInstance()->getStorageByUserId((int)$id);
-		elseif ($type == 'group')
+		}
+		elseif ($type === 'group')
+		{
 			$storage = Driver::getInstance()->getStorageByGroupId((int)$id);
-		elseif ($type == 'docs')
+		}
+		elseif ($type === 'docs' || $type === 'common')
+		{
 			$storage = Driver::getInstance()->getStorageByCommonId($id);
+		}
 		else
-			return array(null, null);
+		{
+			return [null, null];
+		}
 
+		$path = $path ?: '/';
 		$path = static::UrlDecode($path);
 
 		return array($storage, $path);
@@ -197,33 +236,53 @@ class CDavWebDavServer
 		/** @var CDavRequest $request */
 		$request = $this->request;
 		$requestDocument = $request->GetXmlDocument();
-
 		/** @var Storage $storage */
-		list($storage, $path) = $this->parsePath($request->getPath());
+		$requestPath = Encoding::convertEncoding($request->getPath(), 'UTF-8', SITE_CHARSET);
 
-		if (!$storage)
-			return '404 Not Found';
+		if ($this->fillSystemStorage($arResources, $requestPath))
+		{
+			return true;
+		}
 
-//		try
-//		{
+		if ($matches = $this->isStorage($requestPath))
+		{
+			$storage = Storage::loadById(array_pop($matches));
+
+			if (!$storage)
+			{
+				return '404 Not Found';
+			}
+
+			$objectId = $storage->getRootObjectId();
+		}
+		else
+		{
+			list($storage, $path) = $this->parsePath($requestPath);
+
+			if (!$storage)
+			{
+				return '404 Not Found';
+			}
+
 			$objectId = Driver::getInstance()->getUrlManager()->resolveObjectIdFromPath($storage, $path);
-//		}
-//		catch (Exception $e)
-//		{}
+		}
 
-		if(!$objectId)
+		if (!$objectId)
 		{
 			return '404 Not Found';
 		}
+
 		/** @var File|Folder $object */
 		$object = BaseObject::loadById($objectId);
 
-		if(!$object)
+		if (!$object)
 		{
 			return '404 Not Found';
 		}
+
 		$securityContext = $object->getStorage()->getCurrentUserSecurityContext();
-		if(!$object->canRead($securityContext))
+
+		if (!$object->canRead($securityContext))
 		{
 			return '403 Forbidden';
 		}
@@ -232,15 +291,15 @@ class CDavWebDavServer
 		// $resource->AddProperty('имя', 'значение' /*, 'xmlns', 'сырые данные'*/);
 		// $resource->AddProperty('resourcetype', array('collection', ''));
 
-		$arResources[] = $this->getResourceByObject($request->getPath(), $object);
+		$arResources[] = $this->getResourceByObject($requestPath, $object);
 
 		if ($request->GetDepth() && $object instanceof Folder)
 		{
 			// ВЫГРЕБАЕМ И ДОПИСЫВАЕМ В $arResources ДЕТЕЙ ПУТИ $path
-			foreach($object->getChildren($securityContext) as $child)
+			foreach ($object->getChildren($securityContext) as $child)
 			{
 				/** @var File|Folder $child */
-				$arResources[] = $this->getResourceByObject(rtrim($request->getPath(), '/') . '/' . $child->getName(), $child);
+				$arResources[] = $this->getResourceByObject(rtrim($requestPath, '/') . '/' . $child->getName(), $child);
 			}
 			unset($child);
 		}
@@ -254,6 +313,11 @@ class CDavWebDavServer
 
 		/** @var CDavRequest $request */
 		$request = $this->request;
+		$requestPath = Encoding::convertEncoding($request->getPath(), 'UTF-8', SITE_CHARSET);
+		if ($this->isSystemStorageElement($requestPath))
+		{
+			return '403 Forbidden';
+		}
 
 		$path = $request->GetPath();
 		$requestDocument = $request->GetXmlDocument();
@@ -266,14 +330,14 @@ class CDavWebDavServer
 //				);
 
 		// ТУТА ПАТЧИМ ДОКУМЕНТ ПО ПУТЮ $path
-		list($storage, $path) = $this->parsePath($request->getPath());
+		list($storage, $path) = $this->parsePath($requestPath);
 
 		if (!$storage)
 			return '404 Not Found';
 
 		$objectId = Driver::getInstance()->getUrlManager()->resolveObjectIdFromPath($storage, $path);
 
-		if(!$objectId)
+		if (!$objectId)
 		{
 			return '404 Not Found';
 		}
@@ -284,11 +348,11 @@ class CDavWebDavServer
 			return '404 Not Found';
 		}
 		$securityContext = $object->getStorage()->getCurrentUserSecurityContext();
-		if(!$object->canRead($securityContext))
+		if (!$object->canRead($securityContext))
 		{
 			return '403 Forbidden';
 		}
-		if(!$object->canUpdate($securityContext))
+		if (!$object->canUpdate($securityContext))
 		{
 			return '403 Forbidden';
 		}
@@ -302,7 +366,7 @@ class CDavWebDavServer
 		//todo что значит 403? Которые не получилось обновить? А что с успешными?
 
 		// И ФОРМИРУЕМ CDavResource
-		$resource = new CDavResource($request->getPath());
+		$resource = new CDavResource($requestPath);
 		// ЗАПИХИВАЯ В НЕГО ВСЕ ЕГО СВОЙСТВА, КОТОРЫЕ '403 Forbidden'
 		// $resource->AddProperty('имя', '', 'xmlns', '', '403 Forbidden');
 
@@ -316,31 +380,32 @@ class CDavWebDavServer
 		/** @var CDavRequest $request */
 		$request = $this->request;
 		$response = $this->response;
+		$requestPath = Encoding::convertEncoding($request->getPath(), 'UTF-8', SITE_CHARSET);
 
 		$path = $request->GetPath();
 
-		list($storage, $path) = $this->parsePath($request->getPath());
-		
+		list($storage, $path) = $this->parsePath($requestPath);
+
 		if (!$storage)
 			return '404 Not Found';
 
 		$objectId = Driver::getInstance()->getUrlManager()->resolveObjectIdFromPath($storage, $path);
 
-		if(!$objectId)
+		if (!$objectId)
 		{
 			return '404 Not Found';
 		}
 		/** @var File|Folder $object */
 		$object = BaseObject::loadById($objectId);
-		if(!$object)
+		if (!$object)
 		{
 			return '404 Not Found';
 		}
-		if(!$object->canRead($object->getStorage()->getCurrentUserSecurityContext()))
+		if (!$object->canRead($object->getStorage()->getCurrentUserSecurityContext()))
 		{
 			return '403 Forbidden';
 		}
-		if($object instanceof Folder)
+		if ($object instanceof Folder)
 		{
 			return '501 Not Implemented';
 		}
@@ -377,18 +442,18 @@ class CDavWebDavServer
 //		}
 //		else
 //		{
-			if (file_exists($io->GetPhysicalName($arTmpFile['tmp_name'])))
-			{
-				$arResult['stream'] = fopen($io->GetPhysicalName($arTmpFile['tmp_name']), 'rb');
-			}
-			elseif(file_exists($arTmpFile['tmp_name']))
-			{
-				$arResult['stream'] = fopen($arTmpFile['tmp_name'], 'rb');
-			}
-			else
-			{
-				return false;
-			}
+		if (file_exists($io->GetPhysicalName($arTmpFile['tmp_name'])))
+		{
+			$arResult['stream'] = fopen($io->GetPhysicalName($arTmpFile['tmp_name']), 'rb');
+		}
+		elseif (file_exists($arTmpFile['tmp_name']))
+		{
+			$arResult['stream'] = fopen($arTmpFile['tmp_name'], 'rb');
+		}
+		else
+		{
+			return false;
+		}
 //		}
 
 		if (empty($arResult["mimetype"]) || $arResult["mimetype"] == "unknown" || $arResult["mimetype"] == "application/octet-stream")
@@ -412,7 +477,7 @@ class CDavWebDavServer
 		}
 		elseif (preg_match('/\<(D:)?href\>[^<]+\<\/(D:)?href\>/i', $value))
 		{
-			$value = preg_replace('/\<(D:)?href\>([^<]+)\<\/(D:)?href\>/i','&lt;\\1href&gt;<a href="\\2">\\2</a>&lt;/\\3href&gt;<br />', $value);
+			$value = preg_replace('/\<(D:)?href\>([^<]+)\<\/(D:)?href\>/i', '&lt;\\1href&gt;<a href="\\2">\\2</a>&lt;/\\3href&gt;<br />', $value);
 		}
 		else
 		{
@@ -440,7 +505,7 @@ class CDavWebDavServer
 
 			$xmlnsDefs = '';
 			$xmlnsHash = array($prop['xmlns'] => $xmlns, 'DAV:' => 'D');
-			$arr[$xmlns.':'.$prop['tagname']] = is_array($prop['content']) ? CDavResource::EncodeHierarchicalProp($prop['content'], $prop['xmlns'], $xmlnsDefs, $xmlnsHash, $response, $request) : $prop['content'];
+			$arr[$xmlns . ':' . $prop['tagname']] = is_array($prop['content']) ? CDavResource::EncodeHierarchicalProp($prop['content'], $prop['xmlns'], $xmlnsDefs, $xmlnsHash, $response, $request) : $prop['content'];
 		}
 
 		return $arr;
@@ -467,27 +532,29 @@ class CDavWebDavServer
 			$hex = '0123456789abcdef';
 			$uuid{16} = substr($hex, $n, 1);
 
-			$uuid = substr($uuid,  0, 8).'-'.
-				substr($uuid,  8, 4).'-'.
-				substr($uuid, 12, 4).'-'.
-				substr($uuid, 16, 4).'-'.
+			$uuid = substr($uuid, 0, 8) . '-' .
+				substr($uuid, 8, 4) . '-' .
+				substr($uuid, 12, 4) . '-' .
+				substr($uuid, 16, 4) . '-' .
 				substr($uuid, 20);
 		}
 
-		return 'opaquelocktoken:'.$uuid;
+		return 'opaquelocktoken:' . $uuid;
 	}
 
 	/**
 	 * @param array $arResult From PUT(&$arResult)
+	 *
 	 * @return string String like '204 No Content', '403 Forbidden', '404 Not Found' or file pointer if we have to load file
 	 */
 	protected function PUT(&$arResult)
 	{
 		/** @var CDavRequest $request */
 		$request = $this->request;
+		$requestPath = Encoding::convertEncoding($request->getPath(), 'UTF-8', SITE_CHARSET);
 
 		//todo откуда мы узнаем хранилище относительно которого вести поиск?
-		list($storage, $path) = $this->parsePath($request->getPath());
+		list($storage, $path) = $this->parsePath($requestPath);
 
 		if (!$storage)
 			return '404 Not Found';
@@ -511,9 +578,9 @@ class CDavWebDavServer
 		$file = File::load(array('NAME' => $filename, 'PARENT_ID' => $folder->getRealObjectId()));
 
 		$securityContext = $folder->getStorage()->getCurrentUserSecurityContext();
-		if(!$file)
+		if (!$file)
 		{
-			if(!$folder->canAdd($securityContext))
+			if (!$folder->canAdd($securityContext))
 			{
 				return '403 Forbidden';
 			}
@@ -532,7 +599,7 @@ class CDavWebDavServer
 		}
 
 		$arResult['new'] = false;
-		if(!$file->canUpdate($securityContext))
+		if (!$file->canUpdate($securityContext))
 		{
 			return '403 Forbidden';
 		}
@@ -550,6 +617,7 @@ class CDavWebDavServer
 
 	/**
 	 * @param array $arResult From PUT(&$arResult)
+	 *
 	 * @return bool
 	 */
 	protected function PutCommit($arResult)
@@ -557,16 +625,16 @@ class CDavWebDavServer
 		$folder = $arResult['targetFolder'];
 		$fileArray = CFile::MakeFileArray($arResult['tmpFile']);
 
-		if(!$fileArray)
+		if (!$fileArray)
 		{
 			return false;
 		}
-		if($arResult['new'])
+		if ($arResult['new'])
 		{
 			/** @var Folder $folder */
 			$file = $folder->uploadFile($fileArray, array('NAME' => $arResult['filename'], 'CREATED_BY' => $this->getUser()->getId()));
 
-			if(!$file)
+			if (!$file)
 			{
 				return false;
 			}
@@ -582,30 +650,31 @@ class CDavWebDavServer
 	{
 		/** @var CDavRequest $request */
 		$request = $this->request;
+		$requestPath = Encoding::convertEncoding($request->getPath(), 'UTF-8', SITE_CHARSET);
 
 		//todo откуда мы узнаем хранилище относительно которого вести поиск?
-		list($storage, $path) = $this->parsePath($request->getPath());
+		list($storage, $path) = $this->parsePath($requestPath);
 
 		if (!$storage)
 			return '404 Not Found';
 
 		$objectId = Driver::getInstance()->getUrlManager()->resolveObjectIdFromPath($storage, $path);
 
-		if(!$objectId)
+		if (!$objectId)
 		{
 			return '404 Not Found'; //todo 400 Bad Request?
 		}
 		/** @var File|Folder $object */
 		$object = BaseObject::loadById($objectId);
-		if(!$object)
+		if (!$object)
 		{
 			return '404 Not Found';//todo 400 Bad Request?
 		}
-		if(!$object->canMarkDeleted($object->getStorage()->getCurrentUserSecurityContext()))
+		if (!$object->canMarkDeleted($object->getStorage()->getCurrentUserSecurityContext()))
 		{
 			return '403 Forbidden';//todo 400 Bad Request?
 		}
-		if($object->markDeleted($this->getUser()->getId()))
+		if ($object->markDeleted($this->getUser()->getId()))
 		{
 			return '204 No Content';
 		}
@@ -617,10 +686,15 @@ class CDavWebDavServer
 	{
 		/** @var CDavRequest $request */
 		$request = $this->request;
+		$requestPath = Encoding::convertEncoding($request->getPath(), 'UTF-8', SITE_CHARSET);
+		if ($this->isSystemStorageElement($requestPath))
+		{
+			return '403 Forbidden';
+		}
 
 		//todo откуда мы узнаем хранилище относительно которого вести поиск?
 		/** @var Storage $storage */
-		list($storage, $path) = $this->parsePath($request->getPath());
+		list($storage, $path) = $this->parsePath($requestPath);
 		//todo?
 
 		if (!$storage)
@@ -630,18 +704,18 @@ class CDavWebDavServer
 		$folderName = array_pop($withoutFolderName);
 		$folderId = Driver::getInstance()->getUrlManager()->resolveFolderIdFromPath($storage, implode('/', $withoutFolderName));
 
-		if(!$folderId)
+		if (!$folderId)
 		{
 			return '409 Conflict';
 		}
 		/** @var Folder $folder */
 
 		$folder = Folder::loadById($folderId);
-		if(!$folder)
+		if (!$folder)
 		{
 			return '409 Conflict';
 		}
-		if(!$folder->canAdd($folder->getStorage()->getCurrentUserSecurityContext()))
+		if (!$folder->canAdd($folder->getStorage()->getCurrentUserSecurityContext()))
 		{
 			return '403 Forbidden';
 		}
@@ -654,13 +728,13 @@ class CDavWebDavServer
 		{
 		}
 
-		if(!$subFolder)
+		if (!$subFolder)
 		{
 			return '409 Conflict';
 		}
 
 		$this->response->AddHeader('Content-length: 0');
-		$this->response->AddHeader('Location: ' . ($request->GetParameter("HTTPS") === "on" ? "https" : "http").'://'.$request->GetParameter('HTTP_HOST').$request->getPath());
+		$this->response->AddHeader('Location: ' . ($request->GetParameter("HTTPS") === "on" ? "https" : "http") . '://' . $request->GetParameter('HTTP_HOST') . $requestPath);
 
 		return "201 Created";
 	}
@@ -674,6 +748,11 @@ class CDavWebDavServer
 	{
 		/** @var CDavRequest $request */
 		$request = $this->request;
+		$requestPath = Encoding::convertEncoding($request->getPath(), 'UTF-8', SITE_CHARSET);
+		if ($this->isSystemStorageElement($requestPath))
+		{
+			return '403 Forbidden';
+		}
 
 		$v = $request->GetParameter('CONTENT_LENGTH');
 		if (!empty($v))
@@ -690,28 +769,28 @@ class CDavWebDavServer
 
 		//todo откуда мы узнаем хранилище относительно которого вести поиск?
 		/** @var Storage $storage */
-		list($storage, $path) = $this->parsePath($request->getPath());
+		list($storage, $path) = $this->parsePath($requestPath);
 		$objectId = Driver::getInstance()->getUrlManager()->resolveObjectIdFromPath($storage, $path);
-		if(!$objectId)
+		if (!$objectId)
 		{
 			return '404 Not Found';
 		}
 
 		/** @var File|Folder $object */
 		$object = BaseObject::loadById($objectId);
-		if(!$object)
+		if (!$object)
 		{
 			return '404 Not Found';
 		}
 
 		$securityContext = $object->getStorage()->getCurrentUserSecurityContext();
-		if(!$object->canRead($securityContext))
+		if (!$object->canRead($securityContext))
 		{
 			return '403 Forbidden';
 		}
 
 		list($destStorage, $poludest) = $this->parsePath($dest);
-		if(!$destStorage)
+		if (!$destStorage)
 		{
 			return '404 Not Found';
 		}
@@ -741,35 +820,35 @@ class CDavWebDavServer
 		$poludestFolderName = array_pop($poludestExploded);
 
 		$targetObjectId = Driver::getInstance()->getUrlManager()->resolveObjectIdFromPath($destStorage, implode('/', $poludestExploded));
-		if(!$targetObjectId)
+		if (!$targetObjectId)
 		{
 			return '404 Not Found';
 		}
 
 		/** @var File|Folder $folder */
 		$folder = Folder::loadById($targetObjectId);
-		if(!$targetObjectId)
+		if (!$targetObjectId)
 		{
 			return '404 Not Found';
 		}
 
-		if($delete)
+		if ($delete)
 		{
-			if(!$object->canMove($securityContext, $folder))
+			if (!$object->canMove($securityContext, $folder))
 			{
 				return '403 Forbidden';
 			}
 		}
 		else
 		{
-			if(!$folder->canAdd($folder->getStorage()->getCurrentUserSecurityContext()))
+			if (!$folder->canAdd($folder->getStorage()->getCurrentUserSecurityContext()))
 			{
 				return '403 Forbidden';
 			}
 		}
 
 		$opponent = false;
-		if($overwrite)
+		if ($overwrite)
 		{
 			$opponent = BaseObject::getList(array(
 				'select' => array('ID'),
@@ -780,22 +859,22 @@ class CDavWebDavServer
 				'limit' => 1
 			))->fetch();
 
-			if($opponent)
-			{
+			if ($opponent)
+				{
 				/** @var File|Folder $opponentObject */
 				$opponentObject = BaseObject::loadById($opponent['ID']);
-				if(!$opponentObject->canMarkDeleted($opponentObject->getStorage()->getCurrentUserSecurityContext()))
+				if (!$opponentObject->canMarkDeleted($opponentObject->getStorage()->getCurrentUserSecurityContext()))
 				{
 					return '403 Forbidden';
 				}
-				if(!$opponentObject->markDeleted($this->getUser()->getId()))
+				if (!$opponentObject->markDeleted($this->getUser()->getId()))
 				{
 					return '400 Bad Request';
 				}
 			}
 		}
 
-		if($delete)
+		if ($delete)
 		{
 			if (!$object->moveTo($folder, $this->getUser()->getId(), true))
 			{
@@ -820,7 +899,7 @@ class CDavWebDavServer
 
 	/**
 	 * @param Storage $storage
-	 * @param string $path
+	 * @param string  $path
 	 */
 	private function createFolderPath($storage, $path)
 	{
@@ -839,7 +918,7 @@ class CDavWebDavServer
 		while (!empty($foldersPath))
 		{
 			$subFolderName = array_shift($foldersPath);
-			$s .= '/'.$subFolderName;
+			$s .= '/' . $subFolderName;
 			$folderId = $urlManager->resolveFolderIdFromPath($storage, $s);
 			if ($folderId)
 			{
@@ -866,14 +945,16 @@ class CDavWebDavServer
 	{
 		/** @var CDavRequest $request */
 		$request = $this->request;
-		$arRequestPath = self::ParsePath($request->GetPath());
+		$requestPath = Encoding::convertEncoding($request->getPath(), 'UTF-8', SITE_CHARSET);
 
-		if (!$arRequestPath[0])
+		list($storage, $path) = self::ParsePath($requestPath);
+
+		if (!$storage)
 		{
 			return '409 Conflict';
 		}
 
-		$path = CDavVirtualFileSystem::GetLockPath("WS".($arRequestPath[0]->getId()), $arRequestPath[1]);
+		$path = CDavVirtualFileSystem::GetLockPath("WS" . ($storage->getId()), $path);
 
 //		if (!$arRequestPath["id"] || $request->GetDepth() || !$handler->CheckPrivilegesByPath("DAV:write", $request->GetPrincipal(), $arRequestPath["site"], $arRequestPath["account"], $arRequestPath["path"]))
 //			return '409 Conflict';
@@ -894,12 +975,16 @@ class CDavWebDavServer
 	{
 		/** @var CDavRequest $request */
 		$request = $this->request;
+		$requestPath = Encoding::convertEncoding($request->getPath(), 'UTF-8', SITE_CHARSET);
 
-		$arRequestPath = self::ParsePath($request->GetPath());
-		if (!$arRequestPath[0])
+		list($storage, $path) = self::ParsePath($requestPath);
+
+		if (!$storage)
+		{
 			return '409 Conflict';
+		}
 
-		$path = CDavVirtualFileSystem::GetLockPath("WS".($arRequestPath[0]->getId()), $arRequestPath[1]);
+		$path = CDavVirtualFileSystem::GetLockPath("WS" . ($storage->getId()), $path);
 
 		return (CDavVirtualFileSystem::Unlock($path, $httpLocktoken) ? '204 No Content' : '409 Conflict');
 	}
@@ -911,26 +996,29 @@ class CDavWebDavServer
 		if (!$storage)
 			return false;
 
-		$path = CDavVirtualFileSystem::GetLockPath("WS".($storage->getId()), $path);
+		$path = CDavVirtualFileSystem::GetLockPath("WS" . ($storage->getId()), $path);
 
 		return CDavVirtualFileSystem::CheckLock($path);
 	}
 
 	/**
-	 * @param $path
+	 * @param                    $path
 	 * @param File|Folder|Object $object
+	 *
 	 * @return CDavResource
 	 */
 	protected function getResourceByObject($path, BaseObject $object)
 	{
 		$isFolder = $object instanceof Folder;
-		$resource = new CDavResource($path.($isFolder && substr($path, -1, 1) != "/" ? "/" : ""));
+		$resource = new CDavResource($path . ($isFolder && substr($path, -1, 1) != "/" ? "/" : ""));
+
 		$resource->AddProperty('name', $object->getName());
+
 		if ($object instanceof File)
 			$resource->AddProperty('getcontentlength', $object->getSize());
 		$resource->AddProperty('creationdate', $object->getCreateTime()->getTimestamp());
 		$resource->AddProperty('getlastmodified', $object->getUpdateTime()->getTimestamp());
-		$resource->AddProperty('iscollection', $isFolder? '1' : '0');
+		$resource->AddProperty('iscollection', $isFolder ? '1' : '0');
 
 		if($isFolder)
 		{
@@ -952,6 +1040,225 @@ class CDavWebDavServer
 		return $resource;
 	}
 
+	private function isSystemStorageElement($requestPath)
+	{
+		if (preg_match('#^(/docs/[^/]+/?)$#', $requestPath)
+			|| preg_match('#^(/docs/'.$this->titleGroupStoragesQuote.'/[^/]+/?)$#', $requestPath)
+			|| preg_match('#^(/docs/'.$this->titleUserStoragesQuote.'/[^/]+/?)$#', $requestPath))
+		{
+			return true;
+		}
+
+		return false;
+	}
+
+	private function fillSystemStorage(&$arResources, $requestPath)
+	{
+		if ($requestPath === '/docs/')
+		{
+			$arResources[] = $this->getResourceObjectRoot("");
+			if ($this->request->GetDepth())
+			{
+				$arResources[] = $this->getResourceObjectRoot(Loc::getMessage('DAV_USER_STORAGES'));
+				$arResources[] = $this->getResourceObjectRoot(Loc::getMessage('DAV_GROUP_STORAGES'));
+
+				$this->fillResourceRootStorages(ProxyType\Common::class, $arResources, $requestPath);
+			}
+
+			return true;
+		}
+		elseif (preg_match('#^(/docs/'.$this->titleUserStoragesQuote.'/?)$#', $requestPath))
+		{
+			if ($this->request->GetDepth())
+			{
+				$this->fillResourceRootStorages(ProxyType\User::class, $arResources, $requestPath);
+			}
+			return true;
+		}
+		elseif (preg_match('#^(/docs/'.$this->titleGroupStoragesQuote.'/?)$#', $requestPath))
+		{
+			if ($this->request->GetDepth())
+			{
+				$this->fillResourceRootStorages(ProxyType\Group::class, $arResources, $requestPath);
+			}
+			return true;
+		}
+
+		return false;
+	}
+
+	private function isStorage($requestPath)
+	{
+		if (preg_match('#^(/docs/[^/]+\[(\d+)\]/?)$#', $requestPath, $matches)
+		|| preg_match('#^(/docs/' . $this->titleUserStoragesQuote . '/[^/]+\[(\d+)\]/?)$#', $requestPath, $matches)
+		|| preg_match('#^(/docs/' . $this->titleGroupStoragesQuote . '/[^/]+\[(\d+)\]/?)$#', $requestPath, $matches))
+		{
+			return $matches;
+		}
+
+		return false;
+	}
+
+	private function getStorageId($path)
+	{
+		$path = rtrim($path, "/");
+		preg_match("#\[(\d+)\]$#", $path, $match);
+
+		return array_pop($match);
+	}
+
+	protected function getResourceObjectRoot($path)
+	{
+		$resource = new CDavResource('/docs/' . $path. '/');
+
+		$resource->AddProperty('iscollection', '1');
+		$resource->AddProperty('resourcetype', array('collection', ''));
+		$resource->AddProperty('getcontenttype', 'httpd/unix-directory');
+
+		$resource->AddProperty("supportedlock",
+			"<D:lockentry><D:lockscope><D:exclusive/></D:lockscope><D:locktype><D:write/></D:locktype></D:lockentry><D:lockentry><D:lockscope><D:shared/></D:lockscope><D:locktype><D:write/></D:locktype></D:lockentry>"
+		);
+
+		return $resource;
+	}
+
+	private function fillResourceRootStorages ($entityType, &$arResources, $requestPath)
+	{
+		$storages = $this->getStoragesByEntityType($entityType, $requestPath);
+
+		foreach ($storages as $objectId => $item)
+		{
+			$storageId = $this->getStorageId($item['URL']);
+			$storage = Storage::loadById($storageId);
+			$object = $storage->getRootObject();
+
+			if (!$object)
+			{
+				continue;
+			}
+
+			$securityContext = $object->getStorage()->getCurrentUserSecurityContext();
+
+			if (!$object->canRead($securityContext))
+			{
+				continue;
+			}
+
+			$arResources[] = $this->getResourceByObject($item['URL'], $object);
+		}
+
+		return true;
+	}
+
+	private function getStoragesByEntityType($entityType, $path)
+	{
+		$diskSecurityContext = $this->getSecurityContextByUser($this->getUser());
+		$filterReadableList = array('=STORAGE.ENTITY_TYPE' => $entityType);
+
+		$storages = [];
+
+		foreach (Storage::getReadableList($diskSecurityContext, array('filter' => $filterReadableList)) as $storage)
+		{
+			$proxyType = $storage->getProxyType();
+			$url = $path . $proxyType->getEntityTitle() . ' [' . $storage->getId() . ']/';
+			$storages[$storage->getRootObjectId()] = array(
+				"TITLE" => $proxyType->getEntityTitle(),
+				"URL" => $url,
+			);
+		}
+
+		return $storages;
+	}
+
+	private function getEntityType(Storage $storage)
+	{
+		if ($storage->getProxyType() instanceof \Bitrix\Disk\ProxyType\User)
+		{
+			return 'user';
+		}
+		if ($storage->getProxyType() instanceof \Bitrix\Disk\ProxyType\Common)
+		{
+			return 'common';
+		}
+		if ($storage->getProxyType() instanceof \Bitrix\Disk\ProxyType\Group)
+		{
+			return 'group';
+		}
+
+		return 'notype';
+	}
+
+	private function getSecurityContextByUser($user)
+	{
+		$diskSecurityContext = new DiskSecurityContext($user);
+
+		if (Loader::includeModule('socialnetwork'))
+		{
+			if (\CSocnetUser::isCurrentUserModuleAdmin())
+			{
+				$diskSecurityContext = new FakeSecurityContext($user);
+			}
+		}
+
+		if (User::isCurrentUserAdmin())
+		{
+			$diskSecurityContext = new FakeSecurityContext($user);
+		}
+
+		return $diskSecurityContext;
+	}
+
+	private function countQuotaSizeStorage(Storage $storage)
+	{
+		$quotaSize = [];
+		$fullSize = 0;
+
+		$restriction = $storage->isEnabledSizeLimitRestriction();
+		$usedStorageSize = $storage->getRootObject()->countSizeOfVersions();
+
+		if ($restriction)
+		{
+			$fullSize = $storage->getSizeLimit();
+			$usedSize = $usedStorageSize;
+		}
+		else
+		{
+			$userId = $this->getUser()->getId();
+			$fullSize = \Bitrix\Main\Config\Option::get('main', 'disk_space', 0) * 1048576;
+			$indicator = new \Bitrix\Disk\Volume\Bfile();
+			$diskInfo = $indicator->setOwner($userId)->purify()->measure()->loadTotals();
+			$usedSize = $diskInfo ? $diskInfo["FILE_SIZE"] : 0;
+		}
+
+		if ($fullSize > 0)
+		{
+			$quotaSize['used_size'] = $usedStorageSize ? $usedStorageSize : 0;
+			$quotaSize['available_size'] = $fullSize - $usedSize;
+
+			return $quotaSize;
+		}
+		else
+		{
+			return null;
+		}
+	}
+
+	private function countQuotaSizeDisk()
+	{
+		$quotaSize = array();
+		$fullSize = 0;
+
+		$userId = $this->getUser()->getId();
+		$fullSize = \Bitrix\Main\Config\Option::get('main', 'disk_space', 0) * 1048576;
+		$indicator = new \Bitrix\Disk\Volume\Bfile();
+		$diskInfo = $indicator->setOwner($userId)->purify()->measure()->loadTotals();
+		$usedSize = $diskInfo ? $diskInfo["FILE_SIZE"] : 0;
+		$quotaSize['used_size'] = $usedSize;
+		$quotaSize['available_size'] = $fullSize - $usedSize;
+
+		return $fullSize > 0 ? $quotaSize : null;
+	}
+
 	/**
 	 * @return array|bool|\CAllUser|\CUser
 	 */
@@ -961,4 +1268,4 @@ class CDavWebDavServer
 		return $USER;
 	}
 
-} 
+}

@@ -89,41 +89,39 @@ class Tracker
 				$result->addError(new Error(Loc::getMessage('IMOL_TRACKER_ERROR_NO_REQUIRED_PARAMETERS'), self::ERROR_IMOL_TRACKER_NO_REQUIRED_PARAMETERS, __METHOD__));
 			}
 
-			$entitiesSearch = self::checkMessage($messageText);
-			$phones = $entitiesSearch['PHONES'];
-			$emails = $entitiesSearch['EMAILS'];
-
-			if (empty($phones) && empty($emails))
-			{
-				$result->addError(new Error(Loc::getMessage('IMOL_TRACKER_ERROR_NO_REQUIRED_PARAMETERS'), self::ERROR_IMOL_TRACKER_NO_REQUIRED_PARAMETERS, __METHOD__));
-			}
-
 			if ($result->isSuccess())
 			{
-				$crmManager = new Crm($session);
-				if($crmManager->isLoaded())
+				$entitiesSearch = self::checkMessage($messageText);
+				$phones = $entitiesSearch['PHONES'];
+				$emails = $entitiesSearch['EMAILS'];
+
+				if(!empty($phones) || !empty($emails))
 				{
-					$crmFieldsManager = $crmManager->getFields();
-					if (!empty($phones))
+					$crmManager = new Crm($session);
+					if($crmManager->isLoaded())
 					{
-						$crmFieldsManager->setPhones($phones);
+						$crmFieldsManager = $crmManager->getFields();
+						if (!empty($phones))
+						{
+							$crmFieldsManager->setPhones($phones);
+						}
+
+						if (!empty($emails))
+						{
+							$crmFieldsManager->setEmails($emails);
+						}
+
+						if($session->getConfig('CRM_CREATE') != Config::CRM_CREATE_LEAD)
+						{
+							$crmManager->setSkipCreate();
+						}
+
+						$crmManager->search();
+						$crmFieldsManager->setTitle($session->getChat()->getData('TITLE'));
+
+						$crmManager->registrationChanges();
+						$crmManager->sendCrmImMessages();
 					}
-
-					if (!empty($emails))
-					{
-						$crmFieldsManager->setEmails($emails);
-					}
-
-					if($session->getConfig('CRM_CREATE') != Config::CRM_CREATE_LEAD)
-					{
-						$crmManager->setSkipCreate();
-					}
-
-					$crmManager->search();
-					$crmFieldsManager->setTitle($session->getChat()->getData('TITLE'));
-
-					$crmManager->registrationChanges();
-					$crmManager->sendCrmImMessages();
 				}
 			}
 		}

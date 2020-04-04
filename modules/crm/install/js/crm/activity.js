@@ -562,7 +562,7 @@ if(typeof(BX.CrmActivityEditor) == 'undefined')
 				};
 
 				emailSettings['direction'] = parseInt(item.getSetting('direction', BX.CrmActivityDirection.outgoing));
-				if (this._markAsCompletedOnView && !item.getSetting('completed', false) && !(BX.Bitrix24 && BX.Bitrix24.Slider))
+				if (this._markAsCompletedOnView && !item.getSetting('completed', false) && !BX.SidePanel)
 				{
 					emailSettings['completed'] = true;
 					this.setActivityCompleted(item.getSetting('ID', 0), true, null, { disableNotification: true });
@@ -1115,6 +1115,24 @@ if(typeof(BX.CrmActivityEditor) == 'undefined')
 				&& typeof(window.top['taskIFramePopup'].add) === 'function')
 			{
 				window.top['taskIFramePopup'].add(taskData);
+			}
+			else
+			{
+				var taskCreatePath = BX.message("CRM_TASK_CREATION_PATH");
+				taskCreatePath = taskCreatePath.replace("#user_id#", BX.message("USER_ID"));
+				taskCreatePath = BX.util.add_url_param(
+					taskCreatePath,
+					BX.mergeEx(taskData, { "IFRAME": "Y", "IFRAME_TYPE": "SIDE_SLIDER" })
+				);
+
+				if(BX.SidePanel)
+				{
+					BX.SidePanel.Instance.open(taskCreatePath);
+				}
+				else
+				{
+					window.top.location.href = taskCreatePath;
+				}
 			}
 		},
 		handleAddTaskClick: function(e)
@@ -6841,7 +6859,7 @@ if(typeof(BX.CrmActivityEditor) == 'undefined')
 				mode = id > 0 ? BX.CrmDialogMode.view : BX.CrmDialogMode.edit;
 			}
 
-			if (BX.CrmActivityProvider && (mode == BX.CrmDialogMode.view || top.BX.Bitrix24 && top.BX.Bitrix24.Slider))
+			if (BX.CrmActivityProvider && (mode == BX.CrmDialogMode.view || top.BX.SidePanel))
 			{
 				var activity = BX.CrmActivityProvider.create(this._settings, this._editor, this._options, this);
 				window.setTimeout(function(){activity.openDialog(mode);}, 10);

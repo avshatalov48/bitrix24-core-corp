@@ -217,7 +217,8 @@ class CTaskTags
 
 		foreach ($tasks as $primary)
 		{
-			\Bitrix\Tasks\TagTable::update($primary, array("NAME" => $NEW_NAME));
+			\Bitrix\Tasks\TagTable::delete($primary);
+			\Bitrix\Tasks\TagTable::add(array_merge($primary, array("NAME" => $NEW_NAME)));
 		}
 
 		return true;
@@ -233,6 +234,7 @@ class CTaskTags
 			));
 			while ($item = $list->fetch())
 			{
+
 				$result = \Bitrix\Tasks\TagTable::delete($item);
 			}
 			return $result;

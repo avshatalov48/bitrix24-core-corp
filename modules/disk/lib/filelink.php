@@ -127,7 +127,7 @@ final class FileLink extends File
 		{
 			$driver = Driver::getInstance();
 
-			$driver->sendChangeStatusToSubscribers($file);
+			$driver->sendChangeStatusToSubscribers($file, 'quick');
 			if ($file->getStorage()->isUseInternalRights())
 			{
 				$driver->getRecentlyUsedManager()->push($file->getCreatedBy(), $file->getId());
@@ -415,7 +415,7 @@ final class FileLink extends File
 			return false;
 		}
 
-		DeletedLog::addFile($this, $deletedBy, $this->errorCollection);
+		Driver::getInstance()->getDeletedLogManager()->mark($this, $deletedBy);
 
 		$resultDelete = FileTable::delete($this->id);
 		if(!$resultDelete->isSuccess())

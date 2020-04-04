@@ -1,0 +1,1 @@
+{"version":3,"sources":["alert.js"],"names":["console","log","document"],"mappings":"AAAAA,QAAQC,IAAIC","file":"alert.map.js"}

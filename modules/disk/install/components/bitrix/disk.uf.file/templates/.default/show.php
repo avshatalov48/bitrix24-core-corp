@@ -137,7 +137,7 @@ include_once(str_replace(array("\\", "//"), "/", __DIR__."/messages.php"));
 								BX.PopupMenu.currentItem.popupWindow.close();
 								return e.preventDefault();
 							}},
-							<? if($file['EDITABLE'] && $file['CAN_UPDATE'] && (!$file['IS_LOCKED'] || $file['IS_LOCKED_BY_SELF'])){ ?>
+							<? if($file['EDITABLE'] && $file['CAN_UPDATE'] && (!$file['IS_LOCKED'] || $file['IS_LOCKED_BY_SELF']) && !$arParams['DISABLE_LOCAL_EDIT']){ ?>
 							{text : BX.message('JS_CORE_VIEWER_EDIT'), className : "bx-viewer-popup-item item-edit", href : "#", onclick: function(e){
 								top.BX.UI.Viewer.Instance.runActionByNode(BX("disk-attach-<?=$file['ID']?>"), 'edit', {
 								modalWindow: BX.Disk.openBlankDocumentPopup()
@@ -171,7 +171,7 @@ include_once(str_replace(array("\\", "//"), "/", __DIR__."/messages.php"));
 							<? } ?>
 						];
 					</script><?
-					if($file['EDITABLE'] && $file['CAN_UPDATE'] && (!$file['IS_LOCKED'] || $file['IS_LOCKED_BY_SELF'])) {
+					if($file['EDITABLE'] && $file['CAN_UPDATE'] && (!$file['IS_LOCKED'] || $file['IS_LOCKED_BY_SELF']) && !$arParams['DISABLE_LOCAL_EDIT']) {
 						?><a class="feed-con-file-changes-link" href="#" onclick="top.BX.UI.Viewer.Instance.runActionByNode(BX('disk-attach-<?=$file['ID']?>'), 'edit', {
 							modalWindow: BX.Disk.openBlankDocumentPopup()
 						}); return false;"><?= GetMessage('WDUF_FILE_EDIT') ?></a><?

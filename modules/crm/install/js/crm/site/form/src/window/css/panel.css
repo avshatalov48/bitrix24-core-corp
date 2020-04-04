@@ -1,0 +1,65 @@
+.b24-window-panel {
+	position: fixed;
+	width: 100%;
+	height: 100vh;
+	height: -webkit-fill-available;
+	height: -moz-fill-available;
+	height: fill-available;
+	max-height: 100%;
+	max-width: 510px;
+	border-radius: 4px;
+	-webkit-overflow-scrolling: touch;
+	-webkit-font-smoothing: antialiased;
+	box-sizing: border-box;
+	z-index: 99999;
+	overflow: hidden;
+}
+
+.b24-window-panel-pos-center {
+	top: 0;
+	left: 0;
+	right: 0;
+	margin: 0 auto;
+}
+
+.b24-window-panel-pos-right {
+	top: 0;
+	right: 0;
+	border-radius: 0;
+}
+
+.b24-window-panel-pos-left {
+	top: 0;
+	left: 0;
+	border-radius: 0;
+}
+
+.b24-window-panel .b24-window-scrollable {
+	background-color: #fff;
+	background-color: var(--b24-background-color);
+	position: absolute;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	left: 0;
+}
+
+.b24-window-panel .b24-form-wrapper {
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	-webkit-box-orient: vertical;
+	-webkit-box-direction: normal;
+	-ms-flex-direction: column;
+	flex-direction: column;
+	-webkit-box-pack: justify;
+	-ms-flex-pack: justify;
+	justify-content: space-between;
+	min-height: 100%;
+}
+
+.b24-window-panel .b24-form-content{
+	-webkit-box-flex: 1;
+	-ms-flex: 1;
+	flex: 1;
+}

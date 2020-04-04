@@ -79,12 +79,13 @@ abstract class Body
 	}
 
 	/**
-	 * @param string $filename
+	 * @param array $options
 	 * @param Storage|null $storage
 	 * @return AddResult
 	 */
-	public function save($filename = '', Storage $storage = null)
+	public function save(array $options, Storage $storage = null)
 	{
+		$filename = $options['fileName'];
 		if(!$storage)
 		{
 			$storage = $this->storage;
@@ -95,7 +96,10 @@ abstract class Body
 			$storage = Driver::getInstance()->getDefaultStorage();
 		}
 
-		$result = $storage->write($this->content, ['fileName' => $this->getFileName($filename), 'contentType' => $this->getFileMimeType()]);
+		$result = $storage->write($this->content, array_merge($options, [
+			'fileName' => $this->getFileName($filename),
+			'contentType' => $this->getFileMimeType(),
+		]));
 		if($result->isSuccess())
 		{
 			$path = $result->getId();
@@ -221,15 +225,44 @@ abstract class Body
 	/**
 	 * Replaces placeholders on pattern static::$valuesPattern in $content.
 	 *
-	 * @param string $content
+	 * @param array $params
 	 * @return string
 	 */
-	protected function replacePlaceholders($content)
+	protected function replacePlaceholders(array $params = [])
 	{
-		return preg_replace_callback(static::$valuesPattern, [$this, 'getReplaceValue'], $content);
+		if(isset($params['content']) && is_string($params['content']))
+		{
+			$content = $params['content'];
+		}
+		else
+		{
+			$content = $this->content;
+		}
+		if(isset($params['callback']) && is_callable($params['callback']))
+		{
+			$callback = $params['callback'];
+		}
+		else
+		{
+			/** @see Body::getReplaceValue() */
+			$callback = [$this, 'getReplaceValue'];
+		}
+		return preg_replace_callback(
+			static::$valuesPattern,
+			function(array $matches) use ($callback, $params)
+			{
+				return call_user_func_array($callback, [$matches, $params]);
+			},
+			$content
+		);
 	}
 
-	protected function getReplaceValue($matches)
+	/**
+	 * @param array $matches
+	 * @param array $params
+	 * @return string
+	 */
+	protected function getReplaceValue(array $matches, array $params = [])
 	{
 		if(isset($matches[2]) && isset($this->values[$matches[2]]))
 		{
@@ -238,7 +271,7 @@ abstract class Body
 				return $matches[0];
 			}
 
-			return $this->printValue($this->values[$matches[2]], $matches[2], $matches[3]);
+			return $this->printValue($this->values[$matches[2]], $matches[2], $matches[3], $params);
 		}
 
 		return '';
@@ -302,9 +335,10 @@ abstract class Body
 	 * @param mixed $value
 	 * @param string $placeholder
 	 * @param string $modifier
+	 * @param array $params
 	 * @return string
 	 */
-	protected function printValue($value, $placeholder, $modifier = '')
+	protected function printValue($value, $placeholder, $modifier = '', array $params = [])
 	{
 		if(strpos($modifier, static::DO_NOT_INSERT_VALUE_MODIFIER) !== false)
 		{
@@ -316,7 +350,7 @@ abstract class Body
 			{
 				return $value->toString($modifier);
 			}
-			elseif(method_exists($value, '__toString'))
+			elseif(class_exists($value) && method_exists($value, '__toString'))
 			{
 				return $value->__toString();
 			}
@@ -446,5 +480,31 @@ abstract class Body
 		}
 
 		return array_unique($linkedPlaceholders);
+	}
+
+	/**
+	 * Returns array of unique objects.
+	 *
+	 * @param array $nodes
+	 * @return array
+	 */
+	protected function getUniqueObjects(array $nodes)
+	{
+		$result = $hashs = [];
+		foreach($nodes as $node)
+		{
+			if(!is_object($node))
+			{
+				continue;
+			}
+			$hash = spl_object_hash($node);
+			if(!isset($hashs[$hash]))
+			{
+				$hashs[$hash] = 1;
+				$result[] = $node;
+			}
+		}
+
+		return $result;
 	}
 }

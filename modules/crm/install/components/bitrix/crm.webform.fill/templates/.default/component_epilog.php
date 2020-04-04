@@ -2,8 +2,14 @@
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
 use Bitrix\Crm\WebForm\Helper;
+use Bitrix\Main\Loader;
 
-CUtil::initJSCore(array('core'));
+CUtil::InitJSCore(array('core', 'ls', 'ajax', 'date', 'popup'));
+
+if (Loader::includeModule('calendar'))
+{
+	CUtil::InitJSCore(array('userfield_resourcebooking'));
+}
 
 $APPLICATION->SetPageProperty(
 	"BodyClass",

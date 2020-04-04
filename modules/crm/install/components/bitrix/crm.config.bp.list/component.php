@@ -61,10 +61,8 @@ $arResult['BP_LIST_URL'] = htmlspecialcharsbx($arResult['~BP_LIST_URL']);
 $arResult['~BP_EDIT_URL'] = str_replace(array('#entity_id#'), array($arResult['ENTITY_ID']), $arParams['~BP_EDIT_URL']);
 $arResult['BP_EDIT_URL'] = htmlspecialcharsbx($arResult['~BP_EDIT_URL']);
 
-$this->IncludeComponentTemplate();
-
 $APPLICATION->SetTitle(GetMessage('CRM_BP_LIST_TITLE_EDIT', array('#NAME#' => $arResult['ENTITY_NAME'])));
 $APPLICATION->AddChainItem(GetMessage('CRM_BP_ENTITY_LIST'), $arResult['~ENTITY_LIST_URL']);
 $APPLICATION->AddChainItem($arResult['ENTITY_NAME'], $arResult['~BP_LIST_URL']);
 
-?>
+$this->IncludeComponentTemplate();

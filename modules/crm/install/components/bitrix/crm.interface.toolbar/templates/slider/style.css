@@ -12,7 +12,7 @@
 .crm-entity-actions-container {
 	position: relative;
 	display: inline-block;
-	margin-right: 6px;
+	/*margin-right: 12px;*/
 	/*padding-right: 18px;*/
 	white-space: nowrap;
 }
@@ -27,7 +27,6 @@
 	/*content: '';*/
 /*}*/
 
-.webform-small-button.webform-small-button-transparent.crm-bizproc-starter-icon,
 .webform-small-button.webform-small-button-transparent.crm-bizproc-starter-icon-not-available,
 .webform-small-button.webform-small-button-transparent.crm-contact-menu-call-icon,
 .webform-small-button.webform-small-button-transparent.crm-contact-menu-call-icon-not-available,
@@ -38,7 +37,7 @@
 .webform-small-button.webform-small-button-transparent.crm-contact-menu-im-icon,
 .webform-small-button.webform-small-button-transparent.crm-contact-menu-im-icon-not-available {
 	box-sizing: border-box;
-	margin-right: 6px;
+	/*margin-right: 6px;*/
 	width: 42px;
 	background-image: url(images/icons-sprite.svg) !important;
 	background-repeat: no-repeat !important;
@@ -53,9 +52,16 @@
 
 .webform-small-button.webform-small-button-transparent.crm-contact-menu-im-icon { background-position: center -266px !important; }
 
-.webform-small-button.webform-small-button-transparent.crm-bizproc-starter-icon { background-position: center -355px !important; }
+.crm-bizproc-starter-icon,
+.bx-ie .ui-btn.crm-bizproc-starter-icon {
+	background-position: center -355px;
+	background-image: url(images/icons-sprite.svg);
+	background-repeat: no-repeat;
+	padding: 0;
+	width: 39px;
+	min-width: 0;
+}
 
-.webform-small-button.webform-small-button-transparent.crm-bizproc-starter-icon:hover,
 .webform-small-button.webform-small-button-transparent.crm-contact-menu-call-icon:hover,
 .webform-small-button.webform-small-button-transparent.crm-contact-menu-sms-icon:hover,
 .webform-small-button.webform-small-button-transparent.crm-contact-menu-mail-icon:hover,
@@ -82,14 +88,14 @@
 	min-width: 150px;
 }
 
-.crm-btn-dropdown-document {
-	margin-left: 9px;
-}
-
-.crm-btn-dropdown-document {
+.crm-bizproc-starter-icon {
 	margin: 0 12px;
 }
 
+.crm-btn-dropdown-document {
+	margin-left: 12px;
+}
+
 .crm-iframe-header .pagetitle-inner-container .ui-btn-double.ui-btn-primary {
-	margin: 0;
+	margin-right: 0;
 }

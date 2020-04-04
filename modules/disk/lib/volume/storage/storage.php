@@ -18,8 +18,13 @@ use Bitrix\Disk\Volume;
  * Disk storage volume measurement class.
  * @package Bitrix\Disk\Volume
  */
-class Storage extends Volume\Base implements Volume\IVolumeIndicatorStorage, Volume\IVolumeIndicatorLink
+class Storage
+	extends Volume\Base
+	implements Volume\IVolumeIndicatorStorage, Volume\IVolumeIndicatorLink, Volume\IVolumeTimeLimit
 {
+	/** @implements Volume\IVolumeTimeLimit */
+	use Volume\TimeLimit;
+
 	/**
 	 * Returns entity type list.
 	 * @return string[]
@@ -30,15 +35,107 @@ class Storage extends Volume\Base implements Volume\IVolumeIndicatorStorage, Vol
 	}
 
 	/**
+	 * Returns measure process stages list.
+	 * List types data to collect: ATTACHED_OBJECT, SHARING_OBJECT, EXTERNAL_LINK, UNNECESSARY_VERSION or PREVIEW_FILE.
+	 * @return string[]
+	 */
+	public function getMeasureStages()
+	{
+		return array(
+			self::DISK_FILE,
+			self::PREVIEW_FILE,
+			self::UNNECESSARY_VERSION,
+			'recalculatePercent'
+		);
+	}
+
+
+	/**
 	 * Runs measure test to get volumes of selecting objects.
 	 * @param array $collectData List types data to collect: ATTACHED_OBJECT, SHARING_OBJECT, EXTERNAL_LINK, UNNECESSARY_VERSION.
 	 * @return $this
 	 */
 	public function measure($collectData = array(self::DISK_FILE, self::PREVIEW_FILE, self::UNNECESSARY_VERSION))
 	{
+		$collectData[] = 'recalculatePercent';
+
 		$connection = Application::getConnection();
 		$sqlHelper = $connection->getSqlHelper();
 
+		/**
+		 * @param string $selectSql
+		 * @param string $fromSql
+		 * @param string $whereSql
+		 * @param string[] $columns
+		 * @param string $subSelectSql
+		 * @param string $subWhereSql
+		 * @return void
+		 */
+		$build0Sql = function(&$selectSql, &$fromSql, &$whereSql, &$columns, $subSelectSql = '', $subWhereSql = '', $subGroupSql = '')
+		{
+			$query = VolumeTable::query();
+			$query
+				->addFilter('=OWNER_ID', $this->getOwner())
+				->addFilter('=INDICATOR_TYPE', static::className())
+			;
+
+			$query
+				->addSelect('STORAGE_ID')
+				->addSelect('ENTITY_ID')
+				->addSelect('ENTITY_TYPE')
+			;
+			$selectSql .= "
+				, CNT_FILES.STORAGE_ID
+				, CNT_FILES.ENTITY_TYPE
+				, CNT_FILES.ENTITY_ID
+			";
+			$columns = array_merge($columns, array(
+				'STORAGE_ID',
+				'ENTITY_TYPE',
+				'ENTITY_ID',
+			));
+
+			if ($this instanceof Volume\Storage\Group)
+			{
+				$query->addSelect('GROUP_ID');
+				$columns[] = 'GROUP_ID';
+				$selectSql .= " , CNT_FILES.GROUP_ID ";
+			}
+			if ($this instanceof Volume\Storage\User)
+			{
+				$query->addSelect('USER_ID');
+				$columns[] = 'USER_ID';
+				$selectSql .= " , CNT_FILES.USER_ID ";
+			}
+
+			if ($this->getFilterId() > 0)
+			{
+				$query->addFilter('=ID', $this->getFilterId());
+			}
+			if ($this->getFilterValue('STORAGE_ID') !== null)
+			{
+				$query->addFilter('=STORAGE_ID', $this->getFilterValue('STORAGE_ID'));
+			}
+			if ($this->getFilterValue('ENTITY_TYPE') !== null)
+			{
+				$query->addFilter('=ENTITY_TYPE', $this->getFilterValue('ENTITY_TYPE'));
+			}
+			if ($this->getFilterValue('ENTITY_ID') !== null)
+			{
+				$query->addFilter('=ENTITY_ID', $this->getFilterValue('ENTITY_ID'));
+			}
+
+			$querySql = $query->getQuery();
+
+
+			// language=SQL
+			$fromSql .= "
+				(
+					{$querySql}
+					ORDER BY NULL
+				) CNT_FILES
+			";
+		};
 
 		/**
 		 * @param string $selectSql
@@ -104,7 +201,7 @@ class Storage extends Volume\Base implements Volume\IVolumeIndicatorStorage, Vol
 						SUM( {$realFileSize} ) AS FILE_SIZE,
 						COUNT( {$realFileCount} ) AS FILE_COUNT,
 						COUNT( {$realFileCount} ) AS VERSION_COUNT,
-						files.STORAGE_ID AS STORAGE_ID,
+						storage.ID AS STORAGE_ID,
 						storage.ENTITY_TYPE AS ENTITY_TYPE,
 						storage.ENTITY_ID AS ENTITY_ID,
 						storage.NAME AS TITLE
@@ -118,11 +215,12 @@ class Storage extends Volume\Base implements Volume\IVolumeIndicatorStorage, Vol
 						{$realFileFilter}
 						{$subWhereSql}
 					GROUP BY 
-						files.STORAGE_ID, 
+						storage.ID, 
 						storage.ENTITY_ID, 
 						storage.ENTITY_TYPE,
 						storage.NAME
 						{$subGroupSql}
+					ORDER BY NULL
 				) CNT_FILES
 			";
 		};
@@ -149,12 +247,12 @@ class Storage extends Volume\Base implements Volume\IVolumeIndicatorStorage, Vol
 			// language=SQL
 			$fromSql .= "
 				/* preview */
-				LEFT JOIN 
+				INNER JOIN
 				(
 					SELECT
 						SUM(IFNULL(preview_file.FILE_SIZE, 0)) + SUM(IFNULL(view_file.FILE_SIZE, 0)) AS PREVIEW_SIZE,
 						COUNT(DISTINCT preview_file.ID) + COUNT(DISTINCT view_file.ID) AS PREVIEW_COUNT,
-						files.STORAGE_ID AS STORAGE_ID,
+						storage.ID AS STORAGE_ID,
 						storage.ENTITY_TYPE AS ENTITY_TYPE,
 						storage.ENTITY_ID AS ENTITY_ID
 					FROM
@@ -167,9 +265,10 @@ class Storage extends Volume\Base implements Volume\IVolumeIndicatorStorage, Vol
 						AND files.ID = files.REAL_OBJECT_ID
 						{$subWhereSql}
 					GROUP BY
-						files.STORAGE_ID,
+						storage.ID,
 						storage.ENTITY_ID,
 						storage.ENTITY_TYPE
+					ORDER BY NULL
 				) CNT_PREVIEW
 					ON CNT_FILES.STORAGE_ID = CNT_PREVIEW.STORAGE_ID
 					AND CNT_FILES.ENTITY_ID = CNT_PREVIEW.ENTITY_ID
@@ -197,11 +296,11 @@ class Storage extends Volume\Base implements Volume\IVolumeIndicatorStorage, Vol
 			// language=SQL
 			$fromSql .= "
 				/* attached */
-				LEFT JOIN 
+				INNER JOIN
 				(
 					SELECT
 						COUNT(DISTINCT attached.ID) AS ATTACHED_COUNT,
-						files.STORAGE_ID AS STORAGE_ID,
+						storage.ID AS STORAGE_ID,
 						storage.ENTITY_TYPE AS ENTITY_TYPE,
 						storage.ENTITY_ID AS ENTITY_ID
 					FROM
@@ -213,9 +312,10 @@ class Storage extends Volume\Base implements Volume\IVolumeIndicatorStorage, Vol
 						AND files.ID = files.REAL_OBJECT_ID
 						{$subWhereSql}
 					GROUP BY
-						files.STORAGE_ID,
+						storage.ID,
 						storage.ENTITY_ID,
 						storage.ENTITY_TYPE
+					ORDER BY NULL
 				) CNT_ATTACH
 					ON CNT_FILES.STORAGE_ID = CNT_ATTACH.STORAGE_ID
 					AND CNT_FILES.ENTITY_ID = CNT_ATTACH.ENTITY_ID
@@ -243,11 +343,11 @@ class Storage extends Volume\Base implements Volume\IVolumeIndicatorStorage, Vol
 			// language=SQL
 			$fromSql .= "
 				/* external_link */
-				LEFT JOIN 
+				INNER JOIN
 				(
 					SELECT
 						COUNT(DISTINCT link.ID) AS LINK_COUNT,
-						files.STORAGE_ID AS STORAGE_ID,
+						storage.ID AS STORAGE_ID,
 						storage.ENTITY_TYPE AS ENTITY_TYPE,
 						storage.ENTITY_ID AS ENTITY_ID
 					FROM
@@ -260,9 +360,10 @@ class Storage extends Volume\Base implements Volume\IVolumeIndicatorStorage, Vol
 						AND files.ID = files.REAL_OBJECT_ID
 						{$subWhereSql}
 					GROUP BY
-						files.STORAGE_ID,
+						storage.ID,
 						storage.ENTITY_ID,
 						storage.ENTITY_TYPE
+					ORDER BY NULL
 				) CNT_LINK
 					ON CNT_FILES.STORAGE_ID = CNT_LINK.STORAGE_ID
 					AND CNT_FILES.ENTITY_ID = CNT_LINK.ENTITY_ID
@@ -290,11 +391,11 @@ class Storage extends Volume\Base implements Volume\IVolumeIndicatorStorage, Vol
 			// language=SQL
 			$fromSql .= "
 				/* sharing */
-				LEFT JOIN 
+				INNER JOIN
 				(
 					SELECT
 						COUNT(DISTINCT sharing.ID) AS SHARING_COUNT,
-						files.STORAGE_ID AS STORAGE_ID,
+						storage.ID AS STORAGE_ID,
 						storage.ENTITY_TYPE AS ENTITY_TYPE,
 						storage.ENTITY_ID AS ENTITY_ID
 					FROM
@@ -307,9 +408,10 @@ class Storage extends Volume\Base implements Volume\IVolumeIndicatorStorage, Vol
 						AND files.ID = files.REAL_OBJECT_ID
 						{$subWhereSql}
 					GROUP BY
-						files.STORAGE_ID,
+						storage.ID,
 						storage.ENTITY_ID,
 						storage.ENTITY_TYPE
+					ORDER BY NULL
 				) CNT_SHARING
 					ON CNT_FILES.STORAGE_ID = CNT_SHARING.STORAGE_ID
 					AND CNT_FILES.ENTITY_ID = CNT_SHARING.ENTITY_ID
@@ -336,11 +438,10 @@ class Storage extends Volume\Base implements Volume\IVolumeIndicatorStorage, Vol
 				'UNNECESSARY_VERSION_SIZE',
 				'UNNECESSARY_VERSION_COUNT',
 			));
-
 			// language=SQL
 			$fromSql .= "
 				/* may drop */
-				LEFT JOIN
+				INNER JOIN
 				(
 					SELECT
 						SUM(src.SIZE) AS UNNECESSARY_VERSION_SIZE,
@@ -354,7 +455,7 @@ class Storage extends Volume\Base implements Volume\IVolumeIndicatorStorage, Vol
 							files.ID,
 							SUM(ver.SIZE) AS SIZE,
 							COUNT(ver.ID) AS CNT,
-							files.STORAGE_ID AS STORAGE_ID,
+							storage.ID AS STORAGE_ID,
 							storage.ENTITY_TYPE AS ENTITY_TYPE,
 							storage.ENTITY_ID AS ENTITY_ID
 							
@@ -368,6 +469,7 @@ class Storage extends Volume\Base implements Volume\IVolumeIndicatorStorage, Vol
 								SELECT  object_id, max(id) as id
 								FROM b_disk_version 
 								GROUP BY object_id
+								ORDER BY NULL
 							) head ON head.OBJECT_ID = files.ID
 	
 							LEFT JOIN b_disk_attached_object  attached
@@ -390,14 +492,16 @@ class Storage extends Volume\Base implements Volume\IVolumeIndicatorStorage, Vol
 							
 						GROUP BY 
 							files.ID,
-							files.STORAGE_ID, 
+							storage.ID, 
 							storage.ENTITY_ID, 
 							storage.ENTITY_TYPE
+						ORDER BY NULL
 					) src
 					GROUP BY
 						src.STORAGE_ID,
 						src.ENTITY_ID,
 						src.ENTITY_TYPE
+					ORDER BY NULL
 				) CNT_FREE
 					ON CNT_FILES.STORAGE_ID = CNT_FREE.STORAGE_ID
 					AND CNT_FILES.ENTITY_ID = CNT_FREE.ENTITY_ID
@@ -405,87 +509,176 @@ class Storage extends Volume\Base implements Volume\IVolumeIndicatorStorage, Vol
 			";
 		};
 
-		$subSelectSql = Volume\QueryHelper::prepareSelect($this->getSelect());
 
-		$subWhereSql = Volume\QueryHelper::prepareWhere(
-			$this->getFilter(array(
-				'DELETED_TYPE' => ObjectTable::DELETED_TYPE_NONE
-			)),
-			array(
-				'ENTITY_TYPE' => 'storage.ENTITY_TYPE',
-				'ENTITY_ID' => 'storage.ENTITY_ID',
-				'USER_ID' => 'storage.ENTITY_ID',
-				'GROUP_ID' => 'storage.ENTITY_ID',
-				'DELETED_TYPE' => 'files.DELETED_TYPE',
-				'STORAGE_ID' => 'storage.ID',
-				'TITLE' => 'storage.NAME',
-			)
+		$stageId = $this->getStage();
+		if (empty($stageId))
+		{
+			$stageId = self::DISK_FILE;
+		}
+
+		$allTestTypes = array(
+			self::DISK_FILE,
+			self::PREVIEW_FILE,
+			self::ATTACHED_OBJECT,
+			self::EXTERNAL_LINK,
+			self::SHARING_OBJECT,
+			self::UNNECESSARY_VERSION,
+			'recalculatePercent',
 		);
+		$executeTests = array();
+		$needApply = false;
+		foreach ($allTestTypes as $testTypeId)
+		{
+			if (in_array($testTypeId, $collectData))
+			{
+				$needApply = $needApply || ($testTypeId == $stageId);
+				if ($needApply)
+				{
+					$executeTests[] = $testTypeId;
+				}
+			}
+		}
 
-
-		$selectSql = '';
-		$fromSql = '';
-		$whereSql = '';
-		$columns = array(
-			'INDICATOR_TYPE',
-			'OWNER_ID',
-			'CREATE_TIME',
-		);
-
-		$buildDiskSql($selectSql, $fromSql, $whereSql, $columns, $subSelectSql, $subWhereSql);
-
-		if (in_array(self::PREVIEW_FILE, $collectData))
-		{
-			$buildPreviewSql($selectSql, $fromSql, $whereSql, $columns, $subSelectSql, $subWhereSql);
-		}
-		if (in_array(self::ATTACHED_OBJECT, $collectData))
-		{
-			$buildAttachedSql($selectSql, $fromSql, $whereSql, $columns, $subSelectSql, $subWhereSql);
-		}
-		if (in_array(self::EXTERNAL_LINK, $collectData))
-		{
-			$buildExternalSql($selectSql, $fromSql, $whereSql, $columns, $subSelectSql, $subWhereSql);
-		}
-		if (in_array(self::SHARING_OBJECT, $collectData))
-		{
-			$buildSharingSql($selectSql, $fromSql, $whereSql, $columns, $subSelectSql, $subWhereSql);
-		}
-		if (in_array(self::UNNECESSARY_VERSION, $collectData))
-		{
-			$buildUnnecessarySql($selectSql, $fromSql, $whereSql, $columns, $subSelectSql, $subWhereSql);
-		}
+		VolumeTable::createTemporally();
+		$temporallyTableName = VolumeTable::getTemporallyName();
 
 		$indicatorType = $sqlHelper->forSql(static::className());
 		$ownerId = (string)$this->getOwner();
-
-		$querySql = "
-			SELECT
-				'{$indicatorType}' AS INDICATOR_TYPE,
-				{$ownerId} as OWNER_ID,
-				". $connection->getSqlHelper()->getCurrentDateTimeFunction(). " as CREATE_TIME
-				{$selectSql}
-			FROM 
-				{$fromSql}
-			WHERE
-				1 = 1
-				{$whereSql}
-		";
-
+		$createTime = $connection->getSqlHelper()->getCurrentDateTimeFunction();
 		$tableName = VolumeTable::getTableName();
 
-		if ($this->getFilterId() > 0)
+		foreach ($executeTests as $testTypeId)
 		{
-			$filterId = $this->getFilterId();
-			$columnList = Volume\QueryHelper::prepareUpdateOnSelect($columns, $this->getSelect(), 'destinationTbl', 'sourceQuery');
-			$connection->queryExecute("UPDATE {$tableName} destinationTbl, ({$querySql}) sourceQuery SET {$columnList} WHERE destinationTbl.ID = {$filterId}");
-		}
-		else
-		{
+			$this->setStage($testTypeId);
+
+			if (!$this->checkTimeEnd())
+			{
+				break;
+			}
+
+			if ($testTypeId == 'recalculatePercent')
+			{
+				$this->recalculatePercent();
+				$this->setStage(null);
+				continue;
+			}
+
+			VolumeTable::clearTemporally();
+
+			$subSelectSql = Volume\QueryHelper::prepareSelect($this->getSelect());
+
+			$subWhereSql = Volume\QueryHelper::prepareWhere(
+				$this->getFilter(array(
+					'DELETED_TYPE' => ObjectTable::DELETED_TYPE_NONE
+				)),
+				array(
+					'ENTITY_TYPE' => 'storage.ENTITY_TYPE',
+					'ENTITY_ID' => 'storage.ENTITY_ID',
+					'USER_ID' => 'storage.ENTITY_ID',
+					'GROUP_ID' => 'storage.ENTITY_ID',
+					'DELETED_TYPE' => 'files.DELETED_TYPE',
+					'STORAGE_ID' => 'storage.ID',
+					'TITLE' => 'storage.NAME',
+				)
+			);
+
+			$selectSql = '';
+			$fromSql = '';
+			$whereSql = '';
+			$columns = array(
+				'INDICATOR_TYPE',
+				'OWNER_ID',
+				'CREATE_TIME',
+			);
+
+			if ($testTypeId != self::DISK_FILE)
+			{
+				$build0Sql($selectSql, $fromSql, $whereSql, $columns, $subSelectSql, $subWhereSql);
+			}
+			switch ($testTypeId)
+			{
+				case self::DISK_FILE:
+					$buildDiskSql($selectSql, $fromSql, $whereSql, $columns, $subSelectSql, $subWhereSql);
+					break;
+
+				case self::PREVIEW_FILE:
+					$buildPreviewSql($selectSql, $fromSql, $whereSql, $columns, $subSelectSql, $subWhereSql);
+					break;
+
+				case self::ATTACHED_OBJECT:
+					$buildAttachedSql($selectSql, $fromSql, $whereSql, $columns, $subSelectSql, $subWhereSql);
+					break;
+
+				case self::EXTERNAL_LINK:
+					$buildExternalSql($selectSql, $fromSql, $whereSql, $columns, $subSelectSql, $subWhereSql);
+					break;
+
+				case self::SHARING_OBJECT:
+					$buildSharingSql($selectSql, $fromSql, $whereSql, $columns, $subSelectSql, $subWhereSql);
+					break;
+
+				case self::UNNECESSARY_VERSION:
+					$buildUnnecessarySql($selectSql, $fromSql, $whereSql, $columns, $subSelectSql, $subWhereSql);
+					break;
+			}
+
+			$querySql = "
+				SELECT
+					'{$indicatorType}' AS INDICATOR_TYPE,
+					{$ownerId} as OWNER_ID,
+					{$createTime} as CREATE_TIME
+					{$selectSql}
+				FROM 
+					{$fromSql}
+				WHERE
+					1 = 1
+					{$whereSql}
+			";
+
 			$columnList = Volume\QueryHelper::prepareInsert($columns, $this->getSelect());
-			$connection->queryExecute("INSERT INTO {$tableName} ({$columnList}) {$querySql}");
+			$connection->queryExecute("INSERT INTO {$temporallyTableName} ({$columnList}) {$querySql}");
+
+			$temporallyDataSource = "SELECT {$columnList} FROM {$temporallyTableName}";
+
+			if ($this->getFilterId() > 0)
+			{
+				$filterId = $this->getFilterId();
+				$columnList = Volume\QueryHelper::prepareUpdateOnSelect($columns, $this->getSelect(), 'destinationTbl', 'sourceQuery');
+				$querySql = "
+					UPDATE 
+						{$tableName} destinationTbl, 
+						({$temporallyDataSource}) sourceQuery 
+					SET {$columnList} 
+					WHERE destinationTbl.ID = {$filterId}
+				";
+			}
+			elseif ($testTypeId != self::DISK_FILE)
+			{
+				$columnList = Volume\QueryHelper::prepareUpdateOnSelect($columns, $this->getSelect(), 'destinationTbl', 'sourceQuery');
+				$querySql = "
+					UPDATE 
+						{$tableName} destinationTbl, 
+						({$temporallyDataSource}) sourceQuery 
+					SET {$columnList} 
+					WHERE 
+						destinationTbl.INDICATOR_TYPE = '{$indicatorType}'
+						AND destinationTbl.OWNER_ID = {$ownerId} 
+						AND destinationTbl.STORAGE_ID  = sourceQuery.STORAGE_ID  
+						AND destinationTbl.ENTITY_ID  = sourceQuery.ENTITY_ID  
+						AND destinationTbl.ENTITY_TYPE  = sourceQuery.ENTITY_TYPE 
+				";
+			}
+			else
+			{
+				$querySql = "INSERT INTO {$tableName} ({$columnList}) {$temporallyDataSource}";
+			}
+
+			$connection->queryExecute($querySql);
+
+
 		}
 
-		$this->recalculatePercent();
+		VolumeTable::dropTemporally();
 
 		return $this;
 	}
@@ -648,7 +841,11 @@ class Storage extends Volume\Base implements Volume\IVolumeIndicatorStorage, Vol
 			throw new ArgumentTypeException('Fragment must be subclass of '.\Bitrix\Disk\Storage::className());
 		}
 
-		if (in_array($storage->getEntityType(), \Bitrix\Disk\Volume\Module\Im::getEntityType()))
+		if (
+			in_array($storage->getEntityType(), \Bitrix\Disk\Volume\Module\Im::getEntityType()) ||
+			in_array($storage->getEntityType(), \Bitrix\Disk\Volume\Module\Mail::getEntityType()) ||
+			in_array($storage->getEntityType(), \Bitrix\Disk\Volume\Module\Documentgenerator::getEntityType())
+		)
 		{
 			$url = $storage->getProxyType()->getStorageBaseUrl();
 		}

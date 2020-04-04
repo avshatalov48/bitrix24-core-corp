@@ -35,7 +35,14 @@ class Connector
 	{
 		$connectors = array(
 			"livechat" => Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_LIVECHAT'),
+			"whatsappbytwilio" => Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_WHATSAPPBYTWILIO'),
 		);
+
+		// avito available only in Russia
+		if (!Loader::includeModule('bitrix24') || \CBitrix24::getPortalZone() === 'ru')
+		{
+			$connectors['avito'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_AVITO');
+		}
 
 		// disabled in b24.ua
 		if(!Loader::includeModule('bitrix24') || \CBitrix24::getPortalZone() !== 'ua')
@@ -43,7 +50,8 @@ class Connector
 
 		$connectors = array_merge($connectors, array(
 			"viber" => Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_VIBER_BOT'),
-			"telegrambot" => Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_TELEGRAM_BOT')
+			"telegrambot" => Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_TELEGRAM_BOT'),
+			"wechat" => Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_WECHAT')
 		));
 
 		// disabled in b24.ua
@@ -107,7 +115,14 @@ class Connector
 	{
 		$connectors = array(
 			"livechat" => Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_LIVECHAT'),
+			"whatsappbytwilio" => Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_WHATSAPPBYTWILIO'),
 		);
+
+		// avito available only in Russia
+		if (!Loader::includeModule('bitrix24') || \CBitrix24::getPortalZone() === 'ru')
+		{
+			$connectors['avito'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_AVITO');
+		}
 
 		// disabled in b24.ua
 		if(!Loader::includeModule('bitrix24') || \CBitrix24::getPortalZone() !== 'ua')
@@ -115,7 +130,8 @@ class Connector
 
 		$connectors = array_merge($connectors, array(
 			"viber" => Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_VIBER_BOT'),
-			"telegrambot" => Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_TELEGRAM_BOT')
+			"telegrambot" => Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_TELEGRAM_BOT'),
+			"wechat" => Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_WECHAT')
 		));
 
 		// disabled in b24.ua
@@ -157,6 +173,12 @@ class Connector
 		return $connectors;
 	}
 
+	/**
+	 * @param bool $customConnectors
+	 * @return array|string
+	 * @throws \Bitrix\Main\ArgumentNullException
+	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
+	 */
 	public static function getListConnectorActive($customConnectors = true)
 	{
 		$connectors = strtolower(Option::get(Library::MODULE_ID, "list_connector"));
@@ -173,6 +195,10 @@ class Connector
 		return array_merge(Library::$noServerConnectors, CustomConnectors::getListConnectorId());
 	}
 
+	/**
+	 * @return array
+	 * @throws \Bitrix\Main\LoaderException
+	 */
 	public static function getListConnectorShowDeliveryStatus()
 	{
 		return array_keys(static::getListConnector());
@@ -188,7 +214,14 @@ class Connector
 	{
 		$components = array(
 			'livechat' => 'bitrix:imconnector.livechat',
+			'whatsappbytwilio' => 'bitrix:imconnector.whatsappbytwilio',
 		);
+
+		// avito available only in Russia
+		if (!Loader::includeModule('bitrix24') || \CBitrix24::getPortalZone() === 'ru')
+		{
+			$components['avito'] = 'bitrix:imconnector.avito';
+		}
 
 		// disabled in b24.ua
 		if(!Loader::includeModule('bitrix24') || \CBitrix24::getPortalZone() !== 'ua')
@@ -196,7 +229,8 @@ class Connector
 
 		$components = array_merge($components, array(
 			'viber' => 'bitrix:imconnector.viber',
-			'telegrambot' => 'bitrix:imconnector.telegrambot'
+			'telegrambot' => 'bitrix:imconnector.telegrambot',
+			'wechat' => 'bitrix:imconnector.wechat'
 		));
 
 		// disabled in b24.ua
@@ -800,6 +834,7 @@ class Connector
 			'vkgroup' => 'vk',
 			'vkgrouporder' => 'vk-order',
 			'facebook' => 'fb',
+			'wechat' => 'wechat',
 			'facebookcomments' => 'fb-comments',
 			'facebookmessenger' => 'fb-messenger',
 			'instagram' => 'instagram',
@@ -815,6 +850,8 @@ class Connector
 			'emailoffice365' => 'outlook',
 			'webchat' => 'webchat',
 			'msteams' => 'envelope',
+			'whatsappbytwilio' => 'whatsapp',
+			'avito' => 'avito',
 			'directline' => 'directline',
 			'botframework.skype' => 'skype',
 			'botframework.slack' => 'slack',
@@ -1264,6 +1301,8 @@ class Connector
 						case 'facebookcomments':
 						case 'fbinstagram':
 						case 'instagram':
+						case 'avito':
+						case 'wechat':
 							$output = new Output($connector, $line);
 							$rawDelete = $output->deleteConnector();
 							if(!$rawDelete->isSuccess())

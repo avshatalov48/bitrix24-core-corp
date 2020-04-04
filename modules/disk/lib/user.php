@@ -2,6 +2,7 @@
 
 namespace Bitrix\Disk;
 
+use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Entity\Result;
 use Bitrix\Main\Loader;
 use Bitrix\Main\ModuleManager;
@@ -118,7 +119,7 @@ class User extends Internals\Model
 
 		return $model;
 	}
-	
+
 	/**
 	 * @return string
 	 */
@@ -436,11 +437,15 @@ class User extends Internals\Model
 	/**
 	 * Resolves userId from parameter $user.
 	 *
-	 * @param \CUser|User|int $user Different types: User model, CUser, id of user.
+	 * @param \CUser|User|CurrentUser|int $user Different types: User model, CUser, id of user.
 	 * @return int|null
 	 */
 	public static function resolveUserId($user)
 	{
+		if ($user instanceof CurrentUser)
+		{
+			return $user->getId();
+		}
 		if($user instanceof User)
 		{
 			return (int)$user->getId();

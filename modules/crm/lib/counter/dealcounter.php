@@ -182,6 +182,58 @@ class DealCounter extends EntityCounter
 					)
 				);
 
+				//region Activity (inner join with correlated query for fix issue #109347)
+				$activityQuery = new Main\Entity\Query(ActivityTable::getEntity());
+
+				if(is_array($userID))
+				{
+					$userCount = count($userID);
+					if($userCount > 1)
+					{
+						$activityQuery->addFilter('@RESPONSIBLE_ID', $userID);
+					}
+					elseif($userCount === 1)
+					{
+						$activityQuery->addFilter('=RESPONSIBLE_ID', $userID[0]);
+					}
+				}
+				elseif($userID > 0)
+				{
+					$activityQuery->addFilter('=RESPONSIBLE_ID', $userID);
+				}
+
+				if($typeID === EntityCounterType::PENDING)
+				{
+					$lowBound = self::getUserTime($userID);
+					$lowBound->setTime(0, 0, 0);
+					$activityQuery->addFilter('>=DEADLINE', $lowBound);
+
+					$highBound = self::getUserTime($userID);
+					$highBound->setTime(23, 59, 59);
+					$activityQuery->addFilter('<=DEADLINE', $highBound);
+				}
+				elseif($typeID === EntityCounterType::OVERDUE)
+				{
+					$highBound = self::getUserTime($userID);
+					$highBound->setTime(0, 0, 0);
+					$activityQuery->addFilter('<DEADLINE', $highBound);
+				}
+
+				$activityQuery->addFilter('=COMPLETED', 'N');
+				$activityQuery->addSelect('ID');
+
+				$query->registerRuntimeField(
+					'',
+					new ReferenceField('A',
+						Main\Entity\Base::getInstanceByQuery($activityQuery),
+						array('=ref.ID' => 'this.B.ACTIVITY_ID'),
+						array('join_type' => 'INNER')
+					)
+				);
+				//endregion
+
+				//region Activity (standard inner join)
+				/*
 				$query->registerRuntimeField(
 					'',
 					new ReferenceField('A',
@@ -229,6 +281,8 @@ class DealCounter extends EntityCounter
 					$highBound->setTime(0, 0, 0);
 					$query->addFilter('<A.DEADLINE', $highBound);
 				}
+				*/
+				//endregion
 
 				if($select === 'ENTY')
 				{

@@ -523,7 +523,6 @@ class CDavICalendarProperty
 
 		$name = preg_replace('/[;].*$/', '', $this->name);
 		$str = $this->content;
-		$str = strip_tags($str);
 
 		if (in_array($name, $arRender2))
 		{

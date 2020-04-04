@@ -2797,6 +2797,7 @@ body .bx-tm-popup-clock-wnd .bx-tm-popup-clock-wnd-report textarea {
 
 .tm-report-popup .tm-popup-task-form {
 	margin-left: 0;
+	position: relative;
 }
 
 .tm-popup-tasks-empty .tm-popup-task-form {
@@ -2839,12 +2840,16 @@ body .bx-tm-popup-clock-wnd .bx-tm-popup-clock-wnd-report textarea {
 	width: 355px;
 }
 
+.tm-report-popup-tasks .tm-popup-task-form-textbox {
+	width: 275px;
+}
+
 .tm-popup-event-form-textbox {
 	width: 205px;
 }
 
 .tm-report-popup .tm-popup-event-form-textbox {
-	width: 175px;
+	width: 147px;
 }
 
 .tm-popup-event-form-disabled .tm-popup-event-form-options,
@@ -2873,6 +2878,13 @@ body .bx-tm-popup-clock-wnd .bx-tm-popup-clock-wnd-report textarea {
 	width: 36px;
 	position: absolute;
 	right: 11px;
+}
+
+.tm-report-popup .tm-popup-task-form-submit,
+.tm-popup-event-form-submit,
+.tm-popup-event-form-disabled .tm-popup-event-form-submit,
+.tm-popup-task-form-disabled .tm-popup-task-form-submit {
+	right: 0;
 }
 
 .tm-popup-task-form-submit:before,
@@ -3347,8 +3359,7 @@ div.bx-clock-div-inline .bxc-clock-cont {
 
 
 
-.tm-info-bar-btn:before,
-.tm-popup-social-btn:before {
+.tm-info-bar-btn:before {
 	background: url(images/interface/timeman/tm-sprite.svg) no-repeat 100px 100px;
 	background-size: cover;
 	content: '';
@@ -3396,14 +3407,6 @@ div.bx-clock-div-inline .bxc-clock-cont {
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
-}
-
-.tm-popup-social-btn {
-	height: 40px;
-	margin: 0 4px 0 0;
-	float: right;
-	width: 40px;
-	border: none;
 }
 
 .tm-social-set-popup,
@@ -3605,7 +3608,6 @@ body div.bx-clock-div span.double-dot {
 
 body div.bx-clock-div table.bxc-cus-sel-tbl td.bxc-pointer {
 	background: url(images/interface/timeman/tm-sprite.svg) no-repeat 4px -371px;
-	background-size: cover;
 	bottom: 1px;
 	display: block;
 	right: 1px;
@@ -4134,6 +4136,7 @@ body .tm-report-popup-items td.tm-report-popup-events {
 	width: 50%;
 	padding: 0 0 0 20px;
 	border: 0;
+	box-sizing: border-box;
 }
 
 body .tm-report-popup-items td.tm-report-popup-events .tm-popup-event {
@@ -4150,7 +4153,7 @@ body .tm-report-popup-items td.tm-report-popup-events .tm-popup-events {
 	*position: relative;
 	max-height: 206px;
 	padding: 0;
-	margin: 0;
+	margin: 10px 0 0;
 	border: 1px solid #bcd0d5;
 	-moz-border-radius: 3px;
 	-webkit-border-radius: 3px;
@@ -4325,8 +4328,7 @@ body .tm-report .tm-report-right-border {
 	background: #dfe0e2;
 }
 
-.tm-info-bar-btn,
-.tm-popup-social-btn {
+.tm-info-bar-btn {
 	background: none;
 	-webkit-box-shadow: none;
 	box-shadow: none;
@@ -4348,9 +4350,7 @@ body .tm-report .tm-report-right-border {
 }
 
 .tm-info-bar-btn:hover,
-.tm-popup-social-btn:hover,
 .tm-info-bar-btn:active,
-.tm-popup-social-btn:active,
 .tm-popup-social-btn-active{
 	opacity: 1;
 	background: none;
@@ -4404,34 +4404,6 @@ body .tm-report .tm-report-right-border {
 	text-align: right;
 	vertical-align: top;
 	padding: 0;
-}
-
-.tm-popup-social-btn {
-	border: 1px solid #a6aab0;
-	margin: 0 4px 0 0;
-	height: 38px;
-	float: right;
-	width: 38px;
-}
-
-.tm-popup-social-btn:hover {
-	background: #f7f9f9;
-}
-
-.tm-popup-timeman-button-mode .tm-popup-social-btn {
-	margin: 0;
-}
-
-.tm-popup-timeman-buttons-mode .tm-popup-social-btn {
-	margin: 0;
-}
-
-.tm-popup-social-btn:before {
-	background-position: 0 1px;
-	left: 10px;
-	top: 10px;
-	width: 19px;
-	height: 19px;
 }
 
 .tm-social-set-popup,

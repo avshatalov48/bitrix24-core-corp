@@ -12,6 +12,7 @@ $MESS["PERSONAL_CITY"] = "Город";
 $MESS["TIME_ZONE"] = "Часовой пояс";
 $MESS["GROUP_ID"] = "Группа";
 $MESS["WORK_PHONE"] = "Рабочий телефон";
+$MESS["PERSONAL_PHONE"] = "Телефон";
 $MESS["WORK_POSITION"] = "Должность";
 $MESS["UF_PHONE_INNER"] = "Внутренний номер";
 $MESS["UF_SKYPE"] = "Skype";

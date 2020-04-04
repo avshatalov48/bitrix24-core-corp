@@ -195,6 +195,7 @@ abstract class ProductsDataProvider extends CrmEntityDataProvider
 			$this->data['TOTAL_DISCOUNT'] += $product->getRawValue('QUANTITY') * $product->getRawValue('DISCOUNT_SUM');
 			$this->data['TOTAL_QUANTITY'] += $product->getRawValue('QUANTITY');
 			$this->data['TOTAL_RAW'] += $product->getRawValue('PRICE_RAW_SUM');
+			$this->data['TOTAL_RAW_BEFORE_DISCOUNT'] += $product->getRawValue('PRICE_RAW_NETTO');
 			$crmProducts[] = DataProviderManager::getInstance()->getArray($product, ['rawValue' => true]);
 		}
 		$calcOptions = [];
@@ -212,11 +213,12 @@ abstract class ProductsDataProvider extends CrmEntityDataProvider
 			{
 				$tax = new Tax([
 					'NAME' => $taxInfo['NAME'],
-					'VALUE' => new Money($taxInfo['TAX_VAL'], ['CURRENCY_ID' => $currencyID, 'WITH_ZEROS' => true]),
+					'VALUE' => new Money($taxInfo['VALUE_MONEY'], ['CURRENCY_ID' => $currencyID, 'WITH_ZEROS' => true]),
 					'NETTO' => 0,
 					'BRUTTO' => 0,
 					'RATE' => (float)$taxInfo['VALUE'],
 					'TAX_INCLUDED' => $taxInfo['IS_IN_PRICE'],
+					'MODE' => Tax::MODE_TAX,
 				]);
 				$tax->setParentProvider($this);
 				$this->taxes[] = $tax;
@@ -266,6 +268,11 @@ abstract class ProductsDataProvider extends CrmEntityDataProvider
 				'TYPE' => Money::class,
 				'FORMAT' => ['CURRENCY_ID' => $currencyID, 'WITH_ZEROS' => true],
 			],
+			'TOTAL_RAW_BEFORE_DISCOUNT' => [
+				'TITLE' => GetMessage('CRM_DOCGEN_PRODUCTSDATAPROVIDER_TOTAL_RAW_BEFORE_DISCOUNT_TITLE'),
+				'TYPE' => Money::class,
+				'FORMAT' => ['CURRENCY_ID' => $currencyID, 'WITH_ZEROS' => true],
+			],
 			'TOTAL_BEFORE_TAX_WORDS' => [
 				'TITLE' => GetMessage('CRM_DOCGEN_PRODUCTSDATAPROVIDER_TOTAL_BEFORE_TAX_WORDS_TITLE'),
 				'TYPE' => Money::class,
@@ -298,6 +305,7 @@ abstract class ProductsDataProvider extends CrmEntityDataProvider
 				'VALUE' => [$this, 'getTotalRows'],
 				'FORMAT' => ['CURRENCY_ID' => $currencyID, 'WORDS' => true, 'NO_SIGN' => true],
 			],
+
 		];
 
 		return $totalFields;
@@ -308,7 +316,12 @@ abstract class ProductsDataProvider extends CrmEntityDataProvider
 	 */
 	public function getTotalRows()
 	{
-		return count($this->products);
+		if(is_array($this->products) || $this->products instanceof \Countable)
+		{
+			return count($this->products);
+		}
+
+		return 0;
 	}
 
 	/**
@@ -388,7 +401,7 @@ abstract class ProductsDataProvider extends CrmEntityDataProvider
 		foreach($this->products as $product)
 		{
 			$rate = $product->getRawValue('TAX_RATE');
-			if($rate > 0)
+			if($rate > 0 || ($rate == 0 && isset($taxNames[$rate])))
 			{
 				if(!isset($taxes[$product->getRawValue('TAX_RATE')]))
 				{
@@ -404,6 +417,7 @@ abstract class ProductsDataProvider extends CrmEntityDataProvider
 						'BRUTTO' => 0,
 						'RATE' => $rate,
 						'TAX_INCLUDED' => $product->getRawValue('TAX_INCLUDED'),
+						'MODE' => Tax::MODE_VAT,
 					];
 				}
 				$taxes[$product->getRawValue('TAX_RATE')]['VALUE'] += $product->getRawValue('TAX_VALUE_SUM');

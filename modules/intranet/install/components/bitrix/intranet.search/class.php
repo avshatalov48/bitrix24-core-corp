@@ -16,6 +16,7 @@ class CIntranetSearchComponent extends CBitrixComponent
 	{
 		$arParams['FILTER_NAME'] = $this->initFilterName($arParams['FILTER_NAME']);
 		$this->loadTooltipFromSocialNetwork($arParams);
+		$this->loadUserPropertyFromSocialNetwork($arParams);
 
 		$arParams["NAME_TEMPLATE"] = (empty($arParams["NAME_TEMPLATE"]) || !trim($arParams["NAME_TEMPLATE"]))?
 			CSite::GetNameFormat():
@@ -40,13 +41,213 @@ class CIntranetSearchComponent extends CBitrixComponent
 		TrimArr($arParams['ALPHABET_LANG']);
 		$arParams['ALPHABET_LANG'] = empty($arParams['ALPHABET_LANG']) ? array(LANGUAGE_ID) : $arParams['ALPHABET_LANG'];
 		$arParams['CURRENT_VIEW']  = $this->getCurrentView($arParams);
-		$arParams['LIST_URL']      = $this->getApplication()->GetCurPage();
+		$arParams['LIST_URL']      = (!empty($arParams['LIST_URL']) ? $arParams['LIST_URL'] : $this->getApplication()->GetCurPage());
 		if (!$arParams['DETAIL_URL'])
 		{
 			$arParams['DETAIL_URL'] = $arParams['LIST_URL'] . '?ID=#USER_ID#';
 		}
 
 		return parent::onPrepareComponentParams($arParams);
+	}
+
+	/**
+	 * @param $arParams
+	 */
+	protected function loadUserPropertyFromSocialNetwork(&$arParams)
+	{
+		// process USER_PROPERTY_TABLE
+		if (
+			!isset($arParams['USER_PROPERTY_TABLE'])
+			|| !is_array($arParams['USER_PROPERTY_TABLE'])
+		)
+		{
+			$found = false;
+			$val = \Bitrix\Main\Config\Option::get('socialnetwork', 'user_list_user_property_table', false, SITE_ID);
+			if (!empty($val))
+			{
+				$val = unserialize($val);
+				if (
+					is_array($val)
+					&& !empty($val)
+				)
+				{
+					$found = true;
+					$arParams['USER_PROPERTY_TABLE'] = $val;
+				}
+			}
+			if (!$found)
+			{
+				$arParams['USER_PROPERTY_TABLE'] = (
+					\Bitrix\Main\Loader::includeModule('extranet')
+					&& CExtranet::isExtranetSite()
+						? (
+							!empty($arParams['EXTRANET_TYPE'])
+							&& $arParams['EXTRANET_TYPE'] == "employees"
+								? [
+									0 => "PERSONAL_PHOTO",
+									1 => "FULL_NAME",
+									2 => "PERSONAL_PHONE",
+									3 => "WORK_POSITION",
+									4 => "UF_DEPARTMENT",
+								]
+								: [
+									0 => "PERSONAL_PHOTO",
+									1 => "FULL_NAME",
+									2 => "PERSONAL_PHONE",
+									3 => "PERSONAL_CITY",
+									4 => "PERSONAL_COUNTRY",
+									5 => "WORK_POSITION",
+									6 => "WORK_COMPANY",
+								]
+						)
+						: [
+							0	=>	"PERSONAL_PHOTO",
+							1	=>	"FULL_NAME",
+							2	=>	"WORK_POSITION",
+							3	=>	"WORK_PHONE",
+							4	=>	"UF_DEPARTMENT",
+							5 	=> 	"UF_PHONE_INNER",
+							6	=> 	"UF_SKYPE",
+						]
+				);
+			}
+		}
+		else
+		{
+			\Bitrix\Main\Config\Option::set('socialnetwork', 'user_list_user_property_table', serialize($arParams['USER_PROPERTY_TABLE']), SITE_ID);
+		}
+
+		// process USER_PROPERTY_EXCEL
+		if (
+			!isset($arParams['USER_PROPERTY_EXCEL'])
+			|| !is_array($arParams['USER_PROPERTY_EXCEL'])
+		)
+		{
+			$found = false;
+			$val = \Bitrix\Main\Config\Option::get('socialnetwork', 'user_list_user_property_excel', false, SITE_ID);
+			if (!empty($val))
+			{
+				$val = unserialize($val);
+				if (
+					is_array($val)
+					&& !empty($val)
+				)
+				{
+					$found = true;
+					$arParams['USER_PROPERTY_EXCEL'] = $val;
+				}
+			}
+			if (!$found)
+			{
+				$arParams['USER_PROPERTY_EXCEL'] = (
+					\Bitrix\Main\Loader::includeModule('extranet')
+					&& CExtranet::isExtranetSite()
+						? (
+							!empty($arParams['EXTRANET_TYPE'])
+							&& $arParams['EXTRANET_TYPE'] == "employees"
+								? [
+									0 => "FULL_NAME",
+									1 => "EMAIL",
+									2 => "PERSONAL_PHONE",
+									3 => "PERSONAL_FAX",
+									4 => "PERSONAL_MOBILE",
+									5 => "WORK_POSITION",
+									6 => "UF_DEPARTMENT",
+								]
+								: [
+									0 => "FULL_NAME",
+									1 => "EMAIL",
+									2 => "PERSONAL_PHONE",
+									3 => "PERSONAL_FAX",
+									4 => "PERSONAL_MOBILE",
+									5 => "WORK_POSITION",
+									6 => "WORK_COMPANY",
+								]
+						)
+						: [
+							0 => "FULL_NAME",
+							1 => "EMAIL",
+							2 => "PERSONAL_MOBILE",
+							3 => "WORK_PHONE",
+							4 => "WORK_POSITION",
+							5 => "UF_DEPARTMENT",
+							6 => "UF_PHONE_INNER",
+							7 => "UF_SKYPE",
+						]
+				);
+			}
+		}
+		else
+		{
+			\Bitrix\Main\Config\Option::set('socialnetwork', 'user_list_user_property_excel', serialize($arParams['USER_PROPERTY_EXCEL']), SITE_ID);
+		}
+
+		// process USER_PROPERTY_LIST
+		if (
+			!isset($arParams['USER_PROPERTY_LIST'])
+			|| !is_array($arParams['USER_PROPERTY_LIST'])
+		)
+		{
+			$found = false;
+			$val = \Bitrix\Main\Config\Option::get('socialnetwork', 'user_list_user_property_list', false, SITE_ID);
+			if (!empty($val))
+			{
+				$val = unserialize($val);
+				if (
+					is_array($val)
+					&& !empty($val)
+				)
+				{
+					$found = true;
+					$arParams['USER_PROPERTY_LIST'] = $val;
+				}
+			}
+			if (!$found)
+			{
+				$arParams['USER_PROPERTY_LIST'] = (
+					\Bitrix\Main\Loader::includeModule('extranet')
+					&& CExtranet::isExtranetSite()
+					? (
+						!empty($arParams['EXTRANET_TYPE'])
+						&& $arParams['EXTRANET_TYPE'] == "employees"
+							? [
+								0 => "EMAIL",
+								1 => "PERSONAL_ICQ",
+								2 => "PERSONAL_PHONE",
+								3 => "PERSONAL_FAX",
+								4 => "PERSONAL_MOBILE",
+								5 => "UF_DEPARTMENT",
+								6 => "PERSONAL_PHOTO",
+							]
+							: [
+								0 => "EMAIL",
+								1 => "PERSONAL_ICQ",
+								2 => "PERSONAL_PHONE",
+								3 => "PERSONAL_FAX",
+								4 => "PERSONAL_MOBILE",
+								5 => "PERSONAL_CITY",
+								6 => "PERSONAL_COUNTRY",
+								7 => "WORK_COMPANY",
+								8 => "PERSONAL_PHOTO",
+							]
+					)
+					: [
+						0 => "EMAIL",
+						1 => "PERSONAL_MOBILE",
+						2 => "UF_SKYPE",
+						3 => "WORK_PHONE",
+						4 => "UF_PHONE_INNER",
+						5 => "PERSONAL_PHOTO",
+						6 => "UF_DEPARTMENT",
+					]
+				);
+			}
+		}
+		else
+		{
+			\Bitrix\Main\Config\Option::set('socialnetwork', 'user_list_user_property_list', serialize($arParams['USER_PROPERTY_LIST']), SITE_ID);
+		}
+
 	}
 
 	/**

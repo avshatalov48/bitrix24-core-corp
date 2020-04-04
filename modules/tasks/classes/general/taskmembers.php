@@ -216,8 +216,10 @@ class CTaskMembers
 		{
 			$filter["=TYPE"] = $TYPE;
 		}
-
-		$filter['=TYPE'] = array("A", "U"); // remove only of that type
+        else
+        {
+            $filter['=TYPE'] = array("A", "U"); // remove only of that type
+        }
 
 		$list = MemberTable::getList(array(
 			"filter" => $filter,

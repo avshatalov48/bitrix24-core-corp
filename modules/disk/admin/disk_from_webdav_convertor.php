@@ -168,10 +168,11 @@ class CFromWebDavConvertor
 			$this->dropElementProperty($iblock['ID'], self::UF_DISK_FILE_ID);
 			$this->dropElementProperty($iblock['ID'], self::UF_DISK_FILE_STATUS);
 		}
-		
+
 		$tables = array(
 			'b_disk_attached_object',
 			'b_disk_deleted_log',
+			'b_disk_deleted_log_v2',
 			'b_disk_edit_session',
 			'b_disk_external_link',
 			'b_disk_object',

@@ -112,7 +112,7 @@ class Adapter implements iBase
 	/**
 	 * Get name.
 	 *
-	 * return string
+	 * @return string
 	 */
 	public function getName()
 	{
@@ -409,7 +409,7 @@ class Adapter implements iBase
 	/**
 	 * Get recipient data.
 	 *
-	 * @return []
+	 * @return array
 	 */
 	public function getRecipientData()
 	{
@@ -419,7 +419,7 @@ class Adapter implements iBase
 	/**
 	 * Set recipient data.
 	 *
-	 * @param [] $data Data.
+	 * @param array $data Data.
 	 * @return void
 	 */
 	public function setRecipientData(array $data)

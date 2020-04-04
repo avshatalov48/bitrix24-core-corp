@@ -21,6 +21,10 @@
 	font: 12px/14px "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
 
+.bitrix-footer-link {
+	margin: 0;
+}
+
 a.bitrix-footer-link,
 a.bitrix-footer-link:visited{
 	transition: 180ms all ease;
@@ -36,6 +40,12 @@ a.bitrix-footer-link:hover{
 
 .landing-public-mode {
 	flex: 1 0 auto;
+	display: flex;
+	flex-direction: column;
+}
+
+.landing-footer {
+	margin-top: auto;
 }
 
 body {

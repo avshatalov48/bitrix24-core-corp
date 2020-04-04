@@ -10,13 +10,14 @@ return array(
 	'block' => array(
 		'name' => Loc::getMessage('LANDING_BLOCK_51_5_COUNTDOWN_EVENT--NAME'),
 		'section' => array('countdowns', 'cover'),
+		'dynamic' => false,
 		'version' => '18.5.0',
 	),
 	'nodes' => array(
 		'.landing-block-node-img' => array(
 			'name' => Loc::getMessage('LANDING_BLOCK_51_5_COUNTDOWN_EVENT--IMG'),
 			'type' => 'img',
-			'dimensions' => array('width' => 1920, 'height' => 1280),
+			'dimensions' => array('width' => 1920, 'height' => 1080),
 		),
 		'.landing-block-node-title' => array(
 			'name' => Loc::getMessage('LANDING_BLOCK_51_5_COUNTDOWN_EVENT--TITLE'),

@@ -86,6 +86,7 @@ class Client
 		$additionalParams['client_id'] = $this->clientId;
 		$additionalParams['client_secret'] = $this->clientSecret;
 		$additionalParams['client_redirect_uri'] = OAuthService::getRedirectUri();
+		$additionalParams['member_id'] = \CRestUtil::getMemberId();
 
 		if($licenseCheck)
 		{

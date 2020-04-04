@@ -19,6 +19,9 @@ BX.InviteDialog =
 
 BX.InviteDialog.Init = function(arParams)
 {
+	this.signedParameters = arParams.signedParameters;
+	this.componentName = arParams.componentName;
+
 	if(arParams)
 	{
 		BX.InviteDialog.arParams = arParams;
@@ -521,7 +524,7 @@ BX.InviteDialog.bindSendPasswordEmail = function()
 	{
 		if (BX("ADD_EMAIL"))
 		{
-			BX.bind(BX("ADD_EMAIL"), "keyup", function()
+			BX.bind(BX("ADD_EMAIL"), "bxchange", function()
 				{
 					var strEmail1 = BX.InviteDialog.getEmail1();
 					var strEmail2 = BX.InviteDialog.getEmail2();
@@ -591,7 +594,10 @@ BX.InviteDialog.bindInviteDialogSubmit = function(oBlock)
 					"sessid": BX.bitrix_sessid()
 				};
 
-				break;
+				this.selfSubmitAction(obRequestData, oBlock);
+
+				return;
+
 			case "invite-dialog-invite-button-submit":
 
 				if (typeof document.forms.INVITE_DIALOG_FORM["SONET_GROUPS[]"] != 'undefined')
@@ -609,11 +615,9 @@ BX.InviteDialog.bindInviteDialogSubmit = function(oBlock)
 				}
 
 				obRequestData = {
-					"action": "invite",
 					"EMAIL": document.forms.INVITE_DIALOG_FORM["EMAIL"].value,
 					'MESSAGE_TEXT': document.forms.INVITE_DIALOG_FORM["MESSAGE_TEXT"].value,
 					"DEPARTMENT_ID": (BX('intranet-dialog-tab-content-invite').getAttribute('data-user-type') == 'extranet' ? 0 : document.forms.INVITE_DIALOG_FORM["DEPARTMENT_ID"].value),
-					"sessid": BX.bitrix_sessid()
 				};
 
 				arProcessResult = BX.InviteDialog.processSonetGroupsInput(arSonetGroupsInput, document.forms.INVITE_DIALOG_FORM);
@@ -630,7 +634,9 @@ BX.InviteDialog.bindInviteDialogSubmit = function(oBlock)
 					obRequestData.SONET_GROUPS_NAME = arProcessResult.arName;
 				}
 
-				break;
+				this.inviteAction(obRequestData, oBlock);
+
+				return;
 
 			case "invite-dialog-invite-phone-button-submit":
 
@@ -672,11 +678,11 @@ BX.InviteDialog.bindInviteDialogSubmit = function(oBlock)
 				}
 
 				obRequestData = {
-					"action": "invite",
+					"action": "invite-phone",
 					"PHONE": phoneValue,
 					"PHONE_COUNTRY": phoneCountryValue,
 					'MESSAGE_TEXT': document.forms.INVITE_DIALOG_FORM_PHONE["MESSAGE_TEXT"].value,
-					"DEPARTMENT_ID": (BX('intranet-dialog-tab-content-invite').getAttribute('data-user-type') == 'extranet' ? 0 : document.forms.INVITE_DIALOG_FORM_PHONE["DEPARTMENT_ID"].value),
+					"DEPARTMENT_ID": (BX('intranet-dialog-tab-content-invite-phone').getAttribute('data-user-type') == 'extranet' ? 0 : document.forms.INVITE_DIALOG_FORM_PHONE["DEPARTMENT_ID"].value),
 					"sessid": BX.bitrix_sessid()
 				};
 
@@ -694,7 +700,9 @@ BX.InviteDialog.bindInviteDialogSubmit = function(oBlock)
 					obRequestData.SONET_GROUPS_NAME = arProcessResult.arName;
 				}
 
-				break;
+				this.inviteByPhoneAction(obRequestData, oBlock);
+
+				return;
 
 			case "invite-dialog-add-button-submit":
 
@@ -772,7 +780,9 @@ BX.InviteDialog.bindInviteDialogSubmit = function(oBlock)
 					}
 				}
 
-				break;
+				this.addAction(obRequestData, oBlock);
+
+				return;
 
 			case "invite-dialog-integrator-button-submit":
 
@@ -787,7 +797,9 @@ BX.InviteDialog.bindInviteDialogSubmit = function(oBlock)
 					obRequestData["integrator_message_text"] = document.forms.INTEGRATOR_DIALOG_FORM["INTEGRATOR_MESSAGE_TEXT"].value;
 				}
 
-				break;
+				this.inviteIntegratorAction(obRequestData, oBlock);
+
+				return;
 		}
 
 		if (obRequestData)
@@ -838,7 +850,14 @@ BX.InviteDialog.bindInviteDialogSubmit = function(oBlock)
 						&& obResponsedata["ERROR"].length > 0
 					)
 					{
-						BX.InviteDialog.showError(obResponsedata["ERROR"]);
+						if (obResponsedata.hasOwnProperty("TYPE") && obResponsedata["TYPE"] == "userLimit")
+						{
+							B24.licenseInfoPopup.show('featureID', BX.message("BX24_INVITE_DIALOG_USERS_LIMIT_TITLE"), BX.message("BX24_INVITE_DIALOG_USERS_LIMIT_TEXT"));
+						}
+						else
+						{
+							BX.InviteDialog.showError(obResponsedata["ERROR"]);
+						}
 					}
 					else if (
 						typeof obResponsedata["MESSAGE"] != 'undefined'
@@ -857,6 +876,147 @@ BX.InviteDialog.bindInviteDialogSubmit = function(oBlock)
 
 		e.stopPropagation();
 		return e.preventDefault();
+	}.bind(this));
+};
+
+BX.InviteDialog.inviteAction = function(requestData, block)
+{
+	BX.InviteDialog.disableSubmitButton(true, block);
+
+	BX.ajax.runComponentAction(this.componentName, "invite", {
+		signedParameters: this.signedParameters,
+		mode: 'ajax',
+		data: requestData
+	}).then(function (response) {
+
+		BX.InviteDialog.disableSubmitButton(false, block);
+
+		if (response.data)
+		{
+			BX.InviteDialog.showMessage(response.data);
+		}
+
+	}.bind(this), function (response) {
+
+		BX.InviteDialog.disableSubmitButton(false, block);
+
+		if (response.data == "user_limit")
+		{
+			B24.licenseInfoPopup.show('featureID', BX.message("BX24_INVITE_DIALOG_USERS_LIMIT_TITLE"), BX.message("BX24_INVITE_DIALOG_USERS_LIMIT_TEXT"));
+		}
+		else
+		{
+			BX.InviteDialog.showError(response.errors[0].message);
+		}
+	}.bind(this));
+};
+
+BX.InviteDialog.inviteByPhoneAction = function(requestData, block)
+{
+	BX.InviteDialog.disableSubmitButton(true, block);
+
+	BX.ajax.runComponentAction(this.componentName, "inviteByPhone", {
+		signedParameters: this.signedParameters,
+		mode: 'ajax',
+		data: requestData
+	}).then(function (response) {
+
+		BX.InviteDialog.disableSubmitButton(false, block);
+
+		if (response.data)
+		{
+			BX.InviteDialog.showMessage(response.data);
+		}
+
+	}.bind(this), function (response) {
+
+		BX.InviteDialog.disableSubmitButton(false, block);
+
+		if (response.data == "user_limit")
+		{
+			B24.licenseInfoPopup.show('featureID', BX.message("BX24_INVITE_DIALOG_USERS_LIMIT_TITLE"), BX.message("BX24_INVITE_DIALOG_USERS_LIMIT_TEXT"));
+		}
+		else
+		{
+			BX.InviteDialog.showError(response.errors[0].message);
+		}
+	}.bind(this));
+};
+
+BX.InviteDialog.addAction = function(requestData, block)
+{
+	BX.InviteDialog.disableSubmitButton(true, block);
+
+	BX.ajax.runComponentAction(this.componentName, "add", {
+		signedParameters: this.signedParameters,
+		mode: 'ajax',
+		data: requestData
+	}).then(function (response) {
+
+		BX.InviteDialog.disableSubmitButton(false, block);
+
+		if (response.data)
+		{
+			BX.InviteDialog.showMessage(response.data);
+		}
+
+	}.bind(this), function (response) {
+
+		BX.InviteDialog.disableSubmitButton(false, block);
+
+		if (response.data == "user_limit")
+		{
+			B24.licenseInfoPopup.show('featureID', BX.message("BX24_INVITE_DIALOG_USERS_LIMIT_TITLE"), BX.message("BX24_INVITE_DIALOG_USERS_LIMIT_TEXT"));
+		}
+		else
+		{
+			BX.InviteDialog.showError(response.errors[0].message);
+		}
+	}.bind(this));
+};
+
+BX.InviteDialog.selfSubmitAction = function(requestData, block)
+{
+	BX.InviteDialog.disableSubmitButton(true, block);
+
+	BX.ajax.runComponentAction(this.componentName, "self", {
+		signedParameters: this.signedParameters,
+		mode: 'ajax',
+		data: requestData
+	}).then(function (response) {
+		BX.InviteDialog.disableSubmitButton(false, block);
+
+		if (response.data)
+		{
+			BX.InviteDialog.showMessage(response.data);
+		}
+	}.bind(this), function (response) {
+		BX.InviteDialog.disableSubmitButton(false, block);
+	}.bind(this));
+};
+
+BX.InviteDialog.inviteIntegratorAction = function(requestData, block)
+{
+	BX.InviteDialog.disableSubmitButton(true, block);
+
+	BX.ajax.runComponentAction(this.componentName, "inviteIntegrator", {
+		signedParameters: this.signedParameters,
+		mode: 'ajax',
+		data: requestData
+	}).then(function (response) {
+
+		BX.InviteDialog.disableSubmitButton(false, block);
+
+		if (response.data)
+		{
+			BX.InviteDialog.showMessage(response.data);
+		}
+
+	}.bind(this), function (response) {
+
+		BX.InviteDialog.disableSubmitButton(false, block);
+		BX.InviteDialog.showError(response.errors[0].message);
+
 	}.bind(this));
 };
 

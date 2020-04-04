@@ -8,6 +8,7 @@ if (!CModule::IncludeModule('bizproc'))
 IncludeModuleLangFile(dirname(__FILE__)."/crm_document.php");
 
 use Bitrix\Crm\Category\DealCategory;
+use Bitrix\Main;
 
 class CCrmDocumentDeal extends CCrmDocument
 	implements IBPWorkflowDocument
@@ -159,6 +160,14 @@ class CCrmDocumentDeal extends CCrmDocument
 
 		$arResult += parent::getAssignedByFields();
 		$arResult += array(
+			'CREATED_BY_ID' => array(
+				'Name' => GetMessage('CRM_DOCUMENT_FIELD_CREATED_BY_ID_DEAL'),
+				'Type' => 'user',
+			),
+			'MODIFY_BY_ID' => array(
+				'Name' => GetMessage('CRM_DOCUMENT_FIELD_MODIFY_BY_ID'),
+				'Type' => 'user',
+			),
 			'CATEGORY_ID' => array(
 				'Name' => GetMessage('CRM_FIELD_CATEGORY_ID'),
 				'Type' => 'select',
@@ -214,7 +223,7 @@ class CCrmDocumentDeal extends CCrmDocument
 			),
 			'BEGINDATE' => array(
 				'Name' => GetMessage('CRM_FIELD_BEGINDATE'),
-				'Type' => 'datetime',
+				'Type' => 'date',
 				'Filterable' => true,
 				'Editable' => true,
 				'Required' => false,
@@ -355,6 +364,9 @@ class CCrmDocumentDeal extends CCrmDocument
 		//append UTM fields
 		$arResult += parent::getUtmFields();
 
+		//append FORM fields
+		$arResult += parent::getSiteFormFields(CCrmOwnerType::Deal);
+
 		return $arResult;
 	}
 
@@ -367,6 +379,18 @@ class CCrmDocumentDeal extends CCrmDocument
 		$arFields['STAGE_ID_PRINTABLE'] = DealCategory::getStageName($stageID, $categoryID);
 
 		$arFields['CONTACT_IDS'] = Crm\Binding\DealContactTable::getDealContactIDs($arFields['ID']);
+
+		if ($arFields['COMPANY_ID'] <= 0)
+		{
+			//set empty value instead "0"
+			$arFields['COMPANY_ID'] = null;
+		}
+
+		if ($arFields['CONTACT_ID'] <= 0)
+		{
+			//set empty value instead "0"
+			$arFields['CONTACT_ID'] = null;
+		}
 	}
 
 	static public function CreateDocument($parentDocumentId, $arFields)
@@ -456,6 +480,15 @@ class CCrmDocumentDeal extends CCrmDocument
 		if(isset($arFields['COMMENTS']))
 		{
 			$arFields['COMMENTS'] = static::sanitizeCommentsValue($arFields['COMMENTS']);
+		}
+
+		if(isset($arFields['BEGINDATE']) && $arFields['BEGINDATE'] instanceof Main\Type\Date)
+		{
+			$arFields['BEGINDATE'] = (string) $arFields['BEGINDATE'];
+		}
+		if(isset($arFields['CLOSEDATE']) && $arFields['CLOSEDATE'] instanceof Main\Type\Date)
+		{
+			$arFields['CLOSEDATE'] = (string) $arFields['CLOSEDATE'];
 		}
 
 		//region Category & Stage
@@ -640,6 +673,15 @@ class CCrmDocumentDeal extends CCrmDocument
 		if(isset($arFields['COMMENTS']) && $arFields['COMMENTS'] !== '')
 		{
 			$arFields['COMMENTS'] = static::sanitizeCommentsValue($arFields['COMMENTS']);
+		}
+
+		if(isset($arFields['BEGINDATE']) && $arFields['BEGINDATE'] instanceof Main\Type\Date)
+		{
+			$arFields['BEGINDATE'] = (string) $arFields['BEGINDATE'];
+		}
+		if(isset($arFields['CLOSEDATE']) && $arFields['CLOSEDATE'] instanceof Main\Type\Date)
+		{
+			$arFields['CLOSEDATE'] = (string) $arFields['CLOSEDATE'];
 		}
 
 		//region Category & Stage

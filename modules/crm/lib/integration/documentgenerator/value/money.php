@@ -2,6 +2,8 @@
 
 namespace Bitrix\Crm\Integration\DocumentGenerator\Value;
 
+\Bitrix\Main\Loader::includeModule('documentgenerator');
+
 use Bitrix\DocumentGenerator\DataProviderManager;
 use Bitrix\DocumentGenerator\Nameable;
 use Bitrix\DocumentGenerator\Value;

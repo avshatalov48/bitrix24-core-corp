@@ -423,7 +423,7 @@ if(typeof BX.Crm.Component.FormRecurring === 'undefined')
 
 		this.onSetPeriodValue = function(node)
 		{
-			var type = BX.data(node, 'type');
+			var type = parseInt(BX.data(node, 'type'));
 			if (BX.util.in_array(type, [this.constants.PERIOD_DAILY, this.constants.PERIOD_WEEKLY, this.constants.PERIOD_MONTHLY, this.constants.PERIOD_YEARLY]))
 			{
 				var oldActive = BX.findChildrenByClassName(node.parentNode, 'active-recur');
@@ -580,7 +580,12 @@ if(typeof BX.Crm.Component.FormRecurring === 'undefined')
 
 		this.setExecutionHTML = function(data)
 		{
-			if (data.RESULT.NEXT_DATE !== undefined)
+			var hint = BX.prop.getString(data.RESULT, 'NEXT_DATE');
+			if (hint === '')
+			{
+				BX('next-data-hint').innerHTML = BX.message('NEXT_'+this.entityTypeName+'_EMPTY');
+			}
+			else
 			{
 				BX('next-data-hint').innerHTML = BX.message('NEXT_EXECUTION_'+this.entityTypeName+'_HINT').replace('#DATE_EXECUTION#', (data.RESULT.NEXT_DATE));
 			}

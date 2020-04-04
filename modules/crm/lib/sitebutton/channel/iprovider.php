@@ -46,9 +46,10 @@ interface iProvider
 	 * @param string $id Channel ID
 	 * @param bool $removeCopyright Remove copyright
 	 * @param string|null $lang Language ID
+	 * @param array $config Config
 	 * @return array
 	 */
-	public static function getWidgets($id, $removeCopyright = true, $lang = null);
+	public static function getWidgets($id, $removeCopyright = true, $lang = null, array $config = []);
 
 	/**
 	 * Get resources.

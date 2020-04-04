@@ -36,6 +36,22 @@ class NewLead extends Base
 			'default' => true,
 		];
 
+		$presets['filter_current_month'] = [
+			'name' => Loc::getMessage('CRM_REPORT_FILTER_NEW_LEAD_CURRENT_MONTH_PRESET_TITLE'),
+			'fields' => array(
+				'TIME_PERIOD_datesel' => DateType::CURRENT_MONTH,
+				'FROM_LEAD_IS_RETURN_CUSTOMER' => 'N',
+			),
+		];
+
+		$presets['filter_last_month'] = [
+			'name' => Loc::getMessage('CRM_REPORT_FILTER_NEW_LEAD_LAST_MONTH_PRESET_TITLE'),
+			'fields' => array(
+				'TIME_PERIOD_datesel' => DateType::LAST_MONTH,
+				'FROM_LEAD_IS_RETURN_CUSTOMER' => 'N',
+			),
+		];
+
 		return $presets;
 	}
 }

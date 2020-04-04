@@ -31,8 +31,11 @@ class CCrmOwnerType
 	const SuspendedActivity = 25;
 	const SuspendedRequisite = 26;
 
+	const InvoiceRecurring = 27;
+	const Scoring = 28;
+
 	const FirstOwnerType = 1;
-	const LastOwnerType = 26;
+	const LastOwnerType = 28;
 
 	//Special quasi-types
 	const System = 1024;
@@ -51,6 +54,7 @@ class CCrmOwnerType
 	const CallListTypeName = 'CALL_LIST';
 	const SystemName = 'SYSTEM';
 	const DealRecurringName = 'DEAL_RECURRING';
+	const InvoiceRecurringName = 'INVOICE_RECURRING';
 	const OrderName = 'ORDER';
 	const OrderCheckName = 'ORDER_CHECK';
 	const OrderShipmentName = 'ORDER_SHIPMENT';
@@ -65,6 +69,8 @@ class CCrmOwnerType
 	const SuspendedOrderName = 'SUS_ORDER';
 	const SuspendedActivityName = 'SUS_ACTIVITY';
 	const SuspendedRequisiteName = 'SUS_REQUISITE';
+
+	const ScoringName = 'SCORING';
 
 	private static $ALL_DESCRIPTIONS = array();
 	private static $ALL_CATEGORY_CAPTION = array();
@@ -162,6 +168,9 @@ class CCrmOwnerType
 			case self::DealRecurringName:
 				return self::DealRecurring;
 
+			case self::InvoiceRecurringName:
+				return self::InvoiceRecurring;
+
 			case CCrmOwnerTypeAbbr::CustomActivityType:
 			case self::CustomActivityTypeName:
 				return self::CustomActivityType;
@@ -192,6 +201,9 @@ class CCrmOwnerType
 
 			case self::SuspendedActivityName:
 				return self::SuspendedActivity;
+
+			case self::ScoringName:
+				return self::Scoring;
 
 			case CCrmOwnerTypeAbbr::System:
 			case self::SystemName:
@@ -256,6 +268,9 @@ class CCrmOwnerType
 			case self::DealRecurring:
 				return self::DealRecurringName;
 
+			case self::InvoiceRecurring:
+				return self::InvoiceRecurringName;
+
 			case self::CustomActivityType:
 				return self::CustomActivityTypeName;
 
@@ -285,6 +300,9 @@ class CCrmOwnerType
 
 			case self::SuspendedActivity:
 				return self::SuspendedActivityName;
+
+			case self::Scoring:
+				return self::ScoringName;
 
 			case self::System:
 				return self::SystemName;
@@ -710,98 +728,82 @@ class CCrmOwnerType
 	}
 	public static function GetDetailsUrl($typeID, $ID, $bCheckPermissions = false, $options = null)
 	{
+		if(!is_array($options))
+		{
+			$options = array();
+		}
+
 		$typeID = intval($typeID);
 		$ID = intval($ID);
 
-		$openInSlider = is_array($options)
-			&& isset($options['ENABLE_SLIDER'])
-			&& $options['ENABLE_SLIDER'] === true;
-
+		$url = '';
 		switch($typeID)
 		{
 			case self::Lead:
 			{
-				if ($bCheckPermissions && !CCrmLead::CheckReadPermission($ID))
+				if(!$bCheckPermissions || CCrmLead::CheckReadPermission($ID))
 				{
-					return '';
+					$url = CComponentEngine::MakePathFromTemplate(
+						\COption::GetOptionString('crm', 'path_to_lead_details'),
+						array('lead_id' => $ID)
+					);
 				}
-
-				$url = CComponentEngine::MakePathFromTemplate(
-					\COption::GetOptionString('crm', 'path_to_lead_details'),
-					array('lead_id' => $ID)
-				);
-
-				return $openInSlider ? \CCrmUrlUtil::PrepareSliderUrl($url) : $url;
+				break;
 			}
 			case self::Contact:
 			{
-				if ($bCheckPermissions && !CCrmContact::CheckReadPermission($ID))
+				if(!$bCheckPermissions || CCrmContact::CheckReadPermission($ID))
 				{
-					return '';
+					$url = CComponentEngine::MakePathFromTemplate(
+						\COption::GetOptionString('crm', 'path_to_contact_details'),
+						array('contact_id' => $ID)
+					);
 				}
-
-				$url = CComponentEngine::MakePathFromTemplate(
-					\COption::GetOptionString('crm', 'path_to_contact_details'),
-					array('contact_id' => $ID)
-				);
-
-				return $openInSlider ? \CCrmUrlUtil::PrepareSliderUrl($url) : $url;
+				break;
 			}
 			case self::Company:
 			{
-				if ($bCheckPermissions && !CCrmCompany::CheckReadPermission($ID))
+				if(!$bCheckPermissions || CCrmCompany::CheckReadPermission($ID))
 				{
-					return '';
+					$url = CComponentEngine::MakePathFromTemplate(
+						\COption::GetOptionString('crm', 'path_to_company_details'),
+						array('company_id' => $ID)
+					);
 				}
-
-				$url = CComponentEngine::MakePathFromTemplate(
-					\COption::GetOptionString('crm', 'path_to_company_details'),
-					array('company_id' => $ID)
-				);
-
-				return $openInSlider ? \CCrmUrlUtil::PrepareSliderUrl($url) : $url;
+				break;
 			}
 			case self::Deal:
 			{
-				if ($bCheckPermissions && !CCrmDeal::CheckReadPermission($ID))
+				if(!$bCheckPermissions || CCrmDeal::CheckReadPermission($ID))
 				{
-					return '';
+					$url = CComponentEngine::MakePathFromTemplate(
+						\COption::GetOptionString('crm', 'path_to_deal_details'),
+						array('deal_id' => $ID)
+					);
 				}
-
-				$url = CComponentEngine::MakePathFromTemplate(
-					\COption::GetOptionString('crm', 'path_to_deal_details'),
-					array('deal_id' => $ID)
-				);
-
-				return $openInSlider ? \CCrmUrlUtil::PrepareSliderUrl($url) : $url;
+				break;
 			}
 			case self::Quote:
 			{
-				if ($bCheckPermissions && !CCrmQuote::CheckReadPermission($ID))
+				if(!$bCheckPermissions || CCrmQuote::CheckReadPermission($ID))
 				{
-					return '';
+					$url = CComponentEngine::MakePathFromTemplate(
+						\COption::GetOptionString('crm', 'path_to_quote_details'),
+						array('quote_id' => $ID)
+					);
 				}
-
-				$url = CComponentEngine::MakePathFromTemplate(
-					\COption::GetOptionString('crm', 'path_to_quote_details'),
-					array('quote_id' => $ID)
-				);
-
-				return $openInSlider ? \CCrmUrlUtil::PrepareSliderUrl($url) : $url;
+				break;
 			}
 			case self::Order:
 			{
-				if ($bCheckPermissions && !\Bitrix\Crm\Order\Permissions\Order::checkReadPermission($ID))
+				if(!$bCheckPermissions || \Bitrix\Crm\Order\Permissions\Order::checkReadPermission($ID))
 				{
-					return '';
+					$url = CComponentEngine::MakePathFromTemplate(
+						\COption::GetOptionString('crm', 'path_to_order_details'),
+						array('order_id' => $ID)
+					);
 				}
-
-				$url = CComponentEngine::MakePathFromTemplate(
-					\COption::GetOptionString('crm', 'path_to_order_details'),
-					array('order_id' => $ID)
-				);
-
-				return $openInSlider ? \CCrmUrlUtil::PrepareSliderUrl($url) : $url;
+				break;
 			}
 			case self::OrderCheck:
 			{
@@ -809,42 +811,46 @@ class CCrmOwnerType
 					\COption::GetOptionString('crm', 'path_to_order_check_details'),
 					array('check_id' => $ID)
 				);
-
-				return $openInSlider ? \CCrmUrlUtil::PrepareSliderUrl($url) : $url;
+				break;
 			}
 			case self::OrderShipment:
 			{
-				if ($bCheckPermissions && !\Bitrix\Crm\Order\Permissions\Shipment::checkReadPermission($ID))
+				if(!$bCheckPermissions || \Bitrix\Crm\Order\Permissions\Shipment::checkReadPermission($ID))
 				{
-					return '';
+					$url = CComponentEngine::MakePathFromTemplate(
+						\COption::GetOptionString('crm', 'path_to_order_shipment_details'),
+						array('shipment_id' => $ID)
+					);
 				}
-
-				$url = CComponentEngine::MakePathFromTemplate(
-					\COption::GetOptionString('crm', 'path_to_order_shipment_details'),
-					array('shipment_id' => $ID)
-				);
-
-				return $openInSlider ? \CCrmUrlUtil::PrepareSliderUrl($url) : $url;
+				break;
 			}
 			case self::OrderPayment:
 			{
-				if ($bCheckPermissions && !\Bitrix\Crm\Order\Permissions\Payment::checkReadPermission($ID))
+				if (!$bCheckPermissions || \Bitrix\Crm\Order\Permissions\Payment::checkReadPermission($ID))
 				{
-					return '';
+					$url = CComponentEngine::MakePathFromTemplate(
+						\COption::GetOptionString('crm', 'path_to_order_payment_details'),
+						array('payment_id' => $ID)
+					);
 				}
+				break;
+			}
+		}
 
-				$url = CComponentEngine::MakePathFromTemplate(
-					\COption::GetOptionString('crm', 'path_to_order_payment_details'),
-					array('payment_id' => $ID)
-				);
-
-				return $openInSlider ? \CCrmUrlUtil::PrepareSliderUrl($url) : $url;
+		if($url !== '')
+		{
+			if($ID > 0 && isset($options['INIT_MODE']) && $options['INIT_MODE'] !== '')
+			{
+				$url = \CCrmUrlUtil::AddUrlParams($url, array('init_mode' => strtolower($options['INIT_MODE'])));
 			}
 
-
-		default:
-				return '';
+			if(isset($options['ENABLE_SLIDER']) && $options['ENABLE_SLIDER'] === true)
+			{
+				$url = \CCrmUrlUtil::PrepareSliderUrl($url);
+			}
 		}
+
+		return $url;
 	}
 	public static function GetEditUrl($typeID, $ID, $bCheckPermissions = false, array $options = null)
 	{
@@ -1029,9 +1035,23 @@ class CCrmOwnerType
 			$enableSlider = false;
 		}
 
-		return $enableSlider
-			? self::GetDetailsUrl($typeID, $ID, $bCheckPermissions, $options)
-			: self::GetEditUrl($typeID, $ID, $bCheckPermissions, $options);
+		if($enableSlider)
+		{
+			if($ID > 0)
+			{
+				if(!is_array($options))
+				{
+					$options = array('INIT_MODE' => 'edit');
+				}
+				else
+				{
+					$options = array_merge($options, array('INIT_MODE' => 'edit'));
+				}
+			}
+			return self::GetDetailsUrl($typeID, $ID, $bCheckPermissions, $options);
+		}
+
+		return self::GetEditUrl($typeID, $ID, $bCheckPermissions, $options);
 	}
 
 	public static function GetCaption($typeID, $ID, $checkRights = true, array $options = null)
@@ -1583,7 +1603,10 @@ class CCrmOwnerType
 				$orderDB = \Bitrix\Crm\Order\Order::getList(
 					array(
 						'filter' => array('=ID' => $IDs),
-						'select' => array('ID', 'ACCOUNT_NUMBER', 'CREATED_BY', 'DATE_INSERT', 'RESPONSIBLE_ID')
+						'select' => [
+							'ID', 'ACCOUNT_NUMBER', 'CREATED_BY', 'DATE_INSERT',
+							'RESPONSIBLE_ID', 'PRICE', 'CURRENCY', 'ORDER_TOPIC'
+						]
 					)
 				);
 				$dbRes = new \CDBResult($orderDB);
@@ -1985,9 +2008,27 @@ class CCrmOwnerType
 			}
 			case self::Order:
 			{
+				$title = $arRes['ORDER_TOPIC'];
+				if ($title == '')
+				{
+					$number = $arRes['ACCOUNT_NUMBER'] ? $arRes['ACCOUNT_NUMBER'] : $arRes['ID'];
+					$title = GetMessage('CRM_OWNER_TYPE_ORDER_TITLE', [
+						"#ACCOUNT_NUMBER#" => $number
+					]);
+				}
+
+				$culture = Bitrix\Main\Context::getCurrent()->getCulture();
+				$dateInsert = '';
+				if ($arRes['DATE_INSERT'] instanceof \Bitrix\Main\Type\Date && $culture)
+				{
+					$dateInsert = FormatDate($culture->getLongDateFormat(), $arRes['DATE_INSERT']->getTimestamp());
+				}
 				$result = array(
-					'TITLE' => isset($arRes['ACCOUNT_NUMBER']) ? $arRes['ACCOUNT_NUMBER'] : '',
-					'LEGEND' => '',
+					'TITLE' => $title,
+					'LEGEND' => GetMessage('CRM_OWNER_TYPE_ORDER_LEGEND', [
+						"#SUM_WITH_CURRENCY#" => \CCrmCurrency::MoneyToString($arRes['PRICE'], $arRes['CURRENCY']),
+						"#DATE_INSERT#" => $dateInsert,
+					]),
 					'RESPONSIBLE_ID' => isset($arRes['ASSIGNED_BY_ID']) ? intval($arRes['ASSIGNED_BY_ID']) : 0,
 					'IMAGE_FILE_ID' => 0,
 					'SHOW_URL' =>
@@ -2669,6 +2710,20 @@ class CCrmOwnerType
 			}
 		}
 		return false;
+	}
+
+	public static function ParseEntitySlug($slug)
+	{
+		$ary = explode('_', $slug);
+		if(count($ary) !== 2)
+		{
+			return null;
+		}
+
+		return array(
+			'ENTITY_TYPE_ID' => \CCrmOwnerTypeAbbr::ResolveTypeID($ary[0]),
+			'ENTITY_ID' => (int)$ary[1]
+		);
 	}
 
 	public static function GetJavascriptDescriptions()

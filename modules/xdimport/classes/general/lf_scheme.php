@@ -489,7 +489,6 @@ class CAllXDILFScheme
 						if ($arScheme["IS_HTML"] == "Y")
 						{
 							$sanitizer = new CBXSanitizer();
-							$sanitizer->ApplyHtmlSpecChars(false);
 							$sanitizer->SetLevel(CBXSanitizer::SECURE_LEVEL_LOW);
 						}
 
@@ -537,13 +536,15 @@ class CAllXDILFScheme
 									$arLogParams["SOURCE_TIMESTAMP"] = strtotime($arItem["pubDate"]);
 								}
 
-								$description = substr(preg_replace("#^(.*?)([\s]*<br[\s]*/>)+[\s]*[\n]*[\s]*$#is", "\\1", $arItem["description"]), 0, 65500);
-								$description = substr($description, 0, 65000);
+								$description = \CUtil::binSubstr(preg_replace("#^(.*?)([\s]*<br[\s]*/>)+[\s]*[\n]*[\s]*$#is", "\\1", $arItem["description"]), 0, 64500);
+								$description = \Bitrix\Main\Text\UtfSafeString::rtrimInvalidUtf(\CUtil::binSubstr($description, 0, 64000));
+
 								if (
 									$arScheme["IS_HTML"] == "Y"
 									&& $sanitizer
 								)
 								{
+									$sanitizer->ApplyDoubleEncode(false);
 									$description = $sanitizer->SanitizeHtml($description);
 								}
 

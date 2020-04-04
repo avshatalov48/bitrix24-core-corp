@@ -31,6 +31,7 @@ $APPLICATION->IncludeComponent(
 $componentParameters = array(
 	'PATH_TO_WEB_FORM_LIST' => $arResult['PATH_TO_WEB_FORM_LIST'],
 	'PATH_TO_WEB_FORM_EDIT' => $arResult['PATH_TO_WEB_FORM_EDIT'],
+	'PATH_TO_WEB_FORM_DESIGN' => str_replace('#id#', $arResult['VARIABLES']['id'], $arResult['PATH_TO_WEB_FORM_DESIGN']),
 	'PATH_TO_WEB_FORM_FILL' => $arResult['PATH_TO_WEB_FORM_FILL'],
 	'PATH_TO_WEB_FORM_ADS' => $arResult['PATH_TO_WEB_FORM_ADS'],
 	'PATH_TO_USER_PROFILE' => $arResult['PATH_TO_USER_PROFILE'],

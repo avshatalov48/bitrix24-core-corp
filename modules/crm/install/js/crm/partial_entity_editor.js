@@ -82,7 +82,11 @@ if(typeof BX.Crm.PartialEditorDialog === "undefined")
 					PARAMS: {},
 					CONTEXT: BX.prop.getObject(this._settings, "context", {}),
 					TITLE: BX.prop.getString(this._settings, "title", "No title"),
-					IS_EMBEDDED: 'Y'
+					FORCE_DEFAULT_CONFIG: "Y",
+					ENABLE_CONFIG_SCOPE_TOGGLE: "N",
+					ENABLE_CONFIGURATION_UPDATE: "N",
+					ENABLE_FIELDS_CONTEXT_MENU: "N",
+					IS_EMBEDDED: "Y"
 				},
 				function(result)
 				{
@@ -301,9 +305,17 @@ if(typeof BX.Crm.PartialEditorDialog === "undefined")
 				"BX.Crm.EntityEditor:onInit",
 				function(sender, eventArgs)
 				{
-					if(sender.getId() === this.getEditorId())
+					if(sender.getId() !== this.getEditorId())
 					{
-						this._editor = sender;
+						return;
+					}
+
+					this._editor = sender;
+
+					var helpData = BX.prop.getObject(this._settings, "helpData", null);
+					if(helpData)
+					{
+						this._editor.addHelpLink(helpData);
 					}
 				}.bind(this)
 			);

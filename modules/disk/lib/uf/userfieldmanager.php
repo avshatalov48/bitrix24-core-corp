@@ -190,6 +190,7 @@ final class UserFieldManager implements IErrorable
 
 	/**
 	 * Shows component disk.uf.file (edit mode).
+	 *
 	 * @param array &$params Component parameters.
 	 * @param array &$result Component results.
 	 * @param null $component Component.
@@ -197,26 +198,41 @@ final class UserFieldManager implements IErrorable
 	 */
 	public function showEdit(&$params, &$result, $component = null)
 	{
-		if(!Configuration::isSuccessfullyConverted())
+		if (!Configuration::isSuccessfullyConverted())
 		{
 			return;
 		}
-		$p = array_change_key_case($params, CASE_UPPER);
-		$template = ($p["MOBILE"] == "Y" ? "mobile" : ($p["TEMPLATE"] == "mobile" || $p["TEMPLATE"] == "mail" ? $p["TEMPLATE"] : ".default"));
+
 		global $APPLICATION;
-		$APPLICATION->includeComponent('bitrix:disk.uf.file', 
-		$template,
-		array(
-			'EDIT' => 'Y',
-			'PARAMS' => $params,
-			'RESULT' => $result,
-			'DISABLE_CREATING_FILE_BY_CLOUD' => (isset($params['DISABLE_CREATING_FILE_BY_CLOUD']) ? $params['DISABLE_CREATING_FILE_BY_CLOUD'] : false),
-			'DISABLE_LOCAL_EDIT' => (isset($params['DISABLE_LOCAL_EDIT']) ? $params['DISABLE_LOCAL_EDIT'] : false)
-		), $component, array("HIDE_ICONS" => "Y"));
+
+		$map = [
+			'DISABLE_LOCAL_EDIT' => false,
+			'DISABLE_CREATING_FILE_BY_CLOUD' => false,
+		];
+
+		foreach (array_keys($map) as $key)
+		{
+			$map[$key] = (isset($params[$key])? $params[$key] : false);
+		}
+
+		$APPLICATION->includeComponent(
+			'bitrix:disk.uf.file',
+			$this->getShowTemplate($params, ['mobile', 'mail']),
+			[
+				'EDIT' => 'Y',
+				'PARAMS' => $params,
+				'RESULT' => $result,
+				'DISABLE_LOCAL_EDIT' => $map['DISABLE_LOCAL_EDIT'],
+				'DISABLE_CREATING_FILE_BY_CLOUD' => $map['DISABLE_CREATING_FILE_BY_CLOUD'],
+			],
+			$component,
+			['HIDE_ICONS' => 'Y']
+		);
 	}
 
 	/**
 	 * Shows component disk.uf.file (show mode).
+	 *
 	 * @param array &$params Component parameters.
 	 * @param array &$result Component results.
 	 * @param null $component Component.
@@ -224,20 +240,24 @@ final class UserFieldManager implements IErrorable
 	 */
 	public function showView(&$params, &$result, $component = null)
 	{
-		$p = array_change_key_case($params, CASE_UPPER);
-		$template = ($p["MOBILE"] == "Y" ? "mobile" : ($p["TEMPLATE"] == "mobile" || $p["TEMPLATE"] == "mail" ? $p["TEMPLATE"] : ".default"));
 		global $APPLICATION;
-		$APPLICATION->includeComponent('bitrix:disk.uf.file', 
-		$template,
-		array(
-			'PARAMS' => $params,
-			'RESULT' => $result,
-			'DISABLE_LOCAL_EDIT' => (isset($params['DISABLE_LOCAL_EDIT']) ? $params['DISABLE_LOCAL_EDIT'] : false)
-		), $component, array("HIDE_ICONS" => "Y"));
+
+		$APPLICATION->includeComponent(
+			'bitrix:disk.uf.file',
+			$this->getShowTemplate($params, ['mobile', 'mail', 'checklist']),
+			[
+				'PARAMS' => $params,
+				'RESULT' => $result,
+				'DISABLE_LOCAL_EDIT' => (isset($params['DISABLE_LOCAL_EDIT'])? $params['DISABLE_LOCAL_EDIT'] : false),
+			],
+			$component,
+			['HIDE_ICONS' => 'Y']
+		);
 	}
 
 	/**
 	 * Shows component disk.uf.version.
+	 *
 	 * @param array &$params Component parameters.
 	 * @param array &$result Component results.
 	 * @param null $component Component.
@@ -246,15 +266,40 @@ final class UserFieldManager implements IErrorable
 	public function showViewVersion(&$params, &$result, $component = null)
 	{
 		global $APPLICATION;
-		$p = array_change_key_case($params, CASE_UPPER);
-		$template = ($p["MOBILE"] == "Y" ? "mobile" : ($p["TEMPLATE"] == "mobile" || $p["TEMPLATE"] == "mail" ? $p["TEMPLATE"] : ".default"));
-		$APPLICATION->includeComponent('bitrix:disk.uf.version',
-		$template,
-		array(
-			'PARAMS' => $params,
-			'RESULT' => $result,
-			'DISABLE_LOCAL_EDIT' => (isset($params['DISABLE_LOCAL_EDIT']) ? $params['DISABLE_LOCAL_EDIT'] : false)
-		), $component, array("HIDE_ICONS" => "Y"));
+
+		$APPLICATION->includeComponent(
+			'bitrix:disk.uf.version',
+			$this->getShowTemplate($params, ['mobile', 'mail']),
+			[
+				'PARAMS' => $params,
+				'RESULT' => $result,
+				'DISABLE_LOCAL_EDIT' => (isset($params['DISABLE_LOCAL_EDIT'])? $params['DISABLE_LOCAL_EDIT'] : false),
+			],
+			$component,
+			['HIDE_ICONS' => 'Y']
+		);
+	}
+
+	/**
+	 * @param array $params
+	 * @param array $possibleTemplates
+	 * @return string
+	 */
+	private function getShowTemplate($params, $possibleTemplates)
+	{
+		$upperParams = array_change_key_case($params, CASE_UPPER);
+
+		if ($upperParams['MOBILE'] == 'Y')
+		{
+			$template = 'mobile';
+		}
+		else
+		{
+			$template = $upperParams['TEMPLATE'];
+			$template = (in_array($template, $possibleTemplates)? $template : '.default');
+		}
+
+		return $template;
 	}
 
 	/**
@@ -300,7 +345,10 @@ final class UserFieldManager implements IErrorable
 		$modelList = AttachedObject::getModelList([
 			'filter' => ['ID' => $ids],
 			'with' => ['OBJECT'],
-			'extra' => ['FILE_CONTENT_TYPE' => 'OBJECT.FILE_CONTENT.CONTENT_TYPE'],
+			'extra' => [
+				'FILE_CONTENT_TYPE' => 'OBJECT.FILE_CONTENT.CONTENT_TYPE',
+				'FILE_SIZE' => 'OBJECT.FILE_CONTENT.FILE_SIZE',
+			],
 		]);
 		foreach($modelList as $attachedObject)
 		{
@@ -362,7 +410,10 @@ final class UserFieldManager implements IErrorable
 					'ENTITY_ID' => $blogPostIds,
 					'=MODULE_ID' => $moduleId,
 				],
-				'extra' => ['FILE_CONTENT_TYPE' => 'OBJECT.FILE_CONTENT.CONTENT_TYPE'],
+				'extra' => [
+					'FILE_CONTENT_TYPE' => 'OBJECT.FILE_CONTENT.CONTENT_TYPE',
+					'FILE_SIZE' => 'OBJECT.FILE_CONTENT.FILE_SIZE',
+				],
 			]
 		);
 		foreach($modelList as $attachedObject)

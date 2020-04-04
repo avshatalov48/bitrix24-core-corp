@@ -8,6 +8,9 @@ namespace Bitrix\Seo\Retargeting;
  */
 class AdsAudienceConfig
 {
+	/** @var  string $clientId Client ID. */
+	public $clientId;
+
 	/** @var  string $accountId Account ID. */
 	public $accountId;
 
@@ -24,7 +27,7 @@ class AdsAudienceConfig
 	/**
 	 * AdsAudienceConfig constructor.
 	 *
-	 * @param \stdClass|null $config
+	 * @param \stdClass|null $config Config.
 	 */
 	public function __construct(\stdClass $config = null)
 	{
@@ -32,7 +35,10 @@ class AdsAudienceConfig
 		{
 			return;
 		}
-
+		if ($config->clientId)
+		{
+			$this->clientId = $config->clientId;
+		}
 		if ($config->accountId)
 		{
 			$this->accountId = $config->accountId;

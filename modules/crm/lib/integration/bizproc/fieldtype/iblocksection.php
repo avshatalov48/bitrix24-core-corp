@@ -1,7 +1,7 @@
 <?php
 namespace Bitrix\Crm\Integration\BizProc\FieldType;
 
-class IblockSection extends UserFieldBase
+class IblockSection extends IblockElement
 {
 
 }

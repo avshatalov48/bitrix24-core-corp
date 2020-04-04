@@ -1,0 +1,25 @@
+<?php
+$MESS["IMOL_CORRECTION_SESSIONS_THAT_NOT_SHOWN"]="Скорректировать сессии, которые никому не назначены ни одному оператору и не будут распределяться";
+$MESS["IMOL_CORRECTION_RUN"]="Выполнить";
+$MESS["IMOL_CORRECTION_RUN"]="Выполнить";
+$MESS["IMOL_CORRECTION_RUN_ALL"]="Выполнить все";
+$MESS["IMOL_CORRECTION_NO_SESSIONS_FOUND"]="Не найдено сессий";
+$MESS["IMOL_CORRECTION_SESSIONS"]="Сессии";
+$MESS["IMOL_CORRECTION_STATUS_CLOSED_SESSIONS"]="Скорректировать статус закрытых сессий";
+$MESS["IMOL_CORRECTION_STATUS_RUN_CORRECTION"]="Выполнить корректировку?";
+$MESS["IMOL_CORRECTION_SESSIONS_NOT_RIGHT_STATUS"]="Закрытые сессии, у которых не верный статус";
+$MESS["IMOL_CORRECTION_SESSIONS_NOT_RIGHT_STATUS_CORRECTION"]="Закрытые сессии, у которых был не верный статус и которые были скорректированы";
+$MESS["IMOL_CORRECTION_SESSIONS_NO_AUTO_CLOSE_DATE"]="Скорректировать сессии, где нет даты автозакрытия";
+$MESS["IMOL_CORRECTION_SESSIONS_SELECT_DAY_0"]="Не закрывать";
+$MESS["IMOL_CORRECTION_SESSIONS_SELECT_DAY_30"]="30 дней";
+$MESS["IMOL_CORRECTION_SESSIONS_SELECT_DAY_40"]="40 дней";
+$MESS["IMOL_CORRECTION_SESSIONS_SELECT_DAY_50"]="50 дней";
+$MESS["IMOL_CORRECTION_SESSIONS_SELECT_DAY_60"]="60 дней";
+$MESS["IMOL_CORRECTION_SESSIONS_SELECT_DAY_70"]="70 дней";
+$MESS["IMOL_CORRECTION_SESSIONS_SELECT_DAY_80"]="80 дней";
+$MESS["IMOL_CORRECTION_SESSIONS_SELECT_DAY_90"]="90 дней";
+$MESS["IMOL_CORRECTION_SESSIONS_SELECT_DAY_100"]="100 дней";
+$MESS["IMOL_CORRECTION_SESSIONS_SELECT_DAY_TITLE"]="Закрыть сессии, где последнее сообщение старше";
+$MESS["CORRECT_SESSIONS_CLOSE"]="Закрытые сессии";
+$MESS["CORRECT_SESSIONS_UPDATE"]="Скорректированные сессии";
+$MESS["IMOL_CORRECTION_SESSIONS_BROKEN_CONSISTENCY_DATABASE"]="Скорректировать сессии, где нарушена консистентность базы данных";

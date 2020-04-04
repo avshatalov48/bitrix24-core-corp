@@ -161,14 +161,7 @@
 		else
 			B24.connectionStatus("online");
 	}, this));
-
-	BX.bind(window, "online", BX.delegate(function(){
-		B24.connectionStatus("online");
-	}, this));
-
-	BX.bind(window, "offline", BX.delegate(function(){
-		B24.connectionStatus("offline");
-	}, this));
+	
 //==connection status
 
 	if (BX.browser.SupportLocalStorage())
@@ -420,48 +413,10 @@ B24.onScroll = function()
 			}
 		}
 	}
-
-	var menu = BX("menu-favorites-settings-btn", true);
-	if (!menu)
-	{
-		return;
-	}
-
-	var boundary = menu.offsetHeight ? BX.pos(menu).bottom : BX.GetWindowInnerSize().innerHeight / 2;
-
-	var upBtn = BX("feed-up-btn-wrap", true);
-	upBtn.style.left = "-" + windowScroll.scrollLeft + "px";
-
-	if (windowScroll.scrollTop > boundary)
-	{
-		B24.showUpButton(true, upBtn);
-	}
-	else
-	{
-		B24.showUpButton(false, upBtn);
-	}
-};
-
-B24.showUpButton = function(status, upBtn)
-{
-	if (!upBtn)
-		return;
-
-	if (!!status)
-		BX.addClass(upBtn, 'feed-up-btn-wrap-anim');
-	else
-		BX.removeClass(upBtn, 'feed-up-btn-wrap-anim');
 };
 
 B24.goUp = function(fn)
 {
-	var upBtn = BX("feed-up-btn-wrap", true);
-	if (upBtn)
-	{
-		upBtn.style.display = "none";
-		BX.removeClass(upBtn, 'feed-up-btn-wrap-anim');
-	}
-
 	var windowScroll = BX.GetWindowScrollPos();
 
 	(new BX.easing({
@@ -473,8 +428,6 @@ B24.goUp = function(fn)
 			window.scrollTo(0, state.scroll);
 		},
 		complete: function() {
-			if (upBtn)
-				upBtn.style.display = "block";
 			BX.onCustomEvent(window, 'onGoUp');
 
 			if (BX.type.isFunction(fn))
@@ -546,183 +499,12 @@ B24.toggleMenu = function(menuItem, messageShow, messageHide)
 };
 
 B24.licenseInfoPopup = {
-	licenseButtonText : "",
-	trialButtonText : "",
-	showFullDemoButton : "N",
-	hostName : "",
-	ajaxUrl : "",
-	licenseUrl : "",
-	demoUrl : "",
-	featureGroupName : "",
-	ajaxActionsUrl : "",
-	tfPrice : "",
-
-	init: function(params)
-	{
-		if (typeof params == "object")
-		{
-			this.licenseButtonText = params.B24_LICENSE_BUTTON_TEXT || "";
-			this.trialButtonText = params.B24_TRIAL_BUTTON_TEXT || "";
-			this.showFullDemoButton = (params.IS_FULL_DEMO_EXISTS == "Y") ? "Y" : "N";
-			this.hostName = params.HOST_NAME;
-			this.ajaxUrl = params.AJAX_URL;
-			this.licenseUrl = params.LICENSE_ALL_PATH;
-			this.demoUrl = params.LICENSE_DEMO_PATH;
-			this.featureGroupName = params.FEATURE_GROUP_NAME || "";
-			this.ajaxActionsUrl = params.AJAX_ACTIONS_URL || "";
-			this.featureTrialSuccessText = params.B24_FEATURE_TRIAL_SUCCESS_TEXT || "";
-			this.tfPrice = params.tfPrice || "";
-		}
-	},
 	show: function(popupId, title, content, showDemoButton)
 	{
-		if (!popupId)
-			return;
-
-		if (showDemoButton !== false)
-		showDemoButton = true;
-
-		title = title || "";
-		content = content || "";
-
-		if (BX.type.isNotEmptyString(content) && content.indexOf('#TF_PRICE#') !== -1)
+		if (BX.getClass("BX.Bitrix24.LicenseInfoPopup"))
 		{
-			content = content.replace('#TF_PRICE#', this.tfPrice);
+			BX.Bitrix24.LicenseInfoPopup.show(popupId, title, content, showDemoButton);
 		}
-
-		var buttons = [
-			new BX.PopupWindowButton({
-				text : this.licenseButtonText,
-				className : 'popup-window-button-create',
-				events : { click : BX.proxy(function()
-				{
-					BX.ajax.post(
-						this.ajaxUrl,
-						{
-							popupId: popupId,
-							action: "tariff",
-							host: this.hostName
-						},
-						BX.proxy(function(){
-							top.location.href = this.licenseUrl;
-						}, this)
-					);
-				}, this)}
-			})
-		];
-		if (this.showFullDemoButton == "Y" && showDemoButton)
-		{
-			buttons.push(new BX.PopupWindowButtonLink({
-				text : this.trialButtonText,
-				className : 'popup-window-button-link-cancel',
-				events : { click : BX.proxy(function()
-				{
-					BX.ajax.post(
-						this.ajaxUrl,
-						{
-							popupId: popupId,
-							action: "demo",
-							host: this.hostName
-						},
-						BX.proxy(function(){
-							document.location.href = this.demoUrl;
-						}, this)
-					);
-				}, this)}
-			}));
-		}
-		else if (this.featureGroupName)
-		{
-			buttons.push(new BX.PopupWindowButtonLink({
-				text : this.trialButtonText,
-				className : 'popup-window-button-link-cancel',
-				events : { click : BX.proxy(function()
-				{
-					BX.ajax({
-							method: 'POST',
-						dataType: 'json',
-						url: this.ajaxActionsUrl,
-						data: {
-							action: "setFeatureTrial",
-							sessid: BX.bitrix_sessid(),
-							featureGroupName: this.featureGroupName
-						},
-						onsuccess: BX.proxy(function (json) {
-								if (json.error)
-									var text = json.error;
-								else if (json.success)
-									text = this.featureTrialSuccessText;
-
-									if (text)
-									{
-										BX.PopupWindowManager.create('b24InfoPopupFeature', null, {
-											content: BX.create("div", {
-											html: text,
-											attrs: {style: "padding:10px"}
-										}),
-										closeIcon: true
-									}).show();
-								}
-							}, this)
-					});
-					BX.ajax.post(
-						this.ajaxUrl,
-						{
-							popupId: popupId,
-							action: "demoFeature",
-							host: this.hostName
-						},
-						function(){}
-					);
-				}, this)}
-			}));
-		}
-
-		BX.PopupWindowManager.create('b24InfoPopup'+popupId, null, {
-			titleBar: title,
-			content:
-				BX.create("div", {
-					props : { className : "hide-features-popup-wrap" },
-					children : [
-					BX.create("div", {
-						props : { className : "hide-features-popup" },
-						children : [
-							BX.create("div", {
-								props : { className : "hide-features-pic" },
-								children : [
-									BX.create("div", { props : { className : "hide-features-pic-round" } })
-								]}),
-							BX.type.isDomNode(content) ?
-								BX.create("div", {
-									props : { className : "hide-features-text" },
-									children: [content]
-								})
-								: BX.create("div", {
-									props : { className : "hide-features-text" },
-									html: content
-							})
-						]
-					})
-				]}),
-			closeIcon : true,
-			lightShadow : true,
-			offsetLeft : 100,
-			overlay : true,
-			buttons: buttons,
-			events : {
-				onPopupClose : BX.proxy(function() {
-					BX.ajax.post(
-							this.ajaxUrl,
-							{
-								popupId: popupId,
-								action: "close",
-								host: this.hostName
-						},
-						function(){}
-					);
-				}, this)
-			}
-		}).show();
 	}
 };
 
@@ -1155,7 +937,7 @@ B24.Bitrix24InviteDialog.Init = function(arParams)
 			buttons: [
 			],
 			className: 'bx-b24-invite-dialog-popup',
-			content: '<div style="width:500px;height:550px; background: url(/bitrix/templates/bitrix24/images/loader.gif) no-repeat center;"></div>',
+			content: '<div style="width:500px;height:300px; background: url(/bitrix/templates/bitrix24/images/loader.gif) no-repeat center;"></div>',
 			events: {
 				onAfterPopupShow: function()
 				{
@@ -1179,7 +961,7 @@ B24.Bitrix24InviteDialog.ShowForm = function(arParams)
 
 B24.Bitrix24InviteDialog.loadForm = function()
 {
-	B24.Bitrix24InviteDialog.popup.setContent('<div style="width:500px;height:550px; background: url(/bitrix/templates/bitrix24/images/loader.gif) no-repeat center;"></div>');
+	B24.Bitrix24InviteDialog.popup.setContent('<div style="width:500px;height:300px; background: url(/bitrix/templates/bitrix24/images/loader.gif) no-repeat center;"></div>');
 	BX.ajax.post(
 		'/bitrix/tools/intranet_invite_dialog.php',
 		{

@@ -145,7 +145,12 @@ if(isset($_GET['redirect_to']))
 	$pathKey = "PATH_TO_LEAD_{$viewName}";
 	if(isset($arResult[$pathKey]))
 	{
-		LocalRedirect($arResult[$pathKey]);
+		$redirectUrl = CHTTP::urlAddParams(
+			$arResult[$pathKey],
+			array_diff_key($_GET, array_flip(array('redirect_to'))),
+			array('encode' => true)
+		);
+		LocalRedirect($redirectUrl);
 	}
 }
 

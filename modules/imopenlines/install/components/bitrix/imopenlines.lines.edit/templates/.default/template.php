@@ -28,7 +28,8 @@ $APPLICATION->SetTitle($arResult["PAGE_TITLE"]);
 		'IMOL_CONFIG_EDIT_NO_ANSWER_RULE_QUEUE': '<?=GetMessageJS("IMOL_CONFIG_EDIT_NO_ANSWER_RULE_QUEUE")?>',
 		'IMOL_CONFIG_EDIT_NO_ANSWER_RULE_NONE': '<?=GetMessageJS("IMOL_CONFIG_EDIT_NO_ANSWER_RULE_NONE")?>',
 		'IMOL_CONFIG_EDIT_QUEUE_TIME': '<?=GetMessageJS("IMOL_CONFIG_EDIT_QUEUE_TIME_NEW")?>',
-		'IMOL_CONFIG_EDIT_NA_TIME_NEW': '<?=GetMessageJS("IMOL_CONFIG_EDIT_NA_TIME_NEW")?>'
+		'IMOL_CONFIG_EDIT_NA_TIME_NEW': '<?=GetMessageJS("IMOL_CONFIG_EDIT_NA_TIME_NEW")?>',
+		'IMOL_CONFIG_EDIT_POPUP_LIMITED_ACTIVE': '<?=GetMessageJS("IMOL_CONFIG_EDIT_POPUP_LIMITED_ACTIVE")?>'
 	});
 </script>
 <?
@@ -43,7 +44,8 @@ if (!$arResult["IFRAME"])
 
 $APPLICATION->IncludeComponent("bitrix:ui.sidepanel.wrappermenu", "", array(
 	"ITEMS" => $arResult["CONFIG_MENU"],
-	"TITLE" => Loc::getMessage("IMOL_CONFIG_CONFIG")
+	"TITLE" => Loc::getMessage("IMOL_CONFIG_CONFIG"),
+	'RELOAD_PAGE_AFTER_SAVE' => true
 ));
 ?>
 <div id="imopenlines-field-container" <?if(!$arResult["IFRAME"]){?>class="imopenlines-page-field-container"<?}?>>
@@ -52,9 +54,10 @@ $APPLICATION->IncludeComponent("bitrix:ui.sidepanel.wrappermenu", "", array(
 		  id="imol_config_edit_form"
 	<?if ($arResult["IFRAME"]):?>class="imopenlines-form-settings-wrap"<?endif;?>>
 		<?=bitrix_sessid_post()?>
-		<input type="hidden" name="CONFIG_ID" value="<?=$arResult["CONFIG"]["ID"]?>" />
+		<input type="hidden" name="CONFIG_ID" id="imol_config_id" value="<?=$arResult["CONFIG"]["ID"]?>" />
 		<input type="hidden" name="form" value="imopenlines_edit_form" />
 		<input type="hidden" name="action" value="apply" id="imol_config_edit_form_action" />
+		<input type="hidden" name="PAGE" value="<?=$arResult["PAGE"]?>" id="imol_config_current_page">
 		<?
 		foreach ($arResult["CONFIG_MENU"] as $key => $menuItem)
 		{

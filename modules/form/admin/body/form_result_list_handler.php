@@ -4,10 +4,10 @@ IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/form/admin/form
 $err_mess = "File: ".__FILE__."<br>Line: ";
 
 /***************************************************************************
-								  пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+								  Функции
 ***************************************************************************/
 
-function CheckFilter() // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
+function CheckFilter() // проверка введенных полей
 {
 	global $strError, $MESS, $arrFORM_FILTER;
 	global $find_date_create_1, $find_date_create_2;
@@ -57,7 +57,7 @@ function CheckFilter() // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ п
 }
 
 /***************************************************************************
-                           пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ GET | POST
+                           Обработка GET | POST
 ****************************************************************************/
 if ($FORM_ID>0 && $WEB_FORM_ID<=0) $WEB_FORM_ID = $FORM_ID;
 if ($WEB_FORM_ID>0 && $FORM_ID<=0) $FORM_ID = $WEB_FORM_ID;
@@ -170,10 +170,10 @@ if (CheckFilter())
 	}
 }
 
-// пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ"
+// если была нажата кнопка "Сохранить изменения"
 if (strlen($save)>0 && $REQUEST_METHOD=="POST" && (check_bitrix_sessid() || defined("FORM_NOT_CHECK_SESSID")))
 {
-	// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
+	// обновляем записи
 	if (isset($RESULT_ID) && is_array($RESULT_ID))
 	{
 		foreach ($RESULT_ID as $rid)

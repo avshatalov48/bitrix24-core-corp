@@ -438,10 +438,15 @@ class CCrmEntityListBuilder
 			}
 		}
 
+		$enableRowCountThreshold = !isset($arOptions['ENABLE_ROW_COUNT_THRESHOLD'])
+			|| ($arOptions['ENABLE_ROW_COUNT_THRESHOLD'] === true || $arOptions['ENABLE_ROW_COUNT_THRESHOLD'] === 'Y');
+
 		//Get count only
 		if (is_array($arGroupBy) && count($arGroupBy) == 0)
 		{
-			return $this->GetRowCount(RestrictionManager::getSqlRestriction()->getRowCountThreshold());
+			return $this->GetRowCount($enableRowCountThreshold
+				? RestrictionManager::getSqlRestriction()->getRowCountThreshold() : 0
+			);
 		}
 
 		$sql = 'SELECT '.$this->sqlData['SELECT'].' FROM '.$this->tableName.' '.$this->tableAlias;
@@ -496,7 +501,7 @@ class CCrmEntityListBuilder
 				$offset = isset($queryOptions['OFFSET']) ? (int)$queryOptions['OFFSET'] : 0;
 			}
 
-			$threshold = RestrictionManager::getSqlRestriction()->getRowCountThreshold();
+			$threshold = $enableRowCountThreshold ? RestrictionManager::getSqlRestriction()->getRowCountThreshold() : 0;
 			if($threshold > 0 && $threshold < ($limit + $offset))
 			{
 				$delta = $threshold - $offset;
@@ -579,12 +584,9 @@ class CCrmEntityListBuilder
 				$sql .= ' '.$this->tableAlias;
 			}
 
-			if(isset($this->sqlData['FROM_WHERE']))
+			if(isset($this->sqlData['FROM_WHERE']) && $this->sqlData['FROM_WHERE'] !== '')
 			{
-				if($this->sqlData['FROM_WHERE'] !== '')
-				{
-					$sql .= ' '.$this->sqlData['FROM_WHERE'];
-				}
+				$sql .= ' '.$this->sqlData['FROM_WHERE'];
 			}
 			elseif(isset($this->sqlData['FROM']) && $this->sqlData['FROM'] !== '')
 			{

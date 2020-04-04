@@ -44,6 +44,7 @@ $arParams['NAME_TEMPLATE'] = empty($arParams['NAME_TEMPLATE']) ? CSite::GetNameF
 $arDefaultUrlTemplates404 = array(
 	'list' => '',
 	'edit' => 'edit/#id#/',
+	'design' => 'design/#id#/',
 	'fill' => 'fill/#id#/',
 	'ads' => 'ads/#id#/?type=#ads_type#',
 );
@@ -94,6 +95,10 @@ else
 	if (isset($_REQUEST['edit']))
 	{
 		$componentPage = 'edit';
+	}
+	if (isset($_REQUEST['design']))
+	{
+		$componentPage = 'design';
 	}
 	if (isset($_REQUEST['ads']))
 	{

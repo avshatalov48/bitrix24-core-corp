@@ -23,8 +23,6 @@ if ($iLeadId > 0)
 {
 	\Bitrix\Main\Localization\Loc::loadMessages(__FILE__);
 
-	$arParams['PATH_TO_LEAD_SHOW'] = CrmCheckPath('PATH_TO_LEAD_SHOW', $arParams['PATH_TO_LEAD_SHOW'], $APPLICATION->GetCurPage().'?lead_id=#lead_id#&show');
-	$arParams['PATH_TO_LEAD_EDIT'] = CrmCheckPath('PATH_TO_LEAD_EDIT', $arParams['PATH_TO_LEAD_EDIT'], $APPLICATION->GetCurPage().'?lead_id=#lead_id#&edit');
 	$arResult['STATUS_LIST'] = CCrmStatus::GetStatusListEx('STATUS');
 
 	$obRes = CCrmLead::GetListEx(array(), array('ID' => $iLeadId));
@@ -32,16 +30,8 @@ if ($iLeadId > 0)
 	if ($arLead == false)
 		return ;
 
-	$arLead['PATH_TO_LEAD_SHOW'] = CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_LEAD_SHOW'],
-		array(
-			'lead_id' => $iLeadId
-		)
-	);
-	$arLead['PATH_TO_LEAD_EDIT'] = CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_LEAD_EDIT'],
-		array(
-			'lead_id' => $iLeadId
-		)
-	);
+	$arLead['PATH_TO_LEAD_SHOW'] = \CCrmOwnerType::GetEntityShowPath(\CCrmOwnerType::Lead, $iLeadId, false);
+	$arLead['PATH_TO_LEAD_EDIT'] = \CCrmOwnerType::GetEntityEditPath(\CCrmOwnerType::Lead, $iLeadId, false);
 
 	$arLead['FORMATTED_NAME'] =CCrmLead::PrepareFormattedName(
 				array(
@@ -193,7 +183,7 @@ if ($iLeadId > 0)
 </div>';
 	}
 
-	$strPhoto = '<a href="'.$arLead['PATH_TO_LEAD_SHOW'].'" class="bx-user-info-data-photo no-photo" target="_blank"></a>';
+	$strPhoto = '<a href="'.$arLead['PATH_TO_LEAD_SHOW'].'" class="bx-ui-tooltip-info-data-photo no-photo" target="_blank"></a>';
 
 	$strToolbar2 = '
 <div class="bx-user-info-data-separator"></div>

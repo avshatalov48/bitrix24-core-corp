@@ -15,7 +15,7 @@ use Bitrix\Crm\Communication;
  *
  * @package Bitrix\Crm\Tracking\Channel
  */
-class Call extends Base
+class Call extends Base implements Features\TraceDetectable
 {
 	protected $code = self::Call;
 
@@ -44,7 +44,7 @@ class Call extends Base
 	 *
 	 * @return bool
 	 */
-	public function isSupportDetecting()
+	public function isSupportTraceDetecting()
 	{
 		$phones = array_column(Tracking\Provider::getReadySources(), 'PHONE');
 		return in_array($this->getValue(), $phones);

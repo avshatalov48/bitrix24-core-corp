@@ -22,8 +22,12 @@ ChatUserList.init = function()
 
 	this.userId = parseInt(BX.componentParameters.get('USER_ID', 0));
 	this.dialogId = BX.componentParameters.get('DIALOG_ID', 'LIST');
+	this.dialogOwnerId = parseInt(BX.componentParameters.get('DIALOG_OWNER_ID', 0));
 
+	this.users = BX.componentParameters.get('USERS', false);
 	this.items = BX.componentParameters.get('ITEMS', []);
+	this.isBackdrop = BX.componentParameters.get('IS_BACKDROP', false);
+
 	this.sections = BX.componentParameters.get('SECTIONS', []);
 
 	if (!this.dialogId)
@@ -50,6 +54,8 @@ ChatUserList.init = function()
 		}
 	});
 
+	ChatUserListInterface.setRefreshingEnabled(false);
+
 	this.event.init();
 
 	return true;
@@ -65,6 +71,7 @@ ChatUserList.openUserProfile = function(userId, userData = {})
 		title: userData.name,
 		workPosition: userData.work_position,
 		name: userData.name,
+		isBackdrop: this.isBackdrop,
 		url: currentDomain+'/mobile/users/?user_id='+userId+'&FROM_DIALOG=Y',
 	});
 
@@ -105,7 +112,27 @@ ChatUserList.event.init = function ()
 
 	ChatUserListInterface.setListener(this.router.bind(this));
 
-	BX.onViewLoaded(() => ChatUserListInterface.setItems(this.base.items, this.base.sections));
+	if (this.base.items.length <= 0)
+	{
+		if (this.base.users.length <= 0)
+		{
+			this.base.items.push({
+				title : BX.message("IM_USER_LIST_EMPTY"),
+				type:"button",
+				unselectable: true,
+				params: { action: 'empty'}
+			});
+		}
+		else
+		{
+			ChatUserList.rest.userListGet(this.base.users);
+		}
+	}
+
+	if (this.base.items.length > 0)
+	{
+		BX.onViewLoaded(() => ChatUserListInterface.setItems(this.base.items, this.base.sections));
+	}
 };
 
 ChatUserList.event.router = function(eventName, eventResult)
@@ -241,6 +268,100 @@ ChatUserList.rest.setOwner = function (userId)
 				this.base.alert(BX.message('IM_USER_API_ERROR'));
 			}
 		});
+};
+
+ChatUserList.rest.userListGet = function (users)
+{
+	let restMethod = 'im.user.list.get';
+	let restParams = {ID: users, RESULT_TYPE: 'array'};
+
+	if (!users)
+	{
+		restMethod = 'im.dialog.users.get';
+		restParams = {DIALOG_ID: this.base.dialogId};
+	}
+
+	BX.rest.callMethod(restMethod, restParams).then((result) =>
+	{
+		if (result.data())
+		{
+			const items = [];
+
+			result.data().forEach(element =>
+			{
+				let item = ChatDataConverter.getSearchElementFormat(element);
+				item.actions = [];
+
+				if (this.base.type === 'USERS')
+				{
+					if (this.base.dialogOwnerId === this.base.userId)
+					{
+						if (false && this.base.isLines) // TODO lines
+						{
+							if (
+								this.base.userId !== item.id
+								&& linesUsers.indexOf(item.id) < 0
+							)
+							{
+								item.actions.push({
+									title : BX.message("IM_USER_LIST_KICK"),
+									identifier : "kick",
+									iconName : "action_delete",
+									destruct : true,
+									color : "#df532d"
+								});
+							}
+						}
+						else if (this.base.userId !== item.id)
+						{
+							item.actions.push({
+								title : BX.message("IM_USER_LIST_OWNER"),
+								identifier : "owner",
+								color : "#aac337"
+							});
+							item.actions.push({
+								title : BX.message("IM_USER_LIST_KICK"),
+								identifier : "kick",
+								destruct : true,
+								color : "#df532d"
+							});
+						}
+					}
+
+					if (item.id === this.base.dialogOwnerId)
+					{
+						item.styles.title.image = {name: 'name_status_owner'};
+					}
+				}
+
+				items.push(item);
+
+				return true;
+			});
+
+			this.base.items = items;
+			ChatUserListInterface.setItems(items);
+		}
+		else
+		{
+			console.error("ChatUserList.rest.userListGet: we have some problems on server\n", result.answer);
+			this.base.alert(BX.message('IM_USER_API_ERROR'));
+		}
+	})
+	.catch((result) =>
+	{
+		let error = result.error();
+		if (error.ex.error === 'NO_INTERNET_CONNECTION')
+		{
+			console.error("ChatUserList.rest.userListGet - error: connection error", error.ex);
+			this.base.alert(BX.message('IM_USER_CONNECTION_ERROR'));
+		}
+		else
+		{
+			console.error("ChatUserList.rest.userListGet - error: we have some problems on server\n", result.answer);
+			this.base.alert(BX.message('IM_USER_API_ERROR'));
+		}
+	});
 };
 
 /* Initialization */

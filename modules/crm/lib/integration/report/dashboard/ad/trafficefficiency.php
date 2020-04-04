@@ -22,14 +22,6 @@ class TrafficEfficiency
 	 */
 	public static function get()
 	{
-		return self::buildBoard();
-	}
-
-	/**
-	 * @return VC\Entity\Dashboard
-	 */
-	private static function buildBoard()
-	{
 		$board = new VC\Entity\Dashboard();
 		$board->setVersion(self::VERSION);
 		$board->setBoardKey(self::BOARD_KEY);
@@ -66,8 +58,8 @@ class TrafficEfficiency
 		$widget->setCategoryKey('crm');
 		$widget->setBoardId(self::BOARD_KEY);
 
-		$widget->getWidgetHandler()->updateFormElementValue('label',  Loc::getMessage("CRM_INTEGRATION_REPORT_TRAFFIC_EFFICIENCY_FUNNEL_TITLE"));
-		$widget->addConfigurations($widget->getWidgetHandler()->getConfigurations());
+		$widget->getWidgetHandler(true)->updateFormElementValue('label',  Loc::getMessage("CRM_INTEGRATION_REPORT_TRAFFIC_EFFICIENCY_FUNNEL_TITLE"));
+		$widget->addConfigurations($widget->getWidgetHandler(true)->getConfigurations());
 
 		return $widget;
 	}
@@ -84,8 +76,8 @@ class TrafficEfficiency
 		$widget->setCategoryKey('crm');
 		$widget->setBoardId(self::BOARD_KEY);
 
-		$widget->getWidgetHandler()->updateFormElementValue('label',  Loc::getMessage("CRM_INTEGRATION_REPORT_TRAFFIC_EFFICIENCY_GRID_TITLE"));
-		$widget->addConfigurations($widget->getWidgetHandler()->getConfigurations());
+		$widget->getWidgetHandler(true)->updateFormElementValue('label',  Loc::getMessage("CRM_INTEGRATION_REPORT_TRAFFIC_EFFICIENCY_GRID_TITLE"));
+		$widget->addConfigurations($widget->getWidgetHandler(true)->getConfigurations());
 
 		return $widget;
 	}

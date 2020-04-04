@@ -17,6 +17,8 @@ if($arResult['ERRORS'] && $arResult['ERRORS'] instanceof \Bitrix\Main\ErrorColle
 }
 if (\Bitrix\Main\Loader::includeModule('bitrix24'))
 	\CBitrix24::initLicenseInfoPopupJS();
+
+\CJSCore::init('sidepanel');
 ?>
 <script type="text/javascript">
 	function imolOpenTrialPopup(dialogId, text)
@@ -31,7 +33,7 @@ if (\Bitrix\Main\Loader::includeModule('bitrix24'))
 		}
 	}
 </script>
-<form method="POST" action="<?=$arResult['ACTION_URI']?>">
+<form method="POST" action="<?=$arResult['ACTION_URI']?>" id="imol-role-form">
 	<input type="hidden" name="act" value="save">
 	<input type="hidden" name="ID" value="<?=htmlspecialcharsbx($arResult['ID'])?>">
 	<?echo bitrix_sessid_post()?>
@@ -91,7 +93,15 @@ if (\Bitrix\Main\Loader::includeModule('bitrix24'))
 			<?=GetMessage('IMOL_ROLE_SAVE')?>
 			<div class="tel-lock-holder-title"><div class="tel-lock"></div></div></span>
 	<?endif?>
-	<a class="webform-small-button" href="<?=$arResult['PERMISSIONS_URL']?>"><?=GetMessage('IMOL_ROLE_CANCEL')?></a>
+	<a class="webform-small-button"
+		<? if($arResult['IFRAME']): ?>
+			onclick="BX.SidePanel.Instance.close()"
+		<? else: ?>
+			href="<?=$arResult['PERMISSIONS_URL']?>"
+		<? endif; ?>
+	>
+		<?=GetMessage('IMOL_ROLE_CANCEL')?>
+	</a>
 </form>
 <?
 if(!$arResult['CAN_EDIT'])
@@ -106,6 +116,20 @@ if(!$arResult['CAN_EDIT'])
 		BX.ready(function()
 		{
 			viOpenTrialPopup('permissions');
+		});
+	</script>
+	<?
+}
+else
+{
+	?>
+	<script>
+		BX.ready(function()
+		{
+			var sendSidePanelMessage =  function imolSendSidePanelMessage() {
+				BX.SidePanel.Instance.postMessage(BX.SidePanel.Instance.getSliderByWindow(window), 'ImOpenLines:reloadRoles', {});
+			};
+			BX.bind(BX('imol-role-form'), 'submit', sendSidePanelMessage);
 		});
 	</script>
 	<?

@@ -1,6 +1,9 @@
 <?
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/header.php");
-$APPLICATION->SetPageProperty("BodyClass", "page-one-column");
+
+$bodyClass = $APPLICATION->GetPageProperty("BodyClass");
+$APPLICATION->SetPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "")."page-one-column");
+
 IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/intranet/public_bitrix24/timeman/work_report.php");
 
 $APPLICATION->SetTitle(GetMessage("TITLE"));
@@ -14,11 +17,13 @@ if (\Bitrix\Main\Loader::includeModule("bitrix24"))
 if (IsModuleInstalled("timeman"))
 {
 	$APPLICATION->IncludeComponent(
-		"bitrix:timeman.report.weekly",
+		"bitrix:ui.sidepanel.wrapper",
 		"",
-		Array(
-		),
-		false
+		array(
+			"POPUP_COMPONENT_NAME" => "bitrix:timeman.report.weekly",
+			"POPUP_COMPONENT_TEMPLATE_NAME" => "",
+			"POPUP_COMPONENT_PARAMS" => array()
+		)
 	);
 }
 elseif (!(!IsModuleInstalled("timeman") && in_array($licenseType, array("company", "edu", "nfr"))))

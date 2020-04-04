@@ -16,7 +16,7 @@ if (CBXFeatures::IsFeatureEnabled('timeman')&&CModule::IncludeModule('timeman')&
 
 	$obReportUser = new CUserReportFull;
 	$arResult['WORK_REPORT'] = $obReportUser->GetReportData();
-//echo '<pre>'; print_r($arResult['WORK_REPORT']); echo '</pre>';
+
 	CIntranetPlanner::initScripts($arResult['START_INFO']['PLANNER']);
 	$arResult['START_INFO']['PLANNER'] = $arResult['START_INFO']['PLANNER']['DATA'];
 

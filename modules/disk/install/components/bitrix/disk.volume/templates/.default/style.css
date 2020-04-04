@@ -1044,6 +1044,24 @@
 	display: block;
 }
 
+/* mail icon */
+.bx-disk-volume-mail-icon {
+	display: inline-block;
+	width: 22px;
+	height: 22px;
+	border-radius: unset;
+	background: url("/bitrix/js/im/images/desktop-sprite-v7.png") no-repeat -91px -242px;
+}
+
+/* documentgenerator icon */
+.bx-disk-volume-documentgenerator-icon {
+	display: inline-block;
+	width: 22px;
+	height: 22px;
+	border-radius: unset;
+	background: #7f8389 url("/bitrix/components/bitrix/crm.timeline/templates/.default/images/icons-sprite.svg") no-repeat center -1178px;;
+}
+
 /* im icon */
 .bx-disk-volume-im-icon {
 	display: inline-block;

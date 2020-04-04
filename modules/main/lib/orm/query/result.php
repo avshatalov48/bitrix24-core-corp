@@ -375,7 +375,21 @@ class Result extends BaseResult
 			{
 				/** @var Collection $collection */
 				$collection = $this->fetchCollection();
+
+				// remember original result
+				$originalResult = $this->result;
+
 				$this->result = new ArrayResult($collection->getAll());
+
+				// recover count total
+				try
+				{
+					if ($originalResult->getCount())
+					{
+						$this->result->setCount($originalResult->getCount());
+					}
+				}
+				catch (\Bitrix\Main\ObjectPropertyException $e) {}
 			}
 		}
 	}

@@ -62,6 +62,8 @@ class EntityManageFacility
 	protected $isAutoGenRcEnabled = true;
 	/** @var bool  */
 	protected $isLeadEnabled = true;
+	/** @var bool  */
+	protected $isBpRun = false;
 
 
 	/**
@@ -391,6 +393,7 @@ class EntityManageFacility
 	{
 		$this->registeredId = null;
 		$this->registeredTypeId = \CCrmOwnerType::Lead;
+		$this->isBpRun = false;
 
 		if ($this->canAddLead())
 		{
@@ -412,7 +415,7 @@ class EntityManageFacility
 		}
 		elseif ($this->canUpdate())
 		{
-			$this->updateClientFields($fields);
+			$this->updateClientFields($fields, true, $updateSearch, $options);
 		}
 
 		if ($this->isAutomationRun)
@@ -435,6 +438,7 @@ class EntityManageFacility
 	{
 		$this->registeredId = null;
 		$this->registeredTypeId = \CCrmOwnerType::Company;
+		$this->isBpRun = false;
 
 		if ($this->canAddCompany())
 		{
@@ -461,7 +465,7 @@ class EntityManageFacility
 		}
 		elseif ($this->canUpdate())
 		{
-			$this->updateClientFields($fields);
+			$this->updateClientFields($fields, true, $updateSearch, $options);
 		}
 
 		if ($this->isAutomationRun)
@@ -484,6 +488,7 @@ class EntityManageFacility
 	{
 		$this->registeredId = null;
 		$this->registeredTypeId = \CCrmOwnerType::Contact;
+		$this->isBpRun = false;
 
 		if ($this->canAddContact())
 		{
@@ -505,7 +510,7 @@ class EntityManageFacility
 		}
 		elseif ($this->canUpdate())
 		{
-			$this->updateClientFields($fields);
+			$this->updateClientFields($fields, true, $updateSearch, $options);
 		}
 
 		if ($this->isAutomationRun)
@@ -528,6 +533,7 @@ class EntityManageFacility
 	{
 		$this->registeredId = null;
 		$this->registeredTypeId = \CCrmOwnerType::Deal;
+		$this->isBpRun = false;
 
 		if ($this->canAddDeal())
 		{
@@ -763,8 +769,11 @@ class EntityManageFacility
 				$fields['CONTACT_ID'] = $this->selector->getContactId();
 			}
 
-			$fields['IS_RETURN_CUSTOMER'] = 'Y';
-			$isRCLeadAdded = true;
+			if ($this->selector->getCompanyId() || $this->selector->getContactId())
+			{
+				$fields['IS_RETURN_CUSTOMER'] = 'Y';
+				$isRCLeadAdded = true;
+			}
 		}
 		else
 		{
@@ -787,7 +796,7 @@ class EntityManageFacility
 
 		if ($isRCLeadAdded)
 		{
-			$this->updateClientFields($updateClientFields);
+			$this->updateClientFields($fields, true, $updateSearch, $options);
 		}
 
 		$this->traceEntity(\CCrmOwnerType::Lead, $leadId);
@@ -860,13 +869,19 @@ class EntityManageFacility
 		if ($this->canAdd() && $this->registeredId && $this->registeredTypeId)
 		{
 			// run business process
-			$bpErrors = array();
-			\CCrmBizProcHelper::AutoStartWorkflows(
-				$this->registeredTypeId,
-				$this->registeredId,
-				\CCrmBizProcEventType::Create,
-				$bpErrors
-			);
+			if (!$this->isBpRun)
+			{
+				$bpErrors = array();
+				\CCrmBizProcHelper::AutoStartWorkflows(
+					$this->registeredTypeId,
+					$this->registeredId,
+					\CCrmBizProcEventType::Create,
+					$bpErrors
+				);
+
+				// mark as BP run
+				$this->isBpRun = true;
+			}
 
 			// run automation
 			if (!$this->isEntityTypeConvertible($this->registeredTypeId))
@@ -1016,9 +1031,13 @@ class EntityManageFacility
 	 * Update contact and company by lead fields.
 	 *
 	 * @param array $fields Lead fields.
+	 * @param bool $compare
+	 * @param bool $updateSearch
+	 * @param array $options
 	 * @return void
+	 * @throws ArgumentException
 	 */
-	public function updateClientFields(array $fields)
+	public function updateClientFields(array $fields, $compare = true, $updateSearch = true, array $options = [])
 	{
 		$mergeItems = array();
 		if ($this->selector->getCompanyId())
@@ -1074,11 +1093,14 @@ class EntityManageFacility
 
 		if ($this->selector->getLeadId())
 		{
-			$mergeItems[] = array(
-				'typeId' => \CCrmOwnerType::Lead,
-				'id' => $this->selector->getLeadId(),
-				'fields' => $fields
-			);
+			if (!$this->selector->getContactId() && !$this->selector->getCompanyId())
+			{
+				$mergeItems[] = array(
+					'typeId' => \CCrmOwnerType::Lead,
+					'id' => $this->selector->getLeadId(),
+					'fields' => $fields
+				);
+			}
 		}
 		elseif ($this->selector->getReturnCustomerLeadId())
 		{
@@ -1199,11 +1221,19 @@ class EntityManageFacility
 					$entityFields = $entityFieldsDb->fetch();
 					if ($entityFields)
 					{
+						foreach ($entityFields as $key => $value)
+						{
+							if ($value === null)
+							{
+								unset($entityFields[$key]);
+							}
+						}
+
 						$entityFields['FM'] = $entityMultiFields;
 						$merger->mergeFields($mergeFields, $entityFields, false, array('ENABLE_UPLOAD' => true));
 						$this->uniqueMultiFields($entityFields['FM'], $entityMultiFields);
 
-						$entityObject->update($entityId, $entityFields);
+						$entityObject->update($entityId, $entityFields, $compare, $updateSearch, $options);
 					}
 				}
 
@@ -1296,6 +1326,9 @@ class EntityManageFacility
 		{
 			return null;
 		}
+
+		// mark as BP run
+		$this->isBpRun = true;
 
 		// set founded entities to selector
 		foreach ($result->getBoundEntities() as $entity)

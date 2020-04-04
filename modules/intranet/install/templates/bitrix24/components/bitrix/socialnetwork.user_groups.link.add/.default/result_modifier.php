@@ -100,6 +100,20 @@ if (
 	);
 }
 
+if (
+	SITE_ID != $extranetSiteId
+	&& \Bitrix\Main\Loader::includeModule('landing')
+	&& \Bitrix\Main\Loader::includeModule('socialnetwork')
+	&& class_exists('\Bitrix\Socialnetwork\Integration\Landing\Livefeed')
+)
+{
+	$arResult["Filter"][] = array(
+		'id' => 'LANDING',
+		'name' => Loc::getMessage('SONET_C36_T_FILTER_LANDING'),
+		'type' => 'checkbox',
+	);
+}
+
 if (COption::GetOptionString("socialnetwork", "work_with_closed_groups", "N") != "Y")
 {
 	$arResult["Filter"][] = array(

@@ -196,45 +196,44 @@ elseif($action === 'SAVE')
 	}
 
 	$createdEntities = array();
+	$updateEntityInfos = array();
 
 	$companyID = 0;
 	$companyEntity = new \CCrmCompany(false);
-	$enableCompanyCreation = \CCrmCompany::CheckCreatePermission($currentUserPermissions);
 	if(isset($clientData['COMPANY_DATA']) && is_array($clientData['COMPANY_DATA']))
 	{
 		$companyData = $clientData['COMPANY_DATA'];
-		$companyID = isset($companyData['id']) ? (int)$companyData['id'] : 0;
-		$companyTitle = isset($companyData['title']) ? trim($companyData['title']) : '';
-		if($companyID <= 0 && $companyTitle !== '' && $enableCompanyCreation)
+		if(!empty($companyData))
 		{
-			$companyFields = array('TITLE' => $companyTitle);
-			$multifieldData =  isset($companyData['multifields']) && is_array($companyData['multifields'])
-				? $companyData['multifields']  : array();
-
-			if(!empty($multifieldData))
+			$companyItem = $companyData[0];
+			$companyID = isset($companyItem['id']) ? (int)$companyItem['id'] : 0;
+			if($companyID <= 0)
 			{
-				\Bitrix\Crm\Component\EntityDetails\BaseComponent::prepareMultifieldsForSave(
-					$multifieldData,
-					$companyFields
-				);
-			}
-			$companyID = $companyEntity->Add($companyFields, true, array('DISABLE_USER_FIELD_CHECK' => true));
-			if($companyID > 0)
-			{
-				$arErrors = array();
-				\CCrmBizProcHelper::AutoStartWorkflows(
+				$companyID = \Bitrix\Crm\Component\EntityDetails\BaseComponent::createEntity(
 					\CCrmOwnerType::Company,
-					$companyID,
-					\CCrmBizProcEventType::Create,
-					$arErrors
+					$companyItem,
+					array(
+						'userPermissions' => $currentUserPermissions,
+						'startWorkFlows' => true
+					)
 				);
 
-				$createdEntities[CCrmOwnerType::Company] = array($companyID);
+				if($companyID > 0)
+				{
+					$createdEntities[\CCrmOwnerType::Company] = array($companyID);
+				}
+			}
+			elseif($companyItem['title'] || (isset($companyItem['multifields']) && is_array($companyItem['multifields'])))
+			{
+				if(!isset($updateEntityInfos[CCrmOwnerType::Company]))
+				{
+					$updateEntityInfos[CCrmOwnerType::Company] = array();
+				}
+				$updateEntityInfos[CCrmOwnerType::Company][$companyID] = $companyItem;
 			}
 		}
-
 		$fields['COMPANY_ID'] = $companyID;
-		if($companyID > 0)
+		if($fields['COMPANY_ID'] > 0)
 		{
 			Crm\Controller\Entity::addLastRecentlyUsedItems(
 				'crm.lead.details',
@@ -252,36 +251,29 @@ elseif($action === 'SAVE')
 	$contactIDs = null;
 	$bindContactIDs = null;
 	$contactEntity = new \CCrmContact(false);
-	$enableContactCreation = \CCrmContact::CheckCreatePermission($currentUserPermissions);
 	if(isset($clientData['CONTACT_DATA']) && is_array($clientData['CONTACT_DATA']))
 	{
 		$contactIDs = array();
 		$contactData = $clientData['CONTACT_DATA'];
 		foreach($contactData as $contactItem)
 		{
-			$contactID = isset($contactItem['id']) ? (int)$contactItem['id'] : 0;
-			$contactTitle = isset($contactItem['title']) ? trim($contactItem['title']) : '';
-			if($contactID <= 0 && $contactTitle !== '' && $enableContactCreation)
+			if(!is_array($contactItem))
 			{
-				$contactFields = array();
-				\Bitrix\Crm\Format\PersonNameFormatter::tryParseName(
-					$contactTitle,
-					\Bitrix\Crm\Format\PersonNameFormatter::getFormatID(),
-					$contactFields
-				);
-				
-				$multifieldData =  isset($contactItem['multifields']) && is_array($contactItem['multifields'])
-					? $contactItem['multifields']  : array();
+				continue;
+			}
 
-				if(!empty($multifieldData))
-				{
-					\Bitrix\Crm\Component\EntityDetails\BaseComponent::prepareMultifieldsForSave(
-						$multifieldData,
-						$contactFields
-					);
-				}
-				
-				$contactID = $contactEntity->Add($contactFields, true, array('DISABLE_USER_FIELD_CHECK' => true));
+			$contactID = isset($contactItem['id']) ? (int)$contactItem['id'] : 0;
+			if($contactID <= 0)
+			{
+				$contactID = \Bitrix\Crm\Component\EntityDetails\BaseComponent::createEntity(
+					\CCrmOwnerType::Contact,
+					$contactItem,
+					array(
+						'userPermissions' => $currentUserPermissions,
+						'startWorkFlows' => true
+					)
+				);
+
 				if($contactID > 0)
 				{
 					if(!is_array($bindContactIDs))
@@ -290,20 +282,20 @@ elseif($action === 'SAVE')
 					}
 					$bindContactIDs[] = $contactID;
 
-					$arErrors = array();
-					\CCrmBizProcHelper::AutoStartWorkflows(
-						\CCrmOwnerType::Contact,
-						$contactID,
-						\CCrmBizProcEventType::Create,
-						$arErrors
-					);
-
 					if(!isset($createdEntities[CCrmOwnerType::Contact]))
 					{
 						$createdEntities[CCrmOwnerType::Contact] = array();
 					}
 					$createdEntities[CCrmOwnerType::Contact][] = $contactID;
 				}
+			}
+			elseif($contactItem['title'] || (isset($contactItem['multifields']) && is_array($contactItem['multifields'])))
+			{
+				if(!isset($updateEntityInfos[CCrmOwnerType::Contact]))
+				{
+					$updateEntityInfos[CCrmOwnerType::Contact] = array();
+				}
+				$updateEntityInfos[CCrmOwnerType::Contact][$contactID] = $contactItem;
 			}
 
 			if($contactID > 0)
@@ -335,21 +327,33 @@ elseif($action === 'SAVE')
 	//endregion
 
 	//region PRODUCT ROWS
-	$enableProductRows = !array_key_exists('LEAD_PRODUCT_DATA_INVALIDATE', $_POST) && array_key_exists('LEAD_PRODUCT_DATA', $_POST);
+	$enableProductRows = false;
+	$originalProductRows = !$isNew ? \CCrmLead::LoadProductRows($ID) : array();
+
 	$productRows = array();
 	$productRowSettings = array();
-	if($enableProductRows)
+	if(isset($_POST['LEAD_PRODUCT_DATA'])
+		&& !(isset($_POST['SKIP_PRODUCT_DATA']) && strcasecmp($_POST['SKIP_PRODUCT_DATA'], 'Y') === 0)
+	)
 	{
-		if(isset($_POST['LEAD_PRODUCT_DATA']) && $_POST['LEAD_PRODUCT_DATA'] !== '')
-		{
-			$productRows = \CUtil::JsObjectToPhp($_POST['LEAD_PRODUCT_DATA']);
-		}
-
+		$productRows = \CUtil::JsObjectToPhp($_POST['LEAD_PRODUCT_DATA']);
 		if(!is_array($productRows))
 		{
 			$productRows = array();
 		}
 
+		$enableProductRows = true;
+		if(!$isNew
+			&& !$isCopyMode
+			&& \CCrmProductRow::AreEquals($productRows, $originalProductRows)
+		)
+		{
+			$enableProductRows = false;
+		}
+	}
+
+	if($enableProductRows)
+	{
 		if(!empty($productRows))
 		{
 			if($isCopyMode)
@@ -384,20 +388,9 @@ elseif($action === 'SAVE')
 		else
 		{
 			$fields['TAX_VALUE'] = 0.0;
-			if(!isset($fields['OPPORTUNITY']))
+			if(!isset($fields['OPPORTUNITY']) && ($isNew || !empty($originalProductRows)))
 			{
-				if($isNew)
-				{
-					$fields['OPPORTUNITY'] = 0.0;
-				}
-				else
-				{
-					$originalProductRows = \CCrmLead::LoadProductRows($ID);
-					if(!empty($originalProductRows))
-					{
-						$fields['OPPORTUNITY'] = 0.0;
-					}
-				}
+				$fields['OPPORTUNITY'] = 0.0;
 			}
 		}
 
@@ -420,7 +413,7 @@ elseif($action === 'SAVE')
 	$checkExceptions = null;
 	$errorMessage = '';
 
-	if(!empty($fields) || $enableProductRows)
+	if(!empty($fields) || $enableProductRows || !empty($updateEntityInfos))
 	{
 		if(isset($fields['ASSIGNED_BY_ID']) && $fields['ASSIGNED_BY_ID'] > 0)
 		{
@@ -436,6 +429,7 @@ elseif($action === 'SAVE')
 					$fields['ASSIGNED_BY_ID'] = $currentUserID;
 				}
 
+				\Bitrix\Crm\Entity\EntityEditor::prepareForCopy($fields, $userType);
 				$merger = new \Bitrix\Crm\Merger\LeadMerger($currentUserID, false);
 				//Merge with disabling of multiple user fields (SKIP_MULTIPLE_USER_FIELDS = TRUE)
 				$merger->mergeFields(
@@ -451,7 +445,7 @@ elseif($action === 'SAVE')
 				$fields['COMMENTS'] = \Bitrix\Crm\Format\TextHelper::sanitizeHtml($fields['COMMENTS']);
 			}
 
-			$entity = new \CCrmLead(false);
+			$entity = new \CCrmLead(!CCrmPerms::IsAdmin());
 			if($isNew)
 			{
 				/*
@@ -560,22 +554,9 @@ elseif($action === 'SAVE')
 			//Deletion early created entities
 			foreach($createdEntities as $entityTypeID => $entityIDs)
 			{
-				if($entityTypeID === CCrmOwnerType::Company)
-				{
-					$entity = new CCrmCompany(false);
-				}
-				elseif($entityTypeID === CCrmOwnerType::Contact)
-				{
-					$entity = new CCrmContact(false);
-				}
-				else
-				{
-					continue;
-				}
-
 				foreach($entityIDs as $entityID)
 				{
-					$entity->Delete($entityID);
+					\Bitrix\Crm\Component\EntityDetails\BaseComponent::deleteEntity($entityTypeID, $entityID);
 				}
 			}
 
@@ -626,7 +607,8 @@ elseif($action === 'SAVE')
 		\Bitrix\Crm\Tracking\UI\Details::saveEntityData(
 			\CCrmOwnerType::Lead,
 			$ID,
-			$_POST
+			$_POST,
+			$isNew
 		);
 
 		$editorSettings = new \Bitrix\Crm\Settings\EntityEditSettings(
@@ -640,6 +622,25 @@ elseif($action === 'SAVE')
 		)
 		{
 			\Bitrix\Crm\Binding\ContactCompanyTable::bindContactIDs($companyID, $bindContactIDs);
+		}
+
+		if(!empty($updateEntityInfos))
+		{
+			foreach($updateEntityInfos as $entityTypeID => $entityInfos)
+			{
+				foreach($entityInfos as $entityID => $entityInfo)
+				{
+					\Bitrix\Crm\Component\EntityDetails\BaseComponent::updateEntity(
+						$entityTypeID,
+						$entityID,
+						$entityInfo,
+						array(
+							'userPermissions' => $currentUserPermissions,
+							'startWorkFlows' => true
+						)
+					);
+				}
+			}
 		}
 
 		$arErrors = array();
@@ -773,10 +774,19 @@ elseif($action === 'PREPARE_EDITOR_HTML')
 {
 	$ID = isset($_POST['ACTION_ENTITY_ID']) ? max((int)$_POST['ACTION_ENTITY_ID'], 0) : 0;
 	$guid = isset($_POST['GUID']) ? $_POST['GUID'] : "lead_{$ID}_custom_editor";
+	$configID = isset($_POST['CONFIG_ID']) ? $_POST['CONFIG_ID'] : '';
+	$forceDefaultConfig = !isset($_POST['FORCE_DEFAULT_CONFIG']) || strtoupper($_POST['FORCE_DEFAULT_CONFIG']) === 'Y';
 	$params = isset($_POST['PARAMS']) && is_array($_POST['PARAMS']) ? $_POST['PARAMS'] : array();
 	$context = isset($_POST['CONTEXT']) && is_array($_POST['CONTEXT']) ? $_POST['CONTEXT'] : array();
 	$fieldNames = isset($_POST['FIELDS']) && is_array($_POST['FIELDS']) ? $_POST['FIELDS'] : array();
 	$title = isset($_POST['TITLE']) ? $_POST['TITLE'] : '';
+
+	$enableConfigScopeToggle = !isset($_POST['ENABLE_CONFIG_SCOPE_TOGGLE'])
+		|| strtoupper($_POST['ENABLE_CONFIG_SCOPE_TOGGLE']) === 'Y';
+	$enableConfigurationUpdate = !isset($_POST['ENABLE_CONFIGURATION_UPDATE'])
+		|| strtoupper($_POST['ENABLE_CONFIGURATION_UPDATE']) === 'Y';
+	$enableFieldsContextMenu = !isset($_POST['ENABLE_FIELDS_CONTEXT_MENU'])
+		|| strtoupper($_POST['ENABLE_FIELDS_CONTEXT_MENU']) === 'Y';
 	$isEmbedded = isset($_POST['IS_EMBEDDED']) && strtoupper($_POST['IS_EMBEDDED']) === 'Y';
 	$enableRequiredUserFieldCheck = !isset($_POST['ENABLE_REQUIRED_USER_FIELD_CHECK'])
 		|| strtoupper($_POST['ENABLE_REQUIRED_USER_FIELD_CHECK']) === 'Y';
@@ -785,9 +795,16 @@ elseif($action === 'PREPARE_EDITOR_HTML')
 
 	CBitrixComponent::includeComponentClass('bitrix:crm.lead.details');
 	$component = new CCrmLeadDetailsComponent();
+
+	if(!isset($params['NAME_TEMPLATE']))
+	{
+		$params['NAME_TEMPLATE'] = CSite::GetNameFormat(false);
+	}
 	$component->initializeParams($params);
 	$component->setEntityID($ID);
 	$component->enableSearchHistory($enableSearchHistory);
+
+	$context['SKIP_PRODUCT_DATA'] = 'Y';
 
 	$fieldMap = array_fill_keys($fieldNames, true);
 	$fieldInfos = $component->prepareFieldInfos();
@@ -803,7 +820,8 @@ elseif($action === 'PREPARE_EDITOR_HTML')
 	$sectionConfig = array(
 		'name' => 'main',
 		'type' => 'section',
-		'elements' => $entityConfigElements
+		'elements' => $entityConfigElements,
+		'data' => array('isChangeable' => true, 'isRemovable' => false),
 	);
 
 	if($title !== '')
@@ -812,7 +830,19 @@ elseif($action === 'PREPARE_EDITOR_HTML')
 	}
 	else
 	{
-		$sectionConfig['enableTitle'] = false;
+		$sectionConfig['data']['enableTitle'] = false;
+	}
+
+	$scopePrefix = '';
+	if(isset($_POST['FORCE_DEFAULT_SCOPE']) && strtoupper($_POST['FORCE_DEFAULT_SCOPE']) === 'Y')
+	{
+		$scopePrefix = $component->getDefaultConfigID();
+	}
+
+	$optionPrefix = '';
+	if(isset($_POST['FORCE_DEFAULT_OPTIONS']) && strtoupper($_POST['FORCE_DEFAULT_OPTIONS']) === 'Y')
+	{
+		$optionPrefix = $component->getDefaultConfigID();
 	}
 
 	$GLOBALS['APPLICATION']->RestartBuffer();
@@ -823,20 +853,25 @@ elseif($action === 'PREPARE_EDITOR_HTML')
 		'',
 		array(
 			'GUID' => $guid,
-			'CONFIG_ID' => $component->getDefaultConfigID(),
-			'FORCE_DEFAULT_CONFIG' => true,
+			'CONFIG_ID' => $configID !== '' ? $configID : $component->getDefaultConfigID(),
+			'SCOPE_PREFIX' => $scopePrefix,
+			'OPTION_PREFIX' => $optionPrefix,
+			'FORCE_DEFAULT_CONFIG' => $forceDefaultConfig,
 			'ENTITY_CONFIG' => array($sectionConfig),
 			'ENTITY_FIELDS' => $component->prepareFieldInfos(),
 			'ENTITY_DATA' => $component->prepareEntityData(),
+			'ENABLE_CONFIG_SCOPE_TOGGLE' => $enableConfigScopeToggle,
+			'ENABLE_CONFIGURATION_UPDATE' => $enableConfigurationUpdate,
 			'ENABLE_REQUIRED_FIELDS_INJECTION' => false,
-			'ENABLE_CONFIGURATION_UPDATE' => false,
 			'ENABLE_SECTION_EDIT' => false,
 			'ENABLE_SECTION_CREATION' => false,
 			'ENABLE_USER_FIELD_CREATION' => false,
 			'ENABLE_MODE_TOGGLE' => false,
+			'ENABLE_VISIBILITY_POLICY' => false,
 			'ENABLE_TOOL_PANEL' => false,
 			'ENABLE_BOTTOM_PANEL' => false,
 			'ENABLE_PAGE_TITLE_CONTROLS' => false,
+			'ENABLE_FIELDS_CONTEXT_MENU' => $enableFieldsContextMenu,
 			'ENABLE_REQUIRED_USER_FIELD_CHECK' => $enableRequiredUserFieldCheck,
 			'USER_FIELD_ENTITY_ID' => \CCrmLead::GetUserFieldEntityID(),
 			'SERVICE_URL' => '/bitrix/components/bitrix/crm.lead.details/ajax.php?'.bitrix_sessid_get(),

@@ -317,7 +317,7 @@ return array(
 				'SORT' => '3000',
 				'CONTENT' => '<section class="landing-block landing-block-node-container g-pt-10 g-pb-20">
 	<div class="container">
-		<div class="row">
+		<div class="row landing-block-inner">
 
 			<div class="landing-block-card landing-block-node-block col-md-4 g-mb-30 g-mb-0--md g-pt-10 js-animation fadeIn">
 				<img class="landing-block-node-img img-fluid g-mb-30" src="https://cdn.bitrix24.site/bitrix/images/landing/business/800x496/img1.jpg" alt="" />
@@ -368,7 +368,7 @@ return array(
 				'SORT' => '4000',
 				'CONTENT' => '<section class="landing-block landing-block-node-container g-pt-25 g-pb-80 g-bg-secondary">
         <div class="container">
-            <div class="row">
+            <div class="row landing-block-inner">
 
                 <div class="landing-block-card col-lg-4 g-mb-40 g-mb-0--lg  js-animation fadeIn animated">
                     <div class="landing-block-card-header text-uppercase u-heading-v2-4--bottom g-mb-40 g-brd-primary">
@@ -606,7 +606,7 @@ return array(
 				'CONTENT' => '<section class="landing-block landing-block-node-container g-pt-30 g-pb-20 g-bg-gray-dark-v3">
         <div class="container">
 
-            <div class="row no-gutters">
+            <div class="row no-gutters landing-block-inner">
 
                 <div class="landing-block-card js-animation col-md-4 g-mb-30 g-mb-0--md  col-lg-3 fadeInUp animated">
                     <article class="text-center g-brd-around g-color-gray g-brd-gray-light-v5 g-pa-10">

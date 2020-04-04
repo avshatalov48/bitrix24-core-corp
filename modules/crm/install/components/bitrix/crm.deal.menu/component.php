@@ -130,6 +130,24 @@ if($arParams['TYPE'] === 'details')
 
 	$scripts = isset($arParams['~SCRIPTS']) && is_array($arParams['~SCRIPTS']) ? $arParams['~SCRIPTS'] : array();
 
+	//region APPLICATION PLACEMENT
+	$placementGroupInfos = \Bitrix\Crm\Integration\Rest\AppPlacementManager::getHandlerInfos(
+		\Bitrix\Crm\Integration\Rest\AppPlacement::DEAL_DETAIL_TOOLBAR
+	);
+	foreach($placementGroupInfos as $placementGroupName => $placementInfos)
+	{
+		$arResult['BUTTONS'][] = array(
+			'TYPE' => 'rest-app-toolbar',
+			'NAME' => $placementGroupName,
+			'DATA' => array(
+				'OWNER_INFO' => isset($arParams['OWNER_INFO']) ? $arParams['OWNER_INFO'] : array(),
+				'PLACEMENT' => \Bitrix\Crm\Integration\Rest\AppPlacement::DEAL_DETAIL_TOOLBAR,
+				'APP_INFOS' => $placementInfos
+			)
+		);
+	}
+	//endregion
+
 	if (!empty($arParams['BIZPROC_STARTER_DATA']))
 	{
 		$arResult['BUTTONS'][] = array(
@@ -179,12 +197,25 @@ if($arParams['TYPE'] === 'details')
 			'entityTypeId' => CCrmOwnerType::DealRecurring
 		);
 
+		$dealRecurringRestriction = \Bitrix\Crm\Restriction\RestrictionManager::getDealRecurringRestriction();
+		if ($dealRecurringRestriction->hasPermission())
+		{
+			$scriptRecurring = "
+				BX.Crm.Page.open('".CUtil::JSEscape($exposeUrl)."');
+				BX.onCustomEvent(window, 'CrmDealRecurringExpose', [ this, ".CUtil::PhpToJSObject($exposeData)." ]);
+			";
+			$icon = 'btn-copy';
+		}
+		else
+		{
+			$scriptRecurring = $dealRecurringRestriction->preparePopupScript();
+			$icon = 'grid-lock';
+		}
 		$arResult['BUTTONS'][] = array(
 			'TEXT' => GetMessage('DEAL_DETAIL_EXPOSE'),
 			'TITLE' => GetMessage('DEAL_DETAIL_EXPOSE_TITLE'),
-			'ONCLICK' => "BX.Crm.Page.open('".CUtil::JSEscape($exposeUrl)."');
-			BX.onCustomEvent(window, 'CrmDealRecurringExpose', [ this, ".CUtil::PhpToJSObject($exposeData)." ]);",
-			'ICON' => 'btn-copy'
+			'ONCLICK' => $scriptRecurring,
+			'ICON' => $icon
 		);
 	}
 
@@ -272,17 +303,14 @@ if($arParams['TYPE'] === 'details')
 		);
 	}
 
-	$documentLinks = \Bitrix\Crm\Integration\DocumentGeneratorManager::getInstance()->getPreviewList(\Bitrix\Crm\Integration\DocumentGenerator\DataProvider\Deal::class, $arParams['ELEMENT_ID']);
-	if(!empty($documentLinks))
+	if(\Bitrix\Crm\Integration\DocumentGeneratorManager::getInstance()->isDocumentButtonAvailable())
 	{
 		$arResult['BUTTONS'][] = [
 			'TEXT' => GetMessage('DOCUMENT_BUTTON_TEXT'),
 			'TITLE' => GetMessage('DOCUMENT_BUTTON_TITLE'),
 			'TYPE' => 'crm-document-button',
-			'ITEMS' => $documentLinks,
+			'PARAMS' => \Bitrix\Crm\Integration\DocumentGeneratorManager::getInstance()->getDocumentButtonParameters(\Bitrix\Crm\Integration\DocumentGenerator\DataProvider\Deal::class, $arParams['ELEMENT_ID']),
 		];
-
-		\Bitrix\Crm\Integration\DocumentGeneratorManager::getInstance()->showSpotlight('.crm-btn-dropdown-document');
 	}
 
 	$this->IncludeComponentTemplate();
@@ -476,7 +504,7 @@ if($arParams['TYPE'] === 'list')
 		);
 		if (isset($_REQUEST['WG']) && strtoupper($_REQUEST['WG']) === 'Y')
 		{
-			$widgetDataFilter = \Bitrix\Crm\Widget\Data\Activity\DataSource::extractDetailsPageUrlParams($_REQUEST);
+			$widgetDataFilter = \Bitrix\Crm\Widget\Data\DealDataSource::extractDetailsPageUrlParams($_REQUEST);
 			if (!empty($widgetDataFilter))
 			{
 				$componentParams['WIDGET_DATA_FILTER'] = $widgetDataFilter;
@@ -535,7 +563,10 @@ if($arParams['TYPE'] === 'list')
 		unset($entityType, $stExportId, $randomSequence, $stExportManagerId);
 	}
 
-	if (Recurring\Manager::isAllowedExpose(Recurring\Manager::DEAL))
+	if (
+		Recurring\Manager::isAllowedExpose(Recurring\Manager::DEAL)
+		&& !($_REQUEST['IFRAME'] == 'Y' && $_REQUEST['IFRAME_TYPE'] == 'SIDE_SLIDER')
+	)
 	{
 		if ($arParams['IS_RECURRING'] === 'Y')
 		{

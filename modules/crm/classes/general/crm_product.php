@@ -21,6 +21,8 @@ class CCrmProduct
 	private static $bVatMode = null;
 	private static $arVatRates = array();
 
+	private static $allowElementHandlers = 0;
+
 	public static function getDefaultCatalogId()
 	{
 		if (is_null(CCrmProduct::$defaultCatalogId))
@@ -144,6 +146,11 @@ class CCrmProduct
 				$arElement['NAME'] = $arFields['NAME'];
 			}
 
+			if(isset($arFields['CODE']))
+			{
+				$arElement['CODE'] = $arFields['CODE'];
+			}
+
 			if(isset($arFields['SORT']))
 			{
 				$arElement['SORT'] = $arFields['SORT'];
@@ -226,15 +233,36 @@ class CCrmProduct
 				}
 			}
 
-			if(!$element->CheckFields($arElement))
+			if(isset($arFields['DATE_CREATE']))
 			{
-				self::RegisterError($element->LAST_ERROR);
-				return false;
+				$arElement['DATE_CREATE'] = $arFields['DATE_CREATE'];
+			}
+
+			// May be false or null
+			if(array_key_exists('TIMESTAMP_X', $arFields))
+			{
+				$arElement['TIMESTAMP_X'] = $arFields['TIMESTAMP_X'];
+			}
+
+			if(isset($arFields['CREATED_BY']))
+			{
+				$arElement['CREATED_BY'] = $arFields['CREATED_BY'];
+			}
+
+			if(isset($arFields['MODIFIED_BY']))
+			{
+				$arElement['MODIFIED_BY'] = $arFields['MODIFIED_BY'];
 			}
 
 			if(isset($arFields['PROPERTY_VALUES']))
 			{
 				$arElement['PROPERTY_VALUES'] = $arFields['PROPERTY_VALUES'];
+			}
+
+			if(!$element->CheckFields($arElement))
+			{
+				self::RegisterError($element->LAST_ERROR);
+				return false;
 			}
 
 			$ID = intval($element->Add($arElement));
@@ -299,7 +327,11 @@ class CCrmProduct
 			return false;
 		}
 
+		$iblockElementUpdated = false;
+		$needUpdateIblockElement = false;
+
 		if(isset($arFields['NAME'])
+			|| isset($arFields['CODE'])
 			|| isset($arFields['SECTION_ID'])
 			|| isset($arFields['SORT'])
 			|| isset($arFields['ACTIVE'])
@@ -312,7 +344,11 @@ class CCrmProduct
 			|| isset($arFields['ORIGINATOR_ID'])
 			|| isset($arFields['ORIGIN_ID'])
 			|| isset($arFields['XML_ID'])
-			|| isset($arFields['PROPERTY_VALUES']))
+			|| isset($arFields['PROPERTY_VALUES'])
+			|| isset($arFields['DATE_CREATE'])
+			|| array_key_exists('TIMESTAMP_X', $arFields)    // May be false or null
+			|| isset($arFields['CREATED_BY'])
+			|| isset($arFields['MODIFIED_BY']))
 		{
 			$element =  new CIBlockElement();
 			$obResult = $element->GetById($ID);
@@ -327,9 +363,41 @@ class CCrmProduct
 					$arElement['NAME'] = $arFields['NAME'];
 				}
 
+				if(isset($arFields['CODE']))
+				{
+					$arElement['CODE'] = $arFields['CODE'];
+				}
+
+				if (isset($arElement['IN_SECTIONS']) && $arElement['IN_SECTIONS'] !== 'N')
+				{
+					$sections = [];
+					$res = CIBlockElement::GetElementGroups($ID, true, ['ID']);
+					while($row = $res->Fetch())
+					{
+						$sections[] = (int)$row['ID'];
+					}
+					if (count($sections) > 0)
+					{
+						$arElement['IBLOCK_SECTION'] = $sections;
+					}
+					unset($sections, $res, $row);
+				}
+
 				if(isset($arFields['SECTION_ID']))
 				{
-					$arElement['IBLOCK_SECTION_ID'] = $arFields['SECTION_ID'];
+					$newSectionId = (int)$arFields['SECTION_ID'];
+					if (is_array($arElement['IBLOCK_SECTION']) && isset($arElement['IBLOCK_SECTION_ID']))
+					{
+						$oldSectionId = (int)$arElement['IBLOCK_SECTION_ID'];
+						$key = array_search($oldSectionId, $arElement['IBLOCK_SECTION'], true);
+						if ($key !== false)
+						{
+							$arElement['IBLOCK_SECTION'][$key] = $newSectionId;
+						}
+						unset($oldSectionId, $key);
+					}
+					$arElement['IBLOCK_SECTION_ID'] = $newSectionId;
+					unset($newSectionId);
 				}
 
 				if(isset($arFields['SORT']))
@@ -408,6 +476,27 @@ class CCrmProduct
 					}
 				}
 
+				if(isset($arFields['DATE_CREATE']))
+				{
+					$arElement['DATE_CREATE'] = $arFields['DATE_CREATE'];
+				}
+
+				// May be false or null
+				if(array_key_exists('TIMESTAMP_X', $arFields))
+				{
+					$arElement['TIMESTAMP_X'] = $arFields['TIMESTAMP_X'];
+				}
+
+				if(isset($arFields['CREATED_BY']))
+				{
+					$arElement['CREATED_BY'] = $arFields['CREATED_BY'];
+				}
+
+				if(isset($arFields['MODIFIED_BY']))
+				{
+					$arElement['MODIFIED_BY'] = $arFields['MODIFIED_BY'];
+				}
+
 				if(isset($arFields['PROPERTY_VALUES']))
 				{
 					$arElement['PROPERTY_VALUES'] = $arFields['PROPERTY_VALUES'];
@@ -418,6 +507,8 @@ class CCrmProduct
 					self::$LAST_ERROR = $element->LAST_ERROR;
 					return false;
 				}
+
+				$iblockElementUpdated = true;
 			}
 		}
 
@@ -431,11 +522,21 @@ class CCrmProduct
 		if (isset($arFields['MEASURE']) && !empty($arFields['MEASURE']))
 			$arCatalogProductFields['MEASURE'] = $arFields['MEASURE'];
 		if (count($arCatalogProductFields) > 0)
+		{
 			$CCatalogProduct->Update($ID, $arCatalogProductFields);
+			if (!$iblockElementUpdated)
+			{
+				$needUpdateIblockElement = true;
+			}
+		}
 
 		if (isset($arFields['PRICE']) && isset($arFields['CURRENCY_ID']))
 		{
 			self::setPrice($ID, $arFields['PRICE'], $arFields['CURRENCY_ID']);
+			if (!$iblockElementUpdated)
+			{
+				$needUpdateIblockElement = true;
+			}
 		}
 		else
 		{
@@ -473,18 +574,22 @@ class CCrmProduct
 					$price = $arFields['PRICE'];
 					$currency = $arFields['CURRENCY_ID'];
 				}
-				if ($price !== false && $currency !== false) CCrmProduct::setPrice($ID, $price, $currency);
+				if ($price !== false && $currency !== false)
+				{
+					CCrmProduct::setPrice($ID, $price, $currency);
+					if (!$iblockElementUpdated)
+					{
+						$needUpdateIblockElement = true;
+					}
+				}
 			}
 		}
 
-//		$sUpdate = trim($DB->PrepareUpdate(CCrmProduct::TABLE_NAME, $arFields));
-//		if (!empty($sUpdate))
-//		{
-//			$sQuery = 'UPDATE '.CCrmProduct::TABLE_NAME.' SET '.$sUpdate.' WHERE ID = '.$ID;
-//			$DB->Query($sQuery, false, 'File: '.__FILE__.'<br/>Line: '.__LINE__);
-//
-//			CCrmEntityHelper::RemoveCached(self::CACHE_NAME, $ID);
-//		}
+		if ($needUpdateIblockElement)
+		{
+			$element =  new CIBlockElement();
+			$element->Update($ID, ['ID' => $ID], false, false, false, false);
+		}
 
 		CCrmEntityHelper::RemoveCached(self::CACHE_NAME, $ID);
 
@@ -496,9 +601,9 @@ class CCrmProduct
 
 	public static function Delete($ID)
 	{
-		global $DB, $APPLICATION;
+		global $APPLICATION;
 
-		$ID = intval($ID);
+		$ID = (int)$ID;
 
 		$arProduct = self::GetByID($ID);
 		if(!is_array($arProduct))
@@ -507,53 +612,32 @@ class CCrmProduct
 			return true;
 		}
 
-		$rowsCount = CCrmProductRow::GetList(array(), array('PRODUCT_ID' => $ID), array(), false, array());
-		if($rowsCount > 0 || CCrmInvoice::HasProductRows($ID))
+		if (!self::IsAllowedDelete($ID))
 		{
-			self::RegisterError(GetMessage('CRM_COULD_NOT_DELETE_PRODUCT_ROWS_EXIST', array('#NAME#' => $arProduct['~NAME'])));
 			return false;
 		}
 
-		foreach (GetModuleEvents('crm', 'OnBeforeCrmProductDelete', true) as $arEvent)
+		self::disableElementHandlers();
+
+		$element = new CIBlockElement();
+		$result = $element->Delete($ID);
+		if (!$result)
 		{
-			if (ExecuteModuleEventEx($arEvent, array($ID)) === false)
+			if ($ex = $APPLICATION->GetException())
 			{
-				return false;
+				self::RegisterError($ex->GetString());
 			}
 		}
+		unset($element);
 
-		//$DB->StartTransaction();
-		//$APPLICATION->ResetException();
+		self::enableElementHandlers();
 
-//		$sql = 'DELETE FROM '.CCrmProduct::TABLE_NAME.' WHERE ID = '.$ID;
-//		if(!$DB->Query($sql, true))
-//		{
-//			//$DB->Rollback();
-//			return false;
-//		}
-
-		CCrmEntityHelper::RemoveCached(self::CACHE_NAME, $ID);
-
-		if(self::IsIBlockElementExists($ID))
+		if ($result)
 		{
-			$element = new CIBlockElement();
-			if(!$element->Delete($ID))
-			{
-				//$DB->Rollback();
-				if ($ex = $APPLICATION->GetException())
-				{
-					self::RegisterError($ex->GetString());
-				}
-				return false;
-			}
+			self::DeleteInternal($ID);
 		}
 
-		//$DB->Commit();
-		foreach (GetModuleEvents('crm', 'OnCrmProductDelete', true) as $arEvent)
-		{
-			ExecuteModuleEventEx($arEvent, array($ID));
-		}
-		return true;
+		return $result;
 	}
 	//<-- CRUD
 
@@ -1092,6 +1176,7 @@ class CCrmProduct
 			'ORIGINATOR_ID' => false,
 			'ORIGIN_ID' => false,
 			'NAME' => 'NAME',
+			'CODE' => 'CODE',
 			'ACTIVE' => 'ACTIVE',
 			'SECTION_ID' => 'IBLOCK_SECTION_ID',
 			'PREVIEW_PICTURE' => 'PREVIEW_PICTURE',
@@ -1106,7 +1191,10 @@ class CCrmProduct
 			'MEASURE' => false,
 			'XML_ID' => 'XML_ID',
 			'TIMESTAMP_X' => 'TIMESTAMP_X',
-			'DATE_CREATE' => 'DATE_CREATE'
+			'DATE_CREATE' => 'DATE_CREATE',
+			'MODIFIED_BY' => 'MODIFIED_BY',
+			'CREATED_BY' => 'CREATED_BY',
+			'SHOW_COUNTER' => 'SHOW_COUNTER'
 		);
 	}
 
@@ -1136,6 +1224,7 @@ class CCrmProduct
 					'TYPE' => 'string',
 					'ATTRIBUTES' => array(CCrmFieldInfoAttr::Required)
 				),
+				'CODE' => array('TYPE' => 'string'),
 				'DESCRIPTION' => array('TYPE' => 'string'),
 				'DESCRIPTION_TYPE' => array('TYPE' => 'string'),
 				'ACTIVE' => array('TYPE' => 'char'),
@@ -1147,8 +1236,13 @@ class CCrmProduct
 				'XML_ID' => array('TYPE' => 'string'),
 				'PREVIEW_PICTURE' => array('TYPE' => 'product_file'),
 				'DETAIL_PICTURE' => array('TYPE' => 'product_file'),
-				'DATE_CREATE' => array('TYPE' => 'date'),
-				'TIMESTAMP_X' => array('TYPE' => 'date')
+				'DATE_CREATE' => array('TYPE' => 'datetime'),
+				'TIMESTAMP_X' => array(
+					'TYPE' => 'datetime',
+					'ATTRIBUTES' => array(CCrmFieldInfoAttr::Immutable)
+				),
+				'MODIFIED_BY' => array('TYPE' => 'integer'),
+				'CREATED_BY' => array('TYPE' => 'integer')
 			);
 		}
 		return self::$FIELD_INFOS;
@@ -1219,16 +1313,120 @@ class CCrmProduct
 
 	private static function IsIBlockElementExists($ID)
 	{
-		$rsElements = CIBlockElement::GetList(array(), array('ID' => $ID), false, array('nTopCount' => 1), array('ID'));
-		return $rsElements->Fetch() ? true : false;
+		return (CIBlockElement::GetIBlockByID($ID) !== false);
+	}
+
+	/**
+	 * @param int $ID
+	 * @return bool
+	 */
+	private static function IsAllowedDelete($ID)
+	{
+		$ID = (int)$ID;
+		if ($ID <= 0)
+		{
+			return true;
+		}
+
+		$rowsCount = CCrmProductRow::GetList(array(), array('PRODUCT_ID' => $ID), array(), false, array());
+		if($rowsCount > 0 || CCrmInvoice::HasProductRows($ID))
+		{
+			self::RegisterError(GetMessage(
+					'CRM_COULD_NOT_DELETE_PRODUCT_ROWS_EXIST',
+					array('#NAME#' => static::GetProductName($ID)))
+			);
+			return false;
+		}
+
+		foreach (GetModuleEvents('crm', 'OnBeforeCrmProductDelete', true) as $arEvent)
+		{
+			if (ExecuteModuleEventEx($arEvent, array($ID)) === false)
+			{
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	/**
+	 * @param int $ID
+	 * @return void
+	 */
+	private static function DeleteInternal($ID)
+	{
+		$ID = (int)$ID;
+		CCrmEntityHelper::RemoveCached(self::CACHE_NAME, $ID);
+		foreach (GetModuleEvents('crm', 'OnCrmProductDelete', true) as $arEvent)
+		{
+			ExecuteModuleEventEx($arEvent, array($ID));
+		}
 	}
 
 	// <-- Service
 
 	// Event handlers -->
+	/**
+	 * @return void
+	 */
+	private static function disableElementHandlers()
+	{
+		self::$allowElementHandlers--;
+	}
+
+	/**
+	 * @return void
+	 */
+	private static function enableElementHandlers()
+	{
+		self::$allowElementHandlers++;
+	}
+
+	/**
+	 * @return bool
+	 */
+	private static function allowedElementHandlers()
+	{
+		return (self::$allowElementHandlers >= 0);
+	}
+
+	/**
+	 * @param int $ID
+	 * @return bool
+	 */
+	public static function handlerOnBeforeIBlockElementDelete($ID)
+	{
+		if (!self::allowedElementHandlers())
+		{
+			return true;
+		}
+
+		return self::IsAllowedDelete($ID);
+	}
+
+	/**
+	 * @param array $element
+	 * @return void
+	 */
+	public static function handlerOnAfterIBlockElementDelete(array $element)
+	{
+		if (!self::allowedElementHandlers())
+		{
+			return;
+		}
+
+		self::DeleteInternal($element['ID']);
+	}
+
+	/**
+	 * @deprecated
+	 *
+	 * @param int $ID
+	 * @return true
+	 */
 	public static function OnIBlockElementDelete($ID)
 	{
-		return CCrmProduct::Delete($ID);
+		return true;
 	}
 	// <-- Event handlers
 	// Checking User Permissions -->

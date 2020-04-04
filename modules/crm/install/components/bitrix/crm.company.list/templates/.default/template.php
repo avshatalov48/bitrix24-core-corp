@@ -88,7 +88,8 @@ if(!$isInternal):
 			'OWNER_ID' => 0,
 			'READ_ONLY' => false,
 			'ENABLE_UI' => false,
-			'ENABLE_TOOLBAR' => false
+			'ENABLE_TOOLBAR' => false,
+			'SKIP_VISUAL_COMPONENTS' => 'Y'
 		),
 		null,
 		array('HIDE_ICONS' => 'Y')
@@ -785,6 +786,8 @@ $APPLICATION->IncludeComponent(
 				'GET_FIELD' => '/bitrix/components/bitrix/crm.company.list/filter.ajax.php?action=field&filter_id='.urlencode($arResult['GRID_ID']).'&siteID='.SITE_ID.'&'.bitrix_sessid_get(),
 			)
 		),
+		'LIVE_SEARCH_LIMIT_INFO' => isset($arResult['LIVE_SEARCH_LIMIT_INFO'])
+			? $arResult['LIVE_SEARCH_LIMIT_INFO'] : null,
 		'ENABLE_LIVE_SEARCH' => true,
 		'ACTION_PANEL' => $controlPanel,
 		'PAGINATION' => isset($arResult['PAGINATION']) && is_array($arResult['PAGINATION'])
@@ -801,13 +804,6 @@ $APPLICATION->IncludeComponent(
 						'active' => true,
 						'url' => $arParams['PATH_TO_COMPANY_LIST']
 					),
-					array(
-						//'icon' => 'chart',
-						'id' => 'widget',
-						'name' => GetMessage('CRM_COMPANY_LIST_FILTER_NAV_BUTTON_WIDGET'),
-						'active' => false,
-						'url' => $arParams['PATH_TO_COMPANY_WIDGET']
-					)
 				),
 				'BINDING' => array(
 					'category' => 'crm.navigation',

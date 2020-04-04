@@ -247,6 +247,55 @@ if (!WIZARD_IS_INSTALLED)
 	WizardServices::SetFilePermission(Array(WIZARD_SITE_ID, WIZARD_SITE_DIR."rest/"), Array("2" => 'R'));
 }
 
+// Add groups for crm shop
+$groupObject = new CGroup;
+$groupsData = array(
+	array(
+		"ACTIVE" => "Y",
+		"C_SORT" => 100,
+		"NAME" => GetMessage("SALE_USER_GROUP_SHOP_ADMIN_NAME"),
+		"STRING_ID" => "CRM_SHOP_ADMIN",
+		"DESCRIPTION" => GetMessage("SALE_USER_GROUP_SHOP_ADMIN_DESC"),
+		"BASE_RIGHTS" => array("sale" => "W"),
+		"TASK_RIGHTS" => array("catalog" => "W", "main" => "R", "iblock" => "X")
+	),
+	array(
+		"ACTIVE" => "Y",
+		"C_SORT" => 100,
+		"NAME" => GetMessage("SALE_USER_GROUP_SHOP_MANAGER_NAME"),
+		"STRING_ID" => "CRM_SHOP_MANAGER",
+		"DESCRIPTION" => GetMessage("SALE_USER_GROUP_SHOP_MANAGER_DESC"),
+		"BASE_RIGHTS" => array("sale" => "U"),
+		"TASK_RIGHTS" => array("catalog" => "W", "iblock" => "W")
+	),
+);
+global $APPLICATION;
+foreach ($groupsData as $groupData)
+{
+	$groupId = $groupObject->add($groupData);
+	if (strlen($groupObject->LAST_ERROR) <= 0 && $groupId)
+	{
+		foreach($groupData["BASE_RIGHTS"] as $moduleId => $letter)
+		{
+			$APPLICATION->setGroupRight($moduleId, $groupId, $letter, false);
+		}
+		foreach($groupData["TASK_RIGHTS"] as $moduleId => $letter)
+		{
+			switch ($moduleId)
+			{
+				case "iblock":
+					if (CModule::IncludeModule("iblock"))
+					{
+						CIBlockRights::setGroupRight($groupId, "CRM_PRODUCT_CATALOG", $letter);
+					}
+					break;
+				default:
+					CGroup::SetModulePermission($groupId, $moduleId, CTask::GetIdByLetter($letter, $moduleId));
+			}
+		}
+	}
+}
+
 $group = new CGroup;
 $group->Update(2, array(
 	'SECURITY_POLICY' => serialize(array('LOGIN_ATTEMPTS' => 12))

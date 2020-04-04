@@ -112,7 +112,7 @@ final class FileAttributes extends ItemAttributes
 		}
 
 		$documentHandler = Driver::getInstance()->getDocumentHandlersManager()->getDefaultHandlerForView();
-		if ($documentHandler instanceof GoogleViewerHandler && !Configuration::isEnabledExternalLink())
+		if ($documentHandler instanceof GoogleViewerHandler && !Configuration::isEnabledAutoExternalLink())
 		{
 			return false;
 		}

@@ -337,7 +337,7 @@ class CVoxImplantUser
 
 		$arUser = \Bitrix\Main\UserTable::getRow(array(
 			'select' => array('UF_VI_PASSWORD', 'UF_VI_BACKPHONE', 'UF_VI_PHONE', 'UF_VI_PHONE_PASSWORD', 'UF_PHONE_INNER', 'UF_DEPARTMENT'),
-			'filter' => array('=ID' => $userId)
+			'filter' => array('=ID' => $userId, '=ACTIVE' => 'Y', '=IS_REAL_USER' => 'Y')
 		));
 		if ($arUser)
 		{

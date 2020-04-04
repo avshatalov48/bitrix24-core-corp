@@ -18,4 +18,6 @@ $MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_CREATE_BOT"] = "<span class=\"imconnect
 $MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_CONNECT_BOT"] = "<span class=\"imconnector-field-box-text-bold\">Подключить</span> Telegram-бота";
 $MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_INSTRUCTION_TITLE"] = "<span class=\"imconnector-field-box-text-bold\">Инструкция</span> по получению ключа публичного аккаунта:";
 $MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_INFO"] = "Информация";
+$MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_CONNECT_HELP"] = "<div class=\"imconnector-field-button-subtitle\">Я хочу</div>
+				<div class=\"imconnector-field-button-name\"><span class=\"imconnector-field-box-text-bold\">Подключить</span> Telegram-бота</div>";
 ?>

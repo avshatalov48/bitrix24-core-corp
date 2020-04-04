@@ -227,6 +227,15 @@ class CBPCrmChangeStatusActivity extends CBPActivity
 			'ModifiedBy' => CBPHelper::UsersStringToArray($arCurrentValues["modified_by"], $documentType, $errors)
 		);
 
+		if (
+			empty($properties['TargetStatus'])
+			&& !empty($arCurrentValues['target_status_text'])
+			&& static::isExpression($arCurrentValues['target_status_text'])
+		)
+		{
+			$properties['TargetStatus'] = $arCurrentValues['target_status_text'];
+		}
+
 		if (count($errors) > 0)
 		{
 			return false;

@@ -1,7 +1,6 @@
 <?php
 namespace Bitrix\Crm\Agent;
 
-use Bitrix\Main;
 use Bitrix\Main\Config\Option;
 
 abstract class EntityStepwiseAgent extends AgentBase
@@ -14,50 +13,6 @@ abstract class EntityStepwiseAgent extends AgentBase
 		return null;
 	}
 
-	//region AgentBase
-	public static function doRun()
-	{
-		$instance = static::getInstance();
-		if($instance === null)
-		{
-			return false;
-		}
-
-		if(!$instance->isEnabled())
-		{
-			return false;
-		}
-
-		$progressData = $instance->getProgressData();
-
-		$offsetID = isset($progressData['LAST_ITEM_ID']) ? (int)($progressData['LAST_ITEM_ID']) : 0;
-		$processedItemQty = isset($progressData['PROCESSED_ITEMS']) ? (int)($progressData['PROCESSED_ITEMS']) : 0;
-		$totalItemQty = isset($progressData['TOTAL_ITEMS']) ? (int)($progressData['TOTAL_ITEMS']) : 0;
-		if($totalItemQty <= 0)
-		{
-			$totalItemQty = $instance->getTotalEntityCount();
-		}
-
-		$itemIDs = $instance->getEnityIDs($offsetID, $instance->getIterationLimit());
-		$itemQty = count($itemIDs);
-
-		if($itemQty === 0)
-		{
-			$instance->enable(false);
-			return false;
-		}
-
-		$instance->process($itemIDs);
-
-		$processedItemQty += $itemQty;
-		$progressData['LAST_ITEM_ID'] = $itemIDs[$itemQty - 1];
-		$progressData['PROCESSED_ITEMS'] = $processedItemQty;
-		$progressData['TOTAL_ITEMS'] = $totalItemQty;
-
-		$instance->setProgressData($progressData);
-		return true;
-	}
-	//endregion
 	public function isRegistered()
 	{
 		$dbResult = \CAgent::GetList(
@@ -89,11 +44,13 @@ abstract class EntityStepwiseAgent extends AgentBase
 			ConvertTimeStamp(time() + \CTimeZone::GetOffset() + $delay, 'FULL')
 		);
 	}
+
 	public function isEnabled()
 	{
 		$name = $this->getOptionName();
 		return $name !== '' && Option::get('crm', $name, 'N') === 'Y';
 	}
+
 	public function enable($enable)
 	{
 		$name = $this->getOptionName();
@@ -127,6 +84,55 @@ abstract class EntityStepwiseAgent extends AgentBase
 			Option::delete('crm', array('name' => $progressName));
 		}
 	}
+
+	//region AgentBase
+	public static function doRun()
+	{
+		$instance = static::getInstance();
+		if($instance === null)
+		{
+			return false;
+		}
+
+		if(!$instance->isEnabled())
+		{
+			return false;
+		}
+
+		$progressData = $instance->getProgressData();
+
+		$offsetID = isset($progressData['LAST_ITEM_ID']) ? (int)($progressData['LAST_ITEM_ID']) : 0;
+		$processedItemQty = isset($progressData['PROCESSED_ITEMS']) ? (int)($progressData['PROCESSED_ITEMS']) : 0;
+
+		$limit = $instance->getIterationLimit();
+		if($limit <= 0)
+		{
+			$instance->enable(false);
+			return false;
+		}
+
+		$itemIDs = $instance->getEntityIDs($offsetID, $limit);
+		$itemQty = count($itemIDs);
+
+		if($itemQty === 0)
+		{
+			$instance->enable(false);
+			return false;
+		}
+
+		$instance->process($itemIDs);
+
+		$processedItemQty += $itemQty;
+		$totalItemQty = $instance->getTotalEntityCount();
+
+		$progressData['LAST_ITEM_ID'] = $itemIDs[$itemQty - 1];
+		$progressData['PROCESSED_ITEMS'] = $processedItemQty;
+		$progressData['TOTAL_ITEMS'] = $totalItemQty;
+
+		$instance->setProgressData($progressData);
+		return true;
+	}
+	//endregion
 
 	public function getProgressData()
 	{
@@ -162,7 +168,7 @@ abstract class EntityStepwiseAgent extends AgentBase
 	protected abstract function getOptionName();
 	protected abstract function getProgressOptionName();
 	protected abstract function getTotalEntityCount();
-	protected abstract function getEnityIDs($offsetID, $limit);
+	protected abstract function getEntityIDs($offsetID, $limit);
 	protected function getIterationLimit()
 	{
 		return 100;

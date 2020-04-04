@@ -21,6 +21,7 @@ $MESS["TASKS_TASK_CONFIRM_START_TIMER"] = "Вами уже ведется уче
 $MESS["TASKS_TASK_CONFIRM_START_TIMER_TITLE"] = "Вами уже ведется учет времени по задаче \"{{TITLE}}\". Она будет поставлена на паузу, продолжить?";
 $MESS["TASKS_KANBAN_ME_DISABLE_DEADLINE"] = "Вы не можете перенести задачу без изменения крайнего срока";
 $MESS["TASKS_KANBAN_ME_DISABLE_DEADLINE_PART"] = "Крайний срок задачи ограничивает перемещение на длительный срок";
+$MESS["TASKS_KANBAN_ME_DISABLE_DEADLINE_PART2"] = "Крайний срок задачи ограничивает перемещение";
 $MESS["TASKS_KANBAN_ME_DISABLE_FROM_OVERDUE"] = "Измените крайний срок или завершите задачу, чтобы переместить ее";
 $MESS["TASKS_KANBAN_ME_DISABLE_COMPLETE"] = "Задача завершена, чтобы переместить ее в другую колонку, возобновите выполнение";
 $MESS["TASKS_KANBAN_NOTIFY_TITLE"] = "Недостаточно прав";
@@ -29,4 +30,6 @@ $MESS["TASKS_KANBAN_NOTIFY_TEXT"] = "Создать новую стадию мо
 $MESS["TASKS_KANBAN_NOTIFY_BUTTON"] = "Отправить уведомление";
 $MESS["TASKS_KANBAN_DIABLE_SORT_TOOLTIP"] = "У вас нет прав на изменение настроек проекта";
 $MESS["MAIN_KANBAN_TITLE_PLACEHOLDER"] = "Название #тег";
+$MESS["MAIN_KANBAN_NOTIFY_CHANGE_DEADLINE"] = "Крайний срок задачи изменен на #date#";
+$MESS["MAIN_KANBAN_NOTIFY_REMOVE_DEADLINE"] = "Крайний срок задачи был удален";
 ?>

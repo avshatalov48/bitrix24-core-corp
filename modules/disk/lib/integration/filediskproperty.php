@@ -388,9 +388,21 @@ class FileDiskProperty
 
 	private static function prepareValue($value)
 	{
-		if(is_array($value['VALUE']))
+		if (is_array($value['VALUE']))
 		{
 			$value['VALUE'] = array_diff($value['VALUE'], array(''));
+			foreach ($value['VALUE'] as $key => $internalValue)
+			{
+				if (is_string($internalValue))
+				{
+					$explodeResult = explode(',',$internalValue);
+					if (count($explodeResult) > 1)
+					{
+						$value['VALUE'] = array_merge($value['VALUE'], $explodeResult);
+						unset($value['VALUE'][$key]);
+					}
+				}
+			}
 		}
 		else
 		{

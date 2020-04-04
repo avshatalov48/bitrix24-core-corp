@@ -30,8 +30,8 @@ $jsMessages = array();
 if($arResult['RESTRICTED_LICENCE'] === true)
 {
 	$jsMessagesCodes = array(
-		'CRM_1C_START_FACE_CARD_B24_BLOCK_TITLE',
-		'CRM_1C_START_FACE_CARD_B24_BLOCK_TEXT',
+		'CRM_1C_START_FACE_CARD_B24_BLOCK_TITLE2',
+		'CRM_1C_START_FACE_CARD_B24_BLOCK_TEXT2',
 	);
 }
 elseif($arResult['LICENSE_ACCEPTED'] === false)

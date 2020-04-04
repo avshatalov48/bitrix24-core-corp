@@ -641,8 +641,13 @@ $adminList->CheckListMode();
 
 $APPLICATION->SetTitle(Loc::getMessage('BT_SALE_DISCOUNT_COUPON_LIST_TITLE'));
 require($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/prolog_admin_after.php');
-
-$adminList->DisplayFilter($filterFields);
-$adminList->DisplayList();
-
+if (!$publicMode && \Bitrix\Sale\Update\CrmEntityCreatorStepper::isNeedStub())
+{
+	$APPLICATION->IncludeComponent("bitrix:sale.admin.page.stub", ".default");
+}
+else
+{
+	$adminList->DisplayFilter($filterFields);
+	$adminList->DisplayList();
+}
 require($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/epilog_admin.php');

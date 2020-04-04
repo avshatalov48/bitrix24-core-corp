@@ -12,6 +12,8 @@ $guid = $arResult['GUID'];
 $prefix = strtolower($guid);
 $activityEditorID = "{$prefix}_editor";
 
+\Bitrix\Main\UI\Extension::load(["crm.scoringbutton"]);
+
 //region LEGEND
 if(isset($arResult['LEGEND']))
 {
@@ -68,12 +70,20 @@ $APPLICATION->IncludeComponent(
 );
 
 ?><script type="text/javascript">
-		BX.ready(
-			function()
-			{
-				BX.message({ "CRM_TIMELINE_HISTORY_STUB": "<?=GetMessageJS('CRM_DEAL_DETAIL_HISTORY_STUB')?>" });
-			}
-		);
+	BX.message({
+		"CRM_TIMELINE_HISTORY_STUB": "<?=GetMessageJS('CRM_DEAL_DETAIL_HISTORY_STUB')?>",
+	});
+
+	<? if($arResult['ENTITY_ID'] > 0): ?>
+			new BX.CrmScoringButton({
+				mlInstalled: <?= (\Bitrix\Crm\Ml\Scoring::isMlAvailable() ? 'true' : 'false')?>,
+				scoringEnabled: <?= (\Bitrix\Crm\Ml\Scoring::isEnabled() ? 'true' : 'false')?>,
+				scoringParameters: <?= \Bitrix\Main\Web\Json::encode($arResult['SCORING']) ?>,
+				entityType: '<?= CCrmOwnerType::DealName ?>',
+				entityId: <?= (int)$arResult['ENTITY_ID']?>,
+				isFinal: <?= $arResult['IS_STAGE_FINAL'] ? 'true' : 'false' ?>,
+			});
+	<? endif; ?>
 </script><?
 
 $editorContext = array('PARAMS' => $arResult['CONTEXT_PARAMS']);

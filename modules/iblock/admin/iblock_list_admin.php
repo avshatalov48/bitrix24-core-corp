@@ -110,6 +110,7 @@ $priceTypeList = array();
 $priceTypeIndex = array();
 $basePriceType = [];
 $basePriceTypeId = 0;
+$measureList = array();
 if ($bCatalog)
 {
 	$useStoreControl = Catalog\Config\State::isUsedInventoryManagement();
@@ -144,6 +145,22 @@ if ($bCatalog)
 	$basePriceType = \CCatalogGroup::GetBaseGroup();
 	if (!empty($basePriceType))
 		$basePriceTypeId = $basePriceType['ID'];
+	$measureIterator = CCatalogMeasure::getList(
+		array(),
+		array(),
+		false,
+		false,
+		array('ID', 'MEASURE_TITLE', 'SYMBOL_RUS')
+	);
+	while($measure = $measureIterator->Fetch())
+	{
+		$measureList[$measure['ID']] = ($measure['SYMBOL_RUS'] != ''
+			? $measure['SYMBOL_RUS']
+			: $measure['MEASURE_TITLE']
+		);
+	}
+	unset($measure, $measureIterator);
+	asort($measureList);
 }
 
 $arFileProps = array();
@@ -194,7 +211,7 @@ if ($boolSKU)
 }
 
 $sTableID = (defined("CATALOG_PRODUCT")? "tbl_product_list_": "tbl_iblock_list_").md5($type.".".$IBLOCK_ID);
-$oSort = new CAdminSorting($sTableID, "timestamp_x", "desc");
+$oSort = new CAdminUiSorting($sTableID, "timestamp_x", "desc");
 global $by, $order;
 if (!isset($by))
 	$by = 'ID';
@@ -367,6 +384,14 @@ if ($bCatalog)
 		"type" => "number",
 		"filterable" => ""
 	);
+	$filterFields[] = array(
+		"id" => "MEASURE",
+		"name" => GetMessage("IBLIST_A_CATALOG_MEASURE_TITLE"),
+		"type" => "list",
+		"items" => $measureList,
+		"params" => array("multiple" => "Y"),
+		"filterable" => ""
+	);
 }
 
 $propertyManager = new Iblock\Helpers\Filter\PropertyManager($IBLOCK_ID);
@@ -498,7 +523,7 @@ $transferHeaders = [
 	'CATALOG_QUANTITY' => 'QUANTITY',
 	'CATALOG_QUANTITY_RESERVED' => 'QUANTITY_RESERVED',
 	'CATALOG_MEASURE' => 'MEASURE',
-	'CATALOG_QUANTITY_TRACE' => 'QUANTITY_TRACE',
+	'CATALOG_QUANTITY_TRACE' => 'QUANTITY_TRACE_RAW',
 	'CATALOG_WEIGHT' => 'WEIGHT',
 	'CATALOG_WIDTH' => 'WIDTH',
 	'CATALOG_LENGTH' => 'LENGTH',
@@ -733,6 +758,7 @@ if($bCatalog)
 			"content" => GetMessage("IBLIST_A_CATALOG_MEASURE"),
 			"title" => GetMessage('IBLIST_A_CATALOG_MEASURE_TITLE'),
 			"align" => "right",
+			"sort" => "MEASURE",
 			"default" => false,
 		);
 		$arHeader[] = array(
@@ -910,7 +936,7 @@ $arVisibleColumnsMap["SITE_ID"] = true;
 $arVisibleColumnsMap["CODE"] = true;
 $arVisibleColumnsMap["EXTERNAL_ID"] = true;
 
-$measureList = array(0 => ' ');
+$measureList[0] = ' ';
 if ($bCatalog)
 {
 	if (isset($arVisibleColumnsMap['CATALOG_QUANTITY_RESERVED']) || isset($arVisibleColumnsMap['CATALOG_MEASURE']))
@@ -956,14 +982,6 @@ if ($bCatalog)
 
 	if (isset($arVisibleColumnsMap['CATALOG_TYPE']) && $boolCatalogSet)
 		$arVisibleColumnsMap['CATALOG_BUNDLE'] = true;
-
-	if (isset($arVisibleColumnsMap['CATALOG_MEASURE']))
-	{
-		$measureIterator = CCatalogMeasure::getList(array(), array(), false, false, array('ID', 'MEASURE_TITLE', 'SYMBOL_RUS'));
-		while($measure = $measureIterator->Fetch())
-			$measureList[$measure['ID']] = ($measure['SYMBOL_RUS'] != '' ? $measure['SYMBOL_RUS'] : $measure['MEASURE_TITLE']);
-		unset($measure, $measureIterator);
-	}
 }
 
 $arSelectedFields = $arVisibleColumnsMap;
@@ -1320,12 +1338,21 @@ if($lAdmin->EditAction())
 					if ($catalogPurchasInfoEdit)
 					{
 						if (
-							isset($arFields['CATALOG_PURCHASING_PRICE']) && is_string($arFields['CATALOG_PURCHASING_PRICE']) && $arFields['CATALOG_PURCHASING_PRICE'] != ''
-							&& isset($arFields['CATALOG_PURCHASING_CURRENCY']) && is_string($arFields['CATALOG_PURCHASING_CURRENCY']) && $arFields['CATALOG_PURCHASING_CURRENCY'] != ''
+							isset($arFields['CATALOG_PURCHASING_PRICE']) && is_string($arFields['CATALOG_PURCHASING_PRICE'])
+							&& isset($arFields['CATALOG_PURCHASING_CURRENCY']) && is_string($arFields['CATALOG_PURCHASING_CURRENCY'])
 						)
 						{
-							$arCatalogProduct['PURCHASING_PRICE'] = $arFields['CATALOG_PURCHASING_PRICE'];
-							$arCatalogProduct['PURCHASING_CURRENCY'] = $arFields['CATALOG_PURCHASING_CURRENCY'];
+							if ($arFields['CATALOG_PURCHASING_CURRENCY'] != '') // currency control without empty value
+							{
+								$arFields['CATALOG_PURCHASING_PRICE'] = trim($arFields['CATALOG_PURCHASING_PRICE']);
+								if ($arFields['CATALOG_PURCHASING_PRICE'] === '')
+								{
+									$arFields['CATALOG_PURCHASING_PRICE'] = null;
+									$arFields['PURCHASING_CURRENCY'] = null;
+								}
+								$arCatalogProduct['PURCHASING_PRICE'] = $arFields['CATALOG_PURCHASING_PRICE'];
+								$arCatalogProduct['PURCHASING_CURRENCY'] = $arFields['CATALOG_PURCHASING_CURRENCY'];
+							}
 						}
 					}
 
@@ -2176,7 +2203,10 @@ foreach (array_keys($rawRows) as $rowId)
 					$arRes['CATALOG_QUANTITY_RESERVED'] = '';
 			}
 			if (
-				$arRes['CATALOG_TYPE'] == \Bitrix\Catalog\ProductTable::TYPE_SKU
+				(
+					$arRes['CATALOG_TYPE'] == \Bitrix\Catalog\ProductTable::TYPE_SKU
+					|| $arRes['CATALOG_TYPE'] == \Bitrix\Catalog\ProductTable::TYPE_EMPTY_SKU
+				)
 				&& !$showCatalogWithOffers
 			)
 			{
@@ -2833,7 +2863,7 @@ foreach (array_keys($rawRows) as $rowId)
 				$row->AddCheckField("CATALOG_VAT_INCLUDED");
 				if ($boolCatalogPurchasInfo)
 				{
-					$price = '';
+					$price = '&nbsp;';
 					if ((float)$row->arRes["CATALOG_PURCHASING_PRICE"] > 0)
 					{
 						if ($bCurrency)
@@ -2848,13 +2878,14 @@ foreach (array_keys($rawRows) as $rowId)
 						$editFieldCode .= '<input type="hidden" name="FIELDS_OLD[E'.$itemId.'][CATALOG_PURCHASING_CURRENCY]" value="'.htmlspecialcharsbx($row->arRes['CATALOG_PURCHASING_CURRENCY']).'">';
 						$editFieldCode .= '<input type="text" size="5" name="FIELDS[E'.$itemId.'][CATALOG_PURCHASING_PRICE]" value="'.htmlspecialcharsbx($row->arRes['CATALOG_PURCHASING_PRICE']).'">';
 						$editFieldCode .= '<select name="FIELDS[E'.$itemId.'][CATALOG_PURCHASING_CURRENCY]">';
-						foreach ($arCurrencyList as &$currencyCode)
+						foreach ($arCurrencyList as $currencyCode)
 						{
 							$editFieldCode .= '<option value="'.$currencyCode.'"';
 							if ($currencyCode == $row->arRes['CATALOG_PURCHASING_CURRENCY'])
 								$editFieldCode .= ' selected';
 							$editFieldCode .= '>'.$currencyCode.'</option>';
 						}
+						unset($currencyCode);
 						$editFieldCode .= '</select>';
 						$row->AddEditField('CATALOG_PURCHASING_PRICE', $editFieldCode);
 						unset($editFieldCode);
@@ -2873,7 +2904,7 @@ foreach (array_keys($rawRows) as $rowId)
 				$row->AddCheckField("CATALOG_VAT_INCLUDED", false);
 				if ($boolCatalogPurchasInfo)
 				{
-					$price = '';
+					$price = '&nbsp;';
 					if ((float)$row->arRes["CATALOG_PURCHASING_PRICE"] > 0)
 					{
 						if ($bCurrency)
@@ -2899,7 +2930,7 @@ foreach (array_keys($rawRows) as $rowId)
 				$row->AddCheckField("CATALOG_VAT_INCLUDED", false);
 				if ($boolCatalogPurchasInfo)
 				{
-					$price = '';
+					$price = '&nbsp;';
 					if ((float)$row->arRes["CATALOG_PURCHASING_PRICE"] > 0)
 					{
 						if ($bCurrency)
@@ -3417,7 +3448,7 @@ if ($bCatalog)
 					$arRows['E'.$intProductID]->AddViewField('CATALOG_QUANTITY_TRACE', ' ');
 					$arRows['E'.$intProductID]->AddViewField('CATALOG_WEIGHT', ' ');
 					$arRows['E'.$intProductID]->AddViewField('CATALOG_VAT_INCLUDED', ' ');
-					$arRows['E'.$intProductID]->AddViewField('CATALOG_PURCHASING_PRICE', ' ');
+					$arRows['E'.$intProductID]->AddViewField('CATALOG_PURCHASING_PRICE', '&nbsp;');
 					$arRows['E'.$intProductID]->AddViewField('CATALOG_MEASURE_RATIO', ' ');
 					$arRows['E'.$intProductID]->AddViewField('CATALOG_MEASURE', ' ');
 					if (isset($arRows['E'.$intProductID]->aFields['CATALOG_QUANTITY']['edit']))
@@ -3517,6 +3548,14 @@ if ($bCatalog)
 	if (!empty($priceTypeIndex) && !empty($productShowPrices))
 	{
 		$operateIdList = array_keys($productShowPrices);
+		$emptyPrices = array();
+		if (!empty($productEditPrices))
+		{
+			$emptyPrices = array_fill_keys(
+				array_keys($productEditPrices),
+				array_fill_keys($priceTypeIndex, true)
+			);
+		}
 		sort($operateIdList);
 		foreach (array_chunk($operateIdList, 500) as $pageIds)
 		{
@@ -3571,6 +3610,7 @@ if ($bCatalog)
 				unset($price);
 				if (isset($productEditPrices[$productId]))
 				{
+					unset($emptyPrices[$productId][$priceType]);
 					$currencyControl = '<select name="CATALOG_CURRENCY['.$productId.']['.$priceType.']" id="CATALOG_CURRENCY['.$productId.']['.$priceType.']"';
 					if ($priceType == $basePriceTypeId)
 						$currencyControl .= ' onchange="top.ChangeBaseCurrency('.$productId.')"';
@@ -3609,6 +3649,44 @@ if ($bCatalog)
 			unset($row);
 			unset($iterator);
 		}
+		if (!empty($emptyPrices))
+		{
+			foreach (array_keys($emptyPrices) as $productId)
+			{
+				if (empty($emptyPrices[$productId]))
+					continue;
+				foreach (array_keys($emptyPrices[$productId]) as $priceType)
+				{
+					$currencyControl = '<select name="CATALOG_CURRENCY['.$productId.']['.$priceType.']" id="CATALOG_CURRENCY['.$productId.']['.$priceType.']"';
+					if ($priceType == $basePriceTypeId)
+						$currencyControl .= ' onchange="top.ChangeBaseCurrency('.$productId.')"';
+					$currencyControl .= '>';
+					foreach ($arCurrencyList as $currencyCode)
+					{
+						$currencyControl .= '<option value="'.$currencyCode.'">'.$currencyCode.'</option>';
+					}
+					unset($currencyCode);
+					$currencyControl .= '</select>';
+
+					$priceControl = '<input type="text" size="9" id="CATALOG_PRICE['.$productId.']['.$priceType.']" name="CATALOG_PRICE['.$productId.']['.$priceType.']" value=""';
+					if ($priceType == $basePriceTypeId)
+						$priceControl .= ' onchange="top.ChangeBasePrice('.$productId.')"';
+					$priceControl .= '> '.$currencyControl;
+
+					$priceControl .= '<input type="hidden" name="CATALOG_old_PRICE['.$productId.']['.$priceType.']" value="">';
+					$priceControl .= '<input type="hidden" name="CATALOG_old_CURRENCY['.$productId.']['.$priceType.']" value="">';
+					$priceControl .= '<input type="hidden" name="CATALOG_PRICE_ID['.$productId.']['.$priceType.']" value="">';
+					$priceControl .= '<input type="hidden" name="CATALOG_QUANTITY_FROM['.$productId.']['.$priceType.']" value="">';
+					$priceControl .= '<input type="hidden" name="CATALOG_QUANTITY_TO['.$productId.']['.$priceType.']" value="">';
+
+					$arRows['E'.$productId]->AddEditField('CATALOG_GROUP_'.$priceType, $priceControl);
+					unset($priceControl, $currencyControl);
+				}
+				unset($priceType);
+			}
+			unset($productId);
+		}
+		unset($emptyPrices);
 	}
 
 	if(!empty($arElemID))

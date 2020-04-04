@@ -10,6 +10,7 @@ return array(
 	'block' => array(
 		'name' => Loc::getMessage('LANDING_BLOCK_49_3_TWO_COLS_TEXT_VIDEO_FIX--NAME'),
 		'section' => array('video'),
+		'dynamic' => false,
 		'version' => '18.5.0',
 	),
 	'cards' => array(),

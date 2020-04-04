@@ -14,7 +14,7 @@ require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/form/include.php");
 $err_mess = "File: ".__FILE__."<br>Line: ";
 
 /***************************************************************************
-						   пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ GET | POST
+						   Обработка GET | POST
 ****************************************************************************/
 
 $q = CForm::GetByID($WEB_FORM_ID);
@@ -29,7 +29,7 @@ IncludeModuleLangFile(__FILE__);
 $strNote .= GetMessage("FORM_GENERATING_FINISHED")."<br>";
 
 /***************************************************************************
-							   HTML пїЅпїЅпїЅпїЅпїЅ
+							   HTML форма
 ****************************************************************************/
 
 $APPLICATION->SetTitle(GetMessage("FORM_PAGE_TITLE"));

@@ -16,4 +16,7 @@ class TimelineType
 	const SENDER = 11;
 	const DOCUMENT = 12;
 	const RESTORATION = 13;
+	const ORDER = 14;
+	const ORDER_CHECK = 15;
+	const SCORING = 16;
 }

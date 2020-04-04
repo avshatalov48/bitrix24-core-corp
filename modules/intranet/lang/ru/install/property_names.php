@@ -14,4 +14,5 @@ $MESS['UF_XING'] = 'Xing';
 $MESS['UF_WEB_SITES'] = 'Другие сайты';
 $MESS['UF_SKILLS'] = 'Навыки';
 $MESS['UF_INTERESTS'] = 'Интересы';
+$MESS['UF_EMPLOYMENT_DATE'] = 'Дата принятия на работу';
 ?>

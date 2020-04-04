@@ -368,4 +368,16 @@ class CCrmRole
 		$connection->queryExecute("DELETE FROM b_crm_role_perms WHERE ENTITY = '{$entity}'");
 		self::ClearCache();
 	}
+
+	public static function GetDefaultPermissionSet()
+	{
+		return array(
+			'READ' => array('-' => 'X'),
+			'EXPORT' => array('-' => 'X'),
+			'IMPORT' => array('-' => 'X'),
+			'ADD' => array('-' => 'X'),
+			'WRITE' => array('-' => 'X'),
+			'DELETE' => array('-' => 'X')
+		);
+	}
 }

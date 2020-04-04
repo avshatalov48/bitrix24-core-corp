@@ -123,7 +123,7 @@
 		simpleAction: function(grid, params, disableNotify)
 		{
 
-			// for delete another effect – remove now
+			// for delete another effect - remove now
 			if (params.action === "delete" && BX.type.isArray(params["id"]))
 			{
 				for (var i = 0, c = params["id"].length; i< c; i++)
@@ -140,7 +140,10 @@
 
 					if (data && !data.error)
 					{
-						if (params.action !== "delete")
+						if (
+							!disableNotify
+							//params.action !== "delete"
+						)
 						{
 							grid.onApplyFilter();
 						}

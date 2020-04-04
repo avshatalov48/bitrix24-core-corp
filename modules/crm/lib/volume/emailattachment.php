@@ -3,6 +3,7 @@
 namespace Bitrix\Crm\Volume;
 
 use Bitrix\Crm;
+use Bitrix\Crm\Volume;
 use Bitrix\Disk;
 use Bitrix\Main;
 use Bitrix\Main\ORM;
@@ -11,10 +12,10 @@ use Bitrix\Main\Localization\Loc;
 
 
 class EmailAttachment
-	extends Crm\Volume\Base
-	implements Crm\Volume\IVolumeClear, Crm\Volume\IVolumeClearFile, Crm\Volume\IVolumeUrl
+	extends Volume\Base
+	implements Volume\IVolumeClear, Volume\IVolumeClearFile, Volume\IVolumeUrl
 {
-	/** @var Crm\Volume\Activity */
+	/** @var Volume\Activity */
 	private $activityFiles;
 
 	/**
@@ -132,7 +133,7 @@ class EmailAttachment
 	{
 		self::loadTablesInformation();
 
-		$activity = new Crm\Volume\Activity();
+		$activity = new Volume\Activity();
 		$activity->setFilter($this->getFilter());
 
 		$activityQuery = $activity->prepareQuery();
@@ -307,6 +308,8 @@ class EmailAttachment
 		if ($this->prepareFilter($query))
 		{
 			$userPermissions = \CCrmPerms::GetUserPermissions($this->getOwner());
+			$diskAvailable = \Bitrix\Main\Loader::includeModule('disk');
+			$exceptMailTemplateAttachment = Volume\MailTemplate::getAttachmentList();
 
 			$query
 				//->where('TYPE_ID', '=', \CCrmActivityType::Email)// Email
@@ -332,19 +335,24 @@ class EmailAttachment
 						'select' => array('STORAGE_TYPE_ID', 'ELEMENT_ID'),
 					));
 
-					if (\CCrmActivity::DeleteStorageElements($activity['ID']))
+					// check existence and force removing
+					$failOccurred = false;
+					while ($row = $activityElementList->fetch())
 					{
-						// check existence and force removing
-						while ($row = $activityElementList->fetch())
+						// ignoring mail template attachments
+						if (in_array((int)$row['ELEMENT_ID'], $exceptMailTemplateAttachment))
+						{
+							continue;
+						}
+						$elementIds = array($row['ELEMENT_ID']);
+						if (\CCrmActivity::DeleteStorageElements($activity['ID'], array('STORAGE_ELEMENT_IDS' => $elementIds)))
 						{
 							if ($row['STORAGE_TYPE_ID'] == Crm\Integration\StorageType::File)
 							{
 								\CFile::Delete($row['ELEMENT_ID']);
 							}
-							elseif ($row['STORAGE_TYPE_ID'] == Crm\Integration\StorageType::Disk)
+							elseif ($row['STORAGE_TYPE_ID'] == Crm\Integration\StorageType::Disk && $diskAvailable)
 							{
-								\Bitrix\Main\Loader::includeModule('disk');
-
 								$file = \Bitrix\Disk\File::getById($row['ELEMENT_ID']);
 								if ($file instanceof \Bitrix\Disk\File)
 								{
@@ -355,7 +363,21 @@ class EmailAttachment
 								}
 							}
 						}
-
+						else
+						{
+							$failOccurred = true;
+							$error = \CCrmActivity::GetLastErrorMessage();
+							if (empty($error))
+							{
+								$error = 'Deletion failed with activity #'.$activity['ID'];
+							}
+							$this->collectError(new Main\Error($error,self::ERROR_DELETION_FAILED));
+							$this->incrementFailCount();
+						}
+					}
+					if ($failOccurred !== true)
+					{
+						// drop activity
 						if (\CCrmActivity::Delete($activity['ID'], false, false))
 						{
 							$this->incrementDroppedEntityCount();
@@ -365,16 +387,6 @@ class EmailAttachment
 							$this->collectError(new Main\Error('Deletion failed with activity #'.$activity['ID'], self::ERROR_DELETION_FAILED));
 							$this->incrementFailCount();
 						}
-					}
-					else
-					{
-						$error = \CCrmActivity::GetLastErrorMessage();
-						if (empty($error))
-						{
-							$error = 'Deletion failed with activity #'.$activity['ID'];
-						}
-						$this->collectError(new Main\Error($error,self::ERROR_DELETION_FAILED));
-						$this->incrementFailCount();
 					}
 				}
 				else
@@ -432,12 +444,12 @@ class EmailAttachment
 	 */
 	public function prepareQuery($entityGroupField = array())
 	{
-		$this->activityFiles = new Crm\Volume\Activity();
+		$this->activityFiles = new Volume\Activity();
 		$this->activityFiles->setFilter($this->getFilter());
 
-		$query = $this->activityFiles->getActivityFileMeasureQuery(Crm\Volume\Activity::className(), $entityGroupField);
+		$query = $this->activityFiles->getActivityFileMeasureQuery(Volume\Activity::className(), $entityGroupField);
 
-		// only email attatchment
+		// only email attachments
 		$query->where('TYPE_ID', '=', \CCrmActivityType::Email);
 
 		return $query;
@@ -474,6 +486,8 @@ class EmailAttachment
 		if ($this->prepareFilter($query))
 		{
 			$userPermissions = \CCrmPerms::GetUserPermissions($this->getOwner());
+			$diskAvailable = \Bitrix\Main\Loader::includeModule('disk');
+			$exceptMailTemplateAttachment = Volume\MailTemplate::getAttachmentList();
 
 			$query
 				//->where('TYPE_ID', '=', \CCrmActivityType::Email)
@@ -499,19 +513,24 @@ class EmailAttachment
 						'select' => array('STORAGE_TYPE_ID', 'ELEMENT_ID'),
 					));
 
-					if (\CCrmActivity::DeleteStorageElements($activity['ID']))
+					// check existence and force removing
+					while ($row = $activityElementList->fetch())
 					{
-						// check existence and force removing
-						while ($row = $activityElementList->fetch())
+						// ignore mail template attachments
+						if (in_array((int)$row['ELEMENT_ID'], $exceptMailTemplateAttachment))
+						{
+							$this->incrementFailCount();
+							continue;
+						}
+						$elementIds = array($row['ELEMENT_ID']);
+						if (\CCrmActivity::DeleteStorageElements($activity['ID'], array('STORAGE_ELEMENT_IDS' => $elementIds)))
 						{
 							if ($row['STORAGE_TYPE_ID'] == Crm\Integration\StorageType::File)
 							{
 								\CFile::Delete($row['ELEMENT_ID']);
 							}
-							elseif ($row['STORAGE_TYPE_ID'] == Crm\Integration\StorageType::Disk)
+							elseif ($row['STORAGE_TYPE_ID'] == Crm\Integration\StorageType::Disk && $diskAvailable)
 							{
-								\Bitrix\Main\Loader::includeModule('disk');
-
 								$file = \Bitrix\Disk\File::getById($row['ELEMENT_ID']);
 								if ($file instanceof \Bitrix\Disk\File)
 								{
@@ -523,16 +542,16 @@ class EmailAttachment
 							}
 							$this->incrementDroppedFileCount();
 						}
-					}
-					else
-					{
-						$error = \CCrmActivity::GetLastErrorMessage();
-						if (empty($error))
+						else
 						{
-							$error = 'Deletion failed with activity #'.$activity['ID'];
+							$error = \CCrmActivity::GetLastErrorMessage();
+							if (empty($error))
+							{
+								$error = 'Deletion failed with activity #'.$activity['ID'];
+							}
+							$this->collectError(new Main\Error($error,self::ERROR_DELETION_FAILED));
+							$this->incrementFailCount();
 						}
-						$this->collectError(new Main\Error($error,self::ERROR_DELETION_FAILED));
-						$this->incrementFailCount();
 					}
 				}
 				else

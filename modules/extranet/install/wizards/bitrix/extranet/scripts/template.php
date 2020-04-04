@@ -55,10 +55,10 @@ class ExtranetWizardTemplate extends CWizardTemplate
 		elseif (file_exists($_SERVER["DOCUMENT_ROOT"].$wizardPath."/images/en/logo.png"))
 			$logoImage = '<img src="'.$wizardPath.'/images/en/logo.png" alt="" />';
 
-		if (file_exists($_SERVER["DOCUMENT_ROOT"].$wizardPath."/images/".LANGUAGE_ID."/box.jpg"))
-			$boxImage = '<img src="'.$wizardPath.'/images/'.LANGUAGE_ID.'/box.jpg" alt="" />';
-		elseif (file_exists($_SERVER["DOCUMENT_ROOT"].$wizardPath."/images/en/box.jpg"))
-			$boxImage = '<img src="'.$wizardPath.'/images/en/box.jpg" alt="" />';
+		if (file_exists($_SERVER["DOCUMENT_ROOT"].$wizardPath."/images/".LANGUAGE_ID."/box_cp.png"))
+			$boxImage = '<img src="'.$wizardPath.'/images/'.LANGUAGE_ID.'/box_cp.png" alt="" />';
+		elseif (file_exists($_SERVER["DOCUMENT_ROOT"].$wizardPath."/images/en/box_cp.png"))
+			$boxImage = '<img src="'.$wizardPath.'/images/en/box_cp.png" alt="" />';
 
 		$strErrorMessage = "";
 		$strWarningMessage = "";

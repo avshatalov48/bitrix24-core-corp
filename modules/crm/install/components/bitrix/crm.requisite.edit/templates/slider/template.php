@@ -1,21 +1,41 @@
 <?php
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
+use Bitrix\Main\Page\Asset;
+
 /** @var \CCrmRequisiteFormEditorComponent $component */
 
 global $APPLICATION;
 
-CJSCore::Init(array('date', 'popup', 'ajax', 'tooltip', 'ls'));
+$isExternalSearchEnabled = false;
+$externalRequisiteSearchConfig = null;
+if (!$arResult['NEED_CLOSE_POPUP']
+	&& is_array($arResult['EXTERNAL_REQUISITE_SEARCH_CONFIG'])
+	&& isset($arResult['EXTERNAL_REQUISITE_SEARCH_CONFIG']['enabled'])
+	&& $arResult['EXTERNAL_REQUISITE_SEARCH_CONFIG']['enabled'] === true)
+{
+	$isExternalSearchEnabled = true;
+	$externalRequisiteSearchConfig = $arResult['EXTERNAL_REQUISITE_SEARCH_CONFIG'];
+}
 
-\Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/slider.js');
-\Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/requisite.js');
-\Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/js/crm/css/slider.css');
-\Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/js/crm/css/crm.css');
-\Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/themes/.default/crm-entity-show.css');
+$jsExts = ['date', 'popup', 'ajax', 'tooltip', 'ls'];
+if ($isExternalSearchEnabled)
+{
+	$jsExts[] = 'applayout';
+}
+CJSCore::Init($jsExts);
+unset($jsExts);
+
+Asset::getInstance()->addJs('/bitrix/js/crm/common.js');
+Asset::getInstance()->addJs('/bitrix/js/crm/requisite.js');
+Asset::getInstance()->addJs('/bitrix/js/crm/slider.js');
+Asset::getInstance()->addCss('/bitrix/js/crm/css/slider.css');
+Asset::getInstance()->addCss('/bitrix/js/crm/css/crm.css');
+Asset::getInstance()->addCss('/bitrix/themes/.default/crm-entity-show.css');
 
 if(SITE_TEMPLATE_ID === 'bitrix24')
 {
-	\Bitrix\Main\Page\Asset::getInstance()->addCss("/bitrix/themes/.default/bitrix24/crm-entity-show.css");
+	Asset::getInstance()->addCss("/bitrix/themes/.default/bitrix24/crm-entity-show.css");
 }
 
 $elementID = isset($arResult['ELEMENT_ID']) ? (int)$arResult['ELEMENT_ID'] : 0;
@@ -164,7 +184,8 @@ $APPLICATION->IncludeComponent(
 				enableClientResolution: <?=$arResult['ENABLE_CLIENT_RESOLUTION'] ? 'true' : 'false'?>,
 				enableFieldMasquerading: <?=$enableFieldMasquerading ? 'true' : 'false'?>,
 				fieldNameTemplate: "<?=CUtil::JSEscape($fieldNameTemplate)?>",
-				lastInForm: <?=$arResult['IS_LAST_IN_FORM'] === 'Y' ? 'true' : 'false'?>
+				lastInForm: <?=$arResult['IS_LAST_IN_FORM'] === 'Y' ? 'true' : 'false'?>,
+				externalRequisiteSearchConfig: <?=CUtil::PhpToJSObject($externalRequisiteSearchConfig)?>
 			}
 		);
 

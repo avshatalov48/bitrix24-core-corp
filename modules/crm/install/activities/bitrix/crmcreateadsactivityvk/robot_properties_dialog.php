@@ -2,6 +2,7 @@
 /** @var \Bitrix\Bizproc\Activity\PropertiesDialog $dialog */
 
 $runtimeData = $dialog->getRuntimeData();
+$clientId = $runtimeData['CLIENT_ID'];
 $accountId = $runtimeData['ACCOUNT_ID'];
 $audienceId = $runtimeData['AUDIENCE_ID'];
 $autoRemoveDayNumber = $runtimeData['AUTO_REMOVE_DAY_NUMBER'];
@@ -43,6 +44,7 @@ $APPLICATION->IncludeComponent(
 		'HAS_ACCESS' => true,
 		'CONTAINER_NODE_ID' => $containerNodeId,
 		'PROVIDER' => $provider,
+		'CLIENT_ID' => $clientId,
 		'ACCOUNT_ID' => $accountId,
 		'AUDIENCE_ID' => $audienceId,
 		'AUTO_REMOVE_DAY_NUMBER' => $autoRemoveDayNumber,

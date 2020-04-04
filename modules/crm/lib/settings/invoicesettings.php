@@ -6,7 +6,6 @@ use Bitrix\Main\ModuleManager;
 class InvoiceSettings
 {
 	const VIEW_LIST = EntityViewSettings::LIST_VIEW;
-	const VIEW_WIDGET = EntityViewSettings::WIDGET_VIEW;
 	const VIEW_KANBAN = EntityViewSettings::KANBAN_VIEW;
 
 	/** @var LeadSettings  */
@@ -131,7 +130,6 @@ class InvoiceSettings
 
 			self::$descriptions= array(
 				self::VIEW_LIST => GetMessage('CRM_INVOICE_SETTINGS_VIEW_LIST'),
-				self::VIEW_WIDGET => GetMessage('CRM_INVOICE_SETTINGS_VIEW_WIDGET'),
 				self::VIEW_KANBAN => GetMessage('CRM_INVOICE_SETTINGS_VIEW_KANBAN')
 			);
 		}

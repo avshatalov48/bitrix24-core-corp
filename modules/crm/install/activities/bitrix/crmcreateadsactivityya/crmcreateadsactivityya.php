@@ -10,4 +10,16 @@ class CBPCrmCreateAdsActivityYa extends CBPCrmCreateAdsActivityVk
 	{
 		return 'yandex';
 	}
+
+	public function Execute()
+	{
+		$msg = GetMessage('CRM_CREATE_ADS_YA_IS_UNAVAILABLE');
+		if (!$msg)
+		{
+			$msg = 'Service is unavailable now.';
+		}
+
+		$this->WriteToTrackingService($msg, 0, \CBPTrackingType::Error);
+		return CBPActivityExecutionStatus::Closed;
+	}
 }

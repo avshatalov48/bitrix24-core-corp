@@ -35,4 +35,5 @@ $MESS["CRM_ORDER_PL_PROD_EXIST_DLG_TITLE"] = "Данный товар уже д�
 $MESS["CRM_ORDER_PL_PROD_EXIST_DLG_TEXT"] = "Товар \"#NAME#\" уже есть в списке товаров. Вы хотите добавить еще одну единицу товара?";
 $MESS["CRM_ORDER_PL_PROD_EXIST_DLG_BUTT_ADD"] = "Добавить";
 $MESS["CRM_ORDER_PL_PROD_EXIST_DLG_BUTT_CANCEL"] = "Отмена";
+$MESS["CRM_ORDER_PL_CHOOSE_ACTION"] = "Выберите действие";
 ?>

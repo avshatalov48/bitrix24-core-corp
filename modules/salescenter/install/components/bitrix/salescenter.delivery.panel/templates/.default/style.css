@@ -1,0 +1,98 @@
+.salescenter-delivery {
+	margin-bottom: 57px;
+}
+
+.salescenter-delivery-item {
+	background-color: #fff;
+	border-radius:2px;
+	position: absolute;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	left: 0;
+	box-shadow: 0 1px 2px 0 rgba(0,0,0,.14);
+	transition: 180ms linear all;
+}
+
+.salescenter-delivery-item:hover{
+	-webkit-transform: translateY(-3px);
+	-moz-transform: translateY(-3px);
+	-ms-transform: translateY(-3px);
+	-o-transform: translateY(-3px);
+	transform: translateY(-3px);
+	cursor: pointer;
+	box-shadow: 0 2px 2px 1px rgba(0,0,0,.14);
+}
+
+.salescenter-delivery-item-title {
+	position: absolute;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	padding: 0 5px;
+	box-sizing: border-box;
+	height: 45px;
+	text-align: center;
+	color: #525c69;
+	font: 13px/14px "OpenSans-Semibold", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	-webkit-box-align: center;
+	-ms-flex-align: center;
+	align-items: center;
+	-webkit-box-pack: center;
+	-ms-flex-pack: center;
+	justify-content: center;
+}
+
+.salescenter-delivery-item-image {
+	position: absolute;
+	left: 0;
+	right: 0;
+	top: 0;
+	bottom: 27px;
+	background-repeat: no-repeat;
+	background-position: center;
+}
+
+.salescenter-delivery-item-status-selected {
+	position: absolute;
+	opacity: 0;
+	right: 0;
+	top: 0;
+	transition: .1s;
+}
+
+.salescenter-delivery-item-selected .salescenter-delivery-item-status-selected {
+	opacity: 1;
+}
+
+.salescenter-delivery-item-status-selected:before {
+	position: absolute;
+	bottom: 14px;
+	top: -4px;
+	right: -5px;
+	width: 20px;
+	height: 20px;
+	border-radius: 50%;
+	background: #97c70f url(data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2212%22%20height%3D%229%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M4.627%205.81L10.402%200%2012%201.607%204.652%209l-.025-.025L4.602%209%200%204.373l1.598-1.607z%22%20fill%3D%22%23FFF%22%20fill-rule%3D%22evenodd%22/%3E%3C/svg%3E)
+	no-repeat center;
+	content: '';
+	box-shadow: 0 2px 4px rgba(0, 0, 0, .1);
+}
+
+.ui-page-slider-workarea-content-padding {
+	padding: 0;
+	overflow-x: visible;
+}
+
+.salescenter-delivery-title {
+	color: #333;
+	font: 16px/22px 'OpenSans-Regular', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	margin-bottom: 13px;
+	padding-bottom: 13px;
+	border-bottom: 1px solid rgba(82,92,105,.10);
+}
+
+.salescenter-delivery-item-selected .salescenter-delivery-item-title { color: #fff; }

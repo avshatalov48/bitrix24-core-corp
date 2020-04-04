@@ -38,7 +38,8 @@ final class Document extends DataProvider
 						return $this->getDocument()->getTitle();
 					}
 					return false;
-				}
+				},
+				'REQUIRED' => 'Y',
 			],
 			'DOCUMENT_NUMBER' => [
 				'TITLE' => Loc::getMessage('DOCGEN_DATAPROVIDER_DOCUMENT_NUMBER_TITLE'),
@@ -49,7 +50,8 @@ final class Document extends DataProvider
 						return $this->getDocument()->getNumber();
 					}
 					return false;
-				}
+				},
+				'REQUIRED' => 'Y',
 			],
 		];
 

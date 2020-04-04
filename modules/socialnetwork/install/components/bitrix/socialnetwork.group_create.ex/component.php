@@ -19,7 +19,6 @@ use Bitrix\Socialnetwork\Item\UserToGroup;
 use Bitrix\Main\ModuleManager;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Config\Option;
-use Bitrix\Socialnetwork\Item\WorkgroupTemplate;
 use Bitrix\Main\Localization\Loc;
 
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/components/bitrix/socialnetwork.group_create.ex/include.php");
@@ -128,6 +127,9 @@ $arResult['destinationContextOwner'] = 'GROUP_INVITE_OWNER';
 $arResult['destinationContextModerators'] = 'GROUP_INVITE_MODERATORS';
 $arResult['destinationContextUsers'] = 'GROUP_INVITE';
 
+$errorMessage = [];
+$warningMessage = [];
+
 if (!$USER->IsAuthorized())
 {
 	$arResult["NEED_AUTH"] = "Y";
@@ -136,6 +138,7 @@ else
 {
 	$arResult["currentUserId"] = $USER->getId();
 	$arResult["bIntranet"] = $arResult["intranetInstalled"] = ModuleManager::isModuleInstalled('intranet');
+	$arResult["landingInstalled"] = ModuleManager::isModuleInstalled('landing');
 
 	$extranetSiteValue = Option::get("extranet", "extranet_site");
 
@@ -219,10 +222,10 @@ else
 
 	$arResult['Types'] = (
 		$arResult["USE_PRESETS"] == 'Y'
-			? \Bitrix\Socialnetwork\Item\Workgroup::getTypes(array(
-			'currentExtranetSite' => $arResult["bExtranet"]
-		))
-		: array()
+			? \Bitrix\Socialnetwork\Item\Workgroup::getTypes([
+				'currentExtranetSite' => $arResult["bExtranet"]
+			])
+			: []
 	);
 
 	$arResult["Urls"]["User"] = CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_USER"], array("user_id" => $arResult["currentUserId"]));
@@ -241,7 +244,7 @@ else
 			}
 		}
 		elseif (
-			strlen($errorMessage) <= 0
+			empty($errorMessage)
 			&& $arParams["GROUP_ID"] > 0
 			&& $arResult["POST"]["OWNER_ID"] != $arResult["currentUserId"]
 			&& !CSocNetUser::IsCurrentUserModuleAdmin()
@@ -274,9 +277,6 @@ else
 			{
 				CUtil::JSPostUnescape();
 			}
-
-			$errorMessage = "";
-			$warningMessage = "";
 
 			if ($arResult["templateEditMode"] != 'Y')
 			{
@@ -355,23 +355,23 @@ else
 
 				if (strlen($_POST["GROUP_NAME"]) <= 0)
 				{
-					$errorMessage .= GetMessage(empty($_POST["GROUP_PROJECT"]) && $_POST["GROUP_PROJECT"] == 'Y' ? "SONET_GCE_ERR_NAME_PROJECT" : "SONET_GCE_ERR_NAME").".<br />";
+					$errorMessage[] = GetMessage(empty($_POST["GROUP_PROJECT"]) && $_POST["GROUP_PROJECT"] == 'Y' ? "SONET_GCE_ERR_NAME_PROJECT" : "SONET_GCE_ERR_NAME");
 					$arResult["ErrorFields"][] = "GROUP_NAME";
 				}
 				if (IntVal($_POST["GROUP_SUBJECT_ID"]) <= 0)
 				{
-					$errorMessage .= GetMessage(!empty($_POST["GROUP_PROJECT"]) && $_POST["GROUP_PROJECT"] == 'Y' ? "SONET_GCE_ERR_SUBJECT_PROJECT" : "SONET_GCE_ERR_SUBJECT").".<br />";
+					$errorMessage[] = GetMessage(!empty($_POST["GROUP_PROJECT"]) && $_POST["GROUP_PROJECT"] == 'Y' ? "SONET_GCE_ERR_SUBJECT_PROJECT" : "SONET_GCE_ERR_SUBJECT");
 					$arResult["ErrorFields"][] = "GROUP_SUBJECT_ID";
 				}
 
 				if (strlen($_POST["GROUP_INITIATE_PERMS"]) <= 0)
 				{
-					$errorMessage .= GetMessage(!empty($_POST["GROUP_PROJECT"]) && $_POST["GROUP_PROJECT"] == 'Y' ? "SONET_GCE_ERR_PERMS_PROJECT" : "SONET_GCE_ERR_PERMS").".<br />";
+					$errorMessage[] = GetMessage(!empty($_POST["GROUP_PROJECT"]) && $_POST["GROUP_PROJECT"] == 'Y' ? "SONET_GCE_ERR_PERMS_PROJECT" : "SONET_GCE_ERR_PERMS");
 					$arResult["ErrorFields"][] = "GROUP_INITIATE_PERMS";
 				}
 				if (strlen($_POST["GROUP_SPAM_PERMS"]) <= 0)
 				{
-					$errorMessage .= GetMessage("SONET_GCE_ERR_SPAM_PERMS").".<br />";
+					$errorMessage[] .= GetMessage("SONET_GCE_ERR_SPAM_PERMS");
 					$arResult["ErrorFields"][] = "GROUP_SPAM_PERMS";
 				}
 
@@ -475,7 +475,7 @@ else
 						&& empty($arDepartmentIDs)
 						&& !$arResult["intranetInstalled"])
 					{
-						$errorMessage .= GetMessage("SONET_GCE_NO_USERS").". ";
+						$errorMessage[] = GetMessage("SONET_GCE_NO_USERS").". ";
 						$arResult["ErrorFields"][] = "USERS";
 					}
 				}
@@ -528,11 +528,11 @@ else
 							&& Count($arUsersList) <= 0
 						)
 						{
-							$errorMessage .= GetMessage("SONET_GCE_NO_USERS").". ";
+							$errorMessage[] = GetMessage("SONET_GCE_NO_USERS").". ";
 							$arResult["ErrorFields"][] = "USERS";
 						}
 
-						if (StrLen($errorMessage) <= 0)
+						if (empty($errorMessage))
 						{
 							foreach ($arUsersList as $user)
 							{
@@ -564,7 +564,7 @@ else
 					!array_key_exists("TAB", $arResult)
 					|| $arResult["TAB"] == "edit"
 				)
-				&& strlen($errorMessage) <= 0
+				&& empty($errorMessage)
 			)
 			{
 				$arFields = array(
@@ -578,6 +578,7 @@ else
 					"INITIATE_PERMS" => $_POST["GROUP_INITIATE_PERMS"],
 					"SPAM_PERMS" => $_POST["GROUP_SPAM_PERMS"],
 					"PROJECT" => ($_POST["GROUP_PROJECT"] == "Y" ? "Y" : "N"),
+					"LANDING" => ($_POST["GROUP_LANDING"] == "Y" ? "Y" : "N"),
 				);
 
 				if(\Bitrix\Main\Config\Configuration::getValue("utf_mode") === true)
@@ -693,7 +694,7 @@ else
 					{
 						if ($e = $APPLICATION->GetException())
 						{
-							$errorMessage .= $e->GetString();
+							$errorMessage[] = $e->GetString();
 							$errorID = $e->GetID();
 							if (strlen($errorID) > 0)
 							{
@@ -718,7 +719,7 @@ else
 						&& ($e = $APPLICATION->getException())
 					)
 					{
-						$errorMessage .= $e->getString();
+						$errorMessage[] = $e->getString();
 						$errorID = $e->getId();
 						if ($errorID == "ERROR_IMAGE_ID")
 						{
@@ -806,7 +807,7 @@ else
 			}
 
 			if (
-				strlen($errorMessage) <= 0
+				empty($errorMessage)
 				&& array_key_exists("TAB", $arResult)
 				&& $arResult["TAB"] != "edit"
 			)
@@ -822,9 +823,9 @@ else
 				CFile::ResizeImageDeleteCache($arImageID);
 			}
 
-			if (strlen($errorMessage) > 0)
+			if (!empty($errorMessage))
 			{
-				$arResult["ErrorMessage"] = $errorMessage;
+				$arResult["ErrorMessage"] = implode('<br />', $errorMessage);
 				$arResult["bVarsFromForm"] = true;
 			}
 			elseif ($arResult["GROUP_ID"] > 0)
@@ -858,7 +859,7 @@ else
 						{
 							if ($e = $APPLICATION->GetException())
 							{
-								$errorMessage .= $e->GetString();
+								$errorMessage[] = $e->GetString();
 							}
 						}
 						else
@@ -868,36 +869,9 @@ else
 					}
 				}
 
-				if (
-					strlen($errorMessage) <= 0
-					&& $_POST['SAVE_AS_TEMPLATE'] == 'Y'
-				)
-				{
-					$typeFields = array(
-						'VISIBLE' => (isset($arFields['VISIBLE']) && $arFields['VISIBLE'] == 'Y' ? 'Y' : 'N'),
-						'OPENED' => (isset($arFields['OPENED']) && $arFields['OPENED'] == 'Y' ? 'Y' : 'N'),
-						'PROJECT' => (isset($arFields['PROJECT']) && $arFields['PROJECT'] == 'Y' ? 'Y' : 'N'),
-						'EXTERNAL' => (isset($_POST["IS_EXTRANET_GROUP"]) && $_POST["IS_EXTRANET_GROUP"] == 'Y' ? 'Y' : 'N')
-					);
-					$typeCode = \Bitrix\Socialnetwork\Item\Workgroup::getTypeCodeByParams(array(
-						'typesList' => $arResult['Types'],
-						'fields' => $typeFields
-					));
-
-					WorkgroupTemplate::create(array(
-						'userId' => $arResult["currentUserId"],
-						'name' => (!empty($arFields['NAME']) ? $arFields['NAME'] : $arResult['POST']['NAME']),
-						'ownerId' => $ownerId,
-						'type' => $typeCode,
-						'params' => array(
-							'description' => (isset($arFields['DESCRIPTION']) ? $arFields['DESCRIPTION'] : ''),
-						)
-					));
-				}
-
 				/* invite */
 				if (
-					strlen($errorMessage) <= 0
+					empty($errorMessage)
 					&& (
 						!array_key_exists("TAB", $arResult)
 						|| $arResult["TAB"] == "invite"
@@ -1015,7 +989,7 @@ else
 											{
 												if($e = $APPLICATION->GetException())
 												{
-													$errorMessage .= $e->GetString();
+													$errorMessage[] = $e->GetString();
 												}
 											}
 											else
@@ -1064,7 +1038,7 @@ else
 										{
 											foreach ($ID as $strErrorTmp)
 											{
-												$errorMessage .= $strErrorTmp;
+												$errorMessage[] = $strErrorTmp;
 											}
 										}
 										else
@@ -1126,7 +1100,7 @@ else
 								{
 									if($e = $APPLICATION->GetException())
 									{
-										$errorMessage .= (strlen($errorMessage) > 0 ? "<br />" : "").$e->GetString();
+										$errorMessage[] = $e->GetString();
 									}
 								}
 							}
@@ -1137,7 +1111,7 @@ else
 
 							if ($ID_ADDED <= 0)
 							{
-								$errorMessage .= (strlen($errorMessage) > 0 ? "<br />" : "").$strError;
+								$errorMessage[] = $strError;
 								$arResult["ErrorFields"][] = "EXTRANET_BLOCK";
 							}
 							else
@@ -1228,7 +1202,7 @@ else
 										);
 										if ($e = $APPLICATION->GetException())
 										{
-											$warningMessage .= $e->GetString();
+											$warningMessage[] = $e->GetString();
 										}
 									}
 								}
@@ -1258,33 +1232,33 @@ else
 									$email = $arRes["EMAIL"];
 								}
 
-								if (strlen($warningMessage) > 0)
-								{
-									$warningMessage .= "<br>";
-								}
-
 								switch ($user2groupRelation)
 								{
 									case SONET_ROLES_BAN:
-										$warningMessage .= str_replace("#EMAIL#", $email, GetMessage("SONET_GCE_USER_BANNED_IN_GROUP"));
+										$warningMessage[] = str_replace("#EMAIL#", $email, GetMessage("SONET_GCE_USER_BANNED_IN_GROUP"));
 										break;
 									case SONET_ROLES_REQUEST:
-										$warningMessage .= str_replace("#EMAIL#", $email, GetMessage("SONET_GCE_USER_REQUEST_SENT"));
+										$warningMessage[] = str_replace("#EMAIL#", $email, GetMessage("SONET_GCE_USER_REQUEST_SENT"));
 										break;
 									default:
-										$warningMessage .= str_replace("#EMAIL#", $email, GetMessage(empty($_POST["GROUP_PROJECT"]) && $_POST["GROUP_PROJECT"] == 'Y' ? "SONET_GCE_USER_IN_GROUP_PROJECT" : "SONET_GCE_USER_IN_GROUP"));
+										$warningMessage[] = str_replace("#EMAIL#", $email, GetMessage(empty($_POST["GROUP_PROJECT"]) && $_POST["GROUP_PROJECT"] == 'Y' ? "SONET_GCE_USER_IN_GROUP_PROJECT" : "SONET_GCE_USER_IN_GROUP"));
 										break;
 								}
 							}
 						}
 
 						if (
-							strlen($warningMessage) > 0
+							!empty($warningMessage)
 							&& !in_array("USERS", $arResult["ErrorFields"])
 						)
 						{
-							$errorMessage .= $warningMessage.(!$bInvited ? "<br>".GetMessage("SONET_GCE_NO_USERS") : "").".";
-							$warningMessage = "";
+							$errorMessage = array_merge($errorMessage, $warningMessage);
+							if (!$bInvited)
+							{
+								$errorMessage[] = GetMessage("SONET_GCE_NO_USERS").".";
+							}
+
+							$warningMessage = [];
 						}
 					}
 
@@ -1316,11 +1290,11 @@ else
 					//if some e-mails belong to internal users and can't be used for invitation
 					if (count($arIntranetUsersEmails) == 1)
 					{
-						$warningMessage .= str_replace("#EMAIL#", HtmlSpecialCharsEx(implode("", $arIntranetUsersEmails)), GetMessage("SONET_GCE_CANNOT_EMAIL_ADD"));
+						$warningMessage[] = str_replace("#EMAIL#", HtmlSpecialCharsEx(implode("", $arIntranetUsersEmails)), GetMessage("SONET_GCE_CANNOT_EMAIL_ADD"));
 					}
 					elseif (count($arIntranetUsersEmails) > 1)
 					{
-						$warningMessage .= str_replace("#EMAIL#", HtmlSpecialCharsEx(implode(", ", $arIntranetUsersEmails)), GetMessage("SONET_GCE_CANNOT_EMAILS_ADD"));
+						$warningMessage[] = str_replace("#EMAIL#", HtmlSpecialCharsEx(implode(", ", $arIntranetUsersEmails)), GetMessage("SONET_GCE_CANNOT_EMAILS_ADD"));
 					}
 				}
 
@@ -1331,14 +1305,14 @@ else
 					&& empty($arDepartmentIDs)
 				)
 				{
-					$errorMessage .= GetMessage("SONET_GCE_NO_USERS").". ";
+					$errorMessage[] = GetMessage("SONET_GCE_NO_USERS").". ";
 					$arResult["ErrorFields"][] = "USERS";
 				}
 			}
 
 			if (
-				strlen($errorMessage) <= 0
-				&& strlen($warningMessage) <= 0
+				empty($errorMessage)
+				&& empty($warningMessage)
 			)
 			{
 				if ($arResult["IS_IFRAME"])
@@ -1433,8 +1407,8 @@ else
 			}
 			else
 			{
-				$arResult["WarningMessage"] = $warningMessage;
-				$arResult["ErrorMessage"] = $errorMessage;
+				$arResult["WarningMessage"] = implode('<br />', $warningMessage);
+				$arResult["ErrorMessage"] = implode('<br />', $errorMessage);
 
 				if (!array_key_exists("TAB", $arResult))
 				{
@@ -1493,8 +1467,8 @@ else
 					ob_end_clean();
 
 					$arRes = array(
-						'ERROR' => $errorMessage,
-						'WARNING' => $warningMessage,
+						'ERROR' => implode('<br />', $errorMessage),
+						'WARNING' => implode('<br />', $warningMessage),
 						'USERS_ID' => $arResult["POST"]["USER_IDS"]
 					);
 
@@ -1662,9 +1636,12 @@ else
 		$arResult["arSocNetFeaturesSettings"] = CSocNetAllowed::getAllowedFeatures();
 	}
 
+	$arResult["preset"] = (!empty($_GET['preset']) ? $_GET['preset'] : false);
+
 	$arResult["step1Display"] = (
 		$arResult["USE_PRESETS"] == 'Y'
 		&& $arParams["GROUP_ID"] <= 0
+		&& empty($arResult["preset"])
 	);
 
 	$arResult["hidePresetSettings"] = (

@@ -134,13 +134,9 @@ class Filter
 					)
 				];
 			case self::ChannelCode:
-				$channels = Crm\Tracking\Provider::getChannels();
 				return [
 					'params' => ['multiple' => 'Y'],
-					'items' => array_combine(
-						array_column($channels, 'CODE'),
-						array_column($channels, 'SHORT_NAME')
-					)
+					'items' => Crm\Tracking\Channel\Factory::getNames()
 				];
 		}
 
@@ -215,7 +211,7 @@ class Filter
 			}
 			if ($isNullSource)
 			{
-				$sqlSource[] = " CTT.SOURCE_ID is NULL ";
+				$sqlSource[] = " (CTT.SOURCE_ID is NULL or CTT.SOURCE_ID = 0) ";
 			}
 		}
 

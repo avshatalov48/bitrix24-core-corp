@@ -472,6 +472,13 @@ CRM.PopupSelectItem = function(crmID, element, tab, unsave, select)
 	else
 		blockWrap=BX("crm-"+crmID+'_'+obCrm[crmID].name+"-block-"+tab+"-selected");
 
+	if(blockWrap.querySelector("[id='" + ("selected-"+element.id).replace(new RegExp("search$"), tab) + "']")
+		|| blockWrap.querySelector("[id='" + ("selected-"+element.id).replace(new RegExp(tab + "$"), "search") + "']")
+	)
+	{
+		return;
+	}
+
 	if (obCrm[crmID].PopupMultiple)
 	{
 		blockTitle = BX.findChild(blockWrap, { className : "crm-block-cont-right-title-count"}, true);
@@ -492,6 +499,7 @@ CRM.PopupSelectItem = function(crmID, element, tab, unsave, select)
 
 		}
 	}
+
 	blockWrap.appendChild(addCrmItems).appendChild(addCrmDelBut);
 
 	blockWrap.appendChild(addCrmItems).appendChild(addCrmLink).innerHTML=BX.util.htmlspecialchars(obCrm[crmID].PopupItem[elementId]['title']);

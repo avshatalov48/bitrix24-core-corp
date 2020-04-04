@@ -47,7 +47,7 @@ BX.addCustomEvent("onRegisterProvider", (addProviderHandler) =>
 				{
 					BX.rest.callMethod("mobile.settings.energy.get").then((result) =>
 					{
-
+						console.log(env.userId);
 						let params = result.answer.result;
 						if (params)
 						{

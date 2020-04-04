@@ -59,7 +59,8 @@ class OnecStartComponent extends CBitrixComponent
 			'report' => 'report/',
 			'exchange' => 'exchange/',
 			'realtime' => 'realtime/',
-			'facecard' => 'facecard/'
+			'facecard' => 'facecard/',
+			'doc' => 'doc/'
 		);
 
 		$arDefaultVariableAliases404 = array();
@@ -127,6 +128,10 @@ class OnecStartComponent extends CBitrixComponent
 				$this->arResult['APP'] = $this->getApplicationInfo();
 				$this->arResult['APP_INACTIVE'] = $this->applicationIsInactive();
 				break;
+			case 'doc':
+				$this->arResult['APP'] = $this->getApplicationDocInfo();
+				$this->arResult['APP_INACTIVE'] = $this->applicationDocIsInactive();
+				break;
 			case 'index':
 				$this->arResult['TILE_ID'] = "crm-onec";
 
@@ -179,15 +184,39 @@ class OnecStartComponent extends CBitrixComponent
 					);
 				}
 
+				$exch1cEnabled = COption::GetOptionString('crm', 'crm_exch1c_enable', 'N');
+				if ($exch1cEnabled)
+				{
+					if ($license_name = COption::GetOptionString("main", "~controller_group_name"))
+					{
+						preg_match("/(project|tf)$/is", $license_name, $matches);
+						if (strlen($matches[0]) > 0)
+							$exch1cEnabled = false;
+					}
+				}
+
 				$this->arResult['ITEMS'][] = array(
 					"id" => "exchange",
 					"name" => Loc::getMessage("CRM_1C_START_EXCHANGE"),
 					"iconClass" => "ui-icon ui-icon-service-1c",
-					"selected" => COption::GetOptionString("crm", "1c_integration_opened", "") == "Y" ? true : false,
+					"selected" => $exch1cEnabled == "Y" ? true : false,
 					"data" => array(
 						"url" => "/onec/exchange/"
 					)
 				);
+
+				if (\Bitrix\Main\ModuleManager::isModuleInstalled("rest"))
+				{
+					$this->arResult['ITEMS'][] = array(
+						"id" => "doc",
+						"name" => Loc::getMessage("CRM_1C_START_DOC"),
+						"iconClass" => "ui-icon ui-icon-service-1c",
+						"selected" => $this->applicationDocIsInactive() ? false : true,
+						"data" => array(
+							"url" => "/onec/doc/"
+						)
+					);
+				}
 
 				$this->arResult['SYNCHRO_TILE_ID'] = "crm-onec-synchro";
 				$this->arResult['SYNCHRO_ITEMS'] = array(
@@ -195,7 +224,7 @@ class OnecStartComponent extends CBitrixComponent
 						"id" => "invoice",
 						"name" => Loc::getMessage("CRM_1C_START_SYNCHRO_INVOICE"),
 						"iconClass" => "ui-icon ui-icon-service-1c",
-						"selected" => COption::GetOptionString("crm", "1c_integration_opened", "") == "Y" ? true : false,
+						"selected" => $exch1cEnabled == "Y" ? true : false,
 						"data" => array(
 							"url" => "/crm/configs/exch1c/invoice/"
 						)
@@ -204,7 +233,7 @@ class OnecStartComponent extends CBitrixComponent
 						"id" => "catalog",
 						"name" => Loc::getMessage("CRM_1C_START_SYNCHRO_CATALOG"),
 						"iconClass" => "ui-icon ui-icon-service-1c",
-						"selected" => COption::GetOptionString("crm", "1c_integration_opened", "") == "Y" ? true : false,
+						"selected" => $exch1cEnabled == "Y" ? true : false,
 						"data" => array(
 							"url" => "/crm/configs/exch1c/catalog/"
 						)
@@ -234,6 +263,22 @@ class OnecStartComponent extends CBitrixComponent
 	protected function getApplicationInfo()
 	{
 		return \Bitrix\Rest\AppTable::getByClientId('bitrix.1c');
+	}
+
+	protected function applicationDocIsInactive()
+	{
+		$r = false;
+		$appInfo = $this->getApplicationDocInfo();
+		if(!$appInfo || $appInfo['ACTIVE'] === \Bitrix\Rest\AppTable::INACTIVE)
+		{
+			$r = true;
+		}
+		return $r;
+	}
+
+	protected function getApplicationDocInfo()
+	{
+		return \Bitrix\Rest\AppTable::getByClientId('bitrix.1cdoc');
 	}
 
 	protected function checkModuleByPage($page='', &$error, &$redirectUrl = '')
@@ -270,6 +315,7 @@ class OnecStartComponent extends CBitrixComponent
 				break;
 			case 'tracker':
 			case 'report':
+			case 'doc':
 
 				if(!\Bitrix\Main\Loader::includeModule('rest'))
 				{

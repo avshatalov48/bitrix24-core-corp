@@ -12,6 +12,7 @@ use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\Web\Json;
 use Bitrix\Main\Web\Uri;
 
+use Bitrix\Crm;
 use Bitrix\Crm\UtmTable;
 
 /**
@@ -22,7 +23,9 @@ use Bitrix\Crm\UtmTable;
 class Trace
 {
 	const DETECT_TIME_MINUTES = 5;
+	const FIND_ENTITIES_TIME_DAYS = 7;
 
+	protected $id;
 	protected $url;
 	protected $isMobile = false;
 	protected $utm = [];
@@ -31,11 +34,23 @@ class Trace
 	/** @var Channel\Collection|null $channelCollection Channel collection. */
 	protected $channelCollection;
 
+	/** @var Crm\Entity\Identificator\ComplexCollection|null $entityCollection Entity collection. */
+	protected $entityCollection;
+
 	protected $sourceId;
 
 	private $loaded = false;
 
 	protected $ref;
+
+	/** @var bool Use detecting of Date Create. */
+	private $useDetectingOfDateCreate;
+
+	/** @var DateTime|null Date create. */
+	private $dateCreate;
+
+	/** @var static[] Previous traces. */
+	private $previousTraces = [];
 
 	/**
 	 * Create trace from string.
@@ -46,14 +61,17 @@ class Trace
 	public static function create($string = null)
 	{
 		$instance = (new static());
+		$string = trim((string) $string);
 		if ($string)
 		{
-			$string = trim($string);
 			try
 			{
 				$string = Encoding::convertEncoding($string, SITE_CHARSET, 'UTF-8');
 				$data = Json::decode($string);
-				$instance->loadByArray($data);
+				if (is_array($data))
+				{
+					$instance->loadByArray($data);
+				}
 			}
 			catch (\Exception $exception)
 			{
@@ -104,6 +122,7 @@ class Trace
 	public function __construct(array $data = null)
 	{
 		$this->channelCollection = new Channel\Collection();
+		$this->entityCollection = new Crm\Entity\Identificator\ComplexCollection();
 
 		if ($data)
 		{
@@ -120,6 +139,24 @@ class Trace
 	public function loadByArray(array $data)
 	{
 		$this->loaded = true;
+
+		$previousTraces = self::getValueByKey($data, 'previous');
+		$previousTraces = self::getValueByKey($previousTraces, 'list');
+		if (is_array($previousTraces))
+		{
+			$this->previousTraces = [];
+			foreach (array_slice($previousTraces, -5) as $previousTrace)
+			{
+				if (empty($previousTrace) || !is_array($previousTrace))
+				{
+					continue;
+				}
+
+				$this->previousTraces[] = (new static())
+					->useDetectingOfDateCreate()
+					->loadByArray($previousTrace);
+			}
+		}
 
 		$device = self::getValueByKey($data, 'device');
 		$this->setMobile(self::getValueByKey($device, 'isMobile'));
@@ -150,6 +187,12 @@ class Trace
 		}
 
 		$tags = self::getValueByKey($data, 'tags');
+		$tagTs = self::getValueByKey($tags, 'ts');
+		if ($tagTs && is_numeric($tagTs) && $this->useDetectingOfDateCreate)
+		{
+			$this->dateCreate = DateTime::createFromTimestamp($tagTs);
+		}
+
 		$tags = self::getValueByKey($tags, 'list');
 		if (is_array($tags))
 		{
@@ -213,6 +256,16 @@ class Trace
 	}
 
 	/**
+	 * Get pages.
+	 *
+	 * @return array
+	 */
+	public function getPages()
+	{
+		return $this->pages;
+	}
+
+	/**
 	 * Set url.
 	 *
 	 * @param string $url Url.
@@ -226,6 +279,16 @@ class Trace
 		$this->channelCollection->setChannel($channel, 0);
 
 		return $this;
+	}
+
+	/**
+	 * Get url.
+	 *
+	 * @return array
+	 */
+	public function getUrl()
+	{
+		return $this->url;
 	}
 
 	/**
@@ -249,6 +312,16 @@ class Trace
 		}
 
 		return $this;
+	}
+
+	/**
+	 * Get utm.
+	 *
+	 * @return array
+	 */
+	public function getUtm()
+	{
+		return $this->utm;
 	}
 
 	/**
@@ -314,6 +387,28 @@ class Trace
 		return $this;
 	}
 
+	/**
+	 * Use detecting of date create.
+	 *
+	 * @param bool $mode Mode.
+	 * @return $this
+	 */
+	public function useDetectingOfDateCreate($mode = true)
+	{
+		$this->useDetectingOfDateCreate = $mode;
+		return $this;
+	}
+
+	/**
+	 * Get ID.
+	 *
+	 * @return int|null
+	 */
+	public function getId()
+	{
+		return $this->id;
+	}
+
 	protected static function getValueByKey($array, $key)
 	{
 		if (!is_array($array))
@@ -334,26 +429,43 @@ class Trace
 		foreach ($this->channelCollection as $channel)
 		{
 			/** @var Channel\Base $channel */
-			if (!$channel->isSupportDetecting())
+			if (!$channel->isSupportTraceDetecting())
 			{
 				continue;
 			}
 
-			$row = Internals\TraceTable::getList([
-				'select' => ['ID'],
-				'filter' => [
-					'>DATE_CREATE' => (new DateTime())->add('-' . self::DETECT_TIME_MINUTES . ' minutes'),
-					'=ENTITY.ID' => null,
-					'=CHANNEL.CODE' => $channel->getCode(),
-					'=CHANNEL.VALUE' => $channel->getValue(),
-				],
-				'order' => ['ID' => 'ASC']
-			])->fetch();
-
-			return $row ? $row['ID'] : null;
+			return Internals\TraceTable::getSpareTraceIdByChannel(
+				$channel->getCode(),
+				$channel->getValue(),
+				(new DateTime())->add('-' . self::DETECT_TIME_MINUTES . ' minutes')
+			);
 		}
 
 		return null;
+	}
+
+	/**
+	 * Detect entities.
+	 *
+	 * @return $this
+	 */
+	public function detectEntities()
+	{
+		foreach ($this->channelCollection as $channel)
+		{
+			/** @var Channel\Base $channel */
+			if (!$channel->isSupportEntityDetecting())
+			{
+				continue;
+			}
+
+			$entities = $channel->getEntities();
+			/** @var Crm\Entity\Identificator\ComplexCollection $entities */
+			$this->entityCollection->add($entities->toArray());
+			break;
+		}
+
+		return $this;
 	}
 
 	/**
@@ -363,36 +475,72 @@ class Trace
 	 */
 	public function save()
 	{
+		if ($this->id)
+		{
+			return $this->id;
+		}
+
 		$traceId = $this->detect();
 		if ($traceId)
 		{
 			return $traceId;
 		}
 
-		$result = Internals\TraceTable::add([
-			'SOURCE_ID' => $this->getSourceId(),
-			'IS_MOBILE' => $this->isMobile ? 'Y' : 'N',
-			'TAGS_RAW' => $this->utm,
-			'PAGES_RAW' => array_map(
+		$this->detectEntities();
+
+		foreach ($this->previousTraces as $previousTrace)
+		{
+			$previousTrace->save();
+		}
+
+		$trace = (new Internals\EO_Trace)
+			->setSourceId($this->getSourceId())
+			->setIsMobile($this->isMobile)
+			->setTagsRaw($this->utm)
+			->setHasChild(!empty($this->previousTraces))
+			->setPagesRaw(array_map(
 				function ($page)
 				{
 					$dateInsert = $page['DATE_INSERT'];
-					/** @var DateTime $dateInsert */
+					// @var DateTime $dateInsert
 					$page['DATE_INSERT'] = $dateInsert->getTimestamp();
 					return $page;
 				},
 				$this->pages
-			)
-		]);
+			));
+
+		if ($this->dateCreate)
+		{
+			$trace->setDateCreate($this->dateCreate);
+		}
+
+		$result = $trace->save();
 		if ($result->isSuccess())
 		{
-			$traceId = $result->getId();
+			$this->id = $result->getId();
+			foreach ($this->previousTraces as $previousTrace)
+			{
+				if (!$previousTrace->getId())
+				{
+					continue;
+				}
+
+				Internals\TraceTreeTable::add([
+					'PARENT_ID' => $this->id,
+					'CHILD_ID' => $previousTrace->getId()
+				])->isSuccess();
+			}
 			foreach ($this->channelCollection as $channel)
 			{
-				self::appendChannel($traceId, $channel);
+				self::appendChannel($this->id, $channel);
+			}
+			foreach ($this->entityCollection as $entity)
+			{
+				/** @var Crm\Entity\Identificator\Complex $entity */
+				self::appendEntity($this->id, $entity->getTypeId(), $entity->getId());
 			}
 		}
 
-		return $traceId;
+		return $this->id;
 	}
 }

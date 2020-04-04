@@ -1100,7 +1100,6 @@ elseif (isset($_REQUEST['import']) && isset($_SESSION['CRM_IMPORT_FILE']))
 
 			if (!$errorOccured && $requisiteImportHelper->isReady())
 			{
-
 				// preparation of hierarchy with data of requisites
 				$result = $requisiteImportHelper->parseRequisiteData();
 				if (!$result->isSuccess())
@@ -1426,8 +1425,15 @@ elseif (isset($_REQUEST['import']) && isset($_SESSION['CRM_IMPORT_FILE']))
 				unset($requisiteDupParams);
 			}
 
-			$adapter = \Bitrix\Crm\EntityAdapterFactory::create($arContact, CCrmOwnerType::Contact);
-			$dups = $dupChecker->findDuplicates($adapter, new \Bitrix\Crm\Integrity\DuplicateSearchParams($fieldNames));
+			$dups = [];
+			if (!empty($fieldNames))
+			{
+				$adapter = \Bitrix\Crm\EntityAdapterFactory::create($arContact, CCrmOwnerType::Contact);
+				$dups = $dupChecker->findDuplicates(
+					$adapter,
+					new \Bitrix\Crm\Integrity\DuplicateSearchParams($fieldNames)
+				);
+			}
 
 			if ($importRequisite && $enableDupCtrlByRequisite
 				&& is_object($requisiteImportHelper) && $requisiteImportHelper->isReady()
@@ -1711,7 +1717,9 @@ elseif (isset($_REQUEST['import']) && isset($_SESSION['CRM_IMPORT_FILE']))
 						$errorOccured = false;
 						if ($impAddrToRequisite)
 						{
-							$importResult = __CrmImportContactAddressesToRequisite($item, $contactSourceFields, $dupCtrlType, $impAddrPresetId);
+							$importResult = __CrmImportContactAddressesToRequisite(
+								$item, $contactSourceFields, $dupCtrlType, $impAddrPresetId
+							);
 
 							if (!$importResult->isSuccess())
 							{
@@ -1732,62 +1740,69 @@ elseif (isset($_REQUEST['import']) && isset($_SESSION['CRM_IMPORT_FILE']))
 
 									__CrmImportWriteDataToFile(
 										$errataFilePath,
-										isset($_SESSION['CRM_IMPORT_FILE_HEADERS']) ? $_SESSION['CRM_IMPORT_FILE_HEADERS'] : null,
+										isset($_SESSION['CRM_IMPORT_FILE_HEADERS']) ?
+											$_SESSION['CRM_IMPORT_FILE_HEADERS'] : null,
 										$errRows
 									);
 									unset($errRows);
 								}
+								unset($errors);
+							}
+						}
 
-								if ($importRequisite && is_object($requisiteImportHelper) && $requisiteImportHelper->isReady())
+						if ($importRequisite
+							&& is_object($requisiteImportHelper)
+							&& $requisiteImportHelper->isReady())
+						{
+							$rqImportResult = $requisiteImportHelper->importParsedRequisites(
+								CCrmOwnerType::Contact,
+								(int)$item['ID'],
+								$dupCtrlType
+							);
+							if (!$rqImportResult->isSuccess())
+							{
+								$errorOccured = true;
+								$errors = $rqImportResult->getErrorMessages();
+								if (!empty($errors))
 								{
-									$rqImportResult = $requisiteImportHelper->importParsedRequisites(
-										CCrmOwnerType::Contact,
-										(int)$item['ID'],
-										$dupCtrlType
+									$arResult['error']++;
+									$arResult['error_data'][] = Array(
+										'message' => $errors[0],
+										'data' => $requisiteImportHelper->getRows()
 									);
-									if (!$rqImportResult->isSuccess())
-									{
-										$errorOccured = true;
-										$errors = $rqImportResult->getErrorMessages();
-										if (!empty($errors))
-										{
-											$arResult['error']++;
-											$arResult['error_data'][] = Array(
-												'message' => $errors[0],
-												'data' => $requisiteImportHelper->getRows()
-											);
 
-											__CrmImportWriteDataToFile(
-												$errataFilePath,
-												isset($_SESSION['CRM_IMPORT_FILE_HEADERS']) ? $_SESSION['CRM_IMPORT_FILE_HEADERS'] : null,
-												$requisiteImportHelper->getRows()
-											);
-										}
-										unset($errors);
-									}
+									__CrmImportWriteDataToFile(
+										$errataFilePath,
+										isset($_SESSION['CRM_IMPORT_FILE_HEADERS']) ?
+											$_SESSION['CRM_IMPORT_FILE_HEADERS'] : null,
+										$requisiteImportHelper->getRows()
+									);
 								}
+								unset($errors);
 							}
 						}
 
 						if (!$errorOccured)
 						{
+							$CCrmUserType->PrepareForSave($item);
 							if(!$CCrmContact->Update($item['ID'], $item))
 							{
 								if ($importRequisite && is_object($requisiteImportHelper))
-									$dupRows = $requisiteImportHelper->getRows();
+									$errRows = $requisiteImportHelper->getRows();
 								else
-									$dupRows = $arData;
+									$errRows = $arData;
 
 								$arResult['error']++;
 								$arResult['error_data'][] = Array(
 									'message' => $item['RESULT_MESSAGE'],
-									'data' => $dupRows
+									'data' => $errRows
 								);
 
 								__CrmImportWriteDataToFile(
 									$errataFilePath,
-									isset($_SESSION['CRM_IMPORT_FILE_HEADERS']) ? $_SESSION['CRM_IMPORT_FILE_HEADERS'] : null,
-									$dupRows
+									isset($_SESSION['CRM_IMPORT_FILE_HEADERS']) ?
+										$_SESSION['CRM_IMPORT_FILE_HEADERS'] : null,
+									$errRows
 								);
 							}
 						}
@@ -1844,7 +1859,9 @@ elseif (isset($_REQUEST['import']) && isset($_SESSION['CRM_IMPORT_FILE']))
 			{
 				if ($impAddrToRequisite)
 				{
-					$importResult = __CrmImportContactAddressesToRequisite($arContact, $contactSourceFields, $dupCtrlType, $impAddrPresetId);
+					$importResult = __CrmImportContactAddressesToRequisite(
+						$arContact, $contactSourceFields, $dupCtrlType, $impAddrPresetId
+					);
 
 					if (!$importResult->isSuccess())
 					{
@@ -1864,7 +1881,8 @@ elseif (isset($_REQUEST['import']) && isset($_SESSION['CRM_IMPORT_FILE']))
 
 							__CrmImportWriteDataToFile(
 								$errataFilePath,
-								isset($_SESSION['CRM_IMPORT_FILE_HEADERS']) ? $_SESSION['CRM_IMPORT_FILE_HEADERS'] : null,
+								isset($_SESSION['CRM_IMPORT_FILE_HEADERS']) ?
+									$_SESSION['CRM_IMPORT_FILE_HEADERS'] : null,
 								$errRows
 							);
 							unset($errRows);
@@ -1873,7 +1891,9 @@ elseif (isset($_REQUEST['import']) && isset($_SESSION['CRM_IMPORT_FILE']))
 					}
 				}
 
-				if ($importRequisite && is_object($requisiteImportHelper) && $requisiteImportHelper->isReady())
+				if ($importRequisite
+					&& is_object($requisiteImportHelper)
+					&& $requisiteImportHelper->isReady())
 				{
 					$rqImportResult = $requisiteImportHelper->importParsedRequisites(
 						CCrmOwnerType::Contact,
@@ -1894,7 +1914,8 @@ elseif (isset($_REQUEST['import']) && isset($_SESSION['CRM_IMPORT_FILE']))
 
 							__CrmImportWriteDataToFile(
 								$errataFilePath,
-								isset($_SESSION['CRM_IMPORT_FILE_HEADERS']) ? $_SESSION['CRM_IMPORT_FILE_HEADERS'] : null,
+								isset($_SESSION['CRM_IMPORT_FILE_HEADERS']) ?
+									$_SESSION['CRM_IMPORT_FILE_HEADERS'] : null,
 								$requisiteImportHelper->getRows()
 							);
 						}

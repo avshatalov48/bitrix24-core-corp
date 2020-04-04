@@ -2,12 +2,14 @@
 namespace Bitrix\Tasks\Integration\Recyclebin;
 
 use Bitrix\Main\Application;
+use Bitrix\Main\Data\Cache;
 use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
 use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\Result;
 use Bitrix\Main\Localization\Loc;
 
+use Bitrix\Tasks\CheckList\Task\TaskCheckListFacade;
 use Bitrix\Tasks\Integration;
 use Bitrix\Tasks\Internals\TaskTable;
 use Bitrix\Tasks\Internals\Task\SearchIndexTable;
@@ -15,7 +17,6 @@ use Bitrix\Tasks\Internals\Task\FavoriteTable;
 use Bitrix\Tasks\Internals\Task\SortingTable;
 use Bitrix\Tasks\Internals\Task\ViewedTable;
 use Bitrix\Tasks\Internals\Task\ParameterTable;
-use Bitrix\Tasks\Internals\Task\CheckListTable;
 use Bitrix\Tasks\Internals\Helper\Task\Dependence;
 use Bitrix\Tasks\Kanban\TaskStageTable;
 use Bitrix\Tasks\Kanban\StagesTable;
@@ -24,6 +25,8 @@ use Bitrix\Tasks\Util\User;
 
 use Bitrix\Recyclebin\Internals\Entity;
 use Bitrix\Recyclebin\Internals\Contracts\Recyclebinable;
+
+use \CTasks;
 
 if (Loader::includeModule('recyclebin'))
 {
@@ -190,6 +193,9 @@ if (Loader::includeModule('recyclebin'))
 
 				$log = new \CTaskLog();
 				$log->Add($logFields);
+
+				$cache = Cache::createInstance();
+				$cache->clean(CTasks::FILTER_LIMIT_CACHE_KEY, CTasks::CACHE_TASKS_COUNT_DIR_NAME);
 			}
 			catch (\Exception $e)
 			{
@@ -361,7 +367,6 @@ if (Loader::includeModule('recyclebin'))
 				$tablesToClear = [
 					ViewedTable::class => ['TASK_ID', 'USER_ID'],
 					ParameterTable::class => ['ID'],
-					CheckListTable::class => ['ID'],
 					SearchIndexTable::class => ['ID']
 				];
 
@@ -371,6 +376,7 @@ if (Loader::includeModule('recyclebin'))
 				FavoriteTable::deleteByTaskId($taskId, ['LOW_LEVEL' => true]);
 				SortingTable::deleteByTaskId($taskId);
 				TaskStageTable::clearTask($taskId);
+				TaskCheckListFacade::deleteByEntityIdOnLowLevel($taskId);
 
 				foreach ($tablesToClear as $table => $select)
 				{
@@ -392,6 +398,7 @@ if (Loader::includeModule('recyclebin'))
 					'select' => ['FORUM_TOPIC_ID'],
 					'filter' => ['ID' => $taskId]
 				])->fetch();
+
 				Integration\Forum\Task\Topic::delete($task["FORUM_TOPIC_ID"]);
 
 				$USER_FIELD_MANAGER->Delete('TASKS_TASK', $taskId);

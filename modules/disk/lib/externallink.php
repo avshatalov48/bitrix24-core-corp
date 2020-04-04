@@ -512,19 +512,28 @@ final class ExternalLink extends Internals\Model
 	{
 		if($this->getType() === self::TYPE_MANUAL)
 		{
-			$uri = Driver::getInstance()->getUrlManager()->getUrlExternalLink(array(
+			$urlManager = Driver::getInstance()->getUrlManager();
+
+			$this->deleteShortUri($urlManager->getUrlExternalLink([
 				'hash' => $this->getHash(),
 				'action' => 'default',
-			));
-
-			$uriCrc32 = CBXShortUri::crc32($uri);
-			$query = CBXShortUri::getList(array(), array("URI_CRC" => $uriCrc32));
-			if($result = $query->fetch())
-			{
-				CBXShortUri::delete($result['ID']);
-			}
+			]));
+			$this->deleteShortUri($urlManager->getUrlExternalLink([
+				'hash' => $this->getHash(),
+				'action' => 'default',
+			], true));
 		}
 
 		return $this->deleteInternal();
 	}
-} 
+
+	private function deleteShortUri($uri)
+	{
+		$uriCrc32 = CBXShortUri::crc32($uri);
+		$query = CBXShortUri::getList(array(), array("URI_CRC" => $uriCrc32));
+		if($result = $query->fetch())
+		{
+			CBXShortUri::delete($result['ID']);
+		}
+	}
+}

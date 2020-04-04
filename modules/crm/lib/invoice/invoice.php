@@ -4,12 +4,15 @@ namespace Bitrix\Crm\Invoice;
 
 use Bitrix\Crm\Search;
 use Bitrix\Main;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Sale;
 
 if (!Main\Loader::includeModule('sale'))
 {
 	return;
 }
+
+Loc::loadMessages(__FILE__);
 
 /**
  * Class Invoice
@@ -32,6 +35,47 @@ class Invoice extends Sale\Order
 	{
 		return Internals\InvoiceTable::getMap();
 	}
+
+	/**
+	 * @return Sale\Result
+	 * @throws Main\ArgumentException
+	 * @throws Main\ArgumentNullException
+	 * @throws Main\ArgumentOutOfRangeException
+	 */
+	public function save()
+	{
+		$id = (int)$this->getField('ID');
+		$accountNumber = $this->getField('ACCOUNT_NUMBER');
+		if (is_string($accountNumber) && strlen($accountNumber) > 0 || is_numeric($accountNumber))
+		{
+			$res = static::getList(
+				[
+					'order' => ['ID' => 'ASC'],
+					'filter' => [
+						'=ACCOUNT_NUMBER' => $accountNumber,
+						'!ID' => $id
+					],
+					'select' => ['ID'],
+					'limit' => 1
+				]
+			);
+			if ($res->fetch())
+			{
+				$result = new Sale\Result();
+				$result->addError(new Main\Error(
+					Loc::getMessage('CRM_INVOICE_ERR_EXISTING_ACCOUNT_NUMBER'),
+					'CRM_INVOICE_ERR_EXISTING_ACCOUNT_NUMBER'
+				));
+
+				return $result;
+			}
+		}
+
+		$result = parent::save();
+
+		return $result;
+	}
+
 
 	/**
 	 * @param array $data
@@ -63,6 +107,23 @@ class Invoice extends Sale\Order
 		//endregion Search content index
 
 		return $result;
+	}
+
+	/**
+	 * Set account number.
+	 *
+	 * @throws Main\ArgumentNullException
+	 * @throws Main\ArgumentOutOfRangeException
+	 * @throws Main\NotImplementedException
+	 * @throws Main\SystemException
+	 */
+	protected function setAccountNumber()
+	{
+		$accountNumber = $this->getField('ACCOUNT_NUMBER');
+		if (!((is_string($accountNumber) && strlen($accountNumber) > 0) || is_numeric($accountNumber)))
+		{
+			parent::setAccountNumber();
+		}
 	}
 
 	/**

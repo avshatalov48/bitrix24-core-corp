@@ -142,6 +142,11 @@ class UserFieldSynchronizer
 			}
 
 			$typeID = $field['USER_TYPE_ID'];
+			if(!self::isUserFieldTypeSupported($typeID))
+			{
+				continue;
+			}
+
 			if(!(isset($map[$typeID]) && isset($map[$typeID][$label])))
 			{
 				$results[] = $field;
@@ -162,6 +167,11 @@ class UserFieldSynchronizer
 		self::setHistoryItem($srcEntityTypeID, $dstEntityTypeID, $historyItem);
 
 		return $results;
+	}
+
+	public static function isUserFieldTypeSupported($userFieldTypeID)
+	{
+		return $userFieldTypeID !== 'resourcebooking';
 	}
 
 	/**
@@ -207,6 +217,12 @@ class UserFieldSynchronizer
 				continue;
 			}
 
+			$typeID = $srcField['USER_TYPE_ID'];
+			if(!self::isUserFieldTypeSupported($typeID))
+			{
+				continue;
+			}
+
 			if(isset($filter['FIELD_NAME']))
 			{
 				if(!in_array($srcField['FIELD_NAME'], $filter['FIELD_NAME']))
@@ -215,7 +231,6 @@ class UserFieldSynchronizer
 				}
 			}
 
-			$typeID = $srcField['USER_TYPE_ID'];
 			do
 			{
 				$fieldName = 'UF_CRM_'.strtoupper(uniqid());
@@ -260,9 +275,15 @@ class UserFieldSynchronizer
 			$ID = $entity->Add($dstField);
 			if($ID === false)
 			{
+				$ex = $APPLICATION->GetException();
+				if(!($ex instanceof \CApplicationException))
+				{
+					$ex = null;
+				}
+
 				throw new UserFieldSynchronizationException(
 					$dstField,
-					$APPLICATION->GetException(),
+					$ex,
 					UserFieldSynchronizationException::CREATE_FAILED,
 					__FILE__,
 					__LINE__

@@ -32,7 +32,7 @@
 		});
 		this.closeButton = BX.create("button", {
 			props: {className: "ui-btn ui-btn-link"},
-			html: BX.message("LANDING_ALERT_ACTION_CLOSE"),
+			html: BX.Landing.Loc.getMessage("LANDING_ALERT_ACTION_CLOSE"),
 			events: {click: this.onCloseClick}
 		});
 		this.action = BX.create("div", {
@@ -100,7 +100,7 @@
 			if (!this.supportLink)
 			{
 				var url = "https://helpdesk.bitrix24.com/ticket.php";
-				var currentLanguage = BX.message("LANGUAGE_ID");
+				var currentLanguage = BX.Landing.Loc.getMessage("LANGUAGE_ID");
 
 				switch (currentLanguage)
 				{
@@ -123,7 +123,7 @@
 
 				this.supportLink = BX.create("a", {
 					props: {className: "landing-ui-panel-alert-support-link"},
-					html: BX.message("LANDING_ALERT_ACTION_SUPPORT_LINK"),
+					html: BX.Landing.Loc.getMessage("LANDING_ALERT_ACTION_SUPPORT_LINK"),
 					attrs: {href: url, target: '_blank'}
 				});
 			}

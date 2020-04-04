@@ -171,6 +171,17 @@ class Date
 	}
 
 	/**
+	 * Returns difference between dates.
+	 *
+	 * @param DateTime $time
+	 * @return \DateInterval
+	 */
+	public function getDiff(DateTime $time)
+	{
+		return $this->value->diff($time->value);
+	}
+
+	/**
 	 * Converts a date to the string.
 	 *
 	 * @param Context\Culture $culture Culture contains date format.

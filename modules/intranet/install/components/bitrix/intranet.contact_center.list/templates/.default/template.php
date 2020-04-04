@@ -56,19 +56,3 @@ if(!empty($arResult["ADDITIONAL_STYLES"]))
 		</div>
 	</div>
 </div>
-
-<?
-if ($arResult["SHOW_APP_BANNER"])
-{
-	?>
-	<a class="intranet-contact-app-banner" href="javascript:void(0)" id="app-banner">
-		<div class="intranet-contact-app-banner-icon">
-			<div class="intranet-contact-app-banner-icon-arrow"></div>
-		</div>
-		<div class="intranet-contact-app-banner-title">
-			<?= Loc::getMessage("CONTACT_CENTER_APP_BANNER_TITLE");?>
-		</div>
-	</a>
-	<?
-}
-?>

@@ -61,6 +61,12 @@ if ($arParams["TEMPLATE_TYPE"] == "USER_INVITATION" || $arParams["TEMPLATE_TYPE"
 																			"#BLOCK_END#" => "</span></b>"
 																		))?>
 																	</span>
+																	<?if (\Bitrix\Main\ModuleManager::isModuleInstalled("bitrix24")):?>
+																		<br/>
+																		<a href="<?=$httpPrefix?>://<?=BX24_HOST_NAME?>" style="color: #525c69; font-size: 13px; font-family: Helvetica Neue, Helvetica, Arial, sans-serif; text-decoration: none;">
+																			<?=BX24_HOST_NAME?>
+																		</a>
+																	<?endif;?>
 																</td>
 															<?endif?>
 														</tr>
@@ -143,6 +149,13 @@ if ($arParams["TEMPLATE_TYPE"] == "USER_INVITATION" || $arParams["TEMPLATE_TYPE"
 					<tr>
 						<td align="center" style="color: #9FA4AC; font-family: Helvetica, Arial, sans-serif; font-size: 12px; padding-top:11px; text-align: center;"><?=GetMessage("INTRANET_INVITE_FOOTER")?></td>
 					</tr>
+					<tr>
+						<td align="center" style="color: #9FA4AC; font-family: Helvetica, Arial, sans-serif; font-size: 12px; padding-top:11px; text-align: center;">
+							<a style="color: #9FA4AC;" href="<?=$arParams['FIELDS']['MAIL_EVENTS_UNSUBSCRIBE_LINK']?>">
+								<?=GetMessage("INTRANET_MAIL_EVENTS_UNSUBSCRIBE")?>
+							</a>
+						</td>
+					</tr>
 				</table>
 
 			</td>
@@ -198,7 +211,7 @@ if ($arParams["TEMPLATE_TYPE"] == "IM_NEW_NOTIFY" || $arParams["TEMPLATE_TYPE"] 
 
 										<table border="0" cellpadding="0" cellspacing="0" style="margin:0; padding:0; width: 100%;">
 											<tr>
-												<td style="background: #eef2f4 url(http://themozg.com/bitrix/mail/images/bg_im.png) repeat top center;padding: 30px 25px;">
+												<td style="background: #eef2f4 url('<?=$this->getFolder()."/images/bg_im.png"?>') repeat top center;padding: 30px 25px;">
 
 													<table border="0" cellpadding="0" cellspacing="0" style="margin:0; padding:0; width: 100%;min-height: 350px">
 														<tr>

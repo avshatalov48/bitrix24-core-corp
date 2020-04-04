@@ -1,0 +1,65 @@
+.b24-form-btn-container {
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	-webkit-box-align: center;
+	-ms-flex-align: center;
+	align-items: center;
+	position: relative;
+	margin: 0 -5px;
+}
+
+.b24-form-btn-block {
+	padding: 5px;
+	-webkit-box-flex: 1;
+	-ms-flex: 1;
+	flex: 1;
+}
+
+.b24-form-btn {
+	position: relative;
+	display: inline-block;
+	padding: 0 20px;
+	margin: 0;
+	height: 52px;
+	width: 100%;
+	border: none;
+	border-radius: 4px;
+	background-color: #0F58D0;
+	background-color: var(--b24-primary-color);
+	font: 600 15px/51px var(--b24-font-family);
+	box-sizing: border-box;
+	box-shadow: -1px -1px 1px rgba(0, 0, 0, .09);
+	outline: none;
+	cursor: pointer;
+	color: #fff;
+	color: var(--b24-primary-text-color);
+	transition: all 0.2s ease;
+}
+
+.b24-form-btn:hover {
+	background-color: var(--b24-primary-hover-color);
+}
+
+.b24-form-btn-border {
+	border: 1px solid rgba(151, 151, 151, .5);
+	color: rgba(51, 51, 51, .8);
+}
+
+.b24-form-btn.b24-form-btn-white {
+	background-color: #fff;
+	background-color: var(--b24-background-color);
+	color: #000;
+	color: var(--b24-text-color);
+	box-shadow: none;
+}
+
+.b24-form-btn.b24-form-btn-border {
+	background-color: transparent;
+	box-shadow: none;
+	color: #000;
+	color: var(--b24-text-color);
+}
+.b24-form-btn.b24-form-btn-tight {
+	width: initial;
+}

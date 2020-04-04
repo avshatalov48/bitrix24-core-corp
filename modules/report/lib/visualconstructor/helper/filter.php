@@ -10,7 +10,7 @@ use Bitrix\Main\UI\Filter\DateType;
  */
 class Filter
 {
-	protected $boardId;
+	protected $filterId;
 
 	/**
 	 * Base filter constructor.
@@ -19,7 +19,7 @@ class Filter
 	 */
 	public function __construct($boardId)
 	{
-		$this->boardId = $boardId;
+		$this->filterId = $this->createFilterId($boardId);
 	}
 
 	/**
@@ -28,7 +28,7 @@ class Filter
 	public function getFilterParameters()
 	{
 		return array(
-			"FILTER_ID" => 'report_board_' . $this->boardId . '_filter',
+			"FILTER_ID" => $this->filterId,
 			"FILTER" => static::getFieldsList(),
 			"DISABLE_SEARCH" => true,
 			"FILTER_PRESETS" => static::getPresetsList(),
@@ -37,6 +37,11 @@ class Filter
 			'RESET_TO_DEFAULT_MODE' => true,
 			'VALUE_REQUIRED_MODE' => false
 		);
+	}
+
+	public static function createFilterId($boardId)
+	{
+		return 'report_board_' . $boardId . '_filter';
 	}
 
 	/**
@@ -68,21 +73,5 @@ class Filter
 				'default' => true,
 			),
 		);
-	}
-
-
-	public function getJsList()
-	{
-		return [];
-	}
-
-	public function getCssList()
-	{
-		return [];
-	}
-
-	public function getStringList()
-	{
-		return [];
 	}
 }

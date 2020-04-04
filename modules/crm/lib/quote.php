@@ -51,16 +51,16 @@ class QuoteTable extends Entity\DataManager
 				'data_type' => 'integer'
 			),
 			'CURRENCY_ID' => array(
-				'data_type' => 'string'
+				'data_type' => 'float'
 			),
 			'OPPORTUNITY_ACCOUNT' => array(
-				'data_type' => 'integer'
+				'data_type' => 'float'
 			),
 			'ACCOUNT_CURRENCY_ID' => array(
 				'data_type' => 'string'
 			),
 			'EXCH_RATE' => array(
-				'data_type' => 'integer'
+				'data_type' => 'float'
 			),
 			'QUOTE_NUMBER' => array(
 				'data_type' => 'string'

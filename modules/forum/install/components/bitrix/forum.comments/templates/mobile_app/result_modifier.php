@@ -28,8 +28,37 @@ include_once(__DIR__."/functions.php");
 include_once(__DIR__."/../.default/functions.php");
 
 $arResult["PUSH&PULL"] = false;
+$arResult["VISIBLE_RECORDS_COUNT"] = 3;
+
 if (!empty($arResult["MESSAGES"]))
 {
+	if ($arResult['MID'] > 0)
+	{
+		$messagesList = [];
+		foreach($arResult["MESSAGES"] as $messageid => $messageFields)
+		{
+			$arResult["VISIBLE_RECORDS_COUNT"]++;
+			$messagesList[$messageid] = $messageFields;
+			if ($messageid == $arResult['MID'])
+			{
+				break;
+			}
+		}
+
+		$arResult["VISIBLE_RECORDS_COUNT"] = count($messagesList);
+		if ($arResult["VISIBLE_RECORDS_COUNT"] < 3)
+		{
+			$arResult["VISIBLE_RECORDS_COUNT"] = 3;
+		}
+
+		if (count($arResult["MESSAGES"]) > $arResult["VISIBLE_RECORDS_COUNT"])
+		{
+			$arResult["MESSAGES"] = array_slice($arResult["MESSAGES"], 0, $arResult["VISIBLE_RECORDS_COUNT"]);
+		}
+
+		$arResult["NAV_RESULT"]->bShowAll = false;
+	}
+
 	$arResult["NAV_STRING"] = GetPagePath(false, false);
 	if ($arResult["NAV_RESULT"])
 	{

@@ -25,11 +25,6 @@ class RestManager
 //		return ['MODULE_ID' => 'sale'];
 //	}
 
-	protected static function isB24()
-	{
-		return ModuleManager::isModuleInstalled('crm');
-	}
-
 	public static function onRestServiceBuildDescription()
 	{
 		Loader::includeModule('sale');
@@ -62,7 +57,7 @@ class RestManager
 
 					'OnPropertyValueEntitySaved'=>[
 						'sale',
-						self::isB24()? 'OnCrmOrderPropertyValueEntitySaved':'OnSalePropertyValueEntitySaved',
+						'OnSalePropertyValueEntitySaved',
 						[
 							RestManager::class,
 							'processEvent'
@@ -73,7 +68,7 @@ class RestManager
 					],
 					'OnPaymentEntitySaved'=>[
 						'sale',
-						self::isB24()? 'OnCrmOrderPaymentEntitySaved':'OnSalePaymentEntitySaved',
+						'OnSalePaymentEntitySaved',
 						[
 							RestManager::class,
 							'processEvent'
@@ -84,7 +79,7 @@ class RestManager
 					],
 					'OnShipmentEntitySaved'=>[
 						'sale',
-						self::isB24()? 'OnCrmOrderShipmentEntitySaved':'OnSaleShipmentEntitySaved',
+						'OnSaleShipmentEntitySaved',
 						[
 							RestManager::class,
 							'processEvent'
@@ -95,7 +90,7 @@ class RestManager
 					],
 					'OnOrderEntitySaved'=>[
 						'sale',
-						self::isB24()? 'OnCrmOrderOrderEntitySaved':'OnSaleOrderEntitySaved',
+						'OnSaleOrderEntitySaved',
 						[
 							RestManager::class,
 							'processEvent'
@@ -106,7 +101,7 @@ class RestManager
 					],
 					'OnPropertyValueDeleted'=>[
 						'sale',
-						self::isB24()? 'OnCrmOrderPropertyValueDeleted':'OnSalePropertyValueDeleted',
+						'OnSalePropertyValueDeleted',
 						[
 							RestManager::class,
 							'processEvent'
@@ -117,7 +112,7 @@ class RestManager
 					],
 					'OnPaymentDeleted'=>[
 						'sale',
-						self::isB24()? 'OnCrmOrderPaymentDeleted':'OnSalePaymentDeleted',
+						'OnSalePaymentDeleted',
 						[
 							RestManager::class,
 							'processEvent'
@@ -128,7 +123,7 @@ class RestManager
 					],
 					'OnShipmentDeleted'=>[
 						'sale',
-						self::isB24()? 'OnCrmOrderShipmentDeleted':'OnSaleShipmentDeleted',
+						'OnSaleShipmentDeleted',
 						[
 							RestManager::class,
 							'processEvent'
@@ -139,7 +134,7 @@ class RestManager
 					],
 					'OnOrderDeleted'=>[
 						'sale',
-						self::isB24()? 'OnCrmOrderOrderEntitySaved':'OnSaleOrderEntitySaved',
+						'OnSaleOrderEntitySaved',
 						[
 							RestManager::class,
 							'processEvent'
@@ -175,18 +170,18 @@ class RestManager
 				/** @var Entity $entity */
 				$entity = $event->getParameters()['ENTITY'];
 
-				// пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
-				// пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ.пїЅ. пїЅпїЅпїЅпїЅпїЅпїЅпїЅ onsaleordersaved пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
-				// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ deleted пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ onsalebeforeorderdeleterest
-				// пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+				// если сохрянется через импорт, то глушим исходящие событие
+				// если локальное удаление, то тоже глушим событие т.к. событие onsaleordersaved все равно отработате при удалении
+				// проверка на deleted нужна только после вызова события onsalebeforeorderdeleterest
+				// если сохрянется локально, то глушим исходящие событие только при повторном срабатывании события сохраннения
 				if($instance->getAction() == Manager::ACTION_IMPORT || $instance->getAction() == Manager::ACTION_DELETED)
 				{
-					// пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+					// импорт или удаление
 					throw new RestException("Event stopped");
 				}
 				elseif($instance->isExecutedHandler($eventHandler))
 				{
-					//пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+					//локальное срабатывание события
 					throw new RestException("Event stopped");
 				}
 
@@ -196,7 +191,7 @@ class RestManager
 					throw new RestException("Could not find entity ID in fields of event \"{$eventName}\"");
 				}
 
-				//пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ|пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+				//сообщаем внешней системе, что именно мы будем выполнять при синхронизации сохранение|удаление
 				$parameters = ['FIELDS'=>['ID'=>$entity->getId(), 'XML_ID'=>$entity->getField('XML_ID'), 'ACTION'=>Synchronizer::MODE_SAVE]];
 
 				LoggerDiag::addMessage(strtolower($eventName), var_export([
@@ -205,7 +200,7 @@ class RestManager
 					]
 				], true));
 
-				// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
+				// блокируем повторное исполнение обработчика, если изменения заказа порадит поледующие пересохранение заказа, например заупустятся робот
 				$instance->pushHandlerExecuted($eventHandler);
 
 				return $parameters;
@@ -215,16 +210,16 @@ class RestManager
 				/** @var Entity $entity */
 				$entity = $event->getParameters()['ENTITY'];
 
-				// пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
-				// пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
-				// пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ (onpropertyvaluedeleted)
+				// если удаление через импорт, то глушим исходящие событие
+				// если локальное удаление, то отправляем исходящие сообщение во внешнюю сиситему с указанием действия
+				// если локальное удаление и событие удаления вызывают другие сущности (onpropertyvaluedeleted)
 				if($instance->getAction() == Manager::ACTION_IMPORT || $instance->getAction() == Manager::ACTION_DELETED)
 					throw new RestException("Event stopped");
 
-				//TODO: chack - пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ action пїЅ deleted пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ onsaleordersavedrest.
+				//TODO: chack - устанавливаем action в deleted тем самым блокируя следующие событие onsaleordersavedrest.
 				$instance->setAction(Manager::ACTION_DELETED);
 
-				//пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ|пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+				//сообщаем внешней системе, что именно мы будем выполнять при синхронизации сохранение|удаление
 				$parameters = ['FIELDS'=>['ID'=>$entity->getId(), 'XML_ID'=>$entity->getField('XML_ID'), 'ACTION'=>Synchronizer::MODE_DELETE]];
 
 				LoggerDiag::addMessage(strtolower($eventName), var_export([

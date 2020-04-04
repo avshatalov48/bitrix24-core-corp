@@ -472,7 +472,7 @@ class CCatalogAdmin
 			$obRow->aActions[] = array(
 				"ICON" => "list",
 				"TEXT" => CIBlock::GetArrayByID($obRow->arRes["IBLOCK_ID"], "ELEMENTS_NAME"),
-				"ONCLICK" => $obList->ActionRedirect($tmpVar),
+				"ACTION" => $obList->ActionRedirect($tmpVar),
 			);
 		}
 	}

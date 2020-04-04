@@ -49,7 +49,7 @@ class CDavCrmCompanies
 		$map["FN"] = $company["TITLE"];
 		$map["UID"] = $company["ID"];
 		$map["REV"] = date("Ymd\\THis\\Z", MakeTimeStamp($company["DATE_MODIFY"]));
-		$map["URL"] = 'bitrix24://@%';
+		$map["URL"][] = 'bitrix24://@%';
 		$map['IMG'] = !empty($company['LOGO']) ? $company['LOGO'] : '';
 		return $map;
 	}

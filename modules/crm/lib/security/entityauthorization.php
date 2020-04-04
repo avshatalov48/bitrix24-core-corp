@@ -105,7 +105,7 @@ class EntityAuthorization
 		);
 	}
 
-	public static function checkReadPermission($entityTypeID, $entityID, $userPermissions = null)
+	public static function checkReadPermission($entityTypeID, $entityID, $userPermissions = null, array $params = null)
 	{
 		if(!is_int($entityTypeID))
 		{
@@ -123,7 +123,11 @@ class EntityAuthorization
 		}
 		elseif($entityTypeID === \CCrmOwnerType::Deal || $entityTypeID === \CCrmOwnerType::DealRecurring)
 		{
-			return \CCrmDeal::CheckReadPermission($entityID, $userPermissions);
+			return \CCrmDeal::CheckReadPermission(
+				$entityID,
+				$userPermissions,
+				isset($params['DEAL_CATEGORY_ID']) ? (int)$params['DEAL_CATEGORY_ID'] : -1
+			);
 		}
 		elseif($entityTypeID === \CCrmOwnerType::Quote)
 		{

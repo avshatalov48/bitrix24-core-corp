@@ -23,10 +23,12 @@ class OrderSettings
 	private static $descriptions = null;
 	/** @var bool */
 	private static $messagesLoaded = false;
+	/** @var EntityViewSettings */
+	private $entityListView = null;
 
 	function __construct()
 	{
-		$this->defaultListView = new IntegerSetting('order_default_list_view', self::VIEW_LIST);
+		$this->defaultListView = new IntegerSetting('order_default_list_view', self::VIEW_KANBAN);
 		$this->defaultResponsibleId = new IntegerSetting('order_default_responsible_id', 1);
 		$this->isOpened = new BooleanSetting('order_opened_flag', true);
 		$this->enableViewEvent = new BooleanSetting('order_enable_view_event', true);
@@ -92,7 +94,24 @@ class OrderSettings
 	{
 		$this->defaultResponsibleId->set($responsibleId);
 	}
+	/**
+	 * Get current list view ID
+	 * @return int
+	 */
+	public function getCurrentListViewID()
+	{
+		if($this->entityListView === null)
+		{
+			$this->entityListView = new EntityViewSettings();
+		}
 
+		$viewID = $this->entityListView->getViewID(\CCrmOwnerType::Order);
+		if($viewID === EntityViewSettings::UNDEFINED)
+		{
+			$viewID = $this->getDefaultListViewID();
+		}
+		return $viewID;
+	}
 	/**
 	 * Get descriptions of views supported in current context
 	 * @return array

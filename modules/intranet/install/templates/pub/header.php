@@ -5,6 +5,8 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 \Bitrix\Main\Localization\Loc::loadMessages(__FILE__);
 \Bitrix\Main\Localization\Loc::loadMessages(dirname(__FILE__)."/footer.php");
 
+\Bitrix\Main\Loader::includeModule('intranet');
+
 CUtil::initJSCore(array('ajax', 'popup'));
 
 ?><!DOCTYPE html>

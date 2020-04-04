@@ -9,6 +9,8 @@
 namespace Bitrix\Tasks\Integration;
 
 use Bitrix\Bitrix24\Feature;
+use Bitrix\Main\Loader;
+use Bitrix\Main\ModuleManager;
 use \Bitrix\Tasks\Util;
 
 abstract class Bitrix24 extends \Bitrix\Tasks\Integration
@@ -81,5 +83,75 @@ abstract class Bitrix24 extends \Bitrix\Tasks\Integration
 
 		// todo: could be more custom licenses
 		return $type == 'nfr' || $type == 'bis_inc' || $type == 'edu' || $type == 'startup';
+	}
+
+	/**
+	 * Get URL for "Choose a Bitrix24 plan" page.
+	 *
+	 * @return string
+	 */
+	public static function getLicenseListPageUrl()
+	{
+		if (!static::includeModule())
+		{
+			return '';
+		}
+
+		return \CBitrix24::PATH_LICENSE_ALL;
+	}
+
+	/**
+	 * Get variable value.
+	 *
+	 * @param $name - Name of variable
+	 * @return mixed|null
+	 */
+	public static function getVariable($name)
+	{
+		if (!static::includeModule())
+		{
+			return null;
+		}
+
+		return Feature::getVariable($name);
+	}
+
+	/**
+	 * @param array $params
+	 * @return array|null
+	 */
+	public static function prepareStubInfo(array $params)
+	{
+		if (static::includeModule() && method_exists('CBitrix24', 'prepareStubInfo'))
+		{
+			$title = (isset($params['TITLE'])? $params['TITLE'] : '');
+			$content = (isset($params['CONTENT'])? $params['CONTENT'] : '');
+
+			$replacements = (isset($params['REPLACEMENTS']) && is_array($params['REPLACEMENTS'])
+				? $params['REPLACEMENTS'] : []);
+
+			if (!empty($replacements))
+			{
+				$search = array_keys($replacements);
+				$replace = array_values($replacements);
+
+				$title = str_replace($search, $replace, $title);
+				$content = str_replace($search, $replace, $content);
+			}
+
+			$licenseAllButtonClass = ($params['GLOBAL_SEARCH']? 'ui-btn ui-btn-xs ui-btn-light-border' : 'success');
+			$licenseDemoButtonClass = ($params['GLOBAL_SEARCH']? 'ui-btn ui-btn-xs ui-btn-light' : '');
+
+			return \CBitrix24::prepareStubInfo(
+				$title,
+				$content,
+				[
+					['ID' => \CBitrix24::BUTTON_LICENSE_ALL, 'CLASS_NAME' => $licenseAllButtonClass],
+					['ID' => \CBitrix24::BUTTON_LICENSE_DEMO, 'CLASS_NAME' => $licenseDemoButtonClass],
+				]
+			);
+		}
+
+		return null;
 	}
 }

@@ -59,9 +59,6 @@ if ($isBitrix24Template && !$arParams['IS_AJAX_REQUEST'] && $arResult['DATA_COLL
 	<div class="pagetitle-container pagetitle-flexible-space" style="overflow: hidden;">
 		<?
 
-
-		ob_start();
-
 		$APPLICATION->IncludeComponent(
 			'bitrix:main.ui.filter',
 			'',
@@ -74,121 +71,15 @@ if ($isBitrix24Template && !$arParams['IS_AJAX_REQUEST'] && $arResult['DATA_COLL
 				'ENABLE_LIVE_SEARCH' => true,
 				'ENABLE_LABEL' => true,
 				'RESET_TO_DEFAULT_MODE' => false,
+				'MESSAGES' => array(
+					'MAIN_UI_FILTER__DATE_PREV_DAYS_LABEL' => Loc::getMessage('CRM_VOLUME_DATE_PERIOD_PREV_DAYS_LABEL'),
+				),
 			),
 			$component
 		);
 
-		$filter = ob_get_contents();
-		ob_end_clean();
-
-		echo str_replace(
-			array(
-				Loc::getMessage('MAIN_UI_FILTER_FIELD_SUBTYPE_NONE'),
-				Loc::getMessage('MAIN_UI_FILTER_FIELD_SUBTYPE_EXACT'),
-				Loc::getMessage('MAIN_UI_FILTER_FIELD_SUBTYPE_CURRENT_WEEK'),
-				Loc::getMessage('MAIN_UI_FILTER_FIELD_SUBTYPE_CURRENT_MONTH'),
-				Loc::getMessage('MAIN_UI_FILTER_FIELD_SUBTYPE_CURRENT_QUARTER'),
-				Loc::getMessage('MAIN_UI_FILTER_FIELD_SUBTYPE_LAST_7_DAYS'),
-				Loc::getMessage('MAIN_UI_FILTER_FIELD_SUBTYPE_LAST_30_DAYS'),
-				Loc::getMessage('MAIN_UI_FILTER_FIELD_SUBTYPE_LAST_60_DAYS'),
-				Loc::getMessage('MAIN_UI_FILTER_FIELD_SUBTYPE_LAST_90_DAYS'),
-				Loc::getMessage('MAIN_UI_FILTER_FIELD_SUBTYPE_PREV_DAYS'),
-				Loc::getMessage('MAIN_UI_FILTER_FIELD_SUBTYPE_MONTH'),
-				Loc::getMessage('MAIN_UI_FILTER_FIELD_SUBTYPE_QUARTER'),
-				Loc::getMessage('MAIN_UI_FILTER_FIELD_SUBTYPE_YEAR'),
-				Loc::getMessage('MAIN_UI_FILTER_FIELD_SUBTYPE_LAST_WEEK'),
-				Loc::getMessage('MAIN_UI_FILTER_FIELD_SUBTYPE_LAST_MONTH'),
-			),
-			array(
-				Loc::getMessage('CRM_VOLUME_DATE_PERIOD_NONE'),
-				Loc::getMessage('CRM_VOLUME_DATE_PERIOD_EXACT'),
-				Loc::getMessage('CRM_VOLUME_DATE_PERIOD_CURRENT_WEEK'),
-				Loc::getMessage('CRM_VOLUME_DATE_PERIOD_CURRENT_MONTH'),
-				Loc::getMessage('CRM_VOLUME_DATE_PERIOD_CURRENT_QUARTER'),
-				Loc::getMessage('CRM_VOLUME_DATE_PERIOD_LAST_7_DAYS'),
-				Loc::getMessage('CRM_VOLUME_DATE_PERIOD_LAST_30_DAYS'),
-				Loc::getMessage('CRM_VOLUME_DATE_PERIOD_LAST_60_DAYS'),
-				Loc::getMessage('CRM_VOLUME_DATE_PERIOD_LAST_90_DAYS'),
-				Loc::getMessage('CRM_VOLUME_DATE_PERIOD_PREV_DAYS'),
-				Loc::getMessage('CRM_VOLUME_DATE_PERIOD_MONTH'),
-				Loc::getMessage('CRM_VOLUME_DATE_PERIOD_QUARTER'),
-				Loc::getMessage('CRM_VOLUME_DATE_PERIOD_YEAR'),
-				Loc::getMessage('CRM_VOLUME_DATE_PERIOD_LAST_WEEK'),
-				Loc::getMessage('CRM_VOLUME_DATE_PERIOD_LAST_MONTH'),
-			),
-			$filter
-		);
-
 		?>
 	</div>
-	<script type="text/javascript">
-
-		BX.Crm.volume.adjustDateField = function(filterId, valueId, newLabel) {
-			"use strict";
-
-			var adjustDate = function (field)
-			{
-				if (field.TYPE === "DATE")
-				{
-					if (field.SUB_TYPE.VALUE === valueId)
-					{
-						field.SUB_TYPE.NAME = newLabel;
-					}
-
-					for(var i=0; i<field.SUB_TYPES.length; i++)
-					{
-						if (field.SUB_TYPES[i] && field.SUB_TYPES[i].VALUE === valueId)
-						{
-							field.SUB_TYPES[i].NAME = newLabel;
-							break;
-						}
-					}
-				}
-			};
-
-			var adjustPresetDateFields = function (preset)
-			{
-				if (preset)
-				{
-					preset.FIELDS.forEach(adjustDate);
-
-					if (preset.ADDITIONAL)
-					{
-						preset.ADDITIONAL.forEach(adjustDate);
-					}
-				}
-			};
-
-			var filter = BX.Main.filterManager.getById(filterId);
-
-			filter.params.FIELDS.forEach(adjustDate);
-
-			filter.params.DEFAULT_PRESETS.forEach(adjustPresetDateFields);
-			filter.params.PRESETS.forEach(adjustPresetDateFields);
-			adjustPresetDateFields(filter.params.CURRENT_PRESETS);
-		};
-
-		BX(function () {
-			BX.Crm.volume.adjustDateField('<?= $arResult['FILTER_ID'] ?>', 'NONE', '<?= Loc::getMessage('CRM_VOLUME_DATE_PERIOD_NONE') ?>');
-			BX.Crm.volume.adjustDateField('<?= $arResult['FILTER_ID'] ?>', 'EXACT', '<?= Loc::getMessage('CRM_VOLUME_DATE_PERIOD_EXACT') ?>');
-			BX.Crm.volume.adjustDateField('<?= $arResult['FILTER_ID'] ?>', 'CURRENT_WEEK', '<?= Loc::getMessage('CRM_VOLUME_DATE_PERIOD_CURRENT_WEEK') ?>');
-			BX.Crm.volume.adjustDateField('<?= $arResult['FILTER_ID'] ?>', 'CURRENT_MONTH', '<?= Loc::getMessage('CRM_VOLUME_DATE_PERIOD_CURRENT_MONTH') ?>');
-			BX.Crm.volume.adjustDateField('<?= $arResult['FILTER_ID'] ?>', 'CURRENT_QUARTER', '<?= Loc::getMessage('CRM_VOLUME_DATE_PERIOD_CURRENT_QUARTER') ?>');
-			BX.Crm.volume.adjustDateField('<?= $arResult['FILTER_ID'] ?>', 'LAST_7_DAYS', '<?= Loc::getMessage('CRM_VOLUME_DATE_PERIOD_LAST_7_DAYS') ?>');
-			BX.Crm.volume.adjustDateField('<?= $arResult['FILTER_ID'] ?>', 'LAST_30_DAYS', '<?= Loc::getMessage('CRM_VOLUME_DATE_PERIOD_LAST_30_DAYS') ?>');
-			BX.Crm.volume.adjustDateField('<?= $arResult['FILTER_ID'] ?>', 'LAST_60_DAYS', '<?= Loc::getMessage('CRM_VOLUME_DATE_PERIOD_LAST_60_DAYS') ?>');
-			BX.Crm.volume.adjustDateField('<?= $arResult['FILTER_ID'] ?>', 'LAST_90_DAYS', '<?= Loc::getMessage('CRM_VOLUME_DATE_PERIOD_LAST_90_DAYS') ?>');
-			BX.Crm.volume.adjustDateField('<?= $arResult['FILTER_ID'] ?>', 'PREV_DAYS', '<?= Loc::getMessage('CRM_VOLUME_DATE_PERIOD_PREV_DAYS') ?>');
-			BX.Crm.volume.adjustDateField('<?= $arResult['FILTER_ID'] ?>', 'MONTH', '<?= Loc::getMessage('CRM_VOLUME_DATE_PERIOD_MONTH') ?>');
-			BX.Crm.volume.adjustDateField('<?= $arResult['FILTER_ID'] ?>', 'QUARTER', '<?= Loc::getMessage('CRM_VOLUME_DATE_PERIOD_QUARTER') ?>');
-			BX.Crm.volume.adjustDateField('<?= $arResult['FILTER_ID'] ?>', 'YEAR', '<?= Loc::getMessage('CRM_VOLUME_DATE_PERIOD_YEAR') ?>');
-			BX.Crm.volume.adjustDateField('<?= $arResult['FILTER_ID'] ?>', 'LAST_WEEK', '<?= Loc::getMessage('CRM_VOLUME_DATE_PERIOD_LAST_WEEK') ?>');
-			BX.Crm.volume.adjustDateField('<?= $arResult['FILTER_ID'] ?>', 'LAST_MONTH', '<?= Loc::getMessage('CRM_VOLUME_DATE_PERIOD_LAST_MONTH') ?>');
-
-			var filter = BX.Main.filterManager.getById('<?= $arResult['FILTER_ID'] ?>');
-			filter.params["MAIN_UI_FILTER__DATE_PREV_DAYS_LABEL"] = '<?= Loc::getMessage('CRM_VOLUME_DATE_PERIOD_PREV_DAYS') ?>';
-		});
-	</script>
 	<?
 
 	$this->EndViewTarget();

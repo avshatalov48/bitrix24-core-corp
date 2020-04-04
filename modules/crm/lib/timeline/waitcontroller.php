@@ -2,8 +2,9 @@
 namespace Bitrix\Crm\Timeline;
 
 use Bitrix\Main;
+use Bitrix\Crm;
 use Bitrix\Crm\Pseudoactivity\WaitEntry;
-use \Bitrix\Crm\Security\EntityAuthorization;
+use Bitrix\Crm\Security\EntityAuthorization;
 
 class WaitController extends EntityController
 {
@@ -162,6 +163,31 @@ class WaitController extends EntityController
 	public function prepareHistoryDataModel(array $data, array $options = null)
 	{
 		return parent::prepareHistoryDataModel($data, $options);
+	}
+	public function prepareSearchContent(array $params)
+	{
+		$assocEntityID = isset($params['ASSOCIATED_ENTITY_ID']) ? (int)$params['ASSOCIATED_ENTITY_ID'] : 0;
+		if($assocEntityID <= 0)
+		{
+			return '';
+		}
+
+		$result = '';
+
+		$associatedEntityFields = Crm\Pseudoactivity\Entity\WaitTable::getById($assocEntityID)->fetch();
+		if(is_array($associatedEntityFields))
+		{
+			$fields = self::prepareEntityDataModel(
+				$assocEntityID,
+				$associatedEntityFields
+			);
+
+			if(isset($fields['DESCRIPTION_RAW']))
+			{
+				$result = $fields['DESCRIPTION_RAW'];
+			}
+		}
+		return $result;
 	}
 	//endregion
 

@@ -4,8 +4,7 @@ use Bitrix\Main;
 class ContactSettings
 {
 	const VIEW_LIST = EntityViewSettings::LIST_VIEW;
-	const VIEW_WIDGET = EntityViewSettings::WIDGET_VIEW;
-	
+
 	/** @var ContactSettings  */
 	private static $current = null;
 	/** @var bool */
@@ -160,7 +159,6 @@ class ContactSettings
 
 			self::$descriptions= array(
 				self::VIEW_LIST => GetMessage('CRM_CONTACT_SETTINGS_VIEW_LIST'),
-				self::VIEW_WIDGET => GetMessage('CRM_CONTACT_SETTINGS_VIEW_WIDGET')
 			);
 		}
 		return self::$descriptions;

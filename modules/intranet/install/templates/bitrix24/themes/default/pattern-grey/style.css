@@ -1,5 +1,5 @@
 body {
-	background: #eef2f4 url(pattern-grey.svg) 0 0 repeat;
+	background: #eef2f4 url(pattern-grey.svg) 0 0 repeat !important;
 }
 
 #header {
@@ -29,7 +29,7 @@ body {
 }
 
 .feed-add-post-block {
-	padding-top: 15px;
+	padding-top: 4px;
 	background: #fff;
 }
 

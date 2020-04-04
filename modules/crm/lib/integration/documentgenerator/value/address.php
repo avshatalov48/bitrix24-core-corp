@@ -2,6 +2,8 @@
 
 namespace Bitrix\Crm\Integration\DocumentGenerator\Value;
 
+\Bitrix\Main\Loader::includeModule('documentgenerator');
+
 use Bitrix\Crm\Format\AddressSeparator;
 use Bitrix\Crm\Format\EntityAddressFormatter;
 use Bitrix\Crm\Format\RequisiteAddressFormatter;
@@ -19,6 +21,14 @@ class Address extends Value implements Nameable
 	 */
 	public function toString($modifier = null)
 	{
+		if(is_string($this->value))
+		{
+			return $this->value;
+		}
+		elseif(!is_array($this->value))
+		{
+			return '';
+		}
 		$options = $this->getOptions($modifier);
 		$options['SEPARATOR'] = (int)$options['SEPARATOR'];
 		$options['FORMAT'] = (int)$options['FORMAT'];

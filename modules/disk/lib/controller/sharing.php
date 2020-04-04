@@ -53,17 +53,16 @@ final class Sharing extends Engine\Controller
 			return;
 		}
 
+		$rightsManager = Disk\Driver::getInstance()->getRightsManager();
 		$securityContext = $baseObject->getStorage()->getSecurityContext($currentUserId);
-		if (!$baseObject->canShare($securityContext) || !$this->validateTaskName($newTaskName))
+		if (!$baseObject->canShare($securityContext) || !$rightsManager->isValidTaskName($newTaskName))
 		{
 			$this->errorCollection[] = new Error(Loc::getMessage('DISK_ERROR_MESSAGE_DENIED'));
 
 			return;
 		}
 
-		$rightsManager = Disk\Driver::getInstance()->getRightsManager();
 		$maxTaskName = $rightsManager->getPseudoMaxTaskByObjectForUser($baseObject, $currentUserId);
-
 		if ($rightsManager->pseudoCompareTaskName($newTaskName, $maxTaskName) > 0)
 		{
 			$this->errorCollection[] = new Error(Loc::getMessage('DISK_ERROR_MESSAGE_DENIED'));
@@ -92,18 +91,5 @@ final class Sharing extends Engine\Controller
 		];
 
 		$rightsManager->append($baseObject->getRealObject(), $newRights);
-	}
-
-	private function validateTaskName($taskName)
-	{
-		return in_array(
-			$taskName,
-			[
-				Disk\RightsManager::TASK_READ,
-				Disk\RightsManager::TASK_ADD,
-				Disk\RightsManager::TASK_EDIT,
-				Disk\RightsManager::TASK_FULL,
-			]
-		);
 	}
 }

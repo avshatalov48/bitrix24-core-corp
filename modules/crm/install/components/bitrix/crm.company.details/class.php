@@ -3,6 +3,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Crm;
 use Bitrix\Crm\Format\CompanyAddressFormatter;
 use Bitrix\Crm\Format\AddressSeparator;
 use Bitrix\Crm\EntityAddress;
@@ -61,6 +62,8 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 	private $enableOutmodedFields;
 	/** @var array|null */
 	private $defaultFieldValues = null;
+	/** @var bool */
+	private $enableSearchHistory = true;
 
 	public function __construct($component = null)
 	{
@@ -144,6 +147,9 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 			'PATH_TO_USER_PROFILE' => $this->arResult['PATH_TO_USER_PROFILE'],
 			'NAME_TEMPLATE' => $this->arResult['NAME_TEMPLATE']
 		);
+
+		$this->enableSearchHistory = !isset($this->arParams['~ENABLE_SEARCH_HISTORY'])
+			|| strtoupper($this->arParams['~ENABLE_SEARCH_HISTORY']) === 'Y';
 
 		$this->setEntityID($this->arResult['ENTITY_ID']);
 
@@ -529,7 +535,10 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 						'templates' => CBPDocument::getTemplatesForStart(
 							$this->userID,
 							array('crm', 'CCrmDocumentCompany', 'COMPANY'),
-							array('crm', 'CCrmDocumentCompany', 'COMPANY_'.$this->entityID)
+							array('crm', 'CCrmDocumentCompany', 'COMPANY_'.$this->entityID),
+							[
+								'DocumentStates' => []
+							]
 						),
 						'moduleId' => 'crm',
 						'entity' => 'CCrmDocumentCompany',
@@ -700,6 +709,18 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 
 		$this->includeComponentTemplate();
 	}
+	public function isSearchHistoryEnabled()
+	{
+		return $this->enableSearchHistory;
+	}
+	public function enableSearchHistory($enable)
+	{
+		if(!is_bool($enable))
+		{
+			$enable = (bool)$enable;
+		}
+		$this->enableSearchHistory = $enable;
+	}
 	public function getEntityID()
 	{
 		return $this->entityID;
@@ -834,17 +855,14 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 			array(
 				'name' => 'CONTACT',
 				'title' => Loc::getMessage('CRM_COMPANY_FIELD_CONTACT'),
-				'type' => 'client',
+				'type' => 'client_light',
 				'editable' => true,
 				'data' => array(
-					'map' => array(
-						'secondaryEntityType' => '',
-						'secondaryEntityIds' => 'CONTACT_ID'
-					),
-					'enablePrimaryEntity' => false,
-					'secondaryEntityTypeName' => CCrmOwnerType::ContactName,
-					'secondaryEntityInfo' => 'CONTACT_DATA',
-					'secondaryEntityLegend' => Loc::getMessage('CRM_COMPANY_FIELD_CONTACT_LEGEND'),
+					'map' => array('data' => 'CLIENT_DATA'),
+					'info' => 'CLIENT_INFO',
+					'fixedLayoutType' => 'CONTACT',
+					'lastContactInfos' => 'LAST_CONTACT_INFOS',
+					'contactLegend' => Loc::getMessage('CRM_COMPANY_FIELD_CONTACT_LEGEND'),
 					'loaders' => array(
 						'primary' => array(
 							CCrmOwnerType::ContactName => array(
@@ -1262,7 +1280,7 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 		//endregion
 		//region Contact Data & Multifield Data
 		$contactData = array();
-		$multiFildData = array();
+		$multiFieldData = array();
 		if($this->entityID > 0)
 		{
 			$multiFieldDbResult = \CCrmFieldMulti::GetList(
@@ -1329,21 +1347,21 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 					|| ($typeID === 'IM' && preg_match('/^imol\|/', $value) === 1)
 				)
 				{
-					if(!isset($multiFildData[$typeID]))
+					if(!isset($multiFieldData[$typeID]))
 					{
-						$multiFildData[$typeID] = array();
+						$multiFieldData[$typeID] = array();
 					}
 
-					if(!isset($multiFildData[$typeID][$entityKey]))
+					if(!isset($multiFieldData[$typeID][$entityKey]))
 					{
-						$multiFildData[$typeID][$entityKey] = array();
+						$multiFieldData[$typeID][$entityKey] = array();
 					}
 
 					$formattedValue = $typeID === 'PHONE'
 						? Main\PhoneNumber\Parser::getInstance()->parse($value)->format()
 						: $value;
 
-					$multiFildData[$typeID][$entityKey][] = array(
+					$multiFieldData[$typeID][$entityKey][] = array(
 						'ID' => $multiFieldID,
 						'VALUE' => $value,
 						'VALUE_TYPE' => $valueType,
@@ -1374,7 +1392,7 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 				}
 			}
 		}
-		$this->entityData['MULTIFIELD_DATA'] = $multiFildData;
+		$this->entityData['MULTIFIELD_DATA'] = $multiFieldData;
 
 		$contactIDs = array();
 		if($this->entityID > 0)
@@ -1397,12 +1415,24 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 					'IS_HIDDEN' => !$isEntityReadPermitted,
 					'REQUIRE_REQUISITE_DATA' => false,
 					'REQUIRE_MULTIFIELDS' => true,
+					'NORMALIZE_MULTIFIELDS' => true,
 					'REQUIRE_BINDINGS' => true,
 					'NAME_TEMPLATE' => \Bitrix\Crm\Format\PersonNameFormatter::getFormat()
 				)
 			);
 		}
-		$this->entityData['CONTACT_DATA'] = $contactData;
+		$this->entityData['CLIENT_INFO'] = array('CONTACT_DATA' => $contactData);
+
+		if($this->enableSearchHistory)
+		{
+			$this->entityData['LAST_CONTACT_INFOS'] = Crm\Controller\Action\Entity\SearchAction::prepareSearchResultsJson(
+				Crm\Controller\Entity::getRecentlyUsedItems(
+					'crm.company.details',
+					'contact',
+					array('EXPAND_ENTITY_TYPE_ID' => CCrmOwnerType::Contact)
+				)
+			);
+		}
 		//endregion
 
 		//region Images
@@ -1411,8 +1441,8 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 		{
 			$fileResizeInfo = $file->ResizeImageGet(
 				$logoID,
-				array('width' => 200, 'height'=> 200),
-				BX_RESIZE_IMAGE_EXACT
+				array('width' => 300, 'height'=> 300),
+				BX_RESIZE_IMAGE_PROPORTIONAL
 			);
 			if(is_array($fileResizeInfo) && isset($fileResizeInfo['src']))
 			{

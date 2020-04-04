@@ -1,24 +1,41 @@
-<? if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
+<?php if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Text\HtmlFilter;
+use Bitrix\Main\UI\Extension;
+use Bitrix\Main\Web\Json;
 
-\Bitrix\Main\UI\Extension::load("ui.buttons");
+Extension::load([
+	'ui.buttons',
+	'ui.buttons.icons',
+]);
+
+Loc::loadMessages(__FILE__);
 
 $this->SetViewTarget('pagetitle');
-?>
 
-<? if ($arParams['SECTION'] == 'TEMPLATES')
+$section = $arResult['DATA']['SECTION'];
+
+if ($section === 'TEMPLATES')
 {
 	$button = $arParams['ADD_BUTTON'];
 	?>
-	<a class="webform-small-button webform-small-button-blue webform-small-button-add sonet-groups-add-button" href="<?= HtmlFilter::encode($button['URL']);?>">
+	<a class="webform-small-button webform-small-button-blue webform-small-button-add sonet-groups-add-button" href="<?=HtmlFilter::encode($button['URL'])?>">
 	    <span class="webform-small-button-icon"></span>
-		<?= HtmlFilter::encode($button['NAME']);?>
+		<?=HtmlFilter::encode($button['NAME'])?>
 	</a>
-	<?
+	<?php
 }
-elseif ($arParams['SECTION'] == 'EDIT_TASK')
+elseif ($section === 'EDIT_TASK')
 {
+	$APPLICATION->IncludeComponent(
+		'bitrix:ui.feedback.form',
+		'',
+		$arResult['DATA']['FEEDBACK_FORM_PARAMETERS']
+	);
+	?>
+	<button id="taskEditPopupMenuOptions" class="ui-btn ui-btn-light-border ui-btn-themes ui-btn-icon-setting"></button>
+	<?php
 	$APPLICATION->IncludeComponent(
 		"bitrix:tasks.task.detail.parts",
 		"flat",
@@ -40,9 +57,15 @@ elseif ($arParams['SECTION'] == 'EDIT_TASK')
 		array("HIDE_ICONS" => "Y", "ACTIVE_COMPONENT" => "Y")
 	);
 }
-elseif ($arParams['SECTION'] == 'VIEW_TASK')
+elseif ($section === 'VIEW_TASK')
 {
 	$button = $arParams['ADD_BUTTON'];
+
+	$APPLICATION->IncludeComponent(
+		'bitrix:ui.feedback.form',
+		'',
+		$arResult['DATA']['FEEDBACK_FORM_PARAMETERS']
+	);
 	?>
 
 	<?php
@@ -64,14 +87,30 @@ elseif ($arParams['SECTION'] == 'VIEW_TASK')
 	}
 
 	?>
-
+	<button id="taskViewPopupMenuOptions" class="ui-btn ui-btn-light-border ui-btn-themes ui-btn-icon-setting"></button>
 	<span class="ui-btn-double ui-btn-primary">
-		<a class="ui-btn-main" href="<?= HtmlFilter::encode($button['URL']);?>" id="<?= HtmlFilter::encode($button['ID']);?>-btn">
-			<?= HtmlFilter::encode($button['NAME']);?>
+		<a class="ui-btn-main" href="<?=HtmlFilter::encode($button['URL'])?>" id="<?=HtmlFilter::encode($button['ID'])?>-btn">
+			<?=HtmlFilter::encode($button['NAME'])?>
 		</a>
-		<span class="ui-btn-extra" id="<?= HtmlFilter::encode($button['ID']);?>"></span>
+		<span class="ui-btn-extra" id="<?=HtmlFilter::encode($button['ID'])?>"></span>
 	</span>
-	<?
+	<?php
 }?>
 
-<? $this->EndViewTarget(); ?>
+<?php $this->EndViewTarget(); ?>
+
+<script type="text/javascript">
+	BX.ready(function()
+	{
+		BX.message({
+			"POPUP_MENU_CHECKLIST_SECTION": '<?=GetMessageJs('TASKS_INTERFACE_FILTER_BUTTONS_POPUP_MENU_CHECKLIST_SECTION')?>',
+			"POPUP_MENU_SHOW_COMPLETED": '<?=GetMessageJS('TASKS_INTERFACE_FILTER_BUTTONS_POPUP_MENU_SHOW_COMPLETED')?>',
+			"POPUP_MENU_SHOW_ONLY_MINE": '<?=GetMessageJs('TASKS_INTERFACE_FILTER_BUTTONS_POPUP_MENU_SHOW_ONLY_MINE')?>'
+		});
+
+		new BX.Tasks.InterfaceFilterButtons(<?=Json::encode([
+			'section' => $arParams['SECTION'],
+			'checklistShowCompleted' => $arResult['CHECKLIST_OPTION_SHOW_COMPLETED'],
+		])?>);
+	});
+</script>

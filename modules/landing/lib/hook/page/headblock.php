@@ -2,6 +2,8 @@
 namespace Bitrix\Landing\Hook\Page;
 
 use \Bitrix\Landing\Field;
+use \Bitrix\Landing\Manager;
+use \Bitrix\Main\ModuleManager;
 use \Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__FILE__);
@@ -25,16 +27,69 @@ class HeadBlock extends \Bitrix\Landing\Hook\Page
 	var googletag = googletag || {};
 	googletag.cmd = googletag.cmd || [];
 </script>'
-			)),
-			'CSS_CODE' => new Field\Textarea('CSS_CODE', array(
-				'title' => Loc::getMessage('LANDING_HOOK_HEADBLOCK_CSS_CODE'),
-				'help' => Loc::getMessage('LANDING_HOOK_HEADBLOCK_CSS_CODE_HELP'),
-				'placeholder' => '* {display: none;}'
-			)),
-			'CSS_FILE' => new Field\Textarea('CSS_FILE', array(
-				'title' => Loc::getMessage('LANDING_HOOK_HEADBLOCK_CSS_FILE')
 			))
 		);
+	}
+
+	/**
+	 * Enable only in high plan or not.
+	 * @return boolean
+	 */
+	public function isFree()
+	{
+		return false;
+	}
+
+	/**
+	 * Locked or not current hook in free plan.
+	 * @return bool
+	 */
+	public function isLocked()
+	{
+		return $this->isLockedFeature();
+	}
+
+	/**
+	 * Locked or not current hook in free plan.
+	 * @return bool
+	 */
+	public static function isLockedFeature()
+	{
+		if (ModuleManager::isModuleInstalled('bitrix24'))
+		{
+			$checkFeature = Manager::checkFeature(
+				Manager::FEATURE_ENABLE_ALL_HOOKS,
+				['hook' => 'headblock']
+			);
+			if ($checkFeature)
+			{
+				return false;
+			}
+			$dateCreate = \Bitrix\Main\Config\Option::get(
+				'main', '~controller_date_create'
+			);
+			// for all portals early than 01.07.2019, feature are available
+			if ($dateCreate < 1562000000)
+			{
+				// this option will be set after downgrade in bitrix24
+				return Manager::getOption('html_disabled', 'N') == 'Y';
+			}
+			else
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * Gets message for locked state.
+	 * @return string
+	 */
+	public function getLockedMessage()
+	{
+		return Loc::getMessage('LANDING_HOOK_HEADBLOCK_LOCKED');
 	}
 
 	/**
@@ -43,7 +98,7 @@ class HeadBlock extends \Bitrix\Landing\Hook\Page
 	 */
 	public function getTitle()
 	{
-		return Loc::getMessage('LANDING_HOOK_HEADBLOCK_NAME');
+		return Loc::getMessage('LANDING_HOOK_HEADBLOCK_NAME2');
 	}
 
 	/**
@@ -56,21 +111,31 @@ class HeadBlock extends \Bitrix\Landing\Hook\Page
 	}
 
 	/**
-	 * Exec or not hook in edit mode.
-	 * @return true
-	 */
-	public function enabledInEditMode()
-	{
-		return false;
-	}
-
-	/**
 	 * Enable or not the hook.
 	 * @return boolean
 	 */
 	public function enabled()
 	{
+		if ($this->isLocked())
+		{
+			return false;
+		}
+
+		if ($this->issetCustomExec())
+		{
+			return true;
+		}
+
 		return $this->fields['USE']->getValue() == 'Y';
+	}
+
+	/**
+	 * Exec or not hook in edit mode.
+	 * @return boolean
+	 */
+	public function enabledInEditMode()
+	{
+		return false;
 	}
 
 	/**
@@ -79,9 +144,17 @@ class HeadBlock extends \Bitrix\Landing\Hook\Page
 	 */
 	public function exec()
 	{
+		if ($this->isLocked())
+		{
+			return;
+		}
+
+		if ($this->execCustom())
+		{
+			return;
+		}
+
 		$code = trim($this->fields['CODE']);
-		$cssCode = trim($this->fields['CSS_CODE']);
-		$cssFile = trim($this->fields['CSS_FILE']);
 
 		if ($code != '')
 		{
@@ -90,14 +163,6 @@ class HeadBlock extends \Bitrix\Landing\Hook\Page
 				'<script data-skip-moving="true"', $code
 			);
 			\Bitrix\Main\Page\Asset::getInstance()->addString($code);
-		}
-		if ($cssCode != '')
-		{
-			echo '<style type="text/css">' . $cssCode . '</style>';
-		}
-		if ($cssFile != '')
-		{
-			echo '<link href="' . \htmlspecialcharsbx($cssFile) . '" type="text/css"  rel="stylesheet" />';
 		}
 	}
 }

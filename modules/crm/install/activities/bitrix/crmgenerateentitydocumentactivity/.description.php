@@ -34,6 +34,10 @@ $arActivityDescription = array(
 			'NAME' => GetMessage('CRM_ACTIVITY_GENERATE_ENTITY_DOCX_FILE'),
 			'TYPE' => 'file',
 		),
+		'DocumentNumber' => array(
+			'NAME' => GetMessage('CRM_ACTIVITY_GENERATE_ENTITY_DOCUMENT_NUMBER'),
+			'TYPE' => 'string',
+		),
 	),
 	'ROBOT_SETTINGS' => array(
 		'CATEGORY' => 'employee'

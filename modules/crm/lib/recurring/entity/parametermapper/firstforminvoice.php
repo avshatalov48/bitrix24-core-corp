@@ -2,7 +2,8 @@
 namespace Bitrix\Crm\Recurring\Entity\ParameterMapper;
 
 use \Bitrix\Crm\Recurring\DateType,
-	\Bitrix\Crm\Recurring\Calculator;
+	\Bitrix\Crm\Recurring\Calculator,
+	\Bitrix\Main\Type\Date;
 
 class FirstFormInvoice extends InvoiceMap
 {
@@ -10,6 +11,7 @@ class FirstFormInvoice extends InvoiceMap
 	protected static $instance = null;
 
 	const FIELD_PERIOD_NAME = 'PERIOD';
+	const FIELD_INTERVAL_NAME = 'INTERVAL';
 	const FIELD_DAILY_INTERVAL_DAY_NAME = 'DAILY_INTERVAL_DAY';
 	const FIELD_DAILY_WORKDAY_ONLY_NAME = 'DAILY_WORKDAY_ONLY';
 	const FIELD_DAILY_TYPE_NAME = 'DAILY_TYPE';
@@ -33,11 +35,15 @@ class FirstFormInvoice extends InvoiceMap
 	const FIELD_DATE_PAY_BEFORE_TYPE_NAME = 'DATE_PAY_BEFORE_TYPE';
 	const FIELD_DATE_PAY_BEFORE_PERIOD_NAME = 'DATE_PAY_BEFORE_PERIOD';
 	const FIELD_DATE_PAY_BEFORE_OFFSET_NAME = 'DATE_PAY_BEFORE_COUNT';
+	const FIELD_IS_ALLOWED_TO_SEND_BILL_NAME = 'RECURRING_EMAIL_SEND';
+	const FIELD_EMAIL_ID_NAME = 'RECURRING_EMAIL_ID';
+	const FIELD_EMAIL_TEMPLATE_ID_NAME = 'EMAIL_TEMPLATE_ID';
 
 	protected function getScheme()
 	{
 		return [
 			self::FIELD_PERIOD => self::FIELD_PERIOD_NAME,
+			self::FIELD_INTERVAL => self::FIELD_INTERVAL_NAME,
 			self::FIELD_DAILY_INTERVAL => self::FIELD_DAILY_INTERVAL_DAY_NAME,
 			self::FIELD_DAILY_WORKDAY_ONLY => self::FIELD_DAILY_WORKDAY_ONLY_NAME,
 			self::FIELD_DAILY_TYPE => self::FIELD_DAILY_TYPE_NAME,
@@ -61,6 +67,9 @@ class FirstFormInvoice extends InvoiceMap
 			self::FIELD_DATE_PAY_BEFORE_TYPE => self::FIELD_DATE_PAY_BEFORE_TYPE_NAME,
 			self::FIELD_DATE_PAY_BEFORE_PERIOD => self::FIELD_DATE_PAY_BEFORE_PERIOD_NAME,
 			self::FIELD_DATE_PAY_BEFORE_OFFSET => self::FIELD_DATE_PAY_BEFORE_OFFSET_NAME,
+			self::FIELD_IS_ALLOWED_TO_SEND_BILL => self::FIELD_IS_ALLOWED_TO_SEND_BILL_NAME,
+			self::FIELD_EMAIL_ID => self::FIELD_EMAIL_ID_NAME,
+			self::FIELD_EMAIL_TEMPLATE_ID => self::FIELD_EMAIL_TEMPLATE_ID_NAME,
 		];
 	}
 
@@ -109,5 +118,95 @@ class FirstFormInvoice extends InvoiceMap
 		$this->mode = $this->map[self::FIELD_PERIOD];
 		$this->unitType = $this->map[$this->getUnitTypeMapCode()];
 		$this->interval = $this->map[$this->getIntervalMapCode()];
+	}
+
+	public function checkMatchingDate(Date $date)
+	{
+		switch ($this->mode)
+		{
+			case Calculator::SALE_TYPE_DAY_OFFSET:
+				return true;
+				break;
+
+			case Calculator::SALE_TYPE_WEEK_OFFSET:
+				$weekdays = $this->map[self::FIELD_WEEKLY_WEEKDAYS];
+				if (is_array($weekdays))
+				{
+					return in_array($date->format('N'), $weekdays);
+				}
+				break;
+
+			case Calculator::SALE_TYPE_MONTH_OFFSET:
+				if ($this->unitType === DateType\Month::TYPE_DAY_OF_ALTERNATING_MONTHS)
+				{
+					return (int)$date->format('j') === (int)$this->map[self::FIELD_MONTHLY_FIRST_TYPE_INTERVAL_DAY];
+				}
+				elseif ($this->unitType === DateType\Month::TYPE_WEEKDAY_OF_ALTERNATING_MONTHS)
+				{
+					if ((int)$date->format('N') !== (int)$this->map[self::FIELD_MONTHLY_SECOND_TYPE_WEEKDAY])
+					{
+						return false;
+					}
+
+					if ($this->map[self::FIELD_MONTHLY_SECOND_TYPE_WEEK_VALUE] === DateType\Month::LAST_WEEK_IN_MONTH_VALUE)
+					{
+						$currentMonth = $date->format('n');
+						$date->add('1 week');
+						return $currentMonth !== $date->format('n');
+					}
+					else
+					{
+						$weekValue = (int)(floor($date->format('j') / 7));
+						return $weekValue === (int)$this->map[self::FIELD_MONTHLY_SECOND_TYPE_WEEK_VALUE];
+					}
+				}
+				else
+				{
+					return true;
+				}
+				break;
+
+			case Calculator::SALE_TYPE_YEAR_OFFSET:
+				if ($this->unitType === DateType\Year::TYPE_DAY_OF_CERTAIN_MONTH)
+				{
+					if ((int)$date->format('j') !== (int)$this->map[self::FIELD_YEARLY_FIRST_TYPE_INTERVAL_DAY])
+					{
+						return false;
+					}
+
+					return (int)$date->format('n') === (int)$this->map[self::FIELD_YEARLY_FIRST_TYPE_INTERVAL_MONTH];
+				}
+				elseif ($this->unitType === DateType\Year::TYPE_WEEKDAY_OF_CERTAIN_MONTH)
+				{
+					if ((int)$date->format('N') !== (int)$this->map[self::FIELD_YEARLY_SECOND_TYPE_WEEKDAY])
+					{
+						return false;
+					}
+
+					if ((int)$date->format('n') !== (int)$this->map[self::FIELD_YEARLY_SECOND_TYPE_INTERVAL_MONTH])
+					{
+						return false;
+					}
+
+					if ((int)$this->map[self::FIELD_YEARLY_SECOND_TYPE_WEEK_VALUE] === DateType\Month::LAST_WEEK_IN_MONTH_VALUE)
+					{
+						$currentMonth = $date->format('n');
+						$date->add('1 week');
+						return $currentMonth !== $date->format('n');
+					}
+					else
+					{
+						$weekValue = (int)(floor($date->format('j') / 7));
+						return ($weekValue === (int)$this->map[self::FIELD_YEARLY_SECOND_TYPE_WEEK_VALUE]);
+					}
+				}
+				else
+				{
+					return true;
+				}
+				break;
+		}
+
+		return false;
 	}
 }

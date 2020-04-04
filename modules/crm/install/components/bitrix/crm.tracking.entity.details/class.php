@@ -55,16 +55,6 @@ class CCrmTrackingEntityDetailsComponent extends CBitrixComponent
 		$entityTypeId = (int) $this->arParams['ENTITY_TYPE_ID'];
 		$entityId = (int) $this->arParams['ENTITY_ID'];
 
-		$data = [
-			'ROW' => [],
-			'SOURCE' => [],
-			'PAGES' => [],
-			'SITE_DOMAIN' => null,
-			'IS_MOBILE' => false,
-			'SOURCES' => [],
-		];
-
-
 		///// SOURCES //////////////////////////
 		static $actualSources = null;
 		if ($actualSources === null)
@@ -75,70 +65,96 @@ class CCrmTrackingEntityDetailsComponent extends CBitrixComponent
 				array_values($actualSources)
 			);
 		}
-		$data['SOURCES'] = $actualSources;
 
+		///// TRACES //////////////////////////
+		$traces = Tracking\Internals\TraceTable::getList([
+			'select' => ['ID', 'SOURCE_ID', 'PAGES_RAW', 'IS_MOBILE'],
+			'filter' => [
+				'=ENTITY.ENTITY_TYPE_ID' => $entityTypeId,
+				'=ENTITY.ENTITY_ID' => $entityId,
+			],
+			'order' => ['DATE_CREATE' => 'DESC'],
+			'limit' => 10
+		])->fetchAll();
 
-		///// ROW //////////////////////////
-		static $row = false;
-		if ($row === false)
-		{
-			$row = Tracking\Internals\TraceEntityTable::getRowByEntity($entityTypeId, $entityId);
-		}
-		$data['ROW'] = $row;
-
-		///// SOURCE //////////////////////////
-		$trace = null;
-		if ($row)
-		{
-			$trace = Tracking\Internals\TraceTable::getRow([
-				'select' => ['SOURCE_ID', 'PAGES_RAW', 'IS_MOBILE'],
-				'filter' => ['=ID' => $row['TRACE_ID']]
-			]);
-		}
-		if ($trace)
-		{
-			$data['IS_MOBILE'] = $trace['IS_MOBILE'] === 'Y';
-			if ($trace['SOURCE_ID'] && isset($actualSources[$trace['SOURCE_ID']]))
+		$traces = array_filter(
+			$traces,
+			function ($trace, $index) use ($actualSources)
 			{
-				$data['SOURCE'] = $actualSources[$trace['SOURCE_ID']];
+				// old: skip traces without source, except first
+				if (/*$index > 0 && */!$trace['SOURCE_ID'])
+				{
+					return true;
+				}
+
+				return isset($actualSources[$trace['SOURCE_ID']]);
+			},
+			ARRAY_FILTER_USE_BOTH
+		);
+
+		$traces = array_combine(
+			array_column($traces, 'ID'),
+			array_values($traces)
+		);
+
+		foreach ($traces as $traceId => $trace)
+		{
+			///// SITE_DOMAIN
+			$site = null;
+			$collection = Tracking\Channel\Factory::createCollection($traceId);
+			foreach ($collection as $channel)
+			{
+				/** @var Tracking\Channel\Base $channel */
+				if (!$channel->isSite())
+				{
+					continue;
+				}
+
+				$site = [
+					'CAPTION' => $channel->getName(),
+					'DOMAIN' => $channel->getDescription()
+				];
+			}
+
+			///// SOURCE
+			$source = ($trace['SOURCE_ID'] && isset($actualSources[$trace['SOURCE_ID']]))
+				? $actualSources[$trace['SOURCE_ID']]
+				: null;
+
+			if (empty($site) && !$source)
+			{
+				continue;
 			}
 
 			$trace['PAGES_RAW'] = is_array($trace['PAGES_RAW'])
 				? array_slice($trace['PAGES_RAW'], 0, 5)
 				: [];
-			$data['PAGES'] = array_map(
-				function ($page)
-				{
-					$page['DATE_INSERT'] = FormatDate(
-						'j F H:i',
-						$page['DATE_INSERT']
-					);
-					return $page;
-				},
-				$trace['PAGES_RAW']
-			);
-		}
 
-		///// SITE_DOMAIN //////////////////////////
-		$collection = Tracking\Channel\Factory::createCollection($row['TRACE_ID']);
-		foreach ($collection as $channel)
-		{
-			/** @var Tracking\Channel\Base $channel */
-			if (!$channel->isSite())
-			{
-				continue;
-			}
-
-			$data['SITE'] = [
-				'CAPTION' => $channel->getName(),
-				'DOMAIN' => $channel->getDescription()
+			$traces[$traceId] = [
+				'ROW' => $trace,
+				'SOURCE' => $source,
+				'SITE' => $site,
+				'IS_MOBILE' => $trace['IS_MOBILE'] === 'Y',
+				'PAGES' => array_map(
+					function ($page)
+					{
+						$ts = $page['DATE_INSERT'];
+						if ($ts)
+						{
+							$ts = DateTime::createFromTimestamp($ts)
+								->toUserTime()
+								->getTimestamp();
+						}
+						$page['DATE_INSERT'] = FormatDate('j F H:i', $ts);
+						return $page;
+					},
+					$trace['PAGES_RAW']
+				)
 			];
 		}
 
-		$data['IS_EMPTY'] = empty($data['ROW']) || (
-			$collection->isEmpty() && empty($data['SOURCE'])
-		);
-		$this->arResult['DATA'] = $data;
+		$this->arResult['TRACES'] = $traces;
+		$this->arResult['SOURCES'] = $actualSources;
 		$this->includeComponentTemplate();
 	}
 }

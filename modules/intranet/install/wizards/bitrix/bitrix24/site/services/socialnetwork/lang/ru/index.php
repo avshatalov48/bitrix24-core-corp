@@ -19,4 +19,8 @@ $MESS["SONET_TASK_DESCRIPTION_2"] = "Пригласить новых сотру�
 $MESS["GENERAL_GROUP_NAME"] = "Основные форумы";
 $MESS["COMMENTS_GROUP_NAME"] = "Форумы для комментариев";
 $MESS["HIDDEN_GROUP_NAME"] = "Скрытые форумы";
+$MESS["SONET_USER_TAG_1"] = "кино";
+$MESS["SONET_USER_TAG_2"] = "спорт";
+$MESS["SONET_USER_TAG_3"] = "музыка";
+$MESS["SONET_USER_TAG_4"] = "путешествия";
 ?>

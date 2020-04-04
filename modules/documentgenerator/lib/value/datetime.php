@@ -106,7 +106,27 @@ class DateTime extends Value implements Nameable
 	 */
 	public static function parseModifier($modifier)
 	{
-		return ['format' => $modifier];
+		$data = parent::parseModifier($modifier);
+		if(empty($data))
+		{
+			$data = ['format' => $modifier];
+		}
+		elseif(!isset($data['format']))
+		{
+			$format = '';
+			$parts = explode(',', $modifier);
+			foreach($parts as $part)
+			{
+				if(strpos($part, '=') === false)
+				{
+					$format = $part;
+					break;
+				}
+			}
+			$data['format'] = $format;
+		}
+
+		return $data;
 	}
 
 	/**

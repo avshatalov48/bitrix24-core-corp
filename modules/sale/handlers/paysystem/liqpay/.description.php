@@ -31,7 +31,7 @@ $data = array(
 			'SORT' => 300,
 			'GROUP' => 'CONNECT_SETTINGS_LIQPAY',
 			"DEFAULT" => array(
-				"PROVIDER_VALUE" => "http://".$_SERVER["HTTP_HOST"]."/personal/orders/",
+				"PROVIDER_VALUE" => (!IsModuleInstalled('crm')) ? "https://".$_SERVER["HTTP_HOST"]."/personal/orders/" : '',
 				"PROVIDER_KEY" => "VALUE"
 			)
 		),
@@ -40,7 +40,7 @@ $data = array(
 			'SORT' => 400,
 			'GROUP' => 'CONNECT_SETTINGS_LIQPAY',
 			"DEFAULT" => array(
-				"PROVIDER_VALUE" => "http://".$_SERVER["HTTP_HOST"]."/personal/ps_result.php",
+				"PROVIDER_VALUE" => "https://".$_SERVER["HTTP_HOST"]."/bitrix/tools/sale_ps_result.php",
 				"PROVIDER_KEY" => "VALUE"
 			)
 		),
@@ -84,7 +84,17 @@ $data = array(
 			"NAME" => Loc::getMessage("SALE_HPS_LIQPAY_PAYMENT_PM"),
 			'SORT' => 900,
 			'GROUP' => 'CONNECT_SETTINGS_LIQPAY'
-		)
+		),
+		"LIQPAY_PAYMENT_DESCRIPTION" => array(
+			"NAME" => Loc::getMessage("SALE_HPS_LIQPAY_PAYMENT_DESCRIPTION"),
+			"DESCRIPTION" => Loc::getMessage("SALE_HPS_LIQPAY_PAYMENT_DESCRIPTION_DESC"),
+			'SORT' => 1000,
+			'GROUP' => 'CONNECT_SETTINGS_LIQPAY',
+			'DEFAULT' => array(
+				'PROVIDER_KEY' => 'VALUE',
+				'PROVIDER_VALUE' => Loc::getMessage("SALE_HPS_LIQPAY_PAYMENT_DESCRIPTION_TEMPLATE"),
+			)
+		),
 	)
 );
 

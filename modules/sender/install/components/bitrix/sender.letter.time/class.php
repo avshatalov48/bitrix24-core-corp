@@ -121,6 +121,12 @@ class SenderLetterTimeComponent extends CBitrixComponent
 			}
 
 			$method->apply();
+
+			if ($this->letter->hasErrors())
+			{
+				$this->errors->add($this->letter->getErrors());
+				return;
+			}
 		}
 
 		if ($this->errors->isEmpty())

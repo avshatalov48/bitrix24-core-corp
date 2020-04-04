@@ -35,7 +35,7 @@ $MESS["TASKS_TTDP_TEMPLATE_USER_VIEW_LEAVE_AUDITOR"] = "не наблюдать"
 $MESS["TASKS_TTDP_TEMPLATE_USER_VIEW_LEAVE_AUDITOR_CONFIRM"] = "При выходе из наблюдателей вы можете утратить права на просмотр задачи. Выйти из наблюдателей?";
 $MESS["TASKS_TTDP_TEMPLATE_COPY_CURRENT_URL"] = "Скопировать ссылку на задачу в буфер обмена";
 $MESS["TASKS_SIDEBAR_AUTOMATION"] = "Автоматизация";
-$MESS["TASKS_SIDEBAR_ROBOTS"] = "Роботы";
+$MESS["TASKS_SIDEBAR_ROBOTS_1"] = "Роботы";
 
 $MESS['ERROR_TASKS_CHANGE_DEADLINE_NULL']='Вы не можете удалять крайний срок';
 $MESS['ERROR_TASKS_CHANGE_DEADLINE_COUNT_OVER']='Вы больше не можете изменять крайний срок';

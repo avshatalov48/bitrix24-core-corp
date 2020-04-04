@@ -10,5 +10,6 @@ class CCrmFieldInfoAttr
 	const Multiple = 'MUL';
 	const Dynamic = 'DYN';
 	const Deprecated = 'DEP';
+	const Progress = 'PROG'; //It is progress field (for example: STAGE_ID in Deal)
 }
 

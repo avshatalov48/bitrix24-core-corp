@@ -51,9 +51,10 @@ class ContactSearchContentBuilder extends SearchContentBuilder
 	/**
 	 * Prepare search map.
 	 * @param array $fields Entity Fields.
+	 * @param array|null $options Options.
 	 * @return SearchMap
 	 */
-	protected function prepareSearchMap(array $fields)
+	protected function prepareSearchMap(array $fields, array $options = null)
 	{
 		$map = new SearchMap();
 
@@ -64,7 +65,6 @@ class ContactSearchContentBuilder extends SearchContentBuilder
 		}
 
 		$map->add($entityID);
-		$map->addField($fields, 'ID');
 		$map->addField($fields, 'LAST_NAME');
 		$map->addField($fields, 'NAME');
 		$map->addField($fields, 'SECOND_NAME');

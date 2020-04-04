@@ -28,6 +28,7 @@
 .docs-template-info-message.docs-template-error-message {
 	background-color: red;
 	display: none;
+	color: white;
 }
 
 .docs-template-info-link {

@@ -220,6 +220,10 @@
 	padding: 27px 0 0 0;
 }
 
+.imconnector-livechat-public-link-settings-inner.imconnector-livechat-no-padding.imconnector-livechat-public-open {
+	padding: 0;
+}
+
 .imconnector-livechat-public-link-settings-inner-param {
 	display: inline-block;
 	margin: 0 10px 0 0;
@@ -237,8 +241,19 @@
 	margin: 9px 10px 0 0;
 }
 
+.imconnector-livechat-public-column-row .imconnector-livechat-public-link-settings-inner-param {
+	display: block;
+	margin: 0 0 5px 0;
+	float: none;
+	width: auto;
+}
+
 .imconnector-livechat-public-link-settings-inner-content {
 	overflow: hidden;
+}
+
+.imconnector-livechat-public-column-row .imconnector-livechat-public-link-settings-inner-content {
+	overflow: auto;
 }
 
 .imconnector-livechat-public-link-settings-inner-chat-image {
@@ -397,7 +412,7 @@
 .imconnector-livechat-public-link-inner-copy-field-item-livechat {
  	margin-left: 4px;
 	padding: 5px;
-	width: 248px;
+	width: auto;
 }
 
 .imconnector-livechat-public-link-inner-copy-field-item-livechat-error {

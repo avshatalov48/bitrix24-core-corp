@@ -111,19 +111,25 @@ function displayGroup(array &$allGroups, $name, $groups, array &$placeholders, a
 	<h3 class="crm-document-edit-<?=$classSuffix;?>-title"><?=htmlspecialcharsbx($title);?></h3><?
 	// first show selects
 	?><div class="crm-document-edit-fields"><?
-	foreach($placeholders[$name] as $key => $placeholder)
+	if(is_array($placeholders[$name]))
 	{
-		if(is_array($fields[$placeholder]['VALUE']))
+		foreach($placeholders[$name] as $key => $placeholder)
+		{
+			if(is_array($fields[$placeholder]['VALUE']))
+			{
+				displayField($placeholder, $fields[$placeholder]);
+				unset($placeholders[$name][$key]);
+				break;
+			}
+		}
+	}
+	if(is_array($placeholders[$name]))
+	{
+		foreach($placeholders[$name] as $key => $placeholder)
 		{
 			displayField($placeholder, $fields[$placeholder]);
 			unset($placeholders[$name][$key]);
-			break;
 		}
-	}
-	foreach($placeholders[$name] as $key => $placeholder)
-	{
-		displayField($placeholder, $fields[$placeholder]);
-		unset($placeholders[$name][$key]);
 	}
 	?></div><?
 	if(is_array($groups))

@@ -288,7 +288,10 @@ $showItemInterface = function ($item) use($arResult, $showItemWorkTimeInterface)
 						</span>
 					</div>
 					<div class="crm-button-edit-channel-make-line-button">
-						<a href="<?=htmlspecialcharsbx($item['PATH_LIST'])?>" class="crm-button-edit-channel-make-line-button webform-small-button webform-small-button-blue">
+						<a href="<?=htmlspecialcharsbx($item['PATH_LIST'])?>"
+							class="crm-button-edit-channel-make-line-button webform-small-button webform-small-button-blue"
+							data-bx-crm-button-item-channel-setup="<?=($type === 'openline' ? 'sidepanel' : '')?>"
+						>
 							<?=Loc::getMessage('CRM_WEBFORM_EDIT_CHANNEL_SETUP')?>
 						</a>
 					</div>
@@ -1088,7 +1091,7 @@ function getCrmButtonEditTemplateLine($replace = array(), $pathAdd = null)
 			<div class="crm-button-edit-channel-lines-inner-create-button-container">
 				<a data-bx-slider-href="" data-line-edit="" href="" class="crm-button-edit-channel-lines-inner-create-button-item"><?=Loc::getMessage('CRM_WEBFORM_EDIT_CHANNEL_EDIT')?></a>
 				<?if ($pathAdd):?>
-					<a data-bx-slider-href="" href="<?=htmlspecialcharsbx($pathAdd)?>" class="crm-button-edit-channel-lines-inner-create-button-item"><?=Loc::getMessage('CRM_WEBFORM_EDIT_CHANNEL_ADD')?></a>
+					<a data-bx-slider-href="" data-line-add="" href="<?=htmlspecialcharsbx($pathAdd)?>" class="crm-button-edit-channel-lines-inner-create-button-item"><?=Loc::getMessage('CRM_WEBFORM_EDIT_CHANNEL_ADD')?></a>
 				<?else:?>
 					<span data-line-remove="" class="crm-button-edit-channel-lines-inner-create-button-item"><?=Loc::getMessage('CRM_BUTTON_EDIT_OPENLINE_REMOVE')?></span>
 				<?endif;?>

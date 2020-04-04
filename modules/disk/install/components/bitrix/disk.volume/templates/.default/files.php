@@ -116,7 +116,8 @@ $isTrashcan = ($arResult['INDICATOR'] === \Bitrix\Disk\Volume\FileDeleted::getIn
 
 		var goToFolder = function(event){
 			event.stopPropagation();
-			if(BX.data(this,'collected') !== '1')
+			var isLeftClick  = (BX.getEventButton(event) === BX.MSLEFT);
+			if(isLeftClick && BX.data(this,'collected') !== '1')
 			{
 				event.preventDefault();
 				var storageId = parseInt(BX.data(this, 'storageId'));
@@ -126,15 +127,21 @@ $isTrashcan = ($arResult['INDICATOR'] === \Bitrix\Disk\Volume\FileDeleted::getIn
 				{
 					BX.Disk.showActionModal({
 						text: BX.message('DISK_VOLUME_PERFORMING_MEASURE_DATA'),
-						showLoaderIcon: true,
+						//showLoaderIcon: true,
 						autoHide: false
 					});
+
+					BX.Disk.measureManager.getGrid().getLoader().show();
+
 					BX.Disk.measureManager.callAction({
 						action: '<?= $component::ACTION_MEASURE_FOLDER ?>',
 						storageId: storageId,
 						folderId: folderId,
 						filterId: filterId
 					});
+
+					BX.data(this,'collected', '1');
+
 					return BX.PreventDefault(event);
 				}
 			}

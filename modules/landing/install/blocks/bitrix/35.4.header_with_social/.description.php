@@ -11,6 +11,7 @@ return array(
 //		todo: add socials presets and go!
 		'name' => Loc::getMessage('LANDING_BLOCK_35.4.HEADER_NAME'),
 		'section' => array('menu'),
+		'dynamic' => false,
 	),
 	'cards' => array(
 		'.landing-block-node-card' => array(

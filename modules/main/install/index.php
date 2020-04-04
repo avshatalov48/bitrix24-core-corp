@@ -88,6 +88,7 @@ class main extends CModule
 				$entity->enableFullTextIndex("SEARCH_USER_CONTENT");
 				$entity->enableFullTextIndex("SEARCH_DEPARTMENT_CONTENT");
 				$entity->enableFullTextIndex("SEARCH_ADMIN_CONTENT");
+				\Bitrix\Main\UserIndexSelectorTable::getEntity()->enableFullTextIndex("SEARCH_SELECTOR_CONTENT");
 			}
 		}
 
@@ -98,239 +99,21 @@ class main extends CModule
 
 		$this->InstallTasks();
 
-		$group = new CGroup;
-
-		$arGroups = array(
-			array(
-				"~ID" => 1,
-				"ACTIVE" => "Y",
-				"C_SORT" => 1,
-				"NAME" => GetMessage("MAIN_ADMIN_GROUP_NAME"),
-				"ANONYMOUS" => "N",
-				"DESCRIPTION" => GetMessage("MAIN_ADMIN_GROUP_DESC")
-			),
-			array(
-				"~ID" => 2,
-				"ACTIVE" => "Y",
-				"C_SORT" => 2,
-				"NAME" => GetMessage("MAIN_EVERYONE_GROUP_NAME"),
-				"ANONYMOUS" => "Y",
-				"DESCRIPTION" => GetMessage("MAIN_EVERYONE_GROUP_DESC")
-			),
-			array(
-				"~ID" => 3,
-				"ACTIVE" => "Y",
-				"C_SORT" => 3,
-				"NAME" => GetMessage("MAIN_VOTE_RATING_GROUP_NAME"),
-				"ANONYMOUS" => "N",
-				"DESCRIPTION" => GetMessage("MAIN_VOTE_RATING_GROUP_DESC"),
-				"STRING_ID" => "RATING_VOTE"
-			),
-			array(
-				"~ID" => 4,
-				"ACTIVE" => "Y",
-				"C_SORT" => 4,
-				"NAME" => GetMessage("MAIN_VOTE_AUTHORITY_GROUP_NAME"),
-				"ANONYMOUS" => "N",
-				"DESCRIPTION" => GetMessage("MAIN_VOTE_AUTHORITY_GROUP_DESC"),
-				"STRING_ID" => "RATING_VOTE_AUTHORITY"
-			)
-		);
-
-		foreach ($arGroups as $arGroup)
+		if($this->InstallGroups() === false)
 		{
-			$rsGroup = CGroup::GetByID($arGroup["~ID"]);
-			if ($rsGroup->Fetch())
-				continue;
-
-			//mssql does not allow insert identity by default
-			if(strtolower($DB->type) == "mssql")
-				unset($arGroup["~ID"]);
-
-			$success = (bool)$group->Add($arGroup);
-			if (!$success)
-			{
-				$APPLICATION->ThrowException($group->LAST_ERROR);
-				return false;
-			}
+			return false;
 		}
 
 		self::InstallRatings();
 
-		$addResult = CultureTable::add(array(
-			"NAME" => LANGUAGE_ID,
-			"CODE" => LANGUAGE_ID,
-			"FORMAT_DATE" => GetMessage("MAIN_DEFAULT_LANGUAGE_FORMAT_DATE"),
-			"FORMAT_DATETIME" => GetMessage("MAIN_DEFAULT_LANGUAGE_FORMAT_DATETIME"),
-			"FORMAT_NAME" => GetMessage("MAIN_DEFAULT_LANGUAGE_FORMAT_NAME"),
-			"WEEK_START" => (LANGUAGE_ID=='en' ? 0 : 1),
-			"CHARSET" => (defined("BX_UTF") ? "UTF-8" : GetMessage("MAIN_DEFAULT_LANGUAGE_FORMAT_CHARSET"))
-		));
-		$cultureId = $addResult->getId();
-
-		$arLanguages = array(
-			array(
-				"LID" => LANGUAGE_ID,
-				"ACTIVE" => "Y",
-				"SORT" => 1,
-				"DEF" => "Y",
-				"NAME" => GetMessage("MAIN_DEFAULT_LANGUAGE_NAME"),
-				"CULTURE_ID" => $cultureId,
-			)
-		);
-
-		if (LANGUAGE_ID <> "en")
+		if($this->InstallLanguages() === false)
 		{
-			$addResult = CultureTable::add(array(
-				"NAME" => "en",
-				"CODE" => "en",
-				"FORMAT_DATE" => "MM/DD/YYYY",
-				"FORMAT_DATETIME" => "MM/DD/YYYY H:MI:SS T",
-				"FORMAT_NAME" => "#NAME# #LAST_NAME#",
-				"WEEK_START" => 0,
-				"CHARSET" => (defined("BX_UTF") ? "UTF-8" : "iso-8859-1")
-			));
-			$cultureId = $addResult->getId();
-
-			$arLanguages[] = array(
-				"LID" => "en",
-				"ACTIVE" => "Y",
-				"SORT" => 2,
-				"DEF" => "N",
-				"NAME" => "English",
-				"CULTURE_ID" => $cultureId,
-			);
+			return false;
 		}
 
-		if (LANGUAGE_ID <> "de" && file_exists($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/lang/de/install/index.php'))
+		if($this->InstallSites() === false)
 		{
-			$addResult = CultureTable::add(array(
-				"NAME" => "de",
-				"CODE" => "de",
-				"FORMAT_DATE" => "DD.MM.YYYY",
-				"FORMAT_DATETIME" => "DD.MM.YYYY HH:MI:SS",
-				"FORMAT_NAME" => "#NAME# #LAST_NAME#",
-				"WEEK_START" => 1,
-				"CHARSET" => (defined("BX_UTF") ? "UTF-8" : "iso-8859-1")
-			));
-			$cultureId = $addResult->getId();
-
-			$arLanguages[] = array(
-				"LID" => "de",
-				"ACTIVE" => "Y",
-				"SORT" => 3,
-				"DEF" => "N",
-				"NAME" => "German",
-				"CULTURE_ID" => $cultureId,
-			);
-		}
-
-		if (LANGUAGE_ID <> "ua" && file_exists($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/lang/ua/install/index.php'))
-		{
-			$addResult = CultureTable::add(array(
-				"NAME" => "ua",
-				"CODE" => "ua",
-				"FORMAT_DATE" => "DD.MM.YYYY",
-				"FORMAT_DATETIME" => "DD.MM.YYYY HH:MI:SS",
-				"FORMAT_NAME" => "#NAME# #LAST_NAME#",
-				"WEEK_START" => 1,
-				"CHARSET" => (defined("BX_UTF") ? "UTF-8" : "windows-1251")
-			));
-			$cultureId = $addResult->getId();
-
-			$arLanguages[] = array(
-				"LID" => "ua",
-				"ACTIVE" => "Y",
-				"SORT" => 4,
-				"DEF" => "N",
-				"NAME" => "Ukrainian",
-				"CULTURE_ID" => $cultureId,
-			);
-		}
-
-		if (LANGUAGE_ID <> "ru" && file_exists($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/lang/ru/install/index.php'))
-		{
-			$addResult = CultureTable::add(array(
-				"NAME" => "ru",
-				"CODE" => "ru",
-				"FORMAT_DATE" => "DD.MM.YYYY",
-				"FORMAT_DATETIME" => "DD.MM.YYYY HH:MI:SS",
-				"FORMAT_NAME" => "#NAME# #LAST_NAME#",
-				"WEEK_START" => 1,
-				"CHARSET" => (defined("BX_UTF") ? "UTF-8" : "windows-1251")
-			));
-			$cultureId = $addResult->getId();
-
-			$arLanguages[] = array(
-				"LID" => "ru",
-				"ACTIVE" => "Y",
-				"SORT" => 3,
-				"DEF" => "N",
-				"NAME" => "Russian",
-				"CULTURE_ID" => $cultureId,
-			);
-		}
-
-		$lang = new CLanguage;
-		foreach ($arLanguages as $arLanguage)
-		{
-			$rsLang = CLanguage::GetByID($arLanguage["LID"]);
-			if ($rsLang->Fetch())
-				continue;
-
-			$success = (bool)$lang->Add($arLanguage);
-			if (!$success)
-			{
-				$APPLICATION->ThrowException($lang->LAST_ERROR);
-				return false;
-			}
-		}
-
-		$culture = CultureTable::getRow(array('filter'=>array(
-			"=FORMAT_DATE" => GetMessage("MAIN_DEFAULT_SITE_FORMAT_DATE"),
-			"=FORMAT_DATETIME" => GetMessage("MAIN_DEFAULT_SITE_FORMAT_DATETIME"),
-			"=FORMAT_NAME" => GetMessage("MAIN_DEFAULT_SITE_FORMAT_NAME"),
-			"=CHARSET" =>  (defined("BX_UTF") ? "UTF-8" : GetMessage("MAIN_DEFAULT_SITE_FORMAT_CHARSET")),
-		)));
-
-		if($culture)
-		{
-			$cultureId = $culture["ID"];
-		}
-		else
-		{
-			$addResult = CultureTable::add(array(
-				"NAME" => "s1",
-				"CODE" => "s1",
-				"FORMAT_DATE" => GetMessage("MAIN_DEFAULT_SITE_FORMAT_DATE"),
-				"FORMAT_DATETIME" => GetMessage("MAIN_DEFAULT_SITE_FORMAT_DATETIME"),
-				"FORMAT_NAME" => GetMessage("MAIN_DEFAULT_SITE_FORMAT_NAME"),
-				"CHARSET" =>  (defined("BX_UTF") ? "UTF-8" : GetMessage("MAIN_DEFAULT_SITE_FORMAT_CHARSET")),
-			));
-			$cultureId = $addResult->getId();
-		}
-
-		$arSite = array(
-			"LID" => "s1",
-			"ACTIVE" => "Y",
-			"SORT" => 1,
-			"DEF" => "Y",
-			"NAME" => GetMessage("MAIN_DEFAULT_SITE_NAME"),
-			"DIR" => "/",
-			"LANGUAGE_ID" => LANGUAGE_ID,
-			"CULTURE_ID" => $cultureId,
-		);
-
-		$rsSites = CSite::GetByID($arSite["LID"]);
-		if (!$rsSites->Fetch())
-		{
-			$site = new CSite;
-			$success = (bool)$site->Add($arSite);
-			if (!$success)
-			{
-				$APPLICATION->ThrowException($site->LAST_ERROR);
-				return false;
-			}
+			return false;
 		}
 
 		if (!defined('BX_UTF_PCRE_MODIFIER'))
@@ -443,6 +226,9 @@ class main extends CModule
 
 		$eventManager->registerEventHandler('main', 'OnBeforePhpMail', 'main', '\Bitrix\Main\Mail\Sender', 'applyCustomSmtp');
 
+		$eventManager->registerEventHandler('main', 'OnBuildFilterFactoryMethods', 'main', '\Bitrix\Main\Filter\FactoryMain', 'onBuildFilterFactoryMethods');
+
+
 		self::InstallDesktop();
 
 		self::InstallSmiles();
@@ -455,6 +241,320 @@ class main extends CModule
 
 		GeoIp\HandlerTable::add(array('SORT' => 100, 'ACTIVE' => 'N', 'CLASS_NAME' => '\Bitrix\Main\Service\GeoIp\MaxMind'));
 		GeoIp\HandlerTable::add(array('SORT' => 110, 'ACTIVE' => 'Y', 'CLASS_NAME' => '\Bitrix\Main\Service\GeoIp\SypexGeo'));
+
+		return true;
+	}
+
+	protected function InstallGroups()
+	{
+		global $APPLICATION, $DB;
+
+		$group = new CGroup;
+
+		$arGroups = array(
+			array(
+				"~ID" => 1,
+				"ACTIVE" => "Y",
+				"C_SORT" => 1,
+				"NAME" => GetMessage("MAIN_ADMIN_GROUP_NAME"),
+				"ANONYMOUS" => "N",
+				"DESCRIPTION" => GetMessage("MAIN_ADMIN_GROUP_DESC")
+			),
+			array(
+				"~ID" => 2,
+				"ACTIVE" => "Y",
+				"C_SORT" => 2,
+				"NAME" => GetMessage("MAIN_EVERYONE_GROUP_NAME"),
+				"ANONYMOUS" => "Y",
+				"DESCRIPTION" => GetMessage("MAIN_EVERYONE_GROUP_DESC")
+			),
+			array(
+				"~ID" => 3,
+				"ACTIVE" => "Y",
+				"C_SORT" => 3,
+				"NAME" => GetMessage("MAIN_VOTE_RATING_GROUP_NAME"),
+				"ANONYMOUS" => "N",
+				"DESCRIPTION" => GetMessage("MAIN_VOTE_RATING_GROUP_DESC"),
+				"STRING_ID" => "RATING_VOTE"
+			),
+			array(
+				"~ID" => 4,
+				"ACTIVE" => "Y",
+				"C_SORT" => 4,
+				"NAME" => GetMessage("MAIN_VOTE_AUTHORITY_GROUP_NAME"),
+				"ANONYMOUS" => "N",
+				"DESCRIPTION" => GetMessage("MAIN_VOTE_AUTHORITY_GROUP_DESC"),
+				"STRING_ID" => "RATING_VOTE_AUTHORITY"
+			)
+		);
+
+		foreach ($arGroups as $arGroup)
+		{
+			$rsGroup = CGroup::GetByID($arGroup["~ID"]);
+			if ($rsGroup->Fetch())
+				continue;
+
+			//mssql does not allow insert identity by default
+			if(strtolower($DB->type) == "mssql")
+				unset($arGroup["~ID"]);
+
+			$success = (bool)$group->Add($arGroup);
+			if (!$success)
+			{
+				$APPLICATION->ThrowException($group->LAST_ERROR);
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	protected function InstallLanguages()
+	{
+		global $APPLICATION;
+
+		$addResult = CultureTable::add(array(
+			"NAME" => LANGUAGE_ID,
+			"CODE" => LANGUAGE_ID,
+			"FORMAT_DATE" => GetMessage("MAIN_DEFAULT_LANGUAGE_FORMAT_DATE"),
+			"FORMAT_DATETIME" => GetMessage("MAIN_DEFAULT_LANGUAGE_FORMAT_DATETIME"),
+			"FORMAT_NAME" => GetMessage("MAIN_DEFAULT_LANGUAGE_FORMAT_NAME"),
+			"WEEK_START" => (LANGUAGE_ID=='en' ? 0 : 1),
+			"CHARSET" => (defined("BX_UTF") ? "UTF-8" : GetMessage("MAIN_DEFAULT_LANGUAGE_FORMAT_CHARSET")),
+			"SHORT_DATE_FORMAT" => GetMessage("MAIN_DEFAULT_LANGUAGE_SHORT_DATE_FORMAT"),
+			"MEDIUM_DATE_FORMAT" => GetMessage("MAIN_DEFAULT_LANGUAGE_MEDIUM_DATE_FORMAT"),
+			"LONG_DATE_FORMAT" => GetMessage("MAIN_DEFAULT_LANGUAGE_LONG_DATE_FORMAT"),
+			"FULL_DATE_FORMAT" => GetMessage("MAIN_DEFAULT_LANGUAGE_FULL_DATE_FORMAT"),
+			"DAY_MONTH_FORMAT" => GetMessage("MAIN_DEFAULT_LANGUAGE_DAY_MONTH_FORMAT"),
+			"SHORT_TIME_FORMAT" => GetMessage("MAIN_DEFAULT_LANGUAGE_SHORT_TIME_FORMAT"),
+			"LONG_TIME_FORMAT" => GetMessage("MAIN_DEFAULT_LANGUAGE_LONG_TIME_FORMAT"),
+			"AM_VALUE" => GetMessage("MAIN_DEFAULT_LANGUAGE_AM_VALUE"),
+			"PM_VALUE" => GetMessage("MAIN_DEFAULT_LANGUAGE_PM_VALUE"),
+			"NUMBER_THOUSANDS_SEPARATOR" => GetMessage("MAIN_DEFAULT_LANGUAGE_NUMBER_THOUSANDS_SEPARATOR"),
+			"NUMBER_DECIMAL_SEPARATOR" => GetMessage("MAIN_DEFAULT_LANGUAGE_NUMBER_DECIMAL_SEPARATOR"),
+			"NUMBER_DECIMALS" => 2,
+		));
+		$cultureId = $addResult->getId();
+
+		$arLanguages = array(
+			array(
+				"LID" => LANGUAGE_ID,
+				"ACTIVE" => "Y",
+				"SORT" => 1,
+				"DEF" => "Y",
+				"NAME" => GetMessage("MAIN_DEFAULT_LANGUAGE_NAME"),
+				"CULTURE_ID" => $cultureId,
+			)
+		);
+
+		if (LANGUAGE_ID <> "en")
+		{
+			$addResult = CultureTable::add(array(
+				"NAME" => "en",
+				"CODE" => "en",
+				"FORMAT_DATE" => "MM/DD/YYYY",
+				"FORMAT_DATETIME" => "MM/DD/YYYY H:MI:SS T",
+				"FORMAT_NAME" => "#NAME# #LAST_NAME#",
+				"WEEK_START" => 0,
+				"CHARSET" => (defined("BX_UTF") ? "UTF-8" : "iso-8859-1"),
+				"SHORT_DATE_FORMAT" => "n/j/Y",
+				"MEDIUM_DATE_FORMAT" => "M j, Y",
+				"LONG_DATE_FORMAT" => "F j, Y",
+				"FULL_DATE_FORMAT" => "l, F j, Y",
+				"DAY_MONTH_FORMAT" => "M j",
+				"SHORT_TIME_FORMAT" => "g:i a",
+				"LONG_TIME_FORMAT" => "g:i:s a",
+				"AM_VALUE" => "am",
+				"PM_VALUE" => "pm",
+				"NUMBER_THOUSANDS_SEPARATOR" => ",",
+				"NUMBER_DECIMAL_SEPARATOR" => ".",
+				"NUMBER_DECIMALS" => "2",
+			));
+			$cultureId = $addResult->getId();
+
+			$arLanguages[] = array(
+				"LID" => "en",
+				"ACTIVE" => "Y",
+				"SORT" => 2,
+				"DEF" => "N",
+				"NAME" => "English",
+				"CULTURE_ID" => $cultureId,
+			);
+		}
+
+		if (LANGUAGE_ID <> "de" && file_exists($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/lang/de/install/index.php'))
+		{
+			$addResult = CultureTable::add(array(
+				"NAME" => "de",
+				"CODE" => "de",
+				"FORMAT_DATE" => "DD.MM.YYYY",
+				"FORMAT_DATETIME" => "DD.MM.YYYY HH:MI:SS",
+				"FORMAT_NAME" => "#NAME# #LAST_NAME#",
+				"WEEK_START" => 1,
+				"CHARSET" => (defined("BX_UTF") ? "UTF-8" : "iso-8859-1"),
+				"SHORT_DATE_FORMAT" => "d.m.Y",
+				"MEDIUM_DATE_FORMAT" => "j. M Y",
+				"LONG_DATE_FORMAT" => "j. F Y",
+				"FULL_DATE_FORMAT" => "l, j. F  Y",
+				"DAY_MONTH_FORMAT" => "j. M",
+				"SHORT_TIME_FORMAT" => "H:i",
+				"LONG_TIME_FORMAT" => "H:i:s",
+				"AM_VALUE" => "am",
+				"PM_VALUE" => "pm",
+				"NUMBER_THOUSANDS_SEPARATOR" => ".",
+				"NUMBER_DECIMAL_SEPARATOR" => ",",
+				"NUMBER_DECIMALS" => "2",
+			));
+			$cultureId = $addResult->getId();
+
+			$arLanguages[] = array(
+				"LID" => "de",
+				"ACTIVE" => "Y",
+				"SORT" => 3,
+				"DEF" => "N",
+				"NAME" => "German",
+				"CULTURE_ID" => $cultureId,
+			);
+		}
+
+		if (LANGUAGE_ID <> "ua" && file_exists($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/lang/ua/install/index.php'))
+		{
+			$addResult = CultureTable::add(array(
+				"NAME" => "ua",
+				"CODE" => "ua",
+				"FORMAT_DATE" => "DD.MM.YYYY",
+				"FORMAT_DATETIME" => "DD.MM.YYYY HH:MI:SS",
+				"FORMAT_NAME" => "#NAME# #LAST_NAME#",
+				"WEEK_START" => 1,
+				"CHARSET" => (defined("BX_UTF") ? "UTF-8" : "windows-1251"),
+				"SHORT_DATE_FORMAT" => "d.m.Y",
+				"MEDIUM_DATE_FORMAT" => "j M Y",
+				"LONG_DATE_FORMAT" => "j F Y",
+				"FULL_DATE_FORMAT" => "l, j F  Y",
+				"DAY_MONTH_FORMAT" => "j F",
+				"SHORT_TIME_FORMAT" => "H:i",
+				"LONG_TIME_FORMAT" => "H:i:s",
+				"AM_VALUE" => "am",
+				"PM_VALUE" => "pm",
+				"NUMBER_THOUSANDS_SEPARATOR" => " ",
+				"NUMBER_DECIMAL_SEPARATOR" => ",",
+				"NUMBER_DECIMALS" => "2",
+			));
+			$cultureId = $addResult->getId();
+
+			$arLanguages[] = array(
+				"LID" => "ua",
+				"ACTIVE" => "Y",
+				"SORT" => 4,
+				"DEF" => "N",
+				"NAME" => "Ukrainian",
+				"CULTURE_ID" => $cultureId,
+			);
+		}
+
+		if (LANGUAGE_ID <> "ru" && file_exists($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/lang/ru/install/index.php'))
+		{
+			$addResult = CultureTable::add(array(
+				"NAME" => "ru",
+				"CODE" => "ru",
+				"FORMAT_DATE" => "DD.MM.YYYY",
+				"FORMAT_DATETIME" => "DD.MM.YYYY HH:MI:SS",
+				"FORMAT_NAME" => "#NAME# #LAST_NAME#",
+				"WEEK_START" => 1,
+				"CHARSET" => (defined("BX_UTF") ? "UTF-8" : "windows-1251"),
+				"SHORT_DATE_FORMAT" => "d.m.Y",
+				"MEDIUM_DATE_FORMAT" => "j M Y",
+				"LONG_DATE_FORMAT" => "j F Y",
+				"FULL_DATE_FORMAT" => "l, j F  Y",
+				"DAY_MONTH_FORMAT" => "j F",
+				"SHORT_TIME_FORMAT" => "H:i",
+				"LONG_TIME_FORMAT" => "H:i:s",
+				"AM_VALUE" => "am",
+				"PM_VALUE" => "pm",
+				"NUMBER_THOUSANDS_SEPARATOR" => " ",
+				"NUMBER_DECIMAL_SEPARATOR" => ",",
+				"NUMBER_DECIMALS" => "2",
+			));
+			$cultureId = $addResult->getId();
+
+			$arLanguages[] = array(
+				"LID" => "ru",
+				"ACTIVE" => "Y",
+				"SORT" => 3,
+				"DEF" => "N",
+				"NAME" => "Russian",
+				"CULTURE_ID" => $cultureId,
+			);
+		}
+
+		$lang = new CLanguage;
+		foreach ($arLanguages as $arLanguage)
+		{
+			$rsLang = CLanguage::GetByID($arLanguage["LID"]);
+			if ($rsLang->Fetch())
+				continue;
+
+			$success = (bool)$lang->Add($arLanguage);
+			if (!$success)
+			{
+				$APPLICATION->ThrowException($lang->LAST_ERROR);
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	protected function InstallSites()
+	{
+		global $APPLICATION;
+
+		$culture = CultureTable::getRow(array('filter'=>array(
+			"=FORMAT_DATE" => GetMessage("MAIN_DEFAULT_SITE_FORMAT_DATE"),
+			"=FORMAT_DATETIME" => GetMessage("MAIN_DEFAULT_SITE_FORMAT_DATETIME"),
+			"=FORMAT_NAME" => GetMessage("MAIN_DEFAULT_SITE_FORMAT_NAME"),
+			"=CHARSET" =>  (defined("BX_UTF") ? "UTF-8" : GetMessage("MAIN_DEFAULT_SITE_FORMAT_CHARSET")),
+		)));
+
+		if($culture)
+		{
+			$cultureId = $culture["ID"];
+		}
+		else
+		{
+			$addResult = CultureTable::add(array(
+				"NAME" => "s1",
+				"CODE" => "s1",
+				"FORMAT_DATE" => GetMessage("MAIN_DEFAULT_SITE_FORMAT_DATE"),
+				"FORMAT_DATETIME" => GetMessage("MAIN_DEFAULT_SITE_FORMAT_DATETIME"),
+				"FORMAT_NAME" => GetMessage("MAIN_DEFAULT_SITE_FORMAT_NAME"),
+				"CHARSET" =>  (defined("BX_UTF") ? "UTF-8" : GetMessage("MAIN_DEFAULT_SITE_FORMAT_CHARSET")),
+			));
+			$cultureId = $addResult->getId();
+		}
+
+		$arSite = array(
+			"LID" => "s1",
+			"ACTIVE" => "Y",
+			"SORT" => 1,
+			"DEF" => "Y",
+			"NAME" => GetMessage("MAIN_DEFAULT_SITE_NAME"),
+			"DIR" => "/",
+			"LANGUAGE_ID" => LANGUAGE_ID,
+			"CULTURE_ID" => $cultureId,
+		);
+
+		$rsSites = CSite::GetByID($arSite["LID"]);
+		if (!$rsSites->Fetch())
+		{
+			$site = new CSite;
+			$success = (bool)$site->Add($arSite);
+			if (!$success)
+			{
+				$APPLICATION->ThrowException($site->LAST_ERROR);
+				return false;
+			}
+		}
 
 		return true;
 	}
@@ -1585,5 +1685,27 @@ class main extends CModule
 
 	function DoUninstall()
 	{
+	}
+
+	public function migrateToBox()
+	{
+		global $DB;
+
+		COption::SetOptionInt("main", "disk_space", 0);
+		COption::SetOptionString("main", "server_name", "");
+		COption::SetOptionString("main", "~sale_converted_15", 'Y');
+
+		COption::RemoveOption("main", "~controller_group_name");
+		CControllerClient::Unlink();
+
+		$users = $DB->Query("SELECT ID FROM b_user WHERE EXTERNAL_AUTH_ID = 'bot'");
+		while($user = $users->Fetch())
+		{
+			CUser::Delete($user['ID']);
+		}
+
+		$DB->Query("UPDATE b_user SET EXTERNAL_AUTH_ID = NULL WHERE EXTERNAL_AUTH_ID = 'socservices'");
+		$DB->Query("UPDATE b_file SET HANDLER_ID=NULL WHERE HANDLER_ID = 1");
+		$DB->Query("UPDATE b_event_message SET EMAIL_FROM='#DEFAULT_EMAIL_FROM#' WHERE EMAIL_FROM LIKE '%no-reply@bitrix24%'");
 	}
 }

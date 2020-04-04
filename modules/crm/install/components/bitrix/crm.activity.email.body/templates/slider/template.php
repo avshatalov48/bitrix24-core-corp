@@ -1,11 +1,15 @@
 <?php
 
+use Bitrix\Main\UI\Viewer;
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 global $APPLICATION;
 
-\CJSCore::init('viewer');
+\Bitrix\Main\UI\Extension::load('ui.viewer');
 
 $activity = $arParams['ACTIVITY'];
+
+$ownerUid = sprintf('CRM%s%u', \CCrmOwnerType::resolveName($activity['OWNER_TYPE_ID']), $activity['OWNER_ID']);
 
 $socNetLogDestTypes = array(
 	\CCrmOwnerType::LeadName    => 'leads',
@@ -233,8 +237,7 @@ $readDatetimeFormatted = !empty($activity['SETTINGS']['READ_CONFIRMED']) && $act
 					<div class="crm-task-list-mail-file-item-image">
 						<span class="crm-task-list-mail-file-link-image">
 							<img class="crm-task-list-mail-file-item-img" src="<?=htmlspecialcharsbx($item['previewURL']) ?>"
-								data-bx-viewer="image" data-bx-src="<?=htmlspecialcharsbx($item['viewURL']) ?>"
-								data-bx-full="<?=htmlspecialcharsbx($item['viewURL']) ?>">
+								<?=Viewer\ItemAttributes::tryBuildByFileId($item['fileId'], $item['viewURL'])->setTitle($item['fileName'])->setGroupBy(sprintf('crm_activity_%u_files', $activity['ID'])) ?>>
 						</span>
 					</div>
 				<? endforeach ?>
@@ -244,7 +247,10 @@ $readDatetimeFormatted = !empty($activity['SETTINGS']['READ_CONFIRMED']) && $act
 					<? if (!empty($item['previewURL'])) continue; ?>
 					<div class="crm-task-list-mail-file-item diskuf-files-entity">
 						<span class="feed-com-file-icon feed-file-icon-<?=htmlspecialcharsbx(\Bitrix\Main\IO\Path::getExtension($item['fileName'])) ?>"></span>
-						<a class="crm-task-list-mail-file-link" href="<?=htmlspecialcharsbx($item['viewURL']) ?>" target="_blank"><?=htmlspecialcharsbx($item['fileName']) ?></a>
+						<a class="crm-task-list-mail-file-link" href="<?=htmlspecialcharsbx($item['viewURL']) ?>" target="_blank"
+							<?=Viewer\ItemAttributes::tryBuildByFileId($item['fileId'], $item['viewURL'])->setTitle($item['fileName'])->setGroupBy(sprintf('crm_activity_%u_files', $activity['ID'])) ?>>
+							<?=htmlspecialcharsbx($item['fileName']) ?>
+						</a>
 						<div class="crm-task-list-mail-file-link-info"><?=htmlspecialcharsbx($item['fileSize']) ?></div>
 					</div>
 				<? endforeach ?>
@@ -258,12 +264,16 @@ $readDatetimeFormatted = !empty($activity['SETTINGS']['READ_CONFIRMED']) && $act
 </div>
 
 <? $formId = sprintf('crm_act_email_reply_%u_form', $activity['ID']); ?>
-<form action="/bitrix/components/bitrix/crm.activity.editor/ajax.php?action=save_email" method="POST"
-	class="crm-task-list-mail-border-bottom" id="<?=htmlspecialcharsbx($formId) ?>" style="display: none; margin-top: 10px; ">
+<form id="<?=htmlspecialcharsbx($formId) ?>" method="POST"
+	action="/bitrix/components/bitrix/crm.activity.editor/ajax.php?action=save_email&context=activity-<?=$activity['ID'] ?>"
+	class="crm-task-list-mail-border-bottom" style="display: none; margin-top: 10px; ">
 	<?=bitrix_sessid_post() ?>
 	<input type="hidden" name="ACTION" value="SAVE_EMAIL">
 	<input type="hidden" name="DATA[ownerType]" value="<?=\CCrmOwnerType::resolveName($activity['OWNER_TYPE_ID']) ?>">
 	<input type="hidden" name="DATA[ownerID]" value="<?=$activity['OWNER_ID'] ?>">
+	<? if (preg_grep(sprintf('/^%s:/i', preg_quote($ownerUid, '/')), array_keys($rcptSelected + $rcptCcSelected))): ?>
+		<input type="hidden" name="DATA[ownerRcpt]" value="Y">
+	<? endif ?>
 	<input type="hidden" name="DATA[storageTypeID]" value="<?=\CCrmActivityStorageType::Disk ?>">
 	<input type="hidden" name="DATA[REPLIED_ID]" value="<?=$activity['ID'] ?>">
 	<input type="hidden" name="DATA[content_type]" value="<?=\CCrmContentType::Html ?>">
@@ -310,6 +320,12 @@ $readDatetimeFormatted = !empty($activity['SETTINGS']['READ_CONFIRMED']) && $act
 		'searchOnlyWithEmail'      => true,
 	);
 
+	$fromValue = \CUserOptions::getOption('crm', 'activity_email_addresser', '');
+	if (!empty($activity['SETTINGS']['EMAIL_META']['__email']))
+	{
+		$fromValue = $activity['SETTINGS']['EMAIL_META']['__email'];
+	}
+
 	$APPLICATION->includeComponent(
 		'bitrix:main.mail.form', '',
 		array(
@@ -324,9 +340,11 @@ $readDatetimeFormatted = !empty($activity['SETTINGS']['READ_CONFIRMED']) && $act
 					'name'     => 'DATA[from]',
 					'title'    => getMessage('CRM_ACT_EMAIL_CREATE_FROM'),
 					'type'     => 'from',
-					'value'    => \CUserOptions::getOption('crm', 'activity_email_addresser', ''),
+					'value'    => $fromValue,
+					'isFormatted' => true,
 					'required' => true,
 					'folded'   => true,
+					'copy' => 'DATA[from_copy]',
 				),
 				//array(
 				//	'type' => 'separator',
@@ -437,16 +455,6 @@ BX.ready(function()
 
 	setTimeout(function ()
 	{
-		<? if (!empty($activity['SETTINGS']['EMAIL_META']['__email'])): ?>
-		BX.addCustomEvent(BXMainMailForm, 'MailForm:init:<?=\CUtil::jsEscape($formId) ?>', function (form)
-		{
-			form.getField('DATA[from]').setValue('<?=\CUtil::jsEscape(sprintf(
-				empty($arParams['USER_FULL_NAME']) ? '%s%s' : '%s <%s>',
-				$arParams['USER_FULL_NAME'], $activity['SETTINGS']['EMAIL_META']['__email']
-			)) ?>');
-		});
-		<? endif ?>
-
 		var wrapper  = BX.findChildByClassName(instance.htmlForm, 'crm-activity-email-create-template', true);
 		var selector = BX.findChildByClassName(wrapper, 'crm-activity-planner-slider-header-control-text', true);
 		BX.bind(wrapper, 'click', function ()

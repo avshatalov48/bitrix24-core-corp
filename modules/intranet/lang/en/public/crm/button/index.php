@@ -1,3 +1,3 @@
 <?
-$MESS["CRM_TITLE"] = "Website widget";
+$MESS["CRM_TITLE"] = "Website Widget";
 ?>

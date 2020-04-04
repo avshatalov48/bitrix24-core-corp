@@ -116,6 +116,12 @@ if ($arResult['ReadOnly']
 	$arResult['TASK']['DESCRIPTION'] = '';
 }
 
+if ($arResult['TASK']['PARAMETERS'] === false)
+{
+	ShowError(GetMessage("BPAT_NO_PARAMETERS"));
+	return false;
+}
+
 $arState = CBPStateService::GetWorkflowState($arResult['TASK']['WORKFLOW_ID']);
 
 if (!$arState)

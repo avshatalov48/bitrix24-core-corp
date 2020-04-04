@@ -4,7 +4,7 @@ if (strpos($_SERVER['SCRIPT_NAME'], "/bitrix/groupdav.php") === 0)
 
 if ($_SERVER['REQUEST_METHOD'] == 'PROPFIND' || $_SERVER['REQUEST_METHOD'] == 'OPTIONS')
 {
-	if (preg_match("/(bitrix|coredav|iphone|davkit|dataaccess|sunbird|lightning|cfnetwork|zideone|webkit|khtml|ical4ol|ios\\/([5-9]|10|11|12)|mac\\sos|mac_os_x|carddavbitrix24|caldavbitrix24|mac\\+os\\+x)/i", $_SERVER['HTTP_USER_AGENT']))
+	if (preg_match("/(bitrix|coredav|iphone|davkit|dataaccess|sunbird|lightning|cfnetwork|zideone|webkit|khtml|ical4ol|ios\\/([5-9]|10|11|12|13)|mac\\sos|mac_os_x|carddavbitrix24|caldavbitrix24|mac\\+os\\+x)/i", $_SERVER['HTTP_USER_AGENT']))
 	{
 		CHTTP::SetStatus("302 Found");
 		header('Location: /bitrix/groupdav.php/');
@@ -28,7 +28,7 @@ if (!defined("STOP_WEBDAV") || !STOP_WEBDAV)
 					return true;
 			}
 
-			$davMethods = array("OPTIONS", "PUT", "PROPFIND", "PROPPATCH", "MKCOL", "COPY", "MOVE", "LOCK", "UNLOCK", "DELETE", "COPY", "MOVE");
+			$davMethods = array("OPTIONS", "PUT", "PROPFIND", "PROPPATCH", "MKCOL", "COPY", "MOVE", "LOCK", "UNLOCK", "DELETE");
 			foreach ($davMethods as $method)
 			{
 				if ($_SERVER["REQUEST_METHOD"] == $method)
@@ -49,6 +49,10 @@ if (!defined("STOP_WEBDAV") || !STOP_WEBDAV)
 				strpos($_SERVER['HTTP_USER_AGENT'], "gvfs") !== false
 					||
 				strpos($_SERVER['HTTP_USER_AGENT'], "LibreOffice") !== false
+					||
+				strpos($_SERVER['HTTP_USER_AGENT'], "WinSCP") !== false
+					||
+				strpos($_SERVER['HTTP_USER_AGENT'], "NetBox") !== false
 			)
 			{
 				return true;
@@ -85,7 +89,7 @@ if (!defined("STOP_WEBDAV") || !STOP_WEBDAV)
 			CLdapUtil::bitrixVMAuthorize();
 		}
 
-		if (!$_SERVER['PHP_AUTH_USER'] || !$_SERVER['PHP_AUTH_USER'])
+		if (!$_SERVER['PHP_AUTH_USER'])
 		{
 			$res = (!empty($_SERVER['REDIRECT_REMOTE_USER']) ? $_SERVER['REDIRECT_REMOTE_USER'] : $_SERVER['REMOTE_USER']);
 			if (!empty($res) && preg_match('/(?<=(basic\s))(.*)$/is', $res, $matches))

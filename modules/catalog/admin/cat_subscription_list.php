@@ -30,7 +30,7 @@ if(isset($_REQUEST['mode']) && ($_REQUEST['mode'] == 'list' || $_REQUEST['mode']
 	CFile::disableJSFunction(true);
 
 $tableId = 'tbl_product_subscription_list';
-$sortObject = new CAdminSorting($tableId, 'DATE_FROM', 'DESC');
+$sortObject = new CAdminUiSorting($tableId, 'DATE_FROM', 'DESC');
 $listObject = new CAdminUiList($tableId, $sortObject);
 
 global $by, $order;

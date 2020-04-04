@@ -9,6 +9,7 @@ use \Bitrix\Main,
 	\Bitrix\Main\ORM\Query\Join,
 	\Bitrix\Main\ORM\EventResult,
 	\Bitrix\Main\Localization\Loc,
+	\Bitrix\Main\Search\MapBuilder,
 	\Bitrix\Main\ORM\Fields\TextField,
 	\Bitrix\Main\ORM\Data\DataManager,
 	\Bitrix\Main\ORM\Fields\StringField,
@@ -16,10 +17,16 @@ use \Bitrix\Main,
 	\Bitrix\Main\Entity\Validator\Length,
 	\Bitrix\Main\ORM\Fields\BooleanField,
 	\Bitrix\Main\ORM\Fields\DatetimeField,
+	\Bitrix\Main\ORM\Fields\UserTypeField,
+	\Bitrix\Main\ORM\Fields\ExpressionField,
 	\Bitrix\Main\ORM\Fields\Relations\Reference;
 
-use \Bitrix\ImOpenLines\Integrations\Report\Statistics;
+use \Bitrix\ImOpenLines\Crm,
+	\Bitrix\ImOpenLines\Integrations\Report\Statistics;
 
+use \Bitrix\Im,
+	\Bitrix\Im\Model\ChatTable,
+	\Bitrix\Im\Model\MessageTable;
 
 Loc::loadMessages(__FILE__);
 
@@ -59,7 +66,6 @@ Loc::loadMessages(__FILE__);
  *
  * @package Bitrix\Imopenlines
  **/
-
 class SessionTable extends DataManager
 {
 	/**
@@ -76,21 +82,23 @@ class SessionTable extends DataManager
 	 * Returns entity map definition.
 	 *
 	 * @return array
+	 * @throws Main\ArgumentException
+	 * @throws Main\LoaderException
 	 * @throws Main\SystemException
 	 */
 	public static function getMap()
 	{
-		return array(
+		$result = [
 			new IntegerField('ID', [
 				'primary' => true,
 				'autocomplete' => true,
 				'title' => Loc::getMessage('SESSION_ENTITY_ID_FIELD'),
 			]),
-			new StringField('MODE', array(
+			new StringField('MODE', [
 				'validation' => [__CLASS__, 'validateMode'],
 				'title' => Loc::getMessage('SESSION_ENTITY_MODE_FIELD'),
 				'default_value' => 'input',
-			)),
+			]),
 			new StringField('SOURCE', [
 				'validation' => [__CLASS__, 'validateSource'],
 				'title' => Loc::getMessage('SESSION_ENTITY_SOURCE_FIELD'),
@@ -149,36 +157,36 @@ class SessionTable extends DataManager
 				'title' => Loc::getMessage('SESSION_ENTITY_END_ID_FIELD'),
 				'default_value' => '0',
 			]),
-			new BooleanField('CRM', array(
+			new BooleanField('CRM', [
 				'values' => ['N', 'Y'],
 				'title' => Loc::getMessage('SESSION_ENTITY_CRM_FIELD'),
 				'default_value' => 'N',
-			)),
-			new BooleanField('CRM_CREATE', array(
+			]),
+			new BooleanField('CRM_CREATE', [
 				'values' => ['N', 'Y'],
 				'title' => Loc::getMessage('SESSION_ENTITY_CRM_CREATE_FIELD'),
 				'default_value' => 'N',
-			)),
-			new BooleanField('CRM_CREATE_LEAD', array(
+			]),
+			new BooleanField('CRM_CREATE_LEAD', [
 				'values' => ['N', 'Y'],
 				'title' => Loc::getMessage('SESSION_ENTITY_CRM_CREATE_LEAD'),
 				'default_value' => 'N',
-			)),
-			new BooleanField('CRM_CREATE_COMPANY', array(
+			]),
+			new BooleanField('CRM_CREATE_COMPANY', [
 				'values' => ['N', 'Y'],
 				'title' => Loc::getMessage('SESSION_ENTITY_CRM_CREATE_COMPANY'),
 				'default_value' => 'N',
-			)),
-			new BooleanField('CRM_CREATE_CONTACT', array(
+			]),
+			new BooleanField('CRM_CREATE_CONTACT', [
 				'values' => ['N', 'Y'],
 				'title' => Loc::getMessage('SESSION_ENTITY_CRM_CREATE_CONTACT'),
 				'default_value' => 'N',
-			)),
-			new BooleanField('CRM_CREATE_DEAL', array(
+			]),
+			new BooleanField('CRM_CREATE_DEAL', [
 				'values' => ['N', 'Y'],
 				'title' => Loc::getMessage('SESSION_ENTITY_CRM_CREATE_DEAL'),
 				'default_value' => 'N',
-			)),
+			]),
 			new IntegerField('CRM_ACTIVITY_ID', [
 				'title' => Loc::getMessage('SESSION_ENTITY_CRM_ACTIVITY_ID_FIELD'),
 				'default_value' => '0',
@@ -191,14 +199,14 @@ class SessionTable extends DataManager
 				'default_value' => [__CLASS__, 'getCurrentDate'],
 			]),
 			new DatetimeField('DATE_OPERATOR', [
-				'title' => Loc::getMessage('SESSION_ENTITY_DATE_OPERATOR_FIELD'),
+				'title' => Loc::getMessage('SESSION_ENTITY_DATE_OPERATOR_FIELD_1'),
 			]),
 			new DatetimeField('DATE_MODIFY', [
 				'title' => Loc::getMessage('SESSION_ENTITY_DATE_MODIFY_FIELD'),
 				'default_value' => [__CLASS__, 'getCurrentDate'],
 			]),
 			new DatetimeField('DATE_OPERATOR_ANSWER', [
-				'title' => Loc::getMessage('SESSION_ENTITY_DATE_OPERATOR_ANSWER_FIELD_NEW'),
+				'title' => Loc::getMessage('SESSION_ENTITY_DATE_OPERATOR_ANSWER_FIELD_NEW_1'),
 			]),
 			new DatetimeField('DATE_OPERATOR_CLOSE', [
 				'title' => Loc::getMessage('SESSION_ENTITY_DATE_OPERATOR_CLOSE_FIELD_NEW'),
@@ -232,46 +240,51 @@ class SessionTable extends DataManager
 				'title' => Loc::getMessage('SESSION_ENTITY_TIME_DIALOG_FIELD'),
 				'default_value' => '0',
 			]),
-			new BooleanField('WAIT_ACTION', array(
+			new BooleanField('WAIT_ACTION', [
 				'values' => ['N', 'Y'],
 				'title' => Loc::getMessage('SESSION_ENTITY_WAIT_ACTION_FIELD'),
 				'default_value' => 'N',
-			)),
-			new BooleanField('WAIT_VOTE', array(
+			]),
+			new BooleanField('WAIT_VOTE', [
 				'values' => ['N', 'Y'],
 				'title' => Loc::getMessage('SESSION_ENTITY_WAIT_VOTE_FIELD'),
 				'default_value' => 'N',
-			)),
-			new BooleanField('WAIT_ANSWER', array(
+			]),
+			new BooleanField('WAIT_ANSWER', [
 				'values' => ['N', 'Y'],
 				'title' => Loc::getMessage('SESSION_ENTITY_WAIT_ANSWER_FIELD_NEW'),
 				'default_value' => 'Y',
-			)),
-			new BooleanField('CLOSED', array(
+			]),
+			new BooleanField('CLOSED', [
 				'values' => ['N', 'Y'],
 				'title' => Loc::getMessage('SESSION_ENTITY_CLOSED_FIELD'),
 				'default_value' => 'N',
-			)),
-			new BooleanField('PAUSE', array(
+			]),
+			new BooleanField('PAUSE', [
 				'values' => ['N', 'Y'],
 				'title' => Loc::getMessage('SESSION_ENTITY_PAUSE_FIELD'),
 				'default_value' => 'N',
-			)),
-			new BooleanField('SPAM', array(
+			]),
+			new BooleanField('SPAM', [
 				'values' => ['N', 'Y'],
 				'title' => Loc::getMessage('SESSION_ENTITY_SPAM_FIELD'),
 				'default_value' => 'N',
-			)),
-			new BooleanField('WORKTIME', array(
+			]),
+			new BooleanField('WORKTIME', [
 				'values' => ['N', 'Y'],
 				'title' => Loc::getMessage('SESSION_ENTITY_WORKTIME_FIELD'),
 				'default_value' => 'Y',
-			)),
-			new BooleanField('SEND_NO_ANSWER_TEXT', array(
+			]),
+			new BooleanField('SEND_NO_ANSWER_TEXT', [
 				'values' => ['N', 'Y'],
 				'title' => Loc::getMessage('SESSION_ENTITY_SEND_NO_ANSWER_TEXT_FIELD'),
 				'default_value' => 'N',
-			)),
+			]),
+			new BooleanField('SEND_NO_WORK_TIME_TEXT', [
+				'values' => ['N', 'Y'],
+				'title' => Loc::getMessage('SESSION_ENTITY_SEND_NO_ANSWER_TEXT_FIELD'),
+				'default_value' => 'N',
+			]),
 			new TextField('QUEUE_HISTORY', [
 				'title' => Loc::getMessage('SESSION_ENTITY_QUEUE_HISTORY_FIELD'),
 				'default_value' => [],
@@ -313,42 +326,55 @@ class SessionTable extends DataManager
 				'validation' => [__CLASS__, 'validateSendForm'],
 				'default_value' => 'none',
 			]),
-			new BooleanField('SEND_HISTORY', array(
+			new BooleanField('SEND_HISTORY', [
 				'values' => ['N', 'Y'],
 				'default_value' => 'N',
-			)),
+			]),
 			new IntegerField('PARENT_ID', [
 				'default_value' => '0',
 			]),
 			(new Reference(
 				'INDEX',
-				\Bitrix\ImOpenLines\Model\SessionIndexTable::class,
+				SessionIndexTable::class,
 				Join::on('this.ID', 'ref.SESSION_ID')
 			))->configureJoinType('inner'),
 			new Reference(
 				'CONFIG',
-				\Bitrix\ImOpenLines\Model\ConfigTable::class,
+				ConfigTable::class,
 				Join::on('this.CONFIG_ID', 'ref.ID')
 			),
 			new Reference(
-				'CHAT',
-				\Bitrix\Im\Model\ChatTable::class,
-				Join::on('this.CHAT_ID', 'ref.ID')
+				'CHECK',
+				SessionCheckTable::class,
+				Join::on('this.ID', 'ref.SESSION_ID')
 			),
 			new Reference(
-				'CHECK',
-				\Bitrix\ImOpenLines\Model\SessionCheckTable::class,
+				'KPI_MESSAGES',
+				\Bitrix\ImOpenLines\Model\SessionKpiMessagesTable::class,
 				Join::on('this.ID', 'ref.SESSION_ID')
 			),
 			new Reference(
 				'LIVECHAT',
-				\Bitrix\ImOpenLines\Model\LivechatTable::class,
+				LivechatTable::class,
 				Join::on('this.CONFIG_ID', 'ref.CONFIG_ID')
 			),
-			new BooleanField('IS_FIRST', array(
+			new BooleanField('IS_FIRST', [
 				'values' => ['N', 'Y'],
-			)),
-		);
+			]),
+		];
+
+		if(Loader::includeModule('im'))
+		{
+
+			$result[] = new Reference(
+				'CHAT',
+				ChatTable::class,
+				Join::on('this.CHAT_ID', 'ref.ID')
+			);
+
+		}
+
+		return $result;
 	}
 
 	/**
@@ -370,9 +396,9 @@ class SessionTable extends DataManager
 	 */
 	public static function getByIdPerformance($id)
 	{
-		return parent::getByPrimary($id, Array(
+		return parent::getByPrimary($id, [
 			'select' => self::getSelectFieldsPerformance()
-		));
+		]);
 	}
 
 	/**
@@ -395,14 +421,20 @@ class SessionTable extends DataManager
 			{
 				continue;
 			}
+			if (
+				$field instanceof ExpressionField &&
+				substr($key, -7) === '_SINGLE'
+			)
+			{
+				$ufMultiName = substr($key, 0, -7);
+
+				if(self::getEntity()->hasField($ufMultiName) && self::getEntity()->getField($ufMultiName) instanceof UserTypeField)
+				{
+					continue;
+				}
+			}
+
 			$whiteList[] = $prefix? $prefix.'.'.$key: $key;
-		}
-
-		$ufData = \CUserTypeEntity::GetList([], ['ENTITY_ID' => self::getUfId()]);
-
-		while($ufResult = $ufData->Fetch())
-		{
-			$whiteList[] = $prefix? $prefix.'.'.$ufResult["FIELD_NAME"]: $ufResult["FIELD_NAME"];;
 		}
 
 		return $whiteList;
@@ -483,43 +515,46 @@ class SessionTable extends DataManager
 		$select = self::getSelectFieldsPerformance();
 		$select['CONFIG_LINE_NAME'] = 'CONFIG.LINE_NAME';
 
-		$record = parent::getByPrimary($id, Array(
+		$record = parent::getByPrimary($id, [
 			'select' => $select
-		))->fetch();
+		])->fetch();
 		if(!is_array($record))
 			return;
 
-		SessionIndexTable::merge(array(
+		SessionIndexTable::merge([
 			'SESSION_ID' => $id,
 			'SEARCH_CONTENT' => self::generateSearchContent($record)
-		));
+		]);
 	}
 
 	/**
 	 * @param array $fields Record as returned by getList
 	 * @return string
+	 * @throws Main\ArgumentException
 	 * @throws Main\LoaderException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
 	 */
 	public static function generateSearchContent(array $fields)
 	{
-		$crmCaption = \Bitrix\ImOpenLines\Crm\Common::generateSearchContent($fields['CRM_ACTIVITY_ID']);
+		$crmCaption = Crm\Common::generateSearchContent($fields['CRM_ACTIVITY_ID']);
 
-		$userId = array();
+		$userId = [];
 
-		if($fields['CHAT_ID'] > 0 && $fields['CLOSED'] == 'Y' && \Bitrix\Main\Loader::includeModule('im'))
+		if($fields['CHAT_ID'] > 0 && $fields['CLOSED'] == 'Y' && Loader::includeModule('im'))
 		{
 			$userId[$fields['OPERATOR_ID']] = $fields['OPERATOR_ID'];
 			$userId[$fields['USER_ID']] = $fields['USER_ID'];
 
-			$transcriptLines = Array();
-			$cursor = \Bitrix\Im\Model\MessageTable::getList(array(
-				'select' => Array('MESSAGE', 'AUTHOR_ID'),
-				'filter' => array(
+			$transcriptLines = [];
+			$cursor = MessageTable::getList([
+				'select' => ['MESSAGE', 'AUTHOR_ID'],
+				'filter' => [
 					'=CHAT_ID' => $fields['CHAT_ID'],
 					'>=ID' => $fields['START_ID'],
 					'<=ID' => $fields['END_ID'],
-				),
-			));
+				],
+			]);
 			while ($row = $cursor->fetch())
 			{
 				if ($row['AUTHOR_ID'] == 0)
@@ -531,7 +566,7 @@ class SessionTable extends DataManager
 			}
 
 			$transcriptLines = implode(" ", $transcriptLines);
-			$transcriptLines = \Bitrix\Im\Text::removeBbCodes($transcriptLines);
+			$transcriptLines = Im\Text::removeBbCodes($transcriptLines);
 			if (strlen($transcriptLines) > 5000000)
 			{
 				$transcriptLines = substr($transcriptLines, 0, 5000000);
@@ -544,7 +579,7 @@ class SessionTable extends DataManager
 			$userId[$fields['USER_ID']] = $fields['USER_ID'];
 		}
 
-		$mapBuilderManager = \Bitrix\Main\Search\MapBuilder::create();
+		$mapBuilderManager = MapBuilder::create();
 
 		if(!empty($userId))
 		{
@@ -582,9 +617,9 @@ class SessionTable extends DataManager
 	 */
 	public static function validateSource()
 	{
-		return array(
+		return [
 			new Length(null, 255),
-		);
+		];
 	}
 	/**
 	 * Returns validators for SOURCE field.
@@ -594,9 +629,9 @@ class SessionTable extends DataManager
 	 */
 	public static function validateMode()
 	{
-		return array(
+		return [
 			new Length(null, 255),
-		);
+		];
 	}
 	/**
 	 * Returns validators for USER_CODE field.
@@ -606,9 +641,9 @@ class SessionTable extends DataManager
 	 */
 	public static function validateUserCode()
 	{
-		return array(
+		return [
 			new Length(null, 255),
-		);
+		];
 	}
 	/**
 	 * Returns validators for EXTRA_TARIFF field.
@@ -618,9 +653,9 @@ class SessionTable extends DataManager
 	 */
 	public static function validateExtraTariff()
 	{
-		return array(
+		return [
 			new Length(null, 255),
-		);
+		];
 	}
 	/**
 	 * Returns validators for EXTRA_USER_LEVEL field.
@@ -630,9 +665,9 @@ class SessionTable extends DataManager
 	 */
 	public static function validateExtraUserLevel()
 	{
-		return array(
+		return [
 			new Length(null, 255),
-		);
+		];
 	}
 	/**
 	 * Returns validators for EXTRA_PORTAL_TYPE field.
@@ -642,9 +677,9 @@ class SessionTable extends DataManager
 	 */
 	public static function validateExtraPortalType()
 	{
-		return array(
+		return [
 			new Length(null, 255),
-		);
+		];
 	}
 	/**
 	 * Returns validators for EXTRA_URL field.
@@ -654,9 +689,9 @@ class SessionTable extends DataManager
 	 */
 	public static function validateExtraUrl()
 	{
-		return array(
+		return [
 			new Length(null, 255),
-		);
+		];
 	}
 	/**
 	 * Returns validators for SEND_FORM field.
@@ -666,13 +701,16 @@ class SessionTable extends DataManager
 	 */
 	public static function validateSendForm()
 	{
-		return array(
+		return [
 			new Length(null, 255),
-		);
+		];
 	}
 
 	/**
 	 * Return current date for DATE_CREATE field.
+	 *
+	 * @return DateTime
+	 * @throws Main\ObjectException
 	 */
 	public static function getCurrentDate()
 	{

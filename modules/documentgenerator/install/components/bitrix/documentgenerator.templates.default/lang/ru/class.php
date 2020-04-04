@@ -1,6 +1,7 @@
 <?php
 $MESS["DOCGEN_TEMPLATES_DEFAULT_ERROR_MODULE"] = "Модуль \"Генератор документов\" не установлен";
 $MESS["DOCGEN_TEMPLATES_DEFAULT_MODULE_ERROR"] = 'Не удалось подключить модуль #MODULE_ID#';
+$MESS["DOCGEN_TEMPLATES_PERMISSIONS_ERROR"] = "У вас недостаточно прав для изменения шаблонов";
 $MESS["DOCGEN_TEMPLATES_DEFAULT_NAME"] = 'Название';
 $MESS["DOCGEN_TEMPLATES_DEFAULT_REGION"] = 'Страна';
 $MESS["DOCGEN_TEMPLATES_DEFAULT_ENTITIES"] = 'Привязка к разделам';

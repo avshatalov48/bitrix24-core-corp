@@ -1,0 +1,112 @@
+.b24-form {
+	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--b24-font-family);
+	line-height: 18px;
+}
+
+.b24-form * {
+	box-sizing: border-box;
+	outline: none;
+}
+
+.b24-form a, .b24-form a:not([href]),
+.b24-form a:not([href]):not([tabindex]) {
+	color: var(--b24-text-color);
+	text-decoration: underline;
+	cursor: pointer;
+}
+
+.b24-form-wrapper {
+	position: relative;
+	display: block;
+	background-color: rgba(0, 0, 0, .08);
+	background-color: var(--b24-background-color);
+	min-height: 250px;
+	max-width: 700px;
+	margin: 0 auto;
+	transition: min-height 180ms ease;
+}
+
+.b24-form-wrapper.b24-from-state-on {min-height: 320px;}
+
+.b24-form-wrapper.b24-form-shadow { box-shadow: 0 4px 18px 0 rgba(0, 0, 0, .3); }
+
+.b24-form-wrapper.b24-form-border-top { border-top: 5px solid var(--b24-primary-color); }
+
+.b24-form-wrapper.b24-form-border-right { border-right: 5px solid var(--b24-primary-color); }
+
+.b24-form-wrapper.b24-form-border-bottom { border-bottom: 5px solid var(--b24-primary-color); }
+
+.b24-form-wrapper.b24-form-border-left { border-left: 5px solid var(--b24-primary-color); }
+
+.b24-form-header {
+	padding: 15px 31px 5px;
+	border-bottom: 1px solid rgba(82, 92, 105, 0.11);
+	text-align: center;
+}
+
+.b24-form-header-padding { padding: 10px; }
+
+.b24-dark .b24-form-header { border-bottom: 1px solid rgba(255, 255, 255, 0.31); }
+
+.b24-form-header-title {
+	color: #000;
+	color: var(--b24-text-color);
+	letter-spacing: .6px;
+	margin-bottom: 9px;
+	font: 700 24px/33px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 700 24px/33px var(--b24-font-family);
+}
+
+.b24-form-header-description {
+	margin: 0 0 15px 0;
+	font: 15px/17px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 15px/17px var(--b24-font-family);
+	color: #000;
+	color: var(--b24-text-color);
+	opacity: 0.8;
+}
+
+/* Content*/
+.b24-form-content { padding: 14px 31px; }
+
+.b24-form-sign {
+	padding: 0 30px 10px 10px;
+	text-align: right;
+	margin: -10px 0 0;
+}
+
+.b24-form-sign-text {
+	margin: 0 0 0 -2px;
+	font: 12px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 12px var(--b24-font-family);
+	color: #b2b6bd;
+}
+
+.b24-form-sign-bx {
+	margin: 0 -2px 0 0;
+	font: 600 14px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	color: #2fc7f7;
+}
+
+.b24-form-sign-24 {
+	font: 600 15px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	color: #215f98;
+}
+
+.b24-form-padding-side {
+	padding-left: 31px;
+	padding-right: 31px;
+}
+
+@media (max-width: 530px) {
+	.b24-form-header-title {
+		font-size: 18px;
+		line-height: 18px;
+	}
+
+	.b24-form-padding-side {
+		padding-left: 18px;
+		padding-right: 18px;
+	}
+}

@@ -41,9 +41,9 @@ class InvoiceAccountSyncAgent extends EntityStepwiseAgent
 	}
 	protected function getTotalEntityCount()
 	{
-		return \CCrmInvoice::GetList(array(), array('CHECK_PERMISSIONS' => 'N'), array(), false);
+		return \CCrmInvoice::GetTotalCount();
 	}
-	protected function getEnityIDs($offsetID, $limit)
+	protected function getEntityIDs($offsetID, $limit)
 	{
 		$filter = array('CHECK_PERMISSIONS' => 'N');
 		if($offsetID > 0)

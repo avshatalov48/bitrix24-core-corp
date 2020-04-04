@@ -10,4 +10,5 @@ $MESS["NM_DOWNTEXT"] = "Release to refresh";
 $MESS["NM_LOADTEXT"] = "Reloading...";
 $MESS["NM_TITLE"] = "Notifications";
 $MESS["NM_TITLE_2"] = "Updating...";
+$MESS["NM_SYSTEM_USER"] = "System Message";
 ?>

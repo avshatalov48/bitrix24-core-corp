@@ -45,7 +45,7 @@ class CBPCrmCreateLeadContactActivity
 			array('=ID' => $entityId, 'CHECK_PERMISSIONS' => 'N'),
 			false,
 			false,
-			array_merge($customerFields, ['ASSIGNED_BY_ID', 'CONTACT_ID'])
+			array_merge($customerFields, ['ASSIGNED_BY_ID', 'CONTACT_ID', 'STATUS_ID'])
 		)->Fetch();
 
 		if(!$leadFields)
@@ -58,6 +58,12 @@ class CBPCrmCreateLeadContactActivity
 		{
 			$this->ContactId = $leadFields['CONTACT_ID'];
 			$this->WriteToTrackingService(GetMessage('CRM_CRLC_LEAD_HAS_CONTACT'), 0, CBPTrackingType::Error);
+			return CBPActivityExecutionStatus::Closed;
+		}
+
+		if (\CCrmLead::GetSemanticID($leadFields['STATUS_ID']) === \Bitrix\Crm\PhaseSemantics::SUCCESS)
+		{
+			$this->WriteToTrackingService(GetMessage('CRM_CRLC_LEAD_WRONG_STATUS'), 0, CBPTrackingType::Error);
 			return CBPActivityExecutionStatus::Closed;
 		}
 

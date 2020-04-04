@@ -145,11 +145,6 @@ class BaseTable
 		{
 			$params = $class::setAccessFilter($params);
 		}
-		//@tmp
-		if (isset($params['filter']['CHECK_PERMISSIONS']))
-		{
-			unset($params['filter']['CHECK_PERMISSIONS']);
-		}
 
 		/** @var \Bitrix\Main\ORM\Data\DataManager $class */
 		return $class::getList($params);

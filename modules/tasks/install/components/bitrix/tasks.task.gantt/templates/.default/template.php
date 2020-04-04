@@ -6,6 +6,8 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Tasks\Integration\SocialNetwork;
 
+$isIFrame = $_REQUEST['IFRAME'] == 'Y';
+
 Loc::loadMessages(__FILE__);
 CUtil::InitJSCore(array('popup', 'tooltip', 'gantt', 'tasks_util_query', 'task_info_popup', 'task-popups', 'CJSTask'));
 
@@ -585,6 +587,13 @@ else
 </script>
 
 
+
+<?php
+if ($isBitrix24Template)
+{
+    $this->SetViewTarget('inside_pagetitle');
+}
+?>
 <?php $APPLICATION->IncludeComponent(
 	'bitrix:tasks.interface.header',
 	'',
@@ -656,8 +665,16 @@ endif
 		<?= ShowError($error['MESSAGE']) ?>
 	<? endforeach ?>
 <? endif ?>
+<?php
+if ($isBitrix24Template)
+{
+    $this->EndViewTarget();
+}
+?>
 
-<div id="gantt-container"></div>
+
+<div id="gantt-container" class="tasks-gantt"></div>
+
 <br/>
 <?=$arResult["NAV_STRING"] ?>
 

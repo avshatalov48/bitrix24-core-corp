@@ -216,6 +216,16 @@ class EntityCounter extends CounterBase
 			\CUserOptions::SetOption('crm', $this->lastCalculateOptionName, $this->lastCalculatedTime, false, $this->userID);
 		}
 	}
+	protected static function getUserTime($userID)
+	{
+		$time = new DateTime();
+		$offset = $userID > 0 ? \CTimeZone::GetOffset($userID) : 0;
+		if($offset != 0)
+		{
+			$time->add(($offset < 0 ? '-' : '').'PT'.abs($offset).'S');
+		}
+		return $time;
+	}
 	public function getValue($recalculate = false)
 	{
 		if($this->currentValue !== null)
@@ -421,6 +431,58 @@ class EntityCounter extends CounterBase
 						)
 					);
 
+					//region Activity (inner join with correlated query for fix issue #109347)
+					$activityQuery = new Main\Entity\Query(ActivityTable::getEntity());
+
+					if(is_array($userID))
+					{
+						$userCount = count($userID);
+						if($userCount > 1)
+						{
+							$activityQuery->addFilter('@RESPONSIBLE_ID', $userID);
+						}
+						elseif($userCount === 1)
+						{
+							$activityQuery->addFilter('=RESPONSIBLE_ID', $userID[0]);
+						}
+					}
+					elseif($userID > 0)
+					{
+						$activityQuery->addFilter('=RESPONSIBLE_ID', $userID);
+					}
+
+					if($typeID === EntityCounterType::PENDING)
+					{
+						$lowBound = self::getUserTime($userID);
+						$lowBound->setTime(0, 0, 0);
+						$activityQuery->addFilter('>=DEADLINE', $lowBound);
+
+						$highBound = self::getUserTime($userID);
+						$highBound->setTime(23, 59, 59);
+						$activityQuery->addFilter('<=DEADLINE', $highBound);
+					}
+					elseif($typeID === EntityCounterType::OVERDUE)
+					{
+						$highBound = self::getUserTime($userID);
+						$highBound->setTime(0, 0, 0);
+						$activityQuery->addFilter('<DEADLINE', $highBound);
+					}
+
+					$activityQuery->addFilter('=COMPLETED', 'N');
+					$activityQuery->addSelect('ID');
+
+					$query->registerRuntimeField(
+						'',
+						new ReferenceField('A',
+							Main\Entity\Base::getInstanceByQuery($activityQuery),
+							array('=ref.ID' => 'this.B.ACTIVITY_ID'),
+							array('join_type' => 'INNER')
+						)
+					);
+					//endregion
+
+					//region Activity (standard inner join)
+					/*
 					$query->registerRuntimeField(
 						'',
 						new ReferenceField('A',
@@ -467,6 +529,8 @@ class EntityCounter extends CounterBase
 						$highBound->setTime(0, 0, 0);
 						$query->addFilter('<A.DEADLINE', $highBound);
 					}
+					*/
+					//endregion
 
 					if($select === 'ENTY')
 					{
@@ -654,6 +718,23 @@ class EntityCounter extends CounterBase
 			$params = array();
 		}
 
+		$sql = $this->getEntityListSqlExpression($params);
+		if(empty($sql))
+		{
+			return array();
+		}
+		$masterAlias = isset($params['MASTER_ALIAS']) ? $params['MASTER_ALIAS'] : 'L';
+		$masterIdentity = isset($params['MASTER_IDENTITY']) ? $params['MASTER_IDENTITY'] : 'ID';
+		return array('__CONDITIONS' => array(array('SQL' => "{$masterAlias}.{$masterIdentity} IN ({$sql})")));
+	}
+
+	/**
+	 * @param array $params
+	 *
+	 * @return string
+	 */
+	public function getEntityListSqlExpression(array $params = [])
+	{
 		$union = array();
 		$queryParams = array('SELECT' => 'ENTY', 'DISTINCT' => false);
 		if(isset($params['USER_IDS']))
@@ -669,12 +750,9 @@ class EntityCounter extends CounterBase
 
 		if(empty($union))
 		{
-			return array();
+			return '';
 		}
 
-		$sql = implode(' UNION ALL ', $union);
-		$masterAlias = isset($params['MASTER_ALIAS']) ? $params['MASTER_ALIAS'] : 'L';
-		$masterIdentity = isset($params['MASTER_IDENTITY']) ? $params['MASTER_IDENTITY'] : 'ID';
-		return array('__CONDITIONS' => array(array('SQL' => "{$masterAlias}.{$masterIdentity} IN ({$sql})")));
+		return implode(' UNION ALL ', $union);
 	}
 }

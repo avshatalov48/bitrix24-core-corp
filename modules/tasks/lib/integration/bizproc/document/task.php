@@ -176,7 +176,7 @@ class Task implements \IBPWorkflowDocument
 				'Type' => 'select',
 				//'Editable' => true,
 				'Options' => array(
-					\CTasks::STATE_PENDING => Loc::getMessage('TASKS_BP_DOCUMENT_STATUS_PENDING'),
+					\CTasks::STATE_PENDING => Loc::getMessage('TASKS_BP_DOCUMENT_STATUS_PENDING_1'),
 					\CTasks::STATE_IN_PROGRESS => Loc::getMessage('TASKS_BP_DOCUMENT_STATUS_IN_PROGRESS'),
 					\CTasks::STATE_SUPPOSEDLY_COMPLETED => Loc::getMessage('TASKS_BP_DOCUMENT_STATUS_SUPPOSEDLY_COMPLETED'),
 					\CTasks::STATE_COMPLETED => Loc::getMessage('TASKS_BP_DOCUMENT_STATUS_COMPLETED'),
@@ -270,7 +270,6 @@ class Task implements \IBPWorkflowDocument
 			'MATCH_WORK_TIME' => [
 				'Name' => Loc::getMessage('TASKS_BP_DOCUMENT_MATCH_WORK_TIME'),
 				'Type' => 'bool',
-				'Editable' => true
 			],
 			'TASK_CONTROL' => [
 				'Name' => Loc::getMessage('TASKS_BP_DOCUMENT_TASK_CONTROL'),
@@ -450,7 +449,7 @@ class Task implements \IBPWorkflowDocument
 			//bool
 			'ALLOW_CHANGE_DEADLINE',
 			'ALLOW_TIME_TRACKING',
-			'MATCH_WORK_TIME',
+			//'MATCH_WORK_TIME',
 			'TASK_CONTROL',
 			'ADD_IN_REPORT',
 		];
@@ -486,6 +485,23 @@ class Task implements \IBPWorkflowDocument
 		{
 			$fields['PRIORITY'] = $fields['IS_IMPORTANT'] === 'Y' ? \CTasks::PRIORITY_HIGH : \CTasks::PRIORITY_AVERAGE;
 			unset($fields['IS_IMPORTANT']);
+		}
+
+		//normalize date fields
+		foreach (['DEADLINE', 'END_DATE_PLAN', 'START_DATE_PLAN'] as $dateField)
+		{
+			if (!isset($fields[$dateField]))
+			{
+				continue;
+			}
+			if (is_array($fields[$dateField]))
+			{
+				$fields[$dateField] = reset($fields[$dateField]);
+			}
+			if ($fields[$dateField] && !is_scalar($fields[$dateField]))
+			{
+				$fields[$dateField] = (string) $fields[$dateField];
+			}
 		}
 
 		if (empty($fields))
@@ -526,8 +542,17 @@ class Task implements \IBPWorkflowDocument
 
 	public static function deleteDocument($documentId)
 	{
-		$task = new \CTasks();
-		$task->delete($documentId);
+		$res = \CTasks::GetList([], ['ID' => (int) $documentId, 'CHECK_PERMISSIONS' => 'N'], ['CREATED_BY']);
+		if ($res && ($task = $res->Fetch()))
+		{
+			$prevOccurAsUserId = \Bitrix\Tasks\Util\User::getOccurAsId(); // null or positive integer
+			\Bitrix\Tasks\Util\User::setOccurAsId($task['CREATED_BY']);
+
+			$task = new \CTasks();
+			$task->delete($documentId);
+
+			\Bitrix\Tasks\Util\User::setOccurAsId($prevOccurAsUserId);
+		}
 
 		return true;
 	}
@@ -643,10 +668,16 @@ class Task implements \IBPWorkflowDocument
 
 		$fields['STATUS'] = $fields['REAL_STATUS'];
 		$fields['IS_EXPIRED'] = 'N';
-		if (!empty($fields['DEADLINE']) && $fields['STATUS'] < \CTasks::STATE_SUPPOSEDLY_COMPLETED)
+		if (!empty($fields['DEADLINE']))
 		{
+			$closedDateTs = time();
+			if ($fields['STATUS'] >= \CTasks::STATE_SUPPOSEDLY_COMPLETED && !empty($fields['CLOSED_DATE']))
+			{
+				$closedDateTs = DateTime::createFromUserTime($fields['CLOSED_DATE'])->getTimestamp();
+			}
+
 			$deadlineTs = DateTime::createFromUserTime($fields['DEADLINE'])->getTimestamp();
-			if ($deadlineTs <= time())
+			if ($deadlineTs <= $closedDateTs)
 			{
 				$fields['IS_EXPIRED'] = 'Y';
 			}

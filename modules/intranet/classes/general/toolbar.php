@@ -16,7 +16,7 @@ class CIntranetToolbar
 		'SORT' => 'button sorting weight',
 	)
 	*/
-	function AddButton($arButton)
+	public function AddButton($arButton)
 	{
 		if ($arButton['SORT'] <= 0)
 			$arButton['SORT'] = 10000;
@@ -25,17 +25,22 @@ class CIntranetToolbar
 		return count($this->arButtons)-1;
 	}
 	
-	function Disable()
+	public function Disable()
 	{
 		$this->bDisabled = true;
 	}
 
-	function Enable()
+	public function Enable()
 	{
 		$this->bDisabled = false;
 	}
+
+	public function isEnabled()
+	{
+		return !$this->bDisabled;
+	}
 	
-	function Show()
+	public function Show()
 	{
 		global $APPLICATION;
 		
@@ -46,8 +51,13 @@ class CIntranetToolbar
 			$APPLICATION->AddBufferContent(array(&$this, '__display'));
 		}
 	}
+
+	public function getButtons()
+	{
+		return $this->arButtons;
+	}
 	
-	function __display()
+	public function __display()
 	{
 		global $APPLICATION;
 	
@@ -80,4 +90,3 @@ class CIntranetToolbar
 		return $result;
 	}
 }
-?>

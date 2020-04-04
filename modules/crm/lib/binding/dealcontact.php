@@ -487,6 +487,51 @@ class DealContactTable extends Entity\DataManager
 		return "";
 	}
 	/**
+	 * Unbind all contacts from seed deal and bind to target deal
+	 * @param int $seedDealID Seed deal ID.
+	 * @param int $targDealID Target deal ID.
+	 * @throws Main\ArgumentException
+	 */
+	public static function rebindAllContacts($seedDealID, $targDealID)
+	{
+		$seedDealID = (int)$seedDealID;
+		if($seedDealID <= 0)
+		{
+			throw new Main\ArgumentException('Must be greater than zero', 'seedDealID');
+		}
+
+		$targDealID = (int)$targDealID;
+		if($targDealID <= 0)
+		{
+			throw new Main\ArgumentException('Must be greater than zero', 'targDealID');
+		}
+
+		//Combine contacts from seed and target and bind to target.
+		$connection = Main\Application::getConnection();
+		$dbResult = $connection->query(
+		/** @lang text */
+			"SELECT CONTACT_ID FROM b_crm_deal_contact
+				WHERE DEAL_ID IN ({$seedDealID}, {$targDealID}) GROUP BY CONTACT_ID"
+		);
+
+		$contactIDs = array();
+		while($fields = $dbResult->fetch())
+		{
+			$contactIDs[] = (int)$fields['CONTACT_ID'];
+		}
+
+		if(!empty($contactIDs))
+		{
+			self::bindContactIDs($targDealID, $contactIDs);
+		}
+
+		//Clear seed bindings
+		$connection->queryExecute(
+		/** @lang text */
+			"DELETE FROM b_crm_deal_contact WHERE DEAL_ID = {$seedDealID}"
+		);
+	}
+	/**
 	 * Unbind all deals from seed contact and bind to target contact
 	 * @param int $seedContactID Seed contact ID.
 	 * @param int $targContactID Target contact ID.

@@ -89,7 +89,7 @@
 	loader.prototype.createProgress = function ()
 	{
 
-		this.bar = new ProgressBar.Circle(this.loaderContainer, {
+		this.bar = new BX.ProgressBarJs.Circle(this.loaderContainer, {
 			easing: "linear",
 			strokeWidth: 4,
 			color: '#ffffff',
@@ -123,7 +123,6 @@
 					}
 				}
 			}, this)
-
 		});
 	};
 
@@ -195,23 +194,6 @@
 		{
 			this.listener = listener;
 		},
-		/**
-		 * @example
-		 * BX.MobileUploadProvider.addTasks([
-		 {
-			 url: "file://path/to/file", //path to file on device
-			 params: {someKey: "someValue"},//some data, feel free to use it
-			 name: "text1.txt", //final name of file
-			 folderId: "5", //folder id in b24disk
-			 taskId: "task2", //must be unique
-			 chunk: 1024 * 1024 * 100 //chunk size in bytes
-			 progressNode: node, //node to display progress
-			 imageNode: node// image node that will be blurred
-			 onDestroyEventName: "someEventName"//
-
-		 }
-		 ]);
-		 * **/
 		toBXUrl: function (path)
 		{
 			return "bx" + path;
@@ -268,6 +250,23 @@
 				this.taskIds.push(task.taskId);
 			}, this));
 		},
+		/**
+		 * @example
+		 * BX.MobileUploadProvider.addTasks([
+		 {
+			 url: "file://path/to/file", //path to file on device
+			 params: {someKey: "someValue"},//some data, feel free to use it
+			 name: "text1.txt", //final name of file
+			 folderId: "5", //folder id in b24disk
+			 taskId: "task2", //must be unique
+			 chunk: 1024 * 1024 * 100 //chunk size in bytes
+			 progressNode: node, //node to display progress
+			 imageNode: node// image node that will be blurred
+			 onDestroyEventName: "someEventName"//
+
+		 }
+		 ]);
+		 * **/
 		addTasks: function (tasks)
 		{
 			this.registerTaskLoaders(tasks);

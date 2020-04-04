@@ -20,7 +20,7 @@ class CUserTypeCrm extends CUserTypeString
 		$entityType['CONTACT'] = $arUserField['SETTINGS']['CONTACT'] == 'Y'? 'Y': 'N';
 		$entityType['COMPANY'] = $arUserField['SETTINGS']['COMPANY'] == 'Y'? 'Y': 'N';
 		$entityType['DEAL'] = $arUserField['SETTINGS']['DEAL'] == 'Y'? 'Y': 'N';
-		$entityType['ORDER'] = $arUserField['SETTINGS']['DEAL'] == 'Y'? 'Y': 'N';
+		$entityType['ORDER'] = $arUserField['SETTINGS']['ORDER'] == 'Y'? 'Y': 'N';
 
 		$iEntityType = 0;
 		foreach($entityType as $result)

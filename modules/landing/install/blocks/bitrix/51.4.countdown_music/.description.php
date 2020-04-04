@@ -10,6 +10,7 @@ return array(
 	'block' => array(
 		'name' => Loc::getMessage('LANDING_BLOCK_51_4_COUNTDOWN_MUSIC--NAME'),
 		'section' => array('countdowns', 'cover'),
+		'dynamic' => false,
 		'version' => '18.5.0',
 	),
 	'cards' => array(
@@ -23,7 +24,7 @@ return array(
 						'type' => 'date',
 						'format' => 'ms',
 						'attribute' => 'data-end-date',
-					)
+					),
 					//						"placeholder" => "2018/08/25 19:19:19",
 					//			"value" => "default_value",
 				),

@@ -6,4 +6,5 @@ $MESS["TASKS_CHANGE_STATUS_PENDING"] = "Ждет выполнения";
 $MESS["TASKS_CHANGE_STATUS_IN_PROGRESS"] = "Выполняется";
 $MESS["TASKS_CHANGE_STATUS_COMPLETED"] = "Завершена";
 $MESS["TASKS_CHANGE_STATUS_DEFERRED"] = "Отложена";
+$MESS['TASKS_CHANGE_STATUS_MODIFIED_BY'] = "Изменить от имени";
 ?>

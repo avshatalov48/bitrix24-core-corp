@@ -182,70 +182,45 @@ BX.CrmConfigStatusClass = (function ()
 			return;
 		}
 
-		var message = "";
-		if(this.hasSemantics)
-		{
-			message = BX.message('CRM_STATUS_DELETE_FIELD_QUESTION');
-		}
-
-		if(!BX.type.isNotEmptyString(message))
-		{
-			message = BX.message('CRM_STATUS_DELETE_FIELD_QUESTION');
-		}
-
-		var content = BX.create(
-			'p',
-			{
-				props: { className: 'bx-crm-popup-paragraph' },
-				html: message
-			}
-		);
-
-
-		this.modalWindow({
-			modalId: 'bx-crm-popup',
-			title: BX.message("CRM_STATUS_CONFIRMATION_DELETE_TITLE"),
-			overlay: false,
-			content: [content],
-			events : {
-				onPopupClose : function() {
-					this.destroy();
-				},
-				onAfterPopupShow : function(popup) {
-					var title = BX.findChild(popup.contentContainer, {className: 'bx-crm-popup-title'}, true);
-					if (title)
-					{
-						title.style.cursor = "move";
-						BX.bind(title, "mousedown", BX.proxy(popup._startDrag, popup));
-					}
-				}
+		BX.ajax({
+			url: this.ajaxUrl,
+			method: 'POST',
+			dataType: 'json',
+			data: {
+				'ACTION' : 'CHECK_ENTITY_EXISTENCE',
+				'ENTITY_ID': this.entityId,
+				'FIELD_ID': fieldId
 			},
-			buttons: [
-				BX.create('a', {
-					text : BX.message("CRM_STATUS_CONFIRMATION_DELETE_CANCEL_BUTTON"),
-					props: {
-						className: 'webform-small-button webform-small-button-accept'
-					},
-					events : {
-						click : BX.delegate(function (e) {
-							BX.PopupWindowManager.getCurrentPopup().close();
-						}, this)
-					}
-				}),
-				BX.create('a', {
-					text : BX.message("CRM_STATUS_CONFIRMATION_DELETE_SAVE_BUTTON"),
-					props: {
-						className: 'webform-small-button webform-button-cancel'
-					},
-					events : {
-						click : BX.delegate(function (e)
-						{
-							this.deleteField(fieldId);
-							BX.PopupWindowManager.getCurrentPopup().close();
-						}, this)
-					}
-				})
-			]
+			onsuccess: BX.delegate(function(result) {
+				if (result.ERROR)
+				{
+					var popup = new BX.PopupWindow({
+						titleBar: result.TITLE,
+						closeIcon: true,
+						autoHide: true,
+						closeByEsc: true,
+						content: result.ERROR,
+						width: 400,
+						buttons: [
+							new BX.PopupWindowButton({
+								text : BX.message('CRM_STATUS_CLOSE_POPUP_REMOVE_ERROR'),
+								className : 'popup-window-button popup-window-button-link ' +
+									'popup-window-button-link-cancel',
+								events : {
+									click: function() {
+										popup.close();
+									}.bind(this)
+								}
+							})
+						]
+					});
+					popup.show();
+				}
+				else
+				{
+					this.deleteField(fieldId);
+				}
+			}, this)
 		});
 	};
 

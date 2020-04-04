@@ -26,6 +26,7 @@ class Type
 	const BITRIX24 = 7;
 	const OPENLINE = 8;
 	const VIBER = 9;
+	const IMOL = 10;
 
 	const PHONE_NAME = 'PHONE';
 	const EMAIL_NAME = 'EMAIL';
@@ -36,6 +37,7 @@ class Type
 	const BITRIX24_NAME = 'BITRIX24';
 	const OPENLINE_NAME = 'OPENLINE';
 	const VIBER_NAME = 'VIBER';
+	const IMOL_NAME = 'IMOL';
 
 	/**
 	 * Get all names.
@@ -52,7 +54,8 @@ class Type
 			self::VK_NAME,
 			self::BITRIX24_NAME,
 			self::OPENLINE_NAME,
-			self::VIBER_NAME
+			self::VIBER_NAME,
+			self::IMOL_NAME
 		);
 	}
 	/**

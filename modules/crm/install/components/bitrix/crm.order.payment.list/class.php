@@ -25,6 +25,7 @@ class CCrmOrderPaymentListComponent extends \CBitrixComponent
 		$arParams['PATH_TO_ORDER_PAYMENT_SHOW'] = CrmCheckPath('PATH_TO_ORDER_PAYMENT_SHOW', $arParams['PATH_TO_ORDER_PAYMENT_SHOW'], $APPLICATION->GetCurPage().'?payment_id=#payment_id#&show');
 		$arParams['PATH_TO_ORDER_PAYMENT_EDIT'] = CrmCheckPath('PATH_TO_ORDER_PAYMENT_EDIT', $arParams['PATH_TO_ORDER_PAYMENT_EDIT'], $APPLICATION->GetCurPage().'?payment_id=#payment_id#&edit');
 		$arParams['PATH_TO_USER_PROFILE'] = CrmCheckPath('PATH_TO_USER_PROFILE', $arParams['PATH_TO_USER_PROFILE'], '/company/personal/user/#user_id#/');
+		$arParams['PATH_TO_BUYER_PROFILE'] = CrmCheckPath('PATH_TO_BUYER_PROFILE', $arParams['PATH_TO_BUYER_PROFILE'], 'shop/settings/sale_buyers_profile/?USER_ID=#user_id#');
 		$arParams['NAME_TEMPLATE'] = empty($arParams['NAME_TEMPLATE']) ? CSite::GetNameFormat(false) : str_replace(array("#NOBR#","#/NOBR#"), array("",""), $arParams["NAME_TEMPLATE"]);
 
 		return $arParams;
@@ -487,6 +488,23 @@ class CCrmOrderPaymentListComponent extends \CBitrixComponent
 			unset($sort['responsible_by']);
 		}
 
+		if (in_array('USER_ID', $visibleColumns, true) || isset($sort['user_id']))
+		{
+			$selectFields['USER_ID'] = 'ORDER.USER_ID';
+			$selectFields['USER_NAME'] = 'ORDER.USER.NAME';
+			$selectFields['USER_SECOND_NAME'] = 'ORDER.USER.SECOND_NAME';
+			$selectFields['USER_LAST_NAME'] = 'ORDER.USER.LAST_NAME';
+			$selectFields['USER_LOGIN'] = 'ORDER.USER.LOGIN';
+			$selectFields['USER_EMAIL'] = 'ORDER.USER.EMAIL';
+		}
+
+		if (isset($sort['user_id']))
+		{
+			$sort['USER_LAST_NAME'] = $sort['user_id'];
+			$sort['USER_NAME'] = $sort['user_id'];
+			unset($sort['user_id']);
+		}
+
 		$arOptions = $arExportOptions = array('FIELD_OPTIONS' => array('ADDITIONAL_FIELDS' => array()));
 
 		if(isset($this->arParams['IS_EXTERNAL_CONTEXT']))
@@ -736,6 +754,26 @@ class CCrmOrderPaymentListComponent extends \CBitrixComponent
 				'#ACCOUNT_NUMBER#' => $payment['ACCOUNT_NUMBER'],
 				'#DATE_BILL#' => $payment['DATE_BILL']
 			));
+
+			if((int)$payment['USER_ID'] > 0)
+			{
+				$payment['BUYER_FORMATTED_NAME'] = \CUser::FormatName(
+					\CSite::getNameFormat(false),
+					array(
+						'LOGIN' => $payment['USER_LOGIN'],
+						'NAME' => $payment['USER_NAME'],
+						'LAST_NAME' => $payment['USER_LAST_NAME'],
+						'SECOND_NAME' => $payment['USER_SECOND_NAME']
+					),
+					true,
+					true
+				);
+
+				$payment['PATH_TO_BUYER'] = CComponentEngine::MakePathFromTemplate(
+					$this->arParams['PATH_TO_BUYER_PROFILE'],
+					array('user_id' => $payment['USER_ID'])
+				);
+			}
 
 			// todo: order
 			foreach($payment as $name => $field)

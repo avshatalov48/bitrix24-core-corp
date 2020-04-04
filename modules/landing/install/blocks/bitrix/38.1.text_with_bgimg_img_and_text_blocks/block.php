@@ -22,8 +22,8 @@
 							<h3 class="landing-block-node-leftblock-title d-block g-color-black g-line-height-1_2 g-letter-spacing-minus-2 g-font-size-46">
 								$8 789 576.00
 							</h3>
-							<div class="landing-block-node-leftblock-text">
-								<p class="g-color-black-opacity-0_5 g-mb-35">Runc ullamcorper, justo a iaculis
+							<div class="landing-block-node-leftblock-text g-color-black-opacity-0_5 g-mb-35">
+								<p>Runc ullamcorper, justo a iaculis
 									elementum,
 									enim orci viverra eros, fringilla porttitor lorem eros vel odio gravida sollicitudin
 									tortor.</p>
@@ -54,7 +54,7 @@
 
 					<!-- Icon Blocks -->
 					<div class="row g-mb-90">
-						<div class="landing-block-node-card col-md-6 g-mb-30">
+						<div class="landing-block-node-card col-md-6  col-lg-6 g-mb-30">
 							<!-- Icon Blocks -->
 							<div class="media g-mb-25">
 								<div class="d-flex align-self-center g-mr-5">
@@ -78,7 +78,7 @@
 							<!-- End Icon Blocks -->
 						</div>
 
-						<div class="landing-block-node-card col-md-6 g-mb-30">
+						<div class="landing-block-node-card col-md-6 col-lg-6 g-mb-30">
 							<!-- Icon Blocks -->
 							<div class="media g-mb-25">
 								<div class="d-flex align-self-center g-mr-5">

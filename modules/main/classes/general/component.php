@@ -864,7 +864,7 @@ class CBitrixComponent
 		if ($this->__cachePath === false)
 			$this->__cachePath = $CACHE_MANAGER->getCompCachePath($this->__relativePath);
 
-		$this->__cache = \Bitrix\Main\Data\Cache::createInstance();
+		$this->__cache = \Bitrix\Main\Data\Cache::createInstance(['actual_data' => false]);
 		if ($this->__cache->startDataCache($cacheTime, $this->__cacheID, $this->__cachePath))
 		{
 			$this->__NavNum = $GLOBALS["NavNum"];
@@ -1603,7 +1603,7 @@ class CBitrixComponent
 
 		$compositeOptions = \Bitrix\Main\Composite\Helper::getOptions();
 		$componentParams = $this->arParams;
-		
+
 		if (
 			isset($componentParams["COMPOSITE_FRAME_MODE"]) &&
 			in_array($componentParams["COMPOSITE_FRAME_MODE"], array("Y", "N"))
@@ -1615,7 +1615,7 @@ class CBitrixComponent
 		{
 			$frameMode = $compositeOptions["FRAME_MODE"] === "Y";
 		}
-		
+
 		return $frameMode;
 	}
 }

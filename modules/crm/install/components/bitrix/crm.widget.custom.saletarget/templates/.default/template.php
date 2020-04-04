@@ -143,7 +143,7 @@ $this->addExternalJs($this->getFolder() . '/config_popup.js');
 <script type="text/html" data-template="widget-saletarget-user">
 	<div data-loop="users" class="crm-start-row">
 		<div class="crm-start-graph-row">
-			<div class="crm-start-graph-head crm-start-graph-head-dropdown" data-role="user-row" data-open-class="crm-start-graph-head-open">
+			<div class="crm-start-graph-head crm-start-graph-head-dropdown" data-role="user-row" data-open-class="crm-start-graph-head-open" data-inactive-class="crm-start-graph-head-inactive">
 				<div class="crm-start-graph-title">
 					<div class="crm-start-graph-title-avatar" data-role="user-photo"></div>
 					<div class="crm-start-graph-title-user">
@@ -303,7 +303,7 @@ $this->addExternalJs($this->getFolder() . '/config_popup.js');
 
 <script type="text/html" data-template="widget-saletarget-config-user">
 	<div data-loop="users" class="crm-start-popup-users">
-		<div class="crm-start-popup-row" data-new-class="crm-start-popup-row-new" data-remove-class="crm-start-popup-row-remove">
+		<div class="crm-start-popup-row" data-new-class="crm-start-popup-row-new" data-remove-class="crm-start-popup-row-remove" data-inactive-class="crm-start-popup-row-inactive">
 			<div class="crm-start-popup-personal">
 				<div class="crm-start-popup-personal-title">
 					<div class="crm-start-popup-personal-title-wrapper">

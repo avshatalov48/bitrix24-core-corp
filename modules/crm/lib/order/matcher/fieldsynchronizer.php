@@ -859,16 +859,19 @@ class FieldSynchronizer
 
 			$presetFieldsInfo = [];
 
-			foreach ($presetFields['SETTINGS']['FIELDS'] as $field)
+			if (!empty($presetFields['SETTINGS']['FIELDS']) && is_array($presetFields['SETTINGS']['FIELDS']))
 			{
-				foreach ($requisiteFields as $requisiteField)
+				foreach ($presetFields['SETTINGS']['FIELDS'] as $field)
 				{
-					if ($field['FIELD_NAME'] === $requisiteField['entity_field_name'])
+					foreach ($requisiteFields as $requisiteField)
 					{
-						$requisiteField['name'] = $entityName.'_'.$requisiteField['entity_field_name'].'_'.$presetId;
-						$requisiteField['preset_id'] = $presetId;
+						if ($field['FIELD_NAME'] === $requisiteField['entity_field_name'])
+						{
+							$requisiteField['name'] = $entityName.'_'.$requisiteField['entity_field_name'].'_'.$presetId;
+							$requisiteField['preset_id'] = $presetId;
 
-						$presetFieldsInfo[] = $requisiteField;
+							$presetFieldsInfo[] = $requisiteField;
+						}
 					}
 				}
 			}

@@ -78,7 +78,8 @@ class ImConnectorConnectorSettings extends \CBitrixComponent
 		$result = $configManager->getList(Array(
 			'select' => Array(
 				'ID',
-				'NAME' => 'LINE_NAME'
+				'NAME' => 'LINE_NAME',
+				'IS_LINE_ACTIVE' => 'ACTIVE'
 			),
 			'filter' => Array('=TEMPORARY' => 'N')
 		));
@@ -255,10 +256,10 @@ class ImConnectorConnectorSettings extends \CBitrixComponent
 					$this->arResult['PATH_TO_CONNECTOR_LINE_ADAPTED'] = str_replace('#ID#', $this->arResult['ID'], $this->arResult["PATH_TO_CONNECTOR_LINE"]);
 					$this->arResult['LIST_LINE'] = $this->showList();
 
-					if(empty($this->arResult['ACTIVE_LINE']) && !empty($this->arResult['LINE']))
+					/*if(empty($this->arResult['ACTIVE_LINE']) && !empty($this->arResult['LINE']))
 					{
 						LocalRedirect($this->arResult['PUBLIC_PATH']);
-					}
+					}*/
 
 					$configManager = new Config();
 					if(($configManager->canActivateLine() || empty($this->arParams['connector']))

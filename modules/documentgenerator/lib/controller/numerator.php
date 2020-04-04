@@ -4,6 +4,8 @@ namespace Bitrix\DocumentGenerator\Controller;
 
 use Bitrix\DocumentGenerator\Driver;
 use Bitrix\DocumentGenerator\Engine\CheckNumeratorType;
+use Bitrix\DocumentGenerator\Engine\CheckPermissions;
+use Bitrix\DocumentGenerator\UserPermissions;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Engine\Response\DataType\Page;
 use Bitrix\Main\Error;
@@ -21,6 +23,7 @@ class Numerator extends Base
 	public function getDefaultPreFilters()
 	{
 		$filters = parent::getDefaultPreFilters();
+		$filters[] = new CheckPermissions(UserPermissions::ENTITY_TEMPLATES);
 		$filters[] = new CheckNumeratorType();
 
 		return $filters;

@@ -458,6 +458,9 @@ Class tasks extends CModule
 		static::createFileField('TASKS_TASK', $errors);
 		static::createFileField('TASKS_TASK_TEMPLATE', $errors);
 
+		static::createChecklistFileField('TASKS_TASK_CHECKLIST', $errors);
+		static::createChecklistFileField('TASKS_TASK_TEMPLATE_CHECKLIST', $errors);
+
 		return $errors;
 	}
 
@@ -490,6 +493,34 @@ Class tasks extends CModule
 			if (false == $intID && ($strEx = $APPLICATION->getException()))
 			{
 				$errors[] = $strEx->getString();
+			}
+		}
+	}
+
+	private static function createChecklistFileField($entity, array &$errors)
+	{
+		global $APPLICATION;
+
+		$userField = new CUserTypeEntity();
+		$userFieldRes = \CUserTypeEntity::getList([], ['ENTITY_ID' => $entity, 'FIELD_NAME' => 'UF_CHECKLIST_FILES']);
+
+		if (!$userFieldRes->Fetch())
+		{
+			$userFieldId = $userField->Add([
+				'ENTITY_ID' => $entity,
+				'FIELD_NAME' => 'UF_CHECKLIST_FILES',
+				'USER_TYPE_ID' => 'disk_file',
+				'MULTIPLE' => 'Y',
+				'MANDATORY' => 'N',
+				'SHOW_FILTER' => 'N',
+				'SHOW_IN_LIST' => 'N',
+				'EDIT_IN_LIST' => 'N',
+				'IS_SEARCHABLE' => 'N',
+			], false);
+
+			if (!$userFieldId && $APPLICATION->getException())
+			{
+				$errors[] = $APPLICATION->getException()->getString();
 			}
 		}
 	}

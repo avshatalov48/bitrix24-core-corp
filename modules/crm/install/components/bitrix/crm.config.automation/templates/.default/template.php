@@ -2,6 +2,7 @@
 global $APPLICATION;
 /** @var array $arResult */
 
+$APPLICATION->SetPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "") . "no-all-paddings no-background");
 CJSCore::Init(array('popup'));
 
 if (empty($arParams['DISABLE_TOP_MENU']) || $arParams['DISABLE_TOP_MENU'] != 'Y')
@@ -67,9 +68,8 @@ if (empty($arParams['DISABLE_TOP_MENU']) || $arParams['DISABLE_TOP_MENU'] != 'Y'
 <?endif;?>
 <?if ($arResult['CATEGORIES'] && count($arResult['CATEGORIES']) > 1):?>
 	<div class="crm-config-automation-button-container">
-		<div class="crm-interface-toolbar-button" data-role="category-selector" data-categories="<?=htmlspecialcharsbx(\Bitrix\Main\Web\Json::encode($arResult['CATEGORIES']))?>">
-			<span class="crm-interface-toolbar-button-item"><?=htmlspecialcharsbx($arResult['CATEGORY_NAME'])?></span>
-			<span class="crm-interface-toolbar-button-icon crm-interface-toolbar-button-icon-arrow-down"></span>
+		<div class="ui-btn ui-btn-dropdown ui-btn-light-border" data-role="category-selector" data-categories="<?=htmlspecialcharsbx(\Bitrix\Main\Web\Json::encode($arResult['CATEGORIES']))?>">
+			<?=htmlspecialcharsbx($arResult['CATEGORY_NAME'])?>
 		</div>
 	</div><!--pagetitle-container-->
 <?endif?>

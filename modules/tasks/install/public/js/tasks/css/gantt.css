@@ -90,12 +90,14 @@
 }
 
 .task-gantt-item {
-	height: 32px;
+	height: 33px;
+	box-sizing: border-box;
 	position: relative;
 	padding: 0 5px 0 14px;
 	border-top: 1px solid #edeef0;
 	white-space: nowrap;
 	font: normal normal 13px/32px Helvetica, Arial, sans-serif;
+	page-break-inside:avoid;
 }
 
 .task-gantt-item .task-gantt-item-name { display: inline-block; color: #4c4c4c; text-decoration: none; vertical-align: middle; cursor: pointer; }
@@ -419,7 +421,7 @@
 }
 
 .task-gantt-timeline-data { padding: 17px 0 0 0; z-index: 2; position: relative; }
-.task-gantt-timeline-row { height: 33px; position: relative; }
+.task-gantt-timeline-row { height: 33px; position: relative; page-break-inside: avoid; }
 .task-gantt-timeline-row-hover {
 	background-color: rgba(83, 92, 105, 0.06);
 }

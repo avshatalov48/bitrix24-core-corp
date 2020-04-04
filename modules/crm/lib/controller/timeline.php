@@ -36,15 +36,11 @@ class Timeline extends Main\Engine\Controller
 			{
 				$timelineData = Crm\Timeline\Entity\TimelineTable::getById($id);
 				$comment = $timelineData->fetch();
-				$text = $comment['COMMENT'];
+				$text = \Bitrix\Main\Text\Emoji::decode($comment['COMMENT']);
 			}
 			else
 			{
-				$errorCollection = new Main\ErrorCollection([
-					new Main\Error('Update permission denied')
-				]);
-				$empty = new Response\Entity\EmptyContent();
-				return new Response\Engine\Content($empty, Response\Engine\Content::STATUS_ERROR, $errorCollection);
+				return Main\Engine\Response\HtmlContent::createDenied();
 			}
 		}
 
@@ -55,7 +51,6 @@ class Timeline extends Main\Engine\Controller
 			$fileFields['UF_CRM_COMMENT_FILES']['TAG'] = 'DOCUMENT ID';
 		}
 
-		$editor = new Crm\Controller\Response\Entity\Component('bitrix:main.post.form');
 		$editorParameters = [
 			'SELECTOR_VERSION' => 2,
 			'FORM_ID' => $formId,
@@ -139,9 +134,6 @@ class Timeline extends Main\Engine\Controller
 			"ALLOW_CRM_EMAILS" => "Y"
 		];
 
-		$editor->setParameters($editorParameters)
-			->setFunctionParameters(['HIDE_ICONS' => 'Y']);
-
-		return new Response\Engine\Content($editor);
+		return new \Bitrix\Main\Engine\Response\Component('bitrix:main.post.form', '', $editorParameters);
 	}
 }

@@ -7,24 +7,12 @@
  */
 namespace Bitrix\Crm\WebForm;
 
-use Bitrix\Crm\WebForm\Internals\FieldDependenceTable;
-use Bitrix\Crm\WebForm\Internals\FormStartEditTable;
-use Bitrix\Crm\WebForm\Internals\FormTable;
-use Bitrix\Crm\WebForm\Internals\FieldTable;
-use Bitrix\Crm\WebForm\Internals\FormViewTable;
-use Bitrix\Crm\WebForm\Internals\FormCounterTable;
-use Bitrix\Crm\WebForm\Internals\PresetFieldTable;
-use Bitrix\Crm\WebForm\ReCaptcha;
-use Bitrix\Main\Application;
-use Bitrix\Main\EventManager;
-use Bitrix\Main\Event;
-use Bitrix\Main\Loader;
-use Bitrix\Main\Localization\Loc;
-use Bitrix\Main\Entity\Result as EntityResult;
-use Bitrix\Main\Type\DateTime;
-use Bitrix\Main\Mail\Event as MailEvent;
+use Bitrix\Main;
 use Bitrix\Main\Context;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Config\Option;
+use Bitrix\Crm\UI\Webpack;
+use Bitrix\Crm\SiteButton;
 
 Loc::loadMessages(__FILE__);
 
@@ -37,17 +25,22 @@ class Form
 		'ACTIVE' => 'N',
 		'IS_SYSTEM' => 'N',
 		'COPYRIGHT_REMOVED' => 'N',
+		'LANGUAGE_ID' => '',
 		'USE_CAPTCHA' => 'N',
 		'USE_LICENCE' => 'N',
 		'LICENCE_BUTTON_IS_CHECKED' => 'Y',
 		'FIELDS' => array(),
 		'PRESET_FIELDS' => array(),
 		'INVOICE_SETTINGS' => array(),
-		'FORM_SETTINGS' => array(),
+		'FORM_SETTINGS' => array(
+			'VIEWS' => [],
+			'DESIGN' => [],
+		),
 		'DEPENDENCIES' => array()
 	);
 	protected $params = array();
 	protected $errors = array();
+	protected $isEmbeddedAvailableChanged = false;
 
 	public function __construct($id = null, array $params = null)
 	{
@@ -86,7 +79,10 @@ class Form
 
 	public function merge($params)
 	{
-		$this->set($params + $this->get());
+		$oldData = $this->get();
+		$params['FORM_SETTINGS'] = isset($params['FORM_SETTINGS']) ? $params['FORM_SETTINGS'] : [];
+		$params['FORM_SETTINGS'] = $params['FORM_SETTINGS'] + $oldData['FORM_SETTINGS'];
+		$this->set($params + $oldData);
 	}
 
 	public static function getIdByCode($formCode)
@@ -103,7 +99,7 @@ class Form
 		$cache = \Bitrix\Main\Data\Cache::createInstance();
 		if($cache->startDataCache(36000, $cacheId))
 		{
-			$formDb = FormTable::getList(array(
+			$formDb = Internals\FormTable::getList(array(
 				'select' => array('ID', 'CODE'),
 				'filter' => array('=CODE' => $formCode),
 				'limit' => 1
@@ -148,7 +144,7 @@ class Form
 
 	public static function updateBackgroundImage($formId, $fileId)
 	{
-		$updateResult = FormTable::update($formId, array('BACKGROUND_IMAGE' => $fileId));
+		$updateResult = Internals\FormTable::update($formId, array('BACKGROUND_IMAGE' => $fileId));
 		return $updateResult->isSuccess();
 	}
 
@@ -163,6 +159,7 @@ class Form
 		$deleteResult = Internals\FormTable::delete($formId);
 		if($deleteResult->isSuccess())
 		{
+			Webpack\Form::instance($formId)->delete();
 			static::cleanCacheByTag($formId);
 			return true;
 		}
@@ -201,6 +198,31 @@ class Form
 			return false;
 		}
 
+		if(!is_array($result['FORM_SETTINGS']))
+		{
+			$result['FORM_SETTINGS'] = [];
+		}
+		if (empty($result['FORM_SETTINGS']['VIEWS']))
+		{
+			$result['FORM_SETTINGS']['VIEWS'] = [
+				'click' => [
+					'type' => 'panel',
+					'position' => 'right',
+					'vertical' => 'bottom',
+				],
+				'auto' => [
+					'type' => 'popup',
+					'position' => 'center',
+					'vertical' => 'bottom',
+					'delay' => 5,
+				]
+			];
+		}
+		if (empty($result['FORM_SETTINGS']['DESIGN']))
+		{
+			$result['FORM_SETTINGS']['DESIGN'] = [];
+		}
+
 		$this->params = $result;
 		return true;
 	}
@@ -214,7 +236,7 @@ class Form
 		}
 
 		$this->params['PRESET_FIELDS'] = array();
-		$dbPresetField = PresetFieldTable::getList(array(
+		$dbPresetField = Internals\PresetFieldTable::getList(array(
 			'select' => array('ENTITY_NAME', 'FIELD_NAME', 'VALUE'),
 			'filter' => array('=FORM_ID' => $id)
 		));
@@ -223,7 +245,7 @@ class Form
 			$this->params['PRESET_FIELDS'][] = $presetField;
 		}
 
-		$fieldResult = FieldTable::getList(array(
+		$fieldResult = Internals\FieldTable::getList(array(
 			'filter' => array('=FORM_ID' => $id),
 			'order' => array('SORT' => 'ASC', 'CAPTION')
 		));
@@ -294,15 +316,15 @@ class Form
 				}
 			}
 
-			$formResult = new EntityResult;
-			$result['DATE_CREATE'] = new DateTime();
+			$formResult = new Main\Entity\Result;
+			$result['DATE_CREATE'] = new Main\Type\DateTime();
 			Internals\FormTable::checkFields($formResult, $this->id, $result);
 			$this->prepareResult('FIELDS', $formResult);
 
 			foreach($presetFields as $presetField)
 			{
 				$presetField['FORM_ID'] = (int) $this->id;
-				$presetFieldResult = new EntityResult;
+				$presetFieldResult = new Main\Entity\Result;
 				Internals\PresetFieldTable::checkFields($presetFieldResult, null, $presetField);
 				$replaceList = null;
 				if(!$presetFieldResult->isSuccess())
@@ -321,7 +343,7 @@ class Form
 			{
 				$field['FORM_ID'] = (int) $this->id;
 
-				$fieldResult = new EntityResult;
+				$fieldResult = new Main\Entity\Result;
 				Internals\FieldTable::checkFields($fieldResult, null, $field);
 				$this->prepareResult('FIELDS', $fieldResult);
 
@@ -341,7 +363,7 @@ class Form
 					continue;
 				}
 
-				$dependencyResult = new EntityResult;
+				$dependencyResult = new Main\Entity\Result;
 				Internals\FieldDependenceTable::checkFields($dependencyResult, null, $dependency);
 				$this->prepareResult('DEPENDENCIES', $dependencyResult);
 			}
@@ -361,7 +383,7 @@ class Form
 		}
 		else
 		{
-			$result['DATE_CREATE'] = new DateTime();
+			$result['DATE_CREATE'] = new Main\Type\DateTime();
 			$formResult = Internals\FormTable::add($result);
 			$this->id = $formResult->getId();
 		}
@@ -460,7 +482,19 @@ class Form
 			$this->prepareResult('DEPENDENCIES', $dependencyResult);
 		}
 
-		$this->cleanCacheByTag($this->id);
+		$this->buildScript();
+	}
+
+	public function buildScript()
+	{
+		Webpack\Form::instance($this->id)->build();
+		if (Manager::isEmbeddingAvailable() && $this->isEmbeddingAvailable()
+			&& ($this->isEmbeddingEnabled() || $this->isEmbeddedAvailableChanged))
+		{
+			SiteButton\Manager::updateScriptCacheWithForm($this->getId());
+		}
+
+		self::cleanCacheByTag($this->id);
 	}
 
 	public function getErrors()
@@ -473,7 +507,81 @@ class Form
 		return count($this->errors) > 0;
 	}
 
-	protected function prepareResult($sect, EntityResult $entityResult, $replaceList = null)
+	/**
+	 * Set design options.
+	 *
+	 * @param bool $mode Mode.
+	 * @return $this
+	 */
+	public function setEmbeddingEnabled($mode)
+	{
+		$old = $this->isEmbeddingEnabled();
+		$this->params['FORM_SETTINGS']['EMBEDDING_ENABLED'] = $mode ? 'Y' : 'N';
+		$new = $this->isEmbeddingEnabled();
+		if ($old !== $new)
+		{
+			$this->isEmbeddedAvailableChanged = true;
+		}
+
+		return $this;
+	}
+
+	/**
+	 * Set design options.
+	 *
+	 * @param array $options Options.
+	 * @return $this
+	 */
+	public function setDesignOptions(array $options = [])
+	{
+		$designOptions = (new Design($options))->getOptions();
+		unset($designOptions['backgroundImage']);
+		$this->params['FORM_SETTINGS']['DESIGN'] = $designOptions;
+
+		$this->params['BUTTON_COLOR_BG'] = $options['color']['primary']
+			?: $this->params['BUTTON_COLOR_BG'];
+
+		$this->params['BUTTON_COLOR_FONT'] = $options['color']['primaryText']
+			?: $this->params['BUTTON_COLOR_FONT'];
+
+		return $this;
+	}
+
+	/**
+	 * Get design options.
+	 *
+	 * @param bool $asTyped Return as typed.
+	 * @return array
+	 */
+	public function getDesignOptions($asTyped = false)
+	{
+		$options = $this->params['FORM_SETTINGS']['DESIGN'];
+		$options = new Design($options);
+		$options = $asTyped ? $options->toTypedArray() : $options->getOptions();
+		$options['color']['primary'] = $this->params['BUTTON_COLOR_BG']
+			?: $options['color']['primary'];
+		$options['color']['primaryText'] = $this->params['BUTTON_COLOR_FONT']
+			?: $options['color']['primaryText'];
+
+		$options['backgroundImage'] = '';
+		$bgImageId = $this->params['BACKGROUND_IMAGE'];
+		if ($bgImageId && $file = \CFile::getByID($bgImageId)->fetch())
+		{
+			if ($file['~src'])
+			{
+				$options['backgroundImage'] = $file['~src'];
+			}
+			else
+			{
+				$options['backgroundImage'] = Main\Web\WebPacker\Builder::getDefaultSiteUri()
+					. \CFile::GetPath($bgImageId);
+			}
+		}
+
+		return $options;
+	}
+
+	protected function prepareResult($sect, Main\Entity\Result $entityResult, $replaceList = null)
 	{
 		if($entityResult->isSuccess())
 		{
@@ -534,7 +642,7 @@ class Form
 
 	public function getFields()
 	{
-		return $this->params['FIELDS'];
+		return is_array($this->params['FIELDS']) ? $this->params['FIELDS'] : [];
 	}
 
 	public function getAllowedEntitySchemes()
@@ -636,7 +744,7 @@ class Form
 					'settings_data' => $field['SETTINGS_DATA']
 				);
 
-				if(isset($field['ITEMS']))
+				if(isset($field['ITEMS']) && is_array($field['ITEMS']))
 				{
 					$preparedField['items'] = array();
 					foreach($field['ITEMS'] as $item)
@@ -646,6 +754,11 @@ class Form
 						{
 							$price = 0;
 						}
+						$discount = isset($item['DISCOUNT']) ? $item['DISCOUNT'] : null;
+						if ($discount !== null && !is_numeric($discount))
+						{
+							$discount = 0;
+						}
 						$preparedItem = array(
 							'title' => $item['VALUE'],
 							'value' => $item['ID'],
@@ -653,6 +766,7 @@ class Form
 						if ($price !== null)
 						{
 							$preparedItem['price'] = $price;
+							$preparedItem['discount'] = $discount ?: 0;
 							$preparedItem['price_formatted'] = \CCrmCurrency::MoneyToString($price, $currencyId);
 						}
 						$preparedField['items'][] = $preparedItem;
@@ -721,10 +835,51 @@ class Form
 		return $this->params['CURRENCY_ID'] ? $this->params['CURRENCY_ID'] : \CCrmCurrency::GetBaseCurrencyID();
 	}
 
+	/**
+	 * Return true if form payable.
+	 *
+	 * @return bool
+	 */
+	public function isPayable()
+	{
+		return $this->params['IS_PAY'] === 'Y';
+	}
+
+	/**
+	 * Get redirect delay.
+	 *
+	 * @return int
+	 */
+	public function getRedirectDelay()
+	{
+		$delay = Form::REDIRECT_DELAY;
+		if (!empty($this->params['FORM_SETTINGS']['REDIRECT_DELAY']))
+		{
+			$delay = (int) $this->params['FORM_SETTINGS']['REDIRECT_DELAY'];
+		}
+
+		return $delay;
+	}
+
+	/**
+	 * Get success text.
+	 *
+	 * @return string
+	 */
+	public function getSuccessText()
+	{
+		return $this->params['RESULT_SUCCESS_TEXT'];
+	}
+
+	public function getLanguageId()
+	{
+		return ($this->params['LANGUAGE_ID'] ? $this->params['LANGUAGE_ID'] : Context::getCurrent()->getLanguage());
+	}
+
 	public static function copy($formId, $userId = null)
 	{
 		// copy form
-		$form = FormTable::getRowById($formId);
+		$form = Internals\FormTable::getRowById($formId);
 		if(!$form)
 		{
 			return null;
@@ -735,8 +890,8 @@ class Form
 		$form['ACTIVE'] = 'N';
 		$form['IS_SYSTEM'] = 'N';
 		$form['ACTIVE_CHANGE_BY'] = $userId;
-		$form['DATE_CREATE'] = new DateTime();
-		$resultFormAdd = FormTable::add($form);
+		$form['DATE_CREATE'] = new Main\Type\DateTime();
+		$resultFormAdd = Internals\FormTable::add($form);
 		if(!$resultFormAdd->isSuccess())
 		{
 			return null;
@@ -744,35 +899,35 @@ class Form
 		$newFormId = $resultFormAdd->getId();
 
 		// copy fields
-		$fieldDb = FieldTable::getList(array(
+		$fieldDb = Internals\FieldTable::getList(array(
 			'filter' => array('=FORM_ID' => $formId)
 		));
 		while($field = $fieldDb->fetch())
 		{
 			unset($field['ID']);
 			$field['FORM_ID'] = $newFormId;
-			FieldTable::add($field);
+			Internals\FieldTable::add($field);
 		}
 
 		// copy field dependencies
-		$fieldDepDb = FieldDependenceTable::getList(array(
+		$fieldDepDb = Internals\FieldDependenceTable::getList(array(
 			'filter' => array('=FORM_ID' => $formId)
 		));
 		while($fieldDep = $fieldDepDb->fetch())
 		{
 			unset($fieldDep['ID']);
 			$fieldDep['FORM_ID'] = $newFormId;
-			FieldDependenceTable::add($fieldDep);
+			Internals\FieldDependenceTable::add($fieldDep);
 		}
 
 		// copy preset fields
-		$presetFieldDb = PresetFieldTable::getList(array(
+		$presetFieldDb = Internals\PresetFieldTable::getList(array(
 			'filter' => array('=FORM_ID' => $formId)
 		));
 		while($presetField = $presetFieldDb->fetch())
 		{
 			$presetField['FORM_ID'] = $newFormId;
-			PresetFieldTable::add($presetField);
+			Internals\PresetFieldTable::add($presetField);
 		}
 
 
@@ -786,10 +941,10 @@ class Form
 		{
 			$updateFields['ACTIVE_CHANGE_BY'] = $changeUserBy;
 		}
-		$updateResult = FormTable::update($formId, $updateFields);
+		$updateResult = Internals\FormTable::update($formId, $updateFields);
 		if($updateResult->isSuccess())
 		{
-			static::cleanCacheByTag($formId);
+			(new static($formId))->buildScript();
 			return true;
 		}
 		else
@@ -949,7 +1104,7 @@ class Form
 				continue;
 			}
 
-			if(!isset($field['values'][0]) || !$field['values'][0])
+			if(!isset($field['values'][0]) || (!$field['values'][0] && $field['values'][0] !== '0'))
 			{
 				continue;
 			}
@@ -985,9 +1140,30 @@ class Form
 				continue;
 			}
 
+			$productValues = [];
+			foreach ($field['values'] as $value)
+			{
+				$productValue = [
+					'id' => 0,
+					'quantity' => 1
+				];
+				if (is_array($value))
+				{
+					$productValue['id'] = $value['id'] ?: 0;
+					$productValue['quantity'] = $value['quantity'] ?: 1;
+				}
+				else
+				{
+					$productValue['id'] = $value;
+				}
+
+				$productValues[$productValue['id']] = $productValue;
+			}
+
 			foreach($field['items'] as $item)
 			{
-				if(!in_array($item['value'], $field['values']))
+				$productValue = $productValues[$item['value']];
+				if(!is_array($productValue))
 				{
 					continue;
 				}
@@ -997,6 +1173,8 @@ class Form
 					'ID' => $productId,
 					'NAME' => $item['title'],
 					'PRICE' => $item['price'],
+					'DISCOUNT' => $item['discount'] ?: 0,
+					'QUANTITY' => $productValue['quantity'],
 				];
 				if ($productId && ($productData = \CCrmProduct::GetByID($productId)))
 				{
@@ -1038,6 +1216,7 @@ class Form
 			'ACTIVITY_FIELDS' => $activityFields,
 			'IS_CALLBACK' => $this->isCallback(),
 			'CALLBACK_PHONE' => $fieldPhoneValue,
+			'ENTITIES' => isset($resultParameters['ENTITIES']) ? $resultParameters['ENTITIES'] : [],
 		);
 		$result = new Result(null, $data);
 		$result->save();
@@ -1081,6 +1260,23 @@ class Form
 					));
 				}
 			}
+
+			$redirectUrl = $this->params['RESULT_SUCCESS_URL'];
+			if($this->isPayable())
+			{
+				$resultEntity = $result->getResultEntity();
+				if($resultEntity && $resultEntity->getInvoiceId())
+				{
+					$resultRedirectUrl = \CAllCrmInvoice::getPublicLink($resultEntity->getInvoiceId());
+					if($resultRedirectUrl)
+					{
+						$redirectUrl = new \Bitrix\Main\Web\Uri($resultRedirectUrl);
+						$redirectUrl->addParams(array('form_id' => $this->getId()));
+						$redirectUrl = $redirectUrl->getLocator();
+					}
+				}
+			}
+			$result->setUrl($redirectUrl);
 		}
 
 		return $result;
@@ -1088,29 +1284,29 @@ class Form
 
 	protected function sendEventFormSent($fields)
 	{
-		MailEvent::send(array(
+		Main\Mail\Event::send(array(
 				'EVENT_NAME' => 'CRM_WEB_FORM_FILLED',
 				'C_FIELDS' => $fields,
-				'LID' => Context::getCurrent()->getSite()
+				'LID' => Main\Context::getCurrent()->getSite()
 		));
 
-		MailEvent::send(array(
+		Main\Mail\Event::send(array(
 				'EVENT_NAME' => 'CRM_WEB_FORM_FILLED_' . $this->getId(),
 				'C_FIELDS' => $fields,
-				'LID' => Context::getCurrent()->getSite()
+				'LID' => Main\Context::getCurrent()->getSite()
 		));
 	}
 
 	public function getScripts($publicFormPath)
 	{
 		$script = new Script(
-			Context::getCurrent()->getServer()->getHttpHost(),
-			Context::getCurrent()->getRequest()->isHttps()
+			Main\Context::getCurrent()->getServer()->getHttpHost(),
+			Main\Context::getCurrent()->getRequest()->isHttps()
 		);
 
 		$scriptParams = array(
 			'id' => $this->params['ID'],
-			'lang' => Context::getCurrent()->getLanguage(),
+			'lang' => $this->getLanguageId(),
 			'sec' => $this->params['SECURITY_CODE']
 		);
 
@@ -1127,6 +1323,32 @@ class Form
 
 	}
 
+	public function isEmbeddingEnabled()
+	{
+		return (
+			!empty($this->params['FORM_SETTINGS']['EMBEDDING_ENABLED'])
+			&& $this->params['FORM_SETTINGS']['EMBEDDING_ENABLED'] === 'Y'
+		);
+	}
+
+	public function isEmbeddingAvailable()
+	{
+		foreach ($this->getFields() as $field)
+		{
+			if ($field['TYPE'] === Internals\FieldTable::TYPE_ENUM_RESOURCEBOOKING)
+			{
+				return false;
+			}
+		}
+
+		if (!empty($this->getDependencies()))
+		{
+			return false;
+		}
+
+		return true;
+	}
+
 	public static function getCacheTag($formId)
 	{
 		return 'BX_CRM_WEBFORM_ID_' . $formId;
@@ -1136,7 +1358,7 @@ class Form
 	{
 		if(defined("BX_COMP_MANAGED_CACHE"))
 		{
-			$taggedCache = Application::getInstance()->getTaggedCache();
+			$taggedCache = Main\Application::getInstance()->getTaggedCache();
 			$taggedCache->clearByTag(static::getCacheTag($formId));
 		}
 	}
@@ -1163,8 +1385,8 @@ class Form
 			}
 		}
 
-		$entityFieldMap = FormCounterTable::getEntityFieldsMap();
-		$counters = FormCounterTable::getByFormId($formId);
+		$entityFieldMap = Internals\FormCounterTable::getEntityFieldsMap();
+		$counters = Internals\FormCounterTable::getByFormId($formId);
 		foreach($counters as $counter => $value)
 		{
 			if(isset($entityFieldMap[$counter]))
@@ -1193,31 +1415,31 @@ class Form
 
 	public static function incCounterView($formId)
 	{
-		FormViewTable::add(array('FORM_ID' => $formId));
-		return FormCounterTable::incCounters($formId, array('VIEWS'));
+		Internals\FormViewTable::add(array('FORM_ID' => $formId));
+		return Internals\FormCounterTable::incCounters($formId, array('VIEWS'));
 	}
 
 	public static function incCounterStartFill($formId)
 	{
-		FormStartEditTable::add(array('FORM_ID' => $formId));
-		return FormCounterTable::incCounters($formId, array('START_FILL'));
+		Internals\FormStartEditTable::add(array('FORM_ID' => $formId));
+		return Internals\FormCounterTable::incCounters($formId, array('START_FILL'));
 	}
 
 	public static function incCounterEndFill($formId)
 	{
-		return FormCounterTable::incCounters($formId, array('END_FILL'));
+		return Internals\FormCounterTable::incCounters($formId, array('END_FILL'));
 	}
 
 	public static function resetCounters($formId)
 	{
-		$newCounterId = FormCounterTable::addByFormId($formId);
+		$newCounterId = Internals\FormCounterTable::addByFormId($formId);
 		// TODO: merge all counters
 		return $newCounterId;
 	}
 
 	public static function canRemoveCopyright()
 	{
-		if(!Loader::includeModule('bitrix24'))
+		if(!Main\Loader::includeModule('bitrix24'))
 		{
 			return true;
 		}
@@ -1232,13 +1454,13 @@ class Form
 
 	public static function canActivateForm()
 	{
-		if(!Loader::includeModule("bitrix24"))
+		if(!Main\Loader::includeModule("bitrix24"))
 		{
 			return true;
 		}
 
 		$maxActivated = self::getMaxActivatedFormLimit();
-		return $maxActivated > FormTable::getCount(array('=ACTIVE' => 'Y', '=IS_SYSTEM' => 'N'));
+		return $maxActivated > Internals\FormTable::getCount(array('=ACTIVE' => 'Y', '=IS_SYSTEM' => 'N'));
 	}
 
 	public static function actualizeFormsActiveState($maxActivated = null)
@@ -1248,7 +1470,7 @@ class Form
 			$maxActivated = self::getMaxActivatedFormLimit();
 		}
 
-		$formDb = FormTable::getList(array(
+		$formDb = Internals\FormTable::getList(array(
 			'select' => array('ID'),
 			'filter' => array('=ACTIVE' => 'Y', '=IS_SYSTEM' => 'N'),
 			'order' => array('ID' => 'ASC')
@@ -1266,7 +1488,7 @@ class Form
 
 		if(!self::canRemoveCopyright())
 		{
-			$connection = Application::getConnection();
+			$connection = Main\Application::getConnection();
 			$connection->query("UPDATE b_crm_webform SET COPYRIGHT_REMOVED='N'");
 		}
 	}

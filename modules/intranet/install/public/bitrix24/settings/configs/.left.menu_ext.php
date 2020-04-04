@@ -46,5 +46,27 @@ if ($GLOBALS['USER']->CanDoOperation('bitrix24_config'))
 			""
 		);
 	}
+
+	if (Bitrix\Main\Config\Option::get("sale", "~IS_SALE_CRM_SITE_MASTER_FINISH", "N") === 'Y')
+	{
+		$aMenuLinks[] = Array(
+			GetMessage("MENU_ADMIN_PANEL"),
+			"/bitrix/admin/",
+			Array(),
+			Array("menu_item_id" => "menu_admin_panel"),
+			""
+		);
+	}
+
+	/*if (IsModuleInstalled("bitrix24"))
+	{
+		$aMenuLinks[] = Array(
+			GetMessage("MENU_UPDATE_DESC"),
+			"/settings/configs/update_desc.php",
+			Array(),
+			Array("menu_item_id" => "menu_update_desc"),
+			""
+		);
+	}*/
 }
 ?>

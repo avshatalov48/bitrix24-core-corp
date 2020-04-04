@@ -277,14 +277,14 @@ class CsvFile extends File
 		$isInside = false;
 		$str = '';
 		$result = array();
-		while ($this->currentPosition < $this->fileSize)
+		while ($this->currentPosition <= $this->fileSize)
 		{
 			$ch = $this->buffer[$this->bufferPosition];
 			if ($ch == "\r" || $ch == "\n")
 			{
 				if (!$isInside)
 				{
-					while ($this->currentPosition < $this->fileSize)
+					while ($this->currentPosition <= $this->fileSize)
 					{
 						$this->incrementCurrentPosition();
 						$ch = $this->buffer[$this->bufferPosition];
@@ -370,12 +370,12 @@ class CsvFile extends File
 		$jnd = 0;
 		$result = array();
 
-		while ($this->currentPosition < $this->fileSize)
+		while ($this->currentPosition <= $this->fileSize)
 		{
 			$ch = $this->buffer[$this->bufferPosition];
 			if ($ch == "\r" || $ch == "\n")
 			{
-				while ($this->currentPosition < $this->fileSize)
+				while ($this->currentPosition <= $this->fileSize)
 				{
 					$this->incrementCurrentPosition();
 					$ch = $this->buffer[$this->bufferPosition];
@@ -398,11 +398,11 @@ class CsvFile extends File
 			}
 			if ($ind == $this->widthMap[$jnd])
 			{
-				$result[] = $str.$ch;
+				$result[] = $str. $ch;
 				$str = '';
 				$this->incrementCurrentPosition();
-				$ind++;
-				$jnd++;
+				$ind ++;
+				$jnd ++;
 				continue;
 			}
 

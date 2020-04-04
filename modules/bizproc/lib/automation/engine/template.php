@@ -435,7 +435,7 @@ class Template
 					}
 
 					$sequence['Children'][] = $this->createDelayActivity(
-						$delayInterval->toActivityProperties(),
+						$delayInterval->toActivityProperties($documentType),
 						$delayName
 					);
 				}

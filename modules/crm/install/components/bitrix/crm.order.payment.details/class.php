@@ -4,6 +4,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 use Bitrix\Crm;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Sale\Internals\AccountNumberGenerator;
 use Bitrix\Crm\Binding\EntityBinding;
 use Bitrix\Crm\Component\ComponentError;
 use Bitrix\Crm\Component\EntityDetails\ComponentMode;
@@ -482,8 +483,7 @@ class CCrmOrderPaymentDetailsComponent extends Crm\Component\EntityDetails\BaseC
 				'name' => 'ACCOUNT_NUMBER',
 				'title' => Loc::getMessage('CRM_ORDER_PAYMENT_FIELD_ACCOUNT_NUMBER'),
 				'type' => 'text',
-				'editable' => true,
-				'required' => true
+				'editable' => false
 			),
 			array(
 				'name' => 'PAY_SYSTEM_ID',
@@ -539,7 +539,7 @@ class CCrmOrderPaymentDetailsComponent extends Crm\Component\EntityDetails\BaseC
 				'editable' => true
 			),
 			array(
-				'name' => 'RESPONSIBLE',
+				'name' => 'RESPONSIBLE_ID',
 				'title' => Loc::getMessage('CRM_ORDER_PAYMENT_FIELD_RESPONSIBLE_ID'),
 				'type' => 'user',
 				'editable' => true,
@@ -729,6 +729,23 @@ class CCrmOrderPaymentDetailsComponent extends Crm\Component\EntityDetails\BaseC
 			);
 		}
 
+		$this->arResult['ENTITY_FIELDS'][] = array(
+			'name' => 'USER_BUDGET',
+			'title' => Loc::getMessage('CRM_ORDER_PAYMENT_BUDGET'),
+			'type' => 'money',
+			'editable' => false,
+			'data' => array(
+				'affectedFields' => array('CURRENCY', 'BUDGET'),
+				'currency' => array(
+					'name' => 'BUDGET',
+					'items'=> \CCrmInstantEditorHelper::PrepareListOptions(CCrmCurrencyHelper::PrepareListItems())
+				),
+				'amount' => 'BUDGET',
+				'formatted' => 'FORMATTED_BUDGET',
+				'formattedWithCurrency' => 'FORMATTED_BUDGET_WITH_CURRENCY'
+			)
+		);
+
 		$this->arResult['ENTITY_FIELDS'] = array_merge(
 			$this->arResult['ENTITY_FIELDS'],
 			array_values($this->userFieldInfos)
@@ -745,6 +762,7 @@ class CCrmOrderPaymentDetailsComponent extends Crm\Component\EntityDetails\BaseC
 		}
 
 		$this->entityData = array();
+		$order = \Bitrix\Crm\Order\Order::load($this->arResult['ORDER_ID']);
 
 		if ($this->mode === ComponentMode::CREATION)
 		{
@@ -773,7 +791,6 @@ class CCrmOrderPaymentDetailsComponent extends Crm\Component\EntityDetails\BaseC
 				$this->entityData['CONTACT_ID'] = $externalContactID;
 			}
 
-			$order = \Bitrix\Crm\Order\Order::load($this->arResult['ORDER_ID']);
 			$paymentCollection = $order->getPaymentCollection();
 			$paymentSum = $paymentCollection->getSum();
 			$orderPrice = $order->getPrice();
@@ -793,7 +810,8 @@ class CCrmOrderPaymentDetailsComponent extends Crm\Component\EntityDetails\BaseC
 			}
 
 			$this->entityData['CURRENCY'] = $currency;
-			$this->entityData['ACCOUNT_NUMBER'] = $order->getField('ACCOUNT_NUMBER').'/'.($paymentCollection->count() + 1);
+
+			$this->entityData['ACCOUNT_NUMBER'] = AccountNumberGenerator::generateForPayment($this->orderPayment);
 		}
 		else
 		{
@@ -916,6 +934,25 @@ class CCrmOrderPaymentDetailsComponent extends Crm\Component\EntityDetails\BaseC
 		$this->entityData['ORDER_ID'] = $this->arResult['ORDER_ID'];
 		$this->entityData['CHECK'] = $this->getCheckEntityData();
 		$this->entityData['INNER_PAY_SYSTEM_ID'] = \Bitrix\Sale\PaySystem\Manager::getInnerPaySystemId();
+
+		//region USER_BUDGET
+		$this->entityData['BUDGET'] = \Bitrix\Sale\Internals\UserBudgetPool::getUserBudget(
+			$order->getUserId(),
+			$this->entityData['CURRENCY']
+		);
+
+		$this->entityData['FORMATTED_BUDGET'] = \CCrmCurrency::MoneyToString(
+			$this->entityData['BUDGET'],
+			$this->entityData['CURRENCY'],
+			'#'
+		);
+
+		$this->entityData['FORMATTED_BUDGET_WITH_CURRENCY'] = \CCrmCurrency::MoneyToString(
+			$this->entityData['BUDGET'],
+			$this->entityData['CURRENCY'],
+			''
+		);
+		//endregion
 
 		return ($this->arResult['ENTITY_DATA'] = $this->entityData);
 	}

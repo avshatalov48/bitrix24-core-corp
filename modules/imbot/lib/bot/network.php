@@ -275,27 +275,37 @@ class Network extends Base
 				if (!$fileModel)
 					continue;
 
-				$extModel = $fileModel->addExternalLink(array(
-					'CREATED_BY' => $messageFields['FROM_USER_ID'],
-					'TYPE' => \Bitrix\Disk\Internals\ExternalLinkTable::TYPE_MANUAL,
-				));
-				if (!$extModel)
-					continue;
-
-				$file['link'] = \Bitrix\Disk\Driver::getInstance()->getUrlManager()->getShortUrlExternalLink(array(
-					'hash' => $extModel->getHash(),
-					'action' => 'default',
-				), true);
-
+				$file['link'] = \CIMDisk::GetFileLink($fileModel);
 				if (!$file['link'])
 					continue;
 
-				$files[] = array(
-					'name' => $file['name'],
-					'type' => $file['type'],
-					'link' => $file['link'],
-					'size' => $file['size']
-				);
+				$merged = false;
+				if (\Bitrix\Disk\TypeFile::isImage($fileModel))
+				{
+					$source = $fileModel->getFile();
+					if ($source)
+					{
+						$files[] = array(
+							'name' => $file['name'],
+							'type' => $file['type'],
+							'link' => $file['link'],
+							'width' => (int)$source["WIDTH"],
+							'height' => (int)$source["HEIGHT"],
+							'size' => $file['size']
+						);
+						$merged = true;
+					}
+				}
+
+				if (!$merged)
+				{
+					$files[] = array(
+						'name' => $file['name'],
+						'type' => $file['type'],
+						'link' => $file['link'],
+						'size' => $file['size']
+					);
+				}
 			}
 		}
 
@@ -650,13 +660,23 @@ class Network extends Base
 			}
 			foreach ($messageFields['FILES'] as $key => $value)
 			{
-				$attach->AddFiles(array(
-					array(
+				if ($value['type'] === 'image')
+				{
+					$attach->AddImages([[
+						"NAME" => $value['name'],
+						"LINK" => $value['link'],
+						"WIDTH" => (int)$value['width'],
+						"HEIGHT" => (int)$value['height'],
+					]]);
+				}
+				else
+				{
+					$attach->AddFiles([[
 						"NAME" => $value['name'],
 						"LINK" => $value['link'],
 						"SIZE" => $value['size'],
-					)
-				));
+					]]);
+				}
 			}
 		}
 

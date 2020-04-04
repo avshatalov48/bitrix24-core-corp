@@ -18,6 +18,17 @@ class SalesDynamicFilter extends BaseFilter
 	{
 		$fieldsList = parent::getFieldsList();
 
+		$fieldsList['TIME_PERIOD']['exclude'] = [
+			DateType::NONE,
+			DateType::CURRENT_DAY,
+			DateType::YESTERDAY,
+			DateType::TOMORROW,
+			DateType::NEXT_DAYS,
+			DateType::NEXT_WEEK,
+			DateType::NEXT_MONTH,
+			DateType::EXACT,
+		];
+
 		$userPermissions = \CCrmPerms::getCurrentUserPermissions();
 		$dealFilter = Factory::createEntityFilter(
 			new DealSettings(
@@ -33,13 +44,25 @@ class SalesDynamicFilter extends BaseFilter
 		);
 
 		$fields = $dealFilter->getFields();
+
+		$disabledFieldKeys = [
+			'ACTIVITY_COUNTER',
+			'TRACKING_SOURCE_ID',
+			'TRACKING_CHANNEL_CODE',
+		];
+
 		foreach ($fields as $field)
 		{
 			$field = $field->toArray();
 
-			if ($field['id'] === 'ACTIVITY_COUNTER')
+			if (in_array($field['id'], $disabledFieldKeys))
 			{
 				continue;
+			}
+
+			if ($field['id'] === 'CATEGORY_ID')
+			{
+				$field['params']['multiple'] = 'N';
 			}
 
 			$field['id'] = 'FROM_DEAL_'.$field['id'];
@@ -75,7 +98,8 @@ class SalesDynamicFilter extends BaseFilter
 		$presets['filter_last_30_day'] = [
 			'name' => Loc::getMessage('CRM_REPORT_SALES_DYNAMIC_LAST_30_DAYS_FILTER_PRESET_TITLE'),
 			'fields' => array(
-				'TIME_PERIOD_datesel' => DateType::LAST_30_DAYS
+				'TIME_PERIOD_datesel' => DateType::LAST_30_DAYS,
+				'FROM_DEAL_CATEGORY_ID' => "0"
 			),
 			'default' => true,
 		];

@@ -2,6 +2,10 @@
 
 namespace Bitrix\Crm\Integration\DocumentGenerator\DataProvider;
 
+\Bitrix\Main\Loader::includeModule('documentgenerator');
+
+use Bitrix\Crm\Automation\Trigger\DocumentCreateTrigger;
+use Bitrix\Crm\Automation\Trigger\DocumentViewTrigger;
 use Bitrix\Crm\Conversion\Entity\EntityConversionMapTable;
 use Bitrix\Crm\EntityBankDetail;
 use Bitrix\Crm\EntityRequisite;
@@ -10,6 +14,7 @@ use Bitrix\Crm\Integration\DocumentGenerator\Value\Money;
 use Bitrix\Crm\Integration\DocumentGeneratorManager;
 use Bitrix\Crm\Timeline\DocumentController;
 use Bitrix\Crm\Timeline\DocumentEntry;
+use Bitrix\DocumentGenerator\CreationMethod;
 use Bitrix\DocumentGenerator\DataProvider;
 use Bitrix\DocumentGenerator\DataProvider\EntityDataProvider;
 use Bitrix\DocumentGenerator\DataProvider\User;
@@ -45,11 +50,12 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 
 	public function onDocumentCreate(Document $document)
 	{
+		$userId = $this->getDocumentUserId($document);
 		Loc::loadLanguageFile(__FILE__);
 		$text = Loc::getMessage('CRM_DOCGEN_CRMENTITYDATAPROVIDER_COMMENT', ['#TITLE#' => htmlspecialcharsbx($document->getTitle())]);
 		$entryID = DocumentEntry::create([
 			'TEXT' => $text,
-			'AUTHOR_ID' => \CCrmSecurityHelper::GetCurrentUserID(),
+			'AUTHOR_ID' => $userId,
 			'BINDINGS' => [['ENTITY_TYPE_ID' => $this->getCrmOwnerType(), 'ENTITY_ID' => $this->source]],
 		], $document->ID);
 		if($entryID > 0)
@@ -58,10 +64,22 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 				'COMMENT' => $text,
 				'ENTITY_TYPE_ID' => $this->getCrmOwnerType(),
 				'ENTITY_ID' => $this->source,
-				'USER_ID' => \CCrmSecurityHelper::GetCurrentUserID(),
+				'USER_ID' => $userId,
 				'DOCUMENT_ID' => $document->ID,
 			);
 			DocumentController::getInstance()->onCreate($entryID, $saveData);
+		}
+
+		//call automation trigger
+		if (CreationMethod::isDocumentCreatedByPublic($document))
+		{
+			$template = $document->getTemplate();
+			DocumentCreateTrigger::execute(
+				[
+					['OWNER_TYPE_ID' => $this->getCrmOwnerType(), 'OWNER_ID' => $this->source]
+				],
+				['TEMPLATE_ID' => $template->ID]
+			);
 		}
 	}
 
@@ -103,11 +121,45 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 				'TITLE' => $document->getTitle(),
 				'ENTITY_TYPE_ID' => $this->getCrmOwnerType(),
 				'ENTITY_ID' => $this->source,
-				'USER_ID' => \CCrmSecurityHelper::GetCurrentUserID(),
+				'USER_ID' => $this->getDocumentUserId($document),
 				'DOCUMENT_ID' => $document->ID,
 			);
 			DocumentController::getInstance()->onUpdate($entry['ID'], $saveData);
 		}
+	}
+
+	/**
+	 * @param Document $document
+	 */
+	public function onPublicView(Document $document)
+	{
+		//call automation trigger
+		$template = $document->getTemplate();
+
+		DocumentViewTrigger::execute(
+			[
+				['OWNER_TYPE_ID' => $this->getCrmOwnerType(), 'OWNER_ID' => $this->source]
+			],
+			['TEMPLATE_ID' => $template->ID]
+		);
+	}
+
+	/**
+	 * @param Document $document
+	 * @return int
+	 */
+	protected function getDocumentUserId(Document $document)
+	{
+		if(method_exists($document, 'getUserId'))
+		{
+			$userId = $document->getUserId();
+		}
+		else
+		{
+			$userId = \CCrmSecurityHelper::GetCurrentUserID();
+		}
+
+		return $userId;
 	}
 
 	/**
@@ -182,15 +234,33 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 				'TITLE' => GetMessage('CRM_DOCGEN_CRMENTITYDATAPROVIDER_CLIENT_PHONE_TITLE'),
 				'VALUE' => [$this, 'getClientPhone'],
 				'TYPE' => 'PHONE',
+				'FORMAT' => [
+					'mfirst' => true,
+				],
 			];
 			$fields['CLIENT_EMAIL'] = [
 				'TITLE' => GetMessage('CRM_DOCGEN_CRMENTITYDATAPROVIDER_CLIENT_EMAIL_TITLE'),
 				'VALUE' => [$this, 'getClientEmail'],
+				'FORMAT' => [
+					'mfirst' => true,
+				],
 			];
 			$fields['CLIENT_WEB'] = [
 				'TITLE' => GetMessage('CRM_DOCGEN_CRMENTITYDATAPROVIDER_CLIENT_WEB_TITLE'),
 				'VALUE' => [$this, 'getClientWeb'],
+				'FORMAT' => [
+					'mfirst' => true,
+				],
 			];
+
+			if($this->hasLeadField())
+			{
+				$fields['LEAD'] = [
+					'TITLE' => GetMessage('CRM_DOCGEN_CRMENTITYDATAPROVIDER_LEAD_TITLE'),
+					'PROVIDER' => Lead::class,
+					'VALUE' => 'LEAD_ID',
+				];
+			}
 
 			$this->fields = $fields;
 			$fields = $this->getUserFields();
@@ -256,13 +326,28 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 			}
 			elseif($field['USER_TYPE_ID'] == 'employee')
 			{
-				$result[$code]['PROVIDER'] = User::class;
+				if($field['MULTIPLE'] === 'Y')
+				{
+					$result[$code]['PROVIDER'] = DataProvider\ArrayDataProvider::class;
+					$result[$code]['OPTIONS'] = [
+						'ITEM_PROVIDER' => User::class,
+						'ITEM_NAME' => 'ITEM',
+						'ITEM_OPTIONS' => [
+							'isLightMode' => true,
+						],
+					];
+					$result[$code]['DESCRIPTION'] = $field;
+				}
+				else
+				{
+					$result[$code]['PROVIDER'] = User::class;
+				}
 			}
-			elseif($field['USER_TYPE_ID'] == 'date' && $field['MULTIPLE'] != 'Y')
+			elseif($field['USER_TYPE_ID'] == 'date')
 			{
 				$result[$code]['TYPE'] = static::FIELD_TYPE_DATE;
 			}
-			elseif($field['USER_TYPE_ID'] == 'datetime' && $field['MULTIPLE'] != 'Y')
+			elseif($field['USER_TYPE_ID'] == 'datetime')
 			{
 				$result[$code]['TYPE'] = static::FIELD_TYPE_DATE;
 				$result[$code]['FORMAT'] = ['format' => DateTime::getFormat(DataProviderManager::getInstance()->getCulture())];
@@ -307,12 +392,28 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 				}
 				if($provider)
 				{
-					$result[$code]['PROVIDER'] = $provider;
-					$result[$code]['OPTIONS']['isLightMode'] = true;
-					$result[$code]['DESCRIPTION'] = $field;
+					if($field['MULTIPLE'] === 'Y')
+					{
+						$result[$code]['PROVIDER'] = DataProvider\ArrayDataProvider::class;
+						$result[$code]['OPTIONS'] = [
+							'ITEM_PROVIDER' => $provider,
+							'ITEM_NAME' => 'ITEM',
+							'ITEM_OPTIONS' => [
+								'DISABLE_MY_COMPANY' => true,
+								'isLightMode' => true,
+							],
+						];
+						$result[$code]['DESCRIPTION'] = $field;
+					}
+					else
+					{
+						$result[$code]['PROVIDER'] = $provider;
+						$result[$code]['OPTIONS']['isLightMode'] = true;
+						$result[$code]['DESCRIPTION'] = $field;
+					}
 				}
 			}
-			elseif($field['USER_TYPE_ID'] == 'money' && $field['MULTIPLE'] != 'Y')
+			elseif($field['USER_TYPE_ID'] == 'money')
 			{
 				$result[$code]['TYPE'] = Money::class;
 			}
@@ -452,7 +553,7 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 		{
 			if(is_array($value))
 			{
-				$value = null;
+				$value = \CFile::GetPath(reset($value));
 			}
 			else
 			{
@@ -498,27 +599,6 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 			}
 			$value = $result;
 		}
-		elseif($field['USER_TYPE_ID'] == 'datetime' || $field['USER_TYPE_ID'] == 'date')
-		{
-			$result = null;
-			$options = [];
-			if($field['USER_TYPE_ID'] == 'datetime')
-			{
-				$options = ['format' => DateTime::getFormat(DataProviderManager::getInstance()->getCulture())];
-			}
-			if(!is_array($value))
-			{
-				$result = new \Bitrix\DocumentGenerator\Value\DateTime($value, $options);
-			}
-			else
-			{
-				foreach($value as $val)
-				{
-					$result[] = new \Bitrix\DocumentGenerator\Value\DateTime($val, $options);
-				}
-			}
-			$value = $result;
-		}
 		elseif($field['USER_TYPE_ID'] == 'boolean')
 		{
 			if($value)
@@ -532,11 +612,29 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 		}
 		elseif($field['USER_TYPE_ID'] == 'address')
 		{
-			if(strpos($value, '|') !== false)
+			$result = [];
+			if(is_array($value))
 			{
-				$array = explode('|', $value);
-				$value = $array[0];
+				foreach($value as $val)
+				{
+					if(strpos($val, '|') !== false)
+					{
+						$array = explode('|', $val);
+						$val = $array[0];
+					}
+					$result[] = $val;
+				}
 			}
+			else
+			{
+				if(strpos($value, '|') !== false)
+				{
+					$array = explode('|', $value);
+					$value = $array[0];
+				}
+				$result = $value;
+			}
+			$value = $result;
 		}
 		elseif($field['USER_TYPE_ID'] == 'iblock_element')
 		{
@@ -554,9 +652,65 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 				}
 			}
 		}
-		if(is_array($value))
+		elseif($field['USER_TYPE_ID'] == 'crm' && is_array($value))
 		{
-			$value = implode(', ', $value);
+			if($field['MULTIPLE'] === 'Y' && $this->fields[$placeholder]['PROVIDER'] && $this->fields[$placeholder]['PROVIDER'] === DataProvider\ArrayDataProvider::class)
+			{
+				$result = [];
+				foreach($value as $val)
+				{
+					if(!is_numeric($val))
+					{
+						list(, $val) = explode('_', $val);
+					}
+					$val = intval($val);
+					if($val > 0)
+					{
+						$provider = DataProviderManager::getInstance()->getDataProvider(
+							$this->fields[$placeholder]['OPTIONS']['ITEM_PROVIDER'],
+							$val,
+							$this->fields[$placeholder]['OPTIONS']['ITEM_OPTIONS'],
+							$this);
+						if($provider)
+						{
+							$result[] = $provider;
+						}
+					}
+				}
+				$value = $result;
+			}
+			else
+			{
+				$value = reset($value);
+			}
+		}
+		elseif($field['USER_TYPE_ID'] === 'employee' && is_array($value))
+		{
+			if($field['MULTIPLE'] === 'Y' && $this->fields[$placeholder]['PROVIDER'] && $this->fields[$placeholder]['PROVIDER'] === DataProvider\ArrayDataProvider::class)
+			{
+				$result = [];
+				foreach($value as $val)
+				{
+					$val = intval($val);
+					if($val > 0)
+					{
+						$provider = DataProviderManager::getInstance()->getDataProvider(
+							$this->fields[$placeholder]['OPTIONS']['ITEM_PROVIDER'],
+							$val,
+							$this->fields[$placeholder]['OPTIONS']['ITEM_OPTIONS'],
+							$this);
+						if($provider)
+						{
+							$result[] = $provider;
+						}
+					}
+				}
+				$value = $result;
+			}
+			else
+			{
+				$value = reset($value);
+			}
 		}
 
 		return $value;
@@ -994,8 +1148,12 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 		return null;
 	}
 
-	protected function getMultiFields()
+	/**
+	 * @return array
+	 */
+	protected function loadMultiFields()
 	{
+		$result = [];
 		if($this->isLoaded())
 		{
 			if($this->multiFields === null)
@@ -1025,37 +1183,93 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 					}
 				}
 			}
-		}
-		else
-		{
-			return [];
+			$result = $this->multiFields;
 		}
 
-		return $this->multiFields;
+		return $result;
 	}
 
 	/**
-	 * @return string|null
+	 * @param string $type - EMAIL, PHONE, WEB, IM.
+	 * @param string $valueType - HOME, WORK, OTHER.
+	 * @return array
+	 */
+	protected function getMultiFields($type = null, $valueType = null)
+	{
+		$multiFields = $this->loadMultiFields();
+
+		$result = [];
+		foreach($multiFields as $typeId => $fields)
+		{
+			if(!empty($type) && $typeId == $type || (empty($type)))
+			{
+				if(is_array($fields))
+				{
+					foreach($fields as $value)
+					{
+						if(
+							(!empty($valueType) && $value['VALUE_TYPE'] == $valueType) ||
+							(empty($valueType))
+						)
+						{
+							$result[] = $value['VALUE'];
+						}
+					}
+				}
+			}
+		}
+
+		return $result;
+	}
+
+	/**
+	 * @return array
 	 */
 	public function getClientPhone()
 	{
-		return $this->getMultiFields()['PHONE'][0]['VALUE'];
+		return $this->getMultiFields('PHONE');
 	}
 
 	/**
-	 * @return string|null
+	 * @return array
 	 */
 	public function getClientEmail()
 	{
-		return $this->getMultiFields()['EMAIL'][0]['VALUE'];
+		return $this->getMultiFields('EMAIL');
 	}
 
 	/**
-	 * @return string|null
+	 * @return array
 	 */
 	public function getClientWeb()
 	{
-		return $this->getMultiFields()['WEB'][0]['VALUE'];
+		return $this->getMultiFields('WEB');
+	}
+
+	/**
+	 * @return array
+	 */
+	public function getClientIm()
+	{
+		$multiFields = $this->loadMultiFields();
+		$descriptions = \CCrmFieldMulti::GetEntityTypes()['IM'];
+
+		$result = [];
+		foreach($multiFields as $typeId => $fields)
+		{
+			if($typeId == 'IM')
+			{
+				if(is_array($fields))
+				{
+					foreach($fields as $value)
+					{
+						$result[] = $descriptions[$value['VALUE_TYPE']]['SHORT'].': '.$value['VALUE'];
+					}
+				}
+			}
+		}
+
+		return $result;
 	}
 
 	/**
@@ -1196,7 +1410,7 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 		if(!$requisites instanceof Requisite)
 		{
 			$requisites = DataProviderManager::getInstance()->getValueFromList($requisites);
-			$requisites = DataProviderManager::getInstance()->createDataProvider($requisiteFieldDescription, $requisites, $this->getParentProvider(), 'REQUISITE');
+			$requisites = DataProviderManager::getInstance()->createDataProvider($requisiteFieldDescription, $requisites, $this, 'REQUISITE');
 		}
 		if($requisites instanceof Requisite)
 		{
@@ -1238,43 +1452,59 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 	}
 
 	/**
-	 * @return string|null
+	 * @return array
 	 */
 	public function getAnotherPhone()
 	{
-		$phones = $this->getMultiFields()['PHONE'];
-		if(is_array($phones))
-		{
-			foreach($phones as $phone)
-			{
-				if($phone['VALUE_TYPE'] === 'OTHER')
-				{
-					return $phone['VALUE'];
-				}
-			}
-		}
-
-		return null;
+		return $this->getMultiFields('PHONE', 'OTHER');
 	}
 
 	/**
-	 * @return string|null
+	 * @return array
 	 */
 	public function getAnotherEmail()
 	{
-		$emails = $this->getMultiFields()['EMAIL'];
-		if(is_array($emails))
-		{
-			foreach($emails as $email)
-			{
-				if($email['VALUE_TYPE'] === 'OTHER')
-				{
-					return $email['VALUE'];
-				}
-			}
-		}
+		return $this->getMultiFields('EMAIL', 'OTHER');
+	}
 
-		return null;
+	/**
+	 * @return array
+	 */
+	public function getHomeEmail()
+	{
+		return $this->getMultiFields('EMAIL', 'HOME');
+	}
+
+	/**
+	 * @return array
+	 */
+	public function getWorkEmail()
+	{
+		return $this->getMultiFields('EMAIL', 'WORK');
+	}
+
+	/**
+	 * @return array
+	 */
+	public function getMobilePhone()
+	{
+		return $this->getMultiFields('PHONE', 'MOBILE');
+	}
+
+	/**
+	 * @return array
+	 */
+	public function getWorkPhone()
+	{
+		return $this->getMultiFields('PHONE', 'WORK');
+	}
+
+	/**
+	 * @return array
+	 */
+	public function getHomePhone()
+	{
+		return $this->getMultiFields('PHONE', 'HOME');
 	}
 
 	/**
@@ -1282,6 +1512,15 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 	 */
 	public function getLangPhrasesPath()
 	{
+		Loc::loadLanguageFile(__FILE__);
 		return Path::getDirectory(__FILE__).'/../phrases';
+	}
+
+	/**
+	 * @return bool
+	 */
+	protected function hasLeadField()
+	{
+		return false;
 	}
 }

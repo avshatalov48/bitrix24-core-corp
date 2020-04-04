@@ -4,7 +4,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 
 class CBPTask2Activity
 	extends CBPActivity
-	implements IBPEventActivity, IBPActivityExternalEventListener
+	implements IBPEventActivity, IBPActivityExternalEventListener, IBPEventDrivenActivity
 {
 	private $isInEventActivityMode = false;
 	private static $cycleCounter = [];
@@ -27,6 +27,8 @@ class CBPTask2Activity
 			"AUTO_LINK_TO_CRM_ENTITY" => true,
 			"AsChildTask"             => 0,
 			"CheckListItems"          => null,
+			"TimeEstimateHour"          => null,
+			"TimeEstimateMin"          => null,
 
 			//return properties
 			"ClosedBy"                => null,
@@ -65,13 +67,37 @@ class CBPTask2Activity
 
 	public function Execute()
 	{
-		if (!CModule::IncludeModule("tasks"))
+		if ($this->isInEventActivityMode)
 		{
 			return CBPActivityExecutionStatus::Closed;
 		}
 
-		$rootActivity = $this->GetRootActivity();
-		$documentId = $rootActivity->GetDocumentId();
+		if (!$this->createTask())
+		{
+			return CBPActivityExecutionStatus::Closed;
+		}
+
+		if (!$this->HoldToClose)
+		{
+			return CBPActivityExecutionStatus::Closed;
+		}
+
+		$this->Subscribe($this);
+		$this->isInEventActivityMode = false;
+
+		$this->WriteToTrackingService(GetMessage("BPSA_TRACK_SUBSCR"));
+
+		return CBPActivityExecutionStatus::Executing;
+	}
+
+	private function createTask()
+	{
+		if (!CModule::IncludeModule("tasks"))
+		{
+			return false;
+		}
+
+		$documentId = $this->GetDocumentId();
 
 		$this->checkCycling($documentId);
 
@@ -88,9 +114,8 @@ class CBPTask2Activity
 
 		if ($this->AUTO_LINK_TO_CRM_ENTITY && $documentId[0] === 'crm' && CModule::IncludeModule('crm'))
 		{
-			$rootActivity = $this->GetRootActivity();
-			$documentId   = $rootActivity->GetDocumentId();
-			$documentType = $rootActivity->GetDocumentType();
+			$documentId   = $this->GetDocumentId();
+			$documentType = $this->GetDocumentType();
 
 			$letter = CCrmOwnerTypeAbbr::ResolveByTypeID(CCrmOwnerType::ResolveID($documentType[2]));
 
@@ -173,6 +198,29 @@ class CBPTask2Activity
 			}
 		}
 
+		foreach (['DEADLINE', 'END_DATE_PLAN', 'START_DATE_PLAN'] as $dateField)
+		{
+			if (is_object($arFieldsChecked[$dateField]))
+			{
+				$arFieldsChecked[$dateField] = (string)$arFieldsChecked[$dateField];
+			}
+
+			if (!empty($arFieldsChecked[$dateField]) && !CheckDateTime($arFieldsChecked[$dateField]))
+			{
+				$this->WriteToTrackingService(
+					'Incorrect '.$dateField.': '.$arFieldsChecked[$dateField],
+					0,
+					CBPTrackingType::Error
+				);
+				unset($arFieldsChecked[$dateField]);
+			}
+		}
+
+		if ($fields['ALLOW_TIME_TRACKING'] === 'Y')
+		{
+			$arFieldsChecked['TIME_ESTIMATE'] = (int) $this->TimeEstimateHour * 3600 + (int) $this->TimeEstimateMin * 60;
+		}
+
 		$prevOccurAsUserId = \Bitrix\Tasks\Util\User::getOccurAsId(); // null or positive integer
 		\Bitrix\Tasks\Util\User::setOccurAsId($arFieldsChecked['CREATED_BY']);
 
@@ -212,13 +260,13 @@ class CBPTask2Activity
 				$this->WriteToTrackingService(GetMessage("BPSA_TRACK_ERROR").(!empty($errorDesc) ? ' '.implode(', ', $errorDesc) : ''));
 			}
 
-			return CBPActivityExecutionStatus::Closed;
+			return false;
 		}
 
 		$checkListItems = $this->CheckListItems;
 		if ($checkListItems && is_array($checkListItems))
 		{
-			$taskItem = CTaskItem::getInstance($result, \Bitrix\Tasks\Util\User::getAdminId());
+			$taskItem = CTaskItem::getInstance($result, $arFieldsChecked['CREATED_BY']);
 
 			foreach ($checkListItems as $checkListItem)
 			{
@@ -229,7 +277,7 @@ class CBPTask2Activity
 						$checkListItem = implode(', ', \CBPHelper::MakeArrayFlat($checkListItem));
 					}
 
-					\CTaskCheckListItem::add($taskItem, ['TITLE' => (string) $checkListItem]);
+					\CTaskCheckListItem::add($taskItem, ['TITLE' => substr( (string) $checkListItem, 0, 255)]);
 				}
 			}
 		}
@@ -237,28 +285,28 @@ class CBPTask2Activity
 		$this->TaskId = $result;
 		$this->WriteToTrackingService(str_replace("#VAL#", $result, GetMessage("BPSA_TRACK_OK")));
 
-		if ($this->isInEventActivityMode || !$this->HoldToClose)
-		{
-			return CBPActivityExecutionStatus::Closed;
-		}
-
-		$this->Subscribe($this);
-		$this->isInEventActivityMode = false;
-
-		$this->WriteToTrackingService(GetMessage("BPSA_TRACK_SUBSCR"));
-
-		return CBPActivityExecutionStatus::Executing;
+		return true;
 	}
 
 	public function Subscribe(IBPActivityExternalEventListener $eventHandler)
 	{
 		$this->isInEventActivityMode = true;
 
+		if ($eventHandler instanceof CBPListenEventActivitySubscriber)
+		{
+			$result = $this->createTask();
+			if (!$result)
+			{
+				return false;
+			}
+		}
+
 		$schedulerService = $this->workflow->GetService("SchedulerService");
 		$schedulerService->SubscribeOnEvent($this->workflow->GetInstanceId(), $this->name, "tasks", "OnTaskUpdate", $this->TaskId);
 		$schedulerService->SubscribeOnEvent($this->workflow->GetInstanceId(), $this->name, "tasks", "OnTaskDelete", $this->TaskId);
 
 		$this->workflow->AddEventHandler($this->name, $eventHandler);
+		$this->WriteToTrackingService(GetMessage("BPSA_TRACK_SUBSCR"));
 	}
 
 	public function Unsubscribe(IBPActivityExternalEventListener $eventHandler)
@@ -272,6 +320,22 @@ class CBPTask2Activity
 
 	public function OnExternalEvent($arEventParameters = array())
 	{
+		if ($this->onExternalEventHandler($arEventParameters))
+		{
+			$this->Unsubscribe($this);
+			$this->workflow->CloseActivity($this);
+		}
+
+		return;
+	}
+
+	public function OnExternalDrivenEvent($arEventParameters = array())
+	{
+		return $this->onExternalEventHandler($arEventParameters);
+	}
+
+	private function onExternalEventHandler($arEventParameters = array())
+	{
 		if ($this->TaskId != $arEventParameters[0])
 		{
 			return;
@@ -283,8 +347,7 @@ class CBPTask2Activity
 			{
 				$this->IsDeleted = 'Y';
 				$this->WriteToTrackingService(GetMessage("BPSA_TRACK_DELETED"));
-				$this->Unsubscribe($this);
-				$this->workflow->CloseActivity($this);
+				return true;
 			}
 			elseif ($arEventParameters[1]["STATUS"] == 5)
 			{
@@ -292,9 +355,7 @@ class CBPTask2Activity
 				$this->ClosedDate = $arEventParameters[1]["CLOSED_DATE"];
 
 				$this->WriteToTrackingService(str_replace("#DATE#", $arEventParameters[1]["CLOSED_DATE"], GetMessage("BPSA_TRACK_CLOSED")));
-
-				$this->Unsubscribe($this);
-				$this->workflow->CloseActivity($this);
+				return true;
 			}
 		}
 	}
@@ -341,13 +402,13 @@ class CBPTask2Activity
 						if (!is_array($arCurrentValues[$k]))
 							$arCurrentValues[$k] = array($arCurrentValues[$k]);
 
-						$ar = array();
-						foreach ($arCurrentValues[$k] as $val)
+						$ar = (array) $arCurrentValues[$k];
+						/*foreach ($arCurrentValues[$k] as $val)
 						{
 							if (intval($val)."!" == $val."!")
 								$val = "user_".$val;
 							$ar[] = $val;
-						}
+						}*/
 
 						$rawValues[$k] = $ar;
 						$arCurrentValues[$k] = CBPHelper::UsersArrayToString($ar, $arWorkflowTemplate, $documentType);
@@ -378,6 +439,8 @@ class CBPTask2Activity
 			$arCurrentValues["AS_CHILD_TASK"] = ($arCurrentActivity["Properties"]["AsChildTask"] ? "Y" : "N");
 			$arCurrentValues["AUTO_LINK_TO_CRM_ENTITY"] = ($arCurrentActivity["Properties"]["AUTO_LINK_TO_CRM_ENTITY"] ? "Y" : "N");
 			$arCurrentValues["CHECK_LIST_ITEMS"] = $arCurrentActivity["Properties"]["CheckListItems"];
+			$arCurrentValues["TIME_ESTIMATE_H"] = $arCurrentActivity["Properties"]["TimeEstimateHour"];
+			$arCurrentValues["TIME_ESTIMATE_M"] = $arCurrentActivity["Properties"]["TimeEstimateMin"];
 		}
 		else
 		{
@@ -576,6 +639,8 @@ class CBPTask2Activity
 		$properties["HoldToClose"] = ((strtoupper($arCurrentValues["HOLD_TO_CLOSE"]) == "Y") ? true : false);
 		$properties["AsChildTask"] = ((strtoupper($arCurrentValues["AS_CHILD_TASK"]) == "Y") ? 1 : 0);
 		$properties["CheckListItems"] = $arCurrentValues["CHECK_LIST_ITEMS"];
+		$properties["TimeEstimateHour"] = $arCurrentValues["TIME_ESTIMATE_H"];
+		$properties["TimeEstimateMin"] = $arCurrentValues["TIME_ESTIMATE_M"];
 		$properties["AUTO_LINK_TO_CRM_ENTITY"] = ((strtoupper($arCurrentValues["AUTO_LINK_TO_CRM_ENTITY"]) == "Y") ? true : false);
 
 		if (count($errors) > 0)

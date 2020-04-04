@@ -8,6 +8,7 @@
 		constructor(userId = 0, form, items = [], sections = [])
 		{
 			this.form = form;
+			this.isBackdrop = false;
 			this.userId = userId;
 			this.formFields = items;
 			this.formSections = sections;
@@ -242,9 +243,9 @@
 		openCommunicateMenu()
 		{
 			let buttons = [{title: BX.message("COMMUNICATE_MESSAGE"), code: "message"},];
-			if(["bot", "email", "network", "imconnector"].indexOf(this.externalAuthId) == -1)
+			if(["bot", "email", "network", "imconnector"].indexOf(this.externalAuthId) === -1)
 			{
-				if(BX.componentParameters.get("userId",0) != this.userId)
+				if(BX.componentParameters.get("userId",0) !== this.userId)
 				{
 					buttons = buttons.concat([
 						{title: BX.message("COMMUNICATE_VIDEO"), code: "video"},
@@ -306,7 +307,7 @@
 				return;
 			}
 
-			if(item.params)
+			if(item.params && Object.keys(item.params).length > 0)
 			{
 				if(item.params.openScheme)
 				{
@@ -375,14 +376,26 @@
 			if (Application.getApiVersion() >= 25)
 			{
 				console.info('BX.MobileTools.openChat: open chat in JSNative component');
-				BX.postComponentEvent("onOpenDialog", [{
+
+				let openDialog = () => BX.postComponentEvent("onOpenDialog", [{
 					dialogId: dialogId,
 					dialogTitleParams: dialogTitleParams ? {
 						name: dialogTitleParams.name || '',
 						avatar: dialogTitleParams.avatar || '',
 						color: dialogTitleParams.color || '',
 						description: dialogTitleParams.description || ''
-					} : false }], 'im.recent');
+					} : false
+				}], 'im.recent');
+
+				if(this.isBackdrop)
+				{
+					this.form.close(openDialog);
+				}
+				else
+				{
+					openDialog();
+				}
+
 			}
 			else
 			{
@@ -551,7 +564,7 @@
 
 											})
 										},
-										title: item.title
+										title: BX.message("PROFILE_INFO")
 									});
 							}
 							else if(item.id == "tasks")
@@ -604,7 +617,8 @@
 				imageUrl : "",
 				title :"",
 				workPosition : "",
-				name : ""
+				name : "",
+				isBackdrop: false
 			};
 
 			let cachedData = Application.sharedStorage().get("user_head_"+userData.userId);
@@ -636,6 +650,19 @@
 					color:"#2e455a"
 				};
 
+				let openProfile = form=> {
+					let profile = new ProfileView(params.userId,form,[top,
+						{ type:"loading", sectionCode:"1", title:""}
+					], [
+						{id: "top", backgroundColor:"#f0f0f0"},
+						{id: "actions", backgroundColor:"#f0f0f0"},
+						{id: "1", backgroundColor:"#f0f0f0"},
+					]);
+
+
+					profile.isBackdrop = params.isBackdrop;
+					profile.init();
+				};
 
 				if(formObject == false)
 				{
@@ -644,30 +671,16 @@
 						{
 							title: params.title,
 							groupStyle: true,
-							onReady: form=> {
-								(new ProfileView(params.userId,form,[top,
-									{ type:"loading", sectionCode:"1", title:""}
-								], [
-									{id: "top", backgroundColor:"#f0f0f0"},
-									{id: "actions", backgroundColor:"#f0f0f0"},
-									{id: "1", backgroundColor:"#f0f0f0"},
-								])).init();
-							},
+							onReady: openProfile,
 							onError: error=> console.log(error),
 						});
 				}
 				else
 				{
-
 					if(formObject.setTitle)
 						formObject.setTitle({text: BX.message("PROFILE_INFO")});
-					(new ProfileView(params.userId, formObject,[top,
-						{ type:"loading", sectionCode:"1", title:""}
-					], [
-						{id: "top", backgroundColor:"#f0f0f0"},
-						{id: "actions", backgroundColor:"#f0f0f0"},
-						{id: "1", backgroundColor:"#f0f0f0"},
-					])).init();
+
+					openProfile(formObject);
 				}
 
 			}
@@ -677,6 +690,46 @@
 				{
 					PageManager.openPage({url: params.url, titleParams:{text:params.title}});
 				}
+			}
+		}
+
+		static openComponent(userData = {})
+		{
+			if(Application.getApiVersion() >= 27)
+			{
+				let url = "";
+				if(availableComponents && availableComponents["user.profile"])
+				{
+					url = availableComponents["user.profile"]["publicUrl"];
+				}
+				console.log({
+					scriptPath: url,
+					params: {"userId": userData.userId},
+					canOpenInDefault:true,
+					rootWidget:{
+						name: "list",
+						title: userData.title,
+						description: true,
+						settings:{objectName: "form", description: true,}
+					}
+				});
+
+				PageManager.openComponent("JSStackComponent",
+					{
+						scriptPath: url,
+						params: {"userId": userData.userId},
+						canOpenInDefault:true,
+						rootWidget:{
+							name: "list",
+							title: userData.title,
+							description: true,
+							settings:{objectName: "form", description: true,}
+						}
+					});
+			}
+			else
+			{
+				PageManager.openPage({url:"/mobile/users/?user_id="+userData.userId});
 			}
 		}
 	}

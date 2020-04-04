@@ -2708,3 +2708,58 @@ table.bx-disk-popup-shared-people-list .bx-disk-filepage-used-people-link:hover{
 	font-size: 28px;
 	font-family: "OpenSans-Regular", Helvetica, Arial, sans-serif;
 }
+
+.ui-viewer-unsupported-text.disk-viewer-office365-text a,
+.ui-viewer-unsupported-text.disk-viewer-office365-text a:hover {
+	display: inline-block;
+	color: rgba(255,255,255,.8);
+	border-bottom: 1px solid rgba(255,255,255,.4);
+	transition: .1s;
+}
+
+:not(.ui-btn-split) .disk-viewer-panel-icon-l:before,
+.disk-viewer-panel-icon-l .ui-btn-main:before,
+.disk-viewer-panel-icon-gdrive .ui-btn-main:before,
+.disk-viewer-panel-icon-onedrive .ui-btn-main:before,
+.disk-viewer-panel-icon-office365 .ui-btn-main:before {
+	position: absolute;
+	top: 50%;
+	left: 8px;
+	display: block;
+	transform: translateY(-50%);
+	width: 27px;
+	height: 27px;
+	background: no-repeat center;
+	content: '';
+	transition: 160ms color linear, 160ms transform linear, 160ms opacity linear, 160ms background-color linear;
+}
+
+:not(.ui-btn-split) .disk-viewer-panel-icon-l:before,
+.disk-viewer-panel-icon-l .ui-btn-main:before {
+	background-image: url(images/disk-viewer-icon-desktop.svg);
+}
+
+.disk-viewer-panel-icon-onedrive .ui-btn-main:before {
+	background-image: url(images/disk-viewer-icon-onedrive.svg);
+	background-size: 25px 25px;
+}
+
+.disk-viewer-panel-icon-gdrive .ui-btn-main:before {
+	background-image: url(images/disk-viewer-icon-gdrive.svg);
+}
+
+.disk-viewer-panel-icon-office365 .ui-btn-main:before {
+	background-image: url(images/disk-viewer-icon-office365.svg);
+}
+
+:not(.ui-btn-split) .disk-viewer-panel-icon-l {
+	padding-left: 37px;
+}
+
+.ui-btn-split.disk-viewer-panel-icon-l {
+	padding-left: 0;
+}
+
+.ui-btn-split.disk-viewer-panel-icon-l:before {
+	display: none;
+}

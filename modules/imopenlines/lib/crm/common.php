@@ -480,20 +480,23 @@ class Common
 		$result = new Result();
 		$result->setResult(false);
 
-		if(self::hasAccessToEntity(\CCrmOwnerType::ActivityName,$activityId))
+		if(Loader::includeModule('crm'))
 		{
-			$result->setResult(true);
-		}
-
-		if($result->getResult() == false)
-		{
-			$bindings = self::getActivityBindings($activityId);
-
-			foreach ($bindings as $typeEntity => $idEntity)
+			if(self::hasAccessToEntity(\CCrmOwnerType::ActivityName,$activityId))
 			{
-				if($result->getResult() == false && self::hasAccessToEntity($typeEntity, $idEntity))
+				$result->setResult(true);
+			}
+
+			if($result->getResult() == false)
+			{
+				$bindings = self::getActivityBindings($activityId);
+
+				foreach ($bindings as $typeEntity => $idEntity)
 				{
-					$result->setResult(true);
+					if($result->getResult() == false && self::hasAccessToEntity($typeEntity, $idEntity))
+					{
+						$result->setResult(true);
+					}
 				}
 			}
 		}
@@ -518,7 +521,7 @@ class Common
 			{
 				$defaultValue = true;
 				//hack
-				$id = 10000000000000000;
+				$id = 0;
 			}
 
 			$result = \CCrmOwnerType::GetEntityShowPath(\CCrmOwnerType::ResolveID($type), $id, false);
@@ -568,6 +571,135 @@ class Common
 			if(!empty($entityCaption))
 			{
 				$result[] = $entityCaption;
+			}
+		}
+
+		return $result;
+	}
+
+	/**
+	 * @param $crmEntityType
+	 *
+	 * @return bool|mixed
+	 * @throws \Bitrix\Main\LoaderException
+	 */
+	public static function getCrmEntityIdByTypeCode($crmEntityType)
+	{
+		$result = false;
+		$crmEntityType = strtoupper($crmEntityType);
+
+		if (Loader::includeModule('crm'))
+		{
+			$crmEntityList = [
+				\CCrmOwnerType::LeadName => \CCrmOwnerType::Lead,
+				\CCrmOwnerType::DealName => \CCrmOwnerType::Deal,
+				\CCrmOwnerType::ContactName => \CCrmOwnerType::Contact,
+				\CCrmOwnerType::CompanyName => \CCrmOwnerType::Company,
+			];
+
+			$result = !empty($crmEntityList[$crmEntityType]) ? $crmEntityList[$crmEntityType] : false;
+		}
+
+		return $result;
+	}
+
+	/**
+	 * @param $id
+	 *
+	 * @return array
+	 * @throws \Bitrix\Main\LoaderException
+	 */
+	public static function getActivityBindingsFormatted($id)
+	{
+		$result = [];
+		$bindings = self::getActivityBindings($id)->getData();
+
+		foreach ($bindings as $key => $binding)
+		{
+			if ($binding > 0)
+			{
+				$ownerTypeId = self::getCrmEntityIdByTypeCode($key);
+				if ($ownerTypeId)
+				{
+					$result[] = [
+						'OWNER_TYPE_ID' => $ownerTypeId,
+						'OWNER_ID' => $binding
+					];
+				}
+			}
+		}
+
+		return $result;
+	}
+
+
+	/**
+	 * @param $crmEntityType
+	 * @param $crmEntityId
+	 * @return int
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\LoaderException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	public static function getLastChatIdByCrmEntity($crmEntityType, $crmEntityId): int
+	{
+		$result = 0;
+
+		if (Loader::includeModule('im') && Loader::includeModule('crm'))
+		{
+			$crmEntityIdByTypeCode = self::getCrmEntityIdByTypeCode($crmEntityType);
+			$crmEntityId = (int)$crmEntityId;
+
+			if($crmEntityIdByTypeCode && $crmEntityId > 0)
+			{
+				$filter = [
+					'BINDINGS' =>
+						[
+							0 =>
+								[
+									'OWNER_TYPE_ID' => $crmEntityIdByTypeCode,
+									'OWNER_ID' => $crmEntityId,
+									'PROVIDER_ID' => \Bitrix\Crm\Activity\Provider\OpenLine::ACTIVITY_PROVIDER_ID
+								],
+						],
+				];
+			}
+
+			if (isset($filter))
+			{
+				$activity = \CCrmActivity::GetList(
+					array('LAST_UPDATED' => 'DESC'),
+					$filter,
+					false,
+					false,
+					array(
+						'ID', 'OWNER_ID', 'OWNER_TYPE_ID',
+						'TYPE_ID', 'PROVIDER_ID', 'PROVIDER_TYPE_ID', 'ASSOCIATED_ENTITY_ID', 'DIRECTION',
+						'SUBJECT', 'STATUS', 'DESCRIPTION', 'DESCRIPTION_TYPE',
+						'DEADLINE', 'RESPONSIBLE_ID'
+					),
+					array('QUERY_OPTIONS' => array('LIMIT' => 1, 'OFFSET' => 0))
+				)->Fetch();
+			}
+
+			if (!empty($activity))
+			{
+				$activity = \Bitrix\Crm\Timeline\ActivityController::prepareScheduleDataModel($activity);
+
+				if (!empty($activity['ASSOCIATED_ENTITY']['COMMUNICATION']['VALUE']) && strpos( $activity['ASSOCIATED_ENTITY']['COMMUNICATION']['VALUE'],'imol|') === 0)
+				{
+					$entityId = str_replace('imol|', '',  $activity['ASSOCIATED_ENTITY']['COMMUNICATION']['VALUE']);
+					$filter = [
+						'ENTITY_TYPE' => \Bitrix\Im\Alias::ENTITY_TYPE_OPEN_LINE,
+						'ENTITY_ID' => $entityId
+					];
+
+					$chatData = \Bitrix\Im\Model\ChatTable::getList(['select' => ['ID'], 'filter' => $filter])->fetch();
+					$chatData['ID'] = intval($chatData['ID']);
+
+					$result = $chatData['ID'] > 0 ? $chatData['ID'] : 0;
+				}
 			}
 		}
 

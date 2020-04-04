@@ -71,14 +71,13 @@ class File extends BaseObject
 		$data['file'] = $data['object'];
 		unset($data['object']);
 
+		$downloadUri = $this->getActionUri('download', ['fileId' => $file->getId(),]);
+		$showObjectInGridUri = $this->getUriToShowObjectInGrid($file);
+
 		$data['file'] = array_merge($data['file'], [
-			'typeFile' => $file->getTypeFile(),
-			'globalContentVersion' => $file->getGlobalContentVersion(),
-			'fileId' => $file->getFileId(),
-			'etag' => $file->getEtag(),
 			'extra' => [
-				'downloadUri' => $this->getActionUri('download', ['fileId' => $file->getId(),]),
-				'showInGridUri' => $this->getUriToShowObjectInGrid($file),
+				'downloadUri' => $downloadUri,
+				'showInGridUri' => $showObjectInGridUri,
 			],
 		]);
 
@@ -119,15 +118,6 @@ class File extends BaseObject
 			return;
 		}
 
-		$previewId = null;
-		$previewFileData = $this->request->getFile('previewFile');
-		if ($previewFileData && \CFile::IsImage($previewFileData['name'], $previewFileData['type']))
-		{
-			$previewFileData['MODULE_ID'] = Driver::INTERNAL_MODULE_ID;
-			/** @noinspection PhpDynamicAsStaticMethodCallInspection */
-			$previewId = \CFile::saveFile($previewFileData, Driver::INTERNAL_MODULE_ID, true, true);
-		}
-
 		if ($content->isCloud() && $content->getContentType())
 		{
 			$fileId = \CFile::saveFile([
@@ -148,13 +138,16 @@ class File extends BaseObject
 
 			//it's crutch to be similar @see \Bitrix\Disk\Folder::uploadFile()
 			$filename = Disk\Ui\Text::correctFilename($filename);
-			$file = $folder->addFile([
-				'NAME' => $filename,
-				'FILE_ID' => $fileId,
-				'PREVIEW_ID' => $previewId,
-				'SIZE' => $content->getSize(),
-				'CREATED_BY' => $currentUserId,
-			]);
+			$file = $folder->addFile(
+				[
+					'NAME' => $filename,
+					'FILE_ID' => $fileId,
+					'SIZE' => $content->getSize(),
+					'CREATED_BY' => $currentUserId,
+				],
+				[],
+				$generateUniqueName
+			);
 		}
 		else
 		{
@@ -166,7 +159,6 @@ class File extends BaseObject
 				[
 					'NAME' => $filename,
 					'CREATED_BY' => $currentUserId,
-					'PREVIEW_ID' => $previewId,
 				],
 				[],
 				$generateUniqueName
@@ -178,6 +170,18 @@ class File extends BaseObject
 			$this->errorCollection->add($folder->getErrors());
 
 			return;
+		}
+
+		$previewFileData = $this->request->getFile('previewFile');
+		if ($previewFileData && \CFile::isImage($previewFileData['name'], $previewFileData['type']))
+		{
+			$previewFileData['MODULE_ID'] = 'main';
+			/** @noinspection PhpDynamicAsStaticMethodCallInspection */
+			$previewId = \CFile::saveFile($previewFileData, 'main_preview', true);
+			if ($previewId)
+			{
+				(new Main\UI\Viewer\PreviewManager())->setPreviewImageId($file->getFileId(), $previewId);
+			}
 		}
 
 		return $this->getAction($file);
@@ -218,7 +222,7 @@ class File extends BaseObject
 
 	public function showPreviewAction(Disk\File $file, $width = 0, $height = 0, $exact = null)
 	{
-		if (!$file->getPreviewId())
+		if (!$file->getView()->getPreviewData())
 		{
 			Application::getInstance()->terminate();
 		}
@@ -305,6 +309,13 @@ class File extends BaseObject
 
 	public function addSharingAction(Disk\File $file, $entity, $taskName)
 	{
+		if (!Disk\Integration\Bitrix24Manager::isFeatureEnabled('disk_file_sharing'))
+		{
+			$this->errorCollection[] = new Error('Not allowed');
+
+			return;
+		}
+
 		$currentUserId = $this->getCurrentUser()->getId();
 		$securityContext = $file->getStorage()->getSecurityContext($currentUserId);
 		if (!$file->canShare($securityContext))
@@ -315,8 +326,14 @@ class File extends BaseObject
 		}
 
 		$rightsManager = Driver::getInstance()->getRightsManager();
-		$maxTaskName = $rightsManager->getPseudoMaxTaskByObjectForUser($file, $currentUserId);
+		if (!$rightsManager->isValidTaskName($taskName))
+		{
+			$this->errorCollection[] = new Error('Invalid task name');
 
+			return;
+		}
+
+		$maxTaskName = $rightsManager->getPseudoMaxTaskByObjectForUser($file, $currentUserId);
 		if ($rightsManager->pseudoCompareTaskName($taskName, $maxTaskName) > 0)
 		{
 			$this->errorCollection[] = new Error(Loc::getMessage('DISK_ERROR_MESSAGE_DENIED'));
@@ -446,7 +463,7 @@ class File extends BaseObject
 			'FILE_ID' => $file->getId(),
 		];
 
-		return new Engine\ComponentResponse('bitrix:disk.file.view', 'properties', $params);
+		return new Response\Component('bitrix:disk.file.view', 'properties', $params);
 	}
 
 	public function runPreviewGenerationAction(Disk\File $file)

@@ -9,9 +9,9 @@ if (intval($USER->GetID()) <= 0)
 if (!CModule::IncludeModule('im'))
 	return;
 
-$CIMNotify = new CIMNotify(false, Array(
-	'hide_link' => false
-));
+session_write_close();
+
+$CIMNotify = new CIMNotify(false);
 $result = $CIMNotify->GetNotifyList();
 
 $GLOBALS["APPLICATION"]->SetPageProperty("BodyClass", "ml-notify");

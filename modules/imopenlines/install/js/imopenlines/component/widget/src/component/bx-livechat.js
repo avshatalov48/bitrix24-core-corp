@@ -12,7 +12,7 @@ import {Vuex} from "ui.vue.vuex";
 import {Utils} from "im.utils";
 import {Logger} from "im.tools.logger";
 import {FormType, VoteType, LocationStyle, LanguageType} from "../const";
-import {DeviceType, DeviceOrientation} from "im.const";
+import {DeviceType, DeviceOrientation, EventType} from "im.const";
 
 /**
  * @notice Do not mutate or clone this component! It is under development.
@@ -53,6 +53,8 @@ Vue.component('bx-livechat',
 		FormType: () => FormType,
 		VoteType: () => VoteType,
 		DeviceType: () => DeviceType,
+		EventType: () => EventType,
+
 		textareaHeightStyle(state)
 		{
 			return 'flex: 0 0 '+this.textareaHeight+'px;'
@@ -63,12 +65,12 @@ Vue.component('bx-livechat',
 		},
 		widgetMobileDisabled(state)
 		{
-			if (state.application.device.type == DeviceType.mobile)
+			if (state.application.device.type === DeviceType.mobile)
 			{
 				if (navigator.userAgent.toString().includes('iPad'))
 				{
 				}
-				else if (state.application.device.orientation == DeviceOrientation.horizontal)
+				else if (state.application.device.orientation === DeviceOrientation.horizontal)
 				{
 					if (navigator.userAgent.toString().includes('iPhone'))
 					{
@@ -98,11 +100,11 @@ Vue.component('bx-livechat',
 				className.push('bx-livechat-position-'+LocationStyle[state.widget.common.location]);
 			}
 
-			if (state.application.common.languageId == LanguageType.russian)
+			if (state.application.common.languageId === LanguageType.russian)
 			{
 				className.push('bx-livechat-logo-ru');
 			}
-			else if (state.application.common.languageId == LanguageType.ukraine)
+			else if (state.application.common.languageId === LanguageType.ukraine)
 			{
 				className.push('bx-livechat-logo-ua');
 			}
@@ -128,7 +130,7 @@ Vue.component('bx-livechat',
 
 			if (
 				state.widget.dialog.operator.name
-				&& !(state.application.device.type == DeviceType.mobile && state.application.device.orientation == DeviceOrientation.horizontal)
+				&& !(state.application.device.type === DeviceType.mobile && state.application.device.orientation === DeviceOrientation.horizontal)
 			)
 			{
 				className.push('bx-livechat-has-operator');
@@ -167,9 +169,40 @@ Vue.component('bx-livechat',
 		{
 			return this.messageCollection.length > 0;
 		},
+		quotePanelData()
+		{
+			let result = {
+				id: 0,
+				title: '',
+				description: '',
+				color: ''
+			};
+			if (!this.dialog.quoteId)
+			{
+				return result;
+			}
+
+			let message = this.$store.getters['messages/getMessage'](this.dialog.chatId, this.dialog.quoteId);
+			if (!message)
+			{
+				return result;
+			}
+
+			let user = this.$store.getters['users/get'](message.authorId);
+
+			result = {
+				id: this.dialog.quoteId,
+				title: user? user.name: '',
+				color: user? user.color: '',
+				description: message.textConverted? message.textConverted: this.localize.BX_LIVECHAT_FILE_MESSAGE
+			};
+
+			return result;
+		},
 		...Vuex.mapState({
 			widget: state => state.widget,
 			application: state => state.application,
+			dialog: state => state.dialogues.collection[state.application.dialog.dialogId],
 			messageCollection: state => state.messages.collection[state.application.dialog.chatId]
 		})
 	},
@@ -206,7 +239,7 @@ Vue.component('bx-livechat',
 			}
 			if (
 				this.widget.dialog.sessionClose
-				&& this.widget.dialog.userVote != VoteType.none
+				&& this.widget.dialog.userVote !== VoteType.none
 			)
 			{
 				return false;
@@ -235,7 +268,11 @@ Vue.component('bx-livechat',
 		hideForm()
 		{
 			clearTimeout(this.showFormTimeout);
-			this.$store.commit('widget/common', {showForm: FormType.none});
+
+			if (this.widget.common.showForm !== FormType.none)
+			{
+				this.$store.commit('widget/common', {showForm: FormType.none});
+			}
 		},
 		showConsentWidow()
 		{
@@ -251,7 +288,7 @@ Vue.component('bx-livechat',
 			{
 				if (this.storedMessage)
 				{
-					this.onTextareaSend({focus: this.application.device.type != DeviceType.mobile});
+					this.onTextareaSend({focus: this.application.device.type !== DeviceType.mobile});
 					this.storedMessage = '';
 				}
 				if (this.storedFile)
@@ -260,9 +297,9 @@ Vue.component('bx-livechat',
 					this.storedFile = '';
 				}
 			}
-			else if (this.widget.common.showForm == FormType.none)
+			else if (this.widget.common.showForm === FormType.none)
 			{
-				this.$root.$emit('onMessengerTextareaFocus');
+				this.$root.$emit(EventType.textarea.focus);
 			}
 		},
 		disagreeConsentWidow()
@@ -274,9 +311,9 @@ Vue.component('bx-livechat',
 
 			if (this.storedMessage)
 			{
-				this.$root.$emit('onMessengerTextareaInsertText', {
+				this.$root.$emit(EventType.textarea.insertText, {
 					text: this.storedMessage,
-					focus: this.application.device.type != DeviceType.mobile
+					focus: this.application.device.type !== DeviceType.mobile
 				});
 				this.storedMessage = '';
 			}
@@ -285,9 +322,9 @@ Vue.component('bx-livechat',
 				this.storedFile = '';
 			}
 
-			if (this.application.device.type != DeviceType.mobile)
+			if (this.application.device.type !== DeviceType.mobile)
 			{
-				this.$root.$emit('onMessengerTextareaFocus');
+				this.$root.$emit(EventType.textarea.focus);
 			}
 		},
 		logEvent(name, ...params)
@@ -300,7 +337,7 @@ Vue.component('bx-livechat',
 			{
 				let viewPortMetaSiteNode = Array.from(
 					document.head.getElementsByTagName('meta')
-				).filter(element => element.name == 'viewport')[0];
+				).filter(element => element.name === 'viewport')[0];
 
 				if (viewPortMetaSiteNode)
 				{
@@ -388,7 +425,7 @@ Vue.component('bx-livechat',
 		onRequestShowForm(event)
 		{
 			clearTimeout(this.showFormTimeout);
-			if (event.type == FormType.welcome)
+			if (event.type === FormType.welcome)
 			{
 				if (event.delayed)
 				{
@@ -401,7 +438,7 @@ Vue.component('bx-livechat',
 					this.showWelcomeForm();
 				}
 			}
-			else if (event.type == FormType.offline)
+			else if (event.type === FormType.offline)
 			{
 				if (event.delayed)
 				{
@@ -414,7 +451,7 @@ Vue.component('bx-livechat',
 					this.showOfflineForm();
 				}
 			}
-			else if (event.type == FormType.like)
+			else if (event.type === FormType.like)
 			{
 				if (event.delayed)
 				{
@@ -439,13 +476,21 @@ Vue.component('bx-livechat',
 		onDialogMessageClickByUserName(event)
 		{
 			// TODO name push to auto-replace mention holder - User Name -> [USER=274]User Name[/USER]
-			this.$root.$emit('onMessengerTextareaInsertText', {text: event.user.name+' '});
+			this.$root.$emit(EventType.textarea.insertText, {text: event.user.name+' '});
+		},
+		onDialogMessageClickByUploadCancel(event)
+		{
+			this.$root.$bitrixWidget.cancelUploadFile(event.file.id);
+		},
+		onDialogMessageClickByKeyboardButton(event)
+		{
+			this.$root.$bitrixWidget.execMessageKeyboardCommand(event);
 		},
 		onDialogMessageClickByCommand(event)
 		{
 			if (event.type === 'put')
 			{
-				this.$root.$emit('onMessengerTextareaInsertText', {text: event.value+' '});
+				this.$root.$emit(EventType.textarea.insertText, {text: event.value+' '});
 			}
 			else if (event.type === 'send')
 			{
@@ -469,15 +514,26 @@ Vue.component('bx-livechat',
 		{
 			this.$root.$bitrixWidget.readMessage(event.id);
 		},
+		onDialogQuoteMessage(event)
+		{
+			this.$root.$bitrixWidget.quoteMessage(event.message.id);
+		},
+		onDialogMessageReactionSet(event)
+		{
+			this.$root.$bitrixWidget.reactMessage(event.message.id, event.reaction);
+		},
 		onDialogClick(event)
 		{
-			this.$store.commit('widget/common', {showForm: FormType.none});
+			if (this.widget.common.showForm !== FormType.none)
+			{
+				this.$store.commit('widget/common', {showForm: FormType.none});
+			}
 		},
 		onTextareaSend(event)
 		{
 			event.focus = event.focus !== false;
 
-			if (this.widget.common.showForm == FormType.smile)
+			if (this.widget.common.showForm === FormType.smile)
 			{
 				this.$store.commit('widget/common', {showForm: FormType.none});
 			}
@@ -504,7 +560,7 @@ Vue.component('bx-livechat',
 
 			if (event.focus)
 			{
-				this.$root.$emit('onMessengerTextareaFocus');
+				this.$root.$emit(EventType.textarea.focus);
 			}
 
 			return true;
@@ -517,7 +573,7 @@ Vue.component('bx-livechat',
 		{
 			if (
 				this.widget.common.copyright &&
-				this.application.device.type == DeviceType.mobile
+				this.application.device.type === DeviceType.mobile
 			)
 			{
 				this.widget.common.copyright = false;
@@ -537,7 +593,7 @@ Vue.component('bx-livechat',
 			{
 				this.widget.common.copyright = this.$root.$bitrixWidget.copyright;
 				this.$nextTick(() => {
-					this.$root.$emit('onMessengerDialogScrollToBottom', {force: true});
+					this.$root.$emit(EventType.dialog.scrollToBottom, {force: true});
 				});
 			}
 			if (Utils.device.isMobile())
@@ -566,7 +622,7 @@ Vue.component('bx-livechat',
 
 			this.onTextareaDragEventAdd();
 
-			this.$root.$emit('onMessengerTextareaBlur', true);
+			this.$root.$emit(EventType.textarea.blur, true);
 		},
 		onTextareaContinueDrag(event)
 		{
@@ -585,7 +641,7 @@ Vue.component('bx-livechat',
 
 			Logger.log('Livechat: textarea drag', 'new: '+textareaHeight, 'curr: '+this.textareaHeight);
 
-			if (this.textareaHeight != textareaHeight)
+			if (this.textareaHeight !== textareaHeight)
 			{
 				this.textareaHeight = textareaHeight;
 			}
@@ -604,7 +660,7 @@ Vue.component('bx-livechat',
 			this.onTextareaDragEventRemove();
 
 			this.$store.commit('widget/common', {textareaHeight: this.textareaHeight});
-			this.$root.$emit('onMessengerDialogScrollToBottom', {force: true});
+			this.$root.$emit(EventType.dialog.scrollToBottom, {force: true});
 		},
 		onTextareaDragEventAdd()
 		{
@@ -645,13 +701,13 @@ Vue.component('bx-livechat',
 				return false;
 			}
 
-			this.$root.$bitrixWidget.addFile(fileInput);
+			this.$root.$bitrixWidget.uploadFile(fileInput);
 		},
 		onTextareaAppButtonClick(event)
 		{
-			if (event.appId == FormType.smile)
+			if (event.appId === FormType.smile)
 			{
-				if (this.widget.common.showForm == FormType.smile)
+				if (this.widget.common.showForm === FormType.smile)
 				{
 					this.$store.commit('widget/common', {showForm: FormType.none});
 				}
@@ -662,7 +718,7 @@ Vue.component('bx-livechat',
 			}
 			else
 			{
-				this.$root.$emit('onMessengerTextareaFocus');
+				this.$root.$emit(EventType.textarea.focus);
 			}
 		},
 		onPullRequestConfig(event)
@@ -671,17 +727,21 @@ Vue.component('bx-livechat',
 		},
 		onSmilesSelectSmile(event)
 		{
-			this.$root.$emit('onMessengerTextareaInsertText', {text: event.text});
+			this.$root.$emit(EventType.textarea.insertText, {text: event.text});
 		},
 		onSmilesSelectSet()
 		{
-			this.$root.$emit('onMessengerTextareaFocus');
+			this.$root.$emit(EventType.textarea.focus);
+		},
+		onQuotePanelClose()
+		{
+			this.$root.$bitrixWidget.quoteMessageClear();
 		},
 		onWindowKeyDown(event)
 		{
-			if (event.keyCode == 27)
+			if (event.keyCode === 27)
 			{
-				if (this.widget.common.showForm != FormType.none)
+				if (this.widget.common.showForm !== FormType.none)
 				{
 					this.$store.commit('widget/common', {showForm: FormType.none});
 				}
@@ -697,14 +757,14 @@ Vue.component('bx-livechat',
 				event.preventDefault();
 				event.stopPropagation();
 
-				this.$root.$emit('onMessengerTextareaFocus');
+				this.$root.$emit(EventType.textarea.focus);
 			}
 		},
 		onWindowScroll(event)
 		{
 			clearTimeout(this.onWindowScrollTimeout);
 			this.onWindowScrollTimeout = setTimeout(() => {
-				this.$root.$emit('onMessengerTextareaBlur', true);
+				this.$root.$emit(EventType.textarea.blur, true);
 			}, 50);
 		},
 	},
@@ -738,14 +798,6 @@ Vue.component('bx-livechat',
 						<template v-else-if="widget.common.dialogStart">
 							<bx-pull-status :canReconnect="true" @reconnect="onPullRequestConfig"/>
 							<div :class="['bx-livechat-body', {'bx-livechat-body-with-message': showMessageDialog}]" key="with-message">
-								<transition name="bx-livechat-animation-upload-file">
-									<template v-if="widget.common.uploadFile">
-										<div class="bx-livechat-file-upload">	
-											<div class="bx-livechat-file-upload-sending"></div>
-											<div class="bx-livechat-file-upload-text">{{localize.BX_LIVECHAT_FILE_UPLOAD}}</div>
-										</div>	
-									</template>
-								</transition>	
 								<template v-if="showMessageDialog">
 									<div class="bx-livechat-dialog">
 										<bx-messenger-dialog
@@ -753,21 +805,28 @@ Vue.component('bx-livechat',
 											:dialogId="application.dialog.dialogId"
 											:chatId="application.dialog.chatId"
 											:messageLimit="application.dialog.messageLimit"
-											:enableEmotions="false"
+											:messageExtraCount="application.dialog.messageExtraCount"
+											:enableReactions="true"
 											:enableDateActions="false"
 											:enableCreateContent="false"
+											:enableGestureQuote="true"
+											:enableGestureMenu="true"
 											:showMessageAvatar="false"
 											:showMessageMenu="false"
-											listenEventScrollToBottom="onMessengerDialogScrollToBottom"
-											listenEventRequestHistory="onDialogRequestHistoryResult"
-											listenEventRequestUnread="onDialogRequestUnreadResult"
+											:listenEventScrollToBottom="EventType.dialog.scrollToBottom"
+											:listenEventRequestHistory="EventType.dialog.requestHistoryResult"
+											:listenEventRequestUnread="EventType.dialog.requestUnreadResult"
 											@readMessage="onDialogReadMessage"
 											@requestHistory="onDialogRequestHistory"
 											@requestUnread="onDialogRequestUnread"
+											@quoteMessage="onDialogQuoteMessage"
 											@clickByCommand="onDialogMessageClickByCommand"
 											@clickByUserName="onDialogMessageClickByUserName"
+											@clickByUploadCancel="onDialogMessageClickByUploadCancel"
+											@clickByKeyboardButton="onDialogMessageClickByKeyboardButton"
 											@clickByMessageMenu="onDialogMessageMenuClick"
 											@clickByMessageRetry="onDialogMessageRetryClick"
+											@setMessageReaction="onDialogMessageReactionSet"
 											@click="onDialogClick"
 										 />
 									</div>	 
@@ -775,6 +834,9 @@ Vue.component('bx-livechat',
 								<template v-else>
 									<bx-livechat-body-loading/>
 								</template>
+								
+								<bx-messenger-quote-panel :id="quotePanelData.id" :title="quotePanelData.title" :description="quotePanelData.description" :color="quotePanelData.color" @close="onQuotePanelClose"/>
+								
 								<keep-alive include="bx-livechat-smiles">
 									<template v-if="widget.common.showForm == FormType.like && widget.common.vote.enable">
 										<bx-livechat-form-vote/>
@@ -807,9 +869,9 @@ Vue.component('bx-livechat',
 								:enableFile="application.disk.enabled"
 								:autoFocus="application.device.type !== DeviceType.mobile"
 								:styles="{button: {backgroundColor: widget.common.styles.backgroundColor, iconColor: widget.common.styles.iconColor}}"
-								listenEventInsertText="onMessengerTextareaInsertText"
-								listenEventFocus="onMessengerTextareaFocus"
-								listenEventBlur="onMessengerTextareaBlur"
+								:listenEventInsertText="EventType.textarea.insertText"
+								:listenEventFocus="EventType.textarea.focus"
+								:listenEventBlur="EventType.textarea.blur"
 								@writes="onTextareaWrites" 
 								@send="onTextareaSend" 
 								@focus="onTextareaFocus" 

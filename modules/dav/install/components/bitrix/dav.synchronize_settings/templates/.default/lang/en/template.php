@@ -39,8 +39,7 @@ CardDAV.
 
 Follow these instructions to configure CardDAV on Apple devices.
 <ol>
-<li>On your Apple device, open the menu <b>Settings</b> &gt; <b>Contacts</b> &gt;
-  <b>Accounts</b>.</li>
+<li>On your Apple device, open the menu <b>Settings</b> &gt; <b>Passwords & Accounts</b>.</li>
 <li>Select <b>Add Account</b> under the account list.</li>
 <li>Select CardDAV as account type (<b>Other</b> &gt; <b>CardDAV Account</b>).</li>
 <li>Specify this website address as server (#SERVER#). Use your login and password..</li>

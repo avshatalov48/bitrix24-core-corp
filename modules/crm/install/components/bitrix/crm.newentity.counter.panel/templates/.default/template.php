@@ -29,6 +29,7 @@ $counterContainerID = "{$prefix}_counter";
 	BX.ready(
 		function()
 		{
+			BX.CrmNewEntityCounterPanel.removeItemById("<?=CUtil::JSEscape($guid)?>");
 			BX.CrmNewEntityCounterPanel.create(
 				"<?=CUtil::JSEscape($guid)?>",
 				{

@@ -409,8 +409,13 @@ class CIntranetTasksDocument
 	}
 
 
-	public function CreateDocument($arFields)
+	public function CreateDocument($parentDocumentId, $arFields = null)
 	{
+		if (is_null($arFields))
+		{
+			$arFields = $parentDocumentId;
+		}
+
 		$iblockId = COption::GetOptionInt("intranet", "iblock_tasks", 0);
 		if ($iblockId <= 0)
 			return false;
@@ -832,7 +837,7 @@ class CIntranetTasksDocument
 	}
 
 	// array("1" => "Админы", 2 => "Гости", 3 => ..., "Author" => "Афтар")
-	public function GetAllowableUserGroups($documentType)
+	public function GetAllowableUserGroups($documentType, $withExtended = false)
 	{
 		$arResult = array(
 			"author" => GetMessage("INTASK_TD_USER_GROUPS_AUTHOR"),

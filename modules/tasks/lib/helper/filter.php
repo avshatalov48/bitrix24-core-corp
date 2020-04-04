@@ -7,6 +7,7 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Tasks\Internals\Counter;
 use Bitrix\Tasks\Internals\SearchIndex;
 use Bitrix\Tasks\Internals\Task\SearchIndexTable;
+use Bitrix\Tasks\Util\Restriction\Bitrix24FilterLimitRestriction;
 
 class Filter extends Common
 {
@@ -54,7 +55,7 @@ class Filter extends Common
 				$currentPresetId = $filterOptions->getCurrentFilterId();
 				$filterSettings = $filterOptions->getFilterSettings($currentPresetId);
 
-				if (!array_key_exists('ROLEID', $filterSettings['fields']) || !$filterSettings['fields']['ROLEID'])
+				if (is_array($filterSettings['fields']) && (!array_key_exists('ROLEID', $filterSettings['fields']) || !$filterSettings['fields']['ROLEID']))
 				{
 					if ($roleId)
 					{
@@ -268,7 +269,7 @@ class Filter extends Common
 			return $filter;
 		}
 
-		if ($this->getFilterFieldData('FIND'))
+		if ($this->getFilterFieldData('FIND') && !Bitrix24FilterLimitRestriction::isLimitExceeded())
 		{
 			$operator = (($isFullTextIndexEnabled = SearchIndexTable::isFullTextIndexEnabled())? '*' : '*%');
 			$value = SearchIndex::prepareStringToSearch($this->getFilterFieldData('FIND'), $isFullTextIndexEnabled);

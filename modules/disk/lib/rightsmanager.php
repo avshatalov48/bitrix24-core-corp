@@ -565,21 +565,25 @@ class RightsManager implements IErrorable
 		);
 	}
 
-	public function getUserOperationsForChildren($parentId, $userId)
+	public function getUserOperationsForChildren($parentId, $userId, array $restrictIds = [])
 	{
 		$parentId = (int)$parentId;
 		$userId = (int)$userId;
 
-		$rightsByObjectId = array();
+		$rightsByObjectId = [];
+		if ($restrictIds)
+		{
+			$restrictIds[] = $parentId;
+		}
 
-		$needToLoadByLink = $this->appendChildRightsForChildren($parentId, $userId, $rightsByObjectId);
+		$needToLoadByLink = $this->appendChildRightsForChildren($parentId, $userId, $restrictIds, $rightsByObjectId);
 		if($needToLoadByLink)
 		{
-			$this->appendChildRightsForConnectedChildren($parentId, $userId, $rightsByObjectId);
+			$this->appendChildRightsForConnectedChildren($parentId, $userId, $restrictIds, $rightsByObjectId);
 		}
-		$this->appendChildCrRightsForChildren($parentId, $userId, $rightsByObjectId);
+		$this->appendChildCrRightsForChildren($parentId, $userId, $restrictIds, $rightsByObjectId);
 
-		$operations = array();
+		$operations = [];
 		foreach ($rightsByObjectId as $objectId => $rights)
 		{
 			$operations[$objectId] = $this->reformatRightsToOperations($rights);
@@ -588,8 +592,15 @@ class RightsManager implements IErrorable
 		return $operations;
 	}
 
-	private function appendChildRightsForChildren($parentId, $userId, array &$rightsByObjectId)
+	private function appendChildRightsForChildren($parentId, $userId, array $restrictIds, array &$rightsByObjectId)
 	{
+		$restrictById = '';
+		$restrictIds = array_filter(array_map('intval', $restrictIds));
+		if ($restrictIds)
+		{
+			$restrictById = ' AND o.ID IN (' . implode(',', $restrictIds) . ')';
+		}
+
 		$query = Application::getConnection()->query("
 			SELECT op.NAME, r.TASK_ID, r.DOMAIN, r.NEGATIVE, o.REAL_OBJECT_ID O_REAL_OBJECT_ID, o.ID O_OBJECT_ID, r.ACCESS_CODE
 			FROM b_disk_right r
@@ -599,7 +610,7 @@ class RightsManager implements IErrorable
 				INNER JOIN b_operation op ON task_op.OPERATION_ID = op.ID
 				INNER JOIN b_user_access uaccess ON r.ACCESS_CODE = uaccess.ACCESS_CODE
 
-			WHERE o.PARENT_ID = {$parentId} AND uaccess.USER_ID = {$userId}
+			WHERE o.PARENT_ID = {$parentId} AND uaccess.USER_ID = {$userId} {$restrictById}
 		"
 		);
 
@@ -625,8 +636,15 @@ class RightsManager implements IErrorable
 		return $needToLoadByLink;
 	}
 
-	private function appendChildRightsForConnectedChildren($parentId, $userId, &$rightsByObjectId)
+	private function appendChildRightsForConnectedChildren($parentId, $userId, array $restrictIds, &$rightsByObjectId)
 	{
+		$restrictById = '';
+		$restrictIds = array_filter(array_map('intval', $restrictIds));
+		if ($restrictIds)
+		{
+			$restrictById = ' AND o.ID IN (' . implode(',', $restrictIds) . ')';
+		}
+
 		$query = Application::getConnection()->query("
 			SELECT op.NAME, r.TASK_ID, r.DOMAIN, r.NEGATIVE, o.REAL_OBJECT_ID O_REAL_OBJECT_ID, o.ID O_OBJECT_ID, r.ACCESS_CODE
 			FROM b_disk_right r
@@ -636,7 +654,7 @@ class RightsManager implements IErrorable
 				INNER JOIN b_operation op ON task_op.OPERATION_ID = op.ID
 				INNER JOIN b_user_access uaccess ON r.ACCESS_CODE = uaccess.ACCESS_CODE
 
-			WHERE o.PARENT_ID = {$parentId} AND uaccess.USER_ID = {$userId} AND o.ID <> o.REAL_OBJECT_ID
+			WHERE o.PARENT_ID = {$parentId} AND uaccess.USER_ID = {$userId} AND o.ID <> o.REAL_OBJECT_ID {$restrictById}
 		"
 		);
 
@@ -654,8 +672,15 @@ class RightsManager implements IErrorable
 		}
 	}
 
-	private function appendChildCrRightsForChildren($parentId, $userId, &$rightsByObjectId)
+	private function appendChildCrRightsForChildren($parentId, $userId, array $restrictIds, &$rightsByObjectId)
 	{
+		$restrictById = '';
+		$restrictIds = array_filter(array_map('intval', $restrictIds));
+		if ($restrictIds)
+		{
+			$restrictById = ' AND o.ID IN (' . implode(',', $restrictIds) . ')';
+		}
+
 		$query = Application::getConnection()->query("
 			SELECT op.NAME, r.TASK_ID, r.DOMAIN, r.NEGATIVE, o.REAL_OBJECT_ID O_REAL_OBJECT_ID, o.ID O_OBJECT_ID
 			FROM b_disk_right r
@@ -664,7 +689,7 @@ class RightsManager implements IErrorable
 				INNER JOIN b_task_operation task_op ON r.TASK_ID = task_op.TASK_ID
 				INNER JOIN b_operation op ON task_op.OPERATION_ID = op.ID
 
-			WHERE o.PARENT_ID = {$parentId} AND o.CREATED_BY = {$userId} AND r.ACCESS_CODE = 'CR'
+			WHERE o.PARENT_ID = {$parentId} AND o.CREATED_BY = {$userId} AND r.ACCESS_CODE = 'CR' {$restrictById}
 		"
 		);
 
@@ -704,6 +729,11 @@ class RightsManager implements IErrorable
 		$this->loadAccessTasks();
 
 		return $this->accessTasks;
+	}
+
+	public function isValidTaskName($taskName)
+	{
+		return in_array($taskName, array_column($this->getTasks(), 'NAME'), true);
 	}
 
 	public function getTaskById($taskId)

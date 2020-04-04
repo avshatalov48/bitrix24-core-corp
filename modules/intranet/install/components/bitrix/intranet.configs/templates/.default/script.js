@@ -28,18 +28,6 @@ BX.Bitrix24.Configs.LogoClass = (function()
 					else if (json.path)
 					{
 						BX('config_logo_error_block').style.display = 'none';
-						if (mode != "retina")
-						{
-							BX('logo_24_img').src = json.path;
-						}
-						else
-						{
-							BX('logo_24_img').srcset = json.path + " 2x";
-						}
-
-						BX('logo_24_text').style.display = 'none';
-						BX('logo_24_img').style.display = 'block';
-
 						BX('configImgLogo' + mode).src = json.path;
 						BX('configBlockLogo' + mode).style.display = 'inline-block';
 						BX('configDeleteLogo' + mode).style.display = 'inline-block';
@@ -69,20 +57,6 @@ BX.Bitrix24.Configs.LogoClass = (function()
 					mode: mode
 				},
 				function(){
-					if (mode != "retina")
-					{
-						BX('logo_24_img').src = '';
-					}
-					else
-					{
-						BX('logo_24_img').srcset = '';
-					}
-
-					if (!BX('logo_24_img').getAttribute("src") && !BX('logo_24_img').getAttribute("srcset"))
-					{
-						BX('logo_24_img').style.display = 'none';
-						BX('logo_24_text').style.display = 'block';
-					}
 
 					BX('configBlockLogo' + mode).style.display = 'none';
 					curLink.style.display = 'none';
@@ -353,6 +327,22 @@ BX.Bitrix24.Configs.Functions = {
 			closeByEsc: true,
 			closeIcon: { right : "12px", top : "10px"},
 			content: '<div style="padding: 15px; width: 300px; font-size: 13px">' + BX.message("CONFIG_OTP_ADMIN_IS_REQUIRED_INFO") + '</div>'
+		}).show();
+	},
+
+	showDiskExtendedFullTextInfo: function (event, elem)
+	{
+		event.stopPropagation;
+		event.preventDefault();
+		BX.PopupWindowManager.create("diskExtendedFullTextInfo", elem, {
+			autoHide: true,
+			offsetLeft: -100,
+			offsetTop: 15,
+			overlay : false,
+			draggable: {restrict:true},
+			closeByEsc: true,
+			closeIcon: { right : "12px", top : "10px"},
+			content: '<div style="padding: 15px; width: 300px; font-size: 13px">' + BX.message("CONFIG_DISK_EXTENDED_FULLTEXT_INFO") + '</div>'
 		}).show();
 	}
 };

@@ -30,17 +30,45 @@ class Img extends \Bitrix\Landing\Node
 
 		foreach ($data as $pos => $value)
 		{
-			// 2x – this for retina support
+			// 2x - this for retina support
 
 			$src = isset($value['src']) ? trim($value['src']) : '';
 			$src2x = isset($value['src2x']) ? trim($value['src2x']) : '';
 			$alt = isset($value['alt']) ? trim($value['alt']) : '';
-			$url = isset($value['url']) ? trim($value['url']) : '';
 			$id = isset($value['id']) ? intval($value['id']) : 0;
 			$id2x = isset($value['id2x']) ? intval($value['id2x']) : 0;
 
+			if (isset($value['url']))
+			{
+				$url = is_array($value['url'])
+						? json_encode($value['url'])
+						: $value['url'];
+			}
+			else
+			{
+				$url = '';
+			}
+
 			if (isset($resultList[$pos]))
 			{
+				// check permissions to this file ids
+				if ($id || $id2x)
+				{
+					static $files = null;
+					if ($files === null)
+					{
+						$files = File::getFilesFromBlock($block->getId());
+					}
+					if (!in_array($id, $files))
+					{
+						$id = 0;
+					}
+					if (!in_array($id2x, $files))
+					{
+						$id2x = 0;
+					}
+				}
+				// update in content
 				if ($resultList[$pos]->getTagName() !== 'IMG')
 				{
 					$styles = StyleInliner::getStyle($resultList[$pos]);
@@ -188,10 +216,17 @@ class Img extends \Bitrix\Landing\Node
 					$data[$pos]['src2x'] = $matches[1];
 				}
 			}
-			$pseudoUrl = $res->getAttribute('data-pseudo-url');
-			if ($pseudoUrl)
+			$dataAtrs = [
+				'data-pseudo-url' => 'url',
+				'data-fileid' => 'id',
+				'data-fileid2x' => 'id2x'
+			];
+			foreach ($dataAtrs as $codeFrom => $codeTo)
 			{
-				$data[$pos]['data-pseudo-url'] = $pseudoUrl;
+				if ($val = $res->getAttribute($codeFrom))
+				{
+					$data[$pos][$codeTo] = $val;
+				}
 			}
 		}
 

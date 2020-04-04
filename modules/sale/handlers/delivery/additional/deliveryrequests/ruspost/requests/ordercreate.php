@@ -270,10 +270,7 @@ class OrderCreate extends Base
 				'mail-type' => $mailType
 			);
 
-			$courierTypes = array('ONLINE_COURIER', 'BUSINESS_COURIER', 'BUSINESS_COURIER_ES');
-
-			if(in_array($mailType, $courierTypes))
-				$item['courier'] = true;
+			$item['courier'] = isset($shipmentParams['EXTRA_SERVICES'][26]) && $shipmentParams['EXTRA_SERVICES'][26] == 'Y';
 
 			if(isset($shipmentParams['EXTRA_SERVICES'][1]))
 			{

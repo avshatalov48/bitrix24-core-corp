@@ -30,7 +30,7 @@ class SenderStartComponent extends CBitrixComponent
 			return false;
 		}
 
-		return Integration\Bitrix24\Service::isAvailable();
+		return true;
 	}
 
 	protected function initParams()
@@ -46,6 +46,26 @@ class SenderStartComponent extends CBitrixComponent
 			$this->arParams['PATH_TO_RC_ADD']
 			:
 			str_replace('letter', 'rc', $this->arParams['PATH_TO_LETTER_ADD']);
+	}
+
+	protected function getSenderMessageIcon(Message\Adapter $message)
+	{
+		$code = $message->getCode();
+		$map = [
+			Message\iBase::CODE_MAIL => 'ui-icon-service-campaign',
+			Message\iBase::CODE_SMS => 'ui-icon-service-sms',
+			Message\iBase::CODE_IM => 'ui-icon-service-messenger',
+			Message\iBase::CODE_CALL => 'ui-icon-service-infocall',
+			Message\iBase::CODE_WEB_HOOK => '',
+			Integration\Seo\Ads\MessageBase::CODE_ADS_FB => 'ui-icon-service-fb',
+			Integration\Seo\Ads\MessageBase::CODE_ADS_YA => 'ui-icon-service-ya-direct',
+			Integration\Seo\Ads\MessageBase::CODE_ADS_GA => 'ui-icon-service-google-ads',
+			Integration\Seo\Ads\MessageBase::CODE_ADS_VK => 'ui-icon-service-vk',
+			Integration\Crm\ReturnCustomer\MessageBase::CODE_RC_DEAL => 'ui-icon-service-deal',
+			Integration\Crm\ReturnCustomer\MessageBase::CODE_RC_LEAD => 'ui-icon-service-lead',
+		];
+
+		return 'ui-icon ' . $map[$code];
 	}
 
 	protected function getSenderMessages(array $messages)
@@ -91,6 +111,7 @@ class SenderStartComponent extends CBitrixComponent
 				'CODE' => $message->getCode(),
 				'NAME' => $message->getName(),
 				'IS_AVAILABLE' => $message->isAvailable(),
+				'ICON_CLASS' => $this->getSenderMessageIcon($message),
 				'URL' => str_replace(
 					array('#code#', urlencode('#code#')),
 					$message->getCode(),
@@ -184,6 +205,27 @@ class SenderStartComponent extends CBitrixComponent
 				[]
 			),
 		);
+
+		foreach ($this->arResult['MESSAGES'] as $section => $data)
+		{
+			$data['TILES'] = array_map(
+				function ($item)
+				{
+					return [
+						'id' => $item['CODE'],
+						'name' => $item['NAME'],
+						'selected' => $item['IS_AVAILABLE'],
+						'iconClass' => $item['ICON_CLASS'],
+						'data' => [
+							'url' => $item['URL']
+						],
+					];
+				},
+				$data['LIST']
+			);
+
+			$this->arResult['MESSAGES'][$section] = $data;
+		}
 
 		Security\Agreement::requestFromCurrentUser();
 		Integration\Bitrix24\Service::initLicensePopup();

@@ -26,8 +26,8 @@
 				BX.Landing.EventTracker.getInstance().run();
 			}
 
+			// pseudo links
 			var pseudoLinks = [].slice.call(document.querySelectorAll("[data-pseudo-url*=\"{\"]"));
-
 			if (pseudoLinks.length)
 			{
 				pseudoLinks.forEach(function(link) {
@@ -42,6 +42,17 @@
 							top.open(linkOptions.href, linkOptions.target);
 						});
 					}
+				});
+			}
+
+			// stop propagation for sub-elements in pseudo-link nodes
+			var stopPropagationNodes = [].slice.call(document.querySelectorAll("[data-stop-propagation]"));
+			if(stopPropagationNodes.length)
+			{
+				stopPropagationNodes.forEach(function(node) {
+					node.addEventListener("click", function(event) {
+						event.stopPropagation();
+					});
 				});
 			}
 		}

@@ -183,7 +183,7 @@
 					useNewStyle: true
 				},
 				{
-					exp: /\/company\/personal\/user\/(\d+)\//gi,
+					exp: /\/company\/personal\/user\/(\d+)\/$/gi,
 					replace: "/mobile/users/?user_id=$1",
 					useNewStyle: true
 				},
@@ -215,6 +215,65 @@
 
 			return params;
 		},
+		getOpenFunction: function (url)
+		{
+			var resultOpenFunction = null;
+			var resolveList = [
+				{
+					resolveFunction:BX.MobileTools.userIdFromUrl,
+					openFunction: function(userId) { BXMobileApp.Events.postToComponent("onUserProfileOpen", [userId])}
+				},
+				{
+					resolveFunction:BX.MobileTools.taskIdFromUrl,
+					openFunction: function(data) { BXMobileApp.Events.postToComponent("taskbackground::task::action", data, "background");}
+				},
+				{
+					resolveFunction:BX.MobileTools.diskFolderIdFromUrl,
+					openFunction: function(folderId) { BXMobileApp.Events.postToComponent("onDiskFolderOpen", [{folderId: folderId}], "background");}
+				},
+				{
+					resolveFunction:BX.MobileTools.diskFileIdFromUrl,
+					openFunction: function(fileId) { BXMobileApp.Document.open({
+						url:"/mobile/ajax.php?mobile_action=disk_download_file&action=downloadFile&fileId="+fileId,
+					})}
+				},
+			];
+
+			var resolveData = null;
+			var inputData = null;
+			for (var i = 0; i < resolveList.length; i++)
+			{
+				resolveData = resolveList[i];
+				inputData = resolveData.resolveFunction.apply(null, [url]);
+
+				if(inputData)
+				{
+					break;
+				}
+			}
+
+			if(inputData)
+			{
+				resultOpenFunction = function(){resolveData.openFunction.apply(this, [inputData])};
+			}
+
+
+			return resultOpenFunction;
+		},
+		resolveOpenFunction: function(url)
+		{
+			var func = BX.MobileTools.getOpenFunction(url);
+			if(!func)
+			{
+				var params = BX.MobileTools.getMobileUrlParams(url);
+				if(params)
+				{
+					func = function(){ BXMobileApp.PageManager.loadPageBlank(params) };
+				}
+			}
+
+			return func;
+		},
 		userIdFromUrl:function(url)
 		{
 			var regs = [
@@ -236,6 +295,64 @@
 			}
 
 			return userId;
+		},
+		taskIdFromUrl:function(url)
+		{
+			var
+				messageId = 0,
+				messageIdRes = url.match(/\A?MID=([^#&]+)/);
+
+			if (messageIdRes)
+			{
+				messageId = parseInt(messageIdRes[1]);
+			}
+			if (messageId <= 0)
+			{
+				messageIdRes = url.match(/\A?commentId=([^#&]+)/);
+				if (messageIdRes)
+				{
+					messageId = parseInt(messageIdRes[1]);
+				}
+			}
+
+			var regs = [
+				/\/company\/personal\/user\/(\d+)\/tasks\/task\/view\/(\d+)\//i,
+				/\/workgroups\/group\/(\d+)\/tasks\/task\/view\/(\d+)\//i
+			];
+
+			for (var i = 0; i < regs.length; i++)
+			{
+				var result = url.match(regs[i]);
+				if(result)
+				{
+					return {
+						taskId: result[2],
+						messageId: messageId
+					};
+				}
+			}
+		},
+		diskFolderIdFromUrl:function(url)
+		{
+			var result = url.match(/\/bitrix\/tools\/disk\/focus.php\?folderId=(\d+)/i);
+			if(result)
+			{
+				return result[1];
+			}
+
+			return null;
+		},
+		diskFileIdFromUrl:function(url)
+		{
+			//http://192.168.1.171:8080/disk/showFile/761/?&ncc=1&ts=1560508899&filename=%D0%9F%D0%BB%D0%BE%D0%B22.pdf
+
+			var result = url.match(/\/disk\/showFile\/(\d+)\//i);
+			if(result)
+			{
+				return result[1];
+			}
+
+			return null;
 		},
 		createCardScanner: function (options)
 		{

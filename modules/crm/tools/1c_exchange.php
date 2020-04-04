@@ -121,6 +121,7 @@ elseif($type=="catalog")
 		"TRANSLIT_ON_ADD" => COption::GetOptionString("catalog", "1C_TRANSLIT_ON_ADD", "N"),
 		"TRANSLIT_ON_UPDATE" => COption::GetOptionString("catalog", "1C_TRANSLIT_ON_UPDATE", "N"),
 		"SKIP_ROOT_SECTION" => COption::GetOptionString("catalog", "1C_SKIP_ROOT_SECTION", "N"),
+		"IBLOCK_CACHE_MODE" => "F" // CIBlockCMLImport::IBLOCK_CACHE_FINAL
 		)
 	);
 }

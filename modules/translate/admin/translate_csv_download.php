@@ -54,11 +54,19 @@ if (empty($languages))
 	$languages = $enabledLanguages;
 }
 
-//$allowedEncodings = Translate\Translation::getAllowedEncodings();
+$langSort = function ($a, $b) use ($enabledLanguages)
+{
+	$sortLang = array_flip($enabledLanguages);
+	$a = $sortLang[$a];
+	$b = $sortLang[$b];
+	return (($a == $b) ? 1 : ($a < $b ? -1 : 1));
+};
+
+usort($languages, $langSort);
 
 $encodingOut = '';
 $convertEncoding = ($request->get('convert_encoding') === 'Y');
-if ($convertEncoding)// || ($isUtfMode && !Main\Localization\Translation::useTranslationRepository()))
+if ($convertEncoding)
 {
 	$encodingOut = 'utf-8';
 }

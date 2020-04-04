@@ -2,6 +2,7 @@
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 
+use Bitrix\Main\Grid\Panel\Actions;
 use \Bitrix\Main\Localization\Loc;
 \Bitrix\Main\UI\Extension::load("ui.fonts.ruble");
 
@@ -330,6 +331,7 @@ foreach($arResult['PRODUCTS'] as $product)
 	$product['CURRENCY'] = $currencyList[$product['CURRENCY']];
 
 	$actions = [];
+	$controlPanel = array('GROUPS' => array(array('ITEMS' => array())));
 
 	if($arResult['CAN_UPDATE_ORDER'])
 	{
@@ -347,15 +349,59 @@ foreach($arResult['PRODUCTS'] as $product)
 			$editAction['ONCLICK'] = $actionEditScript;
 		}
 
+		$jsProductDelete = $jsObjName.".onProductDelete('".$product['BASKET_CODE']."')";
+
 		$actions =
 		[
 			$editAction,
 			[
 				'TITLE' => Loc::getMessage('CRM_ORDER_PL_REMOVE_ITEM_FROM_CART'),
 				'TEXT' => Loc::getMessage('CRM_ORDER_PL_TO_REMOVE'),
-				'ONCLICK' => $jsObjName.".onProductDelete('".$product['BASKET_CODE']."')"
+				'ONCLICK' => $jsProductDelete
 			]
 		];
+
+		$snippet = new \Bitrix\Main\Grid\Panel\Snippet();
+
+		$applyButton = $snippet->getApplyButton(
+			array(
+				'ONCHANGE' => array(
+					array(
+						'ACTION' => Bitrix\Main\Grid\Panel\Actions::CALLBACK,
+						'DATA' => array(array('JS' => "BX.CrmUIGridExtension.processApplyButtonClick('{$gridManagerID}')"))
+					)
+				)
+			)
+		);
+
+		$jsGroupProductDelete = $jsObjName.".onGroupAction('".$arResult['GRID_ID']."', 'delete')";
+		$actionList = [['NAME' => Loc::getMessage('CRM_ORDER_PL_CHOOSE_ACTION'), 'VALUE' => 'none']];
+		$removeButton = $snippet->getRemoveButton();
+		$removeButton['ONCHANGE'][0]['DATA'][0]['JS'] = $jsGroupProductDelete;
+		$controlPanel['GROUPS'][0]['ITEMS'][] = $removeButton;
+		$actionList[] = array(
+			"NAME" =>  Loc::getMessage('CRM_ORDER_PL_DELETE'),
+			"VALUE" => "remove",
+			"ONCHANGE" => array(
+				array(
+					"ACTION" => Actions::CALLBACK,
+					"CONFIRM" => true,
+					"CONFIRM_APPLY_BUTTON" => Loc::getMessage('CRM_ORDER_PL_DELETE'),
+					"DATA" => array(
+						array("JS" => $jsGroupProductDelete)
+					)
+				)
+			)
+		);
+
+		$prefix = $arResult['GRID_ID'];
+		$controlPanel['GROUPS'][0]['ITEMS'][] = array(
+			"TYPE" => \Bitrix\Main\Grid\Panel\Types::DROPDOWN,
+			"ID" => "action_button_{$prefix}",
+			"NAME" => "action_button_{$prefix}",
+			"ITEMS" => $actionList
+		);
+		$controlPanel['GROUPS'][0]['ITEMS'][] = $snippet->getForAllCheckbox();
 	}
 
 	$rows[] = [
@@ -480,6 +526,8 @@ $APPLICATION->IncludeComponent(
 		'TOTAL_ROWS_COUNT' => $arResult['TOTAL_ROWS_COUNT'],
 		'PRESERVE_HISTORY' => $arResult['PRESERVE_HISTORY'],
 		'NAME_TEMPLATE' => $arParams['NAME_TEMPLATE'],
+		'ACTION_PANEL' => $controlPanel,
+		'SHOW_ACTION_PANEL' => !empty($controlPanel),
 		'EXTENSION' => [
 			'ID' => $gridManagerID,
 			'CONFIG' => [

@@ -156,7 +156,7 @@ class CBPCrmControlNotifyActivity
 			'NAME' => GetMessage('CRM_CTRNA_FORMAT_ROBOT'),
 			'AVATAR' => '/bitrix/images/bizproc/message_robot.png'
 		));
-		$attach->AddDelimiter(Array('COLOR' => '#c6c6c6'));
+		$attach->AddDelimiter();
 		$attach->AddGrid(Array(
 			Array(
 				"NAME" => $documentService->getDocumentTypeName($this->GetDocumentType()) . ':',

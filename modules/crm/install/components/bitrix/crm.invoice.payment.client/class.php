@@ -225,6 +225,13 @@ class CrmInvoicePaymentClientComponent extends CBitrixComponent
 	{
 		$this->arResult['USE_FRAME'] = 'Y';
 
+		$paySystemBufferedOutput = $paySystemObject->initiatePay($payment, null, Sale\PaySystem\BaseServiceHandler::STRING);
+		if (!$paySystemBufferedOutput->isSuccess())
+		{
+			$this->errorCollection->add($paySystemBufferedOutput->getErrors());
+			return false;
+		}
+
 		if ($paySystemObject->getField('ACTION_FILE') === 'invoicedocument'
 			&& $paySystemObject->getField('PS_MODE')
 			&& Loader::includeModule('documentgenerator')
@@ -236,6 +243,7 @@ class CrmInvoicePaymentClientComponent extends CBitrixComponent
 				'select' => ['ID'],
 				'filter' => [
 					'=PROVIDER' => Integration\DocumentGenerator\DataProvider\Invoice::class,
+					'=TEMPLATE_ID' => $paySystemObject->getField('PS_MODE'),
 					'=VALUE' => $payment->getOrderId()
 				],
 				'order' => ['ID' => 'DESC'],
@@ -245,18 +253,12 @@ class CrmInvoicePaymentClientComponent extends CBitrixComponent
 			if ($data = $dbRes->fetch())
 			{
 				$document = DocumentGenerator\Document::loadById($data['ID']);
-				$this->arResult['FILE_PARAMS'] = $document->getFile()->getData();
+				$document->enablePublicUrl();
+				$data = $document->getFile()->getData();
+				$this->arResult['FILE_PARAMS'] = array_merge($data, DocumentGenerator\Model\ExternalLinkTable::getPublicUrlsByDocumentId($document->ID));
 			}
 
 			return '';
-		}
-
-		$paySystemBufferedOutput = $paySystemObject->initiatePay($payment, null, Sale\PaySystem\BaseServiceHandler::STRING);
-
-		if (!$paySystemBufferedOutput->isSuccess())
-		{
-			$this->errorCollection->add($paySystemBufferedOutput->getErrors());
-			return false;
 		}
 
 		return $paySystemBufferedOutput->getTemplate();
@@ -377,8 +379,6 @@ class CrmInvoicePaymentClientComponent extends CBitrixComponent
 			$this->fillOrderPaidArray($payment);
 			return;
 		}
-
-		$paySystemObject->preInitiatePay($payment);
 
 		$this->arResult['BILL_TEMPLATE'] = $this->getPaySystemTemplate($payment, $paySystemObject);
 

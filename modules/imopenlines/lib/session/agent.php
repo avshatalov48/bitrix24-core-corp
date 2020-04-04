@@ -1,18 +1,22 @@
 <?php
 namespace Bitrix\ImOpenLines\Session;
 
-use \Bitrix\ImOpenLines\Chat,
+use	\Bitrix\ImOpenLines\Chat,
 	\Bitrix\ImOpenLines\Mail,
+	\Bitrix\ImOpenLines\Queue,
+	\Bitrix\ImOpenLines\Debug,
 	\Bitrix\ImOpenLines\Common,
 	\Bitrix\ImOpenLines\Config,
 	\Bitrix\ImOpenLines\Session,
 	\Bitrix\ImOpenLines\Log\ExecLog,
+	\Bitrix\ImOpenLines\AutomaticAction,
 	\Bitrix\ImOpenLines\Model\SessionTable,
 	\Bitrix\ImOpenLines\Model\SessionCheckTable;
 
 use \Bitrix\Main\Loader,
+	\Bitrix\Main\Config\Option,
 	\Bitrix\Main\Type\DateTime,
-	\Bitrix\Main\Entity\ExpressionField;
+	\Bitrix\Main\ORM\Fields\ExpressionField;
 
 use \Bitrix\Pull;
 
@@ -22,6 +26,82 @@ use \Bitrix\Pull;
  */
 class Agent
 {
+	const TYPE_AGENT_HIT = 'hit';
+	const TYPE_AGENT_CRON_OL = 'cronol';
+	const TYPE_AGENT_B24 = 'b24';
+	const TYPE_AGENT_CRON = 'cron';
+
+	/**
+	 * Returns the type of the agent run.
+	 *
+	 * @return string
+	 * @throws \Bitrix\Main\ArgumentNullException
+	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
+	 */
+	public static function getTypeRunAgent()
+	{
+		$result = self::TYPE_AGENT_HIT;
+
+		if(self::isExecModeCron())
+		{
+			$result = self::TYPE_AGENT_CRON_OL;
+		}
+		elseif(defined('BX24_HOST_NAME'))
+		{
+			$result = self::TYPE_AGENT_B24;
+		}
+		else
+		{
+			$agentsUseCrontab = Option::get("main", "agents_use_crontab", "N");
+
+			if($agentsUseCrontab=="Y" || (defined("BX_CRONTAB_SUPPORT") && BX_CRONTAB_SUPPORT===true))
+			{
+				if(!defined("BX_CRONTAB") || BX_CRONTAB !== true)
+				{
+					$result = self::TYPE_AGENT_CRON;
+				}
+			}
+		}
+
+		return $result;
+	}
+
+	/**
+	 * Returns the timeout time for agents, depending on the context.
+	 *
+	 * @return int
+	 * @throws \Bitrix\Main\ArgumentNullException
+	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
+	 */
+	public static function getTimeOutTransferToNextInQueue()
+	{
+		$time = 30;
+
+		$type = self::getTypeRunAgent();
+
+		switch ($type)
+		{
+			//agent on the hit
+			case self::TYPE_AGENT_HIT:
+				$time = 5;
+				break;
+			//agent on special cron open lines
+			case self::TYPE_AGENT_CRON_OL:
+				$time = 180;
+				break;
+			//the agent in the cloud-bitrix24
+			case self::TYPE_AGENT_B24:
+				$time = 180;
+				break;
+			//agent on cron
+			case self::TYPE_AGENT_CRON:
+				$time = 60;
+				break;
+		}
+
+		return $time;
+	}
+
 	/**
 	 * The agent of change in charge at the chat.
 	 *
@@ -34,88 +114,32 @@ class Agent
 	 * @throws \Bitrix\Main\ObjectPropertyException
 	 * @throws \Bitrix\Main\SystemException
 	 */
-	public static function transferToNextInQueue($nextExec, $offset = 0)
+	public static function transferToNextInQueue($nextExec = 0, $offset = 0)
 	{
-		$emptyResultReturn = '\Bitrix\ImOpenLines\Session::transferToNextInQueueAgent(0);';
+		Debug::addAgent('start ' . __METHOD__);
 
-		if (self::isCronCall() && self::isExecModeAgent() || !self::isCronCall() && self::isExecModeCron())
-			return $emptyResultReturn;
+		$result = '\Bitrix\ImOpenLines\Session::transferToNextInQueueAgent(0);';
 
-		if (Session::getQueueFlagCache(Session::CACHE_QUEUE))
+		if(!self::isCronCall() && self::isExecModeAgent() || self::isCronCall() && self::isExecModeCron())
 		{
 			ExecLog::setExecFunction(__METHOD__);
-			return $emptyResultReturn;
-		}
 
-		$configCount = SessionCheckTable::getList(array(
-			'select' => array('CNT'),
-			'runtime' => array(new ExpressionField('CNT', 'COUNT(*)')),
-			'filter' => Array('!=DATE_QUEUE' => null),
-		))->fetch();
-
-		if ($configCount['CNT'] <= 0)
-		{
-			Session::setQueueFlagCache(Session::CACHE_QUEUE);
-			ExecLog::setExecFunction(__METHOD__);
-			return $emptyResultReturn;
-		}
-
-		$configs = Array();
-		$chats = Array();
-		$configManager = new Config();
-		$newOffset = 0;
-
-		$select = SessionTable::getSelectFieldsPerformance('SESSION');
-		$res = SessionCheckTable::getList(Array(
-			'select' => $select,
-			'filter' => Array(
-				'<=DATE_QUEUE' => new DateTime()
-			),
-			'order' => array('SESSION.DATE_CREATE'),
-			'limit' => Common::getMaxSessionCount()+1,
-			'offset' => $offset
-		));
-
-		$count = 0;
-		while ($row = $res->fetch())
-		{
-			$count++;
-			if($count <= Common::getMaxSessionCount())
+			if (!Session::getQueueFlagCache(Session::CACHE_QUEUE))
 			{
-				$fields = Array();
-				foreach($row as $key=>$value)
+				if(!Queue::isThereSessionTransfer())
 				{
-					$key = str_replace('IMOPENLINES_MODEL_SESSION_CHECK_SESSION_', '', $key);
-					$fields[$key] = $value;
+					Session::setQueueFlagCache(Session::CACHE_QUEUE);
 				}
-
-				if (!isset($configs[$fields['CONFIG_ID']]))
+				else
 				{
-					$configs[$fields['CONFIG_ID']] = $configManager->get($fields['CONFIG_ID']);
+					Queue::transferToNextSession(self::getTimeOutTransferToNextInQueue());
 				}
-				if (!isset($chats[$fields['CHAT_ID']]))
-				{
-					$chats[$fields['CHAT_ID']] = new Chat($fields['CHAT_ID']);
-				}
-
-				$session = new Session();
-				$session->loadByArray($fields, $configs[$fields['CONFIG_ID']], $chats[$fields['CHAT_ID']]);
-				$session->transferToNextInQueue(false);
-			}
-			else
-			{
-				$newOffset = $offset + Common::getMaxSessionCount();
 			}
 		}
 
-		if (Loader::includeModule('pull'))
-		{
-			Pull\Event::send();
-		}
+		Debug::addAgent('stop ' . __METHOD__);
 
-		ExecLog::setExecFunction(__METHOD__);
-
-		return '\Bitrix\ImOpenLines\Session::transferToNextInQueueAgent(1, ' . $newOffset . ');';
+		return $result;
 	}
 
 	/**
@@ -129,8 +153,10 @@ class Agent
 	 * @throws \Bitrix\Main\ObjectPropertyException
 	 * @throws \Bitrix\Main\SystemException
 	 */
-	public static function closeByTime($nextExec)
+	public static function closeByTime($nextExec = 0)
 	{
+		Debug::addAgent('start ' . __METHOD__);
+
 		$emptyResultReturn = '\Bitrix\ImOpenLines\Session::closeByTimeAgent(0);';
 
 		if (self::isCronCall() && self::isExecModeAgent() || !self::isCronCall() && self::isExecModeCron())
@@ -154,8 +180,8 @@ class Agent
 			return $emptyResultReturn;
 		}
 
-		$configs = Array();
-		$chats = Array();
+		$configs = [];
+		$chats = [];
 		$configManager = new Config();
 
 		$select = SessionTable::getSelectFieldsPerformance('SESSION');
@@ -168,26 +194,29 @@ class Agent
 		));
 		while ($row = $res->fetch())
 		{
-			$fields = Array();
+			$fields = [];
 			foreach($row as $key=>$value)
 			{
 				$key = str_replace('IMOPENLINES_MODEL_SESSION_CHECK_SESSION_', '', $key);
 				$fields[$key] = $value;
 			}
 
-			if (!isset($configs[$fields['CONFIG_ID']]))
+			if (!empty($fields['CONFIG_ID']) && empty($configs[$fields['CONFIG_ID']]))
 			{
 				$configs[$fields['CONFIG_ID']] = $configManager->get($fields['CONFIG_ID']);
 			}
 
-			if (!isset($chats[$fields['CHAT_ID']]))
+			if (!empty($fields['CHAT_ID']) && empty($chats[$fields['CHAT_ID']]))
 			{
 				$chats[$fields['CHAT_ID']] = new Chat($fields['CHAT_ID']);
 			}
 
-			$session = new Session();
-			$session->loadByArray($fields, $configs[$fields['CONFIG_ID']], $chats[$fields['CHAT_ID']]);
-			$session->finish(true);
+			if(!empty($fields) && !empty($configs[$fields['CONFIG_ID']]) && !empty($chats[$fields['CHAT_ID']]))
+			{
+				$session = new Session();
+				$session->loadByArray($fields, $configs[$fields['CONFIG_ID']], $chats[$fields['CHAT_ID']]);
+				$session->finish(true);
+			}
 		}
 
 		if (Loader::includeModule('pull'))
@@ -197,7 +226,49 @@ class Agent
 
 		ExecLog::setExecFunction(__METHOD__);
 
+		Debug::addAgent('stop ' . __METHOD__);
+
 		return '\Bitrix\ImOpenLines\Session::closeByTimeAgent(1);';
+	}
+
+	/**
+	 * Send notification about unavailability of the operator.
+	 *
+	 * @return string
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ArgumentNullException
+	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
+	 * @throws \Bitrix\Main\LoaderException
+	 * @throws \Bitrix\Main\ObjectException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	public static function sendMessageNoAnswer()
+	{
+		Debug::addAgent('start ' . __METHOD__);
+
+		$result = '\Bitrix\ImOpenLines\Session\Agent::sendMessageNoAnswer();';
+
+		if(!self::isCronCall() && self::isExecModeAgent() || self::isCronCall() && self::isExecModeCron())
+		{
+			ExecLog::setExecFunction(__METHOD__);
+
+			if (!Session::getQueueFlagCache(Session::CACHE_NO_ANSWER))
+			{
+				if(!AutomaticAction\NoAnswer::isThereSessionNoAnswer())
+				{
+					Session::setQueueFlagCache(Session::CACHE_NO_ANSWER);
+				}
+				else
+				{
+					AutomaticAction\NoAnswer::sendMessageNoAnswer(self::getTimeOutTransferToNextInQueue());
+				}
+			}
+		}
+
+		Debug::addAgent('stop ' . __METHOD__);
+
+		return $result;
 	}
 
 	/**
@@ -211,8 +282,10 @@ class Agent
 	 * @throws \Bitrix\Main\ObjectPropertyException
 	 * @throws \Bitrix\Main\SystemException
 	 */
-	public static function mailByTime($nextExec)
+	public static function mailByTime($nextExec = 0)
 	{
+		Debug::addAgent('start ' . __METHOD__);
+
 		$emptyResultReturn = '\Bitrix\ImOpenLines\Session::mailByTimeAgent(0);';
 
 		if (self::isCronCall() && self::isExecModeAgent() || !self::isCronCall() && self::isExecModeCron())
@@ -255,6 +328,8 @@ class Agent
 
 		ExecLog::setExecFunction(__METHOD__);
 
+		Debug::addAgent('stop ' . __METHOD__);
+
 		return '\Bitrix\ImOpenLines\Session::mailByTimeAgent(1);';
 	}
 
@@ -269,8 +344,10 @@ class Agent
 	 * @throws \Bitrix\Main\ObjectPropertyException
 	 * @throws \Bitrix\Main\SystemException
 	 */
-	public static function dismissedOperator($nextExec)
+	public static function dismissedOperator($nextExec = 0)
 	{
+		Debug::addAgent('start ' . __METHOD__);
+
 		$emptyResultReturn = '\Bitrix\ImOpenLines\Session::dismissedOperatorAgent(0);';
 
 		if (self::isCronCall() && self::isExecModeAgent() || !self::isCronCall() && self::isExecModeCron())
@@ -340,6 +417,8 @@ class Agent
 		}
 
 		ExecLog::setExecFunction(__METHOD__);
+
+		Debug::addAgent('stop ' . __METHOD__);
 
 		if($nextExec == 0)
 		{

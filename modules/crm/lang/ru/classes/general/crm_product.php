@@ -18,3 +18,7 @@ $MESS["CRM_PRODUCT_FIELD_PREVIEW_PICTURE"] = "Картинка для анонс
 $MESS["CRM_PRODUCT_FIELD_DETAIL_PICTURE"] = "Детальная картинка";
 $MESS["CRM_PRODUCT_FIELD_ORIGIN_ID"] = "Идентификатор элемента в источнике данных";
 $MESS["CRM_PRODUCT_FIELD_XML_ID"] = "Внешний код";
+$MESS["CRM_PRODUCT_FIELD_DATE_CREATE"] = "Дата создания";
+$MESS["CRM_PRODUCT_FIELD_TIMESTAMP_X"] = "Дата изменения";
+$MESS["CRM_PRODUCT_FIELD_CREATED_BY"] = "Кем создан";
+$MESS["CRM_PRODUCT_FIELD_MODIFIED_BY"] = "Кем изменён";

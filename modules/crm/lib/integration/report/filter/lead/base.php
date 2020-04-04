@@ -16,8 +16,9 @@ class Base extends BaseFilter
 	public function getFilterParameters()
 	{
 		$params = parent::getFilterParameters();
-		$params['VALUE_REQUIRED_MODE'] = true;
-
+		$params['RESET_TO_DEFAULT_MODE'] = true;
+		$params['DISABLE_SEARCH'] = false;
+		$params['ENABLE_LIVE_SEARCH'] = true;
 		return $params;
 	}
 
@@ -46,8 +47,8 @@ class Base extends BaseFilter
 			'COMMUNICATION_TYPE',
 			'WEB',
 			'IM',
-			'TRACKING_SOURCE',
-			'TRACKING_ASSIGNED',
+			'TRACKING_SOURCE_ID',
+			'TRACKING_CHANNEL_CODE',
 		];
 		foreach ($fields as $field)
 		{

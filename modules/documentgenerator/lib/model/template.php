@@ -6,6 +6,7 @@ use Bitrix\DocumentGenerator\Body;
 use Bitrix\DocumentGenerator\DataProvider\Filterable;
 use Bitrix\DocumentGenerator\DataProviderManager;
 use Bitrix\DocumentGenerator\Driver;
+use Bitrix\DocumentGenerator\Integration\Bitrix24Manager;
 use Bitrix\DocumentGenerator\Template;
 use Bitrix\Main;
 use Bitrix\Main\Loader;
@@ -61,7 +62,12 @@ class TemplateTable extends FileModel
 			new Main\Entity\DatetimeField('UPDATE_TIME', [
 				'default_value' => function(){return new Main\Type\DateTime();},
 			]),
-			new Main\Entity\IntegerField('CREATED_BY'),
+			new Main\Entity\IntegerField('CREATED_BY', [
+				'default_value' => function()
+				{
+					return Driver::getInstance()->getUserId();
+				}
+			]),
 			new Main\Entity\IntegerField('UPDATED_BY'),
 			new Main\Entity\StringField('MODULE_ID', [
 				'required' => true,
@@ -140,12 +146,7 @@ class TemplateTable extends FileModel
 		}
 		if($userId > 0)
 		{
-			$filter->where(
-				Main\Entity\Query::filter()
-					->logic('or')
-					->whereIn('USER.ACCESS_CODE', Main\UserAccessTable::query()->addSelect('ACCESS_CODE')->where('USER_ID', $userId))
-					->where('USER.ACCESS_CODE', TemplateUserTable::ALL_USERS)
-			);
+			$filter->where(Driver::getInstance()->getUserPermissions($userId)->getFilterForRelatedTemplateList());
 		}
 		return static::getList([
 			'order' => ['SORT' => 'asc', 'ID' => 'asc'],
@@ -177,6 +178,24 @@ class TemplateTable extends FileModel
 		static::addToStack();
 
 		return parent::onBeforeDelete($event);
+	}
+
+	public static function onBeforeAdd(Event $event)
+	{
+		$result = parent::onBeforeAdd($event);
+		if(!$result)
+		{
+			$result = new Main\ORM\EventResult();
+		}
+		$fileId = $event->getParameter('fields')['FILE_ID'];
+		$size = FileTable::getSize($fileId);
+		$maxSize = Bitrix24Manager::getMaximumTemplateFileSize();
+		if($size > $maxSize)
+		{
+			$result->addError(new Main\ORM\EntityError(Loc::getMessage('DOCUMENTGENERATOR_MODEL_TEMPLATE_SIZE_IS_EXCEEDED', ['#SIZE#' => $maxSize])));
+		}
+
+		return $result;
 	}
 
 	/**
@@ -230,7 +249,11 @@ class TemplateTable extends FileModel
 		}
 
 		$body->normalizeContent();
-		FileTable::updateContent($template->FILE_ID, $body->getContent(), ['fileName' => $template->getFileName(), 'contentType' => $body->getFileMimeType()]);
+		FileTable::updateContent($template->FILE_ID, $body->getContent(), [
+			'fileName' => $template->getFileName(),
+			'contentType' => $body->getFileMimeType(),
+			'isTemplate' => true,
+		]);
 	}
 
 	/**

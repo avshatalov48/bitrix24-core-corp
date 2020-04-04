@@ -171,7 +171,7 @@ class BundleCollection extends BasketItemCollection
 	}
 
 	/**
-	 * @return BasketItemCollection
+	 * @return BasketBase
 	 */
 	public function getBasket()
 	{

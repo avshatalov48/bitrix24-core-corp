@@ -114,7 +114,6 @@ final class CloudImportTable extends DataManager
 			'SERVICE_OBJECT_ID' => array(
 				'data_type' => 'string',
 				'required' => true,
-				'validation' => array(__CLASS__, 'validateServiceObjectId'),
 			),
 			'ETAG' => array(
 				'data_type' => 'string',
@@ -161,18 +160,6 @@ final class CloudImportTable extends DataManager
 	 * @return array
 	 */
 	public static function validateMimeType()
-	{
-		return array(
-			new Entity\Validator\Length(null, 255),
-		);
-	}
-
-	/**
-	 * Returns validators for SERVICE_OBJECT_ID field.
-	 *
-	 * @return array
-	 */
-	public static function validateServiceObjectId()
 	{
 		return array(
 			new Entity\Validator\Length(null, 255),

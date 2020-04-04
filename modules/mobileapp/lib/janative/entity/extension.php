@@ -3,6 +3,7 @@
 namespace Bitrix\MobileApp\Janative\Entity;
 
 use Bitrix\Main\Application;
+use Bitrix\Main\IO\Directory;
 use Bitrix\Main\IO\File;
 use Bitrix\Main\IO\Path;
 use Bitrix\Main\Localization;
@@ -14,6 +15,7 @@ class Extension
 	private $path;
 	private $namespace;
 	public $name;
+	protected static $modificationDates = [];
 
 	/**
 	 * Extension constructor.
@@ -22,7 +24,7 @@ class Extension
 	 */
 	public function __construct($identifier)
 	{
-		$this->path = Manager::getInstance()->getExtensionPath($identifier);
+		$this->path = Manager::getExtensionPath($identifier);
 		$desc = Utils::extractEntityDescription($identifier);
 		$this->name = $desc["name"];
 		$this->namespace = $desc["namespace"];
@@ -57,6 +59,35 @@ class Extension
 		return "{$this->path}/extension.js";
 	}
 
+	public function getModificationTime()
+	{
+		if(self::$modificationDates[$this->name])
+		{
+			return self::$modificationDates[$this->name];
+		}
+
+		$file = new File($this->getPath());
+		$dates = [$file->getModificationTime()];
+		$langDirectory = new Directory($this->path . "/lang/");
+		if ($langDirectory->isExists())
+		{
+			$langs = $langDirectory->getChildren();
+			foreach ($langs as $lang)
+			{
+				if ($lang->isDirectory())
+				{
+					$langFile = new File($lang->getPath()."/extension.php");
+					if($langFile->isExists())
+						$dates[] = $langFile->getModificationTime();
+				}
+			}
+		}
+
+		$value = max($dates);
+		self::$modificationDates[$this->name] = $value;
+		return $value;
+	}
+
 	public function getRelativePath()
 	{
 		$relativePath = str_replace(Application::getDocumentRoot(), "", "{$this->path}/extension.js");
@@ -88,16 +119,16 @@ class Extension
 	public function getLangMessages()
 	{
 		$langPhrases = Localization\Loc::loadLanguageFile("{$this->path}/extension.php");
-		return $langPhrases?: [];
+		return $langPhrases ?: [];
 	}
 
 	public function getLangDefinitionExpression()
 	{
 		$langPhrases = $this->getLangMessages();
-		if(count($langPhrases)>0)
+		if (count($langPhrases) > 0)
 		{
 			$jsonLangMessages = Utils::jsonEncode($langPhrases, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE);
-			return  <<<JS
+			return <<<JS
 BX.message($jsonLangMessages);
 JS;
 		}

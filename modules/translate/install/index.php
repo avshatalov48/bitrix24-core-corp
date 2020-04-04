@@ -1,95 +1,111 @@
 <?php
-IncludeModuleLangFile(__FILE__);
 
-if(class_exists("translate")) return;
+use Bitrix\Main;
+use Bitrix\Main\Localization\Loc;
 
-Class translate extends CModule
+Loc::loadMessages(__FILE__);
+
+if(class_exists('translate'))
 {
-	var $MODULE_ID = "translate";
-	var $MODULE_VERSION;
-	var $MODULE_VERSION_DATE;
-	var $MODULE_NAME;
-	var $MODULE_DESCRIPTION;
-	var $MODULE_CSS;
-	var $MODULE_GROUP_RIGHTS = "Y";
+	return;
+}
 
-	function translate()
+class translate extends \CModule
+{
+	public $MODULE_ID = 'translate';
+	public $MODULE_VERSION;
+	public $MODULE_VERSION_DATE;
+	public $MODULE_NAME;
+	public $MODULE_DESCRIPTION;
+	public $MODULE_CSS;
+	public $MODULE_GROUP_RIGHTS = 'Y';
+
+	public function __construct()
 	{
 		$arModuleVersion = array();
 
-		$path = str_replace("\\", "/", __FILE__);
-		$path = substr($path, 0, strlen($path) - strlen("/index.php"));
-		include($path."/version.php");
+		$path = str_replace("\\", '/', __FILE__);
+		$path = substr($path, 0, strlen($path) - strlen('/index.php'));
+		include($path.'/version.php');
 
-		if (is_array($arModuleVersion) && array_key_exists("VERSION", $arModuleVersion))
+		if (is_array($arModuleVersion) && array_key_exists('VERSION', $arModuleVersion))
 		{
-			$this->MODULE_VERSION = $arModuleVersion["VERSION"];
-			$this->MODULE_VERSION_DATE = $arModuleVersion["VERSION_DATE"];
+			$this->MODULE_VERSION = $arModuleVersion['VERSION'];
+			$this->MODULE_VERSION_DATE = $arModuleVersion['VERSION_DATE'];
 		}
 
-		$this->MODULE_NAME = GetMessage("TRANS_MODULE_NAME");
-		$this->MODULE_DESCRIPTION = GetMessage("TRANS_MODULE_DESCRIPTION");
-		$this->MODULE_CSS = "/bitrix/modules/translate/translate.css";
+		$this->MODULE_NAME = Loc::getMessage('TRANS_MODULE_NAME');
+		$this->MODULE_DESCRIPTION = Loc::getMessage('TRANS_MODULE_DESCRIPTION');
 	}
 
-	function InstallDB()
+	public function InstallDB()
 	{
-		RegisterModule("translate");
-		RegisterModuleDependences('main', 'OnPanelCreate', 'translate', 'CTranslateEventHandlers', 'TranslatOnPanelCreate');
+		Main\ModuleManager::registerModule($this->MODULE_ID);
+
+		$eventManager = Main\EventManager::getInstance();
+		$eventManager->registerEventHandlerCompatible('main', 'OnPanelCreate', $this->MODULE_ID, 'CTranslateEventHandlers', 'TranslatOnPanelCreate');
+
 		return true;
 	}
 
-	function UnInstallDB()
+	public function UnInstallDB()
 	{
-		COption::RemoveOption("translate");
-		UnRegisterModuleDependences('main', 'OnPanelCreate', 'translate', 'CTranslateEventHandlers', 'TranslatOnPanelCreate');
-		UnRegisterModule("translate");
+		\COption::RemoveOption($this->MODULE_ID);
+
+		$eventManager = Main\EventManager::getInstance();
+		$eventManager->unRegisterEventHandler('main', 'OnPanelCreate', $this->MODULE_ID, 'CTranslateEventHandlers', 'TranslatOnPanelCreate');
+
+		Main\ModuleManager::unRegisterModule($this->MODULE_ID);
+
 		return true;
 	}
 
-	function InstallEvents()
+	public function InstallEvents()
 	{
 		return true;
 	}
 
-	function UnInstallEvents()
+	public function UnInstallEvents()
 	{
 		return true;
 	}
 
-	function InstallFiles()
+	public function InstallFiles()
 	{
-		if($_ENV["COMPUTERNAME"]!='BX')
+		if ($_ENV['COMPUTERNAME'] != 'BX')
 		{
-			CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/translate/install/admin", $_SERVER["DOCUMENT_ROOT"]."/bitrix/admin", true, true);
-			CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/translate/install/images", $_SERVER["DOCUMENT_ROOT"]."/bitrix/images/translate", true, true);
-			CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/translate/install/themes", $_SERVER["DOCUMENT_ROOT"]."/bitrix/themes", true, true);
+			\CopyDirFiles($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/translate/install/admin', $_SERVER['DOCUMENT_ROOT'].'/bitrix/admin', true, true);
+			\CopyDirFiles($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/translate/install/images', $_SERVER['DOCUMENT_ROOT'].'/bitrix/images/translate', true, true);
+			\CopyDirFiles($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/translate/install/themes', $_SERVER['DOCUMENT_ROOT'].'/bitrix/themes', true, true);
 		}
+
 		return true;
 	}
 
-	function UnInstallFiles()
+	public function UnInstallFiles()
 	{
-		DeleteDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/translate/install/admin", $_SERVER["DOCUMENT_ROOT"]."/bitrix/admin");
-		DeleteDirFilesEx("/bitrix/images/translate/");
-		DeleteDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/translate/install/themes/.default/", $_SERVER["DOCUMENT_ROOT"]."/bitrix/themes/.default");//css
-		DeleteDirFilesEx("/bitrix/themes/.default/icons/translate/");//icons
+		\DeleteDirFiles($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/translate/install/admin', $_SERVER['DOCUMENT_ROOT'].'/bitrix/admin');
+		\DeleteDirFilesEx('/bitrix/images/translate/');
+		\DeleteDirFiles($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/translate/install/themes/.default/', $_SERVER["DOCUMENT_ROOT"].'/bitrix/themes/.default');//css
+		\DeleteDirFilesEx('/bitrix/themes/.default/start_menu/translate/');//start_menu
+		\DeleteDirFilesEx('/bitrix/themes/.default/icons/translate/');//icons
+
 		return true;
 	}
 
-	function DoInstall()
+	public function DoInstall()
 	{
 		global $APPLICATION;
 		$this->InstallDB();
 		$this->InstallFiles();
-		$APPLICATION->IncludeAdminFile(GetMessage("TRANSLATE_INSTALL_TITLE"), $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/translate/install/step.php");
+		$APPLICATION->IncludeAdminFile(Loc::getMessage('TRANSLATE_INSTALL_TITLE'), $_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/translate/install/step.php');
 	}
 
-	function DoUninstall()
+	public function DoUninstall()
 	{
 		global $APPLICATION;
 		$this->UnInstallFiles();
 		$this->UnInstallDB();
-		$APPLICATION->IncludeAdminFile(GetMessage("TRANSLATE_UNINSTALL_TITLE"), $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/translate/install/unstep.php");
+		$APPLICATION->IncludeAdminFile(Loc::getMessage('TRANSLATE_UNINSTALL_TITLE'), $_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/translate/install/unstep.php');
 	}
 }

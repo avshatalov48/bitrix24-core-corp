@@ -257,23 +257,6 @@ function __RenewMenuItems(task)
     task.menuItems = __FilterMenuByStatus(task);
 }
 
-BX.SidePanel.Instance.bindAnchors({
-	rules: [
-		{
-			condition: ['/company/personal/user/(\\d+)/tasks/import/'],
-			loader: 'default-loader',
-			options: {
-				cacheable: false,
-				events: {
-					onClose: function() {
-						// BX.Tasks.GridActions.reloadGrid();
-					}
-				}
-			}
-		}
-	]
-});
-
 BX.addCustomEvent("SidePanel.Slider:onCloseByEsc", function(event) {
 	var reg = /tasks\/task\/edit/;
 	var str = event.getSlider().getUrl();

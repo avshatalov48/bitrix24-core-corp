@@ -184,8 +184,50 @@ class Bitrix24Manager
 			return self::$enableRestBizProc;
 		}
 
-		return (self::$enableRestBizProc = (self::hasPurchasedLicense() || self::hasNfrLicense()));
+		return (self::$enableRestBizProc = (self::hasPurchasedLicense() || self::hasNfrLicense() || self::hasDemoLicense()));
 	}
+
+	/**
+	 * @param array $params
+	 * @return array|null
+	 */
+	public static function prepareStubInfo(array $params)
+	{
+		if(ModuleManager::isModuleInstalled('bitrix24')
+			&& Loader::includeModule('bitrix24')
+			&& method_exists('CBitrix24', 'prepareStubInfo'))
+		{
+			$title = isset($params['TITLE']) ? $params['TITLE'] : '';
+			$content = isset($params['CONTENT']) ? $params['CONTENT'] : '';
+
+			$replacements = isset($params['REPLACEMENTS']) && is_array($params['REPLACEMENTS'])
+				? $params['REPLACEMENTS'] : array();
+
+			if(!empty($replacements))
+			{
+				$search = array_keys($replacements);
+				$replace = array_values($replacements);
+
+				$title = str_replace($search, $replace, $title);
+				$content = str_replace($search, $replace, $content);
+			}
+
+			$licenseAllButtonClass = ($params['GLOBAL_SEARCH']? 'ui-btn ui-btn-xs ui-btn-light-border' : 'success');
+			$licenseDemoButtonClass = ($params['GLOBAL_SEARCH']? 'ui-btn ui-btn-xs ui-btn-light' : '');
+
+			return \CBitrix24::prepareStubInfo(
+				$title,
+				$content,
+				array(
+					array('ID' => \CBitrix24::BUTTON_LICENSE_ALL, 'CLASS_NAME' => $licenseAllButtonClass),
+					array('ID' => \CBitrix24::BUTTON_LICENSE_DEMO, 'CLASS_NAME' => $licenseDemoButtonClass),
+				)
+			);
+		}
+
+		return null;
+	}
+
 	/**
 	 * Prepare JavaScript for license purchase information.
 	 * @param array $params Popup params.
@@ -421,12 +463,27 @@ class Bitrix24Manager
 	 */
 	public static function isFeatureEnabled($releaseName)
 	{
-		if(!self::isEnabled())
+		if(!(ModuleManager::isModuleInstalled('bitrix24') && Loader::includeModule('bitrix24')))
 		{
 			return true;
 		}
 
 		return \Bitrix\Bitrix24\Feature::isFeatureEnabled($releaseName);
+	}
+
+	/**
+	 * Get variable value.
+	 * @param string $name Name of variable
+	 * @return mixed|null
+	 */
+	public static function getVariable($name)
+	{
+		if(!(ModuleManager::isModuleInstalled('bitrix24') && Loader::includeModule('bitrix24')))
+		{
+			return null;
+		}
+
+		return \Bitrix\Bitrix24\Feature::getVariable($name);
 	}
 }
 ?>

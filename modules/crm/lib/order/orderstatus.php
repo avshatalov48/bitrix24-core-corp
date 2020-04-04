@@ -35,31 +35,37 @@ class OrderStatus extends Sale\OrderStatus
 	 */
 	public static function getDefaultStatuses()
 	{
-		return array(
-			'N' => array(
+		return [
+			'N' => [
 				'NAME' => GetMessage('CRM_ORDER_STATUS_INITIAL'),
 				'STATUS_ID' => 'N',
 				'SORT' => 100,
 				'SYSTEM' => 'Y'
-			),
-			'P' => array(
+			],
+			'P' => [
 				'NAME' => GetMessage('CRM_ORDER_STATUS_PAID'),
 				'STATUS_ID' => 'P',
 				'SORT' => 150,
 				'SYSTEM' => 'Y'
-			),
-			'F' => array(
+			],
+			'S' => [
+				'NAME' => GetMessage('CRM_ORDER_STATUS_SEND'),
+				'STATUS_ID' => 'S',
+				'SORT' => 175,
+				'SYSTEM' => 'Y'
+			],
+			'F' => [
 				'NAME' => GetMessage('CRM_ORDER_STATUS_FINISHED'),
 				'STATUS_ID' => 'F',
 				'SORT' => 200,
 				'SYSTEM' => 'Y'
-			),
-			'D' => array(
+			],
+			'D' => [
 				'NAME' => GetMessage('CRM_ORDER_STATUS_REFUSED'),
 				'STATUS_ID' => 'D',
 				'SORT' => 250,
 				'SYSTEM' => 'Y'
-			)
-		);
+			]
+		];
 	}
 }

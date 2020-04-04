@@ -79,7 +79,7 @@ JSIntTaskDialog.prototype.CreateFolderDlg = function()
 	this.folderDialog.onmouseover = function(){_this.bEditFolderDlgOver = true;};
 	this.folderDialog.onmouseout = function(){_this.bEditFolderDlgOver = false;};
 
-	// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+	// Заполнение и создание диалога
 
 	this.oFolder = {
 		oName: document.getElementById('folder_name'),

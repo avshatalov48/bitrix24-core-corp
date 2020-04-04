@@ -19,7 +19,6 @@ $filterIDLc = strtolower($filterID);
 if(isset($arParams['~FILTER']) && is_array($arParams['~FILTER']))
 {
 	$entitySelectors = array();
-	$userSelectors = array();
 	foreach($arParams['~FILTER'] as $filterItem)
 	{
 		if(!(isset($filterItem['type'])
@@ -48,10 +47,6 @@ if(isset($arParams['~FILTER']) && is_array($arParams['~FILTER']))
 		if($selectorType === 'crm_entity')
 		{
 			$entitySelectors[] = $selectorData;
-		}
-		elseif($selectorType === 'user')
-		{
-			$userSelectors[] = $selectorData;
 		}
 	}
 
@@ -104,112 +99,6 @@ if(isset($arParams['~FILTER']) && is_array($arParams['~FILTER']))
 		?></script><?
 	}
 	//endregion
-	//region User Selectors
-
-	$enableSonetUserSelector = true;
-	if(!empty($userSelectors))
-	{
-		if($enableSonetUserSelector)
-		{
-			foreach($userSelectors as $userSelector)
-			{
-
-				$selectorID = $userSelector['ID'];
-				$fieldID = $userSelector['FIELD_ID'];
-
-				$APPLICATION->IncludeComponent(
-					"bitrix:main.ui.selector",
-					".default",
-					array(
-						'ID' => $selectorID,
-						'ITEMS_SELECTED' =>  array(),
-						'CALLBACK' => array(
-							'select' => 'BX.CrmUIFilterUserSelector.processSelection',
-							'unSelect' => '',
-							'openDialog' => 'BX.CrmUIFilterUserSelector.processDialogOpen',
-							'closeDialog' => 'BX.CrmUIFilterUserSelector.processDialogClose',
-							'openSearch' => ''
-						),
-						'OPTIONS' => array(
-							'eventInit' => 'BX.Crm.FilterUserSelector:openInit',
-							'eventOpen' => 'BX.Crm.FilterUserSelector:open',
-							'context' => 'FEED_FILTER_CREATED_BY',
-							'contextCode' => 'U',
-							'useSearch' => 'N',
-							'userNameTemplate' => CUtil::JSEscape($arParams["NAME_TEMPLATE"]),
-							'useClientDatabase' => 'Y',
-							'allowEmailInvitation' => 'N',
-							'enableDepartments' => 'Y',
-							'enableSonetgroups' => 'N',
-							'departmentSelectDisable' => 'Y',
-							'allowAddUser' => 'N',
-							'allowAddCrmContact' => 'N',
-							'allowAddSocNetGroup' => 'N',
-							'allowSearchEmailUsers' => 'N',
-							'allowSearchCrmEmailUsers' => 'N',
-							'allowSearchNetworkUsers' => 'N',
-							'allowSonetGroupsAjaxSearchFeatures' => 'N'
-						)
-					),
-					false,
-					array("HIDE_ICONS" => "Y")
-				);
-				?><script type="text/javascript"><?
-					?>BX.ready(
-					function()
-					{
-						BX.CrmUIFilterUserSelector.create(
-							"<?=CUtil::JSEscape($selectorID)?>",
-							{
-								filterId: "<?=CUtil::JSEscape($filterID)?>",
-								fieldId: "<?=CUtil::JSEscape($fieldID)?>"
-							}
-						);
-					}
-				);<?
-				?></script><?
-			}
-		}
-		else
-		{
-			$componentName = "{$filterID}_FILTER_USER";
-			$APPLICATION->IncludeComponent(
-				'bitrix:intranet.user.selector.new',
-				'',
-				array(
-					'MULTIPLE' => 'N',
-					'NAME' => $componentName,
-					'INPUT_NAME' => strtolower($componentName),
-					'SHOW_EXTRANET_USERS' => 'NONE',
-					'POPUP' => 'Y',
-					'SITE_ID' => SITE_DIR,
-					'NAME_TEMPLATE' => $nameTemplate
-				),
-				null,
-				array('HIDE_ICONS' => 'Y')
-			);
-			?><script type="text/javascript"><?
-			foreach($userSelectors as $userSelector)
-			{
-				$selectorID = $userSelector['ID'];
-				$fieldID = $userSelector['FIELD_ID'];
-				?>BX.ready(
-					function()
-					{
-						BX.FilterUserSelector.create(
-							"<?=CUtil::JSEscape($selectorID)?>",
-							{
-								fieldId: "<?=CUtil::JSEscape($fieldID)?>",
-								componentName: "<?=CUtil::JSEscape($componentName)?>"
-							}
-						);
-					}
-				);<?
-			}
-			?></script><?
-		}
-	}
-	//endregion
 }
 //endregion
 
@@ -218,8 +107,15 @@ $isBitrix24Template = SITE_TEMPLATE_ID === 'bitrix24';
 //region Filter Navgation Bar
 $navigationBarConfig = null;
 $navigationBarID = "{$filterIDLc}_nav_bar";
-$navigationBar = isset($arParams['~NAVIGATION_BAR']) && is_array($arParams['~NAVIGATION_BAR'])
-	? $arParams['~NAVIGATION_BAR'] : array();
+if (isset($arParams['~DISABLE_NAVIGATION_BAR']) &&  $arParams['~DISABLE_NAVIGATION_BAR'] === 'Y')
+{
+	$navigationBar = array();
+}
+else
+{
+	$navigationBar = isset($arParams['~NAVIGATION_BAR']) && is_array($arParams['~NAVIGATION_BAR'])
+		? $arParams['~NAVIGATION_BAR'] : array();
+}
 
 $navigationBarItems = isset($navigationBar['ITEMS']) ? $navigationBar['ITEMS'] : null;
 $hasNavigationBar = !empty($navigationBarItems);
@@ -311,6 +207,7 @@ $APPLICATION->IncludeComponent(
 		'LAZY_LOAD' => isset($arParams['~LAZY_LOAD']) ? $arParams['~LAZY_LOAD'] : null,
 		'VALUE_REQUIRED_MODE' => isset($arParams['~VALUE_REQUIRED_MODE']) && $arParams['~VALUE_REQUIRED_MODE'] === true,
 		'ENABLE_LIVE_SEARCH' => isset($arParams['~ENABLE_LIVE_SEARCH']) && $arParams['~ENABLE_LIVE_SEARCH'] === true,
+		'LIMITS' => isset($arParams['~LIMITS']) ? $arParams['~LIMITS'] : null,
 		'ENABLE_LABEL' => true
 	),
 	$component

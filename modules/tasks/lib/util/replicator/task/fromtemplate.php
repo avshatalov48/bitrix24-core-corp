@@ -10,6 +10,8 @@ namespace Bitrix\Tasks\Util\Replicator\Task;
 
 use Bitrix\Main\Localization\Loc;
 
+use Bitrix\Tasks\CheckList\Task\TaskCheckListFacade;
+use Bitrix\Tasks\CheckList\Template\TemplateCheckListFacade;
 use Bitrix\Tasks\Item;
 use Bitrix\Tasks\Item\Result;
 use Bitrix\Tasks\Util\Collection;
@@ -33,6 +35,16 @@ final class FromTemplate extends Util\Replicator\Task
 	protected static function getConverterClass()
 	{
 		return Item\Converter\Task\Template\ToTask::getClass();
+	}
+
+	protected static function getFromCheckListFacade()
+	{
+		return TemplateCheckListFacade::class;
+	}
+
+	protected static function getToCheckListFacade()
+	{
+		return TaskCheckListFacade::class;
 	}
 
 	/**

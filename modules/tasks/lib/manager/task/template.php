@@ -13,7 +13,10 @@
 namespace Bitrix\Tasks\Manager\Task;
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Tasks\CheckList\Task\TaskCheckListFacade;
+use Bitrix\Tasks\CheckList\Template\TemplateCheckListFacade;
 use Bitrix\Tasks\Integration\SocialNetwork;
+use Bitrix\Tasks\Item;
 use Bitrix\Tasks\Util\Assert;
 use Bitrix\Tasks\Util\Error\Collection;
 use Bitrix\Tasks\Util\Type;
@@ -519,40 +522,73 @@ final class Template extends \Bitrix\Tasks\Manager
 		return $result;
 	}
 
+	/**
+	 * @param $userId
+	 * @param $taskId
+	 * @param $data
+	 * @return array
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\NotImplementedException
+	 * @throws \Bitrix\Main\SystemException
+	 */
 	private static function addTemplateByTask($userId, $taskId, $data)
 	{
 		$id = 0;
-		$errors = array();
+		$errors = [];
 
-		$task = new \Bitrix\Tasks\Item\Task($taskId, $userId);
+		$task = new Item\Task($taskId, $userId);
 		$conversionResult = $task->transformToTemplate();
-		if($conversionResult->isSuccess())
+
+		if ($conversionResult->isSuccess())
 		{
 			$template = $conversionResult->getInstance();
 
-			$template['REPLICATE_PARAMS'] = $data[static::getCode(true)]['REPLICATE_PARAMS'];
-
-			$responsibles = array();
-			if(is_array($data['SE_RESPONSIBLE']))
+			$responsibles = [];
+			if (is_array($data['SE_RESPONSIBLE']))
 			{
 				foreach($data['SE_RESPONSIBLE'] as $user)
 				{
-					if(intval($user['ID']))
+					if (intval($user['ID']))
 					{
 						$responsibles[] = intval($user['ID']);
 					}
 				}
 			}
 
-			if(count($responsibles))
+			if (count($responsibles))
 			{
 				$template['RESPONSIBLES'] = $responsibles;
 			}
+			$template['SE_CHECKLIST'] = new Item\Task\CheckList();
+			$template['REPLICATE_PARAMS'] = $data[static::getCode(true)]['REPLICATE_PARAMS'];
 
 			$saveResult = $template->save();
-			if($saveResult->isSuccess())
+
+			if ($saveResult->isSuccess())
 			{
 				$id = $template->getId();
+
+				$checkListItems = TaskCheckListFacade::getByEntityId($taskId);
+				$checkListItems = array_map(
+					function($item)
+					{
+						$item['COPIED_ID'] = $item['ID'];
+						unset($item['ID']);
+						return $item;
+					},
+					$checkListItems
+				);
+
+				$checkListRoots = TemplateCheckListFacade::getObjectStructuredRoots($checkListItems, $id, $userId);
+				foreach ($checkListRoots as $root)
+				{
+					$checkListSaveResult = $root->save();
+					if (!$checkListSaveResult->isSuccess())
+					{
+						$conversionResult->abortConversion();
+						$errors = $checkListSaveResult->getErrors()->getMessages();
+					}
+				}
 			}
 			else
 			{
@@ -570,10 +606,10 @@ final class Template extends \Bitrix\Tasks\Manager
 			$errors[] = Loc::getMessage('TASKS_MANAGER_TASK_TEMPLATE_UNKNOWN_ERROR');
 		}
 
-		return array(
+		return [
 			'ID' => $id,
-			'ERRORS' => $errors
-		);
+			'ERRORS' => $errors,
+		];
 	}
 
 	public static function getByParentTask($userId, $taskId)

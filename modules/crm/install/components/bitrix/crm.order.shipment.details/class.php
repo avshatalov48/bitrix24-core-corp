@@ -9,6 +9,7 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm\Component\ComponentError;
 use Bitrix\Crm\Security\EntityPermissionType;
 use Bitrix\Crm\Component\EntityDetails\ComponentMode;
+use Bitrix\Sale\Internals\AccountNumberGenerator;
 
 if(!Main\Loader::includeModule('crm'))
 {
@@ -624,14 +625,17 @@ class CCrmOrderShipmentDetailsComponent extends Crm\Component\EntityDetails\Base
 			array(
 				'name' => 'TRACKING_STATUS',
 				'title' => Loc::getMessage('CRM_ORDER_SHIPMENT_TRACKING_STATUS'),
-				'type' => 'text',
-				'editable' => false
+				'type' => 'custom',
+				'editable' => false,
+				'data' => [
+					'view' => 'TRACKING_STATUS_VIEW'
+				]
 			),
 			array(
 				'name' => 'TRACKING_DESCRIPTION',
 				'title' => Loc::getMessage('CRM_ORDER_SHIPMENT_TRACKING_DESCRIPTION'),
-				'type' => 'text',
-				'editable' => false
+				'editable' => false,
+				'type' => 'html'
 			),
 			// todo: create checking
 			array(
@@ -688,7 +692,7 @@ class CCrmOrderShipmentDetailsComponent extends Crm\Component\EntityDetails\Base
 				'editable' => false
 			),
 			array(
-				'name' => 'RESPONSIBLE',
+				'name' => 'RESPONSIBLE_ID',
 				'title' => Loc::getMessage('CRM_ORDER_SHIPMENT_FIELD_RESPONSIBLE_ID'),
 				'type' => 'user',
 				'editable' => true,
@@ -777,7 +781,10 @@ class CCrmOrderShipmentDetailsComponent extends Crm\Component\EntityDetails\Base
 
 		$this->entityData = array();
 		$this->entityData = $this->shipment->getFieldValues();
-
+		if ($this->mode === ComponentMode::CREATION)
+		{
+			$this->entityData['ACCOUNT_NUMBER'] = AccountNumberGenerator::generateForShipment($this->shipment);
+		}
 		//HACK: Removing time from DATE_INSERT because of 'datetime' type (see CCrmQuote::GetFields)
 		if(isset($this->entityData['DATE_INSERT']))
 			$this->entityData['DATE_INSERT'] = \CCrmComponentHelper::TrimZeroTime($this->entityData['DATE_INSERT']);
@@ -1030,6 +1037,15 @@ class CCrmOrderShipmentDetailsComponent extends Crm\Component\EntityDetails\Base
 				);
 			}
 		}
+
+		$this->entityData['TRACKING_STATUS_DATA'] = [
+			'TRACKING_STATUS_NAME' =>
+				Delivery\Tracking\Manager::getInstance()::getStatusName(
+					(int)$this->entityData['TRACKING_STATUS']
+				)
+		];
+
+		$this->entityData['TRACKING_STATUS_VIEW'] = '';
 
 		return ($this->arResult['ENTITY_DATA'] = $this->entityData);
 	}

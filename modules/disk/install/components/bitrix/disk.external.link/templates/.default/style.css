@@ -310,7 +310,7 @@ td.bx-shared-body-fileinfo-value{
 
 /* preview images */
 .bx-shared-preview-images{
-    max-width:255px;
+    max-width:60vw;
     border:1px solid #c6cdd3;
     border-radius:2px;
 }
@@ -900,4 +900,16 @@ hr.bx-disk-popup-delimiter{
         width: 40%;
         float: left;
     }
+}
+
+.disk-external-link-wrapper {
+	height: calc(100vh - 440px);
+}
+
+.ui-viewer-inner {
+	max-width: none !important;
+}
+
+.ui-viewer-item-document-content {
+	padding-top: 0 !important;
 }

@@ -7,12 +7,12 @@
  */
 namespace Bitrix\Crm;
 
-use Bitrix\Main\Entity;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\ORM\Data\DataManager;
 
 Loc::loadMessages(__FILE__);
 
-class ActivityBindingTable extends Entity\DataManager
+class ActivityBindingTable extends DataManager
 {
 	public static function getTableName()
 	{

@@ -124,6 +124,38 @@ abstract class TasksBaseComponent extends CBitrixComponent
 		}
 	}
 
+	/**
+	 * Gets portal age in days.
+	 * @return int
+	 */
+	protected function getPortalDaysAge()
+	{
+		$dateCreate = Util::getPortalCreateTimestamp();
+		return intval((time() - $dateCreate) / 86400);
+	}
+
+	/**
+	 * Show some spotlight or not by code.
+	 * @param string $code Code.
+	 * @return bool
+	 */
+	protected function showSpotlight($code)
+	{
+		if ($code == 'timeline')
+		{
+			if (CUserOptions::getOption('spotlight', 'view_date_tasks_' . $code, false))
+			{
+				return false;
+			}
+			if (\Bitrix\Main\ModuleManager::isModuleInstalled('bitrix24'))
+			{
+				return $this->getPortalDaysAge() >= 30;
+			}
+			return true;
+		}
+		return false;
+	}
+
 	protected function makeAuxParams()
 	{
 		return array(
@@ -706,7 +738,7 @@ abstract class TasksBaseComponent extends CBitrixComponent
 	 * Function forces 'Y'/'N' value to boolean
 	 * @param mixed $fld Field value
 	 * @param string $default Default value
-	 * @return string parsed value
+	 * @return boolean parsed value
 	 */
 	public static function tryParseBooleanParameter(&$fld, $default = false)
 	{

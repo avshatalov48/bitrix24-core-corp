@@ -137,6 +137,14 @@ class Operator
 		);
 	}
 
+	/**
+	 * @return bool
+	 * @throws Main\ArgumentException
+	 * @throws Main\LoaderException
+	 * @throws Main\ObjectException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
 	public function answer()
 	{
 		$access = $this->checkAccess();
@@ -151,20 +159,39 @@ class Operator
 		return true;
 	}
 
+	/**
+	 * Skip the dialogue.
+	 *
+	 * @return bool
+	 * @throws Main\ArgumentException
+	 * @throws Main\LoaderException
+	 * @throws Main\ObjectException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
 	public function skip()
 	{
+		$result = false;
+
 		$access = $this->checkAccess();
-		if (!$access['RESULT'])
+		if ($access['RESULT'])
 		{
-			return false;
+			$chat = new Chat($this->chatId);
+			$result = $chat->skip($this->userId);
 		}
 
-		$chat = new Chat($this->chatId);
-		$chat->skip($this->userId);
-
-		return true;
+		return $result;
 	}
 
+	/**
+	 * @param array $params
+	 * @return bool
+	 * @throws Main\ArgumentException
+	 * @throws Main\LoaderException
+	 * @throws Main\ObjectException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
 	public function transfer(array $params)
 	{
 		$access = $this->checkAccess();
@@ -183,10 +210,10 @@ class Operator
 		}
 
 		$chat = new Chat($this->chatId);
-		$chat->transfer(Array(
+		$chat->transfer([
 			'FROM' => $this->userId,
 			'TO' => $params['TRANSFER_ID']
-		));
+		]);
 
 		return true;
 	}
@@ -393,18 +420,29 @@ class Operator
 		return true;
 	}
 
+	/**
+	 * @param $messageId
+	 * @return bool
+	 * @throws Main\ArgumentException
+	 * @throws Main\LoaderException
+	 * @throws Main\ObjectException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
 	public function startSessionByMessage($messageId)
 	{
+		$result = false;
+
 		$access = $this->checkAccess();
-		if (!$access['RESULT'])
+		if ($access['RESULT'])
 		{
-			return false;
+			$chat = new Chat($this->chatId);
+			$chat->startSessionByMessage($this->userId, $messageId);
+
+			$result = true;
 		}
 
-		$chat = new Chat($this->chatId);
-		$chat->startSessionByMessage($this->userId, $messageId);
-
-		return true;
+		return $result;
 	}
 
 	/**

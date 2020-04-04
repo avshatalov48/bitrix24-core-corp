@@ -153,7 +153,7 @@ if(typeof(BX.Crm.DealCategoryChanger) === "undefined")
 					lightShadow : true,
 					buttons:
 					[
-						new BX.PopupWindowButtonLink(
+						new BX.PopupWindowCustomButton(
 							{
 								text : BX.message("JS_CORE_WINDOW_CLOSE"),
 								className : "ui-btn ui-btn-lg",

@@ -164,7 +164,6 @@ Loader::registerAutoLoadClasses(
 		'CProductQueryBuilder' => 'general/querybuilder.php',
 
 		'\Bitrix\Catalog\Compatible\EventCompatibility' => 'lib/compatible/eventcompatibility.php',
-		'\Bitrix\Catalog\Config\Configuration' => 'lib/config/state.php', // deprecated, temporary
 		'\Bitrix\Catalog\Config\Feature' => 'lib/config/feature.php',
 		'\Bitrix\Catalog\Config\State' => 'lib/config/state.php',
 		'\Bitrix\Catalog\Discount\DiscountManager' => 'lib/discount/discountmanager.php',
@@ -192,6 +191,7 @@ Loader::registerAutoLoadClasses(
 		'\Bitrix\Catalog\Product\Search' => 'lib/product/search.php',
 		'\Bitrix\Catalog\Product\Sku' => 'lib/product/sku.php',
 		'\Bitrix\Catalog\Product\SubscribeManager' => 'lib/product/subscribemanager.php',
+		'\Bitrix\Catalog\Product\SystemField' => 'lib/product/systemfield.php',
 		'\Bitrix\Catalog\Product\Viewed' => 'lib/product/viewed.php',
 		'\Bitrix\Catalog\Update\AdminFilterOption' => 'lib/update/adminfilteroption.php',
 		'\Bitrix\Catalog\Update\AdminGridOption' => 'lib/update/admingridoption.php',
@@ -1509,7 +1509,7 @@ function Add2Basket($PRICE_ID, $QUANTITY = 1, $arRewriteFields = array(), $arPro
 
 /**
  * @deprecated deprecated since catalog 17.5.9
- * @see \Bitrix\Catalog\Product\Basket::add
+ * @see \Bitrix\Catalog\Product\Basket::addProduct
  *
  * @param int $productId
  * @param float|int $quantity

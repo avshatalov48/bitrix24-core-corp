@@ -5,7 +5,6 @@ $MESS["IMOL_SESSION_DEAL"] = "Deal";
 $MESS["IMOL_SESSION_COMPANY"] = "Company";
 $MESS["IMOL_SESSION_CONTACT"] = "Contact";
 $MESS["IMOL_SESSION_LINE_IS_CLOSED"] = "Open Channel is inactive, no messages will be sent to the client.";
-$MESS["IMOL_SESSION_SKIP_ALONE"] = "You cannot decline conversation because you are currently the only one in the queue.";
 $MESS["IMOL_SESSION_LEAD_ADD"] = "New lead created in CRM: \"#LEAD_NAME#\"";
 $MESS["IMOL_SESSION_CRM_FOUND"] = "User was added to the CRM entity: \"#ENTITY_NAME#\"";
 $MESS["IMOL_SESSION_CLOSE_M"] = "#USER# has closed session";

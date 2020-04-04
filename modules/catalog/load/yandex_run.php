@@ -565,6 +565,15 @@ $propertyFields = array(
 	'ID', 'PROPERTY_TYPE', 'MULTIPLE', 'USER_TYPE'
 );
 
+$itemUrlConfig = [
+	'USE_DOMAIN' => true,
+	'REFERRER_SEPARATOR' => '?'
+];
+$offerUrlConfig = [
+	'USE_DOMAIN' => true,
+	'REFERRER_SEPARATOR' => '?'
+];
+
 $IBLOCK_ID = (int)$IBLOCK_ID;
 $db_iblock = CIBlock::GetByID($IBLOCK_ID);
 if (!($ar_iblock = $db_iblock->Fetch()))
@@ -593,6 +602,10 @@ else
 		$ar_iblock['PROPERTY'][$arProp['ID']] = $arProp;
 	}
 	unset($arProp, $rsProps);
+
+	$ar_iblock['DETAIL_PAGE_URL'] = (string)$ar_iblock['DETAIL_PAGE_URL'];
+	$itemUrlConfig['USE_DOMAIN'] = !(preg_match("/^(http|https):\\/\\//i", $ar_iblock['DETAIL_PAGE_URL']));
+	$itemUrlConfig['REFERRER_SEPARATOR'] = (strpos($ar_iblock['DETAIL_PAGE_URL'], '?') === false ? '?' : '&amp;');
 }
 
 $SETUP_SERVER_NAME = (isset($SETUP_SERVER_NAME) ? trim($SETUP_SERVER_NAME) : '');
@@ -706,6 +719,17 @@ else
 			}
 			unset($arProp, $rsProps);
 			$arOfferIBlock['LID'] = $site['LID'];
+
+			$arOfferIBlock['DETAIL_PAGE_URL'] = (string)$arOfferIBlock['DETAIL_PAGE_URL'];
+			if ($arOfferIBlock['DETAIL_PAGE_URL'] == '#PRODUCT_URL#')
+			{
+				$offerUrlConfig = $itemUrlConfig;
+			}
+			else
+			{
+				$offerUrlConfig['USE_DOMAIN'] = !(preg_match("/^(http|https):\\/\\//i", $arOfferIBlock['DETAIL_PAGE_URL']));
+				$offerUrlConfig['REFERRER_SEPARATOR'] = (strpos($arOfferIBlock['DETAIL_PAGE_URL'], '?') === false ? '?' : '&amp;');
+			}
 		}
 		else
 		{
@@ -1674,9 +1698,9 @@ if (empty($arRunErrors))
 
 						$referer = '';
 						if (!$disableReferers)
-							$referer = (strpos($offer['DETAIL_PAGE_URL'], '?') === false ? '?' : '&amp;').'r1=<?=$strReferer1; ?>&amp;r2=<?=$strReferer2; ?>';
+							$referer = $offerUrlConfig['REFERRER_SEPARATOR'].'r1=<?=$strReferer1; ?>&amp;r2=<?=$strReferer2; ?>';
 
-						$itemsContent .= "<url>".$usedProtocol.$site['SERVER_NAME'].htmlspecialcharsbx($offer['DETAIL_PAGE_URL']).$referer."</url>\n";
+						$itemsContent .= "<url>".($offerUrlConfig['USE_DOMAIN'] ? $usedProtocol.$site['SERVER_NAME'] : '').htmlspecialcharsbx($offer['DETAIL_PAGE_URL']).$referer."</url>\n";
 						unset($referer);
 
 						$minPrice = $offer['RESULT_PRICE']['MIN_PRICE'];
@@ -1864,9 +1888,9 @@ if (empty($arRunErrors))
 
 					$referer = '';
 					if (!$disableReferers)
-						$referer = (strpos($row['DETAIL_PAGE_URL'], '?') === false ? '?' : '&amp;').'r1=<?=$strReferer1; ?>&amp;r2=<?=$strReferer2; ?>';
+						$referer = $itemUrlConfig['REFERRER_SEPARATOR'].'r1=<?=$strReferer1; ?>&amp;r2=<?=$strReferer2; ?>';
 
-					$itemsContent .= "<url>".$usedProtocol.$site['SERVER_NAME'].htmlspecialcharsbx($row['DETAIL_PAGE_URL']).$referer."</url>\n";
+					$itemsContent .= "<url>".($itemUrlConfig['USE_DOMAIN'] ? $usedProtocol.$site['SERVER_NAME'] : '').htmlspecialcharsbx($row['DETAIL_PAGE_URL']).$referer."</url>\n";
 					unset($referer);
 
 					$itemsContent .= "<price>".$minPrice."</price>\n";

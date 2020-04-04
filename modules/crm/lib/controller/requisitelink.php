@@ -9,7 +9,7 @@ use Bitrix\Main\Engine\Controller;
 use Bitrix\Main\Engine\Response\DataType\Page;
 use Bitrix\Main\UI\PageNavigation;
 
-class RequisiteLink extends Controller
+class RequisiteLink extends \Bitrix\Sale\Controller\Controller
 {
 	public function getFieldsAction()
 	{

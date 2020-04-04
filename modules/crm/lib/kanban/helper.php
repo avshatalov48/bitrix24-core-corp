@@ -4,6 +4,7 @@ namespace Bitrix\Crm\Kanban;
 use \Bitrix\Main\Localization\Loc;
 use \Bitrix\Crm\Counter\EntityCounterType;
 use \Bitrix\Crm\PhaseSemantics;
+use \Bitrix\Crm\Order;
 
 Loc::loadMessages(__FILE__);
 
@@ -69,7 +70,7 @@ class Helper
 		{
 			return 'CRM_' . $type . '_LIST_V12_C_' . self::$categoryId;
 		}
-		else if ($type == 'LEAD' || $type == 'QUOTE')
+		else if ($type == 'LEAD' || $type == 'QUOTE' || $type === 'ORDER')
 		{
 			return 'CRM_' . $type . '_LIST_V12';
 		}
@@ -93,7 +94,8 @@ class Helper
 				'lead' => \CCrmOwnerType::LeadName,
 				'deal' => \CCrmOwnerType::DealName,
 				'quote' => \CCrmOwnerType::QuoteName,
-				'invoice' => \CCrmOwnerType::InvoiceName
+				'invoice' => \CCrmOwnerType::InvoiceName,
+				'order' => \CCrmOwnerType::OrderName,
 			);
 		}
 
@@ -183,16 +185,18 @@ class Helper
 					'id' => 'RESPONSIBLE_ID',
 					'name' => Loc::getMessage('CRM_KANBAN_HELPER_FLT_ASSIGNED_BY_ID'),
 					'default' => true,
-					'type' => 'custom_entity',
-					'selector' => array(
-						'TYPE' => 'user',
-						'DATA' => array(
-							'ID' => 'assigned_by',
-							'FIELD_ID' => 'RESPONSIBLE_ID'
-						)
-					),
+					'type' => 'dest_selector',
 					'params' => array(
-						'multiple' => 'Y'
+						'context' => 'CRM_KANBAN_FILTER_RESPONSIBLE_ID',
+						'multiple' => 'Y',
+						'contextCode' => 'U',
+						'enableAll' => 'N',
+						'enableSonetgroups' => 'N',
+						'allowEmailInvitation' => 'N',
+						'allowSearchEmailUsers' => 'N',
+						'departmentSelectDisable' => 'Y',
+						'isNumeric' => 'Y',
+						'prefix' => 'U',
 					)
 				);
 				// add new columns
@@ -208,6 +212,17 @@ class Helper
 						)
 					),
 					$columns
+				);
+			}
+			// order
+			elseif ($entity == $types['order'])
+			{
+				$entityFilter = \Bitrix\Crm\Filter\Factory::createEntityFilter(
+					new \Bitrix\Crm\Filter\OrderSettings(
+						array(
+							'ID' => self::getGridId($entity)
+						)
+					)
 				);
 			}
 			// new common filter
@@ -286,6 +301,7 @@ class Helper
 				);
 				$presets[$entity]['filter_my_in_work'] = array(
 					'name' => Loc::getMessage('CRM_KANBAN_HELPER_LPR_MY_WORK'),
+					'disallow_for_all' => true,
 					'fields' => array_merge(
 							$defaultFilter,
 							array(
@@ -335,6 +351,7 @@ class Helper
 				);
 				$presets[$entity]['filter_my'] = array(
 					'name' => Loc::getMessage('CRM_KANBAN_HELPER_DPR_WORK_MY'),
+					'disallow_for_all' => true,
 					'fields' => array(
 						'ASSIGNED_BY_ID_name' => $uname,
 						'ASSIGNED_BY_ID' => $uid,
@@ -373,6 +390,7 @@ class Helper
 				);
 				$presets[$entity]['filter_my'] = array(
 					'name' => Loc::getMessage('CRM_KANBAN_HELPER_QT_MY'),
+					'disallow_for_all' => true,
 					'fields' => array(
 						'ASSIGNED_BY_ID_name' => $uname,
 						'ASSIGNED_BY_ID' => $uid
@@ -380,6 +398,7 @@ class Helper
 				);
 				$presets[$entity]['filter_my_in_work'] = array(
 					'name' => Loc::getMessage('CRM_KANBAN_HELPER_QT_MY_WORK'),
+					'disallow_for_all' => true,
 					'default' => true,
 					'fields' => array(
 						'ASSIGNED_BY_ID_name' => $uname,
@@ -393,6 +412,7 @@ class Helper
 			{
 				$presets[$entity]['filter_inv1_my'] = array(
 					'name' => Loc::getMessage('CRM_KANBAN_HELPER_INV_MY'),
+					'disallow_for_all' => true,
 					'default' => true,
 					'fields' => array(
 						'RESPONSIBLE_ID' => $uid,
@@ -404,6 +424,7 @@ class Helper
 				);
 				$presets[$entity]['filter_inv2_overdue'] = array(
 					'name' => Loc::getMessage('CRM_KANBAN_HELPER_INV_OVERDUE'),
+					'disallow_for_all' => true,
 					'fields' => array(
 						'RESPONSIBLE_ID' => $uid,
 						'RESPONSIBLE_ID_name' => $uname,
@@ -411,6 +432,27 @@ class Helper
 						'DATE_PAY_BEFORE' => '',
 						'PRICE' => ''
 					)
+				);
+			}
+			// order
+			elseif ($entity == $types['order'])
+			{
+				$presets[$entity]['filter_in_work'] = [
+					'name' => Loc::getMessage('CRM_KANBAN_HELPER_ORDER_PRESET_MY_WORK'),
+					'default' => true,
+					'fields' => ['STATUS_ID' => Order\OrderStatus::getSemanticProcessStatuses()]
+				];
+				$presets[$entity]['filter_my'] = array(
+					'name' => Loc::getMessage('CRM_KANBAN_HELPER_ORDER_PRESET_MY'),
+					'fields' => array(
+						'RESPONSIBLE_ID_name' => $uname,
+						'RESPONSIBLE_ID' => $uid,
+						'STATUS_ID' => Order\OrderStatus::getSemanticProcessStatuses()
+					)
+				);
+				$presets[$entity]['filter_won'] = array(
+					'name' => Loc::getMessage('CRM_KANBAN_HELPER_ORDER_PRESET_WON'),
+					'fields' => array('STATUS_ID' =>  array(Order\OrderStatus::getFinalStatus()))
 				);
 			}
 		}

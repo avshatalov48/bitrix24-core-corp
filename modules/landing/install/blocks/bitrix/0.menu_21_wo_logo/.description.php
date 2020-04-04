@@ -10,6 +10,7 @@ return array(
 	'block' => array(
 		'name' => Loc::getMessage('LANDING_BLOCK_0.MENU_21_NAME'),
 		'section' => array('menu'),
+		'dynamic' => false,
 		'subtype' => 'menu',
 		'subtype_params' => array(
 			'source' => 'catalog',
@@ -43,5 +44,8 @@ return array(
 				'type' => ['navbar'],
 			),
 		),
+	),
+	'assets' => array(
+		'ext' => array('landing_menu'),
 	),
 );

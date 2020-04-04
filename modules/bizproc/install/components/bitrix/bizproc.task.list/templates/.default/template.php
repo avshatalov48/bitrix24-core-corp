@@ -5,6 +5,8 @@ if (!empty($_REQUEST['action_button_'.$arResult["GRID_ID"]]))
 	//@TODO remake
 	unset($_REQUEST['bxajaxid'], $_REQUEST['AJAX_CALL']);
 }
+
+\Bitrix\Main\UI\Extension::load("ui.viewer");
 \Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/bizproc/tools.js');
 \Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/components/bitrix/bizproc.workflow.faces/templates/.default/style.css');
 
@@ -148,6 +150,13 @@ else
 					$component
 				);
 				$arResult["RECORDS"][$key]['data']['WORKFLOW_PROGRESS'] = ob_get_clean();
+			}
+
+			if (array_key_exists("DESCRIPTION", $arResult["RECORDS"][$key]['data']))
+			{
+				$arResult["RECORDS"][$key]['data']["DESCRIPTION"] = \CBPViewHelper::prepareTaskDescription(
+					$arResult["RECORDS"][$key]['data']["DESCRIPTION"]
+				);
 			}
 		}
 	}

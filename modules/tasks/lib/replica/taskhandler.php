@@ -513,8 +513,7 @@ class TaskHandler extends \Bitrix\Replica\Client\BaseHandler
 			\CSearch::DeleteIndex("tasks", $oldRecord["ID"]);
 		}
 
-//		\CTaskCountersProcessor::onAfterTaskDelete($oldRecord);
-		\Bitrix\Tasks\Internals\Counter::onAfterTaskUpdate($oldRecord);
+		\Bitrix\Tasks\Internals\Counter::onAfterTaskDelete($oldRecord);
 
 		// clear cache
 		$CACHE_MANAGER->ClearByTag("tasks_".$oldRecord["ID"]);

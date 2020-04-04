@@ -240,9 +240,27 @@ CREATE TABLE b_tasks_checklist_items (
 	TOGGLED_DATE datetime DEFAULT NULL,
 	TITLE varchar(255) DEFAULT NULL,
 	IS_COMPLETE char(1) NOT NULL DEFAULT 'N',
+	IS_IMPORTANT char(1) NOT NULL DEFAULT 'N',
 	SORT_INDEX int(11) NOT NULL DEFAULT '0',
 	PRIMARY KEY (ID),
 	KEY USER_ID (TASK_ID)
+);
+
+CREATE TABLE b_tasks_checklist_items_tree (
+    PARENT_ID INT NOT NULL,
+    CHILD_ID INT NOT NULL,
+    LEVEL SMALLINT NOT NULL DEFAULT 0,
+    PRIMARY KEY (PARENT_ID, CHILD_ID)
+);
+CREATE INDEX ix_tasks_checklist_items_tree_child_id_level  ON b_tasks_checklist_items_tree(CHILD_ID, LEVEL);
+
+CREATE TABLE b_tasks_checklist_items_member (
+    ID INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    ITEM_ID INT(11) NOT NULL,
+    USER_ID INT(11) NOT NULL,
+    TYPE CHAR(1) NOT NULL,
+    UNIQUE (ITEM_ID, USER_ID, TYPE),
+    KEY USER_ID_TYPE (USER_ID, TYPE)
 );
 
 create table b_tasks_template_chl_item (
@@ -251,9 +269,26 @@ create table b_tasks_template_chl_item (
 	SORT int(11) DEFAULT '0',
 	TITLE varchar(255) NOT NULL,
 	CHECKED tinyint default '0',
-
+	IS_IMPORTANT char(1) NOT NULL DEFAULT 'N',
 	PRIMARY KEY (ID),
 	KEY ix_tasks_templ_chl_item_tid(TEMPLATE_ID)
+);
+
+CREATE TABLE b_tasks_template_chl_item_tree (
+    PARENT_ID INT NOT NULL,
+    CHILD_ID INT NOT NULL,
+    LEVEL SMALLINT NOT NULL DEFAULT 0,
+    PRIMARY KEY (PARENT_ID, CHILD_ID)
+);
+CREATE INDEX ix_tasks_template_chl_item_tree_child_id_level  ON b_tasks_template_chl_item_tree(CHILD_ID, LEVEL);
+
+CREATE TABLE b_tasks_template_chl_item_member (
+    ID INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    ITEM_ID INT(11) NOT NULL,
+    USER_ID INT(11) NOT NULL,
+    TYPE CHAR(1) NOT NULL,
+    UNIQUE (ITEM_ID, USER_ID, TYPE),
+    KEY USER_ID_TYPE (USER_ID, TYPE)
 );
 
 CREATE TABLE b_tasks_timer (
@@ -361,6 +396,9 @@ CREATE TABLE b_tasks_stages (
   SYSTEM_TYPE varchar(20) DEFAULT NULL,
   ENTITY_ID int(18) DEFAULT 0,
   ENTITY_TYPE char(1) DEFAULT 'G',
+  ADDITIONAL_FILTER text default null,
+  TO_UPDATE text default null,
+  TO_UPDATE_ACCESS varchar(255) default null,
   PRIMARY KEY (`ID`)
 );
 
@@ -427,4 +465,14 @@ CREATE TABLE b_tasks_search_index (
     MESSAGE_ID bigint(20) default 0 not null,
     SEARCH_INDEX mediumtext null,
     unique (TASK_ID, MESSAGE_ID)
+);
+
+CREATE TABLE IF NOT EXISTS b_tasks_sprint (
+	ID int(18) NOT NULL AUTO_INCREMENT,
+	GROUP_ID int(18) NOT NULL,
+	CREATED_BY_ID int(18) NOT NULL,
+	MODIFIED_BY_ID int(18) NOT NULL,
+	START_TIME timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+	FINISH_TIME timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
+	PRIMARY KEY (ID)
 );

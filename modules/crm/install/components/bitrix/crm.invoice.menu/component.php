@@ -80,17 +80,24 @@ if($arParams['TYPE'] === 'list')
 {
 	if ($bAdd)
 	{
-		$arResult['BUTTONS'][] = array(
+		$addLink = CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_INVOICE_EDIT'],
+			array(
+				'invoice_id' => 0
+			)
+		);
+		$addButton  = [
 			'TEXT' => GetMessage('INVOICE_ADD'),
 			'TITLE' => GetMessage('INVOICE_ADD_TITLE'),
-			'LINK' => CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_INVOICE_EDIT'],
-				array(
-					'invoice_id' => 0
-				)
-			),
-			//'ICON' => 'btn-new',
+			'LINK' => $addLink,
 			'HIGHLIGHT' => true
-		);
+		];
+
+		if ($arParams['IS_RECURRING'] === 'Y')
+		{
+			$addButton['ONCLICK'] = "top.location.href = '{$addLink}'";
+		}
+
+		$arResult['BUTTONS'][] = $addButton;
 	}
 
 //		if ($bImport)
@@ -134,7 +141,7 @@ if($arParams['TYPE'] === 'list')
 			);
 			if (isset($_REQUEST['WG']) && strtoupper($_REQUEST['WG']) === 'Y')
 			{
-				$widgetDataFilter = \Bitrix\Crm\Widget\Data\Activity\DataSource::extractDetailsPageUrlParams($_REQUEST);
+				$widgetDataFilter = \Bitrix\Crm\Widget\Data\InvoiceDataSource::extractDetailsPageUrlParams($_REQUEST);
 				if (!empty($widgetDataFilter))
 				{
 					$componentParams['WIDGET_DATA_FILTER'] = $widgetDataFilter;
@@ -187,7 +194,10 @@ if($arParams['TYPE'] === 'list')
 			unset($entityType, $stExportId, $randomSequence, $stExportManagerId);
 		}
 
-		if (Recurring\Manager::isAllowedExpose(Recurring\Manager::INVOICE))
+		if (
+			Recurring\Manager::isAllowedExpose(Recurring\Manager::INVOICE)
+			&& !($_REQUEST['IFRAME'] == 'Y' && $_REQUEST['IFRAME_TYPE'] == 'SIDE_SLIDER')
+		)
 		{
 			if ($arParams['IS_RECURRING'] === 'Y')
 			{
@@ -221,27 +231,19 @@ if ($arParams['TYPE'] == 'show' && !empty($arParams['ELEMENT_ID']) && $arParams[
 {
 	\CJSCore::init(["sidepanel", "documentpreview"]);
 
-	/** @var \Bitrix\Crm\Integration\DocumentGeneratorManager $documentGenerator */
-	$documentGenerator = \Bitrix\Crm\Integration\DocumentGeneratorManager::getInstance();
-	$documentLinks = $documentGenerator->getPreviewList(
-		\Bitrix\Crm\Integration\DocumentGenerator\DataProvider\Invoice::class,
-		$arParams['ELEMENT_ID']
-	);
-	if(!empty($documentLinks))
+	if(\Bitrix\Crm\Integration\DocumentGeneratorManager::getInstance()->isDocumentButtonAvailable())
 	{
 		$arResult['BUTTONS'][] = [
 			'CODE' => 'document',
 			'TEXT' => GetMessage('INVOICE_DOCUMENT_BUTTON_TEXT'),
 			'TITLE' => GetMessage('INVOICE_DOCUMENT_BUTTON_TITLE'),
 			'TYPE' => 'crm-document-button',
-			'ITEMS' => $documentLinks,
+			'PARAMS' => \Bitrix\Crm\Integration\DocumentGeneratorManager::getInstance()->getDocumentButtonParameters(\Bitrix\Crm\Integration\DocumentGenerator\DataProvider\Invoice::class, $arParams['ELEMENT_ID']),
 		];
-
-		$documentGenerator->showSpotlight('.crm-btn-dropdown-document');
 	}
 	$menuItems = [];
 	$paySystem = \Bitrix\Sale\PaySystem\Manager::getById($arFields['PAY_SYSTEM_ID']);
-	if ($documentGenerator->isEnabled() && $paySystem['ACTION_FILE'] === 'invoicedocument')
+	if (\Bitrix\Crm\Integration\DocumentGeneratorManager::getInstance()->isEnabled() && $paySystem['ACTION_FILE'] === 'invoicedocument')
 	{
 		$componentPath = \CComponentEngine::makeComponentPath('bitrix:crm.document.view');
 		$componentPath = getLocalPath('components'.$componentPath.'/slider.php');
@@ -448,12 +450,18 @@ elseif ($qty >= 3)
 
 if (($arParams['TYPE'] == 'edit' || $arParams['TYPE'] == 'show') && $bDelete && !empty($arParams['ELEMENT_ID']))
 {
+
+	$path = $arParams['PATH_TO_INVOICE_EDIT'];
+	if ($arParams['IS_RECURRING'] == 'Y')
+	{
+		$path = $arParams['PATH_TO_INVOICE_RECUR_EDIT'];
+	}
 	$arResult['BUTTONS'][] = array(
 		'TEXT' => GetMessage('INVOICE_DELETE'),
 		'TITLE' => GetMessage('INVOICE_DELETE_TITLE'),
 		'LINK' => "javascript:invoice_delete('".GetMessage('INVOICE_DELETE_DLG_TITLE')."', '".
 			GetMessage('INVOICE_DELETE_DLG_MESSAGE')."', '".GetMessage('INVOICE_DELETE_DLG_BTNTITLE').
-			"', '".CHTTP::urlAddParams(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_INVOICE_EDIT'],
+			"', '".CHTTP::urlAddParams(CComponentEngine::MakePathFromTemplate($path,
 			array(
 				'invoice_id' => $arParams['ELEMENT_ID']
 			)),

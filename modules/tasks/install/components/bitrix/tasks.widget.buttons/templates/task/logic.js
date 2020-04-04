@@ -149,7 +149,9 @@ BX.namespace('Tasks.Component');
 					}
 					else if(code == 'CREATE_SUBTASK')
 					{
-						window.location = this.option('createSubtaskUrl');
+						BX.SidePanel.Instance.open(
+							this.option('createSubtaskUrl')
+						);
 					}
 					else
 					{

@@ -452,6 +452,8 @@ final class Manager
 				)
 			);
 
+			$item->setField('XML_ID', '');
+
 			$item->getPropertyCollection()->setProperty(
 				$originalBasketItem->getPropertyCollection()->getPropertyValues()
 			);
@@ -459,6 +461,7 @@ final class Manager
 
 		$order->setBasket($basket);
 
+		$payment = null;
 		$paymentCollection = $originalOrder->getPaymentCollection();
 		$originalPayment = $paymentCollection->current();
 
@@ -495,9 +498,18 @@ final class Manager
 			}
 		}
 
-		$order->getDiscount()->calculate();
-		$order->refreshData(array('PRICE', 'PRICE_DELIVERY'));
+		/** @var Result $r */
+		$r = $order->getDiscount()->calculate();
+		if ($r->isSuccess())
+		{
+			$discountData = $r->getData();
+			$order->applyDiscount($discountData);
+		}
 
+		if (!empty($payment))
+		{
+			$payment->setField('SUM', $order->getPrice());
+		}
 		return $order;
 	}
 

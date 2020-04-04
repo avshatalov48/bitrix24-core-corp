@@ -13,6 +13,12 @@ $arResult['BX24_RU_ZONE'] = \Bitrix\Main\ModuleManager::isModuleInstalled('bitri
 $arResult['HELPER'] = $helper = require(dirname(__FILE__).'/helper.php');
 //$arParams =& $helper->getComponent()->arParams; // make $arParams the same variable as $this->__component->arParams, as it really should be
 
+$strIframe = '';
+$strIframe2 = '';
+if($_REQUEST['IFRAME'])
+    $strIframe = '?IFRAME='.($_REQUEST['IFRAME'] == 'Y' ? 'Y' : 'N');
+    $strIframe2 = '&IFRAME='.($_REQUEST['IFRAME'] == 'Y' ? 'Y' : 'N');
+
 if ($helper->checkHasFatals())
 {
 	return;
@@ -41,7 +47,7 @@ $tasksLink = CComponentEngine::makePathFromTemplate(
 
 $arResult['ITEMS'][] = array(
 	"TEXT" => GetMessage("TASKS_PANEL_TAB_ALL"),
-	"URL" => $tasksLink.'?F_CANCEL=Y&F_SECTION=ADVANCED&clear_filter=Y&apply_filter=Y',
+	"URL" => $tasksLink.'?F_CANCEL=Y&F_SECTION=ADVANCED&clear_filter=Y&apply_filter=Y'.$strIframe2,
 	"ID" => "view_all",
 	'CLASS' => 'tasks_role_link',
 	'SUB_LINK' => array(
@@ -75,7 +81,7 @@ foreach ($arResult['ROLES'] as $roleId => $role)
 {
 	$arResult['ITEMS'][] = array(
 		'TEXT' => $role['TEXT'],
-		'URL' => $tasksLink.'?'.$role['HREF'].'&clear_filter=Y',
+		'URL' => $tasksLink.'?'.$role['HREF'].'&clear_filter=Y'.$strIframe2,
 		'ON_CLICK' => '',
 		//		'ON_CLICK'=>$arParams['USE_AJAX_ROLE_FILTER'] == 'N'
 		//			? null
@@ -97,19 +103,23 @@ if ($arParams['SHOW_SECTION_PROJECTS'] == 'Y')
 			'user_id' => $arParams['LOGGED_USER_ID']
 		)
 	);
+	
 
+        
 	$arResult['ITEMS'][] = array(
 		"TEXT" => GetMessage("TASKS_PANEL_TAB_PROJECTS"),
-		"URL" => $tasksLink.'projects/',
+		"URL" => $tasksLink.'projects/'.$strIframe,
 		"ID" => "view_projects",
 		"IS_ACTIVE" => $arParams["MARK_SECTION_PROJECTS"] === "Y",
 		'SUB_LINK' => array('CLASS' => '', 'URL' => $createGroupLink),
 	);
 }
 
+
+
 $arResult['ITEMS'][] = array(
 	"TEXT" => GetMessage("TASKS_PANEL_TAB_KANBAN"),
-	"URL" => $tasksLink.'board/',
+	"URL" => $tasksLink.'board/'.$strIframe,
 	"ID" => "view_kanban",
 	"IS_ACTIVE" => $arParams["MARK_SECTION_KANBAN"] == "Y",
 );
@@ -119,7 +129,7 @@ if ($arParams["SHOW_SECTION_MANAGE"] != "N")
 	$counter = intval($arResult["SECTION_MANAGE_COUNTER"]);
 	$arResult['ITEMS'][] = array(
 		"TEXT" => GetMessage("TASKS_PANEL_TAB_MANAGE"),
-		"URL" => $tasksLink.'departments/',
+		"URL" => $tasksLink.'departments/'.$strIframe,
 		"ID" => "view_departments",
 		'COUNTER' => $counter,
 		'COUNTER_ID' => 'departments_counter',
@@ -129,7 +139,7 @@ if ($arParams["SHOW_SECTION_MANAGE"] != "N")
 
 	$arResult['ITEMS'][] = array(
 		"TEXT" => GetMessage("TASKS_PANEL_TAB_EFFECTIVE"),
-		"URL" => $tasksLink.'effective/',
+		"URL" => $tasksLink.'effective/'.$strIframe,
 		"ID" => "view_effective",
 		'MAX_COUNTER_SIZE'=>100,
 		"IS_ACTIVE" => $arParams["MARK_SECTION_EFFECTIVE"] == "Y",
@@ -141,18 +151,18 @@ if (!\Bitrix\Tasks\Integration\Extranet\User::isExtranet() && !$arParams['GROUP_
 {
 	$arResult['ITEMS'][] = array(
 		"TEXT" => GetMessage("TASKS_PANEL_TAB_EMPLOYEE_PLAN"),
-		"URL" => $tasksLink.'employee/plan/',
+		"URL" => $tasksLink.'employee/plan/'.$strIframe,
 		"ID" => "view_employee_plan",
 		"IS_ACTIVE" => $arParams["MARK_SECTION_EMPLOYEE_PLAN"] == "Y",
 		'IS_DISABLED' => true
 	);
 }
 
-if ($arParams["SHOW_SECTION_REPORTS"] == "Y")
+if ($arParams["SHOW_SECTION_REPORTS"] == "Y" && (!$_REQUEST['IFRAME'] || ($_REQUEST['IFRAME'] && $_REQUEST['IFRAME']!='Y')))
 {
 	$arResult['ITEMS'][] = array(
 		"TEXT" => GetMessage("TASKS_PANEL_TAB_REPORTS"),
-		"URL" => $tasksLink.'report/',
+		"URL" => $tasksLink.'report/'.$strIframe,
 		"ID" => "view_reports",
 		"IS_ACTIVE" => $arParams["MARK_SECTION_REPORTS"] === "Y",
 		'IS_DISABLED' => true
@@ -172,7 +182,7 @@ if ($arParams["SHOW_SECTION_TEMPLATES"] == "Y")
 {
 	$arResult['ITEMS'][] = array(
 		"TEXT" => GetMessage("TASKS_PANEL_TAB_TEMPLATES"),
-		"URL" => $tasksLink.'templates/',
+		"URL" => $tasksLink.'templates/'.$strIframe,
 		"ID" => "view_templates",
 		"IS_ACTIVE" => $arParams["MARK_TEMPLATES"] == "Y",
 		'IS_DISABLED' => true
@@ -182,7 +192,7 @@ if ($arParams["SHOW_SECTION_RECYCLEBIN"] != "N" && CModule::includeModule('recyc
 {
 	$arResult['ITEMS'][] = array(
 		"TEXT"      => GetMessage("TASKS_PANEL_TAB_RECYCLEBIN"),
-		"URL"       => $tasksLink.'recyclebin/',
+		"URL"       => $tasksLink.'recyclebin/'.$strIframe,
 		"ID"        => "view_recyclebin",
 		"IS_ACTIVE" => $arParams["MARK_RECYCLEBIN"] == "Y",
 		//		'IS_DISABLED' => true

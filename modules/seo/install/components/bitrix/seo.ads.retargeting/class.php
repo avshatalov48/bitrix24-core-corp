@@ -126,54 +126,85 @@ class SeoAdsRetargetingComponent extends CBitrixComponent implements Controllera
 		return [];
 	}
 
-	public function getAccountsAction($type)
+	public function getAccountsAction($type, $clientId = null)
 	{
 		$data = [];
 		if ($this->checkAccess())
 		{
+			$service = AdsAudience::getService();
+			$service->setClientId($clientId);
 			$data = AdsAudience::getAccounts($type);
 		}
 
 		return $this->prepareAjaxAnswer($data);
 	}
 
-	public function getProviderAction($type)
+	public function getProviderAction($type, $clientId = null)
 	{
 		$data = [];
 		if ($this->checkAccess())
 		{
-			$data = static::getAdsProvider($type);
+			$data = static::getAdsProvider($type, $clientId);
 		}
 
 		return $this->prepareAjaxAnswer($data);
 	}
 
-	public function logoutAction($type)
+	public function logoutAction($type, $clientId = null, $logoutClientId = null)
 	{
 		$data = [];
 		if ($this->checkAccess())
 		{
+			$service = AdsAudience::getService();
+			$service->setClientId($logoutClientId);
 			AdsAudience::removeAuth($type);
-			$data = static::getAdsProvider($type);
+
+			$data = static::getAdsProvider($type, $clientId);
 		}
 
 		return $this->prepareAjaxAnswer($data);
 	}
 
-	public function getAudiencesAction($type, $accountId = null)
+	public function getAudiencesAction($type, $clientId = null, $accountId = null)
 	{
 		$data = [];
 		if ($this->checkAccess())
 		{
+			$service = AdsAudience::getService();
+			$service->setClientId($clientId);
 			$data = AdsAudience::getAudiences($type, $accountId);
 		}
 
 		return $this->prepareAjaxAnswer($data);
 	}
 
-	protected static function getAdsProvider($adsType)
+	public function addAudienceAction($type, $name = null, $clientId = null, $accountId = null)
 	{
-		$providers = AdsAudience::getProviders();
+		$data = [];
+		if ($this->checkAccess())
+		{
+			$service = AdsAudience::getService();
+			$service->setClientId($clientId);
+
+			$audienceId = AdsAudience::addAudience($type, $accountId, $name);
+			if ($audienceId)
+			{
+				$data['id'] = $audienceId;
+			}
+			else
+			{
+				$data['error'] = implode(', ', AdsAudience::getErrors());
+			}
+		}
+
+		return $this->prepareAjaxAnswer($data);
+	}
+
+	protected static function getAdsProvider($adsType, $clientId = null)
+	{
+		$service = AdsAudience::getService();
+		$service->setClientId($clientId);
+		$providers = AdsAudience::getProviders([$adsType]);
 		$isFound = false;
 		$provider = array();
 		foreach ($providers as $type => $provider)

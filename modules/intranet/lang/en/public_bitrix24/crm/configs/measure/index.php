@@ -1,3 +1,3 @@
 <?
-$MESS["TITLE"] = "Units of measurement";
+$MESS["TITLE"] = "Units of Measurement";
 ?>

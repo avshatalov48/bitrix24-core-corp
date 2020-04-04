@@ -4,6 +4,7 @@ namespace Bitrix\Crm\Timeline\Entity;
 use Bitrix\Main;
 use Bitrix\Main\Entity;
 use Bitrix\Main\Entity\Query;
+use \Bitrix\Crm\Timeline\TimelineType;
 
 class TimelineBindingTable  extends Entity\DataManager
 {
@@ -231,6 +232,16 @@ class TimelineBindingTable  extends Entity\DataManager
 			{
 				$deleteMap[$fields['OWNER_ID']] = true;
 				unset($updateMap[$fields['OWNER_ID']]);
+			}
+
+			//Skip records that are associated with old entity
+			if(in_array(TimelineType::CREATION, $typeIDs, true))
+			{
+				$dbResult = $connection->query("SELECT ID FROM b_crm_timeline WHERE ASSOCIATED_ENTITY_TYPE_ID = {$entityTypeID} AND ASSOCIATED_ENTITY_ID = {$oldEntityID} AND ID IN ({$conditionSql})");
+				while($fields = $dbResult->fetch())
+				{
+					unset($updateMap[$fields['ID']]);
+				}
 			}
 		}
 

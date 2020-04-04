@@ -10,6 +10,7 @@ class Agent
 	 */
 	public static function clearRecycle($days = null)
 	{
+		Rights::setOff();
 		$days = !is_null($days)
 				? (int) $days
 				: (int) Manager::getOption('deleted_lifetime_days');
@@ -36,7 +37,8 @@ class Agent
 					]
 				],
 				'=DELETED' => ['Y', 'N'],
-				'=SITE.DELETED' => ['Y', 'N']
+				'=SITE.DELETED' => ['Y', 'N'],
+				'CHECK_PERMISSIONS' => 'N'
 			],
 			'order' => [
 				'DATE_MODIFY' => 'desc'
@@ -63,7 +65,8 @@ class Agent
 				'filter' => [
 					'FOLDER_ID' => $folders,
 					'=DELETED' => ['Y', 'N'],
-					'=SITE.DELETED' => ['Y', 'N']
+					'=SITE.DELETED' => ['Y', 'N'],
+					'CHECK_PERMISSIONS' => 'N'
 				],
 				'order' => [
 					'DATE_MODIFY' => 'desc'
@@ -87,7 +90,8 @@ class Agent
 			],
 			'filter' => [
 				'=DELETED' => 'Y',
-				'<DATE_MODIFY' => $date
+				'<DATE_MODIFY' => $date,
+				'CHECK_PERMISSIONS' => 'N'
 			],
 			'order' => [
 				'DATE_MODIFY' => 'desc'
@@ -98,6 +102,8 @@ class Agent
 			$resDel = Site::delete($row['ID']);
 			$resDel->isSuccess();// for trigger
 		}
+
+		Rights::setOn();
 
 		return __CLASS__ . '::' . __FUNCTION__ . '();';
 	}

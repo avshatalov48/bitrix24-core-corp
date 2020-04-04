@@ -2,5 +2,6 @@
 return [
 	"utils",
 	"helpers/component",
-	"task"
+	"task",
+	"stress/more",
 ];

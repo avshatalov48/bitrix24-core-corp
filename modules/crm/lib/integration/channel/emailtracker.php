@@ -254,7 +254,7 @@ class EmailTracker extends ChannelTracker
 			$results[] = new ChannelInfo(
 				$this,
 				ChannelType::EMAIL,
-				Loc::getMessage('EMAIL_CHANNEL_COMPANY') . (isset($userMap[0]) && !empty($userMap[0]["NAME"]) ? " ( " . $userMap[0]["NAME"]. " ) " : ""),
+				Loc::getMessage('EMAIL_CHANNEL'),
 				$this->prepareOriginID(
 					array(
 						'USER_ID' => 0,
@@ -273,7 +273,7 @@ class EmailTracker extends ChannelTracker
 			$results[] = new ChannelInfo(
 				$this,
 				ChannelType::EMAIL,
-				Loc::getMessage('EMAIL_CHANNEL_PERSONAL') . ( isset($userMap[$currentUserID]) && !empty($userMap[$currentUserID]["NAME"]) ? " ( " .  $userMap[$currentUserID]["NAME"] . " ) " : ""),
+				Loc::getMessage('EMAIL_CHANNEL'),
 				$this->prepareOriginID(
 					array(
 						'USER_ID' => $currentUserID,
@@ -300,16 +300,12 @@ class EmailTracker extends ChannelTracker
 			}
 		}
 
-		$userNames = $this->prepareUserNames($effectiveUserIDs);
 		foreach($effectiveUserIDs as $userID)
 		{
 			$results[] = new ChannelInfo(
 				$this,
 				ChannelType::EMAIL,
-				Loc::getMessage(
-					'EMAIL_CHANNEL_CUSTOM_USER',
-					array('#USER_NAME#' => (isset($userNames[$userID]) ? $userNames[$userID] : "[{$userID}]"). ( isset($userMap[$userID]) ? " ( " .  $userMap[$userID]["NAME"] . " ) " : ""))
-				),
+				Loc::getMessage('EMAIL_CHANNEL'),
 				$this->prepareOriginID(array('USER_ID' => $userID, 'MAILBOX_ID' => (isset($userMap[$userID]) ? $userMap[$userID]["ID" ] : null))),
 				'',
 				$sort++,
@@ -335,18 +331,15 @@ class EmailTracker extends ChannelTracker
 		$userID = $originData['USER_ID'];
 		if($userID <= 0)
 		{
-			return Loc::getMessage('EMAIL_CHANNEL_COMPANY');
+			return Loc::getMessage('EMAIL_CHANNEL');
 		}
 		if($userID === \CCrmSecurityHelper::GetCurrentUserID())
 		{
-			return Loc::getMessage('EMAIL_CHANNEL_PERSONAL');
+			return Loc::getMessage('EMAIL_CHANNEL');
 		}
 
 		$userName = $this->prepareUserName($userID);
-		return Loc::getMessage(
-			'EMAIL_CHANNEL_CUSTOM_USER',
-			array('#USER_NAME#' => $userName !== '' ? $userName : "[{$userID}]")
-		);
+		return Loc::getMessage('EMAIL_CHANNEL');
 	}
 	//endregion
 }

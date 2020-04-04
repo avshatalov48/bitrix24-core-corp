@@ -1,3 +1,3 @@
 <?
-$MESS["CRM_TITLE"] = "Deal pipelines";
+$MESS["CRM_TITLE"] = "Deal Pipelines";
 ?>

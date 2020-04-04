@@ -1,9 +1,14 @@
-<? if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+<?
+use Bitrix\Main\Config\Option;
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
-} ?>
-<? $frame = $this->createFrame()->begin(''); ?>
-<? if ($arResult['SETTED_UP'] !== false): ?>
+}
+
+$frame = $this->createFrame()->begin('');
+
+if ($arResult['SETTED_UP'] !== false): ?>
 	<script type="text/javascript">
 
 		var ExternalMail = {
@@ -93,27 +98,30 @@
 
 		ExternalMail.warning = function (id)
 		{
-			var warningLink = BX('menu-counter-warning-mail_unseen');
-			if (warningLink)
+			var menu = BX.getClass("BX.Bitrix24.LeftMenu");
+			if (!menu)
 			{
-				if (id > 0)
-				{
-					warningLink.setAttribute(
-						'data-mail-config-path',
-						'<?=\CUtil::jsEscape(
-							\Bitrix\Main\Config\Option::get('intranet', 'path_mail_config', '/mail/')
-						) ?>'.replace('#id#', id)
-					);
-					warningLink.setAttribute(
-						'onclick',
-						"top.BX.Bitrix24.Slider.open(this.getAttribute('data-mail-config-path'), {width: 760, allowChangeHistory: false}); return false; "
-					);
-					warningLink.style.display = 'inline-block';
-				}
-				else
-				{
-					warningLink.style.display = 'none';
-				}
+				return;
+			}
+
+			if (id > 0)
+			{
+				var url = "<?=\CUtil::jsEscape(Option::get("intranet", "path_mail_config", "/mail/")) ?>".replace("#id#", id);
+
+				BX.Bitrix24.LeftMenu.showItemWarning({
+					itemId: "menu_external_mail",
+					events: {
+						click: function(event) {
+							BX.SidePanel.Instance.open(url, { width: 760, allowChangeHistory: false });
+							event.preventDefault();
+						}
+					},
+					title: "<?=GetMessageJS("MAIL_CHECK_MAIL_CONNECTION_ERROR")?>"
+				});
+			}
+			else
+			{
+				BX.Bitrix24.LeftMenu.removeItemWarning("menu_external_mail");
 			}
 		};
 

@@ -1,4 +1,5 @@
 <?
+$MESS["CRM_DOCUMENT_VIEW_SHOW_FULL_DOCUMENT"] = "Show full document";
 $MESS["CRM_DOCUMENT_VIEW_CREATE_OR_EDIT_MY_COMPANY_REQUISITES"] = "<a href=\"#URL#\" target=\"_blank\" class=\"docs-preview-details-link\">Provide or edit</a>
 <span class=\"docs-preview-details-text\">my company details</span>";
 $MESS["CRM_DOCUMENT_VIEW_TRY_AGAIN"] = "Try again";
@@ -21,4 +22,3 @@ $MESS["CRM_DOCUMENT_VIEW_COPY_PUBLIC_URL_MESSAGE"] = "Public link has been copie
 $MESS["CRM_DOCUMENT_VIEW_TRANSFORM_ERROR"] = "Cannot generate PDF file for the document.";
 $MESS["CRM_DOCUMENT_VIEW_TRY_LATER"] = "Please try again later.";
 $MESS["CRM_DOCUMENT_VIEW_SMS_PUBLIC_URL_NECESSARY"] = "Public link is required to send SMS";
-?>

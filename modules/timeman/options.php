@@ -68,27 +68,7 @@ if($REQUEST_METHOD=="POST" && strlen($Update.$Apply.$RestoreDefaults)>0 && check
 					switch ($arOptDef[1])
 					{
 						case 'time':
-							if (strlen($value) > 0)
-							{
-								list($hour, $min) = explode(':', $value, 2);
-
-								if (IsAmPmMode() && preg_match('/(am|pm)/i', $min, $match))
-								{
-									$ampm = strtolower($match[0]);
-									if ($ampm == 'pm' && $hour < 12)
-										$hour += 12;
-									elseif ($ampm == 'am' && $hour == 12)
-										$hour = 0;
-								}
-
-								$value = abs($hour * 3600 + $min * 60);
-								if ($value >= 86400)
-									$value = 86399;
-							}
-							else
-							{
-								$value = 0;
-							}
+							$value = \Bitrix\Timeman\Helper\TimeHelper::getInstance()->convertHoursMinutesToSeconds($value);
 
 						case 'int':
 							COption::SetOptionInt($module_id, $opt, abs(intval($value)), GetMessage('TM_OPT_'.$opt));
@@ -106,10 +86,6 @@ if($REQUEST_METHOD=="POST" && strlen($Update.$Apply.$RestoreDefaults)>0 && check
 		}
 
 		COption::SetOptionString($module_id, 'workday_can_edit_current', $_REQUEST['workday_can_edit_current'] ? 'Y' : 'N');
-
-		ob_start();
-		require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/admin/group_rights2.php");
-		ob_end_clean();
 
 		$SUBORDINATE_ACCESS = $_REQUEST['SUBORDINATE_ACCESS'];
 		COption::SetOptionString($module_id, 'SUBORDINATE_ACCESS', serialize($SUBORDINATE_ACCESS));
@@ -227,12 +203,6 @@ foreach ($arOptions as $opt => $arOptDef):
 endforeach;
 ?>
 <?$tabControl->BeginNextTab();?>
-
-<tr class="heading">
-	<td colspan="2"><?=GetMessage('TM_ACCESS_COMMON')?></td>
-</tr>
-
-<?require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/admin/group_rights2.php");?>
 
 <tr class="heading">
 	<td colspan="2"><?=GetMessage('TM_ACCESS_SUBORDINATE')?></td>

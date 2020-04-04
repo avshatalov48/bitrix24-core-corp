@@ -27,4 +27,7 @@ $MESS["TASKS_SWITCHER_ITEM_LIST"] = "List";
 $MESS["TASKS_SWITCHER_ITEM_REPORTS"] = "Reports";
 $MESS["TASKS_SWITCHER_ITEM_ROBOTS"] = "Automation rules";
 $MESS["TASKS_SWITCHER_NAME"] = "View";
+$MESS["TASKS_TASK_CHECKLIST_CONVERTING_TITLE"] = "Convert task checklists";
+$MESS["TASKS_TEMPLATE_CHECKLIST_CONVERTING_TITLE"] = "Convert task template checklists";
+$MESS["TASKS_TEMPLATE_SPOTLIGHT_TIMELINE"] = "Use the new view to plan your tasks and watch deadlines.";
 ?>

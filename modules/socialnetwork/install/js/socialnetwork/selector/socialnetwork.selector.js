@@ -76,7 +76,9 @@ BX.SocialnetworkUISelector = {
 
 		if (!selectorInstance.popups.inviteEmailUser)
 		{
-			selectorInstance.popups.inviteEmailUser = new BX.PopupWindow("invite-email-email-user-popup", selectorInstance.getPopupBind(), {
+			selectorInstance.popups.inviteEmailUser = new BX.PopupWindow({
+				id: "invite-email-email-user-popup",
+				bindElement: selectorInstance.getPopupBind(),
 				offsetTop: 1,
 				content: this.inviteEmailUserContent(params),
 				zIndex: 1250,
@@ -393,7 +395,9 @@ BX.SocialnetworkUISelector = {
 		{
 			if (!selectorInstance.popups.createSonetgroup)
 			{
-				selectorInstance.popups.createSonetgroup = new BX.PopupWindow("invite-dialog-creategroup-popup", selectorInstance.getPopupBind(), {
+				selectorInstance.popups.createSonetgroup = new BX.PopupWindow({
+					id: "invite-dialog-creategroup-popup",
+					bindElement: selectorInstance.getPopupBind(),
 					offsetTop : 1,
 					autoHide : true,
 					content : this.createSocNetGroupContent(groupName),
@@ -503,6 +507,47 @@ BX.SocialnetworkUISelector = {
 		if (selectorInstance.timeouts.createSonetgroup)
 		{
 			clearTimeout(selectorInstance.timeouts.createSonetgroup);
+		}
+	},
+
+	setFilterSelected: function(params)
+	{
+		if (
+			!BX.type.isNotEmptyObject(params)
+			|| !BX.type.isNotEmptyString(params.selectorId)
+			|| !BX.type.isNotEmptyObject(BX.UI.SelectorManager)
+			|| !BX.type.isNotEmptyObject(BX.Main)
+			|| !BX.type.isNotEmptyObject(BX.Main.selectorManagerV2)
+		)
+		{
+			return;
+		}
+
+		var
+			selectorInstance = BX.UI.SelectorManager.instances[params.selectorId],
+			componentSelectorInstance = BX.Main.selectorManagerV2.getById(params.selectorId);
+
+		if (
+			!BX.type.isNotEmptyObject(selectorInstance)
+			|| !BX.type.isNotEmptyObject(componentSelectorInstance)
+		)
+		{
+			return;
+		}
+
+		var
+			isNumeric = componentSelectorInstance.getOption('isNumeric'),
+			prefix = componentSelectorInstance.getOption('prefix');
+
+		if (BX.type.isArray(params.current))
+		{
+			for (var i = 0; i < params.current.length; i++)
+			{
+				if (isNumeric == 'Y' && prefix == 'U')
+				{
+					componentSelectorInstance.items.selected[prefix + params.current[i].value] = 'users';
+				}
+			}
 		}
 	},
 
@@ -703,7 +748,8 @@ BX.SocialnetworkUISelector = {
 		selectorInstance.entityTypes.GROUPS = {
 			options: {
 				enableAll: (selectorInstance.getOption('enableAll') == 'Y' ? 'Y' : 'N'),
-				enableEmpty: (selectorInstance.getOption('enableEmpty') == 'Y' ? 'Y' : 'N')
+				enableEmpty: (selectorInstance.getOption('enableEmpty') == 'Y' ? 'Y' : 'N'),
+				enableUserManager: (selectorInstance.getOption('enableUserManager') == 'Y' ? 'Y' : 'N')
 			}
 		};
 
@@ -753,7 +799,8 @@ BX.SocialnetworkUISelector = {
 					allowAdd: (selectorInstance.getOption('allowAddSocNetGroup') == 'Y' ? 'Y' : 'N'), // allowAddSocNetGroup
 					enableProjects: (selectorInstance.getOption('enableProjects') == 'Y' ? 'Y' : 'N'), // enableProjects
 					searchFeatures: selectorInstance.getOption('allowSonetGroupsAjaxSearchFeatures'), // allowSonetGroupsAjaxSearchFeatures
-					siteId: selectorInstance.getOption('socNetGroupsSiteId')
+					siteId: selectorInstance.getOption('socNetGroupsSiteId'),
+					landing: (selectorInstance.getOption('landing') == 'Y' ? 'Y' : 'N')
 				}
 			};
 		}
@@ -768,13 +815,14 @@ BX.SocialnetworkUISelector = {
 	}
 };
 
+BX.addCustomEvent('BX.Main.SelectorV2:onGetEntityTypes', BX.SocialnetworkUISelector.onGetEntityTypes);
+
 BX.ready(function () {
 	BX.addCustomEvent('BX.UI.Selector:onEmptySearchResult', BX.SocialnetworkUISelector.onEmptySearchResult.bind(BX.SocialnetworkUISelector));
 	BX.addCustomEvent('BX.Main.User.SelectorController:select', BX.SocialnetworkUISelector.select);
 	BX.addCustomEvent('BX.Main.User.SelectorController:unSelect', BX.SocialnetworkUISelector.unselect);
-	BX.addCustomEvent('BX.Main.SelectorV2:onGetEntityTypes', BX.SocialnetworkUISelector.onGetEntityTypes);
 	BX.addCustomEvent('BX.UI.SelectorManager:beforeRunSearch', BX.SocialnetworkUISelector.beforeRunSearch);
-
+	BX.addCustomEvent('BX.Filter.DestinationSelector:setSelected', BX.SocialnetworkUISelector.setFilterSelected);
 });
 
 })();

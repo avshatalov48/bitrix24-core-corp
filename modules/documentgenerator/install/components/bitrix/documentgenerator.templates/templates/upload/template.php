@@ -63,9 +63,19 @@ if(isset($arResult['TEMPLATE']) && isset($arResult['TEMPLATE']['ID']))
 </style><?
 }
 ?>
+	<div class="docs-template-error-message" id="upload-template-error-message"<?
+	if($arResult['ERROR'])
+	{
+		?> style="display: block;"><?=htmlspecialcharsbx($arResult['ERROR']);
+	}
+	else
+	{
+		?>><?
+	}?></div>
+	<?if(!$arResult['ERROR'])
+	{?>
 		<form>
 			<input type="file" name="body" id="upload-template-button" />
-			<div class="docs-template-error-message" id="upload-template-error-message"<?if($arResult['ERROR']){?> style="display: block;"><?=htmlspecialcharsbx($arResult['ERROR']);}else{?>><?}?></div>
 			<div class="docs-template-load-drag" id="upload-template-upload-block">
 				<div class="docs-template-load-title-inner">
 					<span class="docs-template-load-title"><?=Loc::getMessage('DOCGEN_TEMPLATE_ADD_FILE');?></span>
@@ -88,18 +98,22 @@ if(isset($arResult['TEMPLATE']) && isset($arResult['TEMPLATE']['ID']))
 				<div class="docs-template-load-result-inner">
 					<div class="docs-template-load-result-preview">
 						<div class="docs-template-load-result-img"></div>
-						<span class="docs-template-load-result-name" id="upload-template-file-name"><?if($arResult['TEMPLATE']['fileName']){echo htmlspecialcharsbx($arResult['TEMPLATE']['fileName']);}?></span>
+						<span class="docs-template-load-result-name" id="upload-template-file-name"><?=($arResult['TEMPLATE']['fileName'] ? htmlspecialcharsbx($arResult['TEMPLATE']['fileName']) : '');?></span>
 					</div>
-					<div class="docs-template-load-result-size" id="upload-template-file-size"><?if($arResult['TEMPLATE']['fileSize']){echo CFile::FormatSize($arResult['TEMPLATE']['fileSize']);}?></div>
+					<div class="docs-template-load-result-size" id="upload-template-file-size"><?=($arResult['TEMPLATE']['fileSize'] ? CFile::FormatSize($arResult['TEMPLATE']['fileSize']) : '')?></div>
 					<?if($arResult['params']['defaultCode'])
-					{?>
-					<div class="docs-template-load-result-default">
-						<span class="docs-template-load-result-default-text" id="upload-template-reinstall"><?=Loc::getMessage('DOCGEN_TEMPLATE_ADD_REINSTALL');?></span>
-					</div>
-					<?}?>
+					{
+						?><div class="docs-template-load-result-default">
+							<span class="docs-template-load-result-default-text" id="upload-template-reinstall"><?=Loc::getMessage('DOCGEN_TEMPLATE_ADD_REINSTALL');?></span>
+						</div><?
+					}
+					if($arResult['TEMPLATE']['FILE_ID'] > 0)
+					{
+					?>
 					<div class="docs-template-download-file">
 						<span class="docs-template-load-result-default-text" id="upload-template-download-file"><?=Loc::getMessage('DOCGEN_TEMPLATE_ADD_DOWNLOAD');?></span>
 					</div>
+					<?}?>
 					<div class="docs-template-download-file" id="upload-template-delete-file">
 						<span class="docs-template-load-result-default-text"><?=Loc::getMessage('DOCGEN_TEMPLATE_ADD_UPLOAD_NEW');?></span>
 					</div>
@@ -116,11 +130,11 @@ if(isset($arResult['TEMPLATE']) && isset($arResult['TEMPLATE']['ID']))
 			<div class="docs-template-load-crm" id="add-template-active-block">
 				<div class="docs-template-load-block-wrap">
 					<div class="docs-template-load-check-container">
-						<input class="docs-template-load-input" type="checkbox" name="ACTIVE" value="Y" id="add-template-active-input" <?if($arResult['TEMPLATE']['ACTIVE'] !== 'N'){?> checked<?}?>>
+						<input class="docs-template-load-input" type="checkbox" name="ACTIVE" value="Y" id="add-template-active-input" <?=($arResult['TEMPLATE']['ACTIVE'] !== 'N' ? ' checked' : '')?>>
 						<label class="docs-template-load-title" for="add-template-active-input"><?=Loc::getMessage('DOCGEN_TEMPLATE_ADD_ACTIVE');?></label>
 					</div>
 					<div class="docs-template-load-check-container">
-						<input class="docs-template-load-input" type="checkbox" name="WITH_STAMPS" value="Y" id="add-template-stamps-input" <?if($arResult['TEMPLATE']['WITH_STAMPS'] !== 'N'){?> checked<?}?>>
+						<input class="docs-template-load-input" type="checkbox" name="WITH_STAMPS" value="Y" id="add-template-stamps-input" <?=($arResult['TEMPLATE']['WITH_STAMPS'] !== 'N' ? ' checked' : '')?>>
 						<label class="docs-template-load-title" for="add-template-stamps-input"><?=Loc::getMessage('DOCGEN_TEMPLATE_ADD_WITH_STAMPS');?></label>
 					</div>
 				</div>
@@ -195,7 +209,7 @@ if(isset($arResult['TEMPLATE']) && isset($arResult['TEMPLATE']['ID']))
 					</div>
 					<div class="docs-template-load-num-select-wrap">
 						<select class="docs-template-load-select docs-template-load-indentation-14" id="docs-template-region-select">
-							<? foreach ($arResult["REGIONS"] as $code => $description)
+							<?foreach ($arResult['REGIONS'] as $code => $description)
 							{?>
 								<option value="<?=htmlspecialcharsbx($code);?>"
 									<?=($arResult['TEMPLATE']['REGION'] == $code) ? 'selected="selected"' : ''; ?>
@@ -240,7 +254,8 @@ if(isset($arResult['TEMPLATE']) && isset($arResult['TEMPLATE']['ID']))
 			</div>
 		</form>
 		<script>
-			BX.ready(function() {
+			BX.ready(function()
+			{
 				BX.DocumentGenerator.UploadTemplate.init(<?=CUtil::PhpToJSObject($arResult['params']);?>);
 				BX.DocumentGenerator.UploadTemplate.moduleId = '<?=CUtil::JSEscape($arParams['MODULE']);?>';
 				BX.DocumentGenerator.UploadTemplate.providers = <?=\CUtil::PhpToJSObject($arResult['PROVIDERS']);?>;
@@ -250,15 +265,19 @@ if(isset($arResult['TEMPLATE']) && isset($arResult['TEMPLATE']['ID']))
 				<?
 				}?>
 				BX.DocumentGenerator.UploadTemplate.initProviderPopup();
-				BX.DocumentGenerator.UploadTemplate.regions = <?=\CUtil::PhpToJSObject($arResult['REGIONS']);?>;
+				<?
+				$regions = \Bitrix\Main\Engine\Response\Converter::toJson()->process($arResult['REGIONS']);
+				?>
+				BX.DocumentGenerator.UploadTemplate.regions = <?=\CUtil::PhpToJSObject($regions);?>;
 				<?='BX.message('.\CUtil::PhpToJSObject(\Bitrix\Main\Localization\Loc::loadLanguageFile(__FILE__)).');'?>
 			});
 		</script>
+	<?}?>
 	</div>
 <?if($arResult['IS_SLIDER'])
-{?>
-</div>
-</body>
-</html><?
-\Bitrix\Main\Application::getInstance()->terminate();
+{
+	?></div>
+	</body>
+	</html><?
+	\Bitrix\Main\Application::getInstance()->terminate();
 }

@@ -8,6 +8,7 @@ use Bitrix\Crm\Timeline\TimelineManager;
 use Bitrix\Crm\Timeline\TimelineEntry;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Crm\Security\EntityAuthorization;
+use Bitrix\Disk;
 
 Loc::loadMessages(__FILE__);
 
@@ -160,9 +161,32 @@ class CommentController extends EntityController
 			$data['COMMENT'] = $parser->convertText($data['COMMENT']);
 		}
 
+		$data['COMMENT'] = \Bitrix\Main\Text\Emoji::decode($data['COMMENT']);
 		$data['COMMENT'] = preg_replace('/\[[^\]]+\]/', '', $data['COMMENT']);
 
 		return $data;
+	}
+	public static function extractPlainText($sourceText, array $options = null)
+	{
+		$parser = static::getParser();
+		if(self::$parser instanceof \blogTextParser)
+		{
+			return $parser::killAllTags($sourceText);
+		}
+		elseif(self::$parser instanceof \forumTextParser)
+		{
+			return $parser::killAllTags($sourceText);
+		}
+		elseif(self::$parser instanceof \logTextParser)
+		{
+			return $parser::clearAllTags($sourceText);
+		}
+		elseif(!empty(self::$parser))
+		{
+			return $parser::clearAllTags($sourceText);
+		}
+
+		return preg_replace('/\[[^\]]+\]/', '', $sourceText);
 	}
 	public static function getMentionIds($text)
 	{
@@ -339,5 +363,44 @@ class CommentController extends EntityController
 		}
 		$data = self::convertToHtml($data);
 		return parent::prepareHistoryDataModel($data, $options);
+	}
+	public function prepareSearchContent(array $params)
+	{
+		$result = '';
+		if(isset($params['COMMENT']))
+		{
+			$result = self::extractPlainText($params['COMMENT']);
+		}
+
+		if ($params['SETTINGS']['HAS_FILES'] === 'Y' && Loader::includeModule('disk'))
+		{
+			$fileFields = $GLOBALS['USER_FIELD_MANAGER']->GetUserFields(self::UF_FIELD_NAME, $params['ID']);
+			$attachedIds = $fileFields[self::UF_COMMENT_FILE_NAME]['VALUE'];
+			if (!empty($attachedIds))
+			{
+				$fileIds = [];
+				$attachedObjects = Disk\AttachedObject::getList([
+					'select' => ['OBJECT_ID'],
+					'filter' => ['=ID' => $attachedIds]
+				]);
+				while ($attach = $attachedObjects->fetch())
+				{
+					$fileIds[] = $attach['OBJECT_ID'];
+				}
+				if (!empty($fileIds))
+				{
+					$fileRaw = Disk\File::getList([
+						'filter' => ['=ID' => $fileIds],
+						'select' => ['NAME']
+					]);
+					while ($file = $fileRaw->fetch())
+					{
+						$result .= " {$file['NAME']}";
+					}
+				}
+			}
+		}
+
+		return $result;
 	}
 }

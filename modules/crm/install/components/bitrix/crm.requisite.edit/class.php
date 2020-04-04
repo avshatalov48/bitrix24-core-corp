@@ -6,6 +6,8 @@ use \Bitrix\Crm\EntityRequisite;
 use \Bitrix\Crm\EntityBankDetail;
 use \Bitrix\Crm\EntityPreset;
 use \Bitrix\Crm\Integration\ClientResolver;
+use \Bitrix\Crm\Integration\Rest\AppPlacement;
+use \Bitrix\Rest\PlacementTable;
 
 if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)
 	die();
@@ -24,6 +26,7 @@ class CCrmRequisiteEditComponent extends \CBitrixComponent
 	protected $fieldsOptional;
 	protected $fieldsOptionalSort;
 	protected $fieldsOptionalTitles;
+	protected $sectionsOptionalTitles;
 	protected $fieldsOptionalEnabled;
 	protected $fieldsOfActivePresets;
 	protected $fieldsOfInactivePresets;
@@ -79,6 +82,42 @@ class CCrmRequisiteEditComponent extends \CBitrixComponent
 
 	protected $enableDupControl;
 
+	protected $isRestModuleIncluded;
+
+	protected function getOptionalFieldTitle($id, $defaultTitle = '')
+	{
+		$result = '';
+
+		$optionalFieldTitle = '';
+		if ($this->fieldsOptionalEnabled
+			&& isset($this->fieldsOptionalTitles[$id])
+			&& !empty($this->fieldsOptionalTitles[$id]))
+		{
+			$optionalFieldTitle = $this->fieldsOptionalTitles[$id];
+		}
+
+		if (!empty($optionalFieldTitle))
+		{
+			$result = $optionalFieldTitle;
+		}
+		else if (isset($this->presetFieldTitles[$id]) && !empty($this->presetFieldTitles[$id]))
+		{
+			$result = strval($this->presetFieldTitles[$id]);
+		}
+
+		if ($result === '')
+		{
+			if (!is_string($defaultTitle) || $defaultTitle === '')
+			{
+				$defaultTitle = isset($this->requisiteFieldTitles[$id]) ? $this->requisiteFieldTitles[$id] : $id;
+			}
+
+			$result = $defaultTitle;
+		}
+
+		return $result;
+	}
+
 	public function __construct($component = null)
 	{
 		parent::__construct($component);
@@ -92,6 +131,7 @@ class CCrmRequisiteEditComponent extends \CBitrixComponent
 		$this->fieldsOptional = array();
 		$this->fieldsOptionalSort = array();
 		$this->fieldsOptionalTitles = array();
+		$this->sectionsOptionalTitles = array();
 		$this->fieldsOptionalEnabled = false;
 		$this->fieldsOfActivePresets = array();
 		$this->fieldsOfInactivePresets = array();
@@ -147,6 +187,8 @@ class CCrmRequisiteEditComponent extends \CBitrixComponent
 		$this->deletedBankDetailIds = array();
 
 		$this->enableDupControl = false;
+
+		$this->isRestModuleIncluded = false;
 	}
 
 	public function executeComponent()
@@ -163,17 +205,17 @@ class CCrmRequisiteEditComponent extends \CBitrixComponent
 			return $this->getComponentResult();
 		}
 
-		if ($this->bEdit || $this->bCopy)
+		if ($this->bCreateFromData)
 		{
-			if (!$this->prepareExistingFields())
+			if (!$this->prepareFieldsFromData())
 			{
 				$this->showErrors();
 				return $this->getComponentResult();
 			}
 		}
-		else if ($this->bCreateFromData)
+		else if ($this->elementId > 0 && ($this->bEdit || $this->bCopy))
 		{
-			if (!$this->prepareFieldsFromData())
+			if (!$this->prepareExistingFields())
 			{
 				$this->showErrors();
 				return $this->getComponentResult();
@@ -234,7 +276,7 @@ class CCrmRequisiteEditComponent extends \CBitrixComponent
 		$this->popupMode = $this->arParams['POPUP_MODE'] === 'Y';
 
 		$this->arParams['INNER_FORM_MODE'] = (isset($this->arParams['INNER_FORM_MODE']) && strtoupper($this->arParams['INNER_FORM_MODE']) === 'Y') ? 'Y' : 'N';
-		$this->innerFormMode = $this->arParams['INNER_FORM_MODE'] === 'Y';
+		$this->innerFormMode = ($this->arParams['INNER_FORM_MODE'] === 'Y');
 
 		$this->arParams['IS_LAST_IN_FORM'] = (isset($this->arParams['IS_LAST_IN_FORM']) && strtoupper($this->arParams['IS_LAST_IN_FORM']) === 'Y') ? 'Y' : 'N';
 		$this->isLastInForm = (!$this->innerFormMode || $this->arParams['IS_LAST_IN_FORM'] === 'Y');
@@ -275,7 +317,20 @@ class CCrmRequisiteEditComponent extends \CBitrixComponent
 		}
 		else
 		{
-			$this->pseudoId = isset($this->arParams['PSEUDO_ID']) ? $this->arParams['PSEUDO_ID'] : 'n0';
+			if (isset($this->arParams['PSEUDO_ID']))
+			{
+				$this->pseudoId = $this->arParams['PSEUDO_ID'];
+			}
+			else if (isset($_REQUEST['pseudoId'])
+				&& is_string($_REQUEST['pseudoId'])
+				&& preg_match('/^n\d+$/', $_REQUEST['pseudoId']))
+			{
+				$this->pseudoId = $_REQUEST['pseudoId'];
+			}
+			else
+			{
+				$this->pseudoId = 'n0';
+			}
 		}
 
 		if (!empty($_REQUEST['copy']))
@@ -514,24 +569,39 @@ class CCrmRequisiteEditComponent extends \CBitrixComponent
 						$this->fieldsOptionalEnabled = true;
 						$sortIndex = 0;
 						$fieldTitle = '';
+						$staticFormFields = ['ENTITY_BINDING', 'PRESET_NAME', 'NAME'];
 						foreach ($tabInfo['fields'] as $fieldInfo)
 						{
 							if (is_array($fieldInfo))
 							{
 								$fieldKey = isset($fieldInfo['id']) ? $this->prepareFieldKey($fieldInfo['id']) : '';
 								$fieldType = isset($fieldInfo['type']) ? $fieldInfo['type'] : '';
-								if (!empty($fieldKey) && $fieldType !== 'section'
-									&& isset($this->fieldsAllowed[$fieldKey]))
+
+
+
+								if ($fieldType === 'section')
+								{
+									$sectionTitle = isset($fieldInfo['name']) ? strval($fieldInfo['name']) : '';
+									if (!empty($sectionTitle))
+									{
+										$this->sectionsOptionalTitles[$fieldInfo['id']] = $sectionTitle;
+									}
+								}
+								else if (!empty($fieldKey)
+									&& (isset($this->fieldsAllowed[$fieldKey])
+										|| in_array($fieldKey, $staticFormFields, true)))
 								{
 									$this->fieldsOptional[$fieldKey] = $fieldInfo;
 									$fieldTitle = isset($fieldInfo['name']) ? strval($fieldInfo['name']) : '';
 									if (!empty($fieldTitle))
+									{
 										$this->fieldsOptionalTitles[$fieldInfo['id']] = $fieldTitle;
+									}
 									$this->fieldsOptionalSort[$fieldInfo['id']] = $sortIndex++;
 								}
 							}
 						}
-						unset($sortIndex, $fieldTitle);
+						unset($sortIndex, $sectionTitle, $fieldTitle, $staticFormFields);
 						break;
 					}
 				}
@@ -570,6 +640,7 @@ class CCrmRequisiteEditComponent extends \CBitrixComponent
 		}
 
 		$this->externalContextId = isset($this->arParams['EXTERNAL_CONTEXT_ID']) ? $this->arParams['EXTERNAL_CONTEXT_ID'] : '';
+
 		return true;
 	}
 
@@ -594,13 +665,13 @@ class CCrmRequisiteEditComponent extends \CBitrixComponent
 
 	protected function prepareExistingFields()
 	{
-		$fields = $this->requisiteInfo;
-
-		if (!is_array($fields))
+		if (!is_array($this->requisiteInfo))
 		{
 			$this->errors[] = GetMessage('CRM_REQUISITE_EDIT_ERR_NOT_FOUND', array('#ID#' => $this->elementId));
 			return false;
 		}
+
+		$fields = $this->requisiteInfo;
 
 		if ($this->bCopy)
 		{
@@ -652,19 +723,20 @@ class CCrmRequisiteEditComponent extends \CBitrixComponent
 			return false;
 		}
 
-		$curDateTime = new \Bitrix\Main\Type\DateTime();
-		$curUserId = CCrmSecurityHelper::GetCurrentUserID();
 		$fields['ENTITY_TYPE_ID'] = $this->entityTypeId;
 		$fields['ENTITY_ID'] = $this->entityId;
 		$fields['PRESET_ID'] = $this->presetId;
-		$fields['DATE_CREATE'] = $curDateTime;
-		$fields['CREATED_BY_ID'] = $curUserId;
-		if (isset($fields['ID']))
-			unset($fields['ID']);
-		if (isset($fields['DATE_MODIFY']))
-			unset($fields['DATE_MODIFY']);
-		if (isset($fields['MODIFY_BY_ID']))
-			unset($fields['MODIFY_BY_ID']);
+
+		if ($this->bCopy)
+		{
+			$curDateTime = new \Bitrix\Main\Type\DateTime();
+			$curUserId = CCrmSecurityHelper::GetCurrentUserID();
+			$fields['ID'] = 0;
+			$fields['DATE_CREATE'] = $curDateTime;
+			$fields['DATE_MODIFY'] = $curDateTime;
+			$fields['CREATED_BY_ID'] = $curUserId;
+			$fields['MODIFY_BY_ID'] = $curUserId;
+		}
 
 		$this->fields = $fields;
 		
@@ -675,19 +747,20 @@ class CCrmRequisiteEditComponent extends \CBitrixComponent
 			$this->bankDetailFieldsList = array();
 			foreach ($this->requisiteData['bankDetailFieldsList'] as $bankDetailFields)
 			{
-				$pseudoId = ($bankDetailFields['ID'] > 0) ? $bankDetailFields['ID'] : 'n'.$n++;
-
 				$bankDetailFields['ENTITY_TYPE_ID'] = \CCrmOwnerType::Requisite;
 				$bankDetailFields['ENTITY_ID'] = $this->elementId;
-				$bankDetailFields['DATE_CREATE'] = $curDateTime;
-				$bankDetailFields['CREATED_BY_ID'] = $curUserId;
-				if (isset($bankDetailFields['ID']))
-					unset($bankDetailFields['ID']);
-				if (isset($bankDetailFields['DATE_MODIFY']))
-					unset($bankDetailFields['DATE_MODIFY']);
-				if (isset($bankDetailFields['MODIFY_BY_ID']))
-					unset($bankDetailFields['MODIFY_BY_ID']);
+				$bankDetailFields['COUNTRY_ID'] = $this->presetCountryId;
 
+				if ($this->bCopy)
+				{
+					$bankDetailFields['ID'] = 0;
+					$bankDetailFields['DATE_CREATE'] = $curDateTime;
+					$bankDetailFields['DATE_MODIFY'] = $curDateTime;
+					$bankDetailFields['CREATED_BY_ID'] = $curUserId;
+					$bankDetailFields['MODIFY_BY_ID'] = $curUserId;
+				}
+
+				$pseudoId = ($bankDetailFields['ID'] > 0) ? $bankDetailFields['ID'] : 'n'.$n++;
 				$this->bankDetailFieldsList[$pseudoId] = $bankDetailFields;
 			}
 		}
@@ -1079,13 +1152,14 @@ class CCrmRequisiteEditComponent extends \CBitrixComponent
 					}
 					if ($this->elementId > 0)
 						$dataFields['ID'] = $this->elementId;
+					$fieldsInView = array_intersect_assoc($this->presetFields, $this->fieldsAllowed);
 					$this->requisiteData = array(
 						'fields' => $dataFields,
-						'viewData' => $this->requisite->prepareViewData($dataFields, $this->fieldsAllowed),
+						'viewData' => $this->requisite->prepareViewData($dataFields, $fieldsInView),
 						'bankDetailFieldsList' => array(),
 						'bankDetailViewDataList' => array()
 					);
-					unset($dataFields);
+					unset($dataFields, $fieldsInView);
 
 					// bank details
 					$n = 0;
@@ -1244,6 +1318,7 @@ class CCrmRequisiteEditComponent extends \CBitrixComponent
 
 		$this->arResult['EXTERNAL_CONTEXT_ID'] = $this->externalContextId;
 		$this->arResult['PSEUDO_ID'] = $this->pseudoId;
+
 		// fields
 		$this->arResult['FIELDS'] = array('tab_1' => array());
 
@@ -1261,7 +1336,14 @@ class CCrmRequisiteEditComponent extends \CBitrixComponent
 		}
 		else
 		{
-			if ($this->entityTypeId === CCrmOwnerType::Company)
+			$sectionId = 'section_requisite_info';
+			if ($this->fieldsOptionalEnabled
+				&& isset($this->sectionsOptionalTitles[$sectionId])
+				&& strlen($this->sectionsOptionalTitles[$sectionId]) > 0)
+			{
+				$sectionTitle = $this->sectionsOptionalTitles[$sectionId];
+			}
+			else if ($this->entityTypeId === CCrmOwnerType::Company)
 			{
 				$sectionTitle = GetMessage('CRM_SECTION_COMPANY_REQUISITE_INFO');
 			}
@@ -1270,11 +1352,11 @@ class CCrmRequisiteEditComponent extends \CBitrixComponent
 				$sectionTitle = GetMessage('CRM_SECTION_CONTACT_REQUISITE_INFO');
 			}
 			$this->arResult['FIELDS']['tab_1'][] = array(
-				'id' => 'section_requisite_info',
+				'id' => $sectionId,
 				'name' => $sectionTitle,
 				'type' => 'section'
 			);
-			unset($sectionTitle);
+			unset($sectionId, $sectionTitle);
 
 			$entityBindingValue = '';
 			if ($this->entityTypeId === CCrmOwnerType::Contact && is_array($this->entityInfo))
@@ -1443,7 +1525,14 @@ class CCrmRequisiteEditComponent extends \CBitrixComponent
 
 		if (!$this->innerFormMode)
 		{
-			if ($this->entityTypeId === CCrmOwnerType::Company)
+			$sectionId = 'section_requisite_values';
+			if ($this->fieldsOptionalEnabled
+				&& isset($this->sectionsOptionalTitles[$sectionId])
+				&& strlen($this->sectionsOptionalTitles[$sectionId]) > 0)
+			{
+				$sectionTitle = $this->sectionsOptionalTitles[$sectionId];
+			}
+			else if ($this->entityTypeId === CCrmOwnerType::Company)
 			{
 				$sectionTitle = GetMessage('CRM_SECTION_COMPANY_REQUISITE_VALUES');
 			}
@@ -1452,16 +1541,32 @@ class CCrmRequisiteEditComponent extends \CBitrixComponent
 				$sectionTitle = GetMessage('CRM_SECTION_CONTACT_REQUISITE_VALUES');
 			}
 			$this->arResult['FIELDS']['tab_1'][] = array(
-				'id' => 'section_requisite_values',
+				'id' => $sectionId,
 				'name' => $sectionTitle,
 				'type' => 'section'
 			);
-			unset($sectionTitle);
+			unset($sectionId, $sectionTitle);
 		}
 
 		// rq fields
 		$fieldsInfo = $this->requisite->getFormFieldsInfo($this->presetCountryId);
 		$rqFields = array();
+		
+		$addressFieldScheme = [
+			['name' => 'ADDRESS_1', 'type' => 'multilinetext'],
+			['name' => 'ADDRESS_2', 'type' => 'text'],
+			['name' => 'CITY', 'type' => 'text'],
+			['name' => 'REGION', 'type' => 'text'],
+			['name' => 'PROVINCE', 'type' => 'text'],
+			['name' => 'POSTAL_CODE', 'type' => 'text'],
+			['name' => 'COUNTRY', 'type' => 'text'],
+			[
+				'name' => 'COUNTRY_CODE',
+				'type' => 'locality',
+				'related' => 'COUNTRY',
+				'params' => ['locality' => 'COUNTRY']
+			]
+		];
 
 		foreach ($fieldsInfo as $fieldName => $fieldInfo)
 		{
@@ -1489,22 +1594,9 @@ class CCrmRequisiteEditComponent extends \CBitrixComponent
 							'options' => array('nohover' => true),
 							'componentParams' => array(
 								'ADDRESS_TYPE_INFOS' => $addressTypeInfos,
-								'SERVICE_URL' => '/bitrix/components/bitrix/crm.requisite.edit/ajax.php?siteID='.SITE_ID.'&'.bitrix_sessid_get(),
-								'SCHEME' => array(
-									array('name' => 'ADDRESS_1', 'type' => 'multilinetext'),
-									array('name' => 'ADDRESS_2', 'type' => 'text'),
-									array('name' => 'CITY', 'type' => 'text'),
-									array('name' => 'REGION', 'type' => 'text'),
-									array('name' => 'PROVINCE', 'type' => 'text'),
-									array('name' => 'POSTAL_CODE', 'type' => 'text'),
-									array('name' => 'COUNTRY', 'type' => 'text'),
-									array(
-										'name' => 'COUNTRY_CODE',
-										'type' => 'locality',
-										'related' => 'COUNTRY',
-										'params' => array('locality' => 'COUNTRY')
-									)
-								),
+								'SERVICE_URL' => '/bitrix/components/bitrix/crm.requisite.edit/ajax.php?siteID='.
+									SITE_ID.'&'.bitrix_sessid_get(),
+								'SCHEME' => $addressFieldScheme,
 								'FIELD_NAME_TEMPLATE' => $this->prepareFieldKey($fieldName).'[#TYPE_ID#][#FIELD_NAME#]',
 								'DATA' => is_array($this->fields[$fieldName]) ? $this->fields[$fieldName] : array()
 							)
@@ -1537,7 +1629,7 @@ class CCrmRequisiteEditComponent extends \CBitrixComponent
 				}
 			}
 		}
-		unset($fieldsInfo, $fieldName, $fieldInfo, $fieldTitle);
+		unset($fieldName, $fieldInfo, $fieldTitle);
 
 		// append user fields
 		$fileViewer = new \Bitrix\Crm\Requisite\FileViewer();
@@ -1634,22 +1726,7 @@ class CCrmRequisiteEditComponent extends \CBitrixComponent
 		{
 			if (isset($fieldInfo['id']) && !empty($fieldInfo['id']))
 			{
-				$optionalFieldTitle = '';
-				if ($this->fieldsOptionalEnabled
-					&& isset($this->fieldsOptionalTitles[$fieldInfo['id']])
-					&& !empty($this->fieldsOptionalTitles[$fieldInfo['id']]))
-				{
-					$optionalFieldTitle = $this->fieldsOptionalTitles[$fieldInfo['id']];
-				}
-				if (!empty($optionalFieldTitle))
-				{
-					$fieldInfo['name'] = $optionalFieldTitle;
-				}
-				else if (isset($this->presetFieldTitles[$fieldInfo['id']])
-					&& !empty($this->presetFieldTitles[$fieldInfo['id']]))
-				{
-					$fieldInfo['name'] = strval($this->presetFieldTitles[$fieldInfo['id']]);
-				}
+				$fieldInfo['name'] = $this->getOptionalFieldTitle($fieldInfo['id'], $fieldInfo['name']);
 				if (isset($this->fieldsAllowed[$fieldInfo['id']]))
 					$fieldInfo['isRQ'] = true;
 				if (isset($this->presetFieldsInShortList[$fieldInfo['id']]))
@@ -1664,7 +1741,8 @@ class CCrmRequisiteEditComponent extends \CBitrixComponent
 						&& is_array($fieldInfo['associatedField'])
 						&& isset($fieldInfo['associatedField']['id']))
 					{
-						$fieldInfo['associatedField']['id'] = $this->prepareFieldKey($fieldInfo['associatedField']['id']);
+						$fieldInfo['associatedField']['id'] =
+							$this->prepareFieldKey($fieldInfo['associatedField']['id']);
 					}
 				}
 			}
@@ -1718,6 +1796,7 @@ class CCrmRequisiteEditComponent extends \CBitrixComponent
 				{
 					$aFields[$fieldId] = $field;
 				}
+				unset($fieldId);
 			}
 
 			$this->arResult['FIELDS'][$tabId] = $aFields;
@@ -1727,20 +1806,20 @@ class CCrmRequisiteEditComponent extends \CBitrixComponent
 
 		// bank details
 		$bankDetailsContainerId = "CRM_REQUISITE_EDIT_{$elementId}_BANK_DETAIL_CONT";
-		$fieldList = array();
-		$fieldList[] = array(
+		$bankDetailFieldList = array();
+		$bankDetailFieldList[] = array(
 			'name' => 'ENTITY_ID',
 			'title' => '',
 			'type' => 'hidden',
 			'defaultValue' => $this->elementId
 		);
-		$fieldList[] = array(
+		$bankDetailFieldList[] = array(
 			'name' => 'ENTITY_TYPE_ID',
 			'title' => '',
 			'type' => 'hidden',
 			'defaultValue' => \CCrmOwnerType::Requisite
 		);
-		$fieldList[] = array(
+		$bankDetailFieldList[] = array(
 			'name' => 'COUNTRY_ID',
 			'title' => '',
 			'type' => 'hidden',
@@ -1748,7 +1827,7 @@ class CCrmRequisiteEditComponent extends \CBitrixComponent
 		);
 		foreach ($this->bankDetailFieldsInfoByCountry as $fieldName => $fieldInfo)
 		{
-			$fieldList[] = array(
+			$bankDetailFieldList[] = array(
 				'name' => $fieldName,
 				'title' => $fieldInfo['title'],
 				'type' => $fieldInfo['formType'],
@@ -1765,15 +1844,17 @@ class CCrmRequisiteEditComponent extends \CBitrixComponent
 
 			$bankDetailDataList[] = $bankDetailFields;
 		}
+		$bankDetailEditorId = $this->prepareFieldKey('BANK_DETAILS_EDITOR');
+		$bankDetailEditorTitle = GetMessage('CRM_REQUISITE_BANK_DETAILS_EDITOR_FIELD');
 		$this->arResult['FIELDS']['tab_1'][] = array(
-			'id' => $this->prepareFieldKey('BANK_DETAILS_EDITOR'),
-			'name' => GetMessage('CRM_REQUISITE_BANK_DETAILS_EDITOR_FIELD'),
+			'id' => $bankDetailEditorId,
+			'name' => $bankDetailEditorTitle,
 			'type' => 'bank_details',
 			'options' => array('nohover' => true),
 			'componentParams' => array(
 				'CONTAINER_ID' => $bankDetailsContainerId,
 				'PRESET_COUNTRY_ID' => $this->presetCountryId,
-				'FIELD_LIST' => $fieldList,
+				'FIELD_LIST' => $bankDetailFieldList,
 				'DATA_LIST' => $bankDetailDataList,
 				'FIELD_NAME_TEMPLATE' => $this->prepareFieldKey('BANK_DETAILS').'[#ELEMENT_ID#][#FIELD_NAME#]',
 				'IS_LAST_IN_FORM' => $this->arResult['IS_LAST_IN_FORM']
@@ -1813,6 +1894,327 @@ class CCrmRequisiteEditComponent extends \CBitrixComponent
 				$bankDetailDupCountriesInfo[$countryId] = $countriesInfo[$countryId];
 			$this->arResult['DUPLICATE_CONTROL']['BANK_DETAIL_DUP_COUNTRIES_INFO'] = $bankDetailDupCountriesInfo;
 		}
+
+		// External requisite search handlers
+		if ($this->isRestModuleIncluded)
+		{
+			$externalSearchHandlers = [];
+			$placementCode = AppPlacement::REQUISITE_EDIT_FORM;
+			$placementHandlerList = PlacementTable::getHandlersList($placementCode);
+			foreach($placementHandlerList as $placementHandler)
+			{
+				$externalSearchHandlers[] = [
+					'ID' => $placementHandler['ID'],
+					'CODE' => $placementCode,
+					'TITLE' => $placementHandler['TITLE'],
+					'COMMENT' => $placementHandler['COMMENT'],
+					'GROUP_NAME' => $placementHandler['GROUP_NAME'],
+					'APP_ID' => $placementHandler['APP_ID'],
+					'APP_NAME' => $placementHandler['APP_NAME']
+				];
+			}
+			if (!empty($externalSearchHandlers))
+			{
+				$this->arResult['EXTERNAL_REQUISITE_SEARCH_CONFIG'] = [];
+				$this->arResult['EXTERNAL_REQUISITE_SEARCH_CONFIG']['enabled'] = true;
+				$this->arResult['EXTERNAL_REQUISITE_SEARCH_CONFIG']['entityTypeId'] = $this->arResult['ENTITY_TYPE_ID'];
+				$this->arResult['EXTERNAL_REQUISITE_SEARCH_CONFIG']['presetId'] = $this->presetId;
+				$this->arResult['EXTERNAL_REQUISITE_SEARCH_CONFIG']['countryId'] = $this->arResult['COUNTRY_ID'];
+				$this->arResult['EXTERNAL_REQUISITE_SEARCH_CONFIG']['entityId'] = $this->arResult['ENTITY_ID'];
+				$this->arResult['EXTERNAL_REQUISITE_SEARCH_CONFIG']['requisitePseudoId'] = $elementId;
+				$this->arResult['EXTERNAL_REQUISITE_SEARCH_CONFIG']['formId'] = $this->arResult['FORM_ID'];
+				$this->arResult['EXTERNAL_REQUISITE_SEARCH_CONFIG']['bankDetailAreaId'] = $bankDetailEditorId.'_area';
+				$this->arResult['EXTERNAL_REQUISITE_SEARCH_CONFIG']['placementCode'] = $placementCode;
+				$this->arResult['EXTERNAL_REQUISITE_SEARCH_CONFIG']['handlers'] = $externalSearchHandlers;
+				$isAddressExist = false;
+				$addressEditorTitle = '';
+				$resultFieldMap = [];
+				$fields = [];
+				$fieldIdPrefix = "REQUISITE.{$elementId}.";
+				if ($this->innerFormMode)
+				{
+					$nameFieldInfo = [
+						'id' => $fieldIdPrefix.'NAME',
+						'formId' => $this->prepareFieldKey('NAME'),
+						'name' => $this->getOptionalFieldTitle('NAME'),
+						'inputType' => 'text',
+						'dataType' => 'string',
+						'active' => false,
+						'changeable' => true
+					];
+					$fields[] = $nameFieldInfo;
+					$resultFieldMap[] = [
+						'id' => 'NAME',
+						'name' => $nameFieldInfo['name'],
+						'inputType' => $nameFieldInfo['inputType'],
+						'dataType' => $nameFieldInfo['dataType'],
+						'fieldMap' => null
+					];
+					unset($nameFieldInfo);
+				}
+				$addressLabels = [];
+				$fieldTypeMap = [];
+				$ufMap = [];
+				$field = null;
+				$isUF = false;
+
+				foreach ($fieldsInfo as $fieldName => $fieldInfo)
+				{
+					$fieldTypeMap[$fieldName] = $fieldInfo['type'];
+					if ($fieldInfo['isUF'])
+					{
+						$ufMap[$fieldName] = true;
+					}
+				}
+				unset($fieldsInfo, $fieldName, $fieldInfo);
+
+				foreach ($this->arResult['FIELDS']['tab_1'] as $fieldInfo)
+				{
+					if ($fieldInfo['type'] !== 'multiple_address' && $fieldInfo['type'] !== 'bank_details')
+					{
+						$fieldId = $fieldInfo[$this->enableFieldMasquerading ? 'rawId' : 'id'];
+						$field = [
+							'id' => $fieldIdPrefix.$fieldId,
+							'formId' => $fieldInfo['id'],
+							'name' => $fieldInfo['name'],
+							'inputType' => $fieldInfo['type'],
+							'dataType' => isset($fieldTypeMap[$fieldId]) ? $fieldTypeMap[$fieldId] : 'string',
+							'active' => false,
+							'changeable' => false
+						];
+
+						$isUF = false;
+						if ($fieldInfo['type'] === 'custom' && isset($ufMap[$fieldId]))
+						{
+							if (isset($fieldTypeMap[$fieldId]))
+							{
+								switch ($field['dataType'])
+								{
+									case 'boolean':
+										$field['inputType'] = 'checkbox';
+										break;
+									case 'string':
+									case 'datetime':
+									case 'double':
+										$field['inputType'] = 'text';
+										break;
+								}
+							}
+							$isUF = true;
+						}
+
+						if ($fieldInfo['type'] === 'text'
+							|| ($isUF
+								&& $field['dataType'] === 'string'
+								|| $field['dataType'] === 'datetime'
+								|| $field['dataType'] === 'double')
+							|| $field['dataType'] === 'boolean')
+						{
+							$field['active'] = true;
+						}
+
+						if ($isUF
+							|| ($fieldInfo['type'] !== 'section'
+								&& $fieldInfo['type'] !== 'label'
+								&& $fieldInfo['type'] !== 'custom'))
+						{
+							$field['changeable'] = true;
+						}
+
+						if ($field['active'] || $field['changeable'])
+						{
+							$fields[] = $field;
+						}
+
+						if ($field['changeable'])
+						{
+							$resultFieldMap[] = [
+								'id' => $fieldId,
+								'name' => $field['name'],
+								'inputType' => $field['inputType'],
+								'dataType' => $field['dataType'],
+								'fieldMap' => null
+							];
+						}
+					}
+					else if ($fieldInfo['type'] === 'multiple_address'
+						&& $fieldInfo[$this->enableFieldMasquerading ? 'rawId' : 'id'] === EntityRequisite::ADDRESS)
+					{
+						if (is_array($fieldInfo['componentParams']['DATA'])
+							&& count($fieldInfo['componentParams']['DATA']) > 0
+							&& isset($fieldInfo['componentParams']['FIELD_NAME_TEMPLATE'])
+							&& is_array($fieldInfo['componentParams']['SCHEME']))
+						{
+							foreach (array_keys($fieldInfo['componentParams']['DATA']) as $addressTypeId)
+							{
+								if (!isset($addressLabels[$addressTypeId]))
+								{
+									$addressLabels[$addressTypeId] =
+										Bitrix\Crm\RequisiteAddress::getLabels(/*$addressTypeId*/);
+								}
+
+								foreach ($fieldInfo['componentParams']['SCHEME'] as $addressFieldInfo)
+								{
+									$field = [
+										'id' => $fieldIdPrefix.$fieldInfo[$this->enableFieldMasquerading ?
+												'rawId' : 'id'].'.'.$addressTypeId.'.'.$addressFieldInfo['name'],
+										'formId' => str_replace(
+											['#TYPE_ID#', '#FIELD_NAME#'],
+											[$addressTypeId, $addressFieldInfo['name']],
+											$fieldInfo['componentParams']['FIELD_NAME_TEMPLATE']
+										),
+										'name' => (
+										isset($addressLabels[$addressTypeId][$addressFieldInfo['name']]) ?
+											$addressLabels[$addressTypeId][$addressFieldInfo['name']] :
+											$addressFieldInfo['name']
+										),
+										'inputType' => ($addressFieldInfo['type'] === 'multilinetext') ?
+											"textarea" : $addressFieldInfo['type'],
+										'dataType' => 'string',
+										'active' => false,
+										'changeable' => false
+									];
+
+									if ($addressFieldInfo['type'] === 'text'
+										|| $addressFieldInfo['type'] === 'multilinetext' )
+									{
+										$field['active'] = true;
+									}
+
+									if ($addressFieldInfo['type'] !== 'locality')
+									{
+										$field['changeable'] = true;
+									}
+
+									if ($field['active'] || $field['changeable'])
+									{
+										$fields[] = $field;
+									}
+								}
+								unset($addressFieldInfo);
+							}
+							unset($addressTypeId);
+						}
+
+						if (!$isAddressExist)
+						{
+							$isAddressExist = true;
+							$addressEditorTitle = $fieldInfo['name'];
+						}
+					}
+					else if ($fieldInfo['type'] === 'bank_details'
+						&& is_array($fieldInfo['componentParams']['DATA_LIST'])
+						&& count($fieldInfo['componentParams']['DATA_LIST']) > 0
+						&& isset($fieldInfo['componentParams']['FIELD_NAME_TEMPLATE'])
+						&& is_array($fieldInfo['componentParams']['FIELD_LIST']))
+					{
+						foreach ($fieldInfo['componentParams']['DATA_LIST'] as $bankDetailData)
+						{
+							if (isset($bankDetailData['ID']))
+							{
+								$bankDetailId = $bankDetailData['ID'];
+								foreach ($fieldInfo['componentParams']['FIELD_LIST'] as $bankDetailFieldInfo)
+								{
+									$field = [
+										'id' => $fieldIdPrefix.'BANK_DETAILS.'.$bankDetailId.'.'.
+											$bankDetailFieldInfo['name'],
+										'formId' => str_replace(
+											['#ELEMENT_ID#', '#FIELD_NAME#'],
+											[$bankDetailId, $bankDetailFieldInfo['name']],
+											$fieldInfo['componentParams']['FIELD_NAME_TEMPLATE']
+										),
+										'name' => $bankDetailFieldInfo['title'],
+										'inputType' => $bankDetailFieldInfo['type'],
+										'dataType' => 'string',
+										'active' => false,
+										'changeable' => false
+									];
+
+									if ($bankDetailFieldInfo['name'] !== 'NAME'
+										&& ($bankDetailFieldInfo['type'] === 'text'
+											|| $bankDetailFieldInfo['type'] === 'textarea' ))
+									{
+										$field['active'] = true;
+									}
+
+									if ($bankDetailFieldInfo['type'] !== 'hidden')
+									{
+										$field['changeable'] = true;
+									}
+
+									if ($field['active'] || $field['changeable'])
+									{
+										$fields[] = $field;
+									}
+								}
+								unset($bankDetailFieldInfo, $bankDetailId);
+							}
+						}
+						unset($bankDetailData);
+					}
+				}
+
+				if ($isAddressExist)
+				{
+					$addressFieldMap = [];
+					$addressFieldMap[] = [
+						'id' => 'TYPE_ID',
+						'name' => GetMessage('CRM_REQUISITE_ADDRESS_TYPE_TITLE'),
+						'inputType' => 'none',
+						'dataType' => 'integer'
+					];
+					foreach ($addressFieldScheme as $addressFieldInfo)
+					{
+						if ($addressFieldInfo['type'] === 'text'
+							|| $addressFieldInfo['type'] === 'multilinetext' )
+						{
+							$addressFieldMap[] = [
+								'id' => $addressFieldInfo['name'],
+								'name' => $addressFieldInfo['name'],
+								'inputType' => ($addressFieldInfo['type'] === 'multilinetext') ?
+									"textarea" : $addressFieldInfo['type'],
+								'dataType' => 'string'
+							];
+						}
+					}
+					$resultFieldMap[] = [
+						'id' => "RQ_ADDR",
+						'name' => $addressEditorTitle,
+						'inputType' => 'none',
+						'dataType' => 'multiple_address',
+						'fieldMap' => $addressFieldMap
+					];
+					unset($addressFieldInfo, $addressFieldMap);
+				}
+				unset($isAddressExist, $addressEditorTitle);
+
+				$bankDetailFieldMap = [];
+				foreach ($bankDetailFieldList as $bankDetailFieldInfo)
+				{
+					if ($bankDetailFieldInfo['type'] !== 'hidden')
+					{
+						$bankDetailFieldMap[] = [
+							'id' => $bankDetailFieldInfo['name'],
+							'name' => $bankDetailFieldInfo['title'],
+							'inputType' => $bankDetailFieldInfo['type'],
+							'dataType' => 'string'
+						];
+					}
+				}
+				$resultFieldMap[] = [
+					'id' => "BANK_DETAILS",
+					'name' => $bankDetailEditorTitle,
+					'inputType' => 'none',
+					'dataType' => 'bank_details',
+					'fieldMap' => $bankDetailFieldMap
+				];
+				unset($bankDetailEditorTitle, $bankDetailFieldMap, $bankDetailFieldInfo);
+
+				$this->arResult['EXTERNAL_REQUISITE_SEARCH_CONFIG']['fieldMap'] = $resultFieldMap;
+				$this->arResult['EXTERNAL_REQUISITE_SEARCH_CONFIG']['fields'] = $fields;
+				unset($addressLabels, $fieldTypeMap, $ufMap, $fields, $field, $isUF);
+			}
+		}
 	}
 
 	protected function checkModules()
@@ -1822,6 +2224,8 @@ class CCrmRequisiteEditComponent extends \CBitrixComponent
 			$this->errors[] = GetMessage('CRM_MODULE_NOT_INSTALLED');
 			return false;
 		}
+
+		$this->isRestModuleIncluded = (bool)Bitrix\Main\Loader::includeModule('rest');
 
 		return true;
 	}

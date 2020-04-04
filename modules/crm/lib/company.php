@@ -9,6 +9,7 @@ namespace Bitrix\Crm;
 
 use Bitrix\Main\Entity;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\ORM\Fields\StringField;
 
 Loc::loadMessages(__FILE__);
 
@@ -37,6 +38,7 @@ class CompanyTable extends Entity\DataManager
 			'TITLE' => array(
 				'data_type' => 'string'
 			),
+			(new StringField('LOGO'))->configureSize(10),
 			'COMPANY_TYPE' => array(
 				'data_type' => 'string'
 			),
@@ -175,6 +177,21 @@ class CompanyTable extends Entity\DataManager
 					'ID'
 				)
 			),
+			'EMAIL_MAILING' => array(
+				'data_type' => 'string',
+				'expression' => array(
+					'('.$DB->TopSql(
+						'SELECT FM.VALUE '.
+						'FROM b_crm_field_multi FM '.
+						'WHERE FM.ENTITY_ID = \'COMPANY\' '.
+						'AND FM.ELEMENT_ID = %s '.
+						'AND FM.TYPE_ID = \'EMAIL\' '.
+						'AND FM.VALUE_TYPE = \'MAILING\' '.
+						'ORDER BY FM.ID', 1
+					).')',
+					'ID'
+				)
+			),
 			'PHONE_MOBILE' => array(
 				'data_type' => 'string',
 				'expression' => array(
@@ -200,6 +217,21 @@ class CompanyTable extends Entity\DataManager
 						'AND FM.ELEMENT_ID = %s '.
 						'AND FM.TYPE_ID = \'PHONE\' '.
 						'AND FM.VALUE_TYPE = \'WORK\' '.
+						'ORDER BY FM.ID', 1
+					).')',
+					'ID'
+				)
+			),
+			'PHONE_MAILING' => array(
+				'data_type' => 'string',
+				'expression' => array(
+					'('.$DB->TopSql(
+						'SELECT FM.VALUE '.
+						'FROM b_crm_field_multi FM '.
+						'WHERE FM.ENTITY_ID = \'COMPANY\' '.
+						'AND FM.ELEMENT_ID = %s '.
+						'AND FM.TYPE_ID = \'PHONE\' '.
+						'AND FM.VALUE_TYPE = \'MAILING\' '.
 						'ORDER BY FM.ID', 1
 					).')',
 					'ID'

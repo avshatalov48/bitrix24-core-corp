@@ -1,4 +1,4 @@
 <?
-$MESS["CRM_TITLE"] = "Company details";
-$MESS["CRM_TITLE1"] = "My company details";
+$MESS["CRM_TITLE"] = "Company Details";
+$MESS["CRM_TITLE1"] = "My Company Details";
 ?>

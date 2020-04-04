@@ -87,7 +87,8 @@ if(!$isInternal):
 			'OWNER_ID' => 0,
 			'READ_ONLY' => false,
 			'ENABLE_UI' => false,
-			'ENABLE_TOOLBAR' => false
+			'ENABLE_TOOLBAR' => false,
+			'SKIP_VISUAL_COMPONENTS' => 'Y'
 		),
 		null,
 		array('HIDE_ICONS' => 'Y')
@@ -323,14 +324,6 @@ if(!Bitrix\Main\Grid\Context::isInternalRequest()
 							)
 						)
 						: array()
-					),
-					array(
-						array(
-							'id' => 'widget',
-							'name' => GetMessage('CRM_LEAD_LIST_FILTER_NAV_BUTTON_WIDGET'),
-							'active' => false,
-							'url' => $arParams['PATH_TO_LEAD_WIDGET']
-						)
 					)
 				),
 				'BINDING' => array(
@@ -339,6 +332,7 @@ if(!Bitrix\Main\Grid\Context::isInternalRequest()
 					'key' => strtolower($arResult['NAVIGATION_CONTEXT_ID'])
 				)
 			),
+			'LIMITS' => isset($arResult['LIVE_SEARCH_LIMIT_INFO']) ? $arResult['LIVE_SEARCH_LIMIT_INFO'] : null,
 			'ENABLE_LIVE_SEARCH' => true,
 			'DISABLE_SEARCH' => isset($arParams['~DISABLE_SEARCH']) && $arParams['~DISABLE_SEARCH'] === true,
 			'LAZY_LOAD' => array(
@@ -431,6 +425,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 //region Calendar
 $APPLICATION->IncludeComponent("bitrix:calendar.interface.grid", "", Array(
 	"ID" => $calendarId,
+	"ENTITY_TYPE" => 'crm',
 	"EXTERNAL_DATA_HANDLE_MODE" => true,
 	"READONLY" => !$allowWrite,
 	"SHOW_FILTER" => false,
@@ -439,7 +434,8 @@ $APPLICATION->IncludeComponent("bitrix:calendar.interface.grid", "", Array(
 	"SHOW_TOP_VIEW_SWITCHER" => false,
 	"DEFAULT_SECTION_NAME" => 'calendar#lead',
 	"DEFAULT_SECTION_COLOR" => '#2FC6F6',
-	"NEW_ENTRY_NAME" => 'new lead',
+	"NEW_ENTRY_NAME" => Loc::getMessage('CRM_CALENDAR_NEW_LEAD_NAME'),
+	"COLLAPSED_ENTRIES_NAME" => Loc::getMessage('CRM_CALENDAR_COLLAPSED_LEAD_NAME'),
 	"AVILABLE_VIEWS" => array('day', 'week', 'month'),
 	"ADDITIONAL_VIEW_MODES" => $arParams['CALENDAR_MODE_LIST']
 ));

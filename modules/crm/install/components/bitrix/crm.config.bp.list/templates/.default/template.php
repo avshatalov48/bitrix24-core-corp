@@ -44,7 +44,7 @@ $APPLICATION->IncludeComponent(
 				'bp_id' => '#ID#'
 			)
 		),
-		'SET_TITLE'	=>	'Y'
+		'SET_TITLE'	=>	'N'
 	),
 	$component,
 	array('HIDE_ICONS' => 'Y')

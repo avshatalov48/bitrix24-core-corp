@@ -55,5 +55,105 @@ $APPLICATION->IncludeComponent('bitrix:bizproc.automation', '', [
 
 		BX.addCustomEvent('CrmProgressControlAfterSaveSucces', onStatusChange);
 		BX.addCustomEvent('Crm.EntityProgress.Change', onEntityProgressChange);
+
+		var DocumentTriggerDialogHandler = function(trigger, form)
+		{
+			var triggerData = trigger.manager.getAvailableTrigger(trigger.data['CODE']);
+
+			if (triggerData && triggerData['TEMPLATE_LIST'])
+			{
+				var select = BX.create('select', {
+					attrs: {className: 'bizproc-automation-popup-settings-dropdown'},
+					props: {
+						name: 'TEMPLATE_ID',
+						value: ''
+					},
+					children: [BX.create('option', {
+						props: {value: ''},
+						text: BX.message('BIZPROC_AUTOMATION_TRIGGER_WEBFORM_ANY')
+					})]
+				});
+
+				for (var i = 0; i < triggerData['TEMPLATE_LIST'].length; ++i)
+				{
+					var item = triggerData['TEMPLATE_LIST'][i];
+					select.appendChild(BX.create('option', {
+						props: {value: item['ID']},
+						text: item['NAME']
+					}));
+				}
+				if (BX.type.isPlainObject(trigger.data['APPLY_RULES']) && trigger.data['APPLY_RULES']['TEMPLATE_ID'])
+				{
+					select.value = trigger.data['APPLY_RULES']['TEMPLATE_ID'];
+				}
+
+				var div = BX.create('div', {attrs: {className: 'bizproc-automation-popup-settings'},
+					children: [BX.create('span', {attrs: {
+							className: 'bizproc-automation-popup-settings-title'
+						}, text: triggerData['TEMPLATE_LABEL'] + ':'}), select]
+				});
+				form.appendChild(div);
+			}
+		};
+
+		BX.addCustomEvent('BX.Bizproc.Automation.TriggerManager:onOpenSettingsDialog-DOCUMENT_VIEW', DocumentTriggerDialogHandler);
+		BX.addCustomEvent('BX.Bizproc.Automation.TriggerManager:onOpenSettingsDialog-DOCUMENT_CREATE', DocumentTriggerDialogHandler);
+
+		var DocumentTriggerSaveHandler = function(trigger, formData)
+		{
+			trigger.data['APPLY_RULES'] = {
+				TEMPLATE_ID:  formData['data']['TEMPLATE_ID']
+			}
+		};
+
+		BX.addCustomEvent('BX.Bizproc.Automation.TriggerManager:onSaveSettings-DOCUMENT_VIEW', DocumentTriggerSaveHandler);
+		BX.addCustomEvent('BX.Bizproc.Automation.TriggerManager:onSaveSettings-DOCUMENT_CREATE', DocumentTriggerSaveHandler);
+
+		BX.addCustomEvent('BX.Bizproc.Automation.TriggerManager:onOpenSettingsDialog-MISSED_CALL', function(trigger, form)
+			{
+				var triggerData = trigger.manager.getAvailableTrigger(trigger.data['CODE']);
+				if (triggerData && triggerData['LINES'])
+				{
+					var select = BX.create('select', {
+						attrs: {className: 'bizproc-automation-popup-settings-dropdown'},
+						props: {
+							name: 'LINE_NUMBER',
+							value: ''
+						},
+						children: [BX.create('option', {
+							props: {value: ''},
+							text: BX.message('BIZPROC_AUTOMATION_TRIGGER_WEBFORM_ANY')
+						})]
+					});
+
+					for (var i = 0; i < triggerData['LINES'].length; ++i)
+					{
+						var item = triggerData['LINES'][i];
+						select.appendChild(BX.create('option', {
+							props: {value: item['LINE_NUMBER']},
+							text: item['SHORT_NAME']
+						}));
+					}
+					if (trigger.data['APPLY_RULES']['LINE_NUMBER'])
+					{
+						select.value = trigger.data['APPLY_RULES']['LINE_NUMBER'];
+					}
+
+					var div = BX.create('div', {attrs: {className: 'bizproc-automation-popup-settings'},
+						children: [BX.create('span', {attrs: {
+								className: 'bizproc-automation-popup-settings-title'
+							}, text: BX.message('BIZPROC_AUTOMATION_TRIGGER_CALL_LABEL') + ':'}), select]
+					});
+					form.appendChild(div);
+				}
+			}
+		);
+
+		BX.addCustomEvent('BX.Bizproc.Automation.TriggerManager:onSaveSettings-MISSED_CALL', function(trigger, formData)
+		{
+			trigger.data['APPLY_RULES'] = {
+				LINE_NUMBER:  formData['data']['LINE_NUMBER']
+			}
+		});
 	});
 </script>

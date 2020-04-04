@@ -4,8 +4,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
-use \Bitrix\Landing\TemplateRef;
 use \Bitrix\Landing\Landing;
+use \Bitrix\Landing\Rights;
+use \Bitrix\Landing\TemplateRef;
 use \Bitrix\Main\Localization\Loc;
 
 \CBitrixComponent::includeComponentClass('bitrix:landing.base.form');
@@ -230,38 +231,57 @@ class LandingEditComponent extends LandingBaseFormComponent
 											))
 										: array();
 
-			// if current page in folder
-			$this->arResult['FOLDER'] = array();
-			if ($this->arResult['LANDING']['FOLDER_ID']['CURRENT'])
-			{
-				$folderId = $this->arResult['LANDING']['FOLDER_ID']['CURRENT'];
-				$res = Landing::getList(array(
-					'select' => array(
-						'*'
-					),
-					'filter' => array(
-						'ID' => $folderId
-					)
-				));
-				if ($row = $res->fetch())
-				{
-					$this->arResult['FOLDER'] = $row;
-				}
-			}
-
+			// if access denied, or not found
 			if (!$this->arResult['LANDING'])
 			{
 				$this->id = 0;
 			}
+			if (
+				$this->id &&
+				!Rights::hasAccessForSite(
+					$this->arParams['SITE_ID'],
+					Rights::ACCESS_TYPES['sett']
+				)
+			)
+			{
+				$this->id = 0;
+				$this->arParams['LANDING_ID'] = 0;
+				$this->addError('ACCESS_DENIED', '', true);
+			}
 
-			$this->arResult['HOOKS'] = $this->getHooks();
-			$this->arResult['HOOKS_SITE'] = $this->getHooks('Site', $this->arParams['SITE_ID']);
-			$this->arResult['TEMPLATES_REF'] = TemplateRef::getForLanding($this->id);
-			$this->arResult['META'] = $this->getMeta();
-			$this->arResult['SITES'] = $this->getSites();
-			$this->arResult['DOMAINS'] = $this->getDomains();
+			// if current page in folder
+			if ($this->id)
+			{
+				$this->arResult['FOLDER'] = array();
+				if ($this->arResult['LANDING']['FOLDER_ID']['CURRENT'])
+				{
+					$folderId = $this->arResult['LANDING']['FOLDER_ID']['CURRENT'];
+					$res = Landing::getList(array(
+						'select' => array(
+							'*'
+						),
+						'filter' => array(
+							'ID' => $folderId
+						)
+					));
+					if ($row = $res->fetch())
+					{
+						$this->arResult['FOLDER'] = $row;
+					}
+				}
+			}
 
-			if ($this->id > 0)
+			if ($this->id)
+			{
+				$this->arResult['HOOKS'] = $this->getHooks();
+				$this->arResult['HOOKS_SITE'] = $this->getHooks('Site', $this->arParams['SITE_ID']);
+				$this->arResult['TEMPLATES_REF'] = TemplateRef::getForLanding($this->id);
+				$this->arResult['META'] = $this->getMeta();
+				$this->arResult['SITES'] = $this->getSites();
+				$this->arResult['DOMAINS'] = $this->getDomains();
+			}
+
+			if ($this->id)
 			{
 				$this->arResult['LANDING_INST'] = Landing::createInstance($this->id);
 			}

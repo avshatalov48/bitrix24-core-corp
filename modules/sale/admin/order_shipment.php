@@ -490,19 +490,23 @@ while ($shipment = $dbResultList->Fetch())
 	if(in_array("IS_DELIVERY_REQUEST_FAILED", $visibleHeaders))
 		$row->AddField("IS_DELIVERY_REQUEST_FAILED", strlen($shipment["DELIVERY_REQUEST_SHIPMENT_ERROR_DESCRIPTION"]) > 0 ? GetMessage("SHIPMENT_ORDER_YES") : GetMessage("SHIPMENT_ORDER_NO"));
 
-	$colorRGB = array();
-	$colorRGB = sscanf($shipment['STATUS_COLOR'], "#%02x%02x%02x");
-
-	if (count($colorRGB))
+	$status = '';
+	if ($shipment['STATUS_COLOR'])
 	{
-		$color = "background:rgba(".$colorRGB[0].",".$colorRGB[1].",".$colorRGB[2].",0.6);";
-		$status = '<div style=	"'.$color.'
-									margin: 0 0 0 -16px;
-									padding: 11px 0 10px 16px;
-									min-height: 100%;
-								">'.htmlspecialcharsbx($shipment['STATUS_NAME'])."</div>";
+		$colorRGB = sscanf($shipment['STATUS_COLOR'], "#%02x%02x%02x");
+
+		if (is_array($colorRGB) && count($colorRGB))
+		{
+			$color = "background:rgba(".$colorRGB[0].",".$colorRGB[1].",".$colorRGB[2].",0.6);";
+			$status = '<div style=	"'.$color.'
+										margin: 0 0 0 -16px;
+										padding: 11px 0 10px 16px;
+										min-height: 100%;
+									">'.htmlspecialcharsbx($shipment['STATUS_NAME'])."</div>";
+		}
 	}
-	else
+
+	if ($status === '')
 	{
 		$status = htmlspecialcharsbx($shipment['STATUS_NAME']);
 	}

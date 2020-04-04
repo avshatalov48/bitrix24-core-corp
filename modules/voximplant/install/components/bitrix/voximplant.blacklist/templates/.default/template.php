@@ -11,7 +11,7 @@ if($isBitrix24Template)
 }
 ?>
 <div class="pagetitle-container pagetitle-align-right-container">
-	<button id="vox-blacklist-settings" class="ui-btn ui-btn-md ui-btn-light-border ui-btn-themes ui-btn-icon-setting"></button>
+	<button id="vox-blacklist-settings" class="ui-btn ui-btn-light-border ui-btn-themes ui-btn-icon-setting"></button>
 	<button id="vox-blacklist-add" class="ui-btn ui-btn-md ui-btn-primary ui-btn-icon-add"><?= Loc::getMessage("VOX_BLACKLIST_ADD_TO_LIST") ?></button>
 </div>
 <?

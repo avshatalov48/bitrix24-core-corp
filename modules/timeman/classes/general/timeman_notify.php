@@ -1,13 +1,20 @@
 <?
+
+use Bitrix\Timeman\Model\Worktime\Record\WorktimeRecordTable;
+
 IncludeModuleLangFile(__FILE__);
 
 class CTimeManNotify
 {
 	// $SEND_TYPE = 'U'pdate (only up if exists) OR 'A'dd (only add if not exists)
-	public static function SendMessage($ENTRY_ID, $SEND_TYPE = false)
+	public static function SendMessage($ENTRY_ID, $SEND_TYPE = false, $options = [])
 	{
 		global $DB, $APPLICATION, $USER;
-
+		$sendNotifications = true;
+		if (array_key_exists('SEND_NOTIFICATIONS', $options))
+		{
+			$sendNotifications = (bool)$options['SEND_NOTIFICATIONS'];
+		}
 		$ENTRY_ID = intval($ENTRY_ID);
 		if ($ENTRY_ID <= 0)
 		{
@@ -56,10 +63,14 @@ class CTimeManNotify
 					"FORUM_ID" => COption::GetOptionInt("timeman", "report_forum_id", "")
 				))
 			);
-
+			$sendFromUserId = null;
+			if (array_key_exists('SEND_FROM_USER_ID', $options) && $options['SEND_FROM_USER_ID'] > 0)
+			{
+				$sendFromUserId = (int)$options['SEND_FROM_USER_ID'];
+			}
 			$arSoFields["ENTITY_TYPE"] = SONET_TIMEMAN_ENTRY_ENTITY;
 			$arSoFields["ENTITY_ID"] = $arEntry["USER_ID"];
-			$arSoFields["USER_ID"] = $USER->GetID();//$arEntry["USER_ID"];
+			$arSoFields["USER_ID"] = $sendFromUserId === null ? $USER->GetID() : $sendFromUserId;
 
 			$dbRes = CSocNetLog::GetList(array(), array(
 				'ENTITY_TYPE' => $arSoFields['ENTITY_TYPE'],
@@ -84,7 +95,7 @@ class CTimeManNotify
 
 					$bSend = true;
 
-					if (IsModuleInstalled("im"))
+					if (IsModuleInstalled("im") && $sendNotifications)
 					{
 						$arEntry["LOG_ID"] = $logID;
 						$arEntry["DATE_TEXT"] = FormatDate("j F", MakeTimeStamp($arEntry["DATE_START"], FORMAT_DATETIME));
@@ -109,7 +120,8 @@ class CTimeManNotify
 						CSocNetLogRights::Add($logID, $arRights);
 
 						if (
-							$arEntry["INACTIVE_OR_ACTIVATED"] == "Y"
+							$sendNotifications
+							&& $arEntry["INACTIVE_OR_ACTIVATED"] == "Y"
 							&& IsModuleInstalled("im")
 						)
 						{
@@ -398,8 +410,11 @@ class CTimeManNotify
 				);
 			else
 			{
-				$href = "javascript:BX.StartNotifySlider('".$arFields["ENTITY_ID"]."', '".$arFields["SOURCE_ID"]."', 1);";
-
+				$href = \Bitrix\Timeman\Service\DependencyManager::getInstance()
+					->getUrlManager()
+					->getUriTo(\Bitrix\Timeman\TimemanUrlManager::URI_RECORD_REPORT, [
+						'RECORD_ID' => $arFields["SOURCE_ID"]
+					]);
 				$arResult = array(
 					'EVENT' => $arFields,
 					'EVENT_FORMATTED' => array(
@@ -616,119 +631,158 @@ class CTimeManNotify
 	{
 		global $USER, $DB, $USER_FIELD_MANAGER;
 
-		$dbRes = CTimeManEntry::GetList(array(), array('ID' => $arLog['SOURCE_ID']));
+		$dbRes = CTimeManEntry::GetList([], ['ID' => $arLog['SOURCE_ID']]);
 		$arEntry = $dbRes->Fetch();
 
-		if (
-			$arEntry
-			&& CModule::IncludeModule("forum")
-		)
+		if ($arEntry && CModule::IncludeModule("forum"))
 		{
-			$ufFileID = array();
-			$ufDocID = array();
-
-			if(!$userName = trim($USER->GetFormattedName(false)))
-				$userName = $USER->GetLogin();
-
-			if (intval($arEntry["FORUM_TOPIC_ID"]) > 0)
+			$ufFileID = [];
+			$ufDocID = [];
+			if (isset($arFields['FORUM_COMMENT_ADDED']) && $arFields['FORUM_COMMENT_ADDED'] === true && $arFields['MESSAGE_ID'])
 			{
-				if (!CForumTopic::GetByID($arEntry["FORUM_TOPIC_ID"]))
-				{
-					$arEntry["FORUM_TOPIC_ID"] = false;
-				}
-			}
-
-			if (intval($arEntry["FORUM_TOPIC_ID"]) <= 0)
-			{
-				$t = ConvertTimeStamp(time(),"FULL");
-				$arTopicFields = Array(
-					"TITLE" => $arEntry["DATE_START"],
-					"USER_START_ID" => $arFields["USER_ID"],
-					"STATE" => "Y",
-					"FORUM_ID" => $FORUM_ID,
-					"USER_START_NAME" => $userName,
-					"START_DATE" => $t,
-					"POSTS" => 0,
-					"VIEWS" => 0,
-					"APPROVED" => "Y",
-					"LAST_POSTER_NAME" =>$userName,
-					"LAST_POST_DATE" => $t,
-					"LAST_MESSAGE_ID" => 0,
-					"XML_ID"=>"TIMEMAN_ENTRY_".$arLog["SOURCE_ID"]
-				);
-				$TOPIC_ID = CForumTopic::Add($arTopicFields);
-				if($TOPIC_ID > 0)
-					CTimeManEntry::Update($arLog['SOURCE_ID'], array("FORUM_TOPIC_ID" => $TOPIC_ID));
+				$mess_id = $arFields['MESSAGE_ID'];
 			}
 			else
-				$TOPIC_ID = $arEntry["FORUM_TOPIC_ID"];
-
-			if ($TOPIC_ID)
 			{
-				$arFieldsP = array(
-					"AUTHOR_ID" => $arFields["USER_ID"],
-					"AUTHOR_NAME" => $userName,
-					"POST_MESSAGE" => $arFields["TEXT_MESSAGE"],
-					"POST_DATE" => date($DB->DateFormatToPHP(FORMAT_DATETIME), time()-1),
-					"FORUM_ID" => $FORUM_ID,
-					"TOPIC_ID" =>$TOPIC_ID,
-					"APPROVED" => "Y",
-					"PARAM2" => $arLog["SOURCE_ID"]
-				);
-
-				$USER_FIELD_MANAGER->EditFormAddFields("SONET_COMMENT", $arTmp);
-				if (is_array($arTmp))
+				if (!$userName = trim($USER->GetFormattedName(false)))
 				{
-					if (array_key_exists("UF_SONET_COM_DOC", $arTmp))
-						$GLOBALS["UF_FORUM_MESSAGE_DOC"] = $arTmp["UF_SONET_COM_DOC"];
-					elseif (array_key_exists("UF_SONET_COM_FILE", $arTmp))
+					$userName = $USER->GetLogin();
+				}
+
+				if (intval($arEntry["FORUM_TOPIC_ID"]) > 0)
+				{
+					if (!CForumTopic::GetByID($arEntry["FORUM_TOPIC_ID"]))
 					{
-						$arFieldsP["FILES"] = array();
-						foreach($arTmp["UF_SONET_COM_FILE"] as $file_id)
-							$arFieldsP["FILES"][] = array("FILE_ID" => $file_id);
+						$arEntry["FORUM_TOPIC_ID"] = false;
 					}
 				}
 
-				$USER_FIELD_MANAGER->EditFormAddFields("FORUM_MESSAGE", $arFieldsP);
-
-				$mess_id = CForumMessage::Add($arFieldsP);
-
-				// get UF DOC value and FILE_ID there
-				if ($mess_id > 0)
+				if (intval($arEntry["FORUM_TOPIC_ID"]) <= 0)
 				{
-					$dbAddedMessageFiles = CForumFiles::GetList(array("ID" => "ASC"), array("MESSAGE_ID" => $mess_id));
-					while ($arAddedMessageFiles = $dbAddedMessageFiles->Fetch())
-						$ufFileID[] = $arAddedMessageFiles["FILE_ID"];
-
-					$ufDocID = $USER_FIELD_MANAGER->GetUserFieldValue("FORUM_MESSAGE", "UF_FORUM_MESSAGE_DOC", $mess_id, LANGUAGE_ID);
+					$t = ConvertTimeStamp(time(), "FULL");
+					$arTopicFields = [
+						"TITLE" => $arEntry["DATE_START"],
+						"USER_START_ID" => $arFields["USER_ID"],
+						"STATE" => "Y",
+						"FORUM_ID" => $FORUM_ID,
+						"USER_START_NAME" => $userName,
+						"START_DATE" => $t,
+						"POSTS" => 0,
+						"VIEWS" => 0,
+						"APPROVED" => "Y",
+						"LAST_POSTER_NAME" => $userName,
+						"LAST_POST_DATE" => $t,
+						"LAST_MESSAGE_ID" => 0,
+						"XML_ID" => "TIMEMAN_ENTRY_" . $arLog["SOURCE_ID"],
+					];
+					$TOPIC_ID = CForumTopic::Add($arTopicFields);
+					if ($TOPIC_ID > 0)
+					{
+						CTimeManEntry::Update($arLog['SOURCE_ID'], ["FORUM_TOPIC_ID" => $TOPIC_ID]);
+					}
+				}
+				else
+				{
+					$TOPIC_ID = $arEntry["FORUM_TOPIC_ID"];
 				}
 
-				if (IsModuleInstalled("im"))
-					CTimeManNotify::AddCommentToIM(
-						array(
-							"USER_ID" => $arFieldsP["AUTHOR_ID"],
-							"ENTRY_ID" => $arEntry["ID"],
-							"LOG_ID" => $arLog["ID"],
-							"MESSAGE" => $arFields["TEXT_MESSAGE"]
-						)
-					);
+				if ($TOPIC_ID)
+				{
+					$arFieldsP = [
+						"AUTHOR_ID" => $arFields["USER_ID"],
+						"AUTHOR_NAME" => $userName,
+						"POST_MESSAGE" => $arFields["TEXT_MESSAGE"],
+						"POST_DATE" => date($DB->DateFormatToPHP(FORMAT_DATETIME), time() - 1),
+						"FORUM_ID" => $FORUM_ID,
+						"TOPIC_ID" => $TOPIC_ID,
+						"APPROVED" => "Y",
+						"PARAM2" => $arLog["SOURCE_ID"],
+					];
+
+					$USER_FIELD_MANAGER->EditFormAddFields("SONET_COMMENT", $arTmp);
+					if (is_array($arTmp))
+					{
+						if (array_key_exists("UF_SONET_COM_DOC", $arTmp))
+						{
+							$GLOBALS["UF_FORUM_MESSAGE_DOC"] = $arTmp["UF_SONET_COM_DOC"];
+						}
+						elseif (array_key_exists("UF_SONET_COM_FILE", $arTmp))
+						{
+							$arFieldsP["FILES"] = [];
+							foreach ($arTmp["UF_SONET_COM_FILE"] as $file_id)
+							{
+								$arFieldsP["FILES"][] = ["FILE_ID" => $file_id];
+							}
+						}
+					}
+
+					$USER_FIELD_MANAGER->EditFormAddFields("FORUM_MESSAGE", $arFieldsP);
+
+					$mess_id = CForumMessage::Add($arFieldsP);
+
+				}
+			}
+			// get UF DOC value and FILE_ID there
+			if ($mess_id > 0)
+			{
+				$dbAddedMessageFiles = CForumFiles::GetList(["ID" => "ASC"], ["MESSAGE_ID" => $mess_id]);
+				while ($arAddedMessageFiles = $dbAddedMessageFiles->Fetch())
+				{
+					$ufFileID[] = $arAddedMessageFiles["FILE_ID"];
+				}
+
+				$ufDocID = $USER_FIELD_MANAGER->GetUserFieldValue("FORUM_MESSAGE", "UF_FORUM_MESSAGE_DOC", $mess_id, LANGUAGE_ID);
 			}
 
-			return array(
+			if (IsModuleInstalled("im"))
+			{
+				CTimeManNotify::AddCommentToIM([
+					"USER_ID" => $arFields["USER_ID"],
+					"ENTRY_ID" => $arEntry["ID"],
+					"LOG_ID" => $arLog["ID"],
+					"MESSAGE" => $arFields["TEXT_MESSAGE"],
+				]);
+			}
+
+			return [
 				"RATING_TYPE_ID" => "FORUM_POST",
 				"RATING_ENTITY_ID" => $mess_id,
 				"SOURCE_ID" => $mess_id,
-				"UF" => array(
+				"UF" => [
 					"FILE" => $ufFileID,
-					"DOC" => $ufDocID
-				)
-			);
+					"DOC" => $ufDocID,
+				],
+			];
 		}
 
 		return false;
 	}
 
-	function AddCommentToLog($arFields)
+	public static function onAfterForumCommentAdd($entityType, $entityId, $arFields)
+	{
+		if ($entityType !== 'TM')
+		{
+			return;
+		}
+		$record = WorktimeRecordTable::query()
+			->addSelect('FORUM_TOPIC_ID')
+			->where('ID', $entityId)
+			->fetch();
+		if ($record !== false && $record['FORUM_TOPIC_ID'] <= 0 && $arFields['MESSAGE']['TOPIC_ID'] > 0)
+		{
+			WorktimeRecordTable::update($entityId, ['FORUM_TOPIC_ID' => $arFields['MESSAGE']['TOPIC_ID']]);
+		}
+		$data = [
+			'ENTRY_ID' => $entityId,
+			'COMMENT_TEXT' => $arFields['MESSAGE']['POST_MESSAGE'],
+			'USER_ID' => $arFields['PARAMS']['USER_ID'],
+			'FORUM_COMMENT_ADDED' => true,
+			'MESSAGE_ID' => $arFields['MESSAGE']['ID'],
+		];
+		CTimeManNotify::AddCommentToLog($data);
+	}
+
+	public static function AddCommentToLog($arFields)
 	{
 		global $DB, $USER;
 		CModule::IncludeModule("socialnetwork");
@@ -742,6 +796,8 @@ class CTimeManNotify
 			"TEXT_MESSAGE" => $arFields["COMMENT_TEXT"],
 			"MESSAGE" => $arFields["COMMENT_TEXT"],
 			"USER_ID" => $arFields["USER_ID"],
+			"FORUM_COMMENT_ADDED" => isset($arFields["FORUM_COMMENT_ADDED"]) ? $arFields["FORUM_COMMENT_ADDED"] : false,
+			"MESSAGE_ID" => isset($arFields["MESSAGE_ID"]) ? $arFields["MESSAGE_ID"] : null,
 			"ENTITY_TYPE" => SONET_TIMEMAN_ENTRY_ENTITY,
 			"LOG_ID" => $LOG_ID,
 			"=LOG_DATE" => $DB->CurrentTimeFunction()
@@ -852,18 +908,22 @@ class CTimeManNotify
 		}
 	}
 
-	public static function GetForum($arLog)
+	public static function GetForum($arLog = null)
 	{
-		$FORUM_ID = COption::GetOptionInt("timeman", "report_forum_id", 0);
-
-		if($FORUM_ID <= 0 && CModule::IncludeModule("forum"))
+		$forumId = COption::GetOptionInt("timeman", "report_forum_id", 0);
+		if ($forumId <= 0 && CModule::IncludeModule("forum"))
 		{
-			$arForumFields = Array(
+			$siteId = SITE_ID;
+			if ($arLog)
+			{
+				$siteId = $arLog["SITE_ID"];
+			}
+			$arForumFields = [
 				"NAME" => GetMessage("TIMEMAN_FORUM_TITLE"),
 				"DESCRIPTION" => "",
 				"FORUM_GROUP_ID" => 0,
-				"GROUP_ID" => array(1 => "Y", 2 => "M"),
-				"SITES" => array($arLog["SITE_ID"]=>"/"),
+				"GROUP_ID" => [1 => "Y", 2 => "M"],
+				"SITES" => [$siteId => "/"],
 				"ACTIVE" => "Y",
 				"MODERATION" => "N",
 				"INDEXATION" => "N",
@@ -883,14 +943,16 @@ class CTimeManNotify
 				"ALLOW_UPLOAD" => "Y",
 				"ALLOW_UPLOAD_EXT" => "",
 				"ALLOW_TOPIC_TITLED" => "Y",
-			);
+			];
 
-			$FORUM_ID = CForumNew::Add($arForumFields);
-			if ($FORUM_ID > 0)
-				COption::SetOptionInt("timeman","report_forum_id",$FORUM_ID);
+			$forumId = CForumNew::Add($arForumFields);
+			if ($forumId > 0)
+			{
+				COption::SetOptionInt("timeman", "report_forum_id", $forumId);
+			}
 		}
 
-		return $FORUM_ID;
+		return $forumId;
 	}
 
 	public static function OnAfterUserUpdate($arFields)

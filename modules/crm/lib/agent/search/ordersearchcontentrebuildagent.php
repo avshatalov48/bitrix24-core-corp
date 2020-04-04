@@ -69,9 +69,10 @@ class OrderSearchContentRebuildAgent extends EntitySearchContentRebuildAgent
 	}
 	public function getTotalCount()
 	{
-		$dbResult = new CDBResult();
-		$dbResult->InitFromArray(array());
-		return $dbResult;
+		$orderQuery = \Bitrix\Crm\Order\Order::getList(array(
+			'count_total' => true,
+		));
+		return $orderQuery->getCount();
 	}
 	public function prepareItemIDs($offsetID, $limit)
 	{
@@ -103,8 +104,7 @@ class OrderSearchContentRebuildAgent extends EntitySearchContentRebuildAgent
 	}
 	public function rebuild(array $itemIDs)
 	{
-		//todo:
-		//$builder = SearchContentBuilderFactory::create(\CCrmOwnerType::Order);
-		//$builder->bulkBuild($itemIDs);
+		$builder = SearchContentBuilderFactory::create(\CCrmOwnerType::Order);
+		$builder->bulkBuild($itemIDs);
 	}
 }

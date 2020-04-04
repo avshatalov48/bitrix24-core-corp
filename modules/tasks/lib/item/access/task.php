@@ -8,10 +8,10 @@
 
 namespace Bitrix\Tasks\Item\Access;
 
+use Bitrix\Main\DB\SqlExpression;
 use Bitrix\Tasks\Integration\SocialNetwork\Group;
 use Bitrix\Tasks\Item\Result;
 use Bitrix\Tasks\Util\User;
-use Bitrix\Tasks\Item;
 use Bitrix\Tasks\Internals\Runtime;
 
 final class Task extends \Bitrix\Tasks\Item\Access
@@ -22,26 +22,32 @@ final class Task extends \Bitrix\Tasks\Item\Access
 	 * @param mixed[]|\Bitrix\Main\Entity\Query query parameters or query itself
 	 * @param mixed[] $parameters
 	 * @return array
+	 * @throws \Bitrix\Main\ArgumentException
 	 */
 	public function addDataBaseAccessCheck($query, array $parameters = array())
 	{
-		if(!$this->isEnabled())
+		if (!$this->isEnabled())
 		{
 			return $query;
 		}
 
 		$applyFilter = [];
-		if(array_key_exists('=ID', $query['filter']))
+		if (array_key_exists('=ID', $query['filter']))
 		{
-			$applyFilter = ['ID'=>$query['filter']['=ID']];
+			$applyFilter = ['ID' => $query['filter']['=ID']];
 		}
 
-		return Runtime::apply($query, array(
-			Runtime\Task::getAccessCheck(array(
-				'USER_ID' => $parameters['USER_ID'],
-				'APPLY_FILTER'=>$applyFilter
-			)
-		)));
+		$accessCheckSql = Runtime\Task::getAccessCheckSql([
+			'USER_ID' => $parameters['USER_ID'],
+			'APPLY_FILTER' => $applyFilter,
+		])['sql'];
+
+		if ($accessCheckSql !== '')
+		{
+			$query['filter']['@ID'] = new SqlExpression($accessCheckSql);
+		}
+
+		return Runtime::apply($query, []);
 	}
 
 	public function canCreate($item, $userId = 0)

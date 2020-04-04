@@ -96,7 +96,15 @@ class Year extends Base
 			$yearValue++;
 		}
 
-		$date = mktime(0, 0, 0, 12, 1, $yearValue - 1);
+		if ($monthValue === 1)
+		{
+			$date = mktime(0, 0, 0, 1, 1, $yearValue);
+		}
+		else
+		{
+			$date = mktime(0, 0, 0, 12, 1, $yearValue - 1);
+		}
+
 		$date = Date::createFromTimestamp($date);
 
 		$month = new Month($params);

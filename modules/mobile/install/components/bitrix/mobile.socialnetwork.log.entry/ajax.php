@@ -598,7 +598,7 @@ if(CModule::IncludeModule("socialnetwork"))
 									{
 										$records[$commentId]["WEB"]["UF"] = $records[$commentId]["UF"];
 										$records[$commentId]["MOBILE"]["UF"] = $records[$commentId]["UF"];
-										$records[$commentId]["MOBILE"]["UF"]["UF_SONET_COM_DOC"]['VALUE'] = array_diff($records[$commentId]["MOBILE"]["UF"]["UF_SONET_COM_DOC"]['VALUE'], $inlineDiskAttachedObjectIdImageList);
+										$records[$commentId]["MOBILE"]["UF"]["UF_SONET_COM_DOC"]['VALUE_INLINE'] = $inlineDiskAttachedObjectIdImageList;
 									}
 								}
 							}

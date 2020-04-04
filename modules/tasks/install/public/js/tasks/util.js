@@ -454,7 +454,17 @@ BX.mergeEx(BX.Tasks.Util, {
 		BX.onCustomEvent(window, 'tasksTaskEvent', eventArgs);
 		if(window != window.top) // if we are inside iframe, translate event to the parent window also
 		{
-			window.top.BX.onCustomEvent(window.top, 'tasksTaskEvent', eventArgs);
+
+			top.BX.onCustomEvent(top.window, 'tasksTaskEvent', eventArgs);
+			BX.onCustomEvent(top.window, 'tasksTaskEvent', eventArgs);
+
+			[].slice.call(top.document.querySelectorAll('iframe'))
+				.forEach(function(iframe) {
+					if (iframe.contentWindow && iframe.contentWindow.BX)
+					{
+						iframe.contentWindow.BX.onCustomEvent(iframe.contentWindow, 'tasksTaskEvent', eventArgs);
+					}
+				})
 		}
 
 		return true;

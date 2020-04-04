@@ -88,7 +88,6 @@ if(check_bitrix_sessid())
 
 		$element['TITLE'] = isset($_POST['TITLE']) ? $_POST['TITLE'] : '';
 		$element['IS_ACTIVE'] = isset($_POST['IS_ACTIVE']) && $_POST['IS_ACTIVE'] === 'Y' ?  'Y' : 'N';
-		$element['SORT'] = isset($_POST['SORT']) ?  intval($_POST['SORT']) : 100;
 		$element['EMAIL_FROM'] = isset($_POST['EMAIL_FROM']) ? $_POST['EMAIL_FROM'] : '';
 		$element['SCOPE'] = CCrmPerms::IsAdmin() && isset($_POST['SCOPE']) ? $_POST['SCOPE'] : null;
 		$element['SUBJECT'] = isset($_POST['SUBJECT']) ? $_POST['SUBJECT'] : '';
@@ -118,22 +117,21 @@ if(check_bitrix_sessid())
 
 		if (!$isNew)
 		{
-			if(CCrmPerms::IsAdmin())
+			$curElement = \CCrmMailTemplate::getList(
+				array(),
+				array('=ID' => $elementID),
+				false,
+				false,
+				array('OWNER_ID', 'SCOPE', 'SORT')
+			)->fetch();
+
+			if (!is_array($curElement))
 			{
-				if(!CCrmMailTemplate::Exists($elementID))
-				{
-					$errors[] = GetMessage('CRM_MAIL_TEMPLATE_NOT_FOUND');
-				}
+				$errors[] = getMessage('CRM_MAIL_TEMPLATE_NOT_FOUND');
 			}
-			else
+			else if (!\CCrmPerms::isAdmin())
 			{
-				$dbResult = CCrmMailTemplate::GetList(array(), array('=ID' => $elementID), false, false, array('OWNER_ID', 'SCOPE'));
-				$curElement = $dbResult->Fetch();
-				if(!is_array($curElement))
-				{
-					$errors[] = GetMessage('CRM_MAIL_TEMPLATE_NOT_FOUND');
-				}
-				elseif(intval($curElement['OWNER_ID']) !== $userID)
+				if (intval($curElement['OWNER_ID']) !== $userID)
 				{
 					if (\CCrmMailTemplateScope::Common == $curElement['SCOPE'])
 					{
@@ -151,6 +149,8 @@ if(check_bitrix_sessid())
 				}
 			}
 
+			$element['SORT'] = (int) (isset($_POST['SORT']) ? $_POST['SORT'] : $curElement['SORT']);
+
 			if(empty($errors) && !CCrmMailTemplate::Update($elementID, $element))
 			{
 				$errors = CCrmMailTemplate::GetErrorMessages();
@@ -162,6 +162,8 @@ if(check_bitrix_sessid())
 		}
 		else
 		{
+			$element['SORT'] = (int) (isset($_POST['SORT']) ? $_POST['SORT'] : 100);
+
 			$element['OWNER_ID'] = $userID;
 			$elementID = CCrmMailTemplate::Add($element);
 			if(!is_int($elementID) || $elementID <= 0)

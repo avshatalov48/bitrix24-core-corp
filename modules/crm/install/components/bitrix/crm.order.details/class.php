@@ -3,6 +3,8 @@ if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
 use Bitrix\Crm;
 use Bitrix\Main;
+use Bitrix\Salescenter;
+use Bitrix\Sale;
 use Bitrix\Crm\Order;
 use Bitrix\Crm\Binding;
 use Bitrix\Sale\Delivery;
@@ -12,6 +14,7 @@ use Bitrix\Sale\Services;
 use Bitrix\Crm\Component\ComponentError;
 use Bitrix\Crm\Security\EntityPermissionType;
 use Bitrix\Crm\Component\EntityDetails\ComponentMode;
+use Bitrix\Sale\Helpers\Order\Builder;
 
 if(!Main\Loader::includeModule('crm'))
 {
@@ -94,15 +97,18 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 		);
 
 		$this->arResult['EXTERNAL_CONTEXT_ID'] = $this->request->get('external_context_id');
-		if ($this->arResult['EXTERNAL_CONTEXT_ID'] === null) {
+		if ($this->arResult['EXTERNAL_CONTEXT_ID'] === null)
+		{
 			$this->arResult['EXTERNAL_CONTEXT_ID'] = $this->request->get('external_context');
-			if ($this->arResult['EXTERNAL_CONTEXT_ID'] === null) {
+			if ($this->arResult['EXTERNAL_CONTEXT_ID'] === null)
+			{
 				$this->arResult['EXTERNAL_CONTEXT_ID'] = '';
 			}
 		}
 
 		$this->arResult['ORIGIN_ID'] = $this->request->get('origin_id');
-		if ($this->arResult['ORIGIN_ID'] === null) {
+		if ($this->arResult['ORIGIN_ID'] === null)
+		{
 			$this->arResult['ORIGIN_ID'] = '';
 		}
 	}
@@ -181,44 +187,177 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 			}
 			else
 			{
-				$userId = null;
-				if ((int)$_REQUEST['USER_ID'] > 0)
-				{
-					$userId = (int)$_REQUEST['USER_ID'];
-				}
-				$siteId = !empty($_REQUEST['SITE_ID']) ? $_REQUEST['SITE_ID'] : SITE_ID;
-				$order = \Bitrix\Crm\Order\Manager::createEmptyOrder($siteId, $userId);
-
-				if ($userId > 0)
-				{
-					$personType = $order->getPersonTypeId();
-					$resultProfileLoading = \Bitrix\Sale\OrderUserProperties::loadProfiles($userId, $personType);
-					if ($resultProfileLoading->isSuccess())
-					{
-						$profiles = $resultProfileLoading->getData();
-						if (!empty($profiles) && is_array($profiles))
-						{
-							$personTypeProfiles = $profiles[$personType];
-							if (!empty($personTypeProfiles))
-							{
-								$this->profileId = key($personTypeProfiles);
-								$currentProfile = current($personTypeProfiles);
-								$values = $currentProfile['VALUES'];
-								$propertyCollection = $order->getPropertyCollection();
-								$propertyCollection->setValuesFromPost(
-									['PROPERTIES' => $values],[]
-								);
-							}
-						}
-
-					}
-				}
+				$order = $this->createOrder();
 			}
 
 			$this->setOrder($order);
 		}
 
 		return $this->order;
+	}
+
+	private function createOrder()
+	{
+		$siteId = !empty($_REQUEST['SITE_ID']) ? $_REQUEST['SITE_ID'] : SITE_ID;
+		$formData = [
+			'SITE_ID' => $siteId
+		];
+
+		$userId = null;
+		if ((int)$this->request->get('USER_ID') > 0)
+		{
+			$formData['USER_ID'] = (int)$this->request->get('USER_ID');
+		}
+
+		$clientInfo = [
+			'CONTACT_IDS' => []
+		];
+		if (
+			$this->arParams["EXTRAS"]['IS_SALESCENTER_ORDER_CREATION'] === 'Y' &&
+			Crm\Integration\SalesCenterManager::getInstance()->isEnabled()
+		)
+		{
+			if(isset($this->arParams['EXTRAS']['CLIENT_INFO']))
+			{
+				$clientInfo = $this->arParams['EXTRAS']['CLIENT_INFO'];
+				if(isset($clientInfo['USER_ID']))
+				{
+					$formData['USER_ID'] = $clientInfo['USER_ID'];
+				}
+			}
+			elseif(isset($this->arParams["EXTRAS"]['SALESCENTER_SESSION_ID']) && $this->arParams["EXTRAS"]['SALESCENTER_SESSION_ID'] > 0)
+			{
+				$sessionId = $this->arParams["EXTRAS"]['SALESCENTER_SESSION_ID'];
+				Salescenter\Integration\ImOpenLinesManager::getInstance()->setSessionId($sessionId);
+				$userId = Salescenter\Integration\ImOpenLinesManager::getInstance()->getUserId();
+				if ($userId)
+				{
+					$formData['USER_ID'] = $userId;
+				}
+				$crmInfo = Salescenter\Integration\ImOpenLinesManager::getInstance()->getCrmInfo();
+				if ((int)$crmInfo['COMPANY'] > 0)
+				{
+					$clientInfo['COMPANY_ID'] = $crmInfo['COMPANY'];
+				}
+
+				if (!empty($crmInfo['CONTACT']))
+				{
+					if (is_array($crmInfo['CONTACT']))
+					{
+						$clientInfo['CONTACT_IDS'] = $crmInfo['CONTACT'];
+					}
+					else
+					{
+						$clientInfo['CONTACT_IDS'] = [(int)$crmInfo['CONTACT']];
+					}
+				}
+			}
+		}
+		else
+		{
+			$externalContactID = $this->request->get('contact_id');
+			if($externalContactID > 0)
+			{
+				$clientInfo['CONTACT_IDS'][] = $externalContactID;
+			}
+
+			$externalCompanyID = $this->request->get('company_id');
+			if($externalCompanyID > 0)
+			{
+				$clientInfo['COMPANY_ID'] = $externalCompanyID;
+				if(empty($clientInfo['CONTACT_IDS']))
+				{
+					$contactIds = Binding\ContactCompanyTable::getCompanyContactIDs($externalCompanyID);
+					foreach ($contactIds as $contactId)
+					{
+						if(CCrmContact::CheckReadPermission($contactId, $this->userPermissions))
+						{
+							$clientInfo['CONTACT_IDS'][] = $contactId;
+						}
+					}
+				}
+			}
+		}
+
+		if (!empty($clientInfo))
+		{
+			$formData['CLIENT'] = $clientInfo;
+		}
+
+		$searchCode = 'CRM_CONTACT';
+		$businessValueDomain = Sale\BusinessValue::INDIVIDUAL_DOMAIN;
+		if (!empty($clientInfo['COMPANY_ID']))
+		{
+			$searchCode = 'CRM_COMPANY';
+			$businessValueDomain = Sale\BusinessValue::ENTITY_DOMAIN;
+		}
+
+		$personTypeRaw = Sale\PersonType::getList([
+			'filter' => [
+				'CODE' => $searchCode,
+				'=ACTIVE' => 'Y',
+				'ENTITY_REGISTRY_TYPE' => 'ORDER'
+			],
+			'select' => ['ID'],
+			'limit' => 1
+		]);
+		if ($personType = $personTypeRaw->fetch())
+		{
+			$formData['PERSON_TYPE_ID'] = (int)$personType['ID'];
+		}
+		else
+		{
+			$personTypeRaw = Sale\PersonType::getList([
+				'filter' => [
+					'ENTITY_REGISTRY_TYPE' => 'ORDER',
+					'=ACTIVE' => 'Y',
+					'BIZVAL.DOMAIN' => $businessValueDomain,
+				],
+				'select' => ['ID'],
+				'runtime' => array(
+					new Main\Entity\ReferenceField(
+						'BIZVAL',
+						'Bitrix\Sale\Internals\BusinessValuePersonDomainTable',
+						array(
+							'=this.ID' => 'ref.PERSON_TYPE_ID'
+						),
+						array('join_type' => 'LEFT')
+					),
+				),
+				'limit' => 1
+			]);
+			if ($personType = $personTypeRaw->fetch())
+			{
+				$formData['PERSON_TYPE_ID'] = (int)$personType['ID'];
+			}
+		}
+
+		$settings =	[
+			'createUserIfNeed' => '',
+			'acceptableErrorCodes' => [],
+			'cacheProductProviderData' => true,
+		];
+		$builderSettings = new Builder\SettingsContainer($settings);
+		$orderBuilder = new Crm\Order\OrderBuilderCrm($builderSettings);
+		$director = new Builder\Director;
+		$order = $director->createOrder($orderBuilder, $formData);
+
+		$fuserId = (int)$this->request->get('FUSER_ID');
+		if ($order && $fuserId > 0)
+		{
+			$basket = Sale\Basket::loadItemsForFUser($fuserId, $order->getSiteId());
+			$order->setBasket($basket);
+			$shipmentCollection = $order->getShipmentCollection();
+			$shipmentCollection->createItem();
+		}
+
+		if($order && isset($clientInfo['DEAL_ID']) && $clientInfo['DEAL_ID'] > 0)
+		{
+			/** @var Order\Order $order */
+			$order->getDealBinding()->setDealId($clientInfo['DEAL_ID']);
+		}
+
+		return $order;
 	}
 
 	public function setOrder(Order\Order $order)
@@ -281,111 +420,27 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 
 		//region Config
 
-		$mainConfig = 	array(
-			'name' => 'main',
-			'title' => Loc::getMessage('CRM_ORDER_SECTION_MAIN'),
-			'type' => 'section',
-			'elements' => array(
-				array('name' => 'TRADING_PLATFORM'),
-				array('name' => 'PERSON_TYPE_ID'),
-				array('name' => 'PRICE_WITH_CURRENCY'),
-				array('name' => 'DATE_INSERT'),
-				array('name' => 'STATUS_ID')
-			)
-		);
-
-		if($this->entityID > 0 && $this->mode !== ComponentMode::COPING)
-		{
-			$mainConfig['elements'][] = array('name' => 'ACCOUNT_NUMBER');
-		}
-
-		$this->arResult['ENTITY_CONFIG'] = array(
-			$mainConfig,
-			array(
-				'name' => 'client',
-				'title' => Loc::getMessage('CRM_ORDER_SECTION_CLIENT'),
-				'type' => 'section',
-				'elements' => array(
-					array('name' => 'USER_ID'),
-					array('name' => 'CLIENT')
-				)
-			),
-			array(
-				'name' => 'responsible',
-				'title' => Loc::getMessage('CRM_ORDER_FIELD_RESPONSIBLE_ID'),
-				'type' => 'section',
-				'elements' =>
-					array(
-						array('name' => 'RESPONSIBLE_ID')
-					)
-			)
-		);
-
-		if($this->entityID > 0)
-		{
-			$this->arResult['ENTITY_CONFIG'][] =
-				array(
-					'name' => 'products',
-					'title' => Loc::getMessage('CRM_ORDER_SECTION_PRODUCTS'),
-					'type' => 'section',
-					'elements' => array(
-						array('name' => 'PRODUCT_ROW_SUMMARY')
-					)
-				);
-		}
-
-		$this->arResult['ENTITY_CONFIG'] = array_merge(
-			$this->arResult['ENTITY_CONFIG'],
-			array(
-				array(
-					'name' => 'properties',
-					'title' => Loc::getMessage('CRM_ORDER_SECTION_PROPERTIES'),
-					'type' => 'section',
-					'data' => array(
-						'showButtonPanel' => false
-					),
-					'elements' => 	array(
-						array('name' => 'USER_PROFILE'),
-						array('name' => 'PROPERTIES'),
-					)
-				),
-				array(
-					'name' => 'payment',
-					'title' => Loc::getMessage('CRM_ORDER_SECTION_PAYMENT'),
-					'type' => 'section',
-					'data' => array(
-						'showButtonPanel' => false,
-						'enableToggling' =>  false
-					),
-					'elements' => 	array(
-						array('name' => 'PAYMENT'),
-					)
-				),
-				array(
-					'name' => 'shipment',
-					'title' => Loc::getMessage('CRM_ORDER_SECTION_SHIPMENT'),
-					'type' => 'section',
-					'data' => array(
-						'showButtonPanel' => false,
-						'enableToggling' =>  false,
-					),
-					'elements' => 	array(
-						array('name' => 'SHIPMENT'),
-					)
-				)
-			)
-		);
+		$this->prepareConfiguration();
 
 		//region CONTROLLERS
+
+		$controllerConfig = [
+			"editorId" => $this->arResult['PRODUCT_EDITOR_ID'],
+			"serviceUrl" => '/bitrix/components/bitrix/crm.order.details/ajax.php',
+			"dataFieldName" => $this->arResult['PRODUCT_DATA_FIELD_NAME']
+		];
+
+		if ($this->arParams["EXTRAS"]['IS_SALESCENTER_ORDER_CREATION'] === 'Y')
+		{
+			$controllerConfig['isSalesCenterOrder'] = 'Y';
+			$controllerConfig['salesCenterSessionId'] = htmlspecialcharsbx($this->arParams["EXTRAS"]['SALESCENTER_SESSION_ID']);
+		}
+
 		$this->arResult['ENTITY_CONTROLLERS'] = array(
 			array(
 				"name" => "ORDER_CONTROLLER",
 				"type" => "order_controller",
-				"config" => array(
-					"editorId" => $this->arResult['PRODUCT_EDITOR_ID'],
-					"serviceUrl" => '/bitrix/components/bitrix/crm.order.details/ajax.php',
-					"dataFieldName" => $this->arResult['PRODUCT_DATA_FIELD_NAME']
-				)
+				"config" => $controllerConfig
 			)
 		);
 		//endregion
@@ -393,15 +448,22 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 		//region Tabs
 		$this->arResult['TABS'] = array();
 
+		$productsParams = [
+			'INTERNAL_FILTER' => array('ORDER_ID' => $this->entityID),
+			'PATH_TO_ORDER_PRODUCT_LIST' => '/bitrix/components/bitrix/crm.order.product.list/class.php?&site='.$this->order->getSiteId().'&'.bitrix_sessid_get(),
+			'ACTION_URL' => '/bitrix/components/bitrix/crm.order.product.list/lazyload.ajax.php?&site='.$this->order->getSiteId().'&'.bitrix_sessid_get(),
+			'ORDER_ID' => $this->order->getId(),
+			'SITE_ID' => $this->order->getSiteId()
+		];
+
+		if ($this->mode === ComponentMode::CREATION && (int)$this->request->get('FUSER_ID') > 0)
+		{
+			$productsParams['FUSER_ID'] = $this->order->getBasket()->getFUserId();
+		}
+
 		$this->arResult['PRODUCT_COMPONENT_DATA'] = array(
 			'template' => '.default',
-			'params' => array(
-				'INTERNAL_FILTER' => array('ORDER_ID' => $this->entityID),
-				'PATH_TO_ORDER_PRODUCT_LIST' => '/bitrix/components/bitrix/crm.order.product.list/class.php?&site='.$this->order->getSiteId().'&'.bitrix_sessid_get(),
-				'ACTION_URL' => '/bitrix/components/bitrix/crm.order.product.list/lazyload.ajax.php?&site='.$this->order->getSiteId().'&'.bitrix_sessid_get(),
-				'ORDER_ID' => $this->order->getId(),
-				'SITE_ID' => $this->order->getSiteId()
-			)
+			'params' => $productsParams
 		);
 
 		if ($this->mode !== ComponentMode::COPING && $this->mode !== ComponentMode::CREATION)
@@ -460,29 +522,67 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 			$licensePrefix = Main\Loader::IncludeModule("bitrix24") ? \CBitrix24::getLicensePrefix() : "";
 			if (!Main\ModuleManager::isModuleInstalled("bitrix24") || in_array($licensePrefix, array("ru")))
 			{
-				$this->arResult['TABS'][] = array(
-					'id' => 'tab_check',
-					'name' => Loc::getMessage('CRM_ORDER_TAB_CHECK'),
-					'loader' => array(
-						'serviceUrl' => '/bitrix/components/bitrix/crm.order.check.list/lazyload.ajax.php?&site'.$this->arResult['SITE_ID'].'&'.bitrix_sessid_get(),
-						'componentData' => array(
-							'template' => '',
-							'params' => array(
-								'ENABLE_TOOLBAR' => true,
-								'CHECK_COUNT' => '20',
-								'OWNER_ID' => $this->entityID,
-								'OWNER_TYPE' => CCrmOwnerType::Order,
-								'PATH_TO_ORDER_CHECK_SHOW' => $this->arResult['PATH_TO_ORDER_CHECK_SHOW'],
-								'PATH_TO_ORDER_CHECK_EDIT' => $this->arResult['PATH_TO_ORDER_CHECK_EDIT'],
-								'PATH_TO_ORDER_CHECK_CHECK_STATUS' => $this->arResult['PATH_TO_ORDER_CHECK_CHECK_STATUS'],
-								'PATH_TO_ORDER_CHECK_DELETE' => $this->arResult['PATH_TO_ORDER_CHECK_DELETE'],
-								'GRID_ID_SUFFIX' => 'CHECK_DETAILS',
-								'TAB_ID' => 'tab_check',
-								'NAME_TEMPLATE' => $this->arResult['NAME_TEMPLATE']
+				if ($this->request->get('tab') !== 'check')
+				{
+					$this->arResult['TABS'][] = array(
+						'id' => 'tab_check',
+						'name' => Loc::getMessage('CRM_ORDER_TAB_CHECK'),
+						'loader' => array(
+							'serviceUrl' => '/bitrix/components/bitrix/crm.order.check.list/lazyload.ajax.php?&site'.$this->arResult['SITE_ID'].'&'.bitrix_sessid_get(),
+							'componentData' => array(
+								'template' => '',
+								'params' => array(
+									'ENABLE_TOOLBAR' => true,
+									'CHECK_COUNT' => '20',
+									'OWNER_ID' => $this->entityID,
+									'OWNER_TYPE' => CCrmOwnerType::Order,
+									'PATH_TO_ORDER_CHECK_SHOW' => $this->arResult['PATH_TO_ORDER_CHECK_SHOW'],
+									'PATH_TO_ORDER_CHECK_EDIT' => $this->arResult['PATH_TO_ORDER_CHECK_EDIT'],
+									'PATH_TO_ORDER_CHECK_CHECK_STATUS' => $this->arResult['PATH_TO_ORDER_CHECK_CHECK_STATUS'],
+									'PATH_TO_ORDER_CHECK_DELETE' => $this->arResult['PATH_TO_ORDER_CHECK_DELETE'],
+									'GRID_ID_SUFFIX' => 'CHECK_DETAILS',
+									'TAB_ID' => 'tab_check',
+									'NAME_TEMPLATE' => $this->arResult['NAME_TEMPLATE']
+								)
 							)
 						)
-					)
-				);
+					);
+				}
+				else
+				{
+					ob_start();
+					$componentParams = [
+						'ENABLE_TOOLBAR' => true,
+						'CHECK_COUNT' => '20',
+						'OWNER_ID' => $this->entityID,
+						'AJAX_MODE' => 'N',
+						'AJAX_OPTION_JUMP' => 'N',
+						'AJAX_OPTION_HISTORY' => 'N',
+						'OWNER_TYPE' => CCrmOwnerType::Order,
+						'PATH_TO_ORDER_CHECK_SHOW' => $this->arResult['PATH_TO_ORDER_CHECK_SHOW'],
+						'PATH_TO_ORDER_CHECK_EDIT' => $this->arResult['PATH_TO_ORDER_CHECK_EDIT'],
+						'PATH_TO_ORDER_CHECK_CHECK_STATUS' => $this->arResult['PATH_TO_ORDER_CHECK_CHECK_STATUS'],
+						'PATH_TO_ORDER_CHECK_DELETE' => $this->arResult['PATH_TO_ORDER_CHECK_DELETE'],
+						'GRID_ID_SUFFIX' => 'CHECK_DETAILS',
+						'TAB_ID' => 'tab_check',
+						'NAME_TEMPLATE' => $this->arResult['NAME_TEMPLATE']
+					];
+					$APPLICATION->IncludeComponent('bitrix:crm.order.check.list',
+						'',
+						$componentParams,
+						false,
+						array('HIDE_ICONS' => 'Y', 'ACTIVE_COMPONENT' => 'Y')
+					);
+					$checkListHtml = ob_get_contents();
+					ob_end_clean();
+
+					$this->arResult['TABS'][] = array(
+						'id' => 'tab_check',
+						'active' => true,
+						'name' => Loc::getMessage('CRM_ORDER_TAB_CHECK'),
+						'html' => $checkListHtml
+					);
+				}
 			}
 
 			$this->arResult['TABS'][] = array(
@@ -637,7 +737,7 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 
 		$this->includeComponentTemplate();
 	}
-	protected function prepareFieldInfos()
+	public function prepareFieldInfos()
 	{
 		if(isset($this->arResult['ENTITY_FIELDS']))
 		{
@@ -708,7 +808,7 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 				'name' => 'TRADING_PLATFORM',
 				'title' => Loc::getMessage('CRM_ORDER_FIELD_TRADING_PLATFORM'),
 				'type' => 'list',
-				'editable' => count($tradingPlatforms) > 0,
+				'editable' => count($tradingPlatforms) > 0 && ($this->arParams['EXTRAS']['IS_SALESCENTER_ORDER_CREATION'] !== 'Y') ,
 				'data' => array(
 					'items'=> \CCrmInstantEditorHelper::PrepareListOptions($tradingPlatforms)
 				)
@@ -752,7 +852,7 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 				'name' => 'USER_ID',
 				'title' => Loc::getMessage('CRM_ORDER_FIELD_USER_ID'),
 				'type' => 'order_user',
-				'editable' => true,
+				'editable' => !($this->arParams['EXTRAS']['IS_SALESCENTER_ORDER_CREATION'] === 'Y' && $this->order->getUserId()) ,
 				'requiredConditionally' => true,
 				'data' => array(
 					'enableEditInView' => true,
@@ -840,6 +940,7 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 			'type' => 'shipment',
 			'editable' => true,
 			'transferable' => false,
+			'enabledMenu' => false,
 			'required' => true,
 			'data' => array(
 				'addShipmentDocumentUrl' => '/bitrix/components/bitrix/crm.order.shipment.document/slider.ajax.php?'.bitrix_sessid_get().'&site='.$this->arResult['SITE_ID'],
@@ -850,10 +951,28 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 			'name' => 'PAYMENT',
 			'type' => 'payment',
 			'editable' => true,
+			'enabledMenu' => false,
 			'transferable' => false,
 			'required' => true,
 			'data' => array(
 				'addPaymentDocumentUrl' => '/bitrix/components/bitrix/crm.order.payment.voucher/slider.ajax.php?'.bitrix_sessid_get().'&site='.$this->arResult['SITE_ID'],
+			)
+		);
+
+		$this->arResult['ENTITY_FIELDS'][] = array(
+			'name' => 'USER_BUDGET',
+			'title' => Loc::getMessage('CRM_ORDER_FIELD_BUDGET'),
+			'type' => 'money',
+			'editable' => false,
+			'data' => array(
+				'affectedFields' => array('CURRENCY', 'BUDGET'),
+				'currency' => array(
+					'name' => 'BUDGET',
+					'items'=> \CCrmInstantEditorHelper::PrepareListOptions(CCrmCurrencyHelper::PrepareListItems())
+				),
+				'amount' => 'BUDGET',
+				'formatted' => 'FORMATTED_BUDGET',
+				'formattedWithCurrency' => 'FORMATTED_BUDGET_WITH_CURRENCY'
 			)
 		);
 
@@ -874,6 +993,14 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 			)
 		);
 		$personTypeList = is_array($this->arResult['PERSON_TYPES']) ? $this->arResult['PERSON_TYPES'] : array();
+		$personTypeOptions = [];
+		if (empty($personTypeList))
+		{
+			$personTypeOptions = [
+				'NOT_SELECTED' => Loc::getMessage('CRM_ORDER_STORE_NOT_CHOSEN'),
+				'NOT_SELECTED_VALUE' => '',
+			];
+		}
 		$this->arResult['ENTITY_FIELDS'][] = array(
 			'name' => 'PERSON_TYPE_ID',
 			'title' => Loc::getMessage('CRM_ORDER_SECTION_PERSON_TYPE_ID'),
@@ -882,7 +1009,7 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 			'type' => 'order_person_type',
 			'editable' => true,
 			'data' => array(
-				'items'=> \CCrmInstantEditorHelper::PrepareListOptions($personTypeList)
+				'items'=> \CCrmInstantEditorHelper::PrepareListOptions($personTypeList, $personTypeOptions)
 			)
 		);
 		$this->arResult['ENTITY_FIELDS'][] = array(
@@ -982,6 +1109,7 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 			$this->tryToDetectMode();
 		}
 
+		$this->entityData = $this->order->getFieldValues();
 		if($prepareDataMode === ComponentMode::CREATION)
 		{
 			//region Default Dates
@@ -1014,17 +1142,6 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 			}
 			//endregion
 
-			$externalCompanyID = $this->request->get('company_id');
-			if($externalCompanyID > 0)
-			{
-				$this->entityData['COMPANY_ID'] = $externalCompanyID;
-			}
-
-			$externalContactID = $this->request->get('contact_id');
-			if($externalContactID > 0)
-			{
-				$this->entityData['CONTACT_ID'] = $externalContactID;
-			}
 			$propertiesData = Order\Property::getList(
 				array(
 					'filter' => array('ACTIVE' => 'Y'),
@@ -1057,13 +1174,11 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 				$this->entityData[$name] = $defaultValue;
 			}
 
-			$this->entityData['USER_ID'] = $this->order->getUserId();
 			$this->entityData['USER_PROFILE'] = !is_null($this->profileId) ? (int)$this->profileId : 'NEW';
 			$this->entityData['OLD_USER_ID'] = null;
 		}
 		else
 		{
-			$this->entityData = $this->order->getFieldValues();
 			//HACK: Removing time from DATE_INSERT because of 'datetime' type (see CCrmQuote::GetFields)
 			if(isset($this->entityData['DATE_INSERT']))
 				$this->entityData['DATE_INSERT'] = \CCrmComponentHelper::TrimZeroTime($this->entityData['DATE_INSERT']);
@@ -1089,26 +1204,6 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 				unset($this->entityData['ID'], $this->entityData['ACCOUNT_NUMBER']);
 			}
 			$this->entityData['OLD_USER_ID'] = $this->entityData['USER_ID'];
-			$ccCollection = $this->order->getContactCompanyCollection();
-
-			$companyId = 0;
-			if($company = $ccCollection->getPrimaryCompany())
-			{
-				$companyId = $company->getField('ENTITY_ID');
-				$this->entityData['COMPANY_ID'] = $companyId;
-			}
-
-			$contactIds = [];
-			$contacts = $ccCollection->getContacts();
-			foreach ($contacts as $contact)
-			{
-				$contactIds[] = $contact->getField('ENTITY_ID');
-			}
-			$this->entityData['CLIENT'] = [
-				'COMPANY_ID' => $companyId,
-				'CONTACT_IDS' => $contactIds
-			];
-
 			$platforms = [];
 			$platformsData = \Bitrix\Sale\TradingPlatformTable::getList([
 				'select' => ['CODE', 'ID', 'CLASS']
@@ -1165,21 +1260,63 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 			$this->entityData['CURRENCY'],
 			''
 		);
-		$this->entityData['FORMATTED_PRICE'] = \CCrmCurrency::MoneyToString(
+		$this->entityData['FORMATTED_PRICE'] = str_replace('&nbsp;', ' ', \CCrmCurrency::MoneyToString(
 			$this->entityData['PRICE'],
 			$this->entityData['CURRENCY'],
 			'#'
+		));
+		//endregion
+
+		//region USER_BUDGET
+		$this->entityData['BUDGET'] = \Bitrix\Sale\Internals\UserBudgetPool::getUserBudget(
+			$this->entityData['USER_ID'],
+			$this->entityData['CURRENCY']
+		);
+
+		$this->entityData['FORMATTED_BUDGET'] = \CCrmCurrency::MoneyToString(
+			$this->entityData['BUDGET'],
+			$this->entityData['CURRENCY'],
+			'#'
+		);
+
+		$this->entityData['FORMATTED_BUDGET_WITH_CURRENCY'] = \CCrmCurrency::MoneyToString(
+			$this->entityData['BUDGET'],
+			$this->entityData['CURRENCY'],
+			''
 		);
 		//endregion
 
 		//region Client Data & Multifield Data
+		$ccCollection = $this->order->getContactCompanyCollection();
+
+		$companyId = 0;
+		if($company = $ccCollection->getPrimaryCompany())
+		{
+			$companyId = $company->getField('ENTITY_ID');
+			$this->entityData['COMPANY_ID'] = $companyId;
+		}
+
+		$contactIDs = [];
+		$contacts = $ccCollection->getContacts();
+		foreach ($contacts as $contact)
+		{
+			$contactIDs[] = $contact->getField('ENTITY_ID');
+		}
+
+		if (!empty($companyId) || !empty($contactIDs))
+		{
+			$this->entityData['CLIENT'] = [
+				'COMPANY_ID' => $companyId,
+				'CONTACT_IDS' => $contactIDs
+			];
+		}
+
 		$clientInfo = array();
-		$multiFildData = array();
-		$companyId = $this->entityData['COMPANY_ID'];
+		$multiFieldData = array();
 		if($companyId > 0)
 		{
-			self::prepareMultifieldData(\CCrmOwnerType::Company, $companyId, 'PHONE', $multiFildData);
-			self::prepareMultifieldData(\CCrmOwnerType::Company, $companyId, 'EMAIL', $multiFildData);
+			self::prepareMultifieldData(\CCrmOwnerType::Company, $companyId, 'PHONE', $multiFieldData);
+			self::prepareMultifieldData(\CCrmOwnerType::Company, $companyId, 'EMAIL', $multiFieldData);
 
 			$isEntityReadPermitted = \CCrmCompany::CheckReadPermission($companyId, $this->userPermissions);
 			$companyInfo = \CCrmEntitySelectorHelper::PrepareEntityInfo(
@@ -1194,32 +1331,14 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 				)
 			);
 
-			$clientInfo['COMPANY_DATA'] = $companyInfo;
+			$clientInfo['COMPANY_DATA'] = [$companyInfo];
 		}
 
-		$contactBindings = array();
-		if($this->entityID > 0)
-		{
-			$contactBindings = \Bitrix\Crm\Binding\OrderContactCompanyTable::getOrderBindings($this->entityID);
-		}
-		elseif(isset($this->entityData['CONTACT_BINDINGS']) && is_array($this->entityData['CONTACT_BINDINGS']))
-		{
-			$contactBindings = $this->entityData['CONTACT_BINDINGS'];
-		}
-		elseif(isset($this->entityData['CONTACT_ID']) && $this->entityData['CONTACT_ID'] > 0)
-		{
-			$contactBindings = Binding\EntityBinding::prepareEntityBindings(
-				CCrmOwnerType::Contact,
-				array($this->entityData['CONTACT_ID'])
-			);
-		}
-
-		$contactIDs = Binding\EntityBinding::prepareEntityIDs(\CCrmOwnerType::Contact, $contactBindings);
 		$clientInfo['CONTACT_DATA'] = array();
 		foreach($contactIDs as $contactID)
 		{
-			self::prepareMultifieldData(CCrmOwnerType::Contact, $contactID, 'PHONE', $multiFildData);
-			self::prepareMultifieldData(CCrmOwnerType::Contact, $contactID, 'EMAIL', $multiFildData);
+			self::prepareMultifieldData(CCrmOwnerType::Contact, $contactID, 'PHONE', $multiFieldData);
+			self::prepareMultifieldData(CCrmOwnerType::Contact, $contactID, 'EMAIL', $multiFieldData);
 
 			$isEntityReadPermitted = CCrmContact::CheckReadPermission($contactID, $this->userPermissions);
 			$clientInfo['CONTACT_DATA'][] = CCrmEntitySelectorHelper::PrepareEntityInfo(
@@ -1239,7 +1358,7 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 
 		$this->entityData['REQUISITE_BINDING'] = $this->order->getRequisiteLink();
 
-		$this->entityData['MULTIFIELD_DATA'] = $multiFildData;
+		$this->entityData['MULTIFIELD_DATA'] = $multiFieldData;
 		$this->entityData['USER_LIST_SELECT'] = $this->getDefaultUserList();
 		$lastUserClients = $this->getLastUserClients();
 		$this->entityData['LAST_COMPANY_INFO'] = $lastUserClients[\CCrmOwnerType::Company];
@@ -1613,11 +1732,11 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 					$shipment->getField('CURRENCY'),
 					''
 				),
-				'FORMATTED_PRICE_DELIVERY' => CCrmCurrency::MoneyToString(
+				'FORMATTED_PRICE_DELIVERY' => str_replace('&nbsp;', ' ', CCrmCurrency::MoneyToString(
 					$shipment->getField('PRICE_DELIVERY'),
 					$shipment->getField('CURRENCY'),
 					'#'
-				),
+				)),
 				'DOCUMENT_INFO' => $documentInfo,
 				'CURRENCY_NAME' => $currency,
 				'DISCOUNTS' => $this->getShipmentDiscounts(),
@@ -1647,11 +1766,11 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 				$price = $calcPrice->getPrice();
 
 				$fields['PRICE_DELIVERY_CALCULATED'] = $price;
-				$fields['FORMATTED_PRICE_DELIVERY_CALCULATED'] = \CCrmCurrency::MoneyToString(
-					$price,
-					$this->entityData['CURRENCY'],
+				$fields['FORMATTED_PRICE_DELIVERY_CALCULATED'] =  str_replace('&nbsp;', ' ', CCrmCurrency::MoneyToString(
+					$shipment->getField('PRICE_DELIVERY'),
+					$shipment->getField('CURRENCY'),
 					'#'
-				);
+				));
 				$fields['FORMATTED_PRICE_DELIVERY_CALCULATED_WITH_CURRENCY'] = \CCrmCurrency::MoneyToString(
 					$price,
 					$this->entityData['CURRENCY'],
@@ -1806,7 +1925,7 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 
 		if (empty($primaryClient))
 		{
-			$resultList[] = ['subtitle' => Loc::getMessage('CRM_ORDER_EMPTY_USER_INPUT_VALUE_WITH_CLIENT')];
+			$resultList[] = ['subTitle' => Loc::getMessage('CRM_ORDER_EMPTY_USER_INPUT_VALUE_WITH_CLIENT')];
 			return $resultList;
 		}
 
@@ -1836,6 +1955,7 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 			}
 
 			$resultList[] = [
+				'id' => $user['USER_ID'],
 				'title' => \CUser::FormatName(
 					$nameFormat,
 					array(
@@ -1847,15 +1967,18 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 					true,
 					false
 				),
-				'subtitle' => $user['USER_LOGIN'],
-				'email' => $user['USER_EMAIL'],
-				'id' => $user['USER_ID']
+				'subTitle' => $user['USER_LOGIN'],
+				'attributes' => [
+					'email' => [
+						['value' => $user['USER_EMAIL']]
+					]
+				]
 			];
 		}
 
 		if (empty($resultList))
 		{
-			$resultList[] = ['subtitle' => Loc::getMessage('CRM_ORDER_EMPTY_USER_INPUT_VALUE')];
+			$resultList[] = ['subTitle' => Loc::getMessage('CRM_ORDER_EMPTY_USER_INPUT_VALUE')];
 		}
 
 		return $resultList;
@@ -1863,6 +1986,19 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 	protected function getLastUserClients()
 	{
 		$userId = $this->order->getUserId();
+
+		if ($userId === Order\Manager::getAnonymousUserID() || (int)$userId === 0)
+		{
+			return [
+				CCrmOwnerType::Contact => [
+					['subTitle' =>  Loc::getMessage('CRM_ORDER_EMPTY_USER_INPUT_VALUE')]
+				],
+				CCrmOwnerType::Company => [
+					['subTitle' => Loc::getMessage('CRM_ORDER_EMPTY_USER_INPUT_VALUE')]
+				]
+			];
+		}
+
 		$params = [
 			'select' => ['ENTITY_ID', 'ENTITY_TYPE_ID'],
 			'order' => ['ID' => 'DESC'],
@@ -1887,11 +2023,11 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 		$result = [];
 		foreach ($preparedData as $item)
 		{
-			if ($item['entityType'] === CCrmOwnerType::ContactName)
+			if ($item['type'] === CCrmOwnerType::ContactName)
 			{
 				$result[CCrmOwnerType::Contact][] = $item;
 			}
-			elseif ($item['entityType'] === CCrmOwnerType::CompanyName)
+			elseif ($item['type'] === CCrmOwnerType::CompanyName)
 			{
 				$result[CCrmOwnerType::Company][] = $item;
 			}
@@ -1899,11 +2035,11 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 
 		if (empty($result[CCrmOwnerType::Contact]))
 		{
-			$result[CCrmOwnerType::Contact][] = ['subtitle' =>  Loc::getMessage('CRM_ORDER_EMPTY_USER_INPUT_VALUE')];
+			$result[CCrmOwnerType::Contact][] = ['subTitle' =>  Loc::getMessage('CRM_ORDER_EMPTY_USER_INPUT_VALUE')];
 		}
 		if (empty($result[CCrmOwnerType::Company]))
 		{
-			$result[CCrmOwnerType::Company][] = ['subtitle' => Loc::getMessage('CRM_ORDER_EMPTY_USER_INPUT_VALUE')];
+			$result[CCrmOwnerType::Company][] = ['subTitle' => Loc::getMessage('CRM_ORDER_EMPTY_USER_INPUT_VALUE')];
 		}
 
 		return $result;
@@ -1994,11 +2130,11 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 						$currency,
 						''
 					),
-					'FORMATTED_SUM' => CCrmCurrency::MoneyToString(
+					'FORMATTED_SUM' => str_replace('&nbsp;', ' ', CCrmCurrency::MoneyToString(
 						$payment->getField('SUM'),
 						$currency,
 						'#'
-					),
+					)),
 					'VOUCHER_INFO' => $voucherInfo,
 					'PAY_SYSTEMS_LIST' => $this->getPaySystemsList($payment),
 					'CURRENCY_NAME' => $currencyName,
@@ -2260,5 +2396,175 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 			'optionFlags' => ($property['SETTINGS']['SHOW_ALWAYS'] === 'Y') ? 1 : 0,
 			'data' => $data
 		);
+	}
+	public function prepareConfiguration()
+	{
+		if (isset($this->arResult['ENTITY_CONFIG']))
+		{
+			return $this->arResult['ENTITY_CONFIG'];
+		}
+
+		$mainConfig = 	array(
+			'name' => 'main',
+			'title' => Loc::getMessage('CRM_ORDER_SECTION_MAIN'),
+			'type' => 'section',
+			'elements' => array(
+				array('name' => 'TRADING_PLATFORM'),
+				array('name' => 'PERSON_TYPE_ID'),
+				array('name' => 'PRICE_WITH_CURRENCY'),
+				array('name' => 'DATE_INSERT'),
+				array('name' => 'STATUS_ID')
+			)
+		);
+
+		if($this->entityID > 0 && $this->mode !== ComponentMode::COPING)
+		{
+			$mainConfig['elements'][] = array('name' => 'ACCOUNT_NUMBER');
+		}
+
+		$this->arResult['ENTITY_CONFIG'] = array(
+			$mainConfig,
+			array(
+				'name' => 'client',
+				'title' => Loc::getMessage('CRM_ORDER_SECTION_CLIENT'),
+				'type' => 'section',
+				'elements' => array(
+					array('name' => 'USER_ID'),
+					array('name' => 'CLIENT'),
+					array('name' => 'USER_BUDGET')
+				)
+			),
+			array(
+				'name' => 'responsible',
+				'title' => Loc::getMessage('CRM_ORDER_FIELD_RESPONSIBLE_ID'),
+				'type' => 'section',
+				'elements' =>
+					array(
+						array('name' => 'RESPONSIBLE_ID')
+					)
+			)
+		);
+
+		if($this->entityID > 0)
+		{
+			$this->arResult['ENTITY_CONFIG'][] =
+				array(
+					'name' => 'products',
+					'title' => Loc::getMessage('CRM_ORDER_SECTION_PRODUCTS'),
+					'type' => 'section',
+					'elements' => array(
+						array('name' => 'PRODUCT_ROW_SUMMARY')
+					)
+				);
+		}
+
+		$this->arResult['ENTITY_CONFIG'] = array_merge(
+			$this->arResult['ENTITY_CONFIG'],
+			array(
+				array(
+					'name' => 'properties',
+					'title' => Loc::getMessage('CRM_ORDER_SECTION_PROPERTIES'),
+					'type' => 'section',
+					'data' => array(
+						'showButtonPanel' => false
+					),
+					'elements' => 	array(
+						array('name' => 'USER_PROFILE'),
+						array('name' => 'PROPERTIES')
+					)
+				),
+				array(
+					'name' => 'payment',
+					'title' => Loc::getMessage('CRM_ORDER_SECTION_PAYMENT'),
+					'type' => 'section',
+					'data' => array(
+						'showButtonPanel' => false,
+						'enableToggling' =>  false
+					),
+					'elements' => 	array(
+						array('name' => 'PAYMENT')
+					)
+				),
+				array(
+					'name' => 'shipment',
+					'title' => Loc::getMessage('CRM_ORDER_SECTION_SHIPMENT'),
+					'type' => 'section',
+					'data' => array(
+						'showButtonPanel' => false,
+						'enableToggling' =>  false,
+					),
+					'elements' => 	array(
+						array('name' => 'SHIPMENT'),
+					)
+				)
+			)
+		);
+
+		return $this->arResult['ENTITY_CONFIG'];
+	}
+
+	public function prepareKanbanConfiguration()
+	{
+		$scheme = [
+			[
+				'name' => 'main',
+				'title' => Loc::getMessage('CRM_ORDER_SECTION_MAIN'),
+				'type' => 'section',
+				'elements' => [
+					['name' => 'TITLE'],
+					['name' => 'ID'],
+					['name' => 'SOURCE_ID'],
+					['name' => 'PRICE'],
+					['name' => 'CURRENCY'],
+					['name' => 'CLIENT'],
+					['name' => 'DATE_INSERT'],
+					['name' => 'STATUS_ID'],
+					['name' => 'PROBLEM_NOTIFICATION'],
+					['name' => 'PAYMENT'],
+					['name' => 'SHIPMENT'],
+					['name' => 'USER'],
+					['name' => 'RESPONSIBLE_ID'],
+					['name' => 'CANCELED'],
+					['name' => 'PAYED'],
+					['name' => 'DEDUCTED'],
+					['name' => 'PERSON_TYPE_ID'],
+					['name' => 'ORDER_TOPIC'],
+					['name' => 'ACCOUNT_NUMBER'],
+					['name' => 'DATE_UPDATE'],
+					['name' => 'XML_ID'],
+				]
+			]
+		];
+
+		$propertyElements = [];
+		$propertiesRaw = \Bitrix\Crm\Order\Property::getList([
+			'filter' => [
+				'=ACTIVE' => 'Y',
+				'=TYPE' => ['STRING', 'NUMBER', 'Y/N', 'ENUM', 'DATE']
+			],
+			'select' => ["ID"],
+		]);
+
+		while ($property = $propertiesRaw->fetch())
+		{
+			$propertyElements[] = ['name' => 'PROPERTY_'.$property['ID']];
+		}
+		if (!empty($propertyElements))
+		{
+			$scheme[] = [
+				'name' => 'properties',
+				'title' => Loc::getMessage('CRM_ORDER_SECTION_PROPERTIES'),
+				'type' => 'section',
+				'elements' => $propertyElements
+			];
+		}
+
+		$scheme[] = [
+			'name' => 'additional',
+			'title' => Loc::getMessage('CRM_ORDER_SECTION_ADDITIONAL'),
+			'type' => 'section',
+			'elements' => []
+		];
+		return $scheme;
 	}
 }

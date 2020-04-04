@@ -23,4 +23,9 @@ $MESS["MARKETING_AND_SALES_GROUP_DESC"] = "Sales and Marketing department person
 $MESS["SUPPORT_GROUP_NAME"] = "Helpdesk";
 $MESS["SUPPORT_GROUP_DESC"] = "Helpdesk specialist.";
 $MESS["INTEGRATOR_GROUP_NAME"] = "Bitrix24 partner";
+
+$MESS["SALE_USER_GROUP_SHOP_ADMIN_NAME"] = "Online store administrators";
+$MESS["SALE_USER_GROUP_SHOP_MANAGER_NAME"] = "Online store staff";
+$MESS["SALE_USER_GROUP_SHOP_ADMIN_DESC"] = "User group allowed to edit the online store preferences";
+$MESS["SALE_USER_GROUP_SHOP_MANAGER_DESC"] = "User group allowed to use the online store functions";
 ?>

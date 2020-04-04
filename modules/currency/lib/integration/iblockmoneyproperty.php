@@ -182,7 +182,7 @@ class IblockMoneyProperty
 				}
 				else
 				{
-					$regExp = '/^\d{1,3}(('.$thousandsSep.'){0,1}\d{3})?$/';
+					$regExp = '/^\d{1,3}(('.$thousandsSep.'){0,1}\d{3})*$/';
 				}
 			}
 			elseif($thousandsSep && !$decPoint)
@@ -401,7 +401,7 @@ class IblockMoneyProperty
 					{
 						if (this.isDecimalsNull)
 						{
-							this.regExp = '^\\d{1,3}('+this.thousandsSep+'?\\d{3})?$';
+							this.regExp = '^\\d{1,3}('+this.thousandsSep+'?\\d{3})*$';
 							this.exampleValue = '6'+this.thousandsSep+'456';
 						}
 						else

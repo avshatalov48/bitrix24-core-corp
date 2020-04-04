@@ -35,6 +35,10 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 			{
 				$paymentData = [];
 			}
+			else
+			{
+				unset($paymentData['ACCOUNT_NUMBER']);
+			}
 		}
 
 		$paymentFields = [];

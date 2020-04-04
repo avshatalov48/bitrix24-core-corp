@@ -51,9 +51,10 @@ class CompanySearchContentBuilder extends SearchContentBuilder
 	/**
 	 * Prepare search map.
 	 * @param array $fields Entity Fields.
+	 * @param array|null $options Options.
 	 * @return SearchMap
 	 */
-	protected function prepareSearchMap(array $fields)
+	protected function prepareSearchMap(array $fields, array $options = null)
 	{
 		$map = new SearchMap();
 
@@ -64,8 +65,19 @@ class CompanySearchContentBuilder extends SearchContentBuilder
 		}
 
 		$map->add($entityID);
-		$map->addField($fields, 'ID');
-		$map->addField($fields, 'TITLE');
+
+		$title = isset($fields['TITLE']) ? $fields['TITLE'] : '';
+		if($title !== '')
+		{
+			$map->addText($title);
+			$map->addText(SearchEnvironment::prepareSearchContent($title));
+
+			$customerNumber = $this->parseCustomerNumber($title, '');
+			if($customerNumber != $entityID)
+			{
+				$map->addTextFragments($customerNumber);
+			}
+		}
 
 		if(isset($fields['ASSIGNED_BY_ID']))
 		{

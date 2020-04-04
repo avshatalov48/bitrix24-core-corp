@@ -7,6 +7,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 use \Bitrix\Landing\Site;
 use \Bitrix\Landing\Landing;
 use \Bitrix\Landing\Manager;
+use \Bitrix\Landing\Rights;
 use \Bitrix\Landing\TemplateRef;
 use \Bitrix\Main\Localization\Loc;
 
@@ -126,15 +127,73 @@ class LandingSiteEditComponent extends LandingBaseFormComponent
 			$this->successSavePage = $this->arParams['PAGE_URL_SITES'];
 			$this->template = $this->arParams['TEMPLATE'];
 
-			$this->arResult['LANG_CODES'] = $this->getLangCodes();
-			$this->arResult['IP_FOR_DNS'] = $this->getIpForDNS();
-			$this->arResult['TEMPLATES'] = $this->getTemplates();
-
-			$this->arResult['SETTINGS'] = \Bitrix\Landing\Hook\Page\Settings::getDataForSite(
-				$this->id
-			);
-			$this->arResult['DOMAINS'] = $this->getDomains();
 			$this->arResult['SITE'] = $this->getRow();
+			$this->arResult['LANG_CODES'] = $this->getLangCodes();
+			$this->arResult['TEMPLATES'] = $this->getTemplates();
+			$this->arResult['SHOW_RIGHTS'] = Rights::isExtendedMode() && Rights::isAdmin();
+			$this->arResult['SETTINGS'] = [];
+
+			if (
+				!defined('LANDING_DISABLE_B24_MODE') &&
+				$this->arResult['SITE']['TYPE']['CURRENT'] == 'SMN'
+			)
+			{
+				Manager::forceB24disable(true);
+			}
+
+			if (Manager::isB24())
+			{
+				$this->arResult['IP_FOR_DNS'] = $this->getIpForDNS();
+			}
+
+			// set predefined for getting props from component
+			\Bitrix\Landing\Node\Component::setPredefineForDynamicProps([
+				'USE_ENHANCED_ECOMMERCE' => 'Y',
+				'SHOW_DISCOUNT_PERCENT' => 'Y',
+				'LABEL_PROP' => [
+					'NEWPRODUCT',
+					'SALELEADER',
+					'SPECIALOFFER'
+				],
+				'CONVERT_CURRENCY' => 'Y'
+			]);
+
+			// if access denied, or not found
+			if (
+				$this->id &&
+				!Rights::hasAccessForSite(
+					$this->id,
+					Rights::ACCESS_TYPES['sett']
+				)
+			)
+			{
+				$this->id = 0;
+				$this->arParams['SITE_ID'] = 0;
+				$this->addError('ACCESS_DENIED', '', true);
+			}
+
+			// rights
+			if ($this->arResult['SHOW_RIGHTS'])
+			{
+				$this->arResult['ACCESS_TASKS'] = $this->getAccessTasks();
+				$this->arResult['CURRENT_RIGHTS'] = [];
+				if ($this->id)
+				{
+					$this->arResult['CURRENT_RIGHTS'] = Rights::getDataForSite(
+						$this->id,
+						$this->getRightsValue(true)
+					);
+				}
+			}
+
+			// settings, etc
+			if ($this->id)
+			{
+				$this->arResult['SETTINGS'] = \Bitrix\Landing\Hook\Page\Settings::getDataForSite(
+					$this->id
+				);
+			}
+			$this->arResult['DOMAINS'] = $this->getDomains();
 			$this->arResult['LANDINGS'] = $this->arParams['SITE_ID'] > 0
 										? $this->getLandings(array(
 												'filter' => array(
@@ -155,10 +214,14 @@ class LandingSiteEditComponent extends LandingBaseFormComponent
 			if (!$this->arResult['SITE'])
 			{
 				$this->id = 0;
+				$this->arParams['SITE_ID'] = 0;
 			}
 
-			$this->arResult['HOOKS'] = $this->getHooks();
-			$this->arResult['TEMPLATES_REF'] = TemplateRef::getForSite($this->id);
+			if ($this->id)
+			{
+				$this->arResult['HOOKS'] = $this->getHooks();
+				$this->arResult['TEMPLATES_REF'] = TemplateRef::getForSite($this->id);
+			}
 			$this->arResult['CUSTOM_DOMAIN'] = Manager::checkFeature(
 				Manager::FEATURE_CUSTOM_DOMAIN
 			);
@@ -211,11 +274,20 @@ class LandingSiteEditComponent extends LandingBaseFormComponent
 						$primary['ID'],
 						$data
 					);
+					// rights
+					if (Rights::isAdmin())
+					{
+						Rights::setOperationsForSite(
+							$primary['ID'],
+							$this->getRightsValue()
+						);
+					}
 				}
 			);
 		}
 
 
 		parent::executeComponent();
+		Manager::forceB24disable(false);
 	}
 }

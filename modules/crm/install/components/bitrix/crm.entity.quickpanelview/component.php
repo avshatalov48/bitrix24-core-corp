@@ -1311,6 +1311,7 @@ elseif($entityTypeID === CCrmOwnerType::Lead)
 			'CURRENT_ID' => $entityFields['~STATUS_ID'],
 			'CONVERSION_SCHEME' => isset($arParams['CONVERSION_SCHEME']) ? $arParams['CONVERSION_SCHEME'] : null,
 			'CONVERSION_TYPE_ID' => isset($arParams['CONVERSION_TYPE_ID']) ? (int)$arParams['CONVERSION_TYPE_ID'] : 0,
+			'CAN_CONVERT' => !isset($arParams['CAN_CONVERT']) || $arParams['CAN_CONVERT'],
 			'SERVICE_URL' => '/bitrix/components/bitrix/crm.lead.list/list.ajax.php',
 			'READ_ONLY' => !$canEdit,
 			'DISPLAY_LEGEND' => false,
@@ -1477,7 +1478,8 @@ elseif($entityTypeID === CCrmOwnerType::Quote)
 		'BEGINDATE' => true, 'CLOSEDATE' => true,
 		'CLOSED' => true, 'OPENED' => true,
 		'ASSIGNED_BY_ID' => true,
-		'CLIENT' => true, 'COMMENTS' => true
+		'CLIENT' => true, 'COMMENTS' => true,
+		'LOCATION_ID' => true
 	);
 
 	$arResult['HEAD_PROGRESS_LEGEND_CONTAINER_ID'] = "{$arResult['GUID']}_header_status_text";
@@ -1725,6 +1727,14 @@ elseif($entityTypeID === CCrmOwnerType::Quote)
 						'html' => $entityFields["~{$k}"],
 						'serviceUrl' => $arResult['SERVICE_URL']
 					)
+				);
+			}
+			elseif($k === 'LOCATION_ID')
+			{
+				$k = 'LOCATION_ID';
+				$entityData[$k] = array(
+					'type' => 'text',
+					'data' => array('text' => $v > 0 ? CCrmLocations::getLocationString($v) : GetMessage('CRM_ENTITY_QPV_LOCATION_NOT_ASSIGNED'))
 				);
 			}
 			else

@@ -340,4 +340,22 @@ class Message
 		return $result;
 	}
 
+	public static function ensureAttachments(&$message)
+	{
+		if ($message['OPTIONS']['attachments'] > 0 && !($message['ATTACHMENTS'] > 0))
+		{
+			if (Main\Config\Option::get('mail', 'save_attachments', B_MAIL_SAVE_ATTACHMENTS) == 'Y')
+			{
+				return static::resync($message);
+			}
+		}
+	}
+
+	public static function resync(&$message)
+	{
+		$mailboxHelper = Mailbox::createInstance($message['MAILBOX_ID'], false);
+
+		return empty($mailboxHelper) ? false : $mailboxHelper->resyncMessage($message);
+	}
+
 }

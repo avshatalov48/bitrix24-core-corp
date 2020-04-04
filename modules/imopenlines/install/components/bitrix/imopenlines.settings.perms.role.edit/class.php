@@ -3,6 +3,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 
 use Bitrix\Main\Localization\Loc;
 use Bitrix\ImOpenlines\Model;
+use Bitrix\Main\Loader;
 
 Loc::loadMessages(__FILE__);
 
@@ -26,6 +27,18 @@ class CImOpenlinesRoleEditComponent extends CBitrixComponent
 
 		if($request['act'] === 'save' && check_bitrix_sessid())
 			$this->saveMode = true;
+	}
+
+	protected function checkModules()
+	{
+		$result = true;
+		if(!Loader::includeModule('imopenlines'))
+		{
+			ShowError(Loc::getMessage('IMOL_PERM_MODULE_ERROR'));
+			$result = false;
+		}
+
+		return $result;
 	}
 
 	protected function prepareData()
@@ -64,6 +77,8 @@ class CImOpenlinesRoleEditComponent extends CBitrixComponent
 		{
 			$this->arResult['TRIAL'] = \Bitrix\ImOpenlines\Security\Helper::getTrialText();
 		}
+
+		$this->arResult['IFRAME'] = $this->request['IFRAME'] === 'Y';
 
 		$uri = new \Bitrix\Main\Web\Uri(htmlspecialchars_decode(POST_FORM_ACTION_URI));
 		$uri->addParams(array('action-line' => 'role-add'));
@@ -116,31 +131,31 @@ class CImOpenlinesRoleEditComponent extends CBitrixComponent
 
 	public function executeComponent()
 	{
-		$permissions = \Bitrix\ImOpenlines\Security\Permissions::createWithCurrentUser();
-		if(!$permissions->canPerform(\Bitrix\ImOpenlines\Security\Permissions::ENTITY_SETTINGS, \Bitrix\ImOpenlines\Security\Permissions::ACTION_MODIFY))
+		if ($this->checkModules())
 		{
-			ShowError(Loc::getMessage('IMOL_ROLE_ERROR_INSUFFICIENT_RIGHTS'));
-			return false;
-		}
-
-		if($this->saveMode)
-		{
-			if(\Bitrix\ImOpenlines\Security\Helper::canUse())
+			$permissions = \Bitrix\ImOpenlines\Security\Permissions::createWithCurrentUser();
+			if(!$permissions->canPerform(\Bitrix\ImOpenlines\Security\Permissions::ENTITY_SETTINGS, \Bitrix\ImOpenlines\Security\Permissions::ACTION_MODIFY))
 			{
-				if($this->save())
+				ShowError(Loc::getMessage('IMOL_ROLE_ERROR_INSUFFICIENT_RIGHTS'));
+				return false;
+			}
+
+			if($this->saveMode)
+			{
+				if(\Bitrix\ImOpenlines\Security\Helper::canUse())
 				{
-					LocalRedirect(\Bitrix\ImOpenlines\Common::getPublicFolder()."permissions.php");
-					return false;
+					$this->save();
+				}
+				else
+				{
+					$this->errors[] = new \Bitrix\Main\Error(Loc::getMessage('IMOL_ROLE_LICENSE_ERROR'));
 				}
 			}
-			else
-			{
-				$this->errors[] = new \Bitrix\Main\Error(Loc::getMessage('IMOL_ROLE_LICENSE_ERROR'));
-			}
+
+			$this->prepareData();
+			$this->includeComponentTemplate();
 		}
 
-		$this->prepareData();
-		$this->includeComponentTemplate();
 		return $this->arResult;
 	}
 }

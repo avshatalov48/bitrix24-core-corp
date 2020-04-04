@@ -305,6 +305,7 @@ class File extends Volume\Base implements Volume\IVolumeIndicatorParent, Volume\
 								SELECT  object_id, max(id) as id
 								FROM b_disk_version 
 								GROUP BY object_id
+								ORDER BY NULL
 							) head ON head.OBJECT_ID = files.ID
 	
 							LEFT JOIN b_disk_attached_object  attached
@@ -327,6 +328,7 @@ class File extends Volume\Base implements Volume\IVolumeIndicatorParent, Volume\
 							
 						GROUP BY 
 							files.ID
+						ORDER BY NULL
 					) src
 				) CNT_FREE
 			";
@@ -401,19 +403,33 @@ class File extends Volume\Base implements Volume\IVolumeIndicatorParent, Volume\
 				{$fromSql}
 		";
 
+		VolumeTable::createTemporally();
 		$tableName = VolumeTable::getTableName();
+		$temporallyTableName = VolumeTable::getTemporallyName();
+
+		$columnList = Volume\QueryHelper::prepareInsert($columns, $this->getSelect());
+		$connection->queryExecute("INSERT INTO {$temporallyTableName} ({$columnList}) {$querySql}");
+
+		$temporallyDataSource = "SELECT {$columnList} FROM {$temporallyTableName}";
 
 		if ($this->getFilterId() > 0)
 		{
 			$filterId = $this->getFilterId();
 			$columnList = Volume\QueryHelper::prepareUpdateOnSelect($columns, $this->getSelect(), 'destinationTbl', 'sourceQuery');
-			$connection->queryExecute("UPDATE {$tableName} destinationTbl, ({$querySql}) sourceQuery SET {$columnList} WHERE destinationTbl.ID = {$filterId}");
+			$connection->queryExecute("
+				UPDATE 
+				    {$tableName} destinationTbl, 
+				    ({$temporallyDataSource}) sourceQuery 
+				SET {$columnList} 
+				WHERE destinationTbl.ID = {$filterId}
+			");
 		}
 		else
 		{
-			$columnList = Volume\QueryHelper::prepareInsert($columns, $this->getSelect());
-			$connection->queryExecute("INSERT INTO {$tableName} ({$columnList}) {$querySql}");
+			$connection->queryExecute("INSERT INTO {$tableName} ({$columnList}) {$temporallyDataSource}");
 		}
+
+		VolumeTable::dropTemporally();
 
 		return $this;
 	}
@@ -515,6 +531,7 @@ class File extends Volume\Base implements Volume\IVolumeIndicatorParent, Volume\
 						files.NAME, 
 						files.SIZE, 
 						files.UPDATE_TIME 
+					ORDER BY NULL
 				) CNT_FILES
 			";
 			return $querySql;
@@ -548,6 +565,7 @@ class File extends Volume\Base implements Volume\IVolumeIndicatorParent, Volume\
 						files.STORAGE_ID,
 						storage.ENTITY_ID,
 						storage.ENTITY_TYPE
+					ORDER BY NULL
 				) CNT_PREVIEW
 					ON CNT_PREVIEW.FID = CNT_FILES.FID
 			";
@@ -578,6 +596,7 @@ class File extends Volume\Base implements Volume\IVolumeIndicatorParent, Volume\
 						{$whereSql}
 					GROUP BY
 						files.ID
+					ORDER BY NULL
 				) CNT_ATTACH
 					ON CNT_ATTACH.FID = CNT_FILES.FID
 			";
@@ -609,6 +628,7 @@ class File extends Volume\Base implements Volume\IVolumeIndicatorParent, Volume\
 						{$whereSql}
 					GROUP BY
 						files.ID
+					ORDER BY NULL
 				) CNT_LINK
 					ON CNT_LINK.FID = CNT_FILES.FID
 			";
@@ -640,6 +660,7 @@ class File extends Volume\Base implements Volume\IVolumeIndicatorParent, Volume\
 						{$whereSql}
 					GROUP BY 
 						files.ID
+					ORDER BY NULL
 				) CNT_SHARING
 					ON CNT_FILES.FID = CNT_SHARING.FID
 			";
@@ -671,6 +692,7 @@ class File extends Volume\Base implements Volume\IVolumeIndicatorParent, Volume\
 						{$whereSql}
 					GROUP BY 
 						files.ID
+					ORDER BY NULL
 				) CNT_CRM
 					ON CNT_FILES.FID = CNT_CRM.FID
 			";
@@ -703,6 +725,7 @@ class File extends Volume\Base implements Volume\IVolumeIndicatorParent, Volume\
 							SELECT  object_id, max(id) as id
 							FROM b_disk_version 
 							GROUP BY object_id
+							ORDER BY NULL
 						) head ON head.OBJECT_ID = files.ID
 
 						LEFT JOIN b_disk_attached_object  attached
@@ -725,6 +748,7 @@ class File extends Volume\Base implements Volume\IVolumeIndicatorParent, Volume\
 						
 					GROUP BY 
 						files.ID
+					ORDER BY NULL
 				) CNT_FREE
 					ON CNT_FREE.FID = CNT_FILES.FID
 			";
@@ -948,6 +972,11 @@ class File extends Volume\Base implements Volume\IVolumeIndicatorParent, Volume\
 
 		// Im
 		if (in_array($fragment->getEntityType(), \Bitrix\Disk\Volume\Module\Im::getEntityType()))
+		{
+			return null;
+		}
+		// Mail
+		if (in_array($fragment->getEntityType(), \Bitrix\Disk\Volume\Module\Mail::getEntityType()))
 		{
 			return null;
 		}

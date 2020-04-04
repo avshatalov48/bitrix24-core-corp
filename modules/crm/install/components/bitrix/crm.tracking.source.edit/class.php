@@ -67,20 +67,34 @@ class CrmTrackingSourceEditComponent  extends \CBitrixComponent implements Contr
 		return $list;
 	}
 
+	protected function preparePostUtmSource($utmSources)
+	{
+		$list = [];
+		$utmSources = is_array($utmSources) ? $utmSources : [];
+		foreach ($utmSources as $utmSource)
+		{
+			$utmSource = trim($utmSource);
+			if (!$utmSource)
+			{
+				continue;
+			}
+
+			$list[] = $utmSource;
+		}
+
+		return $list;
+	}
+
 	protected function preparePost()
 	{
 		$name = $this->request->get('NAME');
-		if ($this->arParams['CODE'])
-		{
-			$name = $this->arResult['ROW']['NAME'];
-		}
-
 		$data = [
-			'CODE' => $this->arParams['CODE'],
 			'NAME' => $name,
 			'ICON_COLOR' => $this->arParams['CODE'] ? '' : $this->request->get('ICON_COLOR'),
-			'UTM_SOURCE' => $this->request->get('UTM_SOURCE'),
+			//'UTM_SOURCE' => trim($this->request->get('UTM_SOURCE')),
 			'TAGS' => [],
+			'AD_CLIENT_ID' => $this->arParams['CODE'] ? $this->request->get('AD_CLIENT_ID') : null,
+			'AD_ACCOUNT_ID' => $this->arParams['CODE'] ? $this->request->get('AD_ACCOUNT_ID') : null,
 		];
 		if ($this->arResult['ROW']['ID'])
 		{
@@ -95,31 +109,30 @@ class CrmTrackingSourceEditComponent  extends \CBitrixComponent implements Contr
 		}
 		else
 		{
+			$data['CODE'] = $this->arParams['CODE'];
 			$result = Tracking\Internals\SourceTable::add($data);
 			$this->arResult['ROW']['ID'] = $result->getId() ?: 0;
 		}
 
 		if ($result->isSuccess())
 		{
-			if ($this->arParams['CODE'] && $this->request->get('AD_ACCOUNT_ID'))
-			{
-				Tracking\Analytics\Ad::setAccountIdByCode(
-					$this->arParams['CODE'],
-					$this->request->get('AD_ACCOUNT_ID')
-				);
-			}
-
 			Tracking\Internals\SourceFieldTable::setSourceField(
 				$this->arResult['ROW']['ID'],
 				Tracking\Internals\SourceFieldTable::FIELD_REF_DOMAIN,
 				$this->preparePostRefDomains($this->request->get('REF_DOMAIN'))
 			);
 
+			Tracking\Internals\SourceFieldTable::setSourceField(
+				$this->arResult['ROW']['ID'],
+				Tracking\Internals\SourceFieldTable::FIELD_UTM_SOURCE,
+				$this->preparePostUtmSource($this->request->get('UTM_SOURCE'))
+			);
+
 			Webpack\CallTracker::rebuildEnabled();
 
 			$uri = str_replace(
 				'#id#',
-				$this->arResult['ROW']['CODE'] ?: $this->arResult['ROW']['ID'],
+				$this->arResult['ROW']['ID'],
 				$this->arParams['PATH_TO_EDIT']
 			);
 			$uri = (new \Bitrix\Main\Web\Uri($uri));
@@ -158,41 +171,40 @@ class CrmTrackingSourceEditComponent  extends \CBitrixComponent implements Contr
 		$GLOBALS['APPLICATION']->SetTitle(Loc::getMessage('CRM_ANALYTICS_SOURCE_EDIT_TITLE'));
 
 		$row = null;
-		if ($this->arParams['CODE'] || $this->arParams['ID'])
+		if ($this->arParams['ID'])
 		{
 			$rowFilter = [];
-			if ($this->arParams['CODE'])
-			{
-				$rowFilter['=CODE'] = $this->arParams['CODE'];
-			}
-			if ($this->arParams['ID'])
-			{
-				$rowFilter['=ID'] = $this->arParams['ID'];
-			}
+			$rowFilter['=ID'] = $this->arParams['ID'];
 			$row = Tracking\Internals\SourceTable::getRow(['filter' => $rowFilter]);
 		}
 
 		$this->arResult['ROW'] = $row ?: [
 			'ID' => $this->arParams['ID'],
 			'CODE' => $this->arParams['CODE'],
-			'NAME' => $this->arParams['CODE'],
-			'UTM_SOURCE' => null,
+			'NAME' => '',
+			'AD_CLIENT_ID' => null,
+			'AD_ACCOUNT_ID' => null,
+			//'UTM_SOURCE' => null,
 		];
 
 		$this->arResult['ROW'] += [
 			'ICON_CLASS' => null,
 			'CONFIGURABLE' => true,
-			'AD_ACCOUNT_ID' => Tracking\Analytics\Ad::getAccountIdByCode($this->arParams['CODE'])
 		];
 
-		if ($this->arResult['ROW']['CODE'])
+		$hasCode = !empty($this->arResult['ROW']['CODE']);
+		if ($hasCode)
 		{
 			$code = $this->arResult['ROW']['CODE'];
+			$this->arParams['CODE'] = $code;
 			$adsSources = Tracking\Provider::getStaticSources();
 			$adsSources = array_combine(array_column($adsSources, 'CODE'), $adsSources);
 			if (isset($adsSources[$code]))
 			{
-				$this->arResult['ROW']['NAME'] = $adsSources[$code]['NAME'];
+				if (!$this->arResult['ROW']['NAME'])
+				{
+					$this->arResult['ROW']['NAME'] = $adsSources[$code]['NAME'];
+				}
 				$this->arResult['ROW']['ICON_CLASS'] = $adsSources[$code]['ICON_CLASS'];
 				$this->arResult['ROW']['CONFIGURABLE'] = $adsSources[$code]['CONFIGURABLE'];
 			}
@@ -207,7 +219,7 @@ class CrmTrackingSourceEditComponent  extends \CBitrixComponent implements Contr
 		{
 			$GLOBALS['APPLICATION']->SetTitle($this->arResult['ROW']['NAME']);
 		}
-		elseif ($this->arResult['ROW']['CODE'])
+		elseif ($hasCode)
 		{
 			$GLOBALS['APPLICATION']->SetTitle(Loc::getMessage(
 				'CRM_ANALYTICS_SOURCE_EDIT_TITLE_ADS',
@@ -231,10 +243,29 @@ class CrmTrackingSourceEditComponent  extends \CBitrixComponent implements Contr
 			$this->arResult['ROW']['REF_DOMAIN']
 		);
 
+		$this->arResult['ROW']['UTM_SOURCE'] = Tracking\Internals\SourceFieldTable::getSourceField(
+			$this->arResult['ROW']['ID'],
+			Tracking\Internals\SourceFieldTable::FIELD_UTM_SOURCE
+		);
+		$this->arResult['ROW']['UTM_SOURCE'] = array_map(
+			function ($item)
+			{
+				return [
+					'id' => $item,
+					'name' => $item,
+					'data' => []
+				];
+			},
+			$this->arResult['ROW']['UTM_SOURCE']
+		);
+
+		Tracking\Analytics\Ad::updateAccountIdCompatible();
 		$adType = Tracking\Analytics\Ad::getSeoCodeByCode($this->arResult['ROW']['CODE']);
-		$this->arResult['AD_UPDATE_ACCESSIBLE'] = Tracking\Manager::isAdUpdateAccessible();
-		$this->arResult['AD_ACCESSIBLE'] = Tracking\Manager::isAdAccessible();
-		$this->arResult['PROVIDER'] = $this->arResult['AD_ACCESSIBLE'] ? self::getAdProvider($adType) : null;
+		$this->arResult['AD_UPDATE_ACCESSIBLE'] = $hasCode && Tracking\Manager::isAdUpdateAccessible();
+		$this->arResult['AD_ACCESSIBLE'] = $hasCode && Tracking\Manager::isAdAccessible();
+		$this->arResult['PROVIDER'] = $this->arResult['AD_ACCESSIBLE']
+			? self::getAdProvider($adType, $this->arResult['ROW']['AD_CLIENT_ID'])
+			: null;
 		$this->arResult['HAS_AUTH'] = $this->arResult['AD_ACCESSIBLE'] && !empty($this->arResult['PROVIDER']['HAS_AUTH']);
 		if (!$this->arResult['PROVIDER'])
 		{
@@ -293,7 +324,12 @@ class CrmTrackingSourceEditComponent  extends \CBitrixComponent implements Contr
 
 	protected function prepareAjaxAnswer(array $data)
 	{
-		$errorTexts = Seo\Analytics\Service::getErrors();
+		$errorTexts = [];
+		if (Loader::includeModule('seo'))
+		{
+			$errorTexts = Seo\Analytics\Service::getErrors();
+		}
+
 		foreach ($errorTexts as $errorText)
 		{
 			$this->errors->setError(new Error($errorText));
@@ -309,8 +345,13 @@ class CrmTrackingSourceEditComponent  extends \CBitrixComponent implements Contr
 		];
 	}
 
-	protected static function getAdProvider($adType)
+	protected static function getAdProvider($adType, $clientId = null)
 	{
+		if (!Loader::includeModule('seo'))
+		{
+			return null;
+		}
+
 		$providers = Seo\Analytics\Service::getProviders();
 		$isFound = false;
 		$provider = array();
@@ -328,26 +369,46 @@ class CrmTrackingSourceEditComponent  extends \CBitrixComponent implements Contr
 			return null;
 		}
 
+		$provider['PROFILE'] = current(array_filter(
+			$provider['CLIENTS'],
+			function ($item) use ($clientId)
+			{
+				return $item['CLIENT_ID'] == $clientId;
+			}
+		)) ?: null;
+
 		return $provider;
 	}
 
-	public function getProviderAction($type)
+	public function getProviderAction($type, $clientId = null)
 	{
-		$data = self::getAdProvider($type);
+		$data = self::getAdProvider($type, $clientId);
 
 		return $this->prepareAjaxAnswer($data);
 	}
 
-	public function getAccountsAction($type)
+	public function getAccountsAction($type, $clientId)
 	{
-		$data = Seo\Analytics\Service::getAccounts($type);
+		$data = [];
+		if (Loader::includeModule('seo'))
+		{
+			$data = Seo\Analytics\Service::getInstance()
+				->setClientId($clientId)
+				->getAccounts($type);
+		}
 
 		return $this->prepareAjaxAnswer($data);
 	}
 
-	public function disconnectAction($type)
+	public function disconnectAction($type, $clientId)
 	{
-		Seo\Analytics\Service::removeAuth($type);
+		if (Loader::includeModule('seo'))
+		{
+			Seo\Analytics\Service::getInstance()
+				->setClientId($clientId)
+				->removeAuth($type);
+		}
+
 		$data = self::getAdProvider($type);
 
 		return $this->prepareAjaxAnswer($data);

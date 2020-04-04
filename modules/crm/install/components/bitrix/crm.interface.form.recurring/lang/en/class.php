@@ -162,25 +162,6 @@ $MESS["CRM_RECURRING_HINT_3_PLURAL_1"] = "months";
 $MESS["CRM_RECURRING_HINT_BEFORE_DATE"] = "until #DATE#";
 $MESS["CRM_RECURRING_HINT_TODAY"] = "today";
 $MESS["CRM_RECURRING_HINT_A_FEW_DAYS_BEFORE_DATE"] = "for #COUNT_ELEMENT# #TYPE_ELEMENT##BEFORE_DATE#";
-$MESS["CRM_RECURRING_INVOICE_B24_BLOCK_TEXT"] = "Use Auto Invoicing feature to bill your customers on a regular basis and save your time.
-	Create an invoice and specify how often you want it to be sent in future. The system will create and send a new invoice to the customer according to your timing preference.
-		<ul class=\"hide-features-list\">
-			<li class=\"hide-features-list-item\">Save your time with Auto Invoicing</li>
-			<li class=\"hide-features-list-item\">Quick access to all auto invoicing templates</li>
-			<li class=\"hide-features-list-item\">Send invoice to customer's e-mail <a href=\"#LINK#\" target=\"_blank\" class=\"hide-features-more\">Read more</a></li>
-		</ul>		
-		<strong>Auto Invoicing is available in Standard and Professional plans.</strong>";
-$MESS["CRM_RECURRING_INVOICE_B24_BLOCK_TITLE"] = "Auto Invoicing is available in Standard and Professional plans.";
-$MESS["CRM_RECURRING_DEAL_B24_BLOCK_TEXT"] = "Let Bitrix24 create deals for you! 
-	Recurring deals will save your time and resources on a number of occasions. For example, if your plan is to sing weekly contracts during the forthcoming year - recurring deals will be your deliverance for sure.
-	Create a recurring deal, and set the schedule and a pipeline. New deals will be created at the specified time, and you will not have to lift a finger.
-		<ul class=\"hide-features-list\">
-			<li class=\"hide-features-list-item\">Auto create deals</li>
-			<li class=\"hide-features-list-item\">Improve performance and efficiency of your employees</li>
-			<li class=\"hide-features-list-item\">Fast access to current recurring deals- <a href=\"#LINK#\" target=\"_blank\" class=\"hide-features-more\">Learn more</a></li>
-		</ul>		
-		<strong>Recurring Deals Are Available in \"Standard\" And \"Professional\" Plans</strong>";
-$MESS["CRM_RECURRING_DEAL_B24_BLOCK_TITLE"] = "Recurring deals are available in \"Standard\" and \"Professional\" plans";
 $MESS["CRM_RECURRING_EMPTY_OWNER_EMAIL"] = "Company e-mail in your company details (CRM - Settings - My company details) is empty.";
 $MESS["CRM_RECURRING_EMPTY_OWNER_EMAIL1"] = "E-mail is missing from your company details.";
 $MESS["NEXT_EXECUTION_HINT"] = "Next invoice will be created #DATE_EXECUTION#";

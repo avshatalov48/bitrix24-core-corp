@@ -8,10 +8,14 @@ use Bitrix\Disk\File;
 use Bitrix\Disk\Folder;
 use Bitrix\Disk\Internals\ObjectTable;
 use Bitrix\Disk\Search\ContentManager;
+use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentTypeException;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Update\Stepper;
 
+/**
+ * @deprecated
+ */
 final class BaseObjectIndex extends Stepper
 {
 	const PORTION = 30;
@@ -22,6 +26,16 @@ final class BaseObjectIndex extends Stepper
 
 	protected $portionSize = self::PORTION;
 	protected static $moduleId = 'disk';
+
+	public static function isReady()
+	{
+		$connection = Application::getConnection();
+
+		return
+			self::getStatus() === self::STATUS_STOP &&
+			$connection->getTableField(ObjectTable::getTableName(), 'SEARCH_INDEX')
+		;
+	}
 
 	public static function getStatus()
 	{

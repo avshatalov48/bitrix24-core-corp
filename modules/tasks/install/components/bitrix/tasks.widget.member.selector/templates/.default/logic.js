@@ -42,6 +42,19 @@ BX.namespace('Tasks.Component');
 				{
 					this.getSelector().bindEvent('change', this.onChanged.bind(this));
 				}
+
+				if (this.option('userType') === 'auditor' || this.option('userType') === 'accomplice')
+				{
+					var self = this;
+
+					BX.Event.EventEmitter.subscribe(
+						'BX.Tasks.CheckListItem:' + this.option('userType') + 'Added',
+						function(data)
+						{
+							self.getSelector().onSelectorItemSelected(data.data);
+						}
+					);
+				}
 			},
 
 			onChanged: function(items)

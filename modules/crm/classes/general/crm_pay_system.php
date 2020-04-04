@@ -445,7 +445,7 @@ class CCrmPaySystem
 				'US' => GetCountryIdByCode('US')
 			);
 		}
-		
+
 		$idRU = self::$rqCountryIds['RU'];
 		$idBY = self::$rqCountryIds['BY'];
 		$idKZ = self::$rqCountryIds['KZ'];
@@ -1400,16 +1400,19 @@ class CCrmPaySystem
 		if(!empty($arPTIDs))
 			return $arPTIDs;
 
-		$siteId = '';
-		$siteIterator = Bitrix\Main\SiteTable::getList(array(
-			'select' => array('LID', 'LANGUAGE_ID'),
-			'filter' => array('=DEF' => 'Y', '=ACTIVE' => 'Y')
-		));
-		if ($defaultSite = $siteIterator->fetch())
+		$siteId = SITE_ID;
+		if (defined("ADMIN_SECTION"))
 		{
-			$siteId = $defaultSite['LID'];
+			$siteIterator = Bitrix\Main\SiteTable::getList(array(
+				'select' => array('LID', 'LANGUAGE_ID'),
+				'filter' => array('=DEF' => 'Y', '=ACTIVE' => 'Y')
+			));
+			if ($defaultSite = $siteIterator->fetch())
+			{
+				$siteId = $defaultSite['LID'];
+			}
+			unset($defaultSite, $siteIterator);
 		}
-		unset($defaultSite, $siteIterator);
 
 		$dbRes = \Bitrix\Crm\Invoice\PersonType::getList([
 			'select' => ['ID', 'CODE'],
@@ -1499,7 +1502,7 @@ class CCrmPaySystem
 
 		return self::convertNewToOld($data);
 	}
-	
+
 	public static function rewritePSCorrByRqSource($personTypeId, &$params, $options = array())
 	{
 		$personTypeId = (int)$personTypeId;
@@ -1643,7 +1646,7 @@ class CCrmPaySystem
 				if (is_string($personTypeCode) && strlen($personTypeCode) > 0)
 				{
 					foreach (CCrmPaySystem::getDefaultBuyerParams('CRM_'.$personTypeCode, $type, $countryId)
-					         as $paramName => $paramValue)
+								as $paramName => $paramValue)
 					{
 						if (is_array($params[$paramName]))
 						{

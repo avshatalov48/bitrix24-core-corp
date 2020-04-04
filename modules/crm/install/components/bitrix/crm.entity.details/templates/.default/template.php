@@ -21,10 +21,10 @@ $extras = $arResult['EXTRAS'];
 $entityInfo = $arResult['ENTITY_INFO'];
 $tabs = $arResult['TABS'];
 $readOnly = $arResult['READ_ONLY'];
-
+$activeTabList = array_column($tabs, 'active');
 array_unshift(
 	$tabs,
-	array('id'=> 'main', 'name' => GetMessage("CRM_ENT_DETAIL_MAIN_TAB"), 'active' => true)
+	array('id'=> 'main', 'name' => GetMessage("CRM_ENT_DETAIL_MAIN_TAB"), 'active' => !in_array(true, $activeTabList, true))
 );
 
 $containerId = "{$guid}_container";
@@ -90,9 +90,16 @@ $tabContainerId = "{$guid}_tabs";
 	foreach($tabs as $tab)
 	{
 		$tabID = $tab['id'];
+		$className = "crm-entity-section crm-entity-section-info";
+		$styleString = '';
+		if ($tab['active'] !== true)
+		{
+			$className .= " crm-entity-section-tab-content-hide crm-entity-section-above-overlay";
+			$styleString = 'style="display: none;"';
+		}
 		if($tabID !== 'main')
 		{
-			?><div data-tab-id="<?=htmlspecialcharsbx($tabID)?>" class="crm-entity-section crm-entity-section-info crm-entity-section-tab-content-hide crm-entity-section-above-overlay" style="display: none;"><?
+			?><div data-tab-id="<?=htmlspecialcharsbx($tabID)?>" class="<?=$className?>" <?=$styleString?>><?
 				if(isset($tab['html']))
 				{
 					echo $tab['html'];
@@ -100,7 +107,7 @@ $tabContainerId = "{$guid}_tabs";
 			?></div><?
 			continue;
 		}
-		?><div data-tab-id="<?=htmlspecialcharsbx($tabID)?>" class="crm-entity-section crm-entity-section-info">
+		?><div data-tab-id="<?=htmlspecialcharsbx($tabID)?>" class="<?=$className?>" <?=$styleString?>>
 			<div class="crm-entity-card-container"><?
 				$APPLICATION->IncludeComponent(
 					'bitrix:crm.entity.editor',
@@ -196,12 +203,16 @@ $exclusionConfirmDialogContentHelp = GetMessage("CRM_ENT_DETAIL_EXCLUDE_DIALOG_M
 		{
 			BX.Crm.Page.initialize();
 
+			BX.Crm.Page.context = '<?=\CUtil::jsEscape(strtolower($entityTypeName)) ?>-<?=intval($entityID) ?>';
+
 			BX.Crm.EntityDetailManager.messages =
 			{
 				copyPageUrl: "<?=CUtil::JSEscape($copyPageUrlMessage)?>",
 				pageUrlCopied: "<?=CUtil::JSEscape($pageUrlCopiedMessage)?>",
 				deletionDialogTitle: "<?=CUtil::JSEscape($deletionDialogTitle)?>",
 				deletionConfirmDialogContent: "<?=CUtil::JSEscape($deletionConfirmDialogContent)?>",
+				deletionWarning: "<?=CUtil::JSEscape(GetMessage("CRM_ENT_DETAIL_DELETION_WARNING"))?>",
+				goToDetails: "<?=CUtil::JSEscape(GetMessage("CRM_ENT_DETAIL_DELETION_GO_TO_DETAILS"))?>",
 				exclusionDialogTitle: "<?=CUtil::JSEscape($exclusionDialogTitle)?>",
 				exclusionConfirmDialogContent: "<?=CUtil::JSEscape($exclusionConfirmDialogContent)?>",
 				exclusionConfirmDialogContentHelp: "<?=CUtil::JSEscape($exclusionConfirmDialogContentHelp)?>"

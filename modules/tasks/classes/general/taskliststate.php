@@ -29,6 +29,8 @@ class CTaskListState
 	const VIEW_MODE_KANBAN               = 0x0000300;
 	const VIEW_MODE_TIMELINE             = 0x0000400;
 	const VIEW_MODE_PLAN                 = 0x0000500;
+	const VIEW_MODE_SPRINT               = 0x0000600;
+	const VIEW_MODE_CALENDAR             = 0x0000700;
 
 	const VIEW_SUBMODE_WITH_GROUPS       = 0x0000001;
 	const VIEW_SUBMODE_WITH_SUBTASKS     = 0x0000002;
@@ -476,7 +478,7 @@ class CTaskListState
 			'VIEWS'         => array(),
 			'VIEW_SELECTED' => array(
 				'ID'       => $selectedViewId,
-				'CODENAME' => self::resolveConstantCodename($selectedViewId)
+				'CODENAME' => self::resolveConstantCodename($selectedViewId, self::VIEW_MODE_LIST)
 			),
 			'VIEW_PARAMETERS' => $this->getViewParameters(),
 			'TASK_CATEGORIES' => array(),
@@ -707,10 +709,12 @@ class CTaskListState
 	{
 		return (array(
 			self::VIEW_MODE_LIST,
-			self::VIEW_MODE_PLAN,
-			self::VIEW_MODE_KANBAN,
-			self::VIEW_MODE_GANTT,
 			self::VIEW_MODE_TIMELINE,
+			self::VIEW_MODE_PLAN,
+			self::VIEW_MODE_CALENDAR,
+			self::VIEW_MODE_GANTT,
+			self::VIEW_MODE_SPRINT,
+			self::VIEW_MODE_KANBAN,
 		));
 	}
 
@@ -747,6 +751,8 @@ class CTaskListState
 			self::VIEW_MODE_KANBAN               => 'VIEW_MODE_KANBAN',
 			self::VIEW_MODE_TIMELINE             => 'VIEW_MODE_TIMELINE',
 			self::VIEW_MODE_PLAN                 => 'VIEW_MODE_PLAN',
+			self::VIEW_MODE_SPRINT               => 'VIEW_MODE_SPRINT',
+			self::VIEW_MODE_CALENDAR             => 'VIEW_MODE_CALENDAR',
 			self::VIEW_SUBMODE_WITH_GROUPS       => 'VIEW_SUBMODE_WITH_GROUPS',
 			self::VIEW_SUBMODE_WITH_SUBTASKS     => 'VIEW_SUBMODE_WITH_SUBTASKS',
 			self::VIEW_TASK_CATEGORY_ALL         => 'VIEW_TASK_CATEGORY_ALL',
@@ -780,17 +786,22 @@ class CTaskListState
 		return ($arMap[$constant]);
 	}
 
-	public static function resolveConstantCodename($constant)
+	public static function resolveConstantCodename($constant, $defaultValue = false)
 	{
-		static $arMap = array();
+		static $arMap = [];
 
-		if(!$arMap)
+		if (!$arMap)
 		{
 			$arMap = self::mapConstantCodename();
 		}
 
-		if ( ! isset($arMap[$constant]) )
+		if (!isset($arMap[$constant]))
 		{
+			if ($defaultValue)
+			{
+				return $arMap[$defaultValue];
+			}
+
 			CTaskAssert::logError('[0xbe638df3] ');
 			throw new TasksException('', TasksException::TE_WRONG_ARGUMENTS);
 		}
@@ -898,13 +909,21 @@ class CTaskListState
 					'SHORT'     => GetMessage('TASKS_LIST_CTRL_MODE_KANBAN_SHORT')
 				),
 				self::VIEW_MODE_TIMELINE => array(
-					'DEFAULT' => GetMessage('TASKS_LIST_CTRL_MODE_TIMELINE'),
-					'SHORT'     => GetMessage('TASKS_LIST_CTRL_MODE_TIMELINE_SHORT')
+					'DEFAULT' => GetMessage('TASKS_LIST_CTRL_MODE_TIMELINE2'),
+					'SHORT'     => GetMessage('TASKS_LIST_CTRL_MODE_TIMELINE2_SHORT')
 				),
 				self::VIEW_MODE_PLAN => array(
 					'DEFAULT' => GetMessage('TASKS_LIST_CTRL_MODE_PLAN'),
 					'SHORT'     => GetMessage('TASKS_LIST_CTRL_MODE_PLAN_SHORT')
-				)
+				),
+				self::VIEW_MODE_SPRINT => array(
+					'DEFAULT' => GetMessage('TASKS_LIST_CTRL_MODE_SPRINT'),
+					'SHORT'     => GetMessage('TASKS_LIST_CTRL_MODE_SPRINT_SHORT')
+				),
+				self::VIEW_MODE_CALENDAR => array(
+					'DEFAULT' => GetMessage('TASKS_LIST_CTRL_MODE_CALENDAR'),
+					'SHORT'     => GetMessage('TASKS_LIST_CTRL_MODE_CALENDAR')
+				),
 			);
 		}
 

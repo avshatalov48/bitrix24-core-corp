@@ -25,6 +25,7 @@ class CAllCrmDeal
 	static public $sUFEntityID = 'CRM_DEAL';
 	const USER_FIELD_ENTITY_ID = 'CRM_DEAL';
 	const SUSPENDED_USER_FIELD_ENTITY_ID = 'CRM_DEAL_SPD';
+	const TOTAL_COUNT_CACHE_ID =  'crm_deal_total_count';
 
 	public $LAST_ERROR = '';
 	protected $checkExceptions = array();
@@ -72,13 +73,16 @@ class CAllCrmDeal
 				),
 				'STAGE_ID' => array(
 					'TYPE' => 'crm_status',
-					'CRM_STATUS_TYPE' => 'DEAL_STAGE'
+					'CRM_STATUS_TYPE' => 'DEAL_STAGE',
+					'ATTRIBUTES' => array(CCrmFieldInfoAttr::Progress)
 				),
 				'STAGE_SEMANTIC_ID' => array(
-					'TYPE' => 'string'
+					'TYPE' => 'string',
+					'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
 				),
 				'IS_NEW' => array(
-					'TYPE' => 'char'
+					'TYPE' => 'char',
+					'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
 				),
 				'IS_RECURRING' => array(
 					'TYPE' => 'char'
@@ -365,6 +369,31 @@ class CAllCrmDeal
 		// add utm fields
 		$result = array_merge($result, UtmTable::getFieldsDescriptionByEntityTypeId(CCrmOwnerType::Deal));
 
+		// add uf fields
+		if (
+			isset($arOptions['UF_FIELDS']) &&
+			is_array($arOptions['UF_FIELDS'])
+		)
+		{
+			foreach ($arOptions['UF_FIELDS'] as $ufField)
+			{
+				if (
+					isset($ufField['FIELD']) &&
+					isset($ufField['TYPE']) &&
+					is_string($ufField['FIELD']) &&
+					is_string($ufField['TYPE'])
+				)
+				{
+					$result[$ufField['FIELD']] = [
+						'FIELD' => 'UF.' . $ufField['FIELD'],
+						'TYPE' => $ufField['TYPE'],
+						'FROM' => 'LEFT JOIN b_uts_crm_deal UF ON L.ID = UF.VALUE_ID'
+					];
+				}
+
+			}
+		}
+
 		return $result;
 	}
 	public static function __AfterPrepareSql(/*CCrmEntityListBuilder*/ $sender, $arOrder, $arFilter, $arGroupBy, $arSelectFields)
@@ -397,11 +426,52 @@ class CAllCrmDeal
 			}
 		}
 
-		if (!empty($arFilter['ACTIVE_TIME_PERIOD_from']) && !empty($arFilter['ACTIVE_TIME_PERIOD_to']))
+		if (!empty($arFilter['ACTIVE_TIME_PERIOD_from']) || !empty($arFilter['%STAGE_ID_FROM_HISTORY']) || !empty($arFilter['%STAGE_ID_FROM_SUPPOSED_HISTORY']) || !empty($arFilter['%STAGE_SEMANTIC_ID_FROM_HISTORY']))
 		{
+
 			global $DB;
-			$sqlData['WHERE'][] = "L.DATE_CREATE <= ".$DB->CharToDateFunction($arFilter['ACTIVE_TIME_PERIOD_to']);
-			$sqlData['WHERE'][] = "(L.CLOSEDATE IS NULL OR L.CLOSEDATE >= ".$DB->CharToDateFunction($arFilter['ACTIVE_TIME_PERIOD_from'], 'SHORT').")";
+			$supposedHistoryCaseSql = "L.ID IN (SELECT DISTINCT DSHWS.OWNER_ID FROM b_crm_deal_stage_history_with_supposed DSHWS WHERE ";
+			$supposedHistoryCaseSqlWhereStarted = false;
+
+			if (!empty($arFilter['ACTIVE_TIME_PERIOD_from']) && !empty($arFilter['ACTIVE_TIME_PERIOD_to']))
+			{
+				$supposedHistoryCaseSql .= "DSHWS.LAST_UPDATE_DATE <= ".
+										   $DB->CharToDateFunction($arFilter['ACTIVE_TIME_PERIOD_to'], 'SHORT');
+				$supposedHistoryCaseSql .= " AND DSHWS.CLOSE_DATE >= ".
+										   $DB->CharToDateFunction($arFilter['ACTIVE_TIME_PERIOD_from'], 'SHORT');
+				$supposedHistoryCaseSqlWhereStarted = true;
+			}
+
+
+			if (!empty($arFilter['%STAGE_SEMANTIC_ID_FROM_HISTORY']))
+			{
+				$stageSemanticIdsFromFilter = is_array($arFilter['%STAGE_SEMANTIC_ID_FROM_HISTORY']) ? $arFilter['%STAGE_SEMANTIC_ID_FROM_HISTORY'] : array($arFilter['%STAGE_SEMANTIC_ID_FROM_HISTORY']);
+				$supposedHistoryCaseSql .= $supposedHistoryCaseSqlWhereStarted ? ' AND ' : ' ';
+				$supposedHistoryCaseSql  .= " DSHWS.IS_SUPPOSED = 'N' AND DSHWS.STAGE_SEMANTIC_ID  IN (" . implode(',', array_map(function($el) {return "'" . $el . "'";}, $stageSemanticIdsFromFilter)) . ")";
+				$supposedHistoryCaseSqlWhereStarted = true;
+			}
+
+
+			if (!empty($arFilter['%STAGE_ID_FROM_HISTORY']))
+			{
+				$statusIdsFromFilter = is_array($arFilter['%STAGE_ID_FROM_HISTORY']) ? $arFilter['%STAGE_ID_FROM_HISTORY'] : array($arFilter['%STAGE_ID_FROM_HISTORY']);
+				$supposedHistoryCaseSql .= $supposedHistoryCaseSqlWhereStarted ? ' AND ' : ' ';
+				$supposedHistoryCaseSql .= " DSHWS.IS_SUPPOSED = 'N' AND DSHWS.STAGE_ID  IN (" . implode(',', array_map(function($el) {return "'" . $el . "'";}, $statusIdsFromFilter)) . ")";
+				$supposedHistoryCaseSqlWhereStarted = true;
+			}
+
+
+			if (!empty($arFilter['%STAGE_ID_FROM_SUPPOSED_HISTORY']))
+			{
+				$statusIdsFromFilter = is_array($arFilter['%STAGE_ID_FROM_SUPPOSED_HISTORY']) ? $arFilter['%STAGE_ID_FROM_SUPPOSED_HISTORY'] : array($arFilter['%STAGE_ID_FROM_SUPPOSED_HISTORY']);
+				$supposedHistoryCaseSql .= $supposedHistoryCaseSqlWhereStarted ? ' AND ' : ' ';
+				$supposedHistoryCaseSql .= " DSHWS.STAGE_ID  IN (" . implode(',', array_map(function($el) {return "'" . $el . "'";}, $statusIdsFromFilter)) . ")";
+				$supposedHistoryCaseSqlWhereStarted = true;
+			}
+
+			$supposedHistoryCaseSql .=" )";
+
+			$sqlData['WHERE'][] = $supposedHistoryCaseSql;
 		}
 
 		if(isset($arFilter['CALENDAR_DATE_FROM']) && $arFilter['CALENDAR_DATE_FROM'] !== ''
@@ -1193,6 +1263,29 @@ class CAllCrmDeal
 		return $results;
 	}
 
+	public static function GetTotalCount()
+	{
+		if(defined('BX_COMP_MANAGED_CACHE') && $GLOBALS['CACHE_MANAGER']->Read(600, self::TOTAL_COUNT_CACHE_ID, 'b_crm_deal'))
+		{
+			return $GLOBALS['CACHE_MANAGER']->Get(self::TOTAL_COUNT_CACHE_ID);
+		}
+
+		$result = (int)self::GetListEx(
+			array(),
+			array('CHECK_PERMISSIONS' => 'N'),
+			array(),
+			false,
+			array(),
+			array('ENABLE_ROW_COUNT_THRESHOLD' => false)
+		);
+
+		if(defined('BX_COMP_MANAGED_CACHE'))
+		{
+			$GLOBALS['CACHE_MANAGER']->Set(self::TOTAL_COUNT_CACHE_ID, $result);
+		}
+		return $result;
+	}
+
 	public static function GetRightSiblingID($ID)
 	{
 		$ID = intval($ID);
@@ -1349,9 +1442,17 @@ class CAllCrmDeal
 			//region StageID, SemanticID and IsNew
 			if (!isset($arFields['STAGE_ID']))
 			{
-				$arFields['STAGE_ID'] = self::GetStartStageID($categoryID);
+				$arFields['STAGE_ID'] = self::GetStartStageID(
+					$categoryID,
+					$this->bCheckPermission
+						? Bitrix\Crm\Security\EntityPermissionType::CREATE
+						: Bitrix\Crm\Security\EntityPermissionType::UNDEFINED
+				);
 			}
-			$arFields['STAGE_SEMANTIC_ID'] = self::GetSemanticID($arFields['STAGE_ID'], $categoryID);
+			$arFields['STAGE_SEMANTIC_ID'] = self::IsStageExists($arFields['STAGE_ID'], $categoryID)
+				? self::GetSemanticID($arFields['STAGE_ID'], $categoryID)
+				: Bitrix\Crm\PhaseSemantics::UNDEFINED;
+
 			$arFields['IS_NEW'] = $arFields['STAGE_ID'] === self::GetStartStageID($categoryID) ? 'Y' : 'N';
 			//endregion
 
@@ -1566,14 +1667,19 @@ class CAllCrmDeal
 			unset($arFields['ID']);
 			$ID = intval($DB->Add('b_crm_deal', $arFields, array(), 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__));
 			//Append ID to TITLE if required
-			if($ID > 0 && substr(rtrim($arFields['TITLE']), -1) === '#')
+			if($ID > 0 && $arFields['TITLE'] === self::GetDefaultTitle())
 			{
-				$arFields['TITLE'] .= $ID;
+				$arFields['TITLE'] = self::GetDefaultTitle($ID);
 				$sUpdate = $DB->PrepareUpdate('b_crm_deal', array('TITLE' => $arFields['TITLE']));
 				if(strlen($sUpdate) > 0)
 				{
 					$DB->Query("UPDATE b_crm_deal SET {$sUpdate} WHERE ID = {$ID}", false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
 				};
+			}
+
+			if(defined('BX_COMP_MANAGED_CACHE'))
+			{
+				$GLOBALS['CACHE_MANAGER']->CleanDir('b_crm_deal');
 			}
 
 			$result = $arFields['ID'] = $ID;
@@ -1677,8 +1783,8 @@ class CAllCrmDeal
 				);
 			}
 
-			// add utm fields
-			UtmTable::addEntityUtmFromFields(CCrmOwnerType::Deal, $ID, $arFields);
+			// tracking of entity
+			Tracking\Entity::onAfterAdd(CCrmOwnerType::Deal, $ID, $arFields);
 
 			if($bUpdateSearch)
 			{
@@ -2164,6 +2270,7 @@ class CAllCrmDeal
 		{
 			$options = array();
 		}
+		$isSystemAction = isset($options['IS_SYSTEM_ACTION']) && $options['IS_SYSTEM_ACTION'];
 
 		$this->LAST_ERROR = '';
 		$this->checkExceptions = array();
@@ -2195,7 +2302,14 @@ class CAllCrmDeal
 			unset($arFields['DATE_MODIFY']);
 		}
 
-		$arFields['~DATE_MODIFY'] = $DB->CurrentTimeFunction();
+		if(!$isSystemAction)
+		{
+			$arFields['~DATE_MODIFY'] = $DB->CurrentTimeFunction();
+			if(!isset($arFields['MODIFY_BY_ID']) || $arFields['MODIFY_BY_ID'] <= 0)
+			{
+				$arFields['MODIFY_BY_ID'] = $userID;
+			}
+		}
 
 		if(isset($arFields['TITLE']) && trim($arFields['TITLE']) === '')
 		{
@@ -2211,11 +2325,6 @@ class CAllCrmDeal
 		if(isset($arFields['CLOSEDATE']) && (!is_string($arFields['CLOSEDATE']) || trim($arFields['CLOSEDATE']) === ''))
 		{
 			unset($arFields['CLOSEDATE']);
-		}
-
-		if (!isset($arFields['MODIFY_BY_ID']) || $arFields['MODIFY_BY_ID'] <= 0)
-		{
-			$arFields['MODIFY_BY_ID'] = $userID;
 		}
 
 		if (isset($arFields['ASSIGNED_BY_ID']) && $arFields['ASSIGNED_BY_ID'] <= 0)
@@ -2245,7 +2354,9 @@ class CAllCrmDeal
 			$syncStageSemantics = isset($options['SYNCHRONIZE_STAGE_SEMANTICS']) && $options['SYNCHRONIZE_STAGE_SEMANTICS'];
 			if(isset($arFields['STAGE_ID']) && ($syncStageSemantics || $arFields['STAGE_ID'] !== $arRow['STAGE_ID']))
 			{
-				$arFields['STAGE_SEMANTIC_ID'] = self::GetSemanticID($arFields['STAGE_ID'], $arRow['CATEGORY_ID']);
+				$arFields['STAGE_SEMANTIC_ID'] = self::IsStageExists($arFields['STAGE_ID'], $arRow['CATEGORY_ID'])
+					? self::GetSemanticID($arFields['STAGE_ID'], $arRow['CATEGORY_ID'])
+					: Bitrix\Crm\PhaseSemantics::UNDEFINED;
 				$arFields['IS_NEW'] = $arFields['STAGE_ID'] === self::GetStartStageID($arRow['CATEGORY_ID']) ? 'Y' : 'N';
 			}
 			else
@@ -2266,10 +2377,6 @@ class CAllCrmDeal
 			{
 				$arFields['ID'] = $ID;
 			}
-
-			$originalObserverIDs = Crm\Observer\ObserverManager::getEntityObserverIDs(CCrmOwnerType::Deal, $ID);
-			$observerIDs = isset($arFields['OBSERVER_IDS']) && is_array($arFields['OBSERVER_IDS'])
-				? $arFields['OBSERVER_IDS'] : null;
 
 			$enableSystemEvents = !isset($options['ENABLE_SYSTEM_EVENTS']) || $options['ENABLE_SYSTEM_EVENTS'] === true;
 			//region Before update event
@@ -2299,6 +2406,9 @@ class CAllCrmDeal
 			$arAttr['STAGE_ID'] = !empty($arFields['STAGE_ID']) ? $arFields['STAGE_ID'] : $arRow['STAGE_ID'];
 			$arAttr['OPENED'] = !empty($arFields['OPENED']) ? $arFields['OPENED'] : $arRow['OPENED'];
 
+			$originalObserverIDs = Crm\Observer\ObserverManager::getEntityObserverIDs(CCrmOwnerType::Deal, $ID);
+			$observerIDs = isset($arFields['OBSERVER_IDS']) && is_array($arFields['OBSERVER_IDS'])
+				? $arFields['OBSERVER_IDS'] : null;
 			if($observerIDs !== null && count($observerIDs) > 0)
 			{
 				$arAttr['CONCERNED_USER_IDS'] = $observerIDs;
@@ -2309,12 +2419,16 @@ class CAllCrmDeal
 			}
 
 			$arEntityAttr = self::BuildEntityAttr($assignedByID, $arAttr);
-			$sEntityPerm = $this->cPerms->GetPermType($permissionEntityType, 'WRITE', $arEntityAttr);
-			self::PrepareEntityAttrs($arEntityAttr, $sEntityPerm);
-			//Prevent 'OPENED' field change by user restricted by BX_CRM_PERM_OPEN permission
-			if($sEntityPerm === BX_CRM_PERM_OPEN && isset($arFields['OPENED']) && $arFields['OPENED'] !== 'Y' && $assignedByID !== $userID)
+			if($this->bCheckPermission)
 			{
-				$arFields['OPENED'] = 'Y';
+				$sEntityPerm = $this->cPerms->GetPermType($permissionEntityType, 'WRITE', $arEntityAttr);
+				//HACK: Ensure that entity accessible for user restricted by BX_CRM_PERM_OPEN
+				self::PrepareEntityAttrs($arEntityAttr, $sEntityPerm);
+				//HACK: Prevent 'OPENED' field change by user restricted by BX_CRM_PERM_OPEN permission
+				if($sEntityPerm === BX_CRM_PERM_OPEN && isset($arFields['OPENED']) && $arFields['OPENED'] !== 'Y' && $assignedByID !== $userID)
+				{
+					$arFields['OPENED'] = 'Y';
+				}
 			}
 
 			if (isset($arFields['ASSIGNED_BY_ID']) && $arRow['ASSIGNED_BY_ID'] != $arFields['ASSIGNED_BY_ID'])
@@ -3026,6 +3140,17 @@ class CAllCrmDeal
 			self::PullChange('UPDATE', array('ID' => $ID));
 
 			\Bitrix\Crm\Kanban\SupervisorTable::sendItem($ID, CCrmOwnerType::DealName, 'kanban_update');
+
+			if(!$isSystemAction)
+			{
+				$stageSemanticsId = $arFields['STAGE_SEMANTIC_ID'] ?: $arRow['STAGE_SEMANTIC_ID'];
+				if(Crm\Ml\Scoring::isMlAvailable() && !Crm\PhaseSemantics::isFinal($stageSemanticsId))
+				{
+					Crm\Ml\Scoring::queuePredictionUpdate(CCrmOwnerType::Deal, $ID, [
+						'EVENT_TYPE' => Crm\Ml\Scoring::EVENT_ENTITY_UPDATE
+					]);
+				}
+			}
 		}
 		return $bResult;
 	}
@@ -3113,6 +3238,11 @@ class CAllCrmDeal
 		$dbRes = $DB->Query("DELETE FROM b_crm_deal WHERE ID = {$ID}{$sWherePerm}", false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
 		if (is_object($dbRes) && $dbRes->AffectedRowsCount() > 0)
 		{
+			if(defined('BX_COMP_MANAGED_CACHE'))
+			{
+				$GLOBALS['CACHE_MANAGER']->CleanDir('b_crm_deal');
+			}
+
 			self::SynchronizeCustomerData($ID, $arFields, array('ENABLE_SOURCE' => false));
 
 			CCrmSearch::DeleteSearch('DEAL', $ID);
@@ -3183,6 +3313,7 @@ class CAllCrmDeal
 				\Bitrix\Crm\Timeline\TimelineEntry::deleteByOwner(CCrmOwnerType::Deal, $ID);
 				\Bitrix\Crm\Pseudoactivity\WaitEntry::deleteByOwner(CCrmOwnerType::Deal, $ID);
 				\Bitrix\Crm\Observer\ObserverManager::deleteByOwner(CCrmOwnerType::Deal, $ID);
+				\Bitrix\Crm\Ml\Scoring::onEntityDelete(CCrmOwnerType::Deal, $ID);
 
 				Crm\Integration\Im\Chat::deleteChat(
 					array(
@@ -3210,14 +3341,10 @@ class CAllCrmDeal
 
 			if ($arFields['IS_RECURRING'] === "Y")
 			{
-				$recurDealData = \Bitrix\Crm\DealRecurTable::getList(
-					array(
-						"filter" => array("=DEAL_ID" => $ID)
-					)
-				);
-				while ($recurring = $recurDealData->fetch())
+				$dealRecurringItem = \Bitrix\Crm\Recurring\Entity\Item\DealExist::loadByDealId($ID);
+				if ($dealRecurringItem)
 				{
-					\Bitrix\Crm\DealRecurTable::delete($recurring['ID']);
+					$dealRecurringItem->delete();
 				}
 			}
 
@@ -3449,6 +3576,18 @@ class CAllCrmDeal
 			);
 		}
 
+		if(isset($arFieldsOrig['SOURCE_ID']) && isset($arFieldsModif['SOURCE_ID'])
+			&& $arFieldsOrig['SOURCE_ID'] != $arFieldsModif['SOURCE_ID'])
+		{
+			$arStatus = CCrmStatus::GetStatusList('SOURCE');
+			$arMsg[] = Array(
+				'ENTITY_FIELD' => 'SOURCE_ID',
+				'EVENT_NAME' => GetMessage('CRM_FIELD_COMPARE_SOURCE_ID'),
+				'EVENT_TEXT_1' => htmlspecialcharsbx(CrmCompareFieldsList($arStatus, $arFieldsOrig['SOURCE_ID'])),
+				'EVENT_TEXT_2' => htmlspecialcharsbx(CrmCompareFieldsList($arStatus, $arFieldsModif['SOURCE_ID']))
+			);
+		}
+
 		if (isset($arFieldsOrig['PROBABILITY']) && isset($arFieldsModif['PROBABILITY'])
 			&& $arFieldsOrig['PROBABILITY'] != $arFieldsModif['PROBABILITY'])
 			$arMsg[] = Array(
@@ -3656,7 +3795,7 @@ class CAllCrmDeal
 		return isset($fields['CATEGORY_ID']) ? (int)$fields['CATEGORY_ID'] : 0;
 	}
 
-	protected static function GetPermittedCategoryIDs($permisionType, CCrmPerms $userPermissions = null)
+	protected static function GetPermittedCategoryIDs($permissionType, CCrmPerms $userPermissions = null)
 	{
 		if(!($userPermissions instanceof CCrmPerms))
 		{
@@ -3668,13 +3807,13 @@ class CAllCrmDeal
 		foreach($allCategoryIDs as $categoryID)
 		{
 			$permissionEntity = DealCategory::convertToPermissionEntityType($categoryID);
-			if($permisionType === 'CREATE')
+			if($permissionType === 'CREATE')
 			{
 				$result = CCrmAuthorizationHelper::CheckCreatePermission($permissionEntity, $userPermissions);
 			}
-			elseif($permisionType === 'UPDATE')
+			elseif($permissionType === 'UPDATE')
 			{
-				$result = CCrmAuthorizationHelper::CheckUpdatePermission($permissionEntity, $userPermissions);
+				$result = CCrmAuthorizationHelper::CheckUpdatePermission($permissionEntity, 0, $userPermissions);
 			}
 			else
 			{
@@ -4095,11 +4234,44 @@ class CAllCrmDeal
 		return $result;
 	}
 
-	public static function GetStartStageID($categoryID = 0)
+	/**
+	 * Get start Stage ID for specified Permission Type.
+	 * If Permission Type is not defined permission check will be disabled.
+	 * @param int $categoryID Category ID.
+	 * @param int $permissionTypeID Permission Type (see \Bitrix\Crm\Security\EntityPermissionType).
+	 * @param CCrmPerms $userPermissions User Permissions
+	 * @return string
+	 */
+	public static function GetStartStageID($categoryID = 0, $permissionTypeID = 0, CCrmPerms $userPermissions = null)
 	{
 		$categoryID = (int)$categoryID;
 		$stageIDs = array_keys(self::GetStages($categoryID));
-		return isset($stageIDs[0]) ? $stageIDs[0] : '';
+		if(empty($stageIDs))
+		{
+			return '';
+		}
+
+		$permissionType = Bitrix\Crm\Security\EntityPermissionType::resolveName($permissionTypeID);
+		if($permissionType === '')
+		{
+			return $stageIDs[0];
+		}
+
+		if($userPermissions === null)
+		{
+			$userPermissions = CCrmPerms::GetCurrentUserPermissions();
+		}
+
+		$permissionEntity = DealCategory::convertToPermissionEntityType($categoryID);
+		foreach($stageIDs as $stageID)
+		{
+			$permission = $userPermissions->GetPermType($permissionEntity, $permissionType, array("STAGE_ID{$stageID}"));
+			if($permission !== BX_CRM_PERM_NONE)
+			{
+				return $stageID;
+			}
+		}
+		return '';
 	}
 
 	public static function GetFinalStageID($categoryID = 0)
@@ -4145,6 +4317,22 @@ class CAllCrmDeal
 		$categoryID = (int)$categoryID;
 		$stages = self::GetStages($categoryID);
 		return isset($stages[$stageID]) && isset($stages[$stageID]['SORT']) ? (int)$stages[$stageID]['SORT'] : -1;
+	}
+
+	public static function IsStageExists($stageID, $categoryID = -1)
+	{
+		if(!is_int($categoryID))
+		{
+			$categoryID = (int)$categoryID;
+		}
+
+		if($categoryID < 0)
+		{
+			$categoryID = DealCategory::resolveFromStageID($stageID);
+		}
+
+		$stageList = self::GetStages($categoryID);
+		return isset($stageList[$stageID]);
 	}
 
 	public static function GetStageName($stageID, $categoryID = -1)
@@ -4588,7 +4776,8 @@ class CAllCrmDeal
 				array(
 					'SYNCHRONIZE_STAGE_SEMANTICS' => true,
 					'REGISTER_SONET_EVENT' => false,
-					'ENABLE_SYSTEM_EVENTS' => false
+					'ENABLE_SYSTEM_EVENTS' => false,
+					'IS_SYSTEM_ACTION' => true
 				)
 			);
 		}
@@ -4737,7 +4926,8 @@ class CAllCrmDeal
 				false,
 				array(
 					'REGISTER_SONET_EVENT' => false,
-					'ENABLE_SYSTEM_EVENTS' => false
+					'ENABLE_SYSTEM_EVENTS' => false,
+					'IS_SYSTEM_ACTION' => true
 				)
 			);
 		}
@@ -4779,6 +4969,8 @@ class CAllCrmDeal
 	{
 		global $DB;
 		$DB->Query("UPDATE b_crm_deal SET CONTACT_ID = NULL WHERE CONTACT_ID = {$contactID}", false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
+
+		\Bitrix\Crm\Binding\DealContactTable::unbindAllDeals($contactID);
 	}
 	public static function ProcessCompanyDeletion($companyID)
 	{
@@ -4830,9 +5022,27 @@ class CAllCrmDeal
 		}
 	}
 
-	public static function GetDefaultTitle()
+	public static function GetDefaultTitleTemplate()
 	{
-		return GetMessage('CRM_DEAL_DEFAULT_TITLE');
+		return GetMessage('CRM_DEAL_DEFAULT_TITLE_TEMPLATE');
+	}
+
+	public static function GetDefaultTitle($number = '')
+	{
+		return GetMessage('CRM_DEAL_DEFAULT_TITLE_TEMPLATE', array('%NUMBER%' => $number));
+	}
+
+	public static function existsEntityWithStatus($stageId)
+	{
+		$queryObject = self::getListEx(
+			['ID' => 'DESC'],
+			['STAGE_ID' => $stageId, 'CHECK_PERMISSIONS' => 'N'],
+			false,
+			false,
+			['ID']
+		);
+
+		return (bool) $queryObject->fetch();
 	}
 }
 

@@ -12,4 +12,7 @@ $MESS["CRM_DEAL_FILTER_RECURRING_NEXT_EXECUTION"] = "Дата следующег
 $MESS["CRM_DEAL_FILTER_RECURRING_LIMIT_DATE"] = "Дата окончания";
 $MESS["CRM_DEAL_FILTER_RECURRING_COUNTER_REPEAT"] = "Создано сделок";
 $MESS["CRM_DEAL_FILTER_ACTIVE_TIME_PERIOD"] = "Период активности";
+$MESS["CRM_DEAL_FILTER_STAGE_ID_FROM_HISTORY"] = "Стадия по истории";
+$MESS["CRM_DEAL_FILTER_STAGE_ID_FROM_SUPPOSED_HISTORY"] = "Стадия по истории(с предполагаемыми переходами)";
+$MESS["CRM_DEAL_FILTER_STAGE_SEMANTIC_ID_FROM_HISTORY"] = "Группа стадий по истории";
 ?>

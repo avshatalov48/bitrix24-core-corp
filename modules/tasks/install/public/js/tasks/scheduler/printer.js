@@ -187,9 +187,9 @@ BX.Scheduler.Printer.prototype =
 				"-webkit-print-color-adjust: exact; " +
 				"color-adjust: exact;" +
 			"}\n" +
-			"@page {" +
-				"size: " + this.getFormat() + " " + this.getOrientation() + ";" +
-			"}" +
+			// "@page {" +
+			// 	"size: " + this.getFormat() + " " + this.getOrientation() + ";" +
+			// "}" +
 			"</style>";
 
 		this.printWindow.document.write("<!DOCTYPE html><html><head>");

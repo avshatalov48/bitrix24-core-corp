@@ -16,7 +16,6 @@ $MESS["CRM_ENTITY_ED_CHANGE_USER"] = "Сменить";
 $MESS["CRM_ENTITY_ED_EXPAND_COMMENT"] = "Развернуть";
 $MESS["CRM_ENTITY_ED_COLLAPSE_COMMENT"] = "Свернуть";
 $MESS["CRM_ENTITY_ED_DELETE_SECTION_CONFIRM"] = "Вы действительно желаете удалить этот раздел?";
-$MESS["CRM_ENTITY_ED_DELETE_SECTION_DISABLED"] = "Раздел не может быть удалён, так как содержит обязательные поля.";
 $MESS["CRM_ENTITY_ED_NEW_SECTION_TITLE"] = "Новый раздел";
 $MESS["CRM_ENTITY_ED_TELEPHONY_NOT_SUPPORTED"] = "Телефонные звонки не поддерживаются в данном контексте";
 $MESS["CRM_ENTITY_ED_RECURRING_UNTIL"] = " до ";
@@ -175,4 +174,9 @@ $MESS["CRM_ENTITY_ED_COMPANY_SEARCH_PLACEHOLDER_2"] = "Название комп
 $MESS["CRM_ENTITY_ED_FORCE_COMMON_CONFIG_FOR_ALL"] = "Установить общую карточку для всех пользователей";
 $MESS["CRM_ENTITY_ED_TITLE_EDIT"] = "Редактирование названия";
 $MESS["CRM_ENTITY_ED_TITLE_EDIT_UNSAVED_CHANGES"] = "Сохраните внесённые в карточку изменения, чтобы редактировать название.";
+$MESS["CRM_ENTITY_ED_ENABLE_QUICK_EDIT"] = "Включить быстрое редактирование";
+$MESS["CRM_ENTITY_ED_DISABLE_QUICK_EDIT"] = "Отключить быстрое редактирование";
+$MESS["CRM_ENTITY_ED_EDIT_TAG"] = "Редактирование";
+$MESS["CRM_ENTITY_ED_CONTACT_CHANGE_BUTTON_HINT"] = "Выбрать другой контакт";
+$MESS["CRM_ENTITY_ED_COMPANY_CHANGE_BUTTON_HINT"] = "Выбрать другую компанию";
 ?>

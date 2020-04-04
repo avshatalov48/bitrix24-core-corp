@@ -62,9 +62,9 @@ class CrmTrackingChannelPoolComponent extends \CBitrixComponent implements Contr
 		$sourceList = array_column($this->arResult['SOURCES'], 'ID');
 		$items = [];
 
-		$values = $this->request->get('SOURCE') ;
-		$values = is_array($values) ? $values : [];
-		foreach ($values as $sourceId => $value)
+		$valuesBySource = $this->request->get('SOURCE') ;
+		$valuesBySource = is_array($valuesBySource) ? $valuesBySource : [];
+		foreach ($valuesBySource as $sourceId => $values)
 		{
 			$sourceId = (int) $sourceId;
 			if ($sourceId <= 0)
@@ -72,26 +72,42 @@ class CrmTrackingChannelPoolComponent extends \CBitrixComponent implements Contr
 				continue;
 			}
 
-			$value = Communication\Normalizer::normalize($value, $this->arParams['TYPE_ID']);
-			if (!Communication\Validator::validate($value, $this->arParams['TYPE_ID']))
+			foreach ($values as $value)
 			{
-				$this->errors->setError(new Error("Wrong value `$value`."));
-				break;
-			}
+				$value = Communication\Normalizer::normalize($value, $this->arParams['TYPE_ID']);
+				if (!Communication\Validator::validate($value, $this->arParams['TYPE_ID']))
+				{
+					$this->errors->setError(new Error("Wrong value `$value`."));
+					break 2;
+				}
 
-			$items[$sourceId] = $value;
+				$items[$sourceId] = is_array($items[$sourceId]) ? $items[$sourceId] : [];
+				$items[$sourceId][] = $value;
+			}
 		}
 
-		foreach ($sourceList as $sourceId)
+		$sourceFieldCode = null;
+		switch ($this->arParams['TYPE_ID'])
 		{
-			$value = isset($items[$sourceId]) ? $items[$sourceId] : null;
-			$result = Tracking\Internals\SourceTable::update($sourceId, [
-				$this->arParams['TYPE_NAME'] => $value
-			]);
-			if (!$result->isSuccess())
-			{
-				$this->errors->add($result->getErrors());
+			case Communication\Type::PHONE:
+				$sourceFieldCode = Tracking\Internals\SourceFieldTable::FIELD_PHONE;
 				break;
+			case Communication\Type::EMAIL:
+				$sourceFieldCode = Tracking\Internals\SourceFieldTable::FIELD_EMAIL;
+				break;
+		}
+
+		if ($sourceFieldCode)
+		{
+			foreach ($sourceList as $sourceId)
+			{
+
+				$values = isset($items[$sourceId]) ? $items[$sourceId] : [];
+				Tracking\Internals\SourceFieldTable::setSourceField(
+					$sourceId,
+					$sourceFieldCode,
+					$values
+				);
 			}
 		}
 
@@ -126,21 +142,27 @@ class CrmTrackingChannelPoolComponent extends \CBitrixComponent implements Contr
 				continue;
 			}
 
-			$value = $source[$this->arParams['TYPE_NAME']];
-			$source['TILES'] = !$value ?
+			$values = $source[$this->arParams['TYPE_NAME']];
+			$source['TILES'] = !$values ?
 				[]
 				:
-				[[
-					'id' => $value,
-					'name' => $value,
-					'data' => []
-				]];
+				array_map(
+					function ($value)
+					{
+						return [
+							'id' => $value,
+							'name' => $value,
+							'data' => []
+						];
+					},
+					$values
+				);
 
 			$sources[$index] = $source;
 		}
 		$this->arResult['SOURCES'] = $sources;
 
-		if ($this->request->isPost())
+		if ($this->request->isPost() && check_bitrix_sessid())
 		{
 			$this->preparePost();
 		}
@@ -153,7 +175,8 @@ class CrmTrackingChannelPoolComponent extends \CBitrixComponent implements Contr
 					'id' => $item['VALUE'],
 					'name' => $item['VALUE'],
 					'data' => [
-						'canRemove' => $item['CAN_REMOVE']
+						'canRemove' => $item['CAN_REMOVE'],
+						'using' => isset($item['USING']) ? $item['USING'] : null
 					]
 				];
 			},
@@ -245,11 +268,36 @@ class CrmTrackingChannelPoolComponent extends \CBitrixComponent implements Contr
 	public function addItemAction($typeId, $value)
 	{
 		$data = [
-			'value' => null
+			'value' => null,
 		];
 		if ($this->checkAccess())
 		{
 			$data['value'] = Tracking\Pool::instance()->addItem($typeId, $value);
+			if ($typeId == Communication\Type::PHONE)
+			{
+				$data['using'] = Tracking\Pool::instance()->getUsingByValue($typeId, $value);
+			}
+		}
+
+		/** @var Error $error */
+		$error = $this->errors->current();
+
+		return [
+			'data' => $data,
+			'error' => !$this->errors->isEmpty(),
+			'text' => $error ? $error->getMessage() : ''
+		];
+	}
+
+	public function startTestingAction($numberFrom)
+	{
+		$data = [
+			'numberFrom' => null,
+		];
+		if ($this->checkAccess())
+		{
+			Tracking\Call\Tester::start();
+			$data['numberFrom'] = Communication\Normalizer::normalizePhone($numberFrom);
 		}
 
 		/** @var Error $error */

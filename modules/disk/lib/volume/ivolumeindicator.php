@@ -13,6 +13,25 @@ interface IVolumeIndicator
 	public function measure($collectData = array());
 
 	/**
+	 * Returns measure process stages list.
+	 * @return string[]
+	 */
+	public function getMeasureStages();
+
+	/**
+	 * Gets stage id.
+	 * @return string
+	 */
+	public function getStage();
+
+	/**
+	 * Sets current stage id.
+	 * @param string $stageId Stage id.
+	 * @return $this
+	 */
+	public function setStage($stageId);
+
+	/**
 	 * Recalculates percent from total file size per row selected by filter.
 	 * @param string|Volume\IVolumeIndicator $totalSizeIndicator Use this indicator as total volume.
 	 * @param string|Volume\IVolumeIndicator $excludeSizeIndicator Exclude indicator's volume from total volume.

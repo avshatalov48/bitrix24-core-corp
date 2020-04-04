@@ -181,10 +181,11 @@ class LeadConverter extends EntityConverter
 		{
 			if($this->isReturnCustomer)
 			{
-				$contactID = $this->mapper->getSourceFieldValue('CONTACT_ID');
-				if($contactID > 0)
+				$contactIDs = Crm\Binding\LeadContactTable::getLeadContactIDs($this->entityID);
+				if(!empty($contactIDs))
 				{
-					$fields['CONTACT_ID'] = $contactID;
+					$fields['CONTACT_IDS'] = $contactIDs;
+					$fields['CONTACT_ID'] = $contactIDs[0];
 				}
 
 				$companyID = $this->mapper->getSourceFieldValue('COMPANY_ID');
@@ -363,7 +364,18 @@ class LeadConverter extends EntityConverter
 								array('ENABLE_UPLOAD' => true, 'ENABLE_UPLOAD_CHECK' => false)
 							);
 							$fields['LEAD_ID'] = $this->entityID;
-							$entity->Update($entityID, $fields, true, true, $entityUpdateOptions);
+							if($entity->Update($entityID, $fields, true, true, $entityUpdateOptions))
+							{
+								//region BizProcess
+								$arErrors = array();
+								\CCrmBizProcHelper::AutoStartWorkflows(
+									\CCrmOwnerType::Company,
+									$entityID,
+									\CCrmBizProcEventType::Edit,
+									$arErrors
+								);
+								//endregion
+							}
 						}
 					}
 					elseif(!\CCrmCompany::Exists($entityID))
@@ -415,7 +427,18 @@ class LeadConverter extends EntityConverter
 								array('ENABLE_UPLOAD' => true, 'ENABLE_UPLOAD_CHECK' => false)
 							);
 							$fields['LEAD_ID'] = $this->entityID;
-							$entity->Update($entityID, $fields, true, true, $entityUpdateOptions);
+							if($entity->Update($entityID, $fields, true, true, $entityUpdateOptions))
+							{
+								//region BizProcess
+								$arErrors = array();
+								\CCrmBizProcHelper::AutoStartWorkflows(
+									\CCrmOwnerType::Contact,
+									$entityID,
+									\CCrmBizProcEventType::Edit,
+									$arErrors
+								);
+								//endregion
+							}
 						}
 					}
 					elseif(!\CCrmContact::Exists($entityID))

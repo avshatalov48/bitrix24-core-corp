@@ -748,11 +748,22 @@ class CTasksReportHelper extends CReportHelper
 									}
 									else
 									{
-										$newFilter[] = [
-											'LOGIC' => 'AND',
-											$filterOperation.$numberFieldName => $numberValue,
-											'='.$currencyFieldName => $currencyValue
-										];
+										if ($filterOperation === '!')
+										{
+											$newFilter[] = [
+												'LOGIC' => 'OR',
+												$filterOperation.$numberFieldName => $numberValue,
+												'!'.$currencyFieldName => $currencyValue
+											];
+										}
+										else
+										{
+											$newFilter[] = [
+												'LOGIC' => 'AND',
+												$filterOperation.$numberFieldName => $numberValue,
+												'='.$currencyFieldName => $currencyValue
+											];
+										}
 									}
 								}
 							}
@@ -1299,11 +1310,11 @@ class CTasksReportHelper extends CReportHelper
 							'def' => array(
 								'data_type' => 'float',
 								'expression' => array(
-									"(IF(".
+									"(IFNULL(IF(".
 									"LOCATE('|', %s) > 0, ".
 									"CAST(SUBSTR(%s, 1, LOCATE('|', %s) - 1) AS DECIMAL(18,2)), ".
 									"CAST(%s AS DECIMAL(18,2))".
-									"))", $fieldName, $fieldName, $fieldName, $fieldName
+									"), 0))", $fieldName, $fieldName, $fieldName, $fieldName
 								)
 							),
 							'name' => $fieldName.self::UF_MONEY_NUMBER_POSTFIX
@@ -1312,7 +1323,7 @@ class CTasksReportHelper extends CReportHelper
 							'def' => array(
 								'data_type' => 'string',
 								'expression' => array(
-									"(IF(LOCATE('|', %s) > 0, SUBSTR(%s, LOCATE('|', %s) + 1), NULL))",
+									"(IFNULL(IF(LOCATE('|', %s) > 0, SUBSTR(%s, LOCATE('|', %s) + 1), NULL), ''))",
 									$fieldName, $fieldName, $fieldName
 								)
 							),

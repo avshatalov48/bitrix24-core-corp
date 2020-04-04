@@ -268,7 +268,7 @@ final class Viewer
 				'fileId' => $object->getId(),
 				'ts' => $object->getUpdateTime()->getTimestamp(),
 				'ncc' => 1,
-			));
+			), true);
 
 			$viewUrl = Driver::getInstance()->getUrlManager()->getUrlExternalLink(array(
 				'hash' => $externalLink->getHash(),
@@ -279,7 +279,7 @@ final class Viewer
 				'fileId' => $object->getId(),
 				'ts' => $object->getUpdateTime()->getTimestamp(),
 				'ncc' => 1,
-			));
+			), true);
 
 			$dataAttributesForViewer =
 				'data-bx-viewer="'.$object->getView()->getJsViewerType().'" ' .
@@ -305,7 +305,7 @@ final class Viewer
 				'path' => $path,
 				'fileId' => $object->getId(),
 				'ncc' => 1,
-			));
+			), true);
 
 			$dataAttributesForViewer =
 				'data-bx-viewer="iframe" ' .

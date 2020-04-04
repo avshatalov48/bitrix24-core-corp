@@ -29,7 +29,7 @@ abstract class Base
 
 	public function setInterval($interval)
 	{
-		$this->interval = (int)$interval;
+		$this->interval = (int)$interval >= 0 ? (int)$interval : 0;
 	}
 
 	public function setStartDate(Date $startDate)

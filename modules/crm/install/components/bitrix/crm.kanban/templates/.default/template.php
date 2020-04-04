@@ -19,7 +19,12 @@ use \Bitrix\Crm\Conversion\EntityConverter;
 Loc::loadMessages(__FILE__);
 
 $this->addExternalCss('/bitrix/themes/.default/crm-entity-show.css');
-$APPLICATION->SetPageProperty('BodyClass', 'no-all-paddings grid-mode pagetitle-toolbar-field-view crm-toolbar no-background');
+
+$bodyClass = $APPLICATION->getPageProperty("BodyClass");
+$APPLICATION->setPageProperty("BodyClass",
+	($bodyClass ? $bodyClass." " : "").
+	"no-all-paddings grid-mode pagetitle-toolbar-field-view crm-toolbar no-background"
+);
 
 $data = $arResult['ITEMS'];
 $date = new \Bitrix\Main\Type\Date;
@@ -44,6 +49,15 @@ $langRoot = BX_ROOT . '/modules/crm/lang/' . LANGUAGE_ID . '/';
 ));
 \CJSCore::registerExt('crm_partial_entity_editor', array(
 	'js' => array('/bitrix/js/crm/partial_entity_editor.js', '/bitrix/js/crm/dialog.js')
+));
+\CJSCore::registerExt('crm_entity_editor', array(
+	'css' => array('/bitrix/components/bitrix/crm.entity.editor/templates/.default/style.css'),
+	'js' => array(
+		'/bitrix/components/bitrix/crm.entity.editor/templates/.default/script.js',
+		'/bitrix/js/crm/interface_form.js',
+		'/bitrix/js/crm/entity_event.js',
+		'/bitrix/components/bitrix/crm.entity.editor/templates/.default/js/control.js'
+	)
 ));
 \CJSCore::registerExt('popup_menu', array(
 	'js' => array('/bitrix/js/main/popup_menu.js')
@@ -75,11 +89,14 @@ $langRoot = BX_ROOT . '/modules/crm/lang/' . LANGUAGE_ID . '/';
 	'crm_visit_tracker',
 	'crm_activity_type',
 	'crm_partial_entity_editor',
+	'crm_entity_editor',
 	'popup_menu',
 	'currency',
+	'core_money_editor',
 	'intranet_notify_dialog',
 	'marketplace',
-	'sidepanel'
+	'sidepanel',
+	'uf'
 ));
 
 include 'editors.php';
@@ -107,6 +124,38 @@ include 'editors.php';
 				<?= \CCrmOwnerType::LeadName?>: "<?= '/bitrix/components/bitrix/crm.lead.details/ajax.php?' . bitrix_sessid_get();?>"
 			};
 
+			var schemeInline = BX.Crm.EntityScheme.create(
+				'kanban_scheme',
+				{
+					current: <?= \CUtil::phpToJSObject($arResult['ITEMS']['scheme_inline']);?>
+				}
+			);
+
+			var userFieldManagerInline = BX.Crm.EntityUserFieldManager.create(
+				'kanban_ufmanager',
+				{
+					entityId: 0,
+					enableCreation: false
+				}
+			);
+
+			BX.Crm.EntityEditorUser.messages =
+			{
+				change: "<?= CUtil::JSEscape(Loc::getMessage('CRM_KANBAN_ED_CHANGE_USER'));?>"
+			};
+
+			BX.Crm.EntityEditorBoolean.messages =
+			{
+				yes: "<?= CUtil::JSEscape(Loc::getMessage('MAIN_YES'));?>",
+				no: "<?= CUtil::JSEscape(Loc::getMessage('MAIN_NO'));?>"
+			};
+
+			BX.Crm.EntityEditorSection.messages =
+			{
+				change: "<?= CUtil::JSEscape(Loc::getMessage('CRM_KANBAN_ED_CHANGE'));?>",
+				cancel: "<?= CUtil::JSEscape(Loc::getMessage('CRM_KANBAN_ED_CANCEL'));?>"
+			};
+
 			Kanban = new BX.CRM.Kanban.Grid(
 				{
 					renderTo: BX("crm_kanban"),
@@ -124,12 +173,15 @@ include 'editors.php';
 					dropZones: <?= \CUtil::PhpToJSObject(array_values($data['dropzones']), false, false, true)?>,
 					data:
 						{
+							schemeInline: schemeInline,
+							userFieldManagerInline: userFieldManagerInline,
 							contactCenterShow: <?= $arParams['HIDE_CC'] ? 'false' : 'true';?>,
 							reckonActivitylessItems: <?= \CCrmUserCounterSettings::getValue(\CCrmUserCounterSettings::ReckonActivitylessItems, true) ? 'true' : 'false';?>,
 							ajaxHandlerPath: ajaxHandlerPath,
 							entityType: "<?= \CUtil::JSEscape($arParams['ENTITY_TYPE_CHR'])?>",
 							entityTypeInt: "<?= \CUtil::JSEscape($arParams['ENTITY_TYPE_INT'])?>",
 							entityPath: "<?= \CUtil::JSEscape($arParams['ENTITY_PATH'])?>",
+							editorConfigId: "<?= \CUtil::JSEscape($arParams['EDITOR_CONFIG_ID'])?>",
 							quickEditorPath: {
 								lead: "/bitrix/components/bitrix/crm.lead.details/ajax.php?<?= bitrix_sessid_get();?>",
 								deal: "/bitrix/components/bitrix/crm.deal.details/ajax.php?<?= bitrix_sessid_get();?>"
@@ -153,6 +205,9 @@ include 'editors.php';
 							admins: <?= \CUtil::PhpToJSObject(array_values($arResult['ADMINS']))?>,
 							userId: <?= $arParams['USER_ID'];?>,
 							customFields: <?= \CUtil::phpToJSObject(array_keys($arResult['MORE_FIELDS']));?>,
+							customEditFields: <?= \CUtil::phpToJSObject(array_keys($arResult['MORE_EDIT_FIELDS']));?>,
+							customSectionsFields: <?= \CUtil::phpToJSObject($arResult['FIELDS_SECTIONS']);?>,
+							customDisabledFields: <?= \CUtil::phpToJSObject(array_fill_keys($arResult['FIELDS_DISABLED'], true));?>,
 							userSelectorId: "kanban_multi_actions",
 							linksPath: {
 								marketplace: {
@@ -168,7 +223,7 @@ include 'editors.php';
 									url: "<?= $isBitrix24 ? '/contact_center/?from=kanban' : '/services/contact_center/?from=kanban';?>"
 								}
 							},
-							categories: <?= \CUtil::phpToJsObject($arResult['CATEGORIES']);?>
+							categories: <?= \CUtil::phpToJsObject(array_values($arResult['CATEGORIES']));?>
 						}
 				}
 			);
@@ -215,6 +270,7 @@ include 'editors.php';
 					<?= CCrmOwnerType::CompanyName?>: "<?= CCrmOwnerType::GetDescription(CCrmOwnerType::Company)?>",
 					<?= CCrmOwnerType::DealName?>: "<?= CCrmOwnerType::GetDescription(CCrmOwnerType::Deal)?>",
 					<?= CCrmOwnerType::InvoiceName?>: "<?= CCrmOwnerType::GetDescription(CCrmOwnerType::Invoice)?>",
+					<?= CCrmOwnerType::OrderName?>: "<?= CCrmOwnerType::GetDescription(CCrmOwnerType::Order)?>",
 					<?= CCrmOwnerType::QuoteName?>: "<?= CCrmOwnerType::GetDescription(CCrmOwnerType::Quote)?>"
 				};
 				BX.CrmLeadConversionScheme.messages =

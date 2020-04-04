@@ -6,6 +6,7 @@ use Bitrix\Main\Error;
 use Bitrix\Main\ErrorCollection;
 use Bitrix\ImOpenlines\Model;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Loader;
 
 Loc::loadMessages(__FILE__);
 
@@ -22,6 +23,18 @@ class CImOpenlinesPermsComponent extends CBitrixComponent
 		$request = \Bitrix\Main\Application::getInstance()->getContext()->getRequest();
 		if($request['act'] === 'save' && check_bitrix_sessid())
 			$this->saveMode = true;
+	}
+
+	protected function checkModules()
+	{
+		$result = true;
+		if(!Loader::includeModule('imopenlines'))
+		{
+			ShowError(Loc::getMessage('IMOL_PERM_MODULE_ERROR'));
+			$result = false;
+		}
+
+		return $result;
 	}
 
 	public function prepareData()
@@ -79,6 +92,8 @@ class CImOpenlinesPermsComponent extends CBitrixComponent
 			$this->arResult['TRIAL'] = \Bitrix\ImOpenlines\Security\Helper::getTrialText();
 		}
 
+		$this->arResult['IFRAME'] = $this->request['IFRAME'] === 'Y';
+
 		$uri = new \Bitrix\Main\Web\Uri(htmlspecialchars_decode(POST_FORM_ACTION_URI));
 		$uri->addParams(array('action-line' => 'permission-add'));
 		$this->arResult['ACTION_URI'] = htmlspecialcharsbx($uri->getUri());
@@ -115,28 +130,32 @@ class CImOpenlinesPermsComponent extends CBitrixComponent
 
 	public function executeComponent()
 	{
-		$permissions = \Bitrix\ImOpenlines\Security\Permissions::createWithCurrentUser();
-		if(!$permissions->canPerform(\Bitrix\ImOpenlines\Security\Permissions::ENTITY_SETTINGS, \Bitrix\ImOpenlines\Security\Permissions::ACTION_MODIFY))
+		if ($this->checkModules())
 		{
-			ShowError(Loc::getMessage('IMOL_PERM_ACCESS_DENIED'));
-			return false;
-		}
-
-		if($this->saveMode)
-		{
-			if(\Bitrix\ImOpenlines\Security\Helper::canUse())
+			$permissions = \Bitrix\ImOpenlines\Security\Permissions::createWithCurrentUser();
+			if(!$permissions->canPerform(\Bitrix\ImOpenlines\Security\Permissions::ENTITY_SETTINGS, \Bitrix\ImOpenlines\Security\Permissions::ACTION_MODIFY))
 			{
-				$this->save();
-			}
-			else
-			{
-				ShowError(Loc::getMessage('IMOL_PERM_LICENSING_ERROR'));
+				ShowError(Loc::getMessage('IMOL_PERM_ACCESS_DENIED'));
 				return false;
 			}
+
+			if($this->saveMode)
+			{
+				if(\Bitrix\ImOpenlines\Security\Helper::canUse())
+				{
+					$this->save();
+				}
+				else
+				{
+					ShowError(Loc::getMessage('IMOL_PERM_LICENSING_ERROR'));
+					return false;
+				}
+			}
+
+			$this->prepareData();
+			$this->includeComponentTemplate();
 		}
 
-		$this->prepareData();
-		$this->includeComponentTemplate();
 		return $this->arResult;
 	}
 }

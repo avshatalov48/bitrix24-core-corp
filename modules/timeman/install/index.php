@@ -13,7 +13,7 @@ class timeman extends CModule
 	var $MODULE_NAME;
 	var $MODULE_DESCRIPTION;
 	var $MODULE_CSS;
-	var $MODULE_GROUP_RIGHTS = "Y";
+	var $MODULE_GROUP_RIGHTS = "N";
 
 	function timeman()
 	{
@@ -72,6 +72,7 @@ class timeman extends CModule
 
 		RegisterModuleDependences("perfmon", "OnGetTableSchema", "timeman", "CTimeManTableSchema", "OnGetTableSchema");
 		RegisterModuleDependences('main', 'onAfterUserUpdate', 'timeman', '\CReportSettings', 'onUserUpdate');
+		RegisterModuleDependences("forum", "OnAfterCommentAdd", 'timeman', 'CTimeManNotify', "onAfterForumCommentAdd");
 
 		$eventManager = \Bitrix\Main\EventManager::getInstance();
 		$eventManager->registerEventHandler('im', 'onStatusSet', 'timeman', '\Bitrix\Timeman\Absence', 'onImUserStatusSet');
@@ -85,6 +86,8 @@ class timeman extends CModule
 
 		CAgent::AddAgent('\Bitrix\Timeman\Absence::searchOfflineUsersWithActiveDayAgent();', "timeman", "N", 60);
 		CAgent::AddAgent('\Bitrix\Timeman\Absence::searchOfflineDesktopUsersWithActiveDayAgent();', "timeman", "N", 60);
+		CAgent::AddAgent('\Bitrix\Timeman\Service\Agent\InitialSettingsAgent::installDefaultData();', 'timeman', "N", 130);
+		CAgent::AddAgent('\Bitrix\Timeman\Service\Agent\InitialSettingsAgent::installDefaultPermissions();', 'timeman', "N", 130);
 
 		if (!IsModuleInstalled('bitrix24'))
 		{
@@ -287,14 +290,14 @@ class timeman extends CModule
 				"LETTER" => "N",
 				"BINDING" => "module",
 				"OPERATIONS" => array(
-					'tm_manage', 'tm_read_subordinate', 'tm_write_subordinate'
+					'tm_manage', 'tm_read_subordinate', 'tm_write_subordinate', 'tm_read_schedules_all', 'tm_read_shift_plans_all'
 				),
 			),
 			'timeman_read' => array(
 				"LETTER" => "R",
 				"BINDING" => "module",
 				"OPERATIONS" => array(
-					'tm_read', 'tm_write_subordinate'
+					'tm_read', 'tm_write_subordinate', 'tm_read_schedules_all', 'tm_read_shift_plans_all', 'tm_update_schedules_all', 'tm_update_shift_plans_all'
 				),
 			),
 			'timeman_write' => array(
@@ -308,7 +311,7 @@ class timeman extends CModule
 				"LETTER" => "W",
 				"BINDING" => "module",
 				"OPERATIONS" => array(
-					'tm_manage', 'tm_manage_all', 'tm_read', 'tm_write', 'tm_settings'
+					'tm_manage', 'tm_manage_all', 'tm_read', 'tm_write', 'tm_settings', 'tm_read_schedules_all', 'tm_read_shift_plans_all', 'tm_update_schedules_all', 'tm_update_shift_plans_all'
 				),
 			),
 		);

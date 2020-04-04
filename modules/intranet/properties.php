@@ -40,6 +40,8 @@ class CIEmployeeProperty
 			$titleUserId = '<a title="'.CUtil::JSEscape(GetMessage("MAIN_EDIT_USER_PROFILE")).'" class="tablebodylink" href="/bitrix/admin/user_edit.php?ID='.$USER->GetID().'&lang='.LANGUAGE_ID.'">'.$USER->GetID().'</a>';
 		}
 
+		$selfFolderUrl = (defined("SELF_FOLDER_URL") ? SELF_FOLDER_URL : "/bitrix/admin/");
+
 		ob_start();
 		?>
 <input type="text" name="<?echo htmlspecialcharsbx($strHTMLControlName["VALUE"])?>" id="<?echo $name_x?>" value="<?echo intval($value['VALUE']) > 0 ? intval($value['VALUE']) : ''?>" size="3" class="typeinput" />&nbsp;&nbsp;<?
@@ -64,7 +66,7 @@ function Ch<?=$name_x?>()
 				DV_<?=$name_x?>.innerHTML = '<i><? echo CUtil::JSEscape(GetMessage("MAIN_WAIT"))?></i>';
 				if (value_<?=$name_x?> != <?echo intval($USER->GetID())?>)
 				{
-					document.getElementById("hiddenframe<?=$name_x?>").src='/bitrix/admin/get_user.php?ID=' + value_<?=$name_x?>+'&strName=<?=$name_x?>&lang=<? echo LANG.(defined("ADMIN_SECTION") && ADMIN_SECTION===true?"&admin_section=Y":"")?>';
+					document.getElementById("hiddenframe<?=$name_x?>").src='<?=$selfFolderUrl; ?>get_user.php?ID=' + value_<?=$name_x?>+'&strName=<?=$name_x?>&lang=<? echo LANGUAGE_ID.(defined("ADMIN_SECTION") && ADMIN_SECTION===true?"&admin_section=Y":"")?>';
 				}
 				else
 				{
@@ -102,7 +104,7 @@ Ch<?=$name_x?>();
 			}
 			else
 			{
-				$titleUserId = "<a title='".GetMessage("MAIN_EDIT_USER_PROFILE")."' href='user_edit.php?ID=".$arUser["ID"]."&lang=".LANG."'>".$arUser["ID"]."</a>";
+				$titleUserId = "<a title='".GetMessage("MAIN_EDIT_USER_PROFILE")."' href='user_edit.php?ID=".$arUser["ID"]."&lang=".LANGUAGE_ID."'>".$arUser["ID"]."</a>";
 			}
 
 			return "[".$titleUserId."] (".htmlspecialcharsbx($arUser["LOGIN"]).") ".htmlspecialcharsbx($arUser["NAME"])." ".htmlspecialcharsbx($arUser["LAST_NAME"]);
@@ -518,19 +520,41 @@ class CUserTypeEmployeeDisplay extends \Bitrix\Main\UserField\TypeBase
 
 	public static function getPublicText($arUserField)
 	{
-		$text = '';
-		$value = static::normalizeFieldValue($arUserField["VALUE"]);
-		if(count($value) > 0 && $value[0] !== null)
+		$values = array_filter(
+			static::normalizeFieldValue($arUserField['VALUE']),
+			function($value){ return $value > 0; }
+		);
+
+		if(empty($values))
 		{
-			$results = array();
-			$dbRes = \Bitrix\Main\UserTable::getList(array('filter' => array('@ID' => $value)));
-			while($res = $dbRes->fetch())
-			{
-				$results[] = \CUser::FormatName(\CSite::GetNameFormat(), $res, true, false);
-			}
-			$text = implode(', ', $results);
+			return '';
 		}
-		return $text;
+
+		static $userNames = array();
+
+		$results = array();
+		foreach($values as $k => $v)
+		{
+			if(!isset($userNames[$v]))
+			{
+				$results[$v] = null;
+				continue;
+			}
+
+			$results[$v] = $userNames[$v];
+			unset($values[$k]);
+		}
+
+		if(!empty($values))
+		{
+			$dbResult = \Bitrix\Main\UserTable::getList(array('filter' => array('@ID' => array_values($values))));
+			while($fields = $dbResult->fetch())
+			{
+				$userName = \CUser::FormatName(\CSite::GetNameFormat(), $fields, true, false);
+				$results[$fields['ID']] = $userNames[$fields['ID']] = $userName;
+			}
+		}
+		return implode(', ', array_values($results));
 	}
 }
 
@@ -548,6 +572,7 @@ class CIBlockPropertyEmployee extends CIEmployeeProperty
 			"GetPublicEditHTML" => array("CIBlockPropertyEmployee","GetPublicEditHTML"),
 			"GetPublicEditHTMLMulty" => array("CIBlockPropertyEmployee", "GetPublicEditHTMLMulty"),
 			"GetPublicFilterHTML" => array("CIBlockPropertyEmployee","GetPublicFilterHTML"),
+			"GetUIFilterProperty" => array(__CLASS__, 'GetUIFilterProperty'),
 			"ConvertToDB" => array("CIBlockPropertyEmployee","ConvertFromToDB"),
 			"CheckFields" => array("CIBlockPropertyEmployee","CheckFields"),
 			"GetLength" => array("CIBlockPropertyEmployee","GetLength")
@@ -895,5 +920,18 @@ class CIBlockPropertyEmployee extends CIEmployeeProperty
 		}
 
 		return $value;
+	}
+
+	/**
+	 * @param array $property
+	 * @param array $strHTMLControlName
+	 * @param array &$field
+	 * @return void
+	 */
+	public static function GetUIFilterProperty($property, $strHTMLControlName, &$field)
+	{
+		$field['type'] = 'custom_entity';
+		$field['filterable'] = '';
+		$field['selector'] = ['type' => 'user'];
 	}
 }

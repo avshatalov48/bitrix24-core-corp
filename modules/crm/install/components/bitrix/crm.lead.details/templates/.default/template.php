@@ -12,6 +12,8 @@ use \Bitrix\Crm\Category\DealCategory;
 use \Bitrix\Crm\Conversion\EntityConverter;
 use \Bitrix\Crm\Conversion\LeadConversionType;
 
+\Bitrix\Main\UI\Extension::load(["crm.scoringbutton"]);
+
 //region LEGEND
 if(isset($arResult['LEGEND']))
 {
@@ -67,12 +69,19 @@ $APPLICATION->IncludeComponent(
 );
 
 ?><script type="text/javascript">
-		BX.ready(
-			function()
-			{
-				BX.message({ "CRM_TIMELINE_HISTORY_STUB": "<?=GetMessageJS('CRM_LEAD_DETAIL_HISTORY_STUB')?>" });
-			}
-		);
+		BX.message({
+			"CRM_TIMELINE_HISTORY_STUB": "<?=GetMessageJS('CRM_LEAD_DETAIL_HISTORY_STUB')?>",
+		});
+		<? if($arResult['ENTITY_ID'] > 0): ?>
+			new BX.CrmScoringButton({
+				mlInstalled: <?= (\Bitrix\Crm\Ml\Scoring::isMlAvailable() ? 'true' : 'false')?>,
+				scoringEnabled: <?= (\Bitrix\Crm\Ml\Scoring::isEnabled() ? 'true' : 'false')?>,
+				scoringParameters: <?= \Bitrix\Main\Web\Json::encode($arResult['SCORING'])?>,
+				entityType: '<?= CCrmOwnerType::LeadName?>',
+				entityId: <?= (int)$arResult['ENTITY_ID']?>,
+				isFinal: <?= $arResult['IS_STAGE_FINAL'] ? 'true' : 'false' ?>,
+			});
+		<? endif; ?>
 </script><?
 
 //$arResult['READ_ONLY'] = true;
@@ -129,6 +138,7 @@ $APPLICATION->IncludeComponent(
 		),
 		'ENABLE_PROGRESS_BAR' => true,
 		'ENABLE_PROGRESS_CHANGE' => $arResult['ENABLE_PROGRESS_CHANGE'],
+		'PROGRESS_BAR' => array('VERBOSE_MODE' => true),
 		'ACTIVITY_EDITOR_ID' => $activityEditorID,
 		'PATH_TO_USER_PROFILE' => $arResult['PATH_TO_USER_PROFILE'],
 		'CAN_CONVERT' => isset($arResult['CAN_CONVERT']) ? $arResult['CAN_CONVERT'] : false,

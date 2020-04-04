@@ -47,6 +47,9 @@ class CCrmEntityProgressBarComponent extends CBitrixComponent
 		$this->isReadOnly = $this->arResult['READ_ONLY'] = isset($this->arParams['READ_ONLY'])
 			? (bool)$this->arParams['READ_ONLY'] : false;
 
+		$this->arResult['VERBOSE_MODE'] = isset($this->arParams['VERBOSE_MODE'])
+			? (bool)$this->arParams['VERBOSE_MODE'] : false;
+
 		//Entity field for progress state
 		$this->arResult['ENTITY_FIELD_NAME'] = '';
 

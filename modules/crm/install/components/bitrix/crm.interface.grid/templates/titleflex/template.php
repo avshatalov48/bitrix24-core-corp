@@ -13,7 +13,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
 CUtil::InitJSCore(array('window'));
 
-if(SITE_TEMPLATE_ID === 'bitrix24')
+if(SITE_TEMPLATE_ID === 'bitrix24' && $arParams['~STYLES_LOADED'] !== 'Y')
 {
 	$APPLICATION->SetAdditionalCSS('/bitrix/themes/.default/bitrix24/crm-entity-show.css');
 	$bodyClass = $APPLICATION->GetPageProperty('BodyClass');
@@ -42,6 +42,14 @@ $actionPanel = isset($arParams['~ACTION_PANEL']) && is_array($arParams['~ACTION_
 //Skip reneding of grid filter for internal grid request (filter already created)
 if(!Bitrix\Main\Grid\Context::isInternalRequest() && $arParams['~HIDE_FILTER'] !== true)
 {
+	if (isset($_REQUEST['IFRAME']) && $_REQUEST['IFRAME'] == 'Y' && $_REQUEST['IFRAME_TYPE'] == 'SIDE_SLIDER')
+	{
+		$disableNavigationBar = 'Y';
+	}
+	else
+	{
+		$disableNavigationBar = isset($arParams['~DISABLE_NAVIGATION_BAR']) ? $arParams['~DISABLE_NAVIGATION_BAR'] : 'N';
+	}
 	$filterParams = isset($arParams['~FILTER_PARAMS']) ? $arParams['~FILTER_PARAMS'] : array();
 	$APPLICATION->IncludeComponent(
 		'bitrix:crm.interface.filter',
@@ -53,7 +61,9 @@ if(!Bitrix\Main\Grid\Context::isInternalRequest() && $arParams['~HIDE_FILTER'] !
 				'FILTER' => isset($arParams['~FILTER']) ? $arParams['~FILTER'] : array(),
 				'FILTER_PRESETS' => isset($arParams['~FILTER_PRESETS']) ? $arParams['~FILTER_PRESETS'] : array(),
 				'RENDER_INTO_VIEW' => isset($arParams['~RENDER_FILTER_INTO_VIEW']) ? $arParams['~RENDER_FILTER_INTO_VIEW'] : '',
+				'DISABLE_NAVIGATION_BAR' => $disableNavigationBar,
 				'NAVIGATION_BAR' => isset($arParams['~NAVIGATION_BAR']) ? $arParams['~NAVIGATION_BAR'] : null,
+				'LIMITS' => isset($arParams['~LIVE_SEARCH_LIMIT_INFO']) ? $arParams['~LIVE_SEARCH_LIMIT_INFO'] : null,
 				'ENABLE_LIVE_SEARCH' => isset($arParams['~ENABLE_LIVE_SEARCH']) && $arParams['~ENABLE_LIVE_SEARCH'] === true,
 				'DISABLE_SEARCH' => isset($arParams['~DISABLE_SEARCH']) && $arParams['~DISABLE_SEARCH'] === true,
 			),
@@ -143,7 +153,7 @@ $APPLICATION->IncludeComponent(
 		"SHOW_ROW_ACTIONS_MENU" => isset($arParams['SHOW_ROW_ACTIONS_MENU']) ? (bool)($arParams['SHOW_ROW_ACTIONS_MENU']) : true,
 		"SHOW_GRID_SETTINGS_MENU" => true,
 		"SHOW_MORE_BUTTON" => true,
-		"SHOW_NAVIGATION_PANEL" => true,
+		"SHOW_NAVIGATION_PANEL" => isset($arParams['SHOW_NAVIGATION_PANEL']) ? (bool)($arParams['SHOW_NAVIGATION_PANEL']) : true,
 		"SHOW_PAGINATION" => isset($arParams['SHOW_PAGINATION']) ? (bool)($arParams['SHOW_PAGINATION']) : true,
 		"ENABLE_COLLAPSIBLE_ROWS" => isset($arParams['ENABLE_COLLAPSIBLE_ROWS']) ? (bool)($arParams['ENABLE_COLLAPSIBLE_ROWS']) : false,
 		"SHOW_SELECTED_COUNTER" => isset($arParams['SHOW_SELECTED_COUNTER']) ? (bool)($arParams['SHOW_SELECTED_COUNTER']) : true,
@@ -163,6 +173,8 @@ if(is_array($extensionConfig))
 {
 	$extensionID = isset($extension['ID']) ? $extension['ID'] : $gridID;
 	$extensionMessages = isset($extension['MESSAGES']) && is_array($extension['MESSAGES']) ? $extension['MESSAGES'] : array();
+	$extensionMessages['deletionWarning'] = GetMessage('CRM_INTERFACE_GRID_DELETION_WARNING');
+	$extensionMessages['goToDetails'] = GetMessage('CRM_INTERFACE_GRID_GO_TO_DETAILS');
 	?>
 	<script type="text/javascript">
 		BX.ready(

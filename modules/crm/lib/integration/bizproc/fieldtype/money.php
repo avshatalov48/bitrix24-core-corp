@@ -48,4 +48,12 @@ class Money extends UserFieldBase
 
 		return parent::compareValues($sumA, $sumB);
 	}
+
+	protected static function formatValuePrintable(FieldType $fieldType, $value)
+	{
+		$formatted = parent::formatValuePrintable($fieldType, $value);
+		$formatted = str_replace('&nbsp;', ' ', $formatted);
+
+		return $formatted;
+	}
 }

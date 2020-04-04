@@ -8,3 +8,4 @@ $MESS["USER_LOADING"] = "загрузка...";
 $MESS["SEARCH_PLACEHOLDER"] = "Введите имя, фамилию или должность";
 $MESS["ACTION_DELETE"] = "Удалить";
 $MESS["INVITE_USERS"] = "Пригласить сотрудников";
+$MESS["INVITE_USERS_ERROR"] = "Ошибка";

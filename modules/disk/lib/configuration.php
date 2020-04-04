@@ -6,13 +6,14 @@ namespace Bitrix\Disk;
 
 use Bitrix\Disk\Document\BitrixHandler;
 use Bitrix\Disk\Document\LocalDocumentController;
+use Bitrix\Disk\Integration\Bitrix24Manager;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\UI\Viewer\Transformation\Document;
 use Bitrix\Main\UI\Viewer\Transformation\Video;
 
 final class Configuration
 {
-	const REVISION_API = 7;
+	const REVISION_API = 8;
 
 	public static function isEnabledDefaultEditInUf()
 	{
@@ -51,12 +52,43 @@ final class Configuration
 		return $value?: null;
 	}
 
-	public static function isEnabledExternalLink()
+	public static function isPossibleToShowExternalLinkControl()
 	{
 		static $isAllow = null;
 		if($isAllow === null)
 		{
 			$isAllow = 'Y' == Option::get(Driver::INTERNAL_MODULE_ID, 'disk_allow_use_external_link', 'Y');
+		}
+		return $isAllow;
+	}
+
+	public static function isEnabledExternalLink()
+	{
+		return self::isEnabledManualExternalLink();
+	}
+
+	public static function isEnabledManualExternalLink()
+	{
+		static $isAllow = null;
+		if($isAllow === null)
+		{
+			$isAllow =
+				static::isPossibleToShowExternalLinkControl() &&
+				Bitrix24Manager::isFeatureEnabled('disk_manual_external_link')
+			;
+		}
+		return $isAllow;
+	}
+
+	public static function isEnabledAutoExternalLink()
+	{
+		static $isAllow = null;
+		if($isAllow === null)
+		{
+			$isAllow =
+				static::isPossibleToShowExternalLinkControl() &&
+				Bitrix24Manager::isFeatureEnabled('disk_auto_external_link')
+			;
 		}
 		return $isAllow;
 	}
@@ -146,6 +178,38 @@ final class Configuration
 		) * 1024 * 1024;
 	}
 
+	/**
+	 * Returns max size of index information which we save in b_disk_object_extended_index.SEARCH_INDEX.
+	 *
+	 * @return float|int
+	 * @throws \Bitrix\Main\ArgumentNullException
+	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
+	 */
+	public static function getMaxExtendedIndexSize()
+	{
+		return Option::get(
+			Driver::INTERNAL_MODULE_ID,
+			'disk_max_extended_index_size',
+			1
+		) * 1024 * 1024;
+	}
+
+	/**
+	 * Returns max size of index information which we save in b_disk_object_head_index.SEARCH_INDEX.
+	 *
+	 * @return float|int
+	 * @throws \Bitrix\Main\ArgumentNullException
+	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
+	 */
+	public static function getMaxHeadIndexSize()
+	{
+		return Option::get(
+			Driver::INTERNAL_MODULE_ID,
+			'disk_max_extended_index_size',
+			0.001
+		) * 1024 * 1024;
+	}
+
 	public static function allowIndexFiles()
 	{
 		return Option::get(
@@ -158,6 +222,15 @@ final class Configuration
 	public static function allowFullTextIndex()
 	{
 		return true;
+	}
+
+	public static function allowUseExtendedFullText()
+	{
+		return Option::get(
+			Driver::INTERNAL_MODULE_ID,
+			'disk_allow_use_extended_fulltext',
+			'N'
+		) == 'Y';
 	}
 
 	public static function getDefaultViewerServiceCode()

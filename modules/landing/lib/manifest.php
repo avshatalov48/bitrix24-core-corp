@@ -75,7 +75,7 @@ class Manifest extends \Bitrix\Landing\Internals\BaseTable
 		{
 			$res = self::getList(array(
 				'select' => array(
-					'MANIFEST', 'CONTENT'
+					'MANIFEST', 'CONTENT', 'DATE_MODIFY'
 				),
 				'filter' => array(
 					'=CODE' => trim($code)
@@ -83,6 +83,7 @@ class Manifest extends \Bitrix\Landing\Internals\BaseTable
  			));
 			if ($row = $res->fetch())
 			{
+				$row['MANIFEST']['timestamp'] = $row['DATE_MODIFY']->getTimeStamp();
 				$manifests[$code] = $row;
 			}
 			else

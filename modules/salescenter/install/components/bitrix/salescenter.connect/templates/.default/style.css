@@ -1,0 +1,125 @@
+/*region main section*/
+.salescenter-main-section {
+	margin-bottom: 15px;
+	padding: 25px 20px;
+	background-color: #fff;
+}
+
+.salescenter-main-header {
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	-ms-flex-align: start;
+	-webkit-box-align: start;
+	align-items: flex-start;
+}
+
+.salescenter-main-header-left-block {
+	padding-right: 45px;
+}
+
+.salescenter-logo-container {
+	min-width: 97px;
+	max-width: 97px;
+	width: 97px;
+	height: 97px;
+	position: relative;
+	border-radius: 50%;
+	background-color: #ff5752;
+}
+
+.salescenter-main-header-title {
+	margin-bottom: 20px;
+	color: #000;
+	font: 22px/28px "OpenSans-Light", "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+.salescenter-main-header-right-block {  }
+
+.salescenter-separator {
+	margin: 20px 0;
+	border: none;
+	border-bottom: 1px solid #e9e9e9;
+}
+
+.salescenter-logo {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	width: 43px;
+	height: auto;
+	transform: translate(-50%, -50%);
+}
+
+.salescenter-description {
+	margin-bottom: 20px;
+	color: #525c69;
+	font: 14px/20px "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+/*endregion*/
+
+/*region section*/
+.salescenter-section {
+	margin-bottom: 15px;
+	padding: 25px 20px;
+	background-color: #fff;
+}
+
+.salescenter-header {
+	font: 18px/21px "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	color: #333;
+}
+
+/*endregion*/
+
+/*region form*/
+.s-tracker-label { }
+
+.b24-integration-wrap { display: none; }
+
+.b24-integration-wrap-animate .b24-integration-wrap { display: block; }
+
+/*endregion*/
+
+.salescenter-link-container {
+	margin-bottom: 12px;
+}
+
+.salescenter-link {
+	border-bottom: 1px solid;
+	text-decoration: none;
+	transition: 250ms linear all;
+	cursor: pointer;
+}
+
+.salescenter-link:hover {
+	border-bottom-color: transparent;
+	text-decoration: none;
+}
+
+.salescenter-button-container {
+	padding-top: 5px;
+	margin-bottom: 15px;
+}
+
+.salescenter-img-container {
+	padding-top: 10px;
+	text-align: center;
+}
+
+.img-response {
+	max-width:100%;
+	height: auto;
+	max-height: 300px;
+	max-width: 453px;
+}
+
+.pagetitle-wrap {
+	height: 20px;
+	min-height: 20px !important;
+}
+
+#workarea-content {
+	background-color: inherit !important;
+}

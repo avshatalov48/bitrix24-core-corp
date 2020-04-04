@@ -439,6 +439,7 @@ function FormChecker(params)
 		'date': this.validateDate
 	};
 	this.formatters = {
+		'email': this.normalizeEmail
 		//'phone': this.formatPhone
 	};
 
@@ -609,6 +610,11 @@ FormChecker.prototype = {
 		}
 	},
 
+	normalizeEmail: function(value)
+	{
+		return value.replace(/ /g, '');
+	},
+
 	validateRegexp: function(value, regexp)
 	{
 		return (null !== value.match(regexp));
@@ -643,7 +649,7 @@ FormChecker.prototype = {
 
 	validateInteger: function(value)
 	{
-		return (value && value.match(/^\d+$/));
+		return (value && value.match(/^-?\d+$/));
 	},
 
 	validateUrl: function(value)

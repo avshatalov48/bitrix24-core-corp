@@ -26,6 +26,24 @@ BX.namespace('Tasks.Component');
 			bindEvents: function()
 			{
 				this.getManager();
+
+				if (this.option('role') === 'AUDITORS' || this.option('role') === 'ACCOMPLICES')
+				{
+					var self = this;
+					var roleMap = {
+						'AUDITORS': 'auditor',
+						'ACCOMPLICES': 'accomplice'
+					};
+
+					BX.Event.EventEmitter.subscribe(
+						'BX.Tasks.CheckListItem:' + roleMap[this.option('role')] + 'Added',
+						function(data)
+						{
+							self.getManager().onSelectorItemSelected(data.data);
+							self.onChangeByUser();
+						}
+					);
+				}
 			},
 
 			setHeaderButtonLabelText: function(text)

@@ -11,6 +11,7 @@ use Bitrix\Main,
 	Bitrix\Main\Localization\Loc;
 
 use Bitrix\Tasks\Util\Assert;
+use Exception;
 
 Loc::loadMessages(__FILE__);
 
@@ -34,8 +35,15 @@ class CheckListTable extends Main\Entity\DataManager
 		return get_called_class();
 	}
 
+	public static function getUfId()
+	{
+		return 'TASKS_TASK_TEMPLATE_CHECKLIST';
+	}
+
 	public static function add(array $data)
 	{
+		$data = static::normalizeColumns($data);
+
 		if(!isset($data['SORT']))
 		{
 			$data['TEMPLATE_ID'] = intval($data['TEMPLATE_ID']);
@@ -76,6 +84,12 @@ class CheckListTable extends Main\Entity\DataManager
 		}
 
 		return parent::add($data);
+	}
+
+	public static function update($primary, array $data)
+	{
+		$data = static::normalizeColumns($data);
+		return parent::update($primary, $data);
 	}
 
 	public static function getListByTemplateDependency($templateId, $parameters)
@@ -262,6 +276,10 @@ class CheckListTable extends Main\Entity\DataManager
 			'CHECKED' => array(
 				'data_type' => 'integer',
 			),
+			'IS_IMPORTANT' => array(
+				'data_type' => 'boolean',
+				'values' => array('N', 'Y'),
+			),
 
 			// for compatibility
 			'IS_COMPLETE' => array(
@@ -290,5 +308,49 @@ class CheckListTable extends Main\Entity\DataManager
 		return array(
 			new Main\Entity\Validator\Length(null, 255),
 		);
+	}
+
+	/**
+	 * @return string
+	 */
+	public static function getSortColumnName()
+	{
+		return 'SORT';
+	}
+
+	/**
+	 * @param $data
+	 * @return mixed
+	 */
+	private static function normalizeColumns($data)
+	{
+		if (array_key_exists('SORT_INDEX', $data))
+		{
+			$data['SORT'] = $data['SORT_INDEX'];
+			unset($data['SORT_INDEX']);
+		}
+
+		if (array_key_exists('IS_COMPLETE', $data))
+		{
+			$data['CHECKED'] = $data['IS_COMPLETE'];
+			unset($data['IS_COMPLETE']);
+		}
+
+		return $data;
+	}
+
+	/**
+	 * @param string $ids - string of type (1,2,...,7)
+	 */
+	public static function deleteByCheckListsIds($ids)
+	{
+		global $DB;
+
+		$tableName = static::getTableName();
+
+		$DB->Query("
+			DELETE FROM {$tableName}
+			WHERE ID IN {$ids} 
+		");
 	}
 }

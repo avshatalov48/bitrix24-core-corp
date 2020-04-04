@@ -46,7 +46,7 @@ class CVoxImplantPhone
 
 	public static function stripLetters($number)
 	{
-		return preg_replace("/[^0-9\#\*,;]/i", "", $number);
+		return preg_replace("/[^0-9\#\*\+,;]/i", "", $number);
 	}
 
 	public static function Normalize($number, $minLength = 10)
@@ -56,6 +56,7 @@ class CVoxImplantPhone
 			$number = '008'.substr($number, 2);
 		}
 		$number = self::stripLetters($number);
+		$number = str_replace("+", "", $number);
 		if (substr($number, 0, 2) == '80' || substr($number, 0, 2) == '81' || substr($number, 0, 2) == '82')
 		{
 		}
@@ -105,7 +106,6 @@ class CVoxImplantPhone
 
 		$result = \Bitrix\Main\UserTable::getList(Array(
 			'select' => Array('ID', 'WORK_PHONE', 'PERSONAL_PHONE', 'PERSONAL_MOBILE', 'UF_PHONE_INNER'),
-			'filter' => Array('=Bitrix\Voximplant\Phone:USER.USER_ID'=>0),
 			'limit' => 100,
 			'offset' => $offset,
 			'order' => 'ID'
@@ -116,25 +116,25 @@ class CVoxImplantPhone
 			$user["WORK_PHONE"] = CVoxImplantPhone::Normalize($user["WORK_PHONE"]);
 			if ($user["WORK_PHONE"])
 			{
-				VI\PhoneTable::add(Array('USER_ID' => intval($user['ID']), 'PHONE_NUMBER' => $user["WORK_PHONE"], 'PHONE_MNEMONIC' => "WORK_PHONE"));
+				VI\PhoneTable::merge(['USER_ID' => intval($user['ID']), 'PHONE_NUMBER' => $user["WORK_PHONE"], 'PHONE_MNEMONIC' => "WORK_PHONE"]);
 			}
 
 			$user["PERSONAL_PHONE"] = CVoxImplantPhone::Normalize($user["PERSONAL_PHONE"]);
 			if ($user["PERSONAL_PHONE"])
 			{
-				VI\PhoneTable::add(Array('USER_ID' => intval($user['ID']), 'PHONE_NUMBER' => $user["PERSONAL_PHONE"], 'PHONE_MNEMONIC' => "PERSONAL_PHONE"));
+				VI\PhoneTable::merge(Array('USER_ID' => intval($user['ID']), 'PHONE_NUMBER' => $user["PERSONAL_PHONE"], 'PHONE_MNEMONIC' => "PERSONAL_PHONE"));
 			}
 
 			$user["PERSONAL_MOBILE"] = CVoxImplantPhone::Normalize($user["PERSONAL_MOBILE"]);
 			if ($user["PERSONAL_MOBILE"])
 			{
-				VI\PhoneTable::add(Array('USER_ID' => intval($user['ID']), 'PHONE_NUMBER' => $user["PERSONAL_MOBILE"], 'PHONE_MNEMONIC' => "PERSONAL_MOBILE"));
+				VI\PhoneTable::merge(Array('USER_ID' => intval($user['ID']), 'PHONE_NUMBER' => $user["PERSONAL_MOBILE"], 'PHONE_MNEMONIC' => "PERSONAL_MOBILE"));
 			}
 
 			$user["UF_PHONE_INNER"] = intval(preg_replace("/[^0-9]/i", "", $user["UF_PHONE_INNER"]));
 			if ($user["UF_PHONE_INNER"] > 0 && $user["UF_PHONE_INNER"] < 10000)
 			{
-				VI\PhoneTable::add(Array('USER_ID' => intval($user['ID']), 'PHONE_NUMBER' => $user["UF_PHONE_INNER"], 'PHONE_MNEMONIC' => "UF_PHONE_INNER"));
+				VI\PhoneTable::merge(Array('USER_ID' => intval($user['ID']), 'PHONE_NUMBER' => $user["UF_PHONE_INNER"], 'PHONE_MNEMONIC' => "UF_PHONE_INNER"));
 			}
 			$count++;
 		}
@@ -145,7 +145,10 @@ class CVoxImplantPhone
 			return "CVoxImplantPhone::SynchronizeUserPhones();";
 		}
 		else
+		{
+			COption::RemoveOption("voximplant", "sync_offset");
 			return false;
+		}
 	}
 
 	public static function GetCallerId()
@@ -641,6 +644,19 @@ class CVoxImplantPhone
 		return $result['CNT'];
 	}
 
+	public static function getRentedNumbersHash()
+	{
+		$result = VI\Model\NumberTable::getList(array(
+			'select' => ['NUMBER'],
+			'cache' => ['ttl' => 31536000]
+		))->fetchAll();
+
+		$numbers = array_map(function($n){return $n['NUMBER'];}, $result);
+		sort($numbers, SORT_STRING);
+
+		return md5(join("", $numbers));
+	}
+
 	/**
 	 * @param $configId
 	 * @return bool
@@ -861,6 +877,60 @@ class CVoxImplantPhone
 			'VERIFIED_UNTIL' => $verifiedUntil,
 			'CONFIG_ID' => $configId
 		]);
+	}
+
+	public static function syncCallerIds(array $parameters = [])
+	{
+		if(isset($parameters['callerIds']))
+		{
+			$callerIds = $parameters['callerIds'];
+		}
+		else
+		{
+			return false;
+		}
+
+		$knownCallerIds = [];
+		foreach ($callerIds as $callerId)
+		{
+			$knownCallerIds[$callerId['NUMBER']] = true;
+			VI\Model\CallerIdTable::merge([
+				'NUMBER' => $callerId['NUMBER'],
+				'VERIFIED' => $callerId['VERIFIED'] ? 'Y' : 'N',
+				'VERIFIED_UNTIL' => $callerId['VERIFIED_UNTIL']
+			]);
+		}
+
+		$cursor = VI\Model\CallerIdTable::getList([
+			'select' => ['ID', 'NUMBER', 'CONFIG_ID'],
+			'cache' => ['ttl' => 31536000]
+		]);
+
+		while ($row = $cursor->fetch())
+		{
+			if(isset($knownCallerIds[$row['NUMBER']]))
+			{
+				if(!$row['CONFIG_ID'])
+				{
+					$addResult = VI\ConfigTable::add([
+						'PORTAL_MODE' => CVoxImplantConfig::MODE_LINK
+					]);
+
+					$configId = $addResult->getId();
+					VI\Model\CallerIdTable::update($row['ID'], [
+						'CONFIG_ID' => $configId
+					]);
+				}
+			}
+			else
+			{
+				if($row['CONFIG_ID'])
+				{
+					VI\ConfigTable::delete($row['CONFIG_ID']);
+				}
+				VI\Model\CallerIdTable::delete($row['ID']);
+			}
+		}
 	}
 
 	public static function getNumberDescription($numberFields)

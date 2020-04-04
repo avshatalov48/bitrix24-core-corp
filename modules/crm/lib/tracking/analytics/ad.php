@@ -27,6 +27,7 @@ class Ad
 	protected $authAdapter;
 	protected $seoCode;
 	protected $code;
+	protected $accountId;
 
 	/**
 	 * Return true if supported.
@@ -36,32 +37,16 @@ class Ad
 	 */
 	public static function isSupported($code)
 	{
-		if (!Main\Loader::includeModule('seo') || !$code)
-		{
-			return false;
-		}
-
 		return !empty(self::getSeoCodeByCode($code));
 	}
 
 	/**
-	 * Get account ID by code.
+	 * Update account ID compatible.
 	 *
-	 * @param string $code Code.
-	 * @return string|null
+	 * @return string
+	 * @internal
 	 */
-	public static function getAccountIdByCode($code)
-	{
-		$list = self::getAccountIds();
-		return isset($list[$code]) ? $list[$code] : null;
-	}
-
-	/**
-	 * Get account IDs.
-	 *
-	 * @return array|mixed|string
-	 */
-	protected static function getAccountIds()
+	public static function updateAccountIdCompatible()
 	{
 		$list = Main\Config\Option::get('crm', 'tracking_ad_acc', '');
 		if ($list)
@@ -81,21 +66,54 @@ class Ad
 			$list = [];
 		}
 
-		return $list;
-	}
+		if (count($list) === 0)
+		{
+			return '';
+		}
 
-	/**
-	 * Set account ID by code.
-	 *
-	 * @param string $code Code.
-	 * @param string $accountId Account ID.
-	 * @return void
-	 */
-	public static function setAccountIdByCode($code, $accountId)
-	{
-		$list = self::getAccountIds();
-		$list[$code] = $accountId;
-		Main\Config\Option::set('crm', 'tracking_ad_acc', Main\Web\Json::encode($list));
+
+		if (!Main\Loader::includeModule('seo'))
+		{
+			return '';
+		}
+
+		$providers = \Bitrix\Seo\Analytics\Service::getProviders();
+		foreach ($list as $code => $accountId)
+		{
+			$seoCode = self::getSeoCodeByCode($code);
+			if (!$accountId || !$seoCode || !isset($providers[$seoCode]))
+			{
+				continue;
+			}
+
+			$provider = $providers[$seoCode];
+			if (!$provider || !$provider['HAS_AUTH'] || !$provider['PROFILE'])
+			{
+				continue;
+			}
+
+			$clientId = $provider['PROFILE']['CLIENT_ID'];
+			if (!$clientId)
+			{
+				continue;
+			}
+
+			$row = Tracking\Internals\SourceTable::getRow([
+				'select' => ['ID'],
+				'filter' => ['=CODE' => $code],
+				'limit' => 1,
+				'order' => ['ID' => 'ASC']
+			]);
+
+			Tracking\Internals\SourceTable::update($row['ID'], [
+				'AD_ACCOUNT_ID' => $accountId,
+				'AD_CLIENT_ID' => $clientId,
+			]);
+		}
+
+		Main\Config\Option::delete('crm', ['name' => 'tracking_ad_acc']);
+
+		return '';
 	}
 
 	/**
@@ -106,18 +124,18 @@ class Ad
 	 */
 	public static function getSeoCodeByCode($code)
 	{
+		if (!Main\Loader::includeModule('seo') || !$code)
+		{
+			return null;
+		}
+
 		$map = [
 			Tracking\Source\Base::Ga => Seo\Analytics\Service::TYPE_GOOGLE,
 			Tracking\Source\Base::Vk => Seo\Analytics\Service::TYPE_VKONTAKTE,
 			Tracking\Source\Base::Ya => Seo\Analytics\Service::TYPE_YANDEX,
+			Tracking\Source\Base::Fb => Seo\Analytics\Service::TYPE_FACEBOOK,
+			Tracking\Source\Base::Ig => Seo\Analytics\Service::TYPE_INSTAGRAM,
 		];
-
-		$isAdEnabled = Main\Config\Option::get('crm', '~tracking_ad_enabled', 'N') === 'Y';
-		if ($isAdEnabled)
-		{
-			$map[Tracking\Source\Base::Fb] = Seo\Analytics\Service::TYPE_FACEBOOK;
-			$map[Tracking\Source\Base::Ig] = Seo\Analytics\Service::TYPE_INSTAGRAM;
-		}
 
 		return ($code && isset($map[$code])) ? $map[$code] : null;
 	}
@@ -125,16 +143,21 @@ class Ad
 	/**
 	 * Ad constructor.
 	 *
-	 * @param string $code Code.
+	 * @param array $source Source.
 	 */
-	public function __construct($code)
+	public function __construct(array $source)
 	{
-		$this->code = $code;
-		$this->seoCode = self::isSupported($code) ? self::getSeoCodeByCode($code) : null;
+		$this->code = $source['CODE'];
+		$this->accountId = $source['AD_ACCOUNT_ID'];
+		$this->seoCode = self::isSupported($this->code)
+			? self::getSeoCodeByCode($this->code)
+			: null;
+
 		if ($this->seoCode)
 		{
-			$this->authAdapter = Seo\Analytics\Service::getAuthAdapter($this->seoCode);
-			$this->account = Seo\Analytics\Service::getAccount($this->seoCode);
+			$service = Seo\Analytics\Service::getInstance()->setClientId($source['CLIENT_ID']);
+			$this->authAdapter = $service->getAuthAdapter($this->seoCode);
+			$this->account = $service->getAccount($this->seoCode);
 		}
 	}
 
@@ -163,21 +186,6 @@ class Ad
 		}
 
 		return $this->authAdapter->getAuthUrl();
-	}
-
-	/**
-	 * Get user profile.
-	 *
-	 * @return Seo\Retargeting\Response|null
-	 */
-	public function getUserProfile()
-	{
-		if (!$this->isConnected())
-		{
-			return null;
-		}
-
-		return $this->account->getProfileCached();
 	}
 
 	/**
@@ -250,6 +258,8 @@ class Ad
 	 */
 	public function getExpenses(Main\Type\Date $dateFrom = null, Main\Type\Date $dateTo = null)
 	{
+		self::updateAccountIdCompatible();
+
 		$defaultResult = [
 			'impressions' => 0,
 			'actions' => 0,
@@ -262,12 +272,9 @@ class Ad
 			return $defaultResult;
 		}
 
-		$accountId = null;
-		$account = Seo\Analytics\Service::getAccount($this->seoCode);
-		if ($account->hasAccounts())
+		if ($this->account->hasAccounts())
 		{
-			$accountId = self::getAccountIdByCode($this->code);
-			if (!$accountId)
+			if (!$this->accountId)
 			{
 				return $defaultResult;
 			}
@@ -275,7 +282,7 @@ class Ad
 
 		$cacheDir = '/crm/tracking/ad/expenses/';
 		$cacheTtl = (int) Main\Config\Option::get('crm', 'crm_tracking_expenses_cache_ttl') ?: self::CacheTtl;
-		$cacheId = $this->code . '|' . $dateFrom->getTimestamp() . '|' . $dateTo->getTimestamp();
+		$cacheId = $this->code . '|' . $this->accountId . '|' . $dateFrom->getTimestamp() . '|' . $dateTo->getTimestamp();
 		$cache = Main\Data\Cache::createInstance();
 		if ($cache->initCache($cacheTtl, $cacheId, $cacheDir))
 		{
@@ -283,7 +290,7 @@ class Ad
 		}
 
 		$expenses = $defaultResult;
-		$result = $account->getExpenses($accountId, $dateFrom, $dateTo)->fetch();
+		$result = $this->account->getExpenses($this->accountId, $dateFrom, $dateTo)->fetch();
 		if (!empty($result['EXPENSES']))
 		{
 			$result = $result['EXPENSES'];

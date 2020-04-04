@@ -139,6 +139,7 @@ class DiskManager
 
 		return array(
 			'ID' => $fileID,
+			'FILE_ID' => $file->getFileId(),
 			'NAME' => $file->getName(),
 			'SIZE' => \CFile::FormatSize($file->getSize()),
 			'CAN_READ' => $canRead,

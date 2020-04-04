@@ -57,7 +57,7 @@ class FileUploader
 			$fileName = Path::combine(\CTempFile::GetDirectoryName(1), $fileName);
 		}
 
-		$maxUploadSizeLocal = self::parseSize(ini_get('post_max_size'));
+		$maxUploadSizeLocal = min(self::parseSize(ini_get('post_max_size')), self::parseSize(ini_get('upload_max_filesize')));
 
 		if($maxUploadSizeCloud > 0 && $maxUploadSizeCloud < $maxUploadSizeLocal)
 		{

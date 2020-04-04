@@ -50,6 +50,10 @@ $arResult["SHOW_FULL_FORM"] = (
 	|| $arParams["ID"] > 0
 	|| !empty($_REQUEST["WFILES"])
 	|| !empty($_REQUEST["bp_setting"])
+	|| (
+		!empty($arParams["PAGE_ID"])
+		&& in_array($arParams["PAGE_ID"], array('user_blog_post_edit_profile', 'user_blog_post_edit_grat'))
+	)
 );
 
 $arResult["ALLOW_EMAIL_INVITATION"] = (
@@ -786,13 +790,18 @@ if (
 		{
 			if (isset($_POST[$from]))
 			{
-				$_POST[$to] = array(
-					'UA' => array(),
-					'U' => array(),
-					'UE' => array(),
-					'SG' => array(),
-					'DR' => array()
-				);
+				$_POST[$to] = [
+					'UA' => [],
+					'U' => [],
+					'UE' => [],
+					'SG' => [],
+					'DR' => []
+				];
+				if ($from == 'DEST_CODES')
+				{
+					$_POST[$to]['UP'] = [];
+				}
+
 				foreach($_POST[$from] as $destCode)
 				{
 					if ($destCode == 'UA')
@@ -806,6 +815,14 @@ if (
 					elseif (preg_match('/^U(\d+)$/i', $destCode, $matches))
 					{
 						$_POST[$to]['U'][] = 'U'.$matches[1];
+					}
+					elseif (
+						$from == 'DEST_CODES'
+						&& preg_match('/^UP(\d+)$/i', $destCode, $matches)
+						&& $arResult["perms"] = BLOG_PERMS_FULL
+					)
+					{
+						$_POST[$to]['UP'][] = 'UP'.$matches[1];
 					}
 					elseif (preg_match('/^SG(\d+)$/i', $destCode, $matches))
 					{
@@ -1321,7 +1338,13 @@ if (
 							&& is_array($_POST["GRAT"]["U"])
 							&& array_key_exists("GRAT_TYPE", $_POST)
 							&& array_key_exists("changePostFormTab", $_POST)
-							&& $_POST["changePostFormTab"] == "grat"
+							&& (
+								$_POST["changePostFormTab"] == "grat"
+								|| (
+									isset($arParams["PAGE_ID"])
+									&& in_array($arParams["PAGE_ID"], [ "user_blog_post_edit_grat", "user_grat" ])
+								)
+							)
 						)
 						{
 							$bNeedAddGrat = true;
@@ -1449,12 +1472,12 @@ if (
 							{
 								$bGratFromForm = true;
 
-
 								if (
 									is_array($arResult["PostToShow"]["GRAT_CURRENT"])
 									&& count(array_diff($arResult["PostToShow"]["GRAT_CURRENT"]["USERS"], $arUsersFromPOST)) == 0
 									&& count(array_diff($arUsersFromPOST, $arResult["PostToShow"]["GRAT_CURRENT"]["USERS"])) == 0
-									&& ToLower($arResult["PostToShow"]["GRAT_CURRENT"]["TYPE"]) == ToLower($_POST["GRAT_TYPE"])
+									&& isset($arResult["PostToShow"]["GRAT_CURRENT"]["TYPE"]["XML_ID"])
+									&& ToLower($arResult["PostToShow"]["GRAT_CURRENT"]["TYPE"]["XML_ID"]) == ToLower($_POST["GRAT_TYPE"])
 								)
 								{
 									$bNeedAddGrat = false;
@@ -1702,6 +1725,19 @@ if (
 												"GRATITUDE" => array("VALUE" => $arGratFromPOST["ID"])
 											)
 										);
+
+										if (
+											defined("BX_COMP_MANAGED_CACHE")
+											&& !empty($arUsersFromPOST)
+											&& is_array($arUsersFromPOST)
+										)
+										{
+											foreach($arUsersFromPOST as $gratUserId)
+											{
+												$CACHE_MANAGER->clearByTag("BLOG_POST_GRATITUDE_TO_USER_".$gratUserId);
+											}
+										}
+
 										CBlogPost::Update($newID, array(
 											"DETAIL_TEXT_TYPE" => "text",
 											"UF_GRATITUDE" => $new_grat_element_id
@@ -1962,7 +1998,11 @@ if (
 							}
 						}
 
-						if (strlen($_POST["apply"]) <= 0)
+						if (in_array($arParams["PAGE_ID"], array("user_blog_post_edit_profile", "user_blog_post_edit_grat")))
+						{
+							$redirectUrl = CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_POST_EDIT_PROFILE"], array("post_id"=>$newID, "user_id" => $arBlog["OWNER_ID"])).'?IFRAME=Y';
+						}
+						elseif (strlen($_POST["apply"]) <= 0)
 						{
 							if($arFields["PUBLISH_STATUS"] == BLOG_PUBLISH_STATUS_DRAFT || strlen($_POST["draft"]) > 0)
 							{
@@ -2107,9 +2147,13 @@ if (
 						if(strlen($vv1) > 0)
 						{
 							if($vv1 == "UA")
+							{
 								$arResult["PostToShow"]["SPERM"]["U"][] = "A";
+							}
 							else
+							{
 								$arResult["PostToShow"]["SPERM"][$k][str_replace($k, "", $vv1)] = "";
+							}
 						}
 					}
 				}
@@ -2120,11 +2164,11 @@ if (
 					array_key_exists("GRAT", $_POST)
 					&& isset($_POST["GRAT"]["U"])
 				)
-				|| array_key_exists("GRAT_TYPE", $_POST)
+				|| isset($_POST["GRAT_TYPE"])
+				|| isset($_GET["gratCode"])
 			)
 			{
-				if
-				(
+				if (
 					array_key_exists("GRAT", $_POST)
 					&& isset($_POST["GRAT"]["U"])
 					&& is_array($_POST["GRAT"]["U"])
@@ -2134,8 +2178,12 @@ if (
 					$arUsersFromPOST = array();
 
 					foreach($_POST["GRAT"]["U"] as $code)
+					{
 						if (preg_match('/^U(\d+)$/', $code, $matches))
+						{
 							$arUsersFromPOST[] = $matches[1];
+						}
+					}
 
 					if (count($arUsersFromPOST) > 0)
 					{
@@ -2165,14 +2213,29 @@ if (
 					}
 				}
 
+				$gratType = false;
 				if (
-					array_key_exists("GRAT_TYPE", $_POST)
+					isset($_POST["GRAT_TYPE"])
 					&& strlen($_POST["GRAT_TYPE"]) > 0
+				)
+				{
+					$gratType = $_POST["GRAT_TYPE"];
+				}
+				elseif (
+					isset($_GET["gratCode"])
+					&& strlen($_GET["gratCode"]) > 0
+				)
+				{
+					$gratType = $_GET["gratCode"];
+				}
+
+				if (
+					$gratType
 					&& is_array($arResult["PostToShow"]["GRATS"])
 				)
 					foreach ($arResult["PostToShow"]["GRATS"] as $arGrat)
 					{
-						if ($arGrat["XML_ID"] == $_POST["GRAT_TYPE"])
+						if ($arGrat["XML_ID"] == $gratType)
 						{
 							$arResult["PostToShow"]["GRAT_CURRENT"]["TYPE"] = $arGrat;
 							break;

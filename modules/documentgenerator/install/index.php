@@ -56,6 +56,11 @@ class documentgenerator extends CModule
 			$this->InstallDB();
 			$this->InstallFiles();
 
+			/**
+			 * @see \Bitrix\DocumentGenerator\Driver::installDefaultRoles()
+			 */
+			CAgent::AddAgent('\Bitrix\DocumentGenerator\Driver::installDefaultRoles();', 'documentgenerator', "N", 150, "", "Y", \ConvertTimeStamp(time()+\CTimeZone::GetOffset()+150, "FULL"));
+
 			$APPLICATION->IncludeAdminFile(GetMessage("DOCUMENTGENERATOR_INSTALL_TITLE"), $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/".$this->MODULE_ID."/install/step2.php");
 		}
 		return true;
@@ -80,6 +85,7 @@ class documentgenerator extends CModule
 		RegisterModuleDependences('main', 'onNumberGeneratorsClassesCollect', $this->MODULE_ID, 'Bitrix\DocumentGenerator\Integration\Numerator\DocumentNumberGenerator', 'onGeneratorClassesCollect');
 		$eventManager = \Bitrix\Main\EventManager::getInstance();
 		$eventManager->registerEventHandler('rest', 'OnRestServiceBuildDescription', 'documentgenerator', '\Bitrix\DocumentGenerator\Driver', 'onRestServiceBuildDescription');
+		$eventManager->registerEventHandler('pull', 'OnGetDependentModule', 'documentgenerator', '\Bitrix\DocumentGenerator\Driver', 'onGetDependentModule', 800);
 
 		RegisterModule($this->MODULE_ID);
 
@@ -148,6 +154,7 @@ class documentgenerator extends CModule
 		UnRegisterModuleDependences('main', 'onNumberGeneratorsClassesCollect', $this->MODULE_ID, 'Bitrix\DocumentGenerator\Integration\Numerator\DocumentNumberGenerator', 'onGeneratorClassesCollect');
 		$eventManager = \Bitrix\Main\EventManager::getInstance();
 		$eventManager->unRegisterEventHandler('rest', 'OnRestServiceBuildDescription', 'documentgenerator', '\Bitrix\DocumentGenerator\Driver', 'onRestServiceBuildDescription');
+		$eventManager->unRegisterEventHandler('pull', 'OnGetDependentModule', 'documentgenerator', '\Bitrix\DocumentGenerator\Driver', 'onGetDependentModule');
 
 		UnRegisterModule($this->MODULE_ID);
 		return true;

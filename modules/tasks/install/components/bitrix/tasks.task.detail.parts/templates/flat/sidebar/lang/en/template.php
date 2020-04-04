@@ -1,6 +1,6 @@
 <?
 $MESS["TASKS_SIDEBAR_AUTOMATION"] = "Automation";
-$MESS["TASKS_SIDEBAR_ROBOTS"] = "Automation rules";
+$MESS["TASKS_SIDEBAR_ROBOTS_1"] = "Configure";
 $MESS["TASKS_SIDEBAR_STATUS"] = "Status";
 $MESS["TASKS_SIDEBAR_START_DATE"] = "since";
 $MESS["TASKS_SIDEBAR_START"] = "Start";

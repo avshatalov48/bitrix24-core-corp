@@ -23,5 +23,11 @@ class Util
 
 		return in_array('IU'.$userId, self::$userAccessCodes[$managerId]);
 	}
+
+
+	public static function isSectionStructureConverted()
+	{
+		return \Bitrix\Main\Config\Option::get('calendar', 'sectionStructureConverted', 'N') === 'Y';
+	}
 }
 ?>

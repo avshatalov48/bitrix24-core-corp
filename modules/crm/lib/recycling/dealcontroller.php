@@ -264,10 +264,12 @@ class DealController extends BaseController
 		$this->suspendDocuments($entityID, $recyclingEntityID);
 		$this->suspendLiveFeed($entityID, $recyclingEntityID);
 		$this->suspendUtm($entityID, $recyclingEntityID);
+		$this->suspendTracing($entityID, $recyclingEntityID);
 		$this->suspendObservers($entityID, $recyclingEntityID);
 		$this->suspendWaitings($entityID, $recyclingEntityID);
 		$this->suspendChats($entityID, $recyclingEntityID);
 		$this->suspendProductRows($entityID, $recyclingEntityID);
+		$this->suspendScoringHistory($entityID, $recyclingEntityID);
 
 		//region Relations
 		foreach($relations as $relation)
@@ -278,8 +280,6 @@ class DealController extends BaseController
 		}
 		DealRelationManager::getInstance()->registerRecycleBin($recyclingEntityID, $entityID, $slots);
 		//endregion
-
-		$this->fireAfterMoveToBinEvent($entityID, $recyclingEntityID);
 	}
 
 	/**
@@ -381,18 +381,16 @@ class DealController extends BaseController
 
 		$this->eraseSuspendedUserFields($recyclingEntityID);
 
-		$this->recoverTimeline(
-			$recyclingEntityID,
-			$newEntityID,
-			[ 'OLD_ENTITY_ID' => $entityID, 'RELATIONS' => $relationMap ]
-		);
+		$this->recoverTimeline($recyclingEntityID, $newEntityID);
 		$this->recoverDocuments($recyclingEntityID, $newEntityID);
 		$this->recoverLiveFeed($recyclingEntityID, $newEntityID);
 		$this->recoverUtm($recyclingEntityID, $newEntityID);
+		$this->recoverTracing($recyclingEntityID, $newEntityID);
 		$this->recoverObservers($recyclingEntityID, $newEntityID);
 		$this->recoverWaitings($recyclingEntityID, $newEntityID);
 		$this->recoverChats($recyclingEntityID, $newEntityID);
 		$this->recoverProductRows($recyclingEntityID, $newEntityID);
+		$this->recoverScoringHistory($recyclingEntityID, $newEntityID);
 
 		$requisiteLinks = isset($slots['REQUISITE_LINKS']) ? $slots['REQUISITE_LINKS'] : null;
 		if(is_array($requisiteLinks) && !empty($requisiteLinks))
@@ -411,8 +409,8 @@ class DealController extends BaseController
 		Relation::deleteJunks();
 		//endregion
 
+		$this->rebuildSearchIndex($newEntityID);
 		$this->startRecoveryWorkflows($newEntityID);
-		$this->fireAfterRecoverEvent($recyclingEntityID, $newEntityID);
 
 		return true;
 	}
@@ -456,14 +454,14 @@ class DealController extends BaseController
 		$this->eraseSuspendedDocuments($recyclingEntityID);
 		$this->eraseSuspendedLiveFeed($recyclingEntityID);
 		$this->eraseSuspendedUtm($recyclingEntityID);
+		$this->eraseSuspendedTracing($recyclingEntityID);
 		$this->eraseSuspendedObservers($recyclingEntityID);
 		$this->eraseSuspendedWaitings($recyclingEntityID);
 		$this->eraseSuspendedChats($recyclingEntityID);
 		$this->eraseSuspendProductRows($recyclingEntityID);
 		$this->eraseSuspendedUserFields($recyclingEntityID);
+		$this->eraseSuspendedScoringHistory($recyclingEntityID);
 
 		Relation::deleteByRecycleBin($recyclingEntityID);
-
-		$this->fireAfterEraseEvent($recyclingEntityID);
 	}
 }

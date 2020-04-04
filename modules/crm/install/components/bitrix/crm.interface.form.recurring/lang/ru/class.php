@@ -162,26 +162,6 @@ $MESS["CRM_RECURRING_HINT_3_PLURAL_1"] = "месяца";
 $MESS["CRM_RECURRING_HINT_BEFORE_DATE"] = " до #DATE#";
 $MESS["CRM_RECURRING_HINT_TODAY"] = "сегодня";
 $MESS["CRM_RECURRING_HINT_A_FEW_DAYS_BEFORE_DATE"] = "за #COUNT_ELEMENT# #TYPE_ELEMENT##BEFORE_DATE#";
-$MESS["CRM_RECURRING_INVOICE_B24_BLOCK_TEXT"] = "Каждый счет в Битрикс24 можно повторять автоматически. 
-	Если вы работаете с услугами, регулярно выставляете счета своим клиентам, например, раз в месяц, регулярные счета значительно сэкономят ваше время. 
-	Выставите счет клиенту и укажите регулярность его повторения. В нужное время CRM автоматически создаст счет и отправить его на e-mail клиента.
-		<ul class=\"hide-features-list\">
-			<li class=\"hide-features-list-item\">Автоматическое создание счета</li>
-			<li class=\"hide-features-list-item\">Быстрый доступ ко всем шаблонам регулярных счетов</li>
-			<li class=\"hide-features-list-item\">Отправка счета для оплаты на e-mail клиента <a href=\"#LINK#\" target=\"_blank\" class=\"hide-features-more\">Узнать подробнее</a></li>
-		</ul>		
-		<strong>Регулярные счета доступны в тарифах \"Команда\" и \"Компания\"</strong>";
-$MESS["CRM_RECURRING_INVOICE_B24_BLOCK_TITLE"] = "Регулярные счета доступны в тарифах \"Команда\" и \"Компания\"";
-$MESS["CRM_RECURRING_DEAL_B24_BLOCK_TEXT"] = "Создавать сделки в Битрикс24 можно автоматически! 
-	Если вы, например, целый год планируете еженедельно заключать договор с каким-то клиентом, то регулярные сделки сэкономят ваше время. 
-	Заведите сделку, укажите ее регулярность и направление. А в указанное время она будет создана автоматически без участия менеджера.
-		<ul class=\"hide-features-list\">
-			<li class=\"hide-features-list-item\">Автоматическое создание сделок</li>
-			<li class=\"hide-features-list-item\">Повышение эффективности работы менеджеров</li>
-			<li class=\"hide-features-list-item\">Быстрый доступ к списку регулярных сделок <a href=\"#LINK#\" target=\"_blank\" class=\"hide-features-more\">Узнать подробнее</a></li>
-		</ul>		
-		<strong>Регулярные сделки доступны в тарифах \"Команда\" и \"Компания\"</strong>";
-$MESS["CRM_RECURRING_DEAL_B24_BLOCK_TITLE"] = "Регулярные сделки доступны в тарифах \"Команда\" и \"Компания\"";
 $MESS["CRM_RECURRING_EMPTY_OWNER_EMAIL"] = "Не заполнен E-mail в реквизитах вашей компании";
 $MESS["CRM_RECURRING_EMPTY_OWNER_EMAIL1"] = "Не заполнен E-mail в реквизитах вашей компании";
 $MESS["NEXT_EXECUTION_HINT"] = "Дата следующего выставления #DATE_EXECUTION#";

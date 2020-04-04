@@ -36,6 +36,6 @@ $MESS["TELEPHONY_BALANCE_2"] = "You can view your current balance in your teleph
 $MESS["TELEPHONY_HISTORY_3"] = "Statistics";
 $MESS["VI_LOCK_RECORD_LINK"] = "Additional information";
 $MESS["VI_LOCK_RECORD_TITLE"] = "Record calls";
-$MESS["VI_LOCK_RECORD_TEXT"] = "Your tariff plan can record #LIMIT# calls per month of which #REMAINING# remains.";
+$MESS["VI_LOCK_RECORD_TEXT"] = "Your current plan can record #LIMIT# calls per month of which #REMAINING# remains.";
 $MESS["TELEPHONY_TARIFFS_2"] = "Plans";
 ?>

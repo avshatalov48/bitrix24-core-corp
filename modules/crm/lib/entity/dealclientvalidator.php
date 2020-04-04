@@ -20,6 +20,11 @@ class DealClientValidator extends ClientValidator
 			return $this->entityFields['CONTACT_IDS'];
 		}
 
+		if(isset($this->entityFields['CONTACT_ID']))
+		{
+			return array($this->entityFields['CONTACT_ID']);
+		}
+
 		$entityID = $this->getEntityID();
 		if($entityID > 0)
 		{

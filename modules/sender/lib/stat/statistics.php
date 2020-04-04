@@ -526,8 +526,9 @@ class Statistics
 			foreach ($list as $index => $item)
 			{
 				$item['URL'] = (new Uri($item['URL']))
-					->deleteParams($linkParams)
+					->deleteParams($linkParams, true)
 					->getLocator();
+				$item['URL'] = urldecode($item['URL']);
 				if (!isset($groupedList[$item['URL']]))
 				{
 					$groupedList[$item['URL']] = 0;

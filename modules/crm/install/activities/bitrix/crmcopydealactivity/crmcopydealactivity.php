@@ -1,11 +1,13 @@
-<?
+<?php
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
+
+use Bitrix\Crm;
 
 class CBPCrmCopyDealActivity
 	extends CBPActivity
 {
 	private static $cycleCounter = [];
-	const CYCLE_LIMIT = 1000;
+	const CYCLE_LIMIT = 200;
 
 	public function __construct($name)
 	{
@@ -14,7 +16,7 @@ class CBPCrmCopyDealActivity
 			'Title' => '',
 			'DealTitle' => '',
 			'CategoryId' => 0,
-			//'StageId' => null,
+			'StageId' => null,
 			'Responsible' => null,
 
 			//return
@@ -65,11 +67,19 @@ class CBPCrmCopyDealActivity
 			return CBPActivityExecutionStatus::Closed;
 		}
 
-		$merger = new \Bitrix\Crm\Merger\DealMerger(1, false);
+		$this->prepareSourceFields($sourceFields);
+
+		$merger = new Crm\Merger\DealMerger(1, false);
 		$merger->mergeFields($sourceFields, $fields, true);
 
 		unset($fields['STAGE_ID']);
 		$fields['CATEGORY_ID'] = (int)$this->CategoryId;
+
+		$stageId = (string)$this->StageId;
+		if ($stageId)
+		{
+			$fields['STAGE_ID'] = $stageId;
+		}
 
 		$responsibles = CBPHelper::ExtractUsers($this->Responsible, $this->GetDocumentId());
 		if (count($responsibles) > 1)
@@ -89,7 +99,7 @@ class CBPCrmCopyDealActivity
 
 		$fields['TITLE'] = $dealTitle;
 		$fields['ASSIGNED_BY_ID'] = $responsibles[0];
-		$fields['CONTACT_IDS'] = \Bitrix\Crm\Binding\DealContactTable::getDealContactIDs($sourceDealId);
+		$fields['CONTACT_IDS'] = Crm\Binding\DealContactTable::getDealContactIDs($sourceDealId);
 
 		$entity = new \CCrmDeal(false);
 		$newDealId = $entity->Add(
@@ -156,25 +166,34 @@ class CBPCrmCopyDealActivity
 			'siteId' => $siteId
 		));
 
+		$defaultTitle = GetMessage('CRM_CDA_NEW_DEAL_TITLE', ['#SOURCE_TITLE#' => '{=Document:TITLE}']);
+		if ($formName === 'bizproc_automation_robot_dialog')
+		{
+			$defaultTitle = Crm\Automation\Helper::convertExpressions($defaultTitle, $documentType);
+		}
+
 		$dialog->setMap(array(
 			'DealTitle' => array(
 				'Name' => GetMessage('CRM_CDA_DEAL_TITLE'),
 				'FieldName' => 'deal_title',
 				'Type' => 'string',
-				'Default' => GetMessage('CRM_CDA_NEW_DEAL_TITLE', ['#SOURCE_TITLE#' => '{=Document:TITLE}'])
+				'Default' => $defaultTitle
 			),
 			'CategoryId' => array(
 				'Name' => GetMessage('CRM_CDA_MOVE_TO_CATEGORY'),
 				'FieldName' => 'category_id',
 				'Type' => 'select',
-				'Options' => \Bitrix\Crm\Category\DealCategory::getSelectListItems(),
+				'Options' => Crm\Category\DealCategory::getSelectListItems(),
+				'Required' => true,
+				'Default' => '0',
 			),
-			//'StageId' => array(
-			//	'Name' => GetMessage('CRM_CDA_CHANGE_STAGE'),
-			//	'FieldName' => 'stage_id',
-			//	'Type' => 'string',
-			//	'Default' => 'NEW'
-			//),
+			'StageId' => array(
+				'Name' => GetMessage('CRM_CDA_CHANGE_STAGE'),
+				'FieldName' => 'stage_id',
+				'Type' => 'select',
+				'Default' => 'NEW',
+				'Options' => Crm\Category\DealCategory::getFullStageList(),
+			),
 			'Responsible' => array(
 				'Name' => GetMessage('CRM_CDA_CHANGE_RESPONSIBLE'),
 				'FieldName' => 'responsible',
@@ -192,7 +211,7 @@ class CBPCrmCopyDealActivity
 		$arProperties = array(
 			'DealTitle' => $arCurrentValues["deal_title"],
 			'CategoryId' => $arCurrentValues['category_id'],
-			//'StageId' => $arCurrentValues['stage_id'],
+			'StageId' => $arCurrentValues['stage_id'],
 			'Responsible' => CBPHelper::UsersStringToArray($arCurrentValues["responsible"], $documentType, $arErrors),
 		);
 
@@ -233,6 +252,55 @@ class CBPCrmCopyDealActivity
 		{
 			$this->WriteToTrackingService(GetMessage("CRM_CDA_CYCLING_ERROR"), 0, CBPTrackingType::Error);
 			throw new Exception();
+		}
+	}
+
+	private function prepareSourceFields(&$sourceFields)
+	{
+		if (
+			!\Bitrix\Main\Loader::includeModule('calendar')
+			||
+			!method_exists('\Bitrix\Calendar\UserField\ResourceBooking', 'prepareValue')
+		)
+		{
+			return false;
+		}
+
+		$userFieldsList = CCrmDeal::GetUserFields();
+		if (is_array($userFieldsList))
+		{
+			foreach ($userFieldsList as $userFieldName => $userFieldParams)
+			{
+				$fieldTypeId = isset($userFieldParams['USER_TYPE']) ? $userFieldParams['USER_TYPE']['USER_TYPE_ID'] : '';
+				$fieldValue = isset($sourceFields[$userFieldName]) ? $sourceFields[$userFieldName] : null;
+
+				if (!$fieldValue)
+				{
+					continue;
+				}
+
+				if ($fieldTypeId === 'resourcebooking')
+				{
+					$newValue = [];
+					$resourceList = \Bitrix\Calendar\UserField\ResourceBooking::getResourceEntriesList((array) $fieldValue);
+
+					if  ($resourceList)
+					{
+						foreach ($resourceList['ENTRIES'] as $entry)
+						{
+							$newValue[] = \Bitrix\Calendar\UserField\ResourceBooking::prepareValue(
+								$entry['TYPE'],
+								$entry['RESOURCE_ID'],
+								$resourceList['DATE_FROM'],
+								MakeTimeStamp($resourceList['DATE_TO']) - MakeTimeStamp($resourceList['DATE_FROM']),
+								$resourceList['SERVICE_NAME']
+							);
+						}
+					}
+					$sourceFields[$userFieldName] = $newValue;
+				}
+			}
+
 		}
 	}
 }

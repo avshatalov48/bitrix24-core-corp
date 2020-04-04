@@ -59,7 +59,7 @@ if (strlen($request['PARAMS']['DEAL_DATEPICKER_BEFORE']) > 0)
 if ($request['ACTION'] === "GET_DEAL_HINT")
 {
 	if (!Manager::isAllowedExpose(Manager::DEAL))
-		__CrmRecurringFieldEditEndResponse(array('DATA' => array('HINT' => $hint)));
+		__CrmRecurringFieldEditEndResponse(array('DATA' => array('HINT' => '')));
 
 	$dealDataRaw = Bitrix\Crm\DealRecurTable::getlist(
 		array(
@@ -79,6 +79,7 @@ if ($request['ACTION'] === "GET_DEAL_HINT")
 		if ((int)($dealData['DEAL_ID']) === (int)$request['PARAMS']['ID'])
 		{
 			$hint = GetMessage('NEXT_EXECUTION_DEAL_HINT', array("#DATE_EXECUTION#" => $dealData['NEXT_EXECUTION']));
+			break;
 		}
 		elseif ((int)($dealData['BASED_ID']) === (int)$request['PARAMS']['ID'])
 		{
@@ -114,30 +115,27 @@ if ($request['ACTION'] === "GET_DEAL_HINT")
 
 $startDate = (strlen($request['START_DATE']) > 0) ? $request['START_DATE'] : null;
 $startDate = new Date($startDate);
-$today = new Date();
-if (strlen($request['LAST_EXECUTION']) > 0 && (int)$request['ENTITY_TYPE'] !== \CCrmOwnerType::Deal)
-{
-	$lastExecution = new Date($request['LAST_EXECUTION']);
-	$startDate = $startDate->getTimestamp() > $lastExecution->getTimestamp() ? $startDate : $lastExecution->add('+1 day');
-}
-if ($today->getTimestamp() > $startDate->getTimestamp())
-{
-	$startDate = clone($today);
-}
+$endDate = (strlen($request['PARAMS']['END_DATE']) > 0) ? $request['PARAMS']['END_DATE'] : null;
+$endDate = new Date($endDate);
+
+$fields = [
+	'START_DATE' => $startDate,
+	'IS_LIMIT' => $request['PARAMS']['REPEAT_TILL'],
+	'LIMIT_DATE' => $endDate,
+	'LIMIT_REPEAT' => $request['PARAMS']['TIMES'],
+	'PARAMS' => $request['PARAMS'],
+];
 
 if ((int)$request['ENTITY_TYPE'] === \CCrmOwnerType::Deal)
 {
-	$nextExecuteDate = \Bitrix\Crm\Recurring\Entity\Deal::getNextDate($request['PARAMS'], $startDate);
+	$entity = \Bitrix\Crm\Recurring\Entity\Item\DealNew::create();
 }
 else
 {
-	$nextExecuteDate = \Bitrix\Crm\Recurring\Entity\Invoice::getNextDate($request['PARAMS'], $startDate);
+	$entity = \Bitrix\Crm\Recurring\Entity\Item\InvoiceNew::create();
 }
-
-if ($nextExecuteDate instanceof Date && $today->getTimestamp() > $nextExecuteDate->getTimestamp())
-{
-	$nextExecuteDate = $today;
-}
+	$entity->initFields($fields);
+	$nextExecuteDate = $entity->getField('NEXT_EXECUTION');
 
 __CrmRecurringFieldEditEndResponse(array('RESULT' => array('NEXT_DATE' => $nextExecuteDate)));
 

@@ -72,6 +72,14 @@ final class AttachedObject extends Internals\Model
 			return true;
 		}
 
+		if (
+			!$userId
+			&& !$this->getConnector()->isAnonymousAllowed()
+		)
+		{
+			return false;
+		}
+
 		return $this->getConnector()->canRead($userId);
 	}
 

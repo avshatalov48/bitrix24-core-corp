@@ -24,7 +24,7 @@
 	min-width:1100px;
 	height: 0px;
 	position: relative;
-
+	z-index: 995;
 	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
 

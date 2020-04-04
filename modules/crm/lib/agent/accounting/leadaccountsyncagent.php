@@ -34,9 +34,9 @@ class LeadAccountSyncAgent extends EntityStepwiseAgent
 	}
 	protected function getTotalEntityCount()
 	{
-		return \CCrmLead::GetListEx(array(), array('CHECK_PERMISSIONS' => 'N'), array(), false);
+		return \CCrmLead::GetTotalCount();
 	}
-	protected function getEnityIDs($offsetID, $limit)
+	protected function getEntityIDs($offsetID, $limit)
 	{
 		$filter = array('CHECK_PERMISSIONS' => 'N');
 		if($offsetID > 0)

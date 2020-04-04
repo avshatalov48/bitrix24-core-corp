@@ -135,6 +135,17 @@ class Users extends \Bitrix\Main\UI\Selector\EntityBase
 					}
 				}
 
+				if (!empty($selectedItems[$entityType]))
+				{
+					foreach($selectedItems[$entityType] as $code)
+					{
+						if (!isset($items[$entityType][$code]))
+						{
+							$result['ITEMS_HIDDEN'][] = $code;
+						}
+					}
+				}
+
 				foreach($items[$entityType] as $key => $value)
 				{
 					if (
@@ -144,17 +155,6 @@ class Users extends \Bitrix\Main\UI\Selector\EntityBase
 					{
 						unset($items[$entityType][$key]);
 						unset($lastItems[$entityType][$key]);
-					}
-				}
-
-				if (!empty($selectedItems[$entityType]))
-				{
-					foreach($selectedItems[$entityType] as $code)
-					{
-						if (!isset($items[$entityType][$code]))
-						{
-							$result['ITEMS_HIDDEN'][] = $code;
-						}
 					}
 				}
 			}

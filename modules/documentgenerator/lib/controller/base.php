@@ -4,7 +4,7 @@ namespace Bitrix\DocumentGenerator\Controller;
 
 use Bitrix\DocumentGenerator\Engine\CheckScope;
 use Bitrix\DocumentGenerator\Model\FileTable;
-use Bitrix\Main\Engine\Binder;
+use Bitrix\DocumentGenerator\Model\RoleTable;
 use Bitrix\Main\Engine\Controller;
 use Bitrix\Main\Error;
 
@@ -21,45 +21,57 @@ abstract class Base extends Controller
 		return $preFilters;
 	}
 
-	protected function init()
+	/**
+	 * @return array|\Bitrix\Main\Engine\AutoWire\Parameter[]
+	 */
+	public function getAutoWiredParameters()
 	{
-		parent::init();
-
-		Binder::registerParameterDependsOnName(
-			\Bitrix\DocumentGenerator\Document::class,
-			function($className, $id)
-			{
-				/** @var \Bitrix\DocumentGenerator\Document $className */
-				return $className::loadById($id);
-			}, function()
-			{
-				return 'id';
-			}
-		);
-
-		Binder::registerParameterDependsOnName(
-			\Bitrix\DocumentGenerator\Template::class,
-			function($className, $id)
-			{
-				/** @var \Bitrix\DocumentGenerator\Template $className */
-				return $className::loadById($id);
-			}, function()
-			{
-				return 'id';
-			}
-		);
-
-		Binder::registerParameterDependsOnName(
-			\Bitrix\Main\Numerator\Numerator::class,
-			function($className, $id)
-			{
-				/** @var \Bitrix\Main\Numerator\Numerator $className */
-				return $className::load($id);
-			}, function()
-		{
-			return 'id';
-		}
-		);
+		return [
+			new \Bitrix\Main\Engine\AutoWire\ExactParameter(
+				\Bitrix\DocumentGenerator\Document::class,
+				'document',
+				function($className, $id)
+				{
+					/** @var \Bitrix\DocumentGenerator\Document $className */
+					return $className::loadById($id);
+				}
+			),
+			new \Bitrix\Main\Engine\AutoWire\ExactParameter(
+				\Bitrix\DocumentGenerator\Template::class,
+				'template',
+				function($className, $id)
+				{
+					/** @var \Bitrix\DocumentGenerator\Template $className */
+					return $className::loadById($id);
+				}
+			),
+			new \Bitrix\Main\Engine\AutoWire\ExactParameter(
+				\Bitrix\DocumentGenerator\Template::class,
+				'template',
+				function($className, $templateId)
+				{
+					/** @var \Bitrix\DocumentGenerator\Template $className */
+					return $className::loadById($templateId);
+				}
+			),
+			new \Bitrix\Main\Engine\AutoWire\ExactParameter(
+				\Bitrix\DocumentGenerator\Model\Role::class,
+				'role',
+				function($className, $id)
+				{
+					return RoleTable::getById($id)->fetchObject();
+				}
+			),
+			new \Bitrix\Main\Engine\AutoWire\ExactParameter(
+				\Bitrix\Main\Numerator\Numerator::class,
+				'numerator',
+				function($className, $id)
+				{
+					/** @var \Bitrix\Main\Numerator\Numerator $className */
+					return $className::load($id);
+				}
+			),
+		];
 	}
 
 	/**
@@ -84,13 +96,19 @@ abstract class Base extends Controller
 
 	/**
 	 * @param null $fileContent
-	 * @param null $fileParamName
-	 * @param bool $required
+	 * @param array $options
 	 * @return false|int
 	 * @throws \Exception
 	 */
-	protected function uploadFile($fileContent = null, $fileParamName = null, $required = true)
+	protected function uploadFile($fileContent = null, array $options = [])
 	{
+		$options = array_merge([
+			'fileParamName' => null,
+			'required' => true,
+			'isTemplate' => false,
+		], $options);
+		$fileParamName = $options['fileParamName'];
+		$required = $options['required'];
 		if(!$fileParamName)
 		{
 			$fileParamName = static::FILE_PARAM_NAME;
@@ -116,6 +134,8 @@ abstract class Base extends Controller
 			return false;
 		}
 
+		$fileArray['isTemplate'] = $options['isTemplate'];
+
 		$saveResult = FileTable::saveFile($fileArray);
 		if($saveResult->isSuccess())
 		{
@@ -126,5 +146,40 @@ abstract class Base extends Controller
 			$this->errorCollection->add($saveResult->getErrors());
 			return false;
 		}
+	}
+
+	/**
+	 * @param array $filter
+	 * @param array $dateTimeFields
+	 */
+	protected function prepareDateTimeFieldsForFilter(array &$filter, array $dateTimeFields)
+	{
+		foreach($filter as $name => $value)
+		{
+			foreach($dateTimeFields as $field)
+			{
+				if($this->isCorrectFieldName($name, $field))
+				{
+					$filter[$name] = \CRestUtil::unConvertDateTime($value);
+					break;
+				}
+			}
+		}
+	}
+
+	/**
+	 * @param $filterName
+	 * @param $field
+	 * @return bool
+	 */
+	protected function isCorrectFieldName($filterName, $field)
+	{
+		static $prefixes = [
+			'' => true, '=' => true, '%' => true, '>' => true, '<' => true, '@' => true, '!=' => true,
+			'!%' => true, '><' => true, '>=' => true, '<=' => true, '=%' => true, '%=' => true,
+			'!><' => true, '!=%' => true, '!%=' => true,
+		];
+		return isset($prefixes[str_replace($field, '', $filterName)]);
+
 	}
 }

@@ -9,6 +9,7 @@
 	let formFields = BX.componentParameters.get("items", []);
 	let formSections = BX.componentParameters.get("sections", []);
 	let mode = BX.componentParameters.get("mode", "view");
+	let isBackdrop = BX.componentParameters.get("isBackdrop", false);
 
 	if(mode == "edit")
 	{
@@ -16,7 +17,7 @@
 	}
 	else
 	{
-		ProfileView.open({userId: userId}, form);
+		ProfileView.open({userId, isBackdrop}, form);
 	}
 
 })();

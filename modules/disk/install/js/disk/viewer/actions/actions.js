@@ -65,6 +65,17 @@
 		params = params || {};
 
 		console.log('runActionEdit', params);
+
+		if (BX.getClass('BX.UI.Viewer.Instance'))
+		{
+			var editButton = BX.UI.Viewer.Instance.actionPanel.getItemById('edit');
+			if (editButton)
+			{
+				editButton.changeIconClass('disk-viewer-panel-icon-' + params.serviceCode);
+			}
+		}
+		BX.Disk.saveDocumentService(params.serviceCode);
+
 		if (params.serviceCode === 'l')
 		{
 			if (BX.Disk.Document.Local.Instance.isEnabled())
@@ -93,6 +104,41 @@
 
 			editProcess.start();
 		}
+	};
+
+	BX.Disk.Viewer.Actions.runActionInfo = function(item, params)
+	{
+		var fileId = params.objectId;
+
+		if (BX.SidePanel.Instance.isOpen() && BX.SidePanel.Instance.getTopSlider().getUrl() === "widget:file-props-" + fileId)
+		{
+			BX.SidePanel.Instance.getTopSlider().close();
+
+			return;
+		}
+
+		BX.SidePanel.Instance.open("widget:file-props-" + fileId, {
+			cacheable: false,
+			contentCallback: function (slider) {
+				var promise = new BX.Promise();
+				BX.ajax.runAction('disk.file.showProperties', {data: {
+						fileId: fileId
+					}}).then(function(response){
+					slider.getData().set("configurationFormContent", response.data.html);
+					promise.fulfill(response.data);
+				});
+
+				return promise;
+			},
+			animationDuration: 100,
+			width: 370,
+			events: {
+				onLoad: function (event) {
+					var slider = event.getSlider();
+					BX.html(slider.layout.content, slider.getData().get("configurationFormContent"));
+				}
+			}
+		});
 	};
 
 	BX.Disk.Viewer.Actions.runActionCopyToMe = function(item, params)

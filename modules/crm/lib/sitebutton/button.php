@@ -202,6 +202,23 @@ class Button
 		return $this->getItemByType(Manager::ENUM_TYPE_CRM_FORM);
 	}
 
+	public function getWebFormIdList()
+	{
+		$list = [];
+		$item = $this->getCrmForm();
+		if ($item && !empty($item['EXTERNAL_ID']))
+		{
+			$list[] = (int) $item['EXTERNAL_ID'];
+		}
+		$item = $this->getCallback();
+		if ($item && !empty($item['EXTERNAL_ID']))
+		{
+			$list[] = (int) $item['EXTERNAL_ID'];
+		}
+
+		return $list;
+	}
+
 	public function getCallback()
 	{
 		return $this->getItemByType(Manager::ENUM_TYPE_CALLBACK);

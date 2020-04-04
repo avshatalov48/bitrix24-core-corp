@@ -1,7 +1,12 @@
 <?
 
 use Bitrix\Main\Application;
+use Bitrix\Main\Config\Option;
+use Bitrix\Main\Engine\CurrentUser;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Socialnetwork\Controller\User\StressLevel;
+use Bitrix\Socialnetwork\Item\UserWelltory;
 
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 {
@@ -92,7 +97,12 @@ else
 $events = \Bitrix\Main\EventManager::getInstance()->findEventHandlers("mobile", "onMobileMenuStructureBuilt");
 if (count($events) > 0)
 {
-	$menu = ExecuteModuleEventEx($events[0], [$arResult["menu"]]);
+	$menu = $arResult["menu"];
+	foreach ($events as $event)
+	{
+		$menu = ExecuteModuleEventEx($event, [$menu, $this]);
+	}
+
 	$arResult["menu"] = $menu;
 }
 
@@ -202,6 +212,96 @@ JS
 ];
 
 $counterList = [];
+$isStressLevelTurnOn = Option::get('intranet', 'stresslevel_available', 'Y') == 'Y';
+$showStressItemCondition =(!Loader::includeModule('bitrix24') || \Bitrix\Bitrix24\Release::isAvailable('stresslevel')) && $isStressLevelTurnOn ;
+$arResult["releaseStressLevel"] = $showStressItemCondition;
+if(Loader::includeModule('socialnetwork') && $showStressItemCondition)
+{
+	$favoriteSection = &$arResult["menu"][0];
+	$colors = [
+		"green" => "#9DCF00",
+		"yellow" => "#F7A700",
+		"red" => "#FF5752",
+		"unknown" => "#C8CBCE"
+	];
+
+	$stressValue = false;
+	$stressColor = $colors["unknown"];
+
+	$stressItem = [
+		"title" => Loc::getMessage("MB_BP_MAIN_STRESS_LEVEL"),
+		"id" => "stress",
+		"min_api_version" => 31,
+		"imageUrl" => $this->getPath() . "/images/favorite/icon-stress.png?1",
+		"color" => "#55D0E0",
+		"hidden"=>\Bitrix\MobileApp\Mobile::$apiVersion < 31,
+		"attrs" => [
+			"id" => "stress",
+			"onclick"=>""
+		]
+
+	];
+
+
+	$data = UserWelltory::getHistoricData([
+		'userId' => $USER->getId(),
+		'limit' => 1
+	]);
+
+	if (!empty($data))
+	{
+		$result = $data[0];
+		$initStressResult = \Bitrix\MobileApp\Janative\Utils::jsonEncode([
+			"value"=>$result["value"],
+			"type"=>$result["type"],
+			"comment"=>$result["comment"],
+			"token"=>$result["hash"],
+			"date"=>$result["date"]
+		]);
+
+		$stressItem["styles"] = ["tag"=>["backgroundColor"=>$colors[$result["type"]] , "cornerRadius"=>15]];
+		$stressItem["tag"] = $result["value"]."%";
+		$stressItem["initData"] = $initStressResult;
+		$onclick = <<<JS
+			if(typeof window.version  === "undefined" || window.version < 1.0)
+			{
+				reload();
+			}
+			else 
+			{
+				let initResult = $initStressResult;
+				if(initResult["value"])
+					{
+						initResult["date"] = new Date(initResult["date"]).toLocaleString();
+					}
+				else
+					initResult = null;
+				
+				openStressWidget(initResult, false);
+			}
+JS;
+
+	}
+	else
+	{
+		$stressItem["styles"] = ["tag"=>["backgroundColor"=>"#3BC8F5" , "cornerRadius"=>5]];
+		$stressItem["tag"] = Loc::getMessage("MEASURE_STRESS");
+		$onclick = <<<JS
+			if(typeof window.version  === "undefined" || window.version < 1.0)
+			{
+				reload();
+			}
+			else 
+			{
+				openStressWidget(null, false);
+			}
+JS;
+	}
+
+	$stressItem["attrs"]["onclick"] = $onclick;
+
+	array_unshift($favoriteSection["items"], $stressItem);
+}
 
 usort($arResult["menu"], 'sortMenu');
 

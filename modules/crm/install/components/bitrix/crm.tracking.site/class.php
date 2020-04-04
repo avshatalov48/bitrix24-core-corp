@@ -29,11 +29,28 @@ class CrmTrackingChannelSiteComponent extends \CBitrixComponent
 
 	protected function initParams()
 	{
+		$this->arParams['ID'] = isset($this->arParams['ID']) ? (int) $this->arParams['ID'] : null;
 		$this->arParams['SET_TITLE'] = isset($this->arParams['SET_TITLE']) ? (bool) $this->arParams['SET_TITLE'] : true;
 	}
 
 	protected function preparePost()
 	{
+		if ($this->request->get('remove') === 'Y' && $this->arResult['ROW']['ID'])
+		{
+			$result = Tracking\Internals\SiteTable::delete($this->arResult['ROW']['ID']);
+			if ($result->isSuccess())
+			{
+				$this->finalizePost();
+			}
+			else
+			{
+				$this->errors->add($result->getErrors());
+			}
+
+			return;
+		}
+
+
 		$phones = [];
 		$list = $this->request->get('PHONES');
 		$list = is_array($list) ? $list : [];
@@ -92,13 +109,18 @@ class CrmTrackingChannelSiteComponent extends \CBitrixComponent
 
 		if ($result->isSuccess())
 		{
-			Webpack\CallTracker::rebuildEnabled();
-			LocalRedirect($this->request->getRequestUri());
+			$this->finalizePost();
 		}
 		else
 		{
 			$this->errors->add($result->getErrors());
 		}
+	}
+
+	protected function finalizePost()
+	{
+		Webpack\CallTracker::rebuildEnabled();
+		LocalRedirect($this->request->getRequestUri());
 	}
 
 	protected function prepareResult()
@@ -110,7 +132,9 @@ class CrmTrackingChannelSiteComponent extends \CBitrixComponent
 			);
 		}
 
-		$row = Tracking\Internals\SiteTable::getRow([]);
+		$row = $this->arParams['ID']
+			? Tracking\Internals\SiteTable::getRow(['filter' => ['=ID' => $this->arParams['ID']]])
+			: null;
 		$this->arResult['ROW'] = $row ?: [
 			'ACTIVE' => 'Y',
 			'REPLACE_TEXT' => 'Y',
@@ -151,7 +175,15 @@ class CrmTrackingChannelSiteComponent extends \CBitrixComponent
 
 	protected function printErrors()
 	{
+		$list = [];
 		foreach ($this->errors as $error)
+		{
+			/** @var Error $error */
+			$list[] = $error->getMessage();
+		}
+
+		$list = array_unique($list);
+		foreach ($list as $error)
 		{
 			ShowError($error);
 		}

@@ -8,7 +8,7 @@ if (!empty($arResult['BUTTONS']))
 {
 	$type = $arParams['TYPE'];
 	$template = 'type2';
-	if($type === 'list')
+	if($type === 'list' || $type === 'kanban')
 	{
 		$template = SITE_TEMPLATE_ID === 'bitrix24' ? 'title' : '';
 	}
@@ -47,3 +47,23 @@ BX.ready(
 );
 </script><?
 endif;
+if (is_array($arResult['STEXPORT_PARAMS']))
+{
+	\Bitrix\Main\UI\Extension::load('ui.progressbar');
+	\Bitrix\Main\UI\Extension::load('ui.buttons');
+	\Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/common.js');
+	\Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/export.js');
+	?>
+	<script type="text/javascript">
+		BX.ready(
+			function()
+			{
+				BX.Crm.ExportManager.create(
+					"<?=CUtil::JSEscape($arResult['STEXPORT_PARAMS']['managerId'])?>",
+					<?=CUtil::PhpToJSObject($arResult['STEXPORT_PARAMS'])?>
+				);
+			}
+		);
+	</script>
+	<?php
+}

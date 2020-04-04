@@ -1,0 +1,82 @@
+.salescenter-add-custom-url-popup-form {
+	padding: 20px;
+	min-height: 180px;
+	margin: 5px;
+	border-radius: 5px;
+	background-color: #EBEFF1;
+}
+.salescenter-add-custom-url-popup-buttons {
+	padding: 20px;
+}
+#salescenter-app-add-url .popup-window-titlebar {
+	padding: 0 10px;
+}
+#salescenter-app-add-url .popup-window-titlebar .popup-window-titlebar-text {
+	font-weight: normal;
+	color: #727b85;
+}
+
+#salescenter-app-add-url .ui-ctl {
+	width: auto;
+}
+.salescenter-add-custom-url-popup-form .salescenter-url-message {
+	color: #ff5752;
+}
+.salescenter-add-custom-url-popup-form .salescenter-url-params-selector {
+	cursor: pointer;
+	pointer-events: all;
+}
+
+.salescenter-add-custom-url-popup-form .ui-ctl.hidden {
+	display: none;
+}
+
+.salescenter-url-params-field {
+	border: 1px solid #c6cdd3;
+	border-radius: 2px;
+	overflow: hidden;
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	position: relative;
+	font-size: 14px;
+	padding: 4px 20px 0 4px;
+	min-height: 42px;
+	box-sizing: border-box;
+	width: 100%;
+	background-color: white;
+}
+
+.salescenter-url-params-field .salescenter-url-param {
+	position: relative;
+	display: inline-block;
+	overflow: hidden;
+	padding: 0 55px 0 12px;
+	border-radius: 1px;
+	background: #c9efff;
+	color: #1069c3;
+	vertical-align: middle;
+	font-size: 13px;
+	line-height: 32px;
+	font-weight: bold;
+	-webkit-transition: background-color .2s linear;
+	transition: background-color .2s linear;
+	margin: 0 4px 4px 0;
+}
+
+.salescenter-url-params-field .salescenter-url-param .salescenter-url-param-name {
+	color: #1069c3;
+	font-size: 13px;
+	line-height: 32px;
+	font-weight: bold;
+}
+
+.salescenter-url-params-field .salescenter-url-param .salescenter-url-param-delete {
+	position: absolute;
+	width: 30px;
+	height: 31px;
+	background: url(../images/delete.svg) no-repeat center;
+	cursor: pointer;
+	right: 0;
+	top: 0;
+}

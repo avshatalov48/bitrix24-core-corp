@@ -6,6 +6,8 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Loader;
+use Bitrix\Main\Error;
+use Bitrix\Main\ErrorCollection;
 
 
 Loc::loadMessages(__FILE__);
@@ -14,8 +16,50 @@ Loader::includeModule('dav');
 /**
  * Class CDavSynchronizeSettings
  */
-class CDavSynchronizeSettings extends \CBitrixComponent
+class CDavSynchronizeSettings extends \CBitrixComponent implements \Bitrix\Main\Engine\Contract\Controllerable, \Bitrix\Main\Errorable
 {
+	protected $errorCollection;
+
+	public function getErrorByCode($code)
+	{
+		return $this->errorCollection->getErrorByCode($code);
+	}
+
+	public function configureActions()
+	{
+		return array();
+	}
+
+	public function getErrors()
+	{
+		return $this->errorCollection->toArray();
+	}
+
+	public function onPrepareComponentParams($params)
+	{
+		$this->errorCollection = new ErrorCollection();
+
+		return $params;
+	}
+
+	protected function listKeysSignedParameters()
+	{
+		return array();
+	}
+
+	public function saveSettingsAction()
+	{
+		global $USER;
+		if ($USER->IsAuthorized())
+		{
+			$postParams = $this->request->getPostList()->toArray();
+			if (!empty($postParams["data"]))
+				$this->saveParams($postParams["data"]);
+
+			return true;
+		}
+	}
+
 	public function executeComponent()
 	{
 		global $APPLICATION;
@@ -23,11 +67,20 @@ class CDavSynchronizeSettings extends \CBitrixComponent
 		$this->setFrameMode(false);
 		$APPLICATION->SetTitle(Loc::getMessage("DAV_SYNCHRONIZE_TITLE"));
 
+		if (isset($this->arParams["COMPONENT_AJAX_LOAD"]) && $this->arParams["COMPONENT_AJAX_LOAD"] == "Y")
+		{
+			$this->arParams["COMPONENT_AJAX_LOAD"] = "Y";
+		}
+		else
+		{
+			$this->arParams["COMPONENT_AJAX_LOAD"] = "N";
+		}
+
 		global $USER;
 		if ($USER->IsAuthorized())
 		{
 			$postParams = $this->request->getPostList()->toArray();
-			if (!empty($postParams) && check_bitrix_sessid())
+			if (!empty($postParams) && check_bitrix_sessid() && $this->arParams["COMPONENT_AJAX_LOAD"] == "N")
 				$this->saveParams($postParams);
 
 			$this->prepareData();

@@ -70,6 +70,7 @@ class Timeman extends Volume\Module\Module
 								AND substring_index(message.XML_ID,'_', 1) IN('". implode("','", $eventTypeXML). "')
 							GROUP BY 
 								attached.OBJECT_ID
+							ORDER BY NULL
 						) attach_connect
 							ON attach_connect.OBJECT_ID = files.ID
 				)

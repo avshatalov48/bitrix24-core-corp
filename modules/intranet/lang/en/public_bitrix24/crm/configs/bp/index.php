@@ -1,3 +1,3 @@
 <?
-$MESS["TITLE"] = "Business processes";
+$MESS["TITLE"] = "Business Processes";
 ?>

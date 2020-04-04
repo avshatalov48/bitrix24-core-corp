@@ -119,9 +119,8 @@ class CrmActivityPlannerComponent extends \CBitrixComponent
 			}
 
 			$createdSince = new Bitrix\Main\Type\Datetime();
-			$createdSince->add('-30 days');
 
-			$res = \Bitrix\Crm\ActivityTable::getList(array(
+			$params = array(
 				'runtime' => array(
 					new \Bitrix\Main\Entity\ExpressionField(
 						'LAST_CREATED', 'MAX(%s)', 'CREATED'
@@ -164,26 +163,41 @@ class CrmActivityPlannerComponent extends \CBitrixComponent
 					'LAST_CREATED' => 'DESC',
 				),
 				'limit' => 20,
-			));
+			);
 
-			while ($item = $res->fetch())
+			$t1 = microtime(true);
+			$intervals = array(7, 30);
+			while (count($activity['__communications']) < 10 && ($n = array_shift($intervals)) > 0)
 			{
-				$item['ENTITY_TYPE'] = \CCrmOwnerType::resolveName($item['ENTITY_TYPE_ID']);
-				$item['TYPE'] = strtoupper($commType);
+				$createdSince->add(sprintf('-%u days', $n));
 
-				$id = sprintf(
-					'CRM%s%u:%s',
-					$item['ENTITY_TYPE'], $item['ENTITY_ID'],
-					hash('crc32b', $item['TYPE'].':'.$item['VALUE'])
-				);
-				if (in_array($id, $known))
-					continue;
+				$res = \Bitrix\Crm\ActivityTable::getList($params);
 
-				$activity['__communications'][] = $item;
-				$known[] = $id;
+				while (($item = $res->fetch()) && count($activity['__communications']) < 10)
+				{
+					$item['ENTITY_TYPE'] = \CCrmOwnerType::resolveName($item['ENTITY_TYPE_ID']);
+					$item['TYPE'] = strtoupper($commType);
 
-				if (count($activity['__communications']) >= 10)
+					$id = sprintf(
+						'CRM%s%u:%s',
+						$item['ENTITY_TYPE'], $item['ENTITY_ID'],
+						hash('crc32b', $item['TYPE'] . ':' . $item['VALUE'])
+					);
+					if (in_array($id, $known))
+					{
+						continue;
+					}
+
+					$activity['__communications'][] = $item;
+					$known[] = $id;
+				}
+
+				if (microtime(true) - $t1 > 1)
+				{
 					break;
+				}
+
+				$createdSince->add(sprintf('%u days', $n));
 			}
 		}
 
@@ -311,17 +325,14 @@ class CrmActivityPlannerComponent extends \CBitrixComponent
 				if (!(\CCrmOwnerType::isDefined($item['OWNER_TYPE_ID']) && $item['OWNER_ID'] > 0))
 					continue;
 
-				// @TODO: perf
-				$communicationsGetter = array(\CCrmOwnerType::Lead, \CCrmOwnerType::Contact, \CCrmOwnerType::Company)
-					? 'getCommunicationsFromFM' : 'getCrmEntityCommunications';
-				$entityCommunications = $this->$communicationsGetter(
-					$item['OWNER_TYPE_ID'],
-					$item['OWNER_ID'],
-					$communicationType
-				);
-
 				if ($communicationType == $item['TYPE'] && !empty($item['VALUE']))
 				{
+					// @TODO: perf
+					$entityCommunications = $this->getCrmEntityCommunications(
+						$item['OWNER_TYPE_ID'],
+						$item['OWNER_ID'],
+						$communicationType
+					);
 					foreach ($entityCommunications as $subItem)
 					{
 						if ($item['VALUE'] == $subItem['VALUE'])
@@ -696,6 +707,7 @@ class CrmActivityPlannerComponent extends \CBitrixComponent
 			foreach($activity['FILES'] as $file)
 			{
 				$result[] = array(
+					'fileId' => $file['fileID'],
 					'fileName' => $file['fileName'],
 					'viewURL' => '/bitrix/components/bitrix/crm.activity.planner/show_file.php?activity_id='
 						.$activity['ID'].'&file_id='.$file['fileID'],
@@ -708,6 +720,7 @@ class CrmActivityPlannerComponent extends \CBitrixComponent
 			foreach($activity['WEBDAV_ELEMENTS'] as $element)
 			{
 				$result[] = array(
+					'fileId' => $element['FILE_ID'],
 					'fileName' => $element['NAME'],
 					'viewURL'  => $element['VIEW_URL'],
 					'fileSize' => $element['SIZE'],
@@ -719,6 +732,7 @@ class CrmActivityPlannerComponent extends \CBitrixComponent
 			foreach($activity['DISK_FILES'] as $file)
 			{
 				$result[] = array(
+					'fileId' => $file['FILE_ID'],
 					'fileName'   => $file['NAME'],
 					'viewURL'    => $file['VIEW_URL'],
 					'previewURL' => $file['PREVIEW_URL'],

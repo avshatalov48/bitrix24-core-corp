@@ -727,6 +727,9 @@ label.mobile-grid-field-timetracking input[type=checkbox]:disabled ~ span.pause 
 .bx-tasks-title .mobile-grid-field-expired {
 	margin-top: 10px;
 }
+.mobile-grid-field-expired.hidden {
+	display: none;
+}
 /* Timeplanning */
 .mobile-grid-section-child.bx-tasks-duration .mobile-grid-block{
 	padding-left: 16px;
@@ -872,4 +875,108 @@ input.mobile-grid-field-subtasks-more-input[type=checkbox]:checked ~ .mobile-gri
 	font-weight: Bold;
 	font-size:18px;
 	color: #556574;
+}
+
+.task-detail-no-comments {
+	display: flex;
+	justify-content: center;
+	background-color: #eff2f4;
+	height: 300px;
+}
+
+.task-detail-no-comments-inner {
+	display: table;
+	align-self: center;
+}
+
+.task-detail-no-comments-top-image-container {
+	display: table-row;
+}
+
+.task-detail-no-comments-top-image {
+	width: 75px;
+	height: 68px;
+	margin-left: auto;
+	margin-right: auto;
+	padding-bottom: 30px;
+	background: url(images/task-no-comments-top-img.svg) no-repeat;
+}
+
+.task-detail-no-comments-text {
+	display: block;
+	padding-bottom: 30px;
+	text-align: center;
+}
+
+.task-detail-no-comments-arrow-container {
+	display: table-row;
+}
+
+.task-detail-no-comments-arrow {
+	width: 20px;
+	height: 38px;
+	margin-left: auto;
+	margin-right: auto;
+	background: url(images/task-no-comments-arrow.svg) no-repeat;
+}
+
+.task-detail-left-bottom-options-button {
+	background: url(images/task-left-bottom-options-button.svg);
+	border: none;
+	position: fixed;
+	left: 18px;
+	bottom: 11px;
+	width: 46px;
+	height: 46px;
+}
+
+.task-detail-right-bottom-down-button {
+	display: none;
+	background: url(images/task-right-bottom-down-button.svg);
+	border: none;
+	position: fixed;
+	right: 13px;
+	bottom: 3px;
+	width: 60px;
+	height: 60px;
+	z-index: 5;
+}
+
+.task-detail-top-button-up-button {
+	position: fixed;
+	top: 42px;
+	left: 50%;
+	transform: translateX(-50%);
+	opacity: 0;
+	width: 100%;
+	text-align: center;
+	transition: 180ms ease-out top, 180ms linear opacity;
+}
+
+.task-detail-top-button-up-button.task-show-button {
+	top: 100px;
+	opacity: .85;
+}
+
+.task-detail-top-button-up-button-inner {
+	display: inline-flex;
+	height: 42px;
+	align-items: center;
+	justify-content: center;
+	background-color: #fff;
+	box-shadow: 0 0 15px lightgray;
+	border-radius: 21px;
+	padding: 0 21px;
+}
+
+.task-detail-top-button-up-button-arrow {
+	background: url("images/task-up-button.svg");
+	width: 9px;
+	height: 13px;
+	margin-right: 5px;
+}
+
+.task-detail-top-button-up-button-text {
+	line-height: normal;
+	color: #525c69;
 }

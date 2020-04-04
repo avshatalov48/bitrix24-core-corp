@@ -39,9 +39,19 @@ class DocumentGeneratorDocumentsComponent extends CBitrixComponent
 			return;
 		}
 
-		if(!isset($this->arParams['NAME_FORMAT']))
+		if(!\Bitrix\DocumentGenerator\Driver::getInstance()->getUserPermissions()->canViewDocuments())
 		{
-			$this->arParams['NAME_FORMAT'] = DataProviderManager::getInstance()->getCulture()->getNameFormat();
+			$this->showError(Loc::getMessage('DOCGEN_DOCUMENTS_PERMISSIONS_ERROR'));
+			return;
+		}
+
+		if(!isset($this->arParams['USER_NAME_FORMAT']))
+		{
+			$this->arParams['USER_NAME_FORMAT'] = DataProviderManager::getInstance()->getCulture()->getNameFormat();
+		}
+		if(!isset($this->arParams['USER_PROFILE_URL']))
+		{
+			$this->arParams['USER_PROFILE_URL'] = \Bitrix\Main\Config\Option::get('intranet', 'path_user', '/company/personal/user/#USER_ID#/', SITE_ID);
 		}
 
 		$moduleId = $this->arParams['module'];
@@ -106,7 +116,6 @@ class DocumentGeneratorDocumentsComponent extends CBitrixComponent
 	protected function showError($error)
 	{
 		ShowError($error);
-		$this->includeComponentTemplate();
 	}
 
 	/**
@@ -117,6 +126,12 @@ class DocumentGeneratorDocumentsComponent extends CBitrixComponent
 		$grid = [];
 		$grid['GRID_ID'] = $this->gridId;
 		$grid['COLUMNS'] = [
+			[
+				'id' => 'ID',
+				'name' => 'ID',
+				'default' => false,
+				'sort' => 'ID',
+			],
 			[
 				'id' => 'TITLE',
 				'name' => Loc::getMessage('DOCGEN_DOCUMENTS_NAME_TITLE'),
@@ -196,7 +211,14 @@ class DocumentGeneratorDocumentsComponent extends CBitrixComponent
 				$template = Loc::getMessage('DOCGEN_DOCUMENTS_DELETED_TEMPLATE');
 				if(isset($templates[$document['TEMPLATE_ID']]))
 				{
-					$template = '<a href="javascript:void(0);" onclick="BX.DocumentGenerator.DocumentList.viewTemplate(\''.$templateViewUrl->addParams(['ID' => $document['TEMPLATE_ID']])->getLocator().'\')">'.htmlspecialcharsbx($templates[$document['TEMPLATE_ID']]['NAME']).'</a>';
+					if(\Bitrix\DocumentGenerator\Driver::getInstance()->getUserPermissions()->canModifyTemplate($document['TEMPLATE_ID']))
+					{
+						$template = '<a href="javascript:void(0);" onclick="BX.DocumentGenerator.DocumentList.viewTemplate(\''.$templateViewUrl->addParams(['ID' => $document['TEMPLATE_ID']])->getLocator().'\')">'.htmlspecialcharsbx($templates[$document['TEMPLATE_ID']]['NAME']).'</a>';
+					}
+					else
+					{
+						$template = htmlspecialcharsbx($templates[$document['TEMPLATE_ID']]['NAME']);
+					}
 				}
 				if($viewUrl)
 				{
@@ -224,13 +246,14 @@ class DocumentGeneratorDocumentsComponent extends CBitrixComponent
 					'data' => $document,
 					'actions' => $actions,
 					'columns' => [
+						'ID' => $document['ID'],
 						'TITLE' => $documentTitle,
 						'NUMBER' => htmlspecialcharsbx($document['NUMBER']),
 						'CREATE_TIME' => $document['CREATE_TIME'],
 						'TEMPLATE' => $template,
 						'UPDATE_TIME' => $document['UPDATE_TIME'],
-						'CREATED_BY' => $users[$document['CREATED_BY']],
-						'UPDATED_BY' => $users[$document['UPDATED_BY']],
+						'CREATED_BY' => $users[$document['CREATED_BY']] ? $users[$document['CREATED_BY']] : '',
+						'UPDATED_BY' => $users[$document['UPDATED_BY']] ? $users[$document['UPDATED_BY']] : '',
 					],
 				];
 			}
@@ -395,11 +418,11 @@ class DocumentGeneratorDocumentsComponent extends CBitrixComponent
 		$userList = \Bitrix\Main\UserTable::getList(['select' => [
 			'ID', 'NAME', 'SECOND_NAME', 'LAST_NAME', 'TITLE'
 		], 'filter' => [
-			'@ID' => $userIds,
+			'=ID' => $userIds,
 		]]);
 		while($user = $userList->fetch())
 		{
-			$users[$user['ID']] = \CUser::FormatName($this->arParams['NAME_FORMAT'], $user);
+			$users[$user['ID']] = '<a href="'.str_replace('#USER_ID#', $user['ID'], $this->arParams['USER_PROFILE_URL']).'" target="_blank">'.\CUser::FormatName($this->arParams['USER_NAME_FORMAT'], $user).'</a>';
 		}
 
 		return $users;

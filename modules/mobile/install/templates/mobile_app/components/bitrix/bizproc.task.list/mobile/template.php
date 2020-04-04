@@ -94,7 +94,7 @@ else: foreach($arResult["RECORDS"] as $record):
 											));
 											?>
 
-											<a href="javascript:void(0)" onclick="return BX.BizProcMobile.doTask(<?=$props?>)" class="webform-small-button bp-small-button webform-small-button-<?=$class?>">
+											<a href="javascript:void(0)" onclick="return BX.BizProcMobile.doTask(<?=$props?>, function(){app.reload();})" class="webform-small-button bp-small-button webform-small-button-<?=$class?>">
 												<span class="bp-button-icon"></span>
 												<span class="bp-button-text"><?=$control['TEXT']?></span>
 											</a>

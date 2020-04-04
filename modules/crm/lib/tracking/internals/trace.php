@@ -45,15 +45,17 @@ class TraceTable extends ORM\Data\DataManager
 			'GUEST_ID' => [
 				'data_type' => 'integer',
 			],
-			'TAGS_RAW' => [
-				'data_type' => 'text',
-				'serialized' => true,
-			],
-			'PAGES_RAW' => [
-				'data_type' => 'text',
-				'serialized' => true,
-			],
+
+			(new ORM\Fields\ArrayField('TAGS_RAW'))->configureSerializationPhp(),
+
+			(new ORM\Fields\ArrayField('PAGES_RAW'))->configureSerializationPhp(),
+
 			'IS_MOBILE' => [
+				'data_type' => 'boolean',
+				'default_value' => 'N',
+				'values' => ['N', 'Y']
+			],
+			'HAS_CHILD' => [
 				'data_type' => 'boolean',
 				'default_value' => 'N',
 				'values' => ['N', 'Y']
@@ -102,6 +104,81 @@ class TraceTable extends ORM\Data\DataManager
 			TraceChannelTable::delete($row['ID']);
 		}
 
+		$childTraces = TraceTreeTable::getList([
+			'select' => ['ID'],
+			'filter' => ['=PARENT_ID' => $traceId]
+		]);
+		while ($row = $childTraces->fetch())
+		{
+			TraceTreeTable::delete($row['ID']);
+		}
+
 		return new ORM\EventResult();
+	}
+
+	/**
+	 * Get trace ID by entity.
+	 *
+	 * @param int $entityTypeId Entity type ID.
+	 * @param int $entityId Entity ID.
+	 * @return array|null
+	 */
+	public static function getTraceIdByEntity($entityTypeId, $entityId)
+	{
+		$row = TraceEntityTable::getRow([
+			'select' => ['TRACKING_TRACE_ID' => 'TRACE.ID'],
+			'filter' => [
+				'=ENTITY_TYPE_ID' => $entityTypeId,
+				'=ENTITY_ID' => $entityId
+			],
+			'order' => ['ID' => 'DESC']
+		]);
+
+		return !empty($row['TRACKING_TRACE_ID']) ? $row['TRACKING_TRACE_ID'] : null;
+	}
+
+	/**
+	 * Get trace by entity.
+	 *
+	 * @param int $entityTypeId Entity type ID.
+	 * @param int $entityId Entity ID.
+	 * @return array|null
+	 */
+	public static function getTraceByEntity($entityTypeId, $entityId)
+	{
+		$row = TraceEntityTable::getRow([
+			'select' => ['TRACE.*'],
+			'filter' => [
+				'=ENTITY_TYPE_ID' => $entityTypeId,
+				'=ENTITY_ID' => $entityId
+			],
+			'order' => ['ID' => 'DESC']
+		]);
+
+		return $row ? $row : null;
+	}
+
+	/**
+	 * Get spare(without entities) trace ID by channel.
+	 *
+	 * @param string $channelCode Channel code.
+	 * @param string $channelValue Channel value.
+	 * @param DateTime $dateCreateFrom Date create from.
+	 * @return int|null
+	 */
+	public static function getSpareTraceIdByChannel($channelCode, $channelValue, DateTime $dateCreateFrom)
+	{
+		$row = static::getList([
+			'select' => ['ID'],
+			'filter' => [
+				'>DATE_CREATE' => $dateCreateFrom,
+				'=ENTITY.ID' => null,
+				'=CHANNEL.CODE' => $channelCode,
+				'=CHANNEL.VALUE' => $channelValue,
+			],
+			'order' => ['ID' => 'ASC']
+		])->fetch();
+
+		return $row ? $row['ID'] : null;
 	}
 }

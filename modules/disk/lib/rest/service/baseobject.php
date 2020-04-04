@@ -178,6 +178,20 @@ abstract class BaseObject extends Base
 		return $object;
 	}
 
+	protected function listAllowedOperations($id, $userId)
+	{
+		$object = $this->get($id);
+
+		$rightsManager = Driver::getInstance()->getRightsManager();
+		$securityContext = $object->getStorage()->getCurrentUserSecurityContext();
+		if (!$object->canChangeRights($securityContext))
+		{
+			throw new AccessException;
+		}
+
+		return array_values($rightsManager->getUserOperationsByObject($object->getId(), $userId));
+	}
+
 	/**
 	 * Returns new or existent external link for current user on the file or folder.
 	 * @param int $id Id of file or folder.

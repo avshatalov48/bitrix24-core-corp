@@ -5,6 +5,7 @@ namespace Bitrix\Crm\CallList;
 use Bitrix\Crm\CallList\Internals\CallListCreatedTable;
 use Bitrix\Crm\CallList\Internals\CallListItemTable;
 use Bitrix\Crm\CallList\Internals\CallListTable;
+use Bitrix\Crm\CompanyAddress;
 use Bitrix\Main;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Loader;
@@ -354,8 +355,7 @@ final class CallList
 		else
 		{
 			$filter = array(
-				'=LIST_ID' => $this->id,
-				'=ENTITY_TYPE_ID' => $this->getEntityTypeId()
+				'LIST_ID' => $this->id
 			);
 			if(!is_null($statusId))
 			{
@@ -645,8 +645,7 @@ final class CallList
 		$this->items = array();
 		$cursor = CallListItemTable::getList(array(
 			'filter' => array(
-				'=LIST_ID' => $this->id,
-				'=ENTITY_TYPE_ID' => $this->getEntityTypeId()
+				'=LIST_ID' => $this->id
 			),
 			'order' => array(
 				'LIST_ID' => 'ASC',
@@ -880,6 +879,114 @@ final class CallList
 		}
 
 		$gridFilter['CHECK_PERMISSIONS'] = 'Y';
+
+		//region: filter preparation; copy-paste from the crm.company.list component
+		\CCrmEntityHelper::PrepareMultiFieldFilter($gridFilter, array(), '=%', false);
+		$requisite = new \Bitrix\Crm\EntityRequisite();
+		$requisite->prepareEntityListFilter($gridFilter);
+
+		$arImmutableFilters = array(
+			'FM', 'ID', 'CURRENCY_ID', 'ASSOCIATED_CONTACT_ID',
+			'ASSIGNED_BY_ID', 'CREATED_BY_ID', 'MODIFY_BY_ID',
+			'COMPANY_TYPE', 'INDUSTRY', 'EMPLOYEES', 'WEBFORM_ID',
+			'HAS_PHONE', 'HAS_EMAIL', 'IS_MY_COMPANY', '!IS_MY_COMPANY', 'RQ',
+			'SEARCH_CONTENT', 'TRACKING_SOURCE_ID', 'TRACKING_CHANNEL_CODE',
+			'FILTER_ID', 'FILTER_APPLIED', 'PRESET_ID'
+		);
+
+		foreach ($gridFilter as $k => $v)
+		{
+			if(in_array($k, $arImmutableFilters, true))
+			{
+				continue;
+			}
+
+			$arMatch = array();
+
+			if($k === 'ORIGINATOR_ID')
+			{
+				// HACK: build filter by internal entities
+				$gridFilter['=ORIGINATOR_ID'] = $v !== '__INTERNAL' ? $v : null;
+				unset($gridFilter[$k]);
+			}
+			elseif($k === 'ADDRESS'
+				|| $k === 'ADDRESS_2'
+				|| $k === 'ADDRESS_CITY'
+				|| $k === 'ADDRESS_REGION'
+				|| $k === 'ADDRESS_PROVINCE'
+				|| $k === 'ADDRESS_POSTAL_CODE'
+				|| $k === 'ADDRESS_COUNTRY'
+				|| $k === 'ADDRESS_LEGAL'
+				|| $k === 'REG_ADDRESS_2'
+				|| $k === 'REG_ADDRESS_CITY'
+				|| $k === 'REG_ADDRESS_REGION'
+				|| $k === 'REG_ADDRESS_PROVINCE'
+				|| $k === 'REG_ADDRESS_POSTAL_CODE'
+				|| $k === 'REG_ADDRESS_COUNTRY')
+			{
+				$v = trim($v);
+				if($v === '')
+				{
+					continue;
+				}
+
+				if(!isset($gridFilter['ADDRESSES']))
+				{
+					$gridFilter['ADDRESSES'] = array();
+				}
+
+				$addressAliases = array('ADDRESS_LEGAL' => 'REG_ADDRESS');
+				$addressTypeID = CompanyAddress::resolveEntityFieldTypeID($k, $addressAliases);
+
+				if(!isset($gridFilter['ADDRESSES'][$addressTypeID]))
+				{
+					$gridFilter['ADDRESSES'][$addressTypeID] = array();
+				}
+
+				$n = CompanyAddress::mapEntityField($k, $addressTypeID, $addressAliases);
+				$gridFilter['ADDRESSES'][$addressTypeID][$n] = "{$v}%";
+
+				unset($gridFilter[$k]);
+			}
+			elseif (preg_match('/(.*)_from$/i'.BX_UTF_PCRE_MODIFIER, $k, $arMatch))
+			{
+				\Bitrix\Crm\UI\Filter\Range::prepareFrom($gridFilter, $arMatch[1], $v);
+			}
+			elseif (preg_match('/(.*)_to$/i'.BX_UTF_PCRE_MODIFIER, $k, $arMatch))
+			{
+				if ($v != '' && ($arMatch[1] == 'DATE_CREATE' || $arMatch[1] == 'DATE_MODIFY') && !preg_match('/\d{1,2}:\d{1,2}(:\d{1,2})?$/'.BX_UTF_PCRE_MODIFIER, $v))
+				{
+					$v = \CCrmDateTimeHelper::SetMaxDayTime($v);
+				}
+				\Bitrix\Crm\UI\Filter\Range::prepareTo($gridFilter, $arMatch[1], $v);
+			}
+			elseif($k === 'COMMUNICATION_TYPE')
+			{
+				if(!is_array($v))
+				{
+					$v = array($v);
+				}
+				foreach($v as $commTypeID)
+				{
+					if($commTypeID === \CCrmFieldMulti::PHONE)
+					{
+						$gridFilter['=HAS_PHONE'] = 'Y';
+					}
+					elseif($commTypeID === \CCrmFieldMulti::EMAIL)
+					{
+						$gridFilter['=HAS_EMAIL'] = 'Y';
+					}
+				}
+				unset($gridFilter['COMMUNICATION_TYPE']);
+			}
+			elseif ($k != 'ID' && $k != 'LOGIC' && $k != '__INNER_FILTER' && $k != '__JOINS' && $k != '__CONDITIONS' && strpos($k, 'UF_') !== 0 && preg_match('/^[^\=\%\?\>\<]{1}/', $k) === 1)
+			{
+				$gridFilter['%'.$k] = $v;
+				unset($gridFilter[$k]);
+			}
+		}
+		//endregion
+
 		$cursor = null;
 		if($entityType === \CCrmOwnerType::LeadName)
 		{
@@ -1100,6 +1207,8 @@ final class CallList
 
 	public static function transferOwnership($oldEntityTypeId, $oldEntityId, $newEntityTypeId, $newEntityId)
 	{
+		//Waiting for ENTITY_TYPE column in b_crm_call_list_item
+		/*
 		if($oldEntityTypeId <= 0)
 		{
 			throw new Main\ArgumentException('Must be greater than zero.', 'oldEntityTypeID');
@@ -1137,17 +1246,21 @@ final class CallList
 
 		$oldEntityTypeName = $helper->forSql($oldEntityTypeName);
 		$newEntityTypeName = $helper->forSql($newEntityTypeName);
-		$connection->queryExecute(
+
+		Main\Application::getConnection()->queryExecute(
 			"UPDATE b_crm_call_list_created SET ENTITY_TYPE = '{$newEntityTypeName}', ENTITY_ID = {$newEntityId} WHERE ENTITY_TYPE = '{$oldEntityTypeName}' AND ENTITY_ID = {$oldEntityId}"
 		);
 
-		$connection->queryExecute(
-			"UPDATE b_crm_call_list_item SET ENTITY_TYPE_ID = {$newEntityTypeId}, ELEMENT_ID = {$newEntityId} WHERE ENTITY_TYPE_ID = {$oldEntityTypeId} AND ELEMENT_ID = {$oldEntityId}"
+		Main\Application::getConnection()->queryExecute(
+			"UPDATE b_crm_call_list_item SET ENTITY_TYPE = '{$newEntityTypeName}', ELEMENT_ID = {$newEntityId} WHERE ENTITY_TYPE = '{$oldEntityTypeName}' AND ELEMENT_ID = {$oldEntityId}"
 		);
+		*/
 	}
 
 	public static function deleteByOwner($entityTypeId, $entityId)
 	{
+		//Waiting for ENTITY_TYPE column in b_crm_call_list_item
+		/*
 		if($entityTypeId <= 0)
 		{
 			throw new Main\ArgumentException('Must be greater than zero.', 'oldEntityTypeID');
@@ -1168,12 +1281,14 @@ final class CallList
 		$helper = $connection->getSqlHelper();
 
 		$entityTypeName = $helper->forSql($entityTypeName);
-		$connection->queryExecute(
+
+		Main\Application::getConnection()->queryExecute(
 			"DELETE FROM b_crm_call_list_created WHERE ENTITY_TYPE = '{$entityTypeName}' AND ENTITY_ID = {$entityId}"
 		);
 
-		$connection->queryExecute(
-			"DELETE FROM b_crm_call_list_item WHERE ENTITY_TYPE_ID = {$entityTypeId} AND ELEMENT_ID = {$entityId}"
+		Main\Application::getConnection()->queryExecute(
+			"DELETE FROM b_crm_call_list_item WHERE ENTITY_TYPE = '{$entityTypeName}' AND ELEMENT_ID = {$entityId}"
 		);
+		*/
 	}
 }

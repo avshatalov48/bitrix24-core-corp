@@ -170,185 +170,15 @@ else
 		$moduleVersion .= "_wkwebview";
 	}
 
-	$isOpenlinesOperator = (
-		!$bExtranetUser
-		&& \Bitrix\Main\Loader::includeModule('im')
-		&& \Bitrix\Im\Integration\Imopenlines\User::isOperator()
-	);
+	$context = new \Bitrix\Mobile\Context([
+		"extranet"=>$bExtranetUser,
+		"siteId"=>$siteId,
+		"siteDir"=>$siteDir,
+		"version"=>$moduleVersion,
+	]);
+	$menuTabs = (new \Bitrix\Mobile\Tab\Manager($context))->getActiveTabsData();
 
-	$menuTabs = [];
-
-	if (\Bitrix\Main\Loader::includeModule('im'))
-	{
-		$menuTabs[] = [
-			"sort" => count($menuTabs)+1,
-			"imageName" => "chat",
-			"badgeCode" => "messages",
-			"component" => [
-				"name" => "JSComponentChatRecent",
-				"title" => GetMessage("MD_COMPONENT_IM_RECENT"),
-				"componentCode" => "im.recent",
-				"scriptPath" => \Bitrix\MobileApp\Janative\Manager::getComponentPath("im.recent"),
-				"params" => [
-					"COMPONENT_CODE" => "im.recent",
-					"USER_ID" => $USER->GetId(),
-					"OPENLINES_USER_IS_OPERATOR" => $isOpenlinesOperator,
-					"SITE_ID" => $siteId,
-					"LANGUAGE_ID" => LANGUAGE_ID,
-					"SITE_DIR" => $siteDir,
-					"LIMIT_ONLINE" => CUser::GetSecondsForLimitOnline(),
-					"IM_GENERAL_CHAT_ID" => CIMChat::GetGeneralChatId(),
-					"SEARCH_MIN_SIZE" => CSQLWhere::GetMinTokenSize(),
-
-					"WIDGET_CHAT_CREATE_VERSION" => \Bitrix\MobileApp\Janative\Manager::getComponentVersion('im.chat.create'),
-					"WIDGET_CHAT_USERS_VERSION" => \Bitrix\MobileApp\Janative\Manager::getComponentVersion('im.chat.user.list'),
-					"WIDGET_CHAT_RECIPIENTS_VERSION" => \Bitrix\MobileApp\Janative\Manager::getComponentVersion('im.chat.user.selector'),
-					"WIDGET_CHAT_TRANSFER_VERSION" => \Bitrix\MobileApp\Janative\Manager::getComponentVersion('im.chat.transfer.selector'),
-					"COMPONENT_CHAT_DIALOG_VERSION" => WebComponentManager::getWebComponentVersion('im.dialog'),
-
-					"MESSAGES" => [
-						"COMPONENT_TITLE" => GetMessage("MD_COMPONENT_IM_RECENT"),
-						"IMOL_CHAT_ANSWER_M" => \Bitrix\Im\Integration\Imopenlines\Localize::get(\Bitrix\Im\Integration\Imopenlines\Localize::FILE_LIB_CHAT, "IMOL_CHAT_ANSWER_M"),
-						"IMOL_CHAT_ANSWER_F" => \Bitrix\Im\Integration\Imopenlines\Localize::get(\Bitrix\Im\Integration\Imopenlines\Localize::FILE_LIB_CHAT, "IMOL_CHAT_ANSWER_F")
-					]
-				],
-				"settings" => ["useSearch" => true, "preload" => true],
-			],
-		];
-	}
-
-	if ($isOpenlinesOperator)
-	{
-		$menuTabs[] = [
-			"sort" => count($menuTabs)+1,
-			"imageName" => "openlines",
-			"badgeCode" => "openlines",
-			"component" => [
-				"name" => "JSComponentChatRecent",
-				"title" => GetMessage("MD_COMPONENT_IM_OPENLINES"),
-				"componentCode" => "im.openlines.recent",
-				"scriptPath" => \Bitrix\MobileApp\Janative\Manager::getComponentPath("im.recent"), // TODO change
-				"params" => [
-					"COMPONENT_CODE" => "im.openlines.recent",
-					"USER_ID" => $USER->GetId(),
-					"OPENLINES_USER_IS_OPERATOR" => $isOpenlinesOperator,
-					"SITE_ID" => $siteId,
-					"SITE_DIR" => $siteDir,
-					"LANGUAGE_ID" => LANGUAGE_ID,
-					"LIMIT_ONLINE" => CUser::GetSecondsForLimitOnline(),
-					"IM_GENERAL_CHAT_ID" => CIMChat::GetGeneralChatId(),
-					"SEARCH_MIN_SIZE" => CSQLWhere::GetMinTokenSize(),
-
-					"WIDGET_CHAT_USERS_VERSION" => \Bitrix\MobileApp\Janative\Manager::getComponentVersion('im.chat.user.list'),
-					"WIDGET_CHAT_RECIPIENTS_VERSION" => \Bitrix\MobileApp\Janative\Manager::getComponentVersion('im.chat.user.selector'),
-					"WIDGET_CHAT_TRANSFER_VERSION" => \Bitrix\MobileApp\Janative\Manager::getComponentVersion('im.chat.transfer.selector'),
-					"COMPONENT_CHAT_DIALOG_VERSION" => WebComponentManager::getWebComponentVersion('im.dialog'),
-
-					"MESSAGES" => [
-						"COMPONENT_TITLE" => GetMessage("MD_COMPONENT_IM_OPENLINES"),
-						"IMOL_CHAT_ANSWER_M" => \Bitrix\Im\Integration\Imopenlines\Localize::get(\Bitrix\Im\Integration\Imopenlines\Localize::FILE_LIB_CHAT, "IMOL_CHAT_ANSWER_M"),
-						"IMOL_CHAT_ANSWER_F" => \Bitrix\Im\Integration\Imopenlines\Localize::get(\Bitrix\Im\Integration\Imopenlines\Localize::FILE_LIB_CHAT, "IMOL_CHAT_ANSWER_F")
-					]
-				],
-				"settings" => ["useSearch" => false, "preload" => true],
-			]
-		];
-	}
-
-	$menuTabs[] = [
-		"sort" => count($menuTabs)+1,
-		"imageName" => "stream",
-		"badgeCode" => "stream",
-		"page" => ["useSlidingNavBar" => false, "url" => $siteDir."mobile/index.php?version=".$moduleVersion],
-	];
-
-	$menuTabs[] = [
-		"sort" => count($menuTabs)+1,
-		"imageName" => "bell",
-		"badgeCode" => "notifications",
-		"page" => ["page_id" => "notifications", "url" => $siteDir."mobile/im/notify.php"]
-	];
-
-	if (!$isOpenlinesOperator)
-	{
-		if((\Bitrix\MobileApp\Mobile::getPlatform() == "ios" && \Bitrix\MobileApp\Mobile::getSystemVersion() < 11) || \Bitrix\MobileApp\Mobile::getApiVersion() < 28 )
-		{
-			$menuTabs[] = [
-				"sort" => count($menuTabs)+1,
-				"imageName" => "task",
-				"badgeCode" => "tasks",
-				"page" => ["url" => $siteDir."mobile/tasks/snmrouter/"],
-			];
-		}
-		else
-		{
-			$defaultViewType = Bitrix\Main\Config\Option::get('tasks', 'view_type', 'view_all');
-
-			$menuTabs[] = [
-				"sort" => count($menuTabs)+1,
-				"imageName" => "task",
-				"badgeCode" => "tasks",
-				"component" => [
-					"name" => "JSStackComponent",
-					"title" => GetMessage("MD_COMPONENT_TASKS_LIST"),
-					"componentCode" => "tasks.list",
-					"scriptPath" => \Bitrix\MobileApp\Janative\Manager::getComponentPath("tasks.list"),
-					"rootWidget" => [
-						'name'=>'tasks.list',
-						'settings'=>[
-							'useSearch'=>true,
-							'objectName'=>'list',
-							'menuSections'=> [
-								['id'=> "presets"],
-								['id'=> "counters", 'itemTextColor'=> "#f00"]
-							],
-							'menuItems'=>[
-								['id'=>"view_all", 'title'=> Loc::getMessage('TASKS_ROLE_VIEW_ALL'), 'sectionCode'=>'presets', 'showAsTitle'=>true, 'badgeCount'=> 0],
-								['id'=>"view_role_responsible", 'title'=> Loc::getMessage('TASKS_ROLE_RESPONSIBLE'), 'sectionCode'=>'presets', 'showAsTitle'=>true, 'badgeCount'=> 0],
-								['id'=>"view_role_accomplice", 'title'=> Loc::getMessage('TASKS_ROLE_ACCOMPLICE'), 'sectionCode'=>'presets', 'showAsTitle'=>true, 'badgeCount'=> 0],
-								['id'=>"view_role_auditor", 'title'=> Loc::getMessage('TASKS_ROLE_AUDITOR'), 'sectionCode'=>'presets', 'showAsTitle'=>true, 'badgeCount'=> 0],
-								['id'=>"view_role_originator", 'title'=> Loc::getMessage('TASKS_ROLE_ORIGINATOR'), 'sectionCode'=>'presets', 'showAsTitle'=>true, 'badgeCount'=> 0]
-							],
-							'filter'=>$defaultViewType
-						]
-					],
-
-
-					"params" => [
-						"COMPONENT_CODE" => "tasks.list",
-						"USER_ID" => $USER->GetId(),
-						"SITE_ID" => $siteId,
-						"LANGUAGE_ID" => LANGUAGE_ID,
-						"SITE_DIR" => $siteDir,
-
-						"PATH_TO_TASK_ADD"=> $siteDir."mobile/tasks/snmrouter/?routePage=#action#&TASK_ID=#taskId#",
-
-						"MESSAGES" => [
-
-						]
-					]
-				]
-			];
-		}
-	}
-
-	$menuTabs[] = [
-		"sort" => count($menuTabs)+1,
-		"imageName" => "menu_2",
-		"badgeCode" => "more",
-		"component" => [
-			"settings" => ["useSearch" => true],
-			"name" => "JSMenuComponent",
-			"title" => GetMessage("MD_COMPONENT_MORE"),
-			"componentCode" => "settings",
-			"scriptPath" => \Bitrix\MobileApp\Janative\Manager::getComponentPath("more"),
-			"params" => [
-				"userId" => $USER->getId(),
-				"SITE_ID" => $siteId,
-			]
-		]
-	];
-
+//	array_shift($menuTabs);
 	$voximplantServer = '';
 	$voximplantLogin = '';
 	$voximplantLines = [];
@@ -374,7 +204,6 @@ else
 		$modifiedMenuTabs = ExecuteModuleEventEx($events[0], [$menuTabs]);
 		$menuTabs = $modifiedMenuTabs;
 	}
-
 	$data = [
 		"status" => "success",
 		"id" => $USER->GetID(),

@@ -115,6 +115,7 @@
 					this.viewUrl = response.viewUrl;
 					this.neededCheckView = response.neededCheckView;
 					this.neededDelete = response.neededDelete;
+					this.service = response.service;
 				}
 
 				promise.fulfill(this);
@@ -141,6 +142,37 @@
 			});
 		},
 
+		renderStubForOfiice365: function ()
+		{
+			return BX.create('div', {
+				props: {
+					className: 'ui-viewer-unsupported'
+				},
+				children: [
+					BX.create('div', {
+						props: {
+							className: 'ui-viewer-unsupported-title'
+						},
+						text: BX.message('JS_VIEWER_DOCUMENT_ITEM_OPEN_DESCR_OFFICE365')
+					}),
+					BX.create('div', {
+						props: {
+							className: 'ui-viewer-unsupported-text disk-viewer-office365-text'
+						},
+						html: BX.message('JS_VIEWER_DOCUMENT_ITEM_OPEN_HELP_HINT_OFFICE365')
+					}),
+					BX.create('a', {
+						props: {
+							className: 'ui-btn ui-btn-light-border ui-btn-themes',
+							href: this.viewUrl,
+							target: '_blank'
+						},
+						text: BX.message('JS_VIEWER_DOCUMENT_ITEM_OPEN_FILE_OFFICE365')
+					})
+				]
+			});
+		},
+
 		render: function ()
 		{
 			var item = document.createDocumentFragment();
@@ -151,6 +183,11 @@
 			}
 			else
 			{
+				if (this.service === 'office365')
+				{
+					return this.renderStubForOfiice365();
+				}
+
 				this.iframeNode = BX.create('iframe', {
 					props: {
 						src: this.viewUrl
@@ -252,7 +289,7 @@
 					this.controller.reload(this);
 				}, this));
 			}
-			else
+			else if(this.iframeNode)
 			{
 				this.controller.showLoading();
 			}

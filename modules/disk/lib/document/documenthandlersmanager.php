@@ -11,6 +11,7 @@ use Bitrix\Disk\User;
 use Bitrix\Disk\UserConfiguration;
 use Bitrix\Main\Event;
 use Bitrix\Main\EventResult;
+use Bitrix\Main\ModuleManager;
 use Bitrix\Main\SystemException;
 
 class DocumentHandlersManager
@@ -88,14 +89,33 @@ class DocumentHandlersManager
 	 */
 	public function getHandlers()
 	{
-		$list = array();
-		foreach($this->documentHandlerList as $code => $class)
+		$list = [];
+		foreach ($this->documentHandlerList as $code => $class)
 		{
-			$list[$code] = $this->getHandlerByCode($code);
+			$handler = $this->getHandlerByCode($code);
+			if (!$this->shouldHideGoogle($handler))
+			{
+				$list[$code] = $handler;
+			}
 		}
-		unset($code, $class);
 
 		return $list;
+	}
+
+	private function shouldHideGoogle(DocumentHandler $handler)
+	{
+		//crutch for bitrix24
+		if (!ModuleManager::isModuleInstalled('bitrix24'))
+		{
+			return false;
+		}
+
+		if (!($handler instanceof GoogleHandler))
+		{
+			return false;
+		}
+
+		return !$this->isReady($handler);
 	}
 
 	/**

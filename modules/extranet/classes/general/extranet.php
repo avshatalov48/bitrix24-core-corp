@@ -78,6 +78,7 @@ class CExtranet
 
 		if(!(
 			isset($USER)
+			&& is_object($USER)
 			&& ((get_class($USER) === 'CUser') || ($USER instanceof CUser))
 			&& $USER->IsAuthorized()
 		))
@@ -240,6 +241,7 @@ class CExtranet
 				&& $USER->IsAuthorized()
 				&& !$USER->IsAdmin()
 				&& !CExtranet::IsIntranetUser()
+				&& !$USER->CanDoFileOperation('fm_view_file', array(SITE_ID, \Bitrix\Main\Application::getInstance()->getContext()->getRequest()->getScriptFile()))
 			)
 			{
 				$rsSites = CSite::GetByID(CExtranet::GetExtranetSiteID());
@@ -330,7 +332,7 @@ class CExtranet
 			&& (
 				!CSocNetUser::IsCurrentUserModuleAdmin()
 				|| $bGadget
-			) 
+			)
 		)
 		{
 			$dbUsersInGroup = CSocNetUserToGroup::GetList(
@@ -551,9 +553,9 @@ class CExtranet
 
 		$arPublicUsers = array();
 		$arFilter = Array(
-			COption::GetOptionString("extranet", "extranet_public_uf_code", "UF_PUBLIC") => "1", 
-			"ID" => "~".$USER->GetID(), 
-			"!UF_DEPARTMENT" => false, 
+			COption::GetOptionString("extranet", "extranet_public_uf_code", "UF_PUBLIC") => "1",
+			"ID" => "~".$USER->GetID(),
+			"!UF_DEPARTMENT" => false,
 			"GROUPS_ID" => array(CExtranet::GetExtranetUserGroupID())
 		);
 
@@ -599,8 +601,8 @@ class CExtranet
 				}
 
 				$rsUsers = CUser::GetList(
-					($by="ID"), 
-					($order="asc"), 
+					($by="ID"),
+					($order="asc"),
 					Array(
 						"!UF_DEPARTMENT" => false
 					),
@@ -614,7 +616,7 @@ class CExtranet
 				{
 					$arIntranetUsers[] = $arUser["ID"];
 				}
-				
+
 				if (defined("BX_COMP_MANAGED_CACHE"))
 				{
 					$CACHE_MANAGER->EndTagCache();
@@ -1267,8 +1269,8 @@ class CExtranet
 			$extranet_site_id = CExtranet::GetExtranetSiteID();
 			$arIntranetSiteID = array();
 			$rsSite = CSite::GetList(
-				$by="sort", 
-				$order="desc", 
+				$by="sort",
+				$order="desc",
 				array("ACTIVE" => "Y")
 			);
 			while ($arSite = $rsSite->Fetch())

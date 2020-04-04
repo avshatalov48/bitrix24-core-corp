@@ -69,5 +69,9 @@ return array(
 			'name' => Loc::getMessage('LANDING_BLOCK_44.2.FOUR_COLUMNS_WITH_IMG_AND_TEXT_NODES_LANDINGBLOCKNODECARDTEXT2'),
 			'type' => 'typo',
 		),
+		'.landing-block-inner' => array(
+			'name' => Loc::getMessage('LANDING_BLOCK_44.2.FOUR_COLUMNS_WITH_IMG_AND_TEXT_CARDS_LANDINGBLOCK_INNER'),
+			'type' => 'row-align',
+		),
 	),
 );

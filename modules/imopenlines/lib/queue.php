@@ -3,286 +3,293 @@ namespace Bitrix\ImOpenLines;
 
 use \Bitrix\Main\Loader,
 	\Bitrix\Main\Application,
-	\Bitrix\Main\Entity\Query,
 	\Bitrix\Main\ModuleManager,
 	\Bitrix\Main\Type\DateTime,
+	\Bitrix\Main\ORM\Query\Query,
 	\Bitrix\Main\Localization\Loc,
 	\Bitrix\Main\Entity\ReferenceField,
-	\Bitrix\Main\Entity\ExpressionField;
+	\Bitrix\Main\ORM\Fields\ExpressionField;
 
-use \Bitrix\Im\User;
+use \Bitrix\Pull;
 
-use \Bitrix\ImOpenLines\Model\QueueTable,
-	\Bitrix\ImOpenLines\Model\SessionTable;
+use \Bitrix\Im,
+	\Bitrix\Im\Model\RecentTable;
+
+use \Bitrix\Intranet\UserAbsence;
+
+use \Bitrix\ImOpenLines\Tools,
+	\Bitrix\ImOpenLines\Model\QueueTable,
+	\Bitrix\ImOpenLines\Model\SessionTable,
+	\Bitrix\ImOpenLines\Model\SessionCheckTable;
 
 Loc::loadMessages(__FILE__);
 
 class Queue
 {
 	const USER_DATA_CACHE_TIME = 86400;
+	const UNDISTRIBUTED_QUEUE_TIME = 3600;
+	const MAX_CHAT = 150;
 
-	private $error = null;
-	private $id = null;
-	private $session = null;
-	private $config = null;
-	private $chat = null;
+	//Session check reason return values
+	//if you add a new return reason, you need to add a list of possible values here: \Bitrix\ImOpenLines\Model\SessionCheckTable::getMap
+	const REASON_DEFAULT = 'DEFAULT';
+	const REASON_OPERATOR_ABSENT = 'VACATION';
+	const REASON_OPERATOR_DAY_PAUSE = 'NONWORKING';
+	const REASON_OPERATOR_DAY_END = 'NONWORKING';
+	const REASON_OPERATOR_DELETED = 'DISMISSAL';
+	const REASON_REMOVED_FROM_QUEUE = 'REMOVING';
+	const REASON_OPERATOR_NOT_AVAILABLE = 'NOT_AVAILABLE';
+	const REASON_QUEUE_TYPE_CHANGED = 'DEFAULT';
+
+	public static $type = [
+		Config::QUEUE_TYPE_EVENLY => Config::QUEUE_TYPE_EVENLY,
+		Config::QUEUE_TYPE_STRICTLY => Config::QUEUE_TYPE_STRICTLY,
+		Config::QUEUE_TYPE_ALL => Config::QUEUE_TYPE_ALL,
+	];
 
 	/**
-	 * Queue constructor.
 	 * @param $session
-	 * @param $config
-	 * @param $chat
+	 * @return bool|\Bitrix\ImOpenLines\Queue\Evenly|\Bitrix\ImOpenLines\Queue\All|\Bitrix\ImOpenLines\Queue\Strictly
 	 */
-	public function __construct($session, $config, $chat)
+	public static function initialization($session)
 	{
-		$this->error = new BasicError(null, '', '');
-		$this->session = $session;
-		$this->config = $config;
-		$this->chat = $chat;
+		$result = false;
+
+		if(!empty($session) && $session instanceof Session)
+		{
+			$configData = $session->getConfig();
+			$chatManager = $session->getChat();
+
+			if(
+				!empty($configData) &&
+				!empty($configData['QUEUE_TYPE']) && !empty(self::$type[$configData['QUEUE_TYPE']]) &&
+				!empty($chatManager)
+			)
+			{
+				$queue = "Bitrix\\ImOpenLines\\Queue\\" . ucfirst(strtolower($configData['QUEUE_TYPE']));
+
+				$result = new $queue($session);
+			}
+		}
+
+		return $result;
 	}
 
 	/**
-	 * @param bool $manual
-	 * @param int $currentOperator
-	 * @return array
+	 * @param int $limitTime
+	 * @param int $limit
+	 * @param int $lineId
 	 * @throws \Bitrix\Main\ArgumentException
 	 * @throws \Bitrix\Main\LoaderException
 	 * @throws \Bitrix\Main\ObjectException
 	 * @throws \Bitrix\Main\ObjectPropertyException
 	 * @throws \Bitrix\Main\SystemException
 	 */
-	public function getNextUser($manual = false, $currentOperator = 0)
+	public static function transferToNextSession($limitTime = 60, $limit = 0, $lineId = 0)
 	{
-		$result = [
-			'RESULT' => false,
-			'USER_ID' => 0,
-			'USER_LIST' => [],
-			//TODO: fix 105666
-			'SECOND' => false,
-		];
+		$time = new Tools\Time;
 
-		$firstUserId = 0;
-		$firstUpdateId = 0;
-		$updateId = 0;
+		$configs = [];
+		$chats = [];
+		$configManager = new Config();
+		$runSessionIds = [];
 
-		if (!Loader::includeModule('im'))
+		$count = 0;
+		$countIterationPull = 0;
+		while($time->getElapsedTime() <= $limitTime && (empty($limit) || $count < $limit))
 		{
-			return $result;
+			$reasonReturn = Queue::REASON_DEFAULT;
+
+			if($countIterationPull > 10 && Loader::includeModule('pull'))
+			{
+				$countIterationPull = 0;
+
+				Pull\Event::send();
+			}
+
+			$filter = [
+				'<=DATE_QUEUE' => new DateTime()
+			];
+
+			if(!empty($lineId) && is_numeric($lineId) && $lineId > 0)
+			{
+				$filter['=SESSION.CONFIG_ID'] = $lineId;
+			}
+
+			if(!empty($runSessionIds))
+			{
+				$filter['!=SESSION_ID'] = $runSessionIds;
+			}
+
+			$select = SessionTable::getSelectFieldsPerformance('SESSION');
+
+			$select[] = 'REASON_RETURN';
+
+			$res = SessionCheckTable::getList([
+				'select' => $select,
+				'filter' => $filter,
+				'order' => [
+					'DATE_QUEUE',
+					'SESSION.DATE_CREATE'
+				],
+				'limit' => 1
+			]);
+
+			if ($row = $res->fetch())
+			{
+				$fields = [];
+
+				if(!empty($row['REASON_RETURN']))
+				{
+					$reasonReturn = $row['REASON_RETURN'];
+				}
+				unset($row['REASON_RETURN']);
+
+				foreach($row as $key=>$value)
+				{
+					$key = str_replace('IMOPENLINES_MODEL_SESSION_CHECK_SESSION_', '', $key);
+					$fields[$key] = $value;
+				}
+
+				$runSessionIds[$fields['ID']] = $fields['ID'];
+
+				if (!isset($configs[$fields['CONFIG_ID']]))
+				{
+					$configs[$fields['CONFIG_ID']] = $configManager->get($fields['CONFIG_ID']);
+				}
+				if (!isset($chats[$fields['CHAT_ID']]))
+				{
+					$chats[$fields['CHAT_ID']] = new Chat($fields['CHAT_ID']);
+				}
+
+				self::sendMessageReturnedSession($reasonReturn, $fields);
+
+				$session = new Session();
+				$session->loadByArray($fields, $configs[$fields['CONFIG_ID']], $chats[$fields['CHAT_ID']]);
+				$resultTransfer = $session->transferToNextInQueue(false);
+
+				if($resultTransfer == true)
+				{
+					$countIterationPull++;
+				}
+				$count++;
+			}
+			else
+			{
+				break;
+			}
 		}
 
-		$filter = ['=CONFIG_ID' => $this->config['ID']];
-
-		if ($this->config['QUEUE_TYPE'] == Config::QUEUE_TYPE_STRICTLY)
+		if (Loader::includeModule('pull') && $countIterationPull > 0)
 		{
-			$order = ['ID' => 'asc'];
+			Pull\Event::send();
+		}
+	}
+
+	/**
+	 * Defines whether sessions that require distribution.
+	 *
+	 * @param int $line
+	 * @return bool
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	public static function isThereSessionTransfer($line = 0)
+	{
+		$result = false;
+		$line = intval($line);
+
+		if($line > 0)
+		{
+			$filter = [
+				'!=DATE_QUEUE' => null,
+				'SESSION.CONFIG_ID' => $line
+			];
 		}
 		else
 		{
-			$order = [
-				'LAST_ACTIVITY_DATE' => 'asc',
-				'LAST_ACTIVITY_DATE_EXACT' => 'asc'
-			];
+			$filter = ['!=DATE_QUEUE' => null];
 		}
-		$res = self::getList([
-			'select' => Array('ID', 'USER_ID', 'IS_ONLINE_CUSTOM'),
-			'filter' => $filter,
-			'order' => $order,
-		]);
 
-		$session = null;
-		while($queueUser = $res->fetch())
+		$count = SessionCheckTable::getCount($filter);
+
+		if(!empty($count) && $count > 0)
 		{
-			if (!User::getInstance($queueUser['USER_ID'])->isActive())
-			{
-				continue;
-			}
-
-			if (User::getInstance($queueUser['USER_ID'])->isAbsent())
-			{
-				continue;
-			}
-
-			if ($this->config['CHECK_ONLINE'] == 'Y' && $queueUser['IS_ONLINE_CUSTOM'] != 'Y')
-			{
-				continue;
-			}
-
-			if ($this->config['TIMEMAN'] == "Y" && !self::getActiveStatusByTimeman($queueUser['USER_ID']))
-			{
-				continue;
-			}
-
-			if($this->config["MAX_CHAT"] > 0 && (empty($currentOperator) || $currentOperator != $queueUser['USER_ID']))
-			{
-				$filterSession = array(
-					'=OPERATOR_ID' => $queueUser['USER_ID'],
-					//'!CHECK.SESSION_ID' => null,
-					'CONFIG_ID' => $this->config['ID'],
-				);
-
-				if($this->config["TYPE_MAX_CHAT"] == Config::TYPE_MAX_CHAT_CLOSED)
-				{
-					$filterSession['<STATUS'] = 50;
-				}
-				elseif($this->config["TYPE_MAX_CHAT"] == Config::TYPE_MAX_CHAT_ANSWERED_NEW)
-				{
-					$filterSession['<STATUS'] = 25;
-				}
-				else
-				{
-					$filterSession['<STATUS'] = 40;
-				}
-
-				$cntSessions = SessionTable::getList([
-					'select' => ['CNT'],
-					'filter' => $filterSession,
-					'runtime' => [
-						new ExpressionField('CNT', 'COUNT(*)')
-					]
-				])->fetch();
-
-				if($cntSessions["CNT"] >= $this->config["MAX_CHAT"])
-				{
-					continue;
-				}
-			}
-
-			if(empty($firstUserId))
-			{
-				$firstUserId = $queueUser['USER_ID'];
-				$firstUpdateId = $queueUser['ID'];
-			}
-
-			if($this->session['QUEUE_HISTORY'][$queueUser['USER_ID']] == true)
-			{
-				continue;
-			}
-
-			$result['USER_ID'] = $queueUser['USER_ID'];
-			$updateId = $queueUser['ID'];
-			$result['RESULT'] = true;
-
-			break;
+			$result = true;
 		}
-
-		if(empty($result['USER_ID']) && !empty($firstUserId))
-		{
-			$result['USER_ID'] = $firstUserId;
-			$updateId = $firstUpdateId;
-			$result['RESULT'] = true;
-			$result['SECOND'] = true;
-		}
-
-		if (!$this->session['JOIN_BOT'] && $updateId > 0)
-		{
-			QueueTable::update($updateId, ['LAST_ACTIVITY_DATE' => new DateTime(), 'LAST_ACTIVITY_DATE_EXACT' => microtime(true) * 10000]);
-		}
-
-		Log::write(['Filter' => $filter, 'Result' => $result], 'GET NEXT USER');
 
 		return $result;
 	}
 
 	/**
-	 * Check the operator responsible for CRM on the possibility of transfer of chat.
+	 * Returns whether the operator works according to the working time accounting.
 	 *
-	 * @param $idUser
+	 * @param $userId
+	 * @param bool $ignorePause
 	 * @return bool
 	 * @throws \Bitrix\Main\LoaderException
 	 */
-	public function isActiveCrmUser($idUser)
+	public static function getActiveStatusByTimeman($userId, $ignorePause = false)
 	{
-		$result = true;
+		$result = false;
 
-		if (!Loader::includeModule('im'))
+		if ($userId > 0)
 		{
-			$result = false;
-		}
-
-		if ($result != false && !User::getInstance($idUser)->isActive())
-		{
-			$result = false;
-		}
-
-		if ($result != false && User::getInstance($idUser)->isAbsent())
-		{
-			$result = false;
-		}
-
-		if ($result != false && $this->config['TIMEMAN'] == "Y" && !self::getActiveStatusByTimeman($idUser))
-		{
-			$result = false;
-		}
-
-		Log::write(Array('idUser' => $idUser, 'Result' => $result), 'IS ACTIVE CRM USER');
-
-		return $result;
-	}
-
-	public function getQueue()
-	{
-		if (!Loader::includeModule('im'))
-		{
-			return null;
-		}
-
-		$filter = Array('=CONFIG_ID' => $this->config['ID']);
-		$res = self::getList(Array(
-			'select' => Array('ID', 'USER_ID'),
-			'filter' => $filter
-		));
-		$result = Array(
-			'RESULT' => false,
-			'USER_ID' => 0,
-			'USER_LIST' => Array()
-		);
-		$session = null;
-		while($queueUser = $res->fetch())
-		{
-			if (!User::getInstance($queueUser['USER_ID'])->isActive())
+			if (Config::isTimeManActive())
 			{
-				continue;
-			}
-
-			$result['RESULT'] = true;
-			$result['USER_LIST'][] = $queueUser['USER_ID'];
-		}
-
-		Log::write(Array('Filter' => $filter, 'Result' => $result), 'GET ALL QUEUE');
-
-		return $result;
-	}
-
-	public static function getActiveStatusByTimeman($userId)
-	{
-		if ($userId <= 0)
-			return false;
-
-		if (\CModule::IncludeModule('timeman'))
-		{
-			$tmUser = new \CTimeManUser($userId);
-			$tmSettings = $tmUser->GetSettings(Array('UF_TIMEMAN'));
-			if (!$tmSettings['UF_TIMEMAN'])
-			{
-				$result = true;
-			}
-			else
-			{
-				$tmUser->GetCurrentInfo(true); // need for reload cache
-
-				if ($tmUser->State() == 'OPENED')
+				$tmUser = new \CTimeManUser($userId);
+				$tmSettings = $tmUser->GetSettings(['UF_TIMEMAN']);
+				if (!$tmSettings['UF_TIMEMAN'])
 				{
 					$result = true;
 				}
 				else
 				{
-					$result = false;
+					$tmUser->GetCurrentInfo(true); // need for reload cache
+					if ($tmUser->State() == 'OPENED')
+					{
+						$result = true;
+					}
+					elseif($ignorePause == true && $tmUser->State() == 'PAUSED')
+					{
+						$result = true;
+					}
+					else
+					{
+						$result = false;
+					}
 				}
 			}
+			else
+			{
+				$result = true;
+			}
+		}
+
+		return $result;
+	}
+
+	/**
+	 * Check operator absent in intranet (not including workime pause and workime end)
+	 *
+	 * @param $operatorId
+	 *
+	 * @return bool
+	 * @throws \Bitrix\Main\ArgumentNullException
+	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
+	 * @throws \Bitrix\Main\LoaderException
+	 * @throws \Bitrix\Main\ObjectException
+	 */
+	public static function isOperatorAbsent($operatorId)
+	{
+		if (Loader::includeModule('intranet'))
+		{
+			$result = UserAbsence::isAbsentOnVacation($operatorId, true);
 		}
 		else
 		{
-			$result = true;
+			$result = false;
 		}
 
 		return $result;
@@ -298,6 +305,14 @@ class Queue
 		return ModuleManager::isModuleInstalled('bitrix24')? 1440: 180;
 	}
 
+	/**
+	 * @param $params
+	 * @return \Bitrix\Main\ORM\Query\Result
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\LoaderException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
 	public static function getList($params)
 	{
 		$lastActivityDate = self::getTimeLastActivityOperator();
@@ -309,15 +324,15 @@ class Queue
 			$query->registerRuntimeField('', new ReferenceField(
 				'IM_STATUS',
 				'\Bitrix\Im\Model\StatusTable',
-				array("=ref.USER_ID" => "this.USER_ID",),
-				array("join_type"=>"left")
+				["=ref.USER_ID" => "this.USER_ID"],
+				["join_type"=>"left"]
 			));
 
-			$query->registerRuntimeField('', new ExpressionField('IS_ONLINE_CUSTOM', 'CASE WHEN %s > '.$timeHelper.' &&  %s IS NULL THEN \'Y\' ELSE \'N\' END', Array('USER.LAST_ACTIVITY_DATE', 'IM_STATUS.IDLE')));
+			$query->registerRuntimeField('', new ExpressionField('IS_ONLINE_CUSTOM', 'CASE WHEN %1$s > '.$timeHelper.' && (%2$s IS NULL || %1$s > %2$s) THEN \'Y\' ELSE \'N\' END', ['USER.LAST_ACTIVITY_DATE', 'IM_STATUS.IDLE']));
 		}
 		else
 		{
-			$query->registerRuntimeField('', new ExpressionField('IS_ONLINE_CUSTOM', 'CASE WHEN %s > '.$timeHelper.' THEN \'Y\' ELSE \'N\' END', Array('USER.LAST_ACTIVITY_DATE')));
+			$query->registerRuntimeField('', new ExpressionField('IS_ONLINE_CUSTOM', 'CASE WHEN %s > '.$timeHelper.' THEN \'Y\' ELSE \'N\' END', ['USER.LAST_ACTIVITY_DATE']));
 		}
 
 		if (isset($params['select']))
@@ -345,17 +360,58 @@ class Queue
 	/**
 	 * This operator online?
 	 *
-	 * @param $id The user ID of the operator.
+	 * @param $id int The user ID of the operator.
 	 * @return bool
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\LoaderException
+	 * @throws \Bitrix\Main\ObjectException
+	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function isOperatorOnline($id)
 	{
-		return \CUser::IsOnLine($id, self::getTimeLastActivityOperator());
+		$result = true;
+
+		if(self::isRealOperator($id))
+		{
+			if(Loader::includeModule('im'))
+			{
+				$result = \Bitrix\ImOpenLines\Im::userIsOnline($id);
+			}
+			else
+			{
+				$result = \CUser::IsOnLine($id, self::getTimeLastActivityOperator());
+			}
+		}
+
+		return $result;
 	}
 
-	public function getError()
+	/**
+	 * This real operator online? That's not a bot, not a user of the connector.
+	 *
+	 * @param $id
+	 *
+	 * @return bool
+	 * @throws \Bitrix\Main\LoaderException
+	 */
+	public static function isRealOperator($id)
 	{
-		return $this->error;
+		$result = true;
+
+		if (Loader::includeModule('im'))
+		{
+			$userIm = Im\User::getInstance($id);
+
+			if(
+				$userIm->isConnector() ||
+				$userIm->isBot()
+			)
+			{
+				$result = false;
+			}
+		}
+
+		return $result;
 	}
 
 	/**
@@ -363,8 +419,10 @@ class Queue
 	 *
 	 * @param $userId
 	 * @param $lineId
-	 *
 	 * @return array|bool|false
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\LoaderException
+	 * @throws \Bitrix\Main\ObjectPropertyException
 	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function getQueueOperatorData($userId, $lineId)
@@ -399,6 +457,10 @@ class Queue
 
 				$queue = self::getList($params)->fetch();
 
+				if (empty($queue['USER_AVATAR']))
+				{
+					$queue['USER_AVATAR'] = \Bitrix\Im\User::getInstance($userId)->getAvatar();
+				}
 				$taggedCache->endTagCache();
 				$cache->endDataCache($queue);
 			}
@@ -417,9 +479,9 @@ class Queue
 	 *
 	 * @param $lineId
 	 * @param $userArray
-	 *
-	 * @return mixed
+	 * @return bool
 	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\LoaderException
 	 * @throws \Bitrix\Main\ObjectPropertyException
 	 * @throws \Bitrix\Main\SystemException
 	 */
@@ -510,10 +572,10 @@ class Queue
 	 *
 	 * @param $lineId
 	 * @param $userId
-	 * @param $nullForUnprocessed
-	 *
-	 * @return mixed
+	 * @param bool $nullForUnprocessed
+	 * @return array|null
 	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\LoaderException
 	 * @throws \Bitrix\Main\ObjectPropertyException
 	 * @throws \Bitrix\Main\SystemException
 	 */
@@ -595,4 +657,219 @@ class Queue
 
 		return $result;
 	}
+
+	/**
+	 * Set session queue date to return it to distribution queue.
+	 *
+	 * @param $sessionId
+	 * @param string $reasonReturn
+	 *
+	 * @throws \Bitrix\Main\ObjectException
+	 */
+	public static function returnSessionToQueue($sessionId, $reasonReturn = self::REASON_DEFAULT)
+	{
+		SessionCheckTable::update(
+			$sessionId,
+			[
+				'DATE_QUEUE' => new DateTime(),
+				'REASON_RETURN' => $reasonReturn,
+			]
+		);
+	}
+
+	/**
+	 * Task allocation dates of sessions that are in the closing state.
+	 *
+	 * @param $sessionId
+	 * @param DateTime $dateQueue
+	 * @param string $reasonReturn
+	 * @throws \Exception
+	 */
+	public static function returnSessionWaitClientToQueue($sessionId, DateTime $dateQueue, $reasonReturn = self::REASON_DEFAULT)
+	{
+		SessionCheckTable::update(
+			$sessionId,
+			[
+				'DATE_QUEUE' => $dateQueue,
+				'REASON_RETURN' => $reasonReturn,
+			]
+		);
+	}
+
+	/**
+	 * Basic check that the operator is active.
+	 *
+	 * @param $userId
+	 * @param string $isTimeMan
+	 * @param string $isCheckAvailable
+	 * @return bool
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\LoaderException
+	 * @throws \Bitrix\Main\ObjectException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	public static function isOperatorActive($userId, $isTimeMan = 'N', $isCheckAvailable = 'Y')
+	{
+		$result = true;
+
+		if($isCheckAvailable == 'Y')
+		{
+			if (!Loader::includeModule('im'))
+			{
+				$result = false;
+			}
+
+			if ($result && !Im\User::getInstance($userId)->isActive())
+			{
+				$result = false;
+			}
+
+			if ($result && Im\User::getInstance($userId)->isAbsent())
+			{
+				$result = false;
+			}
+
+			if($result)
+			{
+				if($isTimeMan == "Y")
+				{
+					if(!self::getActiveStatusByTimeman($userId))
+					{
+						$result = false;
+					}
+				}
+				else
+				{
+					$result = self::isOperatorOnline($userId);
+				}
+			}
+		}
+
+		return $result;
+	}
+
+	/**
+	 * How many chats can accept this statement.
+	 *
+	 * @param $idUser
+	 * @param int $idLine
+	 * @param int $maxChat
+	 * @param null $typeMaxChat
+	 * @return int|mixed
+	 * @throws \Bitrix\Main\LoaderException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	public static function getCountFreeSlotOperator($idUser, $idLine = 0, $maxChat = 0, $typeMaxChat = null)
+	{
+		if(empty($maxChat) || $maxChat > Queue::MAX_CHAT)
+		{
+			$maxChat = Queue::MAX_CHAT;
+		}
+
+		$countNotCloseGlobal = 0;
+
+		if(Loader::includeModule('im'))
+		{
+			$countNotCloseGlobal = RecentTable::getCount([
+				'=USER_ID' => $idUser,
+				'=ITEM_TYPE' => IM_MESSAGE_OPEN_LINE
+			]);
+		}
+
+		$result = Queue::MAX_CHAT - $countNotCloseGlobal;
+
+		if(
+			$result > 0 &&
+			!empty($idLine) &&
+			is_numeric($idLine) &&
+			$idLine > 0 &&
+			!empty($typeMaxChat) &&
+			(
+				$typeMaxChat == Config::TYPE_MAX_CHAT_ANSWERED ||
+				$typeMaxChat == Config::TYPE_MAX_CHAT_ANSWERED_NEW ||
+				$typeMaxChat == Config::TYPE_MAX_CHAT_CLOSED
+			)
+		)
+		{
+			if($typeMaxChat == Config::TYPE_MAX_CHAT_ANSWERED_NEW)
+			{
+				$stopStatus = Session::STATUS_CLIENT_AFTER_OPERATOR;
+			}
+
+			if($typeMaxChat == Config::TYPE_MAX_CHAT_ANSWERED)
+			{
+				$stopStatus = Session::STATUS_OPERATOR;
+			}
+
+			if($typeMaxChat == Config::TYPE_MAX_CHAT_CLOSED)
+			{
+				$stopStatus = Session::STATUS_WAIT_CLIENT;
+			}
+
+			if(!empty($stopStatus))
+			{
+				$countBusy  = SessionCheckTable::getCount([
+					'=SESSION.OPERATOR_ID' => $idUser,
+					'SESSION.CONFIG_ID' => $idLine,
+					'<SESSION.STATUS' => $stopStatus
+				]);
+
+				$freeSlotRestrictions = $maxChat - $countBusy;
+
+				$result = min($freeSlotRestrictions, $result);
+			}
+		}
+
+		return $result;
+	}
+
+	/**
+	 * @param string $reasonReturn
+	 * @param $session
+	 * @return bool|int
+	 * @throws \Bitrix\Main\LoaderException
+	 */
+	public static function sendMessageReturnedSession($reasonReturn = Queue::REASON_DEFAULT, $session)
+	{
+		$message = '';
+		$result = false;
+
+		if($session['OPERATOR_ID'] > 0 && $session['STATUS'] >= Session::STATUS_ANSWER)
+		{
+			switch ($reasonReturn) {
+				case Queue::REASON_OPERATOR_ABSENT:
+					$message = Loc::getMessage('IMOL_QUEUE_OPERATOR_VACATION');
+					break;
+				case Queue::REASON_OPERATOR_DAY_PAUSE:
+				case Queue::REASON_OPERATOR_DAY_END:
+					$message = Loc::getMessage('IMOL_QUEUE_OPERATOR_NONWORKING');
+					break;
+				case Queue::REASON_OPERATOR_DELETED:
+					$message = Loc::getMessage('IMOL_QUEUE_OPERATOR_DISMISSAL');
+					break;
+				case Queue::REASON_REMOVED_FROM_QUEUE:
+					$message = Loc::getMessage('IMOL_QUEUE_OPERATOR_REMOVING');
+					break;
+				case Queue::REASON_OPERATOR_NOT_AVAILABLE:
+					$message = Loc::getMessage('IMOL_QUEUE_OPERATOR_NOT_AVAILABLE');
+					break;
+			}
+
+			if(!empty($message))
+			{
+				$messageFields = array(
+					"TO_CHAT_ID" => $session['CHAT_ID'],
+					"MESSAGE" => $message,
+					"SYSTEM" => "Y",
+					"RECENT_ADD" => 'N'
+				);
+				$result = \Bitrix\ImOpenLines\Im::addMessage($messageFields);
+			}
+		}
+
+		return $result;
+	}
+
+	//END STATIC
 }

@@ -1,0 +1,78 @@
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" id="svg_wrapper" class="defs-only" xmlns="http://www.w3.org/2000/svg" style="width: 100%; height: 1200px">
+    <svg height="1200px">
+        <rect fill="#EBF1F4" width="100%" height="1200"/>
+        <rect fill="#FFFFFF" width="100%" height="1200" x="20" y="122"/>
+        <rect fill="transparent" stroke="#868D95" opacity=".2" stroke-width="1" rx="2" ry="2" width="195"  height="39" x="100%" y="12" transform="translate(-225, 0)"/>
+    </svg>
+
+    <svg height="1200px" id="content">
+        <rect fill="#DEE2E6" rx="2" ry="2" width="175"  height="12" x="40" y="26"/>
+        <rect fill="#DEE2E6" rx="2" ry="2" width="175"  height="12" x="100%" y="26" transform="translate(-215, 0)"/>
+        <line stroke="#DEE2E6" x1="20" y1="70" x2="100%" y2="70"/>
+        <rect fill="#DEE2E6" rx="2" ry="2" width="284"  height="6" x="40" y="93"/>
+        <rect fill="#DEE2E6" rx="2" ry="2" width="40"  height="6" x="100%" y="93" transform="translate(-80, 0)"/>
+        <rect fill="#DEE2E6" rx="2" ry="2" width="90"  height="6" x="100%" y="93" transform="translate(-190, 0)"/>
+        <rect fill="#DEE2E6" rx="2" ry="2" width="40"  height="6" x="100%" y="93" transform="translate(-250, 0)"/>
+        <rect fill="#DEE2E6" rx="2" ry="2" width="115"  height="14" x="60" y="154"/>
+        <rect fill="#DEE2E6" rx="2" ry="2" width="115"  height="14" x="100%" y="154" transform="translate(-165, 0)"/>
+
+
+
+    </svg>
+
+    <svg viewBox="0 0 700 500" x="20" y="198" width="97.5%" height="100%" id="calendar" preserveAspectRatio="xMinYMin meet" >
+
+        <defs>
+            <g id="date">
+                <rect fill="#ECEDEF" ry="2" rx="2" width="13" height="5" transform="translate(-23, 0)" y="0" x="14%" />
+                <rect fill="#ECEDEF" ry="2" rx="2" width="13" height="5" transform="translate(-23, 0)" y="0" x="28%" />
+                <rect fill="#ECEDEF" ry="2" rx="2" width="13" height="5" transform="translate(-23, 0)" y="0" x="42%" />
+                <rect fill="#ECEDEF" ry="2" rx="2" width="13" height="5" transform="translate(-23, 0)" y="0" x="56%" />
+                <rect fill="#ECEDEF" ry="2" rx="2" width="13" height="5" transform="translate(-23, 0)" y="0" x="70%" />
+                <rect fill="#ECEDEF" ry="2" rx="2" width="13" height="5" transform="translate(-23, 0)" y="0" x="84%" />
+                <rect fill="#ECEDEF" ry="2" rx="2" width="13" height="5" transform="translate(-23, 0)" y="0" x="98%" />
+            </g>
+
+            <g id="day">
+                <use xlink:href="#date" y="10" x="0"/>
+                <rect fill="transparent" stroke="#ECEDEF" stroke-width="1" width="14%" height="20%" y="0" x="0" />
+                <rect fill="transparent" stroke="#ECEDEF" stroke-width="1" width="14%" height="20%" y="0" x="14%" />
+                <rect fill="transparent" stroke="#ECEDEF" stroke-width="1" width="14%" height="20%" y="0" x="28%" />
+                <rect fill="transparent" stroke="#ECEDEF" stroke-width="1" width="14%" height="20%" y="0" x="42%" />
+                <rect fill="transparent" stroke="#ECEDEF" stroke-width="1" width="14%" height="20%" y="0" x="56%" />
+                <rect fill="transparent" stroke="#ECEDEF" stroke-width="1" width="14%" height="20%" y="0" x="70%" />
+                <rect fill="transparent" stroke="#ECEDEF" stroke-width="1" width="14%" height="20%" y="0" x="84%" />
+                <rect fill="transparent" stroke="#ECEDEF" stroke-width="1" width="14%" height="20%" y="0" x="98%" />
+            </g>
+        </defs>
+
+            <use xlink:href="#date" y="0" x="0"/>
+            <line stroke="#ECEDEF" stroke-width="1" y1="19" y2="20" x1="0" x2="150%"/>
+            <use xlink:href="#day" y="20" x="0"/>
+            <use xlink:href="#day" y="120" x="0"/>
+            <use xlink:href="#day" y="220" x="0"/>
+            <use xlink:href="#day" y="320" x="0"/>
+            <use xlink:href="#day" y="420" x="0"/>
+    </svg>
+
+    <rect id="msk1" width="100%" fill="url(#msk_gd)" mask="url(#contentMsk)" height="1200"/>
+
+    <mask id="contentMsk" fill="white">
+        <use xlink:href="#content"/>
+        <use xlink:href="#calendar"/>
+    </mask>
+
+    <linearGradient x1="66.6%" y1="50%" x2="33.3%" y2="50%" id="msk_gd">
+        <stop stop-color="#000000" stop-opacity="0" offset="0%"/>
+        <stop stop-color="#000000" stop-opacity="0.07" offset="50%"/>
+        <stop stop-color="#000000" stop-opacity="0" offset="100%"/>
+    </linearGradient>
+
+    <animate xlink:href="#msk1" attributeName="x" from="-100%" to="100%" dur="1s" begin="0s" repeatCount="indefinite"/>
+
+    <svg viewBox="0 0 100% 1200" height="1200px">
+<!--        <rect fill="#fff" width="20"   height="1200" x="100%" y="154"   transform="translate(-40, 0)"/>-->
+        <rect fill="#EBF1F4" width="20"   height="1200" x="100%" y="0"   transform="translate(-20, 0)"/>
+    </svg>
+
+</svg>

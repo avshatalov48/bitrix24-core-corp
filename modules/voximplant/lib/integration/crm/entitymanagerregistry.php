@@ -40,6 +40,24 @@ class EntityManagerRegistry
 				\CCrmOwnerType::ResolveID($call->getPrimaryEntityType()),
 				$call->getPrimaryEntityId()
 			);
+
+			foreach ($call->getCrmBindings() as $binding)
+			{
+				if(isset($binding['OWNER_TYPE_NAME']) && isset($binding['OWNER_ID']))
+				{
+					$facilityInstance->getSelector()->setEntity(
+						\CCrmOwnerType::ResolveID($binding['OWNER_TYPE_NAME']),
+						(int)$binding['OWNER_ID']
+					);
+				}
+				else if (isset($binding['OWNER_TYPE_ID']) && isset($binding['OWNER_ID']))
+				{
+					$facilityInstance->getSelector()->setEntity(
+						(int)$binding['OWNER_TYPE_ID'],
+						(int)$binding['OWNER_ID']
+					);
+				}
+			}
 		}
 		else if($call->getCallerId() != '')
 		{

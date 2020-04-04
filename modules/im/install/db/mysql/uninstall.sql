@@ -16,3 +16,6 @@ DROP TABLE if exists b_im_app;
 DROP TABLE if exists b_im_app_lang;
 DROP TABLE if exists b_im_no_relation_permission_disk;
 DROP TABLE if exists b_im_last_search;
+DROP TABLE if exists b_im_permission;
+DROP TABLE if exists b_im_permission_duration;
+DROP TABLE if exists b_im_permission_log;

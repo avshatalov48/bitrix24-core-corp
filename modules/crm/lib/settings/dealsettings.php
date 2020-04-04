@@ -4,7 +4,6 @@ use Bitrix\Main;
 class DealSettings
 {
 	const VIEW_LIST = EntityViewSettings::LIST_VIEW;
-	const VIEW_WIDGET = EntityViewSettings::WIDGET_VIEW;
 	const VIEW_KANBAN = EntityViewSettings::KANBAN_VIEW;
 	const VIEW_CALENDAR = EntityViewSettings::CALENDAR_VIEW;
 
@@ -28,6 +27,8 @@ class DealSettings
 	private $enableDeferredCleaning = null;
 	/** @var BooleanSetting  */
 	private $enableRecycleBin = null;
+	/** @var BooleanSetting  */
+	private $enableCreateDealOnOrder = null;
 
 	function __construct()
 	{
@@ -37,6 +38,7 @@ class DealSettings
 		$this->isOpened = new BooleanSetting('deal_opened_flag', true);
 		$this->enableDeferredCleaning = new BooleanSetting('enable_deal_deferred_cleaning', true);
 		$this->enableRecycleBin = new BooleanSetting('enable_deal_recycle_bin', true);
+		$this->enableCreateDealOnOrder = new BooleanSetting('create_deal_on_order', true);
 	}
 	/**
 	 * Get current instance
@@ -136,6 +138,23 @@ class DealSettings
 		$this->enableRecycleBin->set($enabled);
 	}
 	/**
+	 * Return true if creating new deal on order is enabled.
+	 * @return bool
+	 */
+	public function isCreateDealOnOrderEnabled()
+	{
+		return $this->enableCreateDealOnOrder->get();
+	}
+	/**
+	 * Enable creation new deal on order
+	 * @param bool $enabled Enabled Flag.
+	 * @return void
+	 */
+	public function enableCreateDealOnOrder($enabled)
+	{
+		$this->enableCreateDealOnOrder->set($enabled);
+	}
+	/**
 	 * Get current list view ID
 	 * @return int
 	 */
@@ -182,7 +201,6 @@ class DealSettings
 
 			self::$descriptions= array(
 				self::VIEW_LIST => GetMessage('CRM_DEAL_SETTINGS_VIEW_LIST'),
-				self::VIEW_WIDGET => GetMessage('CRM_DEAL_SETTINGS_VIEW_WIDGET'),
 				self::VIEW_KANBAN => GetMessage('CRM_DEAL_SETTINGS_VIEW_KANBAN')
 			);
 		}

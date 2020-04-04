@@ -7,7 +7,7 @@
 
 $APPLICATION->IncludeComponent(
 	"bitrix:tasks.task",
-	"view",
+	(isset($arParams['NEW_CARD']) && $arParams['NEW_CARD'] === 'Y' ? 'view_new_v2' : 'view'),
 	array(
 		"ID" => $arParams["TASK_ID"],
 		"GROUP_ID" => "",
@@ -28,6 +28,7 @@ $APPLICATION->IncludeComponent(
 		"SET_TITLE" => "N",
 		"NAME_TEMPLATE" => $arParams["NAME_TEMPLATE"],
 		"DATE_TIME_FORMAT" => $arParams["DATE_TIME_FORMAT"],
+		'GUID' => $arParams['GUID'],
 
 		"SHOW_RATING" => "Y",
 		"RATING_TYPE" => "like",
@@ -46,7 +47,7 @@ $APPLICATION->IncludeComponent(
 			"COMPANY_WORKTIME",
 			"USER_FIELDS",
 			"TEMPLATE"
-		)
+		),
 	),
 	$this->__component,
 	array("HIDE_ICONS" => "Y")

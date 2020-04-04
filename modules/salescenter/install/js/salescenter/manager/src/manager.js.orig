@@ -1,0 +1,367 @@
+import 'clipboard';
+import {rest as Rest} from 'rest.client';
+import 'loadext';
+import 'popup';
+import 'sidepanel';
+import {PULL as Pull} from "pull.client";
+
+export class Manager
+{
+	static init(options = {
+		connectedSiteId: 0,
+		sessionId: 0,
+		isSitePublished: false,
+		isSiteExists: false,
+	})
+	{
+		options.connectedSiteId = parseInt(options.connectedSiteId);
+		if(options.connectedSiteId > 0)
+		{
+			Manager.connectedSiteId = options.connectedSiteId;
+		}
+		options.sessionId = parseInt(options.sessionId);
+		if(options.sessionId > 0)
+		{
+			Manager.sessionId = options.sessionId;
+		}
+		if(typeof options.siteTemplateCode === 'string')
+		{
+			Manager.siteTemplateCode = options.siteTemplateCode;
+		}
+		if(typeof options.isSitePublished === "boolean")
+		{
+			Manager.isSitePublished = options.isSitePublished;
+		}
+		if(typeof options.isSiteExists === "boolean")
+		{
+			Manager.isSiteExists = options.isSiteExists;
+		}
+
+		if(!Manager.isPullInited)
+		{
+			Manager.initPull();
+		}
+	}
+
+	static connect()
+	{
+		return new Promise((resolve, reject) =>
+		{
+			if(!Manager.isSitePublished)
+			{
+				if(Manager.connectedSiteId > 0 && Manager.isSiteExists)
+				{
+					Manager.publicConnectedSite().then((result) =>
+					{
+						resolve(result);
+					}).catch((reason) =>
+					{
+						reject(reason);
+					});
+				}
+				else
+				{
+					let url = '/shop/stores/site/edit/0/?IFRAME=Y&IFRAME_TYPE=SIDE_SLIDER&no_redirect=Y';
+					if(Manager.siteTemplateCode)
+					{
+						url = BX.util.add_url_param(url, {tpl : Manager.siteTemplateCode});
+					}
+					Manager.onSetConnectedSiteHandler = () =>
+					{
+						if(Manager.isSiteExists)
+						{
+							Manager.publicConnectedSite().then((result) =>
+							{
+								resolve(result);
+							}).catch((reason) =>
+							{
+								reject(reason);
+							});
+						}
+						else
+						{
+							resolve();
+						}
+					};
+					Manager.openSlider(url);
+				}
+			}
+			else
+			{
+				resolve();
+			}
+		});
+	}
+
+	static publicConnectedSite()
+	{
+		return new Promise((resolve, reject) =>
+		{
+			if(Manager.connectedSiteId > 0 && !Manager.isSitePublished)
+			{
+				Rest.callMethod('landing.site.publication', {id: Manager.connectedSiteId}).then((result) =>
+				{
+					Manager.isSitePublished = true;
+					Manager.firePublicConnectedSiteEvent();
+					resolve(result);
+				}).catch((reason) =>
+				{
+					reject(reason);
+				});
+			}
+			else
+			{
+				resolve();
+			}
+		});
+	}
+
+	static firePublicConnectedSiteEvent()
+	{
+		top.BX.onCustomEvent('Salescenter.Manager:onPublicConnectedSite', {
+			isSitePublished: true
+		});
+	}
+
+	static addPublicConnectedSiteEventHandler(callback)
+	{
+		if(typeof callback === 'function')
+		{
+			top.BX.addCustomEvent('Salescenter.Manager:onPublicConnectedSite', callback);
+		}
+	}
+
+	static copyUrl(url)
+	{
+		BX.clipboard.copy(url);
+	}
+
+	static addCustomPage()
+	{
+		return new Promise((resolve) =>
+		{
+			Manager.getAddUrlPopup().then((popup) => {
+				popup.show();
+			});
+			Manager.addUrlResolve = resolve;
+		});
+	}
+
+	static resolveAddPopup()
+	{
+		if(Manager.addUrlResolve && typeof Manager.addUrlResolve === 'function')
+		{
+			Manager.addUrlResolve();
+			Manager.addUrlResolve = null;
+		}
+	}
+
+	static initPopupTemplate()
+	{
+		return new Promise(resolve => {
+			BX.loadExt('salescenter.url_popup').then(() =>
+			{
+				Manager.templateEngine = BX.Vue.create({
+					el: document.createElement('div'),
+					template: '<bx-salescenter-url-popup/>',
+					mounted()
+					{
+						Manager.popupNode = this.$el;
+						this.$app = Manager;
+						resolve();
+					},
+				});
+			});
+		});
+	}
+
+	static getAddUrlPopup()
+	{
+		return new Promise((resolve) =>
+		{
+			if(!Manager.addUrlPopup)
+			{
+				Manager.initPopupTemplate().then(() =>
+				{
+					Manager.addUrlPopup = new BX.PopupWindow('salescenter-app-add-url', null, {
+						zIndex: 200,
+						autoHide: true,
+						closeByEsc: true,
+						closeIcon: true,
+						content : Manager.popupNode,
+						titleBar: BX.message('SALESCENTER_ACTION_ADD_CUSTOM_TITLE'),
+						contentColor: 'white',
+						maxWidth: 300,
+						events : {
+							onPopupClose: () =>
+							{
+								Manager.resolveAddPopup();
+							},
+							onPopupDestroy : () =>
+							{
+								Manager.addUrlPopup = null;
+							}
+						},
+					});
+
+					resolve(Manager.addUrlPopup);
+				});
+			}
+			else
+			{
+				resolve(Manager.addUrlPopup);
+			}
+		});
+	}
+
+	static addPage(fields)
+	{
+		return Rest.callMethod('salescenter.page.add', {
+			fields: fields
+		});
+	}
+
+	static checkUrl(url)
+	{
+		return Rest.callMethod('salescenter.page.geturldata', {
+			url: url
+		});
+	}
+
+	static addSitePage()
+	{
+		return new Promise((resolve) =>
+		{
+			if(Manager.connectedSiteId > 0)
+			{
+				BX.loadExt('landing.master').then(() =>
+				{
+					BX.Landing.UI.Panel.URLList
+						.getInstance()
+						.show('landing', {siteId: Manager.connectedSiteId})
+						.then((result) =>
+						{
+							Manager.addPage({
+								hidden: false,
+								landingId: result.id
+							}).then((result) =>
+							{
+								resolve(result);
+							});
+						});
+				});
+			}
+			else
+			{
+				Manager.openSlider('/bitrix/components/bitrix/salescenter.connect/slider.php').then(() =>
+				{
+					resolve();
+				});
+			}
+		});
+	}
+
+	static addStorePage()
+	{
+		return Manager.addSitePage();
+	}
+
+	static hidePage(pageId)
+	{
+		const method = 'salescenter.page.hide';
+		const data = {
+			id: pageId,
+			fields: {
+				hidden: true,
+			}
+		};
+
+		return Rest.callMethod(method, data);
+	}
+
+	static deleteUrl(pageId)
+	{
+		const method = 'salescenter.page.delete';
+		const data = {
+			id: pageId,
+		};
+
+		return Rest.callMethod(method, data);
+	}
+
+	static editLandingPage(pageId)
+	{
+		window.open('/shop/stores/site/' + Manager.connectedSiteId + '/view/' + pageId + '/', '_blank');
+	}
+
+	static openSlider(url, options = {cacheable: false, allowChangeHistory: false})
+	{
+		return new Promise((resolve) =>
+		{
+			if(typeof url === "string" && url.length > 1)
+			{
+				options.events = {
+					onClose: () =>
+					{
+						resolve();
+					}
+				};
+				BX.SidePanel.Instance.open(url, options);
+			}
+			else
+			{
+				resolve();
+			}
+		});
+	}
+
+	static showOrdersList()
+	{
+		let url = '/saleshub/orders/', params = {};
+		if(Manager.sessionId > 0)
+		{
+			params['sessionId'] = Manager.sessionId;
+		}
+		url = BX.util.add_url_param(url, params);
+		return Manager.openSlider(url);
+	}
+
+	static showOrderAdd()
+	{
+		return Manager.openSlider('/saleshub/orders/order/');
+	}
+
+	static initPull()
+	{
+		Manager.isPullInited = true;
+		Pull.subscribe({
+			moduleId: 'salescenter',
+			command: 'SETCONNECTEDSITE',
+			callback: (params) =>
+			{
+				Manager.init(params);
+				Manager.onSetConnectedSite();
+			},
+		});
+	}
+
+	static onSetConnectedSite()
+	{
+		if(typeof Manager.onSetConnectedSiteHandler === 'function')
+		{
+			Manager.onSetConnectedSiteHandler();
+			Manager.onSetConnectedSiteHandler = null;
+		}
+	}
+}
+
+Manager.sessionId = null;
+Manager.connectedSiteId = null;
+Manager.addUrlPopup = null;
+Manager.addUrlResolve = null;
+Manager.popupNode = null;
+Manager.siteTemplateCode = null;
+Manager.isSitePublished = null;
+Manager.isSiteExists = null;
+Manager.isPullInited = false;
+Manager.onSetConnectedSiteHandler = null;

@@ -5237,8 +5237,10 @@ window._bx_plann_events['<?= $uid?>'] = [
 			"<=DATE_ACTIVE_FROM" => $arParams['toLimit'],
 		);
 
-		if (count($arFilterEx) > 0)
+		if (!empty($arFilterEx))
+		{
 			$arFilter = array_merge($arFilter, $arFilterEx);
+		}
 
 		$bCache = true;
 		$arResult = false;

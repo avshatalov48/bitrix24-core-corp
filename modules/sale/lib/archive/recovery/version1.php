@@ -11,6 +11,8 @@ use Bitrix\Main,
  * Value of archive version is "1".
  * 
  * @package Bitrix\Sale\Archive\Recovery
+ *
+ * @deprecated No longer used by internal code and not recommended.
  */
 class Version1 extends Base
 {

@@ -2095,7 +2095,7 @@
 		{
 			for (var i = 0; i < leadingDigits.length; i++)
 			{
-				re = new RegExp('^' + leadingDigits[i]);
+				re = new RegExp('^(' + leadingDigits[i] + ')');
 				matches = phoneNumber.match(re);
 				if(matches)
 				{
@@ -2105,7 +2105,7 @@
 		}
 		else
 		{
-			re = new RegExp('^' + leadingDigits);
+			re = new RegExp('^(' + leadingDigits + ')');
 			matches = phoneNumber.match(re);
 			if(matches)
 			{

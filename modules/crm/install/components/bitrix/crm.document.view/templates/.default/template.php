@@ -65,6 +65,7 @@ $activityEditorParams = array(
 	'TOOLBAR_ID' => '',
 	'OWNER_TYPE' => \CCrmOwnerType::ResolveName($this->getComponent()->getCrmOwnerType()),
 	'OWNER_ID' => $this->getComponent()->getValue(),
+	'SKIP_VISUAL_COMPONENTS' => 'Y',
 );
 
 $APPLICATION->IncludeComponent(
@@ -78,7 +79,7 @@ $APPLICATION->IncludeComponent(
 <div class="docs-preview-wrap">
 	<div class="docs-preview-inner docs-preview-inner-slider">
 		<div class="ui-alert ui-alert-danger ui-alert-icon-danger ui-alert-text-center" id="crm-document-view-error"<?
-		if($arResult['ERRORS'])
+		if($arResult['ERRORS'] || $arResult['transformationErrorMessage'])
 		{
 			?> style="display: block;"
 		<?}?>>
@@ -89,9 +90,15 @@ $APPLICATION->IncludeComponent(
 					echo htmlspecialcharsbx($error);
 					echo '<br />';
 				}
+			}
+			elseif($arResult['transformationErrorMessage'])
+			{
+				echo htmlspecialcharsbx($arResult['transformationErrorMessage']);
 			}?></span>
 			<span class="ui-alert-close-btn" onclick="BX.hide(BX('crm-document-view-error'));"></span>
 		</div>
+		<?if(!$arResult['ERRORS'])
+		{?>
 		<div class="docs-preview-img" id="crm-document-image">
 			<div class="docs-preview-error" id="docs-preview-transform-error"<?if($arResult['isTransformationError']){?> style="display: block;"<?}?>>
 				<div class="docs-preview-error-message">
@@ -124,7 +131,10 @@ $APPLICATION->IncludeComponent(
 				BX.Crm.DocumentView.init(<?=CUtil::PhpToJSObject($arResult);?>);
 			});
 		</script>
+		<?}?>
 	</div>
+	<?if(!$arResult['ERRORS'])
+	{?>
 	<div class="docs-preview-sidebar-wrapper">
 		<div class="docs-preview-sidebar">
 		<div class="docs-preview-download">
@@ -139,6 +149,8 @@ $APPLICATION->IncludeComponent(
 					</div>
 				</div>
 			</div>
+			<?if(\Bitrix\DocumentGenerator\Driver::getInstance()->getUserPermissions()->canModifyDocuments())
+			{?>
 			<div class="docs-preview-block">
 				<input class="docs-preview-checkbox" type="checkbox" id="crm-document-stamp"<?if($arResult['stampsEnabled']){
 					?> checked<?
@@ -149,6 +161,7 @@ $APPLICATION->IncludeComponent(
                 ?>>
 				<label class="docs-preview-checkbox-label docs-preview-link-pointer" type="text" for="crm-document-stamp"><?=Loc::getMessage('CRM_DOCUMENT_VIEW_SIGNED');?></label>
 			</div>
+			<?}?>
 		</div>
 		<div class="docs-preview-link-inner docs-preview-link-inner-public">
 			<div class="docs-preview-public-link">
@@ -173,7 +186,7 @@ $APPLICATION->IncludeComponent(
 				</div>
 			</div>
 		</div>
-		<?if($arResult['editTemplateUrl'])
+		<?if(!is_bool($arResult['editTemplateUrl']))
 		{?>
 		<div class="docs-preview-link-inner">
 			<div class="docs-preview-link-block">
@@ -199,6 +212,7 @@ $APPLICATION->IncludeComponent(
 		</div>
 		<?}?>
 	</div>
+	<?}?>
 </div>
 <?if($arParams['IS_SLIDER'])
 {

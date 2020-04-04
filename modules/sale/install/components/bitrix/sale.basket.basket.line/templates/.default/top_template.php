@@ -33,7 +33,8 @@ $compositeStub = (isset($arResult['COMPOSITE_STUB']) && $arResult['COMPOSITE_STU
 				"confirm_user_id",
 				"logout_butt",
 				"auth_service_id",
-				"clear_cache"
+				"clear_cache",
+				"backurl",
 			);
 
 			$currentUrl = urlencode($APPLICATION->GetCurPageParam("", $arParamsToDelete));

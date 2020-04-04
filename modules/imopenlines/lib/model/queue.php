@@ -1,8 +1,10 @@
 <?php
 namespace Bitrix\ImOpenLines\Model;
 
-use Bitrix\Main,
-	Bitrix\Main\Localization\Loc;
+use \Bitrix\Main,
+	\Bitrix\Main\Localization\Loc,
+	\Bitrix\Main\ORM\Query\Join,
+	\Bitrix\Main\ORM\Fields\Relations\Reference;
 Loc::loadMessages(__FILE__);
 
 /**
@@ -20,7 +22,7 @@ Loc::loadMessages(__FILE__);
  * @package Bitrix\Imopenlines
  **/
 
-class QueueTable extends Main\Entity\DataManager
+class QueueTable extends Main\ORM\Data\DataManager
 {
 	/**
 	 * Returns DB table name for entity.
@@ -36,6 +38,8 @@ class QueueTable extends Main\Entity\DataManager
 	 * Returns entity map definition.
 	 *
 	 * @return array
+	 * @throws Main\ArgumentException
+	 * @throws Main\SystemException
 	 */
 	public static function getMap()
 	{
@@ -77,7 +81,6 @@ class QueueTable extends Main\Entity\DataManager
 			),
 			'USER_AVATAR' => array(
 				'data_type' => 'string',
-				'validation' => array(__CLASS__, 'validateString'),
 				'title' => Loc::getMessage('QUEUE_ENTITY_USER_AVATAR_FIELD'),
 			),
 			'USER_AVATAR_ID' => array(
@@ -88,6 +91,11 @@ class QueueTable extends Main\Entity\DataManager
 				'data_type' => 'Bitrix\Main\User',
 				'reference' => array('=this.USER_ID' => 'ref.ID')
 			),
+			new Reference(
+				'CONFIG',
+				ConfigTable::class,
+				Join::on('this.CONFIG_ID', 'ref.ID')
+			)
 		);
 	}
 

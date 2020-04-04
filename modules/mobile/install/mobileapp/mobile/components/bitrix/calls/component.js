@@ -2442,35 +2442,7 @@ MobileTelephony.prototype.getDebugInfo = function()
 
 MobileTelephony.prototype.phoneCorrect = function(number)
 {
-	number = number.toString().trim();
-
-	if (number.substr(0, 2) == '+8' && number.length > 10)
-	{
-		number = '008'+number.substr(2);
-	}
-	number = number.replace(/[^0-9\*]/g, '');
-
-	if (number.substr(0, 2) == '80' || number.substr(0, 2) == '81' || number.substr(0, 2) == '82')
-	{
-	}
-	else if (number.substr(0, 2) == '00' && number.length >= 9)
-	{
-		number = number.substr(2);
-	}
-	else if (number.substr(0, 3) == '011' && number.length >= 10)
-	{
-		number = number.substr(3);
-	}
-	else if (number.substr(0, 1) == '8' && number.length >= 11)
-	{
-		number = '7'+number.substr(1);
-	}
-	else if (number.substr(0, 1) == '0' && number.length >= 8)
-	{
-		number = number.substr(1);
-	}
-
-	return number;
+	return number.toString().replace(/[^0-9+#*;,]/g, '');
 };
 
 MobileTelephony.prototype.log = function()

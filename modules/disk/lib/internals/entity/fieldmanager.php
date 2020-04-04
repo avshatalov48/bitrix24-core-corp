@@ -8,6 +8,7 @@ use Bitrix\Disk\Internals\Error\ErrorCollection;
 use Bitrix\Disk\Internals\Error\IErrorable;
 use Bitrix\Disk\Internals\Entity;
 use Bitrix\Main\ArgumentTypeException;
+use Bitrix\Main\Text\StringHelper;
 
 final class FieldManager implements IErrorable
 {
@@ -134,7 +135,7 @@ final class FieldManager implements IErrorable
 			if(!is_array($conf))
 			{
 				$conf = array(
-					'orm_alias' => strtoupper($this->camel2snake($name)),
+					'orm_alias' => strtoupper(StringHelper::camel2snake($name)),
 					'class' => $conf,
 					'load' => null,
 					'select' => '*',
@@ -148,7 +149,7 @@ final class FieldManager implements IErrorable
 
 			if(!isset($conf['orm_alias']))
 			{
-				$conf['orm_alias'] = strtoupper($this->camel2snake($name));
+				$conf['orm_alias'] = strtoupper(StringHelper::camel2snake($name));
 			}
 
 			$normalizedFields[$name] = $conf;
@@ -157,16 +158,28 @@ final class FieldManager implements IErrorable
 		return $normalizedFields;
 	}
 
+	/**
+	 * @deprecated
+	 *
+	 * @param $str
+	 *
+	 * @return string
+	 */
 	private function camel2snake($str)
 	{
-		return strtolower(preg_replace('/(.)([A-Z])/', '$1_$2', $str));
+		return StringHelper::camel2snake($str);
 	}
 
+	/**
+	 * @deprecated
+	 *
+	 * @param $str
+	 *
+	 * @return mixed
+	 */
 	private function snake2camel($str)
 	{
-		$str = str_replace('_', ' ', strtolower($str));
-
-		return str_replace(' ', '', ucwords($str));
+		return StringHelper::snake2camel($str);
 	}
 
 	/**

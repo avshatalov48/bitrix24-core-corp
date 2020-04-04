@@ -22,6 +22,7 @@ $MESS["CRM_PRODUCT_UPDATE_UNKNOWN_ERROR"] = "Во время обновлени�
 $MESS["CRM_PRODUCT_DELETE_UNKNOWN_ERROR"] = "Во время удаления товара произошла ошибка.";
 $MESS["CRM_PRODUCT_NAV_TITLE_EDIT"] = "Товар: #NAME#";
 $MESS["CRM_PRODUCT_NAV_TITLE_ADD"] = "Добавление товара";
+$MESS["CRM_PRODUCT_NAV_TITLE_COPY"] = "Копирование товара";
 $MESS["CRM_PRODUCT_NAV_TITLE_LIST"] = "Список товаров";
 $MESS["CRM_PRODUCT_PROP_ENLARGE"] = "Увеличить";
 $MESS["CRM_PRODUCT_PROP_DOWNLOAD"] = "Скачать";

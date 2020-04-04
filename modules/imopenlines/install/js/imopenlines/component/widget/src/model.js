@@ -54,7 +54,6 @@ export class WidgetModel extends VuexBuilderModel
 				operators: [],
 				connectors: [],
 				showForm: FormType.none,
-				uploadFile: false,
 				showed: false,
 				reopen: false,
 				dragged: false,
@@ -108,7 +107,6 @@ export class WidgetModel extends VuexBuilderModel
 				showed: null,
 				showConsent: null,
 				showForm: null,
-				uploadFile: null,
 				location: null,
 			},
 		}
@@ -153,15 +151,15 @@ export class WidgetModel extends VuexBuilderModel
 				}
 				if (Utils.types.isPlainObject(payload.textMessages))
 				{
-					if (typeof payload.textMessages.bxLivechatOnlineLine1 === 'string')
+					if (typeof payload.textMessages.bxLivechatOnlineLine1 === 'string' && payload.textMessages.bxLivechatOnlineLine1 !== '')
 					{
 						state.common.textMessages.bxLivechatOnlineLine1 = payload.textMessages.bxLivechatOnlineLine1;
 					}
-					if (typeof payload.textMessages.bxLivechatOnlineLine2 === 'string')
+					if (typeof payload.textMessages.bxLivechatOnlineLine2 === 'string' && payload.textMessages.bxLivechatOnlineLine2 !== '')
 					{
 						state.common.textMessages.bxLivechatOnlineLine2 = payload.textMessages.bxLivechatOnlineLine2;
 					}
-					if (typeof payload.textMessages.bxLivechatOffline === 'string')
+					if (typeof payload.textMessages.bxLivechatOffline === 'string' && payload.textMessages.bxLivechatOffline !== '')
 					{
 						state.common.textMessages.bxLivechatOffline = payload.textMessages.bxLivechatOffline;
 					}
@@ -185,11 +183,11 @@ export class WidgetModel extends VuexBuilderModel
 				if (typeof payload.showed === 'boolean')
 				{
 					state.common.showed = payload.showed;
-					payload.reopen = payload.showed;
+					payload.reopen = Utils.device.isMobile()? false: payload.showed;
 				}
 				if (typeof payload.reopen === 'boolean')
 				{
-					state.common.reopen = payload.showed;
+					state.common.reopen = payload.reopen;
 				}
 				if (typeof payload.copyright === 'boolean')
 				{
@@ -206,14 +204,6 @@ export class WidgetModel extends VuexBuilderModel
 				if (payload.connectors instanceof Array)
 				{
 					state.common.connectors = payload.connectors;
-				}
-				if (typeof payload.uploadFilePlus !== 'undefined')
-				{
-					state.common.uploadFile = state.common.uploadFile+1;
-				}
-				if (typeof payload.uploadFileMinus !== 'undefined')
-				{
-					state.common.uploadFile = state.common.uploadFile-1;
 				}
 				if (typeof payload.showForm === 'string' && typeof FormType[payload.showForm] !== 'undefined')
 				{

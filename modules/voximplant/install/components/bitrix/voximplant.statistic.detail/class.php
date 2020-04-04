@@ -87,7 +87,13 @@ class CVoximplantStatisticDetailComponent extends \CBitrixComponent
 				"id" => "PORTAL_NUMBER",
 				"name" => Loc::getMessage("TELEPHONY_HEADER_PORTAL_PHONE"),
 				"type" => "list",
-				"items" => CVoxImplantConfig::GetPortalNumbers(true, true),
+				"items" => array_map(
+					function($line){return $line["SHORT_NAME"];},
+					CVoxImplantConfig::GetLinesEx([
+						"showRestApps" => true,
+						"showInboundOnly" => true
+					])
+				),
 				"default" => false,
 				"params" => array(
 					"multiple" => true
@@ -218,7 +224,7 @@ class CVoximplantStatisticDetailComponent extends \CBitrixComponent
 		{
 			try
 			{
-				$result[">=CALL_START_DATE"] = new \Bitrix\Main\Type\DateTime($filter["START_DATE_from"]);
+				$result[">=CALL_START_DATE"] = \Bitrix\Main\Type\DateTime::createFromUserTime($filter["START_DATE_from"]);
 			} catch (Exception $e)
 			{
 			}
@@ -228,7 +234,7 @@ class CVoximplantStatisticDetailComponent extends \CBitrixComponent
 		{
 			try
 			{
-				$result["<=CALL_START_DATE"] = new \Bitrix\Main\Type\DateTime($filter["START_DATE_to"]);
+				$result["<=CALL_START_DATE"] = \Bitrix\Main\Type\DateTime::createFromUserTime($filter["START_DATE_to"]);
 			} catch (Exception $e)
 			{
 			}
@@ -638,17 +644,21 @@ class CVoximplantStatisticDetailComponent extends \CBitrixComponent
 
 	protected function getRecordHtml($id, $recordHref, $recordDownloadUrl, $transcriptId, $transcriptPending, $callId)
 	{
-		if (strlen($recordHref) > 0)
+		if (strlen($recordHref) > 0 || $transcriptId > 0)
 		{
-			$recordHtml = '<div class="tel-player"><button class="vi-player-button" data-bx-record="'.$recordHref.'"></button></div>';
+			$recordHtml = '';
+			if(strlen($recordHref) > 0)
+			{
+				$recordHtml .= '<div class="tel-player"><button class="vi-player-button" data-bx-record="'.$recordHref.'"></button></div>';
 
-			if ($recordDownloadUrl != '')
-			{
-				$recordHtml .= '<a href="'.$recordDownloadUrl.'" target="_blank" class="tel-player-download"></a>';
-			}
-			else
-			{
-				$recordHtml .= '<a href="'.$recordHref.'" target="_blank" class="tel-player-download"></a>';
+				if ($recordDownloadUrl != '')
+				{
+					$recordHtml .= '<a href="'.$recordDownloadUrl.'" target="_blank" class="tel-player-download"></a>';
+				}
+				else
+				{
+					$recordHtml .= '<a href="'.$recordHref.'" target="_blank" class="tel-player-download"></a>';
+				}
 			}
 
 			if($transcriptId > 0)
@@ -659,7 +669,6 @@ class CVoximplantStatisticDetailComponent extends \CBitrixComponent
 			{
 
 			}
-
 			$result = '<span style="white-space: nowrap">'.$recordHtml.'</span>';
 		}
 		else

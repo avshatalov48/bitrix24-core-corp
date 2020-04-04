@@ -1,3 +1,3 @@
 <?
-$MESS["TITLE"] = "My activities";
+$MESS["TITLE"] = "My Activities";
 ?>

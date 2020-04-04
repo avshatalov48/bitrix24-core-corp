@@ -206,6 +206,12 @@ $arResult['FILTER'] = array(
 		'type' => 'string',
 		'default' => true
 	),
+	array(
+		'id' => 'CODE',
+		'name' => GetMessage('CRM_COLUMN_CODE'),
+		'type' => 'string',
+		'default' => false
+	),
 // Catalog ID is not supported - section list can not be changed
 //		array(
 //			'id' => 'CATALOG_ID',
@@ -246,6 +252,7 @@ $arResult['HEADERS'] = array(
 	array('id' => 'ID', 'name' => GetMessage('CRM_COLUMN_ID'), 'sort' => 'id', 'default' => false, 'editable' => false),
 	array('id' => 'XML_ID', 'name' => GetMessage('CRM_COLUMN_XML_ID'), 'sort' => 'xml_id', 'default' => false, 'editable' => false),
 	array('id' => 'NAME', 'name' => GetMessage('CRM_COLUMN_NAME'), 'sort' => 'name', 'default' => true, 'editable' => true, 'params' => array('size' => 45)),
+	array('id' => 'CODE', 'name' => GetMessage('CRM_COLUMN_CODE'), 'sort' => 'name', 'default' => false, 'editable' => true, 'params' => array('size' => 45)),
 	array('id' => 'PRICE', 'name' => GetMessage('CRM_COLUMN_PRICE'),/* 'sort' => 'price',*/ 'default' => true, 'editable' => true),
 	array('id' => 'MEASURE', 'name' => GetMessage('CRM_COLUMN_MEASURE'),/* 'sort' => 'price',*/ 'default' => true, 'editable' => array('items' => $arResult['MEASURE_LIST_ITEMS']), 'type' => 'list')
 );
@@ -397,7 +404,7 @@ if ($isStExport)
 	$arNavParams = [
 		'nPageSize' => $stExportPageSize,
 		'iNumPage' => $stExportPageNumber,
-		'bShowAll' => ($stExportPageNumber === 1)
+		'bShowAll' => false
 	];
 }
 else
@@ -604,6 +611,7 @@ $arFiltrableFieldMap = array(
 	'CATALOG_ID' => 'IBLOCK_ID',
 	'SECTION_ID' => 'SECTION_ID',
 	'NAME' => 'NAME',
+	'CODE' => 'CODE',
 	'XML_ID' => 'EXTERNAL_ID'
 );
 $arFiltrableField = array_keys($arFiltrableFieldMap);
@@ -962,7 +970,7 @@ $arResult['SORT'] = $arSort;
 $arResult['SORT_VARS'] = $_arSort['vars'];
 unset($_arSort, $arSort);
 
-$arSelect = $arProperties = $selectedFields = [];
+$arSelect = $selectedPropertyIds = $selectedFields = [];
 if ($isInExportMode && $isStExportAllFields)
 {
 	$selectedFieldsMap = [];
@@ -1001,7 +1009,7 @@ foreach ($selectedFields as $fieldName)
 {
 	if (preg_match('/^PROPERTY_\d+$/', $fieldName))
 	{
-		$arProperties[] = $fieldName;
+		$selectedPropertyIds[] = (int)substr($fieldName, 9);
 
 		if (isset($arProps[$fieldName]))
 		{
@@ -1064,18 +1072,61 @@ if (in_array('DESCRIPTION', $arSelect) && !in_array('DESCRIPTION_TYPE', $arSelec
 	$arSelect[] = 'DESCRIPTION_TYPE';
 }
 
+// get page number
+$navParams = CDBResult::GetNavParams();
+$pageNum = (int)$navParams['PAGEN'];
+$pageSize = (int)$arNavParams['nPageSize'];
+if ($pageSize < 1)
+{
+	$pageSize = 10;
+}
+unset($navParams);
+if ($pageNum < 1)
+{
+	$pageNum = 1;
+}
+$pageOffsetNext = $pageSize * $pageNum;
+$pageOffset = $pageOffsetNext - $pageSize;
+
 // SECTIONS -->
 $arResultData = array();
+$navSectionCount = 0;
+$navSectionFetchCount = 0;
 if (!$bSkipSections)
 {
-	$obSection = new CIBlockSection;
-	$rsSection = $obSection->GetList($arResult['SORT'], $arSectionFilter, false, $arSelect);
-	while($arSectionRow = $rsSection->Fetch())
+	$section = new CIBlockSection();
+	$navSectionCount = $section->GetCount($arSectionFilter);
+	unset($section);
+	if ($navSectionCount > $pageOffset)
 	{
-		$arSectionRow['TYPE'] = 'S';
-		$arResultData[] = $arSectionRow;
+		$navSectionFetchCount = $navSectionCount - $pageOffset;
+		if ($navSectionFetchCount > $pageSize)
+		{
+			$navSectionFetchCount = $pageSize;
+		}
 	}
-	unset($obSection, $rsSection, $arSectionRow);
+	if ($navSectionCount > 0)
+	{
+		$rsSection = CIBlockSection::GetList(
+			$arResult['SORT'],
+			$arSectionFilter,
+			false,
+			$arSelect,
+			[
+				'nPageSize' => $pageSize,
+				'iNumPage' => $pageNum,
+				'bShowAll' => false
+			]
+		);
+		$GLOBALS['NavNum']--;
+		$fetchIndex = 0;
+		while($fetchIndex++ < $navSectionFetchCount && $arSectionRow = $rsSection->Fetch())
+		{
+			$arSectionRow['TYPE'] = 'S';
+			$arResultData[] = $arSectionRow;
+		}
+		unset($rsSection, $fetchIndex, $arSectionRow);
+	}
 }
 unset($arSectionFilter);
 // SECTIONS <--
@@ -1083,39 +1134,117 @@ unset($arSectionFilter);
 // PRODUCTS -->
 $arPricesSelect = $arVatsSelect = array();
 $arSelect = CCrmProduct::DistributeProductSelect($arSelect, $arPricesSelect, $arVatsSelect);
-$rsProduct = CCrmProduct::GetList(
-	$arResult['SORT'],
-	$arFilter,
-	$arSelect,
-	($isStExport && $stExportPageNumber > 1) ? $arNavParams : false
-);
+$navProductCount = 0;
+$navProductFetchCount = 0;
+if (!$isStExport || $stExportPageNumber <= 1)
+{
+	$navProductCount = (int)CCrmProduct::GetList([], $arFilter, [], false, true);
+}
 if ($isStExport)
 {
 	if ($stExportPageNumber === 1)
 	{
-		$stExportTotalItems = $rsProduct->SelectedRowsCount();
-		if (is_numeric($stExportTotalItems))
-		{
-			$arResult['STEXPORT_TOTAL_ITEMS'] = (int)$stExportTotalItems;
-		}
-		unset($stExportTotalItems);
+		$arResult['STEXPORT_TOTAL_ITEMS'] = $navProductCount;
 	}
-	$obRes = &$rsProduct;
-	unset($rsProduct);
+	$obRes = CCrmProduct::GetList($arResult['SORT'], $arFilter, $arSelect, $arNavParams);
 }
 else
 {
-	while($arProductRow = $rsProduct->Fetch())
+	$navTotalCount = $navSectionCount + $navProductCount;
+
+	if ($navSectionCount < $pageOffsetNext)
 	{
-		$arProductRow['TYPE'] = 'P';
-		$arResultData[] = $arProductRow;
+		$navProductPageOffset = $pageOffsetNext - $navSectionCount;
+		$navProductSurplus = $navProductPageOffset % $pageSize;
+		$navProductPageList = [];
+		if ($navProductPageOffset > $pageSize)
+		{
+			$navProductPageNumber = ($navProductPageOffset - $navProductSurplus) / $pageSize;
+			$navProductPageEnd = $pageOffsetNext - $navProductSurplus;
+			if ($navTotalCount <= $navProductPageEnd)
+			{
+				$navProductPageList[] = [
+					'pageSize' => $pageSize,
+					'pageNum' => $navProductPageNumber,
+					'offset' => $navProductSurplus,
+					'count' => $pageSize - ($pageOffsetNext - $navTotalCount)
+				];
+			}
+			else
+			{
+				$navProductPageList[] = [
+					'pageSize' => $pageSize,
+					'pageNum' => $navProductPageNumber,
+					'offset' => $navProductSurplus,
+					'count' => $pageSize - $navProductSurplus
+				];
+				$navProductPageList[] = [
+					'pageSize' => $pageSize,
+					'pageNum' => $navProductPageNumber + 1,
+					'offset' => 0,
+					'count' => (
+						$navTotalCount < $pageOffsetNext ?
+							$navTotalCount - ($pageOffsetNext - $navProductSurplus) :
+							$navProductSurplus
+					)
+				];
+			}
+			unset($navProductPageNumber, $navProductPageEnd);
+		}
+		else
+		{
+			$navProductPageSize = $navProductSurplus > 0 ? $navProductSurplus : $pageSize;
+			$navProductPageList[] = [
+				'pageSize' => $navProductPageSize,
+				'pageNum' => 1,
+				'offset' => 0,
+				'count' => $navProductPageSize
+			];
+			unset($navProductPageSize);
+		}
+		unset($navProductPageOffset, $navProductSurplus);
+
+		foreach ($navProductPageList as $navPageInfo)
+		{
+			$rsProduct = CCrmProduct::GetList(
+				$arResult['SORT'],
+				$arFilter,
+				$arSelect,
+				[
+					'nPageSize' => $navPageInfo['pageSize'],
+					'iNumPage' => $navPageInfo['pageNum'],
+					'bShowAll' => false
+				]
+			);
+			$GLOBALS['NavNum']--;
+			$fetchIndex = 0;
+			$fetchCount = $navPageInfo['offset'] + $navPageInfo['count'];
+			while($fetchIndex++ < $fetchCount && $arProductRow = $rsProduct->Fetch())
+			{
+				if ($fetchIndex > $navPageInfo['offset'])
+				{
+					$arProductRow['TYPE'] = 'P';
+					$arResultData[] = $arProductRow;
+				}
+			}
+			unset($fetchIndex, $fetchCount, $arProductRow);
+		}
+		unset($navProductPageList, $rsProduct, $navPageInfo);
 	}
-	unset($rsProduct, $arProductRow);
-	//$obRes = CCrmProduct::GetList($arResult['SORT'], $arFilter, $arSelect, $arNavParams);
+
 	$obRes = new CDBResult;
 	$obRes->InitFromArray($arResultData);
-	$obRes->NavStart($arNavParams);
+	$obRes->InitNavStartVars($pageSize, false, $pageNum);
+	$obRes->NavPageNomer = $pageNum;
+	$obRes->nSelectedCount = $obRes->NavRecordCount = $navTotalCount;
+	$obRes->NavPageCount = floor($obRes->NavRecordCount / $pageSize);
+	if($obRes->NavRecordCount % $obRes->NavPageSize > 0)
+	{
+		$obRes->NavPageCount++;
+	}
+	unset($navTotalCount);
 }
+
 $arResult['PRODUCTS'] = array();
 $arResult['PERMS']['ADD']    = true;
 $arResult['PERMS']['WRITE']  = true;
@@ -1187,137 +1316,170 @@ while($arElement = $obRes->GetNext())
 		//$arResult['PRODUCT_ID_ARY'][$arElement['ID']] = $arElement['ID'];
 
 		// Product properties
-		$rsProperties = CIBlockElement::GetProperty(
-			$catalogID,
-			$arElement['ID'],
-			array(
-				'sort' => 'asc',
-				'id' => 'asc',
-				'enum_sort' => 'asc',
-				'value_id' => 'asc',
-			),
-			array(
-				'ACTIVE' => 'Y',
-				'EMPTY' => 'N',
-				'CHECK_PERMISSIONS' => 'N'
-			)
-		);
-		$prevPropID = '';
-		$prevPropMultipleValuesInfo = array();
-		$controlSettings = [];
-		while ($arProperty = $rsProperties->Fetch())
+		$propsCount = count($selectedPropertyIds);
+		if ($propsCount > 0)
 		{
-			if (isset($arProperty['USER_TYPE']) && !empty($arProperty['USER_TYPE'])
-				&& !array_key_exists($arProperty['USER_TYPE'], $arPropUserTypeList))
-				continue;
-
-			$propID = 'PROPERTY_' . $arProperty['ID'];
-
-			if ($isInExportMode)
+			$stepSize = 500;
+			$stepCount = (int)floor($propsCount / $stepSize) + 1;
+			$offset = $range = 0;
+			$stepIds = [];
+			while ($stepCount > 0)
 			{
-				$controlSettings['MODE'] = CCrmProductPropsHelper::AjustExportMode($sExportType, $arProperty);
-			}
-
-			// region Prepare multiple values
-			if (!empty($prevPropID) && $propID !== $prevPropID && !empty($prevPropMultipleValuesInfo))
-			{
-				$methodName = $prevPropMultipleValuesInfo['methodName'];
-				$method = $prevPropMultipleValuesInfo['propertyInfo']['PROPERTY_USER_TYPE'][$methodName];
-				$arPropertyValues[$arElement['ID']][$prevPropID] = call_user_func_array(
-					$method,
-					array(
-						$prevPropMultipleValuesInfo['propertyInfo'],
-						array("VALUE" => $prevPropMultipleValuesInfo['value']),
-						$prevPropMultipleValuesInfo['controlSettings']
-					)
-				);
-			}
-			// endregion Prepare multiple values
-
-			if ($propID !== $prevPropID)
-			{
-				$prevPropID = $propID;
-				$prevPropMultipleValuesInfo = array();
-			}
-
-			if (!isset($arPropertyValues[$arElement['ID']][$propID]))
-				$arPropertyValues[$arElement['ID']][$propID] = array();
-
-			$userTypeMultipleWithMultipleMethod = $userTypeMultipleWithSingleMethod =
-				$userTypeSingleWithSingleMethod = false;
-			if (isset($arProperty['USER_TYPE']) && !empty($arProperty['USER_TYPE'])
-				&& is_array($arPropUserTypeList[$arProperty['USER_TYPE']]))
-			{
-				$userTypeMultipleWithMultipleMethod = (
-					isset($arProperty['MULTIPLE']) && $arProperty['MULTIPLE'] === 'Y'
-					&& array_key_exists('GetPublicViewHTMLMulty', $arPropUserTypeList[$arProperty['USER_TYPE']])
-				);
-				$userTypeMultipleWithSingleMethod = (
-					isset($arProperty['MULTIPLE']) && $arProperty['MULTIPLE'] === 'Y'
-					&& array_key_exists('GetPublicViewHTML', $arPropUserTypeList[$arProperty['USER_TYPE']])
-				);
-				$userTypeSingleWithSingleMethod = (
-					(!isset($arProperty['MULTIPLE']) || $arProperty['MULTIPLE'] !== 'Y')
-					&& array_key_exists('GetPublicViewHTML', $arPropUserTypeList[$arProperty['USER_TYPE']])
-				);
-			}
-			if ($userTypeMultipleWithMultipleMethod || $userTypeMultipleWithSingleMethod
-				|| $userTypeSingleWithSingleMethod)
-			{
-				$propertyInfo = $arProps[$propID];
-				$propertyInfo['PROPERTY_USER_TYPE'] = $arPropUserTypeList[$arProperty['USER_TYPE']];
-				$methodName = $userTypeMultipleWithMultipleMethod ? 'GetPublicViewHTMLMulty' : 'GetPublicViewHTML';
-				if ($userTypeMultipleWithMultipleMethod)
+				$range = ($stepCount > 1) ? $stepSize : $propsCount - $offset;
+				if ($range > 0)
 				{
-					if (is_array($prevPropMultipleValuesInfo['value']))
+					$stepIds = array_slice($selectedPropertyIds, $offset, $range);
+
+					$rsProperties = CIBlockElement::GetProperty(
+						$catalogID,
+						$arElement['ID'],
+						array(
+							'sort' => 'asc',
+							'id' => 'asc',
+							'enum_sort' => 'asc',
+							'value_id' => 'asc',
+						),
+						array(
+							'ID' => $stepIds,
+							'ACTIVE' => 'Y',
+							'EMPTY' => 'N',
+							'CHECK_PERMISSIONS' => 'N'
+						)
+					);
+					$prevPropID = '';
+					$prevPropMultipleValuesInfo = array();
+					$controlSettings = [];
+					while ($arProperty = $rsProperties->Fetch())
 					{
-						$prevPropMultipleValuesInfo['value'][] = $arProperty["VALUE"];
+						if (isset($arProperty['USER_TYPE']) && !empty($arProperty['USER_TYPE'])
+							&& !array_key_exists($arProperty['USER_TYPE'], $arPropUserTypeList))
+							continue;
+
+						$propID = 'PROPERTY_' . $arProperty['ID'];
+
+						if ($isInExportMode)
+						{
+							$controlSettings['MODE'] =
+								CCrmProductPropsHelper::AjustExportMode($sExportType, $arProperty);
+						}
+
+						// region Prepare multiple values
+						if (!empty($prevPropID) && $propID !== $prevPropID && !empty($prevPropMultipleValuesInfo))
+						{
+							$methodName = $prevPropMultipleValuesInfo['methodName'];
+							$method = $prevPropMultipleValuesInfo['propertyInfo']['PROPERTY_USER_TYPE'][$methodName];
+							$arPropertyValues[$arElement['ID']][$prevPropID] = call_user_func_array(
+								$method,
+								array(
+									$prevPropMultipleValuesInfo['propertyInfo'],
+									array("VALUE" => $prevPropMultipleValuesInfo['value']),
+									$prevPropMultipleValuesInfo['controlSettings']
+								)
+							);
+						}
+						// endregion Prepare multiple values
+
+						if ($propID !== $prevPropID)
+						{
+							$prevPropID = $propID;
+							$prevPropMultipleValuesInfo = array();
+						}
+
+						if (!isset($arPropertyValues[$arElement['ID']][$propID]))
+							$arPropertyValues[$arElement['ID']][$propID] = array();
+
+						$userTypeMultipleWithMultipleMethod = $userTypeMultipleWithSingleMethod =
+						$userTypeSingleWithSingleMethod = false;
+						if (isset($arProperty['USER_TYPE']) && !empty($arProperty['USER_TYPE'])
+							&& is_array($arPropUserTypeList[$arProperty['USER_TYPE']]))
+						{
+							$userTypeMultipleWithMultipleMethod = (
+								isset($arProperty['MULTIPLE']) && $arProperty['MULTIPLE'] === 'Y'
+								&& array_key_exists(
+									'GetPublicViewHTMLMulty', $arPropUserTypeList[$arProperty['USER_TYPE']]
+								)
+							);
+							$userTypeMultipleWithSingleMethod = (
+								isset($arProperty['MULTIPLE']) && $arProperty['MULTIPLE'] === 'Y'
+								&& array_key_exists(
+									'GetPublicViewHTML', $arPropUserTypeList[$arProperty['USER_TYPE']]
+								)
+							);
+							$userTypeSingleWithSingleMethod = (
+								(!isset($arProperty['MULTIPLE']) || $arProperty['MULTIPLE'] !== 'Y')
+								&& array_key_exists('GetPublicViewHTML', $arPropUserTypeList[$arProperty['USER_TYPE']])
+							);
+						}
+						if ($userTypeMultipleWithMultipleMethod || $userTypeMultipleWithSingleMethod
+							|| $userTypeSingleWithSingleMethod)
+						{
+							$propertyInfo = $arProps[$propID];
+							$propertyInfo['PROPERTY_USER_TYPE'] = $arPropUserTypeList[$arProperty['USER_TYPE']];
+							$methodName = $userTypeMultipleWithMultipleMethod ?
+								'GetPublicViewHTMLMulty' : 'GetPublicViewHTML';
+							if ($userTypeMultipleWithMultipleMethod)
+							{
+								if (is_array($prevPropMultipleValuesInfo['value']))
+								{
+									$prevPropMultipleValuesInfo['value'][] = $arProperty["VALUE"];
+								}
+								else
+								{
+									$prevPropMultipleValuesInfo['propertyInfo'] = $propertyInfo;
+									$prevPropMultipleValuesInfo['controlSettings'] = $controlSettings;
+									$prevPropMultipleValuesInfo['methodName'] = $methodName;
+									$prevPropMultipleValuesInfo['value'] = array($arProperty["VALUE"]);
+								}
+							}
+							else
+							{
+								$arPropertyValues[$arElement['ID']][$propID][] = call_user_func_array(
+									$arPropUserTypeList[$arProperty['USER_TYPE']][$methodName],
+									array(
+										$propertyInfo,
+										array("VALUE" => $arProperty["VALUE"]),
+										$controlSettings
+									)
+								);
+							}
+							unset($propertyInfo);
+						}
+						else if ($arProperty["PROPERTY_TYPE"] == "L")
+						{
+							$arPropertyValues[$arElement['ID']][$propID][] =
+								htmlspecialcharsex($arProperty["VALUE_ENUM"]);
+						}
+						else
+						{
+							$arPropertyValues[$arElement['ID']][$propID][] =
+								htmlspecialcharsex($arProperty["VALUE"]);
+						}
 					}
-					else
+
+					// region Prepare multiple values for last property
+					if (!empty($prevPropID) && !empty($prevPropMultipleValuesInfo))
 					{
-						$prevPropMultipleValuesInfo['propertyInfo'] = $propertyInfo;
-						$prevPropMultipleValuesInfo['controlSettings'] = $controlSettings;
-						$prevPropMultipleValuesInfo['methodName'] = $methodName;
-						$prevPropMultipleValuesInfo['value'] = array($arProperty["VALUE"]);
+						$methodName = $prevPropMultipleValuesInfo['methodName'];
+						$method = $prevPropMultipleValuesInfo['propertyInfo']['PROPERTY_USER_TYPE'][$methodName];
+						$arPropertyValues[$arElement['ID']][$prevPropID] = call_user_func_array(
+							$method,
+							array(
+								$prevPropMultipleValuesInfo['propertyInfo'],
+								array("VALUE" => $prevPropMultipleValuesInfo['value']),
+								$prevPropMultipleValuesInfo['controlSettings']
+							)
+						);
 					}
+					// endregion Prepare multiple values for last property
+
+					unset($rsProperties, $arProperty, $propID, $prevPropID, $prevPropMultipleValuesInfo,
+						$controlSettings);
 				}
-				else
-				{
-					$arPropertyValues[$arElement['ID']][$propID][] = call_user_func_array($arPropUserTypeList[$arProperty['USER_TYPE']][$methodName], array(
-						$propertyInfo,
-						array("VALUE" => $arProperty["VALUE"]),
-						$controlSettings
-					));
-				}
-				unset($propertyInfo);
-			}
-			else if ($arProperty["PROPERTY_TYPE"] == "L")
-			{
-				$arPropertyValues[$arElement['ID']][$propID][] = htmlspecialcharsex($arProperty["VALUE_ENUM"]);
-			}
-			else
-			{
-				$arPropertyValues[$arElement['ID']][$propID][] = htmlspecialcharsex($arProperty["VALUE"]);
+				$offset += $stepSize;
+				$stepCount--;
 			}
 		}
-
-		// region Prepare multiple values for last property
-		if (!empty($prevPropID) && !empty($prevPropMultipleValuesInfo))
-		{
-			$methodName = $prevPropMultipleValuesInfo['methodName'];
-			$method = $prevPropMultipleValuesInfo['propertyInfo']['PROPERTY_USER_TYPE'][$methodName];
-			$arPropertyValues[$arElement['ID']][$prevPropID] = call_user_func_array(
-				$method,
-				array(
-					$prevPropMultipleValuesInfo['propertyInfo'],
-					array("VALUE" => $prevPropMultipleValuesInfo['value']),
-					$prevPropMultipleValuesInfo['controlSettings']
-				)
-			);
-		}
-		// endregion Prepare multiple values for last property
-
-		unset($rsProperties, $arProperty, $propID, $prevPropID, $prevPropMultipleValuesInfo, $controlSettings);
+		unset($propsCount, $stepSize, $stepCount, $offset, $range, $stepIds);
 	}
 }
 $arResult['PROPERTY_VALUES'] = $arPropertyValues;

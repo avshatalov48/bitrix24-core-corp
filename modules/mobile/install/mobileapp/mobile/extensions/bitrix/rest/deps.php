@@ -1,1 +1,1 @@
-<? return ["utils"];
+<? return ["utils", "db", "helpers/holder"];

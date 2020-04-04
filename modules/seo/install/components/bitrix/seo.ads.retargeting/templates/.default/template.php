@@ -6,18 +6,22 @@ use \Bitrix\Main\UI\Extension;
 
 /** @var array $arParams */
 
-Extension::load('ui.hint');
+Extension::load(['ui.hint', 'seo.ads.client_selector']);
 
 $containerNodeId = $arParams['CONTAINER_NODE_ID'];
 $destroyEventName = $arParams['JS_DESTROY_EVENT_NAME'];
 $accountId = $arParams['ACCOUNT_ID'];
 $audienceId = $arParams['AUDIENCE_ID'];
+$clientId = $arParams['CLIENT_ID'];
 $autoRemoveDayNumber = $arParams['AUTO_REMOVE_DAY_NUMBER'];
 $provider = $arParams['PROVIDER'];
+$titleNodeSelector = $arParams['~TITLE_NODE_SELECTOR'];
 $type = htmlspecialcharsbx($provider['TYPE']);
 $typeUpped = strtoupper($type);
 
 $namePrefix = htmlspecialcharsbx($arParams['INPUT_NAME_PREFIX']);
+
+$multiClients = array_key_exists('CLIENTS', $arParams['PROVIDER']);
 ?>
 <script id="template-crm-ads-dlg-settings" type="text/html">
 	<div class="crm-ads-rtg-popup-settings">
@@ -51,6 +55,9 @@ $namePrefix = htmlspecialcharsbx($arParams['INPUT_NAME_PREFIX']);
 	<div data-bx-ads-block="auth" style="display: none;">
 		<div class="crm-ads-rtg-popup-settings">
 			<div class="crm-ads-rtg-popup-social crm-ads-rtg-popup-social-<?=$type?>">
+				<?if ($multiClients):?>
+				<div data-bx-ads-client="" class="crm-ads-rtg-popup-client"></div>
+				<?else:?>
 				<div class="crm-ads-rtg-popup-social-avatar">
 					<div data-bx-ads-auth-avatar="" class="crm-ads-rtg-popup-social-avatar-icon"></div>
 				</div>
@@ -60,6 +67,8 @@ $namePrefix = htmlspecialcharsbx($arParams['INPUT_NAME_PREFIX']);
 				<div class="crm-ads-rtg-popup-social-shutoff">
 					<span data-bx-ads-auth-logout="" class="crm-ads-rtg-popup-social-shutoff-link"><?=Loc::getMessage('CRM_ADS_RTG_LOGOUT')?></span>
 				</div>
+				<?endif?>
+				<input type="hidden" data-bx-ads-client-input="" name="<?=$namePrefix?>CLIENT_ID" value="<?=$clientId?>">
 			</div>
 		</div>
 	</div>
@@ -89,7 +98,8 @@ $namePrefix = htmlspecialcharsbx($arParams['INPUT_NAME_PREFIX']);
 				<table class="crm-ads-rtg-table">
 					<tr>
 						<td>
-							<select disabled name="<?=$namePrefix?>ACCOUNT_ID" data-bx-ads-account="" class="crm-ads-rtg-popup-settings-dropdown">
+							<select disabled name="<?=$namePrefix?>ACCOUNT_ID" data-bx-ads-account="" class="crm-ads-rtg-popup-settings-dropdown<?
+							if ($provider['IS_SUPPORT_ADD_AUDIENCE']):?> crm-ads-rtg-popup-settings-dropdown-narrow<?endif?>">
 							</select>
 						</td>
 						<td>
@@ -109,14 +119,15 @@ $namePrefix = htmlspecialcharsbx($arParams['INPUT_NAME_PREFIX']);
 					<?=Loc::getMessage('CRM_ADS_RTG_SELECT_AUDIENCE')?>:
 					<span data-hint="<?=htmlspecialcharsbx(
 						Loc::getMessage('CRM_ADS_RTG_AUDIENCE_TYPE_HINT_' . $typeUpped)
-						. ' ' . Loc::getMessage('CRM_ADS_RTG_AUDIENCE_ADD_HINT_' . $typeUpped)
+						. ' ' . Loc::getMessage('CRM_ADS_RTG_AUDIENCE_ADD_HINT_' . $typeUpped, ['#BR#' => '<br>'])
 					)?>"></span>
 				</div>
 
 				<table class="crm-ads-rtg-table">
 					<tr>
 						<td>
-							<select disabled name="<?=$namePrefix?>AUDIENCE_ID" data-bx-ads-audience="" class="crm-ads-rtg-popup-settings-dropdown">
+							<select disabled name="<?=$namePrefix?>AUDIENCE_ID" data-bx-ads-audience="" class="crm-ads-rtg-popup-settings-dropdown<?
+								if ($provider['IS_SUPPORT_ADD_AUDIENCE']):?> crm-ads-rtg-popup-settings-dropdown-narrow<?endif?>">
 							</select>
 						</td>
 						<td>
@@ -125,6 +136,11 @@ $namePrefix = htmlspecialcharsbx($arParams['INPUT_NAME_PREFIX']);
 									<circle class="crm-ads-rtg-path" cx="50" cy="50" r="20" fill="none" stroke-width="1" stroke-miterlimit="10"/>
 								</svg>
 							</div>
+							<?if ($provider['IS_SUPPORT_ADD_AUDIENCE']):?>
+							<div>
+								<span  style="display: none;" class="ui-btn ui-btn-link ui-btn-xs" data-bx-ads-audience-add=""><?= Loc::getMessage("CRM_ADS_RTG_AUDIENCE_ADD") ?></span>
+							</div>
+							<?endif?>
 						</td>
 						<?if(false && !$provider['IS_ADDING_REQUIRE_CONTACTS']):?>
 						<td>
@@ -142,7 +158,7 @@ $namePrefix = htmlspecialcharsbx($arParams['INPUT_NAME_PREFIX']);
 					<?=Loc::getMessage('CRM_ADS_RTG_SELECT_CONTACT_DATA')?>:
 					<span data-hint="<?=htmlspecialcharsbx(
 						Loc::getMessage('CRM_ADS_RTG_AUDIENCE_TYPE_HINT_' . $typeUpped)
-						. ' ' . Loc::getMessage('CRM_ADS_RTG_AUDIENCE_ADD_HINT_' . $typeUpped)
+						. ' ' . Loc::getMessage('CRM_ADS_RTG_AUDIENCE_ADD_HINT_' . $typeUpped, ['#BR#' => '<br>'])
 					)?>"></span>
 				</div>
 				<table class="crm-ads-rtg-table">
@@ -256,6 +272,11 @@ $namePrefix = htmlspecialcharsbx($arParams['INPUT_NAME_PREFIX']);
 				<?=Loc::getMessage('CRM_ADS_RTG_CABINET_' . $typeUpped)?>
 			</a>
 		</div>
+
+		<?if ($multiClients):?>
+			<span class="ui-btn ui-btn-light-border ui-btn-xs" data-bx-ads-client-add-btn=""><?= Loc::getMessage("CRM_ADS_RTG_ADD_CLIENT_BTN") ?></span>
+			<br><br>
+		<?endif?>
 	</div>
 
 </script>
@@ -269,16 +290,23 @@ $namePrefix = htmlspecialcharsbx($arParams['INPUT_NAME_PREFIX']);
 		{
 			var params = <?=\Bitrix\Main\Web\Json::encode(array(
 				'provider' => $provider,
+				'multiClients' => $multiClients,
+				'clientId' => $clientId,
 				'accountId' => $accountId,
 				'audienceId' => $audienceId,
 				'containerId' => $containerNodeId,
 				'destroyEventName' => $destroyEventName,
 				'signedParameters' => $this->getComponent()->getSignedParameters(),
 				'componentName' => $this->getComponent()->getName(),
+				'titleNodeSelector' => $titleNodeSelector,
 				'mess' => array(
 					'errorAction' => Loc::getMessage('CRM_ADS_RTG_ERROR_ACTION'),
 					'dlgBtnClose' => Loc::getMessage('CRM_ADS_RTG_CLOSE'),
-					'dlgBtnCancel' => Loc::getMessage('CRM_ADS_RTG_APPLY'),
+					'dlgBtnCreate' => Loc::getMessage('CRM_ADS_RTG_CREATE'),
+					'dlgBtnApply' => Loc::getMessage('CRM_ADS_RTG_APPLY'),
+					'dlgBtnCancel' => Loc::getMessage('CRM_ADS_RTG_CANCEL_ALT'),
+					'newAudiencePopupTitle' => Loc::getMessage('CRM_ADS_RTG_AUDIENCE_ADD'),
+					'newAudienceNameLabel' => Loc::getMessage('CRM_ADS_RTG_NEW_AUDIENCE_NAME_LABEL'),
 				)
 			))?>;
 			new CrmAdsRetargeting(params);

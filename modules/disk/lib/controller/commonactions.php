@@ -2,6 +2,7 @@
 
 namespace Bitrix\Disk\Controller;
 
+use Bitrix\Disk\Driver;
 use Bitrix\Main\Application;
 use Bitrix\Main\Engine\ActionFilter;
 use Bitrix\Disk;
@@ -14,6 +15,9 @@ class CommonActions extends BaseObject
 		$configureActions = parent::configureActions();
 		$configureActions['search'] = [
 			'class' => Disk\Controller\Action\SearchAction::class,
+			'+prefilters' => [
+				new ActionFilter\CloseSession(),
+			]
 		];
 
 		$configureActions['getArchiveLink'] = [
@@ -145,7 +149,7 @@ class CommonActions extends BaseObject
 			if($object instanceof Disk\File)
 			{
 				$zipArchive->addEntry(
-					ZipNginx\ArchiveEntry::createFromFile($object)
+					ZipNginx\ArchiveEntry::createFromFileModel($object)
 				);
 			}
 		}
@@ -154,5 +158,14 @@ class CommonActions extends BaseObject
 		$APPLICATION->restartBuffer();
 		$zipArchive->send();
 		Application::getInstance()->terminate();
+	}
+
+	public function listRecentlyUsedAction()
+	{
+		$recentlyUsedManager = Driver::getInstance()->getRecentlyUsedManager();
+
+		return [
+			'files' => $recentlyUsedManager->getFileModelListByUser($this->getCurrentUser()),
+		];
 	}
 }

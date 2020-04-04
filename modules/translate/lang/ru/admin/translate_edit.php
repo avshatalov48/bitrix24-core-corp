@@ -30,4 +30,10 @@ $MESS["TRANS_GET_UNTRANSLATE_TITLE"] = "Выгрузить непереведе�
 $MESS["TRANS_GET_TRANSLATE"] = "Выгрузить сообщения в CSV";
 $MESS["TRANS_GET_FULL_TRANSLATE"] = "Выгрузить все сообщения";
 $MESS["TRANS_GET_FULL_TRANSLATE_TITLE"] = "Выгрузить все фразы данного файла";
+$MESS["TR_FILEDOWNFORM_TAB2"] = "Выгрузка файла";
+$MESS["TR_FILE_ACTIONS"] = "Обработка файлов:";
+$MESS["TR_CONVERT_NATIONAL2_UTF8"] = "Сконвертировать кодировку в UTF-8";
+$MESS["TR_SELECT_LANGUAGE"] = "Выберите языки для выгрузки";
+$MESS["TR_SELECT_LANGUAGE_ALL"] = "Все";
+$MESS["TR_DOWNLOAD_SUBMIT_BUTTON"] = "Экспортировать";
 ?>

@@ -97,6 +97,14 @@ class CCrmDocumentCompany extends CCrmDocument
 
 		$arResult += parent::getAssignedByFields();
 		$arResult += array(
+			'CREATED_BY_ID' => array(
+				'Name' => GetMessage('CRM_DOCUMENT_FIELD_CREATED_BY_ID_COMPANY'),
+				'Type' => 'user',
+			),
+			'MODIFY_BY_ID' => array(
+				'Name' => GetMessage('CRM_DOCUMENT_FIELD_MODIFY_BY_ID'),
+				'Type' => 'user',
+			),
 			'COMMENTS' => array(
 				'Name' => GetMessage('CRM_FIELD_COMMENTS'),
 				'Type' => 'text',
@@ -251,6 +259,9 @@ class CCrmDocumentCompany extends CCrmDocument
 
 		//append UTM fields
 		$arResult += parent::getUtmFields();
+
+		//append FORM fields
+		$arResult += parent::getSiteFormFields(CCrmOwnerType::Company);
 
 		return $arResult;
 	}

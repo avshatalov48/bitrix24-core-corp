@@ -98,12 +98,21 @@ class Helper
 						'=REST_APP_ID' => $fields['REST_APP_ID']
 					)
 				));
-				if(!$row)
+				if($row)
 				{
-					$result->addError(new Error('Could not find line with number ' . $lineNumber));
-					return $result;
+					$lineId = $row['ID'];
 				}
-				$lineId = $row['ID'];
+				else
+				{
+					$insertResult = ExternalLineTable::add(array(
+						'NUMBER' => $lineNumber,
+						'REST_APP_ID' => $fields['REST_APP_ID']
+					));
+					if($insertResult->isSuccess())
+					{
+						$lineId = $insertResult->getId();
+					}
+				}
 			}
 		}
 
@@ -431,11 +440,21 @@ class Helper
 			));
 			if(!$statisticRecord['CRM_ACTIVITY_ID'])
 				$activityCreationError = \CVoxImplantCrmHelper::$lastError;
+
+			if($call->getCrmActivityId() && \CVoxImplantCrmHelper::shouldCompleteActivity($statisticRecord))
+			{
+				\CVoxImplantCrmHelper::completeActivity($call->getCrmActivityId());
+			}
 		}
 
 		if(\CVoxImplantConfig::GetLeadWorkflowExecution() == \CVoxImplantConfig::WORKFLOW_START_DEFERRED)
 		{
 			\CVoxImplantCrmHelper::StartCallTrigger($call);
+		}
+
+		if($statisticRecord["CALL_FAILED_CODE"] == 304 && ($call->getIncoming() == \CVoxImplantMain::CALL_INCOMING || $call->getIncoming() == \CVoxImplantMain::CALL_INCOMING_REDIRECT))
+		{
+			\CVoxImplantCrmHelper::StartMissedCallTrigger($call);
 		}
 
 		$insertResult = StatisticTable::add($statisticRecord);
@@ -449,7 +468,14 @@ class Helper
 
 		$hasRecord = ($fields['RECORD_URL'] != '');
 		if($hasRecord)
+		{
+			if(defined('BX_UTF') && !mb_check_encoding($fields['RECORD_URL'], 'UTF-8'))
+			{
+				$result->addError(new Error('RECORD_URL contains invalid symbols for UTF-8 encoding'));
+				return $result;
+			}
 			\CVoxImplantHistory::DownloadAgent($insertResult->getId(), $fields['RECORD_URL'], $call->isCrmEnabled());
+		}
 
 		if($fields['ADD_TO_CHAT'])
 		{
@@ -728,7 +754,8 @@ class Helper
 			'USER_ID' => $userId,
 			'CALL_LIST_ID' => (int)$parameters['CALL_LIST_ID'],
 			'APP_ID' => $line['REST_APP_ID'],
-			'LINE_NUMBER' => $lineNumber
+			'LINE_NUMBER' => $lineNumber,
+			'IS_MOBILE' => $parameters['IS_MOBILE'] === true,
 		);
 
 		$registerResult = static::registerExternalCall(array(

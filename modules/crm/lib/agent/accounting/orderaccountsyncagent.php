@@ -39,7 +39,7 @@ class OrderAccountSyncAgent extends EntityStepwiseAgent
 		return \CCrmDeal::GetListEx(array(), array('CHECK_PERMISSIONS' => 'N'), array(), false);
 	}
 	// todo: order
-	protected function getEnityIDs($offsetID, $limit)
+	protected function getEntityIDs($offsetID, $limit)
 	{
 		$filter = array('CHECK_PERMISSIONS' => 'N');
 		if($offsetID > 0)

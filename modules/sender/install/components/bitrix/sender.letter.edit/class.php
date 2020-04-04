@@ -114,9 +114,11 @@ class SenderLetterEditComponent extends CBitrixComponent
 			{
 				case Message\ConfigurationOption::TYPE_TEMPLATE_TYPE:
 					$value = $this->letter->get('TEMPLATE_TYPE');
+					$configuration->set('TEMPLATE_TYPE', $value);
 					break;
 				case Message\ConfigurationOption::TYPE_TEMPLATE_ID:
 					$value = $this->letter->get('TEMPLATE_ID');
+					$configuration->set('TEMPLATE_ID', $value);
 					break;
 				case Message\ConfigurationOption::TYPE_FILE:
 					$value = $option->getValue();
@@ -129,6 +131,16 @@ class SenderLetterEditComponent extends CBitrixComponent
 				case Message\ConfigurationOption::TYPE_MAIL_EDITOR:
 					$value = Security\Sanitizer::fixReplacedStyles($value);
 					$value = Security\Sanitizer::sanitizeHtml($value, $option->getValue());
+					break;
+				case Message\ConfigurationOption::TYPE_USER_LIST:
+					$value = array_filter(
+						is_array($value) ? $value : [],
+						function ($item)
+						{
+							return (is_numeric($item) && $item > 0);
+						}
+					);
+					$value = implode(',', $value);
 					break;
 			}
 			$option->setValue($value);

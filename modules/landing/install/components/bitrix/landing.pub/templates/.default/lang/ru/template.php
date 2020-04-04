@@ -6,5 +6,6 @@ $MESS["LANDING_TPL_COPY_NAME_0"] = "Заряжено";
 $MESS["LANDING_TPL_COPY_NAME"] = "Битрикс24";
 $MESS["LANDING_TPL_COPY_REVIEW"] = "Бесплатные Сайты и CRM.";
 $MESS["LANDING_TPL_COPY_LINK"] = "Создать сайт";
-$MESS["LANDING_TPL_COPY_FULL"] = "Заряжено #LOGO# &mdash; Бесплатные Сайты и CRM.";
+$MESS["LANDING_TPL_COPY_FULL"] = "Заряжено #LOGO# &mdash; Бесплатные Сайты и CRM. <linkcreate>Создать сайт</linkcreate>";
+$MESS["LANDING_TPL_COPY_FULL2"] = "Заряжено <linklogo>#LOGO#</linklogo> &mdash; <linksite>Бесплатные Сайты</linksite> и <linkcrm>CRM</linkcrm>. <linkcreate>Создать сайт</linkcreate>";
 ?>

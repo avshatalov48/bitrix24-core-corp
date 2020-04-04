@@ -92,6 +92,18 @@ class Factory
 			case Base::Callback:
 				$class = Callback::class;
 				break;
+			case Base::FbLeadAds:
+				$class = FbLeadAds::class;
+				break;
+			case Base::VkLeadAds:
+				$class = VkLeadAds::class;
+				break;
+			case Base::Rest:
+				$class = Rest::class;
+				break;
+			case Base::Order:
+				$class = Order::class;
+				break;
 		}
 
 		return $class;
@@ -144,5 +156,44 @@ class Factory
 		}
 
 		return $collection;
+	}
+
+	/**
+	 * Get list of codes.
+	 *
+	 * @return array
+	 */
+	public static function getCodes()
+	{
+		return [
+			Base::Mail,
+			Base::Call,
+			Base::Imol,
+			Base::Site,
+			Base::Site24,
+			Base::Shop24,
+			Base::SiteDomain,
+			Base::Button,
+			Base::Form,
+			Base::Callback,
+			Base::FbLeadAds,
+			Base::VkLeadAds,
+		];
+	}
+
+	/**
+	 * Get list of names.
+	 *
+	 * @return array
+	 */
+	public static function getNames()
+	{
+		$list = [];
+		foreach (self::getCodes() as $code)
+		{
+			$list[$code] = Base::getNameByCode($code);
+		}
+
+		return $list;
 	}
 }

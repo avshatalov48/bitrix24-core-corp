@@ -19,6 +19,7 @@ abstract class EntityMerger
 	protected $userName = null;
 
 	protected $enablePermissionCheck = false;
+	protected $conflictResolutionMode = ConflictResolutionMode::UNDEFINED;
 
 	/**
 	 * @param int $entityTypeID Entity Type ID.
@@ -36,6 +37,7 @@ abstract class EntityMerger
 		$this->entityTypeID = $entityTypeID;
 		$this->setUserID($userID);
 		$this->enabledPermissionCheck($enablePermissionCheck);
+		$this->conflictResolutionMode = self::getDefaultConflictResolutionMode();
 	}
 	/**
 	 * Create new entity merger by specified entity type ID.
@@ -82,6 +84,34 @@ abstract class EntityMerger
 	{
 		$this->enablePermissionCheck = is_bool($enable) ? $enable : (bool)$enable;
 	}
+
+	public function getConflictResolutionMode()
+	{
+		return $this->conflictResolutionMode;
+	}
+	public function setConflictResolutionMode($mode)
+	{
+		if(!is_int($mode))
+		{
+			$mode = (int)$mode;
+		}
+
+		if(!ConflictResolutionMode::isDefined($mode))
+		{
+			throw new Main\ArgumentOutOfRangeException('mode',
+				ConflictResolutionMode::FIRST,
+				ConflictResolutionMode::LAST
+			);
+		}
+
+		$this->conflictResolutionMode = $mode;
+	}
+
+	public static function getDefaultConflictResolutionMode()
+	{
+		return ConflictResolutionMode::NEVER_OVERWRITE;
+	}
+
 	/**
 	 * Check if user is admin.
 	 * @return bool
@@ -345,18 +375,9 @@ abstract class EntityMerger
 		$entityFieldInfos = $this->getEntityFieldsInfo();
 		$userFieldInfos = $this->getEntityUserFieldsInfo();
 
-		$this->innerMergeEntityFields($seed, $targ, $entityFieldInfos);
-		EntityMerger::mergeUserFields($seed, $targ, $userFieldInfos);
-
-		$seedMultiFields = $this->getEntityMultiFields($seedID, self::ROLE_SEED);
-		$targMultiFields = $this->getEntityMultiFields($targID, self::ROLE_TARG);
-
-		EntityMerger::mergeMultiFields($seedMultiFields, $targMultiFields);
-
-		if(!empty($targMultiFields))
-		{
-			$targ['FM'] = $targMultiFields;
-		}
+		$options = array('conflictResolutionMode' => $this->conflictResolutionMode);
+		$this->innerMergeEntityFields($seed, $targ, $entityFieldInfos, false, $options);
+		EntityMerger::mergeUserFields($seed, $targ, $userFieldInfos, $options);
 
 		//region Recovery
 		//$recoveryData = self::prepareRecoveryData($seed, $entityFieldInfos, $userFieldInfos);
@@ -410,8 +431,8 @@ abstract class EntityMerger
 		//region Merge requisites
 		if ($entityTypeID === \CCrmOwnerType::Company || $entityTypeID === \CCrmOwnerType::Contact)
 		{
-			$requsiitedMergingHelper = new RequisiteMergingHelper($entityTypeID, $seedID, $targID);
-			$requsiitedMergingHelper->merge();
+			$requisiteMergingHelper = new RequisiteMergingHelper($entityTypeID, $seedID, $targID);
+			$requisiteMergingHelper->merge();
 		}
 		//endregion Merge requisites
 
@@ -545,28 +566,66 @@ abstract class EntityMerger
 	 * @param array &$targ Target entity fields.
 	 * @param array &$fieldInfos Entity field infos.
 	 * @param bool $skipEmpty Skip empty fields flag.
+	 * @param array $options Operation options.
 	 * @return void
 	 */
-	protected static function mergeEntityFields(array &$seed, array &$targ, array &$fieldInfos, $skipEmpty = false)
+	protected static function mergeEntityFields(array &$seed, array &$targ, array &$fieldInfos, $skipEmpty = false, array $options = null)
 	{
 		if(empty($seed))
 		{
 			return;
 		}
 
+		if($options === null)
+		{
+			$options = array();
+		}
+
+		$conflictResolutionMode = isset($options['conflictResolutionMode'])
+			? (int)$options['conflictResolutionMode'] : ConflictResolutionMode::UNDEFINED;
+		if(!ConflictResolutionMode::isDefined($conflictResolutionMode))
+		{
+			$conflictResolutionMode = self::getDefaultConflictResolutionMode();
+		}
+
+		if($conflictResolutionMode === ConflictResolutionMode::ALWAYS_OVERWRITE)
+		{
+			throw new EntityMergerException(
+				\CCrmOwnerType::Undefined,
+				0,
+				self::ROLE_UNDEFINED,
+				EntityMergerException::CONFLICT_RESOLUTION_NOT_SUPPORTED,
+				'',
+				0,
+				null,
+				array('conflictResolutionMode' => $conflictResolutionMode)
+			);
+		}
+
 		foreach($fieldInfos as $fieldID => &$fieldInfo)
 		{
+			if(!static::canMergeEntityField($fieldID))
+			{
+				continue;
+			}
+			/*
 			// Skip PK
 			if($fieldID === 'ID')
 			{
 				continue;
 			}
+			*/
 
-			// Skip READONLY fields
-			if(isset($fieldInfo['ATTRIBUTES'])
-				&& in_array(\CCrmFieldInfoAttr::ReadOnly, $fieldInfo['ATTRIBUTES'], true))
+			// Skip READONLY and PROGRESS fields
+			if(isset($fieldInfo['ATTRIBUTES']) && is_array($fieldInfo['ATTRIBUTES']))
 			{
-				continue;
+				if (in_array(\CCrmFieldInfoAttr::ReadOnly, $fieldInfo['ATTRIBUTES'], true)
+					|| in_array(\CCrmFieldInfoAttr::Progress, $fieldInfo['ATTRIBUTES'], true)
+					|| in_array(\CCrmFieldInfoAttr::Hidden, $fieldInfo['ATTRIBUTES'], true)
+				)
+				{
+					continue;
+				}
 			}
 
 			$targFlg = isset($targ[$fieldID]);
@@ -596,6 +655,21 @@ abstract class EntityMerger
 				}
 			}
 
+			if($targFlg
+				&& $seedFlg
+				&& $targ[$fieldID] != $seed[$fieldID]
+				&& $conflictResolutionMode === ConflictResolutionMode::ASK_USER
+				&& !static::resolveEntityFieldConflict($seed, $targ, $fieldID)
+			)
+			{
+				throw new EntityMergerException(
+					\CCrmOwnerType::Undefined,
+					0,
+					self::ROLE_UNDEFINED,
+					EntityMergerException::CONFLICT_OCCURRED
+				);
+			}
+
 			// Skip if target entity field is defined
 			// Skip if seed entity field is not defined
 			if(!$targFlg && $seedFlg)
@@ -605,6 +679,17 @@ abstract class EntityMerger
 		}
 		unset($fieldInfo);
 	}
+
+	protected static function canMergeEntityField($fieldID)
+	{
+		// Skip PK
+		if($fieldID === 'ID')
+		{
+			return false;
+		}
+		return true;
+	}
+
 	/**
 	 * Merge entity fields. May be overridden by descendants.
 	 * @param array &$seed Seed entity fields.
@@ -615,8 +700,35 @@ abstract class EntityMerger
 	 */
 	protected function innerMergeEntityFields(array &$seed, array &$targ, array &$fieldInfos, $skipEmpty = false, array $options = array())
 	{
-		self::mergeEntityFields($seed, $targ, $fieldInfos, $skipEmpty);
+		self::mergeEntityFields($seed, $targ, $fieldInfos, $skipEmpty, $options);
+		$this->innerMergeBoundEntities($seed, $targ, $skipEmpty, $options);
 	}
+
+	protected function innerMergeBoundEntities(array &$seed, array &$targ, $skipEmpty = false, array $options = array())
+	{
+		$seedID = isset($seed['ID']) ? (int)$seed['ID'] : 0;
+		$seedMultiFields = $seedID > 0 ? $this->getEntityMultiFields($seedID, self::ROLE_SEED) : array();
+
+		$targID = isset($targ['ID']) ? (int)$targ['ID'] : 0;
+		$targMultiFields = $targID > 0 ? $this->getEntityMultiFields($targID, self::ROLE_TARG) : array();
+
+		//TODO: Rename SKIP_MULTIPLE_USER_FIELDS -> ENABLE_MULTIPLE_FIELDS_ENRICHMENT
+		$skipMultipleFields = isset($options['SKIP_MULTIPLE_USER_FIELDS']) && $options['SKIP_MULTIPLE_USER_FIELDS'];
+		if(!empty($seedMultiFields) && (!$skipMultipleFields || (!$skipEmpty && empty($targMultiFields))))
+		{
+			self::mergeMultiFields($seedMultiFields, $targMultiFields);
+			if(!empty($targMultiFields))
+			{
+				$targ['FM'] = $targMultiFields;
+			}
+		}
+	}
+
+	protected static function resolveEntityFieldConflict(array &$seed, array &$targ, $fieldID)
+	{
+		return false;
+	}
+
 	/**
 	 * Merge user fields.
 	 * @param array &$seed Seed entity fields.
@@ -631,11 +743,47 @@ abstract class EntityMerger
 			return;
 		}
 
+		$conflictResolutionMode = isset($options['conflictResolutionMode'])
+			? (int)$options['conflictResolutionMode'] : ConflictResolutionMode::UNDEFINED;
+		if(!ConflictResolutionMode::isDefined($conflictResolutionMode))
+		{
+			$conflictResolutionMode = self::getDefaultConflictResolutionMode();
+		}
+
+		if($conflictResolutionMode === ConflictResolutionMode::ALWAYS_OVERWRITE)
+		{
+			throw new EntityMergerException(
+				\CCrmOwnerType::Undefined,
+				0,
+				self::ROLE_UNDEFINED,
+				EntityMergerException::CONFLICT_RESOLUTION_NOT_SUPPORTED,
+				'',
+				0,
+				null,
+				array('conflictResolutionMode' => $conflictResolutionMode)
+			);
+		}
+
 		$skipMultipleFields = isset($options['SKIP_MULTIPLE_USER_FIELDS']) && $options['SKIP_MULTIPLE_USER_FIELDS'];
 		foreach($fieldInfos as $fieldID => &$fieldInfo)
 		{
 			$isMultiple = $fieldInfo['MULTIPLE'] === 'Y';
 			$typeID = $fieldInfo['USER_TYPE_ID'];
+
+			if(!$isMultiple
+				&& isset($targ[$fieldID])
+				&& isset($seed[$fieldID])
+				&& $targ[$fieldID] != $seed[$fieldID]
+				&& $conflictResolutionMode === ConflictResolutionMode::ASK_USER
+			)
+			{
+				throw new EntityMergerException(
+					\CCrmOwnerType::Undefined,
+					0,
+					self::ROLE_UNDEFINED,
+					EntityMergerException::CONFLICT_OCCURRED
+				);
+			}
 
 			if($typeID === 'file')
 			{
@@ -671,84 +819,120 @@ abstract class EntityMerger
 				}
 				else
 				{
-					if(isset($seed[$fieldID]) && is_array($seed[$fieldID]))
+					if(!$skipMultipleFields)
 					{
-						$previousFileIDs = array();
-						if(isset($targ[$fieldID]) && is_array($targ[$fieldID]))
+						if(isset($seed[$fieldID]) && is_array($seed[$fieldID]))
 						{
-							foreach($targ[$fieldID] as $data)
+							$previousFileIDs = array();
+							if(isset($targ[$fieldID]) && is_array($targ[$fieldID]))
+							{
+								foreach($targ[$fieldID] as $data)
+								{
+									if(is_array($data))
+									{
+										$fileID = isset($data['ID']) ? (int)$data['ID'] : 0;
+										if($fileID > 0)
+										{
+											$previousFileIDs[] = $fileID;
+										}
+									}
+									else
+									{
+										$previousFileIDs[] = (int)$data;
+									}
+								}
+							}
+
+							$targ[$fieldID] = array();
+							if(!empty($previousFileIDs))
+							{
+								foreach($previousFileIDs as $data)
+								{
+									if(is_array($data))
+									{
+										$targ[$fieldID][] = $data;
+									}
+									elseif(is_numeric($data) && $data > 0)
+									{
+										$file = null;
+										if(\CCrmFileProxy::TryResolveFile($data, $file, array('ENABLE_ID' => true)))
+										{
+											$targ[$fieldID][] = $file;
+										}
+									}
+								}
+							}
+
+							foreach($seed[$fieldID] as $data)
 							{
 								if(is_array($data))
 								{
-									$fileID = isset($data['ID']) ? (int)$data['ID'] : 0;
-									if($fileID > 0)
+									$fileID = isset($data['ID']) ? $data['ID'] : 0;
+
+									//Check if already added from previous values
+									if(array_search($fileID, $previousFileIDs, true) !== false)
 									{
-										$previousFileIDs[] = $fileID;
+										continue;
 									}
+
+									$targ[$fieldID][] = $data;
 								}
 								else
 								{
-									$previousFileIDs[] = (int)$data;
-								}
-							}
-						}
+									$fileID = (int)$data;
 
-						$targ[$fieldID] = array();
-						if(!empty($previousFileIDs))
-						{
-							foreach($previousFileIDs as $data)
-							{
-								if(is_array($data))
-								{
-									$targ[$fieldID][] = $data;
-								}
-								elseif(is_numeric($data) && $data > 0)
-								{
+									//Check if already added from previous values
+									if(array_search($fileID, $previousFileIDs, true) !== false)
+									{
+										continue;
+									}
+
 									$file = null;
-									if(\CCrmFileProxy::TryResolveFile($data, $file, array('ENABLE_ID' => true)))
+									if(\CCrmFileProxy::TryResolveFile($fileID, $file, $fileOptions))
 									{
 										$targ[$fieldID][] = $file;
 									}
 								}
 							}
 						}
-
-						foreach($seed[$fieldID] as $data)
+						elseif(isset($targ[$fieldID]) && is_array($targ[$fieldID]))
 						{
-							if(is_array($data))
+							//HACK: Convert file IDs to file info for preventing error during UF check.
+							$fileIDs = $targ[$fieldID];
+							$targ[$fieldID] = array();
+							if(!empty($fileIDs))
 							{
-								$fileID = isset($data['ID']) ? $data['ID'] : 0;
-
-								//Check if already added from previous values
-								if(array_search($fileID, $previousFileIDs, true) !== false)
+								foreach($fileIDs as $data)
 								{
-									continue;
-								}
-
-								$targ[$fieldID][] = $data;
-							}
-							else
-							{
-								$fileID = (int)$data;
-
-								//Check if already added from previous values
-								if(array_search($fileID, $previousFileIDs, true) !== false)
-								{
-									continue;
-								}
-
-								$file = null;
-								if(\CCrmFileProxy::TryResolveFile($fileID, $file, $fileOptions))
-								{
-									$targ[$fieldID][] = $file;
+									if(is_array($data))
+									{
+										$targ[$fieldID][] = $data;
+									}
+									elseif(is_numeric($data) && $data > 0)
+									{
+										$file = null;
+										if(\CCrmFileProxy::TryResolveFile($data, $file, array('ENABLE_ID' => true)))
+										{
+											$targ[$fieldID][] = $file;
+										}
+									}
 								}
 							}
 						}
 					}
-					elseif(isset($targ[$fieldID]) && is_array($targ[$fieldID]))
+					else
 					{
+						$fileIDs = null;
+						if(isset($targ[$fieldID]) && is_array($targ[$fieldID]))
+						{
+							$fileIDs = $targ[$fieldID];
+						}
+						elseif(isset($seed[$fieldID]) && is_array($seed[$fieldID]))
+						{
+							$fileIDs = $seed[$fieldID];
+						}
+
 						//HACK: Convert file IDs to file info for preventing error during UF check.
-						$fileIDs = $targ[$fieldID];
 						$targ[$fieldID] = array();
 						if(!empty($fileIDs))
 						{
@@ -1077,6 +1261,11 @@ abstract class EntityMerger
 	 */
 	protected function getEntityMultiFields($entityID, $roleID)
 	{
+		if($entityID <= 0)
+		{
+			return array();
+		}
+
 		$results = array();
 		$dbResult = \CCrmFieldMulti::GetList(
 			array('ID' => 'asc'),

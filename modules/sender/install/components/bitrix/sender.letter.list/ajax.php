@@ -6,6 +6,7 @@ require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/prolog_befo
 
 use Bitrix\Main\Loader;
 use Bitrix\Main\HttpRequest;
+use Bitrix\Sender\UI\PageNavigation;
 
 use Bitrix\Sender\Internals\QueryController as Controller;
 use Bitrix\Sender\Internals\CommonAjax;
@@ -66,6 +67,8 @@ $actions[] = Controller\Action::create('remove')->setHandler(
 	{
 		$letter = new Entity\Letter($request->get('id'));
 		$letter->remove();
+
+		(new PageNavigation("page-sender-letters"))->resetSessionVar();
 
 		$content = $response->initContentJson();
 		$content->getErrorCollection()->add($letter->getErrors());

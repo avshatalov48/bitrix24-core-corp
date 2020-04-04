@@ -10,6 +10,7 @@ return array(
 	'block' => array(
 		'name' => Loc::getMessage('LANDING_BLOCK_35.1.FOOTER_LIGHT_NAME'),
 		'section' => array('footer'),
+		'dynamic' => false,
 		'subtype' => 'menu',
 		'subtype_params' => array(
 			'selector' => '.landing-block-node-list-item',

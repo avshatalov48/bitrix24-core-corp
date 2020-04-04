@@ -4,7 +4,11 @@
 foreach ($dialog->getMap() as $fieldId => $field):
 ?>
 <tr>
-	<td align="right" width="40%"><?=htmlspecialcharsbx($field['Name'])?>:</td>
+	<td align="right" width="40%">
+		<?if ($field['Required']):?><span class="adm-required-field"><?endif?>
+			<?=htmlspecialcharsbx($field['Name'])?>:
+		<?if ($field['Required']):?></span><?endif?>
+	</td>
 	<td width="60%">
 		<? $filedType = $dialog->getFieldTypeObject($field);
 

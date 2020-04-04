@@ -395,7 +395,7 @@ class SaleAccountPay extends \CBitrixComponent
 		$basketItem = $basket->createItem('sale', $productId);
 
 		$productFields = array(
-			"PRICE" => $requestValue,
+			"BASE_PRICE" => $requestValue,
 			"CURRENCY" => $this->arParams["SELL_CURRENCY"],
 			"QUANTITY" => 1,
 			"LID" => SITE_ID,
@@ -456,6 +456,22 @@ class SaleAccountPay extends \CBitrixComponent
 
 		$this->initOrderShipment($order);
 
+		if (
+			isset($this->arParams['CONTEXT_SITE_ID'])
+			&& $this->arParams['CONTEXT_SITE_ID'] > 0
+			&& Loader::includeModule('landing')
+		)
+		{
+			$code = \Bitrix\Sale\TradingPlatform\Landing\Landing::getCodeBySiteId($this->arParams['CONTEXT_SITE_ID']);
+
+			$platform = \Bitrix\Sale\TradingPlatform\Landing\Landing::getInstanceByCode($code);
+			if ($platform->isInstalled())
+			{
+				$collection = $order->getTradeBindingCollection();
+				$collection->createItem($platform);
+			}
+		}
+
 		return $order;
 	}
 
@@ -483,7 +499,7 @@ class SaleAccountPay extends \CBitrixComponent
 
 			$fields = array(
 				"PRODUCT_ID" => $productId,
-				"PRICE" => $price,
+				"BASE_PRICE" => $price,
 				"CURRENCY" => $currency,
 				"QUANTITY" => 1,
 				"LID" => SITE_ID,

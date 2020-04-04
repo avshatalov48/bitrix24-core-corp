@@ -5,6 +5,7 @@ use Bitrix\Main;
 use Bitrix\Main\Type\Date;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Crm;
 use Bitrix\Crm\Activity;
 use Bitrix\Crm\Integration;
 
@@ -71,6 +72,7 @@ class ActivityController extends EntityController
 		$status = isset($fields['STATUS']) ? (int)$fields['STATUS'] : \CCrmActivityStatus::Undefined;
 		$typeID = isset($fields['TYPE_ID']) ? (int)$fields['TYPE_ID'] : \CCrmActivityType::Undefined;
 		$direction = isset($fields['DIRECTION']) ? (int)$fields['DIRECTION'] : \CCrmActivityDirection::Undefined;
+		$providerID = isset($fields['PROVIDER_ID']) ? $fields['PROVIDER_ID'] : '';
 		$authorID = self::resolveAuthorID($fields);
 
 		$created = null;
@@ -79,7 +81,14 @@ class ActivityController extends EntityController
 			&& isset($fields['CREATED'])
 		)
 		{
-			$created = new DateTime($fields['CREATED'], Date::convertFormatToPhp(FORMAT_DATETIME));
+			if($fields['CREATED'] instanceof DateTime)
+			{
+				$created = $fields['CREATED'];
+			}
+			else
+			{
+				$created = new DateTime($fields['CREATED'], Date::convertFormatToPhp(FORMAT_DATETIME));
+			}
 		}
 
 		$historyEntryID = 0;
@@ -91,6 +100,7 @@ class ActivityController extends EntityController
 				$historyEntryID = ActivityEntry::create(
 					array(
 						'ACTIVITY_TYPE_ID' => $typeID,
+						'ACTIVITY_PROVIDER_ID' => $providerID,
 						'ENTITY_ID' => $ownerID,
 						'AUTHOR_ID' => $authorID,
 						'CREATED' => $created,
@@ -106,6 +116,7 @@ class ActivityController extends EntityController
 				$historyEntryID = ActivityEntry::create(
 					array(
 						'ACTIVITY_TYPE_ID' => $typeID,
+						'ACTIVITY_PROVIDER_ID' => $providerID,
 						'ENTITY_ID' => $ownerID,
 						'AUTHOR_ID' => $authorID,
 						'CREATED' => $created,
@@ -119,6 +130,7 @@ class ActivityController extends EntityController
 			$historyEntryID = CreationEntry::create(
 				array(
 					'ENTITY_TYPE_ID' => \CCrmOwnerType::Activity,
+					'ENTITY_CLASS_NAME' => $providerID,
 					'ENTITY_ID' => $ownerID,
 					'AUTHOR_ID' => $authorID,
 					'CREATED' => $created,
@@ -135,6 +147,7 @@ class ActivityController extends EntityController
 			$historyEntryID = ActivityEntry::create(
 				array(
 					'ACTIVITY_TYPE_ID' => $typeID,
+					'ACTIVITY_PROVIDER_ID' => $providerID,
 					'ENTITY_ID' => $ownerID,
 					'AUTHOR_ID' => $authorID,
 					'CREATED' => $created,
@@ -208,6 +221,7 @@ class ActivityController extends EntityController
 			? $params['PREVIOUS_FIELDS'] : array();
 
 		$typeID = isset($currentFields['TYPE_ID']) ? (int)$currentFields['TYPE_ID'] : \CCrmActivityType::Undefined;
+		$providerID = isset($currentFields['PROVIDER_ID']) ? $currentFields['PROVIDER_ID'] : '';
 		$prevCompleted = isset($previousFields['COMPLETED']) && $previousFields['COMPLETED'] === 'Y';
 		$curCompleted = isset($currentFields['COMPLETED']) && $currentFields['COMPLETED'] === 'Y';
 
@@ -225,6 +239,7 @@ class ActivityController extends EntityController
 						array(
 							'MARK_TYPE_ID' => TimelineMarkType::SUCCESS,
 							'ENTITY_TYPE_ID' => \CCrmOwnerType::Activity,
+							'ENTITY_CLASS_NAME' => $providerID,
 							'ENTITY_ID' => $ownerID,
 							'AUTHOR_ID' => $authorID,
 							'BINDINGS' => self::mapBindings($currentBindings),
@@ -239,6 +254,7 @@ class ActivityController extends EntityController
 					array(
 						'MARK_TYPE_ID' => TimelineMarkType::SUCCESS,
 						'ENTITY_TYPE_ID' => \CCrmOwnerType::Activity,
+						'ENTITY_CLASS_NAME' => $providerID,
 						'ENTITY_ID' => $ownerID,
 						'AUTHOR_ID' => $authorID,
 						'BINDINGS' => self::mapBindings($currentBindings)
@@ -250,6 +266,7 @@ class ActivityController extends EntityController
 				$historyEntryID = ActivityEntry::create(
 					array(
 						'ACTIVITY_TYPE_ID' => $typeID,
+						'ACTIVITY_PROVIDER_ID' => $providerID,
 						'ENTITY_ID' => $ownerID,
 						'AUTHOR_ID' => $authorID,
 						'BINDINGS' => self::mapBindings($currentBindings)
@@ -264,6 +281,7 @@ class ActivityController extends EntityController
 				array(
 					'MARK_TYPE_ID' => TimelineMarkType::RENEW,
 					'ENTITY_TYPE_ID' => \CCrmOwnerType::Activity,
+					'ENTITY_CLASS_NAME' => $providerID,
 					'ENTITY_ID' => $ownerID,
 					'AUTHOR_ID' => $authorID,
 					'BINDINGS' => self::mapBindings($currentBindings)
@@ -412,6 +430,19 @@ class ActivityController extends EntityController
 		}
 		return parent::prepareHistoryDataModel($data, $options);
 	}
+	public function prepareSearchContent(array $params)
+	{
+		$assocEntityTypeID = isset($params['ASSOCIATED_ENTITY_TYPE_ID']) ? (int)$params['ASSOCIATED_ENTITY_TYPE_ID'] : 0;
+		$assocEntityID = isset($params['ASSOCIATED_ENTITY_ID']) ? (int)$params['ASSOCIATED_ENTITY_ID'] : 0;
+		if($assocEntityTypeID === \CCrmOwnerType::Activity && $assocEntityID > 0)
+		{
+			$builder = new Crm\Search\ActivitySearchContentBuilder();
+			return Crm\Search\SearchEnvironment::prepareToken(
+				$builder->getSearchContent($assocEntityID, array('skipEntityId' => true))
+			);
+		}
+		return '';
+	}
 	//endregion
 
 	public static function getUsePermissions()
@@ -554,6 +585,26 @@ class ActivityController extends EntityController
 				);
 			}
 		}
+		else if($providerID === \Bitrix\Crm\Activity\Provider\RestApp::getId())
+		{
+			$appTypeInfo = Activity\Provider\RestApp::getTypeInfo(
+				$data['ASSOCIATED_ENTITY_ID'], $data['PROVIDER_TYPE_ID']
+			);
+
+			if ($appTypeInfo && $appTypeInfo['ICON_ID'] > 0)
+			{
+				$icon = \CFile::ResizeImageGet(
+					$appTypeInfo['ICON_ID'],
+					array('width' => 32, 'height' => 32),
+					BX_RESIZE_IMAGE_EXACT
+				);
+				if ($icon)
+				{
+					$appTypeInfo['ICON_SRC'] = $icon['src'];
+				}
+			}
+			$data['APP_TYPE'] = $appTypeInfo;
+		}
 
 		$model = array(
 			'ASSOCIATED_ENTITY_TYPE_ID' => \CCrmOwnerType::Activity,
@@ -672,6 +723,26 @@ class ActivityController extends EntityController
 				'VK_PROFILE' => Activity\Provider\Visit::getVkProfile($fields)
 			);
 		}
+		elseif($providerID === Activity\Provider\RestApp::getId())
+		{
+			$appTypeInfo = Activity\Provider\RestApp::getTypeInfo(
+				$fields['ASSOCIATED_ENTITY_ID'], $fields['PROVIDER_TYPE_ID']
+			);
+
+			if ($appTypeInfo && $appTypeInfo['ICON_ID'] > 0)
+			{
+				$icon = \CFile::ResizeImageGet(
+					$appTypeInfo['ICON_ID'],
+					array('width' => 32, 'height' => 32),
+					BX_RESIZE_IMAGE_EXACT
+				);
+				if ($icon)
+				{
+					$appTypeInfo['ICON_SRC'] = $icon['src'];
+				}
+			}
+			$fields['APP_TYPE'] = $appTypeInfo;
+		}
 
 		if(isset($fields['STORAGE_ELEMENT_IDS']))
 		{
@@ -701,6 +772,10 @@ class ActivityController extends EntityController
 								'NAME' => $info['NAME'],
 								'TYPE' => $ext === 'wav' ? 'audio/x-wav' : "audio/{$ext}"
 							);
+							if(isset($fields['CALL_INFO']) && isset($fields['CALL_INFO']['DURATION']))
+							{
+								$fields['MEDIA_FILE_INFO']['DURATION'] = $fields['CALL_INFO']['DURATION'];
+							}
 						}
 						break;
 					}

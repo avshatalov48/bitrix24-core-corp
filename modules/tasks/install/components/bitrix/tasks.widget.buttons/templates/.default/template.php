@@ -46,7 +46,7 @@ $arParams =& $helper->getComponent()->arParams; // make $arParams the same varia
 				<?endif?>
 
 				<?if($button['TYPE'] == 'link'):?>
-					<a href="<?=htmlspecialcharsbx($button['URL'])?>" class="task-view-button edit webform-small-button-link task-button-edit-link">
+					<a <?=$button['KEEP_SLIDER']?'data-slider-ignore-autobinding="true"':''?> href="<?=htmlspecialcharsbx($button['URL'])?>" class="task-view-button edit webform-small-button-link task-button-edit-link">
 						<?=htmlspecialcharsbx($button['TITLE'])?>
 					</a>
 				<?elseif($button['TYPE'] == 'group'):?>

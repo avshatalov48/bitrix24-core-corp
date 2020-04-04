@@ -29,10 +29,10 @@ class Buyer
 
 		$userId = (int)\CUser::LoginInternal($loginParams, $resultMessage);
 
-		if ($resultMessage !== true)
-		{
-			$arParams['RESULT_MESSAGE'] = $resultMessage;
-		}
+		//if ($resultMessage !== true)
+		//{
+		//	$arParams['RESULT_MESSAGE'] = $resultMessage;
+		//}
 
 		return $userId;
 	}

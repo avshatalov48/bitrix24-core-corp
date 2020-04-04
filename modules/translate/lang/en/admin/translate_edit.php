@@ -30,4 +30,10 @@ $MESS['TR_FILE_PHP'] = "PHP Code";
 $MESS['TR_FILE_SHOW'] = "View PHP Code";
 $MESS['TR_FILE_SHOW_TITLE'] = "View PHP Code";
 $MESS['trans_edit_err'] = "Incorrect file name.";
+$MESS['TR_CONVERT_NATIONAL2_UTF8'] = "Convert to UTF-8";
+$MESS['TR_DOWNLOAD_SUBMIT_BUTTON'] = "Export";
+$MESS['TR_FILEDOWNFORM_TAB2'] = "Export Files";
+$MESS['TR_FILE_ACTIONS'] = "File actions:";
+$MESS['TR_SELECT_LANGUAGE'] = "Select languages to export";
+$MESS['TR_SELECT_LANGUAGE_ALL'] = "All";
 ?>

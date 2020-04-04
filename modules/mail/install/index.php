@@ -442,5 +442,9 @@ Class mail extends CModule
 			$APPLICATION->IncludeAdminFile(Loc::getMessage("MAIL_INSTALL_TITLE"), $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/mail/install/unstep2.php");
 		}
 	}
+
+	public function migrateToBox()
+	{
+		COption::SetOptionString('mail', 'disable_log', 'N');
+	}
 }
-?>

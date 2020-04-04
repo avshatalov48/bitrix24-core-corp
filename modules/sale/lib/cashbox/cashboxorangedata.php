@@ -109,7 +109,7 @@ class CashboxOrangeData extends Cashbox implements IPrintImmediately, ICheckable
 				$vat = $this->getValueFromSettings('VAT', 'NOT_VAT');
 			}
 
-			$result['content']['positions'][] = array(
+			$position = array(
 				'text' => $item['name'],
 				'quantity' => $item['quantity'],
 				'price' => $item['price'],
@@ -117,6 +117,13 @@ class CashboxOrangeData extends Cashbox implements IPrintImmediately, ICheckable
 				'paymentMethodType' => $checkType[$check::getType()],
 				'paymentSubjectType' => $paymentObjectMap[$item['payment_object']]
 			);
+
+			if (isset($item['nomenclature_code']))
+			{
+				$position['nomenclatureCode'] = base64_encode($item['nomenclature_code']);
+			}
+
+			$result['content']['positions'][] = $position;
 		}
 
 		$paymentTypeMap = $this->getPaymentTypeMap();
@@ -325,9 +332,19 @@ class CashboxOrangeData extends Cashbox implements IPrintImmediately, ICheckable
 		$result = new Result();
 		if ($client !== false)
 		{
+			if (Manager::DEBUG_MODE === true)
+			{
+				Internals\CashboxErrLogTable::add(array('MESSAGE' => $headers.$data, 'DATE_INSERT' => new Main\Type\DateTime()));
+			}
+
 			fputs($client, $headers.$data);
 			$response = stream_get_contents($client);
 			fclose($client);
+
+			if (Manager::DEBUG_MODE === true)
+			{
+				Internals\CashboxErrLogTable::add(array('MESSAGE' => $response, 'DATE_INSERT' => new Main\Type\DateTime()));
+			}
 
 			list($responseHeaders, $content) = explode("\r\n\r\n", $response);
 			$httpCode = $this->extractResponseStatus($responseHeaders);
@@ -435,7 +452,8 @@ class CashboxOrangeData extends Cashbox implements IPrintImmediately, ICheckable
 			return $result;
 		}
 
-		return static::applyCheckResult($response);}
+		return static::applyCheckResult($response);
+	}
 
 	/**
 	 * @param $url
@@ -484,7 +502,7 @@ class CashboxOrangeData extends Cashbox implements IPrintImmediately, ICheckable
 			Check::PARAM_FISCAL_RECEIPT_NUMBER => $data['documentIndex'],
 			Check::PARAM_FN_NUMBER => $data['fsNumber'],
 			Check::PARAM_SHIFT_NUMBER => $data['shiftNumber'],
-			Check::PARAM_DOC_SUM => $data['total'],
+			Check::PARAM_DOC_SUM => (float)$checkInfo['SUM'],
 			Check::PARAM_DOC_TIME => $dateTime->getTimestamp(),
 			Check::PARAM_CALCULATION_ATTR => $check::getCalculatedSign()
 		);
@@ -543,6 +561,11 @@ class CashboxOrangeData extends Cashbox implements IPrintImmediately, ICheckable
 	private function createTmpFile($data)
 	{
 		$filePath = tempnam(sys_get_temp_dir(), 'orange_data');
+		if ($filePath === false)
+		{
+			return '';
+		}
+
 		if ($data !== null)
 		{
 			file_put_contents($filePath, $data);
@@ -566,21 +589,24 @@ class CashboxOrangeData extends Cashbox implements IPrintImmediately, ICheckable
 				'LABEL' => Localization\Loc::getMessage('SALE_CASHBOX_ORANGE_DATA_SETTINGS_SECURITY'),
 				'ITEMS' => array(
 					'PKEY' => array(
-						'TYPE' => 'SECURITY_FILE_CONTROL',
+						'TYPE' => 'DATABASE_FILE',
 						'CLASS' => 'adm-designed-file',
 						'REQUIRED' => 'Y',
+						'NO_DELETE' => 'Y',
 						'LABEL' => Localization\Loc::getMessage('SALE_CASHBOX_ORANGE_DATA_SETTINGS_SECURITY_PKEY'),
 					),
 					'SSL_CERT' => array(
-						'TYPE' => 'SECURITY_FILE_CONTROL',
+						'TYPE' => 'DATABASE_FILE',
 						'CLASS' => 'adm-designed-file',
 						'REQUIRED' => 'Y',
+						'NO_DELETE' => 'Y',
 						'LABEL' => Localization\Loc::getMessage('SALE_CASHBOX_ORANGE_DATA_SETTINGS_SECURITY_SSL_CERT'),
 					),
 					'SSL_KEY' => array(
-						'TYPE' => 'SECURITY_FILE_CONTROL',
+						'TYPE' => 'DATABASE_FILE',
 						'CLASS' => 'adm-designed-file',
 						'REQUIRED' => 'Y',
+						'NO_DELETE' => 'Y',
 						'LABEL' => Localization\Loc::getMessage('SALE_CASHBOX_ORANGE_DATA_SETTINGS_SECURITY_SSL_KEY'),
 					),
 					'SSL_KEY_PASS' => array(
@@ -704,13 +730,14 @@ class CashboxOrangeData extends Cashbox implements IPrintImmediately, ICheckable
 		$settings = parent::extractSettingsFromRequest($request);
 		$files = $request->getFile('SETTINGS');
 
-		foreach ($settings['SECURITY'] as $fieldId => $field)
+		foreach (static::getSettings()['SECURITY']['ITEMS'] as $fieldId => $field)
 		{
-			if ($files['error']['SECURITY'][$fieldId.'_FILE'] === 0
-				&& $files['tmp_name']['SECURITY'][$fieldId.'_FILE']
+			if ($field['TYPE'] === 'DATABASE_FILE'
+				&& $files['error']['SECURITY'][$fieldId] === 0
+				&& $files['tmp_name']['SECURITY'][$fieldId]
 			)
 			{
-				$content = $APPLICATION->GetFileContent($files['tmp_name']['SECURITY'][$fieldId.'_FILE']);
+				$content = $APPLICATION->GetFileContent($files['tmp_name']['SECURITY'][$fieldId]);
 				$settings['SECURITY'][$fieldId] = $content ?: '';
 			}
 		}

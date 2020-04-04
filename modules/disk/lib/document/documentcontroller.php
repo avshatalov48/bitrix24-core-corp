@@ -302,6 +302,7 @@ class DocumentController extends Internals\Controller
 			$this->sendJsonErrorResponse();
 		}
 
+		$dataForView['service'] = $this->getDocumentHandlerName();
 		$this->sendJsonSuccessResponse($dataForView);
 	}
 

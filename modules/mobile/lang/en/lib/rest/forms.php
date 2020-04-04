@@ -27,4 +27,5 @@ $MESS["MAIN"] = "General";
 $MESS["EXTRA"] = "More";
 $MESS["ACCOUNT"] = "Account";
 $MESS["DEPARTMENTS"] = "Departments";
+$MESS["PERSONAL_PHONE"] = "Phone";
 ?>

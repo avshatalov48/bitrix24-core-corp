@@ -37,7 +37,14 @@ import {Cookie} from "./utils/cookie";
 // messenger files
 import {ApplicationModel, MessagesModel, DialoguesModel, UsersModel, FilesModel} from 'im.model';
 import {ApplicationController} from 'im.controller';
-import {DeviceType, DeviceOrientation, RestMethod as ImRestMethod} from 'im.const';
+import {
+	DeviceType,
+	DeviceOrientation,
+	RestMethod as ImRestMethod,
+	RestMethodHandler as ImRestMethodHandler,
+	EventType,
+	FileStatus
+} from 'im.const';
 import {Utils} from "im.utils";
 import {LocalStorage} from "im.tools.localstorage";
 import {ImRestAnswerHandler} from "im.provider.rest";
@@ -107,8 +114,6 @@ export class Widget
 		this.dateFormat = null;
 
 		this.messagesQueue = [];
-		this.filesQueue = [];
-		this.filesQueueIndex = 0;
 
 		this.configRequestXhr = null;
 
@@ -144,8 +149,8 @@ export class Widget
 
 			if (
 				this.store.state.widget.common.showed
-				&& this.store.state.application.device.type == DeviceType.mobile
-				&& this.store.state.application.device.orientation == DeviceOrientation.horizontal
+				&& this.store.state.application.device.type === DeviceType.mobile
+				&& this.store.state.application.device.orientation === DeviceOrientation.horizontal
 			)
 			{
 				document.activeElement.blur();
@@ -210,16 +215,29 @@ export class Widget
 			},
 			dialog: {
 				messageLimit: this.controller.getDefaultMessageLimit()
+			},
+			saveException: {
+				common: {
+					host: null,
+					siteId: null,
+					languageId: null,
+				},
+				dialog: {
+					messageLimit: null,
+					messageExtraCount: null,
+				}
 			}
 		};
+
+		let cacheDialogues = !Utils.browser.isIe();
 
 		new VuexBuilder()
 			.addModel(WidgetModel.create().setVariables(widgetVariables))
 			.addModel(ApplicationModel.create().setVariables(applicationVariables))
-			.addModel(MessagesModel.create())
-			.addModel(DialoguesModel.create().setVariables({host: this.host}).useDatabase(false))
-			.addModel(UsersModel.create().setVariables({host: this.host, defaultName: this.getLocalize('IM_MESSENGER_MESSAGE_USER_ANONYM')}).useDatabase(false))
-			.addModel(FilesModel.create().setVariables({host: this.host}).useDatabase(false))
+			.addModel(DialoguesModel.create().useDatabase(cacheDialogues).setVariables({host: this.host}))
+			.addModel(MessagesModel.create().useDatabase(cacheDialogues))
+			.addModel(FilesModel.create().useDatabase(cacheDialogues).setVariables({host: this.host, default: {name: this.getLocalize('IM_MESSENGER_MESSAGE_FILE_DELETED')}}))
+			.addModel(UsersModel.create().useDatabase(cacheDialogues).setVariables({host: this.host, default: {name: this.getLocalize('IM_MESSENGER_MESSAGE_USER_ANONYM')}}))
 			.setDatabaseConfig({
 				name: 'imol/widget',
 				type: VuexBuilder.DatabaseType.localStorage,
@@ -232,7 +250,7 @@ export class Widget
 
 			this.initRestClient();
 
-			this.controller.setVuexStore(this.store);
+			this.controller.setStore(this.store);
 			this.controller.setRestClient(this.restClient);
 
 			this.controller.setPrepareFilesBeforeSaveFunction(this.prepareFileData.bind(this));
@@ -353,18 +371,18 @@ export class Widget
 		if (this.isUserRegistered())
 		{
 			query[RestMethod.widgetDialogGet] = [RestMethod.widgetDialogGet, {config_id: this.getConfigId(), trace_data: this.getCrmTraceData(), custom_data: this.getCustomData()}];
-			query[ImRestMethod.imChatGet] = [ImRestMethod.imChatGet, {dialog_id: '$result['+RestMethod.widgetDialogGet+'][dialogId]'}];
-			query[ImRestMethod.imDialogMessagesGet] = [ImRestMethod.imDialogMessagesGet, {chat_id: '$result['+RestMethod.widgetDialogGet+'][chatId]', limit: this.controller.getRequestMessageLimit(), convert_text: 'Y'}];
+			query[ImRestMethodHandler.imChatGet] = [ImRestMethod.imChatGet, {dialog_id: '$result['+RestMethod.widgetDialogGet+'][dialogId]'}];
+			query[ImRestMethodHandler.imDialogMessagesGetInit] = [ImRestMethod.imDialogMessagesGet, {chat_id: '$result['+RestMethod.widgetDialogGet+'][chatId]', limit: this.controller.getRequestMessageLimit(), convert_text: 'Y'}];
 		}
 		else
 		{
 			query[RestMethod.widgetUserRegister] = [RestMethod.widgetUserRegister, {config_id: '$result['+RestMethod.widgetConfigGet+'][configId]', ...this.getUserRegisterFields()}];
-			query[ImRestMethod.imChatGet] = [ImRestMethod.imChatGet, {dialog_id: '$result['+RestMethod.widgetUserRegister+'][dialogId]'}];
+			query[ImRestMethodHandler.imChatGet] = [ImRestMethod.imChatGet, {dialog_id: '$result['+RestMethod.widgetUserRegister+'][dialogId]'}];
 
 			if (this.userRegisterData.hash || this.getUserHashCookie())
 			{
 				query[RestMethod.widgetDialogGet] = [RestMethod.widgetDialogGet, {config_id: '$result['+RestMethod.widgetConfigGet+'][configId]', trace_data: this.getCrmTraceData(), custom_data: this.getCustomData()}];
-				query[ImRestMethod.imDialogMessagesGet] = [ImRestMethod.imDialogMessagesGet, {chat_id: '$result['+RestMethod.widgetDialogGet+'][chatId]', limit: this.controller.getRequestMessageLimit(), convert_text: 'Y'}];
+				query[ImRestMethodHandler.imDialogMessagesGetInit] = [ImRestMethod.imDialogMessagesGet, {chat_id: '$result['+RestMethod.widgetDialogGet+'][chatId]', limit: this.controller.getRequestMessageLimit(), convert_text: 'Y'}];
 			}
 			if (this.isUserAgreeConsent())
 			{
@@ -404,14 +422,14 @@ export class Widget
 			}
 			this.executeRestAnswer(RestMethod.widgetUserGet, userGetResult);
 
-			let chatGetResult = response[ImRestMethod.imChatGet];
+			let chatGetResult = response[ImRestMethodHandler.imChatGet];
 			if (chatGetResult.error())
 			{
 				this.requestDataSend = false;
 				this.setError(chatGetResult.error().ex.error, chatGetResult.error().ex.error_description);
 				return false;
 			}
-			this.executeRestAnswer(ImRestMethod.imChatGet, chatGetResult);
+			this.executeRestAnswer(ImRestMethodHandler.imChatGet, chatGetResult);
 
 			let dialogGetResult = response[RestMethod.widgetDialogGet];
 			if (dialogGetResult)
@@ -422,10 +440,11 @@ export class Widget
 					this.setError(dialogGetResult.error().ex.error, dialogGetResult.error().ex.error_description);
 					return false;
 				}
+
 				this.executeRestAnswer(RestMethod.widgetDialogGet, dialogGetResult);
 			}
 
-			let dialogMessagesGetResult = response[ImRestMethod.imDialogMessagesGet];
+			let dialogMessagesGetResult = response[ImRestMethodHandler.imDialogMessagesGetInit];
 			if (dialogMessagesGetResult)
 			{
 				if (dialogMessagesGetResult.error())
@@ -434,7 +453,13 @@ export class Widget
 					this.setError(dialogMessagesGetResult.error().ex.error, dialogMessagesGetResult.error().ex.error_description);
 					return false;
 				}
-				this.executeRestAnswer(ImRestMethod.imDialogMessagesGet, dialogMessagesGetResult);
+
+				this.store.dispatch('dialogues/saveDialog', {
+					dialogId: this.controller.getDialogId(),
+					chatId: this.controller.getChatId(),
+				});
+
+				this.executeRestAnswer(ImRestMethodHandler.imDialogMessagesGetInit, dialogMessagesGetResult);
 			}
 
 			let userRegisterResult = response[RestMethod.widgetUserRegister];
@@ -467,13 +492,12 @@ export class Widget
 
 			this.startPullClient(config).then(() => {
 				this.processSendMessages();
-				this.processSendFiles();
 			}).catch((error) => {
 				this.setError(error.ex.error, error.ex.error_description);
 			});
 
 			this.requestDataSend = false;
-		}, false, false, Utils.getLogTrackingParams({name: 'widget.init.config', dialog: this.getDialogData()}));
+		}, false, false, Utils.getLogTrackingParams({name: 'widget.init.config', dialog: this.controller.getDialogData()}));
 	}
 
 	executeRestAnswer(command, result, extra)
@@ -485,6 +509,11 @@ export class Widget
 	prepareFileData(files)
 	{
 		if (Cookie.get(null, 'BITRIX_LIVECHAT_AUTH'))
+		{
+			return files;
+		}
+
+		if (!Utils.types.isArray(files))
 		{
 			return files;
 		}
@@ -587,7 +616,7 @@ export class Widget
 		this.pullConnectedFirstTime = this.pullClient.subscribe({
 			type: PullClient.SubscriptionType.Status,
 			callback: (result) => {
-				if (result.status == PullClient.PullStatus.Online)
+				if (result.status === PullClient.PullStatus.Online)
 				{
 					promise.resolve(true);
 					this.pullConnectedFirstTime();
@@ -601,7 +630,10 @@ export class Widget
 			this.template.$root.$emit('onBitrixPullClientInited', this.pullClient);
 		}
 
-		this.pullClient.start(config).catch(function(){
+		this.pullClient.start({
+			...config,
+			skipReconnectToLastSession: true
+		}).catch(function(){
 			promise.reject({
 				ex: { error: 'PULL_CONNECTION_ERROR', error_description: 'Pull is not connected.'}
 			});
@@ -633,9 +665,7 @@ export class Widget
 			if (this.pullRequestMessage)
 			{
 				this.getDialogUnread().then(() => {
-					this.readMessage();
 					this.processSendMessages();
-					this.processSendFiles();
 				});
 				this.pullRequestMessage = false;
 			}
@@ -643,7 +673,6 @@ export class Widget
 			{
 				this.readMessage();
 				this.processSendMessages();
-				this.processSendFiles();
 			}
 		}
 		else if (data.status === PullClient.PullStatus.Offline)
@@ -708,6 +737,8 @@ export class Widget
 			}
 		});
 
+		this.controller.setTemplateEngine(this.template);
+
 		return true;
 	}
 
@@ -732,27 +763,37 @@ export class Widget
 
 /* region 04. Rest methods */
 
-	addMessage(text = '')
+	addMessage(text = '', file = null)
 	{
-		if (!text)
+		if (!text && !file)
 		{
 			return false;
 		}
 
-		Logger.warn('addMessage', text);
+		Logger.warn('addMessage', text, file);
 
 		if (!this.controller.isUnreadMessagesLoaded())
 		{
-			this.sendMessage({id: 0, text});
+			this.sendMessage({id: 0, text, file});
 			this.processSendMessages();
 
 			return true;
+		}
+
+		this.store.commit('application/increaseDialogExtraCount');
+
+		let params = {};
+		if (file)
+		{
+			params.FILE_ID = [file.id];
 		}
 
 		this.store.dispatch('messages/add', {
 			chatId: this.getChatId(),
 			authorId: this.getUserId(),
 			text: text,
+			params,
+			sending: !file,
 		}).then(messageId => {
 
 			if (!this.isDialogStart())
@@ -763,6 +804,7 @@ export class Widget
 			this.messagesQueue.push({
 				id: messageId,
 				text,
+				file,
 				sending: false
 			});
 
@@ -774,42 +816,71 @@ export class Widget
 			{
 				this.requestData();
 			}
-
 		});
 
 		return true;
 	}
 
-	addFile(fileInput)
+	uploadFile(fileInput)
 	{
 		if (!fileInput)
 		{
 			return false;
 		}
 
-		Logger.warn('addFile', fileInput.files[0].name, fileInput.files[0].size);
+		Logger.warn('addFile', fileInput.files[0].name, fileInput.files[0].size, fileInput.files[0]);
 
-		if (!this.isDialogStart())
+		let file = fileInput.files[0];
+
+		let fileType = 'file';
+		if (file.type.toString().startsWith('image'))
 		{
-			this.store.commit('widget/common', {dialogStart:true});
+			fileType = 'image';
 		}
 
-		this.filesQueue.push({
-			id: this.filesQueueIndex,
-			fileInput
-		});
-		this.filesQueueIndex++;
+		if (!this.controller.isUnreadMessagesLoaded())
+		{
+			this.addMessage('', {id: 0, source: fileInput});
+			return true;
+		}
 
-		if (this.getChatId())
-		{
-			this.processSendFiles();
-		}
-		else
-		{
-			this.requestData();
-		}
+		this.store.dispatch('files/add', {
+			chatId: this.getChatId(),
+			authorId: this.getUserId(),
+			name: file.name,
+			type: fileType,
+			extension: file.name.split('.').splice(-1)[0],
+			size: file.size,
+			image: false,
+			status: FileStatus.upload,
+			progress: 0,
+			authorName: this.controller.getCurrentUser().name,
+			urlPreview: "",
+		}).then(fileId => this.addMessage('', {id: fileId, source: fileInput}));
 
 		return true;
+	}
+
+	cancelUploadFile(fileId)
+	{
+		let element = this.messagesQueue.find(element => element.file && element.file.id === fileId);
+		if (element)
+		{
+			if (element.xhr)
+			{
+				element.xhr.abort();
+			}
+			this.store.dispatch('messages/delete', {
+				chatId: this.getChatId(),
+				id: element.id,
+			}).then(() => {
+				this.store.dispatch('files/delete', {
+					chatId: this.getChatId(),
+					id: element.file.id,
+				});
+				this.messagesQueue = this.messagesQueue.filter(el => el.id !== element.id);
+			});
+		}
 	}
 
 	processSendMessages()
@@ -821,22 +892,14 @@ export class Widget
 
 		this.messagesQueue.filter(element => !element.sending).forEach(element => {
 			element.sending = true;
-			this.sendMessage(element);
-		});
-
-		return true;
-	}
-
-	processSendFiles()
-	{
-		if (this.offline)
-		{
-			return false;
-		}
-
-		this.filesQueue.filter(element => !element.sending).forEach(element => {
-			element.sending = true;
-			this.sendFile(element);
+			if (element.file)
+			{
+				this.sendMessageWithFile(element);
+			}
+			else
+			{
+				this.sendMessage(element);
+			}
 		});
 
 		return true;
@@ -846,25 +909,50 @@ export class Widget
 	{
 		this.controller.stopWriting();
 
+		let quiteId = this.store.getters['dialogues/getQuoteId'](this.getDialogId());
+		if (quiteId)
+		{
+			let quoteMessage = this.store.getters['messages/getMessage'](this.getChatId(), quiteId);
+			if (quoteMessage)
+			{
+				let user = this.store.getters['users/get'](quoteMessage.authorId);
+
+				let newMessage = [];
+				newMessage.push("------------------------------------------------------");
+				newMessage.push((user.name? user.name: this.getLocalize('BX_LIVECHAT_SYSTEM_MESSAGE')));
+				newMessage.push(quoteMessage.text);
+				newMessage.push('------------------------------------------------------');
+				newMessage.push(message.text);
+				message.text = newMessage.join("\n");
+
+				this.quoteMessageClear();
+			}
+		}
+
+		message.chatId = this.getChatId();
+
 		this.restClient.callMethod(ImRestMethod.imMessageAdd, {
-			'TEMP_ID': message.id,
-			'CHAT_ID': this.getChatId(),
+			'TEMPLATE_ID': message.id,
+			'CHAT_ID': message.chatId,
 			'MESSAGE': message.text
 		}, null, null, Utils.getLogTrackingParams({
 			name: ImRestMethod.imMessageAdd,
 			data: {timMessageType: 'text'},
 			dialog: this.getDialogData()
 		})).then(response => {
-			this.executeRestAnswer(ImRestMethod.imMessageAdd, response, message);
+			this.executeRestAnswer(ImRestMethodHandler.imMessageAdd, response, message);
 		}).catch(error => {
-			this.executeRestAnswer(ImRestMethod.imMessageAdd, error, message);
+			this.executeRestAnswer(ImRestMethodHandler.imMessageAdd, error, message);
 		});
+
+		return true;
 	}
 
-	sendFile(file)
+	sendMessageWithFile(message)
 	{
-		let fileName = file.fileInput.files[0].name;
-		let fileType = 'file'; // TODO set type by fileInput type
+		this.controller.stopWriting();
+
+		let fileType = this.store.getters['files/get'](this.getChatId(), message.file.id, true).type;
 
 		let diskFolderId = this.getDiskFolderId();
 
@@ -872,82 +960,141 @@ export class Widget
 
 		if (diskFolderId)
 		{
-			query[ImRestMethod.imDiskFileUpload] = [ImRestMethod.imDiskFileUpload, {
+			query[ImRestMethodHandler.imDiskFileUpload] = [ImRestMethod.imDiskFileUpload, {
 				id : diskFolderId,
-				data : {NAME : fileName},
-				fileContent: file.fileInput,
+				data : {NAME : message.file.source.files[0].name},
+				fileContent: message.file.source,
 				generateUniqueName: true
 			}];
 		}
 		else
 		{
-			query[ImRestMethod.imDiskFolderGet] = [ImRestMethod.imDiskFolderGet, {chat_id: this.getChatId()}];
-			query[ImRestMethod.imDiskFileUpload] = [ImRestMethod.imDiskFileUpload, {
-				id : '$result[' + ImRestMethod.imDiskFolderGet + '][ID]',
-				data : {
-					NAME : fileName
+			query[ImRestMethodHandler.imDiskFolderGet] = [ImRestMethod.imDiskFolderGet, {chat_id: this.getChatId()}];
+			query[ImRestMethodHandler.imDiskFileUpload] = [ImRestMethod.imDiskFileUpload, {
+				id: '$result[' + ImRestMethodHandler.imDiskFolderGet + '][ID]',
+				data: {
+					NAME: message.file.source.files[0].name
 				},
-				fileContent: file.fileInput,
+				fileContent: message.file.source,
 				generateUniqueName: true
 			}];
 		}
-		query[ImRestMethod.imDiskFileCommit] = [ImRestMethod.imDiskFileCommit, {
-			chat_id : this.getChatId(),
-			upload_id : '$result[' + ImRestMethod.imDiskFileUpload + '][ID]',
-		}];
-
-		this.store.commit('widget/common', {uploadFilePlus: true}); // TODO remove this after create new file-loader
 
 		this.restClient.callBatch(query, (response) =>
 		{
-			this.store.commit('widget/common', {uploadFileMinus: true}); // TODO  remove this after create new file-loader
-
 			if (!response)
 			{
 				this.requestDataSend = false;
-				this.setError('EMPTY_RESPONSE', 'Server returned an empty response.');
+				console.warn('EMPTY_RESPONSE', 'Server returned an empty response. [1]');
+				this.fileError(this.getChatId, message.file.id, message.id);
 				return false;
 			}
 
 			if (!diskFolderId)
 			{
-				let diskFolderGet = response[ImRestMethod.imDiskFolderGet];
+				let diskFolderGet = response[ImRestMethodHandler.imDiskFolderGet];
 				if (diskFolderGet && diskFolderGet.error())
 				{
 					console.warn(diskFolderGet.error().ex.error, diskFolderGet.error().ex.error_description);
+					this.fileError(this.getChatId(), message.file.id, message.id);
 					return false;
 				}
-				this.executeRestAnswer(ImRestMethod.imDiskFolderGet, diskFolderGet);
+				this.executeRestAnswer(ImRestMethodHandler.imDiskFolderGet, diskFolderGet);
 			}
 
-			let diskFileUpload = response[ImRestMethod.imDiskFileUpload];
-			if (diskFileUpload && diskFileUpload.error())
+			let diskId = 0;
+			let diskFileUpload = response[ImRestMethodHandler.imDiskFileUpload];
+			if (diskFileUpload)
 			{
-				console.warn(diskFileUpload.error().ex.error, diskFileUpload.error().ex.error_description);
-				return false;
+				let result = diskFileUpload.data();
+				if (diskFileUpload.error())
+				{
+					console.warn(diskFileUpload.error().ex.error, diskFileUpload.error().ex.error_description);
+					this.fileError(this.getChatId(), message.file.id, message.id);
+					return false;
+				}
+				else if (!result)
+				{
+					console.warn('EMPTY_RESPONSE', 'Server returned an empty response. [2]');
+					this.fileError(this.getChatId(), message.file.id, message.id);
+					return false;
+				}
+
+				diskId = result.ID;
 			}
 			else
 			{
-				Logger.log('upload success', diskFileUpload.data())
-			}
-
-			let diskFileCommit = response[ImRestMethod.imDiskFileCommit];
-			if (diskFileCommit && diskFileCommit.error())
-			{
-				console.warn(diskFileCommit.error().ex.error, diskFileCommit.error().ex.error_description);
+				console.warn('EMPTY_RESPONSE', 'Server returned an empty response. [3]');
+				this.fileError(this.getChatId(), message.file.id, message.id);
 				return false;
 			}
-			else
-			{
-				Logger.log('commit success', diskFileCommit.data())
-			}
-		}, false, false, Utils.getLogTrackingParams({
-			name: ImRestMethod.imDiskFileCommit,
+
+			message.chatId = this.getChatId();
+
+			this.store.dispatch('files/update', {
+				chatId: message.chatId,
+				id: message.file.id,
+				fields: {
+					status: FileStatus.wait,
+					progress: 95
+				}
+			});
+
+			this.fileCommit({
+				chatId: message.chatId,
+				uploadId: diskId,
+				messageText: message.text,
+				messageId: message.id,
+				fileId: message.file.id,
+				fileType
+			}, message);
+
+		}, false, (xhr) => {message.xhr = xhr}, Utils.getLogTrackingParams({
+			name: ImRestMethodHandler.imDiskFileCommit,
 			data: {timMessageType: fileType},
 			dialog: this.getDialogData()
 		}));
+	}
 
-		this.filesQueue = this.filesQueue.filter(el => el.id != file.id);
+	fileError(chatId, fileId, messageId = 0)
+	{
+		this.store.dispatch('files/update', {
+			chatId: chatId,
+			id: fileId,
+			fields: {
+				status: FileStatus.error,
+				progress: 0
+			}
+		});
+		if (messageId)
+		{
+			this.store.dispatch('messages/actionError', {
+				chatId: chatId,
+				id: messageId,
+				retry: false,
+			});
+		}
+	}
+
+	fileCommit(params, message)
+	{
+		this.restClient.callMethod(ImRestMethod.imDiskFileCommit, {
+			chat_id: params.chatId,
+			upload_id: params.uploadId,
+			message: params.messageText,
+			template_id: params.messageId,
+			file_template_id: params.fileId,
+		}, null, null, Utils.getLogTrackingParams({
+			name: ImRestMethod.imDiskFileCommit,
+			data: {timMessageType: params.fileType},
+			dialog: this.getDialogData()
+		})).then(response => {
+			this.executeRestAnswer(ImRestMethodHandler.imDiskFileCommit, response, message);
+		}).catch(error => {
+			this.executeRestAnswer(ImRestMethodHandler.imDiskFileCommit, error, message);
+		});
+
+		return true;
 	}
 
 	getDialogHistory(lastId, limit = this.controller.getRequestMessageLimit())
@@ -958,10 +1105,10 @@ export class Widget
 			'LIMIT': limit,
 			'CONVERT_TEXT': 'Y'
 		}).then(result => {
-			this.executeRestAnswer(ImRestMethod.imDialogMessagesGet, result);
-			this.template.$emit('onDialogRequestHistoryResult', {count: result.data().messages.length});
+			this.executeRestAnswer(ImRestMethodHandler.imDialogMessagesGet, result);
+			this.template.$emit(EventType.dialog.requestHistoryResult, {count: result.data().messages.length});
 		}).catch(result => {
-			this.template.$emit('onDialogRequestHistoryResult', {error: result.error().ex});
+			this.template.$emit(EventType.dialog.requestHistoryResult, {error: result.error().ex});
 		});
 	}
 
@@ -971,65 +1118,75 @@ export class Widget
 
 		if (!lastId)
 		{
-			lastId = this.store.getters['messages/getLastId'](this.getChatId());
+			lastId = this.store.getters['messages/getLastId'](this.controller.getChatId());
 		}
 
 		if (!lastId)
 		{
-			this.template.$emit('onDialogRequestUnreadResult', {error: {error: 'LAST_ID_EMPTY', error_description: 'LastId is empty.'}});
+			this.template.$emit(EventType.dialog.requestUnreadResult, {error: {error: 'LAST_ID_EMPTY', error_description: 'LastId is empty.'}});
 			promise.reject();
 			return promise;
 		}
 
-		let query = {
-			[ImRestMethod.imChatGet]: [ImRestMethod.imChatGet, {
-				dialog_id: this.getDialogId()
-			}],
-			[ImRestMethod.imDialogMessagesUnread]: [ImRestMethod.imDialogMessagesGet, {
-				chat_id: this.getChatId(),
-				first_id: lastId,
-				limit: limit,
-				convert_text: 'Y'
-			}]
-		};
-
-		this.restClient.callBatch(query, (response) =>
+		this.controller.readMessage(lastId, true, true).then(() =>
 		{
-			if (!response)
+			let query = {
+				[ImRestMethodHandler.imDialogRead]: [ImRestMethod.imDialogRead, {
+					dialog_id: this.getDialogId(),
+					message_id: lastId
+				}],
+				[ImRestMethodHandler.imChatGet]: [ImRestMethod.imChatGet, {
+					dialog_id: this.getDialogId()
+				}],
+				[ImRestMethodHandler.imDialogMessagesGetUnread]: [ImRestMethod.imDialogMessagesGet, {
+					chat_id: this.getChatId(),
+					first_id: lastId,
+					limit: limit,
+					convert_text: 'Y'
+				}]
+			};
+
+			this.restClient.callBatch(query, (response) =>
 			{
-				this.template.$emit('onDialogRequestUnreadResult', {error: {error: 'EMPTY_RESPONSE', error_description: 'Server returned an empty response.'}});
+				if (!response)
+				{
+					this.template.$emit(EventType.dialog.requestUnreadResult, {error: {error: 'EMPTY_RESPONSE', error_description: 'Server returned an empty response.'}});
 
-				promise.reject();
-				return false;
-			}
+					promise.reject();
+					return false;
+				}
 
-			let chatGetResult = response[ImRestMethod.imChatGet];
-			if (!chatGetResult.error())
-			{
-				this.executeRestAnswer(ImRestMethod.imChatGet, chatGetResult);
-			}
+				let chatGetResult = response[ImRestMethodHandler.imChatGet];
+				if (!chatGetResult.error())
+				{
+					this.executeRestAnswer(ImRestMethodHandler.imChatGet, chatGetResult);
+				}
 
-			let dialogMessageUnread = response[ImRestMethod.imDialogMessagesUnread];
-			if (dialogMessageUnread.error())
-			{
-				this.template.$emit('onDialogRequestUnreadResult', {error: dialogMessageUnread.error().ex});
-			}
-			else
-			{
-				this.executeRestAnswer(ImRestMethod.imDialogMessagesUnread, dialogMessageUnread);
-				this.template.$emit('onDialogRequestUnreadResult', {count: dialogMessageUnread.data().messages.length});
-			}
+				let dialogMessageUnread = response[ImRestMethodHandler.imDialogMessagesGetUnread];
+				if (dialogMessageUnread.error())
+				{
+					this.template.$emit(EventType.dialog.requestUnreadResult, {error: dialogMessageUnread.error().ex});
+				}
+				else
+				{
+					this.executeRestAnswer(ImRestMethodHandler.imDialogMessagesGetUnread, dialogMessageUnread);
+					this.template.$emit(EventType.dialog.requestUnreadResult, {
+						firstMessageId: dialogMessageUnread.data().messages.length > 0? dialogMessageUnread.data().messages[0].id: 0,
+						count: dialogMessageUnread.data().messages.length
+					});
+				}
 
-			promise.fulfill(response);
+				promise.fulfill(response);
 
-		}, false, false, Utils.getLogTrackingParams({name: ImRestMethod.imDialogMessagesUnread, dialog: this.getDialogData()}));
+			}, false, false, Utils.getLogTrackingParams({name: ImRestMethodHandler.imDialogMessagesGetUnread, dialog: this.getDialogData()}));
+		});
 
 		return promise;
 	}
 
 	retrySendMessage(message)
 	{
-		if (this.messagesQueue.find(el => el.id == message.id))
+		if (this.messagesQueue.find(el => el.id === message.id))
 		{
 			return false;
 		}
@@ -1053,6 +1210,51 @@ export class Widget
 		}
 
 		return this.controller.readMessage(messageId);
+	}
+
+	quoteMessage(id)
+	{
+		this.store.dispatch('dialogues/update', {
+			dialogId: this.controller.getDialogId(),
+			fields: {
+				quoteId: id
+			}
+		});
+	}
+
+	reactMessage(id, reaction)
+	{
+		this.controller.reactMessage(id, reaction.type, reaction.action);
+	}
+
+	execMessageKeyboardCommand(data)
+	{
+		if (data.action !== 'COMMAND')
+		{
+			return false;
+		}
+
+		let {dialogId, messageId, botId, command, params} = data.params;
+
+		this.restClient.callMethod(ImRestMethod.imMessageCommand, {
+			'MESSAGE_ID': messageId,
+			'DIALOG_ID': dialogId,
+			'BOT_ID': botId,
+			'COMMAND': command,
+			'COMMAND_PARAMS': params,
+		});
+
+		return true;
+	}
+
+	quoteMessageClear()
+	{
+		this.store.dispatch('dialogues/update', {
+			dialogId: this.controller.getDialogId(),
+			fields: {
+				quoteId: 0
+			}
+		});
 	}
 
 	sendDialogVote(result)
@@ -1337,14 +1539,14 @@ export class Widget
 		return this.store.state.widget.common.configId;
 	}
 
-	getChatId()
-	{
-		return this.store.state.application.dialog.chatId;
-	}
-
 	isDialogStart()
 	{
 		return this.store.state.widget.common.dialogStart;
+	}
+
+	getChatId()
+	{
+		return this.store.state.application.dialog.chatId;
 	}
 
 	getDialogId()
@@ -1352,14 +1554,14 @@ export class Widget
 		return this.store.state.application.dialog.dialogId;
 	}
 
-	getDialogData(dialogId = this.getDialogId())
-	{
-		return this.store.state.dialogues.collection[dialogId];
-	}
-
 	getDiskFolderId()
 	{
 		return this.store.state.application.dialog.diskFolderId;
+	}
+
+	getDialogData(dialogId = this.getDialogId())
+	{
+		return this.store.state.dialogues.collection[dialogId];
 	}
 
 	getSessionId()
@@ -1419,7 +1621,7 @@ export class Widget
 			'www': this.userRegisterData.www || '',
 			'gender': this.userRegisterData.gender || '',
 			'position': this.userRegisterData.position || '',
-			'user_hash': this.userRegisterData.hash || '',
+			'user_hash': this.userRegisterData.hash || this.getUserHashCookie() || '',
 			'consent_url': this.store.state.widget.common.consentUrl? location.href: '',
 			'trace_data': this.getCrmTraceData(),
 			'custom_data': this.getCustomData()
@@ -1478,7 +1680,7 @@ export class Widget
 		if (
 			this.userRegisterData.hash
 			&& this.getUserHash()
-			&& this.userRegisterData.hash != this.getUserHash()
+			&& this.userRegisterData.hash !== this.getUserHash()
 		)
 		{
 			this.setNewAuthToken(this.userRegisterData.hash);
@@ -1487,7 +1689,6 @@ export class Widget
 
 	setNewAuthToken(authToken = '')
 	{
-		let siteId = this.getSiteId();
 		this.storeCollector.clearModelState();
 		Cookie.set(null, 'LIVECHAT_HASH', '', {expires: 365*86400, path: '/'});
 
@@ -1540,12 +1741,12 @@ export class Widget
 		console.error(`LiveChatWidget.error: ${code} (${description})`);
 
 		let localizeDescription = '';
-		if (code == 'LIVECHAT_AUTH_FAILED')
+		if (code === 'LIVECHAT_AUTH_FAILED')
 		{
 			localizeDescription = this.getLocalize('BX_LIVECHAT_AUTH_FAILED').replace('#LINK_START#', '<a href="javascript:void();" onclick="location.reload()">').replace('#LINK_END#', '</a>');
 			this.setNewAuthToken();
 		}
-		else if (code == 'LIVECHAT_AUTH_PORTAL_USER')
+		else if (code === 'LIVECHAT_AUTH_PORTAL_USER')
 		{
 			localizeDescription = this.getLocalize('BX_LIVECHAT_PORTAL_USER_NEW').replace('#LINK_START#', '<a href="'+this.host+'">').replace('#LINK_END#', '</a>')
 		}

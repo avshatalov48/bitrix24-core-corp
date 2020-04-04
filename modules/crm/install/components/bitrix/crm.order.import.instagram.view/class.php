@@ -325,7 +325,10 @@ class CrmOrderConnectorInstagramView extends CBitrixComponent
 			$currencyId = \CCrmCurrency::GetBaseCurrencyID();
 			$currencyFormat = \CCurrencyLang::GetFormatDescription($currencyId);
 
-			$priceRegexp = \CAllCurrencyLang::applyTemplate('(\d+(\.|\,|\s){1})*\d+', ToLower($currencyFormat['FORMAT_STRING']));
+			$priceRegexp = \CAllCurrencyLang::applyTemplate(
+				'(\d+(\.|\,|\s){1})*\d+',
+				preg_quote(ToLower($currencyFormat['FORMAT_STRING']))
+			);
 			$priceRegexp = '/'.$priceRegexp.'/';
 		}
 

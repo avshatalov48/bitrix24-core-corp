@@ -92,4 +92,6 @@ $MESS["CRM_DEAL_CATEGORY_DLG_TITLE"] = "Настройка сделки";
 $MESS["CRM_DEAL_CATEGORY_DLG_FIELD"] = "Направление";
 $MESS["CRM_DEAL_BUTTON_SAVE"] = "Сохранить";
 $MESS["CRM_DEAL_BUTTON_CANCEL"] = "Отмена";
+$MESS["CRM_CALENDAR_NEW_DEAL_NAME"] = "Новая сделка";
+$MESS["CRM_CALENDAR_COLLAPSED_DEAL_NAME"] = "Сделок";
 ?>

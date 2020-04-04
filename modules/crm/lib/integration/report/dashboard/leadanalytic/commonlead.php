@@ -19,21 +19,13 @@ use Bitrix\Report\VisualConstructor\Views\Component\Grid;
  */
 class CommonLead
 {
-	const VERSION = 'v1';
+	const VERSION = 'v13';
 	const BOARD_KEY = 'crm_common_lead_analytics';
 
 	/**
 	 * @return Dashboard
 	 */
 	public static function get()
-	{
-		return self::buildLeadAnalyticsDefaultBoard();
-	}
-
-	/**
-	 * @return Dashboard
-	 */
-	private static function buildLeadAnalyticsDefaultBoard()
 	{
 		$board = new Dashboard();
 		$board->setVersion(static::VERSION);
@@ -74,42 +66,46 @@ class CommonLead
 		$widget->setCategoryKey('crm');
 		$widget->setBoardId(static::BOARD_KEY);
 
-		$widget->getWidgetHandler()->updateFormElementValue(
+		$widget->getWidgetHandler(true)->updateFormElementValue(
 			'label',
 			Loc::getMessage('CRM_REPORT_SALES_COLUMN_FUNNEL_TITLE')
 		);
-		$widget->getWidgetHandler()->updateFormElementValue('shortMode', true);
-		$widget->addConfigurations($widget->getWidgetHandler()->getConfigurations());
+		$widget->getWidgetHandler(true)->updateFormElementValue('shortMode', true);
+		$widget->getWidgetHandler(true)->updateFormElementValue('calculateMode', ColumnFunnel::CLASSIC_CALCULATE_MODE);
+		$widget->addConfigurations($widget->getWidgetHandler(true)->getConfigurations());
 
-		$leadCount = new Report();
-		$leadCount->setGId(Util::generateUserUniqueId());
-		$leadCount->setReportClassName(Lead::getClassName());
-		$leadCount->setWidget($widget);
-		$leadCount->getReportHandler()->updateFormElementValue(
+		$leadFunnel = new Report();
+		$leadFunnel->setGId(Util::generateUserUniqueId());
+		$leadFunnel->setReportClassName(Lead::getClassName());
+		$leadFunnel->setWidget($widget);
+		$leadFunnel->getReportHandler(true)->updateFormElementValue(
 			'label',
 			Loc::getMessage(
-				'CRM_REPORT_SALES_COLUMN_FUNNEL_LEAD_COUNT_TITLE'
+				'CRM_REPORT_SALES_COLUMN_FUNNEL_LEAD_COUNT_TITLE_1'
 			)
 		);
-		$leadCount->getReportHandler()->updateFormElementValue('groupingBy', Lead::GROUPING_BY_STATE);
-		$leadCount->getReportHandler()->updateFormElementValue('calculate', Lead::WHAT_WILL_CALCULATE_GOOD_LEAD_COUNT);
-		$leadCount->addConfigurations($leadCount->getReportHandler()->getConfigurations());
-		$widget->addReports($leadCount);
+		$leadFunnel->getReportHandler(true)->updateFormElementValue('groupingBy', Lead::GROUPING_BY_STATE);
+		$leadFunnel->getReportHandler(true)->updateFormElementValue('disableSuccessStates', true);
+		$leadFunnel->getReportHandler(true)->updateFormElementValue('calculate', Lead::WHAT_WILL_CALCULATE_LEAD_DATA_FOR_FUNNEL);
+		$leadFunnel->addConfigurations($leadFunnel->getReportHandler(true)->getConfigurations());
+		$widget->addReports($leadFunnel);
 
-		$conversion = new Report();
-		$conversion->setGId(Util::generateUserUniqueId());
-		$conversion->setReportClassName(Lead::getClassName());
-		$conversion->setWidget($widget);
-		$conversion->getReportHandler()->updateFormElementValue(
+
+		$successLeadData = new Report();
+		$successLeadData->setGId(Util::generateUserUniqueId());
+		$successLeadData->setReportClassName(Lead::getClassName());
+		$successLeadData->setWidget($widget);
+		$successLeadData->getReportHandler(true)->updateFormElementValue(
 			'label',
 			Loc::getMessage(
-				'CRM_REPORT_SALES_COLUMN_FUNNEL_LEAD_CONVERSION_TITLE'
+				'CRM_REPORT_SALES_COLUMN_FUNNEL_SUCCESS_LEAD_TITLE_1'
 			)
 		);
-		$conversion->getReportHandler()->updateFormElementValue('color', '#4fc3f7');
-		$conversion->getReportHandler()->updateFormElementValue('calculate', Lead::WHAT_WILL_CALCULATE_LEAD_CONVERSION);
-		$conversion->addConfigurations($conversion->getReportHandler()->getConfigurations());
-		$widget->addReports($conversion);
+		$successLeadData->getReportHandler(true)->updateFormElementValue('groupingBy', Lead::GROUPING_BY_STATE);
+		$successLeadData->getReportHandler(true)->updateFormElementValue('shortMode', true);
+		$successLeadData->getReportHandler(true)->updateFormElementValue('calculate', Lead::WHAT_WILL_CALCULATE_SUCCESS_LEAD_DATA_FOR_FUNNEL);
+		$successLeadData->addConfigurations($successLeadData->getReportHandler(true)->getConfigurations());
+		$widget->addReports($successLeadData);
 
 		return $widget;
 	}
@@ -126,103 +122,103 @@ class CommonLead
 		$widget->setCategoryKey('crm');
 		$widget->setBoardId(static::BOARD_KEY);
 
-		$widget->getWidgetHandler()->updateFormElementValue(
+		$widget->getWidgetHandler(true)->updateFormElementValue(
 			'label',
 			Loc::getMessage('CRM_REPORT_SALES_MANAGER_GRID_TITLE')
 		);
 
-		$widget->getWidgetHandler()->updateFormElementValue(
+		$widget->getWidgetHandler(true)->updateFormElementValue(
 			'amountFieldTitle',
 			Loc::getMessage('CRM_REPORT_SALES_MANAGER_GRID_AMOUNT_TITLE')
 		);
 
-		$widget->getWidgetHandler()->updateFormElementValue(
+		$widget->getWidgetHandler(true)->updateFormElementValue(
 			'groupingColumnTitle',
 			Loc::getMessage('CRM_REPORT_SALES_MANAGER_GRID_GROUPING_COLUMN_TITLE')
 		);
 
-		$widget->addConfigurations($widget->getWidgetHandler()->getConfigurations());
+		$widget->addConfigurations($widget->getWidgetHandler(true)->getConfigurations());
 
 		$leadCount = new Report();
 		$leadCount->setGId(Util::generateUserUniqueId());
 		$leadCount->setReportClassName(Lead::getClassName());
 		$leadCount->setWidget($widget);
-		$leadCount->getReportHandler()->updateFormElementValue(
+		$leadCount->getReportHandler(true)->updateFormElementValue(
 			'label',
 			Loc::getMessage(
 				'CRM_REPORT_SALES_MANAGER_GRID_ACTIVE_LEAD_COUNT_TITLE'
 			)
 		);
-		$leadCount->getReportHandler()->updateFormElementValue('groupingBy', Lead::GROUPING_BY_RESPONSIBLE);
-		$leadCount->getReportHandler()->updateFormElementValue(
+		$leadCount->getReportHandler(true)->updateFormElementValue('groupingBy', Lead::GROUPING_BY_RESPONSIBLE);
+		$leadCount->getReportHandler(true)->updateFormElementValue(
 			'calculate',
-			Lead::WHAT_WILL_CALCULATE_ACTIVE_LEAD_COUNT
+			Lead::WHAT_WILL_CALCULATE_LEAD_COUNT
 		);
-		$leadCount->addConfigurations($leadCount->getReportHandler()->getConfigurations());
+		$leadCount->addConfigurations($leadCount->getReportHandler(true)->getConfigurations());
 		$widget->addReports($leadCount);
 
 		$successLeadCount = new Report();
 		$successLeadCount->setGId(Util::generateUserUniqueId());
 		$successLeadCount->setReportClassName(Lead::getClassName());
 		$successLeadCount->setWidget($widget);
-		$successLeadCount->getReportHandler()->updateFormElementValue(
+		$successLeadCount->getReportHandler(true)->updateFormElementValue(
 			'label',
 			Loc::getMessage(
 				'CRM_REPORT_SALES_MANAGER_GRID_CONVERTED_LEAD_COUNT_TITLE'
 			)
 		);
-		$successLeadCount->getReportHandler()->updateFormElementValue('groupingBy', Lead::GROUPING_BY_RESPONSIBLE);
-		$successLeadCount->getReportHandler()->updateFormElementValue(
+		$successLeadCount->getReportHandler(true)->updateFormElementValue('groupingBy', Lead::GROUPING_BY_RESPONSIBLE);
+		$successLeadCount->getReportHandler(true)->updateFormElementValue(
 			'calculate',
 			Lead::WHAT_WILL_CALCULATE_CONVERTED_LEAD_COUNT
 		);
-		$successLeadCount->addConfigurations($successLeadCount->getReportHandler()->getConfigurations());
+		$successLeadCount->addConfigurations($successLeadCount->getReportHandler(true)->getConfigurations());
 		$widget->addReports($successLeadCount);
 
 		$lostLeadCount = new Report();
 		$lostLeadCount->setGId(Util::generateUserUniqueId());
 		$lostLeadCount->setReportClassName(Lead::getClassName());
 		$lostLeadCount->setWidget($widget);
-		$lostLeadCount->getReportHandler()->updateFormElementValue(
+		$lostLeadCount->getReportHandler(true)->updateFormElementValue(
 			'label',
 			Loc::getMessage(
-				'CRM_REPORT_SALES_MANAGER_GRID_LOSE_LEAD_COUNT_TITLE'
+				'CRM_REPORT_SALES_MANAGER_GRID_LOSE_LEAD_COUNT_TITLE_1'
 			)
 		);
-		$lostLeadCount->getReportHandler()->updateFormElementValue('groupingBy', Lead::GROUPING_BY_RESPONSIBLE);
-		$lostLeadCount->getReportHandler()->updateFormElementValue(
+		$lostLeadCount->getReportHandler(true)->updateFormElementValue('groupingBy', Lead::GROUPING_BY_RESPONSIBLE);
+		$lostLeadCount->getReportHandler(true)->updateFormElementValue(
 			'calculate',
 			Lead::WHAT_WILL_CALCULATE_LOST_LEAD_COUNT
 		);
-		$lostLeadCount->addConfigurations($lostLeadCount->getReportHandler()->getConfigurations());
+		$lostLeadCount->addConfigurations($lostLeadCount->getReportHandler(true)->getConfigurations());
 		$widget->addReports($lostLeadCount);
 
 		$loses = new Report();
 		$loses->setGId(Util::generateUserUniqueId());
 		$loses->setReportClassName(Lead::getClassName());
 		$loses->setWidget($widget);
-		$loses->getReportHandler()->updateFormElementValue(
+		$loses->getReportHandler(true)->updateFormElementValue(
 			'label',
 			Loc::getMessage('CRM_REPORT_SALES_MANAGER_GRID_LOSES_TITLE')
 		);
-		$loses->getReportHandler()->updateFormElementValue('groupingBy', Lead::GROUPING_BY_RESPONSIBLE);
-		$loses->getReportHandler()->updateFormElementValue('calculate', Lead::WHAT_WILL_CALCULATE_LEAD_LOSES);
-		$loses->addConfigurations($loses->getReportHandler()->getConfigurations());
+		$loses->getReportHandler(true)->updateFormElementValue('groupingBy', Lead::GROUPING_BY_RESPONSIBLE);
+		$loses->getReportHandler(true)->updateFormElementValue('calculate', Lead::WHAT_WILL_CALCULATE_LEAD_LOSES);
+		$loses->addConfigurations($loses->getReportHandler(true)->getConfigurations());
 		$widget->addReports($loses);
 
 		$conversion = new Report();
 		$conversion->setGId(Util::generateUserUniqueId());
 		$conversion->setReportClassName(Lead::getClassName());
 		$conversion->setWidget($widget);
-		$conversion->getReportHandler()->updateFormElementValue(
+		$conversion->getReportHandler(true)->updateFormElementValue(
 			'label',
 			Loc::getMessage(
 				'CRM_REPORT_SALES_MANAGER_GRID_CONVERSION_TITLE'
 			)
 		);
-		$conversion->getReportHandler()->updateFormElementValue('groupingBy', Lead::GROUPING_BY_RESPONSIBLE);
-		$conversion->getReportHandler()->updateFormElementValue('calculate', Lead::WHAT_WILL_CALCULATE_LEAD_CONVERSION);
-		$conversion->addConfigurations($conversion->getReportHandler()->getConfigurations());
+		$conversion->getReportHandler(true)->updateFormElementValue('groupingBy', Lead::GROUPING_BY_RESPONSIBLE);
+		$conversion->getReportHandler(true)->updateFormElementValue('calculate', Lead::WHAT_WILL_CALCULATE_LEAD_CONVERSION);
+		$conversion->addConfigurations($conversion->getReportHandler(true)->getConfigurations());
 		$widget->addReports($conversion);
 
 		return $widget;

@@ -309,7 +309,7 @@ class OrderShipmentController extends EntityController
 				$dateInsert = \CCrmComponentHelper::TrimDateTimeString(ConvertTimeStamp(MakeTimeStamp($data['DATE_INSERT']),'SHORT'));
 			}
 
-			$data['ASSOCIATED_ENTITY']['TITLE'] = Loc::getMessage(
+			$data['ASSOCIATED_ENTITY']['HTML_TITLE'] = Loc::getMessage(
 				'CRM_SHIPMENT_CREATION_MESSAGE',
 				[
 					'#ACCOUNT_NUMBER#' => $title,
@@ -318,14 +318,10 @@ class OrderShipmentController extends EntityController
 			);
 			if (!empty($fields['PRICE_DELIVERY']) && !empty($fields['CURRENCY']))
 			{
-				$sum = \CCrmCurrency::MoneyToString($fields['PRICE_DELIVERY'], $fields['CURRENCY']);
-				if (strlen($sum) > 0)
-				{
-					$data['ASSOCIATED_ENTITY']['TITLE'] .= " ".Loc::getMessage(
-							'CRM_SHIPMENT_CREATION_MESSAGE_PRICE_DELIVERY',
-							['#PRICE_WITH_CURRENCY#' => $sum]
-						);
-				}
+				$data['ASSOCIATED_ENTITY']['HTML_TITLE'] .= " ".Loc::getMessage(
+					'CRM_SHIPMENT_CREATION_MESSAGE_PRICE_DELIVERY',
+					['#PRICE_WITH_CURRENCY#' => \CCrmCurrency::MoneyToString($fields['PRICE_DELIVERY'], $fields['CURRENCY'])]
+				);
 			}
 
 			unset($data['SETTINGS']);

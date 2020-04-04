@@ -46,7 +46,6 @@ class Board extends Base
 
 			$options = new Options($filterId, $filter::getPresetsList());
 			$options->setFilterSettingsArray($filter::getPresetsList());
-
 		}
 
 		return true;
@@ -125,7 +124,6 @@ class Board extends Base
 			return false;
 		}
 
-
 		$widget = \Bitrix\Report\VisualConstructor\Entity\Widget::getWidgetByGId($formParams['patternWidgetId']);
 
 		$copy = $widget->getCopyForCurrentUser();
@@ -153,5 +151,4 @@ class Board extends Base
 		$dashboardForUser->save();
 		return $copy->getGId();
 	}
-
 }

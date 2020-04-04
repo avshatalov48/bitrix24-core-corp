@@ -4,8 +4,6 @@
  */
 
 /**
- * @requires module:chat/utils
- * @requires module:chat/messengercommon
  * @module chat/dataconverter
  */
 
@@ -214,6 +212,13 @@ ChatDataConverter.getTitleFormat = function(type, entity)
 				image: {name: 'name_status_owner'}
 			};
 		}
+		else if (entity.network && entity.external_auth_id === 'support24')
+		{
+			result = {
+				color: '#0165af',
+				image: {name: 'name_status_support24'}
+			};
+		}
 		else if (entity.network)
 		{
 			result = {
@@ -305,6 +310,11 @@ ChatDataConverter.getTitleFormat = function(type, entity)
 			}
 		}
 	}
+
+	result.font = {
+		fontStyle: "semibold",
+		color: typeof result.color != "undefined"? result.color: '#333333'
+	};
 
 	return result;
 };
@@ -593,26 +603,28 @@ ChatDataConverter.getActionList = function(element)
 		}
 		else
 		{
-			result = [
-				{
-					title : element.chat.mute_list[this.userId]? BX.message("ELEMENT_MENU_UNMUTE"): BX.message("ELEMENT_MENU_MUTE"),
-					identifier : element.chat.mute_list[this.userId]? "unmute": "mute",
-					iconName : "action_"+(element.chat.mute_list[this.userId]? "unmute": "mute"),
-					color : "#aaabac"
-				},
-				{
+			result = [];
+			result.push({
+				title : element.chat.mute_list[this.userId]? BX.message("ELEMENT_MENU_UNMUTE"): BX.message("ELEMENT_MENU_MUTE"),
+				identifier : element.chat.mute_list[this.userId]? "unmute": "mute",
+				iconName : "action_"+(element.chat.mute_list[this.userId]? "unmute": "mute"),
+				color : "#aaabac"
+			});
+			if (element.chat.type !== 'announcement')
+			{
+				result.push({
 					title : element.pinned? BX.message("ELEMENT_MENU_UNPIN"): BX.message("ELEMENT_MENU_PIN"),
 					iconName : "action_"+(element.pinned? "unpin": "pin"),
 					identifier : element.pinned? "unpin": "pin",
 					color : "#3e99ce"
-				},
-				{
-					title : BX.message("ELEMENT_MENU_DELETE"),
-					iconName : "action_delete",
-					identifier : "hide",
-					color : "#df532d"
-				},
-			];
+				});
+			}
+			result.push({
+				title : BX.message("ELEMENT_MENU_DELETE"),
+				iconName : "action_delete",
+				identifier : "hide",
+				color : "#df532d"
+			});
 		}
 	}
 
@@ -755,7 +767,6 @@ ChatDataConverter.getSearchElementFormat = function(element, recent)
 	return item;
 };
 
-
 ChatDataConverter.getListElementByUser = function(element)
 {
 	let item = {};
@@ -891,6 +902,232 @@ ChatDataConverter.getPushFormat = function(push)
 		result.ACTION = result.TAG;
 		delete result.TAG;
 	}
+
+	return result;
+};
+
+ChatDataConverter.preparePushFormat = function(element)
+{
+	let indexToNameMap =
+	{
+		1: "chat",
+		2: "chatId",
+		3: "counter",
+		4: "dialogId",
+		5: "files",
+		6: "message",
+		8: "users",
+		9: "name",
+		10: "avatar",
+		11: "color",
+		12: "notify",
+		13: "type",
+		14: "extranet",
+
+		20: "date_create",
+		21: "owner",
+		23: "entity_id",
+		24: "entity_type",
+		203: "entity_data_1",
+		204: "entity_data_2",
+		205: "entity_data_3",
+		201: "call",
+		202: "call_number",
+
+		40: "first_name",
+		41: "last_name",
+		42: "gender",
+		43: "work_position",
+		400: "active",
+		401: "birthday",
+		402: "bot",
+		403: "connector",
+		404: "external_auth_id",
+		406: "network",
+
+
+		60: "textOriginal",
+		61: "date",
+		62: "prevId",
+		63: "params",
+		64: "senderId",
+		601: "system",
+
+		80: "extension",
+		81: "image",
+		82: "progress",
+		83: "size",
+		84: "status",
+		85: "urlDownload",
+		86: "urlPreview",
+		87: "urlShow",
+		88: "width",
+		89: "height",
+	};
+
+	let changeKeysRecursive = function(object)
+	{
+		if (!object || typeof object !== 'object')
+		{
+			return object;
+		}
+
+		if (object instanceof Array)
+		{
+			return object.map(element => changeKeysRecursive(element));
+		}
+
+		let result = {};
+		for (let index in object)
+		{
+			if (!object.hasOwnProperty(index))
+			{
+				continue;
+			}
+
+			let key = indexToNameMap[index]? indexToNameMap[index]: index;
+			result[key] = changeKeysRecursive(object[index]);
+		}
+
+		return result;
+	};
+
+	let result = changeKeysRecursive(element);
+
+	if (
+		result.chat
+		&& typeof result.chat === 'object'
+		&& typeof result.chat.id !== 'undefined'
+	)
+	{
+		let chat = {};
+		chat.id = result.chat.id;
+		chat.avatar = result.chat.avatar || '';
+		chat.call = result.chat.call || '0';
+		chat.call_number = result.chat.call_number || '';
+		chat.color = result.chat.color;
+		chat.date_create = result.chat.date_create;
+		chat.entity_data_1 = result.chat.entity_data_1 || '';
+		chat.entity_data_2 = result.chat.entity_data_2 || '';
+		chat.entity_data_3 = result.chat.entity_data_3 || '';
+		chat.entity_id = result.chat.entity_id || '';
+		chat.entity_type = result.chat.entity_type || '';
+		chat.extranet = result.chat.extranet || false;
+		chat.manager_list = [];
+		chat.mute_list = {};
+		chat.name = result.chat.name;
+		chat.owner = result.chat.owner;
+		chat.type = result.chat.type;
+
+		result.chat = {[chat.id]: chat};
+	}
+	else
+	{
+		result.chat = {};
+	}
+
+	let userId = 0;
+	let userName = '';
+
+	if (
+		result.users
+		&& typeof result.users === 'object'
+		&& typeof result.users.id !== 'undefined'
+	)
+	{
+		let user = {};
+		user.id = result.users.id;
+		user.color = result.users.color;
+		user.first_name = result.users.first_name;
+		user.last_name = result.users.last_name;
+		user.name = result.users.name;
+		user.idle = false;
+		user.departments = [];
+		user.absent = result.users.absent || false;
+		user.active = result.users.active || true;
+		user.avatar = result.users.avatar || '';
+		user.birthday = result.users.birthday || false;
+		user.bot = result.users.bot || false;
+		user.connector = result.users.connector || false;
+		user.network = result.users.network || false;
+		user.extranet = result.users.extranet || false;
+		user.external_auth_id = result.users.external_auth_id || 'default';
+		user.work_position = result.users.work_position || '';
+		user.gender = result.users.gender === 'F'? 'F': 'M';
+
+		userId = user.id;
+		userName = user.name;
+
+		result.users = {[user.id]: user};
+	}
+	else
+	{
+		result.users = {};
+	}
+
+	if (result.files && typeof result.files === 'object')
+	{
+		let files = {};
+		for (let fileId in result.files)
+		{
+			if (!result.files.hasOwnProperty(fileId))
+			{
+				continue;
+			}
+
+			let file = {};
+
+			file.id = result.files[fileId].id;
+			file.authorId = userId;
+			file.authorName = userName;
+			file.chatId = result.chatId;
+			file.date = new Date().toISOString();
+			file.image = result.files[fileId].image || false;
+			file.extension = result.files[fileId].extension;
+			file.name = result.files[fileId].name;
+			file.type = result.files[fileId].type;
+			file.progress = result.files[fileId].progress || 100;
+			file.status = result.files[fileId].status || 'done';
+			file.urlDownload = result.files[fileId].urlDownload || '';
+			file.urlPreview = result.files[fileId].urlPreview || '';
+			file.urlShow = result.files[fileId].urlShow || '';
+
+			files[fileId] = file;
+		}
+
+		result.files = files;
+	}
+	else
+	{
+		result.files = {};
+	}
+
+	result.notify = result.notify || true;
+	result.lines = result.lines || {};
+
+	if (
+		result.message
+		&& typeof result.message === 'object'
+		&& typeof result.message.id !== 'undefined'
+	)
+	{
+		let message = {};
+		message.id = result.message.id;
+		message.chatId = result.chatId;
+		message.date = result.message.date;
+		message.params = result.message.params;
+		message.prevId = result.message.prevId;
+		message.recipientId = result.dialogId;
+		message.senderId = result.message.senderId;
+		message.system = result.message.system || 'N';
+		message.text = result.message.text || '';
+		message.textOriginal = result.message.textOriginal || '';
+		message.push = true;
+
+		result.message = message;
+	}
+
+	result.userInChat = {};
 
 	return result;
 };

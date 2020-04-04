@@ -10,15 +10,15 @@ return array(
 
 	"baseThemes" => array(
 		"default" => array(
-			"css" => array("main.css", "menu.css", "messenger.css")
+			"css" => array("main.css", "menu.css")
 		),
 
 		"light" => array(
-			"css" => array("main.css", "menu.css", "messenger.css")
+			"css" => array("main.css", "menu.css")
 		),
 
 		"dark" => array(
-			"css" => array("main.css", "menu.css", "messenger.css")
+			"css" => array("main.css", "menu.css")
 		)
 	),
 

@@ -34,14 +34,6 @@ if(strlen($_POST['Update'])>0 && check_bitrix_sessid())
 			}
 		}
 
-		$maxSessionCount = COption::GetOptionString("imopenlines", "max_session_count");
-		if ($_POST['MAX_SESSION_COUNT'] != $maxSessionCount || empty($maxSessionCount))
-		{
-			$maxSessionCount = intval($_POST['MAX_SESSION_COUNT']) > 0 ? intval($_POST['MAX_SESSION_COUNT']) : 100;
-
-			COption::SetOptionString("imopenlines", "max_session_count", $maxSessionCount);
-		}
-
 		COption::SetOptionString("imopenlines", "debug", isset($_POST['DEBUG_MODE']));
 
 		$execMode = COption::GetOptionString("imopenlines", "exec_mode");
@@ -76,10 +68,6 @@ if ($errorMessage):?>
 	<td width="60%"><input type="text" name="PUBLIC_URL" value="<?=htmlspecialcharsbx(\Bitrix\ImOpenlines\Common::getServerAddress())?>" /></td>
 </tr>
 <tr>
-	<td width="40%"><?=GetMessage("IMOPENLINES_ACCOUNT_MAX_SESSION_COUNT")?>:</td>
-	<td width="60%"><input type="text" name="MAX_SESSION_COUNT" value="<?=htmlspecialcharsbx(\Bitrix\ImOpenlines\Common::getMaxSessionCount())?>" /></td>
-</tr>
-<tr>
 	<td width="40%"><?=GetMessage("IMOPENLINES_ACCOUNT_DEBUG")?>:</td>
 	<td width="60%"><input type="checkbox" name="DEBUG_MODE" value="Y" <?=(COption::GetOptionInt("imopenlines", "debug")? 'checked':'')?> /></td>
 </tr>
@@ -96,6 +84,15 @@ if ($errorMessage):?>
 				<?=GetMessage("IMOPENLINES_ACCOUNT_EXEC_MODE_CRON")?>
 			</option>
 		</select>
+	</td>
+</tr>
+<tr>
+	<td colspan="2">
+		<div class="adm-info-message-wrap">
+			<div class="adm-info-message">
+				<?=GetMessage("IMOPENLINES_ACCOUNT_EXEC_DESCRIPTION")?>
+			</div>
+		</div>
 	</td>
 </tr>
 <?$tabControl->Buttons();?>

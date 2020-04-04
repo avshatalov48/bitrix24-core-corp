@@ -38,4 +38,5 @@ $MESS["CRM_ORDER_PAYMENT_CASHBOX_STATUS_P"] = "В процессе печати"
 $MESS["CRM_ORDER_PAYMENT_CASHBOX_STATUS_Y"] = "Напечатан";
 $MESS["CRM_ORDER_PAYMENT_CASHBOX_STATUS_E"] = "Ошибка";
 $MESS["CRM_ORDER_PAYMENT_TITLE2"] = "Оплата № #ACCOUNT_NUMBER#";
+$MESS["CRM_ORDER_PAYMENT_BUDGET"] = "Остаток средств на внутреннем счёте покупателя";
 ?>

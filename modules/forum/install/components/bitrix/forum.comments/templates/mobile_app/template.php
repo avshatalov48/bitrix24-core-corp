@@ -56,7 +56,7 @@ $arResult["OUTPUT_LIST"] = $APPLICATION->IncludeComponent(
 			),
 			"CREATETASK" => ($arResult["bTasksAvailable"] ? "Y" : "N")
 		),
-		"VISIBLE_RECORDS_COUNT" => 3,
+		"VISIBLE_RECORDS_COUNT" => $arResult["VISIBLE_RECORDS_COUNT"],
 
 		"ERROR_MESSAGE" => $arResult["ERROR_MESSAGE"],
 		"OK_MESSAGE" => $arResult["OK_MESSAGE"],

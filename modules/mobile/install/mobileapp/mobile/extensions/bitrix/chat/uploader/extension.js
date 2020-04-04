@@ -47,7 +47,8 @@ ChatUploader.fileCommit = function(taskId, fileId, fileData)
 		'UPLOAD_ID': fileId,
 		'MESSAGE_TEXT': messageText,
 		'SILENT_MODE': silentMode? 'Y': 'N',
-		'TASK_ID': taskId,
+		'TEMPLATE_ID': fileData.params.file? fileData.params.id: 0,
+		'FILE_TEMPLATE_ID': fileData.params.file? fileData.params.file.id: 0,
 	}).then((result) => {
 		let eventData = {
 			file: fileData,

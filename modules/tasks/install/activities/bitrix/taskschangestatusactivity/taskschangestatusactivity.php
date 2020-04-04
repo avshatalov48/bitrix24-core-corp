@@ -11,6 +11,7 @@ class CBPTasksChangeStatusActivity extends CBPActivity
 		$this->arProperties = array(
 			"Title" => "",
 			"TargetStatus" => null,
+			"ModifiedBy" => null,
 		);
 	}
 
@@ -39,7 +40,7 @@ class CBPTasksChangeStatusActivity extends CBPActivity
 			return CBPActivityExecutionStatus::Closed;
 		}
 
-		$ds->UpdateDocument($documentId, ['STATUS' => $targetStatus]);
+		$ds->UpdateDocument($documentId, ['STATUS' => $targetStatus], $this->ModifiedBy);
 
 		return CBPActivityExecutionStatus::Closed;
 	}
@@ -74,8 +75,8 @@ class CBPTasksChangeStatusActivity extends CBPActivity
 			'siteId' => $siteId
 		));
 
-		$dialog->setMap(array(
-			'TargetStatus' => array(
+		$dialog->setMap([
+			'TargetStatus' => [
 				'Name' => GetMessage('TASKS_CHANGE_STATUS_STATUS'),
 				'FieldName' => 'target_status',
 				'Type' => 'select',
@@ -86,8 +87,13 @@ class CBPTasksChangeStatusActivity extends CBPActivity
 					\CTasks::STATE_COMPLETED => GetMessage('TASKS_CHANGE_STATUS_COMPLETED'),
 					\CTasks::STATE_DEFERRED => GetMessage('TASKS_CHANGE_STATUS_DEFERRED'),
 				]
-			)
-		));
+			],
+			'ModifiedBy' => [
+				'Name' => GetMessage('TASKS_CHANGE_STATUS_MODIFIED_BY'),
+				'FieldName' => 'modified_by',
+				'Type' => 'user'
+			]
+		]);
 
 		return $dialog;
 	}
@@ -97,7 +103,8 @@ class CBPTasksChangeStatusActivity extends CBPActivity
 		$errors = [];
 
 		$properties = array(
-			'TargetStatus' => (int) $arCurrentValues['target_status']
+			'TargetStatus' => (int) $arCurrentValues['target_status'],
+			'ModifiedBy' => CBPHelper::UsersStringToArray($arCurrentValues["modified_by"], $documentType, $errors)
 		);
 
 		$errors = self::ValidateProperties(
@@ -116,7 +123,7 @@ class CBPTasksChangeStatusActivity extends CBPActivity
 		return true;
 	}
 
-	private function canChangeStatus($targetStatus)
+	private function canChangeStatus(&$targetStatus)
 	{
 		$documentType = $this->GetDocumentType()[2];
 		$taskId = $this->GetDocumentId()[2];
@@ -157,6 +164,25 @@ class CBPTasksChangeStatusActivity extends CBPActivity
 							break;
 						case \CTasks::STATE_COMPLETED:
 							$canChange = ($allowedActions['ACTION_COMPLETE'] === true);
+
+							if ($canChange && $taskFields['TASK_CONTROL'] === 'Y')
+							{
+								$isAdmin = Tasks\Util\User::isSuper($ownerId);
+								$isCreator = ((int) $taskFields['CREATED_BY'] === $ownerId);
+								$isOnePersonTask = (int) $taskFields['CREATED_BY'] === (int) $taskFields['RESPONSIBLE_ID'];
+								$isCreatorDirector = Tasks\Util\User::isBoss($taskFields['CREATED_BY'], $ownerId);
+
+								if (
+									!$isAdmin &&
+									!$isCreatorDirector &&
+									!$isOnePersonTask &&
+									!$isCreator
+								)
+								{
+									$targetStatus = CTasks::STATE_SUPPOSEDLY_COMPLETED;
+								}
+							}
+
 							break;
 						case \CTasks::STATE_DEFERRED:
 							$canChange = ($allowedActions['ACTION_DEFER'] === true);

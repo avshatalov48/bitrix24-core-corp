@@ -2666,7 +2666,6 @@ class CCrmLiveFeed
 			'CALLBACK_FUNC' => false,
 			'ENABLE_COMMENTS' => 'Y',
 			'PARAMS' => is_array($params) && !empty($params) ? serialize($params) : '',
-			'USER_ID' => $userID,
 			'ENTITY_TYPE' => $liveFeedEntityType,
 			'ENTITY_ID' => $entityID,
 			'SOURCE_ID' => $sourceID,
@@ -2675,6 +2674,12 @@ class CCrmLiveFeed
 			'UF_SONET_LOG_FILE' => (!empty($fields["UF_SONET_LOG_DOC"]) ? $fields["UF_SONET_LOG_FILE"] : false),
 			'SITE_ID' =>  (!empty($fields["SITE_ID"]) ? $fields["SITE_ID"] : SITE_ID),
 		);
+
+		if($userID > 0)
+		{
+			$eventFields['USER_ID'] = $userID;
+		}
+
 		if (
 			isset($fields['CONTEXT_USER_ID'])
 			&& intval($fields['CONTEXT_USER_ID']) > 0
@@ -3481,6 +3486,7 @@ class CCrmLiveFeed
 
 		$entityNameList = array_keys($arEntities);
 		$arUserID = array();
+		$permsList = array();
 
 		if (!empty($entityNameList))
 		{
@@ -3492,7 +3498,11 @@ class CCrmLiveFeed
 			$res = $DB->Query($sSql, false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
 			while($row = $res->Fetch())
 			{
-				$permsList[$row['ENTITY']] = array(
+				if (!isset($permsList[$row['ENTITY']]))
+				{
+					$permsList[$row['ENTITY']] = [];
+				}
+				$permsList[$row['ENTITY']][] = array(
 					'RELATION' => $row['RELATION'],
 					'ATTR' => $row['ATTR']
 				);
@@ -3512,57 +3522,60 @@ class CCrmLiveFeed
 					}
 				}
 
-				$perm = $permsList[$entityName]['ATTR'];
-				$relation = $permsList[$entityName]['RELATION'];
-
-				switch ($perm)
+				$entityPermissions = (isset($permsList[$entityName]) ? $permsList[$entityName] : []);
+				foreach($entityPermissions as $entityPermission)
 				{
-					case BX_CRM_PERM_SELF:
-						if (!empty($responsibleList))
-						{
-							$strSQL = "SELECT UA.USER_ID
+					$perm = $entityPermission['ATTR'];
+					$relation = $entityPermission['RELATION'];
+
+					switch ($perm)
+					{
+						case BX_CRM_PERM_SELF:
+							if (!empty($responsibleList))
+							{
+								$strSQL = "SELECT UA.USER_ID
 								FROM b_user_access UA
 								WHERE
 									UA.USER_ID IN (".implode(',', $responsibleList).") 
 									AND UA.ACCESS_CODE = '".$DB->ForSQL($relation)."'";
-							$rsUser = $DB->Query($strSQL, false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
-							while ($arUser = $rsUser->Fetch())
-							{
-								if ($arUser["USER_ID"] != $author_id)
+								$rsUser = $DB->Query($strSQL, false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
+								while ($arUser = $rsUser->Fetch())
 								{
-									$arUserID[] = $arUser["USER_ID"];
+									if ($arUser["USER_ID"] != $author_id)
+									{
+										$arUserID[] = $arUser["USER_ID"];
+									}
 								}
 							}
-						}
-						break;
-					case BX_CRM_PERM_ALL:
-					case BX_CRM_PERM_CONFIG:
-					case BX_CRM_PERM_OPEN:
+							break;
+						case BX_CRM_PERM_ALL:
+						case BX_CRM_PERM_CONFIG:
+						case BX_CRM_PERM_OPEN:
 
-						if (
-							$perm != BX_CRM_PERM_OPEN
-							|| $bHasOpenEntity
-						)
-						{
-							$strSQL = "SELECT UA.USER_ID
+							if (
+								$perm != BX_CRM_PERM_OPEN
+								|| $bHasOpenEntity
+							)
+							{
+								$strSQL = "SELECT UA.USER_ID
 								FROM b_user_access UA
 								WHERE
 									UA.ACCESS_CODE = '".$DB->ForSQL($relation)."'";
-							$rsUser = $DB->Query($strSQL, false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
-							while ($arUser = $rsUser->Fetch())
-							{
-								if ($arUser["USER_ID"] != $author_id)
+								$rsUser = $DB->Query($strSQL, false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
+								while ($arUser = $rsUser->Fetch())
 								{
-									$arUserID[] = $arUser["USER_ID"];
+									if ($arUser["USER_ID"] != $author_id)
+									{
+										$arUserID[] = $arUser["USER_ID"];
+									}
 								}
 							}
-						}
-						break;
-					case BX_CRM_PERM_DEPARTMENT:
+							break;
+						case BX_CRM_PERM_DEPARTMENT:
 
-						if (!empty($responsibleList))
-						{
-							$strSQL = "SELECT UA.USER_ID
+							if (!empty($responsibleList))
+							{
+								$strSQL = "SELECT UA.USER_ID
 								FROM b_user_access UA
 								INNER JOIN b_user_access UA1 ON
 									UA1.USER_ID IN (".implode(',', $responsibleList).")
@@ -3573,21 +3586,21 @@ class CCrmLiveFeed
 									UA2.USER_ID = UA.USER_ID
 									AND UA2.ACCESS_CODE = '".$DB->ForSQL($relation)."'";
 
-							$rsUser = $DB->Query($strSQL, false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
-							while ($arUser = $rsUser->Fetch())
-							{
-								if ($arUser["USER_ID"] != $author_id)
+								$rsUser = $DB->Query($strSQL, false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
+								while ($arUser = $rsUser->Fetch())
 								{
-									$arUserID[] = $arUser["USER_ID"];
+									if ($arUser["USER_ID"] != $author_id)
+									{
+										$arUserID[] = $arUser["USER_ID"];
+									}
 								}
 							}
-						}
-						break;
-					case BX_CRM_PERM_SUBDEPARTMENT:
+							break;
+						case BX_CRM_PERM_SUBDEPARTMENT:
 
-						if (!empty($responsibleList))
-						{
-							$strSQL = "SELECT UA.USER_ID
+							if (!empty($responsibleList))
+							{
+								$strSQL = "SELECT UA.USER_ID
 								FROM b_user_access UA
 								INNER JOIN b_user_access UA1 ON
 									UA1.USER_ID IN (".implode(',', $responsibleList).")
@@ -3597,16 +3610,17 @@ class CCrmLiveFeed
 									UA2.USER_ID = UA.USER_ID
 									AND UA2.ACCESS_CODE = '".$DB->ForSQL($relation)."'";
 
-							$rsUser = $DB->Query($strSQL, false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
-							while ($arUser = $rsUser->Fetch())
-							{
-								if ($arUser["USER_ID"] != $author_id)
+								$rsUser = $DB->Query($strSQL, false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
+								while ($arUser = $rsUser->Fetch())
 								{
-									$arUserID[] = $arUser["USER_ID"];
+									if ($arUser["USER_ID"] != $author_id)
+									{
+										$arUserID[] = $arUser["USER_ID"];
+									}
 								}
 							}
-						}
-						break;
+							break;
+					}
 				}
 			}
 			$arUserID = array_unique($arUserID);
@@ -6294,6 +6308,38 @@ class CCrmLiveFeedComponent
 						$arPOST['SPERM']['DR'] = array();
 					}
 					$arPOST['SPERM']['DR'][] = 'DR'.$matches[1];
+				}
+				elseif (preg_match('/^CRMCONTACT(\d+)$/i', $destCode, $matches))
+				{
+					if (empty($arPOST['SPERM']['CRMCONTACT']))
+					{
+						$arPOST['SPERM']['CRMCONTACT'] = array();
+					}
+					$arPOST['SPERM']['CRMCONTACT'][] = 'CRMCONTACT'.$matches[1];
+				}
+				elseif (preg_match('/^CRMCOMPANY(\d+)$/i', $destCode, $matches))
+				{
+					if (empty($arPOST['SPERM']['CRMCOMPANY']))
+					{
+						$arPOST['SPERM']['CRMCOMPANY'] = array();
+					}
+					$arPOST['SPERM']['CRMCOMPANY'][] = 'CRMCOMPANY'.$matches[1];
+				}
+				elseif (preg_match('/^CRMLEAD(\d+)$/i', $destCode, $matches))
+				{
+					if (empty($arPOST['SPERM']['CRMLEAD']))
+					{
+						$arPOST['SPERM']['CRMLEAD'] = array();
+					}
+					$arPOST['SPERM']['CRMLEAD'][] = 'CRMLEAD'.$matches[1];
+				}
+				elseif (preg_match('/^CRMDEAL(\d+)$/i', $destCode, $matches))
+				{
+					if (empty($arPOST['SPERM']['CRMDEAL']))
+					{
+						$arPOST['SPERM']['CRMDEAL'] = array();
+					}
+					$arPOST['SPERM']['CRMDEAL'][] = 'CRMDEAL'.$matches[1];
 				}
 			}
 			unset($arPOST['DEST_CODES']);

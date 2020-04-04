@@ -19,3 +19,14 @@
 .ol-stat-rating-head-wrap.ol-stat-rating-head-3 { width: 60px; }
 .ol-stat-rating-head-wrap.ol-stat-rating-head-4 { width: 80px; }
 .ol-stat-rating-head-wrap.ol-stat-rating-head-5 { width: 100px; }
+
+div.bx-openlines-dialog-long-run-proc div.bx-openlines-dialog-long-run-proc-popup { width: 520px; }
+div.bx-openlines-dialog-long-run-proc-popup {
+	overflow: hidden;
+	font-size: 14px;
+	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+.bx-openlines-dialog-long-run-proc-progressbar {
+	margin: 10px 0;
+	padding: 10px 0;
+}

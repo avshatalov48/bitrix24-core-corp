@@ -48,11 +48,12 @@ $MESS["BX_LIVECHAT_CONSENT_CHECKBOX_1"] = "Я даю свое согласие �
 $MESS["BX_LIVECHAT_CONSENT_CHECKBOX_2"] = "обработку моих данных";
 $MESS["BX_LIVECHAT_CONSENT_AGREE"] = "Принимаю";
 $MESS["BX_LIVECHAT_CONSENT_DISAGREE"] = "Не принимаю";
-$MESS["BX_LIVECHAT_FILE_UPLOAD"] = "Загрузка файла...";
 
 $MESS["BX_LIVECHAT_COPYRIGHT_TEXT"] = "Бесплатная CRM, чаты и сайты.";
 $MESS["BX_LIVECHAT_EXTRA_SITE"] = "Страница сайта";
 
+$MESS["BX_LIVECHAT_SYSTEM_MESSAGE"] = "Системное сообщение";
+$MESS["BX_LIVECHAT_FILE_MESSAGE"] = "Файл";
 $MESS["BX_LIVECHAT_FILE_SIZE_EXCEEDED"] = "Превышен максимальный размер файла (#LIMIT# Мб).";
 
 $MESS["BX_LIVECHAT_VOTE_TITLE"] = "Пожалуйста оцените качество обслуживания.";

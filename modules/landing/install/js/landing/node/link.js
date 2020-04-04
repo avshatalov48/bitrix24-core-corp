@@ -21,6 +21,7 @@
 	BX.Landing.Block.Node.Link = function(options)
 	{
 		BX.Landing.Block.Node.apply(this, arguments);
+		this.type = "link";
 
 		if (!this.isGrouped())
 		{
@@ -29,7 +30,7 @@
 
 		if (this.isAllowInlineEdit())
 		{
-			this.node.setAttribute("title", BX.message("LANDING_TITLE_OF_LINK_NODE"));
+			this.node.setAttribute("title", BX.Landing.Loc.getMessage("LANDING_TITLE_OF_LINK_NODE"));
 		}
 	};
 
@@ -40,11 +41,13 @@
 
 		onContentUpdate: function()
 		{
+			var blockId = this.getBlock().id;
+
 			clearTimeout(this.contentEditTimeout);
 			this.contentEditTimeout = setTimeout(function() {
 				BX.Landing.History.getInstance().push(
 					new BX.Landing.History.Entry({
-						block: this.getBlock().id,
+						block: blockId,
 						selector: this.selector,
 						command: "editLink",
 						undo: this.startValue,
@@ -67,12 +70,15 @@
 			event.preventDefault();
 			event.stopPropagation();
 
-			BX.Landing.UI.Button.FontAction.hideAll();
-			BX.Landing.UI.Button.ColorAction.hideAll();
-
-			if (!BX.Landing.UI.Panel.StylePanel.getInstance().isShown())
+			if (this.isAllowInlineEdit())
 			{
-				BX.Landing.UI.Panel.Link.getInstance().show(this);
+				BX.Landing.UI.Button.FontAction.hideAll();
+				BX.Landing.UI.Button.ColorAction.hideAll();
+
+				if (!BX.Landing.UI.Panel.StylePanel.getInstance().isShown())
+				{
+					BX.Landing.UI.Panel.Link.getInstance().show(this);
+				}
 			}
 		},
 
@@ -99,7 +105,7 @@
 
 			this.preventSave(preventSave);
 
-			if (!this.containsImage())
+			if (!this.containsImage() && this.isAllowInlineEdit())
 			{
 				var field = this.getField(true).hrefInput;
 

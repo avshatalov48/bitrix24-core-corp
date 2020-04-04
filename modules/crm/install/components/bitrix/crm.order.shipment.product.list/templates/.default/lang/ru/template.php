@@ -11,3 +11,5 @@ $MESS["CRM_ORDER_SPLT_CHOOSE_STORE"] = "Выберите склад";
 $MESS["CRM_ORDER_SPLT_CHOOSE"] = "Выбрать";
 $MESS["CRM_ORDER_SPLT_CLOSE"] = "Закрыть";
 $MESS["CRM_ORDER_SPLT_DELETE_STORE"] = "Убрать отгрузку с этого склада";
+$MESS["CRM_ORDER_SPLT_BARCODE"] = "Штрихкод";
+$MESS["CRM_ORDER_SPLT_MARKING_CODE"] = "Маркировочный код";

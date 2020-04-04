@@ -31,6 +31,7 @@ Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/analytics.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/autorun_proc.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/batch_conversion.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/batch_deletion.js');
+Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/batch_merge.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/partial_entity_editor.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/dialog.js');
 
@@ -42,6 +43,7 @@ use \Bitrix\Crm\Conversion\EntityConverter;
 
 ?><div id="batchConversionWrapper"></div><?
 ?><div id="batchDeletionWrapper"></div><?
+?><div id="batchActionWrapper"></div><?
 
 ?><div id="rebuildMessageWrapper"><?
 if($arResult['NEED_FOR_REBUILD_DUP_INDEX']):
@@ -54,7 +56,10 @@ if($arResult['NEED_FOR_REBUILD_SEARCH_CONTENT'])
 {
 	?><div id="rebuildLeadSearchWrapper"></div><?
 }
-
+if($arResult['NEED_FOR_REBUILD_TIMELINE_SEARCH_CONTENT'])
+{
+	?><div id="buildTimelineSearchWrapper"></div><?
+}
 if($arResult['NEED_FOR_BUILD_TIMELINE'])
 {
 	?><div id="buildLeadTimelineWrapper"></div><?
@@ -63,7 +68,10 @@ if($arResult['NEED_FOR_REFRESH_ACCOUNTING'])
 {
 	?><div id="refreshLeadAccountingWrapper"></div><?
 }
-
+if($arResult['NEED_FOR_REBUILD_LEAD_SEMANTICS'])
+{
+	?><div id="rebuildLeadSemanticsWrapper"></div><?
+}
 if($arResult['NEED_FOR_REBUILD_LEAD_ATTRS']):
 	?><div id="rebuildLeadAttrsMsg" class="crm-view-message">
 	<?=GetMessage('CRM_LEAD_REBUILD_ACCESS_ATTRS', array('#ID#' => 'rebuildLeadAttrsLink', '#URL#' => $arResult['PATH_TO_PRM_LIST']))?>
@@ -94,7 +102,8 @@ if(!$isInternal):
 			'OWNER_ID' => 0,
 			'READ_ONLY' => false,
 			'ENABLE_UI' => false,
-			'ENABLE_TOOLBAR' => false
+			'ENABLE_TOOLBAR' => false,
+			'SKIP_VISUAL_COMPONENTS' => 'Y'
 		),
 		null,
 		array('HIDE_ICONS' => 'Y')
@@ -442,6 +451,7 @@ foreach($arResult['LEAD'] as $sKey => $arLead)
 					'SERVICE_URL' => '/bitrix/components/bitrix/crm.lead.list/list.ajax.php',
 					'CONVERSION_SCHEME' => isset($arResult['CONVERSION']['SCHEMES']) && isset($arResult['CONVERSION']['SCHEMES'][$arLead['CONVERSION_TYPE_ID']])
 						? $arResult['CONVERSION']['SCHEMES'][$arLead['CONVERSION_TYPE_ID']] : null,
+					'CAN_CONVERT' => $arResult['CAN_CONVERT'],
 					'CONVERSION_TYPE_ID' => $arLead['CONVERSION_TYPE_ID'],
 					'READ_ONLY' => !(isset($arLead['EDIT']) && $arLead['EDIT'] === true)
 				)
@@ -761,6 +771,20 @@ if(!$isInternal
 			);
 		}
 		//endregion
+
+		if($allowDelete)
+		{
+			$actionList[] = array(
+				'NAME' => GetMessage('CRM_LEAD_ACTION_MERGE'),
+				'VALUE' => 'merge',
+				'ONCHANGE' => array(
+					array(
+						'ACTION' => Bitrix\Main\Grid\Panel\Actions::CALLBACK,
+						'DATA' => array(array('JS' => "BX.CrmUIGridExtension.applyAction('{$gridManagerID}', 'merge')"))
+					)
+				)
+			);
+		}
 	}
 
 	if($allowDelete)
@@ -952,12 +976,16 @@ $APPLICATION->IncludeComponent(
 		'AJAX_OPTION_HISTORY' => 'N',
 		'FILTER' => $arResult['FILTER'],
 		'FILTER_PRESETS' => $arResult['FILTER_PRESETS'],
-		'FILTER_PARAMS' => array(
-			'LAZY_LOAD' => array(
-				'GET_LIST' => '/bitrix/components/bitrix/crm.lead.list/filter.ajax.php?action=list&filter_id='.urlencode($arResult['GRID_ID']).'&siteID='.SITE_ID.'&'.bitrix_sessid_get(),
-				'GET_FIELD' => '/bitrix/components/bitrix/crm.lead.list/filter.ajax.php?action=field&filter_id='.urlencode($arResult['GRID_ID']).'&siteID='.SITE_ID.'&'.bitrix_sessid_get(),
-			)
-		),
+		'FILTER_PARAMS' => [
+			'LAZY_LOAD' => [
+				'CONTROLLER' => [
+					'getList' => 'crm.api.filter.lead.getlist',
+					'getField' => 'crm.api.filter.lead.getfield'
+				]
+			]
+		],
+		'LIVE_SEARCH_LIMIT_INFO' => isset($arResult['LIVE_SEARCH_LIMIT_INFO'])
+			? $arResult['LIVE_SEARCH_LIMIT_INFO'] : null,
 		'ENABLE_LIVE_SEARCH' => true,
 		'ACTION_PANEL' => $controlPanel,
 		'PAGINATION' => isset($arResult['PAGINATION']) && is_array($arResult['PAGINATION'])
@@ -965,6 +993,7 @@ $APPLICATION->IncludeComponent(
 		'ENABLE_ROW_COUNT_LOADER' => true,
 		'PRESERVE_HISTORY' => $arResult['PRESERVE_HISTORY'],
 		'MESSAGES' => $messages,
+		'DISABLE_NAVIGATION_BAR' => $arResult['DISABLE_NAVIGATION_BAR'],
 		'NAVIGATION_BAR' => array(
 			'ITEMS' => array_merge(
 				\Bitrix\Crm\Automation\Helper::getNavigationBarItems(\CCrmOwnerType::Lead),
@@ -992,14 +1021,6 @@ $APPLICATION->IncludeComponent(
 						)
 					)
 					: array()
-				),
-				array(
-					array(
-						'id' => 'widget',
-						'name' => GetMessage('CRM_LEAD_LIST_FILTER_NAV_BUTTON_WIDGET'),
-						'active' => false,
-						'url' => $arParams['PATH_TO_LEAD_WIDGET']
-					)
 				)
 			),
 			'BINDING' => array(
@@ -1067,6 +1088,24 @@ $APPLICATION->IncludeComponent(
 						summarySucceeded: "<?=GetMessageJS('CRM_LEAD_BATCH_DELETION_COUNT_SUCCEEDED')?>",
 						summaryFailed: "<?=GetMessageJS('CRM_LEAD_BATCH_DELETION_COUNT_FAILED')?>"
 					}
+				}
+			);
+
+			BX.Crm.BatchMergeManager.create(
+				gridId,
+				{
+					gridId: gridId,
+					entityTypeId: <?=CCrmOwnerType::Lead?>,
+					container: "batchActionWrapper",
+					stateTemplate: "<?=GetMessageJS('CRM_LEAD_STEPWISE_STATE_TEMPLATE')?>",
+					messages:
+						{
+							title: "<?=GetMessageJS('CRM_LEAD_LIST_MERGE_PROC_DLG_TITLE')?>",
+							confirmation: "<?=GetMessageJS('CRM_LEAD_LIST_MERGE_PROC_DLG_SUMMARY')?>",
+							summaryCaption: "<?=GetMessageJS('CRM_LEAD_BATCH_MERGE_COMPLETED')?>",
+							summarySucceeded: "<?=GetMessageJS('CRM_LEAD_BATCH_MERGE_COUNT_SUCCEEDED')?>",
+							summaryFailed: "<?=GetMessageJS('CRM_LEAD_BATCH_MERGE_COUNT_FAILED')?>"
+						}
 				}
 			);
 
@@ -1263,6 +1302,34 @@ $APPLICATION->IncludeComponent(
 		);
 	</script>
 <?endif;?>
+<?if($arResult['NEED_FOR_REBUILD_TIMELINE_SEARCH_CONTENT']):?>
+	<script type="text/javascript">
+		BX.ready(
+			function()
+			{
+				if(BX.AutorunProcessPanel.isExists("rebuildTimelineSearch"))
+				{
+					return;
+				}
+
+				BX.AutorunProcessManager.messages =
+					{
+						title: "<?=GetMessageJS('CRM_TIMELINE_REBUILD_SEARCH_CONTENT_DLG_TITLE')?>",
+						stateTemplate: "<?=GetMessageJS('CRM_REBUILD_SEARCH_CONTENT_STATE')?>"
+					};
+				var manager = BX.AutorunProcessManager.create("rebuildTimelineSearch",
+					{
+						serviceUrl: "<?='/bitrix/components/bitrix/crm.timeline/ajax.php?'.bitrix_sessid_get()?>",
+						actionName: "REBUILD_TIMELINE_SEARCH_CONTENT",
+						container: "buildTimelineSearchWrapper",
+						enableLayout: true
+					}
+				);
+				manager.runAfter(100);
+			}
+		);
+	</script>
+<?endif;?>
 <?if($arResult['NEED_FOR_BUILD_TIMELINE']):?>
 	<script type="text/javascript">
 		BX.ready(
@@ -1324,23 +1391,25 @@ $APPLICATION->IncludeComponent(
 		BX.ready(
 			function()
 			{
-				var builderPanel = BX.CrmLongRunningProcessPanel.create(
-					"rebuildLeadSemantics",
+				if(BX.AutorunProcessPanel.isExists("rebuildLeadSemantics"))
+				{
+					return;
+				}
+
+				BX.AutorunProcessManager.messages =
 					{
-						"containerId": "rebuildMessageWrapper",
-						"prefix": "",
-						"active": true,
-						"message": "<?=GetMessageJS('CRM_LEAD_REBUILD_SEMANTICS')?>",
-						"manager":
-						{
-							dialogTitle: "<?=GetMessageJS("CRM_LEAD_REBUILD_SEMANTICS_DLG_TITLE")?>",
-							dialogSummary: "<?=GetMessageJS("CRM_LEAD_REBUILD_SEMANTICS_DLG_SUMMARY")?>",
-							actionName: "REBUILD_SEMANTICS",
-							serviceUrl: "<?='/bitrix/components/bitrix/crm.lead.list/list.ajax.php?'.bitrix_sessid_get()?>"
-						}
+						title: "<?=GetMessageJS('CRM_LEAD_REBUILD_SEMANTICS_DLG_TITLE')?>",
+						stateTemplate: "<?=GetMessageJS('CRM_LEAD_STEPWISE_STATE_TEMPLATE')?>"
+					};
+				var manager = BX.AutorunProcessManager.create("rebuildLeadSemantics",
+					{
+						serviceUrl: "<?='/bitrix/components/bitrix/crm.lead.list/list.ajax.php?'.bitrix_sessid_get()?>",
+						actionName: "REBUILD_SEMANTICS",
+						container: "rebuildLeadSemanticsWrapper",
+						enableLayout: true
 					}
 				);
-				builderPanel.layout();
+				manager.runAfter(100);
 			}
 		);
 	</script>

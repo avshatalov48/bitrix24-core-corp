@@ -45,6 +45,12 @@ if(typeof BX.Crm.EntityEditorOrderController === "undefined")
 		{
 			BX.addCustomEvent(window, "onDeliveryExtraServiceValueChange", BX.delegate(this.onDeliveryExtraServiceValueChange, this));
 		}
+
+		if (this.getConfigStringParam("isSalesCenterOrder", "") === 'Y')
+		{
+			this._model.lockField('USER_ID');
+			this._model.lockField('TRADING_PLATFORM');
+		}
 	};
 
 	BX.Crm.EntityEditorOrderController.prototype.onPullEvent = function(command, params)
@@ -259,6 +265,21 @@ if(typeof BX.Crm.EntityEditorOrderController === "undefined")
 		this.ajax(
 			'deleteProduct',
 			{data:{BASKET_CODE: basketCode}},
+			this._ajaxOptsPreset
+		);
+	};
+
+	BX.Crm.EntityEditorOrderController.prototype.onProductGroupAction = function(basketCodes, action, forAll)
+	{
+		this.ajax(
+			'productGroup',
+			{
+				data:{
+					BASKET_CODES: basketCodes,
+					GROUP_ACTION: action,
+					FOR_ALL: forAll
+				}
+			},
 			this._ajaxOptsPreset
 		);
 	};
@@ -755,6 +776,13 @@ if(typeof BX.Crm.EntityEditorOrderController === "undefined")
 			this.getConfigStringParam("dataFieldName", ""),
 			'['+JSON.stringify(this.demandFormData())+']'
 		);
+		if (this.getConfigStringParam("isSalesCenterOrder", "") === 'Y')
+		{
+			this.setFormField(
+				'SALES_CENTER_SESSION_ID',
+				this.getConfigStringParam("salesCenterSessionId", "")
+			);
+		}
 	};
 
 	BX.Crm.EntityEditorOrderController.prototype.setFormField = function(fieldName, value)
@@ -804,7 +832,8 @@ if(typeof BX.Crm.EntityEditorOrderShipmentController === "undefined")
 		this._editor.getFormElement().appendChild(
 			BX.create('input', {props: {
 				name: 'IS_PRODUCT_LIST_LOADED',
-				value: 'Y'
+				value: 'Y',
+				type: "hidden"
 			}})
 		);
 	};
@@ -1550,6 +1579,7 @@ if(typeof BX.Crm.EntityEditorOrderProductController === "undefined")
 	BX.Crm.EntityEditorOrderProductController.prototype.doInitialize = function()
 	{
 		this._model.lockField('CURRENCY');
+		this._model.setField('CUSTOM_PRICE', 'Y');
 	};
 
 	BX.Crm.EntityEditorOrderProductController.create = function(id, settings)
@@ -1746,7 +1776,8 @@ if(typeof BX.Crm.EntityEditorPayment === "undefined")
 				size: 40
 			},
 			events:{
-				change: BX.delegate(function(e){ this.onPaymentSumChanged(e, index); }, this)
+				change: BX.delegate(function(e){ this.onPaymentSumChanged(e, index); }, this),
+				input: BX.delegate(this.onPaymentSumInput, this)
 			}
 		});
 	};
@@ -1882,17 +1913,15 @@ if(typeof BX.Crm.EntityEditorPayment === "undefined")
 			_this = this;
 
 		this._customPaymentSumm[index] = true;
-
+		var value = target.value.split(" ").join("");
+		_this.setItemField(index, 'SUM', value);
 		this._editor.formatMoney(
-			target.value,
+			value,
 			this.getModel().getField('CURRENCY', ''),
 			function(result)
 			{
-				_this.setItemField(index, 'SUM', target.value);
-
 				if(result.FORMATTED_SUM)
 				{
-					target.value = result.FORMATTED_SUM;
 					_this.setItemField(index, 'FORMATTED_SUM', result.FORMATTED_SUM);
 				}
 
@@ -1902,6 +1931,14 @@ if(typeof BX.Crm.EntityEditorPayment === "undefined")
 				}
 			}
 		);
+	};
+
+	BX.Crm.EntityEditorPayment.prototype.onPaymentSumInput = function(e)
+	{
+		e.target.value = BX.Currency.Editor.getFormattedValue(
+			e.target.value,
+			this.getModel().getField('CURRENCY', '')
+		)
 	};
 
 	BX.Crm.EntityEditorPayment.prototype.createPaySystemName = function(index, value)
@@ -3058,9 +3095,18 @@ if(typeof BX.Crm.EntityEditorShipment === "undefined")
 
 	BX.Crm.EntityEditorShipment.prototype.onPriceDeliveryChange = function(index, value)
 	{
+		value = value.split(' ').join('');
 		this.setItemField(index, 'PRICE_DELIVERY', value);
 		this.setItemField(index, 'CUSTOM_PRICE_DELIVERY', 'Y');
 		this.getOrderController().onDataChanged();
+	};
+
+	BX.Crm.EntityEditorShipment.prototype.onPriceDeliveryInput = function(e)
+	{
+		e.target.value = BX.Currency.Editor.getFormattedValue(
+			e.target.value,
+			this.getModel().getField('CURRENCY', '')
+		)
 	};
 
 	BX.Crm.EntityEditorShipment.prototype.createCurrency = function(index, value)
@@ -3085,7 +3131,8 @@ if(typeof BX.Crm.EntityEditorShipment === "undefined")
 			events: {
 				change: function(){
 					_this.onPriceDeliveryChange(index, this.value);
-				}
+				},
+				input: BX.delegate(_this.onPriceDeliveryInput, _this)
 			}
 		});
 
@@ -5410,7 +5457,10 @@ if(typeof BX.Crm.EntityEditorOrderPropertySubsection === "undefined")
 		)
 		{
 			BX.addClass(field._wrapper, 'crm-entity-widget-content-block-linked');
-			field._titleWrapper.setAttribute('title', linked);
+			if (BX.type.isDomNode(field._titleWrapper))
+			{
+				field._titleWrapper.setAttribute('title', linked);
+			}
 		}
 	};
 
@@ -6138,9 +6188,13 @@ if(typeof BX.Crm.EntityEditorOrderUser === "undefined")
 			}
 
 			var userElement = BX.create("div", { props: { className: "crm-widget-employee-container" } });
-			this._editButton = BX.create("span", { props: { className: "crm-widget-employee-change" }, text: this.getMessage("change") });
-			BX.bind(this._editButton, "click", BX.delegate(this.switchToSingleEditMode, this));
-			userElement.appendChild(this._editButton);
+			if (this.isEditable())
+			{
+				this._editButton = BX.create("span", { props: { className: "crm-widget-employee-change" }, text: this.getMessage("change") });
+				BX.bind(this._editButton, "click", BX.delegate(this.switchToSingleEditMode, this));
+				userElement.appendChild(this._editButton);
+			}
+
 			userElement.appendChild(this._photoElement);
 			userElement.appendChild(
 				BX.create("span",
@@ -6540,9 +6594,11 @@ if(typeof BX.Crm.EntityEditorOrderClient === "undefined")
 	{
 		var value = {};
 		var fieldName = BX.prop.getString(this._map, "companyId", "");
-		if(fieldName !== "")
+
+		if(fieldName !== "" && this._companyInfos && this._companyInfos.length() > 0)
 		{
-			value[fieldName] = this._companyInfo ? this._companyInfo.getId() : 0;
+			var companyInfo = this._companyInfos.get(0);
+			value[fieldName] = companyInfo.getId();
 		}
 
 		var contactIds = [];

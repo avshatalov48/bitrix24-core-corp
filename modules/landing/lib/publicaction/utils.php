@@ -1,8 +1,8 @@
 <?php
 namespace Bitrix\Landing\PublicAction;
 
+use \Bitrix\Landing\Manager;
 use \Bitrix\Landing\Error;
-use \Bitrix\Landing\Node\Component;
 use \Bitrix\Landing\PublicActionResult;
 use \Bitrix\Main\Loader;
 use \Bitrix\Main\UrlPreview\UrlPreview;
@@ -202,6 +202,7 @@ class Utils
 	protected static function getCatalogEntity($entityId, $entityType)
 	{
 		$result = null;
+		$entityId = (int)$entityId;
 
 		if (Loader::includeModule('iblock'))
 		{
@@ -328,6 +329,7 @@ class Utils
 		static $urls = array();
 		static $settings = array();
 
+		$elementId = (int)$elementId;
 		$key = $urlType . '_' . $elementId;
 
 		if (isset($urls[$key]))
@@ -384,6 +386,24 @@ class Utils
 	}
 
 	/**
+	 * Check feature enabling by codes.
+	 * @param array $code Feature code.
+	 * @param array $params Additional params array.
+	 * @return \Bitrix\Landing\PublicActionResult
+	 */
+	public static function checkMultiFeature(array $code, array $params = [])
+	{
+		$result = new PublicActionResult();
+
+		$result->setResult(Manager::checkMultiFeature(
+			(array)$code,
+			$params
+		));
+
+		return $result;
+	}
+
+	/**
 	 * Save some internal settings.
 	 * @param array $settings Settings array.
 	 * @return \Bitrix\Landing\PublicActionResult
@@ -401,5 +421,26 @@ class Utils
 		}
 
 		return $result;
+	}
+
+	/**
+	 * Check if it is boolean and true.
+	 * @param mixed $value Some value
+	 * @return bool
+	 */
+	public static function isTrue($value)
+	{
+		static $internal = true;
+
+		if (
+			$value === 'true' ||
+			$value === true ||
+			(int)$value === 1
+		)
+		{
+			return true;
+		}
+
+		return false;
 	}
 }

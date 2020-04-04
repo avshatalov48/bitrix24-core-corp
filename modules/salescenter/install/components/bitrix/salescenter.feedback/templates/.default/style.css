@@ -1,0 +1,24 @@
+.document-limit-slider {
+	padding: 0 13px 0 21px;
+}
+
+.document-limit-inner {
+	background: #fff;
+	padding: 50px 24px 175px 24px;
+}
+
+.document-limit-desc {
+	padding: 0 0 75px 200px;
+	margin-bottom: 30px;
+	border-bottom: 1px solid #eeeef0;
+	position: relative;
+}
+
+.document-limit-desc-text {
+	font: 16px/24px "OpenSans-Regular", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	color: #525c69;
+}
+
+.document-limit-desc-number {
+	font-weight: 700;
+}

@@ -249,9 +249,10 @@ class DealCategory
 	}
 
 	/**
-	 * Assing user-defined value for name of default category.
-	 * @param string $name Default category name.
+	 * Assign user-defined value for name of default category.
+	 * @param string $name Default Category Name.
 	 * @throws Main\ArgumentNullException
+	 * @throws Main\ArgumentOutOfRangeException
 	 */
 	public static function setDefaultCategoryName($name)
 	{
@@ -263,6 +264,49 @@ class DealCategory
 		else
 		{
 			Main\Config\Option::set('crm', 'default_deal_category_name', $name, '');
+		}
+
+		if(self::$all !== null)
+		{
+			self::$all = null;
+		}
+	}
+
+	/**
+	 * Get Sort of default category.
+	 * Returns user-defined value if assigned or 0.
+	 * @return int
+	 * @throws Main\ArgumentNullException
+	 * @throws Main\ArgumentOutOfRangeException
+	 */
+	public static function getDefaultCategorySort()
+	{
+		return max(
+			(int)Main\Config\Option::get('crm', 'default_deal_category_sort', '0', ''),
+			0
+		);
+	}
+
+	/**
+	 * Assign user-defined value for sort of default category.
+	 * @param int $sort Default category sort.
+	 * @throws Main\ArgumentNullException
+	 * @throws Main\ArgumentOutOfRangeException
+	 */
+	public static function setDefaultCategorySort($sort)
+	{
+		if(!is_int($sort))
+		{
+			$sort = (int)$sort;
+		}
+
+		if($sort <= 0)
+		{
+			Main\Config\Option::delete('crm', array('name' => 'default_deal_category_sort'));
+		}
+		else
+		{
+			Main\Config\Option::set('crm', 'default_deal_category_sort', $sort, '');
 		}
 
 		if(self::$all !== null)
@@ -299,16 +343,54 @@ class DealCategory
 				)
 			);
 
-			self::$all = array(
-				array('ID' => 0, 'NAME' => self::getDefaultCategoryName(), 'SORT' => 0, 'IS_DEFAULT' => true)
+			$defaultSort = self::getDefaultCategorySort();
+			$default = array(
+				'ID' => 0,
+				'NAME' => self::getDefaultCategoryName(),
+				'SORT' => $defaultSort,
+				'IS_DEFAULT' => true
 			);
+
+			self::$all = array();
+			$defaultIndex = -1;
 			while($fields = $dbResult->fetch())
 			{
 				self::$all[] = $fields;
+				if($defaultIndex < 0 && $fields['SORT'] > $defaultSort)
+				{
+					$defaultIndex = count(self::$all) - 1;
+				}
+			}
+
+			if($defaultIndex >= 0)
+			{
+				array_splice(self::$all, $defaultIndex, 0, array($default));
+			}
+			else
+			{
+				self::$all[] = $default;
 			}
 		}
 
-		$results = $enableDefault ? self::$all : array_slice(self::$all, 1);
+		$results = self::$all;
+		if(!$enableDefault)
+		{
+			$defaultIndex = -1;
+			for($i = 0, $length = count($results); $i < $length; $i++)
+			{
+				if($results[$i]['ID'] === 0)
+				{
+					$defaultIndex = $i;
+					break;
+				}
+			}
+
+			if($defaultIndex >= 0)
+			{
+				array_splice($results, $defaultIndex, 1);
+			}
+		}
+
 		if($sort !== null)
 		{
 			$effectiveSort = array();
@@ -417,6 +499,29 @@ class DealCategory
 
 		$ID = $result->getId();
 		self::createDefaultStages($ID);
+
+		//region Setup default rights
+		$permissionEntity = DealCategory::convertToPermissionEntityType($ID);
+
+		$role = new \CCrmRole();
+		$roleDbResult = $role->GetList();
+		while($roleFields = $roleDbResult->Fetch())
+		{
+			$roleID = (int)$roleFields['ID'];
+			$roleRelation = \CCrmRole::GetRolePerms($roleID);
+			if(isset($roleRelation[$permissionEntity]))
+			{
+				continue;
+			}
+
+			if(!isset($roleRelation[$permissionEntity]))
+			{
+				$roleRelation[$permissionEntity] = \CCrmRole::GetDefaultPermissionSet();
+			}
+			$fields = array('RELATION' => $roleRelation);
+			$role->Update($roleID, $fields);
+		}
+		//endregion
 
 		if(self::$all !== null)
 		{

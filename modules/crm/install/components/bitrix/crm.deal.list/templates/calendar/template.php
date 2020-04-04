@@ -397,15 +397,6 @@ if(!Bitrix\Main\Grid\Context::isInternalRequest()
 							)
 						)
 						: array()
-					),
-					array(
-						array(
-							'id' => 'widget',
-							'name' => Loc::getMessage('CRM_DEAL_LIST_FILTER_NAV_BUTTON_WIDGET'),
-							'active' => false,
-							'url' => isset($arResult['PATH_TO_DEAL_WIDGETCATEGORY'])
-								? $arResult['PATH_TO_DEAL_WIDGETCATEGORY'] : $arResult['PATH_TO_DEAL_WIDGET']
-						)
 					)
 				),
 				'BINDING' => array(
@@ -414,6 +405,7 @@ if(!Bitrix\Main\Grid\Context::isInternalRequest()
 					'key' => strtolower($arResult['NAVIGATION_CONTEXT_ID'])
 				)
 			),
+			'LIMITS' => isset($arResult['LIVE_SEARCH_LIMIT_INFO']) ? $arResult['LIVE_SEARCH_LIMIT_INFO'] : null,
 			'ENABLE_LIVE_SEARCH' => true,
 			'DISABLE_SEARCH' => isset($arParams['~DISABLE_SEARCH']) && $arParams['~DISABLE_SEARCH'] === true,
 			'LAZY_LOAD' => array(
@@ -509,6 +501,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 //region Calendar
 $APPLICATION->IncludeComponent("bitrix:calendar.interface.grid", "", Array(
 	"ID" => $calendarId,
+	"ENTITY_TYPE" => 'crm',
 	"EXTERNAL_DATA_HANDLE_MODE" => true,
 	"READONLY" => !$allowWrite,
 	"SHOW_FILTER" => false,
@@ -517,7 +510,8 @@ $APPLICATION->IncludeComponent("bitrix:calendar.interface.grid", "", Array(
 	"SHOW_TOP_VIEW_SWITCHER" => false,
 	"DEFAULT_SECTION_NAME" => 'calendar#deal',
 	"DEFAULT_SECTION_COLOR" => $dealColor,
-	"NEW_ENTRY_NAME" => 'new deal',
+	"NEW_ENTRY_NAME" => Loc::getMessage('CRM_CALENDAR_NEW_DEAL_NAME'),
+	"COLLAPSED_ENTRIES_NAME" => Loc::getMessage('CRM_CALENDAR_COLLAPSED_DEAL_NAME'),
 	"AVILABLE_VIEWS" => array('day', 'week', 'month'),
 	"ADDITIONAL_VIEW_MODES" => $arParams['CALENDAR_MODE_LIST']
 ));

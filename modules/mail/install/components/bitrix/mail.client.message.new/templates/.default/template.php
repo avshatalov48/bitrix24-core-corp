@@ -20,7 +20,6 @@ $this->setViewTarget('pagetitle_icon');
 ?>
 
 <span class="mail-msg-title-icon mail-msg-title-icon-outcome"></span>
-<span class="mail-msg-title-icon-placeholder ">&nbsp;</span>
 
 <?
 

@@ -697,6 +697,9 @@ function ReloadOffers()
 	{
 		global $APPLICATION;
 
+		if (!isset($_REQUEST["mode"]))
+			return;
+
 		if ($_REQUEST["mode"]=='list' || $_REQUEST["mode"]=='frame')
 		{
 			ob_start();

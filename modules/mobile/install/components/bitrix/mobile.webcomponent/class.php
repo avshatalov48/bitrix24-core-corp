@@ -8,6 +8,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 use Bitrix\Main\Application;
 use Bitrix\Main\IO\Directory;
 use Bitrix\Main\IO\File;
+use Bitrix\Main\IO\FileDeleteException;
 use Bitrix\Main\Localization;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Json;
@@ -132,7 +133,7 @@ class MobileWebComponent extends \CBitrixComponent
 		}
 	}
 
-	public function generateArchive()
+	public function 	generateArchive()
 	{
 		require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/classes/general/tar_gz.php");
 
@@ -223,7 +224,14 @@ class MobileWebComponent extends \CBitrixComponent
 
 			//Remove bundle in temporary directory
 			$dirEntry = new Directory($tmpBundlePath);
-			$dirEntry->delete();
+			try
+			{
+				$dirEntry->delete();
+			}
+			catch (FileDeleteException $exception)
+			{
+				//it's ok, let it be
+			}
 
 			if(empty($errors = $arc->getErrors()) && !$this->emulateError)
 			{
@@ -247,7 +255,15 @@ class MobileWebComponent extends \CBitrixComponent
 			}
 
 			//7. Delete tmp dir
-			$randomTmpDir->delete();
+			try
+			{
+				$randomTmpDir->delete();
+			}
+			catch (FileDeleteException $exception)
+			{
+				//it's ok, let it be
+			}
+
 		}
 		else
 		{
@@ -418,6 +434,18 @@ class MobileWebComponent extends \CBitrixComponent
 						{
 							$content = str_replace($find, $replace, $content);
 						}
+						$file->putContents($content);
+					}
+					else if ($type === "css")
+					{
+						$file = new File($path.$localPath);
+						$content = $file->getContents();
+
+						$content = str_replace(
+							['url(/', "url('/", 'url("/'],
+							['url(bundle://', "url('bundle://", 'url("bundle://'],
+						$content);
+
 						$file->putContents($content);
 					}
 

@@ -68,7 +68,9 @@ class UserFieldDataProvider extends DataProvider
 		$result = array();
 		foreach($this->getUserFields() as $fieldName => $userField)
 		{
-			if ($userField['SHOW_FILTER'] === 'N' || $userField['USER_TYPE']['BASE_TYPE'] === 'file')
+			if ($userField['SHOW_FILTER'] === 'N'
+				|| $userField['USER_TYPE']['BASE_TYPE'] === 'file'
+				|| $userField['USER_TYPE_ID'] === 'resourcebooking')
 			{
 				continue;
 			}
@@ -94,7 +96,7 @@ class UserFieldDataProvider extends DataProvider
 				$result[$fieldName] = $this->createField(
 					$fieldName,
 					array(
-						'type' => 'custom_entity',
+						'type' => 'dest_selector',
 						'name' => $fieldLabel,
 						'partial' => true
 					)
@@ -158,7 +160,7 @@ class UserFieldDataProvider extends DataProvider
 				$result[$fieldName] = $this->createField(
 					$fieldName,
 					array(
-						'type' => 'custom_entity',
+						'type' => 'dest_selector',
 						'name' => $fieldLabel,
 						'partial' => true
 					)
@@ -199,10 +201,17 @@ class UserFieldDataProvider extends DataProvider
 		if($typeID === 'employee')
 		{
 			return array(
-				'params' => array('multiple' => 'N'),
-				'selector' => array(
-					'TYPE' => 'user',
-					'DATA' => array('ID' => strtolower($fieldID), 'FIELD_ID' => $fieldID)
+				'params' => array(
+					'context' => 'CRM_UF_FILTER_'.$fieldID,
+					'multiple' => 'N',
+					'contextCode' => 'U',
+					'enableAll' => 'N',
+					'enableSonetgroups' => 'N',
+					'allowEmailInvitation' => 'N',
+					'allowSearchEmailUsers' => 'N',
+					'departmentSelectDisable' => 'Y',
+					'isNumeric' => 'Y',
+					'prefix' => 'U',
 				)
 			);
 		}
@@ -296,17 +305,60 @@ class UserFieldDataProvider extends DataProvider
 				}
 			}
 
+			$destSelectorParams = array(
+				'apiVersion' => 3,
+				'context' => 'CRM_UF_FILTER_ENTITY',
+				'contextCode' => 'CRM',
+				'useClientDatabase' => 'N',
+				'enableAll' => 'N',
+				'enableDepartments' => 'N',
+				'enableUsers' => 'N',
+				'enableSonetgroups' => 'N',
+				'allowEmailInvitation' => 'N',
+				'allowSearchEmailUsers' => 'N',
+				'departmentSelectDisable' => 'Y',
+				'enableCrm' => 'Y',
+				'multiple' => ($isMultiple ? 'Y' : 'N'),
+				'convertJson' => 'Y'
+			);
+
+			$entityTypeCounter = 0;
+			foreach($entityTypeNames as $entityTypeName)
+			{
+				switch($entityTypeName)
+				{
+					case \CCrmOwnerType::LeadName:
+						$destSelectorParams['enableCrmLeads'] = 'Y';
+						$destSelectorParams['addTabCrmLeads'] = 'Y';
+						$entityTypeCounter++;
+						break;
+					case \CCrmOwnerType::DealName:
+						$destSelectorParams['enableCrmDeals'] = 'Y';
+						$destSelectorParams['addTabCrmDeals'] = 'Y';
+						$entityTypeCounter++;
+						break;
+					case \CCrmOwnerType::ContactName:
+						$destSelectorParams['enableCrmContacts'] = 'Y';
+						$destSelectorParams['addTabCrmContacts'] = 'Y';
+						$entityTypeCounter++;
+						break;
+					case \CCrmOwnerType::CompanyName:
+						$destSelectorParams['enableCrmCompanies'] = 'Y';
+						$destSelectorParams['addTabCrmCompanies'] = 'Y';
+						$entityTypeCounter++;
+						break;
+					default:
+				}
+			}
+			if ($entityTypeCounter <= 1)
+			{
+				$destSelectorParams['addTabCrmLeads'] = 'N';
+				$destSelectorParams['addTabCrmDeals'] = 'N';
+				$destSelectorParams['addTabCrmContacts'] = 'N';
+				$destSelectorParams['addTabCrmCompanies'] = 'N';
+			}
 			return array(
-				'params' => array('multiple' => 'N'),
-				'selector' => array(
-					'TYPE' => 'crm_entity',
-					'DATA' => array(
-						'ID' => strtolower($fieldID),
-						'FIELD_ID' => $fieldID,
-						'ENTITY_TYPE_NAMES' => $entityTypeNames,
-						'IS_MULTIPLE' => $isMultiple
-					)
-				)
+				'params' => $destSelectorParams
 			);
 		}
 		elseif($typeID === 'crm_status')

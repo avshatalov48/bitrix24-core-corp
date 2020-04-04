@@ -8,8 +8,9 @@
 
 namespace Bitrix\Tasks\Util\Replicator;
 
+use Bitrix\Tasks\CheckList\CheckListFacade;
+use Bitrix\Tasks\CheckList\Internals\CheckList;
 use Bitrix\Tasks\Util\Error;
-use Bitrix\Tasks\Util\Type;
 use Bitrix\Tasks\Util;
 use Bitrix\Tasks\Item;
 use Bitrix\Main\NotImplementedException;
@@ -44,6 +45,28 @@ abstract class Task
 	protected static function getConverterClass()
 	{
 		throw new NotImplementedException('No default converter class');
+	}
+
+	/**
+	 * Returns checklist facade to get items from
+	 *
+	 * @return string|CheckListFacade
+	 * @throws NotImplementedException
+	 */
+	protected static function getFromCheckListFacade()
+	{
+		throw new NotImplementedException('No default old checklist facade');
+	}
+
+	/**
+	 * Returns checklist facade to put items to
+	 *
+	 * @return string|CheckListFacade
+	 * @throws NotImplementedException
+	 */
+	protected static function getToCheckListFacade()
+	{
+		throw new NotImplementedException('No default new checklist facade');
 	}
 
 	public function setConverter($converter)
@@ -218,6 +241,11 @@ abstract class Task
 	 * @param $dataMixin
 	 * @param int $userId
 	 * @return Result
+	 * @throws NotImplementedException
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\Db\SqlQueryException
+	 * @throws \Bitrix\Main\ObjectException
+	 * @throws \Bitrix\Main\SystemException
 	 */
 	protected function saveItemFromSource($source, $dataMixin, $userId = 0)
 	{
@@ -231,6 +259,8 @@ abstract class Task
 		$conversionResult = $source->transform($converter); // converted to the destination instance
 		if($conversionResult->isSuccess()) // was able to produce an item
 		{
+			$dataMixin['SE_CHECKLIST'] = new Item\Task\CheckList();
+
 			$dstInstance = $conversionResult->getInstance();
 			$dstInstance->setData($dataMixin);
 
@@ -238,6 +268,34 @@ abstract class Task
 			if(!$saveResult->isSuccess()) // but was not able to save it
 			{
 				$dstInstance->abortTransformation($this->getConverter()); // rolling back possible temporal data creation
+			}
+			else
+			{
+				$sourceId = $source->getId();
+				$toCheckListFacade = static::getToCheckListFacade();
+				$fromCheckListFacade = static::getFromCheckListFacade();
+
+				$checkListItems = $fromCheckListFacade::getByEntityId($sourceId);
+				$checkListItems = array_map(
+					static function($item)
+					{
+						$item['COPIED_ID'] = $item['ID'];
+						unset($item['ID']);
+						return $item;
+					},
+					$checkListItems
+				);
+
+				$checkListRoots = $toCheckListFacade::getObjectStructuredRoots($checkListItems, $dstInstance->getId(), $userId);
+				foreach ($checkListRoots as $root)
+				{
+					/** @var CheckList $root */
+					$checkListSaveResult = $root->save();
+					if (!$checkListSaveResult->isSuccess())
+					{
+						$saveResult->loadErrors($checkListSaveResult->getErrors());
+					}
+				}
 			}
 
 			if(!$saveResult->getErrors()->isEmpty())

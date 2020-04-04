@@ -40,6 +40,12 @@ $isFormInline = $defaultTemplateContainerId == $templateContainerId;
 		<br>
 	<?endif;?>
 
+	<?if ($arResult['IS_AVAILABLE_EMBEDDING']):?>
+		<label ><input type="checkbox" data-bx-webform-script-selector="">
+			<?=Loc::getMessage('CRM_WEBFORM_SCRIPT_SELECTOR')?>
+		</label><br><br>
+	<?endif;?>
+
 	<div class="crm-webform-script-tab-container">
 		<div class="crm-webform-script-tab-list">
 			<?
@@ -47,10 +53,11 @@ $isFormInline = $defaultTemplateContainerId == $templateContainerId;
 			foreach($scriptTypes as $type):
 				$addClass = $counter > 0 ? '' : 'crm-webform-script-tab-item-active';
 				$type = htmlspecialcharsbx($type);
+				$msgType = $type === 'AUTO' ? 'DELAY' : $type;
 				$counter++;
 				?>
 				<span data-bx-webform-script-tab-btn="<?=$type?>" class="<?=$addClass?> crm-webform-script-tab-item">
-					<?=Loc::getMessage('CRM_WEBFORM_SCRIPT_TAB_SCRIPT_' . $type)?>
+					<?=Loc::getMessage('CRM_WEBFORM_SCRIPT_TAB_SCRIPT_' . $msgType)?>
 				</span>
 			<?endforeach;?>
 		</div>
@@ -61,25 +68,89 @@ $isFormInline = $defaultTemplateContainerId == $templateContainerId;
 	foreach($scriptTypes as $type):
 		$addStyle = $counter > 0 ? 'display: none;' : '';
 		$type = htmlspecialcharsbx($type);
+		$msgType = $type === 'AUTO' ? 'DELAY' : $type;
+		$typeLower = strtolower($type);
 		$counter++;
+		$view = !empty($arResult['VIEWS'][$typeLower]) ? $arResult['VIEWS'][$typeLower] : [];
 		?>
 		<div data-bx-webform-script-tab-cont="<?=$type?>" class="crm-webform-script-tab-body-container" style="<?=$addStyle?>">
-
 			<div class="crm-webform-script-tab-body-item-container">
 				<div class="crm-webform-script-tab-body-item-subtitle">
-					<?=Loc::getMessage('CRM_WEBFORM_SCRIPT_WINDOW_' . $type)?>:
+					<?=Loc::getMessage('CRM_WEBFORM_SCRIPT_WINDOW_' . $msgType)?>:
 				</div>
-				<div class="crm-webform-script-tab-body-item-inner">
-					<div data-bx-webform-script-copy-text="SCRIPT_<?=$type?>" class="crm-webform-script-tab-body-item-content">
-						<?=$getFormattedScript($arResult['SCRIPTS'][$type])?>
+				<div data-bx-webform-script-kind="" style="<?=($arResult['IS_AVAILABLE_EMBEDDING'] ? '' : 'display: none;')?>">
+					<div class="crm-webform-script-tab-body-item-inner">
+						<div data-bx-webform-script-copy-text="SCRIPT_<?=$type?>" class="crm-webform-script-tab-body-item-content">
+							<?=$getFormattedScript($arResult['SCRIPTS'][$type]['text'])?>
+						</div>
 					</div>
-					<div class="crm-webform-script-tab-body-item-block">
-						<span class="crm-webform-script-tab-body-item-block-element">
-							<img src="<?=$this->GetFolder()?>/images/demo_<?=strtolower($type)?>.png?4">
-						</span>
+					<?if ($type !== 'INLINE'):?>
+						<div class="crm-webform-script-code-settings">
+							<span class="crm-webform-script-code-setting">
+								<?=Loc::getMessage('CRM_WEBFORM_SCRIPT_PARAM_VIEW_TYPE')?>
+								<select name="VIEWS[<?=$typeLower?>][type]" <?=($isFormInline ? '' : 'disabled')?>>
+									<option value="panel" <?=($view['type'] == 'panel' ? 'selected' : '')?>>
+										<?=Loc::getMessage('CRM_WEBFORM_SCRIPT_PARAM_VIEW_TYPE_PANEL')?>
+									</option>
+									<option value="popup" <?=($view['type'] == 'popup' ? 'selected' : '')?>>
+										<?=Loc::getMessage('CRM_WEBFORM_SCRIPT_PARAM_VIEW_TYPE_POPUP')?>
+									</option>
+								</select>
+							</span>
+							<span class="crm-webform-script-code-setting">
+								<?=Loc::getMessage('CRM_WEBFORM_SCRIPT_PARAM_POSITION')?>
+								<select name="VIEWS[<?=$typeLower?>][position]" <?=($isFormInline ? '' : 'disabled')?>>
+									<option value="right" <?=($view['position'] == 'right' ? 'selected' : '')?>>
+										<?=Loc::getMessage('CRM_WEBFORM_SCRIPT_PARAM_POSITION_RIGHT')?>
+									</option>
+									<option value="left" <?=($view['position'] == 'left' ? 'selected' : '')?>>
+										<?=Loc::getMessage('CRM_WEBFORM_SCRIPT_PARAM_POSITION_LEFT')?>
+									</option>
+									<option value="center" <?=($view['position'] == 'center' ? 'selected' : '')?>>
+										<?=Loc::getMessage('CRM_WEBFORM_SCRIPT_PARAM_POSITION_CENTER')?>
+									</option>
+								</select>
+							</span>
+							<span class="crm-webform-script-code-setting">
+								<?=Loc::getMessage('CRM_WEBFORM_SCRIPT_PARAM_ANIMATION')?>
+								<select name="VIEWS[<?=$typeLower?>][vertical]" <?=($isFormInline ? '' : 'disabled')?>>
+									<option value="bottom" <?=($view['vertical'] == 'bottom' ? 'selected' : '')?>>
+										<?=Loc::getMessage('CRM_WEBFORM_SCRIPT_PARAM_ANIMATION_BOTTOM')?>
+									</option>
+									<option value="top" <?=($view['vertical'] == 'top' ? 'selected' : '')?>>
+										<?=Loc::getMessage('CRM_WEBFORM_SCRIPT_PARAM_ANIMATION_TOP')?>
+									</option>
+								</select>
+							</span>
+						</div>
+						<?if ($type !== 'AUTO'):?>
+							<div class="crm-webform-script-code-settings">
+								<?=Loc::getMessage('CRM_WEBFORM_SCRIPT_HINT_INJECT')?>
+							</div>
+						<?else:?>
+							<div class="crm-webform-script-code-settings">
+								<span class="crm-webform-script-code-setting">
+									<?=Loc::getMessage('CRM_WEBFORM_SCRIPT_PARAM_DELAY')?>
+									<select name="VIEWS[<?=$typeLower?>][delay]" <?=($isFormInline ? '' : 'disabled')?>>
+										<?foreach ([3,5,7,10,15,20,25,30,40,60, 120] as $delay):?>
+											<option value="<?=$delay?>" <?=($view['delay'] == $delay ? 'selected' : '')?>>
+												<?=$delay?> <?=Loc::getMessage('CRM_WEBFORM_SCRIPT_SEC')?>
+											</option>
+										<?endforeach?>
+									</select>
+								</span>
+							</div>
+						<?endif;?>
+					<?endif;?>
+				</div>
+				<div data-bx-webform-script-kind="old" style="<?=(!$arResult['IS_AVAILABLE_EMBEDDING'] ? '' : 'display: none;')?>">
+					<div class="crm-webform-script-tab-body-item-inner">
+						<div data-bx-webform-script-copy-text="SCRIPT_<?=$type?>" class="crm-webform-script-tab-body-item-content">
+							<?=$getFormattedScript($arResult['SCRIPTS'][$type]['old'])?>
+						</div>
 					</div>
 				</div>
-			</div><!--crm-webform-script-tab-body-item-container-->
+			</div>
 		</div>
 	<?endforeach;?>
 

@@ -90,30 +90,30 @@
 	margin: auto;
 	height: 1px;
 	-webkit-animation: divider-line-moveRight .5s linear;
-	   -moz-animation: divider-line-moveRight .5s linear;
-		-ms-animation: divider-line-moveRight .5s linear;
-		 -o-animation: divider-line-moveRight .5s linear;
-			animation: divider-line-moveRight .5s linear;
+	-moz-animation: divider-line-moveRight .5s linear;
+	-ms-animation: divider-line-moveRight .5s linear;
+	-o-animation: divider-line-moveRight .5s linear;
+	animation: divider-line-moveRight .5s linear;
 }
 @-webkit-keyframes divider-line-moveRight{ 0%, 75%{ right: 30px } 100%{ right: 13px; } }
-   @-moz-keyframes divider-line-moveRight{ 0%, 75%{ right: 30px } 100%{ right: 13px; } }
-	@-ms-keyframes divider-line-moveRight{ 0%, 75%{ right: 30px } 100%{ right: 13px; } }
-	 @-o-keyframes divider-line-moveRight{ 0%, 75%{ right: 30px } 100%{ right: 13px; } }
-		@keyframes divider-line-moveRight{ 0%, 75%{ right: 30px } 100%{ right: 13px; } }
+@-moz-keyframes divider-line-moveRight{ 0%, 75%{ right: 30px } 100%{ right: 13px; } }
+@-ms-keyframes divider-line-moveRight{ 0%, 75%{ right: 30px } 100%{ right: 13px; } }
+@-o-keyframes divider-line-moveRight{ 0%, 75%{ right: 30px } 100%{ right: 13px; } }
+@keyframes divider-line-moveRight{ 0%, 75%{ right: 30px } 100%{ right: 13px; } }
 
 .task-field-divider:hover:before{
 	right: 30px;
 	-webkit-animation: divider-line-moveLeft .125s linear;
-	   -moz-animation: divider-line-moveLeft .125s linear;
-		-ms-animation: divider-line-moveLeft .125s linear;
-		 -o-animation: divider-line-moveLeft .125s linear;
-			animation: divider-line-moveLeft .125s linear;
+	-moz-animation: divider-line-moveLeft .125s linear;
+	-ms-animation: divider-line-moveLeft .125s linear;
+	-o-animation: divider-line-moveLeft .125s linear;
+	animation: divider-line-moveLeft .125s linear;
 }
 @-webkit-keyframes divider-line-moveLeft{ 0%{ right: 13px } 100%{ right: 30px; } }
-   @-moz-keyframes divider-line-moveLeft{ 0%{ right: 13px } 100%{ right: 30px; } }
-	@-ms-keyframes divider-line-moveLeft{ 0%{ right: 13px } 100%{ right: 30px; } }
-	 @-o-keyframes divider-line-moveLeft{ 0%{ right: 13px } 100%{ right: 30px; } }
-		@keyframes divider-line-moveLeft{ 0%{ right: 13px } 100%{ right: 30px; } }
+@-moz-keyframes divider-line-moveLeft{ 0%{ right: 13px } 100%{ right: 30px; } }
+@-ms-keyframes divider-line-moveLeft{ 0%{ right: 13px } 100%{ right: 30px; } }
+@-o-keyframes divider-line-moveLeft{ 0%{ right: 13px } 100%{ right: 30px; } }
+@keyframes divider-line-moveLeft{ 0%{ right: 13px } 100%{ right: 30px; } }
 
 .tasks-checklist-item.nodrag .task-field-divider:hover:before{ right: 0; }
 
@@ -168,176 +168,176 @@
 
 .task-field-divider .task-field-divider-close:before{
 	-webkit-animation: divider-close-hide-before .5s linear;
-	   -moz-animation: divider-close-hide-before .5s linear;
-		-ms-animation: divider-close-hide-before .5s linear;
-		 -o-animation: divider-close-hide-before .5s linear;
-			animation: divider-close-hide-before .5s linear;
+	-moz-animation: divider-close-hide-before .5s linear;
+	-ms-animation: divider-close-hide-before .5s linear;
+	-o-animation: divider-close-hide-before .5s linear;
+	animation: divider-close-hide-before .5s linear;
 	-webkit-transform: translateX(-50%) translateY(-50%) rotate(0deg);
-	   -moz-transform: translateX(-50%) translateY(-50%) rotate(0deg);
-		-ms-transform: translateX(-50%) translateY(-50%) rotate(0deg);
-		 -o-transform: translateX(-50%) translateY(-50%) rotate(0deg);
-			transform: translateX(-50%) translateY(-50%) rotate(0deg);
+	-moz-transform: translateX(-50%) translateY(-50%) rotate(0deg);
+	-ms-transform: translateX(-50%) translateY(-50%) rotate(0deg);
+	-o-transform: translateX(-50%) translateY(-50%) rotate(0deg);
+	transform: translateX(-50%) translateY(-50%) rotate(0deg);
 }
 @-webkit-keyframes divider-close-hide-before{
-	 0%, 50% { opacity: .7; }
-		  0% { -webkit-transform: translateX(-50%) translateY(-50%) rotate(-45deg);}
+	0%, 50% { opacity: .7; }
+	0% { -webkit-transform: translateX(-50%) translateY(-50%) rotate(-45deg);}
 	50%, 100%{ -webkit-transform: translateX(-50%) translateY(-50%) rotate(0deg);}
 	75%, 100%{ opacity: 0; }
 }
 @-moz-keyframes divider-close-hide-before{
-	 0%, 50% { opacity: .7; }
-		  0% { -moz-transform: translateX(-50%) translateY(-50%) rotate(-45deg);}
+	0%, 50% { opacity: .7; }
+	0% { -moz-transform: translateX(-50%) translateY(-50%) rotate(-45deg);}
 	50%, 100%{ -moz-transform: translateX(-50%) translateY(-50%) rotate(0deg);}
 	75%, 100%{ opacity: 0; }
 }
 @-ms-keyframes divider-close-hide-before{
-	 0%, 50% { opacity: .7; }
-		  0% { -ms-transform: translateX(-50%) translateY(-50%) rotate(-45deg);}
+	0%, 50% { opacity: .7; }
+	0% { -ms-transform: translateX(-50%) translateY(-50%) rotate(-45deg);}
 	50%, 100%{ -ms-transform: translateX(-50%) translateY(-50%) rotate(0deg);}
 	75%, 100%{ opacity: 0; }
 }
 @-o-keyframes divider-close-hide-before{
-	 0%, 50% { opacity: .7; }
-		  0% { -o-transform: translateX(-50%) translateY(-50%) rotate(-45deg);}
+	0%, 50% { opacity: .7; }
+	0% { -o-transform: translateX(-50%) translateY(-50%) rotate(-45deg);}
 	50%, 100%{ -o-transform: translateX(-50%) translateY(-50%) rotate(0deg);}
 	75%, 100%{ opacity: 0; }
 }
 @keyframes divider-close-hide-before{
-	 0%, 50% { opacity: .7; }
-		  0% { transform: translateX(-50%) translateY(-50%) rotate(-45deg);}
+	0%, 50% { opacity: .7; }
+	0% { transform: translateX(-50%) translateY(-50%) rotate(-45deg);}
 	50%, 100%{ transform: translateX(-50%) translateY(-50%) rotate(0deg);}
 	75%, 100%{ opacity: 0; }
 }
 
 .task-field-divider .task-field-divider-close:after{
 	-webkit-animation: divider-close-hide-after .5s linear;
-	   -moz-animation: divider-close-hide-after .5s linear;
-		-ms-animation: divider-close-hide-after .5s linear;
-		 -o-animation: divider-close-hide-after .5s linear;
-			animation: divider-close-hide-after .5s linear;
+	-moz-animation: divider-close-hide-after .5s linear;
+	-ms-animation: divider-close-hide-after .5s linear;
+	-o-animation: divider-close-hide-after .5s linear;
+	animation: divider-close-hide-after .5s linear;
 	-webkit-transform: translateX(-50%) translateY(-50%) rotate(0deg);
-	   -moz-transform: translateX(-50%) translateY(-50%) rotate(0deg);
-		-ms-transform: translateX(-50%) translateY(-50%) rotate(0deg);
-		 -o-transform: translateX(-50%) translateY(-50%) rotate(0deg);
-			transform: translateX(-50%) translateY(-50%) rotate(0deg);
+	-moz-transform: translateX(-50%) translateY(-50%) rotate(0deg);
+	-ms-transform: translateX(-50%) translateY(-50%) rotate(0deg);
+	-o-transform: translateX(-50%) translateY(-50%) rotate(0deg);
+	transform: translateX(-50%) translateY(-50%) rotate(0deg);
 }
 @-webkit-keyframes divider-close-hide-after{
-	 0%, 50% { opacity: .7; }
-	      0% { -webkit-transform: translateX(-50%) translateY(-50%) rotate(45deg);}
+	0%, 50% { opacity: .7; }
+	0% { -webkit-transform: translateX(-50%) translateY(-50%) rotate(45deg);}
 	50%, 100%{ -webkit-transform: translateX(-50%) translateY(-50%) rotate(0deg);}
 	75%, 100%{ opacity: 0; }
 }
 @-moz-keyframes divider-close-hide-after{
-	 0%, 50% { opacity: .7; }
-		  0% { -moz-transform: translateX(-50%) translateY(-50%) rotate(45deg);}
+	0%, 50% { opacity: .7; }
+	0% { -moz-transform: translateX(-50%) translateY(-50%) rotate(45deg);}
 	50%, 100%{ -moz-transform: translateX(-50%) translateY(-50%) rotate(0deg);}
 	75%, 100%{ opacity: 0; }
 }
 @-ms-keyframes divider-close-hide-after{
-	 0%, 50% { opacity: .7; }
-		  0% { -ms-transform: translateX(-50%) translateY(-50%) rotate(45deg);}
+	0%, 50% { opacity: .7; }
+	0% { -ms-transform: translateX(-50%) translateY(-50%) rotate(45deg);}
 	50%, 100%{ -ms-transform: translateX(-50%) translateY(-50%) rotate(0deg);}
 	75%, 100%{ opacity: 0; }
 }
 @-o-keyframes divider-close-hide-after{
-	 0%, 50% { opacity: .7; }
-		  0% { -o-transform: translateX(-50%) translateY(-50%) rotate(45deg);}
+	0%, 50% { opacity: .7; }
+	0% { -o-transform: translateX(-50%) translateY(-50%) rotate(45deg);}
 	50%, 100%{ -o-transform: translateX(-50%) translateY(-50%) rotate(0deg);}
 	75%, 100%{ opacity: 0; }
 }
 @keyframes divider-close-hide-after{
-	 0%, 50% { opacity: .7; }
-		  0% { transform: translateX(-50%) translateY(-50%) rotate(45deg);}
+	0%, 50% { opacity: .7; }
+	0% { transform: translateX(-50%) translateY(-50%) rotate(45deg);}
 	50%, 100%{ transform: translateX(-50%) translateY(-50%) rotate(0deg);}
 	75%, 100%{ opacity: 0; }
 }
 
 .task-field-divider:hover .task-field-divider-close:before{
 	-webkit-animation: divider-close-show-before .5s linear;
-	   -moz-animation: divider-close-show-before .5s linear;
-		-ms-animation: divider-close-show-before .5s linear;
-		 -o-animation: divider-close-show-before .5s linear;
-			animation: divider-close-show-before .5s linear;
+	-moz-animation: divider-close-show-before .5s linear;
+	-ms-animation: divider-close-show-before .5s linear;
+	-o-animation: divider-close-show-before .5s linear;
+	animation: divider-close-show-before .5s linear;
 	-webkit-transform: translateX(-50%) translateY(-50%) rotate(-45deg);
-	   -moz-transform: translateX(-50%) translateY(-50%) rotate(-45deg);
-		-ms-transform: translateX(-50%) translateY(-50%) rotate(-45deg);
-		 -o-transform: translateX(-50%) translateY(-50%) rotate(-45deg);
-			transform: translateX(-50%) translateY(-50%) rotate(-45deg);
+	-moz-transform: translateX(-50%) translateY(-50%) rotate(-45deg);
+	-ms-transform: translateX(-50%) translateY(-50%) rotate(-45deg);
+	-o-transform: translateX(-50%) translateY(-50%) rotate(-45deg);
+	transform: translateX(-50%) translateY(-50%) rotate(-45deg);
 	opacity: .7;
 }
 @-webkit-keyframes divider-close-show-before{
-	 0%, 25% { opacity: 0; }
-	 0%, 50% { -webkit-transform: translateX(-50%) translateY(-50%) rotate(0deg);}
+	0%, 25% { opacity: 0; }
+	0%, 50% { -webkit-transform: translateX(-50%) translateY(-50%) rotate(0deg);}
 	50%, 100%{ opacity: .7;}
-		 100%{ -webkit-transform: translateX(-50%) translateY(-50%) rotate(-45deg);}
+	100%{ -webkit-transform: translateX(-50%) translateY(-50%) rotate(-45deg);}
 }
 @-moz-keyframes divider-close-show-before{
-	 0%, 25% { opacity: 0; }
-	 0%, 50% { -moz-transform: translateX(-50%) translateY(-50%) rotate(0deg);}
+	0%, 25% { opacity: 0; }
+	0%, 50% { -moz-transform: translateX(-50%) translateY(-50%) rotate(0deg);}
 	50%, 100%{ opacity: .7;}
-		 100%{ -moz-transform: translateX(-50%) translateY(-50%) rotate(-45deg);}
+	100%{ -moz-transform: translateX(-50%) translateY(-50%) rotate(-45deg);}
 }
 @-ms-keyframes divider-close-show-before{
-	 0%, 25% { opacity: 0; }
-	 0%, 50% { -ms-transform: translateX(-50%) translateY(-50%) rotate(0deg);}
+	0%, 25% { opacity: 0; }
+	0%, 50% { -ms-transform: translateX(-50%) translateY(-50%) rotate(0deg);}
 	50%, 100%{ opacity: .7;}
-		 100%{ -ms-transform: translateX(-50%) translateY(-50%) rotate(-45deg);}
+	100%{ -ms-transform: translateX(-50%) translateY(-50%) rotate(-45deg);}
 }
 @-o-keyframes divider-close-show-before{
-	 0%, 25% { opacity: 0; }
-	 0%, 50% { -o-transform: translateX(-50%) translateY(-50%) rotate(0deg);}
+	0%, 25% { opacity: 0; }
+	0%, 50% { -o-transform: translateX(-50%) translateY(-50%) rotate(0deg);}
 	50%, 100%{ opacity: .7;}
-		 100%{ -o-transform: translateX(-50%) translateY(-50%) rotate(-45deg);}
+	100%{ -o-transform: translateX(-50%) translateY(-50%) rotate(-45deg);}
 }
 @keyframes divider-close-show-before{
-	 0%, 25% { opacity: 0; }
-	 0%, 50% { transform: translateX(-50%) translateY(-50%) rotate(0deg);}
+	0%, 25% { opacity: 0; }
+	0%, 50% { transform: translateX(-50%) translateY(-50%) rotate(0deg);}
 	50%, 100%{ opacity: .7;}
-		 100%{ transform: translateX(-50%) translateY(-50%) rotate(-45deg);}
+	100%{ transform: translateX(-50%) translateY(-50%) rotate(-45deg);}
 }
 
 .task-field-divider:hover .task-field-divider-close:after{
 	-webkit-animation: divider-close-show-after .5s linear;
-	   -moz-animation: divider-close-show-after .5s linear;
-		-ms-animation: divider-close-show-after .5s linear;
-		 -o-animation: divider-close-show-after .5s linear;
-			animation: divider-close-show-after .5s linear;
+	-moz-animation: divider-close-show-after .5s linear;
+	-ms-animation: divider-close-show-after .5s linear;
+	-o-animation: divider-close-show-after .5s linear;
+	animation: divider-close-show-after .5s linear;
 	-webkit-transform: translateX(-50%) translateY(-50%) rotate(45deg);
-	   -moz-transform: translateX(-50%) translateY(-50%) rotate(45deg);
-		-ms-transform: translateX(-50%) translateY(-50%) rotate(45deg);
-		 -o-transform: translateX(-50%) translateY(-50%) rotate(45deg);
-			transform: translateX(-50%) translateY(-50%) rotate(45deg);
+	-moz-transform: translateX(-50%) translateY(-50%) rotate(45deg);
+	-ms-transform: translateX(-50%) translateY(-50%) rotate(45deg);
+	-o-transform: translateX(-50%) translateY(-50%) rotate(45deg);
+	transform: translateX(-50%) translateY(-50%) rotate(45deg);
 	opacity: .7;
 }
 @-webkit-keyframes divider-close-show-after{
-	 0%, 25% { opacity: 0; }
-	 0%, 50% { -webkit-transform: translateX(-50%) translateY(-50%) rotate(0deg);}
+	0%, 25% { opacity: 0; }
+	0%, 50% { -webkit-transform: translateX(-50%) translateY(-50%) rotate(0deg);}
 	50%, 100%{ opacity: .7;}
-		 100%{ -webkit-transform: translateX(-50%) translateY(-50%) rotate(45deg);}
+	100%{ -webkit-transform: translateX(-50%) translateY(-50%) rotate(45deg);}
 }
 @-moz-keyframes divider-close-show-after{
-	 0%, 25% { opacity: 0; }
-	 0%, 50% { -moz-transform: translateX(-50%) translateY(-50%) rotate(0deg);}
+	0%, 25% { opacity: 0; }
+	0%, 50% { -moz-transform: translateX(-50%) translateY(-50%) rotate(0deg);}
 	50%, 100%{ opacity: .7;}
-		 100%{ -moz-transform: translateX(-50%) translateY(-50%) rotate(45deg);}
+	100%{ -moz-transform: translateX(-50%) translateY(-50%) rotate(45deg);}
 }
 @-ms-keyframes divider-close-show-after{
-	 0%, 25% { opacity: 0; }
-	 0%, 50% { -ms-transform: translateX(-50%) translateY(-50%) rotate(0deg);}
+	0%, 25% { opacity: 0; }
+	0%, 50% { -ms-transform: translateX(-50%) translateY(-50%) rotate(0deg);}
 	50%, 100%{ opacity: .7;}
-		 100%{ -ms-transform: translateX(-50%) translateY(-50%) rotate(45deg);}
+	100%{ -ms-transform: translateX(-50%) translateY(-50%) rotate(45deg);}
 }
 @-o-keyframes divider-close-show-after{
-	 0%, 25% { opacity: 0; }
-	 0%, 50% { -o-transform: translateX(-50%) translateY(-50%) rotate(0deg);}
+	0%, 25% { opacity: 0; }
+	0%, 50% { -o-transform: translateX(-50%) translateY(-50%) rotate(0deg);}
 	50%, 100%{ opacity: .7;}
-		 100%{ -o-transform: translateX(-50%) translateY(-50%) rotate(45deg);}
+	100%{ -o-transform: translateX(-50%) translateY(-50%) rotate(45deg);}
 }
 @keyframes divider-close-show-after{
-	 0%, 25% { opacity: 0; }
-	 0%, 50% { transform: translateX(-50%) translateY(-50%) rotate(0deg);}
+	0%, 25% { opacity: 0; }
+	0%, 50% { transform: translateX(-50%) translateY(-50%) rotate(0deg);}
 	50%, 100%{ opacity: .7;}
-		 100%{ transform: translateX(-50%) translateY(-50%) rotate(45deg);}
+	100%{ transform: translateX(-50%) translateY(-50%) rotate(45deg);}
 }
 
 .task-field-divider-close:hover{

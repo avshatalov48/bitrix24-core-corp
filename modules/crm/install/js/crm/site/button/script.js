@@ -464,6 +464,14 @@
 				this.show(selectorId);
 			}
 		},
+		checkAll: function()
+		{
+			return Manager.config.widgets.some(this.check, this);
+		},
+		check: function(widget)
+		{
+			return this.checkPages(widget) && this.checkWorkTime(widget);
+		},
 		checkPagesAll: function()
 		{
 			return Manager.config.widgets.some(this.checkPages, this);
@@ -572,12 +580,7 @@
 
 			Manager.execEventHandler('load-widget-' + widget.id, [widget]);
 
-			if(!this.checkPages(widget))
-			{
-				return;
-			}
-
-			if(!this.checkWorkTime(widget))
+			if(!this.check(widget))
 			{
 				return;
 			}
@@ -662,7 +665,7 @@
 				scriptText = parsedScript[1];
 				isAddInHead = true;
 			}
-			else
+			else if(!widget.freeze)
 			{
 				widget.node = Utils.getNodeFromText(widget.script);
 				if(!widget.node)
@@ -679,6 +682,11 @@
 						widgetCaptionNode.innerText = widget.caption;
 					}
 				}
+			}
+			else
+			{
+				scriptText = widget.script;
+				isAddInHead = true;
 			}
 
 			if (isAddInHead)
@@ -1030,12 +1038,7 @@
 				return false;
 			}
 
-			if (!WidgetManager.checkPagesAll())
-			{
-				return false;
-			}
-
-			return WidgetManager.checkWorkTimeAll();
+			return WidgetManager.checkAll();
 		},
 		loadResources: function()
 		{

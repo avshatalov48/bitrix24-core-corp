@@ -167,7 +167,7 @@ class Helper
 			<script>
 				BX.ready(function()
 				{
-					if(BX.Voximplant)
+					if(BX.Voximplant && BX.getClass('BX.Voximplant.setLicensePopup'))
 					{
 						" . $initString . "
 					}

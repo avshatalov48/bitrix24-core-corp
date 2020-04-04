@@ -1,0 +1,4 @@
+<?
+$MESS["EXTRANET_SEARCH_LEFT_MENU_SEARCH"] = "Site Search";
+$MESS["EXTRANET_SEARCH_LEFT_MENU_MAP"] = "Site Map";
+?>

@@ -13,6 +13,7 @@ CJSCore::Init(array('crm_entity_editor'));
 /** @var CCrmQuoteDetailsComponent $component */
 
 $guid = $arResult['GUID'];
+$jsGuid = CUtil::JSEscape($guid);
 $prefix = strtolower($guid);
 $activityEditorID = "{$prefix}_editor";
 
@@ -46,7 +47,7 @@ $APPLICATION->IncludeComponent(
 		'OWNER_INFO' => $arResult['ENTITY_INFO'],
 		'TYPE' => 'details',
 		'SCRIPTS' => array(
-			'DELETE' => 'BX.Crm.EntityDetailManager.items["'.CUtil::JSEscape($guid).'"].processRemoval();'
+			'DELETE' => 'BX.Crm.EntityDetailManager.items["'.$jsGuid.'"].processRemoval();'
 		)
 	),
 	$component
@@ -71,6 +72,24 @@ $editorContext = array(
 if(isset($arResult['ORIGIN_ID']) && $arResult['ORIGIN_ID'] !== '')
 {
 	$editorContext['ORIGIN_ID'] = $arResult['ORIGIN_ID'];
+}
+
+if(strlen($arResult['ENTITY_DATA']['TRACKING_NUMBER']) > 0)
+{
+	$trackingNumber  = CUtil::JSEscape($arResult['ENTITY_DATA']['TRACKING_NUMBER']);
+	$onClick = "crmOrderShipment_{$jsGuid}.trackingStatusUpdate({$arResult['ENTITY_DATA']['ID']}, \"{$trackingNumber}\"); return false;";
+
+	$statusViewTemplate = 
+		'<span id="crm-order-shipment-tracking-status-name">#STATUS_NAME#</span> '
+		."<button class='ui-btn ui-btn-xs ui-btn-primary ui-btn-icon-business' onclick='{$onClick}'>"
+			.\Bitrix\Main\Localization\Loc::getMessage('CRM_ORDER_SHIPMENT_TRACKING_STATUS_UPDATE')
+		."</button>";
+
+	$arResult['ENTITY_DATA']['TRACKING_STATUS_VIEW'] = str_replace(
+		'#STATUS_NAME#',
+		$arResult['ENTITY_DATA']['TRACKING_STATUS_DATA']['TRACKING_STATUS_NAME'],
+		$statusViewTemplate
+	);
 }
 
 $APPLICATION->IncludeComponent(
@@ -126,10 +145,19 @@ $APPLICATION->IncludeComponent(
 );
 ?>
 <script type="text/javascript">
+	var crmOrderShipment_<?=$jsGuid?>;
+
 	BX.ready(
-		function()
+		() =>
 		{
-			BX.Crm.OrderShipment.create("<?=CUtil::JSEscape($guid)?>", {});
+			crmOrderShipment_<?=$jsGuid?> = BX.Crm.OrderShipment.create(
+				'<?=$jsGuid?>',
+				{
+					trackingStatusNameNodeId: 'crm-order-shipment-tracking-status-name',
+					editorId: '<?=CUtil::JSEscape($activityEditorID)?>',
+					statusViewTemplate: '<?=CUtil::JSEscape($statusViewTemplate)?>'
+				}
+			);
 		}
 	);
 </script>

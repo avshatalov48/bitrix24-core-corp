@@ -122,22 +122,27 @@ class SearchMap
 		}
 	}
 
-	public function addTextFragments($str)
+	public function addTextFragments($value)
 	{
-		if($str === '')
+		if(!is_string($value))
+		{
+			$value = (string)$value;
+		}
+
+		if($value === '')
 		{
 			return;
 		}
 
-		$length = strlen($str);
+		$length = strlen($value);
 
-		//Right bound. We will stop when 3 digits are left.
+		//Right bound. We will stop when 3 characters are left.
 		$bound = $length - 2;
 		if($bound > 0)
 		{
 			for($i = 0; $i < $bound; $i++)
 			{
-				$fragment = substr($str, $i);
+				$fragment = substr($value, $i);
 				if(!isset($this->data[$fragment]))
 				{
 					$this->addText($fragment);
@@ -148,6 +153,15 @@ class SearchMap
 
 	public function addPhone($phone)
 	{
+		$originalPhone = DuplicateCommunicationCriterion::sanitizePhone($phone);
+		if($originalPhone === '')
+		{
+			return;
+		}
+
+		//Fix for issue #111401. Store original phone for providing opportunity to search by not normalized phone.
+		$this->data[$originalPhone] = true;
+
 		$phone = DuplicateCommunicationCriterion::normalizePhone($phone);
 		if($phone === '')
 		{
@@ -155,7 +169,6 @@ class SearchMap
 		}
 
 		$length = strlen($phone);
-
 		if($length >= 10 && substr($phone, 0, 1) === '7')
 		{
 			$altPhone = '8'.substr($phone, 1);

@@ -106,10 +106,11 @@ final class CCrmOrderShipmentProductListComponent extends \CBitrixComponent
 				$result = array_merge($result,[
 					['id' => 'STORE_ID', 'name' => Loc::getMessage('CRM_ORDER_SPLC_STORE_ID'), 'default' => true, 'editable' => true],
 					['id' => 'STORE_QUANTITY', 'name' => Loc::getMessage('CRM_ORDER_SPLC_STORE_QUANTITY'), 'default' => true, 'editable' => true],
-					['id' => 'STORE_REMAINING_QUANTITY', 'name' => Loc::getMessage('CRM_ORDER_SPLC_STORE_REMAINING_QUANTITY'), 'default' => true],
-					['id' => 'STORE_BARCODE', 'name' => Loc::getMessage('CRM_ORDER_SPLC_STORE_BARCODE'), 'default' => true]
+					['id' => 'STORE_REMAINING_QUANTITY', 'name' => Loc::getMessage('CRM_ORDER_SPLC_STORE_REMAINING_QUANTITY'), 'default' => true]
 				]);
 			}
+
+			$result[] = ['id' => 'STORE_BARCODE', 'name' => Loc::getMessage('CRM_ORDER_SPLC_STORE_BARCODE'), 'default' => true];
 		}
 
 		/*
@@ -119,6 +120,36 @@ final class CCrmOrderShipmentProductListComponent extends \CBitrixComponent
 			['id' => 'SORT', 'name' => Loc::getMessage('CRM_ORDER_SPLC_SORTING'), 'sort' => 'SORT'],
 		]);
 		*/
+
+		return $result;
+	}
+
+	/**
+	 * @param \Bitrix\Crm\Order\ShipmentItem $item
+	 * @return array
+	 */
+	private function createBarcodeInfo($item)
+	{
+		$result = [];
+		$itemStoreCollection = $item->getShipmentItemStoreCollection();
+
+		/** @var \Bitrix\Sale\ShipmentItemStore $barcode */
+		foreach ($itemStoreCollection as $barcode)
+		{
+			$storeId = $barcode->getStoreId();
+
+			if (!isset($result[$storeId]))
+			{
+				$result[$storeId] = [];
+			}
+
+			$result[$storeId][] = [
+				'ID' => $barcode->getId(),
+				'BARCODE' => $barcode->getField('BARCODE'),
+				'MARKING_CODE' => $barcode->getField('MARKING_CODE'),
+				'QUANTITY' => $barcode->getQuantity()
+			];
+		}
 
 		return $result;
 	}
@@ -218,33 +249,15 @@ final class CCrmOrderShipmentProductListComponent extends \CBitrixComponent
 				$params["PRODUCT_PROVIDER_CLASS"] = $basketItem->getProvider();
 				$params["NAME"] = $basketItem->getField("NAME");
 				$params["MODULE"] = $basketItem->getField("MODULE");
-
-				$itemStoreCollection = $item->getShipmentItemStoreCollection();
-
-				/** @var \Bitrix\Sale\ShipmentItemStore $barcode */
-				$params['BARCODE_INFO'] = array();
-				foreach ($itemStoreCollection as $barcode)
-				{
-					$storeId = $barcode->getStoreId();
-					if (!isset($params['BARCODE_INFO'][$storeId]))
-						$params['BARCODE_INFO'][$storeId] = array();
-
-					$params['BARCODE_INFO'][$storeId][] = array(
-						'ID' => $barcode->getId(),
-						'BARCODE' => $barcode->getField('BARCODE'),
-						'QUANTITY' => $barcode->getQuantity()
-					);
-				}
-
+				$params['BARCODE_INFO'] = $this->createBarcodeInfo($item);
 				$params['ORDER_DELIVERY_BASKET_ID'] = $item->getId();
-
-				$systemItemQuantity = ($systemShipmentItem) ? $systemShipmentItem->getQuantity() : 0;
-				$params["QUANTITY"] = floatval($item->getQuantity() + $systemItemQuantity);
+				$params["QUANTITY"] = floatval($item->getQuantity());
 				$params["AMOUNT"] = floatval($item->getQuantity());
 				$params["PRICE"] = $basketItem->getPrice();
 				$params["CURRENCY"] = $basketItem->getCurrency();
 				$params["PRODUCT_PROVIDER_CLASS"] = $basketItem->getProvider();
 				$params["PROPS"] = array();
+				$params["IS_SUPPORTED_MARKING_CODE"] = $basketItem->isSupportedMarkingCode() ? 'Y' : 'N';
 
 				/** @var \Bitrix\Sale\BasketPropertyItem $property */
 				foreach($basketItem->getPropertyCollection() as $property)
@@ -362,7 +375,7 @@ final class CCrmOrderShipmentProductListComponent extends \CBitrixComponent
 
 			$barcode = '';
 
-			if($product['BARCODE_MULTI'] != 'Y')
+			if($product['BARCODE_MULTI'] != 'Y' )
 			{
 				$res = \Bitrix\Catalog\StoreBarcodeTable::getList([
 					'filter' => ['PRODUCT_ID' => $product['OFFER_ID']],
@@ -388,9 +401,9 @@ final class CCrmOrderShipmentProductListComponent extends \CBitrixComponent
 					{
 						$quantity += $item['QUANTITY'];
 
-						if($product['BARCODE_MULTI'] == 'Y')
+						if($product['BARCODE_MULTI'] == 'Y' || $product['IS_SUPPORTED_MARKING_CODE'] == 'Y')
 						{
-							$barcodes[] = ['ID' => $item['ID'], 'VALUE' => $item['BARCODE']];
+							$barcodes[] = ['ID' => (int)$item['ID'], 'VALUE' => (string)$item['BARCODE'], 'MARKING_CODE' => (string)$item['MARKING_CODE']];
 						}
 						elseif(empty($barcode))
 						{
@@ -401,9 +414,9 @@ final class CCrmOrderShipmentProductListComponent extends \CBitrixComponent
 
 					$storesBarcodesInfo[$storeId] = [
 						'QUANTITY' => $quantity,
-						'BARCODES' => ($product['BARCODE_MULTI'] == 'Y' ? $barcodes : []),
-						'BARCODE' => ($product['BARCODE_MULTI'] != 'Y' ? $barcode : ''),
-						'BARCODE_ID' => ($product['BARCODE_MULTI'] != 'Y' ? $barcodeId : 0),
+						'BARCODES' => ($product['BARCODE_MULTI'] == 'Y' || $product['IS_SUPPORTED_MARKING_CODE'] == 'Y' ? $barcodes : []),
+						'BARCODE' => ($product['BARCODE_MULTI'] != 'Y' && $product['IS_SUPPORTED_MARKING_CODE'] != 'Y' ? $barcode : ''),
+						'BARCODE_ID' => ($product['BARCODE_MULTI'] != 'Y' && $product['IS_SUPPORTED_MARKING_CODE'] != 'Y' ? $barcodeId : 0),
 						'STORE_ID' => $storeId,
 						'AMOUNT' => isset($stores[$storeId]['AMOUNT']) ? $stores[$storeId]['AMOUNT'] : 0,
 						'STORE_NAME' => isset($stores[$storeId]['STORE_NAME']) ? $stores[$storeId]['STORE_NAME'] : 'Unknown store "'.$storeId.'"',
@@ -411,7 +424,8 @@ final class CCrmOrderShipmentProductListComponent extends \CBitrixComponent
 						'BASKET_ID' => $product['BASKET_ID'],
 						'BASKET_CODE' => $product['BASKET_CODE'],
 						'IS_USED' => 'Y',
-						'BARCODE_MULTI' => $product['BARCODE_MULTI']
+						'BARCODE_MULTI' => $product['BARCODE_MULTI'],
+						'IS_SUPPORTED_MARKING_CODE' => $product['IS_SUPPORTED_MARKING_CODE']
 					];
 
 					unset($stores[$storeId]);
@@ -435,7 +449,8 @@ final class CCrmOrderShipmentProductListComponent extends \CBitrixComponent
 					'BASKET_ID' => $product['BASKET_ID'],
 					'BASKET_CODE' => $product['BASKET_CODE'],
 					'IS_USED' => 'Y',
-					'BARCODE_MULTI' => $product['BARCODE_MULTI']
+					'BARCODE_MULTI' => $product['BARCODE_MULTI'],
+					'IS_SUPPORTED_MARKING_CODE' => $product['IS_SUPPORTED_MARKING_CODE']
 				];
 
 				unset($stores[$storeId]);
@@ -457,12 +472,56 @@ final class CCrmOrderShipmentProductListComponent extends \CBitrixComponent
 						'BASKET_ID' => $product['BASKET_ID'],
 						'BASKET_CODE' => $product['BASKET_CODE'],
 						'IS_USED' => 'N',
-						'BARCODE_MULTI' => $product['BARCODE_MULTI']
+						'BARCODE_MULTI' => $product['BARCODE_MULTI'],
+						'IS_SUPPORTED_MARKING_CODE' => $product['IS_SUPPORTED_MARKING_CODE']
 					];
 				}
 			}
 
 			$product['STORE_BARCODE_INFO'] = $storesBarcodesInfo;
+		}
+		elseif ($product['IS_SUPPORTED_MARKING_CODE'] == 'Y' && (float)$product['QUANTITY'] > 0)
+		{
+			$barcodes = [];
+
+			if(!empty($product['BARCODE_INFO'][0]))
+			{
+				$barCodeInfo = $product['BARCODE_INFO'][0];
+
+				foreach($barCodeInfo as $item)
+				{
+					if($product['BARCODE_MULTI'] == 'Y' || $product['IS_SUPPORTED_MARKING_CODE'] == 'Y')
+					{
+						$barcodes[] = ['ID' => (int)$item['ID'], 'VALUE' => (string)$item['BARCODE'], 'MARKING_CODE' => (string)$item['MARKING_CODE']];
+					}
+				}
+			}
+			else
+			{
+				$barcodes = array_fill(
+					0,
+					(int)$product['QUANTITY'],
+					['ID' => 0, 'VALUE' => '', 'MARKING_CODE' => '']
+				);
+			}
+
+			$product['STORE_BARCODE_INFO'] = [
+				0 => [
+					'QUANTITY' => $product['QUANTITY'],
+					'BARCODES' => $barcodes,
+					'BARCODE' => '',
+					'BARCODE_ID' => 0,
+					'STORE_ID' => 0,
+					'AMOUNT' => 0,
+					'STORE_NAME' => '',
+					'MEASURE_TEXT' => $product['MEASURE_TEXT'],
+					'BASKET_ID' => $product['BASKET_ID'],
+					'BASKET_CODE' => $product['BASKET_CODE'],
+					'IS_USED' => 'Y',
+					'BARCODE_MULTI' => $product['BARCODE_MULTI'],
+					'IS_SUPPORTED_MARKING_CODE' => $product['IS_SUPPORTED_MARKING_CODE']
+				]
+			];
 		}
 	}
 

@@ -17,12 +17,10 @@ class OrderArchiveCollection
 	public function loadFromDB(array $parameters)
 	{
 		$result = new Sale\Result();
-		$ordersList = Sale\Order::getList($parameters);
+		$ordersList = Sale\Order::loadByFilter($parameters);
 
-		while ($orderFields = $ordersList->fetch())
+		foreach ($ordersList as $order)
 		{
-			$order = Sale\Order::create($orderFields['LID'], $orderFields['USER_ID'], $orderFields['CURRENCY_ID']);
-			$order->initFields($orderFields);
 			$newItem = new OrderArchiveItem($order);
 			$this->addItem($newItem);
 		}

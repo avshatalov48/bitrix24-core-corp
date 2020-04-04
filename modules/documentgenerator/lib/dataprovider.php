@@ -35,6 +35,10 @@ abstract class DataProvider
 	 */
 	public function getValue($name)
 	{
+		if($this->fields === null)
+		{
+			$this->getFields();
+		}
 		if(!isset($this->data[$name]))
 		{
 			$this->data[$name] = DataProviderManager::getInstance()->getDataProviderValue($this, $name);

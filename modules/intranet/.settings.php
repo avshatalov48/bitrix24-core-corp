@@ -3,6 +3,9 @@ return [
 	'controllers' => [
 		'value' => [
 			'defaultNamespace' => '\\Bitrix\\Intranet\\Controller',
+			'restIntegration' => [
+				'enabled' => true,
+			],
 		],
 		'readonly' => true,
 	],

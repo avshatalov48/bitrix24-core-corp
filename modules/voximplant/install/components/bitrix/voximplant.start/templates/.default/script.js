@@ -12,6 +12,8 @@ BX.Voximplant.Start = {
 	applicationUrlTemplate: '',
 	isRestOnly: null,
 
+	balanceElements: [], // Element[]
+
 	init: function(config)
 	{
 		this.mainMenuItems = config.mainMenuItems.map(this.parseMenuItem, this);
@@ -61,6 +63,17 @@ BX.Voximplant.Start = {
 		}
 
 		BX.bind(BX('my-numbers'), 'click', this.onMyNumbersButtonClick.bind(this));
+		BX.bind(BX('balance-type'), 'change', function(e)
+		{
+			this.onBalanceTypeChange(e.currentTarget.value);
+		}.bind(this));
+		document.querySelectorAll("[data-for-balance-type]").forEach(function(node) {this.balanceElements.push(node);},	this);
+		if(BX('balance-type'))
+		{
+			this.onBalanceTypeChange(BX('balance-type').value);
+		}
+
+		BX.bind(BX('balance-top-up'), 'click', this.onTopUpButtonClick.bind(this));
 
 		// workaround to prevent page title update after reloading grid in some side panel
 		BX.ajax.UpdatePageData = (function() {});
@@ -147,6 +160,28 @@ BX.Voximplant.Start = {
 		});
 	},
 
+	onTopUpButtonClick: function()
+	{
+		BX.Voximplant.openBilling();
+	},
+
+	onBalanceTypeChange: function(balanceType)
+	{
+		BX.userOptions.save("voximplant", "start", "balance_type", balanceType);
+
+		this.balanceElements.forEach(function(element)
+		{
+			if(balanceType === element.dataset.forBalanceType)
+			{
+				element.style.removeProperty("display");
+			}
+			else
+			{
+				element.style.display = "none";
+			}
+		});
+	},
+
 	onRentButtonClick: function(packetSize)
 	{
 		packetSize = parseInt(packetSize) || 1;
@@ -172,6 +207,16 @@ BX.Voximplant.Start = {
 			onClose: this.reload
 		});
 		a.show();
+	},
+
+	onShowInvoicesButtonClick: function(e)
+	{
+		var url = "/telephony/invoices.php";
+
+		BX.SidePanel.Instance.open(url, {
+			cacheable: false,
+			allowChangeHistory: false,
+		});
 	},
 
 	onConfigureNumbersButtonClick:function()

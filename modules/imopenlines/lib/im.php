@@ -2,12 +2,22 @@
 namespace Bitrix\ImOpenLines;
 
 use \Bitrix\Main\Loader,
+	\Bitrix\Main\UserTable,
+	\Bitrix\Main\Data\Cache,
+	\Bitrix\Main\Application,
 	\Bitrix\Im\Model\ChatTable,
+	\Bitrix\Main\ORM\Query\Query,
 	\Bitrix\Main\DB\SqlExpression,
-	\Bitrix\Main\Entity\ReferenceField;
+	\Bitrix\Main\Entity\ReferenceField,
+	\Bitrix\Main\ORM\Fields\ExpressionField;;
 
 class Im
 {
+	/** Time to cache online operator status. */
+	const CACHE_TIME_IM_USER_ONLINE = 5;
+	/** Path for online operator status cache. */
+	const CACHE_DIR_IM_USER_ONLINE = '/imopenlines/im_user_online/';
+
 	/**
 	 * @param $fields
 	 * @return bool|int
@@ -136,5 +146,70 @@ class Im
 	public static function chatHide($chatId)
 	{
 		return \CIMChat::hide($chatId);
+	}
+
+	/**
+	 * Determining the status of an online operator using the messenger functionality.
+	 *
+	 * @param $id
+	 * @return bool
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\LoaderException
+	 * @throws \Bitrix\Main\ObjectException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	public static function userIsOnline($id)
+	{
+		$result = false;
+
+		if(Loader::includeModule('im'))
+		{
+			$id = intval($id);
+			if ($id > 0)
+			{
+				$cache = Cache::createInstance();
+
+				if ($cache->initCache(self::CACHE_TIME_IM_USER_ONLINE, $id, self::CACHE_DIR_IM_USER_ONLINE))
+				{
+					$result = $cache->getVars();
+				}
+				elseif ($cache->startDataCache())
+				{
+					$lastActivityDate = Queue::getTimeLastActivityOperator();
+					$timeHelper = Application::getConnection()->getSqlHelper()->addSecondsToDateTime('(-'.$lastActivityDate.')');
+
+					$query = new Query(UserTable::getEntity());
+
+					$query->setSelect(['IS_ONLINE_CUSTOM']);
+
+					$query->registerRuntimeField('', new ReferenceField(
+						'IM_STATUS',
+						'\Bitrix\Im\Model\StatusTable',
+						["=ref.USER_ID" => "this.ID"],
+						["join_type"=>"left"]
+					));
+
+					$query->registerRuntimeField('',
+						new ExpressionField(
+							'IS_ONLINE_CUSTOM',
+							'CASE WHEN %1$s > '.$timeHelper.' && (%2$s IS NULL || %1$s > %2$s) THEN \'Y\' ELSE \'N\' END',
+							['LAST_ACTIVITY_DATE', 'IM_STATUS.IDLE'])
+					);
+
+					$query->setFilter(['ID' => $id]);
+
+					$resultQuery = $query->exec();
+
+					if ($resultQuery->fetch()['IS_ONLINE_CUSTOM'] == 'Y')
+					{
+						$result = true;
+					}
+
+					$cache->endDataCache($result);
+				}
+			}
+		}
+
+		return $result;
 	}
 }

@@ -51,14 +51,20 @@ class TasksToolbarComponent extends TasksBaseComponent
 		$this->listCtrl = Filter\Task::getListCtrlInstance();
 		$this->listCtrl->useState($this->listState);
 
-		$this->arResult[ 'VIEW_LIST' ] = $this->getViewList();
+		$viewList = $this->getViewList();
+		$showCounters = !isset($this->arParams['SPRINT_SELECTED']) || $this->arParams['SPRINT_SELECTED'] != 'Y';
+		$showSpotlight = $this->showSpotlight('timeline')
+			&& $this->arParams['SHOW_VIEW_MODE'] == 'Y'
+			&& array_key_exists('VIEW_MODE_TIMELINE', $viewList);
 
-		//tmp
-		if (isset($this->arResult['VIEW_LIST']['VIEW_MODE_TIMELINE']))
+		$this->arResult['VIEW_LIST'] = $viewList;
+		$this->arResult['SPOTLIGHT_TIMELINE'] = $showSpotlight;
+		$this->arResult['COUNTERS_SHOW'] = $showCounters;
+
+		if ($showCounters)
 		{
-			unset($this->arResult['VIEW_LIST']['VIEW_MODE_TIMELINE']);
+			$this->arResult['COUNTERS'] = $this->getCounters();
 		}
-		$this->arResult[ 'COUNTERS' ] = $this->getCounters();
 	}
 
 	protected function getViewList()

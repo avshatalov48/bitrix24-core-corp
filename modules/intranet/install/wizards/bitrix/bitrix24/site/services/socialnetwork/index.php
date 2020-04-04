@@ -1,6 +1,9 @@
 <?
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Socialnetwork\UserTagTable;
+
 if (!CModule::IncludeModule("socialnetwork"))
 	return;
 
@@ -214,6 +217,24 @@ if (StrLen($errorMessage) <= 0)
 				\Bitrix\Disk\Sharing::connectGroupToSelfUserStorage(1, $groupStorage, $errorCollection);
 			}
 		}
+	}
+}
+
+if (strLen($errorMessage) <= 0)
+{
+	$userTagList = [
+		Loc::getMessage('SONET_USER_TAG_1'),
+		Loc::getMessage('SONET_USER_TAG_2'),
+		Loc::getMessage('SONET_USER_TAG_3'),
+		Loc::getMessage('SONET_USER_TAG_4')
+	];
+
+	foreach($userTagList as $userTag)
+	{
+		UserTagTable::add([
+			'USER_ID' => 0,
+			'NAME' => $userTag
+		]);
 	}
 }
 

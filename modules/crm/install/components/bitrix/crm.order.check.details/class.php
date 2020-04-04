@@ -471,9 +471,9 @@ class CCrmOrderCheckDetailsComponent extends Crm\Component\EntityDetails\BaseCom
 						continue;
 					}
 
-					$shipmentName = Loc::getMessage('CRM_ORDER_PAYMENT', array(
-						'#PAYMENT_NUMBER#' => $payment->getField('ACCOUNT_NUMBER'),
-						'#PAYSYSTEM_NAME#' => $payment->getPaymentSystemName()
+					$shipmentName = Loc::getMessage('CRM_ORDER_SHIPMENT', array(
+						'#SHIPMENT_NUMBER#' => $shipment->getField('ACCOUNT_NUMBER'),
+						'#DELIVERY_SYSTEM_NAME#' => $shipment->getDeliveryName()
 					));
 
 					$entityData = [

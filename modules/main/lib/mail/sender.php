@@ -222,6 +222,7 @@ class Sender
 					'from' => $email,
 					'host' => $config['server'],
 					'port' => $config['port'],
+					'protocol' => $config['protocol'],
 					'login' => $config['login'],
 					'password' => $config['password'],
 				));
@@ -347,17 +348,6 @@ class Sender
 			$mailboxes[$userId][$key] = array(
 				'name'  => $crmAddress->getName() ?: $userNameFormated,
 				'email' => $crmAddress->getEmail(),
-			);
-		}
-
-		$userAddress = new Address($userData['EMAIL']);
-		if ($userAddress->validate())
-		{
-			$key = hash('crc32b', strtolower($userNameFormated) . $userAddress->getEmail());
-
-			$mailboxes[$userId][$key] = array(
-				'name'  => $userNameFormated,
-				'email' => $userAddress->getEmail(),
 			);
 		}
 

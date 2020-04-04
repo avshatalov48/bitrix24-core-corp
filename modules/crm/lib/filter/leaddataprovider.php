@@ -2,6 +2,7 @@
 namespace Bitrix\Crm\Filter;
 
 use Bitrix\Main;
+use Bitrix\Main\Config\Option;
 use Bitrix\Main\Localization\Loc;
 
 use Bitrix\Crm;
@@ -86,7 +87,7 @@ class LeadDataProvider extends EntityDataProvider
 			),
 			'STATUS_CONVERTED' => $this->createField(
 				'STATUS_CONVERTED',
-				array('type' => 'checkbox')
+				array('type' => 'checkbox', 'name' => Loc::getMessage('CRM_LEAD_FILTER_STATUS_PROCESSED'))
 			),
 			'OPPORTUNITY' => $this->createField(
 				'OPPORTUNITY',
@@ -98,15 +99,15 @@ class LeadDataProvider extends EntityDataProvider
 			),
 			'ASSIGNED_BY_ID' => $this->createField(
 				'ASSIGNED_BY_ID',
-				array('type' => 'custom_entity', 'default' => true, 'partial' => true)
+				array('type' => 'dest_selector', 'default' => true, 'partial' => true)
 			),
 			'CREATED_BY_ID' => $this->createField(
 				'CREATED_BY_ID',
-				array('type' => 'custom_entity', 'partial' => true)
+				array('type' => 'dest_selector', 'partial' => true)
 			),
 			'MODIFY_BY_ID' => $this->createField(
 				'MODIFY_BY_ID',
-				array('type' => 'custom_entity', 'partial' => true)
+				array('type' => 'dest_selector', 'partial' => true)
 			),
 			'IS_RETURN_CUSTOMER' => $this->createField(
 				'IS_RETURN_CUSTOMER',
@@ -134,11 +135,11 @@ class LeadDataProvider extends EntityDataProvider
 			'IM' => $this->createField('IM'),
 			'CONTACT_ID' => $this->createField(
 				'CONTACT_ID',
-				array('type' => 'custom_entity', 'partial' => true)
+				array('type' => 'dest_selector', 'partial' => true)
 			),
 			'COMPANY_ID' => $this->createField(
 				'COMPANY_ID',
-				array('type' => 'custom_entity', 'partial' => true)
+				array('type' => 'dest_selector', 'partial' => true)
 			),
 			'COMPANY_TITLE' => $this->createField('COMPANY_TITLE'),
 			'POST' => $this->createField('POST'),
@@ -173,7 +174,7 @@ class LeadDataProvider extends EntityDataProvider
 			'COMMENTS' => $this->createField('COMMENTS'),
 			'PRODUCT_ROW_PRODUCT_ID' => $this->createField(
 				'PRODUCT_ROW_PRODUCT_ID',
-				array('type' => 'custom_entity', 'partial' => true)
+				array('type' => 'dest_selector', 'partial' => true)
 			),
 			'WEBFORM_ID' => $this->createField(
 				'WEBFORM_ID',
@@ -197,6 +198,23 @@ class LeadDataProvider extends EntityDataProvider
 				'type' => 'date'
 			)
 		);
+
+		$result['STATUS_ID_FROM_HISTORY'] = $this->createField(
+			'STATUS_ID_FROM_HISTORY',
+			array('type' => 'list', 'default' => true, 'partial' => true)
+		);
+
+		$result['STATUS_ID_FROM_SUPPOSED_HISTORY'] = $this->createField(
+			'STATUS_ID_FROM_SUPPOSED_HISTORY',
+			array('type' => 'list', 'default' => true, 'partial' => true)
+		);
+
+
+		$result['STATUS_SEMANTIC_ID_FROM_HISTORY'] = $this->createField(
+			'STATUS_SEMANTIC_ID_FROM_HISTORY',
+			array('type' => 'list', 'default' => true, 'partial' => true)
+		);
+
 		return $result;
 	}
 
@@ -215,14 +233,14 @@ class LeadDataProvider extends EntityDataProvider
 				'items' => \CCrmStatus::GetStatusList('SOURCE')
 			);
 		}
-		elseif($fieldID === 'STATUS_ID')
+		elseif($fieldID === 'STATUS_ID' || $fieldID === 'STATUS_ID_FROM_HISTORY' || $fieldID === 'STATUS_ID_FROM_SUPPOSED_HISTORY')
 		{
 			return array(
 				'params' => array('multiple' => 'Y'),
 				'items' => \CCrmStatus::GetStatusList('STATUS')
 			);
 		}
-		elseif($fieldID === 'STATUS_SEMANTIC_ID')
+		elseif($fieldID === 'STATUS_SEMANTIC_ID' || $fieldID === 'STATUS_SEMANTIC_ID_FROM_HISTORY')
 		{
 			return PhaseSemantics::getListFilterInfo(
 				\CCrmOwnerType::Lead,
@@ -239,74 +257,118 @@ class LeadDataProvider extends EntityDataProvider
 		elseif($fieldID === 'ASSIGNED_BY_ID')
 		{
 			return array(
-				'params' => array('multiple' => 'Y'),
-				'selector' => array(
-					'TYPE' => 'user',
-					'DATA' => array('ID' => 'assigned_by', 'FIELD_ID' => 'ASSIGNED_BY_ID')
+				'params' => array(
+					'apiVersion' => 3,
+					'context' => 'CRM_LEAD_FILTER_ASSIGNED_BY_ID',
+					'multiple' => 'Y',
+					'contextCode' => 'U',
+					'enableAll' => 'N',
+					'enableSonetgroups' => 'N',
+					'allowEmailInvitation' => 'N',
+					'allowSearchEmailUsers' => 'N',
+					'departmentSelectDisable' => 'Y',
+					'isNumeric' => 'Y',
+					'prefix' => 'U',
 				)
 			);
 		}
 		elseif($fieldID === 'CREATED_BY_ID')
 		{
 			return array(
-				'params' => array('multiple' => 'Y'),
-				'selector' => array(
-					'TYPE' => 'user',
-					'DATA' => array('ID' => 'created_by', 'FIELD_ID' => 'CREATED_BY_ID')
+				'params' => array(
+					'apiVersion' => 3,
+					'context' => 'CRM_LEAD_FILTER_CREATED_BY_ID',
+					'multiple' => 'Y',
+					'contextCode' => 'U',
+					'enableAll' => 'N',
+					'enableSonetgroups' => 'N',
+					'allowEmailInvitation' => 'N',
+					'allowSearchEmailUsers' => 'N',
+					'departmentSelectDisable' => 'Y',
+					'isNumeric' => 'Y',
+					'prefix' => 'U',
 				)
 			);
 		}
 		elseif($fieldID === 'MODIFY_BY_ID')
 		{
 			return array(
-				'params' => array('multiple' => 'Y'),
-				'selector' => array(
-					'TYPE' => 'user',
-					'DATA' => array('ID' => 'modify_by', 'FIELD_ID' => 'MODIFY_BY_ID')
+				'params' => array(
+					'apiVersion' => 3,
+					'context' => 'CRM_LEAD_FILTER_MODIFY_BY_ID',
+					'multiple' => 'Y',
+					'contextCode' => 'U',
+					'enableAll' => 'N',
+					'enableSonetgroups' => 'N',
+					'allowEmailInvitation' => 'N',
+					'allowSearchEmailUsers' => 'N',
+					'departmentSelectDisable' => 'Y',
+					'isNumeric' => 'Y',
+					'prefix' => 'U',
 				)
 			);
 		}
 		elseif($fieldID === 'CONTACT_ID')
 		{
 			return array(
-				//'params' => array('multiple' => 'Y'),
-				'selector' => array(
-					'TYPE' => 'crm_entity',
-					'DATA' => array(
-						'ID' => 'contact',
-						'FIELD_ID' => 'CONTACT_ID',
-						'FIELD_ALIAS' => 'ASSOCIATED_CONTACT_ID',
-						'ENTITY_TYPE_NAMES' => array(\CCrmOwnerType::ContactName)
-						//'IS_MULTIPLE' => true
-					)
+				'alias' => 'ASSOCIATED_CONTACT_ID',
+				'params' => array(
+					'apiVersion' => 3,
+					'context' => 'CRM_LEAD_FILTER_CONTACT_ID',
+					'contextCode' => 'CRM',
+					'useClientDatabase' => 'N',
+					'enableAll' => 'N',
+					'enableDepartments' => 'N',
+					'enableUsers' => 'N',
+					'enableSonetgroups' => 'N',
+					'allowEmailInvitation' => 'N',
+					'allowSearchEmailUsers' => 'N',
+					'departmentSelectDisable' => 'Y',
+					'enableCrm' => 'Y',
+					'enableCrmContacts' => 'Y',
+					'convertJson' => 'Y'
 				)
 			);
 		}
 		elseif($fieldID === 'COMPANY_ID')
 		{
 			return array(
-				'selector' => array(
-					'TYPE' => 'crm_entity',
-					'DATA' => array(
-						'ID' => 'company',
-						'FIELD_ID' => 'COMPANY_ID',
-						'ENTITY_TYPE_NAMES' => array(\CCrmOwnerType::CompanyName)
-					)
+				'params' => array(
+					'apiVersion' => 3,
+					'context' => 'CRM_LEAD_FILTER_COMPANY_ID',
+					'contextCode' => 'CRM',
+					'useClientDatabase' => 'N',
+					'enableAll' => 'N',
+					'enableDepartments' => 'N',
+					'enableUsers' => 'N',
+					'enableSonetgroups' => 'N',
+					'allowEmailInvitation' => 'N',
+					'allowSearchEmailUsers' => 'N',
+					'departmentSelectDisable' => 'Y',
+					'enableCrm' => 'Y',
+					'enableCrmCompanies' => 'Y',
+					'convertJson' => 'Y'
 				)
 			);
 		}
 		elseif($fieldID === 'PRODUCT_ROW_PRODUCT_ID')
 		{
 			return array(
-				'params' => array('multiple' => 'N'),
-				'selector' => array(
-					'TYPE' => 'crm_entity',
-					'DATA' => array(
-						'ID' => 'product',
-						'FIELD_ID' => 'PRODUCT_ROW_PRODUCT_ID',
-						'ENTITY_TYPE_NAMES' => array('PRODUCT'),
-						'IS_MULTIPLE' => false
-					)
+				'params' => array(
+					'apiVersion' => 3,
+					'context' => 'CRM_LEAD_FILTER_PRODUCT_ID',
+					'contextCode' => 'CRM',
+					'useClientDatabase' => 'N',
+					'enableAll' => 'N',
+					'enableDepartments' => 'N',
+					'enableUsers' => 'N',
+					'enableSonetgroups' => 'N',
+					'allowEmailInvitation' => 'N',
+					'allowSearchEmailUsers' => 'N',
+					'departmentSelectDisable' => 'Y',
+					'enableCrm' => 'Y',
+					'enableCrmProducts' => 'Y',
+					'convertJson' => 'Y'
 				)
 			);
 		}

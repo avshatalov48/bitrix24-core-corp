@@ -10,6 +10,7 @@ return array(
 	'block' => array(
 		'name' => Loc::getMessage('LANDING_BLOCK_40.2.TWO_COLS_CAROUSEL_NAME_NEW'),
 		'section' => array('image'),
+		'dynamic' => false,
 	),
 	'cards' => array(
 		'.landing-block-node-card' => array(
@@ -33,7 +34,7 @@ return array(
 		'.landing-block-node-card-img' => array(
 			'name' => Loc::getMessage('LANDING_BLOCK_40.2.TWO_COLS_CAROUSEL_NODES_LANDINGBLOCKNODECARDIMG'),
 			'type' => 'img',
-			'dimensions' => array('width' => 1332, 'height' => 806),
+			'dimensions' => array('width' => 960, 'height' => 806),
 		),
 	),
 	'style' => array(

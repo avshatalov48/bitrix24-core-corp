@@ -48,7 +48,7 @@ for ($i=0, $filterLength = sizeof($arResult['FILTER']); $i < $filterLength; $i++
 
 	if ($filterType === 'user')
 	{
-		$userID = isset($_REQUEST[$filterID]) ? intval($_REQUEST[$filterID]) : 0;
+		$userID = isset($arResult['DB_FILTER'][$filterID]) ? intval($arResult['DB_FILTER'][$filterID]) : 0;
 		$userName = $userID > 0 ? CCrmViewHelper::GetFormattedUserName($userID) : '';
 
 		ob_start();
@@ -197,6 +197,8 @@ foreach ($grids as $gridID => $postfix)
 			if(($bEmptyCols && $hdr['default']==true) || in_array($hdr['id'], $gridColumns))
 				$dataColumns[$hdr['id']] = $hdr['name'];
 		}
+
+		$currencies  = CCrmCurrency::GetAll();
 		$nRows = $sumValues = 0;
 		foreach ($arResult["GRID_DATA{$postfix}"] as $index => $row)
 		{
@@ -207,7 +209,9 @@ foreach ($grids as $gridID => $postfix)
 				if ($colIndex !== 'FUNNEL' && isset($row['data'][$colIndex]))
 				{
 					$title = $row['data'][(($colIndex === 'TITLE') ? 'TITLE_ORIG' : $colIndex)];
-					$dataRow['title'] .= '<div>'.$colName.': '.htmlspecialcharsbx($title).'</div>';
+					//We can't encode formatted sum because of html-entities.
+					$titleHtml = isset($currencies[$colIndex]) ? strip_tags($title) : htmlspecialcharsbx($title);
+					$dataRow['title'] .= "<div>{$colName}: {$titleHtml}</div>";
 					$n++;
 				}
 			}

@@ -2,6 +2,7 @@
 namespace Bitrix\Crm\Recycling;
 
 use Bitrix\Main;
+use Bitrix\Crm;
 
 trait MultiFieldControllerMixin
 {
@@ -21,6 +22,11 @@ trait MultiFieldControllerMixin
 			$this->getSuspendedEntityTypeName(),
 			$recyclingEntityID
 		);
+
+		Crm\Integrity\DuplicateCommunicationCriterion::unregister(
+			$this->getEntityTypeID(),
+			$entityID
+		);
 	}
 
 	/**
@@ -37,6 +43,20 @@ trait MultiFieldControllerMixin
 			$this->getEntityTypeName(),
 			$newEntityID
 		);
+
+		$entityMultifields = Crm\Integrity\DuplicateCommunicationCriterion::prepareEntityMultifieldValues(
+			$this->getEntityTypeID(),
+			$newEntityID
+		);
+
+		if(!empty($entityMultifields))
+		{
+			Crm\Integrity\DuplicateCommunicationCriterion::bulkRegister(
+				$this->getEntityTypeID(),
+				$newEntityID,
+				Crm\Integrity\DuplicateCommunicationCriterion::prepareBulkData($entityMultifields)
+			);
+		}
 	}
 
 	/**

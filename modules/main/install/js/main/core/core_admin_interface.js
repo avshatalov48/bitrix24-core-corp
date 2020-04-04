@@ -408,7 +408,7 @@ BX.adminFormTools = {
 	{
 		if ((!BX.browser.IsIE() || BX.browser.IsIE9()) && BX.type.isElementNode(el) && el.tagName.toUpperCase() == 'INPUT' && el.type.toUpperCase() == 'CHECKBOX')
 		{
-			if (!BX.hasClass(el, 'adm-designed-checkbox'))
+			if (!BX.hasClass(el, 'adm-designed-checkbox') && !BX.hasClass(el, 'ui-ctl-element'))
 			{
 				if (!el.id)
 					el.id = 'designed_checkbox_' + Math.random();
@@ -727,6 +727,11 @@ BX.adminMenu.prototype.Init = function()
 	{
 		for (var key in this.dest)
 		{
+			if (!BX('fav_dest_' + key) || !BX('fav_cont_' + key))
+			{
+				continue;
+			}
+
 			this.dest[key] = BX('fav_dest_' + key);
 			this.dest_cont[key] = BX('fav_cont_' + key);
 

@@ -1,4 +1,7 @@
 <?php
+
+use Bitrix\Crm\Widget\Layout\StartCrmWidget;
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
 /**
@@ -71,346 +74,8 @@ HTML;
 $currentUserID = CCrmSecurityHelper::GetCurrentUserID();
 $isSupervisor = CCrmPerms::IsAdmin($currentUserID)
 	|| Bitrix\Crm\Integration\IntranetManager::isSupervisor($currentUserID);
-$rowData = array(
-	array(
-		'height' => 380,
-		'cells' => array(
-			array(
-				'controls' => array(
-					array(
-						'entityTypeName' => CCrmOwnerType::ActivityName,
-						'typeName' => 'custom',
-						'configs' => array(
-							array(
-								'name' => 'activity_control',
-								'title' => GetMessage("CRM_CH_TRACKER_WGT_ACTIVITY_DYNAMIC"),
-								'dataPreset' => 'ACTIVITY_DYNAMIC::ALL',
-								'dataSource' => 'ACTIVITY_DYNAMIC',
-								'display' => array(
-									'colorScheme' => 'white'
-								)
-							)
-						),
-						'filter' => array('periodType' => 'D0')
-					)
-				)
-			)
-		)
-	),
-	array(
-		"height" => 380,
-		"cells" => array(
-			array(
-				"controls" => array(
-					array(
-						"typeName" => "graph",
-						"group" => "DATE",
-						"combineData" => "Y",
-						"configs" => array(
-							array(
-								"name" => "param1",
-								"title" => GetMessage("CRM_CH_TRACKER_WGT_COMMUNICATION_DYNAMIC_TELEPHONY"),
-								"display" => array(
-									"colorScheme" => "blue"
-								),
-								"dataPreset" => "ACTIVITY_STATS::VOXIMPLANT_CALL:*:TOTAL_QTY",
-								"dataSource" => "ACTIVITY_STATS",
-								"select" => array(
-									"name" => "TOTAL_QTY",
-									"aggregate" => "COUNT"
-								)
-							),
-							array(
-								"name" => "param2",
-								"title" => GetMessage("CRM_CH_TRACKER_WGT_COMMUNICATION_DYNAMIC_EMAIL"),
-								"display" => array(
-									"colorScheme" => "green"),
-								"dataPreset" => "ACTIVITY_STATS::CRM_EMAIL:*:TOTAL_QTY",
-								"dataSource" => "ACTIVITY_STATS",
-								"select" => array(
-									"name" => "TOTAL_QTY",
-									"aggregate" => "COUNT"
-								)
-							),
-							array(
-								"name" => "param3",
-								"title" => GetMessage("CRM_CH_TRACKER_WGT_COMMUNICATION_DYNAMIC_OPENLINES"),
-								"display" => array(
-									"colorScheme" => "yellow"
-								),
-								"dataPreset" => "ACTIVITY_STATS::IMOPENLINES_SESSION:*:TOTAL_QTY",
-								"dataSource" => "ACTIVITY_STATS",
-								"select" => array(
-									"name" => "TOTAL_QTY", "aggregate" => "COUNT",)
-							),
-							array(
-								"name" => "param4",
-								"title" => GetMessage("CRM_CH_TRACKER_WGT_COMMUNICATION_DYNAMIC_FORM"),
-								"display" => array(
-									"colorScheme" => "red",
-								),
-								"dataPreset" => "ACTIVITY_STATS::CRM_WEBFORM:*:TOTAL_QTY",
-								"dataSource" => "ACTIVITY_STATS",
-								"select" => array(
-									"name" => "TOTAL_QTY",
-									"aggregate" => "COUNT",
-								)
-							)
-						),
-						"entityTypeName" => "ACTIVITY",
-						"title" => GetMessage("CRM_CH_TRACKER_WGT_COMMUNICATION_DYNAMIC"),
-						"filter" => array(
-							"periodType" => ""
-						),
-						"display" => array(
-							"graph" => array(
-								"type" => "line"
-							)
-						),
-						"context" => "E",
-					)
-				),
-			),
-			array(
-				"controls" => array(
-					array(
-						"typeName" => "bar",
-						"group" => "USER",
-						"combineData" => "Y",
-						"enableStack" => "N",
-						"configs" => array(
-							array(
-								"name" => "param1",
-								"title" => GetMessage("CRM_CH_TRACKER_WGT_PERSONAL_LOAD_TELEPHONY"),
-								"display" => array(
-									"colorScheme" => "blue",
-								),
-								"dataPreset" => "ACTIVITY_STATS::VOXIMPLANT_CALL:*:TOTAL_QTY",
-								"dataSource" => "ACTIVITY_STATS",
-								"select" => array(
-									"name" => "TOTAL_QTY",
-									"aggregate" => "COUNT",
-								)
-							),
-							array(
-								"name" => "param2",
-								"title" => GetMessage("CRM_CH_TRACKER_WGT_PERSONAL_LOAD_EMAIL"),
-								"display" => array(
-									"colorScheme" => "green",
-								),
-								"dataPreset" => "ACTIVITY_STATS::CRM_EMAIL:*:TOTAL_QTY",
-								"dataSource" => "ACTIVITY_STATS",
-								"select" => array(
-									"name" => "TOTAL_QTY",
-									"aggregate" => "COUNT",
-								)
-							),
-							array(
-								"name" => "param3",
-								"title" => GetMessage("CRM_CH_TRACKER_WGT_PERSONAL_LOAD_OPENLINES"),
-								"display" => array(
-									"colorScheme" => "yellow",
-								),
-								"dataPreset" => "ACTIVITY_STATS::IMOPENLINES_SESSION:*:TOTAL_QTY",
-								"dataSource" => "ACTIVITY_STATS",
-								"select" => array(
-									"name" => "TOTAL_QTY",
-									"aggregate" => "COUNT",
-								)
-							),
-							array(
-								"name" => "param4",
-								"title" => GetMessage("CRM_CH_TRACKER_WGT_PERSONAL_LOAD_FORM"),
-								"display" => array(
-									"colorScheme" => "red",
-								),
-								"dataPreset" => "ACTIVITY_STATS::CRM_WEBFORM:*:TOTAL_QTY",
-								"dataSource" => "ACTIVITY_STATS",
-								"select" => array(
-									"name" => "TOTAL_QTY",
-									"aggregate" => "COUNT",
-								)
-							)
-						),
-						"entityTypeName" => "ACTIVITY",
-						"title" => GetMessage("CRM_CH_TRACKER_WGT_PERSONAL_LOAD"),
-						"filter" => array(
-							"periodType" => ""
-						),
-						"context" => "E",
-					)
-				)
-			)
-		)
-	),
-	array(
-		'height' => 180,
-		'cells' => array(
-			array(
-				'controls' => array(
-					array(
-						'entityTypeName' => CCrmOwnerType::Lead,
-						'typeName' => 'number',
-						'configs' => array(
-							array(
-								'name' => 'client_success1',
-								'title' => GetMessage("CRM_CH_TRACKER_WGT_NEW_CLIENTS"),
-								'dataPreset' => 'LEAD_CONV_STATS::OVERALL_COUNT',
-								'dataSource' => 'LEAD_CONV_STATS',
-								'select' => array('name' => 'COUNT', 'aggregate' => 'COUNT'),
-								'display' => array(
-									'colorScheme' => 'blue'
-								)
-							)
-						)
-					)
-				)
-			),
-			array(
-				'controls' => array(
-					array(
-						'entityTypeName' => CCrmOwnerType::Undefined,
-						'typeName' => 'number',
-						'configs' => array(
-							array(
-								'name' => 'client_success1',
-								'title' => GetMessage("CRM_CH_TRACKER_WGT_NEW_CLIENTS_PER_DAY"),
-								'dataPreset' => 'LEAD_CONV_STATS::OVERALL_COUNT',
-								'dataSource' => 'LEAD_CONV_STATS',
-								'select' => array('name' => 'COUNT', 'aggregate' => 'COUNT'),
-								'display' => array(
-									'colorScheme' => 'blue'
-								)
-							)
-						),
-						'filter' => array('periodType' => 'D0')
-					)
-				)
-			)
-		)
-	),
-	array(
-		'height' => 380,
-		'cells' => array(
-			array(
-				'controls' => array(
-					array(
-						'entityTypeName' => CCrmOwnerType::ActivityName,
-						'typeName' => 'custom',
-						'configs' => array(
-							array(
-								'name' => 'activity_manager_counters',
-								'title' => GetMessage("CRM_CH_TRACKER_WGT_MANAGERS_FAILS"),
-								'dataPreset' => 'activity_manager_counters::ALL',
-								'dataSource' => 'activity_manager_counters',
-								'display' => array(
-									'colorScheme' => 'white'
-								)
-							)
-						)
-					)
-				)
-			)
-		)
-	)
-);
 
-if ($showSaleTarget)
-{
-	$rowData[] = array(
-		'height' => 380,
-		'cells' => array(
-			array(
-				'controls' => array(
-					array(
-						'title' => GetMessage("CRM_CH_TRACKER_WGT_SALE_TARGET"),
-						'entityTypeName' => CCrmOwnerType::DealName,
-						'typeName' => 'custom',
-						'customType' => 'saletarget',
-						'configs' => array(
-							array(
-								'name' => 'sale_target',
-								'dataPreset' => 'DEAL_SALE_TARGET::ACTIVE',
-								'dataSource' => 'DEAL_SALE_TARGET'
-							)
-						)
-					)
-				)
-			)
-		)
-	);
-}
-
-if($isSupervisor)
-{
-	$rowData[] = array(
-		'height' => 380,
-		'cells' => array(
-			array(
-				'controls' => array(
-					array(
-						'entityTypeName' => CCrmOwnerType::DealName,
-						'typeName' => 'bar',
-						'title' => GetMessage("CRM_CH_TRACKER_WGT_MANAGERS_SUCCESSES"),
-						'group' => 'USER',
-						'context' => 'F',
-						'combineData' => 'Y',
-						'enableStack' => 'Y',
-						'enableAvatar' => 'Y',
-						'format' => array('isCurrency' => 'Y'),
-						'configs' => array(
-							array(
-								'name' => 'deal_success',
-								'title' => GetMessage('CRM_CH_TRACKER_WGT_DEAL_SUCCESS_SUM'),
-								'dataPreset' => 'DEAL_SUM_STATS::OVERALL_SUM',
-								'dataSource' => 'DEAL_SUM_STATS',
-								'select' => array('name' => 'SUM_TOTAL', 'aggregate' => 'SUM'),
-								'filter' => array('semanticID' => 'S'),
-								'display' => array(
-									'colorScheme' => 'green',
-									'graph' => array(
-										'clustered' => 'Y'
-									)
-								)
-							)
-						)
-					)
-				)
-			)
-		)
-	);
-}
-else
-{
-	$rowData[] = array(
-		'height' => 380,
-		'cells' => array(
-			array(
-				'controls' => array(
-					array(
-						'entityTypeName' => CCrmOwnerType::DealName,
-						'typeName' => 'rating',
-						'title' => GetMessage('CRM_CH_TRACKER_WGT_RATING_BY_SUCCESSFUL_DEALS'),
-						'group' => 'USER',
-						'nominee' => $currentUserID,
-						'configs' => array(
-							array(
-								'name' => 'deal_success',
-								'dataPreset' => 'DEAL_SUM_STATS::OVERALL_SUM',
-								'dataSource' => 'DEAL_SUM_STATS',
-								'select' => array('name' => 'SUM_TOTAL', 'aggregate' => 'SUM'),
-								'filter' => array('semanticID' => 'S'),
-								'format' => array('isCurrency' => 'Y', 'enableDecimals' => 'N')
-							),
-						)
-					)
-				)
-			)
-		)
-	);
-}
-
-$startOptions = CUserOptions::GetOption('crm.entity.channeltracker', $guid, array());
+$startOptions = \CUserOptions::GetOption('crm.entity.channeltracker', $guid, array());
 $startVersion = isset($startOptions['version']) ? (int)$startOptions['version'] : 0;
 
 if ($showSaleTarget && $startVersion < 2)
@@ -425,7 +90,7 @@ if ($showSaleTarget && $startVersion < 2)
 					'controls' => array(
 						array(
 							'title' => GetMessage("CRM_CH_TRACKER_WGT_SALE_TARGET"),
-							'entityTypeName' => CCrmOwnerType::DealName,
+							'entityTypeName' => \CCrmOwnerType::DealName,
 							'typeName' => 'custom',
 							'customType' => 'saletarget',
 							'configs' => array(
@@ -444,7 +109,7 @@ if ($showSaleTarget && $startVersion < 2)
 	}
 
 	$startOptions['version'] = 2;
-	CUserOptions::SetOption('crm.entity.channeltracker', $guid, $startOptions);
+	\CUserOptions::SetOption('crm.entity.channeltracker', $guid, $startOptions);
 }
 ?>
 
@@ -456,6 +121,10 @@ if ($showSaleTarget && $startVersion < 2)
 	{
 		$customWidgets[] = 'saletarget';
 	}
+	$rowData = StartCrmWidget::getDefaultRows([
+		'isSupervisor' => $isSupervisor,
+		'showSaleTarget' => $showSaleTarget,
+	]);
 
 	$APPLICATION->IncludeComponent(
 		'bitrix:crm.widget_panel',

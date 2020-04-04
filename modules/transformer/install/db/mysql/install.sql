@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS `b_transformer_command` (
   `PARAMS` TEXT NOT NULL,
   `FILE` VARCHAR(255) NULL,
   `ERROR` TEXT NULL,
+  `ERROR_CODE` int(10) NULL,
   `UPDATE_TIME` datetime,
   PRIMARY KEY (ID),
   index ix_trans_commands_guid (GUID),

@@ -10,10 +10,10 @@ var Bitrix24FormLoader = {
 
 		if(!window.Bitrix24FormObject || !window[window.Bitrix24FormObject])
 			return;
-		if(!window[window.Bitrix24FormObject].forms)
-			return;
 
-		var forms = window[window.Bitrix24FormObject].forms;
+		var b24form = window[window.Bitrix24FormObject];
+		b24form.forms = b24form.forms || [];
+		var forms = b24form.forms;
 		forms.ntpush = forms.push;
 		forms.push = function (params)
 		{
@@ -340,6 +340,15 @@ var Bitrix24FormLoader = {
 		if(!node && !defaultNode)
 			return;
 
+		if (!params.ref)
+		{
+			var scriptNode = document.querySelector('script[src*="/bitrix/js/crm/form_loader.js"]')
+			if (scriptNode)
+			{
+				params.ref = scriptNode.src;
+			}
+		}
+		
 		this.domain = params.ref.match(/((http|https):\/\/[^\/]+?)\//)[1];
 
 		var iframe = this.createFrame(params);
@@ -352,12 +361,18 @@ var Bitrix24FormLoader = {
 
 		var _this = this;
 		this.addEventListener(iframe, 'load', function(){_this.onFrameLoad(uniqueLoadId);});
-		this.addEventListener(window, 'message', function(event){
-			if(event && event.origin == _this.domain)
-			{
-				_this.doFrameAction(event.data);
-			}
-		});
+
+
+		if (!this.isMessageListenerAdded)
+		{
+			this.addEventListener(window, 'message', function(event){
+				if(event && event.origin == _this.domain)
+				{
+					_this.doFrameAction(event.data);
+				}
+			});
+			this.isMessageListenerAdded = true;
+		}
 	},
 	unload: function(params)
 	{
@@ -391,6 +406,7 @@ var Bitrix24FormLoader = {
 				if (!this.isGuestLoaded() && data.value)
 				{
 					eval(data.value);
+					this.guestLoadedChecker();
 				}
 				break;
 			case 'redirect':
@@ -563,11 +579,20 @@ var Bitrix24FormLoader = {
 	{
 		return window.b24Tracker && window.b24Tracker.guest;
 	},
+	guestLoadedChecker: function()
+	{
+		if (this.onGuestLoaded())
+		{
+			return;
+		}
+
+		setTimeout(this.guestLoadedChecker.bind(this), 300);
+	},
 	onGuestLoaded: function()
 	{
 		if (!this.isGuestLoaded())
 		{
-			return;
+			return false;
 		}
 
 		for (var uniqueLoadId in this.forms)
@@ -578,7 +603,7 @@ var Bitrix24FormLoader = {
 			}
 
 			var form = this.forms[uniqueLoadId];
-			if (form.guestLoaded || !form.loaded)
+			if (!form || form.guestLoaded || !form.loaded)
 			{
 				continue;
 			}
@@ -596,6 +621,8 @@ var Bitrix24FormLoader = {
 			}
 			this.sendDataToFrame(uniqueLoadId, {action: 'setTrace', trace: trace});
 		}
+
+		return true;
 	},
 
 	addEventListener: function(el, eventName, handler)

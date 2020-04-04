@@ -58,7 +58,7 @@
 
 		getFormat: function()
 		{
-			return BX.date.convertBitrixFormat(BX.message(this.time ? "FORMAT_DATETIME" : "FORMAT_DATE"));
+			return BX.date.convertBitrixFormat(BX.Landing.Loc.getMessage(this.time ? "FORMAT_DATETIME" : "FORMAT_DATE"));
 		},
 
 		reset: function()

@@ -27,6 +27,8 @@ class MarkEntry extends TimelineEntry
 			throw new Main\ArgumentException('Entity ID must be greater than zero.', 'entityID');
 		}
 
+		$entityClassName = isset($params['ENTITY_CLASS_NAME']) ? $params['ENTITY_CLASS_NAME'] : '';
+
 		$authorID = isset($params['AUTHOR_ID']) ? (int)$params['AUTHOR_ID'] : 0;
 		if($authorID <= 0)
 		{
@@ -42,6 +44,7 @@ class MarkEntry extends TimelineEntry
 				'AUTHOR_ID' => $authorID,
 				'SETTINGS' => $settings,
 				'ASSOCIATED_ENTITY_TYPE_ID' => $entityTypeID,
+				'ASSOCIATED_ENTITY_CLASS_NAME' => $entityClassName,
 				'ASSOCIATED_ENTITY_ID' => $entityID
 			)
 		);
@@ -58,7 +61,15 @@ class MarkEntry extends TimelineEntry
 			$bindings[] = array('ENTITY_TYPE_ID' => $entityTypeID, 'ENTITY_ID' => $entityID);
 		}
 		self::registerBindings($ID, $bindings);
+		if($entityTypeID === \CCrmOwnerType::Activity)
+		{
+			self::buildSearchContent($ID);
+		}
 		return $ID;
+	}
+	public static function rebind($entityTypeID, $oldEntityID, $newEntityID)
+	{
+		Entity\TimelineBindingTable::rebind($entityTypeID, $oldEntityID, $newEntityID, array(TimelineType::MARK));
 	}
 	public static function attach($srcEntityTypeID, $srcEntityID, $targEntityTypeID, $targEntityID)
 	{

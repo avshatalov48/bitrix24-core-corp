@@ -313,7 +313,7 @@ foreach ($arResult['ROWS'] as $index => $data)
 			'ONCLICK' => "BX.Sender.LetterList.resume({$data['ID']});"
 		);
 	}
-	if ($data['STATE']['canWait'] && $canEdit)
+	if ($data['STATE']['isHalted'] && $data['STATE']['canWait'] && $canEdit)
 	{
 		$stateActions[] = array(
 			'TITLE' => Loc::getMessage('SENDER_LETTER_LIST_STATE_RESUME_TITLE'),

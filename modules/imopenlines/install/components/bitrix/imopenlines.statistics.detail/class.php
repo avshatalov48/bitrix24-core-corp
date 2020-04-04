@@ -3,7 +3,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
 use \Bitrix\Main\Loader,
 	\Bitrix\Main\Localization\Loc,
-	\Bitrix\Main\HttpApplication;
+	\Bitrix\Main\HttpApplication,
+	\Bitrix\ImOpenLines\Model\SessionTable;
 
 class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 {
@@ -18,6 +19,7 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 	protected $userPermissions;
 	protected $showHistory;
 	protected $configId;
+	private $enableNextPage;
 
 	private function init()
 	{
@@ -25,8 +27,39 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 		$this->userPermissions = \Bitrix\ImOpenlines\Security\Permissions::createWithCurrentUser();
 
 		$this->gridOptions = new CGridOptions($this->gridId);
-		if(isset($_REQUEST['excel']) && $_REQUEST['excel'] === 'Y'  && $this->enableExport)
-			$this->excelMode = 'Y';
+
+		if(isset($_REQUEST['EXPORT_TYPE']) && $_REQUEST['EXPORT_TYPE'] === 'excel'  && $this->enableExport)
+		{
+			$this->excelMode = true;
+		}
+
+		if($this->enableExport)
+		{
+			$stExportId = 'STEXPORT_MANAGER';
+			$randomSequence = new Bitrix\Main\Type\RandomSequence($stExportId);
+			$stExportManagerId = $stExportId.'_'.$randomSequence->randString();
+
+			$this->arResult['STEXPORT_PARAMS'] = [
+				'siteId' => SITE_ID,
+				'stExportId' => $stExportId,
+				'managerId' => $stExportManagerId,
+				'sToken' => 's' . time(),
+				'messages' => [
+					'stExportExcelDlgTitle' => Loc::getMessage('OL_STAT_EXCEL_EXPORT_POPUP_TITLE'),
+					'stExportExcelDlgSummary' => Loc::getMessage('OL_STAT_EXCEL_EXPORT_POPUP_BODY'),
+				]
+			];
+
+			$this->arResult['BUTTON_EXPORT'] = "BX.OpenLines.ExportManager.items['" . CUtil::JSEscape($stExportManagerId) . "'].startExport('excel')";
+
+			$this->arResult['STEXPORT_TOTAL_ITEMS'] = (isset($this->arParams['STEXPORT_TOTAL_ITEMS']) ?
+				(int)$this->arParams['STEXPORT_TOTAL_ITEMS'] : 0);
+			$this->enableNextPage = false;
+		}
+		else
+		{
+			$this->arResult['BUTTON_EXPORT'] = "viOpenTrialPopup('excel-export');";
+		}
 
 		$request = HttpApplication::getInstance()->getContext()->getRequest();
 
@@ -43,30 +76,10 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 
 	private function getConfigList()
 	{
-		$allowedUserIds = \Bitrix\ImOpenlines\Security\Helper::getAllowedUserIds(
-			\Bitrix\ImOpenlines\Security\Helper::getCurrentUserId(),
-			$this->userPermissions->getPermission(\Bitrix\ImOpenlines\Security\Permissions::ENTITY_LINES, \Bitrix\ImOpenlines\Security\Permissions::ACTION_VIEW)
-		);
-
-		$limit = null;
-		if (is_array($allowedUserIds))
-		{
-			$limit = array();
-			$orm = \Bitrix\ImOpenlines\Model\QueueTable::getList(Array(
-				'filter' => Array(
-					'=USER_ID' => $allowedUserIds
-				)
-			));
-			while ($row = $orm->fetch())
-			{
-				$limit[$row['CONFIG_ID']] = $row['CONFIG_ID'];
-			}
-		}
-
 		$configManager = new \Bitrix\ImOpenLines\Config();
 		$result = $configManager->getList(Array(
 				'select' => Array(
-					'ID', 'LINE_NAME', 'MODIFY_USER_ID'
+					'ID', 'LINE_NAME'
 				),
 				'filter' => Array('=TEMPORARY' => 'N')
 			),
@@ -76,15 +89,6 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 		$lines = Array();
 		foreach ($result as $id => $config)
 		{
-			if (!is_null($limit))
-			{
-				if (!isset($limit[$config['ID']]) && !in_array($config['MODIFY_USER_ID'], $allowedUserIds))
-				{
-					unset($result[$id]);
-					continue;
-				}
-			}
-
 			$lines[$config['ID']] = htmlspecialcharsbx($config['LINE_NAME']);
 		}
 		return $lines;
@@ -168,6 +172,8 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 	{
 		$result = [];
 
+		$domain = \Bitrix\ImOpenLines\Common::getServerAddress();
+
 		if ($row['CRM'] == 'Y' && $row['CRM_ACTIVITY_ID'] > 0)
 		{
 			$crmEntitiesManager = \Bitrix\ImOpenLines\Crm\Common::getActivityBindings($row['CRM_ACTIVITY_ID']);
@@ -178,7 +184,7 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 				{
 					if(!empty($id))
 					{
-						$result[$type] = \Bitrix\ImOpenLines\Crm\Common::getLink($type, $id);
+						$result[$type] = $domain . \Bitrix\ImOpenLines\Crm\Common::getLink($type, $id);
 					}
 				}
 			}
@@ -196,9 +202,11 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 	{
 		$result = '';
 
+		$domain = \Bitrix\ImOpenLines\Common::getServerAddress();
+
 		if ($row['CRM'] == 'Y' && $row['CRM_ACTIVITY_ID'] > 0)
 		{
-			$result = \Bitrix\ImOpenLines\Crm\Common::getLink('ACTIVITY', $row['CRM_ACTIVITY_ID']);
+			$result = $domain . \Bitrix\ImOpenLines\Crm\Common::getLink('ACTIVITY', $row['CRM_ACTIVITY_ID']);
 		}
 
 		return $result;
@@ -570,7 +578,7 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 			),
 			"VOTE_HEAD" => array(
 				"id" => "VOTE_HEAD",
-				"name" => Loc::getMessage("OL_STATS_HEADER_VOTE_HEAD"),
+				"name" => Loc::getMessage("OL_STATS_HEADER_VOTE_HEAD_1"),
 				"default" => false,
 				"type" => "list",
 				"items" => array(
@@ -761,7 +769,7 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 
 			if(count($crmFilter) == 1)
 			{
-				//TODO: доработать поиск
+				//TODO: improve search
 				$entityTypes = array_keys($crmFilter);
 				$entityType = $entityTypes[0];
 				$entityId = $crmFilter[$entityType][0];
@@ -947,11 +955,18 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 			if ($userId > 0)
 			{
 				$photoStyle = '';
+				$photoClass = '';
+
 				if ($userData[$userId]["PHOTO"])
 				{
 					$photoStyle = "background: url('".$userData[$userId]["PHOTO"]."') no-repeat center;";
 				}
-				$userHtml = '<span class="ol-stat-user-img user-avatar" style="'.$photoStyle.'"></span>';
+				else
+				{
+					$photoStyle = 'background-position: center;';
+					$photoClass = 'user-default-avatar';
+				}
+				$userHtml = '<span class="ol-stat-user-img user-avatar '.$photoClass.'" style="'.$photoStyle.'"></span>';
 				$userHtml .= $userData[$userId]["FULL_NAME"];
 			}
 			else
@@ -1028,7 +1043,6 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 			$this->arResult['TRIAL'] = \Bitrix\ImOpenlines\Security\Helper::getTrialText(); // TODO restrict
 		}
 
-		$this->arResult["EXPORT_HREF"] = ($this->enableExport ? $APPLICATION->GetCurPageParam('excel=Y') : 'javascript: viOpenTrialPopup(\'excel-export\');');
 
 		$this->arResult["GRID_ID"] = $this->gridId;
 		$this->arResult["FILTER_ID"] = $this->filterId;
@@ -1036,7 +1050,7 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 		$this->arResult["UF_FIELDS"] = array();
 
 		//UF ->
-		$ufData = \CUserTypeEntity::GetList(array(), array('ENTITY_ID' => \Bitrix\ImOpenLines\Model\SessionTable::getUfId(), 'LANG' => LANGUAGE_ID));
+		$ufData = \CUserTypeEntity::GetList(array(), array('ENTITY_ID' => SessionTable::getUfId(), 'LANG' => LANGUAGE_ID));
 		//<- UF
 
 		while($ufResult = $ufData->Fetch())
@@ -1046,20 +1060,109 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 
 		$sorting = $this->gridOptions->GetSorting(array("sort" => array("ID" => "DESC")));
 		$navParams = $this->gridOptions->GetNavParams();
-		$pageSize = $navParams['nPageSize'];
+
+		if($this->excelMode)
+		{
+			$pageSize = $this->arParams['STEXPORT_PAGE_SIZE'];
+			$pageNum = $this->arParams['PAGE_NUMBER'];
+			$total = $this->arParams['STEXPORT_TOTAL_ITEMS'];
+			$this->arResult['STEXPORT_IS_FIRST_PAGE'] = $pageNum === 1;
+
+			$processed = ($pageNum - 1) * $pageSize;
+			$offset = $pageSize * ($pageNum - 1);
+			if (($total > 0) && ($total - $processed <= $pageSize))
+			{
+				$pageSize = $total - $processed;
+			}
+			unset($total, $processed);
+		}
+		else
+		{
+			$pageSize = $navParams['nPageSize'];
+		}
+
+		$gridHeaders = $this->gridOptions->GetVisibleColumns();
+		if (empty($gridHeaders))
+		{
+			$gridHeaders = \Bitrix\ImOpenLines\Model\SessionTable::getSelectFieldsPerformance();
+		}
+		$selectHeaders = array_intersect(SessionTable::getSelectFieldsPerformance(), $gridHeaders);
+
+		$requiredHeaders = ['ID', 'USER_CODE'];
+		$selectHeaders = array_merge($requiredHeaders, $selectHeaders);
+
+		foreach ($gridHeaders as $gridHeader)
+		{
+			switch ($gridHeader)
+			{
+				case 'MODE_NAME':
+					$selectHeaders[] = 'MODE';
+					break;
+				case 'STATUS_DETAIL':
+					$selectHeaders[] = 'STATUS';
+					break;
+				case 'SOURCE_TEXT':
+					$selectHeaders[] = 'SOURCE';
+					break;
+				case 'USER_NAME':
+					$selectHeaders[] = 'USER_ID';
+					break;
+				case 'CRM_TEXT':
+					$selectHeaders[] = 'CRM';
+					$selectHeaders[] = 'CRM_CREATE';
+					$selectHeaders[] = 'CRM_CREATE_LEAD';
+					$selectHeaders[] = 'CRM_CREATE_COMPANY';
+					$selectHeaders[] = 'CRM_CREATE_CONTACT';
+					$selectHeaders[] = 'CRM_CREATE_DEAL';
+					$selectHeaders[] = 'CRM_ACTIVITY_ID';
+					$selectHeaders[] = 'CRM_TRACE_DATA';
+					break;
+				case 'ACTION':
+					$selectHeaders[] = 'CONFIG_ID';
+					$selectHeaders[] = 'USER_CODE';
+					break;
+				case 'PAUSE_TEXT':
+					$selectHeaders[] = 'PAUSE';
+					break;
+				case 'WORKTIME_TEXT':
+					$selectHeaders[] = 'WORKTIME';
+					break;
+				case 'OPERATOR_NAME':
+					$selectHeaders[] = 'OPERATOR_ID';
+					break;
+				case 'TIME_ANSWER_WO_BOT':
+					$selectHeaders[] = 'TIME_ANSWER';
+					$selectHeaders[] = 'TIME_BOT';
+					break;
+				case 'TIME_CLOSE_WO_BOT':
+					$selectHeaders[] = 'TIME_CLOSE';
+					$selectHeaders[] = 'TIME_BOT';
+					break;
+				case 'TIME_DIALOG_WO_BOT':
+					$selectHeaders[] = 'TIME_DIALOG';
+					$selectHeaders[] = 'TIME_BOT';
+					break;
+				case 'TIME_MESSAGE_ANSWER_FIRST':
+				case 'TIME_MESSAGE_ANSWER_FULL':
+				case 'TIME_MESSAGE_ANSWER_AVERAGE':
+				case 'TIME_MESSAGE_ANSWER_MAX':
+					$isNeedKpi = true;
+					break;
+			}
+		}
 
 		$nav = new \Bitrix\Main\UI\PageNavigation("page");
 		$nav->allowAllRecords(false)
 			->setPageSize($pageSize)
 			->initFromUri();
 
-		$cursor = \Bitrix\ImOpenLines\Model\SessionTable::getList(array(
+		$cursor = SessionTable::getList(array(
 			'order' => $sorting["sort"],
 			'filter' => $this->getFilter($this->arResult["FILTER"]),
-			'select' => \Bitrix\ImOpenLines\Model\SessionTable::getSelectFieldsPerformance(),
+			'select' => $selectHeaders,
 			"count_total" => true,
-			'limit' => ($this->excelMode ? 0 : $nav->getLimit()),
-			'offset' => ($this->excelMode ? 0 : $nav->getOffset())
+			'limit' => ($this->excelMode ? $pageSize : $nav->getLimit()),
+			'offset' => ($this->excelMode ? $offset : $nav->getOffset())
 		));
 
 		$this->arResult["ROWS_COUNT"] = $cursor->getCount();
@@ -1073,6 +1176,10 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 		$this->arResult["ELEMENTS_ROWS"] = [];
 		while($data = $cursor->fetch())
 		{
+			if($pageSize >= count($this->arResult["ELEMENTS_ROWS"]))
+			{
+				$this->enableNextPage = true;
+			}
 			if ($data["USER_ID"] > 0)
 			{
 				$userId[$data["USER_ID"]] = $data["USER_ID"];
@@ -1083,7 +1190,7 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 			}
 			$this->arResult["ELEMENTS_ROWS"][] = ["data" => $data, "columns" => []];
 		}
-
+		$this->arResult['STEXPORT_IS_LAST_PAGE'] = $this->enableNextPage ? false : true;
 		$this->showHistory = \Bitrix\ImOpenlines\Security\Helper::getAllowedUserIds(
 			\Bitrix\ImOpenlines\Security\Helper::getCurrentUserId(),
 			$this->userPermissions->getPermission(\Bitrix\ImOpenlines\Security\Permissions::ENTITY_HISTORY, \Bitrix\ImOpenlines\Security\Permissions::ACTION_VIEW)
@@ -1096,7 +1203,7 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 		{
 			$newRow = $this->arResult["ELEMENTS_ROWS"][$key]["columns"];
 
-			$userFields = $USER_FIELD_MANAGER->getUserFields(\Bitrix\ImOpenLines\Model\SessionTable::getUfId(), $row["data"]['ID'], LANGUAGE_ID);
+			$userFields = $USER_FIELD_MANAGER->getUserFields(SessionTable::getUfId(), $row["data"]['ID'], LANGUAGE_ID);
 
 			foreach ($userFields as $ufResult)
 			{
@@ -1207,6 +1314,15 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 			$newRow["EXTRA_USER_LEVEL"] = $row["data"]["EXTRA_USER_LEVEL"]? $row["data"]["EXTRA_USER_LEVEL"]: ($this->excelMode? '': '-');
 			$newRow["EXTRA_PORTAL_TYPE"] = $row["data"]["EXTRA_PORTAL_TYPE"]? $row["data"]["EXTRA_PORTAL_TYPE"]: ($this->excelMode? '': '-');
 
+			if(isset($isNeedKpi))
+			{
+				$kpi = new \Bitrix\ImOpenLines\KpiManager($row["data"]["ID"]);
+				$newRow["TIME_MESSAGE_ANSWER_FIRST"] = $kpi->getFirstMessageAnswerTime();
+				$newRow["TIME_MESSAGE_ANSWER_FULL"] = $kpi->getFullAnswerTime();
+				$newRow["TIME_MESSAGE_ANSWER_AVERAGE"] = $kpi->getAverageAnswerTime();
+				$newRow["TIME_MESSAGE_ANSWER_MAX"] = $kpi->getMaxAnswerTime();
+			}
+
 			if ($row["data"]["EXTRA_URL"])
 			{
 				$parsedUrl = parse_url($row["data"]["EXTRA_URL"]);
@@ -1249,6 +1365,10 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 				$newRow["TIME_FIRST_ANSWER"] = self::formatDuration($newRow["TIME_FIRST_ANSWER"]);
 				$newRow["TIME_DIALOG"] = self::formatDuration($row["data"]["TIME_DIALOG"]);
 				$newRow["VOTE"] = self::formatVote($row["data"]["ID"], $row["data"]["VOTE"], 'VOTE');
+				$newRow["TIME_MESSAGE_ANSWER_FIRST"] = self::formatDuration($newRow["TIME_MESSAGE_ANSWER_FIRST"]);
+				$newRow["TIME_MESSAGE_ANSWER_FULL"] = self::formatDuration($newRow["TIME_MESSAGE_ANSWER_FULL"]);
+				$newRow["TIME_MESSAGE_ANSWER_AVERAGE"] = self::formatDuration($newRow["TIME_MESSAGE_ANSWER_AVERAGE"]);
+				$newRow["TIME_MESSAGE_ANSWER_MAX"] = self::formatDuration($newRow["TIME_MESSAGE_ANSWER_MAX"]);
 
 				if ($configManager->canVoteAsHead($row["data"]["CONFIG_ID"]))
 				{
@@ -1341,9 +1461,9 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 			["id"=>"MESSAGE_COUNT", "name"=>GetMessage("OL_STATS_HEADER_MESSAGE_COUNT_NEW_NEW"), "default"=>true, "editable"=>false, "sort"=>"MESSAGE_COUNT"],
 			["id"=>"OPERATOR_NAME", "name"=>GetMessage("OL_STATS_HEADER_OPERATOR_NAME"), "default"=>true, "editable"=>false, "sort"=>"OPERATOR_ID"],
 			["id"=>"DATE_CREATE", "name"=>GetMessage("OL_STATS_HEADER_DATE_CREATE"), "default"=>true, "editable"=>false, "sort"=>"DATE_CREATE"],
-			["id"=>"DATE_OPERATOR", "name"=>GetMessage("OL_STATS_HEADER_DATE_OPERATOR_NEW"), "default"=>false, "editable"=>false],
+			["id"=>"DATE_OPERATOR", "name"=>GetMessage("OL_STATS_HEADER_DATE_OPERATOR_NEW_1"), "default"=>false, "editable"=>false],
 			["id"=>"DATE_FIRST_ANSWER", "name"=>GetMessage("OL_STATS_HEADER_DATE_FIRST_ANSWER_NEW"), "default"=>true, "editable"=>false],
-			["id"=>"DATE_OPERATOR_ANSWER", "name"=>GetMessage("OL_STATS_HEADER_DATE_OPERATOR_ANSWER_NEW"), "default"=>false, "editable"=>false],
+			["id"=>"DATE_OPERATOR_ANSWER", "name"=>GetMessage("OL_STATS_HEADER_DATE_OPERATOR_ANSWER_NEW_1"), "default"=>false, "editable"=>false],
 			["id"=>"DATE_LAST_MESSAGE", "name"=>GetMessage("OL_STATS_HEADER_DATE_LAST_MESSAGE"), "default"=>true, "editable"=>false],
 			["id"=>"DATE_OPERATOR_CLOSE", "name"=>GetMessage("OL_STATS_HEADER_DATE_OPERATOR_CLOSE_NEW"), "default"=>true, "editable"=>false],
 			["id"=>"DATE_CLOSE", "name"=>GetMessage("OL_STATS_HEADER_DATE_CLOSE"), "default"=>false, "editable"=>false, "sort"=>"DATE_CLOSE"],
@@ -1356,9 +1476,13 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 			["id"=>"TIME_DIALOG_WO_BOT", "name"=>GetMessage("OL_STATS_HEADER_TIME_DIALOG_WO_BOT_1"), "default"=>true, "editable"=>false],
 		//	["id"=>"TIME_DIALOG", "name"=>GetMessage("OL_STATS_HEADER_TIME_DIALOG_1"), "default"=>false, "editable"=>false],
 			["id"=>"TIME_BOT", "name"=>GetMessage("OL_STATS_HEADER_TIME_BOT"), "default"=>true, "editable"=>false],
+			["id"=>"TIME_MESSAGE_ANSWER_FIRST", "name"=>GetMessage("OL_STATS_HEADER_TIME_MESSAGE_ANSWER_FIRST"), "default"=>true, "editable"=>false],
+			["id"=>"TIME_MESSAGE_ANSWER_FULL", "name"=>GetMessage("OL_STATS_HEADER_TIME_MESSAGE_ANSWER_FULL"), "default"=>true, "editable"=>false],
+			["id"=>"TIME_MESSAGE_ANSWER_AVERAGE", "name"=>GetMessage("OL_STATS_HEADER_TIME_MESSAGE_ANSWER_AVERAGE"), "default"=>true, "editable"=>false],
+			["id"=>"TIME_MESSAGE_ANSWER_MAX", "name"=>GetMessage("OL_STATS_HEADER_TIME_MESSAGE_ANSWER_MAX"), "default"=>true, "editable"=>false],
 			["id"=>"VOTE", "name"=>GetMessage("OL_STATS_HEADER_VOTE_CLIENT"), "default"=>true, "editable"=>false, "sort"=>"VOTE"],
 			["id"=>"COMMENT_HEAD", "name"=>GetMessage("OL_STATS_HEADER_COMMENT_HEAD"), "default"=>true, "editable"=>false],
-			["id"=>"VOTE_HEAD", "name"=>GetMessage("OL_STATS_HEADER_VOTE_HEAD"), "default"=>true, "editable"=>false, "sort"=>"VOTE_HEAD"],
+			["id"=>"VOTE_HEAD", "name"=>GetMessage("OL_STATS_HEADER_VOTE_HEAD_1"), "default"=>true, "editable"=>false, "sort"=>"VOTE_HEAD"],
 		]);
 
 		//UF ->
@@ -1383,14 +1507,27 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 
 		if($this->excelMode)
 		{
-			$now = new \Bitrix\Main\Type\Date();
-			$filename = 'openlines_details_'.$now->format('Y_m_d').'.xls';
-			$APPLICATION->RestartBuffer();
-			header("Content-Type: application/vnd.ms-excel");
-			header("Content-Disposition: filename=".$filename);
+			foreach ($gridHeaders as $gridHeader)
+			{
+				foreach ($this->arResult['HEADERS'] as $header)
+				{
+					if ($gridHeader === $header['id'])
+					{
+						$this->arResult['SELECTED_HEADERS'][] = $header;
+					}
+				}
+
+				if($gridHeader === 'CRM_TEXT')
+				{
+					$this->arResult['SELECTED_HEADERS'][] = ['id' => 'CRM_LINK', 'name' => Loc::getMessage('OL_STATS_HEADER_CRM_LINK')];
+				}
+			}
+
 			$this->includeComponentTemplate('excel');
-			CMain::FinalActions();
-			die();
+			return [
+				'PROCESSED_ITEMS' => count($this->arResult['ELEMENTS_ROWS']),
+				'TOTAL_ITEMS' => $this->arResult['ROWS_COUNT']
+			];
 		}
 		else
 		{

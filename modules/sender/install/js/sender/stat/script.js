@@ -113,7 +113,7 @@
 			itemInitParams.caller = this;
 			this.callBlockFunction('onInit', itemInitParams);
 
-			BX.bind(window, 'scroll', BX.proxy(BX.throttle(this.onScroll, 350),this));
+			BX.bind(window, 'scroll', BX.throttle(this.onScroll.bind(this), 350));
 		}
 	};
 

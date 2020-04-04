@@ -42,6 +42,7 @@ if($arParams["ENABLE_MENU_TOOLBAR"])
 		'bitrix:tasks.interface.filter.buttons',
 		'.default',
 		array(
+			'TASK_ID' => $arParams['ID'],
 			'SECTION' => 'EDIT_TASK',
 			'TEMPLATES' => $arResult["AUX_DATA"]["TEMPLATE"],
 			'PATH_TO_TASKS_TASK' => $arParams['PATH_TO_TASKS_TASK'],
@@ -162,25 +163,25 @@ $hasFatals = false;?>
 			</div>
 
 			<?$blockName = Manager\Task::SE_PREFIX.'CHECKLIST';?>
-			<div data-bx-id="task-edit-checklist" data-block-name="<?=$blockName?>" class="task-checklist-container pinable-block task-openable-block <?=$blockClasses[$blockName]?>">
-
-				<div class="task-options task-checklist">
-					<?$APPLICATION->IncludeComponent(
-						'bitrix:tasks.widget.checklist',
+			<div data-bx-id="task-edit-checklist" data-block-name="<?=$blockName?>" class="task-openable-block <?=$blockClasses[$blockName]?>">
+				<div class="task-checklist">
+					<?
+					$APPLICATION->IncludeComponent(
+						'bitrix:tasks.widget.checklist.new',
 						'',
-						array(
-							'TEMPLATE_CONTROLLER_ID' => $templateId.'-checklist',
-							'INPUT_PREFIX' => $inputPrefix.'['.$blockName.']',
-							'DATA' => $taskData['SE_CHECKLIST'],
-							'CAN_ADD' => $taskCan['CHECKLIST.ADD'],
-							'CAN_REORDER' => $taskCan['CHECKLIST.REORDER'],
+						[
 							'ENTITY_ID' => $taskData['ID'],
-							'ENTITY_ROUTE' => 'task',
-							'COMPATIBILITY_MODE' => true,
-						),
+							'ENTITY_TYPE' => 'TASK',
+							'DATA' => $taskData['SE_CHECKLIST'],
+							'INPUT_PREFIX' => $inputPrefix.'['.$blockName.']',
+							'PATH_TO_USER_PROFILE' => $arParams['PATH_TO_USER_PROFILE'],
+							'CONVERTED' => $arResult['DATA']['CHECKLIST_CONVERTED'],
+							'CAN_ADD_ACCOMPLICE' => true,
+						],
 						null,
-						array("HIDE_ICONS" => "Y", "ACTIVE_COMPONENT" => "Y")
-					);?>
+						['HIDE_ICONS' => 'Y', 'ACTIVE_COMPONENT' => 'Y']
+					);
+					?>
 				</div>
 
 				<span data-bx-id="task-edit-chooser" data-target="checklist" class="task-option-fixedbtn" title="<?=Loc::getMessage('TASKS_TASK_COMPONENT_TEMPLATE_PINNER_HINT')?>"></span>

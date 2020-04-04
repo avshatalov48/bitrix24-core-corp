@@ -28,7 +28,7 @@ final class TmpFile extends Bitrix24Disk\TmpFile
 		}
 
 		//now you can set CREATED_BY
-		$data = array_intersect_key($data, array('CREATED_BY' => true));
+		$data = array_intersect_key($data, array('CREATED_BY' => true, 'SIZE' => true,));
 
 		return array_merge(array(
 			'TOKEN' => static::generateTokenByPath($relativePath),
@@ -37,6 +37,7 @@ final class TmpFile extends Bitrix24Disk\TmpFile
 			'PATH' => $relativePath,
 			'BUCKET_ID' => '',
 			'SIZE' => empty($fileData['size'])? '' : $fileData['size'],
+			'RECEIVED_SIZE' => empty($fileData['size'])? '' : $fileData['size'],
 			'WIDTH' => empty($fileData['width'])? '' : $fileData['width'],
 			'HEIGHT' => empty($fileData['height'])? '' : $fileData['height'],
 		), $data);

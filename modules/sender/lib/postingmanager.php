@@ -156,7 +156,8 @@ class PostingManager
 				}
 
 				$uri = new \Bitrix\Main\Web\Uri($url);
-				$fixedUrl = $uri->deleteParams($deleteParameters)->getLocator();
+				$fixedUrl = $uri->deleteParams($deleteParameters, true)->getLocator();
+				$fixedUrl = urldecode($fixedUrl);
 				$addClickDb = PostingClickTable::add(array(
 					'POSTING_ID' => $row['POSTING_ID'],
 					'RECIPIENT_ID' => $row['ID'],

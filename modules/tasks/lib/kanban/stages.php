@@ -3,12 +3,11 @@ namespace Bitrix\Tasks\Kanban;
 
 use Bitrix\Main\Entity;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Tasks\Internals\Task\FavoriteTable;
 use Bitrix\Tasks\Internals\Task\SortingTable;
-use Bitrix\Tasks\Internals\Task\ViewedTable;
 use Bitrix\Tasks\Internals\TaskTable as Task;
 use Bitrix\Tasks\MemberTable;
 use Bitrix\Tasks\ProjectsTable;
+use Bitrix\Main\ORM\Fields\ArrayField;
 
 Loc::loadMessages(__FILE__);
 
@@ -18,11 +17,19 @@ class StagesTable extends Entity\DataManager
 
 	/**
 	 * System type of stages (new, in progress, etc.).
+	 * Separated from other stages – timeline's stages, sprint's stages.
+	 * @see TimeLineTable::getStages()
+	 * @see SprintTable::getStages()
 	 */
 	const SYS_TYPE_NEW = 'NEW';
 	const SYS_TYPE_PROGRESS = 'WORK';
 	const SYS_TYPE_FINISH = 'FINISH';
 	const SYS_TYPE_DEFAULT = 'NEW';
+	const SYS_TYPE_TL1 = 'PERIOD1';
+	const SYS_TYPE_TL2 = 'PERIOD2';
+	const SYS_TYPE_TL3 = 'PERIOD3';
+	const SYS_TYPE_TL4 = 'PERIOD4';
+	const SYS_TYPE_TL5 = 'PERIOD5';
 
 	/**
 	 * Default colors.
@@ -52,6 +59,8 @@ class StagesTable extends Entity\DataManager
 	 */
 	const WORK_MODE_GROUP = 'G';
 	const WORK_MODE_USER = 'U';
+	const WORK_MODE_TIMELINE = 'P';
+	const WORK_MODE_SPRINT = 'S';
 
 	/**
 	 * Returns DB table name for entity.
@@ -90,9 +99,19 @@ class StagesTable extends Entity\DataManager
 			)),
 			'ENTITY_TYPE' => new Entity\StringField('ENTITY_TYPE', array(
 				//
-			))
+			)),
+			'ADDITIONAL_FILTER' => (new ArrayField('ADDITIONAL_FILTER', array(
+				//
+			)))->configureSerializationPhp(),
+			'TO_UPDATE' => (new ArrayField('TO_UPDATE', array(
+				//
+			)))->configureSerializationPhp(),
+			'TO_UPDATE_ACCESS' => new Entity\StringField('TO_UPDATE_ACCESS', array(
+				//
+			)),
 		);
 	}
+
 
 	/**
 	 * Check work mode.
@@ -102,7 +121,9 @@ class StagesTable extends Entity\DataManager
 	public static function checkWorkMode($mode)
 	{
 		return  $mode == self::WORK_MODE_GROUP ||
-				$mode == self::WORK_MODE_USER;
+				$mode == self::WORK_MODE_USER ||
+				$mode == self::WORK_MODE_TIMELINE ||
+				$mode == self::WORK_MODE_SPRINT;
 	}
 
 	/**
@@ -128,10 +149,20 @@ class StagesTable extends Entity\DataManager
 	}
 
 	/**
+	 * Just delete by parent delete method.
+	 * @param int $id Stage id.
+	 * @return \Bitrix\Main\ORM\Data\DeleteResult
+	 */
+	public static function systemDelete($id)
+	{
+		return parent::delete($id);
+	}
+
+	/**
 	 * Base delete-method, first check that column is not system.
 	 * @param mixed $key Row key.
 	 * @param int $entityId Id of entity.
-	 * @return DeleteResult|false
+	 * @return Entity\DeleteResult|false
 	 */
 	public static function delete($key, $entityId = 0)
 	{
@@ -207,12 +238,18 @@ class StagesTable extends Entity\DataManager
 
 		$entityType = self::getWorkMode();
 
-		if (isset($stages[$entityType.$entityId]) && !empty($stages[$entityType.$entityId]))
+		if (
+			isset($stages[$entityType.$entityId]) &&
+			!empty($stages[$entityType.$entityId])
+		)
 		{
 			return $stages[$entityType.$entityId];
 		}
 
 		$stages[$entityType.$entityId] = array();
+		$predefinedStages = ($entityType == self::WORK_MODE_TIMELINE)
+			? TimeLineTable::getStages()
+			: [];
 
 		$res = self::getList(array(
 			'filter' => array(
@@ -242,6 +279,45 @@ class StagesTable extends Entity\DataManager
 					$row['TITLE'] = Loc::getMessage('TASKS_STAGE_' . self::SYS_TYPE_DEFAULT);
 				}
 			}
+			if ($row['SYSTEM_TYPE'])
+			{
+				if (
+					!$row['ADDITIONAL_FILTER'] &&
+					isset($predefinedStages[$row['SYSTEM_TYPE']]['FILTER'])
+				)
+				{
+					$row['ADDITIONAL_FILTER'] = $predefinedStages[$row['SYSTEM_TYPE']]['FILTER'];
+					$row['ADDITIONAL_FILTER_TEST'] = $row['ADDITIONAL_FILTER'];
+				}
+				if (isset($row['ADDITIONAL_FILTER_TEST']))
+				{
+					foreach ($row['ADDITIONAL_FILTER_TEST'] as &$date)
+					{
+						if ($date instanceof \Bitrix\Main\Type\DateTime)
+						{
+							$date = clone $date;
+							$date = (string)$date;
+						}
+					}
+					unset($date);
+				}
+				if (
+					!$row['TO_UPDATE'] &&
+					isset($predefinedStages[$row['SYSTEM_TYPE']]['UPDATE'])
+				)
+				{
+					$row['TO_UPDATE'] = $predefinedStages[$row['SYSTEM_TYPE']]['UPDATE'];
+				}
+				if (
+					!$row['TO_UPDATE_ACCESS'] &&
+					isset($predefinedStages[$row['SYSTEM_TYPE']]['UPDATE_ACCESS'])
+				)
+				{
+					$row['TO_UPDATE_ACCESS'] = $predefinedStages[$row['SYSTEM_TYPE']]['UPDATE_ACCESS'];
+				}
+			}
+			$row['TO_UPDATE'] = (array)$row['TO_UPDATE'];
+			$row['ADDITIONAL_FILTER'] = (array)$row['ADDITIONAL_FILTER'];
 			$stages[$entityType.$entityId][$row['ID']] = $row;
 		}
 		if ($disableCreate)
@@ -269,7 +345,7 @@ class StagesTable extends Entity\DataManager
 					'COLOR' => '47D1E2'
 				));
 			}
-			else
+			else if ($entityType == self::WORK_MODE_GROUP)
 			{
 				if ($entityId > 0)
 				{
@@ -301,6 +377,40 @@ class StagesTable extends Entity\DataManager
 					));
 				}
 			}
+			else
+			{
+				$i = 0;
+
+				if ($entityType == self::WORK_MODE_TIMELINE)
+				{
+					$source = TimeLineTable::getStages();
+				}
+				else if ($entityType == self::WORK_MODE_SPRINT)
+				{
+					$source = SprintTable::getStages($entityId);
+				}
+				else
+				{
+					return [];
+				}
+
+				foreach ($source as $stageCode => $stageItem)
+				{
+					self::add([
+						'SYSTEM_TYPE' => array_key_exists('SYSTEM_TYPE', $stageItem)
+										? $stageItem['SYSTEM_TYPE']
+										: $stageCode,
+						'TITLE' => array_key_exists('TITLE', $stageItem)
+										? $stageItem['TITLE']
+										: '',
+						'SORT' => ++$i * 100,
+						'ENTITY_ID' => $entityId,
+						'ENTITY_TYPE' => $entityType,
+						'COLOR' => $stageItem['COLOR']
+					]);
+				}
+			}
+
 			return self::getStages($entityId);
 		}
 
@@ -319,6 +429,10 @@ class StagesTable extends Entity\DataManager
 		$afterId = isset($fields['AFTER_ID']) ? intval($fields['AFTER_ID']) : 0;
 		$entityId = isset($fields['ENTITY_ID']) ? intval($fields['ENTITY_ID']) : 0;
 		$entityType = self::getWorkMode();
+		if ($entityType == self::WORK_MODE_TIMELINE)
+		{
+			return null;
+		}
 		// get stages
 		$newStageId = 0;
 		$stages = array();
@@ -397,13 +511,22 @@ class StagesTable extends Entity\DataManager
 		$sort = 100;
 		foreach ($stages as $i => $stage)
 		{
+			if (
+				$stage['TITLE'] ||
+				$stage['SYSTEM_TYPE'] == self::SYS_TYPE_NEW
+			)
+			{
+				$stage['SYSTEM_TYPE'] = '';
+			}
 			$fields = array(
 				'TITLE' => $stage['TITLE'],
 				'COLOR' => $stage['COLOR'],
 				'ENTITY_ID' => $stage['ENTITY_ID'],
 				'ENTITY_TYPE' => $entityType,
 				'SORT' => $sort,
-				'SYSTEM_TYPE' => $sort == 100 ? self::SYS_TYPE_NEW : ''
+				'SYSTEM_TYPE' => $sort == 100
+								? self::SYS_TYPE_NEW
+								: $stage['SYSTEM_TYPE']
 			);
 			$sort += 100;
 			if ($i > 0)
@@ -455,7 +578,7 @@ class StagesTable extends Entity\DataManager
 
 	/**
 	 * Get default stage id.
-	 * @param int $id Id of stage.
+	 * @param int $id Entity id.
 	 * @return int
 	 */
 	public static function getDefaultStageId($id = 0)
@@ -521,7 +644,10 @@ class StagesTable extends Entity\DataManager
 			FROM (";
 
 		// if personal - search in another table
-		if (self::getWorkMode() == self::WORK_MODE_USER)
+		if (
+			self::getWorkMode() == self::WORK_MODE_USER ||
+			self::getWorkMode() == self::WORK_MODE_SPRINT
+		)
 		{
 			$sql .= "
 				SELECT STG.STAGE_ID
@@ -569,7 +695,11 @@ class StagesTable extends Entity\DataManager
 	{
 		if (
 			$fromEntityId != $toEntityId &&
-			($entityType == self::WORK_MODE_USER || $entityType == self::WORK_MODE_GROUP)
+			(
+				$entityType == self::WORK_MODE_USER ||
+				$entityType == self::WORK_MODE_GROUP ||
+				$entityType == self::WORK_MODE_SPRINT
+			)
 		)
 		{
 			$res = self::getList(array(
@@ -868,6 +998,10 @@ class StagesTable extends Entity\DataManager
 	{
 		if (($stage = StagesTable::getById($stageId)->fetch()))
 		{
+			if ($stage['ENTITY_TYPE'] == self::WORK_MODE_TIMELINE)
+			{
+				return;
+			}
 			$order = 'desc';
 			// get order
 			if ($stage['ENTITY_TYPE'] == self::WORK_MODE_GROUP)
@@ -964,7 +1098,7 @@ class StagesTable extends Entity\DataManager
 	}
 
 	/**
-	 * Delete all stages of group after group delete.
+	 * Delete all stages and sprints of group after group delete.
 	 * @param int $groupId Group id.
 	 * @return void
 	 */
@@ -980,6 +1114,15 @@ class StagesTable extends Entity\DataManager
 		{
 			parent::delete($row['ID']);
 		}
+		$res = SprintTable::getList([
+			'filter' => [
+				'GROUP_ID' => $groupId
+			]
+]		);
+		while ($row = $res->fetch())
+		{
+			SprintTable::delete($row['ID']);
+		}
 	}
 
 	/**
@@ -992,7 +1135,10 @@ class StagesTable extends Entity\DataManager
 		$res = self::getList(array(
 			'filter' => array(
 				'ENTITY_ID' => $userId,
-				'=ENTITY_TYPE' => self::WORK_MODE_USER
+				'=ENTITY_TYPE' => [
+					self::WORK_MODE_USER,
+					self::WORK_MODE_TIMELINE
+				]
 			)
 		));
 		while ($row = $res->fetch())

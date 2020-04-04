@@ -1,7 +1,7 @@
 <?
 namespace Bitrix\Crm\Tracking\Internals;
 
-use Bitrix\Main\ORM\Data\DataManager;
+use Bitrix\Main\Orm;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\Localization\Loc;
 
@@ -12,7 +12,7 @@ Loc::loadMessages(__FILE__);
  *
  * @package Bitrix\Crm\Tracking\Internals
  */
-class SiteTable extends DataManager
+class SiteTable extends Orm\Data\DataManager
 {
 	/**
 	 * Returns DB table name for entity.
@@ -44,7 +44,15 @@ class SiteTable extends DataManager
 			'HOST' => [
 				'data_type' => 'string',
 				'required' => true,
-				'title' => Loc::getMessage('CRM_TRACKING_INTERNALS_SITE_TITLE_ADDRESS')
+				'title' => Loc::getMessage('CRM_TRACKING_INTERNALS_SITE_TITLE_ADDRESS'),
+				'validation' => function ()
+				{
+					return [
+						new Orm\Fields\Validators\UniqueValidator(
+							Loc::getMessage('CRM_TRACKING_INTERNALS_SITE_ERROR_UNIQUE_HOST')
+						)
+					];
+				}
 			],
 			'ADDRESS' => [
 				'data_type' => 'string',

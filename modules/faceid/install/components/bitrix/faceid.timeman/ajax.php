@@ -11,6 +11,7 @@ require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_before.ph
 \Bitrix\Main\Loader::includeModule('timeman');
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Timeman\Model\Schedule\ScheduleTable;
 
 // check permissions
 $accessAllowed = false;
@@ -73,7 +74,6 @@ $loggedUser = array(
 	'EMAIL' => $USER->GetEmail()
 );
 
-$USER->Logout();
 
 $expReasons = \Bitrix\Faceid\UsersTable::getExpiredReasonList();
 
@@ -104,7 +104,7 @@ if (!empty($_POST['action']))
 		$outputVisitor = array('id' => (int) $_POST['id']);
 		$tmUser = new CTimeManUser($outputVisitor['id']);
 
-		if ($tmUser->OpenDay() || $tmUser->ReopenDay(true))
+		if ($tmUser->openDay(false, '', ['DEVICE' => ScheduleTable::ALLOWED_DEVICES_B24TIME]))
 		{
 			// ok
 			$actionStatus = 'OPENED';
@@ -120,7 +120,7 @@ if (!empty($_POST['action']))
 		$outputVisitor = array('id' => (int) $_POST['id']);
 		$tmUser = new CTimeManUser($outputVisitor['id']);
 
-		if ($tmUser->PauseDay())
+		if ($tmUser->pauseDay(['DEVICE' => ScheduleTable::ALLOWED_DEVICES_B24TIME]))
 		{
 			// ok
 			$actionStatus = 'PAUSED';
@@ -136,7 +136,7 @@ if (!empty($_POST['action']))
 		$outputVisitor = array('id' => (int) $_POST['id']);
 		$tmUser = new CTimeManUser($outputVisitor['id']);
 
-		if ($tmUser->ReopenDay(true))
+		if ($tmUser->reopenDay(true, SITE_ID, ['DEVICE' => ScheduleTable::ALLOWED_DEVICES_B24TIME]))
 		{
 			$actionStatus = 'REOPENED';
 			faceidSaveWorkdayActionLog($outputVisitor['id'], 'START', $snapshotBinaryContent);
@@ -160,7 +160,7 @@ if (!empty($_POST['action']))
 			$report = $expReasons[$_POST['reason']];
 		}
 
-		if ($tmUser->CloseDay($timestamp, $report))
+		if ($tmUser->closeDay($timestamp, $report, false, ['DEVICE' => ScheduleTable::ALLOWED_DEVICES_B24TIME]))
 		{
 			// ok
 			$actionStatus = 'CLOSED';
@@ -236,15 +236,13 @@ if (!empty($_POST['action']))
 
 							if ($currentStatus == 'OPENED')
 							{
-								$lastUserWorkTime = time() + $userOffset;
+								$wDuration = time() - $workdayData['RECORDED_START_TIMESTAMP'] - $workdayData['TIME_LEAKS'];
+								$outputVisitor['workday_duration'] = $wDuration;
 							}
 							else
 							{
-								$lastUserWorkTime = MakeTimeStamp($workdayData['DATE_FINISH']);
+								$outputVisitor['workday_duration'] = $workdayData['RECORDED_DURATION'];
 							}
-
-							$wDuration = $lastUserWorkTime - MakeTimeStamp($workdayData['DATE_START']) - $workdayData['TIME_LEAKS'];
-							$outputVisitor['workday_duration'] = $wDuration;
 						}
 
 						if ($currentStatus == 'CLOSED')
@@ -252,7 +250,9 @@ if (!empty($_POST['action']))
 							if (!empty($_POST['autoOpen']))
 							{
 								// auto open
-								if ($tmUser->OpenDay() || $tmUser->ReopenDay())
+								if ($tmUser->openDay(false, '', ['DEVICE' => ScheduleTable::ALLOWED_DEVICES_B24TIME])
+									|| $tmUser->reopenDay(false, SITE_ID, ['DEVICE' => ScheduleTable::ALLOWED_DEVICES_B24TIME])
+								)
 								{
 									$outputVisitor['workday_status'] = 'OPENED';
 									$actionStatus = 'OPENED';
@@ -277,11 +277,8 @@ if (!empty($_POST['action']))
 						elseif ($currentStatus == 'PAUSED')
 						{
 							$workdayData = $tmUser->GetCurrentInfo();
-							$userOffset = \CTimeZone::GetOffset($user['ID']);
 
-							$pDuration = time() + $userOffset - strtotime('today') - $workdayData['TIME_FINISH'] + $workdayData['TIME_LEAKS'];
-
-							$outputVisitor['workday_pause_duration'] = $pDuration;
+							$outputVisitor['workday_pause_duration'] = time() - $workdayData['RECORDED_START_TIMESTAMP'] - $workdayData['RECORDED_DURATION'];
 							$outputVisitor['workday_status'] = 'PAUSED';
 						}
 						elseif ($currentStatus == 'EXPIRED')
@@ -360,14 +357,12 @@ if (!empty($_POST['action']))
 
 					if ($currentStatus == 'OPENED')
 					{
-						$lastUserWorkTime = time() + $userOffset;
+						$wDuration = time() - $workdayData['RECORDED_START_TIMESTAMP'] - $workdayData['TIME_LEAKS'];
 					}
 					else
 					{
-						$lastUserWorkTime = MakeTimeStamp($workdayData['DATE_FINISH']);
+						$wDuration = $workdayData['RECORDED_DURATION'];
 					}
-
-					$wDuration = $lastUserWorkTime - MakeTimeStamp($workdayData['DATE_START']) - $workdayData['TIME_LEAKS'];
 
 					$outputVisitor['workday_duration'] = $wDuration;
 				}
@@ -386,12 +381,9 @@ if (!empty($_POST['action']))
 				elseif ($currentStatus == 'PAUSED')
 				{
 					$workdayData = $tmUser->GetCurrentInfo();
-					$userOffset = \CTimeZone::GetOffset($user['ID']);
-
-					$pDuration = time() + $userOffset - strtotime('today') - $workdayData['TIME_FINISH'];
 
 					$outputVisitor['workday_status'] = 'PAUSED';
-					$outputVisitor['workday_pause_duration'] = $pDuration;
+					$outputVisitor['workday_pause_duration'] = time() - $workdayData['RECORDED_START_TIMESTAMP'] - $workdayData['RECORDED_DURATION'];
 				}
 				elseif ($currentStatus == 'EXPIRED')
 				{

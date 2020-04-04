@@ -8,13 +8,13 @@ global $APPLICATION;
 CJSCore::RegisterExt('popup_menu', array('js' => array('/bitrix/js/main/popup_menu.js')));
 \Bitrix\Main\UI\Extension::load("ui.buttons");
 \Bitrix\Main\UI\Extension::load("ui.buttons.icons");
-Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/components/bitrix/crm.interface.toolbar/templates/slider/style.css');
 
 $toolbarID = $arParams['TOOLBAR_ID'];
 $prefix =  $toolbarID.'_';
 
 $items = array();
 $moreItems = array();
+$restAppButtons = array();
 $communicationPanel = null;
 $documentButton = null;
 $enableMoreButton = false;
@@ -39,6 +39,12 @@ foreach($arParams['BUTTONS'] as $item)
 		continue;
 	}
 
+	if(isset($item['TYPE']) && $item['TYPE'] === 'rest-app-toolbar')
+	{
+		$restAppButtons[] = $item;
+		continue;
+	}
+
 	if($enableMoreButton)
 	{
 		$moreItems[] = $item;
@@ -51,7 +57,8 @@ foreach($arParams['BUTTONS'] as $item)
 
 $this->SetViewTarget('inside_pagetitle', 10000);
 
-?><div id="<?=htmlspecialcharsbx($toolbarID)?>" class="pagetitle-container pagetitle-align-right-container"><?
+?><div id="<?=htmlspecialcharsbx($toolbarID)?>" class="pagetitle-container pagetitle-align-right-container crm-pagetitle-btn-box"><?
+
 if($communicationPanel)
 {
 		$data = isset($communicationPanel['DATA']) && is_array($communicationPanel['DATA']) ? $communicationPanel['DATA'] : array();
@@ -72,11 +79,11 @@ if($communicationPanel)
 		<div class="crm-entity-actions-container">
 			<?if(!$enableCall || empty($phones))
 			{
-				?><div id="<?=htmlspecialcharsbx($callButtonId)?>" class="webform-small-button webform-small-button-transparent crm-contact-menu-call-icon-not-available"></div><?
+				?><div id="<?=htmlspecialcharsbx($callButtonId)?>" class="ui-btn ui-btn-light-border ui-btn-icon-phone-call ui-btn-disabled ui-btn-themes"></div><?
 			}
 			else
 			{
-				?><div id="<?=htmlspecialcharsbx($callButtonId)?>" class="webform-small-button webform-small-button-transparent crm-contact-menu-call-icon"></div><?
+				?><div id="<?=htmlspecialcharsbx($callButtonId)?>" class="ui-btn ui-btn-light-border ui-btn-icon-phone-call ui-btn-themes"></div><?
 			}?>
 			<script type="text/javascript">
 				BX.ready(
@@ -100,11 +107,11 @@ if($communicationPanel)
 			<!--<div class="webform-small-button webform-small-button-transparent crm-contact-menu-sms-icon-not-available"></div>-->
 			<?if(empty($emails))
 			{
-				?><div id="<?=htmlspecialcharsbx($emailButtonId)?>" class="webform-small-button webform-small-button-transparent crm-contact-menu-mail-icon-not-available"></div><?
+				?><div id="<?=htmlspecialcharsbx($emailButtonId)?>" class="ui-btn ui-btn-light-border ui-btn-icon-mail ui-btn-disabled ui-btn-themes"></div><?
 			}
 			else
 			{
-				?><div id="<?=htmlspecialcharsbx($emailButtonId)?>" class="webform-small-button webform-small-button-transparent crm-contact-menu-mail-icon"></div><?
+				?><div id="<?=htmlspecialcharsbx($emailButtonId)?>" class="ui-btn ui-btn-light-border ui-btn-icon-mail ui-btn-themes"></div><?
 			}?>
 			<script type="text/javascript">
 				BX.ready(
@@ -123,11 +130,11 @@ if($communicationPanel)
 			</script>
 			<?if(empty($messengers))
 			{
-				?><div id="<?=htmlspecialcharsbx($messengerButtonId)?>" class="webform-small-button webform-small-button-transparent crm-contact-menu-im-icon-not-available"></div><?
+				?><div id="<?=htmlspecialcharsbx($messengerButtonId)?>" class="ui-btn ui-btn-light-border ui-btn-icon-chat ui-btn-disabled ui-btn-themes"></div><?
 			}
 			else
 			{
-				?><div id="<?=htmlspecialcharsbx($messengerButtonId)?>" class="webform-small-button webform-small-button-transparent crm-contact-menu-im-icon"></div><?
+				?><div id="<?=htmlspecialcharsbx($messengerButtonId)?>" class="ui-btn ui-btn-light-border ui-btn-icon-chat ui-btn-themes"></div><?
 			}?>
 			<script type="text/javascript">
 				BX.ready(
@@ -147,27 +154,60 @@ if($communicationPanel)
 		</div>
 		<?
 }
+if($enableMoreButton)
+{
+	?><button class="ui-btn ui-btn-light-border ui-btn-themes ui-btn-icon-setting crm-entity-actions-button-margin-left ui-btn-themes"></button>
+	<script type="text/javascript">
+		BX.ready(
+			function ()
+			{
+				BX.InterfaceToolBar.create(
+					"<?=CUtil::JSEscape($toolbarID)?>",
+					BX.CrmParamBag.create(
+						{
+							"containerId": "<?=CUtil::JSEscape($toolbarID)?>",
+							"items": <?=CUtil::PhpToJSObject($moreItems)?>,
+							"moreButtonClassName": "ui-btn-icon-setting"
+						}
+					)
+				);
+			}
+		);
+	</script><?
+}
 
+if(!empty($restAppButtons))
+{
+	\CJSCore::Init(array('applayout'));
+	for($i = 0, $length = count($restAppButtons); $i < $length; $i++)
+	{
+		$button = $restAppButtons[$i];
+		$buttonID = "crm_rest_app_group_{$i}";
+		$buttonTitle = htmlspecialcharsbx($button['NAME']);
+		$data = isset($button['DATA']) && is_array($button['DATA']) ? $button['DATA'] : array();
+		$ownerInfo = isset($data['OWNER_INFO']) && is_array($data['OWNER_INFO']) ? $data['OWNER_INFO'] : array();
+		unset($data['OWNER_INFO']);
 
-?>
-<button class="ui-btn ui-btn-md ui-btn-light-border ui-btn-themes ui-btn-icon-setting crm-btn-cogwheel"></button>
-<script type="text/javascript">
-	BX.ready(
-		function ()
-		{
-			BX.InterfaceToolBar.create(
-				"<?=CUtil::JSEscape($toolbarID)?>",
-				BX.CrmParamBag.create(
-					{
-						"containerId": "<?=CUtil::JSEscape($toolbarID)?>",
-						"items": <?=CUtil::PhpToJSObject($moreItems)?>,
-						"moreButtonClassName": "crm-btn-cogwheel"
-					}
-				)
+		?><button id="<?=$buttonID?>" title="<?=$buttonTitle?>" class="ui-btn ui-btn-md ui-btn-light-border ui-btn-dropdown ui-btn-themes crm-btn-dropdown-rest-app">
+		<?=$buttonTitle?>
+	</button>
+		<script type="text/javascript">
+			BX.ready(
+				function()
+				{
+					BX.InterfaceToolBarRestAppButton.create(
+						"<?=$buttonID?>",
+						{
+							"button": BX("<?=$buttonID?>"),
+							"data": <?=CUtil::PhpToJSObject($data)?>,
+							"ownerInfo": <?=CUtil::PhpToJSObject($ownerInfo)?>
+						}
+					);
+				}
 			);
-		}
-	);
-</script><?
+		</script><?
+	}
+}
 
 if($documentButton)
 {
@@ -177,15 +217,8 @@ if($documentButton)
 	<script>
 		BX.ready(function()
 		{
-			BX.bind(BX('<?=CUtil::JSEscape($documentButtonId);?>'), 'click', function()
-			{
-				BX.PopupMenu.show('<?=CUtil::JSEscape($documentButtonId);?>_menu', BX('<?=CUtil::JSEscape($documentButtonId);?>'), <?=CUtil::PhpToJSObject($documentButton['ITEMS']);?>, {
-					offsetLeft: 0,
-					offsetTop: 0,
-					closeByEsc: true,
-					className: 'document-toolbar-menu'
-				});
-			});
+			var button = new BX.DocumentGenerator.Button('<?=htmlspecialcharsbx($documentButtonId);?>', <?=CUtil::PhpToJSObject($documentButton['PARAMS']);?>);
+			button.init();
 		});
 	</script>
 	<?
@@ -196,8 +229,8 @@ foreach($items as $item)
 	$type = isset($item['TYPE']) ? $item['TYPE'] : '';
 	$code = isset($item['CODE']) ? $item['CODE'] : '';
 	$visible = isset($item['VISIBLE']) ? (bool)$item['VISIBLE'] : true;
-	$text = isset($item['TEXT']) ? htmlspecialcharsbx($item['TEXT']) : '';
-	$title = isset($item['TITLE']) ? htmlspecialcharsbx($item['TITLE']) : '';
+	$text = isset($item['TEXT']) ? htmlspecialcharsbx(strip_tags($item['TEXT'])) : '';
+	$title = isset($item['TITLE']) ? htmlspecialcharsbx(strip_tags($item['TITLE'])) : '';
 	$link = isset($item['LINK']) ? htmlspecialcharsbx($item['LINK']) : '#';
 	$icon = isset($item['ICON']) ? htmlspecialcharsbx($item['ICON']) : '';
 	$onClick = isset($item['ONCLICK']) ? htmlspecialcharsbx($item['ONCLICK']) : '';
@@ -397,9 +430,8 @@ foreach($items as $item)
 			CJSCore::Init('bp_starter');
 			$starterButtonId = "{$toolbarID}_bp_starter";
 		?>
-		<span class="webform-small-button webform-small-button-transparent crm-bizproc-starter-icon"
-			id="<?=htmlspecialcharsbx($starterButtonId)?>" title="<?=GetMessage('CRM_TOOLBAR_BIZPROC_STARTER_LABEL')?>">
-		</span>
+		<button class="ui-btn ui-btn-md ui-btn-light-border ui-btn-themes crm-bizproc-starter-icon"
+				id="<?=htmlspecialcharsbx($starterButtonId)?>" title="<?=GetMessage('CRM_TOOLBAR_BIZPROC_STARTER_LABEL')?>"></button>
 		<script type="text/javascript">
 			BX.ready(
 				function()

@@ -25,7 +25,8 @@ if($arResult['ENABLE_ACTIVITY_ADD'] || $arResult['SHOW_ACTIVITIES']):
 			'ENABLE_TASK_TRACING' => false,
 			'ENABLE_TASK_ADD' => $arResult['ENABLE_TASK_ADD'],
 			'ENABLE_CALENDAR_EVENT_ADD' => $arResult['ENABLE_CALENDAR_EVENT_ADD'],
-			'ENABLE_EMAIL_ADD' => $arResult['ENABLE_EMAIL_ADD']
+			'ENABLE_EMAIL_ADD' => $arResult['ENABLE_EMAIL_ADD'],
+			'SKIP_VISUAL_COMPONENTS' => 'Y'
 		),
 		null,
 		array('HIDE_ICONS' => 'Y')

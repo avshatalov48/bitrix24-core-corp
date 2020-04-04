@@ -761,6 +761,11 @@ BX.Crm.Widget.Custom.SaleTarget = (function(BX)
 					itemTpl.get('user-photo').style.background = 'url("'+user.photo+'")';
 				}
 
+				if (!user.active)
+				{
+					BX.addClass(itemTpl.get('user-row'), itemTpl.get('user-row').getAttribute('data-inactive-class'));
+				}
+
 				itemTpl.get('user-progress-line').style.width = target.progressPercent + '%';
 				itemTpl.get('user-progress-line-value').textContent = target.completedPercent;
 				if (target.completedPercent > 95)

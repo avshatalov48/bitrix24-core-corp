@@ -12,6 +12,9 @@ if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
 /** @var string $componentPath */
 /** @var CDiskExternalLinkComponent $component */
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\UI\Extension;
+
+Extension::load('ui.viewer');
 
 $langId = $component->getLangId();
 switch(strtolower($langId))
@@ -50,7 +53,12 @@ switch(strtolower($langId))
 	?>
 </head>
 <body style="background: none;">
-
+<script>
+	BX.ready(function(){
+		let inlineController = new BX.UI.Viewer.InlineController({baseContainer: BX('test-content')});
+		inlineController.renderItemByNode(BX('test-content'));
+	});
+</script>
 	<div class="bx-shared-wrap">
 
 		<div class="bx-shared-header">

@@ -1,7 +1,6 @@
 <?php
 namespace Bitrix\Crm\Timeline;
 
-use Bitrix\Crm\Integration\DocumentGeneratorManager;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Loader;
 
@@ -92,6 +91,25 @@ final class DocumentController extends EntityController
 		$text = GetMessage('CRM_DOCUMENT_CONTROLLER_HISTORY_UPDATE_MESSAGE', ['#TITLE#' => $title]);
 		$this->addEvent($text, $params);
 		$this->addToStack($id, 'timeline_document_update', $params);
+	}
+
+	public function prepareSearchContent(array $params)
+	{
+		$result = '';
+		if(isset($params['COMMENT']))
+		{
+			//Try to parse document title.
+			if(preg_match('/<a[^>]*>([^<]+)<\/a>/', $params['COMMENT'], $match))
+			{
+				$result = $match[1];
+			}
+			else
+			{
+				//We have HTML in this comment. Just remove all HTML tags.
+				$result = strip_tags($params['COMMENT']);
+			}
+		}
+		return $result;
 	}
 
 	protected function addEvent($text, array $params)

@@ -204,6 +204,20 @@ class Manager
 		return $list;
 	}
 
+	public static function updateScriptCacheWithForm($formId)
+	{
+		$buttons = Internals\ButtonTable::getList(['filter' => ['=ACTIVE' => 'Y']]);
+		foreach ($buttons as $buttonData)
+		{
+			$button = new Button();
+			$button->loadByData($buttonData);
+			if (in_array($formId, $button->getWebFormIdList()))
+			{
+				Script::saveCache($button);
+			}
+		}
+	}
+
 	public static function updateScriptCache($fromButtonId = null)
 	{
 		$filter = array();

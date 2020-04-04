@@ -7,6 +7,7 @@ $MESS["IMCONNECTOR_WARNING_LARGE_FILE"] = "[b]Внимание![/b]\n[i]Поль
 $MESS["IMCONNECTOR_COMMENT_IN_FACEBOOK"] = "Комментарий в Facebook";
 $MESS["IMCONNECTOR_LINK_TO_ORIGINAL_POST_IN_FACEBOOK"] = "Ссылка на исходный пост в Facebook: #LINK#";
 $MESS["IMCONNECTOR_LINK_TO_ORIGINAL_POST_IN_INSTAGRAM"] = "Ссылка на исходный пост в Instagram: #LINK#";
+$MESS["IMCONNECTOR_LINK_TO_AVITO_AD"] = "Ссылка на объявление в Avito: #LINK#";
 $MESS["IMCONNECTOR_LINK_TO_ORIGINAL_POST"] = "Ссылка на исходный пост: #LINK#";
 $MESS["IMCONNECTOR_GUEST_USER"] = "Гость";
 $MESS["IMCONNECTOR_WALL_TEXT"] = "Запись на стене пользователя";

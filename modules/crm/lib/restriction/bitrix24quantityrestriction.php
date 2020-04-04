@@ -3,7 +3,7 @@ namespace Bitrix\Crm\Restriction;
 class Bitrix24QuantityRestriction extends QuantityRestriction
 {
 	/** @var Bitrix24RestrictionInfo|null */
-	private $restrictionInfo = null;
+	protected $restrictionInfo = null;
 	public function __construct($name = '', $limit = 0, array $htmlInfo = null, array $popupInfo = null)
 	{
 		parent::__construct($name, $limit);

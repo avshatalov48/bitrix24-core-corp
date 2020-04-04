@@ -18,6 +18,7 @@ return [
 		'ui.vue.components.smiles',
 		'im.component.dialog',
 		'im.component.textarea',
+		'im.component.quotepanel',
 		'imopenlines.component.message',
 		'rest.client',
 		'main.md5',

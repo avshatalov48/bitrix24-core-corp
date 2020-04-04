@@ -13,6 +13,7 @@ BX.namespace('Tasks.Component');
 	{
 		this.parameters = parameters || {};
 		this.taskId = this.parameters.taskId;
+		this.userId = this.parameters.userId;
 		this.layout = {
 			favorite: BX("task-detail-favorite"),
 			switcher: BX("task-switcher"),
@@ -21,7 +22,9 @@ BX.namespace('Tasks.Component');
 			effective: BX("task-switcher-effective"),
 
 			createButton: BX("task-detail-create-button"),
-			importantButton: BX("task-detail-important-button")
+			importantButton: BX("task-detail-important-button"),
+			saveButton: BX("saveButton"),
+			cancelButton: BX("cancelButton")
 		};
 
 		this.paramsToLazyLoadTabs = parameters.paramsToLazyLoadTabs || {};
@@ -39,10 +42,67 @@ BX.namespace('Tasks.Component');
 		this.query = new BX.Tasks.Util.Query({url: "/bitrix/components/bitrix/tasks.task/ajax.php"});
 		this.query.bindEvent("executed", BX.proxy(this.onQueryExecuted, this));
 
-		BX.addCustomEvent(
-			window, 
-			"tasksTaskEvent", 
-			this.onTaskEvent.bind(this)
+		var self = this;
+		this.checkListChanged = false;
+		this.showCloseConfirmation = false;
+
+		BX.addCustomEvent(window, "tasksTaskEvent", this.onTaskEvent.bind(this));
+		BX.addCustomEvent('SidePanel.Slider:onClose', function(event) {
+			if (self.checkListChanged && typeof BX.Tasks.CheckListInstance !== 'undefined')
+			{
+				var checkListSlider = BX.Tasks.CheckListInstance.optionManager.slider;
+				if (!checkListSlider || checkListSlider !== event.getSlider())
+				{
+					return;
+				}
+
+				if (!self.showCloseConfirmation)
+				{
+					self.showCloseConfirmation = true;
+					return;
+				}
+
+				event.denyAction();
+
+				var popup = new BX.PopupWindow({
+					titleBar: BX.message('TASKS_CLOSE_SLIDER_CONFIRMATION_POPUP_HEADER'),
+					content: BX.message('TASKS_CLOSE_SLIDER_CONFIRMATION_POPUP_CONTENT'),
+					closeIcon: false,
+					buttons: [
+						new BX.PopupWindowButton({
+							text: BX.message('TASKS_CLOSE_SLIDER_CONFIRMATION_POPUP_BUTTON_CLOSE'),
+							className: 'popup-window-button-accept',
+							events: {
+								click: function() {
+									self.showCloseConfirmation = false;
+									popup.close();
+									checkListSlider.close();
+								}
+							}
+						}),
+						new BX.PopupWindowButton({
+							className: 'popup-window-button popup-window-button-link',
+							text: BX.message('TASKS_CLOSE_SLIDER_CONFIRMATION_POPUP_BUTTON_CANCEL'),
+							events: {
+								click: function() {
+									popup.close();
+								}
+							}
+						})
+					],
+					events: {
+						onPopupClose: function() {
+							this.destroy();
+						}
+					}
+				});
+				popup.show();
+			}
+		});
+
+		BX.Event.EventEmitter.subscribe(
+			'BX.Tasks.CheckListItem:CheckListChanged',
+			this.toggleFooterWrap.bind(this, true)
 		);
 
 		this.initFavorite();
@@ -51,6 +111,7 @@ BX.namespace('Tasks.Component');
 		this.initViewer();
 		this.initAjaxErrorHandler();
 		this.initImportantButton();
+		this.initFooterButtons();
 
 		var stayAtPage = parameters.componentData.EVENT_OPTIONS.STAY_AT_PAGE;
 		this.fireTaskEvent(stayAtPage);
@@ -227,6 +288,112 @@ BX.namespace('Tasks.Component');
 		];
 	};
 
+	BX.Tasks.Component.TaskView.prototype.initFooterButtons = function()
+	{
+		BX.bind(this.layout.saveButton, "click", this.onSaveButtonClick.bind(this));
+		BX.bind(this.layout.cancelButton, "click", this.onCancelButtonClick.bind(this));
+	};
+
+	BX.Tasks.Component.TaskView.prototype.onSaveButtonClick = function()
+	{
+		if (this.isSaving)
+		{
+			return;
+		}
+
+		this.isSaving = true;
+		BX.Tasks.CheckListInstance.activateLoading();
+
+		this.saveCheckList();
+	};
+
+	BX.Tasks.Component.TaskView.prototype.saveCheckList = function()
+	{
+		var self = this;
+		var args = {
+			items: BX.Tasks.CheckListInstance.getTreeStructure().getRequestData(),
+			taskId: this.taskId,
+			userId: this.userId
+		};
+
+		this.query.run('TasksTaskComponent.saveCheckList', args).then(function(result) {
+			if (result.isSuccess())
+			{
+				var treeStructure = BX.Tasks.CheckListInstance.getTreeStructure();
+				var traversedItems = result.getData().TRAVERSED_ITEMS;
+
+				if (traversedItems)
+				{
+					Object.keys(traversedItems).forEach(function(nodeId) {
+						var item = treeStructure.findChild(nodeId);
+						if (item !== 'undefined' && item.fields.getId() === null)
+						{
+							item.fields.setId(traversedItems[nodeId].ID);
+						}
+					});
+				}
+
+				BX.Tasks.CheckListInstance.saveStableTreeStructure();
+				BX.Tasks.CheckListInstance.deactivateLoading();
+
+				self.toggleFooterWrap(false);
+			}
+
+			this.isSaving = false;
+		}.bind(this));
+
+		this.query.execute();
+	};
+
+	BX.Tasks.Component.TaskView.prototype.onCancelButtonClick = function(e)
+	{
+		if (this.isSaving)
+		{
+			return;
+		}
+
+		var self = this;
+		var popup = new BX.PopupWindow({
+			titleBar: BX.message('TASKS_DISABLE_CHANGES_CONFIRMATION_POPUP_HEADER'),
+			content: BX.message('TASKS_DISABLE_CHANGES_CONFIRMATION_POPUP_CONTENT'),
+			closeIcon: false,
+			buttons: [
+				new BX.PopupWindowButton({
+					text: BX.message('TASKS_DISABLE_CHANGES_CONFIRMATION_POPUP_BUTTON_YES'),
+					className: 'popup-window-button-accept',
+					events: {
+						click: function() {
+							popup.close();
+
+							if (BX.Tasks.CheckListInstance !== 'undefined')
+							{
+								BX.Tasks.CheckListInstance.rerender();
+							}
+
+							self.toggleFooterWrap(false);
+						}
+					}
+				}),
+				new BX.PopupWindowButton({
+					className: 'popup-window-button popup-window-button-link',
+					text: BX.message('TASKS_DISABLE_CHANGES_CONFIRMATION_POPUP_BUTTON_NO'),
+					events: {
+						click: function() {
+							popup.close();
+						}
+					}
+				})
+			],
+			events: {
+				onPopupClose: function()
+				{
+					this.destroy();
+				}
+			}
+		});
+		popup.show();
+	};
+
 	BX.Tasks.Component.TaskView.prototype.onImportantButtonClick = function(node)
 	{
 		var priority = BX.data(node, 'priority');
@@ -270,6 +437,14 @@ BX.namespace('Tasks.Component');
 			if(BX.type.isNotEmptyString(data.REAL_STATUS))
 			{
 				this.setStatus(data.REAL_STATUS);
+			}
+		}
+
+		if (type === 'ADD')
+		{
+			if (this.taskId === parameters.taskUgly.parentTaskId)
+			{
+				window.location.href = this.paths.taskView;
 			}
 		}
 	};
@@ -476,6 +651,38 @@ BX.namespace('Tasks.Component');
 				BX.reload();
 			});
 		});
+	};
+
+	BX.Tasks.Component.TaskView.prototype.toggleFooterWrap = function(show)
+	{
+		var footer = BX('footerWrap');
+		var saveButton = BX('saveButton');
+
+		var classWait = 'ui-btn-wait';
+		var classActive = 'task-footer-wrap-active';
+
+		if (show)
+		{
+			if (!BX.hasClass(footer, classActive))
+			{
+				BX.addClass(footer, classActive);
+			}
+
+			this.checkListChanged = true;
+			this.showCloseConfirmation = true;
+		}
+		else
+		{
+			if (BX.hasClass(footer, classActive))
+			{
+				BX.removeClass(footer, classActive);
+			}
+
+			BX.removeClass(saveButton, classWait);
+
+			this.checkListChanged = false;
+			this.showCloseConfirmation = false;
+		}
 	};
 
 }).call(this);

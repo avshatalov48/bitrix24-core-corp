@@ -34,15 +34,8 @@ if ($orderId > 0)
 	}
 
 	\Bitrix\Main\Localization\Loc::loadMessages(__FILE__);
-	$pathToOrderDetails = CrmCheckPath('PATH_TO_ORDER_DETAILS', '', $APPLICATION->GetCurPage().'?order_id=#order_id#&show');
-	$pathToContactShow = CrmCheckPath('PATH_TO_CONTACT_SHOW', '', $APPLICATION->GetCurPage().'?contact_id=#contact_id#&show');
-	$pathToCompanyShow = CrmCheckPath('PATH_TO_COMPANY_SHOW', '', $APPLICATION->GetCurPage().'?company_id=#company_id#&show');
 
-	$pathToOrderDetails = CComponentEngine::MakePathFromTemplate($pathToOrderDetails,
-		array(
-			'order_id' => $orderId
-		)
-	);
+	$pathToOrderDetails = \CCrmOwnerType::GetEntityShowPath(\CCrmOwnerType::Order, $orderId, false);
 
 	$formattedContactName = '';
 
@@ -70,11 +63,7 @@ if ($orderId > 0)
 		$contactId = 0;
 	}
 
-	$pathToContactShow = CComponentEngine::MakePathFromTemplate($pathToContactShow,
-		array(
-			'contact_id' => $contactId
-		)
-	);
+	$pathToContactShow = \CCrmOwnerType::GetEntityShowPath(\CCrmOwnerType::Contact, $contactId, false);
 
 	$company = [];
 
@@ -89,11 +78,7 @@ if ($orderId > 0)
 		$companyId = 0;
 	}
 
-	$pathToCompanyShow = CComponentEngine::MakePathFromTemplate($pathToCompanyShow,
-		array(
-			'company_id' => $companyId
-		)
-	);
+	$pathToCompanyShow = \CCrmOwnerType::GetEntityShowPath(\CCrmOwnerType::Company, $companyId, false);
 
 	$statuses = \Bitrix\Crm\Order\OrderStatus::getListInCrmFormat();
 	$products = [];

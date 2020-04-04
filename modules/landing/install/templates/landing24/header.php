@@ -63,4 +63,4 @@ $APPLICATION->ShowPanel();
 */
 ?>
 <?$APPLICATION->ShowProperty('AfterBodyOpen');?>
-<main class="<?$APPLICATION->ShowProperty('MainClass');?>">
+<main class="w-100 <?$APPLICATION->ShowProperty('MainClass');?>">

@@ -3,7 +3,7 @@
 $this->addExternalCss(SITE_TEMPLATE_PATH."/css/employee.css");
 
 $show_user = "active";
-	
+
 if (isset($_REQUEST['show_user']))
 {
 	if ($_REQUEST['show_user'] == 'inactive')
@@ -175,4 +175,34 @@ else
 		array('HIDE_ICONS' => 'Y')
 	);
 }
-?>
+
+if (
+	SITE_TEMPLATE_ID == 'bitrix24'
+	&& !empty($arParams['SLIDER_PROFILE_USER_ID'])
+	&& intval($arParams['SLIDER_PROFILE_USER_ID']) > 0
+)
+{
+	$userProfileUrl = \Bitrix\Main\Config\Option::get('intranet', 'search_user_url', '/user/#ID#/');
+	?><script>
+		BX.ready(function () {
+			BX.SidePanel.Instance.open(
+				'<?=str_replace(array('#ID#', '#USER_ID#'), intval($arParams['SLIDER_PROFILE_USER_ID']), $userProfileUrl)?>',
+				{
+					cacheable: false,
+					allowChangeHistory: false,
+					contentClassName: "bitrix24-profile-slider-content",
+					loader: "intranet:profile",
+					width: 1100,
+					events: {
+						onCloseComplete: function(event) {
+							// timeout recommended by Compote
+							setTimeout(function() {
+								window.history.replaceState({}, "", '<?=$arParams['LIST_URL']?>');
+							}, 500);
+						}
+					}
+				}
+			);
+		});
+	</script><?
+}

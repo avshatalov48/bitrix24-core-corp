@@ -3,21 +3,23 @@
 namespace Bitrix\Crm\Volume;
 
 use Bitrix\Crm;
+use Bitrix\Crm\Volume;
 use Bitrix\Main;
 use Bitrix\Main\ORM;
-use Bitrix\Main\Entity;
 use Bitrix\Main\Error;
-
+use Bitrix\Disk;
 
 /**
- * @package Bitrix\Crm\Volume
- * @implements Crm\Volume\IVolumeClear
- * @implements Crm\Volume\IVolumeClearFile
- * @implements Crm\Volume\IVolumeClearActivity
- * @implements Crm\Volume\IVolumeClearEvents
+ * @implements \Bitrix\Crm\Volume\IVolumeClear
+ * @implements \Bitrix\Crm\Volume\IVolumeClearFile
+ * @implements \Bitrix\Crm\Volume\IVolumeClearActivity
+ * @implements \Bitrix\Crm\Volume\IVolumeClearEvents
  */
-abstract class Base implements Crm\Volume\IVolumeIndicator
+abstract class Base
+	implements Volume\IVolumeIndicator, Main\Errorable
 {
+	use Main\ErrorableImplementation;
+
 	/** @var array Indicator list available in library. */
 	protected static $indicatorTypeList = array();
 
@@ -26,6 +28,9 @@ abstract class Base implements Crm\Volume\IVolumeIndicator
 
 	/** @var array */
 	protected static $userFieldInformation = array();
+
+	/** @var array */
+	protected static $maxIdRangeCache = array();
 
 	/** @var array */
 	protected $tableList = array();
@@ -63,9 +68,6 @@ abstract class Base implements Crm\Volume\IVolumeIndicator
 	/** @var int */
 	protected $activityCount = 0;
 
-	/** Main\ErrorCollection */
-	protected $errorCollection;
-
 	/** @var array */
 	protected $filter = array();
 
@@ -86,12 +88,6 @@ abstract class Base implements Crm\Volume\IVolumeIndicator
 
 	/** @var int */
 	private $droppedFileCount = 0;
-
-	/** @var int */
-	private $droppedActivityCount = 0;
-
-	/** @var int */
-	private $droppedEventCount = 0;
 
 	/** @var int */
 	private $failCount = 0;
@@ -143,8 +139,8 @@ abstract class Base implements Crm\Volume\IVolumeIndicator
 		if (!isset($available[$moduleId]))
 		{
 			$available[$moduleId] =
-				\Bitrix\Main\ModuleManager::isModuleInstalled($moduleId) &&
-				\Bitrix\Main\Loader::includeModule($moduleId);
+				Main\ModuleManager::isModuleInstalled($moduleId) &&
+				Main\Loader::includeModule($moduleId);
 		}
 
 		return $available[$moduleId];
@@ -186,7 +182,7 @@ abstract class Base implements Crm\Volume\IVolumeIndicator
 	 */
 	protected function copyTemporallyData()
 	{
-		$connection = \Bitrix\Main\Application::getConnection();
+		$connection = Main\Application::getConnection();
 
 		$keyFields = array(
 			'INDICATOR_TYPE',
@@ -209,7 +205,8 @@ abstract class Base implements Crm\Volume\IVolumeIndicator
 
 		$target = $connection->getSqlHelper()->quote(Crm\VolumeTable::getTableName());
 
-		$query = (Crm\VolumeTmpTable::query())
+		$query = Crm\VolumeTmpTable::query();
+		$query
 			->setSelect(array_merge($keyFields, $updateFields))
 			->setFilter(array(
 				'=INDICATOR_TYPE' => static::getIndicatorId(),
@@ -247,9 +244,17 @@ abstract class Base implements Crm\Volume\IVolumeIndicator
 		$this
 			->purify()
 			->measureEntity()
-			->measureFiles()
-			->measureActivity()
-			->measureEvent();
+			->measureFiles();
+
+		if ($this instanceof Volume\IVolumeClearActivity || is_callable([$this, 'measureActivity']))
+		{
+			$this->measureActivity();
+		}
+
+		if ($this instanceof Volume\IVolumeClearEvent || is_callable([$this, 'measureEvent']))
+		{
+			$this->measureEvent();
+		}
 
 		return $this;
 	}
@@ -280,7 +285,7 @@ abstract class Base implements Crm\Volume\IVolumeIndicator
 		$filter = array(
 			'=INDICATOR_TYPE' => static::getIndicatorId(),
 			'=OWNER_ID' => $this->getOwner(),
-			'=AGENT_LOCK' => Crm\Volume\Cleaner::TASK_STATUS_NONE,
+			'=AGENT_LOCK' => Volume\Cleaner::TASK_STATUS_NONE,
 		);
 
 		$filterExt = $this->getFilter();
@@ -362,7 +367,7 @@ abstract class Base implements Crm\Volume\IVolumeIndicator
 			foreach ($entityList as $classEntity)
 			{
 				/**
-				 * @var \Bitrix\Main\ORM\Data\DataManager $classEntity
+				 * @var ORM\Data\DataManager $classEntity
 				 */
 				$query = $classEntity::query();
 				$entity = $classEntity::getEntity();
@@ -398,7 +403,7 @@ abstract class Base implements Crm\Volume\IVolumeIndicator
 			}
 		}
 
-		$connection = \Bitrix\Main\Application::getConnection();
+		$connection = Main\Application::getConnection();
 
 		$data = array(
 			'INDICATOR_TYPE' => static::getIndicatorId(),
@@ -415,7 +420,7 @@ abstract class Base implements Crm\Volume\IVolumeIndicator
 		Crm\VolumeTable::deleteBatch(array(
 			'=INDICATOR_TYPE' => static::getIndicatorId(),
 			'=OWNER_ID' => $this->getOwner(),
-			'=AGENT_LOCK' => Crm\Volume\Cleaner::TASK_STATUS_NONE,
+			'=AGENT_LOCK' => Volume\Cleaner::TASK_STATUS_NONE,
 		));
 
 		$connection->queryExecute($querySql);
@@ -581,7 +586,7 @@ abstract class Base implements Crm\Volume\IVolumeIndicator
 
 		self::loadTablesInformation();
 
-		$connection = \Bitrix\Main\Application::getConnection();
+		$connection = Main\Application::getConnection();
 
 		$source = array();
 
@@ -662,7 +667,7 @@ abstract class Base implements Crm\Volume\IVolumeIndicator
 		Crm\VolumeTable::deleteBatch(array(
 			'=INDICATOR_TYPE' => static::getIndicatorId(),
 			'=OWNER_ID' => $this->getOwner(),
-			'=AGENT_LOCK' => Crm\Volume\Cleaner::TASK_STATUS_NONE,
+			'=AGENT_LOCK' => Volume\Cleaner::TASK_STATUS_NONE,
 		));
 
 		$connection->queryExecute($querySql);
@@ -670,73 +675,8 @@ abstract class Base implements Crm\Volume\IVolumeIndicator
 		return $this;
 	}
 
-	/**
-	 * Runs measure test for activities.
-	 * @implements Crm\Volume\IVolumeClearActivity
-	 * @see Crm\Volume\IVolumeClearActivity::measureActivity
-	 *
-	 * @param array $additionActivityFilter Filter for activity list.
-	 * @return self
-	 */
-	public function measureActivity($additionActivityFilter = array())
-	{
-		return $this;
-	}
 
-	/**
-	 * Returns count of activities.
-	 * @implements Crm\Volume\IVolumeClearActivity
-	 * @see Crm\Volume\IVolumeClearActivity::countActivity
-	 *
-	 * @param array $additionActivityFilter Filter for activity list.
-	 * @return int
-	 */
-	public function countActivity($additionActivityFilter = array())
-	{
-		$activityVolume = new Crm\Volume\Activity();
-		$activityVolume->setFilter($this->getFilter());
 
-		foreach ($additionActivityFilter as $key => $value)
-		{
-			$activityVolume->addFilter($key, $value);
-		}
-
-		return $activityVolume->countEntity();
-	}
-
-	/**
-	 * Runs measure test for events.
-	 * @implements Crm\Volume\IVolumeClearEvent
-	 * @see Crm\Volume\IVolumeClearEvent::measureEvent
-	 *
-	 * @param array $additionEventFilter Filter for event list.
-	 * @return self
-	 */
-	public function measureEvent($additionEventFilter = array())
-	{
-		return $this;
-	}
-
-	/**
-	 * Returns count of events.
-	 * @implements Crm\Volume\IVolumeClearEvent
-	 * @see Crm\Volume\IVolumeClearEvent::countEvent
-	 *
-	 * @param array $additionEventFilter Filter for events list.
-	 * @return int
-	 */
-	public function countEvent($additionEventFilter = array())
-	{
-		$eventVolume = new Crm\Volume\Event();
-		$eventVolume->setFilter($this->getFilter());
-
-		foreach ($additionEventFilter as $key => $value)
-		{
-			$eventVolume->addFilter($key, $value);
-		}
-
-		return $eventVolume->countEntity();
-	}
 
 	/**
 	 * Tells that is is participated in the total volume.
@@ -823,14 +763,14 @@ abstract class Base implements Crm\Volume\IVolumeIndicator
 	 */
 	private static function loadListIndicator($libraryPath = '')
 	{
-		$directory = new \Bitrix\Main\IO\Directory(__DIR__. '/'. $libraryPath);
+		$directory = new Main\IO\Directory(__DIR__. '/'. $libraryPath);
 		$fileList = $directory->getChildren();
 		foreach ($fileList as $entry)
 		{
 			if ($entry->isFile() && preg_match("/^(.+)\.php$/i", $entry->getName(), $parts))
 			{
 				$subNamespace = ($libraryPath != '' ? '\\'.$libraryPath : ''). '\\';
-				/** @var Crm\Volume\IVolumeIndicator $indicatorType */
+				/** @var Volume\IVolumeIndicator $indicatorType */
 				$indicatorType = __NAMESPACE__. $subNamespace. $parts[1];
 				try
 				{
@@ -838,6 +778,7 @@ abstract class Base implements Crm\Volume\IVolumeIndicator
 					if (
 						!$reflection->isInterface() &&
 						!$reflection->isAbstract() &&
+						!$reflection->isTrait() &&
 						$reflection->implementsInterface(__NAMESPACE__.'\\IVolumeIndicator')
 					)
 					{
@@ -858,7 +799,7 @@ abstract class Base implements Crm\Volume\IVolumeIndicator
 	/**
 	 * Constructs and returns indicator type object.
 	 * @param string $indicatorId Indicator class name.
-	 * @return Crm\Volume\IVolumeIndicator
+	 * @return Volume\IVolumeIndicator
 	 * @throws Main\ObjectException
 	 * @throws Main\ArgumentNullException
 	 */
@@ -878,9 +819,9 @@ abstract class Base implements Crm\Volume\IVolumeIndicator
 			$className = __NAMESPACE__.'\\'.str_replace('_', '\\', $indicatorId);
 		}
 
-		/** @var Crm\Volume\IVolumeIndicator $indicator */
+		/** @var Volume\IVolumeIndicator $indicator */
 		$indicator = new $className();
-		if (!$indicator instanceof Crm\Volume\IVolumeIndicator)
+		if (!$indicator instanceof Volume\IVolumeIndicator)
 		{
 			throw new Main\ObjectException('Return must implements '. __NAMESPACE__. '\\IVolumeIndicator interface.');
 		}
@@ -1150,7 +1091,7 @@ abstract class Base implements Crm\Volume\IVolumeIndicator
 
 	/**
 	 * Returns special folder list.
-	 * @return \Bitrix\Disk\Folder[]|null
+	 * @return Disk\Folder[]|null
 	 */
 	public function getSpecialFolderList()
 	{
@@ -1187,7 +1128,7 @@ abstract class Base implements Crm\Volume\IVolumeIndicator
 	{
 		if (empty(self::$tablesInformation))
 		{
-			$connection = \Bitrix\Main\Application::getConnection();
+			$connection = Main\Application::getConnection();
 
 			self::$tablesInformation = array();
 
@@ -1244,13 +1185,13 @@ abstract class Base implements Crm\Volume\IVolumeIndicator
 					if (
 						!$reflection->isInterface() &&
 						!$reflection->isAbstract() &&
-						$reflection->isSubclassOf(\Bitrix\Main\ORM\Data\DataManager::class)
+						$reflection->isSubclassOf(ORM\Data\DataManager::class)
 					)
 					{
-						/** @var \Bitrix\Main\ORM\Data\DataManager $entity */
+						/** @var ORM\Data\DataManager $entity */
 						$this->tableList[] = $entity::getTableName();
 
-						/** @var \Bitrix\Main\ORM\Data\DataManager $entity */
+						/** @var ORM\Data\DataManager $entity */
 						$ufName = $entity::getUfId();
 						if ($ufName != '')
 						{
@@ -1302,14 +1243,14 @@ abstract class Base implements Crm\Volume\IVolumeIndicator
 				if (
 					!$reflection->isInterface() &&
 					!$reflection->isAbstract() &&
-					$reflection->isSubclassOf(\Bitrix\Main\ORM\Data\DataManager::class)
+					$reflection->isSubclassOf(ORM\Data\DataManager::class)
 				)
 				{
-					/** @var \Bitrix\Main\ORM\Data\DataManager $entity */
+					/** @var ORM\Data\DataManager $entity */
 					$ufName = $entity::getUfId();
 					if (strlen($ufName) > 0)
 					{
-						$userFieldList = \Bitrix\Main\UserFieldTable::getList(array(
+						$userFieldList = Main\UserFieldTable::getList(array(
 							'filter' => array(
 								'=ENTITY_ID' => $ufName,
 							),
@@ -1358,8 +1299,8 @@ abstract class Base implements Crm\Volume\IVolumeIndicator
 			);
 			if (self::isModuleAvailable('disk'))
 			{
-				$userTypeField[] = \Bitrix\Disk\Uf\FileUserType::USER_TYPE_ID;
-				$userTypeField[] = \Bitrix\Disk\Uf\VersionUserType::USER_TYPE_ID;
+				$userTypeField[] = Disk\Uf\FileUserType::USER_TYPE_ID;
+				$userTypeField[] = Disk\Uf\VersionUserType::USER_TYPE_ID;
 			}
 
 			foreach (self::$userFieldInformation[$entity] as $userField)
@@ -1387,7 +1328,7 @@ abstract class Base implements Crm\Volume\IVolumeIndicator
 	protected function prepareUserFieldQuery($entityClass, array $userField, array $entityGroupField = array())
 	{
 		/**
-		 * @var \Bitrix\Main\ORM\Data\DataManager $entityClass
+		 * @var ORM\Data\DataManager $entityClass
 		 */
 		$ufName = $entityClass::getUfId();
 		if (empty($ufName))
@@ -1402,19 +1343,19 @@ abstract class Base implements Crm\Volume\IVolumeIndicator
 		$entityQuery = $entityClass::query();
 		$entityEntity = $entityClass::getEntity();
 
-		$entityQuery->addSelect('ID', 'ID');
+		$entityQuery->addSelect('ID');
 
 
 		// STAGE_SEMANTIC_ID
 		if ($entityClass == Crm\QuoteTable::class)
 		{
-			Crm\Volume\Quote::registerStageField($entityQuery, '', 'STAGE_SEMANTIC_ID');
-			Crm\Volume\Quote::registerStageField($entityQuery, '', 'QUOTE_STAGE_SEMANTIC_ID');
+			Volume\Quote::registerStageField($entityQuery, '', 'STAGE_SEMANTIC_ID');
+			Volume\Quote::registerStageField($entityQuery, '', 'QUOTE_STAGE_SEMANTIC_ID');
 		}
 		if ($entityClass == Crm\InvoiceTable::class)
 		{
-			Crm\Volume\Invoice::registerStageField($entityQuery, '', 'STAGE_SEMANTIC_ID');
-			Crm\Volume\Invoice::registerStageField($entityQuery, '', 'INVOICE_STAGE_SEMANTIC_ID');
+			Volume\Invoice::registerStageField($entityQuery, '', 'STAGE_SEMANTIC_ID');
+			Volume\Invoice::registerStageField($entityQuery, '', 'INVOICE_STAGE_SEMANTIC_ID');
 		}
 		// DATE
 		if (
@@ -1422,11 +1363,9 @@ abstract class Base implements Crm\Volume\IVolumeIndicator
 			$entityClass == Crm\ContactTable::class
 		)
 		{
-			/** @global \CDatabase $DB */
-			global $DB;
 			$dayField = new ORM\Fields\ExpressionField(
 				'DATE_CREATE_SHORT',
-				$DB->datetimeToDateFunction('%s'),
+				'DATE(%s)',
 				'DATE_CREATE'
 			);
 			$entityQuery->registerRuntimeField($dayField);
@@ -1435,11 +1374,9 @@ abstract class Base implements Crm\Volume\IVolumeIndicator
 			$entityClass == Crm\InvoiceTable::class
 		)
 		{
-			/** @global \CDatabase $DB */
-			global $DB;
 			$dayField = new ORM\Fields\ExpressionField(
 				'DATE_CREATE_SHORT',
-				$DB->datetimeToDateFunction('%s'),
+				'DATE(%s)',
 				'DATE_INSERT'
 			);
 			$entityQuery->registerRuntimeField($dayField);
@@ -1483,7 +1420,7 @@ abstract class Base implements Crm\Volume\IVolumeIndicator
 			{
 				if (
 					$isDiskAvailable &&
-					$ufType === \Bitrix\Disk\Uf\FileUserType::USER_TYPE_ID
+					$ufType === Disk\Uf\FileUserType::USER_TYPE_ID
 				)
 				{
 					$querySql = "
@@ -1503,7 +1440,7 @@ abstract class Base implements Crm\Volume\IVolumeIndicator
 							INNER JOIN b_disk_object files
 								ON files.ID = attached.OBJECT_ID 
 								AND files.ID = files.REAL_OBJECT_ID
-								AND files.TYPE = '".\Bitrix\Disk\Internals\ObjectTable::TYPE_FILE."'
+								AND files.TYPE = '".Disk\Internals\ObjectTable::TYPE_FILE."'
 							INNER JOIN b_file f
 								ON f.ID = files.FILE_ID 
 						{$entityFieldsGroupSql}  
@@ -1512,7 +1449,7 @@ abstract class Base implements Crm\Volume\IVolumeIndicator
 
 				elseif (
 					$isDiskAvailable &&
-					$ufType === \Bitrix\Disk\Uf\VersionUserType::USER_TYPE_ID
+					$ufType === Disk\Uf\VersionUserType::USER_TYPE_ID
 				)
 				{
 					$querySql = "
@@ -1535,7 +1472,7 @@ abstract class Base implements Crm\Volume\IVolumeIndicator
 								ON files.ID = versions.OBJECT_ID
 								AND files.ID = attached.OBJECT_ID 
 								AND files.ID = files.REAL_OBJECT_ID
-								AND files.TYPE = '".\Bitrix\Disk\Internals\ObjectTable::TYPE_FILE."'
+								AND files.TYPE = '".Disk\Internals\ObjectTable::TYPE_FILE."'
 							INNER JOIN b_file f
 								ON f.ID = versions.FILE_ID
 						{$entityFieldsGroupSql}
@@ -1574,7 +1511,7 @@ abstract class Base implements Crm\Volume\IVolumeIndicator
 			{
 				if (
 					$isDiskAvailable &&
-					$ufType === \Bitrix\Disk\Uf\FileUserType::USER_TYPE_ID
+					$ufType === Disk\Uf\FileUserType::USER_TYPE_ID
 				)
 				{
 					$querySql = "
@@ -1594,7 +1531,7 @@ abstract class Base implements Crm\Volume\IVolumeIndicator
 							INNER JOIN b_disk_object files
 								ON files.ID = attached.OBJECT_ID 
 								AND files.ID = files.REAL_OBJECT_ID
-								AND files.TYPE = '".\Bitrix\Disk\Internals\ObjectTable::TYPE_FILE."'
+								AND files.TYPE = '".Disk\Internals\ObjectTable::TYPE_FILE."'
 							INNER JOIN b_file f
 								ON f.ID = files.FILE_ID 
 						{$entityFieldsGroupSql}
@@ -1603,7 +1540,7 @@ abstract class Base implements Crm\Volume\IVolumeIndicator
 
 				elseif (
 					$isDiskAvailable &&
-					$ufType === \Bitrix\Disk\Uf\VersionUserType::USER_TYPE_ID
+					$ufType === Disk\Uf\VersionUserType::USER_TYPE_ID
 				)
 				{
 					$querySql = "
@@ -1626,7 +1563,7 @@ abstract class Base implements Crm\Volume\IVolumeIndicator
 								ON files.ID = versions.OBJECT_ID
 								AND files.ID = attached.OBJECT_ID
 								AND files.ID = files.REAL_OBJECT_ID
-								AND files.TYPE = '".\Bitrix\Disk\Internals\ObjectTable::TYPE_FILE."'
+								AND files.TYPE = '".Disk\Internals\ObjectTable::TYPE_FILE."'
 							INNER JOIN b_file f
 								ON f.ID = versions.FILE_ID 
 						{$entityFieldsGroupSql}
@@ -1678,7 +1615,7 @@ abstract class Base implements Crm\Volume\IVolumeIndicator
 		}
 
 		/**
-		 * @var \Bitrix\Main\ORM\Data\DataManager $entityClass
+		 * @var ORM\Data\DataManager $entityClass
 		 */
 		$entityQuery = $entityClass::query();
 		$entityEntity = $entityClass::getEntity();
@@ -1688,11 +1625,11 @@ abstract class Base implements Crm\Volume\IVolumeIndicator
 		// STAGE_SEMANTIC_ID
 		if ($entityClass == Crm\QuoteTable::class)
 		{
-			Crm\Volume\Quote::registerStageField($entityQuery, '', 'QUOTE_STAGE_SEMANTIC_ID');
+			Volume\Quote::registerStageField($entityQuery, '', 'QUOTE_STAGE_SEMANTIC_ID');
 		}
 		if ($entityClass == Crm\InvoiceTable::class)
 		{
-			Crm\Volume\Invoice::registerStageField($entityQuery, '', 'INVOICE_STAGE_SEMANTIC_ID');
+			Volume\Invoice::registerStageField($entityQuery, '', 'INVOICE_STAGE_SEMANTIC_ID');
 		}
 		// DATE
 		if (
@@ -1700,11 +1637,9 @@ abstract class Base implements Crm\Volume\IVolumeIndicator
 			$entityClass == Crm\ContactTable::class
 		)
 		{
-			/** @global \CDatabase $DB */
-			global $DB;
 			$dayField = new ORM\Fields\ExpressionField(
 				'DATE_CREATE_SHORT',
-				$DB->datetimeToDateFunction('%s'),
+				'DATE(%s)',
 				'DATE_CREATE'
 			);
 			$entityQuery->registerRuntimeField($dayField);
@@ -1713,11 +1648,9 @@ abstract class Base implements Crm\Volume\IVolumeIndicator
 			$entityClass == Crm\InvoiceTable::class
 		)
 		{
-			/** @global \CDatabase $DB */
-			global $DB;
 			$dayField = new ORM\Fields\ExpressionField(
 				'DATE_CREATE_SHORT',
-				$DB->datetimeToDateFunction('%s'),
+				'DATE(%s)',
 				'DATE_INSERT'
 			);
 			$entityQuery->registerRuntimeField($dayField);
@@ -1748,7 +1681,7 @@ abstract class Base implements Crm\Volume\IVolumeIndicator
 			return '';
 		}
 
-		$attachedEntitySql = \Bitrix\Main\Application::getConnection()->getSqlHelper()->forSql($diskConnector);
+		$attachedEntitySql = Main\Application::getConnection()->getSqlHelper()->forSql($diskConnector);
 		$querySql = "
 			SELECT 
 				SUM(ver.SIZE) as FILE_SIZE,
@@ -1760,7 +1693,7 @@ abstract class Base implements Crm\Volume\IVolumeIndicator
 				b_disk_version ver 
 				INNER JOIN b_disk_object files
 					ON files.ID  = ver.OBJECT_ID
-					AND files.TYPE = '".\Bitrix\Disk\Internals\ObjectTable::TYPE_FILE."'
+					AND files.TYPE = '".Disk\Internals\ObjectTable::TYPE_FILE."'
 					AND files.ID = files.REAL_OBJECT_ID
 				INNER JOIN b_disk_attached_object attached 
 					ON attached.OBJECT_ID = files.ID
@@ -1791,7 +1724,7 @@ abstract class Base implements Crm\Volume\IVolumeIndicator
 		}
 
 		/**
-		 * @var \Bitrix\Main\ORM\Data\DataManager $entityClass
+		 * @var ORM\Data\DataManager $entityClass
 		 */
 		$entityQuery = $entityClass::query();
 		$entityEntity = $entityClass::getEntity();
@@ -1801,11 +1734,11 @@ abstract class Base implements Crm\Volume\IVolumeIndicator
 		// STAGE_SEMANTIC_ID
 		if ($entityClass == Crm\QuoteTable::class)
 		{
-			Crm\Volume\Quote::registerStageField($entityQuery, '', 'QUOTE_STAGE_SEMANTIC_ID');
+			Volume\Quote::registerStageField($entityQuery, '', 'QUOTE_STAGE_SEMANTIC_ID');
 		}
 		if ($entityClass == Crm\InvoiceTable::class)
 		{
-			Crm\Volume\Invoice::registerStageField($entityQuery, '', 'INVOICE_STAGE_SEMANTIC_ID');
+			Volume\Invoice::registerStageField($entityQuery, '', 'INVOICE_STAGE_SEMANTIC_ID');
 		}
 		// DATE
 		if (
@@ -1813,11 +1746,9 @@ abstract class Base implements Crm\Volume\IVolumeIndicator
 			$entityClass == Crm\ContactTable::class
 		)
 		{
-			/** @global \CDatabase $DB */
-			global $DB;
 			$dayField = new ORM\Fields\ExpressionField(
 				'DATE_CREATE_SHORT',
-				$DB->datetimeToDateFunction('%s'),
+				'DATE(%s)',
 				'DATE_CREATE'
 			);
 			$entityQuery->registerRuntimeField($dayField);
@@ -1826,11 +1757,9 @@ abstract class Base implements Crm\Volume\IVolumeIndicator
 			$entityClass == Crm\InvoiceTable::class
 		)
 		{
-			/** @global \CDatabase $DB */
-			global $DB;
 			$dayField = new ORM\Fields\ExpressionField(
 				'DATE_CREATE_SHORT',
-				$DB->datetimeToDateFunction('%s'),
+				'DATE(%s)',
 				'DATE_INSERT'
 			);
 			$entityQuery->registerRuntimeField($dayField);
@@ -1862,9 +1791,9 @@ abstract class Base implements Crm\Volume\IVolumeIndicator
 		}
 
 		$logTable = \Bitrix\Socialnetwork\LogTable::getTableName();
-		$helper = \Bitrix\Main\Application::getConnection()->getSqlHelper();
+		$helper = Main\Application::getConnection()->getSqlHelper();
 
-		$attachedEntitySql = $helper->forSql(\Bitrix\Disk\Uf\SonetLogConnector::class);
+		$attachedEntitySql = $helper->forSql(Disk\Uf\SonetLogConnector::class);
 		$eventEntitySql = $helper->forSql($eventEntityType);
 
 		$querySql = "
@@ -1878,7 +1807,7 @@ abstract class Base implements Crm\Volume\IVolumeIndicator
 				b_disk_version ver 
 				INNER JOIN b_disk_object files
 					ON files.ID  = ver.OBJECT_ID
-					AND files.TYPE = '".\Bitrix\Disk\Internals\ObjectTable::TYPE_FILE."'
+					AND files.TYPE = '".Disk\Internals\ObjectTable::TYPE_FILE."'
 					AND files.ID = files.REAL_OBJECT_ID
 				INNER JOIN b_disk_attached_object attached
 					ON attached.OBJECT_ID = files.ID
@@ -1895,185 +1824,6 @@ abstract class Base implements Crm\Volume\IVolumeIndicator
 		return $querySql;
 	}
 
-	/**
-	 * Gets SQL query code for activity count.
-	 *
-	 * @param array $entityGroupField Entity fields to group by.
-	 *
-	 * @return string
-	 */
-	protected function prepareActivityQuery(array $entityGroupField = array())
-	{
-		if (!(
-			$this instanceof Crm\Volume\Deal ||
-			$this instanceof Crm\Volume\Lead ||
-			$this instanceof Crm\Volume\Quote ||
-			$this instanceof Crm\Volume\Invoice ||
-			$this instanceof Crm\Volume\Company ||
-			$this instanceof Crm\Volume\Contact ||
-			$this instanceof Crm\Volume\Activity
-		))
-		{
-			return '';
-		}
-
-		$query = $this->prepareQuery();
-		if ($this->prepareFilter($query))
-		{
-			$activityVolume = new Crm\Volume\Activity();
-			$activityVolume->setFilter($this->getFilter());
-		}
-		else
-		{
-			return '';
-		}
-
-		//-----------
-
-		$activityQuery = $activityVolume->prepareQuery(static::className());
-		$activityVolume->prepareFilter($activityQuery);
-
-		$fileCount = new ORM\Fields\ExpressionField('FILE_SIZE', '0');
-		$fileBindingCount = new ORM\Fields\ExpressionField('FILE_COUNT', '0');
-		$activityQuery
-			->registerRuntimeField($fileCount)
-			->registerRuntimeField($fileBindingCount)
-			->addSelect('FILE_SIZE')
-			->addSelect('FILE_COUNT');
-
-		if (self::isModuleAvailable('disk'))
-		{
-			$diskCount = new ORM\Fields\ExpressionField('DISK_SIZE', '0');
-			$diskBindingCount = new ORM\Fields\ExpressionField('DISK_COUNT', '0');
-			$activityQuery
-				->registerRuntimeField($diskCount)
-				->registerRuntimeField($diskBindingCount)
-				->addSelect('DISK_SIZE')
-				->addSelect('DISK_COUNT');
-		}
-
-		$activityCount = new ORM\Fields\ExpressionField('ACTIVITY_COUNT', 'COUNT(DISTINCT %s)', 'ID');
-		$activityBindingCount = new ORM\Fields\ExpressionField('BINDINGS_COUNT', 'COUNT(%s)', 'BINDINGS.ID');
-		$activityQuery
-			->registerRuntimeField($activityCount)
-			->registerRuntimeField($activityBindingCount)
-			->addSelect('ACTIVITY_COUNT')
-			->addSelect('BINDINGS_COUNT');
-
-		foreach ($entityGroupField as $alias => $field)
-		{
-			$activityQuery->addSelect($field, $alias);
-			$activityQuery->addGroup($field);
-		}
-
-		//-----------
-
-		$activityFileQuery = $activityVolume->getActivityFileMeasureQuery(static::className(), $entityGroupField);
-
-		$activityCount = new ORM\Fields\ExpressionField('ACTIVITY_COUNT', '0');
-		$activityBindingCount = new ORM\Fields\ExpressionField('BINDINGS_COUNT', '0');
-		$activityFileQuery
-			->registerRuntimeField($activityCount)
-			->registerRuntimeField($activityBindingCount)
-			->addSelect('ACTIVITY_COUNT')
-			->addSelect('BINDINGS_COUNT');
-
-		foreach ($entityGroupField as $alias => $field)
-		{
-			$field = str_replace('.', '_', $field);
-			$activityFileQuery->addSelect($field, $alias);
-			$activityFileQuery->addGroup($field);
-		}
-
-		$sqlQuery =
-			$activityQuery->getQuery().
-			' UNION '.
-			$activityFileQuery->getQuery();
-
-		return $sqlQuery;
-	}
-
-
-	/**
-	 * Gets SQL query code for event count.
-	 *
-	 * @param array $entityGroupField Entity fields to group by.
-	 *
-	 * @return string
-	 */
-	protected function prepareEventQuery(array $entityGroupField = array())
-	{
-		if (!(
-			$this instanceof Crm\Volume\Deal ||
-			$this instanceof Crm\Volume\Lead ||
-			$this instanceof Crm\Volume\Quote ||
-			$this instanceof Crm\Volume\Invoice ||
-			$this instanceof Crm\Volume\Company ||
-			$this instanceof Crm\Volume\Contact ||
-			$this instanceof Crm\Volume\Event
-		))
-		{
-			return '';
-		}
-
-		$query = $this->prepareQuery();
-		if ($this->prepareFilter($query))
-		{
-			$eventVolume = new Crm\Volume\Event();
-			$eventVolume->setFilter($this->getFilter());
-		}
-		else
-		{
-			return '';
-		}
-
-		//-----------
-
-		$eventQuery = $eventVolume->prepareQuery(static::className());
-		$eventVolume->prepareFilter($eventQuery);
-
-		$fileSize = new ORM\Fields\ExpressionField('FILE_SIZE', '0');
-		$fileCount = new ORM\Fields\ExpressionField('FILE_COUNT', '0');
-		$eventQuery
-			->registerRuntimeField($fileSize)
-			->registerRuntimeField($fileCount)
-			->addSelect('FILE_SIZE')
-			->addSelect('FILE_COUNT');
-
-
-		$eventCount = new ORM\Fields\ExpressionField('EVENT_COUNT', 'COUNT(DISTINCT %s)', 'EVENT_BY.ID');
-		$eventQuery
-			->registerRuntimeField($eventCount)
-			->addSelect('EVENT_COUNT');
-
-		foreach ($entityGroupField as $alias => $field)
-		{
-			$eventQuery->addSelect($field, $alias);
-			$eventQuery->addGroup($field);
-		}
-
-		//-----------
-
-		$eventFileQuery = $eventVolume->getEventFileMeasureQuery(static::className());
-		$eventCount = new ORM\Fields\ExpressionField('EVENT_COUNT', '0');
-		$eventFileQuery
-			->registerRuntimeField($eventCount)
-			->addSelect('EVENT_COUNT')
-		;
-
-		foreach ($entityGroupField as $alias => $field)
-		{
-			$eventFileQuery->addSelect($field, $alias);
-			$eventFileQuery->addGroup($field);
-		}
-
-		$sqlQuery =
-			$eventQuery->getQuery().
-			' UNION '.
-			$eventFileQuery->getQuery();
-
-		return $sqlQuery;
-	}
 
 
 	/**
@@ -2098,75 +1848,114 @@ abstract class Base implements Crm\Volume\IVolumeIndicator
 			'MEASURE_EVENT',
 		);
 
-		static $maxIdRangeCache = array();
-
 		$maxIdRange = -1;
-		if (isset($maxIdRangeCache[$entityClass]))
+		if (isset(static::$maxIdRangeCache[$entityClass]))
 		{
-			$maxIdRange = $maxIdRangeCache[$entityClass];
+			$maxIdRange = static::$maxIdRangeCache[$entityClass];
 		}
 		else
 		{
-			/**
-			 * @var \Bitrix\Main\ORM\Data\DataManager $entityClass
-			 */
-			$entityQuery = $entityClass::query();
-
-			$row0 = $entityQuery
-				->registerRuntimeField(new ORM\Fields\ExpressionField('CNT', 'COUNT(*)'))
-				->addSelect('CNT')
-				->exec()
-				->fetch();
-
-			if ($row0)
+			$cache = new \CPHPCache();
+			if ($cache->startDataCache(3 * 3600, "{$entityClass}:{$indicatorId}:maxIdRange", 'crm/configs/volume'))
 			{
-				$coefficient = 1000;
-				if ($row0['CNT'] > 500 * $coefficient)
-				{
-					$maxIdRange = 100 * $coefficient;
-				}
-				elseif ($row0['CNT'] > 100 * $coefficient)
-				{
-					$maxIdRange = 50 * $coefficient;
-				}
-			}
+				/**
+				 * @var ORM\Data\DataManager $entityClass
+				 */
+				$entityQuery = $entityClass::query();
 
-			$maxIdRangeCache[$entityClass] = $maxIdRange;
+				$row0 = $entityQuery
+					->registerRuntimeField(new ORM\Fields\ExpressionField('CNT', 'COUNT(*)'))
+					->addSelect('CNT')
+					->exec()
+					->fetch();
+
+				if ($row0)
+				{
+					$coefficient = 1000;
+					if ((int)$row0['CNT'] > 500 * $coefficient)
+					{
+						$maxIdRange = 100 * $coefficient;
+					}
+					elseif ((int)$row0['CNT'] > 100 * $coefficient)
+					{
+						$maxIdRange = 50 * $coefficient;
+					}
+				}
+
+				static::$maxIdRangeCache[$entityClass] = $maxIdRange;
+
+				$cache->endDataCache($maxIdRange);
+			}
+			else
+			{
+				$maxIdRange = $cache->getVars();
+				static::$maxIdRangeCache[$entityClass] = $maxIdRange;
+			}
 		}
+
 		if ($maxIdRange > 0)
 		{
-			/**
-			 * @var \Bitrix\Main\ORM\Data\DataManager $entityClass
-			 */
-			$query = $entityClass::query();
-
-			$month = new ORM\Fields\ExpressionField('MNTH', "DATE_FORMAT(%s, '%%Y-%%m-%%d')", $dateFieldAlias);
-			$query->registerRuntimeField($month)->addSelect('MNTH');
-
-			$border = new ORM\Fields\ExpressionField('BRDR', 'MAX(%s)', 'ID');
-			$query->registerRuntimeField($border)->addSelect('BRDR');
-
-			$counter = new ORM\Fields\ExpressionField('CNT', 'COUNT(*)');
-			$query->registerRuntimeField($counter)->addSelect('CNT');
-
-			$query->setGroup(array('MNTH'))->setOrder(array('BRDR' => 'ASC'));
-
-			$count = 0;
-			$prevId = 0;
-
-			$res = $query->exec();
-			while ($row = $res->fetch())
+			$cache = new \CPHPCache();
+			if ($cache->startDataCache(3 * 3600, "{$entityClass}:{$indicatorId}:queueList", 'crm/configs/volume'))
 			{
-				$count += $row['CNT'];
+				/**
+				 * @var ORM\Data\DataManager $entityClass
+				 */
+				$query = $entityClass::query();
 
-				if ($count >= $maxIdRange)
+				$month = new ORM\Fields\ExpressionField('YY', "YEAR(%s)", $dateFieldAlias);
+				$query->registerRuntimeField($month)->addSelect('YY');
+
+				$month = new ORM\Fields\ExpressionField('MM', "MONTH(%s)", $dateFieldAlias);
+				$query->registerRuntimeField($month)->addSelect('MM');
+
+				$month = new ORM\Fields\ExpressionField('DD', "DAY(%s)", $dateFieldAlias);
+				$query->registerRuntimeField($month)->addSelect('DD');
+
+				$border = new ORM\Fields\ExpressionField('BRDR', 'MAX(%s)', 'ID');
+				$query->registerRuntimeField($border)->addSelect('BRDR');
+
+				$counter = new ORM\Fields\ExpressionField('CNT', 'COUNT(*)');
+				$query->registerRuntimeField($counter)->addSelect('CNT');
+
+				$query->setGroup(array('YY', 'MM', 'DD'))->setOrder(array('BRDR' => 'ASC'));
+
+				$count = 0;
+				$prevId = 0;
+
+				$res = $query->exec();
+				while ($row = $res->fetch())
 				{
-					$range = '';
-					if ($prevId > 0)
+					$count += $row['CNT'];
+
+					if ($count >= $maxIdRange)
 					{
-						$range .= $prevId;
+						$range = '';
+						if ($prevId > 0)
+						{
+							$range .= $prevId;
+						}
+						$range .= '-'.$row['BRDR'];
+
+						foreach ($actionCommands as $command)
+						{
+							if (isset($actionAliases[$command]))
+							{
+								$queueList[] = array(
+									'indicatorId' => $indicatorId,
+									'action' => $actionAliases[$command],
+									'range' => $range,
+								);
+							}
+						}
+
+						$count = 0;
+						$prevId = $row['BRDR'];
 					}
-					$range .= '-'.$row['BRDR'];
+				}
+				if ($count >= 0 && $prevId > 0)
+				{
+					$range = $prevId.'-';
 
 					foreach ($actionCommands as $command)
 					{
@@ -2179,26 +1968,13 @@ abstract class Base implements Crm\Volume\IVolumeIndicator
 							);
 						}
 					}
-
-					$count = 0;
-					$prevId = $row['BRDR'];
 				}
+
+				$cache->endDataCache($queueList);
 			}
-			if ($count >= 0 && $prevId > 0)
+			else
 			{
-				$range = $prevId.'-';
-
-				foreach ($actionCommands as $command)
-				{
-					if (isset($actionAliases[$command]))
-					{
-						$queueList[] = array(
-							'indicatorId' => $indicatorId,
-							'action' => $actionAliases[$command],
-							'range' => $range,
-						);
-					}
-				}
+				$queueList = $cache->getVars();
 			}
 		}
 		else
@@ -2242,7 +2018,7 @@ abstract class Base implements Crm\Volume\IVolumeIndicator
 		);
 
 		/**
-		 * @var \Bitrix\Main\ORM\Data\DataManager $entityClass
+		 * @var ORM\Data\DataManager $entityClass
 		 */
 		$query = $entityClass::query();
 
@@ -2257,7 +2033,7 @@ abstract class Base implements Crm\Volume\IVolumeIndicator
 		{
 			list($dateSplitPeriod, $dateSplitPeriodUnits) = $this->getDateSplitPeriod();
 
-			$dateMin =  new \Bitrix\Main\Type\DateTime($row['DATE_MIN'], 'Y-m-d');
+			$dateMin =  new Main\Type\DateTime($row['DATE_MIN'], 'Y-m-d');
 			$months =  $row['MONTHS'];
 
 			while ($months >= 0)
@@ -2308,7 +2084,7 @@ abstract class Base implements Crm\Volume\IVolumeIndicator
 	/**
 	 * Adds an array of errors to the collection.
 	 *
-	 * @param \Bitrix\Main\Error[] | \Bitrix\Main\Error $errors Raised error.
+	 * @param Main\Error[] | Main\Error $errors Raised error.
 	 * @return void
 	 */
 	public function collectError($errors)
@@ -2331,40 +2107,8 @@ abstract class Base implements Crm\Volume\IVolumeIndicator
 	/**
 	 * Returns errors list.
 	 *
-	 * @implements Crm\Volume\IVolumeClear
-	 * @return \Bitrix\Main\Error[]
-	 */
-	public function getErrors()
-	{
-		if ($this->errorCollection instanceof Main\ErrorCollection)
-		{
-			return $this->errorCollection->toArray();
-		}
-
-		return array();
-	}
-
-	/**
-	 * Error has occurred.
-	 *
-	 * @implements Crm\Volume\IVolumeClear
-	 * @return boolean
-	 */
-	public function hasErrors()
-	{
-		if ($this->errorCollection instanceof Main\ErrorCollection)
-		{
-			return count($this->errorCollection) > 0;
-		}
-
-		return false;
-	}
-
-	/**
-	 * Returns errors list.
-	 *
-	 * @implements Crm\Volume\IVolumeClear
-	 * @return \Bitrix\Main\Error|null
+	 * @implements Volume\IVolumeClear
+	 * @return Main\Error|null
 	 */
 	public function getLastError()
 	{
@@ -2380,7 +2124,7 @@ abstract class Base implements Crm\Volume\IVolumeIndicator
 	/**
 	 * Returns process offset.
 	 *
-	 * @implements Crm\Volume\IVolumeClear
+	 * @implements Volume\IVolumeClear
 	 * @p
 	 * @return int
 	 */
@@ -2392,7 +2136,7 @@ abstract class Base implements Crm\Volume\IVolumeIndicator
 	/**
 	 * Setup process offset.
 	 *
-	 * @implements Crm\Volume\IVolumeClear
+	 * @implements Volume\IVolumeClear
 	 * @param int $offset Offset position.
 	 * @return void
 	 */
@@ -2404,7 +2148,7 @@ abstract class Base implements Crm\Volume\IVolumeIndicator
 	/**
 	 * Sets dropped count of entity attachments.
 	 *
-	 * @implements Crm\Volume\IVolumeClearFile
+	 * @implements Volume\IVolumeClearFile
 	 * @param int $count Amount to set.
 	 * @return void
 	 */
@@ -2416,7 +2160,7 @@ abstract class Base implements Crm\Volume\IVolumeIndicator
 	/**
 	 * Returns dropped count of entity attachments.
 	 *
-	 * @implements Crm\Volume\IVolumeClearFile
+	 * @implements Volume\IVolumeClearFile
 	 * @param int $count Amount to increment.
 	 * @return void
 	 */
@@ -2427,7 +2171,7 @@ abstract class Base implements Crm\Volume\IVolumeIndicator
 
 	/**
 	 * Returns dropped count of entity attachments.
-	 * @implements Crm\Volume\IVolumeClearFile
+	 * @implements Volume\IVolumeClearFile
 	 *
 	 * @return int
 	 */
@@ -2440,7 +2184,7 @@ abstract class Base implements Crm\Volume\IVolumeIndicator
 	/**
 	 * Sets dropped count of entities.
 	 *
-	 * @implements Crm\Volume\IVolumeClear
+	 * @implements Volume\IVolumeClear
 	 * @param int $count Amount to set.
 	 * @return void
 	 */
@@ -2452,7 +2196,7 @@ abstract class Base implements Crm\Volume\IVolumeIndicator
 	/**
 	 * Returns dropped count of entities.
 	 *
-	 * @implements Crm\Volume\IVolumeClear
+	 * @implements Volume\IVolumeClear
 	 * @param int $count Amount to increment.
 	 * @return void
 	 */
@@ -2464,7 +2208,7 @@ abstract class Base implements Crm\Volume\IVolumeIndicator
 	/**
 	 * Returns dropped count of entities.
 	 *
-	 * @implements Crm\Volume\IVolumeClear
+	 * @implements Volume\IVolumeClear
 	 * @return int
 	 */
 	public function getDroppedEntityCount()
@@ -2472,82 +2216,10 @@ abstract class Base implements Crm\Volume\IVolumeIndicator
 		return $this->droppedCount;
 	}
 
-
-	/**
-	 * Returns dropped count of associated entity activities.
-	 *
-	 * @implements Crm\Volume\IVolumeClearActivity
-	 * @return int
-	 */
-	public function getDroppedActivityCount()
-	{
-		return $this->droppedActivityCount;
-	}
-
-	/**
-	 * Sets dropped count of associated entity activities.
-	 *
-	 * @implements Crm\Volume\IVolumeClearActivity
-	 * @param int $count Amount to set.
-	 * @return void
-	 */
-	public function setDroppedActivityCount($count)
-	{
-		$this->droppedActivityCount = $count;
-	}
-
-	/**
-	 * Returns dropped count of associated entity activities.
-	 *
-	 * @implements Crm\Volume\IVolumeClearActivity
-	 * @param int $count Amount to increment.
-	 * @return void
-	 */
-	public function incrementDroppedActivityCount($count = 1)
-	{
-		$this->droppedActivityCount += $count;
-	}
-
-
-	/**
-	 * Returns dropped count of associated events.
-	 *
-	 * @implements Crm\Volume\IVolumeClearEvent
-	 * @return int
-	 */
-	public function getDroppedEventCount()
-	{
-		return $this->droppedEventCount;
-	}
-
-	/**
-	 * Sets dropped count of associated events.
-	 *
-	 * @implements Crm\Volume\IVolumeClearEvent
-	 * @param int $count Amount to set.
-	 * @return void
-	 */
-	public function setDroppedEventCount($count)
-	{
-		$this->droppedEventCount = $count;
-	}
-
-	/**
-	 * Returns dropped count of associated events.
-	 *
-	 * @implements Crm\Volume\IVolumeClearEvent
-	 * @param int $count Amount to increment.
-	 * @return void
-	 */
-	public function incrementDroppedEventCount($count = 1)
-	{
-		$this->droppedEventCount += $count;
-	}
-
 	/**
 	 * Returns error count.
 	 *
-	 * @implements Crm\Volume\IVolumeClear
+	 * @implements Volume\IVolumeClear
 	 * @return int
 	 */
 	public function getFailCount()
@@ -2558,7 +2230,7 @@ abstract class Base implements Crm\Volume\IVolumeIndicator
 	/**
 	 * Sets error count.
 	 *
-	 * @implements Crm\Volume\IVolumeClear
+	 * @implements Volume\IVolumeClear
 	 * @param int $count Amount to set.
 	 * @return void
 	 */
@@ -2570,7 +2242,7 @@ abstract class Base implements Crm\Volume\IVolumeIndicator
 	/**
 	 * Returns error count.
 	 *
-	 * @implements Crm\Volume\IVolumeClearEvent
+	 * @implements Volume\IVolumeClearEvent
 	 * @param int $count Amount to increment.
 	 * @return void
 	 */
@@ -2582,7 +2254,7 @@ abstract class Base implements Crm\Volume\IVolumeIndicator
 	/**
 	 * Start up timer.
 	 *
-	 * @implements Crm\Volume\IVolumeClear
+	 * @implements Volume\IVolumeClear
 	 * @param int $timeLimit Time limit.
 	 * @return void
 	 */
@@ -2604,7 +2276,7 @@ abstract class Base implements Crm\Volume\IVolumeIndicator
 	/**
 	 * Tells true if time limit reached.
 	 *
-	 * @implements Crm\Volume\IVolumeClear
+	 * @implements Volume\IVolumeClear
 	 * @return boolean
 	 */
 	public function hasTimeLimitReached()
@@ -2630,25 +2302,25 @@ abstract class Base implements Crm\Volume\IVolumeIndicator
 	/**
 	 * Returns count of files in disk folder.
 	 *
-	 * @param \Bitrix\Disk\Folder $folder Disk folder to analize.
+	 * @param Disk\Folder $folder Disk folder to analize.
 	 * @param array $filter Additional filter for file selection.
 	 *
 	 * @return int
 	 * @throws Main\ObjectPropertyException
 	 * @throws Main\SystemException
 	 */
-	protected function countDiskFiles(\Bitrix\Disk\Folder $folder, $filter = array())
+	protected function countDiskFiles(Disk\Folder $folder, $filter = array())
 	{
 		$count = 0;
 		if (self::isModuleAvailable('disk'))
 		{
-			if ($folder instanceof \Bitrix\Disk\Folder)
+			if ($folder instanceof Disk\Folder)
 			{
 				$filter['=STORAGE_ID'] = $folder->getStorageId();
 				$filter['=PATH_CHILD.PARENT_ID'] = $folder->getId();
-				$filter['=TYPE'] = \Bitrix\Disk\Internals\ObjectTable::TYPE_FILE;
+				$filter['=TYPE'] = Disk\Internals\ObjectTable::TYPE_FILE;
 
-				$count = \Bitrix\Disk\Internals\ObjectTable::getCount($filter);
+				$count = Disk\Internals\ObjectTable::getCount($filter);
 			}
 		}
 
@@ -2659,7 +2331,7 @@ abstract class Base implements Crm\Volume\IVolumeIndicator
 	/**
 	 * Performs dropping entity attachments.
 	 *
-	 * @param \Bitrix\Disk\Folder $folder Disk folder to analize.
+	 * @param Disk\Folder $folder Disk folder to analize.
 	 * @param array $filter Additional filter for file selection.
 	 *
 	 * @return boolean
@@ -2667,27 +2339,27 @@ abstract class Base implements Crm\Volume\IVolumeIndicator
 	 * @throws Main\ObjectPropertyException
 	 * @throws Main\SystemException
 	 */
-	protected function clearDiskFiles(\Bitrix\Disk\Folder $folder, $filter = array())
+	protected function clearDiskFiles(Disk\Folder $folder, $filter = array())
 	{
 		if (!self::isModuleAvailable('disk'))
 		{
 			return false;
 		}
-		if (!($folder instanceof \Bitrix\Disk\Folder))
+		if (!($folder instanceof Disk\Folder))
 		{
 			return false;
 		}
 
 		$filter['=STORAGE_ID'] = $folder->getStorageId();
 		$filter['=PATH_CHILD.PARENT_ID'] = $folder->getId();
-		$filter['=TYPE'] = \Bitrix\Disk\Internals\ObjectTable::TYPE_FILE;
+		$filter['=TYPE'] = Disk\Internals\ObjectTable::TYPE_FILE;
 
 		if ($this->getProcessOffset() > 0)
 		{
 			$filter['>ID'] = $this->getProcessOffset();
 		}
 
-		$objectList = \Bitrix\Disk\Internals\ObjectTable::getList(array(
+		$objectList = Disk\Internals\ObjectTable::getList(array(
 			'filter' => $filter,
 			'order' => array(
 				'PATH_CHILD.DEPTH_LEVEL' => 'DESC',
@@ -2700,11 +2372,11 @@ abstract class Base implements Crm\Volume\IVolumeIndicator
 
 		foreach ($objectList as $row)
 		{
-			$file = \Bitrix\Disk\BaseObject::buildFromArray($row);
+			$file = Disk\BaseObject::buildFromArray($row);
 
-			if($file instanceof \Bitrix\Disk\File)
+			if($file instanceof Disk\File)
 			{
-				/** @var \Bitrix\Disk\File $file */
+				/** @var Disk\File $file */
 				$securityContext = $this->getDiskSecurityContext($file);
 				if($file->canDelete($securityContext))
 				{
@@ -2739,8 +2411,8 @@ abstract class Base implements Crm\Volume\IVolumeIndicator
 
 	/**
 	 * Returns disk security context.
-	 * @param \Bitrix\Disk\BaseObject $object File or folder.
-	 * @return \Bitrix\Disk\Security\SecurityContext
+	 * @param Disk\BaseObject $object File or folder.
+	 * @return Disk\Security\SecurityContext
 	 */
 	protected function getDiskSecurityContext($object)
 	{
@@ -2748,11 +2420,11 @@ abstract class Base implements Crm\Volume\IVolumeIndicator
 
 		$userId = $this->getUser()->getId();
 
-		if (!($securityContext instanceof \Bitrix\Disk\Security\SecurityContext))
+		if (!($securityContext instanceof Disk\Security\SecurityContext))
 		{
-			if (\Bitrix\Disk\User::isCurrentUserAdmin())
+			if (Disk\User::isCurrentUserAdmin())
 			{
-				$securityContext = new \Bitrix\Disk\Security\FakeSecurityContext($userId);
+				$securityContext = new Disk\Security\FakeSecurityContext($userId);
 			}
 			else
 			{
@@ -2765,10 +2437,10 @@ abstract class Base implements Crm\Volume\IVolumeIndicator
 
 	/**
 	 * Deletes file.
-	 * @param \Bitrix\Disk\File $file File to drop.
+	 * @param Disk\File $file File to drop.
 	 * @return boolean
 	 */
-	protected function deleteDiskFile(\Bitrix\Disk\File $file)
+	protected function deleteDiskFile(Disk\File $file)
 	{
 		$userId = $this->getUser()->getId();
 

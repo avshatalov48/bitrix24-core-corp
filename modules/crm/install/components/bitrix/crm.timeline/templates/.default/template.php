@@ -14,7 +14,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/activity.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/message.js');
 
-Bitrix\Main\UI\Extension::load(array('ui.buttons', 'ui.icons'));
+Bitrix\Main\UI\Extension::load(array('ui.buttons', 'ui.icons', 'ui.selector'));
 
 //HACK: Preloading files for prevent trembling of player afer load.
 Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/js/crm/timeline_player/timeline_player.css');
@@ -74,6 +74,9 @@ $smsContainerID = "{$prefix}_sms_container";
 $smsInputID = "{$prefix}_sms";
 $smsButtonID = "{$prefix}_sms_button";
 $smsCancelButtonID = "{$prefix}_sms_cancel_button";
+$fileUploaderZoneId = "diskuf-selectdialog-{$prefix}";
+$fileInputName = "{$prefix}-sms-files";
+$fileUploaderInputName = "{$prefix}-sms-files-uploader";
 
 $activityEditorID = "{$prefix}_editor";
 $scheduleItems = $arResult['SCHEDULE_ITEMS'];
@@ -89,6 +92,18 @@ if(!empty($arResult['ERRORS']))
 	return;
 }
 
+if($arResult['ENABLE_SALESCENTER'])
+{
+	$APPLICATION->includeComponent('bitrix:spotlight', '', [
+		'ID' => 'crm-timeline-sms-salescenter',
+		'USER_TYPE' => 'ALL',
+		'JS_OPTIONS' => [
+			'targetElement' => '#'.$menuBarContainerID." .crm-entity-stream-section-new-action[data-item-id='sms']",
+			'targetVertex' => 'middle-center',
+			'content' => GetMessage('CRM_TIMELINE_SMS_SALESCENTER_SPOTLIGHT'),
+		]
+	]);
+}
 
 ?>
 <div class="crm-entity-stream-container-content">
@@ -182,25 +197,120 @@ if(!empty($arResult['ERRORS']))
 					<?if (!$arResult['SMS_CAN_SEND_MESSAGE']):?>
 					<div class="crm-entity-stream-content-sms-conditions-container">
 						<div class="crm-entity-stream-content-sms-conditions">
-							<strong><?=GetMessage("CRM_TIMELINE_SMS_MANAGE_TEXT_1")?></strong><br>
-							<?=GetMessage("CRM_TIMELINE_SMS_MANAGE_TEXT_2")?><br>
-							<?=GetMessage("CRM_TIMELINE_SMS_MANAGE_TEXT_3")?>
-							<!--<span class="crm-entity-stream-content-sms-conditions-helper-icon"></span>-->
+							<div class="crm-entity-stream-content-sms-conditions-text">
+								<strong><?=GetMessage("CRM_TIMELINE_SMS_MANAGE_TEXT_1")?></strong><br>
+								<?=GetMessage("CRM_TIMELINE_SMS_MANAGE_TEXT_2")?><br>
+								<?=GetMessage("CRM_TIMELINE_SMS_MANAGE_TEXT_3")?>
+								<!--<span class="crm-entity-stream-content-sms-conditions-helper-icon"></span>-->
+							</div>
 						</div>
 					</div>
 					<div class="crm-entity-stream-content-new-sms-btn-container">
 						<a href="<?=htmlspecialcharsbx($arResult['SMS_MANAGE_URL'])?>" target="_top" class="crm-entity-stream-content-new-sms-connect-link"><?=GetMessage("CRM_TIMELINE_SMS_MANAGE_URL")?></a>
+						<?php if($arResult['ENABLE_SALESCENTER'])
+						{?>
+							<div class="crm-entity-stream-content-sms-salescenter-container-absolute" data-role="salescenter-starter">
+								<div class="crm-entity-stream-content-sms-salescenter-icon"></div>
+								<div class="crm-entity-stream-content-sms-button-text"><?=GetMessage('CRM_TIMELINE_SMS_SALESCENTER_STARTER')?></div>
+							</div>
+							<?php
+						}
+						?>
 					</div>
 					<?else:?>
-					<div class="crm-entity-stream-content-sms-conditions-container">
+					<div class="crm-entity-stream-content-sms-buttons-container">
+						<?php if($arResult['ENABLE_SALESCENTER'])
+						{?>
+						<div class="crm-entity-stream-content-sms-button" data-role="salescenter-starter">
+							<div class="crm-entity-stream-content-sms-salescenter-icon"></div>
+							<div class="crm-entity-stream-content-sms-button-text"><?=GetMessage('CRM_TIMELINE_SMS_SALESCENTER_STARTER')?></div>
+						</div>
+						<?php
+						}
+						if($arResult['ENABLE_FILES'])
+						{
+						?>
+						<div class="crm-entity-stream-content-sms-button" data-role="sms-file-selector">
+							<div class="crm-entity-stream-content-sms-file-icon"></div>
+							<div class="crm-entity-stream-content-sms-button-text"><?=GetMessage('CRM_TIMELINE_SMS_SEND_FILE')?></div>
+						</div>
+						<?php
+						}
+						if($arResult['ENABLE_DOCUMENTS'])
+						{?>
+						<div class="crm-entity-stream-content-sms-button" data-role="sms-document-selector">
+							<div class="crm-entity-stream-content-sms-document-icon"></div>
+							<div class="crm-entity-stream-content-sms-button-text"><?=GetMessage('CRM_TIMELINE_SMS_SEND_DOCUMENT');?></div>
+						</div>
+						<?}?>
+						<div class="crm-entity-stream-content-sms-detail-toggle" data-role="sms-detail-switcher">
+							<?=GetMessage('CRM_TIMELINE_DETAILS');?>
+						</div>
+					</div>
+					<div class="crm-entity-stream-content-sms-conditions-container hidden" data-role="sms-detail">
 						<div class="crm-entity-stream-content-sms-conditions">
-							<?=GetMessage('CRM_TIMELINE_SMS_SENDER')?> <a href="#" data-role="sender-selector">sender</a><span data-role="from-container"><?=GetMessage('CRM_TIMELINE_SMS_FROM')?><?
-							?> <a data-role="from-selector" href="#">from_number</a></span><?
-							?><span data-role="client-container"> <?=GetMessage('CRM_TIMELINE_SMS_TO')?> <a data-role="client-selector" href="#">client_caption</a> <a data-role="to-selector" href="#">to_number</a></span>
+							<div class="crm-entity-stream-content-sms-conditions-text">
+								<?=GetMessage('CRM_TIMELINE_SMS_SENDER')?> <a href="#" data-role="sender-selector">sender</a><span data-role="from-container"><?=GetMessage('CRM_TIMELINE_SMS_FROM')?><?
+									?> <a data-role="from-selector" href="#">from_number</a></span><?
+								?><span data-role="client-container"> <?=GetMessage('CRM_TIMELINE_SMS_TO')?> <a data-role="client-selector" href="#">client_caption</a> <a data-role="to-selector" href="#">to_number</a></span>
+							</div>
 							<!--<span class="crm-entity-stream-content-sms-conditions-helper-icon"></span>-->
 						</div>
 					</div>
-					<textarea id="<?=htmlspecialcharsbx($smsInputID)?>" class="crm-entity-stream-content-new-sms-textarea" rows='1' placeholder="<?=GetMessage('CRM_TIMELINE_SMS_SEND_MESSAGE')?>"></textarea>
+					<textarea id="<?=htmlspecialcharsbx($smsInputID)?>" class="crm-entity-stream-content-new-sms-textarea" rows='1' placeholder="<?=GetMessage('CRM_TIMELINE_SMS_ENTER_MESSAGE')?>"></textarea>
+					<?php
+					if($arResult['ENABLE_FILES_EXTERNAL_LINK'])
+					{
+					?>
+					<div class="crm-entity-stream-content-sms-file-uploader-zone" data-role="sms-file-upload-zone" data-node-id="<?=htmlspecialcharsbx($prefix);?>">
+						<div id="<?=htmlspecialcharsbx($fileUploaderZoneId);?>" class="diskuf-files-entity diskuf-selectdialog bx-disk">
+							<div class="diskuf-files-block checklist-loader-files">
+								<div class="diskuf-placeholder">
+									<table class="files-list">
+										<tbody class="diskuf-placeholder-tbody"></tbody>
+									</table>
+								</div>
+							</div>
+							<div class="diskuf-extended">
+								<input type="hidden" name="<?=htmlspecialcharsbx($fileInputName);?>[]" value="" />
+							</div>
+							<div class="diskuf-extended-item">
+								<label for="<?=htmlspecialcharsbx($fileUploaderInputName);?>" data-role="sms-file-upload-label"></label>
+								<input class="diskuf-fileUploader" id="<?=htmlspecialcharsbx($fileUploaderInputName);?>" type="file" data-role="sms-file-upload-input" />
+							</div>
+							<div class="diskuf-extended-item">
+								<span class="diskuf-selector-link" data-role="sms-file-selector-bitrix">
+								</span>
+							</div>
+						</div>
+					</div>
+					<?php
+					}
+					else
+					{
+					?>
+					<div class="crm-entity-stream-content-sms-file-external-link-popup" data-role="sms-file-external-link-disabled">
+						<div class="crm-entity-stream-content-sms-file-external-link-popup-limit-container">
+							<div class="crm-entity-stream-content-sms-file-external-link-popup-limit-inner">
+								<div class="crm-entity-stream-content-sms-file-external-link-popup-limit-desc">
+									<div class="crm-entity-stream-content-sms-file-external-link-popup-limit-img">
+										<div class="crm-entity-stream-content-sms-file-external-link-popup-limit-img-lock"></div>
+									</div>
+									<div class="crm-entity-stream-content-sms-file-external-link-popup-limit-desc-text">
+										<?=GetMessage('CRM_TIMELINE_SMS_FILE_EXTERNAL_LINK_FEATURE');?>
+									</div>
+								</div>
+								<div class="crm-entity-stream-content-sms-file-external-link-popup-limit-buttons">
+									<?php
+									\CBitrix24::showTariffRestrictionButtons('disk_external_link');
+									?>
+								</div>
+							</div>
+						</div>
+					</div>
+					<?php
+					}
+					?>
 					<div class="crm-entity-stream-content-new-sms-btn-container">
 						<button id="<?=htmlspecialcharsbx($smsButtonID)?>" class="ui-btn ui-btn-xs ui-btn-primary">
 							<?=GetMessage('CRM_TIMELINE_SEND')?>
@@ -217,6 +327,40 @@ if(!empty($arResult['ERRORS']))
 			</div>
 		</div>
 	</div>
+</div><?
+$filterClassName = $arResult['IS_HISTORY_FILTER_APPLIED']
+	? 'crm-entity-stream-section-filter-show' : 'crm-entity-stream-section-filter-hide';
+
+?><div id="timeline-filter" class="crm-entity-stream-section crm-entity-stream-section-filter <?=$filterClassName?>">
+	<div class="crm-entity-stream-section-content">
+		<div>
+			<div class="crm-entity-stream-filter-container">
+				<?
+				$APPLICATION->includeComponent(
+					'bitrix:main.ui.filter',
+					'',
+					array(
+						'FILTER_ID' => $arResult['HISTORY_FILTER_ID'],
+						'COMMON_PRESETS_ID' => $arResult['HISTORY_FILTER_PRESET_ID'],
+						'THEME' => 'ROUNDED',
+						'FILTER' => $arResult['HISTORY_FILTER'],
+						'FILTER_PRESETS' => $arResult['HISTORY_FILTER_PRESETS'],
+						'DISABLE_SEARCH' => false,
+						'ENABLE_LIVE_SEARCH' => false,
+						'ENABLE_LABEL' => true,
+						'RESET_TO_DEFAULT_MODE' => false,
+						'CONFIG' => array('AUTOFOCUS' => false),
+						'LAZY_LOAD' => array(
+							'GET_LIST' => '/bitrix/components/bitrix/crm.timeline/filter.ajax.php?action=list&filter_id='.urlencode($arResult['HISTORY_FILTER_ID']).'&siteID='.SITE_ID.'&'.bitrix_sessid_get(),
+							'GET_FIELD' => '/bitrix/components/bitrix/crm.timeline/filter.ajax.php?action=field&filter_id='.urlencode($arResult['HISTORY_FILTER_ID']).'&siteID='.SITE_ID.'&'.bitrix_sessid_get(),
+						)
+					)
+				);
+				?>
+				<span class="crm-entity-stream-filter-close"></span>
+			</div>
+		</div>
+	</div>
 </div>
 <script type="text/javascript">
 	BX.ready(
@@ -228,6 +372,12 @@ if(!empty($arResult['ERRORS']))
 				stub: "<?=GetMessageJS('CRM_TIMELINE_COMMON_SCHEDULE_STUB')?>",
 				leadStub: "<?=GetMessageJS('CRM_TIMELINE_LEAD_SCHEDULE_STUB')?>",
 				dealStub: "<?=GetMessageJS('CRM_TIMELINE_DEAL_SCHEDULE_STUB')?>"
+			};
+
+			BX.CrmHistory.messages =
+			{
+				filterButtonCaption: "<?=GetMessageJS('CRM_TIMELINE_FILTER_BUTTON_CAPTION')?>",
+				filterEmptyResultStub: "<?=GetMessageJS('CRM_TIMELINE_FILTER_EMPTY_RESULT_STUB')?>"
 			};
 
 			BX.CrmHistoryItemMark.messages =
@@ -250,8 +400,8 @@ if(!empty($arResult['ERRORS']))
 				taskRenewMark: "<?=GetMessageJS('CRM_TIMELINE_TASK_RENEWMARK')?>",
 				webformSuccessMark: "<?=GetMessageJS('CRM_TIMELINE_WEBFORM_SUCCESSMARK')?>",
 				webformRenewMark: "<?=GetMessageJS('CRM_TIMELINE_WEBFORM_RENEWMARK')?>",
-				requestSuccessMark: "<?=GetMessageJS('CRM_TIMELINE_REQUEST_SUCCESSMARK')?>",
-				requestRenewMark: "<?=GetMessageJS('CRM_TIMELINE_REQUEST_RENEWMARK')?>"
+				requestSuccessMark: "<?=GetMessageJS('CRM_TIMELINE_REQUEST_SUCCESSMARK_1')?>",
+				requestRenewMark: "<?=GetMessageJS('CRM_TIMELINE_REQUEST_RENEWMARK_1')?>"
 			};
 
 			BX.CrmHistoryItemCreation.messages =
@@ -273,7 +423,8 @@ if(!empty($arResult['ERRORS']))
 			BX.CrmHistoryItemLink.messages =
 			{
 				lead: "<?=GetMessageJS('CRM_TIMELINE_LEAD_LINK')?>",
-				deal: "<?=GetMessageJS('CRM_TIMELINE_DEAL_LINK')?>"
+				deal: "<?=GetMessageJS('CRM_TIMELINE_DEAL_LINK')?>",
+				order: "<?=GetMessageJS('CRM_TIMELINE_ORDER_LINK')?>"
 			};
 
 			BX.CrmTimelineCallAction.messages =
@@ -330,7 +481,7 @@ if(!empty($arResult['ERRORS']))
 				sms: "<?=GetMessageJS('CRM_TIMELINE_SMS')?>",
 				visit: "<?=GetMessageJS('CRM_TIMELINE_VISIT')?>",
 				bizproc: "<?=GetMessageJS('CRM_TIMELINE_BIZPROC_TITLE')?>",
-				activityRequest: "<?=GetMessageJS('CRM_TIMELINE_ACTIVITY_REQUEST_TITLE')?>",
+				activityRequest: "<?=GetMessageJS('CRM_TIMELINE_ACTIVITY_REQUEST_TITLE_1')?>",
 				restApplication: "<?=GetMessageJS('CRM_TIMELINE_ACTIVITY_REST_APP_TITLE')?>",
 				openLine: "<?=GetMessageJS('CRM_TIMELINE_ACTIVITY_OPEN_LINE')?>",
 				expand: "<?=GetMessageJS('CRM_TIMELINE_EXPAND')?>",
@@ -404,6 +555,40 @@ if(!empty($arResult['ERRORS']))
 					invite: "<?=GetMessageJS('CRM_TIMELINE_CHAT_INVITE')?>"
 				};
 
+			BX.CrmHistoryItemOrderCreation.messages =
+				{
+					order: "<?=GetMessageJS('CRM_TIMELINE_ORDER_CREATION')?>",
+					unpaid: "<?=GetMessageJS('CRM_TIMELINE_ORDER_UNPAID')?>",
+					paid: "<?=GetMessageJS('CRM_TIMELINE_ORDER_PAID')?>",
+					done: "<?=GetMessageJS('CRM_TIMELINE_ORDER_DONE')?>",
+					canceled: "<?=GetMessageJS('CRM_TIMELINE_ORDER_CANCELED')?>",
+				};
+
+			BX.CrmHistoryItemOrderModification.messages =
+				{
+					order: "<?=GetMessageJS('CRM_TIMELINE_ORDER_TITLE')?>",
+					unpaid: "<?=GetMessageJS('CRM_TIMELINE_ORDER_UNPAID')?>",
+					done: "<?=GetMessageJS('CRM_TIMELINE_ORDER_DONE')?>",
+					canceled: "<?=GetMessageJS('CRM_TIMELINE_ORDER_CANCELED')?>",
+					paid: "<?=GetMessageJS('CRM_TIMELINE_ORDER_PAID')?>",
+					deducted: "<?=GetMessageJS('CRM_TIMELINE_ORDER_DEDUCTED')?>",
+					unshipped: "<?=GetMessageJS('CRM_TIMELINE_ORDER_UNSHIPPED')?>",
+					orderPayment: "<?=GetMessageJS('CRM_TIMELINE_ORDER_PAYMENT_TITLE')?>",
+					orderPaymentLegendPaid: "<?=GetMessageJS('CRM_TIMELINE_ORDER_PAYMENT_LEGEND_PAID')?>",
+					orderPaymentLegendUnpaid: "<?=GetMessageJS('CRM_TIMELINE_ORDER_PAYMENT_LEGEND_UNPAID')?>",
+					orderShipment: "<?=GetMessageJS('CRM_TIMELINE_ORDER_SHIPMENT_TITLE')?>",
+					orderShipmentLegendDeducted: "<?=GetMessageJS('CRM_TIMELINE_ORDER_SHIPMENT_LEGEND_DEDUCTED')?>",
+					orderShipmentLegendUnshipped: "<?=GetMessageJS('CRM_TIMELINE_ORDER_SHIPMENT_LEGEND_UNSHIPPED')?>",
+				};
+
+			BX.CrmHistoryItemOrcderCheck.messages =
+				{
+					orderCheck: "<?=GetMessageJS('CRM_TIMELINE_ORDER_CHECK_TITLE')?>",
+					printed: "<?=GetMessageJS('CRM_TIMELINE_ORDER_PRINTED')?>",
+					unprinted: "<?=GetMessageJS('CRM_TIMELINE_ORDER_UNPRINTED')?>",
+					listLink: "<?=GetMessageJS('CRM_TIMELINE_ORDER_CHECK_LINK_TO_LIST')?>",
+				};
+
 			BX.message({
 				"CRM_TIMELINE_CALL_TRANSCRIPT": '<?=GetMessageJS("CRM_TIMELINE_CALL_TRANSCRIPT")?>',
 				"CRM_TIMELINE_CALL_TRANSCRIPT_PENDING": '<?=GetMessageJS("CRM_TIMELINE_CALL_TRANSCRIPT_PENDING")?>',
@@ -420,7 +605,14 @@ if(!empty($arResult['ERRORS']))
 				"CRM_TIMELINE_VISIT_VKONTAKTE_PROFILE": '<?=GetMessageJS("CRM_TIMELINE_VISIT_VKONTAKTE_PROFILE")?>',
 				"CRM_TIMELINE_FASTEN_LIMIT_MESSAGE": '<?=GetMessageJS("CRM_TIMELINE_FASTEN_LIMIT_MESSAGE")?>',
 				"CRM_TIMELINE_EMPTY_COMMENT_MESSAGE": '<?=GetMessageJS("CRM_TIMELINE_EMPTY_COMMENT_MESSAGE")?>',
-				"CRM_TIMELINE_SPOTLIGHT_FASTEN_MESSAGE": '<?=GetMessageJS("CRM_TIMELINE_SPOTLIGHT_FASTEN_MESSAGE")?>'
+				"CRM_TIMELINE_SPOTLIGHT_FASTEN_MESSAGE": '<?=GetMessageJS("CRM_TIMELINE_SPOTLIGHT_FASTEN_MESSAGE")?>',
+				"CRM_TIMELINE_SCORING_TITLE_2": '<?=GetMessageJS("CRM_TIMELINE_SCORING_TITLE_2")?>',
+				"CRM_TIMELINE_DETAILS": '<?=GetMessageJS("CRM_TIMELINE_DETAILS")?>',
+				"CRM_TIMELINE_COLLAPSE": '<?=GetMessageJS("CRM_TIMELINE_COLLAPSE")?>',
+				"CRM_TIMELINE_SMS_UPLOAD_FILE": '<?=GetMessageJS("CRM_TIMELINE_SMS_UPLOAD_FILE")?>',
+				"CRM_TIMELINE_SMS_FIND_FILE": '<?=GetMessageJS("CRM_TIMELINE_SMS_FIND_FILE")?>',
+				"DISK_TMPLT_THUMB": '',
+				"DISK_TMPLT_THUMB2": '',
 			});
 
 			BX.CrmTimelineManager.create(
@@ -443,6 +635,8 @@ if(!empty($arResult['ERRORS']))
 					scheduleData: <?=CUtil::PhpToJSObject($scheduleItems)?>,
 					historyData: <?=CUtil::PhpToJSObject($historyItems)?>,
 					historyNavigation: <?=CUtil::PhpToJSObject($arResult['HISTORY_NAVIGATION'])?>,
+					historyFilterId: "<?=CUtil::JSEscape($arResult['HISTORY_FILTER_ID'])?>",
+					isHistoryFilterApplied: <?=$arResult['IS_HISTORY_FILTER_APPLIED'] ? 'true' : 'false'?>,
 					fixedData: <?=CUtil::PhpToJSObject($fixedItems)?>,
 					ajaxId: "<?=CUtil::JSEscape($arResult['AJAX_ID'])?>",
 					currentUrl: "<?=CUtil::JSEscape($arResult['CURRENT_URL'])?>",

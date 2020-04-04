@@ -783,6 +783,11 @@ BX.Crm.Widget.Custom.SaleTarget.ConfigPopup = (function(BX)
 					itemTpl.get('user-photo').style.background = 'url("'+user.photo+'")';
 				}
 
+				if (!user.active)
+				{
+					BX.addClass(itemTpl.get(), itemTpl.get().getAttribute('data-inactive-class'));
+				}
+
 				me.decorateGoalInput(itemTpl.get('user-target'), user.id, goal);
 
 				BX.bind(itemTpl.get('user-remove'), 'click', function()

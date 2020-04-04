@@ -4,12 +4,16 @@ namespace Bitrix\Tasks\Rest\Controllers\Action;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\ArgumentOutOfRangeException;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\Search;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\UI\PageNavigation;
 use Bitrix\Tasks\Exception;
+use Bitrix\Tasks\Integration\Bitrix24;
 use Bitrix\Tasks\Internals\SearchIndex;
 use Bitrix\Tasks\Internals\Task\SearchIndexTable;
+use Bitrix\Tasks\Util\Restriction\Bitrix24FilterLimitRestriction;
 
 use CComponentEngine;
 use CTasks;
@@ -41,6 +45,11 @@ class SearchAction extends Search\SearchAction
 	{
 		$result = [];
 
+		if (Bitrix24FilterLimitRestriction::isLimitExceeded())
+		{
+			return $result;
+		}
+
 		$userId = $this->getCurrentUser()->getId();
 		$tasksBySearch = $this->getTasksBySearch($searchQuery, $userId);
 
@@ -65,6 +74,33 @@ class SearchAction extends Search\SearchAction
 
 	/**
 	 * @param $searchQuery
+	 * @param array|null $options
+	 * @return array|Search\ResultLimit
+	 * @throws SystemException
+	 * @throws ObjectPropertyException
+	 */
+	protected function provideLimits($searchQuery, array $options = null)
+	{
+		if (Bitrix24FilterLimitRestriction::isLimitExceeded())
+		{
+			$type = 'TASK';
+			$info = Bitrix24FilterLimitRestriction::prepareStubInfo([
+				'TITLE' => Loc::getMessage("TASKS_CONTROLLER_SEARCH_ACTION_TASKS_LIMIT_EXCEEDED_TITLE"),
+				'CONTENT' => Loc::getMessage("TASKS_CONTROLLER_SEARCH_ACTION_TASKS_LIMIT_EXCEEDED"),
+				'GLOBAL_SEARCH' => true,
+			]);
+
+			$resultLimit = new Search\ResultLimit($type, $info['TITLE'], $info['DESCRIPTION']);
+			$resultLimit->setButtons($info['BUTTONS']);
+
+			return [$resultLimit];
+		}
+
+		return [];
+	}
+
+	/**
+	 * @param $searchQuery
 	 * @param $userId
 	 * @return array
 	 * @throws ArgumentException
@@ -73,7 +109,7 @@ class SearchAction extends Search\SearchAction
 	 * @throws SystemException
 	 * @throws TasksException
 	 */
-	private static function getTasksBySearch($searchQuery, $userId)
+	private function getTasksBySearch($searchQuery, $userId)
 	{
 		$result = [];
 
@@ -90,7 +126,9 @@ class SearchAction extends Search\SearchAction
 		];
 		$params = [
 			'USER_ID' => $userId,
-			'MAKE_ACCESS_FILTER' => true
+			'NAV_PARAMS' => [
+				'nTopCount' => 20,
+			],
 		];
 
 		$taskDbResult = CTasks::GetList($order, $filter, $select, $params, []);
@@ -105,7 +143,7 @@ class SearchAction extends Search\SearchAction
 	/**
 	 * @return string
 	 */
-	private static function getTaskPathTemplate()
+	private function getTaskPathTemplate()
 	{
 		if (self::$taskPathTemplate)
 		{
@@ -135,9 +173,9 @@ class SearchAction extends Search\SearchAction
 	/**
 	 * @return string
 	 */
-	private static function getTaskCommentPathTemplate()
+	private function getTaskCommentPathTemplate()
 	{
-		return self::getTaskPathTemplate() . '?MID=#comment_id##com#comment_id#';
+		return $this->getTaskPathTemplate() . '?MID=#comment_id##com#comment_id#';
 	}
 
 	/**
@@ -147,7 +185,7 @@ class SearchAction extends Search\SearchAction
 	private function getPathForTask($taskId)
 	{
 		$userId = $this->getCurrentUser()->getId();
-		$pathTemplate = self::getTaskPathTemplate();
+		$pathTemplate = $this->getTaskPathTemplate();
 
 		return CComponentEngine::MakePathFromTemplate($pathTemplate, ['user_id' => $userId, 'task_id' => $taskId]);
 	}
@@ -160,7 +198,7 @@ class SearchAction extends Search\SearchAction
 	private function getPathForTaskComment($taskId, $commentId)
 	{
 		$userId = $this->getCurrentUser()->getId();
-		$pathTemplate = self::getTaskCommentPathTemplate();
+		$pathTemplate = $this->getTaskCommentPathTemplate();
 
 		return CComponentEngine::MakePathFromTemplate($pathTemplate, [
 			'user_id' => $userId,

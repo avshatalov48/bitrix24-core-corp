@@ -37,7 +37,8 @@ $isBitrix24Template = (SITE_TEMPLATE_ID == "bitrix24");
 if($isBitrix24Template)
 {
 	$bodyClass = $APPLICATION->GetPageProperty("BodyClass");
-	$APPLICATION->SetPageProperty("BodyClass", "pagetitle-toolbar-field-view");
+	$APPLICATION->SetPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "")."pagetitle-toolbar-field-view");
+
 	$this->SetViewTarget("inside_pagetitle", 0);
 	?><div class="pagetitle-container pagetitle-flexible-space"><?
 }
@@ -59,12 +60,12 @@ $APPLICATION->IncludeComponent(
 
 ?>
 	<div class="pagetitle-container pagetitle-align-right-container">
-		<a class="webform-small-button webform-small-button-transparent <?=($arResult['ENABLE_EXPORT'] ? '' : 'btn-lock')?>" href="<?=$arResult['EXPORT_HREF']?>">
+		<span onclick="<?=$arResult['BUTTON_EXPORT']?>" class="webform-small-button webform-small-button-transparent">
 			<span class="webform-small-button-left"></span>
 			<span class="webform-button-icon"></span>
 			<span class="webform-small-button-text"><?=GetMessage("OL_STAT_EXCEL")?></span>
 			<span class="webform-small-button-right"></span>
-		</a>
+		</span>
 	</div>
 <?
 
@@ -112,4 +113,32 @@ $APPLICATION->IncludeComponent(
 );
 
 \Bitrix\Imopenlines\Ui\Helper::renderCustomSelectors($arResult['FILTER_ID'], $arResult['FILTER']);
+if (is_array($arResult['STEXPORT_PARAMS']))
+{
+	\Bitrix\Main\UI\Extension::load('ui.progressbar');
+	\Bitrix\Main\UI\Extension::load('ui.buttons');
+	\Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/imopenlines/common.js');
+	?>
+	<script type="text/javascript">
+		BX.ready(
+			function()
+			{
+				BX.OpenLines.ExportManager.create(
+					"<?=CUtil::JSEscape($arResult['STEXPORT_PARAMS']['managerId'])?>",
+					<?=CUtil::PhpToJSObject($arResult['STEXPORT_PARAMS'])?>
+				);
+			}
+		);
+		BX.OpenlinesLongRunningProcessDialog.messages =
+		{
+			startButton: "<?=GetMessageJS('OL_STAT_EXCEL_EXPORT_POPUP_BTN_START')?>",
+			stopButton: "<?=GetMessageJS('OL_STAT_EXCEL_EXPORT_POPUP_BTN_STOP')?>",
+			closeButton: "<?=GetMessageJS('OL_STAT_EXCEL_EXPORT_POPUP_BTN_CLOSE')?>",
+			wait: "<?=GetMessageJS('OL_STAT_EXCEL_EXPORT_POPUP_WAIT')?>",
+			requestError: "<?=GetMessageJS('OL_STAT_EXCEL_EXPORT_POPUP_REQUEST_ERR')?>"
+		};
+	</script>
+
+	<?php
+}
 ?>

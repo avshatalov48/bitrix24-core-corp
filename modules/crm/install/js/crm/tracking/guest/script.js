@@ -19,7 +19,6 @@
 	window.b24Tracker.guest = {
 		cookieName: 'b24_crm_guest_id',
 		returnCookieName: 'b24_crm_guest_id_returned',
-		domain: '',
 		requestUrl: '',
 		isInit: false,
 		init: function()
@@ -31,9 +30,27 @@
 			this.isInit = true;
 			this.requestUrl = (webPacker.getAddress() + '/').match(/((http|https):\/\/[^\/]+?)\//)[1] + '/pub/guest.php';
 
-			PageTracker.collect();
+			if (module.properties['lifespan'])
+			{
+				var lifespan = parseInt(module.properties['lifespan']);
+				if (!isNaN(lifespan) && lifespan)
+				{
+					TagTracker.lifespan = lifespan;
+				}
+			}
+
+			TraceTracker.collect();
 			TagTracker.collect();
+			PageTracker.collect();
 			this.checkReturn();
+
+			window.b24order = window.b24order || [];
+			window.b24order.forEach(function (options) {
+				this.registerOrder(options);
+			}, this);
+			window.b24order.push = function (options) {
+				this.registerOrder(options);
+			}.bind(this);
 		},
 		checkReturn: function()
 		{
@@ -45,9 +62,10 @@
 			Request.query(this.requestUrl, {a: 'event', e: 'Return'}, this.onAjaxResponse.bind(this));
 			webPacker.cookie.set(this.returnCookieName, 'y', 3600 * 6);
 		},
-		storeTrace: function(trace)
+		storeTrace: function(trace, action)
 		{
-			Request.query(this.requestUrl, {a: 'storeTrace', d: {trace: trace}});
+			action = action || 'storeTrace';
+			Request.query(this.requestUrl, {a: action, d: {trace: trace}});
 		},
 		link: function(gid)
 		{
@@ -85,28 +103,63 @@
 		{
 			return TagTracker.list();
 		},
-		getTrace: function (options)
+		registerOrder: function(options)
+		{
+			if (!module.properties['canRegisterOrder'])
+			{
+				return;
+			}
+			this.storeTrace(this.getTraceOrder(options), 'registerOrder');
+		},
+		getTraceOrder: function (options)
 		{
 			options = options || {};
-			var trace = {
-				url: window.location.href,
-				ref: document.referrer,
-				device: {
-					isMobile: webPacker.browser.isMobile()
-				},
-				tags: TagTracker.getData(),
-				pages: {
-					list: PageTracker.list()
-				},
-				gid: this.getGidCookie()
-			};
+			var id = options.id || '';
 
-			if (options.channels)
+			if (!Number.isNaN(id) && typeof id === 'number')
 			{
-				trace.channels = options.channels;
+				id = id.toString();
+			}
+			if (!id || !webPacker.type.isString(id) || !id.match(/^[\d\w.\-\/\\_#]{1,30}$/i))
+			{
+				if (window.console && window.console.error)
+				{
+					window.console.error('Wrong order id: ' + options.id);
+				}
 			}
 
-			return JSON.stringify(trace);
+			var sum = parseFloat(options.sum);
+			if (isNaN(sum) || sum < 0)
+			{
+				if (window.console && window.console.error)
+				{
+					window.console.error('Wrong order sum: ' + options.sum);
+				}
+			}
+
+			this.sentOrders = this.sentOrders || [];
+			if (this.sentOrders.indexOf(id) >= 0)
+			{
+				return;
+			}
+			this.sentOrders.push(id);
+
+			return this.getTrace({
+				channels: [
+					{code: 'order', value: id}
+				],
+				order: {id: id, sum: sum}
+			});
+		},
+		getTrace: function (options)
+		{
+			var trace = this.remindTrace(options);
+			TraceTracker.clear();
+			return trace;
+		},
+		remindTrace: function (options)
+		{
+			return JSON.stringify(TraceTracker.current(options));
 		},
 		getUtmSource: function ()
 		{
@@ -118,6 +171,154 @@
 		}
 	};
 
+	var TraceTracker = {
+		maxCount: 5,
+		lsKey: 'b24_crm_guest_traces',
+		previous: function ()
+		{
+			return webPacker.ls.getItem(this.lsKey) || {list: []};
+		},
+		current: function (options)
+		{
+			options = options || {};
+			var trace = {
+				url: window.location.href,
+				ref: document.referrer,
+				device: {
+					isMobile: webPacker.browser.isMobile()
+				},
+				tags: TagTracker.getData(),
+				client: ClientTracker.getData(),
+				pages: {
+					list: PageTracker.list()
+				},
+				gid: b24Tracker.guest.getGidCookie()
+			};
+
+			if (options.previous !== false)
+			{
+				trace.previous = this.previous();
+			}
+			if (options.channels)
+			{
+				trace.channels = options.channels;
+			}
+			if (options.order)
+			{
+				trace.order = options.order;
+			}
+
+			return trace;
+		},
+		clear: function ()
+		{
+			webPacker.ls.removeItem(this.lsKey);
+		},
+		collect: function ()
+		{
+			if (!TagTracker.isSourceDetected())
+			{
+				return;
+			}
+
+			var data = this.previous();
+			data = data || {};
+			data.list = data.list || [];
+			data.list.push(this.current({previous: false}));
+			if (data.list.length > this.maxCount)
+			{
+				data.list.shift();
+			}
+
+			TagTracker.clear();
+			PageTracker.clear();
+
+			webPacker.ls.setItem(this.lsKey, data);
+		}
+	};
+
+	var ClientTracker = {
+		getData: function ()
+		{
+			var data = {
+				gaId: this.getGaId(),
+				yaId: this.getYaId(),
+			};
+			if (!data.gaId) delete data['gaId'];
+			if (!data.yaId) delete data['yaId'];
+			return data;
+		},
+		getGaId: function ()
+		{
+			var id;
+			if (window.ga)
+			{
+				ga(function(tracker) {
+					id = tracker.get('clientId');
+				});
+				if (id)
+				{
+					return id;
+				}
+
+				id = ga.getAll()[0].get('clientId');
+			}
+
+			if (id)
+			{
+				return id;
+			}
+
+			id = (document.cookie || '').match(/_ga=(.+?);/);
+			if (id)
+			{
+				id = (id[1] || '').split('.').slice(-2).join(".")
+			}
+
+			return id ? id : null;
+		},
+		getYaId: function ()
+		{
+			var id;
+			if (window.Ya)
+			{
+				var yaId;
+				if (Ya.Metrika && Ya.Metrika.counters()[0])
+				{
+					yaId = Ya.Metrika.counters()[0].id;
+				}
+				else if (Ya.Metrika2 && Ya.Metrika2.counters()[0])
+				{
+					yaId = Ya.Metrika2.counters()[0].id;
+				}
+
+				if (!yaId)
+				{
+					return null;
+				}
+
+				if (window.ym && typeof window.ym === 'object')
+				{
+					ym(yaId, 'getClientID', function(clientID) {
+						id = clientID;
+					});
+				}
+
+				if (!id && window['yaCounter' + yaId])
+				{
+					id = window['yaCounter' + yaId].getClientID();
+				}
+			}
+
+			if (!id)
+			{
+				id = webPacker.cookie.get('_ym_uid');
+			}
+
+			return id ? id : null;
+		}
+	};
+
 	var TagTracker = {
 		lifespan: 28,
 		lsPageKey: 'b24_crm_guest_utm',
@@ -125,6 +326,11 @@
 		list: function ()
 		{
 			return this.getData().list || {};
+		},
+		isSourceDetected: function ()
+		{
+			var tag = webPacker.url.parameter.get(this.tags[0]);
+			return tag !== null && tag;
 		},
 		getGCLid: function ()
 		{
@@ -202,6 +408,10 @@
 		},
 		collect: function ()
 		{
+			if (!document.body)
+			{
+				return;
+			}
 			var pageTitle = document.body.querySelector('h1');
 			pageTitle = pageTitle ? pageTitle.textContent.trim() : '';
 			if (pageTitle.length === 0)
@@ -229,7 +439,7 @@
 			var date = new Date();
 			pages.push([
 				page,
-				Math.round(date.getTime() / 1000)  + date.getTimezoneOffset() * 60,
+				Math.round(date.getTime() / 1000),
 				pageTitle
 			]);
 			webPacker.ls.setItem(this.lsPageKey, pages);

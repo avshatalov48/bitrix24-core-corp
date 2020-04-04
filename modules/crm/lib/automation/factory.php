@@ -226,6 +226,8 @@ class Factory
 					Trigger\OpenLineTrigger::className(),
 					Trigger\OpenLineMessageTrigger::className(),
 					Trigger\ResourceBookingTrigger::className(),
+					Trigger\DocumentCreateTrigger::className(),
+					Trigger\DocumentViewTrigger::className(),
 					Trigger\AppTrigger::className(),
 				 ]
 				 as $triggerClass
@@ -256,7 +258,7 @@ class Factory
 		{
 			if ($triggerClass::isSupported($entityTypeId))
 			{
-				$description[] = $triggerClass::toArray();
+				$description[] = $triggerClass::toArray($entityTypeId);
 			}
 		}
 

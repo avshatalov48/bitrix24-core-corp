@@ -1776,33 +1776,41 @@ class Counter
 		}
 	}
 
+	/**
+	 * @param array $users
+	 */
 	public static function sendPushCounters(array $users)
-    {
-        foreach($users as $userId)
-        {
-            $counter = self::getInstance($userId);
+	{
+		$tag = 'task_counters';
+		$types = [
+			Counter\Role::ALL,
+			Counter\Role::RESPONSIBLE,
+			Counter\Role::ACCOMPLICE,
+			Counter\Role::ORIGINATOR,
+			Counter\Role::AUDITOR,
+		];
 
-            $types = [Counter\Role::ALL, Counter\Role::RESPONSIBLE,Counter\Role::ACCOMPLICE,Counter\Role::ORIGINATOR,Counter\Role::AUDITOR];
-            $out = [];
-            foreach($types as $type) {
-                $data = $counter->getCounters($type);
+		foreach ($users as $userId)
+		{
+			$pushData = ['userId' => $userId];
+			$counter = self::getInstance($userId);
 
-                foreach ($data as $k => $v) {
-                    $out[$type][$k] = $v['counter'];
-                }
-            }
+			foreach ($types as $type)
+			{
+				$data = $counter->getCounters($type);
 
-            $tag = 'task_counters';
+				foreach ($data as $key => $value)
+				{
+					$pushData[$type][$key] = $value['counter'];
+				}
+			}
 
-            \CPullWatch::Add($userId, $tag);
-            \CPullWatch::AddToStack(
-                $tag,
-                array(
-                    'module_id'  => 'tasks',
-                    'command'    => 'user_counter',
-                    'params'     => $out
-                )
-            );
-        }
-    }
+			\CPullWatch::Add($userId, $tag);
+			\CPullWatch::AddToStack($tag, [
+				'module_id' => 'tasks',
+				'command' => 'user_counter',
+				'params' => $pushData,
+			]);
+		}
+	}
 }

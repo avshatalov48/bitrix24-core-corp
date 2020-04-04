@@ -10,7 +10,7 @@ $MESS["IMCONNECTOR_COMPONENT_FBINSTAGRAM_CONNECT_FACEBOOK_PAGE"] = "Привяз
 $MESS["IMCONNECTOR_COMPONENT_FBINSTAGRAM_TO_CREATE_A_PAGE"] = "Создать";
 $MESS["IMCONNECTOR_COMPONENT_FBINSTAGRAM_CONNECTED_PAGE"] = "Подключен аккаунт";
 $MESS["IMCONNECTOR_COMPONENT_FBINSTAGRAM_CHANGE_PAGE"] = "Сменить";
-$MESS["IMCONNECTOR_COMPONENT_FBINSTAGRAM_SELECT_THE_PAGE"] = "Выберите бизнесс-аккаунт Instagram, привязанный к публичной странице Facebook, которую необходимо подключить к Открытой линии Битрикс24";
+$MESS["IMCONNECTOR_COMPONENT_FBINSTAGRAM_SELECT_THE_PAGE"] = "Выберите бизнес-аккаунт Instagram, привязанный к публичной странице Facebook, которую необходимо подключить к Открытой линии Битрикс24";
 $MESS["IMCONNECTOR_COMPONENT_FBINSTAGRAM_OTHER_PAGES"] = "Другие аккаунты";
 $MESS["IMCONNECTOR_COMPONENT_FBINSTAGRAM_CONNECTOR_ERROR_STATUS"] = "В ходе работы произошла ошибка. Пожалуйста, проверьте настройки.";
 $MESS["IMCONNECTOR_COMPONENT_FBINSTAGRAM_TITLE"] = "Управляйте публичной страницей Facebook в Битрикс24";
@@ -29,5 +29,5 @@ $MESS["IMCONNECTOR_COMPONENT_FBINSTAGRAM_CHANGE_ANY_TIME"] = "Вы можете 
 $MESS["IMCONNECTOR_COMPONENT_FBINSTAGRAM_PREFIX_NAMING_PAGE"] = "через";
 $MESS["IMCONNECTOR_COMPONENT_FBINSTAGRAM_MEDIA"] = "медиа";
 $MESS["IMCONNECTOR_COMPONENT_FBINSTAGRAM_INFO_CONNECT_ID"] = "redirect=detail&code=4779109";
-$MESS["IMCONNECTOR_COMPONENT_FBINSTAGRAM_INSTRUCTION_TITLE"] = "<span class=\"imconnector-field-box-text-bold\">Инструкция</span> по подключению бизнесс-аккаунта Instagram:";
-$MESS["IMCONNECTOR_COMPONENT_FBINSTAGRAM_CONNECT_HELP"] = "<div class=\"imconnector-field-button-subtitle\">Я хочу</div><div class=\"imconnector-field-button-name\"><span class=\"imconnector-field-box-text-bold\">ПОДКЛЮЧИТЬ</span> БИЗНЕСС-АККАУНТ</div>";
+$MESS["IMCONNECTOR_COMPONENT_FBINSTAGRAM_INSTRUCTION_TITLE"] = "<span class=\"imconnector-field-box-text-bold\">Инструкция</span> по подключению бизнес-аккаунта Instagram:";
+$MESS["IMCONNECTOR_COMPONENT_FBINSTAGRAM_CONNECT_HELP"] = "<div class=\"imconnector-field-button-subtitle\">Я хочу</div><div class=\"imconnector-field-button-name\"><span class=\"imconnector-field-box-text-bold\">ПОДКЛЮЧИТЬ</span> БИЗНЕС-АККАУНТ</div>";

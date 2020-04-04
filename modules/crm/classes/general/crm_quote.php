@@ -13,6 +13,7 @@ class CAllCrmQuote
 	public static $sUFEntityID = 'CRM_QUOTE';
 	const USER_FIELD_ENTITY_ID = 'CRM_QUOTE';
 	const SUSPENDED_USER_FIELD_ENTITY_ID = 'CRM_QUOTE_SPD';
+	const TOTAL_COUNT_CACHE_ID =  'crm_quote_total_count';
 
 	protected static $TYPE_NAME = 'QUOTE';
 	private static $QUOTE_STATUSES = null;
@@ -256,6 +257,11 @@ class CAllCrmQuote
 
 			$ID = intval($DB->Add('b_crm_quote', $arFields, $clobFields, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__));
 
+			if(defined('BX_COMP_MANAGED_CACHE'))
+			{
+				$GLOBALS['CACHE_MANAGER']->CleanDir('b_crm_quote');
+			}
+
 			if (!self::SetQuoteNumber($ID))
 			{
 				$this->LAST_ERROR = GetMessage('CRM_ERROR_QUOTE_NUMBER_IS_NOT_SET');
@@ -273,8 +279,8 @@ class CAllCrmQuote
 			}
 			unset($storageTypeID, $storageElementIDs);
 
-			// add utm fields
-			UtmTable::addEntityUtmFromFields(CCrmOwnerType::Quote, $ID, $arFields);
+			// tracking of entity
+			Tracking\Entity::onAfterAdd(CCrmOwnerType::Quote, $ID, $arFields);
 
 			if($bUpdateSearch)
 			{
@@ -614,12 +620,16 @@ class CAllCrmQuote
 			$arAttr['STATUS_ID'] = !empty($arFields['STATUS_ID']) ? $arFields['STATUS_ID'] : $arRow['STATUS_ID'];
 			$arAttr['OPENED'] = !empty($arFields['OPENED']) ? $arFields['OPENED'] : $arRow['OPENED'];
 			$arEntityAttr = self::BuildEntityAttr($assignedByID, $arAttr);
-			$sEntityPerm = $this->cPerms->GetPermType('QUOTE', 'WRITE', $arEntityAttr);
-			$this->PrepareEntityAttrs($arEntityAttr, $sEntityPerm);
-			//Prevent 'OPENED' field change by user restricted by BX_CRM_PERM_OPEN permission
-			if($sEntityPerm === BX_CRM_PERM_OPEN && isset($arFields['OPENED']) && $arFields['OPENED'] !== 'Y' && $assignedByID !== $iUserId)
+			if($this->bCheckPermission)
 			{
-				$arFields['OPENED'] = 'Y';
+				$sEntityPerm = $this->cPerms->GetPermType('QUOTE', 'WRITE', $arEntityAttr);
+				//HACK: Ensure that entity accessible for user restricted by BX_CRM_PERM_OPEN
+				$this->PrepareEntityAttrs($arEntityAttr, $sEntityPerm);
+				//HACK: Prevent 'OPENED' field change by user restricted by BX_CRM_PERM_OPEN permission
+				if($sEntityPerm === BX_CRM_PERM_OPEN && isset($arFields['OPENED']) && $arFields['OPENED'] !== 'Y' && $assignedByID !== $iUserId)
+				{
+					$arFields['OPENED'] = 'Y';
+				}
 			}
 
 			if (isset($arFields['ASSIGNED_BY_ID']) && $arRow['ASSIGNED_BY_ID'] != $arFields['ASSIGNED_BY_ID'])
@@ -1001,6 +1011,7 @@ class CAllCrmQuote
 
 			if(defined("BX_COMP_MANAGED_CACHE"))
 			{
+				$GLOBALS['CACHE_MANAGER']->CleanDir('b_crm_quote');
 				$GLOBALS["CACHE_MANAGER"]->ClearByTag("crm_entity_name_".CCrmOwnerType::Quote."_".$ID);
 			}
 
@@ -2256,6 +2267,29 @@ class CAllCrmQuote
 		return $results;
 	}
 
+	public static function GetTotalCount()
+	{
+		if(defined('BX_COMP_MANAGED_CACHE') && $GLOBALS['CACHE_MANAGER']->Read(600, self::TOTAL_COUNT_CACHE_ID, 'b_crm_quote'))
+		{
+			return $GLOBALS['CACHE_MANAGER']->Get(self::TOTAL_COUNT_CACHE_ID);
+		}
+
+		$result = (int)self::GetList(
+			array(),
+			array('CHECK_PERMISSIONS' => 'N'),
+			array(),
+			false,
+			array(),
+			array('ENABLE_ROW_COUNT_THRESHOLD' => false)
+		);
+
+		if(defined('BX_COMP_MANAGED_CACHE'))
+		{
+			$GLOBALS['CACHE_MANAGER']->Set(self::TOTAL_COUNT_CACHE_ID, $result);
+		}
+		return $result;
+	}
+
 	// GetList with navigation support
 	public static function GetList($arOrder = array(), $arFilter = array(), $arGroupBy = false, $arNavStartParams = false, $arSelectFields = array(), $arOptions = array())
 	{
@@ -2626,7 +2660,7 @@ class CAllCrmQuote
 	public static function GetCount($arFilter)
 	{
 		$fields = self::GetFields();
-		return CSqlUtil::GetCount(CCrmDeal::TABLE_NAME, self::TABLE_ALIAS, $fields, $arFilter);
+		return CSqlUtil::GetCount(CCrmQuote::TABLE_NAME, self::TABLE_ALIAS, $fields, $arFilter);
 	}
 
 	public static function GetClientFields()
@@ -4406,6 +4440,19 @@ class CAllCrmQuote
 		}
 
 		return $fileID;
+	}
+
+	public static function existsEntityWithStatus($statusId)
+	{
+		$queryObject = self::getList(
+			['ID' => 'DESC'],
+			['STATUS_ID' => $statusId, 'CHECK_PERMISSIONS' => 'N'],
+			false,
+			false,
+			['ID']
+		);
+
+		return (bool) $queryObject->fetch();
 	}
 }
 

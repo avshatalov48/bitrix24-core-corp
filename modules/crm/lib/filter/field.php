@@ -224,6 +224,7 @@ class Field
 
 		if(isset($options['lightweight']) && $options['lightweight'])
 		{
+			$result['lightweight'] = true;
 			return $result;
 		}
 

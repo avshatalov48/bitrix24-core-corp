@@ -65,14 +65,6 @@ class Common
 			return (\Bitrix\Main\Context::getCurrent()->getRequest()->isHttps() ? "https" : "http")."://".$_SERVER['SERVER_NAME'].(in_array($_SERVER['SERVER_PORT'], Array(80, 443))?'':':'.$_SERVER['SERVER_PORT']);
 	}
 
-	public static function getMaxSessionCount()
-	{
-		$maxSessionCount = \Bitrix\Main\Config\Option::get("imopenlines", "max_session_count");
-		$maxSessionCount = intval($maxSessionCount) > 0 ? intval($maxSessionCount) : 100;
-
-		return $maxSessionCount;
-	}
-
 	public static function getExecMode()
 	{
 		$execMode = \Bitrix\Main\Config\Option::get("imopenlines", "exec_mode");
@@ -91,7 +83,7 @@ class Common
 		));
 		while ($session = $orm->fetch())
 		{
-			\Bitrix\ImOpenLines\Model\SessionTable::delete($session['ID']);
+			Session::deleteSession($session['ID']);
 		}
 
 		$orm = \Bitrix\ImOpenLines\Model\SessionCheckTable::getList(array(
@@ -280,5 +272,15 @@ class Common
 		}
 
 		return \CUtil::PhpToJSObject($params);
+	}
+
+	/**
+	 * @deprecated
+	 *
+	 * @return int
+	 */
+	public static function getMaxSessionCount()
+	{
+		return 100;
 	}
 }

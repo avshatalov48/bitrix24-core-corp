@@ -14,8 +14,11 @@ $event = $arResult['EVENT'];
 $errorMessages = $arResult['ERROR_MESSAGES'];
 $hasErrors = !empty($errorMessages);
 
+$selectorId = randString(6);
+
 $formParams = array(
 	'FORM_ID' => $UID,
+	"DEST_SELECTOR_ID" => $selectorId,
 	'SHOW_MORE' => 'N',
 	'PARSER' => array(
 		'Bold', 'Italic', 'Underline', 'Strike',
@@ -98,7 +101,7 @@ endif;
 	?></div><?
 ?></div>
 <div id="microblog-form">
-<form action="<?=htmlspecialcharsbx($postFormUri !== '' ? $postFormUri : POST_FORM_ACTION_URI)?>" id="<?=htmlspecialcharsbx($UID)?>" name="<?=htmlspecialcharsbx($UID)?>" method="POST" enctype="multipart/form-data" target="_self">
+<form action="<?=htmlspecialcharsbx($postFormUri !== '' ? $postFormUri : POST_FORM_ACTION_URI)?>" id="<?=htmlspecialcharsbx($UID)?>" name="<?=htmlspecialcharsbx($UID)?>" method="POST" enctype="multipart/form-data" target="_self" data-bx-selector-id="<?=htmlspecialcharsbx($selectorId)?>">
 	<?=bitrix_sessid_post();?>
 	<div id="feed-add-post-content-message">
 		<div class="feed-add-post-title" id="<?=$prefix?>message_title_wrapper"<?=$enableTitle ? '' : ' style="display: none;"'?>>

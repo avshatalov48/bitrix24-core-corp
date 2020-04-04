@@ -448,6 +448,9 @@ else if (isset($_REQUEST['import']) && isset($_SESSION['CRM_IMPORT_FILE']))
 	$mappedMultiFields = isset($_SESSION['CRM_IMPORT_MAPPED_MULTI_FIELDS']) ? $_SESSION['CRM_IMPORT_MAPPED_MULTI_FIELDS'] : array();
 
 	$dupChecker = new \Bitrix\Crm\Integrity\LeadDuplicateChecker();
+	//Required for search by company title.
+	$dupChecker->setStrictComparison(true);
+
 	$processedQty = 0;
 
 	$tempDir = isset($_SESSION['CRM_IMPORT_TEMP_DIR']) ? $_SESSION['CRM_IMPORT_TEMP_DIR'] : '';
@@ -1057,6 +1060,7 @@ else if (isset($_REQUEST['import']) && isset($_SESSION['CRM_IMPORT_FILE']))
 						}
 						unset($valueTypes);
 
+						$CCrmUserType->PrepareForSave($item);
 						if(!$CCrmLead->Update($item['ID'], $item))
 						{
 							$arResult['error']++;

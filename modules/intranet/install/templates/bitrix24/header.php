@@ -1,10 +1,13 @@
 <?
+//phpinfo();
 use Bitrix\Intranet\Integration\Templates\Bitrix24\ThemePicker;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
+
 \Bitrix\Main\UI\Extension::load("ui.fonts.opensans");
+
 
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 {
@@ -33,13 +36,11 @@ CModule::IncludeModule("intranet");
 
 \Bitrix\Main\UI\Extension::load([
 	"intranet.sidepanel.bitrix24",
-	"socialnetwork.slider"
+	"socialnetwork.slider",
 ]);
 
 Loc::loadMessages($_SERVER["DOCUMENT_ROOT"]."/bitrix/templates/".SITE_TEMPLATE_ID."/header.php");
 
-$APPLICATION->GroupModuleJS("webrtc","im");
-$APPLICATION->GroupModuleJS("pull","im");
 $APPLICATION->MoveJSToBody("im");
 $APPLICATION->MoveJSToBody("timeman");
 $APPLICATION->SetUniqueJS('bx24', 'template');
@@ -108,6 +109,17 @@ if ($isIndexPage)
 
 $bodyClass .= " bitrix24-".ThemePicker::getInstance()->getCurrentBaseThemeId()."-theme";
 
+$imBarExists =
+	CModule::IncludeModule("im") &&
+	CBXFeatures::IsFeatureEnabled("WebMessenger") &&
+	!defined("BX_IM_FULLSCREEN")
+;
+
+if ($imBarExists)
+{
+	$bodyClass .= " im-bar-mode";
+}
+
 $APPLICATION->AddHeadString(
 	'<link rel="stylesheet" type="text/css" media="print" href="'.
 	\CUtil::GetAdditionalFileURL(SITE_TEMPLATE_PATH."/print.css").'">',
@@ -134,9 +146,16 @@ $isExtranet =
 	COption::GetOptionString("extranet", "extranet_site") === SITE_ID
 ;
 
+$APPLICATION->ShowViewContent("im");
 $APPLICATION->ShowViewContent("im-fullscreen");
+
+$layoutMode = "";
+if (CUserOptions::GetOption("intranet", "left_menu_collapsed") === "Y")
+{
+	$layoutMode .= " menu-collapsed-mode";
+}
 ?>
-<table class="bx-layout-table">
+<table class="bx-layout-table<?=$layoutMode?>">
 	<tr>
 		<td class="bx-layout-header">
 			<? if ((!$isBitrix24Cloud || $USER->IsAdmin()) && !defined("SKIP_SHOW_PANEL")):?>
@@ -198,10 +217,15 @@ if ($isBitrix24Cloud)
 					else
 					{
 						CJSCore::Init("timer");?>
-						<div class="timeman-wrap">
-							<span id="timeman-block" class="timeman-block">
-								<span class="bx-time" id="timeman-timer"></span>
-							</span>
+						<div
+							class="timeman-container timeman-container-<?=LANGUAGE_ID?><?=(IsAmPmMode() ? " am-pm-mode" : "")?>"
+							id="timeman-container"
+						>
+							<div class="timeman-wrap">
+								<span id="timeman-block" class="timeman-block">
+									<span class="bx-time" id="timeman-timer"></span>
+								</span>
+							</div>
 						</div>
 						<script type="text/javascript">BX.ready(function() {
 							BX.timer.registerFormat("bitrix24_time", B24.Timemanager.formatCurrentTime);
@@ -252,91 +276,47 @@ if ($isBitrix24Cloud)
 							}
 						})();
 					</script>
-					<div class="header-logo-block">
-						<?$APPLICATION->ShowViewContent("sitemap"); ?>
-<!--						<span class="header-logo-block-util"></span>-->
-						<?
-						$clientLogo = Bitrix\Intranet\Util::getClientLogo();
-						$siteTitle = trim(COption::GetOptionString("bitrix24", "site_title", ""));
+					<div class="header-logo-block"><?include(__DIR__."/logo.php"); ?></div>
 
-						if (file_exists($_SERVER["DOCUMENT_ROOT"].SITE_DIR."include/company_name.php") && !$clientLogo['logo'] && !$siteTitle)
+					<?if (Loader::includeModule("bitrix24") && \CBitrix24::IsPortalAdmin($USER->GetID()))
+					{
+						if (!\CBitrix24::isDomainChanged())
 						{
-							$logoID = COption::GetOptionString("main", "wizard_site_logo", "", SITE_ID);
-							?><a id="logo_24_a" href="<?=htmlspecialcharsbx(SITE_DIR)?>" title="<?=GetMessage("BITRIX24_LOGO_TOOLTIP")?>" class="logo">
-								<?if ($logoID):?>
-									<span class="logo-img-span">
-										<?$APPLICATION->IncludeComponent("bitrix:main.include", "", array("AREA_FILE_SHOW" => "file", "PATH" => SITE_DIR."include/company_name.php"), false);?>
-									</span>
-								<?else:
-									?><span class="logo-text-container" id="logo_24_text"><?
-										?><span class="logo-text"><?=htmlspecialcharsbx(COption::GetOptionString("main", "site_name", ""));?></span><?
-										?><span class="logo-color">24</span><?
-									?></span>
-								<?endif?>
-							</a>
-						<?
+							?><div
+								class="header-logo-block-settings header-logo-block-settings-show"
+								data-rename-portal="true"<?
+							?>><?
+								?><span
+									class="header-logo-block-settings-item"
+									onclick="BX.Bitrix24.renamePortal(this)"
+									title="<?=GetMessage('BITRIX24_SETTINGS_TITLE')?>">
+								</span><?
+							?></div><?
 						}
 						else
 						{
-							?>
-							<a id="logo_24_a" href="<?=htmlspecialcharsbx(SITE_DIR)?>" title="<?=GetMessage("BITRIX24_LOGO_TOOLTIP")?>" class="logo"><?
-								if(strlen($siteTitle) <= 0)
-								{
-									$siteTitle = $isBitrix24Cloud ? GetMessage('BITRIX24_SITE_TITLE_DEFAULT') : COption::GetOptionString("main", "site_name", "");
-								}
-								?>
-								<span class="logo-text-container" id="logo_24_text" <? if ($clientLogo['logo']): ?> style="display: none; "<? endif ?>>
-									<span class="logo-text"><?=htmlspecialcharsbx($siteTitle)?></span>
-									<? if ($logo24 = Bitrix\Intranet\Util::getLogo24()): ?>
-										<span class="logo-color"><?=$logo24 ?></span>
-									<? endif ?>
-								</span>
-								<span class="logo-img-span">
-									<img id="logo_24_img"
-										<? if ($clientLogo['logo']): ?> src="<?=CFile::getPath($clientLogo['logo']) ?>"<? else: ?> style="display: none; "<? endif ?>
-										<? if ($clientLogo['retina']): ?> srcset="<?=CFile::getPath($clientLogo['retina']) ?> 2x"<? endif ?>
-									/>
-								</span>
-							</a>
-							<?
-								if (Loader::includeModule("bitrix24") && \CBitrix24::IsPortalAdmin($USER->GetID()))
-								{
-								if (!\CBitrix24::isDomainChanged()):
-								?>
-									<div class="header-logo-block-settings header-logo-block-settings-show">
-													<span
-														id="b24_rename_button" class="header-logo-block-settings-item"
-														onclick="BX.Bitrix24.renamePortal(BX('b24_rename_button')); return false;"
-														title="<?=GetMessage('BITRIX24_SETTINGS_TITLE')?>"></span>
-									</div>
-								<?else:?>
-									<div class="header-logo-block-settings">
-													<span
-														id="b24_rename_button" class="header-logo-block-settings-item"
-														onclick="location.href='<?=CBitrix24::PATH_CONFIGS?>'; return false;"
-														title="<?=GetMessage('BITRIX24_SETTINGS_TITLE_RENAMED')?>"></span>
-									</div>
-								<?endif;
-
-								if(isset($_GET['b24renameform'])):
-								?>
-									<script>
-										BX.ready(function()
-										{
-											if(!!BX.Bitrix24 && !!BX.Bitrix24.renamePortal)
-											{
-												BX.Bitrix24.renamePortal()
-											}
-										})
-									</script>
-									<?
-								endif;
-								}
-							?>
-							<?
+							?><div class="header-logo-block-settings"><?
+								?><a
+									class="header-logo-block-settings-item"
+									href="<?=CBitrix24::PATH_CONFIGS?>"
+									title="<?=GetMessage("BITRIX24_SETTINGS_TITLE_RENAMED")?>"></a><?
+							?></div><?
 						}
-						?>
-					</div>
+
+						if (isset($_GET["b24renameform"]))
+						{
+							?><script>
+								BX.ready(function()
+								{
+									if(!!BX.Bitrix24 && !!BX.Bitrix24.renamePortal)
+									{
+										BX.Bitrix24.renamePortal()
+									}
+								});<?
+							?></script><?
+						}
+					}
+					?>
 
 					<div class="header-search">
 					<?
@@ -356,15 +336,14 @@ if ($isBitrix24Cloud)
 								"NUM_CATEGORIES" => "3",
 							);
 						}
-					?>
-					<?
+
 						$APPLICATION->IncludeComponent(
 							"bitrix:search.title",
 							(COption::GetOptionString("intranet", "search_title_old", "") == "Y" ? ".default_old" : ""),
 							array_merge(
 								array(
 									"CHECK_DATES" => "N",
-									"SHOW_OTHERS" => $isBitrix24Cloud ? "N" : "Y",
+									"SHOW_OTHERS" => "N",
 									"TOP_COUNT" => 7,
 									"CATEGORY_0_TITLE" => GetMessage("BITRIX24_SEARCH_EMPLOYEE"),
 									"CATEGORY_0" => array(
@@ -407,25 +386,7 @@ if ($isBitrix24Cloud)
 	</tr>
 	<tr>
 		<td class="bx-layout-cont">
-		<?
-			$leftColumnClass = "";
-			if (CUserOptions::GetOption("intranet", "left_menu_collapsed") === "Y")
-			{
-				$leftColumnClass .= " menu-collapsed-mode";
-			}
-
-			$imBarExists =
-				CModule::IncludeModule("im") &&
-				CBXFeatures::IsFeatureEnabled("WebMessenger") &&
-				!defined("BX_IM_FULLSCREEN")
-			;
-
-			if ($imBarExists)
-			{
-				$leftColumnClass .= " im-bar-mode";
-			}
-		?>
-			<table class="bx-layout-inner-table<?=$leftColumnClass?>">
+			<table class="bx-layout-inner-table">
 				<tr class="bx-layout-inner-top-row">
 					<td class="bx-layout-inner-left" id="layout-left-column">
 						<?$APPLICATION->IncludeComponent(
@@ -465,13 +426,6 @@ if ($isBitrix24Cloud)
 							);
 						}
 						?>
-
-						<div id="feed-up-btn-wrap" class="feed-up-btn-wrap" title="<?=GetMessage("BITRIX24_UP")?>" onclick="B24.goUp();">
-							<div class="feed-up-btn">
-								<span class="feed-up-text"><?=GetMessage("BITRIX24_UP")?></span>
-								<span class="feed-up-btn-icon"></span>
-							</div>
-						</div>
 					</td>
 					<td class="bx-layout-inner-center" id="content-table">
 					<?
@@ -548,24 +502,8 @@ if ($isBitrix24Cloud)
 										);
 										?>
 
-										<div class="pagetitle-wrap <?$APPLICATION->ShowProperty("TitleClass");?>">
-											<div class="pagetitle-inner-container">
-												<div class="pagetitle-menu pagetitle-container pagetitle-last-item-in-a-row" id="pagetitle-menu"><?
-													if ($isBitrix24Cloud):
-														$GLOBALS['INTRANET_TOOLBAR']->Disable();
-													else:
-														$GLOBALS['INTRANET_TOOLBAR']->Enable();
-														$GLOBALS['INTRANET_TOOLBAR']->Show();
-													endif;
-													$APPLICATION->ShowViewContent("pagetitle")
-													?></div>
-												<div class="pagetitle">
-													<span id="pagetitle" class="pagetitle-item"><?$APPLICATION->ShowTitle(false);?></span>
-													<span class="pagetitle-star" id="pagetitle-star"></span>
-												</div>
-												<?$APPLICATION->ShowViewContent("inside_pagetitle")?>
-											</div>
-										</div>
+										<?$APPLICATION->IncludeComponent("bitrix:ui.toolbar", '', []);?>
+
 										<div class="pagetitle-below"><?$APPLICATION->ShowViewContent("below_pagetitle")?></div>
 									</div>
 								</td>

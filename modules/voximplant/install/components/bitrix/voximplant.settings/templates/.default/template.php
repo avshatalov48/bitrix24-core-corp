@@ -5,7 +5,8 @@ use Bitrix\Main\Localization\Loc;
 
 CJSCore::Init(['voximplant.common']);
 
-$APPLICATION->SetPageProperty('BodyClass', 'no-all-paddings no-background');
+$bodyClass = $APPLICATION->getPageProperty('BodyClass');
+$APPLICATION->setPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '').'no-all-paddings no-background');
 
 foreach($arResult['INTERFACE_CHAT_OPTIONS'] as $action)
 {

@@ -214,17 +214,9 @@ class LocalDocumentController extends Internals\Controller
 		$this->sendJsonSuccessResponse();
 	}
 
-	protected function processActionPublishBlank()
+	protected function processActionPublishBlank($type)
 	{
-		$this->checkRequiredGetParams(array(
-			'type'
-		));
-		if($this->errorCollection->hasErrors())
-		{
-			$this->sendJsonErrorResponse();
-		}
-
-		$fileData = new BlankFileData($this->request->getQuery('type'));
+		$fileData = new BlankFileData($type);
 
 		if($this->request->getPost('targetFolderId'))
 		{
@@ -259,11 +251,22 @@ class LocalDocumentController extends Internals\Controller
 			$this->sendJsonErrorResponse();
 		}
 
-		$newFile = $folder->addBlankFile(array(
-			'NAME' => $fileData->getName(),
-			'CREATED_BY' => $this->getUser()->getId(),
-			'MIME_TYPE' => $fileData->getMimeType(),
-		), array(), true);
+		if ($type === 'xlsx')
+		{
+			$newFile = $folder->uploadFile(\CFile::makeFileArray($fileData->getSrc()), [
+				'NAME' => $fileData->getName(),
+				'CREATED_BY' => $this->getUser()->getId(),
+			], [], true);
+		}
+		else
+		{
+			$newFile = $folder->addBlankFile(array(
+				'NAME' => $fileData->getName(),
+				'CREATED_BY' => $this->getUser()->getId(),
+				'MIME_TYPE' => $fileData->getMimeType(),
+			), array(), true);
+		}
+
 
 		if(!$newFile)
 		{

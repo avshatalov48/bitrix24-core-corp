@@ -20,4 +20,5 @@ $MESS["IMOL_NETWORK_PORTAL_TYPE"] = "Тип портала";
 $MESS["IMOL_NETWORK_PORTAL_TYPE_PRODUCTION"] = "Стандартный";
 $MESS["IMOL_NETWORK_PORTAL_TYPE_STAGE"] = "Тест-группа";
 $MESS["IMOL_NETWORK_TARIFF_DIALOG_CLOSE"] = "Текущий диалог был автоматически закрыт из-за изменения уровня поддержки.";
+$MESS["IMOL_NETWORK_UNREGISTER_DIALOG_CLOSE"] = "Текущий диалог был автоматически закрыт из-за удаления чат-бота поддержки.";
 ?>

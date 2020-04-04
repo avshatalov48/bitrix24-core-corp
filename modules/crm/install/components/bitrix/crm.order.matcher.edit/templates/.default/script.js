@@ -411,27 +411,8 @@ var CrmFormEditor = function(params)
 			templateId = this.templates.field.replace('%type%', 'string');
 		}
 
-		var newFieldStringType = null;
-		var newFieldPlaceholder = null;
-		var isPhone = params.is_phone;
-		var isEmail = params.is_email;
-
-		switch (params.entity_field_name)
-		{
-			case 'PHONE':
-				isPhone = true;
-				newFieldStringType = 'phone';
-				newFieldPlaceholder = '111-11-11';
-				break;
-			case 'WEB':
-				newFieldPlaceholder = 'http://';
-				break;
-			case 'EMAIL':
-				isEmail = true;
-				newFieldStringType = 'email';
-				newFieldPlaceholder = 'my@example.com';
-				break;
-		}
+		var isPhone = params.is_phone || params.entity_field_name === 'PHONE';
+		var isEmail = params.is_email || params.entity_field_name === 'EMAIL';
 
 		params.entity_field_name = params.entity_field_name || '';
 
@@ -442,11 +423,11 @@ var CrmFormEditor = function(params)
 			{
 				id: params.id || '',
 				code: params.name || '',
-				type: newFieldStringType || params.type,
+				type: params.type,
 				name: params.code ? params.code : params.name,
 				name_id: params.name ? params.name : params.code,
 				caption: params.caption,
-				placeholder: newFieldPlaceholder || '',
+				placeholder: params.placeholder || '',
 				multiple: params.multiple ? 'Y' : 'N',
 				required: params.required ? 'Y' : 'N',
 				sort: params.sort !== undefined ? params.sort : 1000,
@@ -608,7 +589,7 @@ var CrmFormEditor = function(params)
 		return saleType;
 	};
 
-	this.getCrmFieldType = function(property)
+	this.getCrmFieldType = function(property, currentType)
 	{
 		var crmType;
 
@@ -616,7 +597,14 @@ var CrmFormEditor = function(params)
 		{
 			case 'STRING':
 			case 'NUMBER':
-				crmType = 'string';
+				if (currentType === 'typed_string')
+				{
+					crmType = currentType;
+				}
+				else
+				{
+					crmType = 'string';
+				}
 				break;
 			case 'Y/N':
 				crmType = 'checkbox';
@@ -1102,7 +1090,7 @@ var CrmFormEditor = function(params)
 	this.sortFields = function ()
 	{
 		this.fields.forEach(function(field){
-			field.sortValue = BX.util.array_search(field.node, field.node.parentNode.children);
+			field.sortValue = BX.convert.nodeListToArray(field.node.parentNode.children).indexOf(field.node);
 		});
 
 		this.fields.sort(function(fieldA, fieldB){
@@ -1227,13 +1215,13 @@ var CrmFormEditor = function(params)
 				{
 					this.fieldsDictionary[i] = BX.merge(this.fieldsDictionary[i], {
 						id: property.ID,
-						type: this.getCrmFieldType(property),
+						type: this.getCrmFieldType(property, this.fieldsDictionary[i].type),
 						caption: property.NAME,
 						placeholder: property.DESCRIPTION,
 						sort: field.sort,
 						code: property.CODE,
 						props_group_id: property.PROPS_GROUP_ID,
-						is_adress: property.IS_ADDRESS === 'Y',
+						is_address: property.IS_ADDRESS === 'Y',
 						is_email: property.IS_EMAIL === 'Y',
 						is_location: property.IS_LOCATION === 'Y',
 						is_location4tax: property.IS_LOCATION4TAX === 'Y',
@@ -1670,16 +1658,17 @@ CrmOrderFormEditEntityScheme.prototype =
 			this.hasFieldsContact = hasFieldsContact;
 			this.hasFieldsRequisite = hasFieldsRequisite;
 
-			if(!hasFieldsContact || !hasFieldsCompany)
+			if(hasFieldsContact)
 			{
-				if(hasFieldsContact)
-				{
-					this.setCurrentPayerEntityType('CONTACT');
-				}
-				else if(hasFieldsCompany)
-				{
-					this.setCurrentPayerEntityType('COMPANY');
-				}
+				this.setCurrentPayerEntityType('CONTACT');
+			}
+			else if(hasFieldsCompany)
+			{
+				this.setCurrentPayerEntityType('COMPANY');
+			}
+			else
+			{
+				this.setCurrentPayerEntityType(null);
 			}
 		},
 

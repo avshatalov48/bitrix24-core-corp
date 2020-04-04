@@ -1,0 +1,4 @@
+<?
+return [
+	"chat/background/tasks",
+];

@@ -9,7 +9,10 @@ Loc::loadMessages(__FILE__);
 
 class DealRecurringController extends DealController
 {
-	/** @ToDo DealRecurringController */
+	//region Singleton
+	/** @var DealRecurringController|null */
+	protected static $instance = null;
+
 	const CONTROLLER_NAME = __CLASS__;
 	const PUSH_COMMAND_DEAL_ADD = "timeline_deal_add";
 	const PUSH_COMMAND_DEAL_MODIFY = "timeline_activity_add";
@@ -35,7 +38,7 @@ class DealRecurringController extends DealController
 		}
 
 		$fields = isset($params['FIELDS']) && is_array($params['FIELDS']) ? $params['FIELDS'] : null;
-		if(!is_array($fields))
+		if(!is_array($fields) || empty($fields))
 		{
 			$fields = self::getEntity($ownerID);
 		}
@@ -110,73 +113,74 @@ class DealRecurringController extends DealController
 		}
 	}
 
-	public function onExpose($ownerID, array $params)
+	public function onExpose($newDealID, array $params)
 	{
-		if(!is_int($ownerID))
+		if(!is_int($newDealID))
 		{
-			$ownerID = (int)$ownerID;
+			$newDealID = (int)$newDealID;
 		}
-		if($ownerID <= 0)
+		if($newDealID <= 0)
 		{
 			throw new Main\ArgumentException('Owner ID must be greater than zero.', 'ownerID');
 		}
 
-		$fields = isset($params['FIELDS']) && is_array($params['FIELDS']) ? $params['FIELDS'] : null;
-		if(!is_array($fields))
+		$newDealFields = isset($params['FIELDS']) && is_array($params['FIELDS']) ? $params['FIELDS'] : null;
+		if(!is_array($newDealFields))
 		{
-			$fields = self::getEntity($ownerID);
+			$newDealFields = self::getEntity($newDealID);
 		}
-		if(!is_array($fields))
+		if(!is_array($newDealFields))
 		{
 			return;
 		}
 
+		$recurringDealID = $newDealFields['RECURRING_ID'];
 		$settings = array();
 
-		if(isset($fields['RECURRING_ID']) && (int)$fields['RECURRING_ID'] > 0)
+		if(isset($recurringDealID) && (int)$recurringDealID > 0)
 		{
 			$settings['BASE'] = array(
 				'ENTITY_TYPE_ID' => \CCrmOwnerType::DealRecurring,
-				'ENTITY_ID' => (int)$fields['RECURRING_ID']
+				'ENTITY_ID' => (int)$recurringDealID
 			);
 		}
 
 		$historyEntryID = CreationEntry::create(
 			array(
 				'ENTITY_TYPE_ID' => \CCrmOwnerType::Deal,
-				'ENTITY_ID' => $ownerID,
-				'AUTHOR_ID' => self::resolveCreatorID($fields),
+				'ENTITY_ID' => $newDealID,
+				'AUTHOR_ID' => self::resolveCreatorID($newDealFields),
 				'SETTINGS' => $settings,
 				'BINDINGS' => array(
 					array(
 						'ENTITY_TYPE_ID' => \CCrmOwnerType::Deal,
-						'ENTITY_ID' => $ownerID
+						'ENTITY_ID' => $newDealID
 					)
 				)
 			)
 		);
 
-		$this->pushHistory($historyEntryID, $ownerID, self::PUSH_COMMAND_DEAL_ADD);
+		$this->pushHistory($historyEntryID, $newDealID, self::PUSH_COMMAND_DEAL_ADD);
 
-		if ((int)$fields['RECURRING_ID'] > 0)
+		if ((int)$recurringDealID > 0)
 		{
 			$historyEntryID = ConversionEntry::create(
 				array(
 					'ENTITY_TYPE_ID' => \CCrmOwnerType::DealRecurring,
-					'ENTITY_ID' => (int)$fields['RECURRING_ID'],
-					'AUTHOR_ID' => self::resolveCreatorID($fields),
+					'ENTITY_ID' => (int)$recurringDealID,
+					'AUTHOR_ID' => self::resolveCreatorID($newDealFields),
 					'SETTINGS' => array(
 						'ENTITIES' => array(
 							array(
 								'ENTITY_TYPE_ID' => \CCrmOwnerType::Deal,
-								'ENTITY_ID' => $ownerID
+								'ENTITY_ID' => $newDealID
 							)
 						)
 					)
 				)
 			);
 
-			$this->pushHistory($historyEntryID, (int)$fields['RECURRING_ID'], self::PUSH_COMMAND_DEAL_MODIFY);
+			$this->pushHistory($historyEntryID, (int)$recurringDealID, self::PUSH_COMMAND_DEAL_MODIFY);
 		}
 	}
 

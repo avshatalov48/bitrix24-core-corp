@@ -3,16 +3,20 @@
 
 $this->SetViewTarget("above_pagetitle");
 
-$APPLICATION->IncludeComponent(
-	"bitrix:main.interface.buttons",
-	"",
-	array(
-		"ID" => $arResult["MENU_ID"],
-		"ITEMS" => $arResult["MENU_ITEMS"],
-	)
-);
+$isSlider = ($_REQUEST['IFRAME'] == 'Y' && $_REQUEST['IFRAME_TYPE'] == 'SIDE_SLIDER');
+if (!$isSlider)
+{
+	$APPLICATION->IncludeComponent(
+		"bitrix:main.interface.buttons",
+		"",
+		array(
+			"ID" => $arResult["MENU_ID"],
+			"ITEMS" => $arResult["MENU_ITEMS"],
+		)
+	);
+}
 
-$this->EndViewTarget("sidebar");
+$this->EndViewTarget();
 
 if ($arResult["CONNECT_PAGE"])
 {

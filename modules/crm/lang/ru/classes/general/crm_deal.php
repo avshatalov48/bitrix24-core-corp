@@ -85,10 +85,11 @@ $MESS["CRM_DEAL_FIELD_UTM_CONTENT"] = "Содержание кампании";
 $MESS["CRM_DEAL_FIELD_UTM_MEDIUM"] = "Тип трафика";
 $MESS["CRM_DEAL_FIELD_UTM_SOURCE"] = "Рекламная система";
 $MESS["CRM_DEAL_FIELD_UTM_TERM"] = "Условие поиска кампании";
-$MESS["CRM_DEAL_DEFAULT_TITLE"] = "Сделка #";
+$MESS["CRM_DEAL_DEFAULT_TITLE_TEMPLATE"] = "Сделка #%NUMBER%";
 $MESS["CRM_DEAL_FIELD_COMPARE"] = "Изменено поле \"#FIELD_NAME#\"";
 $MESS["CRM_PERMISSION_USER_NOT_DEFINED"] = "Не удалось выполнить проверку прав. Не задан пользователь.";
 $MESS["CRM_DEAL_FIELD_OBSERVER"] = "Наблюдатели";
 $MESS["CRM_DEAL_FIELD_OBSERVER_IDS"] = "Наблюдатели";
 $MESS["CRM_DEAL_FIELD_UTM"] = "UTM-метки";
+$MESS["CRM_FIELD_COMPARE_SOURCE_ID"] = "Изменено поле \"Источник\"";
 ?>

@@ -45,6 +45,11 @@ class BizprocAutomationComponent extends \CBitrixComponent
 		return isset($this->arParams['DOCUMENT_CATEGORY_ID']) ? (int)$this->arParams['DOCUMENT_CATEGORY_ID'] : 0;
 	}
 
+	protected function isApiMode()
+	{
+		return (isset($this->arParams['API_MODE']) && $this->arParams['API_MODE'] === 'Y');
+	}
+
 	protected function getTemplates(array $statuses)
 	{
 		$relation = array();
@@ -143,10 +148,16 @@ class BizprocAutomationComponent extends \CBitrixComponent
 
 		$documentType = $this->getDocumentType();
 		$documentCategoryId = $this->getDocumentCategoryId();
-		$runtime = CBPRuntime::GetRuntime();
-		$runtime->StartRuntime();
+		$documentService = CBPRuntime::GetRuntime(true)->getDocumentService();
 
-		$documentService = $runtime->GetService('DocumentService');
+		if ($this->isApiMode())
+		{
+			$this->arResult['DOCUMENT_FIELDS'] = $this->getDocumentFields();
+			$this->arResult['DOCUMENT_SIGNED'] = static::signDocument($documentType, $documentCategoryId, null);
+			$this->arResult['DOCUMENT_NAME'] = $documentService->getEntityName($documentType[0], $documentType[1]);
+			$this->includeComponentTemplate('api');
+			return;
+		}
 
 		/** @var \Bitrix\Bizproc\Automation\Target\BaseTarget $target */
 		$target = $documentService->createAutomationTarget($documentType);
@@ -277,7 +288,6 @@ class BizprocAutomationComponent extends \CBitrixComponent
 
 			'WORKFLOW_EDIT_URL' => $this->getWorkflowEditUrl(),
 			'STATUSES_EDIT_URL' => $this->getStatusesEditUrl(),
-			'B24_TARIF_ZONE' => SITE_ID,
 			'USER_OPTIONS' => array(
 				'defaults' => \CUserOptions::GetOption('bizproc.automation', 'defaults', array()),
 				'save_state_checkboxes' => \CUserOptions::GetOption('bizproc.automation', 'save_state_checkboxes', array())
@@ -285,11 +295,6 @@ class BizprocAutomationComponent extends \CBitrixComponent
 			'FRAME_MODE' => $this->request->get('IFRAME') === 'Y' && $this->request->get('IFRAME_TYPE') === 'SIDE_SLIDER',
 			'USE_DISK' => Main\Loader::includeModule('disk')
 		);
-
-		if (IsModuleInstalled('bitrix24') && CModule::IncludeModule('bitrix24'))
-		{
-			$this->arResult['B24_TARIF_ZONE'] = \CBitrix24::getLicensePrefix();
-		}
 
 		$this->includeComponentTemplate();
 	}

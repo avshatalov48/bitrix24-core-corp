@@ -1,4 +1,4 @@
 <?
 return [
-	"db", "rest", "user/profile"
+	"user/list", "user/profile"
 ];

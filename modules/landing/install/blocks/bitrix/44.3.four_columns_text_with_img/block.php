@@ -1,5 +1,5 @@
 <section class="landing-block w-100 no-gutters">
-	<div class="js-carousel u-carousel-v5"
+	<div class="js-carousel u-carousel-v5 row"
 		 data-infinite="true"
 		 data-slides-scroll="true"
 		 data-slides-show="4"
@@ -26,11 +26,18 @@
                "settings": {
                  "slidesToShow": 1
                }
-             }]'>
+             }]'
+		 data-init-classes-exclude='[{
+				 "selector": ".landing-block-node-card",
+				 "class": "col-12 col-sm-4 col-lg-3"
+			   }, {
+				 "selector": ".js-carousel",
+				 "class": "row"
+			   }]'>
 
-		<div class="landing-block-node-card js-slide g-theme-travel-bg-black-v1 g-bg-primary--hover ">
+		<div class="landing-block-node-card js-slide g-theme-travel-bg-black-v1 g-bg-primary--hover col-12 col-sm-4 col-lg-3">
 			<article
-					class="u-shadow-v26 g-parent">
+					class="w-100 u-shadow-v26 g-parent">
 				<img class="landing-block-node-card-img img-fluid w-100"
 					 src="https://cdn.bitrix24.site/bitrix/images/landing/business/570x436/img5.jpg" alt="">
 
@@ -50,9 +57,9 @@
 			</article>
 		</div>
 
-		<div class="landing-block-node-card js-slide g-theme-travel-bg-black-v1 g-bg-primary--hover ">
+		<div class="landing-block-node-card js-slide g-theme-travel-bg-black-v1 g-bg-primary--hover col-12 col-sm-4 col-lg-3">
 			<article
-					class="u-shadow-v26 g-parent">
+					class="w-100 u-shadow-v26 g-parent">
 				<img class="landing-block-node-card-img img-fluid w-100"
 					 src="https://cdn.bitrix24.site/bitrix/images/landing/business/570x436/img6.jpg" alt="">
 
@@ -72,9 +79,9 @@
 			</article>
 		</div>
 
-		<div class="landing-block-node-card js-slide g-theme-travel-bg-black-v1 g-bg-primary--hover ">
+		<div class="landing-block-node-card js-slide g-theme-travel-bg-black-v1 g-bg-primary--hover col-12 col-sm-4 col-lg-3">
 			<article
-					class="u-shadow-v26 g-parent">
+					class="w-100 u-shadow-v26 g-parent">
 				<img class="landing-block-node-card-img img-fluid w-100"
 					 src="https://cdn.bitrix24.site/bitrix/images/landing/business/570x436/img7.jpg" alt="">
 
@@ -94,9 +101,9 @@
 			</article>
 		</div>
 
-		<div class="landing-block-node-card js-slide g-theme-travel-bg-black-v1 g-bg-primary--hover ">
+		<div class="landing-block-node-card js-slide g-theme-travel-bg-black-v1 g-bg-primary--hover col-12 col-sm-4 col-lg-3">
 			<article
-					class="u-shadow-v26 g-parent">
+					class="w-100 u-shadow-v26 g-parent">
 				<img class="landing-block-node-card-img img-fluid w-100"
 					 src="https://cdn.bitrix24.site/bitrix/images/landing/business/570x436/img8.jpg" alt="">
 
@@ -116,9 +123,9 @@
 			</article>
 		</div>
 
-		<div class="landing-block-node-card js-slide g-theme-travel-bg-black-v1 g-bg-primary--hover ">
+		<div class="landing-block-node-card js-slide g-theme-travel-bg-black-v1 g-bg-primary--hover col-12 col-sm-4 col-lg-3">
 			<article
-					class="u-shadow-v26 g-parent">
+					class="w-100 u-shadow-v26 g-parent">
 				<img class="landing-block-node-card-img img-fluid w-100"
 					 src="https://cdn.bitrix24.site/bitrix/images/landing/business/570x436/img5.jpg" alt="">
 
@@ -138,9 +145,9 @@
 			</article>
 		</div>
 
-		<div class="landing-block-node-card js-slide g-theme-travel-bg-black-v1 g-bg-primary--hover ">
+		<div class="landing-block-node-card js-slide g-theme-travel-bg-black-v1 g-bg-primary--hover col-12 col-sm-4 col-lg-3">
 			<article
-					class="u-shadow-v26 g-parent">
+					class="w-100 u-shadow-v26 g-parent">
 				<img class="landing-block-node-card-img img-fluid w-100"
 					 src="https://cdn.bitrix24.site/bitrix/images/landing/business/570x436/img6.jpg" alt="">
 

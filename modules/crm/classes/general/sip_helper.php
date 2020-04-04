@@ -152,7 +152,7 @@ class CCrmSipHelper
 					$deals = array();
 					$dbDeal = CCrmDeal::GetListEx(
 						array('BEGINDATE' => 'ASC'),
-						array('=CONTACT_ID' => $entityID, 'CLOSED' => 'N', 'CHECK_PERMISSIONS' => $isAdmin ? 'N' : 'Y'),
+						array('=ASSOCIATED_CONTACT_ID' => $entityID, 'CLOSED' => 'N', 'CHECK_PERMISSIONS' => $isAdmin ? 'N' : 'Y'),
 						false,
 						array('nTopCount' => 2),
 						array('ID', 'TITLE', 'STAGE_ID', 'OPPORTUNITY', 'CURRENCY_ID', 'CATEGORY_ID'),

@@ -60,7 +60,7 @@ else
 
 				<div class="login-item">
 					<span class="login-item-alignment"></span><span class="login-label"><span class="starrequired">*</span><?=GetMessage("AUTH_PASSWORD_REQ")?></span>
-					<input type="password" name="USER_PASSWORD" maxlength="50" value="<?=$arResult["USER_PASSWORD"]?>" class="login-inp" />
+					<input type="password" name="USER_PASSWORD" maxlength="255" value="<?=$arResult["USER_PASSWORD"]?>" class="login-inp" />
 					<?if($arResult["SECURE_AUTH"]):?>
 						<span class="bx-auth-secure" id="bx_auth_secure" title="<?echo GetMessage("AUTH_SECURE_NOTE")?>" style="display:none">
 							<div class="bx-auth-secure-icon"></div>
@@ -78,7 +78,7 @@ else
 
 				<div class="login-item">
 					<span class="login-item-alignment"></span><span class="login-label"><span class="starrequired">*</span><?=GetMessage("AUTH_CONFIRM")?></span>
-					<input type="password" name="USER_CONFIRM_PASSWORD" maxlength="50" value="<?=$arResult["USER_CONFIRM_PASSWORD"]?>" class="login-inp" />
+					<input type="password" name="USER_CONFIRM_PASSWORD" maxlength="255" value="<?=$arResult["USER_CONFIRM_PASSWORD"]?>" class="login-inp" />
 				</div>
 
 				<div class="login-item">

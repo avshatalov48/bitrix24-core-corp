@@ -70,15 +70,15 @@ class ContactDataProvider extends EntityDataProvider
 			),
 			'ASSIGNED_BY_ID' => $this->createField(
 				'ASSIGNED_BY_ID',
-				array('type' => 'custom_entity', 'default' => true, 'partial' => true)
+				array('type' => 'dest_selector', 'default' => true, 'partial' => true)
 			),
 			'CREATED_BY_ID' => $this->createField(
 				'CREATED_BY_ID',
-				array('type' => 'custom_entity', 'partial' => true)
+				array('type' => 'dest_selector', 'partial' => true)
 			),
 			'MODIFY_BY_ID' => $this->createField(
 				'MODIFY_BY_ID',
-				array('type' => 'custom_entity', 'partial' => true)
+				array('type' => 'dest_selector', 'partial' => true)
 			),
 			'SOURCE_ID' => $this->createField(
 				'SOURCE_ID',
@@ -98,7 +98,7 @@ class ContactDataProvider extends EntityDataProvider
 			),
 			'COMPANY_ID' => $this->createField(
 				'COMPANY_ID',
-				array('type' => 'custom_entity', 'default' => true, 'partial' => true)
+				array('type' => 'dest_selector', 'default' => true, 'partial' => true)
 			),
 			'COMPANY_TITLE' => $this->createField('COMPANY_TITLE'),
 			'POST' => $this->createField('POST'),
@@ -202,30 +202,54 @@ class ContactDataProvider extends EntityDataProvider
 		elseif($fieldID === 'ASSIGNED_BY_ID')
 		{
 			return array(
-				'params' => array('multiple' => 'Y'),
-				'selector' => array(
-					'TYPE' => 'user',
-					'DATA' => array('ID' => 'assigned_by', 'FIELD_ID' => 'ASSIGNED_BY_ID')
+				'params' => array(
+					'apiVersion' => 3,
+					'context' => 'CRM_CONTACT_FILTER_ASSIGNED_BY_ID',
+					'multiple' => 'Y',
+					'contextCode' => 'U',
+					'enableAll' => 'N',
+					'enableSonetgroups' => 'N',
+					'allowEmailInvitation' => 'N',
+					'allowSearchEmailUsers' => 'N',
+					'departmentSelectDisable' => 'Y',
+					'isNumeric' => 'Y',
+					'prefix' => 'U'
 				)
 			);
 		}
 		elseif($fieldID === 'CREATED_BY_ID')
 		{
 			return array(
-				'params' => array('multiple' => 'Y'),
-				'selector' => array(
-					'TYPE' => 'user',
-					'DATA' => array('ID' => 'created_by', 'FIELD_ID' => 'CREATED_BY_ID')
+				'params' => array(
+					'apiVersion' => 3,
+					'context' => 'CRM_CONTACT_FILTER_CREATED_BY_ID',
+					'multiple' => 'Y',
+					'contextCode' => 'U',
+					'enableAll' => 'N',
+					'enableSonetgroups' => 'N',
+					'allowEmailInvitation' => 'N',
+					'allowSearchEmailUsers' => 'N',
+					'departmentSelectDisable' => 'Y',
+					'isNumeric' => 'Y',
+					'prefix' => 'U'
 				)
 			);
 		}
 		elseif($fieldID === 'MODIFY_BY_ID')
 		{
 			return array(
-				'params' => array('multiple' => 'Y'),
-				'selector' => array(
-					'TYPE' => 'user',
-					'DATA' => array('ID' => 'modify_by', 'FIELD_ID' => 'MODIFY_BY_ID')
+				'params' => array(
+					'apiVersion' => 3,
+					'context' => 'CRM_CONTACT_FILTER_MODIFY_BY_ID',
+					'multiple' => 'Y',
+					'contextCode' => 'U',
+					'enableAll' => 'N',
+					'enableSonetgroups' => 'N',
+					'allowEmailInvitation' => 'N',
+					'allowSearchEmailUsers' => 'N',
+					'departmentSelectDisable' => 'Y',
+					'isNumeric' => 'Y',
+					'prefix' => 'U'
 				)
 			);
 		}
@@ -239,13 +263,21 @@ class ContactDataProvider extends EntityDataProvider
 		elseif($fieldID === 'COMPANY_ID')
 		{
 			return array(
-				'selector' => array(
-					'TYPE' => 'crm_entity',
-					'DATA' => array(
-						'ID' => 'company',
-						'FIELD_ID' => 'COMPANY_ID',
-						'ENTITY_TYPE_NAMES' => array(\CCrmOwnerType::CompanyName)
-					)
+				'params' => array(
+					'apiVersion' => 3,
+					'context' => 'CRM_CONTACT_FILTER_COMPANY_ID',
+					'contextCode' => 'CRM',
+					'useClientDatabase' => 'N',
+					'enableAll' => 'N',
+					'enableDepartments' => 'N',
+					'enableUsers' => 'N',
+					'enableSonetgroups' => 'N',
+					'allowEmailInvitation' => 'N',
+					'allowSearchEmailUsers' => 'N',
+					'departmentSelectDisable' => 'Y',
+					'enableCrm' => 'Y',
+					'enableCrmCompanies' => 'Y',
+					'convertJson' => 'Y'
 				)
 			);
 		}

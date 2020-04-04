@@ -2,14 +2,13 @@
 
 namespace Bitrix\Transformer;
 
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
 use Bitrix\Main\Error;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Transformer\Entity\CommandTable;
-use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\ArgumentTypeException;
-use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\InvalidOperationException;
 use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Main\Loader;
@@ -26,6 +25,24 @@ class Command
 	const STATUS_SUCCESS = 400;
 	const STATUS_ERROR = 1000;
 
+	const ERROR_CONNECTION = 50;
+	const ERROR_CONTROLLER_DOWNLOAD_STATUS = 100;
+	const ERROR_CONTROLLER_DOWNLOAD_TYPE = 101;
+	const ERROR_CONTROLLER_DOWNLOAD_SIZE = 102;
+	const ERROR_CONTROLLER_BANNED = 103;
+	const ERROR_CONTROLLER_QUEUE_CANCELED_BY_EVENT = 150;
+	const ERROR_CONTROLLER_QUEUE_ADD_FAIL = 151;
+	const ERROR_CONTROLLER_STATUS_AFTER_DOWNLOAD = 200;
+	const ERROR_CONTROLLER_DOWNLOAD = 201;
+	const ERROR_CONTROLLER_AFTER_DOWNLOAD_SIZE = 202;
+	const ERROR_CONTROLLER_UPLOAD = 203;
+	const ERROR_CONTROLLER_TRANSFORMATION = 300;
+	const ERROR_CONTROLLER_TRANSFORMATION_COMMAND = 301;
+	const ERROR_CONTROLLER_COMMAND_NOT_FOUND = 302;
+	const ERROR_CONTROLLER_COMMAND_ERROR = 303;
+	const ERROR_CONTROLLER_UNKNOWN_ERROR = 250;
+	const ERROR_CALLBACK = 400;
+
 	protected $command;
 	protected $params;
 	protected $status;
@@ -35,6 +52,8 @@ class Command
 	protected $id;
 	protected $file;
 	protected $time;
+	protected $error;
+	protected $errorCode;
 
 	/**
 	 * Command constructor.
@@ -47,7 +66,7 @@ class Command
 	 * @param string $guid Unique key of the command.
 	 * @throws ArgumentNullException
 	 */
-	public function __construct($command, $params, $module, $callback, $status = self::STATUS_CREATE, $id = '', $guid = '', $time = null)
+	public function __construct($command, $params, $module, $callback, $status = self::STATUS_CREATE, $id = '', $guid = '', $time = null, $error = '', $errorCode = 0)
 	{
 		if(empty($command))
 		{
@@ -65,10 +84,12 @@ class Command
 		$this->params = $params;
 		$this->module = $module;
 		$this->callback = $callback;
-		$this->status = $status;
+		$this->status = intval($status);
 		$this->id = $id;
 		$this->guid = $guid;
 		$this->time = $time;
+		$this->error = $error;
+		$this->errorCode = $errorCode;
 		if(isset($params['file']))
 		{
 			$this->file = $params['file'];
@@ -88,10 +109,8 @@ class Command
 	 *
 	 * @param Http $http Class to send command.
 	 * @return Result
-	 * @throws NotSupportedException
 	 * @throws ArgumentNullException
 	 * @throws ArgumentTypeException
-	 * @throws NotImplementedException
 	 * @throws InvalidOperationException
 	 */
 	public function send(Http $http)
@@ -113,11 +132,7 @@ class Command
 		}
 		else
 		{
-			$result = $this->processError($response['result']['msg']);
-			if($response['result']['code'] == 'WRONG_COMMAND')
-			{
-				throw new NotSupportedException($response['result']['msg']);
-			}
+			$result = $this->processError($response['result']['msg'], $response['result']['code']);
 		}
 		return $result;
 	}
@@ -190,11 +205,13 @@ class Command
 	 *
 	 * @param int $status CommandTable_STATUS.
 	 * @param string $error Error to save to DB.
+	 * @param int $errorCode
 	 * @return \Bitrix\Main\Entity\UpdateResult
 	 * @throws ArgumentOutOfRangeException
 	 * @throws InvalidOperationException
+	 * @throws \Bitrix\Main\ObjectException
 	 */
-	public function updateStatus($status, $error = '')
+	public function updateStatus($status, $error = '', $errorCode = 0)
 	{
 		$status = intval($status);
 		if(!self::getStatusText($status))
@@ -216,6 +233,11 @@ class Command
 		{
 			$data['ERROR'] = $error;
 		}
+		if(!empty($errorCode))
+		{
+			$errorCode = intval($errorCode);
+			$data['ERROR_CODE'] = $errorCode;
+		}
 		return CommandTable::update($this->id, $data);
 	}
 
@@ -233,16 +255,18 @@ class Command
 	 * Write error message to log, update status of the command, call callback with error status.
 	 *
 	 * @param string $error Error text.
+	 * @param int $errorCode
 	 * @return Result
+	 * @throws \Bitrix\Main\ObjectException
 	 */
-	protected function processError($error)
+	protected function processError($error, $errorCode = 0)
 	{
 		$result = new Result();
 		$result->addError(new Error($error));
 		Log::write($error);
 		if($this->id > 0)
 		{
-			$this->updateStatus(self::STATUS_ERROR, $error);
+			$this->updateStatus(self::STATUS_ERROR, $error, $errorCode);
 		}
 		if(!empty($this->callback))
 		{
@@ -287,7 +311,9 @@ class Command
 			throw new InvalidOperationException('command should not be saved before save');
 		}
 		$this->guid = self::generateGuid();
-		$this->time = new DateTime();
+		$time = new DateTime();
+		$time->setTime($time->format('H'), $time->format('i'), $time->format('s'));
+		$this->time = $time;
 		$commandItem = array(
 			'GUID' => $this->guid,
 			'STATUS' => $this->status,
@@ -360,7 +386,7 @@ class Command
 		$commandItem['MODULE'] = unserialize(base64_decode($commandItem['MODULE']));
 		$commandItem['PARAMS'] = unserialize(base64_decode($commandItem['PARAMS']));
 		$commandItem['ID'] = intval($commandItem['ID']);
-		return new self($commandItem['COMMAND'], $commandItem['PARAMS'], $commandItem['MODULE'], $commandItem['CALLBACK'], $commandItem['STATUS'], $commandItem['ID'], $commandItem['GUID'], $commandItem['UPDATE_TIME']);
+		return new self($commandItem['COMMAND'], $commandItem['PARAMS'], $commandItem['MODULE'], $commandItem['CALLBACK'], $commandItem['STATUS'], $commandItem['ID'], $commandItem['GUID'], $commandItem['UPDATE_TIME'], $commandItem['ERROR'], $commandItem['ERROR_CODE']);
 	}
 
 	/**
@@ -404,5 +430,58 @@ class Command
 	public function getParams()
 	{
 		return $this->params;
+	}
+
+	/**
+	 * @return Error|null
+	 */
+	public function getError()
+	{
+		if($this->status === static::STATUS_ERROR)
+		{
+			$message = null;
+			if($this->errorCode)
+			{
+				$message = $this->getErrorMessages()[$this->errorCode];
+			}
+			if(!$message)
+			{
+				$message = $this->error;
+			}
+			if(!$message)
+			{
+				$message = $this->getErrorMessages()[static::ERROR_CONTROLLER_UNKNOWN_ERROR];
+			}
+
+			return new Error($message, $this->errorCode, ['originalMessage' => $this->error]);
+		}
+
+		return null;
+	}
+
+	/**
+	 * @return array
+	 */
+	protected function getErrorMessages()
+	{
+		return [
+			static::ERROR_CONNECTION => Loc::getMessage('TRANSFORMER_COMMAND_ERROR_CONNECTION'),
+			static::ERROR_CONTROLLER_DOWNLOAD_STATUS => Loc::getMessage('TRANSFORMER_COMMAND_ERROR_DOWNLOAD_STATUS'),
+			static::ERROR_CONTROLLER_DOWNLOAD_TYPE => Loc::getMessage('TRANSFORMER_COMMAND_ERROR_DOWNLOAD_TYPE'),
+			static::ERROR_CONTROLLER_DOWNLOAD_SIZE => Loc::getMessage('TRANSFORMER_COMMAND_ERROR_DOWNLOAD_SIZE'),
+			static::ERROR_CONTROLLER_BANNED => Loc::getMessage('TRANSFORMER_COMMAND_ERROR_BANNED'),
+			static::ERROR_CONTROLLER_QUEUE_CANCELED_BY_EVENT => Loc::getMessage('TRANSFORMER_COMMAND_ERROR_QUEUE_CANCELED_BY_EVENT'),
+			static::ERROR_CONTROLLER_QUEUE_ADD_FAIL => Loc::getMessage('TRANSFORMER_COMMAND_ERROR_QUEUE_ADD_FAIL'),
+			static::ERROR_CONTROLLER_STATUS_AFTER_DOWNLOAD => Loc::getMessage('TRANSFORMER_COMMAND_ERROR_DOWNLOAD'),
+			static::ERROR_CONTROLLER_DOWNLOAD => Loc::getMessage('TRANSFORMER_COMMAND_ERROR_DOWNLOAD'),
+			static::ERROR_CONTROLLER_AFTER_DOWNLOAD_SIZE => Loc::getMessage('TRANSFORMER_COMMAND_ERROR_DOWNLOAD_SIZE'),
+			static::ERROR_CONTROLLER_UPLOAD => Loc::getMessage('TRANSFORMER_COMMAND_ERROR_UPLOAD'),
+			static::ERROR_CONTROLLER_TRANSFORMATION => Loc::getMessage('TRANSFORMER_COMMAND_ERROR_TRANSFORMATION'),
+			static::ERROR_CONTROLLER_TRANSFORMATION_COMMAND => Loc::getMessage('TRANSFORMER_COMMAND_ERROR_TRANSFORMATION'),
+			static::ERROR_CONTROLLER_COMMAND_NOT_FOUND => Loc::getMessage('TRANSFORMER_COMMAND_ERROR_COMMAND_NOT_FOUND'),
+			static::ERROR_CONTROLLER_COMMAND_ERROR => Loc::getMessage('TRANSFORMER_COMMAND_ERROR_COMMAND_ERROR'),
+			static::ERROR_CONTROLLER_UNKNOWN_ERROR => Loc::getMessage('TRANSFORMER_COMMAND_ERROR_UNKNOWN'),
+			static::ERROR_CALLBACK => Loc::getMessage('TRANSFORMER_COMMAND_ERROR_CALLBACK'),
+		];
 	}
 }

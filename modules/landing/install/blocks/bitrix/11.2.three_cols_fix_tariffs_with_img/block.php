@@ -9,7 +9,7 @@
 			</div>
 		</div>
 
-		<div class="row">
+		<div class="row landing-block-inner">
 			<div class="landing-block-node-card col-md-6 col-lg-4 g-mb-30 g-mb-0--md">
 				<!-- Article -->
 				<article
@@ -21,7 +21,7 @@
 
 					<!-- Article Content -->
 					<header class="g-letter-spacing-3 g-pos-rel g-px-40 g-mb-30">
-						<span class="u-icon-v3 u-icon-size--xl g-rounded-50x g-font-size-26 g-bg-gray-dark-v1 g-color-white g-pull-50x-up">
+						<span class="landing-block-node-card-icon-container u-icon-v3 u-icon-size--xl g-rounded-50x g-font-size-26 g-bg-gray-dark-v1 g-color-white g-pull-50x-up">
 							<i class="landing-block-node-card-icon icon-camera"></i>
 						</span>
 						<h4 class="landing-block-node-card-title h6 g-color-white g-mt-minus-25 g-mb-10">
@@ -31,10 +31,10 @@
 						</div>
 					</header>
 
-					<div class="landing-block-node-card-price g-font-weight-700 d-block g-color-white g-font-size-26 g-letter-spacing-5 g-mb-20">
+					<div class="landing-block-node-card-price g-font-weight-700 d-block g-color-white g-font-size-26 g-letter-spacing-5">
 						$100.00
 					</div>
-					<ul class="landing-block-node-card-price-list list-unstyled g-letter-spacing-0_5 g-font-size-12 mb-0">
+					<ul class="landing-block-node-card-price-list list-unstyled g-letter-spacing-0_5 g-font-size-12 mb-0 g-pt-20">
 						<li class="g-theme-photography-bg-gray-dark-v3 g-py-10 g-px-30"><b>10%</b> In hac habitasse
 							platea
 						</li>
@@ -69,7 +69,7 @@
 
 					<!-- Article Content -->
 					<header class="g-letter-spacing-3 g-pos-rel g-px-40 g-mb-30">
-						<span class="u-icon-v3 u-icon-size--xl g-rounded-50x g-font-size-26 g-bg-gray-dark-v1 g-color-white g-pull-50x-up">
+						<span class="landing-block-node-card-icon-container u-icon-v3 u-icon-size--xl g-rounded-50x g-font-size-26 g-bg-gray-dark-v1 g-color-white g-pull-50x-up">
 							<i class="landing-block-node-card-icon icon-film"></i>
 						</span>
 						<h4 class="landing-block-node-card-title h6 g-color-white g-mt-minus-25 g-mb-10">Video</h4>
@@ -78,10 +78,10 @@
 						</div>
 					</header>
 
-					<div class="landing-block-node-card-price g-font-weight-700 d-block g-color-white g-font-size-26 g-letter-spacing-5 g-mb-20">
+					<div class="landing-block-node-card-price g-font-weight-700 d-block g-color-white g-font-size-26 g-letter-spacing-5">
 						$150.00
 					</div>
-					<ul class="landing-block-node-card-price-list list-unstyled g-letter-spacing-0_5 g-font-size-12 mb-0">
+					<ul class="landing-block-node-card-price-list list-unstyled g-letter-spacing-0_5 g-font-size-12 mb-0 g-pt-20">
 						<li class="g-theme-photography-bg-gray-dark-v3 g-py-10 g-px-30"><b>10%</b> In hac habitasse
 							platea
 						</li>
@@ -116,7 +116,7 @@
 
 					<!-- Article Content -->
 					<header class="g-letter-spacing-3 g-pos-rel g-px-40 g-mb-30">
-						<span class="u-icon-v3 u-icon-size--xl g-rounded-50x g-font-size-26 g-bg-gray-dark-v1 g-color-white g-pull-50x-up">
+						<span class="landing-block-node-card-icon-container u-icon-v3 u-icon-size--xl g-rounded-50x g-font-size-26 g-bg-gray-dark-v1 g-color-white g-pull-50x-up">
 							<i class="landing-block-node-card-icon icon-star"></i>
 						</span>
 						<h4 class="landing-block-node-card-title h6 g-color-white g-mt-minus-25 g-mb-10">Photo and
@@ -126,10 +126,10 @@
 						</div>
 					</header>
 
-					<div class="landing-block-node-card-price g-font-weight-700 d-block g-color-white g-font-size-26 g-letter-spacing-5 g-mb-20">
+					<div class="landing-block-node-card-price g-font-weight-700 d-block g-color-white g-font-size-26 g-letter-spacing-5">
 						$200.00
 					</div>
-					<ul class="landing-block-node-card-price-list list-unstyled g-letter-spacing-0_5 g-font-size-12 mb-0">
+					<ul class="landing-block-node-card-price-list list-unstyled g-letter-spacing-0_5 g-font-size-12 mb-0 g-pt-20">
 						<li class="g-theme-photography-bg-gray-dark-v3 g-py-10 g-px-30"><b>10%</b> In hac habitasse
 							platea
 						</li>

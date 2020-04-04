@@ -5,7 +5,9 @@ use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\ObjectException;
 use Bitrix\Main\Web\Json;
+use Bitrix\Sale\Helpers\Order\Builder\BuildingException;
 use Bitrix\Sale\TradingPlatform;
 use Bitrix\Sale\Helpers\Order\Builder\OrderBuilder;
 use Bitrix\Sale\Helpers\Order\Builder\OrderBuilderNew;
@@ -75,6 +77,13 @@ final class OrderBuilderCrm extends OrderBuilder
 						{
 							$fields = array_intersect_key($p, array_flip(BasketItem::getAllFields()));
 							$fields = array_merge($fieldsValues, $fields);
+
+							//todo: convert it due to currency format
+							$fields['PRICE'] = str_replace([' ', chr(160), ','], ['', '', '.'], $fields['PRICE']);
+							$fields['QUANTITY'] = str_replace([' ', chr(160), ','], ['', '', '.'], $fields['QUANTITY']);
+
+							$fields['OFFER_ID'] = $fields['PRODUCT_ID'];
+							$this->formData['PRODUCT'][$k] = $fields;
 						}
 					}
 					catch(ArgumentException $e)
@@ -87,11 +96,6 @@ final class OrderBuilderCrm extends OrderBuilder
 						);
 					}
 				}
-
-				$fields['PRICE'] = str_replace([' ', ','], ['', '.'], $fields['PRICE']);
-				$fields['QUANTITY'] = str_replace([' ', ','], ['', '.'], $fields['QUANTITY']);
-				$fields['OFFER_ID'] = $fields['PRODUCT_ID'];
-				$this->formData['PRODUCT'][$k] = $fields;
 			}
 
 			sortByColumn($this->formData["PRODUCT"], array("SORT" => SORT_ASC), '', null, true);
@@ -128,8 +132,38 @@ final class OrderBuilderCrm extends OrderBuilder
 		return parent::setFields();
 	}
 
+	protected function prepareDateFields(array $fields, array $dateFields)
+	{
+		foreach($dateFields as $dateFieldName)
+		{
+			if(!empty($fields[$dateFieldName]) && is_string($fields[$dateFieldName]))
+			{
+				try
+				{
+					$fields[$dateFieldName] = new \Bitrix\Main\Type\Date($fields[$dateFieldName]);
+				}
+				catch (ObjectException $exception)
+				{
+					$this->errorsContainer->addError(
+						new Error(
+							Loc::getMessage("CRM_ORDERBUILDER_".$dateFieldName."_ERROR")
+						)
+					);
+					throw new BuildingException();
+				}
+			}
+		}
+
+		return $fields;
+	}
+
 	public function buildPayments()
 	{
+		$dateTypeFields = [
+			'DATE_PAID', 'DATE_PAY_BEFORE', 'DATE_BILL',
+			'PAY_RETURN_DATE', 'PAY_VOUCHER_DATE', 'DATE_RESPONSIBLE_ID'
+		];
+
 		if(is_array($this->formData["PAYMENT"]))
 		{
 			foreach($this->formData["PAYMENT"] as $idx => $data)
@@ -138,10 +172,36 @@ final class OrderBuilderCrm extends OrderBuilder
 				{
 					$this->formData["PAYMENT"][$idx] = $data['fields'];
 				}
+
+				$this->formData["PAYMENT"][$idx] = $this->prepareDateFields(
+					$this->formData["PAYMENT"][$idx],
+					$dateTypeFields
+				);
 			}
 		}
 
 		return parent::buildPayments();
+	}
+
+	public function buildShipments()
+	{
+		$dateTypeFields = [
+			'DELIVERY_DOC_DATE', 'DATE_DEDUCTED', 'DATE_MARKED',
+			'DATE_CANCELED', 'DATE_RESPONSIBLE_ID'
+		];
+
+		if(is_array($this->formData["SHIPMENT"]))
+		{
+			foreach($this->formData["SHIPMENT"] as $idx => $data)
+			{
+				$this->formData["SHIPMENT"][$idx] = $this->prepareDateFields(
+					$this->formData["SHIPMENT"][$idx],
+					$dateTypeFields
+				);
+			}
+		}
+
+		return parent::buildShipments();
 	}
 
 	protected function setContactCompanyCollection()
@@ -215,10 +275,15 @@ final class OrderBuilderCrm extends OrderBuilder
 		if ($this->delegate instanceof OrderBuilderNew)
 		{
 			$clientCollection = $this->order->getContactCompanyCollection();
+			$company = $clientCollection->getPrimaryCompany();
+			if (!empty($company))
+			{
+				$this->setPropertiesByClient($company);
+			}
+
 			$primaryClient = $clientCollection->getPrimaryContact();
 			if (empty($primaryClient))
 			{
-				$primaryClient = $clientCollection->getPrimaryCompany();
 				$contacts = $clientCollection->getContacts();
 				foreach ($contacts as $contact)
 				{
@@ -226,7 +291,7 @@ final class OrderBuilderCrm extends OrderBuilder
 					break;
 				}
 			}
-			if (!empty($primaryClient))
+			else
 			{
 				$this->setPropertiesByClient($primaryClient);
 			}

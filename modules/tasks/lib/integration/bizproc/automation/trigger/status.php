@@ -33,7 +33,7 @@ class Status extends Base
 		$statusA = (int)$trigger['APPLY_RULES']['STATUS'];
 		$statusB = (int)$this->getInputData('STATUS');
 
-		return ($statusA === $statusB);
+		return (!$statusA || $statusA === $statusB);
 	}
 
 	public static function toArray()
@@ -52,7 +52,7 @@ class Status extends Base
 		$result = [
 			[
 				'ID' => \CTasks::STATE_PENDING,
-				'NAME' => Loc::getMessage('TASKS_AUTOMATION_TRIGGER_STATUS_PENDING')
+				'NAME' => Loc::getMessage('TASKS_AUTOMATION_TRIGGER_STATUS_PENDING_1')
 			],
 			[
 				'ID' => \CTasks::STATE_IN_PROGRESS,

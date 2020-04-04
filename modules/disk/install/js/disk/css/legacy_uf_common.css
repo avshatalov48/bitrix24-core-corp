@@ -444,7 +444,7 @@ table.files-list td.files-del-btn .del-but {
 .diskuf-extended-overlay-icon {
 	width: 37px;
 	height: 45px;
-	background: url("images/files-sprite.png?6") no-repeat 0 -252px;
+	background: url("images/files-sprite.png?7") no-repeat 0 -252px;
 	display: block;
 	margin: 0 auto 15px;
 }
@@ -713,7 +713,7 @@ td.diskuf-selector-hover .diskuf-uploader-text {
 }
 
 .bx-disk  .wd-fa-add-file-editor-icon {
-	background: url("images/files-sprite.png?6") no-repeat -5px 0 !important;
+	background: url("images/files-sprite.png?7") no-repeat -5px 0 !important;
 	height: 24px;
 	left: 0;
 	top: 3px;

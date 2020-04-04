@@ -23,7 +23,7 @@ BX.ready(function(){
 					BitrixDisk.showSwitchOnBDisk();
 				}
 
-				if (BX.getClass('BX.PULL.isPublishingEnabled') && BX.PULL.isPublishingEnabled())
+				if (BX.getClass('BX.PULL.isPublishingEnabled') && BX.PULL.isPublishingEnabled() && BX.PULL.isConnected())
 				{
 					BX.PULL.sendMessage([BX.message('USER_ID')], 'disk', 'bdisk', {
 						status: BXFileStorage.GetStatus().status,
@@ -54,24 +54,26 @@ BX.ready(function(){
 						console.debug('Object path', filePath, decodeURIComponent(params.objectId));
 					}
 
-					if(filePath)
-					{
-						BXFileStorage.ObjectOpen(filePath, function(){});
-					}
-					else if(params.url)
-					{
-						urlDownload = decodeURIComponent(params.url);
-						urlUpload = urlDownload = addToLinkParam(urlDownload, 'editIn', 'l');
+					BXFileStorage.FileExist(filePath, function(exist) {
+						if (exist && filePath)
+						{
+							BXFileStorage.ObjectOpen(filePath, function () {});
+						}
+						else if(params.url)
+						{
+							urlDownload = decodeURIComponent(params.url);
+							urlUpload = urlDownload = addToLinkParam(urlDownload, 'editIn', 'l');
 
-						urlDownload = addToLinkParam(urlDownload, 'action', 'start');
-						urlUpload = addToLinkParam(urlDownload, 'action', 'commit');
-						urlUpload = addToLinkParam(urlDownload, 'primaryAction', 'commit');
+							urlDownload = addToLinkParam(urlDownload, 'action', 'start');
+							urlUpload = addToLinkParam(urlDownload, 'action', 'commit');
+							urlUpload = addToLinkParam(urlDownload, 'primaryAction', 'commit');
 
-						console.debug(params, params.name, decodeURIComponent(params.name));
-						//fake!!!
-						BitrixDisk.onStartEditingFile(decodeURIComponent(params.name), {}, null, true, true);
-						BXFileStorage.EditFile(urlDownload, urlUpload, decodeURIComponent(params.name));
-					}
+							console.debug(params, params.name, decodeURIComponent(params.name));
+							//fake!!!
+							BitrixDisk.onStartEditingFile(decodeURIComponent(params.name), {}, null, true, true);
+							BXFileStorage.EditFile(urlDownload, urlUpload, decodeURIComponent(params.name));
+						}
+					});
 
 					break;
 
@@ -1678,43 +1680,7 @@ var BitrixDisk = {
 	},
 
 	updateSpaces : function()
-	{
-		if (this.storageCmdPath.length < 1)
-		{
-			return;
-		}
-
-		BX.ajax({
-			method : "POST",
-			dataType : "json",
-			url : BX.Disk.addToLinkParam(this.storageCmdPath, 'action', 'GetDiskSpace'),
-			data :  BX.ajax.prepareData({ SITE_ID: BX.message('SITE_ID'), action : "GetDiskSpace" }),
-			onsuccess: BX.proxy(function(result) {
-				if (result)
-				{
-					console.debug(
-						"Updated spaces: diskSpace: ",
-						BitrixDisk.formatSize(result.diskSpace) + " (" + result.diskSpace + ")  ",
-						"freeSpace: ", BitrixDisk.formatSize(result.freeSpace) + " (" + result.freeSpace + ")"
-					);
-
-					this.diskSpace = result.diskSpace > 0 ? result.diskSpace : 0;
-					this.freeSpace = result.freeSpace > 0 ? result.freeSpace : 0;
-
-					if (this.diskSpace > 0)
-					{
-						this.showChart();
-					}
-					else
-					{
-						this.hideChart();
-					}
-
-					this.updateChart();
-				}
-			}, this)
-		});
-	},
+	{},
 
 	getTargetFolder : function()
 	{

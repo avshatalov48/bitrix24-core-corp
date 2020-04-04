@@ -23,8 +23,6 @@ if ($iCompanyId > 0)
 {
 	\Bitrix\Main\Localization\Loc::loadMessages(__FILE__);
 
-	$arParams['PATH_TO_COMPANY_SHOW'] = CrmCheckPath('PATH_TO_COMPANY_SHOW', $arParams['PATH_TO_COMPANY_SHOW'], $APPLICATION->GetCurPage().'?company_id=#company_id#&show');
-	$arParams['PATH_TO_COMPANY_EDIT'] = CrmCheckPath('PATH_TO_COMPANY_EDIT', $arParams['PATH_TO_COMPANY_EDIT'], $APPLICATION->GetCurPage().'?company_id=#company_id#&edit');
 	$arResult['COMPANY_TYPE_LIST'] = CCrmStatus::GetStatusListEx('COMPANY_TYPE');
 	$arResult['EMPLOYEES_LIST'] = CCrmStatus::GetStatusListEx('EMPLOYEES');
 
@@ -33,16 +31,8 @@ if ($iCompanyId > 0)
 	if ($arCompany == false)
 		return ;
 
-	$arCompany['PATH_TO_COMPANY_SHOW'] = CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_COMPANY_SHOW'],
-		array(
-			'company_id' => $iCompanyId
-		)
-	);
-	$arCompany['PATH_TO_COMPANY_EDIT'] = CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_COMPANY_EDIT'],
-		array(
-			'company_id' => $iCompanyId
-		)
-	);
+	$arCompany['PATH_TO_COMPANY_SHOW'] = \CCrmOwnerType::GetEntityShowPath(\CCrmOwnerType::Company, $iCompanyId, false);
+	$arCompany['PATH_TO_COMPANY_EDIT'] = \CCrmOwnerType::GetEntityEditPath(\CCrmOwnerType::Company, $iCompanyId, false);
 
 	//region Multifields
 	$arEntityTypes = CCrmFieldMulti::GetEntityTypes();
@@ -202,12 +192,12 @@ if ($iCompanyId > 0)
 			$imageImg = CFile::ShowImage($arFileTmp['src'], 102, 104, "border='0'", '');
 		}
 		if (strlen($imageImg)>0)
-			$strPhoto = '<a href="'.$arCompany['PATH_TO_COMPANY_SHOW'].'" class="bx-user-info-data-photo" target="_blank">'.$imageImg.'</a>';
+			$strPhoto = '<a href="'.$arCompany['PATH_TO_COMPANY_SHOW'].'" class="bx-ui-tooltip-info-data-photo" target="_blank">'.$imageImg.'</a>';
 		else
-			$strPhoto = '<a href="'.$arCompany['PATH_TO_COMPANY_SHOW'].'" class="bx-user-info-data-photo no-photo" target="_blank"></a>';
+			$strPhoto = '<a href="'.$arCompany['PATH_TO_COMPANY_SHOW'].'" class="bx-ui-tooltip-info-data-photo no-photo" target="_blank"></a>';
 	}
 	else
-		$strPhoto = '<a href="'.$arCompany['PATH_TO_COMPANY_SHOW'].'" class="bx-user-info-data-photo no-photo" target="_blank"></a>';
+		$strPhoto = '<a href="'.$arCompany['PATH_TO_COMPANY_SHOW'].'" class="bx-ui-tooltip-info-data-photo no-photo" target="_blank"></a>';
 
 	$strToolbar2 = '
 <div class="bx-user-info-data-separator"></div>

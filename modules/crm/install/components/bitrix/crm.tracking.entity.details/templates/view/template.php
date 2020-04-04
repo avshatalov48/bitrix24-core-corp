@@ -16,26 +16,30 @@ use Bitrix\Main\Localization\Loc;
 Loc::loadMessages(__FILE__);
 
 $containerId = 'crm-tracking-entity-details-view';
-
-$hasTrace = !empty($arResult['DATA']['ROW']);
-$hasPages = $arResult['DATA']['SITE'] && $arResult['DATA']['PAGES'];
 ?>
 <div id="<?=htmlspecialcharsbx($containerId)?>">
-	<?if ($arResult['DATA']['IS_EMPTY']):?>
+	<?if (empty($arResult['TRACES'])):?>
 		<span style="opacity: 0.5;">
 			<?=Loc::getMessage('CRM_TRACKING_ENTITY_DETAILS_ORGANIC')?>
 		</span>
 	<?else:?>
 	<div id="crm-tracking-entity-details" class="crm-tracking-entity-details">
-		<div class="crm-tracking-entity-details-path-block-inner">
-			<div>
-				<?if (false && $arResult['DATA']['SOURCE']):?>
+		<?
+		$traceCounter = 0;
+		foreach ($arResult['TRACES'] as $trace):
+			$traceCounter++;
+			?>
+		<div class="crm-tracking-entity-details-path-block-inner <?=($traceCounter > 1 ? 'crm-tracking-entity-details-hidden' : '')?>"
+			data-role="trace"
+		>
+			<div data-role="trace/header" class="crm-tracking-entity-details-head">
+				<?if (false && $trace['SOURCE']):?>
 					<div class="crm-tracking-entity-details-path-info">
 						<span class="crm-tracking-entity-details-path-icon <?=htmlspecialcharsbx($arResult['DATA']['SOURCE']['ICON_CLASS'])?>">
 							<i></i>
 						</span>
 						<span class="crm-tracking-entity-details-path-name">
-							<?=htmlspecialcharsbx($arResult['DATA']['SOURCE']['NAME'])?>
+							<?=htmlspecialcharsbx($trace['SOURCE']['NAME'])?>
 						</span>
 					</div>
 				<?endif;?>
@@ -47,24 +51,36 @@ $hasPages = $arResult['DATA']['SITE'] && $arResult['DATA']['PAGES'];
 					[
 						'ENTITY_TYPE_ID' => $arParams['ENTITY_TYPE_ID'],
 						'ENTITY_ID' => $arParams['ENTITY_ID'],
-						'SKIP_SOURCE' => false
+						'TRACE_ID' => $trace['ROW']['ID'],
+						'SKIP_SOURCE' => false,
 					]
 				);
 				?>
+
+				<div class="crm-tracking-entity-details-toggler">
+					<div class="crm-tracking-entity-details-overlay"></div>
+					<?if($traceCounter <= 1):?>
+						<div data-role="trace/edit" class="crm-tracking-entity-details-edit"></div>
+					<?endif;?>
+					<div data-role="trace/view" class="crm-tracking-entity-details-show"
+						data-caption-show="<?=Loc::getMessage('CRM_TRACKING_ENTITY_DETAILS_SHOW')?>"
+						data-caption-hide="<?=Loc::getMessage('CRM_TRACKING_ENTITY_DETAILS_HIDE')?>"
+					></div>
+				</div>
 			</div>
 
-			<?if ($arResult['DATA']['SITE'] && $arResult['DATA']['PAGES']):?>
-				<div class="crm-tracking-entity-details-path-header"></div>
-				<div>
+			<?if ($trace['SITE'] && $trace['PAGES']):?>
+				<div data-role="trace/details" class="crm-tracking-entity-details-body">
+					<div class="crm-tracking-entity-details-path-header"></div>
 					<div class="crm-tracking-entity-details-path-site">
 						<span class="crm-tracking-entity-details-path-name">
 							<?=Loc::getMessage('CRM_TRACKING_ENTITY_DETAILS_PAGES')?>:
 						</span>
 						<a target="_blank"
-							href="http://<?=htmlspecialcharsbx($arResult['DATA']['SITE']['DOMAIN'])?>"
+							href="http://<?=htmlspecialcharsbx($trace['SITE']['DOMAIN'])?>"
 							class="crm-tracking-entity-details-path-site-link"
 						>
-							<?=htmlspecialcharsbx($arResult['DATA']['SITE']['DOMAIN'])?>
+							<?=htmlspecialcharsbx($trace['SITE']['DOMAIN'])?>
 						</a>
 						<!--
 						<span id="crm-tracking-entity-details-toggler"
@@ -73,13 +89,13 @@ $hasPages = $arResult['DATA']['SITE'] && $arResult['DATA']['PAGES'];
 						-->
 					</div>
 
-					<div title="<?=Loc::getMessage('CRM_TRACKING_ENTITY_DETAILS_DEVICE_' . ($arResult['DATA']['IS_MOBILE'] ? 'MOBILE' : 'DESKTOP'))?>"
-						class="crm-tracking-entity-details-device crm-tracking-entity-details-device-<?=($arResult['DATA']['IS_MOBILE'] ? 'mobile' : 'desktop')?>"
+					<div title="<?=Loc::getMessage('CRM_TRACKING_ENTITY_DETAILS_DEVICE_' . ($trace['IS_MOBILE'] ? 'MOBILE' : 'DESKTOP'))?>"
+						class="crm-tracking-entity-details-device crm-tracking-entity-details-device-<?=($trace['IS_MOBILE'] ? 'mobile' : 'desktop')?>"
 					></div>
 
-					<div id="crm-tracking-entity-details-pages" class="crm-tracking-entity-details-popup-list">
+					<div class="crm-tracking-entity-details-popup-list">
 						<br>
-						<?foreach ($arResult['DATA']['PAGES'] as $page):?>
+						<?foreach ($trace['PAGES'] as $page):?>
 							<div class="crm-tracking-entity-details-popup-item">
 								<span class="crm-tracking-entity-details-popup-time">
 									<?=htmlspecialcharsbx($page['DATE_INSERT'])?>
@@ -96,16 +112,47 @@ $hasPages = $arResult['DATA']['SITE'] && $arResult['DATA']['PAGES'];
 			<?endif;?>
 
 		</div>
+		<?endforeach;?>
 	</div>
 	<?endif;?>
 	<script>
 		BX.ready(function () {
-			var toggler = BX('crm-tracking-entity-details-toggler');
-			var pages = BX('crm-tracking-entity-details-pages');
-			BX.bind(toggler, 'click', function (e) {
+			let stopPropagation = true;
+			let context = BX('<?=$containerId?>');
+			let blocks = context.querySelectorAll('[data-role="trace"]');
+			Array.prototype.slice.call(blocks).forEach(function (block) {
+				let edit = block.querySelector('[data-role="trace/edit"]');
+				let view = block.querySelector('[data-role="trace/view"]');
+
+				let className = 'crm-tracking-entity-details-hidden';
+				let adjustText = function () {
+					view.textContent = BX.hasClass(block, className)
+						? view.getAttribute('data-caption-show')
+						: view.getAttribute('data-caption-hide')
+				};
+				adjustText();
+				BX.bind(view, 'click', function () {
+					BX.hasClass(block, className)
+						? BX.removeClass(block, className)
+						: BX.addClass(block, className);
+
+					adjustText();
+				});
+				BX.bind(edit, 'mouseup', function () {
+					stopPropagation = false;
+				});
+			}, this);
+
+			let handler = function (e) {
+				if (!stopPropagation)
+				{
+					stopPropagation = true;
+					return;
+				}
 				e.stopPropagation();
-				BX.toggleClass(pages, 'crm-tracking-entity-details-popup-list-hidden');
-			});
+				e.stopImmediatePropagation();
+			};
+			BX.bind(context, 'mouseup', handler);
 		})
 	</script>
 </div>

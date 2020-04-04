@@ -251,6 +251,10 @@
 		{
 			return this.file.type;
 		},
+		getMimeType: function ()
+		{
+			return this.file.mimeType;
+		},
 		getName: function ()
 		{
 			return this.file.name;

@@ -1448,7 +1448,6 @@ class CAllSaleDelivery
 		if($collection = $shipment->getShipmentItemCollection())
 			$oldOrder["PRICE"] = $collection->getPrice();
 
-		$oldOrder["WEIGHT"] = 0;
 		$oldOrder["LOCATION_FROM"] = \Bitrix\Main\Config\Option::get(
 			'sale',
 			'location',
@@ -1485,10 +1484,7 @@ class CAllSaleDelivery
 
 			unset($itemFieldValues['DATE_INSERT'], $itemFieldValues['DATE_UPDATE']);
 			$oldOrder["ITEMS"][] = $itemFieldValues;
-			$itemWeight = floatval($basketItem->getField("WEIGHT"));
-
-			if($itemWeight > 0)
-				$oldOrder["WEIGHT"] += $itemWeight*floatval($basketItem->getField("QUANTITY"));
+			$oldOrder["WEIGHT"] = $shipment->getWeight();
 		}
 
 		return $oldOrder;

@@ -16,12 +16,13 @@
 		this.sendSmsUrl = '';
 		this.values = {};
 		this.progress = false;
-		this.transformationError = false;
 		this.progressInterval = 0;
 		this.changeStampsEnabled = false;
 		this.changeStampsDisabledReason = '';
 		this.myCompanyEditUrl = '';
 		this.isTransformationError = false;
+		this.transformationErrorMessage = '';
+		this.transformationErrorCode = 0;
 	};
 
 	BX.Crm.DocumentView.init = function(options)
@@ -99,10 +100,6 @@
 		{
 			this.title = options.title;
 		}
-		if(options.transformationError)
-		{
-			this.transformationError = options.transformationError;
-		}
 		if(options.sendSmsUrl)
 		{
 			this.sendSmsUrl = options.sendSmsUrl;
@@ -122,6 +119,18 @@
 		if(options.myCompanyEditUrl)
 		{
 			this.myCompanyEditUrl = options.myCompanyEditUrl;
+		}
+		if(BX.type.isString(options.transformationErrorMessage))
+		{
+			this.transformationErrorMessage = options.transformationErrorMessage;
+		}
+		else
+		{
+			this.transformationErrorMessage = '';
+		}
+		if(BX.type.isNumber(options.transformationErrorCode))
+		{
+			this.transformationErrorCode = options.transformationErrorCode;
 		}
 		this.preview.applyOptions(options);
 	};
@@ -279,6 +288,13 @@
 	{
 		if(text === false)
 		{
+			if(this.transformationErrorMessage.length > 0)
+			{
+				this.transformationErrorMessage = text;
+			}
+		}
+		if(text === false)
+		{
 			BX.hide(BX('crm-document-view-error'));
 		}
 		if(!text)
@@ -378,16 +394,19 @@
 			this.applyOptions(response.data.document);
 			BX.show(BX('crm-document-show-pdf'));
 			var title = BX('pagetitle');
-			if(title)
+			if(title && response.data.document && response.data.document.title)
 			{
 				title.innerText = response.data.document.title;
 			}
 		}, this), BX.proxy(function(response)
 		{
-			this.applyOptions(response.data.document);
+			if(response.data && response.data.document)
+			{
+				this.applyOptions(response.data.document);
+			}
 			this.progress = false;
 			BX('crm-document-stamp').disabled = false;
-			if(response.data.document.isTransformationError)
+			if(response.data && response.data.document && response.data.document.isTransformationError)
 			{
 				BX.hide(this.previewNode);
 				BX.show(this.transformationErrorNode);
@@ -395,8 +414,8 @@
 			else
 			{
 				this.initPreviewMessage(0);
-				this.showError(response.errors);
 			}
+			this.showError(response.errors.pop().message);
 		}, this));
 	};
 
@@ -814,7 +833,7 @@
 				}
 				if(result.hasOwnProperty(placeholder))
 				{
-					if(BX.type.isString(result[placeholder].value) && input.tagName === 'INPUT' || input.tagName === 'TEXTAREA')
+					if((BX.type.isString(result[placeholder].value) || BX.type.isNumber(result[placeholder].value)) && input.tagName === 'INPUT' || input.tagName === 'TEXTAREA')
 					{
 						input.value = result[placeholder].value;
 						if(result[placeholder].hasOwnProperty('default'))

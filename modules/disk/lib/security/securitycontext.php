@@ -137,6 +137,10 @@ abstract class SecurityContext implements IErrorable
 	{
 	}
 
+	public function preloadOperationsForSpecifiedObjects($parentObjectId, array $objectIds)
+	{
+	}
+
 	/**
 	 * @return Error[]
 	 */

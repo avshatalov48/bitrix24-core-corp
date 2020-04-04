@@ -6,22 +6,17 @@ use Bitrix\DocumentGenerator\DataProvider;
 use Bitrix\DocumentGenerator\DataProvider\ArrayDataProvider;
 use Bitrix\Main\Result;
 use Bitrix\Main\Text\Encoding;
+use Bitrix\Main\Web\DOM;
 
 final class DocxXml extends Xml
 {
 	const EMPTY_IMAGE_PLACEHOLDER = '{__SystemEmptyImage}';
 
-	const HTML_NODE_DISPLAY_HIDDEN = 'hidden';
-	const HTML_NODE_DISPLAY_BLOCK = 'block';
-	const HTML_NODE_DISPLAY_INLINE = 'inline';
-
-	const HTML_NODE_FONT_NORMAL = 'normal';
-	const HTML_NODE_FONT_BOLD = 'bold';
-	const HTML_NODE_FONT_ITALIC = 'italic';
-	const HTML_NODE_FONT_UNDERLINED = 'underlined';
-	const HTML_NODE_FONT_DELETED = 'deleted';
+	const NUMBERING_TYPE_ORDERED = 'ordered';
+	const NUMBERING_TYPE_UNORDERED = 'unordered';
 
 	protected $arrayImageValues = [];
+	protected $numberingIds = [];
 
 	/**
 	 * Parse $content, process commands, fill values.
@@ -33,11 +28,13 @@ final class DocxXml extends Xml
 	{
 		$result = new Result();
 
+		$data = [];
 		$this->processArrays();
 		$this->clearRowsWithoutValues();
-		$imageData = $this->processImages();
-		$result->setData(['imageData' => $imageData]);
-		$this->content = $this->replacePlaceholders($this->content);
+		$data['imageData'] = $this->processImages();
+		$this->content = $this->replacePlaceholders();
+		$data['numberingIds'] = $this->numberingIds;
+		$result->setData($data);
 
 		return $result;
 	}
@@ -45,13 +42,28 @@ final class DocxXml extends Xml
 	/**
 	 * @return array
 	 */
-	protected function getNamespaces()
+	public static function getNamespaces()
 	{
 		return array_merge(parent::getNamespaces(), [
 			'w' => 'http://schemas.openxmlformats.org/wordprocessingml/2006/main',
 			'wp' => 'http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing',
 			'a' => 'http://schemas.openxmlformats.org/drawingml/2006/main',
+			'o' => 'urn:schemas-microsoft-com:office:office',
+			'r' => 'http://schemas.openxmlformats.org/officeDocument/2006/relationships',
+			'v' => 'urn:schemas-microsoft-com:vml',
+			'wps' => 'http://schemas.microsoft.com/office/word/2010/wordprocessingShape',
+			'wpg' => 'http://schemas.microsoft.com/office/word/2010/wordprocessingGroup',
+			'mc' => 'http://schemas.openxmlformats.org/markup-compatibility/2006',
+			'w10' => 'urn:schemas-microsoft-com:office:word',
 		]);
+	}
+
+	/**
+	 * @return string
+	 */
+	public static function getMainPrefix()
+	{
+		return 'w';
 	}
 
 	/**
@@ -71,7 +83,7 @@ final class DocxXml extends Xml
 		{
 			$bracketNodes[] = $this->getParentParagraphNode($node, 4);
 		}
-		$bracketNodes = $this->getUniqueNodes($bracketNodes);
+		$bracketNodes = $this->getUniqueObjects($bracketNodes);
 		foreach($bracketNodes as $bracketNode)
 		{
 			/** @var \DOMElement $bracketNode */
@@ -86,7 +98,7 @@ final class DocxXml extends Xml
 	}
 
 	/**
-	 * Clears all placeholders that inside attributes and are not images
+	 * Clears all placeholder-like strings that are inside attributes and not images
 	 */
 	protected function clearPlaceholdersInAttributes()
 	{
@@ -117,7 +129,7 @@ final class DocxXml extends Xml
 	}
 
 	/**
-	 * Walk through $nodeList, finds start node and text with all placeholdersþ
+	 * Walk through $nodeList, finds start node and text with all placeholders
 	 *
 	 * @param \DOMNodeList $nodeList
 	 * @param \DOMElement|null $parentNode
@@ -161,7 +173,7 @@ final class DocxXml extends Xml
 			}
 			if($startNode && $endNode)
 			{
-				$this->refillTextNode($startNode, $text);
+				$this->normalizeTextNode($startNode, $text);
 				if($parentNode)
 				{
 					$parentNode->normalize();
@@ -186,7 +198,7 @@ final class DocxXml extends Xml
 	 * @param \DOMElement $rowNode
 	 * @param $textContent
 	 */
-	protected function refillTextNode(\DOMElement $rowNode, $textContent)
+	protected function normalizeTextNode(\DOMElement $rowNode, $textContent)
 	{
 		$textNodes = $rowNode->getElementsByTagNameNS($this->getNamespaces()['w'], 't');
 		if($textNodes->length == 0)
@@ -226,40 +238,6 @@ final class DocxXml extends Xml
 				$deleteNode->parentNode->removeChild($deleteNode);
 			}
 		}
-	}
-
-	/**
-	 * Finds first node that contains {$placeholder} text.
-	 *
-	 * @param $placeholder
-	 * @param \DOMXPath|null $xpath
-	 * @return bool|\DOMElement
-	 */
-	protected function findPlaceholderNode($placeholder, \DOMXPath $xpath = null)
-	{
-		$nodes = $this->findPlaceholderNodes($placeholder, $xpath);
-		if($nodes->length > 0)
-		{
-			return $nodes->item(0);
-		}
-
-		return false;
-	}
-
-	/**
-	 * Finds all nodes that contains {$placeholder} text.
-	 *
-	 * @param $placeholder
-	 * @param \DOMXPath|null $xpath
-	 * @return \DOMNodeList
-	 */
-	protected function findPlaceholderNodes($placeholder, \DOMXPath $xpath = null)
-	{
-		if(!$xpath)
-		{
-			$xpath = $this->xpath;
-		}
-		return $xpath->query('//w:t[text()[contains(.,"{'.$placeholder.'")]]');
 	}
 
 	/**
@@ -435,7 +413,7 @@ final class DocxXml extends Xml
 					}
 				}
 			}
-			$tableRowNodes = $this->getUniqueNodes($tableRowNodes);
+			$tableRowNodes = $this->getUniqueObjects($tableRowNodes);
 			if(!empty($tableRowNodes))
 			{
 				/** @var \DOMElement[] $tableRowNodes */
@@ -576,7 +554,7 @@ final class DocxXml extends Xml
 					}
 				}
 			}
-			$nodesToDelete = $this->getUniqueNodes($nodesToDelete);
+			$nodesToDelete = $this->getUniqueObjects($nodesToDelete);
 			foreach($nodesToDelete as $node)
 			{
 				$node->parentNode->removeChild($node);
@@ -592,7 +570,7 @@ final class DocxXml extends Xml
 	 */
 	protected function processImages()
 	{
-		$imageData = $this->findImages();
+		$imageData = $this->findImages(true);
 		foreach($imageData as $placeholder => &$image)
 		{
 			if(!isset($this->values[$placeholder]) || empty($this->values[$placeholder]) || $this->values[$placeholder] == ' ')
@@ -665,9 +643,9 @@ final class DocxXml extends Xml
 						{
 							/** @var \DOMAttr $innerImageId */
 							$imageId = $innerImageId->value;
-							if($generateNewImageIds)
+							if($generateNewImageIds && !isset($this->arrayImageValues['originalId'][$imageId]))
 							{
-								$newImageId = 'rId' . rand(5000, 100000);
+								$newImageId = $this->getRandomId('rId', true);
 								$placeholders[$placeholder]['originalId'][$newImageId] = $imageId;
 								$imageId = $innerImageId->value = $newImageId;
 							}
@@ -698,9 +676,10 @@ final class DocxXml extends Xml
 	 * @param mixed $value
 	 * @param string $placeholder
 	 * @param string $modifier
+	 * @param array $params
 	 * @return string
 	 */
-	protected function printValue($value, $placeholder, $modifier = '')
+	protected function printValue($value, $placeholder, $modifier = '', array $params = [])
 	{
 		$value = parent::printValue($value, $placeholder, $modifier);
 		if(empty($value))
@@ -732,7 +711,13 @@ final class DocxXml extends Xml
 			{
 				if($this->isHtml($value))
 				{
-					$value = $this->htmlToXml($value);
+					$context = [];
+					if(isset($params['currentNode']) && $params['currentNode'] instanceof \DOMElement)
+					{
+						$context['rowProperties'] = $this->getRowPropertyNodeValue($params['currentNode']);
+					}
+					$value = $this->htmlToXml($value, $context);
+//					$value = $this->htmlToXml($value);
 				}
 				else
 				{
@@ -766,33 +751,11 @@ final class DocxXml extends Xml
 	}
 
 	/**
-	 * @param string $text
-	 * @param bool $saveBreakLines
 	 * @return string
 	 */
-	protected function prepareTextValue($text, $saveBreakLines = false)
+	protected function getBreakLineTag()
 	{
-		if($saveBreakLines)
-		{
-			$text = str_replace(PHP_EOL, '{__SystemBreakLine}', $text);
-		}
-		$text = html_entity_decode($text);
-		$text = strtr(
-			$text,
-			array(
-				'<' => '&lt;',
-				'>' => '&gt;',
-				'"' => '&quot;',
-				'\'' => '&apos;',
-				'&' => '&amp;',
-			)
-		);
-		$text = preg_replace('/[\x01-\x08\x0B-\x0C\x0E-\x1F]/', '', $text);
-		if($saveBreakLines)
-		{
-			$text = str_replace('{__SystemBreakLine}', '</w:t><w:br/><w:t>', $text);
-		}
-		return $text;
+		return '</w:t><w:br/><w:t>';
 	}
 
 	/**
@@ -808,13 +771,14 @@ final class DocxXml extends Xml
 	 * Converts html to xml with the same rendering.
 	 *
 	 * @param string $html
+	 * @param array $context
 	 * @return string
 	 */
-	protected function htmlToXml($html)
+	protected function htmlToXml($html, array $context = [])
 	{
-		$htmlDocument = new \Bitrix\Main\Web\DOM\Document();
+		$htmlDocument = new DOM\Document();
 		$htmlDocument->loadHTML($html);
-		$result = $this->htmlNodeToXml($htmlDocument);
+		$result = $this->htmlNodeToXml($htmlDocument, $context);
 		if(!empty($result))
 		{
 			$result = '</w:t></w:r>'.$result.'<w:r><w:t>';
@@ -823,136 +787,29 @@ final class DocxXml extends Xml
 	}
 
 	/**
-	 * Returns true if this node should be rendered.
-	 *
-	 * @param \Bitrix\Main\Web\DOM\Node $node
-	 * @return bool
+	 * @param DOM\Node $node
+	 * @param array $properties
+	 * @return DOM\DisplayProperties
 	 */
-	protected function isDisplayableNode(\Bitrix\Main\Web\DOM\Node $node)
+	protected function getDisplayProperties(DOM\Node $node, array $properties = [])
 	{
-		$hiddenNodeNames = [
-			'#comment' => true, 'STYLE' => true, 'SCRIPT' => true,
-		];
-		if(isset($hiddenNodeNames[$node->getNodeName()]))
-		{
-			return false;
-		}
-
-		return true;
-	}
-
-	/**
-	 * Returns array with rendering properties - display type and font params.
-	 *
-	 * @param \Bitrix\Main\Web\DOM\Node $node
-	 * @return array
-	 */
-	protected function getDisplayProperties(\Bitrix\Main\Web\DOM\Node $node)
-	{
-		$result = ['display' => 'inline', 'font' => [],];
-		if(!$this->isDisplayableNode($node))
-		{
-			$result['display'] = static::HTML_NODE_DISPLAY_HIDDEN;
-			return $result;
-		}
-		if($node instanceof \Bitrix\Main\Web\DOM\Element)
-		{
-			$styles = $node->getStyle();
-			$display = false;
-			$font = [];
-			if($styles)
-			{
-				$stylePairs = explode(';', $styles);
-				foreach($stylePairs as $pair)
-				{
-					list($name, $value) = explode(':', $pair);
-					if($name && $value)
-					{
-						if($name == 'display')
-						{
-							if($value == 'none')
-							{
-								$display = static::HTML_NODE_DISPLAY_HIDDEN;
-							}
-							elseif($value == 'block')
-							{
-								$display = static::HTML_NODE_DISPLAY_BLOCK;
-							}
-						}
-						elseif($name == 'font-weight')
-						{
-							if(intval($value) > 500 || $value == 'bold')
-							{
-								$font[static::HTML_NODE_FONT_BOLD] = static::HTML_NODE_FONT_BOLD;
-							}
-							elseif(intval($value) < 500 || $value == 'normal')
-							{
-								$font[static::HTML_NODE_FONT_NORMAL] = static::HTML_NODE_FONT_NORMAL;
-							}
-						}
-						elseif($name == 'font-style' && $value == 'italic' || strpos($value, 'oblique') === 0)
-						{
-							$font[static::HTML_NODE_FONT_ITALIC] = static::HTML_NODE_FONT_ITALIC;
-						}
-						elseif($name == 'text-decoration' && strpos($value, 'underline') !== false)
-						{
-							$font[static::HTML_NODE_FONT_UNDERLINED] = static::HTML_NODE_FONT_UNDERLINED;
-						}
-					}
-				}
-			}
-			if($display == static::HTML_NODE_DISPLAY_HIDDEN)
-			{
-				$result['display'] = $display;
-				return $result;
-			}
-			if(!$display && $this->isBlockTag($node->getTagName()))
-			{
-				$display = static::HTML_NODE_DISPLAY_BLOCK;
-			}
-			if(!$display)
-			{
-				$display = static::HTML_NODE_DISPLAY_INLINE;
-			}
-
-			if(!isset($font[static::HTML_NODE_FONT_BOLD]) && $this->isBoldTag($node->getTagName()))
-			{
-				$font[static::HTML_NODE_FONT_BOLD] = static::HTML_NODE_FONT_BOLD;
-			}
-			if(!isset($font[static::HTML_NODE_FONT_ITALIC]) && $this->isItalicTag($node->getTagName()))
-			{
-				$font[static::HTML_NODE_FONT_ITALIC] = static::HTML_NODE_FONT_ITALIC;
-			}
-			if(!isset($font[static::HTML_NODE_FONT_UNDERLINED]) && $this->isUnderlinedTag($node->getTagName()))
-			{
-				$font[static::HTML_NODE_FONT_UNDERLINED] = static::HTML_NODE_FONT_UNDERLINED;
-			}
-			if($this->isDeletedTag($node->getTagName()))
-			{
-				$font[static::HTML_NODE_FONT_DELETED] = static::HTML_NODE_FONT_DELETED;
-			}
-
-			$result['display'] = $display;
-			$result['font'] = $font;
-		}
-
-		return $result;
+		return new DOM\DisplayProperties($node, $properties);
 	}
 
 	/**
 	 * Recursively converts html node to xml.
 	 *
-	 * @param \Bitrix\Main\Web\DOM\Node $node
+	 * @param DOM\Node $node
 	 * @param array $context
 	 * @return string
 	 */
-	protected function htmlNodeToXml(\Bitrix\Main\Web\DOM\Node $node, array &$context = [])
+	protected function htmlNodeToXml(DOM\Node $node, array &$context = [])
 	{
 		$result = '';
 
 		$displayProperties = $this->getDisplayProperties($node);
 
-		if(isset($displayProperties['display']) && $displayProperties['display'] == static::HTML_NODE_DISPLAY_HIDDEN)
+		if($displayProperties->isHidden())
 		{
 			return $result;
 		}
@@ -960,32 +817,40 @@ final class DocxXml extends Xml
 		$nodeName = strtolower($node->getNodeName());
 		if($nodeName == 'ul')
 		{
-			$context['currentList'] = 'ul';
+			$context['currentList'] = [
+				'type' => static::NUMBERING_TYPE_UNORDERED,
+				'id' => $this->getRandomId('numberingValue', false),
+			];
 		}
 		elseif($nodeName == 'ol')
 		{
-			$context['currentList'] = 'ol';
-			$context['currentNumber'] = 1;
+			$context['currentList'] = [
+				'type' => static::NUMBERING_TYPE_ORDERED,
+				'id' => $this->getRandomId('numberingValue', false),
+			];
 		}
 		elseif($nodeName == 'li')
 		{
 			$context['showNumber'] = true;
 		}
 
-		if($displayProperties['display'] == static::HTML_NODE_DISPLAY_BLOCK)
+		if($displayProperties->isDisplayBlock())
 		{
-			$context['display'] = $displayProperties['display'];
+			$context['display'] = DOM\DisplayProperties::DISPLAY_BLOCK;
 		}
 		if(!isset($context['font']) || !is_array($context['font']))
 		{
 			$context['font'] = [];
 		}
-		$context['font'] = array_merge($context['font'], $displayProperties['font']);
-		/** @var \Bitrix\Main\Web\DOM\Node $childNode */
+		$context['font'] = array_merge($context['font'], $displayProperties->getProperties()['font']);
+		// The trick is in order we get tags. We have to carry $context all along.
+		// First we have 'b' tag and then we have #text tag. But they are on the same level of hierarchy.
+		// So we have to put 'bold font' into context and we need to know about it in the next tag.
+		/** @var DOM\Node $childNode */
 		foreach($nodes as $childNode)
 		{
 			$nodeValue = str_replace("\n", '', $childNode->getNodeValue());
-			if($displayProperties['display'] == static::HTML_NODE_DISPLAY_BLOCK || $context['display'] == static::HTML_NODE_DISPLAY_BLOCK)
+			if($displayProperties->isDisplayBlock() || $context['display'] == DOM\DisplayProperties::DISPLAY_BLOCK)
 			{
 				$nodeValue = trim($nodeValue);
 			}
@@ -996,36 +861,34 @@ final class DocxXml extends Xml
 				$result .= '<w:br/>';
 				$result .= '</w:r>';
 			}
-			elseif($childNode instanceof \Bitrix\Main\Web\DOM\Text && !empty($nodeValue))
+			elseif($childNode instanceof DOM\Text && !empty($nodeValue))
 			{
-				$result .= '<w:r>';
-				if($context['display'] == static::HTML_NODE_DISPLAY_BLOCK)
+				if(isset($context['showNumber']) && isset($context['currentList']))
 				{
-					$result .= '<w:br/>';
-					$context['display'] = $displayProperties['display'];
-				}
-				if(isset($context['showNumber']) && $context['showNumber'])
-				{
+					$result .= '</w:p>';
+					$result .= '<w:p>';
+					$this->numberingIds[$context['currentList']['id']] = $context['currentList'];
+					$result .= '<w:pPr>';
+					$result .= '<w:numPr>';
+					$result .= '<w:ilvl w:val="0" />';
+					$result .= '<w:numId w:val="'.$context['currentList']['id'].'" />';
+					$result .= '</w:numPr>';
+					$result .= '</w:pPr>';
 					unset($context['showNumber']);
-					if(isset($context['currentList']) && $context['currentList'] == 'ol' && isset($context['currentNumber']) && $context['currentNumber'] > 0)
-					{
-						$result .= '<w:t xml:space="preserve">';
-						$result .= '    '.$context['currentNumber'].'. ';
-						$context['currentNumber']++;
-						$result .= '</w:t>';
-						$result .= '</w:r>';
-						$result .= '<w:r>';
-					}
-					elseif(isset($context['currentList']) && $context['currentList'] == 'ul')
-					{
-						$result .= '<w:t xml:space="preserve">';
-						$result .= '     - ';
-						$result .= '</w:t>';
-						$result .= '</w:r>';
-						$result .= '<w:r>';
-					}
+					$context['display'] = $displayProperties->getProperties()[DOM\DisplayProperties::DISPLAY];
+					$result .= '<w:r>';
 				}
-				$result .= $this->addRowPropertiesTag($context['font']);
+				elseif($context['display'] == DOM\DisplayProperties::DISPLAY_BLOCK)
+				{
+					$result .= '<w:r>';
+					$result .= '<w:br/>';
+					$context['display'] = $displayProperties->getProperties()[DOM\DisplayProperties::DISPLAY];
+				}
+				else
+				{
+					$result .= '<w:r>';
+				}
+				$result .= $this->addRowPropertiesTag($context);
 				$result .= '<w:t xml:space="preserve">';
 				$result .= $this->prepareTextValue($childNode->getNodeValue());
 				$result .= '</w:t>';
@@ -1037,127 +900,117 @@ final class DocxXml extends Xml
 			}
 		}
 
-		if($nodeName == 'ul')
+		if($nodeName == 'ul' || $nodeName == 'ol')
 		{
 			unset($context['currentList']);
-		}
-		elseif($nodeName == 'ol')
-		{
-			unset($context['currentList']);
-			unset($context['currentNumber']);
+			$result .= '</w:p>';
+			$result .= '<w:p>';
 		}
 		elseif($nodeName == 'li')
 		{
 			unset($context['showNumber']);
 		}
-		$context['font'] = array_diff_assoc($context['font'], $displayProperties['font']);
+		$context['font'] = array_diff_assoc($context['font'], $displayProperties->getProperties()['font']);
 
 		return $result;
-	}
-
-	/**
-	 * Returns true if html-tag with this $tagName displays as block by default.
-	 *
-	 * @param string $tagName
-	 * @return bool
-	 */
-	protected function isBlockTag($tagName)
-	{
-		$blockTagNames = [
-			'address' => true, 'article' => true, 'aside' => true, 'blockquote' => true, 'details' => true,
-			'dialog' => true, 'dd' => true, 'div' => true, 'dl' => true, 'dt' => true, 'fieldset' => true,
-			'figcaption' => true, 'figure' => true, 'footer' => true, 'form' => true, 'h1' => true, 'h2' => true,
-			'h3' => true, 'h4' => true, 'h5' => true, 'h6' => true, 'header' => true, 'hgroup' => true, 'hr' => true,
-			'li' => true, 'main' => true, 'nav' => true, 'ol' => true, 'p' => true, 'pre' => true, 'section' => true, 'table' => true,
-			'ul' => true,
-		];
-
-		return isset($blockTagNames[strtolower($tagName)]);
-	}
-
-	/**
-	 * Returns true if html-tag with this $tagName has bold font-weight by default.
-	 *
-	 * @param string $tagName
-	 * @return bool
-	 */
-	protected function isBoldTag($tagName)
-	{
-		$boldTagNames = [
-			'b' => true, 'mark' => true, 'em' => true, 'strong' => true, 'h1' => true, 'h2' => true, 'h3' => true,
-			'h4' => true, 'h5' => true, 'h6' => true,
-		];
-
-		return isset($boldTagNames[strtolower($tagName)]);
-	}
-
-	/**
-	 * Returns true if html-tag with this $tagName has italic font-style by default.
-	 *
-	 * @param string $tagName
-	 * @return bool
-	 */
-	protected function isItalicTag($tagName)
-	{
-		$italicTagNames = [
-			'i' => true, 'cite' => true, 'dfn' => true,
-		];
-
-		return isset($italicTagNames[strtolower($tagName)]);
-	}
-
-	/**
-	 * Returns true if html-tag with this $tagName has underlined font-decoration by default.
-	 *
-	 * @param string $tagName
-	 * @return bool
-	 */
-	protected function isUnderlinedTag($tagName)
-	{
-		return strtolower($tagName) == 'u';
-	}
-
-	/**
-	 * Returns true if html-tag with this $tagName renders as 'deleted' by default.
-	 *
-	 * @param string $tagName
-	 * @return bool
-	 */
-	protected function isDeletedTag($tagName)
-	{
-		return strtolower($tagName) == 'del';
 	}
 
 	/**
 	 * Returns row-properties xml-tag based on font properties.
 	 *
-	 * @param array $font
+	 * @param array $properties
 	 * @return string
 	 */
-	protected function addRowPropertiesTag(array $font)
+	protected function addRowPropertiesTag(array $properties)
 	{
+		$displayProperties = $this->getDisplayProperties(new DOM\Element('stub'), $properties);
 		$result = '<w:rPr>';
 		$result .= '<w:rStyle w:val="Del" />';
-		if(isset($font[static::HTML_NODE_FONT_BOLD]))
+		if($displayProperties->isFontBold())
 		{
 			$result .= '<w:b/>';
 		}
-		if(isset($font[static::HTML_NODE_FONT_ITALIC]))
+		if($displayProperties->isFontItalic())
 		{
 			$result .= '<w:i/>';
 		}
-		if(isset($font[static::HTML_NODE_FONT_DELETED]))
+		if($displayProperties->isFontDeleted())
 		{
 			$result .= '<w:strike/>';
 		}
-		if(isset($font[static::HTML_NODE_FONT_UNDERLINED]))
+		if($displayProperties->isFontUnderlined())
 		{
 			$result .= '<w:u w:val="single" />';
+		}
+		if(isset($properties['rowProperties']) && is_string($properties['rowProperties']))
+		{
+			$result .= $properties['rowProperties'];
 		}
 		$result .= '</w:rPr>';
 
 		return $result;
 	}
+
+	/**
+	 * @param \DOMElement $node
+	 * @return string|false
+	 */
+	protected function getRowPropertyNodeValue(\DOMElement $node)
+	{
+		if($node->nodeName === 'w:t')
+		{
+			$rowNode = $this->getParentNodeType($node, ['w:r'], 2);
+		}
+		else
+		{
+			$rowNode = $node;
+		}
+		/** @var \DOMElement $rowNode */
+		if($rowNode && $rowNode->nodeName === 'w:r')
+		{
+			$propertyNodes = $rowNode->getElementsByTagNameNS($this->getNameSpaces()['w'], 'rPr');
+			if($propertyNodes->length > 0)
+			{
+				$propertyNode = $propertyNodes->item(0);
+				if($propertyNode)
+				{
+					return $propertyNode->nodeValue;
+				}
+			}
+		}
+
+		return false;
+	}
+
+//  This is not ready yet
+//	/**
+//	 * @param array $params
+//	 * @return string
+//	 */
+//	protected function replacePlaceholders(array $params = [])
+//	{
+//		$placeholders = $this->getPlaceholders();
+//		$allNodes = array_fill_keys($placeholders, []);
+//		foreach($placeholders as $placeholder)
+//		{
+//			$allNodes[$placeholder] = $this->findPlaceholderNodes($placeholder);
+//		}
+//
+//		foreach($allNodes as $placeholder => $nodes)
+//		{
+//			foreach($nodes as $node)
+//			{
+//				/** @var \DOMNode $node */
+//				$textContent = parent::replacePlaceholders([
+//					'content' => $node->nodeValue,
+//					'currentNode' => $node,
+//				]);
+//			}
+//		}
+//
+//		$this->saveContent();
+//		return $this->content;
+//	}
 
 //	/**
 //	 * Generates simple spreadsheets for array values.

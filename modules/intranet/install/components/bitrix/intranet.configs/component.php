@@ -131,9 +131,13 @@ if(\Bitrix\Main\ModuleManager::isModuleInstalled('rest'))
 {
 	$arResult['MP_ALLOW_USER_INSTALL_EXTENDED'] = !$arResult['IS_BITRIX24'] || \Bitrix\Bitrix24\Feature::isFeatureEnabled('rest_userinstall_extended');
 }
+$arResult['SHOW_RENAME_POPUP'] = ($_GET['change_address'] == 'yes');
 
 //logo for bitrix24
-if ($_SERVER["REQUEST_METHOD"] == "POST" && check_bitrix_sessid())
+if (
+	$_SERVER["REQUEST_METHOD"] == "POST" && check_bitrix_sessid()
+	&& ($arResult["IS_BITRIX24"] && \Bitrix\Bitrix24\Feature::isFeatureEnabled("set_logo") || !$arResult["IS_BITRIX24"])
+)
 {
 	\Bitrix\Intranet\Composite\CacheProvider::deleteUserCache();
 
@@ -284,7 +288,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST"  && (isset($_POST["save_settings"]) )&&
 		else
 			$activateError = GetMessage("CONFIG_EMAIL_ERROR");
 
-		if (\CBitrix24::IsNetworkAllowed())
+		if (\CBitrix24::IsNetworkAllowed() && in_array($arResult["LICENSE_PREFIX"], array("ru", "ua", "kz", "by")))
 		{
 			if (CModule::IncludeModule('socialservices'))
 			{
@@ -316,7 +320,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST"  && (isset($_POST["save_settings"]) )&&
 	}
 
 	if (
-		$arResult["IS_BITRIX24"] && in_array($arResult["LICENSE_TYPE"], array("team", "company", "nfr", "edu", "demo", "bis_inc"))
+		$arResult["IS_BITRIX24"] && \Bitrix\Bitrix24\Feature::isFeatureEnabled("remove_logo24")
 		|| !$arResult["IS_BITRIX24"]
 	)
 	{
@@ -378,7 +382,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST"  && (isset($_POST["save_settings"]) )&&
 	}
 
 	$SET = array();
-	if (isset($_POST["work_time_start"]) && !empty($_POST["work_time_start"]))
+	if (isset($_POST['work_time_start']))
 		$SET["work_time_start"] = $_POST["work_time_start"];
 
 	if (isset($_POST["work_time_end"]) && !empty($_POST["work_time_end"]))
@@ -419,12 +423,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST"  && (isset($_POST["save_settings"]) )&&
 
 	if ($arResult["IS_DISK_CONVERTED"])
 	{
-		if (strlen($_POST["disk_allow_edit_object_in_uf"])>0)
+		if (strlen($_POST["disk_allow_edit_object_in_uf"]) > 0)
 			COption::SetOptionString("disk", "disk_allow_edit_object_in_uf", "Y");
 		else
 			COption::SetOptionString("disk", "disk_allow_edit_object_in_uf", "N");
 
-		if (strlen($_POST["disk_allow_autoconnect_shared_objects"])>0)
+		if (strlen($_POST["disk_allow_autoconnect_shared_objects"]) > 0)
 			COption::SetOptionString("disk", "disk_allow_autoconnect_shared_objects", "Y");
 		else
 			COption::SetOptionString("disk", "disk_allow_autoconnect_shared_objects", "N");
@@ -441,38 +445,56 @@ if ($_SERVER["REQUEST_METHOD"] == "POST"  && (isset($_POST["save_settings"]) )&&
 		else
 			COption::SetOptionString("webdav", "webdav_allow_ext_doc_services_local", "N");
 
-		if (strlen($_POST["webdav_autoconnect_share_group_folder"])>0)
+		if (strlen($_POST["webdav_autoconnect_share_group_folder"]) > 0)
 			COption::SetOptionString("webdav", "webdav_allow_autoconnect_share_group_folder", "Y");
 		else
 			COption::SetOptionString("webdav", "webdav_allow_autoconnect_share_group_folder", "N");
 	}
 
-	if (!$arResult["IS_BITRIX24"] || $arResult["IS_BITRIX24"] && !in_array($arResult["LICENSE_TYPE"], array("project", "self")))
+	if (!$arResult["IS_BITRIX24"] || $arResult["IS_BITRIX24"] && \Bitrix\Bitrix24\Feature::isFeatureEnabled("disk_version_limit_per_file"))
 	{
-		if (strlen($_POST["disk_version_limit_per_file"])>0 && in_array($_POST["disk_version_limit_per_file"], array_keys($arResult["DISK_LIMIT_PER_FILE"])))
+		if (
+			strlen($_POST["disk_version_limit_per_file"]) > 0
+			&& in_array($_POST["disk_version_limit_per_file"], array_keys($arResult["DISK_LIMIT_PER_FILE"]))
+		)
+		{
 			COption::SetOptionString("disk", "disk_version_limit_per_file", $_POST["disk_version_limit_per_file"]);
-
+		}
 	}
 
-	if (!$arResult["IS_BITRIX24"] || $arResult["IS_BITRIX24"] && in_array($arResult["LICENSE_TYPE"], array("team", "company", "demo", "edu", "bis_inc", "nfr")))
+	if (!$arResult["IS_BITRIX24"] || $arResult["IS_BITRIX24"] && \Bitrix\Bitrix24\Feature::isFeatureEnabled("disk_switch_external_link"))
 	{
-		if (strlen($_POST["disk_allow_use_external_link"])>0)
+		if (strlen($_POST["disk_allow_use_external_link"]) > 0)
 			COption::SetOptionString("disk", "disk_allow_use_external_link", "Y");
 		else
 			COption::SetOptionString("disk", "disk_allow_use_external_link", "N");
+	}
 
-		if (strlen($_POST["disk_object_lock_enabled"])>0)
+	if (!$arResult["IS_BITRIX24"] || $arResult["IS_BITRIX24"] && \Bitrix\Bitrix24\Feature::isFeatureEnabled("disk_object_lock_enabled"))
+	{
+		if (strlen($_POST["disk_object_lock_enabled"]) > 0)
 			COption::SetOptionString("disk", "disk_object_lock_enabled", "Y");
 		else
 			COption::SetOptionString("disk", "disk_object_lock_enabled", "N");
 	}
 
-	if (strlen($_POST["allow_livefeed_toall"])>0)
+	if (
+		!$arResult["IS_BITRIX24"]
+		|| $arResult["IS_BITRIX24"] && strlen($_POST["disk_allow_use_extended_fulltext"]) <= 0
+	)
+	{
+		if (strlen($_POST["disk_allow_use_extended_fulltext"]) > 0)
+			COption::SetOptionString("disk", "disk_allow_use_extended_fulltext", "Y");
+		else
+			COption::SetOptionString("disk", "disk_allow_use_extended_fulltext", "N");
+	}
+
+	if (strlen($_POST["allow_livefeed_toall"]) > 0)
 		COption::SetOptionString("socialnetwork", "allow_livefeed_toall", "Y");
 	else
 		COption::SetOptionString("socialnetwork", "allow_livefeed_toall", "N");
 
-	if (strlen($_POST["default_livefeed_toall"])>0)
+	if (strlen($_POST["default_livefeed_toall"]) > 0)
 		COption::SetOptionString("socialnetwork", "default_livefeed_toall", "Y");
 	else
 		COption::SetOptionString("socialnetwork", "default_livefeed_toall", "N");
@@ -501,6 +523,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST"  && (isset($_POST["save_settings"]) )&&
 		COption::SetOptionString("intranet", "BLOCK_NEW_USER_LF_SITE", "N", false, SITE_ID);
 	else
 		COption::SetOptionString("intranet", "BLOCK_NEW_USER_LF_SITE", "Y", false, SITE_ID);
+
+	if (strlen($_POST["show_year_for_female"])>0)
+		COption::SetOptionString("intranet", "show_year_for_female", "Y", false);
+	else
+		COption::SetOptionString("intranet", "show_year_for_female", "N", false);
+
+	if (strlen($_POST["stresslevel_available"])>0)
+		COption::SetOptionString("intranet", "stresslevel_available", "Y", false);
+	else
+		COption::SetOptionString("intranet", "stresslevel_available", "N", false);
 
 //im chat
 	if (CModule::IncludeModule('im'))
@@ -569,49 +601,90 @@ if ($_SERVER["REQUEST_METHOD"] == "POST"  && (isset($_POST["save_settings"]) )&&
 
 	if ($arResult["IS_BITRIX24"])
 	{
+		$manualModulesChangedList = [];
 		//features
 		if (isset($_POST["feature_crm"]) && !IsModuleInstalled("crm"))
 		{
 			COption::SetOptionString("bitrix24", "feature_crm", "Y");
 			\Bitrix\Main\ModuleManager::add("crm");
+			$manualModulesChangedList['crm'] = 'Y';
 		}
 		elseif (!isset($_POST["feature_crm"]) && IsModuleInstalled("crm"))
 		{
 			COption::SetOptionString("bitrix24", "feature_crm", "N");
 			\Bitrix\Main\ModuleManager::delete("crm");
+			$manualModulesChangedList['crm'] = 'N';
 		}
 
-		if (in_array($arResult["LICENSE_TYPE"], array("team", "company", "nfr", "edu")))
+		if (isset($_POST["feature_extranet"]) && !IsModuleInstalled("extranet"))
 		{
-			if (isset($_POST["feature_extranet"]) && !IsModuleInstalled("extranet"))
+			COption::SetOptionString("bitrix24", "feature_extranet", "Y");
+			CBitrix24::updateExtranetUsersActivity(true);
+			\Bitrix\Main\ModuleManager::add("extranet");
+			$manualModulesChangedList['extranet'] = 'Y';
+		}
+		elseif (!isset($_POST["feature_extranet"]) && IsModuleInstalled("extranet"))
+		{
+			COption::SetOptionString("bitrix24", "feature_extranet", "N");
+			CBitrix24::updateExtranetUsersActivity(false);
+			\Bitrix\Main\ModuleManager::delete("extranet");
+			$manualModulesChangedList['extranet'] = 'N';
+		}
+
+		if (\Bitrix\Bitrix24\Feature::isFeatureEnabled("timeman"))
+		{
+			if (isset($_POST["feature_timeman"]) && !IsModuleInstalled("timeman"))
 			{
-				COption::SetOptionString("bitrix24", "feature_extranet", "Y");
-				CBitrix24::updateExtranetUsersActivity(true);
-				\Bitrix\Main\ModuleManager::add("extranet");
+				COption::SetOptionString("bitrix24", "feature_timeman", "Y");
+				\Bitrix\Main\ModuleManager::add("timeman");
+				$manualModulesChangedList["timeman"] = 'Y';
 			}
-			elseif (!isset($_POST["feature_extranet"]) && IsModuleInstalled("extranet"))
+			elseif (!isset($_POST["feature_timeman"]) && IsModuleInstalled("timeman"))
 			{
-				COption::SetOptionString("bitrix24", "feature_extranet", "N");
-				CBitrix24::updateExtranetUsersActivity(false);
-				\Bitrix\Main\ModuleManager::delete("extranet");
+				COption::SetOptionString("bitrix24", "feature_timeman", "N");
+				\Bitrix\Main\ModuleManager::delete("timeman");
+				$manualModulesChangedList["timeman"] = 'N';
 			}
 		}
-		if (in_array($arResult["LICENSE_TYPE"], array("company", "nfr", "edu")))
+
+		if (\Bitrix\Bitrix24\Feature::isFeatureEnabled("meeting"))
 		{
-			$arModules = array("timeman", "meeting", "lists");
-			foreach($arModules as $module_id)
+			if (isset($_POST["feature_meeting"]) && !IsModuleInstalled("meeting"))
 			{
-				if (isset($_POST["feature_".$module_id]) && !IsModuleInstalled($module_id))
-				{
-					COption::SetOptionString("bitrix24", "feature_".$module_id, "Y");
-					\Bitrix\Main\ModuleManager::add($module_id);
-				}
-				elseif (!isset($_POST["feature_".$module_id]) && IsModuleInstalled($module_id))
-				{
-					COption::SetOptionString("bitrix24", "feature_".$module_id, "N");
-					\Bitrix\Main\ModuleManager::delete($module_id);
-				}
+				COption::SetOptionString("bitrix24", "feature_meeting", "Y");
+				\Bitrix\Main\ModuleManager::add("meeting");
+				$manualModulesChangedList["meeting"] = 'Y';
 			}
+			elseif (!isset($_POST["feature_meeting"]) && IsModuleInstalled("meeting"))
+			{
+				COption::SetOptionString("bitrix24", "feature_meeting", "N");
+				\Bitrix\Main\ModuleManager::delete("meeting");
+				$manualModulesChangedList["meeting"] = 'N';
+			}
+		}
+
+		if (\Bitrix\Bitrix24\Feature::isFeatureEnabled("lists"))
+		{
+			if (isset($_POST["feature_lists"]) && !IsModuleInstalled("lists"))
+			{
+				COption::SetOptionString("bitrix24", "feature_lists", "Y");
+				\Bitrix\Main\ModuleManager::add("lists");
+				$manualModulesChangedList["lists"] = 'Y';
+			}
+			elseif (!isset($_POST["feature_lists"]) && IsModuleInstalled("lists"))
+			{
+				COption::SetOptionString("bitrix24", "feature_lists", "N");
+				\Bitrix\Main\ModuleManager::delete("lists");
+				$manualModulesChangedList["lists"] = 'N';
+			}
+		}
+
+		if (!empty($manualModulesChangedList))
+		{
+			$event = new Bitrix\Main\Event("bitrix24", "OnManualModuleAddDelete", array(
+				'modulesList' => $manualModulesChangedList
+			));
+			$event->send();
 		}
 
 		if(defined("BX_COMP_MANAGED_CACHE"))
@@ -621,36 +694,39 @@ if ($_SERVER["REQUEST_METHOD"] == "POST"  && (isset($_POST["save_settings"]) )&&
 		}
 
 		//ip
-		$arIpSettings = array();
-		foreach ($_POST as $key=>$arItem)
+		if (\Bitrix\Bitrix24\Feature::isFeatureEnabled("ip_access_rights"))
 		{
-			if (strpos($key, "ip_access_rights_") !== false)
+			$arIpSettings = array();
+			foreach ($_POST as $key => $arItem)
 			{
-				$right = str_replace("ip_access_rights_", "", $key);
-				if (is_array($arItem))
+				if (strpos($key, "ip_access_rights_") !== false)
 				{
-					foreach ($arItem as $ip)
+					$right = str_replace("ip_access_rights_", "", $key);
+					if (is_array($arItem))
 					{
-						$ip = trim($ip);
-						if ($ip)
+						foreach ($arItem as $ip)
 						{
-							if (strpos($ip, "-") !== false)
+							$ip = trim($ip);
+							if ($ip)
 							{
-								$ipRange = explode("-", $ip);
-								preg_match('#^(?:\d{1,3}\.){3}\d{1,3}$#', $ipRange[0], $matches1);
-								preg_match('#^(?:\d{1,3}\.){3}\d{1,3}$#', $ipRange[1], $matches2);
-								if ($matches1[0] && $matches2[0])
-									$arIpSettings[$right][] = $ip;
+								if (strpos($ip, "-") !== false)
+								{
+									$ipRange = explode("-", $ip);
+									preg_match('#^(?:\d{1,3}\.){3}\d{1,3}$#', $ipRange[0], $matches1);
+									preg_match('#^(?:\d{1,3}\.){3}\d{1,3}$#', $ipRange[1], $matches2);
+									if ($matches1[0] && $matches2[0])
+										$arIpSettings[$right][] = $ip;
+									else
+										$arResult["ERROR"] = GetMessage("CONFIG_IP_ERROR");
+								}
 								else
-									$arResult["ERROR"] = GetMessage("CONFIG_IP_ERROR");
-							}
-							else
-							{
-								preg_match('#^(?:\d{1,3}\.){3}\d{1,3}$#', $ip, $matches);
-								if ($matches[0])
-									$arIpSettings[$right][] = $ip;
-								else
-									$arResult["ERROR"] = GetMessage("CONFIG_IP_ERROR");
+								{
+									preg_match('#^(?:\d{1,3}\.){3}\d{1,3}$#', $ip, $matches);
+									if ($matches[0])
+										$arIpSettings[$right][] = $ip;
+									else
+										$arResult["ERROR"] = GetMessage("CONFIG_IP_ERROR");
+								}
 							}
 						}
 					}
@@ -767,7 +843,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST"  && (isset($_POST["save_settings"]) )&&
 
 	if (!$arResult["ERROR"])
 	{
-		if ($arResult["IS_BITRIX24"])
+		if ($arResult["IS_BITRIX24"] && \Bitrix\Bitrix24\Feature::isFeatureEnabled("ip_access_rights"))
 		{
 			if (empty($arIpSettings))
 			{
@@ -833,6 +909,7 @@ if ($arResult["IS_BITRIX24"])
 	);
 
 	$arResult['ALLOW_NETWORK_CHANGE'] = \CBitrix24::IsNetworkAllowed() ? 'Y' : 'N';
+	$arResult['SHOW_YEAR_FOR_FEMALE'] = COption::GetOptionString("intranet", "show_year_for_female", "N");
 
 	$arResult["NETWORK_AVAILABLE"] = 'N';
 	if ($arResult['CREATOR_CONFIRMED'] && CModule::IncludeModule('socialservices'))
@@ -845,6 +922,8 @@ if ($arResult["IS_BITRIX24"])
 	$arProductPrices = CBitrix24::getPrices($billingCurrency);
 	$arResult["PROJECT_PRICE"] = CBitrix24::ConvertCurrency($arProductPrices["TF1"]["PRICE"], $billingCurrency);
 }
+
+$arResult['STRESSLEVEL_AVAILABLE'] = COption::GetOptionString("intranet", "stresslevel_available", "Y");
 
 if($arResult['SHOW_GOOGLE_API_KEY_FIELD'])
 {

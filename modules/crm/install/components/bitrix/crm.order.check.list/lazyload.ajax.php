@@ -55,7 +55,7 @@ if ($action === 'delete')
 		$check = \Bitrix\Sale\Cashbox\Internals\CashboxCheckTable::getRowById($id);
 		if ($check['STATUS'] == 'E' || $check['STATUS'] == 'N')
 		{
-			\Bitrix\Sale\Cashbox\Internals\CashboxCheckTable::delete($id);
+			\Bitrix\Sale\Cashbox\CheckManager::delete($id);
 		}
 	}
 }

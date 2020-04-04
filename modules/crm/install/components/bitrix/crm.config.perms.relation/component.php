@@ -27,15 +27,12 @@ $arParams['PATH_TO_ENTITY_LIST'] = CrmCheckPath('PATH_TO_ENTITY_LIST', $arParams
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && $_POST['ACTION'] == 'save' && check_bitrix_sessid() && $arResult['IS_PERMITTED'])
 {
-	CCrmSaleHelper::deleteUserFromShopGroup();
-
 	$arPerms = isset($_POST['PERMS'])? $_POST['PERMS']: array();
 	$CCrmRole = new CcrmRole();
 	$CCrmRole->SetRelation($arPerms);
 
-	CCrmSaleHelper::addUserToShopGroup();
-	$cache = new CPHPCache;
-	$cache->CleanDir("/crm/list_crm_roles/");
+	$currentUserIds = CCrmSaleHelper::getCurrentUsersShopGroups();
+	CCrmSaleHelper::addUserToShopGroup([], $currentUserIds);
 
 	LocalRedirect($APPLICATION->GetCurPage());
 }

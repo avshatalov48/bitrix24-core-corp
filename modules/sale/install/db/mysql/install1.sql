@@ -23,9 +23,9 @@ create table b_catalog_currency_lang
 	primary key (CURRENCY, LID)
 );
 
-INSERT INTO b_catalog_currency_lang (CURRENCY, LID, FORMAT_STRING, FULL_NAME, DEC_POINT, THOUSANDS_SEP, DECIMALS) VALUES('USD', 'ru', '$#', 'пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ', '.', ',', 2);
+INSERT INTO b_catalog_currency_lang (CURRENCY, LID, FORMAT_STRING, FULL_NAME, DEC_POINT, THOUSANDS_SEP, DECIMALS) VALUES('USD', 'ru', '$#', 'Доллар США', '.', ',', 2);
 INSERT INTO b_catalog_currency_lang (CURRENCY, LID, FORMAT_STRING, FULL_NAME, DEC_POINT, THOUSANDS_SEP, DECIMALS) VALUES('USD', 'en', '$#', 'USA dollar', '.', ',', 2);
-INSERT INTO b_catalog_currency_lang (CURRENCY, LID, FORMAT_STRING, FULL_NAME, DEC_POINT, THOUSANDS_SEP, DECIMALS) VALUES('RUR', 'ru', '# пїЅпїЅпїЅ', 'пїЅпїЅпїЅпїЅпїЅ', '.', '\\xA0', 2);
+INSERT INTO b_catalog_currency_lang (CURRENCY, LID, FORMAT_STRING, FULL_NAME, DEC_POINT, THOUSANDS_SEP, DECIMALS) VALUES('RUR', 'ru', '# руб', 'Рубль', '.', '\\xA0', 2);
 INSERT INTO b_catalog_currency_lang (CURRENCY, LID, FORMAT_STRING, FULL_NAME, DEC_POINT, THOUSANDS_SEP, DECIMALS) VALUES('RUR', 'en', '# rub', 'Rouble', '.', '\\xA0', 2);
 
 create table b_catalog_currency_rate

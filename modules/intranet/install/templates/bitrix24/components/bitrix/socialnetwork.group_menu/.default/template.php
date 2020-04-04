@@ -103,7 +103,7 @@ if (!empty($arResult["bShowRequestSentMessage"]))
 				<a href="<?=$arResult["Urls"]["View"]?>" class="profile-menu-name"><?=$arResult["Group"]["NAME"]?></a>
 				<div class="profile-menu-type">
 					<span class="profile-menu-type-name">
-						<span class="profile-menu-type-name-item"><?=(is_array($arResult['Group']['Type']) && !empty($arResult['Group']['Type']) && !empty($arResult['Group']['Type']['NAME']) ? $arResult['Group']['Type']['NAME'] : '')?></span><?
+						<span class="profile-menu-type-name-item"><?=(is_array($arResult['Group']['Type']) && !empty($arResult['Group']['Type']) && !empty($arResult['Group']['Type']['NAME']) ? (LANGUAGE_ID == 'de' ? $arResult['Group']['Type']['NAME'] : strtolower($arResult['Group']['Type']['NAME'])) : '')?></span><?
 						if ($arResult["CurrentUserPerms"]["UserCanModifyGroup"])
 						{
 							?><a href="<?=htmlspecialcharsbx($arResult["Urls"]["Edit"].(strpos($arResult["Urls"]["Edit"], "?") !== false ? "&" : '?')."tab=edit")?>" class="profile-menu-type-icon"></a><?

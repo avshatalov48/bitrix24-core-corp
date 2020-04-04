@@ -486,6 +486,7 @@ class SiteSettingsStep extends CWizardStep
 
 			$this->content .= '<tr><td>&nbsp;</td></tr>';
 		}
+/*
 		elseif (
 			strpos($templateID, "light") === 0
 			|| $templateID == "bitrix24"
@@ -526,7 +527,7 @@ JS;
 			$this->content .= $this->ShowFileField("siteLogo", $arParams);
 			$this->content .= '</td></tr>';
 		}
-
+*/
 		define("WIZARD_IS_RERUN", strlen(COption::GetOptionString("extranet", "extranet_site")) > 0);
 		
 		if(WIZARD_IS_RERUN !== true)

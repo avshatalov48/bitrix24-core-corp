@@ -9,6 +9,7 @@ audio.vjs-tech {display: none;}
 	vertical-align: middle;
 	width: 30px;
 	float:none;
+	flex-shrink: 0;
 }
 .tel-stat-icon {
 	background: url("./images/sprite.png") no-repeat scroll 2px -16px;
@@ -115,6 +116,7 @@ audio.vjs-tech {display: none;}
 
 .tel-stat-user-name {
 	display: inline-block;
+	flex-shrink: 1;
 }
 
 #tel-stat-grid-container .main-grid-cell-content {

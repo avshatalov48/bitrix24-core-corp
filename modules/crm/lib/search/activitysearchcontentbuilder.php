@@ -38,9 +38,10 @@ class ActivitySearchContentBuilder extends SearchContentBuilder
 	/**
 	 * Prepare search map.
 	 * @param array $fields Entity Fields.
+	 * @param array $options Options.
 	 * @return SearchMap
 	 */
-	protected function prepareSearchMap(array $fields)
+	protected function prepareSearchMap(array $fields, array $options = null)
 	{
 		$map = new SearchMap();
 
@@ -50,8 +51,16 @@ class ActivitySearchContentBuilder extends SearchContentBuilder
 			return $map;
 		}
 
-		$map->add($entityID);
-		$map->addField($fields, 'ID');
+		if(!is_array($options))
+		{
+			$options = array();
+		}
+
+		if(!(isset($options['skipEntityId']) && $options['skipEntityId']))
+		{
+			$map->add($entityID);
+		}
+
 		$map->addField($fields, 'SUBJECT');
 
 		$description = isset($fields['DESCRIPTION']) ? trim($fields['DESCRIPTION']) : '';

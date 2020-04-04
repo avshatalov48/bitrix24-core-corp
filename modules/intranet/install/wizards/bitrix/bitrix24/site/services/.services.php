@@ -100,6 +100,9 @@ $arServices = Array(
 	"crm" => Array(
 		"NAME" => GetMessage("SERVICE_CRM"),
 	),
+	"documentgenerator" => [
+		"NAME" => GetMessage("SERVICE_DOCUMENTGENERATOR"),
+	],
 	"timeman" => Array(
 		"NAME" => GetMessage("SERVICE_TIMEMAN"),
 	), 

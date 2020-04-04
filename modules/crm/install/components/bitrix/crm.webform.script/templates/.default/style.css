@@ -30,7 +30,7 @@
 }
 
 .crm-webform-script-popup .crm-webform-script-tab-body-item-container {
-	padding: 0 0 20px 0;
+	padding: 0;
 	background: transparent;
 }
 
@@ -93,7 +93,7 @@
 }
 
 .crm-webform-script-tab-body-item-content {
-	float: left;
+	width: 100%;
 	margin: 0 14px 0 0;
 	height: 100%;
 	padding: 12px 17px;
@@ -147,6 +147,21 @@
 	background-repeat: no-repeat;
 	background-position: cover;
 	overflow: hidden;
+}
+
+.crm-webform-script-code-settings {
+	padding: 10px;
+	margin: 10px 0 0 0;
+	background: #eef2f4;
+}
+
+.crm-webform-script-code-setting {
+	padding: 0 10px 0 0;
+	white-space: nowrap;
+}
+
+.crm-webform-script-code-setting select {
+	-webkit-appearance: menulist;
 }
 
 @media (max-width: 1458px) {

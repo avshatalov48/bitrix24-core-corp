@@ -4,6 +4,7 @@ namespace Bitrix\ImConnector\Input;
 use \Bitrix\Main\Event,
 	\Bitrix\Main\IO\File,
 	\Bitrix\Main\UserTable,
+	\Bitrix\Main\Text\Emoji,
 	\Bitrix\Main\Type\DateTime,
 	\Bitrix\Main\Web\HttpClient,
 	\Bitrix\Main\Localization\Loc;
@@ -13,7 +14,6 @@ use \Bitrix\ImConnector\Chat,
 	\Bitrix\ImConnector\Result,
 	\Bitrix\ImConnector\Library,
 	\Bitrix\ImConnector\Connector,
-	\Bitrix\ImConnector\Emoji\Emojione,
 	\Bitrix\ImConnector\Connectors\Instagram,
 	\Bitrix\ImConnector\Connectors\BotFramework;
 
@@ -238,12 +238,22 @@ class ReceivingMessage
 
 			if($resultMessage->isSuccess() && !empty($message['chat']['url']))
 			{
-				if($this->connector == 'facebookcomments')
-					$message['chat']['description'] = Loc::getMessage("IMCONNECTOR_LINK_TO_ORIGINAL_POST_IN_FACEBOOK", array('#LINK#' => $message['chat']['url']));
-				elseif($this->connector == 'instagram' || $this->connector == 'fbinstagram')
-					$message['chat']['description'] = Loc::getMessage("IMCONNECTOR_LINK_TO_ORIGINAL_POST_IN_INSTAGRAM", array('#LINK#' => $message['chat']['url']));
+				if ($this->connector === 'facebookcomments')
+				{
+					$message['chat']['description'] = Loc::getMessage('IMCONNECTOR_LINK_TO_ORIGINAL_POST_IN_FACEBOOK', ['#LINK#' => $message['chat']['url']]);
+				}
+				elseif ($this->connector === 'instagram' || $this->connector === 'fbinstagram')
+				{
+					$message['chat']['description'] = Loc::getMessage('IMCONNECTOR_LINK_TO_ORIGINAL_POST_IN_INSTAGRAM', ['#LINK#' => $message['chat']['url']]);
+				}
+				elseif ($this->connector === 'avito')
+				{
+					$message['chat']['description'] = Loc::getMessage('IMCONNECTOR_LINK_TO_AVITO_AD', ['#LINK#' => $message['chat']['url']]);
+				}
 				else
+				{
 					$message['chat']['description'] = Loc::getMessage("IMCONNECTOR_LINK_TO_ORIGINAL_POST", array('#LINK#' => $message['chat']['url']));
+				}
 
 				unset($message['chat']['url']);
 			}
@@ -271,7 +281,14 @@ class ReceivingMessage
 
 			if($resultMessage->isSuccess() && !Library::isEmpty($message['message']['text']))
 			{
-				$message['message']['text'] = Emojione::parseTextToEmoji($message['message']['text']);
+				if (\Bitrix\Main\Application::isUtfMode())
+				{
+					$message['message']['text'] = Emoji::decode($message['message']['text']);
+				}
+				else
+				{
+					$message['message']['text'] = preg_replace('/:([A-F0-9]{8}):/i', '(emoji)', $message['message']['text']);
+				}
 			}
 
 			if($resultMessage->isSuccess())
@@ -485,6 +502,16 @@ class ReceivingMessage
 
 		if(!Library::isEmpty($user['title']))
 			$fields['TITLE'] = $user['title'];
+
+		if (!Library::isEmpty($user['email']))
+		{
+			$fields['EMAIL'] = $user['email'];
+		}
+
+		if (!Library::isEmpty($user['phone']))
+		{
+			$fields['PERSONAL_MOBILE'] = $user['phone'];
+		}
 
 		return $fields;
 	}

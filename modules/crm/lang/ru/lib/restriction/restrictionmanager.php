@@ -74,4 +74,24 @@ $MESS["CRM_RESTR_MGR_PERMISSION_CONTROL_POPUP_CONTENT_2"] = "<div class=\"crm-pe
 		Подробнее про тарифы и их возможности узнайте на <a target=\"_blank\" href=\"https://www.bitrix24.ru/prices/\">странице сравнения редакций</a>.	
 	</div>
 </div>";
+$MESS["CRM_RESTR_MGR_INVOICE_RECURRING_POPUP_TITLE"] = "Регулярные счета доступны в тарифах \"Команда\" и \"Компания\"";
+$MESS["CRM_RESTR_MGR_INVOICE_RECURRING_POPUP_CONTENT"] = "Каждый счет в Битрикс24 можно повторять автоматически. 
+Если вы работаете с услугами, регулярно выставляете счета своим клиентам, например, раз в месяц, регулярные счета значительно сэкономят ваше время. 
+Выставите счет клиенту и укажите регулярность его повторения. В нужное время CRM автоматически создаст счет и отправить его на e-mail клиента.
+	<ul class=\"hide-features-list\">
+		<li class=\"hide-features-list-item\">Автоматическое создание счета</li>
+		<li class=\"hide-features-list-item\">Быстрый доступ ко всем шаблонам регулярных счетов</li>
+		<li class=\"hide-features-list-item\">Отправка счета для оплаты на e-mail клиента <a href=\"https://www.bitrix24.ru/pro/crm.php\" target=\"_blank\" class=\"hide-features-more\">Узнать подробнее</a></li>
+	</ul>		
+	<strong>Регулярные счета доступны в тарифах \"Команда\" и \"Компания\"</strong>";
+$MESS["CRM_RESTR_MGR_DEAL_RECURRING_POPUP_TITLE"] = "Регулярные сделки доступны в тарифах \"Команда\" и \"Компания\"";
+$MESS["CRM_RESTR_MGR_DEAL_RECURRING_POPUP_CONTENT"] = "Создавать сделки в Битрикс24 можно автоматически! 
+Если вы, например, целый год планируете еженедельно заключать договор с каким-то клиентом, то регулярные сделки сэкономят ваше время. 
+Заведите сделку, укажите ее регулярность и направление. А в указанное время она будет создана автоматически без участия менеджера.
+	<ul class=\"hide-features-list\">
+		<li class=\"hide-features-list-item\">Автоматическое создание сделок</li>
+		<li class=\"hide-features-list-item\">Повышение эффективности работы менеджеров</li>
+		<li class=\"hide-features-list-item\">Быстрый доступ к списку регулярных сделок <a href=\"https://www.bitrix24.ru/pro/crm.php\" target=\"_blank\" class=\"hide-features-more\">Узнать подробнее</a></li>
+	</ul>		
+	<strong>Регулярные сделки доступны в тарифах \"Команда\" и \"Компания\"</strong>";
 ?>

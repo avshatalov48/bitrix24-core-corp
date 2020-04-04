@@ -1,3 +1,10 @@
+.ui-tile-selector-item [data-role="tile-item-name"] {
+	overflow: hidden;
+	max-width: 400px;
+	text-overflow: ellipsis;
+	display: inline-block;
+}
+
 .ui-tile-selector-selector-wrap {
 	width: 100%;
 }
@@ -88,27 +95,6 @@
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	padding: 8px 13px 8px 15px;
-}
-
-.crm-analytics-source-user-link {
-	font-size: 14px;
-	line-height: 22px;
-	font-weight: 600;
-	color: #2066b0;
-	display: flex;
-	align-items: center;
-}
-
-.crm-analytics-source-user-img {
-	border-radius: 50%;
-	background: #535c6a url(data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2247.188%22%20height%3D%2254.063%22%20viewBox%3D%22-2%20-6%2050%2057%22%3E%0A%20%20%20%20%3Cpath%20fill%3D%22%23fff%22%20d%3D%22M47.18%2054.062c0-3.217-3.61-16.826-3.61-16.826%200-1.99-2.6-4.26-7.72-5.585a17.394%2017.394%200%200%201-4.887-2.223c-.33-.188-.28-1.925-.28-1.925l-1.648-.25c0-.142-.14-2.225-.14-2.225%201.972-.663%201.77-4.574%201.77-4.574%201.252.695%202.068-2.4%202.068-2.4%201.482-4.3-.738-4.04-.738-4.04a27.05%2027.05%200%200%200%200-7.918c-.987-8.708-15.847-6.344-14.085-3.5-4.343-.8-3.352%209.082-3.352%209.082l.942%202.56c-1.85%201.2-.564%202.65-.5%204.32.09%202.466%201.6%201.955%201.6%201.955.093%204.07%202.1%204.6%202.1%204.6.377%202.556.142%202.12.142%202.12l-1.786.217a7.1%207.1%200%200%201-.14%201.732c-2.1.936-2.553%201.485-4.64%202.4-4.032%201.767-8.414%204.065-9.193%207.16S-.012%2054.06-.012%2054.06h47.19z%22/%3E%0A%3C/svg%3E)
-	no-repeat center;
-	background-size: cover;
-	width: 37px;
-	height: 37px;
-	display: block;
-	margin-right: 10px;
 }
 
 .crm-analytics-source-block-utm .crm-analytics-source-title {
@@ -271,7 +257,8 @@
 	background: #d3f3fd;
 	font: 15px/21px "OpenSans-Bold", "Helvetica Neue", Arial, Helvetica, sans-serif;
 	color: #535c69;
-	padding: 8px 11px 9px;
+	/*padding: 8px 11px 9px;*/
+	padding: 12px 11px;
 	margin-right: 8px;
 }
 

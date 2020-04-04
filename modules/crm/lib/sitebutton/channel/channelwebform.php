@@ -15,6 +15,7 @@ use Bitrix\Crm\WebForm\EntityFieldProvider;
 use Bitrix\Crm\WebForm\Internals\FormTable;
 use Bitrix\Crm\WebForm\Internals\FieldTable;
 use Bitrix\Crm\WebForm\Script as WebFormScript;
+use Bitrix\Crm\WebForm;
 
 Loc::loadMessages(__FILE__);
 
@@ -146,6 +147,7 @@ class ChannelWebForm implements iProvider
 					'LANGUAGE_ID' => $lang
 				)
 			),
+			'freeze' => WebForm\Manager::isEmbeddingEnabled($id),
 			'sort' => 300,
 			'useColors' => true,
 			'classList' => array('b24-widget-button-' . $type),
@@ -155,7 +157,7 @@ class ChannelWebForm implements iProvider
 					'siteButton' => true,
 				]
 			),
-			'hide' => 'BX.SiteButton.classes.remove(document.getElementById(\'bx24_form_container_' . $id . '\'), \'open-sidebar\'); BX.SiteButton.onWidgetClose();',
+			'hide' => WebFormScript::getCrmButtonWidgetHider($id),
 		);
 		$widgets[] = $widget;
 

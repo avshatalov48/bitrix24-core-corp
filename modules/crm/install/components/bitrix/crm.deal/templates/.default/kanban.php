@@ -3,7 +3,7 @@
 // js/css
 $APPLICATION->SetAdditionalCSS('/bitrix/themes/.default/bitrix24/crm-entity-show.css');
 $bodyClass = $APPLICATION->GetPageProperty('BodyClass');
-$APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '').'no-paddings grid-mode pagetitle-toolbar-field-view flexible-layout crm-toolbar');
+$APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '').'no-paddings grid-mode pagetitle-toolbar-field-view crm-toolbar');
 $asset = Bitrix\Main\Page\Asset::getInstance();
 $asset->addJs('/bitrix/js/crm/common.js');
 
@@ -18,8 +18,6 @@ $categoryID = isset($arResult['VARIABLES']['category_id']) ? $arResult['VARIABLE
 $arResult['PATH_TO_DEAL_EDIT'] = isset($arResult['PATH_TO_DEAL_EDIT']) ? $arResult['PATH_TO_DEAL_EDIT'] : '';
 $arResult['PATH_TO_DEAL_LIST'] = isset($arResult['PATH_TO_DEAL_LIST']) ? $arResult['PATH_TO_DEAL_LIST'] : '';
 $arResult['PATH_TO_DEAL_CATEGORY'] = isset($arResult['PATH_TO_DEAL_CATEGORY']) ? $arResult['PATH_TO_DEAL_CATEGORY'] : '';
-$arResult['PATH_TO_DEAL_WIDGET'] = isset($arResult['PATH_TO_DEAL_WIDGET']) ? $arResult['PATH_TO_DEAL_WIDGET'] : '';
-$arResult['PATH_TO_DEAL_WIDGETCATEGORY'] = isset($arResult['PATH_TO_DEAL_WIDGETCATEGORY']) ? $arResult['PATH_TO_DEAL_WIDGETCATEGORY'] : '';
 $arResult['PATH_TO_DEAL_KANBAN'] = isset($arResult['PATH_TO_DEAL_KANBAN']) ? $arResult['PATH_TO_DEAL_KANBAN'] : '';
 $arResult['PATH_TO_DEAL_KANBANCATEGORY'] = isset($arResult['PATH_TO_DEAL_KANBANCATEGORY']) ? $arResult['PATH_TO_DEAL_KANBANCATEGORY'] : '';
 $arResult['PATH_TO_DEAL_CALENDARCATEGORY'] = isset($arResult['PATH_TO_DEAL_CALENDARCATEGORY']) ? $arResult['PATH_TO_DEAL_CALENDARCATEGORY'] : '';
@@ -68,7 +66,6 @@ $APPLICATION->IncludeComponent(
 		'PATH_TO_COMPANY_EDIT' => isset($arResult['PATH_TO_COMPANY_EDIT']) ? $arResult['PATH_TO_COMPANY_EDIT'] : '',
 		'PATH_TO_CONTACT_LIST' => isset($arResult['PATH_TO_CONTACT_LIST']) ? $arResult['PATH_TO_CONTACT_LIST'] : '',
 		'PATH_TO_CONTACT_EDIT' => isset($arResult['PATH_TO_CONTACT_EDIT']) ? $arResult['PATH_TO_CONTACT_EDIT'] : '',
-		'PATH_TO_DEAL_WIDGET' => isset($arResult['PATH_TO_DEAL_WIDGET']) ? $arResult['PATH_TO_DEAL_WIDGET'] : '',
 		'PATH_TO_DEAL_LIST' => isset($arResult['PATH_TO_DEAL_LIST']) ? $arResult['PATH_TO_DEAL_LIST'] : '',
 		'PATH_TO_DEAL_EDIT' => isset($arResult['PATH_TO_DEAL_EDIT']) ? $arResult['PATH_TO_DEAL_EDIT'] : '',
 		'PATH_TO_DEAL_CATEGORY' => isset($arResult['PATH_TO_DEAL_CATEGORY']) ? $arResult['PATH_TO_DEAL_CATEGORY'] : '',
@@ -243,20 +240,6 @@ else
 							)
 						)
 						: array()
-					),
-					array(
-						array(
-							//'icon' => 'chart',
-							'id' => 'widget',
-							'name' => Loc::getMessage('CRM_DEAL_LIST_FILTER_NAV_BUTTON_WIDGET'),
-							'active' => 0,
-							'url' => $categoryID < 0
-								? $arResult['PATH_TO_DEAL_WIDGET']
-								: CComponentEngine::makePathFromTemplate(
-									$arResult['PATH_TO_DEAL_WIDGETCATEGORY'],
-									array('category_id' => $categoryID)
-								)
-						)
 					)
 				),
 				'BINDING' => array(

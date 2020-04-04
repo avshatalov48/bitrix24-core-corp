@@ -16,6 +16,7 @@ use Bitrix\Main\Web\Json;
 use Bitrix\Main\Text\HtmlFilter;
 use Bitrix\Main\Context;
 use Bitrix\Main\Web\Uri;
+use Bitrix\Crm\UI\Webpack;
 
 Loc::loadMessages(__FILE__);
 
@@ -151,6 +152,22 @@ class Script
 		Option::set('crm', 'webform_public_form_path', $path);
 	}
 
+	public static function proxyUrl($url)
+	{
+		if (Loader::includeModule('bitrix24') && !\CBitrix24::isCustomDomain())
+		{
+			$url = new Uri($url);
+			if (strpos($url->getPath(), '/pub/') === 0)
+			{
+				$url = $url->setPath(
+					'/' . $url->getHost() . substr($url->getPath(), 4)
+				)->setHost('bitrix24public.com')->getLocator();
+			}
+		}
+
+		return $url;
+	}
+
 	public static function getDomain()
 	{
 		$result = null;
@@ -183,7 +200,7 @@ class Script
 		return $result;
 	}
 
-	protected static function getPublicUrl(array $formData)
+	public static function getPublicUrl(array $formData)
 	{
 		$link = self::getDomain() . self::$defaultFormPath;
 		$link = str_replace(
@@ -192,7 +209,7 @@ class Script
 			$link
 		);
 
-		return $link;
+		return self::proxyUrl($link);
 	}
 
 	public static function getAgreementUrl(array $formData)
@@ -223,8 +240,7 @@ class Script
 			$link
 		);
 
-		$uri = new Uri($link);
-		return $uri->getLocator();
+		return self::proxyUrl($link);
 	}
 
 	public static function getListContext($formData, $params, $formPath = null)
@@ -243,6 +259,11 @@ class Script
 
 		$script = new static($httpHost, $isHttps, $formPath);
 
+		if (!$formData['ID'])
+		{
+			return [];
+		}
+
 		$lang = Context::getCurrent()->getLanguage();
 		$scriptParams = array(
 			'id' => $formData['ID'],
@@ -250,16 +271,54 @@ class Script
 			'sec' => $formData['SECURITY_CODE']
 		);
 
+		$webpack = Webpack\Form::instance($formData['ID']);
+		if (!$webpack->isBuilt())
+		{
+			$webpack->build();
+			$webpack = Webpack\Form::instance($formData['ID']);
+		}
+
 		return array(
-			'INLINE' => $script->getInline($scriptParams),
-			'BUTTON' => $script->getButton($scriptParams + array('button_caption' => Loc::getMessage('CRM_WEBFORM_SCRIPT_BUTTON_TEXT'))),
-			'LINK' => $script->getLink($scriptParams + array('button_caption' => Loc::getMessage('CRM_WEBFORM_SCRIPT_BUTTON_TEXT'))),
-			'DELAY' => $script->getDelay($scriptParams + array('delay' => 5))
+			'INLINE' => [
+				'text' => $webpack
+					->configureFormEmbeddedScript(['action' => 'inline', 'sec' => $formData['SECURITY_CODE']])
+					->getEmbeddedScript(),
+				'old' => $script->getInline($scriptParams)
+			],
+			'CLICK' => [
+				'text' => $webpack
+					->configureFormEmbeddedScript(['action' => 'click', 'sec' => $formData['SECURITY_CODE']])
+					->getEmbeddedScript(),
+				'old' => $script->getButton($scriptParams + ['button_caption' => Loc::getMessage('CRM_WEBFORM_SCRIPT_BUTTON_TEXT')])
+			],
+			'AUTO' => [
+				'text' => $webpack
+					->configureFormEmbeddedScript(['action' => 'auto', 'sec' => $formData['SECURITY_CODE']])
+					->getEmbeddedScript(),
+				'old' => $script->getDelay($scriptParams + ['delay' => 5])
+			]
 		);
 	}
 
-	public static function getCrmButtonWidget($formId, $params = array())
+	public static function getCrmButtonWidget($formId, $params = [])
 	{
+		if (Manager::isEmbeddingEnabled($formId))
+		{
+			$options = [
+				'usedBySiteButton' => true,
+				'lang' => $params['LANGUAGE_ID'] ?: LANGUAGE_ID,
+			];
+			$formOptions = [
+				'id' => 'b24-site-button-form-' . $formId,
+				'visible' => false,
+				'useSign' => !$params['REMOVE_COPYRIGHT'],
+			];
+			return Webpack\Form::instance($formId)
+				->setAdditionalOptions($options)
+				->setAdditionalFormOptions($formOptions)
+				->getContent();
+		}
+
 		ob_start();
 
 		/*@var $APPLICATION CMain*/
@@ -279,8 +338,27 @@ class Script
 		return ob_get_clean();
 	}
 
+	public static function getCrmButtonWidgetHider($formId)
+	{
+		if (Manager::isEmbeddingEnabled($formId))
+		{
+
+			$id = 'b24-site-button-form-' . $formId;
+			return "b24form.App.get('$id').hide();";
+		}
+
+		return 'BX.SiteButton.classes.remove(document.getElementById(\'bx24_form_container_' . $formId . '\'), \'open-sidebar\'); BX.SiteButton.onWidgetClose();';
+	}
+
 	public static function getCrmButtonWidgetShower($formId, $lang = null, array $options = [])
 	{
+		if (Manager::isEmbeddingEnabled($formId))
+		{
+
+			$id = 'b24-site-button-form-' . $formId;
+			return "b24form.App.get('$id').show();";
+		}
+
 		$formData = FormTable::getRowById($formId);
 		$sec = $formData['SECURITY_CODE'];
 		$isCallbackForm = $formData['IS_CALLBACK_FORM'] == 'Y';
@@ -317,12 +395,12 @@ class Script
 						"keyboard": function (form, keyCode){
 							if (keyCode == 27) BX.SiteButton.wm.hide();
 						}
-					}
+					},
+					"ref": "' . $url . '" 
 				};
 				
 				if(w[\'Bitrix24FormLoader\'] && !Bitrix24FormLoader.isFormExisted(params)) 
 				{
-					params.ref = "' . $url . '";
 					Bitrix24FormLoader.preLoad(params);
 				}
 				else

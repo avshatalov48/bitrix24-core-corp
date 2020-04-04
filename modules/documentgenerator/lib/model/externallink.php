@@ -128,30 +128,37 @@ class ExternalLinkTable extends Main\Entity\DataManager
 		$result = [];
 		if($documentId > 0)
 		{
-			$item = static::getList(['filter' => ['DOCUMENT_ID' => $documentId]])->fetch();
+			$item = static::getList([
+				'select' => ['HASH', 'DOCUMENT_PDF_ID' => 'DOCUMENT.PDF_ID', 'DOCUMENT_IMAGE_ID' => 'DOCUMENT.IMAGE_ID'],
+				'filter' => ['DOCUMENT_ID' => $documentId],
+			])->fetch();
 			if($item)
 			{
 				$hash = $item['HASH'];
 				$urlManager = UrlManager::getInstance();
-				$result = [
-					'imageUrl' => $urlManager->create('documentgenerator.api.publicdocument.getImage', [
+				$result['publicDownloadUrl'] = $urlManager->create('documentgenerator.api.publicdocument.getFile', [
+					'id' => $documentId,
+					'hash' => $hash,
+				], $absolute);
+				if($item['DOCUMENT_IMAGE_ID'] > 0)
+				{
+					$result['imageUrl'] = $urlManager->create('documentgenerator.api.publicdocument.getImage', [
 						'id' => $documentId,
 						'hash' => $hash,
-					], $absolute),
-					'publicDownloadUrl' => $urlManager->create('documentgenerator.api.publicdocument.getFile', [
+					], $absolute);
+				}
+				if($item['DOCUMENT_PDF_ID'] > 0)
+				{
+					$result['pdfUrl'] = $urlManager->create('documentgenerator.api.publicdocument.getPdf', [
 						'id' => $documentId,
 						'hash' => $hash,
-					], $absolute),
-					'pdfUrl' => $urlManager->create('documentgenerator.api.publicdocument.getPdf', [
-						'id' => $documentId,
-						'hash' => $hash,
-					], $absolute),
-					'printUrl' => $urlManager->create('documentgenerator.api.publicdocument.showPdf', [
+					], $absolute);
+					$result['printUrl'] = $urlManager->create('documentgenerator.api.publicdocument.showPdf', [
 						'print' => 'y',
 						'id' => $documentId,
 						'hash' => $hash,
-					], $absolute),
-				];
+					], $absolute);
+				}
 			}
 		}
 

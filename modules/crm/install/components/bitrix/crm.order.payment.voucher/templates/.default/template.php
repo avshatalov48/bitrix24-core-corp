@@ -64,7 +64,7 @@ $editorContext = array(
 		function()
 		{
 			BX.Crm.OrderPaymentVoucher.create("<?=CUtil::JSEscape($guid)?>", {
-				entityId: '<?=htmlspecialcharsbx($arResult['ENTITY_ID'])?>'
+				entityId: '<?=CUtil::JSEscape($arResult['ENTITY_ID'])?>'
 			});
 		}
 	);

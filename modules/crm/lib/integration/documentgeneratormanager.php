@@ -16,10 +16,9 @@ use Bitrix\DocumentGenerator\Driver;
 use Bitrix\DocumentGenerator\Model\DocumentTable;
 use Bitrix\DocumentGenerator\Nameable;
 use Bitrix\Main\Event;
-use Bitrix\Main\IO\File;
+use Bitrix\Main\IO\Directory;
 use Bitrix\Main\Loader;
 use Bitrix\DocumentGenerator\Model\TemplateTable;
-use Bitrix\Main\UI\Spotlight;
 use Bitrix\Main\Web\Uri;
 use Bitrix\Main\Localization\Loc;
 
@@ -28,6 +27,7 @@ class DocumentGeneratorManager
 	const PROVIDER_LIST_EVENT_NAME = 'onGetDataProviderList';
 	const DOCUMENT_CREATE_EVENT_NAME = 'onCreateDocument';
 	const DOCUMENT_UPDATE_EVENT_NAME = 'onUpdateDocument';
+	const DOCUMENT_PUBLIC_VIEW_EVENT_NAME = 'onPublicView';
 	const DOCUMENT_DELETE_EVENT_NAME = '\Bitrix\DocumentGenerator\Model\Document::OnBeforeDelete';
 
 	protected static $instance;
@@ -63,94 +63,15 @@ class DocumentGeneratorManager
 	 */
 	public function isEnabled()
 	{
-		return $this->isEnabled;
-	}
-
-	/**
-	 * @param string $className
-	 * @param string|int $value
-	 * @return array|false
-	 */
-	public function getPreviewList($className, $value)
-	{
-		$templates = [];
-
-		if($this->isEnabled())
+		if($this->isEnabled)
 		{
-			\CJSCore::init(["sidepanel", "documentpreview"]);
-			$componentPath = \CComponentEngine::makeComponentPath('bitrix:crm.document.view');
-			if(!empty($componentPath))
+			if(method_exists(Driver::getInstance(), 'isEnabled'))
 			{
-				$loaderPath = getLocalPath('components'.$componentPath.'/templates/.default/images/document_view.svg');
-				$componentPath = getLocalPath('components'.$componentPath.'/slider.php');
-				Loc::loadMessages(__FILE__);
-				$templates = TemplateTable::getListByClassName($className, Driver::getInstance()->getUserId(), $value);
-				if($templates)
-				{
-					foreach($templates as &$template)
-					{
-						$uri = new Uri($componentPath);
-						$template['text'] = htmlspecialcharsbx($template['NAME']);
-						$params = ['templateId' => $template['ID'], 'providerClassName' => $className, 'value' => $value, 'analyticsLabel' => 'generateDocument', 'templateCode' => $template['CODE']];
-						$href = $uri->addParams($params)->getLocator();
-						$template['onclick'] = 'BX.DocumentGenerator.Document.onBeforeCreate(\''.\CUtil::JSEscape($href).'\', '.\CUtil::PhpToJSObject(['checkNumber' => true]).', \''.\CUtil::JSEscape($loaderPath).'\');';
-					}
-				}
-				$isDelimiterAdded = false;
-				$documentListUrl = $this->getDocumentListUrl($className, $value, $componentPath, $loaderPath);
-				if($documentListUrl)
-				{
-					if(!$isDelimiterAdded)
-					{
-						$templates[] = ['delimiter' => true];
-						$isDelimiterAdded = true;
-					}
-					$templates[] = [
-						'text' => Loc::getMessage('CRM_DOCUMENTGENERATOR_DOCUMENTS_LIST'),
-						'onclick' => 'BX.SidePanel.Instance.open("'.$documentListUrl.'", {width: 930}); BX.PopupMenu.getCurrentMenu().popupWindow.close();',
-					];
-				}
-				$addTemplateUrl = $this->getAddTemplateUrl($className);
-				if($addTemplateUrl)
-				{
-					if(!$isDelimiterAdded)
-					{
-						$templates[] = ['delimiter' => true];
-					}
-					$templates[] = [
-						'text' => Loc::getMessage('CRM_DOCUMENTGENERATOR_ADD_NEW_TEMPLATE'),
-						'onclick' => 'BX.SidePanel.Instance.open("'.$addTemplateUrl.'", {width: 930}); BX.PopupMenu.getCurrentMenu().popupWindow.close();',
-					];
-				}
+				return Driver::getInstance()->isEnabled();
 			}
-		}
-
-		return $templates;
-	}
-
-	/**
-	 * @param $provider
-	 * @return bool|string
-	 */
-	protected function getAddTemplateUrl($provider)
-	{
-		$path = null;
-		if(File::isFileExists(\Bitrix\Main\Application::getInstance()->getContext()->getServer()->getDocumentRoot().'/crm/documents/'))
-		{
-			$path = '/crm/documents/templates/';
-			$uri = new Uri($path);
-			$uri->addParams(['entityTypeId' => $provider]);
-			return $uri->getLocator();
-		}
-		else
-		{
-			$path = \CComponentEngine::makeComponentPath('bitrix:documentgenerator.templates');
-			$path = getLocalPath('components'.$path.'/slider.php');
-			if(!empty($path))
+			else
 			{
-				$uri = new Uri($path);
-				$uri->addParams(['MODULE' => 'crm', 'PROVIDER' => $provider]);
-				return $uri->getLocator();
+				return (class_exists('\DOMDocument', true) && class_exists('\ZipArchive', true));
 			}
 		}
 
@@ -158,26 +79,69 @@ class DocumentGeneratorManager
 	}
 
 	/**
-	 * @param string $className
-	 * @param mixed $value
-	 * @param string $viewUrl
-	 * @param string $loaderPath
-	 * @return bool|string
+	 * @return bool
 	 */
-	protected function getDocumentListUrl($className, $value, $viewUrl = '', $loaderPath = '')
+	public function isDocumentButtonAvailable()
 	{
-		$componentPath = \CComponentEngine::makeComponentPath('bitrix:documentgenerator.documents');
-		$componentPath = getLocalPath('components'.$componentPath.'/slider.php');
+		return (
+			$this->isEnabled() && (
+				Driver::getInstance()->getUserPermissions()->canViewDocuments() ||
+				Driver::getInstance()->getUserPermissions()->canModifyTemplates()
+			)
+		);
+	}
+
+	/**
+	 * @param string $className
+	 * @param string $value
+	 * @return array
+	 */
+	public function getDocumentButtonParameters($className, $value)
+	{
+		if(!$this->isDocumentButtonAvailable())
+		{
+			return [];
+		}
+		// subscribe to changes in the list
+		TemplateTable::getPullTag();
+		\CJSCore::init(["documentpreview"]);
+		Loc::loadMessages(__FILE__);
+		$params = [
+			'provider' => $className,
+			'moduleId' => 'crm',
+			'value' => $value,
+			'templateListUrl' => $this->getAddTemplateUrl($className),
+			'className' => 'crm-btn-dropdown-document',
+			'menuClassName' => 'document-toolbar-menu',
+			'templatesText' => Loc::getMessage('CRM_DOCUMENTGENERATOR_ADD_NEW_TEMPLATE'),
+			'documentsText' => Loc::getMessage('CRM_DOCUMENTGENERATOR_DOCUMENTS_LIST'),
+		];
+		$componentPath = \CComponentEngine::makeComponentPath('bitrix:crm.document.view');
 		if(!empty($componentPath))
 		{
-			$uri = new Uri($componentPath);
-			$uri->addParams([
-				'provider' => $className,
-				'module' => 'crm',
-				'value' => $value,
-				'viewUrl' => $viewUrl,
-				'loaderPath' => $loaderPath,
-			]);
+			$params['loaderPath'] = getLocalPath('components'.$componentPath.'/templates/.default/images/document_view.svg');
+			$documentUrl = new Uri(getLocalPath('components'.$componentPath.'/slider.php'));
+			$documentUrl->addParams(['providerClassName' => $className,]);
+			$params['documentUrl'] = $documentUrl->getUri();
+		}
+
+		return $params;
+	}
+
+	/**
+	 * @param string $provider
+	 * @return bool|string
+	 */
+	public function getAddTemplateUrl($provider = null)
+	{
+		if($this->isEnabled() && Directory::isDirectoryExists(\Bitrix\Main\Application::getInstance()->getContext()->getServer()->getDocumentRoot().'/crm/documents/'))
+		{
+			$path = '/crm/documents/templates/';
+			$uri = new Uri($path);
+			if($provider)
+			{
+				$uri->addParams(['entityTypeId' => $provider]);
+			}
 			return $uri->getLocator();
 		}
 
@@ -281,26 +245,27 @@ class DocumentGeneratorManager
 		return true;
 	}
 
-	public function showSpotlight($targetElement)
+	/**
+	 * @param Event $event
+	 * @return bool
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	public static function onPublicView(Event $event)
 	{
-		global $APPLICATION;
-
-		if(!$targetElement)
+		$document = $event->getParameter('document');
+		/** @var Document $document */
+		if($document)
 		{
-			return;
+			$provider = $document->getProvider();
+			if($provider && $provider instanceof CrmEntityDataProvider)
+			{
+				$provider->onPublicView($document);
+			}
 		}
 
-		Loc::loadMessages(__FILE__);
-		$APPLICATION->includeComponent("bitrix:spotlight", "", [
-			"ID" => "crm-documents-feature",
-			"USER_TYPE" => Spotlight::USER_TYPE_OLD,
-			"JS_OPTIONS" => [
-				"targetElement" => $targetElement,
-				"content" => Loc::getMessage('CRM_DOCUMENTGENERATOR_SPOTLIGHT_TEXT'),
-				"targetVertex" => "middle-center",
-				"zIndex" => 2000,
-			]
-		]);
+		return true;
 	}
 
 	/**

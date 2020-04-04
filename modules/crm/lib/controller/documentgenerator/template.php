@@ -5,7 +5,6 @@ namespace Bitrix\Crm\Controller\DocumentGenerator;
 use Bitrix\Crm\Integration\DocumentGeneratorManager;
 use Bitrix\DocumentGenerator\Model\FileTable;
 use Bitrix\Main\Application;
-use Bitrix\Main\Engine\ActionFilter\Csrf;
 use Bitrix\Main\Engine\Response\DataType\ContentUri;
 use Bitrix\Main\Engine\Response\DataType\Page;
 use Bitrix\Main\Engine\UrlManager;
@@ -16,21 +15,6 @@ use Bitrix\Main\Web\Uri;
 
 class Template extends Base
 {
-	/**
-	 * @return array
-	 */
-	public function configureActions()
-	{
-		$configureActions = parent::configureActions();
-		$configureActions['download'] = [
-			'-prefilters' => [
-				Csrf::class
-			]
-		];
-
-		return $configureActions;
-	}
-
 	/**
 	 * @param int $templateId
 	 * @return Uri
@@ -179,7 +163,9 @@ class Template extends Base
 			$fields['users'] = [];
 		}
 
-		$fileId = $this->uploadFile($fields[static::FILE_PARAM_NAME]);
+		$fileId = $this->uploadFile($fields[static::FILE_PARAM_NAME], [
+			'isTemplate' => true,
+		]);
 		if(!$fileId)
 		{
 			return null;
@@ -224,7 +210,9 @@ class Template extends Base
 		}
 		if($fileContent)
 		{
-			$fileId = $this->uploadFile($fileContent);
+			$fileId = $this->uploadFile($fileContent, [
+				'isTemplate' => true,
+			]);
 			if(!$fileId)
 			{
 				return null;

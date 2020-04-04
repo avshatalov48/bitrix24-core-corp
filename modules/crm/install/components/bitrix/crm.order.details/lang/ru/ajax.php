@@ -22,3 +22,4 @@ $MESS["CRM_ORDER_DA_ADD_COUPON_ERROR"] = "Ошибка добавления ку
 $MESS["CRM_ORDER_DA_DELETE_COUPON_ERROR"] = "Ошибка удаления купона";
 $MESS["CRM_ORDER_DA_CURRENCY_CHANGED"] = "Валюта заказа изменена. Проверьте правильность конвертации цен товаров";
 $MESS["CRM_ORDER_DA_DELIVERY_INDEX_ERROR"] = "Индекс отгрузки не определён";
+$MESS["CRM_ORDER_DA_GROUP_ACTION_ABSENT"] = "Групповое действие для товаров не определено";

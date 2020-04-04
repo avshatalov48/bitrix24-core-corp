@@ -10,7 +10,11 @@ IncludeModuleLangFile(__FILE__);
 
 $priceTypeId = intval(CCrmProduct::getSelectedPriceTypeId());
 
-$props = array();
+$gridOptions = new CGridOptions($arResult['TABLE_ID']);
+$visibleColumnsMap = array_fill_keys($gridOptions->GetVisibleColumns(), true);
+
+$props = [];
+$headerPropsMap = [];
 if (is_array($arResult['PROPS']))
 {
 	foreach ($arResult['PROPS'] as $propIndex => $prop)
@@ -22,12 +26,19 @@ if (is_array($arResult['PROPS']))
 			)
 			&& $prop['PROPERTY_TYPE'] !== 'G')
 		{
-			$props[intval($prop['ID'])] = &$arResult['PROPS'][$propIndex];
+			if (isset($visibleColumnsMap['PROPERTY_'.$prop['ID']]))
+			{
+				$props[intval($prop['ID'])] = $arResult['PROPS'][$propIndex];
+			}
+			$headerPropsMap[intval($prop['ID'])] = true;
 		}
+		unset($arResult['PROPS'][$propIndex]);
 	}
 }
 
 $arResult['PUBLIC_PROPS'] = &$props;
+
+unset($gridOptions, $visibleColumnsMap);
 
 function isPublicHeaderItem($headerId, $priceTypeId, &$propsInfo)
 {
@@ -69,8 +80,10 @@ if (is_array($arResult['HEADERS']))
 
 	foreach ($arResult['HEADERS'] as $header)
 	{
-		if (!isPublicHeaderItem($header['id'], $priceTypeId, $props))
+		if (!isPublicHeaderItem($header['id'], $priceTypeId, $headerPropsMap))
+		{
 			continue;
+		}
 
 		$newHeader = array();
 		if (isset($header['id']))
@@ -98,8 +111,7 @@ if (is_array($arResult['HEADERS']))
 
 	$arResult['HEADERS'] = $newHeaders;
 }
-
-
+unset($headerPropsMap);
 
 // Properties values
 $arArrays = array();

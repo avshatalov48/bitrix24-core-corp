@@ -1628,6 +1628,10 @@ elseif($action == 'SAVE_EMAIL')
 	else if (!empty($arErrors))
 		__CrmActivityEditorEndResponse(array('ERROR' => $arErrors));
 
+	$ownerTypeName = isset($data['ownerType']) ? strtoupper(strval($data['ownerType'])) : '';
+	$ownerTypeID = !empty($ownerTypeName) ? \CCrmOwnerType::resolveId($ownerTypeName) : 0;
+	$ownerID = isset($data['ownerID']) ? intval($data['ownerID']) : 0;
+
 	$bindData = isset($data['bindings']) ? $data['bindings'] : array();
 	if (!empty($rawData['docs']) && is_array($rawData['docs']))
 	{
@@ -1654,6 +1658,10 @@ elseif($action == 'SAVE_EMAIL')
 			$key = sprintf('%u_%u', $item['entityType'], $item['entityId']);
 			if (\CCrmOwnerType::Deal == $item['entityTypeId'] && !isset($arBindings[$key]))
 			{
+				$ownerTypeName = \CCrmOwnerType::resolveName($item['entityTypeId']);
+				$ownerTypeID = $item['entityTypeId'];
+				$ownerID = $item['entityId'];
+
 				$arBindings[$key] = array(
 					'OWNER_TYPE_ID' => $item['entityTypeId'],
 					'OWNER_ID'      => $item['entityId']
@@ -1662,14 +1670,10 @@ elseif($action == 'SAVE_EMAIL')
 		}
 	}
 
-	$ownerTypeName = isset($data['ownerType']) ? strtoupper(strval($data['ownerType'])) : '';
-	$ownerTypeID   = !empty($ownerTypeName) ? \CCrmOwnerType::resolveId($ownerTypeName) : 0;
-	$ownerID       = isset($data['ownerID']) ? intval($data['ownerID']) : 0;
-
-	// DealRecurring?!
 	$nonRcptOwnerTypes = array(
 		\CCrmOwnerType::Lead,
 		\CCrmOwnerType::Order,
+		\CCrmOwnerType::Deal,
 		\CCrmOwnerType::DealRecurring,
 	);
 	if ('Y' != $data['ownerRcpt'] && in_array($ownerTypeID, $nonRcptOwnerTypes) && $ownerID > 0)
@@ -1832,8 +1836,12 @@ elseif($action == 'SAVE_EMAIL')
 				$reply = $fromEmail . ', ' . $crmEmail;
 			}
 
-			$cc[] = $fromEmail;
 			$injectUrn = true;
+		}
+
+		if ('Y' == $data['from_copy'])
+		{
+			$cc[] = $fromEmail;
 		}
 	}
 
@@ -1904,6 +1912,16 @@ elseif($action == 'SAVE_EMAIL')
 			}
 		}
 	}
+
+	$arBindings = array_merge(
+		array(
+			sprintf('%u_%u', \CCrmOwnerType::resolveName($ownerTypeID), $ownerID) => array(
+				'OWNER_TYPE_ID' => $ownerTypeID,
+				'OWNER_ID' => $ownerID,
+			),
+		),
+		$arBindings
+	);
 
 	$arFields = array(
 		'OWNER_ID' => $ownerID,
@@ -2245,9 +2263,11 @@ elseif($action == 'SAVE_EMAIL')
 		__CrmActivityEditorEndResponse(array('ERROR' => $arErrors));
 	}
 
+	addEventToStatFile('crm', 'send_email_message', $_REQUEST['context'], trim(trim($messageId), '<>'));
+
 	$needUpload = !empty($userImap);
 
-	if ($context->getSmtp() && strtolower($context->getSmtp()->getHost()) == 'smtp.gmail.com')
+	if ($context->getSmtp() && in_array(strtolower($context->getSmtp()->getHost()), array('smtp.gmail.com', 'smtp.office365.com')))
 	{
 		$needUpload = false;
 	}
@@ -2287,15 +2307,22 @@ elseif($action == 'SAVE_EMAIL')
 		$eventText .= 'Bcc: '.implode(',', $bcc)."\n\r";
 	$eventText .= "\n\r";
 	$eventText .= $description;
-	// Register event only for owner
+
+	$eventBindings = array();
+	foreach($arBindings as $item)
+	{
+		$bindingEntityID = $item['OWNER_ID'];
+		$bindingEntityTypeID = $item['OWNER_TYPE_ID'];
+		$bindingEntityTypeName = \CCrmOwnerType::resolveName($bindingEntityTypeID);
+
+		$eventBindings["{$bindingEntityTypeName}_{$bindingEntityID}"] = array(
+			'ENTITY_TYPE' => $bindingEntityTypeName,
+			'ENTITY_ID' => $bindingEntityID
+		);
+	}
 	$CCrmEvent->Add(
 		array(
-			'ENTITY' => array(
-				$ownerID => array(
-					'ENTITY_TYPE' => \CCrmOwnerType::resolveName($ownerTypeID),
-					'ENTITY_ID' => $ownerID
-				)
-			),
+			'ENTITY' => $eventBindings,
 			'EVENT_ID' => 'MESSAGE',
 			'EVENT_TEXT_1' => $eventText,
 			'FILES' => array_values($arRawFiles),
@@ -3281,43 +3308,52 @@ elseif($action == 'UPDATE_DOCS')
 		unset($activity['BINDINGS'][$k]);
 	}
 
-	$activity['BINDINGS'] = array_values(array_merge($activity['BINDINGS'], $docsBindings));
+	$activity['BINDINGS'] = array_values(array_merge($docsBindings, $activity['BINDINGS']));
 
 	if ($activity['OWNER_TYPE_ID'] <= 0 || $activity['OWNER_ID'] <= 0)
 	{
-		$typeIds = array(
-			\CCrmOwnerType::Contact,
-			\CCrmOwnerType::Company,
-			\CCrmOwnerType::Lead,
+		$typesPriority = array(
+			\CCrmOwnerType::Deal => 1,
+			\CCrmOwnerType::Order => 2,
+			\CCrmOwnerType::Contact => 3,
+			\CCrmOwnerType::Company => 4,
+			\CCrmOwnerType::Lead => 5,
 		);
 
-		foreach ($typeIds as $typeId)
+		foreach ($activity['BINDINGS'] as $item)
 		{
-			foreach ($activity['BINDINGS'] as $item)
+			if ($activity['OWNER_TYPE_ID'] <= 0 || $typesPriority[$item['OWNER_TYPE_ID']] < $typesPriority[$activity['OWNER_TYPE_ID']])
 			{
-				if ($item['TYPE_ID'] == $typeId)
+				if (\CCrmActivity::checkUpdatePermission($item['OWNER_TYPE_ID'], $item['OWNER_ID']))
 				{
 					$activity['OWNER_TYPE_ID'] = $item['OWNER_TYPE_ID'];
-					$activity['OWNER_ID']      = $item['OWNER_ID'];
-
-					break 2;
+					$activity['OWNER_ID'] = $item['OWNER_ID'];
 				}
 			}
-		}
-
-		if ($activity['OWNER_TYPE_ID'] <= 0 || $activity['OWNER_ID'] <= 0)
-		{
-			$item = reset($activity['BINDINGS']);
-
-			$activity['OWNER_TYPE_ID'] = $item['OWNER_TYPE_ID'];
-			$activity['OWNER_ID']      = $item['OWNER_ID'];
 		}
 	}
 
 	if ($activity['OWNER_TYPE_ID'] > 0 && $activity['OWNER_ID'] > 0)
 	{
-		if (!\CCrmActivity::update($ID, array('BINDINGS' => $activity['BINDINGS']), false, false))
+		$result = \CCrmActivity::update(
+			$ID,
+			array(
+				'OWNER_TYPE_ID' => $activity['OWNER_TYPE_ID'],
+				'OWNER_ID' => $activity['OWNER_ID'],
+				'BINDINGS' => $activity['BINDINGS'],
+			),
+			false,
+			false
+		);
+
+		if (!$result)
+		{
 			__CrmActivityEditorEndResponse(array('ERROR' => \CCrmActivity::getLastErrorMessage()));
+		}
+	}
+	else
+	{
+		__CrmActivityEditorEndResponse(array('ERROR' => getMessage('CRM_PERMISSION_DENIED')));
 	}
 
 	__CrmActivityEditorEndResponse($result);

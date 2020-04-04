@@ -68,10 +68,7 @@ $APPLICATION->IncludeComponent(
 $arResult['GRID_DATA'] = $arColumns = [];
 foreach ($arResult['HEADERS'] as $arHead)
 {
-	foreach ($arResult['HEADERS'] as $arHead)
-	{
-		$arColumns[$arHead['id']] = false;
-	}
+	$arColumns[$arHead['id']] = false;
 }
 
 foreach ($arResult['ITEMS'] as &$item)

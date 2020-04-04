@@ -25,12 +25,15 @@ abstract class SearchContentBuilder
 	abstract public function isFullTextSearchEnabled();
 	abstract protected function prepareEntityFields($entityID);
 	abstract public function prepareEntityFilter(array $params);
+
 	/**
-	 * Prepare search map.
+	 * Prepare Search Map.
+	 * Map is source of text for fulltext search index.
 	 * @param array $fields Entity Fields.
+	 * @param array|null $options Options.
 	 * @return SearchMap
 	 */
-	abstract protected function prepareSearchMap(array $fields);
+	abstract protected function prepareSearchMap(array $fields, array $options = null);
 
 	/**
 	 * Prepare required data for bulk build.
@@ -40,6 +43,19 @@ abstract class SearchContentBuilder
 	{
 	}
 	abstract protected function save($entityID, SearchMap $map);
+
+	protected function parseCustomerNumber($str, $template)
+	{
+		$regex = $template !== ''
+			? '/^'.str_replace(array('%NUMBER%', ' '), array('\s*(.+)\s*', '\s*'), $template).'$/'
+			: '/(?:#|Nr.?)\s*(.+)/';
+
+		if(preg_match($regex, $str, $m) === 1 && isset($m[1]))
+		{
+			return $m[1];
+		}
+		return '';
+	}
 
 	protected function getSearchFieldName()
 	{
@@ -139,12 +155,35 @@ abstract class SearchContentBuilder
 		return $results;
 	}
 
-	public function build($entityID)
+	/**
+	 * Prepare text for fulltext search index.
+	 * @param int $entityID Entity ID.
+	 * @param array|null $options Options.
+	 * @return string
+	 */
+	function getSearchContent($entityID, array $options = null)
+	{
+		$fields = $this->prepareEntityFields($entityID);
+		if(!is_array($fields))
+		{
+			return '';
+		}
+
+		$map = $this->prepareSearchMap($fields, $options);
+		return $map ? $map->getString() : '';
+	}
+
+	/**
+	 * Prepare and save search content for entity specified by ID.
+	 * @param int $entityID Entity ID.
+	 * @param array|null $options Options.
+	 */
+	public function build($entityID, array $options = null)
 	{
 		$fields = $this->prepareEntityFields($entityID);
 		if(is_array($fields))
 		{
-			$this->save($entityID, $this->prepareSearchMap($fields));
+			$this->save($entityID, $this->prepareSearchMap($fields, $options));
 		}
 	}
 

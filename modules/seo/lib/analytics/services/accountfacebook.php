@@ -10,8 +10,9 @@ use \Bitrix\Seo\Analytics\Account;
 use Bitrix\Seo\Analytics\Internals\Page;
 use Bitrix\Seo\Retargeting\Services\ResponseFacebook;
 use Bitrix\Seo\Retargeting\Response;
+use Bitrix\Seo\Retargeting\IRequestDirectly;
 
-class AccountFacebook extends Account
+class AccountFacebook extends Account implements IRequestDirectly
 {
 	const TYPE_CODE = 'facebook';
 

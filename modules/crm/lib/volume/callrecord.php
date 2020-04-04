@@ -3,18 +3,17 @@
 namespace Bitrix\Crm\Volume;
 
 use Bitrix\Crm;
-use Bitrix\Disk;
+use Bitrix\Crm\Volume;
 use Bitrix\Main;
 use Bitrix\Main\ORM;
-use Bitrix\Main\Entity;
 use Bitrix\Main\Localization\Loc;
 
 
 class Callrecord
-	extends Crm\Volume\Base
-	implements Crm\Volume\IVolumeClear, Crm\Volume\IVolumeClearFile, Crm\Volume\IVolumeUrl
+	extends Volume\Base
+	implements Volume\IVolumeClear, Volume\IVolumeClearFile, Volume\IVolumeUrl
 {
-	/** @var Crm\Volume\Activity */
+	/** @var Volume\Activity */
 	private $activityFiles;
 
 	/**
@@ -132,7 +131,7 @@ class Callrecord
 	{
 		self::loadTablesInformation();
 
-		$activity = new Crm\Volume\Activity();
+		$activity = new Volume\Activity();
 		$activity->setFilter($this->getFilter());
 
 		$activityQuery = $activity->prepareQuery();
@@ -307,6 +306,7 @@ class Callrecord
 		if ($this->prepareFilter($query))
 		{
 			$userPermissions = \CCrmPerms::GetUserPermissions($this->getOwner());
+			$diskAvailable = \Bitrix\Main\Loader::includeModule('disk');
 
 			$query
 				//->where('TYPE_ID', '=', \CCrmActivityType::Call)// Call records
@@ -341,10 +341,8 @@ class Callrecord
 							{
 								\CFile::Delete($row['ELEMENT_ID']);
 							}
-							elseif ($row['STORAGE_TYPE_ID'] == Crm\Integration\StorageType::Disk)
+							elseif ($row['STORAGE_TYPE_ID'] == Crm\Integration\StorageType::Disk && $diskAvailable)
 							{
-								\Bitrix\Main\Loader::includeModule('disk');
-
 								$file = \Bitrix\Disk\File::getById($row['ELEMENT_ID']);
 								if ($file instanceof \Bitrix\Disk\File)
 								{
@@ -432,10 +430,10 @@ class Callrecord
 	 */
 	public function prepareQuery($entityGroupField = array())
 	{
-		$this->activityFiles = new Crm\Volume\Activity();
+		$this->activityFiles = new Volume\Activity();
 		$this->activityFiles->setFilter($this->getFilter());
 
-		$query = $this->activityFiles->getActivityFileMeasureQuery(Crm\Volume\Activity::className(), $entityGroupField);
+		$query = $this->activityFiles->getActivityFileMeasureQuery(Volume\Activity::className(), $entityGroupField);
 
 		// only call records
 		$query->where('TYPE_ID', '=', \CCrmActivityType::Call);
@@ -474,6 +472,7 @@ class Callrecord
 		if ($this->prepareFilter($query))
 		{
 			$userPermissions = \CCrmPerms::GetUserPermissions($this->getOwner());
+			$diskAvailable = \Bitrix\Main\Loader::includeModule('disk');
 
 			$query
 				//->where('TYPE_ID', '=', \CCrmActivityType::Call)// Call records
@@ -508,10 +507,8 @@ class Callrecord
 							{
 								\CFile::Delete($row['ELEMENT_ID']);
 							}
-							elseif ($row['STORAGE_TYPE_ID'] == Crm\Integration\StorageType::Disk)
+							elseif ($row['STORAGE_TYPE_ID'] == Crm\Integration\StorageType::Disk && $diskAvailable)
 							{
-								\Bitrix\Main\Loader::includeModule('disk');
-
 								$file = \Bitrix\Disk\File::getById($row['ELEMENT_ID']);
 								if ($file instanceof \Bitrix\Disk\File)
 								{

@@ -33,7 +33,24 @@ class Deal extends EntityBase
 	{
 		return DealTable::getEntity();
 	}
+	protected function getDbTableAlias()
+	{
+		return \CCrmDeal::TABLE_ALIAS;
+	}
 	//endregion
+
+	public function prepareFilter(array &$filterFields, array $params = null)
+	{
+		parent::prepareFilter($filterFields, $params);
+
+		$extras = isset($params['extras']) && is_array($params['extras']) ? $params['extras'] : array();
+		if(isset($extras['CATEGORY_ID']) && $extras['CATEGORY_ID'] >= 0)
+		{
+			$filterFields['CATEGORY_ID'] = (int)$extras['CATEGORY_ID'];
+		}
+
+		$filterFields['IS_RECURRING'] = isset($extras['IS_RECURRING']) && $extras['IS_RECURRING'] === 'Y' ? 'Y' : 'N';
+	}
 
 	//region Permissions
 	protected function buildPermissionSql(array $params)
@@ -134,6 +151,31 @@ class Deal extends EntityBase
 		);
 		$fields = is_object($dbResult) ? $dbResult->Fetch() : null;
 		return is_array($fields) && isset($fields['ASSIGNED_BY_ID']) ? (int)$fields['ASSIGNED_BY_ID'] : 0;
+	}
+
+	/**
+	 * Check if Entity exists.
+	 * @param int $entityID Entity ID.
+	 * @return bool
+	 * @throws Main\ArgumentException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
+	public function isExists($entityID)
+	{
+		if(!is_int($entityID))
+		{
+			$entityID = (int)$entityID;
+		}
+
+		$dbResult = DealTable::getList(
+			array(
+				'select' => array('ID'),
+				'filter' => array('=ID' => $entityID)
+			)
+		);
+
+		return is_array($dbResult->fetch());
 	}
 
 	/**

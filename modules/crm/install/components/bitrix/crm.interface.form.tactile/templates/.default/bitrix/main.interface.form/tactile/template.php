@@ -277,8 +277,20 @@ foreach($arSections as &$arSection):
 			</td><!-- "crm-offer-info-right" --><?
 		elseif ($field['type'] === 'recurring_params'):
 			?>
-			<td class="crm-offer-info-right" colspan="4">
-				<div class="crm-offer-editor-wrap crm-offer-info-data-wrap"><?=$val?></div>
+			<td class="crm-offer-last-td" colspan="4">
+				<div class="crm-offer-editor-wrap crm-offer-info-data-wrap">
+					<?php
+						echo $val;
+						if(!$required && !$persistent)
+						{
+							?>
+							<span class="crm-offer-info-right-btn">
+								<span class="crm-offer-item-del" style="margin-top:0"></span>
+							</span>
+							<?php
+						}
+					?>
+				</div>
 			</td>
 			<?
 		elseif($field['type'] === 'lhe'):

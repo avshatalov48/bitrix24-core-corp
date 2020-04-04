@@ -31,9 +31,23 @@ BX.ready(function()
 	 */
 	var onRequiredLinkClick = function(element)
 	{
-		var linkTpl = element.getAttribute("href");
+		var href = element.getAttribute("href");
+
+		if (href.substr(0, 1) !== "#")
+		{
+			window.open(href, "_top");
+		}
+
+		var linkTpl = href.substr(1);
 		var urlParams = {};
-		linkTpl = linkTpl.substr(1).toUpperCase();
+		var linkTplAnchor = '';
+
+		if (linkTpl.indexOf('@') > 0)
+		{
+			linkTplAnchor = linkTpl.split('@')[1];
+			linkTpl = linkTpl.split('@')[0];
+		}
+		linkTpl = linkTpl.toUpperCase();
 
 		if (linkTpl === "PAGE_URL_CATALOG_EDIT")
 		{
@@ -50,7 +64,11 @@ BX.ready(function()
 				BX.util.add_url_param(
 					landingParams[linkTpl],
 					urlParams
-				)
+				) +
+				(linkTplAnchor ? '#' + linkTplAnchor : ''),
+				{
+					allowChangeHistory: false
+				}
 			);
 		}
 	};
@@ -75,3 +93,25 @@ BX.ready(function()
 		});
 	});
 });
+
+var landingAlertMessage = function landingAlertMessage(errorText, payment)
+{
+	if (
+		payment === true &&
+		typeof BX.Landing.PaymentAlertShow !== 'undefined'
+	)
+	{
+		BX.Landing.PaymentAlertShow({
+			message: errorText
+		});
+	}
+	else
+	{
+		var msg = BX.Landing.UI.Tool.ActionDialog.getInstance();
+		msg.show({
+			content: errorText,
+			confirm: 'OK',
+			contentColor: 'grey'
+		});
+	}
+}

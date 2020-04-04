@@ -1008,7 +1008,18 @@ class ImportHelper
 		$rqIndex = 0;
 		foreach ($this->getParsedRequisites() as $requisiteFields)
 		{
-			$presetId = isset($requisiteFields['PRESET_ID']) ? (int)$requisiteFields['PRESET_ID'] : 0;
+			if ($this->assocPreset)
+			{
+				$presetId = isset($requisiteFields['PRESET_ID']) ? (int)$requisiteFields['PRESET_ID'] : 0;
+				if ($presetId <= 0 && $this->useDefPreset && $this->defPresetId > 0)
+				{
+					$presetId = $this->defPresetId;
+				}
+			}
+			else if ($this->defPresetId > 0)
+			{
+				$presetId = $this->defPresetId;
+			}
 			$presetInfo = self::getCachedPresetInfo($presetId);
 			if (is_array($presetInfo) && isset($presetInfo['COUNTRY_ID']))
 			{

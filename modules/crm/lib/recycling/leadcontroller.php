@@ -8,9 +8,12 @@ Main\Localization\Loc::loadMessages(__FILE__);
 
 class LeadController extends BaseController
 {
+	use MultiFieldControllerMixin {
+		recoverMultiFields as innerRecoverMultiFields;
+	}
+
 	use ActivityControllerMixin;
 	use AddressControllerMixin;
-	use MultiFieldControllerMixin;
 	use ProductRowControllerMixin;
 	use ObserverControllerMixin;
 	use ChatControllerMixin;
@@ -249,10 +252,12 @@ class LeadController extends BaseController
 		$this->suspendDocuments($entityID, $recyclingEntityID);
 		$this->suspendLiveFeed($entityID, $recyclingEntityID);
 		$this->suspendUtm($entityID, $recyclingEntityID);
+		$this->suspendTracing($entityID, $recyclingEntityID);
 		$this->suspendObservers($entityID, $recyclingEntityID);
 		$this->suspendWaitings($entityID, $recyclingEntityID);
 		$this->suspendChats($entityID, $recyclingEntityID);
 		$this->suspendProductRows($entityID, $recyclingEntityID);
+		$this->suspendScoringHistory($entityID, $recyclingEntityID);
 
 		//region Relations
 		foreach($relations as $relation)
@@ -263,8 +268,6 @@ class LeadController extends BaseController
 		}
 		LeadRelationManager::getInstance()->registerRecycleBin($recyclingEntityID, $entityID, $slots);
 		//endregion
-
-		$this->fireAfterMoveToBinEvent($entityID, $recyclingEntityID);
 	}
 
 	/**
@@ -354,18 +357,16 @@ class LeadController extends BaseController
 
 		$this->recoverMultiFields($recyclingEntityID, $newEntityID);
 		$this->recoverAddresses($recyclingEntityID, $newEntityID);
-		$this->recoverTimeline(
-			$recyclingEntityID,
-			$newEntityID,
-			[ 'OLD_ENTITY_ID' => $entityID, 'RELATIONS' => $relationMap ]
-		);
+		$this->recoverTimeline($recyclingEntityID, $newEntityID);
 		$this->recoverDocuments($recyclingEntityID, $newEntityID);
 		$this->recoverLiveFeed($recyclingEntityID, $newEntityID);
 		$this->recoverUtm($recyclingEntityID, $newEntityID);
+		$this->recoverTracing($recyclingEntityID, $newEntityID);
 		$this->recoverObservers($recyclingEntityID, $newEntityID);
 		$this->recoverWaitings($recyclingEntityID, $newEntityID);
 		$this->recoverChats($recyclingEntityID, $newEntityID);
 		$this->recoverProductRows($recyclingEntityID, $newEntityID);
+		$this->recoverScoringHistory($recyclingEntityID, $newEntityID);
 
 		$this->recoverActivities($recyclingEntityID, $entityID, $newEntityID, $params, $relationMap);
 
@@ -374,10 +375,22 @@ class LeadController extends BaseController
 		Relation::deleteJunks();
 		//endregion
 
+		$this->rebuildSearchIndex($newEntityID);
 		$this->startRecoveryWorkflows($newEntityID);
-		$this->fireAfterRecoverEvent($recyclingEntityID, $newEntityID);
 
 		return true;
+	}
+
+	/**
+	 * Recover entity multifields.
+	 * @param int $recyclingEntityID Recycle Bin Entity ID.
+	 * @param int $newEntityID New Entity ID.
+	 * @throws Main\ArgumentException
+	 */
+	protected function recoverMultiFields($recyclingEntityID, $newEntityID)
+	{
+		$this->innerRecoverMultiFields($recyclingEntityID, $newEntityID);
+		\CCrmLead::SynchronizeMultifieldMarkers($newEntityID);
 	}
 
 	/**
@@ -421,14 +434,14 @@ class LeadController extends BaseController
 		$this->eraseSuspendedDocuments($recyclingEntityID);
 		$this->eraseSuspendedLiveFeed($recyclingEntityID);
 		$this->eraseSuspendedUtm($recyclingEntityID);
+		$this->eraseSuspendedTracing($recyclingEntityID);
 		$this->eraseSuspendedObservers($recyclingEntityID);
 		$this->eraseSuspendedWaitings($recyclingEntityID);
 		$this->eraseSuspendedChats($recyclingEntityID);
 		$this->eraseSuspendProductRows($recyclingEntityID);
 		$this->eraseSuspendedUserFields($recyclingEntityID);
+		$this->eraseSuspendedScoringHistory($recyclingEntityID);
 
 		Relation::deleteByRecycleBin($recyclingEntityID);
-
-		$this->fireAfterEraseEvent($recyclingEntityID);
 	}
 }

@@ -161,7 +161,7 @@ ChatMessengerCommon.getUserPosition = function(userData)
 	}
 	else
 	{
-		position = this.isIntranet()? BX.message('IM_CL_USER'): BX.message('IM_CL_USER_B24');
+		position = this.isIntranet()? BX.message('IM_CL_USER_B24'): BX.message('IM_CL_USER');
 	}
 
 	return position
@@ -208,7 +208,6 @@ ChatMessengerCommon.linesGetSession = function(chatData) // after change this co
 	var source = chatData.entity_id.toString().split('|');
 
 	session.connector = source[0];
-	session.lineId = source[1];
 	session.canVoteHead = this.linesCanVoteAsHead(source[1]);
 
 	var sessionData = chatData.entity_data_1.toString().split('|');
@@ -222,6 +221,7 @@ ChatMessengerCommon.linesGetSession = function(chatData) // after change this co
 	session.wait = typeof(sessionData[4]) != 'undefined' && sessionData[4] == 'Y'? 'Y': 'N';
 	session.id = typeof(sessionData[5]) != 'undefined'? parseInt(sessionData[5]): Math.round(new Date()/1000)+chatData.id;
 	session.dateCreate = typeof(sessionData[6]) != 'undefined' || sessionData[6] > 0? parseInt(sessionData[6]): session.id;
+	session.lineId = typeof(sessionData[7]) != 'undefined' && sessionData[7] > 0? parseInt(sessionData[7]) : source[1];
 
 	session.crmLinkLead = '';
 	session.crmLead = 0;

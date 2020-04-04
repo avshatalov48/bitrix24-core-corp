@@ -39,3 +39,54 @@ a.bizproc_status_attention {
 a.bizproc_status_inprogress {
 	background: url("images/bizproc/bizproc_attention.gif") no-repeat right center;
 }
+
+.crm-order-list-basket-item div{
+    margin: 2px;
+	padding: 3px;
+}
+.crm-order-list-basket-item span{
+	white-space: nowrap;
+	padding: 3px;
+	margin: 2px;
+}
+.crm-order-list-basket-item-props div{
+	padding: 1px;
+	font-size: 11px;
+}
+
+.crm-order-list-basket-item,
+.crm-order-list-shipment,
+.crm-order-list-payment{
+    border-bottom: 1px solid lightgray;
+    padding: 1px 0 1px 0;
+}
+
+.crm-order-list-basket-item:last-child,
+.crm-order-list-shipment:last-child,
+.crm-order-list-payment:last-child{
+    border-bottom: none;
+}
+
+.crm-order-list-shipment div,
+.crm-order-list-payment div{
+    white-space: nowrap;
+    padding: 1px;
+    margin: 1px;
+}
+
+.crm-order-list-shipment div.marked,
+.crm-order-list-payment div.marked{
+    color: red;
+}
+
+.crm-order-list-props-group-name{
+	font-weight: bold;
+}
+
+.crm-order-list-props-group{
+	padding-bottom: 10px;
+}
+
+.crm-order-list-props-group:last-child{
+	padding-bottom: 0;
+}

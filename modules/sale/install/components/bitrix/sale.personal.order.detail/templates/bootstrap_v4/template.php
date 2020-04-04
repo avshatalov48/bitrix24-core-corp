@@ -30,7 +30,7 @@ if (!empty($arResult['ERRORS']['FATAL']))
 				<div class="alert alert-danger"><?=$arResult['ERRORS']['FATAL'][$component::E_NOT_AUTHORIZED]?></div>
 			</div>
 			<? $authListGetParams = array(); ?>
-			<div class="col-md-8 offset-md-2 col-lg-6 offset-lg-3" id="catalog-subscriber-auth-form" style="<?=$authStyle?>">
+			<div class="col-md-8 offset-md-2 col-lg-6 offset-lg-3">
 				<?$APPLICATION->AuthForm('', false, false, 'N', false);?>
 			</div>
 		</div>
@@ -138,8 +138,8 @@ else
 
 								<div class="col-sm-auto mb-3">
 									<div class="sale-order-detail-prop-name">
-										<?= Loc::getMessage('SPOD_LIST_CURRENT_STATUS', array(
-											'#DATE_ORDER_CREATE#' => $arResult["DATE_INSERT_FORMATED"]
+										<?= Loc::getMessage('SPOD_LIST_CURRENT_STATUS_DATE', array(
+											'#DATE_STATUS#' => $arResult["DATE_STATUS_FORMATED"]
 										)) ?>
 									</div>
 									<div class="sale-order-detail-prop-value">

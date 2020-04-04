@@ -135,4 +135,55 @@ class ImOpenLinesLinesEditAjaxController extends \Bitrix\Main\Engine\Controller
 			'fileId' => $fileId
 		);
 	}
+
+	/**
+	 * @param $configId
+	 *
+	 * @return bool
+	 * @throws \Bitrix\Main\LoaderException
+	 */
+	public function checkCanActiveLineAction($configId)
+	{
+		Loader::includeModule('imopenlines');
+
+		$result = true;
+		$configId = intval($configId);
+		$linesLimit = \Bitrix\Imopenlines\Limit::getLinesLimit();
+
+		if ($linesLimit > 0)
+		{
+			$activeLinesCount = \Bitrix\ImOpenLines\Model\ConfigTable::getList(
+				array(
+					'select' => array('ID'),
+					'filter' => array('ACTIVE' => 'Y', '!=ID' => $configId, '=TEMPORARY' => 'N'),
+					'count_total' => true
+				)
+			)->getCount();
+
+			if ($activeLinesCount >= $linesLimit)
+			{
+				$result = false;
+			}
+		}
+
+		return $result;
+	}
+
+	/**
+	 * @param $configId
+	 *
+	 * @return array|bool
+	 * @throws \Bitrix\Main\LoaderException
+	 */
+
+	public function deleteOpenLineAction($configId)
+	{
+		Loader::includeModule('imopenlines');
+		$configManager = new \Bitrix\ImOpenLines\Config();
+		if(!$configManager->canEditLine($configId))
+		{
+			return false;
+		}
+		return $configManager->delete($configId);
+	}
 }

@@ -13,7 +13,7 @@ $action = isset($_REQUEST['ACTION']) ? $_REQUEST['ACTION'] : '';
  */
 define(
 	'NO_AGENT_CHECK',
-	!in_array($action, array('REBUILD_SEARCH_CONTENT', 'BUILD_TIMELINE', 'REFRESH_ACCOUNTING'), true)
+	!in_array($action, array('REBUILD_SEARCH_CONTENT', 'BUILD_TIMELINE', 'REFRESH_ACCOUNTING', 'REBUILD_SEMANTICS', 'REBUILD_CONVERSION_STATISTICS'), true)
 );
 
 require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/prolog_before.php');
@@ -88,9 +88,14 @@ if (isset($_REQUEST['MODE']) && $_REQUEST['MODE'] === 'SEARCH')
 		else if (preg_match('/(.*)\[(\d+?)\]/i' . BX_UTF_PCRE_MODIFIER, $search, $arMatches))
 		{
 			$arFilter['ID'] = (int)$arMatches[2];
-			$arFilter['%TITLE'] = trim($arMatches[1]);
-			$arFilter['%FULL_NAME'] = trim($arMatches[1]);
-			$arFilter['LOGIC'] = 'OR';
+			$searchString = trim($arMatches[1]);
+			if (is_string($searchString) && $searchString !== '')
+			{
+				$arFilter['%TITLE'] = $searchString;
+				$arFilter['%FULL_NAME'] = $searchString;
+				$arFilter['LOGIC'] = 'OR';
+			}
+			unset($searchString);
 		}
 		else
 		{
@@ -639,102 +644,47 @@ elseif ($action === 'REBUILD_SUM_STATISTICS')
 		);
 	}
 }
+elseif ($action === 'REBUILD_CONVERSION_STATISTICS')
+{
+	$agent = \Bitrix\Crm\Agent\Statistics\LeadConversionStatisticsRebuildAgent::getInstance();
+	if($agent->isEnabled() && !$agent->isRegistered())
+	{
+		$agent->enable(false);
+	}
+	if(!$agent->isEnabled())
+	{
+		__CrmLeadListEndResponse(array('STATUS' => 'COMPLETED'));
+	}
+
+	$progressData = $agent->getProgressData();
+	__CrmLeadListEndResponse(
+		array(
+			'STATUS' => 'PROGRESS',
+			'PROCESSED_ITEMS' => $progressData['PROCESSED_ITEMS'],
+			'TOTAL_ITEMS' => $progressData['TOTAL_ITEMS']
+		)
+	);
+}
 elseif ($action === 'REBUILD_SEMANTICS')
 {
-	//~CRM_REBUILD_LEAD_SEMANTICS
-	\Bitrix\Main\Localization\Loc::loadMessages(__FILE__);
-
-	if(!CCrmLead::CheckUpdatePermission(0))
+	$agent = \Bitrix\Crm\Agent\Semantics\LeadSemanticsRebuildAgent::getInstance();
+	if($agent->isEnabled() && !$agent->isRegistered())
 	{
-		__CrmLeadListEndResponse(array('ERROR' => 'Access denied.'));
+		$agent->enable(false);
+	}
+	if(!$agent->isEnabled())
+	{
+		__CrmLeadListEndResponse(array('STATUS' => 'COMPLETED'));
 	}
 
-	if(COption::GetOptionString('crm', '~CRM_REBUILD_LEAD_SEMANTICS', 'N') !== 'Y')
-	{
-		__CrmLeadListEndResponse(
-			array(
-				'STATUS' => 'NOT_REQUIRED',
-				'SUMMARY' => GetMessage('CRM_LEAD_LIST_REBUILD_SEMANTICS_NOT_REQUIRED_SUMMARY')
-			)
-		);
-	}
-
-	$progressData = COption::GetOptionString('crm', '~CRM_REBUILD_LEAD_SEMANTICS_PROGRESS',  '');
-	$progressData = $progressData !== '' ? unserialize($progressData) : array();
-	$lastItemID = isset($progressData['LAST_ITEM_ID']) ? intval($progressData['LAST_ITEM_ID']) : 0;
-	$processedItemQty = isset($progressData['PROCESSED_ITEMS']) ? intval($progressData['PROCESSED_ITEMS']) : 0;
-	$totalItemQty = isset($progressData['TOTAL_ITEMS']) ? intval($progressData['TOTAL_ITEMS']) : 0;
-	if($totalItemQty <= 0)
-	{
-		$totalItemQty = CCrmLead::GetListEx(array(), array('CHECK_PERMISSIONS' => 'N'), array(), false);
-	}
-
-	$filter = array('CHECK_PERMISSIONS' => 'N');
-	if($lastItemID > 0)
-	{
-		$filter['>ID'] = $lastItemID;
-	}
-
-	$dbResult = CCrmLead::GetListEx(
-		array('ID' => 'ASC'),
-		$filter,
-		false,
-		array('nTopCount' => 200),
-		array('ID')
+	$progressData = $agent->getProgressData();
+	__CrmLeadListEndResponse(
+		array(
+			'STATUS' => 'PROGRESS',
+			'PROCESSED_ITEMS' => $progressData['PROCESSED_ITEMS'],
+			'TOTAL_ITEMS' => $progressData['TOTAL_ITEMS']
+		)
 	);
-
-	$itemIDs = array();
-	$itemQty = 0;
-	if(is_object($dbResult))
-	{
-		while($fields = $dbResult->Fetch())
-		{
-			$itemIDs[] = (int)$fields['ID'];
-			$itemQty++;
-		}
-	}
-
-	if($itemQty > 0)
-	{
-		CCrmLead::RebuildSemantics($itemIDs, array('FORCED' => true));
-
-		$progressData['TOTAL_ITEMS'] = $totalItemQty;
-		$processedItemQty += $itemQty;
-		$progressData['PROCESSED_ITEMS'] = $processedItemQty;
-		$progressData['LAST_ITEM_ID'] = $itemIDs[$itemQty - 1];
-
-		COption::SetOptionString('crm', '~CRM_REBUILD_LEAD_SEMANTICS_PROGRESS', serialize($progressData));
-		__CrmLeadListEndResponse(
-			array(
-				'STATUS' => 'PROGRESS',
-				'PROCESSED_ITEMS' => $processedItemQty,
-				'TOTAL_ITEMS' => $totalItemQty,
-				'SUMMARY' => GetMessage(
-					'CRM_LEAD_LIST_REBUILD_SEMANTICS_PROGRESS_SUMMARY',
-					array(
-						'#PROCESSED_ITEMS#' => $processedItemQty,
-						'#TOTAL_ITEMS#' => $totalItemQty
-					)
-				)
-			)
-		);
-	}
-	else
-	{
-		COption::RemoveOption('crm', '~CRM_REBUILD_LEAD_SEMANTICS');
-		COption::RemoveOption('crm', '~CRM_REBUILD_LEAD_SEMANTICS_PROGRESS');
-		__CrmLeadListEndResponse(
-			array(
-				'STATUS' => 'COMPLETED',
-				'PROCESSED_ITEMS' => $processedItemQty,
-				'TOTAL_ITEMS' => $totalItemQty,
-				'SUMMARY' => GetMessage(
-					'CRM_LEAD_LIST_REBUILD_SEMANTICS_COMPLETED_SUMMARY',
-					array('#PROCESSED_ITEMS#' => $processedItemQty)
-				)
-			)
-		);
-	}
 }
 elseif ($action === 'GET_ROW_COUNT')
 {
@@ -1226,7 +1176,7 @@ elseif ($action === 'PROCESS_BATCH_CONVERSION')
 			false
 		);
 
-		$resultData['ERRORS'] = array(array('MESSAGE' => $errorText, 'INFO' => $entityInfo));
+		$resultData['ERRORS'] = array(array('message' => $errorText, 'customData' => array('info' => $entityInfo)));
 	}
 
 	$isInProgress = true;

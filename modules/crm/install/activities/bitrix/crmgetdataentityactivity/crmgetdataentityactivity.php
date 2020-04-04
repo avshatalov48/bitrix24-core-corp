@@ -701,7 +701,7 @@ class CBPCrmGetDataEntityActivity extends CBPActivity
 					$values[] = $fieldValue['VALUE'];
 				}
 			}
-			$entityData[$fieldType] = implode('; ', $values);
+			$entityData[$fieldType] = $printableVersion ? implode('; ', $values) : $values;
 		}
 	}
 

@@ -5,7 +5,7 @@ CJSCore::Init(array('mobile_crm'));
 $APPLICATION->AddHeadScript('/bitrix/js/crm/common.js');
 
 $mode = $arResult['MODE'];
-$formTitle = GetMessage("M_CRM_PRODUCT_EDIT_{$mode}_TITLE");
+$formTitle = GetMessageJS("M_CRM_PRODUCT_EDIT_{$mode}_TITLE");
 $formId = "MOBILE_CRM_PRODUCT_EDIT_".$arResult['ELEMENT_ID'];
 $ajaxPath = '/mobile/?mobile_action=mobile_crm_product_actions';
 

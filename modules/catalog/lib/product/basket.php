@@ -545,7 +545,7 @@ class Basket
 
 		if ($basketItem)
 		{
-			$fields['QUANTITY'] = $basketItem->getQuantity() + $quantity;
+			$fields['QUANTITY'] = $basketItem->isDelay() ? $quantity : $basketItem->getQuantity() + $quantity;
 		}
 		else
 		{

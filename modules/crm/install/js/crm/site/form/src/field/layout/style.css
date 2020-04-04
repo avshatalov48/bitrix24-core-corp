@@ -1,0 +1,18 @@
+.b24-form-field-layout-br,
+.b24-form-field-layout-hr {
+	margin: 24px 0;
+	border: none;
+	height: 1px;
+	background-color: rgba(0, 0, 0, 0.08);
+	background-color: var(--b24-field-border-color);
+}
+
+.b24-form-field-layout-br { background: none; }
+
+.b24-form-field-layout-section {
+	font: 20px/36px "Helvetica Neue", Helvetica, Arial, sans-serif;;
+	font: 20px/36px var(--b24-font-family);
+	color: #000;
+	color: var(--b24-text-color);
+	margin: 29px 0 15px;
+}

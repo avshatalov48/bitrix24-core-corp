@@ -17,4 +17,6 @@ $MESS["CRM_TRACKING_CHANNEL_POOL_AV_ITEMS_EMAIL"] = "Доступные email-а
 $MESS["CRM_TRACKING_CHANNEL_POOL_AV"] = "Доступные";
 $MESS["CRM_TRACKING_CHANNEL_POOL_FORMAT_PHONE"] = "'Формат телефонных номеров";
 $MESS["CRM_TRACKING_CHANNEL_POOL_DELETE_CONFIRM"] = "Удалить `%code%`? Эта операция необратима.";
+$MESS["CRM_TRACKING_CHANNEL_POOL_PHONE_STATUS_SUCCESS"] = "Номер поддерживает коллтрекинг";
+$MESS["CRM_TRACKING_CHANNEL_POOL_PHONE_STATUS_UNKNOWN"] = "Возможно номер не поддерживает коллтрекинг. Нажмите для проверки";
 ?>

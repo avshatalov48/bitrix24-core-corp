@@ -1201,6 +1201,10 @@ BitrixLF.prototype.getNextPage = function()
 	{
 		oNode.style.display = 'block';
 	}
+	else if (this.nextPageFirst)
+	{
+		BX.addClass(BX('feed-new-message-inf-wrap-first'), 'feed-new-message-inf-wrap-first-visible');
+	}
 
 	var data = { method: "GET", url: this.nextURL };
 	BX.onCustomEvent("SonetLogBeforeGetNextPage", [ data ]);
@@ -1252,7 +1256,10 @@ BitrixLF.prototype.getNextPage = function()
 
 				if (oLF.nextPageFirst)
 				{
-					BX('feed-new-message-inf-wrap-first').style.display = 'block';
+					BX('feed-new-message-inf-text-first').style.display = 'block';
+					BX('feed-new-message-inf-loader-first').style.display = 'none';
+					BX.addClass(BX('feed-new-message-inf-wrap-first'), 'feed-new-message-inf-wrap-first-active');
+
 					var f = function() {
 						oLF.bStopTrackNextPage = false;
 						if (BX(contentBlockId))
@@ -1284,6 +1291,10 @@ BitrixLF.prototype.getNextPage = function()
 				}
 
 				oLF.nextPageFirst = false;
+			}
+			else if (BX('feed-new-message-inf-wrap-first'))
+			{
+				BX('feed-new-message-inf-wrap-first').style.display = 'none';
 			}
 		},
 		onfailure: function(data)

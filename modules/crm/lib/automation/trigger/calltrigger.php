@@ -25,7 +25,7 @@ class CallTrigger extends BaseTrigger
 			return false;
 		}
 
-		if (!isset($trigger['APPLY_RULES']['LINE_NUMBER']))
+		if (empty($trigger['APPLY_RULES']['LINE_NUMBER']))
 		{
 			return true;
 		}
@@ -33,7 +33,7 @@ class CallTrigger extends BaseTrigger
 		$lineA = (string) $trigger['APPLY_RULES']['LINE_NUMBER'];
 		$lineB = (string) $this->getInputData('LINE_NUMBER');
 
-		return (!$lineA || $lineA === $lineB);
+		return ($lineA === $lineB);
 	}
 
 	public static function toArray()

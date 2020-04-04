@@ -10,12 +10,34 @@ class User
 	public static function checkOnline($userId = false)
 	{
 		$maxDate = 120;
+		$timestamp = 0;
 
-		$LastActivityDate = \CUserOptions::GetOption('mobile', 'lastActivityDate', 0, $userId);
-		if (intval($LastActivityDate)+$maxDate+60 > time())
-			return true;
+		if (\Bitrix\Main\Loader::includeModule('im'))
+		{
+			$status = \CIMStatus::GetStatus($userId);
+			if ($status['MOBILE_LAST_DATE'] instanceof \Bitrix\Main\Type\DateTime)
+			{
+				$timestamp = $status['MOBILE_LAST_DATE']->getTimestamp();
+			}
+		}
 		else
+		{
+			$timestamp = \CUserOptions::GetOption('mobile', 'lastActivityDate', 0, $userId);
+		}
+
+		if (!$timestamp)
+		{
 			return false;
+		}
+
+		if (intval($timestamp)+$maxDate+60 > time())
+		{
+			return true;
+		}
+		else
+		{
+			return false;
+		}
 	}
 
 	public static function setOnline($userId = false, $cache = true)
@@ -23,11 +45,15 @@ class User
 		global $USER;
 
 		if (!$userId)
+		{
 			$userId = $USER->GetId();
+		}
 
 		$userId = intval($userId);
 		if ($userId <= 0)
+		{
 			return false;
+		}
 
 		if ($cache && $userId == $USER->GetId())
 		{
@@ -38,11 +64,36 @@ class User
 		}
 
 		$time = time();
-		\CUserOptions::SetOption('mobile', 'lastActivityDate', $time, false, $userId);
-
-		if (\CModule::IncludeModule("im"))
+		if (\Bitrix\Main\Loader::includeModule('im'))
 		{
-			\CIMStatus::SetMobile($userId, true);
+			\CIMStatus::Set($userId, Array('MOBILE_LAST_DATE' => \Bitrix\Main\Type\DateTime::createFromTimestamp($time)));
+		}
+		else
+		{
+			\CUserOptions::SetOption('mobile', 'lastActivityDate', $time, false, $userId);
+		}
+
+		$mobileDevice = \Bitrix\Main\Context::getCurrent()->getRequest()->getCookieRaw('MOBILE_DEVICE');
+		if ($mobileDevice)
+		{
+			$mobileDevice = strtolower($mobileDevice);
+
+			if ($mobileDevice === 'iphone' || $mobileDevice === 'ipad')
+			{
+				$lastTimestamp = (int)\CUserOptions::GetOption('mobile', 'iOsLastActivityDate', -1, $userId);
+				if ($lastTimestamp+86400*30 < time())
+				{
+					\CUserOptions::SetOption('mobile', 'iOsLastActivityDate', $time, false, $userId);
+				}
+			}
+			else if ($mobileDevice === 'android')
+			{
+				$lastTimestamp = (int)\CUserOptions::GetOption('mobile', 'AndroidLastActivityDate', -1, $userId);
+				if ($lastTimestamp+86400*30 < time())
+				{
+					\CUserOptions::SetOption('mobile', 'AndroidLastActivityDate', $time, false, $userId);
+				}
+			}
 		}
 
 		return true;
@@ -51,15 +102,25 @@ class User
 	public static function setOffline($userId = false)
 	{
 		global $USER;
-
 		if (!$userId)
+		{
 			$userId = $USER->GetId();
+		}
 
 		$userId = intval($userId);
 		if ($userId <= 0)
+		{
 			return false;
+		}
 
-		\CUserOptions::DeleteOption('mobile', 'lastActivityDate', false, $userId);
+		if (\Bitrix\Main\Loader::includeModule('im'))
+		{
+			\CIMStatus::Set($userId, Array('MOBILE_LAST_DATE' => null));
+		}
+		else
+		{
+			\CUserOptions::DeleteOption('mobile', 'lastActivityDate', false, $userId);
+		}
 
 		return false;
 	}

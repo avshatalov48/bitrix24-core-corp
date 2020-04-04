@@ -10,14 +10,191 @@ use Bitrix\Disk\ProxyType;
 use Bitrix\Disk\Sharing;
 use Bitrix\Disk\Storage;
 use Bitrix\Main\Application;
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\Entity\Event;
+use Bitrix\Main\EventManager;
 
 final class SubscriberManager
 {
+	const DIRECTION_PARENTS = 0;
+	const DIRECTION_SUBTREE = 1;
+
 	private $subscribersByObjectId = array();
 	/** @var Sharing[] */
 	private $sharingsByObject = array();
 	/** @var array */
 	private $detectCycles = array();
+
+	public function __construct()
+	{
+		$this->setEvents();
+	}
+
+	protected function setEvents()
+	{
+		$eventManager = EventManager::getInstance();
+
+		$eventManager->addEventHandler(Driver::INTERNAL_MODULE_ID, 'FileOnAfterMove', array($this, 'onObjectOnAfterMove'));
+		$eventManager->addEventHandler(Driver::INTERNAL_MODULE_ID, 'FolderOnAfterMove', array($this, 'onObjectOnAfterMove'));
+		$eventManager->addEventHandler(Driver::INTERNAL_MODULE_ID, 'ObjectOnAfterMove', array($this, 'onObjectOnAfterMove'));
+		$eventManager->addEventHandler(Driver::INTERNAL_MODULE_ID, 'SharingOnAfterUpdate', array($this, 'onSharingUpdated'));
+	}
+
+	public function onObjectOnAfterMove(Event $event)
+	{
+		$primaryData = $event->getParameter('id');
+		if ($primaryData)
+		{
+			$this->cleanByObjectId($primaryData['ID']);
+		}
+	}
+
+	public function onSharingUpdated(Event $event)
+	{
+		$fields = $event->getParameter('fields');
+		if ($fields['REAL_OBJECT_ID'])
+		{
+			$this->cleanByObjectId($fields['REAL_OBJECT_ID']);
+		}
+		if ($fields['LINK_OBJECT_ID'])
+		{
+			$this->cleanByObjectId($fields['LINK_OBJECT_ID']);
+		}
+	}
+
+	protected function cleanByObjectId($objectId)
+	{
+		unset($this->subscribersByObjectId[$objectId]);
+		unset($this->detectCycles[$objectId]);
+		unset($this->sharingsByObject[$objectId]);
+	}
+
+	public function collectSubscribersFromSubtree(BaseObject $object)
+	{
+		return $this->collectSubscribersGeneralWay($object, self::DIRECTION_SUBTREE);
+	}
+
+	protected function collectSubscribersGeneralWay(BaseObject $object, $direction)
+	{
+		set_time_limit(0);
+
+		if (!in_array($direction, [self::DIRECTION_PARENTS, self::DIRECTION_SUBTREE], true))
+		{
+			throw new ArgumentException('Invalid argument value for', 'direction');
+		}
+
+		$maxInnerJoinDepth = 12;
+		$currentDepth = 0;
+		$emptySelect = false;
+		$connection = Application::getConnection();
+		$objectId = (int)$object->getId();
+		$sharingStatus = Sharing::STATUS_IS_DECLINED;
+
+		$ownerStorageIds = [];
+		$subscribers = [];
+		$where = "
+			WHERE
+				path." . ($direction === self::DIRECTION_PARENTS? 'OBJECT_ID' : 'PARENT_ID') . " = {$objectId} AND sharing.STATUS <> {$sharingStatus}							
+		";
+
+		while ($currentDepth < $maxInnerJoinDepth && !$emptySelect)
+		{
+			$query = "
+				SELECT sharing" . ($currentDepth-1 >= 0 ? $currentDepth-1: '') . ".*
+				FROM b_disk_object_path path
+					INNER JOIN b_disk_sharing sharing ON sharing.REAL_OBJECT_ID = path." . ($direction === self::DIRECTION_PARENTS? 'PARENT_ID' : 'OBJECT_ID') . "
+			";
+
+			$emptySelect = true;
+			$finalQuery = $query;
+			for ($i = 0; $i < $currentDepth; $i++)
+			{
+				$prevI = ($i-1 >= 0)? ($i-1): '';
+				$finalQuery .= " 
+					 INNER JOIN b_disk_object_path path{$i} ON path{$i}.OBJECT_ID = sharing{$prevI}.LINK_OBJECT_ID
+					 INNER JOIN b_disk_sharing sharing{$i} ON sharing{$i}.REAL_OBJECT_ID = path{$i}.PARENT_ID
+				";
+
+			}
+
+			$finalQuery = $finalQuery . $where;
+			$s = null;
+			foreach ($connection->query($finalQuery) as $row)
+			{
+				$emptySelect = false;
+				list($type, $id) = Sharing::parseEntityValue($row['TO_ENTITY']);
+				if($type === Sharing::TYPE_TO_USER && $row['LINK_STORAGE_ID'])
+				{
+					$subscribers[$row['LINK_STORAGE_ID']] = $id;
+				}
+
+				$ownerStorageIds[$row['REAL_STORAGE_ID']] = $row['REAL_STORAGE_ID'];
+			}
+
+			$currentDepth++;
+		}
+
+		$ownerStorageIds[$object->getStorageId()] = $object->getStorageId();
+
+		foreach ($this->getSubscribresByStorages($ownerStorageIds) as $storageId => $userId)
+		{
+			$subscribers[$storageId] = $userId;
+		}
+
+		return $subscribers;
+	}
+
+	protected function getSubscribresByStorages(array $storagesId)
+	{
+		$subscribers = [];
+		$storagesId = array_filter($storagesId);
+		if (!$storagesId)
+		{
+			return $subscribers;
+		}
+
+		foreach ($storagesId as $k => $id)
+		{
+			if (Storage::isLoaded($id))
+			{
+				$subscribers[$id] = Storage::loadById($id)->getEntityId();
+				unset($storagesId[$k]);
+			}
+		}
+
+		if (!$storagesId)
+		{
+			return $subscribers;
+		}
+
+		$storages = Storage::getList([
+			'select' => ['ID', 'ENTITY_ID'],
+			'filter' => [
+				'=ENTITY_TYPE' => \Bitrix\Disk\ProxyType\User::className(),
+				'@ID' => $storagesId,
+			]
+		]);
+
+
+		foreach ($storages as $storage)
+		{
+			$subscribers[$storage['ID']] = $storage['ENTITY_ID'];
+		}
+
+		return $subscribers;
+	}
+
+	public function collectSubscribersSmart(BaseObject $object)
+	{
+		if (isset($this->subscribersByObjectId[$object->getId()]))
+		{
+			return $this->subscribersByObjectId[$object->getId()];
+		}
+
+		$this->subscribersByObjectId[$object->getId()] = $this->collectSubscribersGeneralWay($object, self::DIRECTION_PARENTS);
+
+		return $this->subscribersByObjectId[$object->getId()];
+	}
 
 	/**
 	 * Collects id of user storage which contains $object.

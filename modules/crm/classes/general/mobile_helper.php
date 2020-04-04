@@ -312,7 +312,7 @@ class CCrmMobileHelper
 							$params['COMPANY_URL_TEMPLATE'],
 							array('company_id' => $companyID)
 						) : '';
-					$item["COMPANY"] = "<span class='mobile-grid-field-link' onclick=\"BX.Mobile.Crm.loadPageBlank('".$url."');\">".$company["TITLE"]."</span><br/>";
+					$item["COMPANY"] = "<span class='mobile-grid-field-link' onclick=\"BX.Mobile.Crm.loadPageBlank('".$url."');\">".htmlspecialcharsbx($company["TITLE"])."</span><br/>";
 					/*
 					 * if($enableMultiFields)
 						{
@@ -791,7 +791,7 @@ class CCrmMobileHelper
 						$params['COMPANY_URL_TEMPLATE'],
 						array('company_id' => $companyID)
 					) : '';
-				$item["COMPANY"] = "<span class='mobile-grid-field-link' onclick=\"BX.Mobile.Crm.loadPageBlank('".$url."');\">".$item['COMPANY_TITLE']."</span><br/>";
+				$item["COMPANY"] = "<span class='mobile-grid-field-link' onclick=\"BX.Mobile.Crm.loadPageBlank('".$url."');\">".htmlspecialcharsbx($item['COMPANY_TITLE'])."</span><br/>";
 			}
 		}
 		//<-- COMPANY
@@ -807,7 +807,7 @@ class CCrmMobileHelper
 						$params['DEAL_URL_TEMPLATE'],
 						array('deal_id' => $dealID)
 					) : '';
-				$item["DEAL"] = "<span class='mobile-grid-field-link' onclick=\"BX.Mobile.Crm.loadPageBlank('".$url."');\">".$item["DEAL_TITLE"]."</span><br/>";
+				$item["DEAL"] = "<span class='mobile-grid-field-link' onclick=\"BX.Mobile.Crm.loadPageBlank('".$url."');\">".htmlspecialcharsbx($item["DEAL_TITLE"])."</span><br/>";
 			}
 		}
 		//<-- DEAL
@@ -823,7 +823,7 @@ class CCrmMobileHelper
 						$params['LEAD_URL_TEMPLATE'],
 						array('lead_id' => $leadID)
 					) : '';
-				$item["LEAD"] = "<span class='mobile-grid-field-link' onclick=\"BX.Mobile.Crm.loadPageBlank('".$url."');\">".$item["LEAD_TITLE"]."</span><br/>";
+				$item["LEAD"] = "<span class='mobile-grid-field-link' onclick=\"BX.Mobile.Crm.loadPageBlank('".$url."');\">".htmlspecialcharsbx($item["LEAD_TITLE"])."</span><br/>";
 			}
 		}
 		//<-- LEAD
@@ -1197,7 +1197,7 @@ class CCrmMobileHelper
 				array('company_id' => $companyID)
 			);
 
-			$item['COMPANY'] = "<span class='mobile-grid-field-link' onclick=\"BX.Mobile.Crm.loadPageBlank('".$url."');\">".$item['COMPANY_TITLE']."</span>";
+			$item['COMPANY'] = "<span class='mobile-grid-field-link' onclick=\"BX.Mobile.Crm.loadPageBlank('".$url."');\">".htmlspecialcharsbx($item['COMPANY_TITLE'])."</span>";
 		}
 
 		if(!isset($item['~COMPANY_TITLE']))

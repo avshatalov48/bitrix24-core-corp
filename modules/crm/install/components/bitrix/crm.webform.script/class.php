@@ -2,10 +2,8 @@
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
 use Bitrix\Main\Loader;
-use Bitrix\Main\Context;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Crm\WebForm\Script;
-use Bitrix\Crm\WebForm\Internals\FormTable;
+use Bitrix\Crm\WebForm;
 
 Loc::loadMessages(__FILE__);
 
@@ -19,17 +17,22 @@ class CCrmWebFormScriptComponent extends \CBitrixComponent
 		if(is_array($this->arParams['FORM']))
 		{
 			$formData = $this->arParams['FORM'];
+			$isAvailableEmbedding = $this->arParams['IS_AVAILABLE_EMBEDDING'];
 		}
 		else
 		{
-			$formData = FormTable::getRowById($this->arParams['FORM_ID']);
+			$form = new WebForm\Form($this->arParams['FORM_ID']);
+			$formData = $form->get();
+			$isAvailableEmbedding = $form->isEmbeddingAvailable();
 		}
 
 		$scriptParams = array();
 		$this->arResult = array(
 			'FORM_NAME' => $formData['CAPTION'] ? $formData['CAPTION'] : $formData['NAME'],
-			'LINK' =>  Script::getUrlContext($formData, $this->arParams['PATH_TO_WEB_FORM_FILL']),
-			'SCRIPTS' => Script::getListContext($formData, $scriptParams, $this->arParams['PATH_TO_WEB_FORM_FILL'])
+			'LINK' =>  WebForm\Script::getUrlContext($formData, $this->arParams['PATH_TO_WEB_FORM_FILL']),
+			'SCRIPTS' => WebForm\Script::getListContext($formData, $scriptParams, $this->arParams['PATH_TO_WEB_FORM_FILL']),
+			'VIEWS' => $formData['FORM_SETTINGS']['VIEWS'],
+			'IS_AVAILABLE_EMBEDDING' => $isAvailableEmbedding && WebForm\Manager::isEmbeddingAvailable()
 		);
 	}
 

@@ -2,7 +2,9 @@
 namespace Bitrix\Landing\Hook\Page;
 
 use \Bitrix\Landing\Field;
+use \Bitrix\Landing\File;
 use \Bitrix\Landing\Manager;
+use \Bitrix\Landing\PublicAction;
 use \Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__FILE__);
@@ -17,7 +19,23 @@ class Favicon extends \Bitrix\Landing\Hook\Page
 	{
 		return array(
 			'PICTURE' => new Field\Hidden('PICTURE', array(
-				'title' => Loc::getMessage('LANDING_HOOK_FI_PICTURE')
+				'title' => Loc::getMessage('LANDING_HOOK_FI_PICTURE'),
+				'fetch_data_modification' => function($value)
+				{
+					if (PublicAction::restApplication())
+					{
+						if ($value > 0)
+						{
+							$path = File::getFilePath($value);
+							if ($path)
+							{
+								$path = Manager::getUrlFromFile($path);
+								return $path;
+							}
+						}
+					}
+					return $value;
+				}
 			))
 		);
 	}
@@ -37,6 +55,11 @@ class Favicon extends \Bitrix\Landing\Hook\Page
 	 */
 	public function enabled()
 	{
+		if ($this->issetCustomExec())
+		{
+			return true;
+		}
+
 		return $this->fields['PICTURE']->getValue() > 0;
 	}
 
@@ -46,6 +69,11 @@ class Favicon extends \Bitrix\Landing\Hook\Page
 	 */
 	public function exec()
 	{
+		if ($this->execCustom())
+		{
+			return;
+		}
+
 		$picture = intval($this->fields['PICTURE']->getValue());
 
 		if ($picture > 0)

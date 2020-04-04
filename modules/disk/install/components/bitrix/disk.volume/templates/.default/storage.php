@@ -113,9 +113,11 @@ if (!empty($arResult['ERROR_MESSAGE']))
 
 		var goToFolder = function(event){
 			event.stopPropagation();
-			if(BX.data(this,'collected') !== '1')
+			var isLeftClick  = (BX.getEventButton(event) === BX.MSLEFT);
+			if(isLeftClick && BX.data(this,'collected') !== '1')
 			{
 				event.preventDefault();
+
 				var storageId = parseInt(BX.data(this, 'storageId'));
 				var folderId = parseInt(BX.data(this, 'folderId'));
 				var filterId = parseInt(BX.data(this, 'filterId'));
@@ -123,15 +125,21 @@ if (!empty($arResult['ERROR_MESSAGE']))
 				{
 					BX.Disk.showActionModal({
 						text: BX.message('DISK_VOLUME_PERFORMING_MEASURE_DATA'),
-						showLoaderIcon: true,
+						//showLoaderIcon: true,
 						autoHide: false
 					});
+
+					BX.Disk.measureManager.getGrid().getLoader().show();
+
 					BX.Disk.measureManager.callAction({
 						action: '<?= $component::ACTION_MEASURE_FOLDER ?>',
 						storageId: storageId,
 						folderId: folderId,
 						filterId: filterId
 					});
+
+					BX.data(this,'collected', '1');
+
 					return BX.PreventDefault(event);
 				}
 			}
@@ -146,6 +154,20 @@ if (!empty($arResult['ERROR_MESSAGE']))
 				className: 'disk-volume-folder-link'
 			},
 			goToFolder
+		);
+
+		BX.bindDelegate(
+			BX('disk-volume-disk-grid-<?= $component->getComponentId() ?>'),
+			'dblclick',
+			{
+				tagName: 'A',
+				className: 'disk-volume-folder-link'
+			},
+			function(event){
+				event.stopPropagation();
+				event.preventDefault();
+				return true;
+			}
 		);
 
 		BX.bindDelegate(

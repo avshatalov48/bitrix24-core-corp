@@ -64,7 +64,7 @@ class Application extends \Bitrix\Main\Authentication\Application
 			$urls = UrlRewriter::getList($site);
 			foreach ($urls as $url)
 			{
-				if (in_array($url['ID'], array('bitrix:socialnetwork_user', 'bitrix:socialnetwork_group', 'bitrix:disk.common')))
+				if (in_array($url['ID'], array('bitrix:socialnetwork_user', 'bitrix:socialnetwork_group', 'bitrix:disk.common', 'bitrix:webdav')))
 					$this->validUrls[] = $url['PATH'];
 			}
 		}

@@ -20,16 +20,18 @@ function renderInput($input, $name, $property)
 			?>
 			<div class="crm-entity-widget-content-block crm-entity-widget-content-block-field-text"<?=$display?>>
 				<div class="crm-entity-widget-content-block-title">
-					<?
-					echo $input['LABEL'];
-
-					if (isset($input['REQUIRED']) && $input['REQUIRED'] === 'Y')
-					{
-						?>
-						<span style="color: #ff5752">*</span>
+					<span class="crm-entity-widget-content-block-title-text">
 						<?
-					}
-					?>
+						echo $input['LABEL'];
+
+						if (isset($input['REQUIRED']) && $input['REQUIRED'] === 'Y')
+						{
+							?>
+							<span style="color: #ff5752">*</span>
+							<?
+						}
+						?>
+					</span>
 				</div>
 				<div class="crm-entity-widget-content-block-inner">
 					<?=Input\Manager::getEditHtml($name, $input, $property[$name]).$input['RLABEL']?>
@@ -52,16 +54,18 @@ function renderInput($input, $name, $property)
 			?>
 			<div class="crm-entity-widget-content-block crm-entity-widget-content-block-field-number"<?=$display?>>
 				<div class="crm-entity-widget-content-block-title">
-					<?
-					echo $input['LABEL'];
-
-					if (isset($input['REQUIRED']) && $input['REQUIRED'] === 'Y')
-					{
-						?>
-						<span style="color: #ff5752">*</span>
+					<span class="crm-entity-widget-content-block-title-text">
 						<?
-					}
-					?>
+						echo $input['LABEL'];
+
+						if (isset($input['REQUIRED']) && $input['REQUIRED'] === 'Y')
+						{
+							?>
+							<span style="color: #ff5752">*</span>
+							<?
+						}
+						?>
+					</span>
 				</div>
 				<div class="crm-entity-widget-content-block-inner">
 					<?=Input\Manager::getEditHtml($name, $input, $property[$name]).$input['RLABEL']?>
@@ -83,16 +87,18 @@ function renderInput($input, $name, $property)
 			?>
 			<div class="crm-entity-widget-content-block"<?=$display?>>
 				<div class="crm-entity-widget-content-block-title">
-					<?
-					echo $input['LABEL'];
-
-					if (isset($input['REQUIRED']) && $input['REQUIRED'] === 'Y')
-					{
-						?>
-						<span style="color: #ff5752">*</span>
+					<span class="crm-entity-widget-content-block-title-text">
 						<?
-					}
-					?>
+						echo $input['LABEL'];
+
+						if (isset($input['REQUIRED']) && $input['REQUIRED'] === 'Y')
+						{
+							?>
+							<span style="color: #ff5752">*</span>
+							<?
+						}
+						?>
+					</span>
 				</div>
 				<div class="crm-entity-widget-content-block-inner">
 					<?=Input\Manager::getEditHtml($name, $input, $property[$name]).$input['RLABEL']?>
@@ -115,16 +121,18 @@ function renderInput($input, $name, $property)
 			?>
 			<div class="crm-entity-widget-content-block crm-entity-widget-content-block-field-select"<?=$display?>>
 				<div class="crm-entity-widget-content-block-title">
-					<?
-					echo $input['LABEL'];
-
-					if (isset($input['REQUIRED']) && $input['REQUIRED'] === 'Y')
-					{
-						?>
-						<span style="color: #ff5752">*</span>
+					<span class="crm-entity-widget-content-block-title-text">
 						<?
-					}
-					?>
+						echo $input['LABEL'];
+
+						if (isset($input['REQUIRED']) && $input['REQUIRED'] === 'Y')
+						{
+							?>
+							<span style="color: #ff5752">*</span>
+							<?
+						}
+						?>
+					</span>
 				</div>
 				<div class="crm-entity-widget-content-block-inner crm-entity-widget-content-block-select">
 					<?=Input\Manager::getEditHtml($name, $input, $property[$name]).$input['RLABEL']?>
@@ -146,16 +154,18 @@ function renderInput($input, $name, $property)
 			?>
 			<div class="crm-entity-widget-content-block crm-entity-widget-content-block-field-file"<?=$display?>>
 				<div class="crm-entity-widget-content-block-title">
-					<?
-					echo $input['LABEL'];
-
-					if (isset($input['REQUIRED']) && $input['REQUIRED'] === 'Y')
-					{
-						?>
-						<span style="color: #ff5752">*</span>
+					<span class="crm-entity-widget-content-block-title-text">
 						<?
-					}
-					?>
+						echo $input['LABEL'];
+
+						if (isset($input['REQUIRED']) && $input['REQUIRED'] === 'Y')
+						{
+							?>
+							<span style="color: #ff5752">*</span>
+							<?
+						}
+						?>
+					</span>
 				</div>
 				<div class="crm-entity-widget-content-block-inner">
 					<?=Input\Manager::getEditHtml($name, $input, $property[$name]).$input['RLABEL']?>
@@ -178,16 +188,18 @@ function renderInput($input, $name, $property)
 			?>
 			<div class="crm-entity-widget-content-block crm-entity-widget-content-block-field-date"<?=$display?>>
 				<div class="crm-entity-widget-content-block-title">
-					<?
-					echo $input['LABEL'];
-
-					if (isset($input['REQUIRED']) && $input['REQUIRED'] === 'Y')
-					{
-						?>
-						<span style="color: #ff5752">*</span>
+					<span class="crm-entity-widget-content-block-title-text">
 						<?
-					}
-					?>
+						echo $input['LABEL'];
+
+						if (isset($input['REQUIRED']) && $input['REQUIRED'] === 'Y')
+						{
+							?>
+							<span style="color: #ff5752">*</span>
+							<?
+						}
+						?>
+					</span>
 				</div>
 				<div class="crm-entity-widget-content-block-inner">
 					<?=Input\Manager::getEditHtml($name, $input, $property[$name]).$input['RLABEL']?>
@@ -209,16 +221,18 @@ function renderInput($input, $name, $property)
 			?>
 			<div class="crm-entity-widget-content-block crm-entity-widget-content-block-field-text"<?=$display?>>
 				<div class="crm-entity-widget-content-block-title">
-					<?
-					echo $input['LABEL'];
-
-					if (isset($input['REQUIRED']) && $input['REQUIRED'] === 'Y')
-					{
-						?>
-						<span style="color: #ff5752">*</span>
+					<span class="crm-entity-widget-content-block-title-text">
 						<?
-					}
-					?>
+						echo $input['LABEL'];
+
+						if (isset($input['REQUIRED']) && $input['REQUIRED'] === 'Y')
+						{
+							?>
+							<span style="color: #ff5752">*</span>
+							<?
+						}
+						?>
+					</span>
 				</div>
 				<div class="crm-entity-widget-content-block-inner">
 					<?=Input\Manager::getEditHtml($name, $input, $property[$name]).$input['RLABEL']?>

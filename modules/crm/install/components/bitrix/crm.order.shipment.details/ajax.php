@@ -313,11 +313,6 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 				return;
 			}
 		}
-		else
-		{
-			$this->addError('Can\'t get shipment item');
-			return;
-		}
 
 		$this->addData([
 			'SHIPMENT_DATA' => $this->createDataByComponent($shipment),

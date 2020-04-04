@@ -20,6 +20,7 @@ BX.CRM.Kanban.Item = function(options)
 	this.timer = null;
 	this.popupTooltip = null;
 	this.plannerCurrent = null;
+	this.fieldsWrapper = null;
 };
 
 BX.CRM.Kanban.Item.prototype = {
@@ -143,6 +144,7 @@ BX.CRM.Kanban.Item.prototype = {
 	{
 		var layout = null;
 		var data = this.getData();
+		var gridData = this.getGridData();
 
 		if (data.special_type === "import")
 		{
@@ -180,7 +182,11 @@ BX.CRM.Kanban.Item.prototype = {
 		// date
 		this.date.textContent = data.date;
 		// contact / company name
-		if (data.contactId && data.contactName)
+		if (
+			data.contactId &&
+			data.contactName &&
+			BX.util.in_array("CLIENT", gridData.customFields)
+		)
 		{
 			this.contactName.innerHTML = data.contactTooltip;
 			this.switchVisible(this.contactName, true);
@@ -221,9 +227,165 @@ BX.CRM.Kanban.Item.prototype = {
 			}
 		}
 
+		if (this.fieldsWrapper && data.fields && gridData.entityType === "ORDER")
+		{
+			this.fieldsWrapper.innerHTML = null;
+			this.layoutFields();
+		}
+
 		layout = this.container;
 
 		return layout;
+	},
+
+	getItemFields: function()
+	{
+		if(!this.fieldsWrapper)
+		{
+			var gridData = this.getGridData();
+			this.fieldsWrapper = BX.create("div", {
+				props: {
+					className: "crm-kanban-item-fields"
+				}
+			});
+			if (
+				gridData.entityType !== "LEAD" &&
+				gridData.entityType !== "DEAL" &&
+				gridData.entityType !== "ORDER"
+			)
+			{
+				this.switchVisible(this.link, true);
+				this.switchVisible(this.date, true);
+				this.switchVisible(this.contactName, true);
+				if (this.total)
+				{
+					this.switchVisible(this.total, true);
+				}
+				return this.fieldsWrapper;
+			}
+			this.layoutFields();
+		}
+
+		return this.fieldsWrapper;
+	},
+
+	layoutFields: function()
+	{
+		if (this.fieldsWrapper)
+		{
+			for (var i = 0; i < this.data.fields.length; i++)
+			{
+				// don't show main fields
+				var code = this.data.fields[i].code;
+				if (code === "TITLE")
+				{
+					this.switchVisible(this.link, true);
+					continue;
+				}
+				if (code === "DATE_CREATE")
+				{
+					this.switchVisible(this.date, true);
+					continue;
+				}
+				if (code === "CLIENT")
+				{
+					this.switchVisible(this.contactName, true);
+					continue;
+				}
+				if (code === "OPPORTUNITY" || code === "PRICE")
+				{
+					if (this.total)
+					{
+						this.switchVisible(this.total, true);
+					}
+					continue;
+				}
+
+				var userPic = null;
+
+				if ((code === "ASSIGNED_BY_ID" || code === "RESPONSIBLE_ID") && this.data.fields[i].value.picture)
+				{
+					userPic = " style=\"background-image: url(" + this.data.fields[i].value.picture + ")\"";
+				}
+
+				this.fieldsWrapper.appendChild(BX.create("div", {
+					props: {
+						className: "crm-kanban-item-fields-item"
+					},
+					children: [
+						BX.create("div", {
+							props: {
+								className: "crm-kanban-item-fields-item-title"
+							},
+							html: this.data.fields[i].title
+						}),
+						(this.data.fields[i].html === true || this.data.fields[i].type === "money")
+							? BX.create("div", {
+								props: {
+									className: "crm-kanban-item-fields-item-value"
+								},
+								html: (code === "ASSIGNED_BY_ID" || code === "RESPONSIBLE_ID")
+									? 	"<div class=\"crm-kanban-item-fields-item-value-user\">" +
+									"<a class=\"crm-kanban-item-fields-item-value-userpic\" href=\"" + this.data.fields[i].value.link + "\"" + userPic + "></a>" +
+									"<a class=\"crm-kanban-item-fields-item-value-name\" href=\"" + this.data.fields[i].value.link + "\">" + this.data.fields[i].value.title + "</a>" +
+									"</div>"
+									: this.data.fields[i].value
+							})
+							: BX.create("div", {
+								props: {
+									className: "crm-kanban-item-fields-item-value"
+								},
+								text: this.data.fields[i].value
+							})
+					]
+				}))
+			}
+		}
+	},
+
+	getItemFieldsEditor: function()
+	{
+		var gridData = this.getGridData();
+		var editorContainer = BX.create("div", {});
+		var fieldsWrapper = BX.create("div", {
+			props: {
+				className: "crm-kanban-item-fields"
+			},
+			children: [
+				editorContainer
+			]
+		});
+		var serviceUrl = BX.Crm.PartialEditorDialog.entityEditorUrls[
+			gridData.entityType
+		];
+
+		if (this.data.fieldsEditor)
+		{
+			var model = BX.Crm.EntityEditorModelFactory.create(
+				"kanban_model",
+				"",
+				{data: this.data.fieldsEditor}
+			);
+
+			BX.Crm.EntityEditor.create(
+				"kanban_" + gridData.entityType.toLowerCase() + "_" + this.getId(),
+				{
+					containerId: editorContainer,
+					serviceUrl: serviceUrl,
+					entityTypeId: gridData.entityTypeInt,
+					entityId: this.getId(),
+					scheme: gridData.schemeInline,
+					model: model,
+					initialMode: "view",
+					enableModeToggle: true,
+					enableToolPanel: true,
+					enableRequiredUserFieldCheck: true,
+					userFieldManager: gridData.userFieldManagerInline
+				}
+			);
+		}
+
+		return fieldsWrapper;
 	},
 
 	/**
@@ -449,8 +611,17 @@ BX.CRM.Kanban.Item.prototype = {
 			events: {
 				click: function(e)
 				{
-					if(e.target !== this.container)
+					var parent = BX.findParent(e.target, {
+						className: this.container.className
+					});
+
+					if (
+						(e.target !== this.container && !parent) ||
+						(parent && e.target.tagName === "A") ||
+						(parent && e.target.tagName === "SPAN"))
+					{
 						return;
+					}
 
 					if(this.checked)
 					{
@@ -492,7 +663,11 @@ BX.CRM.Kanban.Item.prototype = {
 		this.link = BX.create("a", {
 			props: {
 				className: "crm-kanban-item-title"
-			}
+			},
+			style:
+				this.data.fields.length > 0
+				? { display: "none" }
+				: {}
 		});
 
 		this.container.appendChild(this.link);
@@ -515,23 +690,24 @@ BX.CRM.Kanban.Item.prototype = {
 		}
 
 		// price
-		if (gridData.entityType !== "LEAD")
-		{
-			this.totalPrice = BX.create("div", {
-				props: {
-					className: "crm-kanban-item-total-price"
-				}
-			});
-			this.total = BX.create("div", {
-				props: {
-					className: "crm-kanban-item-total"
-				},
-				children: [
-					this.totalPrice
-				]
-			});
-			this.container.appendChild(this.total);
-		}
+		this.totalPrice = BX.create("div", {
+			props: {
+				className: "crm-kanban-item-total-price"
+			}
+		});
+		this.total = BX.create("div", {
+			props: {
+				className: "crm-kanban-item-total"
+			},
+			style: this.data.fields.length > 0
+				? { display: "none" }
+				: {},
+			children: [
+				this.totalPrice
+			]
+		});
+		this.container.appendChild(this.total);
+
 		// contact / company name
 		this.contactName = BX.create("span", {
 			props: {
@@ -543,7 +719,10 @@ BX.CRM.Kanban.Item.prototype = {
 		this.date = BX.create("div", {
 			props: {
 				className: "crm-kanban-item-date"
-			}
+			},
+			style: this.data.fields.length > 0
+				? { display: "none" }
+				: {}
 		});
 		this.container.appendChild(this.date);
 		// checked button
@@ -562,6 +741,16 @@ BX.CRM.Kanban.Item.prototype = {
 			}
 		});
 		this.container.appendChild(this.checkedButton);
+
+		if(false && this.data.fieldsEditor)
+		{
+			this.container.appendChild(this.getItemFieldsEditor());
+		}
+		else if(this.data.fields.length > 0)
+		{
+			this.container.appendChild(this.getItemFields());
+		}
+		
 		// plan
 		if (gridData.showActivity)
 		{
@@ -599,7 +788,7 @@ BX.CRM.Kanban.Item.prototype = {
 					click: BX.delegate(this.showPlannerMenu, this)
 				}
 			});
-			this.planner = BX.create("span", {
+			this.planner = BX.create("div", {
 				props: {
 					className: "crm-kanban-item-planner"
 				},
@@ -611,6 +800,7 @@ BX.CRM.Kanban.Item.prototype = {
 			});
 			this.container.appendChild(this.planner);
 		}
+
 		// phone, mail, chat
 		this.contactPhone = BX.create("span", {
 			props: {
@@ -1203,6 +1393,30 @@ BX.CRM.Kanban.Item.prototype = {
 		this.dragElement.className = "main-kanban-item main-kanban-item-drag";
 
 		document.body.appendChild(this.dragElement);
+	},
+
+	makeDroppable: function()
+	{
+		if (!this.isDroppable())
+		{
+			return;
+		}
+
+		var itemContainer = this.getContainer();
+
+		itemContainer.onbxdestdraghover = BX.delegate(this.onDragEnter, this);
+		itemContainer.onbxdestdraghout = BX.delegate(this.onDragLeave, this);
+		itemContainer.onbxdestdragfinish = BX.delegate(this.onDragDrop, this);
+
+		itemContainer.onbxdestdragstop = BX.delegate(this.onItemDragEnd, this);
+
+		jsDD.registerDest(itemContainer, 5);
+
+		if (this.getGrid().getDragMode() !== BX.Kanban.DragMode.ITEM)
+		{
+			//when we load new items in drag mode
+			this.disableDropping();
+		}
 	}
 };
 

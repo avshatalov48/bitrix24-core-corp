@@ -81,7 +81,7 @@ class OrderBasketShipment extends OrderBasket
 				<table class="adm-s-order-table-ddi-table" style="width: 100%;" id="'.$this->idPrefix.'sale_order_edit_product_table">
 					<thead>
 					<tr>
-						<td>
+						<td class="adm-s-order-table-context-menu-column">
 							<span class="adm-s-order-table-title-icon"
 								title="'.Loc::getMessage("SALE_ORDER_BASKET_SETTINGS_BUTTON_TITLE").'"
 								onclick="'.$this->jsObjName.'.onHeadMenu(this);"

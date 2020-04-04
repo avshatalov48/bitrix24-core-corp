@@ -6,6 +6,7 @@ $MESS["CRM_MODULE_NOT_INSTALLED"] = "The CRM module is not installed.";
 $MESS["CRM_PERMISSION_DENIED"] = "Access Denied";
 $MESS["CRM_PRODUCT_IMP_COL_XML_ID"] = "External ID";
 $MESS["CRM_PRODUCT_IMP_COL_NAME"] = "Name";
+$MESS["CRM_PRODUCT_IMP_COL_CODE"] = "Symbolic code";
 $MESS["CRM_PRODUCT_IMP_COL_DESCRIPTION"] = "Description";
 $MESS["CRM_PRODUCT_IMP_COL_ACTIVE"] = "Active";
 $MESS["CRM_PRODUCT_IMP_COL_CURRENCY_ID"] = "Currency";

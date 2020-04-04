@@ -1,0 +1,53 @@
+.b24-form-progress-container {
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	-webkit-box-align: center;
+	-ms-flex-align: center;
+	align-items: center;
+	-webkit-box-pack: start;
+	-ms-flex-pack: start;
+	justify-content: flex-start;;
+	margin-bottom: 15px;
+}
+
+.b24-form-progress-bar-container { position: relative; }
+
+.b24-form-progress { transform: rotate(-90deg); }
+
+.b24-form-progress-track {
+	stroke: #c0c0c0;
+	stroke: var(--b24-field-border-color);
+	stroke-dashoffset: 0;
+	stroke-dasharray: 0;
+	fill: transparent;
+}
+
+.b24-form-progress-bar {
+	fill: transparent;
+	stroke: #0f58d0;
+	stroke: var(--b24-primary-color);
+	transition: 120ms linear;
+}
+
+.b24-form-progress-bar-counter {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	font: 13px/18px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 13px/18px var(--b24-font-family);
+	text-align: center;
+	color: #000;
+	color: var(--b24-text-color);
+	white-space: nowrap;
+}
+
+.b24-form-progress-bar-title {
+	padding-left: 11px;
+	vertical-align: middle;
+	font: 600 18px/24px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 600 18px/24px var(--b24-font-family);
+	color: #000;
+	color: var(--b24-text-color);
+}

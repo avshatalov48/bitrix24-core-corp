@@ -194,7 +194,7 @@
 		{
 			e = e || window.event;
 
-			if(e.origin != this.params.appProto + '://' + this.params.appHost || !e.data)
+			if(e.origin != this.params.appProto + '://' + this.params.appHost || !BX.type.isString(e.data))
 			{
 				return;
 			}

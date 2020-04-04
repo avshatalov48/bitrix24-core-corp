@@ -1,0 +1,117 @@
+.b24-window-widget {
+	position: fixed;
+	width: 363px;
+	min-height: 150px;
+	border-radius: 6px;
+	background-color: #fff;
+	box-shadow: 0 4px 18px 0 rgba(0, 0, 0, .3);
+	-webkit-overflow-scrolling: touch;
+	-webkit-font-smoothing: antialiased;
+	z-index: 99999;
+}
+
+.b24-window-widget-body {}
+
+.b24-window-widget:after {
+	content: '';
+	position: absolute;
+	right: 75px;
+	bottom: -28px;
+	width: 0;
+	height: 0;
+	border-bottom: 28px solid white;
+	border-right: 28px solid transparent;
+	transform: rotate(-180deg);
+	opacity: 0;
+}
+
+/***** POSITION ******/
+.b24-window-widget-p-top-left {
+	top: 130px;
+	left: 56px;
+}
+
+.b24-window-widget-p-top-center {
+	top: 130px;
+	left: 0;
+	right: 0;
+	margin: 0 auto;
+}
+
+.b24-window-widget-p-top-right {
+	top: 130px;
+	right: 53px;
+}
+
+.b24-window-widget-p-bottom-left {
+	bottom: 130px;
+	left: 56px;
+}
+
+.b24-window-widget-p-bottom-center {
+	bottom: 130px;
+	left: 0;
+	right: 0;
+	margin: 0 auto;
+}
+
+.b24-window-widget-p-bottom-right {
+	bottom: 130px;
+	right: 53px;
+}
+
+/***** ARROW ******/
+.b24-window-widget-p-top-left.b24-window-widget:after {
+	top: -28px;
+	left: 75px;
+	bottom: auto;
+	right: auto;
+	transform: rotate(0deg);
+}
+
+.b24-window-widget-p-top-right.b24-window-widget:after {
+	top: -28px;
+	bottom: auto;
+	transform: rotate(-90deg);
+}
+
+.b24-window-widget-p-top-center.b24-window-widget:after {
+	top: -28px;
+	left: 50%;
+	right: auto;
+	bottom: auto;
+	transform: translate(-50%, 0%) rotate(-90deg);
+}
+
+.b24-window-widget-p-bottom-center.b24-window-widget:after {
+	left: 50%;
+	right: auto;
+	transform: translate(-50%, 0%) rotate(-180deg);
+}
+
+.b24-window-widget-p-bottom-left.b24-window-widget:after {
+	left: 75px;
+	transform: rotate(-270deg);
+}
+
+
+/***** MOBILE ******/
+
+@media (max-width: 530px) {
+	.b24-window-widget {
+		width: 100%;
+		max-width: 350px;
+	}
+
+	.b24-window-widget-p-top-left { left: 10px; }
+
+	.b24-window-widget-p-top-center {}
+
+	.b24-window-widget-p-top-right { right: 10px; }
+
+	.b24-window-widget-p-bottom-left { left: 10px; }
+
+	.b24-window-widget-p-bottom-center {}
+
+	.b24-window-widget-p-bottom-right { right: 10px; }
+}

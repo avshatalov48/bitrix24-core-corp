@@ -113,6 +113,10 @@ class CCrmDocumentLead extends CCrmDocument
 				'Editable' => false,
 				'Required' => false,
 			),
+			'MODIFY_BY_ID' => array(
+				'Name' => GetMessage('CRM_DOCUMENT_FIELD_MODIFY_BY_ID'),
+				'Type' => 'user',
+			),
 			'COMMENTS' => array(
 				'Name' => GetMessage('CRM_FIELD_COMMENTS'),
 				'Type' => 'text',
@@ -121,7 +125,7 @@ class CCrmDocumentLead extends CCrmDocument
 				'Required' => false,
 			),
 			'NAME' => array(
-				'Name' => GetMessage('CRM_FIELD_NAME'),
+				'Name' => GetMessage('CRM_LEAD_FIELD_NAME'),
 				'Type' => 'string',
 				'Filterable' => true,
 				'Editable' => true,
@@ -328,6 +332,9 @@ class CCrmDocumentLead extends CCrmDocument
 		//append UTM fields
 		$arResult += parent::getUtmFields();
 
+		//append FORM fields
+		$arResult += parent::getSiteFormFields(CCrmOwnerType::Lead);
+
 		return $arResult;
 	}
 
@@ -361,6 +368,18 @@ class CCrmDocumentLead extends CCrmDocument
 				$arRes = $dbRes ? $dbRes->Fetch() : null;
 				$arFields['COMPANY_TITLE'] = $arRes ? $arRes['TITLE'] : '';
 			}
+		}
+
+		if ($arFields['COMPANY_ID'] <= 0)
+		{
+			//set empty value instead "0"
+			$arFields['COMPANY_ID'] = null;
+		}
+
+		if ($arFields['CONTACT_ID'] <= 0)
+		{
+			//set empty value instead "0"
+			$arFields['CONTACT_ID'] = null;
 		}
 
 		$arFields['FULL_ADDRESS'] = Crm\Format\LeadAddressFormatter::format(

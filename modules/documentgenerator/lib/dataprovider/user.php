@@ -53,6 +53,7 @@ final class User extends EntityDataProvider
 
 			$this->fields['PERSONAL_PHONE']['TYPE'] = static::FIELD_TYPE_PHONE;
 			$this->fields['WORK_PHONE']['TYPE'] = static::FIELD_TYPE_PHONE;
+			$this->fields['PERSONAL_MOBILE']['TYPE'] = static::FIELD_TYPE_PHONE;
 
 			$this->fields['WORK_DEPARTMENT']['VALUE'] = [$this, 'getDepartment'];
 			if(isset($this->fields['UF_DEPARTMENT']))

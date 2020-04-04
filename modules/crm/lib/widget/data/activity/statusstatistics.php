@@ -152,7 +152,7 @@ class StatusStatistics extends DataSource
 					unset($ary[$nameAlias]);
 				}
 
-				$ary['DATE'] = $ary['DEADLINE_DATE']->format('Y-m-d');
+				$ary['DATE'] = $this->getLocalDate($ary['DEADLINE_DATE'], 'Y-m-d');
 				unset($ary['DEADLINE_DATE']);
 
 				if($ary['DATE'] === '9999-12-31')

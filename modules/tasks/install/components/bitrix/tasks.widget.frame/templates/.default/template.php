@@ -88,7 +88,7 @@ $inputPrefix = $arParams['INPUT_PREFIX'];
 
 									<?=$block['HTML']?>
 
-									<?if(count($block['TOGGLE'])):?>
+									<?if($block['TOGGLE'] && count($block['TOGGLE'])):?>
 										<span class="task-dashed-link task-dashed-link-add tasks-additional-block-link">
 											<?foreach($block['TOGGLE'] as $link):?>
 			                                    <span class="js-id-wfr-edit-form-toggler task-dashed-link-inner" data-target="<?=htmlspecialcharsbx(ToLower($link['TARGET']))?>"><?=htmlspecialcharsbx($link['TITLE'])?></span>
@@ -224,6 +224,7 @@ $inputPrefix = $arParams['INPUT_PREFIX'];
 
 		<?if($arParams['FOOTER']['IS_ENABLED']):?>
 
+        <?php /*
 			<div class="js-id-wfr-edit-form-footer webform-buttons pinable-block <?=($state['FLAGS']['FORM_FOOTER_PIN'] ? 'pinned' : '')?>">
 
 				<div class="tasks-form-footer-container">
@@ -248,7 +249,11 @@ $inputPrefix = $arParams['INPUT_PREFIX'];
 
 				</div>
 			</div>
+        */?>
 
+            <?$APPLICATION->IncludeComponent('bitrix:ui.button.panel', '', [
+                'BUTTONS' => $arParams['FOOTER']['BUTTONS']
+            ]);?>
 		<?endif?>
 
 		<?/*

@@ -4,6 +4,8 @@ namespace Bitrix\Crm\Integration\DocumentGenerator\DataProvider;
 
 use Bitrix\Crm\ContactAddress;
 use Bitrix\Crm\ContactTable;
+use Bitrix\DocumentGenerator\DataProvider\ArrayDataProvider;
+use Bitrix\DocumentGenerator\DataProviderManager;
 use Bitrix\DocumentGenerator\Nameable;
 use Bitrix\DocumentGenerator\Value\Name;
 
@@ -11,6 +13,8 @@ class Contact extends CrmEntityDataProvider implements Nameable
 {
 	protected $bankDetailIds;
 	protected $nameData = [];
+
+	protected $companies;
 
 	/**
 	 * @return array
@@ -34,29 +38,63 @@ class Contact extends CrmEntityDataProvider implements Nameable
 			$this->fields['SOURCE'] = ['TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_CONTACT_SOURCE_TITLE'),];
 			$this->fields['EMAIL_HOME'] = [
 				'TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_EMAIL_HOME_TITLE'),
+				'VALUE' => [$this, 'getHomeEmail'],
+				'FORMAT' => [
+					'mfirst' => true,
+				],
 			];
 			$this->fields['EMAIL_WORK'] = [
 				'TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_EMAIL_WORK_TITLE'),
+				'VALUE' => [$this, 'getWorkEmail'],
+				'FORMAT' => [
+					'mfirst' => true,
+				],
 			];
 			$this->fields['PHONE_MOBILE'] = [
 				'TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_PHONE_MOBILE_TITLE'),
 				'TYPE' => 'PHONE',
+				'VALUE' => [$this, 'getMobilePhone'],
+				'FORMAT' => [
+					'mfirst' => true,
+				],
 			];
 			$this->fields['PHONE_WORK'] = [
 				'TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_PHONE_WORK_TITLE'),
 				'TYPE' => 'PHONE',
+				'VALUE' => [$this, 'getWorkPhone'],
+				'FORMAT' => [
+					'mfirst' => true,
+				],
+			];
+			$this->fields['PHONE_HOME'] = [
+				'TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_PHONE_HOME_TITLE'),
+				'TYPE' => 'PHONE',
+				'VALUE' => [$this, 'getHomePhone'],
+				'FORMAT' => [
+					'mfirst' => true,
+				],
 			];
 			$this->fields['PHONE_ANOTHER'] = [
 				'TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_PHONE_ANOTHER_TITLE'),
 				'VALUE' => [$this, 'getAnotherPhone'],
 				'TYPE' => 'PHONE',
+				'FORMAT' => [
+					'mfirst' => true,
+				],
 			];
 			$this->fields['EMAIL_ANOTHER'] = [
 				'TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_EMAIL_ANOTHER_TITLE'),
 				'VALUE' => [$this, 'getAnotherEmail'],
+				'FORMAT' => [
+					'mfirst' => true,
+				],
 			];
 			$this->fields['IMOL'] = [
 				'TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_IMOL_TITLE'),
+				'VALUE' => [$this, 'getClientIm'],
+				'FORMAT' => [
+					'mfirst' => true,
+				],
 			];
 			$this->fields['NAME']['VALUE'] = [$this, 'getNameData'];
 			$this->fields['NAME']['TYPE'] = static::FIELD_TYPE_NAME;
@@ -74,6 +112,26 @@ class Contact extends CrmEntityDataProvider implements Nameable
 			$this->fields['PHOTO']['TYPE'] = static::FIELD_TYPE_IMAGE;
 
 			$this->fields['PHONE']['TYPE'] = 'PHONE';
+			$this->fields['PHONE']['FORMAT'] = ['mfirst' => true,];
+			$this->fields['PHONE']['VALUE'] = [$this, 'getClientPhone'];
+			$this->fields['EMAIL']['FORMAT'] = ['mfirst' => true,];
+			$this->fields['EMAIL']['VALUE'] = [$this, 'getClientEmail'];
+
+			$this->fields['COMPANIES'] = [
+				'TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_COMPANIES_TITLE'),
+				'PROVIDER' => ArrayDataProvider::class,
+				'OPTIONS' => [
+					'ITEM_PROVIDER' => Company::class,
+					'ITEM_NAME' => 'COMPANY',
+					'ITEM_TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_COMPANY_TITLE'),
+					'ITEM_OPTIONS' => [
+						'DISABLE_MY_COMPANY' => true,
+						'isLightMode' => true,
+					],
+				],
+				'VALUE' => [$this, 'getCompanies'],
+			];
+			$this->fields['BIRTHDATE']['TITLE'] = GetMessage('CRM_DOCGEN_DATAPROVIDER_BIRTHDATE_TITLE');
 
 			if(isset($this->getOptions()['DISABLE_MY_COMPANY']))
 			{
@@ -169,6 +227,8 @@ class Contact extends CrmEntityDataProvider implements Nameable
 			'HAS_IMOL',
 			'SEARCH_CONTENT',
 			'HONORIFIC',
+			'COMPANY_ID',
+			'FULL_NAME',
 		]);
 	}
 
@@ -182,12 +242,6 @@ class Contact extends CrmEntityDataProvider implements Nameable
 				'SHORT_NAME',
 				'TYPE' => 'TYPE_BY.NAME',
 				'SOURCE' => 'SOURCE_BY.NAME',
-				'EMAIL_HOME',
-				'EMAIL_WORK',
-				'PHONE_MOBILE',
-				'PHONE_WORK',
-				'EMAIL',
-				'PHONE',
 			],
 		]);
 	}
@@ -260,5 +314,39 @@ class Contact extends CrmEntityDataProvider implements Nameable
 	public function getAddress()
 	{
 		return $this->getAddressFromRequisite($this->fields['REQUISITE'], 'PRIMARY_ADDRESS');
+	}
+
+	/**
+	 * @return array
+	 * @throws \Bitrix\Main\ArgumentException
+	 */
+	public function getCompanies()
+	{
+		if($this->companies === null)
+		{
+			$this->companies = [];
+			if(intval($this->source) > 0)
+			{
+				$contactBindings = \Bitrix\Crm\Binding\ContactCompanyTable::getContactBindings($this->source);
+				foreach($contactBindings as $binding)
+				{
+					$company = DataProviderManager::getInstance()->getDataProvider(Company::class, $binding['COMPANY_ID'], [
+						'isLightMode' => true,
+						'DISABLE_MY_COMPANY' => true,
+					], $this);
+					$this->companies[] = $company;
+				}
+			}
+		}
+
+		return $this->companies;
+	}
+
+	/**
+	 * @return bool
+	 */
+	protected function hasLeadField()
+	{
+		return true;
 	}
 }

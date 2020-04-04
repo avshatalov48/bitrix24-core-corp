@@ -1,5 +1,9 @@
 <?php
 
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 use Bitrix\Report\VisualConstructor\Views\Component\BaseViewComponent;
 
@@ -8,8 +12,7 @@ class CrmReportVcWidgetContentColumnFunnel extends BaseViewComponent
 	public function executeComponent()
 	{
 		$this->arResult['WIDGET_DATA'] = $this->buildEntities();
-		/** @var \Bitrix\Report\VisualConstructor\Entity\Widget $widget */
-		//$widget = $this->arParams['WIDGET'];
+		/** @var \Bitrix\Report\VisualConstructor\Entity\Widget $widget */ //$widget = $this->arParams['WIDGET'];
 		//$this->arResult['SHORT_MODE'] = $widget->getWidgetHandler()->getFormElement('shortMode')->getValue();
 		parent::executeComponent();
 	}
@@ -25,46 +28,56 @@ class CrmReportVcWidgetContentColumnFunnel extends BaseViewComponent
 				$entity['title'] = $reportResult['title'];
 				if (isset($reportResult['config']['mode']) && $reportResult['config']['mode'] === 'singleData')
 				{
-					$entity['value'] = $reportResult['items'][0]['value'];
-					$entity['color'] = $reportResult['items'][0]['color'];
+					$entity['topAdditionalTitle'] = $reportResult['config']['topAdditionalTitle'];
+					$entity['topAdditionalValue'] = $reportResult['config']['topAdditionalValue'];
 					$entity['singleData'] = true;
-					$entity['unitOfMeasurement'] = $reportResult['config']['unitOfMeasurement'];
+					$entity['topAdditionalValueUnit'] = $reportResult['config']['topAdditionalValueUnit'];
 				}
-				else
+
+				if (!empty($reportResult['items']))
 				{
-					if (isset($reportResult['config']['additionalValues']['sum']))
-					{
-						$entity['topAdditionalTitleAmount'] = $reportResult['config']['additionalValues']['sum']['titleShort'];
-						$entity['topAdditionalTitleAmount'] = 0;
-					}
-
-
-
-					if (!$reportResult['items'])
-					{
-						continue;
-					}
-
 					foreach ($reportResult['items'] as $id => $item)
 					{
 						$column = [
 							'title' => $item['label'],
 							'value' => $item['value'],
 							'color' => $item['color'],
-							'firstAdditionalTitle' => $reportResult['config']['titleShort'],
-							'firstAdditionalValue' => $item['value'],
-							'secondAdditionalTitle' => $reportResult['config']['titleShort'],
-							'secondAdditionalValue' => $item['value'],
+							'link' => !empty($item['link']) ? $item['link'] : ''
 						];
-						if (isset($reportResult['config']['additionalValues']['sum']))
+
+						if (isset($item['additionalValues']['firstAdditionalValue']))
 						{
-							$column['topAdditionalTitle'] = $reportResult['config']['additionalValues']['sum']['titleShort'];
-							$column['topAdditionalValue'] = $item['additionalValues']['sum']['value'];
+							$column['firstAdditionalTitle'] = $reportResult['config']['additionalValues']['firstAdditionalValue']['titleShort'];
+							$column['firstAdditionalValue'] = $item['additionalValues']['firstAdditionalValue']['value'];
+							$column['firstAdditionalUnit'] = !empty($item['additionalValues']['firstAdditionalValue']['unitOfMeasurement'])
+								? $item['additionalValues']['firstAdditionalValue']['unitOfMeasurement'] : '';
 						}
 
+						if (isset($item['additionalValues']['secondAdditionalValue']))
+						{
+							$column['secondAdditionalTitle'] = $reportResult['config']['additionalValues']['secondAdditionalValue']['titleShort'];
+							$column['secondAdditionalValue'] = $item['additionalValues']['secondAdditionalValue']['value'];
+							$column['secondAdditionalUnit'] = !empty($item['additionalValues']['secondAdditionalValue']['unitOfMeasurement'])
+								? $item['additionalValues']['secondAdditionalValue']['unitOfMeasurement'] : '';
+						}
+
+						if (isset($item['additionalValues']['thirdAdditionalValue']))
+						{
+							$column['thirdAdditionalTitle'] = $reportResult['config']['additionalValues']['thirdAdditionalValue']['titleShort'];
+							$column['thirdAdditionalValue'] = $item['additionalValues']['thirdAdditionalValue']['value'];
+							$column['thirdAdditionalUnit'] = !empty($item['additionalValues']['thirdAdditionalValue']['unitOfMeasurement'])
+								? $item['additionalValues']['thirdAdditionalValue']['unitOfMeasurement'] : '';
+
+						}
+
+						if (isset($item['additionalValues']['forthAdditionalValue']))
+						{
+							$column['forthAdditionalTitle'] = $reportResult['config']['additionalValues']['forthAdditionalValue']['titleShort'];
+							$column['forthAdditionalValue'] = $item['additionalValues']['forthAdditionalValue']['value'];
+							$column['forthAdditionalUnit'] = !empty($item['additionalValues']['forthAdditionalValue']['unitOfMeasurement'])
+								? $item['additionalValues']['forthAdditionalValue']['unitOfMeasurement'] : '';
+						}
 						$entity['columns'][] = $column;
-
-
 
 					}
 				}
@@ -73,6 +86,7 @@ class CrmReportVcWidgetContentColumnFunnel extends BaseViewComponent
 				{
 					$entity['firstAdditionalTitleAmount'] = $reportResult['config']['valuesAmount']['firstAdditionalAmount']['title'];
 					$entity['firstAdditionalValueAmount'] = $reportResult['config']['valuesAmount']['firstAdditionalAmount']['value'];
+					$entity['firstAdditionalAmountTargetUrl'] = $reportResult['config']['valuesAmount']['firstAdditionalAmount']['targetUrl'];
 				}
 
 				if (!empty($reportResult['config']['valuesAmount']['secondAdditionalAmount']))
@@ -81,6 +95,17 @@ class CrmReportVcWidgetContentColumnFunnel extends BaseViewComponent
 					$entity['secondAdditionalValueAmount'] = $reportResult['config']['valuesAmount']['secondAdditionalAmount']['value'];
 				}
 
+				if (!empty($reportResult['config']['valuesAmount']['thirdAdditionalAmount']))
+				{
+					$entity['thirdAdditionalTitleAmount'] = $reportResult['config']['valuesAmount']['thirdAdditionalAmount']['title'];
+					$entity['thirdAdditionalValueAmount'] = $reportResult['config']['valuesAmount']['thirdAdditionalAmount']['value'];
+				}
+
+				if (!empty($reportResult['config']['valuesAmount']['forthAdditionalAmount']))
+				{
+					$entity['forthAdditionalTitleAmount'] = $reportResult['config']['valuesAmount']['forthAdditionalAmount']['title'];
+					$entity['forthAdditionalValueAmount'] = $reportResult['config']['valuesAmount']['forthAdditionalAmount']['value'];
+				}
 
 				if (!empty($entity))
 				{
@@ -89,8 +114,6 @@ class CrmReportVcWidgetContentColumnFunnel extends BaseViewComponent
 
 			}
 		}
-
-
 
 		return $entities;
 	}

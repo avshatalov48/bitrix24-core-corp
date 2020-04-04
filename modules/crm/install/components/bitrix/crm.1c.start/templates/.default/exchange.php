@@ -18,9 +18,6 @@ use Bitrix\Main\Localization\Loc;
  */
 
 $APPLICATION->SetTitle(Loc::getMessage("CRM_1C_START_EXCHANGE_NAME"));
-
-if (COption::GetOptionString("crm", "1c_integration_opened", "") != "Y")
-	COption::SetOptionString("crm", "1c_integration_opened", "Y");
 ?>
 
 

@@ -18,6 +18,7 @@ class CAllCrmInvoice
 	static public $sUFEntityID = 'CRM_INVOICE';
 	const USER_FIELD_ENTITY_ID = 'CRM_INVOICE';
 	const SUSPENDED_USER_FIELD_ENTITY_ID = 'CRM_INVOICE_SPD';
+	const TOTAL_COUNT_CACHE_ID =  'crm_invoice_total_count';
 
 	public $LAST_ERROR = '';
 	public $cPerms = null;
@@ -93,8 +94,12 @@ class CAllCrmInvoice
 			$this->LAST_ERROR .= GetMessage('CRM_ERROR_FIELD_INCORRECT', array('%FIELD_NAME%' => GetMessage('CRM_FIELD_USER_DESCRIPTION')))
 				.' ('.GetMessage('CRM_FIELD_USER_DESCRIPTION_INCORRECT_INFO').").<br />\n";
 
-		if (empty($arFields['STATUS_ID']) || strlen($arFields['STATUS_ID']) !== 1)
+		$crmStatus = new CCrmStatus('INVOICE_STATUS');
+		if (empty($arFields['STATUS_ID']) || !$crmStatus->CheckStatusId($arFields['STATUS_ID']))
+		{
 			$this->LAST_ERROR .= GetMessage('CRM_ERROR_FIELD_INCORRECT', array('%FIELD_NAME%' => GetMessage('CRM_FIELD_STATUS_ID')))."<br />\n";
+		}
+		unset($crmStatus);
 
 		if ($bStatusSuccess)
 		{
@@ -869,7 +874,9 @@ class CAllCrmInvoice
 	public function Add($arFields, &$arRecalculated = false, $siteId = SITE_ID, $options = array())
 	{
 		/** @global \CDatabase $DB */
-		global $DB;
+		/** @global \CMain $APPLICATION */
+		/** @var CApplicationException $ex */
+		global $DB, $APPLICATION;
 
 		if(!CModule::IncludeModule('sale'))
 		{
@@ -963,11 +970,18 @@ class CAllCrmInvoice
 			$arFields['~DATE_BILL'] = $DB->CharToDateFunction($arFields['DATE_BILL'], 'SHORT', false);
 		}
 		unset($arFields['DATE_BILL']);
-		if(isset($arFields['DATE_PAY_BEFORE']) && $arFields['DATE_PAY_BEFORE'] !== '')
+		if(array_key_exists('DATE_PAY_BEFORE', $arFields))
 		{
-			$arFields['~DATE_PAY_BEFORE'] = $DB->CharToDateFunction($arFields['DATE_PAY_BEFORE'], 'SHORT', false);
+			if (is_string($arFields['DATE_PAY_BEFORE']) && $arFields['DATE_PAY_BEFORE'] !== '')
+			{
+				$arFields['~DATE_PAY_BEFORE'] = $DB->CharToDateFunction($arFields['DATE_PAY_BEFORE'], 'SHORT', false);
+				unset($arFields['DATE_PAY_BEFORE']);
+			}
+			else
+			{
+				$arFields['DATE_PAY_BEFORE'] = '';
+			}
 		}
-		unset($arFields['DATE_PAY_BEFORE']);
 
 		$paidStateCanceled = false;
 		if ($tmpOrderId > 0 && is_array($arPrevOrder) && !$bRecalculate
@@ -993,10 +1007,26 @@ class CAllCrmInvoice
 			{
 				if(ExecuteModuleEventEx($arEvent, array(&$arFields)) === false)
 				{
+					$errMsg = '';
 					if(isset($arFields['RESULT_MESSAGE']))
-						$this->LAST_ERROR = $arFields['RESULT_MESSAGE'];
-					else
+					{
+						$errMsg = trim(strval($arFields['RESULT_MESSAGE']));
+					}
+					else if ($ex = $APPLICATION->GetException())
+					{
+						$errMsg = trim(strval($ex->GetString()));
+					}
+
+					if ($errMsg === '')
+					{
 						$this->LAST_ERROR = GetMessage('CRM_INVOICE_UPDATE_CANCELED', array('#NAME#' => $arEvent['TO_NAME']));
+					}
+					else
+					{
+						$this->LAST_ERROR = $errMsg;
+					}
+					unset($errMsg);
+
 					$GLOBALS['APPLICATION']->ThrowException($this->LAST_ERROR);
 					if ($paidStateCanceled)
 					{
@@ -1121,10 +1151,26 @@ class CAllCrmInvoice
 				{
 					if(ExecuteModuleEventEx($arEvent, array(&$arFields)) === false)
 					{
+						$errMsg = '';
 						if(isset($arFields['RESULT_MESSAGE']))
-							$this->LAST_ERROR = $arFields['RESULT_MESSAGE'];
-						else
+						{
+							$errMsg = trim(strval($arFields['RESULT_MESSAGE']));
+						}
+						else if ($ex = $APPLICATION->GetException())
+						{
+							$errMsg = trim(strval($ex->GetString()));
+						}
+
+						if ($errMsg === '')
+						{
 							$this->LAST_ERROR = GetMessage('CRM_INVOICE_CREATION_CANCELED', array('#NAME#' => $arEvent['TO_NAME']));
+						}
+						else
+						{
+							$this->LAST_ERROR = $errMsg;
+						}
+						unset($errMsg);
+
 						$GLOBALS['APPLICATION']->ThrowException($this->LAST_ERROR);
 						if ($paidStateCanceled)
 						{
@@ -1145,10 +1191,26 @@ class CAllCrmInvoice
 				{
 					if(ExecuteModuleEventEx($arEvent, array(&$arFields)) === false)
 					{
+						$errMsg = '';
 						if(isset($arFields['RESULT_MESSAGE']))
-							$this->LAST_ERROR = $arFields['RESULT_MESSAGE'];
-						else
+						{
+							$errMsg = trim(strval($arFields['RESULT_MESSAGE']));
+						}
+						else if ($ex = $APPLICATION->GetException())
+						{
+							$errMsg = trim(strval($ex->GetString()));
+						}
+
+						if ($errMsg === '')
+						{
 							$this->LAST_ERROR = GetMessage('CRM_INVOICE_UPDATE_CANCELED', array('#NAME#' => $arEvent['TO_NAME']));
+						}
+						else
+						{
+							$this->LAST_ERROR = $errMsg;
+						}
+						unset($errMsg);
+
 						$GLOBALS['APPLICATION']->ThrowException($this->LAST_ERROR);
 						if ($paidStateCanceled)
 						{
@@ -1660,6 +1722,11 @@ class CAllCrmInvoice
 		{
 			$isNew = $tmpOrderId <= 0;
 
+			if(defined('BX_COMP_MANAGED_CACHE'))
+			{
+				$GLOBALS['CACHE_MANAGER']->CleanDir('b_crm_invoice');
+			}
+
 			//Statistics & History -->
 			if((!isset($options['REGISTER_STATISTICS']) || $options['REGISTER_STATISTICS'] === true) && $arFields['IS_RECURRING'] !== 'Y')
 			{
@@ -1704,9 +1771,24 @@ class CAllCrmInvoice
 		{
 			if (ExecuteModuleEventEx($arEvent, array($ID)) === false)
 			{
-				$this->LAST_ERROR = GetMessage('CRM_INVOICE_DELETE_CANCELED') . ' ' . $arEvent['TO_NAME'];
+				$errMsg = '';
 				if ($ex = $APPLICATION->GetException())
-					$this->LAST_ERROR .= ': ' . $ex->GetString();
+				{
+					$errMsg = trim(strval($ex->GetString()));
+				}
+
+				if ($errMsg === '')
+				{
+					$this->LAST_ERROR = GetMessage(
+						'CRM_INVOICE_DELETE_CANCELED', array('#NAME#' => $arEvent['TO_NAME'])
+					);
+				}
+				else
+				{
+					$this->LAST_ERROR = $errMsg;
+				}
+				unset($errMsg);
+
 				$APPLICATION->throwException($this->LAST_ERROR);
 				return false;
 			}
@@ -1730,6 +1812,11 @@ class CAllCrmInvoice
 		$result = Compatible\Helper::delete($ID);
 		if($result)
 		{
+			if(defined('BX_COMP_MANAGED_CACHE'))
+			{
+				$GLOBALS['CACHE_MANAGER']->CleanDir('b_crm_invoice');
+			}
+
 			Bitrix\Crm\Kanban\SortTable::clearEntity($ID, \CCrmOwnerType::InvoiceName);
 
 			$USER_FIELD_MANAGER->Delete(self::$sUFEntityID, $ID);
@@ -1752,14 +1839,10 @@ class CAllCrmInvoice
 
 			if ($fields['IS_RECURRING'] === "Y")
 			{
-				$invoice = \Bitrix\Crm\InvoiceRecurTable::getList(
-					array(
-						"filter" => array("=INVOICE_ID" => $ID)
-					)
-				);
-				while ($invoiceData = $invoice->fetch())
+				$invoiceRecurringItem = \Bitrix\Crm\Recurring\Entity\Item\InvoiceExist::loadByInvoiceId($ID);
+				if ($invoiceRecurringItem)
 				{
-					\Bitrix\Crm\InvoiceRecurTable::delete($invoiceData['ID']);
+					$invoiceRecurringItem->delete();
 				}
 			}
 		}
@@ -1775,6 +1858,29 @@ class CAllCrmInvoice
 		if ($this->Add($arFields, $arRecalculated))
 			$result = $arRecalculated;
 
+		return $result;
+	}
+
+	public static function GetTotalCount()
+	{
+		if(defined('BX_COMP_MANAGED_CACHE') && $GLOBALS['CACHE_MANAGER']->Read(600, self::TOTAL_COUNT_CACHE_ID, 'b_crm_invoice'))
+		{
+			return $GLOBALS['CACHE_MANAGER']->Get(self::TOTAL_COUNT_CACHE_ID);
+		}
+
+		$result = (int)self::GetList(
+			array(),
+			array('CHECK_PERMISSIONS' => 'N'),
+			array(),
+			false,
+			array(),
+			array('ENABLE_ROW_COUNT_THRESHOLD' => false)
+		);
+
+		if(defined('BX_COMP_MANAGED_CACHE'))
+		{
+			$GLOBALS['CACHE_MANAGER']->Set(self::TOTAL_COUNT_CACHE_ID, $result);
+		}
 		return $result;
 	}
 
@@ -1897,6 +2003,8 @@ class CAllCrmInvoice
 				{
 					Bitrix\Crm\History\InvoiceStatusHistoryEntry::register($ID);
 					Bitrix\Crm\Statistics\InvoiceSumStatisticEntry::register($ID, null);
+
+					Bitrix\Crm\Automation\Trigger\InvoiceTrigger::onInvoiceStatusChanged($ID, $statusID);
 				}
 			}
 		}
@@ -2740,25 +2848,29 @@ class CAllCrmInvoice
 	{
 		//TODO: Move this method to crm.invoice edit
 
-		$result = array('COMPANY' => 0, 'CONTACT' => 0);
+		$result = array('COMPANY' => 0, 'CONTACT' => 0, 'COMPANY_ISSET' => false, 'CONTACT_ISSET' => false);
 
 		$primaryEntityTypeName = isset($post['PRIMARY_ENTITY_TYPE']) ? $post['PRIMARY_ENTITY_TYPE'] : '';
 		$primaryEntityTypeID = CCrmOwnerType::ResolveID($primaryEntityTypeName);
-		$primaryEntityID = isset($post['PRIMARY_ENTITY_ID']) ? (int)$post['PRIMARY_ENTITY_ID'] : 0;
+		$primaryEntityIsSet = isset($post['PRIMARY_ENTITY_ID']);
+		$primaryEntityID = $primaryEntityIsSet ? (int)$post['PRIMARY_ENTITY_ID'] : 0;
 
 		if($primaryEntityTypeID === CCrmOwnerType::Contact)
 		{
 			$result['CONTACT'] = $primaryEntityID;
+			$result['CONTACT_ISSET'] = $primaryEntityIsSet;
 		}
 		elseif($primaryEntityTypeID === CCrmOwnerType::Company)
 		{
 			$result['COMPANY'] = $primaryEntityID;
+			$result['COMPANY_ISSET'] = $primaryEntityIsSet;
 			if(isset($post['SECONDARY_ENTITY_IDS']))
 			{
 				$secondaryEntityIDs = explode(',', $post['SECONDARY_ENTITY_IDS']);
 				if(!empty($secondaryEntityIDs))
 				{
 					$result['CONTACT'] = (int)$secondaryEntityIDs[0];
+					$result['CONTACT_ISSET'] = true;
 				}
 			}
 		}
@@ -3099,26 +3211,6 @@ class CAllCrmInvoice
 				$sort += 10;
 			}
 			unset($sort);
-
-			$languageId = '';
-			if (IsModuleInstalled('bitrix24')
-				&& CModule::IncludeModule('bitrix24')
-				&& method_exists('CBitrix24', 'getLicensePrefix'))
-			{
-				$languageId = CBitrix24::getLicensePrefix();
-			}
-			if ($languageId == '')
-			{
-				$siteIterator = \Bitrix\Main\SiteTable::getList(array(
-					'select' => array('LID', 'LANGUAGE_ID'),
-					'filter' => array('=DEF' => 'Y', '=ACTIVE' => 'Y')
-				));
-				if ($site = $siteIterator->fetch())
-					$languageId = (string)$site['LANGUAGE_ID'];
-				unset($site, $siteIterator);
-			}
-			if ($languageId == '')
-				$languageId = 'en';
 
 			$crmStatus = new CCrmStatus('INVOICE_STATUS');
 			if (!empty($statuses))
@@ -3975,14 +4067,14 @@ class CAllCrmInvoice
 		if ($currencyId == '')
 			$currencyId = CCrmCurrency::GetBaseCurrencyID();
 
+		$filter['CHECK_PERMISSIONS'] = 'N';
+		$statusSemanticInfo = CCrmStatus::GetInvoiceStatusSemanticInfo();
+		$filter['STATUS_ID'] = $statusSemanticInfo['FINAL_SUCCESS_FIELD'];
 		$dbRes = CCrmInvoice::GetList(array('ID' => 'ASC'), $filter, false, false, array('PRICE', 'CURRENCY', 'STATUS_ID'));
 		while ($arValues = $dbRes->Fetch())
 		{
-			if (CCrmStatusInvoice::isStatusSuccess($arValues['STATUS_ID']))
-			{
-				$totalPaidNumber++;
-				$totalPaidSum += CCrmCurrency::ConvertMoney($arValues['PRICE'], $arValues['CURRENCY'], $currencyId);
-			}
+			$totalPaidNumber++;
+			$totalPaidSum += CCrmCurrency::ConvertMoney($arValues['PRICE'], $arValues['CURRENCY'], $currencyId);
 		}
 
 		$result = array(
@@ -4192,7 +4284,7 @@ class CAllCrmInvoice
 		$userID = CCrmSecurityHelper::GetCurrentUserID();
 		$startResponsibleID = isset($params['START_RESPONSIBLE_ID']) ? intval($params['START_RESPONSIBLE_ID']) : 0;
 		$finalResponsibleID = isset($params['FINAL_RESPONSIBLE_ID']) ? intval($params['FINAL_RESPONSIBLE_ID']) : 0;
-		$enableMessages = ($startResponsibleID > 0 || $finalResponsibleID > 0)
+		$enableMessages = $startResponsibleID !== $finalResponsibleID
 			&& IsModuleInstalled('im') && CModule::IncludeModule('im');
 		$topic = isset($params['TOPIC']) ? $params['TOPIC'] : $invoiceID;
 
@@ -5599,32 +5691,13 @@ class CAllCrmInvoice
 					/** @var \Bitrix\Sale\Payment $payment */
 					foreach ($collection as $payment)
 					{
-						if (!$payment->isInner())
+						if (!$payment->isInner() && $service->isAffordPdf())
 						{
-							$origRequest = $_REQUEST;
-
-							$_REQUEST['pdf'] = true;
-							$_REQUEST['GET_CONTENT'] = 'Y';
-							$initResult = $service->initiatePay($payment, null, \Bitrix\Sale\PaySystem\BaseServiceHandler::STRING);
-
-							foreach (array('pdf', 'GET_CONTENT') as $key)
+							$file = $service->getPdf($payment);
+							if ($file !== null)
 							{
-								if (array_key_exists($key, $origRequest))
-									$_REQUEST[$key] = $origRequest[$key];
-								else
-									unset($_REQUEST[$key]);
+								return $file['ID'];
 							}
-
-							if ($initResult->isSuccess())
-							{
-								$pdfContent = $initResult->getTemplate();
-							}
-							else
-							{
-								$error = 'PDF MAKER NOT FOUNDED!';
-								return false;
-							}
-							break;
 						}
 					}
 
@@ -5632,24 +5705,7 @@ class CAllCrmInvoice
 			}
 		}
 
-		$invNum = isset($_REQUEST['INVOICE_NUM']) ? preg_replace('/[^a-zA-Z0-9_-]/', '', $_REQUEST['INVOICE_NUM']) : '';
-		$fileName = 'invoice_'.(strlen($invNum) > 0 ? $invNum : strval($invoice_id)).'.pdf';
-
-		$fileData = array(
-			'name' => $fileName,
-			'type' => 'application/pdf',
-			'content' => $pdfContent,
-			'MODULE_ID' => 'crm'
-		);
-
-		$fileId = CFile::SaveFile($fileData, 'crm');
-		if ($fileId <= 0)
-		{
-			$error = 'COULD NOT SAVE FILE!';
-			return false;
-		}
-
-		return $fileId;
+		return false;
 	}
 
 	public static function Search($query, $topCount = 5, $minWordLength = 2)
@@ -5689,5 +5745,18 @@ class CAllCrmInvoice
 		}
 
 		return $result;
+	}
+
+	public static function existsEntityWithStatus($statusId)
+	{
+		$queryObject = self::getList(
+			['ID' => 'DESC'],
+			['STATUS_ID' => $statusId, 'CHECK_PERMISSIONS' => 'N'],
+			false,
+			false,
+			['ID']
+		);
+
+		return (bool) $queryObject->fetch();
 	}
 }

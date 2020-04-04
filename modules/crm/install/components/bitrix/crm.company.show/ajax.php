@@ -97,6 +97,8 @@ if($mode === 'GET_CLIENT_INFO')
 		__CrmCompanyShowEndJsonResonse(array('ERROR' => 'Access denied.'));
 	}
 
+	$normalizeMultifields = isset($params['NORMALIZE_MULTIFIELDS']) && $params['NORMALIZE_MULTIFIELDS'] === 'Y';
+
 	$isReadPermitted = CCrmCompany::CheckReadPermission($entityID, $userPermissions);
 	$data = CCrmEntitySelectorHelper::PrepareEntityInfo(
 		CCrmOwnerType::CompanyName,
@@ -104,7 +106,9 @@ if($mode === 'GET_CLIENT_INFO')
 		array(
 			'ENTITY_EDITOR_FORMAT' => true,
 			'REQUIRE_REQUISITE_DATA' => $isReadPermitted,
-			'REQUIRE_MULTIFIELDS' => $isReadPermitted
+			'REQUIRE_MULTIFIELDS' => $isReadPermitted,
+			'USER_PERMISSIONS' => $userPermissions,
+			'NORMALIZE_MULTIFIELDS' => $normalizeMultifields
 		)
 	);
 
@@ -165,7 +169,8 @@ if($mode === 'GET_CLIENT_INFOS')
 			array(
 				'ENTITY_EDITOR_FORMAT' => true,
 				'REQUIRE_REQUISITE_DATA' => $isReadPermitted,
-				'REQUIRE_MULTIFIELDS' => $isReadPermitted
+				'REQUIRE_MULTIFIELDS' => $isReadPermitted,
+				'USER_PERMISSIONS' => $userPermissions,
 			)
 		);
 	}

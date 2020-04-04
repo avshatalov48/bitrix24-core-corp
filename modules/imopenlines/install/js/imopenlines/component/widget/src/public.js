@@ -8,6 +8,7 @@
  */
 
 import {Widget} from "./widget"
+import {SubscriptionType} from "./const";
 
 export class WidgetPublicManager
 {

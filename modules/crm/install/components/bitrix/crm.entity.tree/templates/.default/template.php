@@ -453,7 +453,7 @@ if (!function_exists('CrmEntityTreeDrawItem'))
 					<div class="crm-doc-cart-info">
 						<a href="<?= $item['URL']?>" target="_top" class="crm-doc-cart-title crm-doc-cart-title-invoice crm-tree-link" data-id="<?= $item['ID']?>" data-type="<?= $item['TREE_TYPE']?>"><?
 							?><span class="crm-doc-gray"><?= $lang[strtoupper($item['TREE_TYPE'])]?><?= $item['ACCOUNT_NUMBER']?>:</span> <?
-							?><?= strlen($item['ORDER_TOPIC']) > 0 ? htmlspecialcharsbx($item['ORDER_TOPIC']) : Loc::getMessage('CRM_ENTITY_TREE_UNTITLED')?><?
+							?><?= strlen($item['ORDER_TOPIC']) > 0 ? $item['ORDER_TOPIC'] : Loc::getMessage('CRM_ENTITY_TREE_UNTITLED')?><?
 						?></a>
 						<?if ($item['RESPONSIBLE_ID'] > 0):?>
 						<div class="crm-doc-info-text"><?= $lang['ASSIGNED_BY']?>:

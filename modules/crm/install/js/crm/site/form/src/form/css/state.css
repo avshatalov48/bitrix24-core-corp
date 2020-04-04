@@ -1,0 +1,151 @@
+.b24-from-state-on .b24-form-state-container {
+	position: absolute;
+	top: 0;
+	left: 0;
+	bottom: -5px;
+	right: 0;
+	background-color: #fff;
+}
+
+.b24-form-state-container .b24-form-loader,
+.b24-form-state-container .b24-form-success,
+.b24-form-state-container .b24-form-error,
+.b24-form-state-container .b24-form-warning {
+	position: absolute;
+	top: 0;
+	left: 0;
+	bottom: 0;
+	right: 0;
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	-webkit-box-align: end;
+	-ms-flex-align: end;
+	align-items: flex-end;
+	-webkit-box-pack: center;
+	-ms-flex-pack: center;
+	justify-content: center;
+	padding-bottom: 0;
+	z-index: 15;
+	/*border-radius: 5px 5px 0 0;*/
+}
+
+/*region b24-form-loader*/
+div.b24-form-loader {
+	background-color: #fff;
+	background-color: var(--b24-background-color);
+	padding-bottom: 20px;
+}
+
+.b24-form-loader-icon {
+	display: inline-block;
+	width: 263px;
+	height: 174px;
+}
+
+.b24-form-loader-icon .bx-sun-lines-animate {
+	-moz-transform-origin: 50%;
+	transform-origin: 79px 79px;
+	animation: linear bxSunCover 25s infinite ;
+	fill: var(--b24-primary-color);
+}
+
+@keyframes bxSunCover {
+	100%{ transform: rotate(360deg); }
+}
+
+.b24-form-loader-icon .b24-form-loader-icon-sun-ring { stroke: var(--b24-primary-color) }
+
+.b24-form-loader-icon svg g > path {
+	fill: var(--b24-field-background-color);
+	stroke: var(--b24-field-background-color);
+}
+
+/*endregion*/
+
+/*region b24-form-success*/
+.b24-form-success { background-color: #a0be47; }
+
+.b24-form-success-inner {
+	max-width: 330px;
+	text-align: center;
+}
+
+.b24-form-success-icon {
+	display: inline-block;
+	margin: 0 0 26px 0;
+	width: 169px;
+	height: 169px;
+	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20viewBox%3D%220%200%20169%20169%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20xmlns%3Axlink%3D%22http%3A//www.w3.org/1999/xlink%22%3E%3Cdefs%3E%3Ccircle%20id%3D%22a%22%20cx%3D%2284.5%22%20cy%3D%2284.5%22%20r%3D%2265.5%22/%3E%3Cfilter%20x%3D%22-.8%25%22%20y%3D%22-.8%25%22%20width%3D%22101.5%25%22%20height%3D%22101.5%25%22%20filterUnits%3D%22objectBoundingBox%22%20id%3D%22b%22%3E%3CfeGaussianBlur%20stdDeviation%3D%22.5%22%20in%3D%22SourceAlpha%22%20result%3D%22shadowBlurInner1%22/%3E%3CfeOffset%20dx%3D%22-1%22%20dy%3D%22-1%22%20in%3D%22shadowBlurInner1%22%20result%3D%22shadowOffsetInner1%22/%3E%3CfeComposite%20in%3D%22shadowOffsetInner1%22%20in2%3D%22SourceAlpha%22%20operator%3D%22arithmetic%22%20k2%3D%22-1%22%20k3%3D%221%22%20result%3D%22shadowInnerInner1%22/%3E%3CfeColorMatrix%20values%3D%220%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200.0886691434%200%22%20in%3D%22shadowInnerInner1%22%20result%3D%22shadowMatrixInner1%22/%3E%3CfeGaussianBlur%20stdDeviation%3D%22.5%22%20in%3D%22SourceAlpha%22%20result%3D%22shadowBlurInner2%22/%3E%3CfeOffset%20dx%3D%221%22%20dy%3D%221%22%20in%3D%22shadowBlurInner2%22%20result%3D%22shadowOffsetInner2%22/%3E%3CfeComposite%20in%3D%22shadowOffsetInner2%22%20in2%3D%22SourceAlpha%22%20operator%3D%22arithmetic%22%20k2%3D%22-1%22%20k3%3D%221%22%20result%3D%22shadowInnerInner2%22/%3E%3CfeColorMatrix%20values%3D%220%200%200%200%201%200%200%200%200%201%200%200%200%200%201%200%200%200%200.292285839%200%22%20in%3D%22shadowInnerInner2%22%20result%3D%22shadowMatrixInner2%22/%3E%3CfeMerge%3E%3CfeMergeNode%20in%3D%22shadowMatrixInner1%22/%3E%3CfeMergeNode%20in%3D%22shadowMatrixInner2%22/%3E%3C/feMerge%3E%3C/filter%3E%3C/defs%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Ccircle%20stroke-opacity%3D%22.05%22%20stroke%3D%22%23000%22%20fill-opacity%3D%22.07%22%20fill%3D%22%23000%22%20cx%3D%2284.5%22%20cy%3D%2284.5%22%20r%3D%2284%22/%3E%3Cuse%20fill%3D%22%23FFF%22%20xlink%3Ahref%3D%22%23a%22/%3E%3Cuse%20fill%3D%22%23000%22%20filter%3D%22url%28%23b%29%22%20xlink%3Ahref%3D%22%23a%22/%3E%3Cpath%20fill%3D%22%23A0BE47%22%20d%3D%22M76.853%20107L57%2087.651l6.949-6.771%2012.904%2012.576L106.051%2065%20113%2071.772z%22/%3E%3C/g%3E%3C/svg%3E');
+	background-repeat: no-repeat;
+}
+
+.b24-form-success-text {
+	display: block;
+	margin: 0 0 27px;
+	font: 20px/30px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 20px/30px var(--b24-font-family);
+	color: #000;
+	text-align: center;
+	opacity: .8;
+}
+
+.b24-form-success-text p { margin: 0; }
+
+/*endregion*/
+
+/*region b24-form-error*/
+.b24-form-error { background-color: #f25830; }
+
+.b24-form-error-inner {
+	max-width: 285px;
+	text-align: center;
+}
+
+.b24-form-error-icon {
+	display: inline-block;
+	margin: 0 0 30px;
+	width: 169px;
+	height: 169px;
+	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20viewBox%3D%220%200%20169%20169%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20xmlns%3Axlink%3D%22http%3A//www.w3.org/1999/xlink%22%3E%3Cdefs%3E%3Ccircle%20id%3D%22a%22%20cx%3D%2284.5%22%20cy%3D%2284.5%22%20r%3D%2265.5%22/%3E%3Cfilter%20x%3D%22-.8%25%22%20y%3D%22-.8%25%22%20width%3D%22101.5%25%22%20height%3D%22101.5%25%22%20filterUnits%3D%22objectBoundingBox%22%20id%3D%22b%22%3E%3CfeGaussianBlur%20stdDeviation%3D%22.5%22%20in%3D%22SourceAlpha%22%20result%3D%22shadowBlurInner1%22/%3E%3CfeOffset%20dx%3D%22-1%22%20dy%3D%22-1%22%20in%3D%22shadowBlurInner1%22%20result%3D%22shadowOffsetInner1%22/%3E%3CfeComposite%20in%3D%22shadowOffsetInner1%22%20in2%3D%22SourceAlpha%22%20operator%3D%22arithmetic%22%20k2%3D%22-1%22%20k3%3D%221%22%20result%3D%22shadowInnerInner1%22/%3E%3CfeColorMatrix%20values%3D%220%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200.0886691434%200%22%20in%3D%22shadowInnerInner1%22%20result%3D%22shadowMatrixInner1%22/%3E%3CfeGaussianBlur%20stdDeviation%3D%22.5%22%20in%3D%22SourceAlpha%22%20result%3D%22shadowBlurInner2%22/%3E%3CfeOffset%20dx%3D%221%22%20dy%3D%221%22%20in%3D%22shadowBlurInner2%22%20result%3D%22shadowOffsetInner2%22/%3E%3CfeComposite%20in%3D%22shadowOffsetInner2%22%20in2%3D%22SourceAlpha%22%20operator%3D%22arithmetic%22%20k2%3D%22-1%22%20k3%3D%221%22%20result%3D%22shadowInnerInner2%22/%3E%3CfeColorMatrix%20values%3D%220%200%200%200%201%200%200%200%200%201%200%200%200%200%201%200%200%200%200.292285839%200%22%20in%3D%22shadowInnerInner2%22%20result%3D%22shadowMatrixInner2%22/%3E%3CfeMerge%3E%3CfeMergeNode%20in%3D%22shadowMatrixInner1%22/%3E%3CfeMergeNode%20in%3D%22shadowMatrixInner2%22/%3E%3C/feMerge%3E%3C/filter%3E%3C/defs%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Ccircle%20stroke-opacity%3D%22.05%22%20stroke%3D%22%23000%22%20fill-opacity%3D%22.07%22%20fill%3D%22%23000%22%20cx%3D%2284.5%22%20cy%3D%2284.5%22%20r%3D%2284%22/%3E%3Cuse%20fill%3D%22%23FFF%22%20xlink%3Ahref%3D%22%23a%22/%3E%3Cuse%20fill%3D%22%23000%22%20filter%3D%22url%28%23b%29%22%20xlink%3Ahref%3D%22%23a%22/%3E%3Cpath%20d%3D%22M91.638%2084.567l14.496%2014.495-7.072%207.072-14.495-14.496-14.496%2014.496L63%2099.062l14.496-14.495L63%2070.07%2070.071%2063l14.496%2014.496L99.062%2063l7.072%207.071-14.496%2014.496z%22%20fill%3D%22%23F25830%22/%3E%3C/g%3E%3C/svg%3E');
+	background-repeat: no-repeat;
+}
+
+.b24-form-error-text p {
+	display: block;
+	margin: 0 0 30px;
+	font: 20px/30px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 20px/30px var(--b24-font-family);
+	color: #fff;
+}
+
+.b24-form-error .b24-form-btn { margin: 0 0 15px; }
+
+/*endregion*/
+
+/*region b24-form-warning*/
+.b24-form-warning { background-color: #fff; }
+
+.b24-form-warning-inner {
+	max-width: 330px;
+	text-align: center;
+}
+
+.b24-form-warning-icon {
+	display: inline-block;
+	margin: 0 0 28px;
+	width: 169px;
+	height: 169px;
+	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20viewBox%3D%220%200%20169%20169%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20xmlns%3Axlink%3D%22http%3A//www.w3.org/1999/xlink%22%3E%3Cdefs%3E%3Ccircle%20id%3D%22a%22%20cx%3D%2284.5%22%20cy%3D%2284.5%22%20r%3D%2265.5%22/%3E%3Cfilter%20x%3D%22-.8%25%22%20y%3D%22-.8%25%22%20width%3D%22101.5%25%22%20height%3D%22101.5%25%22%20filterUnits%3D%22objectBoundingBox%22%20id%3D%22b%22%3E%3CfeGaussianBlur%20stdDeviation%3D%22.5%22%20in%3D%22SourceAlpha%22%20result%3D%22shadowBlurInner1%22/%3E%3CfeOffset%20dx%3D%22-1%22%20dy%3D%22-1%22%20in%3D%22shadowBlurInner1%22%20result%3D%22shadowOffsetInner1%22/%3E%3CfeComposite%20in%3D%22shadowOffsetInner1%22%20in2%3D%22SourceAlpha%22%20operator%3D%22arithmetic%22%20k2%3D%22-1%22%20k3%3D%221%22%20result%3D%22shadowInnerInner1%22/%3E%3CfeColorMatrix%20values%3D%220%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200%200.0886691434%200%22%20in%3D%22shadowInnerInner1%22%20result%3D%22shadowMatrixInner1%22/%3E%3CfeGaussianBlur%20stdDeviation%3D%22.5%22%20in%3D%22SourceAlpha%22%20result%3D%22shadowBlurInner2%22/%3E%3CfeOffset%20dx%3D%221%22%20dy%3D%221%22%20in%3D%22shadowBlurInner2%22%20result%3D%22shadowOffsetInner2%22/%3E%3CfeComposite%20in%3D%22shadowOffsetInner2%22%20in2%3D%22SourceAlpha%22%20operator%3D%22arithmetic%22%20k2%3D%22-1%22%20k3%3D%221%22%20result%3D%22shadowInnerInner2%22/%3E%3CfeColorMatrix%20values%3D%220%200%200%200%201%200%200%200%200%201%200%200%200%200%201%200%200%200%200.292285839%200%22%20in%3D%22shadowInnerInner2%22%20result%3D%22shadowMatrixInner2%22/%3E%3CfeMerge%3E%3CfeMergeNode%20in%3D%22shadowMatrixInner1%22/%3E%3CfeMergeNode%20in%3D%22shadowMatrixInner2%22/%3E%3C/feMerge%3E%3C/filter%3E%3C/defs%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Ccircle%20stroke-opacity%3D%22.05%22%20stroke%3D%22%23000%22%20fill-opacity%3D%22.07%22%20fill%3D%22%23000%22%20cx%3D%2284.5%22%20cy%3D%2284.5%22%20r%3D%2284%22/%3E%3Cuse%20fill%3D%22%23FFF%22%20xlink%3Ahref%3D%22%23a%22/%3E%3Cuse%20fill%3D%22%23000%22%20filter%3D%22url%28%23b%29%22%20xlink%3Ahref%3D%22%23a%22/%3E%3Cpath%20d%3D%22M114.29%2099.648L89.214%2058.376c-1.932-3.168-6.536-3.168-8.427%200L55.709%2099.648c-1.974%203.25.41%207.352%204.234%207.352h50.155c3.782%200%206.166-4.103%204.193-7.352zM81.404%2072.756c0-1.828%201.48-3.29%203.33-3.29h.452c1.85%200%203.33%201.462%203.33%203.29v12.309c0%201.827-1.48%203.29-3.33%203.29h-.453c-1.85%200-3.33-1.463-3.33-3.29V72.756zm7.77%2023.886c0%202.274-1.892%204.143-4.194%204.143s-4.193-1.869-4.193-4.143c0-2.275%201.891-4.144%204.193-4.144%202.302%200%204.193%201.869%204.193%204.144z%22%20fill%3D%22%23000%22%20opacity%3D%22.4%22/%3E%3C/g%3E%3C/svg%3E');
+	background-repeat: no-repeat;
+}
+
+.b24-form-warning-text {
+	margin: 0 0 35px;
+	font: 400 17px/25px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 400 17px/25px var(--b24-font-family);
+	color: #333;
+	opacity: .8;
+}
+
+/*endregion*/

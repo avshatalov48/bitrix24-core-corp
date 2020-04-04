@@ -59,7 +59,7 @@ class Calendar
 		{
 			\CJSCore::init("spotlight");
 
-			$message = Loc::getMessage('CRM_CALENDAR_VIEW_SPOTLIGHT');
+			$message = \CUtil::JSEscape(Loc::getMessage('CRM_CALENDAR_VIEW_SPOTLIGHT'));
 			$message .= ' <a href="javascript:void(0);" onclick="BX.Helper.show(\\\'redirect=detail&code=7481073\\\')">'.Loc::getMessage('CRM_CALENDAR_HELP_LINK').'</a>';
 			?>
 			<script type="text/javascript">
@@ -112,8 +112,8 @@ class Calendar
 		{
 			\CJSCore::init("spotlight");
 			$message = $entityName == 'LEAD'
-				? Loc::getMessage('CRM_CALENDAR_VIEW_MODE_SPOTLIGHT_LEAD')
-				: Loc::getMessage('CRM_CALENDAR_VIEW_MODE_SPOTLIGHT_DEAL');
+				? \CUtil::JSEscape(Loc::getMessage('CRM_CALENDAR_VIEW_MODE_SPOTLIGHT_LEAD'))
+				: \CUtil::JSEscape(Loc::getMessage('CRM_CALENDAR_VIEW_MODE_SPOTLIGHT_DEAL'));
 
 			$message .= ' <a href="javascript:void(0);" onclick="BX.Helper.show(\\\'redirect=detail&code=7481073\\\')">'.Loc::getMessage('CRM_CALENDAR_HELP_LINK').'</a>';
 			?>

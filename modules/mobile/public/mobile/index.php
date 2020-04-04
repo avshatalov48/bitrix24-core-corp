@@ -1,5 +1,12 @@
 <?
 define("BX_MOBILE_LOG", true);
+if (isset($_REQUEST['BX_SESSION_LOCK']) && $_REQUEST['BX_SESSION_LOCK'] !== 'Y'
+	&& !($_POST["ACTION"] == "ADD_POST" || $_POST["ACTION"] == "EDIT_POST")
+)
+{
+	define('BX_SECURITY_SESSION_READONLY', true);
+}
+
 
 require($_SERVER["DOCUMENT_ROOT"]."/mobile/headers.php");
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/header.php");

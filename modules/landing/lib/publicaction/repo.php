@@ -335,6 +335,7 @@ class Repo
 	{
 		$result = new PublicActionResult();
 		$error = new \Bitrix\Landing\Error;
+		\trimArr($fields);
 
 		if (($app = \Bitrix\Landing\PublicAction::restApplication()))
 		{
@@ -351,6 +352,9 @@ class Repo
 							: false,
 				'PLACEMENT' => isset($fields['PLACEMENT'])
 							? $fields['PLACEMENT']
+							: false,
+				'PLACEMENT_HANDLER' => isset($fields['PLACEMENT_HANDLER'])
+							? $fields['PLACEMENT_HANDLER']
 							: false
 			)
 		));
@@ -399,14 +403,15 @@ class Repo
 	/**
 	 * Unbind the placement.
 	 * @param string $code Placement code.
+	 * @param string $handler Handler path (if you want delete specific).
 	 * @return \Bitrix\Landing\PublicActionResult
 	 */
-	public static function unbind($code)
+	public static function unbind($code, $handler = null)
 	{
 		$result = new PublicActionResult();
 		$error = new \Bitrix\Landing\Error;
 		$code = trim($code);
-		$deleteLocal = false;
+		$wasDeleted = false;
 
 		if (($app = \Bitrix\Landing\PublicAction::restApplication()))
 		{
@@ -420,60 +425,54 @@ class Repo
 			return $result;
 		}
 
-		// get first local, if exists
-		$resLocal = Placement::getList(array(
-			'select' => array(
+		// common ORM params
+		$params = [
+			'select' => [
 				'ID'
-			),
-			'filter' => array(
+			],
+			'filter' => [
 				'APP_ID' => $fields['APP_ID'],
 				'=PLACEMENT' => $code
-			)
-		));
-		if ($rowLocal = $resLocal->fetch())
+			]
+		];
+		if ($handler)
 		{
-			$deleteLocal = true;
+			$params['filter']['=PLACEMENT_HANDLER'] = trim($handler);
 		}
 
-		// try delete from rest placements
+		// at first, delete local binds
+		$res = Placement::getList($params);
+		while ($row = $res->fetch())
+		{
+			$wasDeleted = true;
+			Placement::delete($row['ID']);
+		}
+		unset($res, $row);
+
+		// then delete from rest placements
 		if (\Bitrix\Main\Loader::includeModule('rest'))
 		{
-			$resRest = PlacementTable::getList(array(
-				'select' => array(
-					'ID'
-				),
-				'filter' => array(
-					'APP_ID' => $fields['APP_ID'],
-					'=PLACEMENT' => $code
-				)
-			));
-			if ($rowRest = $resRest->fetch())
+			$res = PlacementTable::getList($params);
+			while ($row = $res->fetch())
 			{
-				$result->setResult(true);
-				$res = PlacementTable::delete($rowRest['ID']);
-				// disable delete local if cant delete rest
-				if (!$res->isSuccess())
-				{
-					$deleteLocal = false;
-				}
+				PlacementTable::delete($row['ID']);
 			}
-			else
-			{
-				$error->addError(
-					'PLACEMENT_NO_EXIST',
-					Loc::getMessage('LANDING_APP_PLACEMENT_NO_EXIST')
-				);
-			}
+			unset($res, $row);
 		}
 
-		// finally delete local
-		if ($deleteLocal)
+		// make answer
+		if ($wasDeleted)
 		{
 			$result->setResult(true);
-			Placement::delete($rowLocal['ID']);
 		}
-
-		$result->setError($error);
+		else
+		{
+			$error->addError(
+				'PLACEMENT_NO_EXIST',
+				Loc::getMessage('LANDING_APP_PLACEMENT_NO_EXIST')
+			);
+			$result->setError($error);
+		}
 
 		return $result;
 	}

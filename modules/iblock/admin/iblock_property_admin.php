@@ -23,7 +23,7 @@ if(!CIBlockRights::UserHasRightTo($arIBlock["ID"], $arIBlock["ID"], "iblock_edit
 $simpleTypeList = array_fill_keys(Iblock\Helpers\Admin\Property::getBaseTypeList(false), true);
 
 $sTableID = "tbl_iblock_property_admin_".$arIBlock["ID"];
-$oSort = new CAdminSorting($sTableID, 'SORT', 'ASC');
+$oSort = new CAdminUiSorting($sTableID, 'SORT', 'ASC');
 $lAdmin = new CAdminUiList($sTableID, $oSort);
 
 $arPropType = Iblock\Helpers\Admin\Property::getBaseTypeList(true);

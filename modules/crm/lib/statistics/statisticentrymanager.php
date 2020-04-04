@@ -229,6 +229,24 @@ abstract class StatisticEntryManager
 				)
 			);
 		}
+		elseif($ownerTypeID === \CCrmOwnerType::Lead
+			&& Main\Config\Option::get('crm', '~CRM_REBUILD_LEAD_CONVERSION_STATISTICS', 'N', false) === 'Y')
+		{
+			self::includeModuleFile();
+			return array(
+				array(
+					'ID' => 'LEAD_CONVERSION_STATISTICS',
+					'ACTIVE' => true,
+					'TYPE' => 'AUTO_RUN',
+					'SETTINGS' => array(
+						'TITLE' => GetMessage('CRM_STAT_MGR_REBUILD_LEAD_CONVERSION_TITLE'),
+						'STATE_TEMPLATE' => GetMessage('CRM_STAT_MGR_REBUILD_STATE_TEMPLATE'),
+						'ACTION' => 'REBUILD_CONVERSION_STATISTICS',
+						'URL' => '/bitrix/components/bitrix/crm.lead.list/list.ajax.php?'.bitrix_sessid_get()
+					)
+				)
+			);
+		}
 		elseif($ownerTypeID === \CCrmOwnerType::Invoice
 			&& Main\Config\Option::get('crm', '~CRM_REBUILD_INVOICE_STATISTICS', 'N', false) === 'Y')
 		{

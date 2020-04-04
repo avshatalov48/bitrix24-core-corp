@@ -1124,36 +1124,42 @@ BX.ImMobile.prototype.addCopyableDialog = function (node, highlightBlockClass, t
 
 			}
 		});
-		buttons.push({
-			title: BX.message("IM_MENU_MESS_QUOTE"),
-			callback: function ()
-			{
-
-				var putText = null;
-
-				if (typeof getQuoteFunction === "function")
+		if (
+			BXIM.messenger.currentTab.toString().substr(0,4) !== 'chat'
+			|| BXIM.messenger.chat[BXIM.messenger.currentTab.substr(4)] && BXIM.messenger.chat[BXIM.messenger.currentTab.substr(4)].type !== 'announcement'
+		)
+		{
+			buttons.push({
+				title: BX.message("IM_MENU_MESS_QUOTE"),
+				callback: function ()
 				{
-					putText = getQuoteFunction(textBlock)
-				}
-				else
-				{
-					putText = textBlock.innerHTML;
-				}
 
-				if (putText !== null)
-				{
-					BXMobileApp.UI.Page.TextPanel.getText(function(currentText){
-						if (currentText)
-						{
-							putText = BX.util.trim(currentText)+"\n"+putText;
-						}
-						BXMobileApp.UI.Page.TextPanel.setText(putText+' ');
-						BXMobileApp.UI.Page.TextPanel.focus();
-					});
+					var putText = null;
+
+					if (typeof getQuoteFunction === "function")
+					{
+						putText = getQuoteFunction(textBlock)
+					}
+					else
+					{
+						putText = textBlock.innerHTML;
+					}
+
+					if (putText !== null)
+					{
+						BXMobileApp.UI.Page.TextPanel.getText(function(currentText){
+							if (currentText)
+							{
+								putText = BX.util.trim(currentText)+"\n"+putText;
+							}
+							BXMobileApp.UI.Page.TextPanel.setText(putText+' ');
+							BXMobileApp.UI.Page.TextPanel.focus();
+						});
+					}
 				}
-			}
-		});
-		if (false && deleteMessageId && BX.MessengerCommon.checkEditMessage(deleteMessageId, 'edit'))
+			});
+		}
+		if (deleteMessageId && BX.MessengerCommon.checkEditMessage(deleteMessageId, 'edit'))
 		{
 			buttons.push({
 				title: BX.message("IM_MENU_MESS_EDIT"),
@@ -2275,15 +2281,22 @@ BX.ImMessengerMobile.prototype.dialogStatusRedrawDelay = function(params)
 			}
 			else if (BX.MessengerCommon.userInChat(chatId))
 			{
-				if (this.chat[chatId].type == 'lines' && this.chat[chatId].owner == 0)
+				if (
+					this.chat[chatId].type == 'lines' && this.chat[chatId].owner == 0
+					|| this.chat[chatId].type === 'announcement' && this.chat[chatId].manager_list && !this.chat[chatId].manager_list.map(userId => parseInt(userId)).includes(parseInt(this.BXIM.userId))
+				)
 				{
 					if (this.textPanelShowed)
 					{
 						this.textPanelShowed = false;
 						setTimeout(() => BXMobileApp.UI.Page.TextPanel.hide(), 100);
 					}
-					addClass.push('bx-messenger-chat-guest');
-					addClass.push('bx-messenger-chat-lines');
+					if (this.chat[chatId].type === 'lines')
+					{
+						addClass.push('bx-messenger-chat-guest');
+						addClass.push('bx-messenger-chat-lines');
+					}
+					removeClass.push('bx-messenger-chat-guest');
 				}
 				else
 				{
@@ -2305,9 +2318,37 @@ BX.ImMessengerMobile.prototype.dialogStatusRedrawDelay = function(params)
 				addClass.push('bx-messenger-chat-guest');
 			}
 		}
+
+		removeClass.push('bx-messenger-chat-imol-skip-block');
+		if (this.BXIM.messenger.chat[chatId])
+		{
+			if (this.BXIM.messenger.chat[chatId].entity_type == 'LINES')
+			{
+				let session = BX.MessengerCommon.linesGetSession(this.BXIM.messenger.chat[chatId]);
+				let line;
+
+				if (parseInt(session.id) > 0)
+				{
+					for (queue of this.BXIM.messenger.openlines.queue)
+					{
+						if (queue.id == session.lineId)
+						{
+							line = queue;
+							break;
+						}
+					}
+
+					if (line && line.queue_type == 'all')
+					{
+						addClass.push('bx-messenger-chat-imol-skip-block');
+					}
+				}
+			}
+		}
 	}
 	else
 	{
+		removeClass.push('bx-messenger-chat-imol-skip-block');
 		removeClass.push('bx-messenger-chat-general-first-open');
 		removeClass.push('bx-messenger-chat-general-access');
 		removeClass.push('bx-messenger-chat-guest');
@@ -2791,6 +2832,15 @@ BX.ImMessengerMobile.prototype.openMessageMenu = function(messageId)
 		return false;
 	}
 
+	var isAnnouncement = false;
+	if (
+		this.chat[this.message[messageId].chatId]
+		&& this.chat[this.message[messageId].chatId].type === 'announcement'
+	)
+	{
+		isAnnouncement = true;
+	}
+
 	var sheetButtons = [];
 
 	if (!(this.chat[this.message[messageId].chatId] && this.chat[this.message[messageId].chatId].type == 'call'))
@@ -2823,7 +2873,7 @@ BX.ImMessengerMobile.prototype.openMessageMenu = function(messageId)
 	var userId = this.message[messageId].senderId;
 	if (userId > 0)
 	{
-		if (this.generalChatId == this.message[messageId].chatId && !this.canSendMessageGeneralChat)
+		if (isAnnouncement || this.generalChatId == this.message[messageId].chatId && !this.canSendMessageGeneralChat)
 		{
 		}
 		else
@@ -2865,7 +2915,7 @@ BX.ImMessengerMobile.prototype.openMessageMenu = function(messageId)
 		});
 	}
 
-	if (!this.users[this.BXIM.userId].extranet)
+	if (!this.users[this.BXIM.userId].extranet && !isAnnouncement)
 	{
 		sheetButtons.push({
 			title: BX.message("IM_MENU_TO_TASK"),
@@ -2880,15 +2930,18 @@ BX.ImMessengerMobile.prototype.openMessageMenu = function(messageId)
 			});
 		}
 
-		sheetButtons.push({
-			title: BX.message("IM_MENU_TO_CHAT"),
-			callback: BX.delegate(function () { BX.MessengerCommon.shareMessageAjax(messageId, 'CHAT') }, this)
-		});
+		if (!this.chat[this.message[messageId].chatId] || this.chat[this.message[messageId].chatId].type !== 'announcement')
+		{
+			sheetButtons.push({
+				title: BX.message("IM_MENU_TO_CHAT"),
+				callback: BX.delegate(function () { BX.MessengerCommon.shareMessageAjax(messageId, 'CHAT') }, this)
+			});
 
-		sheetButtons.push({
-			title: BX.message("IM_MENU_TO_POST"),
-			callback: BX.delegate(function () { BX.MessengerCommon.shareMessageAjax(messageId, 'POST') }, this)
-		});
+			sheetButtons.push({
+				title: BX.message("IM_MENU_TO_POST"),
+				callback: BX.delegate(function () { BX.MessengerCommon.shareMessageAjax(messageId, 'POST') }, this)
+			});
+		}
 	}
 
 	if (BX.MessengerCommon.checkEditMessage(deleteMessageId, 'delete'))
@@ -3125,7 +3178,7 @@ BX.ImDiskManagerMobile.prototype.uploadFromDisk = function(selected, text)
 	{
 		this.files[chatId]['disk'+fileId] = {
 			'id': 'disk'+fileId,
-			'tempId': 'disk'+fileId,
+			'templateId': 'disk'+fileId,
 			'chatId': chatId,
 			'date': new Date(selected[fileId].modifyDateInt*1000),
 			'type': 'file',
@@ -3390,7 +3443,7 @@ BX.ImDiskManagerMobile.prototype.fileRegister = function(file, params)
 
 		this.BXIM.disk.files[chatId][file.id] = {
 			'id': file.id,
-			'tempId': file.id,
+			'templateId': file.id,
 			'chatId': chatId,
 			'date': new Date(),
 			'type': fileType,

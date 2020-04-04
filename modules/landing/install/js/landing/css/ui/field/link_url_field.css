@@ -41,7 +41,7 @@
 
 .landing-ui-button-select-link:hover,
 .landing-ui-button-select-link.landing-ui-active {
-	background: #F6F8F9;
+	background: #f6f8f9;
 }
 
 .landing-ui-field-url-placeholder {
@@ -58,6 +58,8 @@
 	left: 5px;
 	line-height: 28px;
 	padding-right: 24px;
+	box-sizing: border-box;
+	white-space: nowrap;
 }
 
 .landing-ui-field-url-placeholder-delete {

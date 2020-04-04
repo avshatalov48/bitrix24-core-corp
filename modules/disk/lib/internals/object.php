@@ -2,6 +2,7 @@
 namespace Bitrix\Disk\Internals;
 
 use Bitrix\Disk\TypeFile;
+use Bitrix\Main\Application;
 use Bitrix\Main\Entity;
 use Bitrix\Main\Entity\Result;
 use Bitrix\Main\Entity\UpdateResult;
@@ -14,7 +15,7 @@ Loc::loadMessages(__FILE__);
 
 /**
  * Class ObjectTable
- * 
+ *
  * Fields:
  * <ul>
  * <li> ID int mandatory
@@ -262,6 +263,20 @@ class ObjectTable extends DataManager
 					'%%TABLE_ALIAS.SEARCH_INDEX'
 				],
 			),
+			'HEAD_INDEX' => array(
+				'data_type' => '\Bitrix\Disk\Internals\Index\ObjectHeadIndexTable',
+				'reference' => array(
+					'=this.ID' => 'ref.OBJECT_ID'
+				),
+				'join_type' => 'INNER',
+			),
+			'EXTENDED_INDEX' => array(
+				'data_type' => '\Bitrix\Disk\Internals\Index\ObjectExtendedIndexTable',
+				'reference' => array(
+					'=this.ID' => 'ref.OBJECT_ID'
+				),
+				'join_type' => 'INNER',
+			),
 			'HAS_SEARCH_INDEX' => array(
 				'data_type' => 'boolean',
 				'expression'  => [
@@ -466,6 +481,27 @@ class ObjectTable extends DataManager
 		$event->send();
 
 		return $result;
+	}
+
+	public static function updateSyncTime($objectId, DateTime $dateTime)
+	{
+		$objectId = (int)$objectId;
+
+		$connection = Application::getInstance()->getConnection();
+		$table = static::getTableName();
+		$tablePath = ObjectPathTable::getTableName();
+
+		$helper = $connection->getSqlHelper();
+		$update = $helper->prepareUpdate($table, ['SYNC_UPDATE_TIME' => $dateTime,]);
+
+		$sql = "
+			UPDATE {$table} obj
+			INNER JOIN {$tablePath} p ON p.OBJECT_ID = obj.ID
+			SET {$update[0]}
+			WHERE p.PARENT_ID = {$objectId}
+		";
+
+		$connection->queryExecute($sql, $update[1]);
 	}
 
 	/**

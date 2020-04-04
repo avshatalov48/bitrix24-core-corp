@@ -85,6 +85,7 @@ class Tasks extends Volume\Module\Module
 								AND substring_index(message.XML_ID,'_', 1) = '{$eventTypeXML}'
 							GROUP BY 
 								attached.OBJECT_ID
+							ORDER BY NULL
 						) attach_connect
 							ON attach_connect.OBJECT_ID = files.ID
 				)
@@ -152,6 +153,7 @@ class Tasks extends Volume\Module\Module
 								attached.ENTITY_TYPE IN($attachedEntitySql)
 							GROUP BY 
 								attached.OBJECT_ID
+							ORDER BY NULL
 						) attach_connect
 							ON attach_connect.OBJECT_ID = files.ID
 				)

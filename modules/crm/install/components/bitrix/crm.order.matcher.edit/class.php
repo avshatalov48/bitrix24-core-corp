@@ -152,6 +152,7 @@ class CCrmConfigOrderProps extends \CBitrixComponent
 				if (isset($matchedProperties[$property['ID']]))
 				{
 					$matchedProperty = $matchedProperties[$property['ID']];
+					$field = null;
 
 					if ((int)$matchedProperty['CRM_FIELD_TYPE'] === \Bitrix\Crm\Order\Matcher\BaseEntityMatcher::MULTI_FIELD_TYPE)
 					{
@@ -383,7 +384,7 @@ class CCrmConfigOrderProps extends \CBitrixComponent
 					\CCrmOwnerType::ContactName,
 					\CCrmOwnerType::RequisiteName,
 				],
-				'DESCRIPTION' => Loc::getMessage('CRM_ORDERFORM_ENTITY_SCHEME_CLIENT_DESC')
+				'DESCRIPTION' => Loc::getMessage('CRM_ORDERFORM_ENTITY_SCHEME_CLIENT_DESC2')
 			]
 		];
 

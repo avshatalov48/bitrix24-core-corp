@@ -6,6 +6,7 @@ use Bitrix\Main;
 use Bitrix\Main\ArgumentTypeException;
 use Bitrix\Main\ObjectException;
 use Bitrix\Disk\Volume;
+use Bitrix\Disk\Internals\VolumeTable;
 
 /**
  * Disk storage volume measurement class.
@@ -41,7 +42,8 @@ class Voximplant extends Volume\Module\Module implements Volume\IVolumeIndicator
 		$indicatorType = $connection->getSqlHelper()->forSql(static::className());
 		$ownerId = (string)$this->getOwner();
 
-		\Bitrix\Disk\Internals\VolumeTable::createTemporally();
+		VolumeTable::createTemporally();
+		$temporallyTableName = VolumeTable::getTemporallyName();
 
 		// Scan specific folder list in a storage
 		$storageList = $this->getStorageList();
@@ -74,7 +76,7 @@ class Voximplant extends Volume\Module\Module implements Volume\IVolumeIndicator
 				$folderIdSql = implode(',', $folderIds);
 
 				$querySql = "
-					INSERT INTO b_disk_volume_tmp 
+					INSERT INTO {$temporallyTableName} 
 					(
 						INDICATOR_TYPE,
 						OWNER_ID,
@@ -135,11 +137,12 @@ class Voximplant extends Volume\Module\Module implements Volume\IVolumeIndicator
 				SUM(UNNECESSARY_VERSION_SIZE),
 				SUM(UNNECESSARY_VERSION_COUNT)
 			FROM 
-				b_disk_volume_tmp
+				{$temporallyTableName}
 			WHERE 
 				INDICATOR_TYPE = '{$indicatorType}'
 			GROUP BY
 				INDICATOR_TYPE
+			ORDER BY NULL
 		";
 
 		$columnList = Volume\QueryHelper::prepareInsert(
@@ -161,11 +164,11 @@ class Voximplant extends Volume\Module\Module implements Volume\IVolumeIndicator
 			$this->getSelect()
 		);
 
-		$tableName = \Bitrix\Disk\Internals\VolumeTable::getTableName();
+		$tableName = VolumeTable::getTableName();
 
 		$connection->queryExecute("INSERT INTO {$tableName} ({$columnList}) {$querySql}");
 
-		\Bitrix\Disk\Internals\VolumeTable::dropTemporally();
+		VolumeTable::dropTemporally();
 
 		return $this;
 	}

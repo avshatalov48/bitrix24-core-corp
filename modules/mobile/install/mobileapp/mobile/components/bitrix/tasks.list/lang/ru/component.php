@@ -21,6 +21,9 @@ $MESS['TASKS_SNACKBAR_CANCEL_REMOVE_TASK'] = 'Отменить удаление 
 $MESS['TASKS_POPUP_MENU_SHOW_CLOSED_TASKS'] = 'Показать завершенные';
 $MESS['TASKS_POPUP_MENU_HIDE_CLOSED_TASKS'] = 'Скрыть завершенные';
 
+$MESS['TASKS_POPUP_MENU_SHOW_GROUPS'] = 'Показать группы';
+$MESS['TASKS_POPUP_MENU_HIDE_GROUPS'] = 'Скрыть группы';
+
 $MESS['TASKS_POPUP_MENU_SECTION_HEADER_ORDER_DIRECTION'] = 'Направление сортировки';
 $MESS['TASKS_POPUP_MENU_SECTION_HEADER_ORDER_FIELD'] = 'Поле сортировки';
 
@@ -69,3 +72,9 @@ $MESS["TASKS_NO_INTERNET_CONNECTION"] = "Вероятно, потеряно со
 $MESS["TASKS_UNEXPECTED_ANSWER"] = "Проблемы соединения с сервером. Пожалуйста, повторите попытку позже.";
 $MESS["TASKS_SOME_THING_WENT_WRONG"] = "Что-то пошло не так. Пожалуйста, повторите попытку позже.";
 $MESS["TASKS_ERROR_TITLE"] = "Ошибка";
+
+
+$MESS['MOBILE_TASKS_VIEW_TAB_COMMENT'] = "Комментарии";
+$MESS['MOBILE_TASKS_VIEW_TAB_CHECKLIST'] = "Чек-лист";
+$MESS['MOBILE_TASKS_VIEW_TAB_FILES'] = "Файлы";
+$MESS['MOBILE_TASKS_VIEW_TAB_TASK'] = "Задача";

@@ -128,6 +128,8 @@ foreach($arBlogPosts as $arBlogPostFields)
 			"RATING_TYPE_ID" => "BLOG_POST",
 			"RATING_ENTITY_ID" => $postID
 		);
+		$post = \Bitrix\Blog\Item\Post::getById($postID);
+		$arSoFields["TAG"] = $post->getTags();
 
 		$logID = CSocNetLog::Add($arSoFields, false);
 

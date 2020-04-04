@@ -1,6 +1,7 @@
 <?
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
+use Bitrix\Bizproc\BaseType\Value;
 use Bitrix\Crm\Integration\DocumentGeneratorManager;
 use Bitrix\Main\Loader;
 use Bitrix\Crm\Integration\DocumentGenerator\DataProvider;
@@ -15,6 +16,7 @@ use Bitrix\DocumentGenerator;
  * @property-read string DocumentUrl
  * @property-read int DocumentPdf
  * @property-read int DocumentDocx
+ * @property-read string DocumentNumber
  * @property-read array Values
  */
 class CBPCrmGenerateEntityDocumentActivity
@@ -36,6 +38,7 @@ class CBPCrmGenerateEntityDocumentActivity
 			'DocumentUrl' => null,
 			'DocumentPdf' => null,
 			'DocumentDocx' => null,
+			'DocumentNumber' => null,
 		);
 
 		$this->SetPropertiesTypes([
@@ -43,6 +46,7 @@ class CBPCrmGenerateEntityDocumentActivity
 			'DocumentUrl' => ['Type' => 'string'],
 			'DocumentPdf' => ['Type' => 'file'],
 			'DocumentDocx' => ['Type' => 'file'],
+			'DocumentNumber' => ['Type' => 'string'],
 		]);
 	}
 
@@ -53,6 +57,7 @@ class CBPCrmGenerateEntityDocumentActivity
 		$this->DocumentUrl = null;
 		$this->DocumentPdf = null;
 		$this->DocumentDocx = null;
+		$this->DocumentNumber = null;
 	}
 
 	public function Cancel()
@@ -108,6 +113,20 @@ class CBPCrmGenerateEntityDocumentActivity
 		{
 			$values = [];
 		}
+
+		foreach($values as &$value)
+		{
+			$value = $this->prepareValue($value);
+		}
+
+		\Bitrix\DocumentGenerator\CreationMethod::markDocumentAsCreatedByAutomation($document);
+		if(method_exists($document, 'setUserId'))
+		{
+			//todo make a property
+			$user = new CBPWorkflowTemplateUser(CBPWorkflowTemplateUser::CurrentUser);
+			$document->setUserId($user->getId());
+		}
+
 		$result = $document->setValues($values)->getFile();
 		if(!$result->isSuccess())
 		{
@@ -117,6 +136,7 @@ class CBPCrmGenerateEntityDocumentActivity
 		$documentData = $result->getData();
 
 		$this->DocumentId = $documentData['id'];
+		$this->DocumentNumber = $documentData['number'];
 		$this->DocumentDocx = \Bitrix\DocumentGenerator\Model\FileTable::getBFileId($document->FILE_ID);
 		$result = $document->enablePublicUrl();
 		if($result->isSuccess())
@@ -419,6 +439,11 @@ class CBPCrmGenerateEntityDocumentActivity
 			$value = $field['chain'];
 		}
 
+		if(is_object($value) || is_array($value))
+		{
+			$value = '';
+		}
+
 		$placeholderUri = false;
 		if(is_array($field) && $field['chain'] && method_exists(DocumentGenerator\Driver::getInstance(), 'getPlaceholdersListUri'))
 		{
@@ -435,8 +460,8 @@ class CBPCrmGenerateEntityDocumentActivity
 
 		if($isRobot)
 		{
-			$result = '<div class="bizproc-automation-popup-settings">';
-			$result .= '<span class="bizproc-automation-popup-settings-title bizproc-automation-popup-settings-title-autocomplete" data-placeholder="'.$placeholder.'">';
+			$result = '<div class="bizproc-automation-popup-settings" data-placeholder="'.$placeholder.'">';
+			$result .= '<span class="bizproc-automation-popup-settings-title bizproc-automation-popup-settings-title-autocomplete">';
 			if($placeholderUri)
 			{
 				$result.= '<a class="bp-geda-fields-link" href="'.$placeholderUri->getLocator().'">';
@@ -477,5 +502,29 @@ class CBPCrmGenerateEntityDocumentActivity
 		}
 
 		return $result;
+	}
+
+	protected function prepareValue($value)
+	{
+		if(is_object($value))
+		{
+			if($value instanceof Value\Date)
+			{
+				$value = $value->toSystemObject();
+			}
+			else
+			{
+				$value = $this->ParseValue($value, 'string');
+			}
+		}
+		elseif(is_array($value))
+		{
+			foreach($value as &$val)
+			{
+				$val = $this->prepareValue($val);
+			}
+		}
+
+		return $value;
 	}
 }

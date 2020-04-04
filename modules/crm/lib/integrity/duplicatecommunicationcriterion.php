@@ -11,6 +11,8 @@ class DuplicateCommunicationCriterion extends DuplicateCriterion
 	protected $communicationType = '';
 	protected $value = '';
 
+	private static $entityMultiFields = array();
+
 	public function __construct($communicationType, $value)
 	{
 		$this->useStrictComparison = true;
@@ -80,6 +82,10 @@ class DuplicateCommunicationCriterion extends DuplicateCriterion
 		{
 			return self::extractMultifieldsValues($multifields, \CCrmFieldMulti::IM, 'VIBER');
 		}
+		elseif($communicationType === CommunicationType::IMOL_NAME)
+		{
+			return self::extractMultifieldsValues($multifields, \CCrmFieldMulti::IM, 'IMOL');
+		}
 
 		return array();
 	}
@@ -111,6 +117,19 @@ class DuplicateCommunicationCriterion extends DuplicateCriterion
 	}
 	public static function prepareEntityMultifieldValues($entityTypeID, $entityID)
 	{
+		if(isset(self::$entityMultiFields[$entityTypeID])
+			&& is_array(self::$entityMultiFields[$entityTypeID])
+			&& isset(self::$entityMultiFields[$entityTypeID][$entityID])
+		)
+		{
+			return self::$entityMultiFields[$entityTypeID][$entityID];
+		}
+
+		if(!isset(self::$entityMultiFields[$entityTypeID]))
+		{
+			self::$entityMultiFields[$entityTypeID] = array();
+		}
+
 		$dbResult = \CCrmFieldMulti::GetListEx(
 			array(),
 			array(
@@ -143,6 +162,7 @@ class DuplicateCommunicationCriterion extends DuplicateCriterion
 				$results[$typeID][] = array('VALUE'=> $value, 'VALUE_TYPE' => $valueType);
 			}
 		}
+		self::$entityMultiFields[$entityTypeID][$entityID] = $results;
 		return $results;
 	}
 	public static function prepareBatchEntityMultifieldValues($entityTypeID, array $entityIDs)
@@ -238,6 +258,10 @@ class DuplicateCommunicationCriterion extends DuplicateCriterion
 	{
 		$result = self::prepareCodes($communicationType, array($value));
 		return !empty($result) ? $result[0] : $value;
+	}
+	public static function sanitizePhone($value)
+	{
+		return preg_replace("/[^0-9\#\*,;]/i", "", $value);
 	}
 	public static function normalizePhone($value)
 	{

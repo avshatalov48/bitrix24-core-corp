@@ -10,6 +10,7 @@ return array(
 	'block' => array(
 		'name' => Loc::getMessage('LANDING_BLOCK_54_COVER_SLIDER_BGVIDEO--NAME'),
 		'section' => array('video', 'cover'),
+		'dynamic' => false,
 		'version' => '18.5.0',
 	),
 	'cards' => array(

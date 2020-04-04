@@ -264,9 +264,15 @@ if (CModule::IncludeModule("calendar") && class_exists("CCalendar") && !class_ex
 				}
 			}
 
+			$calendarSettings = \CCalendar::GetUserSettings($account[1]);
+			$pastMonth = (isset($calendarSettings['syncPeriodPast']) && $calendarSettings['syncPeriodPast'] > 0) ? $calendarSettings['syncPeriodPast']: 3; // default tree monthes back
+
+			$futureMonth = (isset($calendarSettings['syncPeriodFuture']) && $calendarSettings['syncPeriodFuture'] > 0) ?
+				$calendarSettings['syncPeriodFuture']: 12; // default one year into the future
+
 			$arFilter = array(
-				'DATE_START' => ConvertTimeStamp(time() - 93 * 24 * 3600, "FULL"),		// default tree monthes back
-				'DATE_END' => ConvertTimeStamp(time() + 365 * 24 * 3600, "FULL"),		// default one year into the future
+				'DATE_START' => ConvertTimeStamp(time() - $pastMonth * 31 * 24 * 3600, "FULL"),
+				'DATE_END' => ConvertTimeStamp(time() + $futureMonth * 31 * 24 * 3600, "FULL")
 			);
 
 			if (($id || $requestDocument->GetRoot() && $requestDocument->GetRoot()->GetTag() != 'propfind') && !$this->PrepareFilters($arFilter, $requestDocument, $id))
@@ -274,7 +280,7 @@ if (CModule::IncludeModule("calendar") && class_exists("CCalendar") && !class_ex
 
 			if ($calendarId[0] > 0)
 			{
-				$arEvents = CCalendar::GetDavCalendarEventsList($calendarId, $arFilter);
+				$arEvents = \CCalendar::GetDavCalendarEventsList($calendarId, $arFilter);
 
 				foreach ($arEvents as $event)
 				{
@@ -307,32 +313,33 @@ if (CModule::IncludeModule("calendar") && class_exists("CCalendar") && !class_ex
 
 		private function PrepareFilters(&$arFilter, $requestDocument, $id)
 		{
-			$arNodes = $requestDocument->GetPath('/*/filter');
-			if (count($arNodes) > 0)
-			{
-				$dateStartOld = $arFilter['DATE_START'];
-				$dateEndOld = $arFilter['DATE_END'];
-
-				unset($arFilter['DATE_START']);
-				unset($arFilter['DATE_END']);
-
-				$numberOfItems = count($arFilter);
-
-				$arNodes = $requestDocument->GetPath('/*/filter/*/*/time-range');
-				if (count($arNodes) > 0)
-				{
-					if ($s = $arNodes[0]->GetAttribute('start'))
-						$arFilter['DATE_START'] = CDavICalendarTimeZone::GetFormattedServerDateTime($s);
-					if ($s = $arNodes[0]->GetAttribute('end'))
-						$arFilter['DATE_END'] = CDavICalendarTimeZone::GetFormattedServerDateTime($s);
-				}
-
-				if (count($arFilter) == $numberOfItems)			// no filters set - restore default start and end time
-				{
-					$arFilter['DATE_START'] = $dateStartOld;
-					$arFilter['DATE_END'] = $dateEndOld;
-				}
-			}
+			// We have options in bitrix calendar to set time range
+//			$arNodes = $requestDocument->GetPath('/*/filter');
+//			if (count($arNodes) > 0)
+//			{
+//				$dateStartOld = $arFilter['DATE_START'];
+//				$dateEndOld = $arFilter['DATE_END'];
+//
+//				unset($arFilter['DATE_START']);
+//				unset($arFilter['DATE_END']);
+//
+//				$numberOfItems = count($arFilter);
+//
+//				$arNodes = $requestDocument->GetPath('/*/filter/*/*/time-range');
+//				if (count($arNodes) > 0)
+//				{
+//					if ($s = $arNodes[0]->GetAttribute('start'))
+//						$arFilter['DATE_START'] = CDavICalendarTimeZone::GetFormattedServerDateTime($s);
+//					if ($s = $arNodes[0]->GetAttribute('end'))
+//						$arFilter['DATE_END'] = CDavICalendarTimeZone::GetFormattedServerDateTime($s);
+//				}
+//
+//				if (count($arFilter) == $numberOfItems)			// no filters set - restore default start and end time
+//				{
+//					$arFilter['DATE_START'] = $dateStartOld;
+//					$arFilter['DATE_END'] = $dateEndOld;
+//				}
+//			}
 
 			if ($id)
 			{
@@ -854,6 +861,8 @@ if (CModule::IncludeModule("calendar") && class_exists("CCalendar") && !class_ex
 
 		public function Put($id, $siteId, $account, $arPath)
 		{
+			$params = [];
+			$params['caldav'] = true;
 			$calendarId = $this->GetCalendarId($siteId, $account, $arPath);
 			if ($calendarId == null)
 				return '404 Not Found';
@@ -926,7 +935,7 @@ if (CModule::IncludeModule("calendar") && class_exists("CCalendar") && !class_ex
 				$arFields['XML_ID'] = $arFields['DAV_XML_ID'];
 
 			CDav::Report("CDavCalendarHandler::Put", "arFields", $arFields);
-			$eventId = CCalendarSync::ModifyEvent($calendarId, $arFields);
+			$eventId = CCalendarSync::ModifyEvent($calendarId, $arFields, $params);
 
 			if (count($arEvents) > 1)
 			{

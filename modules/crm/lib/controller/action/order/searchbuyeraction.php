@@ -28,7 +28,7 @@ class SearchBuyerAction extends Main\Search\SearchAction
 		$filter = Main\UserUtils::getAdminSearchFilter([
 			'FIND' => $searchQuery
 		]);
-		$filter['=IS_REAL_USER'] = 'Y';
+
 		$filter['=ACTIVE'] = 'Y';
 		$filter['=GROUP.GROUP_ID'] = Crm\Order\BuyerGroup::getSystemGroupId();
 		$userData = Main\UserTable::getList(array(

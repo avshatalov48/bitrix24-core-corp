@@ -36,7 +36,6 @@ if($arResult['IS_PERMITTED'])
 {
 	if ($_SERVER['REQUEST_METHOD'] == 'POST' && (isset($_POST['save']) || isset($_POST['apply'])) && check_bitrix_sessid())
 	{
-		CCrmSaleHelper::deleteUserFromShopGroup();
 
 		$bVarsFromForm = true;
 		$arFields = array(
@@ -57,9 +56,8 @@ if($arResult['IS_PERMITTED'])
 				$arResult['ERROR_MESSAGE'] = $arFields['RESULT_MESSAGE'];
 		}
 
-		CCrmSaleHelper::addUserToShopGroup();
-		$cache = new CPHPCache;
-		$cache->CleanDir("/crm/list_crm_roles/");
+		$currentUserIds = CCrmSaleHelper::getCurrentUsersShopGroups();
+		CCrmSaleHelper::addUserToShopGroup([], $currentUserIds);
 
 		if (empty($arResult['ERROR_MESSAGE']))
 		{

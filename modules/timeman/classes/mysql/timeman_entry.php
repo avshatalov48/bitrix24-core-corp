@@ -16,6 +16,7 @@ class CTimeManEntry extends CAllTimeManEntry
 		$join_user = "LEFT JOIN b_user U ON (E.USER_ID = U.ID)";
 		$arFields = array(
 			"ID" => array("FIELD" => "E.ID", "TYPE" => "int"),
+			"APPROVED" => array("FIELD" => "E.APPROVED", "TYPE" => "int"),
 			"TIMESTAMP_X" => array("FIELD" => "E.TIMESTAMP_X", "TYPE" => "datetime"),
 			"USER_ID" => array("FIELD" => "E.USER_ID", "TYPE" => "int"),
 			"MODIFIED_BY" => array("FIELD" => "E.MODIFIED_BY", "TYPE" => "int"),
@@ -193,7 +194,7 @@ SELECT
 	'.$DB->DateToCharFunction("DATE_FINISH", "FULL").' DATE_FINISH
 FROM b_timeman_entries E
 WHERE USER_ID=\''.intval($USER_ID).'\'
-ORDER BY E.DATE_START DESC
+ORDER BY ID DESC
 LIMIT 0,1
 ';
 	}

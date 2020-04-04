@@ -12,7 +12,14 @@ if (!isset($arResult['INTERNAL']) || !$arResult['INTERNAL'])
 		$GLOBALS['APPLICATION']->AddChainItem(GetMessage('CRM_PRODUCT_NAV_TITLE_LIST'), $listUrl);
 		if ($arResult['PRODUCT_ID'] > 0)
 		{
-			$GLOBALS['APPLICATION']->SetTitle(GetMessage('CRM_PRODUCT_NAV_TITLE_EDIT', array('#NAME#' => $arResult['PRODUCT']['NAME'])));
+			$isCopyMode = (isset($arResult['IS_COPY_MODE'])
+				&& ($arResult['IS_COPY_MODE'] === 'Y' || $arResult['IS_COPY_MODE'] === true));
+			$GLOBALS['APPLICATION']->SetTitle(
+				GetMessage(
+					'CRM_PRODUCT_NAV_TITLE_'.($isCopyMode ? 'COPY' : 'EDIT'),
+					array('#NAME#' => $arResult['PRODUCT']['NAME'])
+				)
+			);
 		}
 		else
 		{

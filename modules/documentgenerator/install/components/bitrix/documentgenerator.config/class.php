@@ -16,6 +16,12 @@ class DocumentGeneratorConfigComponent extends CBitrixComponent implements \Bitr
 			return;
 		}
 
+		if(!\Bitrix\DocumentGenerator\Driver::getInstance()->getUserPermissions()->canModifySettings())
+		{
+			$this->showError(Loc::getMessage('DOCGEN_CONFIG_PERMISSIONS_ERROR'));
+			return;
+		}
+
 		$this->arResult = [];
 
 		$this->arResult['TOP_VIEW_TARGET_ID'] = false;
@@ -44,7 +50,6 @@ class DocumentGeneratorConfigComponent extends CBitrixComponent implements \Bitr
 	protected function showError($error)
 	{
 		ShowError($error);
-		$this->includeComponentTemplate();
 	}
 
 	/**

@@ -2,16 +2,15 @@
 
 namespace Bitrix\Seo\Retargeting\Services;
 
-use \Bitrix\Seo\Retargeting\Request;
-
-
-class RequestFacebook extends Request
+use Bitrix\Seo\Retargeting\ProxyRequest;
+class RequestFacebook extends ProxyRequest
 {
 	const TYPE_CODE = 'facebook';
+	const REST_METHOD_PREFIX = 'seo.client.ads.facebook';
 
-	public function query(array $params = array())
+	protected function directQuery(array $params = array())
 	{
-		$url = 'https://graph.facebook.com/v3.1/';
+		$url = 'https://graph.facebook.com/v4.0/';
 		$url .= $params['endpoint'];
 
 		$clientParameters = is_array($params['fields']) ? $params['fields'] : array();

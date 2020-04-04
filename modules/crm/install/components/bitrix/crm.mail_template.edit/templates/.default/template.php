@@ -55,7 +55,7 @@ else
 	<input type="hidden" name="<?=$saveAction ?>" value="<?=$saveAction ?>">
 	<input type="hidden" name="element_id" value="<?=intval($arResult['ELEMENT']['ID']) ?>">
 	<input type="hidden" name="BODY_TYPE" value="<?=\CCrmContentType::Html ?>">
-	
+
 	<? ob_start(); ?>
 	<span class="crm-mail-template-edit-form-switches-wrapper">
 		<span class="crm-mail-template-edit-form-switch">

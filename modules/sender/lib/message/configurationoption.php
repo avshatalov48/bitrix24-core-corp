@@ -23,6 +23,7 @@ class ConfigurationOption
 	const TYPE_TEMPLATE_ID = 'template-id';
 	const TYPE_MAIL_EDITOR = 'mail-editor';
 	const TYPE_SMS_EDITOR = 'sms-editor';
+	const TYPE_USER_LIST = 'user-list';
 
 	const GROUP_DEFAULT = 0;
 	const GROUP_ADDITIONAL = 1;

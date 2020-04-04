@@ -19,6 +19,7 @@ BX.Bitrix24.SlidingPanel = function(options)
 	this.isOpen = false;
 
 	this.header = BX("header");
+	this.menuItems = BX("menu-items-block");
 	this.imBar = BX("bx-im-bar");
 	this.panel = BX("panel");
 	this.creatorConfirmedPanel = BX("creatorconfirmed");
@@ -88,7 +89,7 @@ BX.Bitrix24.SlidingPanel.prototype = {
 		}
 
 		document.body.style.overflow = "hidden";
-		this.header.style.zIndex = 3000;
+		// this.header.style.zIndex = 3000;
 
 		this.adjustPosition();
 
@@ -166,16 +167,15 @@ BX.Bitrix24.SlidingPanel.prototype = {
 
 	adjustPosition: function()
 	{
-		var headerPosition = BX.pos(this.header);
+		var menuItemsPosition = BX.pos(this.menuItems);
 		var scrollTop = window.pageYOffset || document.documentElement.scrollTop;
 
 		if (scrollTop > 0)
 		{
 			this.overlay.style.bottom = -scrollTop + "px";
-			this.container.style.bottom = -scrollTop + "px";
 		}
 
-		var top = scrollTop > headerPosition.bottom ? scrollTop : headerPosition.bottom;
+		var top = scrollTop > menuItemsPosition.top ? scrollTop : menuItemsPosition.top;
 		this.overlay.style.top = top + "px";
 	},
 
@@ -275,10 +275,8 @@ BX.Bitrix24.GroupPanel = function(options)
 	this.siteId = BX.type.isNotEmptyString(options.siteId) ? options.siteId : BX.message("SITE_ID");
 
 	this.menu = BX("menu-all-groups-link");
-	this.menuOverlay = document.createElement("div");
-	this.menuOverlay.className = "group-panel-menu-overlay";
 
-	this.leftMenu = BX("bx-left-menu");
+	this.leftMenu = BX("menu-items-block");
 	this.content = BX("group-panel-content");
 	this.items = BX("group-panel-items");
 	this.counter = BX("group-panel-header-filter-counter");
@@ -338,27 +336,27 @@ BX.Bitrix24.GroupPanel.prototype.open = function()
 		window.pulse_loading.close(true);
 	}
 
-	this.leftMenu.style.zIndex = 3000;
+	//this.leftMenu.style.zIndex = 3000;
 	this.container.style.display = "block";
 	BX.addClass(this.menu.parentNode, "menu-item-block-hover");
 	this.menu.innerHTML = BX.message("menu_hide");
 
 	var pos = BX.pos(this.leftMenu);
-	this.menuOverlay.style.left = pos.left + "px";
-	this.menuOverlay.style.top = pos.bottom + "px";
-	this.menuOverlay.style.width = pos.width + "px";
-	this.menuOverlay.style.backgroundColor = BX.style(this.leftMenu, "backgroundColor");
-	this.menuOverlay.style.height = document.documentElement.scrollHeight - pos.bottom + "px";
-
-	document.body.appendChild(this.menuOverlay);
+	this.overlay.style.left = pos.right + "px";
 
 	this.super.open.apply(this, arguments);
+
+	BX.onCustomEvent("BX.Bitrix24.GroupPanel:onOpen", [this]);
 };
 
 BX.Bitrix24.GroupPanel.prototype.close = function()
 {
+	BX.onCustomEvent("BX.Bitrix24.GroupPanel:onBeforeClose", [this]);
+
 	this.menu.innerHTML = BX.message("menu_show");
 	this.super.close.apply(this, arguments);
+
+	BX.onCustomEvent("BX.Bitrix24.GroupPanel:onClose", [this]);
 };
 
 BX.Bitrix24.GroupPanel.prototype.onTrasitionEnd = function()
@@ -366,9 +364,8 @@ BX.Bitrix24.GroupPanel.prototype.onTrasitionEnd = function()
 	this.super.onTrasitionEnd.apply(this, arguments);
 	if (!this.isOpen)
 	{
-		this.leftMenu.style.cssText = "";
+		this.leftMenu.style.removeProperty("z-index");
 		BX.removeClass(this.menu.parentNode, "menu-item-block-hover");
-		this.menuOverlay.parentNode.removeChild(this.menuOverlay);
 	}
 };
 

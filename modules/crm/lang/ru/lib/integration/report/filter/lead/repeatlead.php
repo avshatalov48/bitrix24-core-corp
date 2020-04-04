@@ -1,3 +1,5 @@
 <?php
 
 $MESS['CRM_REPORT_FILTER_REPEATED_LEAD_LAST_30_DAYS_PRESET_TITLE'] = 'Повторные за последние 30 дней';
+$MESS['CRM_REPORT_FILTER_REPEATED_LEAD_CURRENT_MONTH_PRESET_TITLE'] = 'Повторные за текущий месяц';
+$MESS['CRM_REPORT_FILTER_REPEATED_LEAD_LAST_MONTH_PRESET_TITLE'] = 'Повторные за предыдущий месяц';

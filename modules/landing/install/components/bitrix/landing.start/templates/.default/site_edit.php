@@ -11,17 +11,16 @@ $arParams['PAGE_URL_SITE_EDIT'] = str_replace(
 	0,
 	$arParams['PAGE_URL_SITE_EDIT']
 );
+
+$template = $request->get('tpl');
+$notRedirectToEdit = ($request->get('no_redirect') == 'Y') ? 'Y' : 'N';
+if ($arParams['TYPE'] != 'STORE')
+{
+	$template = '';
+}
 ?>
 
 <?if ($arResult['VARS']['site_edit']):?>
-
-	<?
-	$template = $request->get('tpl');
-	if ($arParams['TYPE'] != 'STORE')
-	{
-		$template = '';
-	}
-	?>
 
 	<?$APPLICATION->IncludeComponent(
 		'bitrix:landing.site_edit',
@@ -44,7 +43,8 @@ $arParams['PAGE_URL_SITE_EDIT'] = str_replace(
 		array(
 			'CODE' => $template,
 			'TYPE' => $arParams['TYPE'],
-			'PAGE_URL_BACK' => $arParams['PAGE_URL_SITE_EDIT']
+			'PAGE_URL_BACK' => $arParams['PAGE_URL_SITE_EDIT'],
+			'DISABLE_REDIRECT' => $notRedirectToEdit,
 		),
 		$component
 	);?>
@@ -56,6 +56,7 @@ $arParams['PAGE_URL_SITE_EDIT'] = str_replace(
 		'.default',
 		array(
 			'TYPE' => $arParams['TYPE'],
+			'DISABLE_REDIRECT' => $notRedirectToEdit,
 			'PAGE_URL_SITES' => $arParams['PAGE_URL_SITES'],
 			'PAGE_URL_LANDING_VIEW' => $arParams['PAGE_URL_LANDING_VIEW']
 		),

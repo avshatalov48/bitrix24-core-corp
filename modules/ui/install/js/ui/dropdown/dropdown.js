@@ -33,6 +33,7 @@
 		this.isChanged = false;
 		this.isDisabled = BX.prop.getBoolean(options, "isDisabled", false);
 		this.enableCreation = BX.prop.getBoolean(options, "enableCreation", false);
+		this.enableCreationOnBlur = BX.prop.getBoolean(options, "enableCreationOnBlur", true);
 
 		this.documentClickHandler = BX.delegate(this.onDocumentClick, this);
 
@@ -266,23 +267,25 @@
 					}
 				}
 			},
-			cancelCreationOnBlur: function()
-			{
-				if(!this.enableCreation)
-				{
-					this.targetElement.addEventListener("blur", function()
-					{
-						this.resetInputValue();
-					}.bind(this));
-				}
-			},
 			onDocumentClick: function()
 			{
 				if((this.CurrentItem && this.CurrentItem.title.length !== this.targetElement.value.length)
 					|| (!this.CurrentItem && this.targetElement.value.length > 0)
 				)
 				{
-					this.onEmptyValueEvent();
+					if(!this.enableCreationOnBlur)
+					{
+						this.resetInputValue();
+						this.setItems(this.getDefaultItems());
+						BX.cleanNode(this.popupAlertContainer);
+						this.newAlertContainer = null;
+						
+						return;
+					}
+					else
+					{
+						this.onEmptyValueEvent();
+					}
 				}
 			},
 			getDefaultItems: function()
@@ -327,7 +330,7 @@
 					this.setItems(this.getDefaultItems());
 					loader.classList.remove('ui-dropdown-loader-active');
 					BX.cleanNode(this.popupAlertContainer);
-					this.alertEmptyContainer = null;
+					this.newAlertContainer = null;
 
 					BX.onCustomEvent(this, "BX.UI.Dropdown:onReset", [this]);
 				}
@@ -337,14 +340,9 @@
 					this.searchItemsByStr(this.targetElement.value).then(
 						function (items)
 						{
-                            if (this.isDisabled)
-                            {
-                                return;
-                            }
-
-							if(!this.alertEmptyContainer)
+							if(!this.newAlertContainer && this.enableCreation)
 							{
-								this.popupAlertContainer.appendChild(this.getAlertEmptyContainer(items));
+								this.popupAlertContainer.appendChild(this.getNewAlertContainer(items));
 								BX.bind(document, "click", this.documentClickHandler);
 							}
 							this.setItems(items);
@@ -395,7 +393,7 @@
 								this.popupWindow = null;
 								this.itemListContainer = null;
 								this.itemListInnerContainer = null;
-								this.alertEmptyContainer = null;
+								this.newAlertContainer = null;
 								this.popupAlertContainer = null;
 							}.bind(this)
 						}
@@ -426,7 +424,7 @@
 
 							this.setItems(this.getDefaultItems());
 							BX.cleanNode(this.popupAlertContainer);
-							this.alertEmptyContainer = null;
+							this.newAlertContainer = null;
 						}
 						else
 						{
@@ -480,24 +478,24 @@
 
 				return this.popupAlertContainer;
 			},
-			getAlertEmptyContainer: function(items)
+			getNewAlertContainer: function(items)
 			{
-				if(!this.alertEmptyContainer)
+				if(!this.newAlertContainer)
 				{
-					this.alertEmptyContainer = BX.create('div', {
+					this.newAlertContainer = BX.create('div', {
 						props: {
-							className: 'ui-dropdown-alert-new'
+							className: 'ui-dropdown-alert'
 						},
 						events: {
 							click: this.onEmptyValueEvent.bind(this)
 						},
 						children: [
-							this.alertEmptyContainerValue = BX.create('div', {
-								attrs: { className: 'ui-dropdown-alert-new-name' },
+							this.alertContainerValue = BX.create('div', {
+								attrs: { className: 'ui-dropdown-alert-name' },
 								text: this.targetElement.value
 							}),
 							BX.create('div', {
-								attrs: { className: 'ui-dropdown-alert-new-text' },
+								attrs: { className: 'ui-dropdown-alert-text' },
 								text: BX.prop.getString(this.messages, this.enableCreation ? "creationLegend" : "notFound", "")
 							})
 						]
@@ -505,28 +503,28 @@
 
 					this.targetElement.addEventListener("input", function()
 					{
-						this.alertEmptyContainerValue.innerHTML = this.targetElement.value;
+						this.alertContainerValue.textContent = this.targetElement.value;
 					}.bind(this));
 
 					if(!this.enableCreation)
 					{
 						this.targetElement.addEventListener("input", function()
 						{
-							this.alertEmptyContainerValue.style.display = "none";
+							this.alertContainerValue.style.display = "none";
 						}.bind(this));
 					}
 				}
 
 				if(items.length > 0 && !this.enableCreation)
 				{
-					this.alertEmptyContainer.style.display = "none";
+					this.newAlertContainer.style.display = "none";
 				}
 				else
 				{
-					this.alertEmptyContainer.style.display = "";
+					this.newAlertContainer.style.display = "";
 				}
 
-				return this.alertEmptyContainer;
+				return this.newAlertContainer;
 			},
 			getItemsListContainer: function()
 			{
@@ -685,7 +683,7 @@
 			},
 			handleUpArrow: function()
 			{
-				if(this.alertEmptyContainer && this.popupAlertContainer.classList.contains('ui-dropdown-item-highlight'))
+				if(this.newAlertContainer && this.popupAlertContainer.classList.contains('ui-dropdown-item-highlight'))
 				{
 					if (this.items && this.items.length > 0)
 					{
@@ -725,14 +723,14 @@
 			{
 				var highlightElementIndex = this.getHighlightItemIndex();
 
-				if(this.alertEmptyContainer && this.popupAlertContainer.classList.contains('ui-dropdown-item-highlight'))
+				if(this.newAlertContainer && this.popupAlertContainer.classList.contains('ui-dropdown-item-highlight'))
 				{
 					return;
 				}
 
 				if (!this.items || this.items.length === 0)
 				{
-					if(this.alertEmptyContainer && !this.popupAlertContainer.classList.contains('ui-dropdown-item-highlight'))
+					if(this.newAlertContainer && !this.popupAlertContainer.classList.contains('ui-dropdown-item-highlight'))
 					{
 						this.popupAlertContainer.classList.add('ui-dropdown-item-highlight');
 					}
@@ -742,7 +740,7 @@
 
 				if(highlightElementIndex === this.items.length - 1)
 				{
-					if(this.alertEmptyContainer && !this.popupAlertContainer.classList.contains('ui-dropdown-item-highlight'))
+					if(this.newAlertContainer && !this.popupAlertContainer.classList.contains('ui-dropdown-item-highlight'))
 					{
 						this.cleanHighlightingItem();
 						this.popupAlertContainer.classList.add('ui-dropdown-item-highlight');

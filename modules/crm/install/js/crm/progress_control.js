@@ -1126,6 +1126,7 @@ if(typeof(BX.CrmProgressControl) === "undefined")
 						{
 							entityId: this._entityId,
 							conversionScheme: this.getSetting("conversionScheme", null),
+							canConvert: this.getSetting("canConvert", true),
 							typeId: this.getSetting("conversionTypeId", BX.CrmLeadConversionType.general)
 						}
 					)
@@ -1299,8 +1300,11 @@ if(typeof(BX.CrmProgressControl) === "undefined")
 				&& this._findStepInfoBySemantics("success")
 				&& this._findStepInfoBySemantics("failure"))
 			{
-				//User have to make choice
-				this._openTerminationDialog();
+				if(!this._terminationControl || this._terminationControl.isEnabled())
+				{
+					//User have to make choice
+					this._openTerminationDialog();
+				}
 				return;
 			}
 
@@ -1706,6 +1710,7 @@ if(typeof(BX.CrmProgressControl) === "undefined")
 				this._openEntityEditorDialog(
 					{
 						title: this._manager.getMessage("checkErrorTitle"),
+						helpData: { text: this._manager.getMessage("checkErrorHelp"), code: this._manager.getMessage("checkErrorHelpArticleCode") },
 						fieldNames: Object.keys(checkErrors),
 						initData: BX.prop.getObject(data, "EDITOR_INIT_DATA", null),
 						context: BX.prop.getObject(data, "CONTEXT", null)
@@ -1732,6 +1737,7 @@ if(typeof(BX.CrmProgressControl) === "undefined")
 					entityTypeName: this._entityType,
 					entityId: this._entityId,
 					fieldNames: BX.prop.getArray(params, "fieldNames", []),
+					helpData: BX.prop.getObject(params, "helpData", null),
 					context: BX.prop.getObject(params, "context", null)
 				}
 			);
@@ -2607,7 +2613,6 @@ if(typeof(BX.CrmProcessFailureDialog) === "undefined")
 				delete BX.PopupMenu.Data[this._popupMenuId];
 			}
 
-			var self = this;
 			BX.PopupMenu.show(
 				this._popupMenuId,
 				this._selector,
@@ -2616,31 +2621,33 @@ if(typeof(BX.CrmProcessFailureDialog) === "undefined")
 						text: this.getFailureTitle(),
 						onclick: function()
 							{
-								self.setValue(self._failureInfo["id"], true);
-								if(self._radioButtonBlock.style.display === "none" && self._apologyInfos.length > 0)
+								this.setValue(this._failureInfo["id"], true);
+								if(this._radioButtonBlock.style.display === "none" && this._apologyInfos.length > 0)
 								{
-									self._radioButtonBlock.style.display = "";
+									this._radioButtonBlock.style.display = "";
 								}
-								self._selector.innerHTML = BX.util.htmlspecialchars(self.getFailureTitle());
-								BX.removeClass(self._selector, "crm-list-end-deal-option-success");
-								BX.addClass(self._selector, "crm-list-end-deal-option-fail");
-								self._closePopupMenu();
-							}
+								this._selector.innerHTML = BX.util.htmlspecialchars(this.getFailureTitle());
+								BX.removeClass(this._selector, "crm-list-end-deal-option-success");
+								BX.addClass(this._selector, "crm-list-end-deal-option-fail");
+
+								window.setTimeout(function(){ this._closePopupMenu(); }.bind(this), 0);
+							}.bind(this)
 					},
 					{
 						text: this.getSuccessTitle(),
 						onclick: function()
 							{
-								self.setValue(self._successInfo["id"], true);
-								if(self._radioButtonBlock.style.display !== "none")
+								this.setValue(this._successInfo["id"], true);
+								if(this._radioButtonBlock.style.display !== "none")
 								{
-									self._radioButtonBlock.style.display = "none";
+									this._radioButtonBlock.style.display = "none";
 								}
-								self._selector.innerHTML = BX.util.htmlspecialchars(self.getSuccessTitle());
-								BX.removeClass(self._selector, "crm-list-end-deal-option-fail");
-								BX.addClass(self._selector, "crm-list-end-deal-option-success");
-								self._closePopupMenu();
-							}
+								this._selector.innerHTML = BX.util.htmlspecialchars(this.getSuccessTitle());
+								BX.removeClass(this._selector, "crm-list-end-deal-option-fail");
+								BX.addClass(this._selector, "crm-list-end-deal-option-success");
+
+								window.setTimeout(function(){ this._closePopupMenu(); }.bind(this), 0);
+							}.bind(this)
 					}
 				],
 				{

@@ -3,6 +3,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
 $avatarId = "lenta-task-avatar-".randString(5);
 ?>
+
 <div class="lenta-info-block lenta-info-block-task info-block-blue">
 	<div class="lenta-info-block-l">
 		<div class="lenta-info-block-l-text"><?=GetMessage("TASKS_SONET_LOG_RESPONSIBLE_ID")?>:</div>
@@ -18,9 +19,10 @@ $avatarId = "lenta-task-avatar-".randString(5);
 	</div>
 	<span class="lenta-block-angle"></span>
 </div><?
-if ($arResult["PHOTO"]):
+if ($arResult["PHOTO"])
+{
 	?><script>BitrixMobile.LazyLoad.registerImage("<?=$avatarId?>");</script><?
-endif;
+}
 
 if ($arParams["TYPE"] !== 'comment')
 {

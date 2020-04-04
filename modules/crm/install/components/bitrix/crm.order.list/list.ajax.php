@@ -120,7 +120,33 @@ if (isset($_REQUEST['MODE']) && $_REQUEST['MODE'] === 'SEARCH')
 
 	__CrmOrderListEndResponse($data);
 }
+elseif ($action === 'REBUILD_SEARCH_CONTENT')
+{
+	/** @var \Bitrix\Crm\Agent\Search\OrderSearchContentRebuildAgent $agent */
+	$agent = \Bitrix\Crm\Agent\Search\OrderSearchContentRebuildAgent::getInstance();
+	$isAgentEnabled = $agent->isEnabled();
+	if ($isAgentEnabled)
+	{
+		if (!$agent->isActive())
+		{
+			$agent->enable(false);
+			$isAgentEnabled = false;
+		}
+	}
+	if(!$isAgentEnabled)
+	{
+		__CrmOrderListEndResponse(array('STATUS' => 'COMPLETED'));
+	}
 
+	$progressData = $agent->getProgressData();
+	__CrmOrderListEndResponse(
+		array(
+			'STATUS' => 'PROGRESS',
+			'PROCESSED_ITEMS' => $progressData['PROCESSED_ITEMS'],
+			'TOTAL_ITEMS' => $progressData['TOTAL_ITEMS'],
+		)
+	);
+}
 elseif ($action === 'SAVE_PROGRESS')
 {
 	CUtil::JSPostUnescape();

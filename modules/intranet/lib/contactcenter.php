@@ -408,6 +408,24 @@ class ContactCenter
 		}
 		else
 		{
+			$itemsList = array(
+				'ccplacement' => array(
+					"NAME" => Loc::getMessage("CONTACT_CENTER_REST_CC_PLACEMENT"),
+					"LOGO_CLASS" => "ui-icon ui-icon-service-rest-contact-center",
+					"SELECTED" => false
+				),
+				'chatbot' => array(
+					"NAME" => Loc::getMessage("CONTACT_CENTER_REST_CHATBOT"),
+					"LOGO_CLASS" => "ui-icon ui-icon-service-chatbot",
+					"SELECTED" => false
+				),
+				'telephonybot' => array(
+					"NAME" => Loc::getMessage("CONTACT_CENTER_REST_TELEPHONYBOT"),
+					"LOGO_CLASS" => "ui-icon ui-icon-service-telephonybot",
+					"SELECTED" => false
+				)
+			);
+
 			$placements = \Bitrix\Rest\PlacementTable::getHandlersList(\CIntranetRestService::CONTACT_CENTER_PLACEMENT);
 			$appIdList = array();
 			$appList = array();

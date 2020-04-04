@@ -530,7 +530,6 @@ if(typeof(BX.InterfaceToolBarPhoneMenuItem) === "undefined")
 	}
 }
 
-//---
 if(typeof(BX.InterfaceToolBarMessengerButton) === "undefined")
 {
 	BX.InterfaceToolBarMessengerButton = function()
@@ -678,7 +677,6 @@ if(typeof(BX.InterfaceToolBarMessengerMenuItem) === "undefined")
 	}
 }
 
-//--
 
 if(typeof(BX.InterfaceToolBarEmailButton) === "undefined")
 {
@@ -717,4 +715,166 @@ if(typeof(BX.InterfaceToolBarEmailButton) === "undefined")
 		self.initialize(id, settings);
 		return self;
 	};
+}
+
+if(typeof(BX.InterfaceToolBarRestAppButton) === "undefined")
+{
+	BX.InterfaceToolBarRestAppButton = function()
+	{
+		this._id = "";
+		this._settings = [];
+		this._button = null;
+		this._ownerInfo = null;
+		this._isMenuOpened = false;
+		this._menuPopup = null;
+		this._menuId = "";
+		this._items = null;
+	};
+
+	BX.InterfaceToolBarRestAppButton.prototype =
+	{
+		initialize: function (id, settings)
+		{
+			this._id = id;
+			this._settings = settings ? settings : {};
+			this._button = BX.prop.getElementNode(this._settings, "button");
+			BX.bind(this._button, "click", BX.delegate(this.onButtonClick, this));
+
+			this._ownerInfo = BX.prop.getObject(this._settings, "ownerInfo", {});
+			var data = BX.prop.getObject(this._settings, "data", {});
+
+			this._items = [];
+			var placementCode = BX.prop.getString(data, "PLACEMENT", "");
+			var infos = BX.prop.getArray(data, "APP_INFOS", []);
+			for(var i = 0, length = infos.length; i < length; i++)
+			{
+				var item = BX.InterfaceToolBarRestAppMenuItem.create(
+					{
+						owner: this,
+						placementCode: placementCode,
+						info: infos[i]
+					}
+				);
+				this._items.push(item);
+			}
+		},
+		getOwnerInfo: function()
+		{
+			return this._ownerInfo;
+		},
+		onButtonClick: function(e)
+		{
+			this.openMenu();
+		},
+		openMenu: function()
+		{
+			if(this._isMenuOpened)
+			{
+				this.closeMenu();
+				return;
+			}
+
+			var menuItems = [];
+			for(var i = 0, length = this._items.length; i < length; i++)
+			{
+				menuItems.push(this._items[i].createMenuItem());
+			}
+
+			this._menuId = this._id.toLowerCase() + "_menu";
+
+			BX.PopupMenu.show(
+				this._menuId,
+				this._button,
+				menuItems,
+				{
+					"offsetTop": 0,
+					"offsetLeft": 0,
+					"events":
+						{
+							"onPopupShow": BX.delegate(this.onPopupShow, this),
+							"onPopupClose": BX.delegate(this.onPopupClose, this),
+							"onPopupDestroy": BX.delegate(this.onPopupDestroy, this)
+						}
+				}
+			);
+			this._menuPopup = BX.PopupMenu.currentItem;
+		},
+		closeMenu: function()
+		{
+			if(this._menuPopup)
+			{
+				if(this._menuPopup.popupWindow)
+				{
+					this._menuPopup.popupWindow.destroy();
+				}
+			}
+		},
+		onPopupShow: function()
+		{
+			this._isMenuOpened = true;
+		},
+		onPopupClose: function()
+		{
+			this.closeMenu();
+		},
+		onPopupDestroy: function()
+		{
+			this._isMenuOpened = false;
+			this._menuPopup = null;
+
+			if(typeof(BX.PopupMenu.Data[this._menuId]) !== "undefined")
+			{
+				delete(BX.PopupMenu.Data[this._menuId]);
+			}
+		}
+	};
+	BX.InterfaceToolBarRestAppButton.create = function(id, settings)
+	{
+		var self = new BX.InterfaceToolBarRestAppButton();
+		self.initialize(id, settings);
+		return self;
+	};
+}
+
+if(typeof(BX.InterfaceToolBarRestAppMenuItem) === "undefined")
+{
+	BX.InterfaceToolBarRestAppMenuItem = function()
+	{
+		this._settings = {};
+		this._placementCode = "";
+		this._appInfo = {};
+	};
+	BX.InterfaceToolBarRestAppMenuItem.prototype =
+	{
+		initialize: function(settings)
+		{
+			this._settings = settings ? settings : {};
+			this._owner = BX.prop.get(this._settings, "owner");
+
+			this._placementCode = BX.prop.getString(this._settings, "placementCode", "");
+			this._appInfo = BX.prop.getObject(this._settings, "info", {});
+		},
+		onSelect: function()
+		{
+			BX.rest.AppLayout.openApplication(
+				BX.prop.getInteger(this._appInfo, "APP_ID"),
+				{ ID: BX.prop.getInteger(this._owner.getOwnerInfo(), "ENTITY_ID") },
+				{
+					PLACEMENT: this._placementCode,
+					PLACEMENT_ID:  BX.prop.getInteger(this._appInfo, "ID")
+				}
+			);
+		},
+		createMenuItem: function()
+		{
+			return { text: BX.prop.getString(this._appInfo, "TITLE"), onclick: BX.delegate(this.onSelect, this) };
+		}
+	};
+
+	BX.InterfaceToolBarRestAppMenuItem.create = function(settings)
+	{
+		var self = new BX.InterfaceToolBarRestAppMenuItem();
+		self.initialize(settings);
+		return self;
+	}
 }

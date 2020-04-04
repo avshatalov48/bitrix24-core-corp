@@ -50,7 +50,7 @@ $getHint = function ($messageCode) use ($messages)
 				data-title-edit="<?=htmlspecialcharsbx($titleEdit)?>">
 			</div>
 			<div class="automation-base-button" data-role="automation-base-toolbar">
-				<button class="ui-btn ui-btn-light-border<?if (!$arResult['CAN_EDIT']):?> ui-btn-disabled<?endif?>" data-role="automation-btn-change-view"
+				<button class="ui-btn ui-btn-light-border ui-btn-themes <?if (!$arResult['CAN_EDIT']):?> ui-btn-disabled<?endif?>" data-role="automation-btn-change-view"
 					data-label-view="<?=GetMessage('BIZPROC_AUTOMATION_CMP_VIEW')?>" data-label-edit="<?=GetMessage('BIZPROC_AUTOMATION_CMP_AUTOMATION_EDIT')?>">
 					<?=GetMessage('BIZPROC_AUTOMATION_CMP_AUTOMATION_EDIT')?>
 				</button>
@@ -67,7 +67,7 @@ $getHint = function ($messageCode) use ($messages)
 						<?=htmlspecialcharsbx($status['NAME']?:$status['TITLE'])?>
 					</div>
 					<div class="bizproc-automation-status-bg" style="background-color: <?='#'.$color?>">
-						<span class="bizproc-automation-status-title-right" style="background-image: url(data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2213%22%20height%3D%2232%22%20viewBox%3D%220%200%2013%2032%22%3E%3Cpath%20fill%3D%22%23<?=$color?>%22%20fill-rule%3D%22evenodd%22%20d%3D%22M0%200h3c2.8%200%204%203%204%203l6%2013-6%2013s-1.06%203-4%203H0V0z%22/%3E%3C/svg%3E)"></span>
+						<span class="bizproc-automation-status-title-right" style="background-image: url(data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2213%22%20height%3D%2232%22%20viewBox%3D%220%200%2013%2032%22%3E%3Cpath%20fill%3D%22%23<?=$color?>%22%20fill-rule%3D%22evenodd%22%20d%3D%22M0%200h3c2.8%200%204%203%204%203l6%2013-6%2013s-1.06%203-4%203H0V0z%22/%3E%3C/svg%3E); background-color: transparent !important;"></span>
 					</div>
 				</div>
 				<?endforeach;?>

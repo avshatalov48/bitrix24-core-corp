@@ -23,7 +23,7 @@ Loc::loadMessages(__FILE__);
  * @package Bitrix\Voximplant
  **/
 
-class PhoneTable extends ORM\Data\DataManager
+class PhoneTable extends Model\Base
 {
 	public static function getFilePath()
 	{
@@ -67,6 +67,12 @@ class PhoneTable extends ORM\Data\DataManager
 			),
 		);
 	}
+
+	protected static function getMergeFields()
+	{
+		return ['USER_ID', 'PHONE_MNEMONIC'];
+	}
+
 
 	public static function validateString()
 	{

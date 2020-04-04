@@ -1857,7 +1857,7 @@ class EntityRequisite
 		return true;
 	}
 
-	public function prepareViewData($fields, $fieldsInView, $options = array())
+	public function prepareViewData($fields, $fieldsInViewMap, $options = array())
 	{
 		$optionValueHtml = false;
 		$optionValueText = true;
@@ -1939,7 +1939,7 @@ class EntityRequisite
 			}
 			else
 			{
-				if (in_array($fieldName, $fieldsInView, true) && isset($fieldsInfo[$fieldName]))
+				if (isset($fieldsInViewMap[$fieldName]) && isset($fieldsInfo[$fieldName]))
 				{
 					$fieldInfo = $fieldsInfo[$fieldName];
 					if ($fieldInfo['isRQ'])
@@ -2712,60 +2712,74 @@ class EntityRequisite
 					'SETTINGS' => array(
 						'FIELDS' => array(
 							0 => array(
-								'ID' => 1,
-								'FIELD_NAME' => 'RQ_LAST_NAME',
+								'ID' => 2,
+								'FIELD_NAME' => 'RQ_COMPANY_NAME',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'Y',
 								'SORT' => 510
 							),
 							1 => array(
-								'ID' => 2,
-								'FIELD_NAME' => 'RQ_FIRST_NAME',
+								'ID' => 3,
+								'FIELD_NAME' => 'RQ_COMPANY_FULL_NAME',
 								'FIELD_TITLE' => '',
-								'IN_SHORT_LIST' => 'Y',
+								'IN_SHORT_LIST' => 'N',
 								'SORT' => 520
 							),
 							2 => array(
-								'ID' => 3,
-								'FIELD_NAME' => 'RQ_SECOND_NAME',
+								'ID' => 1,
+								'FIELD_NAME' => 'RQ_LAST_NAME',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'Y',
 								'SORT' => 530
 							),
 							3 => array(
-								'ID' => 4,
-								'FIELD_NAME' => 'RQ_INN',
+								'ID' => 2,
+								'FIELD_NAME' => 'RQ_FIRST_NAME',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'Y',
 								'SORT' => 540
 							),
 							4 => array(
-								'ID' => 5,
-								'FIELD_NAME' => 'RQ_OGRNIP',
+								'ID' => 3,
+								'FIELD_NAME' => 'RQ_SECOND_NAME',
 								'FIELD_TITLE' => '',
-								'IN_SHORT_LIST' => 'N',
+								'IN_SHORT_LIST' => 'Y',
 								'SORT' => 550
 							),
 							5 => array(
-								'ID' => 6,
-								'FIELD_NAME' => 'RQ_OKPO',
+								'ID' => 4,
+								'FIELD_NAME' => 'RQ_INN',
 								'FIELD_TITLE' => '',
-								'IN_SHORT_LIST' => 'N',
+								'IN_SHORT_LIST' => 'Y',
 								'SORT' => 560
 							),
 							6 => array(
-								'ID' => 7,
-								'FIELD_NAME' => 'RQ_OKVED',
+								'ID' => 5,
+								'FIELD_NAME' => 'RQ_OGRNIP',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'N',
 								'SORT' => 570
 							),
 							7 => array(
+								'ID' => 6,
+								'FIELD_NAME' => 'RQ_OKPO',
+								'FIELD_TITLE' => '',
+								'IN_SHORT_LIST' => 'N',
+								'SORT' => 580
+							),
+							8 => array(
+								'ID' => 7,
+								'FIELD_NAME' => 'RQ_OKVED',
+								'FIELD_TITLE' => '',
+								'IN_SHORT_LIST' => 'N',
+								'SORT' => 590
+							),
+							9 => array(
 								'ID' => 8,
 								'FIELD_NAME' => 'RQ_ADDR',
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'N',
-								'SORT' => 580
+								'SORT' => 600
 							)
 						),
 						'LAST_FIELD_ID' => 8
@@ -3690,59 +3704,31 @@ class EntityRequisite
 		}
 		if ($languageId == '')
 			$languageId = 'en';
-		$countryLangId = '';
 		switch ($languageId)
 		{
-			case 'ua':
 			case 'de':
-			case 'en':
-			case 'la':
-			case 'tc':
-			case 'sc':
-			case 'in':
-			case 'kz':
-			case 'br':
-			case 'fr':
-			case 'by':
-			case 'ru':
-				$countryLangId = $languageId;
+				$countryCode = 'DE';
 				break;
-			default:
-				$countryLangId = 'en';
-				break;
-		}
-		$countryCode = 'US';
-		switch ($countryLangId)
-		{
 			case 'ru':
 				$countryCode = 'RU';
 				break;
-			case 'by':
-				$countryCode = 'BY';
+			case 'ua':
+			case 'ur':
+				$countryCode = 'UA';
 				break;
 			case 'kz':
 				$countryCode = 'KZ';
 				break;
-			case 'ua':
-				$countryCode = 'UA';
+			case 'by':
+				$countryCode = 'BY';
 				break;
-			case 'de':
-				$countryCode = 'DE';
-				break;
-			case 'en':
-			case 'la':
-			case 'tc':
-			case 'sc':
-			case 'br':
-			case 'fr':
-			case 'in':
 			default:
 				$countryCode = 'US';
 				break;
 		}
 		$countryId = (int)GetCountryIdByCode($countryCode);
 		Main\Config\Option::set('crm', 'crm_requisite_preset_country_id', $countryId);
-		unset($bitrix24, $countryLangId);
+		unset($bitrix24);
 
 		if($countryId > 0)
 		{

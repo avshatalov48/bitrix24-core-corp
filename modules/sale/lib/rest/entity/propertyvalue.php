@@ -25,7 +25,7 @@ class PropertyValue extends Base
 			],
 			'ID'=>[
 				'TYPE'=>self::TYPE_INT,
-				'ATTRIBUTES'=>[Attributes::ReadOnly, Attributes::Immutable] //пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ. id пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ.
+				'ATTRIBUTES'=>[Attributes::ReadOnly, Attributes::Immutable] //особенность работы с значениями свойств. id всегда новый.
 			],
 			'ORDER_ID'=>[
 				'TYPE'=>self::TYPE_INT,

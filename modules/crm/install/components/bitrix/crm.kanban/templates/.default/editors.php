@@ -18,7 +18,8 @@ $APPLICATION->IncludeComponent(
 		'ENABLE_TOOLBAR' => false,
 		'ENABLE_EMAIL_ADD' => true,
 		'ENABLE_TASK_ADD' => false,
-		'MARK_AS_COMPLETED_ON_VIEW' => false
+		'MARK_AS_COMPLETED_ON_VIEW' => false,
+		'SKIP_VISUAL_COMPONENTS' => 'Y'
 	),
 	null,
 	array('HIDE_ICONS' => 'Y')

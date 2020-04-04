@@ -26,6 +26,16 @@ if (!function_exists('__SLLogGetIds'))
 		&$arResult, &$arActivity2Log, &$arDiskUFEntity, &$arTmpEventsNew
 	)
 	{
+		if (
+			!empty($arListParams['EMPTY_LIST'])
+			&& $arListParams['EMPTY_LIST'] == 'Y'
+		)
+		{
+			$arResult["arLogTmpID"] = [];
+			$arTmpEventsNew = [];
+			return false;
+		}
+
 		$dbEventsID = CSocNetLog::GetList(
 			$arOrder,
 			$arFilter,

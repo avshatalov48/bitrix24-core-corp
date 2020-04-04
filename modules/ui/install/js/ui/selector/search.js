@@ -349,7 +349,7 @@ BX.UI.Selector.Search.prototype.runSearch = function(params)
 					{
 						/* sync minus */
 						BX.onCustomEvent(BX.UI.SelectorManager, 'syncClientDb', [ {
-							selectorInstance: this,
+							selectorInstance: this.selectorInstance,
 							clientDBData: this.selectorInstance.clientDBSearchResult.users[searchString], // oDbUserSearchResult
 							ajaxData: ( // oAjaxUserSearchResult
 								typeof this.selectorInstance.ajaxSearchResult.users[searchString] != 'undefined'
@@ -474,115 +474,132 @@ BX.UI.Selector.Search.prototype.runSearch = function(params)
 					continue;
 				}
 
-				for (key = 0; key < searchStringAlternativesList.length; key++)
+				bFound = (
+					this.selectorInstance.getOption('searchById', entityType) == 'Y'
+					&& parseInt(searchString) == searchString
+					&& entityTypeData.items[itemCode].entityId == searchString
+				);
+
+				if (!bFound)
 				{
-					bFound = false;
-
-					searchString = searchStringAlternativesList[key];
-					partsSearchText = searchString.toLowerCase().split(" ");
-
-					partsItem = (
-						BX.type.isNotEmptyString(entityTypeData.items[itemCode].name)
-							? entityTypeData.items[itemCode].name.toLowerCase().split(" ")
-							: []
-					);
-
-					if (
-						entityType.toLowerCase() === "mailContacts"
-						&& entityTypeData.items[itemCode].email
-					)
+					for (key = 0; key < searchStringAlternativesList.length; key++)
 					{
-						partsItem = partsItem.concat(entityTypeData.items[itemCode].email.toLowerCase().split("@"));
-					}
+						bFound = false;
 
-					for (k in partsItem)
-					{
-						if (partsItem.hasOwnProperty(k))
+						searchString = searchStringAlternativesList[key];
+						partsSearchText = searchString.toLowerCase().split(/\s+/);
+
+						if (BX.type.isNotEmptyString(entityTypeData.items[itemCode].index))
 						{
-							partsItem[k] = BX.util.htmlspecialcharsback(partsItem[k]);
-							tmpString = partsItem[k].replace(/(["\xAB\xBB])/g, ''); // strip quotes
-
-							if (tmpString.length != partsItem[k].length)
-							{
-								partsItem.push(tmpString);
-							}
+							partsItem = entityTypeData.items[itemCode].index.toLowerCase().split(/\s+/);
 						}
-					}
+						else
+						{
+							partsItem = [];
+						}
 
-					if (
-						typeof entityTypeData.items[itemCode].email != 'undefined'
-						&& entityTypeData.items[itemCode].email
-						&& entityTypeData.items[itemCode].email.length > 0
-					)
-					{
-						partsItem.push(entityTypeData.items[itemCode].email.toLowerCase());
-					}
+						if (BX.type.isNotEmptyString(entityTypeData.items[itemCode].name))
+						{
+							partsItem = partsItem.concat(entityTypeData.items[itemCode].name.toLowerCase().split(/\s+/));
+						}
 
-					if (
-						typeof entityTypeData.items[itemCode].login != 'undefined'
-						&& entityTypeData.items[itemCode].login.length > 0
-						&& partsSearchText.length <= 1
-						&& searchString.length > 2
-					)
-					{
-						partsItem.push(entityTypeData.items[itemCode].login.toLowerCase());
-					}
+						if (
+							entityType.toLowerCase() === "mailContacts"
+							&& entityTypeData.items[itemCode].email
+						)
+						{
+							partsItem = partsItem.concat(entityTypeData.items[itemCode].email.toLowerCase().split("@"));
+						}
 
-					BX.onCustomEvent(window, 'SocNetLogDestinationSearchFillItemParts', [ entityType, entityTypeData.items[itemCode], partsItem ]);
-
-					if (partsSearchText.length <= 1)
-					{
 						for (k in partsItem)
 						{
-							if (
-								partsItem.hasOwnProperty(k)
-								&& searchString.toLowerCase().localeCompare(partsItem[k].substring(0, searchString.length), 'en-US', { sensitivity: 'base' }) === 0
-							)
+							if (partsItem.hasOwnProperty(k))
 							{
-								bFound = true;
-								break;
+								partsItem[k] = BX.util.htmlspecialcharsback(partsItem[k]);
+								tmpString = partsItem[k].replace(/(["\(\)\xAB\xBB])/g, ''); // strip quotes and brackets
+
+								if (tmpString.length != partsItem[k].length)
+								{
+									partsItem.push(tmpString);
+								}
 							}
 						}
-					}
-					else
-					{
-						bFound = true;
 
-						for (var j in partsSearchText)
+						if (
+							typeof entityTypeData.items[itemCode].email != 'undefined'
+							&& entityTypeData.items[itemCode].email
+							&& entityTypeData.items[itemCode].email.length > 0
+						)
 						{
-							if (!partsSearchText.hasOwnProperty(j))
-							{
-								continue;
-							}
+							partsItem.push(entityTypeData.items[itemCode].email.toLowerCase());
+						}
 
-							bPartFound = false;
+						if (
+							typeof entityTypeData.items[itemCode].login != 'undefined'
+							&& entityTypeData.items[itemCode].login.length > 0
+							&& partsSearchText.length <= 1
+							&& searchString.length > 2
+						)
+						{
+							partsItem.push(entityTypeData.items[itemCode].login.toLowerCase());
+						}
+
+						BX.onCustomEvent(window, 'SocNetLogDestinationSearchFillItemParts', [ entityType, entityTypeData.items[itemCode], partsItem ]);
+
+						if (partsSearchText.length <= 1)
+						{
 							for (k in partsItem)
 							{
 								if (
 									partsItem.hasOwnProperty(k)
-									&& partsSearchText[j].toLowerCase().localeCompare(partsItem[k].substring(0, partsSearchText[j].length), 'en-US', { sensitivity: 'base' }) === 0
+									&& searchString.toLowerCase().localeCompare(partsItem[k].substring(0, searchString.length), 'en-US', { sensitivity: 'base' }) === 0
 								)
 								{
-									bPartFound = true;
+									bFound = true;
+									break;
+								}
+							}
+						}
+						else
+						{
+							bFound = true;
+
+							for (var j in partsSearchText)
+							{
+								if (!partsSearchText.hasOwnProperty(j))
+								{
+									continue;
+								}
+
+								bPartFound = false;
+								for (k in partsItem)
+								{
+									if (
+										partsItem.hasOwnProperty(k)
+										&& partsSearchText[j].toLowerCase().localeCompare(partsItem[k].substring(0, partsSearchText[j].length), 'en-US', { sensitivity: 'base' }) === 0
+									)
+									{
+										bPartFound = true;
+										break;
+									}
+								}
+
+								if (!bPartFound)
+								{
+									bFound = false;
 									break;
 								}
 							}
 
-							if (!bPartFound)
+							if (!bFound)
 							{
-								bFound = false;
-								break;
+								continue;
 							}
 						}
-
-						if (!bFound)
+						if (bFound)
 						{
-							continue;
+							break;
 						}
-					}
-					if (bFound)
-					{
-						break;
 					}
 				}
 
@@ -1086,31 +1103,22 @@ BX.UI.Selector.Search.prototype.searchRequestCallbackSuccess = function(response
 				}
 			}
 
-			if (this.getOption('isCrmFeed') == 'Y')
+			var eventResult = {
+				found: found,
+				itemCodeList: []
+			};
+
+			BX.onCustomEvent('BX.UI.Selector:onSearchRequestCallbackSussess', [ {
+				selector: this.selectorInstance,
+				responseData: responseData,
+				eventResult: eventResult
+			} ]);
+
+			found = eventResult.found;
+
+			for (var i = 0; i < eventResult.itemCodeList.length; i++)
 			{
-				/*
-								var types = {
-									contacts: 'CONTACTS',
-									companies: 'COMPANIES',
-									leads: 'LEADS',
-									deals: 'DEALS'
-								};
-								for (type in types)
-								{
-									for (i in data[types[type]])
-									{
-										if (data[types[type]].hasOwnProperty(i))
-										{
-											bFound = true;
-											if (!BX.SocNetLogDestination.obItems[name][type][i])
-											{
-												BX.SocNetLogDestination.obItems[name][type][i] = data[types[type]][i];
-												this.tmpSearchResult.ajax.push(i);
-											}
-										}
-									}
-								}
-				*/
+				this.selectorInstance.tmpSearchResult.ajax.push(eventResult.itemCodeList[i]);
 			}
 
 			if (!found)

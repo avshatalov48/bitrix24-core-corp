@@ -37,10 +37,7 @@ class BaseTrigger extends \Bitrix\Bizproc\Automation\Trigger\BaseTrigger
 			$entityTypeId = (int)$binding['OWNER_TYPE_ID'];
 			$entityId = (int)$binding['OWNER_ID'];
 
-			if (
-				$binding['OWNER_TYPE_ID'] === \CCrmOwnerType::Contact
-				|| $binding['OWNER_TYPE_ID'] === \CCrmOwnerType::Company
-			)
+			if ($entityTypeId === \CCrmOwnerType::Contact || $entityTypeId === \CCrmOwnerType::Company)
 			{
 				$clientBindings[] = $binding;
 				continue;

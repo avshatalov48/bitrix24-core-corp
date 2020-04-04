@@ -56,3 +56,5 @@ $APPLICATION->IncludeComponent(
 	null,
 	array('HIDE_ICONS' => 'Y')
 );
+
+CMain::FinalActions();

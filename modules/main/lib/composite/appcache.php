@@ -140,7 +140,10 @@ class AppCache
 				$fileCountImages = 0;
 				foreach ($arFields["FILE_DATA"]["CSS_FILE_IMAGES"] as $file=>$images)
 				{
-					$fileCountImages += count($images);
+					if (is_array($images))
+					{
+						$fileCountImages += count($images);
+					}
 				}
 
 

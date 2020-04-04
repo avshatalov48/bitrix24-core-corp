@@ -1,13 +1,43 @@
 <?php
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
+{
 	die();
+}
+
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Tasks\Util\Restriction\Bitrix24FilterLimitRestriction;
+
+Loc::loadMessages(__FILE__);;
 
 CBitrixComponent::includeComponentClass("bitrix:tasks.base");
 
 class TasksInterfaceFilterComponent extends TasksBaseComponent
 {
+	/**
+	 * Gets sprints of current groups.
+	 * @return array
+	 */
+	protected function getSprints()
+	{
+		$sprints = [];
+
+		if (
+			$this->arParams['GROUP_ID'] &&
+			$this->arParams['SPRINT_ID']//mark that we are in sprint mode
+		)
+		{
+			$sprints = \Bitrix\Tasks\Kanban\SprintTable::getAllSprints(
+				$this->arParams['GROUP_ID']
+			);
+		}
+
+		return $sprints;
+	}
+
 	protected function checkParameters()
 	{
+		$groupId = (isset($this->arParams['MENU_GROUP_ID'])? $this->arParams['MENU_GROUP_ID'] : $this->arParams['GROUP_ID']);
+
 		static::tryParseStringParameter(
 			$this->arParams['PATH_TO_USER_TASKS_TEMPLATES'],
 			'/company/personal/user/#user_id#/tasks/templates/'
@@ -25,17 +55,16 @@ class TasksInterfaceFilterComponent extends TasksBaseComponent
 		static::tryParseStringParameter($this->arParams['USE_GROUP_SELECTOR'], 'N');
 		static::tryParseIntegerParameter($this->arParams['GROUP_SELECTOR_LIMIT'], 5);
 		static::tryParseIntegerParameter($this->arParams['GROUP_ID'], 0);
-		static::tryParseArrayParameter($this->arParams['POPUP_MENU_ITEMS'], array());
-
+		static::tryParseIntegerParameter($this->arParams['SPRINT_ID'], 0);
+		static::tryParseArrayParameter($this->arParams['POPUP_MENU_ITEMS']);
 		static::tryParseArrayParameter(
 			$this->arParams['SHOW_CREATE_TASK_BUTTON'],
-			$this->canCreateGroupTasks(
-				isset($this->arParams['MENU_GROUP_ID'])
-					? $this->arParams['MENU_GROUP_ID']
-					: $this->arParams['GROUP_ID'])
-				? 'Y' : 'N'
+			($this->canCreateGroupTasks($groupId)? 'Y' : 'N')
 		);
-		
+
+        $this->arResult['LIMIT_EXCEEDED'] = Bitrix24FilterLimitRestriction::isLimitExceeded();
+        $this->arResult['LIMITS'] = Bitrix24FilterLimitRestriction::prepareStubInfo();
+        $this->arResult['SPRINTS'] = $this->getSprints();
 	}
 
 	protected function canCreateGroupTasks($groupId)

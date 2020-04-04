@@ -28,7 +28,7 @@ class Favorite extends Base
 	 *
 	 * @return bool
 	 */
-	public function deleteAction(\CTaskItem $task, array $params = array())
+	public function removeAction(\CTaskItem $task, array $params = array())
 	{
 		$task->deleteFromFavorite($params);
 

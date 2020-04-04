@@ -891,7 +891,8 @@ class CBitrixCatalogSmartFilter extends CBitrixComponent
 		if($arTuple)
 		{
 			reset($arTuple);
-			list($key, $head) = each($arTuple);
+			$key = key($arTuple);
+			$head = $arTuple[$key];
 			unset($arTuple[$key]);
 			$arTemp[$key] = false;
 			if(is_array($head))

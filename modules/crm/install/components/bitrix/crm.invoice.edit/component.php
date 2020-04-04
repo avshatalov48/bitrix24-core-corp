@@ -1,6 +1,9 @@
 <?php
 use Bitrix\Crm\Recurring;
 
+/** @global CMain $APPLICATION */
+global $APPLICATION;
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
 if (!CModule::IncludeModule('crm'))
@@ -477,24 +480,80 @@ $arResult['EXTERNAL_CONTEXT'] = isset($_REQUEST['external_context']) ? $_REQUEST
 if ($bProcessPost)
 {
 	$bAjaxSubmit = (isset($_POST['invoiceSubmitAjax']) && $_POST['invoiceSubmitAjax'] === 'Y') ? true : false;
+	$isPostSaveAction = (isset($_POST['save']) || isset($_POST['saveAndView']) || isset($_POST['saveAndAdd'])
+		|| isset($_POST['apply']) || isset($_POST['continue']) || $bAjaxSubmit);
 }
 
-// Determine person type
+// Determine company, contact and person type
+$clientPostInfo = null;
+$companyId = 0;
+$contactId = 0;
 $personTypeId = 0;
 $arPersonTypes = CCrmPaySystem::getPersonTypeIDs();
 if (isset($arPersonTypes['COMPANY']) && isset($arPersonTypes['CONTACT']))
 {
-	if ($bProcessPost)
+	if ($bProcessPost && $isPostSaveAction)
 	{
-		$info = $CCrmInvoice::__GetCompanyAndContactFromPost($_POST);
-		if ($info['COMPANY'] > 0) $personTypeId = $arPersonTypes['COMPANY'];
-		elseif ($info['CONTACT'] > 0) $personTypeId = $arPersonTypes['CONTACT'];
-		unset($info);
+		$clientPostInfo = $CCrmInvoice::__GetCompanyAndContactFromPost($_POST);
+		$prevCompanyID = isset($arResult['ELEMENT']['UF_COMPANY_ID']) ?
+			(int)$arResult['ELEMENT']['UF_COMPANY_ID'] : 0;
+		if($clientPostInfo['COMPANY_ISSET'])
+		{
+			$companyId = $clientPostInfo['COMPANY'];
+			if ($companyId > 0 && $companyId !== $prevCompanyID
+				&& !CCrmCompany::CheckReadPermission($companyId))
+			{
+				$companyId = $prevCompanyID;
+			}
+		}
+		else if (!$clientPostInfo['CONTACT_ISSET'])
+		{
+			$companyId = $prevCompanyID;
+		}
+		if ($companyId < 0)
+		{
+			$companyId = 0;
+		}
+
+		$prevContactID = isset($arResult['ELEMENT']['UF_CONTACT_ID']) ?
+			(int)$arResult['ELEMENT']['UF_CONTACT_ID'] : 0;
+		if($clientPostInfo['CONTACT_ISSET'])
+		{
+			$contactId = $clientPostInfo['CONTACT'];
+			if ($contactId > 0 && $contactId !== $prevContactID
+				&& !CCrmContact::CheckReadPermission($contactId))
+			{
+				$contactId = ($clientPostInfo['COMPANY_ISSET'] && $companyId !== $prevCompanyID) ?
+					0 : $prevContactID;
+			}
+		}
+		else
+		{
+			$contactId = ($clientPostInfo['COMPANY_ISSET'] && $companyId !== $prevCompanyID) ?
+				0 : $prevContactID;
+		}
+		if ($contactId < 0)
+		{
+			$contactId = 0;
+		}
+
+		unset($clientPostInfo, $prevContactID, $prevCompanyID);
 	}
 	else
 	{
-		if (intval($arFields['UF_COMPANY_ID']) > 0) $personTypeId = $arPersonTypes['COMPANY'];
-		elseif (intval($arFields['UF_CONTACT_ID']) > 0) $personTypeId = $arPersonTypes['CONTACT'];
+		$companyId = (isset($arFields['UF_COMPANY_ID']) && $arFields['UF_COMPANY_ID'] > 0) ?
+			$arFields['UF_COMPANY_ID'] : 0;
+		$contactId = (isset($arFields['UF_CONTACT_ID']) && $arFields['UF_CONTACT_ID'] > 0) ?
+			$arFields['UF_CONTACT_ID'] : 0;
+	}
+
+	if ($companyId > 0)
+	{
+		$personTypeId = $arPersonTypes['COMPANY'];
+	}
+	elseif ($contactId > 0)
+	{
+		$personTypeId = $arPersonTypes['CONTACT'];
 	}
 
 	if($personTypeId === 0)
@@ -599,51 +658,48 @@ else
 				);
 			}
 		}
-		elseif (isset($_POST['save']) || isset($_POST['saveAndView']) || isset($_POST['saveAndAdd']) || isset($_POST['apply']) || isset($_POST['continue']) || $bAjaxSubmit)
+		elseif ($isPostSaveAction)
 		{
 			//Check entities access -->
+			$prevQuoteID = isset($arResult['ELEMENT']['UF_QUOTE_ID']) ? (int)$arResult['ELEMENT']['UF_QUOTE_ID'] : 0;
 			$quoteID = 0;
 			if(isset($_POST['UF_QUOTE_ID']))
 			{
 				$quoteID = (int)$_POST['UF_QUOTE_ID'];
+				if ($quoteID > 0 && $quoteID !== $prevQuoteID && !CCrmQuote::CheckReadPermission($quoteID))
+				{
+					$quoteID = $prevQuoteID;
+				}
 			}
-			elseif (isset($arResult['ELEMENT']['UF_QUOTE_ID']))
+			else
 			{
-				$quoteID = (int)$arResult['ELEMENT']['UF_QUOTE_ID'];
+				$quoteID = $prevQuoteID;
 			}
-			if ($quoteID <= 0 || !CCrmQuote::CheckReadPermission($quoteID))
+			if ($quoteID < 0)
 			{
 				$quoteID = 0;
 			}
+			unset($prevQuoteID);
 
+			$prevDealID = isset($arResult['ELEMENT']['UF_DEAL_ID']) ? (int)$arResult['ELEMENT']['UF_DEAL_ID'] : 0;
 			$dealID = 0;
 			if(isset($_POST['UF_DEAL_ID']))
 			{
 				$dealID = (int)$_POST['UF_DEAL_ID'];
+				if ($dealID > 0 && $dealID !== $prevDealID && !CCrmDeal::CheckReadPermission($dealID))
+				{
+					$dealID = $prevDealID;
+				}
 			}
-			elseif (isset($arResult['ELEMENT']['UF_DEAL_ID']))
+			else
 			{
-				$dealID = (int)$arResult['ELEMENT']['UF_DEAL_ID'];
+				$dealID = $prevDealID;
 			}
-			if ($dealID <= 0 || !CCrmDeal::CheckReadPermission($dealID))
+			if ($dealID < 0)
 			{
 				$dealID = 0;
 			}
-
-			$info = CCrmInvoice::__GetCompanyAndContactFromPost($_POST);
-
-			$companyID = $info['COMPANY'];
-			if($companyID > 0 && !CCrmCompany::CheckReadPermission($companyID))
-			{
-				$companyID = 0;
-			}
-
-			$contactID = $info['CONTACT'];
-			if($contactID > 0 && !CCrmContact::CheckReadPermission($contactID))
-			{
-				$contactID = 0;
-			}
-			unset($info);
+			unset($prevDealID);
 			//<-- Check entities access
 
 			$clientRequisiteId = isset($_POST['REQUISITE_ID']) ? (int)$_POST['REQUISITE_ID'] : 0;
@@ -652,7 +708,7 @@ else
 			$clientBankDetailId = isset($_POST['BANK_DETAIL_ID']) ? (int)$_POST['BANK_DETAIL_ID'] : 0;
 			if ($clientBankDetailId < 0)
 				$clientBankDetailId = 0;
-			if (($companyID > 0 || $contactID > 0) && $clientRequisiteId > 0)
+			if (($companyId > 0 || $contactId > 0) && $clientRequisiteId > 0)
 			{
 				$requisiteIdLinked = $clientRequisiteId;
 				$bankDetailIdLinked = $clientBankDetailId;
@@ -707,9 +763,15 @@ else
 			}
 			unset($bSanitizeComments, $bSanitizeUserDescription);
 
+			$statusId = trim($_POST['STATUS_ID']);
+			if ($_POST['RECUR_PARAM']['RECURRING_SWITCHER'] === 'Y' || $arParams['IS_RECURRING'] === 'Y')
+			{
+				$statusId = \Bitrix\Crm\Invoice\InvoiceStatus::getInitialStatus();
+			}
+
 			$arFields = array(
 				'ORDER_TOPIC' => trim($_POST['ORDER_TOPIC']),
-				'STATUS_ID' => ($_POST['RECUR_PARAM']['RECURRING_SWITCHER'] !== 'Y') ? trim($_POST['STATUS_ID']) : "N",
+				'STATUS_ID' => $statusId,
 				'DATE_BILL' => isset($_POST['DATE_BILL']) ? trim($_POST['DATE_BILL']) : null,
 				'PAY_VOUCHER_DATE' => isset($_POST['PAY_VOUCHER_DATE']) ? trim($_POST['PAY_VOUCHER_DATE']) : null,
 				'DATE_PAY_BEFORE' => trim($_POST['DATE_PAY_BEFORE']),
@@ -718,8 +780,8 @@ else
 				'USER_DESCRIPTION' => $userDescription,
 				'UF_QUOTE_ID' => $quoteID,
 				'UF_DEAL_ID' => $dealID,
-				'UF_COMPANY_ID' => $companyID,
-				'UF_CONTACT_ID' => $contactID,
+				'UF_COMPANY_ID' => $companyId,
+				'UF_CONTACT_ID' => $contactId,
 				'UF_MYCOMPANY_ID' => $myCompanyId
 			);
 
@@ -797,8 +859,7 @@ else
 			}
 
 			// <editor-fold defaultstate="collapsed" desc="Process invoice properties ...">
-			CCrmInvoice::__RewritePayerInfo($companyID, $contactID, $arInvoiceProperties);
-			unset($companyId, $contactId);
+			CCrmInvoice::__RewritePayerInfo($companyId, $contactId, $arInvoiceProperties);
 			CCrmInvoice::rewritePropsFromRequisite($personTypeId, $requisiteIdLinked, $arInvoiceProperties);
 			$formProps = array();
 			if (isset($_POST['LOC_CITY']))
@@ -865,7 +926,13 @@ else
 					'TOTAL_TAX' => $totalTax,
 					'TOTAL_BEFORE_TAX' => $totalBeforeTax,
 					'TOTAL_BEFORE_DISCOUNT' => $totalBeforeDiscount,
-					'TOTAL_DISCOUNT' => $totalDiscount
+					'TOTAL_DISCOUNT' => $totalDiscount,
+					'TOTAL_SUM_FORMATTED' => CCrmCurrency::MoneyToString($totalSum, $currencyID),
+					'TOTAL_SUM_FORMATTED_SHORT' => CCrmCurrency::MoneyToString($totalSum, $currencyID, '#'),
+					'TOTAL_TAX_FORMATTED' => CCrmCurrency::MoneyToString($totalTax, $currencyID),
+					'TOTAL_BEFORE_TAX_FORMATTED' => CCrmCurrency::MoneyToString($totalBeforeTax, $currencyID),
+					'TOTAL_DISCOUNT_FORMATTED' => CCrmCurrency::MoneyToString($totalDiscount, $currencyID),
+					'TOTAL_BEFORE_DISCOUNT_FORMATTED' => CCrmCurrency::MoneyToString($totalBeforeDiscount, $currencyID)
 				);
 				unset($arRemoveItems, $totalSum, $totalTax, $totalBeforeTax, $totalBeforeDiscount, $totalDiscount);
 
@@ -995,7 +1062,10 @@ else
 				{
 					$bSuccess = $CCrmInvoice->Update($arResult['ELEMENT']['ID'], $arFields, array('REGISTER_SONET_EVENT' => true, 'UPDATE_SEARCH' => true));
 
-					if ($_POST['RECUR_PARAM']['RECURRING_SWITCHER'] === 'Y' && Recurring\Manager::isAllowedExpose(Recurring\Manager::INVOICE))
+					if (
+							($_POST['RECUR_PARAM']['RECURRING_SWITCHER'] === 'Y' || $arParams['IS_RECURRING'] === 'Y')
+							&& Recurring\Manager::isAllowedExpose(Recurring\Manager::INVOICE)
+					)
 					{
 						if (strlen($_POST['RECUR_PARAM']['START_DATE']) > 0)
 							$recurringList['START_DATE'] = new \Bitrix\Main\Type\Date($_POST['RECUR_PARAM']['START_DATE']);
@@ -1055,7 +1125,10 @@ else
 				}
 				else
 				{
-					if ($_POST['RECUR_PARAM']['RECURRING_SWITCHER'] === 'Y' && Recurring\Manager::isAllowedExpose(Recurring\Manager::INVOICE))
+					if (
+						($_POST['RECUR_PARAM']['RECURRING_SWITCHER'] === 'Y' || $arParams['IS_RECURRING'] === 'Y')
+						&& Recurring\Manager::isAllowedExpose(Recurring\Manager::INVOICE)
+					)
 					{
 						if (is_array($arFields['PRODUCT_ROWS']))
 						{
@@ -1161,19 +1234,13 @@ else
 							$arContactFields = array(
 								'COMPANY_ID' => $arFields['UF_COMPANY_ID']
 							);
-
-							$bSuccess = $CrmContact->Update(
+							$CrmContact->Update(
 								$arFields['UF_CONTACT_ID'],
 								$arContactFields,
 								false,
 								true,
 								array('DISABLE_USER_FIELD_CHECK' => true)
 							);
-
-							if(!$bSuccess)
-							{
-								$arResult['ERROR_MESSAGE'] = !empty($arFields['RESULT_MESSAGE']) ? $arFields['RESULT_MESSAGE'] : GetMessage('UNKNOWN_ERROR');
-							}
 						}
 						unset($arContactInfo, $dbRes, $CrmContact);
 					}
@@ -1243,7 +1310,7 @@ else
 			}
 			else
 			{
-				if ($_POST['RECUR_PARAM']['RECURRING_SWITCHER'] === 'Y')
+				if ($_POST['RECUR_PARAM']['RECURRING_SWITCHER'] === 'Y' || $arParams['IS_RECURRING'] === 'Y')
 				{
 					$pathEdit = $arParams['PATH_TO_INVOICE_RECUR_EDIT'];
 					$pathShow = $arParams['PATH_TO_INVOICE_RECUR_SHOW'];
@@ -1351,13 +1418,32 @@ else
 		{
 			$arResult['ERROR_MESSAGE'] = '';
 			if (!$CCrmInvoice->cPerms->CheckEnityAccess('INVOICE', 'DELETE', $arEntityAttr[$arParams['ELEMENT_ID']]))
+			{
 				$arResult['ERROR_MESSAGE'] .= GetMessage('CRM_PERMISSION_DENIED').'<br />';
+			}
 			if (empty($arResult['ERROR_MESSAGE']) && !$CCrmInvoice->Delete($arResult['ELEMENT']['ID']))
-				$arResult['ERROR_MESSAGE'] = GetMessage('CRM_DELETE_ERROR');
+			{
+				$errMsg = trim(strval($CCrmInvoice->LAST_ERROR));
+				if ($errMsg === '' && $ex = $APPLICATION->GetException())
+				{
+					$errMsg = trim(strval($ex->GetString()));
+				}
+				if ($errMsg === '')
+				{
+					$errMsg = GetMessage('CRM_DELETE_ERROR');
+				}
+				$arResult['ERROR_MESSAGE'] = $errMsg;
+				unset($errMsg);
+			}
 			if (empty($arResult['ERROR_MESSAGE']))
+			{
 				LocalRedirect(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_INVOICE_LIST']));
+			}
 			else
+			{
 				ShowError($arResult['ERROR_MESSAGE']);
+			}
+
 			return;
 		}
 		else
@@ -1582,24 +1668,24 @@ $arResult['FIELDS']['tab_1'][] = array(
 );
 
 // CLIENT
-$companyID = isset($arResult['ELEMENT']['UF_COMPANY_ID']) ? (int)$arResult['ELEMENT']['UF_COMPANY_ID'] : 0;
-$contactID = isset($arResult['ELEMENT']['UF_CONTACT_ID']) ? (int)$arResult['ELEMENT']['UF_CONTACT_ID'] : 0;
+$companyId = isset($arResult['ELEMENT']['UF_COMPANY_ID']) ? (int)$arResult['ELEMENT']['UF_COMPANY_ID'] : 0;
+$contactId = isset($arResult['ELEMENT']['UF_CONTACT_ID']) ? (int)$arResult['ELEMENT']['UF_CONTACT_ID'] : 0;
 
-if($companyID > 0 || $contactID <= 0)
+if($companyId > 0 || $contactId <= 0)
 {
 	$primaryEntityTypeName = CCrmOwnerType::CompanyName;
-	$primaryEntityID = $companyID;
+	$primaryEntityID = $companyId;
 }
 else
 {
 	$primaryEntityTypeName = CCrmOwnerType::ContactName;
-	$primaryEntityID = $contactID;
+	$primaryEntityID = $contactId;
 }
 
 $secondaryIDs = array();
-if($contactID > 0)
+if($contactId > 0)
 {
-	$secondaryIDs[] = $contactID;
+	$secondaryIDs[] = $contactId;
 }
 $arResult['CLIENT_SELECTOR_ID'] = 'CLIENT';
 $arResult['FIELDS']['tab_1'][] = array(
@@ -1749,6 +1835,9 @@ $data['CONTEXT'] = $arParams['ELEMENT_ID'] > 0 ? "INVOICE_{$arParams['ELEMENT_ID
 $data['CLIENT_PRIMARY_ENTITY_TYPE_NAME'] = $primaryEntityTypeName;
 $data['CLIENT_PRIMARY_ENTITY_ID'] = $primaryEntityID;
 $data['CLIENT_SECONDARY_ENTITY_IDS'] = $secondaryIDs;
+$data['START_DATE'] = $arResult['ELEMENT']['RECURRING_DATA']['START_DATE'];
+$data['RECURRING_EMAIL_SEND'] = $arResult['ELEMENT']['RECURRING_DATA']['SEND_BILL'];
+$data['RECURRING_EMAIL_ID'] = $arResult['ELEMENT']['RECURRING_DATA']['EMAIL_ID'];
 $data['LAST_EXECUTION'] = $arResult['ELEMENT']['RECURRING_DATA']['LAST_EXECUTION'];
 $data['UF_MYCOMPANY_ID'] = (int)$arResult['ELEMENT']['UF_MYCOMPANY_ID'] > 0 ? $arResult['ELEMENT']['UF_MYCOMPANY_ID'] : null;
 $APPLICATION->IncludeComponent('bitrix:crm.interface.form.recurring',
@@ -1780,8 +1869,7 @@ $arResult['FIELDS']['tab_1'][] = array(
 		),
 	'type' => 'recurring_params',
 	'colspan' => true,
-	'value' => $recurringHtml,
-	'required' => true
+	'value' => $recurringHtml
 );
 
 

@@ -34,59 +34,78 @@ else
 	$APPLICATION->SetTitle($arResult['TITLE']);?>
 <div class="docs-template-wrap">
 <?}
-if(!$arResult['TOP_VIEW_TARGET_ID'])
-{?>
-	<div class="pagetitle-wrap">
-		<div class="docs-template-pagetitle-wrap">
-			<div class="docs-template-pagetitle-inner pagetitle-inner-container">
-				<div class="pagetitle">
-					<span class="docs-template-pagetitle-item pagetitle-item" id="pagetitle"><?=$arResult['TITLE'];?></span>
-				</div>
-<?}
-else
+if(!$arResult['ERROR'])
 {
-	$this->SetViewTarget($arResult['TOP_VIEW_TARGET_ID']);
-}?>
-				<div class="pagetitle-container pagetitle-flexible-space pagetitle-container-docs-template">
-					<? $APPLICATION->IncludeComponent(
-						"bitrix:main.ui.filter",
-						"",
-						$arResult['FILTER']
-					); ?>
+	if(!$arResult['TOP_VIEW_TARGET_ID'])
+	{?>
+		<div class="pagetitle-wrap">
+			<div class="docs-template-pagetitle-wrap">
+				<div class="docs-template-pagetitle-inner pagetitle-inner-container">
+					<div class="pagetitle">
+						<span class="docs-template-pagetitle-item pagetitle-item" id="pagetitle"><?=$arResult['TITLE'];?></span>
+					</div>
+	<?}
+	else
+	{
+		$this->SetViewTarget($arResult['TOP_VIEW_TARGET_ID']);
+	}?>
+					<div class="pagetitle-container pagetitle-flexible-space pagetitle-container-docs-template">
+						<? $APPLICATION->IncludeComponent(
+							"bitrix:main.ui.filter",
+							"",
+							$arResult['FILTER']
+						); ?>
+					</div>
+					<div class="pagetitle-container pagetitle-align-right-container">
+						<?if(Bitrix24Manager::isEnabled())
+						{
+							?><button class="ui-btn ui-btn-md ui-btn-light-border" onclick="BX.DocumentGenerator.Feedback.open('<?=\CUtil::JSEscape($arParams['PROVIDER'])?>');"><?=\Bitrix\Main\Localization\Loc::getMessage('DOCGEN_TEMPLATE_LIST_FEEDBACK');?></button>
+							<?
+						}?>
+						<button class="ui-btn ui-btn-md ui-btn-light-border ui-btn-icon-setting" id="docgen-templates-settings-button"></button>
+						<button class="ui-btn ui-btn-md ui-btn-primary ui-btn-primary-docs-template" onclick="BX.DocumentGenerator.TemplateList.edit();"><?=\Bitrix\Main\Localization\Loc::getMessage('DOCGEN_TEMPLATE_LIST_UPLOAD');?></button>
+					</div>
+	<?if(!$arResult['TOP_VIEW_TARGET_ID'])
+	{?>
 				</div>
-				<div class="pagetitle-container pagetitle-align-right-container">
-					<?if(Bitrix24Manager::isEnabled())
-					{
-						?><button class="ui-btn ui-btn-md ui-btn-light-border" onclick="BX.DocumentGenerator.Feedback.open('<?=\CUtil::JSEscape($arParams['PROVIDER'])?>');"><?=\Bitrix\Main\Localization\Loc::getMessage('DOCGEN_TEMPLATE_LIST_FEEDBACK');?></button>
-						<?
-					}?>
-					<button class="ui-btn ui-btn-md ui-btn-light-border ui-btn-icon-setting" id="docgen-templates-settings-button"></button>
-					<button class="ui-btn ui-btn-md ui-btn-primary ui-btn-primary-docs-template" onclick="BX.DocumentGenerator.TemplateList.edit();"><?=\Bitrix\Main\Localization\Loc::getMessage('DOCGEN_TEMPLATE_LIST_UPLOAD');?></button>
-				</div>
-<?if(!$arResult['TOP_VIEW_TARGET_ID'])
-{?>
 			</div>
 		</div>
-	</div>
-<?}
-else
-{
-	$this->EndViewTarget();
+	<?}
+	else
+	{
+		$this->EndViewTarget();
+	}
 }?>
 	<div class="docs-template-info-inner">
-		<div class="docs-template-info-message docs-template-error-message" id="docgen-templates-error-message"></div>
-		<div class="docs-template-info-message"><?=\Bitrix\Main\Localization\Loc::getMessage('DOCGEN_TEMPLATE_LIST_MORE_INFO');?>
-			<a class="docs-template-info-link" onclick="BX.DocumentGenerator.TemplateList.openMoreLink(event);"><?=\Bitrix\Main\Localization\Loc::getMessage('DOCGEN_TEMPLATE_LIST_MORE');?></a>
+		<div class="docs-template-info-message docs-template-error-message" id="docgen-templates-error-message"<?
+		if($arResult['ERROR'])
+		{
+			?> style="display: block;"><?=htmlspecialcharsbx($arResult['ERROR']);
+		}
+		else
+		{
+			?>><?
+		}?></div>
+		<?if(!$arResult['ERROR'])
+		{?>
+			<div class="docs-template-info-message"><?=\Bitrix\Main\Localization\Loc::getMessage('DOCGEN_TEMPLATE_LIST_MORE_INFO');?>
+				<a class="docs-template-info-link" onclick="BX.DocumentGenerator.TemplateList.openMoreLink(event);"><?=\Bitrix\Main\Localization\Loc::getMessage('DOCGEN_TEMPLATE_LIST_MORE');?></a>
+			</div>
+		<?}?>
+	</div>
+	<?if(!$arResult['ERROR'])
+	{?>
+		<div class="docs-template-grid">
+				<?$APPLICATION->IncludeComponent(
+			"bitrix:main.ui.grid",
+			"",
+			$arResult['GRID']
+			);?>
 		</div>
-	</div>
-	<div class="docs-template-grid">
-		<?$APPLICATION->IncludeComponent(
-	"bitrix:main.ui.grid",
-	"",
-	$arResult['GRID']
-	);?>
-	</div>
+		<?}?>
 </div>
+<?if(!$arResult['ERROR'])
+{?>
 <script>
 	BX.ready(function()
 	{
@@ -94,6 +113,7 @@ else
 		<?='BX.message('.\CUtil::PhpToJSObject(\Bitrix\Main\Localization\Loc::loadLanguageFile(__FILE__)).');'?>
 	});
 </script>
+<?}?>
 <?
 if($arResult['IS_SLIDER'])
 {

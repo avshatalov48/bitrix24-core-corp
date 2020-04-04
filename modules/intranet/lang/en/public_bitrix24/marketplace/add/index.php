@@ -1,6 +1,6 @@
 <?
 $MESS["MARKETPLACE_PAGE_TITLE2"] = "An application can be created by your developers, or you can order it with <a target='_blank' href=\"https://www.bitrix24.com/partners/\">one of our partners</a>.";
-$MESS["MARKETPLACE_TITLE"] = "Add application";
+$MESS["MARKETPLACE_TITLE"] = "Add Application";
 $MESS["MARKETPLACE_BUTTON"] = "Continue";
 $MESS["MARKETPLACE_PAGE_TITLE"] = "How do you add your application to Bitrix24?";
 $MESS["MARKETPLACE_BLOCK1_TITLE"] = "My account only";

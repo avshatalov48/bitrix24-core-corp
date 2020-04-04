@@ -345,6 +345,43 @@ class CCrmStatus
 		$fields = is_object($res) ? $res->Fetch() : array();
 		return isset($fields['ID']);
 	}
+
+	/**
+	 * Checks if there are entities with the specified status.
+	 *
+	 * @param mixed $statusId Status id.
+	 * @return bool
+	 */
+	public function existsEntityWithStatus($statusId)
+	{
+		$entityTypes = self::GetEntityTypes();
+
+		if (array_key_exists($this->entityId, $entityTypes))
+		{
+			if ($this->entityId == 'STATUS')
+			{
+				return CCrmLead::existsEntityWithStatus($statusId);
+			}
+			elseif ($this->entityId == 'INVOICE_STATUS')
+			{
+				return CCrmInvoice::existsEntityWithStatus($statusId);
+			}
+			elseif ($this->entityId == 'QUOTE_STATUS')
+			{
+				return CCrmQuote::existsEntityWithStatus($statusId);
+			}
+			elseif (strpos($this->entityId, 'DEAL_STAGE') === 0)
+			{
+				return CCrmDeal::existsEntityWithStatus($statusId);
+			}
+			return false;
+		}
+		else
+		{
+			return false;
+		}
+	}
+
 	public function GetNextStatusId()
 	{
 		global $DB, $DBType;

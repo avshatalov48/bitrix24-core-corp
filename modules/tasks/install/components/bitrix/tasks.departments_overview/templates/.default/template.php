@@ -17,9 +17,8 @@ $APPLICATION->SetPageProperty(
 	($bodyClass ? $bodyClass.' ' : '').' no-background no-all-paddings pagetitle-toolbar-field-view '
 );
 $isBitrix24Template = SITE_TEMPLATE_ID === "bitrix24";
-?>
 
-<?
+
 if (isset($arResult["ERROR"]) && !empty($arResult["ERROR"]))
 {
 	foreach ($arResult["ERROR"] as $error)

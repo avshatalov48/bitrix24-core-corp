@@ -1,6 +1,9 @@
 <?php
 namespace Bitrix\Tasks\Replica;
 
+use Bitrix\Main\Application;
+use Bitrix\Tasks\CheckList\Task\TaskCheckListTree;
+
 class TaskChecklistItemHandler extends \Bitrix\Replica\Client\BaseHandler
 {
 	protected $tableName = "b_tasks_checklist_items";
@@ -86,46 +89,90 @@ class TaskChecklistItemHandler extends \Bitrix\Replica\Client\BaseHandler
 		$selectedItemId = (int)$parameters[0];
 		$insertAfterItemId = (int)$parameters[1];
 
-		if ($selectedItemId > 0)
+		if ($selectedItemId > 0 && $insertAfterItemId > 0)
 		{
+			$connection = Application::getConnection();
 
-			$conn = \Bitrix\Main\Application::getConnection();
-			$rc = $conn->query("
-				SELECT i2.ID, i2.SORT_INDEX
-				FROM b_tasks_checklist_items i1
-				INNER JOIN b_tasks_checklist_items i2 on i2.TASK_ID = i1.TASK_ID
-				WHERE i1.ID = ".(int)$selectedItemId."
-				ORDER BY i2.SORT_INDEX ASC, i2.ID ASC
-			");
+			$items = $this->getItems($selectedItemId, $connection);
 
-			//Following code from \CTaskCheckListItem::moveItem :
-			$arItems = array($selectedItemId => 0);
-			$prevItemId = 0;
-			$sortIndex = 1;
-			while ($arItem = $rc->fetch())
+			$newSortIndex = (int)$items[$insertAfterItemId]['SORT_INDEX'] + 1;
+			$oldSortIndex = (int)$items[$selectedItemId]['SORT_INDEX'];
+			$newParentId = (int)$items[$insertAfterItemId]['PARENT_ID'];
+			$oldParentId = (int)$items[$selectedItemId]['PARENT_ID'];
+
+			$nextIndex = $newSortIndex + 1;
+			$prevIndex = $oldSortIndex;
+
+			$recountedSortIndexes = [];
+			foreach ($items as $id => $item)
 			{
-				if ($insertAfterItemId == $prevItemId)
-					$arItems[$selectedItemId] = $sortIndex++;
+				$parentId = (int)$item['PARENT_ID'];
+				$sortIndex = (int)$item['SORT_INDEX'];
 
-				if ($arItem['ID'] != $selectedItemId)
-					$arItems[$arItem['ID']] = $sortIndex++;
-
-				$prevItemId = $arItem['ID'];
+				if ($parentId === $newParentId && $sortIndex >= $newSortIndex)
+				{
+					$recountedSortIndexes[$id] = $nextIndex;
+					$nextIndex++;
+				}
+				else if ($parentId === $oldParentId && $sortIndex > $oldSortIndex)
+				{
+					$recountedSortIndexes[$id] = $prevIndex;
+					$prevIndex++;
+				}
 			}
+			$recountedSortIndexes[$selectedItemId] = $newSortIndex;
 
-			if ($insertAfterItemId == $prevItemId)
-				$arItems[$selectedItemId] = $sortIndex;
+			$this->updateSortIndexes($recountedSortIndexes, $connection);
+			$this->updateParents($newParentId, $oldParentId, $selectedItemId);
+		}
+	}
 
-			if ($arItems)
+	private function getItems($itemId, $connection)
+	{
+		$itemsResult = $connection->query("
+			SELECT i2.ID, i2.SORT_INDEX, PARENT_ID
+			FROM b_tasks_checklist_items i1
+			INNER JOIN b_tasks_checklist_items i2 on i2.TASK_ID = i1.TASK_ID
+			LEFT JOIN b_tasks_checklist_items_tree ON CHILD_ID = i2.ID AND LEVEL = 1
+			WHERE i1.ID = {$itemId}
+			ORDER BY i2.SORT_INDEX, i2.ID
+		");
+
+		$items = [];
+		while ($item = $itemsResult->fetch())
+		{
+			$item['PARENT_ID'] = ($item['PARENT_ID'] === null? 0 : (int)$item['PARENT_ID']);
+			$items[$item['ID']] = $item;
+		}
+
+		return $items;
+	}
+
+	private function updateSortIndexes($recountedSortIndexes, $connection)
+	{
+		$sqlUpdate = "UPDATE b_tasks_checklist_items SET SORT_INDEX = CASE ID\n";
+
+		foreach ($recountedSortIndexes as $id => $sortIndex)
+		{
+			$sqlUpdate .= "WHEN $id THEN $sortIndex\n";
+		}
+
+		$sqlUpdate .= "END WHERE ID IN (".implode(', ', array_keys($recountedSortIndexes)).")";
+
+		$connection->query($sqlUpdate);
+	}
+
+	private function updateParents($newParentId, $oldParentId, $selectedItemId)
+	{
+		if ($newParentId !== $oldParentId)
+		{
+			if ($newParentId === 0)
 			{
-				$sqlUpdate = "UPDATE b_tasks_checklist_items SET SORT_INDEX = CASE ID\n";
-
-				foreach ($arItems as $id => $sortIndex)
-					$sqlUpdate .= "WHEN $id THEN $sortIndex\n";
-
-				$sqlUpdate .= "END WHERE ID IN (".implode(', ', array_keys($arItems)).")";
-
-				$conn->query($sqlUpdate);
+				TaskCheckListTree::detachSubTree($selectedItemId);
+			}
+			else
+			{
+				TaskCheckListTree::attach($selectedItemId, $newParentId);
 			}
 		}
 	}

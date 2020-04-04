@@ -2,17 +2,40 @@
 namespace Bitrix\Crm\Entity;
 
 use Bitrix\Main;
+use Bitrix\Crm;
 use Bitrix\Crm\Security\EntityAuthorization;
 
 abstract class EntityBase
 {
 	abstract public function getEntityTypeID();
-
 	abstract protected function getDbEntity();
+	abstract protected function getDbTableAlias();
+
 	abstract protected function buildPermissionSql(array $params);
 
 	abstract public function checkReadPermission($entityID = 0, $userPermissions = null);
 	abstract public function checkDeletePermission($entityID = 0, $userPermissions = null);
+
+	public function create(array $fields)
+	{
+		throw new Main\NotImplementedException('Method "create" must be overridden');
+	}
+
+	/**
+	 * Get Entity By ID.
+	 * @param int $entityID Entity ID.
+	 * @return array|null
+	 * @throws Main\NotImplementedException
+	 */
+	public function getByID($entityID)
+	{
+		throw new Main\NotImplementedException('Method "getByID" must be overridden');
+	}
+
+	public function update($entityID, array $fields)
+	{
+		throw new Main\NotImplementedException('Method "update" must be overridden');
+	}
 
 	abstract public function getTopIDs(array $params);
 	abstract public function getCount(array $params);
@@ -20,6 +43,17 @@ abstract class EntityBase
 	public function cleanup($entityID)
 	{
 		throw new Main\NotImplementedException('Method cleanup must be overridden');
+	}
+
+	/**
+	 * Check if Entity exists.
+	 * @param int $entityID Entity ID.
+	 * @return bool
+	 * @throws Main\NotImplementedException
+	 */
+	public function isExists($entityID)
+	{
+		return is_array($this->getByID($entityID));
 	}
 
 	public function getLastID($userID = 0, $enablePermissionCheck = true)
@@ -171,5 +205,80 @@ abstract class EntityBase
 		}
 
 		return $entityMultiFields;
+	}
+	public function setEntityMultifields($entityID, array $data)
+	{
+		if($entityID <= 0)
+		{
+			throw new Main\ArgumentException('Must be greater than zero.', 'entityID');
+		}
+
+		$multifieldEntity = new \CCrmFieldMulti();
+		$multifieldEntity->SetFields(\CCrmOwnerType::ResolveName($this->getEntityTypeID()), $entityID, $data);
+	}
+
+	public function prepareFilter(array &$filterFields, array $params = null)
+	{
+		if(!is_array($params))
+		{
+			$params = array();
+		}
+
+		if(isset($filterFields['ACTIVITY_COUNTER']))
+		{
+			if(is_array($filterFields['ACTIVITY_COUNTER']))
+			{
+				$counterTypeID = Crm\Counter\EntityCounterType::joinType(
+					array_filter($filterFields['ACTIVITY_COUNTER'], 'is_numeric')
+				);
+			}
+			else
+			{
+				$counterTypeID = (int)$filterFields['ACTIVITY_COUNTER'];
+			}
+			unset($filterFields['ACTIVITY_COUNTER']);
+
+			$counter = null;
+			if($counterTypeID > 0)
+			{
+				$counterUserIDs = array();
+				if(isset($filterFields['ASSIGNED_BY_ID']))
+				{
+					if(is_array($filterFields['ASSIGNED_BY_ID']))
+					{
+						$counterUserIDs = array_filter($filterFields['ASSIGNED_BY_ID'], 'is_numeric');
+					}
+					elseif($filterFields['ASSIGNED_BY_ID'] > 0)
+					{
+						$counterUserIDs[] = $filterFields['ASSIGNED_BY_ID'];
+					}
+				}
+
+				try
+				{
+					$counter = Crm\Counter\EntityCounterFactory::create(
+						$this->getEntityTypeID(),
+						$counterTypeID,
+						0,
+						Crm\Counter\EntityCounter::internalizeExtras($params)
+					);
+
+					$filterFields += $counter->prepareEntityListFilter(
+						array(
+							'MASTER_ALIAS' => $this->getDbTableAlias(),
+							'MASTER_IDENTITY' => 'ID',
+							'USER_IDS' => $counterUserIDs
+						)
+					);
+					unset($filterFields['ASSIGNED_BY_ID']);
+				}
+				catch(Main\NotSupportedException $e)
+				{
+				}
+				catch(Main\ArgumentException $e)
+				{
+				}
+			}
+		}
 	}
 }

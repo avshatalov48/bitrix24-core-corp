@@ -8,7 +8,12 @@ class Entity extends Main\Engine\Controller
 	public function configureActions()
 	{
 		return array(
-			'search' => array('class' => Crm\Controller\Action\Entity\SearchAction::class),
+			'search' => array(
+				'class' => Crm\Controller\Action\Entity\SearchAction::class,
+				'+prefilters' => [new Main\Engine\ActionFilter\CloseSession()]
+			),
+			'prepareMerge' => array('class' => Crm\Controller\Action\Entity\PrepareMergeAction::class),
+			'processMerge' => array('class' => Crm\Controller\Action\Entity\ProcessMergeAction::class),
 			'prepareDeletion' => array('class' => Crm\Controller\Action\Entity\PrepareDeletionAction::class),
 			'cancelDeletion' => array('class' => Crm\Controller\Action\Entity\CancelDeletionAction::class),
 			'processDeletion' => array('class' => Crm\Controller\Action\Entity\ProcessDeletionAction::class)

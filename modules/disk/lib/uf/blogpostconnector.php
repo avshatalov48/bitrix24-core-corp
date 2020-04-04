@@ -10,6 +10,7 @@ use Bitrix\Main\Type\DateTime;
 use Bitrix\Socialnetwork\CommentAux;
 use Bitrix\Disk\Configuration;
 use Bitrix\Disk\AttachedObject;
+use Bitrix\Socialnetwork\WorkgroupTable;
 
 Loc::loadMessages(__FILE__);
 
@@ -17,6 +18,14 @@ final class BlogPostConnector extends Connector
 {
 	private $blogPostData;
 	private $canRead = null;
+
+	/**
+	 * @return bool
+	 */
+	public function isAnonymousAllowed()
+	{
+		return true;
+	}
 
 	public static function createFromBlogPostCommentConnector(BlogPostCommentConnector $blogPostCommentConnector)
 	{
@@ -195,6 +204,40 @@ final class BlogPostConnector extends Connector
 		}
 		/** @noinspection PhpDynamicAsStaticMethodCallInspection */
 		$this->canRead = \CBlogPost::getSocNetPostPerms($this->entityId, true, $userId, $post["AUTHOR_ID"]) >= BLOG_PERMS_READ;
+
+		if (!$this->canRead)
+		{
+			$perms = \CBlogPost::getSocNetPerms($this->entityId);
+			$this->canRead = (
+				is_array($perms)
+				&& !empty($perms['UP'])
+			);
+
+			if(
+				!$this->canRead
+				&& !empty($perms['SG'])
+			)
+			{
+				$sonetGroupsIdList = array_unique(array_keys($perms['SG']));
+				if (
+					!empty($sonetGroupsIdList)
+					&& Loader::includeModule('socialnetwork')
+				)
+				{
+					$res = WorkgroupTable::getList([
+						'filter' => [
+							'=LANDING' => 'Y',
+							'=ACTIVE' => 'Y'
+						],
+						'limit' => 1
+					]);
+					if ($res->fetch())
+					{
+						$this->canRead = true;
+					}
+				}
+			}
+		}
 
 		return $this->canRead;
 	}

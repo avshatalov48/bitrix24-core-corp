@@ -18,10 +18,15 @@ class CashboxAtolFarm extends Cashbox implements IPrintImmediately, ICheckable
 {
 	const OPERATION_CHECK_REGISTRY = 'registry';
 	const OPERATION_CHECK_CHECK = 'check';
+	const OPERATION_GET_TOKEN = 'get_token';
+
 	const REQUEST_TYPE_GET = 'get';
 	const REQUEST_TYPE_POST = 'post';
+
 	const TOKEN_OPTION_NAME = 'atol_access_token';
+
 	const SERVICE_URL = 'https://online.atol.ru/possystem/v3';
+
 	const RESPONSE_HTTP_CODE_401 = 401;
 	const RESPONSE_HTTP_CODE_200 = 200;
 
@@ -221,7 +226,7 @@ class CashboxAtolFarm extends Cashbox implements IPrintImmediately, ICheckable
 	 * @return string
 	 * @throws Main\SystemException
 	 */
-	protected function getUrl($operation, $token, array $queryData = array())
+	protected function getRequestUrl($operation, $token, array $queryData = array())
 	{
 		$groupCode = $this->getField('NUMBER_KKM');
 
@@ -233,6 +238,10 @@ class CashboxAtolFarm extends Cashbox implements IPrintImmediately, ICheckable
 		{
 			return static::SERVICE_URL.'/'.$groupCode.'/report/'.$queryData['EXTERNAL_UUID'].'?tokenid='.$token;
 		}
+		elseif ($operation === static::OPERATION_GET_TOKEN)
+		{
+			return static::SERVICE_URL.'/getToken';
+		}
 
 		throw new Main\SystemException();
 	}
@@ -240,6 +249,8 @@ class CashboxAtolFarm extends Cashbox implements IPrintImmediately, ICheckable
 	/**
 	 * @param Check $check
 	 * @return Result
+	 * @throws Main\NotImplementedException
+	 * @throws Main\SystemException
 	 */
 	public function printImmediately(Check $check)
 	{
@@ -264,7 +275,7 @@ class CashboxAtolFarm extends Cashbox implements IPrintImmediately, ICheckable
 		}
 
 		$operation = $check::getCalculatedSign() === Check::CALCULATED_SIGN_INCOME ? 'sell' : 'sell_refund';
-		$url = $this->getUrl(static::OPERATION_CHECK_REGISTRY, $token, array('CHECK_TYPE' => $operation));
+		$url = $this->getRequestUrl(static::OPERATION_CHECK_REGISTRY, $token, array('CHECK_TYPE' => $operation));
 
 		$result = $this->send(static::REQUEST_TYPE_POST, $url, $checkQuery);
 		if (!$result->isSuccess())
@@ -280,7 +291,7 @@ class CashboxAtolFarm extends Cashbox implements IPrintImmediately, ICheckable
 				return $printResult;
 			}
 
-			$url = $this->getUrl(static::OPERATION_CHECK_REGISTRY, $token, array('CHECK_TYPE' => $operation));
+			$url = $this->getRequestUrl(static::OPERATION_CHECK_REGISTRY, $token, array('CHECK_TYPE' => $operation));
 			$result = $this->send(static::REQUEST_TYPE_POST, $url, $checkQuery);
 			if (!$result->isSuccess())
 				return $result;
@@ -320,7 +331,7 @@ class CashboxAtolFarm extends Cashbox implements IPrintImmediately, ICheckable
 	 */
 	public function check(Check $check)
 	{
-		$url = $this->getUrl(
+		$url = $this->getRequestUrl(
 			static::OPERATION_CHECK_CHECK,
 			$this->getAccessToken(),
 			array('EXTERNAL_UUID' => $check->getField('EXTERNAL_UUID'))
@@ -340,7 +351,7 @@ class CashboxAtolFarm extends Cashbox implements IPrintImmediately, ICheckable
 				return $result;
 			}
 
-			$url = $this->getUrl(
+			$url = $this->getRequestUrl(
 				static::OPERATION_CHECK_CHECK,
 				$this->getAccessToken(),
 				array('EXTERNAL_UUID' => $check->getField('EXTERNAL_UUID'))
@@ -404,6 +415,12 @@ class CashboxAtolFarm extends Cashbox implements IPrintImmediately, ICheckable
 		{
 			$http->disableSslVerification();
 			$data = $this->encode($data);
+
+			if (Manager::DEBUG_MODE === true)
+			{
+				Internals\CashboxErrLogTable::add(array('MESSAGE' => $data, 'DATE_INSERT' => new Main\Type\DateTime()));
+			}
+
 			$response = $http->post($url, $data);
 		}
 		else
@@ -413,6 +430,11 @@ class CashboxAtolFarm extends Cashbox implements IPrintImmediately, ICheckable
 
 		if ($response !== false)
 		{
+			if (Manager::DEBUG_MODE === true)
+			{
+				Internals\CashboxErrLogTable::add(array('MESSAGE' => $response, 'DATE_INSERT' => new Main\Type\DateTime()));
+			}
+
 			try
 			{
 				$response = $this->decode($response);
@@ -613,8 +635,9 @@ class CashboxAtolFarm extends Cashbox implements IPrintImmediately, ICheckable
 	}
 
 	/**
-	 * @param string $data
+	 * @param $data
 	 * @return mixed
+	 * @throws Main\ArgumentException
 	 */
 	private function decode($data)
 	{
@@ -623,10 +646,12 @@ class CashboxAtolFarm extends Cashbox implements IPrintImmediately, ICheckable
 
 	/**
 	 * @return string
+	 * @throws Main\SystemException
 	 */
 	private function requestAccessToken()
 	{
-		$url = static::SERVICE_URL.'/getToken';
+		$url = $this->getRequestUrl(static::OPERATION_GET_TOKEN, '');
+
 		$data = array(
 			'login' => $this->getValueFromSettings('AUTH', 'LOGIN'),
 			'pass' => $this->getValueFromSettings('AUTH', 'PASS')
@@ -636,9 +661,12 @@ class CashboxAtolFarm extends Cashbox implements IPrintImmediately, ICheckable
 		if ($result->isSuccess())
 		{
 			$response = $result->getData();
-			$this->setAccessToken($response['token']);
+			if (isset($response['token']))
+			{
+				$this->setAccessToken($response['token']);
 
-			return $response['token'];
+				return $response['token'];
+			}
 		}
 
 		return '';

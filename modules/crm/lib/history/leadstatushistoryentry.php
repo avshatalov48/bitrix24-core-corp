@@ -88,6 +88,28 @@ class LeadStatusHistoryEntry
 		$result = $dbResult->fetch();
 		return is_array($result);
 	}
+	public static function checkStatus($ownerID, $statusID)
+	{
+		if(!is_int($ownerID))
+		{
+			$ownerID = (int)$ownerID;
+		}
+
+		if($ownerID <= 0)
+		{
+			throw new Main\ArgumentException('Owner ID must be greater than zero.', 'ownerID');
+		}
+
+		$query = new Query(LeadStatusHistoryTable::getEntity());
+		$query->addFilter('=OWNER_ID', $ownerID);
+		$query->addFilter('=STATUS_ID', $statusID);
+		$query->addSelect('ID');
+		$query->setLimit(1);
+
+		$dbResult = $query->exec();
+		$fields = $dbResult->fetch();
+		return is_array($fields) && isset($fields['ID']);
+	}
 	public static function register($ownerID, array $entityFields = null, array $options = null)
 	{
 		if(!is_int($ownerID))
@@ -178,11 +200,13 @@ class LeadStatusHistoryEntry
 			LeadStatusHistoryTable::delete($latest['ID']);
 		}
 
+		LeadStatusHistoryWithSupposedEntry::register($ownerID);
 		return true;
 	}
 	public static function unregister($ownerID)
 	{
 		LeadStatusHistoryTable::deleteByOwner($ownerID);
+		LeadStatusHistoryWithSupposedEntry::unregister($ownerID);
 	}
 	public static function synchronize($ownerID, array $entityFields = null)
 	{

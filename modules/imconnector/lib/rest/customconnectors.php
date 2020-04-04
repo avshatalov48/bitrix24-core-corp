@@ -97,6 +97,30 @@ if(Loader::includeModule('rest'))
 								"category" => RestSqs::CATEGORY_DEFAULT,
 							)
 						),
+						/*'OnImConnectorStatusAdd' => array(
+							'imconnector',
+							Library::EVENT_STATUS_ADD,
+							array(__CLASS__, 'OnStatusCustom'),
+							array(
+								"category" => RestSqs::CATEGORY_DEFAULT,
+							)
+						),
+						'OnImConnectorStatusUpdate' => array(
+							'imconnector',
+							Library::EVENT_STATUS_UPDATE,
+							array(__CLASS__, 'OnStatusCustom'),
+							array(
+								"category" => RestSqs::CATEGORY_DEFAULT,
+							)
+						),*/
+						'OnImConnectorStatusDelete' => array(
+							'imconnector',
+							Library::EVENT_STATUS_DELETE,
+							array(__CLASS__, 'OnStatusCustom'),
+							array(
+								"category" => RestSqs::CATEGORY_DEFAULT,
+							)
+						),
 					),
 					\CRestUtil::PLACEMENTS => array(
 						Helper::PLACEMENT_SETTING_CONNECTOR => array(),
@@ -115,6 +139,29 @@ if(Loader::includeModule('rest'))
 			$parameters = $params[0]->getParameters();
 
 			return $parameters['LINE_ID'];
+		}
+
+		/**
+		 * @param $params
+		 * @param $arHandler
+		 * @return mixed
+		 */
+		public static function OnStatusCustom($params, $arHandler)
+		{
+			$appId = null;
+			$parameters = $params[0]->getParameters();
+
+			if(!empty($parameters['connector']))
+			{
+				$appId = Helper::getAppRestConnector($parameters['connector']);
+			}
+
+			if(empty($appId) || ($arHandler['APP_ID'] != $appId && $arHandler['APP_CODE'] != $appId))
+			{
+				throw new \Exception('Wrong app!');
+			}
+
+			return $parameters;
 		}
 
 		/**

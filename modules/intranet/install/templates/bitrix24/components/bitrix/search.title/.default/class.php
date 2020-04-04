@@ -13,7 +13,7 @@ final class CB24SearchTitle
 		}
 
 		$searchStringOriginal = $searchString;
-		$searchString = str_replace('%', '', $searchString)."%";
+//		$searchString = str_replace('%', '', $searchString)."%";
 
 		$userNameTemplate = CSite::GetNameFormat(false);
 		$userPageURLTemplate = \Bitrix\Main\Config\Option::get('socialnetwork', 'user_page', SITE_DIR.'company/personal/', SITE_ID).'user/#user_id#/';
@@ -47,6 +47,32 @@ final class CB24SearchTitle
 		$searchByEmail = false;
 		if (!empty($searchString))
 		{
+			$matchesPhones = [];
+			$phoneParserManager = \Bitrix\Main\PhoneNumber\Parser::getInstance();
+			preg_match_all('/'.$phoneParserManager->getValidNumberPattern().'/i', $searchString, $matchesPhones);
+
+			if (
+				!empty($matchesPhones)
+				&& !empty($matchesPhones[0])
+			)
+			{
+				foreach($matchesPhones[0] as $phone)
+				{
+					$convertedPhone = \Bitrix\Main\PhoneNumber\Parser::getInstance()
+						->parse($phone)
+						->format(\Bitrix\Main\PhoneNumber\Format::E164);
+					$searchString = str_replace($phone, $convertedPhone, $searchString);
+				}
+			}
+
+			$findFilter = \Bitrix\Main\UserUtils::getAdminSearchFilter([
+				'FIND' => $searchString
+			]);
+			if (!empty($findFilter))
+			{
+				$userFilter = array_merge($userFilter, $findFilter);
+			}
+/*
 			$searchStringList = preg_split('/\s+/', trim(ToUpper($searchString)));
 			array_walk(
 				$searchStringList,
@@ -81,6 +107,7 @@ final class CB24SearchTitle
 
 				$userFilter[] = $subFilter;
 			}
+*/
 		}
 
 		if (
@@ -121,10 +148,12 @@ final class CB24SearchTitle
 			'ID', 'ACTIVE', 'NAME', 'LAST_NAME', 'SECOND_NAME', 'LOGIN', 'PERSONAL_PHOTO', 'WORK_POSITION', 'PERSONAL_PROFESSION',
 		];
 
+/*
 		if ($searchByEmail)
 		{
 			$selectFields[] = new \Bitrix\Main\Entity\ExpressionField('EMAIL_OK', 'CASE WHEN UPPER(%s) = "'.$DB->ForSql(strtoupper(str_replace('%', '%%', $searchStringOriginal))).'" THEN 1 ELSE 0 END', 'EMAIL');
 		}
+*/
 
 		$res = \Bitrix\Main\UserTable::getList(array(
 			'filter' => $userFilter,
@@ -153,7 +182,8 @@ final class CB24SearchTitle
 						'LAST_NAME' => $user['LAST_NAME'],
 						'SECOND_NAME' => $user['SECOND_NAME'],
 						'LOGIN' => $user['LOGIN'],
-					)
+					),
+					true
 				),
 				'URL' => str_replace('#user_id#', $user['ID'], $userPageURLTemplate),
 				'MODULE_ID' => '',

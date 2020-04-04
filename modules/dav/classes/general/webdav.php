@@ -845,13 +845,11 @@ abstract class CDavWebDav
 				else
 				{
 					if (isset($arResult['size']))
-						$response->AddHeader("Content-length: ".$arResult['size']);
-
-					while (!feof($arResult['stream']))
 					{
-						$buffer = fread($arResult['stream'], 4096);
-						$response->AddLine($buffer);
+						$response->AddHeader("Content-length: ".$arResult['size']);
 					}
+
+					$response->AddLine(stream_get_contents($arResult['stream']));
 
 					return;
 				}
@@ -1144,7 +1142,7 @@ abstract class CDavWebDav
 
 		// RFC 2518 Sections 9.6, 8.8.4, 8.9.3
 		$httpOverwrite = $request->GetParameter("HTTP_OVERWRITE");
-		if (!is_null($httpOverwrite)) 
+		if (!is_null($httpOverwrite))
 			$overwrite = ($httpOverwrite == "T");
 		else
 			$overwrite = true;

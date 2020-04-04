@@ -6,7 +6,7 @@ use Bitrix\Main\Entity;
 use Bitrix\Main\ORM;
 use Bitrix\Main\Type\DateTime;
 
-class CallerIdTable extends ORM\Data\DataManager
+class CallerIdTable extends Base
 {
 	public static function getTableName()
 	{
@@ -33,5 +33,10 @@ class CallerIdTable extends ORM\Data\DataManager
 			new Entity\DateField("VERIFIED_UNTIL"),
 			new Entity\IntegerField("CONFIG_ID"),
 		];
+	}
+
+	public static function getMergeFields()
+	{
+		return ["NUMBER"];
 	}
 }

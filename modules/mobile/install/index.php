@@ -43,6 +43,7 @@ Class mobile extends CModule
 		$eventManager->registerEventHandler('pull', 'OnGetDependentModule', 'mobile', 'CMobileEvent', 'PullOnGetDependentModule');
 		$eventManager->registerEventHandler('main', 'OnApplicationsBuildList', 'mobile', 'MobileApplication', 'OnApplicationsBuildList', 100, "modules/mobile/classes/general/mobile_event.php");
 		$eventManager->registerEventHandler('mobileapp', 'onJNComponentWorkspaceGet', 'mobile', 'CMobileEvent', 'getJNWorkspace');
+		$eventManager->registerEventHandler('mobile', 'onMobileMenuStructureBuilt', 'mobile', 'CMobileEvent', 'onMobileMenuBuilt');
 		$eventManager->registerEventHandler('main', 'onKernelCheckInstallFilesMappingGet', 'mobile', 'CMobileEvent', 'getKernelCheckPath');
 
 		return true;

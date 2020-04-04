@@ -98,8 +98,12 @@ if ($_REQUEST['MODE'] == 'SEARCH')
 		else if (preg_match('/(.*)\[(\d+?)\]/i' . BX_UTF_PCRE_MODIFIER, $search, $arMatches))
 		{
 			$arFilter['ID'] = (int)$arMatches[2];
-			$arFilter['%TITLE'] = trim($arMatches[1]);
-			$arFilter['LOGIC'] = 'OR';
+			$searchString = trim($arMatches[1]);
+			if (is_string($searchString) && $searchString !== '')
+			{
+				$arFilter['%TITLE'] = $searchString;
+				$arFilter['LOGIC'] = 'OR';
+			}
 		}
 		else
 		{

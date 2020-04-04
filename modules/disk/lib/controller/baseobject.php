@@ -15,23 +15,7 @@ abstract class BaseObject extends Internals\Engine\Controller
 	protected function get(Disk\BaseObject $object)
 	{
 		return [
-			'object' => [
-				'id' => $object->getId(),
-				'name' => $object->getName(),
-				'createTime' => $object->getCreateTime(),
-				'updateTime' => $object->getUpdateTime(),
-				'deleteTime' => $object->getDeleteTime(),
-				'code' => $object->getCode(),
-				'xmlId' => $object->getXmlId(),
-				'storageId' => $object->getStorageId(),
-				'realObjectId' => $object->getRealObjectId(),
-				'parentId' => $object->getParentId(),
-				'deletedType' => $object->getDeletedType(),
-				'size' => $object->getSize(),
-				'createdBy' => $object->getCreatedBy(),
-				'updatedBy' => $object->getUpdatedBy(),
-				'deletedBy' => $object->getDeletedBy(),
-			],
+			'object' => $object->jsonSerialize(),
 		];
 	}
 

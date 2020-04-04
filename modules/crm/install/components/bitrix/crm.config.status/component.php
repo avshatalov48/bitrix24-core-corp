@@ -172,9 +172,24 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid() &&
 			COption::SetOptionString('crm', 'CONFIG_STATUS_'.$entityId, serialize($settings));
 		}
 
+		if($entityId === 'STATUS')
+		{
+			$agent = \Bitrix\Crm\Agent\Semantics\LeadSemanticsRebuildAgent::getInstance();
+			if(!$agent->isRegistered())
+			{
+				$agent->enable(true);
+				$agent->register();
+			}
+		}
+
 		if($entityId === 'DEAL_STAGE' || preg_match("/DEAL_STAGE_\d+/", $entityId) == 1)
 		{
-			COption::SetOptionString('crm', '~CRM_REBUILD_DEAL_SEMANTICS', 'Y');
+			$agent = \Bitrix\Crm\Agent\Semantics\DealSemanticsRebuildAgent::getInstance();
+			if(!$agent->isRegistered())
+			{
+				$agent->enable(true);
+				$agent->register();
+			}
 		}
 	}
 
@@ -268,7 +283,7 @@ foreach($arResult['ENTITY'] as $entityId => $dataEntity)
 	foreach($arResult['ROWS'][$entityId] as $status)
 	{
 		$status['NUMBER'] = $number;
-		if($status['STATUS_ID'] == $dataEntity['START_FIELD'])
+		if (empty($arResult['INITIAL_FIELDS'][$entityId]))
 		{
 			$arResult['INITIAL_FIELDS'][$entityId] = $status;
 			$arResult['SUCCESS_FIELDS'][$entityId][] = $status;

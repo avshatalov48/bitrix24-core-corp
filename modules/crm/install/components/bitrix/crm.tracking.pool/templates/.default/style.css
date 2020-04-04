@@ -1,3 +1,17 @@
+.crm-tracking-channel-pool-item-status {
+	width: 9px;
+	height: 9px;
+	display: inline-block;
+	margin: 0 5px 0 0;
+	border-radius: 9px;
+}
+.crm-tracking-channel-pool-item-status-gray {
+	background: #b7b7b7;
+}
+.crm-tracking-channel-pool-item-status-green {
+	background: #a1e071;
+}
+
 .crm-tracking-channel-pool-block {
 	padding: 5px 10px 0 6px;
 }

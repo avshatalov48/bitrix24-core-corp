@@ -10,6 +10,7 @@ return array(
 	'block' => array(
 		'name' => Loc::getMessage('LANDING_BLOCK_1_BIG_WITH_TEXT_2_1_NAME'),
 		'section' => array('cover'),
+		'dynamic' => false,
 	),
 	'nodes' => array(
 		'.landing-block-title' => array(

@@ -14,10 +14,15 @@ if (is_array($arResult["TASKS"]) && !empty($arResult["TASKS"]))
 	foreach($arResult["TASKS"] as $task)
 	{
 		?><div class="mobile-grid-field-subtasks-item task-status-<?=tasksStatus2String($task["STATUS"])?>"><?
+			?><span onclick="BXMobileApp.Events.postToComponent('taskbackground::task::action', {taskId: <?=(int)$task['ID']?>}, 'background');"><?=($task["TITLE"])?></span>
+        <?
+		?></div><?
+
+        /*?><div class="mobile-grid-field-subtasks-item task-status-<?=tasksStatus2String($task["STATUS"])?>"><?
 			?><span onclick="BXMobileApp.PageManager.loadPageBlank({url: '<?=CUtil::JSEscape(CComponentEngine::MakePathFromTemplate(
 				$arParams["~PATH_TO_USER_TASKS_TASK"],
 				array("USER_ID" => $arParams["USER_ID"], "TASK_ID" => $task["ID"])))?>',bx24ModernStyle : true});"><?=($task["TITLE"])?></span><?
-		?></div><?
+		?></div><?*/
 	}
 ?>
 </div>

@@ -2,6 +2,7 @@
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
 /**
+/**
  * @global \CMain $APPLICATION
  * @global \CUser $USER
  * @global \CDatabase $DB
@@ -157,6 +158,7 @@ $arResult['CURRENT_USER_ID'] = CCrmSecurityHelper::GetCurrentUserID();
 $arResult['IS_AJAX_CALL'] = isset($_REQUEST['AJAX_CALL']) || isset($_REQUEST['ajax_request']) || !!CAjax::GetSession();
 $arResult['SESSION_ID'] = bitrix_sessid();
 $arResult['NAVIGATION_CONTEXT_ID'] = isset($arParams['NAVIGATION_CONTEXT_ID']) ? $arParams['NAVIGATION_CONTEXT_ID'] : '';
+$arResult['DISABLE_NAVIGATION_BAR'] = isset($arParams['DISABLE_NAVIGATION_BAR']) ? $arParams['DISABLE_NAVIGATION_BAR'] : 'N';
 $arResult['PRESERVE_HISTORY'] = isset($arParams['PRESERVE_HISTORY']) ? $arParams['PRESERVE_HISTORY'] : false;
 $arResult['ENABLE_SLIDER'] = \Bitrix\Crm\Settings\LayoutSettings::getCurrent()->isSliderEnabled();
 
@@ -377,41 +379,6 @@ foreach ($arResult['~STATUS_LIST_WRITE'] as $sStatusId => $sStatusTitle)
 //region Filter Presets Initialization
 if(!$bInternal)
 {
-	/*
-		array(
-			'id' => 'CONTACT_ID',
-			'name' => GetMessage('CRM_COLUMN_CONTACT_LIST'),
-			'default' => true,
-			'type' => 'custom_entity',
-			//'params' => array('multiple' => 'Y'),
-			'selector' => array(
-				'TYPE' => 'crm_entity',
-				'DATA' => array(
-					'ID' => 'contact',
-					'FIELD_ID' => 'CONTACT_ID',
-					'FIELD_ALIAS' => 'ASSOCIATED_CONTACT_ID',
-					'ENTITY_TYPE_NAMES' => array(CCrmOwnerType::ContactName),
-					//'IS_MULTIPLE' => true
-				)
-			)
-		),
-		array(
-			'id' => 'COMPANY_ID',
-			'name' => GetMessage('CRM_COLUMN_COMPANY_LIST'),
-			'default' => true,
-			'type' => 'custom_entity',
-			//'params' => array('multiple' => 'Y'),
-			'selector' => array(
-				'TYPE' => 'crm_entity',
-				'DATA' => array(
-					'ID' => 'company',
-					'FIELD_ID' => 'COMPANY_ID',
-					'ENTITY_TYPE_NAMES' => array(CCrmOwnerType::CompanyName),
-					//'IS_MULTIPLE' => false
-				)
-			)
-		),
-	*/
 	$defaultFilter = array('SOURCE_ID' => array(), 'STATUS_ID' => array(), 'COMMUNICATION_TYPE' => array(), 'DATE_CREATE' => '', 'ASSIGNED_BY_ID' => '');
 
 	$currentUserID = $arResult['CURRENT_USER_ID'];;
@@ -419,6 +386,7 @@ if(!$bInternal)
 	$arResult['FILTER_PRESETS'] = array(
 		'filter_my_in_work' => array(
 			'name' => GetMessage('CRM_PRESET_MY_IN_WORK'),
+			'disallow_for_all' => true,
 			'fields' => array_merge(
 				$defaultFilter,
 				array(
@@ -447,7 +415,6 @@ if(!$bInternal)
 }
 //endregion
 
-$gridOptions = new \Bitrix\Main\Grid\Options($arResult['GRID_ID'], $arResult['FILTER_PRESETS']);
 if (!empty($externalFilterId))
 {
 	Main\Loader::includeModule('report');
@@ -459,6 +426,7 @@ else
 	$filterOptions = new \Bitrix\Main\UI\Filter\Options($arResult['GRID_ID'], $arResult['FILTER_PRESETS']);
 }
 
+$gridOptions = new \Bitrix\Main\Grid\Options($arResult['GRID_ID'], $arResult['FILTER_PRESETS']);
 
 //region Navigation Params
 if ($arParams['LEAD_COUNT'] <= 0)
@@ -467,6 +435,10 @@ if ($arParams['LEAD_COUNT'] <= 0)
 }
 $arNavParams = $gridOptions->GetNavParams(array('nPageSize' => $arParams['LEAD_COUNT']));
 $arNavParams['bShowAll'] = false;
+if(isset($arNavParams['nPageSize']) && $arNavParams['nPageSize'] > 100)
+{
+	$arNavParams['nPageSize'] = 100;
+}
 //endregion
 
 //region Filter initialization
@@ -838,8 +810,19 @@ $CCrmUserType->PrepareListFilterValues($arResult['FILTER'], $arFilter, $arResult
 
 $USER_FIELD_MANAGER->AdminListAddFilter(CCrmLead::$sUFEntityID, $arFilter);
 
-// converts data from filter
-Bitrix\Crm\Search\SearchEnvironment::convertEntityFilterValues(CCrmOwnerType::Lead, $arFilter);
+//region Apply Search Restrictions
+$searchRestriction = \Bitrix\Crm\Restriction\RestrictionManager::getSearchLimitRestriction();
+if(!$searchRestriction->isExceeded(CCrmOwnerType::Lead))
+{
+	Bitrix\Crm\Search\SearchEnvironment::convertEntityFilterValues(CCrmOwnerType::Lead, $arFilter);
+}
+else
+{
+	$arResult['LIVE_SEARCH_LIMIT_INFO'] = $searchRestriction->prepareStubInfo(
+		array('ENTITY_TYPE_ID' => CCrmOwnerType::Lead)
+	);
+}
+//endregion
 
 //region Activity Counter Filter
 if(isset($arFilter['ACTIVITY_COUNTER']))
@@ -1874,6 +1857,12 @@ if(!empty($arSort) && !isset($arSort['id']))
 
 $arSelect = array_unique(array_keys($arSelectMap), SORT_STRING);
 
+// For calendar view
+if (isset($arParams['CALENDAR_MODE_LIST']) && !in_array('DATE_CREATE', $arSelect))
+{
+	$arSelect[] = 'DATE_CREATE';
+}
+
 $arResult['LEAD'] = array();
 $arResult['LEAD_ID'] = array();
 $arResult['LEAD_UF'] = array();
@@ -2746,7 +2735,13 @@ if (!$isInExportMode)
 			$arResult['NEED_FOR_REBUILD_SEARCH_CONTENT'] = true;
 		}
 
+		if(\Bitrix\Crm\Agent\Semantics\LeadSemanticsRebuildAgent::getInstance()->isEnabled())
+		{
+			$arResult['NEED_FOR_REBUILD_LEAD_SEMANTICS'] = true;
+		}
+
 		$arResult['NEED_FOR_BUILD_TIMELINE'] = \Bitrix\Crm\Agent\Timeline\LeadTimelineBuildAgent::getInstance()->isEnabled();
+		$arResult['NEED_FOR_REBUILD_TIMELINE_SEARCH_CONTENT'] = \Bitrix\Crm\Agent\Search\TimelineSearchContentRebuildAgent::getInstance()->isEnabled();
 		$arResult['NEED_FOR_REFRESH_ACCOUNTING'] = \Bitrix\Crm\Agent\Accounting\LeadAccountSyncAgent::getInstance()->isEnabled();
 
 		if(CCrmPerms::IsAdmin())
@@ -2759,10 +2754,6 @@ if (!$isInExportMode)
 			{
 				$arResult['PATH_TO_PRM_LIST'] = CComponentEngine::MakePathFromTemplate(COption::GetOptionString('crm', 'path_to_perm_list'));
 				$arResult['NEED_FOR_REBUILD_LEAD_ATTRS'] = true;
-			}
-			if(COption::GetOptionString('crm', '~CRM_REBUILD_LEAD_SEMANTICS', 'N') === 'Y')
-			{
-				$arResult['NEED_FOR_REBUILD_LEAD_SEMANTICS'] = true;
 			}
 		}
 	}

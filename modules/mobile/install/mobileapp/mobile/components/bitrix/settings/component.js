@@ -159,9 +159,9 @@
 				})
 			}
 
-			settings.setItems(items, [
+			BX.onViewLoaded(()=>settings.setItems(items, [
 				new FormSection("main", BX.message("SETTINGS_TITLE")).compile()
-			]);
+			]));
 
 			console.info("AppSettingsManager.init:", items);
 		},

@@ -10,6 +10,7 @@ $MESS["VOX_START_CONFIGURE_IVR"] = "Voice menu";
 $MESS["VOX_START_CONFIGURE_NUMBERS"] = "Configure numbers";
 $MESS["VOX_START_CONFIGURE_TELEPHONY"] = "Configure telephony";
 $MESS["VOX_START_CONFIGURE_USERS"] = "Telephony users";
+$MESS["VOX_START_CONTRACTOR_DOCUMENTS"] = "Telephony invoices";
 $MESS["VOX_START_INTEGRATION_REQUIRED"] = "Need integration?";
 $MESS["VOX_START_NUMBER_RENT"] = "Rent a number";
 $MESS["VOX_START_SEE_ALL"] = "View all";

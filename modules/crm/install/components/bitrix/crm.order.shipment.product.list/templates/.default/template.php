@@ -4,12 +4,14 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 use \Bitrix\Main\Localization\Loc;
 \Bitrix\Main\UI\Extension::load("ui.fonts.ruble");
+\Bitrix\Main\UI\Extension::load('sale.barcode');
 
 Loc::loadMessages(__FILE__);
 
 $APPLICATION->AddHeadScript('/bitrix/js/crm/interface_grid.js');
 
 $jsObjName = 'BX.Crm.Order.Shipment.Product.listObj_'.$arResult['GRID_ID'];
+$barcodeWidgetCssPath = $templateFolder.'/barcodewidget.css';
 $gridManagerID = $arResult['GRID_ID'].'_MANAGER';
 $basketCodes = [];
 $rows = [];
@@ -22,7 +24,7 @@ $storeBarcodeTmplB =
 		id="barcode_button_#BASKET_CODE#_#STORE_ID#"
 		class="ui-btn ui-btn-primary" 
 		name="barcode" 
-		onclick="'.$jsObjName.'.onBarcodeClick(\''.$arResult['ORDER_ID'].'\', \'#BASKET_ID#\', \'#STORE_ID#\'); return false;"
+		onclick="'.$jsObjName.'.onBarcodeClick(\''.$arResult['ORDER_ID'].'\', \'#BASKET_ID#\', \'#STORE_ID#\', \''.CUtil::JSEscape($barcodeWidgetCssPath).'\'); return false;"
 	>'.\Bitrix\Main\Localization\Loc::getMessage('CRM_ORDER_SPLT_BARCODES').'</button></div>';
 
 $storeBarcodeTmplI=
@@ -71,6 +73,7 @@ foreach($arResult['PRODUCTS'] as $product)
 			<input type="hidden" name="'.$namePrefix.'[BASKET_ID]" value="'.(float)$product['BASKET_ID'].'">					
 			<input type="hidden" name="'.$namePrefix.'[BASKET_CODE]" value="'.$product['BASKET_CODE'].'">
 			<input type="hidden" name="'.$namePrefix.'[ORDER_DELIVERY_BASKET_ID]" value="'.$product['ORDER_DELIVERY_BASKET_ID'].'">
+			<input type="hidden" name="'.$namePrefix.'[IS_SUPPORTED_MARKING_CODE]" value="'.$product['IS_SUPPORTED_MARKING_CODE'].'">
 		';
 	}
 	$nameClass = "crm-order-product-container";
@@ -196,7 +199,14 @@ foreach($arResult['PRODUCTS'] as $product)
 
 		if (!$isReadOnly)
 		{
-			$storeBarcodeTmpl .= $product['BARCODE_MULTI'] == 'Y' ? $storeBarcodeTmplB : $storeBarcodeTmplI;
+			if($product['BARCODE_MULTI'] == 'Y' || $product['IS_SUPPORTED_MARKING_CODE'] == 'Y')
+			{
+				$storeBarcodeTmpl .= $storeBarcodeTmplB;
+			}
+			else
+			{
+				$storeBarcodeTmpl .=  $storeBarcodeTmplI;
+			}
 		}
 		else
 		{
@@ -342,6 +352,9 @@ $APPLICATION->IncludeComponent(
 		'AJAX_OPTION_HISTORY' => $arResult['AJAX_OPTION_HISTORY'],
 		'AJAX_LOADER' => isset($arParams['AJAX_LOADER']) ? $arParams['AJAX_LOADER'] : null,
 		'ENABLE_ROW_COUNT_LOADER' => true,
+		"SHOW_CHECK_ALL_CHECKBOXES" => false,
+		"SHOW_ROW_CHECKBOXES" => false,
+		"SHOW_NAVIGATION_PANEL" => false,
 		'PRESERVE_HISTORY' => $arResult['PRESERVE_HISTORY'],
 		'SHOW_ROW_ACTIONS_MENU' => !$isSetItems,
 		'ENABLE_COLLAPSIBLE_ROWS' => true,
@@ -375,7 +388,9 @@ $APPLICATION->IncludeComponent(
 			BX.message({
 				CRM_ORDER_SPLT_CHOOSE_STORE: '<?=Loc::getMessage("CRM_ORDER_SPLT_CHOOSE_STORE")?>',
 				CRM_ORDER_SPLT_CHOOSE: '<?=Loc::getMessage("CRM_ORDER_SPLT_CHOOSE")?>',
-				CRM_ORDER_SPLT_CLOSE: '<?=Loc::getMessage("CRM_ORDER_SPLT_CLOSE")?>'
+				CRM_ORDER_SPLT_CLOSE: '<?=Loc::getMessage("CRM_ORDER_SPLT_CLOSE")?>',
+				CRM_ORDER_SPLT_BARCODE: '<?=Loc::getMessage("CRM_ORDER_SPLT_BARCODE")?>',
+				CRM_ORDER_SPLT_MARKING_CODE: '<?=Loc::getMessage("CRM_ORDER_SPLT_MARKING_CODE")?>'
 			});
 			<?=$jsObjName?> = BX.Crm.Order.Shipment.Product.List.create(
 				"<?=$arResult['GRID_ID']?>",

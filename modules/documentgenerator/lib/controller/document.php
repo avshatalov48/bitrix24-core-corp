@@ -5,16 +5,18 @@
 namespace Bitrix\DocumentGenerator\Controller;
 
 use Bitrix\DocumentGenerator\Body\Docx;
+use Bitrix\DocumentGenerator\CreationMethod;
 use Bitrix\DocumentGenerator\DataProvider\Rest;
 use Bitrix\DocumentGenerator\DataProviderManager;
 use Bitrix\DocumentGenerator\Driver;
 use Bitrix\DocumentGenerator\Engine\CheckAccess;
+use Bitrix\DocumentGenerator\Engine\CheckPermissions;
 use Bitrix\DocumentGenerator\Integration\Bitrix24Manager;
 use Bitrix\DocumentGenerator\Model\DocumentTable;
 use Bitrix\DocumentGenerator\Model\FileTable;
 use Bitrix\DocumentGenerator\Model\TemplateTable;
+use Bitrix\DocumentGenerator\UserPermissions;
 use Bitrix\Main\Engine\ActionFilter\Csrf;
-use Bitrix\Main\Engine\Binder;
 use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Engine\Response\Converter;
 use Bitrix\Main\Engine\Response\DataType\ContentUri;
@@ -38,29 +40,11 @@ class Document extends Base
 	public function getDefaultPreFilters()
 	{
 		$preFilters = parent::getDefaultPreFilters();
+		$preFilters[] = new CheckPermissions(UserPermissions::ENTITY_DOCUMENTS, UserPermissions::ACTION_VIEW);
 		$preFilters[] = new CheckAccess();
 
 		return $preFilters;
 	}
-
-	protected function init()
-	{
-		parent::init();
-
-		Binder::registerParameterDependsOnName(
-			\Bitrix\DocumentGenerator\Template::class,
-			function($className, $id)
-			{
-				/** @var \Bitrix\DocumentGenerator\Template $className */
-				return $className::loadById($id);
-			},
-			function()
-			{
-				return 'templateId';
-			}
-		);
-	}
-
 
 	/**
 	 * @return array
@@ -68,24 +52,31 @@ class Document extends Base
 	public function configureActions()
 	{
 		$configureActions = parent::configureActions();
-		$configureActions['getImage'] = [
-			'-prefilters' => [
-				Csrf::class
-			]
-		];
-		$configureActions['getFile'] = [
-			'-prefilters' => [
-				Csrf::class
-			]
-		];
-		$configureActions['getPdf'] = [
-			'-prefilters' => [
-				Csrf::class
-			]
-		];
+		$configureActions['getImage'] =
+		$configureActions['getFile'] =
+		$configureActions['getPdf'] =
 		$configureActions['showPdf'] = [
 			'-prefilters' => [
-				Csrf::class
+				Csrf::class,
+			],
+		];
+		$configureActions['delete'] =
+		$configureActions['update'] =
+		$configureActions['getFields'] =
+		$configureActions['enablePublicUrl'] =
+		$configureActions['upload'] = [
+			'+prefilters' => [
+				new CheckPermissions(UserPermissions::ENTITY_DOCUMENTS, UserPermissions::ACTION_MODIFY),
+			],
+		];
+		$configureActions['add'] = [
+			'+prefilters' => [
+				new CheckPermissions(UserPermissions::ENTITY_DOCUMENTS, UserPermissions::ACTION_CREATE),
+			],
+		];
+		$configureActions['getButtonTemplates'] = [
+			'-prefilters' => [
+				CheckPermissions::class,
 			]
 		];
 
@@ -249,7 +240,7 @@ class Document extends Base
 		}
 		$template->setSourceType($providerClassName);
 		$document = \Bitrix\DocumentGenerator\Document::createByTemplate($template, $value);
-		if(!$document->hasAccess(Driver::getInstance()->getUserId()))
+		if(!$document->hasAccess())
 		{
 			$this->errorCollection[] = new Error('Access denied', static::ERROR_ACCESS_DENIED);
 			return null;
@@ -258,6 +249,14 @@ class Document extends Base
 		{
 			$this->errorCollection[] = new Error('Maximum count of documents has been reached', Bitrix24Manager::LIMIT_ERROR_CODE);
 			return null;
+		}
+		if($restServer || $this->getScope() === static::SCOPE_REST)
+		{
+			CreationMethod::markDocumentAsCreatedByRest($document);
+		}
+		else
+		{
+			CreationMethod::markDocumentAsCreatedByPublic($document);
 		}
 		$result = $document->enableStamps($stampsEnabled == 1)->setValues($values)->setFields($fields)->getFile(true, $this->getScope() === static::SCOPE_REST);
 		if(!$result->isSuccess())
@@ -366,6 +365,7 @@ class Document extends Base
 			}
 			$filter['template.moduleId'] = Driver::REST_MODULE_ID;
 		}
+		$this->prepareDateTimeFieldsForFilter($filter, ['createTime', 'updateTime']);
 		if(is_array($filter))
 		{
 			$filter = $converter->setFormat(Converter::TO_UPPER | Converter::KEYS | Converter::TO_SNAKE)->process($filter);
@@ -415,7 +415,7 @@ class Document extends Base
 	/**
 	 * @param array $fields
 	 * @param \CRestServer $restServer
-	 * @return array|bool
+	 * @return array|null
 	 */
 	public function uploadAction(array $fields, \CRestServer $restServer)
 	{
@@ -477,7 +477,6 @@ class Document extends Base
 			return false;
 		}
 
-		$templateId = 0;
 		$template = TemplateTable::getList(['select' => ['ID'], 'order' => ['ID' => 'desc',],'filter' => ['MODULE_ID' => $moduleId, 'CODE' => $appInfo['CODE'], 'REGION' => $region]])->fetch();
 		if(!$template)
 		{
@@ -581,6 +580,53 @@ class Document extends Base
 			$updateTime = time();
 		}
 		return new ContentUri(UrlManager::getInstance()->create('documentgenerator.api.document.'.$action, ['id' => $documentId, 'ts' => $updateTime], true)->getUri());
+	}
+
+	/**
+	 * @param $moduleId
+	 * @param $provider
+	 * @param $value
+	 * @return array
+	 */
+	public function getButtonTemplatesAction($moduleId, $provider, $value)
+	{
+		$result = [];
+		if(is_string($moduleId) && !empty($moduleId) && Loader::includeModule($moduleId))
+		{
+			$result = [
+				'documentList' => $this->getDocumentListUrl(),
+				'canEditTemplate' => Driver::getInstance()->getUserPermissions()->canModifyTemplates(),
+			];
+
+			if(Driver::getInstance()->getUserPermissions()->canModifyDocuments())
+			{
+				$result['templates'] = TemplateTable::getListByClassName($provider, Driver::getInstance()->getUserId(), $value);
+			}
+		}
+		else
+		{
+			$this->errorCollection->add([new Error('Wrong moduleId')]);
+		}
+
+		return $result;
+	}
+
+	/**
+	 * @return bool|string
+	 */
+	protected function getDocumentListUrl()
+	{
+		if(Driver::getInstance()->getUserPermissions()->canViewDocuments())
+		{
+			$componentPath = \CComponentEngine::makeComponentPath('bitrix:documentgenerator.documents');
+			$componentPath = getLocalPath('components'.$componentPath.'/slider.php');
+			if(!empty($componentPath))
+			{
+				return $componentPath;
+			}
+		}
+
+		return false;
 	}
 }
 

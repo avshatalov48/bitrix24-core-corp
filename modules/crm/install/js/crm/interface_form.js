@@ -2655,7 +2655,7 @@ BX.CrmEntityEditor.prototype =
 						}
 					}
 				}
-				
+
 				switch (type)
 				{
 					case 'contact':
@@ -3860,6 +3860,14 @@ if(typeof(BX.CrmEntityInfo) === "undefined")
 		{
 			return BX.prop.getString(this._settings, "largeImage", "");
 		},
+		canUpdate: function()
+		{
+			return BX.prop.getBoolean(
+				BX.prop.getObject(this._settings, "permissions"),
+				"canUpdate",
+				false
+			);
+		},
 		hasMultiFields: function()
 		{
 			var advancedInfo = this.getSetting("advancedInfo", null);
@@ -3889,6 +3897,94 @@ if(typeof(BX.CrmEntityInfo) === "undefined")
 				"multiFields",
 				[]
 			);
+		},
+		findIndexMultifieldById: function(id)
+		{
+			if(id === null || id === undefined)
+			{
+				return -1;
+			}
+
+			if(!BX.type.isString(id))
+			{
+				id = id.toString();
+			}
+
+			var advancedInfo = this.getSetting("advancedInfo", null);
+			if(!advancedInfo)
+			{
+				return -1;
+			}
+
+			var fields = BX.prop.getArray(advancedInfo, "multiFields", []);
+			for (var i = 0; i < fields.length; i++)
+			{
+				var field = fields[i];
+				if(BX.prop.getString(field, "ID", "") === id)
+				{
+					return i;
+				}
+			}
+
+			return -1;
+		},
+		getMultiField: function(index)
+		{
+			var advancedInfo = this.getSetting("advancedInfo", null);
+			if(!advancedInfo)
+			{
+				return null;
+			}
+
+			var fields = BX.prop.getArray(advancedInfo, "multiFields", []);
+			return fields.length > index ? fields[index] : null;
+		},
+		setMultifield: function(field, index)
+		{
+			if(!BX.type.isPlainObject(this._settings["advancedInfo"]))
+			{
+				this._settings["advancedInfo"] = {};
+			}
+
+			if(!BX.type.isArray(this._settings["advancedInfo"]["multiFields"]))
+			{
+				this._settings["advancedInfo"]["multiFields"] = [];
+			}
+
+			if(this._settings["advancedInfo"]["multiFields"].length > index)
+			{
+				this._settings["advancedInfo"]["multiFields"][index] = field;
+			}
+			else
+			{
+				throw "Could not find field";
+			}
+		},
+		addMultifield: function(field)
+		{
+			if(!BX.type.isPlainObject(this._settings["advancedInfo"]))
+			{
+				this._settings["advancedInfo"] = {};
+			}
+
+			if(!BX.type.isArray(this._settings["advancedInfo"]["multiFields"]))
+			{
+				this._settings["advancedInfo"]["multiFields"] = [];
+			}
+
+			this._settings["advancedInfo"]["multiFields"].push(field);
+		},
+		setMultifieldById: function(field, fieldId)
+		{
+			var index = this.findIndexMultifieldById(fieldId);
+			if(index >= 0)
+			{
+				this.setMultifield(field, index);
+			}
+			else
+			{
+				this.addMultifield(field);
+			}
 		},
 		getMultiFieldsByType: function(type)
 		{
@@ -11492,7 +11588,7 @@ if(typeof(BX.CrmMultipleAddressEditor) === "undefined")
 			var msg = BX.CrmMultipleAddressEditor.messages;
 			return msg.hasOwnProperty(name) ? msg[name] : name;
 		},
-		createItem: function(typeId, originatorId)
+		createItem: function(typeId, originatorId, silent)
 		{
 			if(!BX.type.isNumber(typeId))
 			{
@@ -11528,10 +11624,13 @@ if(typeof(BX.CrmMultipleAddressEditor) === "undefined")
 				}
 				else
 				{
-					window.alert(
-						this.getMessage("alreadyExists")
-						.replace("#TYPE_NAME#", this.getTypeName(typeId))
-					);
+					if (!silent)
+					{
+						window.alert(
+							this.getMessage("alreadyExists")
+								.replace("#TYPE_NAME#", this.getTypeName(typeId))
+						);
+					}
 					return false;
 				}
 			}
@@ -12158,6 +12257,8 @@ if(typeof(BX.CrmMultipleAddressItemEditor) === "undefined")
 				)
 			);
 			this._container.style.display = "none";
+
+			BX.onCustomEvent(this._editor, "CrmMultipleAddressItemMarkAsDeleted", [this._editor, this]);
 		},
 		isMarkedAsDeleted: function()
 		{
@@ -12243,6 +12344,7 @@ BX.Crm.EntityEditorBlockAreaClass = (function ()
 		this.visualization = null;
 
 		this.blockList = [];
+		this.blockPseudoIdIndex = {};
 
 		this.cleanState = {
 			started: false,
@@ -12308,6 +12410,17 @@ BX.Crm.EntityEditorBlockAreaClass = (function ()
 		{
 			return this.wrapper;
 		},
+		getBlockByPseudoId: function(pseudoId)
+		{
+			var result = null;
+
+			if (this.blockPseudoIdIndex.hasOwnProperty(pseudoId))
+			{
+				result = this.blockPseudoIdIndex[pseudoId];
+			}
+
+			return result;
+		},
 		addBlock: function(entityInfo)
 		{
 			var blockIndex = this.blockList.length;
@@ -12329,6 +12442,7 @@ BX.Crm.EntityEditorBlockAreaClass = (function ()
 			if (block)
 			{
 				this.blockList[blockIndex] = block;
+				this.blockPseudoIdIndex[block.getPseudoId()] = blockIndex;
 
 				if (this.visualization)
 					this.visualization.addTabBlock(block);
@@ -12410,7 +12524,7 @@ BX.Crm.EntityEditorBlockAreaClass = (function ()
 				var block = this.blockList[blockIndex];
 
 				this.blockList.splice(blockIndex, 1);
-
+				delete this.blockPseudoIdIndex[block.getPseudoId()];
 				this.reindexBlocks(blockIndex);
 
 				block.continueDestroy();
@@ -12422,7 +12536,10 @@ BX.Crm.EntityEditorBlockAreaClass = (function ()
 		reindexBlocks: function(indexFrom)
 		{
 			for (var i = indexFrom; i < this.blockList.length; i++)
+			{
 				this.blockList[i].setIndex(i);
+				this.blockPseudoIdIndex[blockList[i].getPseudoId()] = i;
+			}
 		},
 		destroy: function(afterDestroy)
 		{
@@ -12554,7 +12671,7 @@ BX.Crm.EntityEditorBlockAreaVisualizationClass = (function()
 		switchRequisiteItems : function(item, itemList)
 		{
 			var inp;
-			
+
 			for(var i=0; i<itemList.length; i++)
 			{
 				BX.removeClass(itemList[i], 'crm-offer-requisite-active');
@@ -12672,7 +12789,7 @@ BX.Crm.EntityEditorBlockClass = (function ()
 		this.titleNode = null;
 		this.closeButtonNode = null;
 		this.requisiteIndex = [];
-		
+
 		this.random = Math.random().toString().substring(2);
 
 		this.initialize();
@@ -13248,7 +13365,7 @@ BX.Crm.EntityEditorBlockClass = (function ()
 									var requisiteBlockNode,
 										requisiteRadioIdPrefix,
 										requisiteRadioId;
-									
+
 									if (this.editor)
 										requisiteRadioIdPrefix = this.editor.getSetting("containerId", null);
 									if (!BX.type.isNotEmptyString(requisiteRadioIdPrefix))
@@ -13306,7 +13423,7 @@ BX.Crm.EntityEditorBlockClass = (function ()
 											if (requisiteBlockNode)
 											{
 												var requisiteFields = requisiteItems[i]["viewData"]["fields"];
-												
+
 												if (requisiteFields.length > 0 ||
 													requisiteItems[i]["bankDetailViewDataList"].length > 0)
 												{
@@ -13745,6 +13862,8 @@ if(typeof(BX.Crm.RequisiteBankDetailsArea) === "undefined")
 		},
 		addBlock: function(bankDetailId, bankDetailData)
 		{
+			var result = 0;
+
 			bankDetailId = parseInt(bankDetailId);
 			if (bankDetailId < 0 || isNaN(bankDetailId))
 				bankDetailId = 0;
@@ -13772,7 +13891,12 @@ if(typeof(BX.Crm.RequisiteBankDetailsArea) === "undefined")
 			});
 
 			if (block)
+			{
+				result = block.getPseudoId();
 				this.blockList[blockIndex] = block;
+			}
+
+			return result;
 		},
 		onBlockDestroy: function(blockIndex)
 		{
@@ -13915,7 +14039,7 @@ if(typeof(BX.Crm.RequisiteBankDetailsBlock) === "undefined")
 		this.wrapper = null;
 
 		this.documentClickHandler = null;
-		
+
 		this.editNameMode = false;
 		this.editNameInput = null;
 		this.hiddenNameInput = null;
@@ -14163,6 +14287,10 @@ if(typeof(BX.Crm.RequisiteBankDetailsBlock) === "undefined")
 
 			return "";
 		},
+		getFieldList: function()
+		{
+			return this.fieldList;
+		},
 		clean: function(cleanAll)
 		{
 			cleanAll = !!cleanAll;
@@ -14226,10 +14354,10 @@ if(typeof(BX.Crm.RequisiteBankDetailsBlock) === "undefined")
 		enableEditNameMode: function(enable)
 		{
 			enable = !!enable;
-			
+
 			if (this.editNameMode === enable)
 				return;
-			
+
 			this.editNameMode = enable;
 			if (this.editNameMode)
 			{
@@ -14246,7 +14374,7 @@ if(typeof(BX.Crm.RequisiteBankDetailsBlock) === "undefined")
 					BX.bind(this.editNameInput, "keydown", this.editNameKeyPressHandler);
 				}
 			}
-			else 
+			else
 			{
 				this.editNameInput.style.display = "none";
 				this.nameLabelNode.style.display = "";
@@ -14333,7 +14461,6 @@ if(typeof(BX.Crm.RequisiteBankDetailsBlock) === "undefined")
 		},
 		onDeleteButtonClick: function()
 		{
-			BX.onCustomEvent("CrmFormBankDetailBlockRemove", [this]);
 			this.markAsDeleted();
 		},
 		resolveFieldInputName: function(fieldName)
@@ -14374,6 +14501,8 @@ if(typeof(BX.Crm.RequisiteBankDetailsBlock) === "undefined")
 				);
 				this.wrapper.style.display = "none";
 			}
+
+			BX.onCustomEvent("CrmFormBankDetailBlockRemove", [this]);
 		},
 		isMarkedAsDeleted: function()
 		{
@@ -14401,8 +14530,9 @@ if(typeof(BX.Crm.RequisiteBankDetailsBlock) === "undefined")
 			if (countryId <= 0)
 				countryId = this.presetCountryId;
 			return {
+				bankDetailBlock: this,
 				formId: this.formId,
-					containerId: this.wrapperId,
+				containerId: this.wrapperId,
 				bankDetailPseudoId: this.getPseudoId(),
 				countryId: countryId,
 				enableFieldMasquerading: this.fieldNameTemplate !== "",

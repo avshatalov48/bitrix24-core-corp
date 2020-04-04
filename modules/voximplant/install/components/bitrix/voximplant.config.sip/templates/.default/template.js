@@ -205,7 +205,7 @@
 		{
 			//statistics
 
-			BX.ajax.runComponentAction("bitrix:voximplan.config.sip", "buySipConnector", {
+			BX.ajax.runComponentAction("bitrix:voximplant.config.sip", "buySipConnector", {
 				analyticsLabel: "buySipConnector"
 			});
 

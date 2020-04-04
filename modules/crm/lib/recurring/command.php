@@ -37,12 +37,22 @@ class Command
 	/**
 	 * @param $type
 	 *
+	 * @return bool
+	 */
+	private static function isEntityExist($type)
+	{
+		return in_array($type, [Manager::INVOICE, Manager::DEAL]);
+	}
+
+	/**
+	 * @param $type
+	 *
 	 * @return Entity\Base | null
 	 */
 	public static function loadEntity($type)
 	{
 		$className = __NAMESPACE__."\\Entity\\".$type;
-		if (!class_exists($className))
+		if (!class_exists($className) || !self::isEntityExist($type))
 		{
 			return null;
 		}

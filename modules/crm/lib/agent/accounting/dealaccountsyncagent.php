@@ -34,9 +34,9 @@ class DealAccountSyncAgent extends EntityStepwiseAgent
 	}
 	protected function getTotalEntityCount()
 	{
-		return \CCrmDeal::GetListEx(array(), array('CHECK_PERMISSIONS' => 'N'), array(), false);
+		return \CCrmDeal::GetTotalCount();
 	}
-	protected function getEnityIDs($offsetID, $limit)
+	protected function getEntityIDs($offsetID, $limit)
 	{
 		$filter = array('CHECK_PERMISSIONS' => 'N');
 		if($offsetID > 0)

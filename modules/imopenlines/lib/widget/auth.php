@@ -41,11 +41,11 @@ class Auth
 		'pull.watch.extend',
 		// im
 		'im.chat.get',
-		'im.chat.sendtyping',
 		'im.message.add',
 		'im.message.update',
 		'im.message.delete',
 		'im.message.like',
+		'im.dialog.writing',
 		'im.dialog.messages.get',
 		'im.dialog.read',
 		'im.disk.folder.get',
@@ -209,7 +209,7 @@ class Auth
 
 		$userData = \Bitrix\Main\UserTable::getList([
 			'select' => ['ID', 'EXTERNAL_AUTH_ID'],
-			'filter' => ['XML_ID' => $xmlId]
+			'filter' => ['=XML_ID' => $xmlId]
 		])->fetch();
 
 		if($userData && $userData['EXTERNAL_AUTH_ID'] == User::EXTERNAL_AUTH_ID)

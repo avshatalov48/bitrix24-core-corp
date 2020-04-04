@@ -10,6 +10,7 @@ namespace Bitrix\Rest\SessionAuth;
 
 
 use Bitrix\Main\Context;
+use Bitrix\Main\UserTable;
 
 class Auth
 {
@@ -18,6 +19,64 @@ class Auth
 	protected static $authQueryParams = array(
 		'sessid',
 	);
+
+	public static function isAccessAllowed(): bool
+	{
+		global $USER;
+
+		$externalAuthId = $USER->GetParam('EXTERNAL_AUTH_ID');
+
+		// user without EXTERNAL_AUTH_ID is real user
+		if (!$externalAuthId)
+		{
+			return true;
+		}
+
+		// user with Controller or SocialServices authorization is real user
+		$whiteList = ["__controller", "socservices"];
+		if (in_array($externalAuthId, $whiteList, true))
+		{
+			return true;
+		}
+
+		// fake user like as BOT, IMCONNECTOR, SHOP
+		$blackList = UserTable::getExternalUserTypes();
+		if (in_array($externalAuthId, $blackList, true))
+		{
+			return false;
+		}
+
+		// If for some reason,
+		// EXTERNAL_AUTH_ID was not included in white or black lists
+		// check access using API (its very "fast")
+
+		// If REST use not in Bitrix24
+		if (!\Bitrix\Main\Loader::includeModule('intranet'))
+		{
+			return false;
+		}
+
+		$userId = $USER->GetID();
+		$userData = \Bitrix\Intranet\UserTable::getByPrimary($userId, ['select' => ['USER_TYPE_INNER']])->fetch();
+		if ($userData && $userData['USER_TYPE_INNER'] === 'employee')
+		{
+			return true;
+		}
+
+		if (!\Bitrix\Main\ModuleManager::isModuleInstalled('extranet'))
+		{
+			return false;
+		}
+
+		$extranetGroupId = (int)\Bitrix\Main\Config\Option::get('extranet', 'extranet_group', 0);
+		$userGroups = array_map(function($value) { return (int)$value; }, $USER->GetUserGroupArray());
+		if ($extranetGroupId && in_array($extranetGroupId, $userGroups, true))
+		{
+			return true;
+		}
+
+		return false;
+	}
 
 	public static function onRestCheckAuth(array $query, $scope, &$res)
 	{
@@ -42,15 +101,28 @@ class Auth
 			{
 				if($USER->isAuthorized())
 				{
-					$error = false;
-					$res = array(
-						'user_id' => $USER->GetID(),
-						'scope' => implode(',', \CRestUtil::getScopeList()),
-						'parameters_clear' => static::$authQueryParams,
-						'auth_type' => static::AUTH_TYPE,
-					);
+					if (self::isAccessAllowed())
+					{
+						$error = false;
+						$res = array(
+							'user_id' => $USER->GetID(),
+							'scope' => implode(',', \CRestUtil::getScopeList()),
+							'parameters_clear' => static::$authQueryParams,
+							'auth_type' => static::AUTH_TYPE,
+						);
 
-					self::setLastActivityDate($USER->GetID(), $query);
+						self::setLastActivityDate($USER->GetID(), $query);
+
+						if ($query['BX_SESSION_LOCK'] !== 'Y')
+						{
+							session_write_close();
+						}
+					}
+					else
+					{
+						$error = true;
+						$res = array('error' => 'access_denied', 'error_description' => 'Access denied for this type of user', 'additional' => array('type' => $USER->GetParam('EXTERNAL_AUTH_ID')));
+					}
 				}
 				else
 				{

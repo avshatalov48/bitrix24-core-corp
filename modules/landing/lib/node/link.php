@@ -134,4 +134,67 @@ class Link extends \Bitrix\Landing\Node
 
 		return $data;
 	}
+
+	/**
+	 * @param array $field
+	 * @return array|null
+	 */
+	protected static function validateFieldDefinition(array $field)
+	{
+		$result = parent::validateFieldDefinition($field);
+		if (empty($result))
+		{
+			return null;
+		}
+
+		$field['actions'] = static::prepareActions($field);
+		if (empty($field['actions']))
+		{
+			return null;
+		}
+
+		$result['actions'] = $field['actions'];
+		return $result;
+	}
+
+	/**
+	 * @param array $field
+	 * @return array|null
+	 */
+	protected static function prepareActions(array $field)
+	{
+		if (empty($field['actions']) || !is_array($field['actions']))
+		{
+			return null;
+		}
+		$result = [];
+		$dublicate = [];
+		foreach ($field['actions'] as $row)
+		{
+			if (empty($row) || !is_array($row))
+			{
+				continue;
+			}
+			$row = array_change_key_case($row, CASE_LOWER);
+
+			$row['name'] = static::prepareStringValue($row, 'name');
+			$row['type'] = static::prepareStringValue($row, 'type');
+			if (empty($row['name']) || empty($row['type']))
+			{
+				continue;
+			}
+			if (isset($dublicate[$row['type']]))
+			{
+				continue;
+			}
+
+			$result[] = [
+				'type' => $row['type'],
+				'name' => $row['name']
+			];
+			$dublicate[$row['type']] = true;
+		}
+
+		return (!empty($result) ? $result : null);
+	}
 }

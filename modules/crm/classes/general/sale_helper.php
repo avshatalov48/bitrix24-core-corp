@@ -1,12 +1,10 @@
 <?php
 
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Main\UserGroupTable;
 
 class CCrmSaleHelper
 {
-	private static $listUserIdWithShopAccess = array();
-	private static $listUserIdWithSessionGroups = array();
+	private static $listUserIdWithShopAccess = [];
 
 	public static function Calculate($productRows, $currencyID, $personTypeID, $enableSaleDiscount = false, $siteId = SITE_ID, $arOptions = array())
 	{
@@ -345,8 +343,6 @@ class CCrmSaleHelper
 			return false;
 		}
 
-		CCrmInvoice::installExternalEntities();
-
 		global $USER;
 
 		if (!is_object($USER))
@@ -356,73 +352,69 @@ class CCrmSaleHelper
 
 		$userId = $USER->GetID();
 
-		if (array_key_exists($userId, self::$listUserIdWithShopAccess))
+		if (isset(self::$listUserIdWithShopAccess[$userId][$type]))
 		{
-			if (isset(self::$listUserIdWithShopAccess[$userId][$type]))
-			{
-				if (!empty(self::$listUserIdWithShopAccess[$userId][$type]))
-				{
-					self::setCurrentUserToGroup(self::getShopGroupIdByType($type));
-					return true;
-				}
-				else
-				{
-					return false;
-				}
-			}
+			return (!empty(self::$listUserIdWithShopAccess[$userId][$type]));
 		}
 
-		if ($USER->isAdmin())
+		if ($USER->isAdmin() || (CModule::IncludeModule("bitrix24") && CBitrix24::IsPortalAdmin($userId)))
 		{
-			self::$listUserIdWithShopAccess[$userId] = array($type => true);
-			self::setCurrentUserToGroup(self::getShopGroupIdByType("admin"));
+			$type = "admin";
+			self::$listUserIdWithShopAccess[$userId] = [$type => true];
+			if (!self::isUserInShopGroup($userId, $type))
+			{
+				self::setUserToShopGroup($userId, $type);
+			}
 			return true;
 		}
 
-		$listGroupId = array();
-		if ($type)
+		if ($userId)
 		{
-			$listGroupId[] = self::getShopGroupIdByType($type);
-		}
-		else
-		{
-			$listGroupId[] = self::getShopGroupIdByType("admin");
-			$listGroupId[] = self::getShopGroupIdByType("manager");
-		}
-
-		if ($userId && $listGroupId)
-		{
-			$listCurrentGroupId = array();
-			$groupListObject = CUser::getUserGroupList($userId);
-			while($groupList = $groupListObject->fetch())
+			$isAccess = self::isUserInShopGroup($userId, $type);
+			if (!$isAccess)
 			{
-				$listCurrentGroupId[] = $groupList["GROUP_ID"];
+				// If there is no access, we need to re-verify that there is no access, based on the rights of crm.
+				$isAccess = self::setUserToShopGroup($userId, $type);
 			}
-
-			$isAccess = false;
-			foreach ($listGroupId as $groupId)
-			{
-				if (in_array($groupId, $listCurrentGroupId))
-				{
-					$isAccess = true;
-				}
-			}
-
-			$isAccess = ($isAccess ? $isAccess : self::setUserToShopGroup($userId, $type));
-
-			if ($isAccess)
-			{
-				self::setCurrentUserToGroup(self::getShopGroupIdByType($type));
-			}
-
-			self::$listUserIdWithShopAccess[$userId] = array($type => $isAccess);
+			self::$listUserIdWithShopAccess[$userId] = [$type => $isAccess];
 			return $isAccess;
 		}
 		else
 		{
-			self::$listUserIdWithShopAccess[$userId] = array($type => false);
+			self::$listUserIdWithShopAccess[$userId] = [$type => false];
 			return false;
 		}
+	}
+
+	private static function isUserInShopGroup($userId, $type)
+	{
+		$shopGroupIds = [];
+		if ($type)
+		{
+			$shopGroupIds[] = self::getShopGroupIdByType($type);
+		}
+		else
+		{
+			$shopGroupIds[] = self::getShopGroupIdByType("admin");
+			$shopGroupIds[] = self::getShopGroupIdByType("manager");
+		}
+
+		$currentUserGroupIds = [];
+		$groupListObject = CUser::getUserGroupList($userId);
+		while ($groupList = $groupListObject->fetch())
+		{
+			$currentUserGroupIds[] = $groupList["GROUP_ID"];
+		}
+
+		foreach ($shopGroupIds as $groupId)
+		{
+			if (in_array($groupId, $currentUserGroupIds))
+			{
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	/**
@@ -464,86 +456,26 @@ class CCrmSaleHelper
 		return $isAccess;
 	}
 
-	private static function setCurrentUserToGroup($groupId)
-	{
-		global $USER;
-		if (!is_object($USER))
-		{
-			return;
-		}
-
-		$userId = $USER->GetId();
-		if (in_array($userId, self::$listUserIdWithSessionGroups))
-		{
-			return;
-		}
-
-		$groupId = intval($groupId);
-
-		if (!$groupId)
-		{
-			$CrmPerms = new CCrmPerms($userId);
-			if ($CrmPerms->havePerm("CONFIG", BX_CRM_PERM_CONFIG, "WRITE"))
-			{
-				$groupId = self::getShopGroupIdByType("admin");
-			}
-			else
-			{
-				$groupId = self::getShopGroupIdByType("manager");
-			}
-		}
-
-		$groups = $USER->GetUserGroupArray();
-		if ($groupId && !in_array($groupId, $groups))
-		{
-			$groups[] = $groupId;
-			$USER->SetUserGroupArray($groups);
-			self::$listUserIdWithSessionGroups[] = $userId;
-		}
-	}
-
 	/**
-	 * @param array $listUserId
+	 * @param array $newUserIds List new user id for add to shop groups.
+	 * @param array $currentUserIds List current user id from shop groups for delete.
 	 * @throws \Bitrix\Main\ArgumentException
 	 * @throws \Bitrix\Main\Db\SqlQueryException
 	 * @throws \Bitrix\Main\ObjectPropertyException
 	 * @throws \Bitrix\Main\SystemException
 	 */
-	public static function addUserToShopGroup($listUserId = array())
+	public static function addUserToShopGroup($newUserIds = [], $currentUserIds = [])
 	{
 		if (IsModuleInstalled("bitrix24"))
 		{
-			if (empty($listUserId))
+			if (empty($newUserIds))
 			{
-				$listUserId = self::getListUserIdFromCrmRoles();
+				$newUserIds = self::getListUserIdFromCrmRoles(true);
 			}
 
-			if ($listUserId)
-			{
-				foreach ($listUserId as $userId)
-				{
-					$CrmPerms = new CCrmPerms($userId);
-					if ($CrmPerms->havePerm("CONFIG", BX_CRM_PERM_CONFIG, "WRITE"))
-					{
-						$groupId = self::getShopGroupIdByType("admin");
-					}
-					else
-					{
-						$groupId = self::getShopGroupIdByType("manager");
-					}
-					if ($groupId)
-					{
-						$queryObject = UserGroupTable::getByPrimary(
-							array("GROUP_ID" => $groupId, "USER_ID" => $userId),
-							array("select" => array("GROUP_ID"))
-						);
-						if (!$queryObject->fetch())
-						{
-							UserGroupTable::add(array("GROUP_ID" => $groupId, "USER_ID" => $userId));
-						}
-					}
-				}
-			}
+			self::deleteUserFromShopGroupByUserIds($currentUserIds);
+
+			self::addUserToShopGroupByUserIds($newUserIds);
 		}
 	}
 
@@ -642,13 +574,14 @@ class CCrmSaleHelper
 	}
 
 	/**
+	 * @param bool $resetCash Reset cache.
 	 * @return array
 	 * @throws \Bitrix\Main\ArgumentException
 	 * @throws \Bitrix\Main\Db\SqlQueryException
 	 * @throws \Bitrix\Main\ObjectPropertyException
 	 * @throws \Bitrix\Main\SystemException
 	 */
-	public static function getListUserIdFromCrmRoles()
+	public static function getListUserIdFromCrmRoles($resetCash = false)
 	{
 		$listUserId = array();
 
@@ -657,7 +590,7 @@ class CCrmSaleHelper
 		$cacheDir = "/crm/list_crm_roles/";
 		$cache = new CPHPCache;
 
-		if ($cache->initCache($cacheTime, $cacheId, $cacheDir))
+		if (!$resetCash && $cache->initCache($cacheTime, $cacheId, $cacheDir))
 		{
 			$listUserId = $cache->getVars();
 		}
@@ -761,6 +694,101 @@ class CCrmSaleHelper
 		}
 
 		return $listUserId;
+	}
+
+	public static function getCurrentUsersShopGroups()
+	{
+		$userIds = [];
+
+		$shopGroupIds = [
+			self::getShopGroupIdByType("admin"),
+			self::getShopGroupIdByType("manager")
+		];
+
+		$queryObject = CUser::getList($by = "ID", $order = "asc",
+			["GROUPS_ID" => $shopGroupIds], ["SELECT" => ["ID"]]);
+		while ($user = $queryObject->fetch())
+		{
+			$userIds[] = $user["ID"];
+		}
+
+		return $userIds;
+	}
+
+	/**
+	 * @param $userId
+	 * @return int|null
+	 */
+	private static function getShopGroupIdByUserId($userId)
+	{
+		$CrmPerms = new CCrmPerms($userId);
+		if ($CrmPerms->havePerm("CONFIG", BX_CRM_PERM_CONFIG, "WRITE"))
+		{
+			return self::getShopGroupIdByType("admin");
+		}
+		else
+		{
+			return self::getShopGroupIdByType("manager");
+		}
+	}
+
+	private static function addUserToShopGroupByUserIds($newUserIds)
+	{
+		if (!$newUserIds)
+		{
+			return;
+		}
+
+		global $USER;
+
+		$currentUserId = 0;
+		if ($USER instanceof \CUser)
+		{
+			$currentUserId = (int)$USER->GetID();
+		}
+
+		foreach ($newUserIds as $userId)
+		{
+			$groupId = self::getShopGroupIdByUserId($userId);
+			if ($groupId)
+			{
+				CUser::appendUserGroup($userId, [$groupId]);
+				if ($currentUserId == $userId)
+				{
+					$USER->CheckAuthActions();
+				}
+			}
+		}
+	}
+
+	private static function deleteUserFromShopGroupByUserIds($currentUserIds = [])
+	{
+		if (!$currentUserIds)
+		{
+			return;
+		}
+
+		$connection = Bitrix\Main\Application::getConnection();
+		if ($connection->isTableExists("b_user_group"))
+		{
+			$shopGroupIds = [
+				self::getShopGroupIdByType("admin"),
+				self::getShopGroupIdByType("manager")
+			];
+			$shopGroupIds = array_filter($shopGroupIds);
+
+			$result = array_search(1, $currentUserIds);
+			if ($result !== false)
+			{
+				unset($currentUserIds[$result]);
+			}
+			if ($currentUserIds)
+			{
+				$strSql = "DELETE FROM b_user_group WHERE GROUP_ID IN (".
+					implode(',', $shopGroupIds).") and USER_ID IN (" .implode(',', $currentUserIds) . ")";
+				$connection->queryExecute($strSql);
+			}
+		}
 	}
 
 	public static function divideInvoiceOrderPersonTypeAgent()

@@ -314,6 +314,7 @@ abstract class Module extends Volume\Base implements Volume\IVolumeIndicatorModu
 								SELECT  object_id, max(id) as id
 								FROM b_disk_version 
 								GROUP BY object_id
+								ORDER BY NULL
 							) head ON head.OBJECT_ID = files.ID
 	
 							LEFT JOIN b_disk_attached_object  attached
@@ -337,9 +338,11 @@ abstract class Module extends Volume\Base implements Volume\IVolumeIndicatorModu
 						GROUP BY 
 							files.ID,
 							storage.MODULE_ID
+						ORDER BY NULL
 					) src
 					GROUP BY
 						src.MODULE_ID
+					ORDER BY NULL
 				) CNT_FREE
 					ON CNT_FILES.MODULE_ID = CNT_FREE.MODULE_ID
 			";
@@ -406,19 +409,34 @@ abstract class Module extends Volume\Base implements Volume\IVolumeIndicatorModu
 				{$fromSql}
 		";
 
+		VolumeTable::createTemporally();
+
 		$tableName = VolumeTable::getTableName();
+		$temporallyTableName = VolumeTable::getTemporallyName();
+
+		$columnList = Volume\QueryHelper::prepareInsert($columns, $this->getSelect());
+		$connection->queryExecute("INSERT INTO {$temporallyTableName} ({$columnList}) {$querySql}");
+
+		$temporallyDataSource = "SELECT {$columnList} FROM {$temporallyTableName}";
 
 		if ($this->getFilterId() > 0)
 		{
 			$filterId = $this->getFilterId();
 			$columnList = Volume\QueryHelper::prepareUpdateOnSelect($columns, $this->getSelect(), 'destinationTbl', 'sourceQuery');
-			$connection->queryExecute("UPDATE {$tableName} destinationTbl, ({$querySql}) sourceQuery SET {$columnList} WHERE destinationTbl.ID = {$filterId}");
+			$connection->queryExecute("
+				UPDATE 
+				    {$tableName} destinationTbl, 
+				    ({$temporallyDataSource}) sourceQuery 
+				SET {$columnList} 
+				WHERE destinationTbl.ID = {$filterId}
+			");
 		}
 		else
 		{
-			$columnList = Volume\QueryHelper::prepareInsert($columns, $this->getSelect());
-			$connection->queryExecute("INSERT INTO {$tableName} ({$columnList}) {$querySql}");
+			$connection->queryExecute("INSERT INTO {$tableName} ({$columnList}) {$temporallyDataSource}");
 		}
+
+		VolumeTable::dropTemporally();
 
 		return $this;
 	}
@@ -656,7 +674,7 @@ abstract class Module extends Volume\Base implements Volume\IVolumeIndicatorModu
 		{
 			$fields[$entityClass] = array();
 
-			/** @var \Bitrix\Main\Entity\DataManager $entityClass */
+			/** @var \Bitrix\Main\ORM\Data\DataManager $entityClass */
 			$ufName = $entityClass::getUfId();
 			if (strlen($ufName) > 0 && count($userTypeField) > 0)
 			{
@@ -696,7 +714,7 @@ abstract class Module extends Volume\Base implements Volume\IVolumeIndicatorModu
 	{
 		$connection = \Bitrix\Main\Application::getConnection();
 
-		/** @var \Bitrix\Main\Entity\DataManager $entityClass */
+		/** @var \Bitrix\Main\ORM\Data\DataManager $entityClass */
 		$ufName = $entityClass::getUfId();
 		$ufType = $userField['USER_TYPE_ID'];
 
@@ -761,6 +779,7 @@ abstract class Module extends Volume\Base implements Volume\IVolumeIndicatorModu
 										ON f.ID = files.FILE_ID 
 							) flsrc
 							{$relationGroupBySql}
+							ORDER BY NULL
 						";
 						break;
 					}
@@ -798,6 +817,7 @@ abstract class Module extends Volume\Base implements Volume\IVolumeIndicatorModu
 										ON f.ID = versions.FILE_ID
 							) flsrc
 							{$relationGroupBySql}
+							ORDER BY NULL
 						";
 						break;
 					}
@@ -826,6 +846,7 @@ abstract class Module extends Volume\Base implements Volume\IVolumeIndicatorModu
 										AND ufsrc.FIELD_ID = '{$ufId}'
 							) flsrc
 							{$relationGroupBySql}
+							ORDER BY NULL
 						";
 						break;
 					}
@@ -871,6 +892,7 @@ abstract class Module extends Volume\Base implements Volume\IVolumeIndicatorModu
 										ON f.ID = files.FILE_ID 
 							) flsrc
 							{$relationGroupBySql}
+							ORDER BY NULL
 						";
 						break;
 					}
@@ -908,6 +930,7 @@ abstract class Module extends Volume\Base implements Volume\IVolumeIndicatorModu
 										ON f.ID = versions.FILE_ID 
 							) flsrc
 							{$relationGroupBySql}
+							ORDER BY NULL
 						";
 						break;
 					}
@@ -936,6 +959,7 @@ abstract class Module extends Volume\Base implements Volume\IVolumeIndicatorModu
 										and ufsrc.{$ufEntityTableFieldName} REGEXP '^[0-9]+$'
 							) flsrc
 							{$relationGroupBySql}
+							ORDER BY NULL
 						";
 						break;
 					}

@@ -20,6 +20,14 @@ $APPLICATION->setAdditionalCSS('/bitrix/components/bitrix/main.post.form/templat
 $mailbox = $arParams['MAILBOX'];
 $settings = $arParams['SERVICE'];
 
+if ('N' == $_REQUEST['oauth'])
+{
+	$hiddenOAuth = !empty($settings['oauth']);
+	unset($settings['oauth']);
+}
+
+$baseUri = \CHTTP::urlDeleteParams(Main\Context::getCurrent()->getRequest()->getRequestUri(), array('oauth'));
+
 if (!empty($mailbox))
 {
 	if (!is_array($mailbox['OPTIONS']))
@@ -87,19 +95,22 @@ foreach ($arParams['ACCESS_LIST'] as $type => $list)
 $crmQueueList = array();
 $crmQueueLast = array();
 $crmQueueSelected = array();
-foreach ($arParams['CRM_QUEUE'] as $item)
+if ($arParams['CRM_AVAILABLE'])
 {
-	$id = sprintf('U%u', $item['ID']);
+	foreach ($arParams['CRM_QUEUE'] as $item)
+	{
+		$id = sprintf('U%u', $item['ID']);
 
-	$crmQueueList[$id] = array(
-		'id'       => $id,
-		'entityId' => $item['ID'],
-		'name'     => \CUser::formatName(\CSite::getNameFormat(), $item, true),
-		'avatar'   => '',
-		'desc'     => $item['WORK_POSITION'] ?: $item['PERSONAL_PROFESSION'] ?: '&nbsp;'
-	);
-	$crmQueueLast[$id] = $id;
-	$crmQueueSelected[$id] = 'users';
+		$crmQueueList[$id] = array(
+			'id'       => $id,
+			'entityId' => $item['ID'],
+			'name'     => \CUser::formatName(\CSite::getNameFormat(), $item, true),
+			'avatar'   => '',
+			'desc'     => $item['WORK_POSITION'] ?: $item['PERSONAL_PROFESSION'] ?: '&nbsp;'
+		);
+		$crmQueueLast[$id] = $id;
+		$crmQueueSelected[$id] = 'users';
+	}
 }
 
 $APPLICATION->includeComponent('bitrix:main.mail.confirm', '', array());
@@ -125,12 +136,12 @@ $APPLICATION->includeComponent('bitrix:main.mail.confirm', '', array());
 						<img class="mail-connect-img" src="<?=$settings['icon'] ?>" alt="<?=htmlspecialcharsbx($settings['name']) ?>">
 					<? else: ?>
 						<span class="mail-connect-text <? if (strlen($settings['name']) > 10): ?> mail-connect-text-small"<? endif ?>">
-						&nbsp;<?=htmlspecialcharsbx($settings['name']) ?>&nbsp;
+							&nbsp;<?=htmlspecialcharsbx($settings['name']) ?>&nbsp;
 						</span>
 					<? endif ?>
 				</div>
 			</div>
-		<?endif;?>
+		<? endif ?>
 
 		<? if (!empty($mailbox)): ?>
 			<div class="mail-connect-section-block">
@@ -191,6 +202,8 @@ $APPLICATION->includeComponent('bitrix:main.mail.confirm', '', array());
 							type="button" id="mail_connect_mb_oauth_cancel_btn"><?=Loc::getMessage('MAIL_CLIENT_CONFIG_OAUTH_DISCONNECT') ?></button>
 					</div>
 				</div>
+				<a href="<?=htmlspecialcharsbx(\CHTTP::urlAddParams($baseUri, array('oauth' => 'N'))) ?>"
+					data-slider-ignore-autobinding="true" style="display: none; ">password mode</a>
 			<? else: ?>
 				<div class="mail-connect-form-inner">
 					<? if (empty($mailbox['EMAIL'])): ?>
@@ -248,23 +261,27 @@ $APPLICATION->includeComponent('bitrix:main.mail.confirm', '', array());
 						<div class="mail-connect-form-error"></div>
 					</div>
 				</div>
+				<? if (!empty($hiddenOAuth)): ?>
+					<a href="<?=htmlspecialcharsbx(\CHTTP::urlAddParams($baseUri, array('oauth' => 'Y'))) ?>"
+						data-slider-ignore-autobinding="true" style="display: none; ">oauth mode</a>
+				<? endif ?>
 			<? endif ?>
 		</div>
 
 		<? $maxAgeLimit = LicenseManager::getSyncOldLimit(); ?>
-		<? if (empty($mailbox) && $maxAgeLimit != 0): ?>
+		<? if (empty($mailbox)): ?>
 			<div class="mail-connect-section-block">
 				<div class="mail-connect-form-inner">
 					<input type="checkbox" class="mail-connect-form-input mail-connect-form-input-check" name="fields[mail_connect_import_messages]" value="Y" id="mail_connect_mb_import_messages" checked>
 					<? list($label1, $label2) = explode('#AGE#', Loc::getMessage('MAIL_CLIENT_CONFIG_IMAP_AGE'), 2); ?>
 					<label class="mail_connect_mb_import_messages_label" for="mail_connect_mb_import_messages"><?=$label1 ?></label>
-					<? $maxAgeDefault = $maxAgeLimit > 0 && $maxAgeLimit < 7 ? ($maxAgeLimit < 3 ? 1 : 3) : 7; ?>
+					<? $maxAgeDefault = $maxAgeLimit > 0 && $maxAgeLimit < 7 ? 1 : 7; ?>
 					<label class="mail-set-singleselect mail-set-singleselect-line" data-checked="mail_connect_mb_max_age_field_<?=$maxAgeDefault ?>">
 						<input id="mail_connect_mb_max_age_field_0" type="radio" name="fields[msg_max_age]" value="0">
-						<label for="mail_connect_mb_max_age_field_0"><?=Loc::getMessage('MAIL_CLIENT_CONFIG_IMAP_AGE_<?=$maxAgeDefault ?>') ?></label>
+						<label for="mail_connect_mb_max_age_field_0"><?=Loc::getMessage('MAIL_CLIENT_CONFIG_IMAP_AGE_2_<?=$maxAgeDefault ?>') ?></label>
 						<div class="mail-set-singleselect-wrapper">
-							<? foreach ($maxAgeDefault < 3 ? array(1, 3, 7, 30) : array(3, 7, 30) as $value): ?>
-								<? $disabled = $maxAgeLimit >= 0 && $value > $maxAgeLimit; ?>
+							<? foreach ($maxAgeDefault < 7 ? array(1, 7, 30, 60, 90) : array(7, 30, 60, 90) as $value): ?>
+								<? $disabled = $maxAgeLimit > 0 && $value > $maxAgeLimit; ?>
 								<input type="radio" name="fields[msg_max_age]" value="<?=$value ?>"
 									id="mail_connect_mb_max_age_field_<?=$value ?>"
 									<? if ($maxAgeDefault == $value): ?> checked<? endif ?>
@@ -273,16 +290,12 @@ $APPLICATION->includeComponent('bitrix:main.mail.confirm', '', array());
 									<? if ($disabled): ?>
 										class="mail-set-singleselect-option-disabled"
 										onclick="showLicenseInfoPopup('age'); "
-									<? endif ?>><?=Loc::getMessage('MAIL_CLIENT_CONFIG_IMAP_AGE_' . $value) ?></label>
+									<? endif ?>><?=Loc::getMessage('MAIL_CLIENT_CONFIG_IMAP_AGE_2_' . $value) ?></label>
 							<? endforeach ?>
-							<input type="radio" name="fields[msg_max_age]" value="-1"
-								id="mail_connect_mb_max_age_field_i"
-								<? if ($maxAgeLimit >= 0): ?> disabled<? endif ?>>
-							<label for="mail_connect_mb_max_age_field_i"
-								<? if ($maxAgeLimit >= 0): ?>
-									class="mail-set-singleselect-option-disabled"
-									onclick="showLicenseInfoPopup('age'); "
-								<? endif ?>><?=Loc::getMessage('MAIL_CLIENT_CONFIG_IMAP_AGE_I') ?></label>
+							<? if ($maxAgeLimit <= 0): ?>
+								<input type="radio" name="fields[msg_max_age]" value="-1" id="mail_connect_mb_max_age_field_i">
+								<label for="mail_connect_mb_max_age_field_i"><?=Loc::getMessage('MAIL_CLIENT_CONFIG_IMAP_AGE_2_I') ?></label>
+							<? endif ?>
 						</div>
 					</label>
 					<?=$label2 ?>
@@ -339,8 +352,6 @@ $APPLICATION->includeComponent('bitrix:main.mail.confirm', '', array());
 								onchange="BX('mail_connect_mb_server_smtp_form').style.display = this.checked ? '' : 'none'; ">
 							<label class="mail-connect-form-label mail-connect-form-label-check" for="mail_connect_mb_server_smtp_switch"><?=Loc::getMessage('MAIL_CLIENT_CONFIG_SMTP_ACTIVE') ?></label>
 						</div>
-					<? else: ?>
-						<input type="hidden" name="fields[use_smtp]" value="1">
 					<? endif ?>
 					<div class="mail-connect-form-inner" id="mail_connect_mb_server_smtp_form"
 						<? if (!empty($mailbox) && empty($mailbox['__smtp'])): ?> style="display: none; " <? endif ?>>
@@ -419,16 +430,16 @@ $APPLICATION->includeComponent('bitrix:main.mail.confirm', '', array());
 								</label>
 								<label class="mail-set-singleselect mail-set-singleselect-line" data-checked="mail_connect_mb_crm_max_age_field_7">
 									<input id="mail_connect_mb_crm_max_age_field_0" type="radio" name="fields[crm_max_age]" value="0">
-									<label for="mail_connect_mb_crm_max_age_field_0"><?=Loc::getMessage('MAIL_CLIENT_CONFIG_IMAP_AGE_7') ?></label>
+									<label for="mail_connect_mb_crm_max_age_field_0"><?=Loc::getMessage('MAIL_CLIENT_CONFIG_IMAP_AGE_2_7') ?></label>
 									<div class="mail-set-singleselect-wrapper">
 										<? foreach (array(7, 30) as $value): ?>
 											<input type="radio" name="fields[crm_max_age]" value="<?=$value ?>"
 												id="mail_connect_mb_crm_max_age_field_<?=$value ?>"
 												<? if (7 == $value): ?> checked <? endif ?>>
-											<label for="mail_connect_mb_crm_max_age_field_<?=$value ?>"><?=Loc::getMessage('MAIL_CLIENT_CONFIG_IMAP_AGE_' . $value) ?></label>
+											<label for="mail_connect_mb_crm_max_age_field_<?=$value ?>"><?=Loc::getMessage('MAIL_CLIENT_CONFIG_IMAP_AGE_2_' . $value) ?></label>
 										<? endforeach ?>
 										<input type="radio" name="fields[crm_max_age]" value="-1" id="mail_connect_mb_crm_max_age_field_i">
-										<label for="mail_connect_mb_crm_max_age_field_i"><?=Loc::getMessage('MAIL_CLIENT_CONFIG_IMAP_AGE_I') ?></label>
+										<label for="mail_connect_mb_crm_max_age_field_i"><?=Loc::getMessage('MAIL_CLIENT_CONFIG_IMAP_AGE_2_I') ?></label>
 									</div>
 								</label>
 								<label class="mail-connect-form-label mail-connect-form-label-check" for="mail_connect_mb_crm_sync_old">
@@ -609,6 +620,11 @@ $APPLICATION->includeComponent('bitrix:main.mail.confirm', '', array());
 			var footerPanel = BX.findChildByClassName(BX('mail_connect_form'), 'mail-connect-footer', true);
 			footerPanel && document.body.appendChild(footerPanel);
 		});
+	}
+	else
+	{
+		top.BX.loadCSS('/bitrix/components/bitrix/mail.client.sidepanel/templates/.default/style.css');
+		top.BX.loadCSS('/bitrix/components/bitrix/mail.client.config/templates/.default/style.css');
 	}
 
 	BX.message({
@@ -1528,6 +1544,7 @@ $APPLICATION->includeComponent('bitrix:main.mail.confirm', '', array());
 		};
 
 		BX.bind(form, 'submit', submitForm);
+		BX.bind(BX('mail_connect_save_btn'), 'click', submitForm);
 
 		var nameField = BX('mail_connect_mb_name_field');
 		if (nameField && nameField.value.length > 0)

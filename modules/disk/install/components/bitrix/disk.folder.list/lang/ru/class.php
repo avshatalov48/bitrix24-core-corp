@@ -153,4 +153,5 @@ $MESS["DISK_TRASHCAN_ACT_RESTORE"] = "Восстановить";
 $MESS["DISK_TRASHCAN_TRASH_RESTORE_TITLE"] = "Подтверждение восстановления";
 $MESS["DISK_ACTION_SAVE_TO_OWN_FILES"] = "Сохранить на Битрикс24.Диск";
 $MESS["DISK_FOLDER_LIST_ACT_EDIT"] = "Редактировать";
+$MESS["DISK_FOLDER_FILTER_SEARCH_BY_CONTENT"] = "В содержимом документов";
 ?>

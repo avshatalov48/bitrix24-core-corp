@@ -1,6 +1,7 @@
 <?php
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
+use Bitrix\Main\Localization\Loc;
 /**
  * Bitrix vars
  * Bitrix vars
@@ -54,6 +55,10 @@ if($arResult['NEED_FOR_REBUILD_ORDER_ATTRS'])
 $isRecurring = isset($arParams['IS_RECURRING']) && $arParams['IS_RECURRING'] === 'Y';
 $isInternal = $arResult['INTERNAL'];
 $callListUpdateMode = $arResult['CALL_LIST_UPDATE_MODE'];
+$salescenterMode = ($arResult['SALESCENTER_MODE']
+	&& \Bitrix\Main\ModuleManager::isModuleInstalled('salescenter')
+	&& \Bitrix\SalesCenter\Integration\LandingManager::getInstance()->isSitePublished()
+);
 $allowWrite = $arResult['PERMS']['WRITE'];
 $allowDelete = $arResult['PERMS']['DELETE'];
 $currentUserID = $arResult['CURRENT_USER_ID'];
@@ -71,7 +76,8 @@ if(!$isInternal)
 			'OWNER_ID' => 0,
 			'READ_ONLY' => false,
 			'ENABLE_UI' => false,
-			'ENABLE_TOOLBAR' => false
+			'ENABLE_TOOLBAR' => false,
+			'SKIP_VISUAL_COMPONENTS' => 'Y'
 		),
 		null,
 		array('HIDE_ICONS' => 'Y')
@@ -129,6 +135,14 @@ foreach($arResult['ORDER'] as $sKey => $arOrder)
 			'TITLE' => GetMessage('CRM_ORDER_COPY_TITLE'),
 			'TEXT' => GetMessage('CRM_ORDER_COPY'),
 			'ONCLICK' => "BX.Crm.Page.open('".CUtil::JSEscape($arOrder['PATH_TO_ORDER_COPY'])."')"
+		);
+	}
+
+	if($salescenterMode)
+	{
+		$arActions[] = array(
+			'TEXT' => GetMessage("CRM_ORDER_SEND_TO_CHAT"),
+			'ONCLICK' => "BX.Salescenter.Orders.highlightOrder('".$arOrder['ID']."'); BX.Salescenter.Orders.sendGridOrders();",
 		);
 	}
 
@@ -270,6 +284,163 @@ foreach($arResult['ORDER'] as $sKey => $arOrder)
 		ExecuteModuleEventEx($event, array('CRM_ORDER_LIST_MENU', $eventParam, &$arActions));
 	}
 
+	$basket = '';
+
+	if(!empty($arOrder['BASKET']))
+	{
+		foreach ($arOrder['BASKET'] as $item)
+		{
+			$basketItem = $item['NAME'];
+
+			if(strlen($item['EDIT_PAGE_URL']) > 0)
+			{
+				$basketItem = '<a href="'.$item['EDIT_PAGE_URL'].'">'.$basketItem.'</a>';
+			}
+
+			$basketItem = '<span>['.$item['PRODUCT_ID'].'] '.$basketItem.'</span> ';
+
+			$basketItem .= '<span>'.$item['QUANTITY'].'</span> ';
+
+			if(strlen($item['PRICE']) > 0)
+			{
+				$basketItem .= '<span>'.$item["PRICE"].'</span> ';
+			}
+
+			if((float)$item['WEIGHT'] > 0)
+			{
+				$basketItem .= '<span>'.$item["WEIGHT"].'</span> ';
+			}
+
+			$basketItem = "<div>{$basketItem}</div>";
+			if (!empty($item['PROPS']) && is_array($item['PROPS']))
+			{
+				$propsRow = "";
+				foreach ($item['PROPS'] as $property)
+				{
+					$propertyString = htmlspecialcharsbx("{$property['NAME']}: {$property['VALUE']}");
+					$propsRow .= "<div>{$propertyString}</div>";
+				}
+				if (strlen($propsRow) > 0)
+				{
+					$basketItem .= "<div class='crm-order-list-basket-item-props'>$propsRow</div>";
+				}
+			}
+
+			$basket .= '<div class="crm-order-list-basket-item">'.$basketItem.'</div>';
+		}
+	}
+
+	$shipment = '';
+
+	if(is_array($arOrder['SHIPMENT']))
+	{
+		foreach ($arOrder['SHIPMENT'] as $item)
+		{
+			$shipmentItem = '<div>'
+					.Loc::getMessage('CRM_ORDER_LIST_NUMBER')
+					.': <a href="'.htmlspecialcharsbx($item['URL']).'">'
+					.htmlspecialcharsbx($item['ACCOUNT_NUMBER'])
+				.'</a></div> '
+				.'<div>'
+					.Loc::getMessage('CRM_ORDER_LIST_DELIVERY_NAME').': '
+					.'<strong>'.htmlspecialcharsbx($item['DELIVERY_NAME']).'</strong>'
+				.'</div>'
+				.'<div>'
+					.Loc::getMessage('CRM_ORDER_LIST_SHIPMENT_PRICE').': '
+					.'<strong>'.htmlspecialcharsbx($item['PRICE_DELIVERY']).'</strong>'
+				.'</div>'
+				.'<div>'.Loc::getMessage('CRM_ORDER_LIST_STATUS').': '.htmlspecialcharsbx($item['STATUS']).'</div>'
+				.'<div>'
+					.($item['ALLOW_DELIVERY'] === 'Y'
+						? Loc::getMessage('CRM_ORDER_LIST_SHIPMENT_ALLOWED')
+						: Loc::getMessage('CRM_ORDER_LIST_SHIPMENT_NOT_ALLOWED'))
+				.'</div>';
+
+			$shipmentItem .= '<div>'
+					.($item['DEDUCTED'] === 'Y'
+						? Loc::getMessage('CRM_ORDER_LIST_SHIPMENT_DEDUCTED')
+						: Loc::getMessage('CRM_ORDER_LIST_SHIPMENT_NOT_DEDUCTED'))
+				.'</div>';
+
+			if(strlen($item['TRACKING_NUMBER']) > 0)
+			{
+				$shipmentItem .= '<div>'
+						.Loc::getMessage('CRM_ORDER_LIST_SHIPMENT_TRACK_NUMBER').': '
+						.'<strong>'.htmlspecialcharsbx($item['TRACKING_NUMBER']).'</strong>'
+					.'</div>';
+			}
+
+			if($item['CANCELED'] === 'Y')
+			{
+				$shipmentItem .= '<div>'.Loc::getMessage('CRM_ORDER_LIST_SHIPMENT_CANCELLED').'</div>';
+			}
+
+			if($item['MARKED'] === 'Y')
+			{
+				$shipmentItem .= '<div class="marked">'.Loc::getMessage('CRM_ORDER_LIST_SHIPMENT_MARKED').'</div>';
+			}
+
+			if(strlen($item['WEIGHT']) > 0)
+			{
+				$shipmentItem .= '<div>'.Loc::getMessage('CRM_ORDER_LIST_SHIPMENT_WEIGHT').': '.$item["WEIGHT"].'</div> ';
+			}
+
+			$shipment .= '<div class="crm-order-list-shipment">'.$shipmentItem.'</div>';
+		}
+	}
+
+	$payment = '';
+
+	if(is_array($arOrder['PAYMENT']))
+	{
+		foreach ($arOrder['PAYMENT'] as $item)
+		{
+			$paymentItem = '<div>'
+					.Loc::getMessage('CRM_ORDER_LIST_NUMBER')
+					.': <a href="'.htmlspecialcharsbx($item['URL']).'">'
+					.htmlspecialcharsbx($item['ACCOUNT_NUMBER'])
+				.'</a></div> '
+				.'<div>'
+					.Loc::getMessage('CRM_ORDER_LIST_PAYSYSTEM_NAME').': '
+					.'<strong>'.htmlspecialcharsbx($item['PAY_SYSTEM_NAME']).'</strong>'
+				.'</div>'
+				.'<div>'
+					.Loc::getMessage('CRM_ORDER_LIST_PAYSYSTEM_SUM').': '
+					.'<strong>'.$item['SUM'].'</strong>'
+				.'</div>'
+				.'<div><strong>'
+				.($item['PAID'] === 'Y'
+					? Loc::getMessage('CRM_ORDER_LIST_PAYSYSTEM_PAID')
+					: Loc::getMessage('CRM_ORDER_LIST_PAYSYSTEM_NOT_PAID'))
+				.'</strong></div>';
+
+			$payment .= '<div class="crm-order-list-payment">'.$paymentItem.'</div>';
+		}
+	}
+
+	$properties = '';
+
+	if(is_array($arOrder['PROPS']))
+	{
+		foreach ($arOrder['PROPS'] as $group)
+		{
+			$items = '';
+			
+			foreach ($group['ITEMS'] as $property)
+			{
+				$items .= "<div>{$property["NAME"]}: {$property["VALUE"]}</div>";
+			}
+
+ 			$properties .= "<div class=\"crm-order-list-props-group\">"
+				."<div class=\"crm-order-list-props-group-name\">{$group['NAME']}:</div>"
+				."<div class=\"crm-order-list-props-group-items\">{$items}</div>"
+			."</div>";
+		}
+
+		$properties = "<div class=\"crm-order-list-props\">{$properties}</div>";
+	}
+
+
 	$resultItem = array(
 		'id' => $arOrder['ID'],
 		'actions' => $arActions,
@@ -278,12 +449,12 @@ foreach($arResult['ORDER'] as $sKey => $arOrder)
 		'columns' => array(
 			'ORDER_SUMMARY' => CCrmViewHelper::RenderInfo(
 				$arOrder['PATH_TO_ORDER_DETAILS'],
-				\Bitrix\Main\Localization\Loc::getMessage(
+				Loc::getMessage(
 					'CRM_ORDER_SUMMARY',
 					array(
-						'#ORDER_NUMBER#' => isset($arOrder['ACCOUNT_NUMBER']) ? $arOrder['ACCOUNT_NUMBER'] : $arOrder['ID']
+						'#ORDER_NUMBER#' => isset($arOrder['ACCOUNT_NUMBER']) ? htmlspecialcharsbx($arOrder['ACCOUNT_NUMBER']) : $arOrder['ID']
 				)),
-				!empty($arOrder['ORDER_TOPIC']) ? $arOrder['ORDER_TOPIC'] : '', // type
+				!empty($arOrder['ORDER_TOPIC']) ? htmlspecialcharsbx($arOrder['ORDER_TOPIC']) : '', // type
 				array('TARGET' => '_self')
 			),
 			'STATUS_ID' => CCrmViewHelper::RenderOrderStatusControl(
@@ -295,9 +466,15 @@ foreach($arResult['ORDER'] as $sKey => $arOrder)
 					'READ_ONLY' => !(isset($arOrder['EDIT']) && $arOrder['EDIT'] === true)
 				)
 			),
-			'ORDER_CLIENT' => isset($arOrder['CLIENT_INFO']) ? CCrmViewHelper::PrepareClientInfo($arOrder['CLIENT_INFO']) : '',
-			'COMPANY_ID' => isset($arOrder['COMPANY_INFO']) ? CCrmViewHelper::PrepareClientInfo($arOrder['COMPANY_INFO']) : '',
-			'CONTACT_ID' => isset($arOrder['CONTACT_INFO']) ? CCrmViewHelper::PrepareClientInfo($arOrder['CONTACT_INFO']) : '',
+			'ACCOUNT_NUMBER' => isset($arOrder['ACCOUNT_NUMBER']) ? htmlspecialcharsbx($arOrder['ACCOUNT_NUMBER']) : '',
+			'ORDER_TOPIC' => isset($arOrder['ORDER_TOPIC']) ? htmlspecialcharsbx($arOrder['ORDER_TOPIC']) : '',
+			'CLIENT' => isset($arOrder['CLIENT']) ? CCrmViewHelper::PrepareClientInfo($arOrder['CLIENT']) : '',
+			'COMPANY' => isset($arOrder['COMPANY']) ? CCrmViewHelper::PrepareClientInfo($arOrder['COMPANY']) : '',
+			'CONTACT' => isset($arOrder['CONTACT']) ? CCrmViewHelper::PrepareClientInfo($arOrder['CONTACT']) : '',
+			'BASKET' => $basket,
+			'SHIPMENT' => $shipment,
+			'PAYMENT' => $payment,
+			'PROPS' => $properties,
 			'TITLE' => '<a target="_self" href="'.$arOrder['PATH_TO_ORDER_SHOW'].'"
 				class="'.($arOrder['BIZPROC_STATUS'] != '' ? 'bizproc bizproc_status_'.$arOrder['BIZPROC_STATUS'] : '').'"
 				'.($arOrder['BIZPROC_STATUS_HINT'] != '' ? 'onmouseover="BX.hint(this, \''.CUtil::JSEscape($arOrder['BIZPROC_STATUS_HINT']).'\');"' : '').'>'.$arOrder['TITLE'].'</a>',
@@ -389,7 +566,7 @@ foreach($arResult['ORDER'] as $sKey => $arOrder)
 						'USER_PROFILE_URL' => $arOrder['PATH_TO_EMP_DEDUCTED_ID']
 					)
 				) : ''
-		) //+ $arResult['ORDER_UF'][$sKey]
+		) + $arResult['ORDER_UF'][$sKey]
 	);
 
 	$userActivityID = isset($arOrder['USER_ACTIVITY_ID']) ? intval($arOrder['USER_ACTIVITY_ID']) : 0;
@@ -639,7 +816,22 @@ if(!$isInternal
 		$actionList[] = $snippet->getRemoveAction();
 	}
 
-	if($callListUpdateMode)
+	if($salescenterMode)
+	{
+		$controlPanel['GROUPS'][0]['ITEMS'][] = array(
+			"TYPE" => \Bitrix\Main\Grid\Panel\Types::BUTTON,
+			"TEXT" => GetMessage("CRM_ORDER_SEND_TO_CHAT"),
+			"ID" => "send_to_chat",
+			"NAME" => "send_to_chat",
+			'ONCHANGE' => array(
+				array(
+					'ACTION' => Bitrix\Main\Grid\Panel\Actions::CALLBACK,
+					'DATA' => [['JS' => "BX.Salescenter.Orders.sendGridOrders();"]]
+				)
+			)
+		);
+	}
+	elseif($callListUpdateMode)
 	{
 		$controlPanel['GROUPS'][0]['ITEMS'][] = array(
 			"TYPE" => \Bitrix\Main\Grid\Panel\Types::BUTTON,
@@ -736,9 +928,9 @@ if(isset($arResult['ERRORS']) && is_array($arResult['ERRORS']))
 	foreach($arResult['ERRORS'] as $error)
 	{
 		$messages[] = array(
-    		'TYPE' => \Bitrix\Main\Grid\MessageType::ERROR,
-//    		'TITLE' => $error['TITLE'],
-    		'TEXT' => $error
+			'TYPE' => \Bitrix\Main\Grid\MessageType::ERROR,
+//			'TITLE' => $error['TITLE'],
+			'TEXT' => $error
 		);
 	}
 }
@@ -778,15 +970,13 @@ $APPLICATION->IncludeComponent(
 			'ITEMS' => array_merge(
 				\Bitrix\Crm\Automation\Helper::getNavigationBarItems(\CCrmOwnerType::Order),
 				array(
-					/*
 					array(
 						//'icon' => 'kanban',
 						'id' => 'kanban',
-						'name' => GetMessage('CRM_INVOICE_LIST_FILTER_NAV_BUTTON_KANBAN'),
+						'name' => GetMessage('CRM_ORDER_LIST_FILTER_NAV_BUTTON_KANBAN'),
 						'active' => false,
 						'url' => $arParams['PATH_TO_ORDER_KANBAN']
 					),
-					*/
 					array(
 						//'icon' => 'table',
 						'id' => 'list',

@@ -107,6 +107,16 @@ class CBitrixCrmConfigLocationList2Component extends CBitrixComponent
 		return true;
 	}
 
+	protected function checkIntegrity()
+	{
+		if(!\Bitrix\Sale\Location\LocationTable::checkIntegrity())
+		{
+			$this->errors['FATAL'][] = Loc::getMessage('CRM_CLL2_IMPORT_ERROR');
+			return false;
+		}
+
+		return true;
+	}
 	/**
 	 * Function makes some actions based on what is in $this->request
 	 * @return void
@@ -319,17 +329,20 @@ class CBitrixCrmConfigLocationList2Component extends CBitrixComponent
 		$this->arResult =& $this->dbResult;
 		$this->arResult['ERRORS'] =& $this->errors;
 
-		// grid
-		$this->arResult['HEADERS'] = array();
-		foreach($this->componentData['LIST_HEADERS'] as $code => $fld)
+		if(is_array($this->componentData['LIST_HEADERS']))
 		{
-			$this->arResult['HEADERS'][] = array(
-				'id' => $code,
-				'name' => $fld['title'],
-				'sort' => $code,
-				'default' => $fld['DEFAULT'],
-				'editable' => false
-			);
+			// grid
+			$this->arResult['HEADERS'] = array();
+			foreach($this->componentData['LIST_HEADERS'] as $code => $fld)
+			{
+				$this->arResult['HEADERS'][] = array(
+					'id' => $code,
+					'name' => $fld['title'],
+					'sort' => $code,
+					'default' => $fld['DEFAULT'],
+					'editable' => false
+				);
+			}
 		}
 
 		unset($this->componentData);
@@ -341,7 +354,7 @@ class CBitrixCrmConfigLocationList2Component extends CBitrixComponent
 	 */
 	public function executeComponent()
 	{
-		if($this->checkRequiredModules() && $this->checkPermissions() && $this->checkParameters())
+		if($this->checkRequiredModules() && $this->checkPermissions() && $this->checkParameters() && $this->checkIntegrity())
 		{
 			$this->performAction();
 			$this->obtainData();

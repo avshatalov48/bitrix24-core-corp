@@ -212,6 +212,8 @@ $trackedFields = CTaskLog::getTrackedFields();
 			case "CHECKLIST_ITEM_CREATE":
 			case "CHECKLIST_ITEM_REMOVE":
 			case "CHECKLIST_ITEM_RENAME":
+			case "CHECKLIST_ITEM_MAKE_IMPORTANT":
+			case "CHECKLIST_ITEM_MAKE_UNIMPORTANT":
 
 				if(\Bitrix\Tasks\UI\Task\CheckList::checkIsSeparatorValue($record["FROM_VALUE"]))
 				{

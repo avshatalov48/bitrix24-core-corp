@@ -919,6 +919,8 @@ a:hover {color: #2067b0;text-decoration: none;}
 }
 #im-dialog-invite .bx-notifier-item-button { margin-right: 10px; margin-bottom: 10px; font-size: 14px !important; padding: 5px 15px; max-width: none;}
 
+#im-dialog-invite.bx-messenger-chat-imol-skip-block .bx-messenger-textarea-open-invite-skip.bx-notifier-item-button.bx-notifier-item-button-confirm.bx-notifier-item-button-cancel {display: none;}
+
 .bx-messenger-keyboard { margin: 3px 30px 0 38px; }
 .bx-messenger-keyboard-button-text { padding: 10px 10px; font-size: 14px; max-width: 225px;   }
 .bx-messenger-keyboard-button-line { margin-right: 6px; }
@@ -1034,4 +1036,10 @@ a:hover {color: #2067b0;text-decoration: none;}
 	.bx-messenger-content-item-2 .bx-messenger-content-item-avatar {margin-left: -44px;}
 	.bx-messenger-content-item-avatar-name { margin: -2px -9px 0; }
 	.bx-messenger-content-item-avatar-img-default { background-position: -25px 0px; background-size: 65px auto; }
+}
+
+.bx-messenger-audioplayer-container {
+	min-width: 220px;
+	margin-right: 32px;
+	min-height: 48px;
 }

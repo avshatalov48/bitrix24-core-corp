@@ -83,7 +83,15 @@ class CBPCrmCreateReturnLeadActivity
 
 		$leadEntity = new \CCrmLead(false);
 
-		$id = $leadEntity->Add($leadFields, true, ['REGISTER_SONET_EVENT' => true, 'CURRENT_USER' => 0]);
+		$id = $leadEntity->Add(
+			$leadFields,
+			true,
+			[
+				'REGISTER_SONET_EVENT' => true,
+				'CURRENT_USER' => 0,
+				'DISABLE_USER_FIELD_CHECK' => true
+			]
+		);
 
 		if (!$id)
 		{

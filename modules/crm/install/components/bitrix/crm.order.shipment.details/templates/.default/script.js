@@ -10,6 +10,7 @@ if(typeof(BX.Crm.OrderShipment) === "undefined")
 		this._editorUpdateHandler = BX.delegate(this.onEntityUpdate, this);
 		this._editorDeleteHandler = BX.delegate(this.onSliderDelete, this);
 	};
+
 	BX.Crm.OrderShipment.prototype =
 	{
 		initialize: function(id, settings)
@@ -69,8 +70,49 @@ if(typeof(BX.Crm.OrderShipment) === "undefined")
 					eventData
 				);
 			}
+		},
+		trackingStatusUpdate: function(shipmentId, trackingNumber)
+		{
+			var self = this;
+
+			BX.ajax.runAction('sale.tracking.getStatusByShipmentId', {
+				data: {
+					shipmentId: shipmentId,
+					trackingNumber: trackingNumber,
+				}
+			}).then(
+				function(response) {
+					if(response.data)
+					{
+						var data = response.data,
+							editor = BX.Crm.EntityEditor.items[self._settings.editorId];
+
+						if(editor)
+						{
+							var statusName = self._settings.statusViewTemplate.replace(
+								'#STATUS_NAME#',
+								data.statusName
+							);
+
+							editor.getModel().setField('TRACKING_STATUS_VIEW', statusName);
+							editor.getModel().setField('TRACKING_DESCRIPTION', data.description);
+
+							if(data.lastChange)
+							{
+								editor.getModel().setField('TRACKING_LAST_CHANGE', data.lastChange);
+							}
+
+							editor.refreshLayout();
+						}
+					}
+				},
+				function(data) {
+					BX.debug(data);
+				}
+			);
 		}
 	};
+
 	BX.Crm.OrderShipment.create = function(id, settings)
 	{
 		var self = new BX.Crm.OrderShipment();

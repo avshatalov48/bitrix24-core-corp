@@ -18,6 +18,7 @@ global $APPLICATION;
 		}
 	</script>
 	<?$APPLICATION->ShowHead();?>
+	<title><?$APPLICATION->ShowTitle()?></title>
 </head>
 <body class="intranet-slider-frame-popup template-<?= SITE_TEMPLATE_ID ?> <? $APPLICATION->ShowProperty('BodyClass'); ?>" onload="window.top.BX.onCustomEvent(window.top, 'crmEntityIframeLoad');" onunload="window.top.BX.onCustomEvent(window.top, 'crmEntityIframeUnload');">
 	<div class="pagetitle-wrap">

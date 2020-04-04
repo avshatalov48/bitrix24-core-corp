@@ -42,6 +42,7 @@ class IBlockElementProperty
 			'ConvertFromDB' => array($className, 'convertFromDB'),
 			'GetValuePrintable' => array($className, 'getValuePrintable'),
 			'AddFilterFields' => array($className, 'addFilterFields'),
+			'GetUIFilterProperty' => array($className, 'getUIFilterProperty')
 		);
 	}
 
@@ -534,6 +535,20 @@ class IBlockElementProperty
 		}
 	}
 
+	/**
+	 * Returns filter field description.
+	 *
+	 * @param array $property
+	 * @param array $strHTMLControlName
+	 * @param array &$field
+	 * @return void
+	 */
+	public static function getUIFilterProperty($property, $strHTMLControlName, &$field)
+	{
+		$field["type"] = "custom_entity";
+		$field["filterable"] = "";
+	}
+
 	protected static function prepareValueView($value, $defaultType = '', array &$valueView)
 	{
 		$parts = explode('_', $value);
@@ -674,17 +689,17 @@ class IBlockElementProperty
 		return $result;
 	}
 
-	protected static function isUsePrefix($property)
+	public static function isUsePrefix(array $property)
 	{
-		if(is_array($property['USER_TYPE_SETTINGS']))
+		if (is_array($property['USER_TYPE_SETTINGS']))
 		{
-			if(array_key_exists('VISIBLE', $property['USER_TYPE_SETTINGS']))
+			if (array_key_exists('VISIBLE', $property['USER_TYPE_SETTINGS']))
 				unset($property['USER_TYPE_SETTINGS']['VISIBLE']);
 			$tmpArray = array_filter($property['USER_TYPE_SETTINGS'], function($mark)
 			{
 				return $mark == "Y";
 			});
-			if(count($tmpArray) == 1)
+			if (count($tmpArray) == 1)
 			{
 				return false;
 			}

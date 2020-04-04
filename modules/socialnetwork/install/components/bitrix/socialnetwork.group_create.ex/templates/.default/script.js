@@ -394,6 +394,16 @@ BX.BXGCE.init = function(params) {
 		i = null,
 		cnt = null;
 
+	if (
+		BX.type.isNotEmptyString(params.preset)
+		&& parseInt(this.groupId) <= 0
+	)
+	{
+		this.recalcForm({
+			type: params.preset
+		});
+	}
+
 	if (BX('sonet_group_create_form_step_1'))
 	{
 		var tiles = BX.findChildren(BX('sonet_group_create_form_step_1'), {
@@ -843,7 +853,7 @@ BX.BXGCE.recalcFormPartProjectBlock = function(blockId, isChecked)
 		}
 		else
 		{
-			BX.removeClass(blockId, 'sgcp-switch-project');
+			BX.removeClass(BX(blockId), 'sgcp-switch-project');
 		}
 	}
 };
@@ -924,6 +934,11 @@ BX.BXGCE.recalcForm = function (params) {
 	if (BX('IS_EXTRANET_GROUP'))
 	{
 		this.setCheckedValue(BX('IS_EXTRANET_GROUP'), (this.types[type].EXTERNAL == 'Y'));
+	}
+
+	if (BX('GROUP_LANDING'))
+	{
+		this.setCheckedValue(BX('GROUP_LANDING'), (this.types[type].LANDING == 'Y'));
 	}
 
 	this.recalcFormDependencies();

@@ -15,7 +15,20 @@ class Imap extends Mail\Helper\Mailbox
 		parent::__construct($mailbox);
 
 		$mailbox = &$this->mailbox;
-		$options = &$mailbox['OPTIONS'];
+
+		$this->client = new Mail\Imap(
+			$mailbox['SERVER'],
+			$mailbox['PORT'],
+			$mailbox['USE_TLS'] == 'Y' || $mailbox['USE_TLS'] == 'S',
+			$mailbox['USE_TLS'] == 'Y',
+			$mailbox['LOGIN'],
+			$mailbox['PASSWORD']
+		);
+	}
+
+	protected function normalizeMailboxOptions()
+	{
+		$options = &$this->mailbox['OPTIONS'];
 
 		if (empty($options['imap']) || !is_array($options['imap']))
 		{
@@ -31,24 +44,13 @@ class Imap extends Mail\Helper\Mailbox
 		{
 			$imapOptions[MessageFolder::OUTCOME] = array();
 		}
-
-		$imapOptions[MessageFolder::OUTCOME] = array_diff($imapOptions[MessageFolder::OUTCOME], $imapOptions[MessageFolder::INCOME]);
-
-		$this->client = new Mail\Imap(
-			$mailbox['SERVER'],
-			$mailbox['PORT'],
-			$mailbox['USE_TLS'] == 'Y' || $mailbox['USE_TLS'] == 'S',
-			$mailbox['USE_TLS'] == 'Y',
-			$mailbox['LOGIN'],
-			$mailbox['PASSWORD']
-		);
 	}
 
 	public function getSyncStatus()
 	{
 		$meta = Mail\MailMessageUidTable::getList(array(
 			'select' => array(
-				new Main\Entity\ExpressionField('TOTAL', 'COUNT(%s)', 'MESSAGE_ID'),
+				new Main\Entity\ExpressionField('TOTAL', 'COUNT(1)'),
 			),
 			'filter' => array(
 				'=MAILBOX_ID' => $this->mailbox['ID'],
@@ -151,6 +153,24 @@ class Imap extends Mail\Helper\Mailbox
 		return $result;
 	}
 
+	protected function downloadMessage(array &$excerpt)
+	{
+		if (empty($excerpt['MSG_UID']) || empty($excerpt['DIR_MD5']))
+		{
+			return false;
+		}
+
+		$dir = MessageFolder::getFolderNameByHash($excerpt['DIR_MD5'], $this->mailbox['OPTIONS']);
+		if (empty($dir))
+		{
+			return false;
+		}
+
+		$body = $this->client->fetch(true, $dir, $excerpt['MSG_UID'], '(BODY.PEEK[])', $error);
+
+		return empty($body['BODY[]']) ? null : $body['BODY[]'];
+	}
+
 	public function cacheDirs()
 	{
 		$dirs = $this->client->listMailboxes('*', $error, true);
@@ -217,6 +237,8 @@ class Imap extends Mail\Helper\Mailbox
 		}
 
 		// @TODO: filter disabled from income, outcome etc.
+
+		$this->reloadMailboxOptions();
 
 		$options = &$this->mailbox['OPTIONS'];
 
@@ -310,6 +332,8 @@ class Imap extends Mail\Helper\Mailbox
 
 			$meta[$item['name']] = $item;
 		}
+
+		$this->reloadMailboxOptions();
 
 		$options = &$this->mailbox['OPTIONS'];
 
@@ -484,13 +508,16 @@ class Imap extends Mail\Helper\Mailbox
 				),
 			));
 
-			foreach ($meta as $dir => $item)
+			if (!empty($this->syncParams['full']))
 			{
-				$this->resyncDir($dir);
-
-				if ($this->isTimeQuotaExceeded())
+				foreach ($meta as $dir => $item)
 				{
-					break;
+					$this->resyncDir($dir);
+
+					if ($this->isTimeQuotaExceeded())
+					{
+						break;
+					}
 				}
 			}
 		}
@@ -537,13 +564,16 @@ class Imap extends Mail\Helper\Mailbox
 
 			$reverse ? krsort($messages) : ksort($messages);
 
+			$this->parseHeaders($messages);
+
 			$this->blacklistMessages($dir, $messages);
 
 			$this->prepareMessages($dir, $uidtoken, $messages);
 
+			$hashesMap = array();
 			foreach ($messages as $id => $item)
 			{
-				if ($this->syncMessage($dir, $uidtoken, $item))
+				if ($this->syncMessage($dir, $uidtoken, $item, $hashesMap))
 				{
 					$count++;
 				}
@@ -596,9 +626,12 @@ class Imap extends Mail\Helper\Mailbox
 		}
 		else
 		{
-			$this->unregisterMessages(array(
-				'=DIR_MD5' => md5($dir),
-			));
+			if ($this->client->ensureEmpty($dir, $error))
+			{
+				$this->unregisterMessages(array(
+					'=DIR_MD5' => md5($dir),
+				));
+			}
 
 			return;
 		}
@@ -626,7 +659,7 @@ class Imap extends Mail\Helper\Mailbox
 			return $messages;
 		};
 
-		$messages = $fetcher($meta['exists'] > 10000 ? '1,*' : '1:*');
+		$messages = $fetcher($meta['exists'] > 10000 ? sprintf('1,%u', $meta['exists']) : '1:*');
 
 		if (empty($messages))
 		{
@@ -677,6 +710,18 @@ class Imap extends Mail\Helper\Mailbox
 			}
 
 			$range1 -= $rangeSize;
+		}
+	}
+
+	protected function parseHeaders(&$messages)
+	{
+		foreach ($messages as $id => $item)
+		{
+			$messages[$id]['__header'] = \CMailMessage::parseHeader($item['BODY[HEADER]'], $this->mailbox['LANG_CHARSET']);
+			$messages[$id]['__from'] = array_unique(array_map('strtolower', array_filter(array_merge(
+				\CMailUtil::extractAllMailAddresses($messages[$id]['__header']->getHeader('FROM')),
+				\CMailUtil::extractAllMailAddresses($messages[$id]['__header']->getHeader('REPLY-TO'))
+			), 'trim')));
 		}
 	}
 
@@ -743,16 +788,9 @@ class Imap extends Mail\Helper\Mailbox
 
 		foreach ($messages as $id => $item)
 		{
-			$parsedHeader = \CMailMessage::parseHeader($item['BODY[HEADER]'], $this->mailbox['LANG_CHARSET']);
-
-			$parsedFrom = array_unique(array_map('strtolower', array_filter(array_merge(
-				\CMailUtil::extractAllMailAddresses($parsedHeader->getHeader('FROM')),
-				\CMailUtil::extractAllMailAddresses($parsedHeader->getHeader('REPLY-TO'))
-			), 'trim')));
-
 			if (!empty($blacklist['email']))
 			{
-				if (array_intersect($parsedFrom, $emailAddresses))
+				if (array_intersect($messages[$id]['__from'], $emailAddresses))
 				{
 					$targetMessages[$id] = $item['UID'];
 
@@ -763,7 +801,7 @@ class Imap extends Mail\Helper\Mailbox
 					foreach ($blacklist['email'] as $blacklistMail)
 					{
 						/** @var Mail\Internals\Entity\BlacklistEmail $blacklistMail */
-						if (array_intersect($parsedFrom, [$blacklistMail->convertDomainToPunycode()]))
+						if (array_intersect($messages[$id]['__from'], [$blacklistMail->convertDomainToPunycode()]))
 						{
 							$targetMessages[$id] = $item['UID'];
 							continue;
@@ -774,7 +812,7 @@ class Imap extends Mail\Helper\Mailbox
 
 			if (!empty($blacklist['domain']))
 			{
-				foreach ($parsedFrom as $email)
+				foreach ($messages[$id]['__from'] as $email)
 				{
 					$domain = substr($email, strrpos($email, '@'));
 					if (in_array($domain, $domains))
@@ -1026,10 +1064,8 @@ class Imap extends Mail\Helper\Mailbox
 		}
 	}
 
-	protected function syncMessage($dir, $uidtoken, $message)
+	protected function syncMessage($dir, $uidtoken, $message, &$hashesMap = array())
 	{
-		static $hashesMap = array();
-
 		$fields = $message['__fields'];
 
 		if ($fields['MESSAGE_ID'] > 0)
@@ -1047,6 +1083,14 @@ class Imap extends Mail\Helper\Mailbox
 		if (!$this->registerMessage($fields, $message['__replaces']))
 		{
 			return false;
+		}
+
+		if (Mail\Helper\LicenseManager::getSyncOldLimit() > 0)
+		{
+			if ($message['__internaldate']->getTimestamp() < strtotime(sprintf('-%u days', Mail\Helper\LicenseManager::getSyncOldLimit())))
+			{
+				return false;
+			}
 		}
 
 		if (!empty($this->mailbox['OPTIONS']['sync_from']))
@@ -1070,27 +1114,21 @@ class Imap extends Mail\Helper\Mailbox
 			return true;
 		}
 
-		$body = $this->client->fetch(
-			true,
-			$dir,
-			$message['UID'],
-			'(BODY.PEEK[])',
-			$error
-		);
-
 		$messageId = 0;
 
-		if (!empty($body['BODY[]']))
+		$body = $this->downloadMessage($message['__fields']);
+		if (!empty($body))
 		{
 			$messageId = $this->cacheMessage(
-				$body['BODY[]'],
+				$body,
 				array(
 					'timestamp' => $message['__internaldate']->getTimestamp(),
-					'outcome' => in_array($dir, $this->mailbox['OPTIONS']['imap'][MessageFolder::OUTCOME]), // @TODO: check sender
+					'outcome' => in_array($this->mailbox['EMAIL'], $message['__from']),
 					'trash' => in_array($dir, $this->mailbox['OPTIONS']['imap'][MessageFolder::TRASH]),
 					'spam' => in_array($dir, $this->mailbox['OPTIONS']['imap'][MessageFolder::SPAM]),
 					'seen' => $fields['IS_SEEN'] == 'Y',
 					'hash' => $fields['HEADER_MD5'],
+					'excerpt' => $fields,
 				)
 			);
 		}

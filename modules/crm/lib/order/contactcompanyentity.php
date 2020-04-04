@@ -18,8 +18,6 @@ if (!Main\Loader::includeModule('sale'))
  */
 abstract class ContactCompanyEntity extends Sale\Internals\CollectableEntity
 {
-	const REGISTRY_ENTITY_NAME = '';
-
 	/**
 	 * @return string
 	 */
@@ -109,15 +107,8 @@ abstract class ContactCompanyEntity extends Sale\Internals\CollectableEntity
 	 */
 	private static function createEntityObject(array $fields = array())
 	{
-		if (static::REGISTRY_ENTITY_NAME === '')
-		{
-			throw new Main\SystemException(
-				'The constant REGISTRY_ENTITY_NAME is not overridden in '.static::class
-			);
-		}
-
 		$registry = Sale\Registry::getInstance(static::getRegistryType());
-		$entityClassName = $registry->get(static::REGISTRY_ENTITY_NAME);
+		$entityClassName = $registry->get(static::getRegistryEntity());
 
 		return new $entityClassName($fields);
 	}

@@ -59,11 +59,11 @@ $uriSave->addParams(array(
 ));
 
 // domain
-if (\Bitrix\Main\Loader::includeModule('bitrix24'))
+if (Manager::isB24())
 {
 	$domainName = isset($domains[$row['DOMAIN_ID']['CURRENT']]['DOMAIN'])
 				? $domains[$row['DOMAIN_ID']['CURRENT']]['DOMAIN']
-				: $row['DOMAIN_ID']['CURRENT'];
+				: '';
 }
 else
 {
@@ -216,7 +216,7 @@ else
 									</label>
 									<div class="landing-form-wrapper">
 										<?$APPLICATION->IncludeComponent(
-											'bitrix:main.userconsent.selector',
+											'bitrix:landing.userconsent.selector',
 											'',
 											array(
 												'ID' => $agreementId,

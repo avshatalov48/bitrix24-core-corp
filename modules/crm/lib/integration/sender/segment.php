@@ -19,11 +19,26 @@ class Segment extends Main\Engine\Controller
 	 * );
 	 *
 	 * @param int|null $segmentId Segment ID.
-	 * @param $entityTypeName
-	 * @param array $entities
+	 * @param string $entityTypeName Entity type name.
+	 * @param array $entities Entities.
+	 * @param string $gridId Grid ID.
 	 * @return array
 	 */
-	public function uploadAction($segmentId = null, $entityTypeName, array $entities)
+
+	const ENTITIES_LIMIT = 5000;
+
+	/**
+	 * @param int $segmentId Segment id.
+	 * @param string $entityTypeName  Entity type name.
+	 * @param array $entities Entities.
+	 * @param string $gridId Grid id.
+	 * @return array
+	 * @throws Main\ArgumentException
+	 * @throws Main\NotSupportedException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
+	public function uploadAction($segmentId = null, $entityTypeName, array $entities = [], $gridId = null)
 	{
 		if (!GridPanel::canCurrentUserModifySegments())
 		{
@@ -38,6 +53,16 @@ class Segment extends Main\Engine\Controller
 		if (!in_array($entityTypeId, [\CCrmOwnerType::Contact, \CCrmOwnerType::Company, \CCrmOwnerType::Lead]))
 		{
 			return ['errors' => ['Entity type does not allowed.']];
+		}
+
+		if ($gridId) // for all
+		{
+			$entitiesResult = self::getEntitiesByGridId($entityTypeId, $gridId);
+			if (!$entitiesResult->isSuccess())
+			{
+				return ['errors' => $entitiesResult->getErrorMessages()];
+			}
+			$entities = $entitiesResult->getData();
 		}
 
 		$segment = new Sender\Entity\Segment($segmentId);
@@ -58,11 +83,13 @@ class Segment extends Main\Engine\Controller
 			}
 		}
 
+
 		$segment->upload(self::getAddresses($entityTypeName, $entities));
 		if ($segment->hasErrors())
 		{
 			return ['errors' => $segment->getErrorMessages()];
 		}
+		$segment->save();
 
 		$segmentId = $segment->getId();
 		$segmentName = $segment->get('NAME');
@@ -81,8 +108,20 @@ class Segment extends Main\Engine\Controller
 		];
 	}
 
+	/**
+	 * @param string $entityTypeName Entity type name.
+	 * @param array $entities Entities.
+	 * @return array
+	 * @throws Main\ArgumentException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
 	protected static function getAddresses($entityTypeName, array $entities)
 	{
+		if (!$entities)
+		{
+			return [];
+		}
 		switch ($entityTypeName)
 		{
 			case \CCrmOwnerType::CompanyName:
@@ -99,11 +138,14 @@ class Segment extends Main\Engine\Controller
 				return [];
 		}
 
-		$listDb = $entityObject->getListEx([], ['ID' => $entities], false, false, ['ID']);
+		$listDb = $entityObject->getListEx([], ['ID' => $entities], false, false, ['ID', 'NAME', 'TITLE', 'CONTACT_NAME']);
 		$entities = [];
 		while ($entity = $listDb->Fetch())
 		{
-			$entities[] = $entity['ID'];
+			$entityName = isset($entity['TITLE']) ? $entity['TITLE'] : null;
+			$entityName = isset($entity['NAME']) ? $entity['NAME'] : $entityName;
+			$entityName = isset($entity['CONTACT_NAME']) ? $entity['CONTACT_NAME'] : $entityName;
+			$entities[$entity['ID']] = $entityName;
 		}
 
 		$result = [];
@@ -113,17 +155,68 @@ class Segment extends Main\Engine\Controller
 			\CCrmFieldMulti::EMAIL => Sender\Recipient\Type::EMAIL,
 		];
 		$list = Crm\FieldMultiTable::getList([
-			'select' => ['TYPE_ID', 'VALUE'],
+			'select' => ['TYPE_ID', 'VALUE', 'ELEMENT_ID'],
 			'filter' => [
 				'=ENTITY_ID' => $entityTypeName,
-				'=ELEMENT_ID' => $entities,
+				'=ELEMENT_ID' => array_keys($entities),
 				'=TYPE_ID' => array_keys($typeMap)
 			],
 		]);
 		foreach ($list as $item)
 		{
-			//$typeMap[$item['TYPE_ID']]
-			$result[] = $item['VALUE'];
+			$result[] = [
+				'CODE' => $item['VALUE'],
+				'NAME' => isset($entities[$item['ELEMENT_ID']])
+					? $entities[$item['ELEMENT_ID']]
+					: null
+				,
+			];
+		}
+
+		return $result;
+	}
+
+	/**
+	 * @param int $entityTypeId Entity type id.
+	 * @param string $gridId Grid id.
+	 * @return Main\Result
+	 * @throws Main\NotSupportedException
+	 */
+	private static function getEntitiesByGridId($entityTypeId, $gridId)
+	{
+		$result = new Main\Result();
+		$result->setData([]);
+		if (!$entityTypeId || !$gridId)
+		{
+			return $result;
+		}
+
+		$filterOptions = new Main\UI\Filter\Options($gridId);
+		$filterFields = $filterOptions->getFilter();
+		$entityFilter = Crm\Filter\Factory::createEntityFilter(
+			Crm\Filter\Factory::createEntitySettings($entityTypeId, $gridId)
+		);
+
+		$entityFilter->prepareListFilterParams($filterFields);
+		Crm\Search\SearchEnvironment::convertEntityFilterValues($entityTypeId, $filterFields);
+		\CCrmEntityHelper::PrepareMultiFieldFilter($filterFields, array(), '=%', false);
+
+		$entity = Crm\Entity\EntityManager::resolveByTypeID($entityTypeId);
+		if($entity)
+		{
+			$entity->prepareFilter($filterFields, []);
+			if ($entity->getCount(['filter' => $filterFields]) > self::ENTITIES_LIMIT)
+			{
+				$result->addError(
+					new Main\Error(
+						Loc::getMessage('CRM_INTEGRATION_SENDER_SEGMENT_LIMIT_ERROR', array("%limit%" => self::ENTITIES_LIMIT))
+					)
+				);
+			}
+			else
+			{
+				$result->setData($entity->getTopIDs(['filter' => $filterFields, 'limit' => 0]));
+			}
 		}
 
 		return $result;

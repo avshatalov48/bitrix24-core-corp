@@ -10,7 +10,7 @@
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Config\Option;
 
-CJSCore::Init(array('lists'));
+CJSCore::Init(array("lists"));
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/main/utils.js');
 Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/js/lists/css/autorun_progress_bar.css');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/lists/js/autorun_progress_bar.js');
@@ -147,7 +147,7 @@ $pagetitleAlignRightContainer = "lists-align-right-container";
 if($isBitrix24Template)
 {
 	$bodyClass = $APPLICATION->GetPageProperty("BodyClass");
-	$APPLICATION->SetPageProperty("BodyClass", "pagetitle-toolbar-field-view");
+	$APPLICATION->SetPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "")."pagetitle-toolbar-field-view");
 	$this->SetViewTarget("inside_pagetitle");
 	$pagetitleFlexibleSpace = "";
 	$pagetitleAlignRightContainer = "";
@@ -174,25 +174,20 @@ elseif(!IsModuleInstalled("intranet"))
 </div>
 <div class="pagetitle-container pagetitle-align-right-container <?=$pagetitleAlignRightContainer?>">
 	<? if($arResult["SECTION_ID"]):?>
-		<a href="<?=$arResult["LIST_PARENT_URL"]?>" class="lists-list-back">
+		<a href="<?=$arResult["LIST_PARENT_URL"]?>" class="ui-btn ui-btn-link ui-btn-themes lists-list-back">
 			<?=GetMessage("CT_BLL_SECTION_RETURN")?>
 		</a>
 	<?endif;?>
 	<? if($listAction):?>
-		<span id="lists-title-action" class="webform-small-button webform-small-button-transparent webform-small-button-dropdown">
-		<span class="webform-small-button-text"><?=Loc::getMessage("CT_BLL_TOOLBAR_ACTION")?></span>
-		<span id="lists-title-action-icon" class="webform-small-button-icon"></span>
-	</span>
+		<span id="lists-title-action" class="ui-btn ui-btn-light-border ui-btn-dropdown ui-btn-themes">
+			<?=Loc::getMessage("CT_BLL_TOOLBAR_ACTION")?>
+		</span>
 	<?endif;?>
 	<?if($arResult["CAN_ADD_ELEMENT"] || $arResult["CAN_EDIT_SECTIONS"]):?>
-		<span class="webform-small-button-separate-wrap">
-		<a href="<?=$arResult["LIST_NEW_ELEMENT_URL"]?>" class="
-			webform-small-button webform-small-button-blue" id="lists-title-action-add">
-			<span class="webform-small-button-icon"></span>
-			<span class="webform-small-button-text"><?=Loc::getMessage("CT_BLL_TOOLBAR_ADD")?></span>
-		</a>
-		<span class="webform-small-button-right-part" id="lists-title-action-select-add"></span>
-	</span>
+		<div class="ui-btn-split ui-btn-primary">
+			<a href="<?=$arResult["LIST_NEW_ELEMENT_URL"]?>" id="lists-title-action-add" class="ui-btn-main"><?=Loc::getMessage("CT_BLL_TOOLBAR_ADD")?></a>
+			<span id="lists-title-action-select-add" class="ui-btn-menu"></span>
+		</div>
 	<?endif?>
 </div>
 <?
@@ -310,17 +305,6 @@ $APPLICATION->IncludeComponent(
 			CT_BLL_SHOW_SECTION_GRID: '<?=GetMessageJS("CT_BLL_SHOW_SECTION_GRID")?>',
 			CT_BLL_HIDE_SECTION_GRID: '<?=GetMessageJS("CT_BLL_HIDE_SECTION_GRID")?>'
 		});
-
-		if(BX["viewElementBind"])
-		{
-			BX.viewElementBind('<?=$arResult["GRID_ID"]?>', {showTitle: true},
-				function(node)
-				{
-					return BX.type.isElementNode(node) && (node.getAttribute('data-bx-viewer')
-						|| node.getAttribute('data-bx-image'));
-				}
-			);
-		}
 	});
 </script>
 

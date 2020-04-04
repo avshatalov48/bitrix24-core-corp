@@ -223,6 +223,18 @@ if(typeof BX.Crm.Order.Product.List === "undefined")
 			this._controller.onProductDelete(basketCode);
 		},
 
+		onGroupAction: function(gridId, action)
+		{
+			var grid = BX.Main.gridManager.getById(gridId);
+
+
+		 	var basketCodes = grid.instance.getRows().getSelectedIds(),
+				values = grid.instance.getActionsPanel().getValues(),
+				forAll = grid.instance.getForAllKey() in values ? values[grid.instance.getForAllKey()] : 'N';
+
+			this._controller.onProductGroupAction(basketCodes, action, forAll);
+		},
+
 		onRefreshOrderDataAndSave: function()
 		{
 			this._controller.onRefreshOrderDataAndSave();

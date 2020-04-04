@@ -79,6 +79,7 @@ $arResult["bTasksAvailable"] = (
 		!Loader::includeModule('bitrix24')
 		|| CBitrix24BusinessTools::isToolAvailable($USER->getId(), "tasks")
 	)
+	&& CSocNetFeaturesPerms::CurrentUserCanPerformOperation(SONET_ENTITY_USER, $USER->getId(), "tasks", "create_tasks")
 );
 
 if (isset($arParams["CURRENT_PAGE_DATE"]))
@@ -321,8 +322,13 @@ if ($arEvent)
 			$arCommentsFullListCut = array();
 			$arCommentID = array();
 
-
-			if (!empty($arCommentsFullList))
+			if (
+				!empty($arCommentsFullList)
+				|| (
+					isset($arParams["IS_LIST"])
+					&& !$arParams["IS_LIST"]
+				)
+			)
 			{
 				$arCommentRights = CSocNetLogComponent::getCommentRights(array(
 					"EVENT_ID" => $arEvent["EVENT"]["EVENT_ID"],

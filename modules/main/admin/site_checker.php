@@ -193,7 +193,10 @@ if ($_REQUEST['unique_id'])
 			header('Content-type: text/plain; charset='.LANG_CHARSET);
 		}
 		define('LANGUAGE_ID', preg_match('#[a-z]{2}#',$_REQUEST['lang'],$regs) ? $regs[0] : 'en');
-		include_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/lang/'.LANGUAGE_ID.'/admin/site_checker.php');
+		if (file_exists($file = $_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/lang/'.LANGUAGE_ID.'/admin/site_checker.php'))
+			include_once($file);
+		else
+			include_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/lang/en/admin/site_checker.php');
 		InitPureDB();
 		if (!function_exists('AddMessage2Log'))
 		{

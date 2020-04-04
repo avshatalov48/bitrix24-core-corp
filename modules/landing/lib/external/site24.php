@@ -17,14 +17,14 @@ class Site24
         return self::Execute("update", array("domain" => $domain, "newname" => $newName, "url" => $url));
     }
 
-    public static function activateDomain($domain, $active = 'Y')
+    public static function activateDomain($domain, $active = 'Y', $lang = false)
     {
-        return self::Execute("activate", array("domain" => $domain, "active" => $active));
+        return self::Execute("activate", array("domain" => $domain, "active" => $active, "lang" => $lang));
     }
 
-    public static function addDomain($domain, $url, $active = 'Y', $type = "site")
+    public static function addDomain($domain, $url, $active = 'Y', $type = "site", $lang = "")
     {
-        return self::Execute("add", array("domain" => $domain, "url" => $url, "active" => $active, "type" => $type));
+        return self::Execute("add", array("domain" => $domain, "url" => $url, "active" => $active, "type" => $type, "lang" => $lang));
     }
 
     // 0 - domain name is available
@@ -40,9 +40,9 @@ class Site24
         return self::Execute("delete", array("domain" => $domain));
     }
 
-    public static function addRandomDomain($url, $type = "site")
+    public static function addRandomDomain($url, $type = "site", $lang = "")
     {
-        return self::Execute("addrandom", array('url' => $url, 'type' => $type));
+        return self::Execute("addrandom", array('url' => $url, 'type' => $type, "lang" => $lang));
     }
 
     protected static function Execute($operation, $params = array())
@@ -52,7 +52,23 @@ class Site24
         require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/classes/general/update_client.php");
         $params['key'] = md5("BITRIX".\CUpdateClient::GetLicenseKey()."LICENCE");
         $params['keysign'] = md5(\CUpdateClient::GetLicenseKey());
-        $params['host']= \Bitrix\Main\Config\Option::get("intranet", "portal_url", $_SERVER['HTTP_HOST']);
+        $params['host']= \Bitrix\Main\Config\Option::get('intranet', 'portal_url', null);
+
+        if ($params['host'] === null)
+		{
+			$params['host']= \Bitrix\Main\Config\Option::get(
+				'landing',
+				'portal_url',
+				$_SERVER['HTTP_HOST']
+			);
+		}
+
+		$params['host'] = parse_url($params['host'])['host'];
+
+        if (!isset($params['lang']) || !$params['lang'])
+		{
+			unset($params['lang']);
+		}
 
         $httpClient = new \Bitrix\Main\Web\HttpClient(array(
             "socketTimeout" => 5,

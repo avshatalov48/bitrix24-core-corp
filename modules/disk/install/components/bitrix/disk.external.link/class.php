@@ -17,6 +17,7 @@ use Bitrix\Disk\Ui;
 use Bitrix\Disk\ZipNginx;
 use Bitrix\Main\Config\Option;
 use Bitrix\Disk\Internals\Grid;
+use Bitrix\Main\Context;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Security\Random;
 use Bitrix\Main\Web\Uri;
@@ -52,7 +53,13 @@ class CDiskExternalLinkComponent extends DiskComponent
 	 */
 	protected function processBeforeAction($actionName)
 	{
-		if(!Configuration::isEnabledExternalLink())
+		$this->defaultHandlerForView = Driver::getInstance()->getDocumentHandlersManager()->getDefaultHandlerForView();
+		$this->findLink();
+
+		if(
+			($this->externalLink->isAutomatic() && !Configuration::isEnabledAutoExternalLink()) ||
+			(!$this->externalLink->isAutomatic() && !Configuration::isEnabledManualExternalLink())
+		)
 		{
 			$this->arResult = array(
 				'ERROR_MESSAGE' => $this->getMessage('DISK_EXTERNAL_LINK_ERROR_DISABLED_MODE'),
@@ -60,10 +67,6 @@ class CDiskExternalLinkComponent extends DiskComponent
 			$this->includeComponentTemplate('error');
 			return false;
 		}
-
-		$this->defaultHandlerForView = Driver::getInstance()->getDocumentHandlersManager()->getDefaultHandlerForView();
-
-		$this->findLink();
 
 		if ($actionName == 'default')
 		{
@@ -208,7 +211,7 @@ class CDiskExternalLinkComponent extends DiskComponent
 				'LINK' => $this->getUrlManager()->getUrlExternalLink(array(
 					'hash' => $this->externalLink->getHash(),
 					'action' => 'default',
-				)),
+				), true),
 				'ID' => $this->externalLink->getObjectId(),
 			);
 		}
@@ -231,7 +234,8 @@ class CDiskExternalLinkComponent extends DiskComponent
 	{
 		$crumbs = array();
 
-		$uri = new Uri($this->request->getRequestUri());
+		$serverName = (Context::getCurrent()->getRequest()->isHttps()? "https" : "http") . "://" . Context::getCurrent()->getServer()->getHttpHost();
+		$uri = new Uri($serverName . $this->request->getRequestUri());
 		$parts = explode('/', trim($path, '/'));
 
 		foreach ($relativeItems as $i => $item)
@@ -256,7 +260,7 @@ class CDiskExternalLinkComponent extends DiskComponent
 			$crumbs[] = array(
 				'ID' => $item['ID'],
 				'NAME' => $item['NAME'],
-				'ENCODED_LINK' => $uri->getPathQuery(),
+				'ENCODED_LINK' => $uri->getLocator(),
 			);
 		}
 		unset($i, $item);
@@ -542,7 +546,7 @@ class CDiskExternalLinkComponent extends DiskComponent
 			'VIEW_FULL_URL' => $this->getUrlManager()->getUrlExternalLink(array(
 				'hash' => $this->externalLink->getHash(),
 				'action' => 'default',
-			)),
+			), true),
 		);
 
 		if ($result['IS_IMAGE'])
@@ -566,12 +570,12 @@ class CDiskExternalLinkComponent extends DiskComponent
 					'token' => $this->downloadToken,
 					'ts' => $file->getUpdateTime()->getTimestamp(),
 					'ncc' => 1,
-				)),
+				), true),
 				$this->getUrlManager()->getUrlExternalLink(array(
 					'hash' => $this->externalLink->getHash(),
 					'action' => 'showFile',
 					'token' => $this->downloadToken,
-				))
+				), true)
 			);
 
 			$height = 520;
@@ -581,13 +585,34 @@ class CDiskExternalLinkComponent extends DiskComponent
 				$height = 400;
 				$width = 600;
 			}
-
-			$result['VIEWER'] = $file->getView()->render(array(
-				'PATH' => $viewUrl,
-				'HEIGHT' => $height,
-				'WIDTH' => $width,
-				'SIZE_TYPE' => 'absolute',
+			$sourceUri = $this->getUrlManager()->getUrlExternalLink(array(
+				'hash' => $this->externalLink->getHash(),
+				'action' => 'showFile',
+				'token' => $this->downloadToken,
 			));
+
+			if ($file->getView() instanceof \Bitrix\Disk\View\Document)
+			{
+				$attributes = FileAttributes::tryBuildByFileId($file->getFileId(), $sourceUri);
+				$attributes
+					->unsetAttribute('data-viewer')
+					->setAttribute('data-inline-viewer')
+					->setAttribute('data-disable-annotation-layer')
+				;
+
+
+				$result['VIEWER'] = "<div id=\"test-content\" style=\"width: 50vw;\" class=\"disk-external-link-wrapper\" {$attributes}></div>";
+			}
+			else
+			{
+				$result['VIEWER'] = $file->getView()->render(array(
+					'PATH' => $viewUrl,
+					'HEIGHT' => $height,
+					'WIDTH' => $width,
+					'SIZE_TYPE' => 'absolute',
+				));
+			}
+
 		}
 		elseif ($result['IS_DOCUMENT'] && $this->canMakePreview($file))
 		{
@@ -787,7 +812,7 @@ class CDiskExternalLinkComponent extends DiskComponent
 		if($runResize && TypeFile::isImage($fileData['ORIGINAL_NAME']))
 		{
 			/** @noinspection PhpDynamicAsStaticMethodCallInspection */
-			$tmpFile = \CFile::resizeImageGet($fileData, array("width" => 255, "height" => 255), BX_RESIZE_IMAGE_EXACT, true, false, true);
+			$tmpFile = \CFile::resizeImageGet($fileData, array("width" => 1920, "height" => 1080), BX_RESIZE_IMAGE_PROPORTIONAL, true, false, true);
 			$fileData["FILE_SIZE"] = $tmpFile["size"];
 			$fileData["SRC"] = $tmpFile["src"];
 		}

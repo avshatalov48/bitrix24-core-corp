@@ -8,12 +8,12 @@
 
 namespace Bitrix\Sender\Integration\Crm\Connectors;
 
+use Bitrix\Main\Application;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\DB\SqlExpression;
-use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Entity;
-use Bitrix\Main\Page\Asset;
+use Bitrix\Main\Orm;
 use Bitrix\Main\UI\Filter\Type as UiFilterType;
 use Bitrix\Main\UI\Filter\AdditionalDateType;
 
@@ -34,6 +34,40 @@ Loc::loadMessages(__FILE__);
 class Helper
 {
 	public static $runtimeByEntity = [];
+
+	/**
+	 * Create Orm expression field for selecting multi field.
+	 *
+	 * @param string $entityName Entity name.
+	 * @param string $multiFieldTypeId Multi-field type ID.
+	 * @return Orm\Fields\ExpressionField
+	 */
+	public static function createExpressionMultiField($entityName, $multiFieldTypeId)
+	{
+		$sqlHelper = Application::getConnection()->getSqlHelper();
+		return new Orm\Fields\ExpressionField(
+			$multiFieldTypeId,
+			'(' . $sqlHelper->getTopSql(
+				"
+						SELECT FM.VALUE							
+						FROM b_crm_field_multi FM 
+						WHERE FM.ENTITY_ID = '$entityName' 
+							AND FM.ELEMENT_ID = %s 
+							AND FM.TYPE_ID = '$multiFieldTypeId' 
+						ORDER BY
+							CASE FM.VALUE_TYPE 
+								WHEN 'MAILING' THEN 0 
+								WHEN 'HOME' THEN 1
+								WHEN 'MOBILE' THEN 1
+								ELSE 2
+							END,
+							FM.ID
+					",
+				1
+			) . ')',
+			'ID'
+		);
+	}
 
 	/**
 	 * Get personalize field list.
@@ -99,18 +133,6 @@ class Helper
 				{
 					$list[$index]['allow_years_switcher'] = true;
 				}
-			}
-
-			if ($field['type'] === 'custom_entity' && !empty($field['selector']) && $field['selector']['TYPE'] == 'user')
-			{
-				$list[$index]['sender_segment_callback'] = function ($field) use ($entityTypeId)
-				{
-					return Helper::getFilterFieldUserSelector(
-						$field['selector']['DATA'],
-						'crm_segment_' . ($entityTypeId === \CCrmOwnerType::Lead ? 'lead' : 'client')
-					);
-				};
-				$list[$index]['params'] = ['multiple' => 'Y'];
 			}
 		}
 
@@ -500,129 +522,6 @@ class Helper
 		{
 			$filter['=HAS_IMOL'] = 'Y';
 		}
-	}
-
-	/**
-	 * Get "user selector" filter field
-	 *
-	 * @param array $userSelector User-selector.
-	 * @param string $filterID ID of filter.
-	 * @return string
-	 */
-	public static function getFilterFieldUserSelector(array $userSelector, $filterID)
-	{
-		if(empty($userSelector))
-		{
-			return '';
-		}
-
-		$userSelectors = array($userSelector);
-		Asset::getInstance()->addJs('/bitrix/js/crm/common.js');
-		ob_start();
-		$componentName = "{$filterID}_FILTER_USER";
-
-		/** @var \CAllMain $GLOBALS['APPLICATION'] */
-		if (true)
-		{
-			foreach($userSelectors as $userSelector)
-			{
-				$selectorID = $userSelector['ID'];
-				$fieldID = $userSelector['FIELD_ID'];
-
-				Loader::includeModule('socialnetwork');
-				$GLOBALS['APPLICATION']->includeComponent(
-					"bitrix:main.ui.selector",
-					".default",
-					array(
-						'ID' => $selectorID,
-						'ITEMS_SELECTED' =>  array(),
-						'CALLBACK' => array(
-							'select' => 'BX.CrmUIFilterUserSelector.processSelection',
-							'unSelect' => '',
-							'openDialog' => 'BX.CrmUIFilterUserSelector.processDialogOpen',
-							'closeDialog' => 'BX.CrmUIFilterUserSelector.processDialogClose',
-							'openSearch' => ''
-						),
-						'OPTIONS' => array(
-							'eventInit' => 'BX.Crm.FilterUserSelector:openInit',
-							'eventOpen' => 'BX.Crm.FilterUserSelector:open',
-							'context' => 'FEED_FILTER_CREATED_BY',
-							'contextCode' => 'U',
-							'useSearch' => 'N',
-							'useClientDatabase' => 'Y',
-							'allowEmailInvitation' => 'N',
-							'enableDepartments' => 'Y',
-							'enableSonetgroups' => 'N',
-							'departmentSelectDisable' => 'Y',
-							'allowAddUser' => 'N',
-							'allowAddCrmContact' => 'N',
-							'allowAddSocNetGroup' => 'N',
-							'allowSearchEmailUsers' => 'N',
-							'allowSearchCrmEmailUsers' => 'N',
-							'allowSearchNetworkUsers' => 'N',
-							'allowSonetGroupsAjaxSearchFeatures' => 'N'
-						)
-					),
-					false,
-					array("HIDE_ICONS" => "Y")
-				);
-				?><script type="text/javascript"><?
-				?>BX.ready(
-					function()
-					{
-						BX.CrmUIFilterUserSelector.create(
-							"<?=\CUtil::jsEscape($selectorID)?>",
-							{
-								filterId: "<?=\CUtil::jsEscape($filterID)?>",
-								fieldId: "<?=\CUtil::jsEscape($fieldID)?>"
-							}
-						);
-					}
-				);<?
-				?></script><?
-			}
-		}
-		else
-		{
-			$GLOBALS['APPLICATION']->includeComponent(
-				'bitrix:intranet.user.selector.new',
-				'',
-				array(
-					'MULTIPLE' => 'N',
-					'NAME' => $componentName,
-					'INPUT_NAME' => strtolower($componentName),
-					'SHOW_EXTRANET_USERS' => 'NONE',
-					'POPUP' => 'Y',
-					'SITE_ID' => SITE_DIR,
-					//'NAME_TEMPLATE' => $nameTemplate
-				),
-				null,
-				array('HIDE_ICONS' => 'Y')
-			);
-			?><script type="text/javascript"><?
-			foreach($userSelectors as $userSelector)
-			{
-				$selectorID = $userSelector['ID'];
-				$fieldID = $userSelector['FIELD_ID'];
-				?>
-				BX.ready(
-					function()
-					{
-						BX.FilterUserSelector.create(
-							"<?=\CUtil::JSEscape($selectorID)?>",
-							{
-								fieldId: "<?=\CUtil::JSEscape($fieldID)?>",
-								componentName: "<?=\CUtil::JSEscape($componentName)?>"
-							}
-						);
-					}
-				);
-				<?
-			}
-			?></script><?
-		}
-
-		return ob_get_clean();
 	}
 
 	/**

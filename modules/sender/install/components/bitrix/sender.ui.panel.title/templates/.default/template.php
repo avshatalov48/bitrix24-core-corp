@@ -103,7 +103,7 @@ foreach ($arParams['LIST'] as $item):
 				</script>
 				<span id="<?=htmlspecialcharsbx($button['id'])?>"
 					href="<?=htmlspecialcharsbx($button['href'])?>"
-					class="ui-btn <?=htmlspecialcharsbx($button['class'])?>"
+					class="ui-btn ui-btn-themes <?=htmlspecialcharsbx($button['class'])?>"
 					style="<?=($button['visible'] ? '' : 'display: none;')?>"
 				><?=htmlspecialcharsbx($button['caption'])?></span>
 			<?
@@ -142,7 +142,7 @@ foreach ($arParams['LIST'] as $item):
 				<a id="<?=htmlspecialcharsbx($button['id'])?>" title="<?=htmlspecialcharsbx($button['caption'])?>"
 					href="<?=htmlspecialcharsbx($button['href'])?>"
 					onclick="BX.Sender.Page.open('<?=CUtil::JSEscape(htmlspecialcharsbx($button['href']))?>'); return false;"
-					class="ui-btn <?=htmlspecialcharsbx($button['class'])?>"
+					class="ui-btn ui-btn-themes <?=htmlspecialcharsbx($button['class'])?>"
 				><?
 					if ($button['counter']):
 						?><i id="sender-abuse-counter" class="ui-btn-counter"><?=htmlspecialcharsbx($button['counter'])?></i><?

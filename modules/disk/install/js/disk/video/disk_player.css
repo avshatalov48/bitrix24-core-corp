@@ -1,7 +1,8 @@
 
 .disk-player-container {
 	max-width: 100%;
-	overflow:hidden;
+	overflow: hidden;
+	position: relative;
 }
 .disk-player-container .vjs-disk_player-skin {
 	opacity: 0;
@@ -14,8 +15,14 @@
 	-o-transition: opacity 0.3s;
 	transition: opacity 0.3s;
 }
-.disk-player-container.player-loaded .main-ui-loader{
+.disk-player-container .main-ui-loader{
 	display: none;
+}
+.disk-player-container.player-adjusting .main-ui-loader{
+	display: block;
+}
+.disk-player-container.player-loaded .main-ui-loader{
+	display: none !important;
 }
 .disk-player-container .vjs-disk_player-skin .vjs-big-play-button {
 	border: 0;
@@ -50,14 +57,10 @@
 }
 
 .disk-player-container .vjs-disk_player-skin .vjs-big-play-button:after {
-	/*background-image: url("data:image/svg+xml,<svg%20width='56px'%20height='90px'%20viewBox='0%200%2056%2090'%20version='1.1'%20xmlns='http://www.w3.org/2000/svg'%20xmlns:xlink='http://www.w3.org/1999/xlink'><g%20stroke='none'%20fill='none'%20fill-rule='evenodd'><polygon%20fill='%232FC6F6'%20points='56%2045%200%2090%200%200'></polygon></g></svg>");*/
-	/*background-position: center;*/
-	/*background-repeat: no-repeat;*/
-	/*background-size: auto 100%;*/
 	content: '';
 	position: absolute;
-	left: 39px;
-	top: 27px;
+	left: 40px;
+	top: 25px;
 	/*height: 43px;*/
 	/*left: 56px;*/
 	/*top: 42px;*/

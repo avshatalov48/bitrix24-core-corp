@@ -2,14 +2,15 @@
 
 namespace Bitrix\DocumentGenerator\Integration;
 
+use Bitrix\Bitrix24\Feature;
 use Bitrix\DocumentGenerator\Driver;
-use Bitrix\Main\Config\Option;
 use Bitrix\Main\Loader;
 use Bitrix\Main\ModuleManager;
 
 class Bitrix24Manager
 {
 	const LIMIT_ERROR_CODE = 'DOCGEN_LIMIT_ERROR';
+	const DEFAULT_TEMPLATE_SIZE = 2097152;
 
 	/**
 	 * Tells if module bitrix24 is installed.
@@ -22,51 +23,6 @@ class Bitrix24Manager
 	}
 
 	/**
-	 * Returns true if tariff for this portal is not free.
-	 *
-	 * @return bool
-	 */
-	public static function isLicensePaid()
-	{
-		if(Loader::includeModule('bitrix24'))
-		{
-			return \CBitrix24::IsLicensePaid();
-		}
-
-		return false;
-	}
-
-	/**
-	 * Returns true if demo is active.
-	 *
-	 * @return bool
-	 */
-	public static function isDemoLicense()
-	{
-		if(Loader::includeModule('bitrix24'))
-		{
-			return \CBitrix24::IsDemoLicense();
-		}
-
-		return false;
-	}
-
-	/**
-	 * Returns true if it is an nfr portal.
-	 *
-	 * @return bool
-	 */
-	public static function isNfrLicense()
-	{
-		if(Loader::includeModule('bitrix24'))
-		{
-			return \CBitrix24::IsNfrLicense();
-		}
-
-		return false;
-	}
-
-	/**
 	 * Returns true if restrictions are active.
 	 *
 	 * @return bool
@@ -75,12 +31,7 @@ class Bitrix24Manager
 	{
 		if(static::isEnabled())
 		{
-			if(static::isDemoLicense() || static::isLicensePaid() || static::isNfrLicense())
-			{
-				return false;
-			}
-
-			return true;
+			return (static::getDocumentsLimit() > 0);
 		}
 
 		return false;
@@ -111,12 +62,10 @@ class Bitrix24Manager
 
 	/**
 	 * @return int
-	 * @throws \Bitrix\Main\ArgumentNullException
-	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
 	 */
 	public static function getDocumentsLimit()
 	{
-		return Option::get(Driver::MODULE_ID, 'maximum_documents_on_free_tariff', 100);
+	    return \Bitrix\Bitrix24\Feature::getVariable('documentgenerator_create_documents');
 	}
 
 	/**
@@ -139,12 +88,18 @@ class Bitrix24Manager
 		static::setDocumentsCount($count);
 	}
 
-	protected static function getDocumentsCount()
+    /**
+     * @return int
+     */
+    public static function getDocumentsCount()
 	{
 		return \CUserOptions::GetOption(Driver::MODULE_ID, 'documents_count', 0);
 	}
 
-	protected static function setDocumentsCount($count)
+    /**
+     * @param int $count
+     */
+    public static function setDocumentsCount($count)
 	{
 		\CUserOptions::SetOption(Driver::MODULE_ID, 'documents_count', $count);
 	}
@@ -199,5 +154,41 @@ class Bitrix24Manager
 		{
 			return \CBitrix24::GetDefaultLanguage();
 		}
+	}
+
+	/**
+	 * @return bool
+	 */
+	public static function isPermissionsFeatureEnabled()
+	{
+		if(static::isEnabled())
+		{
+			return \Bitrix\Bitrix24\Feature::isFeatureEnabled("documentgenerator_permissions");
+		}
+
+		return true;
+	}
+
+	public static function getMaximumTemplateFileSize()
+	{
+		$size = null;
+		if(static::isEnabled())
+		{
+			$size = Feature::getVariable('documentgenerator_template_size');
+		}
+
+		if(!$size)
+		{
+			if(defined('DOCUMENTGENERATOR_MAXIMUM_TEMPLATE_SIZE'))
+			{
+				$size = DOCUMENTGENERATOR_MAXIMUM_TEMPLATE_SIZE;
+			}
+			else
+			{
+				$size = static::DEFAULT_TEMPLATE_SIZE;
+			}
+		}
+
+		return $size;
 	}
 }

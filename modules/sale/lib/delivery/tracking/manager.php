@@ -249,7 +249,7 @@ class Manager
 	 */
 	protected function getStatus($shipment)
 	{
-		$result = new \Bitrix\Sale\Result();
+		$result = new StatusResult();
 
 		if(intval($shipment['DELIVERY_ID']) <= 0)
 			throw new ArgumentNullException('deliveryId');

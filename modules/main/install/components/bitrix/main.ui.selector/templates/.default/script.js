@@ -33,6 +33,7 @@
 		this.tag = null;
 		this.options = null;
 		this.callback = null;
+		this.callbackBefore = null;
 		this.items = null;
 		this.entities = null;
 		this.mainPopupWindow = null;
@@ -57,12 +58,20 @@
 		}
 		else if (typeof BX.Main.selectorManagerV2.controls[params.id] != 'undefined')
 		{
-			return BX.Main.selectorManagerV2.controls[params.id];
+			var control = BX.Main.selectorManagerV2.controls[params.id];
+			if (control.bindNode && !document.body.contains(control.bindNode))
+			{
+				delete BX.Main.selectorManagerV2.controls[params.id];
+			}
+			else
+			{
+				return BX.Main.selectorManagerV2.controls[params.id];
+			}
 		}
 
 		var self = new BX.Main.SelectorV2();
+		BX.Main.selectorManagerV2.controls[params.id] = self;
 		self.init(params);
-		BX.Main.selectorManagerV2.controls[self.getId()] = self;
 
 		return self;
 	};
@@ -90,6 +99,7 @@
 
 			this.options = params.options || {};
 			this.callback = params.callback || null;
+			this.callbackBefore = params.callbackBefore || null;
 
 			this.items = params.items || null;
 			this.entities = params.entities || null;
@@ -136,7 +146,8 @@
 					offsetTop: 5,
 					offsetLeft: 15
 				},
-				callback: this.callback
+				callback: this.callback,
+				callbackBefore: this.callbackBefore
 			});
 
 			BX.addCustomEvent('BX.UI.SelectorManager:getTreeItemRelation', function(params) {
@@ -527,9 +538,7 @@
 
 		openDialog: function(openDialogParams)
 		{
-			if (
-				BX.type.isNotEmptyObject(openDialogParams)
-			)
+			if (BX.type.isNotEmptyObject(openDialogParams))
 			{
 				if (typeof openDialogParams.bindNode != 'undefined')
 				{

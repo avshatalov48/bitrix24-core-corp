@@ -878,10 +878,15 @@ a {
 
 .post-item-text a { font-size: 16px }
 
-.post-item-text table.data-table { border-collapse: collapse; }
+.post-item-text table.data-table,
+.post-comment-text table.data-table { border-collapse: collapse; }
 
 .post-item-text table.data-table td,
-.post-item-text table.data-table th {
+.post-comment-text table.data-table td,
+.post-item-text table.data-table th,
+.post-comment-text table.data-table th {
+	background-color: #fff;
+	background-image: none;
 	border: 1px solid grey;
 	padding: 3px;
 }
@@ -2351,7 +2356,7 @@ div.blog-post-quote table.blogquote {
 
 .notif-avatar-offline i{ background: -webkit-linear-gradient(bottom, #890000, #f14d4d); }
 .notif-avatar-online i { background: -webkit-linear-gradient(bottom, #3e6f00, #97d500); }
-.notif-block-wrap a { display: none; }
+.notif-block-wrap a {display: inline-block; font-size: 14px; font-weight: 600} }
 .notif-block:first-child {
 	border-top: 0;
 }
@@ -3022,21 +3027,21 @@ div.blog-post-quote table.blogquote {
 	padding-bottom: 10px;
 }
 
-.lenta-block-grat-medal { float: left; width: 32.5px; height: 32.5px; background: none; margin: 0 7px 0 0; }
-.lenta-block-grat-medal.lenta-block-grat-medal-heart   { background: url(images/lenta/medals.png) no-repeat  -9px   -8px; background-size: 303px 167px; }
-.lenta-block-grat-medal.lenta-block-grat-medal-gift    { background: url(images/lenta/medals.png) no-repeat  -50px  -8px; background-size: 303px 167px; }
-.lenta-block-grat-medal.lenta-block-grat-medal-cup     { background: url(images/lenta/medals.png) no-repeat  -91px  -8px; background-size: 303px 167px; }
-.lenta-block-grat-medal.lenta-block-grat-medal-money   { background: url(images/lenta/medals.png) no-repeat  -132px  -8px; background-size: 303px 167px; }
-.lenta-block-grat-medal.lenta-block-grat-medal-crown   { background: url(images/lenta/medals.png) no-repeat -173px  -8px; background-size: 303px 167px; }
-.lenta-block-grat-medal.lenta-block-grat-medal-cake    { background: url(images/lenta/medals.png) no-repeat -214px  -8px; background-size: 303px 167px; }
-.lenta-block-grat-medal.lenta-block-grat-medal-drink   { background: url(images/lenta/medals.png) no-repeat -255px  -8px; background-size: 303px 167px; }
-.lenta-block-grat-medal.lenta-block-grat-medal-thefirst{ background: url(images/lenta/medals.png) no-repeat   -9px -130px; background-size: 303px 167px; }
-.lenta-block-grat-medal.lenta-block-grat-medal-flag    { background: url(images/lenta/medals.png) no-repeat  -50px -130px; background-size: 303px 167px; }
-.lenta-block-grat-medal.lenta-block-grat-medal-star    { background: url(images/lenta/medals.png) no-repeat  -91px -130px; background-size: 303px 167px; }
-.lenta-block-grat-medal.lenta-block-grat-medal-thumbsup{ background: url(images/lenta/medals.png) no-repeat  -132px -130px; background-size: 303px 167px; }
-.lenta-block-grat-medal.lenta-block-grat-medal-beer    { background: url(images/lenta/medals.png) no-repeat -173px -130px; background-size: 303px 167px; }
-.lenta-block-grat-medal.lenta-block-grat-medal-flowers { background: url(images/lenta/medals.png) no-repeat -214px -130px; background-size: 303px 167px; }
-.lenta-block-grat-medal.lenta-block-grat-medal-smile   { background: url(images/lenta/medals.png) no-repeat -255px -130px; background-size: 303px 167px; }
+.lenta-block-grat-medal { float: left; width: 32.5px; height: 32.5px; margin: 0 7px 0 0; background-image: url(images/lenta/medals-2.png); background-repeat: no-repeat; background-size: 303px 167px; border-radius: 50%;}
+.lenta-block-grat-medal.lenta-block-grat-medal-heart   { background-position:   -7.5px   -4px; background-color: #fe5857; }
+.lenta-block-grat-medal.lenta-block-grat-medal-gift    { background-position:    -49px   -4px; background-color: #5cd1df; }
+.lenta-block-grat-medal.lenta-block-grat-medal-cup     { background-position:    -90px   -4px; background-color: #ffa800; }
+.lenta-block-grat-medal.lenta-block-grat-medal-money   { background-position:   -131px   -4px; background-color: #05b5ab; }
+.lenta-block-grat-medal.lenta-block-grat-medal-crown   { background-position:   -172px   -4px; background-color: #a7abb0; }
+.lenta-block-grat-medal.lenta-block-grat-medal-drink   { background-position:   -213px   -4px; background-color: #2fc7f7; }
+.lenta-block-grat-medal.lenta-block-grat-medal-cake    { background-position: -254.5px   -4px; background-color: #b47153; }
+.lenta-block-grat-medal.lenta-block-grat-medal-thefirst{ background-position:   -7.5px -126px; background-color: #ffd200; }
+.lenta-block-grat-medal.lenta-block-grat-medal-flag    { background-position:    -49px -126px; background-color: #fb6dba; }
+.lenta-block-grat-medal.lenta-block-grat-medal-star    { background-position:    -90px -126px; background-color: #29ad49; }
+.lenta-block-grat-medal.lenta-block-grat-medal-thumbsup{ background-position:   -131px -126px; background-color: #6e54d1; }
+.lenta-block-grat-medal.lenta-block-grat-medal-beer    { background-position:   -172px -126px; background-color: #ae914b; }
+.lenta-block-grat-medal.lenta-block-grat-medal-flowers { background-position:   -213px -126px; background-color: #ff7b9d; }
+.lenta-block-grat-medal.lenta-block-grat-medal-smile   { background-position: -254.5px -126px; background-color: #bada0b; }
 
 .lenta-block-grat .lenta-important-block-text {
 	min-height: 15px;

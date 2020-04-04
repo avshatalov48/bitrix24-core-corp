@@ -1,6 +1,7 @@
 <?
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Loader;
+use Bitrix\Crm\WebForm\Manager;
 use Bitrix\Crm\WebForm\Helper;
 use Bitrix\Crm\WebForm\Form;
 use Bitrix\Crm\WebForm\FieldSynchronizer;
@@ -52,7 +53,7 @@ class CCrmWebFormEditComponent extends \CBitrixComponent
 			$fieldTmp['REQUIRED'] = $field['REQUIRED'] == 'Y' ? 'Y' : 'N';
 			$fieldTmp['MULTIPLE'] = $field['MULTIPLE'] == 'Y' ? 'Y' : 'N';
 
-			if($field['TYPE'] == 'section')
+			if($field['TYPE'] == 'section' || $field['TYPE'] == 'page')
 			{
 				$fieldTmp['REQUIRED'] = 'N';
 				$fieldTmp['MULTIPLE'] = 'N';
@@ -60,7 +61,7 @@ class CCrmWebFormEditComponent extends \CBitrixComponent
 			elseif($field['TYPE'] == 'product')
 			{
 				//$fieldTmp['REQUIRED'] = 'Y';
-				$fieldTmp['MULTIPLE'] = 'N';
+				//$fieldTmp['MULTIPLE'] = 'N';
 			}
 			else
 			{
@@ -91,7 +92,7 @@ class CCrmWebFormEditComponent extends \CBitrixComponent
 				{
 					$unknownItemKeys = array_diff(
 						array_keys($item),
-						array('ID', 'VALUE', 'PRICE', 'NAME', 'SELECTED')
+						array('ID', 'VALUE', 'PRICE', 'DISCOUNT', 'NAME', 'SELECTED')
 					);
 					if(count($unknownItemKeys) == 0)
 					{
@@ -260,6 +261,39 @@ class CCrmWebFormEditComponent extends \CBitrixComponent
 			$requestFormSettings['DEAL_CATEGORY'] = null;
 		}
 
+		$views = [];
+		foreach ($requestFormSettings['VIEWS'] as $mode => $settings)
+		{
+			if (!in_array($mode, ['auto', 'click', 'inline']))
+			{
+				continue;
+			}
+
+			$settings = is_array($settings) ? $settings : [];
+			$views[$mode] = array_filter(
+				$settings,
+				function ($value, $key)
+				{
+					if (!in_array($key, ['type', 'vertical', 'position', 'delay', 'title']))
+					{
+						return false;
+					}
+					if (empty($value) || !is_string($value))
+					{
+						return false;
+					}
+					if (empty($key) || !is_string($key) || is_numeric($key))
+					{
+						return false;
+					}
+
+					return true;
+				},
+				ARRAY_FILTER_USE_BOTH
+			);
+		}
+		$requestFormSettings['VIEWS'] = $views;
+
 		return $requestFormSettings;
 	}
 
@@ -272,6 +306,7 @@ class CCrmWebFormEditComponent extends \CBitrixComponent
 		$presetFields = is_array($request->get('FIELD_PRESET')) ? $request->get('FIELD_PRESET') : array();
 		$dependencies = is_array($request->get('DEPENDENCIES')) ? $request->get('DEPENDENCIES') : array();
 		$scripts = is_array($request->get('SCRIPTS')) ? $request->get('SCRIPTS') : array();
+		$languageId = isset($this->arResult['LANGUAGES'][$request->get('LANGUAGE_ID')]) ? $request->get('LANGUAGE_ID') : $this->crmWebForm->getLanguageId();
 
 		$entityScheme = (string) $request->get('ENTITY_SCHEME');
 
@@ -302,6 +337,7 @@ class CCrmWebFormEditComponent extends \CBitrixComponent
 		$params = array(
 			//'ACTIVE' => $request->get('ACTIVE') == 'Y' ? 'Y' : 'N',
 			'ACTIVE_CHANGE_BY' => $USER->GetID(),
+			'LANGUAGE_ID' => $languageId,
 			'NAME' => $request->get('NAME'),
 			'CAPTION' => $request->get('CAPTION'),
 			'DESCRIPTION' => $request->get('DESCRIPTION'),
@@ -320,12 +356,13 @@ class CCrmWebFormEditComponent extends \CBitrixComponent
 			'DUPLICATE_MODE' => $request->get('DUPLICATE_MODE'),
 			'SCRIPT_INCLUDE_SETTINGS' => array(),
 			'INVOICE_SETTINGS' => $this->processPostInvoiceSettings($request->get('INVOICE_SETTINGS')),
-			'FORM_SETTINGS' => $this->processPostFormSettings(array(
+			'FORM_SETTINGS' => $this->processPostFormSettings([
 				'DEAL_CATEGORY' => $request->get('DEAL_CATEGORY'),
 				'DEAL_DC_ENABLED' => $request->get('DEAL_DC_ENABLED') == 'Y' ? 'Y' : 'N',
 				'NO_BORDERS' => $request->get('NO_BORDERS') == 'Y' ? 'Y' : 'N',
-				'REDIRECT_DELAY' => (int) $request->get('RESULT_REDIRECT_DELAY')
-			)),
+				'REDIRECT_DELAY' => (int) $request->get('RESULT_REDIRECT_DELAY'),
+				'VIEWS' => is_array($request->get('VIEWS')) ? $request->get('VIEWS') : [],
+			]),
 			'ASSIGNED_BY_ID' => $assignedById,
 			'ASSIGNED_WORK_TIME' => $request->get('ASSIGNED_WORK_TIME') == 'Y' ? 'Y' : 'N',
 
@@ -380,6 +417,7 @@ class CCrmWebFormEditComponent extends \CBitrixComponent
 	protected function redirectTo()
 	{
 		$isSaved = $this->request->get('save') === 'Y';
+		$isReloadList = $this->arParams['RELOAD_LIST'];
 		$url = ($isSaved && !$this->arParams['IFRAME']) ? $this->arParams['PATH_TO_WEB_FORM_LIST'] : $this->arParams['PATH_TO_WEB_FORM_EDIT'];
 
 		$replaceList = array('id' => $this->crmWebForm->getId(), 'form_id' => $this->crmWebForm->getId());
@@ -391,6 +429,10 @@ class CCrmWebFormEditComponent extends \CBitrixComponent
 			if ($isSaved)
 			{
 				$uri->addParams(['IS_SAVED' => 'Y']);
+			}
+			if (!$isReloadList)
+			{
+				$uri->addParams(['RELOAD_LIST' => 'N']);
 			}
 			$url = $uri->getLocator();
 		}
@@ -845,9 +887,19 @@ class CCrmWebFormEditComponent extends \CBitrixComponent
 		$this->arResult['PRESET_AVAILABLE_FIELDS_TREE'] = EntityFieldProvider::getPresetFieldsTree();
 		$this->arResult['AVAILABLE_ENTITIES'] = Entity::getList();
 
+
 		$this->crmWebForm = new Form($id);
 
 		/* Set form data */
+		$this->arResult['LANGUAGES'] = \Bitrix\Crm\SiteButton\Manager::getLanguages();
+		foreach($this->arResult['LANGUAGES'] as $languageId => $language)
+		{
+			$language['SELECTED'] = $this->crmWebForm->getLanguageId() === $languageId;
+			$this->arResult['LANGUAGES'][$languageId] = $language;
+
+		}
+		$this->arResult['IS_AVAILABLE_EMBEDDING_PORTAL'] = Manager::isEmbeddingAvailable();
+		$this->arResult['IS_AVAILABLE_EMBEDDING'] = $this->crmWebForm->isEmbeddingAvailable();
 		$this->arResult['FORM'] = $this->crmWebForm->get();
 		$this->arResult['FORM']['BACKGROUND_IMAGE_PATH'] = \CFile::GetPath($this->arResult['FORM']['BACKGROUND_IMAGE']);
 		$this->arResult['FORM']['IS_READONLY'] = (
@@ -941,6 +993,7 @@ class CCrmWebFormEditComponent extends \CBitrixComponent
 		$this->arParams['NAME_TEMPLATE'] = empty($this->arParams['NAME_TEMPLATE']) ? CSite::GetNameFormat(false) : str_replace(array("#NOBR#","#/NOBR#"), array("",""), $this->arParams["NAME_TEMPLATE"]);
 		$this->arParams['IFRAME'] = isset($this->arParams['IFRAME']) ? (bool) $this->arParams['IFRAME'] : $this->request->get('IFRAME') === 'Y';
 		$this->arParams['IS_SAVED'] = $this->request->get('IS_SAVED') === 'Y';
+		$this->arParams['RELOAD_LIST'] = isset($this->arParams['RELOAD_LIST']) ? (bool) $this->arParams['RELOAD_LIST'] : $this->request->get('RELOAD_LIST') !== 'N';
 
 		return true;
 	}

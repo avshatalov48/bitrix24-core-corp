@@ -133,7 +133,15 @@ foreach ($arDocumentFields as $fieldKey => $fieldValue)
 						break;
 				}
 			}
-			?>
+
+			if ($fieldKey === 'ALLOW_TIME_TRACKING'):?>
+				<div style="padding: 10px">
+					<div><?=GetMessage('BPTA1A_TIME_TRACKING_H')?>:</div>
+					<?=CBPDocument::ShowParameterField("int", 'TIME_ESTIMATE_H', $arCurrentValues['TIME_ESTIMATE_H'], ['size' => 20])?>
+					<div><?=GetMessage('BPTA1A_TIME_TRACKING_M')?>:</div>
+					<?=CBPDocument::ShowParameterField("int", 'TIME_ESTIMATE_M', $arCurrentValues['TIME_ESTIMATE_M'], ['size' => 20])?>
+				</div>
+			<?php endif; ?>
 		</td>
 	</tr>
 	<?php

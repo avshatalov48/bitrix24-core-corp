@@ -57,5 +57,9 @@ return array(
 			'name' => Loc::getMessage('LANDING_BLOCK_42.1.REST_MENU_STYLE_LANDINGBLOCKNODECARDPRICE'),
 			'type' => array('background-color', 'typo'),
 		),
+		'.landing-block-inner' => array(
+			'name' => Loc::getMessage('LANDING_BLOCK_42.1.REST_MENU_CARDS_LANDINGBLOCKNODEINNER'),
+			'type' => array('row-align'),
+		),
 	),
 );

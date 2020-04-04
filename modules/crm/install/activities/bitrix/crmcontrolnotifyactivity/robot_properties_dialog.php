@@ -13,10 +13,7 @@ if ($dialog->getCurrentValue($map['ToHead']['FieldName']) !== 'N')
 		$toUsers = (array) $toUsers;
 	}
 
-	if (empty($toUsers))
-	{
-		$toUsers[] = 'CONTROL_HEAD';
-	}
+	$toUsers[] = 'CONTROL_HEAD';
 }
 ?>
 <div class="crm-automation-popup-settings">

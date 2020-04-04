@@ -8,20 +8,33 @@
 	{
 		return;
 	}
-	else if (iframeMode)
-	{
-		window.top.location = window.location.href;
-		return;
-	}
 
+	var siteDir = ('/' + (BX.message.SITE_DIR || '/').replace(/[\\*+?.()|[\]{}]/g, '\\$&') + '/').replace(/\/+/g, '/');
 
 	BX.SidePanel.Instance.bindAnchors({
 		rules: [
 			{
 				condition: [
-					'/company/personal/user/(\\d+)/tasks/task/view/(\\d+)/',
-					'/workgroups/group/(\\d+)/tasks/task/view/(\\d+)/',
-					'/extranet/contacts/personal/user/(\\d+)/tasks/task/view/(\\d+)/'
+					'/company/personal/user/(\\d+)/tasks/effective/show/',
+					'/company/personal/user/(\\d+)/tasks/effective/inprogress/'
+				],
+				loader: 'default-loader'
+			},
+			{
+				condition: ['/company/personal/user/(\\d+)/tasks/import/'],
+				loader: 'default-loader',
+				options: {
+					cacheable: false,
+					events: {
+						onClose: function() {
+							BX.Tasks.GridActions.reloadGrid();
+						}
+					}
+				}
+			},
+			{
+				condition: [
+					// '/company/personal/user/(\\d+)/tasks/report/construct/(\\d+)/create/',
 				],
 				loader: 'task-view-loader',
 				stopParameters: [
@@ -30,19 +43,52 @@
 			},
 			{
 				condition: [
+					'/company/personal/user/(\\d+)/tasks/task/view/(\\d+)/',
+					'/company/personal/user/(\\d+)/tasks/templates/template/view/(\\d+)/',
+					// '/company/personal/user/(\\d+)/tasks/report/view/(\\d+)/',
+					'/workgroups/group/(\\d+)/tasks/task/view/(\\d+)/',
+					'/extranet/contacts/personal/user/(\\d+)/tasks/task/view/(\\d+)/'
+				],
+				loader: 'task-view-loader',
+				stopParameters: [
+					'PAGEN_(\\d+)',
+				],
+				options: {
+					label: {
+						text: BX.message("INTRANET_BINDINGS_TASK"),
+						bgColor: "#2FC6F6"
+					}
+				}
+			},
+			{
+				condition: [
 					'/company/personal/user/(\\d+)/tasks/task/edit/0/',
+					'/company/personal/user/(\\d+)/tasks/templates/template/edit/0/',
 					'/workgroups/group/(\\d+)/tasks/task/edit/0/',
 					'/extranet/contacts/personal/user/(\\d+)/tasks/task/edit/0/'
 				],
-				loader: 'task-new-loader'
+				loader: 'task-new-loader',
+				options: {
+					label: {
+						text: BX.message("INTRANET_BINDINGS_TASK"),
+						bgColor: "#2FC6F6"
+					}
+				}
 			},
 			{
 				condition: [
 					'/company/personal/user/(\\d+)/tasks/task/edit/(\\d+)/',
+					'/company/personal/user/(\\d+)/tasks/templates/template/edit/(\\d+)/',
 					'/workgroups/group/(\\d+)/tasks/task/edit/(\\d+)/',
 					'/extranet/contacts/personal/user/(\\d+)/tasks/task/edit/(\\d+)/'
 				],
-				loader: 'task-edit-loader'
+				loader: 'task-edit-loader',
+				options: {
+					label: {
+						text: BX.message("INTRANET_BINDINGS_TASK"),
+						bgColor: "#2FC6F6"
+					}
+				}
 			},
 			{
 				condition: ['/crm/button/edit/(\\d+)/'],
@@ -54,7 +100,7 @@
 			},
 			{
 				condition: [
-					/\/online\/\?(IM_DIALOG|IM_HISTORY)=([a-zA-Z0-9_|]+)/i
+					/\/online\/\?(IM_DIALOG|IM_HISTORY)=(.+)/i
 				],
 				handler: function(event, link)
 				{
@@ -80,7 +126,7 @@
 			},
 			{
 				condition: [
-					/^(http|https):\/\/helpdesk\.bitrix24\.([a-zA-Z]{2,3})\/open\/([a-zA-Z0-9_|]+)/i
+					/^(http|https):\/\/helpdesk\.bitrix24\.([a-zA-Z\.]{2,})\/open\/([a-zA-Z0-9_|]+)/i
 				],
 				allowCrossDomain: true,
 				handler: function(event, link)
@@ -102,21 +148,45 @@
 			{
 				condition: [ new RegExp("/crm/lead/details/[0-9]+/", "i") ],
 				loader: "crm-entity-details-loader",
-				options: { cacheable: false }
+				options: {
+					cacheable: false,
+					label: {
+						text: BX.message("INTRANET_BINDINGS_LEAD"),
+						bgColor: "#55D0E0"
+					}
+				}
 			},
 			{
 				condition: [ new RegExp("/crm/contact/details/[0-9]+/", "i") ],
 				loader: "crm-entity-details-loader",
-				options: { cacheable: false }
+				options: {
+					cacheable: false,
+					label: {
+						text: BX.message("INTRANET_BINDINGS_CONTACT"),
+						bgColor: "#7BD500"
+					}
+				}
 			},
 			{
 				condition: [ new RegExp("/crm/company/details/[0-9]+/", "i") ],
-				loader: "crm-entity-details-loader"
+				loader: "crm-entity-details-loader",
+				options: {
+					label: {
+						text: BX.message("INTRANET_BINDINGS_COMPANY"),
+						bgColor: "#F7A700"
+					}
+				}
 			},
 			{
 				condition: [ new RegExp("/crm/deal/details/[0-9]+/", "i") ],
 				loader: "crm-entity-details-loader",
-				options: { cacheable: false }
+				options: {
+					cacheable: false,
+					label: {
+						text: BX.message("INTRANET_BINDINGS_DEAL"),
+						bgColor: "#9985DD"
+					}
+				}
 			},
 			{
 				condition: [
@@ -131,6 +201,78 @@
 			},
 			{
 				condition: [ new RegExp("/bitrix/tools/disk/focus.php\\?.*(inSidePanel).*action=(openFileDetail)", "i") ]
+			},
+			{
+				condition: [
+					new RegExp(siteDir + "company/personal/user/[0-9]+/($|\\?)", "i"),
+					new RegExp(siteDir + "contacts/personal/user/[0-9]+/($|\\?)", "i")
+				],
+				options: {
+					contentClassName: "bitrix24-profile-slider-content",
+					loader: "intranet:profile",
+					width: 1100
+				}
+			},
+			{
+				condition: [
+					new RegExp(siteDir + "timeman/worktime/records/[0-9]+/report/($|\\?)", "i")
+				],
+				options: {
+					cacheable: false,
+					allowChangeHistory: false,
+					width: 800
+				}
+			},
+			{
+				condition: [
+					new RegExp(siteDir + "company/personal/user/[0-9]+/edit/($|\\?)", "i"),
+					new RegExp(siteDir + "contacts/personal/user/[0-9]+/edit/($|\\?)", "i")
+				],
+				handler: function(event, link)
+				{
+					event.preventDefault();
+					var newLink = link.url.replace("\/edit", "");
+
+					BX.SidePanel.Instance.open(
+						newLink,
+						{
+							cacheable: false,
+							allowChangeHistory: false,
+							contentClassName: "bitrix24-profile-slider-content",
+							loader: "intranet:profile",
+							width: 1100
+						}
+					);
+				}
+			},
+			{
+				condition: [ new RegExp("/saleshub/orders/order/\\?.*") ],
+				loader: "crm-entity-details-loader"
+			},
+			{
+				condition: [
+					'^' + siteDir + 'mail/config/(new|edit)',
+				],
+				options: {
+					width: 760,
+					cacheable: false
+				}
+			},
+			{
+				condition: [
+					'^' + siteDir + 'mail/(blacklist|signature|config|message)'
+				],
+				options: {
+					width: 1080
+				}
+			},
+			{
+				condition: [
+					'^' + siteDir + 'mail/',
+				],
+				options: {
+					cacheable: false
+				}
 			}
 		]
 	});

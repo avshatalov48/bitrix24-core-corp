@@ -66,14 +66,15 @@
 	 * @see BX.Landing.Main.getInstance()
 	 *
 	 * @param {int} id - Landing id
-	 * @param {object} options
 	 *
 	 * @constructor
 	 */
-	BX.Landing.Main = function(id, options)
+	BX.Landing.Main = function(id)
 	{
+		var options = BX.Landing.Env.getInstance().getOptions();
+
 		this.id = id;
-		this.options = deepFreeze(options || {});
+		this.options = deepFreeze(options);
 		this.blocksPanel = null;
 		this.currentBlock = null;
 		this.loadedDeps = {};
@@ -133,9 +134,9 @@
 	 * @param {number} id
 	 * @param {Object} options - Option object.
 	 */
-	BX.Landing.Main.createInstance = function(id, options)
+	BX.Landing.Main.createInstance = function(id)
 	{
-		top.BX.Landing.Main.instance = new BX.Landing.Main(id, options);
+		top.BX.Landing.Main.instance = new BX.Landing.Main(id);
 	};
 
 
@@ -151,7 +152,7 @@
 			return top.BX.Landing.Main.instance;
 		}
 
-		top.BX.Landing.Main.instance = new BX.Landing.Main(-1, {});
+		top.BX.Landing.Main.instance = new BX.Landing.Main(-1);
 
 		return top.BX.Landing.Main.instance;
 	};
@@ -200,7 +201,7 @@
 		createInsertBlockButton: function(area)
 		{
 			var button = new PlusButton("insert_first_block", {
-				text: BX.message("ACTION_BUTTON_CREATE")
+				text: BX.Landing.Loc.getMessage("ACTION_BUTTON_CREATE")
 			});
 
 			button.on("click", this.showBlocksPanel.bind(this, null, area, button));
@@ -223,26 +224,26 @@
 					{
 						case hasClass(area, "landing-main"):
 							button.setText([
-								BX.message("ACTION_BUTTON_CREATE"),
-								BX.message("LANDING_ADD_BLOCK_TO_MAIN")
+								BX.Landing.Loc.getMessage("ACTION_BUTTON_CREATE"),
+								BX.Landing.Loc.getMessage("LANDING_ADD_BLOCK_TO_MAIN")
 							].join(" "));
 							break;
 						case hasClass(area, "landing-header"):
 							button.setText([
-								BX.message("ACTION_BUTTON_CREATE"),
-								BX.message("LANDING_ADD_BLOCK_TO_HEADER")
+								BX.Landing.Loc.getMessage("ACTION_BUTTON_CREATE"),
+								BX.Landing.Loc.getMessage("LANDING_ADD_BLOCK_TO_HEADER")
 							].join(" "));
 							break;
 						case hasClass(area, "landing-sidebar"):
 							button.setText([
-								BX.message("ACTION_BUTTON_CREATE"),
-								BX.message("LANDING_ADD_BLOCK_TO_SIDEBAR")
+								BX.Landing.Loc.getMessage("ACTION_BUTTON_CREATE"),
+								BX.Landing.Loc.getMessage("LANDING_ADD_BLOCK_TO_SIDEBAR")
 							].join(" "));
 							break;
 						case hasClass(area, "landing-footer"):
 							button.setText([
-								BX.message("ACTION_BUTTON_CREATE"),
-								BX.message("LANDING_ADD_BLOCK_TO_FOOTER")
+								BX.Landing.Loc.getMessage("ACTION_BUTTON_CREATE"),
+								BX.Landing.Loc.getMessage("LANDING_ADD_BLOCK_TO_FOOTER")
 							].join(" "));
 							break;
 					}
@@ -273,7 +274,7 @@
 
 				if (areas.length > 1)
 				{
-					button.setText(BX.message("ACTION_BUTTON_CREATE"));
+					button.setText(BX.Landing.Loc.getMessage("ACTION_BUTTON_CREATE"));
 					areas.forEach(function(currentArea) {
 						removeClass(currentArea, "landing-area-highlight");
 						removeClass(currentArea, "landing-area-fade");
@@ -432,7 +433,7 @@
 			var categories = Object.keys(blocks);
 
 			var panel = new ContentPanel("blocks_panel", {
-				title: BX.message("LANDING_CONTENT_BLOCKS_TITLE"),
+				title: BX.Landing.Loc.getMessage("LANDING_CONTENT_BLOCKS_TITLE"),
 				className: "landing-ui-panel-block-list",
 				scrollAnimation: true
 			});
@@ -453,7 +454,7 @@
 			panel.appendSidebarButton(
 				new BX.Landing.UI.Button.SidebarButton("feedback_button", {
 					className: "landing-ui-button-sidebar-feedback",
-					text: BX.message("LANDING_BLOCKS_LIST_FEEDBACK_BUTTON"),
+					text: BX.Landing.Loc.getMessage("LANDING_BLOCKS_LIST_FEEDBACK_BUTTON"),
 					onClick: this.showFeedbackForm.bind(this)
 				})
 			);
@@ -472,7 +473,7 @@
 			{
 				this.sliderFeedbackInited = true;
 				this.sliderFeedback = new ContentPanel("slider_feedback", {
-					title: BX.message("LANDING_PANEL_FEEDBACK_TITLE"),
+					title: BX.Landing.Loc.getMessage("LANDING_PANEL_FEEDBACK_TITLE"),
 					className: "landing-ui-panel-feedback"
 				});
 				append(this.sliderFeedback.layout, document.body);
@@ -512,7 +513,7 @@
 		 */
 		getFeedbackFormOptions: function()
 		{
-			var currentLanguage = BX.message("LANGUAGE_ID");
+			var currentLanguage = BX.Landing.Loc.getMessage("LANGUAGE_ID");
 			var options = {"id": "16", "sec": "3h483y", "lang": "en"};
 
 			switch (currentLanguage)
@@ -807,7 +808,8 @@
 						id: blockId,
 						active: true,
 						requiredUserAction: res.requiredUserAction,
-						manifest: res.manifest
+						manifest: res.manifest,
+						dynamicParams: res.dynamicParams
 					});
 
 					return self.runBlockScripts(res)
@@ -897,6 +899,7 @@
 		showBlockLoader: function()
 		{
 			this.insertToBlocksFlow(this.getBlockLoader());
+			this.blockLoader.show();
 			return Promise.resolve();
 		},
 
@@ -908,6 +911,7 @@
 		hideBlockLoader: function()
 		{
 			remove(this.getBlockLoader());
+			this.blockLoader = null;
 			return Promise.resolve();
 		},
 

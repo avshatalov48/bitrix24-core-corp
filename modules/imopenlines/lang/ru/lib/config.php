@@ -12,6 +12,9 @@ $MESS["IMOL_CONFIG_VOTE_MESSAGE_1_DISLIKE"] = "Очень жаль, что мы 
 $MESS["IMOL_CONFIG_VOTE_MESSAGE_2_TEXT"] = "Пожалуйста, оцените качество обслуживания.[br][br]Отправьте: 1 - хорошо, 0 - плохо";
 $MESS["IMOL_CONFIG_VOTE_MESSAGE_2_LIKE"] = "Спасибо за оценку!";
 $MESS["IMOL_CONFIG_VOTE_MESSAGE_2_DISLIKE"] = "Очень жаль, что мы не смогли помочь вам, мы постараемся стать лучше.";
+$MESS["IMOL_CONFIG_KPI_FIRST_ANSWER_TEXT"] = "Сотрудник #OPERATOR# превысил допустимое время ответа клиенту на первое сообщение. Диалог №#DIALOG#.";
+$MESS["IMOL_CONFIG_KPI_FURTHER_ANSWER_TEXT"] = "Сотрудник #OPERATOR# превысил допустимое время ответа клиенту на сообщение. Диалог №#DIALOG#.";
+
 $MESS["IMOL_ADD_ERROR"] = "Ошибка создания открытой линии";
 $MESS["IMOL_UPDATE_ERROR"] = "Ошибка обновления открытой линии";
 ?>

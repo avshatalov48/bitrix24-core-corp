@@ -216,6 +216,11 @@ class CTimeManAdminReport
 		return $arResult;
 	}
 
+	public function getDepartmentsData($departmentsIds)
+	{
+		return $this->_getDepartmentsData($departmentsIds);
+	}
+
 	private function _getDepartmentsData($arSections)
 	{
 		$arResult = array();

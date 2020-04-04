@@ -13,3 +13,7 @@ drop table if exists b_landing_manifest;
 drop table if exists b_landing_placement;
 drop table if exists b_landing_update_block;
 drop table if exists b_landing_urlrewrite;
+drop table if exists b_landing_entity_rights;
+drop table if exists b_landing_role;
+drop table if exists b_landing_filter_entity;
+drop table if exists b_landing_filter_block;

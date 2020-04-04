@@ -3,6 +3,7 @@
 namespace Bitrix\DocumentGenerator\Storage;
 
 use Bitrix\Disk\Driver;
+use Bitrix\Disk\Folder;
 use Bitrix\Disk\SystemUser;
 use Bitrix\Disk\Ui\Text;
 use Bitrix\DocumentGenerator\Integration\Disk\ProxyType;
@@ -15,6 +16,7 @@ use Bitrix\Main\Text\BinaryString;
 final class Disk extends BFile
 {
 	const STORAGE_CODE = 'documents';
+	const TEMPLATES_FOLDER_CODE = 'FOR_DOCUMENTGENERATOR_TEMPLATES';
 
 	/**
 	 * Try to read content. Returns string on success, false on failure.
@@ -31,10 +33,6 @@ final class Disk extends BFile
 			{
 				$bFileId = $file->getFileId();
 				return parent::read($bFileId);
-			}
-			else
-			{
-				echo 'cant read from '.$fileId;
 			}
 		}
 
@@ -72,7 +70,7 @@ final class Disk extends BFile
 	 * @return \Bitrix\Disk\Storage|null
 	 * @throws \Bitrix\Main\ArgumentException
 	 */
-	protected static function getDiskStorage()
+	public static function getDiskStorage()
 	{
 		static $storage;
 		if($storage === null)
@@ -99,6 +97,30 @@ final class Disk extends BFile
 	}
 
 	/**
+	 * @return \Bitrix\Disk\Folder|null
+	 * @throws \Bitrix\Main\ArgumentException
+	 */
+	public static function getTemplatesFolder()
+	{
+		$storage = static::getDiskStorage();
+		$folder = Folder::load([
+			'=CODE' => static::TEMPLATES_FOLDER_CODE,
+			'STORAGE_ID' => $storage->getId(),
+		]);
+
+		if(!$folder)
+		{
+			$folder = $storage->addFolder([
+				'NAME' => static::TEMPLATES_FOLDER_CODE,
+				'CODE' => static::TEMPLATES_FOLDER_CODE,
+				'CREATED_BY' => 0
+			], [], true);
+		}
+
+		return $folder;
+	}
+
+	/**
 	 * @param int $fileId
 	 * @param string $fileName
 	 * @return bool
@@ -115,14 +137,6 @@ final class Disk extends BFile
 				$bFileId = $file->getFileId();
 				return parent::download($bFileId, $fileName);
 			}
-			else
-			{
-				echo 'no disk file '.$fileId;
-			}
-		}
-		else
-		{
-			echo 'no module disk';
 		}
 
 		return false;
@@ -182,7 +196,10 @@ final class Disk extends BFile
 					$fileName = $file['fileName'];
 				}
 				$bFileId = $result->getId();
-				$result = $this->addFile($bFileId, ['fileName' => $fileName], $file['size']);
+				$result = $this->addFile($bFileId, [
+					'fileName' => $fileName,
+					'isTemplate' => ($file['isTemplate'] === true),
+				], $file['size']);
 			}
 		}
 		else
@@ -209,24 +226,32 @@ final class Disk extends BFile
 	 * @return AddResult
 	 * @throws \Bitrix\Main\ArgumentException
 	 */
-	protected function addFile($bFileId, array $options = [], $size)
+	protected function addFile($bFileId, array $options = [], $size = null)
 	{
 		$name = $options['fileName'];
 		$result = new AddResult();
-		$storage = static::getDiskStorage();
-		$file = $storage->addFile([
+		$fileDescription = [
 			'NAME' => Text::correctFilename($name),
 			'FILE_ID' => (int)$bFileId,
 			'SIZE' => $size,
 			'CREATED_BY' => $this->getUserId(),
-		], [], true);
+		];
+		if($options['isTemplate'] === true)
+		{
+			$folder = static::getTemplatesFolder();
+		}
+		else
+		{
+			$folder = static::getDiskStorage()->getRootObject();
+		}
+		$file = $folder->addFile($fileDescription, [], true);
 		if($file && $file->getId() > 0)
 		{
 			$result->setId($file->getId());
 		}
 		else
 		{
-			$result->addErrors($storage->getErrors());
+			$result->addErrors($folder->getErrors());
 		}
 
 		return $result;
@@ -251,10 +276,6 @@ final class Disk extends BFile
 			if($file)
 			{
 				return $file->getSize();
-			}
-			else
-			{
-				echo 'cant read from '.$fileId;
 			}
 		}
 

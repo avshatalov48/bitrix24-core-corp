@@ -77,11 +77,6 @@
 		this.recorder = null;
 		this.record = null;
 
-		// webaudio objects
-		this.audioContext = null;
-		this.analyserNode = null;
-		this.mediaStreamNode = null;
-
 		this.frequencyData = null;
 
 		this.canvasContext = null;
@@ -188,10 +183,12 @@
 				self.recorder = new BX.Recorder(stream);
 				BX.addCustomEvent(self.recorder, 'stop', self.__onRecorderStopped.bind(self));
 				self.recorder.start();
+				self.recorder.attachAnalyser();
+				self.frequencyData = new Uint8Array(self.recorder.analyserNode.frequencyBinCount);
+
+				window.requestAnimationFrame(self.__visualize.bind(self));
 			}
 
-			self.__attachAnalyser();
-			self.__visualize();
 			self.__updateDeviceList();
 			BX.onCustomEvent(self, events.deviceReady, [self]);
 		}).catch(function(error)
@@ -203,31 +200,12 @@
 	{
 		this.defaultMicrophone = microphoneId;
 		this.__setDefaultMicrophone(microphoneId);
-		this.__detachAnalyser();
 		stopMediaStream(this.mediaStream);
 		this.mediaStream = null;
 		this.getMediaStream();
 	};
 	BX.CrmRecorder.prototype.dispose = function()
 	{
-		if(this.analyserNode)
-		{
-			this.analyserNode.disconnect();
-			this.analyserNode = null;
-		}
-
-		if(this.mediaStreamNode)
-		{
-			this.mediaStreamNode.disconnect();
-			this.analyserNode = null;
-		}
-
-		if(this.audioContext)
-		{
-			this.audioContext.close();
-			this.audioContext = null;
-		}
-
 		if(this.mediaStream)
 		{
 			stopMediaStream(this.mediaStream);
@@ -238,6 +216,7 @@
 			this.recorder.dispose();
 			this.recorder = null;
 		}
+		this.frequencyData = null;
 	};
 	BX.CrmRecorder.prototype.__setState = function(newState)
 	{
@@ -261,7 +240,7 @@
 	};
 	BX.CrmRecorder.prototype.__visualize = function()
 	{
-		if(!this.analyserNode)
+		if(!this.recorder || !this.recorder.analyserNode)
 			return;
 
 		window.requestAnimationFrame(this.__visualize.bind(this));
@@ -275,12 +254,12 @@
 
 		lastFrameDate = now;
 
-		this.analyserNode.getByteFrequencyData(this.frequencyData);
+		this.recorder.analyserNode.getByteFrequencyData(this.frequencyData);
 		//this.analyserNode.getFloatFrequencyData(this.frequencyData);
 
 		var width = this.elements.canvas.width;
 		var height = this.elements.canvas.height;
-		var frequencyPoints = this.analyserNode.frequencyBinCount;
+		var frequencyPoints = this.recorder.analyserNode.frequencyBinCount;
 
 		this.canvasContext.clearRect(0, 0, width, height);
 		this.canvasContext.beginPath();
@@ -338,39 +317,6 @@
 			}
 		}
 		return result;
-	};
-	BX.CrmRecorder.prototype.__attachAnalyser = function()
-	{
-		if(!this.mediaStream)
-			return false;
-
-		if(!this.audioContext)
-			this.audioContext = new (window.AudioContext || window.webkitAudioContext);
-
-		if(!this.analyserNode)
-		{
-			this.analyserNode = this.audioContext.createAnalyser();
-			this.analyserNode.fftSize = 128;
-			this.analyserNode.minDecibels = -80;
-			this.analyserNode.maxDecibels = -10;
-		}
-
-		if(!this.mediaStreamNode)
-		{
-			this.mediaStreamNode = this.audioContext.createMediaStreamSource(this.mediaStream);
-			this.mediaStreamNode.connect(this.analyserNode);
-		}
-
-		this.frequencyData = new Uint8Array(this.analyserNode.frequencyBinCount);
-		//this.frequencyData = new Float32Array(this.analyserNode.frequencyBinCount);
-	};
-	BX.CrmRecorder.prototype.__detachAnalyser = function()
-	{
-		if(this.mediaStreamNode)
-		{
-			this.mediaStreamNode.disconnect();
-			this.mediaStreamNode = null;
-		}
 	};
 	BX.CrmRecorder.prototype.__onRecorderStopped = function(record)
 	{

@@ -62,6 +62,7 @@ $APPLICATION->IncludeComponent(
 
 		'USER_ID' => $arParams[ 'USER_ID' ],
 		'GROUP_ID' => $arParams[ 'GROUP_ID' ],
+		'SPRINT_ID' => $arParams[ 'SPRINT_ID' ],
 		'MENU_GROUP_ID' => $arParams['MENU_GROUP_ID'],
 
 		'USE_LIVE_SEARCH'=>$arParams['USE_LIVE_SEARCH'],
@@ -94,6 +95,8 @@ $APPLICATION->IncludeComponent(
 	array(
 		'USER_ID' => $arParams[ 'USER_ID' ],
 		'GROUP_ID' => $arParams[ 'GROUP_ID' ],
+		'SPRINT_ID' => $arParams[ 'SPRINT_ID' ],
+		'SPRINT_SELECTED' => $arParams[ 'SPRINT_SELECTED' ],
 
 		'FILTER_ID' => $arParams[ "FILTER_ID" ],
 

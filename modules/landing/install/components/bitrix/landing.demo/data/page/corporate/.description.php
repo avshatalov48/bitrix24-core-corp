@@ -12,8 +12,8 @@ return array(
 	'description' => Loc::getMessage('LANDING_DEMO_CORPORATE_DESCRIPTION'),
 	'fields' => array(
 		'ADDITIONAL_FIELDS' => array(
-			'THEME_CODE' => 'corporate',
-			'THEME_CODE_TYPO' => 'corporate',
+			'THEME_CODE' => '3corporate',
+			'THEME_CODE_TYPO' => '3corporate',
 			'METAOG_IMAGE' => 'https://cdn.bitrix24.site/bitrix/images/demo/page/corporate/preview.jpg',
 			'METAOG_TITLE' => Loc::getMessage('LANDING_DEMO_CORPORATE_TITLE'),
 			'METAOG_DESCRIPTION' => Loc::getMessage('LANDING_DEMO_CORPORATE_DESCRIPTION'),
@@ -197,7 +197,7 @@ return array(
 
             <div class="col-md-6 col-lg-4 landing-block-node-right">
                 <div class="js-carousel g-pb-90" data-infinite="true" data-slides-show="true" data-pagi-classes="u-carousel-indicators-v1 g-absolute-centered--x g-bottom-30">
-                    <div class="js-slide landing-block-card-right slick-slide g-min-height-$1vh">
+                    <div class="js-slide landing-block-card-right slick-slide ">
                         <img class="landing-block-node-right-img img-fluid w-100" src="https://cdn.bitrix24.site/bitrix/images/landing/business/500x335/img11.jpg" alt="" />
 
                         <div class="g-pa-30">
@@ -206,7 +206,7 @@ return array(
                         </div>
                     </div>
 
-                    <div class="js-slide landing-block-card-right slick-slide g-min-height-$1vh">
+                    <div class="js-slide landing-block-card-right slick-slide ">
                         <img class="landing-block-node-right-img img-fluid w-100" src="https://cdn.bitrix24.site/bitrix/images/landing/business/500x335/img12.jpg" alt="" />
 
                         <div class="g-pa-30">
@@ -215,7 +215,7 @@ return array(
                         </div>
                     </div>
 
-                    <div class="js-slide landing-block-card-right slick-slide g-min-height-$1vh">
+                    <div class="js-slide landing-block-card-right slick-slide ">
                         <img class="landing-block-node-right-img img-fluid w-100" src="https://cdn.bitrix24.site/bitrix/images/landing/business/500x335/img6.jpg" alt="" />
 
                         <div class="g-pa-30">
@@ -269,7 +269,7 @@ return array(
 				'SORT' => '2500',
 				'CONTENT' => '<section class="landing-block landing-block-node-container g-pt-10 g-pb-20">
 	<div class="container">
-		<div class="row">
+		<div class="row landing-block-inner">
 
 			<div class="landing-block-card landing-block-node-block col-md-4 g-mb-30 g-mb-0--md g-pt-10">
 				<img class="landing-block-node-img img-fluid g-mb-30" src="https://cdn.bitrix24.site/bitrix/images/landing/business/500x335/img5.jpg" alt="" data-fileid="-1" />
@@ -302,7 +302,7 @@ return array(
 				'SORT' => '3000',
 				'CONTENT' => '<section class="landing-block landing-block-node-container g-pt-10 g-pb-20">
 	<div class="container">
-		<div class="row">
+		<div class="row landing-block-inner">
 
 			<div class="landing-block-card landing-block-node-block col-md-4 g-mb-30 g-mb-0--md g-pt-10">
 				<img class="landing-block-node-img img-fluid g-mb-30" src="https://cdn.bitrix24.site/bitrix/images/landing/business/500x335/img8.jpg" alt="" />
@@ -373,7 +373,7 @@ return array(
 				'CONTENT' => '<section class="landing-block container-fluid px-0 g-bg-secondary">
         <div class="landing-block-inner-container row no-gutters align-items-start">
 
-            <div class="landing-block-card col-md-6 g-flex-centered g-min-height-$1vh col-lg-3">
+            <div class="landing-block-card col-md-6 g-flex-centered  col-lg-3">
                 <div class="text-center g-color-gray-light-v2 g-pa-30">
                     <div class="landing-block-node-card-header text-uppercase u-heading-v2-4--bottom g-brd-primary g-mb-40">
                         <h4 class="landing-block-node-subtitle h6 g-font-weight-800 g-font-size-12 g-letter-spacing-1 g-color-primary g-mb-20"></h4>
@@ -384,7 +384,7 @@ return array(
                 </div>
             </div>
 
-            <div class="landing-block-card col-md-6 g-flex-centered g-min-height-$1vh col-lg-3">
+            <div class="landing-block-card col-md-6 g-flex-centered  col-lg-3">
                 <div class="text-center g-color-gray-light-v2 g-pa-30">
                     <div class="landing-block-node-card-header text-uppercase u-heading-v2-4--bottom g-brd-primary g-mb-40">
                         <h4 class="landing-block-node-subtitle h6 g-font-weight-800 g-font-size-12 g-letter-spacing-1 g-color-primary g-mb-20"></h4>
@@ -395,7 +395,7 @@ return array(
                 </div>
             </div>
 
-            <div class="landing-block-card col-md-6 g-flex-centered g-min-height-$1vh col-lg-3">
+            <div class="landing-block-card col-md-6 g-flex-centered  col-lg-3">
                 <div class="text-center g-color-gray-light-v2 g-pa-30">
                     <div class="landing-block-node-card-header text-uppercase u-heading-v2-4--bottom g-brd-primary g-mb-40">
                         <h4 class="landing-block-node-subtitle h6 g-font-weight-800 g-font-size-12 g-letter-spacing-1 g-color-primary g-mb-20"></h4>
@@ -406,7 +406,7 @@ return array(
                 </div>
             </div>
 
-        <div class="landing-block-card col-md-6 g-flex-centered g-min-height-$1vh col-lg-3">
+        <div class="landing-block-card col-md-6 g-flex-centered  col-lg-3">
                 <div class="text-center g-color-gray-light-v2 g-pa-30">
                     <div class="text-uppercase u-heading-v2-4--bottom g-brd-primary g-mb-40">
                         <h4 class="landing-block-node-subtitle h6 g-font-weight-800 g-font-size-12 g-letter-spacing-1 g-color-primary g-mb-20" ></h4>
@@ -425,9 +425,9 @@ return array(
 				'CONTENT' => '<section class="landing-block landing-block-node-container g-pt-30 g-pb-20 g-bg-secondary">
         <div class="container">
 
-            <div class="row no-gutters">
+            <div class="row no-gutters landing-block-inner">
 
-                <div class="landing-block-card js-animation fadeInUp col-md-4 g-mb-30 g-mb-0--md g-min-height-$1vh col-lg-6">
+                <div class="landing-block-card js-animation fadeInUp col-md-4 g-mb-30 g-mb-0--md  col-lg-6">
                     <article class="text-center g-brd-around g-color-gray g-brd-gray-light-v5 g-pa-10">
                         <div class="g-bg-gray-light-v5 g-pa-30">
                             <h4 class="landing-block-node-title text-uppercase h5 g-color-gray-dark-v3 g-font-weight-500 g-mb-10 g-color-black-opacity-0_9"><span style="font-weight: bold;">SINGLE</span></h4>
@@ -454,7 +454,7 @@ return array(
 
 
 
-                <div class="landing-block-card js-animation fadeInUp col-md-4 g-mb-30 g-mb-0--md g-min-height-$1vh col-lg-6">
+                <div class="landing-block-card js-animation fadeInUp col-md-4 g-mb-30 g-mb-0--md  col-lg-6">
                     <article class="text-center g-brd-around g-color-gray g-brd-gray-light-v5 g-pa-10">
                         <div class="g-bg-gray-light-v5 g-pa-30">
                             <h4 class="landing-block-node-title text-uppercase h5 g-color-gray-dark-v3 g-font-weight-500 g-mb-10 g-color-black-opacity-0_9"><span style="font-weight: bold;">MULTIPLE</span></h4>
@@ -920,7 +920,7 @@ return array(
 				'CONTENT' => '<section class="landing-block g-pt-30 g-pb-20">
 
         <div class="container">
-            <div class="row">
+            <div class="row landing-block-inner">
 
                 <div class="landing-block-card col-sm-6 col-md-4">
                     <article class="u-shadow-v28 g-bg-white">

@@ -43,7 +43,7 @@ class OpenLine extends Base
 
 	public static function getStatusAnchor()
 	{
-		$included = Main\Loader::includeModule('imopenlines');
+		$isBitrix24 = Main\Loader::includeModule('bitrix24');
 		if (static::isActive())
 		{
 			$text = Loc::getMessage('IMOPENLINES_ACTIVITY_PROVIDER_ACTIVE', Array('#NUMBER#' => static::$activeLine));
@@ -55,7 +55,7 @@ class OpenLine extends Base
 
 		return array(
 			'TEXT' => $text,
-			'URL' => $included? \Bitrix\ImOpenLines\Common::getPublicFolder(): ''
+			'URL' => $isBitrix24 ? '/contact_center/' : '/services/contact_center/'
 		);
 	}
 

@@ -18,8 +18,11 @@ Loc::loadMessages(__FILE__);
 
 class Result extends Model
 {
-	/**@var $resultEntity \Bitrix\Crm\WebForm\ResultEntity*/
+	/**@var $resultEntity ResultEntity Result entity. */
 	protected $resultEntity;
+
+	/** @var string $resultUrl Result Url. */
+	protected $url;
 
 	protected function getClassTable()
 	{
@@ -27,11 +30,34 @@ class Result extends Model
 	}
 
 	/*
-	 * @return \Bitrix\Crm\WebForm\ResultEntity
+	 * Get result entity.
+	 *
+	 * @return ResultEntity
 	 * */
 	public function getResultEntity()
 	{
 		return $this->resultEntity;
+	}
+
+	/**
+	 * Get result url.
+	 *
+	 * @return string
+	 */
+	public function getUrl()
+	{
+		return $this->url;
+	}
+
+	/**
+	 * Set result url.
+	 *
+	 * @param string $url Url.
+	 * @return void
+	 */
+	public function setUrl(string $url = null)
+	{
+		$this->url = $url;
 	}
 
 	public function load($id)
@@ -192,7 +218,7 @@ class Result extends Model
 				trimArr($value);
 			}
 
-			if(!$value)
+			if(!$value && $value !== '0' && $value !== 0)
 			{
 				continue;
 			}
@@ -365,6 +391,7 @@ class Result extends Model
 		$placeholders = $this->params['PLACEHOLDERS'];
 		$isCallback = $this->params['IS_CALLBACK'];
 		$callbackPhone = $this->params['CALLBACK_PHONE'];
+		$entities = $this->params['ENTITIES'];
 
 		$resultEntity = new ResultEntity;
 		$resultEntity->setFormData($this->params['FORM']);
@@ -381,6 +408,7 @@ class Result extends Model
 		$resultEntity->setInvoiceSettings($invoiceSettings);
 		$resultEntity->setDuplicateMode($duplicateMode);
 		$resultEntity->setCallback($isCallback, $callbackPhone);
+		$resultEntity->setEntities($entities);
 
 		$resultEntity->add($scheme, $fields);
 		$this->resultEntity = $resultEntity;

@@ -39,6 +39,7 @@ create table b_sonet_group
 	PROJECT_DATE_START datetime null,
 	PROJECT_DATE_FINISH datetime null,
 	SEARCH_INDEX mediumtext null,
+	LANDING char(1) null,
   primary key (ID),
   index IX_SONET_GROUP_1(OWNER_ID)
 );
@@ -47,29 +48,7 @@ create table b_sonet_group_tag (
 	GROUP_ID int(11) NOT NULL,
 	NAME varchar(255) NOT NULL,
 	PRIMARY KEY (GROUP_ID,NAME),
-	index IX_SONET_GROUP_TAG_1(`GROUP_ID`),
 	index IX_SONET_GROUP_TAG_2(`NAME`)
-);
-
-create table b_sonet_group_template
-(
-	ID int not null auto_increment,
-	USER_ID int not null,
-	NAME varchar(255) not null,
-	OWNER_ID int not null,
-	TYPE varchar(255) null,
-	DATE_CREATE datetime null,
-	TIMESTAMP_X datetime null,
-	PARAMS text null,
-	primary key (ID),
-	index IX_SONET_GROUP_TEMPLATE_1(`USER_ID`)
-);
-
-create table b_sonet_group_template_right
-(
-	TEMPLATE_ID int not null,
-	GROUP_CODE varchar(255) not null,
-	unique ix_b_sonet_group_template_right_1(TEMPLATE_ID, GROUP_CODE)
 );
 
 create table b_sonet_group_site
@@ -445,4 +424,31 @@ create table b_sonet_log_tag (
 	PRIMARY KEY (ITEM_TYPE,ITEM_ID,NAME),
 	index IX_SONET_LOG_TAG_1(`LOG_ID`),
 	index IX_SONET_LOG_TAG_2(`NAME`)
+);
+
+create table b_sonet_user_tag (
+	USER_ID int(11) NOT NULL,
+	NAME varchar(255) NOT NULL,
+	PRIMARY KEY (`USER_ID`,`NAME`),
+	index IX_SONET_USER_TAG_1(`NAME`)
+);
+
+create table b_sonet_user_welltory (
+	ID int(11) not null auto_increment,
+	USER_ID int(11) NOT NULL,
+	STRESS tinyint NOT NULL,
+	STRESS_TYPE varchar(100) DEFAULT NULL,
+	STRESS_COMMENT varchar(255) DEFAULT NULL,
+	DATE_MEASURE datetime not null,
+	HASH varchar(100) DEFAULT NULL,
+	PRIMARY KEY (`ID`),
+	index IX_SONET_USER_STRESSLEVEL_1(`USER_ID`,`DATE_MEASURE`)
+);
+
+create table b_sonet_user_welltory_disclaimer (
+	ID int(11) not null auto_increment,
+	USER_ID int(11) NOT NULL,
+	DATE_SIGNED datetime not null,
+	PRIMARY KEY (`ID`),
+	index IX_SONET_USER_STRESSLEVEL_DISCLAIMER_1(`USER_ID`)
 );

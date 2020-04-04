@@ -221,6 +221,10 @@ class Network
 		{
 			$result = $this->executeClientChangeLicence($params);
 		}
+		else if ($command == 'clientRequestFinalizeSession')
+		{
+			$result = $this->executeClientRequestFinalizeSession($params);
+		}
 
 		return $result;
 	}
@@ -271,26 +275,17 @@ class Network
 		if (!\Bitrix\Main\Loader::includeModule('im'))
 			return false;
 
-		$params['GUID'] = array_map(function($value){return 'network|'.$value;}, $params['GUID']);
+		$sessions = array_map(function($value){return (int)$value;}, $params['SESSIONS']);
 
-		$users =\Bitrix\Main\UserTable::getList(Array(
-			'select' => Array('ID'),
-			'filter' => Array(
-				'=EXTERNAL_AUTH_ID' => self::EXTERNAL_AUTH_ID,
-				'=XML_ID' => $params['GUID']
-			)
-		))->fetchAll();
-
-		if (empty($users))
+		if (empty($sessions))
 		{
 			return false;
 		}
-		$users = array_map(function($value){return $value['ID'];}, $users);
 
 		$orm = \Bitrix\Imopenlines\Model\SessionTable::getList(Array(
 			'select' => Array('ID', 'CONFIG_ID', 'USER_ID', 'SOURCE', 'CHAT_ID', 'USER_CODE'),
 			'filter' => Array(
-				'=USER_ID' => $users,
+				'=ID' => $sessions,
 				'=CLOSED' => 'N',
 			)
 		));
@@ -299,6 +294,68 @@ class Network
 			Im::addMessage(Array(
 				"TO_CHAT_ID" => $row['CHAT_ID'],
 				'MESSAGE' => Loc::getMessage('IMOL_NETWORK_TARIFF_DIALOG_CLOSE'),
+				'SYSTEM' => 'Y',
+				'SKIP_COMMAND' => 'Y',
+				'RECENT_ADD' => 'N',
+				"PARAMS" => Array(
+					"CLASS" => "bx-messenger-content-item-system"
+				),
+			));
+
+			$session = new Session();
+			$result = $session->start(array_merge($row, Array(
+				'SKIP_CREATE' => 'Y',
+			)));
+			if(!$result->isSuccess() || $result->getResult() != true)
+			{
+				return false;
+			}
+
+			$session->update(Array(
+				'WAIT_ACTION' => 'Y',
+				'WAIT_ANSWER' => 'N',
+			));
+			$session->finish();
+		}
+
+		return true;
+	}
+
+	/**
+	 * @param $params
+	 * @return bool
+	 * @throws Main\ArgumentException
+	 * @throws Main\LoaderException
+	 * @throws Main\ObjectException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
+	private function executeClientRequestFinalizeSession($params)
+	{
+		\Bitrix\ImOpenLines\Log::write($params, 'NETWORK FINALIZE SESSION');
+
+		if (!\Bitrix\Main\Loader::includeModule('im'))
+			return false;
+
+		$sessions = array_map(function($value){return (int)$value;}, $params['SESSIONS']);
+
+		if (empty($sessions))
+		{
+			return false;
+		}
+
+		$orm = \Bitrix\Imopenlines\Model\SessionTable::getList(Array(
+			'select' => Array('ID', 'CONFIG_ID', 'USER_ID', 'SOURCE', 'CHAT_ID', 'USER_CODE'),
+			'filter' => Array(
+				'=ID' => $sessions,
+				'=CLOSED' => 'N',
+			)
+		));
+		while($row = $orm->fetch())
+		{
+			Im::addMessage(Array(
+				"TO_CHAT_ID" => $row['CHAT_ID'],
+				'MESSAGE' => Loc::getMessage('IMOL_NETWORK_UNREGISTER_DIALOG_CLOSE'),
 				'SYSTEM' => 'Y',
 				'SKIP_COMMAND' => 'Y',
 				'RECENT_ADD' => 'N',
@@ -359,6 +416,10 @@ class Network
 		\Bitrix\ImOpenLines\Log::write($params, 'NETWORK GET');
 
 		$userId = $this->getUserId($params['USER']);
+		if (!$userId)
+		{
+			return false;
+		}
 
 		$message = Array(
 			'id' => $params['MESSAGE_ID'],
@@ -462,6 +523,10 @@ class Network
 		\Bitrix\ImOpenLines\Log::write($params, 'NETWORK GET');
 
 		$userId = $this->getUserId($params['USER']);
+		if (!$userId)
+		{
+			return false;
+		}
 
 		$message = Array(
 			'id' => $params['MESSAGE_ID'],
@@ -486,6 +551,10 @@ class Network
 		\Bitrix\ImOpenLines\Log::write($params, 'NETWORK GET');
 
 		$userId = $this->getUserId($params['USER']);
+		if (!$userId)
+		{
+			return false;
+		}
 
 		$message = Array(
 			'id' => $params['MESSAGE_ID']
@@ -632,7 +701,7 @@ class Network
 	private function getUserId($params, $createUser = true)
 	{
 		$orm = \Bitrix\Main\UserTable::getList(array(
-			'select' => Array('ID', 'NAME', 'LAST_NAME', 'PERSONAL_GENDER', 'PERSONAL_WWW', 'EMAIL'),
+			'select' => Array('ID', 'NAME', 'LAST_NAME', 'PERSONAL_GENDER', 'PERSONAL_PHOTO', 'PERSONAL_WWW', 'EMAIL'),
 			'filter' => array(
 				'=EXTERNAL_AUTH_ID' => self::EXTERNAL_AUTH_ID,
 				'=XML_ID' => 'network|'.$params['UUID']
@@ -667,6 +736,17 @@ class Network
 				$updateFields['EMAIL'] = $params['EMAIL'];
 			}
 
+			if (isset($params['PERSONAL_PHOTO']) && !empty($params['PERSONAL_PHOTO']))
+			{
+				$userAvatar = \Bitrix\Im\User::uploadAvatar($params['PERSONAL_PHOTO'], $userId);
+				if ($userAvatar && $userFields['PERSONAL_PHOTO'] != $userAvatar)
+				{
+					$connection = \Bitrix\Main\Application::getConnection();
+					$connection->query("UPDATE b_user SET PERSONAL_PHOTO = ".intval($userAvatar)." WHERE ID = ".intval($userId));
+					$updateFields['ID'] = $userId;
+				}
+			}
+
 			if (!empty($updateFields))
 			{
 				$cUser = new \CUser;
@@ -679,27 +759,19 @@ class Network
 			$userName = $params['NAME']? $params['NAME']: Loc::getMessage('IMOL_NETWORK_GUEST_NAME');
 			$userLastName = $params['LAST_NAME'];
 			$userGender = $params['PERSONAL_GENDER'];
-			$userAvatar = $params['PERSONAL_PHOTO'];
 			$userWww = $params['PERSONAL_WWW'];
 			$userEmail = $params['EMAIL'];
-
-			if ($userAvatar)
-			{
-				$userAvatar = \CFile::MakeFileArray($userAvatar);
-			}
 
 			$cUser = new \CUser;
 			$fields['LOGIN'] = self::MODULE_ID . '_' . rand(1000,9999) . randString(5);
 			$fields['NAME'] = $userName;
 			$fields['LAST_NAME'] = $userLastName;
-			if ($userAvatar)
-			{
-				$fields['PERSONAL_PHOTO'] = $userAvatar;
-			}
+
 			if ($userEmail)
 			{
 				$fields['EMAIL'] = $userEmail;
 			}
+
 			$fields['PERSONAL_GENDER'] = $userGender;
 			$fields['PERSONAL_WWW'] = $userWww;
 			$fields['PASSWORD'] = md5($fields['LOGIN'].'|'.rand(1000,9999).'|'.time());
@@ -709,6 +781,14 @@ class Network
 			$fields['ACTIVE'] = 'Y';
 
 			$userId = $cUser->Add($fields);
+
+			if ($userId && $params['PERSONAL_PHOTO'])
+			{
+				$userAvatar = \Bitrix\Im\User::uploadAvatar($params['PERSONAL_PHOTO'], $userId);
+
+				$connection = \Bitrix\Main\Application::getConnection();
+				$connection->query("UPDATE b_user SET PERSONAL_PHOTO = ".intval($userAvatar)." WHERE ID = ".intval($userId));
+			}
 		}
 
 		return $userId;

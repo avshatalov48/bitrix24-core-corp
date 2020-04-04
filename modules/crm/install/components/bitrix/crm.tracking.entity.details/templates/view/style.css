@@ -10,6 +10,70 @@
 	position: relative;
 }
 
+.crm-tracking-entity-details-head {
+	position: relative;
+}
+
+.crm-tracking-entity-details-toggler {
+	position: absolute;
+	top: -10px;
+	right: 0;
+	z-index: 1;
+	visibility: hidden;
+	display: flex;
+	color: rgba(106, 111, 117, 0.5);
+	font-size: 13px;
+	cursor: pointer;
+	transition: all 0.3s ease;
+}
+.crm-tracking-entity-details-overlay {
+	background: rgba(255, 255, 255, 0.7);
+	padding: 10px 0 10px 30px;
+}
+.crm-tracking-entity-details-edit {
+	padding: 10px 0 10px 0;
+	background: white;
+}
+.crm-tracking-entity-details-edit:after {
+	content: '';
+	background: url(/bitrix/components/bitrix/crm.entity.editor/templates/.default/images/icons-sprite.svg) no-repeat center -246px;
+	padding: 10px;
+	opacity: 0.5;
+}
+.crm-tracking-entity-details-edit:hover:after {
+	opacity: 1;
+}
+.crm-tracking-entity-details-show {
+	background: white;
+	padding: 10px 5px 10px 0;
+}
+.crm-tracking-entity-details-show:hover {
+	color: rgba(106, 111, 117, 1);
+}
+
+.crm-tracking-entity-details-toggler :nth-child(2)
+{
+	padding: 10px 5px 10px 10px;
+}
+
+.crm-tracking-entity-details-hidden .crm-tracking-entity-details-toggler {
+	visibility: visible;
+}
+.crm-tracking-entity-details-hidden .crm-tracking-entity-details-body {
+	display: none;
+}
+
+.crm-tracking-entity-details-hidden .crm-tracking-entity-details-head {
+	position: relative;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	overflow: hidden;
+}
+
+.crm-tracking-entity-details-path-block-inner:hover .crm-tracking-entity-details-toggler {
+	visibility: visible;
+}
+
 .crm-tracking-entity-details-close {
 	position: absolute;
 	right: -9px;

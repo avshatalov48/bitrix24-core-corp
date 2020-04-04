@@ -92,6 +92,7 @@ class Task extends Activity\Provider\Base
 				$fields['~DEADLINE'] = \CCrmDateTimeHelper::GetMaxDatabaseDate();
 			}
 		}
+
 		return $result;
 	}
 
@@ -156,9 +157,70 @@ class Task extends Activity\Provider\Base
 		$updateResult = new Main\Result();
 
 		if (!$result)
+		{
 			$updateResult->addError(new Main\Error('Failed.'));
+		}
+		elseif(isset($activity['COMPLETED'])
+			&& $activity['COMPLETED'] === 'Y'
+			&& Crm\Settings\ActivitySettings::getCurrent()->isDeadlineSyncEnabled()
+		)
+		{
+			//Perform synchronization of 'DEADLINE' field
+			$itemIterator = \CTasks::getByID($entityId, false);
+			$taskFields = $itemIterator->fetch();
+			if(is_array($taskFields) && !empty($taskFields['CLOSED_DATE']))
+			{
+				$activity['DEADLINE'] = $activity['END_TIME'] = $taskFields['CLOSED_DATE'];
+				\CCrmActivity::update(
+					$activity['ID'],
+					$activity,
+					false,
+					true,
+					array('SKIP_ASSOCIATED_ENTITY' => true, 'REGISTER_SONET_EVENT' => true)
+				);
+				\CCrmLiveFeed::syncTaskEvent($activity, $taskFields);
+			}
+		}
 
 		return $updateResult;
+	}
+
+	public static function rebindAssociatedEntity($entityId, $oldOwnerTypeId, $newEntityTypeId, $oldOwnerId, $newOwnerId)
+	{
+		$entityId = (int)$entityId;
+		if ($entityId <= 0 || !Loader::includeModule('tasks'))
+		{
+			return;
+		}
+
+		$task = \CTasks::getByID($entityId, false)->fetch();
+		if(!is_array($task))
+		{
+			return;
+		}
+
+		$entityBindings = isset($task['UF_CRM_TASK']) && is_array($task['UF_CRM_TASK']) ? $task['UF_CRM_TASK'] : array();
+		$entityIndex = -1;
+		for($i = 0, $length = count($entityBindings); $i < $length; $i++)
+		{
+			$entityInfo = \CCrmOwnerType::ParseEntitySlug($entityBindings[$i]);
+			if(is_array($entityInfo)
+				&& $entityInfo['ENTITY_TYPE_ID'] === $oldOwnerTypeId
+				&& $entityInfo['ENTITY_ID'] === $oldOwnerId
+			)
+			{
+				$entityIndex = $i;
+				break;
+			}
+		}
+
+		if($entityIndex >= 0)
+		{
+			$entityBindings[$entityIndex] = \CCrmOwnerTypeAbbr::ResolveByTypeID($newEntityTypeId).'_'.$newOwnerId;
+
+			$taskEntity = new \CTasks();
+			$taskEntity->Update($entityId, ['UF_CRM_TASK' => $entityBindings]);
+		}
 	}
 
 	public static function bindExternalEntity($entityId, array $bindings)
@@ -197,9 +259,8 @@ class Task extends Activity\Provider\Base
 			}
 		}
 
-		$task['UF_CRM_TASK'] = array_keys($ownerMap);
 		$taskEntity = new \CTasks();
-		$taskEntity->Update($entityId, $task);
+		$taskEntity->Update($entityId, ['UF_CRM_TASK'=>array_keys($ownerMap)]);
 
 		return true;
 	}
@@ -218,9 +279,8 @@ class Task extends Activity\Provider\Base
 			return false;
 		}
 
-		$task['UF_CRM_TASK'] = array();
 		$taskEntity = new \CTasks();
-		$taskEntity->Update($entityId, $task);
+		$taskEntity->Update($entityId, ['UF_CRM_TASK'=>[]]);
 
 		return true;
 	}
@@ -521,14 +581,20 @@ class Task extends Activity\Provider\Base
 		$isCompleted = isset($activity['COMPLETED']) && $activity['COMPLETED'] === 'Y';
 		if(isset($taskFields['DEADLINE']) || isset($taskFields['CLOSED_DATE']))
 		{
-			// Try to find end date
-			if(!$isCompleted && !empty($taskFields['DEADLINE']))
+			if(Crm\Settings\ActivitySettings::getCurrent()->isDeadlineSyncEnabled())
+			{
+				if(!$isCompleted && !empty($taskFields['DEADLINE']))
+				{
+					$end = $taskFields['DEADLINE'];
+				}
+				elseif($isCompleted && !empty($taskFields['CLOSED_DATE']))
+				{
+					$end = $taskFields['CLOSED_DATE'];
+				}
+			}
+			elseif(!empty($taskFields['DEADLINE']))
 			{
 				$end = $taskFields['DEADLINE'];
-			}
-			elseif($isCompleted && !empty($taskFields['CLOSED_DATE']))
-			{
-				$end = $taskFields['CLOSED_DATE'];
 			}
 		}
 

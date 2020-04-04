@@ -1,3 +1,3 @@
 <?
-$MESS["VI_PAGE_RENT_TITLE"] = "Rent phone number";
+$MESS["VI_PAGE_RENT_TITLE"] = "Rent Phone Number";
 ?>

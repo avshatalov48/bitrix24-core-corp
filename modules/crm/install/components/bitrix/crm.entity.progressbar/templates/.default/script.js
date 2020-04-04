@@ -405,6 +405,7 @@ if(typeof BX.Crm.EntityDetailProgressControl === "undefined")
 				this.openEntityEditorDialog(
 					{
 						title: this._manager.getMessage("checkErrorTitle"),
+						helpData: { text: this._manager.getMessage("checkErrorHelp"), code: this._manager.getMessage("checkErrorHelpArticleCode") },
 						fieldNames: Object.keys(checkErrors),
 						initData: BX.prop.getObject(data, "EDITOR_INIT_DATA", null),
 						context: BX.prop.getObject(data, "CONTEXT", null)
@@ -441,6 +442,7 @@ if(typeof BX.Crm.EntityDetailProgressControl === "undefined")
 					entityTypeId: this._entityTypeId,
 					entityId: this._entityId,
 					fieldNames: BX.prop.getArray(params, "fieldNames", []),
+					helpData: BX.prop.getObject(params, "helpData", null),
 					context: BX.prop.getObject(params, "context", null)
 				}
 			);
@@ -656,23 +658,36 @@ if(typeof BX.Crm.EntityDetailProgressControl === "undefined")
 				stepInfo = this._stepInfos[stepIndex];
 				if(stepInfo["semantics"] === "success")
 				{
-					var finalScript = this.getSetting("finalScript", "");
+					var finalScript = BX.prop.getString(this._settings, "finalScript", "");
 					if(finalScript !== "")
 					{
 						eval(finalScript);
 						return;
 					}
 
-					var finalUrl = this.getSetting("finalUrl", "");
+					var finalUrl = BX.prop.getString(this._settings, "finalUrl", "");
 					if(finalUrl !== "")
 					{
 						window.location = finalUrl;
 						return;
 					}
 
-					var verboseMode = !!this.getSetting("verboseMode", false);
+					var verboseMode = BX.prop.getBoolean(this._settings, "verboseMode", false);
 					if(verboseMode)
 					{
+						//Rollback current step
+						if(this._previousStepId !== "")
+						{
+							stepIndex = this.findStepInfoIndex(this._previousStepId);
+							stepInfo = this._stepInfos[stepIndex];
+							this.setCurrentStep(stepInfo);
+
+							this.adjustSteps(
+								stepIndex,
+								BX.Crm.EntityDetailProgressControl.getStepColor(this._stepInfos[stepIndex])
+							);
+						}
+
 						//User have to make choice
 						this.openTerminationDialog();
 						return;

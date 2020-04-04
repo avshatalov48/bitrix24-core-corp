@@ -13,6 +13,11 @@ class Task
 	public static function buildPreview(array $params)
 	{
 		global $APPLICATION;
+		$taskId = (int)$params['taskId'];
+		if(!$taskId)
+		{
+			return '';
+		}
 
 		ob_start();
 		$APPLICATION->IncludeComponent(
@@ -25,7 +30,12 @@ class Task
 
 	public static function checkUserReadAccess(array $params)
 	{
-		$task = new \CTaskItem($params['taskId'], static::getUser()->GetID());
+		$taskId = (int)$params['taskId'];
+		if(!$taskId)
+		{
+			return false;
+		}
+		$task = new \CTaskItem($taskId, static::getUser()->GetID());
 		$access = $task->checkCanRead();
 
 		return !!$access;
@@ -34,10 +44,18 @@ class Task
 	public static function getImAttach(array $params)
 	{
 		if(!Loader::includeModule('im'))
+		{
 			return false;
+		}
+
+		$taskId = (int)$params['taskId'];
+		if(!$taskId)
+		{
+			return false;
+		}
 
 		$task = \CTasks::getById(
-			$params['taskId'],
+			$taskId,
 			false,
 			array(
 				'returnAsArray'  => true,
@@ -55,7 +73,7 @@ class Task
 			//'AVATAR' => '', // todo: task icon
 			'LINK' => $task['LINK']
 		));
-		$attach->AddDelimiter(Array('COLOR' => '#c6c6c6'));
+		$attach->AddDelimiter();
 		$grid = array();
 		if($task['STATUS'] > 0)
 		{
@@ -108,7 +126,7 @@ class Task
 				"WIDTH" => 120,
 			);
 		}
-		
+
 		if($task['GROUP_ID'] > 0)
 		{
 			$groupId = $task['GROUP_ID'];

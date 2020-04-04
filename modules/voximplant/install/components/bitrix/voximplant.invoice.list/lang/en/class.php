@@ -1,0 +1,8 @@
+<?
+$MESS["VOX_INVOICES_DATE_RANGE"] = "Date range";
+$MESS["VOX_INVOICES_DOCUMENT_DATE"] = "Invoice date";
+$MESS["VOX_INVOICES_DOCUMENT_NUMBER"] = "#";
+$MESS["VOX_INVOICES_DOCUMENT_TYPE"] = "Document type";
+$MESS["VOX_INVOICES_DOWNLOAD"] = "Download";
+$MESS["VOX_INVOICES_TOTAL_AMOUNT"] = "Total amount";
+?>

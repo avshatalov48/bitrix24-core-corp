@@ -3,9 +3,11 @@ namespace Bitrix\Landing\PublicAction;
 
 use \Bitrix\Landing\Manager;
 use \Bitrix\Landing\File;
+use \Bitrix\Landing\Site;
 use \Bitrix\Landing\Block as BlockCore;
 use \Bitrix\Landing\TemplateRef;
 use \Bitrix\Landing\Landing as LandingCore;
+use \Bitrix\Landing\PublicAction;
 use \Bitrix\Landing\PublicActionResult;
 use \Bitrix\Landing\Internals\HookDataTable;
 use \Bitrix\Main\Localization\Loc;
@@ -21,7 +23,7 @@ class Landing
 	 */
 	protected static function clearDisallowFields(array $fields)
 	{
-		$disallow = array('RULE', 'TPL_CODE', 'ACTIVE');
+		$disallow = ['RULE', 'TPL_CODE', 'ACTIVE', 'INITIATOR_APP_CODE'];
 
 		if (is_array($fields))
 		{
@@ -166,8 +168,10 @@ class Landing
 		$landing = LandingCore::createInstance($lid);
 		if ($landing->exist())
 		{
+			$restApp = PublicAction::restApplication();
 			$data = array(
-				'PUBLIC' => 'N'
+				'PUBLIC' => 'N',
+				'INITIATOR_APP_CODE' => $restApp['CODE']
 			);
 			if (isset($fields['ACTIVE']))
 			{
@@ -572,7 +576,9 @@ class Landing
 		$result = new PublicActionResult();
 		$error = new \Bitrix\Landing\Error;
 
+		$restApp = PublicAction::restApplication();
 		$fields = self::clearDisallowFields($fields);
+		$fields['INITIATOR_APP_CODE'] = $restApp['CODE'];
 		$fields['ACTIVE'] = 'N';
 
 		$res = LandingCore::add($fields);
@@ -586,6 +592,74 @@ class Landing
 			$error->addFromResult($res);
 			$result->setError($error);
 		}
+
+		return $result;
+	}
+
+	/**
+	 * Create a page by template.
+	 * @param int $siteId Site id.
+	 * @param string $code Code of template.
+	 * @return PublicActionResult
+	 */
+	public static function addByTemplate($siteId, $code)
+	{
+		$result = new PublicActionResult();
+		$error = new \Bitrix\Landing\Error;
+
+		$siteId = intval($siteId);
+
+		// get type by siteId
+		$res = Site::getList([
+			'select' => [
+				'TYPE'
+			],
+			'filter' => [
+				'ID' => $siteId
+			]
+		]);
+		if (!($site = $res->fetch()))
+		{
+			$error->addError(
+				'SITE_ERROR',
+				Loc::getMessage('LANDING_SITE_ERROR')
+			);
+			$result->setError($error);
+			return $result;
+		}
+
+		// include the component
+		$componentName = 'bitrix:landing.demo';
+		$className = \CBitrixComponent::includeComponentClass($componentName);
+		$demoCmp = new $className;
+		$demoCmp->initComponent($componentName);
+		$demoCmp->arParams = [
+			'TYPE' => 'PAGE',//$site['TYPE'],
+			'SITE_ID' => $siteId,
+			'SITE_WORK_MODE' => 'N',
+			'DISABLE_REDIRECT' => 'Y'
+		];
+
+		// for catching new landing id
+		LandingCore::callback('OnAfterAdd',
+			function(\Bitrix\Main\Event $event) use($result)
+			{
+				$primary = $event->getParameter('primary');
+				$result->setResult(
+					$primary['ID']
+				);
+			}
+		);
+
+		// ... and create the page by component's method
+		$demoCmp->actionSelect($code);
+
+		// if error occurred
+		foreach ($demoCmp->getErrors() as $code => $title)
+		{
+			$error->addError($code, $title);
+		}
+		$result->setError($error);
 
 		return $result;
 	}
@@ -647,10 +721,12 @@ class Landing
 	 * Copy landing.
 	 * @param int $lid Landing id.
 	 * @param int $toSiteId Site id (if you want copy in another site).
+	 * @param int $toFolderId Folder id (if you want copy in some folder).
 	 * @return \Bitrix\Landing\PublicActionResult
 	 */
-	public static function copy($lid, $toSiteId = false)
+	public static function copy($lid, $toSiteId = null, $toFolderId = null)
 	{
+		$lid = (int)$lid;
 		$result = new PublicActionResult();
 		$error = new \Bitrix\Landing\Error;
 
@@ -666,25 +742,34 @@ class Landing
 
 		if ($landing->exist())
 		{
+			$folderId = null;
 			if (!$toSiteId)
 			{
 				$toSiteId = $landing->getSiteId();
 			}
+			if ($toFolderId)
+			{
+				$folderId = $toFolderId;
+			}
+			else if ($toSiteId == $landing->getSiteId())
+			{
+				$folderId = $landingRow['FOLDER_ID'];
+			}
 			$res = LandingCore::add(array(
 				'CODE' => $landingRow['CODE'],
-				'ACTIVE' => $landingRow['ACTIVE'],
-				'PUBLIC' => $landingRow['PUBLIC'],
+				'ACTIVE' => 'N',
+				'PUBLIC' => 'N',
 				'TITLE' => $landingRow['TITLE'],
 				'XML_ID' => $landingRow['XML_ID'],
 				'TPL_CODE' => $landingRow['TPL_CODE'],
+				'INITIATOR_APP_CODE' => $landingRow['INITIATOR_APP_CODE'],
 				'DESCRIPTION' => $landingRow['DESCRIPTION'],
 				'TPL_ID' => $landingRow['TPL_ID'],
 				'SITE_ID' => $toSiteId,
 				'SITEMAP' => $landingRow['SITEMAP'],
-				'FOLDER' => $landingRow['FOLDER'],
-				'FOLDER_ID' => ($toSiteId == $landing->getSiteId())
-								? $landingRow['FOLDER_ID']
-								: null
+				'FOLDER' => $folderId ? 'N' : $landingRow['FOLDER'],
+				'FOLDER_ID' => $folderId,
+				'RULE' => ''
 			));
 			// landing allready create, just copy the blocks
 			if ($res->isSuccess())
@@ -699,6 +784,11 @@ class Landing
 						$landingRow['ID'],
 						$landingNew->getId()
 					);
+					// copy template refs
+					if (($refs = TemplateRef::getForLanding($lid)))
+					{
+						TemplateRef::setForLanding($res->getId(), $refs);
+					}
 					$result->setResult($landingNew->getId());
 				}
 				$result->setError(

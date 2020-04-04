@@ -9,6 +9,7 @@ namespace Bitrix\Crm;
 
 use Bitrix\Main\Entity;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\ORM\Fields\TextField;
 
 Loc::loadMessages(__FILE__);
 
@@ -21,6 +22,11 @@ class ActivityTable extends Entity\DataManager
 	public static function getTableName()
 	{
 		return 'b_crm_act';
+	}
+
+	public static function getUFId()
+	{
+		return 'CRM_ACTIVITY';
 	}
 
 	/**
@@ -272,7 +278,10 @@ class ActivityTable extends Entity\DataManager
 			),
 			'SEARCH_CONTENT' => array(
 				'data_type' => 'string'
-			)
+			),
+			new TextField('PROVIDER_PARAMS', [
+				'serialized' => true
+			])
 		);
 	}
 

@@ -2,6 +2,8 @@
 
 namespace Bitrix\Crm\Integration\DocumentGenerator\DataProvider;
 
+\Bitrix\Main\Loader::includeModule('documentgenerator');
+
 use Bitrix\Crm\Discount;
 use Bitrix\Crm\Integration\DocumentGenerator\Value\Money;
 use Bitrix\Crm\Integration\DocumentGeneratorManager;
@@ -9,6 +11,8 @@ use Bitrix\DocumentGenerator\DataProvider\HashDataProvider;
 use Bitrix\DocumentGenerator\DataProviderManager;
 use Bitrix\DocumentGenerator\Value;
 use Bitrix\Iblock\ElementTable;
+use Bitrix\Main\Loader;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Type\DateTime;
 
 class Product extends HashDataProvider
@@ -17,6 +21,8 @@ class Product extends HashDataProvider
 	protected $propertyIDs;
 	protected $propertiesLoaded = false;
 	protected $propertyValues = [];
+
+	protected static $measureInfo = [];
 
 	public function __construct($data, array $options = [])
 	{
@@ -34,7 +40,10 @@ class Product extends HashDataProvider
 				$data['PRICE'] = \CCrmProductRow::CalculateInclusivePrice($data['PRICE_EXCLUSIVE'], $taxRate);
 			}
 
-			$data['DISCOUNT_RATE'] = Discount::calculateDiscountRate(($data['PRICE_EXCLUSIVE'] + $data['DISCOUNT_SUM']), $data['PRICE_EXCLUSIVE']);
+			if(!isset($data['DISCOUNT_RATE']) || empty($data['DISCOUNT_RATE']))
+			{
+				$data['DISCOUNT_RATE'] = Discount::calculateDiscountRate(($data['PRICE_EXCLUSIVE'] + $data['DISCOUNT_SUM']), $data['PRICE_EXCLUSIVE']);
+			}
 			$data['PRICE_NETTO'] = $data['PRICE_EXCLUSIVE'] + $data['DISCOUNT_SUM'];
 
 			if($data['DISCOUNT_SUM'] <= 0)
@@ -140,6 +149,18 @@ class Product extends HashDataProvider
 				'TAX_INCLUDED' => ['TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_PRODUCT_TAX_INCLUDED_TITLE'),],
 				'MEASURE_CODE' => ['TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_PRODUCT_MEASURE_CODE_TITLE'),],
 				'MEASURE_NAME' => ['TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_PRODUCT_MEASURE_NAME_TITLE'),],
+				'MEASURE_TITLE' => [
+					'TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_PRODUCT_MEASURE_TITLE_TITLE'),
+					'VALUE' => [$this, 'getMeasureTitle'],
+				],
+				'MEASURE_SYMBOL' => [
+					'TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_PRODUCT_MEASURE_SYMBOL_TITLE'),
+					'VALUE' => [$this, 'getMeasureSymbol'],
+				],
+				'MEASURE_SYMBOL_INTL' => [
+					'TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_PRODUCT_MEASURE_SYMBOL_INTL_TITLE'),
+					'VALUE' => [$this, 'getMeasureSymbolIntl'],
+				],
 				'PRICE_SUM' => [
 					'TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_PRODUCT_PRICE_SUM_TITLE'),
 					'VALUE' => [$this, 'getPriceSum'],
@@ -452,7 +473,6 @@ class Product extends HashDataProvider
 					$codes[] = $property['CODE'];
 				}
 				$value = $property['VALUE'];
-				$separator = ', ';
 				if($property['PROPERTY_TYPE'] === 'F')
 				{
 					if($property['MULTIPLE'] == 'Y' && isset($this->propertyValues['PROPERTY_'.$codes[0]]) && !empty($this->propertyValues['PROPERTY_'.$codes[0]]))
@@ -467,7 +487,6 @@ class Product extends HashDataProvider
 					if($property['USER_TYPE'] == 'HTML')
 					{
 						$value = $value['TEXT'];
-						$separator = '<br />';
 					}
 					elseif($property['USER_TYPE'] == 'Date')
 					{
@@ -508,7 +527,11 @@ class Product extends HashDataProvider
 				{
 					if(isset($this->propertyValues['PROPERTY_'.$code]) && !empty($this->propertyValues['PROPERTY_'.$code]))
 					{
-						$this->propertyValues['PROPERTY_'.$code] .= $separator.$value;
+						if(!is_array($this->propertyValues['PROPERTY_'.$code]))
+						{
+							$this->propertyValues['PROPERTY_'.$code] = [$this->propertyValues['PROPERTY_'.$code]];
+						}
+						$this->propertyValues['PROPERTY_'.$code][] = $value;
 					}
 					else
 					{
@@ -531,13 +554,16 @@ class Product extends HashDataProvider
 					{
 						if(isset($this->propertyValues['PROPERTY_'.$code]) && !empty($this->propertyValues['PROPERTY_'.$code]))
 						{
-							$this->propertyValues['PROPERTY_'.$code] .= ', ';
+							if(!is_array($this->propertyValues['PROPERTY_'.$code]))
+							{
+								$this->propertyValues['PROPERTY_'.$code] = [$this->propertyValues['PROPERTY_'.$code]];
+							}
+							$this->propertyValues['PROPERTY_'.$code][] = $item['NAME'];
 						}
 						else
 						{
-							$this->propertyValues['PROPERTY_'.$code] = '';
+							$this->propertyValues['PROPERTY_'.$code] = $item['NAME'];
 						}
-						$this->propertyValues['PROPERTY_'.$code] .= $item['NAME'];
 					}
 				}
 			}
@@ -601,5 +627,81 @@ class Product extends HashDataProvider
 		{
 			return $this->data['PRICE_EXCLUSIVE'];
 		}
+	}
+
+	/**
+	 * @return bool
+	 * @throws \Bitrix\Main\LoaderException
+	 */
+	protected function loadMeasureInfo()
+	{
+		$languageId = DataProviderManager::getInstance()->getContext()->getRegionLanguageId();
+		if(!$languageId)
+		{
+			return false;
+		}
+		if(!isset(static::$measureInfo[$languageId]))
+		{
+			static::$measureInfo[$languageId] = [];
+		}
+		$code = $this->data['MEASURE_CODE'];
+		if(!$code)
+		{
+			return false;
+		}
+		if(!isset(static::$measureInfo[$languageId][$code]))
+		{
+			if(Loader::includeModule('catalog'))
+			{
+				$originalLanguageId = Loc::getCurrentLang();
+				Loc::setCurrentLang($languageId);
+				static::$measureInfo[$languageId][$code] = \CCatalogMeasureClassifier::getMeasureInfoByCode($code);
+				Loc::setCurrentLang($originalLanguageId);
+			}
+		}
+
+		return static::$measureInfo[$languageId][$code];
+	}
+
+	/**
+	 * @return null
+	 */
+	public function getMeasureTitle()
+	{
+		$info = $this->loadMeasureInfo();
+		if($info)
+		{
+			return $info['MEASURE_TITLE'];
+		}
+
+		return null;
+	}
+
+	/**
+	 * @return string|null
+	 */
+	public function getMeasureSymbol()
+	{
+		$info = $this->loadMeasureInfo();
+		if($info)
+		{
+			return $info['SYMBOL_RUS'];
+		}
+
+		return null;
+	}
+
+	/**
+	 * @return string|null
+	 */
+	public function getMeasureSymbolIntl()
+	{
+		$info = $this->loadMeasureInfo();
+		if($info)
+		{
+			return $info['SYMBOL_INTL'];
+		}
+
+		return null;
 	}
 }

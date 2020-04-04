@@ -191,7 +191,7 @@ class BasketHelper
 					$arFieldsTmp = array('CAN_BUY' => 'N');
 				}
 
-				// TODO: ... [DISCOUNT_001] - удалить или вернуть, если надо
+				// TODO: ... [DISCOUNT_001] - delete or revert if needed
 				/*if (!Sale\Compatible\DiscountCompatibility::isInited())
 				{
 					Sale\Compatible\DiscountCompatibility::init();

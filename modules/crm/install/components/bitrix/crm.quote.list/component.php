@@ -500,19 +500,30 @@ $arFilter += $filterOptions->GetFilter($arResult['FILTER']);
 $CCrmUserType->PrepareListFilterValues($arResult['FILTER'], $arFilter, $arResult['GRID_ID']);
 $USER_FIELD_MANAGER->AdminListAddFilter(CCrmQuote::$sUFEntityID, $arFilter);
 
-// converts data from filter
-if(isset($arFilter['FIND']))
+//region Apply Search Restrictions
+$searchRestriction = \Bitrix\Crm\Restriction\RestrictionManager::getSearchLimitRestriction();
+if(!$searchRestriction->isExceeded(CCrmOwnerType::Quote))
 {
-	if(is_string($arFilter['FIND']))
+	if(isset($arFilter['FIND']))
 	{
-		$find = trim($arFilter['FIND']);
-		if($find !== '')
+		if(is_string($arFilter['FIND']))
 		{
-			$arFilter['SEARCH_CONTENT'] = $find;
+			$find = trim($arFilter['FIND']);
+			if($find !== '')
+			{
+				$arFilter['SEARCH_CONTENT'] = $find;
+			}
 		}
+		unset($arFilter['FIND']);
 	}
-	unset($arFilter['FIND']);
 }
+else
+{
+	$arResult['LIVE_SEARCH_LIMIT_INFO'] = $searchRestriction->prepareStubInfo(
+		array('ENTITY_TYPE_ID' => CCrmOwnerType::Quote)
+	);
+}
+
 
 CCrmEntityHelper::PrepareMultiFieldFilter($arFilter, array(), '=%', false);
 $arImmutableFilters = array(
@@ -550,14 +561,57 @@ foreach ($arFilter as $k => $v)
 	}
 	elseif ($k === 'ENTITIES_LINKS')
 	{
-		$ownerData =explode('_', $v);
-		if(count($ownerData) > 1)
+		$arEntitiesFilter = [];
+
+		try
 		{
-			$ownerTypeName = CCrmOwnerType::ResolveName(CCrmOwnerType::ResolveID($ownerData[0]));
-			$ownerID = intval($ownerData[1]);
-			if(!empty($ownerTypeName) && $ownerID > 0)
-				$arFilter[$ownerTypeName.'_ID'] = $ownerID;
+			$v = Bitrix\Main\Web\Json::decode($v);
+			if(count($v) > 0)
+			{
+				foreach ($v as $entityType => $entityValues)
+				{
+					$entityTypeName = CCrmOwnerType::ResolveName(CCrmOwnerType::ResolveID($entityType));
+					if (!empty($entityTypeName))
+					{
+						foreach ($entityValues as $value)
+						{
+							$value = intval($value);
+							if ($value > 0)
+							{
+								$arEntitiesFilter[$entityTypeName][] = $value;
+							}
+						}
+					}
+				}
+			}
 		}
+		catch (Main\ArgumentException $e)
+		{
+			$ownerData = explode('_', $v);
+			if(count($ownerData) > 1)
+			{
+				$ownerTypeName = CCrmOwnerType::ResolveName(CCrmOwnerType::ResolveID($ownerData[0]));
+				$ownerID = intval($ownerData[1]);
+				if(
+					!empty($ownerTypeName)
+					&& $ownerID > 0
+				)
+				{
+					$arEntitiesFilter[$ownerTypeName.'_ID'] = $ownerID;
+				}
+			}
+		}
+
+		// for internalize
+		if (!empty($arEntitiesFilter))
+		{
+			foreach ($arEntitiesFilter as $key => $val)
+			{
+				$arFilter[$key.'_ID'] = Bitrix\Main\Web\Json::encode([$key => $val]);
+			}
+		}
+
+		unset($arEntitiesFilter);
 		unset($arFilter[$k]);
 	}
 	elseif (preg_match('/(.*)_from$/i'.BX_UTF_PCRE_MODIFIER, $k, $arMatch))

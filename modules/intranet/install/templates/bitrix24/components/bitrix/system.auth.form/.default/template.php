@@ -14,6 +14,8 @@ if (!$USER->IsAuthorized())
 	return;
 }
 
+\CJSCore::init("sidepanel");
+
 $videoSteps = array(
 	array(
 		"id" => "start",
@@ -130,8 +132,11 @@ else
 		var bindElement = BX("user-block");
 		BX.addClass(bindElement, "user-block-active");
 		BX.PopupMenu.show("user-menu", bindElement, [
-			{ text : "<?=GetMessageJS("AUTH_PROFILE")?>", className : "menu-popup-no-icon", href : "<?=CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_SONET_PROFILE'], array("user_id" => $USER->GetID() ))?>"},
-			{ text : "<?=GetMessageJS("AUTH_CHANGE_PROFILE")?>", className : "menu-popup-no-icon", href : "<?=CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_SONET_PROFILE_EDIT'], array("user_id" => $USER->GetID() ))?>"},
+			{
+				text : "<?=GetMessageJS("AUTH_PROFILE")?>",
+				className : "menu-popup-no-icon",
+				href: "<?=CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_SONET_PROFILE'], array("user_id" => $USER->GetID()))?>"
+			},
 			<? if (ThemePicker::isAvailable()): ?>
 			{
 				text : "<?=GetMessageJS("AUTH_THEME_DIALOG")?>",
@@ -179,15 +184,33 @@ else
 	<span class="user-img user-default-avatar" <?if ($arResult["USER_PERSONAL_PHOTO_SRC"]):?>style="background: url('<?=$arResult["USER_PERSONAL_PHOTO_SRC"]?>') no-repeat center; background-size: cover;"<?endif?>></span><span class="user-name" id="user-name"><?=$arResult["USER_NAME"]?></span>
 </div>
 
-<div class="help-block" id="bx-help-block" title="<?=GetMessage("AUTH_HELP")?>">
-	<div class="help-icon-border"></div>
-	<div class="help-block-icon"></div>
-	<div class="help-block-counter-wrap" id="bx-help-notify">
-	</div>
-</div>
 
-<?$frame = $this->createFrame("b24_helper")->begin("");?>
+<?
+
+$imBarExists =
+	CModule::IncludeModule("im") &&
+	CBXFeatures::IsFeatureEnabled("WebMessenger") &&
+	!defined("BX_IM_FULLSCREEN")
+;
+
+if ($imBarExists)
+{
+	$this->setViewTarget("im", 200);
+}
+else
+{
+	?>
+	<div class="help-block" id="bx-help-block" title="<?=GetMessage("AUTH_HELP")?>">
+		<div class="help-icon-border"></div>
+		<div class="help-block-icon"></div>
+		<div class="help-block-counter-wrap" id="bx-help-notify">
+		</div>
+	</div>
 	<?
+}
+
+$frame = $this->createFrame("b24_helper")->begin("");
+
 	$support_bot = 0;
 	if (\Bitrix\Main\Loader::includeModule("imbot"))
 	{
@@ -229,11 +252,12 @@ else
 		)
 	);
 
-	$host = IsModuleInstalled("bitrix24") ? BX24_HOST_NAME : CIntranetUtils::getHostName();
+	$host = IsModuleInstalled("bitrix24") && defined("BX24_HOST_NAME") ? BX24_HOST_NAME : CIntranetUtils::getHostName();
 	$notifyData = array(
 		"support_bot" => $support_bot,
 		"is_admin" => IsModuleInstalled("bitrix24") && CBitrix24::IsPortalAdmin($USER->GetID()) || !IsModuleInstalled("bitrix24") && $USER->IsAdmin() ? 1 : 0,
 		"user_id" => $USER->GetID(),
+		"user_email" => urlencode($USER->GetEmail()),
 		"tariff" => COption::GetOptionString("main", "~controller_group_name", ""),
 		"host" => $host,
 		"key" => IsModuleInstalled("bitrix24") ? CBitrix24::RequestSign($host.$USER->GetID()) : md5($host.$USER->GetID().'BX_USER_CHECK'),
@@ -293,5 +317,10 @@ if ($arResult["CAN_HAVE_HELP_NOTIFICATIONS"] === 'Y')
 	</script>
 	<?
 }
-?>
-<?$frame->end();?>
+
+$frame->end();
+
+if ($imBarExists)
+{
+	$this->endViewTarget();
+}

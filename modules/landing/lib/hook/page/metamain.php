@@ -61,6 +61,11 @@ class MetaMain extends \Bitrix\Landing\Hook\Page
 	 */
 	public function enabled()
 	{
+		if ($this->issetCustomExec())
+		{
+			return true;
+		}
+
 		return $this->fields['USE']->getValue() == 'Y';
 	}
 
@@ -70,6 +75,11 @@ class MetaMain extends \Bitrix\Landing\Hook\Page
 	 */
 	public function exec()
 	{
+		if ($this->execCustom())
+		{
+			return;
+		}
+
 		$title = \htmlspecialcharsbx(trim($this->fields['TITLE']));
 		$description = trim($this->fields['DESCRIPTION']);
 		$keywords = trim($this->fields['KEYWORDS']);

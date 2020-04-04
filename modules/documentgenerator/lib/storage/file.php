@@ -34,18 +34,19 @@ class File implements Storage
 				return false;
 			}
 		}
-		else
-		{
-			$path = Path::convertRelativeToAbsolute($path);
-		}
-		$file = new \Bitrix\Main\IO\File($path);
+		$file = new IO\File($path);
 		if($file->isExists() && $file->isReadable())
 		{
 			return $file->getContents();
 		}
 		else
 		{
-			echo 'cant read file '.$path;
+			$path = Path::convertPhysicalToLogical($path);
+			$file = new IO\File($path);
+			if($file->isExists() && $file->isReadable())
+			{
+				return $file->getContents();
+			}
 		}
 
 		return false;
@@ -95,7 +96,12 @@ class File implements Storage
 	public function write($content, array $options = [])
 	{
 		$result = new AddResult();
-		$path = \CTempFile::getFileName(uniqid(Driver::MODULE_ID, true));
+		$fileName = uniqid(Driver::MODULE_ID, true);
+		if($options['isTemplate'] === true)
+		{
+			$fileName = Path::combine('templates', $fileName);
+		}
+		$path = \CTempFile::getFileName($fileName);
 		$dir = IO\Path::getDirectory($path);
 		IO\Directory::createDirectory($dir);
 		$file = new IO\File($path);
@@ -117,7 +123,7 @@ class File implements Storage
 	{
 		$result = new AddResult();
 		$path = \CTempFile::GetFileName($fileName);
-		$file = new \Bitrix\Main\IO\File($path);
+		$file = new IO\File($path);
 		if($file->putContents($content))
 		{
 			$result->setId($path);
@@ -211,7 +217,7 @@ class File implements Storage
 	 */
 	public function download($path, $fileName = '')
 	{
-		$file = new \Bitrix\Main\IO\File($path);
+		$file = new IO\File($path);
 		if($file->isExists() && $file->isReadable())
 		{
 			$fileDescription = \CFile::MakeFileArray($path);
@@ -221,10 +227,6 @@ class File implements Storage
 			}
 			\CFile::ViewByUser($fileDescription);
 			return true;
-		}
-		else
-		{
-			echo 'cant read file '.$path;
 		}
 
 		return false;
@@ -236,7 +238,7 @@ class File implements Storage
 	 */
 	public function delete($path)
 	{
-		$file = new \Bitrix\Main\IO\File($path);
+		$file = new IO\File($path);
 		if($file->isExists())
 		{
 			return $file->delete();
@@ -262,7 +264,7 @@ class File implements Storage
 	 */
 	public function getModificationTime($path)
 	{
-		$file = new \Bitrix\Main\IO\File($path);
+		$file = new IO\File($path);
 		if($file->isExists() && $file->isReadable())
 		{
 			return $file->getModificationTime();
@@ -289,14 +291,10 @@ class File implements Storage
 	 */
 	public function getSize($path)
 	{
-		$file = new \Bitrix\Main\IO\File($path);
+		$file = new IO\File($path);
 		if($file->isExists() && $file->isReadable())
 		{
 			return $file->getSize();
-		}
-		else
-		{
-			echo 'cant read file '.$path;
 		}
 
 		return false;

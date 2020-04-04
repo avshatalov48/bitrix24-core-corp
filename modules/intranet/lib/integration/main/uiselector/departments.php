@@ -85,6 +85,8 @@ class Departments extends \Bitrix\Main\UI\Selector\EntityBase
 		}
 		else
 		{
+			$result['ADDITIONAL_INFO']['RELATION_ROOT'] = (!empty($options['siteDepartmentId']) ? intval($options['siteDepartmentId']) : 0);
+
 			$structure = \CSocNetLogDestination::getStucture(array(
 				'LAZY_LOAD' => true,
 				'DEPARTMENT_ID' => (!empty($options['siteDepartmentId']) ? intval($options['siteDepartmentId']) : false)

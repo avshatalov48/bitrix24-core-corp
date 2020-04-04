@@ -32,20 +32,7 @@ interface IVolumeTimeLimit
 	/**
 	 * Sets limitation time in seconds.
 	 * @param int $timeLimit Timeout in seconds.
-	 * @return void
+	 * @return $this
 	 */
 	public function setTimeLimit($timeLimit);
-
-	/**
-	 * Gets step identification.
-	 * @return string|null
-	 */
-	public function getStepId();
-
-	/**
-	 * Sets step identification.
-	 * @param string $stepId Step id.
-	 * @return void
-	 */
-	public function setStepId($stepId);
 }

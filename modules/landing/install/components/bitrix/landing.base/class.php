@@ -4,6 +4,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use \Bitrix\Landing\Landing;
 use \Bitrix\Landing\Manager;
 use \Bitrix\Landing\Help;
 use \Bitrix\Main\Loader;
@@ -134,21 +135,34 @@ class LandingBaseComponent extends \CBitrixComponent
 		{
 			$this->arParams[$var] = $default;
 		}
+		if (is_int($default))
+		{
+			$this->arParams[$var] = (int)$this->arParams[$var];
+		}
+		if (substr($var, 0, 1) !== '~')
+		{
+			$this->checkParam('~' . $var, $default);
+		}
 	}
 
 	/**
 	 * Add one more error.
 	 * @param string $code Code of error (lang code).
 	 * @param string $message Optional message.
+	 * @param bool $fatal Is fatal error.
 	 * @return void
 	 */
-	protected function addError($code, $message = '')
+	protected function addError($code, $message = '', $fatal = false)
 	{
 		if ($message == '')
 		{
 			$message = Loc::getMessage($code);
 		}
 		$this->errors[$code] = new Error($message != '' ? $message : $code, $code);
+		if ($fatal)
+		{
+			$this->arResult['FATAL'] = true;
+		}
 	}
 
 	/**
@@ -201,7 +215,7 @@ class LandingBaseComponent extends \CBitrixComponent
 	 * @param bool $string Convert Errors to string.
 	 * @return array
 	 */
-	protected function getErrors($string = true)
+	public function getErrors($string = true)
 	{
 		if ($string)
 		{
@@ -350,8 +364,8 @@ class LandingBaseComponent extends \CBitrixComponent
 					'MODIFIED_BY_SECOND_NAME' => 'MODIFIED_BY.SECOND_NAME',
 					'MODIFIED_BY_LAST_NAME' => 'MODIFIED_BY.LAST_NAME'
 				), isset($params['select'])
-						? $params['select']
-						: array()),
+							? $params['select']
+							: array()),
 				'filter' => isset($params['filter'])
 							? $params['filter']
 							: array(),
@@ -406,7 +420,19 @@ class LandingBaseComponent extends \CBitrixComponent
 			!isset($params['filter']['=TYPE'])
 		)
 		{
-			$params['filter']['=TYPE'] = $this->arParams['TYPE'];
+			if (
+				Manager::isExtendedSMN() &&
+				$this->arParams['TYPE'] == 'STORE')
+			{
+				$params['filter']['=TYPE'] = [
+					$this->arParams['TYPE'],
+					'SMN'
+				];
+			}
+			else
+			{
+				$params['filter']['=TYPE'] = $this->arParams['TYPE'];
+			}
 		}
 		return $this->getItems('Site', $params);
 	}
@@ -461,7 +487,7 @@ class LandingBaseComponent extends \CBitrixComponent
 	public function initAPIKeys()
 	{
 		$googleImagesKey = Manager::getOption(
-			'googleImages',
+			'google_images_key',
 			null
 		);
 		$googleImagesKey = \CUtil::jsEscape(
@@ -547,20 +573,168 @@ class LandingBaseComponent extends \CBitrixComponent
 	}
 
 	/**
+	 * Gets tasks for access part.
+	 * @return array
+	 */
+	protected function getAccessTasks()
+	{
+		return \Bitrix\Landing\Rights::getAccessTasks();
+	}
+
+	/**
+	 * Gets settings link by error code.
+	 * @param string $errorCode Error code.
+	 * @return string
+	 */
+	public function getSettingLinkByError($errorCode)
+	{
+		$params = $this->arParams;
+		if (preg_match('/^(PUBLIC_HTML_DISALLOWED)\[([S,L]{1})([\d]+)\]$/i', $errorCode, $matches))
+		{
+			if (
+				$matches[2] == 'S' &&
+				isset($params['SEF']['site_edit'])
+			)
+			{
+				$editPage = $params['SEF']['site_edit'];
+				$editPage = str_replace(
+					'#site_edit#',
+					$matches[3],
+					$editPage
+				);
+			}
+			else if (
+				$matches[2] == 'L' &&
+				isset($params['SEF']['landing_edit'])
+			)
+			{
+				if (!isset($params['SITE_ID']))
+				{
+					$res = Landing::getList([
+						'select' => [
+							'SITE_ID'
+						],
+						'filter' => [
+							'ID' => $matches[3]
+						]
+	 				]);
+					if ($row = $res->fetch())
+					{
+						$params['SITE_ID'] = $row['SITE_ID'];
+					}
+					unset($row, $res);
+
+				}
+				$editPage = $params['SEF']['landing_edit'];
+				$editPage = str_replace(
+					['#site_show#', '#landing_edit#'],
+					[$params['SITE_ID'], $matches[3]],
+					$editPage
+				);
+			}
+			if (isset($editPage))
+			{
+				$editPage .= '#' . strtolower($matches[1]);
+				unset($params, $matches);
+				return '<a href="' . $editPage . '">' . Loc::getMessage('LANDING_GOTO_EDIT') . '</a>';
+			}
+		}
+		unset($params);
+
+		return '';
+	}
+
+	/**
+	 * Detect, if error occurred on small tarrifs.
+	 * @param string $errorCode Error code.
+	 * @return bool
+	 */
+	public function isTariffError($errorCode)
+	{
+		static $tariffsCodes = [
+			'PUBLIC_PAGE_REACHED',
+			'PUBLIC_SITE_REACHED',
+			'PUBLIC_HTML_DISALLOWED'
+		];
+
+		foreach ($tariffsCodes as $code)
+		{
+			if (strpos($errorCode, $code) === 0)
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * Proxy rest methods, that we can redefine an answer.
+	 * @throws ReflectionException
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @return void
+	 */
+	protected function restProxy()
+	{
+		Manager::getApplication()->restartBuffer();
+		header('Content-Type: application/json');
+		$ajaxResult = \Bitrix\Landing\PublicAction::ajaxProcessing();
+
+		// redefine errors
+		if ($ajaxResult['type'] == 'error')
+		{
+			$ajaxResult['error_type'] = 'common';
+			if (isset($ajaxResult['result']))
+			{
+				foreach ($ajaxResult['result'] as &$error)
+				{
+					if ($this->isTariffError($error['error']))
+					{
+						$ajaxResult['error_type'] = 'payment';
+						$error['error_description'] .= $this->getSettingLinkByError(
+							$error['error']
+						);
+					}
+				}
+				unset($error);
+			}
+		}
+
+		echo \Bitrix\Main\Web\Json::encode($ajaxResult);
+		\CMain::finalActions();
+		unset($ajaxResult);
+		die();
+	}
+
+	/**
 	 * Base executable method.
 	 * @return void
 	 */
 	public function executeComponent()
 	{
-		$this->getRestPath();
 		$init = $this->init();
+
+		if (!$init)
+		{
+			return;
+		}
+
+		$this->getRestPath();
 		$action = $this->request('action');
 		$param = $this->request('param');
 		$additional = $this->request('additional');
+		$componentName = $this->request('componentName');
 		$this->arResult['CUR_URI'] = $this->getUri();
 
 		// some action
-		if ($action && is_callable(array($this, 'action' . $action)))
+		if ($this->request('actionType') == 'rest')
+		{
+			if (!$componentName || $this->getName() == $componentName)
+			{
+				$this->restProxy();
+			}
+		}
+		else if ($action && is_callable(array($this, 'action' . $action)))
 		{
 			if (
 				check_bitrix_sessid() &&
@@ -572,7 +746,10 @@ class LandingBaseComponent extends \CBitrixComponent
 			}
 		}
 
-		$this->arResult['FATAL'] = !$init;
+		if (!isset($this->arResult['FATAL']))
+		{
+			$this->arResult['FATAL'] = !$init;
+		}
 		$this->arResult['ERRORS'] = $this->getErrors();
 
 		$this->IncludeComponentTemplate($this->template);

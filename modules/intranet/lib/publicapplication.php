@@ -17,7 +17,10 @@ class PublicApplication extends \Bitrix\Main\Authentication\Application
 		"/pub/",
 		"/rest/",
 		"/bitrix/services/main/ajax.php",
-		"/bitrix/services/rest/index.php"
+		"/bitrix/services/rest/index.php",
+		"/bitrix/tools/sale_ps_success.php",
+		"/bitrix/tools/sale_ps_fail.php",
+		"/bitrix/tools/sale_ps_ajax.php",
 	);
 
 	public static function OnApplicationsBuildList()

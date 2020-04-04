@@ -44,7 +44,8 @@ class Settings extends \Bitrix\Landing\Hook\Page
 		'SHOW_PRICE_COUNT' => 1,
 		'USE_ENHANCED_ECOMMERCE' => 'Y',
 		'DATA_LAYER_NAME' => 'dataLayer',
-		'BRAND_PROPERTY' => 'BRAND_REF'
+		'BRAND_PROPERTY' => 'BRAND_REF',
+		'CART_POSITION' => 'BL'
 	);
 
 	/**
@@ -68,7 +69,7 @@ class Settings extends \Bitrix\Landing\Hook\Page
 				),
 				'VIEW' => array(
 					'HIDE_NOT_AVAILABLE', 'HIDE_NOT_AVAILABLE_OFFERS', 'PRODUCT_SUBSCRIPTION',
-					'USE_PRODUCT_QUANTITY', 'DISPLAY_COMPARE'
+					'USE_PRODUCT_QUANTITY', 'DISPLAY_COMPARE', 'CART_POSITION'
 				),
 				'PRICE' => array(
 					'PRICE_CODE', 'USE_PRICE_COUNT', 'SHOW_PRICE_COUNT', 'CURRENCY_ID',
@@ -236,9 +237,13 @@ class Settings extends \Bitrix\Landing\Hook\Page
 					$row['IBLOCK_ID'] = (int)$row['IBLOCK_ID'];
 					$row['PRODUCT_IBLOCK_ID'] = (int)$row['PRODUCT_IBLOCK_ID'];
 					if ($row['PRODUCT_IBLOCK_ID'] > 0)
+					{
 						$allowedCatalogs[$row['PRODUCT_IBLOCK_ID']] = true;
+					}
 					else
+					{
 						$allowedCatalogs[$row['IBLOCK_ID']] = true;
+					}
 				}
 				unset($row, $iterator);
 			}
@@ -289,6 +294,25 @@ class Settings extends \Bitrix\Landing\Hook\Page
 		$fields['AGREEMENT_ID'] = self::getFieldByType(
 			null, 'AGREEMENT_ID'
 		);
+
+		// cart position
+		$positions = array_fill_keys(
+			['TC', 'TR', 'CR', 'BR', 'BC', 'BL', 'CL', 'TL'],
+			''
+		);
+		foreach ($positions as $key => $val)
+		{
+			$positions[$key] = Loc::getMessage('LANDING_HOOK_SETTINGS_CART_POSITION_' . $key);
+		}
+		$fields['CART_POSITION'] = self::getFieldByType(
+			'LIST',
+			'CART_POSITION',
+			array(
+				'NAME' => Loc::getMessage('LANDING_HOOK_SETTINGS_CART_POSITION'),
+				'VALUES' => $positions
+			)
+		);
+		unset($positions, $key, $val);
 
 		return $fields;
 	}
@@ -368,6 +392,10 @@ class Settings extends \Bitrix\Landing\Hook\Page
 		if (isset($hooks['SETTINGS']['AGREEMENT_ID']))
 		{
 			$settings[$id]['AGREEMENT_ID'] = $hooks['SETTINGS']['AGREEMENT_ID'];
+		}
+		if (isset($hooks['SETTINGS']['CART_POSITION']))
+		{
+			$settings[$id]['CART_POSITION'] = $hooks['SETTINGS']['CART_POSITION'];
 		}
 
 		return $settings[$id];

@@ -3,7 +3,6 @@
 namespace Bitrix\Vote\Uf;
 
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Vote\Attachment\Attach;
 
 Loc::loadMessages(__FILE__);
 
@@ -105,7 +104,7 @@ final class VoteUserType
 			[SETTINGS] => Array
 				(
 					[CHANNEL_ID] => 1
-					[UNIQUE] => 8
+					[UNIQUE] => 40
 					[UNIQUE_IP_DELAY] => Array
 						(
 							[DELAY] =>
@@ -173,7 +172,7 @@ final class VoteUserType
 		if (array_key_exists("CHANNEL_ID", $settings))
 		{
 			$settings["CHANNEL_ID"] = intval($settings["CHANNEL_ID"]);
-			if ($settings["CHANNEL_ID"] <= 0 && \CModule::IncludeModule("vote"))
+			if ($settings["CHANNEL_ID"] <= 0 && \Bitrix\Main\Loader::includeModule("vote"))
 			{
 				$isFiltered = "";
 				$dbRes = \CVoteChannel::GetList($by = "ID", $order = "ASC",
@@ -240,7 +239,7 @@ final class VoteUserType
 	 */
 	public static function getSettingsHTML($userField = false, $htmlControl, $varsFromForm)
 	{
-		if (!\CModule::IncludeModule("vote"))
+		if (!\Bitrix\Main\Loader::includeModule("vote"))
 			return '';
 		global ${$htmlControl["NAME"]}, $aVotePermissions;
 		$entity = ${$htmlControl["NAME"]};
@@ -323,12 +322,16 @@ final class VoteUserType
 		}
 		else
 		{
-			$uniqType = ($userField["SETTINGS"]["UNIQUE"] ? $userField["SETTINGS"]["UNIQUE"] : 8);
+			$uniqType = ($userField["SETTINGS"]["UNIQUE"] ? $userField["SETTINGS"]["UNIQUE"] : (\Bitrix\Vote\Vote\EventLimits::BY_USER_AUTH|\Bitrix\Vote\Vote\EventLimits::BY_USER_ID));
 			if (is_array($userField["SETTINGS"]["UNIQUE"]))
 			{
 				foreach ( $userField["SETTINGS"]["UNIQUE"] as $res)
 					$uniqType |= $res;
 			}
+		}
+		if ($uniqType&\Bitrix\Vote\Vote\EventLimits::BY_USER_AUTH)
+		{
+			$uniqType |= \Bitrix\Vote\Vote\EventLimits::BY_USER_ID;
 		}
 		?>
 		<script language="javascript">
@@ -369,16 +372,16 @@ final class VoteUserType
 			<td class="adm-detail-content-cell-l adm-detail-valign-top"><?=Loc::getMessage("V_UNIQUE")?></td>
 			<td class="adm-detail-content-cell-r">
 				<? if (IsModuleInstalled('statistic')): ?>
-					<input type="checkbox" name="<?=$htmlControl["NAME"]?>[UNIQUE][]" id="UNIQUE_TYPE_SESSION" value="1" <?=($uniqType & 1)?" checked":""?> />
+					<input type="checkbox" name="<?=$htmlControl["NAME"]?>[UNIQUE][]" id="UNIQUE_TYPE_SESSION" value="1" <?=($uniqType & \Bitrix\Vote\Vote\EventLimits::BY_SESSION)?" checked":""?> />
 					<label for="UNIQUE_TYPE_SESSION"><?=Loc::getMessage("V_UNIQUE_SESSION")?></label><br />
 				<? endif; ?>
-				<input type="checkbox" name="<?=$htmlControl["NAME"]?>[UNIQUE][]" id="UNIQUE_TYPE_COOKIE" value="2" <?=($uniqType & 2)?" checked":""?> />
+				<input type="checkbox" name="<?=$htmlControl["NAME"]?>[UNIQUE][]" id="UNIQUE_TYPE_COOKIE" value="2" <?=($uniqType & \Bitrix\Vote\Vote\EventLimits::BY_COOKIE)?" checked":""?> />
 				<label for="UNIQUE_TYPE_COOKIE"><?=Loc::getMessage("V_UNIQUE_COOKIE_ONLY")?></label><br />
-				<input type="checkbox" name="<?=$htmlControl["NAME"]?>[UNIQUE][]" id="UNIQUE_TYPE_IP" onclick="__utch()" value="4" <?
-				?><?=($uniqType & 4) ? " checked":""?> />
+				<input type="checkbox" name="<?=$htmlControl["NAME"]?>[UNIQUE][]" id="UNIQUE_TYPE_IP" onclick="__utch()" value="<?=\Bitrix\Vote\Vote\EventLimits::BY_IP?>" <?
+				?><?=($uniqType & \Bitrix\Vote\Vote\EventLimits::BY_IP) ? " checked":""?> />
 				<label for="UNIQUE_TYPE_IP"><?=Loc::getMessage("V_UNIQUE_IP_ONLY")?></label><br />
-				<input type="checkbox" name="<?=$htmlControl["NAME"]?>[UNIQUE][]" id="UNIQUE_TYPE_USER_ID" onclick="__utch();" value="8" <?
-				?><?=($uniqType & 8)?" checked":""?> />
+				<input type="checkbox" name="<?=$htmlControl["NAME"]?>[UNIQUE][]" id="UNIQUE_TYPE_USER_ID" onclick="__utch();" value="<?=(\Bitrix\Vote\Vote\EventLimits::BY_USER_AUTH|\Bitrix\Vote\Vote\EventLimits::BY_USER_ID)?>" <?
+				?><?=($uniqType & (\Bitrix\Vote\Vote\EventLimits::BY_USER_AUTH|\Bitrix\Vote\Vote\EventLimits::BY_USER_ID))?" checked":""?> />
 				<label for="UNIQUE_TYPE_USER_ID"><?=Loc::getMessage("V_UNIQUE_USER_ID_ONLY")?></label><br />
 			</td>
 		</tr>
@@ -426,15 +429,17 @@ final class VoteUserType
 
 	/**
 	 * @param array $userField UserField array.
+	 * @param array $value Value.
 	 * @return string
 	 */
-	public static function getEditFormHTML($userField)
+	public static function getEditFormHTML($userField, $value)
 	{
 		ob_start();
 		$params = array(
 			"arUserField" => $userField
 		);
-		\Bitrix\Vote\UF\Manager::getInstance($userField)->showEdit($params, $result);
+		$result = $value;
+		\Bitrix\Vote\UF\Manager::getInstance($userField)->showEdit($params, $value);
 		return ob_get_clean();
 	}
 
@@ -488,7 +493,7 @@ final class VoteUserType
 				$return .= " [<a href='vote_edit.php?lang=".LANGUAGE_ID."&ID=".$vote["ID"]."&return_url=".urlencode($returnUrl)."' title='".Loc::getMessage("VOTE_EDIT_TITLE")."'>".$vote["ID"]."</a>] ";
 				$return .= $vote["TITLE"].(!empty($vote["DESCRIPTION"]) ? " <i>(".$vote["DESCRIPTION"].")</i>" : "");
 				if ($vote["COUNTER"] > 0)
-					$return .= Loc::getMessage("VOTE_VOTES")." <a href=\"vote_user_votes.php?lang=".LANGUAGE_ID."&find_vote_id=".$vote["ID"]."&find_valid=Y&set_filter=Y\">".$vote["COUNTER"]."</a>";
+					$return .= Loc::getMessage("VOTE_VOTES")." <a href=\"vote_user_votes_table.php?lang={LANGUAGE_ID}&VOTE_ID={$vote["ID"]}\">".$vote["COUNTER"]."</a>";
 			}
 
 		}
@@ -550,9 +555,11 @@ final class VoteUserType
 				if (!$userFieldManager->belongsToEntity($attach, $userField['ENTITY_ID'], $userField['ENTITY_VALUE_ID']))
 					throw new \Bitrix\Main\ObjectNotFoundException(Loc::getMessage("VOTE_IS_NOT_FOUND"));
 
-				$data["UNIQUE_TYPE"] = $userField["SETTINGS"]["UNIQUE"];
-				$data["DELAY"] = $userField["SETTINGS"]["UNIQUE_IP_DELAY"]["DELAY"];
-				$data["DELAY_TYPE"] = $userField["SETTINGS"]["UNIQUE_IP_DELAY"]["DELAY_TYPE"];
+				$data["OPTIONS"] = (is_array($data["OPTIONS"]) ? array_sum($data["OPTIONS"]) : 0);
+				$data["UNIQUE_TYPE"] = ($userField["SETTINGS"]["UNIQUE"] & \Bitrix\Vote\Vote\EventLimits::BY_USER_AUTH ? $userField["SETTINGS"]["UNIQUE"] | \Bitrix\Vote\Vote\EventLimits::BY_USER_ID : $userField["SETTINGS"]["UNIQUE"]);
+				$interval = intval($userField["SETTINGS"]["UNIQUE_IP_DELAY"]["DELAY"]);
+				$interval = in_array($userField["SETTINGS"]["UNIQUE_IP_DELAY"]["DELAY_TYPE"], array("S", "M", "H")) ? "PT".$interval.$userField["SETTINGS"]["UNIQUE_IP_DELAY"]["DELAY_TYPE"] : "P".$interval."D";
+				$data["KEEP_IP_SEC"] = (new \DateTime("@0"))->add(new \DateInterval($interval))->getTimestamp();
 				$data["NOTIFY"] = $userField["SETTINGS"]["NOTIFY"];
 
 				$attach->checkData($data);
@@ -605,7 +612,7 @@ final class VoteUserType
 
 			list($type, $realValue) = self::detectType($value);
 
-			/*@var \Bitrix\Vote\Attachment\Attach $attach*/
+			/*@var \Bitrix\Vote\Attach $attach*/
 			$attach = ($type == self::TYPE_SAVED_ATTACH ? $userFieldManager->loadFromAttachId($realValue) :
 				($data["ID"] > 0 ? $userFieldManager->loadFromVoteId($data["ID"]) : $userFieldManager->loadEmptyObject()));
 
@@ -618,9 +625,11 @@ final class VoteUserType
 			if (!empty($data) && !$attach->canEdit($userId))
 				throw new \Bitrix\Main\AccessDeniedException(Loc::getMessage("VOTE_EDIT_ACCESS_IS_DENIED"));
 
-			$data["UNIQUE_TYPE"] = $userField["SETTINGS"]["UNIQUE"];
-			$data["DELAY"] = $userField["SETTINGS"]["UNIQUE_IP_DELAY"]["DELAY"];
-			$data["DELAY_TYPE"] = $userField["SETTINGS"]["UNIQUE_IP_DELAY"]["DELAY_TYPE"];
+			$data["OPTIONS"] = (is_array($data["OPTIONS"]) ? array_sum($data["OPTIONS"]) : 0);
+			$data["UNIQUE_TYPE"] = ($userField["SETTINGS"]["UNIQUE"] & \Bitrix\Vote\Vote\EventLimits::BY_USER_AUTH ? $userField["SETTINGS"]["UNIQUE"] | \Bitrix\Vote\Vote\EventLimits::BY_USER_ID : $userField["SETTINGS"]["UNIQUE"]);
+			$interval = intval($userField["SETTINGS"]["UNIQUE_IP_DELAY"]["DELAY"]);
+			$interval = in_array($userField["SETTINGS"]["UNIQUE_IP_DELAY"]["DELAY_TYPE"], array("S", "M", "H")) ? "PT".$interval.$userField["SETTINGS"]["UNIQUE_IP_DELAY"]["DELAY_TYPE"] : "P".$interval."D";
+			$data["KEEP_IP_SEC"] = (new \DateTime("@0"))->add(new \DateInterval($interval))->getTimestamp();
 			$data["NOTIFY"] = $userField["SETTINGS"]["NOTIFY"];
 
 			$attach->save($data, $userId);

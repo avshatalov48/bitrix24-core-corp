@@ -154,11 +154,11 @@ class Rest extends \IRestService
 						throw new DateTimeException('Day open date should correspond to the current date', DateTimeException::ERROR_WRONG_DATETIME);
 					}
 
-					$result = $tmUser->OpenDay($timeInfo['TIME'], $query['REPORT']);
+					$result = $tmUser->openDay($timeInfo['TIME'], $query['REPORT']);
 				}
 				else
 				{
-					$result = $tmUser->OpenDay();
+					$result = $tmUser->openDay();
 				}
 
 				if($result !== false)
@@ -754,7 +754,8 @@ class Rest extends \IRestService
 	 */
 	protected static function formatDateToISO($date, $userOffset)
 	{
-		return date('Y-m-d', MakeTimeStamp($date)-date('Z')+$userOffset);
+		// no timezone fix here
+		return date('Y-m-d', MakeTimeStamp($date));
 	}
 
 	/**

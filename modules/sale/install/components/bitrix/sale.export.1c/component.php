@@ -597,39 +597,81 @@ else
                     {
 						$loader->nodeHandlerDefaultModuleOneC($xmlObject);
                     }
-
 				});
 			}
 			//endregion
 			//region schema Contragents
-			$o->registerNodeHandler("/".GetMessage("CC_BSC1_COM_INFO")."/".GetMessage("CC_BSC1_AGENTS")."/".GetMessage("CC_BSC1_AGENT"), function (CDataXML $xmlObject) use ($o, $loader)
-			{
-				\Bitrix\Sale\Exchange\ImportOneCContragent::configuration();
-				$loader->importer = new \Bitrix\Sale\Exchange\ImportOneCContragent();
-				$loader->nodeHandler($xmlObject, $o);
-
-			});
-			//endregion
-			//region schema Package.CRM or Package.Sale
-			if(CModule::IncludeModule('CRM'))
+			if(\Bitrix\Main\Config\Option::get("sale", "~IS_SALE_CRM_SITE_MASTER_FINISH", "N") == "Y" ||
+				\Bitrix\Main\Config\Option::get("sale", "~IS_SALE_BSM_SITE_MASTER_FINISH", "N")=="Y")
             {
-				$o->registerNodeHandler("/".GetMessage("CC_BSC1_COM_INFO")."/".GetMessage("CC_BSC1_CONTAINER"), function (CDataXML $xmlObject) use ($o, $loader)
-                {
-					\Bitrix\Sale\Exchange\ImportOneCPackageCRM::configuration();
-					$loader->importer = \Bitrix\Sale\Exchange\ImportOneCPackageCRM::getInstance();
+				CModule::IncludeModule('CRM');
+				$o->registerNodeHandler("/".GetMessage("CC_BSC1_COM_INFO")."/".GetMessage("CC_BSC1_AGENTS")."/".GetMessage("CC_BSC1_AGENT"), function (CDataXML $xmlObject) use ($o, $loader)
+				{
+					\Bitrix\Sale\Exchange\ImportOneCContragentCRM::configuration();
+					$loader->importer = new \Bitrix\Sale\Exchange\ImportOneCContragentCRM();
 					$loader->nodeHandler($xmlObject, $o);
 				});
             }
             else
             {
-                $o->registerNodeHandler("/".GetMessage("CC_BSC1_COM_INFO")."/".GetMessage("CC_BSC1_CONTAINER"), function (CDataXML $xmlObject) use ($o, $loader)
-                {
+				$o->registerNodeHandler("/".GetMessage("CC_BSC1_COM_INFO")."/".GetMessage("CC_BSC1_AGENTS")."/".GetMessage("CC_BSC1_AGENT"), function (CDataXML $xmlObject) use ($o, $loader)
+				{
+					\Bitrix\Sale\Exchange\ImportOneCContragent::configuration();
+					$loader->importer = new \Bitrix\Sale\Exchange\ImportOneCContragent();
+					$loader->nodeHandler($xmlObject, $o);
+				});
+            }
+			//endregion
+			//region schema Package.CRM or Package.Sale
+            /*
+             * если устнавливется дистр Б24, то обмен идет счетами
+             * если устнавливется дистр БУС, то обмен идет заказами
+             * если на БУС вводиться ключ редакции Б24+БУС, то выполняется обмен заказми (т.к. модуль CRM не установлен)
+             * если на Б24 вводиться ключ редакции Б24+БУС, то выполняется обмен счетами (т.к. модуль CRM установлен)
+             * если на БУС запускается мастер +Б24, анализирем опцию IS_SALE_CRM_SITE_MASTER_FINISH и продолжаем ипортировать заказы
+             * если на Б24 запускается мастер +БУС, анализирем опцию IS_SALE_BSM_SITE_MASTER_FINISH и продолжаем ипортировать счета,
+             *     а для импорта заказов используем отдельный модуль на rest
+             * */
+			//B24 -> +BUS.wizard
+            if( \Bitrix\Main\Config\Option::get("sale", "~IS_SALE_BSM_SITE_MASTER_FINISH", "N")=="Y")
+            {
+				CModule::IncludeModule('CRM');
+				$o->registerNodeHandler("/".GetMessage("CC_BSC1_COM_INFO")."/".GetMessage("CC_BSC1_CONTAINER"), function (CDataXML $xmlObject) use ($o, $loader)
+				{
+					\Bitrix\Sale\Exchange\ImportOneCPackageCRM::configuration();
+					$loader->importer = \Bitrix\Sale\Exchange\ImportOneCPackageCRM::getInstance();
+					$loader->nodeHandler($xmlObject, $o);
+				});
+            }
+			//BUS -> +B24.wizard
+            elseif(\Bitrix\Main\Config\Option::get("sale", "~IS_SALE_CRM_SITE_MASTER_FINISH", "N") == "Y")
+			{
+				$o->registerNodeHandler("/".GetMessage("CC_BSC1_COM_INFO")."/".GetMessage("CC_BSC1_CONTAINER"), function (CDataXML $xmlObject) use ($o, $loader)
+				{
 					\Bitrix\Sale\Exchange\ImportOneCPackageSale::configuration();
 					$loader->importer = \Bitrix\Sale\Exchange\ImportOneCPackageSale::getInstance();
 					$loader->nodeHandler($xmlObject, $o);
 				});
-            }
-            //endregion
+			}
+			elseif(CModule::IncludeModule('CRM'))
+			{
+				$o->registerNodeHandler("/".GetMessage("CC_BSC1_COM_INFO")."/".GetMessage("CC_BSC1_CONTAINER"), function (CDataXML $xmlObject) use ($o, $loader)
+				{
+					\Bitrix\Sale\Exchange\ImportOneCPackageCRM::configuration();
+					$loader->importer = \Bitrix\Sale\Exchange\ImportOneCPackageCRM::getInstance();
+					$loader->nodeHandler($xmlObject, $o);
+				});
+			}
+			else
+			{
+				$o->registerNodeHandler("/".GetMessage("CC_BSC1_COM_INFO")."/".GetMessage("CC_BSC1_CONTAINER"), function (CDataXML $xmlObject) use ($o, $loader)
+				{
+					\Bitrix\Sale\Exchange\ImportOneCPackageSale::configuration();
+					$loader->importer = \Bitrix\Sale\Exchange\ImportOneCPackageSale::getInstance();
+					$loader->nodeHandler($xmlObject, $o);
+				});
+			}
+			//endregion
 
 			$o->setPosition($_SESSION["BX_CML2_EXPORT"]["last_xml_entry"]);
 			if ($o->openFile($ABS_FILE_NAME))

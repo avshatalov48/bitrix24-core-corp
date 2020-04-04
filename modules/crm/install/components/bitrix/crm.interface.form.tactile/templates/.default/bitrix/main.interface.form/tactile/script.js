@@ -824,6 +824,7 @@ if(typeof(BX.CrmFormSettingManager) === "undefined")
 			{
 				this._dragDropUndoData = null;
 				BX.cleanNode(BX(this._undoContainerId), false);
+				BX.onCustomEvent(this, "CrmFormSettingManagerRemoveField", [fieldId]);
 			}
 			return result;
 		},
@@ -1299,6 +1300,7 @@ if(typeof(BX.CrmFormSettingManager) === "undefined")
 		},
 		processFieldRemove: function(field)
 		{
+			console.info("BX.CrmFormSettingManager: processFieldRemove - ", field);
 			var fieldId = field.getId();
 			delete this._fieldSettings[fieldId];
 

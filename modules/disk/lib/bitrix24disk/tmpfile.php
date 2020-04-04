@@ -329,7 +329,7 @@ class TmpFile extends Model
 		}
 
 		//now you can set CREATED_BY
-		$data = array_intersect_key($data, array('CREATED_BY' => true));
+		$data = array_intersect_key($data, array('CREATED_BY' => true, 'SIZE' => true,));
 
 		return array_merge(array(
 			'TOKEN' => static::generateTokenByPath($relativePath),
@@ -338,6 +338,7 @@ class TmpFile extends Model
 			'PATH' => $relativePath,
 			'BUCKET_ID' => '',
 			'SIZE' => empty($fileData['size'])? '' : $fileData['size'],
+			'RECEIVED_SIZE' => empty($fileData['size'])? '' : $fileData['size'],
 			'WIDTH' => empty($fileData['width'])? '' : $fileData['width'],
 			'HEIGHT' => empty($fileData['height'])? '' : $fileData['height'],
 		), $data);
@@ -445,12 +446,12 @@ class TmpFile extends Model
 
 		if
 		(
-			($endRange - $startRange + 1) != $bucket->getService()->getMinUploadPartSize() && !$isLastChunk
+			($endRange - $startRange + 1) < $bucket->getService()->getMinUploadPartSize() && !$isLastChunk
 		)
 		{
 			$this->errorCollection->addOne(
 				new Error(
-					"Could not append content. Size of chunk must be equals {$bucket->getService()->getMinUploadPartSize()} (if chunk is not last)",
+					"Could not append content. Size of chunk must be more than {$bucket->getService()->getMinUploadPartSize()} (if chunk is not last)",
 					static::ERROR_CLOUD_APPEND_INVALID_CHUNK_SIZE
 				)
 			);

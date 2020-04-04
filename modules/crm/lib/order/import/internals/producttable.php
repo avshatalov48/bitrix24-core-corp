@@ -56,14 +56,14 @@ class ProductTable extends Entity\DataManager
 	public static function validateSourceName()
 	{
 		return array(
-			new LengthValidator(null, 255),
+			new LengthValidator(null, 100),
 		);
 	}
 
 	public static function validateSourceId()
 	{
 		return array(
-			new LengthValidator(null, 255),
+			new LengthValidator(null, 100),
 		);
 	}
 

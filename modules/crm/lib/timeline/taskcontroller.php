@@ -149,9 +149,9 @@ class TaskController extends ActivityController
 		if($prevStatusID !== $curStatusID)
 		{
 			$authorID = isset($currentFields['CHANGED_BY']) ? $currentFields['CHANGED_BY'] : 0;
-			if($authorID <= 0 && isset($fields['RESPONSIBLE_ID']))
+			if($authorID <= 0 && isset($currentFields['RESPONSIBLE_ID']))
 			{
-				$authorID = (int)$fields['RESPONSIBLE_ID'];
+				$authorID = (int)$currentFields['RESPONSIBLE_ID'];
 			}
 			if($authorID <= 0)
 			{

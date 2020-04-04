@@ -63,16 +63,19 @@ BX.Disk.FolderListClass = (function (){
 
 		this.setEvents();
 
-		window.history.replaceState(
-			{
-				disk: true,
-				folder: {
-					id: this.currentFolder.id
-				}
-			},
-			null,
-			document.location.toString()
-		);
+		if (this.shouldUseHistory())
+		{
+			window.history.replaceState(
+				{
+					disk: true,
+					folder: {
+						id: this.currentFolder.id
+					}
+				},
+				null,
+				document.location.toString()
+			);
+		}
 
 		this.workWithLocationHash();
 		this.processCommand();
@@ -112,11 +115,6 @@ BX.Disk.FolderListClass = (function (){
 
 	FolderListClass.prototype.onHashChange = function()
 	{
-		if (this.commonGrid.isTile())
-		{
-			return;
-		}
-
 		var matches = document.location.hash.match(/hl-([0-9]+)/g);
 		if(matches)
 		{
@@ -129,11 +127,10 @@ BX.Disk.FolderListClass = (function (){
 				var number = hl.match(/hl-([0-9]+)/);
 				if(number && number[1])
 				{
-					var row = this.getRow(number[1]);
-
-					if(row)
+					if (this.commonGrid.getItemById(number[1]))
 					{
-						this.scrollToRow(row);
+						this.commonGrid.scrollTo(number[1]);
+						this.commonGrid.selectItemById(number[1]);
 						this.runCommandOnObjectId(command, number[1]);
 					}
 					else if(command)
@@ -166,6 +163,11 @@ BX.Disk.FolderListClass = (function (){
 		}
 	};
 
+	FolderListClass.prototype.shouldUseHistory = function()
+	{
+		return top === window;
+	};
+
 	FolderListClass.prototype.workWithLocationHash = function()
 	{
 		setTimeout(BX.delegate(function(){
@@ -176,7 +178,6 @@ BX.Disk.FolderListClass = (function (){
 	FolderListClass.prototype.setEvents = function()
 	{
 		BX.bind(this.getFilesCountAndSize.button, 'click', BX.proxy(this.onClickGetFilesCountAndSizeButtonButton, this));
-		BX.bind(BX(this.storage.manage.connectButtonId), 'click', BX.proxy(this.onClickManageConnectButton, this));
 		BX.bind(window, 'hashchange', BX.proxy(this.onHashChange, this));
 		BX.bindDelegate(this.commonGrid.getContainer(), 'click', {className: 'js-disk-grid-open-folder'}, this.openGridFolder.bind(this));
 		BX.bind(this.sort.layout.label, 'click', this.showGridSortingMenu.bind(this));
@@ -220,11 +221,7 @@ BX.Disk.FolderListClass = (function (){
 							event.preventDefault();
 						}
 						//else we have BX.Viewer which bind in disk.folder.list/templates/.default/template.php
-					},
-					options: {
-						width: 372
 					}
-
 				}
 			]
 		});
@@ -724,18 +721,26 @@ BX.Disk.FolderListClass = (function (){
 			return;
 		}
 
-		var objectData = BX.delegate(getObjectDataId, this)(objectId);
-
-		var row = objectData.row;
-		var title = objectData.title;
-		var icon = objectData.icon;
-
 		switch (command.toLowerCase())
 		{
 			case '!disconnect':
 			case '!detach':
+				var menuItem = this.commonGrid.getActionsMenu(objectId).getMenuItem(command.toLowerCase().substr(1));
+				if(!menuItem || !menuItem.onclick)
+				{
+					return;
+				}
+
+				eval(menuItem.onclick);
+				break;
 			case '!share':
-				var menuItem = row.getActionsMenu().getMenuItem(command.toLowerCase().substr(1));
+				var menuItem = this.commonGrid.getActionsMenu(objectId).getMenuItem('share-section');
+				if(!menuItem || !menuItem.hasSubMenu())
+				{
+					return;
+				}
+				menuItem.addSubMenu(menuItem._items);
+				menuItem = menuItem.getSubMenu().getMenuItem(command.toLowerCase().substr(1));
 				if(!menuItem || !menuItem.onclick)
 				{
 					return;
@@ -777,41 +782,6 @@ BX.Disk.FolderListClass = (function (){
 			return BX.type.isElementNode(node) && (BX.hasClass(node, 'bx-disk-file-icon') || BX.hasClass(node, 'bx-disk-folder-icon'));
 		}, true);
 	}
-
-	FolderListClass.prototype.runActionInfo = function (item, params)
-	{
-		var fileId = params.objectId;
-
-		if (BX.SidePanel.Instance.isOpen() && BX.SidePanel.Instance.getTopSlider().getUrl() === "widget:file-props-" + fileId)
-		{
-			BX.SidePanel.Instance.getTopSlider().close();
-
-			return;
-		}
-
-		BX.SidePanel.Instance.open("widget:file-props-" + fileId, {
-			cacheable: false,
-			contentCallback: function (slider) {
-				var promise = new BX.Promise();
-				BX.Disk.runAction('disk.file.showProperties', {data: {
-					fileId: fileId
-				}}).then(function(response){
-					slider.getData().set("configurationFormContent", response.data);
-					promise.fulfill(response.data);
-				});
-
-				return promise;
-			},
-			animationDuration: 100,
-			width: 370,
-			events: {
-				onLoad: function (event) {
-					var slider = event.getSlider();
-					BX.html(slider.layout.content, slider.getData().get("configurationFormContent"));
-				}
-			}
-		});
-	};
 
 	FolderListClass.prototype.scrollToObject = function (objectId)
 	{
@@ -971,7 +941,10 @@ BX.Disk.FolderListClass = (function (){
 
 			link.classList.toggle('disk-folder-list-view-item-active');
 
-			window.history.replaceState(null, null, BX.util.remove_url_param(document.location.toString(), 'viewSize'));
+			if (this.shouldUseHistory())
+			{
+				window.history.replaceState(null, null, BX.util.remove_url_param(document.location.toString(), 'viewSize'));
+			}
 
 			BX.ajax.runComponentAction('bitrix:disk.folder.list', 'saveViewOptions', {
 				analyticsLabel: 'tile.' + link.dataset.viewTileSize,
@@ -1106,13 +1079,14 @@ BX.Disk.FolderListClass = (function (){
 		});
 	};
 
-	FolderListClass.prototype.onClickManageConnectButton = function (e)
+	/**
+	 *
+	 * @param {BX.UI.Button} button
+	 * @param e
+	 */
+	FolderListClass.prototype.onClickManageConnectButton = function (button, e)
 	{
-		var target = BX.proxy_context;
-		if(!BX.type.isDomNode(BX.proxy_context))
-			return;
-		var rootObjectId = this.storage.rootObject.id;
-		if(BX.hasClass(target, 'connect'))
+		if(button.getIcon() === BX.UI.Button.Icon.DISK)
 		{
 			BX.Disk.ajax({
 				method: 'POST',
@@ -1128,30 +1102,17 @@ BX.Disk.FolderListClass = (function (){
 					{
 						return;
 					}
-					var icon = BX.findChild(target, {className: 'popup-current-icon'}, true);
-					if(!!icon)
-					{
-						BX.removeClass(icon, 'webform-small-button-disk connect');
-						BX.addClass(icon, 'webform-small-button-check-round disconnect');
-					}
-					var text = BX('bx-disk-disconnect-connect-disk-text');
-					if(!!text)
-					{
-						BX.adjust(text, {text: BX.message('DISK_FOLDER_LIST_LABEL_ALREADY_CONNECT_DISK')});
-					}
-					BX.removeClass(target, 'webform-small-button-disk connect');
-					BX.addClass(target, 'webform-small-button-check-round disconnect');
+					button.setIcon(BX.UI.Button.Icon.DONE);
+					button.setText(BX.message('DISK_FOLDER_LIST_LABEL_ALREADY_CONNECT_DISK'));
 
 					if(!!response.manage.link)
 					{
 						this.storage.manage.link = BX.clone(response.manage.link, true);
 					}
-
 				}, this)
 			});
-			BX.PreventDefault(e);
 		}
-		else if(BX.hasClass(target, 'disconnect'))
+		else if(button.getIcon() === BX.UI.Button.Icon.DONE)
 		{
 			this.openConfirmDetach({
 				object: {
@@ -1166,22 +1127,10 @@ BX.Disk.FolderListClass = (function (){
 					}
 					BX.Disk.showModalWithStatusAction(response);
 
-					var icon = BX.findChild(target, {className: 'popup-current-icon'}, true);
-					if(!!icon)
-					{
-						BX.removeClass(icon, 'webform-small-button-check-round disconnect');
-						BX.addClass(icon, 'webform-small-button-disk connect');
-					}
-					var text = BX('bx-disk-disconnect-connect-disk-text');
-					if(!!text)
-					{
-						BX.adjust(text, {text: BX.message('DISK_FOLDER_LIST_LABEL_CONNECT_DISK')});
-					}
-					BX.removeClass(target, 'webform-small-button-check-round disconnect');
-					BX.addClass(target, 'webform-small-button-disk connect');
+					button.setIcon(BX.UI.Button.Icon.DISK);
+					button.setText(BX.message('DISK_FOLDER_LIST_LABEL_CONNECT_DISK'));
 				}
 			});
-			BX.PreventDefault(e);
 		}
 	};
 
@@ -1376,11 +1325,14 @@ BX.Disk.FolderListClass = (function (){
 				name: folder.name
 			}
 		};
-		window.history.pushState(
-			state,
-			null,
-			folder.link
-		);
+		if (this.shouldUseHistory())
+		{
+			window.history.pushState(
+				state,
+				null,
+				folder.link
+			);
+		}
 		BX.onCustomEvent("Window:onPushState", [state, null, folder.link]);
 
 		this.openFolder(folder.id, folder);
@@ -2404,7 +2356,7 @@ BX.Disk.FolderListClass = (function (){
 			{
 				title: BX.message('DISK_FOLDER_LIST_LABEL_SORT_INVERSE_DIRECTION'),
 				text: BX.message('DISK_FOLDER_LIST_LABEL_SORT_INVERSE_DIRECTION'),
-				className: this.sort.direction !== 'desc'? 'menu-popup-item menu-popup-item-accept' : '',
+				className: this.sort.direction === 'desc'? 'menu-popup-item menu-popup-item-accept' : '',
 				onclick: function(event, item) {
 					this.inverseSortByColumn();
 					toggleActiveMark(item);
@@ -5013,6 +4965,40 @@ BX.Disk.FolderListClass = (function (){
 			}
 		},
 
+		scrollTo: function (id)
+		{
+			var contentNode;
+			if (this.isGrid())
+			{
+				var row = this.instance.getRows().getById(id);
+				if (row && row.node)
+				{
+					contentNode = row.node;
+				}
+			}
+			else
+			{
+				var item = this.instance.getItem(id);
+				if (row && row.node)
+				{
+					contentNode = row.getContainer();
+				}
+			}
+
+			if(contentNode)
+			{
+				(new BX.easing({
+					duration : 500,
+					start : { scroll : window.pageYOffset || document.documentElement.scrollTop },
+					finish : { scroll : BX.pos(contentNode).top },
+					transition : BX.easing.makeEaseOut(BX.easing.transitions.quart),
+					step : function(state){
+						window.scrollTo(0, state.scroll);
+					}
+				})).animate();
+			}
+		},
+
 		getActionById: function (id, menuItemId)
 		{
 			var item = this.getItemById(id);
@@ -5192,7 +5178,7 @@ BX.Disk.FolderListClass = (function (){
 
 			if(this.image)
 			{
-				this.imageItemHandler = BX.throttle(this.appendImageItem, 20).bind(this)
+				this.imageItemHandler = BX.throttle(this.appendImageItem, 20, this);
 				BX.bind(window, 'resize', this.imageItemHandler);
 				BX.bind(window, 'scroll', this.imageItemHandler);
 			}
@@ -5400,12 +5386,17 @@ BX.Disk.FolderListClass = (function (){
 					action.href = this.link;
 				}
 			}, this);
-			
+
 			this.destroyActionsMenu();
 		},
 
 		runRename: function()
 		{
+			if (this.item.titleInput.value === this.title)
+			{
+				return;
+			}
+
 			var oldTitle = this.title;
 			this.rename(this.item.titleInput.value);
 
@@ -5416,7 +5407,12 @@ BX.Disk.FolderListClass = (function (){
 					newName: this.title,
 					autoCorrect: true
 				}
-			}).catch(function(response){
+			}).then(function (response) {
+				if(response.data.object.name !== this.title)
+				{
+					this.rename(response.data.object.name);
+				}
+			}.bind(this)).catch(function (response) {
 				BX.Disk.showModalWithStatusAction(response);
 				this.rename(oldTitle);
 			}.bind(this));
@@ -5566,6 +5562,10 @@ BX.Disk.FolderListClass = (function (){
 
 				case 'rar':
 					fileExtension = 'rar';
+					break;
+
+				case 'zip':
+					fileExtension = 'zip';
 					break;
 
 				case 'set':

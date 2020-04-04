@@ -210,11 +210,14 @@ class CrmActivityEmailComponent extends CBitrixComponent
 
 			if ($pdfFileId > 0)
 			{
-				// encapsulate to StorageManager
-				$storageElementId = \Bitrix\Crm\Integration\StorageManager::saveEmailAttachment(
-					\CFile::getFileArray($pdfFileId),
-					\Bitrix\Crm\Integration\StorageType::Disk
-				);
+				if ($pdfFile = \CFile::getFileArray($pdfFileId))
+				{
+					// encapsulate to StorageManager
+					$storageElementId = \Bitrix\Crm\Integration\StorageManager::saveEmailAttachment(
+						$pdfFile,
+						\Bitrix\Crm\Integration\StorageType::Disk
+					);
+				}
 				if ($storageElementId > 0)
 				{
 					$storageElement = \Bitrix\Disk\File::loadById($storageElementId, array('STORAGE'));
@@ -278,6 +281,8 @@ class CrmActivityEmailComponent extends CBitrixComponent
 					break;
 				case 'RE':
 					$subjectPrefix = 'Re';
+					$activity['OWNER_TYPE_ID'] = $activity['__parent']['OWNER_TYPE_ID'];
+					$activity['OWNER_ID'] = $activity['__parent']['OWNER_ID'];
 					$activity['REPLIED_ID'] = $activity['__parent']['ID'];
 					$activity['BINDINGS'] = $activity['__parent']['BINDINGS'];
 					$activity['STORAGE_TYPE_ID'] = $activity['__parent']['STORAGE_TYPE_ID'];
@@ -690,13 +695,11 @@ class CrmActivityEmailComponent extends CBitrixComponent
 				$list = is_array($value) ? $value : explode(',', $value);
 				foreach ($list as $item)
 				{
-					if (!check_email($item))
-						continue;
-
-					if (preg_match('/.*?[<\[\(](.+?)[>\]\)].*/i', $item, $matches))
-						$item = $matches[1];
-
-					$result[] = strtolower(trim($item));
+					$address = new \Bitrix\Main\Mail\Address($item);
+					if ($address->validate())
+					{
+						$result[] = $address->getEmail();
+					}
 				}
 
 				$activityEmailMeta[$field] = $result;

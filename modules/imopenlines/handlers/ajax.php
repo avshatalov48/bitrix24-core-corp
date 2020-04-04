@@ -1,7 +1,12 @@
-<?
-if($_SERVER["REQUEST_METHOD"] == "POST" && array_key_exists("IM_AJAX_CALL", $_REQUEST) && $_REQUEST["IM_AJAX_CALL"] === "Y" && $_POST['IM_OPEN_LINES_CLIENT'] == 'Y')
+<?php
+$request = Bitrix\Main\HttpApplication::getInstance()->getContext()->getRequest();
+
+if ($request->isPost() &&
+	$request->get('IM_AJAX_CALL') === 'Y' &&
+	$request->getPost('IM_OPEN_LINES_CLIENT') == 'Y'
+)
 {
-	$chatId = intval($_POST['CHAT_ID']);
+	$chatId = intval($request->getPost('CHAT_ID'));
 	$userId = intval($USER->GetId());
 
 	if ($userId <= 0 || !(IsModuleInstalled('imopenlines') && \Bitrix\Main\Loader::includeModule('im') && \Bitrix\Im\User::getInstance($userId)->isConnector()))
@@ -21,14 +26,14 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && array_key_exists("IM_AJAX_CALL", $_RE
 		die();
 	}
 
-	if ($_POST['COMMAND'] == "sendLivechatForm")
+	if ($request->getPost('COMMAND') == "sendLivechatForm")
 	{
 		$params = Array();
 
-		CUtil::decodeURIComponent($_POST);
+		$request->addFilter(new \Bitrix\Main\Web\PostDecodeFilter());
 
 		$control = new \Bitrix\ImOpenLines\Widget\Form($chatId, $userId);
-		$result = $control->saveForm($_POST['FORM'], $_POST['FIELDS']);
+		$result = $control->saveForm($request->getPost('FORM'), $request->getPost('FIELDS'));
 		if ($result->isSuccess())
 		{
 			echo \Bitrix\ImOpenLines\Common::objectEncode(Array(
@@ -47,7 +52,10 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && array_key_exists("IM_AJAX_CALL", $_RE
 		}
 	}
 }
-else if($_SERVER["REQUEST_METHOD"] == "POST" && array_key_exists("IM_AJAX_CALL", $_REQUEST) && $_REQUEST["IM_AJAX_CALL"] === "Y" && $_POST['IM_OPEN_LINES'] == 'Y')
+else if($request->isPost() &&
+	$request->get('IM_AJAX_CALL') === 'Y' &&
+	$request->getPost('IM_OPEN_LINES') == 'Y'
+)
 {
 	if (intval($USER->GetID()) <= 0 || !(IsModuleInstalled('imopenlines') && (!IsModuleInstalled('extranet') || CModule::IncludeModule('extranet') && CExtranet::IsIntranetUser())))
 	{
@@ -66,10 +74,10 @@ else if($_SERVER["REQUEST_METHOD"] == "POST" && array_key_exists("IM_AJAX_CALL",
 		die();
 	}
 
-	$chatId = intval($_POST['CHAT_ID']);
+	$chatId = intval($request->getPost('CHAT_ID'));
 	$userId = intval($USER->GetId());
 
-	if ($_POST['COMMAND'] == 'answer')
+	if ($request->getPost('COMMAND') == 'answer')
 	{
 		$control = new \Bitrix\ImOpenLines\Operator($chatId, $userId);
 		$result = $control->answer();
@@ -87,7 +95,8 @@ else if($_SERVER["REQUEST_METHOD"] == "POST" && array_key_exists("IM_AJAX_CALL",
 			));
 		}
 	}
-	else if ($_POST['COMMAND'] == 'skip')
+	//skip the dialogue
+	else if ($request->getPost('COMMAND') == 'skip')
 	{
 		$control = new \Bitrix\ImOpenLines\Operator($chatId, $userId);
 		$result = $control->skip();
@@ -105,11 +114,11 @@ else if($_SERVER["REQUEST_METHOD"] == "POST" && array_key_exists("IM_AJAX_CALL",
 			));
 		}
 	}
-	else if ($_POST['COMMAND'] == 'transfer')
+	else if ($request->getPost('COMMAND') == 'transfer')
 	{
 		$control = new \Bitrix\ImOpenLines\Operator($chatId, $userId);
 		$result = $control->transfer(Array(
-			'TRANSFER_ID' => $_POST['TRANSFER_ID'],
+			'TRANSFER_ID' => $request->getPost('TRANSFER_ID'),
 		));
 		if ($result)
 		{
@@ -125,10 +134,10 @@ else if($_SERVER["REQUEST_METHOD"] == "POST" && array_key_exists("IM_AJAX_CALL",
 			));
 		}
 	}
-	else if ($_POST['COMMAND'] == 'silentMode')
+	else if ($request->getPost('COMMAND') == 'silentMode')
 	{
 		$control = new \Bitrix\ImOpenLines\Operator($chatId, $userId);
-		$result = $control->setSilentMode($_POST['ACTIVATE'] == 'Y');
+		$result = $control->setSilentMode($request->getPost('ACTIVATE') == 'Y');
 		if ($result)
 		{
 			echo \Bitrix\ImOpenLines\Common::objectEncode(Array(
@@ -143,10 +152,10 @@ else if($_SERVER["REQUEST_METHOD"] == "POST" && array_key_exists("IM_AJAX_CALL",
 			));
 		}
 	}
-	else if ($_POST['COMMAND'] == 'pinMode')
+	else if ($request->getPost('COMMAND') == 'pinMode')
 	{
 		$control = new \Bitrix\ImOpenLines\Operator($chatId, $userId);
-		$result = $control->setPinMode($_POST['ACTIVATE'] == 'Y');
+		$result = $control->setPinMode($request->getPost('ACTIVATE') == 'Y');
 		if ($result)
 		{
 			echo \Bitrix\ImOpenLines\Common::objectEncode(Array(
@@ -161,7 +170,7 @@ else if($_SERVER["REQUEST_METHOD"] == "POST" && array_key_exists("IM_AJAX_CALL",
 			));
 		}
 	}
-	else if ($_POST['COMMAND'] == 'closeDialog')
+	else if ($request->getPost('COMMAND') == 'closeDialog')
 	{
 		$control = new \Bitrix\ImOpenLines\Operator($chatId, $userId);
 		$result = $control->closeDialog();
@@ -179,7 +188,7 @@ else if($_SERVER["REQUEST_METHOD"] == "POST" && array_key_exists("IM_AJAX_CALL",
 			));
 		}
 	}
-	else if ($_POST['COMMAND'] == 'markSpam')
+	else if ($request->getPost('COMMAND') == 'markSpam')
 	{
 		$control = new \Bitrix\ImOpenLines\Operator($chatId, $userId);
 		$result = $control->markSpam();
@@ -197,7 +206,7 @@ else if($_SERVER["REQUEST_METHOD"] == "POST" && array_key_exists("IM_AJAX_CALL",
 			));
 		}
 	}
-	else if ($_POST['COMMAND'] == 'interceptSession')
+	else if ($request->getPost('COMMAND') == 'interceptSession')
 	{
 		$control = new \Bitrix\ImOpenLines\Operator($chatId, $userId);
 		$result = $control->interceptSession();
@@ -215,7 +224,7 @@ else if($_SERVER["REQUEST_METHOD"] == "POST" && array_key_exists("IM_AJAX_CALL",
 			));
 		}
 	}
-	else if ($_POST['COMMAND'] == 'createLead')
+	else if ($request->getPost('COMMAND') == 'createLead')
 	{
 		$control = new \Bitrix\ImOpenLines\Operator($chatId, $userId);
 		$result = $control->createLead();
@@ -233,10 +242,10 @@ else if($_SERVER["REQUEST_METHOD"] == "POST" && array_key_exists("IM_AJAX_CALL",
 			));
 		}
 	}
-	else if ($_POST['COMMAND'] == 'cancelCrmExtend')
+	else if ($request->getPost('COMMAND') == 'cancelCrmExtend')
 	{
 		$control = new \Bitrix\ImOpenLines\Operator($chatId, $userId);
-		$result = $control->cancelCrmExtend($_POST['MESSAGE_ID']);
+		$result = $control->cancelCrmExtend($request->getPost('MESSAGE_ID'));
 		if ($result)
 		{
 			echo \Bitrix\ImOpenLines\Common::objectEncode(Array(
@@ -251,10 +260,10 @@ else if($_SERVER["REQUEST_METHOD"] == "POST" && array_key_exists("IM_AJAX_CALL",
 			));
 		}
 	}
-	else if ($_POST['COMMAND'] == 'changeCrmEntity')
+	else if ($request->getPost('COMMAND') == 'changeCrmEntity')
 	{
 		$control = new \Bitrix\ImOpenLines\Operator($chatId, $userId);
-		$result = $control->changeCrmEntity($_POST['MESSAGE_ID'], strtoupper($_POST['ENTITY_TYPE']), $_POST['ENTITY_ID']);
+		$result = $control->changeCrmEntity($request->getPost('MESSAGE_ID'), strtoupper($request->getPost('ENTITY_TYPE')), $request->getPost('ENTITY_ID'));
 		if ($result)
 		{
 			echo \Bitrix\ImOpenLines\Common::objectEncode(Array(
@@ -269,10 +278,10 @@ else if($_SERVER["REQUEST_METHOD"] == "POST" && array_key_exists("IM_AJAX_CALL",
 			));
 		}
 	}
-	else if ($_POST['COMMAND'] == 'openSession')
+	else if ($request->getPost('COMMAND') == 'openSession')
 	{
 		$control = new \Bitrix\ImOpenLines\Operator(0, $userId);
-		$result = $control->openChat($_POST['USER_CODE']);
+		$result = $control->openChat($request->getPostList()->getRaw('USER_CODE'));
 		if ($result)
 		{
 			echo \Bitrix\ImOpenLines\Common::objectEncode(Array(
@@ -288,12 +297,12 @@ else if($_SERVER["REQUEST_METHOD"] == "POST" && array_key_exists("IM_AJAX_CALL",
 			));
 		}
 	}
-	else if ($_POST['COMMAND'] == 'voteHead')
+	else if ($request->getPost('COMMAND') == 'voteHead')
 	{
-		CUtil::decodeURIComponent($_POST);
+		$request->addFilter(new \Bitrix\Main\Web\PostDecodeFilter());
 
 		$control = new \Bitrix\ImOpenLines\Operator(0, $userId);
-		$result = $control->voteAsHead($_POST['SESSION_ID'], $_POST['RATING'], $_POST['COMMENT']);
+		$result = $control->voteAsHead($request->getPost('SESSION_ID'), $request->getPost('RATING'), $request->getPost('COMMENT'));
 		if ($result)
 		{
 			echo \Bitrix\ImOpenLines\Common::objectEncode(Array(
@@ -308,14 +317,14 @@ else if($_SERVER["REQUEST_METHOD"] == "POST" && array_key_exists("IM_AJAX_CALL",
 			));
 		}
 	}
-	else if ($_POST['COMMAND'] == 'joinSession')
+	else if ($request->getPost('COMMAND') == 'joinSession')
 	{
-		$control = new \Bitrix\ImOpenLines\Operator($_POST['CHAT_ID'], $userId);
+		$control = new \Bitrix\ImOpenLines\Operator($request->getPost('CHAT_ID'), $userId);
 		$result = $control->joinSession();
 		if ($result)
 		{
 			echo \Bitrix\ImOpenLines\Common::objectEncode(Array(
-				'CHAT_ID' => $_POST['CHAT_ID'],
+				'CHAT_ID' => $request->getPost('CHAT_ID'),
 				'ERROR' => ''
 			));
 		}
@@ -327,7 +336,7 @@ else if($_SERVER["REQUEST_METHOD"] == "POST" && array_key_exists("IM_AJAX_CALL",
 			));
 		}
 	}
-	else if ($_POST['COMMAND'] == 'startSession')
+	else if ($request->getPost('COMMAND') == 'startSession')
 	{
 		$control = new \Bitrix\ImOpenLines\Operator($chatId, $userId);
 		$result = $control->startSession();
@@ -345,10 +354,10 @@ else if($_SERVER["REQUEST_METHOD"] == "POST" && array_key_exists("IM_AJAX_CALL",
 			));
 		}
 	}
-	else if ($_POST['COMMAND'] == 'startSessionByMessage')
+	else if ($request->getPost('COMMAND') == 'startSessionByMessage')
 	{
 		$control = new \Bitrix\ImOpenLines\Operator($chatId, $userId);
-		$result = $control->startSessionByMessage($_POST['MESSAGE_ID']);
+		$result = $control->startSessionByMessage($request->getPost('MESSAGE_ID'));
 		if ($result)
 		{
 			echo \Bitrix\ImOpenLines\Common::objectEncode(Array(
@@ -363,10 +372,10 @@ else if($_SERVER["REQUEST_METHOD"] == "POST" && array_key_exists("IM_AJAX_CALL",
 			));
 		}
 	}
-	else if ($_POST['COMMAND'] == 'saveToQuickAnswers')
+	else if ($request->getPost('COMMAND') == 'saveToQuickAnswers')
 	{
 		$control = new \Bitrix\ImOpenLines\Operator($chatId, $userId);
-		$result = $control->saveToQuickAnswers($_POST['MESSAGE_ID']);
+		$result = $control->saveToQuickAnswers($request->getPost('MESSAGE_ID'));
 		if ($result)
 		{
 			echo \Bitrix\ImOpenLines\Common::objectEncode(Array(
@@ -381,10 +390,10 @@ else if($_SERVER["REQUEST_METHOD"] == "POST" && array_key_exists("IM_AJAX_CALL",
 			));
 		}
 	}
-	else if ($_POST['COMMAND'] == 'sessionGetHistory')
+	else if ($request->getPost('COMMAND') == 'sessionGetHistory')
 	{
 		$control = new \Bitrix\ImOpenLines\Operator(0, $userId);
-		$result = $control->getSessionHistory($_POST['SESSION_ID']);
+		$result = $control->getSessionHistory($request->getPost('SESSION_ID'));
 
 		if ($result)
 		{

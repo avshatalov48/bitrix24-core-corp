@@ -85,11 +85,13 @@ class AddressTable extends Entity\DataManager
 		}
 
 		$connection = Main\Application::getConnection();
+		//HACK: DEFINE TYPE_ID IN WHERE CONDITION FOR MAKE MYSQL USE PK IN EFFECTIVE WAY
+		$typeSlug = implode(',', EntityAddressType::getAllIDs());
 		$connection->queryExecute(
-			"UPDATE b_crm_addr SET ENTITY_TYPE_ID = {$newEntityTypeID}, ENTITY_ID = {$newEntityID} WHERE ENTITY_TYPE_ID = {$oldEntityTypeID} AND ENTITY_ID = {$oldEntityID}"
+			"UPDATE b_crm_addr SET ENTITY_TYPE_ID = {$newEntityTypeID}, ENTITY_ID = {$newEntityID} WHERE TYPE_ID IN({$typeSlug}) AND ENTITY_TYPE_ID = {$oldEntityTypeID} AND ENTITY_ID = {$oldEntityID}"
 		);
 		$connection->queryExecute(
-			"UPDATE b_crm_addr SET ANCHOR_TYPE_ID = {$newEntityTypeID}, ANCHOR_ID = {$newEntityID} WHERE ANCHOR_TYPE_ID = {$oldEntityTypeID} AND ANCHOR_ID = {$oldEntityID}"
+			"UPDATE b_crm_addr SET ANCHOR_TYPE_ID = {$newEntityTypeID}, ANCHOR_ID = {$newEntityID} WHERE TYPE_ID IN({$typeSlug}) AND ANCHOR_TYPE_ID = {$oldEntityTypeID} AND ANCHOR_ID = {$oldEntityID}"
 		);
 	}
 }

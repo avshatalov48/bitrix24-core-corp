@@ -84,7 +84,10 @@ final class FolderLink extends Folder
 	 */
 	public function getErrors()
 	{
-		return array_merge(parent::getErrors(), $this->getRealObject()->getErrors());
+		return array_merge(
+			parent::getErrors(),
+			$this->getRealObject()? $this->getRealObject()->getErrors() : []
+		);
 	}
 
 	/**
@@ -94,7 +97,10 @@ final class FolderLink extends Folder
 	 */
 	public function getErrorsByCode($code)
 	{
-		return array_merge(parent::getErrorsByCode($code), $this->getRealObject()->getErrorsByCode($code));
+		return array_merge(
+			parent::getErrorsByCode($code),
+			$this->getRealObject()? $this->getRealObject()->getErrorsByCode($code) : []
+		);
 	}
 
 	/**

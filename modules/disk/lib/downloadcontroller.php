@@ -427,7 +427,7 @@ class DownloadController extends Internals\Controller
 			}
 
 			$zipArchive->addEntry(
-				ZipNginx\ArchiveEntry::createFromFile($file)
+				ZipNginx\ArchiveEntry::createFromFileModel($file)
 			);
 		}
 

@@ -1,5 +1,8 @@
 <?if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();?>
 <?
+use Bitrix\Main\Loader;
+
+$arResult['isExtranetSite'] = (Loader::includeModule('extranet') && \CExtranet::isExtranetSite());
 
 if ($this->__component->__parent && $this->__component->__parent->arParams && array_key_exists("NAME_TEMPLATE", $this->__component->__parent->arParams))
 	$arParams["NAME_TEMPLATE"] = $this->__component->__parent->arParams["NAME_TEMPLATE"];
@@ -76,6 +79,22 @@ if ($arResult["User"]["ID"] == $GLOBALS["USER"]->GetID())
 {
 	$arResult["CurrentUserPerms"]["Operations"]["message"] = false;
 	$arResult["CurrentUserPerms"]["Operations"]["videocall"] = false;
+}
+
+if(
+	!CModule::IncludeModule("timeman")
+	|| !CBXFeatures::IsFeatureEnabled('timeman')
+	|| in_array($arResult["User"]["EXTERNAL_AUTH_ID"], array('bot', 'email', 'replica', 'imconnector', 'shop'))
+	|| $arResult['isExtranetSite']
+)
+{
+	$arResult["CurrentUserPerms"]["Operations"]["timeman"] = false;
+}
+else
+{
+	global $USER;
+	$userPermissionsManager = \Bitrix\Timeman\Service\DependencyManager::getInstance()->getUserPermissionsManager($USER);
+	$arResult["CurrentUserPerms"]["Operations"]["timeman"] = $userPermissionsManager->canReadWorktime($arResult["User"]["ID"]);
 }
 
 $arResult["Urls"]["MessageChat"] = CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_MESSAGES_CHAT"], array("user_id" => $arResult["User"]["ID"]));

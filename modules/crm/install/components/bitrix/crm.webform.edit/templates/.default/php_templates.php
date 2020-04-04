@@ -2,6 +2,7 @@
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Crm\WebForm;
 
 
 class CrmWebFormEditTemplate
@@ -122,6 +123,34 @@ class CrmWebFormEditTemplate
 			$params['ENTITY_CAPTION'] = '-';
 		}
 
+
+		if(!isset($params['SETTINGS_DATA']) || !is_array($params['SETTINGS_DATA']))
+		{
+			$params['SETTINGS_DATA'] = [];
+		}
+		if(!isset($params['SETTINGS_DATA']['BIG_PIC']))
+		{
+			$params['SETTINGS_DATA']['BIG_PIC'] = 'N';
+		}
+		if(!isset($params['SETTINGS_DATA']['QUANTITY_MIN']))
+		{
+			$params['SETTINGS_DATA']['QUANTITY_MIN'] = '';
+		}
+		if(!isset($params['SETTINGS_DATA']['QUANTITY_MAX']))
+		{
+			$params['SETTINGS_DATA']['QUANTITY_MAX'] = '';
+		}
+		if(!isset($params['SETTINGS_DATA']['QUANTITY_STEP']))
+		{
+			$params['SETTINGS_DATA']['QUANTITY_STEP'] = '';
+		}
+		foreach ($params['SETTINGS_DATA'] as $sdKey => $sdValue)
+		{
+			$params['SETTINGS_DATA_' . $sdKey] = $sdValue;
+		}
+
+
+
 		$params['URL_DISPLAY_STYLE'] = (substr($params['ENTITY_FIELD_NAME'], 0, 3) == 'UF_' ? 'initial' : 'none');
 
 		if(is_array($params['ITEMS']))
@@ -134,7 +163,8 @@ class CrmWebFormEditTemplate
 					array(
 						'name' => $params['CODE'],
 						'item_id' => $item['ID'],
-						'item_value' => $item['VALUE']
+						'item_value' => $item['VALUE'],
+						'item_discount' => $item['DISCOUNT'] ?: '',
 					)
 				);
 			}
@@ -150,6 +180,7 @@ class CrmWebFormEditTemplate
 						'item_value' => $item['VALUE'],
 						'item_name' => $item['NAME'],
 						'item_price' => $item['PRICE'],
+						'item_discount' => $item['DISCOUNT'] ?: '',
 						'currency_short_name' => $params['CURRENCY_SHORT_NAME'],
 					)
 				);
@@ -320,6 +351,32 @@ class CrmWebFormEditTemplate
 		<div data-bx-web-form-lbl-cont="">
 			<span class="crm-webform-edit-field-option"></span>
 			<span class="crm-webform-edit-left-inner-field-title-wrap">
+				<span data-bx-web-form-lbl-caption="" class="crm-webform-edit-left-inner-field-title-item field-title-item">%caption%</span>
+				<span data-bx-web-form-lbl-btn-edit="" class="inner-field-title-field-item-icon" title="<?=Loc::getMessage('CRM_WEBFORM_EDIT_INLINE_EDIT')?>"></span>
+			</span>
+			<span class="crm-webform-edit-left-inner-field-title-field">
+				<input data-bx-web-form-btn-caption="" name="FIELD[%name%][CAPTION]" value="%caption%" type="text" class="crm-webform-edit-left-inner-field-title-field-item">
+				<span data-bx-web-form-lbl-btn-apply="" class="crm-webform-edit-field-accept" title="<?=Loc::getMessage('CRM_WEBFORM_EDIT_INLINE_EDIT_APPLY')?>"></span>
+			</span>
+		</div>
+		<?
+		$result['DISPLAY_PART'] = ob_get_clean();
+		$result['SETTINGS'] = '';
+		$result['HIDE_CAPTION'] = true;
+
+		return $result;
+	}
+
+	public static function getFieldPage($params)
+	{
+		$result = array();
+		ob_start();
+		?>
+		<div data-bx-web-form-lbl-cont="">
+			<span class="crm-webform-edit-field-option"></span>
+			<span class="crm-webform-edit-left-inner-field-title-wrap">
+				<?=Loc::getMessage('CRM_WEBFORM_EDIT_FORM_TREE_ADD_FIELD_PAGE')?>
+				&nbsp;&nbsp;
 				<span data-bx-web-form-lbl-caption="" class="crm-webform-edit-left-inner-field-title-item field-title-item">%caption%</span>
 				<span data-bx-web-form-lbl-btn-edit="" class="inner-field-title-field-item-icon" title="<?=Loc::getMessage('CRM_WEBFORM_EDIT_INLINE_EDIT')?>"></span>
 			</span>
@@ -586,6 +643,33 @@ class CrmWebFormEditTemplate
 		';
 	}
 
+	public static function getFieldSettingsCommonBigPic()
+	{
+		return '
+			<label for="FIELD_%name%_SETTINGS_DATA_BIG_PIC" class="crm-webform-edit-popup-checkbox-container">
+				<input data-bx-web-form-btn-big-pic-value="" name="FIELD[%name%][SETTINGS_DATA][BIG_PIC]" value="%settings_data_big_pic%" type="hidden">
+				<input data-bx-web-form-btn-big-pic="" id="FIELD_%name%_SETTINGS_DATA_BIG_PIC" value="Y" type="checkbox" class="crm-webform-edit-popup-checkbox">
+				<span class="crm-webform-edit-popup-checkbox-text">' . Loc::getMessage('CRM_WEBFORM_EDIT_TMPL_SETTINGS_BIG_PIC') . '</span>
+			</label>
+		';
+	}
+
+	public static function getFieldSettingsCommonQuantity()
+	{
+		return '
+			<label for="" class="crm-webform-edit-popup-label">
+				<div class="crm-webform-edit-popup-name">' . Loc::getMessage('CRM_WEBFORM_EDIT_TMPL_SETTINGS_QUANTITY') . '</div>
+				<div class="crm-webform-edit-popup-inner-container">
+					<input type="text" name="FIELD[%name%][SETTINGS_DATA][QUANTITY_MIN]" value="%settings_data_quantity_min%" placeholder="' . Loc::getMessage('CRM_WEBFORM_EDIT_TMPL_SETTINGS_QUANTITY_MIN') . '"  class="crm-webform-edit-popup-input popup-input-placeholder">
+					<div style="line-height: 34px;">&nbsp - &nbsp</div>
+					<input type="text" name="FIELD[%name%][SETTINGS_DATA][QUANTITY_MAX]" value="%settings_data_quantity_max%" placeholder="' . Loc::getMessage('CRM_WEBFORM_EDIT_TMPL_SETTINGS_QUANTITY_MAX') . '"  class="crm-webform-edit-popup-input popup-input-placeholder">
+					<div style="line-height: 34px;">&nbsp ' . Loc::getMessage('CRM_WEBFORM_EDIT_TMPL_SETTINGS_QUANTITY_STEP') . ' &nbsp</div>
+					<input type="text" name="FIELD[%name%][SETTINGS_DATA][QUANTITY_STEP]" value="%settings_data_quantity_step%" placeholder="' . Loc::getMessage('CRM_WEBFORM_EDIT_TMPL_SETTINGS_QUANTITY_STEP_HINT') . '"  class="crm-webform-edit-popup-input popup-input-placeholder">
+				</div>
+			</label>
+		';
+	}
+
 	public static function getFieldSettingsCommonDefaultValue()
 	{
 		return '
@@ -637,6 +721,12 @@ class CrmWebFormEditTemplate
 		ob_start();
 		echo self::getFieldSettingsCommonName();
 		echo self::getFieldSettingsCommonRequired();
+		if (WebForm\Manager::isEmbeddingAvailable())
+		{
+			echo self::getFieldSettingsCommonMultiple();
+			echo self::getFieldSettingsCommonBigPic();
+			echo self::getFieldSettingsCommonQuantity();
+		}
 		?>
 			<div class="crm-webform-edit-task-options-account-setup-info-description">
 				<br>
@@ -671,6 +761,7 @@ class CrmWebFormEditTemplate
 				<input name="FIELD[%name%][ITEMS][%item_id%][ID]" type="hidden" value="%item_id%">
 				<input data-bx-crm-webform-product-item-input="" name="FIELD[%name%][ITEMS][%item_id%][VALUE]" value="%item_value%" class="crm-webform-edit-task-options-account-setup-goods-name" placeholder="' . Loc::getMessage('CRM_WEBFORM_EDIT_DOC_INVOICE_PRODUCT_CHOICE_NAME1') . '">
 				<input name="FIELD[%name%][ITEMS][%item_id%][PRICE]" value="%item_price%" class="crm-webform-edit-task-options-account-setup-goods-price" placeholder="' . Loc::getMessage('CRM_WEBFORM_EDIT_DOC_INVOICE_PRODUCT_CHOICE_PRICE1') . ', %currency_short_name%">
+				<input type="' . (WebForm\Manager::isEmbeddingAvailable() ? 'text' : 'hidden') . '" name="FIELD[%name%][ITEMS][%item_id%][DISCOUNT]" value="%item_discount%" class="crm-webform-edit-task-options-account-setup-goods-price" placeholder="' . Loc::getMessage('CRM_WEBFORM_EDIT_DOC_INVOICE_PRODUCT_CHOICE_DISCOUNT') . ', %currency_short_name%">
 			</label>
 		';
 	}

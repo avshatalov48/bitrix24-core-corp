@@ -108,7 +108,7 @@ if (CModule::IncludeModule('bitrix24') && !(CModule::IncludeModule("extranet") &
 	}
 	$arResult["COUNTER_UPDATE_DATE"] = $helpNotify["counter_update_date"]; //time when user read notifications last time
 
-	if ($arResult["SHOW_ANIMATED_FINGER_HERO"] != "Y" && (!isset($helpNotify["time"]) || $helpNotify["time"] < time()))
+	if (!isset($helpNotify["time"]) || $helpNotify["time"] < time())
 	{
 		$arResult["NEED_CHECK_HELP_NOTIFICATION"] = "Y";
 	}
@@ -127,14 +127,15 @@ if (CModule::IncludeModule('bitrix24') && !(CModule::IncludeModule("extranet") &
 	$arResult["CAN_HAVE_HELP_NOTIFICATIONS"] = 'Y';
 }
 
+$arResult["SHOW_LICENSE_BUTTON"] = false;
 if (CModule::IncludeModule('bitrix24') && in_array(CBitrix24::getLicenseType(), array("project", "demo")))
 {
-	$arResult["SHOW_LICENSE_BUTTON"] = false;
+	$portalCreationDate = intval(COption::GetOptionString("main", "~controller_date_create", ""));
 	if (
-		!in_array(LANGUAGE_ID, array("ru", "ua"))
-		|| (
+		!in_array(LANGUAGE_ID, array("ru", "ua")) ||
+		(
 			in_array(LANGUAGE_ID, array("ru", "ua")) &&
-			(COption::GetOptionString("main", "~controller_date_create", "") + 86400 < time() || !intval(COption::GetOptionString("main", "~controller_date_create", "")))
+			($portalCreationDate + 86400 < time() || !$portalCreationDate)
 		)
 	)
 	{
@@ -144,4 +145,3 @@ if (CModule::IncludeModule('bitrix24') && in_array(CBitrix24::getLicenseType(), 
 		$arResult["HOST_NAME"] = BX24_HOST_NAME;
 	}
 }
-?>

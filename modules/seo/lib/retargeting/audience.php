@@ -72,6 +72,11 @@ abstract class Audience extends BaseApiObject
 		return true;
 	}
 
+	public static function isSupportAddAudience()
+	{
+		return false;
+	}
+
 	public static function isAddingRequireContacts()
 	{
 		return false;
@@ -228,6 +233,7 @@ abstract class Audience extends BaseApiObject
 				$resultDb = QueueTable::add(array(
 					'TYPE' => static::TYPE_CODE,
 					'ACCOUNT_ID' => $this->accountId,
+					'CLIENT_ID' => $this->service instanceof IMultiClientService ? $this->service->getClientId() : null,
 					'AUDIENCE_ID' => $audienceId,
 					'CONTACT_TYPE' => $contactType,
 					'VALUE' => $contact,

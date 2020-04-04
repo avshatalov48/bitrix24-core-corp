@@ -207,8 +207,8 @@ if(!function_exists('__CrmActivityListRenderItems'))
 				'ENABLE_TOOLBAR' => $editorCfg['ENABLE_TOOLBAR'],
 				'TOOLBAR_ID' => $toolbarID,
 				'BUTTON_ID' => $editorCfg['BUTTON_ID'],
-				'EDITOR_ITEMS' => $editorItems
-
+				'EDITOR_ITEMS' => $editorItems,
+				'SKIP_VISUAL_COMPONENTS' => 'Y'
 			),
 			null,
 			array('HIDE_ICONS' => 'Y')

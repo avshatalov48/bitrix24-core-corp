@@ -239,7 +239,7 @@ class Util
 	{
 		if (!$force && Loader::includeModule('bitrix24'))
 		{
-			if (!in_array(\CBitrix24::getLicenseType(), array('team', 'company', 'nfr', 'edu', 'demo', 'bis_inc')))
+			if (!\Bitrix\Bitrix24\Feature::isFeatureEnabled("set_logo"))
 			{
 				return array(
 					'logo' => 0,
@@ -269,7 +269,7 @@ class Util
 
 		if (Loader::includeModule('bitrix24'))
 		{
-			if (!in_array(\CBitrix24::getLicenseType(), array('team', 'company', 'nfr', 'edu', 'demo', 'bis_inc')))
+			if (!\Bitrix\Bitrix24\Feature::isFeatureEnabled("remove_logo24"))
 			{
 				return $logo;
 			}

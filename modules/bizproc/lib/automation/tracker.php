@@ -63,6 +63,7 @@ class Tracker
 			$isExecute = $isClosed = $isAutocompleted = false;
 			$executeTime = $closedTime = $autocompletedTime = null;
 			$errors = array();
+			$notes = array();
 			foreach ($robotEntry as $entry)
 			{
 				if ($entry['TYPE'] == \CBPTrackingType::ExecuteActivity)
@@ -78,6 +79,10 @@ class Tracker
 				elseif ($entry['TYPE'] == \CBPTrackingType::Error)
 				{
 					$errors[] = $entry['ACTION_NOTE'];
+				}
+				elseif ($entry['TYPE'] == \CBPTrackingType::Custom)
+				{
+					$notes[] = $entry['ACTION_NOTE'];
 				}
 			}
 
@@ -101,7 +106,8 @@ class Tracker
 				'ID' => $robotId,
 				'STATUS' => $status,
 				'MODIFIED' => $modified,
-				'ERRORS' => $errors
+				'ERRORS' => $errors,
+				'NOTES' => $notes
 			);
 		}
 

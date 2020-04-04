@@ -8,13 +8,13 @@ namespace Bitrix\Disk\Volume;
  */
 class Timer implements IVolumeTimeLimit
 {
-	/** @var float microseconds */
+	/** @var int seconds */
 	private $timeLimit = -1;
 
 	/** @var int seconds */
 	private $timeGap = 5;
 
-	/** @var float microseconds */
+	/** @var float seconds */
 	private $startTime = -1;
 
 	/** @var boolean */
@@ -23,8 +23,6 @@ class Timer implements IVolumeTimeLimit
 	/** @const int General limitation execution time. */
 	const MAX_EXECUTION_TIME = 30;
 
-	/** @var string Step id */
-	private $stepId;
 
 	/**
 	 * @param int $timeLimit Timeout in seconds.
@@ -63,7 +61,7 @@ class Timer implements IVolumeTimeLimit
 		}
 		else
 		{
-			$this->startTime = microtime(true) * 1000;
+			$this->startTime = time();
 		}
 	}
 
@@ -73,9 +71,9 @@ class Timer implements IVolumeTimeLimit
 	 */
 	public function checkTimeEnd()
 	{
-		if ($this->timeLimit > 0)
+		if ($this->timeLimit > 0 && $this->startTime > 0)
 		{
-			$currentTime = microtime(true) * 1000;
+			$currentTime = time();
 			if (($currentTime - $this->startTime) >= $this->timeLimit)
 			{
 				$this->timeLimitReached = true;
@@ -101,36 +99,19 @@ class Timer implements IVolumeTimeLimit
 	 */
 	public function getTimeLimit()
 	{
-		return $this->timeLimit / 1000;
+		return $this->timeLimit;
 	}
 
 	/**
 	 * Sets limitation time in seconds.
 	 * @param int $timeLimit Timeout in seconds.
-	 * @return void
+	 * @return $this
 	 */
 	public function setTimeLimit($timeLimit)
 	{
-		$this->timeLimit = $timeLimit * 1000;
-	}
+		$this->timeLimit = $timeLimit;
 
-	/**
-	 * Gets step identification.
-	 * @return string|null
-	 */
-	public function getStepId()
-	{
-		return $this->stepId;
-	}
-
-	/**
-	 * Sets step identification.
-	 * @param string|null $stepId Step id.
-	 * @return void
-	 */
-	public function setStepId($stepId)
-	{
-		$this->stepId = $stepId;
+		return $this;
 	}
 }
 

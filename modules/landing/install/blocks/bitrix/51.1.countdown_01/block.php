@@ -6,7 +6,7 @@
 
 		<div class="row">
 			<div class="landing-block-node-date mx-auto js-countdown u-countdown text-center text-uppercase g-font-weight-300 g-line-height-1-2"
-				 data-end-date="1555056180000"
+				 data-end-date="1586678580000"
 				 data-days-format="%D"
 				 data-hours-format="%H"
 				 data-minutes-format="%M"

@@ -10,7 +10,7 @@ return [
 	],
 	"css" => [
 		"/bitrix/components/bitrix/crm.button.button/templates/.default/style.css",
-		"/bitrix/components/bitrix/crm.button.webform/templates/.default/style.css",
+		"/bitrix/components/bitrix/crm.button.webform/templates/.default/style.css"
 	],
 	"layout" => [
 		"/bitrix/components/bitrix/crm.button.button/templates/.default/layout.html",

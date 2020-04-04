@@ -4,6 +4,8 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true){die();}
 use Bitrix\Main\Localization\Loc;
 \Bitrix\Main\UI\Extension::load("ui.buttons.icons");
 
+$isIFrame = $_REQUEST['IFRAME'] == 'Y';
+
 if (isset($arResult["ERROR"]) && !empty($arResult["ERROR"]))
 {
 	foreach ($arResult["ERROR"] as $error)
@@ -78,7 +80,7 @@ if ($isBitrix24Template)
 			); ?>
 		</div>
 
-		<div class="pagetitle-container pagetitle-align-right-container task-report-filter-btn-add">
+		<div class="pagetitle-container pagetitle-align-right-container task-report-filter-btn-add" style="padding-right: 30px;">
 			<a class="ui-btn ui-btn-primary ui-btn-icon-add" href="<?=$arParams['PATH_TO_TASK_ADD']?>">
 				<?=GetMessage('TASKS_ADD_TASK')?>
 			</a>

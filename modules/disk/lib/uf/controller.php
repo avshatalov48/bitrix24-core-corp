@@ -40,7 +40,7 @@ class Controller extends Internals\Controller
 	const ERROR_COULD_NOT_WORK_WITH_TOKEN_SERVICE = 'DISK_UF_CON_22004';
 	const ERROR_COULD_NOT_FIND_STORAGE            = 'DISK_UF_CON_22005';
 
-	public static $previewParams = array("width" => 275, "height" => 206);
+	public static $previewParams = array("width" => 69, "height" => 69);
 
 	protected function listActions()
 	{
@@ -1157,7 +1157,7 @@ class Controller extends Internals\Controller
 		{
 			$this->sendJsonInvalidSignResponse('Invalid signature');
 		}
-		
+
 		if(!ZipNginx\Configuration::isEnabled())
 		{
 			$this->errorCollection[] = new Error('Work with mod_zip is disabled in module settings.');
@@ -1543,9 +1543,12 @@ class Controller extends Internals\Controller
 						'storage' => $storage->getProxyType()->getTitleForCurrentUser() . ' / ' . $folder->getName(),
 						'canChangeName' => true,
 					),
-					(TypeFile::isImage($name) ? array(
-						'previewUrl' => $urlManager->getUrlForShowFile($fileModel, array("width" => self::$previewParams["width"], "height" => self::$previewParams["height"]))
-					) : array()),
+					(TypeFile::isImage($name) ? [
+						'previewUrl' => $urlManager->getUrlForShowFile(
+							$fileModel,
+							["width" => self::$previewParams["width"], "height" => self::$previewParams["height"], 'exact' => 'Y',]
+						)
+					] : array()),
 					(!empty($fileType) ? array (
 						'fileType' => $fileType,
 					): array()),
@@ -1903,7 +1906,6 @@ class Controller extends Internals\Controller
 				$this->errorCollection->add($model->getErrors());
 				$this->sendJsonErrorResponse();
 			}
-			Driver::getInstance()->getIndexManager()->indexFile($model);
 
 			$this->sendJsonSuccessResponse(array(
 				'id' => $this->request->getPost('attachedId'),
@@ -1999,5 +2001,10 @@ class Controller extends Internals\Controller
 			'authUrl' => $authUrl,
 			'isBitrix24' => ModuleManager::isModuleInstalled('bitrix24'),
 		));
+	}
+
+	protected function runProcessingIfUserNotAuthorized()
+	{
+
 	}
 }

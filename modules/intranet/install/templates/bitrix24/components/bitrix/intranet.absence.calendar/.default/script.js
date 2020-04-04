@@ -237,7 +237,7 @@ var jsBXAC = {
 
 		this.CURRENT_VIEW_HANDLER.UnloadData && this.CURRENT_VIEW_HANDLER.UnloadData();
 
-		for(var i = 0; i < DATA.length; i++)
+		for (var i = 0, dateTo; i < DATA.length; i++)
 		{
 			if (null != DATA[i].DATA)
 			{
@@ -253,11 +253,17 @@ var jsBXAC = {
 						DATA[i].DATA[j].DATE_ACTIVE_TO = tmp;
 					}
 
-					if (DATA[i].DATA[j].DATE_ACTIVE_TO.getHours()+DATA[i].DATA[j].DATE_ACTIVE_TO.getMinutes()+DATA[i].DATA[j].DATE_ACTIVE_TO.getSeconds() == 0)
+					dateTo = DATA[i].DATA[j].DATE_ACTIVE_TO;
+					if (DATA[i].DATA[j].DATE_ACTIVE_FROM.valueOf() != dateTo.valueOf())
 					{
-						DATA[i].DATA[j].DATE_ACTIVE_TO.setDate(DATA[i].DATA[j].DATE_ACTIVE_TO.getDate() + 1);
-						DATA[i].DATA[j].DATE_ACTIVE_TO.setSeconds(DATA[i].DATA[j].DATE_ACTIVE_TO.getSeconds() - 1);
+						if (dateTo.getHours() + dateTo.getMinutes() + dateTo.getSeconds() > 0)
+						{
+							continue;
+						}
 					}
+
+					DATA[i].DATA[j].DATE_ACTIVE_TO.setDate(DATA[i].DATA[j].DATE_ACTIVE_TO.getDate() + 1);
+					DATA[i].DATA[j].DATE_ACTIVE_TO.setSeconds(DATA[i].DATA[j].DATE_ACTIVE_TO.getSeconds() - 1);
 				}
 			}
 		}

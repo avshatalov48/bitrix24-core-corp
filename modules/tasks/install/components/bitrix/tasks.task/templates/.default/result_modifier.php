@@ -107,6 +107,7 @@ if($bbCode)
 	$buttons[] = "MentionUser";
 }
 $buttons[] = "Checklist";
+$buttons[] = "ToCheckList";
 
 $arResult['AUX_TEMPLATE_DATA']['EDITOR_PARAMETERS'] = array(
 	"FORM_ID" => 'task-form-'.$arResult['TEMPLATE_DATA']['ID'],
@@ -128,7 +129,8 @@ $arResult['AUX_TEMPLATE_DATA']['EDITOR_PARAMETERS'] = array(
 	),
 	"BUTTONS" => $buttons,
 	"BUTTONS_HTML" => array(
-		"Checklist" => '<span class="tasks-task-mpf-link" data-bx-id="task-edit-toggler" data-target="checklist">'.Loc::getMessage('TASKS_TASK_COMPONENT_TEMPLATE_CHECKLIST').'</span>'
+		"Checklist" => '<span class="tasks-task-mpf-link" data-bx-id="task-edit-toggler" data-target="checklist">'.Loc::getMessage('TASKS_TASK_COMPONENT_TEMPLATE_CHECKLIST').'</span>',
+		"ToCheckList" => '<span class="tasks-task-mpf-link" data-bx-id="task-edit-to-checklist">' . Loc::getMessage('TASKS_TASK_COMPONENT_TEMPLATE_TO_CHECKLIST') . '</span>',
 	),
 	"FILES" => Array(
 		"VALUE" => array(),
@@ -524,3 +526,30 @@ if($taskData['SE_PROJECT'] && count($taskData['SE_PROJECT']))
 	$project = array($project);
 }
 $arResult['DATA']['TASK']['SE_PROJECT'] = $project;
+
+$lastTasks = [];
+
+$order = ['STATUS' => 'ASC', 'DEADLINE' => 'DESC', 'PRIORITY' => 'DESC', 'ID' => 'DESC'];
+$filter = [
+	'DOER' => User::getId(),
+	'STATUS' => [
+		CTasks::METASTATE_VIRGIN_NEW,
+		CTasks::METASTATE_EXPIRED,
+		CTasks::STATE_NEW,
+		CTasks::STATE_PENDING,
+		CTasks::STATE_IN_PROGRESS
+	]
+];
+$select = ['ID', 'TITLE', 'STATUS'];
+$params = [
+	'MAKE_ACCESS_FILTER' => false,
+	'NAV_PARAMS' => ['nTopCount' => 15]
+];
+
+$tasksDdRes = CTasks::GetList($order, $filter, $select, $params);
+while ($task = $tasksDdRes->Fetch())
+{
+	$lastTasks[] = $task;
+}
+
+$arResult['DATA']['LAST_TASKS'] = $lastTasks;

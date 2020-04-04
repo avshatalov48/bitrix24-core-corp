@@ -43,10 +43,6 @@ class ConfigOrderPropertyEdit extends \CBitrixComponent
 			$this->errors[] = Loc::getMessage('CRM_INVALID_PERSON_TYPE_ID');
 		}
 
-		$propertyTypes = \Bitrix\Sale\Internals\Input\Manager::getTypes();
-		$propertyType = $this->request->get('TYPE');
-		$params['PROPERTY_TYPE'] = isset($propertyTypes[$propertyType]) ? $propertyType : 'STRING';
-
 		$params['PROPERTY_ID'] = (int)$params['PROPERTY_ID'];
 		$params['RELOAD_HANDLER'] = 'orderPropertyConfig.reloadAction()';
 		$params['IFRAME'] = isset($params['IFRAME']) && $params['IFRAME'];
@@ -305,9 +301,13 @@ class ConfigOrderPropertyEdit extends \CBitrixComponent
 
 	protected function prepareCreationInfo()
 	{
+		$propertyTypes = \Bitrix\Sale\Internals\Input\Manager::getTypes();
+		$propertyType = $this->request->get('TYPE');
+		$propertyType = isset($propertyTypes[$propertyType]) ? $propertyType : 'STRING';
+
 		return [
 			'PERSON_TYPE_ID' => $this->arParams['PERSON_TYPE_ID'],
-			'TYPE' => $this->arParams['PROPERTY_TYPE'],
+			'TYPE' => $propertyType,
 		];
 	}
 
@@ -393,7 +393,12 @@ class ConfigOrderPropertyEdit extends \CBitrixComponent
 				'MULTILINE' => 'Y',
 				'ROWS' => 3,
 				'COLS' => 40
-			]
+			],
+			'XML_ID' => [
+				'TYPE' => 'STRING',
+				'LABEL' => Loc::getMessage('F_XML_ID'),
+				'VALUE' => \Bitrix\Sale\Internals\OrderPropsTable::generateXmlId()
+			],
 		];
 
 		if (!empty($this->property['ID']))

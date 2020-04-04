@@ -61,13 +61,14 @@ class Complex
 	/**
 	 * Convert to array.
 	 *
+	 * @param array $keys Keys of array.
 	 * @return array
 	 */
-	public function toArray()
+	public function toArray(array $keys = ['ENTITY_TYPE_ID', 'ENTITY_ID'])
 	{
 		return [
-			'ENTITY_TYPE_ID' => $this->getTypeId(),
-			'ENTITY_ID' => $this->getId(),
+			$keys[0] => $this->getTypeId(),
+			$keys[1] => $this->getId(),
 		];
 	}
 

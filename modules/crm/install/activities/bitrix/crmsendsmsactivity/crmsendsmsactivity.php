@@ -331,6 +331,25 @@ class CBPCrmSendSmsActivity extends CBPActivity
 			$communications = $this->getCommunicationsFromFM(CCrmOwnerType::Contact, $entityContactID);
 		}
 
+		if (empty($communications))
+		{
+			$dealContactIds = \Bitrix\Crm\Binding\DealContactTable::getDealContactIDs($id);
+			if ($dealContactIds)
+			{
+				foreach ($dealContactIds as $contId)
+				{
+					if ($contId !== $entityContactID)
+					{
+						$communications = $this->getCommunicationsFromFM(CCrmOwnerType::Contact, $contId);
+						if ($communications)
+						{
+							break;
+						}
+					}
+				}
+			}
+		}
+
 		if (empty($communications) && $entityCompanyID > 0)
 		{
 			$communications = $this->getCommunicationsFromFM(CCrmOwnerType::Company, $entityCompanyID);

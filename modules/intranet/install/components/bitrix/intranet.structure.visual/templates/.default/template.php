@@ -1,8 +1,10 @@
 <?
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 
-$APPLICATION->SetPageProperty("BodyClass", "page-one-column flexible-layout");
-Bitrix\Main\UI\Extension::load("ui.tooltip");
+$bodyClass = $APPLICATION->GetPageProperty("BodyClass");
+$APPLICATION->SetPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "")."page-one-column flexible-layout");
+
+Bitrix\Main\UI\Extension::load(["ui.tooltip", "ui.buttons"]);
 
 $arParams['PAGE_URL'] = $APPLICATION->GetCurPageParam("", array('action', 'section', 'level', 'mr', 'mode', 'sessid', 'dpt_id', 'dpt_to', 'dpt_from', 'user_id', 'type', 'undo', 'dpt_before', 'dpt_after', 'dpt_parent'));
 $arParams['PAGE_URL_JS'] = CUtil::JSEscape($arParams['PAGE_URL']);
@@ -260,31 +262,27 @@ window.BXSTRUCTURECALLBACK = function()
 			$this->SetViewTarget("pagetitle", 100);
 
 			if (CModule::IncludeModule('bitrix24')):
-				if(CBitrix24::isInvitingUsersAllowed()):
-?>
-<span class="webform-small-button webform-small-button-blue webform-small-button-add" onclick="<?=CIntranetInviteDialog::ShowInviteDialogLink()?>">
-	<span class="webform-small-button-icon"></span>
-	<span class="webform-small-button-text"><?=GetMessage("ISV_B24_INVITE")?></span>
-</span>
-<?
+				if (CBitrix24::isInvitingUsersAllowed()):
+					?><button
+						class="ui-btn ui-btn-primary"
+						onclick="<?=CIntranetInviteDialog::ShowInviteDialogLink()?>"
+					><?=GetMessage("ISV_B24_INVITE")?></button><?
 				endif;
-?>
-<span class="webform-small-button webform-small-button-blue webform-small-button-add" onclick="BX.IntranetStructure.ShowForm({IBLOCK_SECTION_ID: <?=intval($arTopEntry['ID'])?>});">
-	<span class="webform-small-button-icon"></span>
-	<span class="webform-small-button-text"><?=GetMessage('ISV_ADD_DEPARTMENT')?></span>
-</span>
-<?
-			else:
-?>
-<a class="webform-small-button webform-small-button-blue webform-small-button-add" href="javascript:void(0)" onclick="BX.IntranetStructure.ShowForm({IBLOCK_SECTION_ID: <?=intval($arTopEntry['ID'])?>});">
-	<span class="webform-small-button-icon"></span>
-	<span class="webform-small-button-text"><?=GetMessage('ISV_ADD_DEPARTMENT')?></span>
-</a>
-<?
-			endif;
-			$this->EndViewTarget();
-		endif;
 
+				?><button
+					class="ui-btn ui-btn-primary"
+					onclick="BX.IntranetStructure.ShowForm({IBLOCK_SECTION_ID: <?=intval($arTopEntry['ID'])?>})"
+				><?=GetMessage('ISV_ADD_DEPARTMENT')?></button><?
+			else:
+				?><button
+					class="ui-btn ui-btn-primary"
+					onclick="BX.IntranetStructure.ShowForm({IBLOCK_SECTION_ID: <?=intval($arTopEntry['ID'])?>})"
+				><?=GetMessage('ISV_ADD_DEPARTMENT')?></button><?
+			endif;
+
+			$this->EndViewTarget();
+
+		endif;
 ?>
 <div id="bx_visual_structure" class="structure-wrap" style="overflow: auto; position: relative;">
 <?

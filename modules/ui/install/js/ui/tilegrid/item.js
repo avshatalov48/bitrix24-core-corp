@@ -44,7 +44,8 @@ BX.TileGrid.Item.prototype =
 				className: this.gridTile.itemHeight ? 'ui-grid-tile-item ui-grid-tile-item-fixed-height' : 'ui-grid-tile-item'
 			},
 			style: {
-				height: this.gridTile.itemHeight ? this.gridTile.itemHeight + 'px' : null
+				height: this.gridTile.itemHeight ? this.gridTile.itemHeight + 'px' : null,
+				margin: this.gridTile.getTileMargin() ? this.gridTile.getTileMargin() + 'px' : null
 			},
 			dataset: {
 				id: this.id

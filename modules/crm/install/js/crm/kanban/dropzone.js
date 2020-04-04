@@ -223,6 +223,17 @@ BX.CRM.Kanban.DropZone.prototype = {
 		}
 
 		return this.layout.container;
+	},
+
+	makeDroppable: function()
+	{
+		var container = this.getContainer();
+
+		container.onbxdestdraghover = BX.delegate(this.onDragEnter, this);
+		container.onbxdestdraghout = BX.delegate(this.onDragLeave, this);
+		container.onbxdestdragfinish = BX.delegate(this.onDragDrop, this);
+
+		jsDD.registerDest(container, 4);
 	}
 };
 

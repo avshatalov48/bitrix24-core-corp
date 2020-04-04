@@ -17,6 +17,7 @@ BX.UI.ActionPanel = function(options)
 	};
 	this.zIndex = options.zIndex;
 	this.itemContainer = null;
+	this.className = options.className;
 	this.renderTo = options.renderTo;
 	this.darkMode = options.darkMode;
 	this.floatMode = typeof options.floatMode === 'undefined' ? true : options.floatMode;
@@ -38,7 +39,6 @@ BX.UI.ActionPanel = function(options)
 	this.showResetAllBlock = typeof options.showResetAllBlock === 'undefined' ? (this.pinnedMode ? false : true) : options.showResetAllBlock;
 
 	this.buildPanelContainer();
-	this.bindEvents();
 	if (this.pinnedMode)
 	{
 		this.buildPanelByGroup();
@@ -111,6 +111,17 @@ BX.UI.ActionPanel.prototype =
 			attributeOldValue: true,
 			characterDataOldValue: true
 		}
+	},
+
+	/**
+	 * @param {String }id
+	 * @return {BX.UI.ActionPanel.Item}
+	 */
+	getItemById: function(id)
+	{
+		return this.items.find(function (item) {
+			return item.id === id;
+		});
 	},
 
 	addItems: function(items)
@@ -370,7 +381,7 @@ BX.UI.ActionPanel.prototype =
 	{
 		this.layout.container = BX.create("div", {
 			attrs: {
-				className: this.darkMode ? "ui-action-panel ui-action-panel-darkmode" : "ui-action-panel"
+				className: ['ui-action-panel', this.darkMode ? 'ui-action-panel-darkmode' : '', this.className].join(' ')
 			},
 			dataset: {
 				tileGrid: "tile-grid-stop-close"
@@ -435,7 +446,7 @@ BX.UI.ActionPanel.prototype =
 		var parentContainerParam = BX.pos(this.resolveRenderContainer());
 
 		var offsetTop = 0;
-		
+
 		if(this.maxHeight)
 		{
 			offsetTop = parentContainerParam.height - this.maxHeight;
@@ -514,7 +525,7 @@ BX.UI.ActionPanel.prototype =
 			this.buildPanelByItem(tileGrid.getSelectedItems().pop());
 		}
 	},
-	
+
 	handleGridSelectItem: function()
 	{
 		if (this.showTotalSelectedBlock)
@@ -653,7 +664,7 @@ BX.UI.ActionPanel.prototype =
 
 		var parentContainerParam = BX.pos(this.resolveRenderContainer());
 
-		this.layout.container.style.height = parentContainerParam.height + "px";
+		this.layout.container.style.setProperty('height', parentContainerParam.height + 'px');
 
 		setTimeout(function() {
 			BX.removeClass(this.layout.container, "ui-action-panel-show-animate");
@@ -728,6 +739,7 @@ BX.UI.ActionPanel.prototype =
 
 	draw: function()
 	{
+		this.bindEvents();
 		document.body.appendChild(this.getPanelContainer());
 		this.adjustPanelStyle();
 		if (this.pinnedMode)

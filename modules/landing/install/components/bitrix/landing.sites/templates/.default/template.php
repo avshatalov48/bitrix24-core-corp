@@ -4,36 +4,51 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+/** @var \Bitrix\Main\UI\PageNavigation $navigation */
+
+use \Bitrix\Landing\Manager;
+use \Bitrix\Main\ModuleManager;
 use \Bitrix\Main\Localization\Loc;
 Loc::loadMessages(__FILE__);
+$context = \Bitrix\Main\Application::getInstance()->getContext();
+$request = $context->getRequest();
+$navigation = $arResult['NAVIGATION'];
+$lastPage = $navigation->getPageCount() == 0 ||
+			$navigation->getPageCount() == $navigation->getCurrentPage();
 
+// errors title
+Manager::setPageTitle(
+	$this->__component->getMessageType('LANDING_TPL_TITLE')
+);
 if ($arResult['ERRORS'])
 {
 	\showError(implode("\n", $arResult['ERRORS']));
 }
-
 if ($arResult['FATAL'])
 {
 	return;
 }
 
-// title
-\Bitrix\Landing\Manager::setPageTitle(
-	$this->__component->getMessageType('LANDING_TPL_TITLE')
-);
-
 // assets
-$bodyClass = $APPLICATION->GetPageProperty('BodyClass');
-$APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '') . 'no-all-paddings landing-tile no-background');
-
-\CJSCore::Init(array('sidepanel', 'landing_master', 'action_dialog'));
+Manager::setPageView(
+	'BodyClass',
+	'no-all-paddings landing-tile no-background'
+);
+\CJSCore::init([
+	'sidepanel', 'landing_master', 'action_dialog'
+]);
+\Bitrix\Main\UI\Extension::load('ui.buttons');
+\Bitrix\Main\Page\Asset::getInstance()->addCSS(
+	'/bitrix/components/bitrix/landing.site_edit/templates/.default/landing-forms.css'
+);
 ?>
 
 <div class="grid-tile-wrap" id="grid-tile-wrap">
 	<div class="grid-tile-inner" id="grid-tile-inner">
+		<?if ($arResult['ACCESS_SITE_NEW'] == 'Y'):?>
 		<div class="landing-item landing-item-add-new" style="display: <?=$arResult['IS_DELETED'] ? 'none' : 'block';?>;">
 			<?$urlEdit = str_replace('#site_edit#', 0, $arParams['PAGE_URL_SITE_EDIT']);?>
-			<span class="landing-item-inner" data-href="<?=$urlEdit?>">
+			<span class="landing-item-inner" data-href="<?= $urlEdit;?>">
 				<span class="landing-item-add-new-inner">
 					<span class="landing-item-add-icon"></span>
 					<span class="landing-item-text">
@@ -42,6 +57,7 @@ $APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '') . 
 				</span>
 			</span>
 		</div>
+		<?endif;?>
 
 		<?foreach ($arResult['SITES'] as $item):
 
@@ -50,9 +66,10 @@ $APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '') . 
 				continue;
 			}
 
-			$urlEdit = str_replace('#site_edit#', $item['ID'], $arParams['PAGE_URL_SITE_EDIT']);
-			$urlCreatePage = str_replace(array('#site_show#', '#landing_edit#'), array($item['ID'], 0), $arParams['PAGE_URL_LANDING_EDIT']);
-			$urlView = str_replace('#site_show#', $item['ID'], $arParams['PAGE_URL_SITE']);
+			// actions / urls
+			$urlEdit = str_replace('#site_edit#', $item['ID'], $arParams['~PAGE_URL_SITE_EDIT']);
+			$urlCreatePage = str_replace(array('#site_show#', '#landing_edit#'), array($item['ID'], 0), $arParams['~PAGE_URL_LANDING_EDIT']);
+			$urlView = str_replace('#site_show#', $item['ID'], $arParams['~PAGE_URL_SITE']);
 			?>
 			<div class="landing-item <?
 					?><?= $item['ACTIVE'] != 'Y' || $item['DELETED'] != 'N' ? ' landing-item-unactive' : '';?><?
@@ -62,14 +79,22 @@ $APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '') . 
 						<div class="landing-title-btn"
 							 onclick="showTileMenu(this,{
 									ID: '<?= $item['ID']?>',
-									publicUrl: '<?= \CUtil::jsEscape(\htmlspecialcharsbx($item['PUBLIC_URL']));?>',
-									viewSite: '<?= \CUtil::jsEscape($urlView);?>',
-									createPage: '<?= \CUtil::jsEscape($urlCreatePage);?>',
+									domainId: '<?= $item['DOMAIN_ID']?>',
+									domainName: '<?= \htmlspecialcharsbx(\CUtil::jsEscape($item['DOMAIN_NAME']));?>',
+									domainB24Name: '<?= \htmlspecialcharsbx(\CUtil::jsEscape($item['DOMAIN_B24_NAME']));?>',
+									publicUrl: '<?= \htmlspecialcharsbx(\CUtil::jsEscape($item['PUBLIC_URL']));?>',
+									viewSite: '<?= \htmlspecialcharsbx(\CUtil::jsEscape($urlView));?>',
+									createPage: '<?= \htmlspecialcharsbx(\CUtil::jsEscape($urlCreatePage));?>',
 									deleteSite: '#',
-									editSite:'<?= \CUtil::jsEscape($urlEdit);?>',
+									editSite: '<?= \htmlspecialcharsbx(\CUtil::jsEscape($urlEdit));?>',
+								 	exportSite: '<?= \htmlspecialcharsbx(\CUtil::jsEscape($item['EXPORT_URI']->getUri()));?>',
 									publicPage: '#',
 								 	isActive: <?= ($item['ACTIVE'] == 'Y') ? 'true' : 'false';?>,
-								 	isDeleted: <?= ($item['DELETED'] == 'Y') ? 'true' : 'false';?>
+								 	isDeleted: <?= ($item['DELETED'] == 'Y') ? 'true' : 'false';?>,
+								 	isEditDisabled: <?= ($item['ACCESS_EDIT'] != 'Y') ? 'true' : 'false';?>,
+								 	isSettingsDisabled: <?= ($item['ACCESS_SETTINGS'] != 'Y') ? 'true' : 'false';?>,
+								 	isPublicationDisabled: <?= ($item['ACCESS_PUBLICATION'] != 'Y') ? 'true' : 'false';?>,
+								 	isDeleteDisabled: <?= ($item['ACCESS_DELETE'] != 'Y') ? 'true' : 'false';?>
 								}
 							)">
 							<span class="landing-title-btn-inner"><?= Loc::getMessage('LANDING_TPL_ACTIONS')?></span>
@@ -107,16 +132,113 @@ $APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '') . 
 				</div>
 			</div>
 		<?endforeach;?>
+
+		<?
+		// show developer sites (from main module)
+		if ($lastPage && $arResult['SMN_SITES'])
+		{
+			foreach ($arResult['SMN_SITES'] as $item)
+			{
+				?>
+				<div class="landing-item <?= $item['ACTIVE'] != 'Y' ? ' landing-item-unactive' : '';?>">
+					<div class="landing-item-inner">
+						<div class="landing-title">
+							<div class="landing-title-btn"
+								 onclick="showTileMenu(this,{
+									 ID: '<?= $item['ID']?>',
+									 domainId: 0,
+									 domainName: '',
+									 domainB24Name: '',
+									 publicUrl: '<?= \htmlspecialcharsbx(\CUtil::jsEscape($item['PUBLIC_URL']));?>',
+									 viewSite: '',
+									 createPage: '',
+									 deleteSite: '',
+									 editSite: '/bitrix/admin/site_edit.php?lang=<?= LANGUAGE_ID;?>&amp;LID=<?= $item['LID'];?>',
+									 exportSite: '',
+									 publicPage: '',
+									 isActive: <?= ($item['ACTIVE'] == 'Y') ? 'true' : 'false';?>,
+									 isDeleted: false,
+									 isEditDisabled: true,
+									 isSettingsDisabled: false,
+									 isPublicationDisabled: true,
+									 isDeleteDisabled: true
+									 }
+									 )">
+								<span class="landing-title-btn-inner"><?= Loc::getMessage('LANDING_TPL_ACTIONS')?></span>
+							</div>
+							<div class="landing-title-wrap">
+								<div class="landing-title-overflow"><?= \htmlspecialcharsbx($item['NAME'])?></div>
+							</div>
+						</div>
+						<span class="landing-item-cover" style="background-image: url('/bitrix/images/landing/dev_site.png');">
+					</span>
+					</div>
+					<?if ($item['PUBLIC_URL']):?>
+					<a href="<?= \htmlspecialcharsbx($item['PUBLIC_URL']);?>" target="_blank" class="landing-item-link"></a>
+					<?else:?>
+					<span class="landing-item-link"></span>
+					<?endif;?>
+					<div class="landing-item-status-block">
+						<div class="landing-item-status-inner">
+							<?if ($item['ACTIVE'] != 'Y'):?>
+								<span class="landing-item-status landing-item-status-unpublished"><?= Loc::getMessage('LANDING_TPL_UNPUBLIC');?></span>
+							<?else:?>
+								<span class="landing-item-status landing-item-status-published"><?= Loc::getMessage('LANDING_TPL_PUBLIC');?></span>
+							<?endif;?>
+						</div>
+					</div>
+				</div>
+				<?
+			}
+		}
+		if (
+			$lastPage &&
+			!$arResult['IS_DELETED'] &&
+			!ModuleManager::isModuleInstalled('bitrix24') &&
+			ModuleManager::isModuleInstalled('sale')
+		)
+		{
+			$APPLICATION->includeComponent(
+				'bitrix:sale.bsm.site.master.button',
+				'.default'
+			);
+		}
+		?>
+
 	</div>
 </div>
 
-<?if ($arResult['NAVIGATION']->getPageCount() > 1):?>
+<?if ($request->get('IS_AJAX') != 'Y' && Manager::isB24()):?>
+<div id="landing_domain_popup" style="display: none; width: 400px;">
+	<p><?= Loc::getMessage('LANDING_TPL_TRANSFER_NOTE');?></p>
+	<p id="landing_domain_address_allow" style="display: none;">
+		<?= Loc::getMessage('LANDING_TPL_TRANSFER_NEW_ADDRESS');?>:
+	</p>
+	<p id="landing_domain_address_disallow" style="display: none; color: #d2000d;">
+		<?= Loc::getMessage('LANDING_TPL_TRANSFER_NEW_ADDRESS_DISABLED');?>:
+	</p>
+	<?$APPLICATION->IncludeComponent(
+		'bitrix:landing.domain_rename',
+		'.default',
+		array(
+			'TYPE' => 'STORE',
+			'FIELD_ID' => 'new_domain_name'
+		),
+		false
+	);?>
+	<?if ($helpUrl = \Bitrix\Landing\Help::getHelpUrl('SITE_TRANSFER')):?>
+	<p><a href="<?= $helpUrl;?>" target="_blank"><?= Loc::getMessage('LANDING_TPL_TRANSFER_HELP_LINK');?></a></p>
+	<?endif;?>
+</div>
+<?endif;?>
+
+<?if ($navigation->getPageCount() > 1):?>
 	<div class="<?= (defined('ADMIN_SECTION') && ADMIN_SECTION === true) ? '' : 'landing-navigation';?>">
 			<?$APPLICATION->IncludeComponent(
 				'bitrix:main.pagenavigation',
 				'',//grid
 				array(
-					'NAV_OBJECT' => $arResult['NAVIGATION'],
+					'NAV_OBJECT' => $navigation,
 					'SEF_MODE' => 'N',
 					'BASE_LINK' => $arResult['CUR_URI']
 				),
@@ -168,6 +290,8 @@ $APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '') . 
     });
 
 	var tileGrid;
+	var isMenuShown = false;
+	var menu;
 
 	BX.ready(function ()
 	{
@@ -214,12 +338,12 @@ $APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '') . 
 			{
 				text: '<?= \CUtil::jsEscape(Loc::getMessage('LANDING_TPL_ACTION_VIEW'));?>',
 				href: params.viewSite,
-				disabled: params.isDeleted,
+				disabled: !params.viewSite || params.isDeleted,
 			},
 			{
 				text: '<?= \CUtil::jsEscape(Loc::getMessage('LANDING_TPL_ACTION_COPYLINK'));?>',
 				className: 'landing-popup-menu-item-icon',
-				disabled: params.isDeleted,
+				disabled: !params.publicUrl || params.isDeleted,
 				onclick: function(e, item)
 				{
 					if (BX.clipboard.isCopySupported())
@@ -235,6 +359,8 @@ $APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '') . 
 						{
 							this.popupWindow.close();
 							menuItem.classList.remove('landing-link-copied');
+							menu.destroy();
+							isMenuShown = false;
 						}.bind(this),250);
 					}.bind(this))
 				}
@@ -244,12 +370,12 @@ $APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '') . 
 				className: 'landing-popup-menu-item-icon',
 				href: params.publicUrl,
 				target: '_blank',
-				disabled: params.isDeleted,
+				disabled: !params.publicUrl || params.isDeleted || !params.isActive,
 			},
 			{
 				text: '<?= \CUtil::jsEscape(Loc::getMessage('LANDING_TPL_ACTION_ADDPAGE'));?>',
 				href: params.createPage,
-				disabled: params.isDeleted,
+				disabled: params.isDeleted || params.isEditDisabled,
 				onclick: function()
 				{
 					this.popupWindow.close();
@@ -258,7 +384,8 @@ $APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '') . 
 			{
 				text: '<?= \CUtil::jsEscape(Loc::getMessage('LANDING_TPL_ACTION_EDIT'));?>',
 				href: params.editSite,
-				disabled: params.isDeleted,
+				target: '_blank',
+				disabled: params.isDeleted || params.isSettingsDisabled,
 				onclick: function()
 				{
 					this.popupWindow.close();
@@ -269,36 +396,51 @@ $APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '') . 
 					? '<?= \CUtil::jsEscape(Loc::getMessage('LANDING_TPL_ACTION_UNPUBLIC'));?>'
 					: '<?= \CUtil::jsEscape(Loc::getMessage('LANDING_TPL_ACTION_PUBLIC'));?>',
 				href: params.publicPage,
-				<?if ($folderId):?>
-				disabled: params.isFolder || params.isDeleted,
-				<?else:?>
-				disabled: params.isDeleted,
-				<?endif;?>
+				disabled: params.isDeleted || params.isPublicationDisabled,
 				onclick: function(event)
 				{
 					event.preventDefault();
 
-					tileGrid.action(
-						params.isActive
-						? 'Site::unpublic'
-						: 'Site::publication',
-						{
-							id: params.ID
-						}
-					);
+					var successFunction = function()
+					{
+						tileGrid.action(
+							params.isActive
+								? 'Site::unpublic'
+								: 'Site::publication',
+							{
+								id: params.ID
+							},
+							null,
+							'<?= \CUtil::jsEscape($this->getComponent()->getName());?>'
+						);
+					};
 
-					this.popupWindow.close();
+					if (!params.isActive && <?= $arResult['AGREEMENT'] ? 'true' : 'false';?>)
+					{
+						landingAgreementPopup({
+							success: successFunction
+						});
+						return;
+					}
+					else
+					{
+						successFunction();
+						this.popupWindow.close();
+					}
+					menu.destroy();
 				}
 			},
 			{
 				text: params.isDeleted
 						? '<?= \CUtil::jsEscape(Loc::getMessage('LANDING_TPL_ACTION_UNDELETE'));?>'
 						: '<?= \CUtil::jsEscape(Loc::getMessage('LANDING_TPL_ACTION_DELETE'));?>',
+				disabled: params.isDeleteDisabled,
 				href: params.deleteSite,
 				onclick: function(event)
 				{
 					event.preventDefault();
 					this.popupWindow.close();
+					menu.destroy();
 
 					if (params.isDeleted)
 					{
@@ -331,17 +473,87 @@ $APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '') . 
 							);
 					}
 				}
+			},
+			<?if (defined('ASD_TTT')):?>
+			params.exportSite
+			? {
+				delimiter: true
 			}
+			: null,
+			<?if (defined('ASD_TTT')):?>
+			params.exportSite
+			? {
+				text: '<?= \CUtil::jsEscape(Loc::getMessage('LANDING_TPL_ACTION_EXPORT'));?>',
+				href: params.exportSite
+				<?if ($arResult['EXPORT_ENABLED'] == 'N'):?>
+				,onclick: function(event)
+				{
+					var msg = BX.Landing.UI.Tool.ActionDialog.getInstance();
+					msg.show({
+						content: '<?= \CUtil::jsEscape(Loc::getMessage('LANDING_TPL_EXPORT_DISABLED'));?>',
+						confirm: 'OK',
+						type: 'alert'
+					});
+					BX.PreventDefault(event);
+				}
+				<?endif;?>
+			}
+			: null,
+			<?endif;?>
+			<?if (false && $arParams['TYPE'] != 'STORE' && \Bitrix\Main\ModuleManager::isModuleInstalled('bitrix24')):?>
+			{
+				text: '<?= \CUtil::jsEscape(Loc::getMessage('LANDING_TPL_ACTION_TRANSFER'));?>',
+				onclick: function(event)
+				{
+					tileGrid.transfer(params.ID, {
+						type: 'store',
+						domainId: params.domainId,
+						domainName: params.domainName
+										.replace('.bitrix24site.by', '.bitrix24shop.by')
+										.replace('.bitrix24.site', '.bitrix24.shop'),
+						domainB24Name: params.domainB24Name
+					});
+					BX.PreventDefault(event);
+				}
+			}
+			<?endif;?>
+			<?endif;?>
 		];
 
-		var menu = new BX.PopupMenuWindow('landing-popup-menu' + params.ID, node, menuItems,{
-			autoHide : true,
-			offsetTop: -2,
-			offsetLeft: -55,
-			className: 'landing-popup-menu'
-		});
+		if (!isMenuShown) {
+			menu = new BX.PopupMenuWindow(
+				'landing-popup-menu' + params.ID,
+				node,
+				menuItems,
+				{
+					autoHide : true,
+					offsetTop: -2,
+					offsetLeft: -55,
+					className: 'landing-popup-menu',
+					events: {
+						onPopupClose() {
+							menu.destroy();
+							isMenuShown = false;
+						},
+					},
+				}
+			);
+			menu.show();
 
-		menu.show();
+			isMenuShown = true;
+		}
+		else
+		{
+			menu.destroy();
+			isMenuShown = false;
+		}
+
 	}
 
 </script>
+
+<?php
+if ($arResult['AGREEMENT'])
+{
+	include Manager::getDocRoot() . '/bitrix/components/bitrix/landing.start/templates/.default/popups/agreement.php';
+}

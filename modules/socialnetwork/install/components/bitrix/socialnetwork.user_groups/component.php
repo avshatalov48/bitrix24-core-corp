@@ -243,6 +243,14 @@ if ($arResult["USE_UI_FILTER"])
 			$arResult["filter_favorites"] = 'Y';
 		}
 
+		if (
+			isset($filterData['LANDING'])
+			&& $filterData['LANDING'] == 'Y'
+		)
+		{
+			$arResult["filter_landing"] = 'Y';
+		}
+
 		if (!empty($filterData['TAG']))
 		{
 			$arResult["~tags"] = $filterData['TAG'];
@@ -824,6 +832,11 @@ if (StrLen($arResult["FatalError"]) <= 0)
 					$arGroupFilter["=PROJECT"] = 'Y';
 				}
 
+				if (!empty($arResult["filter_landing"]))
+				{
+					$arGroupFilter["=LANDING"] = $arResult["filter_landing"];
+				}
+
 				if (
 					!empty($arResult["filter_extranet"])
 					&& CModule::IncludeModule("extranet")
@@ -1352,6 +1365,14 @@ if (StrLen($arResult["FatalError"]) <= 0)
 			{
 				$APPLICATION->SetTitle(Loc::getMessage("SONET_C36_PAGE_TITLE_COMMON"));
 			}
+			elseif (
+				$arParams["PAGE"] == "user_groups"
+				&& !empty($_REQUEST['IFRAME'])
+				&& $_REQUEST['IFRAME'] == 'Y'
+			)
+			{
+				$APPLICATION->SetTitle($strTitleFormatted.": ".Loc::getMessage("SONET_C36_PAGE_TITLE1"));
+			}
 			elseif ($arParams["PAGE"] == "group_request_group_search")
 			{
 				$APPLICATION->SetTitle($strTitleFormatted.": ".Loc::getMessage("SONET_C36_PAGE_TITLE"));
@@ -1364,7 +1385,7 @@ if (StrLen($arResult["FatalError"]) <= 0)
 				}
 				else
 				{
-					$APPLICATION->SetTitle(Loc::getMessage("SONET_C36_PAGE_TITLE1"));
+					$APPLICATION->SetTitle($strTitleFormatted.": ".Loc::getMessage("SONET_C36_PAGE_TITLE1"));
 				}
 			}
 			elseif ($arParams["PAGE"] == "user_projects")

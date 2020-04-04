@@ -272,7 +272,7 @@ $arComponentParameters = array(
 if ($boolCatalog)
 {
 	$arComponentParameters["PARAMETERS"]['HIDE_NOT_AVAILABLE'] = array(
-		'NAME' => GetMessage('CP_BCCR_HIDE_NOT_AVAILABLE'),
+		'NAME' => GetMessage('CP_BCCR_HIDE_NOT_AVAILABLE_EXT'),
 		'TYPE' => 'CHECKBOX',
 		'DEFAULT' => 'N',
 	);

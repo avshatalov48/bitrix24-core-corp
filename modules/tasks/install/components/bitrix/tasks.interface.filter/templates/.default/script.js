@@ -303,3 +303,73 @@ if (typeof(BX.Tasks.SortManager) === "undefined")
 		}
 	}
 }
+
+if (typeof BX.Tasks.SprintSelector === "undefined")
+{
+	BX.Tasks.SprintSelector = function(containerId, sprints, params)
+	{
+		if (!BX(containerId))
+		{
+			return;
+		}
+
+		var menuSprintItems = [];
+
+		for (var i = 0, c = sprints.length; i < c; i++)
+		{
+			menuSprintItems.push({
+				sprintId: sprints[i]["ID"],
+				text: sprints[i]["START_TIME"]
+							+ " &mdash; " +
+						sprints[i]["FINISH_TIME"],
+				className: (params.sprintId === parseInt(sprints[i]["ID"]))
+							? "menu-popup-item-accept"
+							: "menu-popup-item-none",
+				onclick: function(e, menuItem)
+				{
+					BX.onCustomEvent(
+						BX(containerId),
+						"onTasksGroupSelectorChange",
+						[
+							{
+								id: params.groupId,
+								sprintId: menuItem.sprintId
+							}
+						]
+					);
+					// remove and set css-classes
+					var menuItems = menuItem.menuWindow.getMenuItems();
+					for (var i = 0, c = menuItems.length; i < c; i++)
+					{
+						BX.removeClass(
+							menuItems[i].layout.item,
+							"menu-popup-item-accept"
+						);
+					}
+					BX.addClass(
+						menuItem.layout.item,
+						"menu-popup-item-accept"
+					);
+				}
+			});
+		}
+
+		var menuSprint = new BX.PopupMenuWindow(
+			"tasks_sprint_menu",
+			BX(containerId),
+			menuSprintItems,
+			{
+				autoHide : true
+			}
+		);
+
+		BX.bind(
+			BX(containerId),
+			"click",
+			function()
+			{
+				menuSprint.show();
+			}
+		);
+	};
+}

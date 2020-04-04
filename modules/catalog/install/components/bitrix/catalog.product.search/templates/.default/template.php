@@ -41,7 +41,7 @@ function getTreeOffsetWidth($level = 0)
 	return 30 + $level * 21;
 }
 
-function renderTree($sections, $level = 0, $tableId)
+function renderTree($sections, $level, $tableId)
 {
 	$content = '';
 	$level = (int)$level;

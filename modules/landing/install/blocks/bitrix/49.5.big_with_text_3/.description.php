@@ -10,6 +10,7 @@ return array(
 	'block' => array(
 		'name' => Loc::getMessage('LANDING_BLOCK_49_5--NAME'),
 		'section' => array('cover','video'),
+		'dynamic' => false,
 		'version' => '18.5.0',
 	),
 	'cards' => array(),

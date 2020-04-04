@@ -15,14 +15,14 @@ return array(
 	'cards' => array(
 		'.landing-block-card-left' => array(
 			'name' => Loc::getMessage('LANDING_BLOCK_2_THREE_COLS_3_CARDS_LANDINGBLOCKCARDLEFT'),
-			'label' => array('.landing-block-node-left-title'),
+			'label' => array('.landing-block-node-left-img', '.landing-block-node-left-title'),
 		),
 	),
 	'nodes' => array(
 		'.landing-block-node-left-img' => array(
 			'name' => Loc::getMessage('LANDING_BLOCK_2_THREE_COLS_3_NODES_LANDINGBLOCKNODELEFTIMG'),
 			'type' => 'img',
-			'dimensions' => array('width' => 1600, 'height' => 1600),
+			'dimensions' => ['width' => 640],
 		),
 		'.landing-block-node-left-title' => array(
 			'name' => Loc::getMessage('LANDING_BLOCK_2_THREE_COLS_3_NODES_LANDINGBLOCKNODELEFTTITLE'),
@@ -47,7 +47,7 @@ return array(
 		'.landing-block-node-right-img' => array(
 			'name' => Loc::getMessage('LANDING_BLOCK_2_THREE_COLS_3_NODES_LANDINGBLOCKNODERIGHTIMG'),
 			'type' => 'img',
-			'dimensions' => array('width' => 1600, 'height' => 1920),
+			'dimensions' => ['width' => 640],
 		),
 	),
 	'style' => array(

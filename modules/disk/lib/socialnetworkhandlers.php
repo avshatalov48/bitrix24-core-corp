@@ -5,6 +5,7 @@ namespace Bitrix\Disk;
 use Bitrix\Disk\Internals\Error\ErrorCollection;
 use Bitrix\Disk\Internals\RightTable;
 use Bitrix\Main\Loader;
+use Bitrix\Main\Localization\Loc;
 
 class SocialnetworkHandlers
 {
@@ -112,7 +113,7 @@ class SocialnetworkHandlers
 		{
 			return;
 		}
-		
+
 		if($storage->rename($fields['NAME']))
 		{
 			foreach($storage->getRootObject()->getSharingsAsReal() as $sharing)
@@ -121,7 +122,7 @@ class SocialnetworkHandlers
 				{
 					continue;
 				}
-				
+
 				$linkObject = $sharing->getLinkObject();
 				if(!$linkObject)
 				{
@@ -135,6 +136,25 @@ class SocialnetworkHandlers
 			}
 			unset($sharing);
 		}
+	}
+
+	public static function onBeforeSocNetGroupDelete($groupId)
+	{
+		$storage = Driver::getInstance()->getStorageByGroupId($groupId);
+		if (!$storage)
+		{
+			return true;
+		}
+
+		if ($storage->getRootObject()->countSizeOfVersions() > 0)
+		{
+			global $APPLICATION;
+			$APPLICATION->ThrowException(Loc::getMessage("DISK_SOCNET_HANDLERS_DECLINE_GROUP_DELETING_WITH_FILES"));
+
+			return false;
+		}
+
+		return true;
 	}
 
 	public static function onSocNetGroupDelete($groupId)

@@ -43,6 +43,7 @@ foreach ($arParams['SEF_URL_TEMPLATES'] as $code => $url)
 		'PAGE_URL_LANDING_EDIT' => $arParams['PAGE_URL_LANDING_EDIT'],
 		'PAGE_URL_SITE_EDIT' => $arParams['PAGE_URL_SITE_EDIT'],
 		'PARAMS' => $params,
+		'SEF' => $params['sef_url'],
 		'AGREEMENT' => $arResult['AGREEMENT']
 	),
 	$component

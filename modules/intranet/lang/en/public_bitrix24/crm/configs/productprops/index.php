@@ -1,3 +1,3 @@
 <?
-$MESS["CRM_TITLE"] = "Product properties";
+$MESS["CRM_TITLE"] = "Product Properties";
 ?>

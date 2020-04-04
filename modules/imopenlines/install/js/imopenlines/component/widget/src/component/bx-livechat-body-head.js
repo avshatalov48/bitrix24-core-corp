@@ -10,6 +10,7 @@
 import {Vue} from "ui.vue";
 import {Vuex} from "ui.vue.vuex";
 import {VoteType} from "../const";
+import {EventType} from "im.const";
 
 Vue.component('bx-livechat-head',
 {
@@ -69,7 +70,7 @@ Vue.component('bx-livechat-head',
 			if (value)
 			{
 				setTimeout(() => {
-					this.$root.$emit('onMessengerDialogScrollToBottom');
+					this.$root.$emit(EventType.dialog.scrollToBottom);
 				}, 300);
 			}
 		},

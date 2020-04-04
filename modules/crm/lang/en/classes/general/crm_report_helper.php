@@ -56,6 +56,7 @@ $MESS["CRM_REPORT_OWNER_TITLE_CRM_PRODUCT_ROW"] = "Product";
 $MESS["REPORT_crm_product_row_DEAL_OWNER"] = "Deal";
 $MESS["REPORT_POPUP_COLUMN_TITLE_CRM_LEAD"] = "Lead";
 $MESS["REPORT_crm_lead_COLUMN_TREE_STATUS_SUB"] = "In status";
+$MESS["REPORT_crm_lead_COLUMN_TREE_PRODUCT_ROW"] = "Product";
 $MESS["REPORT_POPUP_COLUMN_TITLE_CRM_INVOICE"] = "Invoice";
 $MESS["REPORT_crm_invoice_COLUMN_TREE_STATUS_SUB"] = "In status";
 $MESS["REPORT_crm_invoice_COLUMN_TREE_PRICE_SUB"] = "Total in status";

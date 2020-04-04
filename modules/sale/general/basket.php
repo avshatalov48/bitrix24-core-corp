@@ -58,7 +58,7 @@ class CAllSaleBasket
 	{
 		CSaleBasket::_ClearProductSubscribe($LID);
 
-		return "CSaleBasket::ClearProductSubscribe(".$LID.");";
+		return "CSaleBasket::ClearProductSubscribe('".$LID."');";
 	}
 
 	/**
@@ -106,36 +106,37 @@ class CAllSaleBasket
 				$arMailProp = array();
 				$arPayerProp = array();
 
-				// select person type
-				$dbPersonType = CSalePersonType::GetList(array("SORT" => "ASC"), array("LID" => $LID), false, false, array('ID'));
-				while ($arPersonType = $dbPersonType->Fetch())
-				{
-					// select ID props is mail
-					$dbProperties = CSaleOrderProps::GetList(
-						array(),
-						array("PERSON_TYPE_ID" => $arPersonType["ID"], "IS_EMAIL" => "Y", "ACTIVE" => "Y"),
-						false,
-						false,
-						array('ID', 'PERSON_TYPE_ID')
-					);
-					while ($arProperties = $dbProperties->Fetch())
-						$arMailProp[$arProperties["PERSON_TYPE_ID"]] = $arProperties["ID"];
-
-					// select ID props is name
-					$arPayerProp = array();
-					$dbProperties = CSaleOrderProps::GetList(
-						array(),
-						array("PERSON_TYPE_ID" => $arPersonType["ID"], "IS_PAYER" => "Y", "ACTIVE" => "Y"),
-						false,
-						false,
-						array('ID', 'PERSON_TYPE_ID')
-					);
-					while ($arProperties = $dbProperties->Fetch())
-						$arPayerProp[$arProperties["PERSON_TYPE_ID"]] = $arProperties["ID"];
-				}//end while
-
 				// load user profiles
 				$arUserProfiles = CSaleOrderUserProps::DoLoadProfiles($USER_ID);
+				if (!empty($arUserProfiles))
+				{
+					// select person type
+					$dbPersonType = CSalePersonType::GetList(array("SORT" => "ASC"), array("LID" => $LID), false, false, array('ID'));
+					while ($arPersonType = $dbPersonType->Fetch())
+					{
+						// select ID props is mail
+						$dbProperties = CSaleOrderProps::GetList(
+							array(),
+							array("PERSON_TYPE_ID" => $arPersonType["ID"], "IS_EMAIL" => "Y", "ACTIVE" => "Y"),
+							false,
+							false,
+							array('ID', 'PERSON_TYPE_ID')
+						);
+						while ($arProperties = $dbProperties->Fetch())
+							$arMailProp[$arProperties["PERSON_TYPE_ID"]] = $arProperties["ID"];
+
+						// select ID props is name
+						$dbProperties = CSaleOrderProps::GetList(
+							array(),
+							array("PERSON_TYPE_ID" => $arPersonType["ID"], "IS_PAYER" => "Y", "ACTIVE" => "Y"),
+							false,
+							false,
+							array('ID', 'PERSON_TYPE_ID')
+						);
+						while ($arProperties = $dbProperties->Fetch())
+							$arPayerProp[$arProperties["PERSON_TYPE_ID"]] = $arProperties["ID"];
+					}//end while
+				}
 
 				$rsUser = CUser::GetByID($USER_ID);
 				$arUser = $rsUser->Fetch();
@@ -159,7 +160,15 @@ class CAllSaleBasket
 									$arUserSendName[$personType] = trim($profiles["VALUES"][$namePropID]);
 									break;
 								}
+								else
+								{
+									$arUserSendName[$personType] = $userName;
+								}
 							}
+						}
+						else
+						{
+							$arUserSendName[$personType] = $userName;
 						}
 					}
 				}
@@ -182,6 +191,10 @@ class CAllSaleBasket
 								{
 									$arUserSendMail[$personType] = trim($profiles["VALUES"][$mailPropID]);
 									break;
+								}
+								else
+								{
+									$arUserSendMail[$personType] = $arUser["EMAIL"];
 								}
 							}
 						}
@@ -1008,6 +1021,14 @@ class CAllSaleBasket
 
 					$orderBasketPool[$arItem["ID"]] = array("ORDER_ID" => $orderId);
 
+					foreach(GetModuleEvents("sale", "OnBeforeBasketUpdateAfterCheck", true) as $event)
+					{
+						if (ExecuteModuleEventEx($event, array($arItem["ID"], &$fields)) === false)
+						{
+							return false;
+						}
+					}
+
 					/** @var \Bitrix\Sale\Result $r */
 					$r = \Bitrix\Sale\Compatible\BasketCompatibility::update($arItem["ID"], $fields);
 
@@ -1674,6 +1695,14 @@ class CAllSaleBasket
 
 			if ($isOrderConverted != 'N')
 			{
+				foreach(GetModuleEvents("sale", "OnBeforeBasketUpdateAfterCheck", true) as $event)
+				{
+					if (ExecuteModuleEventEx($event, array($ID, &$arFields)) === false)
+					{
+						return false;
+					}
+				}
+
 				/** @var \Bitrix\Sale\Result $r */
 				$r = \Bitrix\Sale\Compatible\BasketCompatibility::update($ID, $arFields);
 				if (!$r->isSuccess())
@@ -1952,7 +1981,7 @@ class CAllSaleBasket
 				$notes = $basket['NOTES'];
 			unset($basket, $basketIterator);
 		}
-		
+
 		$providerName = CSaleBasket::GetProductProvider(array("MODULE" => $module, "PRODUCT_PROVIDER_CLASS" => $productProvider));
 		if ($providerName)
 		{
@@ -3664,7 +3693,7 @@ class CAllSaleUser
 				$groups = explode(",", $defaultGroup);
 			}
 		}
-		
+
 		$arPolicy = CUser::GetGroupPolicy($groups);
 
 		$passwordMinLength = intval($arPolicy["PASSWORD_LENGTH"]);

@@ -149,20 +149,8 @@ foreach($arParams['BUTTONS'] as $k => $item):
 			<script>
 				BX.ready(function()
 				{
-					BX.bind(BX('<?=CUtil::JSEscape($documentButtonId);?>'), 'click', function()
-					{
-						BX.PopupMenu.show(
-							'<?=CUtil::JSEscape($documentButtonId);?>_menu',
-							BX('<?=CUtil::JSEscape($documentButtonId);?>'),
-							<?=CUtil::PhpToJSObject($item['ITEMS']);?>,
-							{
-								offsetLeft: 0,
-								offsetTop: 0,
-								closeByEsc: true,
-								className: 'document-toolbar-menu'
-							}
-						);
-					});
+					var button = new BX.DocumentGenerator.Button('<?=htmlspecialcharsbx($documentButtonId);?>', <?=CUtil::PhpToJSObject($item['PARAMS']);?>);
+					button.init();
 				});
 			</script>
 			<?

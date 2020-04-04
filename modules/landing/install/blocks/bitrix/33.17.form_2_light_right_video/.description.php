@@ -10,6 +10,7 @@ return array(
 	'block' => array(
 		'name' => Loc::getMessage('LANDING_BLOCK_FORM_33.16--NAME'),
 		'section' => array('video', 'forms'),
+		'dynamic' => false,
 		'subtype' => 'form',
 		'version' => '18.5.0',
 	),

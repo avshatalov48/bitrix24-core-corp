@@ -10,6 +10,7 @@ return array(
 	'block' => array(
 		'name' => Loc::getMessage('LANDING_BLOCK_51_7_COUNTDOWN_13--NAME'),
 		'section' => array('countdowns'),
+		'dynamic' => false,
 		'version' => '18.5.5',
 	),
 	'nodes' => array(

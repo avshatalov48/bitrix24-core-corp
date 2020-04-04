@@ -1,7 +1,17 @@
 <?
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 use \Bitrix\Main\Localization\Loc;
+\Bitrix\Main\UI\Extension::load("ui.notification");
 ?>
+<script>
+	BX.ready(function(){
+		BX.message({
+			'IMOL_CONFIG_EDIT_DELETE_THIS_OPENLINE_BUTTON': '<?=GetMessageJS("IMOL_CONFIG_EDIT_DELETE_THIS_OPENLINE_BUTTON")?>',
+			'IMOL_CONFIG_EDIT_DELETE_NOTIFICATION_SUCCESS': '<?=GetMessageJS("IMOL_CONFIG_EDIT_DELETE_NOTIFICATION_SUCCESS")?>',
+			'IMOL_CONFIG_EDIT_DELETE_FAIL': '<?=GetMessageJS("IMOL_CONFIG_EDIT_DELETE_FAIL")?>',
+		});
+	});
+</script>
 <div class="imopenlines-form-settings-section">
 	<div class="imopenlines-form-settings-title imopenlines-form-settings-title-other">
 		<?=Loc::getMessage('IMOL_CONFIG_CHANGE_LINE_NAME')?>
@@ -19,6 +29,19 @@ use \Bitrix\Main\Localization\Loc;
 	</div>
 </div>
 <div class="imopenlines-form-settings-section">
+	<div class="imopenlines-form-settings-block">
+		<div class="imopenlines-control-checkbox-container">
+			<label class="imopenlines-control-checkbox-label">
+				<input type="checkbox"
+					   id="imol_active_checkbox"
+					   name="CONFIG[ACTIVE]"
+					   <?if($arResult['CONFIG']['ACTIVE'] == 'Y'):?>checked="checked"<?endif;?>
+					   value="Y"
+					   class="imopenlines-control-checkbox">
+				<?=Loc::getMessage('IMOL_CONFIG_ACTIVE')?>
+			</label>
+		</div>
+	</div>
 	<div class="imopenlines-form-settings-block">
 		<div class="imopenlines-control-checkbox-container">
 			<label class="imopenlines-control-checkbox-label">
@@ -57,5 +80,15 @@ use \Bitrix\Main\Localization\Loc;
 				</div>
 			</div>
 		</div>
+		<div class="imopenlines-control-container imopenlines-control-delete">
+			<h5 class="imopenlines-control-subtitle"><?=Loc::getMessage("IMOL_CONFIG_EDIT_DELETE_THIS_OPENLINE")?></h5>
+			<button class="ui-btn ui-btn-light-border" id="imol_delete_openline" type="button"><?=Loc::getMessage("IMOL_CONFIG_EDIT_DELETE_THIS_OPENLINE_BUTTON")?></button>
+		</div>
+	</div>
+</div>
+<div class="imopenlines-control-alert-popup" id="imol_delete_openline_popup" style="display: none">
+	<div class="imopenlines-control-alert-popup-inner">
+		<h6 class="imopenlines-control-alert-popup-title"><?=Loc::getMessage("IMOL_CONFIG_EDIT_DELETE_THIS_OPENLINE_POPUP_TITLE")?></h6>
+		<p class="imopenlines-control-alert-popup-text" id="imol-alert-popup-text"><?=Loc::getMessage("IMOL_CONFIG_EDIT_DELETE_THIS_OPENLINE_POPUP_MESSAGE")?></p>
 	</div>
 </div>

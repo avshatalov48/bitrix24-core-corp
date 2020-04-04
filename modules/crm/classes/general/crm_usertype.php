@@ -197,11 +197,20 @@ class CCrmUserType
 				$arFilterFields[] = array(
 					'id' => $FIELD_NAME,
 					'name' => $fieldLabel,
-					'type' => 'custom_entity',
-					'selector' => array(
-						'TYPE' => 'user',
-						'DATA' => array('ID' => strtolower($FIELD_NAME), 'FIELD_ID' => $FIELD_NAME)
+					'type' => 'dest_selector',
+					'params' => array(
+						'context' => 'CRM_UF_FILTER_'.$FIELD_NAME,
+						'multiple' => 'N',
+						'contextCode' => 'U',
+						'enableAll' => 'N',
+						'enableSonetgroups' => 'N',
+						'allowEmailInvitation' => 'N',
+						'allowSearchEmailUsers' => 'N',
+						'departmentSelectDisable' => 'Y',
+						'isNumeric' => 'Y',
+						'prefix' => 'U',
 					)
+
 				);
 				continue;
 			}
@@ -349,19 +358,70 @@ class CCrmUserType
 					}
 				}
 
+				$destSelectorParams = array(
+					'apiVersion' => 3,
+					'context' => 'CRM_UF_FILTER_ENTITY',
+					'contextCode' => 'CRM',
+					'useClientDatabase' => 'N',
+					'enableAll' => 'N',
+					'enableDepartments' => 'N',
+					'enableUsers' => 'N',
+					'enableSonetgroups' => 'N',
+					'allowEmailInvitation' => 'N',
+					'allowSearchEmailUsers' => 'N',
+					'departmentSelectDisable' => 'Y',
+					'enableCrm' => 'Y',
+					'multiple' => ($isMultiple ? 'Y' : 'N'),
+					'convertJson' => 'Y'
+				);
+
+				$entityTypeCounter = 0;
+				foreach($entityTypeNames as $entityTypeName)
+				{
+					switch($entityTypeName)
+					{
+						case \CCrmOwnerType::LeadName:
+							$destSelectorParams['enableCrmLeads'] = 'Y';
+							$destSelectorParams['addTabCrmLeads'] = 'Y';
+							$entityTypeCounter++;
+							break;
+						case \CCrmOwnerType::DealName:
+							$destSelectorParams['enableCrmDeals'] = 'Y';
+							$destSelectorParams['addTabCrmDeals'] = 'Y';
+							$entityTypeCounter++;
+							break;
+						case \CCrmOwnerType::ContactName:
+							$destSelectorParams['enableCrmContacts'] = 'Y';
+							$destSelectorParams['addTabCrmContacts'] = 'Y';
+							$entityTypeCounter++;
+							break;
+						case \CCrmOwnerType::CompanyName:
+							$destSelectorParams['enableCrmCompanies'] = 'Y';
+							$destSelectorParams['addTabCrmCompanies'] = 'Y';
+							$entityTypeCounter++;
+							break;
+						case \CCrmOwnerType::OrderName:
+							$destSelectorParams['enableCrmOrders'] = 'Y';
+							$destSelectorParams['addTabCrmOrders'] = 'Y';
+							$entityTypeCounter++;
+							break;
+						default:
+					}
+				}
+				if ($entityTypeCounter <= 1)
+				{
+					$destSelectorParams['addTabCrmLeads'] = 'N';
+					$destSelectorParams['addTabCrmDeals'] = 'N';
+					$destSelectorParams['addTabCrmContacts'] = 'N';
+					$destSelectorParams['addTabCrmCompanies'] = 'N';
+					$destSelectorParams['addTabCrmOrders'] = 'N';
+				}
+
 				$arFilterFields[] = array(
 					'id' => $FIELD_NAME,
 					'name' => $fieldLabel,
-					'type' => 'custom_entity',
-					'selector' => array(
-						'TYPE' => 'crm_entity',
-						'DATA' => array(
-							'ID' => strtolower($FIELD_NAME),
-							'FIELD_ID' => $FIELD_NAME,
-							'ENTITY_TYPE_NAMES' => $entityTypeNames,
-							'IS_MULTIPLE' => $isMultiple
-						)
-					)
+					'type' => 'dest_selector',
+					'params' => $destSelectorParams
 				);
 				continue;
 			}
@@ -1287,6 +1347,23 @@ class CCrmUserType
 						$arValuePrepare[$arUserField['USER_TYPE']['USER_TYPE_ID']]['ID'][] = $value;
 					}
 				}
+				elseif($arUserField['USER_TYPE']['USER_TYPE_ID'] === 'resourcebooking' && $textonly && \Bitrix\Crm\Integration\Calendar::isResourceBookingEnabled())
+				{
+					$value = array();
+					if(is_array($arValue[$ID][$FIELD_NAME]))
+					{
+						$valueCount = count($arValue[$ID][$FIELD_NAME]);
+						for($i = 0; $i < $valueCount; $i++)
+						{
+							$value[] = htmlspecialcharsback($arValue[$ID][$FIELD_NAME][$i]);
+						}
+					}
+
+					$arReplaceValue[$ID][$FIELD_NAME] =  \Bitrix\Calendar\UserField\ResourceBooking::getPublicText(array_merge(
+						$arUserField,
+						array('ENTITY_VALUE_ID' => $ID, 'VALUE' => $value)
+					));
+				}
 				elseif(!$textonly
 					&& ($arUserField['USER_TYPE']['USER_TYPE_ID'] === 'address'
 						|| $arUserField['USER_TYPE']['USER_TYPE_ID'] === 'money'
@@ -1552,8 +1629,11 @@ class CCrmUserType
 				if (is_callable(array($arUserField['USER_TYPE']['CLASS_NAME'], 'GetList')))
 				{
 					$rsEnum = call_user_func_array(array($arUserField['USER_TYPE']['CLASS_NAME'], 'GetList'), array($arUserField));
-					while($ar = $rsEnum->GetNext())
-						$editable['items'][$ar['ID']] = htmlspecialcharsback($ar['VALUE']);
+					if(is_object($rsEnum) && is_subclass_of($rsEnum, 'CAllDBResult'))
+					{
+						while($ar = $rsEnum->GetNext())
+							$editable['items'][$ar['ID']] = htmlspecialcharsback($ar['VALUE']);
+					}
 				}
 			}
 			else if ($arUserField['USER_TYPE']['USER_TYPE_ID'] == 'boolean')
@@ -1864,7 +1944,7 @@ class CCrmUserType
 				$arHeaders[$FIELD_NAME.'_PRINTABLE'] = array(
 					'Name' => $fieldTitle.' ('.(isset($arOptions['PRINTABLE_SUFFIX']) ? $arOptions['PRINTABLE_SUFFIX'] : 'text').')',
 					'Options' => $editable,
-					'Type' => $sType,
+					'Type' => 'string',
 					'Filterable' => $arUserField['MULTIPLE'] != 'Y',
 					'Editable' => false,
 					'Multiple' => $arUserField['MULTIPLE'] == 'Y',
@@ -2227,6 +2307,39 @@ class CCrmUserType
 						{
 							$fields[$fieldName] = $file;
 						}
+					}
+				}
+			}
+		}
+	}
+
+	public function PrepareForSave(array &$fields)
+	{
+		$userFields = $this->GetAbstractFields();
+		foreach($userFields as $fieldName => $userFieldInfo)
+		{
+			if($userFieldInfo['USER_TYPE_ID'] === 'file')
+			{
+				if(isset($userFieldInfo['MULTIPLE']) && $userFieldInfo['MULTIPLE'] === 'Y')
+				{
+					$results = array();
+					if(is_array($fields[$fieldName]))
+					{
+						foreach($fields[$fieldName] as $data)
+						{
+							if(\CCrmFileProxy::TryResolveFile($data, $file, array('ENABLE_ID' => true)))
+							{
+								$results[] = $file;
+							}
+						}
+					}
+					$fields[$fieldName] = $results;
+				}
+				else
+				{
+					if(\CCrmFileProxy::TryResolveFile($fields[$fieldName], $file, array('ENABLE_ID' => true)))
+					{
+						$fields[$fieldName] = $file;
 					}
 				}
 			}

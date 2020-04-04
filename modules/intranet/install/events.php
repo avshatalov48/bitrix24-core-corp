@@ -67,7 +67,7 @@ while($lang = $langs->Fetch())
 			"EMAIL_TO" => "#EMAIL_TO#",
 			"BCC" => "",
 			"SUBJECT" => GetMessage("INTRANET_USER_INVITATION_SUBJECT"),
-			"MESSAGE" => "<?EventMessageThemeCompiler::includeComponent(\"bitrix:intranet.template.mail\", \"\", array(\"EMAIL_FROM\" => \"{#EMAIL_FROM#}\",\"EMAIL_TO\" => \"{#EMAIL_TO#}\",\"LINK\" => \"{#LINK#}\",\"USER_TEXT\" => \"{#USER_TEXT#}\",\"USER_ID_FROM\" => \"{#USER_ID_FROM#}\",\"TEMPLATE_TYPE\" => \"USER_INVITATION\"));?>",
+			"MESSAGE" => "<?EventMessageThemeCompiler::includeComponent(\"bitrix:intranet.template.mail\", \"\", array(\"EMAIL_FROM\" => \"{#EMAIL_FROM#}\",\"EMAIL_TO\" => \"{#EMAIL_TO#}\",\"LINK\" => \"{#LINK#}\",\"USER_TEXT\" => \"{#USER_TEXT#}\",\"USER_ID_FROM\" => \"{#USER_ID_FROM#}\",\"TEMPLATE_TYPE\" => \"USER_INVITATION\",\"FIELDS\" => \$arParams));?>",
 			"BODY_TYPE" => "html",
 		));
 

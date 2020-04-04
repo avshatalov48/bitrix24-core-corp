@@ -97,6 +97,14 @@ class TimelineManager
 		{
 			return OrderShipmentController::getInstance();
 		}
+		elseif($assocEntityTypeID === \CCrmOwnerType::OrderCheck)
+		{
+			return OrderCheckController::getInstance();
+		}
+		elseif($assocEntityTypeID === \CCrmOwnerType::Scoring)
+		{
+			return ScoringController::getInstance();
+		}
 
 		return null;
 	}
@@ -247,6 +255,116 @@ class TimelineManager
 					}
 				}
 			}
+			elseif ($entityTypeID === \CCrmOwnerType::Order)
+			{
+				$orderIds = array_keys($entityInfos);
+				$orderPaymentMap = [];
+				$paymentsData = \Bitrix\Crm\Order\Payment::getList(
+					array(
+						'filter' => array('=ORDER_ID' => $orderIds),
+						'select' => array('ID', 'ORDER_ID', 'SUM', 'CURRENCY', 'PAY_SYSTEM_NAME')
+					)
+				);
+				while ($payment = $paymentsData->fetch())
+				{
+					$payment['SHOW_URL'] = \CComponentEngine::MakePathFromTemplate(
+						\Bitrix\Main\Config\Option::get('crm', 'path_to_order_payment_details'),
+						array('payment_id' => $payment['ID'])
+					);
+					$payment['SUM_WITH_CURRENCY'] = \CCrmCurrency::MoneyToString($payment['SUM'], $payment['CURRENCY']);
+					$orderPaymentMap[$payment['ORDER_ID']][$payment['ID']] = $payment;
+				}
+
+				$orderShipmentMap = [];
+				$shipmentsData = \Bitrix\Crm\Order\Shipment::getList(
+					array(
+						'filter' => array(
+							'=ORDER_ID' => $orderIds,
+							'SYSTEM' => 'N'
+						),
+						'select' => array('ID', 'ORDER_ID', 'PRICE_DELIVERY', 'CURRENCY', 'DELIVERY_NAME')
+					)
+				);
+				while ($shipment = $shipmentsData->fetch())
+				{
+					$shipment['SHOW_URL'] = \CComponentEngine::MakePathFromTemplate(
+						\Bitrix\Main\Config\Option::get('crm', 'path_to_order_shipment_details'),
+						array('shipment_id' => $shipment['ID'])
+					);
+					$shipment['PRICE_WITH_CURRENCY'] = \CCrmCurrency::MoneyToString($shipment['PRICE'], $shipment['CURRENCY']);
+					$orderShipmentMap[$shipment['ORDER_ID']][$shipment['ID']] = $shipment;
+				}
+
+				\CCrmOwnerType::PrepareEntityInfoBatch($entityTypeID, $entityInfos, false);
+				foreach($entityInfos as $entityID => $entityInfo)
+				{
+					if (empty($entityInfo['ITEM_IDS']) || !is_array($entityInfo['ITEM_IDS']))
+					{
+						continue;
+					}
+					if (!empty($orderPaymentMap[$entityID]))
+					{
+						$entityInfo['PAYMENTS_INFO'] = $orderPaymentMap[$entityID];
+					}
+
+					if (!empty($orderShipmentMap[$entityID]))
+					{
+						$entityInfo['SHIPMENTS_INFO'] = $orderShipmentMap[$entityID];
+					}
+
+					foreach($entityInfo['ITEM_IDS'] as $itemID)
+					{
+						$items[$itemID]['ASSOCIATED_ENTITY'] = $entityInfo;
+					}
+				}
+			}
+			elseif ($entityTypeID === \CCrmOwnerType::OrderCheck)
+			{
+				if (\Bitrix\Main\Loader::includeModule('sale'))
+				{
+					$checkIds = array_keys($entityInfos);
+					$checkDB = \Bitrix\Sale\Cashbox\CheckManager::getList(
+						array(
+							'filter' => array('=ID' => $checkIds),
+							'select' => array('ID', 'DATE_CREATE', 'ORDER_ID', 'SUM', 'CURRENCY')
+						)
+					);
+
+					while ($check = $checkDB->fetch())
+					{
+						$check['SHOW_URL'] = \CComponentEngine::MakePathFromTemplate(
+							\Bitrix\Main\Config\Option::get('crm', 'path_to_order_check_details'),
+							array('check_id' => $check['ID'])
+						);
+
+						$listLink = \CComponentEngine::MakePathFromTemplate(
+							\Bitrix\Main\Config\Option::get('crm', 'path_to_order_details'),
+							array('order_id' => $check['ORDER_ID'])
+						);
+
+						$uri = new \Bitrix\Main\Web\Uri($listLink);
+						$uri->addParams(['tab' => 'check']);
+						$check['LIST_URL'] = $uri->getUri();
+						if ($check['DATE_CREATE'] instanceof \Bitrix\Main\Type\Date)
+						{
+							$culture = \Bitrix\Main\Context::getCurrent()->getCulture();
+							$check['DATE_CREATE_FORMATTED'] =  FormatDate($culture->getLongDateFormat(), $check['DATE_CREATE']->getTimestamp());
+						}
+
+						$check['SUM_WITH_CURRENCY'] = \CCrmCurrency::MoneyToString($check['SUM'], $check['CURRENCY']);
+						$entityInfos[$check['ID']] = array_merge($entityInfos[$check['ID']], $check);
+					}
+
+					foreach($entityInfos as $entityID => $entityInfo)
+					{
+						$itemIDs = isset($entityInfo['ITEM_IDS']) ? $entityInfo['ITEM_IDS'] : array();
+						foreach($itemIDs as $itemID)
+						{
+							$items[$itemID]['ASSOCIATED_ENTITY'] = $entityInfo;
+						}
+					}
+				}
+			}
 			else
 			{
 				if ($entityTypeID === \CCrmOwnerType::DealRecurring)
@@ -309,5 +427,20 @@ class TimelineManager
 	public static function transferAssociation($oldEntityTypeID, $oldEntityID, $newEntityTypeID, $newEntityID)
 	{
 		Entity\TimelineBindingTable::transferAssociation($oldEntityTypeID, $oldEntityID, $newEntityTypeID, $newEntityID);
+	}
+
+	/**
+	 * Get Entity Type ID that should be ignored in timeline
+	 * @return array
+	 */
+	public static function getIgnoredEntityTypeIDs()
+	{
+		return array(
+			\CCrmOwnerType::SuspendedLead,
+			\CCrmOwnerType::SuspendedDeal,
+			\CCrmOwnerType::SuspendedContact,
+			\CCrmOwnerType::SuspendedCompany,
+			\CCrmOwnerType::SuspendedActivity
+		);
 	}
 }

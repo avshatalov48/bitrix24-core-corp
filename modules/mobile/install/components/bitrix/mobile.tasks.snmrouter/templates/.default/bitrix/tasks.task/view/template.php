@@ -24,6 +24,7 @@ $APPLICATION->SetPageProperty('BodyClass', 'task-card-page');
 \Bitrix\Main\Page\Asset::getInstance()->addJs($templateFolder.'/../.default/script.js');
 $task = &$arResult["DATA"]["TASK"];
 $can = $arResult["CAN"]["TASK"]["ACTION"];
+$can["CHECKLIST_ADD_ITEMS"] = false;
 $arResult["FORM_ID"] = 'MOBILE_TASK_VIEW';
 $arResult['GRID_ID'] = 'MOBILE_TASK_VIEW';
 $task["PRIORITY"] = ($task["PRIORITY"] == CTasks::PRIORITY_HIGH ? CTasks::PRIORITY_HIGH : CTasks::PRIORITY_LOW);
@@ -126,6 +127,9 @@ $APPLICATION->IncludeComponent(
 								$ids = array();
 								foreach($list as $item)
 								{
+									$item['ACTION']['MODIFY'] = false;
+									$item['ACTION']['REMOVE'] = false;
+
 									$separator = \Bitrix\Tasks\UI\Task\CheckList::checkIsSeparatorValue($item["TITLE"]);
 									$ids[] = $item["ID"];
 									$item["TITLE"] = htmlspecialcharsbx($item["TITLE"]);

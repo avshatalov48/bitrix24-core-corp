@@ -73,6 +73,12 @@ class SourceTable extends DataManager
 				'data_type' => 'text',
 				'serialized' => true,
 			],
+			'AD_CLIENT_ID' => [
+				'data_type' => 'string',
+			],
+			'AD_ACCOUNT_ID' => [
+				'data_type' => 'string',
+			],
 		];
 	}
 
@@ -88,7 +94,7 @@ class SourceTable extends DataManager
 	{
 		return static::getList([
 			'select' => [
-				'ID', 'CODE', 'PHONE', 'EMAIL', 'UTM_SOURCE'
+				'ID', 'CODE',
 			],
 			'filter' => [
 				//'=ACTIVE' => 'Y'

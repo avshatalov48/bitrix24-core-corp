@@ -873,6 +873,11 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 			$entityList = $object->getMembersOfSharing();
 		}
 
+		if (!$object->getRealObject())
+		{
+			$this->sendJsonErrorResponse();
+		}
+
 		$proxyType = $object->getRealObject()->getStorage()->getProxyType();
 
 		$this->sendJsonSuccessResponse(array(
@@ -976,6 +981,7 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 		}
 
 		$securityContext = $object->getStorage()->getCurrentUserSecurityContext();
+		$rightsManager = Driver::getInstance()->getRightsManager();
 		if(!$object->canShare($securityContext))
 		{
 			$this->sendJsonAccessDeniedResponse();
@@ -988,17 +994,12 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 			$newExtendedRightsReformat = array();
 			foreach($extendedRights as $entityId => $right)
 			{
-				switch($right['right'])
+				if ($rightsManager->isValidTaskName($right['right']))
 				{
-					case \Bitrix\Disk\RightsManager::TASK_READ:
-					case \Bitrix\Disk\RightsManager::TASK_ADD:
-					case \Bitrix\Disk\RightsManager::TASK_EDIT:
-					case \Bitrix\Disk\RightsManager::TASK_FULL:
-						$newExtendedRightsReformat[$entityId] = $right['right'];
-						break;
+					$newExtendedRightsReformat[$entityId] = $right['right'];
 				}
 			}
-			unset($right);
+
 			//todo move this code to Object or Sharing model (reset sharing)
 			$query = Sharing::getList(array(
 				'select' => array('ID', 'TO_ENTITY', 'TASK_NAME'),
@@ -1021,7 +1022,6 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 			if($needToAdd)
 			{
 				//todo! refactor this to compare set of operations. And move this code
-				$rightsManager = Driver::getInstance()->getRightsManager();
 				$maxTaskName = $rightsManager->getPseudoMaxTaskByObjectForUser($object, $this->getUser()->getId());
 				if(!$maxTaskName)
 				{
@@ -1867,7 +1867,7 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 			'message' => Loc::getMessage('DISK_FOLDER_ACTION_MESSAGE_FILE_DELETED'),
 		));
 	}
-	
+
 	protected function processActionGetUrlToDownloadArchive($folderId, array $objectIds)
 	{
 		$objectIds = array_filter(array_map('intval', $objectIds));
@@ -1876,13 +1876,13 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 			$this->errorCollection[] = new Error('Empty list of object ids');
 			$this->sendJsonErrorResponse();
 		}
-		
+
 		/** @var Folder $folder */
 		$folder = Folder::loadById((int)$folderId, array('STORAGE'));
 		if(!$folder || !$folder->getStorage())
 		{
 			$this->errorCollection[] = new Error(
-				Loc::getMessage('DISK_FOLDER_LIST_ERROR_COULD_NOT_FIND_OBJECT'), 
+				Loc::getMessage('DISK_FOLDER_LIST_ERROR_COULD_NOT_FIND_OBJECT'),
 				self::ERROR_COULD_NOT_FIND_OBJECT
 			);
 			$this->sendJsonErrorResponse();
@@ -1891,8 +1891,8 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 		$fileIds = array();
 		$securityContext = $folder->getStorage()->getCurrentUserSecurityContext();
 		foreach($folder->getChildren($securityContext, array('filter' => array(
-			'@ID' => $objectIds, 
-			'TYPE' => ObjectTable::TYPE_FILE, 
+			'@ID' => $objectIds,
+			'TYPE' => ObjectTable::TYPE_FILE,
 		))) as $file)
 		{
 			$fileIds[] = $file->getId();

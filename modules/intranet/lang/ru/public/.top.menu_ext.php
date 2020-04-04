@@ -29,4 +29,5 @@ $MESS["TOP_MENU_CONTACT_CENTER"] = "Контакт-центр";
 $MESS["TOP_MENU_CRM_ANALYTICS"] = "CRM-Аналитика";
 $MESS["TOP_MENU_CRM_TRACKING"] = "Сквозная аналитика";
 $MESS["TOP_MENU_AI"] = "Лаборатория AI";
+$MESS["MENU_SALESCENTER_SECTION"] = "Центр продаж";
 ?>

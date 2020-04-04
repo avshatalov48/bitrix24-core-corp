@@ -175,6 +175,8 @@ if (IsModuleInstalled("bitrix24"))
 	COption::SetOptionString("bizproc", "limit_simultaneous_processes", 2);
 	COption::SetOptionString("bitrix24", "admin_limits_enabled", "Y");
 	COption::SetOptionString("bitrix24", "absence_limits_enabled", "Y");
+	COption::SetOptionString("bitrix24", "business_tools_available", "N");
+	COption::SetOptionString("bitrix24", "allow_invite_users", "Y");
 }
 Bitrix\Main\Config\Option::set("main", "move_js_to_body", "Y");
 

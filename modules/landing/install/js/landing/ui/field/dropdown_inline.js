@@ -19,6 +19,8 @@
 		this.popup = null;
 		this.input.addEventListener("click", this.onInputClick.bind(this));
 
+		this.layout.classList.add("landing-ui-field-dropdown-inline");
+
 		if (BX.type.isPlainObject(this.items))
 		{
 			var keys = Object.keys(this.items);

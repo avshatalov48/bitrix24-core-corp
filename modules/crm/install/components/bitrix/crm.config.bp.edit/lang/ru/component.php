@@ -11,4 +11,6 @@ $MESS["CRM_BP_COMPANY"] = "Компания";
 $MESS["CRM_BP_DEAL"] = "Сделка";
 $MESS["CRM_BP_ORDER"] = "Заказ";
 $MESS["CRM_BP_INVOICE"] = "Счет";
+$MESS["CRM_BP_WFEDIT_TITLE_ADD"] = "#NAME#. Создание шаблона бизнес-процесса";
+$MESS["CRM_BP_WFEDIT_TITLE_EDIT"] = "#NAME#. #TEMPLATE#: Редактирование шаблона бизнес-процесса";
 ?>

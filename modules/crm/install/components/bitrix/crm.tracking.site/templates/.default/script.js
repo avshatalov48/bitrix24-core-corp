@@ -17,16 +17,32 @@
 		BX.bind(window, 'message', this.onMessage.bind(this));
 		BX.bind(window, 'beforeunload', this.onWindowClose.bind(this));
 		BX.bind(window, 'blur', this.onWindowBlur.bind(this));
-		if (BX.SidePanel.Instance)
+		if (BX.SidePanel && BX.SidePanel.Instance)
 		{
 			BX.addCustomEvent("SidePanel.Slider:onClose", this.onWindowClose.bind(this));
 		}
 
 		this.timeout = 20;
+		this.debug = false;
 	}
 	Checking.prototype.parameterName = 'b24_tracker_checking_origin';
 	Checking.prototype.editParameterName = 'b24_tracker_edit_enabled';
 	Checking.prototype.running = false;
+	Checking.prototype.setDebug = function (mode, timeout)
+	{
+		this.debug = !!mode;
+		if (this.debug)
+		{
+			this.timeout = timeout || 1000;
+		}
+	};
+	Checking.prototype.log = function (mess)
+	{
+		if (this.debug && window.console && 'log' in console)
+		{
+			console.log('BX.Crm.Tracking.Site[checking]:', mess);
+		}
+	};
 	Checking.prototype.edit = function (url)
 	{
 		if (this.editingWindow)
@@ -38,7 +54,6 @@
 		a.href = url;
 		var host = a.hostname;
 		var addressee = a.protocol + '//' + a.hostname + (a.port ? ':' + a.port : '');
-
 		this.editingWindow = window.open(url + '?utm_source=&' + this.editParameterName + '=' + 'y', 'editingWindow');
 		this.connector = new window.b24Tracker.Connector({
 			addressee: addressee,
@@ -67,11 +82,19 @@
 
 		this.bar = options.bar;
 		var url = options.url + '?utm_source=&' + this.parameterName + '=' + encodeURIComponent(window.location.origin);
+		if (this.debug)
+		{
+			url += '&bx_debug=y';
+		}
 		this.checkingWindow = window.open(url, 'checkingWindow', 'height=300,width=450');
+		this.log('Open window ' + url);
 
 		this.promise = new BX.Promise();
 		this.timer = setTimeout(this.onError.bind(this), this.timeout * 1000);
-		this.updateBar();
+		if (!this.debug)
+		{
+			this.updateBar();
+		}
 		// postMessage
 		// resolve
 		// clearTimeout(this.timer)
@@ -107,10 +130,13 @@
 		{
 			clearTimeout(this.timer);
 		}
-		if (this.checkingWindow)
+
+		this.log('End. Close window');
+		if (this.checkingWindow && !this.debug)
 		{
 			this.checkingWindow.close();
 		}
+
 		this.checkingWindow = null;
 		this.timer = null;
 		this.domain = null;
@@ -144,26 +170,33 @@
 		}
 		if (!this.domain || this.domain.indexOf(event.origin) !== 0)
 		{
+			this.log('Domains not equal `' + this.domain + '` & `' + event.origin + '`');
 			return;
 		}
 
 		if (!this.checkingWindow || this.checkingWindow !== event.source)
 		{
+			this.log('Checking window not equals for event.source');
 			return;
 		}
+
+		this.log('Data received ' + event.data);
 
 		var data;
 		try
 		{
 			data = JSON.parse(event.data || '');
+			this.log(data);
 		}
 		catch (e)
 		{
+			this.log('Data parse error ' + e.message);
 			return;
 		}
 
 		if (data.source !== 'b24Tracker')
 		{
+			this.log('Wrong data source ' + data.source);
 			return;
 		}
 
@@ -247,6 +280,16 @@
 		var btnEmailAdd = BX('crm-tracking-email-add');
 		BX.bind(btnPhoneAdd, 'click', this.showAddItemDialog.bind(this, true, btnPhoneAdd));
 		BX.bind(btnEmailAdd, 'click', this.showAddItemDialog.bind(this, false, btnEmailAdd));
+
+		var buttonRemove = BX('crm-tracking-site-remove');
+		if (buttonRemove)
+		{
+			BX.bind(buttonRemove, 'click', function () {
+				BX.addClass(buttonRemove, 'ui-btn-wait');
+				BX('crm-tracking-site-remove-input').value = 'Y';
+				BX.submit(BX('crm-tracking-site-form'));
+			});
+		}
 	};
 	Editor.prototype.checkBrowser = function ()
 	{
@@ -499,4 +542,5 @@
 	};
 
 	namespace.Site = new Editor();
+	namespace.SiteChecker = Checking;
 })();

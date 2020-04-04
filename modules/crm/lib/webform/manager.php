@@ -124,4 +124,26 @@ class Manager
 
 		return $result;
 	}
+
+	public static function isEmbeddingEnabled($formId)
+	{
+		if (!self::isEmbeddingAvailable())
+		{
+			return false;
+		}
+
+		static $lastResult = [];
+		if (!isset($lastResult[$formId]))
+		{
+			$form = new Form($formId);
+			$lastResult[$formId] = $form->isEmbeddingEnabled() && $form->isEmbeddingAvailable();
+		}
+
+		return $lastResult[$formId];
+	}
+
+	public static function isEmbeddingAvailable()
+	{
+		return Option::get('crm', '~webfrom_embedding_available', 'N') === 'Y';
+	}
 }

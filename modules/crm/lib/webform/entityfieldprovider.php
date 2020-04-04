@@ -98,7 +98,7 @@ class EntityFieldProvider
 					'entity_name' => '',
 					'name' => 'PRODUCT',
 					'caption' => Loc::getMessage('CRM_WEBFORM_FIELD_PROVIDER_PRODUCT'),
-					'multiple' => false,
+					'multiple' => true,
 					'required' => true,
 				)
 			)

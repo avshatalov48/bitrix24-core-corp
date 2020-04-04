@@ -120,7 +120,10 @@ trait StatusTrait
 		$finalSort = static::getFinalStatusSort();
 
 		/** @var Main\DB\Result $dbRes */
-		$dbRes = static::getList(['filter' => ['=TYPE' => static::TYPE]]);
+		$dbRes = static::getList([
+			'select' => ['ID', 'SORT'],
+			'filter' => ['=TYPE' => static::TYPE]
+		]);
 		while ($status = $dbRes->fetch())
 		{
 			if ($status['SORT'] < $finalSort)
@@ -151,13 +154,15 @@ trait StatusTrait
 	}
 
 	/**
+	 * @param bool $clearCache
+	 *
 	 * @return array
 	 */
-	public static function getListInCrmFormat()
+	public static function getListInCrmFormat($clearCache = false)
 	{
 		static $result = [];
 
-		if (isset($result[static::TYPE]))
+		if (isset($result[static::TYPE]) && !$clearCache)
 		{
 			return $result[static::TYPE];
 		}
@@ -219,7 +224,8 @@ trait StatusTrait
 			'NAME' => $status['NAME'],
 			'NAME_INIT' => $status['NAME'],
 			'SORT' => $status['SORT'],
-			'SYSTEM' => 'N'
+			'SYSTEM' => 'N',
+			'COLOR' => $status['COLOR'],
 		];
 
 		if (isset($defaultList[$status['ID']]))

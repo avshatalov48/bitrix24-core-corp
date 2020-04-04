@@ -2,9 +2,15 @@
 
 namespace Bitrix\ImOpenLines;
 
-use Bitrix\ImOpenlines\QuickAnswers\ListsDataManager;
-use Bitrix\Main,
-	Bitrix\Main\Localization\Loc;
+use \Bitrix\ImOpenLines\Model\ConfigTable,
+	\Bitrix\ImOpenlines\QuickAnswers\ListsDataManager;
+
+use \Bitrix\Main,
+	\Bitrix\Main\Loader,
+	\Bitrix\Main\ModuleManager,
+	\Bitrix\Main\Localization\Loc;
+
+use \Bitrix\Bitrix24\Feature;
 
 Loc::loadMessages(__FILE__);
 
@@ -25,11 +31,12 @@ class Config
 	const QUEUE_TYPE_EVENLY = 'evenly';
 	const QUEUE_TYPE_STRICTLY = 'strictly';
 	const QUEUE_TYPE_ALL = 'all';
-
+	/** @deprecated */
 	const RULE_FORM = 'form';
+	/** @deprecated */
+	const RULE_QUEUE = 'queue';
 	const RULE_QUALITY = 'text';
 	const RULE_TEXT = 'text';
-	const RULE_QUEUE = 'queue';
 	const RULE_NONE = 'none';
 
 	const BOT_JOIN_FIRST = 'first';
@@ -44,6 +51,8 @@ class Config
 
 	const EVENT_IMOPENLINE_CREATE = 'OnImopenlineCreate';
 	const EVENT_IMOPENLINE_DELETE = 'OnImopenlineDelete';
+	const EVENT_IMOPENLINE_CHANGE_QUEUE_TYPE = 'OnImopenlineChangeQueueType';
+	const EVENT_AFTER_IMOPENLINE_ACTIVITY_CHANGE = 'OnAfterImopenlineActivityChange';
 
 	const CONFIG_CACHE_TIME = 86400;
 
@@ -142,6 +151,15 @@ class Config
 		else if ($mode == self::MODE_ADD)
 		{
 			$fields['QUEUE_TIME'] = 60;
+		}
+
+		if (isset($params['NO_ANSWER_TIME']))
+		{
+			$fields['NO_ANSWER_TIME'] = intval($params['NO_ANSWER_TIME']);
+		}
+		else if ($mode == self::MODE_ADD)
+		{
+			$fields['NO_ANSWER_TIME'] = 60;
 		}
 
 		if (isset($params['MAX_CHAT']))
@@ -272,31 +290,13 @@ class Config
 			$fields['QUEUE_TYPE'] = self::QUEUE_TYPE_EVENLY;
 		}
 
-		if (isset($params['TIMEMAN']))
+		if (isset($params['CHECK_AVAILABLE']))
 		{
-			$fields['TIMEMAN'] = \IsModuleInstalled('timeman') && $params['TIMEMAN'] == 'Y'? 'Y': 'N';
+			$fields['CHECK_AVAILABLE'] = $params['CHECK_AVAILABLE'] == 'N'? 'N': 'Y';
 		}
 		else if ($mode == self::MODE_ADD)
 		{
-			$fields["TIMEMAN"] = 'N';
-		}
-
-		if (isset($params['CHECK_ONLINE']))
-		{
-			$fields['CHECK_ONLINE'] = $params['CHECK_ONLINE'] == 'N'? 'N': 'Y';
-		}
-		else if ($mode == self::MODE_ADD)
-		{
-			$fields["CHECK_ONLINE"] = 'Y';
-		}
-
-		if (isset($params['CHECKING_OFFLINE']))
-		{
-			$fields['CHECKING_OFFLINE'] = $params['CHECKING_OFFLINE'] == 'Y'? 'Y': 'N';
-		}
-		else if ($mode == self::MODE_ADD)
-		{
-			$fields["CHECKING_OFFLINE"] = 'N';
+			$fields["CHECK_AVAILABLE"] = 'N';
 		}
 
 		if (isset($params['WELCOME_MESSAGE']))
@@ -337,11 +337,11 @@ class Config
 
 		if (isset($params['NO_ANSWER_RULE']))
 		{
-			$fields['NO_ANSWER_RULE'] = in_array($params["NO_ANSWER_RULE"], Array(self::RULE_FORM, self::RULE_TEXT, self::RULE_QUEUE, self::RULE_NONE))? $params["NO_ANSWER_RULE"]: self::RULE_FORM;
+			$fields['NO_ANSWER_RULE'] = in_array($params["NO_ANSWER_RULE"], Array(self::RULE_TEXT, self::RULE_NONE))? $params["NO_ANSWER_RULE"]: self::RULE_NONE;
 		}
 		else if ($mode == self::MODE_ADD)
 		{
-			$fields['NO_ANSWER_RULE'] = self::RULE_FORM;
+			$fields['NO_ANSWER_RULE'] = self::RULE_NONE;
 		}
 
 		if (isset($params['NO_ANSWER_FORM_ID']))
@@ -450,11 +450,11 @@ class Config
 
 		if (isset($params['WORKTIME_DAYOFF_RULE']))
 		{
-			$fields['WORKTIME_DAYOFF_RULE'] = in_array($params["WORKTIME_DAYOFF_RULE"], Array(self::RULE_FORM, self::RULE_TEXT, self::RULE_NONE))? $params["WORKTIME_DAYOFF_RULE"]: self::RULE_FORM;
+			$fields['WORKTIME_DAYOFF_RULE'] = in_array($params["WORKTIME_DAYOFF_RULE"], Array( self::RULE_TEXT, self::RULE_NONE))? $params["WORKTIME_DAYOFF_RULE"]: self::RULE_NONE;
 		}
 		else if ($mode == self::MODE_ADD)
 		{
-			$fields['WORKTIME_DAYOFF_RULE'] = self::RULE_FORM;
+			$fields['WORKTIME_DAYOFF_RULE'] = self::RULE_NONE;
 		}
 
 		if (isset($params['WORKTIME_DAYOFF_FORM_ID']))
@@ -486,7 +486,7 @@ class Config
 
 		if (isset($params['CLOSE_RULE']))
 		{
-			$fields['CLOSE_RULE'] = in_array($params["CLOSE_RULE"], Array(self::RULE_FORM, self::RULE_TEXT, self::RULE_QUALITY, self::RULE_NONE))? $params["CLOSE_RULE"]: self::RULE_FORM;
+			$fields['CLOSE_RULE'] = in_array($params["CLOSE_RULE"], Array(self::RULE_TEXT, self::RULE_QUALITY, self::RULE_NONE))? $params["CLOSE_RULE"]: self::RULE_NONE;
 		}
 		else if ($mode == self::MODE_ADD)
 		{
@@ -593,7 +593,7 @@ class Config
 
 		if (isset($params['AUTO_CLOSE_RULE']))
 		{
-			$fields['AUTO_CLOSE_RULE'] = in_array($params["AUTO_CLOSE_RULE"], Array(self::RULE_FORM, self::RULE_TEXT, self::RULE_NONE))? $params["AUTO_CLOSE_RULE"]: self::RULE_NONE;
+			$fields['AUTO_CLOSE_RULE'] = in_array($params["AUTO_CLOSE_RULE"], Array(self::RULE_TEXT, self::RULE_NONE))? $params["AUTO_CLOSE_RULE"]: self::RULE_NONE;
 		}
 		else if ($mode == self::MODE_ADD)
 		{
@@ -675,6 +675,79 @@ class Config
 		if (isset($params['QUICK_ANSWERS_IBLOCK_ID']))
 		{
 			$fields['QUICK_ANSWERS_IBLOCK_ID'] = intval($params['QUICK_ANSWERS_IBLOCK_ID']);
+		}
+
+		if (isset($params['KPI_FIRST_ANSWER_TIME']))
+		{
+			$fields['KPI_FIRST_ANSWER_TIME'] = intval($params['KPI_FIRST_ANSWER_TIME']) > 0 ? intval($params['KPI_FIRST_ANSWER_TIME']) : 0;
+		}
+		else if ($mode == self::MODE_ADD)
+		{
+			$fields['KPI_FIRST_ANSWER_TIME'] = 0;
+		}
+
+		if (isset($params['KPI_FIRST_ANSWER_ALERT']))
+		{
+			$fields['KPI_FIRST_ANSWER_ALERT'] = $params['KPI_FIRST_ANSWER_ALERT'] == 'Y' ? 'Y' : 'N';
+		}
+		else if ($mode == self::MODE_ADD)
+		{
+			$fields['KPI_FIRST_ANSWER_ALERT'] = 'N';
+		}
+
+		if (isset($params['KPI_FIRST_ANSWER_LIST']))
+		{
+			$fields['KPI_FIRST_ANSWER_LIST'] = $params['KPI_FIRST_ANSWER_LIST'];
+		}
+
+		if (isset($params['KPI_FIRST_ANSWER_TEXT']))
+		{
+			$fields['KPI_FIRST_ANSWER_TEXT'] = htmlspecialcharsbx($params['KPI_FIRST_ANSWER_TEXT']);
+		}
+		else if ($mode == self::MODE_ADD)
+		{
+			$fields['KPI_FIRST_ANSWER_TEXT'] = Loc::getMessage('IMOL_CONFIG_KPI_FIRST_ANSWER_TEXT');
+		}
+
+		if (isset($params['KPI_FURTHER_ANSWER_TIME']))
+		{
+			$fields['KPI_FURTHER_ANSWER_TIME'] = intval($params['KPI_FURTHER_ANSWER_TIME']) > 0 ? intval($params['KPI_FURTHER_ANSWER_TIME']) : 0;
+		}
+		else if ($mode == self::MODE_ADD)
+		{
+			$fields['KPI_FURTHER_ANSWER_TIME'] = 0;
+		}
+
+		if (isset($params['KPI_FURTHER_ANSWER_ALERT']))
+		{
+			$fields['KPI_FURTHER_ANSWER_ALERT'] = $params['KPI_FURTHER_ANSWER_ALERT'] == 'Y' ? 'Y' : 'N';
+		}
+		else if ($mode == self::MODE_ADD)
+		{
+			$fields['KPI_FURTHER_ANSWER_ALERT'] = 'N';
+		}
+
+		if (isset($params['KPI_FURTHER_ANSWER_LIST']))
+		{
+			$fields['KPI_FURTHER_ANSWER_LIST'] = $params['KPI_FURTHER_ANSWER_LIST'];
+		}
+
+		if (isset($params['KPI_FURTHER_ANSWER_TEXT']))
+		{
+			$fields['KPI_FURTHER_ANSWER_TEXT'] = htmlspecialcharsbx($params['KPI_FURTHER_ANSWER_TEXT']);
+		}
+		else if ($mode == self::MODE_ADD)
+		{
+			$fields['KPI_FURTHER_ANSWER_TEXT'] = Loc::getMessage('IMOL_CONFIG_KPI_FURTHER_ANSWER_TEXT');
+		}
+
+		if (isset($params['KPI_CHECK_OPERATOR_ACTIVITY']))
+		{
+			$fields['KPI_CHECK_OPERATOR_ACTIVITY'] = $params['KPI_CHECK_OPERATOR_ACTIVITY'] == 'Y' ? 'Y' : 'N';
+		}
+		else if ($mode == self::MODE_ADD)
+		{
+			$fields['KPI_CHECK_OPERATOR_ACTIVITY'] = 'N';
 		}
 
 		return $fields;
@@ -761,10 +834,35 @@ class Config
 		}
 
 		$result = Model\ConfigTable::update($id, $fields);
+
 		if(!$result->isSuccess())
 		{
 			$this->error = new BasicError(__METHOD__, 'UPDATE_ERROR', Loc::getMessage('IMOL_UPDATE_ERROR'));
 			return false;
+		}
+		else
+		{
+			if ($config['ACTIVE'] !== $fields['ACTIVE'])
+			{
+				$eventData = [
+					'line' => $id,
+					'active' => $fields['ACTIVE']
+				];
+				$event = new Main\Event('imopenlines', self::EVENT_AFTER_IMOPENLINE_ACTIVITY_CHANGE, $eventData);
+				$event->send();
+			}
+
+			if ($config['QUEUE_TYPE'] != $fields['QUEUE_TYPE'])
+			{
+				$eventData = array(
+					'line' => $id,
+					'typeBefore' => $config['QUEUE_TYPE'],
+					'typeAfter' => $fields['QUEUE_TYPE']
+				);
+				$event = new Main\Event('imopenlines', self::EVENT_IMOPENLINE_CHANGE_QUEUE_TYPE, $eventData);
+				$event->send();
+			}
+
 		}
 
 		if (isset($params['QUEUE']) && is_array($params['QUEUE']))
@@ -786,12 +884,9 @@ class Config
 		$sendUpdate = false;
 		$sendDelete = false;
 		$lineName = $config['LINE_NAME'];
-		if (isset($fields['LINE_NAME']) && $config['LINE_NAME'] != $fields['LINE_NAME'])
-		{
-			$lineName = $fields['LINE_NAME'];
-			$sendUpdate = true;
-		}
-		else if (isset($fields['ACTIVE']) && $config['ACTIVE'] != $fields['ACTIVE'])
+		$queueType = $config['QUEUE_TYPE'];
+
+		if (isset($fields['ACTIVE']) && $config['ACTIVE'] != $fields['ACTIVE'])
 		{
 			if ($fields['ACTIVE'] == 'Y')
 			{
@@ -802,13 +897,27 @@ class Config
 				$sendDelete = true;
 			}
 		}
+		else
+		{
+			if (isset($fields['LINE_NAME']) && $config['LINE_NAME'] != $fields['LINE_NAME'])
+			{
+				$lineName = $fields['LINE_NAME'];
+				$sendUpdate = true;
+			}
+			if (isset($fields['QUEUE_TYPE']) && $config['QUEUE_TYPE'] != $fields['QUEUE_TYPE'])
+			{
+				$sendUpdate = true;
+				$queueType = $fields['QUEUE_TYPE'];
+			}
+		}
 
 		if ($sendUpdate)
 		{
 			self::sendUpdateForQueueList(Array(
 				'ID' => $id,
 				'NAME' => $lineName,
-				'SESSION_PRIORITY' => isset($fields['SESSION_PRIORITY'])? $fields['SESSION_PRIORITY']: $config['SESSION_PRIORITY']
+				'SESSION_PRIORITY' => isset($fields['SESSION_PRIORITY'])? $fields['SESSION_PRIORITY']: $config['SESSION_PRIORITY'],
+				'QUEUE_TYPE' => $queueType
 			));
 		}
 		else if ($sendDelete)
@@ -855,8 +964,7 @@ class Config
 		));
 		while ($row = $orm->fetch())
 		{
-			Model\SessionTable::delete($row['ID']);
-			Model\SessionCheckTable::delete($row['ID']);
+			Session::deleteSession($row['ID']);
 		}
 
 		try
@@ -883,6 +991,9 @@ class Config
 				$livechatManager = new LiveChatManager($id);
 				$livechatManager->delete();
 			}
+
+			$network = new Network();
+			$network->unRegisterConnector($id);
 		}
 		catch (\Exception $e)
 		{}
@@ -1157,7 +1268,7 @@ class Config
 	{
 		// TODO add self cache
 
-		$select = Array('ID', 'NAME' => 'LINE_NAME', 'PRIORITY' => 'SESSION_PRIORITY');
+		$select = Array('ID', 'NAME' => 'LINE_NAME', 'PRIORITY' => 'SESSION_PRIORITY', 'QUEUE_TYPE');
 		$runtime = Array();
 		$order = Array();
 
@@ -1257,6 +1368,7 @@ class Config
 				'id' => $data['ID'],
 				'name' => $isDelete? '': $data['NAME'],
 				'PRIORITY' => $data['SESSION_PRIORITY'],
+				'queue_type' => $data['QUEUE_TYPE']
 			),
 		));
 
@@ -1441,6 +1553,68 @@ class Config
 			if (!empty($config) && is_array($config))
 			{
 				$result = $config['DEFAULT_OPERATOR_DATA'];
+			}
+		}
+
+		return $result;
+	}
+
+
+	/**
+	 * Check config is active
+	 *
+	 * @param $configId
+	 * @return bool
+	 * @throws Main\ArgumentException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
+	public static function isConfigActive($configId)
+	{
+		$config = ConfigTable::getList(
+			[
+				'select' => ['ACTIVE'],
+				'filter' => [
+					'=ID' => $configId
+				]
+			]
+		)->fetch();
+
+		return $config['ACTIVE'] == 'Y';
+	}
+
+	/**
+	 *
+	 *
+	 * @return bool
+	 * @throws Main\LoaderException
+	 */
+	public static function isTimeManActive()
+	{
+		$result = false;
+
+		if(Loader::includeModule('timeman'))
+		{
+			if(Loader::includeModule('bitrix24'))
+			{
+				if(Feature::isFeatureEnabled("timeman"))
+				{
+					$result = true;
+				}
+			}
+			else
+			{
+				if(class_exists('CBXFeatures'))
+				{
+					if(\CBXFeatures::IsFeatureEnabled('timeman'))
+					{
+						$result = true;
+					}
+				}
+				else
+				{
+					$result = true;
+				}
 			}
 		}
 

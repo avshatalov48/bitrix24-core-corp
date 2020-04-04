@@ -19,7 +19,7 @@ use \Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__FILE__);
 
-CJSCore::Init(array('clipboard'));
+CJSCore::Init(['clipboard']);
 
 if ($arParams['INDIVIDUAL_USE'] != 'Y')
 {
@@ -166,17 +166,17 @@ else
 		</div>
 	</div>
 	<?include 'messages.php'?>
-	<div class="imconnector-field-container">
-		<div class="imconnector-field-section">
-			<form action="<?=$arResult["URL"]["SIMPLE_FORM_EDIT"]?>" method="post" enctype="multipart/form-data">
-				<input type="hidden" name="<?=$arResult["CONNECTOR"]?>_form" value="true">
-				<?=bitrix_sessid_post();?>
-				<div class="imconnector-step-text imconnector-livechat-inner-container" style="padding-top: 0;">
-					<div class="imconnector-livechat-public-link">
-						<?
-						if ($arResult['INFO_CONNECTION']['BUTTON_INTERFACE'] == 'Y')
-						{
-							?>
+	<form action="<?=$arResult["URL"]["SIMPLE_FORM_EDIT"]?>" method="post" enctype="multipart/form-data">
+		<input type="hidden" name="<?=$arResult["CONNECTOR"]?>_form" value="true">
+		<?=bitrix_sessid_post();?>
+		<?
+		if ($arResult['INFO_CONNECTION']['BUTTON_INTERFACE'] == 'Y')
+		{
+			?>
+			<div class="imconnector-field-container">
+				<div class="imconnector-field-section">
+					<div class="imconnector-step-text imconnector-livechat-inner-container" style="padding-top: 0;">
+						<div class="imconnector-livechat-public-link">
 							<div class="imconnector-livechat-body-block">
 								<div class="imconnector-livechat-public-link-header">
 									<div class="imconnector-livechat-public-link-header-item">
@@ -190,9 +190,17 @@ else
 									));?>
 								</div>
 							</div>
-							<?
-						}
-						?>
+						</div>
+					</div>
+				</div>
+			</div>
+			<?
+		}
+		?>
+		<div class="imconnector-field-container">
+			<div class="imconnector-field-section">
+				<div class="imconnector-step-text imconnector-livechat-inner-container" style="padding-top: 0;">
+					<div class="imconnector-livechat-public-link">
 						<div class="imconnector-livechat-body-block">
 							<div class="imconnector-livechat-public-link-header">
 								<div class="imconnector-livechat-public-link-header-item">
@@ -204,14 +212,12 @@ else
 									<div class="imconnector-livechat-public-link-inner-copy-inner">
 										<div class="imconnector-livechat-public-link-inner-copy-field">
 											<span><?=htmlspecialcharsbx($arResult['INFO_CONNECTION']['URL_SERVER'])?></span>
-											<div>
-												<input id="imconnector-livechat-public-link-url-code"
-													   class="imconnector-livechat-public-link-inner-copy-field-item imconnector-livechat-public-link-inner-copy-field-item-livechat"
-													   type="text"
-													   placeholder="<?=Loc::getMessage('IMCONNECTOR_COMPONENT_LIVECHAT_SF_PAGE_NAME')?>"
-													   name="URL_CODE_PUBLIC"
-													   value="<?=htmlspecialcharsbx($arResult['INFO_CONNECTION']['URL_CODE_PUBLIC'])?>">
-											</div>
+											<input id="imconnector-livechat-public-link-url-code"
+												   class="imconnector-livechat-public-link-inner-copy-field-item imconnector-livechat-public-link-inner-copy-field-item-livechat"
+												   type="text"
+												   placeholder="<?=Loc::getMessage('IMCONNECTOR_COMPONENT_LIVECHAT_SF_PAGE_NAME')?>"
+												   name="URL_CODE_PUBLIC"
+												   value="<?=htmlspecialcharsbx($arResult['INFO_CONNECTION']['URL_CODE_PUBLIC'])?>">
 										</div>
 										<div class="imconnector-livechat-public-link-inner-copy-button">
 											<span class="webform-small-button imconnector-public-link-inner-copy-button-item" id="imconnector-copy-public-link"><?=Loc::getMessage('IMCONNECTOR_COMPONENT_LIVECHAT_SF_COPY')?></span>
@@ -345,68 +351,6 @@ else
 							</div><!--imconnector-livechat-public-link-settings-inner-content-->
 						</div><!--imconnector-livechat-public-link-settings-inner-container-->
 
-						<?/*<div class="imconnector-border"></div><!--imconnector-border-->
-						<div class="imconnector-livechat-public-link-settings-inner-settings-container">
-							<span class="imconnector-livechat-public-link-settings-inner-param imconnector-livechat-public-link-settings-inner-param-text-input"><?=Loc::getMessage('IMCONNECTOR_COMPONENT_LIVECHAT_SF_PHONE_CODE')?>:</span>
-							<div class="imconnector-livechat-public-link-settings-inner-content">
-								<div class="imconnector-public-link-settings-inner-option">
-									<label for="phone_code" class="imconnector-livechat-public-link-settings-inner-option-container">
-										<input type="text" placeholder="<?=Loc::getMessage('IMCONNECTOR_COMPONENT_LIVECHAT_SF_PHONE_CODE_PLACEHOLDER')?>" class="imconnector-livechat-public-link-settings-inner-add-input" name="PHONE_CODE" value="<?=htmlspecialcharsbx($arResult['INFO_CONNECTION']['PHONE_CODE'])?>">
-									</label><!--imconnector-livechat-public-link-settings-inner-option-container-->
-								</div><!--imconnector-public-link-settings-inner-option-->
-							</div>
-						</div><!--imconnector-livechat-public-link-settings-inner-container-->
-						<div class="imconnector-border"></div><!--imconnector-border-->
-						<div class="imconnector-livechat-public-link-settings-inner-settings-container">
-							<span class="imconnector-livechat-public-link-settings-inner-param imconnector-livechat-public-link-settings-inner-param-text-input">
-								<?=Loc::getMessage('IMCONNECTOR_COMPONENT_LIVECHAT_SF_ONLINE_LINE_1')?>:
-							</span>
-							<div class="imconnector-livechat-public-link-settings-inner-content">
-								<div class="imconnector-public-link-settings-inner-option">
-									<label for="phone_code" class="imconnector-livechat-public-link-settings-inner-option-container">
-										<input type="text"
-											   placeholder="<?=Loc::getMessage('IMCONNECTOR_COMPONENT_LIVECHAT_SF_ONLINE_LINE_1')?>"
-											   class="imconnector-livechat-public-link-settings-inner-add-input"
-											   name="TEXT_PHRASES[BX_LIVECHAT_ONLINE_LINE_1]"
-											   value="<?=htmlspecialcharsbx($arResult['INFO_CONNECTION']['TEXT_PHRASES']['BX_LIVECHAT_ONLINE_LINE_1'])?>">
-									</label>
-								</div>
-							</div>
-						</div>
-						<div class="imconnector-livechat-public-link-settings-inner-settings-container">
-							<span class="imconnector-livechat-public-link-settings-inner-param imconnector-livechat-public-link-settings-inner-param-text-input">
-								<?=Loc::getMessage('IMCONNECTOR_COMPONENT_LIVECHAT_SF_ONLINE_LINE_2')?>:
-							</span>
-							<div class="imconnector-livechat-public-link-settings-inner-content">
-								<div class="imconnector-public-link-settings-inner-option">
-									<label for="phone_code" class="imconnector-livechat-public-link-settings-inner-option-container">
-										<input type="text"
-											   placeholder="<?=Loc::getMessage('IMCONNECTOR_COMPONENT_LIVECHAT_SF_ONLINE_LINE_2')?>"
-											   class="imconnector-livechat-public-link-settings-inner-add-input"
-											   name="TEXT_PHRASES[BX_LIVECHAT_ONLINE_LINE_2]"
-											   value="<?=htmlspecialcharsbx($arResult['INFO_CONNECTION']['TEXT_PHRASES']['BX_LIVECHAT_ONLINE_LINE_2'])?>">
-									</label>
-								</div>
-							</div>
-						</div>
-						<div class="imconnector-livechat-public-link-settings-inner-settings-container">
-							<span class="imconnector-livechat-public-link-settings-inner-param imconnector-livechat-public-link-settings-inner-param-text-input">
-								<?=Loc::getMessage('IMCONNECTOR_COMPONENT_LIVECHAT_SF_OFFLINE')?>:
-							</span>
-							<div class="imconnector-livechat-public-link-settings-inner-content">
-								<div class="imconnector-public-link-settings-inner-option">
-									<label for="phone_code" class="imconnector-livechat-public-link-settings-inner-option-container">
-										<input type="text"
-											   placeholder="<?=Loc::getMessage('IMCONNECTOR_COMPONENT_LIVECHAT_SF_OFFLINE')?>"
-											   class="imconnector-livechat-public-link-settings-inner-add-input"
-											   name="TEXT_PHRASES[BX_LIVECHAT_OFFLINE]"
-											   value="<?=htmlspecialcharsbx($arResult['INFO_CONNECTION']['TEXT_PHRASES']['BX_LIVECHAT_OFFLINE'])?>">
-									</label>
-								</div>
-							</div>
-						</div>*/?>
-
-
 						<div class="imconnector-border"></div><!--imconnector-border-->
 						<div class="imconnector-livechat-public-link-settings-inner-settings-container">
 							<span class="imconnector-livechat-public-link-settings-inner-param"><?=Loc::getMessage('IMCONNECTOR_COMPONENT_LIVECHAT_SF_PAGE_CSS')?>:</span>
@@ -480,6 +424,58 @@ else
 							</div>
 						</div><!--imconnector-livechat-public-link-settings-inner-container-->
 					</div><!--imconnector-livechat-public-link-settings-inner-->
+					<div id="imconnector-livechat-phrases-config-toggle" class="imconnector-livechat-public-link-settings" style="margin-top: 2px;">
+						<span class="imconnector-livechat-public-link-settings-item"><?=Loc::getMessage('IMCONNECTOR_COMPONENT_LIVECHAT_SF_PHRASES_CONFIG')?></span>
+						<span class="imconnector-livechat-public-link-settings-triangle-down"></span>
+					</div><!--imconnector-livechat-public-link-settings-->
+					<input type="hidden" name="open_block_phrases" id="imconnector-livechat-open-block-phrases" value="<?=$arResult['OPEN_BLOCK_PHRASES']?>">
+					<div id="imconnector-livechat-open-phrases" class="imconnector-livechat-public-column-row imconnector-livechat-public-link-settings-inner imconnector-livechat-no-padding<?=empty($arResult['OPEN_BLOCK_PHRASES'])?'':' imconnector-livechat-public-open';?>">
+						<div class="imconnector-livechat-public-link-settings-inner-settings-container">
+							<span class="imconnector-livechat-public-link-settings-inner-param imconnector-livechat-public-link-settings-inner-param-text-input">
+								<?=Loc::getMessage('IMCONNECTOR_COMPONENT_LIVECHAT_SF_ONLINE_LINE_1')?>:
+							</span>
+							<div class="imconnector-livechat-public-link-settings-inner-content">
+								<div class="imconnector-public-link-settings-inner-option">
+									<label for="phone_code" class="imconnector-livechat-public-link-settings-inner-option-container">
+										<input type="text"
+											   class="imconnector-livechat-public-link-settings-inner-add-input"
+											   name="TEXT_PHRASES[BX_LIVECHAT_ONLINE_LINE_1]"
+											   value="<?=htmlspecialcharsbx($arResult['INFO_CONNECTION']['TEXT_PHRASES']['BX_LIVECHAT_ONLINE_LINE_1'])?>">
+									</label>
+								</div>
+							</div>
+						</div>
+						<div class="imconnector-livechat-public-link-settings-inner-settings-container">
+							<span class="imconnector-livechat-public-link-settings-inner-param imconnector-livechat-public-link-settings-inner-param-text-input">
+								<?=Loc::getMessage('IMCONNECTOR_COMPONENT_LIVECHAT_SF_ONLINE_LINE_2')?>:
+							</span>
+							<div class="imconnector-livechat-public-link-settings-inner-content">
+								<div class="imconnector-public-link-settings-inner-option">
+									<label for="phone_code" class="imconnector-livechat-public-link-settings-inner-option-container">
+										<input type="text"
+											   class="imconnector-livechat-public-link-settings-inner-add-input"
+											   name="TEXT_PHRASES[BX_LIVECHAT_ONLINE_LINE_2]"
+											   value="<?=htmlspecialcharsbx($arResult['INFO_CONNECTION']['TEXT_PHRASES']['BX_LIVECHAT_ONLINE_LINE_2'])?>">
+									</label>
+								</div>
+							</div>
+						</div>
+						<div class="imconnector-livechat-public-link-settings-inner-settings-container">
+							<span class="imconnector-livechat-public-link-settings-inner-param imconnector-livechat-public-link-settings-inner-param-text-input">
+								<?=Loc::getMessage('IMCONNECTOR_COMPONENT_LIVECHAT_SF_OFFLINE')?>:
+							</span>
+							<div class="imconnector-livechat-public-link-settings-inner-content">
+								<div class="imconnector-public-link-settings-inner-option">
+									<label for="phone_code" class="imconnector-livechat-public-link-settings-inner-option-container">
+										<input type="text"
+											   class="imconnector-livechat-public-link-settings-inner-add-input"
+											   name="TEXT_PHRASES[BX_LIVECHAT_OFFLINE]"
+											   value="<?=htmlspecialcharsbx($arResult['INFO_CONNECTION']['TEXT_PHRASES']['BX_LIVECHAT_OFFLINE'])?>">
+									</label>
+								</div>
+							</div>
+						</div>
+					</div>
 				</div>
 				<div class="imconnector-border imconnctor-outer-border" style="display: none"></div><!--imconnector-border-->
 				<input type="submit"
@@ -487,9 +483,9 @@ else
 					   id="livechat-small-button-save"
 					   name="<?=$arResult["CONNECTOR"]?>_save"
 					   value="<?=Loc::getMessage('IMCONNECTOR_COMPONENT_SETTINGS_SAVE')?>">
-			</form>
+			</div>
 		</div>
-	</div>
+	</form>
 	<?
 }
 ?>

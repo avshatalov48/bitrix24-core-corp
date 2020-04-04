@@ -367,7 +367,8 @@ function __blogPostSetFollow(log_id)
 					menuItems.push({
 						text: BX.message('BLOG_HREF'),
 						href: postData.urlToPost,
-						class: 'feed-entry-popup-menu-link'
+						class: 'feed-entry-popup-menu-link',
+						target: '_top'
 					});
 
 					menuItems.push({
@@ -415,7 +416,8 @@ function __blogPostSetFollow(log_id)
 					{
 						menuItems.push({
 							text: BX.message('BLOG_BLOG_BLOG_EDIT'),
-							href: urlToEdit
+							href: urlToEdit,
+							target: '_top'
 						});
 					}
 
@@ -478,7 +480,8 @@ function __blogPostSetFollow(log_id)
 					{
 						menuItems.push({
 							text: BX.message('BLOG_POST_VOTE_EXPORT'),
-							href: postData.urlToVoteExport
+							href: postData.urlToVoteExport,
+							target: '_top'
 						});
 					}
 				}
@@ -1024,8 +1027,8 @@ function __blogPostSetFollow(log_id)
 		var res = BX.proxy_context;
 		if (res.scrollTop > (res.scrollHeight - res.offsetHeight) / 1.5)
 		{
-			BX.unbind(res, 'scroll' , BX.proxy(this.popupScrollCheck, this));
 			this.get();
+			BX.unbindAll(res);
 		}
 	}
 })(window);

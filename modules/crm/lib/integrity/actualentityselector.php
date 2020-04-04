@@ -10,10 +10,63 @@ use Bitrix\Crm\ContactTable;
 use Bitrix\Crm\LeadTable;
 use Bitrix\Crm\DealTable;
 use Bitrix\Crm\Entity\Identificator;
+use Bitrix\Crm\Binding\OrderContactCompanyTable;
+use Bitrix\Main\SystemException;
 
 /**
  * Class ActualEntitySelector
  * @package Bitrix\Crm\Integrity
+ * @method int[] getCompanyOrders() Get company orders.
+ * @method void setCompanyOrders(array $list) Set company orders.
+ * @method int[] getCompanyDeals() Get company deals.
+ * @method void setCompanyDeals(array $list) Set company deals.
+ * @method int|null getCompanyDealId() Get company deal ID.
+ * @method void setCompanyDealId($id) Set company deal ID.
+ * @method int[] getCompanyReturnCustomerLeads() Get company return customer leads.
+ * @method void setCompanyReturnCustomerLeads(array $list) Set company return customer leads.
+ * @method int|null getCompanyReturnCustomerLeadId() Get company return customer lead ID.
+ * @method void setCompanyReturnCustomerLeadId($id) Set company return customer lead ID.
+ *
+ * @method int|null getContactCompanyId() Get contact company ID.
+ * @method void setContactCompanyId($id) Set contact company ID.
+ * @method int[] getContactOrders() Get contact orders.
+ * @method void setContactOrders(array $list) Set contact orders.
+ * @method int[] getContactDeals() Get contact deals.
+ * @method void setContactDeals(array $list) Set contact deals.
+ * @method int|null getContactDealId() Get contact deal ID.
+ * @method void setContactDealId($id) Set contact deal ID.
+ * @method int[] getContactReturnCustomerLeads() Get contact return customer leads.
+ * @method void setContactReturnCustomerLeads(array $list) Set contact return customer leads.
+ * @method int|null getContactReturnCustomerLeadId() Get contact return customer lead ID.
+ * @method void setContactReturnCustomerLeadId($id) Set contact return customer lead ID.
+ *
+ * @method int[] getContacts() Get contacts.
+ * @method void setContacts(array $list) Set contacts.
+ * @method int|null getContactId() Get contact ID.
+ * @method void setContactId($id) Set contact ID.
+ *
+ * @method int[] getCompanies() Get companies.
+ * @method void setCompanies(array $list) Set companies.
+ * @method int|null getCompanyId() Get company ID.
+ * @method void setCompanyId($id) Set company ID.
+ *
+ * @method int[] getLeads() Get leads.
+ * @method void setLeads(array $list) Set leads.
+ * @method int|null getLeadId() Get lead ID.
+ * @method void setLeadId($id) Set lead ID.
+ *
+ * @method int[] getOrders() Get orders.
+ * @method void setOrders(array $list) Set orders.
+ *
+ * @method int[] getDeals() Get deals.
+ * @method void setDeals(array $list) Set deals.
+ * @method int|null getDealId() Get deal ID.
+ * @method void setDealId($id) Set deal ID.
+ *
+ * @method int[] getReturnCustomerLeads() Get return customer leads.
+ * @method void setReturnCustomerLeads(array $list) Set return customer leads.
+ * @method int|null getReturnCustomerLeadId() Get return customer lead ID.
+ * @method void setReturnCustomerLeadId($id) Set return customer lead ID.
  */
 class ActualEntitySelector
 {
@@ -49,81 +102,81 @@ class ActualEntitySelector
 	/** @var array $entities Actual entities. */
 	protected $entities = array(
 		array(
-			'CODE' => 'companyId',
+			'CODE' => 'companies',
 			'IS_PRIMARY' => true,
 			'PRIMARY_SORT' => 40,
 			'TYPE_ID' => \CCrmOwnerType::Company,
-			'ID' => null,
-		),
-		array(
-			'CODE' => 'companyDealId',
-			'TYPE_ID' => \CCrmOwnerType::Deal,
-			'ID' => null,
+			'ID' => [],
 		),
 		array(
 			'CODE' => 'companyOrders',
 			'TYPE_ID' => \CCrmOwnerType::Order,
-			'ID' => null,
+			'ID' => [],
 		),
 		array(
-			'CODE' => 'companyReturnCustomerLeadId',
+			'CODE' => 'companyDeals',
+			'TYPE_ID' => \CCrmOwnerType::Deal,
+			'ID' => [],
+		),
+		array(
+			'CODE' => 'companyReturnCustomerLeads',
 			'TYPE_ID' => \CCrmOwnerType::Lead,
-			'ID' => null,
+			'ID' => [],
 		),
 		array(
-			'CODE' => 'contactId',
+			'CODE' => 'contacts',
 			'IS_PRIMARY' => true,
 			'PRIMARY_SORT' => 10,
 			'TYPE_ID' => \CCrmOwnerType::Contact,
-			'ID' => null,
+			'ID' => [],
 		),
 		array(
-			'CODE' => 'contactCompanyId',
+			'CODE' => 'contactCompanies',
 			'TYPE_ID' => \CCrmOwnerType::Company,
-			'ID' => null,
-		),
-		array(
-			'CODE' => 'contactDealId',
-			'TYPE_ID' => \CCrmOwnerType::Deal,
-			'ID' => null,
+			'ID' => [],
 		),
 		array(
 			'CODE' => 'contactOrders',
 			'TYPE_ID' => \CCrmOwnerType::Order,
-			'ID' => null,
+			'ID' => [],
 		),
 		array(
-			'CODE' => 'contactReturnCustomerLeadId',
+			'CODE' => 'contactDeals',
+			'TYPE_ID' => \CCrmOwnerType::Deal,
+			'ID' => [],
+		),
+		array(
+			'CODE' => 'contactReturnCustomerLeads',
 			'TYPE_ID' => \CCrmOwnerType::Lead,
-			'ID' => null,
+			'ID' => [],
 		),
 		array(
-			'CODE' => 'dealId',
+			'CODE' => 'deals',
 			'IS_PRIMARY' => true,
 			'TYPE_ID' => \CCrmOwnerType::Deal,
-			'ID' => null,
+			'ID' => [],
 		),
 		array(
 			'CODE' => 'orders',
 			'IS_PRIMARY' => true,
 			'TYPE_ID' => \CCrmOwnerType::Order,
-			'ID' => null,
+			'ID' => [],
 		),
 		array(
-			'CODE' => 'leadId',
+			'CODE' => 'leads',
 			'IS_PRIMARY' => true,
 			'PRIMARY_SORT' => 30,
 			'TYPE_ID' => \CCrmOwnerType::Lead,
-			'ID' => null,
+			'ID' => [],
 		),
 		array(
-			'CODE' => 'returnCustomerLeadId',
+			'CODE' => 'returnCustomerLeads',
 			'IS_PRIMARY' => true,
-			'PRIMARY_SORT' => 20,
 			'TYPE_ID' => \CCrmOwnerType::Lead,
-			'ID' => null,
+			'ID' => [],
 		),
 	);
+
 
 	/**
 	 * Create instance of class.
@@ -170,29 +223,33 @@ class ActualEntitySelector
 				case self::SEARCH_PARAM_PERSON:
 					if (!isset($fields['LAST_NAME']) || !$fields['LAST_NAME'])
 					{
-						continue;
+						break;
 					}
 
-					$criteria[] = new DuplicatePersonCriterion(
+					$criterion = new DuplicatePersonCriterion(
 						$fields['LAST_NAME'],
 						isset($fields['NAME']) ? $fields['NAME'] : '',
 						isset($fields['SECOND_NAME']) ? $fields['SECOND_NAME'] : ''
 					);
+					$criterion->setStrictComparison(true);
+					$criteria[] = $criterion;
 					break;
 
 				case self::SEARCH_PARAM_ORGANIZATION:
 					if (!isset($fields['COMPANY_TITLE']) || !$fields['COMPANY_TITLE'])
 					{
-						continue;
+						break;
 					}
 
-					$criteria[] = new DuplicateOrganizationCriterion($fields['COMPANY_TITLE']);
+					$criterion = new DuplicateOrganizationCriterion($fields['COMPANY_TITLE']);
+					$criterion->setStrictComparison(true);
+					$criteria[] = $criterion;
 					break;
 
 				case self::SEARCH_PARAM_EMAIL:
 					if (!isset($fields['FM']))
 					{
-						continue;
+						break;
 					}
 
 					$values = DuplicateCommunicationCriterion::extractMultifieldsValues(
@@ -209,7 +266,7 @@ class ActualEntitySelector
 				case self::SEARCH_PARAM_PHONE:
 					if (!isset($fields['FM']))
 					{
-						continue;
+						break;
 					}
 
 					$values = DuplicateCommunicationCriterion::extractMultifieldsValues(
@@ -219,7 +276,7 @@ class ActualEntitySelector
 
 					foreach ($values as $value)
 					{
-						$criteria[] = new DuplicateCommunicationCriterion(Communication\Type::PHONE_NAME, $value);
+						$criteria[] = new DuplicateCommunicationCriterion(Communication\Type::PHONE_NAME, (string) $value);
 					}
 					break;
 
@@ -243,6 +300,30 @@ class ActualEntitySelector
 		$this->initialEntities = $this->entities;
 		$this->setCriteria($criteria);
 		$this->search();
+	}
+
+	/**
+	 * Magic method __call.
+	 *
+	 * @param string $name Method name.
+	 * @param array $arguments Arguments.
+	 * @return mixed
+	 */
+	public function __call($name, $arguments)
+	{
+		$operation = substr($name, 0, 3);
+		if (!in_array($operation, ['get', 'set'], true))
+		{
+			throw new SystemException("Unknown method name `$name`");
+		}
+
+		$action = lcfirst(substr($name, 3));
+		if ($action)
+		{
+			return call_user_func_array([$this, $operation], array_merge([$action], $arguments));
+		}
+
+		throw new SystemException("Unknown method name `$name`");
 	}
 
 	/**
@@ -328,7 +409,23 @@ class ActualEntitySelector
 	 */
 	public function appendPersonCriterion($lastName, $name = '', $secondName = '')
 	{
-		$this->duplicateCriteria[] = new DuplicatePersonCriterion($lastName, $name, $secondName);
+		$criterion = new DuplicatePersonCriterion($lastName, $name, $secondName);
+		$criterion->setStrictComparison(true);
+		$this->duplicateCriteria[] = $criterion;
+		return $this;
+	}
+
+	/**
+	 * Append person criterion.
+	 *
+	 * @param string $title Organization title.
+	 * @return $this
+	 */
+	public function appendOrganizationCriterion($title)
+	{
+		$criterion = new DuplicateOrganizationCriterion($title);
+		$criterion->setStrictComparison(true);
+		$this->duplicateCriteria[] = $criterion;
 		return $this;
 	}
 
@@ -348,14 +445,33 @@ class ActualEntitySelector
 	 * @param string $code Code.
 	 * @return int|int[]|null
 	 * @throws ArgumentException
+	 * @internal
 	 */
 	public function get($code)
 	{
+		// prepare codes
+		$expectSingle = false;
+		$codes = [$code];
+		if (substr($code, -3) === 'yId')
+		{
+			$codes[] = substr($code, 0,-3) . 'ies';
+			$expectSingle = true;
+		}
+		else if (substr($code, -2) === 'Id')
+		{
+			$codes[] = substr($code, 0,-2) . 's';
+			$expectSingle = true;
+		}
+
+		// get value
 		foreach ($this->entities as $entity)
 		{
-			if ($entity['CODE'] === $code)
+			if (in_array($entity['CODE'], $codes, true))
 			{
-				return $entity['ID'];
+				return ($expectSingle
+					? (current(array_values($entity['ID'])) ?: null)
+					: $entity['ID']
+				);
 			}
 		}
 
@@ -367,16 +483,63 @@ class ActualEntitySelector
 	 *
 	 * @param string $code Code.
 	 * @param int|int[]|null $value Entity id.
+	 * @param array $options $options.
 	 * @throws ArgumentException
+	 * @internal
 	 */
-	public function set($code, $value)
+	public function set($code, $value, array $options = [])
 	{
-		$value = (int) $value;
+		// prepare $valueMulti and $valueSingle
+		if (is_array($value))
+		{
+			$value = array_map(
+				function ($item)
+				{
+					return (int) $item;
+				},
+				$value
+			);
+			$value = array_filter(
+				$value,
+				function ($item)
+				{
+					return $item > 0;
+				}
+			);
+		}
+		else
+		{
+			$valueSingle = (int) $value;
+			$valueSingle = $valueSingle > 0 ? $valueSingle : null;
+			$value = $valueSingle ? [$valueSingle] : [];
+		}
+
+		// prepare $codes
+		$codes = [$code];
+		if (substr($code, -3) === 'yId')
+		{
+			$codes[] = substr($code, 0,-3) . 'ies';
+		}
+		elseif (substr($code, -2) === 'Id')
+		{
+			$codes[] = substr($code, 0,-2) . 's';
+		}
+
+		// set value
 		foreach ($this->entities as $index => $entity)
 		{
-			if ($entity['CODE'] === $code)
+			if (in_array($entity['CODE'], $codes, true))
 			{
-				$entity['ID'] = $value ?: null;
+				$entity['ID'] = $value;
+				if (isset($options['skipRanking']))
+				{
+					$entity['SKIP_RANKING'] = (bool) $options['skipRanking'];
+				}
+				if (isset($options['skipDuplicates']))
+				{
+					$entity['SKIP_DUPLICATES'] = (bool) $options['skipDuplicates'];
+				}
+
 				$this->entities[$index] = $entity;
 				return;
 			}
@@ -389,6 +552,7 @@ class ActualEntitySelector
 	 * Get actual entities with non-primary entities.
 	 *
 	 * @return array
+	 * @internal
 	 */
 	public function getAll()
 	{
@@ -427,12 +591,15 @@ class ActualEntitySelector
 				continue;
 			}
 
-			$sort = isset($entity['PRIMARY_SORT']) ? $entity['PRIMARY_SORT'] : 100;
-			$sort += ++$num/100;
-			$list[(string) $sort] = array(
-				'ENTITY_TYPE_ID' => $entity['TYPE_ID'],
-				'ENTITY_ID' => $entity['ID'],
-			);
+			foreach ($entity['ID'] as $entityId)
+			{
+				$sort = isset($entity['PRIMARY_SORT']) ? $entity['PRIMARY_SORT'] : 100;
+				$sort += ++$num/100;
+				$list[(string) $sort] = array(
+					'ENTITY_TYPE_ID' => $entity['TYPE_ID'],
+					'ENTITY_ID' => $entityId,
+				);
+			}
 		}
 
 		ksort($list, SORT_NUMERIC);
@@ -478,20 +645,7 @@ class ActualEntitySelector
 		$list = [];
 		foreach ($entities as $entity)
 		{
-			switch ($entity->getTypeId() )
-			{
-				case \CCrmOwnerType::Order:
-					if (!isset($list[\CCrmOwnerType::Order]))
-					{
-						$list[\CCrmOwnerType::Order] = [];
-					}
-					$list[\CCrmOwnerType::Order][] = $entity->getId();
-					break;
-
-				default:
-					$this->setEntity($entity->getTypeId(), $entity->getId(), $skipRanking);
-					break;
-			}
+			$list[$entity->getTypeId()][] = $entity->getId();
 		}
 
 		foreach ($list as $typeId => $ids)
@@ -512,25 +666,7 @@ class ActualEntitySelector
 	 */
 	public function setEntity($entityTypeId, $entityId, $skipRanking = false)
 	{
-		if (is_array($entityId))
-		{
-			switch ($entityTypeId)
-			{
-				case \CCrmOwnerType::Order:
-					$entityId = is_array($entityId) ? $entityId : [$entityId];
-					$entityId = array_filter($entityId, 'is_numeric');
-					$entityId = array_map('intval', $entityId);
-					$entityId = empty($entityId) ? null : $entityId;
-					break;
-
-				default:
-					$entityId = current($entityId);
-					$entityId = $entityId ? (int) $entityId : null;
-					break;
-			}
-		}
-
-		foreach($this->entities as $index => $entity)
+		foreach($this->entities as $entity)
 		{
 			if (!isset($entity['IS_PRIMARY']) || !$entity['IS_PRIMARY'])
 			{
@@ -545,7 +681,7 @@ class ActualEntitySelector
 			// check with lead type
 			if ($entityTypeId == \CCrmOwnerType::Lead)
 			{
-				$isCurrentLeadRC = $entity['CODE'] == 'returnCustomerLeadId';
+				$isCurrentLeadRC = $entity['CODE'] == 'returnCustomerLeads';
 				$leadRow = LeadTable::getRow([
 					'select' => ['ID', 'IS_RETURN_CUSTOMER', 'CONTACT_ID', 'COMPANY_ID'],
 					'filter' => ['=ID' => $entityId]
@@ -572,11 +708,12 @@ class ActualEntitySelector
 			}
 			elseif ($entityTypeId == \CCrmOwnerType::Deal)
 			{
-				$dealRow = DealTable::getRow([
+				$dealRows = DealTable::getList([
 					'select' => ['ID', 'CONTACT_ID', 'COMPANY_ID'],
-					'filter' => ['=ID' => $entityId]
+					'filter' => ['=ID' => $entityId],
+					'limit' => 3
 				]);
-				if ($dealRow)
+				foreach ($dealRows as $dealRow)
 				{
 					if ($dealRow['CONTACT_ID'])
 					{
@@ -587,12 +724,41 @@ class ActualEntitySelector
 						$this->setEntity(\CCrmOwnerType::Company, $dealRow['COMPANY_ID'], true);
 					}
 				}
+
+				$skipRanking = true;
+			}
+			elseif ($entityTypeId == \CCrmOwnerType::Order)
+			{
+				$orderRows = OrderContactCompanyTable::getList([
+					'select' => ['ENTITY_TYPE_ID', 'ENTITY_ID'],
+					'filter' => [
+						'=ORDER_ID' => $entityId,
+						'=IS_PRIMARY' => 'Y',
+						'=ENTITY_TYPE_ID' => [\CCrmOwnerType::Contact, \CCrmOwnerType::Company],
+					],
+					'limit' => 3
+				]);
+				foreach ($orderRows as $orderRow)
+				{
+					if ($orderRow['ENTITY_TYPE_ID'] == \CCrmOwnerType::Contact)
+					{
+						$this->setEntity(\CCrmOwnerType::Contact, $orderRow['ENTITY_ID'], true);
+					}
+					if ($orderRow['ENTITY_TYPE_ID'] == \CCrmOwnerType::Company)
+					{
+						$this->setEntity(\CCrmOwnerType::Company, $orderRow['ENTITY_ID'], true);
+					}
+				}
+
+				$skipRanking = true;
 			}
 
-			$entity['ID'] = $entityId;
-			$entity['SKIP_DUPLICATES'] = true;
-			$entity['SKIP_RANKING'] = $skipRanking;
-			$this->entities[$index] = $entity;
+			$this->set($entity['CODE'], $entityId,
+				[
+					'skipRanking' => $skipRanking,
+					'skipDuplicates' => true,
+				]
+			);
 		}
 
 		return $this;
@@ -658,10 +824,7 @@ class ActualEntitySelector
 		if (empty($list))
 		{
 			$entity = $this->getEntityByTypeId($entityTypeId);
-			if ($entity['ID'])
-			{
-				$list[] = $entity['ID'];
-			}
+			$list = array_merge($list, $entity['ID']);
 		}
 
 		// unique list
@@ -728,31 +891,31 @@ class ActualEntitySelector
 			$this->searchLead();
 		}
 
-		if ($this->getCompanyDealId())
+		if ($this->getContactDeals())
 		{
-			$this->set('dealId', $this->getCompanyDealId());
+			$this->setDeals($this->getContactDeals());
 		}
-		else if ($this->getContactDealId())
+		else if ($this->getContactDeals())
 		{
-			$this->set('dealId', $this->getContactDealId());
+			$this->setDeals($this->getContactDeals());
 		}
 
 		if (!empty($this->getCompanyOrders()))
 		{
-			$this->set('orders', $this->getCompanyOrders());
+			$this->setOrders($this->getCompanyOrders());
 		}
 		else if (!empty($this->getContactOrders()))
 		{
-			$this->set('orders', $this->getContactOrders());
+			$this->setOrders($this->getContactOrders());
 		}
 
-		if ($this->getCompanyReturnCustomerLeadId())
+		if ($this->getCompanyReturnCustomerLeads())
 		{
-			$this->set('returnCustomerLeadId', $this->getCompanyReturnCustomerLeadId());
+			$this->setReturnCustomerLeads($this->getCompanyReturnCustomerLeads());
 		}
-		else if ($this->getContactReturnCustomerLeadId())
+		else if ($this->getContactReturnCustomerLeads())
 		{
-			$this->set('returnCustomerLeadId', $this->getContactReturnCustomerLeadId());
+			$this->setReturnCustomerLeads($this->getContactReturnCustomerLeads());
 		}
 
 		return $this;
@@ -766,10 +929,14 @@ class ActualEntitySelector
 			return;
 		}
 
-		$this->set('companyId', $ranking->getEntityId());
-		$this->set('companyDealId', $ranking->getDealId());
-		$this->set('companyOrders', $ranking->getOrders());
-		$this->set('companyReturnCustomerLeadId', $ranking->getReturnCustomerLeadId());
+		$this->setCompanyId($ranking->getEntityId());
+		$this->setCompanyOrders($ranking->getOrders());
+		if (!$this->getDeals() && !$this->getReturnCustomerLeadId())
+		{
+			// set only if ::setEntity with deals or rc-leads didnt used
+			$this->setCompanyDeals($ranking->getDeals());
+			$this->setCompanyReturnCustomerLeads($ranking->getLeads());
+		}
 	}
 
 	protected function searchContact()
@@ -781,10 +948,14 @@ class ActualEntitySelector
 		}
 
 		$contactId = $ranking->getEntityId();
-		$this->set('contactId', $contactId);
-		$this->set('contactDealId', $ranking->getDealId());
-		$this->set('contactOrders', $ranking->getOrders());
-		$this->set('contactReturnCustomerLeadId', $ranking->getReturnCustomerLeadId());
+		$this->setContactId($contactId);
+		$this->setContactOrders($ranking->getOrders());
+		if (!$this->getDeals() && !$this->getReturnCustomerLeadId())
+		{
+			// set only if ::setEntity with deals or rc-leads didnt used
+			$this->setContactDeals($ranking->getDeals());
+			$this->setContactReturnCustomerLeads($ranking->getLeads());
+		}
 
 		if ($contactId)
 		{
@@ -794,7 +965,7 @@ class ActualEntitySelector
 			));
 			if (($contact = $contactDb->fetch()) && $contact['COMPANY_ID'])
 			{
-				$this->set('contactCompanyId', (int) $contact['COMPANY_ID']);
+				$this->setContactCompanyId((int) $contact['COMPANY_ID']);
 			}
 		}
 	}
@@ -816,7 +987,7 @@ class ActualEntitySelector
 
 		if ($leadId)
 		{
-			$this->set('leadId', $leadId);
+			$this->setLeadId($leadId);
 		}
 	}
 
@@ -912,136 +1083,6 @@ class ActualEntitySelector
 		}
 
 		return \CCrmOwnerType::getResponsibleID($this->getPrimaryTypeId(), $id, false);
-	}
-
-	/**
-	 * Get actual lead id.
-	 *
-	 * @return int|null
-	 */
-	public function getLeadId()
-	{
-		return $this->get('leadId');
-	}
-
-	/**
-	 * Get actual deal id.
-	 *
-	 * @return int|null
-	 */
-	public function getDealId()
-	{
-		return $this->get('dealId');
-	}
-
-	/**
-	 * Get actual deal id.
-	 *
-	 * @return int[]
-	 */
-	public function getOrders()
-	{
-		return $this->get('orders') ?: [];
-	}
-
-	/**
-	 * Get actual company id.
-	 *
-	 * @return int|null
-	 */
-	public function getCompanyId()
-	{
-		return $this->get('companyId');
-	}
-
-	/**
-	 * Get deal id that found by actual company id.
-	 *
-	 * @return int|null
-	 */
-	public function getCompanyDealId()
-	{
-		return $this->get('companyDealId');
-	}
-
-	/**
-	 * Get orders id that found by actual company id.
-	 *
-	 * @return int|null
-	 */
-	public function getCompanyOrders()
-	{
-		return $this->get('companyOrders');
-	}
-
-	/**
-	 * Get lead(return customer type) id that found by actual company id.
-	 *
-	 * @return int|null
-	 */
-	public function getCompanyReturnCustomerLeadId()
-	{
-		return $this->get('companyReturnCustomerLeadId');
-	}
-
-	/**
-	 * Get actual contact id.
-	 *
-	 * @return int|null
-	 */
-	public function getContactId()
-	{
-		return $this->get('contactId');
-	}
-
-	/**
-	 * Get deal id that found by actual contact id.
-	 *
-	 * @return int|null
-	 */
-	public function getContactDealId()
-	{
-		return $this->get('contactDealId');
-	}
-
-	/**
-	 * Get deal id that found by actual contact id.
-	 *
-	 * @return int|null
-	 */
-	public function getContactOrders()
-	{
-		return $this->get('contactOrders');
-	}
-
-	/**
-	 * Get company id that found by actual contact id.
-	 *
-	 * @return int|null
-	 */
-	public function getContactCompanyId()
-	{
-		return $this->get('contactCompanyId');
-	}
-
-	/**
-	 * Get lead(return customer type) id that found by actual contact id.
-	 *
-	 * @return int|null
-	 */
-	public function getContactReturnCustomerLeadId()
-	{
-		return $this->get('contactReturnCustomerLeadId');
-	}
-
-	/**
-	 * Get actual lead(return customer type).
-	 *
-	 * @return int|null
-	 */
-	public function getReturnCustomerLeadId()
-	{
-		return $this->get('returnCustomerLeadId');
 	}
 
 	/**

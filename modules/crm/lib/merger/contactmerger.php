@@ -86,23 +86,23 @@ class ContactMerger extends EntityMerger
 		}
 	}
 
-	/**
-	 * Merge entity fields. May be overridden by descendants.
-	 * @param array &$seed Seed entity fields.
-	 * @param array &$targ Target entity fields.
-	 * @param array $fieldInfos Metadata fields.
-	 * @param bool $skipEmpty Skip empty fields flag. If is enabled then empty fields of "seed" will not be replaced by fields from "targ"
-	 * @param array $options Options array.
-	 * @throws Main\ArgumentException
-	 * @throws Main\ArgumentOutOfRangeException
-	 * @throws Main\NotSupportedException
-	 */
-	protected function innerMergeEntityFields(array &$seed, array &$targ, array &$fieldInfos, $skipEmpty = false, array $options = array())
+	protected static function canMergeEntityField($fieldID)
 	{
-		self::mergeEntityFields($seed, $targ, $fieldInfos, $skipEmpty);
-		
-		//region Merge company bindings
+		//Field CompanyID is obsolete. It is replaced by CompanyIDs
+		if($fieldID === 'COMPANY_ID')
+		{
+			return false;
+		}
+		return parent::canMergeEntityField($fieldID);
+	}
+
+	protected function innerMergeBoundEntities(array &$seed, array &$targ, $skipEmpty = false, array $options = array())
+	{
 		$seedID = isset($seed['ID']) ? (int)$seed['ID'] : 0;
+		$targID = isset($targ['ID']) ? (int)$targ['ID'] : 0;
+
+		//region Merge company bindings
+		$seedBindings = null;
 		if($seedID > 0)
 		{
 			$seedBindings = Binding\ContactCompanyTable::getContactBindings($seedID);
@@ -120,12 +120,8 @@ class ContactMerger extends EntityMerger
 					: array($seed['COMPANY_ID'])
 			);
 		}
-		else
-		{
-			$seedBindings = array();
-		}
 
-		$targID = isset($targ['ID']) ? (int)$targ['ID'] : 0;
+		$targBindings = null;
 		if($targID > 0)
 		{
 			$targBindings = Binding\ContactCompanyTable::getContactBindings($targID);
@@ -143,23 +139,14 @@ class ContactMerger extends EntityMerger
 					: array($targ['COMPANY_ID'])
 			);
 		}
-		else
-		{
-			$targBindings = array();
-		}
 
 		//TODO: Rename SKIP_MULTIPLE_USER_FIELDS -> ENABLE_MULTIPLE_FIELDS_ENRICHMENT
 		$skipMultipleFields = isset($options['SKIP_MULTIPLE_USER_FIELDS']) && $options['SKIP_MULTIPLE_USER_FIELDS'];
-		if(!$skipMultipleFields)
+		if($seedBindings !== null && count($seedBindings) > 0)
 		{
-			if(empty($seedBindings))
+			if(!$skipMultipleFields)
 			{
-				//Prevent target companies from changing
-				unset($targ['COMPANY_ID']);
-			}
-			else
-			{
-				if(empty($targBindings))
+				if($targBindings === null || count($targBindings) === 0)
 				{
 					$targBindings = $seedBindings;
 				}
@@ -169,20 +156,14 @@ class ContactMerger extends EntityMerger
 				}
 				$targ['COMPANY_BINDINGS'] = $targBindings;
 			}
-		}
-		elseif(empty($targBindings) && !$skipEmpty)
-		{
-			if(empty($seedBindings))
-			{
-				//Prevent target companies from changing
-				unset($targ['COMPANY_ID']);
-			}
-			else
+			elseif($targBindings === null || (count($targBindings) === 0 && !$skipEmpty))
 			{
 				$targ['COMPANY_BINDINGS'] = $seedBindings;
 			}
 		}
 		//endregion
+
+		parent::innerMergeBoundEntities($seed, $targ, $skipEmpty, $options);
 	}
 	/**
 	 * Update entity
@@ -196,6 +177,8 @@ class ContactMerger extends EntityMerger
 	protected function updateEntity($entityID, array &$fields, $roleID, array $options = array())
 	{
 		$entity = $this->getEntity();
+		//Required for set current user as last modification author
+		unset($fields['CREATED_BY_ID'], $fields['DATE_CREATE'], $fields['MODIFY_BY_ID'], $fields['DATE_MODIFY']);
 		if(!$entity->Update($entityID, $fields, true, true, $options))
 		{
 			throw new EntityMergerException(
@@ -238,7 +221,10 @@ class ContactMerger extends EntityMerger
 		\CCrmSonetRelation::RebindRelations(\CCrmOwnerType::Contact, $seedID, $targID);
 		\CCrmEvent::Rebind(\CCrmOwnerType::Contact, $seedID, $targID);
 		EntityRequisite::rebind(\CCrmOwnerType::Contact, $seedID, $targID);
+
 		Timeline\ActivityEntry::rebind(\CCrmOwnerType::Contact, $seedID, $targID);
+		Timeline\CreationEntry::rebind(\CCrmOwnerType::Contact, $seedID, $targID);
+		Timeline\MarkEntry::rebind(\CCrmOwnerType::Contact, $seedID, $targID);
 		Timeline\CommentEntry::rebind(\CCrmOwnerType::Contact, $seedID, $targID);
 	}
 	protected function resolveMergeCollisions($seedID, $targID, array &$results)

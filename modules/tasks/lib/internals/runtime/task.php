@@ -142,7 +142,7 @@ final class Task extends \Bitrix\Tasks\Internals\Runtime
 			'sql' => '',
 		);
 
-		if(!User::isAdmin($parameters['USER_ID']))
+		if (!User::isSuper($parameters['USER_ID']))
 		{
 			$result['sql'] = static::getAccessibleTaskIdsSql($parameters);
 		}

@@ -125,6 +125,7 @@ class Iblock extends Volume\Module\Module
 						{$filterIblockSql}
 					GROUP BY
 						iblock.ID
+					ORDER BY NULL
 				)
 				/*-- section --*/
 				UNION
@@ -142,6 +143,7 @@ class Iblock extends Volume\Module\Module
 						{$filterSectionSql}
 					GROUP BY
 						section.IBLOCK_ID
+					ORDER BY NULL
 				)
 				UNION
 				(
@@ -158,6 +160,7 @@ class Iblock extends Volume\Module\Module
 						{$filterSectionSql}
 					GROUP BY
 						section.IBLOCK_ID
+					ORDER BY NULL
 				)
 				/*-- element --*/
 				UNION
@@ -175,6 +178,7 @@ class Iblock extends Volume\Module\Module
 						{$filterElementSql}
 					GROUP BY
 						element.IBLOCK_ID
+					ORDER BY NULL
 				)
 				UNION
 				(
@@ -191,6 +195,7 @@ class Iblock extends Volume\Module\Module
 						{$filterElementSql}
 					GROUP BY
 						element.IBLOCK_ID
+					ORDER BY NULL
 				)
 				/*-- property --*/
 				UNION
@@ -216,10 +221,12 @@ class Iblock extends Volume\Module\Module
 						{$filterElementSql}
 					GROUP BY
 						element.IBLOCK_ID
+					ORDER BY NULL
 				)
 				{$entityUserFieldSource}
 			) src
 			{$groupBySql}
+			ORDER BY NULL
 		";
 
 		$columnList = Volume\QueryHelper::prepareInsert(

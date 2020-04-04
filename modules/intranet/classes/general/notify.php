@@ -36,7 +36,7 @@ class CIntranetNotify
 
 		if ($blockNewUserLF != "Y")
 		{
-			$dbRes = CUser::GetByID($USER_ID);
+			$dbRes = CUser::GetList($by="ID", $order="asc", array("ID_EQUAL_EXACT" => $USER_ID), array("FIELDS" => array("EXTERNAL_AUTH_ID"), "SELECT" => array("UF_DEPARTMENT")));
 			if (
 				($arUser = $dbRes->Fetch())
 				&& (!in_array($arUser["EXTERNAL_AUTH_ID"], Array('bot', 'imconnector')))
@@ -126,70 +126,61 @@ class CIntranetNotify
 
 	public static function OnAfterSocNetLogCommentAdd($ID, $arFields)
 	{
-		if (!IsModuleInstalled('bitrix24'))
+		if (
+			$arFields['ENTITY_TYPE'] == SONET_INTRANET_NEW_USER_ENTITY
+			&& $arFields['EVENT_ID'] == SONET_INTRANET_NEW_USER_COMMENT_EVENT_ID
+		)
 		{
-			if (
-				$arFields['ENTITY_TYPE'] == SONET_INTRANET_NEW_USER_ENTITY
-				&& $arFields['EVENT_ID'] == SONET_INTRANET_NEW_USER_COMMENT_EVENT_ID
-			)
-			{
-				$arUpdateFields = array(
-					'RATING_TYPE_ID' => 'INTRANET_NEW_USER_COMMENT',
-					'RATING_ENTITY_ID' => $ID,
-				);
+			$arUpdateFields = array(
+				'RATING_TYPE_ID' => 'INTRANET_NEW_USER_COMMENT',
+				'RATING_ENTITY_ID' => $ID,
+			);
 
-				CSocNetLogComments::Update($ID, $arUpdateFields);
-			}
+			CSocNetLogComments::Update($ID, $arUpdateFields);
 		}
 	}
 
 	public static function OnFillSocNetLogEvents(&$arSocNetLogEvents)
 	{
-		if (!IsModuleInstalled('bitrix24'))
-		{
-			$arSocNetLogEvents[SONET_INTRANET_NEW_USER_EVENT_ID] = array(
-				"ENTITIES" => array(
-					SONET_INTRANET_NEW_USER_ENTITY => array(
-						'TITLE' => GetMessage('I_NEW_USER_TITLE_SETTINGS'),
-						"TITLE_SETTINGS_1" => "#TITLE#",
-						"TITLE_SETTINGS_2" => "#TITLE#",
-						"TITLE_SETTINGS_ALL" => GetMessage('I_NEW_USER_TITLE_SETTINGS'),
-						"TITLE_SETTINGS_ALL_1" => GetMessage('I_NEW_USER_TITLE_SETTINGS'),
-						"TITLE_SETTINGS_ALL_2" => GetMessage('I_NEW_USER_TITLE_SETTINGS'),
-					),
+		$arSocNetLogEvents[SONET_INTRANET_NEW_USER_EVENT_ID] = array(
+			"ENTITIES" => array(
+				SONET_INTRANET_NEW_USER_ENTITY => array(
+					'TITLE' => GetMessage('I_NEW_USER_TITLE_SETTINGS'),
+					"TITLE_SETTINGS_1" => "#TITLE#",
+					"TITLE_SETTINGS_2" => "#TITLE#",
+					"TITLE_SETTINGS_ALL" => GetMessage('I_NEW_USER_TITLE_SETTINGS'),
+					"TITLE_SETTINGS_ALL_1" => GetMessage('I_NEW_USER_TITLE_SETTINGS'),
+					"TITLE_SETTINGS_ALL_2" => GetMessage('I_NEW_USER_TITLE_SETTINGS'),
 				),
+			),
+			"CLASS_FORMAT" => "CIntranetNotify",
+			"METHOD_FORMAT" => "FormatEvent",
+			"HAS_CB" => 'Y',
+			"FULL_SET" => array(SONET_INTRANET_NEW_USER_EVENT_ID, SONET_INTRANET_NEW_USER_COMMENT_EVENT_ID),
+			"COMMENT_EVENT" => array(
+				"EVENT_ID" => SONET_INTRANET_NEW_USER_COMMENT_EVENT_ID,
+				"UPDATE_CALLBACK" => "NO_SOURCE",
+				"DELETE_CALLBACK" => "NO_SOURCE",
 				"CLASS_FORMAT" => "CIntranetNotify",
-				"METHOD_FORMAT" => "FormatEvent",
-				"HAS_CB" => 'Y',
-				"FULL_SET" => array(SONET_INTRANET_NEW_USER_EVENT_ID, SONET_INTRANET_NEW_USER_COMMENT_EVENT_ID),
-				"COMMENT_EVENT" => array(
-					"EVENT_ID" => SONET_INTRANET_NEW_USER_COMMENT_EVENT_ID,
-					"UPDATE_CALLBACK" => "NO_SOURCE",
-					"DELETE_CALLBACK" => "NO_SOURCE",
-					"CLASS_FORMAT" => "CIntranetNotify",
-					"METHOD_FORMAT" => "FormatComment",
-					"RATING_TYPE_ID" => "LOG_COMMENT"
-				)
-			);
-		}
+				"METHOD_FORMAT" => "FormatComment",
+				"RATING_TYPE_ID" => "LOG_COMMENT"
+			)
+		);
 	}
 
 	public static function OnFillSocNetAllowedSubscribeEntityTypes(&$arSocNetEntityTypes)
 	{
-		if (!IsModuleInstalled('bitrix24'))
-		{
-			$arSocNetEntityTypes[] = SONET_INTRANET_NEW_USER_ENTITY;
+		$arSocNetEntityTypes[] = SONET_INTRANET_NEW_USER_ENTITY;
 
-			global $arSocNetAllowedSubscribeEntityTypesDesc;
-			$arSocNetAllowedSubscribeEntityTypesDesc[SONET_INTRANET_NEW_USER_ENTITY] = array(
-				"TITLE_LIST" => GetMessage('I_NEW_USER_TITLE_LIST'),
-				"TITLE_ENTITY" => GetMessage('I_NEW_USER_TITLE_LIST'),
-				"CLASS_DESC_GET" => "CIntranetNotify",
-				"METHOD_DESC_GET" => "GetByID",
-				"CLASS_DESC_SHOW" => "CIntranetNotify",
-				"METHOD_DESC_SHOW" => "GetForShow",
-			);
-		}
+		global $arSocNetAllowedSubscribeEntityTypesDesc;
+		$arSocNetAllowedSubscribeEntityTypesDesc[SONET_INTRANET_NEW_USER_ENTITY] = array(
+			"TITLE_LIST" => GetMessage('I_NEW_USER_TITLE_LIST'),
+			"TITLE_ENTITY" => GetMessage('I_NEW_USER_TITLE_LIST'),
+			"CLASS_DESC_GET" => "CIntranetNotify",
+			"METHOD_DESC_GET" => "GetByID",
+			"CLASS_DESC_SHOW" => "CIntranetNotify",
+			"METHOD_DESC_SHOW" => "GetForShow",
+		);
 	}
 
 	public static function GetByID($ID)
@@ -225,7 +216,17 @@ class CIntranetNotify
 		$dbRes = CUser::GetByID($arFields['ENTITY_ID']);
 		$arUser = $dbRes->Fetch();
 
-		if ($arUser)
+		if (
+			$arUser
+			&& (
+				IsModuleInstalled("extranet")
+				|| (
+					!empty($arUser['UF_DEPARTMENT'])
+					&& is_array($arUser['UF_DEPARTMENT'])
+					&& intval($arUser['UF_DEPARTMENT'][0]) > 0
+				) // for uninstalled extranet module / b24
+			)
+		)
 		{
 			if(!$bMail)
 			{
@@ -266,44 +267,64 @@ class CIntranetNotify
 					),
 				);
 
-				$arResult['CREATED_BY']['FORMATTED'] = '';
-				if (is_array($arUser['UF_DEPARTMENT']) && count($arUser['UF_DEPARTMENT']) > 0)
+				if (Loader::includeModule('bitrix24'))
 				{
-					if ($arParams["MOBILE"] == "Y")
-						$url = "";
-					else
-					{
-						$url = $arParams['PATH_TO_CONPANY_DEPARTMENT'];
-						if (strlen($url) <= 0)
-							$url = $arParams['PATH_TO_COMPANY_DEPARTMENT'];
-					}
-
-					$dbRes = CIBlockSection::GetList(array('ID' => 'ASC'), array('ID' => $arUser['UF_DEPARTMENT']));
-					if ($arSection = $dbRes->GetNext())
-					{
-						if (strlen($url) > 0)
-							$arResult['CREATED_BY']['FORMATTED'] = '<a href="'.str_replace('#ID#', $arSection['ID'], $url).'">'.$arSection['NAME'].'</a>';
-						else
-							$arResult['CREATED_BY']['FORMATTED'] = $arSection['NAME'];
-					}
+					$arResult['CREATED_BY']['FORMATTED'] = (
+						$arParams["MOBILE"] == "Y"
+							? htmlspecialcharsEx(self::GetSiteName())
+							: '<a href="'.BITRIX24_PATH_COMPANY_STRUCTURE_VISUAL.'">'.htmlspecialcharsEx(self::GetSiteName()).'</a>'
+					);
 				}
-
-				if (!$arResult['CREATED_BY']['FORMATTED'])
+				else
 				{
-					$arResult['CREATED_BY']['FORMATTED'] = htmlspecialcharsEx(self::GetSiteName());
+					$arResult['CREATED_BY']['FORMATTED'] = '';
+					if (is_array($arUser['UF_DEPARTMENT']) && count($arUser['UF_DEPARTMENT']) > 0)
+					{
+						if ($arParams["MOBILE"] == "Y")
+						{
+							$url = "";
+						}
+						else
+						{
+							$url = $arParams['PATH_TO_CONPANY_DEPARTMENT'];
+							if (strlen($url) <= 0)
+							{
+								$url = $arParams['PATH_TO_COMPANY_DEPARTMENT'];
+							}
+						}
+
+						$dbRes = CIBlockSection::GetList(array('ID' => 'ASC'), array('ID' => $arUser['UF_DEPARTMENT']));
+						if ($arSection = $dbRes->fetch())
+						{
+							$arResult['CREATED_BY']['FORMATTED'] = (
+								strlen($url) > 0
+									? '<a href="'.str_replace('#ID#', $arSection['ID'], $url).'">'.htmlspecialcharsEx($arSection['NAME']).'</a>'
+									: htmlspecialcharsEx($arSection['NAME'])
+							);
+						}
+					}
+
+					if (strlen($arResult['CREATED_BY']['FORMATTED']) <= 0)
+					{
+						$arResult['CREATED_BY']['FORMATTED'] = htmlspecialcharsEx(self::GetSiteName());
+					}
 				}
 
 				$arResult['ENTITY']['FORMATTED']["NAME"] = ($bExtranetUser ? GetMessage('I_NEW_USER_EXTERNAL_TITLE') : GetMessage('I_NEW_USER_TITLE'));
 				$arResult['ENTITY']['FORMATTED']["URL"] = $user_url;
 
 				if (
-					$arParams["MOBILE"] != "Y" 
+					$arParams["MOBILE"] != "Y"
 					&& $arParams["NEW_TEMPLATE"] != "Y"
 				)
 				{
 					$arResult['EVENT_FORMATTED']['IS_MESSAGE_SHORT'] = CSocNetLogTools::FormatEvent_IsMessageShort($arFields['MESSAGE']);
 				}
 			}
+		}
+		else
+		{
+			$arResult = false;
 		}
 
 		return $arResult;
@@ -477,16 +498,17 @@ class CIntranetNotify
 		)
 		{
 			$genderSuffix = "";
-			$dbUser = CUser::GetByID($arCommentFields["USER_ID"]);
-			if($arUser = $dbUser->Fetch())
+			$dbUsers = CUser::GetList(($by="ID"), ($order="desc"), array("ID" => $arCommentFields["USER_ID"].' | '.$arLog["USER_ID"]), array("PERSONAL_GENDER", "LOGIN", "NAME", "LAST_NAME", "SECOND_NAME"));
+			while ($arUser = $dbUsers->Fetch())
 			{
-				$genderSuffix = $arUser["PERSONAL_GENDER"];
-			}
-			
-			$dbUser = CUser::GetByID($arLog["USER_ID"]);
-			if($arUser = $dbUser->Fetch())
-			{
-				$nameFormatted = CUser::FormatName(CSite::GetNameFormat(), $arUser);
+				if ($arUser["ID"] == $arCommentFields["USER_ID"])
+				{
+					$genderSuffix = $arUser["PERSONAL_GENDER"];
+				}
+				if ($arUser["ID"] == $arLog["USER_ID"])
+				{
+					$nameFormatted = CUser::FormatName(CSite::GetNameFormat(), $arUser);
+				}
 			}
 
 			$strPathToLogEntry = str_replace("#log_id#", $arLog["ID"], COption::GetOptionString("socialnetwork", "log_entry_page", "/company/personal/log/#log_id#/", SITE_ID));

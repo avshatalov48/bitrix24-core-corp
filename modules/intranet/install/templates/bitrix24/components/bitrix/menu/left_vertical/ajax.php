@@ -597,9 +597,8 @@ if ($_SERVER["REQUEST_METHOD"]=="POST" && strlen($_POST["action"])>0 && check_bi
 		case "collapse_menu":
 			CUserOptions::SetOption("intranet", "left_menu_collapsed", "Y");
 			break;
-
 		case "expand_menu":
-			CUserOptions::DeleteOption("intranet", "left_menu_collapsed");
+			CUserOptions::SetOption("intranet", "left_menu_collapsed", "N");
 			break;
 
 		case "set_preset":
@@ -618,8 +617,8 @@ if ($_SERVER["REQUEST_METHOD"]=="POST" && strlen($_POST["action"])>0 && check_bi
 					CUserOptions::SetOption("intranet", "left_menu_preset_".$siteID, $_POST["preset"]);
 
 					CUserOptions::DeleteOption("intranet", "left_menu_first_page_".$siteID);
-					CUserOptions::DeleteOption("intranet", "left_menu_self_items_".$siteID);
-					CUserOptions::DeleteOption("intranet", "left_menu_standard_items_".$siteID);
+				//	CUserOptions::DeleteOption("intranet", "left_menu_self_items_".$siteID);
+				//	CUserOptions::DeleteOption("intranet", "left_menu_standard_items_".$siteID);
 					CUserOptions::DeleteOption("intranet", $optionName);
 				}
 
@@ -661,6 +660,20 @@ if ($_SERVER["REQUEST_METHOD"]=="POST" && strlen($_POST["action"])>0 && check_bi
 				{
 					$_SESSION['B24_SHOW_DEMO_LICENSE_HINT'] = 1;
 				}
+			}
+
+			$showPresetPopup = COption::GetOptionString("intranet", "show_menu_preset_popup", "N") == "Y";
+			if ($showPresetPopup)
+			{
+				COption::SetOptionString("intranet", "show_menu_preset_popup", "N");
+			}
+
+			break;
+		case "delay_set_preset":
+			$showPresetPopup = COption::GetOptionString("intranet", "show_menu_preset_popup", "N") == "Y";
+			if ($showPresetPopup)
+			{
+				COption::SetOptionString("intranet", "show_menu_preset_popup", "N");
 			}
 
 			break;

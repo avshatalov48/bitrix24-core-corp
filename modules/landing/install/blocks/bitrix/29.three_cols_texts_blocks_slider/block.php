@@ -2,7 +2,7 @@
 
 	<div class="container g-py-40">
 
-		<div class="js-carousel g-pb-60"
+		<div class="js-carousel g-pb-60 row"
 			 data-infinite="true"
 			 data-autoplay="true"
 			 data-pause-hover="true"
@@ -30,8 +30,15 @@
                  "settings": {
                    "slidesToShow": 1
                  }
-               }]'>
-			<div class="landing-block-card-slider-element js-slide g-px-15 mb-1">
+               }]'
+			 data-init-classes-exclude='[{
+				 "selector": ".landing-block-card-slider-element",
+				 "class": "col-12 col-sm-6 col-lg-4"
+			   }, {
+				 "selector": ".js-carousel",
+				 "class": "row"
+			   }]'>
+			<div class="landing-block-card-slider-element js-slide g-px-15 mb-1 col-12 col-sm-6 col-lg-4">
 				<blockquote class="landing-block-node-element-text u-blockquote-v8 g-font-weight-300 g-font-size-15 rounded g-pa-25 g-mb-25">
 					Dear Company24 team, I just bought your template some weeks ago. The template is really nice and
 					offers quite a large set of options.
@@ -49,7 +56,7 @@
 				</div>
 			</div>
 
-			<div class="landing-block-card-slider-element js-slide g-px-15 mb-1">
+			<div class="landing-block-card-slider-element js-slide g-px-15 mb-1 col-12 col-sm-6 col-lg-4">
 				<blockquote class="landing-block-node-element-text u-blockquote-v8 g-font-weight-300 g-font-size-15 rounded g-pa-25 g-mb-25">
 					Hi there purchased a couple of days ago and the site looks great, big thanks to the Company24
 					guys, they gave me some great help with some fiddly setup issues.
@@ -67,7 +74,7 @@
 				</div>
 			</div>
 
-			<div class="landing-block-card-slider-element js-slide g-px-15 mb-1">
+			<div class="landing-block-card-slider-element js-slide g-px-15 mb-1 col-12 col-sm-6 col-lg-4">
 				<blockquote class="landing-block-node-element-text u-blockquote-v8 g-font-weight-300 g-font-size-15 rounded g-pa-25 g-mb-25">
 					The website package made my life easier. I will advice programmers to buy it even it cost 140$ -
 					because it shorten hunderds of hours in front of your pc designing your layout.
@@ -85,7 +92,7 @@
 				</div>
 			</div>
 
-			<div class="landing-block-card-slider-element js-slide g-px-15 mb-1">
+			<div class="landing-block-card-slider-element js-slide g-px-15 mb-1 col-12 col-sm-6 col-lg-4">
 				<blockquote class="landing-block-node-element-text u-blockquote-v8 g-font-weight-300 g-font-size-15 rounded g-pa-25 g-mb-25">
 					New website template looks great!. Love the multiple layout examples for Shortcodes and the new
 					Show code Copy code snippet feature is brilliant
@@ -103,7 +110,7 @@
 				</div>
 			</div>
 
-			<div class="landing-block-card-slider-element js-slide g-px-15 mb-1">
+			<div class="landing-block-card-slider-element js-slide g-px-15 mb-1 col-12 col-sm-6 col-lg-4">
 				<blockquote class="landing-block-node-element-text u-blockquote-v8 g-font-weight-300 g-font-size-15 rounded g-pa-25 g-mb-25">
 					Great templates, I'm currently using them for work. It's beautiful and the coding is done
 					quickly and seamlessly. Thank you!

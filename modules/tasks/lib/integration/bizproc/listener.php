@@ -7,6 +7,12 @@ class Listener
 {
 	public static function onTaskAdd($id, array $fields)
 	{
+		//fix creation from template
+		if (!isset($fields['STATUS']))
+		{
+			$fields['STATUS'] = \CTasks::STATE_PENDING;
+		}
+
 		//Run project automation
 
 		if (isset($fields['GROUP_ID']) && $fields['GROUP_ID'] > 0)
@@ -33,6 +39,7 @@ class Listener
 	public static function onTaskUpdate($id, array $fields, array $previousFields)
 	{
 		$projectId = isset($fields['GROUP_ID']) ? $fields['GROUP_ID'] : $previousFields['GROUP_ID'];
+		$statusChanged = (isset($fields['STATUS']) && (string)$fields['STATUS'] !== (string)$previousFields['STATUS']);
 
 		//Stop automation on previous project if project was changed
 		if (
@@ -45,10 +52,7 @@ class Listener
 		}
 
 		//Check triggers for project tasks
-		$projectTriggerApplied = (
-			isset($fields['STATUS']) ?
-			static::fireStatusTriggerOnProject($id, $projectId, $fields) : false
-		);
+		$projectTriggerApplied = ($statusChanged ? static::fireStatusTriggerOnProject($id, $projectId, $fields) : false);
 
 		//Run project automation
 		if (
@@ -76,8 +80,6 @@ class Listener
 			$personalDocumentType = Document\Task::resolvePersonalTaskType($memberId);
 			Automation\Factory::stopAutomation($personalDocumentType, $id);
 		}
-
-		$statusChanged = (isset($fields['STATUS']) && (string)$fields['STATUS'] !== (string)$previousFields['STATUS']);
 
 		foreach ($membersDiff->plus as $memberId)
 		{

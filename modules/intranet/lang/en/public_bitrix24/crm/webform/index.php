@@ -1,3 +1,3 @@
 <?
-$MESS["CRM_TITLE"] = "CRM forms";
+$MESS["CRM_TITLE"] = "CRM Forms";
 ?>

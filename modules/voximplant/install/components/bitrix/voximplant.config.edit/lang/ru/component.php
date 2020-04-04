@@ -19,6 +19,7 @@ $MESS["VI_CONFIG_EDIT_VOTE_END_TUNE_TIP"] = "Эта мелодия проигр�
 $MESS["VI_CONFIG_EDIT_RECORDING_TUNE"] = "Предупреждение о начале записи звонка";
 $MESS["VI_CONFIG_EDIT_RECORDING_TUNE_TIP"] = "Эта мелодия проигрывается абоненту перед началом записи разговора";
 $MESS["VOX_CONFIG_EDIT_CONNECTION_SETTINGS"] = "Настройки подключения";
+$MESS["VOX_CONFIG_EDIT_SIP_NUMBERS"] = "Номера SIP АТС";
 $MESS["VOX_CONFIG_EDIT_CALL_ROUTING"] = "Маршрутизация входящих звонков";
 $MESS["VOX_CONFIG_EDIT_CALLBACK_ROUTING"] = "Маршрутизация обратных звонков";
 $MESS["VOX_CONFIG_EDIT_CRM_INTEGRATION"] = "Интеграция с CRM";

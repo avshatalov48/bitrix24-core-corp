@@ -448,7 +448,13 @@ class Helper
 			$add = '0d';
 		}
 
-		return '='.$fn.'('.$interval['basis'].',"'.$add.'")';
+		$worker = '';
+		if ($fn === 'workdateadd' && isset($interval['worker']))
+		{
+			$worker = $interval['worker'];
+		}
+
+		return '='.$fn.'('.$interval['basis'].',"'.$add.'"'.($worker ? ','.$worker : '').')';
 	}
 
 	public static function parseTimeString($time)

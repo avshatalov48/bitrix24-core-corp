@@ -5,6 +5,7 @@ $MESS["VOX_START_10_NUMBER_RENT"] = "Пакет 10 номеров";
 $MESS["VOX_START_SIP_PBX_OFFICE"] = "Офисная SIP АТС";
 $MESS["VOX_START_SIP_PBX_CLOUD"] = "Облачная SIP АТС";
 $MESS["VOX_START_CALLER_ID"] = "Привязать свой номер";
+$MESS["VOX_START_CONTRACTOR_DOCUMENTS"] = "Закрывающие документы";
 $MESS["VOX_START_UPLOAD_DOCUMENTS"] = "Загрузка документов";
 $MESS["VOX_START_CONFIGURE_NUMBERS"] = "Настройка номеров";
 $MESS["VOX_START_CONFIGURE_TELEPHONY"] = "Настройка телефонии";

@@ -16,4 +16,6 @@ $MESS["CRM_EMAIL_CODE_ALLOCATION_SUBJECT"] = "Размещать в теме";
 $MESS["CRM_EMAIL_CODE_ALLOCATION_NONE"] = "Не использовать";
 $MESS["CRM_EMAIL_DEFAULT_SUBJECT"] = "(Без темы)";
 $MESS["CRM_EMAIL_BAD_RESP_QUEUE"] = "В очереди на распределение писем из ящика \"#EMAIL#\" указан уволенный сотрудник. Новые письма не распределяются на него, но вся старая переписка по прежнему будет направлена уволенному. <a href=\"#CONFIG_URL#\">Настроить параметры очереди</a>.";
-?>
+
+$MESS["CRM_EMAIL_IMAP_ERROR_EMPLOYE_IN"] = "Письма от сотрудников не могут быть сохранены в CRM";
+$MESS["CRM_EMAIL_IMAP_ERROR_EMPLOYE_OUT"] = "Письма сотрудникам не могут быть сохранены в CRM";

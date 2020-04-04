@@ -9,6 +9,7 @@ use Bitrix\Main\Event;
 use Bitrix\Main\EventResult;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm\Ads\Internals\AdsFormLinkTable;
+use Bitrix\Crm\Tracking;
 use Bitrix\Seo\LeadAds\Service as LeadAdsService;
 use Bitrix\Seo\WebHook\Payload;
 
@@ -135,12 +136,13 @@ class WebHookFormFillHandler
 		}
 
 		$addResultParameters = array(
-			'ORIGIN_ID' => $type . '/' . $adsResultId
+			'ORIGIN_ID' => $type . '/' . $adsResultId,
+			'COMMON_DATA' => []
 		);
 		foreach ($crmForms as $crmFormId)
 		{
 			// add result
-			$this->addResult($crmFormId, $incomeFields, $addResultParameters);
+			$this->addResult($crmFormId, $incomeFields, $addResultParameters, $type);
 		}
 	}
 
@@ -165,7 +167,7 @@ class WebHookFormFillHandler
 		return $crmForms;
 	}
 
-	protected function addResult($formId, array $incomeFields, array $addResultParameters)
+	protected function addResult($formId, array $incomeFields, array $addResultParameters, $type)
 	{
 		// check existing form
 		$form = new Form();
@@ -180,6 +182,15 @@ class WebHookFormFillHandler
 		{
 			return true;
 		}
+
+		$addResultParameters['COMMON_DATA']['TRACE_ID'] = Tracking\Trace::create()
+			->addChannel(
+			$type === LeadAdsService::TYPE_FACEBOOK
+				? new Tracking\Channel\FbLeadAds()
+				: new Tracking\Channel\VkLeadAds()
+			)
+			->addChannel(new Tracking\Channel\Form($formId))
+			->save();
 
 		// prepare fields
 		$fields = $form->getFieldsMap();

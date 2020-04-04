@@ -8,6 +8,7 @@ use Bitrix\DocumentGenerator\Template;
 use Bitrix\Main\Application;
 use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
 
 abstract class ViewComponent extends \CBitrixComponent
@@ -60,11 +61,11 @@ abstract class ViewComponent extends \CBitrixComponent
 
 	/**
 	 * @return Result
-	 * @throws \Bitrix\Main\ArgumentTypeException
 	 * @throws \Bitrix\Main\LoaderException
 	 */
 	protected function initDocument()
 	{
+		Loc::loadLanguageFile(__FILE__);
 		$result = new Result();
 		if(!$this->includeModules())
 		{
@@ -72,16 +73,20 @@ abstract class ViewComponent extends \CBitrixComponent
 		}
 		else
 		{
+			$userPermissions = Driver::getInstance()->getUserPermissions();
 			if(isset($this->arParams['DOCUMENT_ID']) && $this->arParams['DOCUMENT_ID'] > 0)
 			{
+				if(!$userPermissions->canViewDocuments())
+				{
+					return $result->addError(new Error(Loc::getMessage('DOCGEN_DOCUMENT_VIEW_PERMISSION_ERROR')));
+				}
 				$document = Document::loadById($this->arParams['DOCUMENT_ID']);
 				if($document)
 				{
 					$this->document = $document;
-					if(!$this->document->hasAccess(Driver::getInstance()->getUserId()))
+					if(!$this->document->hasAccess())
 					{
-						$result->addError(new Error('Access denied'));
-						return $result;
+						return $result->addError(new Error(Loc::getMessage('DOCGEN_DOCUMENT_VIEW_ACCESS_ERROR')));
 					}
 					$provider = $this->document->getProvider();
 					if($provider)
@@ -91,25 +96,28 @@ abstract class ViewComponent extends \CBitrixComponent
 					$this->template = $document->getTemplate();
 					if($this->template && $this->template->MODULE_ID != $this->getModule())
 					{
-						$result->addError(new Error('Access denied'));
+						$result->addError(new Error(Loc::getMessage('DOCGEN_DOCUMENT_VIEW_ACCESS_ERROR')));
 					}
 				}
 				else
 				{
-					$result->addError(new Error('Document with id '.$this->arParams['DOCUMENT_ID'].' is not found'));
+					$result->addError(new Error(Loc::getMessage('DOCGEN_DOCUMENT_NOT_FOUND_ERROR')));
 				}
 				return $result;
 			}
 			elseif(isset($this->arParams['TEMPLATE_ID']) && isset($this->arParams['PROVIDER']) && isset($this->arParams['VALUE']))
 			{
+				if(!$userPermissions->canModifyDocuments())
+				{
+					return $result->addError(new Error(Loc::getMessage('DOCGEN_DOCUMENT_MODIFY_PERMISSION_ERROR')));
+				}
 				$template = Template::loadById($this->arParams['TEMPLATE_ID']);
 				if($template && !$template->isDeleted())
 				{
 					$template->setSourceType($this->arParams['PROVIDER']);
 					if($template->MODULE_ID != $this->getModule())
 					{
-						$result->addError(new Error('Access denied'));
-						return $result;
+						return $result->addError(new Error(Loc::getMessage('DOCGEN_DOCUMENT_VIEW_ACCESS_ERROR')));
 					}
 					$this->template = $template;
 					$this->value = $this->arParams['VALUE'];
@@ -119,21 +127,21 @@ abstract class ViewComponent extends \CBitrixComponent
 						$data['NUMBER'] = $this->arParams['NUMBER'];
 					}
 					$this->document = Document::createByTemplate($template, $this->value, $data);
-					if(!$this->document->hasAccess(Driver::getInstance()->getUserId()))
+					if(!$this->document->hasAccess())
 					{
-						$result->addError(new Error('Access denied'));
+						$result->addError(new Error(Loc::getMessage('DOCGEN_DOCUMENT_VIEW_ACCESS_ERROR')));
 						return $result;
 					}
 					$this->document->setValues($this->arParams['VALUES']);
 				}
 				else
 				{
-					$result->addError(new Error('template not found'));
+					$result->addError(new Error(Loc::getMessage('DOCGEN_TEMPLATE_NOT_FOUND_ERROR')));
 				}
 			}
 			else
 			{
-				$result->addError(new Error('Wrong parameters'));
+				$result->addError(new Error(Loc::getMessage('DOCGEN_UNKNOWN_ERROR')));
 			}
 		}
 

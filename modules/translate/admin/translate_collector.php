@@ -466,7 +466,7 @@ $tabControl->Begin();
 						'ID' => array_intersect($availableLanguages, $enabledLanguages),
 						'=ACTIVE' => 'Y'
 					],
-					'order' => ['DEF' => 'DESC', 'SORT' => 'ASC']
+					'order' => ['SORT' => 'ASC']
 				]);
 				while ($row = $iterator->fetch())
 				{
@@ -566,7 +566,7 @@ $tabControl->BeginNextTab();
 						'ID' => $enabledLanguages,
 						'=ACTIVE' => 'Y'
 					],
-					'order' => ['DEF' => 'DESC', 'SORT' => 'ASC']
+					'order' => ['SORT' => 'ASC']
 				]);
 				while ($row = $iterator->fetch())
 				{

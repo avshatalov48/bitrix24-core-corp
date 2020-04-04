@@ -201,7 +201,7 @@ class Helper
 			return false;
 		}
 
-		// TODO: ... [ORDER_CHANGE_001] - убрать или заменить
+		// TODO: ... [ORDER_CHANGE_001] - delete or replace
 		/*$arOrderOldFields = array();
 
 		$resultFields = $result->getData();
@@ -670,6 +670,29 @@ class Helper
 
 		if ($id > 0)
 			$orderFields['ID'] = $id;
+
+		if (isset($orderFields['ACCOUNT_NUMBER']))
+		{
+			$accountNumber = $orderFields['ACCOUNT_NUMBER'];
+			if (is_string($accountNumber) && strlen($accountNumber) > 0 || is_numeric($accountNumber))
+			{
+				$res = static::getList(
+					['ID' => 'ASC'],
+					[
+						'ACCOUNT_NUMBER' => $accountNumber,
+						'!ID' => $id,
+					],
+					false,
+					['nTopCount' => 1],
+					['ID']
+				);
+				if ($res->fetch())
+				{
+					$errors[] = Loc::getMessage('CRM_INVOICE_COMPAT_HELPER_EXISTING_ACCOUNT_NUMBER');
+					return false;
+				}
+			}
+		}
 
 		/** @var Sale\Result $r */
 		$r = Invoice::modifyOrder(Invoice::ORDER_COMPAT_ACTION_SAVE, $orderFields);

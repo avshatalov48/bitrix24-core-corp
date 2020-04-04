@@ -141,7 +141,6 @@ if (!isset($diskTitleFormat) || !is_callable($diskTitleFormat))
 				'</span>'.
 				'</a>'.
 				'</div>';
-
 		}
 		elseif ($entityType == \Bitrix\Disk\ProxyType\Common::className())
 		{
@@ -154,20 +153,42 @@ if (!isset($diskTitleFormat) || !is_callable($diskTitleFormat))
 				'</span>'.
 				'</a>'.
 				'</div>';
-
 		}
 		elseif (in_array($entityType, \Bitrix\Disk\Volume\Module\Im::getEntityType()))
 		{
 			$titleFormat =
 				'<div class="tasks-grid-username-wrapper">'.
 				'<a class="tasks-grid-username tasks-grid-commonname disk-volume-storage-link" target="_self" href="'.$row['ACTION_URL'].'" '.$linkStorageReload($row).'>'.
-				'<span class="tasks-grid-avatar  bx-disk-volume-im-icon"></span>'.
+				'<span class="tasks-grid-avatar bx-disk-volume-im-icon"></span>'.
 				'<span class="tasks-grid-username-inner">'.
 				$row['TITLE'].
 				'</span>'.
 				'</a>'.
 				'</div>';
-
+		}
+		elseif (in_array($entityType, \Bitrix\Disk\Volume\Module\Mail::getEntityType()))
+		{
+			$titleFormat =
+				'<div class="tasks-grid-username-wrapper">'.
+				'<a class="tasks-grid-username tasks-grid-commonname disk-volume-storage-link" target="_self" href="'.$row['ACTION_URL'].'" '.$linkStorageReload($row).'>'.
+				'<span class="tasks-grid-avatar bx-disk-volume-mail-icon"></span>'.
+				'<span class="tasks-grid-username-inner">'.
+				$row['TITLE'].
+				'</span>'.
+				'</a>'.
+				'</div>';
+		}
+		elseif (in_array($entityType, \Bitrix\Disk\Volume\Module\Documentgenerator::getEntityType()))
+		{
+			$titleFormat =
+				'<div class="tasks-grid-username-wrapper">'.
+				'<a class="tasks-grid-username tasks-grid-commonname disk-volume-storage-link" target="_self" href="'.$row['ACTION_URL'].'" '.$linkStorageReload($row).'>'.
+				'<span class="tasks-grid-avatar bx-disk-volume-documentgenerator-icon"></span>'.
+				'<span class="tasks-grid-username-inner">'.
+				$row['TITLE'].
+				'</span>'.
+				'</a>'.
+				'</div>';
 		}
 		else
 		{
@@ -401,7 +422,9 @@ if (!isset($fileUsingCountTitle) || !is_callable($fileUsingCountTitle))
 						//$fileExtLink = $file->getExternalLinks();
 						$usingCount += $fragment->getLinkCount();
 						if ($usingCountMenuLinks != '')
+						{
 							$usingCountMenuLinks .= ', ';
+						}
 						if ($row['LINK_COUNT'] > 0)
 						{
 							$usingCountMenuLinks .=
@@ -415,6 +438,10 @@ if (!isset($fileUsingCountTitle) || !is_callable($fileUsingCountTitle))
 						if ($crmIndicator->isMeasureAvailable())
 						{
 							$usingCount += $row['ACT_COUNT'];
+							if ($usingCountMenuLinks != '')
+							{
+								$usingCountMenuLinks .= ', ';
+							}
 							$usingCountMenuLinks .=
 								'{title: \''.Loc::getMessage('DISK_VOLUME_CRM_COUNT').': '.$row['ACT_COUNT'].'\'}';
 						}

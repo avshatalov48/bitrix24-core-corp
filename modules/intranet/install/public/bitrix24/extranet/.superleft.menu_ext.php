@@ -38,6 +38,7 @@ $arMenu = array(
 			"name" => "tasks",
 			"counter_id" => "tasks_total",
 			"top_menu_id" => "tasks_panel_menu",
+			"menu_item_id"=>"menu_tasks",
 			"sub_link" => "/extranet/contacts/personal/user/".$USER_ID."/tasks/task/edit/0/"
 		),
 		""
@@ -52,6 +53,7 @@ $arMenu = array(
 				"/extranet/contacts/personal/user/".$USER_ID."/blog/"
 			),
 			"counter_id" => "blog_post",
+			"menu_item_id"=>"menu_blog",
 			"top_menu_id" => "blog_messages_panel_menu"
 		),
 		""
@@ -60,7 +62,9 @@ $arMenu = array(
 		GetMessage("MENU_FILES"),
 		"/extranet/contacts/personal/user/".$USER_ID.($diskEnabled == "Y" ? "/disk/path/" : "/files/lib/"),
 		array(),
-		array(),
+		array(
+			"menu_item_id"=>"menu_files",
+		),
 		""
 	),
 );
@@ -81,6 +85,7 @@ if (CModule::IncludeModule("socialnetwork") && CModule::IncludeModule("extranet"
 				"sonetgroups_panel_menu",
 				"/extranet/workgroups/"
 			),
+			"menu_item_id"=>"menu_all_groups",
 			"top_menu_id" => "sonetgroups_panel_menu",
 		),
 		""
@@ -128,6 +133,7 @@ $arMenu[] = array(
 			"top_menu_id_extranet_contacts",
 			"/extranet/contacts/"
 		),
+		"menu_item_id" => "menu_company",
 		"top_menu_id" => "top_menu_id_extranet_contacts",
 	),
 	""

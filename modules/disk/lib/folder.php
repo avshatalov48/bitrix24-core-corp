@@ -13,9 +13,11 @@ use Bitrix\Disk\Internals\SimpleRightTable;
 use Bitrix\Disk\Internals\VersionTable;
 use Bitrix\Disk\ProxyType\Group;
 use Bitrix\Disk\Security\SecurityContext;
+use Bitrix\Main\DB\SqlQueryException;
 use Bitrix\Main\Entity\ExpressionField;
 use Bitrix\Main\Entity\Query;
 use Bitrix\Main\Event;
+use Bitrix\Main\InvalidOperationException;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ObjectException;
@@ -75,6 +77,16 @@ class Folder extends BaseObject
 	public function preloadOperationsForChildren(SecurityContext $securityContext)
 	{
 		$securityContext->preloadOperationsForChildren($this->id);
+	}
+
+	public function preloadOperationsForSpecifiedObjects(array $ids, SecurityContext $securityContext)
+	{
+		if (!$ids)
+		{
+			return;
+		}
+
+		$securityContext->preloadOperationsForSpecifiedObjects($this->id, $ids);
 	}
 
 	/**
@@ -274,15 +286,54 @@ class Folder extends BaseObject
 		$data['PARENT'] = $this;
 
 		/** @var File $fileModel */
-		$fileModel = File::add($data, $this->errorCollection);
-		if(!$fileModel)
+		$fileModel = $this->processAdd($data, $this->errorCollection, $generateUniqueName);
+		if ($fileModel)
 		{
-			return null;
+			Driver::getInstance()->getRightsManager()->setAsNewLeaf($fileModel, $rights);
 		}
 
-		Driver::getInstance()->getRightsManager()->setAsNewLeaf($fileModel, $rights);
+		return $fileModel;
+	}
 
-//		$this->notifySonetGroup($fileModel);
+	private function isDuplicateKeyError(SqlQueryException $exception)
+	{
+		return strpos($exception->getDatabaseMessage(), '(1062)') !== false;
+	}
+
+	private function processAdd(array $data, ErrorCollection $errorCollection, $generateUniqueName = false, $countStepsToGenerateName = 0)
+	{
+		try
+		{
+			$fileModel = File::add($data, $errorCollection);
+			if(!$fileModel)
+			{
+				return null;
+			}
+		}
+		catch (SqlQueryException $exception)
+		{
+			if ($generateUniqueName && $this->isDuplicateKeyError($exception))
+			{
+				$countStepsToGenerateName++;
+				if ($countStepsToGenerateName > 10)
+				{
+					throw new InvalidOperationException(
+						"Too many attempts ({$countStepsToGenerateName}) to generate unique name {$data['NAME']}"
+					);
+				}
+
+				$data['NAME'] = $this->generateUniqueName($data['NAME'], $this->id);
+
+				return $this->processAdd(
+					$data,
+					$errorCollection,
+					$generateUniqueName,
+					$countStepsToGenerateName
+				);
+			}
+
+			throw $exception;
+		}
 
 		return $fileModel;
 	}
@@ -630,7 +681,12 @@ class Folder extends BaseObject
 		{
 			unset($parameters['filter']['DELETED_TYPE'], $parameters['filter']['MIXED_SHOW_DELETED']);
 		}
-		elseif(!array_key_exists('DELETED_TYPE', $parameters['filter']) && !array_key_exists('!DELETED_TYPE', $parameters['filter']) && !array_key_exists('!=DELETED_TYPE', $parameters['filter']))
+		elseif (
+			!array_key_exists('DELETED_TYPE', $parameters['filter']) &&
+			!array_key_exists('!DELETED_TYPE', $parameters['filter']) &&
+			!array_key_exists('!=DELETED_TYPE', $parameters['filter']) &&
+			!array_key_exists('!==DELETED_TYPE', $parameters['filter'])
+		)
 		{
 			$parameters['filter']['DELETED_TYPE'] = ObjectTable::DELETED_TYPE_NONE;
 		}
@@ -669,7 +725,12 @@ class Folder extends BaseObject
 		{
 			unset($parameters['filter']['DELETED_TYPE'], $parameters['filter']['MIXED_SHOW_DELETED']);
 		}
-		elseif(!array_key_exists('DELETED_TYPE', $parameters['filter']) && !array_key_exists('!DELETED_TYPE', $parameters['filter']) && !array_key_exists('!=DELETED_TYPE', $parameters['filter']))
+		elseif (
+			!array_key_exists('DELETED_TYPE', $parameters['filter']) &&
+			!array_key_exists('!DELETED_TYPE', $parameters['filter']) &&
+			!array_key_exists('!=DELETED_TYPE', $parameters['filter']) &&
+			!array_key_exists('!==DELETED_TYPE', $parameters['filter'])
+		)
 		{
 			$parameters['filter']['DELETED_TYPE'] = ObjectTable::DELETED_TYPE_NONE;
 		}
@@ -837,11 +898,13 @@ class Folder extends BaseObject
 
 	protected function markDeletedNonRecursiveInternal($deletedBy, $deletedType = ObjectTable::DELETED_TYPE_ROOT)
 	{
+		$alreadyDeleted = $this->isDeleted();
 		$success = parent::markDeletedInternal($deletedBy, $deletedType);
-		if($success)
+		if ($success && !$alreadyDeleted)
 		{
-			DeletedLog::addFolder($this, $deletedBy, $this->errorCollection);
+			Driver::getInstance()->getDeletedLogManager()->mark($this, $deletedBy);
 		}
+
 		return $success;
 	}
 
@@ -866,7 +929,7 @@ class Folder extends BaseObject
 			),
 			'filter' => array(
 				'PATH_CHILD.PARENT_ID' => $this->id,
-				'!DELETED_TYPE' => ObjectTable::DELETED_TYPE_NONE,
+				'!==DELETED_TYPE' => ObjectTable::DELETED_TYPE_NONE,
 			),
 			'order' => array('DEPTH_LEVEL' => 'DESC')
 		);
@@ -993,7 +1056,7 @@ class Folder extends BaseObject
 			return false;
 		}
 		Driver::getInstance()->getIndexManager()->dropIndex($this);
-		DeletedLog::addFolder($this, $deletedBy, $this->errorCollection);
+		Driver::getInstance()->getDeletedLogManager()->mark($this, $deletedBy);
 
 		$resultDelete = FolderTable::delete($this->id);
 		if(!$resultDelete->isSuccess())

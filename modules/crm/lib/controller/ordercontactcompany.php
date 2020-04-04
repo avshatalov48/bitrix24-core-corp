@@ -11,7 +11,7 @@ use Bitrix\Main\Engine\Response\DataType\Page;
 use Bitrix\Main\UI\PageNavigation;
 use Bitrix\Sale\Registry;
 
-class OrderContactCompany extends Controller
+class OrderContactCompany extends \Bitrix\Sale\Controller\Controller
 {
 	public function getFieldsAction()
 	{
@@ -65,18 +65,18 @@ class OrderContactCompany extends Controller
 		{
 			foreach ($fields['CLIENTS'] as $client)
 			{
-				//TODO: пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ. пїЅпїЅпїЅпїЅ пїЅ rest пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+				//TODO: необходимо вынести в проверку полей. Поля в rest описаны как обязательные
 				if(intval($client['ENTITY_TYPE_ID'])<=0 || intval($client['ENTITY_ID'])<=0)
 					continue;
 
 				$client['IS_PRIMARY'] = (isset($client['IS_PRIMARY']) && $client['IS_PRIMARY'] == 'Y') ? 'Y':'N';
 
-				// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ
+				// компания может быть только одна
 				if(count($data[\CCrmOwnerType::Company])==0)
 				{
 					if($client['ENTITY_TYPE_ID'] == \CCrmOwnerType::Company)
 					{
-						// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ isPrinary пїЅ.пїЅ. пїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
+						// компания должна быть isPrinary т.к. в этого требует матчер
 						$client['IS_PRIMARY'] = 'Y';
 						$data[\CCrmOwnerType::Company][] = $client;
 					}
@@ -93,7 +93,7 @@ class OrderContactCompany extends Controller
 
 			if(count($data[\CCrmOwnerType::Contact])>0 && !$contactIsPrinary)
 			{
-				//пїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ isPrinary, пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+				//если ни один из переданных контактов не является isPrinary, проставляем признак для первого
 				$data[\CCrmOwnerType::Contact][0]['IS_PRIMARY'] = 'Y';
 			}
 			return ['CLIENTS'=>array_merge($data[\CCrmOwnerType::Company], $data[\CCrmOwnerType::Contact])];

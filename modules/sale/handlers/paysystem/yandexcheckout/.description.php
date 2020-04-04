@@ -31,24 +31,6 @@ $data = array(
 	'SORT' => 500,
 	'IS_AVAILABLE' => $isAvailable,
 	'CODES' => array(
-		"YANDEX_CHECKOUT_SHOP_ID" => array(
-			"NAME" => Loc::getMessage("SALE_HPS_YANDEX_CHECKOUT_SHOP_ID"),
-			"DESCRIPTION" => Loc::getMessage("SALE_HPS_YANDEX_CHECKOUT_SHOP_ID_DESC"),
-			'SORT' => 100,
-			'GROUP' => 'CONNECT_SETTINGS_YANDEX',
-		),
-		"YANDEX_CHECKOUT_SECRET_KEY" => array(
-			"NAME" => Loc::getMessage("SALE_HPS_YANDEX_CHECKOUT_SECRET_KEY"),
-			"DESCRIPTION" => Loc::getMessage("SALE_HPS_YANDEX_CHECKOUT_SECRET_KEY_DESC"),
-			'SORT' => 200,
-			'GROUP' => 'CONNECT_SETTINGS_YANDEX'
-		),
-		"YANDEX_CHECKOUT_SHOP_ARTICLE_ID" => array(
-			"NAME" => Loc::getMessage("SALE_HPS_YANDEX_CHECKOUT_SHOP_ARTICLE_ID"),
-			"DESCRIPTION" => Loc::getMessage("SALE_HPS_YANDEX_CHECKOUT_SHOP_ARTICLE_ID_DESC"),
-			'SORT' => 250,
-			'GROUP' => 'CONNECT_SETTINGS_YANDEX'
-		),
 		"YANDEX_CHECKOUT_DESCRIPTION" => array(
 			"NAME" => Loc::getMessage("SALE_HPS_YANDEX_CHECKOUT_PAYMENT_DESCRIPTION"),
 			"DESCRIPTION" => Loc::getMessage("SALE_HPS_YANDEX_CHECKOUT_PAYMENT_DESCRIPTION_DESC"),
@@ -76,6 +58,33 @@ $data = array(
 			"INPUT" => array(
 				'TYPE' => 'Y/N'
 			),
+			'DEFAULT' => array(
+				"PROVIDER_KEY" => "INPUT",
+				"PROVIDER_VALUE" => "Y",
+			)
 		),
 	)
 );
+if (\Bitrix\Main\Config\Option::get('sale', 'YANDEX_CHECKOUT_OAUTH', false) == false)
+{
+	$data['CODES']["YANDEX_CHECKOUT_SHOP_ID"] = array(
+		"NAME" => Loc::getMessage("SALE_HPS_YANDEX_CHECKOUT_SHOP_ID"),
+		"DESCRIPTION" => Loc::getMessage("SALE_HPS_YANDEX_CHECKOUT_SHOP_ID_DESC"),
+		'SORT' => 100,
+		'GROUP' => 'CONNECT_SETTINGS_YANDEX',
+	);
+
+	$data['CODES']["YANDEX_CHECKOUT_SECRET_KEY"] = array(
+		"NAME" => Loc::getMessage("SALE_HPS_YANDEX_CHECKOUT_SECRET_KEY"),
+		"DESCRIPTION" => Loc::getMessage("SALE_HPS_YANDEX_CHECKOUT_SECRET_KEY_DESC"),
+		'SORT' => 200,
+		'GROUP' => 'CONNECT_SETTINGS_YANDEX'
+	);
+
+	$data['CODES']["YANDEX_CHECKOUT_SHOP_ARTICLE_ID"] = array(
+		"NAME" => Loc::getMessage("SALE_HPS_YANDEX_CHECKOUT_SHOP_ARTICLE_ID"),
+		"DESCRIPTION" => Loc::getMessage("SALE_HPS_YANDEX_CHECKOUT_SHOP_ARTICLE_ID_DESC"),
+		'SORT' => 250,
+		'GROUP' => 'CONNECT_SETTINGS_YANDEX'
+	);
+}

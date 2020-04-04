@@ -1,0 +1,177 @@
+/**
+	FORM
+		--b24-text-color: Text color
+		--b24-background-color: Background color
+
+	BRIGHT ELEMENTS - submit button, close buttons etc.
+		--b24-primary-color: Color of bright elements
+		--b24-primary-text-color: Text color of bright elements
+		--b24-primary-hover-color: Hover color of bright elements(buttons)
+
+	FIELDS
+
+		--b24-field-border-color: Color of field borders
+		--b24-field-background-color: Color of field background
+
+	FONT
+		--b24-font-family-default: Default font family
+		--b24-font-family: Font family
+ */
+
+.b24-form {
+	--b24-primary-color: #0F58D0;
+	--b24-primary-text-color: #FFF;
+	--b24-primary-hover-color: var(--b24-primary-color);
+	--b24-text-color: #000;
+	--b24-background-color: #FFF;
+	--b24-field-border-color: rgba(0, 0, 0, .1);
+	--b24-field-background-color: rgba(0, 0, 0, .08);
+	--b24-field-focus-background-color: #fff;
+	--b24-font-family-default: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	--b24-font-family: var(--b24-font-family-default);
+}
+
+.b24-form-dark {
+	--b24-primary-color: #0F58D0;
+	--b24-primary-text-color: #FFF;
+	--b24-primary-hover-color: var(--b24-primary-color);
+	--b24-text-color: #FFF;
+	--b24-background-color: #282D30;
+	--b24-field-border-color: rgba(255, 255, 255, .1);
+	--b24-field-background-color: rgba(255, 255, 255, .08);
+	--b24-field-focus-background-color: rgba(0, 0, 0, .17);
+	--b24-font-family-default: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	--b24-font-family: var(--b24-font-family-default);
+}
+
+/*
+.b24-form-style-modern {
+	--b24-primary-color: #FFD110;
+	--b24-primary-text-color: #000;
+	--b24-primary-hover-color: var(--b24-primary-color);
+	--b24-text-color: #000;
+	--b24-background-color: #FFF;
+	--b24-field-border-color: rgba(0, 0, 0, .08);
+	--b24-field-background-color: transparent;
+	--b24-field-focus-background-color: rgba(0, 0, 0, .05);
+	--b24-font-family-default: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	--b24-font-family: var(--b24-font-family-default);
+}
+
+.b24-form-dark.b24-form-style-modern {
+	--b24-primary-color: #FFD110;
+	--b24-primary-text-color: #000;
+	--b24-primary-hover-color: var(--b24-primary-color);
+	--b24-text-color: #FFF;
+	--b24-background-color: #282D30;
+	--b24-field-border-color: rgba(255, 255, 255, .08);
+	--b24-field-background-color: transparent;
+	--b24-field-focus-background-color: rgba(255, 255, 255, .05);
+	--b24-font-family-default: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	--b24-font-family: var(--b24-font-family-default);
+}
+
+.b24-form-style-classic {
+	--b24-primary-color: #000;
+	--b24-primary-text-color: #FFF;
+	--b24-primary-hover-color: var(--b24-primary-color);
+	--b24-text-color: #000;
+	--b24-background-color: #FFF;
+	--b24-field-border-color: rgba(0, 0, 0, .08);
+	--b24-field-background-color: rgba(0, 0, 0, .08);
+	--b24-field-focus-background-color: rgba(0, 0, 0, .05);
+	--b24-font-family-default: "PT Serif", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	--b24-font-family: var(--b24-font-family-default);
+}
+
+.b24-form-dark.b24-form-style-classic {
+	--b24-primary-color: #FFF;
+	--b24-primary-text-color: #FFF;
+	--b24-primary-hover-color: var(--b24-primary-color);
+	--b24-text-color: #FFF;
+	--b24-background-color: #000;
+	--b24-field-background-color: rgba(255, 255, 255, .08);
+	--b24-field-focus-background-color: rgba(255, 255, 255, .05);
+	--b24-font-family-default: "PT Serif", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	--b24-font-family: var(--b24-font-family-default);
+}
+
+.b24-form-style-fun {
+	--b24-primary-color: #F09B22;
+	--b24-primary-text-color: #000;
+	--b24-primary-hover-color: var(--b24-primary-color);
+	--b24-text-color: #000;
+	--b24-background-color: #FFF;
+	--b24-field-border-color: rgba(0, 0, 0, .08);
+	--b24-field-background-color:rgba(240, 155, 34, .08);
+	--b24-field-focus-background-color: rgba(0, 0, 0, .05);
+	--b24-font-family-default: "Pangolin", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	--b24-font-family: var(--b24-font-family-default);
+}
+
+.b24-form-dark.b24-form-style-fun {
+	--b24-primary-color: #F09B22;
+	--b24-primary-text-color: #000;
+	--b24-primary-hover-color: var(--b24-primary-color);
+	--b24-text-color: #FFF;
+	--b24-background-color: #221400;
+	--b24-field-background-color: rgba(240, 155, 34, .08);
+	--b24-field-focus-background-color: rgba(255, 255, 255, 0.05);
+	--b24-font-family-default: "Pangolin", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	--b24-font-family: var(--b24-font-family-default);
+}
+*/
+
+@media (prefers-color-scheme: dark) {
+	.b24-form-dark-auto {
+		--b24-primary-color: #0F58D0;
+		--b24-primary-text-color: #fff;
+		--b24-primary-hover-color: var(--b24-primary-color);
+		--b24-text-color: #FFF;
+		--b24-background-color: #282D30;
+		--b24-field-border-color: rgba(255, 255, 255, .1);
+		--b24-field-background-color: rgba(255, 255, 255, .08);
+		--b24-field-focus-background-color: rgba(0, 0, 0, .17);
+		--b24-font-family-default: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+		--b24-font-family: var(--b24-font-family-default);
+	}
+
+	/*
+	.b24-form-dark.b24-form-style-modern {
+		--b24-primary-color: #FFD110;
+		--b24-primary-text-color: #000;
+		--b24-primary-hover-color: var(--b24-primary-color);
+		--b24-text-color: #FFF;
+		--b24-background-color: #282D30;
+		--b24-field-border-color: rgba(255, 255, 255, .08);
+		--b24-field-background-color: transparent;
+		--b24-field-focus-background-color: rgba(255, 255, 255, .05);
+		--b24-font-family-default: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+		--b24-font-family: var(--b24-font-family-default);
+	}
+
+	.b24-form-dark.b24-form-style-classic {
+		--b24-primary-color: #FFF;
+		--b24-primary-text-color: #FFF;
+		--b24-primary-hover-color: var(--b24-primary-color);
+		--b24-text-color: #FFF;
+		--b24-background-color: #000;
+		--b24-field-background-color: rgba(255, 255, 255, .08);
+		--b24-field-focus-background-color: rgba(255, 255, 255, .05);
+		--b24-font-family-default: "PT Serif", "Helvetica Neue", Helvetica, Arial, sans-serif;
+		--b24-font-family: var(--b24-font-family-default);
+	}
+
+	.b24-form-dark.b24-form-style-fun {
+		--b24-primary-color: #F09B22;
+		--b24-primary-text-color: #000;
+		--b24-primary-hover-color: var(--b24-primary-color);
+		--b24-text-color: #FFF;
+		--b24-background-color: #221400;
+		--b24-field-background-color: rgba(240, 155, 34, .08);
+		--b24-field-focus-background-color: rgba(255, 255, 255, 0.05);
+		--b24-font-family-default: "Pangolin", "Helvetica Neue", Helvetica, Arial, sans-serif;
+		--b24-font-family: var(--b24-font-family-default);
+	}
+	*/
+}

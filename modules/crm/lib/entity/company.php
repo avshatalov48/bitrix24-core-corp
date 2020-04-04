@@ -33,6 +33,10 @@ class Company extends EntityBase
 	{
 		return CompanyTable::getEntity();
 	}
+	protected function getDbTableAlias()
+	{
+		return \CCrmCompany::TABLE_ALIAS;
+	}
 	//endregion
 
 	//region Permissions
@@ -53,6 +57,48 @@ class Company extends EntityBase
 		return \CCrmCompany::CheckDeletePermission($entityID, $userPermissions);
 	}
 	//endregion
+
+	public function create(array $fields)
+	{
+		$entity = new \CCrmCompany(false);
+		return $entity->Add(
+			$fields,
+			true,
+			array('DISABLE_USER_FIELD_CHECK' => true)
+		);
+	}
+
+	/**
+	 * Get Entity By ID.
+	 * @param int $entityID Entity ID.
+	 * @return array|null
+	 * @throws Main\ArgumentException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
+	public function getByID($entityID)
+	{
+		if(!is_int($entityID))
+		{
+			$entityID = (int)$entityID;
+		}
+
+		$dbResult = CompanyTable::getList(array('filter' => array('=ID' => $entityID)));
+
+		$fields = $dbResult->fetch();
+		return is_array($fields) ? $fields : null;
+	}
+
+	public function update($entityID, array $fields)
+	{
+		$entity = new \CCrmCompany(false);
+		return $entity->Update(
+			$entityID,
+			$fields,
+			true,
+			array('DISABLE_USER_FIELD_CHECK' => true)
+		);
+	}
 
 	public function getTopIDs(array $params)
 	{
@@ -134,6 +180,31 @@ class Company extends EntityBase
 		);
 		$fields = is_object($dbResult) ? $dbResult->Fetch() : null;
 		return is_array($fields) && isset($fields['ASSIGNED_BY_ID']) ? (int)$fields['ASSIGNED_BY_ID'] : 0;
+	}
+
+	/**
+	 * Check if Entity exists.
+	 * @param int $entityID Entity ID.
+	 * @return bool
+	 * @throws Main\ArgumentException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
+	public function isExists($entityID)
+	{
+		if(!is_int($entityID))
+		{
+			$entityID = (int)$entityID;
+		}
+
+		$dbResult = CompanyTable::getList(
+			array(
+				'select' => array('ID'),
+				'filter' => array('=ID' => $entityID)
+			)
+		);
+
+		return is_array($dbResult->fetch());
 	}
 
 	/**

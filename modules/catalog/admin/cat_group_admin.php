@@ -31,7 +31,7 @@ IncludeModuleLangFile(__FILE__);
 
 $sTableID = "tbl_catalog_group";
 
-$oSort = new CAdminSorting($sTableID, "ID", "asc");
+$oSort = new CAdminUiSorting($sTableID, "ID", "asc");
 
 $lAdmin = new CAdminUiList($sTableID, $oSort);
 

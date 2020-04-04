@@ -76,7 +76,7 @@ $isBitrix24Template = (SITE_TEMPLATE_ID == "bitrix24");
 if($isBitrix24Template)
 {
 	$bodyClass = $APPLICATION->GetPageProperty("BodyClass");
-	$APPLICATION->SetPageProperty("BodyClass", "pagetitle-toolbar-field-view");
+	$APPLICATION->SetPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "")."pagetitle-toolbar-field-view");
 	$this->SetViewTarget("inside_pagetitle", 0);
 	?><div class="pagetitle-container pagetitle-flexible-space"><?
 }

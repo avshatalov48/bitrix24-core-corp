@@ -1384,3 +1384,11 @@ table.data-table td {
 	padding-right: 24px;
 }
 /*=========================== main.post.list patches ======================*/
+
+.task-footer-wrap {
+	visibility: collapse;
+}
+
+.task-footer-wrap.task-footer-wrap-active {
+	visibility: visible;
+}

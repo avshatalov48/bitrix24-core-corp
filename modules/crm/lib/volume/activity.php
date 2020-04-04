@@ -3,17 +3,21 @@
 namespace Bitrix\Crm\Volume;
 
 use Bitrix\Crm;
+use Bitrix\Crm\Volume;
 use Bitrix\Disk;
 use Bitrix\Main;
 use Bitrix\Main\ORM;
-use Bitrix\Main\Entity;
 use Bitrix\Main\Localization\Loc;
 
 
 class Activity
-	extends Crm\Volume\Base
-	implements Crm\Volume\IVolumeClear, Crm\Volume\IVolumeUrl
+	extends Volume\Base
+	implements Volume\IVolumeClear, Volume\IVolumeUrl
 {
+
+	// todo: reemove it
+	use Volume\ClearActivity;
+
 	/** @var array */
 	protected static $entityList = array(
 		Crm\ActivityTable::class,
@@ -24,6 +28,8 @@ class Activity
 		Crm\UserActivityTable::class,
 		Crm\Statistics\Entity\ActivityStatisticsTable::class,
 		Crm\Statistics\Entity\ActivityChannelStatisticsTable::class,
+		Crm\Activity\Entity\AppTypeTable::class,
+		Crm\Activity\MailMetaTable::class,
 	);
 
 
@@ -177,11 +183,8 @@ class Activity
 	{
 		$query = Crm\ActivityTable::query();
 
-		/** @global \CDatabase $DB */
-		global $DB;
-
 		if (
-			$indicator == Crm\Volume\Company::class
+			$indicator == Volume\Company::class
 		)
 		{
 			$companyRelation = new ORM\Fields\Relations\Reference(
@@ -191,12 +194,9 @@ class Activity
 				array('join_type' => 'INNER')
 			);
 			$query->registerRuntimeField($companyRelation);
-
-			//$dayField = new ORM\Fields\ExpressionField('COMPANY_DATE_CREATE_SHORT', $DB->datetimeToDateFunction('%s'), 'COMPANY.DATE_CREATE');
-			//$query->registerRuntimeField($dayField);
 		}
 		elseif (
-			$indicator == Crm\Volume\Contact::class
+			$indicator == Volume\Contact::class
 		)
 		{
 			$contactRelation = new ORM\Fields\Relations\Reference(
@@ -206,9 +206,6 @@ class Activity
 				array('join_type' => 'INNER')
 			);
 			$query->registerRuntimeField($contactRelation);
-
-			//$dayField = new ORM\Fields\ExpressionField('CONTACT_DATE_CREATE_SHORT', $DB->datetimeToDateFunction('%s'), 'CONTACT.DATE_CREATE');
-			//$query->registerRuntimeField($dayField);
 		}
 		else
 		{
@@ -217,7 +214,7 @@ class Activity
 				'DEAL',
 				Crm\DealTable::class,
 				ORM\Query\Join::on('this.BINDINGS.OWNER_ID', 'ref.ID')->where('this.BINDINGS.OWNER_TYPE_ID', \CCrmOwnerType::Deal),
-				array('join_type' => ($indicator == Crm\Volume\Deal::class ? 'INNER' : 'LEFT'))
+				array('join_type' => ($indicator == Volume\Deal::class ? 'INNER' : 'LEFT'))
 			);
 			$query->registerRuntimeField($dealRelation);
 
@@ -226,7 +223,7 @@ class Activity
 				'LEAD',
 				Crm\LeadTable::class,
 				ORM\Query\Join::on('this.BINDINGS.OWNER_ID', 'ref.ID')->where('this.BINDINGS.OWNER_TYPE_ID', \CCrmOwnerType::Lead),
-				array('join_type' => ($indicator == Crm\Volume\Lead::class ? 'INNER' : 'LEFT'))
+				array('join_type' => ($indicator == Volume\Lead::class ? 'INNER' : 'LEFT'))
 			);
 			$query->registerRuntimeField($leadRelation);
 
@@ -235,27 +232,31 @@ class Activity
 				'QUOTE',
 				Crm\QuoteTable::class,
 				ORM\Query\Join::on('this.BINDINGS.OWNER_ID', 'ref.ID')->where('this.BINDINGS.OWNER_TYPE_ID', \CCrmOwnerType::Quote),
-				array('join_type' => ($indicator == Crm\Volume\Quote::class ? 'INNER' : 'LEFT'))
+				array('join_type' => ($indicator == Volume\Quote::class ? 'INNER' : 'LEFT'))
 			);
 			$query->registerRuntimeField($quoteRelation);
 
 			// STAGE_SEMANTIC_ID
-			Crm\Volume\Quote::registerStageField($query, 'QUOTE', 'QUOTE_STAGE_SEMANTIC_ID');
+			Volume\Quote::registerStageField($query, 'QUOTE', 'QUOTE_STAGE_SEMANTIC_ID');
 
 
 			$invoiceRelation = new ORM\Fields\Relations\Reference(
 				'INVOICE',
 				Crm\InvoiceTable::class,
 				ORM\Query\Join::on('this.BINDINGS.OWNER_ID', 'ref.ID')->where('this.BINDINGS.OWNER_TYPE_ID', \CCrmOwnerType::Invoice),
-				array('join_type' => ($indicator == Crm\Volume\Invoice::class ? 'INNER' : 'LEFT'))
+				array('join_type' => ($indicator == Volume\Invoice::class ? 'INNER' : 'LEFT'))
 			);
 			$query->registerRuntimeField($invoiceRelation);
 
-			$dayField = new ORM\Fields\ExpressionField('INVOICE_DATE_CREATE_SHORT', $DB->datetimeToDateFunction('%s'), 'INVOICE.DATE_INSERT');
+			$dayField = new ORM\Fields\ExpressionField(
+				'INVOICE_DATE_CREATE_SHORT',
+				'DATE(%s)',
+				'INVOICE.DATE_INSERT'
+			);
 			$query->registerRuntimeField($dayField);
 
 			// STAGE_SEMANTIC_ID
-			Crm\Volume\Invoice::registerStageField($query, 'INVOICE', 'INVOICE_STAGE_SEMANTIC_ID');
+			Volume\Invoice::registerStageField($query, 'INVOICE', 'INVOICE_STAGE_SEMANTIC_ID');
 
 			$stageField = new ORM\Fields\ExpressionField(
 				'STAGE_SEMANTIC_ID',
@@ -300,7 +301,7 @@ class Activity
 		$entityStageSemanticField = '';
 
 		if (
-			$indicator == Crm\Volume\Company::class
+			$indicator == Volume\Company::class
 		)
 		{
 			$companyRelation = new ORM\Fields\Relations\Reference(
@@ -312,7 +313,7 @@ class Activity
 			$queryBindings->registerRuntimeField($companyRelation);
 		}
 		elseif (
-			$indicator == Crm\Volume\Contact::class
+			$indicator == Volume\Contact::class
 		)
 		{
 			$contactRelation = new ORM\Fields\Relations\Reference(
@@ -330,11 +331,11 @@ class Activity
 				'DEAL',
 				Crm\DealTable::class,
 				ORM\Query\Join::on('this.OWNER_ID', 'ref.ID')->where('this.OWNER_TYPE_ID', \CCrmOwnerType::Deal),
-				array('join_type' => ($indicator == Crm\Volume\Deal::class ? 'INNER' : 'LEFT'))
+				array('join_type' => ($indicator == Volume\Deal::class ? 'INNER' : 'LEFT'))
 			);
 			$queryBindings->registerRuntimeField($dealRelation);
 
-			if ($indicator === Crm\Volume\Deal::class)
+			if ($indicator === Volume\Deal::class)
 			{
 				$entityStageSemanticField = 'DEAL_STAGE_SEMANTIC_ID';
 				$queryBindings
@@ -353,11 +354,11 @@ class Activity
 				'LEAD',
 				Crm\LeadTable::class,
 				ORM\Query\Join::on('this.OWNER_ID', 'ref.ID')->where('this.OWNER_TYPE_ID', \CCrmOwnerType::Lead),
-				array('join_type' => ($indicator == Crm\Volume\Lead::class ? 'INNER' : 'LEFT'))
+				array('join_type' => ($indicator == Volume\Lead::class ? 'INNER' : 'LEFT'))
 			);
 			$queryBindings->registerRuntimeField($leadRelation);
 
-			if ($indicator === Crm\Volume\Lead::class)
+			if ($indicator === Volume\Lead::class)
 			{
 				$entityStageSemanticField = 'LEAD_STATUS_SEMANTIC_ID';
 				$queryBindings
@@ -376,14 +377,14 @@ class Activity
 				'QUOTE',
 				Crm\QuoteTable::class,
 				ORM\Query\Join::on('this.OWNER_ID', 'ref.ID')->where('this.OWNER_TYPE_ID', \CCrmOwnerType::Quote),
-				array('join_type' => ($indicator == Crm\Volume\Quote::class ? 'INNER' : 'LEFT'))
+				array('join_type' => ($indicator == Volume\Quote::class ? 'INNER' : 'LEFT'))
 			);
 			$queryBindings->registerRuntimeField($quoteRelation);
 
-			if ($indicator === Crm\Volume\Quote::class)
+			if ($indicator === Volume\Quote::class)
 			{
 				$entityStageSemanticField = 'QUOTE_STAGE_SEMANTIC_ID';
-				Crm\Volume\Quote::registerStageField($queryBindings, 'QUOTE', 'QUOTE_STAGE_SRC');
+				Volume\Quote::registerStageField($queryBindings, 'QUOTE', 'QUOTE_STAGE_SRC');
 
 				$queryBindings
 					->registerRuntimeField(new ORM\Fields\ExpressionField($entityStageSemanticField, 'MAX(%s)', 'QUOTE_STAGE_SRC'))
@@ -392,7 +393,7 @@ class Activity
 			else
 			{
 				// QUOTE_STAGE_SEMANTIC_ID
-				Crm\Volume\Quote::registerStageField($queryBindings, 'QUOTE', 'QUOTE_STAGE_SEMANTIC_ID');
+				Volume\Quote::registerStageField($queryBindings, 'QUOTE', 'QUOTE_STAGE_SEMANTIC_ID');
 			}
 
 
@@ -401,14 +402,14 @@ class Activity
 				'INVOICE',
 				Crm\InvoiceTable::class,
 				ORM\Query\Join::on('this.OWNER_ID', 'ref.ID')->where('this.OWNER_TYPE_ID', \CCrmOwnerType::Invoice),
-				array('join_type' => ($indicator == Crm\Volume\Invoice::class ? 'INNER' : 'LEFT'))
+				array('join_type' => ($indicator == Volume\Invoice::class ? 'INNER' : 'LEFT'))
 			);
 			$queryBindings->registerRuntimeField($invoiceRelation);
 
-			if ($indicator === Crm\Volume\Invoice::class)
+			if ($indicator === Volume\Invoice::class)
 			{
 				$entityStageSemanticField = 'INVOICE_STAGE_SEMANTIC_ID';
-				Crm\Volume\Invoice::registerStageField($queryBindings, 'INVOICE', 'INVOICE_STAGE_SRC');
+				Volume\Invoice::registerStageField($queryBindings, 'INVOICE', 'INVOICE_STAGE_SRC');
 
 				$queryBindings
 					->registerRuntimeField(new ORM\Fields\ExpressionField($entityStageSemanticField, 'MAX(%s)', 'INVOICE_STAGE_SRC'))
@@ -417,11 +418,11 @@ class Activity
 			else
 			{
 				// INVOICE_STAGE_SEMANTIC_ID
-				Crm\Volume\Invoice::registerStageField($queryBindings, 'INVOICE', 'INVOICE_STAGE_SEMANTIC_ID');
+				Volume\Invoice::registerStageField($queryBindings, 'INVOICE', 'INVOICE_STAGE_SEMANTIC_ID');
 			}
 
 
-			if ($indicator === Crm\Volume\Activity::class)
+			if ($indicator === Volume\Activity::class)
 			{
 				$entityStageSemanticField = 'STAGE_SEMANTIC_ID_MAX';
 				// STAGE_SEMANTIC_ID
@@ -505,8 +506,8 @@ class Activity
 					->where(array(
 						array('DEAL.STAGE_SEMANTIC_ID', 'in', $value),
 						array('LEAD.STATUS_SEMANTIC_ID', 'in', $value),
-						array('QUOTE.STATUS_ID', 'in', Crm\Volume\Quote::getStatusSemantics($value)),
-						array('INVOICE.STATUS_ID', 'in', Crm\Volume\Invoice::getStatusSemantics($value)),
+						array('QUOTE.STATUS_ID', 'in', Volume\Quote::getStatusSemantics($value)),
+						array('INVOICE.STATUS_ID', 'in', Volume\Invoice::getStatusSemantics($value)),
 					))
 				);
 			}
@@ -514,12 +515,12 @@ class Activity
 			*/
 			if ($key0 === 'QUOTE_STAGE_SEMANTIC_ID')
 			{
-				$statuses = Crm\Volume\Quote::getStatusSemantics($value);
+				$statuses = Volume\Quote::getStatusSemantics($value);
 				$query->where('QUOTE.STATUS_ID', 'in', $statuses);
 			}
 			elseif ($key0 === 'INVOICE_STAGE_SEMANTIC_ID')
 			{
-				$statuses = Crm\Volume\Invoice::getStatusSemantics($value);
+				$statuses = Volume\Invoice::getStatusSemantics($value);
 				$query->where('INVOICE.STATUS_ID', 'in', $statuses);
 			}
 			elseif (isset(static::$filterFieldAlias[$key0]))
@@ -836,7 +837,7 @@ class Activity
 	 */
 	public function measureFiles()
 	{
-		$querySql = $this->prepareActivityQuery(array(
+		$querySql = $this->prepareActivityRelationQuerySql(array(
 			'DATE_CREATE' => 'DATE_CREATED_SHORT',
 			'STAGE_SEMANTIC_ID' => 'STAGE_SEMANTIC_ID',
 		));

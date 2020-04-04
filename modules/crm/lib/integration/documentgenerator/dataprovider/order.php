@@ -259,19 +259,21 @@ class Order extends ProductsDataProvider implements Nameable
 		{
 			$this->taxes = [];
 			$currencyID = $this->getCurrencyId();
-			$taxes = $order->getTax()->getTaxList();
-			foreach($taxes as $taxInfo)
+			if ($taxes = $order->getTax()->getTaxList())
 			{
-				$tax = new Tax([
-					'NAME' => $taxInfo['NAME'],
-					'VALUE' => new Money($taxInfo['VALUE_MONEY'], ['CURRENCY_ID' => $currencyID, 'WITH_ZEROS' => true]),
-					'NETTO' => 0,
-					'BRUTTO' => 0,
-					'RATE' => $taxInfo['VALUE'],
-					'TAX_INCLUDED' => $taxInfo['IS_IN_PRICE'],
-				]);
-				$tax->setParentProvider($this);
-				$this->taxes[] = $tax;
+				foreach($taxes as $taxInfo)
+				{
+					$tax = new Tax([
+						'NAME' => $taxInfo['NAME'],
+						'VALUE' => new Money($taxInfo['VALUE_MONEY'], ['CURRENCY_ID' => $currencyID, 'WITH_ZEROS' => true]),
+						'NETTO' => 0,
+						'BRUTTO' => 0,
+						'RATE' => $taxInfo['VALUE'],
+						'TAX_INCLUDED' => $taxInfo['IS_IN_PRICE'],
+					]);
+					$tax->setParentProvider($this);
+					$this->taxes[] = $tax;
+				}
 			}
 
 			$taxes = $this->loadVatTaxesInfo();

@@ -2,7 +2,7 @@
 
 namespace Bitrix\Crm\Volume;
 
-use Bitrix\Main\Entity;
+use Bitrix\Main;
 use Bitrix\Main\ORM;
 use Bitrix\Crm;
 use Bitrix\Crm\Volume;
@@ -13,7 +13,7 @@ use Bitrix\Crm\Volume;
  */
 class Cleaner
 {
-	/** @var Volume\IVolumeIndicator */
+	/** @var Volume\IVolumeIndicator | Volume\IVolumeClearFile | Volume\IVolumeClearEvent | Volume\IVolumeClearActivity */
 	private $indicator;
 
 	/** @var array */
@@ -166,15 +166,6 @@ class Cleaner
 			$indicator->setProcessOffset($cleaner->getLastId());
 		}
 
-		/*
-		global $USER;
-		if (!(isset($USER) && $USER instanceof \CUser))
-		{
-			// Authorize($id, $bSave = false, $bUpdate = true, $applicationId = null)
-			$USER = new \CUser();
-			$USER->Authorize($cleaner->getOwnerId(), false, false, 'public');
-		}*/
-
 		// run subTask
 		$taskDone = false;
 		switch ($subTask)
@@ -196,10 +187,6 @@ class Cleaner
 				}
 				else
 				{
-					/*if ($indicator->hasErrors())
-					{
-						$taskDone = true;
-					}*/
 					if ($indicator->hasTimeLimitReached())
 					{
 						$taskDone = false;
@@ -213,7 +200,7 @@ class Cleaner
 				if ($indicator->hasErrors())
 				{
 					$error = $indicator->getLastError();
-					if ($error instanceof \Bitrix\Main\Error)
+					if ($error instanceof Main\Error)
 					{
 						$cleaner->setLastError($error->getMessage());
 					}
@@ -245,10 +232,6 @@ class Cleaner
 				}
 				else
 				{
-					/*if ($indicator->hasErrors())
-					{
-						$taskDone = true;
-					}*/
 					if ($indicator->hasTimeLimitReached())
 					{
 						$taskDone = false;
@@ -262,7 +245,7 @@ class Cleaner
 				if ($indicator->hasErrors())
 				{
 					$error = $indicator->getLastError();
-					if ($error instanceof \Bitrix\Main\Error)
+					if ($error instanceof Main\Error)
 					{
 						$cleaner->setLastError($error->getMessage());
 					}
@@ -294,10 +277,6 @@ class Cleaner
 				}
 				else
 				{
-					/*if ($indicator->hasErrors())
-					{
-						$taskDone = true;
-					}*/
 					if ($indicator->hasTimeLimitReached())
 					{
 						$taskDone = false;
@@ -311,7 +290,7 @@ class Cleaner
 				if ($indicator->hasErrors())
 				{
 					$error = $indicator->getLastError();
-					if ($error instanceof \Bitrix\Main\Error)
+					if ($error instanceof Main\Error)
 					{
 						$cleaner->setLastError($error->getMessage());
 					}
@@ -360,7 +339,7 @@ class Cleaner
 				if ($indicator->hasErrors())
 				{
 					$error = $indicator->getLastError();
-					if ($error instanceof \Bitrix\Main\Error)
+					if ($error instanceof Main\Error)
 					{
 						$cleaner->setLastError($error->getMessage());
 					}
@@ -462,7 +441,7 @@ class Cleaner
 
 			if ($params[self::DROP_ENTITY] === true)
 			{
-				if ($indicator instanceof \Bitrix\Crm\Volume\IVolumeClear)
+				if ($indicator instanceof Volume\IVolumeClear)
 				{
 					if ($indicator->canClearEntity())
 					{
@@ -473,7 +452,7 @@ class Cleaner
 			}
 			if ($params[self::DROP_FILE] === true)
 			{
-				if ($indicator instanceof \Bitrix\Crm\Volume\IVolumeClearFile)
+				if ($indicator instanceof Volume\IVolumeClearFile)
 				{
 					if ($indicator->canClearFile())
 					{
@@ -484,7 +463,7 @@ class Cleaner
 			}
 			if ($params[self::DROP_EVENT] === true)
 			{
-				if ($indicator instanceof \Bitrix\Crm\Volume\IVolumeClearEvent)
+				if ($indicator instanceof Volume\IVolumeClearEvent)
 				{
 					if ($indicator->canClearEvent())
 					{
@@ -495,7 +474,7 @@ class Cleaner
 			}
 			if ($params[self::DROP_ACTIVITY] === true)
 			{
-				if ($indicator instanceof \Bitrix\Crm\Volume\IVolumeClearActivity)
+				if ($indicator instanceof Volume\IVolumeClearActivity)
 				{
 					if ($indicator->canClearActivity())
 					{
@@ -537,9 +516,9 @@ class Cleaner
 				$nextExecutionTime = '';
 				if (!empty($params['delay']) && (int)$params['delay'] > 0)
 				{
-					$now = new \Bitrix\Main\Type\DateTime();
+					$now = new Main\Type\DateTime();
 					$now->add($params['delay'].' SECOND');
-					$nextExecutionTime = $now->format(\Bitrix\Main\Type\DateTime::getFormat());
+					$nextExecutionTime = $now->format(Main\Type\DateTime::getFormat());
 				}
 
 				$agents = \CAgent::GetList(
@@ -600,9 +579,9 @@ class Cleaner
 	public static function canAgentUseCrontab()
 	{
 		$canAgentsUseCrontab = false;
-		$agentsUseCrontab = \Bitrix\Main\Config\Option::get('main', 'agents_use_crontab', 'N');
+		$agentsUseCrontab = Main\Config\Option::get('main', 'agents_use_crontab', 'N');
 		if (
-			!\Bitrix\Main\ModuleManager::isModuleInstalled('bitrix24') &&
+			!Main\ModuleManager::isModuleInstalled('bitrix24') &&
 			($agentsUseCrontab === 'Y' || (defined('BX_CRONTAB_SUPPORT') && BX_CRONTAB_SUPPORT === true))
 		)
 		{
@@ -620,7 +599,7 @@ class Cleaner
 	{
 		$isCronRun = false;
 		if (
-			!\Bitrix\Main\ModuleManager::isModuleInstalled('bitrix24') &&
+			!Main\ModuleManager::isModuleInstalled('bitrix24') &&
 			(php_sapi_name() === 'cli')
 		)
 		{
@@ -653,17 +632,17 @@ class Cleaner
 				$taskParams[self::DROP_ENTITY] = $this->getStatusSubTask(self::DROP_ENTITY);
 				$taskParams['DROPPED_ENTITY_COUNT'] = $this->indicator->getDroppedEntityCount();
 			}
-			if (($subTask == '' || $subTask == self::DROP_FILE) && $this->indicator instanceof Crm\Volume\IVolumeClearFile)
+			if (($subTask == '' || $subTask == self::DROP_FILE) && $this->indicator instanceof Volume\IVolumeClearFile)
 			{
 				$taskParams[self::DROP_FILE] = $this->getStatusSubTask(self::DROP_FILE);
 				$taskParams['DROPPED_FILE_COUNT'] = $this->indicator->getDroppedFileCount();
 			}
-			if (($subTask == '' || $subTask == self::DROP_EVENT) && $this->indicator instanceof Crm\Volume\IVolumeClearEvent)
+			if (($subTask == '' || $subTask == self::DROP_EVENT) && $this->indicator instanceof Volume\IVolumeClearEvent)
 			{
 				$taskParams[self::DROP_EVENT] = $this->getStatusSubTask(self::DROP_EVENT);
 				$taskParams['DROPPED_EVENT_COUNT'] = $this->indicator->getDroppedEventCount();
 			}
-			if (($subTask == '' || $subTask == self::DROP_ACTIVITY) && $this->indicator instanceof Crm\Volume\IVolumeClearActivity)
+			if (($subTask == '' || $subTask == self::DROP_ACTIVITY) && $this->indicator instanceof Volume\IVolumeClearActivity)
 			{
 				$taskParams[self::DROP_ACTIVITY] = $this->getStatusSubTask(self::DROP_ACTIVITY);
 				$taskParams['DROPPED_ACTIVITY_COUNT'] = $this->indicator->getDroppedActivityCount();
@@ -681,12 +660,12 @@ class Cleaner
 				$taskParams['LAST_ERROR'] = $this->getLastError();
 			}
 
-			$result = \Bitrix\Crm\VolumeTable::update($this->getId(), $taskParams);
+			$result = Crm\VolumeTable::update($this->getId(), $taskParams);
 
 			return $result->isSuccess();
 		}
 
-		$result = \Bitrix\Crm\VolumeTable::add(array(
+		$result = Crm\VolumeTable::add(array(
 			'INDICATOR_TYPE' => $this->getIndicatorType(),
 			'OWNER_ID' => $this->getOwnerId(),
 			'AGENT_LOCK' => $this->getStatus(),
@@ -769,7 +748,7 @@ class Cleaner
 	{
 		if ($this->getId() > 0 && self::isRunningMode($this->getStatus()))
 		{
-			$param = \Bitrix\Crm\VolumeTable::getByPrimary($this->getId(), array('select' => array('AGENT_LOCK')))->fetch();
+			$param = Crm\VolumeTable::getByPrimary($this->getId(), array('select' => array('AGENT_LOCK')))->fetch();
 			if ($param)
 			{
 				if ((int)$param['AGENT_LOCK'] === self::TASK_STATUS_CANCEL)
@@ -788,7 +767,7 @@ class Cleaner
 	/**
 	 * Returns object indicator corresponding to task.
 	 * @return Volume\IVolumeIndicator|boolean
-	 * @throws \Bitrix\Main\ArgumentNullException
+	 * @throws Main\ArgumentNullException
 	 */
 	public function getIndicator()
 	{
@@ -799,30 +778,30 @@ class Cleaner
 				/** @var Volume\IVolumeIndicator $indicatorType */
 				$indicatorType = $this->getIndicatorType();
 
-				/** @var Crm\Volume\IVolumeClear $this->indicator */
+				/** @var Volume\IVolumeClear $this->indicator */
 				$this->indicator = Volume\Base::getIndicator($indicatorType);
 
-				if ($this->indicator instanceof Crm\Volume\IVolumeClear)
+				if ($this->indicator instanceof Volume\IVolumeClear)
 				{
 					$this->indicator->setDroppedEntityCount($this->getParam('DROPPED_ENTITY_COUNT'));
 					$this->indicator->setFailCount($this->getParam('FAIL_COUNT'));
 				}
-				if ($this->indicator instanceof Crm\Volume\IVolumeClearFile)
+				if ($this->indicator instanceof Volume\IVolumeClearFile)
 				{
 					$this->indicator->setDroppedFileCount($this->getParam('DROPPED_FILE_COUNT'));
 				}
-				if ($this->indicator instanceof Crm\Volume\IVolumeClearEvent)
+				if ($this->indicator instanceof Volume\IVolumeClearEvent)
 				{
 					$this->indicator->setDroppedEventCount($this->getParam('DROPPED_EVENT_COUNT'));
 				}
-				if ($this->indicator instanceof Crm\Volume\IVolumeClearActivity)
+				if ($this->indicator instanceof Volume\IVolumeClearActivity)
 				{
 					$this->indicator->setDroppedActivityCount($this->getParam('DROPPED_ACTIVITY_COUNT'));
 				}
 
 				if (!empty($this->param['FILTER']))
 				{
-					$filter = unserialize($this->param['FILTER']);
+					$filter = unserialize($this->param['FILTER'], [Main\Type\DateTime::class]);
 					if ($filter === false || !is_array($filter))
 					{
 						return false;
@@ -831,7 +810,7 @@ class Cleaner
 					$this->indicator->setFilter($filter);
 				}
 			}
-			catch(\Bitrix\Main\ObjectException $ex)
+			catch(Main\ObjectException $ex)
 			{
 				return false;
 			}
@@ -1016,7 +995,7 @@ class Cleaner
 	}
 
 	/**
-	 * Sets last error text ocoried  in iteration.
+	 * Sets last error text occurred in iteration.
 	 * @param string $errorText Error text to save.
 	 * @return void
 	 */
@@ -1193,7 +1172,7 @@ class Cleaner
 	 */
 	public static function cancelWorker($ownerId)
 	{
-		$workerResult = \Bitrix\Crm\VolumeTable::getList(array(
+		$workerResult = Crm\VolumeTable::getList(array(
 			'select' => array(
 				'ID',
 			),
@@ -1206,7 +1185,7 @@ class Cleaner
 		{
 			foreach ($workerResult as $row)
 			{
-				\Bitrix\Crm\VolumeTable::update($row['ID'], array('AGENT_LOCK' => self::TASK_STATUS_CANCEL));
+				Crm\VolumeTable::update($row['ID'], array('AGENT_LOCK' => self::TASK_STATUS_CANCEL));
 			}
 		}
 	}
@@ -1219,7 +1198,7 @@ class Cleaner
 	 */
 	public static function countWorker($ownerId)
 	{
-		$workerResult = \Bitrix\Crm\VolumeTable::getList(array(
+		$workerResult = Crm\VolumeTable::getList(array(
 			'select' => array(
 				//'CNT',
 				'AGENT_LOCK',
@@ -1299,14 +1278,14 @@ class Cleaner
 	 */
 	public static function getProgressInfo($ownerId)
 	{
-		$optionSerialized = \Bitrix\Main\Config\Option::get(
+		$optionSerialized = Main\Config\Option::get(
 			'main.stepper.crm',
 			self::class. $ownerId,
 			''
 		);
 		if (!empty($optionSerialized))
 		{
-			return unserialize($optionSerialized);
+			return unserialize($optionSerialized, [false]);
 		}
 
 		return null;
@@ -1339,7 +1318,7 @@ class Cleaner
 				}
 			}
 
-			\Bitrix\Main\Config\Option::set(
+			Main\Config\Option::set(
 				'main.stepper.crm',
 				self::class. $ownerId,
 				serialize(array('steps' => ($droppedCount + $failCount), 'count' => $totalToDrop))
@@ -1358,7 +1337,7 @@ class Cleaner
 	 */
 	public static function clearProgressInfo($ownerId)
 	{
-		\Bitrix\Main\Config\Option::delete(
+		Main\Config\Option::delete(
 			'main.stepper.crm',
 			array('name' => self::class. $ownerId)
 		);

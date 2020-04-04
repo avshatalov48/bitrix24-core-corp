@@ -3,6 +3,8 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 
 use Bitrix\Main\Localization\Loc;
 
+use Bitrix\Tasks\CheckList\Template\TemplateCheckListConverterHelper;
+use Bitrix\Tasks\CheckList\Template\TemplateCheckListFacade;
 use Bitrix\Tasks\Util\Error\Collection;
 use Bitrix\Tasks\Item\Task\Template;
 use Bitrix\Tasks\Util\Type\ArrayOption;
@@ -10,7 +12,6 @@ use Bitrix\Tasks\Util\Type\StructureChecker;
 use Bitrix\Tasks\Util;
 use Bitrix\Tasks\Util\User;
 use Bitrix\Tasks\Integration\SocialNetwork\Group;
-use Bitrix\Tasks\Util\Type;
 use Bitrix\Tasks\UI;
 use Bitrix\Tasks\Item\Converter\Task\Template\ToTemplate;
 
@@ -133,6 +134,8 @@ class TasksTaskTemplateComponent extends TasksBaseComponent
 		$formSubmitted = $this->formData !== false;
 		$id = $this->template->getId();
 
+		$this->arResult['CHECKLIST_CONVERTED'] = ($id? TemplateCheckListConverterHelper::checkEntityConverted($id) : true);
+
 		if(!$id) // get from other sources: default data or other templates`s data
 		{
 			$this->getDataDefaults();
@@ -150,12 +153,10 @@ class TasksTaskTemplateComponent extends TasksBaseComponent
 		}
 		elseif(!$id)
 		{
-			if(intval($this->request['COPY'])) // copy from another template?
+			if((int)$this->request['COPY']) // copy from another template?
 			{
-				$sourceTemplate = new Template(
-					intval($this->request['COPY']),
-					$this->arResult['USER_ID']
-				);
+				$copiedFrom = (int)$this->request['COPY'];
+				$sourceTemplate = new Template($copiedFrom, $this->arResult['USER_ID']);
 
 				/**
 				 * todo: @see \Bitrix\Tasks\Item\Converter::convert for todo remark
@@ -170,6 +171,9 @@ class TasksTaskTemplateComponent extends TasksBaseComponent
 					$transformErrors = $transformResult->getErrors()->transform(array('TYPE' => Util\Error::TYPE_WARNING));
 					$this->errors->load($transformErrors);
 				}
+
+				$this->arResult['COPIED_FROM'] = $copiedFrom;
+				$this->arResult['CHECKLIST_CONVERTED'] = TemplateCheckListConverterHelper::checkEntityConverted($copiedFrom);
 			}
 			else // get some from request
 			{
@@ -181,6 +185,38 @@ class TasksTaskTemplateComponent extends TasksBaseComponent
 		$this->collectProjects();
 		$this->collectTasks();
 		$this->collectTemplates();
+
+		$this->getFeedbackFormParameters($id);
+	}
+
+	/**
+	 * @param $templateId
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\NotImplementedException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	private function getFeedbackFormParameters($templateId)
+	{
+		$checklistGroupCount = count(
+			TemplateCheckListFacade::getList(['ID'], ['TEMPLATE_ID' => $templateId, 'PARENT_ID' => 0])
+		);
+
+		$this->arResult['DATA']['FEEDBACK_FORM_PARAMETERS'] = [
+			'ID' => 'tasks-checklist',
+			'VIEW_TARGET' => null,
+			'FORMS' => [
+				['zones' => ['com.br'], 'id' => '112','lang' => 'br', 'sec' => 'fcujin'],
+				['zones' => ['es'], 'id' => '110','lang' => 'la', 'sec' => 'hj410g'],
+				['zones' => ['de'], 'id' => '108','lang' => 'de', 'sec' => '9fgkgr'],
+				['zones' => ['ua'], 'id' => '104','lang' => 'ua', 'sec' => 'pahi9k'],
+				['zones' => ['ru', 'kz', 'by'], 'id' => '102','lang' => 'ru', 'sec' => 'xsbhvf'],
+				['zones' => ['en'], 'id' => '106','lang' => 'en', 'sec' => 'etwdsc'],
+			],
+			'PRESETS' => [
+				'check_list' => ($checklistGroupCount > 0? 1 : 0),
+				'amount_list' => $checklistGroupCount,
+			],
+		];
 	}
 
 	protected function getAuxData()
@@ -287,6 +323,25 @@ class TasksTaskTemplateComponent extends TasksBaseComponent
 
 			if($this->success)
 			{
+				$templates = Util::getOption('propagate_to_sub_templates');
+				if ($templates)
+				{
+					$templates = unserialize($templates);
+					$templateId = $op->getResult()->getData()['ID'];
+					$propagateToSubTemplates = $op->getArguments()['data']['PROPAGATE_TO_SUB_TEMPLATES'];
+
+					if (in_array($propagateToSubTemplates, ['Y', '1']) && !in_array($templateId, $templates))
+					{
+						$templates[] = $templateId;
+					}
+					else if (!in_array($propagateToSubTemplates, ['Y', '1']) && in_array($templateId, $templates))
+					{
+						unset($templates[array_search($templateId, $templates)]);
+					}
+
+					Util::setOption('propagate_to_sub_templates', serialize($templates));
+				}
+
 				if($this->arParams['REDIRECT_ON_SUCCESS'])
 				{
 					LocalRedirect($this->makeRedirectUrl($op));
@@ -319,6 +374,12 @@ class TasksTaskTemplateComponent extends TasksBaseComponent
 		$backUrl = $this->getBackUrl();
 		$url = $backUrl != '' ? Util::secureBackUrl($backUrl) : $GLOBALS["APPLICATION"]->GetCurPageParam('');
 		$action = 'view'; // having default backurl after success edit we go to view ...
+
+        $isIframe = $_REQUEST['IFRAME'] && $_REQUEST['IFRAME']=='Y';
+        if($isIframe)
+        {
+            $url .= '?IFRAME=Y';
+        }
 
 		return UI\Task\Template::makeActionUrl($url, static::getOperationTaskId($operation), $action);
 	}
@@ -452,5 +513,44 @@ class TasksTaskTemplateComponent extends TasksBaseComponent
 		}
 
 		return $ids;
+	}
+
+	public static function getAllowedMethods()
+	{
+		return [
+			'saveCheckList',
+		];
+	}
+
+	public static function saveCheckList($items, $templateId, $userId)
+	{
+		if (!is_array($items))
+		{
+			$items = [];
+		}
+
+		foreach ($items as $id => $item)
+		{
+			$item['ID'] = ((int)$item['ID'] === 0? null : (int)$item['ID']);
+			$item['IS_COMPLETE'] = (int)$item['IS_COMPLETE'] > 0;
+			$item['IS_IMPORTANT'] = (int)$item['IS_IMPORTANT'] > 0;
+
+			if (is_array($item['MEMBERS']))
+			{
+				$members = [];
+
+				foreach ($item['MEMBERS'] as $number => $member)
+				{
+					$members[key($member)] = current($member);
+				}
+
+				$item['MEMBERS'] = $members;
+			}
+
+			$items[$item['NODE_ID']] = $item;
+			unset($items[$id]);
+		}
+
+		return TemplateCheckListFacade::merge($templateId, $userId, $items);
 	}
 }

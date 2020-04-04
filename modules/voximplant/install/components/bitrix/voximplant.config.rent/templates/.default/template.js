@@ -14,7 +14,6 @@
 		this.location = params.location;
 		this.canRent = params.canRent;
 		this.iframe = params.iframe;
-		this.buyLink = params.buyLink;
 
 		this.currentBalance = params.currentBalance;
 
@@ -742,7 +741,7 @@
 					}
 				}
 
-				if(this.selectedCount === 0  && !getMore && Object.keys(region["NUMBERS"]).length >= this.rentPacketSize)
+				if(this.selectedCount === 0  && !getMore && Object.keys(region["NUMBERS"]).length >= this.rentPacketSize && this.rentPacketSize > 1)
 				{
 					for (var i = 0; i < this.rentPacketSize; i++)
 					{
@@ -1023,11 +1022,12 @@
 
 		var rentPrice = 0;
 		var installationPrice = 0;
+		var selectedCount = (this.selectedCount || 1);
 
 		if(this._data[this._countryId]["CAN_LIST_PHONES"])
 		{
-			rentPrice = parseFloat(region["MONTH_PRICE"]) * this.selectedCount;
-			installationPrice = parseFloat(region["INSTALLATION_PRICE"]) * this.selectedCount;
+			rentPrice = parseFloat(region["MONTH_PRICE"]) * selectedCount;
+			installationPrice = parseFloat(region["INSTALLATION_PRICE"]) * selectedCount;
 		}
 		else
 		{
@@ -1108,14 +1108,15 @@
 						props: {className: "tel-set-amount-warning-text"},
 						text: BX.type.isNotEmptyString(this.currentRegion["REQUIRED_VERIFICATION"]) ? BX.message("VI_CONFIG_RENT_NO_MONEY_TO_RESERVE") : BX.message("VI_CONFIG_RENT_NO_MONEY_TO_RENT")
 					}),
-					BX.create("a", {
-						//ToDo: add href setting
+					BX.create("span", {
 						props: {className: "tel-set-amount-warning-link"},
-						attrs: {
-							href: this.buyLink,
-							target: "_blank"
-						},
-						text: BX.message("VI_CONFIG_RENT_TOP_UP_BALANCE")
+						text: BX.message("VI_CONFIG_RENT_TOP_UP_BALANCE"),
+						events: {
+							click: function()
+							{
+								BX.Voximplant.openBilling();
+							}
+						}
 					})
 				]
 			}));

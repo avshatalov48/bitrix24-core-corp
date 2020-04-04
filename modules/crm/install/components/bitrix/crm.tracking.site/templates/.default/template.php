@@ -29,6 +29,17 @@ $containerId = 'crm-tracking-site';
 <div id="<?=htmlspecialcharsbx($containerId)?>" class="crm-tracking-site-wrap">
 
 	<?
+		if ($arResult['ROW']['ID']):
+			$this->SetViewTarget('pagetitle');
+	?>
+			<div id="crm-tracking-site-remove" class="ui-btn ui-btn-light-border ui-btn-icon-remove">
+				<?=Loc::getMessage('CRM_TRACKING_SITE_BTN_REMOVE')?>
+			</div>
+	<?
+			$this->EndViewTarget();
+		endif;
+	?>
+	<?
 	$APPLICATION->IncludeComponent(
 		'bitrix:ui.feedback.form',
 		'',
@@ -36,8 +47,9 @@ $containerId = 'crm-tracking-site';
 	);
 	?>
 
-	<form method="post">
+	<form method="post" id="crm-tracking-site-form">
 		<?=bitrix_sessid_post();?>
+		<input id="crm-tracking-site-remove-input" type="hidden" name="remove" value="N">
 		<div class="crm-tracking-site-block">
 			<div class="crm-tracking-site-desc">
 				<span class="crm-tracking-site-desc-text">
@@ -209,8 +221,8 @@ $containerId = 'crm-tracking-site';
 				<div class="crm-analytics-channel-addition-alt" id="crm-analytics-channel-addition-btn">
 					<div class="crm-analytics-channel-addition-more"><?=Loc::getMessage("CRM_TRACKING_SITE_ADDITIONAL")?></div>
 					<div class="crm-analytics-channel-addition-alt-promo">
-						<span class="crm-analytics-channel-addition-alt-promo-text"><?=Loc::getMessage('CRM_TRACKING_SITE_REPLACE_TEXT_SHORT')?></span>
 						<span class="crm-analytics-channel-addition-alt-promo-text"><?=Loc::getMessage('CRM_TRACKING_SITE_ENRICH_TEXT_SHORT')?></span>
+						<span class="crm-analytics-channel-addition-alt-promo-text"><?=Loc::getMessage('CRM_TRACKING_SITE_REPLACE_TEXT_SHORT')?></span>
 						<span class="crm-analytics-channel-addition-alt-promo-text"><?=Loc::getMessage('CRM_TRACKING_SITE_RESOLVE_DUP_SHORT')?></span>
 					</div>
 				</div>
@@ -227,13 +239,13 @@ $containerId = 'crm-tracking-site';
 
 						<div class="crm-analytics-channel-addition-options-subitem">
 							<input class="crm-analytics-channel-addition-input" type="checkbox"
-								   id="ENRICH_TEXT" name="ENRICH_TEXT" value="Y"
+								id="ENRICH_TEXT" name="ENRICH_TEXT" value="Y"
 								<?=($arResult['ROW']['ENRICH_TEXT'] === 'Y' ? 'checked' : '')?>
 							>
 							<label class="crm-analytics-channel-addition-label" for="ENRICH_TEXT">
 								<?=Loc::getMessage('CRM_TRACKING_SITE_ENRICH_TEXT')?>
 							</label>
-							<span data-hint="<?=Loc::getMessage('CRM_TRACKING_SITE_ENRICH_TEXT_HINT')?>" class="ui-hint"></span>
+							<span data-hint="<?=Loc::getMessage('CRM_TRACKING_SITE_ENRICH_TEXT_HINT1')?>" class="ui-hint"></span>
 						</div>
 					</div>
 					<div class="crm-analytics-channel-addition-options-item">

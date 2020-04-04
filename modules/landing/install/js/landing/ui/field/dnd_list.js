@@ -446,7 +446,7 @@
 			return create("div", {
 				props: {className: "landing-ui-field-dnd-value-placeholder"},
 				children: [
-					create("span", {html: BX.message("LANDING_FIELD_CATALOG_CONSTRUCTOR_PLACEHOLDER_TEXT")})
+					create("span", {html: BX.Landing.Loc.getMessage("LANDING_FIELD_CATALOG_CONSTRUCTOR_PLACEHOLDER_TEXT")})
 				]
 			})
 		},

@@ -35,18 +35,20 @@ abstract class Stepper
 	 */
 	public static function getHtml($ids = array(), $title = "")
 	{
+		if (static::class !== __CLASS__)
+		{
+			$title = static::getTitle();
+			$ids = [static::$moduleId => [ static::class ]];
+			return call_user_func(array(__CLASS__, "getHtml"), $ids, $title);
+		}
+
 		$return = array();
 		$count = 0;
 		$steps = 0;
+
 		if (is_string($ids))
 		{
-			if (is_array($title))
-			{
-				$ids = array($ids => $title);
-				$title = "";
-			}
-			else
-				$ids = array($ids => null);
+			$ids = array($ids => null);
 		}
 
 		foreach($ids as $moduleId => $classesId)
@@ -65,6 +67,7 @@ abstract class Stepper
 							$return[] = array(
 								"moduleId" => $moduleId,
 								"class" => $classId,
+								"title" => $option["title"],
 								"steps" => $option["steps"],
 								"count" => $option["count"]
 							);
@@ -85,6 +88,7 @@ abstract class Stepper
 						$return[] = array(
 							"moduleId" => $moduleId,
 							"class" => $classId,
+							"title" => $option["title"],
 							"steps" => $option["steps"],
 							"count" => $option["count"]
 						);
@@ -94,15 +98,16 @@ abstract class Stepper
 				}
 			}
 		}
+
 		$result = '';
-		if (!empty($return) && $count > 0)
+		if (!empty($return))
 		{
 			$id = ++self::$countId;
 			\CJSCore::Init(array('update_stepper'));
-			$title = empty($title) ? Loc::getMessage("STEPPER_TITLE") : $title;
-			$progress = intval( $steps * 100 / $count);
+			$title = empty($title) ? self::getTitle() : $title;
+			$progress = $count > 0 ? intval( $steps * 100 / $count) : 0;
 			$result .= <<<HTML
-<div class="main-stepper main-stepper-show" id="{$id}-container">
+<div class="main-stepper main-stepper-show" id="{$id}-container" data-bx-steps-count="{$count}">
 	<div class="main-stepper-info" id="{$id}-title">{$title}</div>
 	<div class="main-stepper-inner">
 		<div class="main-stepper-bar">
@@ -122,6 +127,11 @@ HTML;
 		}
 		return $result;
 	}
+
+	public static function getTitle()
+	{
+		return Loc::getMessage("STEPPER_TITLE");
+	}
 	/**
 	 * Execute an agent
 	 * @return string
@@ -139,6 +149,7 @@ HTML;
 		{
 			$option["steps"] = (array_key_exists("steps", $option) ? intval($option["steps"]) : 0);
 			$option["count"] = (array_key_exists("count", $option) ? intval($option["count"]) : 0);
+			$option["title"] = $updater::getTitle();
 
 			Option::set("main.stepper.".$updater->getModuleId(), $className, serialize($option));
 			return $className . '::execAgent();';
@@ -261,16 +272,23 @@ HTML;
 					false,
 					false
 				);
+				if (Option::get("main.stepper.".$moduleId, $className, "") === "")
+					Option::set("main.stepper.".$moduleId, $className, serialize([]));
 			}
 		}
 		else
 		{
 			global $DB;
 			$name = $DB->ForSql($className.'::execAgent();', 2000);
+			$className = $DB->ForSql($className);
 			$moduleId = $DB->ForSql($moduleId);
 			if (!(($agent = $DB->Query("SELECT ID FROM b_agent WHERE MODULE_ID='".$moduleId."' AND NAME = '".$name."' AND USER_ID IS NULL")->Fetch()) && $agent))
 			{
 				$DB->Query("INSERT INTO b_agent (MODULE_ID, SORT, NAME, ACTIVE, AGENT_INTERVAL, IS_PERIOD, NEXT_EXEC) VALUES ('".$moduleId."', 100, '".$name."', 'Y', 1, 'Y', ".($delay > 0 ? "DATE_ADD(now(), INTERVAL ". ((int) $delay)." SECOND)" : $DB->GetNowFunction()).")");
+				$DB->Query("INSERT INTO b_option (`MODULE_ID`, `NAME`, `VALUE`)".
+					"VALUES ('main.stepper.{$moduleId}', '".$className."', 'a:0:{}')".
+					"ON DUPLICATE KEY UPDATE `VALUE` = 'a:0:{}'"
+				);
 			}
 		}
 	}

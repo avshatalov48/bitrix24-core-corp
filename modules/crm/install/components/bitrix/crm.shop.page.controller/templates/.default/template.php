@@ -4,13 +4,19 @@ Bitrix\Main\Page\Asset::getInstance()->addJs("/bitrix/js/main/hot_keys.js");
 
 $selfFolderUrl = "/shop/settings/";
 
+$orderMenuUrl = "/shop/orders/";
+if (\Bitrix\Crm\Settings\OrderSettings::getCurrent()->getCurrentListViewID() == \Bitrix\Crm\Settings\OrderSettings::VIEW_KANBAN)
+{
+	$orderMenuUrl = "/shop/orders/kanban/";
+}
+
 $additionalList = array(
 	array(
 		"parent_menu" => "global_menu_store",
 		"sort" => 100,
 		"text" => GetMessage("SHOP_MENU_ORDER_TITLE"),
 		"title" => GetMessage("SHOP_MENU_ORDER_TITLE"),
-		"url" => "/shop/orders/",
+		"url" => $orderMenuUrl,
 		"url_constant" => true,
 		"items_id" => "orders",
 	),
@@ -116,15 +122,57 @@ $additionalList = array(
 
 if (CCrmSaleHelper::isShopAccess("admin"))
 {
-	$additionalList[] = array(
-		"parent_menu" => "global_menu_store",
-		"sort" => 150,
-		"text" => GetMessage("SHOP_MENU_SHOP_TITLE"),
-		"title" => GetMessage("SHOP_MENU_SHOP_TITLE"),
-		"url" => "/shop/stores/",
-		"url_constant" => true,
-		"items_id" => "stores",
-	);
+	if (
+		false && // @tmp disabled
+		\Bitrix\Main\Loader::includeModule("landing") &&
+		(
+			is_callable(["\Bitrix\Landing\Rights", "isAdmin"]) &&
+			\Bitrix\Landing\Rights::isAdmin()
+		)
+	)
+	{
+		$additionalList[] = array(
+			"parent_menu" => "global_menu_store",
+			"sort" => 150,
+			"text" => GetMessage("SHOP_MENU_SHOP_TITLE"),
+			"title" => GetMessage("SHOP_MENU_SHOP_TITLE"),
+			"url" => "/shop/stores/",
+			"url_constant" => true,
+			"items_id" => "stores",
+			"items" => array(
+				array(
+					"parent_menu" => "global_menu_store",
+					"sort" => 150.2,
+					"text" => GetMessage("SHOP_MENU_SHOP_LIST_TITLE"),
+					"title" => GetMessage("SHOP_MENU_SHOP_LIST_TITLE"),
+					"url" => "/shop/stores/",
+					"url_constant" => true,
+					"items_id" => "menu_store_list",
+				),
+				array(
+					"parent_menu" => "global_menu_store",
+					"sort" => 150.3,
+					"text" => GetMessage("SHOP_MENU_SHOP_ROLES_TITLE"),
+					"title" => GetMessage("SHOP_MENU_SHOP_ROLES_TITLE"),
+					"url" => "/shop/stores/roles/",
+					"url_constant" => true,
+					"items_id" => "menu_store_role",
+				),
+			)
+		);
+	}
+	else
+	{
+		$additionalList[] = array(
+			"parent_menu" => "global_menu_store",
+			"sort" => 150,
+			"text" => GetMessage("SHOP_MENU_SHOP_TITLE"),
+			"title" => GetMessage("SHOP_MENU_SHOP_TITLE"),
+			"url" => "/shop/stores/",
+			"url_constant" => true,
+			"items_id" => "stores",
+		);
+	}
 }
 
 $ignorePageList = ["menu_order", "sale_cashbox_zreport", "1c_admin", "sale_crm", "update_system_market",
@@ -188,6 +236,7 @@ $APPLICATION->IncludeComponent(
 			"sale_location_type_edit" => $selfFolderUrl."sale_location_type_edit.php",
 			"sale_location_import" => $selfFolderUrl."sale_location_import.php",
 			"iblock_subelement_edit" => $selfFolderUrl."iblock_subelement_edit.php",
+			"report_view" => $selfFolderUrl."sale_report_view.php",
 		),
 		"IGNORE_PAGE_LIST" => $ignorePageList,
 		"SIDE_PANEL_PAGE_LIST" => array(

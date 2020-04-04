@@ -1,5 +1,7 @@
 DROP TABLE IF EXISTS b_disk_storage;
 DROP TABLE IF EXISTS b_disk_object;
+DROP TABLE IF EXISTS b_disk_object_head_index;
+DROP TABLE IF EXISTS b_disk_object_extended_index;
 DROP TABLE IF EXISTS b_disk_object_lock;
 DROP TABLE IF EXISTS b_disk_object_ttl;
 DROP TABLE IF EXISTS b_disk_object_path;
@@ -13,6 +15,7 @@ DROP TABLE IF EXISTS b_disk_edit_session;
 DROP TABLE IF EXISTS b_disk_show_session;
 DROP TABLE IF EXISTS b_disk_tmp_file;
 DROP TABLE IF EXISTS b_disk_deleted_log;
+DROP TABLE IF EXISTS b_disk_deleted_log_v2;
 DROP TABLE IF EXISTS b_disk_cloud_import;
 DROP TABLE IF EXISTS b_disk_recently_used;
 DROP TABLE IF EXISTS b_disk_right_setup_session;

@@ -329,7 +329,7 @@
 .profile-menu-type-name-item {
 	display: inline-block;
 	margin: 0 5px 0 0;
-	text-transform: lowercase;
+/*	text-transform: lowercase;*/
 }
 
 .profile-menu-type-icon {

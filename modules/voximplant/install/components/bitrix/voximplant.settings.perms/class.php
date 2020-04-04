@@ -30,46 +30,30 @@ class CVoximplantPermsComponent extends CBitrixComponent
 	public function prepareData()
 	{
 		$roles = array();
-		$cursor = Model\RoleTable::getList();
-		while($row = $cursor->fetch())
+		foreach (\Bitrix\Voximplant\Security\RoleManager::getRoles() as $roleId => $roleName)
 		{
-			$roles[$row['ID']] = array(
-				'ID' => $row['ID'],
-				'NAME' => $row['NAME'],
-				'EDIT_URL' => CVoxImplantMain::GetPublicFolder().'editrole.php?ID='.$row['ID'],
+			$roles[$roleId] = array(
+				'ID' => $roleId,
+				'NAME' => $roleName,
+				'EDIT_URL' => CVoxImplantMain::GetPublicFolder().'editrole.php?ID='.$roleId,
 			);
 		}
 
 		$roleAccessCodes = array();
-		$accessCodesToResolve = array();
-		$cursor = Model\RoleAccessTable::getList(array(
-			'select' => array('ID', 'ROLE_ID', 'ROLE_NAME' => 'ROLE.NAME', 'ACCESS_CODE'),
-		));
-		while($row = $cursor->fetch())
-		{
-			$roleAccessCodes[$row['ID']] = array(
-				'ID' => $row['ID'],
-				'ROLE_ID' => $row['ROLE_ID'],
-				'ROLE_NAME' => $row['ROLE_NAME'],
-				'ACCESS_CODE' => $row['ACCESS_CODE']
-			);
-			$accessCodesToResolve[] = $row['ACCESS_CODE'];
-		}
 
 		$accessManager = new CAccess();
-		$resolvedAccessCodes = $accessManager->GetNames($accessCodesToResolve);
+		$resolvedAccessCodes = $accessManager->GetNames(array_keys(\Bitrix\Voximplant\Security\RoleManager::getRoleAccess()));
 
-		foreach($roleAccessCodes as $id => $roleAccessCode)
+		foreach(\Bitrix\Voximplant\Security\RoleManager::getRoleAccess() as $accessCode => $accessRoles)
 		{
-			if(isset($resolvedAccessCodes[$roleAccessCode['ACCESS_CODE']]))
+			foreach ($accessRoles as $roleId)
 			{
-				$codeDescription = $resolvedAccessCodes[$roleAccessCode['ACCESS_CODE']];
-				$roleAccessCodes[$id]['ACCESS_PROVIDER'] = $codeDescription['provider'];
-				$roleAccessCodes[$id]['ACCESS_NAME'] = $codeDescription['name'];
-			}
-			else
-			{
-				$roleAccessCodes[$id]['ACCESS_NAME'] = Loc::getMessage('VOXIMPLANT_PERM_UNKNOWN_ACCESS_CODE');
+				$roleAccessCodes[] = array(
+					'ROLE_ID' => $roleId,
+					'ACCESS_CODE' => $accessCode,
+					'ACCESS_PROVIDER' => $resolvedAccessCodes[$accessCode] ? $resolvedAccessCodes[$accessCode]['provider'] : null,
+					'ACCESS_NAME' => $resolvedAccessCodes[$accessCode] ? $resolvedAccessCodes[$accessCode]['name'] : Loc::getMessage('VOXIMPLANT_PERM_UNKNOWN_ACCESS_CODE'),
+				);
 			}
 		}
 
@@ -89,7 +73,7 @@ class CVoximplantPermsComponent extends CBitrixComponent
 		$roleAccessCodes = $request['PERMS'];
 		\Bitrix\Voximplant\Security\Helper::clearMenuCache();
 
-		Model\RoleAccessTable::truncate();
+		\Bitrix\Voximplant\Security\RoleManager::clearRoleAccess();
 
 		if(!is_array($roleAccessCodes))
 		{

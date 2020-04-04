@@ -1,6 +1,8 @@
 <?
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
+use \Bitrix\Crm\Settings\OrderSettings;
+
 if (!CModule::IncludeModule('crm'))
 {
 	ShowError(GetMessage('CRM_MODULE_NOT_INSTALLED'));
@@ -31,6 +33,7 @@ $arDefaultUrlTemplates404 = array(
 	'shipment_details' => 'shipment/details/#shipment_id#/',
 	'payment_details' => 'payment/details/#payment_id#/',
 	'automation' => 'automation/#category_id#/',
+	'kanban' => 'kanban/',
 );
 
 $arDefaultVariableAliases404 = array();
@@ -119,6 +122,7 @@ $arResult = array_merge(
 		'PATH_TO_COMPANY_EDIT' => $arParams['PATH_TO_COMPANY_EDIT'],
 		'PATH_TO_COMPANY_SHOW' => $arParams['PATH_TO_COMPANY_SHOW'],
 		'PATH_TO_USER_PROFILE' => $arParams['PATH_TO_USER_PROFILE'],
+		'PATH_TO_BUYER_PROFILE' => '/shop/settings/sale_buyers_profile/?USER_ID=#user_id#&lang=' . LANGUAGE_ID,
 	),
 	$arResult
 );
@@ -127,7 +131,7 @@ $arResult['NAVIGATION_CONTEXT_ID'] = 'ORDER';
 
 if($componentPage === 'index')
 {
-	$componentPage = 'list';
+	$componentPage = (OrderSettings::getCurrent()->getCurrentListViewID() == OrderSettings::VIEW_KANBAN) ? 'kanban' : 'list';
 }
 
 if(\Bitrix\Crm\Settings\LayoutSettings::getCurrent()->isSliderEnabled()

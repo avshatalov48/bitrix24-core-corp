@@ -71,8 +71,13 @@ if (isset($_REQUEST['MODE']) && $_REQUEST['MODE'] === 'SEARCH')
 	else if (preg_match('/(.*)\[(\d+?)\]/i'.BX_UTF_PCRE_MODIFIER, $search, $arMatches))
 	{
 		$arFilter['ID'] = (int) $arMatches[2];
-		$arFilter['%ORDER_TOPIC'] = trim($arMatches[1]);
-		$arFilter['LOGIC'] = 'OR';
+		$searchString = trim($arMatches[1]);
+		if (is_string($searchString) && $searchString !== '')
+		{
+			$arFilter['%ORDER_TOPIC'] = $searchString;
+			$arFilter['LOGIC'] = 'OR';
+		}
+		unset($searchString);
 	}
 	else
 		$arFilter['%ORDER_TOPIC'] = $search;
@@ -480,12 +485,17 @@ if ($action === 'GET_ROW_COUNT')
 			$recurFieldPrefix = 'CRM_INVOICE_RECURRING_';
 			$invoiceFields = array_keys(\Bitrix\Crm\InvoiceTable::getMap());
 			$recurringFields = \Bitrix\Crm\InvoiceRecurTable::getFieldNames();
+			$invoiceUserFields = $GLOBALS['USER_FIELD_MANAGER']->GetUserFields(\CCrmInvoice::$sUFEntityID);
+			if (!empty($invoiceUserFields) && is_array($invoiceUserFields))
+			{
+				$invoiceFields = array_merge($invoiceFields, array_keys($invoiceUserFields));
+			}
 			$invoiceFields = array_merge($invoiceFields, $recurringFields);
 
 			foreach ($filter as $fieldName => $value)
 			{
 				$key = str_replace($recurFieldPrefix, '', $fieldName);
-				$key = str_replace(array('<', '>', '=', '!', '~', '%', '@', '?'), '', $key);
+				$key = preg_replace('/^\W+/', '', $key);
 				if (in_array($key, $invoiceFields))
 				{
 					$fieldName = str_replace('~','',$fieldName);

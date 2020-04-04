@@ -116,20 +116,40 @@ class CAllDavConnection
 
 	public static function MarkSynchronized($id)
 	{
+		if ($tzEnabled = CTimeZone::Enabled())
+		{
+			CTimeZone::Disable();
+		}
+
 		self::Update(
 			$id,
 			array("SYNCHRONIZED" => ConvertTimeStamp(time(), "FULL")),
 			false
 		);
+
+		if ($tzEnabled)
+		{
+			CTimeZone::Enable();
+		}
 	}
 
 	public static function SetLastResult($id, $result, $syncToken = null)
 	{
+		if ($tzEnabled = CTimeZone::Enabled())
+		{
+			CTimeZone::Disable();
+		}
+
 		self::Update(
 			$id,
 			array("LAST_RESULT" => $result, "SYNCHRONIZED" => ConvertTimeStamp(time(), "FULL"), "SYNC_TOKEN" => $syncToken),
 			false
 		);
+
+		if ($tzEnabled)
+		{
+			CTimeZone::Enable();
+		}
 	}
 
 	public static function Update($id, $arFields, $bModifyDate = true)
@@ -156,6 +176,7 @@ class CAllDavConnection
 				"	".$strUpdate." ".
 				($bModifyDate ? ", MODIFIED = ".$DB->CurrentTimeFunction()." " : "").
 				"WHERE ID = ".$id." ";
+
 			$DB->Query($strSql, false, "File: ".__FILE__."<br>Line: ".__LINE__);
 		}
 

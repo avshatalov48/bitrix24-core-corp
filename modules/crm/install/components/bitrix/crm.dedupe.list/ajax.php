@@ -129,7 +129,7 @@ if ($action === 'GET_DUPLICATE_ENTITIES')
 	$layoutName = isset($_POST['LAYOUT_NAME']) ?  $_POST['LAYOUT_NAME'] : '';
 	$layoutID = CCrmOwnerType::ResolveID($layoutName);
 
-	$matches = isset($_POST['INDEX_MATCHES']) && is_array($_POST['INDEX_MATCHES']) ? $_POST['INDEX_MATCHES'] : array();
+	$matches = isset($_POST['INDEX_MATCHES']) && is_array($_POST['INDEX_MATCHES']) ? array_filter($_POST['INDEX_MATCHES']) : array();
 	if(empty($matches))
 	{
 		__CrmDedupeListEndResponse(array('ERROR' => 'Matches is not defined.'));

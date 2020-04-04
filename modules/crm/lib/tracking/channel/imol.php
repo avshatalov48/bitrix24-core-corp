@@ -7,7 +7,7 @@
  */
 namespace Bitrix\Crm\Tracking\Channel;
 
-use Bitrix\Main\Loader;
+use Bitrix\Main;
 use Bitrix\ImConnector;
 use Bitrix\Crm\Tracking;
 
@@ -16,7 +16,7 @@ use Bitrix\Crm\Tracking;
  *
  * @package Bitrix\Crm\Tracking\Channel
  */
-class Imol extends Base
+class Imol extends Base implements Features\TraceDetectable, Features\SingleChannelSourceDetectable
 {
 	protected $code = self::Imol;
 
@@ -52,7 +52,7 @@ class Imol extends Base
 	 *
 	 * @return bool
 	 */
-	public function isSupportDetecting()
+	public function isSupportTraceDetecting()
 	{
 		switch ($this->getValue())
 		{
@@ -98,7 +98,7 @@ class Imol extends Base
 	 */
 	public function canUse()
 	{
-		if (!Loader::includeModule('imconnector'))
+		if (!Main\Loader::includeModule('imconnector'))
 		{
 			return false;
 		}
@@ -133,5 +133,17 @@ class Imol extends Base
 	public function getDescription()
 	{
 		return parent::getName();
+	}
+
+	/**
+	 * Make uri trackable for imol channel.
+	 *
+	 * @param Main\Web\Uri $uri Uri.
+	 * @param string $connectorCode Connector code.
+	 * @return Main\Web\Uri
+	 */
+	public static function makeUriTrackable(Main\Web\Uri $uri, $connectorCode)
+	{
+		return $uri;
 	}
 }

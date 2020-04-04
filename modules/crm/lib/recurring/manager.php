@@ -160,7 +160,7 @@ class Manager
 		if (!($agent))
 		{
 			$tomorrow = DateTime::createFromTimestamp(strtotime('tomorrow 00:01:00'));
-			\CAgent::AddAgent("\\".__CLASS__."::checkAgent();", "crm", "N", 43200, "", "Y", $tomorrow->toString());
+			\CAgent::AddAgent("\\".__CLASS__."::checkAgent();", "crm", "N", 86400, "", "Y", $tomorrow->toString());
 		}
 
 		static::exposeAgent($typeEntity);
@@ -185,6 +185,11 @@ class Manager
 			{
 				$agentNames[$typeEntity] = "\\".__CLASS__."::exposeAgent('".$typeEntity."');";
 			}
+		}
+
+		if (empty($agentNames))
+		{
+			return '';
 		}
 
 		$agentData = \CAgent::GetList(
@@ -215,7 +220,22 @@ class Manager
 			}
 		}
 
-		return "\\".__CLASS__."::checkAgent();";
+		$currentAgentData = \CAgent::GetList(
+			array(),
+			array(
+				"MODULE_ID" => "crm",
+				"NAME" => "\\".__CLASS__."::checkAgent(%"
+			)
+		);
+
+		if ($currentAgent = $currentAgentData->Fetch())
+		{
+			\CAgent::Delete($currentAgent['ID']);
+			$nextCheckDate = DateTime::createFromTimestamp(strtotime('tomorrow 00:01:00'));
+			\CAgent::AddAgent("\\".__CLASS__."::checkAgent();", "crm", "N", 86400, "", "Y", $nextCheckDate->toString());
+		}
+
+		return '';
 	}
 
 	/**

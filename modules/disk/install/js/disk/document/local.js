@@ -257,7 +257,6 @@
 						closeIcon: true,
 						closeByEsc: true,
 						width: 500,
-						height: 120,
 						zIndex: zIndex,
 						overlay: {
 							backgroundColor: 'rgba(0,0,0,0.5)'

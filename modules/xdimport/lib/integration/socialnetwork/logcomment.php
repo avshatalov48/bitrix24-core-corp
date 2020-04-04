@@ -52,7 +52,7 @@ class LogComment
 				'filter' => array(
 					'=ID' => $itemId
 				),
-				'select' => array('USER_ID', 'MESSAGE')
+				'select' => array('USER_ID', 'MESSAGE', 'UF_SONET_COM_URL_PRV')
 			));
 
 			if ($commentFields = $res->fetch())
@@ -63,6 +63,17 @@ class LogComment
 				}
 				$content .= \CTextParser::clearAllTags($commentFields["MESSAGE"]);
 
+				if (!empty($commentFields['UF_SONET_COM_URL_PRV']))
+				{
+					$metadata = \Bitrix\Main\UrlPreview\UrlMetadataTable::getRowById($commentFields['UF_SONET_COM_URL_PRV']);
+					if (
+						$metadata
+						&& !empty($metadata['TITLE'])
+					)
+					{
+						$content .= ' '.$metadata['TITLE'];
+					}
+				}
 			}
 		}
 

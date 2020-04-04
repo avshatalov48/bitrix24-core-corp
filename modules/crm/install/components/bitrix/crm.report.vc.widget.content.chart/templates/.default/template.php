@@ -121,10 +121,6 @@ $lastStageCode = end($stages);
                 <div class="crm-report-chart-flex-box">
                     <div class="crm-report-chart-through-funnel-widget crm-report-chart-through-funnel-widget-1">
                         <?foreach ($arResult['DATA']['sources'] as $source):
-							if (empty($source['color']))
-							{
-								continue;
-							}
 							?>
                             <div data-role="items/<?=htmlspecialcharsbx($source['code'])?>/<?=htmlspecialcharsbx($stage['code'])?>"
                                  class="crm-report-chart-through-funnel-widget-item"
@@ -233,7 +229,7 @@ $lastStageCode = end($stages);
 					<div data-role="popup-icon" class="crm-report-chart-modal-title-icon">
 						<i data-role="popup-icon-color"></i>
 					</div>
-					<span data-role="popup-caption"></span>
+					<span data-role="popup-caption" class="crm-report-chart-modal-title-text"></span>
 				</div>
 			</div>
 			<div class="crm-report-chart-modal-main">

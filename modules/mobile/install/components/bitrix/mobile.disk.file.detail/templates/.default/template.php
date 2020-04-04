@@ -1,6 +1,9 @@
 <?if(!defined("B_PROLOG_INCLUDED")||B_PROLOG_INCLUDED!==true)die();
 
 $APPLICATION->SetPageProperty("BodyClass","file-card-page");
+
+$openUrlParams = ['url' => $arResult["URL"], 'filename' => $arResult["NAME"]];
+
 ?>
 <div class="file-card-wrap">
 	<div class="file-card-name"><span class="file-card-name-icon" style="background-image:url(<? echo $arResult["ICON"]; ?>)"></span><? echo htmlspecialcharsbx($arResult["NAME"]); ?></div>
@@ -18,5 +21,5 @@ $APPLICATION->SetPageProperty("BodyClass","file-card-page");
 			<span class="file-card-description-left"><? echo GetMessage("DISK_MOBILE_MODIFIED"); ?></span><span class="file-card-description-right"><?  echo $arResult["CREATE_TIME"]; ?></span>
 		</div>
 	</div>
-	<div class="file-card-review-btn" onclick="app.openDocument({'url' : '<? echo $arResult["URL"]; ?>'});" ><? echo GetMessage("DISK_MOBILE_VIEW_FILE"); ?></div>
+	<div class="file-card-review-btn" onclick="BXMobileApp.UI.Document.open(<?=htmlspecialcharsbx(\Bitrix\Main\Web\Json::encode($openUrlParams))?>);" ><? echo GetMessage("DISK_MOBILE_VIEW_FILE"); ?></div>
 </div>

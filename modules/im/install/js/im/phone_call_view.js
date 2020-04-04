@@ -99,6 +99,7 @@
 		this.crmActivityId = params.crmActivityId || 0;
 		this.crmActivityEditUrl = params.crmActivityEditUrl || '';
 		this.crmData = BX.type.isPlainObject(params.crmData) ? params.crmData : {};
+		this.crmBindings = {};
 		this.externalRequests = {};
 
 		//portal call
@@ -1413,6 +1414,7 @@
 		this.crmEntityId = params.id;
 		this.crmActivityId = params.activityId || '';
 		this.crmActivityEditUrl = params.activityEditUrl || '';
+		this.crmBindings = params.bindings;
 
 		if(this.isDesktop() && !this.slave)
 		{
@@ -2289,6 +2291,7 @@
 			'CRM_ENTITY_TYPE': this.crmEntityType,
 			'CRM_ENTITY_ID': this.crmEntityId,
 			'CRM_ACTIVITY_ID': this.crmActivityId === 0 ? undefined : this.crmActivityId,
+			'CRM_BINDINGS': this.crmBindings,
 			'CALL_DIRECTION': this.direction,
 			'CALL_STATE': this.callState,
 			'CALL_LIST_MODE': this.callListId > 0

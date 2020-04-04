@@ -4,11 +4,16 @@ namespace Bitrix\Crm\Controller\Action\Entity;
 
 use Bitrix\Crm\Search\SearchEnvironment;
 use Bitrix\Crm\Controller\EntitySearchScope;
+use Bitrix\Crm\Restriction\RestrictionManager;
+use Bitrix\Crm\Integration\Bitrix24Manager;
 
 use Bitrix\Main;
 use Bitrix\Main\Search;
 use Bitrix\Main\UI\PageNavigation;
 use Bitrix\Main\Web\Uri;
+
+use \Bitrix\Main\Localization\Loc;
+Loc::loadMessages(__FILE__);
 
 /**
  * Class SearchAction
@@ -47,8 +52,11 @@ class SearchAction extends Search\SearchAction
 		}
 		//endregion
 
+		$searchRestriction = RestrictionManager::getSearchLimitRestriction();
 		$items = array();
-		if($enableAllTypes || isset($typeMap[\CCrmOwnerType::LeadName]))
+		if(!$searchRestriction->isExceeded(\CCrmOwnerType::Lead)
+			&& ($enableAllTypes || isset($typeMap[\CCrmOwnerType::LeadName]))
+		)
 		{
 			if($scope === EntitySearchScope::INDEX)
 			{
@@ -76,7 +84,9 @@ class SearchAction extends Search\SearchAction
 				}
 			}
 		}
-		if($enableAllTypes || isset($typeMap[\CCrmOwnerType::ContactName]))
+		if(!$searchRestriction->isExceeded(\CCrmOwnerType::Contact)
+			&& ($enableAllTypes || isset($typeMap[\CCrmOwnerType::ContactName]))
+		)
 		{
 			if($scope === EntitySearchScope::INDEX)
 			{
@@ -116,18 +126,22 @@ class SearchAction extends Search\SearchAction
 				}
 			}
 		}
-		if($enableAllTypes || isset($typeMap[\CCrmOwnerType::CompanyName]))
+		if(!$searchRestriction->isExceeded(\CCrmOwnerType::Company)
+			&& ($enableAllTypes || isset($typeMap[\CCrmOwnerType::CompanyName]))
+		)
 		{
 			if($scope === EntitySearchScope::INDEX)
 			{
 				$filter = array('FIND' => $searchQuery);
+				$filter['=IS_MY_COMPANY'] = isset($options['isMyCompany']) && strtoupper($options['isMyCompany']) === 'Y'
+					? 'Y' : 'N';
 				SearchEnvironment::convertEntityFilterValues(\CCrmOwnerType::Company, $filter);
 			}
 			else //if($scope === EntitySearchScope::DENOMINATION)
 			{
 				$filter = array('%TITLE' => $searchQuery);
-				$filter['=IS_MY_COMPANY'] = isset($options['isMyCompany'])
-				&& strtoupper($options['isMyCompany']) === 'Y' ? 'Y' : 'N';
+				$filter['=IS_MY_COMPANY'] = isset($options['isMyCompany']) && strtoupper($options['isMyCompany']) === 'Y'
+					? 'Y' : 'N';
 			}
 
 			$dbResult = \CCrmCompany::GetListEx(
@@ -146,7 +160,9 @@ class SearchAction extends Search\SearchAction
 				}
 			}
 		}
-		if($enableAllTypes || isset($typeMap[\CCrmOwnerType::DealName]))
+		if(!$searchRestriction->isExceeded(\CCrmOwnerType::Deal)
+			&& ($enableAllTypes || isset($typeMap[\CCrmOwnerType::DealName]))
+		)
 		{
 			if($scope === EntitySearchScope::INDEX)
 			{
@@ -174,10 +190,151 @@ class SearchAction extends Search\SearchAction
 				}
 			}
 		}
+		if(!$searchRestriction->isExceeded(\CCrmOwnerType::Quote)
+			&& ($enableAllTypes || isset($typeMap[\CCrmOwnerType::QuoteName]))
+		)
+		{
+			if($scope === EntitySearchScope::INDEX)
+			{
+				$filter = array('FIND' => $searchQuery);
+				SearchEnvironment::convertEntityFilterValues(\CCrmOwnerType::Quote, $filter);
+			}
+			else //if($scope === EntitySearchScope::DENOMINATION)
+			{
+				$filter = array('%TITLE' => $searchQuery);
+			}
 
+			$dbResult = \CCrmQuote::GetList(
+				array(),
+				$filter,
+				false,
+				array('nTopCount' => 20),
+				array('ID')
+			);
+
+			if(is_object($dbResult))
+			{
+				while($fields = $dbResult->Fetch())
+				{
+					$items[] = array('ENTITY_TYPE_ID' => \CCrmOwnerType::Quote, 'ENTITY_ID' => $fields['ID']);
+				}
+			}
+		}
+		if(!$searchRestriction->isExceeded(\CCrmOwnerType::Invoice)
+			&& ($enableAllTypes || isset($typeMap[\CCrmOwnerType::InvoiceName]))
+		)
+		{
+			if($scope === EntitySearchScope::INDEX)
+			{
+				$filter = array('FIND' => $searchQuery);
+				SearchEnvironment::convertEntityFilterValues(\CCrmOwnerType::Quote, $filter);
+			}
+			else //if($scope === EntitySearchScope::DENOMINATION)
+			{
+				$filter = array('%ORDER_TOPIC' => $searchQuery);
+			}
+
+			$dbResult = \CCrmInvoice::GetList(
+				array(),
+				$filter,
+				false,
+				array('nTopCount' => 20),
+				array('ID')
+			);
+
+			if(is_object($dbResult))
+			{
+				while($fields = $dbResult->Fetch())
+				{
+					$items[] = array('ENTITY_TYPE_ID' => \CCrmOwnerType::Invoice, 'ENTITY_ID' => $fields['ID']);
+				}
+			}
+		}
 		return self::prepareSearchResults($items);
 	}
 
+	protected function provideLimits($searchQuery, array $options = null)
+	{
+		if($options === null)
+		{
+			$options = array();
+		}
+
+		$types = isset($options['types']) && is_array($options['types']) ? $options['types'] : array();
+		$typeMap = array_fill_keys($types, true);
+		$enableAllTypes = empty($typeMap);
+
+		$searchRestriction = RestrictionManager::getSearchLimitRestriction();
+		$limits = array();
+		if($searchRestriction->isExceeded(\CCrmOwnerType::Lead)
+			&& ($enableAllTypes || isset($typeMap[\CCrmOwnerType::LeadName]))
+		)
+		{
+			$limits[] = self::prepareLimitExceededError(\CCrmOwnerType::Lead);
+		}
+		if($searchRestriction->isExceeded(\CCrmOwnerType::Contact)
+			&& ($enableAllTypes || isset($typeMap[\CCrmOwnerType::ContactName]))
+		)
+		{
+			$limits[] = self::prepareLimitExceededError(\CCrmOwnerType::Contact);
+		}
+		if($searchRestriction->isExceeded(\CCrmOwnerType::Company)
+			&& ($enableAllTypes || isset($typeMap[\CCrmOwnerType::CompanyName]))
+		)
+		{
+			$limits[] = self::prepareLimitExceededError(\CCrmOwnerType::Company);
+		}
+		if($searchRestriction->isExceeded(\CCrmOwnerType::Deal)
+			&& ($enableAllTypes || isset($typeMap[\CCrmOwnerType::DealName]))
+		)
+		{
+			$limits[] = self::prepareLimitExceededError(\CCrmOwnerType::Deal);
+		}
+		if($searchRestriction->isExceeded(\CCrmOwnerType::Quote)
+			&& ($enableAllTypes || isset($typeMap[\CCrmOwnerType::QuoteName]))
+		)
+		{
+			$limits[] = self::prepareLimitExceededError(\CCrmOwnerType::Quote);
+		}
+		if($searchRestriction->isExceeded(\CCrmOwnerType::Invoice)
+			&& ($enableAllTypes || isset($typeMap[\CCrmOwnerType::InvoiceName]))
+		)
+		{
+			$limits[] = self::prepareLimitExceededError(\CCrmOwnerType::Invoice);
+		}
+
+		return $limits;
+	}
+
+	public static function prepareLimitExceededError($entityTypeID)
+	{
+		$restriction = RestrictionManager::getSearchLimitRestriction();
+		$entityTypeName = \CCrmOwnerType::ResolveName($entityTypeID);
+		/**
+		 * CRM_CONTROLLER_SEARCH_ACTION_LEAD_LIMIT_EXCEEDED
+		 * CRM_CONTROLLER_SEARCH_ACTION_DEAL_LIMIT_EXCEEDED
+		 * CRM_CONTROLLER_SEARCH_ACTION_CONTACT_LIMIT_EXCEEDED
+		 * CRM_CONTROLLER_SEARCH_ACTION_COMPANY_LIMIT_EXCEEDED
+		 * CRM_CONTROLLER_SEARCH_ACTION_QUOTE_LIMIT_EXCEEDED
+		 * CRM_CONTROLLER_SEARCH_ACTION_INVOICE_LIMIT_EXCEEDED
+		 */
+		$info = $restriction->prepareStubInfo(
+			array(
+				'ENTITY_TYPE_ID' => $entityTypeID,
+				'CONTENT' => Loc::getMessage("CRM_CONTROLLER_SEARCH_ACTION_{$entityTypeName}_LIMIT_EXCEEDED"),
+				'GLOBAL_SEARCH' => true,
+			)
+		);
+
+		$resultLimit = new Search\ResultLimit(
+			\CCrmOwnerType::ResolveName($entityTypeID),
+			$info['TITLE'],
+			$info['DESCRIPTION']
+		);
+		$resultLimit->setButtons($info['BUTTONS']);
+
+		return $resultLimit;
+	}
 	public static function prepareSearchResults(array $items)
 	{
 		/** @var int[] $map */
@@ -399,6 +556,118 @@ class SearchAction extends Search\SearchAction
 							new Uri(
 								\CCrmOwnerType::GetEntityShowPath(
 									\CCrmOwnerType::Deal,
+									$entityID,
+									false
+								)
+							)
+						);
+
+						$resultItem->setModule('crm');
+						$resultItem->setType($entityTypeName);
+						$resultItem->setId($entityID);
+
+						if(!empty($descriptions))
+						{
+							$resultItem->setSubTitle(implode(', ', $descriptions));
+						}
+
+						$results["{$entityTypeName}:{$fields['ID']}"] = $resultItem;
+					}
+				}
+			}
+			elseif($entityTypeName === \CCrmOwnerType::QuoteName)
+			{
+				$dbResult = \CCrmQuote::GetList(
+					array(),
+					array('@ID' => $entityIDs, 'CHECK_PERMISSIONS' => 'N'),
+					false,
+					false,
+					array('ID', 'TITLE', 'COMPANY_TITLE', 'CONTACT_HONORIFIC', 'CONTACT_NAME', 'CONTACT_SECOND_NAME', 'CONTACT_LAST_NAME')
+				);
+				if(is_object($dbResult))
+				{
+					while($fields = $dbResult->Fetch())
+					{
+						$descriptions = array();
+						if(isset($fields['COMPANY_TITLE']) && $fields['COMPANY_TITLE'] != '')
+						{
+							$descriptions[] = $fields['COMPANY_TITLE'];
+						}
+
+						$descriptions[] =\CCrmContact::PrepareFormattedName(
+							array(
+								'LOGIN' => '',
+								'HONORIFIC' => isset($fields['CONTACT_HONORIFIC']) ? $fields['CONTACT_HONORIFIC'] : '',
+								'NAME' => isset($fields['CONTACT_NAME']) ? $fields['CONTACT_NAME'] : '',
+								'SECOND_NAME' => isset($fields['CONTACT_SECOND_NAME']) ? $fields['CONTACT_SECOND_NAME'] : '',
+								'LAST_NAME' => isset($fields['CONTACT_LAST_NAME']) ? $fields['CONTACT_LAST_NAME'] : ''
+							)
+						);
+
+						$entityID = (int)$fields['ID'];
+
+						$resultItem = new Search\ResultItem(
+							$fields['TITLE'],
+							new Uri(
+								\CCrmOwnerType::GetEntityShowPath(
+									\CCrmOwnerType::Quote,
+									$entityID,
+									false
+								)
+							)
+						);
+
+						$resultItem->setModule('crm');
+						$resultItem->setType($entityTypeName);
+						$resultItem->setId($entityID);
+
+						if(!empty($descriptions))
+						{
+							$resultItem->setSubTitle(implode(', ', $descriptions));
+						}
+
+						$results["{$entityTypeName}:{$fields['ID']}"] = $resultItem;
+					}
+				}
+			}
+			elseif($entityTypeName === \CCrmOwnerType::InvoiceName)
+			{
+				$dbResult = \CCrmInvoice::GetList(
+					array(),
+					array('@ID' => $entityIDs, 'CHECK_PERMISSIONS' => 'N'),
+					false,
+					false,
+					array('ID', 'ORDER_TOPIC', 'UF_COMPANY_ID', 'UF_CONTACT_ID')
+				);
+				if(is_object($dbResult))
+				{
+					while($fields = $dbResult->Fetch())
+					{
+						$descriptions = array();
+						if(isset($fields['UF_COMPANY_ID']) && $fields['UF_COMPANY_ID'] > 0)
+						{
+							$companyTitle = \CCrmOwnerType::GetCaption(\CCrmOwnerType::Company, $fields['UF_COMPANY_ID']);
+							if($companyTitle !== '')
+							{
+								$descriptions[] = $companyTitle;
+							}
+						}
+
+						if(isset($fields['UF_CONTACT_ID']) && $fields['UF_CONTACT_ID'] > 0)
+						{
+							$contactName = \CCrmOwnerType::GetCaption(\CCrmOwnerType::Contact, $fields['UF_CONTACT_ID']);
+							if($contactName !== '')
+							{
+								$descriptions[] = $contactName;
+							}
+						}
+
+						$entityID = (int)$fields['ID'];
+						$resultItem = new Search\ResultItem(
+							$fields['ORDER_TOPIC'],
+							new Uri(
+								\CCrmOwnerType::GetEntityShowPath(
+									\CCrmOwnerType::Invoice,
 									$entityID,
 									false
 								)

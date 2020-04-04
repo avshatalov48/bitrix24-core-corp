@@ -259,6 +259,7 @@ BX.Mobile.Crm.List = {
 			function()
 			{
 				BXMobileApp.UI.Page.reload();
+				BXMobileApp.UI.Page.LoadingScreen.hide();
 			}
 		);
 	},

@@ -97,7 +97,7 @@ class CustomConnectorsTable extends DataManager
 			)),
 			new BooleanField('CHAT_GROUP', array(
 				'values' => array('N', 'Y'),
-				'default_value' => 'Y'
+				'default_value' => 'N'
 			)),
 			new IntegerField('REST_APP_ID', array(
 				'required' => true,

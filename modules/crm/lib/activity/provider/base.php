@@ -337,6 +337,17 @@ class Base
 	}
 
 	/**
+	 * @param int $entityId Associated (external) Entity id.
+	 * @param int $oldOwnerTypeId Old Entity Type id.
+	 * @param int $newEntityTypeId New Entity Type id.
+	 * @param int $oldOwnerId Old Entity id.
+	 * @param int $newOwnerId New Entity id.
+	 */
+	public static function rebindAssociatedEntity($entityId, $oldOwnerTypeId, $newEntityTypeId, $oldOwnerId, $newOwnerId)
+	{
+	}
+
+	/**
 	 * @param int $entityId Associated entity id.
 	 * @param array $activity Activity data.
 	 * @param array $options Delete operation options.

@@ -69,7 +69,6 @@ if(!isset($arParams['HIDE_TOOLBAR']) || $arParams['HIDE_TOOLBAR'] <> 'Y')
 			<div class="crm-detail-comments-text" style="padding-left: 0; cursor: text;">
 				<p><?= htmlspecialcharsbx(GetMessage('CRM_EXCH1C_CONNECT_COMMENT_P1')) ?></p>
 				<p><?= htmlspecialcharsbx(GetMessage('CRM_EXCH1C_CONNECT_COMMENT_P2', array('#URL#' => $arResult['EXCH_1C_SCRIPT_URL']))) ?></p>
-				<p><?= htmlspecialcharsbx(GetMessage('CRM_EXCH1C_CONNECT_COMMENT_P3')) ?><a href="<?=htmlspecialcharsbx($arResult['EXCH_1C_INFORMATION_URL'])?>" target="_blank"><?= htmlspecialcharsbx(GetMessage('CRM_EXCH1C_CONNECT_COMMENT_P3_1')) ?></a></p>
 			</div>
 		</div>
 	</div>

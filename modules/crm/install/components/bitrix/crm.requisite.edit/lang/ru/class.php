@@ -17,5 +17,6 @@ $MESS["CRM_REQUISITE_EDIT_PRESET_NAME"] = "Шаблон";
 $MESS["CRM_REQUISITE_EDIT_PRESET_NOT_SELECTED"] = "(Не выбран)";
 $MESS["CRM_REQUISITE_EDIT_POPUP_RESPONSE"] = "Внутренние данные";
 $MESS["CRM_REQUISITE_EDIT_CUSTOM_FORM_HTML"] = "Дополнительные данные формы";
+$MESS["CRM_REQUISITE_ADDRESS_TYPE_TITLE"] = "Тип адреса";
 $MESS["CRM_REQUISITE_BANK_DETAILS_EDITOR_FIELD"] = "Банковские реквизиты";
 ?>

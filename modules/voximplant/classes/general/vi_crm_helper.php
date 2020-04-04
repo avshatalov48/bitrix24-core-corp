@@ -276,6 +276,7 @@ class CVoxImplantCrmHelper
 			'USER_ID' => $call->getUserId(),
 			'PHONE_NUMBER' => $call->getCallerId(),
 			'SEARCH_ID' => $call->getPortalNumber(),
+			'EXTERNAL_LINE_ID' => $call->getExternalLineId(),
 			'CRM_SOURCE' => $config['CRM_SOURCE'],
 			'INCOMING' => $call->getIncoming(),
 		]);
@@ -442,6 +443,7 @@ class CVoxImplantCrmHelper
 			'TYPE_ID' =>  CCrmActivityType::Call,
 			'PROVIDER_ID' => Provider\Call::ACTIVITY_PROVIDER_ID,
 			//'ASSOCIATED_ENTITY_ID' => $params['ID'],
+			'CREATED' => $callFields['CALL_START_DATE'],
 			'START_TIME' => $callFields['CALL_START_DATE'],
 			'END_TIME' => static::getCallEndTime($callFields),
 			'DEADLINE' => static::getCallEndTime($callFields),
@@ -495,7 +497,16 @@ class CVoxImplantCrmHelper
 
 		if ($callFields['INCOMING'] == CVoxImplantMain::CALL_INCOMING)
 		{
-			$portalNumbers = CVoxImplantConfig::GetPortalNumbers();
+			$portalNumbers = array_map(
+				function($line)
+				{
+					return $line["SHORT_NAME"];
+				},
+				CVoxImplantConfig::GetLinesEx([
+					"showRestApps" => true,
+					"showInboundOnly" => true
+				])
+			);
 			$portalNumber = isset($portalNumbers[$callFields['PORTAL_NUMBER']])? $portalNumbers[$callFields['PORTAL_NUMBER']]: '';
 			if ($portalNumber)
 			{
@@ -539,7 +550,14 @@ class CVoxImplantCrmHelper
 			$activityFields['RESULT_MARK'] = \Bitrix\Crm\Activity\StatisticsMark::None;
 
 
-		$activityId = CCrmActivity::Add($activityFields, false, true, array('REGISTER_SONET_EVENT' => true));
+		$activityId = CCrmActivity::Add(
+			$activityFields,
+			false,
+			true, [
+				'REGISTER_SONET_EVENT' => true,
+				'PRESERVE_CREATION_TIME' => true
+			]
+		);
 		if($activityId > 0)
 		{
 			\Bitrix\Crm\Integration\Channel\VoxImplantTracker::getInstance()->registerActivity($activityId, array(
@@ -677,6 +695,43 @@ class CVoxImplantCrmHelper
 		{
 			$updatedFields['COMMUNICATIONS'] = $communications;
 		}
+
+		CCrmActivity::Update($activityFields['ID'], $updatedFields, false);
+		return true;
+	}
+
+	public static function shouldCompleteActivity(array $statisticRecord)
+	{
+
+		if(
+			$statisticRecord['INCOMING'] == CVoxImplantMain::CALL_OUTGOING
+			&& $statisticRecord['CALL_DURATION'] > 0
+			&& $statisticRecord['CALL_FAILED_CODE'] == '200'
+		)
+			return true;
+
+		return false;
+	}
+
+
+	public static function completeActivity($activityId)
+	{
+		if(!\Bitrix\Main\Loader::includeModule('crm'))
+			return false;
+
+		$activityId = (int)$activityId;
+		if($activityId === 0)
+			return false;
+
+		$activityFields = CCrmActivity::GetByID($activityId, false);
+		if(!$activityFields)
+			return false;
+		if($activityFields['COMPLETED'] == 'Y')
+			return false;
+
+		$updatedFields = array(
+			'COMPLETED' => 'Y',
+		);
 
 		CCrmActivity::Update($activityFields['ID'], $updatedFields, false);
 		return true;
@@ -830,10 +885,19 @@ class CVoxImplantCrmHelper
 			return false;
 		}
 
-		$result = VI\PhoneTable::getList(Array(
-			'select' => Array('USER_ID', 'PHONE_MNEMONIC'),
-			'filter' => Array('=PHONE_NUMBER' => $params['PHONE_NUMBER'], '=USER.ACTIVE' => 'Y', '=USER.IS_REAL_USER' => 'Y')
-		));
+		$normalizedNumber = CVoxImplantPhone::Normalize($params['PHONE_NUMBER']);
+		$result = VI\PhoneTable::getList([
+			'select' => ['USER_ID', 'PHONE_MNEMONIC'],
+			'filter' => [
+				[
+					'LOGIC' => 'OR',
+					['=PHONE_NUMBER' => $params['PHONE_NUMBER']],
+					['=PHONE_NUMBER' => $normalizedNumber],
+				],
+				'=USER.ACTIVE' => 'Y',
+				'=USER.IS_REAL_USER' => 'Y'
+			]
+		]);
 		if ($row = $result->fetch())
 		{
 			static::$lastError = 'Lead creation is disabled for local users';
@@ -874,9 +938,18 @@ class CVoxImplantCrmHelper
 			$arFields['SOURCE_ID'] = 'OTHER';
 		}
 
-		$portalNumbers = CVoxImplantConfig::GetLines(true, true);
+		$portalNumbers = CVoxImplantConfig::GetLinesEx([
+			'showRestApps' => true,
+			'showInboundOnly' => true
+		]);
 		$portalNumber = isset($portalNumbers[$params['SEARCH_ID']])? $portalNumbers[$params['SEARCH_ID']]['SHORT_NAME']: '';
-		if ($portalNumber)
+		$externalLine = (int)$params['EXTERNAL_LINE_ID'] ? VI\Model\ExternalLineTable::getById($params['EXTERNAL_LINE_ID'])->fetchObject() : null;
+
+		if($externalLine)
+		{
+			$arFields['SOURCE_DESCRIPTION'] = GetMessage('VI_CRM_CALL_TO_PORTAL_NUMBER', array('#PORTAL_NUMBER#' => $externalLine->getNormalizedNumber()));
+		}
+		else if ($portalNumber)
 		{
 			$arFields['SOURCE_DESCRIPTION'] = GetMessage('VI_CRM_CALL_TO_PORTAL_NUMBER', array('#PORTAL_NUMBER#' => $portalNumber));
 		}
@@ -997,6 +1070,33 @@ class CVoxImplantCrmHelper
 		if(is_array($bindings) && count($bindings) > 0)
 		{
 			\Bitrix\Crm\Automation\Trigger\CallTrigger::execute($bindings, ['LINE_NUMBER' => $call->getPortalNumber()]);
+		}
+	}
+
+	public static function StartMissedCallTrigger(VI\Call $call)
+	{
+		if(!\Bitrix\Main\Loader::includeModule('crm'))
+		{
+			return;
+		}
+		if(!class_exists("\Bitrix\Crm\Automation\Trigger\MissedCallTrigger"))
+		{
+			return;
+		}
+
+		$crmEntities = $call->getCrmEntities();
+		$bindings = array_map(function($e)
+		{
+			return [
+				'OWNER_TYPE_ID' => CCrmOwnerType::ResolveID($e['ENTITY_TYPE']),
+				'OWNER_ID' => $e['ENTITY_ID']
+			];
+		}, $crmEntities);
+
+		CVoxImplantHistory::WriteToLog($bindings, "Starting missed call trigger for call " . $call->getCallId() . "; bindings:");
+		if(is_array($bindings) && count($bindings) > 0)
+		{
+			\Bitrix\Crm\Automation\Trigger\MissedCallTrigger::execute($bindings, ['LINE_NUMBER' => $call->getPortalNumber()]);
 		}
 	}
 
@@ -1615,6 +1715,31 @@ class CVoxImplantCrmHelper
 		}
 
 		return \Bitrix\Crm\Settings\LeadSettings::isEnabled();
+	}
 
+	public static function resolveBindingNames($bindings)
+	{
+		if(!is_array($bindings))
+		{
+			return $bindings;
+		}
+		if(!\Bitrix\Main\Loader::includeModule('crm'))
+		{
+			return $bindings;
+		}
+
+		return array_map(
+			function($binding)
+			{
+				return ($binding['OWNER_TYPE_ID'] && $binding['OWNER_ID']) ?
+					[
+						'ENTITY_TYPE' => CCrmOwnerType::ResolveName($binding['OWNER_TYPE_ID']),
+						'ENTITY_ID' => $binding['OWNER_ID']
+					]
+					:
+					$binding;
+			},
+			$bindings
+		);
 	}
 }

@@ -164,6 +164,14 @@
 			})
 		);
 
+		history.registerCommand(
+			new BX.Landing.History.Command({
+				id: "updateBlockState",
+				undo: BX.Landing.History.Action.updateBlockState.bind(null, UNDO),
+				redo: BX.Landing.History.Action.updateBlockState.bind(null, REDO)
+			})
+		);
+
 		return Promise.resolve(history);
 	}
 

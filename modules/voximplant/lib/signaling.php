@@ -7,6 +7,7 @@ use Bitrix\Main\SystemException;
 use Bitrix\Pull\Event;
 use Bitrix\Voximplant\Model\CallUserTable;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Voximplant\Model\ExternalLineTable;
 
 class Signaling
 {
@@ -38,7 +39,21 @@ class Signaling
 		$isTransfer = $this->call->getParentCallId() != '';
 		$call = $isTransfer ? Call::load($this->call->getParentCallId()) : $this->call;
 
-		$phoneTitle = $config['PORTAL_MODE'] == \CVoxImplantConfig::MODE_SIP ? $config['PHONE_TITLE'] : $call->getPortalNumber();
+		if ($config['PORTAL_MODE'] == \CVoxImplantConfig::MODE_SIP)
+		{
+			if($call->getExternalLineId())
+			{
+				$externalLine = ExternalLineTable::getRowById($call->getExternalLineId());
+				$externalNumber = $externalLine ? $externalLine['NUMBER'] : '';
+			}
+
+			$phoneTitle = $externalNumber ?: $config['PHONE_TITLE'];
+		}
+		else
+		{
+			$phoneTitle = $call->getPortalNumber();
+		}
+
 		if($call->isInternalCall() && Loader::includeModule('im'))
 		{
 			$portalCallData = \CIMContactList::GetUserData(array(
@@ -56,6 +71,7 @@ class Signaling
 			"callId" => $call->getCallId(),
 			"callerId" => $call->getCallerId(),
 			"lineNumber" => $call->getPortalNumber(),
+			"companyPhoneNumber" => $phoneTitle,
 			"phoneNumber" => $phoneTitle,
 			"chatId" => 0,
 			"chat" => array(),
@@ -63,7 +79,10 @@ class Signaling
 			"portalCallUserId" => $call->isInternalCall() ? (int)$call->getUserId() : 0,
 			"portalCallData" => $call->isInternalCall() ? $portalCallData : [],
 			"config" => \CVoxImplantConfig::getConfigForPopup($call->getCallId()),
-			"CRM" => ($call->isCrmEnabled() ? \CVoxImplantCrmHelper::GetDataForPopup($call->getCallId(), $call->getCallerId()) : false),
+			"CRM" => ($call->isCrmEnabled() && !$call->isInternalCall()
+				? \CVoxImplantCrmHelper::GetDataForPopup($call->getCallId(), $call->getCallerId(), $call->getUserId())
+				: false
+			),
 			"showCrmCard" => ($call->isCrmEnabled() && !$call->isInternalCall()),
 			"crmEntityType" => $call->getPrimaryEntityType(),
 			"crmEntityId" => $call->getPrimaryEntityId(),
@@ -94,7 +113,6 @@ class Signaling
 		);
 		if ($call->isInternalCall())
 		{
-
 			$push['message'] = Loc::getMessage('INCOMING_CALL', Array('#NAME#' => $portalCallData['users'][$call->getPortalUserId()]['name']));
 		}
 		else
@@ -103,9 +121,50 @@ class Signaling
 			$push['message'] = $push['message'].' '.Loc::getMessage('CALL_FOR_NUMBER', Array('#NUMBER#' => $phoneTitle));
 		}
 
+		$pushParams = [
+			'callId' => $config['callId'],
+			'callerId' => $config['callerId'],
+			'companyPhoneNumber' => $config['companyPhoneNumber'],
+			'config' => $config['config'],
+			'isCallback' => $config['isCallback'],
+			'isTransfer' => $config['isTransfer'],
+			'portalCall' => $config['portalCall'],
+		];
+		if($call->isInternalCall() && is_array($portalCallData['users']))
+		{
+			$pushParams['portalCallUserId'] = $config['portalCallUserId'];
+			$pushParams['portalCallData'] = [
+				'users' => []
+			];
+			foreach ($portalCallData['users'] as $userId => $userFields)
+			{
+				if(!in_array($userId, $users))
+				{
+					$pushParams['portalCallData']['users'][$userId] = [
+						'name' => $userFields['name'],
+						'avatar' => $userFields['avatar'],
+					];
+				}
+			}
+		}
+		else
+		{
+			$pushParams['CRM'] = [
+				'FOUND' => $config['CRM']['FOUND'],
+			];
+			if(isset($config['CRM']['CONTACT']))
+			{
+				$pushParams['CRM']['CONTACT'] = $config['CRM']['CONTACT'];
+			}
+			if(isset($config['CRM']['COMPANY']))
+			{
+				$pushParams['CRM']['COMPANY'] = $config['CRM']['COMPANY'];
+			}
+		}
+
 		$push['params'] = Array(
 			'ACTION' => 'VI_CALL_'.$call->getCallId(),
-			'PARAMS' => $config
+			'PARAMS' => $pushParams
 		);
 
 		$this->send($users, static::COMMAND_INVITE, $config, $push);
@@ -158,6 +217,7 @@ class Signaling
 				"crmEntityId" => $this->call->getPrimaryEntityId(),
 				"crmActivityId" => $this->call->getCrmActivityId(),
 				"crmActivityEditUrl" => \CVoxImplantCrmHelper::getActivityEditUrl($this->call->getCrmActivityId()),
+				"crmBindings" => \CVoxImplantCrmHelper::resolveBindingNames($this->call->getCrmBindings())
 			);
 			$this->send([$userId], static::COMMAND_UPDATE_CRM, $params);
 		}
@@ -175,6 +235,7 @@ class Signaling
 			"showCrmCard" => $this->call->isCrmEnabled(),
 			"crmEntityType" => $this->call->getPrimaryEntityType(),
 			"crmEntityId" => $this->call->getPrimaryEntityId(),
+			"crmBindings" => \CVoxImplantCrmHelper::resolveBindingNames($this->call->getCrmBindings())
 		]);
 	}
 

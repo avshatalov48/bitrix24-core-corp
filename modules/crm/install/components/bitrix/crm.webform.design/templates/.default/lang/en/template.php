@@ -1,0 +1,34 @@
+<?
+$MESS["CRM_WEBFORM_EDIT_V2_ATTENTION"] = "Attention!";
+$MESS["CRM_WEBFORM_EDIT_V2_ATTENTION_TEXT"] = "The form shows the most recent autosaved changes.";
+$MESS["CRM_WEBFORM_EDIT_V2_AUTO"] = "Auto";
+$MESS["CRM_WEBFORM_EDIT_V2_BORDER"] = "Form borders";
+$MESS["CRM_WEBFORM_EDIT_V2_BORDER_BOTTOM"] = "Bottom";
+$MESS["CRM_WEBFORM_EDIT_V2_BORDER_LEFT"] = "Left";
+$MESS["CRM_WEBFORM_EDIT_V2_BORDER_RIGHT"] = "Right";
+$MESS["CRM_WEBFORM_EDIT_V2_BORDER_TOP"] = "Top";
+$MESS["CRM_WEBFORM_EDIT_V2_COLOR_BRIGHT"] = "Color for light items";
+$MESS["CRM_WEBFORM_EDIT_V2_COLOR_BRIGHT_TEXT"] = "Text color for light items";
+$MESS["CRM_WEBFORM_EDIT_V2_COLOR_FIELD"] = "Field background color";
+$MESS["CRM_WEBFORM_EDIT_V2_COLOR_FIELD_BORDER"] = "Field border color";
+$MESS["CRM_WEBFORM_EDIT_V2_COLOR_FIELD_FOCUS"] = "Focused field background color";
+$MESS["CRM_WEBFORM_EDIT_V2_COLOR_FORM"] = "Form background color";
+$MESS["CRM_WEBFORM_EDIT_V2_COLOR_FORM_TEXT"] = "Form text color";
+$MESS["CRM_WEBFORM_EDIT_V2_DEF"] = "Default";
+$MESS["CRM_WEBFORM_EDIT_V2_ENABLE_DESIGN"] = "Enable new design for this form in Website widget or via direct link (for embedded form design can be changed via new or legacy code).";
+$MESS["CRM_WEBFORM_EDIT_V2_FONT"] = "Font";
+$MESS["CRM_WEBFORM_EDIT_V2_FONT_FAMILY_HINT"] = "Font face name (font-family).<br>Example: Open Sans";
+$MESS["CRM_WEBFORM_EDIT_V2_FONT_URI_HINT"] = "Link to font provided on fonts.google.com";
+$MESS["CRM_WEBFORM_EDIT_V2_FORM_TRANSPARENT_HINT"] = "You can make the form translucent by changing the transparency parameter of the form background color and field background color values.";
+$MESS["CRM_WEBFORM_EDIT_V2_MANUAL"] = "Custom";
+$MESS["CRM_WEBFORM_EDIT_V2_MODE"] = "Mode";
+$MESS["CRM_WEBFORM_EDIT_V2_MORE_FIELDS"] = "Extra parameters";
+$MESS["CRM_WEBFORM_EDIT_V2_PRIMARY_COLOR"] = "Primary color";
+$MESS["CRM_WEBFORM_EDIT_V2_SETUP"] = "configure";
+$MESS["CRM_WEBFORM_EDIT_V2_SETUP_COLOR"] = "Set color";
+$MESS["CRM_WEBFORM_EDIT_V2_SETUP_OPACITY"] = "Set transparency";
+$MESS["CRM_WEBFORM_EDIT_V2_SHADOW"] = "Form shadow";
+$MESS["CRM_WEBFORM_EDIT_V2_STANDARD"] = "Standard";
+$MESS["CRM_WEBFORM_EDIT_V2_STYLE"] = "Field style";
+$MESS["CRM_WEBFORM_EDIT_V2_THEME"] = "Theme";
+?>

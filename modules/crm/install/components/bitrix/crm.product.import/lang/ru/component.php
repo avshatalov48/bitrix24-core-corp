@@ -3,6 +3,7 @@ $MESS["CRM_MODULE_NOT_INSTALLED"] = "Модуль CRM не установлен.
 $MESS["CRM_PERMISSION_DENIED"] = "Доступ запрещен";
 $MESS['CRM_PRODUCT_IMP_COL_XML_ID'] = 'Внешний код';
 $MESS["CRM_PRODUCT_IMP_COL_NAME"] = "Название";
+$MESS["CRM_PRODUCT_IMP_COL_CODE"] = "Символьный код";
 $MESS["CRM_PRODUCT_IMP_COL_DESCRIPTION"] = "Описание";
 $MESS["CRM_PRODUCT_IMP_COL_DESCRIPTION_TYPE"] = "Формат описания";
 $MESS["CRM_PRODUCT_IMP_COL_ACTIVE"] = "Активен";

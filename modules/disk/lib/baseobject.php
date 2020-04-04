@@ -130,7 +130,7 @@ abstract class BaseObject extends Internals\Model implements \JsonSerializable
 	 */
 	public function canMove(SecurityContext $securityContext, BaseObject $targetObject)
 	{
-		return $securityContext->canMove($this->id, $targetObject->getId());
+		return $securityContext->canMove($this->id, $targetObject->getRealObjectId());
 	}
 
 	/**
@@ -631,7 +631,7 @@ abstract class BaseObject extends Internals\Model implements \JsonSerializable
 		$this->label = null;
 
 		Driver::getInstance()->getIndexManager()->changeName($this);
-		Driver::getInstance()->sendChangeStatusToSubscribers($this);
+		Driver::getInstance()->sendChangeStatusToSubscribers($this, 'quick');
 
 		$event = new Event(Driver::INTERNAL_MODULE_ID, "onAfterRenameObject", array($this, $oldName, $newName));
 		$event->send();
@@ -806,7 +806,10 @@ abstract class BaseObject extends Internals\Model implements \JsonSerializable
 	 */
 	protected function moveInSameStorage(Folder $folder, $movedBy)
 	{
-		$subscribersBeforeMove = Driver::getInstance()->collectSubscribers($this);
+		$driver = Driver::getInstance();
+		$subscriberManager = $driver->getSubscriberManager();
+
+		$subscribersBeforeMove = $subscriberManager->collectSubscribersSmart($this);
 
 		$realFolderId = $folder->getRealObject()->getId();
 		/** @var ObjectTable $tableClassName */
@@ -820,27 +823,23 @@ abstract class BaseObject extends Internals\Model implements \JsonSerializable
 		}
 		$this->setAttributesFromResult($moveResult);
 
-		Driver::getInstance()->getRightsManager()->setAfterMove($this);
+		$driver->getRightsManager()->setAfterMove($this);
 
-		$subscribersAfterMove = Driver::getInstance()->collectSubscribers($this);
-		DeletedLog::addAfterMove(
+		$subscribersAfterMove = $subscriberManager->collectSubscribersSmart($this);
+		$driver->getDeletedLogManager()->markAfterMove(
 			$this,
 			array_unique(array_diff($subscribersBeforeMove, $subscribersAfterMove)),
-			$movedBy,
-			$this->errorCollection
+			$movedBy
 		);
 		//notify new subscribers (in DeletedLog we notify subscribers only missed access)
 		if($this instanceof Folder)
 		{
-			Driver::getInstance()->cleanCacheTreeBitrixDisk(array_keys($subscribersAfterMove));
+			$driver->cleanCacheTreeBitrixDisk(array_keys($subscribersAfterMove));
 		}
-		Driver::getInstance()->sendChangeStatus($subscribersAfterMove);
+		$driver->sendChangeStatus($subscribersAfterMove);
 
-		$success = $this->update(array('SYNC_UPDATE_TIME' => new DateTime()));
-		if(!$success)
-		{
-			return null;
-		}
+		ObjectTable::updateSyncTime($this->id, new DateTime());
+		$driver->sendChangeStatus($subscriberManager->collectSubscribersFromSubtree($this));
 
 		return $this;
 	}
@@ -1055,7 +1054,10 @@ abstract class BaseObject extends Internals\Model implements \JsonSerializable
 			$nameAfterDelete = $this->getNameWithoutTrashCanSuffix();
 		}
 
-		$nameAfterDelete = $this->generateUniqueName($nameAfterDelete, $this->getParentId());
+		if (!static::isUniqueName($nameAfterDelete, $this->getParentId(), $this->getId()))
+		{
+			$nameAfterDelete = $this->generateUniqueName($nameAfterDelete, $this->getParentId());
+		}
 
 		$status = $this->update(array(
 			'CODE' => null,
@@ -1067,7 +1069,7 @@ abstract class BaseObject extends Internals\Model implements \JsonSerializable
 
 		if($status)
 		{
-			Driver::getInstance()->getIndexManager()->dropIndex($this);
+			Driver::getInstance()->getIndexManager()->dropIndexByModuleSearch($this);
 
 			$event = new Event(Driver::INTERNAL_MODULE_ID, "onAfterMarkDeletedObject", array($this, $deletedBy, $deletedType));
 			$event->send();
@@ -1177,7 +1179,7 @@ abstract class BaseObject extends Internals\Model implements \JsonSerializable
 			}
 
 			/** @var $parent Folder */
-			foreach ($parent->getChildren($fakeContext, array('filter' => array('!DELETED_TYPE' => ObjectTable::DELETED_TYPE_NONE,))) as $childPotentialRoot)
+			foreach ($parent->getChildren($fakeContext, array('filter' => array('!==DELETED_TYPE' => ObjectTable::DELETED_TYPE_NONE,))) as $childPotentialRoot)
 			{
 				if($childPotentialRoot instanceof Folder && $childPotentialRoot->getId() != $this->getId())
 				{
@@ -1221,7 +1223,12 @@ abstract class BaseObject extends Internals\Model implements \JsonSerializable
 		{
 			unset($parameters['filter']['DELETED_TYPE'], $parameters['filter']['MIXED_SHOW_DELETED']);
 		}
-		elseif(!array_key_exists('DELETED_TYPE', $parameters['filter']) && !array_key_exists('!DELETED_TYPE', $parameters['filter']))
+		elseif (
+			!array_key_exists('DELETED_TYPE', $parameters['filter']) &&
+			!array_key_exists('!DELETED_TYPE', $parameters['filter']) &&
+			!array_key_exists('!=DELETED_TYPE', $parameters['filter']) &&
+			!array_key_exists('!==DELETED_TYPE', $parameters['filter'])
+		)
 		{
 			$parameters['filter']['DELETED_TYPE'] = ObjectTable::DELETED_TYPE_NONE;
 		}
@@ -1343,18 +1350,21 @@ abstract class BaseObject extends Internals\Model implements \JsonSerializable
 			$count++;
 			list($newName) = static::getNextGeneratedName($mainPartName, $suffix, $underObjectId, $count > 2);
 
-			static::alarmIfNeeded($count, $potentialName, $newName);
+			if ($count > 10)
+			{
+				return static::generateFallbackName($mainPartName, $suffix);
+			}
 		}
 
 		return $newName;
 	}
 
-	private static function alarmIfNeeded($countStepsToGenerateName, $potentialName, $newName)
+	private static function generateFallbackName($mainPartName, $suffix)
 	{
-		if ($countStepsToGenerateName > 10)
-		{
-			throw new InvalidOperationException("Too many attempts ({$countStepsToGenerateName}) to generate unique name {$newName} instead {$potentialName}");
-		}
+		return implode('.', array_filter([
+			$mainPartName . ' ' . time(),
+			$suffix
+		]));
 	}
 
 	private static function getNextGeneratedName($mainPartName, $suffix, $underObjectId, $withoutLike = false)
@@ -1723,17 +1733,17 @@ abstract class BaseObject extends Internals\Model implements \JsonSerializable
 	public function jsonSerialize()
 	{
 		return [
-			'id' => $this->getId(),
+			'id' => (int)$this->getId(),
 			'name' => $this->getName(),
 			'createTime' => $this->getCreateTime(),
 			'updateTime' => $this->getUpdateTime(),
 			'deleteTime' => $this->getDeleteTime(),
 			'code' => $this->getCode(),
 			'xmlId' => $this->getXmlId(),
-			'storageId' => $this->getStorageId(),
-			'realObjectId' => $this->getRealObjectId(),
-			'parentId' => $this->getParentId(),
-			'deletedType' => $this->getDeletedType(),
+			'storageId' => (int)$this->getStorageId(),
+			'realObjectId' => (int)$this->getRealObjectId(),
+			'parentId' => (int)$this->getParentId(),
+			'deletedType' => (int)$this->getDeletedType(),
 			'createdBy' => $this->getCreatedBy(),
 			'updatedBy' => $this->getUpdatedBy(),
 			'deletedBy' => $this->getDeletedBy(),

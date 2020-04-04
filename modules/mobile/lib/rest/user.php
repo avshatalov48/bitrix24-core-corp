@@ -91,7 +91,23 @@ class User extends \IRestService
 
 	public static function allowedFields()
 	{
-		return [
+		global $USER_FIELD_MANAGER;
+
+		$userFieldList= $USER_FIELD_MANAGER->GetUserFields("USER");
+		$allowedUserFields = array_intersect([
+			"UF_PHONE_INNER",
+			"UF_SKYPE",
+			"UF_TWITTER",
+			"UF_FACEBOOK",
+			"UF_LINKEDIN",
+			"UF_XING",
+			"UF_SKILLS",
+			"UF_INTERESTS",
+			"UF_WEB_SITES",
+			"UF_DEPARTMENT"
+		], array_keys($userFieldList));
+
+		return array_merge([
 			"ID",
 			"NAME",
 			"SECOND_NAME",
@@ -103,21 +119,12 @@ class User extends \IRestService
 			"PERSONAL_GENDER",
 			"PERSONAL_PHOTO",
 			"PERSONAL_MOBILE",
+			"PERSONAL_PHONE",
 			"PERSONAL_CITY",
 			"WORK_PHONE",
 			"WORK_POSITION",
-			"EXTERNAL_AUTH_ID",
-			"UF_PHONE_INNER",
-			"UF_SKYPE",
-			"UF_TWITTER",
-			"UF_FACEBOOK",
-			"UF_LINKEDIN",
-			"UF_XING",
-			"UF_SKILLS",
-			"UF_INTERESTS",
-			"UF_WEB_SITES",
-			"UF_DEPARTMENT"
-		];
+			"EXTERNAL_AUTH_ID"
+		], $allowedUserFields);
 	}
 
 
@@ -159,9 +166,12 @@ class User extends \IRestService
 			"position" => $heads[0]["WORK_POSITION"],
 		];
 		$data["HEAD_DATA"] = array_merge($headData, $photoData);
-
+		$data["EMPLOYEES_LIST"] = [];
 		while ($employee = $employees->fetch())
 		{
+			if($userId == $employee["ID"])
+				continue;
+
 			$photos = self::getUserPhoto($employee["PERSONAL_PHOTO"], $photoSize);
 			$employeeData = [
 				"name" => \CUser::FormatName(\CSite::GetNameFormat(false), $employee),
@@ -174,7 +184,8 @@ class User extends \IRestService
 			$data["EMPLOYEES_LIST"][] = $employeeData["name"];
 		}
 
-		$data["EMPLOYEES_LIST"] = implode(", ", $data["EMPLOYEES_LIST"]);
+		if(count($data["EMPLOYEES_LIST"]) > 0)
+			$data["EMPLOYEES_LIST"] = implode(", ", $data["EMPLOYEES_LIST"]);
 
 		return $data;
 	}

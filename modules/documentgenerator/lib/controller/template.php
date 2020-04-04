@@ -8,10 +8,12 @@ use Bitrix\DocumentGenerator\Body\Docx;
 use Bitrix\DocumentGenerator\DataProvider\Rest;
 use Bitrix\DocumentGenerator\DataProviderManager;
 use Bitrix\DocumentGenerator\Driver;
+use Bitrix\DocumentGenerator\Engine\CheckPermissions;
 use Bitrix\DocumentGenerator\Model\FileTable;
 use Bitrix\DocumentGenerator\Model\TemplateProviderTable;
 use Bitrix\DocumentGenerator\Model\TemplateTable;
 use Bitrix\DocumentGenerator\Model\TemplateUserTable;
+use Bitrix\DocumentGenerator\UserPermissions;
 use Bitrix\Main\Application;
 use Bitrix\Main\Engine\ActionFilter\Csrf;
 use Bitrix\Main\Engine\Response\Converter;
@@ -32,6 +34,17 @@ use Bitrix\Main\UI\PageNavigation;
 class Template extends Base
 {
 	const DEFAULT_DATA_PATH = '/bitrix/modules/documentgenerator/data/';
+
+	/**
+	 * @return array
+	 */
+	public function getDefaultPreFilters()
+	{
+		$preFilters = parent::getDefaultPreFilters();
+		$preFilters[] = new CheckPermissions(UserPermissions::ENTITY_TEMPLATES);
+
+		return $preFilters;
+	}
 
 	/**
 	 * @return array
@@ -94,7 +107,9 @@ class Template extends Base
 	{
 		if($restServer && !isset($fields['fileId']))
 		{
-			$fields['fileId'] = $this->uploadFile($fields[static::FILE_PARAM_NAME], static::FILE_PARAM_NAME);
+			$fields['fileId'] = $this->uploadFile($fields[static::FILE_PARAM_NAME], [
+				'isTemplate' => true,
+			]);
 			if(!$fields['fileId'])
 			{
 				return null;
@@ -108,6 +123,14 @@ class Template extends Base
 			$fields['providers'] = [
 				Rest::class,
 			];
+		}
+		if(empty($fields['providers']))
+		{
+			unset($fields['providers']);
+		}
+		elseif(!is_array($fields['providers']))
+		{
+			$fields['providers'] = [$fields['providers']];
 		}
 		$emptyFields = $this->checkArrayRequiredParams($fields, ['name', 'fileId', 'numeratorId', 'region', 'providers', 'moduleId']);
 		if(!empty($emptyFields))
@@ -131,6 +154,14 @@ class Template extends Base
 		if(!$fields['users'])
 		{
 			$fields['users'] = [];
+		}
+		if(empty($fields['users']))
+		{
+			$currentUserId = Driver::getInstance()->getUserId();
+			if($currentUserId > 0)
+			{
+				$fields['users'][] = 'U' . $currentUserId;
+			}
 		}
 		$fields['bodyType'] = Docx::class;
 		$fields['createdBy'] = Driver::getInstance()->getUserId();
@@ -165,7 +196,10 @@ class Template extends Base
 		if($restServer)
 		{
 			unset($fields['moduleId']);
-			$fileId = $this->uploadFile($fields[static::FILE_PARAM_NAME], static::FILE_PARAM_NAME, false);
+			$fileId = $this->uploadFile($fields[static::FILE_PARAM_NAME], [
+				'required' => false,
+				'isTemplate' => true,
+			]);
 			if($fileId > 0)
 			{
 				$fields['fileId'] = $fileId;
@@ -292,6 +326,10 @@ class Template extends Base
 		}
 		if($result->isSuccess())
 		{
+			if($template['IS_DELETED'] === 'Y')
+			{
+				unset($template['ID']);
+			}
 			$template['IS_DELETED'] = 'N';
 			$providers = $template['PROVIDERS'];
 			unset($template['PROVIDER_NAMES']);
@@ -419,7 +457,7 @@ class Template extends Base
 				'IS_DELETED',
 			],
 			'order' => [
-				'ID' => 'asc'
+				'ID' => 'desc'
 			],
 			'filter' => [
 				'@CODE' => $codes,
@@ -456,31 +494,38 @@ class Template extends Base
 	 */
 	protected function add(array $templateData, array $providers = [], array $users = [])
 	{
+		$result = new Result();
 		$id = intval($templateData['ID']);
-		if($id > 0)
+		if($id > 0 && !Driver::getInstance()->getUserPermissions()->canModifyTemplate($id))
 		{
-			$template = \Bitrix\DocumentGenerator\Template::loadById($id);
-			if($template)
+			$result->addError(new Error('You do not have permissions to modify this template'));
+		}
+		if($result->isSuccess())
+		{
+			if($id > 0)
 			{
-				unset($templateData['CREATED_BY']);
-				unset($templateData['ID']);
-				$templateData['UPDATE_TIME'] = new DateTime();
-				$templateData['UPDATED_BY'] = Driver::getInstance()->getUserId();
-				$result = TemplateTable::update($id, $templateData);
+				$template = \Bitrix\DocumentGenerator\Template::loadById($id);
+				if($template)
+				{
+					unset($templateData['CREATED_BY']);
+					unset($templateData['ID']);
+					$templateData['UPDATE_TIME'] = new DateTime();
+					$templateData['UPDATED_BY'] = Driver::getInstance()->getUserId();
+					$result = TemplateTable::update($id, $templateData);
+				}
+				else
+				{
+					$result->addError(new Error(Loc::getMessage('DOCGEN_CONTROLLER_TEMPLATE_NOT_FOUND')));
+				}
 			}
 			else
 			{
-				$result = new Result();
-				$result->addError(new Error(Loc::getMessage('DOCGEN_CONTROLLER_TEMPLATE_NOT_FOUND')));
+				if(empty($templateData['NUMERATOR_ID']))
+				{
+					$templateData['NUMERATOR_ID'] = $this->createNumerator($templateData['NAME']);
+				}
+				$result = TemplateTable::add($templateData);
 			}
-		}
-		else
-		{
-			if(empty($templateData['NUMERATOR_ID']))
-			{
-				$templateData['NUMERATOR_ID'] = $this->createNumerator($templateData['NAME']);
-			}
-			$result = TemplateTable::add($templateData);
 		}
 		if(!$result->isSuccess())
 		{
@@ -583,7 +628,7 @@ class Template extends Base
 			return null;
 		}
 		$document = \Bitrix\DocumentGenerator\Document::createByTemplate($template, $value);
-		if(!$document->hasAccess(Driver::getInstance()->getUserId()))
+		if(!$document->hasAccess())
 		{
 			$this->errorCollection[] = new Error('Access denied', static::ERROR_ACCESS_DENIED);
 			return null;
@@ -630,6 +675,7 @@ class Template extends Base
 			$filter['moduleId'] = Driver::REST_MODULE_ID;
 		}
 
+		$this->prepareDateTimeFieldsForFilter($filter, ['createTime', 'updateTime']);
 		$converter = new Converter(0);
 		if(is_array($filter))
 		{
@@ -648,6 +694,8 @@ class Template extends Base
 		{
 			$select[] = 'ID';
 		}
+
+		$filter = array_merge($filter, Driver::getInstance()->getUserPermissions()->getFilterForTemplateList());
 
 		$templates = TemplateTable::getList([
 			'select' => $select,
@@ -733,34 +781,5 @@ class Template extends Base
 			$updateTime = time();
 		}
 		return new ContentUri(UrlManager::getInstance()->create('documentgenerator.api.template.download', ['id' => $templateId, 'ts' => $updateTime])->getUri());
-	}
-
-	/**
-	 * @param $provider
-	 * @param $value
-	 * @return array
-	 */
-	public function getButtonTemplatesAction($provider, $value)
-	{
-		return [
-			'documentList' => $this->getDocumentListUrl(),
-			'canEditTemplate' => true,
-			'templates' => TemplateTable::getListByClassName($provider, Driver::getInstance()->getUserId(), $value)
-		];
-	}
-
-	/**
-	 * @return bool|string
-	 */
-	protected function getDocumentListUrl()
-	{
-		$componentPath = \CComponentEngine::makeComponentPath('bitrix:documentgenerator.documents');
-		$componentPath = getLocalPath('components'.$componentPath.'/slider.php');
-		if(!empty($componentPath))
-		{
-			return $componentPath;
-		}
-
-		return false;
 	}
 }

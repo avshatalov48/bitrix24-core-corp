@@ -44,4 +44,6 @@ $MESS["IBSEC_A_NOT_TREE_TITLE"] = "Отображение разделов в в
 $MESS["IBSEC_A_UP"] = "На один уровень вверх";
 $MESS["IBSEC_A_UP_TITLE"] = "Нажмите для перехода в папку выше";
 $MESS["IBSEC_A_ADD"] = "Добавить";
+$MESS["IBSEC_A_PICTURE"] = "Изображение";
+$MESS["IBSEC_A_DETAIL_PICTURE"] = "Детальная картинка";
 ?>

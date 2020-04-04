@@ -273,15 +273,19 @@ else
 		if (empty($arResult['FORM']['PAGES']))  //case user haven't got any groups.
 		{
 			?>
-			<div class="imconnector-intro">
-				<div class="imconnector-intro-text">
-					<?= Loc::getMessage('IMCONNECTOR_COMPONENT_FACEBOOK_COMMENTS_THERE_IS_NO_PAGE_WHERE_THE_ADMINISTRATOR') ?>
+			<div class="imconnector-field-container">
+				<div class="imconnector-field-section imconnector-field-section-social">
+						<div class="imconnector-intro">
+							<div class="imconnector-intro-text">
+								<?= Loc::getMessage('IMCONNECTOR_COMPONENT_FACEBOOK_COMMENTS_THERE_IS_NO_PAGE_WHERE_THE_ADMINISTRATOR') ?>
+							</div>
+							<a href="https://www.facebook.com/pages/create/"
+							   class="webform-small-button webform-small-button-accept webform-small-button-accept-nomargin"
+							   target="_blank">
+								<?= Loc::getMessage('IMCONNECTOR_COMPONENT_FACEBOOK_COMMENTS_TO_CREATE_A_PAGE') ?>
+							</a>
+						</div>
 				</div>
-				<a href="https://www.facebook.com/pages/create/"
-				   class="webform-small-button webform-small-button-accept webform-small-button-accept-nomargin"
-				   target="_blank">
-					<?= Loc::getMessage('IMCONNECTOR_COMPONENT_FACEBOOK_COMMENTS_TO_CREATE_A_PAGE') ?>
-				</a>
 			</div>
 			<?
 		}

@@ -18,6 +18,7 @@ class Transcript
 	protected $url;
 	protected $content;
 	protected $sessionId;
+	protected $callId;
 	protected $cost;
 	protected $costCurrency;
 	protected $lines = array();
@@ -36,6 +37,18 @@ class Transcript
 	{
 		$instance = new static();
 		$instance->url = $url;
+		return $instance;
+	}
+
+	/**
+	 * Creates instance of the current class with the given array of lines.
+	 * @param array $lines Lines of the transcription in format [SIDE, START_TIME, STOP_TIME, MESSAGE]
+	 * @return Transcript
+	 */
+	public static function createWithLines(array $lines)
+	{
+		$instance = new static();
+		$instance->lines = $lines;
 		return $instance;
 	}
 
@@ -129,19 +142,27 @@ class Transcript
 	}
 
 	/**
-	 * @return mixed
-	 */
-	public function getSessionId()
-	{
-		return $this->sessionId;
-	}
-
-	/**
 	 * @param mixed $sessionId
 	 */
 	public function setSessionId($sessionId)
 	{
 		$this->sessionId = $sessionId;
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getCallId()
+	{
+		return $this->callId;
+	}
+
+	/**
+	 * @param string $callId
+	 */
+	public function setCallId($callId)
+	{
+		$this->callId = $callId;
 	}
 
 	/**
@@ -210,20 +231,25 @@ class Transcript
 	public static function onTranscriptionComplete($params)
 	{
 		$sessionId = (int)$params['SESSION_ID'];
+		$statisticRecord = StatisticTable::getList(array(
+			'filter' => array(
+				'=SESSION_ID' => $sessionId
+			)
+		))->fetch();
+
 		$transcriptionUrl = (string)$params['TRANSCRIPTION_URL'];
 		$transcript = self::createWithUrl($transcriptionUrl);
 		$transcript->setSessionId($sessionId);
+		if($statisticRecord)
+		{
+			$transcript->setCallId($statisticRecord['CALL_ID']);
+		}
 		$transcript->setCost((double)$params['COST']);
 		$transcript->setCostCurrency((string)$params['COST_CURRENCY']);
 		$transcript->fetch();
 
 		$transcript->save();
 
-		$statisticRecord = StatisticTable::getList(array(
-			'filter' => array(
-				'=SESSION_ID' => $sessionId
-			)
-		))->fetch();
 		if(!$statisticRecord)
 		{
 			return false;
@@ -332,6 +358,7 @@ class Transcript
 			'ID' => $this->id,
 			'URL' => $this->url,
 			'CONTENT' => $this->content,
+			'CALL_ID' => $this->callId,
 			'SESSION_ID' => $this->sessionId,
 			'COST' => $this->cost,
 			'COST_CURRENCY' => $this->costCurrency,

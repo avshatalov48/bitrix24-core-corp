@@ -179,7 +179,9 @@ final class Cleaner
 
 	public static function emptyOldDeletedLogEntries()
 	{
-		DeletedLogTable::deleteOldEntries();
+		$deletedLogManager = Driver::getInstance()->getDeletedLogManager();
+		$tableClass = $deletedLogManager->getLogTable();
+		$tableClass::deleteOldEntries();
 
 		return static::className() . "::emptyOldDeletedLogEntries();";
 	}

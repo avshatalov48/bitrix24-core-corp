@@ -25,7 +25,8 @@ abstract class CDavAddressbookCrmBase
 	 */
 	public function Put($id, $card)
 	{
-		parent::Put($id, $card);
+		//TODO: in future, when iOS client will have correct put functionality with groups, then there we can add crm entities from phone addressbook
+		return parent::Put($id, $card);
 		$entityParams = $this->PrepareEntityParamsFromVCard($id, $card);
 		$photoProperty = $card->GetProperties('PHOTO');
 		if (!empty($photoProperty[0]))
@@ -258,6 +259,68 @@ abstract class CDavAddressbookCrmBase
 				);
 		}
 
+		if (!empty($entity["WEB_HOME"]))
+		{
+			foreach ($entity["WEB_HOME"] as $url)
+				$map["URL"][] = array(
+					"VALUE" => $url,
+					"PARAMETERS" => array("TYPE" => "HOME")
+				);
+		}
+
+		if (!empty($entity["WEB_WORK"]))
+		{
+			foreach ($entity["WEB_WORK"] as $url)
+				$map["URL"][] = array(
+					"VALUE" => $url,
+					"PARAMETERS" => array("TYPE" => "WORK")
+				);
+		}
+
+		if (!empty($entity["WEB_OTHER"]))
+		{
+			foreach ($entity["WEB_OTHER"] as $url)
+				$map["URL"][] = array(
+					"VALUE" => $url,
+					"PARAMETERS" => array("TYPE" => "OTHER")
+				);
+		}
+
+		if (!empty($entity["WEB_FACEBOOK"]))
+		{
+			foreach ($entity["WEB_FACEBOOK"] as $url)
+				$map["URL"][] = array(
+					"VALUE" => $url,
+					"PARAMETERS" => array("TYPE" => "OTHER")
+				);
+		}
+
+		if (!empty($entity["WEB_VK"]))
+		{
+			foreach ($entity["WEB_VK"] as $url)
+				$map["URL"][] = array(
+					"VALUE" => $url,
+					"PARAMETERS" => array("TYPE" => "OTHER")
+				);
+		}
+
+		if (!empty($entity["WEB_LIVEJOURNAL"]))
+		{
+			foreach ($entity["WEB_LIVEJOURNAL"] as $url)
+				$map["URL"][] = array(
+					"VALUE" => $url,
+					"PARAMETERS" => array("TYPE" => "OTHER")
+				);
+		}
+
+		if (!empty($entity["WEB_TWITTER"]))
+		{
+			foreach ($entity["WEB_TWITTER"] as $url)
+				$map["URL"][] = array(
+					"VALUE" => $url,
+					"PARAMETERS" => array("TYPE" => "OTHER")
+				);
+		}
 		return $map;
 	}
 

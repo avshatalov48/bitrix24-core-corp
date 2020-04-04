@@ -2,8 +2,6 @@
 namespace Bitrix\Crm\Timeline;
 
 use Bitrix\Main;
-use Bitrix\Main\Type\Date;
-use Bitrix\Main\Type\DateTime;
 
 class EntityController extends Controller
 {
@@ -26,6 +24,10 @@ class EntityController extends Controller
 	public function getSupportedPullCommands()
 	{
 		return array();
+	}
+	public function prepareSearchContent(array $params)
+	{
+		return '';
 	}
 
 	public function prepareEntityPushTag($entityID)
@@ -86,23 +88,23 @@ class EntityController extends Controller
 			$map[$typeName][$entityTypeName][$entityID][] = $ID;
 		}
 
-		$mulfifields = array();
+		$multifields = array();
 		foreach($map as $typeName => $item)
 		{
 			$entityTypeNames = array_keys($item);
 			foreach($entityTypeNames as $entityTypeName)
 			{
-				if(!isset($mulfifields[$typeName]))
+				if(!isset($multifields[$typeName]))
 				{
-					$mulfifields[$typeName] = array();
+					$multifields[$typeName] = array();
 				}
 
-				if(!isset($mulfifields[$typeName][$entityTypeName]))
+				if(!isset($multifields[$typeName][$entityTypeName]))
 				{
-					$mulfifields[$typeName][$entityTypeName] = array();
+					$multifields[$typeName][$entityTypeName] = array();
 				}
 
-				$mulfifields[$typeName][$entityTypeName] = \CCrmFieldMulti::PrepareEntityDataBulk(
+				$multifields[$typeName][$entityTypeName] = \CCrmFieldMulti::PrepareEntityDataBulk(
 					$typeName,
 					$entityTypeName,
 					array_keys($item[$entityTypeName]),
@@ -111,7 +113,7 @@ class EntityController extends Controller
 			}
 		}
 
-		foreach($mulfifields as $typeName => $item)
+		foreach($multifields as $typeName => $item)
 		{
 			if(!isset($map[$typeName]))
 			{

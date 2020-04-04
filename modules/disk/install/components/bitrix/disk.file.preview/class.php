@@ -24,7 +24,7 @@ class CDiskFilePreviewComponent extends \CBitrixComponent
 			$this->arResult['URL_DOWNLOAD'] = \Bitrix\Disk\Driver::getInstance()->getUrlManager()->getUrlExternalLink(array(
 				'hash' => $this->arParams['hash'],
 				'action' => $this->arParams['action']
-			));
+			), true);
 		else
 			$this->arResult['URL_DOWNLOAD'] = \Bitrix\Disk\Driver::getInstance()->getUrlManager()->getUrlForDownloadFile($file, true);
 

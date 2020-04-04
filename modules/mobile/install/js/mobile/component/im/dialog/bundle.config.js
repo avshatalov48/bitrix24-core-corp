@@ -1,5 +1,5 @@
 module.exports = {
-	input: './src/dialog.js',
+	input: './src/registry.js',
 	output: './dist/dialog.bundle.js',
-	adjustConfigPhp: false,
+	namespace: 'BX.Messenger.Runtime',
 };

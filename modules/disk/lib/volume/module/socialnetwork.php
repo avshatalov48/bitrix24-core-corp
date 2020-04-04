@@ -92,6 +92,7 @@ class Socialnetwork extends Volume\Module\Module
 								AND substring_index(message.XML_ID,'_', 1) IN('". implode("','", $eventTypeXML). "')
 							GROUP BY 
 								attached.OBJECT_ID
+							ORDER BY NULL
 						) attach_connect
 							ON attach_connect.OBJECT_ID = files.ID
 				)
@@ -137,6 +138,7 @@ class Socialnetwork extends Volume\Module\Module
 							AND live_feed_log.ENTITY_TYPE NOT IN ('". implode("','", $excludeEventType). "')
 						GROUP BY 
 							attached.OBJECT_ID
+						ORDER BY NULL
 					) attach_connect
 						ON attach_connect.OBJECT_ID = files.ID
 			";
@@ -168,6 +170,7 @@ class Socialnetwork extends Volume\Module\Module
 							attached.ENTITY_TYPE IN($attachedEntitySql)
 						GROUP BY 
 							attached.OBJECT_ID
+						ORDER BY NULL
 					) attach_connect
 						ON attach_connect.OBJECT_ID = files.ID
 			";

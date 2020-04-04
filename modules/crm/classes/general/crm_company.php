@@ -22,6 +22,7 @@ class CAllCrmCompany
 	static public $sUFEntityID = 'CRM_COMPANY';
 	const USER_FIELD_ENTITY_ID = 'CRM_COMPANY';
 	const SUSPENDED_USER_FIELD_ENTITY_ID = 'CRM_COMPANY_SPD';
+	const TOTAL_COUNT_CACHE_ID =  'crm_company_total_count';
 
 	public $LAST_ERROR = '';
 	public $cPerms = null;
@@ -442,6 +443,29 @@ class CAllCrmCompany
 			$results[] = (int)$field['ID'];
 		}
 		return $results;
+	}
+
+	public static function GetTotalCount()
+	{
+		if(defined('BX_COMP_MANAGED_CACHE') && $GLOBALS['CACHE_MANAGER']->Read(600, self::TOTAL_COUNT_CACHE_ID, 'b_crm_company'))
+		{
+			return $GLOBALS['CACHE_MANAGER']->Get(self::TOTAL_COUNT_CACHE_ID);
+		}
+
+		$result = (int)self::GetListEx(
+			array(),
+			array('CHECK_PERMISSIONS' => 'N'),
+			array(),
+			false,
+			array(),
+			array('ENABLE_ROW_COUNT_THRESHOLD' => false)
+		);
+
+		if(defined('BX_COMP_MANAGED_CACHE'))
+		{
+			$GLOBALS['CACHE_MANAGER']->Set(self::TOTAL_COUNT_CACHE_ID, $result);
+		}
+		return $result;
 	}
 
 	public static function GetRightSiblingID($ID)
@@ -1099,6 +1123,12 @@ class CAllCrmCompany
 			}
 
 			$ID = intval($DB->Add('b_crm_company', $arFields, array(), 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__));
+
+			if(defined('BX_COMP_MANAGED_CACHE'))
+			{
+				$GLOBALS['CACHE_MANAGER']->CleanDir('b_crm_company');
+			}
+
 			$result = $arFields['ID'] = $ID;
 			CCrmPerms::UpdateEntityAttr('COMPANY', $ID, $arEntityAttr);
 
@@ -1166,8 +1196,8 @@ class CAllCrmCompany
 			//endregion
 			DuplicateEntityRanking::registerEntityStatistics(CCrmOwnerType::Company, $ID, $arFields);
 
-			// add utm fields
-			UtmTable::addEntityUtmFromFields(CCrmOwnerType::Company, $ID, $arFields);
+			// tracking of entity
+			Tracking\Entity::onAfterAdd(CCrmOwnerType::Company, $ID, $arFields);
 
 			if($bUpdateSearch)
 			{
@@ -1292,7 +1322,7 @@ class CAllCrmCompany
 	}
 	private function PrepareEntityAttrs(&$arEntityAttr, $entityPermType)
 	{
-		// Ensure that entity accessable for user restricted by BX_CRM_PERM_OPEN
+		// Ensure that entity accessible for user restricted by BX_CRM_PERM_OPEN
 		if($entityPermType === BX_CRM_PERM_OPEN && !in_array('O', $arEntityAttr, true))
 		{
 			$arEntityAttr[] = 'O';
@@ -1309,6 +1339,7 @@ class CAllCrmCompany
 		{
 			$arOptions = array();
 		}
+		$isSystemAction = isset($options['IS_SYSTEM_ACTION']) && $arOptions['IS_SYSTEM_ACTION'];
 
 		$arFilterTmp = Array('ID' => $ID);
 		if (!$this->bCheckPermission)
@@ -1340,11 +1371,14 @@ class CAllCrmCompany
 		{
 			unset($arFields['DATE_MODIFY']);
 		}
-		$arFields['~DATE_MODIFY'] = $DB->CurrentTimeFunction();
 
-		if(!isset($arFields['MODIFY_BY_ID']) || $arFields['MODIFY_BY_ID'] <= 0)
+		if(!$isSystemAction)
 		{
-			$arFields['MODIFY_BY_ID'] = $iUserId;
+			$arFields['~DATE_MODIFY'] = $DB->CurrentTimeFunction();
+			if(!isset($arFields['MODIFY_BY_ID']) || $arFields['MODIFY_BY_ID'] <= 0)
+			{
+				$arFields['MODIFY_BY_ID'] = $iUserId;
+			}
 		}
 
 		if (isset($arFields['ASSIGNED_BY_ID']) && $arFields['ASSIGNED_BY_ID'] <= 0)
@@ -1405,12 +1439,16 @@ class CAllCrmCompany
 			$arAttr['OPENED'] = !empty($arFields['OPENED']) ? $arFields['OPENED'] : $arRow['OPENED'];
 			$arAttr['IS_MY_COMPANY'] = !empty($arFields['IS_MY_COMPANY']) ? $arFields['IS_MY_COMPANY'] : $arRow['IS_MY_COMPANY'];
 			$arEntityAttr = self::BuildEntityAttr($assignedByID, $arAttr);
-			$sEntityPerm = $this->cPerms->GetPermType('COMPANY', 'WRITE', $arEntityAttr);
-			$this->PrepareEntityAttrs($arEntityAttr, $sEntityPerm);
-			//Prevent 'OPENED' field change by user restricted by BX_CRM_PERM_OPEN permission
-			if($sEntityPerm === BX_CRM_PERM_OPEN && isset($arFields['OPENED']) && $arFields['OPENED'] !== 'Y' && $assignedByID !== $iUserId)
+			if($this->bCheckPermission)
 			{
-				$arFields['OPENED'] = 'Y';
+				$sEntityPerm = $this->cPerms->GetPermType('COMPANY', 'WRITE', $arEntityAttr);
+				//HACK: Ensure that entity accessible for user restricted by BX_CRM_PERM_OPEN
+				$this->PrepareEntityAttrs($arEntityAttr, $sEntityPerm);
+				//HACK: Prevent 'OPENED' field change by user restricted by BX_CRM_PERM_OPEN permission
+				if($sEntityPerm === BX_CRM_PERM_OPEN && isset($arFields['OPENED']) && $arFields['OPENED'] !== 'Y' && $assignedByID !== $iUserId)
+				{
+					$arFields['OPENED'] = 'Y';
+				}
 			}
 
 			if(isset($arFields['LOGO']))
@@ -1987,6 +2025,11 @@ class CAllCrmCompany
 		$obRes = $DB->Query("DELETE FROM b_crm_company WHERE ID = {$ID}{$sWherePerm}", false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
 		if (is_object($obRes) && $obRes->AffectedRowsCount() > 0)
 		{
+			if(defined('BX_COMP_MANAGED_CACHE'))
+			{
+				$GLOBALS['CACHE_MANAGER']->CleanDir('b_crm_company');
+			}
+
 			if(!$enableRecycleBin)
 			{
 				self::ReleaseExternalResources($arFields);
@@ -2636,6 +2679,58 @@ class CAllCrmCompany
 
 		$requisiteEntity = new Crm\EntityRequisite();
 		return $requisiteEntity->add($requisiteFields)->isSuccess();
+	}
+
+	public static function SynchronizeMultifieldMarkers($sourceID, array $fields = null)
+	{
+		global $DB;
+
+		if($sourceID <= 0)
+		{
+			return;
+		}
+
+		if($fields === null)
+		{
+			$dbResult = self::GetListEx(
+				array(),
+				array('=ID' => $sourceID, 'CHECK_PERMISSIONS' => 'N'),
+				false,
+				false,
+				array('ID', 'HAS_EMAIL', 'HAS_PHONE', 'HAS_IMOL')
+			);
+
+			if(is_object($dbResult))
+			{
+				$fields = $dbResult->Fetch();
+			}
+		}
+
+		if($fields === null)
+		{
+			return;
+		}
+
+		$multifields = isset($fields['FM']) && is_array($fields['FM']) ? $fields['FM'] : null;
+		if($multifields === null)
+		{
+			$multifields = DuplicateCommunicationCriterion::prepareEntityMultifieldValues(
+				CCrmOwnerType::Company,
+				$sourceID
+			);
+		}
+
+		$hasEmail = CCrmFieldMulti::HasValues($multifields, CCrmFieldMulti::EMAIL) ? 'Y' : 'N';
+		$hasPhone = CCrmFieldMulti::HasValues($multifields, CCrmFieldMulti::PHONE) ? 'Y' : 'N';
+		$hasImol = CCrmFieldMulti::HasImolValues($multifields) ? 'Y' : 'N';
+
+		if(!isset($fields['HAS_EMAIL']) || $fields['HAS_EMAIL'] !== $hasEmail ||
+			!isset($fields['HAS_PHONE']) || $fields['HAS_PHONE'] !== $hasPhone ||
+			!isset($fields['HAS_IMOL']) || $fields['HAS_IMOL'] !== $hasImol
+		)
+		{
+			$DB->Query("UPDATE b_crm_company SET HAS_EMAIL = '{$hasEmail}', HAS_PHONE = '{$hasPhone}', HAS_IMOL = '{$hasImol}' WHERE ID = {$sourceID}", false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
+		}
 	}
 
 	public static function GetDefaultTitle()

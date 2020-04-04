@@ -239,6 +239,11 @@ abstract class EntityConversionMapper
 		$srcField = self::getUserField($srcEntityTypeID, $srcFieldID);
 		$dstField = self::getUserField($dstEntityTypeID, $dstFieldID);
 
+		if($srcField && !UserFieldSynchronizer::isUserFieldTypeSupported($srcField['USER_TYPE_ID']))
+		{
+			return;
+		}
+
 		if($srcField && $srcField['USER_TYPE_ID'] === 'enumeration'
 			&& $dstField && $dstField['USER_TYPE_ID'] === 'enumeration')
 		{

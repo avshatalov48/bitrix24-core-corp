@@ -587,10 +587,34 @@ class Order extends \CCrmDocument
 		foreach ($collection as $entity)
 		{
 			$platform = $entity->getTradePlatform();
+			if ($platform === null)
+			{
+				continue;
+			}
+
 			$data = $platform->getInfo();
 			$fields['SHOP_TITLE'] = $data['TITLE'];
 			$fields['SHOP_PUBLIC_URL'] = $data['PUBLIC_URL'];
 			break;
+		}
+
+		if (empty($fields['SHOP_TITLE']))
+		{
+			$siteData = Main\SiteTable::getList([
+				"select" => ["LID", "NAME", "SITE_NAME"],
+				"filter" => ["LID" => $order->getSiteId()]
+			])->fetch();
+			if ($siteData)
+			{
+				if ($siteData["SITE_NAME"])
+				{
+					$fields['SHOP_TITLE'] = $siteData["SITE_NAME"];
+				}
+				else
+				{
+					$fields['SHOP_TITLE'] = $siteData["NAME"];
+				}
+			}
 		}
 	}
 

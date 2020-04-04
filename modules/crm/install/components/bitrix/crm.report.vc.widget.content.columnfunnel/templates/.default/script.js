@@ -7,6 +7,9 @@
 		this.infoPopupContentTemplate = options.context.querySelector('[data-role="info-popup-content-template"]');
 		this.firstColumnsContainer = this.columnFunnelWrapperContainer.querySelector('[data-role="first-columns-container"]');
 		this.secondColumnsContainer = this.columnFunnelWrapperContainer.querySelector('[data-role="second-columns-container"]');
+		this.thirdColumnsContainer = this.columnFunnelWrapperContainer.querySelector('[data-role="third-columns-container"]');
+
+		this.context = options.context;
 		this.columnsValues = [];
 		this.maxColumnValue = null;
 		this.minColumnValue = null;
@@ -41,12 +44,26 @@
 					{
 						this.secondColumnsContainer.appendChild(columnNode);
 					}
-					column.node = columnNode;
 
+					if (i === 2)
+					{
+
+						this.thirdColumnsContainer.appendChild(columnNode);
+					}
+					column.node = columnNode;
 
 					BX.bind(columnNode, 'mouseover', this.handleColumnMouseOver.bind(this, column));
 					BX.bind(columnNode, 'mouseout', this.handleColumnMouseOut.bind(this));
 					this.columns.push(column);
+				}
+
+				if (entity['firstAdditionalAmountTargetUrl'] !== undefined)
+				{
+					var valueNode = this.context.querySelector('[data-role="first-additional-card-value-'+i+'"]');
+					if (valueNode)
+					{
+						valueNode.addEventListener('click', this.openSlider.bind(this, entity['firstAdditionalAmountTargetUrl']));
+					}
 				}
 			}
 
@@ -56,6 +73,12 @@
 				this.adjustColumnsHeight();
 			}.bind(this), 500);
 
+		},
+		openSlider: function(url)
+		{
+			BX.SidePanel.Instance.open(url, {
+				cacheable: false
+			});
 		},
 		renderScaleItems: function()
 		{
@@ -131,7 +154,7 @@
 		},
 		buildColumn: function(column)
 		{
-			return BX.create('div', {
+			var columnNode = BX.create('div', {
 				props: {
 					className: 'crm-report-column-funnel-through-funnel-widget-item'
 				},
@@ -140,6 +163,14 @@
 				}
 
 			});
+
+			if (column.link.length > 0)
+			{
+				columnNode.addEventListener('click', this.openSlider.bind(this, column.link));
+				columnNode.classList.add('crm-report-column-funnel-through-funnel-widget-item-clickable');
+			}
+
+			return columnNode;
 		},
 		adjustColumnsHeight: function()
 		{
@@ -198,25 +229,73 @@
 			this.infoPopupContentTemplateTopTitle = this.infoPopupContentTemplate.querySelector('[data-role="info-popup-top-title"]');
 			this.infoPopupContentTemplateTopValue = this.infoPopupContentTemplate.querySelector('[data-role="info-popup-top-value"]');
 
-			this.infoPopupContentTemplateFirstTitle = this.infoPopupContentTemplate.querySelector('[data-role="info-popup-first-title"]');
-			this.infoPopupContentTemplateFirstValue = this.infoPopupContentTemplate.querySelector('[data-role="info-popup-first-value"]');
+			// this.infoPopupContentTemplateFirstTitle = this.infoPopupContentTemplate.querySelector('[data-role="info-popup-first-title"]');
+			// this.infoPopupContentTemplateFirstValue = this.infoPopupContentTemplate.querySelector('[data-role="info-popup-first-value"]');
+
+			this.infoPopupContentTemplateSecondCard = this.infoPopupContentTemplate.querySelector('[data-role="info-popup-second-card"]');
+			this.infoPopupContentTemplateSecondTitle = this.infoPopupContentTemplate.querySelector('[data-role="info-popup-second-title"]');
+			this.infoPopupContentTemplateSecondValue = this.infoPopupContentTemplate.querySelector('[data-role="info-popup-second-value"]');
+
+			this.infoPopupContentTemplateThirdCard = this.infoPopupContentTemplate.querySelector('[data-role="info-popup-third-card"]');
+			this.infoPopupContentTemplateThirdTitle = this.infoPopupContentTemplate.querySelector('[data-role="info-popup-third-title"]');
+			this.infoPopupContentTemplateThirdValue = this.infoPopupContentTemplate.querySelector('[data-role="info-popup-third-value"]');
+
+			this.infoPopupContentTemplateForthCard = this.infoPopupContentTemplate.querySelector('[data-role="info-popup-forth-card"]');
+			this.infoPopupContentTemplateForthTitle = this.infoPopupContentTemplate.querySelector('[data-role="info-popup-forth-title"]');
+			this.infoPopupContentTemplateForthValue = this.infoPopupContentTemplate.querySelector('[data-role="info-popup-forth-value"]');
 
 			this.infoPopupContentTemplate.style.borderColor = columnObject.color;
 			this.infoPopupContentTemplateLabel.innerText = columnObject.title;
 
-			if (columnObject.topAdditionalTitle !== undefined)
+			if (columnObject.firstAdditionalTitle !== undefined)
 			{
 				this.infoPopupContentTemplateTopCard.style.display = 'block';
-				this.infoPopupContentTemplateTopTitle.innerText = columnObject.topAdditionalTitle;
-				this.infoPopupContentTemplateTopValue.innerHTML = columnObject.topAdditionalValue;
+				this.infoPopupContentTemplateTopTitle.innerText = columnObject.firstAdditionalTitle;
+				this.infoPopupContentTemplateTopValue.innerHTML = columnObject.firstAdditionalValue;
+				this.infoPopupContentTemplateTopValue.innerHTML += columnObject.firstAdditionalUnit;
 			}
 			else
 			{
 				this.infoPopupContentTemplateTopCard.style.display = 'none';
 			}
 
-			this.infoPopupContentTemplateFirstTitle.innerText = columnObject.firstAdditionalTitle;
-			this.infoPopupContentTemplateFirstValue.innerHTML = columnObject.firstAdditionalValue;
+			if (columnObject.secondAdditionalTitle !== undefined)
+			{
+				this.infoPopupContentTemplateSecondCard.style.display = 'block';
+				this.infoPopupContentTemplateSecondTitle.innerText = columnObject.secondAdditionalTitle;
+				this.infoPopupContentTemplateSecondValue.innerHTML = columnObject.secondAdditionalValue;
+				this.infoPopupContentTemplateSecondValue.innerHTML += columnObject.secondAdditionalUnit;
+			}
+			else
+			{
+				this.infoPopupContentTemplateSecondCard.style.display = 'none';
+			}
+
+			if (columnObject.thirdAdditionalValue !== undefined)
+			{
+				this.infoPopupContentTemplateThirdCard.style.display = 'block';
+				this.infoPopupContentTemplateThirdTitle.innerText = columnObject.thirdAdditionalTitle;
+				this.infoPopupContentTemplateThirdValue.innerHTML = columnObject.thirdAdditionalValue;
+				this.infoPopupContentTemplateThirdValue.innerHTML += columnObject.thirdAdditionalUnit;
+			}
+			else
+			{
+				this.infoPopupContentTemplateThirdCard.style.display = 'none';
+			}
+
+			if (columnObject.forthAdditionalValue !== undefined)
+			{
+				this.infoPopupContentTemplateForthCard.style.display = 'block';
+				this.infoPopupContentTemplateForthTitle.innerText = columnObject.forthAdditionalTitle;
+				this.infoPopupContentTemplateForthValue.innerHTML = columnObject.forthAdditionalValue;
+				this.infoPopupContentTemplateForthValue.innerHTML += columnObject.forthAdditionalUnit;
+			}
+			else
+			{
+				this.infoPopupContentTemplateForthCard.style.display = 'none';
+			}
+
+
 
 			return this.infoPopupContentTemplate;
 		},

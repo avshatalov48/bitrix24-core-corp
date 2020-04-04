@@ -1,14 +1,4 @@
 <?php
-/**
- * Bitrix Framework
- * @package bitrix
- * @subpackage tasks
- * @copyright 2001-2013 Bitrix
- *
- * @global $USER_FIELD_MANAGER CUserTypeManager
- * @global $APPLICATION CMain
- */
-
 /*
 
 Usage example:
@@ -45,35 +35,309 @@ bool(false)
 Got exception: 8; /var/www/sites/RAM/cpb24.bxram.bsr/html/bitrix/modules/tasks/classes/general/checklistitem.php:282
 */
 
-use Bitrix\Tasks\Internals\Task\CheckListTable;
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\Db\SqlQueryException;
+use Bitrix\Main\EventManager;
+use Bitrix\Main\NotImplementedException;
+use Bitrix\Main\ObjectException;
+use Bitrix\Main\ObjectPropertyException;
+use Bitrix\Main\SystemException;
+use Bitrix\Tasks\CheckList\CheckListFacade;
+use Bitrix\Tasks\CheckList\Internals\CheckList;
+use Bitrix\Tasks\CheckList\Task\TaskCheckListFacade;
 
+/**
+ * Class CTaskCheckListItem
+ *
+ * @deprecated
+ *
+ * @see TaskCheckListFacade
+ * @see CheckList
+ */
 final class CTaskCheckListItem extends CTaskSubItemAbstract
 {
-	const ACTION_ADD = 0x01;
+	const /** @noinspection PhpUnused */ ACTION_ADD = 0x01;
 	const ACTION_MODIFY = 0x02;
 	const ACTION_REMOVE = 0x03;
 	const ACTION_TOGGLE = 0x04;
-	const ACTION_REORDER = 0x05;
+	const /** @noinspection PhpUnused */ ACTION_REORDER = 0x05;
 
 	/**
-	 * @access private
+	 * @param array $parameters
+	 * @return array
+	 * @throws TasksException
 	 *
 	 * @deprecated
+	 *
+	 * @see TaskCheckListFacade::getList()
+	 */
+	public static function getList(array $parameters = [])
+	{
+		$select = (array_key_exists('select', $parameters)? $parameters['select'] : []);
+		$filter = (array_key_exists('filter', $parameters)? $parameters['filter'] : []);
+		$order = (array_key_exists('order', $parameters)? $parameters['order'] : []);
+
+		try
+		{
+			return TaskCheckListFacade::getList($select, $filter, $order);
+		}
+		catch (Exception $e)
+		{
+			/** @noinspection PhpDeprecationInspection */
+			throw new TasksException($e->getMessage(), TasksException::TE_ACTION_FAILED_TO_BE_PROCESSED);
+		}
+	}
+
+	/**
+	 * @param $itemId
+	 * @return bool
+	 * @throws SystemException
+	 * @throws ArgumentException
+	 * @throws NotImplementedException
+	 *
+	 * @deprecated
+	 *
+	 * @see TaskCheckListFacade::getList()
 	 */
 	public static function getTaskIdByItemId($itemId)
 	{
-		global $DB;
-
-		$itemId = intval($itemId);
+		$itemId = (int)$itemId;
 
 		if (!$itemId)
 		{
 			return false;
 		}
 
-		$item = $DB->Query("select TASK_ID from b_tasks_checklist_items where ID = '".$itemId."'")->fetch();
+		$item = TaskCheckListFacade::getList(['TASK_ID'], ['ID' => $itemId])[$itemId];
 
 		return $item['TASK_ID'];
+	}
+
+	/**
+	 * @param CTaskItemInterface $task (of class CTaskItem,checklist item will be added to this task)
+	 * @param array $fields with mandatory element TITLE (string).
+	 *
+	 * @return CTaskCheckListItem
+	 * @throws ArgumentException
+	 * @throws NotImplementedException
+	 * @throws ObjectException
+	 * @throws SqlQueryException
+	 * @throws SystemException
+	 * @throws TasksException
+	 *
+	 * @deprecated
+	 *
+	 * @see TaskCheckListFacade::add()
+	 */
+	public static function add(CTaskItemInterface $task, $fields)
+	{
+		$taskId = $task->getId();
+		$userId = $task->getExecutiveUserId();
+
+		/** @noinspection PhpDeprecationInspection */
+		$fields = static::fillFieldsForCompatibility($taskId, $userId, $fields);
+
+		$addResult = TaskCheckListFacade::add($taskId, $userId, $fields);
+		if (!$addResult->isSuccess() && $addResult->getErrors())
+		{
+			/** @noinspection PhpDeprecationInspection */
+			throw new TasksException(
+				$addResult->getErrors()->getMessages()[0],
+				TasksException::TE_ACTION_FAILED_TO_BE_PROCESSED
+			);
+		}
+
+		/** @var CheckList $newItem */
+		$newItem = $addResult->getData()['ITEM'];
+		$newItemId = $newItem->getFields()['ID'];
+
+		/** @noinspection PhpDeprecationInspection */
+		return new self($task, $newItemId);
+	}
+
+	/**
+	 * @param $taskId
+	 * @param $userId
+	 * @param $fields
+	 * @return array
+	 * @throws ArgumentException
+	 * @throws NotImplementedException
+	 * @throws ObjectException
+	 * @throws SqlQueryException
+	 * @throws SystemException
+	 */
+	private static function fillFieldsForCompatibility($taskId, $userId, $fields)
+	{
+		$newFields = $fields;
+
+		if (!isset($newFields['PARENT_ID'], $newFields['SORT_INDEX']))
+		{
+			$items = TaskCheckListFacade::getList(['ID', 'PARENT_ID', 'SORT_INDEX'], ['TASK_ID' => $taskId]);
+
+			if (!isset($newFields['PARENT_ID']))
+			{
+				/** @noinspection PhpDeprecationInspection */
+				$newFields['PARENT_ID'] = static::getFirstCheckListId($taskId, $userId, $items);
+			}
+
+			if (!isset($newFields['SORT_INDEX']))
+			{
+				/** @noinspection PhpDeprecationInspection */
+				$newFields['SORT_INDEX'] = static::getNextSortIndex($items, $newFields['PARENT_ID']);
+			}
+		}
+
+		return $newFields;
+	}
+
+	/**
+	 * @param $taskId
+	 * @param $userId
+	 * @param array $items
+	 * @return false|int|string
+	 * @throws ArgumentException
+	 * @throws NotImplementedException
+	 * @throws ObjectException
+	 * @throws ObjectPropertyException
+	 * @throws SqlQueryException
+	 * @throws SystemException
+	 */
+	private static function getFirstCheckListId($taskId, $userId, $items)
+	{
+		if (empty($items))
+		{
+			/** @noinspection PhpDeprecationInspection */
+			$firstCheckListId = static::createFirstCheckList($taskId, $userId)->getFields()['ID'];
+		}
+		else
+		{
+			$arrayStructuredRoots = TaskCheckListFacade::getArrayStructuredRoots($items);
+			$sortIndexes = array_column($arrayStructuredRoots, 'SORT_INDEX', 'ID');
+
+			$firstCheckListId = array_search(min($sortIndexes), $sortIndexes, true);
+		}
+
+		return $firstCheckListId;
+	}
+
+	/**
+	 * @param $taskId
+	 * @param $userId
+	 * @return CheckList
+	 * @throws ArgumentException
+	 * @throws NotImplementedException
+	 * @throws ObjectException
+	 * @throws SqlQueryException
+	 * @throws SystemException
+	 * @throws ObjectPropertyException
+	 */
+	private static function createFirstCheckList($taskId, $userId)
+	{
+		/** @var CheckListFacade $facade */
+		$facade = TaskCheckListFacade::class;
+		$checkList = new CheckList(0, $userId, $facade, [
+			'ENTITY_ID' => $taskId,
+			'CREATED_BY' => $userId,
+			'TITLE' => 'BX_CHECKLIST_1',
+			'PARENT_ID' => 0,
+			'SORT_INDEX' => 0,
+		]);
+		$checkListSaveResult = $checkList->save();
+
+		/** @var CheckList $checkList */
+		$checkList = $checkListSaveResult->getData()['ITEM'];
+
+		return $checkList;
+	}
+
+	/**
+	 * @param array $items
+	 * @param $parentId
+	 * @return int
+	 */
+	private static function getNextSortIndex($items, $parentId)
+	{
+		$neighbours = array_filter(
+			$items,
+			static function ($item) use ($parentId)
+			{
+				return (int)$item['PARENT_ID'] === $parentId;
+			}
+		);
+		$sortIndexes = array_column($neighbours, 'SORT_INDEX');
+
+		return (int)max($sortIndexes) + 1;
+	}
+
+	/**
+	 * @param $fields
+	 * @throws ArgumentException
+	 * @throws NotImplementedException
+	 * @throws ObjectException
+	 * @throws SystemException
+	 * @throws TasksException
+	 *
+	 * @deprecated
+	 *
+	 * @see TaskCheckListFacade::update()
+	 */
+	public function update($fields)
+	{
+		$this->resetCache();
+
+		$id = $this->getId();
+		$userId = $this->getExecutiveUserId();
+		$currentFields = TaskCheckListFacade::getList([], ['ID' => $id])[$id];
+
+		/** @var TaskCheckListFacade $facade */
+		$facade = TaskCheckListFacade::class;
+		$checkList = new CheckList(0, $userId, $facade, $currentFields);
+		$checkList->setFields($fields);
+
+		$saveResult = $checkList->save();
+		if (!$saveResult->isSuccess() && $saveResult->getErrors())
+		{
+			/** @noinspection PhpDeprecationInspection */
+			throw new TasksException(
+				$saveResult->getErrors()->getMessages()[0],
+				TasksException::TE_ACTION_FAILED_TO_BE_PROCESSED
+			);
+		}
+	}
+
+	/**
+	 * @return bool
+	 * @throws ArgumentException
+	 * @throws NotImplementedException
+	 * @throws SystemException
+	 * @throws TasksException
+	 *
+	 * @deprecated
+	 *
+	 * @see TaskCheckListFacade::delete()
+	 */
+	public function delete()
+	{
+		$this->resetCache();
+
+		$taskId = $this->taskId;
+		$userId = $this->getExecutiveUserId();
+
+		/** @var TaskCheckListFacade $facade */
+		$facade = TaskCheckListFacade::class;
+		$checkList = new CheckList(0, $userId, $facade, ['ID' => $this->getId()]);
+
+		$deleteResult = TaskCheckListFacade::delete($taskId, $userId, $checkList);
+		if (!$deleteResult->isSuccess() && $deleteResult->getErrors())
+		{
+			/** @noinspection PhpDeprecationInspection */
+			throw new TasksException(
+				$deleteResult->getErrors()->getMessages()[0],
+				TasksException::TE_ACTION_FAILED_TO_BE_PROCESSED
+			);
+		}
+
+		return true;
 	}
 
 	/**
@@ -81,160 +345,455 @@ final class CTaskCheckListItem extends CTaskSubItemAbstract
 	 * WARNING: This function doesn't check rights!
 	 *
 	 * @param integer $taskId
-	 *
-	 * @throws TasksException
 	 * @throws CTaskAssertException
+	 * @throws TasksException
+	 *
+	 * @deprecated
+	 *
+	 * @see TaskCheckListFacade::deleteByEntityId()
+	 * @see TaskCheckListFacade::deleteByEntityIdOnLowLevel()
 	 */
 	public static function deleteByTaskId($taskId)
 	{
-		CTaskAssert::assert(
-			CTaskAssert::isLaxIntegers($taskId) && ($taskId > 0)
-		);
+		CTaskAssert::assert(CTaskAssert::isLaxIntegers($taskId) && $taskId > 0);
 
-		$list = CheckListTable::getList(
-			array(
-				"select" => array("ID"),
-				"filter" => array(
-					"=TASK_ID" => $taskId,
-				),
-			)
-		);
-		while ($item = $list->fetch())
+		try
 		{
-			$result = CheckListTable::delete($item["ID"]);
-			if (!$result->isSuccess())
-			{
-				throw new TasksException(
-					'', TasksException::TE_ACTION_FAILED_TO_BE_PROCESSED
-				);
-			}
+			TaskCheckListFacade::deleteByEntityIdOnLowLevel($taskId);
+		}
+		catch (Exception $e)
+		{
+			/** @noinspection PhpDeprecationInspection */
+			throw new TasksException($e->getMessage(), TasksException::TE_ACTION_FAILED_TO_BE_PROCESSED);
 		}
 	}
 
 	/**
-	 * @param array $parameters
-	 *
-	 * @return array |null
-	 * @throws TasksException
-	 */
-	public static function getList(array $parameters = array())
-	{
-		if(!array_key_exists('select', $parameters) || empty($parameters['select']))
-		{
-			$parameters['select'] = ['ID', 'CREATED_BY', 'TITLE', 'IS_COMPLETE', 'SORT_INDEX'];
-		}
-
-		if(!array_key_exists('order', $parameters) || empty($parameters['order']))
-		{
-			$parameters['order'] = ['SORT_INDEX'=>'asc', 'ID'=>'DESC'];
-		}
-
-		$result = CheckListTable::getList($parameters);
-
-		/** @var $result \Bitrix\Main\ORM\Query\Result */
-		if (!$result->isSuccess())
-		{
-			throw new TasksException(
-				'', TasksException::TE_ACTION_FAILED_TO_BE_PROCESSED
-			);
-		}
-		else
-		{
-			return $result->fetchAll();
-		}
-	}
-
-	/* @access private */
-	/**
-	 * @param $taskId
-	 *
-	 * @return bool|CDBResult
-	 * @throws \Bitrix\Main\SystemException
+	 * @return bool
+	 * @throws ArgumentException
+	 * @throws NotImplementedException
+	 * @throws ObjectException
+	 * @throws SystemException
 	 *
 	 * @deprecated
-	 * 
+	 *
+	 * @see TaskCheckListFacade::complete()
 	 */
-	final public static function getByTaskId($taskId)
+	public function complete()
 	{
-		global $DB;
+		try
+		{
+			/** @noinspection PhpDeprecationInspection */
+			$this->update(['IS_COMPLETE' => 'Y']);
+		}
+		/** @noinspection PhpDeprecationInspection */
+		catch (TasksException $e)
+		{
+			return false;
+		}
 
-		$rc = $DB->Query(
-			"SELECT ID, CREATED_BY, TITLE, IS_COMPLETE
-				FROM b_tasks_checklist_items 
-				WHERE TASK_ID = ".(int)$taskId." ORDER BY SORT_INDEX",
-			$bIgnoreErrors = true
-		);
-
-		if ($rc)
-			return ($rc);
-		else
-			throw new \Bitrix\Main\SystemException();
+		return true;
 	}
 
-	public static function runRestMethod($executiveUserId, $methodName, $args,
-		/** @noinspection PhpUnusedParameterInspection */
-										 $navigation)
+	/**
+	 * @return bool
+	 * @throws ArgumentException
+	 * @throws NotImplementedException
+	 * @throws ObjectException
+	 * @throws SystemException
+	 *
+	 * @deprecated
+	 *
+	 * @see TaskCheckListFacade::renew()
+	 */
+	public function renew()
 	{
-		static $arManifest = null;
-		static $arMethodsMetaInfo = null;
-
-		if ($arManifest === null)
+		try
 		{
-			$arManifest = self::getManifest();
-			$arMethodsMetaInfo = $arManifest['REST: available methods'];
+			/** @noinspection PhpDeprecationInspection */
+			$this->update(['IS_COMPLETE' => 'N']);
+		}
+		/** @noinspection PhpDeprecationInspection */
+		catch (TasksException $e)
+		{
+			return false;
+		}
+
+		return true;
+	}
+
+	/**
+	 * @param $sortIndex
+	 * @throws ArgumentException
+	 * @throws NotImplementedException
+	 * @throws ObjectException
+	 * @throws SystemException
+	 * @throws TasksException
+	 *
+	 * @deprecated
+	 *
+	 * @see TaskCheckListFacade::update()
+	 */
+	public function setSortIndex($sortIndex)
+	{
+		/** @noinspection PhpDeprecationInspection */
+		$this->update(['SORT_INDEX' => $sortIndex]);
+	}
+
+	/**
+	 * Reorder item in checklist to position after some given item.
+	 *
+	 * @param $itemId
+	 * @throws ArgumentException
+	 * @throws NotImplementedException
+	 * @throws SystemException
+	 * @throws TasksException
+	 *
+	 * @deprecated
+	 *
+	 * @see TaskCheckListFacade::moveItem()
+	 */
+	public function moveAfterItem($itemId)
+	{
+		/** @noinspection PhpDeprecationInspection */
+		$this->moveItem($this->getId(), $itemId);
+	}
+
+	/**
+	 * @param $selectedItemId
+	 * @param $insertAfterItemId
+	 * @throws ArgumentException
+	 * @throws NotImplementedException
+	 * @throws SystemException
+	 * @throws TasksException
+	 *
+	 * @deprecated
+	 *
+	 * @see TaskCheckListFacade::moveItem()
+	 */
+	private function moveItem($selectedItemId, $insertAfterItemId)
+	{
+		$taskId = $this->oTaskItem->getId();
+		$userId = $this->getExecutiveUserId();
+		$currentFields = TaskCheckListFacade::getList([], ['ID' => $selectedItemId])[$selectedItemId];
+
+		/** @var TaskCheckListFacade $facade */
+		$facade = TaskCheckListFacade::class;
+		$checkList = new CheckList(0, $userId, $facade, $currentFields);
+
+		$moveResult = TaskCheckListFacade::moveItem(
+			$taskId,
+			$userId,
+			$checkList,
+			$insertAfterItemId,
+			TaskCheckListFacade::MOVING_POSITION_AFTER
+		);
+		if (!$moveResult->isSuccess() && $moveResult->getErrors())
+		{
+			/** @noinspection PhpDeprecationInspection */
+			throw new TasksException(
+				$moveResult->getErrors()->getMessages()[0],
+				TasksException::TE_ACTION_FAILED_TO_BE_PROCESSED
+			);
+		}
+
+		$eventManager = EventManager::getInstance();
+		foreach ($eventManager->findEventHandlers("tasks", "OnCheckListItemMoveItem") as $event)
+		{
+			ExecuteModuleEventEx($event, [$selectedItemId, $insertAfterItemId]);
+		}
+	}
+
+	/**
+	 * @return mixed
+	 * @throws TasksException
+	 *
+	 * @deprecated
+	 *
+	 * @see CheckList->fields->getTitle()
+	 */
+	public function getTitle()
+	{
+		$itemData = $this->getData();
+		return ($itemData['TITLE']);
+	}
+
+	/**
+	 * @return mixed
+	 * @throws TasksException
+	 *
+	 * @deprecated
+	 *
+	 * @see CheckList->fields->getEntityId()
+	 */
+	public function getTaskId()
+	{
+		$itemData = $this->getData();
+		return ($itemData['TASK_ID']);
+	}
+
+	/**
+	 * @return bool true if complete, false otherwise
+	 * @throws TasksException
+	 *
+	 * @deprecated
+	 *
+	 * @see CheckList->fields->getIsComplete()
+	 */
+	public function isComplete()
+	{
+		$itemsData = $this->getData();
+		return $itemsData['IS_COMPLETE'] === 'Y';
+	}
+
+	/**
+	 * @param $actionId
+	 * @return bool
+	 *
+	 * @throws ArgumentException
+	 * @throws NotImplementedException
+	 * @throws SystemException
+	 *
+	 * @deprecated
+	 *
+	 * @see TaskCheckListFacade::isActionAllowed()
+	 */
+	public function isActionAllowed($actionId)
+	{
+		CTaskAssert::assertLaxIntegers($actionId);
+
+		$id = $this->getId();
+		$userId = $this->getExecutiveUserId();
+		$currentFields = TaskCheckListFacade::getList([], ['ID' => $id])[$id];
+
+		/** @var TaskCheckListFacade $facade */
+		$facade = TaskCheckListFacade::class;
+		$checkList = new CheckList(0, $userId, $facade, $currentFields);
+
+		return TaskCheckListFacade::isActionAllowed($this->taskId, $checkList, $userId, $actionId);
+	}
+
+	/**
+	 * @param array $fields
+	 * @param bool $checkForAdd
+	 * @return bool
+	 *
+	 * @deprecated
+	 *
+	 * @see TaskCheckListFacade::checkFields()
+	 */
+	private static function checkFields($fields, $checkForAdd)
+	{
+		/** @noinspection PhpVariableNamingConventionInspection */
+		global $APPLICATION;
+
+		$errors = [];
+
+		if ($checkForAdd)
+		{
+			$checkResult = TaskCheckListFacade::checkFieldsForAdd($fields);
+		}
+		else
+		{
+			$checkResult = TaskCheckListFacade::checkFieldsForUpdate($fields);
+		}
+
+		if (!$checkResult->isSuccess())
+		{
+			/** @var \Bitrix\Main\Error $error */
+			foreach ($checkResult->getErrors() as $error)
+			{
+				$errors[] = [
+					'id' => $error->getCode(),
+					'text' => $error->getMessage(),
+				];
+			}
+
+			if (!empty($errors))
+			{
+				$e = new CAdminException($errors);
+				$APPLICATION->ThrowException($e);
+			}
+		}
+
+		return empty($errors);
+	}
+
+	/** @noinspection PhpUnused */
+	/**
+	 * @param array $fields
+	 * @return bool
+	 *
+	 * @deprecated
+	 *
+	 * @see TaskCheckListFacade::checkFieldsForAdd()
+	 */
+	public static function checkFieldsForAdd($fields)
+	{
+		/** @noinspection PhpDeprecationInspection */
+		return self::checkFields($fields, true);
+	}
+
+	/** @noinspection PhpUnused */
+	/**
+	 * @param array $fields
+	 * @return bool
+	 *
+	 * @deprecated
+	 *
+	 * @see TaskCheckListFacade::checkFieldsForUpdate()
+	 */
+	public static function checkFieldsForUpdate($fields)
+	{
+		/** @noinspection PhpDeprecationInspection */
+		return (self::checkFields($fields, false));
+	}
+
+	/**
+	 * @param array $order
+	 * @return bool
+	 *
+	 * @deprecated
+	 */
+	public static function checkFieldsForSort($order)
+	{
+		/** @noinspection PhpVariableNamingConventionInspection */
+		global $APPLICATION;
+
+		$errors = [];
+		$errorsFound = false;
+
+		$allowedSortFields = [
+			'ID',
+			'TASK_ID',
+			'CREATED_BY',
+			'PARENT_ID',
+			'TITLE',
+			'SORT_INDEX',
+			'IS_COMPLETE',
+			'IS_IMPORTANT',
+			'TOGGLED_BY',
+			'TOGGLED_DATE'
+		];
+
+		foreach ($order as $field => $sort)
+		{
+			if (!in_array($field, $allowedSortFields, true))
+			{
+				$errorsFound = true;
+				$errors[] = [
+					'id' => 'ERROR_TASKS_CHECKLISTITEM_UNKNOWN_FIELD',
+					'text' => GetMessage('TASKS_CHECKLISTITEM_UNKNOWN_FIELD'),
+				];
+			}
+
+			$sort = ToLower($sort);
+			if ($sort !== 'desc' && $sort !== 'asc')
+			{
+				$errorsFound = true;
+				$errors[] = [
+					'id' => 'ERROR_TASKS_CHECKLISTITEM_BAD_SORT_DIRECTION',
+					'text' => GetMessage('TASKS_CHECKLISTITEM_BAD_SORT_DIRECTION'),
+				];
+			}
+		}
+
+		if ($errorsFound)
+		{
+			$e = new CAdminException($errors);
+			$APPLICATION->ThrowException($e);
+		}
+
+		return !$errorsFound;
+	}
+
+	/**
+	 * @param $executiveUserId
+	 * @param $methodName
+	 * @param $args
+	 * @param $navigation
+	 * @return array
+	 * @throws ArgumentException
+	 * @throws CTaskAssertException
+	 * @throws NotImplementedException
+	 * @throws ObjectException
+	 * @throws SqlQueryException
+	 * @throws SystemException
+	 * @throws TasksException
+	 *
+	 * @deprecated
+	 */
+	public static function runRestMethod($executiveUserId, $methodName, $args,
+		/** @noinspection PhpUnusedParameterInspection */ $navigation)
+	{
+		static $manifest = null;
+		static $methodsMetaInfo = null;
+
+		if ($manifest === null)
+		{
+			/** @noinspection PhpDeprecationInspection */
+			$manifest = self::getManifest();
+			$methodsMetaInfo = $manifest['REST: available methods'];
 		}
 
 		// Check and parse params
-		CTaskAssert::assert(isset($arMethodsMetaInfo[$methodName]));
-		$arMethodMetaInfo = $arMethodsMetaInfo[$methodName];
-		$argsParsed = CTaskRestService::_parseRestParams('ctaskchecklistitem', $methodName, $args);
+		CTaskAssert::assert(isset($methodsMetaInfo[$methodName]));
+		$currentMethodMetaInfo = $methodsMetaInfo[$methodName];
+		$parsedArguments = CTaskRestService::_parseRestParams('ctaskchecklistitem', $methodName, $args);
 
 		$returnValue = null;
-		if (isset($arMethodMetaInfo['staticMethod']) && $arMethodMetaInfo['staticMethod'])
+
+		if (isset($currentMethodMetaInfo['staticMethod']) && $currentMethodMetaInfo['staticMethod'])
 		{
 			if ($methodName === 'add')
 			{
-				$taskId = $argsParsed[0];
-				$arFields = $argsParsed[1];
-				$oTaskItem = CTaskItem::getInstance($taskId, $executiveUserId);
-				$oItem = self::add($oTaskItem, $arFields);
+				list($taskId, $fields) = $parsedArguments;
+				$task = CTaskItem::getInstance($taskId, $executiveUserId);
+				/** @noinspection PhpDeprecationInspection */
+				$checkListItem = self::add($task, $fields);
 
-				$returnValue = $oItem->getId();
+				$returnValue = $checkListItem->getId();
 			}
 			elseif ($methodName === 'getlist')
 			{
-				$taskId = $argsParsed[0];
-				$order = $argsParsed[1];
-				$oTaskItem = CTaskItem::getInstance($taskId, $executiveUserId);
-				list($oCheckListItems, $rsData) = self::fetchList($oTaskItem, $order);
+				list($taskId, $order) = $parsedArguments;
+				$task = CTaskItem::getInstance($taskId, $executiveUserId);
+				/** @noinspection PhpDeprecationInspection */
+				/** @noinspection PhpUnusedLocalVariableInspection */
+				list($checkListItems, $checkListItemsResult) = self::fetchList($task, $order);
 
-				$returnValue = array();
-
-				foreach ($oCheckListItems as $oCheckListItem)
+				$returnValue = [];
+				foreach ($checkListItems as $checkListItem)
 				{
-					$returnValue[] = $oCheckListItem->getData(false);
+					/** @var self $checkListItem */
+					$returnValue[] = $checkListItem->getData(false);
 				}
 			}
 			else
-				$returnValue = call_user_func_array(array('self', $methodName), $argsParsed);
+			{
+				$returnValue = call_user_func_array(['self', $methodName], $parsedArguments);
+			}
 		}
 		else
 		{
-			$taskId = array_shift($argsParsed);
-			$itemId = array_shift($argsParsed);
-			$oTaskItem = CTaskItem::getInstance($taskId, $executiveUserId);
-			$obElapsed = new self($oTaskItem, $itemId);
+			$taskId = array_shift($parsedArguments);
+			$checkListId = array_shift($parsedArguments);
+			$task = CTaskItem::getInstance($taskId, $executiveUserId);
+			/** @noinspection PhpDeprecationInspection */
+			$checkListItem = new self($task, $checkListId);
 
 			if ($methodName === 'get')
 			{
-				$returnValue = $obElapsed->getData();
+				$returnValue = $checkListItem->getData();
 				$returnValue['TITLE'] = htmlspecialcharsback($returnValue['TITLE']);
 			}
 			else
-				$returnValue = call_user_func_array(array($obElapsed, $methodName), $argsParsed);
+			{
+				$returnValue = call_user_func_array([$checkListItem, $methodName], $parsedArguments);
+			}
 		}
 
-		return (array($returnValue, null));
+		return ([$returnValue, null]);
 	}
 
 	/**
@@ -243,868 +802,274 @@ final class CTaskCheckListItem extends CTaskSubItemAbstract
 	 * It can be changed without any notifications
 	 *
 	 * @access private
+	 *
+	 * @deprecated
 	 */
 	public static function getManifest()
 	{
-		// todo: plug getPublicFieldMap() here
+		$allKeys = [
+			0 => [], // readableKeys
+			1 => [], // writableKeys
+			2 => [], // sortableKeys
+			3 => [], // filterableKeys
+			4 => [], // dateKeys
+		];
 
-		$arWritableKeys = array('TITLE', 'SORT_INDEX', 'IS_COMPLETE');
-		$arSortableKeys = array_merge(array('ID', 'CREATED_BY', 'TOGGLED_BY', 'TOGGLED_DATE'), $arWritableKeys);
-		$arDateKeys = array('TOGGLED_DATE');
-		$arReadableKeys = array_merge(
-			array('TASK_ID'),
-			$arDateKeys,
-			$arSortableKeys,
-			$arWritableKeys
-		);
+		foreach ($allKeys as $index => $keys)
+		{
+			/** @noinspection PhpDeprecationInspection */
+			foreach ($fieldMap = static::getPublicFieldMap() as $fieldName => $field)
+			{
+				if ($field[$index] === 1)
+				{
+					$allKeys[$index][] = $fieldName;
+				}
+			}
+		}
 
-		return (array(
-			'Manifest version'                         => '1.0',
+		list($readableKeys, $writableKeys, $sortableKeys, $dateKeys) = $allKeys;
+
+		return [
+			'Manifest version'                         => '2.0',
 			'Warning'                                  => 'don\'t rely on format of this manifest, it can be changed without any notification',
 			'REST: shortname alias to class'           => 'checklistitem',
-			'REST: writable checklistitem data fields' => $arWritableKeys,
-			'REST: readable checklistitem data fields' => $arReadableKeys,
-			'REST: sortable checklistitem data fields' => $arSortableKeys,
-			'REST: date fields'                        => $arDateKeys,
-			'REST: available methods'                  => array(
-				'getmanifest'     => array(
+			'REST: writable checklistitem data fields' => $writableKeys,
+			'REST: readable checklistitem data fields' => $readableKeys,
+			'REST: sortable checklistitem data fields' => $sortableKeys,
+			'REST: date fields'                        => $dateKeys,
+			'REST: available methods' => [
+				'getmanifest'     => [
 					'staticMethod' => true,
-					'params'       => array()
-				),
-				'getlist'         => array(
+					'params'       => [],
+				],
+				'get'             => [
+					'mandatoryParamsCount'     => 2,
+					'params'                   => [
+						[
+							'description' => 'taskId',
+							'type'        => 'integer',
+						],
+						[
+							'description' => 'itemId',
+							'type'        => 'integer',
+						],
+					],
+					'allowedKeysInReturnValue' => $readableKeys,
+				],
+				'getlist'         => [
 					'staticMethod'             => true,
 					'mandatoryParamsCount'     => 1,
-					'params'                   => array(
-						array(
+					'params'                   => [
+						[
 							'description' => 'taskId',
-							'type'        => 'integer'
-						),
-						array(
+							'type'        => 'integer',
+						],
+						[
 							'description' => 'arOrder',
 							'type'        => 'array',
-							'allowedKeys' => $arSortableKeys
-						),
-					),
-					'allowedKeysInReturnValue' => $arReadableKeys,
-					'collectionInReturnValue'  => true
-				),
-				'get'             => array(
-					'mandatoryParamsCount'     => 2,
-					'params'                   => array(
-						array(
-							'description' => 'taskId',
-							'type'        => 'integer'
-						),
-						array(
-							'description' => 'itemId',
-							'type'        => 'integer'
-						)
-					),
-					'allowedKeysInReturnValue' => $arReadableKeys
-				),
-				'add'             => array(
+							'allowedKeys' => $sortableKeys,
+						],
+					],
+					'allowedKeysInReturnValue' => $readableKeys,
+					'collectionInReturnValue'  => true,
+				],
+				'add'             => [
 					'staticMethod'         => true,
 					'mandatoryParamsCount' => 2,
-					'params'               => array(
-						array(
+					'params'               => [
+						[
 							'description' => 'taskId',
-							'type'        => 'integer'
-						),
-						array(
+							'type'        => 'integer',
+						],
+						[
 							'description' => 'arFields',
 							'type'        => 'array',
-							'allowedKeys' => $arWritableKeys
-						)
-					)
-				),
-				'update'          => array(
+							'allowedKeys' => $writableKeys,
+						],
+					],
+				],
+				'update'          => [
 					'staticMethod'         => false,
 					'mandatoryParamsCount' => 3,
-					'params'               => array(
-						array(
+					'params'               => [
+						[
 							'description' => 'taskId',
-							'type'        => 'integer'
-						),
-						array(
+							'type'        => 'integer',
+						],
+						[
 							'description' => 'itemId',
-							'type'        => 'integer'
-						),
-						array(
+							'type'        => 'integer',
+						],
+						[
 							'description' => 'arFields',
 							'type'        => 'array',
-							'allowedKeys' => $arWritableKeys
-						)
-					)
-				),
-				'delete'          => array(
+							'allowedKeys' => $writableKeys,
+						],
+					],
+				],
+				'delete'          => [
 					'staticMethod'         => false,
 					'mandatoryParamsCount' => 2,
-					'params'               => array(
-						array(
+					'params'               => [
+						[
 							'description' => 'taskId',
-							'type'        => 'integer'
-						),
-						array(
+							'type'        => 'integer',
+						],
+						[
 							'description' => 'itemId',
-							'type'        => 'integer'
-						)
-					)
-				),
-				'complete'        => array(
+							'type'        => 'integer',
+						],
+					],
+				],
+				'complete'        => [
 					'staticMethod'         => false,
 					'mandatoryParamsCount' => 2,
-					'params'               => array(
-						array(
+					'params'               => [
+						[
 							'description' => 'taskId',
-							'type'        => 'integer'
-						),
-						array(
+							'type'        => 'integer',
+						],
+						[
 							'description' => 'itemId',
-							'type'        => 'integer'
-						)
-					)
-				),
-				'renew'           => array(
+							'type'        => 'integer',
+						],
+					],
+				],
+				'renew'           => [
 					'staticMethod'         => false,
 					'mandatoryParamsCount' => 2,
-					'params'               => array(
-						array(
+					'params'               => [
+						[
 							'description' => 'taskId',
-							'type'        => 'integer'
-						),
-						array(
+							'type'        => 'integer',
+						],
+						[
 							'description' => 'itemId',
-							'type'        => 'integer'
-						)
-					)
-				),
-				'moveafteritem'   => array(
+							'type'        => 'integer',
+						],
+					],
+				],
+				'moveafteritem'   => [
 					'staticMethod'         => false,
 					'mandatoryParamsCount' => 3,
-					'params'               => array(
-						array(
+					'params'               => [
+						[
 							'description' => 'taskId',
-							'type'        => 'integer'
-						),
-						array(
+							'type'        => 'integer',
+						],
+						[
 							'description' => 'itemId',
-							'type'        => 'integer'
-						),
-						array(
+							'type'        => 'integer',
+						],
+						[
 							'description' => 'afterItemId',
-							'type'        => 'integer'
-						)
-					)
-				),
-				'isactionallowed' => array(
+							'type'        => 'integer',
+						],
+					],
+				],
+				'isactionallowed' => [
 					'staticMethod'         => false,
 					'mandatoryParamsCount' => 3,
-					'params'               => array(
-						array(
+					'params'               => [
+						[
 							'description' => 'taskId',
-							'type'        => 'integer'
-						),
-						array(
+							'type'        => 'integer',
+						],
+						[
 							'description' => 'itemId',
-							'type'        => 'integer'
-						),
-						array(
+							'type'        => 'integer',
+						],
+						[
 							'description' => 'actionId',
-							'type'        => 'integer'
-						)
-					)
-				)
-			)
-		));
+							'type'        => 'integer',
+						],
+					],
+				],
+			],
+		];
 	}
 
 	/**
-	 * @param CTaskItemInterface $task (of class CTaskItem,checklist item will be added to this task)
-	 * @param array $arFields with mandatory element TITLE (string).
+	 * @return array
 	 *
-	 * @return CTaskCheckListItem
-	 * @throws TasksException with code TasksException::TE_WRONG_ARGUMENTS
+	 * @deprecated
 	 */
-	public static function add(CTaskItemInterface $task, $arFields)
-	{
-		global $DB;
-
-		if (!self::checkFieldsForAdd($arFields))
-		{
-			throw new TasksException(false, TasksException::TE_WRONG_ARGUMENTS);
-		}
-
-		$arFields['SORT_INDEX'] = (int)$arFields['SORT_INDEX'];
-		$arFields['IS_COMPLETE'] = in_array($arFields['IS_COMPLETE'], ['Y', true, 1], true) ? 'Y' : 'N';
-
-		if (!$task->isActionAllowed(CTaskItem::ACTION_CHECKLIST_ADD_ITEMS))
-		{
-			throw new TasksException(false, TasksException::TE_ACTION_NOT_ALLOWED);
-		}
-
-		$taskId = (int)$task->getId();
-		$executiveUserId = (int)$task->getExecutiveUserId();
-
-		/** @noinspection PhpDynamicAsStaticMethodCallInspection */
-		$curDatetime = \Bitrix\Tasks\UI::formatDateTime(\Bitrix\Tasks\Util\User::getTime());
-
-		$arFieldsToDb = array(
-			'TITLE'       => $arFields['TITLE'],
-			'TASK_ID'     => $taskId,
-			'CREATED_BY'  => $executiveUserId,
-			'IS_COMPLETE' => $arFields['IS_COMPLETE'],
-			'SORT_INDEX'  => 0
-		);
-
-		if ($arFields['SORT_INDEX'])
-		{
-			$arFieldsToDb['SORT_INDEX'] = $arFields['SORT_INDEX'];
-		}
-		else
-		{
-			$rc = $DB->Query(
-				"SELECT MAX(SORT_INDEX) AS MAX_SORT_INDEX
-				FROM b_tasks_checklist_items 
-				WHERE TASK_ID = ".(int)$taskId
-			);
-			if (($maxSortIndex = $rc->fetch()) && isset($maxSortIndex['MAX_SORT_INDEX']))
-				$arFieldsToDb['SORT_INDEX'] = (int)$maxSortIndex['MAX_SORT_INDEX'] + 1;
-		}
-
-		$addResult = CheckListTable::add($arFieldsToDb);
-		$id = $addResult->isSuccess() ? $addResult->getId() : false;
-
-		if (!$id)
-		{
-			throw new TasksException('Action failed', TasksException::TE_ACTION_FAILED_TO_BE_PROCESSED);
-		}
-
-		$occurAsUserId = CTasksTools::getOccurAsUserId();
-		if (!$occurAsUserId)
-		{
-			$occurAsUserId = $executiveUserId;
-		}
-
-		// changes log
-		$arLogFields = [
-			'TASK_ID'      => $taskId,
-			'USER_ID'      => $occurAsUserId,
-			'CREATED_DATE' => $curDatetime,
-			'FIELD'        => 'CHECKLIST_ITEM_CREATE',
-			'FROM_VALUE'   => '',
-			'TO_VALUE'     => $arFields['TITLE']
-		];
-
-		// TODO: move search index update in afterTaskCheckListItemAdd event when it comes to life
-		\Bitrix\Tasks\Internals\SearchIndex::setTaskSearchIndex($taskId);
-
-		$log = new CTaskLog();
-		$log->Add($arLogFields);
-
-		if ($arFieldsToDb['IS_COMPLETE'] === 'Y')
-		{
-			// changes log
-			$arLogFields = array(
-				'TASK_ID'      => $taskId,
-				'USER_ID'      => $occurAsUserId,
-				'CREATED_DATE' => $curDatetime,
-				'FIELD'        => 'CHECKLIST_ITEM_CHECK',
-				'FROM_VALUE'   => 0,
-				'TO_VALUE'     => 1
-			);
-
-			$log->Add($arLogFields);
-		}
-
-		return new self($task, $id);
-	}
-
-	public static function checkFieldsForAdd($arFields)
-	{
-		return (self::checkFields($arFields, $checkForAdd = true));
-	}
-
-	private static function checkFields($fields, $checkForAdd)
-	{
-		global $APPLICATION;
-
-		$errors = [];
-
-		if ($checkForAdd)
-		{
-			// TITLE must be set during add
-			if (!array_key_exists('TITLE', $fields))
-			{
-				$errors[] = [
-					'text' => GetMessage('TASKS_CHECKLISTITEM_BAD_TITLE'),
-					'id'   => 'ERROR_TASKS_CHECKLISTITEM_BAD_TITLE'
-				];
-			}
-		}
-
-		$allowedFields = ['SORT_INDEX', 'TITLE', 'IS_COMPLETE'];
-		foreach (array_keys($fields) as $fieldName)
-		{
-			if (!in_array($fieldName, $allowedFields))
-			{
-				$errors[] = [
-					'text' => GetMessage('TASKS_CHECKLISTITEM_UNKNOWN_FIELD'),
-					'id'   => 'ERROR_TASKS_CHECKLISTITEM_UNKNOWN_FIELD'
-				];
-			}
-		}
-
-		// TITLE must be an non-empty string
-		if (array_key_exists('TITLE', $fields))
-		{
-			if (!trim($fields['TITLE']))
-			{
-				$errors[] = array(
-					'text' => GetMessage('TASKS_CHECKLISTITEM_BAD_TITLE'),
-					'id'   => 'ERROR_TASKS_CHECKLISTITEM_BAD_TITLE'
-				);
-			}
-		}
-
-		// IS_COMPLETE can be 'Y' / 'N' / true / false
-		if (array_key_exists('IS_COMPLETE', $fields))
-		{
-			$availableValues = ['Y', 'N', true, false, 0, 1];
-			if (!in_array($fields['IS_COMPLETE'], $availableValues))
-			{
-				$errors[] = array(
-					'text' => GetMessage('TASKS_CHECKLISTITEM_BAD_COMPLETE_FLAG'),
-					'id'   => 'ERROR_TASKS_CHECKLISTITEM_BAD_COMPLETE_FLAG'
-				);
-			}
-		}
-
-		if (!empty($errors))
-		{
-			$e = new CAdminException($errors);
-			$APPLICATION->ThrowException($e);
-		}
-
-		return empty($errors);
-	}
-
 	public static function getPublicFieldMap()
 	{
 		// READ, WRITE, SORT, FILTER, DATE
 		return [
-			'TITLE'        => [1, 1, 1, 0, 0],
-			'SORT_INDEX'   => [1, 1, 1, 0, 0],
-			'IS_COMPLETE'  => [1, 1, 1, 0, 0],
-			'ID'           => [1, 0, 1, 0, 0],
-			'CREATED_BY'   => [1, 0, 1, 0, 0],
-			'TOGGLED_BY'   => [1, 0, 1, 0, 0],
+			'ID' => [1, 0, 1, 0, 0],
+			'TASK_ID' => [1, 0, 0, 0, 0],
+			'PARENT_ID' => [1, 1, 1, 0, 0],
+			'CREATED_BY' => [1, 0, 1, 0, 0],
+			'TITLE' => [1, 1, 1, 0, 0],
+			'SORT_INDEX' => [1, 1, 1, 0, 0],
+			'IS_COMPLETE' => [1, 1, 1, 0, 0],
+			'IS_IMPORTANT' => [1, 1, 1, 0, 0],
+			'TOGGLED_BY' => [1, 0, 1, 0, 0],
 			'TOGGLED_DATE' => [1, 0, 1, 1, 1],
-			'TASK_ID'      => [1, 0, 0, 0, 0],
+			'MEMBERS' => [1, 1, 0, 0, 0],
+			'ATTACHMENTS' => [1, 0, 0, 0, 0],
 		];
 	}
 
-	public function getTitle()
-	{
-		$arItemData = $this->getData();
-
-		return ($arItemData['TITLE']);
-	}
-
-	// this function does not check rights on EDIT action, because item reordering is not an actual EDIT
-
-	public function getTaskId()
-	{
-		$arItemData = $this->getData();
-
-		return ($arItemData['TASK_ID']);
-	}
-
 	/**
-	 * @return bool true if complete, false otherwise
+	 * @param $taskData
+	 * @param array $order
+	 * @return array
+	 * @throws ArgumentException
+	 * @throws NotImplementedException
+	 * @throws SystemException
 	 * @throws TasksException
-	 */
-	public function isComplete()
-	{
-		$arItemData = $this->getData();
-		$isComplete = ($arItemData['IS_COMPLETE'] === 'Y');
-
-		return ($isComplete);
-	}
-
-	public function complete()
-	{
-		try
-		{
-			$this->update(array('IS_COMPLETE' => 'Y'));
-		}
-		catch (\TasksException $e)
-		{
-			return false;
-		}
-	}
-
-	/**
-	 * @param $arFields
 	 *
-	 * @throws CTaskAssertException
-	 * @throws TasksException
-	 * @throws \Bitrix\Main\ObjectException
+	 * @deprecated
 	 */
-	public function update($arFields)
+	protected function fetchListFromDb($taskData, $order = ['SORT_INDEX' => 'asc', 'ID' => 'asc'])
 	{
-		global $DB;
+		$taskId = $taskData['ID'];
 
-		if (!self::checkFieldsForUpdate($arFields))
+		CTaskAssert::assertLaxIntegers($taskId);
+
+		if (!isset($order) || !is_array($order))
 		{
+			$order = ['SORT_INDEX' => 'asc', 'ID' => 'asc'];
+		}
+
+		/** @noinspection PhpDeprecationInspection */
+		if (is_array($order) && !empty($order) && !self::checkFieldsForSort($order))
+		{
+			/** @noinspection PhpDeprecationInspection */
 			throw new TasksException('', TasksException::TE_WRONG_ARGUMENTS);
 		}
 
-		$arFields = self::normalizeFieldsDataForUpdate($arFields);
+		$items = TaskCheckListFacade::getList([], ['TASK_ID' => $taskId], $order);
 
-		CTaskAssert::assert(is_array($arFields));
+		/** @noinspection PhpUndefinedClassInspection */
+		$dbResult = new CDBResult();
+		$dbResult->InitFromArray($items);
 
-		// Nothing to do?
-		if (empty($arFields))
-			return;
-
-		if (!$this->isActionAllowed(self::ACTION_MODIFY))
-		{
-			if ((count($arFields) == 1) && array_key_exists('IS_COMPLETE', $arFields))
-			{
-				// this field can be edited only in case of ACTION_TOGGLE is allowed
-				if (!$this->isActionAllowed(self::ACTION_TOGGLE))
-				{
-					throw new TasksException('Item toggle permission denied', TasksException::TE_ACTION_NOT_ALLOWED);
-				}
-			}
-			else
-			{
-				throw new TasksException('Item edit permission denied', TasksException::TE_ACTION_NOT_ALLOWED);
-			}
-		}
-
-		/** @noinspection PhpDynamicAsStaticMethodCallInspection */
-		$curDatetime = \Bitrix\Tasks\UI::formatDateTime(\Bitrix\Tasks\Util\User::getTime());
-
-		$arCurrentData = $this->getData();
-		$curTitle = $arCurrentData['~TITLE'];
-		$curIsComplete = $arCurrentData['IS_COMPLETE'];
-
-		if (isset($arFields['IS_COMPLETE']))
-			$newIsComplete = $arFields['IS_COMPLETE'];
-		else
-			$newIsComplete = $curIsComplete;
-
-		if (isset($arFields['TITLE']))
-			$newTitle = $arFields['TITLE'];
-		else
-			$newTitle = $curTitle;
-
-		if (isset($arFields['IS_COMPLETE']))
-		{
-			$arFields['TOGGLED_BY'] = $this->executiveUserId;
-			$arFields['TOGGLED_DATE'] = new \Bitrix\Main\Type\DateTime($curDatetime);
-		}
-
-		$result = CheckListTable::update($this->itemId, $arFields);
-
-		// Reset cache
-		$this->resetCache();
-
-		if (!$result->isSuccess())
-		{
-			throw new TasksException(
-				'', TasksException::TE_ACTION_FAILED_TO_BE_PROCESSED
-			);
-		}
-
-		// TODO: move search index update in afterTaskCheckListItemUpdate event when it comes to life
-		\Bitrix\Tasks\Internals\SearchIndex::setTaskSearchIndex($this->taskId);
-
-		if ($curTitle !== $newTitle)
-		{
-			$occurAsUserId = CTasksTools::getOccurAsUserId();
-			if (!$occurAsUserId)
-				$occurAsUserId = (int)$this->executiveUserId;
-
-			// changes log
-			$arLogFields = array(
-				'TASK_ID'      => (int)$this->taskId,
-				'USER_ID'      => $occurAsUserId,
-				'CREATED_DATE' => $curDatetime,
-				'FIELD'        => 'CHECKLIST_ITEM_RENAME',
-				'FROM_VALUE'   => $curTitle,
-				'TO_VALUE'     => $newTitle
-			);
-
-			$log = new CTaskLog();
-			$log->Add($arLogFields);
-		}
-
-		if ($curIsComplete !== $newIsComplete)
-		{
-			$occurAsUserId = CTasksTools::getOccurAsUserId();
-			if (!$occurAsUserId)
-				$occurAsUserId = (int)$this->executiveUserId;
-
-			// changes log
-			$arLogFields = array(
-				'TASK_ID'      => (int)$this->taskId,
-				'USER_ID'      => $occurAsUserId,
-				'CREATED_DATE' => $curDatetime,
-				'FIELD'        => (($newIsComplete === 'Y') ? 'CHECKLIST_ITEM_CHECK' : 'CHECKLIST_ITEM_UNCHECK'),
-				'FROM_VALUE'   => $curTitle,
-				'TO_VALUE'     => $newTitle
-			);
-
-			$log = new CTaskLog();
-			$log->Add($arLogFields);
-		}
-	}
-
-	public static function checkFieldsForUpdate($arFields)
-	{
-		return (self::checkFields($arFields, $checkForAdd = false));
-	}
-
-	private static function normalizeFieldsDataForUpdate($arFields)
-	{
-		if (isset($arFields['IS_COMPLETE']))
-		{
-			if ($arFields['IS_COMPLETE'] === true ||
-				$arFields['IS_COMPLETE'] === 'Y' ||
-				intval($arFields['IS_COMPLETE']) > 0)
-				$arFields['IS_COMPLETE'] = 'Y';
-			else
-				$arFields['IS_COMPLETE'] = 'N';
-		}
-
-		if (isset($arFields['SORT_INDEX']))
-			$arFields['SORT_INDEX'] = (int)$arFields['SORT_INDEX'];
-
-		return ($arFields);
-	}
-
-	public function isActionAllowed($actionId)
-	{
-		$isActionAllowed = false;
-		CTaskAssert::assertLaxIntegers($actionId);
-		$actionId = (int)$actionId;
-
-		$isAdmin = CTasksTools::IsAdmin($this->executiveUserId) ||
-				   CTasksTools::IsPortalB24Admin($this->executiveUserId);
-
-		if ($actionId === self::ACTION_ADD || $actionId === self::ACTION_REORDER) // ask taskitem for add() permission
-		{
-			$isActionAllowed = $this->oTaskItem->isActionAllowed(
-				self::ACTION_ADD ? CTaskItem::ACTION_CHECKLIST_ADD_ITEMS : CTaskItem::ACTION_CHECKLIST_REORDER_ITEMS
-			);
-		}
-		elseif (in_array(
-			(int)$actionId,
-			array(self::ACTION_MODIFY, self::ACTION_REMOVE, self::ACTION_TOGGLE),
-			true
-		)) // for other actions - below
-		{
-			$arItemData = $this->getData($bEscape = false);
-
-			if ($isAdmin ||
-				($arItemData['CREATED_BY'] == $this->executiveUserId)) // admin and creator may do what they want
-			{
-				$isActionAllowed = true;
-			}
-			elseif ($actionId == self::ACTION_TOGGLE)
-			{
-				// toggle() can do director, responsible and accomplices
-				if ($this->oTaskItem->isUserRole(
-					CTaskItem::ROLE_DIRECTOR | CTaskItem::ROLE_RESPONSIBLE | CTaskItem::ROLE_ACCOMPLICE
-				))
-				{
-					$isActionAllowed = true;
-				}
-			}
-			elseif (($actionId == self::ACTION_MODIFY) || ($actionId == self::ACTION_REMOVE))
-			{
-				// edit() and remove() can do director or user who can edit task
-				if ($this->oTaskItem->isUserRole(CTaskItem::ROLE_DIRECTOR) ||
-					$this->oTaskItem->isActionAllowed(CTaskItem::ACTION_EDIT))
-				{
-					$isActionAllowed = true;
-				}
-			}
-		}
-
-		return ($isActionAllowed);
-	}
-
-	public function renew()
-	{
-		try
-		{
-			$this->update(array('IS_COMPLETE' => 'N'));
-		}
-		catch (\TasksException $e)
-		{
-			return false;
-		}
+		return [$items, $dbResult];
 	}
 
 	/**
-	 * @return bool
-	 * @throws TasksException
+	 * @param $taskId
+	 * @param $itemId
+	 * @return mixed
+	 * @throws ArgumentException
+	 * @throws NotImplementedException
+	 * @throws SystemException
+	 *
+	 * @deprecated
 	 */
-	public function delete()
+	protected function fetchDataFromDb($taskId, $itemId)
 	{
-		$taskId = (int)$this->oTaskItem->getId();
-		$executiveUserId = (int)$this->oTaskItem->getExecutiveUserId();
+		$itemData = TaskCheckListFacade::getList([], ['ID' => $itemId, 'TASK_ID' => $taskId])[$itemId];
 
-		/** @noinspection PhpDynamicAsStaticMethodCallInspection */
-		$curDatetime = \Bitrix\Tasks\UI::formatDateTime(\Bitrix\Tasks\Util\User::getTime());
-
-		if (!$this->isActionAllowed(self::ACTION_REMOVE))
+		if (!$itemData)
 		{
-			throw new TasksException('Access denied or checklist item not found', TasksException::TE_ACTION_NOT_ALLOWED);
+			throw new SystemException();
 		}
 
-		$arCurrentData = $this->getData();
-
-		$rc = CheckListTable::delete($this->itemId);
-
-		// Reset cache
-		$this->resetCache();
-
-		if (!$rc->isSuccess())
-		{
-			throw new TasksException('', TasksException::TE_ACTION_FAILED_TO_BE_PROCESSED);
-		}
-
-		// TODO: move search index update in afterTaskCheckListItemDelete event when it comes to life
-		\Bitrix\Tasks\Internals\SearchIndex::setTaskSearchIndex($taskId);
-
-		$occurAsUserId = CTasksTools::getOccurAsUserId();
-		if (!$occurAsUserId)
-		{
-			$occurAsUserId = $executiveUserId;
-		}
-
-		// changes log
-		$arLogFields = array(
-			'TASK_ID'      => $taskId,
-			'USER_ID'      => $occurAsUserId,
-			'CREATED_DATE' => $curDatetime,
-			'FIELD'        => 'CHECKLIST_ITEM_REMOVE',
-			'FROM_VALUE'   => $arCurrentData['~TITLE'],
-			'TO_VALUE'     => ''
-		);
-
-		$log = new CTaskLog();
-		$log->Add($arLogFields);
-
-		return true;
-	}
-
-	public function setSortIndex($sortIndex)
-	{
-		if (!$this->oTaskItem->isActionAllowed(CTaskItem::ACTION_EDIT))
-		{
-			throw new TasksException('', TasksException::TE_ACTION_NOT_ALLOWED);
-		}
-
-		$rc = CheckListTable::update(
-			$this->itemId,
-			array(
-				"SORT_INDEX" => $sortIndex,
-			)
-		);
-
-		if (!$rc->isSuccess())
-			throw new TasksException('', TasksException::TE_SQL_ERROR);
-
-		$this->resetCache();
-	}
-
-	/**
-	 * Reorder item in checklist to position after some given item.
-	 */
-	public function moveAfterItem($itemId)
-	{
-		if (!$this->isActionAllowed(self::ACTION_REORDER))
-		{
-			throw new TasksException('', TasksException::TE_ACTION_NOT_ALLOWED);
-		}
-
-		$this->moveItem($this->getId(), $itemId);
-	}
-
-	private function moveItem($selectedItemId, $insertAfterItemId)
-	{
-		global $DB;
-
-		$rc = $DB->Query(
-			"SELECT ID, SORT_INDEX
-			FROM b_tasks_checklist_items 
-			WHERE TASK_ID = ".(int)$this->taskId."
-			ORDER BY SORT_INDEX ASC, ID ASC
-			",
-			$bIgnoreErrors = true
-		);
-
-		if (!$rc)
-			throw new TasksException('', TasksException::TE_SQL_ERROR);
-
-		$arItems = array($selectedItemId => 0);    // by default to first position
-		$prevItemId = 0;
-		$sortIndex = 1;
-		while ($arItem = $rc->fetch())
-		{
-			if ($insertAfterItemId == $prevItemId)
-				$arItems[$selectedItemId] = $sortIndex++;
-
-			if ($arItem['ID'] != $selectedItemId)
-				$arItems[$arItem['ID']] = $sortIndex++;
-
-			$prevItemId = $arItem['ID'];
-		}
-
-		if ($insertAfterItemId == $prevItemId)
-			$arItems[$selectedItemId] = $sortIndex;
-
-		if (!empty($arItems))
-		{
-			$sqlUpdate = "UPDATE b_tasks_checklist_items
-				SET SORT_INDEX = CASE ID\n";
-
-			foreach ($arItems as $id => $sortIndex)
-			{
-				$sqlUpdate .= "WHEN $id THEN $sortIndex\n";
-			}
-
-			$sqlUpdate .= "END\n"."WHERE ID IN (".implode(', ', array_keys($arItems)).")";
-
-			$DB->Query($sqlUpdate);
-		}
-
-		foreach (\Bitrix\Main\EventManager::getInstance()->findEventHandlers(
-			"tasks",
-			"OnCheckListItemMoveItem"
-		) as $event)
-		{
-			\ExecuteModuleEventEx($event, array($selectedItemId, $insertAfterItemId));
-		}
-	}
-
-	final protected function fetchListFromDb($taskData, $arOrder = array('SORT_INDEX' => 'asc', 'ID' => 'asc'))
-	{
-		CTaskAssert::assertLaxIntegers($taskData['ID']);
-
-		if (!isset($arOrder))
-			$arOrder = array('SORT_INDEX' => 'asc', 'ID' => 'asc');
-
-		global $DB;
-
-		if (is_array($arOrder) && !empty($arOrder))
-		{
-			if (!self::checkFieldsForSort($arOrder))
-				throw new TasksException('', TasksException::TE_WRONG_ARGUMENTS);
-
-			$sqlOrder = array();
-			foreach ($arOrder as $fld => $way)
-			{
-				$sqlOrder[] = $fld.' '.$way;
-			}
-			$sqlOrder = 'ORDER BY '.implode(', ', $sqlOrder);
-		}
-		else
-			$sqlOrder = '';
-
-		$rc = $DB->Query(
-			"SELECT ID, CREATED_BY, TASK_ID, TITLE, IS_COMPLETE, SORT_INDEX, ".
-			$DB->DateToCharFunction("TOGGLED_DATE", "FULL").
-			" AS TOGGLED_DATE , TOGGLED_BY
-				FROM b_tasks_checklist_items 
-				WHERE TASK_ID = ".
-			(int)$taskData['ID'].
-			' '.
-			$sqlOrder,
-			$bIgnoreErrors = true
-		);
-
-		if (!$rc)
-			throw new \Bitrix\Main\SystemException();
-
-		$arItemsData = array();
-		while ($arItemData = $rc->fetch())
-		{
-			$arItemsData[] = $arItemData;
-		}
-
-		return (array($arItemsData, $rc));
-	}
-
-	public static function checkFieldsForSort($arOrder)
-	{
-		global $APPLICATION;
-
-		$bErrorsFound = false;
-		$arErrorsMsgs = array();
-
-		$allowedSortFields = array(
-			'SORT_INDEX',
-			'ID',
-			'TITLE',
-			'IS_COMPLETE',
-			'CREATED_BY',
-			'TASK_ID',
-			'TOGGLED_BY',
-			'TOGGLED_DATE'
-		);
-		foreach ($arOrder as $fld => $way)
-		{
-			if (!in_array($fld, $allowedSortFields))
-			{
-				$bErrorsFound = true;
-				$arErrorsMsgs[] = array(
-					'text' => GetMessage('TASKS_CHECKLISTITEM_UNKNOWN_FIELD'),
-					'id'   => 'ERROR_TASKS_CHECKLISTITEM_UNKNOWN_FIELD'
-				);
-			}
-
-			$way = ToLower($way);
-			if ($way != 'desc' && $way != 'asc')
-			{
-				$bErrorsFound = true;
-				$arErrorsMsgs[] = array(
-					'text' => GetMessage('TASKS_CHECKLISTITEM_BAD_SORT_DIRECTION'),
-					'id'   => 'ERROR_TASKS_CHECKLISTITEM_BAD_SORT_DIRECTION'
-				);
-			}
-		}
-
-		if ($bErrorsFound)
-		{
-			$e = new CAdminException($arErrorsMsgs);
-			$APPLICATION->ThrowException($e);
-		}
-
-		$isAllRight = !$bErrorsFound;
-
-		return ($isAllRight);
-	}
-
-	final protected function fetchDataFromDb($taskId, $itemId)
-	{
-		global $DB;
-
-		$rc = $DB->Query(
-			"SELECT ID, CREATED_BY, TASK_ID, TITLE, IS_COMPLETE, SORT_INDEX
-				FROM b_tasks_checklist_items 
-				WHERE ID = ".(int)$itemId." AND TASK_ID = ".(int)$taskId,
-			$bIgnoreErrors = true
-		);
-
-		if ($rc && ($arItemData = $rc->fetch()))
-			return ($arItemData);
-		else
-			throw new \Bitrix\Main\SystemException();
+		return $itemData;
 	}
 }

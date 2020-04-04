@@ -82,7 +82,22 @@ if(typeof BX.Crm.ExportManager === "undefined")
 					initialOptions: this._initialOptions,
 					title: this.getMessage("stExport" + exportTypeMsgSuffix + "DlgTitle"),
 					summary: this.getMessage("stExport" + exportTypeMsgSuffix + "DlgSummary"),
-					isSummaryHtml: false
+					isSummaryHtml: false,
+					requestHandler: function(result){
+						if(BX.type.isNotEmptyString(result["STATUS"]) && result["STATUS"]=="COMPLETED")
+						{
+							if(BX.type.isNotEmptyString(result["DOWNLOAD_LINK"]))
+							{
+								result["SUMMARY_HTML"] +=
+									'<br><br>' +
+									'<a href="' + result["DOWNLOAD_LINK"] + '" class="ui-btn ui-btn-sm ui-btn-success ui-btn-icon-download">' +
+									result['DOWNLOAD_LINK_NAME'] + '</a>' +
+									'<button onclick="BX.Crm.ExportManager.currentInstance().callAction(\'clear\')" class="ui-btn ui-btn-sm ui-btn-default ui-btn-icon-remove">' +
+									result['CLEAR_LINK_NAME'] + '</button>';
+
+							}
+						}
+					}
 				}
 			);
 

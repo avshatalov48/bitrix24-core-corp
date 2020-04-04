@@ -1,5 +1,7 @@
 <?if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();?><?
 
+global $MESS;
+
 $langFile = GetLangFileName(dirname(__FILE__)."/", "/quote.php");
 
 if(file_exists($langFile))

@@ -16,3 +16,51 @@ foreach ($dialog->getMap() as $fieldId => $field):
 		</td>
 	</tr>
 <?endforeach;?>
+<script>
+	BX.ready(function()
+	{
+		var formName = '<?=CUtil::JSEscape($dialog->getFormName())?>';
+
+		var categorySelect = document.forms[formName]['category_id'];
+		var stageSelect = document.forms[formName]['stage_id'];
+
+		if (!categorySelect || !stageSelect)
+		{
+			return false;
+		}
+
+		var filter = function(catId)
+		{
+			var prefix = catId === '0' ? '' : 'C' + catId + ':';
+			var currentValue = stageSelect.value;
+
+			for (var i = 0; i < stageSelect.options.length; ++i)
+			{
+				var opt = stageSelect.options[i];
+
+				if (opt.value === '')
+				{
+					continue;
+				}
+
+				opt.disabled = (prefix && opt.value.indexOf(prefix) < 0 || !prefix && opt.value.indexOf(':') > -1);
+
+				if (opt.disabled && opt.value === currentValue)
+				{
+					opt.selected = false;
+				}
+
+				BX[opt.disabled ? 'hide' : 'show'](opt);
+			}
+		};
+
+		var handler = function()
+		{
+			filter(this.value);
+		};
+
+		BX.bind(categorySelect, 'change', handler);
+
+		filter(categorySelect.value);
+	});
+</script>

@@ -7,7 +7,7 @@ use Bitrix\DocumentGenerator\DataProviderManager;
 use Bitrix\Main\ArgumentTypeException;
 use Bitrix\Main\Localization\Loc;
 
-class ArrayDataProvider extends DataProvider implements \Iterator
+class ArrayDataProvider extends DataProvider implements \Iterator, \Countable
 {
 	const INDEX_PLACEHOLDER = 'INDEX';
 	const NUMBER_PLACEHOLDER = 'NUMBER';
@@ -184,5 +184,15 @@ class ArrayDataProvider extends DataProvider implements \Iterator
 		}
 
 		return false;
+	}
+
+	public function count()
+	{
+		if(is_array($this->data))
+		{
+			return count($this->data);
+		}
+
+		return 0;
 	}
 }

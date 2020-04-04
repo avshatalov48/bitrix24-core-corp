@@ -4,13 +4,20 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Main\Localization\Loc;
 
-CJSCore::Init("sidepanel");
-CJSCore::Init("CJSTask");
-CJSCore::Init("tasks_integration_socialnetwork");
-
 global $APPLICATION;
 Loc::loadMessages(__FILE__);
 
+
+$isIFrame = $_REQUEST['IFRAME'] == 'Y';
+
+    CJSCore::Init("sidepanel");
+    CJSCore::Init("CJSTask");
+    CJSCore::Init("tasks_integration_socialnetwork");
+
+    $GLOBALS['APPLICATION']->SetAdditionalCSS("/bitrix/js/tasks/css/tasks.css");
+    ?>
+
+<?php
 if (\Bitrix\Tasks\Util\DisposableAction::needConvertTemplateFiles())
 {
 	$APPLICATION->IncludeComponent(
@@ -118,10 +125,10 @@ $APPLICATION->IncludeComponent(
 		"AJAX_OPTION_HISTORY" => "N",
 
 		"ALLOW_COLUMNS_SORT"      => true,
-		"ALLOW_ROWS_SORT"         => $arResult["CAN"]["SORT"],
+		"ALLOW_ROWS_SORT"         => $arResult['CAN']['SORT'] || $arParams['SCRUM_BACKLOG'] == 'Y',
 		"ALLOW_COLUMNS_RESIZE"    => true,
 		"ALLOW_HORIZONTAL_SCROLL" => true,
-		"ALLOW_SORT"              => true,
+		"ALLOW_SORT"              => $arParams['SCRUM_BACKLOG'] != 'Y',
 		"ALLOW_PIN_HEADER"        => true,
 		"ACTION_PANEL"            => $arResult['GROUP_ACTIONS'],
 

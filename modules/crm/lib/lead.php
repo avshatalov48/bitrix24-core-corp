@@ -7,7 +7,10 @@
  */
 namespace Bitrix\Crm;
 
+use Bitrix\Crm\History\Entity\LeadStatusHistoryTable;
+use Bitrix\Crm\History\Entity\LeadStatusHistoryWithSupposedTable;
 use Bitrix\Main;
+use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ORM\Fields\FloatField;
 
@@ -67,13 +70,13 @@ class LeadTable extends Main\ORM\Data\DataManager
 				'data_type' => 'string'
 			),
 			'OPPORTUNITY' => array(
-				'data_type' => 'integer'
+				'data_type' => 'float'
 			),
 			'CURRENCY_ID' => array(
 				'data_type' => 'string'
 			),
 			'OPPORTUNITY_ACCOUNT' => array(
-				'data_type' => 'integer'
+				'data_type' => 'float'
 			),
 			'ACCOUNT_CURRENCY_ID' => array(
 				'data_type' => 'string'
@@ -180,6 +183,9 @@ class LeadTable extends Main\ORM\Data\DataManager
 			'BIRTHDATE' => array(
 				'data_type' => 'date'
 			),
+			'HONORIFIC' => array(
+				'data_type' => 'string'
+			),
 			'EVENT_RELATION' => array(
 				'data_type' => 'EventRelations',
 				'reference' => array('=this.ID' => 'ref.ENTITY_ID')
@@ -256,6 +262,30 @@ class LeadTable extends Main\ORM\Data\DataManager
 					'ID'
 				)
 			),
+			'PHONE_MAILING' => array(
+				'data_type' => 'string',
+				'expression' => array(
+					(ToLower($DBType) === 'oracle') ?
+					'(SELECT FM.VALUE '.
+					'FROM (SELECT ID, ENTITY_ID, ELEMENT_ID, TYPE_ID, VALUE_TYPE, VALUE '.
+					'FROM b_crm_field_multi ORDER BY ID) FM '.
+					'WHERE FM.ENTITY_ID = \'LEAD\' '.
+					'AND FM.ELEMENT_ID = %s '.
+					'AND FM.TYPE_ID = \'PHONE\' '.
+					'AND FM.VALUE_TYPE = \'MAILING\' '.
+					'AND ROWNUM <= 1)' :
+					'('.$DB->TopSql(
+						'SELECT FM.VALUE '.
+						'FROM b_crm_field_multi FM '.
+						'WHERE FM.ENTITY_ID = \'LEAD\' '.
+						'AND FM.ELEMENT_ID = %s '.
+						'AND FM.TYPE_ID = \'PHONE\' '.
+						'AND FM.VALUE_TYPE = \'MAILING\' '.
+						'ORDER BY FM.ID', 1
+					).')',
+					'ID'
+				)
+			),
 			'EMAIL_HOME' => array(
 				'data_type' => 'string',
 				'expression' => array(
@@ -299,6 +329,30 @@ class LeadTable extends Main\ORM\Data\DataManager
 						'AND FM.ELEMENT_ID = %s '.
 						'AND FM.TYPE_ID = \'EMAIL\' '.
 						'AND FM.VALUE_TYPE = \'WORK\' '.
+						'ORDER BY FM.ID', 1
+					).')',
+					'ID'
+				)
+			),
+			'EMAIL_MAILING' => array(
+				'data_type' => 'string',
+				'expression' => array(
+					(ToLower($DBType) === 'oracle') ?
+					'(SELECT FM.VALUE '.
+					'FROM (SELECT ID, ENTITY_ID, ELEMENT_ID, TYPE_ID, VALUE_TYPE, VALUE '.
+					'FROM b_crm_field_multi ORDER BY ID) FM '.
+					'WHERE FM.ENTITY_ID = \'LEAD\' '.
+					'AND FM.ELEMENT_ID = %s '.
+					'AND FM.TYPE_ID = \'EMAIL\' '.
+					'AND FM.VALUE_TYPE = \'MAILING\' '.
+					'AND ROWNUM <= 1)' :
+					'('.$DB->TopSql(
+						'SELECT FM.VALUE '.
+						'FROM b_crm_field_multi FM '.
+						'WHERE FM.ENTITY_ID = \'LEAD\' '.
+						'AND FM.ELEMENT_ID = %s '.
+						'AND FM.TYPE_ID = \'EMAIL\' '.
+						'AND FM.VALUE_TYPE = \'MAILING\' '.
 						'ORDER BY FM.ID', 1
 					).')',
 					'ID'
@@ -401,13 +455,24 @@ class LeadTable extends Main\ORM\Data\DataManager
 			new Main\Entity\IntegerField('FACE_ID'),
 			new Main\Entity\ReferenceField('ADDRESS_ENTITY', AddressTable::getEntity(), array(
 				'=this.ID' => 'ref.ENTITY_ID',
-				'=ref.TYPE_ID' => new Main\DB\SqlException('?', EntityAddress::Primary),
-				'=ref.ENTITY_TYPE_ID' => new Main\DB\SqlException('?', \CCrmOwnerType::Lead)
+				'=ref.TYPE_ID' => new Main\DB\SqlExpression('?', EntityAddress::Primary),
+				'=ref.ENTITY_TYPE_ID' => new Main\DB\SqlExpression('?', \CCrmOwnerType::Lead)
 			)),
 			new Main\Entity\ReferenceField('PRODUCT_ROW', ProductRowTable::getEntity(), array(
 				'=this.ID' => 'ref.OWNER_ID',
-				'=ref.OWNER_TYPE_ID' => new Main\DB\SqlException('?', \CCrmOwnerType::Lead),
-			))
+				'=ref.OWNER_TYPE' => new Main\DB\SqlExpression('?', \CCrmOwnerTypeAbbr::Lead),
+			)),
+			new Main\Entity\ReferenceField(
+				'HISTORY',
+				LeadStatusHistoryTable::class,
+				Main\ORM\Query\Join::on('this.ID', 'ref.OWNER_ID')
+			),
+			new ReferenceField(
+				'FULL_HISTORY',
+				LeadStatusHistoryWithSupposedTable::class,
+				Main\ORM\Query\Join::on('this.ID', 'ref.OWNER_ID'),
+				array('join_type' => 'INNER')
+			)
 		);
 
 		$codeList = UtmTable::getCodeList();
@@ -415,9 +480,9 @@ class LeadTable extends Main\ORM\Data\DataManager
 		foreach ($codeList as $fieldName)
 		{
 			$map[] = new Main\Entity\ReferenceField($fieldName, UtmTable::getEntity(), array(
-				'=ref.ENTITY_TYPE_ID' => new Main\DB\SqlException('?', \CCrmOwnerType::Lead),
+				'=ref.ENTITY_TYPE_ID' => new Main\DB\SqlExpression('?', \CCrmOwnerType::Lead),
 				'=this.ID' => 'ref.ENTITY_ID',
-				'=ref.CODE' => new Main\DB\SqlException('?', $fieldName)
+				'=ref.CODE' => new Main\DB\SqlExpression('?', $fieldName)
 			));
 		}
 

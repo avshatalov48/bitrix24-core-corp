@@ -19,6 +19,8 @@ class TasksInterfaceHeaderComponent extends TasksBaseComponent
 {
 	protected function checkParameters()
 	{
+		self::tryParseIntegerParameter($this->arParams['SPRINT_ID'], 0);
+		self::tryParseStringParameter($this->arParams['SPRINT_SELECTED'], 'N');
 		self::tryParseStringParameter($this->arParams['SHOW_QUICK_FORM'], 'Y');
 		self::tryParseStringParameter($this->arParams['SHOW_VIEW_MODE'], 'Y');
 		self::tryParseArrayParameter($this->arParams['POPUP_MENU_ITEMS'], array());

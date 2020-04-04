@@ -130,6 +130,7 @@ body{
 	padding: 10px 18px 19px 43px;
 	position: relative;
 	line-height: 22px;
+	word-break: break-word;
 }
 
 .mobile-grid-field-lead-title-arrow {

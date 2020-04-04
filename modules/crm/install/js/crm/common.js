@@ -2627,6 +2627,8 @@ if(typeof(BX.CrmLongRunningProcessDialog) === "undefined")
 		this._state = BX.CrmLongRunningProcessState.intermediate;
 		this._cancelRequest = false;
 		this._requestIsRunning = false;
+		this._networkErrorCount = 0;
+		this._requestHandler = null;
 	};
 	BX.CrmLongRunningProcessDialog.prototype =
 	{
@@ -2671,6 +2673,8 @@ if(typeof(BX.CrmLongRunningProcessDialog) === "undefined")
 					fill: true
 				});
 			}
+
+			this._requestHandler = this.getSetting("requestHandler", null);
 		},
 		getId: function()
 		{
@@ -3261,6 +3265,13 @@ if(typeof(BX.CrmLongRunningProcessDialog) === "undefined")
 				result = result["data"];
 			}
 
+			if(typeof(this._requestHandler) == 'function')
+			{
+				this._requestHandler.call(this, result);
+			}
+
+			this._networkErrorCount = 0;
+
 			var status = BX.type.isNotEmptyString(result["STATUS"]) ? result["STATUS"] : "";
 			var summary = BX.type.isNotEmptyString(result["SUMMARY"]) ? result["SUMMARY"] : "";
 			var isHtmlSummary = false;
@@ -3298,7 +3309,7 @@ if(typeof(BX.CrmLongRunningProcessDialog) === "undefined")
 
 					window.setTimeout(
 						BX.delegate(this._startRequest, this),
-						100
+						200
 					);
 				}
 				return;
@@ -3337,6 +3348,21 @@ if(typeof(BX.CrmLongRunningProcessDialog) === "undefined")
 				if(BX.type.isArray(result["errors"]) && result["errors"].length > 0)
 				{
 					var lastError = result["errors"][result["errors"].length - 1];
+
+					if (lastError.code === "NETWORK_ERROR")
+					{
+						this._networkErrorCount ++;
+						// Let's give it more chance to complete
+						if (this._networkErrorCount <= 2)
+						{
+							window.setTimeout(
+								BX.delegate(this._startRequest, this),
+								15000
+							);
+							return;
+						}
+					}
+
 					this._setSummary(lastError.message);
 				}
 				else
@@ -3348,6 +3374,7 @@ if(typeof(BX.CrmLongRunningProcessDialog) === "undefined")
 			{
 				this._setSummary(this.getMessage("requestError"));
 			}
+
 			this._setState(BX.CrmLongRunningProcessState.error);
 		}
 	};
@@ -3400,7 +3427,8 @@ if(typeof(BX.CrmEntityType) === "undefined")
 		dealrecurring: "DEAL_RECURRING",
 		order: "ORDER",
 		ordershipment: "ORDER_SHIPMENT",
-		orderpayment: "ORDER_PAYMENT"
+		orderpayment: "ORDER_PAYMENT",
+		ordercheck: "ORDER_CHECK"
 	};
 	BX.CrmEntityType.abbreviations =
 	{
@@ -9402,6 +9430,7 @@ if(typeof(BX.CrmEntityConverter) === "undefined")
 						this.openEntityEditorDialog(
 							{
 								title: manager ? manager.getMessage("checkErrorTitle") : null,
+								helpData: { text: manager.getMessage("checkErrorHelp"), code: manager.getMessage("checkErrorHelpArticleCode") },
 								fieldNames: Object.keys(checkErrors),
 								initData: BX.prop.getObject(data, "EDITOR_INIT_DATA", null),
 								context: BX.prop.getObject(data, "CONTEXT", null)
@@ -9481,6 +9510,7 @@ if(typeof(BX.CrmEntityConverter) === "undefined")
 					entityTypeId: this.getEntityTypeId(),
 					entityId: this.getEntityId(),
 					fieldNames: BX.prop.getArray(params, "fieldNames", []),
+					helpData: BX.prop.getObject(params, "helpData", null),
 					context: BX.prop.getObject(params, "context", null)
 				}
 			);
@@ -11155,11 +11185,7 @@ if(typeof(BX.CrmDealCategorySelector) === "undefined")
 				return;
 			}
 
-			BX.Crm.Page.open(
-				categoryId > 0
-					? BX.util.add_url_param(this._createUrl, { "category_id": categoryId })
-					: this._createUrl
-			);
+			BX.Crm.Page.open(BX.util.add_url_param(this._createUrl, { "category_id": categoryId }));
 		},
 		openMenu: function(anchor)
 		{
@@ -11502,7 +11528,7 @@ if(typeof(BX.CrmEntityManager) === "undefined")
 							else
 							{
 								var value =  sender.getValue();
-								if(value > 0)
+								if(value >= 0)
 								{
 									options["urlParams"] = BX.mergeEx(
 										BX.prop.getObject(options, "urlParams", {}),
@@ -12232,279 +12258,156 @@ if(typeof(BX.FilterUserSelector) === "undefined")
 	}
 }
 
-if(typeof(BX.CrmUIFilterUserSelector) === "undefined")
+if(typeof(BX.CrmUIFilterEntitySelector) === "undefined")
 {
-	BX.CrmUIFilterUserSelector = function ()
+	BX.CrmUIFilterEntitySelector = function()
 	{
-		this.id = "";
-		this.filterId = "";
-		this.settings = {};
-		this.fieldId = "";
-		this.control = null;
-		this.initialized = false;
-		this.opened = false;
-
+		this._id = "";
+		this._settings = {};
+		this._fieldId = "";
+		this._control = null;
+		this._entitySelector = null;
 		this._filterOpenHandler = BX.delegate(this.onCustomEntitySelectorOpen, this);
 		this._filterCloseHandler = BX.delegate(this.onCustomEntitySelectorClose, this);
-		this._filterBlurHandler = BX.delegate(this.onGetStopBlur, this);
-		this._filterItemRemoveHandler = BX.delegate(this.onCustomEntityRemove, this);
-
-		this._dialogInitHandler = BX.delegate(this.onBeforeInitDialog, this);
-		this._tabSwitchHandler = BX.delegate(this.onBeforeSwitchTabFocus, this);
-		this._itemFocusHandler = BX.delegate(this.onBeforeSelectItemFocus, this);
-
 	};
-	BX.CrmUIFilterUserSelector.prototype =
-	{
-		initialize: function(id, settings)
+
+	BX.CrmUIFilterEntitySelector.prototype =
 		{
-			//console.log("CrmUIFilterUserSelector.initialize: %s", id);
-			this.id = id;
-
-			this.settings = settings ? settings : {};
-			this.fieldId = this.getSetting("fieldId", "");
-			this.filterId = this.getSetting("filterId", "");
-
-			var initialValue = this.getSetting("initialValue",false);
-			if (!!initialValue)
+			initialize: function(id, settings)
 			{
-				var initialSettings = {};
-				initialSettings[this.fieldId] = initialValue.itemId;
-				initialSettings[this.fieldId + '_label'] = initialValue.itemName;
+				this._id = id;
+				this._settings = settings ? settings : {};
+				this._fieldId = this.getSetting("fieldId", "");
 
-				BX.Main.filterManager.getById(this.filterId).getApi().setFields(initialSettings);
-			}
-
-			BX.addCustomEvent(window, "BX.Main.Filter:customEntityFocus", this._filterOpenHandler);
-			BX.addCustomEvent(window, "BX.Main.Filter:customEntityBlur", this._filterCloseHandler);
-			BX.addCustomEvent(window, "BX.Main.Filter:onGetStopBlur", this._filterBlurHandler);
-			BX.addCustomEvent(window, "BX.Main.Filter:customEntityRemove", this._filterItemRemoveHandler);
-
-			BX.addCustomEvent(window, "BX.Main.Selector:beforeInitDialog", this._dialogInitHandler);
-			BX.addCustomEvent(window, "BX.SocNetLogDestination:onBeforeSwitchTabFocus", this._tabSwitchHandler);
-			BX.addCustomEvent(window, "BX.SocNetLogDestination:onBeforeSelectItemFocus", this._itemFocusHandler);
-
-		},
-		release: function ()
-		{
-			BX.removeCustomEvent(window, "BX.Main.Filter:customEntityFocus", this._filterOpenHandler);
-			BX.removeCustomEvent(window, "BX.Main.Filter:customEntityBlur", this._filterCloseHandler);
-			BX.removeCustomEvent(window, "BX.Main.Filter:onGetStopBlur", this._filterBlurHandler);
-			BX.removeCustomEvent(window, "BX.Main.Filter:customEntityRemove", this._filterItemRemoveHandler);
-
-			BX.removeCustomEvent(window, "BX.Main.Selector:beforeInitDialog", this._dialogInitHandler);
-			BX.removeCustomEvent(window, "BX.SocNetLogDestination:onBeforeSwitchTabFocus", this._tabSwitchHandler);
-			BX.removeCustomEvent(window, "BX.SocNetLogDestination:onBeforeSelectItemFocus", this._itemFocusHandler);
-		},
-		getId: function()
-		{
-			return this.id;
-		},
-		getSetting: function(name, defaultval)
-		{
-			return this.settings.hasOwnProperty(name) ? this.settings[name] : defaultval;
-		},
-		getControl: function()
-		{
-			return this.control;
-		},
-		getSearchInput: function()
-		{
-			return this.control ? this.control.getLabelNode() : null;
-		},
-		isMultiple: function()
-		{
-			return this.control && this.control.isMultiple();
-		},
-		isActive: function()
-		{
-			return !!this.control;
-		},
-		isOpened: function()
-		{
-			return this.opened;
-		},
-		open: function()
-		{
-			if(typeof(BX.Main.selectorManager.controls[this.id]) === "undefined")
+				BX.addCustomEvent(window, "BX.Main.Filter:customEntityFocus", this._filterOpenHandler);
+				BX.addCustomEvent(window, "BX.Main.Filter:customEntityBlur", this._filterCloseHandler);
+			},
+			release: function ()
 			{
-				var input = this.getSearchInput();
-				input.id = input.name;
-
-				window.setTimeout(
-					function () {
-						BX.onCustomEvent(
-							window,
-							'BX.Crm.FilterUserSelector:openInit',
-							[ { id: this.id, inputId: input.id, containerId: input.id } ]
-						);
-					}.bind(this),
-					50
-				);
-			}
-			else
+				BX.removeCustomEvent(window, "BX.Main.Filter:customEntityFocus", this._filterOpenHandler);
+				BX.removeCustomEvent(window, "BX.Main.Filter:customEntityBlur", this._filterCloseHandler);
+			},
+			getId: function()
 			{
-				window.setTimeout(
-					function () {
-						if(this.control)
-						{
-							BX.onCustomEvent(
-								window,
-								'BX.Crm.FilterUserSelector:open',
-								[ { id: this.id, bindNode: this.control.getField() } ]
-							);
-						}
-					}.bind(this),
-					50
-				);
-			}
-		},
-		close: function()
-		{
-			if(typeof(BX.Main.selectorManager.controls[this.id]) !== "undefined")
+				return this._id;
+			},
+			getSetting: function (name, defaultval)
 			{
-				BX.Main.selectorManager.controls[this.id].closeDialog();
-			}
-		},
-		onCustomEntitySelectorOpen: function(control)
-		{
-			if(this.fieldId !== control.getId())
+				return this._settings.hasOwnProperty(name)  ? this._settings[name] : defaultval;
+			},
+			getSearchInput: function()
 			{
-				return;
-			}
-
-			this.control = control;
-			this.open();
-		},
-		onCustomEntitySelectorClose: function(control)
-		{
-			if(this.fieldId !== control.getId())
+				return this._control ? this._control.getLabelNode() : null;
+			},
+			onCustomEntitySelectorOpen: function(control)
 			{
-				return;
-			}
-
-			this.control = null;
-			window.setTimeout(BX.delegate(this.close, this), 50);
-		},
-		onGetStopBlur: function(event, result)
-		{
-			if (BX.findParent(event.target, { className: 'bx-lm-box'}))
-			{
-				result.stopBlur = true;
-			}
-		},
-		onCustomEntityRemove: function(control)
-		{
-			if(this.fieldId === control.getId())
-			{
-				if (
-					typeof control.hiddenInput !== 'undefined'
-					&& typeof control.hiddenInput.value !== 'undefined'
-					&& typeof BX.SocNetLogDestination.obItemsSelected[this.id] !== 'undefined'
-					&& typeof BX.SocNetLogDestination.obItemsSelected[this.id][control.hiddenInput.value] !== 'undefined'
-				)
+				var fieldId = control.getId();
+				if(this._fieldId !== fieldId)
 				{
-					delete BX.SocNetLogDestination.obItemsSelected[this.id][control.hiddenInput.value];
+					this._control = null;
+					this.close();
 				}
-			}
-		},
-		onBeforeSwitchTabFocus: function(params)
-		{
-			if(BX.prop.getString(params, "id", "") === this.id)
-			{
-				params.blockFocus = true;
-			}
-		},
-		onBeforeSelectItemFocus: function(params)
-		{
-			if(BX.prop.getString(params, "id", "") === this.id)
-			{
-				params.blockFocus = true;
-			}
-		},
-		onBeforeInitDialog: function(params)
-		{
-			if(BX.prop.getString(params, "id", "") !== this.id)
-			{
-				return;
-			}
-
-			this.initialized = true;
-
-			if (!this.control)
-			{
-				params.blockInit = true;
-			}
-		},
-		processDialogOpen: function()
-		{
-			this.opened = true;
-		},
-		processDialogClose: function()
-		{
-			this.opened = false;
-		},
-		processSelection: function(selected)
-		{
-			if(!this.control)
-			{
-				return;
-			}
-
-			//Reset search input
-			this.control.getLabelNode().value = "";
-
-			var userCode = selected.id;
-			var userName = BX.util.htmlspecialcharsback(selected.name);
-
-			if(this.control.isMultiple())
-			{
-				//Check if user already selected
-				var values = this.control.getCurrentValues();
-				for(var i = 0, length = values.length; i < length; i++)
+				else
 				{
-					if(userCode === ("U" + values[i].value))
+					this._control = control;
+					/*if(this._control)
 					{
-						return;
+						var current = this._control.getCurrentValues();
+						this._currentValues = current["value"];
+					}*/
+					this.closeSiblings();
+					this.open();
+				}
+			},
+			onCustomEntitySelectorClose: function(control)
+			{
+				if(this._fieldId === control.getId())
+				{
+					this._control = null;
+					this.close();
+				}
+			},
+			onSelect: function(sender, data)
+			{
+				if(!this._control)
+				{
+					return;
+				}
+
+				var labels = [];
+				var values = {};
+				for(var typeName in data)
+				{
+					if(!data.hasOwnProperty(typeName))
+					{
+						continue;
+					}
+
+					var infos = data[typeName];
+					for(var i = 0, l = infos.length; i < l; i++)
+					{
+						var info = infos[i];
+						labels.push(info["title"]);
+						if(typeof(values[typeName]) === "undefined")
+						{
+							values[typeName] = [];
+						}
+
+						values[typeName].push(info["entityId"]);
+					}
+				}
+				//this._currentValues = values;
+				this._control.setData(labels.join(", "), JSON.stringify(values));
+			},
+			open: function()
+			{
+				if(!this._entitySelector)
+				{
+					this._entitySelector = BX.CrmEntitySelector.create(
+						this._id,
+						{
+							entityTypeNames: this.getSetting("entityTypeNames", []),
+							isMultiple: this.getSetting("isMultiple", false),
+							title: this.getSetting("title", "")
+						}
+					);
+
+					BX.addCustomEvent(this._entitySelector, "BX.CrmEntitySelector:select", BX.delegate(this.onSelect, this));
+				}
+
+				this._entitySelector.open(this.getSearchInput());
+				if(this._control)
+				{
+					this._control.setPopupContainer(this._entitySelector.getPopup()["contentContainer"]);
+				}
+			},
+			close: function()
+			{
+				if(this._entitySelector)
+				{
+					this._entitySelector.close();
+
+					if(this._control)
+					{
+						this._control.setPopupContainer(null);
+					}
+				}
+			},
+			closeSiblings: function()
+			{
+				var siblings = BX.CrmUIFilterEntitySelector.items;
+				for(var k in siblings)
+				{
+					if(siblings.hasOwnProperty(k) && siblings[k] !== this)
+					{
+						siblings[k].close();
 					}
 				}
 			}
+		};
 
-			var m = /^U([0-9]+)$/.exec(userCode);
-			if(m && m.length > 1)
-			{
-				this.control.setData(userName, m[1]);
-			}
-
-			this.close();
-		}
-	};
-	BX.CrmUIFilterUserSelector.processDialogOpen = function(name)
-	{
-		var item = BX.prop.get(BX.CrmUIFilterUserSelector.items, name, null);
-		if(item)
-		{
-			item.processDialogOpen();
-		}
-	};
-	BX.CrmUIFilterUserSelector.processDialogClose = function(name)
-	{
-		var item = BX.prop.get(BX.CrmUIFilterUserSelector.items, name, null);
-		if(item)
-		{
-			item.processDialogClose();
-		}
-	};
-	BX.CrmUIFilterUserSelector.processSelection = function(selected, type, search, bUndeleted, name, state)
-	{
-		var item = BX.prop.get(BX.CrmUIFilterUserSelector.items, name, null);
-		if(item)
-		{
-			item.processSelection(selected);
-		}
-	};
-	BX.CrmUIFilterUserSelector.items = {};
-	BX.CrmUIFilterUserSelector.remove = function(id)
+	BX.CrmUIFilterEntitySelector.items = {};
+	BX.CrmUIFilterEntitySelector.remove = function(id)
 	{
 		var item = BX.prop.get(this.items, id, null);
 		if(item)
@@ -12513,13 +12416,212 @@ if(typeof(BX.CrmUIFilterUserSelector) === "undefined")
 			delete this.items[id];
 		}
 	};
-	BX.CrmUIFilterUserSelector.create = function(id, settings)
+	BX.CrmUIFilterEntitySelector.create = function(id, settings)
 	{
-		var self = new BX.CrmUIFilterUserSelector(id, settings);
+		var self = new BX.CrmUIFilterEntitySelector(id, settings);
 		self.initialize(id, settings);
-		this.items[id] = self;
+		BX.CrmUIFilterEntitySelector.items[self.getId()] = self;
 		return self;
+	}
+}
+
+if(typeof(BX.CrmEntitySelector) === "undefined")
+{
+	BX.CrmEntitySelector = function()
+	{
+		this._id = "";
+		this._settings = {};
+		this._entityTypeNames = [];
+		this._isMultiple = false;
+		this._entityInfos = null;
+		this._entitySelectHandler = BX.delegate(this.onEntitySelect, this);
 	};
+	BX.CrmEntitySelector.prototype =
+		{
+			initialize: function(id, settings)
+			{
+				this._id = id;
+				this._settings = settings ? settings : {};
+				this._entityTypeNames = this.getSetting("entityTypeNames", []);
+				this._isMultiple = this.getSetting("isMultiple", false);
+				this._entityInfos = [];
+			},
+			getId: function()
+			{
+				return this._id;
+			},
+			getSetting: function (name, defaultval)
+			{
+				return this._settings.hasOwnProperty(name)  ? this._settings[name] : defaultval;
+			},
+			getMessage: function(name)
+			{
+				var msg = BX.CrmEntitySelector.messages;
+				return msg.hasOwnProperty(name) ? msg[name] : name;
+			},
+			isOpened: function()
+			{
+				return ((obCrm[this._id].popup instanceof BX.PopupWindow) && obCrm[this._id].popup.isShown());
+			},
+			open: function(anchor)
+			{
+				if(typeof(obCrm[this._id]) === "undefined")
+				{
+					var entityTypes = [];
+					for(var i = 0, l = this._entityTypeNames.length; i < l; i++)
+					{
+						entityTypes.push(this._entityTypeNames[i].toLowerCase());
+					}
+
+					obCrm[this._id] = new CRM(
+						this._id,
+						null,
+						null,
+						this._id,
+						this._entityInfos,
+						false,
+						this._isMultiple,
+						entityTypes,
+						{
+							"contact": BX.CrmEntityType.getCaptionByName(BX.CrmEntityType.names.contact),
+							"company": BX.CrmEntityType.getCaptionByName(BX.CrmEntityType.names.company),
+							"invoice": BX.CrmEntityType.getCaptionByName(BX.CrmEntityType.names.invoice),
+							"quote": BX.CrmEntityType.getCaptionByName(BX.CrmEntityType.names.quote),
+							"lead": BX.CrmEntityType.getCaptionByName(BX.CrmEntityType.names.lead),
+							"deal": BX.CrmEntityType.getCaptionByName(BX.CrmEntityType.names.deal),
+							"ok": this.getMessage("selectButton"),
+							"cancel": BX.message("JS_CORE_WINDOW_CANCEL"),
+							"close": BX.message("JS_CORE_WINDOW_CLOSE"),
+							"wait": BX.message("JS_CORE_LOADING"),
+							"noresult": this.getMessage("noresult"),
+							"search" : this.getMessage("search"),
+							"last" : this.getMessage("last")
+						},
+						true
+					);
+					obCrm[this._id].Init();
+					obCrm[this._id].AddOnSaveListener(this._entitySelectHandler);
+				}
+
+				if(!((obCrm[this._id].popup instanceof BX.PopupWindow) && obCrm[this._id].popup.isShown()))
+				{
+					if(!BX.type.isDomNode(anchor))
+					{
+						anchor = BX.prop.getElementNode(this._settings, "anchor", null);
+					}
+					obCrm[this._id].Open(
+						{
+							closeIcon: { top: "10px", right: "15px" },
+							closeByEsc: true,
+							autoHide: false,
+							gainFocus: false,
+							anchor: anchor,
+							titleBar: this.getSetting("title", "")
+						}
+					);
+				}
+			},
+			close: function()
+			{
+				if(typeof(obCrm[this._id]) !== "undefined")
+				{
+					obCrm[this._id].RemoveOnSaveListener(this._entitySelectHandler);
+					obCrm[this._id].Clear();
+					delete obCrm[this._id];
+				}
+
+			},
+			getPopup: function()
+			{
+				return typeof(obCrm[this._id]) !== "undefined" ? obCrm[this._id].popup : null;
+			},
+			onEntitySelect: function(settings)
+			{
+				this.close();
+
+				var data = {};
+				this._entityInfos = [];
+				for(var type in settings)
+				{
+					if(!settings.hasOwnProperty(type))
+					{
+						continue;
+					}
+
+					var entityInfos = settings[type];
+					if(!BX.type.isPlainObject(entityInfos))
+					{
+						continue;
+					}
+
+					var typeName = type.toUpperCase();
+					for(var key in entityInfos)
+					{
+						if(!entityInfos.hasOwnProperty(key))
+						{
+							continue;
+						}
+
+						var entityInfo = entityInfos[key];
+						this._entityInfos.push(
+							{
+								"id": entityInfo["id"],
+								"type": entityInfo["type"],
+								"title": entityInfo["title"],
+								"desc": entityInfo["desc"],
+								"url": entityInfo["url"],
+								"image": entityInfo["image"],
+								"selected": "Y"
+							}
+						);
+
+						var entityId = BX.type.isNotEmptyString(entityInfo["id"]) ? parseInt(entityInfo["id"]) : 0;
+						if(entityId > 0)
+						{
+							if(typeof(data[typeName]) === "undefined")
+							{
+								data[typeName] = [];
+							}
+
+							data[typeName].push(
+								{
+									entityTypeName: typeName,
+									entityId: entityId,
+									title: BX.type.isNotEmptyString(entityInfo["title"]) ? entityInfo["title"] : ("[" + entityId + "]")
+								}
+							);
+						}
+					}
+				}
+
+				BX.onCustomEvent(this, "BX.CrmEntitySelector:select", [this, data]);
+			}
+		};
+
+	if(typeof(BX.CrmEntitySelector.messages) === "undefined")
+	{
+		BX.CrmEntitySelector.messages =
+			{
+			};
+	}
+	BX.CrmEntitySelector.closeAll = function()
+	{
+		for(var k in this.items)
+		{
+			if(this.items.hasOwnProperty(k))
+			{
+				this.items[k].close();
+			}
+		}
+	};
+	BX.CrmEntitySelector.items = {};
+	BX.CrmEntitySelector.create = function(id, settings)
+	{
+		var self = new BX.CrmEntitySelector(id, settings);
+		self.initialize(id, settings);
+		BX.CrmEntitySelector.items[self.getId()] = self;
+		return self;
+	}
 }
 
 if(typeof(BX.CrmSearchContentManager) === "undefined")
@@ -12641,6 +12743,7 @@ BX.Crm.Page =
 		dealAutomation: { condition: new RegExp("/crm/deal/automation/[0-9]+/", "i") },
 		quote: { condition: new RegExp("/crm/quote/details/[0-9]+/", "i") },
 		order: { condition: new RegExp("/shop/orders/details/[0-9]+/", "i") },
+		orderSalescenter: { condition: new RegExp("/saleshub/orders/order/", "i") }, //
 		orderShipment: { condition: new RegExp("/shop/orders/shipment/details/[0-9]+/", "i") },
 		orderPayment: { condition: new RegExp("/shop/orders/payment/details/[0-9]+/", "i") },
 		orderAutomation: { condition: new RegExp("/shop/orders/automation/[0-9]+/", "i") }
@@ -12698,8 +12801,7 @@ BX.Crm.Page =
 	},
 	isSliderEnabled: function(url)
 	{
-		//Slider is available in Bitrix24 context only
-		if(typeof(window.top.BX.Bitrix24) === "undefined")
+		if(!(window.top.BX.SidePanel && window.top.BX.SidePanel.Instance))
 		{
 			return false;
 		}
@@ -12740,7 +12842,7 @@ BX.Crm.Page =
 		window.top.location.href = url;
 		return null;
 	},
-	close: function(url)
+	close: function(url, params)
 	{
 		var item = this.getItem(url);
 		if(!item)
@@ -12750,7 +12852,7 @@ BX.Crm.Page =
 
 		if(BX.prop.getString(item, "", "isSlider", false))
 		{
-			this.closeSlider(url);
+			this.closeSlider(url, false, params);
 		}
 		else
 		{
@@ -12783,7 +12885,7 @@ BX.Crm.Page =
 	},
 	openSlider: function(url, params)
 	{
-		if(typeof(window.top.BX.Bitrix24) === "undefined")
+		if(!(window.top.BX.SidePanel && window.top.BX.SidePanel.Instance))
 		{
 			return;
 		}
@@ -12793,26 +12895,73 @@ BX.Crm.Page =
 			params = {};
 		}
 
-		window.top.BX.Bitrix24.Slider.open (
+		window.top.BX.SidePanel.Instance.open (
 			BX.util.add_url_param( url, { "IFRAME": "Y", "IFRAME_TYPE": "SIDE_SLIDER" } ),
 			params
 		);
 
 		this.items.push({ url: url, isSlider: true });
 	},
-	closeSlider: function(url, keepalive)
+	closeSlider: function(url, keepalive, params)
 	{
-		//HACK: close slider before destroy due to BX.Bitrix24.Slider.destroy bug
-		var current = window.top.BX.Bitrix24.Slider.getCurrentPage();
-		if(current && current.getUrl() === url)
+		if(!(window.top.BX.SidePanel && window.top.BX.SidePanel.Instance))
 		{
-			current.close(true);
+			return;
 		}
 
+		//HACK: close slider before destroy due to window.top.BX.SidePanel.destroy bug
+		var current = window.top.BX.SidePanel.Instance.getTopSlider();
+		if(!current)
+		{
+			return;
+		}
+
+		var isFound = false, key = "", value = "";
+		var identity = BX.prop.getObject(params, "identity", null);
+		if(identity)
+		{
+			key = BX.prop.getString(identity, "key", "");
+			value = BX.prop.getString(identity, "value", "");
+		}
+
+		if(key !== "" && value !== "")
+		{
+			var queryParam = "";
+			if(typeof(BX.Uri) !== "undefined")
+			{
+				queryParam = (new BX.Uri(current.getUrl())).getQueryParam(key);
+			}
+			else
+			{
+				queryParam = this.getQueryParam(current.getUrl(), key);
+			}
+			isFound = BX.type.isString(queryParam) && queryParam.toUpperCase() === value.toUpperCase();
+		}
+		else
+		{
+			isFound = current.getUrl() === url;
+		}
+
+		if(!isFound)
+		{
+			return;
+		}
+
+		current.close(true);
 		if(!keepalive)
 		{
-			window.top.BX.Bitrix24.Slider.destroy(url);
+			window.top.BX.SidePanel.Instance.destroy(current.getUrl());
 		}
+	},
+	getQueryParam: function(url, param)
+	{
+		if(!BX.type.isNotEmptyString(param))
+		{
+			return "";
+		}
+
+		var matches = (new RegExp('(?:^|[?&])'+ param +'=([^&#]*)', 'i')).exec(url);
+		return BX.type.isArray(matches) && typeof(matches[1]) !== "undefined" ? matches[1] : "";
 	},
 	getTopSlider: function()
 	{
@@ -12868,6 +13017,7 @@ if(typeof(BX.Crm.Form) === "undefined")
 			BX.onCustomEvent(this, "onBeforeSubmit", [this, eventArgs]);
 			if(eventArgs["cancel"])
 			{
+				BX.onCustomEvent(this, "onSubmitCancel", [this, eventArgs]);
 				return false;
 			}
 
@@ -12929,7 +13079,7 @@ if(typeof(BX.Crm.AjaxForm) === "undefined")
 	};
 	BX.Crm.AjaxForm.prototype.doSubmit = function(options)
 	{
-		BX.ajax.submitAjax( this._elementNode, this._config);
+		BX.ajax.submitAjax(this._elementNode, this._config);
 	};
 	BX.Crm.AjaxForm.create = function(id, settings)
 	{

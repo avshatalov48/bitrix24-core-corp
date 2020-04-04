@@ -104,6 +104,7 @@ class CVoxImplantRestService extends IRestService
 				'telephony.externalCall.show' => array('CVoxImplantRestService', 'showExternalCall'),
 				'telephony.externalCall.hide' => array('CVoxImplantRestService', 'hideExternalCall'),
 				'telephony.externalCall.attachRecord' => array('CVoxImplantRestService', 'attachRecord'),
+				'telephony.call.attachTranscription' => array('CVoxImplantRestService', 'attachTranscription'),
 				'telephony.externalLine.add' => array('CVoxImplantRestService', 'addExternalLine'),
 				'telephony.externalLine.update' => array('CVoxImplantRestService', 'updateExternalLine'),
 				'telephony.externalLine.delete' => array('CVoxImplantRestService', 'deleteExternalLine'),
@@ -419,58 +420,51 @@ class CVoxImplantRestService extends IRestService
 			$arFilter['PORTAL_USER_ID'] = $allowedUserIds;
 		}
 
-		$arReturn = array();
-
 		$dbResCnt = \Bitrix\Voximplant\StatisticTable::getList(array(
 			'filter' => $arFilter,
 			'select' => array("CNT" => new Bitrix\Main\Entity\ExpressionField('CNT', 'COUNT(1)')),
 		));
 		$arResCnt = $dbResCnt->fetch();
-		if ($arResCnt && $arResCnt["CNT"] > 0)
+		$arNavParams = self::getNavData($nav, true);
+
+		$arSort = array();
+		if ($sort && $order)
 		{
-			$arNavParams = self::getNavData($nav, true);
-
-			$arSort = array();
-			if ($sort && $order)
-			{
-				$arSort[$sort] = $order;
-			}
-
-			$dbRes = \Bitrix\Voximplant\StatisticTable::getList(array(
-				'order' => $arSort,
-				'filter' => $arFilter,
-				'limit' => $arNavParams['limit'],
-				'offset' => $arNavParams['offset'],
-			));
-
-			$result = array();
-			while ($arData = $dbRes->fetch())
-			{
-				$arData['RECORD_FILE_ID'] = (int)$arData['CALL_WEBDAV_ID'] ?: null;
-				unset($arData['ACCOUNT_ID']);
-				unset($arData['APPLICATION_ID']);
-				unset($arData['APPLICATION_NAME']);
-				unset($arData['CALL_LOG']);
-				unset($arData['CALL_RECORD_ID']);
-				unset($arData['CALL_WEBDAV_ID']);
-				unset($arData['CALL_STATUS']);
-				unset($arData['CALL_DIRECTION']);
-				$arData['CALL_TYPE'] = $arData['INCOMING'];
-				unset($arData['INCOMING']);
-				$arData['CALL_START_DATE'] = CRestUtil::ConvertDateTime($arData['CALL_START_DATE']);
-				$result[] = $arData;
-			}
-
-			return self::setNavData(
-				$result,
-				array(
-					"count" => $arResCnt['CNT'],
-					"offset" => $arNavParams['offset']
-				)
-			);
+			$arSort[$sort] = $order;
 		}
 
-		return $arReturn;
+		$dbRes = \Bitrix\Voximplant\StatisticTable::getList(array(
+			'order' => $arSort,
+			'filter' => $arFilter,
+			'limit' => $arNavParams['limit'],
+			'offset' => $arNavParams['offset'],
+		));
+
+		$result = array();
+		while ($arData = $dbRes->fetch())
+		{
+			$arData['RECORD_FILE_ID'] = (int)$arData['CALL_WEBDAV_ID'] ?: null;
+			unset($arData['ACCOUNT_ID']);
+			unset($arData['APPLICATION_ID']);
+			unset($arData['APPLICATION_NAME']);
+			unset($arData['CALL_LOG']);
+			unset($arData['CALL_RECORD_ID']);
+			unset($arData['CALL_WEBDAV_ID']);
+			unset($arData['CALL_STATUS']);
+			unset($arData['CALL_DIRECTION']);
+			$arData['CALL_TYPE'] = $arData['INCOMING'];
+			unset($arData['INCOMING']);
+			$arData['CALL_START_DATE'] = CRestUtil::ConvertDateTime($arData['CALL_START_DATE']);
+			$result[] = $arData;
+		}
+
+		return self::setNavData(
+			$result,
+			array(
+				"count" => $arResCnt['CNT'],
+				"offset" => $arNavParams['offset']
+			)
+		);
 	}
 
 	public static function checkStatisticFilter($arFilter)
@@ -1041,6 +1035,11 @@ class CVoxImplantRestService extends IRestService
 
 		$callParams = is_array($params['PARAMS']) ? $params['PARAMS'] : array();
 		$userId = static::getCurrentUserId();
+		$isMobile = \Bitrix\Main\Context::getCurrent()->getRequest()->get('bx_mobile') === 'Y';
+		if($isMobile)
+		{
+			$callParams['IS_MOBILE'] = true;
+		}
 		$startResult = \Bitrix\Voximplant\Rest\Helper::startCall(
 			$params['NUMBER'],
 			$userId,
@@ -1268,6 +1267,7 @@ class CVoxImplantRestService extends IRestService
 			'USER_ID' => $userId,
 			'PHONE_NUMBER' => $params['PHONE_NUMBER'],
 			'LINE_NUMBER' => $params['LINE_NUMBER'],
+			'EXTERNAL_CALL_ID' => $params['EXTERNAL_CALL_ID'],
 			'TYPE' => $params['TYPE'],
 			'CALL_START_DATE' => $startDate,
 			'CRM' => $params['CRM'],
@@ -1386,6 +1386,72 @@ class CVoxImplantRestService extends IRestService
 			throw new \Bitrix\Rest\RestException(implode('; ', $result->getErrorMessages()));
 
 		return $result->getData();
+	}
+
+	/**
+	 * @param array $params
+	 * @param $n
+	 * @param CRestServer $server
+	 */
+	public static function attachTranscription($params, $n, $server)
+	{
+		if(!isset($params['CALL_ID']))
+		{
+			throw new \Bitrix\Rest\RestException('CALL_ID should be set');
+		}
+		if(!is_array($params['MESSAGES']))
+		{
+			throw new \Bitrix\Rest\RestException('MESSAGES should be an array');
+		}
+		foreach ($params['MESSAGES'] as $k => $messageFields)
+		{
+			if($messageFields['SIDE'] !== \Bitrix\Voximplant\Transcript::SIDE_CLIENT && $messageFields['SIDE'] !== \Bitrix\Voximplant\Transcript::SIDE_USER)
+			{
+				throw new \Bitrix\Rest\RestException('MESSAGES['.$k.'][SIDE] should be either Client or User');
+			}
+			if((int)$messageFields['START_TIME'] <= 0)
+			{
+				throw new \Bitrix\Rest\RestException('MESSAGES['.$k.'][START_TIME] should be greater than zero');
+			}
+			if((int)$messageFields['STOP_TIME'] <= 0)
+			{
+				throw new \Bitrix\Rest\RestException('MESSAGES['.$k.'][STOP_TIME] should be greater than zero');
+			}
+			if($messageFields['MESSAGE'] == '')
+			{
+				throw new \Bitrix\Rest\RestException('MESSAGES['.$k.'][MESSAGE] is empty');
+			}
+		}
+
+		$callId = $params['CALL_ID'];
+		$callFields = \Bitrix\Voximplant\StatisticTable::getRow([
+			'filter' => [
+				'=CALL_ID' => $callId
+			]
+		]);
+
+		if(!$callFields)
+		{
+			throw new \Bitrix\Rest\RestException('Call ' . $callId . ' is not found. Is it finished?');
+		}
+
+		$transcript = \Bitrix\Voximplant\Transcript::createWithLines($params['MESSAGES']);
+		$transcript->setCallId($callId);
+		if($params['COST'])
+		{
+			$transcript->setCost((double)$params['COST']);
+			$transcript->setCostCurrency((string)$params['COST_CURRENCY']);
+		}
+		$transcript->save();
+
+		\Bitrix\Voximplant\StatisticTable::update($callFields['ID'], [
+			'TRANSCRIPT_ID' => $transcript->getId(),
+			'TRANSCRIPT_PENDING' => 'N'
+		]);
+
+		return [
+			'TRANSCRIPT_ID' => $transcript->getId()
+		];
 	}
 
 	/**

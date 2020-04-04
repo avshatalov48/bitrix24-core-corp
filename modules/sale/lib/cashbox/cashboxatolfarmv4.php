@@ -17,6 +17,10 @@ Localization\Loc::loadMessages(__FILE__);
 class CashboxAtolFarmV4 extends CashboxAtolFarm
 {
 	const SERVICE_URL = 'https://online.atol.ru/possystem/v4';
+	const SERVICE_TEST_URL = 'https://testonline.atol.ru/possystem/v4';
+
+	const HANDLER_MODE_ACTIVE = 'ACTIVE';
+	const HANDLER_MODE_TEST = 'TEST';
 
 	/**
 	 * @param Check $check
@@ -35,25 +39,25 @@ class CashboxAtolFarmV4 extends CashboxAtolFarm
 			$serviceEmail = static::getDefaultServiceEmail();
 		}
 
-		$result = array(
+		$result = [
 			'timestamp' => $dateTime->format('d.m.Y H:i:s'),
 			'external_id' => static::buildUuid(static::UUID_TYPE_CHECK, $data['unique_id']),
-			'service' => array(
+			'service' => [
 				'callback_url' => $this->getCallbackUrl(),
-			),
-			'receipt' => array(
-				'client' => array(),
-				'company' => array(
+			],
+			'receipt' => [
+				'client' => [],
+				'company' => [
 					'email' => $serviceEmail,
 					'sno' => $this->getValueFromSettings('TAX', 'SNO'),
 					'inn' => $this->getValueFromSettings('SERVICE', 'INN'),
 					'payment_address' => $this->getValueFromSettings('SERVICE', 'P_ADDRESS'),
-				),
-				'payments' => array(),
-				'items' => array(),
+				],
+				'payments' => [],
+				'items' => [],
 				'total' => (float)$data['total_sum']
-			)
-		);
+			]
+		];
 
 		$email = $data['client_email'] ?: '';
 
@@ -61,7 +65,9 @@ class CashboxAtolFarmV4 extends CashboxAtolFarm
 		if (is_string($phone))
 		{
 			if ($phone[0] === '7')
+			{
 				$phone = substr($phone, 1);
+			}
 		}
 		else
 		{
@@ -95,10 +101,10 @@ class CashboxAtolFarmV4 extends CashboxAtolFarm
 		$paymentTypeMap = $this->getPaymentTypeMap();
 		foreach ($data['payments'] as $payment)
 		{
-			$result['receipt']['payments'][] = array(
+			$result['receipt']['payments'][] = [
 				'type' => $paymentTypeMap[$payment['type']],
 				'sum' => (float)$payment['sum']
-			);
+			];
 		}
 
 		$checkTypeMap = $this->getCheckTypeMap();
@@ -107,19 +113,28 @@ class CashboxAtolFarmV4 extends CashboxAtolFarm
 		{
 			$vat = $this->getValueFromSettings('VAT', $item['vat']);
 			if ($vat === null)
+			{
 				$vat = $this->getValueFromSettings('VAT', 'NOT_VAT');
+			}
 
-			$result['receipt']['items'][] = array(
+			$position = [
 				'name' => $item['name'],
 				'price' => (float)$item['price'],
 				'sum' => (float)$item['sum'],
 				'quantity' => $item['quantity'],
 				'payment_method' => $checkTypeMap[$check::getType()],
 				'payment_object' => $paymentObjectMap[$item['payment_object']],
-				'vat' => array(
+				'vat' => [
 					'type' => $vat
-				),
-			);
+				],
+			];
+
+			if (isset($item['nomenclature_code']))
+			{
+				$position['nomenclature_code'] = $item['nomenclature_code'];
+			}
+
+			$result['receipt']['items'][] = $position;
 		}
 
 		return $result;
@@ -199,17 +214,28 @@ class CashboxAtolFarmV4 extends CashboxAtolFarm
 	 * @return string
 	 * @throws Main\SystemException
 	 */
-	protected function getUrl($operation, $token, array $queryData = array())
+	protected function getRequestUrl($operation, $token, array $queryData = array())
 	{
+		$serviceUrl = static::SERVICE_URL;
+
+		if ($this->getValueFromSettings('INTERACTION', 'MODE_HANDLER') === static::HANDLER_MODE_TEST)
+		{
+			$serviceUrl = static::SERVICE_TEST_URL;
+		}
+
 		$groupCode = $this->getField('NUMBER_KKM');
 
 		if ($operation === static::OPERATION_CHECK_REGISTRY)
 		{
-			return static::SERVICE_URL.'/'.$groupCode.'/'.$queryData['CHECK_TYPE'].'?token='.$token;
+			return $serviceUrl.'/'.$groupCode.'/'.$queryData['CHECK_TYPE'].'?token='.$token;
 		}
 		elseif ($operation === static::OPERATION_CHECK_CHECK)
 		{
-			return static::SERVICE_URL.'/'.$groupCode.'/report/'.$queryData['EXTERNAL_UUID'].'?token='.$token;
+			return $serviceUrl.'/'.$groupCode.'/report/'.$queryData['EXTERNAL_UUID'].'?token='.$token;
+		}
+		elseif ($operation === static::OPERATION_GET_TOKEN)
+		{
+			return $serviceUrl.'/getToken';
 		}
 
 		throw new Main\SystemException();
@@ -228,6 +254,20 @@ class CashboxAtolFarmV4 extends CashboxAtolFarm
 			'TYPE' => 'STRING',
 			'LABEL' => Localization\Loc::getMessage('SALE_CASHBOX_ATOL_FARM_SETTINGS_SERVICE_EMAIL_LABEL'),
 			'VALUE' => static::getDefaultServiceEmail()
+		);
+
+		$settings['INTERACTION'] = array(
+			'LABEL' => Localization\Loc::getMessage('SALE_CASHBOX_ATOL_FARM_SETTINGS_INTERACTION'),
+			'ITEMS' => array(
+				'MODE_HANDLER' => array(
+					'TYPE' => 'ENUM',
+					'LABEL' => Localization\Loc::getMessage('SALE_CASHBOX_ATOL_FARM_SETTINGS_MODE_HANDLER_LABEL'),
+					'OPTIONS' => array(
+						static::HANDLER_MODE_ACTIVE => Localization\Loc::getMessage('SALE_CASHBOX_ATOL_FARM_MODE_ACTIVE'),
+						static::HANDLER_MODE_TEST => Localization\Loc::getMessage('SALE_CASHBOX_ATOL_FARM_MODE_TEST'),
+					)
+				)
+			)
 		);
 
 		return $settings;

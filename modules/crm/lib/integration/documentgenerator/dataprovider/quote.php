@@ -2,12 +2,17 @@
 
 namespace Bitrix\Crm\Integration\DocumentGenerator\DataProvider;
 
+use Bitrix\Crm\Binding\QuoteContactTable;
 use Bitrix\Crm\QuoteTable;
+use Bitrix\DocumentGenerator\DataProvider\ArrayDataProvider;
+use Bitrix\DocumentGenerator\DataProviderManager;
 use Bitrix\DocumentGenerator\Nameable;
 use Bitrix\DocumentGenerator\Value\DateTime;
 
 class Quote extends ProductsDataProvider implements Nameable
 {
+	protected $contacts;
+
 	/**
 	 * Returns list of value names for this Provider.
 	 *
@@ -30,15 +35,24 @@ class Quote extends ProductsDataProvider implements Nameable
 			$this->fields['DATE_MODIFY'] = ['TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_QUOTE_DATE_MODIFY_TITLE'), 'TYPE' => DateTime::class];
 			$this->fields['CONTENT'] = ['TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_QUOTE_CONTENT_TITLE'), 'TYPE' => static::FIELD_TYPE_TEXT];
 			$this->fields['TERMS'] = ['TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_QUOTE_TERM_TITLE'), 'TYPE' => static::FIELD_TYPE_TEXT];
-	//		$this->fields['LEAD'] = [
-	//			'PROVIDER' => Lead::class,
-	//			'VALUE' => 'LEAD_ID',
-	//			'TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_QUOTE_LEAD_TITLE'),
-	//		];
 			$this->fields['DEAL'] = [
 				'PROVIDER' => Deal::class,
 				'VALUE' => 'DEAL_ID',
 				'TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_QUOTE_DEAL_TITLE'),
+			];
+			$this->fields['CONTACTS'] = [
+				'TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_QUOTE_CONTACTS_TITLE'),
+				'PROVIDER' => ArrayDataProvider::class,
+				'OPTIONS' => [
+					'ITEM_PROVIDER' => Contact::class,
+					'ITEM_NAME' => 'CONTACT',
+					'ITEM_TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_QUOTE_CONTACT_TITLE'),
+					'ITEM_OPTIONS' => [
+						'DISABLE_MY_COMPANY' => true,
+						'isLightMode' => true,
+					],
+				],
+				'VALUE' => [$this, 'getContacts'],
 			];
 		}
 
@@ -145,5 +159,39 @@ class Quote extends ProductsDataProvider implements Nameable
 			'CLOSEDATE_SHORT',
 			'MYCOMPANY_ID',
 		]);
+	}
+
+	/**
+	 * @return bool
+	 */
+	protected function hasLeadField()
+	{
+		return true;
+	}
+
+	/**
+	 * @return array
+	 * @throws \Bitrix\Main\ArgumentException
+	 */
+	public function getContacts()
+	{
+		if($this->contacts === null)
+		{
+			$this->contacts = [];
+			if(intval($this->source) > 0)
+			{
+				$contactBindings = QuoteContactTable::getQuoteBindings($this->source);
+				foreach($contactBindings as $binding)
+				{
+					$contact = DataProviderManager::getInstance()->getDataProvider(Contact::class, $binding['CONTACT_ID'], [
+						'isLightMode' => true,
+						'DISABLE_MY_COMPANY' => true,
+					], $this);
+					$this->contacts[] = $contact;
+				}
+			}
+		}
+
+		return $this->contacts;
 	}
 }

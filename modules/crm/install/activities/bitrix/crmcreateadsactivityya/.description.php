@@ -21,6 +21,7 @@ $arActivityDescription = array(
 	'ROBOT_SETTINGS' => array(
 		'CATEGORY' => 'ads'
 	),
+	'EXCLUDED' => true,
 );
 
 if (CModule::IncludeModule('bitrix24'))

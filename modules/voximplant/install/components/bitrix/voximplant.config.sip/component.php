@@ -19,35 +19,15 @@ $arResult['SIP_ENABLE'] = (bool)$result->ACTIVE;
 $arResult['TEST_MINUTES'] = intval($result->FREE);
 $arResult['DATE_END'] = (strlen($result->DATE_END) > 0 ? new \Bitrix\Main\Type\Date($result->DATE_END, 'd.m.Y') : '');
 
+$arResult['LINK_TO_BUY'] = CVoxImplantSip::getBuyLink();
 if (IsModuleInstalled('bitrix24'))
 {
 	$account = new CVoxImplantAccount();
 	$accountLang = $account->GetAccountLang();
-	$arResult['LINK_TO_BUY'] = '/settings/license_phone_sip.php';
 	$arResult['LINK_TO_DOC'] = (in_array(LANGUAGE_ID, Array("ru", "kz", "ua", "by"))? 'https://dev.1c-bitrix.ru/learning/course/index.php?COURSE_ID=52&CHAPTER_ID=02564': 'https://www.bitrixsoft.com/support/training/course/index.php?COURSE_ID=55&LESSON_ID=6635');
 }
 else
 {
-	if (LANGUAGE_ID == 'ru')
-	{
-		$arResult['LINK_TO_BUY'] = 'http://www.1c-bitrix.ru/buy/intranet.php#tab-call-link';
-	}
-	else if (LANGUAGE_ID == 'ua')
-	{
-		$arResult['LINK_TO_BUY'] = 'http://www.1c-bitrix.ua/buy/intranet.php#tab-call-link';
-	}
-	else if (LANGUAGE_ID == 'kz')
-	{
-		$arResult['LINK_TO_BUY'] = 'https://www.1c-bitrix.kz/buy/intranet.php#tab-call-link';
-	}
-	else if (LANGUAGE_ID == 'de')
-	{
-		$arResult['LINK_TO_BUY'] = 'https://www.bitrix24.de/prices/self-hosted-telephony.php';
-	}
-	else
-	{
-		$arResult['LINK_TO_BUY'] = 'https://www.bitrix24.com/prices/self-hosted-telephony.php';
-	}
 	$arResult['LINK_TO_DOC'] = (in_array(LANGUAGE_ID, Array("ru", "kz", "ua", "by"))? 'https://dev.1c-bitrix.ru/learning/course/index.php?COURSE_ID=48&CHAPTER_ID=02699': 'https://www.bitrixsoft.com/support/training/course/index.php?COURSE_ID=26&LESSON_ID=6734');
 }
 

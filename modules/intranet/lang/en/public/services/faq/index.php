@@ -1,3 +1,3 @@
 <?
-$MESS["SERVICES_TITLE"] = "Frequently asked questions";
+$MESS["SERVICES_TITLE"] = "Frequently Asked Questions";
 ?>

@@ -91,7 +91,11 @@ return array(
 		),
 		'.landing-block-node-card-price-list li' => array(
 			'name' => Loc::getMessage('LANDING_BLOCK_11.2.THREE_COLS_FIX_TARIFFS_BLACK_NODES_LANDINGBLOCKNODECARDPRICE_LIST_ITEM'),
-			'type' => array('background-color', 'background-gradient', 'typo'),
+			'type' => array('background-color', 'background-gradient'),
+		),
+		'.landing-block-node-card-price-list' => array(
+			'name' => Loc::getMessage('LANDING_BLOCK_11.2.THREE_COLS_FIX_TARIFFS_BLACK_NODES_LANDINGBLOCKNODECARDPRICE_LIST'),
+			'type' => array('typo'),
 		),
 		'.landing-block-node-card-button' => array(
 			'name' => Loc::getMessage('LANDING_BLOCK_11.2.THREE_COLS_FIX_TARIFFS_BLACK_NODES_LANDINGBLOCKNODECARD_BUTTON'),
@@ -100,6 +104,10 @@ return array(
 		'.landing-block-node-card-button-container' => array(
 			'name' => Loc::getMessage('LANDING_BLOCK_11.2.THREE_COLS_FIX_TARIFFS_BLACK_NODES_LANDINGBLOCKNODECARD_BUTTON'),
 			'type' => 'text-align',
+		),
+		'.landing-block-inner' => array(
+			'name' => Loc::getMessage('LANDING_BLOCK_11.2.THREE_COLS_FIX_TARIFFS_BLACK_CARDS_LANDINGBLOCKNODEINNER'),
+			'type' => 'row-align',
 		),
 	),
 );

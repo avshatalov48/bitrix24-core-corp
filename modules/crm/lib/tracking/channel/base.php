@@ -8,6 +8,7 @@
 namespace Bitrix\Crm\Tracking\Channel;
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Crm\Entity;
 
 Loc::loadMessages(__FILE__);
 
@@ -28,12 +29,51 @@ class Base
 	const Button = 'button';
 	const Form = 'form';
 	const Callback = 'callback';
+	const Rest = 'rest';
+	const Order = 'order';
+	const FbLeadAds = 'fb-lead-ads';
+	const VkLeadAds = 'vk-lead-ads';
 
 	/** @var string $code Code. */
 	protected $code;
 
 	/**	@var string $value Value. */
 	protected $value;
+
+	/**	@var Entity\Identificator\ComplexCollection|null $entities Entity collection. */
+	private $entities;
+
+	/**
+	 * Return true if it is configured.
+	 *
+	 * @return bool
+	 */
+	public static function isConfigured()
+	{
+		return true;
+	}
+
+	/**
+	 * Get name by code.
+	 *
+	 * @param string $code Code.
+	 * @return string
+	 */
+	public static function getNameByCode($code)
+	{
+		return Loc::getMessage('CRM_TRACKING_CHANNEL_BASE_NAME_' . strtoupper($code)) ?: $code;
+	}
+
+	/**
+	 * Get grid name by code.
+	 *
+	 * @param string $code Code.
+	 * @return string
+	 */
+	public static function getGridNameByCode($code)
+	{
+		return Loc::getMessage('CRM_TRACKING_CHANNEL_BASE_GRID_NAME_' . strtoupper($code)) ?: self::getNameByCode($code);
+	}
 
 	/**
 	 * Get source ID.
@@ -46,13 +86,38 @@ class Base
 	}
 
 	/**
+	 * Get entities.
+	 *
+	 * @return Entity\Identificator\ComplexCollection
+	 */
+	public function getEntities()
+	{
+		if (!$this->entities)
+		{
+			$this->entities = new Entity\Identificator\ComplexCollection();
+		}
+
+		return $this->entities;
+	}
+
+	/**
 	 * Return true if supports detecting trace.
 	 *
 	 * @return bool
 	 */
-	public function isSupportDetecting()
+	public function isSupportTraceDetecting()
 	{
-		return false;
+		return $this instanceof Features\TraceDetectable;
+	}
+
+	/**
+	 * Return true if supports detecting entities.
+	 *
+	 * @return bool
+	 */
+	public function isSupportEntityDetecting()
+	{
+		return $this instanceof Features\EntityDetectable;
 	}
 
 	/**
@@ -62,7 +127,7 @@ class Base
 	 */
 	public function isSite()
 	{
-		return $this instanceof iSite;
+		return $this instanceof Features\Site;
 	}
 
 	/**
@@ -72,7 +137,7 @@ class Base
 	 */
 	public function isSourceDirectlyRequiredSingleChannel()
 	{
-		return false;
+		return $this instanceof Features\SingleChannelSourceDetectable;
 	}
 
 	/**
@@ -102,7 +167,7 @@ class Base
 	 */
 	public function getName()
 	{
-		return Loc::getMessage('CRM_TRACKING_CHANNEL_BASE_NAME_' . strtoupper($this->getCode())) ?: $this->getCode();
+		return self::getNameByCode($this->getCode());
 	}
 
 	/**
@@ -112,7 +177,7 @@ class Base
 	 */
 	public function getGridName()
 	{
-		return Loc::getMessage('CRM_TRACKING_CHANNEL_BASE_GRID_NAME_' . strtoupper($this->getCode())) ?: $this->getName();
+		return self::getGridNameByCode($this->getCode());
 	}
 
 	/**
@@ -133,6 +198,16 @@ class Base
 	public function canUse()
 	{
 		return true;
+	}
+
+	/**
+	 * Get items.
+	 *
+	 * @return array
+	 */
+	public function getItems()
+	{
+		return [];
 	}
 
 	/**

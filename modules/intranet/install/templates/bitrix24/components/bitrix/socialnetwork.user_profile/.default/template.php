@@ -1,5 +1,4 @@
 <?if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
-
 /**
  * Bitrix vars
  * @global array $arResult
@@ -9,6 +8,8 @@
  * @global CUserTypeManager $USER_FIELD_MANAGER
  * @global CCacheManager $CACHE_MANAGER
  */
+use Bitrix\Main\Localization\Loc;
+
 $this->addExternalCss(SITE_TEMPLATE_PATH."/css/user_profile.css");
 
 $bBitrix24 = IsModuleInstalled("bitrix24");

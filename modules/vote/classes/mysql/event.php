@@ -79,6 +79,7 @@ class CVoteEvent extends CAllVoteEvent
 					$arSqlSearch[] = $str;
 					break;
 				case "VALID":
+				case "VISIBLE":
 					if (empty($val))
 						$arSqlSearch[] = ($strNegative=="Y"?"NOT":"")."(VE.".$key." IS NULL OR LENGTH(VE.".$key.")<=0)";
 					else

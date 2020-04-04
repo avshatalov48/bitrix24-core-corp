@@ -622,15 +622,22 @@ final class Driver implements IErrorable
 	 * Send change status to Bitrix24.Disk by subscribers of object.
 	 *
 	 * @param BaseObject $object Target object.
+	 * @param string $way
+	 *
 	 * @return void
 	 */
-	public function sendChangeStatusToSubscribers(BaseObject $object)
+	public function sendChangeStatusToSubscribers(BaseObject $object, $way = 'old')
 	{
 		if(defined('DISK_MIGRATE_MODE'))
 		{
 			return;
 		}
-		$subscribers = $this->collectSubscribers($object);
+
+		$subscribers = $way === 'old'?
+			$this->collectSubscribers($object) :
+			$this->getSubscriberManager()->collectSubscribersSmart($object)
+		;
+
 		if($object instanceof Folder)
 		{
 			Driver::getInstance()->cleanCacheTreeBitrixDisk(array_keys($subscribers));
@@ -661,12 +668,15 @@ final class Driver implements IErrorable
 	public function cleanCacheTreeBitrixDisk(array $storageIds)
 	{
 		$cache = Cache::createInstance();
-		foreach($storageIds as $id)
+		foreach ($storageIds as $id)
 		{
-			$cache->clean('storage_tr_' . $id, 'disk');
-			$cache->clean('new_storage_tr_' . $id, 'disk');
+			$cache->clean("new_storage_tr_{$id}", 'disk');
 		}
-		unset($id);
+
+		foreach ($storageIds as $id)
+		{
+			$cache->clean("storage_tr_{$id}", 'disk');
+		}
 	}
 
 	/**

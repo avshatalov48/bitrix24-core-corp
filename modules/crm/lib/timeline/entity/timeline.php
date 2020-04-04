@@ -26,6 +26,7 @@ class TimelineTable  extends Entity\DataManager
 			'AUTHOR_ID' => array('data_type' => 'integer'),
 			'ASSOCIATED_ENTITY_ID' => array('data_type' => 'integer'),
 			'ASSOCIATED_ENTITY_TYPE_ID' => array('data_type' => 'integer'),
+			'ASSOCIATED_ENTITY_CLASS_NAME' => array('data_type' => 'string'),
 			'COMMENT' => array('data_type' => 'text'),
 			'SETTINGS' => array('data_type' => 'text', 'serialized' => true),
 			'BINDINGS' => array(

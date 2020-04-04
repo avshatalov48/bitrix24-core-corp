@@ -57,7 +57,7 @@ class QuoteDataProvider extends EntityDataProvider
 			'TITLE' => $this->createField('TITLE'),
 			'ASSIGNED_BY_ID' => $this->createField(
 				'ASSIGNED_BY_ID',
-				array('type' => 'custom_entity', 'default' => true, 'partial' => true)
+				array('type' => 'dest_selector', 'default' => true, 'partial' => true)
 			),
 
 			'OPPORTUNITY' => $this->createField(
@@ -86,25 +86,25 @@ class QuoteDataProvider extends EntityDataProvider
 			),
 			'LEAD_ID' => $this->createField(
 				'LEAD_ID',
-				array('type' => 'custom_entity', 'partial' => true)
+				array('type' => 'dest_selector', 'partial' => true)
 			),
 			'DEAL_ID' => $this->createField(
 				'DEAL_ID',
-				array('type' => 'custom_entity', 'partial' => true)
+				array('type' => 'dest_selector', 'partial' => true)
 			),
 			'CONTACT_ID' => $this->createField(
 				'CONTACT_ID',
-				array('type' => 'custom_entity', 'default' => true, 'partial' => true)
+				array('type' => 'dest_selector', 'default' => true, 'partial' => true)
 			),
 			'CONTACT_FULL_NAME' => $this->createField('CONTACT_FULL_NAME'),
 			'COMPANY_ID' => $this->createField(
 				'COMPANY_ID',
-				array('type' => 'custom_entity', 'default' => true, 'partial' => true)
+				array('type' => 'dest_selector', 'default' => true, 'partial' => true)
 			),
 			'COMPANY_TITLE' => $this->createField('COMPANY_TITLE'),
 			'MYCOMPANY_ID' => $this->createField(
 				'MYCOMPANY_ID',
-				array('type' => 'custom_entity', 'partial' => true)
+				array('type' => 'dest_selector', 'partial' => true)
 			),
 			'MYCOMPANY_TITLE' => $this->createField('MYCOMPANY_TITLE'),
 			'COMMENTS' => $this->createField('COMMENTS'),
@@ -118,19 +118,19 @@ class QuoteDataProvider extends EntityDataProvider
 			),
 			'CREATED_BY_ID' => $this->createField(
 				'CREATED_BY_ID',
-				array('type' => 'custom_entity', 'partial' => true)
+				array('type' => 'dest_selector', 'partial' => true)
 			),
 			'MODIFY_BY_ID' => $this->createField(
 				'MODIFY_BY_ID',
-				array('type' => 'custom_entity', 'partial' => true)
+				array('type' => 'dest_selector', 'partial' => true)
 			),
 			'PRODUCT_ROW_PRODUCT_ID' => $this->createField(
 				'PRODUCT_ROW_PRODUCT_ID',
-				array('type' => 'custom_entity', 'partial' => true)
+				array('type' => 'dest_selector', 'partial' => true)
 			),
 			'ENTITIES_LINKS' => $this->createField(
 				'ENTITIES_LINKS',
-				array('type' => 'custom_entity', 'partial' => true)
+				array('type' => 'dest_selector', 'partial' => true)
 			),
 			'WEBFORM_ID' => $this->createField(
 				'WEBFORM_ID',
@@ -175,133 +175,206 @@ class QuoteDataProvider extends EntityDataProvider
 		elseif($fieldID === 'ASSIGNED_BY_ID')
 		{
 			return array(
-				'params' => array('multiple' => 'Y'),
-				'selector' => array(
-					'TYPE' => 'user',
-					'DATA' => array('ID' => 'assigned_by', 'FIELD_ID' => 'ASSIGNED_BY_ID')
+				'params' => array(
+					'context' => 'CRM_QUOTE_FILTER_ASSIGNED_BY_ID',
+					'multiple' => 'Y',
+					'contextCode' => 'U',
+					'enableAll' => 'N',
+					'enableSonetgroups' => 'N',
+					'allowEmailInvitation' => 'N',
+					'allowSearchEmailUsers' => 'N',
+					'departmentSelectDisable' => 'Y',
+					'isNumeric' => 'Y',
+					'prefix' => 'U',
 				)
 			);
 		}
 		elseif($fieldID === 'LEAD_ID')
 		{
 			return array(
-				'selector' => array(
-					'TYPE' => 'crm_entity',
-					'DATA' => array(
-						'ID' => 'lead',
-						'FIELD_ID' => 'LEAD_ID',
-						'ENTITY_TYPE_NAMES' => array(\CCrmOwnerType::LeadName),
-						'IS_MULTIPLE' => false
-					)
+				'params' => array(
+					'apiVersion' => 3,
+					'context' => 'CRM_QUOTE_FILTER_LEAD_ID',
+					'contextCode' => 'CRM',
+					'useClientDatabase' => 'N',
+					'enableAll' => 'N',
+					'enableDepartments' => 'N',
+					'enableUsers' => 'N',
+					'enableSonetgroups' => 'N',
+					'allowEmailInvitation' => 'N',
+					'allowSearchEmailUsers' => 'N',
+					'departmentSelectDisable' => 'Y',
+					'enableCrm' => 'Y',
+					'enableCrmLeads' => 'Y',
+					'convertJson' => 'Y'
 				)
 			);
 		}
 		elseif($fieldID === 'DEAL_ID')
 		{
 			return array(
-				'selector' => array(
-					'TYPE' => 'crm_entity',
-					'DATA' => array(
-						'ID' => 'deal',
-						'FIELD_ID' => 'DEAL_ID',
-						'ENTITY_TYPE_NAMES' => array(\CCrmOwnerType::DealName),
-						'IS_MULTIPLE' => false
-					)
+				'params' => array(
+					'apiVersion' => 3,
+					'context' => 'CRM_QUOTE_FILTER_DEAL_ID',
+					'contextCode' => 'CRM',
+					'useClientDatabase' => 'N',
+					'enableAll' => 'N',
+					'enableDepartments' => 'N',
+					'enableUsers' => 'N',
+					'enableSonetgroups' => 'N',
+					'allowEmailInvitation' => 'N',
+					'allowSearchEmailUsers' => 'N',
+					'departmentSelectDisable' => 'Y',
+					'enableCrm' => 'Y',
+					'enableCrmDeals' => 'Y',
+					'convertJson' => 'Y'
 				)
 			);
 		}
 		elseif($fieldID === 'CONTACT_ID')
 		{
 			return array(
-				'selector' => array(
-					'TYPE' => 'crm_entity',
-					'DATA' => array(
-						'ID' => 'contact',
-						'FIELD_ID' => 'CONTACT_ID',
-						'FIELD_ALIAS' => 'ASSOCIATED_CONTACT_ID',
-						'ENTITY_TYPE_NAMES' => array(\CCrmOwnerType::ContactName)
-					)
+				'alias' => 'ASSOCIATED_CONTACT_ID',
+				'params' => array(
+					'apiVersion' => 3,
+					'context' => 'CRM_QUOTE_FILTER_CONTACT_ID',
+					'contextCode' => 'CRM',
+					'useClientDatabase' => 'N',
+					'enableAll' => 'N',
+					'enableDepartments' => 'N',
+					'enableUsers' => 'N',
+					'enableSonetgroups' => 'N',
+					'allowEmailInvitation' => 'N',
+					'allowSearchEmailUsers' => 'N',
+					'departmentSelectDisable' => 'Y',
+					'enableCrm' => 'Y',
+					'enableCrmContacts' => 'Y',
+					'convertJson' => 'Y'
 				)
 			);
 		}
 		elseif($fieldID === 'COMPANY_ID')
 		{
 			return array(
-				'selector' => array(
-					'TYPE' => 'crm_entity',
-					'DATA' => array(
-						'ID' => 'company',
-						'FIELD_ID' => 'COMPANY_ID',
-						'ENTITY_TYPE_NAMES' => array(\CCrmOwnerType::CompanyName)
-					)
+				'params' => array(
+					'apiVersion' => 3,
+					'context' => 'CRM_QUOTE_FILTER_COMPANY_ID',
+					'contextCode' => 'CRM',
+					'useClientDatabase' => 'N',
+					'enableAll' => 'N',
+					'enableDepartments' => 'N',
+					'enableUsers' => 'N',
+					'enableSonetgroups' => 'N',
+					'allowEmailInvitation' => 'N',
+					'allowSearchEmailUsers' => 'N',
+					'departmentSelectDisable' => 'Y',
+					'enableCrm' => 'Y',
+					'enableCrmCompanies' => 'Y',
+					'convertJson' => 'Y'
 				)
 			);
 		}
 		elseif($fieldID === 'MYCOMPANY_ID')
 		{
 			return array(
-				'selector' => array(
-					'TYPE' => 'crm_entity',
-					'DATA' => array(
-						'ID' => 'my_company',
-						'FIELD_ID' => 'MYCOMPANY_ID',
-						'ENTITY_TYPE_NAMES' => array(\CCrmOwnerType::CompanyName),
-						'IS_MULTIPLE' => false
-					)
+				'params' => array(
+					'apiVersion' => 3,
+					'context' => 'CRM_QUOTE_FILTER_MYCOMPANY_ID',
+					'contextCode' => 'CRM',
+					'useClientDatabase' => 'N',
+					'enableAll' => 'N',
+					'enableDepartments' => 'N',
+					'enableUsers' => 'N',
+					'enableSonetgroups' => 'N',
+					'allowEmailInvitation' => 'N',
+					'allowSearchEmailUsers' => 'N',
+					'departmentSelectDisable' => 'Y',
+					'enableCrm' => 'Y',
+					'enableCrmCompanies' => 'Y',
+					'convertJson' => 'Y'
 				)
 			);
 		}
 		elseif($fieldID === 'ENTITIES_LINKS')
 		{
 			return array(
-				'selector' => array(
-					'TYPE' => 'crm_entity',
-					'DATA' => array(
-						'ID' => 'entities_links',
-						'FIELD_ID' => 'ENTITIES_LINKS',
-						'ENTITY_TYPE_NAMES' => array(
-							\CCrmOwnerType::LeadName,
-							\CCrmOwnerType::DealName,
-							\CCrmOwnerType::CompanyName,
-							\CCrmOwnerType::ContactName
-						),
-						'IS_MULTIPLE' => false
-					)
+				'params' => array(
+					'apiVersion' => 3,
+					'context' => 'CRM_QUOTE_FILTER_ENTITY',
+					'contextCode' => 'CRM',
+					'useClientDatabase' => 'N',
+					'enableAll' => 'N',
+					'enableDepartments' => 'N',
+					'enableUsers' => 'N',
+					'enableSonetgroups' => 'N',
+					'allowEmailInvitation' => 'N',
+					'allowSearchEmailUsers' => 'N',
+					'departmentSelectDisable' => 'Y',
+					'enableCrm' => 'Y',
+					'enableCrmCompanies' => 'Y',
+					'enableCrmContacts' => 'Y',
+					'enableCrmDeals' => 'Y',
+					'enableCrmLeads' => 'Y',
+					'addTabCrmCompanies' => 'Y',
+					'addTabCrmContacts' => 'Y',
+					'addTabCrmDeals' => 'Y',
+					'addTabCrmLeads' => 'Y',
+					'convertJson' => 'Y'
 				)
 			);
 		}
 		elseif($fieldID === 'CREATED_BY_ID')
 		{
 			return array(
-				'params' => array('multiple' => 'Y'),
-				'selector' => array(
-					'TYPE' => 'user',
-					'DATA' => array('ID' => 'created_by', 'FIELD_ID' => 'CREATED_BY_ID')
+				'params' => array(
+					'context' => 'CRM_QUOTE_FILTER_CREATED_BY_ID',
+					'multiple' => 'Y',
+					'contextCode' => 'U',
+					'enableAll' => 'N',
+					'enableSonetgroups' => 'N',
+					'allowEmailInvitation' => 'N',
+					'allowSearchEmailUsers' => 'N',
+					'departmentSelectDisable' => 'Y',
+					'isNumeric' => 'Y',
+					'prefix' => 'U',
 				)
 			);
 		}
 		elseif($fieldID === 'MODIFY_BY_ID')
 		{
 			return array(
-				'params' => array('multiple' => 'Y'),
-				'selector' => array(
-					'TYPE' => 'user',
-					'DATA' => array('ID' => 'modify_by', 'FIELD_ID' => 'MODIFY_BY_ID')
+				'params' => array(
+					'context' => 'CRM_QUOTE_FILTER_MODIFY_BY_ID',
+					'multiple' => 'Y',
+					'contextCode' => 'U',
+					'enableAll' => 'N',
+					'enableSonetgroups' => 'N',
+					'allowEmailInvitation' => 'N',
+					'allowSearchEmailUsers' => 'N',
+					'departmentSelectDisable' => 'Y',
+					'isNumeric' => 'Y',
+					'prefix' => 'U',
 				)
 			);
 		}
 		elseif($fieldID === 'PRODUCT_ROW_PRODUCT_ID')
 		{
 			return array(
-				'params' => array('multiple' => 'N'),
-				'selector' => array(
-					'TYPE' => 'crm_entity',
-					'DATA' => array(
-						'ID' => 'product',
-						'FIELD_ID' => 'PRODUCT_ROW_PRODUCT_ID',
-						'ENTITY_TYPE_NAMES' => array('PRODUCT'),
-						'IS_MULTIPLE' => false
-					)
+				'params' => array(
+					'apiVersion' => 3,
+					'context' => 'CRM_QUOTE_FILTER_PRODUCT_ID',
+					'contextCode' => 'CRM',
+					'useClientDatabase' => 'N',
+					'enableAll' => 'N',
+					'enableDepartments' => 'N',
+					'enableUsers' => 'N',
+					'enableSonetgroups' => 'N',
+					'allowEmailInvitation' => 'N',
+					'allowSearchEmailUsers' => 'N',
+					'departmentSelectDisable' => 'Y',
+					'enableCrm' => 'Y',
+					'enableCrmProducts' => 'Y',
+					'convertJson' => 'Y'
 				)
 			);
 		}

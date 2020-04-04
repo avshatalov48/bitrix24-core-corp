@@ -815,7 +815,7 @@ class CCrmInvoiceRestService extends IRestService
 				"required" => true,
 				"readonly" => false,
 				"get" => true,
-				"add" => false,
+				"add" => true,
 				"update" => true,
 				"list" => true,
 				"filter" => true,

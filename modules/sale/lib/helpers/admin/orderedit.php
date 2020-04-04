@@ -7,18 +7,15 @@ use Bitrix\Sale\Fuser;
 use Bitrix\Sale\Order;
 use Bitrix\Main\Loader;
 use Bitrix\Sale\Basket;
+use Bitrix\Sale\OrderBase;
 use Bitrix\Sale\Result;
-use Bitrix\Sale\Discount;
 use Bitrix\Sale\Provider;
 use Bitrix\Main\UserTable;
 use Bitrix\Sale\BasketItem;
 use Bitrix\Main\Page\Asset;
 use Bitrix\Iblock\IblockTable;
-use Bitrix\Main\Config\Option;
-use Bitrix\Highloadblock as HL;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Sale\SaleProviderBase;
 use Bitrix\Sale\Services\Company;
 use Bitrix\Main\Entity\EntityError;
 use Bitrix\Sale\UserMessageException;
@@ -41,6 +38,8 @@ Loader::registerAutoLoadClasses('sale',
 		'\Bitrix\Sale\Helpers\Admin\Blocks\OrderBuyer' => 'lib/helpers/admin/blocks/orderbuyer.php',
 		'\Bitrix\Sale\Helpers\Admin\Blocks\OrderInfo' => 'lib/helpers/admin/blocks/orderinfo.php',
 		'\Bitrix\Sale\Helpers\Admin\Blocks\OrderMarker' => 'lib/helpers/admin/blocks/ordermarker.php',
+
+		'\Bitrix\Sale\Helpers\Admin\OrderEditResult' => 'lib/helpers/admin/ordereditresult.php'
 ));
 
 /**
@@ -193,12 +192,12 @@ class OrderEdit
 			<script type="text/javascript">
 				BX.ready(function(){
 					BX.Sale.Admin.OrderEditPage.orderId = "'.$order->getId().'";
-					BX.Sale.Admin.OrderEditPage.siteId = "'.$order->getSiteId().'";
+					BX.Sale.Admin.OrderEditPage.siteId = "'.\CUtil::JSEscape($order->getSiteId()).'";
 					BX.Sale.Admin.OrderEditPage.languageId = "'.LANGUAGE_ID.'";
 					BX.Sale.Admin.OrderEditPage.formId = "'.$formId.'_form";
 					BX.Sale.Admin.OrderEditPage.adminTabControlId = "'.$formId.'";
 					'.(!empty($currencies) ? 'BX.Currency.setCurrencies('.\CUtil::PhpToJSObject($currencies, false, true, true).');' : '').
-					'BX.Sale.Admin.OrderEditPage.currency = "'.$currencyId.'";
+					'BX.Sale.Admin.OrderEditPage.currency = "'.\CUtil::JSEscape($currencyId).'";
 					BX.Sale.Admin.OrderEditPage.currencyLang = "'.\CUtil::JSEscape($currencyLang).'";';
 
 		if($formId == "sale_order_create")
@@ -368,7 +367,10 @@ class OrderEdit
 			$name,
 			$formData["SITE_ID"],
 			$errors,
-			array('PERSONAL_PHONE' => $phone)
+			[
+				'PERSONAL_PHONE' => $phone,
+				'PHONE_NUMBER' => $phone
+			]
 		);
 
 		if (!empty($errors))
@@ -445,9 +447,7 @@ class OrderEdit
 		if(!$res->isSuccess())
 			$opResult->addErrors($res->getErrors());
 
-		$propCollection = $order->getPropertyCollection();
-		$res = $propCollection->setValuesFromPost($formData, $files);
-
+		$res = self::fillOrderProperties($order, $formData, $files);
 		if(!$res->isSuccess())
 			$opResult->addErrors($res->getErrors());
 
@@ -601,7 +601,11 @@ class OrderEdit
 			if(!$res->isSuccess())
 			{
 				$opResult->addErrors($res->getErrors());
-				//return null;
+
+				if($res->isTerminal())
+				{
+					return null;
+				}
 			}
 
 			if ($isStartField)
@@ -625,6 +629,12 @@ class OrderEdit
 		}
 
 		return $order;
+	}
+
+	public static function fillOrderProperties(OrderBase $order, $formData, $files = [])
+	{
+		$propCollection = $order->getPropertyCollection();
+		return $propCollection->setValuesFromPost($formData, $files);
 	}
 
 	public static function isBasketItemNew($basketCode)
@@ -960,6 +970,13 @@ class OrderEdit
 						$result->addErrors($res->getErrors());
 //						return null;
 					}
+					elseif($res->hasWarnings())
+					{
+						foreach($res->getWarningMessages() as $warning)
+						{
+							$result->addError(new Error($warning));
+						}
+					}
 				}
 
 				/*
@@ -993,7 +1010,11 @@ class OrderEdit
 			if(!$res->isSuccess())
 			{
 				$result->addErrors($res->getErrors());
-//				return null;
+
+				if($res->isTerminal())
+				{
+					return null;
+				}
 			}
 
 			if ($isStartField)
@@ -1126,7 +1147,7 @@ class OrderEdit
 	public static function fillBasketItems(Basket &$basket, array $productsFormData, Order $order, array $needDataUpdate = array())
 	{
 		$basketItems = $basket->getBasketItems();
-		$result = new Result();
+		$result = new OrderEditResult();
 		$catalogProductsIds = array();
 		$trustData = array();
 
@@ -1177,7 +1198,19 @@ class OrderEdit
 			if(!$res->isSuccess())
 			{
 				$result->addErrors($res->getErrors());
-				//return $result;
+				$justAdded = isset($productsFormData[$basketCode]['JUST_ADDED']) && $productsFormData[$basketCode]['JUST_ADDED'] == 'Y';
+
+				if($justAdded)
+				{
+					foreach($res->getErrors() as $error)
+					{
+						if($error->getCode() == 'SALE_BASKET_ITEM_WRONG_AVAILABLE_QUANTITY')
+						{
+							$result->setIsTerminal(true);
+							return $result;
+						}
+					}
+				}
 			}
 
 			if(isset($productData["MODULE"]) && $productData["MODULE"] == "catalog")
@@ -1735,7 +1768,7 @@ class OrderEdit
 				{
 					$oneCoupon['JS_CHECK_CODE'] = (
 					is_array($oneCoupon['CHECK_CODE_TEXT'])
-						? implode('<br>', $oneCoupon['CHECK_CODE_TEXT'])
+						? implode(', ', $oneCoupon['CHECK_CODE_TEXT'])
 						: $oneCoupon['CHECK_CODE_TEXT']
 					);
 				}

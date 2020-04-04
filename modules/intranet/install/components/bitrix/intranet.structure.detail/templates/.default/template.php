@@ -4,7 +4,7 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 <?
 if (!is_array($arResult['USER'])):
 ?>
-пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
+Пользователь не найден
 <?
 else:
 ?>
@@ -15,7 +15,7 @@ else:
 
 <?=(strlen($arResult['USER']['PERSONAL_PHOTO']) > 0) ? '<div class="bx-user-photo">'.$arResult['USER']['PERSONAL_PHOTO'].'</div>' : ''?>
 
-<h4>пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ</h4>
+<h4>Подразделения</h4>
 
 <div class="bx-user-departments">
 	<ul>
@@ -33,9 +33,9 @@ else:
 <div class="bx-user-fields">
 	<ul>
 		<li><b>E-mail: </b><a href="mailto:<?=$arResult['USER']['EMAIL']?>"><?=$arResult['USER']['EMAIL']?></a></li>
-		<li><b>пїЅпїЅпїЅ. пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ: </b><?=$arResult['USER']['UF_PHONE_INNER']?></li>
-		<li><b>пїЅпїЅпїЅ. пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ: </b><?=$arResult['USER']['PERSONAL_MOBILE']?></li>
-		<li><b>пїЅпїЅпїЅпїЅпїЅ: </b><?=$arResult['USER']['PERSONAL_STREET']?></li>
+		<li><b>Тел. внутренний: </b><?=$arResult['USER']['UF_PHONE_INNER']?></li>
+		<li><b>Тел. мобильный: </b><?=$arResult['USER']['PERSONAL_MOBILE']?></li>
+		<li><b>Адрес: </b><?=$arResult['USER']['PERSONAL_STREET']?></li>
 	</ul>
 </div>
 
@@ -55,7 +55,7 @@ endif;
 <?
 if ($arParams['LIST_URL']):
 ?>
-<div style="bx-back-url"><a href="<?=$arParams['LIST_URL']?>">пїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ</a></div>
+<div style="bx-back-url"><a href="<?=$arParams['LIST_URL']?>">К списку пользователей</a></div>
 <?
 endif;
 ?>

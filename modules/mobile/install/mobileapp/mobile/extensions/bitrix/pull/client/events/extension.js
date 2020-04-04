@@ -13,6 +13,8 @@
 	 *  Dont modify following script, this is copy from mobile/install/js/mobile/pull/client/src/client.js
 	 */
 
+	// start common code
+
 	var PullStatus = {
 		Online: 'online',
 		Offline: 'offline',
@@ -39,7 +41,7 @@
 
 	class PullEvents
 	{
-		constructor(method, options)
+		constructor()
 		{
 			this._subscribers = {};
 			this._eventListener = {};
@@ -52,6 +54,7 @@
 		 *
 		 * @param {Object} params
 		 * @param {string} [params.type] Subscription type (for possible values see SubscriptionType).
+		 * @param {string} [params.command] command
 		 * @param {string} [params.moduleId] Name of the module.
 		 * @param {Function} params.callback Function, that will be called for incoming messages.
 		 * @returns {Function} - Unsubscribe callback function
@@ -74,81 +77,101 @@
 			let eventName = '';
 			let eventType = params.type;
 
-			if (typeof env !== 'undefined')
+			if (
+				eventType === SubscriptionType.Server
+				|| eventType === SubscriptionType.Client
+				|| eventType === SubscriptionType.Online
+			)
 			{
-				if (eventType == SubscriptionType.Server)
+				if (eventType === SubscriptionType.Server)
 				{
-					eventName = "onPullEvent-" + params.moduleId;
+					eventName = typeof env !== 'undefined'? "onPullEvent-" + params.moduleId: "onPull-" + params.moduleId;
 				}
-				else if (eventType == SubscriptionType.Client)
+				else if (eventType === SubscriptionType.Client)
 				{
-					eventName = "onPullClientEvent-" + params.moduleId;
+					eventName = typeof env !== 'undefined'? "onPullClientEvent-" + params.moduleId: "onPullClient-" + params.moduleId;
 				}
-				else if (eventType == SubscriptionType.Online)
+				else if (eventType === SubscriptionType.Online)
 				{
-					eventName = "onPullOnlineEvent";
+					eventName = typeof env !== 'undefined'? "onPullOnlineEvent": 'onPullOnline';
 				}
-				if (eventName && !this._eventListener[eventName])
-				{
-					this._eventListener[eventName] = true;
-					BX.addCustomEvent(eventName, (command, params, extra, moduleId) => {
-						let event = {
-							type : eventType,
-							moduleId : moduleId,
-							data: {
-								command,
-								params: Utils.clone(params),
-								extra: Utils.clone(params)
-							}
-						};
-						if (!(eventType == SubscriptionType.Server || eventType == SubscriptionType.Client))
-						{
-							delete event.moduleId;
-						}
-						this.emit(event);
-					});
-				}
-			}
-			else
-			{
-				if (eventType == SubscriptionType.Server)
-				{
-					eventName = "onPull-" + params.moduleId;
-				}
-				else if (eventType == SubscriptionType.Client)
-				{
-					eventName = "onPullClient-" + params.moduleId;
-				}
-				else if (eventType == SubscriptionType.Online)
-				{
-					eventName = "onPullOnline";
-				}
+
 				if (eventName && !this._eventListener[eventName])
 				{
 					this._eventListener[eventName] = true;
 
-					this.receiveComponentEvent(eventName, data => {
-						let event = {
-							type : SubscriptionType.Server,
-							moduleId : data.module_id,
-							data: Utils.clone(data)
-						};
-						if (!(eventType == SubscriptionType.Server || eventType == SubscriptionType.Client))
+					if (typeof env !== 'undefined')
+					{
+						BX.addCustomEvent(eventName, (command, params, extra, moduleId) =>
 						{
-							delete event.moduleId;
-						}
-						this.emit(event);
-					});
+							if (eventType === SubscriptionType.Online)
+							{
+								moduleId = 'online';
+							}
+							this.emit({
+								type : eventType,
+								moduleId : moduleId,
+								data: {
+									command,
+									params: Utils.clone(params),
+									extra: Utils.clone(extra)
+								}
+							});
+						});
+					}
+					else
+					{
+						this.receiveComponentEvent(eventName, data =>
+						{
+							if (eventType === SubscriptionType.Online)
+							{
+								data.module_id = 'online';
+							}
+							this.emit({
+								type : eventType,
+								moduleId : data.module_id,
+								data: Utils.clone(data)
+							});
+						});
+					}
 				}
 			}
+			else if (eventType === SubscriptionType.Status)
+			{
+				eventName = 'onPullStatus';
+
+				if (eventName && !this._eventListener[eventName])
+				{
+					this._eventListener[eventName] = true;
+
+					if (typeof env !== 'undefined')
+					{
+						BX.addCustomEvent(eventName, (status) => {
+							this.emit({
+								type : eventType,
+								data: {status}
+							});
+						});
+					}
+					else
+					{
+						this.receiveComponentEvent(eventName, data => {
+							this.emit({
+								type : eventType,
+								data: Utils.clone(data)
+							});
+						});
+					}
+				}
+			}
+
 
 			/**
 			 *  Dont modify following code, copy from pull/install/js/pull/client/pull.client.js: 'subscribe'
 			 */
-
 			params.command = params.command || null;
 
-			if (params.type == SubscriptionType.Server || params.type == SubscriptionType.Client)
+			if (params.type === SubscriptionType.Server || params.type === SubscriptionType.Client)
 			{
 				if (typeof (this._subscribers[params.type]) === 'undefined')
 				{
@@ -379,7 +402,7 @@
 			 */
 			params = params || {};
 
-			if (params.type == SubscriptionType.Server || params.type == SubscriptionType.Client)
+			if (params.type === SubscriptionType.Server || params.type === SubscriptionType.Client)
 			{
 				if (typeof (this._subscribers[params.type]) === 'undefined')
 				{
@@ -432,17 +455,17 @@
 		}
 	}
 
-	let Utils =
+	var Utils =
 	{
 		isArray(item)
 		{
-			return item && Object.prototype.toString.call(item) == "[object Array]";
+			return item && Object.prototype.toString.call(item) === "[object Array]";
 		},
 		isDomNode: function(item) {
 			return item && typeof (item) == "object" && "nodeType" in item;
 		},
 		isDate: function(item) {
-			return item && Object.prototype.toString.call(item) == "[object Date]";
+			return item && Object.prototype.toString.call(item) === "[object Date]";
 		},
 		clone(obj, bCopyObj)
 		{
@@ -552,6 +575,8 @@
 			return d.getFullYear() + "-" + Utils.lpad(d.getMonth(), 2, '0') + "-" + Utils.lpad(d.getDate(), 2, '0') + " " + Utils.lpad(d.getHours(), 2, '0') + ":" + Utils.lpad(d.getMinutes(), 2, '0');
 		},
 	};
+
+	// end common code
 
 	if (!window.BX)
 	{

@@ -132,6 +132,7 @@ $arAEParams = array(
 	'TOOLBAR_ID' => 'crm_invoice_toolbar',
 	'OWNER_TYPE' => \CCrmOwnerType::InvoiceName,
 	'OWNER_ID' => $arResult['ELEMENT_ID'],
+	'SKIP_VISUAL_COMPONENTS' => 'Y'
 );
 
 if(isset($arResult['ELEMENT']['UF_DEAL_ID']) && intval($arResult['ELEMENT']['UF_DEAL_ID']) > 0)

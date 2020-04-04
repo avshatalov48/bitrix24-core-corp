@@ -47,29 +47,29 @@ class InvoiceDataProvider extends EntityDataProvider
 	 */
 	public function prepareFields()
 	{
-		$result =  array(
+		$result =  [
 			'ID' => $this->createField('ID'),
 			'ACCOUNT_NUMBER' => $this->createField('ACCOUNT_NUMBER'),
 			'ORDER_TOPIC' => $this->createField('ORDER_TOPIC'),
-			'PRICE' => $this->createField('PRICE', array('type' => 'number')),
-			'DATE_INSERT' => $this->createField('DATE_INSERT', array('type' => 'date')),
-			'RESPONSIBLE_ID' => $this->createField(
-				'RESPONSIBLE_ID',
-				array('type' => 'custom_entity', 'default' => true, 'partial' => true)
-			),
-			'ENTITIES_LINKS' => $this->createField(
-				'ENTITIES_LINKS',
-				array('type' => 'custom_entity', 'default' => false, 'partial' => true)
-			),
-			'UF_MYCOMPANY_ID' => $this->createField(
-				'UF_MYCOMPANY_ID',
-				array('type' => 'custom_entity', 'default' => false, 'partial' => true)
-			),
-		);
+			'PRICE' => $this->createField('PRICE', ['type' => 'number']),
+			'DATE_INSERT' => $this->createField('DATE_INSERT', ['type' => 'date'])
+		];
 
 		if($this->settings->checkFlag(InvoiceSettings::FLAG_RECURRING))
 		{
 			$result += array(
+				'RESPONSIBLE_ID' => $this->createField(
+					'RESPONSIBLE_ID',
+					['type' => 'dest_selector', 'default' => true, 'partial' => true]
+				),
+				'ENTITIES_LINKS' => $this->createField(
+					'ENTITIES_LINKS',
+					['type' => 'dest_selector', 'default' => false, 'partial' => true]
+				),
+				'UF_MYCOMPANY_ID' => $this->createField(
+					'UF_MYCOMPANY_ID',
+					['type' => 'dest_selector', 'default' => false, 'partial' => true]
+				),
 				'CRM_INVOICE_RECURRING_ACTIVE' => $this->createField(
 					'CRM_INVOICE_RECURRING_ACTIVE',
 					array('default' => true, 'type' => 'checkbox')
@@ -91,6 +91,11 @@ class InvoiceDataProvider extends EntityDataProvider
 		else
 		{
 			$result += array(
+				'DATE_UPDATE' => $this->createField('DATE_UPDATE', array('type' => 'date')),
+				'DATE_BILL' => $this->createField(
+					'DATE_BILL',
+					array('default' => true, 'type' => 'date')
+				),
 				'DATE_PAY_BEFORE' => $this->createField(
 					'DATE_PAY_BEFORE',
 					array('default' => true, 'type' => 'date')
@@ -98,6 +103,31 @@ class InvoiceDataProvider extends EntityDataProvider
 				'STATUS_ID' => $this->createField(
 					'STATUS_ID',
 					array('default' => true, 'type' => 'list', 'partial' => true)
+				),
+				'DATE_STATUS' => $this->createField(
+					'DATE_STATUS',
+					array('default' => false, 'type' => 'date')
+				),
+				'PAY_VOUCHER_NUM' => $this->createField('PAY_VOUCHER_NUM'),
+				'PAY_VOUCHER_DATE' => $this->createField(
+					'PAY_VOUCHER_DATE',
+					array('default' => false, 'type' => 'date')
+				),
+				'DATE_MARKED' => $this->createField(
+					'DATE_MARKED',
+					array('default' => false, 'type' => 'date')
+				),
+				'RESPONSIBLE_ID' => $this->createField(
+					'RESPONSIBLE_ID',
+					['type' => 'dest_selector', 'default' => true, 'partial' => true]
+				),
+				'ENTITIES_LINKS' => $this->createField(
+					'ENTITIES_LINKS',
+					['type' => 'dest_selector', 'default' => false, 'partial' => true]
+				),
+				'UF_MYCOMPANY_ID' => $this->createField(
+					'UF_MYCOMPANY_ID',
+					['type' => 'dest_selector', 'default' => false, 'partial' => true]
 				),
 			);
 		}
@@ -116,42 +146,67 @@ class InvoiceDataProvider extends EntityDataProvider
 		if ($fieldID === 'RESPONSIBLE_ID')
 		{
 			return array(
-				'selector' => array(
-					'TYPE' => 'user',
-					'DATA' => array('ID' => 'responsible', 'FIELD_ID' => 'RESPONSIBLE_ID')
+				'params' => array(
+					'apiVersion' => 3,
+					'context' => 'CRM_INVOICE_FILTER_RESPONSIBLE_ID',
+					'multiple' => 'Y',
+					'contextCode' => 'U',
+					'enableAll' => 'N',
+					'enableSonetgroups' => 'N',
+					'allowEmailInvitation' => 'N',
+					'allowSearchEmailUsers' => 'N',
+					'departmentSelectDisable' => 'Y',
+					'isNumeric' => 'Y',
+					'prefix' => 'U'
 				)
 			);
 		}
 		else if ($fieldID === 'ENTITIES_LINKS')
 		{
 			return array(
-				'selector' => array(
-					'TYPE' => 'crm_entity',
-					'DATA' => array(
-						'ID' => 'entities_links',
-						'FIELD_ID' => 'ENTITIES_LINKS',
-						'ENTITY_TYPE_NAMES' => array(
-							\CCrmOwnerType::DealName,
-							\CCrmOwnerType::QuoteName,
-							\CCrmOwnerType::CompanyName,
-							\CCrmOwnerType::ContactName
-						),
-						'IS_MULTIPLE' => false
-					)
+				'params' => array(
+					'apiVersion' => 3,
+					'context' => 'CRM_INVOICE_FILTER_ENTITY',
+					'contextCode' => 'CRM',
+					'useClientDatabase' => 'N',
+					'enableAll' => 'N',
+					'enableDepartments' => 'N',
+					'enableUsers' => 'N',
+					'enableSonetgroups' => 'N',
+					'allowEmailInvitation' => 'N',
+					'allowSearchEmailUsers' => 'N',
+					'departmentSelectDisable' => 'Y',
+					'enableCrm' => 'Y',
+					'enableCrmCompanies' => 'Y',
+					'enableCrmContacts' => 'Y',
+					'enableCrmDeals' => 'Y',
+					'enableCrmQuotes' => 'Y',
+					'addTabCrmCompanies' => 'Y',
+					'addTabCrmContacts' => 'Y',
+					'addTabCrmDeals' => 'Y',
+					'addTabCrmQuotes' => 'Y',
+					'convertJson' => 'Y'
 				)
 			);
 		}
 		else if ($fieldID === 'UF_MYCOMPANY_ID')
 		{
 			return array(
-				'selector' => array(
-					'TYPE' => 'crm_entity',
-					'DATA' => array(
-						'ID' => 'uf_mycompany',
-						'FIELD_ID' => 'UF_MYCOMPANY_ID',
-						'ENTITY_TYPE_NAMES' => array(\CCrmOwnerType::CompanyName),
-						'IS_MULTIPLE' => false
-					)
+				'params' => array(
+					'apiVersion' => 3,
+					'context' => 'CRM_INVOICE_FILTER_UF_MYCOMPANY_ID',
+					'contextCode' => 'CRM',
+					'useClientDatabase' => 'N',
+					'enableAll' => 'N',
+					'enableDepartments' => 'N',
+					'enableUsers' => 'N',
+					'enableSonetgroups' => 'N',
+					'allowEmailInvitation' => 'N',
+					'allowSearchEmailUsers' => 'N',
+					'departmentSelectDisable' => 'Y',
+					'enableCrm' => 'Y',
+					'enableCrmCompanies' => 'Y',
+					'convertJson' => 'Y'
 				)
 			);
 		}

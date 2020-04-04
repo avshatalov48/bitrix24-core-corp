@@ -30,16 +30,16 @@ span.bx-filter-hellip { width:20px; display:inline-block; text-align:center;}
 
 /*Common actions icons */
 div.bx-popup-menu td.popupmenu div.popupitem td.gutter div {
-	background:url(images/popup/drop-menu-icons.png) no-repeat;
+	background:url(images/popup/drop-menu-icons1.png) no-repeat;
 	width: 24px;
 	height: 24px;
 }
 div.bx-popup-menu td.popupmenu div.popupitem td.gutter div.view {background-position: -78px -48px;}
 div.bx-popup-menu td.popupmenu div.popupitem td.gutter div.edit {background-position: -78px -82px;}
+div.bx-popup-menu td.popupmenu div.popupitem td.gutter div.copy {background-position: -78px -357px;}
 div.bx-popup-menu td.popupmenu div.popupitem td.gutter div.delete {background-position: -78px -116px;}
 
 
-div.bx-popup-menu td.popupmenu div.popupitem td.gutter div.copy {background:url(images/popup/copy.gif) no-repeat 0 0 !important;}
 div.bx-popup-menu td.popupmenu div.popupitem td.gutter div.print {background:url(images/popup/print.png) no-repeat 0 0 !important;}
 div.bx-popup-menu td.popupmenu div.popupitem td.gutter div.checked {background:url(images/popup/checkbox.gif) no-repeat 0 0 !important;}
 div.bx-popup-menu td.popupmenu div.popupitem td.gutter div.list {background:url(images/popup/list.gif) no-repeat 0 0 !important;}

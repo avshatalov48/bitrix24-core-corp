@@ -1,3 +1,3 @@
 <?
-$MESS["TITLE"] = "Order properties";
+$MESS["TITLE"] = "Order Properties";
 ?>

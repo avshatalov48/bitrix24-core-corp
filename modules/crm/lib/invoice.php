@@ -265,9 +265,14 @@ class InvoiceTable extends Entity\DataManager
 
 		/** @var \Bitrix\Sale\Payment $payment*/
 		$payment = $parameters['payment'];
+		if ($payment::getRegistryType() !== REGISTRY_TYPE_CRM_INVOICE)
+		{
+			return;
+		}
+
 		$status = $parameters['status'];
 		$paySystemId = $parameters['pay_system_id'];
-		
+
 		if ($status === 'Y')
 		{
 			$paysystem = \Bitrix\Sale\PaySystem\Manager::getById($paySystemId);

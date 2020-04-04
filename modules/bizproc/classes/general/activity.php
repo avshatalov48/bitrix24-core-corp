@@ -1,7 +1,7 @@
-<?
-IncludeModuleLangFile(__FILE__);
+<?php
 
 use Bitrix\Bizproc;
+use Bitrix\Main;
 
 abstract class CBPActivity
 {
@@ -556,14 +556,14 @@ abstract class CBPActivity
 	{
 		$return = true;
 		$property = null;
+		/** @var CBPDocumentService $documentService */
+		$documentService = $this->workflow->GetService("DocumentService");
 
 		if ($objectName == "Document")
 		{
 			$rootActivity = $this->GetRootActivity();
 			$documentId = $rootActivity->GetDocumentId();
 
-			/** @var CBPDocumentService $documentService */
-			$documentService = $this->workflow->GetService("DocumentService");
 			$documentType = $this->GetDocumentType();
 			$document = $documentService->GetDocument($documentId, $documentType);
 			$documentFields = $documentService->GetDocumentFields($documentType);
@@ -588,10 +588,7 @@ abstract class CBPActivity
 				if (is_array($result) && strtoupper(substr($fieldName, -strlen('_PRINTABLE'))) == '_PRINTABLE')
 					$result = implode(", ", CBPHelper::MakeArrayFlat($result));
 
-				if (!empty($modifiers))
-				{
-					$property = isset($documentFields[$fieldName]) ? $documentFields[$fieldName] : null;
-				}
+				$property = isset($documentFields[$fieldName]) ? $documentFields[$fieldName] : null;
 			}
 		}
 		elseif (in_array($objectName, ['Template', 'Variable', 'Constant']))
@@ -644,21 +641,28 @@ abstract class CBPActivity
 			$property = array('Type' => 'datetime');
 			$systemField = strtolower($fieldName);
 			if ($systemField === 'now')
-				$result = date($DB->DateFormatToPHP(CSite::GetDateFormat("FULL")));
+			{
+				$result = new Bizproc\BaseType\Value\DateTime();
+				//$result = date($DB->DateFormatToPHP(CSite::GetDateFormat("FULL")));
+			}
 			elseif ($systemField === 'nowlocal')
 			{
-				$result = time();
-				if (CTimeZone::Enabled())
-					$result += CTimeZone::GetOffset();
-				$result = date($DB->DateFormatToPHP(CSite::GetDateFormat("FULL")), $result);
+				$result = new Bizproc\BaseType\Value\DateTime(time(), CTimeZone::GetOffset());
+				//$result = time();
+				//if (CTimeZone::Enabled())
+				//	$result += CTimeZone::GetOffset();
+				//$result = date($DB->DateFormatToPHP(CSite::GetDateFormat("FULL")), $result);
 			}
 			elseif ($systemField == 'date')
 			{
-				$result = date($DB->DateFormatToPHP(CSite::GetDateFormat("SHORT")));
+				$result = new Bizproc\BaseType\Value\Date();
+				//$result = date($DB->DateFormatToPHP(CSite::GetDateFormat("SHORT")));
 				$property = array('Type' => 'date');
 			}
 			if ($result === null)
+			{
 				$return = false;
+			}
 		}
 		elseif ($objectName)
 		{
@@ -677,6 +681,16 @@ abstract class CBPActivity
 		}
 		else
 			$return = false;
+
+		if ($property && $result)
+		{
+			$fieldTypeObject = $documentService->getFieldTypeObject($this->GetDocumentType(), $property);
+			if ($fieldTypeObject)
+			{
+				$fieldTypeObject->setDocumentId($this->GetDocumentId());
+				$result = $fieldTypeObject->internalizeValue($objectName, $result);
+			}
+		}
 
 		if ($return)
 			$result = $this->applyPropertyValueModifiers($fieldName, $property, $result, $modifiers);
@@ -809,7 +823,7 @@ abstract class CBPActivity
 		return null;
 	}
 
-	function __get($name)
+	public function __get($name)
 	{
 		$property = $this->getRawProperty($name);
 		if ($property !== null)
@@ -820,12 +834,12 @@ abstract class CBPActivity
 		return null;
 	}
 
-	function __set($name, $val)
+	public function __set($name, $val)
 	{
 		if (array_key_exists($name, $this->arProperties))
+		{
 			$this->arProperties[$name] = $val;
-		//else
-			//throw new Exception(str_replace("#NAME#", htmlspecialcharsbx($name), GetMessage("BPCGACT_NO_PROPERTY")));
+		}
 	}
 
 	public function IsPropertyExists($name)

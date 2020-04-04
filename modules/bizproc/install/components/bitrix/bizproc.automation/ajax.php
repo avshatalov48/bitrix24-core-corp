@@ -62,8 +62,7 @@ $sendResponse = function($data, array $errors = array(), $plain = false)
 	}
 
 	echo \Bitrix\Main\Web\Json::encode($result);
-	CMain::FinalActions();
-	die();
+	\Bitrix\Main\Application::getInstance()->end();
 };
 $sendError = function($error) use ($sendResponse)
 {
@@ -78,8 +77,7 @@ $sendHtmlResponse = function($html)
 	}
 	header('Content-Type: text/html; charset='.LANG_CHARSET);
 	echo $html;
-	CMain::FinalActions();
-	die();
+	\Bitrix\Main\Application::getInstance()->end();
 };
 
 CBitrixComponent::includeComponentClass('bitrix:bizproc.automation');
@@ -252,15 +250,6 @@ switch ($action)
 
 		$sendResponse(array('templates' => $updatedTemplates, 'triggers' => $updatedTriggers), $errors);
 
-		break;
-
-	case 'GET_DESTINATION_DATA':
-		//Check permissions.
-		$checkConfigWritePerms();
-
-		CBitrixComponent::includeComponentClass('bitrix:bizproc.automation');
-		$result = \BizprocAutomationComponent::getDestinationData($documentType);
-		$sendResponse($result);
 		break;
 
 	case 'GET_LOG':

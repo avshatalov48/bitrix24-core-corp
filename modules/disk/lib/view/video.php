@@ -5,6 +5,7 @@ namespace Bitrix\Disk\View;
 use Bitrix\Disk\Configuration;
 use Bitrix\Disk\TypeFile;
 use Bitrix\Main\ArgumentNullException;
+use Bitrix\Main\UI\Extension;
 
 class Video extends Base
 {
@@ -430,6 +431,7 @@ class Video extends Base
 			</div>
 		<?
 		global $APPLICATION;
+		Extension::load(['disk.video']);
 		$APPLICATION->IncludeComponent(
 		'bitrix:player',
 		'',

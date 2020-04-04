@@ -74,6 +74,8 @@ $mobileDiskPrepareForJson = function($string)
 	return $string;
 };
 
-$arResult['URL'] = SITE_DIR . "mobile/disk/{$file->getId()}/download" .'/' . $mobileDiskPrepareForJson($file->getName());
+//$arResult['URL'] = SITE_DIR . "mobile/disk/{$file->getId()}/download" .'/' . $mobileDiskPrepareForJson($file->getName());
+$arResult['URL'] = SITE_DIR . "mobile/ajax.php?mobile_action=disk_download_file&action=downloadFile&fileId={$file->getId()}&filename="
+	. $mobileDiskPrepareForJson($file->getName());
 
 $this->IncludeComponentTemplate();

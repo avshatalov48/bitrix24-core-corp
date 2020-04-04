@@ -1,4 +1,5 @@
 <?
+use Bitrix\Main;
 use Bitrix\Main\Loader;
 
 class CIBlockElement extends CAllIBlockElement
@@ -701,11 +702,11 @@ class CIBlockElement extends CAllIBlockElement
 
 				if($nPageSize > 0)
 				{
-					$DB->Query("SET @rank=0");
+					$DB->Query("SET @ranx=0");
 					$DB->Query("
-						SELECT @rank:=el1.rank
+						SELECT @ranx:=el1.ranx
 						FROM (
-							SELECT @rank:=@rank+1 AS rank, el0.*
+							SELECT @ranx:=@ranx+1 AS ranx, el0.*
 							FROM (
 								SELECT ".$el->sSelect."
 								FROM ".$el->sFrom."
@@ -717,12 +718,12 @@ class CIBlockElement extends CAllIBlockElement
 						) el1
 						WHERE el1.ID = ".$nElementID."
 					");
-					$DB->Query("SET @rank2=0");
+					$DB->Query("SET @ranx2=0");
 
 					$res = $DB->Query("
 						SELECT *
 						FROM (
-							SELECT @rank2:=@rank2+1 AS RANK, el0.*
+							SELECT @ranx2:=@ranx2+1 AS `RANK`, el0.*
 							FROM (
 								SELECT ".$el->sSelect."
 								FROM ".$el->sFrom."
@@ -732,16 +733,16 @@ class CIBlockElement extends CAllIBlockElement
 								LIMIT 18446744073709551615
 							) el0
 						) el1
-						WHERE el1.RANK between @rank-$nPageSize and @rank+$nPageSize
+						WHERE el1.`RANK` between @ranx-$nPageSize and @ranx+$nPageSize
 					");
 				}
 				else
 				{
-					$DB->Query("SET @rank=0");
+					$DB->Query("SET @ranx=0");
 					$res = $DB->Query("
 						SELECT el1.*
 						FROM (
-							SELECT @rank:=@rank+1 AS RANK, el0.*
+							SELECT @ranx:=@ranx+1 AS `RANK`, el0.*
 							FROM (
 								SELECT ".$el->sSelect."
 								FROM ".$el->sFrom."
@@ -2274,7 +2275,12 @@ class CIBlockElement extends CAllIBlockElement
 								"IBLOCK_ID" => $prop["IBLOCK_ID"],
 							);
 						}
-						elseif ($prop["MULTIPLE"] != "Y")
+						elseif (
+							$prop["MULTIPLE"] != "Y"
+							|| (
+								is_array($val) && isset($val["tmp_name"]) && $val["tmp_name"] != ''
+							)
+						)
 						{
 							//Delete all stored in database for replacement.
 							$arFilesToDelete[$res["VALUE"]] = array(
@@ -2603,5 +2609,26 @@ class CIBlockElement extends CAllIBlockElement
 		";
 
 		return $DB->Query($strSql, false, "FILE: ".__FILE__."<br> LINE: ".__LINE__);
+	}
+
+	/**
+	 * @param mixed $order
+	 * @return string
+	 */
+	protected function getIdOrder($order)
+	{
+		if (is_array($order))
+		{
+			Main\Type\Collection::normalizeArrayValuesByInt($order, false);
+			if (!empty($order))
+			{
+				return 'FIELD(BE.ID, '.implode(', ', $order).')';
+			}
+			else
+			{
+				return parent::getIdOrder('');
+			}
+		}
+		return parent::getIdOrder($order);
 	}
 }

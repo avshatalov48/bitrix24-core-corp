@@ -14,7 +14,7 @@ namespace Bitrix\Tasks\Util\Replicator\Task;
 
 use Bitrix\Main\Localization\Loc;
 
-use Bitrix\Tasks\Internals\Task\CheckListTable;
+use Bitrix\Tasks\CheckList\Task\TaskCheckListFacade;
 use Bitrix\Tasks\Internals\Task\MemberTable;
 use Bitrix\Tasks\Internals\Task\RelatedTable;
 use Bitrix\Tasks\Internals\Task\TagTable;
@@ -37,6 +37,16 @@ class FromTask extends \Bitrix\Tasks\Util\Replicator\Task
 	protected static function getConverterClass()
 	{
 		return '\\Bitrix\\Tasks\\Item\\Converter\\Task\\ToTask';
+	}
+
+	protected static function getFromCheckListFacade()
+	{
+		return TaskCheckListFacade::class;
+	}
+
+	protected static function getToCheckListFacade()
+	{
+		return TaskCheckListFacade::class;
 	}
 
 	/**
@@ -82,9 +92,7 @@ class FromTask extends \Bitrix\Tasks\Util\Replicator\Task
 					continue;
 				}
 
-				$saveResult = $this->saveItemFromSource($data['DATA'][$childId], array(
-					'PARENT_ID' => $srcToDst[$parentId]
-				));
+				$saveResult = $this->saveItemFromSource($data['DATA'][$childId], ['PARENT_ID' => $srcToDst[$parentId]], $userId);
 
 				if($saveResult->isSuccess())
 				{
@@ -173,14 +181,14 @@ class FromTask extends \Bitrix\Tasks\Util\Replicator\Task
 			$ids = array_keys($data);
 
 			// get checklist data
-			$res = CheckListTable::getList(array('filter' => array('=TASK_ID' => $ids)));
-			while($item = $res->fetch())
-			{
-				if(array_key_exists($item['TASK_ID'], $data))
-				{
-					$data[$item['TASK_ID']]['SE_CHECKLIST'][] = $item;
-				}
-			}
+//			$res = CheckListTable::getList(array('filter' => array('=TASK_ID' => $ids)));
+//			while($item = $res->fetch())
+//			{
+//				if(array_key_exists($item['TASK_ID'], $data))
+//				{
+//					$data[$item['TASK_ID']]['SE_CHECKLIST'][] = $item;
+//				}
+//			}
 
 			// get member data
 			$res = MemberTable::getList(array('filter' => array('=TASK_ID' => $ids, '=TYPE' => array('A', 'U'))));

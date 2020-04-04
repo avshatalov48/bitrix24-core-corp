@@ -77,14 +77,21 @@ class Event
 			return $result;
 		}
 
+		$context = Main\Context::getCurrent();
+
 		if($this->siteId === null)
 		{
-			$this->siteId = Main\Context::getCurrent()->getSite();
+			$this->siteId = $context->getSite();
 			if($this->siteId === null)
 			{
 				$result->addError(new Main\Error("Can't filter templates, the siteId is not set.", self::ERR_SITE));
 				return $result;
 			}
+		}
+
+		if($this->languageId === null)
+		{
+			$this->languageId = $context->getLanguage();
 		}
 
 		$templates = $this->fetchTemplates();

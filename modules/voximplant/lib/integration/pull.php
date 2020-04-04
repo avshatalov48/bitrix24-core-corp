@@ -6,6 +6,7 @@ use Bitrix\Main\Diag\Helper;
 use Bitrix\Main\Loader;
 use Bitrix\Voximplant\Model\CallTable;
 use Bitrix\Voximplant\ConfigTable;
+use Bitrix\Voximplant\Model\ExternalLineTable;
 
 /**
  * Class for integration with Push & Pull
@@ -26,7 +27,13 @@ class Pull
 		else
 			$config = array();
 
-		$phoneTitle = $config['PHONE_NAME'] ?: "";
+		if($call['EXTERNAL_LINE_ID'])
+		{
+			$externalLine = ExternalLineTable::getRowById($call['EXTERNAL_LINE_ID']);
+			$externalNumber = $externalLine ? $externalLine['NUMBER'] : '';
+		}
+
+		$phoneTitle = $externalNumber ?: $config['PHONE_NAME'] ?: "";
 
 		$portalCall = $call['PORTAL_USER_ID'] > 0;
 		if($portalCall && Loader::includeModule('im'))

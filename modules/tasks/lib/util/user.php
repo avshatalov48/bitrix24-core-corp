@@ -321,7 +321,7 @@ final class User
 			{
 				$item['IS_EXTRANET_USER'] = Extranet\User::isExtranet($item);
 				$item['IS_EMAIL_USER'] = Mail\User::isEmail($item);
-				$item['IS_CRM_EMAIL_USER'] = $item['IS_EMAIL_USER'] && !empty($item['UF_USER_CRM_ENTITY']);
+				$item['IS_CRM_EMAIL_USER'] = $item['IS_EMAIL_USER'] && $item['UF_USER_CRM_ENTITY'] && !empty($item['UF_USER_CRM_ENTITY']);
 				$item['IS_NETWORK_USER'] = ($item["EXTERNAL_AUTH_ID"] === "replica");
 
 				if($item['ID'] != $current)
@@ -679,23 +679,32 @@ final class User
 	 */
 	public static function isExternalUser($userID)
 	{
-		if(!ModuleManager::isModuleInstalled('extranet'))
-		{
-			return false;
-		}
+	    static $users = [];
 
-		$dbResult = \CUser::getList(
-			$o = 'ID',
-			$b = 'ASC',
-			array('ID_EQUAL_EXACT' => $userID),
-			array('FIELDS' => array('ID'), 'SELECT' => array('UF_DEPARTMENT'))
-		);
+	    if(!$users[$userID])
+	    {
+            if (!ModuleManager::isModuleInstalled('extranet'))
+            {
+                $users[$userID] = false;
+            }
+            else
+            {
+                $dbResult = \CUser::getList(
+                    $o = 'ID',
+                    $b = 'ASC',
+                    array('ID_EQUAL_EXACT' => $userID),
+                    array('FIELDS' => array('ID'), 'SELECT' => array('UF_DEPARTMENT'))
+                );
 
-		$user = $dbResult->Fetch();
-		return !(is_array($user)
-				 && isset($user['UF_DEPARTMENT'])
-				 && isset($user['UF_DEPARTMENT'][0])
-				 && $user['UF_DEPARTMENT'][0] > 0);
+                $user = $dbResult->Fetch();
+                $users[$userID] = !(is_array($user)
+                    && isset($user['UF_DEPARTMENT'])
+                    && isset($user['UF_DEPARTMENT'][0])
+                    && $user['UF_DEPARTMENT'][0] > 0);
+            }
+        }
+
+	    return $users[$userID];
 	}
 
 	public static function isAbsence(array $userIds)

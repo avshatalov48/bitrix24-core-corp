@@ -512,6 +512,31 @@ if (!function_exists('prepareTaskRowTitle'))
 				 $append;
 		$title .= prepareTimeTracking($row, $arParams);
 
+		if (
+			isset($row['NAV_CHAIN']) &&
+			!empty($row['NAV_CHAIN'])
+		)
+		{
+			$title .= '<div>';
+			foreach ($row['NAV_CHAIN'] as $subTask)
+			{
+				$subTaskUrl = CComponentEngine::MakePathFromTemplate(
+					$taskUrlTemplate,
+					array(
+						'user_id' => $arParams['USER_ID'],
+						'task_id' => $subTask['ID'],
+						'action' => 'view',
+						'group_id' => $arParams['GROUP_ID']
+					)
+				);
+
+				$title .= '&nbsp;&nbsp;&larr;&nbsp;&nbsp;<a href="' . $subTaskUrl . '">';
+				$title .= \htmlspecialcharsbx($subTask['TITLE']);
+				$title .= '</a>';
+			}
+			$title .= '</div>';
+		}
+
 		return $title;
 	}
 }
@@ -862,6 +887,62 @@ if (!function_exists('prepareTaskGroupActions'))
 				)
 			)
 		);
+
+		if ($arParams['SCRUM_BACKLOG'] == 'Y')
+		{
+			$actionList[] = array(
+				'NAME' => GetMessage('TASKS_LIST_GROUP_ACTION_SPRINT'),
+				'VALUE' => 'setsprint',
+				'ONCHANGE' => array(
+					array(
+						'ACTION' => Grid\Panel\Actions::CREATE,
+						'DATA' => array(
+							array(
+								'TYPE' => Bitrix\Main\Grid\Panel\Types::CUSTOM,
+								'ID' => 'action_set_sprint_title',
+								'NAME' => 'ACTION_SET_SPRINT_TITLE',
+								'VALUE' => GetMessage('TASKS_LIST_GROUP_ACTION_SPRINT_TITLE')
+							),
+							array(
+								'TYPE' => Bitrix\Main\Grid\Panel\Types::DATE,
+								'ID' => 'action_set_sprint',
+								'NAME' => 'ACTION_SET_SPRINT',
+								'VALUE' => '',
+								'TIME' => true
+							)
+						)
+					)
+				)
+			);  // add to sprint
+		}
+
+		if ($arParams['SCRUM_BACKLOG'] == 'Y')
+		{
+			$actionList[] = array(
+				'NAME' => GetMessage('TASKS_LIST_GROUP_ACTION_SPRINT'),
+				'VALUE' => 'setsprint',
+				'ONCHANGE' => array(
+					array(
+						'ACTION' => Grid\Panel\Actions::CREATE,
+						'DATA' => array(
+							array(
+								'TYPE' => Bitrix\Main\Grid\Panel\Types::CUSTOM,
+								'ID' => 'action_set_sprint_title',
+								'NAME' => 'ACTION_SET_SPRINT_TITLE',
+								'VALUE' => GetMessage('TASKS_LIST_GROUP_ACTION_SPRINT_TITLE')
+							),
+							array(
+								'TYPE' => Bitrix\Main\Grid\Panel\Types::DATE,
+								'ID' => 'action_set_sprint',
+								'NAME' => 'ACTION_SET_SPRINT',
+								'VALUE' => '',
+								'TIME' => true
+							)
+						)
+					)
+				)
+			);  // add to sprint
+		}
 
 		$actionList[] = array(
 			'NAME' => GetMessage('TASKS_LIST_GROUP_ACTION_COMPLETE'),
@@ -1310,13 +1391,22 @@ if (!function_exists('prepareTaskRowUserBaloonHtml'))
 {
 	function prepareTaskRowUserBaloonHtml($arParams)
 	{
+	    static $cache = [];
+
 		if (!is_array($arParams))
 		{
 			return '';
 		}
 
-		$users = Util\User::getData(array($arParams['USER_ID']));
-		$user = $users[$arParams['USER_ID']];
+		if(isset($cache[$arParams['USER_ID']]))
+        {
+            $user = $cache[$arParams['USER_ID']];
+        }
+		else {
+            $users = Util\User::getData(array($arParams['USER_ID']));
+            $user = $users[$arParams['USER_ID']];
+            $cache[$arParams['USER_ID']] = $user;
+        }
 
 		$user['AVATAR'] = \Bitrix\Tasks\UI::getAvatar($user['PERSONAL_PHOTO'], 100, 100);
 		$user['IS_EXTERNAL'] = \Bitrix\Tasks\Util\User::isExternalUser($user['ID']);

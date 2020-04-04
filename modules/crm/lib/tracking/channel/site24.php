@@ -15,7 +15,7 @@ use Bitrix\Crm\Tracking;
  *
  * @package Bitrix\Crm\Tracking\Channel
  */
-class Site24 extends Base implements iSite
+class Site24 extends Base implements Features\Site
 {
 	protected $code = self::Site24;
 

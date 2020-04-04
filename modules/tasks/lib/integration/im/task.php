@@ -106,7 +106,7 @@ final class Task extends IM
 
 			if(count($gridRows))
 			{
-				$attach->AddDelimiter(Array('COLOR' => '#c6c6c6'));
+				$attach->AddDelimiter();
 				$attach->AddGrid($gridRows);
 			}
 		}

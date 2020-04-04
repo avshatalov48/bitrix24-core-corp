@@ -45,7 +45,23 @@ $arResult['NAME_TEMPLATE'] = empty($arParams['NAME_TEMPLATE']) ? CSite::GetNameF
 $arResult['BACK_URL'] = $arParams['PATH_TO_EXCH1C_INDEX'];
 $arResult['FORM_ID'] = 'CRM_EXCH1C_CONFIG';
 $arResult['FIELDS'] = array();
+$arResult['FIELDS_CONFIG'] = array();
+$arResult['FIELDS_DATA'] = array();
 
+$arResult['FIELDS_CONFIG'] = array(
+	array(
+		'name' => 'tab_catalog_import',
+		'title' => GetMessage('CRM_TAB_CATALOG_IMPORT'),
+		'type' => 'section',
+		'elements' => array()
+	),
+	array(
+		'name' => 'tab_catalog_export',
+		'title' => GetMessage('CRM_TAB_CATALOG_EXPORT'),
+		'type' => 'section',
+		'elements' => array()
+	)
+);
 
 
 // <editor-fold defaultstate="collapsed" desc="Catalog import options">
@@ -116,7 +132,7 @@ $arAllOptions = array(
 	array("1CE_USE_ZIP", GetMessage("CAT_1CE_USE_ZIP"), "Y", Array("checkbox"), "hidden", 2)
 );
 
-if($_SERVER['REQUEST_METHOD'] == "POST" && $_POST['save'] != "" && check_bitrix_sessid())
+if($_SERVER['REQUEST_METHOD'] == "POST" && check_bitrix_sessid())
 {
 	for ($i = 0, $intCount = count($arAllOptions); $i < $intCount; $i++)
 	{
@@ -148,6 +164,14 @@ if($_SERVER['REQUEST_METHOD'] == "POST" && $_POST['save'] != "" && check_bitrix_
 		}
 	}
 
+	if ($this->request->isAjaxRequest())
+	{
+		$APPLICATION->RestartBuffer();
+		$ajaxResponce["SUCCESS"] = "Y";
+		echo \Bitrix\Main\Web\Json::encode($ajaxResponce);
+		die();
+	}
+
 	if (!(isset($_REQUEST["IFRAME"]) && $_REQUEST["IFRAME"] === "Y"))
 	{
 		LocalRedirect(CComponentEngine::MakePathFromTemplate($arResult['PATH_TO_EXCH1C_INDEX'], array()));
@@ -177,21 +201,22 @@ foreach($arAllOptions as $Option)
 	$type = $Option[3];
 
 	$fieldParams = array(
-		'id' => $tabNumber.'_'.$Option[0],
+		'name' => $tabNumber.'_'.$Option[0],
 		'title' => $Option[1],
 		'type' => ($type[0] === 'mlist') ? 'list' : $type[0],
-		'value' => ($type[0] === 'mlist') ? explode(",", $val) : $val/*,
-		'required' => true*/
 	);
 	if ($type[0] === 'list' || $type[0] === 'mlist')
-		$fieldParams['items'] = $type[1];
-	if ($type[0] === "text" || $type[0] === "date" || $type[0] === "file")
 	{
-		if (isset($type[1]))
-			$fieldParams['params'] = array("size" => $type[1]);
+		foreach ($type[1] as $itemValue => $itemName)
+		$fieldParams["data"]['items'][] = array(
+			"NAME" => $itemName,
+			"VALUE" => $itemValue
+		);
 	}
 
-	$arResult['FIELDS'][$tabNames[$tabNumber]][] = $fieldParams;
+	$arResult['FIELDS'][] = $fieldParams;
+	$arResult['FIELDS_DATA'][$tabNumber.'_'.$Option[0]] = ($type[0] === 'mlist') ? explode(",", $val) : $val;
+	$arResult['FIELDS_CONFIG'][$tabNumber-1]["elements"][] = array("name" => $tabNumber.'_'.$Option[0]);
 }
 // <-- Catalog import options
 // </editor-fold>
@@ -199,5 +224,4 @@ foreach($arAllOptions as $Option)
 $this->IncludeComponentTemplate();
 
 $APPLICATION->AddChainItem(GetMessage('CRM_EXCH1C_LIST'), $arParams['PATH_TO_EXCH1C_INDEX']);
-
 ?>

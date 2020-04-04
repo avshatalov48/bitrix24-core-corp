@@ -5,13 +5,14 @@ namespace Bitrix\Crm\Integration;
 use Bitrix\Main\Event;
 use Bitrix\Main\EventResult;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\UserTable;
 
 class Socialnetwork
 {
-	const DATA_ENTITY_TYPE_CRM_LEAD = 'CRM_LEAD';
-	const DATA_ENTITY_TYPE_CRM_CONTACT = 'CRM_CONTACT';
-	const DATA_ENTITY_TYPE_CRM_COMPANY = 'CRM_COMPANY';
-	const DATA_ENTITY_TYPE_CRM_DEAL = 'CRM_DEAL';
+	const DATA_ENTITY_TYPE_CRM_LEAD = 'CRM_LOG_LEAD';
+	const DATA_ENTITY_TYPE_CRM_CONTACT = 'CRM_LOG_CONTACT';
+	const DATA_ENTITY_TYPE_CRM_COMPANY = 'CRM_LOG_COMPANY';
+	const DATA_ENTITY_TYPE_CRM_DEAL = 'CRM_LOG_DEAL';
 	const DATA_ENTITY_TYPE_CRM_INVOICE = 'CRM_INVOICE';
 	const DATA_ENTITY_TYPE_CRM_ACTIVITY = 'CRM_ACTIVITY';
 	const DATA_ENTITY_TYPE_CRM_ENTITY_COMMENT = 'CRM_ENTITY_COMMENT';
@@ -110,7 +111,6 @@ class Socialnetwork
 		return $result;
 	}
 
-
 	public static function onLogProviderGetContentId(Event $event)
 	{
 		$result = new EventResult(
@@ -120,16 +120,11 @@ class Socialnetwork
 		);
 
 		$eventFields = $event->getParameter('eventFields');
-
 		$contentEntityType = $contentEntityId = false;
 
 		if (!empty($eventFields["EVENT_ID"]))
 		{
 			$providersList = array(
-				new \Bitrix\Crm\Integration\Socialnetwork\Livefeed\CrmLead(),
-				new \Bitrix\Crm\Integration\Socialnetwork\Livefeed\CrmContact(),
-				new \Bitrix\Crm\Integration\Socialnetwork\Livefeed\CrmCompany(),
-				new \Bitrix\Crm\Integration\Socialnetwork\Livefeed\CrmDeal(),
 				new \Bitrix\Crm\Integration\Socialnetwork\Livefeed\CrmInvoice(),
 				new \Bitrix\Crm\Integration\Socialnetwork\Livefeed\CrmActivity(),
 				new \Bitrix\Crm\Integration\Socialnetwork\Livefeed\CrmEntityComment(),
@@ -140,6 +135,22 @@ class Socialnetwork
 				{
 					$contentEntityType = $provider->getContentTypeId();
 					$contentEntityId = intval($eventFields["ENTITY_ID"]);
+					break;
+				}
+			}
+
+			$providersList = array(
+				new \Bitrix\Crm\Integration\Socialnetwork\Livefeed\CrmLead(),
+				new \Bitrix\Crm\Integration\Socialnetwork\Livefeed\CrmContact(),
+				new \Bitrix\Crm\Integration\Socialnetwork\Livefeed\CrmCompany(),
+				new \Bitrix\Crm\Integration\Socialnetwork\Livefeed\CrmDeal(),
+			);
+			foreach($providersList as $provider)
+			{
+				if (in_array($eventFields["EVENT_ID"], $provider->getEventId()))
+				{
+					$contentEntityType = $provider->getContentTypeId();
+					$contentEntityId = intval($eventFields["ID"]);
 					break;
 				}
 			}
@@ -223,5 +234,70 @@ class Socialnetwork
 			),
 			'crm'
 		);
+	}
+
+	public static function buildAuxTaskDescription(array $params, $entityType = '')
+	{
+		$result = false;
+
+		if (isset($params['TITLE']))
+		{
+			$result = $params['TITLE'];
+		}
+		else if (
+			$entityType == \Bitrix\Crm\Integration\Socialnetwork::DATA_ENTITY_TYPE_CRM_CONTACT
+			&& isset($params['NAME'])
+			&& isset($params['LAST_NAME'])
+		)
+		{
+			$result = \CCrmContact::prepareFormattedName([
+				'HONORIFIC' => isset($params['HONORIFIC']) ? $params['HONORIFIC'] : '',
+				'NAME' => $params['NAME'],
+				'LAST_NAME' => $params['LAST_NAME'],
+				'SECOND_NAME' => isset($params['SECOND_NAME']) ? $params['SECOND_NAME'] : '',
+			]);
+		}
+		elseif (
+			isset($params['FINAL_RESPONSIBLE_ID'])
+			&& intval($params['FINAL_RESPONSIBLE_ID']) > 0
+		)
+		{
+			$res = UserTable::getList([
+				'filter' => [
+					'=ID' => intval($params['FINAL_RESPONSIBLE_ID'])
+				],
+				'select' => ['NAME', 'LAST_NAME', 'SECOND_NAME', 'LOGIN']
+			]);
+			if ($userFields = $res->fetch())
+			{
+				$result = \CUser::formatName(\CSite::getNameFormat(), $userFields, true, false);
+			}
+		}
+		elseif (
+			$entityType == \Bitrix\Crm\Integration\Socialnetwork::DATA_ENTITY_TYPE_CRM_DEAL
+			&& !empty($params['FINAL_STATUS_ID'])
+			&& isset($params['CATEGORY_ID'])
+		)
+		{
+			$info = \CCrmViewHelper::getDealStageInfos($params['CATEGORY_ID']);
+			if (!empty($info[$params['FINAL_STATUS_ID']]))
+			{
+				$result = $info[$params['FINAL_STATUS_ID']]['NAME'];
+			}
+		}
+		elseif (
+			$entityType == \Bitrix\Crm\Integration\Socialnetwork::DATA_ENTITY_TYPE_CRM_LEAD
+			&& !empty($params['FINAL_STATUS_ID'])
+		)
+		{
+			$info = \CCrmViewHelper::getLeadStatusInfos();
+			if (!empty($info[$params['FINAL_STATUS_ID']]))
+			{
+				$result = $info[$params['FINAL_STATUS_ID']]['NAME'];
+			}
+		}
+
+
+		return $result;
 	}
 }

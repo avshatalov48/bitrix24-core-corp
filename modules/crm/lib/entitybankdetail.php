@@ -73,7 +73,8 @@ class EntityBankDetail
 		14 => array(
 			'RQ_BANK_NAME',
 			'RQ_MFO',
-			'RQ_ACC_NUM'
+			'RQ_ACC_NUM',
+			'RQ_IBAN'
 		),
 		// DE
 		46 => array(

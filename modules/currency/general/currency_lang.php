@@ -627,20 +627,28 @@ class CAllCurrencyLang
 		if ($currency === false)
 			return '';
 
-		$price = (float)$price;
-		$arCurFormat = (isset(self::$arCurrencyFormat[$currency]) ? self::$arCurrencyFormat[$currency] : self::GetFormatDescription($currency));
-		$intDecimals = $arCurFormat['DECIMALS'];
-		if (self::isAllowUseHideZero() && $arCurFormat['HIDE_ZERO'] == 'Y')
-		{
-			if (round($price, $arCurFormat["DECIMALS"]) == round($price, 0))
-				$intDecimals = 0;
-		}
-		$price = number_format($price, $intDecimals, $arCurFormat['DEC_POINT'], $arCurFormat['THOUSANDS_SEP']);
+		$format = (isset(self::$arCurrencyFormat[$currency])
+			? self::$arCurrencyFormat[$currency]
+			: self::GetFormatDescription($currency)
+		);
 
-		return (
-			$useTemplate
-			? self::applyTemplate($price, $arCurFormat['FORMAT_STRING'])
-			: $price
+		return self::formatValue($price, $format, $useTemplate);
+	}
+
+	public static function formatValue($value, array $format, $useTemplate = true)
+	{
+		$value = (float)$value;
+		$decimals = $format['DECIMALS'];
+		if (self::isAllowUseHideZero() && $format['HIDE_ZERO'] == 'Y')
+		{
+			if (round($value, $format['DECIMALS']) == round($value, 0))
+				$decimals = 0;
+		}
+		$result = number_format($value, $decimals, $format['DEC_POINT'], $format['THOUSANDS_SEP']);
+
+		return ($useTemplate
+			? self::applyTemplate($result, $format['FORMAT_STRING'])
+			: $result
 		);
 	}
 

@@ -12,6 +12,7 @@ $cmpParams = [
 
 if ($_REQUEST['IFRAME'] == 'Y' && $_REQUEST['IFRAME_TYPE'] == 'SIDE_SLIDER')
 {
+	$cmpParams['DISABLE_TOP_MENU'] = 'Y';
 	$APPLICATION->IncludeComponent(
 		'bitrix:ui.sidepanel.wrapper',
 		'',

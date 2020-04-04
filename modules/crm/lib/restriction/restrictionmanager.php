@@ -17,12 +17,18 @@ class RestrictionManager
 	private static $dupControlRestriction = null;
 	/** @var Bitrix24AccessRestriction|null  */
 	private static $historyViewRestriction = null;
+	/** @var Bitrix24SearchLimitRestriction|null  */
+	private static $searchLimitRestriction = null;
 	/** @var Bitrix24QuantityRestriction|null  */
 	private static $dealCategoryLimitRestriction = null;
 	/** @var Bitrix24AccessRestriction|null  */
 	private static $attributeConfigRestriction = null;
 	/** @var Bitrix24AccessRestriction|null  */
 	private static $permissionControlRestriction = null;
+	/** @var Bitrix24AccessRestriction|null  */
+	private static $dealRecurringRestriction = null;
+	/** @var Bitrix24AccessRestriction|null  */
+	private static $invoiceRecurringRestriction = null;
 	/**
 	* @return SqlRestriction
 	*/
@@ -65,6 +71,15 @@ class RestrictionManager
 	}
 
 	/**
+	 * @return Bitrix24SearchLimitRestriction
+	 */
+	public static function getSearchLimitRestriction()
+	{
+		self::initialize();
+		return self::$searchLimitRestriction;
+	}
+
+	/**
 	 * @return AccessRestriction
 	 */
 	public static function getAttributeConfigRestriction()
@@ -83,6 +98,24 @@ class RestrictionManager
 	}
 
 	/**
+	 * @return AccessRestriction
+	 */
+	public static function getDealRecurringRestriction()
+	{
+		self::initialize();
+		return self::$dealRecurringRestriction;
+	}
+
+	/**
+	 * @return AccessRestriction
+	 */
+	public static function getInvoiceRecurringRestriction()
+	{
+		self::initialize();
+		return self::$invoiceRecurringRestriction;
+	}
+
+	/**
 	* @return void
 	*/
 	public static function reset()
@@ -93,17 +126,23 @@ class RestrictionManager
 		self::$conversionRestriction->reset();
 		self::$dupControlRestriction->reset();
 		self::$historyViewRestriction->reset();
+		self::$searchLimitRestriction->reset();
 		self::$dealCategoryLimitRestriction->reset();
 		self::$attributeConfigRestriction->reset();
 		self::$permissionControlRestriction->reset();
+		self::$dealRecurringRestriction->reset();
+		self::$invoiceRecurringRestriction->reset();
 
 		self::$sqlRestriction = null;
 		self::$conversionRestriction = null;
 		self::$dupControlRestriction = null;
 		self::$historyViewRestriction = null;
+		self::$searchLimitRestriction = null;
 		self::$dealCategoryLimitRestriction = null;
 		self::$attributeConfigRestriction = null;
 		self::$permissionControlRestriction = null;
+		self::$dealRecurringRestriction = null;
+		self::$invoiceRecurringRestriction = null;
 
 		self::$isInitialized = false;
 	}
@@ -135,9 +174,12 @@ class RestrictionManager
 	{
 		return self::getDealCategoryLimitRestriction()->getQuantityLimit();
 	}
+
 	/**
-	* @return void
-	*/
+	 * @throws Main\ArgumentNullException
+	 * @throws Main\ArgumentOutOfRangeException
+	 * @throws Main\LoaderException
+	 */
 	private static function initialize()
 	{
 		if(self::$isInitialized)
@@ -146,17 +188,13 @@ class RestrictionManager
 		}
 
 		Main\Localization\Loc::loadMessages(__FILE__);
-		
-		$isFree = !Bitrix24Manager::isEnabled()
-			|| Bitrix24Manager::hasPurchasedLicense()
-			|| Bitrix24Manager::hasNfrLicense()
-			|| Bitrix24Manager::hasDemoLicense();
 
 		//region SQL
 		self::$sqlRestriction = new Bitrix24SqlRestriction('crm_clr_cfg_sql');
 		if(!self::$sqlRestriction->load())
 		{
-			self::$sqlRestriction->setRowCountThreshold($isFree ? 0 : self::SQL_ROW_COUNT_THRESHOLD);
+			//SQL Limit is Disabled by default
+			self::$sqlRestriction->setRowCountThreshold(0);
 		}
 		//endregion
 		//region Conversion
@@ -172,7 +210,9 @@ class RestrictionManager
 		);
 		if(!self::$conversionRestriction->load())
 		{
-			self::$conversionRestriction->permit($isFree);
+			self::$conversionRestriction->permit(
+				Bitrix24Manager::isFeatureEnabled('crm_entity_conversion')
+			);
 		}
 		//endregion
 		//region Duplicate Control
@@ -192,7 +232,9 @@ class RestrictionManager
 
 		if(!self::$dupControlRestriction->load())
 		{
-			self::$dupControlRestriction->permit($isFree);
+			self::$dupControlRestriction->permit(
+				Bitrix24Manager::isFeatureEnabled('crm_duplicate_control')
+			);
 		}
 		//endregion
 		//region History View
@@ -216,6 +258,25 @@ class RestrictionManager
 				Bitrix24Manager::isFeatureEnabled("crm_history_view")
 			);
 		}
+		//endregion
+		//region Entity Limit
+
+		self::$searchLimitRestriction = new Bitrix24SearchLimitRestriction(
+			'crm_clr_cfg_entity_search_limit',
+			0
+		);
+
+		if(!self::$searchLimitRestriction->load())
+		{
+			$entityLimit = Bitrix24Manager::getVariable('crm_entity_search_limit');
+			if(is_numeric($entityLimit))
+			{
+				self::$searchLimitRestriction->setQuantityLimit(
+					max((int)$entityLimit, 0)
+				);
+			}
+		}
+
 		//endregion
 		//region Deal Category Limit
 		self::$dealCategoryLimitRestriction = new Bitrix24QuantityRestriction(
@@ -253,7 +314,7 @@ class RestrictionManager
 		if(!self::$attributeConfigRestriction->load())
 		{
 			self::$attributeConfigRestriction->permit(
-				Bitrix24Manager::isFeatureEnabled("crm_attr_configurator")
+				Bitrix24Manager::isFeatureEnabled('crm_attr_configurator')
 			);
 		}
 		//endregion
@@ -273,7 +334,49 @@ class RestrictionManager
 		if(!self::$permissionControlRestriction->load())
 		{
 			self::$permissionControlRestriction->permit(
-				Main\Config\Option::get('crm', 'crm_enable_permission_control', 'Y', '') === 'Y'
+				!Bitrix24Manager::isEnabled()
+				|| Main\Config\Option::get('crm', 'crm_enable_permission_control', 'Y', '') === 'Y'
+			);
+		}
+		//endregion
+
+		//region Deal Recurring
+		self::$dealRecurringRestriction = new Bitrix24AccessRestriction(
+			'crm_clr_cfg_deal_recurring',
+			true,
+			null,
+			array(
+				'ID' => 'crm_deal_recurring',
+				'TITLE' => GetMessage('CRM_RESTR_MGR_DEAL_RECURRING_POPUP_TITLE'),
+				'CONTENT' => GetMessage('CRM_RESTR_MGR_DEAL_RECURRING_POPUP_CONTENT')
+			)
+		);
+
+		if(!self::$dealRecurringRestriction->load())
+		{
+			self::$dealRecurringRestriction->permit(
+				Bitrix24Manager::isFeatureEnabled("crm_deal_recurring")
+				|| Main\Config\Option::get('crm', 'recurring_deal_enabled', 'N') === 'Y'
+			);
+		}
+		//endregion
+
+		//region Invoice Recurring
+		self::$invoiceRecurringRestriction = new Bitrix24AccessRestriction(
+			'crm_clr_cfg_invoice_recurring',
+			true,
+			null,
+			array(
+				'ID' => 'crm_invoice_recurring',
+				'TITLE' => GetMessage('CRM_RESTR_MGR_INVOICE_RECURRING_POPUP_TITLE'),
+				'CONTENT' => GetMessage('CRM_RESTR_MGR_INVOICE_RECURRING_POPUP_CONTENT')
+			)
+		);
+
+		if(!self::$invoiceRecurringRestriction->load())
+		{
+			self::$invoiceRecurringRestriction->permit(
+				Bitrix24Manager::isFeatureEnabled("crm_invoice_recurring")
 			);
 		}
 		//endregion
@@ -284,5 +387,11 @@ class RestrictionManager
 	public static function onDealCategoryLimitChange(Main\Event $event)
 	{
 		DealCategory::applyMaximumLimitRestrictions(Bitrix24Manager::getDealCategoryCount());
+	}
+
+	public static function onMigrateToBox()
+	{
+		Main\Config\Option::delete('crm', array('name' => 'crm_enable_permission_control'));
+		Main\Config\Option::delete('crm', array('name' => 'recurring_deal_enabled'));
 	}
 }

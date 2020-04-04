@@ -20,7 +20,7 @@ $APPLICATION->SetAdditionalCSS("/bitrix/themes/.default/calendar.css");
 $APPLICATION->AddHeadScript('/bitrix/js/main/utils.js');
 $APPLICATION->AddHeadScript('/bitrix/js/main/popup_menu.js');
 $APPLICATION->AddHeadScript('/bitrix/js/main/admin_tools.js');
-CUtil::InitJSCore(array("window", "ajax")); 
+CUtil::InitJSCore(array("window", "ajax", "bp_selector"));
 require_once($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/interface/admin_lib.php");
 //////////////////////////////////////////////////////////////////////////////
 

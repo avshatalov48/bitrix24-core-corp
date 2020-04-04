@@ -343,12 +343,14 @@ $arLastLeads = array();
 $arLastDeals = array();
 
 // get last contacts
-
-foreach ($arResult['FEED_DESTINATION']['LAST']['CONTACTS'] as $key => $val)
+if (!empty($arResult['FEED_DESTINATION']['LAST']['CONTACTS']))
 {
-	if (preg_match('/^CRMCONTACT(\d+)$/i', $val, $matches))
+	foreach ($arResult['FEED_DESTINATION']['LAST']['CONTACTS'] as $key => $val)
 	{
-		$lastContactIds[] = $matches[1];
+		if (preg_match('/^CRMCONTACT(\d+)$/i', $val, $matches))
+		{
+			$lastContactIds[] = $matches[1];
+		}
 	}
 }
 
@@ -369,12 +371,14 @@ if (!empty($lastContactIds))
 }
 
 // get last companies
-
-foreach ($arResult['FEED_DESTINATION']['LAST']['COMPANIES'] as $key => $val)
+if (!empty($arResult['FEED_DESTINATION']['LAST']['COMPANIES']))
 {
-	if (preg_match('/^CRMCOMPANY(\d+)$/i', $val, $matches))
+	foreach ($arResult['FEED_DESTINATION']['LAST']['COMPANIES'] as $key => $val)
 	{
-		$lastCompanyIds[] = $matches[1];
+		if (preg_match('/^CRMCOMPANY(\d+)$/i', $val, $matches))
+		{
+			$lastCompanyIds[] = $matches[1];
+		}
 	}
 }
 
@@ -395,12 +399,14 @@ if (!empty($lastCompanyIds))
 }
 
 // get last leads
-
-foreach ($arResult['FEED_DESTINATION']['LAST']['LEADS'] as $key => $val)
+if (!empty($arResult['FEED_DESTINATION']['LAST']['LEADS']))
 {
-	if (preg_match('/^CRMLEAD(\d+)$/i', $val, $matches))
+	foreach ($arResult['FEED_DESTINATION']['LAST']['LEADS'] as $key => $val)
 	{
-		$lastLeadIds[] = $matches[1];
+		if (preg_match('/^CRMLEAD(\d+)$/i', $val, $matches))
+		{
+			$lastLeadIds[] = $matches[1];
+		}
 	}
 }
 
@@ -421,12 +427,14 @@ if (!empty($lastLeadIds))
 }
 
 // get last deals
-
-foreach ($arResult['FEED_DESTINATION']['LAST']['DEALS'] as $key => $val)
+if (!empty($arResult['FEED_DESTINATION']['LAST']['DEALS']))
 {
-	if (preg_match('/^CRMDEAL(\d+)$/i', $val, $matches))
+	foreach ($arResult['FEED_DESTINATION']['LAST']['DEALS'] as $key => $val)
 	{
-		$lastDealIds[] = $matches[1];
+		if (preg_match('/^CRMDEAL(\d+)$/i', $val, $matches))
+		{
+			$lastDealIds[] = $matches[1];
+		}
 	}
 }
 

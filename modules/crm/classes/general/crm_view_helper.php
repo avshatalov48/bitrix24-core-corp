@@ -604,12 +604,12 @@ class CCrmViewHelper
 			{
 				if($useGridExtension)
 				{
-					$result .= '<div class="crm-nearest-activity-plus" onclick="BX.CrmUIGridExtension.showContextMenu(\''.$menuID.'\', this);"></div>
+					$result .= '<div class="crm-nearest-activity-plus" onclick="BX.CrmUIGridExtension.showContextMenu(\''.htmlspecialcharsbx($menuID).'\', this);"></div>
 					<script type="text/javascript">BX.CrmUIGridExtension.createContextMenu("'.$menuID.'", '.CUtil::PhpToJSObject($menuItems).');</script>';
 				}
 				else
 				{
-					$result .= '<div class="crm-nearest-activity-plus" onclick="BX.CrmInterfaceGridManager.showMenu(\''.$menuID.'\', this);"></div>
+					$result .= '<div class="crm-nearest-activity-plus" onclick="BX.CrmInterfaceGridManager.showMenu(\''.htmlspecialcharsbx($menuID).'\', this);"></div>
 					<script type="text/javascript">BX.CrmInterfaceGridManager.createMenu("'.$menuID.'", '.CUtil::PhpToJSObject($menuItems).');</script>';
 				}
 			}
@@ -657,13 +657,13 @@ class CCrmViewHelper
 			if($useGridExtension)
 			{
 				return '<span class="crm-activity-add-hint">'.htmlspecialcharsbx($hintText).'</span>
-				<a class="crm-activity-add" onclick="BX.CrmUIGridExtension.showContextMenu(\''.$menuID.'\', this); return false;">'.htmlspecialcharsbx(GetMessage('CRM_ENTITY_ADD_ACTIVITY')).'</a>
+				<a class="crm-activity-add" onclick="BX.CrmUIGridExtension.showContextMenu(\''.htmlspecialcharsbx($menuID).'\', this); return false;">'.htmlspecialcharsbx(GetMessage('CRM_ENTITY_ADD_ACTIVITY')).'</a>
 				<script type="text/javascript">BX.CrmUIGridExtension.createContextMenu("'.$menuID.'", '.CUtil::PhpToJSObject($menuItems).');</script>';
 			}
 			else
 			{
 				return '<span class="crm-activity-add-hint">'.htmlspecialcharsbx($hintText).'</span>
-				<a class="crm-activity-add" onclick="BX.CrmInterfaceGridManager.showMenu(\''.$menuID.'\', this); return false;">'.htmlspecialcharsbx(GetMessage('CRM_ENTITY_ADD_ACTIVITY')).'</a>
+				<a class="crm-activity-add" onclick="BX.CrmInterfaceGridManager.showMenu(\''.htmlspecialcharsbx($menuID).'\', this); return false;">'.htmlspecialcharsbx(GetMessage('CRM_ENTITY_ADD_ACTIVITY')).'</a>
 				<script type="text/javascript">BX.CrmInterfaceGridManager.createMenu("'.$menuID.'", '.CUtil::PhpToJSObject($menuItems).');</script>';
 			}
 		}
@@ -1939,7 +1939,9 @@ class CCrmViewHelper
 			//'apologyTitle' => GetMessage('CRM_DEAL_STAGE_MANAGER_APOLOGY_TTL'),
 			'failureTitle' => GetMessage('CRM_DEAL_STAGE_MANAGER_FAILURE_TTL'),
 			'selectorTitle' => GetMessage('CRM_DEAL_STAGE_MANAGER_SELECTOR_TTL'),
-			'checkErrorTitle' => GetMessage('CRM_DEAL_STAGE_MANAGER_CHECK_ERROR_TTL')
+			'checkErrorTitle' => GetMessage('CRM_DEAL_STAGE_MANAGER_CHECK_ERROR_TTL'),
+			'checkErrorHelp' => GetMessage('CRM_STAGE_MANAGER_CHECK_ERROR_HELP'),
+			'checkErrorHelpArticleCode' => '9480255'
 		);
 
 		return '<script type="text/javascript">'
@@ -2040,6 +2042,8 @@ class CCrmViewHelper
 			'failureTitle' => GetMessage('CRM_LEAD_STATUS_MANAGER_FAILURE_TTL'),
 			'selectorTitle' => GetMessage('CRM_LEAD_STATUS_MANAGER_SELECTOR_TTL'),
 			'checkErrorTitle' => GetMessage('CRM_LEAD_STAGE_MANAGER_CHECK_ERROR_TTL'),
+			'checkErrorHelp' => GetMessage('CRM_STAGE_MANAGER_CHECK_ERROR_HELP'),
+			'checkErrorHelpArticleCode' => '9480255',
 			'conversionCancellationTitle' => GetMessage('CRM_CONFIRMATION_DLG_TTL'),
 			'conversionCancellationContent' => GetMessage('CRM_LEAD_STATUS_MANAGER_CONVERSION_CANCEL_CNT')
 		);
@@ -2120,7 +2124,7 @@ class CCrmViewHelper
 			'selectorTitle' => GetMessage('CRM_INVOICE_STATUS_MANAGER_SELECTOR_TTL'),
 			'setDate' =>  GetMessage('CRM_INVOICE_STATUS_MANAGER_SET_DATE'),
 			'dateLabelText' => GetMessage('CRM_INVOICE_STATUS_MANAGER_DATE_LABEL'),
-			'payVoucherNumLabelText' => GetMessage('CRM_INVOICE_STATUS_MANAGER_PAY_VOUCHER_NUM_LABEL'),
+			'payVoucherNumLabelText' => GetMessage('CRM_INVOICE_STATUS_MANAGER_PAY_VOUCHER_NUM_LABEL_1'),
 			'commentLabelText' => GetMessage('CRM_INVOICE_STATUS_MANAGER_COMMENT_LABEL'),
 			'notSpecified' => GetMessage('CRM_INVOICE_STATUS_MANAGER_NOT_SPECIFIED')
 		);
@@ -2479,6 +2483,7 @@ class CCrmViewHelper
 			}
 		}
 		$conversionTypeID = isset($arParams['CONVERSION_TYPE_ID']) ? (int)$arParams['CONVERSION_TYPE_ID'] : LeadConversionType::GENERAL;
+		$canConvert = !isset($arParams['CAN_CONVERT']) || $arParams['CAN_CONVERT'];
 
 		return $registrationScript.'<div class="crm-list-stage-bar'.$wrapperClass.'" '.$wrapperStyle.' id="'.htmlspecialcharsbx($controlID).'"><table class="crm-list-stage-bar-table"><tr>'
 			.$stepHtml
@@ -2494,6 +2499,7 @@ class CCrmViewHelper
 			.', "verboseMode":'.(isset($arParams['VERBOSE_MODE']) && $arParams['VERBOSE_MODE'] ? 'true' : 'false')
 			.', "conversionScheme":'.($conversionScheme !== null ? CUtil::PhpToJSObject($conversionScheme) : 'null')
 			.', "conversionTypeId":'.CUtil::JSEscape($conversionTypeID)
+			.', "canConvert":'.($canConvert ? 'true' : 'false')
 			.', "currentStepId":"'.CUtil::JSEscape($currentID).'"'
 			.', "infoTypeId":"'.CUtil::JSEscape("category_{$categoryID}").'"'
 			.', "readOnly":'.($isReadOnly ? 'true' : 'false')

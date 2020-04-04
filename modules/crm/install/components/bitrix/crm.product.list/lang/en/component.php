@@ -7,6 +7,7 @@ $MESS["CRM_PRODUCT_LIST_FILTER_CHECKBOX_NO"] = "No";
 $MESS["CRM_COLUMN_ID"] = "ID";
 $MESS["CRM_COLUMN_XML_ID"] = "External ID";
 $MESS["CRM_COLUMN_NAME"] = "Name";
+$MESS["CRM_COLUMN_CODE"] = "Symbolic code";
 $MESS["CRM_COLUMN_CATALOG_ID"] = "Catalog";
 $MESS["CRM_COLUMN_SORT"] = "Sort";
 $MESS["CRM_COLUMN_PRICE"] = "Price";

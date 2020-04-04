@@ -88,14 +88,17 @@ elseif ($action === 'REFRESH_CHECK')
 
 	// ---------------------------------------------------
 	$check = \Bitrix\Sale\Cashbox\CheckManager::getObjectById($id);
-	$cashbox = \Bitrix\Sale\Cashbox\Manager::getObjectById($check->getField('CASHBOX_ID'));
-	if ($cashbox && $cashbox->isCheckable())
+	if ($check->getField('STATUS') === 'P')
 	{
-		$r = $cashbox->check($check);
-		if (!$r->isSuccess())
+		$cashbox = \Bitrix\Sale\Cashbox\Manager::getObjectById($check->getField('CASHBOX_ID'));
+		if ($cashbox && $cashbox->isCheckable())
 		{
-			$err = implode("\n", $r->getErrorMessages());
-			__CrmCheckListEndResponse(array('ERROR'=>$err));
+			$r = $cashbox->check($check);
+			if (!$r->isSuccess())
+			{
+				$err = implode("\n", $r->getErrorMessages());
+				__CrmCheckListEndResponse(array('ERROR'=>$err));
+			}
 		}
 	}
 

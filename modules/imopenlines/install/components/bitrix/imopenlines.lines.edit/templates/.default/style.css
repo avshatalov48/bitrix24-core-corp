@@ -535,6 +535,10 @@
 	z-index: 1;
 }
 
+.imopenlines-control-inner.width-80 {
+	width: 80px;
+}
+
 .imopenlines-control-input:hover {
 	border-color: #66afe9;
 }
@@ -573,6 +577,10 @@
 	max-width: 420px;
 	background: #fff url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20viewBox%3D%220%200%2011%207%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Ctitle%3EPath%3C/title%3E%3Cpath%20d%3D%22M5.485%204.228L1.37.114%200%201.484l4.8%204.8.685.687%205.486-5.485L9.6.115%205.484%204.227z%22%20fill%3D%22%23535C69%22%20fill-rule%3D%22evenodd%22/%3E%3C/svg%3E') center right 10px no-repeat;
 	background-size: 12px 12px;
+}
+
+.imopenlines-control-select .imopenlines-control-input.imopenlines-control-input-kpi {
+	padding-top: 6px;
 }
 
 .imopenlines-control-link {
@@ -896,6 +904,14 @@
 
 .imopenlines-control-input-vote {
 	height: 79px;
+	white-space: pre-wrap;
+	resize: none;
+	overflow-y: visible;
+}
+
+.imopenlines-control-input-textarea-kpi {
+	height: 79px;
+	padding-top: 5px;
 	white-space: pre-wrap;
 	resize: none;
 	overflow-y: visible;
@@ -1381,4 +1397,70 @@ select::-ms-expand {
 
 select {
 	-moz-appearance: none;
+}
+
+.imopenlines-lines-edit-popup-text {
+	padding-left: 7px;
+	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	color: #525c68;
+}
+
+.imopenlines-lines-edit-popup-content {
+	display: block;
+	text-align: center;
+	white-space: nowrap;
+	padding: 10px 10px 0 10px;
+}
+
+.popup-window.imopenlines-lines-edit-popup {
+	padding: 10px 20px;
+}
+
+.imopenlines-lines-edit-popup-input-number {
+	text-align: center;
+	padding: 0 5px;
+}
+
+.imopenlines-lines-edit-popup-input-number::-webkit-outer-spin-button,
+.imopenlines-lines-edit-popup-input-number::-webkit-inner-spin-button {
+	-webkit-appearance: none;
+	margin: 0;
+}
+
+.imopenlines-control-delete.imopenlines-control-container {
+	display: block;
+}
+
+.imopenlines-control-alert-popup .popup-window-buttons {
+	padding: 15px 0 0 0;
+	border-top: 1px solid rgba(82, 92, 105, .1);
+}
+
+.imopenlines-control-delete .imopenlines-control-subtitle {
+	display: block;
+	padding: 0 0 10px 0;
+	margin: 0 0 17px 0;
+	border-bottom: 1px solid rgba(82, 92, 105, .1);
+	font: 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	color: #858C96;
+}
+
+.imopenlines-control-alert-popup {
+	font: 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	color: #535C69;
+}
+
+.imopenlines-control-alert-popup-inner {
+	min-height: 80px;
+}
+
+.imopenlines-control-alert-popup-title {
+	display: block;
+	margin: 0 0 15px 0;
+	font: bold 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+}
+
+.imopenlines-control-alert-popup.popup-window {
+	padding: 20px;
+	max-width: 362px;
 }

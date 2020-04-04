@@ -206,12 +206,26 @@
 									url = "file://" + this.fileData.url;
 								}
 
+								let name = this.fileData.name? this.fileData.name: null;
+								let mimeType = this.fileData.mimeType? this.fileData.mimeType: null;
+
 								return BX.FileUtils.fileForReading(url)
 									.then(entry =>
 									{
 										entry.params = this.fileData.params;
 										entry.folderId = this.fileData.folderId;
 										entry.chunk = this.fileData.chunk || this.chunkSize;
+
+										if (name)
+										{
+											entry.file.name = name;
+										}
+
+										if (mimeType)
+										{
+											entry.file.mimeType = mimeType;
+										}
+
 										this.fileEntry = entry;
 										resolve();
 									})
@@ -245,6 +259,11 @@
 								"Content-Disposition: form-data; name=\"previewFile\"; filename=\"" + previewName + "\"\r\n" +
 								"Content-Type: image/jpeg\r\n\r\n" + previewData + "\r\n\r\n" +
 								"--" + boundary + "--";
+						}
+
+						if (this.fileEntry.getMimeType())
+						{
+							headers['X-Upload-Content-Type'] = this.fileEntry.getMimeType();
 						}
 
 						BX.ajax({
@@ -345,10 +364,16 @@
 		{
 			return this.callAction("afterCommitAction");
 		},
+		getFileName:function(){
+			if(this.fileData.name)
+				return this.fileData.name;
+
+			return this.fileEntry.getFileName();
+		},
 		sendChunk: function (data)
 		{
 			let url = "/bitrix/services/main/ajax.php?action=disk.api.content.upload&filename="
-				+ this.fileEntry.getName()
+				+ this.getFileName()
 				+ (this.token ? "&token=" + this.token : "");
 
 			let headers = {

@@ -191,6 +191,8 @@ BX.IntranetVSBlock = function(params)
 	this.disableDrag = params.disableDrag;
 	this.disableDragDest = params.disableDragDest;
 
+	this.baseZindex = 1000;
+
 	this.tplParts = {};
 	this.employees_index = {};
 
@@ -311,7 +313,7 @@ BX.IntranetVSBlock.prototype.showEmployees = function()
 			closeByEsc: true,
 			autoHide: true,
 			lightShadow: true,
-			zIndex: 2,
+			zIndex: this.baseZindex,
 			content: data,
 			offsetLeft: 50,
 			angle : true
@@ -393,7 +395,7 @@ BX.IntranetVSBlock.prototype._showNext = function (data) {
 		BX.addClass(this.node, 'bx-current');
 		BX.removeClass(this.node, 'structure-dept-nesting');
 
-		this.node.style.zIndex = 30 * this.section_level;
+		this.node.style.zIndex = this.baseZindex + 30 * this.section_level;
 
 		this.node.style.top = obPos.top + 'px';
 		this.node.style.left = obPos.left + 'px';
@@ -409,7 +411,7 @@ BX.IntranetVSBlock.prototype._showNext = function (data) {
 				left: '0px',
 				width: windowSize.scrollWidth + "px",
 				height: windowSize.scrollHeight + "px",
-				zIndex: 25 * this.section_level
+				zIndex: this.baseZindex + 25 * this.section_level
 			}
 		}));
 		BX.bind(window, "resize", BX.proxy(_onresize, this.overlay));
@@ -419,7 +421,7 @@ BX.IntranetVSBlock.prototype._showNext = function (data) {
 			style: {
 				position: 'absolute',
 				top: (obPos.top - 20) + 'px',
-				zIndex: 28 * this.section_level,
+				zIndex: this.baseZindex + 28 * this.section_level,
 				padding: (obPos.height + 30) + "px 100px 20px 20px"
 			},
 			html: data
@@ -438,7 +440,7 @@ BX.IntranetVSBlock.prototype._showNext = function (data) {
 		this.stick = document.body.appendChild(BX.create('DIV', {
 			props: {className: 'bx-str-stick'},
 			style: {
-				zIndex: 29 * this.section_level,
+				zIndex: this.baseZindex + 29 * this.section_level,
 				top: (obPos.bottom - 3) + 'px',
 				left: parseInt((obPos.right+obPos.left)/2) + 'px'
 			}

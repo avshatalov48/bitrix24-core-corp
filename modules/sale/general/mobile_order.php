@@ -629,6 +629,18 @@ class CSaleMobileOrderUtils
 		);
 	}
 
+	/**
+	 * @param string $strDate
+	 * @return string
+	 */
+	static function getDate($strDate)
+	{
+		return FormatDateFromDB(
+			$strDate,
+			CSite::GetDateFormat('SHORT', LANGUAGE_ID)
+		);
+	}
+
 	function getPreparedTemplate($template, $arFields)
 	{
 		$retStr = $template;

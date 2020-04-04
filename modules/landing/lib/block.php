@@ -3,10 +3,11 @@ namespace Bitrix\Landing;
 
 use \Bitrix\Main\Web\HttpClient;
 use \Bitrix\Main\Web\Json;
-use \Bitrix\Main\Page\Asset;
 use \Bitrix\Main\Web\DOM;
 use \Bitrix\Main\Localization\Loc;
 use \Bitrix\Landing\Internals;
+use \Bitrix\Landing\Assets;
+use \Bitrix\Landing\PublicAction\Utils as UtilsAction;
 
 Loc::loadMessages(__FILE__);
 
@@ -51,6 +52,11 @@ class Block extends \Bitrix\Landing\Internals\BaseTable
 	 * Life time for mark new block.
 	 */
 	const NEW_BLOCK_LT = 1209600;//86400 * 14
+
+	/**
+	 * Access level: any access denied to all blocks.
+	 */
+	const ACCESS_A = 'A';
 
 	/**
 	 * Access level: access denied.
@@ -119,6 +125,12 @@ class Block extends \Bitrix\Landing\Internals\BaseTable
 	protected $repoId = 0;
 
 	/**
+	 * REST repository some info.
+	 * @var array
+	 */
+	protected $repoInfo = [];
+
+	/**
 	 * Code of current block.
 	 * @var string
 	 */
@@ -135,6 +147,12 @@ class Block extends \Bitrix\Landing\Internals\BaseTable
 	 * @var string
 	 */
 	protected $content = '';
+
+	/**
+	 * Required user action just added.
+	 * @var array
+	 */
+	protected $runtimeRequiredUserAction = [];
 
 	/**
 	 * Access for this block.
@@ -165,6 +183,12 @@ class Block extends \Bitrix\Landing\Internals\BaseTable
 	 * Public or not current block.
 	 * @var boolean
 	 */
+	protected $public = false;
+
+	/**
+	 * Public or not current block.
+	 * @var boolean
+	 */
 	protected $block = false;
 
 	/**
@@ -181,16 +205,35 @@ class Block extends \Bitrix\Landing\Internals\BaseTable
 
 	/**
 	 * Instance of Error.
-	 * @var \Bitrix\Landing\Error
+	 * @var Error
 	 */
 	protected $error = null;
+
+	/**
+	 * Dynamic params.
+	 * @var array
+	 */
+	protected $dynamicParams = [];
+
+	/**
+	 * Allowed extensions for developers.
+	 * @var array
+	 */
+	protected $allowedExtensions = [
+		'landing_form',
+		'landing_carousel',
+		'landing_google_maps_new',
+		'landing_countdown',
+		'landing_gallery_cards'
+	];
 
 	/**
 	 * Constructor.
 	 * @param int $id Block id.
 	 * @param array $data Data row from BlockTable (by default get from DB).
+	 * @param array $params Some additional params.
 	 */
-	public function __construct($id, $data = array())
+	public function __construct($id, $data = [], array $params = [])
 	{
 		if (empty($data) || !is_array($data))
 		{
@@ -198,7 +241,8 @@ class Block extends \Bitrix\Landing\Internals\BaseTable
 				'select' => array(
 					'*',
 					'SITE_ID' => 'LANDING.SITE_ID',
-					'MANIFEST' => 'MANIFEST_DB.MANIFEST'
+					'MANIFEST' => 'MANIFEST_DB.MANIFEST',
+					'MANIFEST_MODIFY' => 'MANIFEST_DB.DATE_MODIFY'
 				),
 				'filter' => array(
 					'ID' => $id
@@ -227,6 +271,7 @@ class Block extends \Bitrix\Landing\Internals\BaseTable
 		$this->public = isset($data['PUBLIC']) && $data['PUBLIC'] == 'Y';
 		$this->content = (!$this->deleted && isset($data['CONTENT'])) ? trim($data['CONTENT']) : '';
 
+		// access
 		if (isset($data['ACCESS']))
 		{
 			$this->access = $data['ACCESS'];
@@ -234,6 +279,10 @@ class Block extends \Bitrix\Landing\Internals\BaseTable
 		if (isset($data['MANIFEST']))
 		{
 			$this->manifestDB = $data['MANIFEST'];
+			if ($data['MANIFEST_MODIFY'])
+			{
+				$this->manifestDB['timestamp'] = $data['MANIFEST_MODIFY']->getTimeStamp();
+			}
 		}
 
 		// fill meta data
@@ -246,40 +295,46 @@ class Block extends \Bitrix\Landing\Internals\BaseTable
 			}
 		}
 
+		// other data
 		if (preg_match(self::REPO_MASK, $this->code, $matches))
 		{
 			$this->repoId = $matches[1];
 		}
-
 		if (!$this->content && !$this->deleted)
 		{
 			$this->content = self::getContentFromRepository($this->code);
 		}
-
 		$this->error = new Error;
 		$this->docRoot = Manager::getDocRoot();
+
+		// dynamic params
+		if (isset($data['SOURCE_PARAMS']))
+		{
+			$this->dynamicParams = (array)$data['SOURCE_PARAMS'];
+			$this->setDynamic();
+		}
 	}
 
 	/**
 	 * Fill landing with blocks.
-	 * @param \Bitrix\Landing\Landing $landing Landing instance.
+	 * @param Landing $landing Landing instance.
 	 * @param int $limit Limit count for blocks.
 	 * @param array $params Additional params.
 	 * @return boolean
 	 */
-	public static function fillLanding(\Bitrix\Landing\Landing $landing, $limit = 0, array $params = array())
+	public static function fillLanding(Landing $landing, $limit = 0, array $params = array())
 	{
 		if ($landing->exist())
 		{
 			$editMode = $landing->getEditMode() || $landing->getPreviewMode();
 			$repo = array();
 			$blocks = array();
-			$rows = array();
 			// get all blocks by filter
 			$res = parent::getList(array(
 				'select' => array(
 					'*',
-					'MANIFEST' => 'MANIFEST_DB.MANIFEST'
+					'MANIFEST' => 'MANIFEST_DB.MANIFEST',
+					'MANIFEST_MODIFY' => 'MANIFEST_DB.DATE_MODIFY'
 				),
 				'filter' => array(
 					'LID' => $landing->getId(),
@@ -296,14 +351,24 @@ class Block extends \Bitrix\Landing\Internals\BaseTable
 			));
 			while ($row = $res->fetch())
 			{
+				$blockParams = [];
+				if (!$landing->canEdit())
+				{
+					$row['ACCESS'] = self::ACCESS_A;
+				}
 				$row['SITE_ID'] = $landing->getSiteId();
-				$block = new self($row['ID'], $row);
+				$block = new self(
+					$row['ID'],
+					$row,
+					$blockParams
+				);
 				if (!$editMode && $block->getRepoId())
 				{
 					$repo[] = $block->getRepoId();
 				}
 				$blocks[$row['ID']] = $block;
 			}
+			unset($row, $res);
 			if (!empty($repo))
 			{
 				$repo = Repo::getAppInfo($repo);
@@ -311,21 +376,36 @@ class Block extends \Bitrix\Landing\Internals\BaseTable
 			// add blocks to landing
 			foreach ($blocks as $block)
 			{
-				$reposInfo = isset($repo[$block->getRepoId()])
-							? $repo[$block->getRepoId()]
-							: array();
-				if ($editMode || !$reposInfo)
+				if (
+					isset($repo[$block->getRepoId()]['PAYMENT_ALLOW']) &&
+					$repo[$block->getRepoId()]['PAYMENT_ALLOW'] != 'Y'
+				)
 				{
+					$allowedByTariff = false;
+				}
+				else
+				{
+					$allowedByTariff = true;
+				}
+				if ($editMode)
+				{
+					if (!$allowedByTariff)
+					{
+						$block->saveContent(self::getMessageBlock([
+							'HEADER' => Loc::getMessage('LANDING_BLOCK_SUBSCRIBE_EXP_HEADER'),
+							'MESSAGE' => Loc::getMessage('LANDING_BLOCK_SUBSCRIBE_EXP_MESSAGE'),
+							'BUTTON' => Loc::getMessage('LANDING_BLOCK_SUBSCRIBE_EXP_BUTTON'),
+							'LINK' => Manager::BUY_LICENSE_PATH
+			  			], 'locked'));
+					}
 					$landing->addBlockToCollection($block);
 				}
-				elseif (
-					isset($reposInfo['PAYMENT_ALLOW']) &&
-					$reposInfo['PAYMENT_ALLOW'] == 'Y'
-				)
+				elseif ($allowedByTariff)
 				{
 					$landing->addBlockToCollection($block);
 				}
 			}
+			unset($blocks, $block, $repo);
 			return true;
 		}
 
@@ -501,12 +581,12 @@ class Block extends \Bitrix\Landing\Internals\BaseTable
 
 	/**
 	 * Create instance by string code.
-	 * @param \Bitrix\Landing\Landing $landing Landing - owner for new block.
+	 * @param Landing $landing Landing - owner for new block.
 	 * @param string $code Code of block from repository.
 	 * @param array $data Additional data array.
 	 * @return Block|false
 	 */
-	public static function createFromRepository(\Bitrix\Landing\Landing $landing, $code, $data = array())
+	public static function createFromRepository(Landing $landing, $code, $data = array())
 	{
 		// get content and mainfest
 		$content = self::getContentFromRepository($code);
@@ -549,7 +629,8 @@ class Block extends \Bitrix\Landing\Internals\BaseTable
 		);
 		$availableReplace = array(
 			'ACTIVE', 'PUBLIC', 'ACCESS',
-			'SORT', 'CONTENT', 'ANCHOR'
+			'SORT', 'CONTENT', 'ANCHOR',
+			'SOURCE_PARAMS', 'INITIATOR_APP_CODE'
 		);
 		foreach ($availableReplace as $replace)
 		{
@@ -569,6 +650,13 @@ class Block extends \Bitrix\Landing\Internals\BaseTable
 			)
 			{
 				$manifest['callbacks']['afteradd']($block);
+			}
+			// for set filter
+			if ($fields['SOURCE_PARAMS'])
+			{
+				$block->saveDynamicParams(
+					$fields['SOURCE_PARAMS']
+				);
 			}
 			// get all images from block to local storage
 			if (self::ADD_FILES_TO_LOCAL_STORAGE)
@@ -650,6 +738,29 @@ class Block extends \Bitrix\Landing\Internals\BaseTable
 	}
 
 	/**
+	 * Gets general paths, where blocks can be found.
+	 * @return array
+	 */
+	protected static function getGeneralPaths()
+	{
+		static $paths = null;
+
+		if (!$paths)
+		{
+			$paths = [
+				BX_ROOT . '/' . self::BLOCKS_DIR,
+				\getLocalPath(self::BLOCKS_DIR)
+			];
+			if ($paths[0] == $paths[1])
+			{
+				unset($paths[1]);
+			}
+		}
+
+		return $paths;
+	}
+
+	/**
 	 * Clear cache repository.
 	 * @return void
 	 */
@@ -659,6 +770,59 @@ class Block extends \Bitrix\Landing\Internals\BaseTable
 		{
 			Manager::getCacheManager()->clearByTag(self::BLOCKS_TAG);
 		}
+	}
+
+	/**
+	 * Gets all available namespaces.
+	 * @return array
+	 */
+	protected static function getNamespaces()
+	{
+		static $namespaces = [];
+
+		if ($namespaces)
+		{
+			return $namespaces;
+		}
+
+		$paths = self::getGeneralPaths();
+		$disableNamespace = (array)Config::get('disable_namespace');
+		$enableNamespace = Config::get('enable_namespace');
+		$enableNamespace = $enableNamespace ? (array) $enableNamespace : array();
+
+		$namespaces = [];
+		foreach ($paths as $path)
+		{
+			if ($path !== false)
+			{
+				$path = Manager::getDocRoot() . $path;
+				// read all subdirs ($namespaces) in block dir
+				if (($handle = opendir($path)))
+				{
+					while ((($entry = readdir($handle)) !== false))
+					{
+						if (!empty($enableNamespace))
+						{
+							if (in_array($entry, $enableNamespace))
+							{
+								$namespaces[] = $entry;
+							}
+						}
+						else if (
+							$entry != '.' && $entry != '..' &&
+							is_dir($path . '/' . $entry) &&
+							!in_array($entry, $disableNamespace)
+						)
+						{
+							$namespaces[] = $entry;
+						}
+					}
+				}
+			}
+		}
+		$namespaces = array_unique($namespaces);
+
+		return $namespaces;
 	}
 
 	/**
@@ -777,42 +941,9 @@ class Block extends \Bitrix\Landing\Internals\BaseTable
 		$blocks = array();
 		$sections = array();
 
-		// gets namespaces
-		$namespaces = [];
-		$paths = [
-			BX_ROOT . '/' . self::BLOCKS_DIR,
-			\getLocalPath(self::BLOCKS_DIR)
-		];
-		foreach ($paths as $path)
-		{
-			if ($path !== false)
-			{
-				$path = Manager::getDocRoot() . $path;
-				// read all subdirs ($namespaces) in block dir
-				if (($handle = opendir($path)))
-				{
-					while ((($entry = readdir($handle)) !== false))
-					{
-						if (!empty($enableNamespace))
-						{
-							if (in_array($entry, $enableNamespace))
-							{
-								$namespaces[] = $entry;
-							}
-						}
-						else if (
-							$entry != '.' && $entry != '..' &&
-							is_dir($path . '/' . $entry) &&
-							!in_array($entry, $disableNamespace)
-						)
-						{
-							$namespaces[] = $entry;
-						}
-					}
-				}
-			}
-		}
-		$namespaces = array_unique($namespaces);
+		// general paths and namespaces
+		$paths = self::getGeneralPaths();
+		$namespaces = self::getNamespaces();
 
 		//get all blocks with description-file
 		sort($namespaces);
@@ -881,106 +1012,116 @@ class Block extends \Bitrix\Landing\Internals\BaseTable
 					}
 				}
 			}
-			else if (($handle = opendir($path . '/' . $subdir)))
+			else
 			{
-				// sections
-				$sectionsPath = $path . '/' . $subdir . '/.sections.php';
-				if (file_exists($sectionsPath))
+				foreach ($paths as $path)
 				{
-					$sections = array_merge(
-						$sections,
-						(array) include $sectionsPath
-					);
-				}
-				if (!isset($sections['last']))
-				{
-					$sections['last'] = Loc::getMessage('LD_BLOCK_SECTION_LAST');
-				}
-				// blocks
-				while ((($entry = readdir($handle)) !== false))
-				{
-					$descriptionPath = $path . '/' . $subdir . '/' . $entry . '/.description.php';
-					$previewPathJpg = $path . '/' . $subdir . '/' . $entry . '/' . self::PREVIEW_FILE_NAME;
-					if ($entry != '.' && $entry != '..' && file_exists($descriptionPath))
+					$path = Manager::getDocRoot() . $path;
+					if (
+						is_dir($path . '/' . $subdir) &&
+						($handle = opendir($path . '/' . $subdir))
+					)
 					{
-						Loc::loadLanguageFile($descriptionPath);
-						$description = include $descriptionPath;
-						if (isset($description['block']['name']))
+						// sections
+						$sectionsPath = $path . '/' . $subdir . '/.sections.php';
+						if (file_exists($sectionsPath))
 						{
-							$previewFileName = Manager::getUrlFromFile(
-								\getLocalPath(
-									self::BLOCKS_DIR . '/' . $subdir . '/' . $entry . '/' . self::PREVIEW_FILE_NAME
-								)
+							$sections = array_merge(
+								$sections,
+								(array) include $sectionsPath
 							);
-							$blocks[$entry] = array(
-								'name' => $description['block']['name'],
-								'namespace' => $subdir,
-								'new' => self::isNewBlock($entry),
-								'version' => isset($description['block']['version'])
-												? $description['block']['version']
-												: null,
-								'type' => isset($description['block']['type'])
-												? $description['block']['type']
-												: array(),
-								'section' => isset($description['block']['section'])
-												? $description['block']['section']
-												: 'other',
-								'description' => isset($description['block']['description'])
-												? $description['block']['description']
-												: '',
-								'preview' => file_exists($previewPathJpg)
-												? $previewFileName
-												: '',
-								'restricted' => false,
-								'repo_id' => false,
-								'app_code' => false
-							);
-							if ($withManifest)
+						}
+						if (!isset($sections['last']))
+						{
+							$sections['last'] = Loc::getMessage('LD_BLOCK_SECTION_LAST');
+						}
+						// blocks
+						while ((($entry = readdir($handle)) !== false))
+						{
+							$descriptionPath = $path . '/' . $subdir . '/' . $entry . '/.description.php';
+							$previewPathJpg = $path . '/' . $subdir . '/' . $entry . '/' . self::PREVIEW_FILE_NAME;
+							if ($entry != '.' && $entry != '..' && file_exists($descriptionPath))
 							{
-								$blocks[$entry]['manifest'] = self::getManifestFile(
-									$subdir . ':' . $entry
-								);
-								$blocks[$entry]['content'] = self::getContentFromRepository(
-									$entry, $subdir
-								);
-								if (isset($blocks[$entry]['manifest']['block']))
+								Loc::loadLanguageFile($descriptionPath);
+								$description = include $descriptionPath;
+								if (isset($description['block']['name']))
 								{
-									$blocks[$entry]['manifest']['block']['preview'] = $blocks[$entry]['preview'];
-								}
-								// local assets to manifest's assets
-								if (!isset($blocks[$entry]['manifest']['assets']))
-								{
-									$blocks[$entry]['manifest']['assets'] = array();
-								}
-								// if css exists
-								if (file_exists($path . '/' . $subdir . '/' . $entry . '/style.min.css'))
-								{
-									if (!isset($blocks[$entry]['manifest']['assets']['css']))
-									{
-										$blocks[$entry]['manifest']['assets']['css'] = array();
-									}
-									$blocks[$entry]['manifest']['assets']['css'][] = Manager::getUrlFromFile(
+									$previewFileName = Manager::getUrlFromFile(
 										\getLocalPath(
-											self::BLOCKS_DIR . '/' . $subdir . '/' . $entry . '/style.min.css'
+											self::BLOCKS_DIR . '/' . $subdir . '/' . $entry . '/' . self::PREVIEW_FILE_NAME
 										)
 									);
-								}
-								// if js exists
-								if (file_exists($path . '/' . $subdir . '/' . $entry . '/script.min.js' ))
-								{
-									if (!isset($blocks[$entry]['manifest']['assets']['js']))
-									{
-										$blocks[$entry]['manifest']['assets']['js'] = array();
-									}
-									$blocks[$entry]['manifest']['assets']['js'][] = Manager::getUrlFromFile(
-										\getLocalPath(
-											self::BLOCKS_DIR . '/' . $subdir . '/' . $entry . '/script.min.js'
-										)
+									$blocks[$entry] = array(
+										'name' => $description['block']['name'],
+										'namespace' => $subdir,
+										'new' => self::isNewBlock($entry),
+										'version' => isset($description['block']['version'])
+														? $description['block']['version']
+														: null,
+										'type' => isset($description['block']['type'])
+														? $description['block']['type']
+														: array(),
+										'section' => isset($description['block']['section'])
+														? $description['block']['section']
+														: 'other',
+										'description' => isset($description['block']['description'])
+														? $description['block']['description']
+														: '',
+										'preview' => file_exists($previewPathJpg)
+														? $previewFileName
+														: '',
+										'restricted' => false,
+										'repo_id' => false,
+										'app_code' => false
 									);
-								}
-								if (empty($blocks[$entry]['manifest']['assets']))
-								{
-									unset($blocks[$entry]['manifest']['assets']);
+									if ($withManifest)
+									{
+										$blocks[$entry]['manifest'] = self::getManifestFile(
+											$subdir . ':' . $entry
+										);
+										$blocks[$entry]['content'] = self::getContentFromRepository(
+											$entry, $subdir
+										);
+										if (isset($blocks[$entry]['manifest']['block']))
+										{
+											$blocks[$entry]['manifest']['block']['preview'] = $blocks[$entry]['preview'];
+										}
+										// local assets to manifest's assets
+										if (!isset($blocks[$entry]['manifest']['assets']))
+										{
+											$blocks[$entry]['manifest']['assets'] = array();
+										}
+										// if css exists
+										if (file_exists($path . '/' . $subdir . '/' . $entry . '/style.min.css'))
+										{
+											if (!isset($blocks[$entry]['manifest']['assets']['css']))
+											{
+												$blocks[$entry]['manifest']['assets']['css'] = array();
+											}
+											$blocks[$entry]['manifest']['assets']['css'][] = Manager::getUrlFromFile(
+												\getLocalPath(
+													self::BLOCKS_DIR . '/' . $subdir . '/' . $entry . '/style.min.css'
+												)
+											);
+										}
+										// if js exists
+										if (file_exists($path . '/' . $subdir . '/' . $entry . '/script.min.js' ))
+										{
+											if (!isset($blocks[$entry]['manifest']['assets']['js']))
+											{
+												$blocks[$entry]['manifest']['assets']['js'] = array();
+											}
+											$blocks[$entry]['manifest']['assets']['js'][] = Manager::getUrlFromFile(
+												\getLocalPath(
+													self::BLOCKS_DIR . '/' . $subdir . '/' . $entry . '/script.min.js'
+												)
+											);
+										}
+										if (empty($blocks[$entry]['manifest']['assets']))
+										{
+											unset($blocks[$entry]['manifest']['assets']);
+										}
+									}
 								}
 							}
 						}
@@ -1167,19 +1308,24 @@ class Block extends \Bitrix\Landing\Internals\BaseTable
 	{
 		$style = array();
 
+		$paths = self::getGeneralPaths();
+
 		// read all subdirs ($namespaces) in block dir
-		$path = Manager::getDocRoot() . \getLocalPath(self::BLOCKS_DIR);
-		if (($handle = opendir($path)))
+		foreach ($paths as $path)
 		{
-			while ((($entry = readdir($handle)) !== false))
+			$path = Manager::getDocRoot() . $path;
+			if (($handle = opendir($path)))
 			{
-				if (
-					$entry != '.' && $entry != '..' &&
-					is_dir($path . '/' . $entry) &&
-					file_exists($path . '/' . $entry . '/.style.php')
-				)
+				while ((($entry = readdir($handle)) !== false))
 				{
-					$style[$entry] = include $path . '/' . $entry . '/.style.php';
+					if (
+						$entry != '.' && $entry != '..' &&
+						is_dir($path . '/' . $entry) &&
+						file_exists($path . '/' . $entry . '/.style.php')
+					)
+					{
+						$style[$entry] = include $path . '/' . $entry . '/.style.php';
+					}
 				}
 			}
 		}
@@ -1231,13 +1377,22 @@ class Block extends \Bitrix\Landing\Internals\BaseTable
 		{
 			Manager::getApplication()->restartBuffer();
 			$availableJS = !$editMode || !$block->getRepoId();
+			$manifest = $block->getManifest();
+			if (
+				!isset($manifest['requiredUserAction']) &&
+				$block->getRuntimeRequiredUserAction()
+			)
+			{
+				$manifest['requiredUserAction'] = $block->getRuntimeRequiredUserAction();
+			}
 			$return = array(
 				'id' => $id,
 				'content' => $content,
 				'content_ext' => $extContent,
 				'css' => $block->getCSS(),
 				'js' => $availableJS ? $block->getJS() : array(),
-				'manifest' => $block->getManifest()
+				'manifest' => $manifest,
+				'dynamicParams' => $block->dynamicParams
 			);
 			if (
 				$editMode &&
@@ -1282,34 +1437,21 @@ class Block extends \Bitrix\Landing\Internals\BaseTable
 		}
 
 		$paths[$code] = '';
-		$path = Manager::getDocRoot() . \getLocalPath(self::BLOCKS_DIR);
 
-		// read all subdirs ($namespaces) in block dir
-		if (empty($namespace))
-		{
-			if (($handle = opendir($path)))
-			{
-				while ((($entry = readdir($handle)) !== false))
-				{
-					if (
-						is_dir($path . '/' . $entry) &&
-						$entry != '.' && $entry != '..'
-					)
-					{
-						$namespace[] = $entry;
-					}
-				}
-			}
-			sort($namespace);
-		}
+		$namespaces = self::getNamespaces();
+		$generalPaths = self::getGeneralPaths();
 
 		// get first needed block from end
-		foreach (array_reverse($namespace) as $subdir)
+		foreach (array_reverse($namespaces) as $subdir)
 		{
-			if (file_exists($path . '/' . $subdir . '/' . $code . '/.description.php'))
+			foreach ($generalPaths as $path)
 			{
-				$paths[$code] = $subdir;
-				break;
+				$path = Manager::getDocRoot() . $path;
+				if (file_exists($path . '/' . $subdir . '/' . $code . '/.description.php'))
+				{
+					$paths[$code] = $subdir;
+					break 2;
+				}
 			}
 		}
 
@@ -1406,6 +1548,26 @@ class Block extends \Bitrix\Landing\Internals\BaseTable
 	}
 
 	/**
+	 * Reset content of current block.
+	 * @return void
+	 */
+	public function resetContent()
+	{
+		$data = parent::getList([
+			'select' => [
+				'CONTENT'
+			],
+			'filter' => [
+				'ID' => $this->id
+			]
+		])->fetch();
+		if ($data)
+		{
+			$this->content = $data['CONTENT'];
+		}
+	}
+
+	/**
 	 * Active or not the block.
 	 * @return boolean
 	 */
@@ -1430,6 +1592,15 @@ class Block extends \Bitrix\Landing\Internals\BaseTable
 	public function getAccess()
 	{
 		return $this->access;
+	}
+
+	/**
+	 * Set new access to the block.
+	 * @param string $letter Access letter.
+	 */
+	public function setAccess($letter)
+	{
+		$this->access = $letter;
 	}
 
 	/**
@@ -1512,45 +1683,16 @@ class Block extends \Bitrix\Landing\Internals\BaseTable
 
 	/**
 	 * Get class handler for type of node.
+	 *
+	 * @deprecated
+	 * @see Node\Type::getClassName
+	 *
 	 * @param string $type Type.
 	 * @return string
 	 */
 	protected function getTypeClass($type)
 	{
-		static $classes = array();
-
-		$type = strtolower($type);
-
-		if (isset($classes[$type]))
-		{
-			return $classes[$type];
-		}
-
-		$class = __NAMESPACE__ . '\\Node\\' . $type;
-
-		// check custom classes
-		$event = new \Bitrix\Main\Event('landing', 'onGetNodeClass', array(
-			'type' => $type,
-		));
-		$event->send();
-		foreach ($event->getResults() as $result)
-		{
-			if ($result->getResultType() != \Bitrix\Main\EventResult::ERROR)
-			{
-				if (
-					($modified = $result->getModified()) &&
-					isset($modified['class']) &&
-					is_subclass_of($modified['class'], '\\Bitrix\\Landing\\Node')
-				)
-				{
-					$class = $modified['class'];
-				}
-			}
-		}
-
-		$classes[$type] = $class;
-
-		return $classes[$type];
+		return Node\Type::getClassName($type);
 	}
 
 	/**
@@ -1590,6 +1732,9 @@ class Block extends \Bitrix\Landing\Internals\BaseTable
 			{
 				Loc::loadLanguageFile($path . '/.description.php');
 				$manifest = include $path . '/.description.php';
+				$manifest['timestamp'] = file_exists($path . '/block.php')
+										? filectime($path . '/block.php')
+										: time();
 				return $manifest;
 			};
 
@@ -1621,7 +1766,7 @@ class Block extends \Bitrix\Landing\Internals\BaseTable
 				{
 					$subtypes = [$subtypes];
 				}
-				
+
 				foreach ($subtypes as $subtype)
 				{
 					$subtypeClass = '\\Bitrix\\Landing\\Subtype\\';
@@ -1654,7 +1799,7 @@ class Block extends \Bitrix\Landing\Internals\BaseTable
 					$node = $node();
 				}
 				$node['code'] = $keyNode;
-				$class = $this->getTypeClass($node['type']);
+				$class = Node\Type::getClassName($node['type']);
 				if (isset($node['type']) && class_exists($class))
 				{
 					$node['handler'] = call_user_func(array(
@@ -1873,6 +2018,9 @@ class Block extends \Bitrix\Landing\Internals\BaseTable
 			else if ($path = self::getBlockPath($this->code))
 			{
 				$manifest = include $this->docRoot . $path . '/.description.php';
+				$manifest['timestamp'] = file_exists($this->docRoot . $path . '/.description.php')
+										? filectime($this->docRoot . $path . '/.description.php')
+										: time();
 			}
 			else
 			{
@@ -1891,7 +2039,7 @@ class Block extends \Bitrix\Landing\Internals\BaseTable
 				$classFile = \getLocalPath($classFile);
 				if ($classFile)
 				{
-					$asset[$this->code]['class'][] = Manager::getDocRoot() . $classFile;
+					$asset[$this->code]['class'][] = $this->docRoot . $classFile;
 				}
 			}
 
@@ -1916,7 +2064,7 @@ class Block extends \Bitrix\Landing\Internals\BaseTable
 						// for rest block allowed only this
 						else if (
 							!$this->repoId ||
-							in_array($file, array('landing_form'))
+							in_array($file, $this->allowedExtensions)
 						)
 						{
 							$asset[$this->code][$ass][] = trim($file);
@@ -2031,18 +2179,17 @@ class Block extends \Bitrix\Landing\Internals\BaseTable
 
 	/**
 	 * Gets message string.
-	 * @param string $message Message for show in block.
+	 * @param array $params Component's params.
+	 * @param string $template Template name.
 	 * @return string
 	 */
-	protected function getMessageBlock($message)
+	protected static function getMessageBlock($params, $template = '')
 	{
 		ob_start();
 		Manager::getApplication()->includeComponent(
 			'bitrix:landing.blocks.message',
-			'',
-			[
-				'MESSAGE' => $message
-			],
+			$template,
+			$params,
 			false
 		);
 		$blockMesage = ob_get_contents();
@@ -2061,8 +2208,6 @@ class Block extends \Bitrix\Landing\Internals\BaseTable
 	public function view($edit = false, \Bitrix\Landing\Landing $landing = null, array $params = array())
 	{
 		global $APPLICATION;
-
-		static $assetsPlaced = array();
 
 		if (!isset($params['wrapper_show']))
 		{
@@ -2084,47 +2229,20 @@ class Block extends \Bitrix\Landing\Internals\BaseTable
 
 		if ($edit || $this->active)
 		{
-			foreach ($this->getCSS() as $css)
+			$assets = Assets\Manager::getInstance();
+			if ($css = $this->getCSS())
 			{
-				if ($this->repoId)
-				{
-					if (!in_array($css, $assetsPlaced))
-					{
-						$assetsPlaced[] = $css;
-						Manager::setPageView(
-							'BeforeHeadClose',
-							'<link href="' . \htmlspecialcharsbx($css) . '" type="text/css" rel="stylesheet" />'
-						);
-					}
-				}
-				else
-				{
-					Asset::getInstance()->addCSS($css);
-				}
+				$assets->addAsset($css, Assets\Location::LOCATION_TEMPLATE);
 			}
-			if (($ext = $this->getExt()))
+			if ($ext = $this->getExt())
 			{
-				\CUtil::initJSCore($ext);
+				$assets->addAsset($ext, Assets\Location::LOCATION_TEMPLATE);
 			}
 			if (!$edit || !$this->repoId)
 			{
-				foreach ($this->getJS() as $js)
+				if ($js = $this->getJS())
 				{
-					if ($this->repoId)
-					{
-						if (!in_array($js, $assetsPlaced))
-						{
-							$assetsPlaced[] = $js;
-							Manager::setPageView(
-								'FooterJS',
-								'<script type="text/javascript" src="' . \htmlspecialcharsbx($js) . '"></script>'
-							);
-						}
-					}
-					else
-					{
-						Asset::getInstance()->addJS($js);
-					}
+					$assets->addAsset($js, Assets\Location::LOCATION_AFTER_TEMPLATE);
 				}
 			}
 			// calling class(es) of block
@@ -2135,25 +2253,97 @@ class Block extends \Bitrix\Landing\Internals\BaseTable
 			}
 		}
 
-		if ($params['wrapper_show'])
+		// get manifest
+		if ($edit)
 		{
-			if ($edit)
+			$manifest = $this->getManifest();
+		}
+
+		// develop mode - rebuild and reset content
+		if (
+			$this->id > 0 &&
+			defined('LANDING_DEVELOPER_MODE') &&
+			LANDING_DEVELOPER_MODE === true
+		)
+		{
+			if (!isset($manifest))
 			{
-				$anchor = $this->getAnchor($this->id);
+				$manifest = $this->getManifest();
+			}
+			if (isset($this->metaData['DATE_MODIFY']))
+			{
+				$modifyTime = $this->metaData['DATE_MODIFY']->getTimeStamp();
 			}
 			else
 			{
-				$anchor = $this->anchor
-							? \htmlspecialcharsbx($this->anchor)
-							: $this->getAnchor($this->id);
+				$modifyTime = 0;
+			}
+			if ($modifyTime < $manifest['timestamp'])
+			{
+				Update\Block::executeStep([
+  					'ID' => $this->id
+	  			], $count = 0, $limit = 1, $paramsUpdater = []);
+				$this->resetContent();
+				$this->content = $this->getContent();
+			}
+		}
+
+		if (!\Bitrix\Main\ModuleManager::isModuleInstalled('bitrix24'))
+		{
+			if (strpos($this->content, '/upload/') !== false)
+			{
+				$this->content = preg_replace(
+					'#//[^\'^"]+/upload/#',
+					'/upload/',
+					$this->content
+				);
+			}
+			if (Manager::getOption('badpicture2x') == 'Y')
+			{
+				if (strpos($this->content, 'srcset="') !== false)
+				{
+					$this->content = str_replace(
+						'srcset="',
+						'data-srcset-bad="',
+						$this->content
+					);
+				}
+				if (strpos($this->content, '2x)') !== false)
+				{
+					$this->content = preg_replace(
+						"#(, url\('[^'^\"]+'\) 2x)#",
+						'',
+						$this->content
+					);
+				}
+			}
+		}
+
+		// show or not a wrapper of block
+		if ($params['wrapper_show'])
+		{
+			if ($this->id > 0)
+			{
+				if ($edit)
+				{
+					$anchor = $this->getAnchor($this->id);
+				}
+				else
+				{
+					$anchor = $this->anchor
+						? \htmlspecialcharsbx($this->anchor)
+						: $this->getAnchor($this->id);
+				}
+			}
+			else
+			{
+				$anchor = 'block' . rand(10000, 100000);
 			}
 			$classFromCode = 'block-' . $this->code;
 			$classFromCode = preg_replace('/([^a-z0-9-])/i', '-', $classFromCode);
 			$classFromCode = ' ' . $classFromCode;
-			$content = '<div id="' . $anchor . '" class="block-wrapper' .
-					   		(!$this->active ? ' landing-block-deactive' : '') .
-					   		$classFromCode .
-					   		'">' .
+			$content = '<div id="' . $anchor . '" ' .
+					   		'class="block-wrapper' . (!$this->active ? ' landing-block-deactive' : '') . $classFromCode . '">' .
 								$this->content .
 						'</div>';
 		}
@@ -2161,20 +2351,21 @@ class Block extends \Bitrix\Landing\Internals\BaseTable
 		{
 			$content = $this->content;
 		}
+
 		// @tmp bug with setInnerHTML save result
 		$content = preg_replace('/&amp;([^\s]{1})/is', '&$1', $content);
 
 		if ($edit)
 		{
-			$manifest = $this->getManifest();
-			if (!$manifest)
-			{
-				$manifest = array(
-					'code' => $this->code
-				);
-			}
 			if ($manifest)
 			{
+				if (
+					!isset($manifest['requiredUserAction']) &&
+					$this->runtimeRequiredUserAction
+				)
+				{
+					$manifest['requiredUserAction'] = $this->runtimeRequiredUserAction;
+				}
 				echo '<script type="text/javascript">'
 						. 'BX.ready(function(){'
 							. 'if (typeof BX.Landing.Block !== "undefined")'
@@ -2186,7 +2377,8 @@ class Block extends \Bitrix\Landing\Internals\BaseTable
 										. 'active: ' . ($this->active ? 'true' : 'false')  . ', '
 										. 'anchor: ' . '"' . \CUtil::jsEscape($this->anchor) . '"' . ', '
 										. 'access: ' . '"' . $this->access . '"' . ', '
-										. 'manifest: ' . Json::encode($manifest)
+					 					. 'dynamicParams: ' . Json::encode($this->dynamicParams) . ','
+					 					. 'manifest: ' . Json::encode($manifest)
 					 					. (
 					 						isset($manifest['requiredUserAction'])
 											? ', requiredUserAction: ' . Json::encode($manifest['requiredUserAction'])
@@ -2211,9 +2403,20 @@ class Block extends \Bitrix\Landing\Internals\BaseTable
 				}
 				catch (\ParseError $e)
 				{
-					echo $this->getMessageBlock(
-						Loc::getMessage('LANDING_BLOCK_MESSAGE_ERROR_EVAL')
-					);
+					$errMessage = $this::getMessageBlock([
+						'MESSAGE' => Loc::getMessage('LANDING_BLOCK_MESSAGE_ERROR_EVAL')
+				 	]);
+					if ($params['wrapper_show'])
+					{
+						echo '<div id="' . $anchor . '" class="block-wrapper' .
+							 	(!$this->active ? ' landing-block-deactive' : '') . '">' .
+							 		$errMessage .
+							 '</div>';
+					}
+					else
+					{
+						echo $errMessage;
+					}
 				}
 			}
 		}
@@ -2300,6 +2503,15 @@ class Block extends \Bitrix\Landing\Internals\BaseTable
 	 */
 	public function save()
 	{
+		if ($this->access == $this::ACCESS_A)
+		{
+			$this->error->addError(
+				'ACCESS_DENIED',
+				Loc::getMessage('LANDING_BLOCK_ACCESS_DENIED')
+			);
+			return false;
+		}
+
 		$data = array(
 			'SORT' => $this->sort,
 			'ACTIVE' => $this->active ? 'Y' : 'N',
@@ -2444,6 +2656,455 @@ class Block extends \Bitrix\Landing\Internals\BaseTable
 	}
 
 	/**
+	 * Gets dynamic source params.
+	 * @param int $id Not current block id.
+	 * @return array
+	 */
+	public function getDynamicParams($id = null)
+	{
+		$params = [];
+
+		if ($id !== null)
+		{
+			$id = intval($id);
+			$res = parent::getList([
+				'select' => [
+					'SOURCE_PARAMS'
+				],
+				'filter' => [
+					'ID' => $id
+				]
+			]);
+			if ($row = $res->fetch())
+			{
+				$params = $row['SOURCE_PARAMS'];
+			}
+			unset($row, $res);
+		}
+		else
+		{
+			$params = $this->dynamicParams;
+		}
+
+		return $params;
+	}
+
+	/**
+	 * @param array $data
+	 * @param array $replace
+	 * @return array
+	 */
+	private function dynamicLinkReplacer(array $data, array $replace)
+	{
+		foreach ($data as $key => $value)
+		{
+			if (is_array($value))
+			{
+				$data[$key] = $this->dynamicLinkReplacer($value, $replace);
+			}
+			else
+			{
+				$data[$key] = str_replace(
+					array_keys($replace),
+					array_values($replace),
+					$data[$key]
+				);
+			}
+		}
+		unset($key, $value);
+
+		return $data;
+	}
+
+	/**
+	 * Save dynamic params for the block.
+	 * @param array $sourceParams Source params.
+	 * @param array $params Additional params.
+	 * @return void
+	 */
+	public function saveDynamicParams(array $sourceParams = [], array $params = [])
+	{
+		if ($this->access < $this::ACCESS_W)
+		{
+			$this->error->addError(
+				'ACCESS_DENIED',
+				Loc::getMessage('LANDING_BLOCK_ACCESS_DENIED')
+			);
+			return;
+		}
+		// replace old link to new in dynamic manifest
+		if (
+			isset($params['linkReplace']) &&
+			is_array($params['linkReplace'])
+		)
+		{
+			$sourceParams = $this->dynamicLinkReplacer(
+				$sourceParams,
+				$params['linkReplace']
+			);
+		}
+		// save
+		$this->dynamicParams = $sourceParams;
+		Internals\BlockTable::update($this->id, [
+			'SOURCE_PARAMS' => $sourceParams
+		]);
+		unset($sourceParams, $params);
+	}
+
+	/**
+	 * Build dynamic content for the block.
+	 * @return void
+	 */
+	protected function setDynamic()
+	{
+		static $sourceList = null;
+		static $isDetailDynamic = null;
+		static $dynamicElementId = null;
+		static $dynamicFilter = null;
+
+		$data = $this->dynamicParams;
+
+		// check if is true dynamic
+		if (!$this->active || !$this->content)
+		{
+			return;
+		}
+		if (!is_array($data) || empty($data))
+		{
+			return;
+		}
+
+		// check feature
+		$availableFeature = Manager::checkFeature(
+			Manager::FEATURE_DYNAMIC_BLOCK,
+			[
+				'targetBlockId' => $this->id
+			]
+		);
+		if (!$availableFeature)
+		{
+			$this->runtimeRequiredUserAction = [
+				'header' => Loc::getMessage('LANDING_BLOCK_MESSAGE_ERROR_DYNAMIC_LIMIT_TITLE'),
+				'description' => Loc::getMessage('LANDING_BLOCK_MESSAGE_ERROR_DYNAMIC_LIMIT_TEXT'),
+				'text' => Loc::getMessage('LANDING_BLOCK_MESSAGE_ERROR_LIMIT_BUTTON'),
+				'href' => '/settings/license_all.php',
+				'className' => 'ui-btn-primary'
+			];
+			return;
+		}
+
+		// if is detail page
+		if ($isDetailDynamic === null)
+		{
+			$isDetailDynamic = Landing::isDynamicDetailPage();
+		}
+		if ($dynamicElementId === null)
+		{
+			$dynamicElementId = Landing::getDynamicElementId();
+		}
+		if ($dynamicFilter === null)
+		{
+			$dynamicFilter = Landing::getDynamicFilter();
+		}
+
+		$updated = false;
+		// @todo: remove after refactoring
+		$manifest = $this->getManifest();
+
+		// build sources list
+		if ($sourceList === null)
+		{
+			$sourceList = new Source\Selector();
+		}
+
+		// @todo: remove after refactoring
+		$getDetailPage = function(array $detailPage, $filterId = 0, $elemId = 0)
+		{
+			$filterId = intval($filterId);
+			$elemId = intval($elemId);
+
+			// normalize the array
+			$detailPage = array_merge(
+				array_fill_keys(['text', 'href', 'target'], ''),
+				$detailPage
+			);
+			\trimArr($detailPage, true);
+
+			if ($filterId && $elemId && $detailPage['href'])
+			{
+				$detailPage['href'] = str_replace(
+					'#landing',
+					'#dynamic',
+					$detailPage['href']
+				);
+				$detailPage['href'] .= '_' . $filterId;
+				$detailPage['href'] .= '_' . $elemId;
+			}
+			else if ($filterId && $elemId)
+			{
+				$detailPage['href'] = '#';
+			}
+
+			return $detailPage;
+		};
+
+		// apply for each selector dynamic data from source
+		$disableUpdate = false;
+		foreach ($data as $cardSelector => $item)
+		{
+			$update = [];
+			$itemDetail = $cardSelector == 'wrapper';
+			if (
+				!isset($item['source']) ||
+				!isset($item['settings']) ||
+				!isset($item['references'])
+			)
+			{
+				continue;
+			}
+			// build start params
+			$sourceId = $item['source'];
+			$settings = $item['settings'];
+			$references = (array)$item['references'];
+			$filterId = isset($item['filterId'])
+						? intval($item['filterId'])
+						: 0;
+			$detailPage = isset($settings['detailPage'])
+						? (array)$settings['detailPage']
+						: [];
+			$pagesCount = (
+							isset($settings['pagesCount']) &&
+							$settings['pagesCount'] > 0
+						)
+						? (int)$settings['pagesCount']
+						: 10;
+			$filter = isset($settings['source']['filter'])
+						? (array)$settings['source']['filter']
+						: [];
+			$order = isset($settings['source']['sort'])
+						? (array)$settings['source']['sort']
+						: [];
+			$stubs = isset($item['stubs'])
+						? (array)$item['stubs']
+						: [];
+			// load external filter, if we on detail
+			if (
+				$isDetailDynamic && $itemDetail &&
+				$dynamicFilter['SOURCE_ID'] == $sourceId
+			)
+			{
+				$filter = $dynamicFilter['FILTER'];
+			}
+			$sourceParameters = [
+				'select' => array_values($references),
+				'filter' => $filter,
+				'order' => $order,
+				'limit' => $pagesCount
+			];
+			// gets list or singleton data
+			$sourceData = [];
+			$source = $sourceList->getDataLoader($sourceId, $sourceParameters);
+			if (is_object($source))
+			{
+				// detail page
+				if ($isDetailDynamic && $itemDetail)
+				{
+					$sourceData = $source->getElementData($dynamicElementId);
+					if (!$sourceData)
+					{
+						$disableUpdate = true;
+						continue;
+					}
+					Manager::setPageTitle(
+						$source->getSeoTitle(),
+						true
+					);
+				}
+				// element list
+				else
+				{
+					$sourceData = $source->getElementListData();
+					$pagesCount = max(1, count($sourceData));
+				}
+			}
+			// apply getting data in block
+			if (!empty($sourceData) && is_array($sourceData))
+			{
+				// collect array for update html
+				foreach ($references as $selector => $field)
+				{
+					if (empty($field) || !is_array($field))
+					{
+						continue;
+					}
+					if (empty($field['id']))
+					{
+						continue;
+					}
+					if (strpos($selector, '@') !== false)
+					{
+						list($selector,) = explode('@', $selector);
+					}
+					if (!isset($update[$selector]))
+					{
+						$update[$selector] = [];
+					}
+					$fieldCode = $field['id'];
+					$fieldType = isset($manifest['nodes'][$selector]['type'])
+								? $manifest['nodes'][$selector]['type']
+								: \Bitrix\Landing\Node\Type::TEXT;
+					// fill ever selector with data, if data exist
+					foreach ($sourceData as $dataItem)
+					{
+						// set link to the card
+						// @todo: need refactoring
+						if (
+							$fieldType == 'link' &&
+							isset($field['action'])
+						)
+						{
+							switch ($field['action'])
+							{
+								case 'detail':
+									{
+										$detailPage['text'] = isset($field['text'])
+															? $field['text']
+															: '';
+										$update[$selector][] = $getDetailPage(
+											$detailPage,
+											$filterId,
+											$dataItem['ID']
+										);
+										break;
+									}
+								case 'link':
+									{
+										if (isset($field['link']))
+										{
+											$field['link'] = (array) $field['link'];
+											if (isset($field['text']))
+											{
+												$field['link']['text'] = $field['text'];
+											}
+											$update[$selector][] = $getDetailPage(
+												$field['link']
+											);
+										}
+										break;
+									}
+							}
+						}
+						else
+						{
+							// other data
+							$value = isset($dataItem[$fieldCode])
+								? $dataItem[$fieldCode]
+								: '';
+							// @todo: refactor
+							if (
+								$fieldType == 'img' &&
+								is_array($value)
+							)
+							{
+								$urlPicture = $getDetailPage(
+									$detailPage,
+									$filterId,
+									$dataItem['ID']
+								);
+								if ($urlPicture)
+								{
+									unset($urlPicture['text']);
+									$urlPicture['enabled'] = true;
+									$value['url'] = $urlPicture;
+								}
+							}
+
+							$update[$selector][] = $value;
+						}
+					}
+					// not touch the selector, if there is no data
+					if (!$update[$selector])
+					{
+						unset($update[$selector]);
+					}
+				}
+				if (!$itemDetail)
+				{
+					$rememberAccess = $this->access;
+					$this->access = $this::ACCESS_W;
+					$this->adjustCards(
+						$cardSelector,
+						$pagesCount
+					);
+					$this->access = $rememberAccess;
+				}
+			}
+
+			// stubs (common content)
+			if ($stubs)
+			{
+				foreach ($stubs as $selector => $stub)
+				{
+					if (strpos($selector, '@') !== false)
+					{
+						list($selector,) = explode('@', $selector);
+					}
+					$update[$selector] = array_fill(0, $pagesCount, $stub);
+				}
+			}
+
+			// update dynamic
+			if ($update)
+			{
+				$updated = true;
+				$rememberAccess = $this->access;
+				$this->access = $this::ACCESS_W;
+				$this->updateNodes(
+					$update,
+					[
+						'sanitize' => false
+					]
+				);
+				$this->access = $rememberAccess;
+				header('X-Bitrix24-Page: dynamic');
+			}
+			else if (false)
+			{
+				$this->runtimeRequiredUserAction = [
+					'header' => Loc::getMessage('LANDING_BLOCK_MESSAGE_ERROR_NO_DATA_TITLE'),
+					'description' => Loc::getMessage('LANDING_BLOCK_MESSAGE_ERROR_NO_DATA_TEXT')
+				];
+			}
+		}
+
+		if (
+			$disableUpdate ||
+			(!$updated && !Landing::getEditMode())
+		)
+		{
+			$this->deleted = true;
+		}
+	}
+
+	/**
+	 * Make block not dynamic.
+	 * @return void
+	 */
+	public function clearDynamic()
+	{
+		$this->saveDynamicParams();
+	}
+
+	/**
+	 * Gets only runtime required actions.
+	 * @return array
+	 */
+	public function getRuntimeRequiredUserAction()
+	{
+		return $this->runtimeRequiredUserAction;
+	}
+
+	/**
 	 * Load current content in DOM html structure.
 	 * @param bool $clear CLear static cache.
 	 * @return DOM\Document
@@ -2483,7 +3144,6 @@ class Block extends \Bitrix\Landing\Internals\BaseTable
 	 * @param string $selector Selector.
 	 * @param int $count Needed cards count.
 	 * @param bool &$changed Changed.
-	 * @deprecated since 18.6.0.
 	 * @return boolean Success or failure.
 	 */
 	public function adjustCards($selector, $count, &$changed = false)
@@ -2801,7 +3461,7 @@ class Block extends \Bitrix\Landing\Internals\BaseTable
 				}
 				// and save content from frontend in DOM by handler-class
 				call_user_func_array(array(
-					$this->getTypeClass($node['type']),
+					Node\Type::getClassName($node['type']),
 					'saveNode'
 				), array(
 					&$this,
@@ -2995,6 +3655,10 @@ class Block extends \Bitrix\Landing\Internals\BaseTable
 			else
 			{
 				$position = -1;
+			}
+			if ($selector == '#wrapper')
+			{
+				$selector = '#block' . $this->id;
 			}
 			if ($position >= 0)
 			{
@@ -3615,7 +4279,8 @@ class Block extends \Bitrix\Landing\Internals\BaseTable
 			'cards' => $cards,
 			'nodes' => $nodes,
 			'style' => $styles,
-			'attrs' => $allAttrs
+			'attrs' => $allAttrs,
+			'dynamic' => $this->dynamicParams
 		];
 	}
 

@@ -12,7 +12,7 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
 use Bitrix\Main\Web\Json;
 
-Extension::load(["ui.buttons", "ui.buttons.icons", "ui.icons", "popup", "ui.forms"]);
+Extension::load(["ui.buttons", "ui.buttons.icons", "ui.icons", "popup", "ui.forms", "loader"]);
 
 $containerId = 'crm-tracking-channel-pool';
 ?>
@@ -28,6 +28,7 @@ $containerId = 'crm-tracking-channel-pool';
 	?>
 
 	<form method="post">
+		<?=bitrix_sessid_post();?>
 		<div class="crm-tracking-channel-pool-block">
 			<div class="crm-tracking-channel-pool-header">
 				<?=Loc::getMessage('CRM_TRACKING_CHANNEL_POOL_HEAD_' . $arParams['TYPE_NAME'])?>
@@ -97,7 +98,7 @@ $containerId = 'crm-tracking-channel-pool';
 							array(
 								'ID' => 'phone-list-' . $source['ID'],
 								'INPUT_NAME'=> "SOURCE[{$source['ID']}]",
-								'MULTIPLE' => false,
+								'MULTIPLE' => true,
 								'LIST' => $source['TILES'],
 								'SHOW_BUTTON_SELECT' => true,
 								'SHOW_BUTTON_ADD' => false,
@@ -159,6 +160,10 @@ $containerId = 'crm-tracking-channel-pool';
 				</a>
 			</div>
 		</div>
+
+		<div id="crm-tracking-pool-tester">
+			<?include __DIR__ . '/tester.php'?>
+		</div>
 	</div>
 
 	<script type="text/javascript">
@@ -172,6 +177,9 @@ $containerId = 'crm-tracking-channel-pool';
 					'searcherTitle' => Loc::getMessage('CRM_TRACKING_CHANNEL_POOL_AV_ITEMS_' . $arParams['TYPE_NAME']),
 					'searcherCategory' => Loc::getMessage('CRM_TRACKING_CHANNEL_POOL_AV'),
 					'dialogDeleteConfirm' => Loc::getMessage('CRM_TRACKING_CHANNEL_POOL_DELETE_CONFIRM'),
+					'phoneStatusSuccess' => Loc::getMessage('CRM_TRACKING_CHANNEL_POOL_PHONE_STATUS_SUCCESS'),
+					'phoneStatusUnknown' => Loc::getMessage('CRM_TRACKING_CHANNEL_POOL_PHONE_STATUS_UNKNOWN'),
+					'noPhoneTesting' => Loc::getMessage('CRM_TRACKING_CHANNEL_POOL_TESTER_TEST_DATE_NO'),
 				]
 			])?>);
 		});

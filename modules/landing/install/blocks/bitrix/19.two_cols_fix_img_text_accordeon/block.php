@@ -2,7 +2,7 @@
 	<div class="container">
 		<div class="row">
 
-			<div class="col-md-5 g-mb-30 g-mb-0--md">
+			<div class="col-md-5 col-lg-5 g-mb-30 g-mb-0--md">
 				<img class="landing-block-node-img img-fluid g-mb-30"
 					 src="https://cdn.bitrix24.site/bitrix/images/landing/business/1000x562/img1.jpg" alt="">
 
@@ -15,7 +15,7 @@
 				</div>
 			</div>
 
-			<div class="col-md-7">
+			<div class="col-md-7 col-lg-5">
 				<div id="aboutAccordion" role="tablist" aria-multiselectable="true">
 					<div class="landing-block-card-accordeon-element card g-brd-none">
 						<div id="aboutAccordionHeading1"

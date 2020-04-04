@@ -7,12 +7,12 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 use \Bitrix\Main\Localization\Loc;
 
 return array(
-	'block' =>
-		array(
-			'name' => Loc::getMessage('LANDING_BLOCK_FORM_33.12'),
-			'section' => array('forms'),
-			'subtype' => 'form',
-		),
+	'block' => array(
+		'name' => Loc::getMessage('LANDING_BLOCK_FORM_33.12'),
+		'section' => array('forms'),
+		'dynamic' => false,
+		'subtype' => 'form',
+	),
 	'cards' => array(
 		'.landing-block-card-contact' => array(
 			'name' => Loc::getMessage('LANDING_BLOCK_FORM_33.12_NODE_CONTACT'),
@@ -23,7 +23,7 @@ return array(
 				'.landing-block-card-linkcontact-title',
 			),
 			'presets' => include __DIR__ . '/presets.php',
-		)
+		),
 	),
 	'groups' => array(
 		'contact' => Loc::getMessage('LANDING_BLOCK_FORM_33.12_NODE_CONTACT'),
@@ -80,7 +80,7 @@ return array(
 			'allowInlineEdit' => false,
 			'textOnly' => true,
 		),
-		
+	
 	),
 	'style' => array(
 		'.landing-block-node-main-title' => array(

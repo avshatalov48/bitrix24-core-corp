@@ -78,6 +78,8 @@ function CrmWebForm(params)
 			this.initReCaptcha();
 		}
 
+		this.loadGuestTracker();
+
 		// Start listener of resize events
 		this.listenResizeEvent();
 
@@ -529,7 +531,6 @@ function CrmWebForm(params)
 			this.addCss(data.options.css);
 		}
 
-		this.loadGuestTracker();
 		this.fireResizeEvent();
 
 		// fix first text height calc error
@@ -563,10 +564,31 @@ function CrmWebForm(params)
 
 	this.loadGuestTracker = function()
 	{
-		if(this.isFrame() && this.guestLoader)
+		if (!this.guestLoader)
+		{
+			return;
+		}
+
+		if(this.isFrame())
 		{
 			this.sendDataToFrameHolder({uniqueLoadId: this.uniqueLoadId, action: 'guestLoader', value: this.guestLoader});
 		}
+		else
+		{
+			this.trackGuest();
+			BX.evalGlobal(this.guestLoader);
+		}
+	};
+
+	this.trackGuest = function()
+	{
+		if (!window.b24Tracker || !window.b24Tracker.guest)
+		{
+			setTimeout(this.trackGuest.bind(this), 200);
+			return;
+		}
+
+		this.setTrace(window.b24Tracker.guest.getTrace());
 	};
 
 	this.fireRedirectEvent = function(url)
@@ -634,10 +656,9 @@ function CrmWebForm(params)
 	this.getHeight = function()
 	{
 		return Math.max(
-					Math.ceil(BX.pos(document.querySelector('.crm-webform-popup-container')).height),
-					Math.ceil(BX.pos(document.querySelector('.content').parentNode).height)
-				);
-
+			Math.ceil(BX.pos(document.querySelector('.crm-webform-popup-container')).height),
+			Math.ceil(BX.pos(document.querySelector('.content').parentNode).height)
+		);
 	};
 
 	this.getCurrentItems = function(field)
@@ -1057,7 +1078,9 @@ function CrmWebForm(params)
 				this.currency.DEC_POINT,
 				this.currency.THOUSANDS_SEP
 			);
-			cart.totalNode.innerHTML = this.currency.FORMAT_STRING.replace('#', summaryPricePrint);
+			summaryPricePrint = BX.util.htmlspecialcharsback(summaryPricePrint);
+			cart.totalNode.innerHTML = this.currency.FORMAT_STRING;
+			cart.totalNode.textContent = cart.totalNode.textContent.replace('#', summaryPricePrint);
 			cart.itemsNode.innerHTML = cart.isMini ? itemMiniHtmlList.join(' ') : itemHtmlList.join(' ');
 		}, this);
 

@@ -9,21 +9,21 @@
 
 		<div class="landing-block-node-card-container">
 			<div class="landing-block-node-card row g-mb-50 js-countdown u-countdown"
-				 data-end-date="1555056180000"
+				 data-end-date="1586678580000"
 				 data-days-format="%D"
 				 data-hours-format="%H"
 				 data-minutes-format="%M"
 				 data-seconds-format="%S"
 				 data-days-expired-classes="u-countdown--days-expiried"
 			>
-				<div class="landing-block-node-text-container col-md-4 ml-lg-auto">
+				<div class="landing-block-node-text-container col-md-4 col-lg-4 ml-lg-auto">
 					<h3 class="landing-block-node-text-title text-uppercase g-font-weight-700 g-font-size-26 g-color-white g-mb-5">
 						Nam enim eros rhoncus</h3>
 					<p class="landing-block-node-text g-font-size-13 g-color-white g-mb-60 g-mb-0--md">8 Rue de
 						Montpensier 75001, Paris, France, 18:00</p>
 				</div>
 
-				<div class="landing-block-node-date-container col-md-8">
+				<div class="landing-block-node-date-container col-md-8 col-lg-8">
 					<div class="landing-block-node-date mx-auto text-center">
 
 						<div class="landing-block-node-number landing-block-node-number-days u-countdown--days-hide d-inline-block g-line-height-1 align-top g-bg-white-opacity-0_05 g-brd-around g-brd-white-opacity-0_3 g-px-10 g-pt-5 g-pb-8 g-px-20--sm g-pt-15--sm g-pb-10--sm g-mx-3 g-px-10--sm g-mx-15--lg">

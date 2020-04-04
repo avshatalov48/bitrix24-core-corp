@@ -3,12 +3,11 @@ return [
 	// common
 	"db",
 	"reload/listeners",
-	"utils/iterators",
 	"form",
-	// im
-	"chat/tables",
+	// settings panel
 	"settings/notify",
-	// sync
 	"settings/sync",
+	"settings/chat",
+	"settings/tabs",
 	"settings/system",
 ];

@@ -1,4 +1,8 @@
 <?
+
+use Bitrix\Socialnetwork\Livefeed\TasksTask;
+use Bitrix\Socialnetwork\LogTable;
+
 class CMobileHelper
 {
 	public static function InitFileStorage()
@@ -702,6 +706,8 @@ class CMobileHelper
 
 	public static function createLink($tag)
 	{
+		global $USER;
+
 		$link = SITE_DIR.'mobile/log/?ACTION=CONVERT';
 		$result = false;
 		$unique = false;
@@ -758,7 +764,10 @@ class CMobileHelper
 			$params = explode("|", $tag);
 			if ($params[1] == 'TASK')
 			{
-				$result = SITE_DIR.'mobile/tasks/snmrouter/?routePage=view&USER_ID='.intval($GLOBALS['USER']->GetId()).'&TASK_ID='.intval($params[2]);
+				if (!empty(($taskId = $params[2]) && \Bitrix\Main\Loader::includeModule('tasks')))
+				{
+					return self::getTaskLink($taskId);
+				}
 			}
 			elseif ($params[1] == 'BLOG_COMMENT')
 			{
@@ -791,7 +800,38 @@ class CMobileHelper
 		)
 		{
 			$params = explode("|", $tag);
-			$result = $link."&ENTITY_TYPE_ID=FORUM_POST&ENTITY_ID=".$params[2];
+			if (
+				!empty($params[1])
+				&& !empty($params[2])
+				&& \Bitrix\Main\Loader::includeModule('socialnetwork')
+			)
+			{
+				$liveFeedEntity = Bitrix\SocialNetwork\Livefeed\Provider::init([
+					'ENTITY_TYPE' => $params[1],
+					'ENTITY_ID' => $params[2]
+				]);
+
+				$suffix = $liveFeedEntity->getSuffix();
+				if ($suffix == 'TASK')
+				{
+
+					$res = LogTable::getList(array(
+						'filter' => array(
+							'ID' => $liveFeedEntity->getLogId()
+						),
+						'select' => array('SOURCE_ID')
+					));
+					if($logEntryFields = $res->fetch())
+					{
+						$result = SITE_DIR.'mobile/tasks/snmrouter/?routePage=view&USER_ID='.intval($USER->getId()).'&TASK_ID='.intval($logEntryFields['SOURCE_ID']).'#com'.$params[2];
+					}
+				}
+			}
+
+			if (!$result)
+			{
+				$result = $link."&ENTITY_TYPE_ID=FORUM_POST&ENTITY_ID=".$params[2];
+			}
 		}
 		else if (substr($tag, 0, 7) == 'VOTING|')
 		{
@@ -833,7 +873,11 @@ class CMobileHelper
 			// TASKS|TASK_COMMENT|%task_id%|%user_id%|%comment_id%
 
 			$params = explode("|", $tag);
-			$result = SITE_DIR.'mobile/tasks/snmrouter/?routePage=view&USER_ID='.intval($GLOBALS['USER']->GetId()).'&TASK_ID='.intval($params[2]).($params[4] > 0 ? "#com".$params[4] : "");
+			if (!empty(($taskId = $params[2]) && \Bitrix\Main\Loader::includeModule('tasks')))
+			{
+				return self::getTaskLink($taskId);
+			}
+
 			// after task detail page supports reloading only by TASK_ID, use the following:
 			//$result = SITE_DIR.'mobile/tasks/snmrouter/?routePage=__ROUTE_PAGE__&USER_ID='.intval($GLOBALS['USER']->GetId());
 			//$uniqueParams = "{task_id:".intval($params[2]).", params_emitter: 'tasks_list'}";
@@ -869,7 +913,7 @@ class CMobileHelper
 
 		if ($result)
 		{
-			if ($unique)
+		    if ($unique)
 			{
 				$result = "BXMobileApp.PageManager.loadPageUnique({'url' : '".$result."','bx24ModernStyle' : true, 'data': ".$uniqueParams."});";
 			}
@@ -911,6 +955,57 @@ class CMobileHelper
 		}
 
 		return;
+	}
+
+	/**
+	 * @param $taskId
+	 * @return string
+	 */
+	private static function getTaskLink($taskId)
+	{
+		$taskId = (int)$taskId;
+
+		try
+		{
+			$taskData = \CTaskItem::getInstanceFromPool($taskId, $GLOBALS["USER"]->GetID())->getData(false);
+
+			$creatorIcon = Bitrix\Tasks\UI\Avatar::getPerson($taskData['CREATED_BY_PHOTO']);
+			$responsibleIcon = Bitrix\Tasks\UI\Avatar::getPerson($taskData['RESPONSIBLE_PHOTO']);
+
+			$eventName = '\'taskbackground::task::action\'';
+			$taskInfoParameter = '{title: \''.htmlspecialcharsbx($taskData['TITLE']).'\', creatorIcon: \''.$creatorIcon.'\', responsibleIcon: \''.$responsibleIcon.'\'}';
+			$taskDataParameter = '{id: '.$taskId.', title: \'TASK\', taskInfo: '.$taskInfoParameter.'}';
+
+			return 'BXMobileApp.Events.postToComponent('
+				.$eventName.', '
+				.'['
+					.$taskDataParameter.', '
+					.$taskId.', '
+					.'{taskId: '.$taskId.', getTaskInfo: true}'
+				.']'
+			.');';
+		}
+		catch (TasksException $exception)
+		{
+			return '';
+		}
+	}
+
+	/**
+	 * @param $text
+	 * @param $tag
+	 * @return string
+	 */
+	public static function prepareNotificationText($text, $tag)
+	{
+		$preparedText = $text;
+
+		if (strpos($tag, 'TASKS|TASK|') === 0 || strpos($tag, 'TASKS|COMMENT|') === 0)
+		{
+			$preparedText = strip_tags($text, '<br>');
+		}
+
+		return $preparedText;
 	}
 
 	public static function getCurrentSiteData()

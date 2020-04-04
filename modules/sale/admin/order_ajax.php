@@ -29,6 +29,7 @@ define("NO_KEEP_STATISTIC", true);
 define("NO_AGENT_STATISTIC", true);
 define("NO_AGENT_CHECK", true);
 define("NOT_CHECK_PERMISSIONS", true);
+define("ADMIN_AJAX_MODE", true);
 
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_before.php");
 
@@ -36,7 +37,7 @@ Loc::loadMessages(__FILE__);
 
 global $USER;
 $arResult = array();
-$result = new \Bitrix\Main\Entity\Result();
+$result = new \Bitrix\Main\Result();
 $saleModulePermissions = $APPLICATION->GetGroupRight("sale");
 
 if(!isset($_REQUEST["action"]))
@@ -89,14 +90,17 @@ else
 	}
 }
 
-if ($result->hasWarnings())
+if($result instanceof Result)
 {
-	$arResult["WARNING"] = implode("\n", $result->getWarningMessages());
-	$arResult["WARNINGS"] = array();
-
-	foreach($result->getWarningMessages() as $warning)
+	if ($result->hasWarnings())
 	{
-		$arResult["WARNINGS"][] = $warning;
+		$arResult["WARNING"] = implode("\n", $result->getWarningMessages());
+		$arResult["WARNINGS"] = array();
+
+		foreach ($result->getWarningMessages() as $warning)
+		{
+			$arResult["WARNINGS"][] = $warning;
+		}
 	}
 }
 
@@ -328,6 +332,7 @@ class AjaxProcessor
 			);
 
 			$productParams[$productId]["QUANTITY"] = $quantity;
+			$productParams[$productId]["JUST_ADDED"] = 'Y';
 			$providerData = \Bitrix\Sale\Helpers\Admin\Product::getProviderData($productParams, $siteId, $userId);
 			$productParams = $productParams[$productId];
 
@@ -697,6 +702,8 @@ class AjaxProcessor
 				$data = $res->getData();
 				$payment = array_shift($data['PAYMENT']);
 			}
+
+			Admin\OrderEdit::fillOrderProperties($order, $formData);
 		}
 
 		if ($isStartField)
@@ -725,6 +732,13 @@ class AjaxProcessor
 			{
 				$result['DELIVERY_ERROR'] = implode("\n", $calcResult->getErrorMessages());
 			}
+
+			if (!isset($data['SHIPMENT_DATA']['DELIVERY_WEIGHT']))
+			{
+				$result['DELIVERY_WEIGHT'] = $shipment->getWeight() / Admin\Blocks\OrderShipment::getWeightKoef($order->getSiteId());
+			}
+
+			$result["CALCULATED_WEIGHT"] = $shipment->getShipmentItemCollection()->getWeight() / Admin\Blocks\OrderShipment::getWeightKoef($order->getSiteId());
 
 			if (!isset($data['SHIPMENT_DATA']['DELIVERY_SERVICE_LIST']))
 			{
@@ -1418,7 +1432,6 @@ class AjaxProcessor
 		$shipmentId = $this->request['shipmentId'];
 		$orderId = $this->request['orderId'];
 		$field = $this->request['field'];
-		$index = $this->request['index'];
 		$newStatus = $this->request['status'];
 		$strict = (isset($this->request['strict']) && $this->request['strict'] == true);
 
@@ -1432,7 +1445,19 @@ class AjaxProcessor
 
 		if ($saleModulePermissions == 'P')
 		{
-			$allowedStatusesUpdate = Sale\OrderStatus::getStatusesUserCanDoOperations($USER->GetID(), array('update'));
+			if ($field === 'DEDUCTED')
+			{
+				$operation = 'deduction';
+			}
+			elseif ($field === 'ALLOW_DELIVERY')
+			{
+				$operation = 'delivery';
+			}
+			else
+			{
+				$operation = 'update';
+			}
+			$allowedStatusesUpdate = Sale\DeliveryStatus::getStatusesUserCanDoOperations($USER->GetID(), [$operation]);
 			$isUserResponsible = false;
 			$isAllowCompany = false;
 
@@ -1829,6 +1854,7 @@ class AjaxProcessor
 			$result['DELIVERY_ERROR'] = implode("\n", $calcResult->getErrorMessages());
 		}
 
+		$result["CALCULATED_WEIGHT"] = $shipment->getShipmentItemCollection()->getWeight() / Admin\Blocks\OrderShipment::getWeightKoef($order->getSiteId());
 		$this->addResultData("SHIPMENT_DATA", $result);
 
 		$this->formDataChanged = true;
@@ -2924,9 +2950,10 @@ class AjaxProcessor
 		$allowedStatusesMark = Sale\OrderStatus::getStatusesUserCanDoOperations($USER->GetID(), array('mark'));
 
 		/** @var  \Bitrix\Sale\Order $saleOrder*/
-		if(!$order = Sale\Order::load($orderId))
+		if (!$order = Sale\Order::load($orderId))
+		{
 			throw new UserMessageException(Loc::getMessage('SALE_OA_ERROR_LOAD_ORDER').": ".$orderId);
-
+		}
 
 		$saleModulePermissions = $APPLICATION->GetGroupRight("sale");
 
@@ -2952,21 +2979,41 @@ class AjaxProcessor
 			}
 		}
 
-		if(!in_array($order->getField("STATUS_ID"), $allowedStatusesMark))
+		if (!in_array($order->getField("STATUS_ID"), $allowedStatusesMark))
 		{
 			throw new UserMessageException(Loc::getMessage('SALE_OA_ERROR_UNMARK_RIGHTS'));
 		}
-
-		$errors = array();
-		$warnings = array();
 
 		$r = Sale\EntityMarker::delete($markerId);
 		if(!$r->isSuccess())
 		{
 			$errors = $r->getErrorMessages();
+			foreach ($errors as $error)
+			{
+				$this->addResultError($error);
+			}
 		}
 		else
 		{
+			$r = $order->save();
+			if (!$r->isSuccess())
+			{
+				$errors = $r->getErrorMessages();
+				foreach ($errors as $error)
+				{
+					$this->addResultError($error);
+				}
+			}
+
+			if ($r->hasWarnings())
+			{
+				$warnings = $r->getWarningMessages();
+				foreach ($warnings as $warning)
+				{
+					$this->addResultWarning($warning);
+				}
+			}
+
 			if ($forEntity)
 			{
 				$markerListHtml = Admin\Blocks\OrderMarker::getViewForEntity($orderId, $entityId);
@@ -2978,37 +3025,6 @@ class AjaxProcessor
 			if (!empty($markerListHtml))
 			{
 				$this->addResultData('MARKERS', $markerListHtml);
-			}
-		}
-
-		$r = $order->save();
-		if($r->isSuccess())
-		{
-			Sale\Provider::resetTrustData($order->getSiteId());
-		}
-		else
-		{
-			$errors = array_merge($errors, $r->getErrorMessages());
-		}
-
-		if ($r->hasWarnings())
-		{
-			$warnings = array_merge($warnings, $r->getWarningMessages());
-		}
-
-		if (!empty($errors))
-		{
-			foreach ($errors as $error)
-			{
-				$this->addResultError($error);
-			}
-		}
-
-		if (!empty($warnings))
-		{
-			foreach ($warnings as $warning)
-			{
-				$this->addResultWarning($warning);
 			}
 		}
 	}
@@ -3396,14 +3412,17 @@ class AjaxProcessor
 		$checkId = (int)$this->request['checkId'];
 
 		$check = Cashbox\CheckManager::getObjectById($checkId);
-		$cashbox = Cashbox\Manager::getObjectById($check->getField('CASHBOX_ID'));
-		if ($cashbox && $cashbox->isCheckable())
+		if ($check->getField('STATUS') === 'P')
 		{
-			$r = $cashbox->check($check);
-			if (!$r->isSuccess())
+			$cashbox = Cashbox\Manager::getObjectById($check->getField('CASHBOX_ID'));
+			if ($cashbox && $cashbox->isCheckable())
 			{
-				$err = implode("\n", $r->getErrorMessages());
-				$this->addResultError($err);
+				$r = $cashbox->check($check);
+				if (!$r->isSuccess())
+				{
+					$err = implode("\n", $r->getErrorMessages());
+					$this->addResultError($err);
+				}
 			}
 		}
 

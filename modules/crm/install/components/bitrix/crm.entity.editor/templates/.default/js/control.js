@@ -14,11 +14,17 @@ if(typeof BX.Crm.EntityEditorMultipleUser === "undefined")
 		this._items = null;
 		this._innerWrapper = null;
 
-		this._buttonWrapper = null;
-		this._addItemButton = null;
-		this._addItemActionHandler = BX.delegate(this.onAddItemAction, this);
+		this._topButton = null;
+		this._bottomButton = null;
+
+		this._topButtonClickHandler = BX.delegate(this.onTopButtonClick, this);
+		this._bottomButtonClickHandler = BX.delegate(this.onBottomButtonClick, this);
 	};
 	BX.extend(BX.Crm.EntityEditorMultipleUser, BX.Crm.EntityEditorField);
+	BX.Crm.EntityEditorMultipleUser.prototype.isSingleEditEnabled = function()
+	{
+		return true;
+	};
 	BX.Crm.EntityEditorMultipleUser.prototype.doInitialize = function()
 	{
 		this._map = this._schemeElement.getDataObjectParam("map", {});
@@ -182,18 +188,26 @@ if(typeof BX.Crm.EntityEditorMultipleUser === "undefined")
 
 			if(this.isInEditMode())
 			{
-				this._buttonWrapper = BX.create("div", { props: { className: "crm-entity-widget-content-block-add-field" } });
-				this._wrapper.appendChild(this._buttonWrapper);
-
-				var messages = this._schemeElement.getDataObjectParam("messages", {});
-				this._addItemButton = BX.create("span",
+				this._bottomButton = BX.create("span",
 					{
 						props: { className: "crm-entity-widget-content-add-employees" },
-						text : BX.prop.getString(messages, "addObserver", BX.message("CRM_EDITOR_ADD"))
+						text : BX.prop.getString(
+							this._schemeElement.getDataObjectParam("messages", {}),
+							"addObserver",
+							BX.message("CRM_EDITOR_ADD")
+						),
+						events: { click: this._bottomButtonClickHandler }
 					}
 				);
-				this._buttonWrapper.appendChild(this._addItemButton);
-				BX.bind(this._addItemButton, "click", this._addItemActionHandler);
+
+				this._wrapper.appendChild(
+					BX.create("div",
+						{
+							props: { className: "crm-entity-widget-content-block-add-field" },
+							children: [ this._bottomButton ]
+						}
+					)
+				);
 			}
 		}
 		else
@@ -228,7 +242,10 @@ if(typeof BX.Crm.EntityEditorMultipleUser === "undefined")
 			&& this.checkModeOption(BX.Crm.EntityEditorModeOptions.individual)
 		)
 		{
-			window.setTimeout(BX.delegate(this.openSelector, this), 0);
+			window.setTimeout(
+				function(){ this.getSelector().open(this._bottomButton); }.bind(this),
+				500
+			);
 		}
 	};
 	BX.Crm.EntityEditorMultipleUser.prototype.doClearLayout = function(options)
@@ -243,28 +260,31 @@ if(typeof BX.Crm.EntityEditorMultipleUser === "undefined")
 		}
 		this._innerWrapper = null;
 
-		if(this._addItemButton)
+		if(this._topButton)
 		{
-			BX.unbind(this._addItemButton, "click", this._addItemActionHandler);
-			this._addItemButton = null;
+			BX.unbind(this._topButton, "click", this._topButtonClickHandler);
+			this._topButton = null;
 		}
 
-		this._buttonWrapper = null;
+		if(this._bottomButton)
+		{
+			BX.unbind(this._bottomButton, "click", this._bottomButtonClickHandler);
+			this._bottomButton = null;
+		}
 	};
 	BX.Crm.EntityEditorMultipleUser.prototype.createTitleActionControls = function()
 	{
 		var controls = [];
 		if(this.isInViewMode() && this.isEditInViewEnabled() && !this.isReadOnly())
 		{
-			controls.push(
-				BX.create("span",
-					{
-						props: { className: "crm-entity-widget-content-block-title-action-btn" },
-						text: BX.message("CRM_EDITOR_ADD"),
-						events: { click: this._addItemActionHandler }
-					}
-				)
+			this._topButton = BX.create("span",
+				{
+					props: { className: "crm-entity-widget-content-block-title-action-btn" },
+					text: BX.message("CRM_EDITOR_ADD"),
+					events: { click: this._topButtonClickHandler }
+				}
 			);
+			controls.push(this._topButton);
 		}
 		return controls;
 	};
@@ -288,9 +308,21 @@ if(typeof BX.Crm.EntityEditorMultipleUser === "undefined")
 		this._model.setMappedField(this._map, "data", values);
 		this._model.setSchemeField(this._schemeElement, "infos", infos);
 	};
-	BX.Crm.EntityEditorMultipleUser.prototype.onAddItemAction = function(e)
+	BX.Crm.EntityEditorMultipleUser.prototype.onTopButtonClick = function(e)
 	{
-		this.getSelector().open(BX.getEventTarget(e));
+		//If any other control has changed try to switch to edit mode.
+		if(this._mode === BX.Crm.EntityEditorMode.view && this.isEditInViewEnabled() && this.getEditor().isChanged())
+		{
+			this.switchToSingleEditMode();
+		}
+		else
+		{
+			this.getSelector().open(this._topButton);
+		}
+	};
+	BX.Crm.EntityEditorMultipleUser.prototype.onBottomButtonClick = function(e)
+	{
+		this.getSelector().open(this._bottomButton);
 	};
 	BX.Crm.EntityEditorMultipleUser.prototype.getSelector = function()
 	{

@@ -10,7 +10,6 @@ namespace Bitrix\Sender\Integration\Crm\Connectors;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Entity;
 use Bitrix\Main\Page\Asset;
-use Bitrix\Main\Type\Date;
 use Bitrix\Main\UI\Filter\AdditionalDateType;
 
 use Bitrix\Sender\Connector\BaseFilter as ConnectorBaseFilter;
@@ -69,6 +68,8 @@ class Client extends ConnectorBaseFilter
 			$query->registerRuntimeField(new Entity\ExpressionField('CRM_ENTITY_TYPE_ID', \CCrmOwnerType::Contact));
 			$query->registerRuntimeField(new Entity\ExpressionField('CRM_COMPANY_ID', 0));
 			$query->registerRuntimeField(new Entity\ExpressionField('CONTACT_ID', '%s', ['ID']));
+			$query->registerRuntimeField(Helper::createExpressionMultiField(\CCrmOwnerType::ContactName, 'EMAIL'));
+			$query->registerRuntimeField(Helper::createExpressionMultiField(\CCrmOwnerType::ContactName, 'PHONE'));
 			$query->setSelect([
 				'NAME', 'CRM_ENTITY_ID' => 'ID', 'CRM_ENTITY_TYPE_ID',
 				'CRM_CONTACT_ID' => 'CONTACT_ID', 'CRM_COMPANY_ID',
@@ -83,6 +84,8 @@ class Client extends ConnectorBaseFilter
 			$query->registerRuntimeField(new Entity\ExpressionField('CRM_ENTITY_TYPE_ID', \CCrmOwnerType::Company));
 			$query->registerRuntimeField(new Entity\ExpressionField('CONTACT_ID', 0));
 			$query->registerRuntimeField(new Entity\ExpressionField('COMPANY_ID', '%s', ['ID']));
+			$query->registerRuntimeField(Helper::createExpressionMultiField(\CCrmOwnerType::CompanyName, 'EMAIL'));
+			$query->registerRuntimeField(Helper::createExpressionMultiField(\CCrmOwnerType::CompanyName, 'PHONE'));
 			$query->setSelect([
 				'NAME' => 'TITLE', 'CRM_ENTITY_ID' => 'ID', 'CRM_ENTITY_TYPE_ID',
 				'CRM_CONTACT_ID' => 'CONTACT_ID', 'CRM_COMPANY_ID' => 'COMPANY_ID',
@@ -236,6 +239,10 @@ class Client extends ConnectorBaseFilter
 		}
 
 		$commonNames = ['ASSIGNED_BY_ID', 'EMAIL', 'PHONE', 'NAME'];
+		if ($isReferenced)
+		{
+			$commonNames = ['ASSIGNED_BY_ID'];
+		}
 		foreach ($commonNames as $commonName)
 		{
 			$value = $this->getFieldValue($commonName);
@@ -452,16 +459,19 @@ class Client extends ConnectorBaseFilter
 		$list[] = array(
 			"id" => "ASSIGNED_BY_ID",
 			"name" => Loc::getMessage('SENDER_INTEGRATION_CRM_CONNECTOR_CLIENT_FIELD_ASSIGNED_BY_ID'),
-			'type' => 'custom_entity',
-			'params' => array('multiple' => 'Y'),
-			'selector' => array(
-				'TYPE' => 'user',
-				'DATA' => array('ID' => 'assigned_by', 'FIELD_ID' => 'ASSIGNED_BY_ID'),
+			'type' => 'dest_selector',
+			'params' => array(
+				'context' => 'SENDER_FILTER_ASSIGNED_BY_ID',
+				'multiple' => 'Y',
+				'contextCode' => 'U',
+				'enableAll' => 'N',
+				'enableSonetgroups' => 'N',
+				'allowEmailInvitation' => 'N',
+				'allowSearchEmailUsers' => 'N',
+				'departmentSelectDisable' => 'Y',
+				'isNumeric' => 'Y',
+				'prefix' => 'U'
 			),
-			'sender_segment_callback' => function ($field)
-			{
-				return Helper::getFilterFieldUserSelector($field['selector']['DATA'], 'crm_segment_client');
-			},
 			"sender_segment_filter" => false,
 			"default" => false
 		);
@@ -474,16 +484,19 @@ class Client extends ConnectorBaseFilter
 			$list[] = array(
 				"id" => $fieldId,
 				"name" => Loc::getMessage('SENDER_INTEGRATION_CRM_CONNECTOR_CLIENT_FIELD_ASSIGNED_BY_ID') . " ($entityTypeCaption)",
-				'type' => 'custom_entity',
-				'params' => array('multiple' => 'Y'),
-				'selector' => array(
-					'TYPE' => 'user',
-					'DATA' => array('ID' => strtolower($fieldId), 'FIELD_ID' => $fieldId),
+				'type' => 'dest_selector',
+				'params' => array(
+					'context' => 'SENDER_FILTER_ASSIGNED_BY_ID',
+					'multiple' => 'Y',
+					'contextCode' => 'U',
+					'enableAll' => 'N',
+					'enableSonetgroups' => 'N',
+					'allowEmailInvitation' => 'N',
+					'allowSearchEmailUsers' => 'N',
+					'departmentSelectDisable' => 'Y',
+					'isNumeric' => 'Y',
+					'prefix' => 'U'
 				),
-				'sender_segment_callback' => function ($field)
-				{
-					return Helper::getFilterFieldUserSelector($field['selector']['DATA'], 'crm_segment_client');
-				},
 				//"sender_segment_filter" => false,
 				"default" => false
 			);

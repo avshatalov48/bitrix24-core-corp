@@ -218,6 +218,19 @@ class BitrixVue
 	}
 
 	/**
+	 * Make an object reactive. Internally, Vue uses this on the object returned by the data function.
+	 *
+	 * @param object
+	 * @returns {*}
+	 *
+	 * @see https://vuejs.org/v2/api/#Vue-observable
+	 */
+	observable(object)
+	{
+		return VueVendorV2.observable(object);
+	}
+
+	/**
 	 * Compiles a template string into a render function.
 	 *
 	 * @param template

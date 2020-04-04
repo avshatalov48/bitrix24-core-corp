@@ -22,6 +22,12 @@ class Invoice extends ProductsDataProvider implements Nameable
 
 			Loc::loadMessages(__FILE__);
 			$this->fields['USER_DESCRIPTION']['TITLE'] = Loc::getMessage('CRM_DOCGEN_DATAPROVIDER_USER_DESCRIPTION_TITLE');
+
+			$this->fields['DEAL'] = [
+				'PROVIDER' => Deal::class,
+				'VALUE' => 'UF_DEAL_ID',
+				'TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_INVOICE_DEAL_TITLE'),
+			];
 		}
 
 		return $this->fields;

@@ -417,6 +417,10 @@
 	color: #000;
 }
 
+.bitrix24-light-theme :not(.side-panel) .automation-base-node-title {
+	color: #fff;
+}
+
 .crm-automation-trigger-item-drag .crm-automation-trigger-item-wrapper {
 	-webkit-box-shadow: 0 0 10px rgba(0,0,0,.1);
 	-moz-box-shadow: 0 0 10px rgba(0,0,0,.1);

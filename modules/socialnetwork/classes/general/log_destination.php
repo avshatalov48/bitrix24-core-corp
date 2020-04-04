@@ -806,7 +806,7 @@ class CSocNetLogDestination
 		$val = str_replace('%', '', $val)."%";
 	}
 
-	public static function SearchUsers($search, &$nt = "", $bSelf = true, $bEmployeesOnly = false, $bExtranetOnly = false, $departmentId = false)
+	public static function searchUsers($search, &$nt = "", $bSelf = true, $bEmployeesOnly = false, $bExtranetOnly = false, $departmentId = false)
 	{
 		global $USER, $DB;
 
@@ -876,7 +876,19 @@ class CSocNetLogDestination
 
 		$arMyUserId = array();
 
-		if ($bIntranetEnabled)
+		$filter = [];
+
+		$useFulltextIndex = (
+			class_exists('\Bitrix\Main\UserIndexSelectorTable')
+			&& \Bitrix\Main\UserIndexSelectorTable::getEntity()->fullTextIndexEnabled("SEARCH_SELECTOR_CONTENT")
+			&& \Bitrix\Main\Config\Option::get("main", "user_selector_content_indexed", "") == "Y"
+		);
+
+		if ($useFulltextIndex)
+		{
+			$filter['*INDEX_SELECTOR.SEARCH_SELECTOR_CONTENT'] = \Bitrix\Main\Search\Content::prepareStringToken(implode(' ', $arSearchValue));
+		}
+		else
 		{
 			if (count($arSearchValue) == 2)
 			{
@@ -895,7 +907,8 @@ class CSocNetLogDestination
 				);
 
 				if (
-					count($arSearchValue) == 1
+					$bIntranetEnabled
+					&& count($arSearchValue) == 1
 					&& strlen($arSearchValue[0]) > 2
 				)
 				{
@@ -903,22 +916,23 @@ class CSocNetLogDestination
 				}
 			}
 
-			$arFilter = array(
-				$arLogicFilter
-			);
+			$filter[] = $arLogicFilter;
+		}
 
-			if ($bActiveOnly)
-			{
-				$arFilter['=ACTIVE'] = 'Y';
-			}
+		if ($bActiveOnly)
+		{
+			$filter['=ACTIVE'] = 'Y';
+		}
 
+		if ($bIntranetEnabled)
+		{
 			$arExternalAuthId = self::getExternalAuthIdBlackList(array(
 				"NETWORK_SEARCH" => $bNetworkSearch
 			));
 
 			if (!empty($arExternalAuthId))
 			{
-				$arFilter['!=EXTERNAL_AUTH_ID'] = $arExternalAuthId;
+				$filter['!=EXTERNAL_AUTH_ID'] = $arExternalAuthId;
 			}
 
 			if (
@@ -955,34 +969,6 @@ class CSocNetLogDestination
 				}
 			}
 		}
-		else
-		{
-			if (count($arSearchValue) == 2)
-			{
-				$arFilter = array(
-					array(
-						'LOGIC' => 'OR',
-						array('LOGIC' => 'AND', 'NAME' => $arSearchValue[0], 'LAST_NAME' => $arSearchValue[1]),
-						array('LOGIC' => 'AND', 'NAME' => $arSearchValue[1], 'LAST_NAME' => $arSearchValue[0]),
-					)
-				);
-			}
-			else
-			{
-				$arFilter = array(
-					array(
-						'LOGIC' => 'OR',
-						'NAME' => $arSearchValue,
-						'LAST_NAME' => $arSearchValue,
-					)
-				);
-			}
-
-			if ($bActiveOnly)
-			{
-				$arFilter['=ACTIVE'] = 'Y';
-			}
-		}
 
 		if (
 			!$bNetworkSearch
@@ -992,7 +978,7 @@ class CSocNetLogDestination
 			)
 		)
 		{
-			$arFilter["CONFIRM_CODE"] = false;
+			$filter["CONFIRM_CODE"] = false;
 		}
 
 		$bFilteredByMyUserId = false;
@@ -1012,19 +998,19 @@ class CSocNetLogDestination
 					"EMAIL_USERS_ALL" => $bEmailUsersAll,
 					"MY_USERS" => $arMyUserId
 				),
-				$arFilter,
+				$filter,
 				$bFilteredByMyUserId
 			);
 
-			if (!$arFilter)
+			if (!$filter)
 			{
 				return $arUsers;
 			}
 
 			if ($bNetworkSearch)
 			{
-				end($arFilter);
-				$arFilter[key($arFilter)]["=EXTERNAL_AUTH_ID"] = "replica";
+				end($filter);
+				$filter[key($filter)]["=EXTERNAL_AUTH_ID"] = "replica";
 			}
 		}
 
@@ -1033,7 +1019,7 @@ class CSocNetLogDestination
 			&& !$bFilteredByMyUserId
 		)
 		{
-			$arFilter[] = array(
+			$filter[] = array(
 				'LOGIC' => 'OR',
 				'!=EXTERNAL_AUTH_ID' => 'email',
 				'ID' => $arMyUserId,
@@ -1042,10 +1028,10 @@ class CSocNetLogDestination
 
 		if ($bSearchOnlyWithEmail)
 		{
-			$arFilter["!EMAIL"] = false;
+			$filter["!EMAIL"] = false;
 		}
 
-		$arSelect = array(
+		$select = array(
 			"ID",
 			"ACTIVE",
 			"NAME",
@@ -1063,30 +1049,78 @@ class CSocNetLogDestination
 
 		if ($bCrmEmailUsers)
 		{
-			$arSelect[] = "UF_USER_CRM_ENTITY";
+			$select[] = "UF_USER_CRM_ENTITY";
 		}
 
 		if (!$bActiveOnly)
 		{
-			$arSelect[] = "ACTIVE";
+			$select[] = "ACTIVE";
+		}
+
+		if ($useFulltextIndex)
+		{
+			$select['SEARCH_SELECTOR_CONTENT'] = 'INDEX_SELECTOR.SEARCH_SELECTOR_CONTENT';
 		}
 
 		$db_events = GetModuleEvents("socialnetwork", "OnSocNetLogDestinationSearchUsers");
 		while ($arEvent = $db_events->Fetch())
 		{
-			ExecuteModuleEventEx($arEvent, array($arSearchValue, &$arFilter, &$arSelect));
+			ExecuteModuleEventEx($arEvent, array($arSearchValue, &$filter, &$select));
 		}
 
-		$rsUser = \Bitrix\Main\UserTable::getList(array(
-			'order' => array(
-				"MAX_LAST_USE_DATE" => 'DESC',
-				'LAST_NAME' => 'ASC'
-			),
-			'filter' => $arFilter,
-			'select' => $arSelect,
-			'limit' => 100,
-			'data_doubling' => false
-		));
+		if ($useFulltextIndex)
+		{
+			$rsUser = \Bitrix\Main\UserTable::getList(array(
+				'order' => array(
+					"MAX_LAST_USE_DATE" => 'DESC',
+					'LAST_NAME' => 'ASC'
+				),
+				'filter' => $filter,
+				'select' => [
+					'ID',
+					new \Bitrix\Main\Entity\ExpressionField('MAX_LAST_USE_DATE', 'MAX(%s)', array('\Bitrix\Main\FinderDest:CODE_USER_CURRENT.LAST_USE_DATE'))
+				],
+				'limit' => 100,
+				'data_doubling' => false
+			));
+
+			$userIdList = [];
+
+			while ($arUser = $rsUser->fetch())
+			{
+				$userIdList[] = $arUser['ID'];
+			}
+
+			if (empty($userIdList))
+			{
+				return $arUsers;
+			}
+
+			$rsUser = \Bitrix\Main\UserTable::getList(array(
+				'order' => array(
+					"MAX_LAST_USE_DATE" => 'DESC',
+					'LAST_NAME' => 'ASC'
+				),
+				'filter' => [
+					'@ID' => $userIdList
+				],
+				'select' => $select
+			));
+		}
+		else
+		{
+			$rsUser = \Bitrix\Main\UserTable::getList(array(
+				'order' => array(
+					"MAX_LAST_USE_DATE" => 'DESC',
+					'LAST_NAME' => 'ASC'
+				),
+				'filter' => $filter,
+				'select' => $select,
+				'limit' => 100,
+				'data_doubling' => false
+			));
+		}
+
 
 		$queryResultCnt = 0;
 		$bUseLogin = (strlen($search) > 3 && strpos($search, '@') > 0);
@@ -1211,6 +1245,14 @@ class CSocNetLogDestination
 			"SITE_ID" => $siteId,
 			"ACTIVE" => "Y",
 		);
+
+		if (
+			!empty($params['LANDING'])
+			&& $params['LANDING'] == 'Y'
+		)
+		{
+			$filter['LANDING'] = 'Y';
+		}
 
 		if (!$currentUserAdmin)
 		{
@@ -1619,6 +1661,14 @@ class CSocNetLogDestination
 					"GROUP_ACTIVE" => "Y"
 				);
 
+				if (
+					!empty($arParams['landing'])
+					&& $arParams['landing'] == 'Y'
+				)
+				{
+					$filter["GROUP_LANDING"] = $arParams['landing'];
+				}
+
 				if(isset($arParams['GROUP_CLOSED']))
 				{
 					$filter['GROUP_CLOSED'] = $arParams['GROUP_CLOSED'];
@@ -1656,8 +1706,15 @@ class CSocNetLogDestination
 				{
 					$filter['CLOSED'] = $arParams['GROUP_CLOSED'];
 				}
+				if(
+					!empty($arParams['landing'])
+					&& $arParams['landing'] == 'Y'
+				)
+				{
+					$filter['LANDING'] = $arParams['landing'];
+				}
 
-				$res = CSocnetGroup::GetList(
+				$res = CSocnetGroup::getList(
 					array("NAME" => "ASC"),
 					$filter,
 					false,
@@ -2398,7 +2455,15 @@ class CSocNetLogDestination
 
 		$arRes = array(
 			'id' => 'U'.$arUser["ID"],
-			'entityId' => $arUser["ID"],
+			'entityId' => $arUser["ID"]
+		);
+
+		if (ModuleManager::isModuleInstalled('intranet'))
+		{
+			$arRes["email"] = $arUser['EMAIL'];
+		}
+
+		$arRes = array_merge($arRes, array(
 			'name' => CUser::FormatName(
 				(
 					!empty($arParams["NAME_TEMPLATE"])
@@ -2434,7 +2499,7 @@ class CSocNetLogDestination
 					? 'Y'
 					: 'N'
 			)
-		);
+		));
 
 		if (!empty($arUser["UF_USER_CRM_ENTITY"]))
 		{
@@ -2444,11 +2509,6 @@ class CSocNetLogDestination
 		if (!empty($arUser["ACTIVE"]))
 		{
 			$arRes['active'] = $arUser["ACTIVE"];
-		}
-
-		if (ModuleManager::isModuleInstalled('intranet'))
-		{
-			$arRes["email"] = $arUser['EMAIL'];
 		}
 
 		if (
@@ -2482,6 +2542,12 @@ class CSocNetLogDestination
 			&& isset($arParams['USE_LOGIN'])
 			&& $arParams['USE_LOGIN']
 				? $arUser["LOGIN"]
+				: ''
+		);
+
+		$arRes['index'] = (
+			isset($arUser["SEARCH_SELECTOR_CONTENT"])
+				? $arUser["SEARCH_SELECTOR_CONTENT"]
 				: ''
 		);
 

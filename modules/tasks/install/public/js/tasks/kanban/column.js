@@ -119,6 +119,78 @@
 			{
 				BX.Kanban.Column.prototype.handleAddItemButtonClick.apply(this, arguments);
 			}
+		},
+
+		/**
+		 *
+		 * @returns {Element}
+		 */
+		getDefaultTitleLayout: function()
+		{
+			if (this.layout.titleBody)
+			{
+				return this.layout.titleBody;
+			}
+
+			var customButtons = this.getCustomTitleButtons();
+			var gridData = this.getGrid().getData();
+
+			if (BX.type.isDomNode(customButtons))
+			{
+				customButtons = [customButtons];
+			}
+			else if (!BX.type.isArray(customButtons))
+			{
+				customButtons = [];
+			}
+
+			this.layout.titleBody = BX.create("div", {
+				attrs: {
+					className: "main-kanban-column-title-wrapper"
+				},
+				children: [
+					this.layout.color = BX.create("div", {
+						attrs: {
+							className: "main-kanban-column-title-bg",
+							style: "background: #" + this.getColor()
+						}
+					}),
+					this.layout.info = BX.create("div", {
+						attrs: {
+							className: "main-kanban-column-title-info"
+						},
+						children: [
+
+							this.layout.name = BX.create("div", {
+								attrs: {
+									className: "main-kanban-column-title-text"
+								},
+								children: [
+									this.getColumnTitle(),
+									this.getTotalItem()
+								]
+							}),
+
+							this.isEditable() ? this.getEditButton() : null
+						].concat(customButtons)
+					}),
+
+					this.isEditable() ? this.getEditForm() : null,
+
+					this.layout.titleArrow = BX.create("span", {
+						attrs: {
+							className: "main-kanban-column-title-right"
+
+						}
+					})
+				]});
+
+			if(gridData.kanbanType === "TL")
+			{
+				this.layout.titleBody.classList.add("task-kanban-column-revert")
+			}
+
+			return this.layout.titleBody;
 		}
 	};
 

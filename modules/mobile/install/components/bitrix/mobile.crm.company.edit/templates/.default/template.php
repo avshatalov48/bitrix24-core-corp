@@ -4,7 +4,7 @@ global $APPLICATION;
 CJSCore::Init(array('mobile_crm'));
 
 $mode = $arResult['MODE'];
-$formTitle = GetMessage("M_CRM_COMPANY_EDIT_{$mode}_TITLE");
+$formTitle = GetMessageJS("M_CRM_COMPANY_EDIT_{$mode}_TITLE");
 $formId = "MOBILE_CRM_COMPANY_EDIT_".$arResult['ELEMENT_ID'];
 $ajaxPath = '/mobile/?mobile_action=mobile_crm_company_actions';
 

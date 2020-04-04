@@ -2,9 +2,14 @@
 
 namespace Bitrix\DocumentGenerator;
 
+use Bitrix\Disk\Internals\ObjectTable;
 use Bitrix\DocumentGenerator\DataProvider\Filterable;
 use Bitrix\DocumentGenerator\Integration\Bitrix24Manager;
+use Bitrix\DocumentGenerator\Model\FileTable;
 use Bitrix\DocumentGenerator\Model\RegionTable;
+use Bitrix\DocumentGenerator\Model\Role;
+use Bitrix\DocumentGenerator\Model\RoleTable;
+use Bitrix\DocumentGenerator\Model\RoleAccessTable;
 use Bitrix\DocumentGenerator\Model\TemplateProviderTable;
 use Bitrix\DocumentGenerator\Model\TemplateTable;
 use Bitrix\DocumentGenerator\Storage\BFile;
@@ -15,6 +20,7 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
 use Bitrix\Main\Numerator\Numerator;
+use Bitrix\Main\ORM\Query\Query;
 
 final class Driver
 {
@@ -23,6 +29,8 @@ final class Driver
 	const DEFAULT_DATA_PATH = '/bitrix/modules/documentgenerator/data/';
 
 	const NUMERATOR_TYPE = 'DOCUMENT';
+
+	protected $usersPermissions = [];
 
 	/** @var  Driver */
 	private static $instance;
@@ -251,8 +259,6 @@ final class Driver
 
 	/**
 	 * @return array
-	 * @throws \Bitrix\Main\ArgumentNullException
-	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
 	 * @throws \Bitrix\Main\LoaderException
 	 */
 	public function getCurrentRegion()
@@ -261,7 +267,7 @@ final class Driver
 
 		if(Bitrix24Manager::isEnabled())
 		{
-			$region = substr((string)Option::get('main', '~controller_group_name'), 0, 2);
+			$region = \CBitrix24::getPortalZone();
 			if(empty($region))
 			{
 				$region = $this->getRegionByLanguageId(Bitrix24Manager::getDefaultLanguage());
@@ -300,6 +306,26 @@ final class Driver
 		return [];
 	}
 
+	/**
+	 * @param $userId
+	 * @return UserPermissions
+	 */
+	public function getUserPermissions($userId = null)
+	{
+		if($userId === null)
+		{
+			$userId = $this->getUserId();
+		}
+
+		if(!isset($this->usersPermissions[$userId]))
+		{
+			$this->usersPermissions[$userId] = new UserPermissions($userId);
+		}
+
+		return $this->usersPermissions[$userId];
+	}
+
+	//region Agents
 	/**
 	 * @param bool $rewrite
 	 * @return string
@@ -390,7 +416,123 @@ final class Driver
 		{
 			TemplateTable::delete($template['ID'], true);
 		}
+
+		return '';
 	}
+
+	public static function installDefaultRoles()
+	{
+		global $DB;
+		if(!$DB->TableExists(RoleTable::getTableName()))
+		{
+			return '\\Bitrix\\DocumentGenerator\\Driver::installDefaultRoles();';
+		}
+		$rolesCount = RoleTable::getCount();
+		if($rolesCount > 0)
+		{
+			return '';
+		}
+
+		$role = new Role();
+		$role->setCode('ADMIN')->setName('ADMIN');
+		$addResult = $role->save();
+		if($addResult->isSuccess())
+		{
+			$role->setPermissions([
+				UserPermissions::ENTITY_SETTINGS => [
+					UserPermissions::ACTION_MODIFY => UserPermissions::PERMISSION_ANY,
+				],
+				UserPermissions::ENTITY_TEMPLATES => [
+					UserPermissions::ACTION_MODIFY => UserPermissions::PERMISSION_ANY,
+				],
+				UserPermissions::ENTITY_DOCUMENTS => [
+					UserPermissions::ACTION_MODIFY => UserPermissions::PERMISSION_ANY,
+					UserPermissions::ACTION_VIEW => UserPermissions::PERMISSION_ANY,
+				],
+			]);
+			RoleAccessTable::add(array(
+				'ROLE_ID' => $role->getId(),
+				'ACCESS_CODE' => 'G1'
+			));
+		}
+
+		$role = new Role();
+		$role->setCode('MANAGER')->setName('MANAGER');
+		$addResult = $role->save();
+		if($addResult->isSuccess())
+		{
+			$role->setPermissions([
+				UserPermissions::ENTITY_SETTINGS => [
+					UserPermissions::ACTION_MODIFY => UserPermissions::PERMISSION_ANY,
+				],
+				UserPermissions::ENTITY_TEMPLATES => [
+					UserPermissions::ACTION_MODIFY => UserPermissions::PERMISSION_ANY,
+				],
+				UserPermissions::ENTITY_DOCUMENTS => [
+					UserPermissions::ACTION_MODIFY => UserPermissions::PERMISSION_ANY,
+					UserPermissions::ACTION_VIEW => UserPermissions::PERMISSION_ANY,
+				],
+			]);
+			if(Loader::includeModule('intranet'))
+			{
+				$departmentTree = \CIntranetUtils::GetDeparmentsTree();
+				$rootDepartment = (int)$departmentTree[0][0];
+
+				if ($rootDepartment > 0)
+				{
+					RoleAccessTable::add(array(
+						'ROLE_ID' => $role->getId(),
+						'ACCESS_CODE' => 'DR'.$rootDepartment
+					));
+				}
+			}
+		}
+
+		return "";
+	}
+
+	public static function moveTemplateFilesToFolder()
+	{
+		global $DB;
+		if(!$DB->TableExists(TemplateTable::getTableName()))
+		{
+			return '';
+		}
+		if(!Loader::includeModule('disk'))
+		{
+			return '';
+		}
+		if(!$DB->TableExists(ObjectTable::getTableName()))
+		{
+			return '';
+		}
+
+		$folder = Disk::getTemplatesFolder();
+		if(!$folder)
+		{
+			return '';
+		}
+		$files = \Bitrix\Disk\File::getModelList([
+			'filter' => Query::filter()
+				->whereNot('PARENT_ID', $folder->getId())
+				->whereIn('ID',
+					FileTable::query()
+						->addSelect('STORAGE_WHERE')
+						->where('STORAGE_TYPE', '=', 'Bitrix\\DocumentGenerator\\Storage\\Disk')
+						->whereIn('ID',
+							TemplateTable::query()->addSelect('FILE_ID')
+						)
+					)
+		]);
+		foreach($files as $file)
+		{
+			/** @var \Bitrix\Disk\File $file */
+			$file->moveTo($folder, 0, true);
+		}
+
+		return '';
+	}
+	//endregion
 
 	/**
 	 * @return array
@@ -398,9 +540,20 @@ final class Driver
 	public static function onRestServiceBuildDescription()
 	{
 		return [
-			'documentgenerator' => [
-				'documentgenerator.stub' => []
-			]
+			static::MODULE_ID => [
+				static::MODULE_ID.'.stub' => [],
+			],
+		];
+	}
+
+	/**
+	 * @return array
+	 */
+	public static function onGetDependentModule()
+	{
+		return [
+			'MODULE_ID' => static::MODULE_ID,
+			'USE' => ['PUBLIC_SECTION'],
 		];
 	}
 }

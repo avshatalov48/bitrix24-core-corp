@@ -6,19 +6,27 @@ function CrmWebFormEditScript(params)
 }
 CrmWebFormEditScript.prototype =
 {
-	init: function (params)
+	init: function ()
 	{
-		this.initTabs(params);
-		this.initCopy(params);
+		this.initTabs();
+		this.initCopy();
 		BX.onCustomEvent(window, 'crm-web-form-edit-script', [this]);
 	},
 
-	initTabs: function (params)
+	initTabs: function ()
 	{
 		this.tabAttribute = 'data-bx-webform-script-tab-cont';
 		this.buttonTabAttribute = 'data-bx-webform-script-tab-btn';
 		this.buttonAttribute = 'data-bx-webform-script-copy-btn';
 		this.copyTextAttribute = 'data-bx-webform-script-copy-text';
+		this.selectorAttribute = 'data-bx-webform-script-selector';
+		this.kindAttribute = 'data-bx-webform-script-kind';
+
+		this.selectorButton = this.context.querySelector('[' + this.selectorAttribute + ']');
+		if (this.selectorButton)
+		{
+			BX.bind(this.selectorButton, 'change', this.changeScriptKind.bind(this));
+		}
 
 		this.tabNodeList = this.context.querySelectorAll('[' + this.tabAttribute + ']');
 		this.tabNodeList = BX.convert.nodeListToArray(this.tabNodeList);
@@ -31,6 +39,18 @@ CrmWebFormEditScript.prototype =
 		this.copyButtonList = this.context.querySelectorAll('[' + this.buttonAttribute + ']');
 		this.copyButtonList = BX.convert.nodeListToArray(this.copyButtonList);
 		this.copyButtonScriptList = [];
+	},
+
+	changeScriptKind: function ()
+	{
+		var isOld = !this.selectorButton || this.selectorButton.checked;
+		var list = this.context.querySelectorAll('[' + this.kindAttribute + ']');
+		list = BX.convert.nodeListToArray(list);
+		list.forEach(function (node) {
+			var isNodeOld = node.getAttribute(this.kindAttribute) === 'old';
+			var show = (isNodeOld && isOld) || (!isNodeOld && !isOld);
+			node.style.display = show ? '' : 'none';
+		}, this);
 	},
 
 	bindTabButtonClick: function (tabBtnNode)
@@ -74,7 +94,10 @@ CrmWebFormEditScript.prototype =
 
 	getCurrentCopyText: function ()
 	{
-		var copyTextNode = this.currentTabNode.querySelector('[' + this.copyTextAttribute + ']');
+		var isOld = (!this.selectorButton || this.selectorButton.checked) ? '="old"' : '';
+		var selector = '[' + this.kindAttribute + isOld + ']';
+		var parentNode = this.currentTabNode.querySelector(selector);
+		var copyTextNode = parentNode.querySelector('[' + this.copyTextAttribute + ']');
 		if (copyTextNode)
 		{
 			return copyTextNode.innerText;
@@ -90,23 +113,36 @@ CrmWebFormEditScript.prototype =
 		this.copyButtonScriptList[0].parentNode.style.display = 'none';
 	},
 
-	initCopy: function (params)
+	initCopy: function ()
 	{
 		this.copyButtonList.forEach(function(buttonNode){
-			var id = buttonNode.getAttribute(this.buttonAttribute);
+			if (!BX.clipboard.isCopySupported())
+			{
+				buttonNode.style.display = 'none';
+				return;
+			}
 
-			if (id.substr(0, 6) == 'SCRIPT')
+			var id = buttonNode.getAttribute(this.buttonAttribute);
+			if (id.substr(0, 6) === 'SCRIPT')
 			{
 				this.copyButtonScriptList.push(buttonNode);
 			}
 
-			var copyButtonText = this.context.querySelector('[' + this.copyTextAttribute + '="' + id + '"]');
-			if(!copyButtonText)
-			{
-				return;
-			}
-
-			BX.clipboard.bindCopyClick(buttonNode, {text: copyButtonText, offsetLeft: 30});
+			BX.bind(buttonNode, 'click', function () {
+				var isOld = (!this.selectorButton || this.selectorButton.checked) ? '="old"' : '';
+				var selector = '[' + this.kindAttribute + isOld + ']';
+				var copyButtonText = this.context.querySelector(selector + ' [' + this.copyTextAttribute + '="' + id + '"]');
+				if(!copyButtonText)
+				{
+					return;
+				}
+				BX.clipboard._onCopyClick(
+					BX.util.getRandomString(5),
+					buttonNode,
+					copyButtonText,
+					{offsetLeft: 30}
+				);
+			}.bind(this));
 		}, this);
 	}
 };

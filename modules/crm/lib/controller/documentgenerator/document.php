@@ -3,8 +3,6 @@
 namespace Bitrix\Crm\Controller\DocumentGenerator;
 
 use Bitrix\Crm\Integration\DocumentGeneratorManager;
-use Bitrix\Main\Engine\ActionFilter\Csrf;
-use Bitrix\Main\Engine\Binder;
 use Bitrix\Main\Engine\Response\DataType\ContentUri;
 use Bitrix\Main\Engine\Response\DataType\Page;
 use Bitrix\Main\Engine\UrlManager;
@@ -15,48 +13,6 @@ use Bitrix\Main\UI\PageNavigation;
 
 class Document extends Base
 {
-	protected function init()
-	{
-		parent::init();
-
-		Binder::registerParameterDependsOnName(
-			'\Bitrix\DocumentGenerator\Template',
-			function($className, $id)
-			{
-				/** @var \Bitrix\DocumentGenerator\Template $className */
-				return $className::loadById($id);
-			},
-			function()
-			{
-				return 'templateId';
-			}
-		);
-	}
-
-	/**
-	 * @return array
-	 */
-	public function configureActions()
-	{
-		$configureActions = parent::configureActions();
-		$configureActions['download'] = [
-			'-prefilters' => [
-				Csrf::class
-			]
-		];
-		$configureActions['getImage'] = [
-			'-prefilters' => [
-				Csrf::class
-			]
-		];
-		$configureActions['getPdf'] = [
-			'-prefilters' => [
-				Csrf::class
-			]
-		];
-
-		return $configureActions;
-	}
 	/**
 	 * @return \Bitrix\DocumentGenerator\Controller\Base
 	 */
@@ -181,9 +137,10 @@ class Document extends Base
 	 * @param $entityId
 	 * @param array $values
 	 * @param int $stampsEnabled
+	 * @param array $fields
 	 * @return bool|mixed
 	 */
-	public function addAction(\Bitrix\DocumentGenerator\Template $template, $entityTypeId, $entityId, array $values = [], $stampsEnabled = 0)
+	public function addAction(\Bitrix\DocumentGenerator\Template $template, $entityTypeId, $entityId, array $values = [], $stampsEnabled = 0, array $fields = [])
 	{
 		$providersMap = DocumentGeneratorManager::getInstance()->getCrmOwnerTypeProvidersMap();
 		if(!isset($providersMap[$entityTypeId]))
@@ -192,7 +149,7 @@ class Document extends Base
 			return null;
 		}
 
-		$result = $this->proxyAction('addAction', [$template, $providersMap[$entityTypeId], $entityId, $values, $stampsEnabled]);
+		$result = $this->proxyAction('addAction', [$template, $providersMap[$entityTypeId], $entityId, $values, $stampsEnabled, $fields]);
 		if(is_array($result))
 		{
 			$result['document'] = $this->prepareDocumentData($result['document']);
@@ -276,7 +233,7 @@ class Document extends Base
 	 * @see \Bitrix\DocumentGenerator\Controller\Document::uploadAction()
 	 * @param array $fields
 	 * @param \CRestServer $restServer
-	 * @return \Bitrix\Main\Result|bool
+	 * @return array|null
 	 * @throws \Exception
 	 */
 	public function uploadAction(array $fields, \CRestServer $restServer)
@@ -304,22 +261,24 @@ class Document extends Base
 		}
 		unset($fields['fileContent']);
 
-		$fields['pdfId'] = $this->uploadFile($fields['pdfContent'], 'pdf', false);
+		$fields['pdfId'] = $this->uploadFile($fields['pdfContent'], [
+			'fileParamName' => 'pdf',
+			'required' => false,
+			'fileName' => $fields['title'].'.pdf',
+		]);
 		unset($fields['pdfContent']);
-		$fields['imageId'] = $this->uploadFile($fields['imageContent'], 'image', false);
+		$fields['imageId'] = $this->uploadFile($fields['imageContent'], [
+			'fileParamName' => 'image',
+			'required' => false,
+			'fileName' => $fields['title'].'.jpg',
+		]);
 		unset($fields['imageContent']);
 		$fields['moduleId'] = static::MODULE_ID;
 		$fields['value'] = $fields['entityId'];
 		unset($fields['entityId']);
 
-		if($this->isFieldsAsArraySupportedInUpload())
-		{
-			$result = $this->proxyAction('uploadAction', [$fields, $restServer]);
-		}
-		else
-		{
-			$result = $this->proxyAction('uploadAction', [$restServer, $fields['fileId'], $fields['moduleId'], $fields['region'], $fields['providerClassName'], $fields['value'], $fields['title'], $fields['number']]);
-		}
+		$result = $this->proxyAction('uploadAction', [$fields, $restServer]);
+
 		if(is_array($result))
 		{
 			$result['document'] = $this->prepareDocumentData($result['document']);
@@ -407,14 +366,5 @@ class Document extends Base
 		}
 
 		return $data;
-	}
-
-	/**
-	 * @return bool
-	 */
-	protected function isFieldsAsArraySupportedInUpload()
-	{
-		$template = new \Bitrix\DocumentGenerator\Controller\Template();
-		return method_exists($template, 'updateAction');
 	}
 }

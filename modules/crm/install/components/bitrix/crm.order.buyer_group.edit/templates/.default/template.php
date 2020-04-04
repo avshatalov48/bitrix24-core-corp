@@ -36,7 +36,10 @@ $this->addExternalCss('/bitrix/components/bitrix/crm.entity.editor/templates/.de
 										?>
 										<div class="crm-entity-widget-content-block crm-entity-widget-content-block-field-text">
 											<div class="crm-entity-widget-content-block-title">
-												<?=$field['NAME']?><?=($field['REQUIRED'] ? '<span style="color: rgb(255, 0, 0);">*</span>' : '')?>
+												<span class="crm-entity-widget-content-block-title-text">
+													<?=$field['NAME']?>
+													<?=($field['REQUIRED'] ? '<span style="color: rgb(255, 0, 0);">*</span>' : '')?>
+												</span>
 											</div>
 											<div class="crm-entity-widget-content-block-inner">
 												<?

@@ -35,8 +35,6 @@ BX.IntranetUISelector = {
 	}
 };
 
-BX.ready(function () {
-	BX.addCustomEvent('BX.Main.SelectorV2:onGetEntityTypes', BX.IntranetUISelector.onGetEntityTypes);
-});
+BX.addCustomEvent('BX.Main.SelectorV2:onGetEntityTypes', BX.IntranetUISelector.onGetEntityTypes);
 
 })();

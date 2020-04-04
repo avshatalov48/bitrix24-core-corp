@@ -375,7 +375,7 @@ $tabControl->BeginNextTab();
 				<?=$ENTITY_ID?>
 				<input type="hidden" name="ENTITY_ID" value="<?=$ENTITY_ID?>">
 			<?else:?>
-				<input type="text" name="ENTITY_ID" value="<?=$ENTITY_ID?>" maxlength="20">
+				<input type="text" name="ENTITY_ID" value="<?=$ENTITY_ID?>" maxlength="50">
 			<?endif?>
 		</td>
 	</tr>

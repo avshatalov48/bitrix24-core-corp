@@ -39,10 +39,10 @@ class FirstFormDeal extends DealMap
 		$multiplyType = Calculator::SALE_TYPE_DAY_OFFSET;
 		$singleValue =
 		$multiplyValue = 0;
-		if ((int)$params[self::FIELD_MODE_NAME] === Manager::SINGLE_EXECUTION)
-		{
-			$this->mode = Manager::SINGLE_EXECUTION;
 
+		$this->mode = (int)$params[self::FIELD_MODE_NAME];
+		if ($this->mode === Manager::SINGLE_EXECUTION)
+		{
 			$singleType =
 			$this->unitType = (int)$params[self::FIELD_SINGLE_TYPE_NAME];
 
@@ -51,8 +51,6 @@ class FirstFormDeal extends DealMap
 		}
 		else
 		{
-			$this->mode = Manager::MULTIPLY_EXECUTION;
-
 			$multiplyType =
 			$this->unitType = (int)$params[self::FIELD_MULTIPLE_TYPE_NAME];
 

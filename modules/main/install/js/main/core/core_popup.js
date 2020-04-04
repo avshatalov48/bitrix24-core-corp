@@ -458,19 +458,21 @@ BX.PopupWindow.prototype.getButton = function(id)
  */
 BX.PopupWindow.prototype.setBindElement = function(bindElement)
 {
-	if (!bindElement || typeof(bindElement) !== "object")
+	if (bindElement === null)
 	{
-		return;
+		this.bindElement = null;
 	}
-
-	if (BX.type.isDomNode(bindElement) || (BX.type.isNumber(bindElement.top) && BX.type.isNumber(bindElement.left)))
+	else if (typeof(bindElement) === "object")
 	{
-		this.bindElement = bindElement;
-	}
-	else if (BX.type.isNumber(bindElement.clientX) && BX.type.isNumber(bindElement.clientY))
-	{
-		BX.fixEventPageXY(bindElement);
-		this.bindElement = { left : bindElement.pageX, top : bindElement.pageY, bottom : bindElement.pageY };
+		if (BX.type.isDomNode(bindElement) || (BX.type.isNumber(bindElement.top) && BX.type.isNumber(bindElement.left)))
+		{
+			this.bindElement = bindElement;
+		}
+		else if (BX.type.isNumber(bindElement.clientX) && BX.type.isNumber(bindElement.clientY))
+		{
+			BX.fixEventPageXY(bindElement);
+			this.bindElement = { left : bindElement.pageX, top : bindElement.pageY, bottom : bindElement.pageY };
+		}
 	}
 };
 
@@ -525,9 +527,13 @@ BX.PopupWindow.prototype.getBindElementPos = function(bindElement)
  */
 BX.PopupWindow.prototype.setAngle = function(params)
 {
-	if (params === false && this.angle !== null)
+	if (params === false)
 	{
-		BX.remove(this.angle.element);
+		if (this.angle !== null)
+		{
+			BX.remove(this.angle.element);
+		}
+
 		this.angle = null;
 		return;
 	}
@@ -576,6 +582,7 @@ BX.PopupWindow.prototype.setAngle = function(params)
 			this.angle.offset = Math.min(Math.max(minOffset, offset), maxOffset);
 			this.angle.element.style.left = this.angle.offset + "px";
 			this.angle.element.style.marginLeft = 0;
+			this.angle.element.style.removeProperty("top");
 		}
 		else if (this.angle.position === "bottom")
 		{
@@ -586,6 +593,7 @@ BX.PopupWindow.prototype.setAngle = function(params)
 			this.angle.offset = Math.min(Math.max(minOffset, offset), maxOffset);
 			this.angle.element.style.marginLeft = this.angle.offset + "px";
 			this.angle.element.style.left = 0;
+			this.angle.element.style.removeProperty("top");
 		}
 		else if (this.angle.position === "right")
 		{
@@ -595,6 +603,8 @@ BX.PopupWindow.prototype.setAngle = function(params)
 
 			this.angle.offset = Math.min(Math.max(minOffset, offset), maxOffset);
 			this.angle.element.style.top = this.angle.offset + "px";
+			this.angle.element.style.removeProperty("left");
+			this.angle.element.style.removeProperty("margin-left");
 		}
 		else if (this.angle.position === "left")
 		{
@@ -604,6 +614,8 @@ BX.PopupWindow.prototype.setAngle = function(params)
 
 			this.angle.offset = Math.min(Math.max(minOffset, offset), maxOffset);
 			this.angle.element.style.top = this.angle.offset + "px";
+			this.angle.element.style.removeProperty("left");
+			this.angle.element.style.removeProperty("margin-left");
 		}
 	}
 };
@@ -1538,6 +1550,8 @@ BX.PopupWindow.prototype.close = function()
 			this.unbindAutoHide();
 		}
 
+		BX.onCustomEvent(this, "onPopupAfterClose", [this]);
+
 		if (!this.isCacheable())
 		{
 			this.destroy();
@@ -2018,10 +2032,10 @@ BX.PopupWindow.defaultOptions = {
 	popupOverlayZindex : 1100,
 
 	angleMinLeft : 10,
-	angleMaxLeft : 10,
+	angleMaxLeft : 30,
 
 	angleMinRight : 10,
-	angleMaxRight : 10,
+	angleMaxRight : 30,
 
 	angleMinBottom : 23, /**/
 	angleMaxBottom : 25,
@@ -2189,7 +2203,7 @@ BX.PopupWindowCustomButton = function(params)
 	this.buttonNode = BX.create(
 		"span",
 		{
-			props : { className :  (this.className.length > 0 ? " " + this.className : ""), id : this.id },
+			props : { className :  (this.className.length > 0 ? this.className : ""), id : this.id },
 			events : this.contextEvents,
 			text : this.text
 		}
@@ -2907,10 +2921,7 @@ BX.PopupMenuItem.prototype = {
 
 		BX.onCustomEvent(this, "onMouseEnter");
 
-		if (this.subMenuTimeout)
-		{
-			clearTimeout(this.subMenuTimeout);
-		}
+		this.clearSubMenuTimeout();
 
 		if (this.hasSubMenu())
 		{
@@ -2935,10 +2946,17 @@ BX.PopupMenuItem.prototype = {
 
 		BX.onCustomEvent(this, "onMouseLeave");
 
+		this.clearSubMenuTimeout();
+	},
+
+	clearSubMenuTimeout: function()
+	{
 		if (this.subMenuTimeout)
 		{
 			clearTimeout(this.subMenuTimeout);
 		}
+
+		this.subMenuTimeout = null;
 	},
 
 	hasSubMenu: function()
@@ -3016,6 +3034,8 @@ BX.PopupMenuItem.prototype = {
 
 	closeSubMenu: function()
 	{
+		this.clearSubMenuTimeout();
+
 		if (this.subMenuWindow)
 		{
 			BX.removeClass(this.layout.item, "menu-popup-item-open");

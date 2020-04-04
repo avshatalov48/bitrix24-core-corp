@@ -375,6 +375,7 @@ function CrmButtonEditActivationManager(params)
 	this.attributeItem = 'data-bx-crm-button-item';
 	this.attributeActive = 'data-bx-crm-button-item-active';
 	this.attributeActiveValue = 'data-bx-crm-button-item-active-val';
+	this.attributeChannelSetup = 'data-bx-crm-button-item-channel-setup';
 
 	this.context = params.context;
 
@@ -385,11 +386,23 @@ CrmButtonEditActivationManager.prototype =
 	init: function()
 	{
 		var nodeList = this.context.querySelectorAll('[' + this.attributeActive + ']');
-		nodeList = BX.convert.nodeListToArray(nodeList);
+		nodeList = Array.prototype.slice.call(nodeList);
 		nodeList.forEach(function (node) {
 			BX.bind(node, 'click', BX.delegate(function (){
 				this.toggleActive(node);
 			}, this));
+		}, this);
+
+		var channelSetupNodes = this.context.querySelectorAll('[' + this.attributeChannelSetup + ']');
+		channelSetupNodes = Array.prototype.slice.call(channelSetupNodes);
+		channelSetupNodes.forEach(function (node) {
+			if (node.getAttribute(this.attributeChannelSetup))
+			{
+				BX.bind(node, 'click', function (e) {
+					e.preventDefault();
+					BX.SidePanel.Instance.open(this.href, {width: 996, allowChangeHistory: false});
+				});
+			}
 		}, this);
 	},
 
@@ -1757,6 +1770,7 @@ CrmButtonEditLine.prototype =
 	{
 		this.selectNode = this.node.querySelector('[data-line-list]');
 		this.editButtonNode = this.node.querySelector('[data-line-edit]');
+		this.addButtonNode = this.node.querySelector('[data-line-add]');
 		this.removeButtonNode = this.node.querySelector('[data-line-remove]');
 		this.channelsNode = this.node.querySelector('[data-line-channels]');
 
@@ -1795,6 +1809,18 @@ CrmButtonEditLine.prototype =
 		this.editButtonNode.href = this.data.PATH_EDIT;
 		this.channelsNode.innerHTML = '';
 		this.data.CONNECTORS.forEach(this.addConnector, this);
+
+		BX.bind(this.editButtonNode, 'click', function (e) {
+			e.preventDefault();
+
+			BX.SidePanel.Instance.open(this.href, {width: 996, allowChangeHistory: false});
+		});
+
+		BX.bind(this.addButtonNode, 'click', function (e) {
+			e.preventDefault();
+
+			BX.SidePanel.Instance.open(this.href, {width: 996, allowChangeHistory: false});
+		});
 
 		BX.onCustomEvent(this, 'load', [this]);
 	},

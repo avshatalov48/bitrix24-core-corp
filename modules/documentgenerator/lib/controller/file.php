@@ -4,7 +4,10 @@ namespace Bitrix\DocumentGenerator\Controller;
 
 use Bitrix\DocumentGenerator\Body\Docx;
 use Bitrix\DocumentGenerator\Driver;
+use Bitrix\DocumentGenerator\Engine\CheckPermissions;
+use Bitrix\DocumentGenerator\Integration\Bitrix24Manager;
 use Bitrix\DocumentGenerator\Model\FileTable;
+use Bitrix\DocumentGenerator\UserPermissions;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Uploader\Uploader;
 
@@ -13,6 +16,21 @@ class File extends Base
 	const FILE_PARAM_NAME = 'file';
 
 	protected $uploader;
+
+	/**
+	 * @return array
+	 */
+	public function configureActions()
+	{
+		$configureActions = parent::configureActions();
+		$configureActions['upload'] = [
+			'+prefilters' => [
+				new CheckPermissions(UserPermissions::ENTITY_TEMPLATES)
+			]
+		];
+
+		return $configureActions;
+	}
 
 	/**
 	 * @return array|bool
@@ -46,11 +64,13 @@ class File extends Base
 	public function uploadDocxFile($hash, &$file, &$package, &$upload, &$error)
 	{
 		Loc::loadMessages(__FILE__);
-		if($file['size'] > 1024*1024)
+		$maxSize = Bitrix24Manager::getMaximumTemplateFileSize();
+		if($file['size'] > $maxSize)
 		{
-			$error = Loc::getMessage('DOCGEN_CONT_FILE_UPLOAD_WRONG_SIZE');
+			$error = Loc::getMessage('DOCGEN_CONT_FILE_UPLOAD_WRONG_SIZE_BIG', ['#SIZE#' => ($maxSize / 1024).'Kb']);
 			return false;
 		}
+		$file['files']['default']['isTemplate'] = true;
 		$uploadResult = FileTable::saveFile($file['files']['default']);
 		if($uploadResult->isSuccess())
 		{

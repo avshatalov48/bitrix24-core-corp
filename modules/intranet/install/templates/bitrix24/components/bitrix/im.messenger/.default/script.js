@@ -1,230 +1,285 @@
-function bxImBarInit()
-{
-	BX.isImBarTransparent = false;
-	BX.bind(window, 'scroll', bxImBarRedraw);
-	BX.bind(window, 'resize', bxImBarRedraw);
-	BX.addCustomEvent("onTopPanelCollapse", bxImBarRedraw);
+BX.namespace("BX.Intranet.Bitrix24.ImBar");
 
-	bxImBarRedraw();
+(function() {
 
-	BX.bind(BX("bx-im-bar-notify"), "click", function(){
-		if (typeof(BXIM) == 'undefined') return false;
-		BXIM.openNotify();
-	});
-	BX.bind(BX("bx-im-bar-search"), "click", function(){
-		if (typeof(BXIM) == 'undefined') return false;
-		BXIM.openMessenger(0, 'im');
-	});
-	BX.bind(BX("bx-im-bar-ol"), "click", function(){
-		if (typeof(BXIM) == 'undefined') return false;
-		BXIM.openMessenger(0, 'im-ol');
-	});
-	BX.bind(BX("bx-im-btn-call"), "click", function(e){
-		if (typeof(BXIM) == 'undefined') return false;
-		BXIM.webrtc.openKeyPad(e);
-	});
-	BX.bind(window, "scroll", function(){
-		if (typeof(BXIM) == 'undefined' || !BXIM.messenger.popupPopupMenu) return true;
-		if (BX.util.in_array(BXIM.messenger.popupPopupMenu.uniquePopupId.replace('bx-messenger-popup-',''), ["createChat", "contactList"]))
-		{
-			BXIM.messenger.popupPopupMenu.close();
-		}
-	});
-	BX.bindDelegate(BX("bx-im-external-recent-list"), "contextmenu", {className: 'bx-messenger-cl-item'}, function(e) {
-		if (typeof(BXIM) == 'undefined') return false;
-		
-		BXIM.messenger.openPopupMenu(this, 'contactList', false);
-		
-		return BX.PreventDefault(e);
-	});
+	var fixedAdminPanelHeight = 0;
+	var adminPanelHeight = null;
 
-	BX.bindDelegate(BX("bx-im-external-recent-list"), "click", {className: 'bx-messenger-cl-item'}, function(e){
-		if (typeof(BXIM) == 'undefined') return false;
-		
-		BXIM.openMessenger(this.getAttribute('data-userId'));
-		
-		return BX.PreventDefault(e);
-	});
+	var isTransparentMode = false;
+	var isScrollMode = false;
+	var scrollModeThreshold = 20;
 
-	BX.addCustomEvent("onMessengerWindowBodyOverflow", function(messengerWindow, size)
+	function init()
 	{
-		var td = BX.findChildrenByClassName(BX('im-workarea-popup'), "bx-im-fullscreen-popup-td", true);
-		for (var i = 0; i < td.length; i++)
+		var adminPanel = getAdminPanel();
+		if (adminPanel)
 		{
-			var computedStyle = getComputedStyle(td[i], null);
-			computedStyle = computedStyle? parseInt(computedStyle.getPropertyValue('padding-left').toString().replace('px', '')): 85;
-			td[i].style.paddingRight = (computedStyle+size)+'px'; 
-		}
-		document.body.style.paddingRight = size + "px";
-		BX('bx-im-bar').style.right = size + "px";
-	});
-		
-	BX.addCustomEvent("onImUpdateCounterNotify", function(counter) {
-		var notifyCounter = BX.findChildByClassName(BX("bx-im-bar-notify"), "bx-im-informer-num");
-		if (!notifyCounter)
-			return false;
+			var adminPanelState = BX.getClass("BX.admin.panel.state");
+			if (adminPanelState && adminPanelState.fixed)
+			{
+				fixedAdminPanelHeight = getAdminPanelHeight();
+			}
 
-		if (counter > 0)
+			BX.addCustomEvent("onTopPanelCollapse", function() {
+				adminPanelHeight = null;
+				if (BX.admin.panel.isFixed())
+				{
+					fixedAdminPanelHeight = getAdminPanelHeight();
+				}
+
+				adjustAdminPanel();
+
+			}.bind(this));
+
+			BX.addCustomEvent("onTopPanelFix", function(isFixed) {
+
+				if (isFixed)
+				{
+					fixedAdminPanelHeight = getAdminPanelHeight();
+				}
+				else
+				{
+					fixedAdminPanelHeight = 0;
+				}
+
+				adjustAdminPanel();
+
+			}.bind(this));
+
+			adjustAdminPanel();
+		}
+
+		BX.bind(window, "scroll", redraw);
+		BX.bind(window, "resize", redraw);
+
+		redraw();
+
+		BX.bind(BX("bx-im-bar-notify"), "click", function(){
+			if (typeof(BXIM) == 'undefined') return false;
+			BXIM.openNotify();
+		});
+
+		BX.bind(BX("bx-im-bar-search"), "click", function(){
+			if (typeof(BXIM) == 'undefined') return false;
+			BXIM.openMessenger(0, 'im');
+		});
+
+		BX.bind(BX("bx-im-bar-ol"), "click", function(){
+			if (typeof(BXIM) == 'undefined') return false;
+			BXIM.openMessenger(0, 'im-ol');
+		});
+
+		BX.bind(BX("bx-im-btn-call"), "click", function(e){
+			if (typeof(BXIM) == 'undefined') return false;
+			BXIM.webrtc.openKeyPad(e);
+		});
+
+		BX.bind(window, "scroll", function(){
+			if (typeof(BXIM) == 'undefined' || !BXIM.messenger.popupPopupMenu) return true;
+			if (BX.util.in_array(BXIM.messenger.popupPopupMenu.uniquePopupId.replace('bx-messenger-popup-',''), ["createChat", "contactList"]))
+			{
+				BXIM.messenger.popupPopupMenu.close();
+			}
+		});
+
+
+		BX.bindDelegate(BX("bx-im-external-recent-list"), "contextmenu", {className: 'bx-messenger-cl-item'}, function(e) {
+			if (typeof(BXIM) == 'undefined') return false;
+
+			BXIM.messenger.openPopupMenu(this, 'contactList', false);
+
+			return BX.PreventDefault(e);
+		});
+
+		BX.bindDelegate(BX("bx-im-external-recent-list"), "click", {className: 'bx-messenger-cl-item'}, function(e){
+			if (typeof(BXIM) == 'undefined') return false;
+
+			BXIM.openMessenger(this.getAttribute('data-userId'));
+
+			return BX.PreventDefault(e);
+		});
+
+		BX.addCustomEvent("onMessengerWindowBodyOverflow", function(messengerWindow, size)
 		{
-			notifyCounter.innerHTML = '<div class="bx-im-informer-num-digit">'+(counter > 99? "99+": counter)+'</div>';
+			var td = BX.findChildrenByClassName(BX('im-workarea-popup'), "bx-im-fullscreen-popup-td", true);
+			for (var i = 0; i < td.length; i++)
+			{
+				var computedStyle = getComputedStyle(td[i], null);
+				computedStyle = computedStyle? parseInt(computedStyle.getPropertyValue('padding-left').toString().replace('px', '')): 85;
+				td[i].style.paddingRight = (computedStyle+size)+'px';
+			}
+			document.body.style.paddingRight = size + "px";
+			BX('bx-im-bar').style.right = size + "px";
+		});
+
+		BX.addCustomEvent("onImUpdateCounterNotify", function(counter) {
+			var notifyCounter = BX.findChildByClassName(BX("bx-im-bar-notify"), "bx-im-informer-num");
+			if (!notifyCounter)
+				return false;
+
+			if (counter > 0)
+			{
+				notifyCounter.innerHTML = '<div class="bx-im-informer-num-digit">'+(counter > 99? "99+": counter)+'</div>';
+			}
+			else
+			{
+				notifyCounter.innerHTML = "";
+			}
+		});
+
+		BX.addCustomEvent("onImUpdateCounterMessage", function(counter, type) {
+			var node = null;
+			if (type === 'LINES')
+			{
+				node = BX("bx-im-bar-ol");
+			}
+			else
+			{
+				return false;
+			}
+
+			var notifyCounter = node && BX.findChildByClassName(node, "bx-im-informer-num");
+			if (!notifyCounter)
+				return false;
+
+			if (counter > 0)
+			{
+				notifyCounter.innerHTML = '<div class="bx-im-informer-num-digit">'+(counter > 99? "99+": counter)+'</div>';
+			}
+			else
+			{
+				notifyCounter.innerHTML = "";
+			}
+		});
+
+		BX.bind(BX("im-workarea-backgound-selector"), "change", function(){
+			BX("im-workarea-backgound-selector-title").innerHTML = this.options[this.selectedIndex].text;
+		});
+
+		BX.addCustomEvent('onMessengerWindowInit', function(){
+			BX("im-workarea-backgound-selector-title").innerHTML = BX("im-workarea-backgound-selector").options[BX("im-workarea-backgound-selector").selectedIndex].text;
+		});
+
+		BX.addCustomEvent("onImInit", function(initObj) {
+			initObj.notify.panelButtonCall = BX("bx-im-btn-call");
+			initObj.notify.panelButtonCallAnlgePosition = "bottom";
+			initObj.notify.panelButtonCallAnlgeOffset = 131;
+			BX.MessengerCommon.recentListRedraw();
+		});
+	}
+
+	function redraw()
+	{
+		var imBar = getImBar();
+		if (!imBar || imBar.dataset.lockRedraw === "true")
+		{
+			return;
+		}
+
+		adjustAdminPanel();
+
+		var scrollWidth = document.documentElement.scrollWidth - document.documentElement.clientWidth;
+		if (scrollWidth > 0)
+		{
+			if (!isTransparentMode)
+			{
+				BX.addClass(imBar, "bx-im-bar-transparent");
+				isTransparentMode = true;
+			}
 		}
 		else
 		{
-			notifyCounter.innerHTML = "";
+			if (isTransparentMode)
+			{
+				BX.removeClass(imBar, "bx-im-bar-transparent");
+				isTransparentMode = false;
+			}
 		}
-	});
-	BX.addCustomEvent("onImUpdateCounterMessage", function(counter, type) {
-		var node = null;
-		if (type == 'LINES')
-		{
-			node = BX("bx-im-bar-ol");
-		}
-		else 
-		{
-			return false;
-		}
-		
-		var notifyCounter = node && BX.findChildByClassName(node, "bx-im-informer-num");
-		if (!notifyCounter)
-			return false;
 
-		if (counter > 0)
+
+		var threshold = scrollModeThreshold;
+		if (fixedAdminPanelHeight === 0 && getAdminPanel())
 		{
-			notifyCounter.innerHTML = '<div class="bx-im-informer-num-digit">'+(counter > 99? "99+": counter)+'</div>';
+			threshold += getAdminPanelHeight()
+		}
+
+		if (window.pageYOffset > threshold)
+		{
+			if (!isScrollMode)
+			{
+				BX.addClass(imBar, "bx-im-bar-scroll-mode");
+				isScrollMode = true;
+			}
 		}
 		else
 		{
-			notifyCounter.innerHTML = "";
-		}
-	});
-
-	BX.addCustomEvent("onPullOnlineEvent", BX.delegate(function(command,params)
-	{
-		if (command == 'user_online')
-		{
-			if (typeof(BXIM.messenger.online) == 'undefined')
-				return false;
-
-			if (BXIM.messenger.online[params.USER_ID] != 'Y')
+			if (isScrollMode)
 			{
-				BXIM.messenger.online[params.USER_ID] = 'Y';
-				bxImBarRecount();
+				BX.removeClass(imBar, "bx-im-bar-scroll-mode");
+				isScrollMode = false;
 			}
 		}
-		else if (command == 'user_offline')
-		{
-			if (typeof(BXIM.messenger.online) == 'undefined')
-				return false;
+	}
 
-			if (BXIM.messenger.online[params.USER_ID] == 'Y')
-			{
-				BXIM.messenger.online[params.USER_ID] = 'N';
-				bxImBarRecount();
-			}
+	function getImBar()
+	{
+		return BX("bx-im-bar");
+	}
+
+	function getAdminPanel()
+	{
+		return BX("bx-panel");
+	}
+
+	function adjustAdminPanel()
+	{
+		var adminPanel = getAdminPanel();
+		var imBar = getImBar();
+
+		if (!adminPanel || !imBar)
+		{
+			return;
 		}
-		else if (command == 'online_list')
+
+		var rect = adminPanel.getBoundingClientRect();
+
+		if (rect.bottom > 0)
 		{
-			BXIM.messenger.online = {};
-			for (var i in params.USERS)
-			{
-				BXIM.messenger.online[i] = 'Y';
-			}
-			//bxImBarRecount();
+			imBar.style.top = Math.max(rect.bottom, fixedAdminPanelHeight) + "px";
 		}
-	}, this));
-
-	BX.bind(BX("im-workarea-backgound-selector"), "change", function(){
-		BX("im-workarea-backgound-selector-title").innerHTML = this.options[this.selectedIndex].text;
-	});
-	BX.addCustomEvent('onMessengerWindowInit', function(){
-		BX("im-workarea-backgound-selector-title").innerHTML = BX("im-workarea-backgound-selector").options[BX("im-workarea-backgound-selector").selectedIndex].text;
-	});
-	
-	BX.addCustomEvent("onImInit", function(initObj) {
-		initObj.notify.panelButtonCall = BX("bx-im-btn-call");
-		initObj.notify.panelButtonCallAnlgePosition = "bottom";
-		initObj.notify.panelButtonCallAnlgeOffset = 131;
-		BX.MessengerCommon.recentListRedraw();
-	});
-}
-
-function bxImBarRedraw()
-{
-	var bar = BX('bx-im-bar');
-	if (!bar || bar.dataset.lockRedraw === "true")
-	{
-		return;
-	}
-
-	var scrolledY = window.pageYOffset || document.documentElement.scrollTop;
-	var scrolledX = window.pageXOffset || document.documentElement.scrollLeft;
-	var scrollWidth = document.documentElement.scrollWidth - document.documentElement.clientWidth;
-	var barOffset = 63;
-
-	var panel = BX('bx-panel');
-	if (panel)
-	{
-		barOffset = barOffset+panel.offsetHeight;
-	}
-
-	var creatorNotify = BX('creatorconfirmed');
-	if (creatorNotify)
-	{
-		barOffset = barOffset+ creatorNotify.offsetHeight;
-	}
-
-	if(scrolledY <= barOffset)
-	{
-		bar.style.top = (barOffset - scrolledY) + 'px';
-	}
-	else if(scrolledY > barOffset)
-	{
-		if (bar.style.top != "0px")
+		else
 		{
-			bar.style.top = 0;
+			imBar.style.top = Math.max(0, fixedAdminPanelHeight) + "px";
 		}
 	}
 
-	if(scrollWidth > 19 && (scrollWidth - scrolledX) > 19)
+	function getAdminPanelHeight()
 	{
-		if (!BX.isImBarTransparent)
+		if (adminPanelHeight !== null)
 		{
-			BX.addClass(bar, 'bx-im-bar-transparent');
-			BX.isImBarTransparent = true;
+			return adminPanelHeight;
 		}
+
+		var adminPanel = getAdminPanel();
+		if (adminPanel)
+		{
+			adminPanelHeight = adminPanel.offsetHeight;
+		}
+		else
+		{
+			adminPanelHeight = 0;
+		}
+
+		return adminPanelHeight;
 	}
-	else
+
+	function closeMessenger()
 	{
-		if (BX.isImBarTransparent)
-		{
-			BX.removeClass(bar, 'bx-im-bar-transparent');
-			BX.isImBarTransparent = false;
-		}
+		BX.MessengerWindow.closePopup();
 	}
-}
 
-function bxImBarRecount()
-{
-	if (typeof(BXIM.messenger.online) == 'undefined' || !BX('bx-im-online-count'))
-		return false;
+	BX.Intranet.Bitrix24.ImBar.init = init;
+	BX.Intranet.Bitrix24.ImBar.redraw = redraw;
+	window.bxFullscreenClose = closeMessenger;
 
-	var count = 0;
-	for (var i in BXIM.messenger.online)
-	{
-		if (BXIM.messenger.online[i] == 'Y')
-		{
-			count++;
-		}
-	}
-	count = count <= 0? 1: count;
-	count = count > 9999? 9999: count;
-
-	BX('bx-im-online-count').innerHTML = count;
-
-	return true;
-}
-
-function bxFullscreenClose()
-{
-	BX.MessengerWindow.closePopup();
-}
+})();

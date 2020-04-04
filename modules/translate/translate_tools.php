@@ -660,6 +660,18 @@ function TSEARCH($arFile, &$count)
 {
 	global $arSearchParam;
 
+	if (isset($arFile['LANG']))
+	{
+		$langId = $arFile['LANG'];
+	}
+	else
+	{
+		$langId = Translate\Path::extractLangId($arFile['PATH']);
+	}
+
+	$sourceEncoding = Main\Localization\Translation::getSourceEncoding($langId);
+	$targetEncoding = Main\Localization\Translation::getCurrentEncoding();
+
 	$MESS = [];
 	include $arFile['FULL_PATH'];
 
@@ -693,6 +705,12 @@ function TSEARCH($arFile, &$count)
 	$count = 0;
 	foreach ($MESS as $_sMn =>  $_sMe)
 	{
+		if ($targetEncoding != '' && $sourceEncoding != $targetEncoding)
+		{
+			$errorMessage = '';
+			$_sMe = Encoding::convertEncoding($_sMe, $sourceEncoding, $targetEncoding, $errorMessage);
+		}
+
 		$__sMe = $_sMe;
 		$__sMn = $_sMn;
 		if (!$arSearchParam['bCaseSens'])
@@ -1378,7 +1396,7 @@ function saveTranslationFile($langFileName, $phrases, &$errorCollection)
 	foreach ($phrases as $phraseId => $phrase)
 	{
 		$phrase = str_replace(["\n\r", "\r"], ["\n", ''], $phrase);
-		$row = "\$MESS['". EscapePHPString($phraseId). "'] = \"". EscapePHPString($phrase). "\"";
+		$row = "\$MESS[\"". EscapePHPString($phraseId). "\"] = \"". EscapePHPString($phrase). "\"";
 		$content .= "\n". $row. ';';
 	}
 	unset($phraseId, $phrase, $row);

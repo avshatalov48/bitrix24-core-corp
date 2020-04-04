@@ -107,6 +107,15 @@ BX.Tasks.Kanban.Item.prototype = {
 	},
 
 	/**
+	 * Gets deadline of item.
+	 * @return {String}
+	 */
+	getDeadline: function()
+	{
+		return this.date_deadline.innerText;
+	},
+
+	/**
 	 * Set status for current item.
 	 * @param {String} code
 	 * @returns {undefined}
@@ -545,6 +554,7 @@ BX.Tasks.Kanban.Item.prototype = {
 						 (new Date()).getFullYear()
 						? this.dateFormats["short"][formatLang]
 						: this.dateFormats["full"][formatLang];
+			data.overdue = Date.now() > data.date_deadline * 1000;
 			this.date_deadline.textContent = BX.date.format(format, data.date_deadline);
 		}
 		else

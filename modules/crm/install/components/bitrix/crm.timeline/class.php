@@ -2,6 +2,7 @@
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
 use Bitrix\Main;
+use Bitrix\Main\Page\Asset;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\DB\SqlExpression;
@@ -39,6 +40,20 @@ class CCrmTimelineComponent extends CBitrixComponent
 	protected $parser = null;
 	/** @var string */
 	protected $pullTagName = '';
+	/** @var string */
+	protected $historyFilterID = '';
+	/** @var array */
+	protected $historyFilter = array();
+
+	public function getGuid()
+	{
+		return $this->guid;
+	}
+
+	public function setGuid($guid)
+	{
+		$this->guid = $guid;
+	}
 
 	public function getEntityTypeID()
 	{
@@ -48,6 +63,7 @@ class CCrmTimelineComponent extends CBitrixComponent
 	public function setEntityTypeID($entityTypeID)
 	{
 		$this->entityTypeID = $entityTypeID;
+		$this->entityTypeName = CCrmOwnerType::ResolveName($entityTypeID);
 	}
 
 	public function getEntityID()
@@ -211,9 +227,11 @@ class CCrmTimelineComponent extends CBitrixComponent
 		$this->arResult['USER_ID'] = \CCrmSecurityHelper::GetCurrentUserID();
 
 		$this->prepareScheduleItems();
+		$this->prepareHistoryFilter();
 		$this->prepareHistoryItems();
 		$this->prepareHistoryFixedItems();
 
+		//region Chat
 		$this->arResult['CHAT_DATA'] = array();
 		$this->arResult['CHAT_DATA']['ENABLED'] = $this->entityID > 0
 			&& in_array($this->entityTypeID, array(CCrmOwnerType::Lead, CCrmOwnerType::Deal))
@@ -222,7 +240,9 @@ class CCrmTimelineComponent extends CBitrixComponent
 		{
 			$this->prepareChatData();
 		}
+		//endregion
 
+		//region  Push&Pull
 		if(Bitrix\Main\Loader::includeModule('pull'))
 		{
 			$this->pullTagName = $this->arResult['PULL_TAG_NAME'] = TimelineEntry::prepareEntityPushTag($this->entityTypeID, $this->entityID);
@@ -233,6 +253,189 @@ class CCrmTimelineComponent extends CBitrixComponent
 				\CPullWatch::Add($this->userID, 'MESSAGESERVICE');
 			}
 		}
+		//endregion
+
+		//region salescenter
+		if(isset($this->arParams['~ENABLE_SALESCENTER']) && $this->arParams['~ENABLE_SALESCENTER'] === false)
+		{
+			$this->arResult['ENABLE_SALESCENTER'] = false;
+		}
+		else
+		{
+			$this->arResult['ENABLE_SALESCENTER'] = ($this->arResult['ENABLE_SMS'] && Crm\Integration\SalesCenterManager::getInstance()->isShowApplicationInSmsEditor());
+		}
+		if(is_array($this->arResult['SMS_CONFIG']))
+		{
+			$this->arResult['SMS_CONFIG']['isSalescenterEnabled'] = $this->arResult['ENABLE_SALESCENTER'];
+		}
+		//endregion
+
+		$documentGeneratorManager = Crm\Integration\DocumentGeneratorManager::getInstance();
+		$this->arResult['ENABLE_DOCUMENTS'] = $documentGeneratorManager->isDocumentButtonAvailable();
+		if($this->arResult['ENABLE_DOCUMENTS'])
+		{
+			$extension = Main\UI\Extension::getConfig('documentgenerator.selector');
+			if($extension)
+			{
+				$providersMap = $documentGeneratorManager->getCrmOwnerTypeProvidersMap();
+				$provider = $providersMap[$this->entityTypeID];
+				if(!$provider)
+				{
+					$this->arResult['ENABLE_DOCUMENTS'] = false;
+				}
+				else
+				{
+					$this->arResult['SMS_CONFIG']['documentsProvider'] = $provider;
+					$this->arResult['SMS_CONFIG']['documentsValue'] = $this->entityID;
+				}
+			}
+			else
+			{
+				$this->arResult['ENABLE_DOCUMENTS'] = false;
+			}
+		}
+		$this->arResult['SMS_CONFIG']['isDocumentsEnabled'] = $this->arResult['ENABLE_DOCUMENTS'];
+
+		$this->arResult['ENABLE_FILES'] = Main\Loader::includeModule('disk');
+		if($this->arResult['ENABLE_FILES'])
+		{
+			$this->arResult['SMS_CONFIG']['isFilesEnabled'] = $this->arResult['ENABLE_FILES'];
+			$this->arResult['ENABLE_FILES_EXTERNAL_LINK'] = true;
+			if(Main\Loader::includeModule('bitrix24'))
+			{
+				$this->arResult['ENABLE_FILES_EXTERNAL_LINK'] = \Bitrix\Bitrix24\Feature::isFeatureEnabled('disk_external_link');
+			}
+			$this->arResult['SMS_CONFIG']['isFilesExternalLinkEnabled'] = $this->arResult['ENABLE_FILES_EXTERNAL_LINK'];
+			if($this->arResult['ENABLE_FILES_EXTERNAL_LINK'])
+			{
+				Asset::getInstance()->addJs('/bitrix/components/bitrix/disk.uf.file/templates/.default/script.js');
+				Main\UI\Extension::load(['uploader']);
+				$this->arResult['SMS_CONFIG']['diskUrls'] = [
+					'urlSelect' => '/bitrix/tools/disk/uf.php?action=selectFile&SITE_ID='.SITE_ID,
+					'urlRenameFile' => '/bitrix/tools/disk/uf.php?action=renameFile',
+					'urlDeleteFile' => '/bitrix/tools/disk/uf.php?action=deleteFile',
+					'urlUpload' => '/bitrix/tools/disk/uf.php?action=uploadFile&ncc=1',
+				];
+			}
+		}
+		else
+		{
+			$this->arResult['SMS_CONFIG']['isFilesEnabled'] = false;
+		}
+	}
+
+	public function getHistoryFilter()
+	{
+		$filter = new Crm\Filter\Filter(
+			$this->historyFilterID,
+			new Crm\Filter\TimelineDataProvider(
+				new Crm\Filter\TimelineSettings(array('ID' => $this->historyFilterID))
+			)
+		);
+
+		return $filter;
+	}
+
+	public function prepareHistoryFilter()
+	{
+		$this->arResult['HISTORY_FILTER_ID'] = $this->historyFilterID = strtolower($this->entityTypeName).'_'.$this->entityID.'_timeline_history';
+		$this->arResult['HISTORY_FILTER_PRESET_ID'] = strtolower($this->entityTypeName).'_timeline_history';
+		$this->arResult['HISTORY_FILTER_PRESETS'] = array(
+			'communications' => array(
+				'name' => Loc::getMessage('CRM_TIMELINE_FILTER_PRESET_COMMUNICATIONS'),
+				'fields' => array(
+					'ENTRY_CATEGORY_ID' => array(
+						Crm\Filter\TimelineEntryCategory::SMS,
+						Crm\Filter\TimelineEntryCategory::ACTIVITY_CALL,
+						Crm\Filter\TimelineEntryCategory::ACTIVITY_VISIT,
+						Crm\Filter\TimelineEntryCategory::ACTIVITY_MEETING,
+						Crm\Filter\TimelineEntryCategory::ACTIVITY_EMAIL,
+						Crm\Filter\TimelineEntryCategory::WEB_FORM,
+						Crm\Filter\TimelineEntryCategory::CHAT
+					)
+				)
+			),
+			'comments' => array(
+				'name' => Loc::getMessage('CRM_TIMELINE_FILTER_PRESET_COMMENTS'),
+				'fields' => array(
+					'ENTRY_CATEGORY_ID' => array(
+						Crm\Filter\TimelineEntryCategory::COMMENT,
+						Crm\Filter\TimelineEntryCategory::WAITING
+					)
+				)
+			),
+			'documents' => array(
+				'name' => Loc::getMessage('CRM_TIMELINE_FILTER_PRESET_DOCUMENTS'),
+				'fields' => array(
+					'ENTRY_CATEGORY_ID' => array(
+						Crm\Filter\TimelineEntryCategory::DOCUMENT
+					)
+				)
+			),
+			'tasks' => array(
+				'name' => Loc::getMessage('CRM_TIMELINE_FILTER_PRESET_TASKS'),
+				'fields' => array(
+					'ENTRY_CATEGORY_ID' => array(
+						Crm\Filter\TimelineEntryCategory::ACTIVITY_TASK
+					)
+				)
+			),
+			'business_processes' => array(
+				'name' => Loc::getMessage('CRM_TIMELINE_FILTER_PRESET_BUSINESS_PROCESSES'),
+				'fields' => array(
+					'ENTRY_CATEGORY_ID' => array(
+						Crm\Filter\TimelineEntryCategory::ACTIVITY_REQUEST,
+						Crm\Filter\TimelineEntryCategory::BIZ_PROCESS
+					)
+				)
+			),
+			'system_events' => array(
+				'name' => Loc::getMessage('CRM_TIMELINE_FILTER_PRESET_SYSTEM_EVENTS'),
+				'fields' => array(
+					'ENTRY_CATEGORY_ID' => array(
+						Crm\Filter\TimelineEntryCategory::CREATION,
+						Crm\Filter\TimelineEntryCategory::MODIFICATION,
+						Crm\Filter\TimelineEntryCategory::CONVERSION
+					)
+				)
+			),
+			'applications' => array(
+				'name' => Loc::getMessage('CRM_TIMELINE_FILTER_PRESET_APPLICATIONS'),
+				'fields' => array(
+					'ENTRY_CATEGORY_ID' => array(
+						Crm\Filter\TimelineEntryCategory::APPLICATION
+					)
+				)
+			)
+		);
+
+		$this->arResult['HISTORY_FILTER'] = array();
+		$filterOptions = new \Bitrix\Main\UI\Filter\Options(
+			$this->historyFilterID,
+			$this->arResult['HISTORY_FILTER_PRESETS'],
+			$this->arResult['HISTORY_FILTER_PRESET_ID']
+		);
+		$filter = $this->getHistoryFilter();
+		$effectiveFilterFieldIDs = $filterOptions->getUsedFields();
+		if(empty($effectiveFilterFieldIDs))
+		{
+			$effectiveFilterFieldIDs = $filter->getDefaultFieldIDs();
+		}
+
+		foreach($effectiveFilterFieldIDs as $filterFieldID)
+		{
+			$filterField = $filter->getField($filterFieldID);
+			if($filterField)
+			{
+				$this->arResult['HISTORY_FILTER'][] = $filterField->toArray();
+			}
+		}
+
+		$this->historyFilter = $filterOptions->getFilter($this->arResult['HISTORY_FILTER']);
+		$this->arResult['IS_HISTORY_FILTER_APPLIED'] = isset($this->historyFilter['FILTER_APPLIED'])
+			&& $this->historyFilter['FILTER_APPLIED'];
+
+		return $this->historyFilter;
 	}
 	public function getHistoryTimestamp(DateTime $time = null)
 	{
@@ -317,7 +520,7 @@ class CCrmTimelineComponent extends CBitrixComponent
 					$nextOffsetTime,
 					$offsetID,
 					$nextOffsetID,
-					10
+					array('limit' => 10, 'filter' => $this->historyFilter)
 				)
 			);
 		} while(count($this->arResult['HISTORY_ITEMS']) < 10 && $nextOffsetTime !== null);
@@ -337,49 +540,92 @@ class CCrmTimelineComponent extends CBitrixComponent
 				$offsetTime,
 				0,
 				$offsetID,
-				3,
-				true
+				array('limit' => 3, 'onlyFixed' => true)
 			)
 		);
 	}
-	public function loadHistoryItems($offsetTime, &$nextOffsetTime, $offsetID, &$nextOffsetID, $limit, $onlyFixed = false)
+	public function loadHistoryItems($offsetTime, &$nextOffsetTime, $offsetID, &$nextOffsetID, array $params = array())
 	{
 		if($this->entityID <= 0)
 		{
 			return array();
 		}
 
+		$limit = isset($params['limit']) ? (int)$params['limit'] : 0;
+		$onlyFixed = isset($params['onlyFixed']) && $params['onlyFixed'] == true;
+		$filter = isset($params['filter']) && is_array($params['filter']) ? $params['filter'] : array();
+
 		//Permissions are already checked
 		$query = new Query(TimelineTable::getEntity());
 		$query->addSelect('*');
-		$query->addFilter('!=ASSOCIATED_ENTITY_TYPE_ID', CCrmOwnerType::SuspendedActivity);
 
-		$subQuery = new Query(TimelineBindingTable::getEntity());
-		$subQuery->addSelect('OWNER_ID');
-		$subQuery->addFilter('=ENTITY_TYPE_ID', $this->entityTypeID);
-		$subQuery->addFilter('=ENTITY_ID', $this->entityID);
+		$bindingQuery = new Query(TimelineBindingTable::getEntity());
+		$bindingQuery->addSelect('OWNER_ID');
+		$bindingQuery->addFilter('=ENTITY_TYPE_ID', $this->entityTypeID);
+		$bindingQuery->addFilter('=ENTITY_ID', $this->entityID);
 
-		if ($onlyFixed)
+		if($onlyFixed)
 		{
-			$subQuery->addFilter('=IS_FIXED', 'Y');
+			$bindingQuery->addFilter('=IS_FIXED', 'Y');
 		}
 
-		$subQuery->addSelect('IS_FIXED');
+		$bindingQuery->addSelect('IS_FIXED');
 		$query->addSelect('bind.IS_FIXED', 'IS_FIXED');
 
 		$query->registerRuntimeField('',
 			new ReferenceField('bind',
-				Base::getInstanceByQuery($subQuery),
+				Base::getInstanceByQuery($bindingQuery),
 				array('=this.ID' => 'ref.OWNER_ID'),
 				array('join_type' => 'INNER')
 			)
 		);
 
-		if($offsetTime instanceof DateTime)
+		//Client filter
+		/*
+		$bindingQuery1 = new Query(TimelineBindingTable::getEntity());
+		$bindingQuery1->addSelect('OWNER_ID');
+
+		$bindingQuery1->where(
+			Main\Entity\Query::filter()
+				->where('ENTITY_TYPE_ID', '=', 4)
+				->where('ENTITY_ID', '=', 2414)
+		);
+
+		$query->registerRuntimeField('',
+			new ReferenceField('bind1',
+				Base::getInstanceByQuery($bindingQuery1),
+				array('=this.ID' => 'ref.OWNER_ID'),
+				array('join_type' => 'INNER')
+			)
+		);
+		*/
+
+		if(isset($filter['CREATED_to']))
 		{
-			//Using '<=' instead of '<' for prevention of loss of items that have same creation time
-			$query->addFilter('<=CREATED', $offsetTime);
+			$filter['CREATED_to'] = Main\Type\DateTime::tryParse($filter['CREATED_to']);
 		}
+
+		if(isset($filter['CREATED_from']))
+		{
+			$filter['CREATED_from'] = Main\Type\DateTime::tryParse($filter['CREATED_from']);
+		}
+
+		if($offsetTime instanceof DateTime && (!isset($filter['CREATED_to']) || $offsetTime < $filter['CREATED_to']))
+		{
+			$filter['CREATED_to'] = $offsetTime;
+		}
+
+		if(!empty($filter))
+		{
+			$entityFilter = $this->getHistoryFilter();
+			$entityFilter->prepareListFilterParams($filter);
+			Crm\Filter\TimelineDataProvider::prepareQuery($query, $filter);
+		}
+
+		$query->whereNotIn(
+			'ASSOCIATED_ENTITY_TYPE_ID',
+			Crm\Timeline\TimelineManager::getIgnoredEntityTypeIDs()
+		);
 
 		$query->setOrder(array('CREATED' => 'DESC', 'ID' => 'DESC'));
 		if($limit > 0)

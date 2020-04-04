@@ -74,7 +74,7 @@ if ($hasPermissionEditPhp)
 		'ONSELECT' => "_trSetBTN('replace');"
 	);
 }
-$tabControl = new \CAdminTabControl("tabControl2", $aTabs, false);
+$tabControl = new \CAdminTabControl("tabControl2", $aTabs, false, true);
 
 ?>
 <form name="form_search" method="post" action="">
@@ -98,7 +98,7 @@ $tabControl->BeginNextTab();
 						'ID' => Translate\Translation::getEnabledLanguages(),
 						'=ACTIVE' => 'Y'
 					],
-					'order' => ['DEF' => 'DESC', 'SORT' => 'ASC']
+					'order' => ['SORT' => 'ASC']
 				]);
 				while ($row = $iterator->fetch())
 				{
@@ -147,7 +147,7 @@ if ($hasPermissionEditPhp)
 						'ID' => Translate\Translation::getEnabledLanguages(),
 						'=ACTIVE' => 'Y'
 					],
-					'order' => ['DEF' => 'DESC', 'SORT' => 'ASC']
+					'order' => ['SORT' => 'ASC']
 				]);
 				while ($row = $iterator->fetch())
 				{

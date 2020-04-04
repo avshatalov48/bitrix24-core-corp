@@ -199,7 +199,10 @@ class LetterTable extends Entity\DataManager
 	{
 		$data = $event->getParameters();
 		$fields = static::getRowById($data['primary']['ID']);
-		MessageTable::delete($fields['MESSAGE_ID']);
+		if ($fields)
+		{
+			MessageTable::delete($fields['MESSAGE_ID']);
+		}
 
 		return MailingChainTable::onDelete($event);
 	}

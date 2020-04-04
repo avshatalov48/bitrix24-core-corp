@@ -78,6 +78,17 @@ if(typeof(BX.CrmWidget) === "undefined")
 		doInitialize: function()
 		{
 		},
+		getExecutionContext: function()
+		{
+			if (BX.VisualConstructor && BX.VisualConstructor.BoardRepository && BX.VisualConstructor.BoardRepository.getBoards().length > 0)
+			{
+				return BX.CrmWidgetExecutionContext.analytics;
+			}
+			else
+			{
+				return BX.CrmWidgetExecutionContext.standalone;
+			}
+		},
 		getSetting: function (name, defaultval)
 		{
 			return this._settings.hasOwnProperty(name) ? this._settings[name] : defaultval;
@@ -477,6 +488,18 @@ if(typeof(BX.CrmWidget) === "undefined")
 				}
 			}
 			this.closeSettingMenu();
+		},
+		onLinkClick: function(e)
+		{
+			if(BX.SidePanel && BX.SidePanel.Instance.isOpen())
+			{
+				BX.SidePanel.Instance.open(e.currentTarget.href, {
+					cacheable: false
+				});
+				e.preventDefault();
+				e.stopPropagation();
+
+			}
 		},
 		openConfigDialog: function()
 		{
@@ -902,8 +925,18 @@ if(typeof(BX.CrmCustomWidget) === "undefined")
 			html = BX.util.htmlspecialchars(item["text"]);
 			url = BX.type.isNotEmptyString(item["url"]) ? BX.util.htmlspecialchars(item["url"]) : "";
 			content = url !== ""
-				? BX.create("A", { attrs: { className: "crm-widget-content-text" }, props: { href: url, target: '_top' }, html: html, style: { fontSize: "48px", lineHeight: "56px", opacity: 1 } })
-				: BX.create("SPAN", { attrs: { className: "crm-widget-content-text" }, html: html, style: { fontSize: "48px", lineHeight: "56px", opacity: 1 } });
+				? BX.create("A", {
+					attrs: { className: "crm-widget-content-text" },
+					props: { href: url, target: '_top' },
+					html: html,
+					style: { fontSize: "48px", lineHeight: "56px", opacity: 1 },
+					events: { click: this.onLinkClick.bind(this)}
+				})
+				: BX.create("SPAN", {
+					attrs: { className: "crm-widget-content-text" },
+					html: html,
+					style: { fontSize: "48px", lineHeight: "56px", opacity: 1 }
+				});
 		}
 
 		if (useAutoHeight)
@@ -934,14 +967,20 @@ if(typeof(BX.CrmCustomWidget) === "undefined")
 			);
 		}
 
-		this.ajustFontSize(this._wrapper.querySelectorAll(".crm-widget-content-text"));
-		this._widowResizeHandler = BX.throttle(BX.delegate(this.onWidowResize, this), 300);
-		BX.bind(window, "resize", this._widowResizeHandler);
+		this.ajustFontSize(this._wrapper.getElementsByClassName("crm-widget-content-text"));
+		if(this.getExecutionContext() != BX.CrmWidgetExecutionContext.analytics)
+		{
+			this._widowResizeHandler = BX.throttle(BX.delegate(this.onWidowResize, this), 300);
+			BX.bind(window, "resize", this._widowResizeHandler);
+		}
 	};
 	BX.CrmCustomWidget.prototype.innerClearLayout = function()
 	{
-		BX.unbind(window, "resize", this._widowResizeHandler);
-		this._widowResizeHandler = null;
+		if(this.getExecutionContext() != BX.CrmWidgetExecutionContext.analytics)
+		{
+			BX.unbind(window, "resize", this._widowResizeHandler);
+			this._widowResizeHandler = null;
+		}
 	};
 	BX.CrmCustomWidget.prototype.openConfigDialog = function()
 	{
@@ -976,7 +1015,7 @@ if(typeof(BX.CrmCustomWidget) === "undefined")
 	{
 		if(this._hasLayout && this._wrapper)
 		{
-			this.ajustFontSize(this._wrapper.querySelectorAll(".crm-widget-content-text"));
+			this.ajustFontSize(this._wrapper.getElementsByClassName("crm-widget-content-text"));
 		}
 	};
 	BX.CrmCustomWidget.prototype.ajustFontSize = function(nodeList)
@@ -1518,11 +1557,15 @@ if(typeof(BX.CrmGraphWidget) === "undefined")
 			this._chart = AmCharts.makeChart(this._chartWrapper.id, BX.clone(chartConfig, true));
 		}, this);
 		f();
-		BX.bind(window, "resize", BX.throttle(function(){
-			if (this._chart)
-				this._chart.clear();
-			setTimeout(f, 100);
-		}, 300, this));
+
+		if(this.getExecutionContext() != BX.CrmWidgetExecutionContext.analytics)
+		{
+			BX.bind(window, "resize", BX.throttle(function(){
+				if (this._chart)
+					this._chart.clear();
+				setTimeout(f, 100);
+			}, 300, this));
+		}
 	};
 	BX.CrmGraphWidget.prototype.customiseAvatarInClusteredBar = function(e)
 	{
@@ -1975,8 +2018,18 @@ if(typeof(BX.CrmNumericWidget) === "undefined")
 			html = this.prepareItemHtml(first);
 			url = BX.type.isNotEmptyString(first["url"]) ? first["url"] : "";
 			content = url !== ""
-				? BX.create("A", { attrs: { className: "crm-widget-content-text" }, props: { href: url, target: '_top' }, html: html, style: { fontSize: "48px", lineHeight: "56px", opacity: 1 } })
-				: BX.create("SPAN", { attrs: { className: "crm-widget-content-text" }, html: html, style: { fontSize: "48px", lineHeight: "56px", opacity: 1 } });
+				? BX.create("A", {
+					attrs: { className: "crm-widget-content-text" },
+					props: { href: url, target: '_top' },
+					html: html,
+					style: { fontSize: "48px", lineHeight: "56px", opacity: 1 },
+					events: { click: this.onLinkClick.bind(this)}
+				})
+				: BX.create("SPAN", {
+					attrs: { className: "crm-widget-content-text" },
+					html: html,
+					style: { fontSize: "48px", lineHeight: "56px", opacity: 1 }
+				});
 
 			this._contentWrapper.appendChild(
 				BX.create("DIV",
@@ -2011,8 +2064,18 @@ if(typeof(BX.CrmNumericWidget) === "undefined")
 				html = this.prepareItemHtml(second);
 				url = BX.type.isNotEmptyString(second["url"]) ? second["url"] : "";
 				content = url !== ""
-					? BX.create("A", { attrs: { className: "crm-widget-content-text" }, props: { href: url, target: '_top' }, html: html, style: { fontSize: "48px", lineHeight: "56px", opacity: 1 } })
-					: BX.create("SPAN", { attrs: { className: "crm-widget-content-text" }, html: html, style: { fontSize: "48px", lineHeight: "56px", opacity: 1 } });
+					? BX.create("A", {
+						attrs: { className: "crm-widget-content-text" },
+						props: { href: url, target: '_top' },
+						html: html,
+						style: { fontSize: "48px", lineHeight: "56px", opacity: 1 },
+						events: { click: this.onLinkClick.bind(this)}
+					})
+					: BX.create("SPAN", {
+						attrs: { className: "crm-widget-content-text" },
+						html: html,
+						style: { fontSize: "48px", lineHeight: "56px", opacity: 1 }
+					});
 
 				var leftContentWrapper = BX.create("DIV",
 					{
@@ -2050,8 +2113,18 @@ if(typeof(BX.CrmNumericWidget) === "undefined")
 				html = this.prepareItemHtml(third);
 				url = BX.type.isNotEmptyString(third["url"]) ? third["url"] : "";
 				content = url !== ""
-					? BX.create("A", { attrs: { className: "crm-widget-content-text" }, props: { href: url, target: '_top' }, html: html, style: { fontSize: "48px", lineHeight: "56px", opacity: 1 } })
-					: BX.create("SPAN", { attrs: { className: "crm-widget-content-text" }, html: html, style: { fontSize: "48px", lineHeight: "56px", opacity: 1 } });
+					? BX.create("A", {
+						attrs: { className: "crm-widget-content-text" },
+						props: { href: url, target: '_top' },
+						html: html,
+						style: { fontSize: "48px", lineHeight: "56px", opacity: 1 },
+						events: { click: this.onLinkClick.bind(this)}
+					})
+					: BX.create("SPAN", {
+						attrs: { className: "crm-widget-content-text" },
+						html: html,
+						style: { fontSize: "48px", lineHeight: "56px", opacity: 1 }
+					});
 
 				var rightContentWrapper = BX.create("DIV",
 					{
@@ -2100,8 +2173,18 @@ if(typeof(BX.CrmNumericWidget) === "undefined")
 			html = this.prepareItemHtml(item);
 			url = BX.type.isNotEmptyString(item["url"]) ? item["url"] : "";
 			content = url !== ""
-				? BX.create("A", { attrs: { className: "crm-widget-content-text" }, props: { href: url, target: '_top' }, html: html, style: { fontSize: "48px", lineHeight: "56px", opacity: 1 } })
-				: BX.create("SPAN", { attrs: { className: "crm-widget-content-text" }, html: html, style: { fontSize: "48px", lineHeight: "56px", opacity: 1 } });
+				? BX.create("A", {
+					attrs: { className: "crm-widget-content-text" },
+					props: { href: url, target: '_top' },
+					html: html,
+					style: { fontSize: "48px", lineHeight: "56px", opacity: 1 },
+					events: { click: this.onLinkClick.bind(this)}
+				})
+				: BX.create("SPAN", {
+					attrs: { className: "crm-widget-content-text" },
+					html: html,
+					style: { fontSize: "48px", lineHeight: "56px", opacity: 1 }
+				});
 
 			if(periodDescr !== "")
 			{
@@ -2124,10 +2207,13 @@ if(typeof(BX.CrmNumericWidget) === "undefined")
 				)
 			);
 		}
-
-		this.ajustFontSize(this._wrapper.querySelectorAll(".crm-widget-content-text"));
-		this._widowResizeHandler = BX.throttle(BX.delegate(this.onWidowResize, this), 300);
-		BX.bind(window, "resize", this._widowResizeHandler);
+		
+		this.ajustFontSize(this._wrapper.getElementsByClassName("crm-widget-content-text"));
+		if(this.getExecutionContext() != BX.CrmWidgetExecutionContext.analytics)
+		{
+			this._widowResizeHandler = BX.throttle(BX.delegate(this.onWidowResize, this), 300);
+			BX.bind(window, "resize", this._widowResizeHandler);
+		}
 	};
 	BX.CrmNumericWidget.prototype.prepareItemHtml = function(item)
 	{
@@ -2157,8 +2243,11 @@ if(typeof(BX.CrmNumericWidget) === "undefined")
 	};
 	BX.CrmNumericWidget.prototype.innerClearLayout = function()
 	{
-		BX.unbind(window, "resize", this._widowResizeHandler);
-		this._widowResizeHandler = null;
+		if(this.getExecutionContext() != BX.CrmWidgetExecutionContext.analytics)
+		{
+			BX.unbind(window, "resize", this._widowResizeHandler);
+			this._widowResizeHandler = null;
+		}
 	};
 	BX.CrmNumericWidget.prototype.ensureConfigEditorCreated = function()
 	{
@@ -2184,7 +2273,7 @@ if(typeof(BX.CrmNumericWidget) === "undefined")
 	{
 		if(this._hasLayout && this._wrapper)
 		{
-			this.ajustFontSize(this._wrapper.querySelectorAll(".crm-widget-content-text"));
+			//this.ajustFontSize(this._wrapper.getElementsByClassName("crm-widget-content-text"));
 		}
 	};
 	BX.CrmNumericWidget.prototype.ajustFontSize = function(nodeList)
@@ -7091,6 +7180,17 @@ if(typeof(BX.CrmWidgetPanel) === "undefined")
 		{
 			return this._maxWidgetCount;
 		},
+		getExecutionContext: function()
+		{
+			if (BX.VisualConstructor && BX.VisualConstructor.BoardRepository && BX.VisualConstructor.BoardRepository.getBoards().length > 0)
+			{
+				return BX.CrmWidgetExecutionContext.analytics;
+			}
+			else
+			{
+				return BX.CrmWidgetExecutionContext.standalone;
+			}
+		},
 		openTypeSelector: function()
 		{
 			if(this._layoutTypeSelector && this._layoutTypeSelector.isDialogOpened())
@@ -7509,7 +7609,18 @@ if(typeof(BX.CrmWidgetPanel) === "undefined")
 		},
 		reloadWindow: function()
 		{
-			window.location.reload();
+			if(this.getExecutionContext() == BX.CrmWidgetExecutionContext.analytics)
+			{
+				var analyticsBoard = BX.VisualConstructor.BoardRepository.getLast();
+				if(analyticsBoard)
+				{
+					analyticsBoard.reload();
+				}
+			}
+			else
+			{
+				window.location.reload();
+			}
 		}
 	};
 	if(typeof(BX.CrmWidgetPanel.messages) === "undefined")
@@ -7879,6 +7990,13 @@ if(typeof(BX.CrmWidgetDataContext) === "undefined")
 		}
 	}
 }
+//endregion
+//region BX.CrmWidgetExecutionContext
+BX.CrmWidgetExecutionContext =
+	{
+		analytics: "A",
+		standalone: "F",
+	}
 //endregion
 //region BX.CrmPhaseSemantics
 if(typeof(BX.CrmPhaseSemantics) === "undefined")

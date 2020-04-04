@@ -7,3 +7,4 @@ $MESS['LANDING_CMP_PAR_PAGE_URL_LANDING_EDIT'] = 'Ссылка на страни
 $MESS['LANDING_CMP_PAR_PAGE_URL_SITE_EDIT'] = 'Ссылка на страницу редактирования сайта';
 $MESS['LANDING_CMP_PAR_LANDING_TYPE'] = 'Тип сайтов';
 $MESS['LANDING_CMP_PAR_PARAMS'] = 'Переменная с прочими параметрами для передачи конструктору';
+$MESS['LANDING_CMP_PAR_SEF'] = 'Шаблоны URL';

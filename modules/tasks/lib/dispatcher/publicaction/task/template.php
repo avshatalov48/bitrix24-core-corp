@@ -12,6 +12,11 @@
 
 namespace Bitrix\Tasks\Dispatcher\PublicAction\Task;
 
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\NotImplementedException;
+use Bitrix\Main\ObjectException;
+use Bitrix\Main\SystemException;
+use Bitrix\Tasks\CheckList\Template\TemplateCheckListFacade;
 use Bitrix\Tasks\Integration;
 use Bitrix\Tasks\Integration\SocialServices\User;
 use Bitrix\Tasks\Internals\Task\Template\ReplicateParamsCorrector;
@@ -77,6 +82,13 @@ final class Template extends \Bitrix\Tasks\Dispatcher\PublicAction
 
 	/**
 	 * Add a new task template
+	 *
+	 * @param array $data
+	 * @return array
+	 * @throws ArgumentException
+	 * @throws NotImplementedException
+	 * @throws ObjectException
+	 * @throws SystemException
 	 */
 	public function add(array $data)
 	{
@@ -87,16 +99,27 @@ final class Template extends \Bitrix\Tasks\Dispatcher\PublicAction
 		$this->prepareMembers($data);
 		$this->prepareReplicateParams($data);
 
-		if($this->errors->checkNoFatals())
+		if ($this->errors->checkNoFatals())
 		{
+			$checkListItems = ($data['SE_CHECKLIST']?: []);
+			unset($data['SE_CHECKLIST']);
+
 			$template = new Item\Task\Template($data);
 			$saveResult = $template->save();
 
 			$this->errors->load($saveResult->getErrors());
 
-			if($template->getId())
+			$templateId = $template->getId();
+
+			if ($templateId)
 			{
-				$result['ID'] = $template->getId();
+				$result['ID'] = $templateId;
+
+				$mergeResult = TemplateCheckListFacade::merge($templateId, Util\User::getId(), $checkListItems);
+				if (!$mergeResult->isSuccess())
+				{
+					$saveResult->loadErrors($mergeResult->getErrors());
+				}
 				// todo: also DATA and CAN keys here...
 			}
 		}
@@ -106,15 +129,21 @@ final class Template extends \Bitrix\Tasks\Dispatcher\PublicAction
 
 	/**
 	 * Update the task template with some new data
+	 *
+	 * @param $id
+	 * @param array $data
+	 * @return array
+	 * @throws SystemException
 	 */
 	public function update($id, array $data)
 	{
 		$result = array();
 
-		if(!($id = $this->checkId($id)))
+		if (!($id = $this->checkId($id)))
 		{
 			return $result;
 		}
+
 		$result['ID'] = $id;
 
 		// todo: check $data here, check for publicly-readable\writable keys\values
@@ -122,11 +151,23 @@ final class Template extends \Bitrix\Tasks\Dispatcher\PublicAction
 		$this->prepareMembers($data);
 		$this->prepareReplicateParams($data);
 
-		if($this->errors->checkNoFatals())
+		if ($this->errors->checkNoFatals())
 		{
+			$checkListItems = $data['SE_CHECKLIST'];
+			unset($data['SE_CHECKLIST']);
+
 			$template = new Item\Task\Template($id);
 			$template->setData($data);
 			$saveResult = $template->save();
+
+			if ($checkListItems && $saveResult->isSuccess())
+			{
+				$mergeResult = TemplateCheckListFacade::merge($id, Util\User::getId(), $checkListItems);
+				if (!$mergeResult->isSuccess())
+				{
+					$saveResult->loadErrors($mergeResult->getErrors());
+				}
+			}
 
 			$this->errors->load($saveResult->getErrors());
 		}

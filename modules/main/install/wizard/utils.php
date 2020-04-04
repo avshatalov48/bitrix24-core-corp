@@ -499,14 +499,21 @@ class BXInstallServices
 	{
 	}
 
+	public static function GetConfigWizard()
+	{
+		if (isset($GLOBALS["arWizardConfig"]) && array_key_exists("demoWizardName", $GLOBALS["arWizardConfig"]) && CWizardUtil::CheckName($GLOBALS["arWizardConfig"]["demoWizardName"]))
+			return $GLOBALS["arWizardConfig"]["demoWizardName"];
+
+		return false;
+	}
 
 	public static function GetDemoWizard()
 	{
 		if (!defined("B_PROLOG_INCLUDED"))
 			define("B_PROLOG_INCLUDED",true);
 
-		if (isset($GLOBALS["arWizardConfig"]) && array_key_exists("demoWizardName", $GLOBALS["arWizardConfig"]) && CWizardUtil::CheckName($GLOBALS["arWizardConfig"]["demoWizardName"]))
-			return $GLOBALS["arWizardConfig"]["demoWizardName"];
+		if(($demo = self::GetConfigWizard()) !== false)
+			return $demo;
 
 		$arWizards = CWizardUtil::GetWizardList();
 
@@ -653,7 +660,7 @@ class BXInstallServices
 			if ($dbResult && ($arVersion = $dbResult->Fetch()))
 			{
 				$mysqlVersion = trim($arVersion["ver"]);
-				if (!BXInstallServices::VersionCompare($mysqlVersion, "5.0.0"))
+				if (!BXInstallServices::VersionCompare($mysqlVersion, "5.6.0"))
 					BXInstallServices::ShowStepErrors(InstallGetMessage("SC_DB_VERS_MYSQL_ER"));
 
 				$databaseStep->needCodePage = true;

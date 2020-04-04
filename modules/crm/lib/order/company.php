@@ -8,8 +8,6 @@ namespace Bitrix\Crm\Order;
  */
 class Company extends ContactCompanyEntity
 {
-	const REGISTRY_ENTITY_NAME = ENTITY_CRM_COMPANY;
-
 	/**
 	 * @return string
 	 */
@@ -24,5 +22,23 @@ class Company extends ContactCompanyEntity
 	public static function getEntityTypeName()
 	{
 		return \CCrmOwnerType::CompanyName;
+	}
+
+	/**
+	 * @return null|string
+	 * @internal
+	 *
+	 */
+	public static function getEntityEventName()
+	{
+		return 'CrmOrderCompany';
+	}
+
+	/**
+	 * @return string
+	 */
+	public static function getRegistryEntity()
+	{
+		return ENTITY_CRM_COMPANY;
 	}
 }

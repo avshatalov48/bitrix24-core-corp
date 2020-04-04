@@ -2,13 +2,30 @@
 
 namespace Bitrix\Crm\Integration\DocumentGenerator\DataProvider;
 
+\Bitrix\Main\Loader::includeModule('documentgenerator');
+
 use Bitrix\DocumentGenerator\DataProvider\HashDataProvider;
 use Bitrix\DocumentGenerator\DataProviderManager;
 use Bitrix\Main\IO\Path;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Text\Encoding;
 
 class Tax extends HashDataProvider
 {
+	const MODE_TAX = 'TAX';
+	const MODE_VAT = 'VAT';
+
+	protected $mode = 'VAT';
+
+	public function __construct($source, array $options = [])
+	{
+		parent::__construct($source, $options);
+		if(isset($source['MODE']) && $source['MODE'] === static::MODE_TAX)
+		{
+			$this->mode = static::MODE_TAX;
+		}
+	}
+
 	/**
 	 * @return array
 	 */
@@ -23,7 +40,15 @@ class Tax extends HashDataProvider
 				'TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_TAX_TITLE_NEW_TITLE'),
 				'VALUE' => function()
 				{
-					$name = GetMessage('CRM_DOCGEN_PRODUCTSDATAPROVIDER_TAX_VAT_NAME');
+					if($this->isVatMode())
+					{
+						Loc::loadLanguageFile(__DIR__.'/productsdataprovider.php', DataProviderManager::getInstance()->getContext()->getRegionLanguageId());
+						$name = Loc::getMessage('CRM_DOCGEN_PRODUCTSDATAPROVIDER_TAX_VAT_NAME', null, DataProviderManager::getInstance()->getContext()->getRegionLanguageId());
+					}
+					else
+					{
+						$name = $this->data['NAME'];
+					}
 					if(ToUpper(SITE_CHARSET) !== 'UTF-8')
 					{
 						$name = Encoding::convertEncoding($name, SITE_CHARSET, 'UTF-8');
@@ -77,5 +102,21 @@ class Tax extends HashDataProvider
 	public function getLangPhrasesPath()
 	{
 		return Path::getDirectory(__FILE__).'/../phrases';
+	}
+
+	/**
+	 * @return bool
+	 */
+	protected function isTaxMode()
+	{
+		return $this->mode === static::MODE_TAX;
+	}
+
+	/**
+	 * @return bool
+	 */
+	protected function isVatMode()
+	{
+		return !$this->isTaxMode();
 	}
 }

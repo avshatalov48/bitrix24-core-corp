@@ -265,7 +265,12 @@ abstract class Base
 				if($iParams["TYPE"] == "DELIVERY_SECTION")
 					continue;
 
-				$errors = \Bitrix\Sale\Internals\Input\Manager::getError($iParams, $fields["CONFIG"][$key1][$key2]);
+				$errors = \Bitrix\Sale\Internals\Input\Manager::getRequiredError($iParams, $fields["CONFIG"][$key1][$key2]);
+
+				if(empty($errors))
+				{
+					$errors = \Bitrix\Sale\Internals\Input\Manager::getError($iParams, $fields["CONFIG"][$key1][$key2]);
+				}
 
 				if(!empty($errors))
 				{

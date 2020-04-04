@@ -226,7 +226,7 @@ class IblockTable extends Entity\DataManager
 				'data_type' => 'enum',
 				'values' => array(self::PROPERTY_INDEX_DISABLE, self::PROPERTY_INDEX_ENABLE, self::PROPERTY_INDEX_INVALID),
 				'default' => self::PROPERTY_INDEX_DISABLE,
-				'title' => Loc::getMessage('IBLOCK_ENTITY_SECTION_PROPERTY_FIELD'),
+				'title' => Loc::getMessage('IBLOCK_ENTITY_PROPERTY_INDEX_FIELD'),
 			),
 			'VERSION' => array(
 				'data_type' => 'enum',

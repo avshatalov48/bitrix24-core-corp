@@ -457,6 +457,25 @@ class CBPVoximplantCallActivity extends CBPActivity
 			$communications = $this->getPhoneFromFM(CCrmOwnerType::ContactName, $entityContactID);
 		}
 
+		if (empty($communications))
+		{
+			$dealContactIds = \Bitrix\Crm\Binding\DealContactTable::getDealContactIDs($id);
+			if ($dealContactIds)
+			{
+				foreach ($dealContactIds as $contId)
+				{
+					if ($contId !== $entityContactID)
+					{
+						$communications = $this->getPhoneFromFM(CCrmOwnerType::ContactName, $contId);
+						if ($communications)
+						{
+							break;
+						}
+					}
+				}
+			}
+		}
+
 		if (empty($communications) && $entityCompanyID > 0)
 		{
 			$communications = $this->getPhoneFromFM(CCrmOwnerType::CompanyName, $entityCompanyID);

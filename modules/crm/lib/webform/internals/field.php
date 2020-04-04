@@ -16,6 +16,7 @@ Loc::loadMessages(__FILE__);
 class FieldTable extends Entity\DataManager
 {
 	const TYPE_ENUM_SECTION = 'section';
+	const TYPE_ENUM_PAGE = 'page';
 
 	const TYPE_ENUM_EMAIL = 'email';
 	const TYPE_ENUM_PHONE = 'phone';
@@ -110,6 +111,7 @@ class FieldTable extends Entity\DataManager
 	{
 		return array(
 			self::TYPE_ENUM_SECTION => Loc::getMessage('CRM_WEBFORM_FIELD_TYPE_SECTION'),
+			self::TYPE_ENUM_PAGE => Loc::getMessage('CRM_WEBFORM_FIELD_TYPE_SECTION'),
 			self::TYPE_ENUM_EMAIL => Loc::getMessage('CRM_WEBFORM_FIELD_TYPE_EMAIL'),
 			self::TYPE_ENUM_INT => Loc::getMessage('CRM_WEBFORM_FIELD_TYPE_INT1'),
 			self::TYPE_ENUM_FLOAT => Loc::getMessage('CRM_WEBFORM_FIELD_TYPE_FLOAT'),
@@ -158,7 +160,7 @@ class FieldTable extends Entity\DataManager
 
 	public static function isUiFieldType($type)
 	{
-		$uiTypes = [self::TYPE_ENUM_BR, self::TYPE_ENUM_HR, self::TYPE_ENUM_SECTION];
+		$uiTypes = [self::TYPE_ENUM_BR, self::TYPE_ENUM_HR, self::TYPE_ENUM_SECTION, self::TYPE_ENUM_PAGE];
 
 		return in_array($type, $uiTypes);
 	}

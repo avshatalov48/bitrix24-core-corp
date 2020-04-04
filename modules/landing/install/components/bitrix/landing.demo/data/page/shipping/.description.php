@@ -203,9 +203,9 @@ return array(
 				'CONTENT' => '<section class="landing-block g-pt-60 g-pb-60">
 
         <div class="container">
-            <div class="row">
+            <div class="row landing-block-inner">
 
-                <div class="landing-block-card col-sm-6 col-md-4 js-animation fadeIn animated g-min-height-$1vh">
+                <div class="landing-block-card col-sm-6 col-md-4 js-animation fadeIn animated ">
                     <article class="u-shadow-v28 g-bg-white">
                         <img class="landing-block-node-img img-fluid w-100" src="https://cdn.bitrix24.site/bitrix/images/landing/business/600x400/img1.jpg" alt="" data-fileid="-1" data-filehash="9eef207add73028ae50f74a9033c20cb" />
 
@@ -233,7 +233,7 @@ return array(
                     </article>
                 </div>
 
-                <div class="landing-block-card col-sm-6 col-md-4 js-animation fadeIn animated g-min-height-$1vh">
+                <div class="landing-block-card col-sm-6 col-md-4 js-animation fadeIn animated ">
                     <article class="u-shadow-v28 g-bg-white">
                         <img class="landing-block-node-img img-fluid w-100" src="https://cdn.bitrix24.site/bitrix/images/landing/business/600x400/img2.jpg" alt="" data-fileid="-1" data-filehash="9eef207add73028ae50f74a9033c20cb" />
 
@@ -262,7 +262,7 @@ return array(
                 </div>
 
 
-				<div class="landing-block-card col-sm-6 col-md-4 js-animation fadeIn animated g-min-height-$1vh">
+				<div class="landing-block-card col-sm-6 col-md-4 js-animation fadeIn animated ">
 					<article class="u-shadow-v28 g-bg-white">
 						<img class="landing-block-node-img img-fluid w-100" src="https://cdn.bitrix24.site/bitrix/images/landing/business/600x400/img3.jpg" alt="" data-fileid="-1" data-filehash="9eef207add73028ae50f74a9033c20cb" />
 
@@ -320,7 +320,7 @@ return array(
 				'CONTENT' => '<section class="landing-block">
 	<div class="container-fluid px-0">
 		<!-- Banners -->
-		<div class="row no-gutters">
+		<div class="row no-gutters landing-block-inner">
 			<div class="landing-block-node-card col-md-6 col-lg-3">
 				<!-- Article -->
 				<article
@@ -331,7 +331,7 @@ return array(
 					<!-- End Article Image -->
 
 					<!-- Article Content -->
-					<div class="info-v3-3__description u-link-v2 g-pos-cover g-flex-middle">
+					<div class="info-v3-3__description-sm u-link-v2 g-pos-cover g-flex-middle g-white-space-normal">
 						<div class="g-flex-middle-item g-pa-30">
 							<h4 class="landing-block-node-card-title h3 text-uppercase g-line-height-1 g-font-weight-700
 							g-mb-20 info-v3-3__title g-color-gray-dark-v2 g-color-white--parent-hover g-text-underline--none--hover g-transition-0_3">
@@ -364,7 +364,7 @@ return array(
 					<!-- End Article Image -->
 
 					<!-- Article Content -->
-					<div class="info-v3-3__description u-link-v2 g-pos-cover g-flex-middle">
+					<div class="info-v3-3__description-sm u-link-v2 g-pos-cover g-flex-middle g-white-space-normal">
 						<div class="g-flex-middle-item g-pa-30">
 							<h4 class="landing-block-node-card-title h3 text-uppercase g-line-height-1 g-font-weight-700
 							g-mb-20 info-v3-3__title g-color-gray-dark-v2 g-color-white--parent-hover g-text-underline--none--hover g-transition-0_3">
@@ -397,7 +397,7 @@ return array(
 					<!-- End Article Image -->
 
 					<!-- Article Content -->
-					<div class="info-v3-3__description u-link-v2 g-pos-cover g-flex-middle">
+					<div class="info-v3-3__description-sm u-link-v2 g-pos-cover g-flex-middle g-white-space-normal">
 						<div class="g-flex-middle-item g-pa-30">
 							<h4 class="landing-block-node-card-title h3 text-uppercase g-line-height-1 g-font-weight-700
 							g-mb-20 info-v3-3__title g-color-gray-dark-v2 g-color-white--parent-hover g-text-underline--none--hover g-transition-0_3">
@@ -430,7 +430,7 @@ return array(
 					<!-- End Article Image -->
 
 					<!-- Article Content -->
-					<div class="info-v3-3__description u-link-v2 g-pos-cover g-flex-middle">
+					<div class="info-v3-3__description-sm u-link-v2 g-pos-cover g-flex-middle g-white-space-normal">
 						<div class="g-flex-middle-item g-pa-30">
 							<h4 class="landing-block-node-card-title h3 text-uppercase g-line-height-1 g-font-weight-700
 							g-mb-20 info-v3-3__title g-color-gray-dark-v2 g-color-white--parent-hover g-text-underline--none--hover g-transition-0_3">
@@ -620,9 +620,9 @@ return array(
 				'SORT' => '3500',
 				'CONTENT' => '<section class="landing-block g-pb-60 g-pt-20">
         <div class="container">
-            <div class="row">
+            <div class="row landing-block-inner">
 
-                <div class="landing-block-card g-mb-40 g-mb-0--lg g-min-height-$1vh col-lg-3 js-animation fadeIn animated">
+                <div class="landing-block-card g-mb-40 g-mb-0--lg  col-lg-3 js-animation fadeIn animated">
                     <div class="landing-block-card-header text-uppercase u-heading-v2-4--bottom g-brd-primary g-mb-40">
                         <h4 class="landing-block-node-subtitle h6 g-font-weight-800 g-font-size-12 g-letter-spacing-1 g-color-primary g-mb-20"> </h4>
                         <h2 class="landing-block-node-title h1 u-heading-v2__title g-line-height-1_3 g-font-weight-600 g-mb-minus-10 g-color-black g-font-size-17 g-text-break-word">84 HAPPY CLIENTS</h2>
@@ -631,7 +631,7 @@ return array(
                     <div class="landing-block-node-text"><p>Integer accumsan maximus leo, et consectetur metus vestibulum in. Vestibulum viverra justo odio maximus efficitur</p></div>
                 </div>
 
-                <div class="landing-block-card g-mb-40 g-mb-0--lg g-min-height-$1vh col-lg-3 js-animation fadeIn animated">
+                <div class="landing-block-card g-mb-40 g-mb-0--lg  col-lg-3 js-animation fadeIn animated">
                     <div class="landing-block-card-header text-uppercase u-heading-v2-4--bottom g-brd-primary g-mb-40">
                         <h4 class="landing-block-node-subtitle h6 g-font-weight-800 g-font-size-12 g-letter-spacing-1 g-color-primary g-mb-20"> </h4>
                         <h2 class="landing-block-node-title h1 u-heading-v2__title g-line-height-1_3 g-font-weight-600 g-mb-minus-10 g-color-black g-font-size-17 g-text-break-word">34 COMPLETED PROJECTS</h2>
@@ -640,7 +640,7 @@ return array(
                     <div class="landing-block-node-text"><p>Integer accumsan maximus leo, et consectetur metus vestibulum in. Vestibulum viverra justo odio maximus efficitur</p></div>
                 </div>
 
-                <div class="landing-block-card g-mb-40 g-mb-0--lg g-min-height-$1vh col-lg-3 js-animation fadeIn animated">
+                <div class="landing-block-card g-mb-40 g-mb-0--lg  col-lg-3 js-animation fadeIn animated">
                     <div class="landing-block-card-header text-uppercase u-heading-v2-4--bottom g-brd-primary g-mb-40">
                         <h4 class="landing-block-node-subtitle h6 g-font-weight-800 g-font-size-12 g-letter-spacing-1 g-color-primary g-mb-20"> </h4>
                         <h2 class="landing-block-node-title h1 u-heading-v2__title g-line-height-1_3 g-font-weight-600 g-mb-minus-10 g-color-black g-font-size-17 g-text-break-word">35 OUR TEAM</h2>
@@ -649,7 +649,7 @@ return array(
                     <div class="landing-block-node-text"><p>Integer accumsan maximus leo, et consectetur metus vestibulum in. Vestibulum viverra justo odio maximus efficitur</p></div>
                 </div>
 
-            <div class="landing-block-card g-mb-40 g-mb-0--lg g-min-height-$1vh col-lg-3 js-animation fadeIn animated">
+            <div class="landing-block-card g-mb-40 g-mb-0--lg  col-lg-3 js-animation fadeIn animated">
                     <div class="landing-block-card-header text-uppercase u-heading-v2-4--bottom g-brd-primary g-mb-40">
                         <h4 class="landing-block-node-subtitle h6 g-font-weight-800 g-font-size-12 g-letter-spacing-1 g-color-primary g-mb-20"> </h4>
                         <h2 class="landing-block-node-title h1 u-heading-v2__title g-line-height-1_3 g-font-weight-600 g-mb-minus-10 g-color-black g-font-size-17 g-text-break-word">67 COUNTRIES</h2>
@@ -743,8 +743,8 @@ return array(
 			<div class="landing-block-node-text g-color-gray-dark-v5 mb-0 g-text-transform-none g-font-size-14 g-letter-spacing-0"><p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam.</p></div>
 		</div>
 
-		<div class="row">
-			<div class="landing-block-node-card col-md-6 g-mb-30 g-mb-0--md g-min-height-$1vh col-lg-3">
+		<div class="row landing-block-inner">
+			<div class="landing-block-node-card col-md-6 g-mb-30 g-mb-0--md  col-lg-3">
 				<!-- Article -->
 				<article
  class="landing-block-node-card-container js-animation fadeInRight text-center text-uppercase g-color-white-opacity-0_5 animated g-bg-main">
@@ -774,7 +774,7 @@ return array(
 			</article
 ></div>
 
-			<div class="landing-block-node-card col-md-6 g-mb-30 g-mb-0--md g-min-height-$1vh col-lg-3">
+			<div class="landing-block-node-card col-md-6 g-mb-30 g-mb-0--md  col-lg-3">
 				<!-- Article -->
 				<article
  class="landing-block-node-card-container js-animation fadeInRight text-center text-uppercase g-color-white-opacity-0_5 animated g-bg-main">
@@ -803,7 +803,7 @@ return array(
 			</article
 ></div>
 
-			<div class="landing-block-node-card col-md-6 g-mb-30 g-mb-0--md g-min-height-$1vh col-lg-3">
+			<div class="landing-block-node-card col-md-6 g-mb-30 g-mb-0--md  col-lg-3">
 				<!-- Article -->
 				<article
  class="landing-block-node-card-container js-animation fadeInRight text-center text-uppercase g-color-white-opacity-0_5 animated g-bg-main">
@@ -831,7 +831,7 @@ return array(
 				<!-- End Article -->
 			</article
 ></div>
-		<div class="landing-block-node-card col-md-6 g-mb-30 g-mb-0--md g-min-height-$1vh col-lg-3">
+		<div class="landing-block-node-card col-md-6 g-mb-30 g-mb-0--md  col-lg-3">
 				<!-- Article -->
 				<article
  class="landing-block-node-card-container js-animation fadeInRight text-center text-uppercase g-color-white-opacity-0_5 animated g-bg-main">
@@ -993,7 +993,7 @@ return array(
 
                 <div class="col-md-7">
                     <div aria-multiselectable="true">
-                        <div class="landing-block-card-accordeon-element card g-brd-none js-animation fadeInUp animated g-min-height-$1vh">
+                        <div class="landing-block-card-accordeon-element card g-brd-none js-animation fadeInUp animated ">
                             <div class="card-header u-accordion__header g-bg-transparent g-brd-none rounded-0 p-0">
 								<div class="landing-block-card-accordeon-element-title-link d-block text-uppercase g-pos-rel g-font-weight-700 g-font-size-12 g-brd-bottom g-brd-primary g-brd-2 g-py-15">
                                     <span class="landing-block-node-accordeon-element-img-container g-color-primary">
@@ -1010,7 +1010,7 @@ return array(
                             </div>
                         </div>
 
-                        <div class="landing-block-card-accordeon-element card g-brd-none js-animation fadeInUp animated g-min-height-$1vh">
+                        <div class="landing-block-card-accordeon-element card g-brd-none js-animation fadeInUp animated ">
                             <div class="card-header u-accordion__header g-bg-transparent g-brd-none rounded-0 p-0">
                                 <div class="landing-block-card-accordeon-element-title-link d-block text-uppercase g-pos-rel g-font-weight-700 g-font-size-12 g-brd-bottom g-brd-primary g-brd-2 g-py-15">
                                     <span class="landing-block-node-accordeon-element-img-container g-color-primary">
@@ -1027,7 +1027,7 @@ return array(
                             </div>
                         </div>
 
-                        <div class="landing-block-card-accordeon-element card g-brd-none js-animation fadeInUp animated g-min-height-$1vh">
+                        <div class="landing-block-card-accordeon-element card g-brd-none js-animation fadeInUp animated ">
                             <div class="card-header u-accordion__header g-bg-transparent g-brd-none rounded-0 p-0">
                                 <div class="landing-block-card-accordeon-element-title-link d-block text-uppercase g-pos-rel g-font-weight-700 g-font-size-12 g-brd-bottom g-brd-primary g-brd-2 g-py-15">
                                     <span class="landing-block-node-accordeon-element-img-container g-color-primary">
@@ -1044,7 +1044,7 @@ return array(
                             </div>
                         </div>
 
-                        <div class="landing-block-card-accordeon-element card g-brd-none js-animation fadeInUp animated g-min-height-$1vh">
+                        <div class="landing-block-card-accordeon-element card g-brd-none js-animation fadeInUp animated ">
                             <div class="card-header u-accordion__header g-bg-transparent g-brd-none rounded-0 p-0">
                                 <div class="landing-block-card-accordeon-element-title-link d-block text-uppercase g-pos-rel g-font-weight-700 g-font-size-12 g-brd-bottom g-brd-primary g-brd-2 g-py-15">
                                     <span class="landing-block-node-accordeon-element-img-container g-color-primary">
@@ -1060,7 +1060,7 @@ return array(
                                 </div>
                             </div>
                         </div>
-                    <div class="landing-block-card-accordeon-element card g-brd-none js-animation fadeInUp animated g-min-height-$1vh">
+                    <div class="landing-block-card-accordeon-element card g-brd-none js-animation fadeInUp animated ">
                             <div class="card-header u-accordion__header g-bg-transparent g-brd-none rounded-0 p-0">
                                 <div class="landing-block-card-accordeon-element-title-link d-block text-uppercase g-pos-rel g-font-weight-700 g-font-size-12 g-brd-bottom g-brd-primary g-brd-2 g-py-15">
                                     <span class="landing-block-node-accordeon-element-img-container g-color-primary">

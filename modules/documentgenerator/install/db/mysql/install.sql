@@ -116,3 +116,33 @@ CREATE TABLE IF NOT EXISTS `b_documentgenerator_region_phrase` (
   `PHRASE` TEXT,
   PRIMARY KEY (ID)
 );
+
+CREATE TABLE IF NOT EXISTS b_documentgenerator_role
+(
+  ID int(11) NOT NULL auto_increment,
+  NAME varchar(255) NOT NULL,
+  CODE varchar(255) NULL,
+  PRIMARY KEY (ID),
+  KEY IX_DOCGEN_PERM_CODE (CODE)
+);
+
+
+CREATE TABLE IF NOT EXISTS b_documentgenerator_role_permission
+(
+  ID int(11) NOT NULL auto_increment,
+  ROLE_ID int(11) NOT NULL,
+  ENTITY varchar(50) NOT NULL,
+  ACTION varchar(50) NOT NULL,
+  PERMISSION char(1) NULL,
+  PRIMARY KEY (ID),
+  KEY IX_DOCGEN_PERM_ROLE_ID (ROLE_ID)
+);
+
+CREATE TABLE IF NOT EXISTS b_documentgenerator_role_access
+(
+  ID int(11) NOT NULL auto_increment,
+  ROLE_ID int(11) NOT NULL,
+  ACCESS_CODE varchar(100) NOT NULL,
+  PRIMARY KEY (ID),
+  KEY IX_DOCGEN_ACCESS_ROLE_ID (ROLE_ID)
+);

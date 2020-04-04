@@ -81,6 +81,7 @@ $arResult['BP_LIST_URL'] = htmlspecialcharsbx($arResult['~BP_LIST_URL']);
 $arResult['~BP_EDIT_URL'] = str_replace(	array('#entity_id#'),	array($arResult['ENTITY_ID']),	$arParams['~BP_EDIT_URL']);
 $arResult['BP_EDIT_URL'] = htmlspecialcharsbx($arResult['~BP_EDIT_URL']);
 
+$arTemplate = null;
 if (strlen($arResult['BP_ID']) > 0)
 {
 	$db_res = CBPWorkflowTemplateLoader::GetList(
@@ -95,15 +96,27 @@ if (strlen($arResult['BP_ID']) > 0)
 
 $this->IncludeComponentTemplate();
 
-$APPLICATION->SetTitle(GetMessage('CRM_BP_LIST_TITLE_EDIT', array('#NAME#' => $arResult['ENTITY_NAME'])));
+if ($arTemplate && $arTemplate['NAME'])
+{
+	$title = GetMessage('CRM_BP_WFEDIT_TITLE_EDIT', [
+		'#TEMPLATE#' => htmlspecialcharsbx($arTemplate['NAME']),
+		'#NAME#' => $arResult['ENTITY_NAME']
+	]);
+}
+else
+{
+	$title = GetMessage('CRM_BP_WFEDIT_TITLE_ADD', ['#NAME#' => $arResult['ENTITY_NAME']]);
+}
+
+$APPLICATION->SetTitle($title);
 $APPLICATION->AddChainItem(GetMessage('CRM_BP_ENTITY_LIST'), $arResult['~ENTITY_LIST_URL']);
 $APPLICATION->AddChainItem($arResult['ENTITY_NAME'], $arResult['~BP_LIST_URL']);
-if (strlen($arTemplate['NAME']) > 0)
+if ($arTemplate && $arTemplate['NAME'])
+{
 	$APPLICATION->AddChainItem($arTemplate['NAME'],
 		CComponentEngine::MakePathFromTemplate(
 			$arResult['~BP_EDIT_URL'],
-			array('bp_id' => $arResult['BP_ID'])
+			['bp_id' => $arResult['BP_ID']]
 		)
 	);
-
-?>
+}

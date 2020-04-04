@@ -6,6 +6,7 @@ use Bitrix\Disk\BaseObject;
 use Bitrix\Disk\Driver;
 use Bitrix\Disk\File;
 use Bitrix\Disk\Folder;
+use Bitrix\Disk\Internals\Steppers\DeletedLogMover;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Type\DateTime;
 
@@ -19,6 +20,11 @@ final class DeletedLogManager
 	private $subscribedUsers = array();
 	/** @var array */
 	private $logData = array();
+
+	public function __construct()
+	{
+		$this->registerShutdownFunction();
+	}
 
 	private function registerShutdownFunction()
 	{
@@ -35,6 +41,38 @@ final class DeletedLogManager
 		$this->isRegisteredShutdownFunction = true;
 	}
 
+	/**
+	 * @return string|DeletedLogTable|DeletedLogV2Table
+	 * @throws \Bitrix\Main\ArgumentNullException
+	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
+	 */
+	public function getLogTable()
+	{
+		if ($this->isMigrated())
+		{
+			return DeletedLogV2Table::class;
+		}
+
+		return DeletedLogTable::class;
+	}
+
+	protected function isMigrated()
+	{
+		return DeletedLogMover::getStatus() === DeletedLogMover::STATUS_DONE;
+	}
+
+	/**
+	 * @param array $parameters
+	 *
+	 * @return \Bitrix\Main\ORM\Query\Result
+	 */
+	public function getEntries(array $parameters)
+	{
+		$className = $this->getLogTable();
+
+		return $className::getList($parameters);
+	}
+
 	public function finalize()
 	{
 		$this->insertLogData();
@@ -44,8 +82,6 @@ final class DeletedLogManager
 
 	public function mark(BaseObject $object, $deletedBy)
 	{
-		$this->registerShutdownFunction();
-
 		if ($object instanceof Folder)
 		{
 			$dateTime = new DateTime();
@@ -85,9 +121,37 @@ final class DeletedLogManager
 		}
 	}
 
+	public function markAfterMove(BaseObject $object, array $subscribersLostAccess, $updatedBy)
+	{
+		$dateTime = new DateTime();
+		$isFolder = $object instanceof Folder;
+		foreach ($subscribersLostAccess as $storageId => $userId)
+		{
+			$this->logData[] = [
+				'STORAGE_ID' => $storageId,
+				'OBJECT_ID' => $object->getId(),
+				'TYPE' => $isFolder? ObjectTable::TYPE_FOLDER : ObjectTable::TYPE_FILE,
+				'USER_ID' => $updatedBy,
+				'CREATE_TIME' => $dateTime,
+			];
+		}
+
+		if ($isFolder)
+		{
+			Driver::getInstance()->cleanCacheTreeBitrixDisk(array_keys($subscribersLostAccess));
+		}
+
+		Driver::getInstance()->sendChangeStatus($subscribersLostAccess);
+	}
+
 	private function insertLogData()
 	{
-		DeletedLogTable::insertBatch($this->logData);
+		if (!$this->isMigrated())
+		{
+			DeletedLogTable::insertBatch($this->logData);
+		}
+
+		DeletedLogV2Table::upsertBatch($this->logData);
 
 		$this->logData = array();
 	}

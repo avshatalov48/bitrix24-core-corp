@@ -32,6 +32,10 @@ class Lead extends EntityBase
 	{
 		return Crm\LeadTable::getEntity();
 	}
+	protected function getDbTableAlias()
+	{
+		return \CCrmLead::TABLE_ALIAS;
+	}
 	//endregion
 	//region Permissions
 	protected function buildPermissionSql(array $params)
@@ -267,6 +271,33 @@ class Lead extends EntityBase
 			$entityTypeName = \CCrmOwnerType::ResolveName($childEntityTypeID);
 			throw new Main\NotSupportedException("Entity type: '{$entityTypeName}' is not supported in current context");
 		}
+
+		Crm\Statistics\LeadConversionStatisticsEntry::register($ID);
+	}
+
+	/**
+	 * Check if Entity exists.
+	 * @param int $entityID Entity ID.
+	 * @return bool
+	 * @throws Main\ArgumentException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
+	public function isExists($entityID)
+	{
+		if(!is_int($entityID))
+		{
+			$entityID = (int)$entityID;
+		}
+
+		$dbResult = LeadTable::getList(
+			array(
+				'select' => array('ID'),
+				'filter' => array('=ID' => $entityID)
+			)
+		);
+
+		return is_array($dbResult->fetch());
 	}
 
 	/**

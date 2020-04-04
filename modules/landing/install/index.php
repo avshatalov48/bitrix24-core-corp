@@ -143,6 +143,13 @@ class Landing extends \CModule
 		);
 		$eventManager->registerEventHandler(
 			'rest',
+			'onBeforeApplicationUninstall',
+			$this->MODULE_ID,
+			'\Bitrix\Landing\Publicaction',
+			'beforeRestApplicationDelete'
+		);
+		$eventManager->registerEventHandler(
+			'rest',
 			'OnRestAppDelete',
 			$this->MODULE_ID,
 			'\Bitrix\Landing\Publicaction',
@@ -162,26 +169,20 @@ class Landing extends \CModule
 			'\Bitrix\Landing\Site',
 			'onMainSiteDelete'
 		);
-		if ($this->isB24())
-		{
-			$eventManager->registerEventHandler(
-				'bitrix24',
-				'OnDomainChange',
-				$this->MODULE_ID,
-				'\Bitrix\Landing\Update\Block\NodeAttributes',
-				'updateFormDomain'
-			);
-		}
-		if ($this->isB24Connector())
-		{
-			$eventManager->registerEventHandler(
-				'socialservices',
-				'\Bitrix\Socialservices\ApTable::OnAfterAdd',
-				$this->MODULE_ID,
-				'\Bitrix\Landing\Update\Block\NodeAttributes',
-				'updateFormDomainByConnector'
-			);
-		}
+		$eventManager->registerEventHandler(
+			'bitrix24',
+			'OnDomainChange',
+			$this->MODULE_ID,
+			'\Bitrix\Landing\Update\Block\NodeAttributes',
+			'updateFormDomain'
+		);
+		$eventManager->registerEventHandler(
+			'socialservices',
+			'\Bitrix\Socialservices\ApTable::OnAfterAdd',
+			$this->MODULE_ID,
+			'\Bitrix\Landing\Update\Block\NodeAttributes',
+			'updateFormDomainByConnector'
+		);
 
 		// agents
 		\CAgent::addAgent(
@@ -190,13 +191,15 @@ class Landing extends \CModule
 			'N',
 			7200
 		);
-		// agents
 		\CAgent::addAgent(
 			'Bitrix\Landing\Agent::clearFiles();',
 			$this->MODULE_ID,
 			'N',
 			3600
 		);
+
+		// rights
+		$this->InstallTasks();
 
 		// templates
 		if (\Bitrix\Main\Loader::includeModule($this->MODULE_ID))
@@ -227,21 +230,6 @@ class Landing extends \CModule
 			return ModuleManager::isModuleInstalled('bitrix24') ||
 				   ModuleManager::isModuleInstalled('intranet');
 		}
-	}
-
-	/**
-	 * Its SMN with b24connector module installed.
-	 * @return bool
-	 */
-	private function isB24Connector()
-	{
-		static $isConnector = null;
-		if ($isConnector === null)
-		{
-			$isConnector = ModuleManager::isModuleInstalled('b24connector') &&
-							ModuleManager::isModuleInstalled('socialservices');
-		}
-		return $isConnector;
 	}
 
 
@@ -486,7 +474,8 @@ class Landing extends \CModule
 				],
 				'filter' => [
 					'=DELETED' => ['Y', 'N'],
-					'=SITE.DELETED' => ['Y', 'N']
+					'=SITE.DELETED' => ['Y', 'N'],
+					'CHECK_PERMISSIONS' => 'N'
 				]
 			]);
 			while ($row = $res->fetch())
@@ -501,7 +490,8 @@ class Landing extends \CModule
 					'ID'
 				],
 				'filter' => [
-					'=DELETED' => ['Y', 'N']
+					'=DELETED' => ['Y', 'N'],
+					'CHECK_PERMISSIONS' => 'N'
 				],
 			]);
 			while ($row = $res->fetch())
@@ -537,7 +527,9 @@ class Landing extends \CModule
 			return false;
 		}
 
+		// agents and rights
 		\CAgent::removeModuleAgents($this->MODULE_ID);
+		$this->UnInstallTasks();
 
 		// unregister events
 		$eventManager = Bitrix\Main\EventManager::getInstance();
@@ -547,6 +539,13 @@ class Landing extends \CModule
 			$this->MODULE_ID, 
 			'\Bitrix\Landing\Publicaction', 
 			'restBase'
+		);
+		$eventManager->unregisterEventHandler(
+			'rest',
+			'onBeforeApplicationUninstall',
+			$this->MODULE_ID,
+			'\Bitrix\Landing\Publicaction',
+			'beforeRestApplicationDelete'
 		);
 		$eventManager->unregisterEventHandler(
 			'rest', 
@@ -569,26 +568,20 @@ class Landing extends \CModule
 			'\Bitrix\Landing\Site',
 			'onMainSiteDelete'
 		);
-		if ($this->isB24())
-		{
-			$eventManager->unregisterEventHandler(
-				'bitrix24', 
-				'OnDomainChange', 
-				$this->MODULE_ID, 
-				'\Bitrix\Landing\Update\Block\NodeAttributes', 
-				'updateFormDomain'
-			);
-		}
-		if ($this->isB24Connector())
-		{
-			$eventManager->unregisterEventHandler(
-				'socialservices', 
-				'\Bitrix\Socialservices\ApTable::OnAfterAdd', 
-				$this->MODULE_ID, 
-				'\Bitrix\Landing\Update\Block\NodeAttributes', 
-				'updateFormDomainByConnector'
-			);
-		}
+		$eventManager->unregisterEventHandler(
+			'bitrix24',
+			'OnDomainChange',
+			$this->MODULE_ID,
+			'\Bitrix\Landing\Update\Block\NodeAttributes',
+			'updateFormDomain'
+		);
+		$eventManager->unregisterEventHandler(
+			'socialservices',
+			'\Bitrix\Socialservices\ApTable::OnAfterAdd',
+			$this->MODULE_ID,
+			'\Bitrix\Landing\Update\Block\NodeAttributes',
+			'updateFormDomainByConnector'
+		);
 
 		// module
 		unregisterModule($this->MODULE_ID);
@@ -652,5 +645,83 @@ class Landing extends \CModule
 				'[W] ' . Loc::getMessage('LANDING_RIGHT_W')
 			)
 		);
+	}
+
+	/**
+	 * Get access tasks for module.
+	 * @return array
+	 */
+	public function getModuleTasks()
+	{
+		return array(
+			'landing_right_denied' => array(
+				'LETTER' => 'D',
+				'BINDING' => 'module',
+				'OPERATIONS' => array()
+			),
+			'landing_right_read' => array(
+				'LETTER' => 'R',
+				'BINDING' => 'module',
+				'OPERATIONS' => array(
+					'landing_read'
+				)
+			),
+			'landing_right_edit' => array(
+				'LETTER' => 'U',
+				'BINDING' => 'module',
+				'OPERATIONS' => array(
+					'landing_edit'
+				)
+			),
+			'landing_right_sett' => array(
+				'LETTER' => 'V',
+				'BINDING' => 'module',
+				'OPERATIONS' => array(
+					'landing_sett'
+				)
+			),
+			'landing_right_public' => array(
+				'LETTER' => 'W',
+				'BINDING' => 'module',
+				'OPERATIONS' => array(
+					'landing_public'
+				)
+			),
+			'landing_right_delete' => array(
+				'LETTER' => 'X',
+				'BINDING' => 'module',
+				'OPERATIONS' => array(
+					'landing_delete'
+				)
+			)
+		);
+	}
+
+	/**
+	 * Method for migrate from cloud version.
+	 * @return void
+	 */
+	public function migrateToBox()
+	{
+		$keyForDelete = [
+			'shops_limit_count',
+			'site_limit_count',
+			'pages_limit_count',
+			'shops_limit_count_publication',
+			'site_limit_count_publication',
+			'pages_limit_count_publication',
+			'permissions_available',
+			'google_images_key'
+		];
+
+		foreach ($keyForDelete as $key)
+		{
+			Option::delete(
+				'landing',
+				['name' => $key]
+			);
+		}
+
+		unset($keyForDelete, $key);
 	}
 }

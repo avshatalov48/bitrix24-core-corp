@@ -8,8 +8,9 @@
 namespace Bitrix\Crm;
 
 use Bitrix\Crm\History\Entity\DealStageHistoryTable;
+use Bitrix\Crm\History\Entity\DealStageHistoryWithSupposedTable;
 use Bitrix\Main;
-use Bitrix\Main\DB\SqlException;
+use Bitrix\Main\DB\SqlExpression;
 use Bitrix\Main\Entity\IntegerField;
 use Bitrix\Main\Entity\StringField;
 use Bitrix\Main\Localization\Loc;
@@ -42,19 +43,19 @@ class DealTable extends Main\ORM\Data\DataManager
 				'data_type' => 'string'
 			),
 			'OPPORTUNITY' => array(
-				'data_type' => 'integer'
+				'data_type' => 'float'
 			),
 			'CURRENCY_ID' => array(
 				'data_type' => 'string'
 			),
 			'OPPORTUNITY_ACCOUNT' => array(
-				'data_type' => 'integer'
+				'data_type' => 'float'
 			),
 			'ACCOUNT_CURRENCY_ID' => array(
 				'data_type' => 'string'
 			),
 			'EXCH_RATE' => array(
-				'data_type' => 'integer'
+				'data_type' => 'float'
 			),
 			'PROBABILITY' => array(
 				'data_type' => 'integer'
@@ -304,7 +305,14 @@ class DealTable extends Main\ORM\Data\DataManager
 			new ReferenceField(
 				'HISTORY',
 				DealStageHistoryTable::class,
-				Main\ORM\Query\Join::on('this.ID', 'ref.OWNER_ID')->where('ref.TYPE_ID', \CCrmOwnerType::Deal)
+				Main\ORM\Query\Join::on('this.ID', 'ref.OWNER_ID'),
+				array('join_type' => 'INNER')
+			),
+			new ReferenceField(
+				'FULL_HISTORY',
+				DealStageHistoryWithSupposedTable::class,
+				Main\ORM\Query\Join::on('this.ID', 'ref.OWNER_ID'),
+				array('join_type' => 'INNER')
 			)
 		);
 
@@ -313,9 +321,9 @@ class DealTable extends Main\ORM\Data\DataManager
 		foreach ($codeList as $fieldName)
 		{
 			$map[] = new ReferenceField($fieldName, UtmTable::getEntity(), array(
-				'=ref.ENTITY_TYPE_ID' => new SqlException('?', \CCrmOwnerType::Deal),
+				'=ref.ENTITY_TYPE_ID' => new SqlExpression('?', \CCrmOwnerType::Deal),
 				'=this.ID' => 'ref.ENTITY_ID',
-				'=ref.CODE' => new SqlException('?', $fieldName)
+				'=ref.CODE' => new SqlExpression('?', $fieldName)
 			));
 		}
 

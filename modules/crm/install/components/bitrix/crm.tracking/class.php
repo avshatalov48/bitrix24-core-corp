@@ -53,7 +53,9 @@ class CrmTrackingComponent extends CBitrixComponent
 				"call" => [],
 				"mail" => [],
 				"site" => [],
+				"order" => [],
 				"channel" => [],
+				"settings" => [],
 			);
 		}
 
@@ -61,14 +63,17 @@ class CrmTrackingComponent extends CBitrixComponent
 			"list" => "list/",
 			"add" => "source/edit/0/",
 			"edit" => "source/edit/#id#/",
+			"archive" => "source/archive/",
 			"expenses" => "expenses/#id#/",
 			"channel" => "channel/#id#/",
 			"utm" => "source/utm/?code=#id#",
 			"call" => "channel/call/",
 			"mail" => "channel/mail/",
-			"site" => "channel/site/",
+			"site" => "channel/site/#id#/",
 			"site24" => "channel/site24/",
 			"shop24" => "channel/shop24/",
+			"order" => "channel/order/",
+			"settings" => "settings/",
 		);
 
 		$componentPage = 'list';

@@ -9,14 +9,16 @@ define('DisableEventsCheck', true);
 use Bitrix\Catalog;
 use Bitrix\Crm\Order\Order;
 use Bitrix\Main\Loader;
-use \Bitrix\Main\Localization\Loc,
-	\Bitrix\Main\Error,
-	\Bitrix\Crm\Order\Permissions;
+use \Bitrix\Main\Localization\Loc;
+use \Bitrix\Main\Error;
+use \Bitrix\Crm\Order\Permissions;
 use Bitrix\Sale\Delivery;
+use Bitrix\Sale\Basket;
 use Bitrix\Sale\DiscountCouponsManager;
 use Bitrix\Sale\Helpers\Admin\OrderEdit;
 use Bitrix\Sale\Helpers\Order\Builder;
 use Bitrix\Main\Type\Date;
+use Bitrix\SalesCenter;
 
 require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/prolog_before.php');
 
@@ -80,6 +82,15 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 					)
 				)
 			);
+
+			if ($isNew && !empty($this->request['SALES_CENTER_SESSION_ID']) && Loader::includeModule('salescenter'))
+			{
+				$salesCenterLandingId = SalesCenter\Integration\LandingManager::getInstance()->getConnectedSiteId();
+				if ($salesCenterLandingId > 0)
+				{
+					$productData['TRADING_PLATFORM'] = \Bitrix\Sale\TradingPlatform\Landing\Landing::getCodeBySiteId($salesCenterLandingId);
+				}
+			}
 		}
 
 		if(!empty($productData))
@@ -124,7 +135,7 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 				return;
 			}
 
-			$res = $basket->refreshData(array('PRICE', 'COUPONS'));
+			$res = $basket->refresh(Basket\RefreshFactory::create(Basket\RefreshFactory::TYPE_FULL));
 
 			if(!$res->isSuccess())
 			{
@@ -175,31 +186,39 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 			{
 				$companyEntity = new \CCrmCompany(false);
 				$enableCompanyCreation = \CCrmCompany::CheckCreatePermission($this->userPermissions);
-				$companyData = $clientData['COMPANY_DATA'];
-				$companyID = isset($companyData['id']) ? (int)$companyData['id'] : 0;
-				$companyTitle = isset($companyData['title']) ? trim($companyData['title']) : '';
-				if($companyID <= 0 && $companyTitle !== '' && $enableCompanyCreation)
+				foreach ($clientData['COMPANY_DATA'] as $companyData)
 				{
-					$companyFields = array('TITLE' => $companyTitle);
-					$multifieldData =  isset($companyData['multifields']) && is_array($companyData['multifields'])
-						? $companyData['multifields']  : array();
+					$companyID = isset($companyData['id']) ? (int)$companyData['id'] : 0;
+					$companyTitle = isset($companyData['title']) ? trim($companyData['title']) : '';
+					if($companyID <= 0 && $companyTitle !== '' && $enableCompanyCreation)
+					{
+						$companyFields = array('TITLE' => $companyTitle);
+						$multifieldData =  isset($companyData['multifields']) && is_array($companyData['multifields'])
+							? $companyData['multifields']  : array();
 
-					if(!empty($multifieldData))
-					{
-						\Bitrix\Crm\Component\EntityDetails\BaseComponent::prepareMultifieldsForSave(
-							$multifieldData,
-							$companyFields
-						);
-					}
-					$companyID = $companyEntity->Add($companyFields, true, array('DISABLE_USER_FIELD_CHECK' => true));
-					if($companyID > 0)
-					{
-						/** @var \Bitrix\Crm\Order\Company $company */
-						$company = $clientCollection->createCompany();
-						$company->setFields([
-							'ENTITY_ID' => $companyID,
-							'IS_PRIMARY' => 'Y'
-						]);
+						if(!empty($multifieldData))
+						{
+							$multifields = \Bitrix\Crm\Component\EntityDetails\BaseComponent::prepareMultifieldsForSave(
+								CCrmOwnerType::Company,
+								0,
+								$multifieldData
+							);
+
+							if(!empty($multifields))
+							{
+								$companyFields['FM'] = $multifields;
+							}
+						}
+						$companyID = $companyEntity->Add($companyFields, true, array('DISABLE_USER_FIELD_CHECK' => true));
+						if($companyID > 0)
+						{
+							/** @var \Bitrix\Crm\Order\Company $company */
+							$company = $clientCollection->createCompany();
+							$company->setFields([
+								'ENTITY_ID' => $companyID,
+								'IS_PRIMARY' => 'Y'
+							]);
+						}
 					}
 				}
 			}
@@ -229,10 +248,16 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 
 						if(!empty($multifieldData))
 						{
-							\Bitrix\Crm\Component\EntityDetails\BaseComponent::prepareMultifieldsForSave(
-								$multifieldData,
-								$contactFields
+							$multifields = \Bitrix\Crm\Component\EntityDetails\BaseComponent::prepareMultifieldsForSave(
+								CCrmOwnerType::Contact,
+								0,
+								$multifieldData
 							);
+
+							if(!empty($multifields))
+							{
+								$contactFields['FM'] = $multifields;
+							}
 						}
 
 						$contactID = $contactEntity->Add($contactFields, true, array('DISABLE_USER_FIELD_CHECK' => true));
@@ -359,7 +384,7 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 			isset($this->request['PARAMS']) && is_array($this->request['PARAMS']) ? $this->request['PARAMS'] : []
 		);
 		$component->setEntityID($id);
-		$component->obtainOrder();
+		$order = $component->obtainOrder();
 		$entityData = $component->prepareEntityData();
 		if ((int)$this->request['USER_ID'] > 0 || (int)$this->request['PERSON_TYPE_ID'] > 0)
 		{
@@ -371,6 +396,27 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 			$entityData['USER_PROFILE'] = $profileId;
 		}
 
+		if ($isNew)
+		{
+			$fuser = (int)$this->request['PRODUCT_COMPONENT_DATA']['params']['FUSER_ID'];
+			if ($fuser > 0)
+			{
+				$itemsDataList = \Bitrix\Sale\Internals\BasketTable::getList(
+					array(
+						"filter" => array(
+							"=ORDER_ID" => NULL,
+							"=FUSER_ID" => $fuser,
+						),
+						"select" => ["ID"]
+					)
+				);
+
+				while ($item = $itemsDataList->fetch())
+				{
+					\Bitrix\Sale\Internals\BasketTable::deleteWithItems($item['ID']);
+				}
+			}
+		}
 
 		if($productData['PRODUCT'])
 		{
@@ -381,12 +427,19 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 
 		if($isNew)
 		{
-			$this->addData(['REDIRECT_URL' =>\CCrmOwnerType::GetDetailsUrl(
-				\CCrmOwnerType::Order,
-				$id,
-				false,
-				['OPEN_IN_SLIDER' => true]
-			)]);
+			if (!empty($this->request['SALES_CENTER_SESSION_ID']) && Loader::includeModule('salescenter'))
+			{
+				\Bitrix\SalesCenter\Integration\SaleManager::pushOrder($id, $this->request['SALES_CENTER_SESSION_ID']);
+			}
+			else
+			{
+				$this->addData(['REDIRECT_URL' =>\CCrmOwnerType::GetDetailsUrl(
+					\CCrmOwnerType::Order,
+					$id,
+					false,
+					['OPEN_IN_SLIDER' => true]
+				)]);
+			}
 		}
 	}
 
@@ -900,7 +953,7 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 			{
 				if (strlen($option['VALUE']) > 0)
 				{
-					\Bitrix\Sale\Internals\OrderPropsVariantTable::add([
+					\Bitrix\Crm\Order\PropertyVariant::add([
 						'ORDER_PROPS_ID' => $result->getId(),
 						'NAME' => $option['VALUE'],
 						'VALUE' => $value
@@ -1364,7 +1417,7 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 		{
 			$basketItem->setField('CUSTOM_PRICE', 'N');
 			$basketItem->setFieldNoDemand('PRODUCT_ID', $newProductId);
-			$basket->refreshData(array(), $basketItem);
+			$basket->refresh(Basket\RefreshFactory::createSingle($basketItem->getBasketCode()));
 		}
 
 		$this->addData([
@@ -1570,7 +1623,8 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 		$res = Catalog\Product\Basket::addProductToBasket(
 			$order->getBasket(),
 			$basketItemFields,
-			$context
+			$context,
+			['FILL_PRODUCT_PROPERTIES' => 'Y']
 		);
 
 		if($res->isSuccess())
@@ -1724,6 +1778,97 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 			$this->result->addErrors($res->getErrors());
 		}
 	}
+
+	protected function productGroupAction()
+	{
+		if(is_array($this->request['BASKET_CODES']))
+		{
+			$basketCodes = $this->request['BASKET_CODES'];
+		}
+		else
+		{
+			$this->addError(Loc::getMessage('CRM_ORDER_DA_BASKET_CODE_ABSENT'));
+			return;
+		}
+
+		if(strlen($this->request['GROUP_ACTION']) > 0)
+		{
+			$groupAction = $this->request['GROUP_ACTION'];
+		}
+		else
+		{
+			$this->addError(Loc::getMessage('CRM_ORDER_DA_GROUP_ACTION_ABSENT'));
+			return;
+		}
+
+		$forAll = isset($this->request['FOR_ALL']) && $this->request['FOR_ALL'] == 'Y';
+
+		if(!($formData = $this->getFormData()))
+		{
+			return;
+		}
+
+		if(!($order = $this->buildOrder($formData)))
+		{
+			return;
+		}
+
+		if(!($basket = $order->getBasket()))
+		{
+			$this->addError(Loc::getMessage('CRM_ORDER_DA_CART_NOT_FOUND'));
+			return;
+		}
+
+		if($forAll)
+		{
+			$basketCodes = [];
+			foreach($basket->getBasketItems() as $item)
+			{
+				$basketCodes[] = $item->getBasketCode();
+			}
+		}
+
+		if(empty($basketCodes))
+		{
+			return;
+		}
+
+		if($groupAction == 'delete')
+		{
+			foreach($basketCodes as $basketCode)
+			{
+				if(!($basketItem = $basket->getItemByBasketCode($basketCode)))
+				{
+					$this->addError(Loc::getMessage('CRM_ORDER_DA_BASKET_ID_BY_CODE_ERROR'));
+					continue;
+				}
+
+				$res = $basketItem->delete();
+
+				if($res->isSuccess())
+				{
+					if (isset($_SESSION['ORDER_BASKET'][$order->getId()]))
+					{
+						unset($_SESSION['ORDER_BASKET'][$order->getId()]['ITEMS'][$basketCode]);
+					}
+					if ((int)$basketCode > 0)
+					{
+						$_SESSION['ORDER_BASKET'][$order->getId()]['DELETED_ITEM_IDS'][] = (int)$basketCode;
+					}
+
+					$this->addData([
+						'ORDER_DATA' => $this->formatResultData($order, $formData),
+						'PRODUCT_COMPONENT_RESULT' => $this->getProductComponentData($order)
+					]);
+				}
+				else
+				{
+					$this->result->addErrors($res->getErrors());
+				}
+			}
+		}
+	}
+
 
 	protected function addCouponAction()
 	{

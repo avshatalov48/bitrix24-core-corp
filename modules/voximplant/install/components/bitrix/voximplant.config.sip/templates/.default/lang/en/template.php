@@ -1,7 +1,7 @@
 <?
 $MESS["VI_CONFIG_SIP_ACCEPT"] = "Pay";
 $MESS["VI_CONFIG_SIP_ACCEPT_2"] = "Buy";
-$MESS["VI_CONFIG_SIP_ACCEPT_3"] = "Buy SIP-Connector";
+$MESS["VI_CONFIG_SIP_ACCEPT_3"] = "Buy SIP Connector";
 $MESS["VI_CONFIG_SIP_ADDITIONAL_FIELDS"] = "Additional fields";
 $MESS["VI_CONFIG_SIP_CANCEL"] = "Deactivate module";
 $MESS["VI_CONFIG_SIP_CANCEL_CREATE"] = "Cancel";
@@ -58,7 +58,7 @@ $MESS["VI_CONFIG_SIP_REST_CREATE_YOUR"] = "or <a href=\"#URL#\" target=\"_blank\
 $MESS["VI_CONFIG_SIP_REST_HEADER"] = "Connect your PBX using Rest API for free";
 $MESS["VI_CONFIG_SIP_REST_SELECT_MARKET"] = "Select Marketplace solution";
 $MESS["VI_CONFIG_SIP_VALUE"] = "Value";
-$MESS["VI_NOTICE_BUTTON_DONE"] = "Ready";
+$MESS["VI_NOTICE_BUTTON_DONE"] = "Done";
 $MESS["VI_SIP_BUTTON"] = "Extend";
 $MESS["VI_SIP_BUTTON_BUY"] = "Connect";
 $MESS["VI_SIP_PAID_BEFORE"] = "Module will expire on #DATE#";

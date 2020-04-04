@@ -1,6 +1,7 @@
 <?php
 namespace Bitrix\Tasks\Update;
 
+use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\ArgumentOutOfRangeException;
@@ -90,7 +91,7 @@ final class FullTasksIndexer extends Stepper
 				$return = true;
 			}
 
-			$result["progress"] = intval($params["number"] * 100 / $params["count"]);
+			$result["progress"] = (int)($params["number"] * 100 / $params["count"]);
 			$result["steps"] = $params["number"];
 		}
 
@@ -241,24 +242,15 @@ final class FullTasksIndexer extends Stepper
 
 		if (static::checkForumIncluded())
 		{
-			$query = new Query(TaskTable::getEntity());
-			$query->setSelect(['FM.ID']);
-			$query->registerRuntimeField(
-				'',
-				new ReferenceField(
-					'FM',
-					MessageTable::class,
-					Join::on('this.FORUM_TOPIC_ID', 'ref.TOPIC_ID')
-						->where('ref.NEW_TOPIC', 'N'),
-					['join_type' => 'INNER']
-				)
-			);
-			$query->where('ZOMBIE', 'N');
-			$query->countTotal(true);
+			$connection = Application::getConnection();
+			$commentsCountRes = $connection->query("
+				SELECT COUNT(FM.ID) AS CNT
+				FROM b_tasks T
+				INNER JOIN b_forum_message FM ON FM.TOPIC_ID = T.FORUM_TOPIC_ID AND FM.NEW_TOPIC = 'N'
+				WHERE T.ZOMBIE = 'N'
+			")->fetch();
 
-			$commentsRes = $query->exec();
-
-			$count += $commentsRes->getCount();
+			$count += (int)$commentsCountRes['CNT'];
 		}
 
 		$params = [
@@ -266,7 +258,7 @@ final class FullTasksIndexer extends Stepper
 			"last_task_id" => 0,
 			"last_task_to_index" => $lastTaskToIndex,
 			"last_comment_id" => 0,
-			"count" => (int)$count,
+			"count" => $count,
 		];
 
 		return $params;

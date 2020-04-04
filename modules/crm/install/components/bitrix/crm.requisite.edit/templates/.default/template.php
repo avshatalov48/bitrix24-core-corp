@@ -1,6 +1,8 @@
 <?php
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
+use Bitrix\Main\Page\Asset;
+
 /** @var \CCrmRequisiteFormEditorComponent $component */
 
 global $APPLICATION;
@@ -13,9 +15,30 @@ if(SITE_TEMPLATE_ID === 'bitrix24')
 	$APPLICATION->SetAdditionalCSS("/bitrix/themes/.default/bitrix24/crm-entity-show.css");
 }
 
-CJSCore::Init(array('date', 'popup', 'ajax', 'tooltip'));
+$isExternalSearchEnabled = false;
+$externalRequisiteSearchConfig = null;
+if (!$arResult['NEED_CLOSE_POPUP']
+	&& is_array($arResult['EXTERNAL_REQUISITE_SEARCH_CONFIG'])
+	&& isset($arResult['EXTERNAL_REQUISITE_SEARCH_CONFIG']['enabled'])
+	&& $arResult['EXTERNAL_REQUISITE_SEARCH_CONFIG']['enabled'] === true)
+{
+	$isExternalSearchEnabled = true;
+	$externalRequisiteSearchConfig = $arResult['EXTERNAL_REQUISITE_SEARCH_CONFIG'];
+}
+
+$jsExts = ['date', 'popup', 'ajax', 'tooltip'];
+if ($isExternalSearchEnabled)
+{
+	$jsExts[] = 'applayout';
+}
+CJSCore::Init($jsExts);
+unset($jsExts);
+
+Asset::getInstance()->addJs('/bitrix/js/crm/common.js');
+Asset::getInstance()->addJs('/bitrix/js/crm/requisite.js');
 
 $elementID = isset($arResult['ELEMENT_ID']) ? (int)$arResult['ELEMENT_ID'] : 0;
+$pseudoID = isset($arResult['PSEUDO_ID']) ? (string)$arResult['PSEUDO_ID'] : 'n0';
 $enableFieldMasquerading = isset($arResult['ENABLE_FIELD_MASQUERADING']) && $arResult['ENABLE_FIELD_MASQUERADING'] === 'Y';
 $fieldNameTemplate = isset($arResult['FIELD_NAME_TEMPLATE']) ? $arResult['FIELD_NAME_TEMPLATE'] : '';
 if ($arResult['ENTITY_TYPE_MNEMO'] === 'COMPANY')
@@ -115,7 +138,7 @@ if($arResult['INNER_FORM_MODE'] === 'Y')
 }
 
 
-if($arResult['INNER_FORM_MODE'] == 'Y')
+if($arResult['INNER_FORM_MODE'] === 'Y')
 {
 	$tactileSettings = array('ENABLE_FIELD_DRAG' => 'N', 'ENABLE_SECTION_DRAG' => 'N');
 }
@@ -138,7 +161,7 @@ $APPLICATION->IncludeComponent(
 		'USER_FIELD_SERVICE_URL' => '/bitrix/components/bitrix/crm.requisite.edit/uf.ajax.php?siteID='.SITE_ID.'&'.bitrix_sessid_get(),
 		'BUTTONS' => $buttons,
 		'IS_NEW' => $elementID <= 0,
-		'TITLE' => (($arResult['POPUP_MODE'] === 'Y' || $arResult['INNER_FORM_MODE'] == 'Y') ? '' : $arResult['CRM_CUSTOM_PAGE_TITLE']),
+		'TITLE' => (($arResult['POPUP_MODE'] === 'Y' || $arResult['INNER_FORM_MODE'] === 'Y') ? '' : $arResult['CRM_CUSTOM_PAGE_TITLE']),
 		'ENABLE_TACTILE_INTERFACE' => 'Y',
 		'TACTILE_INTERFACE_SETTINGS' => $tactileSettings,
 		'DATA' => $arResult['ELEMENT'],
@@ -172,11 +195,13 @@ if($arResult['INNER_FORM_MODE'] === 'Y')
 			formId: formId,
 			containerId: containerId,
 			elementId: <?=$elementID?>,
+			pseudoId: "<?=$pseudoID?>",
 			countryId: <?=CUtil::JSEscape($arResult['COUNTRY_ID'])?>,
 			enableClientResolution: <?=$arResult['ENABLE_CLIENT_RESOLUTION'] ? 'true' : 'false'?>,
 			enableFieldMasquerading: <?=$enableFieldMasquerading ? 'true' : 'false'?>,
 			fieldNameTemplate: "<?=CUtil::JSEscape($fieldNameTemplate)?>",
-			lastInForm: <?=$arResult['IS_LAST_IN_FORM'] === 'Y' ? 'true' : 'false'?>
+			lastInForm: <?=$arResult['IS_LAST_IN_FORM'] === 'Y' ? 'true' : 'false'?>,
+			externalRequisiteSearchConfig: <?=CUtil::PhpToJSObject($externalRequisiteSearchConfig)?>
 		};
 		BX.Crm.RequisiteEditFormManager.create(formId, requisiteEditFormParams);
 	});

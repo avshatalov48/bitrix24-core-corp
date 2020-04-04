@@ -1,7 +1,8 @@
 <?
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 
-$APPLICATION->SetPageProperty("BodyClass", "page-one-column");
+$bodyClass = $APPLICATION->GetPageProperty("BodyClass");
+$APPLICATION->SetPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "")."page-one-column");
 
 if ($arParams['bAdmin']):
 	$arAbsenceParams["MESS"] = array(

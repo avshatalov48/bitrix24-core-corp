@@ -139,8 +139,16 @@ class CDiskUfVersionComponent extends BaseComponent
 				}
 				$attr->addAction([
 					'type' => 'edit',
+					'buttonIconClass' => ' ',
+					'action' => 'BX.Disk.Viewer.Actions.runActionDefaultEdit',
+					'params' => [
+						'attachedObjectId' => $attachedModel->getId(),
+						'name' => $documentName,
+						'dependsOnService' => $items? null : LocalDocumentController::getCode(),
+					],
 					'items' => $items,
 				]);
+
 			}
 			$versionData['ATTRIBUTES_FOR_VIEWER'] = $attr;
 

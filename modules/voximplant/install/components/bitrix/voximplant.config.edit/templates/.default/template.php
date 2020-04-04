@@ -10,7 +10,7 @@ CJSCore::RegisterExt('voximplant_config_edit', array(
 
 CJSCore::Init([
 	"voximplant.common", "voximplant_config_edit", "voximplant.numberrent", "ui.tilegrid", "ui.buttons",
-	"ui.forms", "ui.alerts", "ui.hint", "player", "sidepanel"
+	"ui.forms", "ui.alerts", "ui.hint", "player", "sidepanel", "phone_number"
 ]);
 \Bitrix\Voximplant\Ui\Helper::initLicensePopups();
 $melodiesToLoad = [];
@@ -68,7 +68,7 @@ $APPLICATION->IncludeComponent("bitrix:ui.sidepanel.wrappermenu", "", array(
 						</div>
 						<div class="voximplant-control-row">
 							<div class="voximplant-control-subtitle"><?=GetMessage('VI_CONFIG_SIP_T_PASS')?></div>
-							<input type="text" name="SIP[PASSWORD]" value="<?=htmlspecialcharsbx($arResult['SIP_CONFIG']['PASSWORD'])?>" class="voximplant-control-input">
+							<input type="password" name="SIP[PASSWORD]" value="<?=htmlspecialcharsbx($arResult['SIP_CONFIG']['PASSWORD'])?>" class="voximplant-control-input">
 							<div class="voximplant-control-description"><?= Loc::getMessage("VI_CONFIG_SIP_T_PASS_HINT") ?></div>
 						</div>
 						<? if($arResult["SIP_CONFIG"]['TYPE'] == CVoxImplantSip::TYPE_CLOUD): ?>
@@ -264,6 +264,51 @@ $APPLICATION->IncludeComponent("bitrix:ui.sidepanel.wrappermenu", "", array(
 						</div>
 					</div>
 				</div>
+			</div>
+		</div>
+
+		<div class="voximplant-config-page" data-role="page" data-page="sip-numbers">
+			<div class="voximplant-container">
+				<div class="voximplant-title-dark"><?= Loc::getMessage("VI_CONFIG_YOUR_SIP_PBX_NUMBERS") ?></div>
+				<div class="voximplant-number-settings-row">
+					<div class="voximplant-number-settings-choice voximplant-number-settings-bold-text">
+						<input id="DETECT_LINE_NUMBER" name="SIP[DETECT_LINE_NUMBER]" type="checkbox" data-role="enable-sip-detect-line-number"
+							   value="Y"
+							   <? if ($arResult["SIP_CONFIG"]["DETECT_LINE_NUMBER"] === "Y"): ?>checked="checked"<? endif ?>
+							   class="voximplant-number-settings-checkbox">
+						<label for="DETECT_LINE_NUMBER" class="voximplant-number-settings-label"><?= Loc::getMessage("VI_CONFIG_SIP_DETECT_INCOMING_NUMBER") ?></label>
+					</div>
+
+					<div class="voximplant-number-settings-inner tel-set-height-animated" data-role="sip-detect-line-number-settings" data-height="800px" style="max-height: <?= $arResult["SIP_CONFIG"]["DETECT_LINE_NUMBER"] === "Y" ? "800px" : "0" ?>">
+						<div class="voximplant-control-row">
+							<div class="voximplant-control-subtitle"><?= Loc::getMessage("VI_CONFIG_SIP_DETECTION_HEADER_ORDER") ?></div>
+							<select name="SIP[LINE_DETECT_HEADER_ORDER]" class="voximplant-control-select">
+								<option value="<?=CVoxImplantSip::HEADER_ORDER_DIVERSION_TO?>"<?= ($arResult["SIP_CONFIG"]["LINE_DETECT_HEADER_ORDER"] == CVoxImplantSip::HEADER_ORDER_DIVERSION_TO ? ' selected="selected"' : '') ?>><?= "diversion, to"?></option>
+								<option value="<?=CVoxImplantSip::HEADER_ORDER_TO_DIVERSION?>"<?= ($arResult["SIP_CONFIG"]["LINE_DETECT_HEADER_ORDER"] == CVoxImplantSip::HEADER_ORDER_TO_DIVERSION ? ' selected="selected"' : '') ?>><?= "to, diversion"?></option>
+							</select>
+						</div>
+
+						<div class="voximplant-control-row">
+							<div class="voximplant-control-subtitle"><?= Loc::getMessage("VI_CONFIG_SIP_CONNECTION_NUMBERS") ?></div>
+							<?
+							$GLOBALS["APPLICATION"]->includeComponent(
+								"bitrix:ui.tile.selector",
+								"",
+								[
+									"ID" => "sip-numbers",
+									"MULTIPLE" => true,
+									"LIST" => $arResult["SIP_CONFIG"]["NUMBERS"],
+									"CAN_REMOVE_TILES" => true,
+									'SHOW_BUTTON_SELECT' => false,
+									"SHOW_BUTTON_ADD" => true,
+									"BUTTON_ADD_CAPTION" => Loc::getMessage("VI_CONFIG_SIP_ADD_CONNECTION_NUMBER")
+								]
+							);
+							?>
+						</div>
+					</div>
+				</div>
+
 			</div>
 		</div>
 
@@ -751,7 +796,7 @@ $APPLICATION->IncludeComponent("bitrix:ui.sidepanel.wrappermenu", "", array(
 						</div>
 					</div>
 				<? endif ?>
-				<? if ($arResult["ITEM"]["PORTAL_MODE"] === CVoxImplantConfig::MODE_RENT): ?>
+				<? if ($arResult["ITEM"]["PORTAL_MODE"] === CVoxImplantConfig::MODE_RENT || $arResult["ITEM"]["PORTAL_MODE"] === CVoxImplantConfig::MODE_GROUP): ?>
 					<div class="voximplant-number-settings-row">
 						<div class="voximplant-number-settings-choice voximplant-number-settings-bold-text">
 							<input id="redirect-with-client-number" name="REDIRECT_WITH_CLIENT_NUMBER" type="checkbox"

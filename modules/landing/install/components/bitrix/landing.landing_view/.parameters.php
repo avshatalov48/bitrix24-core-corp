@@ -47,6 +47,10 @@ $arComponentParameters = Array(
 		'PARAMS' => array(
 			'NAME' => getMessage('LANDING_CMP_PAR_PARAMS'),
 			'TYPE' => 'STRING'
+		),
+		'SEF' => array(
+			'NAME' => getMessage('LANDING_CMP_PAR_SEF'),
+			'TYPE' => 'STRING'
 		)
 	)
 );

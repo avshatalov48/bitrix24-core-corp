@@ -1,0 +1,26 @@
+.docs-role-block-wrap {
+	margin-bottom: 26px;
+}
+.docs-role-input-container {
+	display: flex;
+	flex-direction: column;
+}
+.docs-role-title {
+	font-size: 14px;
+	line-height: 19px;
+	/*color: #a9adb2;*/
+}
+.docs-role-input {
+	color: #475767;
+	padding-left: 11px;
+	margin-top: 5px;
+	border: 1px solid #c6cdd3;
+	border-radius: 2px;
+	overflow: hidden;
+	min-height: 38px;
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	position: relative;
+	font-size: 14px;
+}

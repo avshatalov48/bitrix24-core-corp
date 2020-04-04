@@ -125,7 +125,7 @@ class OrderArchiveItem
 		$eventManager = Main\EventManager::getInstance();
 		if ($eventsList = $eventManager->findEventHandlers('sale', Sale\EventActions::EVENT_ON_ORDER_BEFORE_ARCHIVED))
 		{
-			/** @var Main\Entity\Event $event */
+			/** @var Main\Event $event */
 			$event = new Main\Event('sale', Sale\EventActions::EVENT_ON_ORDER_BEFORE_ARCHIVED, array(
 				'ENTITY' => $order
 			));
@@ -191,8 +191,28 @@ class OrderArchiveItem
 		$preparedOrderData['ORDER_ID'] = $this->getId();
 		$preparedOrderData['DATE_ARCHIVED'] = new Type\DateTime();
 		$preparedOrderData['VERSION'] = Manager::SALE_ARCHIVE_VERSION;
-		$preparedOrderData['ORDER_DATA'] = serialize($this->orderDataFields);
+		$preparedFields = $this->prepareEncodeFields($this->orderDataFields);
+		$preparedOrderData['ORDER_DATA'] = Main\Web\Json::encode($preparedFields);
 		return Internals\OrderArchiveTable::add($preparedOrderData);
+	}
+
+	private function prepareEncodeFields(array $fields)
+	{
+		foreach ($fields as &$field)
+		{
+			if (is_array($field))
+			{
+				$field = $this->prepareEncodeFields($field);
+			}
+			elseif ($field instanceof Type\Date)
+			{
+				\CTimeZone::Disable();
+				$field = $field->toString();
+				\CTimeZone::Enable();
+			}
+		}
+
+		return $fields;
 	}
 
 	/**
@@ -205,7 +225,8 @@ class OrderArchiveItem
 	{
 		$preparedBasketItems = array_intersect_key($item, array_flip(Manager::getBasketFieldNames()));
 		$preparedBasketItems['ARCHIVE_ID'] = (int)$archivedOrderId;
-		$preparedBasketItems['BASKET_DATA'] = serialize($item);
+		$preparedFields = $this->prepareEncodeFields($item);
+		$preparedBasketItems['BASKET_DATA'] = Main\Web\Json::encode($preparedFields);
 
 		if (empty($preparedBasketItems['DATE_INSERT']))
 		{

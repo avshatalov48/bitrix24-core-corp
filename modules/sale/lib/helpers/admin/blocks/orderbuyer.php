@@ -538,23 +538,12 @@ class OrderBuyer
 				{
 					if (isset($property['RELATION']))
 					{
-						foreach ($property['RELATION'] as $relation)
+						if ($property['TYPE'] === 'ENUM' && is_array($property['OPTIONS']))
 						{
-							if (
-								in_array($relation['ENTITY_ID'], $order->getPaymentSystemId())
-								||
-								in_array($relation['ENTITY_ID'], $order->getDeliverySystemId())
-							)
-							{
-								if ($property['TYPE'] === 'ENUM' && is_array($property['OPTIONS']))
-								{
-									$property['OPTIONS_SORT'] = array_keys($property['OPTIONS']);
-								}
-								$result[$key][] = $property;
-								$groups[$property['PROPS_GROUP_ID']] = true;
-								break;
-							}
+							$property['OPTIONS_SORT'] = array_keys($property['OPTIONS']);
 						}
+						$result[$key][] = $property;
+						$groups[$property['PROPS_GROUP_ID']] = true;
 					}
 				}
 			}

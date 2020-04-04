@@ -20,6 +20,10 @@ $arComponentParameters = Array(
 			'TYPE' => 'LIST',
 			'VALUES' => $types
 		),
+		'SHOW_MENU' => array(
+			'NAME' => getMessage('LANDING_CMP_PAR_SHOW_MENU'),
+			'TYPE' => 'CHECKBOX'
+		),
 		'VARIABLE_ALIASES' => Array(
 			'site_show' => Array(
 				'NAME' => getMessage('LANDING_CMP_PAR_VAR_SITE'),
@@ -45,10 +49,18 @@ $arComponentParameters = Array(
 				'NAME' => getMessage('LANDING_CMP_PAR_VAR_DOMAIN'),
 				'DEFAULT' => 'domains'
 			),
+			'roles' => Array(
+				'NAME' => getMessage('LANDING_CMP_PAR_VAR_ROLES'),
+				'DEFAULT' => 'rights'
+			),
+			'role_edit' => Array(
+				'NAME' => getMessage('LANDING_CMP_PAR_VAR_ROLE_EDIT'),
+				'DEFAULT' => 'right_edit'
+			),
 			'sites' => Array(
 				'NAME' => getMessage('LANDING_CMP_PAR_VAR_SITES'),
 				'DEFAULT' => 'sites'
-			),
+			)
 		),
 		'SEF_MODE' => Array(
 			'sites' => array(
@@ -85,7 +97,22 @@ $arComponentParameters = Array(
 				'NAME' => getMessage('LANDING_CMP_PAR_SM_DOMAIN_EDIT'),
 				'DEFAULT' => 'domain/edit/#domain_edit#/',
 				'VARIABLES' => array('domain_edit')
+			),
+			'roles' => array(
+				'NAME' => getMessage('LANDING_CMP_PAR_SM_ROLES'),
+				'DEFAULT' => 'roles/',
+				'VARIABLES' => array('roles')
+			),
+			'role_edit' => array(
+				'NAME' => getMessage('LANDING_CMP_PAR_SM_ROLE_EDIT'),
+				'DEFAULT' => 'role/edit/#role_edit#/',
+				'VARIABLES' => array('role_edit')
 			)
 		)
 	)
 );
+
+if (!\Bitrix\Landing\Manager::isB24())
+{
+	unset($arComponentParameters['PARAMETERS']['SHOW_MENU']);
+}

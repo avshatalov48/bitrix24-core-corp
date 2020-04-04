@@ -1,3 +1,3 @@
 <?
-$MESS["VI_PAGE_USERS_TITLE"] = "Telephony users";
+$MESS["VI_PAGE_USERS_TITLE"] = "Telephony Users";
 ?>

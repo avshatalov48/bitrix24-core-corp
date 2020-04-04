@@ -110,4 +110,48 @@ class Service
 	{
 		return "BX.Sender.B24License.showPopup('Rc');";
 	}
+
+	/**
+	 * Get deal worker count.
+	 * @param int|null $categoryId Deal category ID.
+	 * @return bool
+	 */
+	public static function getDealWorkerCount($categoryId = null)
+	{
+		if (!self::canUse())
+		{
+			return null;
+		}
+
+		$items = Sender\Entity\Rc::getList([
+			'select' => ['MESSAGE_ID'],
+			'filter' => [
+				'=REITERATE' => 'Y',
+				'=STATUS' => Sender\Dispatch\Semantics::getWorkStates(),
+				'=MESSAGE_CODE' => 'rc_deal'
+			],
+			'cache' => ['ttl' => 36000]
+		])->fetchAll();
+
+		$fields = Sender\Internals\Model\MessageFieldTable::getList([
+			'select' => ['VALUE'],
+			'filter'=> [
+				'=MESSAGE_ID'=> array_column($items, 'MESSAGE_ID'),
+				'=CODE' => 'CATEGORY_ID'
+			],
+			'cache' => ['ttl' => 36000]
+		])->fetchAll();
+
+		return count(
+			$categoryId
+				? array_filter(
+						$fields,
+						function ($field) use ($categoryId)
+						{
+							return $field['VALUE'] == $categoryId;
+						}
+					)
+				: $fields
+		);
+	}
 }

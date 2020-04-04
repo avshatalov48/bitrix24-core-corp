@@ -285,6 +285,8 @@ class CYandexOAuthInterface extends CSocServOAuthTransport
 
 	const USERINFO_URL = "https://login.yandex.ru/info";
 
+	const MAX_DEVICE_ID_LENGTH = 50;
+
 	protected $arResult = array();
 
 	public function __construct($appID = false, $appSecret = false, $code = false)
@@ -319,14 +321,41 @@ class CYandexOAuthInterface extends CSocServOAuthTransport
 			: '';
 	}
 
+	/**
+	 * @param string $redirect_uri
+	 * @param string $state
+	 * @return string
+	 */
 	public function GetAuthUrl($redirect_uri = '', $state = '')
 	{
+		$deviceId = $this->getDeviceId($state);
+
 		return self::AUTH_URL
 			."?response_type=code"
 			."&client_id=".urlencode($this->appID)
+			.(!empty($deviceId) ? "&device_id=".$deviceId : '')
 			."&display=popup"
 			."&redirect_uri=".urlencode($redirect_uri)
 			.(!empty($state) ? "&state=".urlencode($state) : '');
+	}
+
+	/**
+	 * @param string $state
+	 * @return string
+	 */
+	public function getDeviceId($state)
+	{
+		$deviceId = '';
+		if (!empty($state) && isset($_SESSION[$state]))
+		{
+			list(, $deviceId) = $_SESSION[$state];
+			if ($deviceId)
+			{
+				$deviceId = substr($deviceId, 0, self::MAX_DEVICE_ID_LENGTH);
+			}
+		}
+
+		return $deviceId;
 	}
 
 	public function GetAccessToken()
@@ -404,6 +433,30 @@ class CYandexOAuthInterface extends CSocServOAuthTransport
 			$result["refresh_token"] = $this->refresh_token;
 			$result["expires_in"] = $this->accessTokenExpires;
 		}
+		return $result;
+	}
+
+	public function GetAppInfo()
+	{
+		if ($this->access_token === false)
+			return false;
+
+		$h = new \Bitrix\Main\Web\HttpClient();
+		$h->setTimeout($this->httpTimeout);
+
+		$result = $h->get(self::USERINFO_URL.'?format=json&oauth_token='.urlencode($this->access_token));
+
+		try
+		{
+			$result = \Bitrix\Main\Web\Json::decode($result);
+			$result = array_key_exists("client_id", $result)
+							? array("id" => $result["client_id"])
+							: array();
+		} catch (\Bitrix\Main\ArgumentException $e)
+		{
+			$result = array();
+		}
+
 		return $result;
 	}
 }

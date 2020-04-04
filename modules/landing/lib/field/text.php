@@ -32,6 +32,15 @@ class Text extends \Bitrix\Landing\Field
 	}
 
 	/**
+	 * Gets true, if current value is empty.
+	 * @return bool
+	 */
+	public function isEmptyValue()
+	{
+		return $this->value === '';
+	}
+
+	/**
 	 * Vew field.
 	 * @param array $params Array params:
 	 * name - field name
@@ -46,7 +55,7 @@ class Text extends \Bitrix\Landing\Field
 		?><?= isset($params['additional']) ? $params['additional'] . ' ' : ''?><?
 		?><?= isset($params['id']) ? 'id="' . \htmlspecialcharsbx($params['id']) . '" ' : ''?><?
 		?><?= $this->maxlength > 0 ? 'maxlength="'. $this->maxlength . '" ' : ''?><?
-		?><?= $this->placeholder != '' ? 'placeholder="'. $this->placeholder . '" ' : ''?><?
+		?><?= $this->placeholder != '' ? 'placeholder="'. \htmlspecialcharsbx($this->placeholder) . '" ' : ''?><?
 		?>class="<?= isset($params['class']) ? \htmlspecialcharsbx($params['class']) : ''?>" <?
 		?>data-code="<?= \htmlspecialcharsbx($this->code)?>" <?
 		?>name="<?= \htmlspecialcharsbx(isset($params['name_format'])

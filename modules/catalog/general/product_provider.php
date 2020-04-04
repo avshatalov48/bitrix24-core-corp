@@ -160,17 +160,20 @@ class CCatalogProductProvider implements IBXSaleProductProvider
 
 		if (!$arCatalogProduct = static::getHitCache(self::CACHE_PRODUCT, $productID))
 		{
+			$select = array('ID', 'TYPE', 'AVAILABLE',
+				'QUANTITY', 'QUANTITY_TRACE', 'CAN_BUY_ZERO',
+				'WEIGHT', 'WIDTH', 'HEIGHT', 'LENGTH',
+				'BARCODE_MULTI',
+				'MEASURE'
+			);
+			$select = array_merge($select, Catalog\Product\SystemField::getFieldList());
 			$arCatalogProduct = Catalog\ProductTable::getList(array(
-				'select' => array('ID', 'TYPE', 'AVAILABLE',
-					'QUANTITY', 'QUANTITY_TRACE', 'CAN_BUY_ZERO',
-					'WEIGHT', 'WIDTH', 'HEIGHT', 'LENGTH',
-					'BARCODE_MULTI',
-					'MEASURE'
-				),
+				'select' => $select,
 				'filter' => array('=ID' => $productID)
 			))->fetch();
 			if (!empty($arCatalogProduct))
 			{
+				Catalog\Product\SystemField::convertRow($arCatalogProduct);
 				$arCatalogProduct['QUANTITY'] = (float)$arCatalogProduct['QUANTITY'];
 				static::setHitCache(self::CACHE_PRODUCT, $productID, $arCatalogProduct);
 			}
@@ -277,6 +280,7 @@ class CCatalogProductProvider implements IBXSaleProductProvider
 				"LENGTH" => $arCatalogProduct["LENGTH"]
 			)),
 			"TYPE" => ($arCatalogProduct["TYPE"] == Catalog\ProductTable::TYPE_SET ? CCatalogProductSet::TYPE_SET : null),
+			"MARKING_CODE_GROUP" => $arCatalogProduct["MARKING_CODE_GROUP"],
 			"VAT_INCLUDED" => "Y",
 			"MEASURE_ID" => $arCatalogProduct['MEASURE'],
 			"MEASURE_NAME" => $arCatalogProduct['MEASURE_NAME'],
@@ -562,17 +566,20 @@ class CCatalogProductProvider implements IBXSaleProductProvider
 
 		if (!$arCatalogProduct = static::getHitCache(self::CACHE_PRODUCT, $productID))
 		{
+			$select = array('ID', 'TYPE', 'AVAILABLE',
+				'QUANTITY', 'QUANTITY_TRACE', 'CAN_BUY_ZERO',
+				'WEIGHT', 'WIDTH', 'HEIGHT', 'LENGTH',
+				'BARCODE_MULTI',
+				'MEASURE'
+			);
+			$select = array_merge($select, Catalog\Product\SystemField::getFieldList());
 			$arCatalogProduct = Catalog\ProductTable::getList(array(
-				'select' => array('ID', 'TYPE', 'AVAILABLE',
-					'QUANTITY', 'QUANTITY_TRACE', 'CAN_BUY_ZERO',
-					'WEIGHT', 'WIDTH', 'HEIGHT', 'LENGTH',
-					'BARCODE_MULTI',
-					'MEASURE'
-				),
+				'select' => $select,
 				'filter' => array('=ID' => $productID)
 			))->fetch();
 			if (!empty($arCatalogProduct))
 			{
+				Catalog\Product\SystemField::convertRow($arCatalogProduct);
 				$arCatalogProduct['QUANTITY'] = (float)$arCatalogProduct['QUANTITY'];
 				static::setHitCache(self::CACHE_PRODUCT, $productID, $arCatalogProduct);
 			}
@@ -714,6 +721,7 @@ class CCatalogProductProvider implements IBXSaleProductProvider
 			"NOTES" => $arPrice["PRICE"]["CATALOG_GROUP_NAME"],
 			"DISCOUNT_PRICE" => $arPrice['RESULT_PRICE']['DISCOUNT'],
 			"TYPE" => ($arCatalogProduct["TYPE"] == Catalog\ProductTable::TYPE_SET ? CCatalogProductSet::TYPE_SET : null),
+			"MARKING_CODE_GROUP" => $arCatalogProduct["MARKING_CODE_GROUP"],
 			"DISCOUNT_VALUE" => ($arPrice['RESULT_PRICE']['PERCENT'] > 0 ? $arPrice['RESULT_PRICE']['PERCENT'].'%' : null),
 			"DISCOUNT_NAME" => null,
 			"DISCOUNT_COUPON" => null,

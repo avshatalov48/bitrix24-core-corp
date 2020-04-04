@@ -46,7 +46,6 @@ final class Document
 	/** @var Body|null  */
 	protected $body;
 	protected $values = [];
-	protected $entities = [];
 	protected $result;
 	/** @var Template */
 	protected $template;
@@ -56,6 +55,7 @@ final class Document
 	protected $externalValues = [];
 	protected $selectFields = [];
 	protected $isCheckAccess = false;
+	protected $userId;
 
 	/**
 	 * Document constructor.
@@ -67,7 +67,7 @@ final class Document
 	private function __construct(Body $body, array $fields = [], array $data = [], $value = null)
 	{
 		$this->body = $body;
-		$this->fields = $fields;
+		$this->fields = array_merge($this->getDefaultFields(), $fields);
 		$this->data = $data;
 		$this->result = new Result();
 		$this->values = [
@@ -534,6 +534,14 @@ final class Document
 	}
 
 	/**
+	 * @return string
+	 */
+	public function getCreationMethod()
+	{
+		return $this->getValue(CreationMethod::CREATION_METHOD_PLACEHOLDER);
+	}
+
+	/**
 	 * Returns array with all placeholders, their field descriptions and actual values.
 	 *
 	 * @param array $fieldNames
@@ -547,15 +555,6 @@ final class Document
 		Loc::loadLanguageFile(__FILE__);
 		$this->resolveProviders();
 		$fields = [];
-		$fields['DocumentTitle'] = [
-			'TITLE' => Loc::getMessage('DOCUMENT_TITLE_FIELD_NAME'),
-			'VALUE' => $this->getTitle(),
-			'GROUP' => [
-				$this->getFieldGroup(''),
-				'',
-			],
-			'CHAIN' => 'this.DOCUMENT.DOCUMENT_TITLE',
-		];
 
 		$default = !($this->ID > 0);
 		if(empty($fieldNames))
@@ -583,7 +582,7 @@ final class Document
 				$value = '';
 			}
 			$valueParts = explode('.', $value);
-			if($valueParts[0] && in_array($valueParts[0], $this->fieldNames))
+			if($valueParts[0] && in_array($valueParts[0], $this->fieldNames) || isset($fields[$placeholder]))
 			{
 				continue;
 			}
@@ -624,6 +623,31 @@ final class Document
 		}
 
 		return $fields;
+	}
+
+	/**
+	 * @return int
+	 */
+	public function getUserId()
+	{
+		$userId = $this->userId;
+		if($userId === null)
+		{
+			$userId = Driver::getInstance()->getUserId();
+		}
+
+		return $userId;
+	}
+
+	/**
+	 * @param int $userId
+	 * @return $this
+	 */
+	public function setUserId($userId)
+	{
+		$userId = (int)$userId;
+		$this->userId = $userId;
+		return $this;
 	}
 
 	/**
@@ -758,7 +782,11 @@ final class Document
 		if($this->result->isSuccess())
 		{
 			$resultData = $this->result->getData();
-			$saveResult = $this->body->save($this->getFileName());
+			$saveResult = $this->body->save([
+				'fileName' => $this->getFileName(),
+				'templateId' => $this->template->ID,
+				'value' => $this->getValue(Template::MAIN_PROVIDER_PLACEHOLDER),
+			]);
 			if(!$saveResult->isSuccess())
 			{
 				$this->result->addErrors($saveResult->getErrors());
@@ -779,13 +807,13 @@ final class Document
 				];
 				if($this->ID > 0)
 				{
-					$data['UPDATED_BY'] = Driver::getInstance()->getUserId();
+					$data['UPDATED_BY'] = $this->getUserId();
 					$result = DocumentTable::update($this->ID, $data);
 					$eventName = 'onUpdateDocument';
 				}
 				else
 				{
-					$data['CREATED_BY'] = Driver::getInstance()->getUserId();
+					$data['CREATED_BY'] = $this->getUserId();
 					$result = DocumentTable::add($data);
 					$eventName = 'onCreateDocument';
 				}
@@ -838,7 +866,7 @@ final class Document
 	}
 
 	/**
-	 * Link entities by their names and values.
+	 * Link providers by their names and values.
 	 */
 	protected function resolveProviders()
 	{
@@ -980,7 +1008,13 @@ final class Document
 
 		// if this value has been overwritten - use it.
 		$externalValues = $this->getExternalValues();
-		if(isset($externalValues[$name]) && $externalValues[$name] != $this->values[$name] && $externalValues[$name] != htmlspecialcharsbx($this->values[$name]))
+		if(
+			isset($externalValues[$name]) &&
+			$externalValues[$name] != $this->values[$name] &&
+			(
+				!is_array($this->values[$name]) && $externalValues[$name] != htmlspecialcharsbx($this->values[$name])
+			)
+		)
 		{
 			$value = $externalValues[$name];
 			$value = $this->resolveValue($value);
@@ -1014,12 +1048,16 @@ final class Document
 				}
 			}
 		}
+		elseif(is_callable($value))
+		{
+			$value = call_user_func($value);
+		}
 
 		return $value;
 	}
 
 	/**
-	 * This method resolves entities from $name.
+	 * This method resolves provider from $name.
 	 * For example, 'basket.price' is a placeholder.
 	 * First we need to get value for 'basket', and if it is a dataProvider - we can get 'price' value from it
 	 * $name may consist from infinite number of providers (provider1.provider2.provider3.provider4...name).
@@ -1228,13 +1266,6 @@ final class Document
 	 */
 	protected function getExternalValues($unique = false)
 	{
-		foreach($this->externalValues as $placeholder => $value)
-		{
-			if(empty($value))
-			{
-				unset($this->externalValues[$placeholder]);
-			}
-		}
 		$result = $this->externalValues;
 		if($unique)
 		{
@@ -1259,8 +1290,12 @@ final class Document
 	 * @param $userId
 	 * @return boolean
 	 */
-	public function hasAccess($userId)
+	public function hasAccess($userId = null)
 	{
+		if($userId === null)
+		{
+			$userId = $this->getUserId();
+		}
 		$this->isCheckAccess = true;
 		$sourceProvider = $this->getProvider();
 		if($sourceProvider)
@@ -1427,13 +1462,21 @@ final class Document
 	protected function getFieldNames()
 	{
 		$fieldNames = [];
+		foreach($this->getDefaultFields() as $placeholder => $field)
+		{
+			$fieldNames[$placeholder] = $placeholder;
+		}
+		foreach($this->externalFields as $placeholder => $field)
+		{
+			$fieldNames[$placeholder] = $placeholder;
+		}
 		if(!$this->body)
 		{
 			$this->result->addError(new Error('no body'));
 		}
 		else
 		{
-			$fieldNames = array_merge($this->body->getFieldNames(), $this->fieldNames);
+			$fieldNames = array_merge($this->body->getFieldNames(), $this->fieldNames, $fieldNames);
 		}
 
 		return $fieldNames;
@@ -1536,6 +1579,9 @@ final class Document
 			'TITLE' => $title,
 			'NUMBER' => $number,
 			'CREATED_BY' => Driver::getInstance()->getUserId(),
+			'VALUES' => [
+				CreationMethod::CREATION_METHOD_PLACEHOLDER => CreationMethod::METHOD_REST,
+			],
 		];
 		$result = DocumentTable::add($data);
 		if($result->isSuccess())
@@ -1566,5 +1612,27 @@ final class Document
 	public function getIsCheckAccess()
 	{
 		return ($this->isCheckAccess === true);
+	}
+
+	/**
+	 * @return array
+	 */
+	protected function getDefaultFields()
+	{
+		return [
+			'DocumentTitle' => [
+				'TITLE' => Loc::getMessage('DOCUMENT_TITLE_FIELD_NAME'),
+				'VALUE' => function()
+				{
+					return $this->getTitle();
+				},
+				'GROUP' => [
+					Loc::getMessage('DOCUMENT_GROUP_NAME'),
+					'',
+				],
+				'CHAIN' => 'this.DOCUMENT.DOCUMENT_TITLE',
+				'REQUIRED' => 'Y',
+			]
+		];
 	}
 }

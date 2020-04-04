@@ -239,10 +239,10 @@ HTML;
 							<div class="crm-start-channel-graph">
 								<div class="crm-start-channel-graph-half">
 									<div class="crm-start-channel-graph-total" title="{$user["TOTAL"][1]}">{$user["TOTAL"][1]}</div>
-									<div class="crm-start-channel-graph-line" style="width:{$k1}%;"></div>
+									<div class="crm-start-channel-graph-line" style="max-width:{$k1}%;"></div>
 								</div>
 								<div class="crm-start-channel-graph-half crm-start-channel-graph-half-right">
-									<div class="crm-start-channel-graph-line" style="width:{$k0}%;"></div>
+									<div class="crm-start-channel-graph-line" style="max-width:{$k0}%;"></div>
 									<div class="crm-start-channel-graph-total" title="{$user["TOTAL"][0]}">{$user["TOTAL"][0]}</div>
 								</div>
 							</div>
@@ -268,10 +268,10 @@ HTML;
 									<div class="crm-start-channel-graph">
 										<div class="crm-start-channel-graph-half">
 											<div class="crm-start-channel-graph-total" title="{$user["VALUE"][$entityId][1]}">{$user["VALUE"][$entityId][1]}</div>
-											<div class="crm-start-channel-graph-line" style="width:$p1%;"></div>
+											<div class="crm-start-channel-graph-line" style="max-width:$p1%;"></div>
 										</div>
 										<div class="crm-start-channel-graph-half crm-start-channel-graph-half-right">
-											<div class="crm-start-channel-graph-line" style="width:$p0%;"></div>
+											<div class="crm-start-channel-graph-line" style="max-width:$p0%;"></div>
 											<div class="crm-start-channel-graph-total" title="{$user["VALUE"][$entityId][0]}">{$user["VALUE"][$entityId][0]}</div>
 										</div>
 									</div>

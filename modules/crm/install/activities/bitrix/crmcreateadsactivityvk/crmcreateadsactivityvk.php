@@ -1,4 +1,7 @@
 <?
+
+use Bitrix\Crm\Ads\AdsAudience;
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
 /*
@@ -18,6 +21,7 @@ class CBPCrmCreateAdsActivityVk extends CBPActivity
 	{
 		parent::__construct($name);
 		$this->arProperties = array(
+			"clientId" => null,
 			"accountId" => null,
 			"audienceId" => null,
 			"audienceEmailId" => null,
@@ -26,10 +30,13 @@ class CBPCrmCreateAdsActivityVk extends CBPActivity
 		);
 	}
 
-	protected static function getAdsProvider()
+	protected static function getAdsProvider($clientId = null)
 	{
 		$adsType = static::getAdsType();
-		$providers = \Bitrix\Crm\Ads\AdsAudience::getProviders();
+
+		$service = AdsAudience::getService();
+		$service->setClientId($clientId);
+		$providers = AdsAudience::getProviders([$adsType]);
 		$isFound = false;
 		$provider = array();
 		foreach ($providers as $type => $provider)
@@ -106,7 +113,7 @@ class CBPCrmCreateAdsActivityVk extends CBPActivity
 			$isError = true;
 		}
 
-		$provider = static::getAdsProvider();
+		$provider = static::getAdsProvider($this->clientId);
 		if (!$provider)
 		{
 			$isError = true;
@@ -150,15 +157,16 @@ class CBPCrmCreateAdsActivityVk extends CBPActivity
 		{
 			foreach ($audienceList as $audience)
 			{
-				$config = new \Bitrix\Crm\Ads\AdsAudienceConfig();
+				$config = new \Bitrix\Seo\Retargeting\AdsAudienceConfig();
+				$config->clientId = $this->clientId;
 				$config->accountId = $this->accountId;
 				$config->audienceId = $audience['id'];
 				$config->contactType = $audience['contactType'];
 				$config->type = static::getAdsType();
 				$config->autoRemoveDayNumber = $this->autoRemoveDayNumber;
 
-				\Bitrix\Crm\Ads\AdsAudience::useQueue();
-				\Bitrix\Crm\Ads\AdsAudience::addFromEntity($entityTypeId, $entityId, $config);
+				AdsAudience::useQueue();
+				AdsAudience::addFromEntity($entityTypeId, $entityId, $config);
 			}
 		}
 
@@ -211,14 +219,6 @@ class CBPCrmCreateAdsActivityVk extends CBPActivity
 		if (!static::isModulesIncluded())
 			return '';
 
-		$adsType = static::getAdsType();
-		$provider = static::getAdsProvider();
-
-		if (!$provider)
-		{
-			return '';
-		}
-
 		$dialog = new \Bitrix\Bizproc\Activity\PropertiesDialog(__FILE__, array(
 			'documentType' => $documentType,
 			'activityName' => $activityName,
@@ -232,6 +232,12 @@ class CBPCrmCreateAdsActivityVk extends CBPActivity
 
 
 		$dialog->setMap(array(
+			'clientId' => array(
+				'Name' => 'Client id',
+				'FieldName' => 'CLIENT_ID',
+				'Type' => 'string',
+				'Required' => false
+			),
 			'accountId' => array(
 				'Name' => 'Account id',
 				'FieldName' => 'ACCOUNT_ID',
@@ -264,6 +270,12 @@ class CBPCrmCreateAdsActivityVk extends CBPActivity
 			),
 		));
 
+		$provider = static::getAdsProvider($dialog->getCurrentValue('CLIENT_ID'));
+
+		if (!$provider)
+		{
+			return '';
+		}
 
 		if ($dialog->getCurrentValue('AUDIENCE_EMAIL_ID') || $dialog->getCurrentValue('AUDIENCE_PHONE_ID'))
 		{
@@ -278,6 +290,7 @@ class CBPCrmCreateAdsActivityVk extends CBPActivity
 		}
 		$dialog->setRuntimeData(array(
 			'PROVIDER' => $provider,
+			'CLIENT_ID' =>  $dialog->getCurrentValue('CLIENT_ID'),
 			'ACCOUNT_ID' => $dialog->getCurrentValue('ACCOUNT_ID'),
 			'AUDIENCE_ID' => $audienceId,
 			'AUTO_REMOVE_DAY_NUMBER' => (int) $dialog->getCurrentValue('AUTO_REMOVE_DAY_NUMBER'),
@@ -293,6 +306,7 @@ class CBPCrmCreateAdsActivityVk extends CBPActivity
 	{
 		$arErrors = Array();
 
+		$clientId = $arCurrentValues['CLIENT_ID'];
 		$accountId = $arCurrentValues['ACCOUNT_ID'];
 		$audienceId = $arCurrentValues['AUDIENCE_ID'];
 		$audienceEmailId = $arCurrentValues['AUDIENCE_EMAIL_ID'];
@@ -300,6 +314,7 @@ class CBPCrmCreateAdsActivityVk extends CBPActivity
 		$autoRemoveDayNumber = (int) $arCurrentValues['AUTO_REMOVE_DAY_NUMBER'];
 
 		$arProperties = array(
+			'clientId' => $clientId,
 			'accountId' => $accountId,
 			'audienceId' => $audienceId,
 			'audiencePhoneId' => $audiencePhoneId,

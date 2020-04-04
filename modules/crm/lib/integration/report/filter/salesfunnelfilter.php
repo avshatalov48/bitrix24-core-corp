@@ -7,6 +7,7 @@ use Bitrix\Crm\Filter\Factory;
 use Bitrix\Crm\Filter\LeadSettings;
 use Bitrix\Crm\Integration\Report\Dashboard\Sales\SalesFunnelBoard;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Type\Date;
 use Bitrix\Main\UI\Filter\DateType;
 
 /**
@@ -15,11 +16,18 @@ use Bitrix\Main\UI\Filter\DateType;
  */
 class SalesFunnelFilter extends Base
 {
+	static $fieldList = [];
+
 	public function getFilterParameters()
 	{
 		$filterParameters = parent::getFilterParameters();
+		$filterParameters['RESET_TO_DEFAULT_MODE'] = true;
+		$filterParameters['DISABLE_SEARCH'] = false;
+		$filterParameters['ENABLE_LIVE_SEARCH'] = true;
+
 		return $filterParameters;
 	}
+
 	/**
 	 * @return array
 	 */
@@ -27,10 +35,14 @@ class SalesFunnelFilter extends Base
 	{
 		$fieldsList = parent::getFieldsList();
 
+		if (self::$fieldList)
+		{
+			return self::$fieldList;
+		}
 		if (\Bitrix\Crm\Settings\LeadSettings::isEnabled())
 		{
 			$leadFilter = Factory::createEntityFilter(
-				new LeadSettings(array('ID' => SalesFunnelBoard::BOARD_KEY))
+				new LeadSettings(['ID' => SalesFunnelBoard::BOARD_KEY])
 			);
 
 			$disabledFieldKeys = [
@@ -39,15 +51,14 @@ class SalesFunnelFilter extends Base
 				'COMMUNICATION_TYPE',
 				'WEB',
 				'IM',
-				'TRACKING_SOURCE',
-				'TRACKING_ASSIGNED',
+				'TRACKING_SOURCE_ID',
+				'TRACKING_CHANNEL_CODE',
 			];
 
 			$fields = $leadFilter->getFields();
 			foreach ($fields as $field)
 			{
 				$field = $field->toArray();
-
 
 				if (in_array($field['id'], $disabledFieldKeys))
 				{
@@ -79,16 +90,21 @@ class SalesFunnelFilter extends Base
 		$userPermissions = \CCrmPerms::getCurrentUserPermissions();
 		$dealFilter = Factory::createEntityFilter(
 			new DealSettings(
-				array(
+				[
 					'ID' => SalesFunnelBoard::BOARD_KEY,
 					'categoryID' => -1,
-					'categoryAccess' => array(
+					'categoryAccess' => [
 						'READ' => \CCrmDeal::getPermittedToReadCategoryIDs($userPermissions),
-					),
+					],
 					'flags' => DealSettings::FLAG_NONE
-				)
+				]
 			)
 		);
+
+		$disabledFieldKeys = [
+			'TRACKING_SOURCE_ID',
+			'TRACKING_CHANNEL_CODE',
+		];
 
 		$fields = $dealFilter->getFields();
 		foreach ($fields as $field)
@@ -99,8 +115,21 @@ class SalesFunnelFilter extends Base
 			{
 				continue;
 			}
+
+			if (in_array($field['id'], $disabledFieldKeys))
+			{
+				continue;
+			}
+
+			if ($field['id'] === 'CATEGORY_ID')
+			{
+				$field['params']['multiple'] = 'N';
+			}
+
 			$field['id'] = 'FROM_DEAL_'.$field['id'];
-			$field['name'] = $field['name'].' '.Loc::getMessage('CRM_REPORT_SALES_FUNNEL_BOARD_FILTER_DEAL_FIELDS_POSTFIX');
+			$field['name'] = $field['name'].
+								' '.
+								Loc::getMessage('CRM_REPORT_SALES_FUNNEL_BOARD_FILTER_DEAL_FIELDS_POSTFIX');
 			if (isset($field['type']) && $field['type'] === 'custom_entity')
 			{
 				$field['html'] = str_replace(
@@ -124,8 +153,9 @@ class SalesFunnelFilter extends Base
 
 			$fieldsList[] = $field;
 		}
+		self::$fieldList = $fieldsList;
 
-		return $fieldsList;
+		return self::$fieldList;
 	}
 
 	/**
@@ -135,13 +165,30 @@ class SalesFunnelFilter extends Base
 	{
 		$presets['filter_last_30_day'] = [
 			'name' => Loc::getMessage('CRM_REPORT_FILTER_LAST_30_DAYS_PRESET_TITLE'),
-			'fields' => array(
+			'fields' => [
 				'TIME_PERIOD_datesel' => DateType::LAST_30_DAYS,
-				'FROM_DEAL_CATEGORY_ID' => ["0"]
-			),
+				'FROM_DEAL_CATEGORY_ID' => "0"
+			],
 			'default' => true,
+		];
+
+		$presets['filter_current_month'] = [
+			'name' => Loc::getMessage('CRM_REPORT_FILTER_CURRENT_MONTH_PRESET_TITLE'),
+			'fields' => [
+				'TIME_PERIOD_datesel' => DateType::CURRENT_MONTH,
+				'FROM_DEAL_CATEGORY_ID' => "0"
+			],
+		];
+
+		$presets['filter_last_month'] = [
+			'name' => Loc::getMessage('CRM_REPORT_FILTER_LAST_MONTH_PRESET_TITLE'),
+			'fields' => [
+				'TIME_PERIOD_datesel' => DateType::LAST_MONTH,
+				'FROM_DEAL_CATEGORY_ID' => "0"
+			],
 		];
 
 		return $presets;
 	}
+
 }

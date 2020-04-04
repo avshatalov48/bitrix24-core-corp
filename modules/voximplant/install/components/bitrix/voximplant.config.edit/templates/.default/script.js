@@ -53,7 +53,11 @@
 			'number-selection': 'number-selection-settings',
 			'callback-redial': 'callback-redial-settings',
 			'backup-number': 'backup-number-settings',
+			'enable-sip-detect-line-number': 'sip-detect-line-number-settings',
 		};
+
+		this.sipNumberSelector = BX.UI.TileSelector.getById('sip-numbers');
+		this.numberInputPopup = null;
 
 		Object.keys(this.map).forEach(function(checkboxRole)
 		{
@@ -113,12 +117,17 @@
 			}
 		}
 
-		this.setCrmCreate(this.getNode('crm-create').value);
+		if(this.getNode('crm-create'))
+		{
+			this.setCrmCreate(this.getNode('crm-create').value);
+		}
 
 		if(this.portalMode === 'SIP' && this.sipConfig.TYPE === 'cloud')
 		{
 			this.checkSipState();
 		}
+
+		this.sipNumberSelector.getTiles().forEach(function (tile) {tile.changeRemoving(tile.data.canRemove);}, this);
 	};
 
 	BX.Voximplant.ConfigEditor.prototype.bindEvents = function ()
@@ -175,6 +184,9 @@
 				);
 			});
 		}
+
+		BX.addCustomEvent(this.sipNumberSelector, this.sipNumberSelector.events.buttonAdd, this.onAddSipNumberButtonClick.bind(this));
+		BX.addCustomEvent(this.sipNumberSelector, this.sipNumberSelector.events.tileRemove, this.onNumberSelectorRemoveTile.bind(this));
 	};
 
 
@@ -452,6 +464,62 @@
 		this.showIvrSettings({
 			ivrId: this.getNode('select-ivr').value
 		});
+	};
+
+	BX.Voximplant.ConfigEditor.prototype.onAddSipNumberButtonClick = function (e)
+	{
+		this.numberInputPopup = new AddNumberPopup({
+			bindElement: this.sipNumberSelector.buttonAdd,
+			onAdd: this.addSipNumber.bind(this),
+			onCancel: function()
+			{
+				this.numberInputPopup.close()
+			}.bind(this),
+			onDestroy: function()
+			{
+				this.numberInputPopup = null;
+			}.bind(this)
+		});
+		this.numberInputPopup.show();
+	};
+
+	BX.Voximplant.ConfigEditor.prototype.addSipNumber = function(params)
+	{
+		BX.ajax.runComponentAction("bitrix:voximplant.config.edit", "addSipNumber", {
+			data: {
+				sipId: this.sipConfig.ID,
+				number: params.number
+			}
+		}).then(function(response)
+		{
+			this.numberInputPopup.close();
+			var numberFields = response.data;
+			this.sipNumberSelector.addTile(
+				numberFields["FORMATTED_NUMBER"],
+				{
+					canRemove: true
+				},
+				numberFields["NUMBER"]
+			)
+
+		}.bind(this)).catch(function(response)
+		{
+			this.numberInputPopup.close();
+			BX.Voximplant.alert(" ", response.errors[0].message);
+		}.bind(this));
+	};
+
+	BX.Voximplant.ConfigEditor.prototype.onNumberSelectorRemoveTile = function(tile)
+	{
+		BX.ajax.runComponentAction("bitrix:voximplant.config.edit", "removeSipNumber", {
+			data: {
+				sipId: this.sipConfig.ID,
+				number: tile.id
+			}
+		}).catch(function(response)
+		{
+			console.error(response.errors[0].message);
+		})
 	};
 
 	BX.Voximplant.ConfigEditor.prototype.showGroupSettings = function (params)
@@ -773,5 +841,127 @@
 		ivrSelect.value = ivrFields.ID;
 		this.currentIvrId = ivrFields.ID;
 	};
+
+	var AddNumberPopup = function(config)
+	{
+		this.popup = null;
+		this.bindElement = config.bindElement;
+
+		this.input = null;
+		this.value = "";
+
+		this.callbacks = {
+			onAdd: BX.type.isFunction(config.onAdd) ? config.onAdd : BX.DoNothing,
+			onCancel: BX.type.isFunction(config.onCancel) ? config.onCancel : BX.DoNothing,
+			onDestroy: BX.type.isFunction(config.onDestroy) ? config.onDestroy : BX.DoNothing,
+		}
+	};
+
+	AddNumberPopup.prototype = {
+		show: function()
+		{
+			if(this.popup)
+			{
+				this.popup.show();
+				return;
+			}
+
+			this.popup = new BX.PopupWindow("vox-config-add-number", this.bindElement, {
+				autoHide: true,
+				closeByEsc: true,
+				closeIcon: false,
+				contentNoPaddings: true,
+				contentColor: "white",
+				events: {
+					onPopupClose: function ()
+					{
+						this.destroy()
+					}.bind(this),
+					onPopupDestroy: function ()
+					{
+						this.popup = null;
+					}.bind(this)
+				},
+				content: BX.create("div", {
+					children: [
+						this.input = BX.create("input", {
+							props: {className: "voximplant-control-input"},
+							events: {
+								keyup: this.onInputKeyUp.bind(this)
+							}
+						})
+					]
+				}),
+				buttons: [
+					new BX.PopupWindowCustomButton({
+						id: "button-add",
+						text: BX.message("VI_CONFIG_SIP_ADD"),
+						className: "ui-btn ui-btn-sm ui-btn-primary",
+						events: {
+							click: this.onAddButtonClick.bind(this)
+						}
+					}),
+					new BX.PopupWindowCustomButton({
+						id: "button-cancel",
+						text: BX.message("VI_CONFIG_SIP_CANCEL"),
+						className: "ui-btn ui-btn-sm ui-btn-link",
+						events: {
+							click: this.onCancelButtonClick.bind(this)
+						}
+					})
+				]
+			});
+
+			this.inputFormatted = new BX.PhoneNumber.Input({
+				node: this.input,
+				onChange: this.onInputChange.bind(this)
+			});
+
+			this.popup.show();
+			this.input.focus();
+		},
+
+		close: function()
+		{
+			if(this.popup)
+			{
+				this.popup.close();
+			}
+		},
+
+		onInputChange: function(e)
+		{
+			this.value = e.value;
+		},
+
+		onInputKeyUp: function(e)
+		{
+			if(e.key === "Enter")
+			{
+				this.onAddButtonClick();
+				e.preventDefault();
+				e.stopPropagation();
+			}
+		},
+
+		onAddButtonClick: function()
+		{
+			this.popup.getButton("button-add").addClassName("ui-btn-wait");
+			this.callbacks.onAdd({
+				number: this.value
+			});
+		},
+
+		onCancelButtonClick: function()
+		{
+			this.close();
+		},
+
+		destroy: function()
+		{
+			this.popup.destroy();
+			this.callbacks.onDestroy();
+		}
+	}
 
 })(window);

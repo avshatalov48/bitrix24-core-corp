@@ -107,11 +107,10 @@ class TokensTable extends Entity\DataManager
 	 */
 	public static function updateToken($oldToken, $userId, $newToken = null, DateTime $expiredAt = null)
 	{
-		$params['USER_ID'] = $userId;
-		$params['TOKEN'] = $newToken ?: Random::getString(static::DEFAULT_TOKEN_LENGTH);
-		$params['EXPIRED_AT'] = $expiredAt ?: self::getTokenNewValidTimeInterval();
-
-		return static::update($oldToken, $params)->getData();
+		$token = $newToken ?: Random::getString(static::DEFAULT_TOKEN_LENGTH);
+		$expiredAt = $expiredAt ?: self::getTokenNewValidTimeInterval();
+		static::delete($oldToken);
+		return static::createToken($userId, $token, $expiredAt);
 	}
 
 	/**
@@ -156,7 +155,7 @@ class TokensTable extends Entity\DataManager
 	}
 
 	/**
-	 * @return \Bitrix\Main\Type\Date
+	 * @return \Bitrix\Main\Type\DateTime
 	 */
 	private static function getTokenNewValidTimeInterval()
 	{

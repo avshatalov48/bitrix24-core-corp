@@ -6,7 +6,7 @@
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 \Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/css/main/table/style.css');
 
-CUtil::InitJSCore(Array('access'));
+CUtil::InitJSCore(Array('access', 'sidepanel'));
 ?>
 
 <div id="vi-permissions-edit">
@@ -59,7 +59,11 @@ CUtil::InitJSCore(Array('access'));
 								<?=htmlspecialcharsbx($role['NAME'])?>
 							</td>
 							<td class="table-blue-td-action">
-								<a class="table-blue-edit" title="<?=GetMessage('IMOL_PERM_EDIT')?>" href="<?=$role['EDIT_URL']?>"></a>
+								<? if($arResult['IFRAME']): ?>
+									<a class="table-blue-edit" href="javascript:void(0);" title="<?=GetMessage('IMOL_PERM_EDIT')?>" onclick="BX.SidePanel.Instance.open('<?=$role['EDIT_URL']?>', {allowChangeHistory: false})"></a>
+								<? else: ?>
+									<a class="table-blue-edit" href="<?=$role['EDIT_URL']?>" title="<?=GetMessage('IMOL_PERM_EDIT')?>"></a>
+								<? endif; ?>
 								<?if($arResult['CAN_EDIT']):?>
 									<span class="table-blue-delete bx-vi-js-delete-role" title="<?=GetMessage('IMOL_PERM_DELETE')?>" data-role-id="<?=htmlspecialcharsbx($role['ID'])?>"></span>
 								<?endif?>
@@ -68,7 +72,11 @@ CUtil::InitJSCore(Array('access'));
 					<?endforeach;?>
 					<tr>
 						<td colspan="2" class="table-blue-td-link">
-							<a href="<?=$arResult['ADD_URL']?>" class="table-blue-link"><?=GetMessage('IMOL_PERM_ADD')?></a>
+							<? if($arResult['IFRAME']): ?>
+								<a href="javascript:void(0);" onclick="BX.SidePanel.Instance.open('<?=$arResult['ADD_URL']?>', {allowChangeHistory: false})" class="table-blue-link"><?=GetMessage('IMOL_PERM_ADD')?></a>
+							<? else: ?>
+								<a href="<?=$arResult['ADD_URL']?>" class="table-blue-link"><?=GetMessage('IMOL_PERM_ADD')?></a>
+							<? endif; ?>
 						</td>
 					</tr>
 				</table>

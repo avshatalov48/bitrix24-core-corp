@@ -817,6 +817,11 @@ class State
 	 */
 	private function changeState($state, Date $sendDate = null)
 	{
+		if (!$this->isCampaignActive() && in_array($state, [self::SENDING, self::PLANNED]))
+		{
+			throw new InvalidOperationException(Loc::getMessage('SENDER_DISPATCH_STATE_ERROR_CAMPAIGN_INACTIVE'));
+		}
+
 		if (!$this->canChangeState($state))
 		{
 			$messageText = Loc::getMessage('SENDER_DISPATCH_STATE_ERROR_CHANGE', array(
@@ -937,5 +942,10 @@ class State
 			Model\LetterTable::STATUS_END => self::SENT,
 			Model\LetterTable::STATUS_CANCEL => self::STOPPED,
 		);
+	}
+
+	private function isCampaignActive()
+	{
+		return $this->letter->get('CAMPAIGN_ACTIVE', 'Y') === 'Y';
 	}
 }

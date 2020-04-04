@@ -12,6 +12,7 @@ use \Bitrix\Imopenlines\Limit;
 				   id="imol_vote_message"
 				   name="CONFIG[VOTE_MESSAGE]"
 				   value="Y"
+				   data-limit="<?=!Limit::canUseVoteClient()?'Y':'N';?>"
 				   <? if ($arResult['CONFIG']['VOTE_MESSAGE'] == "Y") { ?>checked<? } ?>>
 			<?=Loc::getMessage("IMOL_CONFIG_EDIT_VOTE_MESSAGE_NEW")?>
 			<?
@@ -137,7 +138,7 @@ use \Bitrix\Imopenlines\Limit;
 								<input name="CONFIG[VOTE_MESSAGE_2_DISLIKE]"
 									   class="imopenlines-control-input"
 									   type="text"
-									   value="<?=str_replace(array('[BR]', '[br]', '#BR#'), PHP_EOL, htmlspecialcharsbx($arResult['CONFIG']['VOTE_MESSAGE_1_DISLIKE']))?>">
+									   value="<?=str_replace(array('[BR]', '[br]', '#BR#'), PHP_EOL, htmlspecialcharsbx($arResult['CONFIG']['VOTE_MESSAGE_2_DISLIKE']))?>">
 							</div>
 						</div>
 						<div class="imopenlines-control-container">
@@ -151,7 +152,7 @@ use \Bitrix\Imopenlines\Limit;
 								<input name="CONFIG[VOTE_MESSAGE_2_LIKE]"
 									   class="imopenlines-control-input"
 									   type="text"
-									   value="<?=str_replace(array('[BR]', '[br]', '#BR#'), PHP_EOL, htmlspecialcharsbx($arResult['CONFIG']['VOTE_MESSAGE_1_LIKE']))?>">
+									   value="<?=str_replace(array('[BR]', '[br]', '#BR#'), PHP_EOL, htmlspecialcharsbx($arResult['CONFIG']['VOTE_MESSAGE_2_LIKE']))?>">
 							</div>
 						</div>
 					</div>

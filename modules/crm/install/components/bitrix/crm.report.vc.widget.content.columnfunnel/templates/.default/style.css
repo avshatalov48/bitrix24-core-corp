@@ -67,6 +67,16 @@
 	text-overflow: ellipsis;
 }
 
+.crm-report-column-funnel-card-info-value-clickable {
+	border-bottom: 1px dashed transparent;
+}
+
+.crm-report-column-funnel-card-info-value-clickable:hover {
+	color: #2066B0;
+	border-bottom: 1px dashed #2066B0;
+	cursor: pointer;
+}
+
 .crm-report-column-funnel-card-info-symbol {
 	display: inline-block;
 }
@@ -185,6 +195,10 @@
 	height: 0;
 	border-top: 2px solid #fff;
 	transition: height 0.5s;
+}
+
+.crm-report-column-funnel-through-funnel-widget-item-clickable:hover {
+	cursor: pointer;
 }
 
 .crm-report-column-funnel-through-funnel-widget-2 .crm-report-column-funnel-through-funnel-widget-item {
@@ -561,4 +575,12 @@
 
 .crm-report-column-funnel-wrapper {
 	padding: 15px 20px 20px 20px;
+}
+
+.crm-report-column-funnel-card-flexed-container {
+	display: flex;
+}
+
+.crm-report-column-funnel-card-flex-item {
+	flex: 1;
 }

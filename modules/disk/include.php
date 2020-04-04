@@ -120,7 +120,7 @@ CJSCore::RegisterExt('disk', array(
 			// And in this case we'll rewrite composite cache and have invalid data in composite cache.
 			// So in this way we have to insert BX.messages in dynamic area by viewContent placeholders.
 			global $APPLICATION;
-			$APPLICATION->AddViewContent("pagetitle", '
+			$APPLICATION->AddViewContent("below_pagetitle", '
 				<script>
 					BX.message["disk_restriction"] = false;
 					BX.message["disk_revision_api"] = ' . (int)\Bitrix\Disk\Configuration::getRevisionApi() . ';

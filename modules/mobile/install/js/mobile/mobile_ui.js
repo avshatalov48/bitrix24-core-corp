@@ -8,21 +8,11 @@
 		return;
 
 	window.BX.MobileUI = {
-
+		events:{
+			MOBILE_UI_TEXT_FIELD_SET_PARAMS:"mobile.ui/textfield/setdefaultparams"
+		},
 		TextField: {
-			/**
-			 * @param params
-			 * @config {boolean} useFilePanel - show panel to manage attachments
-			 * @config {boolean} useMentions - use mention function
-			 * @config {boolean} useSmiles - show smile panel
-			 * @config {object} attachSources - attach items
-			 * @config {object} attachResizeOptions - attach settings
-			 * @config {object} attachUseBase64 -
-			 * @config {function} onSend - send-button handler
-			 * @config {function} onEvent - event handler
-			 * @config {function} onPlusPressed - event handler
-			 */
-			show: function (params)
+			__generateParams: function(params)
 			{
 				var userId = BX.message("USER_ID");
 				var panelParams = {
@@ -158,9 +148,44 @@
 					panelParams.callback = params["onEvent"];
 				}
 
-				BXMPage.TextPanel.show(panelParams);
-
 				return panelParams;
+			},
+			setDefaultParams: function (params)
+			{
+				BX.MobileUI.TextField.defaultParams = BX.MobileUI.TextField.__generateParams(params);
+				BX.onCustomEvent(BX.MobileUI.events.MOBILE_UI_TEXT_FIELD_SET_PARAMS, [BX.MobileUI.TextField.defaultParams]);
+
+			},
+			/**
+			 * @param params
+			 * @config {boolean} useFilePanel - show panel to manage attachments
+			 * @config {boolean} useMentions - use mention function
+			 * @config {boolean} useSmiles - show smile panel
+			 * @config {object} attachSources - attach items
+			 * @config {object} attachResizeOptions - attach settings
+			 * @config {object} attachUseBase64 -
+			 * @config {function} onSend - send-button handler
+			 * @config {function} onEvent - event handler
+			 * @config {function} onPlusPressed - event handler
+			 */
+			show: function (params)
+			{
+				var panelParams = {};
+				if(typeof params != "undefined")
+				{
+					panelParams = BX.MobileUI.TextField.__generateParams(params);
+				}
+				else
+				{
+					if( typeof BX.MobileUI.TextField.defaultParams  != "undefined")
+					{
+						panelParams = BX.MobileUI.TextField.defaultParams;
+					}
+				}
+
+
+
+				BXMPage.TextPanel.show(panelParams);
 			}
 		},
 		createLoader: function ()
@@ -505,7 +530,6 @@
 
 				if (
 					!likeButtonNode
-					&& window.platform != "android"
 				)
 				{
 					var highlightNode = BX.findParent(targetNode, { className: params.copyItemClass }, node);

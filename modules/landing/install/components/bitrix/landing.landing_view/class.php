@@ -9,7 +9,11 @@ use \Bitrix\Landing\Site;
 use \Bitrix\Landing\Landing;
 use \Bitrix\Landing\Syspage;
 use \Bitrix\Landing\Hook;
+use \Bitrix\Landing\Rights;
+use \Bitrix\Main\EventManager;
 use \Bitrix\Main\ModuleManager;
+use \Bitrix\Landing\Source\Selector;
+use \Bitrix\Landing\PublicAction\Demos;
 
 \CBitrixComponent::includeComponentClass('bitrix:landing.base');
 
@@ -165,6 +169,13 @@ class LandingViewComponent extends LandingBaseComponent
 					\localRedirect($this->getTimestampUrl($url), true);
 				}
 			}
+			else
+			{
+				$this->setErrors(
+					$landing->getError()->getErrors()
+				 );
+				return false;
+			}
 		}
 
 		$this->setErrors(
@@ -279,9 +290,10 @@ class LandingViewComponent extends LandingBaseComponent
 
 	/**
 	 * Gets pages count of current site.
+	 * @param int $siteId Site id.
 	 * @return int
 	 */
-	public function getPagesCount()
+	public function getPagesCount($siteId = null)
 	{
 		if (is_int($this->pagesCount))
 		{
@@ -295,7 +307,9 @@ class LandingViewComponent extends LandingBaseComponent
 				)
 			),
 			'filter' => array(
-				'=SITE_ID' => $this->arParams['SITE_ID']
+				'=SITE_ID' => ($siteId === null)
+							? $siteId
+							: $this->arParams['SITE_ID']
 			)
 		));
 		if ($row = $res->fetch())
@@ -319,21 +333,34 @@ class LandingViewComponent extends LandingBaseComponent
 		$type = strtolower($this->arParams['TYPE']);
 		$landing = $this->arResult['LANDING'];
 		$params = $this->arParams;
-		$eventManager = \Bitrix\Main\EventManager::getInstance();
+		$eventManager = EventManager::getInstance();
 		$eventManager->addEventHandler('landing', 'onLandingView',
 			function(\Bitrix\Main\Event $event) use ($type, $params, $landing)
 			{
 				/** @var \Bitrix\Landing\Landing $landing */
 				$result = new \Bitrix\Main\Entity\EventResult;
+				$b24 = \Bitrix\Landing\Manager::isB24();
+				$isStore = \Bitrix\Landing\Manager::isStoreEnabled();
 				$options = $event->getParameter('options');
 				$meta = $landing->getMeta();
 				$options['version'] = Manager::getVersion();
 				$options['params'] = (array)$params['PARAMS'];
 				$options['params']['type'] = $params['TYPE'];
 				$options['sites_count'] = $this->getSitesCount();
-				$options['pages_count'] = $this->getPagesCount();
+				$options['pages_count'] = $this->getPagesCount($landing->getSiteId());
 				$options['syspages'] = array();
 				$options['promoblocks'] = array();
+				$options['helps'] = [
+					'DYNAMIC_BLOCKS' => \Bitrix\Landing\Help::getHelpUrl('DYNAMIC_BLOCKS')
+				];
+				$options['features'] = [
+					Manager::FEATURE_DYNAMIC_BLOCK => Manager::checkFeature(
+						Manager::FEATURE_DYNAMIC_BLOCK
+					)
+				];
+				$options['rights'] = Rights::getOperationsForSite(
+					$landing->getSiteId()
+				);
 				$options['placements'] = array(
 					'blocks' => array(),
 					'image' => array()
@@ -342,85 +369,58 @@ class LandingViewComponent extends LandingBaseComponent
 					'YACOUNTER' => array(),
 					'GACOUNTER' => array()
 				);
-				$options['sources'] = array (//tmp
-					0 =>
-						array (
-							'name' => 'Blog',
-							'url' =>
-								array (
-									'filter' => '',
-									'create' => '',
-								),
-							'sort' =>
-								array (
-									0 =>
-										array (
-											'id' => 'ID',
-											'name' => 'By ID',
-										),
-									1 =>
-										array (
-											'id' => 'TITLE',
-											'name' => 'By title',
-										),
-								),
-							'references' =>
-								array (
-									0 =>
-										array (
-											'id' => 'TITLE',
-											'name' => 'Title',
-											'type' => 'text',
-										),
-									1 =>
-										array (
-											'id' => 'TEXT',
-											'name' => 'Text',
-											'type' => 'text',
-										),
-								),
-						),
-					1 =>
-						array (
-							'name' => 'Catalog',
-							'url' =>
-								array (
-									'filter' => '',
-									'create' => '',
-								),
-							'sort' =>
-								array (
-									0 =>
-										array (
-											'id' => 'ID',
-											'name' => 'By ID',
-										),
-									1 =>
-										array (
-											'id' => 'PRICE',
-											'name' => 'By price',
-										),
-								),
-							'references' =>
-								array (
-									0 =>
-										array (
-											'id' => 'TITLE',
-											'name' => 'Title',
-											'type' => 'text',
-										),
-									1 =>
-										array (
-											'id' => 'PREVIEW_TEXT',
-											'name' => 'Preivew text',
-											'type' => 'text',
-										),
-								),
-						),
-				);
 				$options['lastModified'] = isset($meta['DATE_MODIFY'])
-											? $meta['DATE_MODIFY']->getTimestamp()
-											: null;
+					? $meta['DATE_MODIFY']->getTimestamp()
+					: null;
+				$options['sources'] = array_values(Selector::getSources([]));
+				// gets default pages in this site
+				// @todo: should refactor for several types (detail, ...)
+				if ($options['sources'])
+				{
+					foreach ($options['sources'] as &$source)
+					{
+						$source['default'] = [
+							'detail' => ''
+						];
+						$checkPages = [
+							'detail' => []
+						];
+						// get available templates
+						$demoPages = Demos::getPageList(
+							'page',
+							['section' => 'dynamic:' . $source['id']]
+						)->getResult();
+						foreach ($demoPages as $demoItem)
+						{
+							if (in_array('dynamic:detail', $demoItem['SECTION']))
+							{
+								$checkPages['detail'][] = $demoItem['ID'];
+							}
+						}
+						if ($checkPages['detail'])
+						{
+							$res = Landing::getList([
+								'select' => [
+									'ID', 'TPL_CODE'
+								],
+								'filter' => [
+									'SITE_ID' => $this->arParams['SITE_ID']
+								],
+								'order' => [
+									'ID' => 'asc'
+								]
+							]);
+							while ($row = $res->fetch())
+							{
+								if (in_array($row['TPL_CODE'], $checkPages['detail']))
+								{
+									$source['default']['detail'] = '#landing' . $row['ID'];
+								}
+							}
+						}
+					}
+					unset($source);
+				}
 				// product type
 				if (ModuleManager::isModuleInstalled('bitrix24'))
 				{
@@ -461,7 +461,7 @@ class LandingViewComponent extends LandingBaseComponent
 				}
 				unset($hookFields);
 				// get system pages
-				foreach (Syspage::get($this->arParams['SITE_ID']) as $code => $page)
+				foreach (Syspage::get($landing->getSiteId()) as $code => $page)
 				{
 					$options['syspages'][$code] = array(
 						'landing_id' => $page['LANDING_ID'],
@@ -475,7 +475,8 @@ class LandingViewComponent extends LandingBaseComponent
 							'TITLE'
 						],
 						'filter' => [
-							'ID' => $mainPageId
+							'ID' => $mainPageId,
+							'CHECK_PERMISSIONS' => 'N'
 						]
 				 	]);
 					if ($row = $res->fetch())
@@ -486,9 +487,15 @@ class LandingViewComponent extends LandingBaseComponent
 						);
 					}
 				}
+				// special check for type = SMN
+				if ($options['params']['type'] == 'SMN')
+				{
+					if (isset($options['syspages']['catalog']))
+					{
+						$options['params']['type'] = 'STORE';
+					}
+				}
 				// unset blocks not for this type
-				$b24 = \Bitrix\Landing\Manager::isB24();
-				$isStore = \Bitrix\Landing\Manager::isStoreEnabled();
 				foreach ($options['blocks'] as &$section)
 				{
 					foreach ($section['items'] as $code => &$block)
@@ -595,6 +602,21 @@ class LandingViewComponent extends LandingBaseComponent
 			}
 		);
 	}
+	
+	/**
+	 * Handler on template epilog.
+	 * @return void
+	 */
+	protected function onEpilog()
+	{
+		$eventManager = EventManager::getInstance();
+		$eventManager->addEventHandler('main', 'OnEpilog',
+			function()
+			{
+				Manager::initAssets();
+			}
+		);
+	}
 
 	/**
 	 * Base executable method.
@@ -626,14 +648,20 @@ class LandingViewComponent extends LandingBaseComponent
 
 			if ($landing->exist())
 			{
+				$this->arResult['SITES_COUNT'] = $this->getSitesCount();
+				$this->arResult['PAGES_COUNT'] = $this->getPagesCount($landing->getSiteId());
 				$this->arResult['SITE'] = $this->getSites(array(
 					'filter' => array(
-						'ID' => $this->arParams['SITE_ID']
+						'ID' => $landing->getSiteId()
 					)
 				));
 				if ($this->arResult['SITE'])
 				{
 					$this->arResult['SITE'] = array_pop($this->arResult['SITE']);
+				}
+				else
+				{
+					return;
 				}
 				// disable optimisation
 				if (\Bitrix\Landing\Manager::isB24())
@@ -669,7 +697,7 @@ class LandingViewComponent extends LandingBaseComponent
 						$this->arResult['PLACEMENTS_SETTINGS'][] = $row;
 					}
 				}
-				// can publication page?
+				// can publication / edit settings for page?
 				$canPublication = Manager::checkFeature(
 					Manager::FEATURE_PUBLICATION_PAGE,
 					array(
@@ -692,8 +720,24 @@ class LandingViewComponent extends LandingBaseComponent
 					);
 					$this->arResult['CAN_PUBLICATION_SITE'] = $canPublication;
 				}
+				$rights = Rights::getOperationsForSite(
+					$landing->getSiteId()
+				);
+				$this->arResult['CAN_SETTINGS_SITE'] = in_array(
+					Rights::ACCESS_TYPES['sett'],
+					$rights
+				);
+				$this->arResult['CAN_PUBLIC_SITE'] = in_array(
+					Rights::ACCESS_TYPES['public'],
+					$rights
+				);
+				$this->arResult['CAN_EDIT_SITE'] = in_array(
+					Rights::ACCESS_TYPES['edit'],
+					$rights
+				);
 
 				$this->onLandingView();
+				$this->onEpilog();
 			}
 
 

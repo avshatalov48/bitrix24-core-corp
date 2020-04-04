@@ -290,7 +290,7 @@ class CAdminList
 		}
 
 		//AddMessage2Log("GroupAction = X");
-		if($_REQUEST['action_target']!='selected')
+		if (!$this->IsGroupActionToAll())
 		{
 			if(!is_array($_REQUEST['ID']))
 				$arID = Array($_REQUEST['ID']);
@@ -301,6 +301,16 @@ class CAdminList
 			$arID = Array('');
 
 		return $arID;
+	}
+
+	/**
+	 * Returns true if the user has set the flag "To all" in the list.
+	 *
+	 * @return bool
+	 */
+	public function IsGroupActionToAll()
+	{
+		return (isset($_REQUEST['action_target']) && $_REQUEST['action_target'] === 'selected');
 	}
 
 	public function ActionRedirect($url)

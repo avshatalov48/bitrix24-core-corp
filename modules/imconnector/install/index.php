@@ -163,7 +163,6 @@ Class ImConnector extends CModule
 	{
 		\CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/imconnector/install/pub/imconnector", $_SERVER["DOCUMENT_ROOT"]."/pub/imconnector", true, true);
 		\CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/imconnector/install/components/bitrix", $_SERVER["DOCUMENT_ROOT"]."/bitrix/components/bitrix", true, true);
-		\CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/imconnector/install/images", $_SERVER["DOCUMENT_ROOT"] . "/bitrix/images", true, true);
 		\CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/imconnector/install/js", $_SERVER["DOCUMENT_ROOT"]."/bitrix/js", true, true);
 
 		return true;

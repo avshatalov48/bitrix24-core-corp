@@ -365,7 +365,7 @@
 						}
 					}
 					html = html.replace(new RegExp("\#(width|height)\#", "gi"), "0").
-						replace(new RegExp("\#preview_url\#", "gi"), "javascript:void(0);");
+						replace(new RegExp("\#preview_url\#", "gi"), "data:image/png;base64,");
 					var attrs = { id : 'disk-edit-attach' + file.id, 'bx-agentFileId': item.id}, TR;
 					if (file["XML_ID"])
 						attrs["bx-attach-xml-id"] = file["XML_ID"];
@@ -584,6 +584,19 @@
 				item.deleteFile('deleteFile');
 
 				BX.remove(row);
+
+				this.setHiddenUfValue();
+			},
+			setHiddenUfValue: function()
+			{
+				var extendedBlock = BX.findChild(this.controller, {className : "diskuf-extended"}, true);
+				BX.append(BX.create("input",{
+					props : {
+						name  : this.params.controlName,
+						type  : "hidden",
+						value : ""
+					}
+				}), extendedBlock);
 			},
 			move : function(element_id, name, row)
 			{
@@ -1067,8 +1080,8 @@
 		BX.show(this.node);
 		BX.remove(this.node.nextSibling);
 		this.id = 'wufdp_' + Math.random();
-		BX.bind(this.node, "mouseover", BX.delegate(function(){this.turnOn();}, this));
-		BX.bind(this.node, "mouseout", BX.delegate(function(){this.turnOff();}, this));
+		// BX.bind(this.node, "mouseover", BX.delegate(function(){this.turnOn();}, this));
+		// BX.bind(this.node, "mouseout", BX.delegate(function(){this.turnOff();}, this));
 	};
 	__preview.prototype =
 	{

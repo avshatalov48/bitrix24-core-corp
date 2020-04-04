@@ -30,7 +30,7 @@ ClearVars();
 
 $sTableID = "b_catalog_store_docs";
 
-$oSort = new CAdminSorting($sTableID, "ID", "DESC");
+$oSort = new CAdminUiSorting($sTableID, "ID", "DESC");
 $lAdmin = new CAdminUiList($sTableID, $oSort);
 
 $errorMessage = "";

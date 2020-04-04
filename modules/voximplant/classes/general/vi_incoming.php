@@ -322,6 +322,39 @@ class CVoxImplantIncoming
 	public static function RegisterCall($config, $params)
 	{
 		$call = VI\Call::load($params['CALL_ID']);
+
+		$portalNumber = $config['SEARCH_ID'];
+		$externalLineId = null;
+
+		if($config['PORTAL_MODE'] === CVoxImplantConfig::MODE_SIP && $config['SIP_DETECT_LINE_NUMBER'] === 'Y' && is_array($params['SIP_HEADERS']))
+		{
+			// try to guess portal number from sip headers
+			$portalNumber = static::guessPortalNumber($config, $params['SIP_HEADERS']);
+
+			if($portalNumber !== $config['SEARCH_ID'])
+			{
+				$normalizedNumber = \Bitrix\Main\PhoneNumber\Parser::getInstance()->parse($portalNumber)->format(\Bitrix\Main\PhoneNumber\Format::E164);
+				VI\Model\ExternalLineTable::merge([
+					'TYPE' => VI\Model\ExternalLineTable::TYPE_SIP,
+					'NUMBER' => $portalNumber,
+					'NORMALIZED_NUMBER' => $normalizedNumber,
+					'SIP_ID' => $config['SIP_ID'],
+					'IS_MANUAL' => 'N'
+				]);
+
+				$row = VI\Model\ExternalLineTable::getRow([
+					'filter' => [
+						'=SIP_ID' => $config['SIP_ID'],
+						'=NUMBER' => $portalNumber
+					]
+				]);
+				if($row)
+				{
+					$externalLineId = $row['ID'];
+				}
+			}
+		}
+
 		if($call)
 		{
 			// callback calls are pre-created
@@ -349,7 +382,8 @@ class CVoxImplantIncoming
 				'ACCESS_URL' => $params['ACCESS_URL'],
 				'DATE_CREATE' => new Bitrix\Main\Type\DateTime(),
 				'WORKTIME_SKIPPED' => $config['WORKTIME_SKIP_CALL'] == 'Y',
-				'PORTAL_NUMBER' => $config['SEARCH_ID'],
+				'PORTAL_NUMBER' => $portalNumber,
+				'EXTERNAL_LINE_ID' => $externalLineId,
 				'SESSION_ID' => $params['SESSION_ID'],
 				'SIP_HEADERS' => is_array($params['SIP_HEADERS']) ? $params['SIP_HEADERS'] : [],
 			]);
@@ -629,6 +663,37 @@ class CVoxImplantIncoming
 		));
 
 		return $row ? $row['CALL_ID'] : false;
+	}
+
+	public static function guessPortalNumber(array $config, array $sipHeaders)
+	{
+		$destination = '';
+		$diversion = '';
+
+		$sipUserPattern = '/(?>sip|tel):(\+?\d+)@/';
+
+		if(isset($sipHeaders['To']) && preg_match($sipUserPattern, $sipHeaders['To'], $matches))
+		{
+			$destination = $matches[1];
+		}
+		if(isset($sipHeaders['Diversion']) && preg_match($sipUserPattern, $sipHeaders['Diversion'], $matches))
+		{
+			$diversion = $matches[1];
+		}
+
+		if(!$diversion && !$destination)
+		{
+			return $config['SEARCH_ID'];
+		}
+
+		if($config['SIP_LINE_DETECT_HEADER_ORDER'] === CVoxImplantSip::HEADER_ORDER_DIVERSION_TO)
+		{
+			return $diversion ?: $destination;
+		}
+		else
+		{
+			return $destination ?: $diversion;
+		}
 	}
 }
 ?>

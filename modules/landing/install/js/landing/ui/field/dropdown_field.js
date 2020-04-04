@@ -43,7 +43,11 @@
 		setTextContent(this.input, this.items[0].name);
 		data(this.input, "value", this.items[0].value);
 
-		this.setValue(this.content);
+		if (this.content !== "")
+		{
+			this.setValue(this.content);
+			this.onMouseWheel = this.onMouseWheel.bind(this);
+		}
 	};
 
 	BX.Landing.UI.Field.Dropdown.prototype = {
@@ -60,7 +64,7 @@
 					bindElement: this.input,
 					items: this.items.map(function(item) {
 						return {
-							text: escapeText(item.name),
+							text: item.html ? item.html : escapeText(item.name),
 							onclick: function() {
 								this.onItemClick(item)
 							}.bind(this)
@@ -121,12 +125,18 @@
 		 */
 		getValue: function()
 		{
-			return typeof this.input.dataset.value !== "undefined" ? this.input.dataset.value : this.items[0].value;
+			var value = this.input.dataset.value;
+
+			if (value !== "undefined" && typeof value !== "undefined")
+			{
+				return value;
+			}
+
+			return this.items[0].value;
 		},
 
 		setValue: function(value)
 		{
-			this.input.dataset.value = value;
 			this.items.forEach(function(item) {
 				// noinspection EqualityComparisonWithCoercionJS
 				if (value == item.value)
@@ -161,8 +171,9 @@
 		 */
 		onMouseOver: function()
 		{
-			bind(this.popup.popupWindow.popupContainer, !!window.onwheel ? "wheel" : "mousewheel", this.onMouseWheel.bind(this));
-			bind(this.popup.popupWindow.popupContainer, "touchmove", this.onMouseWheel.bind(this));
+			var mouseEvent = "onwheel" in window ? "wheel" : "mousewheel";
+			bind(this.popup.popupWindow.popupContainer, mouseEvent, this.onMouseWheel);
+			bind(this.popup.popupWindow.popupContainer, "touchmove", this.onMouseWheel);
 		},
 
 
@@ -171,8 +182,9 @@
 		 */
 		onMouseLeave: function()
 		{
-			unbind(this.popup.popupWindow.popupContainer, !!window.onwheel ? "wheel" : "mousewheel", this.onMouseWheel.bind(this));
-			unbind(this.popup.popupWindow.popupContainer, "touchmove", this.onMouseWheel.bind(this));
+			var mouseEvent = "onwheel" in window ? "wheel" : "mousewheel";
+			unbind(this.popup.popupWindow.popupContainer, mouseEvent, this.onMouseWheel);
+			unbind(this.popup.popupWindow.popupContainer, "touchmove", this.onMouseWheel);
 		},
 
 
@@ -185,12 +197,15 @@
 			event.stopPropagation();
 			event.preventDefault();
 
-			var delta = BX.Landing.UI.Panel.Content.getDeltaFromEvent(event);
-			var scrollTop = this.popup.popupWindow.contentContainer.scrollTop;
+			if (this.popup)
+			{
+				var delta = BX.Landing.UI.Panel.Content.getDeltaFromEvent(event);
+				var scrollTop = this.popup.popupWindow.contentContainer.scrollTop;
 
-			requestAnimationFrame(function() {
-				this.popup.popupWindow.contentContainer.scrollTop = scrollTop - delta.y;
-			}.bind(this));
+				requestAnimationFrame(function() {
+					this.popup.popupWindow.contentContainer.scrollTop = scrollTop - delta.y;
+				}.bind(this));
+			}
 		}
 	};
 })();

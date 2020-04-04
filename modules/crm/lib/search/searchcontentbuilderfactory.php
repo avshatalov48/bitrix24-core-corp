@@ -33,6 +33,10 @@ class SearchContentBuilderFactory
 		{
 			return new ActivitySearchContentBuilder();
 		}
+		elseif($entityTypeID === \CCrmOwnerType::Order)
+		{
+			return new OrderSearchContentBuilder();
+		}
 		else
 		{
 			throw new Main\NotSupportedException("Type: '".\CCrmOwnerType::resolveName($entityTypeID)."' is not supported in current context");

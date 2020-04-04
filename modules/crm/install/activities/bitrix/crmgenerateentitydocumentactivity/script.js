@@ -74,7 +74,7 @@
 		{
 			for(var i = 1; i < fieldRows.length; i++)
 			{
-				if(fieldRows[i].children[0].dataset['placeholder'] == name)
+				if(fieldRows[i].children && fieldRows[i].children[0] && fieldRows[i].children[0].dataset['placeholder'] === name)
 				{
 					return;
 				}
@@ -95,7 +95,8 @@
 				'templateId': BX('id_template_id').value,
 				'isRobot': this.isRobot === true ? 'y' : 'n',
 		},
-			BX.proxy(function(response) {
+			BX.proxy(function(response)
+			{
 				if(response)
 				{
 					var fieldRows = BX.findChildrenByClassName(document, this.fieldTableRowClassName, true);
@@ -108,10 +109,13 @@
 					});
 					BX.insertAfter(newNode, fieldToInsert);
 
-					var dlg = BX.Bizproc.Automation.Designer.getRobotSettingsDialog();
-					if (dlg)
+					if(BX.getClass('BX.Bizproc.Automation.Designer'))
 					{
-						dlg.template.initRobotSettingsControls(dlg.robot, newNode);
+						var dlg = BX.Bizproc.Automation.Designer.getRobotSettingsDialog();
+						if (dlg)
+						{
+							dlg.template.initRobotSettingsControls(dlg.robot, newNode);
+						}
 					}
 				}
 			}, this)

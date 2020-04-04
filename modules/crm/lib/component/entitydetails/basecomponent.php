@@ -3,6 +3,7 @@ namespace Bitrix\Crm\Component\EntityDetails;
 
 use Bitrix\Main;
 
+use Bitrix\Crm;
 use Bitrix\Crm\Security\EntityPermissionType;
 use Bitrix\Crm\Security\EntityAuthorization;
 use Bitrix\Crm\Component\ComponentError;
@@ -84,37 +85,432 @@ class BaseComponent extends \CBitrixComponent
 		return $this->mode;
 	}
 
-	public static function prepareMultifieldsForSave(array $data, array &$entityFields)
+	public static function createEntity($entityTypeID, array $entityData, array $options = array())
 	{
-		foreach($data as $item)
+		$currentUserPermissions = isset($options['userPermissions']) ? $options['userPermissions'] : null;
+		if(!($currentUserPermissions instanceof \CCrmPerms))
 		{
+			$currentUserPermissions = \CCrmPerms::GetCurrentUserPermissions();
+		}
+
+		$title = isset($entityData['title']) ? trim($entityData['title']) : '';
+		if(!($title !== '' && EntityAuthorization::checkCreatePermission($entityTypeID, $currentUserPermissions)))
+		{
+			return 0;
+		}
+
+		if($entityTypeID === \CCrmOwnerType::Company)
+		{
+			$fields = array('TITLE' => $title);
+		}
+		elseif($entityTypeID === \CCrmOwnerType::Contact)
+		{
+			$fields = array();
+			if($title === \CCrmContact::GetDefaultName())
+			{
+				$fields['NAME'] = $title;
+			}
+			else
+			{
+				Crm\Format\PersonNameFormatter::tryParseName(
+					$title,
+					Crm\Format\PersonNameFormatter::getFormatID(),
+					$fields
+				);
+			}
+		}
+		else
+		{
+			$entityTypeName = \CCrmOwnerType::ResolveName($entityTypeID);
+			throw new Main\NotSupportedException("Entity type: '{$entityTypeName}' is not supported in current context");
+		}
+
+		$multifieldData =  isset($entityData['multifields']) && is_array($entityData['multifields'])
+			? $entityData['multifields']  : array();
+
+		if(!empty($multifieldData))
+		{
+			$multifields = self::prepareMultifieldsForSave($entityTypeID, 0, $multifieldData);
+			if(!empty($multifields))
+			{
+				$fields['FM'] = $multifields;
+			}
+		}
+
+		$entity = Crm\Entity\EntityManager::resolveByTypeID($entityTypeID);
+		if(!$entity)
+		{
+			$entityTypeName = \CCrmOwnerType::ResolveName($entityTypeID);
+			throw new Main\NotSupportedException("Entity type: '{$entityTypeName}' is not supported in current context");
+		}
+		$entityID = $entity->create($fields);
+		if($entityID > 0 && isset($options['startWorkFlows']) && $options['startWorkFlows'])
+		{
+			\CCrmBizProcHelper::AutoStartWorkflows(
+				$entityTypeID,
+				$entityID,
+				\CCrmBizProcEventType::Create,
+				$arErrors
+			);
+		}
+		return $entityID;
+	}
+	public static function updateEntity($entityTypeID, $entityID, array $entityData, array $options = array())
+	{
+		if(empty($entityData))
+		{
+			return false;
+		}
+
+		$currentUserPermissions = isset($options['userPermissions']) ? $options['userPermissions'] : null;
+		if(!($currentUserPermissions instanceof \CCrmPerms))
+		{
+			$currentUserPermissions = \CCrmPerms::GetCurrentUserPermissions();
+		}
+
+		if(!EntityAuthorization::checkUpdatePermission($entityTypeID, $entityID, $currentUserPermissions))
+		{
+			return false;
+		}
+
+		$entity = Crm\Entity\EntityManager::resolveByTypeID($entityTypeID);
+		if(!$entity)
+		{
+			$entityTypeName = \CCrmOwnerType::ResolveName($entityTypeID);
+			throw new Main\NotSupportedException("Entity type: '{$entityTypeName}' is not supported in current context");
+		}
+
+		$presentFields = $entity->getByID($entityID);
+		if(!is_array($presentFields))
+		{
+			return false;
+		}
+
+		$fields = array();
+		$title = isset($entityData['title']) ? trim($entityData['title']) : '';
+		if($title !== '')
+		{
+			if($entityTypeID === \CCrmOwnerType::Company)
+			{
+				if(!isset($presentFields['TITLE']) || $presentFields['TITLE'] !== $title)
+				{
+					$fields['TITLE'] = $title;
+				}
+			}
+			elseif($entityTypeID === \CCrmOwnerType::Contact)
+			{
+				$nameFormatID = Crm\Format\PersonNameFormatter::getFormatID();
+				$nameFormat = Crm\Format\PersonNameFormatter::getFormat();
+
+				if($title !== \CCrmContact::PrepareFormattedName($presentFields))
+				{
+					if($title === \CCrmContact::GetDefaultName())
+					{
+						$fields['NAME'] = $title;
+					}
+					else
+					{
+						Crm\Format\PersonNameFormatter::tryParseName(
+							$title,
+							$nameFormatID,
+							$fields
+						);
+					}
+
+					if(isset($presentFields['NAME'])
+						&& (!isset($fields['NAME']) || $fields['NAME'] === '')
+						&& !Crm\Format\PersonNameFormatter::hasFirstName($nameFormat)
+					)
+					{
+						$fields['NAME'] = $presentFields['NAME'];
+					}
+
+					if(isset($presentFields['SECOND_NAME'])
+						&& (!isset($fields['SECOND_NAME']) || $fields['SECOND_NAME'] === '')
+						&& !Crm\Format\PersonNameFormatter::hasSecondName($nameFormat)
+					)
+					{
+						$fields['SECOND_NAME'] = $presentFields['SECOND_NAME'];
+					}
+
+					if(isset($presentFields['LAST_NAME'])
+						&& (!isset($fields['LAST_NAME']) || $fields['LAST_NAME'] === '')
+						&& !Crm\Format\PersonNameFormatter::hasLastName($nameFormat)
+					)
+					{
+						$fields['LAST_NAME'] = $presentFields['LAST_NAME'];
+					}
+
+					if(Crm\Comparer\ComparerBase::areFieldsEquals($fields, $presentFields, 'NAME')
+						&& Crm\Comparer\ComparerBase::areFieldsEquals($fields, $presentFields, 'SECOND_NAME')
+						&& Crm\Comparer\ComparerBase::areFieldsEquals($fields, $presentFields, 'LAST_NAME')
+					)
+					{
+						$fields = array();
+					}
+				}
+			}
+			else
+			{
+				$entityTypeName = \CCrmOwnerType::ResolveName($entityTypeID);
+				throw new Main\NotSupportedException("Entity type: '{$entityTypeName}' is not supported in current context");
+			}
+		}
+
+		$multifieldData =  isset($entityData['multifields']) && is_array($entityData['multifields'])
+			? $entityData['multifields']  : array();
+
+		if(!empty($multifieldData))
+		{
+			$multifields = self::prepareMultifieldsForSave($entityTypeID, $entityID, $multifieldData);
+			if(!empty($multifields))
+			{
+				$presentMultifields = self::getMultifields($entityTypeID, $entityID);
+				if(count($presentMultifields) === count($multifields))
+				{
+					$areMultifieldsEquals = true;
+					foreach(array('PHONE', 'EMAIL') as $multifieldType)
+					{
+						$multifieldItems = isset($multifields[$multifieldType])
+							? $multifields[$multifieldType] : array();
+						$presentMultifieldsItems = isset($presentMultifields[$multifieldType])
+							? $presentMultifields[$multifieldType] : array();
+
+						foreach($multifieldItems as $multifieldID => $multifieldData)
+						{
+							if(!isset($presentMultifieldsItems[$multifieldID])
+								|| $presentMultifieldsItems[$multifieldID]['VALUE'] !== $multifieldData['VALUE']
+							)
+							{
+								$areMultifieldsEquals = false;
+								break;
+							}
+						}
+
+						if(!$areMultifieldsEquals)
+						{
+							break;
+						}
+					}
+
+					if($areMultifieldsEquals)
+					{
+						$multifields = array();
+					}
+				}
+
+				if(!empty($multifields))
+				{
+					$fields['FM'] = $multifields;
+				}
+			}
+		}
+
+		if(empty($fields))
+		{
+			return false;
+		}
+
+		$result = $entity->update($entityID, $fields);
+		if($result && isset($options['startWorkFlows']) && $options['startWorkFlows'])
+		{
+			\CCrmBizProcHelper::AutoStartWorkflows(
+				$entityTypeID,
+				$entityID,
+				\CCrmBizProcEventType::Edit,
+				$arErrors
+			);
+		}
+		return $result;
+	}
+	public static function deleteEntity($entityTypeID, $entityID, array $options = array())
+	{
+		$entity = Crm\Entity\EntityManager::resolveByTypeID($entityTypeID);
+		if(!$entity)
+		{
+			$entityTypeName = \CCrmOwnerType::ResolveName($entityTypeID);
+			throw new Main\NotSupportedException("Entity type: '{$entityTypeName}' is not supported in current context");
+		}
+
+		$entity->delete($entityID, $options);
+	}
+
+	public static function prepareLastBoundEntityIDs($entityTypeID, $ownerEntityTypeID, array $params = null)
+	{
+		if($params === null)
+		{
+			$params = array();
+		}
+
+		$userID = (isset($params['userID']) && $params['userID'] > 0)
+			? (int)$params['userID'] : \CCrmSecurityHelper::GetCurrentUserID();
+		$userPermissions = isset($params['userPermissions'])
+			? $params['userPermissions'] : \CCrmPerms::GetCurrentUserPermissions();
+
+		$results = array();
+		if($ownerEntityTypeID === \CCrmOwnerType::Deal && \CCrmDeal::CheckReadPermission(0, $userPermissions))
+		{
+			if($entityTypeID === \CCrmOwnerType::Contact)
+			{
+				$companyID = isset($params['companyID']) ? (int)$params['companyID'] : 0;
+				if($companyID > 0)
+				{
+					$dbResult = \CCrmDeal::GetListEx(
+						array('ID' => 'DESC'),
+						array(
+							'=COMPANY_ID' => $companyID,
+							'=ASSIGNED_BY_ID' => $userID,
+							'CHECK_PERMISSIONS' => 'N'
+						),
+						false,
+						array('nTopCount' => 5),
+						array('ID')
+					);
+
+					$ownerIDs = array();
+					while($ary = $dbResult->Fetch())
+					{
+						$ownerIDs[] = (int)$ary['ID'];
+					}
+
+					$ownerIDs = array();
+					while($ary = $dbResult->Fetch())
+					{
+						$ownerIDs[] = (int)$ary['ID'];
+					}
+
+					foreach($ownerIDs as $ownerID)
+					{
+						$entityIDs = Crm\Binding\DealContactTable::getDealContactIDs($ownerID);
+						foreach($entityIDs as $entityID)
+						{
+							if(\CCrmContact::CheckReadPermission($entityID, $userPermissions))
+							{
+								$results[] = $entityID;
+							}
+						}
+
+						if(!empty($results))
+						{
+							break;
+						}
+					}
+
+					if(empty($results))
+					{
+						$results = Crm\Binding\ContactCompanyTable::getCompanyContactIDs($companyID);
+					}
+				}
+			}
+		}
+		return $results;
+	}
+
+	public static function prepareMultifieldsForSave($entityTypeID, $entityID, array $multifieldData)
+	{
+		if(!is_int($entityTypeID))
+		{
+			$entityTypeID = (int)$entityTypeID;
+		}
+
+		if(!is_int($entityID))
+		{
+			$entityID = (int)$entityID;
+		}
+
+		$multifields = array();
+		if(\CCrmOwnerType::IsDefined($entityTypeID) && $entityID > 0)
+		{
+			$dbResult = \CCrmFieldMulti::GetList(
+				array('ID' => 'asc'),
+				array('ENTITY_ID' => \CCrmOwnerType::ResolveName($entityTypeID), 'ELEMENT_ID' => $entityID)
+			);
+			while($fields = $dbResult->Fetch())
+			{
+				$typeID = $fields['TYPE_ID'];
+				if(!isset($multifields[$typeID]))
+				{
+					$multifields[$typeID] = array();
+				}
+
+				$multifields[$typeID][$fields['ID']] = array(
+					'VALUE' => isset($fields['VALUE']) ? $fields['VALUE'] : '',
+					'VALUE_TYPE' => isset($fields['VALUE_TYPE']) ? $fields['VALUE_TYPE'] : ''
+				);
+			}
+		}
+
+		$counter = 0;
+		foreach($multifieldData as $item)
+		{
+			$ID = isset($item['ID']) ? (int)$item['ID'] : 0;
 			$typeID = isset($item['TYPE_ID']) ? $item['TYPE_ID'] : '';
 			$value = isset($item['VALUE']) ? $item['VALUE'] : '';
-			if($typeID === '' || $value === '')
+			if($typeID === '')
+			{
+				continue;
+			}
+
+			if($ID <= 0 && $value === '')
 			{
 				continue;
 			}
 
 			if($typeID === 'EMAIL' && !check_email($value))
 			{
-				continue;
+				if($ID <= 0)
+				{
+					continue;
+				}
+				else
+				{
+					$value = '';
+				}
 			}
 
-			if(!isset($entityFields['FM']))
+			if(!isset($multifields[$typeID]))
 			{
-				$entityFields['FM'] = array();
+				$multifields[$typeID] = array();
 			}
 
-			if(!isset($entityFields['FM'][$typeID]))
+			if($ID > 0)
 			{
-				$entityFields['FM'][$typeID] = array();
+				$valueType = isset($multifields[$typeID][$ID]) && $multifields[$typeID][$ID]['VALUE_TYPE']
+					? $multifields[$typeID][$ID]['VALUE_TYPE'] : 'WORK';
+				$multifields[$typeID][$ID] = array('VALUE' => $value, 'VALUE_TYPE' => $valueType);
 			}
-
-			$qty = count($entityFields['FM'][$typeID]);
-			$entityFields['FM'][$typeID]["n{$qty}"] = array('VALUE' => $value, 'VALUE_TYPE' => 'WORK');
+			else
+			{
+				$multifields[$typeID]["n{$counter}"] = array('VALUE' => $value, 'VALUE_TYPE' => 'WORK');
+				$counter++;
+			}
 		}
+		return $multifields;
 	}
+	protected static function getMultifields($entityTypeID, $entityID)
+	{
+		$dbResult = \CCrmFieldMulti::GetList(
+			array('ID' => 'asc'),
+			array('ENTITY_ID' => \CCrmOwnerType::ResolveName($entityTypeID), 'ELEMENT_ID' => $entityID)
+		);
 
+		$multifields = array();
+		while($fields = $dbResult->Fetch())
+		{
+			$typeID = $fields['TYPE_ID'];
+			if(!isset($multifields[$typeID]))
+			{
+				$multifields[$typeID] = array();
+			}
+
+			$multifields[$typeID][$fields['ID']] = array(
+				'VALUE' => isset($fields['VALUE']) ? $fields['VALUE'] : '',
+				'VALUE_TYPE' => isset($fields['VALUE_TYPE']) ? $fields['VALUE_TYPE'] : ''
+			);
+		}
+
+		return $multifields;
+	}
 	protected static function prepareMultifieldData($entityTypeID, $entityID, $typeID, array &$data)
 	{
 		$dbResult = \CCrmFieldMulti::GetList(
@@ -172,6 +568,7 @@ class BaseComponent extends \CBitrixComponent
 			}
 		}
 	}
+
 	protected function getRequestParamOrDefault($paramName, $default = null)
 	{
 		$value = $this->request->get($paramName);

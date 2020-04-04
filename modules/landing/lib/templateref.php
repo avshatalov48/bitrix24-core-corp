@@ -108,7 +108,10 @@ class TemplateRef
 	 */
 	public static function setForSite($id, array $data = array())
 	{
-		self::set($id, self::ENTITY_TYPE_SITE, $data);
+		if (Rights::hasAccessForSite($id, Rights::ACCESS_TYPES['sett']))
+		{
+			self::set($id, self::ENTITY_TYPE_SITE, $data);
+		}
 	}
 
 	/**
@@ -119,7 +122,10 @@ class TemplateRef
 	 */
 	public static function setForLanding($id, array $data = array())
 	{
-		self::set($id, self::ENTITY_TYPE_LANDING, $data);
+		if (Rights::hasAccessForLanding($id, Rights::ACCESS_TYPES['sett']))
+		{
+			self::set($id, self::ENTITY_TYPE_LANDING, $data);
+		}
 	}
 
 	/**

@@ -249,10 +249,21 @@ ChatUserSelector.rest.chatExtend = function (params)
 		.catch((result) =>
 		{
 			let error = result.error();
-			if (error.ex.error == 'NO_INTERNET_CONNECTION')
+			if (error.ex.error === 'NO_INTERNET_CONNECTION')
 			{
 				console.error("ChatUserSelector.rest.chatExtend - error: connection error", error.ex);
 				this.base.alert(BX.message('IM_USER_SELECTOR_CONNECTION_ERROR'));
+			}
+			else if (
+				error.ex.error === 'NOTHING_TO_ADD'
+				|| error.ex.error === 'EMPTY_CHAT_ID'
+				|| error.ex.error === 'EMPTY_USER_ID'
+				|| error.ex.error === 'EMPTY_USER_ID_BY_PRIVACY'
+				|| error.ex.error === 'AUTHORIZE_ERROR'
+			)
+			{
+				console.error("ChatUserSelector.rest.chatExtend - correct error", error.ex);
+				this.base.alert(error.ex.error_description);
 			}
 			else
 			{

@@ -67,7 +67,10 @@ final class User extends \Bitrix\Tasks\Integration\Mail
 		$item = \CUser::GetList(
 			$o = "ID",
 			$b = "ASC",
-			array("=EMAIL" => $email),
+			array(
+				"=EMAIL" => $email,
+				"!EXTERNAL_AUTH_ID" => [ "bot", "controller", "replica", "shop", "imconnector", "sale", "saleanonymous" ]
+			),
 			array("FIELDS" => array("ID", "EXTERNAL_AUTH_ID", "ACTIVE"))
 		)->fetch();
 

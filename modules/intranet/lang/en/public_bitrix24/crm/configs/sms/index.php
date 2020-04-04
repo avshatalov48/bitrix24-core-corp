@@ -1,3 +1,3 @@
 <?
-$MESS["TITLE"] = "SMS to clients, customers or employees";
+$MESS["TITLE"] = "SMS to Clients, Customers or Employees";
 ?>

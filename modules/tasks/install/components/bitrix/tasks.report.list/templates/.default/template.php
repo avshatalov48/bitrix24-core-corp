@@ -30,16 +30,16 @@ $APPLICATION->IncludeComponent(
 	$component,
 	array('HIDE_ICONS' => true)
 );
-
+$isIframe = $_REQUEST['IFRAME'] && $_REQUEST['IFRAME']=='Y';
 $APPLICATION->IncludeComponent(
 	"bitrix:report.list",
 	"",
 	array(
 		"USER_ID" => $arResult["USER_ID"],
 		"GROUP_ID" => $arParams["GROUP_ID"],
-		"PATH_TO_REPORT_LIST" => $arParams["PATH_TO_TASKS_REPORT"],
-		"PATH_TO_REPORT_CONSTRUCT" => $arParams["PATH_TO_TASKS_REPORT_CONSTRUCT"],
-		"PATH_TO_REPORT_VIEW" => $arParams["PATH_TO_TASKS_REPORT_VIEW"],
+		"PATH_TO_REPORT_LIST" => $arParams["PATH_TO_TASKS_REPORT"].($isIframe?'?IFRAME=Y':''),
+		"PATH_TO_REPORT_CONSTRUCT" => $arParams["PATH_TO_TASKS_REPORT_CONSTRUCT"].($isIframe?'?IFRAME=Y':''),
+		"PATH_TO_REPORT_VIEW" => $arParams["PATH_TO_TASKS_REPORT_VIEW"].($isIframe?'?IFRAME=Y':''),
 		"REPORT_HELPER_CLASS" => "CTasksReportHelper"
 	),
 	false

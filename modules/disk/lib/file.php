@@ -16,6 +16,7 @@ use Bitrix\Disk\Internals\SimpleRightTable;
 use Bitrix\Disk\Internals\VersionTable;
 use Bitrix\Disk\Security\SecurityContext;
 use Bitrix\Disk\Uf\FileUserType;
+use Bitrix\Main;
 use Bitrix\Main\Application;
 use Bitrix\Main\Entity\ExpressionField;
 use Bitrix\Main\Entity\Query;
@@ -273,6 +274,7 @@ class File extends BaseObject
 	/**
 	 * Returns id of preview image.
 	 * @return int
+	 * @deprecated
 	 */
 	public function getPreviewId()
 	{
@@ -284,6 +286,7 @@ class File extends BaseObject
 	 *
 	 * @param int $fileId
 	 * @return bool
+	 * @deprecated
 	 */
 	public function changePreviewId($fileId)
 	{
@@ -293,6 +296,7 @@ class File extends BaseObject
 	/**
 	 * Returns id of view.
 	 * @return int|null
+	 * @deprecated
 	 */
 	public function getViewId()
 	{
@@ -304,6 +308,7 @@ class File extends BaseObject
 	 *
 	 * @param int $fileId
 	 * @return bool
+	 * @deprecated
 	 */
 	public function changeViewId($fileId)
 	{
@@ -314,6 +319,7 @@ class File extends BaseObject
 	 * Delete converted view file.
 	 *
 	 * @return bool
+	 * @deprecated
 	 */
 	public function deleteViewId()
 	{
@@ -477,7 +483,7 @@ class File extends BaseObject
 		if($lock)
 		{
 			$this->update(array('SYNC_UPDATE_TIME' => new DateTime()));
-			Driver::getInstance()->sendChangeStatusToSubscribers($this);
+			Driver::getInstance()->sendChangeStatusToSubscribers($this, 'quick');
 		}
 
 		return $lock;
@@ -520,7 +526,7 @@ class File extends BaseObject
 		if($success)
 		{
 			$this->update(array('SYNC_UPDATE_TIME' => new DateTime()));
-			Driver::getInstance()->sendChangeStatusToSubscribers($this);
+			Driver::getInstance()->sendChangeStatusToSubscribers($this, 'quick');
 		}
 
 		return $success;
@@ -573,7 +579,7 @@ class File extends BaseObject
 			return false;
 		}
 
-		$this->changeParentUpdateTime(empty($file['UPDATE_TIME'])? new DateTime() : $file['UPDATE_TIME'], $updatedBy);
+		$this->changeParentUpdateTime(new DateTime(), $updatedBy);
 
 		$this->updateLinksAttributes(array(
 			'ETAG' => $this->getEtag(),
@@ -590,12 +596,21 @@ class File extends BaseObject
 			$driver->getRecentlyUsedManager()->push($updatedBy, $this->getId());
 		}
 
-		$driver->getIndexManager()->indexFile($this);
+		if ($this->getGlobalContentVersion() <= 1)
+		{
+			//initial full index
+			$driver->getIndexManager()->indexFile($this);
+		}
+		else
+		{
+			//just update content
+			$driver->getIndexManager()->updateFileContent($this);
+		}
 
 		//todo little hack...We don't synchronize file in folder with uploaded files. And we have not to send notify by pull
 		if($this->parent === null || $this->parent && $this->parent->getCode() !== Folder::CODE_FOR_UPLOADED_FILES)
 		{
-			$driver->sendChangeStatusToSubscribers($this);
+			$driver->sendChangeStatusToSubscribers($this, 'quick');
 
 			$updatedBy = $this->getUpdatedBy();
 			if($updatedBy)
@@ -708,7 +723,8 @@ class File extends BaseObject
 			return;
 		}
 
-		if($this->getStorage()->isEnabledBizProc())
+		$storage = $this->getStorage();
+		if($storage && $this->getStorage()->isEnabledBizProc())
 		{
 			BizProcDocument::runAfterCreate($this->storageId, $this->id);
 		}
@@ -721,7 +737,8 @@ class File extends BaseObject
 			return;
 		}
 
-		if($this->getStorage()->isEnabledBizProc())
+		$storage = $this->getStorage();
+		if($storage && $this->getStorage()->isEnabledBizProc())
 		{
 			BizProcDocument::runAfterEdit($this->storageId, $this->id);
 		}
@@ -1140,11 +1157,13 @@ class File extends BaseObject
 	 */
 	public function markDeletedInternal($deletedBy, $deletedType = ObjectTable::DELETED_TYPE_ROOT)
 	{
+		$alreadyDeleted = $this->isDeleted();
 		$success = parent::markDeletedInternal($deletedBy, $deletedType);
-		if($success)
+		if ($success && !$alreadyDeleted)
 		{
-			DeletedLog::addFile($this, $deletedBy, $this->errorCollection);
+			Driver::getInstance()->getDeletedLogManager()->mark($this, $deletedBy);
 		}
+
 		return $success;
 	}
 
@@ -1173,7 +1192,7 @@ class File extends BaseObject
 			{
 				$driver->getRecentlyUsedManager()->push($restoredBy, $this->getId());
 			}
-			$driver->getIndexManager()->indexFile($this);
+			$driver->getIndexManager()->indexFileByModuleSearch($this);
 			$driver->sendChangeStatusToSubscribers($this);
 
 			//it's necessary to reset cache because in default way \Bitrix\Disk\Driver::sendChangeStatusToSubscribers
@@ -1294,7 +1313,7 @@ class File extends BaseObject
 		//we add only directly destroyed objects.
 		if(!$this->isDeleted())
 		{
-			DeletedLog::addFile($this, $deletedBy, $this->errorCollection);
+			Driver::getInstance()->getDeletedLogManager()->mark($this, $deletedBy);
 		}
 
 		\CFile::delete($this->fileId);
@@ -1488,12 +1507,22 @@ class File extends BaseObject
 	 */
 	public function jsonSerialize()
 	{
+		$urlShowObjectInGrid = Driver::getInstance()->getUrlManager()->getUrlFocusController('showObjectInGrid', [
+			'objectId' => $this->getId(),
+		]);
+		$urlShowObjectInGrid = new Main\Web\Uri($urlShowObjectInGrid);
+
 		return array_merge(parent::jsonSerialize(), [
-			'typeFile' => $this->getTypeFile(),
-			'globalContentVersion' => $this->getGlobalContentVersion(),
-			'fileId' => $this->getFileId(),
-			'size' => $this->getSize(),
+			'typeFile' => (int)$this->getTypeFile(),
+			'globalContentVersion' => (int)$this->getGlobalContentVersion(),
+			'fileId' => (int)$this->getFileId(),
+			'size' => (int)$this->getSize(),
 			'etag' => $this->getEtag(),
+			'links' => [
+				/** @see \Bitrix\Disk\Controller\File::downloadAction() */
+				'download' => Main\Engine\UrlManager::getInstance()->create('disk.file.download', ['fileId' => $this->getId()]),
+				'showInGrid' => $urlShowObjectInGrid,
+			],
 		]);
 	}
 }

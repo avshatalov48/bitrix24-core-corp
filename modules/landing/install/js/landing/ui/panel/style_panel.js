@@ -24,16 +24,17 @@
 		this.layout.classList.add("landing-ui-panel-style");
 		this.overlay.classList.add("landing-ui-panel-style-overlay");
 		this.layout.hidden = true;
-		this.title.innerText = BX.message("LANDING_DESIGN_PANEL_HEADER");
+		this.title.innerText = BX.Landing.Loc.getMessage("LANDING_DESIGN_PANEL_HEADER");
 		this.pseudoContent = BX.clone(this.content);
 		this.pseudoContent.innerHTML = "";
 		this.pseudoContent.style.marginLeft = "20px";
+		this.shouldAdjustTopPanelControls = false;
 		this.body.appendChild(this.pseudoContent);
 
 		this.loader = new BX.Loader({target: this.pseudoContent, offset: {top: "-10%"}});
 
 		this.switcher = new BX.Landing.UI.Field.Switch({
-			title: BX.message("LANDING_STYLE_PANEL_SELECT_GROUP_SWITCH"),
+			title: BX.Landing.Loc.getMessage("LANDING_STYLE_PANEL_SELECT_GROUP_SWITCH"),
 			onValueChange: function() {
 				if (window.localStorage)
 				{

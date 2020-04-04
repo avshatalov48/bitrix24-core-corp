@@ -87,6 +87,7 @@ class Letter extends Base
 			$parameters['select'] = array(
 				'*',
 				'SITE_ID' => 'CAMPAIGN.SITE_ID',
+				'CAMPAIGN_ACTIVE' => 'CAMPAIGN.ACTIVE',
 
 				'DATE_SEND' => 'CURRENT_POSTING.DATE_SEND',
 				'DATE_PAUSE' => 'CURRENT_POSTING.DATE_PAUSE',
@@ -434,7 +435,7 @@ class Letter extends Base
 				case $option::TYPE_HTML:
 				case $option::TYPE_MAIL_EDITOR:
 					$content->addHtmlLayout($value);
-					continue;
+					break;
 
 				case $option::TYPE_TEXT:
 				case $option::TYPE_STRING:
@@ -442,9 +443,6 @@ class Letter extends Base
 				case $option::TYPE_SMS_EDITOR:
 					$content->addText($value);
 					break;
-
-				default:
-					continue;
 			}
 		}
 

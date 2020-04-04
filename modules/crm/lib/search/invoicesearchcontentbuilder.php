@@ -60,9 +60,10 @@ class InvoiceSearchContentBuilder extends SearchContentBuilder
 	/**
 	 * Prepare search map.
 	 * @param array $fields Entity Fields.
+	 * @param array|null $options Options.
 	 * @return SearchMap
 	 */
-	protected function prepareSearchMap(array $fields)
+	protected function prepareSearchMap(array $fields, array $options = null)
 	{
 		$map = new SearchMap();
 
@@ -73,7 +74,6 @@ class InvoiceSearchContentBuilder extends SearchContentBuilder
 		}
 
 		$map->add($entityID);
-		$map->addField($fields, 'ID');
 		$map->addField($fields, 'ACCOUNT_NUMBER');
 		$map->addField($fields, 'ORDER_TOPIC');
 

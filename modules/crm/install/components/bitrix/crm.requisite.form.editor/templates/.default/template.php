@@ -30,6 +30,18 @@ $errPresetNotSelected = ($arResult['REQUISITE_ENTITY_TYPE_MNEMO'] === 'COMPANY')
 	GetMessage('CRM_REQUISITE_POPUP_ERR_PRESET_NOT_SELECTED_COMPANY') :
 	GetMessage('CRM_REQUISITE_POPUP_ERR_PRESET_NOT_SELECTED_CONTACT');
 
+$newPseudoIdStartNumber = 0;
+$isFormDataPresent = is_array($arResult['REQUISITE_FORM_DATA']);
+$isRequisiteDataPresent = is_array($arResult['REQUISITE_DATA_LIST']);
+if($isFormDataPresent)
+{
+	$newPseudoIdStartNumber = count($arResult['REQUISITE_FORM_DATA']);
+}
+else if ($isRequisiteDataPresent)
+{
+	$newPseudoIdStartNumber = count($arResult['REQUISITE_DATA_LIST']);
+}
+
 ?><script type="text/javascript">
 	BX.ready(
 		function()
@@ -53,7 +65,8 @@ $errPresetNotSelected = ($arResult['REQUISITE_ENTITY_TYPE_MNEMO'] === 'COMPANY')
 					containerId: "<?=CUtil::JSEscape($containerId)?>",
 					fieldNameTemplate: "<?=CUtil::JSEscape($arResult['FORM_FIELD_NAME_TEMPLATE'])?>",
 					formLoaderUrl: "/bitrix/components/bitrix/crm.requisite.edit/innerform.ajax.php?&site=<?=SITE_ID?>&<?=bitrix_sessid_get()?>",
-					serviceUrl: "/bitrix/components/bitrix/crm.requisite.edit/ajax.php?&site=<?=SITE_ID?>&<?=bitrix_sessid_get()?>"
+					serviceUrl: "/bitrix/components/bitrix/crm.requisite.edit/ajax.php?&site=<?=SITE_ID?>&<?=bitrix_sessid_get()?>",
+					pseudoIdStartNumber: <?=$newPseudoIdStartNumber?>
 				}
 			);
 
@@ -66,17 +79,18 @@ $errPresetNotSelected = ($arResult['REQUISITE_ENTITY_TYPE_MNEMO'] === 'COMPANY')
 	);
 </script>
 <div id="<?=$containerId?>" class="crm-offer-requisite-block-wrap"><?
-	if(isset($arResult['REQUISITE_FORM_DATA']) && is_array($arResult['REQUISITE_FORM_DATA']))
+	if($isFormDataPresent)
 	{
 		$entityTypeId = $arResult['REQUISITE_ENTITY_TYPE_ID'];
 		$entityId = $arResult['REQUISITE_ENTITY_ID'];
 
 		end($arResult['REQUISITE_FORM_DATA']);
 		$lastKey = key($arResult['REQUISITE_FORM_DATA']);
+		$n = 0;
 		foreach($arResult['REQUISITE_FORM_DATA'] as $requisiteId => $formData)
 		{
 			$elementId = (int)$requisiteId;
-			$pseudoId = $elementId > 0 ? '' : $requisiteId;
+			$pseudoId = $elementId > 0 ? $elementId : 'n'.$n++;
 
 			$APPLICATION->IncludeComponent(
 				'bitrix:crm.requisite.edit',
@@ -89,20 +103,23 @@ $errPresetNotSelected = ($arResult['REQUISITE_ENTITY_TYPE_MNEMO'] === 'COMPANY')
 					'PRESET_ID' => isset($formData['PRESET_ID']) ? (int)$formData['PRESET_ID'] : 0,
 					'REQUISITE_FORM_DATA' => $formData,
 					'INNER_FORM_MODE' => 'Y',
-					'FIELD_NAME_TEMPLATE' => str_replace('#ELEMENT_ID#', $requisiteId, $fieldNameTemplate),
+					'FIELD_NAME_TEMPLATE' => str_replace('#ELEMENT_ID#', $pseudoId, $fieldNameTemplate),
 					'IS_LAST_IN_FORM' => ($requisiteId === $lastKey ? 'Y' : 'N')
 				),
 				false
 			);
 		}
+		unset($n);
 	}
-	else
+	else if ($isRequisiteDataPresent)
 	{
 		end($arResult['REQUISITE_DATA_LIST']);
 		$lastKey = key($arResult['REQUISITE_DATA_LIST']);
+		$n = 0;
 		foreach($arResult['REQUISITE_DATA_LIST'] as $k => $data)
 		{
 			$requisiteId = $data['requisiteId'];
+			$pseudoId = ($requisiteId > 0) ? $requisiteId : 'n'.$n++;
 			$APPLICATION->IncludeComponent(
 				'bitrix:crm.requisite.edit',
 				'',
@@ -110,15 +127,19 @@ $errPresetNotSelected = ($arResult['REQUISITE_ENTITY_TYPE_MNEMO'] === 'COMPANY')
 					'ENTITY_TYPE_ID' => $data['entityTypeId'],
 					'ENTITY_ID' => $data['entityId'],
 					'ELEMENT_ID' => $requisiteId,
+					'PSEUDO_ID' => $pseudoId,
 					'PRESET_ID' => $data['presetId'],
 					'REQUISITE_DATA' => $data['requisiteData'],
 					'REQUISITE_DATA_SIGN' => $data['requisiteDataSign'],
 					'INNER_FORM_MODE' => 'Y',
-					'FIELD_NAME_TEMPLATE' => str_replace('#ELEMENT_ID#', $requisiteId, $fieldNameTemplate),
+					'FIELD_NAME_TEMPLATE' => str_replace('#ELEMENT_ID#', $pseudoId, $fieldNameTemplate),
 					'IS_LAST_IN_FORM' => ($k === $lastKey ? 'Y' : 'N')
 				),
 				false
 			);
 		}
+		unset($n);
 	}
-?></div>
+?></div><?
+unset($newPseudoIdStartNumber, $isFormDataPresent, $isRequisiteDataPresent);
+?>

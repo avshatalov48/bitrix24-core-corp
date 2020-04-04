@@ -129,6 +129,7 @@ $arResult['ADD_EVENT_NAME'] = $arParams['ADD_EVENT_NAME'] !== ''
 	? preg_replace('/[^a-zA-Z0-9_]/', '', $arParams['ADD_EVENT_NAME']) : '';
 
 $arResult['NAVIGATION_CONTEXT_ID'] = isset($arParams['NAVIGATION_CONTEXT_ID']) ? $arParams['NAVIGATION_CONTEXT_ID'] : '';
+$arResult['DISABLE_NAVIGATION_BAR'] = isset($arParams['DISABLE_NAVIGATION_BAR']) ? $arParams['DISABLE_NAVIGATION_BAR'] : 'N';
 $arResult['PRESERVE_HISTORY'] = isset($arParams['PRESERVE_HISTORY']) ? $arParams['PRESERVE_HISTORY'] : false;
 $arResult['CALL_LIST_UPDATE_MODE'] = isset($_REQUEST['call_list_context']) && isset($_REQUEST['call_list_id']) && IsModuleInstalled('voximplant');
 $arResult['CALL_LIST_CONTEXT'] = (string)$_REQUEST['call_list_context'];
@@ -170,10 +171,10 @@ $arFilter = $arSort = array();
 $bInternal = false;
 $arResult['FORM_ID'] = isset($arParams['FORM_ID']) ? $arParams['FORM_ID'] : '';
 $arResult['TAB_ID'] = isset($arParams['TAB_ID']) ? $arParams['TAB_ID'] : '';
-if (!empty($arParams['INTERNAL_FILTER']) || $arResult['GADGET'] == 'Y')
-	$bInternal = true;
+$hasInternalFilter = (is_array($arParams['INTERNAL_FILTER']) && !empty($arParams['INTERNAL_FILTER']));
+$bInternal = ($hasInternalFilter || $arResult['GADGET'] == 'Y');
 $arResult['INTERNAL'] = $bInternal;
-if (!empty($arParams['INTERNAL_FILTER']) && is_array($arParams['INTERNAL_FILTER']))
+if ($hasInternalFilter)
 {
 	if(empty($arParams['GRID_ID_SUFFIX']))
 	{
@@ -563,20 +564,29 @@ if (is_array($arFilter))
 $CCrmUserType->PrepareListFilterValues($arResult['FILTER'], $arFilter, $arResult['GRID_ID']);
 $USER_FIELD_MANAGER->AdminListAddFilter(CCrmInvoice::$sUFEntityID, $arFilter);
 
-//region converts data from filter
-if(isset($arFilter['FIND']))
+//region Apply Search Restrictions
+$searchRestriction = \Bitrix\Crm\Restriction\RestrictionManager::getSearchLimitRestriction();
+if(!$searchRestriction->isExceeded(CCrmOwnerType::Invoice))
 {
-	if(is_string($arFilter['FIND']))
+	if(isset($arFilter['FIND']))
 	{
-		$find = trim($arFilter['FIND']);
-		if($find !== '')
+		if(is_string($arFilter['FIND']))
 		{
-			$arFilter['SEARCH_CONTENT'] = $find;
+			$find = trim($arFilter['FIND']);
+			if($find !== '')
+			{
+				$arFilter['SEARCH_CONTENT'] = $find;
+			}
 		}
+		unset($arFilter['FIND']);
 	}
-	unset($arFilter['FIND']);
 }
-//endregion
+else
+{
+	$arResult['LIVE_SEARCH_LIMIT_INFO'] = $searchRestriction->prepareStubInfo(
+		array('ENTITY_TYPE_ID' => CCrmOwnerType::Invoice)
+	);
+}
 
 foreach ($arFilter as $k => $v)
 {
@@ -606,17 +616,38 @@ foreach ($arFilter as $k => $v)
 	}
 	elseif ($k === 'ENTITIES_LINKS')
 	{
-		$v = Bitrix\Main\Web\Json::decode($v);
-		if(count($v) > 0)
+		if (is_array($v))
 		{
-			foreach ($v as $entityType => $entityValues)
+			foreach ($v as $vItem)
 			{
-				foreach ($entityValues as $value)
+				$vItem = Bitrix\Main\Web\Json::decode($vItem);
+				if(count($vItem) > 0)
 				{
-					$arFilter['UF_'.$entityType.'_ID'][] = $value;
+					foreach ($vItem as $entityType => $entityValues)
+					{
+						foreach ($entityValues as $value)
+						{
+							$arFilter['UF_'.$entityType.'_ID'][] = $value;
+						}
+					}
 				}
 			}
 		}
+		else
+		{
+			$v = Bitrix\Main\Web\Json::decode($v);
+			if(count($v) > 0)
+			{
+				foreach ($v as $entityType => $entityValues)
+				{
+					foreach ($entityValues as $value)
+					{
+						$arFilter['UF_'.$entityType.'_ID'][] = $value;
+					}
+				}
+			}
+		}
+
 		unset($arFilter[$k]);
 	}
 	elseif (in_array($k, $arResult['FILTER2LOGIC']))
@@ -833,7 +864,9 @@ if($actionData['ACTIVE'])
 
 		if (!$actionData['AJAX_CALL'])
 		{
-			LocalRedirect($bInternal ? '?'.$arParams['FORM_ID'].'_active_tab=tab_invoice' : $srResult['PATH_TO_CURRENT_LIST']);
+			LocalRedirect(
+				$bInternal ? '?'.$arParams['FORM_ID'].'_active_tab=tab_invoice' : $arResult['PATH_TO_CURRENT_LIST']
+			);
 		}
 	}
 }
@@ -1113,6 +1146,11 @@ else
 
 	$subQuery->addSelect('INVOICE_ID');
 	$invoiceFields = array_keys(\Bitrix\Crm\InvoiceTable::getMap());
+	if (!empty($arUserFields) && is_array($arUserFields))
+	{
+		$invoiceFields = array_merge($invoiceFields, array_keys($arUserFields));
+	}
+
 	foreach ($arSelect as $field)
 	{
 		if (strpos($field, $recurFieldPrefix)!== false)
@@ -1124,7 +1162,7 @@ else
 				$query->addSelect("recurring.$fieldName", $recurFieldPrefix.$fieldName);
 			}
 		}
-		elseif (in_array($field, $invoiceFields) || strpos($field, 'UF_') === 0)
+		elseif (in_array($field, $invoiceFields))
 		{
 			$query->addSelect($field);
 		}
@@ -1149,9 +1187,8 @@ else
 	foreach ($arFilter as $key => $valueFilter)
 	{
 		$key = str_replace('~','',$key);
-		$keyField = str_replace(array('<', '>', '=', '!', '~', '%', '@', '?'), '', $key);
-
-		if (in_array($keyField, $invoiceFields) || strpos($keyField, 'UF_') === 0)
+		$keyField = preg_replace('/^\W+/', '', $key);
+		if (in_array($keyField, $invoiceFields))
 		{
 			if (strpos($keyField, $recurFieldPrefix)!== false)
 			{
@@ -1207,6 +1244,37 @@ else
 
 	if (!($obRes instanceof \CDBResult))
 	{
+		$query->countTotal(true);
+		$recurRes = $query->exec();
+		$totalRowsCount = $recurRes->getCount();
+		$query->countTotal(false);
+
+		if(isset($_REQUEST['apply_filter']) && $_REQUEST['apply_filter'] === 'Y')
+		{
+			$pageNum = 1;
+		}
+		elseif($pageSize > 0 && (isset($arParams['PAGE_NUMBER']) || isset($_REQUEST['page'])))
+		{
+			$pageNum = (int)(isset($arParams['PAGE_NUMBER']) ? $arParams['PAGE_NUMBER'] : $_REQUEST['page']);
+			if($pageNum < 0)
+			{
+				//Backward mode
+				$offset = -($pageNum + 1);
+				$pageNum = (int)(ceil($totalRowsCount / $pageSize)) - $offset;
+				if($pageNum <= 0)
+				{
+					$pageNum = 1;
+				}
+			}
+
+			if ($pageNum > 1)
+			{
+				$query->setOffset(($pageNum - 1) * $pageSize);
+			}
+		}
+
+		$query->setLimit($pageSize);
+		$arNavParams['iNumPage'] = $pageNum;
 		$recurRes = $query->exec();
 		$obRes = new \CDBResult($recurRes);
 	}
@@ -1227,7 +1295,10 @@ $arDealList = array();
 $arQuoteList = array();
 $arMyCompanyList = array();
 
-$totalRowsCount = $obRes->SelectedRowsCount();
+if (empty($totalRowsCount))
+{
+	$totalRowsCount = $obRes->SelectedRowsCount();
+}
 
 if ($arResult['GADGET'] != 'Y' && !$isInExportMode)
 {
@@ -1289,13 +1360,6 @@ while($arInvoice = $obRes->GetNext())
 	$isStatusSuccess = CCrmStatusInvoice::isStatusSuccess($arInvoice['~STATUS_ID']);
 	if (!$isStatusSuccess)
 		$isStatusNeutral = CCrmStatusInvoice::isStatusNeutral($arInvoice['~STATUS_ID']);
-
-	// calculate paid sum
-	if ($isStatusSuccess)
-	{
-		$totalPaidNumber++;
-		$totalPaidSum += CCrmCurrency::ConvertMoney($arInvoice['~PRICE'], $arInvoice['~CURRENCY'], $totalPaidCurrencyId);
-	}
 
 	// color coding
 	$arInvoice['INVOICE_EXPIRED_FLAG'] = false;
@@ -1614,7 +1678,23 @@ $CCrmUserType->ListAddEnumFieldsValue(
 	)
 );
 
-$arResult['TOOLBAR_LABEL_TEXT'] = GetMessage('CRM_INVOICE_LIST_TB_LABEL_TEXT', array('#num#' => $totalPaidNumber, '#sum#' => CCrmCurrency::MoneyToString(round($totalPaidSum, 2), $totalPaidCurrencyId)));
+if ($hasInternalFilter)
+{
+	$paidSumInfo = CCrmInvoice::GetPaidSum($arFilter, $totalPaidCurrencyId);
+	$arResult['TOOLBAR_LABEL_TEXT'] = GetMessage(
+		'CRM_INVOICE_LIST_TB_LABEL_TEXT',
+		array(
+			'#num#' => $paidSumInfo['num'],
+			'#sum#' => CCrmCurrency::MoneyToString($paidSumInfo['sum'], $totalPaidCurrencyId)
+		)
+	);
+	unset($paidSumInfo);
+}
+else
+{
+	$arResult['TOOLBAR_LABEL_TEXT'] = '';
+}
+unset($hasInternalFilter, $totalPaidCurrencyId);
 
 $arResult['DB_LIST'] = $obRes;
 

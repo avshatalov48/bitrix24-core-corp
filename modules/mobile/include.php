@@ -13,15 +13,18 @@ CJSCore::RegisterExt('mobile_voximplant', array(
 ));
 
 CJSCore::RegisterExt('mobile_uploader', array(
-	'js' => ['/bitrix/js/mobile/external/progressbar.js','/bitrix/js/mobile/uploader.js'],
-	'rel' => array('mobile_ui'),
-	));
+	'js' => ['/bitrix/js/mobile/uploader.js'],
+	'rel' => [
+		'ui.progressbarjs',
+		'mobile_ui'
+	],
+));
 
 CJSCore::RegisterExt('mobile_ui', array(
 	'js' => '/bitrix/js/mobile/mobile_ui.js',
 	'lang' => '/bitrix/modules/mobile/lang/'.LANGUAGE_ID.'/mobile_ui_messages.php',
 	'css' => '/bitrix/js/mobile/css/mobile_ui.css',
-	'rel' => array('mobileapp:mobile_fastclick', 'mobileapp:mobile_gesture', 'mobile_fastclick'),
+	'rel' => array('mobileapp:mobile_fastclick', 'mobileapp:mobile_gesture'),
 ));
 CJSCore::RegisterExt('mobile_crm', array(
 	'js'   => '/bitrix/js/mobile/mobile_crm.js',

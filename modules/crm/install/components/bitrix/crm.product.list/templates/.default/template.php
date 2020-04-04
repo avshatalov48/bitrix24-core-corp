@@ -140,6 +140,18 @@ foreach($arProducts as $sKey =>  $arProduct)
 					)
 				).'\');'
 		);
+
+		$arActions[] =  array(
+			'ICONCLASS' => 'copy',
+			'TITLE' => GetMessage('CRM_PRODUCT_COPY_TITLE'),
+			'TEXT' => GetMessage('CRM_PRODUCT_COPY'),
+			'ONCLICK' => 'jsUtils.Redirect([], \''.CUtil::JSEscape(
+					CHTTP::urlAddParams(
+						$arProduct['PATH_TO_PRODUCT_EDIT'],
+						array('list_section_id' => $arResult['BACK_URL_SECTION_ID'], 'copy' => 1)
+					)
+				).'\');'
+		);
 	}
 
 	if ($arProduct['DELETE'] && !$arResult['INTERNAL'])

@@ -422,6 +422,14 @@ class CIntranetStructureListComponent extends CBitrixComponent
 		$this->cacheId .= CDBResult::NavStringForCache($this->arParams['USERS_PER_PAGE'], false)
 				. $cntStartCacheId . "|" . $this->arParams['USERS_PER_PAGE'];
 
+		if (
+			isset($this->arParams['LIST_URL'])
+			&& strlen($this->arParams['LIST_URL']) > 0
+		)
+		{
+			$this->cacheId .= "|" . $this->arParams['LIST_URL'];
+		}
+
 		$this->obCache = new CPHPCache;
 
 		return $this->obCache->initCache($this->arParams['CACHE_TIME'], $this->cacheId, $this->cacheDir);
@@ -586,10 +594,10 @@ class CIntranetStructureListComponent extends CBitrixComponent
 				$arAdmins[$ar["ID"]] = $ar["ID"];
 			}
 
-			$integratorId = "";
+			$integratorsId = array();
 			if (IsModuleInstalled("bitrix24"))
 			{
-				$integratorId = \CBitrix24::getIntegratorId();
+				$integratorsId = \Bitrix\Bitrix24\Integrator::getIntegratorsId();
 			}
 
 			$displayPhoto = $this->displayPersonalPhoto();
@@ -628,7 +636,7 @@ class CIntranetStructureListComponent extends CBitrixComponent
 					$arUser['EXTRANET']        = true;
 				}
 
-				if (intval($integratorId) && $arUser['ID'] == $integratorId)
+				if (!empty($integratorsId) && in_array($arUser['ID'], $integratorsId))
 				{
 					$arUser["ACTIVITY_STATUS"] = 'integrator';
 				}
@@ -665,7 +673,7 @@ class CIntranetStructureListComponent extends CBitrixComponent
 			}
 			unset($arUser, $key);
 
-			$this->arResult["USERS_NAV"] = $bNav ? $dbUsers->GetPageNavStringEx($navComponentObject=null, $this->arParams["NAV_TITLE"]) : '';
+			$this->arResult["USERS_NAV"] = ($bNav ? $dbUsers->GetPageNavStringEx($navComponentObject=null, $this->arParams["NAV_TITLE"]) : '');
 
 			if ($this->arParams['bCache'])
 			{

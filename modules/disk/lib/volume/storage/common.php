@@ -3,7 +3,6 @@
 namespace Bitrix\Disk\Volume\Storage;
 
 use Bitrix\Main\ArgumentTypeException;
-use Bitrix\Disk\Internals\ObjectTable;
 use Bitrix\Disk\Volume;
 
 
@@ -19,9 +18,12 @@ class Common extends Volume\Storage\Storage
 	 */
 	public static function getEntityType()
 	{
-		$entityTypes = array(\Bitrix\Disk\ProxyType\Common::className());
-
-		$entityTypes = array_merge($entityTypes, \Bitrix\Disk\Volume\Module\Im::getEntityType());
+		$entityTypes = array_merge(
+			array(\Bitrix\Disk\ProxyType\Common::className()),
+			Volume\Module\Im::getEntityType(),
+			Volume\Module\Mail::getEntityType(),
+			Volume\Module\Documentgenerator::getEntityType()
+		);
 
 		return $entityTypes;
 	}

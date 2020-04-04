@@ -16,6 +16,9 @@ class QueueManager
 	private $id = null;
 	private $config = null;
 
+	const EVENT_QUEUE_OPERATORS_ADD = 'OnQueueOperatorsAdd';
+	const EVENT_QUEUE_OPERATORS_DELETE = 'OnQueueOperatorsDelete';
+
 	public function __construct($id, $config = array())
 	{
 		$this->error = new BasicError(null, '', '');
@@ -50,6 +53,8 @@ class QueueManager
 		{
 			$inQueue[$row['ID']] = $row['USER_ID'];
 		}
+
+		$queueList['QUEUE_BEFORE'] = array_values($inQueue);
 
 		if (implode('|', $addQueue) != implode('|', $inQueue))
 		{
@@ -107,6 +112,7 @@ class QueueManager
 
 			if ($userId)
 			{
+				$inQueue[] = $userId;
 				$data = array(
 					"CONFIG_ID" => $this->id,
 					"USER_ID" => $userId,
@@ -116,11 +122,15 @@ class QueueManager
 				if (!empty($userFields))
 				{
 					$data = array_merge($data, $userFields);
+					$data['USER_AVATAR'] = '';
 				}
 
 				QueueTable::add($data);
 			}
 		}
+
+		$queueList['QUEUE_AFTER'] = array_values($inQueue);
+		$this->sendQueueChangeEvents($queueList['QUEUE_BEFORE'], $queueList['QUEUE_AFTER']);
 
 		return true;
 	}
@@ -178,5 +188,57 @@ class QueueManager
 	public function getError()
 	{
 		return $this->error;
+	}
+
+	/**
+	 * Get diff between old queue and new queue and send queue operators change events
+	 *
+	 * @param $queueBefore
+	 * @param $queueAfter
+	 */
+	private function sendQueueChangeEvents($queueBefore, $queueAfter)
+	{
+		$queueRemoved = array_diff($queueBefore, $queueAfter); //list of removed operators
+		$queueAdded = array_diff($queueAfter, $queueBefore); //list of added operators
+
+		if (!empty($queueRemoved))
+		{
+			$this->sendQueueOperatorsDeleteEvent($queueRemoved);
+		}
+
+		if (!empty($queueAdded))
+		{
+			$this->sendQueueOperatorsAddEvent($queueAdded);
+		}
+	}
+
+	/**
+	 * Send event with list of added to line queue operators
+	 *
+	 * @param $operators
+	 */
+	private function sendQueueOperatorsAddEvent($operators)
+	{
+		$eventData = array(
+			'line' => $this->id,
+			'operators' => $operators
+		);
+		$event = new \Bitrix\Main\Event('imopenlines', self::EVENT_QUEUE_OPERATORS_ADD, $eventData);
+		$event->send();
+	}
+
+	/**
+	 * Send event with list of removed from line queue operators
+	 *
+	 * @param $operators
+	 */
+	private function sendQueueOperatorsDeleteEvent($operators)
+	{
+		$eventData = array(
+			'line' => $this->id,
+			'operators' => $operators
+		);
+		$event = new \Bitrix\Main\Event('imopenlines', self::EVENT_QUEUE_OPERATORS_DELETE, $eventData);
+		$event->send();
 	}
 }

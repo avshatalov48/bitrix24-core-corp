@@ -15,6 +15,7 @@ use Bitrix\Disk\View\Video;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Context;
 use Bitrix\Main\InvalidOperationException;
+use Bitrix\Main\Loader;
 
 class UrlManager implements IErrorable
 {
@@ -241,7 +242,15 @@ class UrlManager implements IErrorable
 			}
 		}
 
-		return ($absolute? $this->getHostUrl() : '') . $this->buildUrl($rewriteCondition, $paramsUri);
+		$url = $this->buildUrl($rewriteCondition, $paramsUri);
+		if ($absolute && Loader::includeModule('bitrix24') && !\CBitrix24::isCustomDomain())
+		{
+			$host = parse_url($this->getHostUrl(), PHP_URL_HOST);
+
+			return "https://bitrix24public.com/{$host}{$url}";
+		}
+
+		return ($absolute? $this->getHostUrl() : '') . $url;
 	}
 
 	/**
@@ -252,7 +261,7 @@ class UrlManager implements IErrorable
 	 */
 	public function getShortUrlExternalLink(array $paramsUri, $absolute = false)
 	{
-		return ($absolute? $this->getHostUrl() : '') . \CBXShortUri::getShortUri($this->getUrlExternalLink($paramsUri, false));
+		return ($absolute? $this->getHostUrl() : '') . \CBXShortUri::getShortUri($this->getUrlExternalLink($paramsUri, $absolute));
 	}
 
 	/**
@@ -1186,7 +1195,7 @@ class UrlManager implements IErrorable
 				'ID', 'NAME', 'DELETED_TYPE',
 			),
 			'filter' => array(
-				'!DELETED_TYPE' => ObjectTable::DELETED_TYPE_NONE,
+				'!==DELETED_TYPE' => ObjectTable::DELETED_TYPE_NONE,
 			),
 		));
 

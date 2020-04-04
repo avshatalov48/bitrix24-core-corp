@@ -71,7 +71,7 @@ class StatisticTable extends Base
 			new Entity\IntegerField('PORTAL_USER_ID'),
 			new Entity\StringField('PORTAL_NUMBER', array(
 				'required' => false,
-				'validation' => function(){return array(new Entity\Validator\Length(null, 20));},
+				'validation' => function(){return array(new Entity\Validator\Length(null, 50));},
 				'title' => Loc::getMessage('STATISTIC_ENTITY_PORTAL_NUMBER_FIELD'),
 			)),
 			new Entity\StringField('PHONE_NUMBER', array(

@@ -345,21 +345,32 @@ abstract class Disk extends \Bitrix\Tasks\Integration
 
 	/**
 	 * Returns available entities for tasks module
-	 * @return array
+	 *
+	 * @return EventResult
 	 */
 	public static function onBuildConnectorList()
 	{
-		return new EventResult(EventResult::SUCCESS, array(
-			'TASK' => array(
+		return new EventResult(EventResult::SUCCESS, [
+			'TASK' => [
 				'ENTITY_TYPE' => 'tasks_task', // should match entity type from user fields: TASKS_TASK
 				'MODULE_ID' => 'tasks',
-				'CLASS' => Disk\Connector\Task::className()
-			),
-			'TASK_TEMPLATE' => array(
+				'CLASS' => Disk\Connector\Task::className(),
+			],
+			'TASK_TEMPLATE' => [
 				'ENTITY_TYPE' => 'tasks_task_template', // should match entity type from user fields: TASKS_TASK_TEMPLATE
 				'MODULE_ID' => 'tasks',
-				'CLASS' => Disk\Connector\Task\Template::className()
-			),
-		));
+				'CLASS' => Disk\Connector\Task\Template::className(),
+			],
+			'TASK_CHECKLIST' => [
+				'ENTITY_TYPE' => 'tasks_task_checklist', // should match entity type from user fields: TASKS_TASK_CHECKLIST
+				'MODULE_ID' => 'tasks',
+				'CLASS' => Disk\Connector\CheckList\Task::className(),
+			],
+			'TEMPLATE_CHECKLIST' => [
+				'ENTITY_TYPE' => 'tasks_task_template_checklist', // should match entity type from user fields: TASKS_TASK_TEMPLATE_CHECKLIST
+				'MODULE_ID' => 'tasks',
+				'CLASS' => Disk\Connector\CheckList\Template::className(),
+			],
+		]);
 	}
 }

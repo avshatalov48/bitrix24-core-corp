@@ -289,23 +289,15 @@ if (($arParams['TYPE'] == 'edit' || $arParams['TYPE'] == 'show')
 
 if ($arParams['TYPE'] == 'show' && !empty($arParams['ELEMENT_ID']))
 {
-	/** @var DocumentGeneratorManager $documentGenerator */
-	$documentGenerator = DocumentGeneratorManager::getInstance();
-	$documentLinks = $documentGenerator->getPreviewList(
-		DocumentGenerator\DataProvider\Quote::class,
-		$arParams['ELEMENT_ID']
-	);
-	if(!empty($documentLinks))
+	if(\Bitrix\Crm\Integration\DocumentGeneratorManager::getInstance()->isDocumentButtonAvailable())
 	{
 		$arResult['BUTTONS'][] = [
 			'CODE' => 'document',
 			'TEXT' => GetMessage('QUOTE_DOCUMENT_BUTTON_TEXT'),
 			'TITLE' => GetMessage('QUOTE_DOCUMENT_BUTTON_TITLE'),
 			'TYPE' => 'crm-document-button',
-			'ITEMS' => $documentLinks,
+			'PARAMS' => DocumentGeneratorManager::getInstance()->getDocumentButtonParameters(DocumentGenerator\DataProvider\Quote::class, $arParams['ELEMENT_ID']),
 		];
-
-		$documentGenerator->showSpotlight('.crm-btn-dropdown-document');
 	}
 
 	if (CCrmQuote::isPrintingViaPaymentMethodSupported())

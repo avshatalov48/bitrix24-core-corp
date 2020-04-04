@@ -21,10 +21,15 @@ class DocumentGeneratorRegionComponent extends CBitrixComponent
 
 	public function executeComponent()
 	{
-		Loc::loadMessages(__FILE__);
 		if(!Loader::includeModule('documentgenerator'))
 		{
 			$this->showError(Loc::getMessage('DOCGEN_REGION_MODULE_DOCGEN_ERROR'));
+			return;
+		}
+
+		if(!\Bitrix\DocumentGenerator\Driver::getInstance()->getUserPermissions()->canModifyTemplates())
+		{
+			$this->showError(Loc::getMessage('DOCGEN_REGION_PERMISSIONS_ERROR'));
 			return;
 		}
 

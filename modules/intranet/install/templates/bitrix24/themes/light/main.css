@@ -1,3 +1,8 @@
+.im-bar-mode table.bx-layout-inner-inner-table td.bx-layout-inner-inner-cont,
+.im-bar-mode.start-page table.bx-layout-inner-inner-table td.bx-layout-inner-inner-cont {
+	padding-right: 66px;
+}
+
 .page-header,
 #sidebar,
 #workarea-content {
@@ -150,7 +155,6 @@
 	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2216%22%20height%3D%2217%22%20viewBox%3D%220%200%2016%2017%22%3E%0A%20%20%3Cg%20fill%3D%22%23FFFFFF%22%3E%0A%20%20%20%20%3Cpath%20d%3D%22M8.2%2C0.8%20C12.5%2C0.8%2016%2C4.3%2016%2C8.6%20C16%2C12.9%2012.5%2C16.4%208.2%2C16.4%20C3.9%2C16.4%200.4%2C12.9%200.4%2C8.6%20C0.4%2C4.3%203.9%2C0.8%208.2%2C0.8%20Z%20M8.2%2C15.6%20C12%2C15.6%2015.1%2C12.5%2015.2%2C8.6%20C15.2%2C4.7%2012%2C1.6%208.2%2C1.6%20C4.3%2C1.6%201.2%2C4.8%201.2%2C8.6%20C1.2%2C12.5%204.4%2C15.6%208.2%2C15.6%20Z%22/%3E%0A%20%20%20%20%3Cpath%20d%3D%22M7.5%205L5.7%205C5.6%205%205.5%205.1%205.5%205.2L5.5%2012.1C5.5%2012.2%205.6%2012.3%205.7%2012.3L7.5%2012.3C7.6%2012.3%207.7%2012.2%207.7%2012.1L7.7%205.2C7.6%205.1%207.6%205%207.5%205zM10.6%205L8.9%205C8.8%205%208.7%205.1%208.7%205.2L8.7%2012.1C8.7%2012.2%208.8%2012.3%208.9%2012.3L10.6%2012.3C10.7%2012.3%2010.8%2012.2%2010.8%2012.1L10.8%205.2C10.8%205.1%2010.7%205%2010.6%205z%22/%3E%0A%20%20%3C/g%3E%0A%3C/svg%3E%0A');
 }
 
-/* userblock styles */
 .user-block:hover {
 	background-color: rgba(255,255,255,.2);
 }
@@ -165,11 +169,6 @@
 
 .user-name:after {
 	border-top-color: #FFF;
-}
-
-.help-block {
-	border-left: 1px solid rgba(255,255,255,.2);
-	background: rgba(255,255,255,.15);
 }
 
 /* footer */
@@ -227,16 +226,6 @@
 	border: none;
 }
 
-/* go to top arrow */
-.feed-up-text {
-	font-family: "OpenSans-Semibold", Helvetica, Arial, sans-serif;
-	color: rgba(255,255,255,.6);
-}
-
-.feed-up-btn-icon {
-	border-color: transparent transparent rgba(255,255,255,.8) transparent;
-}
-
 .workarea-transparent #workarea-content {
 	background: transparent;
 }
@@ -266,7 +255,7 @@
 }
 
 .pagetitle-star {
-	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2221%22%20height%3D%22102%22%20viewBox%3D%220%200%2021%20102%22%20xmlns%3Axlink%3D%22http%3A//www.w3.org/1999/xlink%22%3E%3Cdefs%3E%3Cpath%20id%3D%22a%22%20d%3D%22M10.174%2038l2.4%207.378h7.77l-6.288%204.556%202.4%207.375-6.284-4.563-6.284%204.562%202.4-7.376L0%2045.378h7.77z%22/%3E%3Cmask%20id%3D%22d%22%20width%3D%2220.344%22%20height%3D%2219.309%22%20x%3D%220%22%20y%3D%220%22%20fill%3D%22%23fff%22%3E%3Cuse%20xlink%3Ahref%3D%22%23a%22/%3E%3C/mask%3E%3Cpath%20id%3D%22b%22%20d%3D%22M10.174%2082l2.4%207.378h7.77l-6.288%204.556%202.4%207.375-6.284-4.563-6.284%204.562%202.4-7.376L0%2089.378h7.77z%22/%3E%3Cmask%20id%3D%22e%22%20width%3D%2220.344%22%20height%3D%2219.309%22%20x%3D%220%22%20y%3D%220%22%20fill%3D%22%23fff%22%3E%3Cuse%20xlink%3Ahref%3D%22%23b%22/%3E%3C/mask%3E%3Cpath%20id%3D%22c%22%20d%3D%22M10.174%200l2.4%207.378h7.77l-6.288%204.556%202.4%207.375-6.284-4.563-6.284%204.562%202.4-7.376L0%207.378h7.77z%22/%3E%3Cmask%20id%3D%22f%22%20width%3D%2220.344%22%20height%3D%2219.309%22%20x%3D%220%22%20y%3D%220%22%20fill%3D%22%23fff%22%3E%3Cuse%20xlink%3Ahref%3D%22%23c%22/%3E%3C/mask%3E%3C/defs%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%20stroke-width%3D%222%22%20opacity%3D%22.6%22%3E%3Cuse%20fill%3D%22%23ffffff%22%20fill-opacity%3D%22.6%22%20stroke%3D%22%23ffffff%22%20mask%3D%22url%28%23d%29%22%20xlink%3Ahref%3D%22%23a%22/%3E%3Cuse%20fill%3D%22%23ffffff%22%20stroke%3D%22%23ffffff%22%20mask%3D%22url%28%23e%29%22%20xlink%3Ahref%3D%22%23b%22/%3E%3Cuse%20stroke%3D%22%23ffffff%22%20mask%3D%22url%28%23f%29%22%20xlink%3Ahref%3D%22%23c%22/%3E%3C/g%3E%3C/svg%3E');
+	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2018%2017%22%3E%3Cpath%20fill%3D%22none%22%20stroke%3D%22%23AFB5BB%22%20d%3D%22M13.915%2016.225l-.936-5.461%203.968-3.868-5.484-.797-2.452-4.97L6.558%206.1l-5.484.797%203.969%203.868-.937%205.461%204.905-2.578%204.904%202.578z%22/%3E%3C/svg%3E');
 }
 
 /* socialnetwork.log.ex */
@@ -276,7 +265,7 @@
 }
 
 .feed-add-post-block {
-	padding-top: 15px;
+	padding-top: 4px;
 	background: #fff;
 }
 
@@ -341,9 +330,9 @@
 
 /* intranet-common */
 
-.pagetitle-wrap .webform-small-button:last-child {
-	margin-right: 0;
-}
+/*.pagetitle-wrap .webform-small-button:last-child {*/
+	/*margin-right: 0;*/
+/*}*/
 
 .pagetitle-wrap .webform-rounded-cogwheel .webform-button-icon {
 	background: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2216%22%20height%3D%2216%22%20viewBox%3D%220%200%2012%2012%22%3E%0A%20%20%3Cpath%20fill%3D%22%23FFFFFF%22%20d%3D%22M11.654%2C23.56%20L11.654%2C22.093%20L10.234%2C22.093%20C10.124%2C21.403%209.86%2C20.767%209.471%2C20.221%20L10.467%2C19.226%20L9.43%2C18.189%20L8.434%2C19.184%20C7.892%2C18.79%207.26%2C18.522%206.571%2C18.404%20L6.571%2C17%20L5.106%2C17%20L5.106%2C18.4%20C4.41%2C18.513%203.772%2C18.778%203.224%2C19.17%20L2.234%2C18.18%20L1.196%2C19.218%20L2.186%2C20.206%20C1.789%2C20.756%201.523%2C21.396%201.409%2C22.093%20L0%2C22.093%20L0%2C23.56%20L1.41%2C23.56%20C1.527%2C24.25%201.795%2C24.885%202.188%2C25.43%20L1.188%2C26.428%20L2.225%2C27.465%20L3.225%2C26.465%20C3.775%2C26.855%204.413%2C27.117%205.105%2C27.23%20L5.105%2C28.655%20L6.57%2C28.655%20L6.57%2C27.225%20C7.258%2C27.111%207.888%2C26.843%208.43%2C26.453%20L9.435%2C27.459%20L10.475%2C26.421%20L9.465%2C25.413%20C9.853%2C24.873%2010.118%2C24.243%2010.233%2C23.559%20L11.653%2C23.559%20L11.654%2C23.56%20Z%20M5.82%2C25.6%20C4.284%2C25.6%203.038%2C24.353%203.038%2C22.816%20C3.038%2C21.276%204.284%2C20.031%205.821%2C20.031%20C7.361%2C20.031%208.606%2C21.278%208.606%2C22.817%20C8.606%2C24.354%207.36%2C25.601%205.822%2C25.601%20L5.82%2C25.6%20Z%22%20transform%3D%22translate%280%20-17%29%22/%3E%0A%3C/svg%3E%0A') center center no-repeat;
@@ -458,9 +447,11 @@
 	border-bottom: 0;
 }
 
+
+.pagetitle-container .webform-small-button:last-of-type,
 .pagetitle-flexible-space .webform-small-button:last-child,
 .crm-interface-toolbar-button-container .webform-small-button:last-child {
-	margin-right: 12px;
+	margin-right: 0;
 }
 
 /* END OF COGWHEEL */
@@ -583,14 +574,7 @@
 	opacity: 0.5;
 }
 
-.upgrade-btn {
-	right: 81px;
-}
 
-.user-block {
-	right: 81px;
-	width: 263px;
-}
 
 /* calendr */
 
@@ -631,8 +615,4 @@
 
 .calendar-pagetitle-view .pagetitle-below {
 	border-top: 1px solid rgba(255,255,255,.4);
-}
-
-.calendar-view-switcher-list-item:last-child {
-	margin: 0;
 }

@@ -926,7 +926,7 @@ CrmWebFormListItem.prototype =
 	},
 	showScriptPopup: function ()
 	{
-		BX.addClass(this.nodeBtnGetScript, 'webform-small-button-wait');
+		BX.addClass(this.nodeBtnGetScript, 'ui-btn-wait');
 		this.sendActionRequest('show_script', function(data){
 				var processed = BX.processHTML(data.html);
 				var popup = this.createScriptPopup();
@@ -937,11 +937,11 @@ CrmWebFormListItem.prototype =
 						BX.evalGlobal(scriptData.JS);
 					}
 				});
-				BX.removeClass(this.nodeBtnGetScript, 'webform-small-button-wait');
+				BX.removeClass(this.nodeBtnGetScript, 'ui-btn-wait');
 				popup.show();
 			},
 			function (data) {
-				BX.removeClass(this.nodeBtnGetScript, 'webform-small-button-wait');
+				BX.removeClass(this.nodeBtnGetScript, 'ui-btn-wait');
 				this.showErrorPopup(data);
 		});
 	},

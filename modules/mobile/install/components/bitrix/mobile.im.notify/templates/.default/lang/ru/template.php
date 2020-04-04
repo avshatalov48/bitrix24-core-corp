@@ -10,4 +10,5 @@ $MESS["NM_DOWNTEXT"] = "Отпустите для перезагрузки";
 $MESS["NM_LOADTEXT"] = "Перезагрузка...";
 $MESS["NM_FOLD"] = "Свернуть";
 $MESS["NM_UNFOLD"] = "Развернуть";
+$MESS["NM_SYSTEM_USER"] = "Системное сообщение";
 ?>

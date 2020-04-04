@@ -24,4 +24,9 @@ $MESS["SUPPORT_GROUP_NAME"] = "Техподдержка";
 $MESS["SUPPORT_GROUP_DESC"] = "Сотрудники IT отдела, обеспечивающие техническую поддержку.";
 
 $MESS["INTEGRATOR_GROUP_NAME"] = "Интегратор";
+
+$MESS["SALE_USER_GROUP_SHOP_ADMIN_NAME"] = "Администраторы магазина";
+$MESS["SALE_USER_GROUP_SHOP_MANAGER_NAME"] = "Менеджеры магазина";
+$MESS["SALE_USER_GROUP_SHOP_ADMIN_DESC"] = "Группа пользователей, которые могут настраивать магазин";
+$MESS["SALE_USER_GROUP_SHOP_MANAGER_DESC"] = "Группа пользователей, которые могут работать с магазином";
 ?>

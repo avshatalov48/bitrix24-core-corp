@@ -1,12 +1,12 @@
 <?php
 namespace Bitrix\Crm\Recurring;
 
-use Bitrix\Main\Type\Date,
-	Bitrix\Main\Type\DateTime,
+use Bitrix\Main\Type\DateTime,
 	Bitrix\Main\Localization\Loc,
 	Bitrix\Main\Loader,
 	Bitrix\Sale\PaySystem,
 	Bitrix\Main,
+	Bitrix\Crm,
 	Bitrix\Disk,
 	Bitrix\Crm\Integration\StorageType,
 	Bitrix\Crm\Integration\StorageManager,
@@ -307,16 +307,19 @@ class Mail
 		try
 		{
 			$attachmentId = static::getPdfAttachment($invoice['ID']);
+			if (is_bool($attachmentId))
+			{
+				if ($attachmentId === false)
+				{
+					$result->addError(new Main\Error(Loc::getMessage('CRM_ERROR_SAVING_BILL')));
+				}
+
+				return $result;
+			}
 		}
 		catch (Main\SystemException $e)
 		{
 			$result->addError(new Main\Error($e->getMessage(), $e->getCode()));
-			return $result;
-		}
-
-		if ((int)$attachmentId <= 0)
-		{
-			$result->addError(new Main\Error(Loc::getMessage('CRM_ERROR_SAVING_BILL')));
 			return $result;
 		}
 
@@ -475,6 +478,14 @@ class Mail
 			$result->addErrors($errorList);
 			return $result;
 		}
+
+		addEventToStatFile(
+			'crm',
+			'send_email_message',
+			sprintf('recurring_%s', $invoice['RECURRING_ID']),
+			trim(trim($fields['SETTINGS']['MESSAGE_HEADERS']['Message-Id']), '<>')
+		);
+
 		if ($result->isSuccess())
 		{
 			$result->setData(array('ACTIVITY_ID' => $id));
@@ -486,11 +497,12 @@ class Mail
 	/**
 	 * Get pdf file of payment bill.
 	 *
-	 * @param int $invoiceId		Invoice id.
-	 * @return int|bool		File id.
-	 *
+	 * @param $invoiceId
+	 * @return bool|false|int
+	 * @throws Main\ArgumentException
 	 * @throws Main\ArgumentNullException
 	 * @throws Main\LoaderException
+	 * @throws Main\NotSupportedException
 	 */
 	public static function getPdfAttachment($invoiceId)
 	{
@@ -518,29 +530,84 @@ class Mail
 			$siteId = $data['LID'];
 		}
 
-		$paySystemObject = PaySystem\Manager::getObjectById($paySystem);
-		$_REQUEST['GET_CONTENT'] = 'Y';
-		$_REQUEST['pdf'] = 'Y';
-		$paySystemBufferedOutput = $paySystemObject->initiatePay($payment, null, PaySystem\BaseServiceHandler::STRING);
-		$pdfTemplate = $paySystemBufferedOutput->getTemplate();
-		if (empty($pdfTemplate))
-			return false;
+		$service = PaySystem\Manager::getObjectById($paySystem);
 
-		$today = new Date();
-		$fileName = 'invoice_'.$invoice->getField('ACCOUNT_NUMBER').'_'.str_replace(array('.', '\\', '/'), '-' ,$today->toString()).'.pdf';
-		$fileData = array(
-			'name' => $fileName,
-			'type' => 'application/pdf',
-			'content' => $pdfTemplate,
-			'MODULE_ID' => 'crm'
-		);
-		$fileId = \CFile::SaveFile($fileData, 'crm');
-		$fileArray = \CFile::GetFileArray($fileId);
-		if (!is_array($fileArray))
-			return false;
+		if ($service->isAffordPdf())
+		{
+			$file = $service->getPdf($payment);
+			if ($file === null)
+			{
+				if ($service->isAffordDocumentGeneratePdf()
+					&& !$service->isPdfGenerated($payment)
+				)
+				{
+					$service->registerCallbackOnGenerate(
+						$payment,
+						[
+							'CALLBACK_CLASS' => '\Bitrix\Crm\Recurring\Mail',
+							'CALLBACK_METHOD' => 'send',
+							'MODULE_ID' => 'crm',
+						]
+					);
 
-		$storageTypeId = StorageType::getDefaultTypeID();
+					return true;
+				}
 
-		return StorageManager::saveEmailAttachment($fileArray, $storageTypeId, $siteId);
+				return false;
+			}
+
+			$storageTypeId = StorageType::getDefaultTypeID();
+
+			return StorageManager::saveEmailAttachment($file, $storageTypeId, $siteId);
+		}
+
+		return false;
+	}
+
+	/**
+	 * @param $invoiceId
+	 * @throws Main\ArgumentException
+	 * @throws Main\LoaderException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
+	public static function send($invoiceId)
+	{
+		$dbRes = Invoice::getList([
+			'select' => ['RECURRING_ID'],
+			'filter' => [
+				'=ID' => $invoiceId
+			]
+		]);
+
+		if ($data = $dbRes->fetch())
+		{
+			$dbRes = Crm\InvoiceRecurTable::getList([
+				'select' => ['ID'],
+				'filter' => [
+					'=INVOICE_ID' => $data['RECURRING_ID']
+				]
+			]);
+
+			if ($data = $dbRes->fetch())
+			{
+				$recurringInstance = Entity\Item\InvoiceExist::load($data['ID']);
+				if ($recurringInstance)
+				{
+					$preparedEmailData = $recurringInstance->getPreparedEmailData();
+					if ($preparedEmailData)
+					{
+						$invoice = Crm\Recurring\Entity\Invoice::getInstance();
+						$emailData[$invoiceId] = array(
+							'EMAIL_ID' => (int)$preparedEmailData['EMAIL_ID'],
+							'TEMPLATE_ID' => (int)$preparedEmailData['EMAIL_TEMPLATE_ID'] ? (int)$preparedEmailData['EMAIL_TEMPLATE_ID'] : null,
+							'INVOICE_ID' => $invoiceId
+						);
+
+						$invoice->sendByMail([$preparedEmailData['EMAIL_ID']], $emailData);
+					}
+				}
+			}
+		}
 	}
 }

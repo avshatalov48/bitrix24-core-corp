@@ -23,6 +23,7 @@ $MESS["CRM_DEAL_SECTION_RECURRING"] = "Регулярная сделка";
 $MESS["CRM_DEAL_SECTION_PRODUCTS"] = "Товары";
 $MESS["CRM_DEAL_TAB_PRODUCTS"] = "Товары";
 $MESS["CRM_DEAL_TAB_INVOICES"] = "Счета";
+$MESS["CRM_DEAL_TAB_ORDERS"] = "Заказы";
 $MESS["CRM_DEAL_TAB_AUTOMATION"] = "Роботы";
 $MESS["CRM_DEAL_TAB_EVENT"] = "История";
 $MESS["CRM_DEAL_TAB_QUOTE"] = "Предложения";
@@ -48,16 +49,8 @@ $MESS["CRM_DEAL_FIELD_NUM_SIGN"] = "№#DEAL_ID#";
 $MESS["CRM_DEAL_FIELD_CONTACT_LEGEND"] = "Контакты, участвующие в сделке";
 $MESS["CRM_DEAL_NOT_FOUND"] = "Сделка не найдена";
 $MESS["CRM_DEAL_FIELD_ID"] = "ID";
-$MESS["CRM_RECURRING_DEAL_B24_BLOCK_TITLE"] = "Регулярные сделки доступны в тарифах \"Команда\" и \"Компания\"";
-$MESS["CRM_RECURRING_DEAL_B24_BLOCK_TEXT"] = "Создавать сделки в Битрикс24 можно автоматически! 
-	Если вы, например, целый год планируете еженедельно заключать договор с каким-то клиентом, то регулярные сделки сэкономят ваше время. 
-	Заведите сделку, укажите ее регулярность и направление. А в указанное время она будет создана автоматически без участия менеджера.
-		<ul class=\"hide-features-list\">
-			<li class=\"hide-features-list-item\">Автоматическое создание сделок</li>
-			<li class=\"hide-features-list-item\">Повышение эффективности работы менеджеров</li>
-			<li class=\"hide-features-list-item\">Быстрый доступ к списку регулярных сделок <a href=\"#LINK#\" target=\"_blank\" class=\"hide-features-more\">Узнать подробнее</a></li>
-		</ul>		
-		<strong>Регулярные сделки доступны в тарифах \"Команда\" и \"Компания\"</strong>";
+$MESS["CRM_DEAL_FIELD_DATE_CREATE"] = "Дата создания";
+$MESS["CRM_DEAL_FIELD_DATE_MODIFY"] = "Дата изменения";
 $MESS["CRM_DEAL_QUOTE_LINK"] = "Сделка создана на основании предложения <a target='_blank' href='#URL#'>#TITLE#</a>";
 $MESS["CRM_DEAL_FIELD_LOCATION_ID"] = "Местоположение";
 $MESS["CRM_DEAL_FIELD_UTM"] = "UTM-метки";

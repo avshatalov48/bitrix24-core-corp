@@ -29,6 +29,7 @@ foreach ($arResult['ITEMS']['columns'] as $k => &$column)
 			'total' => (int) $column['count'],
 			'color' => $column['color'],
 			'name' => htmlspecialcharsback($column['name']),
+			'canAddItem' => $column['canAddItem'],
 			'canSort' => $arResult['ACCESS_CONFIG_PERMS'] &&
 						!($column['type'] == 'WIN' || $column['type'] == 'LOOSE'),
 			'data' => array(

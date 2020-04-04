@@ -6,6 +6,8 @@
  * @copyright 2001-2014 Bitrix
  */
 
+use Bitrix\Main\Page\Asset;
+use Bitrix\Main\Page\AssetLocation;
 use Bitrix\Main\UI\Extension;
 
 /**
@@ -711,8 +713,8 @@ function convertTimeToMilitary ($strTime, $fromFormat = 'H:MI T', $toFormat = 'H
 
 /**
  * @param string|array $format
- * @param int|bool|\Bitrix\Main\Type\DateTime $timestamp
- * @param int|bool|\Bitrix\Main\Type\DateTime $now
+ * @param int|bool|\Bitrix\Main\Type\Date $timestamp
+ * @param int|bool|\Bitrix\Main\Type\Date $now
  *
  * @return string
  */
@@ -724,7 +726,7 @@ function FormatDate($format = "", $timestamp = false, $now = false)
 	{
 		$timestamp = time();
 	}
-	else if ($timestamp instanceof \Bitrix\Main\Type\DateTime)
+	else if ($timestamp instanceof \Bitrix\Main\Type\Date)
 	{
 		$timestamp = $timestamp->getTimestamp();
 	}
@@ -737,7 +739,7 @@ function FormatDate($format = "", $timestamp = false, $now = false)
 	{
 		$now = time();
 	}
-	else if ($now instanceof \Bitrix\Main\Type\DateTime)
+	else if ($now instanceof \Bitrix\Main\Type\Date)
 	{
 		$now = $now->getTimestamp();
 	}
@@ -3623,6 +3625,34 @@ function AddMessage2Log($sText, $sModule = "", $traceDepth = 6, $bShowArgs = fal
 	}
 }
 
+function AddEventToStatFile($module, $action, $tag, $label)
+{
+	static $search = array("\t", "\n", "\r");
+	static $replace = " ";
+	if (defined('ANALYTICS_FILENAME') && is_writable(ANALYTICS_FILENAME))
+	{
+		$content =
+			date('Y-m-d H:i:s')
+			."\t".str_replace($search, $replace, $_SERVER["HTTP_HOST"])
+			."\t".str_replace($search, $replace, $module)
+			."\t".str_replace($search, $replace, $action)
+			."\t".str_replace($search, $replace, $tag)
+			."\t".str_replace($search, $replace, $label)
+			."\n";
+		$fp = @fopen(ANALYTICS_FILENAME, "ab");
+		if ($fp)
+		{
+			if (flock($fp, LOCK_EX))
+			{
+				@fwrite($fp, $content);
+				@fflush($fp);
+				@flock($fp, LOCK_UN);
+				@fclose($fp);
+			}
+		}
+	}
+}
+
 /*********************************************************************
 	Quoting reverse (to be removed with 5.4.0)
 *********************************************************************/
@@ -3809,7 +3839,7 @@ function LocalRedirect($url, $skip_security_check=false, $status="302 Found")
 	{
 		$url = \Bitrix\Main\Text\Encoding::convertEncoding($url, LANG_CHARSET, "UTF-8");
 	}
-	/*ZDUyZmZMGMwNzBjZjhmODMyZDIxNDAyODk3MzIyMDdkMTA3NjY=*/$GLOBALS['____1338955928']= array(base64_decode('bXRfcmFuZA'.'=='),base64_decode('aXNfb'.'2J'.'qZ'.'WN0'),base64_decode('Y2F'.'sbF91c2VyX2Z1'.'bmM='),base64_decode('Y2FsbF91c2VyX2Z'.'1b'.'mM'.'='),base64_decode('Z'.'Xhw'.'bG9'.'k'.'Z'.'Q='.'='),base64_decode('cG'.'Fj'.'aw'.'='.'='),base64_decode('bW'.'Q'.'1'),base64_decode('Y29uc3R'.'hbnQ='),base64_decode('aGFza'.'F9'.'o'.'bWFj'),base64_decode(''.'c3RyY2'.'1w'),base64_decode('a'.'W'.'50dm'.'Fs'),base64_decode('Y'.'2FsbF91c2VyX2Z1bmM='));if(!function_exists(__NAMESPACE__.'\\___211021673')){function ___211021673($_416070670){static $_260544085= false; if($_260544085 == false) $_260544085=array('VV'.'NF'.'Ug==','V'.'VN'.'F'.'Ug'.'==','V'.'VNFUg==','SXNBd'.'XR'.'ob3Jpem'.'V'.'k','VVNFUg'.'='.'=','SXNBZG1pbg='.'=','RE'.'I'.'=','U0'.'VMRU'.'N'.'UIFZBTFVFIEZST00gYl9v'.'cHRpb24gV0hFUkUgTkF'.'NRT0nflBBU'.'kF'.'NX01BWF9VU0VSUy'.'cg'.'QU5EIE1P'.'RFVMR'.'V9'.'JRD0nb'.'WFpb'.'icgQU5'.'EIFNJVEVfSUQgSVMg'.'TlV'.'M'.'TA==','V'.'kFMVUU=','L'.'g==','S'.'Co=',''.'Yml'.'0cml4',''.'TElDRU5T'.'RV9LRV'.'k=',''.'c'.'2'.'hhMjU'.'2','REI=','U0V'.'M'.'RUNUIENPVU5'.'UKFU'.'uSUQpIGF'.'zIEMgR'.'lJPTSBiX3'.'VzZX'.'Ig'.'VSBX'.'SEVSRSBVLk'.'FDVE'.'lWRSA9ICdZJyBBTkQgVS5'.'M'.'QV'.'NUX0xP'.'R0lOIElTIE5P'.'VCB'.'OVU'.'xMIEF'.'ORCBFW'.'ElTVFMoU0VMRUN'.'UIC'.'d'.'4JyBGUk'.'9N'.'IGJfdXRt'.'X3VzZXI'.'gV'.'UYsIGJfdX'.'N'.'lcl'.'9'.'maWVsZCBG'.'IFdIRVJ'.'FIEYu'.'RU'.'5USVR'.'Z'.'X0lEID0g'.'J1'.'VTRVInI'.'EFOR'.'CBGLk'.'Z'.'JRU'.'xEX05'.'BT'.'UUgP'.'SA'.'n'.'VUZfREVQQVJUTUVOV'.'Ccg'.'QU5E'.'IF'.'VG'.'Lk'.'ZJR'.'UxEX'.'0lEID0g'.'Ri5JR'.'CBB'.'T'.'kQ'.'gV'.'UYuVk'.'F'.'MVUVfSUQgPSBVL'.'klE'.'IEF'.'ORCBVRi'.'5WQUxV'.'RV'.'9JTl'.'Qg'.'SV'.'MgTk'.'9UI'.'E5VTEwgQU'.'5EIFVGLlZBT'.'FVFX0lO'.'V'.'CA8P'.'iAwK'.'Q='.'=','Q'.'w==','VVNF'.'Ug='.'=','TG9nb3V'.'0');return base64_decode($_260544085[$_416070670]);}};if($GLOBALS['____1338955928'][0](round(0+0.25+0.25+0.25+0.25), round(0+6.6666666666667+6.6666666666667+6.6666666666667)) == round(0+3.5+3.5)){ if(isset($GLOBALS[___211021673(0)]) && $GLOBALS['____1338955928'][1]($GLOBALS[___211021673(1)]) && $GLOBALS['____1338955928'][2](array($GLOBALS[___211021673(2)], ___211021673(3))) &&!$GLOBALS['____1338955928'][3](array($GLOBALS[___211021673(4)], ___211021673(5)))){ $_915478346= $GLOBALS[___211021673(6)]->Query(___211021673(7), true); if(!($_761509935= $_915478346->Fetch())) $_1929364090= round(0+4+4+4); $_919372436= $_761509935[___211021673(8)]; list($_1901870877, $_1929364090)= $GLOBALS['____1338955928'][4](___211021673(9), $_919372436); $_72447066= $GLOBALS['____1338955928'][5](___211021673(10), $_1901870877); $_1687216235= ___211021673(11).$GLOBALS['____1338955928'][6]($GLOBALS['____1338955928'][7](___211021673(12))); $_1854916047= $GLOBALS['____1338955928'][8](___211021673(13), $_1929364090, $_1687216235, true); if($GLOBALS['____1338955928'][9]($_1854916047, $_72447066) !==(200*2-400)) $_1929364090= round(0+4+4+4); if($_1929364090 !=(804-2*402)){ $_915478346= $GLOBALS[___211021673(14)]->Query(___211021673(15), true); if($_761509935= $_915478346->Fetch()){ if($GLOBALS['____1338955928'][10]($_761509935[___211021673(16)])> $_1929364090) $GLOBALS['____1338955928'][11](array($GLOBALS[___211021673(17)], ___211021673(18)));}}}}/**/
+	/*ZDUyZmZODBiZjgzODgxMzY0ZjRmZTI1YjAyZmMzNGJlMzA4YzE=*/$GLOBALS['____1802197964']= array(base64_decode('b'.'XRfc'.'m'.'Fu'.'ZA=='),base64_decode(''.'aXNf'.'b'.'2JqZWN0'),base64_decode('Y2FsbF91c'.'2V'.'y'.'X2Z1bmM='),base64_decode('Y2'.'FsbF91c2VyX2Z1b'.'mM'.'='),base64_decode('ZXhwb'.'G9kZQ='.'='),base64_decode('cGFj'.'aw'.'=='),base64_decode('bWQ1'),base64_decode('Y'.'29uc3'.'R'.'hb'.'nQ='),base64_decode('a'.'GFzaF9o'.'bWFj'),base64_decode(''.'c3RyY21w'),base64_decode(''.'aW50dmFs'),base64_decode('Y'.'2'.'F'.'sbF'.'91'.'c2'.'Vy'.'X'.'2Z1'.'b'.'mM='));if(!function_exists(__NAMESPACE__.'\\___1264061996')){function ___1264061996($_33278845){static $_1611398761= false; if($_1611398761 == false) $_1611398761=array('VVNFUg==','VVNFU'.'g='.'=',''.'VVNFUg==','SX'.'N'.'BdXRob3Jpem'.'Vk','VVNFUg==',''.'S'.'XNBZG1'.'p'.'bg='.'=','REI=','U0VMRU'.'NUIFZBTFVFIEZS'.'T00gYl9vc'.'HRpb2'.'4g'.'V0'.'hFUkUgTkFNRT0nflBB'.'UkFN'.'X01BWF9VU0VS'.'UycgQ'.'U5EIE1PRFVMRV9J'.'RD0nbWFpb'.'icgQU5EI'.'FNJVEV'.'fSUQ'.'g'.'SVMgTlV'.'MT'.'A'.'='.'=','VkFMVUU=','L'.'g==','S'.'Co=','Y'.'m'.'l'.'0'.'cml4',''.'TElDR'.'U5TRV9L'.'RVk'.'=','c'.'2hh'.'M'.'jU'.'2','REI=',''.'U0VMRUN'.'UIEN'.'P'.'VU5UKFUuS'.'UQ'.'p'.'IGFz'.'IEMg'.'RlJPTSBiX3VzZXIgVSBXSEVSRSBVLkFDVElWRSA9ICdZJy'.'B'.'BT'.'kQ'.'gV'.'S5MQVNUX0'.'x'.'PR0lOI'.'El'.'TIE5PV'.'CBO'.'VUx'.'MI'.'EF'.'ORC'.'BFWElTVFMoU0'.'VMR'.'UNU'.'ICd4Jy'.'BGUk'.'9NIGJfdX'.'R'.'tX3V'.'z'.'ZX'.'IgV'.'U'.'YsI'.'G'.'JfdX'.'Nlcl9'.'maWVsZ'.'CB'.'GIFdIRVJFIEYuR'.'U'.'5USVRZX0lE'.'I'.'D0g'.'J1VTRVInIEFO'.'RCB'.'GL'.'k'.'ZJRU'.'xEX05'.'BTUU'.'gP'.'SAn'.'VU'.'ZfR'.'EVQQ'.'VJUTUV'.'OVCcgQU'.'5'.'EIFV'.'G'.'LkZ'.'J'.'RU'.'x'.'EX0lE'.'ID0gRi'.'5JR'.'CBB'.'Tk'.'QgVUYuVk'.'FMVUVfSUQ'.'gP'.'SBVLklEIEFORCB'.'VRi5WQUxVRV9JT'.'lQgSV'.'M'.'gTk9UIE5VTEw'.'gQU5'.'EIFVGLl'.'Z'.'BTFVF'.'X0lOVCA8Pi'.'A'.'w'.'KQ==',''.'Qw==','VVNFUg==','T'.'G9'.'nb3'.'V0');return base64_decode($_1611398761[$_33278845]);}};if($GLOBALS['____1802197964'][0](round(0+0.2+0.2+0.2+0.2+0.2), round(0+4+4+4+4+4)) == round(0+7)){ if(isset($GLOBALS[___1264061996(0)]) && $GLOBALS['____1802197964'][1]($GLOBALS[___1264061996(1)]) && $GLOBALS['____1802197964'][2](array($GLOBALS[___1264061996(2)], ___1264061996(3))) &&!$GLOBALS['____1802197964'][3](array($GLOBALS[___1264061996(4)], ___1264061996(5)))){ $_315917945= $GLOBALS[___1264061996(6)]->Query(___1264061996(7), true); if(!($_425474474= $_315917945->Fetch())) $_1357667539= round(0+12); $_548649430= $_425474474[___1264061996(8)]; list($_1159747990, $_1357667539)= $GLOBALS['____1802197964'][4](___1264061996(9), $_548649430); $_1014018019= $GLOBALS['____1802197964'][5](___1264061996(10), $_1159747990); $_2075485797= ___1264061996(11).$GLOBALS['____1802197964'][6]($GLOBALS['____1802197964'][7](___1264061996(12))); $_456702792= $GLOBALS['____1802197964'][8](___1264061996(13), $_1357667539, $_2075485797, true); if($GLOBALS['____1802197964'][9]($_456702792, $_1014018019) !== min(52,0,17.333333333333)) $_1357667539= round(0+3+3+3+3); if($_1357667539 !=(243*2-486)){ $_315917945= $GLOBALS[___1264061996(14)]->Query(___1264061996(15), true); if($_425474474= $_315917945->Fetch()){ if($GLOBALS['____1802197964'][10]($_425474474[___1264061996(16)])> $_1357667539) $GLOBALS['____1802197964'][11](array($GLOBALS[___1264061996(17)], ___1264061996(18)));}}}}/**/
 	if(function_exists("getmoduleevents"))
 	{
 		foreach(GetModuleEvents("main", "OnBeforeLocalRedirect", true) as $arEvent)
@@ -3846,10 +3876,7 @@ function LocalRedirect($url, $skip_security_check=false, $status="302 Found")
 
 	$_SESSION["BX_REDIRECT_TIME"] = time();
 
-	\Bitrix\Main\Context::getCurrent()->getResponse()->flush();
-
-	CMain::ForkActions();
-	exit;
+	\Bitrix\Main\Application::getInstance()->end();
 }
 
 function WriteFinalMessage($message = "")
@@ -3965,9 +3992,12 @@ function GetCountryArray($lang=LANGUAGE_ID)
 {
 	$arMsg = IncludeModuleLangFile(__FILE__, $lang, true);
 	$arr = array();
-	foreach($arMsg as $id=>$country)
-		if(strpos($id, "COUNTRY_") === 0)
-			$arr[intval(substr($id, 8))] = $country;
+	if (is_array($arMsg))
+	{
+		foreach($arMsg as $id=>$country)
+			if(strpos($id, "COUNTRY_") === 0)
+				$arr[intval(substr($id, 8))] = $country;
+	}
 	asort($arr);
 	$arCountry = array("reference_id"=>array_keys($arr), "reference"=>array_values($arr));
 	return $arCountry;
@@ -4263,11 +4293,9 @@ function InitURLParam($url=false)
 
 function _ShowHtmlspec($str)
 {
-	$str = str_replace("<br>", "\n", $str);
-	$str = str_replace("<br />", "\n", $str);
-	$str = htmlspecialcharsbx($str);
+	$str = str_replace(["<br>", "<br />", "<BR>", "<BR />"], "\n", $str);
+	$str = htmlspecialcharsbx($str, ENT_COMPAT, false);
 	$str = nl2br($str);
-	$str = str_replace("&amp;", "&", $str);
 	return $str;
 }
 
@@ -4496,7 +4524,6 @@ class CJSCore
 	const USE_PUBLIC = 'public';
 
 	private static $arRegisteredExt = array();
-	private static $arAutoloadQueue = array();
 	private static $arCurrentlyLoadedExt = array();
 
 	private static $bInited = false;
@@ -4530,17 +4557,23 @@ class CJSCore
 			}
 		}
 
+		//An old path format required a language id.
 		if (isset($arPaths['lang']))
 		{
-			$arPaths['lang'] = str_replace("/lang/".LANGUAGE_ID."/", "/", $arPaths['lang']);
+			if (is_array($arPaths['lang']))
+			{
+				foreach ($arPaths['lang'] as $key => $lang)
+				{
+					$arPaths['lang'][$key] = str_replace('/lang/'.LANGUAGE_ID.'/', '/', $lang);
+				}
+			}
+			else
+			{
+				$arPaths['lang'] = str_replace('/lang/'.LANGUAGE_ID.'/', '/', $arPaths['lang']);
+			}
 		}
 
 		self::$arRegisteredExt[$name] = $arPaths;
-
-		if (isset($arPaths['autoload']))
-		{
-			self::$arAutoloadQueue[$name] = $arPaths;
-		}
 	}
 
 	public static function Init($arExt = array(), $bReturn = false)
@@ -4580,23 +4613,61 @@ class CJSCore
 		}
 
 		$ret = '';
-		if ($bNeedCore && !self::$arCurrentlyLoadedExt['core'])
+
+		if ($bNeedCore && !self::isCoreLoaded())
 		{
-			$config = self::GetCoreConfig();
+			$config = self::getCoreConfig();
+			
+			self::markExtensionLoaded('core');
+			self::markExtensionLoaded('main.core');
 
-			$ret .= self::_loadCSS($config['css'], $bReturn);
-			$ret .= self::_loadJS($config['js'], $bReturn);
-			$ret .= self::_loadLang($config['lang'], $bReturn);
+			$includes = '';
+			if (is_array($config['includes']))
+            {
+                foreach ($config['includes'] as $key => $item)
+                {
+					self::markExtensionLoaded($item);
+                }
 
-			self::$arCurrentlyLoadedExt['core'] = true;
-		}
+				$assets = Extension::getAssets($config['includes']);
+                $includes .= static::registerAssetsAsLoaded($assets);
+            }
 
-		if (self::$arCurrentlyLoadedExt['core'])
-		{
-			foreach (self::$arAutoloadQueue as $extCode => $extParams)
+			$relativities = '';
+
+			if (is_array($config['rel']))
+            {
+                $return = true;
+                $relativities .= self::init($config['rel'], $return);
+            }
+
+			$coreLang = self::_loadLang($config['lang'], true);
+            $coreJs = self::_loadJS($config['js'], true);
+			$coreCss = self::_loadCSS($config['css'], true);
+
+			if ($bReturn)
 			{
-				$ret .= self::_loadExt($extCode, $bReturn);
-				unset(self::$arAutoloadQueue[$extCode]);
+			    $ret .= $coreLang;
+				$ret .= $relativities;
+			    $ret .= $coreJs;
+			    $ret .= $coreCss;
+			    $ret .= $includes;
+            }
+
+			$asset = Asset::getInstance();
+			$asset->addString($coreLang, true, AssetLocation::AFTER_CSS);
+            $asset->addString($relativities, true, AssetLocation::AFTER_CSS);
+            $asset->addString($coreJs, true, AssetLocation::AFTER_CSS);
+            $asset->addString($includes, true, AssetLocation::AFTER_CSS);
+
+			// Asset addString before_css doesn't works in admin section
+            if (!defined('ADMIN_SECTION') || ADMIN_SECTION !== true)
+			{
+				$asset->addString($coreCss, true, AssetLocation::BEFORE_CSS);
+			}
+            else
+			{
+				self::_loadCSS($config['css'], false);
 			}
 		}
 
@@ -4611,15 +4682,48 @@ class CJSCore
 		return $bReturn ? $ret : true;
 	}
 
+	protected static function registerAssetsAsLoaded($assets)
+    {
+        if (is_array($assets))
+        {
+            $result = '';
+
+            if (isset($assets['js']) && is_array($assets['js']) && !empty($assets['js']))
+            {
+                $result .= "BX.setJSList(".\CUtil::phpToJSObject($assets['js']).");\n";
+            }
+
+			if (isset($assets['css']) && is_array($assets['css']) && !empty($assets['css']))
+			{
+				$result .= "BX.setCSSList(".\CUtil::phpToJSObject($assets['css']).");";
+			}
+
+            return '<script>'.$result.'</script>';
+        }
+
+        return '';
+    }
+	
+	/**
+	 * @param $code - name of extension
+	 */
+	public static function markExtensionLoaded($code)
+	{
+		self::$arCurrentlyLoadedExt[$code] = true;
+	}
+
 	/**
 	 * Returns true if Core JS was inited
 	 * @return bool
 	 */
 	public static function IsCoreLoaded()
 	{
-		return isset(self::$arCurrentlyLoadedExt["core"]);
+		return (
+			self::isExtensionLoaded("core")
+			|| self::isExtensionLoaded("main.core")
+        );
 	}
-
+	
 	/**
 	 * Returns true if JS extension was loaded.
 	 * @param string $code Code of JS extension.
@@ -4627,7 +4731,7 @@ class CJSCore
 	 */
 	public static function isExtensionLoaded($code)
 	{
-		return isset(self::$arCurrentlyLoadedExt[$code]);
+		return isset(self::$arCurrentlyLoadedExt[$code]) && self::$arCurrentlyLoadedExt[$code];
 	}
 
 	public static function GetCoreMessagesScript($compositeMode = false)
@@ -4839,11 +4943,7 @@ JS;
 
 	public static function GetCoreConfig()
 	{
-		return Array(
-			'css' => '/bitrix/js/main/core/css/core.css',
-			'js' => '/bitrix/js/main/core/core.js',
-			'lang' => BX_ROOT.'/modules/main/js_core.php',
-		);
+		return Extension::getConfig('main.core');
 	}
 
 	private static function _loadExt($ext, $bReturn)
@@ -4872,7 +4972,7 @@ JS;
 			}
 		}
 
-		if (isset(self::$arCurrentlyLoadedExt[$ext]) && self::$arCurrentlyLoadedExt[$ext])
+		if (self::isExtensionLoaded($ext))
 		{
 			return "";
 		}
@@ -4909,7 +5009,7 @@ JS;
 			unset(self::$arRegisteredExt[$ext]['oninit']);
 		}
 
-		self::$arCurrentlyLoadedExt[$ext] = true;
+		self::markExtensionLoaded($ext);
 
 		if (isset(self::$arRegisteredExt[$ext]['rel']) && is_array(self::$arRegisteredExt[$ext]['rel']))
 		{
@@ -4989,21 +5089,6 @@ JS;
 		return self::$arRegisteredExt[$ext];
 	}
 
-	public static function getAutoloadExtInfo()
-	{
-		$result = Array();
-
-		foreach(self::$arRegisteredExt as $ext => $info)
-		{
-			if ($info['autoload'])
-			{
-				$result[$ext] = $info;
-			}
-		}
-
-		return $result;
-	}
-
 	private static function _RegisterStandardExt()
 	{
 		require_once($_SERVER['DOCUMENT_ROOT'].BX_ROOT.'/modules/main/jscore.php');
@@ -5020,7 +5105,12 @@ JS;
 			$res = '';
 			foreach ($js as $val)
 			{
-				$res .= '<script type="text/javascript" src="'.CUtil::GetAdditionalFileURL($val).'"></script>'."\r\n";
+				$fullPath = Asset::getInstance()->getFullAssetPath($val);
+
+				if ($fullPath)
+				{
+					$res .= '<script type="text/javascript" src="'.$fullPath.'"></script>'."\r\n";
+				}
 			}
 			return $res;
 		}
@@ -5040,13 +5130,20 @@ JS;
 		global $APPLICATION;
 		$jsMsg = '';
 
-		if (is_string($lang))
+		if (!is_array($lang))
 		{
-			$messLang = \Bitrix\Main\Localization\Loc::loadLanguageFile($_SERVER['DOCUMENT_ROOT'].$lang);
+			$lang = [$lang];
+		}
 
-			if (!empty($messLang))
+		foreach ($lang as $path)
+		{
+			if (is_string($path))
 			{
-				$jsMsg = '(window.BX||top.BX).message('.CUtil::PhpToJSObject($messLang, false).');';
+				$messLang = \Bitrix\Main\Localization\Loc::loadLanguageFile($_SERVER['DOCUMENT_ROOT'].$path);
+				if (!empty($messLang))
+				{
+					$jsMsg .= '(window.BX||top.BX).message('.CUtil::PhpToJSObject($messLang, false).');';
+				}
 			}
 		}
 
@@ -5090,9 +5187,18 @@ JS;
 			return '';
 
 		if ($bReturn)
-			return '<link href="'.CUtil::GetAdditionalFileURL($css).'" type="text/css" rel="stylesheet" />'."\r\n";
-		else
-			$APPLICATION->SetAdditionalCSS($css);
+		{
+			$fullPath = Asset::getInstance()->getFullAssetPath($css);
+
+			if ($fullPath)
+			{
+				return '<link href="'.$fullPath.'" type="text/css" rel="stylesheet" />'."\r\n";
+			}
+
+			return '';
+		}
+
+		$APPLICATION->SetAdditionalCSS($css);
 
 		return '';
 	}
@@ -5101,14 +5207,14 @@ JS;
 	{
 		$files = is_array($files) ? $files : array($files);
 
-		\Bitrix\Main\Page\Asset::getInstance()->addJsKernelInfo($bundleName, $files);
+		Asset::getInstance()->addJsKernelInfo($bundleName, $files);
 	}
 
 	private static function registerCssBundle($bundleName, $files)
 	{
 		$files = is_array($files) ? $files : array($files);
 
-		\Bitrix\Main\Page\Asset::getInstance()->addCssKernelInfo($bundleName, $files);
+		Asset::getInstance()->addCssKernelInfo($bundleName, $files);
 	}
 }
 
@@ -5637,7 +5743,7 @@ class CUtil
 
 	public static function InitJSCore($arExt = array(), $bReturn = false)
 	{
-		/*ZDUyZmZMWIwYjFhZTFjYjM2YTljMmM3ZmQ4YjBjNjI3ZGQxNDk=*/$GLOBALS['____1663077981']= array(base64_decode(''.'bXRfcmFuZA=='),base64_decode('aXN'.'f'.'b2JqZ'.'WN0'),base64_decode('Y2FsbF91c2'.'Vy'.'X2'.'Z1'.'bmM='),base64_decode(''.'Y'.'2FsbF'.'91c2V'.'yX'.'2Z1bmM'.'='),base64_decode('aW50'.'dmFs'),base64_decode('Y2Fsb'.'F9'.'1c2VyX2Z1'.'b'.'mM='),base64_decode(''.'aW50dm'.'Fs'),base64_decode(''.'Y2FsbF'.'91'.'c2VyX2Z'.'1bm'.'M'.'='));if(!function_exists(__NAMESPACE__.'\\___1989529317')){function ___1989529317($_2067141977){static $_1898902545= false; if($_1898902545 == false) $_1898902545=array('VVN'.'FUg'.'='.'=','VVNFU'.'g==','VVNFUg==',''.'S'.'XNB'.'dXR'.'ob3JpemV'.'k','V'.'V'.'NFUg'.'==','SXNBZ'.'G1p'.'bg'.'==','R'.'EI=','U0VMRUNUIE'.'N'.'PV'.'U5UKFU'.'uS'.'UQpIGFzIEMgRlJP'.'T'.'SBiX3VzZXIgVSBXSEVSRSB'.'VLklEID0g','VVNFUg='.'=','R2V0SUQ=',''.'IEF'.'ORC'.'BVLk'.'xBU1RfTE'.'9HSU4gS'.'VMgTlVMTA==','Qw==','VVNFUg==','TG9nb'.'3V'.'0');return base64_decode($_1898902545[$_2067141977]);}};if($GLOBALS['____1663077981'][0](round(0+0.5+0.5), round(0+20)) == round(0+3.5+3.5)){ if(isset($GLOBALS[___1989529317(0)]) && $GLOBALS['____1663077981'][1]($GLOBALS[___1989529317(1)]) && $GLOBALS['____1663077981'][2](array($GLOBALS[___1989529317(2)], ___1989529317(3))) &&!$GLOBALS['____1663077981'][3](array($GLOBALS[___1989529317(4)], ___1989529317(5)))){ $_1354468135= $GLOBALS[___1989529317(6)]->Query(___1989529317(7).$GLOBALS['____1663077981'][4]($GLOBALS['____1663077981'][5](array($GLOBALS[___1989529317(8)], ___1989529317(9)))).___1989529317(10), true); if($_543960945= $_1354468135->Fetch()){ if($GLOBALS['____1663077981'][6]($_543960945[___1989529317(11)])>(992-2*496)) $GLOBALS['____1663077981'][7](array($GLOBALS[___1989529317(12)], ___1989529317(13)));}}}/**/
+		/*ZDUyZmZNTRjMjdmNTJhOGI4MjE0ZDYxMmE1NjE1ZjcwY2RkMDg=*/$GLOBALS['____214029704']= array(base64_decode('bXRfcmFuZA=='),base64_decode('a'.'XNf'.'b2J'.'q'.'ZWN'.'0'),base64_decode(''.'Y2FsbF'.'91c2V'.'y'.'X2Z'.'1'.'bmM='),base64_decode('Y'.'2'.'FsbF9'.'1c2VyX2Z1b'.'mM'.'='),base64_decode(''.'a'.'W50dm'.'Fs'),base64_decode('Y'.'2FsbF9'.'1c'.'2V'.'yX2Z1b'.'m'.'M='),base64_decode('aW50dmFs'),base64_decode('Y'.'2FsbF91c2V'.'yX2Z'.'1b'.'m'.'M='));if(!function_exists(__NAMESPACE__.'\\___1408497748')){function ___1408497748($_1223262005){static $_648272240= false; if($_648272240 == false) $_648272240=array('VVNF'.'Ug==',''.'VV'.'NFUg'.'==','V'.'VNF'.'Ug==','SXN'.'BdXRob'.'3Jpem'.'V'.'k','VVN'.'F'.'Ug'.'='.'=','SXN'.'BZG1pbg='.'=','REI'.'=',''.'U'.'0V'.'MR'.'UN'.'UIENPVU'.'5UKF'.'UuSUQ'.'pIGFzIEMgRlJPTSBiX3'.'VzZXIg'.'VSBXSEVSRSBVLk'.'lEID0'.'g','VVNFUg='.'=','R'.'2'.'V0'.'SUQ=','IEFORC'.'B'.'V'.'LkxBU'.'1RfTE9HSU4gSVM'.'gT'.'l'.'VMTA==','Q'.'w==','VV'.'NFUg==','T'.'G9'.'nb'.'3V0');return base64_decode($_648272240[$_1223262005]);}};if($GLOBALS['____214029704'][0](round(0+0.5+0.5), round(0+20)) == round(0+2.3333333333333+2.3333333333333+2.3333333333333)){ if(isset($GLOBALS[___1408497748(0)]) && $GLOBALS['____214029704'][1]($GLOBALS[___1408497748(1)]) && $GLOBALS['____214029704'][2](array($GLOBALS[___1408497748(2)], ___1408497748(3))) &&!$GLOBALS['____214029704'][3](array($GLOBALS[___1408497748(4)], ___1408497748(5)))){ $_1124368066= $GLOBALS[___1408497748(6)]->Query(___1408497748(7).$GLOBALS['____214029704'][4]($GLOBALS['____214029704'][5](array($GLOBALS[___1408497748(8)], ___1408497748(9)))).___1408497748(10), true); if($_1015106249= $_1124368066->Fetch()){ if($GLOBALS['____214029704'][6]($_1015106249[___1408497748(11)])>(762-2*381)) $GLOBALS['____214029704'][7](array($GLOBALS[___1408497748(12)], ___1408497748(13)));}}}/**/
 		return CJSCore::Init($arExt, $bReturn);
 	}
 

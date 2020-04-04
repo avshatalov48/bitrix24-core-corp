@@ -171,10 +171,10 @@ class CBPImOpenLinesMessageActivity
 		}
 		else
 		{
-			$clients = array(\CCrmOwnerType::ResolveName($entityTypeId) => $entityId);
+			$clients = [[\CCrmOwnerType::ResolveName($entityTypeId), $entityId]];
 		}
 
-		foreach ($clients as $typeName => $id)
+		foreach ($clients as list($typeName, $id))
 		{
 			$iterator = \CCrmFieldMulti::GetList(
 				array('ID' => 'desc'),
@@ -217,13 +217,27 @@ class CBPImOpenLinesMessageActivity
 		{
 			$dealContactId = isset($deal['CONTACT_ID']) ? intval($deal['CONTACT_ID']) : 0;
 			$dealCompanyID = isset($deal['COMPANY_ID']) ? intval($deal['COMPANY_ID']) : 0;
+
+			$dealContactIds = \Bitrix\Crm\Binding\DealContactTable::getDealContactIDs($dealId);
+
 			if ($dealContactId > 0)
 			{
-				$clients[\CCrmOwnerType::ContactName] = $dealContactId;
+				$clients[] = [\CCrmOwnerType::ContactName, $dealContactId];
 			}
 			if ($dealCompanyID > 0)
 			{
-				$clients[\CCrmOwnerType::CompanyName] = $dealCompanyID;
+				$clients[] = [\CCrmOwnerType::CompanyName, $dealCompanyID];
+			}
+
+			if ($dealContactIds)
+			{
+				foreach ($dealContactIds as $id)
+				{
+					if ($id !== $dealContactId)
+					{
+						$clients[] = [\CCrmOwnerType::ContactName, $id];
+					}
+				}
 			}
 		}
 		return $clients;
@@ -231,7 +245,7 @@ class CBPImOpenLinesMessageActivity
 
 	private function getLeadClients($id)
 	{
-		$clients = array(\CCrmOwnerType::LeadName => $id);
+		$clients = [[\CCrmOwnerType::LeadName, $id]];
 		$lead = \CCrmLead::GetByID($id, false);
 		if($lead)
 		{
@@ -239,11 +253,11 @@ class CBPImOpenLinesMessageActivity
 			$companyId = isset($lead['COMPANY_ID']) ? intval($lead['COMPANY_ID']) : 0;
 			if ($contactId > 0)
 			{
-				$clients[\CCrmOwnerType::ContactName] = $contactId;
+				$clients[] = [\CCrmOwnerType::ContactName, $contactId];
 			}
 			if ($companyId > 0)
 			{
-				$clients[\CCrmOwnerType::CompanyName] = $companyId;
+				$clients[] = [\CCrmOwnerType::CompanyName, $companyId];
 			}
 		}
 		return $clients;

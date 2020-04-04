@@ -5,32 +5,6 @@ li.g-brd-bottom:last-child {
 }
 
 
-/* xl
-   Large devices more than 992px
- */
-@media (min-width: 992px) {
-	.l-d-lg-none {
-		display: none;
-	}
-}
-
-/* md
-   Medium devices less than 1200px and more than 576px
-*/
-@media (max-width: 991px) and (min-width: 576px) {
-	.l-d-md-none {
-		display: none;
-	}
-}
-
-/* xs
-   Extra small devices less than 576px
- */
-@media (max-width: 575px) {
-	.l-d-xs-none {
-		display: none;
-	}
-}
 
 
 

@@ -1,12 +1,22 @@
 <?php
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
-$defaultMenuTarget = SITE_TEMPLATE_ID === "bitrix24" ? "above_pagetitle" : "task_menu";
+
+$defaultMenuTarget =  "above_pagetitle";
 
 \CJSCore::init("spotlight");
 
 if(SITE_TEMPLATE_ID === "bitrix24")
 {
 	$this->SetViewTarget($defaultMenuTarget, 200);
+}
+
+if($_REQUEST['IFRAME'] && $_REQUEST['IFRAME']==='Y') {
+    ?>
+    <style>.pagetitle-above {
+            margin-top: 18px;
+        }
+    </style>
+    <?
 }
 
 $menuId = intval($arParams["GROUP_ID"]) ? "tasks_panel_menu_group" : "tasks_panel_menu";

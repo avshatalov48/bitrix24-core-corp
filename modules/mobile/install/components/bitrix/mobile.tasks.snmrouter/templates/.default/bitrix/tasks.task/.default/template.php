@@ -106,7 +106,7 @@ $APPLICATION->IncludeComponent(
 									$ids[] = $item["ID"];
 									$item["TITLE"] = htmlspecialcharsbx($item["TITLE"]);
 									$result .=
-									"<label id=\"checkListItem".$item["ID"]."Label\" for=\"checkListItem".$item["ID"]."\" class=\"task-view-checklist task-view-checklist-toggle task-view-checklist-modify task-view-checklist-remove\">".
+									"<label id=\"checkListItem".$item["ID"]."Label\" for=\"checkListItem".$item["ID"]."\" class=\"task-view-checklist task-view-checklist-toggle\">".
 										"<span class=\"".($separator ? "mobile-grid-field-divider" : "mobile-grid-field-tasks-checklist-item")."\">".
 											"<input type=\"hidden\" name=\"data[SE_CHECKLIST][".$item["ID"]."][ID]\" value=\"".$item["ID"]."\" />".
 											"<input type=\"checkbox\" name=\"data[SE_CHECKLIST][".$item["ID"]."][IS_COMPLETE]\" id=\"checkListItem".$item["ID"]."\"".($item["IS_COMPLETE"] == "Y" ? " checked " : "")." value=\"Y\" />".
@@ -118,11 +118,7 @@ $APPLICATION->IncludeComponent(
 									"</label>";
 								}
 								return $result;
-							}) ? $checkList($task["SE_CHECKLIST"], $task["CHECKLIST"]) : "")."</div>".
-							"<div class='mobile-grid-button'>".
-								"<a id=\"checkList".$task["ID"]."Add\" href=\"#\">".GetMessage("MB_TASKS_TASK_ADD")."</a>".
-								"<a id=\"checkList".$task["ID"]."Separator\" href=\"#\">".GetMessage("MB_TASKS_TASK_ADD_SEPARATOR")."</a>".
-							"</div>"
+							}) ? $checkList($task["SE_CHECKLIST"], $task["CHECKLIST"]) : "")."</div>"
 					),
 					array(
 						"type" => ($can["EDIT"] || $can["EDIT.PLAN"] ? "datetime" : "datetimelabel"),

@@ -73,6 +73,7 @@ class CCrmFieldMulti
 					'FAX' 	=> Array('FULL' => GetMessage('CRM_FM_ENTITY_PHONE_FAX'), 'SHORT' => GetMessage('CRM_FM_ENTITY_PHONE_FAX_SHORT'), 'ABBR' => GetMessage('CRM_FM_ENTITY_PHONE_FAX_ABBR'), 'TEMPLATE' => '<a href="'.CCrmCallToUrl::Format('#VALUE#').'">#VALUE_HTML#</a>'),
 					'HOME' 	=> Array('FULL' => GetMessage('CRM_FM_ENTITY_PHONE_HOME'), 'SHORT' => GetMessage('CRM_FM_ENTITY_PHONE_HOME_SHORT'), 'ABBR' => GetMessage('CRM_FM_ENTITY_PHONE_HOME_ABBR'), 'TEMPLATE' => '<a href="'.CCrmCallToUrl::Format('#VALUE#').'">#VALUE_HTML#</a>'),
 					'PAGER' => Array('FULL' => GetMessage('CRM_FM_ENTITY_PHONE_PAGER'), 'SHORT' => GetMessage('CRM_FM_ENTITY_PHONE_PAGER_SHORT'), 'ABBR' => GetMessage('CRM_FM_ENTITY_PHONE_PAGER_ABBR'), 'TEMPLATE' => '<a href="'.CCrmCallToUrl::Format('#VALUE#').'">#VALUE_HTML#</a>'),
+					'MAILING' => Array('FULL' => GetMessage('CRM_FM_ENTITY_PHONE_MAILING'), 'SHORT' => GetMessage('CRM_FM_ENTITY_PHONE_MAILING_SHORT'), 'ABBR' => GetMessage('CRM_FM_ENTITY_PHONE_MAILING_ABBR'), 'TEMPLATE' => '<a href="'.CCrmCallToUrl::Format('#VALUE#').'">#VALUE_HTML#</a>'),
 					'OTHER' => Array('FULL' => GetMessage('CRM_FM_ENTITY_PHONE_OTHER'), 'SHORT' => GetMessage('CRM_FM_ENTITY_PHONE_OTHER_SHORT'), 'ABBR' => GetMessage('CRM_FM_ENTITY_PHONE_OTHER_ABBR'), 'TEMPLATE' => '<a href="'.CCrmCallToUrl::Format('#VALUE#').'">#VALUE_HTML#</a>'),
 				),
 				'WEB' => Array(
@@ -87,6 +88,7 @@ class CCrmFieldMulti
 				'EMAIL' => Array(
 					'WORK'  => Array('FULL' => GetMessage('CRM_FM_ENTITY_EMAIL_WORK'), 'SHORT' => GetMessage('CRM_FM_ENTITY_EMAIL_WORK_SHORT'), 'ABBR' => GetMessage('CRM_FM_ENTITY_EMAIL_WORK_ABBR'), 'TEMPLATE' => '<a href="mailto:#VALUE_URL#">#VALUE_HTML#</a>'),
 					'HOME' 	=> Array('FULL' => GetMessage('CRM_FM_ENTITY_EMAIL_HOME'), 'SHORT' => GetMessage('CRM_FM_ENTITY_EMAIL_HOME_SHORT'), 'ABBR' => GetMessage('CRM_FM_ENTITY_EMAIL_HOME_ABBR'), 'TEMPLATE' => '<a href="mailto:#VALUE_URL#">#VALUE_HTML#</a>'),
+					'MAILING' 	=> Array('FULL' => GetMessage('CRM_FM_ENTITY_EMAIL_MAILING1'), 'SHORT' => GetMessage('CRM_FM_ENTITY_EMAIL_MAILING_SHORT'), 'ABBR' => GetMessage('CRM_FM_ENTITY_EMAIL_MAILING_ABBR'), 'TEMPLATE' => '<a href="mailto:#VALUE_URL#">#VALUE_HTML#</a>'),
 					'OTHER' => Array('FULL' =>  GetMessage('CRM_FM_ENTITY_EMAIL_OTHER'), 'SHORT' => GetMessage('CRM_FM_ENTITY_EMAIL_OTHER_SHORT'), 'ABBR' => GetMessage('CRM_FM_ENTITY_EMAIL_OTHER_ABBR'), 'TEMPLATE' => '<a href="mailto:#VALUE_URL#">#VALUE_HTML#</a>'),
 				),
 				'IM' => Array(
@@ -233,20 +235,8 @@ class CCrmFieldMulti
 			return false;
 		}
 
-		/*if($options === null)
-		{
-			$options = array();
-		}*/
-
 		$arPreviousFieldData = array();
-		$dbResult = self::GetListEx(
-			array('ID' => 'asc'),
-			array('ENTITY_ID' => $entityId, 'ELEMENT_ID' => $elementId),
-			false,
-			false,
-			array(),
-			array('QUERY_OPTIONS' => array('LIMIT' => 1000))
-		);
+		$dbResult = self::GetListEx(array('ID' => 'asc'), array('ENTITY_ID' => $entityId, 'ELEMENT_ID' => $elementId));
 
 		while($arPreviousField = $dbResult->Fetch())
 		{

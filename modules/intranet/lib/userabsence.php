@@ -10,12 +10,14 @@ class UserAbsence
 	const CACHE_TTL = 2678400; // 1 month
 	const CACHE_PATH = '/bx/intranet/absence/';
 
-	public static $vacation = [
+	public static $defaultVacationTypes = [
 		'VACATION',
 		'LEAVESICK',
 		'LEAVEMATERINITY',
 		'LEAVEUNPAYED'
 	];
+
+	private static $activeVacationTypes = null;
 
 	/**
 	 * @return int
@@ -37,6 +39,77 @@ class UserAbsence
 	public static function getTypeCaption($xmlId, $default = '')
 	{
 		return Loc::getMessage('INTR_USER_ABSENCE_TYPE_' . $xmlId) ?: $default;
+	}
+
+	/**
+	 * @param array $types
+	 * @return bool
+	 * @throws \Bitrix\Main\ArgumentNullException
+	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
+	 */
+	public static function saveActiveVacationTypes($types = [])
+	{
+		$list = array_keys(self::getVacationTypes());
+
+		$save = [];
+		foreach ($types as $type)
+		{
+			if (in_array($type, $list, true))
+			{
+				$save[] = $type;
+			}
+		}
+
+		Option::set('intranet', 'vacation_types', serialize($save));
+		self::$activeVacationTypes = $save;
+
+		self::cleanCache();
+
+		return true;
+	}
+
+	public static function getActiveVacationTypes()
+	{
+		if (is_array(self::$activeVacationTypes))
+		{
+			return self::$activeVacationTypes;
+		}
+
+		$defaultVacationTypes = self::$defaultVacationTypes;
+
+		$vacationTypesOption = Option::get('intranet', 'vacation_types', null);
+		if ($vacationTypesOption)
+		{
+			$defaultVacationTypes = unserialize($vacationTypesOption);
+		}
+
+		self::$activeVacationTypes = $defaultVacationTypes;
+
+		return self::$activeVacationTypes;
+	}
+
+	/**
+	 * @return array
+	 * @throws \Bitrix\Main\ArgumentNullException
+	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
+	 */
+	public static function getVacationTypes()
+	{
+		$defaultVacationTypes = self::getActiveVacationTypes();
+
+		$types = [];
+		$res = \CIBlockPropertyEnum::GetList(Array('DEF'=>'DESC', 'SORT'=>'ASC'), Array('IBLOCK_ID'=>self::getIblockId(), 'CODE'=>'ABSENCE_TYPE'));
+		while ($row = $res->GetNext())
+		{
+			$types[$row['EXTERNAL_ID']] = [
+				'ID' => $row['EXTERNAL_ID'],
+				'ENUM_ID' => $row['ID'],
+				'NAME' => self::getTypeCaption($row['EXTERNAL_ID']),
+				'ACTIVE' => in_array($row['EXTERNAL_ID'], $defaultVacationTypes),
+			];
+		}
+
+		return $types;
 	}
 
 	/**
@@ -256,7 +329,7 @@ class UserAbsence
 	{
 		$result = false;
 
-		if(in_array($type, self::$vacation))
+		if (in_array($type, self::getActiveVacationTypes()))
 		{
 			$result = true;
 		}

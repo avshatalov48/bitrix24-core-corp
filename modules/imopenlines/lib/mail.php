@@ -34,8 +34,6 @@ class Mail
 			'DATE_MAIL' => $mailData
 		));
 
-		Session::deleteQueueFlagCache(Session::CACHE_MAIL);
-
 		$event = new \Bitrix\Main\Event("imopenlines", "OnSessionToMailQueueAdd", Array('SESSION_ID' => $sessionId));
 		$event->send();
 
@@ -394,7 +392,7 @@ class Mail
 					$authorName = \Bitrix\ImOpenLines\Connector::getOperatorName($session['CONFIG_ID'], $message['senderId']);
 				}
 
-				$authorAvatar = \Bitrix\Im\User::getInstance($message['senderId'])->getAvatar();
+				$authorAvatar = \Bitrix\ImOpenLines\Connector::getOperatorAvatar($session['CONFIG_ID'], $message['senderId']);
 				if ($authorAvatar)
 				{
 					$authorAvatar = substr($authorAvatar, 0, 4) != 'http'? \Bitrix\ImOpenLines\Common::getServerAddress().$authorAvatar: $authorAvatar;

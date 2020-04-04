@@ -48,7 +48,7 @@ else
 				<div class="document-limit-img-lock"></div>
 			</div>
 			<div class="document-limit-desc-text">
-				<?=\Bitrix\Main\Localization\Loc::getMessage('CRM_DOCUMENT_LIMIT_TEXT', ['#MAX#' => \Bitrix\DocumentGenerator\Integration\Bitrix24Manager::getDocumentsLimit()]);?>
+				<?=\Bitrix\Main\Localization\Loc::getMessage('CRM_DOCUMENT_LIMIT_TEXT_EXTENDED', ['#MAX#' => \Bitrix\DocumentGenerator\Integration\Bitrix24Manager::getDocumentsLimit()]);?>
 			</div>
 		</div>
 		<div class="document-limit-buttons">

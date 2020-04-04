@@ -75,7 +75,14 @@ class MailServicesTable extends Entity\DataManager
 		if (empty($data))
 			return new Entity\UpdateResult();
 
-		$serviceForUpdate = static::getByPrimary($primary)->fetch();
+		$serviceForUpdate = static::getByPrimary(
+			$primary,
+			array(
+				'select' => array(
+					'ID', 'SITE_ID', 'ACTIVE', 'SERVICE_TYPE',
+				),
+			)
+		)->fetch();
 		if (!$serviceForUpdate)
 		{
 			$updateResult = new Entity\UpdateResult();
@@ -106,6 +113,7 @@ class MailServicesTable extends Entity\DataManager
 			if (($isSiteChanged || $isDeactivated) && $serviceForUpdate['SERVICE_TYPE'] == 'imap')
 			{
 				$emptyService = static::getList(array(
+					'select' => array('ID'),
 					'filter' => array(
 						'=SITE_ID' => $serviceForUpdate['SITE_ID'],
 						'ACTIVE' => 'Y',

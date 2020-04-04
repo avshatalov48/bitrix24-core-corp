@@ -4,7 +4,6 @@ namespace Bitrix\Crm\Controller\DocumentGenerator;
 
 use Bitrix\Crm\Integration\DocumentGeneratorManager;
 use Bitrix\DocumentGenerator\Model\FileTable;
-use Bitrix\Main\Engine\Binder;
 use Bitrix\Main\Engine\Controller;
 use Bitrix\Main\EventResult;
 use Bitrix\Main\Error;
@@ -16,47 +15,32 @@ abstract class Base extends Controller
 	const FILE_PARAM_NAME = 'file';
 	const CONTROLLER_PATH = 'crm.documentgenerator';
 
-	protected function init()
+	protected $documentGeneratorControllerInstance;
+
+	/**
+	 * @return array|\Bitrix\Main\Engine\AutoWire\Parameter[]
+	 */
+	public function getAutoWiredParameters()
 	{
-		parent::init();
+		if(DocumentGeneratorManager::getInstance()->isEnabled())
+		{
+			return $this->getDocumentGeneratorController()->getAutoWiredParameters();
+		}
 
-		Binder::registerParameterDependsOnName(
-			'\Bitrix\DocumentGenerator\Document',
-			function($className, $id)
-			{
-				/** @var \Bitrix\DocumentGenerator\Document $className */
-				return $className::loadById($id);
-			},
-			function()
-			{
-				return 'id';
-			}
-		);
+		return [];
+	}
 
-		Binder::registerParameterDependsOnName(
-			'\Bitrix\DocumentGenerator\Template',
-			function($className, $id)
-			{
-				/** @var \Bitrix\DocumentGenerator\Template $className */
-				return $className::loadById($id);
-			},
-			function()
-			{
-				return 'id';
-			}
-		);
+	/**
+	 * @return array
+	 */
+	public function configureActions()
+	{
+		if(DocumentGeneratorManager::getInstance()->isEnabled())
+		{
+			return array_merge(parent::configureActions(), $this->getDocumentGeneratorController()->configureActions());
+		}
 
-		Binder::registerParameterDependsOnName(
-			\Bitrix\Main\Numerator\Numerator::class,
-			function($className, $id)
-			{
-				/** @var \Bitrix\Main\Numerator\Numerator $className */
-				return $className::load($id);
-			}, function()
-			{
-				return 'id';
-			}
-		);
+		return parent::configureActions();
 	}
 
 	/**
@@ -75,6 +59,8 @@ abstract class Base extends Controller
 
 				return new EventResult(EventResult::ERROR, null, null, $this);
 			}
+
+			return new EventResult(EventResult::SUCCESS);
 		};
 		$preFilters[] = new CheckModule();
 
@@ -128,13 +114,21 @@ abstract class Base extends Controller
 
 	/**
 	 * @param null $fileContent
-	 * @param null $fileParamName
-	 * @param bool $required
+	 * @param array $options
 	 * @return false|int
 	 * @throws \Exception
 	 */
-	protected function uploadFile($fileContent = null, $fileParamName = null, $required = true)
+	protected function uploadFile($fileContent = null, array $options = [])
 	{
+		$options = array_merge([
+			'fileParamName' => null,
+			'required' => true,
+			'fileName' => null,
+			'isTemplate' => false,
+		], $options);
+		$fileParamName = $options['fileParamName'];
+		$required = $options['required'];
+		$fileName = $options['fileName'];
 		if(!$fileParamName)
 		{
 			$fileParamName = static::FILE_PARAM_NAME;
@@ -160,6 +154,11 @@ abstract class Base extends Controller
 			return false;
 		}
 
+		if($fileName && is_string($fileName))
+		{
+			$fileArray['name'] = $fileArray['fileName'] = $fileName;
+		}
+		$fileArray['isTemplate'] = $options['isTemplate'];
 		$saveResult = FileTable::saveFile($fileArray);
 		if($saveResult->isSuccess())
 		{

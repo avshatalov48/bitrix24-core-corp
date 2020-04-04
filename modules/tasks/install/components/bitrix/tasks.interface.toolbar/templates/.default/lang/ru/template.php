@@ -36,3 +36,7 @@ $MESS['TASKS_SWITCHER_ITEM_ROBOTS'] = 'Роботы';
 $MESS['TASKS_GROUP_COUNTERS_SOON'] = 'Скоро здесь появятся счетчики задач проекта';
 
 $MESS['TASKS_FULL_TASK_INDEXING_TITLE'] = "Индексация задач и комментариев";
+$MESS['TASKS_TASK_CHECKLIST_CONVERTING_TITLE'] = "Конвертация чек-листов задач";
+$MESS['TASKS_TEMPLATE_CHECKLIST_CONVERTING_TITLE'] = "Конвертация чек-листов шаблонов задач";
+
+$MESS['TASKS_TEMPLATE_SPOTLIGHT_TIMELINE'] = "Планируйте решение своих задач и следите за крайним сроком в новом представлении.";

@@ -61,7 +61,7 @@ var VoxImplant =
 /******/ 	__webpack_require__.p = "/build";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 40);
+/******/ 	return __webpack_require__(__webpack_require__.s = 46);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -72,6 +72,8 @@ var VoxImplant =
 
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -189,7 +191,13 @@ var LogManager = function () {
     function LogManager() {
         _classCallCheck(this, LogManager);
 
+        /**
+         * Diff between performance.timeOrigin and the moment of the first tick
+         */
+        this.timeOriginGap = 0;
+        this.isFirstPrint = true;
         this.levels = {};
+        this.showTrace = false;
         this._shadowLogging = false;
     }
 
@@ -216,36 +224,44 @@ var LogManager = function () {
     }, {
         key: "setLogLevel",
         value: function setLogLevel(category, level) {
-            this.levels[LogCategory[category]] = level;
+            if (level === LogLevel.TRACE) this.showTrace = true;else this.levels[LogCategory[category]] = level;
         }
     }, {
         key: "writeMessage",
         value: function writeMessage(category, label, level, message) {
-            LogManager.tick++;
-            var sampleMessage = "VIWSLR " + LogManager.tick + " " + new Date().toString() + " " + LogLevel[level] + " " + label + ": " + message;
-            var currentLevel = LogLevel.NONE;
-            if (typeof this.levels[LogCategory[category]] != 'undefined') currentLevel = this.levels[LogCategory[category]];
-            if (level <= currentLevel) {
+            if (level === LogLevel.TRACE) LogManager.traceTick++;else LogManager.logTick++;
+            if (!this.timeOriginGap) this.timeOriginGap = performance.now();
+            var msg = typeof message == 'string' ? message : JSON.stringify(message);
+            var timing = this.isFirstPrint ? this.prettyPrint ? new Date().toUTCString() : new Date().toString() : parseInt("" + (performance.now() - this.timeOriginGap) / 1000);
+            var tag = level === LogLevel.TRACE ? "VIWSTR " + LogManager.traceTick : "VIWSLR " + LogManager.logTick;
+            var sampleMessage = tag + " " + timing + " " + LogLevel[level] + " " + label + ": " + msg;
+            var maxOutputLevel = typeof this.levels[LogCategory[category]] != 'undefined' ? this.levels[LogCategory[category]] : LogLevel.NONE;
+            if (level <= maxOutputLevel || level === LogLevel.TRACE && this.showTrace) {
                 if (typeof console.debug != 'undefined' && typeof console.info != 'undefined' && typeof console.error != 'undefined' && typeof console.warn != 'undefined') {
                     if (this.prettyPrint) {
-                        if (typeof message != 'string') message = JSON.stringify(message);
-                        var formatedMessage = "%c VIWSLR " + LogManager.tick + " " + new Date().toUTCString() + " [" + LogLevel[level] + "] %c" + label + ": %c" + message.replace('\r\n', '<br>');
-                        if (level === LogLevel.ERROR) console.error(sampleMessage);else if (level === LogLevel.WARNING) console.warn(formatedMessage, 'color:#ccc', 'color:#2375a2', 'color:#000');else if (level === LogLevel.INFO) console.info(formatedMessage, 'color:#ccc', 'color:#2375a2', 'color:#000');else if (level === LogLevel.TRACE) console.log(formatedMessage, 'color:#ccc', 'color:#2375a2', 'color:#000');else console.log(formatedMessage, 'color:#ccc', 'color:#2375a2', 'color:#000');
+                        var _tagColors;
+
+                        var formatedMessage = "%c" + tag + " " + timing + " [" + LogLevel[level] + "] %c" + label + ": %c" + msg;
+                        var tagColors = (_tagColors = {}, _defineProperty(_tagColors, LogLevel.ERROR, 'color:#fab005'), _defineProperty(_tagColors, LogLevel.WARNING, 'color:#af2a2a'), _defineProperty(_tagColors, LogLevel.INFO, 'color:#0ca678'), _defineProperty(_tagColors, LogLevel.TRACE, 'color:#8f66ff'), _tagColors);
+                        if (level === LogLevel.ERROR) console.error(sampleMessage);else if (level === LogLevel.WARNING) console.warn(formatedMessage, tagColors[level], 'color:#2375a2', 'color:#000');else if (level === LogLevel.INFO) console.info(formatedMessage, tagColors[level], 'color:#2375a2', 'color:#000');else if (level === LogLevel.TRACE) console.debug(formatedMessage, tagColors[level], 'color:#2375a2', 'color:#000');else console.log(formatedMessage, tagColors[level], 'color:#2375a2', 'color:#000');
                     } else {
                         if (level === LogLevel.ERROR) console.error(sampleMessage);else if (level === LogLevel.WARNING) console.warn(sampleMessage);else if (level === LogLevel.INFO) console.info(sampleMessage);else if (level === LogLevel.TRACE) console.debug(sampleMessage);else console.log(sampleMessage);
                     }
-                } else console.log(sampleMessage);
+                } else {
+                    console.log(sampleMessage);
+                }
+                if (this.isFirstPrint) this.isFirstPrint = false;
             }
-            if (this.shadowLogging) {
+            if (this.shadowLogging && (level !== LogLevel.TRACE || this.showTrace)) {
                 this._shadowLog.push(sampleMessage);
             }
-            if (typeof this._outerCallback === 'function') {
+            if (typeof this._outerCallback === 'function' && (level !== LogLevel.TRACE || this.showTrace)) {
                 this._outerCallback({
                     formattedText: sampleMessage,
                     category: category,
                     label: label,
                     level: level,
-                    message: message
+                    message: msg
                 });
             }
         }
@@ -283,32 +299,33 @@ var LogManager = function () {
             }
             return this.inst;
         }
-        //# decorator 4 trace
+        /**
+         * Decorator for tracing
+         */
 
     }, {
         key: "d_trace",
         value: function d_trace(category) {
-            return function (target, key, _value) {
+            return function (target, name, descriptor) {
                 return {
                     value: function value() {
-                        var a = '';
-
                         for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
                             args[_key] = arguments[_key];
                         }
 
+                        var isLogin = name === 'login' || name === "basicLogin" || name === 'sendWSMessage' && args[0] === 'login';
+                        var passwordIdx = name === 'sendWSMessage' ? 2 : 1;
+                        var className = target._traceName ? "" + target._traceName() + (this && this.settings ? " " + this.settings.id : this && this.id && typeof this.id != 'function' ? " " + this.id : '') : '';
+                        var serializedArgs = '';
                         try {
-                            a = args.map(function (a) {
-                                return JSON.stringify(a);
+                            serializedArgs = args.map(function (a, idx) {
+                                return isLogin && idx === passwordIdx ? '"********"' : JSON.stringify(a);
                             }).join();
                         } catch (e) {
-                            a = 'circular structure';
+                            serializedArgs = 'circular structure';
                         }
-                        var className = '';
-                        if (target._traceName) className = target._traceName();
-                        LogManager.get().writeMessage(category, className, LogLevel.TRACE, key + "(" + a + ")");
-                        var result = _value.value.apply(this, args);
-                        return result;
+                        LogManager.get().writeMessage(category, className, LogLevel.TRACE, name + "(" + serializedArgs + ")");
+                        return descriptor.value.apply(this, args);
                     }
                 };
             };
@@ -318,7 +335,8 @@ var LogManager = function () {
     return LogManager;
 }();
 
-LogManager.tick = 0;
+LogManager.logTick = 0;
+LogManager.traceTick = 0;
 exports.LogManager = LogManager;
 
 /***/ }),
@@ -349,31 +367,32 @@ var __decorate = undefined && undefined.__decorate || function (decorators, targ
     }return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-var Structures_1 = __webpack_require__(31);
-var Events_1 = __webpack_require__(18);
-var Utils_1 = __webpack_require__(23);
+var Structures_1 = __webpack_require__(28);
+var Events_1 = __webpack_require__(14);
+var Utils_1 = __webpack_require__(20);
 var VoxSignaling_1 = __webpack_require__(2);
-var Authenticator_1 = __webpack_require__(10);
-var BrowserSpecific_1 = __webpack_require__(8);
+var Authenticator_1 = __webpack_require__(11);
+var BrowserSpecific_1 = __webpack_require__(7);
 var Logger_1 = __webpack_require__(0);
-var PCFactory_1 = __webpack_require__(9);
-var CallManager_1 = __webpack_require__(5);
-var EventTarget_1 = __webpack_require__(14);
+var PCFactory_1 = __webpack_require__(8);
+var CallManager_1 = __webpack_require__(6);
+var EventTarget_1 = __webpack_require__(15);
 var RemoteFunction_1 = __webpack_require__(3);
-var RemoteEvent_1 = __webpack_require__(12);
-var CallstatsIo_1 = __webpack_require__(21);
-var ZingayaAPI_1 = __webpack_require__(54);
-var PushService_1 = __webpack_require__(55);
-var GUID_1 = __webpack_require__(28);
+var RemoteEvent_1 = __webpack_require__(13);
+var CallstatsIo_1 = __webpack_require__(17);
+var ZingayaAPI_1 = __webpack_require__(64);
+var PushService_1 = __webpack_require__(65);
+var GUID_1 = __webpack_require__(33);
 var Hardware_1 = __webpack_require__(4);
+var ACDManager_1 = __webpack_require__(42);
 /**
  * The Client class is used to control platform functions. Can't be instantiated directly (singleton), so use the [getInstance] method to get the class instance.
  *
  *
  * Example:
- * ``` js
+ * ``` jss
  * // Getting an instance
- * var vox = VoxImplant.getInstance();
+ * const vox = VoxImplant.getInstance();
  * ```
 
  */
@@ -450,13 +469,19 @@ var Client = function (_EventTarget_1$EventT) {
          */
         _this.progressTone = true;
         /**
-         * If true - set log level to TRACE
+         * If true, show logs on TRACE level
+         * @type {boolean}
+         * @hidden
+         */
+        _this.enableTrace = false;
+        /**
+         * If true, set logger level to INFO
          * @type {boolean}
          * @hidden
          */
         _this.showDebugInfo = false;
         /**
-         * If true - set log level to WARNING
+         * If true, set logger level to WARNING
          * @type {boolean}
          * @hidden
          */
@@ -488,7 +513,7 @@ var Client = function (_EventTarget_1$EventT) {
          * @hidden
          */
         _this.depLastDevices = { ai: [], ao: [], vi: [] };
-        _this.applyMixins(Client, [EventTarget_1.EventTarget]);
+        _this._alreadyInitialized = false;
         if (Client.instance) {
             throw new Error('Error - use VoxImplant.getInstance()');
         }
@@ -500,13 +525,13 @@ var Client = function (_EventTarget_1$EventT) {
         _this.voxSignaling = VoxSignaling_1.VoxSignaling.get();
         _this.voxCallManager = CallManager_1.CallManager.get();
         _this.setLogLevelAll(Logger_1.LogLevel.NONE);
-        Logger_1.LogManager.get().writeMessage(Logger_1.LogCategory.CLIENT, 'SDK ver.', Logger_1.LogLevel.TRACE, _this.version);
         VoxSignaling_1.VoxSignaling.get().setRPCHandler(RemoteEvent_1.RemoteEvent.onPCStats, function (id, stats) {
             if (PCFactory_1.PCFactory.get().getPeerConnect(id)) _this.dispatchEvent({
                 name: 'NetStatsReceived',
                 stats: stats
             });
         });
+        _this.logger = Logger_1.LogManager.get().createLogger(Logger_1.LogCategory.CLIENT, _this._traceName());
         _this._defaultSinkId = null;
         _this.loginState = 0;
         return _this;
@@ -562,22 +587,25 @@ var Client = function (_EventTarget_1$EventT) {
                 video: hasVideo
             });
         }
+    }, {
+        key: "init",
+
         /**
          * Initialize SDK. The [Events.SDKReady] event will be dispatched after successful SDK initialization. SDK can't be used until it's initialized
          * @param {VoxImplant.Config} [config] Client configuration options
          */
-
-    }, {
-        key: "init",
         value: function init(config) {
             var _this2 = this;
 
             return new Promise(function (resolve, reject) {
+                if (_this2.alreadyInitialized) reject(new Error('WebSDK already initialized'));
+                _this2._alreadyInitialized = true;
                 //if (this.config !== null) throw ("VoxImplant.Client has been already initialized");
                 _this2._config = typeof config !== 'undefined' ? config : {};
                 if (_this2._config.progressToneCountry !== undefined) _this2.progressToneCountry = _this2._config.progressToneCountry;
                 if (_this2._config.progressTone !== true) _this2.progressTone = false;
                 if (_this2._config.serverIp !== undefined) _this2.serverIp = _this2._config.serverIp;
+                if (_this2._config.enableTrace !== undefined) _this2.enableTrace = _this2._config.enableTrace;
                 if (_this2._config.showDebugInfo !== undefined) _this2.showDebugInfo = _this2._config.showDebugInfo;
                 if (_this2._config.showWarnings !== false) _this2.showWarnings = true;
                 if (typeof _this2._config.videoContainerId === 'string') _this2.remoteVideoContainerId = _this2._config.videoContainerId;
@@ -591,6 +619,7 @@ var Client = function (_EventTarget_1$EventT) {
                 }
                 if (typeof _this2._config.VP8first != 'undefined') _this2._VP8first = _this2._config.VP8first;
                 if (typeof _this2._config.rtcStatsCollectionInterval != 'undefined') CallManager_1.CallManager.get().rtcStatsCollectionInterval = _this2._config.rtcStatsCollectionInterval;else CallManager_1.CallManager.get().rtcStatsCollectionInterval = 10000;
+                if (typeof Client.getInstance().config().experiments !== 'undefined' && typeof Client.getInstance().config().experiments.rtcStatsInquiryInterval !== 'undefined') CallManager_1.CallManager.get().rtcStatsInquiryInterval = Client.getInstance().config().experiments.rtcStatsInquiryInterval;else CallManager_1.CallManager.get().rtcStatsInquiryInterval = 500;
                 if (_this2._config.protocolVersion && (_this2._config.protocolVersion === '2' || _this2._config.protocolVersion === '3')) {
                     _this2._callProtocolVersion = _this2._config.protocolVersion;
                     CallManager_1.CallManager.get().setProtocolVersion(_this2._callProtocolVersion);
@@ -598,9 +627,10 @@ var Client = function (_EventTarget_1$EventT) {
                 if (_this2._config.callstatsIoParams) CallstatsIo_1.CallstatsIo.get(_this2._config.callstatsIoParams);
                 if (_this2._config.prettyPrint) Logger_1.LogManager.get().setPrettyPrint(_this2._config.prettyPrint);
                 if (_this2.showWarnings) _this2.setLogLevelAll(Logger_1.LogLevel.WARNING);
-                if (_this2.showDebugInfo) _this2.setLogLevelAll(Logger_1.LogLevel.TRACE);
-                Logger_1.LogManager.get().writeMessage(Logger_1.LogCategory.CLIENT, '[sdkinit]', Logger_1.LogLevel.TRACE, _this2.version);
-                Logger_1.LogManager.get().writeMessage(Logger_1.LogCategory.CLIENT, '[sdkinit]', Logger_1.LogLevel.TRACE, JSON.stringify(_this2._config));
+                if (_this2.showDebugInfo) _this2.setLogLevelAll(Logger_1.LogLevel.INFO);
+                if (_this2.enableTrace) _this2.setLogLevelAll(Logger_1.LogLevel.TRACE);
+                _this2.logger.info("SDK version: " + _this2.version);
+                _this2.logger.info("init(" + JSON.stringify(_this2._config) + ")");
                 if (_this2._config.videoConstraints !== undefined) {
                     _this2.videoConstraints = _this2._config.videoConstraints;
                     var videoConfig = Hardware_1.default.CameraManager.legacyParamConverter(_this2._config.videoConstraints);
@@ -617,7 +647,7 @@ var Client = function (_EventTarget_1$EventT) {
                 });
                 // Show warning about getUserMedia w/o https
                 if (window.location.hostname != '127.0.0.1' && window.location.hostname != 'localhost' && window.location.protocol != 'https:') {
-                    if (typeof console.error != 'undefined' && _this2.showWarnings) Logger_1.LogManager.get().writeMessage(Logger_1.LogCategory.CLIENT, 'WARNING:', Logger_1.LogLevel.WARNING, 'getUserMedia() is deprecated on insecure origins, and support will be removed in the future. You should consider switching your application to a secure origin, such as HTTPS. See https://goo.gl/rStTGz for more details.');
+                    if (typeof console.error != 'undefined' && _this2.showWarnings) _this2.logger.warning('WARNING: getUserMedia() is deprecated on insecure origins, and support will be removed in the future. You should consider switching your application to a secure origin, such as HTTPS. See https://goo.gl/rStTGz for more details.');
                 }
                 if (_this2._config.experiments && _this2._config.experiments.ignorewebrtc) {
                     _this2.RTCsupported = true;
@@ -692,12 +722,16 @@ var Client = function (_EventTarget_1$EventT) {
                         sipuri: sipuri
                     });
                 });
-                VoxSignaling_1.VoxSignaling.get().setRPCHandler(RemoteEvent_1.RemoteEvent.onACDStatus, function (id, status) {
-                    _this2.dispatchEvent({
-                        name: Events_1.Events.ACDStatusUpdated,
-                        id: id,
-                        status: status
-                    });
+                VoxSignaling_1.VoxSignaling.get().setRPCHandler(RemoteEvent_1.RemoteEvent.onACDStatus, function (id, status, uuid) {
+                    if (_this2._config.experiments && _this2._config.experiments.cleverACD) {
+                        ACDManager_1.default.onStatusUpdated(status, uuid);
+                    } else {
+                        _this2.dispatchEvent({
+                            name: Events_1.Events.ACDStatusUpdated,
+                            id: id,
+                            status: status
+                        });
+                    }
                 });
                 VoxSignaling_1.VoxSignaling.get().setRPCHandler(RemoteEvent_1.RemoteEvent.sipRegisterFailed, function (id, sipuri, status, reason) {
                     _this2.dispatchEvent({
@@ -723,6 +757,7 @@ var Client = function (_EventTarget_1$EventT) {
     }, {
         key: "call",
         value: function call(num, useVideo, customData, extraHeaders) {
+            this.logger.info("call(" + num + ", " + JSON.stringify(useVideo) + ")");
             Utils_1.Utils.checkCA();
             var sets = {
                 H264first: this._h264first,
@@ -761,6 +796,7 @@ var Client = function (_EventTarget_1$EventT) {
     }, {
         key: "callConference",
         value: function callConference(num, useVideo, customData, extraHeaders) {
+            this.logger.info("callConference(" + num + ", " + JSON.stringify(useVideo) + ")");
             Utils_1.Utils.checkCA();
             var sets = {
                 H264first: this._h264first,
@@ -806,37 +842,39 @@ var Client = function (_EventTarget_1$EventT) {
         value: function connect(connectivityCheck) {
             var _this3 = this;
 
-            if (typeof this._config === 'undefined') Logger_1.LogManager.get().writeMessage(Logger_1.LogCategory.CLIENT, 'WARNING:', Logger_1.LogLevel.WARNING, 'Please, run VoxImplant init before connect.');
+            this.logger.info("connect(" + connectivityCheck + ")");
+            if (typeof this._config === 'undefined') this.logger.warning('Please, run VoxImplant init before connect.');
             if (typeof connectivityCheck === 'undefined' && this._config.micRequired === false) connectivityCheck = false;
+            var fillServerList = null;
             return new Promise(function (resolve, reject) {
-                _this3._promises['connect'] = { resolve: resolve, reject: reject };
-                if (_this3.serverIp !== undefined) {
-                    var host = void 0;
-                    if (_typeof(_this3.serverIp) === 'object') {
-                        _this3.serversList = _this3.serverIp;
-                        host = _this3.serversList[0];
-                    } else host = _this3.serverIp;
-                    if (typeof _this3._config.tryingServers === 'undefined') _this3._config.tryingServers = [];
-                    _this3._config.tryingServers.push(host);
-                    Logger_1.LogManager.get().writeMessage(Logger_1.LogCategory.CLIENT, 'connecting', Logger_1.LogLevel.TRACE, host + ' trying');
-                    _this3.connectTo(host, null, connectivityCheck);
+                var connectToServers = function connectToServers(serverList) {
+                    if (!fillServerList) fillServerList = serverList;
+                    if (serverList.length === 0) {
+                        _this3.logger.info("We can't connect to the Voximplant cloud. Please, check UDP connection to Voximplant servers: " + fillServerList.join(', '));
+                    }
+                    var host = serverList.shift();
+                    _this3.logger.info("Trying " + host);
+                    _this3.connectTo(host, null, connectivityCheck).then(function (data) {
+                        resolve(data);
+                    }).catch(function () {
+                        _this3.logger.info("Connection to the " + host + " falled");
+                        setTimeout(function () {
+                            return connectToServers(serverList);
+                        }, 0);
+                    });
+                };
+                if (_this3._config.serverIp && _typeof(_this3._config.serverIp) === 'object') {
+                    connectToServers(_this3.serverIp);
+                } else if (_this3._config.serverIp) {
+                    connectToServers(_this3.serverIp.split(';'));
                 } else {
-                    var balancerResult = function balancerResult(data) {
-                        var ind = String(data).indexOf(';'),
-                            host = void 0;
-                        if (ind == -1) {
-                            // one IP available
-                            host = data;
-                        } else {
-                            this.serversList = data.split(';');
-                            host = this.serversList[0];
-                        }
-                        if (typeof this._config.tryingServers === 'undefined') this._config.tryingServers = [];
-                        this._config.tryingServers.push(host);
-                        Logger_1.LogManager.get().writeMessage(Logger_1.LogCategory.CLIENT, 'connecting', Logger_1.LogLevel.TRACE, host + ' trying');
-                        this.connectTo(host, null, connectivityCheck);
-                    };
-                    Utils_1.Utils.getServers(balancerResult.bind(_this3), false, _this3);
+                    Utils_1.Utils.getServers().then(function (data) {
+                        return setTimeout(function () {
+                            return connectToServers(data.split(';'));
+                        }, 0);
+                    }).catch(function () {
+                        return _this3.dispatchEvent({ name: 'ConnectionFailed', message: "VoxImplant Cloud is unavailable" });
+                    });
                 }
             });
         }
@@ -849,11 +887,14 @@ var Client = function (_EventTarget_1$EventT) {
     }, {
         key: "connectTo",
         value: function connectTo(host, omitMicDetection, connectivityCheck) {
-            if (this._connected) {
-                throw new Error('ALREADY_CONNECTED_TO_VOXIMPLANT');
-            }
-            this.host = host;
-            this.voxSignaling.connectTo(host, true, true, connectivityCheck, this._callProtocolVersion); //this.zingayaAPI.connectTo(host, "platform");
+            var _this4 = this;
+
+            return new Promise(function (resolve, reject) {
+                if (_this4._connected) reject(new Error('ALREADY_CONNECTED_TO_VOXIMPLANT'));
+                _this4._promises['connect'] = { resolve: resolve, reject: reject };
+                _this4.host = host;
+                _this4.voxSignaling.connectTo(host, true, true, connectivityCheck, _this4._callProtocolVersion); //this.zingayaAPI.connectTo(host, "platform");
+            });
         }
         /**
          * Disconnect from VoxImplant Cloud
@@ -862,6 +903,7 @@ var Client = function (_EventTarget_1$EventT) {
     }, {
         key: "disconnect",
         value: function disconnect() {
+            this.logger.info('disconnect()');
             this.checkConnection();
             this.voxSignaling.disconnect();
             Hardware_1.default.StreamManager.get().clear();
@@ -876,16 +918,22 @@ var Client = function (_EventTarget_1$EventT) {
     }, {
         key: "setOperatorACDStatus",
         value: function setOperatorACDStatus(status) {
-            var _this4 = this;
+            var _this5 = this;
 
-            return new Promise(function (resolve, reject) {
-                Utils_1.Utils.checkCA();
-                if (!Object.values(Structures_1.OperatorACDStatuses).includes(status)) {
-                    reject(new Error("Wrong ACD status name " + status));
-                }
-                _this4.voxSignaling.callRemoteFunction(RemoteFunction_1.RemoteFunction.setOperatorACDStatus, status);
-                resolve();
-            });
+            this.logger.info("setOperatorACDStatus(" + status + ")");
+            // Next version of the ACD
+            if (this._config.experiments && this._config.experiments.cleverACD) {
+                return ACDManager_1.default.setStatus(status);
+            } else {
+                return new Promise(function (resolve, reject) {
+                    Utils_1.Utils.checkCA();
+                    if (!Object.values(Structures_1.OperatorACDStatuses).includes(status)) {
+                        reject(new Error("Wrong ACD status name " + status));
+                    }
+                    _this5.voxSignaling.callRemoteFunction(RemoteFunction_1.RemoteFunction.setOperatorACDStatus, status, new GUID_1.default().toString());
+                    resolve();
+                });
+            }
         }
         /**
          * Return current ACD status of the operator.
@@ -895,21 +943,25 @@ var Client = function (_EventTarget_1$EventT) {
     }, {
         key: "getOperatorACDStatus",
         value: function getOperatorACDStatus() {
-            var _this5 = this;
+            var _this6 = this;
 
-            return new Promise(function (resolve, reject) {
-                Utils_1.Utils.checkCA();
-                _this5.voxSignaling.callRemoteFunction(RemoteFunction_1.RemoteFunction.getOperatorACDStatus);
-                var callback = function callback(e) {
-                    resolve(e.status);
-                    _this5.off(Events_1.Events.ACDStatusUpdated, callback);
-                };
-                setTimeout(function () {
-                    reject();
-                    _this5.off(Events_1.Events.ACDStatusUpdated, callback);
-                }, 5000);
-                _this5.on(Events_1.Events.ACDStatusUpdated, callback);
-            });
+            if (this._config.experiments && this._config.experiments.cleverACD) {
+                return ACDManager_1.default.getStatus();
+            } else {
+                return new Promise(function (resolve, reject) {
+                    Utils_1.Utils.checkCA();
+                    _this6.voxSignaling.callRemoteFunction(RemoteFunction_1.RemoteFunction.getOperatorACDStatus, new GUID_1.default().toString());
+                    var callback = function callback(e) {
+                        resolve(e.status);
+                        _this6.off(Events_1.Events.ACDStatusUpdated, callback);
+                    };
+                    setTimeout(function () {
+                        reject();
+                        _this6.off(Events_1.Events.ACDStatusUpdated, callback);
+                    }, 5000);
+                    _this6.on(Events_1.Events.ACDStatusUpdated, callback);
+                });
+            }
         }
         /**
          * Log in to an application. The method triggers the [Events.AuthResult] event.
@@ -921,23 +973,20 @@ var Client = function (_EventTarget_1$EventT) {
     }, {
         key: "login",
         value: function login(username, password, options) {
-            var _this6 = this;
+            var _this7 = this;
 
+            this.logger.info("login(" + username + ", " + (password ? '***' : undefined) + ", {receiveCalls: " + (options && options.receiveCalls) + "})");
             this.loginState = 1;
             //Sentry.getInstance().setUserContext(username);
             return new Promise(function (resolve, reject) {
-                _this6._promises['login'] = { resolve: resolve, reject: reject };
+                _this7._promises['login'] = { resolve: resolve, reject: reject };
                 options = typeof options !== 'undefined' ? options : {};
-                options = Utils_1.Utils.extend({}, options);
-                if (!_this6._connected) {
-                    reject(new Error('NOT_CONNECTED_TO_VOXIMPLANT'));
-                    throw new Error('NOT_CONNECTED_TO_VOXIMPLANT');
-                }
+                _this7.checkConnection();
                 //if (this.RTCsupported) this.zingayaAPI.login(username, password, options);
-                if (_this6._config.experiments && _this6._config.experiments.mediaServer) {
-                    options.mediaServer = _this6._config.experiments.mediaServer;
+                if (_this7._config.experiments && _this7._config.experiments.mediaServer) {
+                    options.mediaServer = _this7._config.experiments.mediaServer;
                 }
-                _this6.voxAuth.basicLogin(username, password, options);
+                _this7.voxAuth.basicLogin(username, password, options);
             });
         }
         /**
@@ -953,19 +1002,16 @@ var Client = function (_EventTarget_1$EventT) {
     }, {
         key: "loginWithCode",
         value: function loginWithCode(username, code, options) {
-            var _this7 = this;
+            var _this8 = this;
 
             this.loginState = 1;
             return new Promise(function (resolve, reject) {
-                _this7._promises['login'] = { resolve: resolve, reject: reject };
+                _this8._promises['login'] = { resolve: resolve, reject: reject };
                 options = typeof options !== 'undefined' ? options : {};
-                options = Utils_1.Utils.extend({ serverPresenceControl: false }, options);
-                if (!_this7._connected) {
-                    reject(new Error('NOT_CONNECTED_TO_VOXIMPLANT'));
-                    throw new Error('NOT_CONNECTED_TO_VOXIMPLANT');
-                }
+                options = Object.assign({}, options, { serverPresenceControl: false });
+                _this8.checkConnection();
                 //if (this.RTCsupported) this.zingayaAPI.loginStage2(username, code, options);
-                _this7.voxAuth.loginStage2(username, code, options);
+                _this8.voxAuth.loginStage2(username, code, options);
             });
         }
         /**
@@ -978,20 +1024,18 @@ var Client = function (_EventTarget_1$EventT) {
     }, {
         key: "loginWithToken",
         value: function loginWithToken(username, token, options) {
-            var _this8 = this;
+            var _this9 = this;
 
+            this.logger.info("loginWithToken(" + username + ", '***', {receiveCalls: " + (options && options.receiveCalls) + "})");
             this.loginState = 1;
             return new Promise(function (resolve, reject) {
-                _this8._promises['login'] = { resolve: resolve, reject: reject };
+                _this9._promises['login'] = { resolve: resolve, reject: reject };
                 options = typeof options !== 'undefined' ? options : {};
-                options = Utils_1.Utils.extend({ serverPresenceControl: false }, options);
+                options = Object.assign({}, options, { serverPresenceControl: false });
                 options.accessToken = token;
-                if (!_this8._connected) {
-                    reject(new Error('NOT_CONNECTED_TO_VOXIMPLANT'));
-                    throw new Error('NOT_CONNECTED_TO_VOXIMPLANT');
-                }
+                _this9.checkConnection();
                 //if (this.RTCsupported) this.zingayaAPI.loginStage2(username, code, options);
-                _this8.voxAuth.tokenLogin(username, options);
+                _this9.voxAuth.tokenLogin(username, options);
             });
         }
         /**
@@ -1004,15 +1048,16 @@ var Client = function (_EventTarget_1$EventT) {
     }, {
         key: "tokenRefresh",
         value: function tokenRefresh(username, refreshToken, deviceToken) {
-            var _this9 = this;
+            var _this10 = this;
 
+            this.logger.info("tokenRefresh(" + username + ")");
             return new Promise(function (resolve, reject) {
                 var listener = function listener(e) {
                     if (e.result) resolve(e);else reject(e);
-                    _this9.off(Events_1.Events.RefreshTokenResult, listener);
+                    _this10.off(Events_1.Events.RefreshTokenResult, listener);
                 };
-                _this9.on(Events_1.Events.RefreshTokenResult, listener);
-                _this9.voxAuth.tokenRefresh(username, refreshToken, deviceToken);
+                _this10.on(Events_1.Events.RefreshTokenResult, listener);
+                _this10.voxAuth.tokenRefresh(username, refreshToken, deviceToken);
             });
         }
         /**
@@ -1026,16 +1071,13 @@ var Client = function (_EventTarget_1$EventT) {
     }, {
         key: "requestOneTimeLoginKey",
         value: function requestOneTimeLoginKey(username) {
-            var _this10 = this;
+            var _this11 = this;
 
             return new Promise(function (resolve, reject) {
-                _this10._promises['loginkey'] = { resolve: resolve, reject: reject };
-                if (!_this10._connected) {
-                    reject(new Error('NOT_CONNECTED_TO_VOXIMPLANT'));
-                    throw new Error('NOT_CONNECTED_TO_VOXIMPLANT');
-                }
+                _this11._promises['loginkey'] = { resolve: resolve, reject: reject };
+                _this11.checkConnection();
                 //if (this.RTCsupported) this.zingayaAPI.loginGenerateOneTimeKey(username);
-                _this10.voxAuth.generateOneTimeKey(username);
+                _this11.voxAuth.generateOneTimeKey(username);
             });
         }
         /**
@@ -1051,19 +1093,17 @@ var Client = function (_EventTarget_1$EventT) {
     }, {
         key: "loginWithOneTimeKey",
         value: function loginWithOneTimeKey(username, hash, options) {
-            var _this11 = this;
+            var _this12 = this;
 
+            this.logger.info("loginWithOneTimeKey(" + username + ", '***' , {receiveCalls: " + (options && options.receiveCalls) + "})");
             this.loginState = 1;
             return new Promise(function (resolve, reject) {
-                _this11._promises['login'] = { resolve: resolve, reject: reject };
+                _this12._promises['login'] = { resolve: resolve, reject: reject };
                 options = typeof options !== 'undefined' ? options : {};
-                options = Utils_1.Utils.extend({ serverPresenceControl: false }, options);
-                if (!_this11._connected) {
-                    reject(new Error('NOT_COFNNECTED_TO_VOXIMPLANT'));
-                    throw new Error('NOT_CONNECTED_TO_VOXIMPLANT');
-                }
+                options = Object.assign({}, options, { serverPresenceControl: false });
+                _this12.checkConnection();
                 //if (this.RTCsupported) this.zingayaAPI.loginUsingOneTimeKey(username, hash, options);
-                _this11.voxAuth.loginUsingOneTimeKey(username, hash, options);
+                _this12.voxAuth.loginUsingOneTimeKey(username, hash, options);
             });
         }
         /**
@@ -1091,6 +1131,7 @@ var Client = function (_EventTarget_1$EventT) {
             var mirror = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
             var detachCamera = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
 
+            this.logger.info("showLocalVideo(" + flag + ", " + mirror + ", " + detachCamera + ")");
             if (flag) return Hardware_1.default.StreamManager.get().showLocalVideo();else return Hardware_1.default.StreamManager.get().hideLocalVideo();
         }
         /**
@@ -1150,6 +1191,7 @@ var Client = function (_EventTarget_1$EventT) {
     }, {
         key: "setVideoBandwidth",
         value: function setVideoBandwidth(bandwidth) {
+            this.logger.info("setVideoBandwidth(" + bandwidth + ")");
             this.checkConnection();
             PCFactory_1.PCFactory.get().setBandwidthParams(bandwidth);
             this.voxSignaling.callRemoteFunction(RemoteFunction_1.RemoteFunction.setDesiredVideoBandwidth, bandwidth);
@@ -1165,6 +1207,7 @@ var Client = function (_EventTarget_1$EventT) {
         value: function playToneScript(script) {
             var loop = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
 
+            this.logger.info("playToneScript('***', " + loop + ")");
             Utils_1.Utils.playToneScript(script, loop);
         }
         /**
@@ -1174,6 +1217,7 @@ var Client = function (_EventTarget_1$EventT) {
     }, {
         key: "stopPlayback",
         value: function stopPlayback() {
+            this.logger.info("stopPlayback()");
             if (Utils_1.Utils.stopPlayback()) this.dispatchEvent({ name: Events_1.Events.PlaybackFinished });
         }
         /**
@@ -1287,11 +1331,11 @@ var Client = function (_EventTarget_1$EventT) {
     }, {
         key: "useAudioOutput",
         value: function useAudioOutput(id) {
-            var _this12 = this;
+            var _this13 = this;
 
             return new Promise(function (resolve, reject) {
                 if (BrowserSpecific_1.default.getWSVendor(true) !== 'chrome') reject(new Error('Unsupported browser. Only Google Chrome 49 and above.'));
-                _this12._defaultSinkId = id;
+                _this13._defaultSinkId = id;
                 resolve();
             });
         }
@@ -1334,10 +1378,7 @@ var Client = function (_EventTarget_1$EventT) {
         value: function setCallActive(call) {
             var active = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
 
-            return new Promise(function (resolve, reject) {
-                Utils_1.Utils.checkCA();
-                if (call) return call.setActive(active);else reject('trying to hold unknown call ' + call);
-            });
+            return call.setActive(active);
         }
         /**
          * Start/stop sending local video to remote party/parties. *IMPORTANT*: Safari browser for iOS requires a user interface for playing video during a call. It should be interactive element like an HTML "button" with "onclick" handler that calls "play" method on the "video" HTML element.
@@ -1384,11 +1425,12 @@ var Client = function (_EventTarget_1$EventT) {
     }, {
         key: "transferCall",
         value: function transferCall(call1, call2) {
+            this.logger.info("transferCall(" + call1 + ", " + call1 + ")");
             Utils_1.Utils.checkCA();
             this.voxCallManager.transferCall(call1, call2);
         }
         /**
-         * Set log levels for specified log categories
+         * Set logger levels for specified logger categories
          * @param {LogCategory} category Log category
          * @param {LogLevel} level Log level
          * @hidden
@@ -1430,20 +1472,7 @@ var Client = function (_EventTarget_1$EventT) {
          */
         value: function onSignalingConnectionFailed(reason) {
             this._connected = false;
-            if (this.serversList.length > 1 && (typeof this.serverIp === 'undefined' || _typeof(this.serverIp) === 'object')) {
-                Logger_1.LogManager.get().writeMessage(Logger_1.LogCategory.CLIENT, 'connecting', Logger_1.LogLevel.TRACE, "Connection to the " + this.serversList[0] + " falled");
-                this.serversList.splice(0, 1);
-                var host = this.serversList[0];
-                if (typeof this._config.tryingServers === 'undefined') this._config.tryingServers = [];
-                this._config.tryingServers.push(host);
-                Logger_1.LogManager.get().writeMessage(Logger_1.LogCategory.CLIENT, 'connecting', Logger_1.LogLevel.TRACE, host + ' trying');
-                this.connectTo(host, true);
-            } else {
-                Logger_1.LogManager.get().writeMessage(Logger_1.LogCategory.CLIENT, '', Logger_1.LogLevel.INFO, "We can't connect to the Voximplant cloud. Please, check UDP connection to Voximplant servers: " + this._config.tryingServers.join(', '));
-                var event = { name: Events_1.Events.ConnectionFailed, message: reason };
-                this._rejectPromise('connect', event);
-                this.dispatchEvent(event);
-            }
+            this._rejectPromise('connect', event);
         }
         /**
          * @hidden
@@ -1524,7 +1553,7 @@ var Client = function (_EventTarget_1$EventT) {
 
     }, {
         key: "on",
-        value: function on(event, handler) {
+        value: function on(event, handler, options) {
             _get(Client.prototype.__proto__ || Object.getPrototypeOf(Client.prototype), "on", this).call(this, event, handler);
         }
         /**
@@ -1541,26 +1570,6 @@ var Client = function (_EventTarget_1$EventT) {
         }
         /**
          * @hidden
-         * @param val
-         */
-
-    }, {
-        key: "sslset",
-        value: function sslset(val) {
-            this.voxSignaling.writeLog = val;
-        }
-        /**
-         * @hidden
-         * @returns {Array<string>}
-         */
-
-    }, {
-        key: "sslget",
-        value: function sslget() {
-            return this.voxSignaling.getLog();
-        }
-        /**
-         * @hidden
          */
 
     }, {
@@ -1569,7 +1578,7 @@ var Client = function (_EventTarget_1$EventT) {
             return new ZingayaAPI_1.ZingayaAPI(this);
         }
         /**
-         * Register for push notifications. Application will receive push notifications from VoxImplant Server after first log in.
+         * Register for push notifications. Application will receive push notifications from VoxImplant Server after first logger in.
          * @hidden
          * @param token FCM registration token that can be retrieved by calling firebase.messaging().getToken() inside a service worker
          * @returns {Promise<void>}
@@ -1578,7 +1587,33 @@ var Client = function (_EventTarget_1$EventT) {
     }, {
         key: "registerForPushNotificatuons",
         value: function registerForPushNotificatuons(token) {
+            this.logger.info("Deprecated registerForPushNotificatuons()");
             return PushService_1.PushService.register(token);
+        }
+        /**
+         * Register for push notifications. Application will receive push notifications from VoxImplant Server after first logger in.
+         * @param token FCM registration token that can be retrieved by calling firebase.messaging().getToken() inside a service worker
+         * @returns {Promise<void>}
+         */
+
+    }, {
+        key: "registerForPushNotifications",
+        value: function registerForPushNotifications(token) {
+            this.logger.info("registerForPushNotifications()");
+            return PushService_1.PushService.register(token);
+        }
+        /**
+         * Unregister from push notifications. Application will no longer receive push notifications from VoxImplant server.
+         * @param token FCM registration token that was used to register for push notifications
+         * @hidden
+         * @returns {Promise<void>}
+         */
+
+    }, {
+        key: "unregisterForPushNotificatuons",
+        value: function unregisterForPushNotificatuons(token) {
+            this.logger.info("Deprecated unregisterForPushNotificatuons()");
+            return PushService_1.PushService.unregister(token);
         }
         /**
          * Unregister from push notifications. Application will no longer receive push notifications from VoxImplant server.
@@ -1588,13 +1623,13 @@ var Client = function (_EventTarget_1$EventT) {
          */
 
     }, {
-        key: "unregisterForPushNotificatuons",
-        value: function unregisterForPushNotificatuons(token) {
+        key: "unregisterForPushNotifications",
+        value: function unregisterForPushNotifications(token) {
+            this.logger.info("unregisterForPushNotifications()");
             return PushService_1.PushService.unregister(token);
         }
         /**
          * Handle incoming push notification
-         * @hidden
          * @param message  Incoming push notification that comes from the firebase.messaging().setBackgroundMessageHandler callback inside a service worker
          * @returns {Promise<void>}
          */
@@ -1602,6 +1637,7 @@ var Client = function (_EventTarget_1$EventT) {
     }, {
         key: "handlePushNotification",
         value: function handlePushNotification(message) {
+            this.logger.info("handlePushNotification()");
             return PushService_1.PushService.incomingPush(message);
         }
         /**
@@ -1612,24 +1648,14 @@ var Client = function (_EventTarget_1$EventT) {
     }, {
         key: "getGUID",
         value: function getGUID() {
-            return new GUID_1.GUID().toString();
+            return new GUID_1.default().toString();
         }
         /**
-         * @hidden
-         * @param {boolean} flag
-         */
-
-    }, {
-        key: "setSilentLogging",
-        value: function setSilentLogging(flag) {
-            this.enableSilentLogging(flag);
-        }
-        /**
-         * Set the state of the silent logging inside SDK (it is disabled by default). When it is enabled, the WebSDK will save all log messages into the log until you disable it.
+         * Set the state of the silent logging inside SDK (it is disabled by default). When it is enabled, the WebSDK will save all logger messages into the logger until you disable it.
          *
-         * Note that enabling of the silent logging automatically clears all existed log records before the start.
+         * Note that enabling of the silent logging automatically clears all existed logger records before the start.
          *
-         * You can get current log by the [getSilentLog] function and clean it by the [clearSilentLog] function.
+         * You can get current logger by the [getSilentLog] function and clean it by the [clearSilentLog] function.
          * @param {boolean} flag
          */
 
@@ -1639,7 +1665,7 @@ var Client = function (_EventTarget_1$EventT) {
             Logger_1.LogManager.get().shadowLogging = flag;
         }
         /**
-         * Clear the log journal and free some memory.
+         * Clear the logger journal and free some memory.
          */
 
     }, {
@@ -1648,7 +1674,7 @@ var Client = function (_EventTarget_1$EventT) {
             Logger_1.LogManager.get().clearSilentLog();
         }
         /**
-         * Get records from the log journal.
+         * Get records from the logger journal.
          * @returns {Array<string>}
          */
 
@@ -1715,44 +1741,6 @@ var Client = function (_EventTarget_1$EventT) {
         }
         /**
          * @hidden
-         * @param {number} as
-         * @param {number} tias
-         */
-
-    }, {
-        key: "setXAS",
-        value: function setXAS(as, tias) {
-            if (typeof this._config.experiments === 'undefined') this._config.experiments = {};
-            this._config.experiments.xas = { as: as, tias: tias };
-        }
-        /**
-         * @hidden
-         */
-
-    }, {
-        key: "removeCC",
-        value: function removeCC(flag) {
-            if (typeof this._config.experiments === 'undefined') this._config.experiments = {};
-            this._config.experiments.removeTransportCC = flag;
-        }
-        /**
-         * Helper for apply mixins
-         * @hidden
-         * @param derivedCtor
-         * @param baseCtors
-         */
-
-    }, {
-        key: "applyMixins",
-        value: function applyMixins(derivedCtor, baseCtors) {
-            baseCtors.forEach(function (baseCtor) {
-                Object.getOwnPropertyNames(baseCtor.prototype).forEach(function (name) {
-                    derivedCtor.prototype[name] = baseCtor.prototype[name];
-                });
-            });
-        }
-        /**
-         * @hidden
          */
 
     }, {
@@ -1800,33 +1788,25 @@ var Client = function (_EventTarget_1$EventT) {
     }, {
         key: "setLogLevelAll",
         value: function setLogLevelAll(level) {
-            this.setLogLevel(Logger_1.LogCategory.SIGNALING, level);
-            this.setLogLevel(Logger_1.LogCategory.RTC, level);
-            this.setLogLevel(Logger_1.LogCategory.ORTC, level);
-            this.setLogLevel(Logger_1.LogCategory.USERMEDIA, level);
-            this.setLogLevel(Logger_1.LogCategory.CALL, level);
-            this.setLogLevel(Logger_1.LogCategory.CALLEXP2P, level);
-            this.setLogLevel(Logger_1.LogCategory.CALLEXSERVER, level);
-            this.setLogLevel(Logger_1.LogCategory.CALLMANAGER, level);
-            this.setLogLevel(Logger_1.LogCategory.CLIENT, level);
-            this.setLogLevel(Logger_1.LogCategory.AUTHENTICATOR, level);
-            this.setLogLevel(Logger_1.LogCategory.PCFACTORY, level);
-            this.setLogLevel(Logger_1.LogCategory.UTILS, level);
-            this.setLogLevel(Logger_1.LogCategory.MESSAGING, level);
-            this.setLogLevel(Logger_1.LogCategory.REINVITEQ, level);
-            this.setLogLevel(Logger_1.LogCategory.HARDWARE, level);
-            this.setLogLevel(Logger_1.LogCategory.ENDPOINT, level);
-            this.setLogLevel(Logger_1.LogCategory.EVENTTARGET, level);
+            var logManager = Logger_1.LogManager.get();
+            Object.keys(Logger_1.LogCategory).forEach(function (key) {
+                logManager.setLogLevel(Logger_1.LogCategory[key], level);
+            });
         }
     }, {
         key: "version",
         get: function get() {
-            return '4.3.31692-1543311155';
+            return '4.3.71854-1569232096';
         }
         /**
          * @hidden
          */
 
+    }, {
+        key: "alreadyInitialized",
+        get: function get() {
+            return this._alreadyInitialized;
+        }
     }], [{
         key: "getInstance",
         value: function getInstance() {
@@ -1844,7 +1824,6 @@ __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.CLIENT)], Client.pr
 __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.CLIENT)], Client.prototype, "init", null);
 __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.CLIENT)], Client.prototype, "call", null);
 __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.CLIENT)], Client.prototype, "callConference", null);
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.CLIENT)], Client.prototype, "config", null);
 __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.CLIENT)], Client.prototype, "connect", null);
 __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.CLIENT)], Client.prototype, "connectTo", null);
 __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.CLIENT)], Client.prototype, "disconnect", null);
@@ -1890,7 +1869,6 @@ __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.CLIENT)], Client.pr
 __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.CLIENT)], Client.prototype, "off", null);
 __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.CLIENT)], Client.prototype, "checkConnection", null);
 __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.CLIENT)], Client.prototype, "setLogLevelAll", null);
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.CLIENT)], Client, "getInstance", null);
 exports.Client = Client;
 
 /***/ }),
@@ -1916,12 +1894,12 @@ var __decorate = undefined && undefined.__decorate || function (decorators, targ
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 var Logger_1 = __webpack_require__(0);
-var BrowserSpecific_1 = __webpack_require__(8);
-var PCFactory_1 = __webpack_require__(9);
-var CallManager_1 = __webpack_require__(5);
+var BrowserSpecific_1 = __webpack_require__(7);
+var PCFactory_1 = __webpack_require__(8);
+var CallManager_1 = __webpack_require__(6);
 var RemoteFunction_1 = __webpack_require__(3);
-var RemoteEvent_1 = __webpack_require__(12);
-var MsgSignaling_1 = __webpack_require__(15);
+var RemoteEvent_1 = __webpack_require__(13);
+var MsgSignaling_1 = __webpack_require__(18);
 var Client_1 = __webpack_require__(1);
 /**
  * @hidden
@@ -1985,7 +1963,7 @@ var VoxSignaling = function () {
         this.writeLog = false;
         this._opLog = [];
         this.token = '';
-        this.log = Logger_1.LogManager.get().createLogger(Logger_1.LogCategory.SIGNALING, "VoxSignaling");
+        this.logger = Logger_1.LogManager.get().createLogger(Logger_1.LogCategory.SIGNALING, this._traceName());
         this.currentState = VoxSignalingState.IDLE;
         this.setRPCHandler(RemoteEvent_1.RemoteEvent.connectionSuccessful, function (token) {
             _this.onConnectionSuccessfulRPC(token);
@@ -2021,7 +1999,7 @@ var VoxSignaling = function () {
                 this.ws.close();
                 this.onWSClosed(null);
             } else {
-                this.log.warning("Try close unused WS in state " + VoxSignalingState[this.currentState]);
+                this.logger.warning("Try close unused WS in state " + VoxSignalingState[this.currentState]);
             }
         }
         /**
@@ -2043,7 +2021,7 @@ var VoxSignaling = function () {
         key: "onConnectionSuccessfulRPC",
         value: function onConnectionSuccessfulRPC(token) {
             if (this.currentState != VoxSignalingState.WSCONNECTED) {
-                this.log.error("Can't handle __connectionSuccessful while in state " + VoxSignalingState[this.currentState]);
+                this.logger.error("Can't handle __connectionSuccessful while in state " + VoxSignalingState[this.currentState]);
                 return;
             }
             if (token) this.token = token;
@@ -2053,11 +2031,11 @@ var VoxSignaling = function () {
                     try {
                         this.handlers[i].onSignalingConnected();
                     } catch (e) {
-                        this.log.warning("Error in onSignalingConnected callback: " + e);
+                        this.logger.warning("Error in onSignalingConnected callback: " + e);
                     }
                 }
             } else {
-                this.log.warning("No VoxSignaling handler specified");
+                this.logger.warning("No VoxSignaling handler specified");
             }
         }
         /**
@@ -2068,23 +2046,24 @@ var VoxSignaling = function () {
         key: "onConnectionFailedRPC",
         value: function onConnectionFailedRPC() {
             if (this.currentState != VoxSignalingState.WSCONNECTED) {
-                this.log.error("Can't handle __connectionSuccessful while in state " + VoxSignalingState[this.currentState]);
+                this.logger.error("Can't handle __connectionSuccessful while in state " + VoxSignalingState[this.currentState]);
                 return;
             }
             this.ws.onerror = null;
             this.ws.close();
             this.ws = null;
             this.currentState = VoxSignalingState.IDLE;
+            Client_1.Client.getInstance().loginState = 0;
             if (this.handlers.length > 0) {
                 for (var i = 0; i < this.handlers.length; ++i) {
                     try {
                         this.handlers[i].onMediaConnectionFailed();
                     } catch (e) {
-                        this.log.warning("Error in onMediaConnectionFailed callback: " + e);
+                        this.logger.warning("Error in onMediaConnectionFailed callback: " + e);
                     }
                 }
             } else {
-                this.log.warning("No VoxSignaling handler specified");
+                this.logger.warning("No VoxSignaling handler specified");
             }
         }
         /**
@@ -2111,12 +2090,12 @@ var VoxSignaling = function () {
             this.manualDisconnect = false;
             this.ver = version;
             if (this.currentState != VoxSignalingState.IDLE) {
-                this.log.error("Can't establish connection while in state " + VoxSignalingState[this.currentState]);
+                this.logger.error("Can't establish connection while in state " + VoxSignalingState[this.currentState]);
                 return;
             }
             this.currentState = VoxSignalingState.CONNECTING;
             var browser = BrowserSpecific_1.default.getWSVendor();
-            this.ws = new WebSocket("ws" + (secure ? 's' : '') + "://" + host + "/" + this.platform + "?version=" + this.ver + "&client=" + browser + "&ccheck=" + (typeof connectivityCheck === "undefined" ? true : connectivityCheck) + "&referrer=&extra=" + this.extra + "&video=" + (isVideo ? "true" : "false") + "&client_version=" + Client_1.Client.getInstance().version);
+            this.ws = new WebSocket("ws" + (secure ? 's' : '') + "://" + host + "/" + this.platform + "?version=" + this.ver + "&client=" + browser + "&ccheck=" + (typeof connectivityCheck === "undefined" ? true : connectivityCheck) + "&referrer=&extra=" + this.extra + "&video=" + (isVideo ? "true" : "false") + "&client_version=" + Client_1.Client.getInstance().version + "&client_platform=" + browser + "&im_version=2");
             this.ws.onopen = function (e) {
                 return _this2.onWSConnected();
             };
@@ -2138,7 +2117,7 @@ var VoxSignaling = function () {
         key: "setRPCHandler",
         value: function setRPCHandler(name, callback) {
             if (typeof this.rpcHandlers[name] != "undefined") {
-                this.log.warning("Overwriting RPC handler for function " + name);
+                this.logger.warning("Overwriting RPC handler for function " + name);
             }
             this.rpcHandlers[name] = callback;
         }
@@ -2151,7 +2130,7 @@ var VoxSignaling = function () {
         key: "removeRPCHandler",
         value: function removeRPCHandler(name) {
             if (typeof this.rpcHandlers[name] == "undefined" && !this.closing) {
-                this.log.warning("There is no RPC handler for function " + name);
+                this.logger.warning("There is no RPC handler for function " + name);
             }
             delete this.rpcHandlers[name];
         }
@@ -2168,15 +2147,15 @@ var VoxSignaling = function () {
                 params[_key - 1] = arguments[_key];
             }
 
+            if (name !== RemoteFunction_1.RemoteFunction.ping) this.logger.trace("callRemoteFunction(" + name + ")");
             if (this.currentState != VoxSignalingState.CONNECTED && this.currentState != VoxSignalingState.WSCONNECTED) {
-                if (!this.closing) this.log.error("Can't make a RPC call in state " + VoxSignalingState[this.currentState]);
+                if (!this.closing) this.logger.error("Can't make a RPC call in state " + VoxSignalingState[this.currentState]);
                 return false;
             }
             if (typeof this.ws != "undefined") {
                 if (this.writeLog) this._opLog.push("send:" + JSON.stringify({ "name": name, "params": params }));
                 var data = JSON.stringify({ "name": name, "params": params });
                 this.ws.send(data);
-                Logger_1.LogManager.get().writeMessage(Logger_1.LogCategory.SIGNALING, '[wsdataout]', Logger_1.LogLevel.INFO, data);
                 return true;
             }
         }
@@ -2187,13 +2166,12 @@ var VoxSignaling = function () {
     }, {
         key: "onWSData",
         value: function onWSData(data) {
-            Logger_1.LogManager.get().writeMessage(Logger_1.LogCategory.SIGNALING, '[wsdatain]', Logger_1.LogLevel.INFO, data);
             if (this.writeLog) this._opLog.push("recv:" + data);
             var parsedData = void 0;
             try {
                 parsedData = JSON.parse(data);
             } catch (e) {
-                this.log.error("Can't parse JSON data: " + data);
+                this.logger.error("Can't parse JSON data: " + data);
                 return;
             }
             if (typeof parsedData['service'] != "undefined") this.onWSMessData(parsedData);else this.onWSVoipData(parsedData);
@@ -2224,10 +2202,10 @@ var VoxSignaling = function () {
                 try {
                     this.rpcHandlers[functionName].apply(null, callParams);
                 } catch (e) {
-                    this.log.warning("Error in '" + functionName + "' handler : " + e);
+                    this.logger.warning("Error in '" + functionName + "' handler : " + e);
                 }
             } else {
-                this.log.warning("No handler for " + functionName);
+                this.logger.warning("No handler for " + functionName);
             }
         }
         /**
@@ -2246,7 +2224,7 @@ var VoxSignaling = function () {
         key: "onWSClosed",
         value: function onWSClosed(e) {
             if (this.currentState != VoxSignalingState.CONNECTED && this.currentState != VoxSignalingState.CONNECTING && this.currentState != VoxSignalingState.CLOSING) {
-                if (!this.closing) this.log.warning("onWSClosed in state " + VoxSignalingState[this.currentState]);else return;
+                if (!this.closing) this.logger.warning("onWSClosed in state " + VoxSignalingState[this.currentState]);else return;
             }
             if (this.ws) {
                 this.ws.close();
@@ -2262,24 +2240,25 @@ var VoxSignaling = function () {
             }
             this.cleanup();
             this.currentState = VoxSignalingState.IDLE;
+            Client_1.Client.getInstance().loginState = 0;
             if (this.handlers.length > 0) {
                 for (var i = 0; i < this.handlers.length; ++i) {
                     if ((oldState == VoxSignalingState.CONNECTING || oldState == VoxSignalingState.WSCONNECTED || oldState == VoxSignalingState.IDLE) && !this.manualDisconnect) {
                         try {
                             this.handlers[i].onSignalingConnectionFailed(e.reason);
                         } catch (e) {
-                            this.log.warning("Error in onSignalingConnectionFailed callback: " + e);
+                            this.logger.warning("Error in onSignalingConnectionFailed callback: " + e);
                         }
                     } else {
                         try {
                             this.handlers[i].onSignalingClosed();
                         } catch (e) {
-                            this.log.warning("Error in onSignalingClosed callback: " + e);
+                            this.logger.warning("Error in onSignalingClosed callback: " + e);
                         }
                     }
                 }
             } else {
-                this.log.warning("No VoxSignaling handler specified");
+                this.logger.warning("No VoxSignaling handler specified");
             }
         }
     }, {
@@ -2289,7 +2268,7 @@ var VoxSignaling = function () {
 
             this.closing = false;
             if (this.currentState != VoxSignalingState.CONNECTING) {
-                this.log.warning("onWSConnected in state " + VoxSignalingState[this.currentState]);
+                this.logger.warning("onWSConnected in state " + VoxSignalingState[this.currentState]);
             }
             this.currentState = VoxSignalingState.WSCONNECTED;
             this.pingTimer = window.setTimeout(function () {
@@ -2301,7 +2280,7 @@ var VoxSignaling = function () {
             });
             //Set deprecated message handlers
             this.setRPCHandler(RemoteEvent_1.RemoteEvent.increaseGain, function () {
-                _this3.log.info("Deprecated increaseGain");
+                _this3.logger.info("Deprecated increaseGain");
             });
         }
         /**
@@ -2312,7 +2291,7 @@ var VoxSignaling = function () {
         key: "onWSError",
         value: function onWSError() {
             if (this.currentState != VoxSignalingState.CONNECTING) {
-                this.log.warning("onWSError in state " + this.currentState);
+                this.logger.warning("onWSError in state " + this.currentState);
             }
             this.ws.close();
             this.ws = undefined;
@@ -2325,16 +2304,17 @@ var VoxSignaling = function () {
             }
             this.cleanup();
             this.currentState = VoxSignalingState.IDLE;
+            Client_1.Client.getInstance().loginState = 0;
             if (typeof this.handlers != "undefined") {
                 for (var i = 0; i < this.handlers.length; ++i) {
                     try {
                         this.handlers[i].onSignalingConnectionFailed("Error connecting to VoxImplant server");
                     } catch (e) {
-                        this.log.warning("Error in onSignalingConnectionFailed callback: " + e);
+                        this.logger.warning("Error in onSignalingConnectionFailed callback: " + e);
                     }
                 }
             } else {
-                this.log.warning("No VoxSignaling handler specified");
+                this.logger.warning("No VoxSignaling handler specified");
             }
         }
         /**
@@ -2359,18 +2339,19 @@ var VoxSignaling = function () {
                         try {
                             _this4.handlers[i].onSignalingClosed();
                         } catch (e) {
-                            _this4.log.warning("Error in onSignalingClosed callback: " + e);
+                            _this4.logger.warning("Error in onSignalingClosed callback: " + e);
                         }
                     } else {
                         try {
                             _this4.handlers[i].onSignalingConnectionFailed("Connection closed");
                         } catch (e) {
-                            _this4.log.warning("Error in onSignalingConnectionFailed callback: " + e);
+                            _this4.logger.warning("Error in onSignalingConnectionFailed callback: " + e);
                         }
                     }
                 }
                 _this4.ws.close();
                 _this4.currentState = VoxSignalingState.IDLE;
+                Client_1.Client.getInstance().loginState = 0;
             }, VoxSignaling.PONG_DELAY);
         }
         /**
@@ -2392,8 +2373,7 @@ var VoxSignaling = function () {
             }
         }
         /**
-         *
-         * @param {MsgBusMessage} data
+         * @param {MsgInputMessage<MsgAction>} data
          * @returns {boolean}
          */
 
@@ -2458,7 +2438,6 @@ __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.SIGNALING)], VoxSig
 __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.SIGNALING)], VoxSignaling.prototype, "connectTo", null);
 __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.SIGNALING)], VoxSignaling.prototype, "setRPCHandler", null);
 __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.SIGNALING)], VoxSignaling.prototype, "removeRPCHandler", null);
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.SIGNALING)], VoxSignaling.prototype, "callRemoteFunction", null);
 __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.SIGNALING)], VoxSignaling.prototype, "disconnect", null);
 __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.SIGNALING)], VoxSignaling.prototype, "onWSClosed", null);
 __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.SIGNALING)], VoxSignaling.prototype, "onWSConnected", null);
@@ -2482,40 +2461,43 @@ Object.defineProperty(exports, "__esModule", { value: true });
  */
 var RemoteFunction;
 (function (RemoteFunction) {
-    RemoteFunction[RemoteFunction["ping"] = "__ping"] = "ping";
-    RemoteFunction[RemoteFunction["login"] = "login"] = "login";
-    RemoteFunction[RemoteFunction["loginGenerateOneTimeKey"] = "loginGenerateOneTimeKey"] = "loginGenerateOneTimeKey";
-    RemoteFunction[RemoteFunction["loginStage2"] = "loginStage2"] = "loginStage2";
-    RemoteFunction[RemoteFunction["setOperatorACDStatus"] = "setOperatorACDStatus"] = "setOperatorACDStatus";
-    RemoteFunction[RemoteFunction["getOperatorACDStatus"] = "getOperatorACDStatus"] = "getOperatorACDStatus";
-    RemoteFunction[RemoteFunction["setDesiredVideoBandwidth"] = "setDesiredVideoBandwidth"] = "setDesiredVideoBandwidth";
-    RemoteFunction[RemoteFunction["rejectCall"] = "rejectCall"] = "rejectCall";
-    RemoteFunction[RemoteFunction["disconnectCall"] = "disconnectCall"] = "disconnectCall";
-    RemoteFunction[RemoteFunction["sendDTMF"] = "sendDTMF"] = "sendDTMF";
-    RemoteFunction[RemoteFunction["sendSIPInfo"] = "sendSIPInfo"] = "sendSIPInfo";
-    RemoteFunction[RemoteFunction["hold"] = "hold"] = "hold";
-    RemoteFunction[RemoteFunction["unhold"] = "unhold"] = "unhold";
-    RemoteFunction[RemoteFunction["acceptCall"] = "acceptCall"] = "acceptCall";
-    RemoteFunction[RemoteFunction["createCall"] = "createCall"] = "createCall";
-    RemoteFunction[RemoteFunction["callConference"] = "callConference"] = "callConference";
-    RemoteFunction[RemoteFunction["transferCall"] = "transferCall"] = "transferCall";
-    RemoteFunction[RemoteFunction["muteLocal"] = "__muteLocal"] = "muteLocal";
-    RemoteFunction[RemoteFunction["reInvite"] = "ReInvite"] = "reInvite";
-    RemoteFunction[RemoteFunction["acceptReInvite"] = "AcceptReInvite"] = "acceptReInvite";
-    RemoteFunction[RemoteFunction["rejectReInvite"] = "RejectReInvite"] = "rejectReInvite";
-    RemoteFunction[RemoteFunction["confirmPC"] = "__confirmPC"] = "confirmPC";
-    RemoteFunction[RemoteFunction["addCandidate"] = "__addCandidate"] = "addCandidate";
-    RemoteFunction[RemoteFunction["loginUsingOneTimeKey"] = "loginUsingOneTimeKey"] = "loginUsingOneTimeKey";
-    RemoteFunction[RemoteFunction["refreshOauthToken"] = "refreshOauthToken"] = "refreshOauthToken";
+    RemoteFunction[RemoteFunction["ping"] = '__ping'] = "ping";
+    RemoteFunction[RemoteFunction["login"] = 'login'] = "login";
+    RemoteFunction[RemoteFunction["loginGenerateOneTimeKey"] = 'loginGenerateOneTimeKey'] = "loginGenerateOneTimeKey";
+    RemoteFunction[RemoteFunction["loginStage2"] = 'loginStage2'] = "loginStage2";
+    RemoteFunction[RemoteFunction["setOperatorACDStatus"] = 'setOperatorACDStatus'] = "setOperatorACDStatus";
+    RemoteFunction[RemoteFunction["getOperatorACDStatus"] = 'getOperatorACDStatus'] = "getOperatorACDStatus";
+    RemoteFunction[RemoteFunction["setDesiredVideoBandwidth"] = 'setDesiredVideoBandwidth'] = "setDesiredVideoBandwidth";
+    RemoteFunction[RemoteFunction["rejectCall"] = 'rejectCall'] = "rejectCall";
+    RemoteFunction[RemoteFunction["disconnectCall"] = 'disconnectCall'] = "disconnectCall";
+    RemoteFunction[RemoteFunction["sendDTMF"] = 'sendDTMF'] = "sendDTMF";
+    RemoteFunction[RemoteFunction["sendSIPInfo"] = 'sendSIPInfo'] = "sendSIPInfo";
+    RemoteFunction[RemoteFunction["hold"] = 'hold'] = "hold";
+    RemoteFunction[RemoteFunction["unhold"] = 'unhold'] = "unhold";
+    RemoteFunction[RemoteFunction["acceptCall"] = 'acceptCall'] = "acceptCall";
+    RemoteFunction[RemoteFunction["createCall"] = 'createCall'] = "createCall";
+    RemoteFunction[RemoteFunction["callConference"] = 'callConference'] = "callConference";
+    RemoteFunction[RemoteFunction["transferCall"] = 'transferCall'] = "transferCall";
+    RemoteFunction[RemoteFunction["muteLocal"] = '__muteLocal'] = "muteLocal";
+    RemoteFunction[RemoteFunction["reInvite"] = 'ReInvite'] = "reInvite";
+    RemoteFunction[RemoteFunction["acceptReInvite"] = 'AcceptReInvite'] = "acceptReInvite";
+    RemoteFunction[RemoteFunction["rejectReInvite"] = 'RejectReInvite'] = "rejectReInvite";
+    RemoteFunction[RemoteFunction["confirmPC"] = '__confirmPC'] = "confirmPC";
+    RemoteFunction[RemoteFunction["addCandidate"] = '__addCandidate'] = "addCandidate";
+    RemoteFunction[RemoteFunction["loginUsingOneTimeKey"] = 'loginUsingOneTimeKey'] = "loginUsingOneTimeKey";
+    RemoteFunction[RemoteFunction["refreshOauthToken"] = 'refreshOauthToken'] = "refreshOauthToken";
     //    =========================Legacy ZAPI
-    RemoteFunction[RemoteFunction["zPromptFinished"] = "promptFinished"] = "zPromptFinished";
-    RemoteFunction[RemoteFunction["zStartPreFlightCheck"] = "__startPreFlightCheck"] = "zStartPreFlightCheck";
+    RemoteFunction[RemoteFunction["zPromptFinished"] = 'promptFinished'] = "zPromptFinished";
+    RemoteFunction[RemoteFunction["zStartPreFlightCheck"] = '__startPreFlightCheck'] = "zStartPreFlightCheck";
     //    =========================Legacy ZAPI
     //    =========================Push service
-    RemoteFunction[RemoteFunction["registerPushToken"] = "registerPushToken"] = "registerPushToken";
-    RemoteFunction[RemoteFunction["unregisterPushToken"] = "unregisterPushToken"] = "unregisterPushToken";
-    RemoteFunction[RemoteFunction["pushFeedback"] = "pushFeedback"] = "pushFeedback";
+    RemoteFunction[RemoteFunction["registerPushToken"] = 'registerPushToken'] = "registerPushToken";
+    RemoteFunction[RemoteFunction["unregisterPushToken"] = 'unregisterPushToken'] = "unregisterPushToken";
+    RemoteFunction[RemoteFunction["pushFeedback"] = 'pushFeedback'] = "pushFeedback";
     //    =========================Push service
+    // ============================ICE
+    RemoteFunction[RemoteFunction["refreshIceConfig"] = 'refreshIceConfig'] = "refreshIceConfig";
+    // ============================ICE
 })(RemoteFunction = exports.RemoteFunction || (exports.RemoteFunction = {}));
 
 /***/ }),
@@ -2532,7 +2514,7 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var Implement = __webpack_require__(44);
+var Implement = __webpack_require__(50);
 var Hardware;
 (function (Hardware) {
   /**
@@ -2713,6 +2695,203 @@ exports.default = Hardware;
 "use strict";
 
 
+Object.defineProperty(exports, "__esModule", { value: true });
+/**
+ * The events that are triggered by [Call] instance.
+ *
+ * Use [Call.on] to subscribe on
+ * any of these events.
+ *
+ *
+ * Example:
+ * ``` js
+ * var currentCall = vox.call("exampleUser");
+ * currentCall.on(VoxImplant.CallEvents.Connected,onConnected);
+ * currentCall.on(VoxImplant.CallEvents.Disconnected,onDisconnected);
+ * currentCall.on(VoxImplant.CallEvents.Failed,onFailed);
+ * currentCall.on(VoxImplant.CallEvents.ICETimeout,onICETimeout)
+ * ```
+ */
+var CallEvents;
+(function (CallEvents) {
+  /**
+   * Event is triggered when a reliable connection is established for the call. Depending on network conditions there can be a 2-3 seconds delay between first audio data and this event.
+   * Handler function receives [EventHandlers.CallEventWithHeaders] object as an argument.
+   */
+  CallEvents[CallEvents["Connected"] = "Connected"] = "Connected";
+  /**
+   *  Event is triggered when a call was disconnected
+   *  Handler function receives the [EventHandlers.Disconnected] object as an argument.
+   */
+  CallEvents[CallEvents["Disconnected"] = "Disconnected"] = "Disconnected";
+  /**
+   *  Event is triggered due to a call failure
+   *
+   *  Most frequent status codes:
+   *
+   * |Code|Description                      |
+   * |----|---------------------------------|
+   * |486 |Destination number is busy       |
+   * |487 |Request terminated               |
+   * |603 |Call was rejected                |
+   * |404 |Invalid number                   |
+   * |480 |Destination number is unavailable|
+   * |402 |Insufficient funds               |
+   *
+   * Handler function receives the [EventHandlers.Failed] object as an argument.
+   */
+  CallEvents[CallEvents["Failed"] = "Failed"] = "Failed";
+  /**
+   *  Event is triggered when a progress tone playback starts.
+   *  Handler function receives the [EventHandlers.CallEvent] object as an argument.
+   */
+  CallEvents[CallEvents["ProgressToneStart"] = "ProgressToneStart"] = "ProgressToneStart";
+  /**
+   *  Event is triggered when a progress tone playback stops.
+   *  Handler function receives the [EventHandlers.CallEvent] object as an argument.
+   */
+  CallEvents[CallEvents["ProgressToneStop"] = "ProgressToneStop"] = "ProgressToneStop";
+  /**
+   *  Event is triggered when a text message is received.
+   *  Handler function receives the [EventHandlers.MessageReceived] object as an argument.
+   */
+  CallEvents[CallEvents["MessageReceived"] = "onSendMessage"] = "MessageReceived";
+  /**
+   *  Event is triggered when the INFO message is received
+   *  Handler function receives [EventHandlers.InfoReceived] object as an argument.
+   */
+  CallEvents[CallEvents["InfoReceived"] = "InfoReceived"] = "InfoReceived";
+  /**
+   *  Event is triggered when a call has been transferred successfully.
+   *  Handler function receives the [EventHandlers.CallEvent] object as an argument.
+   */
+  CallEvents[CallEvents["TransferComplete"] = "TransferComplete"] = "TransferComplete";
+  /**
+   *  Event is triggered when a call transfer failed
+   *  Handler function receives the [EventHandlers.CallEvent] object as an argument.
+   */
+  CallEvents[CallEvents["TransferFailed"] = "TransferFailed"] = "TransferFailed";
+  /**
+   *  Event is triggered when connection was not established due to a network connection problem between 2 peers
+   *  Handler function receives [EventHandlers.CallEvent] object as an argument.
+   *  @deprecated
+   */
+  CallEvents[CallEvents["ICETimeout"] = "ICETimeout"] = "ICETimeout";
+  /**
+   *  Event is triggered every 10 seconds when the call is CONNECTED.
+   *  Handler function receives RTCStatsReport dictionary as it is returned by a browser RTCPeerConnection.getStats() method as an argument.
+   *  RTCStatsReport provides statistics about the specified [Call] and may differ from one vendor to another.
+   *  @deprecated Use [CallStatsReceived] instead
+   */
+  CallEvents[CallEvents["RTCStatsReceived"] = "RTCStatsReceived"] = "RTCStatsReceived";
+  /**
+   *  Event is triggered when the call is CONNECTED at the interval specified by [Config.rtcStatsCollectionInterval] (defaults to 10 seconds).
+   *  Handler function receives [CallStats] object as an argument.
+   */
+  CallEvents[CallEvents["CallStatsReceived"] = "CallStatsReceived"] = "CallStatsReceived";
+  /**
+   * Event is triggered when a new HTMLMediaElement for the call's media playback has been created
+   * Handler function receives [EventHandlers.MediaElementCreated] object as an argument.
+   * @hidden
+   * @deprecated
+   */
+  CallEvents[CallEvents["MediaElementCreated"] = "MediaElementCreated"] = "MediaElementCreated";
+  /**
+   * @hidden
+   * @deprecated
+   * @type {string}
+   */
+  CallEvents[CallEvents["MediaElementRemoved"] = "MediaElementRemoved"] = "MediaElementRemoved";
+  // VideoPlaybackStarted =<any>"VideoPlaybackStarted",
+  /**
+   *  Event is triggered when an ICE connection is complete
+   *  Handler function receives [EventHandlers.CallEvent] object as an argument.
+   *  @deprecated
+   */
+  CallEvents[CallEvents["ICECompleted"] = "ICECompleted"] = "ICECompleted";
+  /**
+   * Event is triggered when a call was updated. For example, video was added/removed.
+   * Handler function receives the [EventHandlers.Updated] object as an argument.
+   */
+  CallEvents[CallEvents["Updated"] = "Updated"] = "Updated";
+  /**
+   * Event is triggered when user receives the call update from another side. For example, a video was added/removed on the remote side.
+   * Handler function receives [EventHandlers.CallEvent] object as an argument.
+   * @hidden
+   * @deprecated
+   */
+  CallEvents[CallEvents["PendingUpdate"] = "PendingUpdate"] = "PendingUpdate";
+  /**
+   * Event is triggered when multiple participants tried to update the same call simultaneously. For example, video added/removed on a local and remote side at the same time.
+   * Handler function receives [EventHandlers.UpdateFailed] object as an argument.
+   * @hidden
+   * @deprecated
+   */
+  CallEvents[CallEvents["UpdateFailed"] = "UpdateFailed"] = "UpdateFailed";
+  /**
+   * Handler function receives [EventHandlers.LocalVideoStreamAdded] object as an argument.
+   * @deprecated
+   * @hidden
+   */
+  CallEvents[CallEvents["LocalVideoStreamAdded"] = "LocalVideoStreamAdded"] = "LocalVideoStreamAdded";
+  /**
+   * Event is triggered when a new Endpoint is created. [Endpoint] represents an another participant in your call or conference.
+   */
+  CallEvents[CallEvents["EndpointAdded"] = "EndpointAdded"] = "EndpointAdded";
+  /**
+   * Handler function receives [EventHandlers.StateUpdated] object as an argument.
+   */
+  CallEvents[CallEvents["StateUpdated"] = "StateUpdated"] = "StateUpdated";
+  /**
+   * Handler function receives [EventHandlers.ActiveUpdated] object as an argument.
+   */
+  CallEvents[CallEvents["ActiveUpdated"] = "ActiveUpdated"] = "ActiveUpdated";
+  /**
+   * Event is triggered when the local audio, video or shared stream is encoded by a codec different from the one specified in [Config] or [CallSettings].
+   * @beta
+   */
+  CallEvents[CallEvents["QualityIssueCodecMismatch"] = "QualityIssueCodecMismatch"] = "QualityIssueCodecMismatch";
+  /**
+   * Event is triggered when network-based media latency is detected in the call.
+   * @beta
+   */
+  CallEvents[CallEvents["QualityIssueHighMediaLatency"] = "QualityIssueHighMediaLatency"] = "QualityIssueHighMediaLatency";
+  /**
+   * Event is triggered when the ICE connection is switched to the "disconnected" state during the call.
+   * @beta
+   */
+  CallEvents[CallEvents["QualityIssueICEDisconnected"] = "QualityIssueICEDisconnected"] = "QualityIssueICEDisconnected";
+  /**
+   * Event is triggered when the video resolution sent to the endpoint is lower than a captured video resolution.
+   * @beta
+   */
+  CallEvents[CallEvents["QualityIssueLocalVideoDegradation"] = "QualityIssueLocalVideoDegradation"] = "QualityIssueLocalVideoDegradation";
+  /**
+   * Event is triggered when the current bitrate is insufficient for sending video in the current resolution.
+   * @beta
+   * @hidden
+   */
+  CallEvents[CallEvents["QualityIssueLowBandwidth"] = "QualityIssueLowBandwidth"] = "QualityIssueLowBandwidth";
+  /**
+   * Event is triggered when no audio is captured by the microphone.
+   * @beta
+   * @hidden
+   */
+  CallEvents[CallEvents["QualityIssueNoAudioSignal"] = "QualityIssueNoAudioSignal"] = "QualityIssueNoAudioSignal";
+  /**
+   * Event is triggered every 2.5 seconds and indicates packet loss for the last period.
+   * @beta
+   */
+  CallEvents[CallEvents["QualityIssuePacketLoss"] = "QualityIssuePacketLoss"] = "QualityIssuePacketLoss";
+})(CallEvents = exports.CallEvents || (exports.CallEvents = {}));
+
+/***/ }),
+/* 6 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
@@ -2728,25 +2907,26 @@ var __decorate = undefined && undefined.__decorate || function (decorators, targ
     }return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-var Call_1 = __webpack_require__(13);
-var CallEvents_1 = __webpack_require__(6);
+var Call_1 = __webpack_require__(12);
+var CallEvents_1 = __webpack_require__(5);
 var VoxSignaling_1 = __webpack_require__(2);
-var Utils_1 = __webpack_require__(23);
-var Authenticator_1 = __webpack_require__(10);
-var Constants_1 = __webpack_require__(11);
+var Utils_1 = __webpack_require__(20);
+var Authenticator_1 = __webpack_require__(11);
+var Constants_1 = __webpack_require__(10);
 var Logger_1 = __webpack_require__(0);
-var PCFactory_1 = __webpack_require__(9);
+var PCFactory_1 = __webpack_require__(8);
 var Client_1 = __webpack_require__(1);
-var PeerConnection_1 = __webpack_require__(24);
-var CallExServer_1 = __webpack_require__(48);
+var PeerConnection_1 = __webpack_require__(22);
+var CallExServer_1 = __webpack_require__(54);
 var RemoteFunction_1 = __webpack_require__(3);
-var RemoteEvent_1 = __webpack_require__(12);
-var CallExMedia_1 = __webpack_require__(49);
-var CallstatsIo_1 = __webpack_require__(21);
-var CodecSorterHelpers_1 = __webpack_require__(50);
-var SDPMuggle_1 = __webpack_require__(20);
-var EndpointManager_1 = __webpack_require__(26);
+var RemoteEvent_1 = __webpack_require__(13);
+var CallExMedia_1 = __webpack_require__(55);
+var CallstatsIo_1 = __webpack_require__(17);
+var CodecSorterHelpers_1 = __webpack_require__(56);
+var SDPMuggle_1 = __webpack_require__(16);
+var EndpointManager_1 = __webpack_require__(23);
 var Hardware_1 = __webpack_require__(4);
+var CallStatsManager_1 = __webpack_require__(57);
 /**
  * Implenets signaling protocol and local call management'
  * Singleton
@@ -2762,12 +2942,20 @@ var CallManager = function () {
 
         this.protocolVersion = '3';
         this._h264first = false;
+        this.iceServers = {};
         this._calls = {};
+        this.callStats = CallStatsManager_1.CallStatsManager.get();
         this.voxSignaling = VoxSignaling_1.VoxSignaling.get();
-        this.log = Logger_1.LogManager.get().createLogger(Logger_1.LogCategory.SIGNALING, 'CallManager');
+        this.logger = Logger_1.LogManager.get().createLogger(Logger_1.LogCategory.SIGNALING, this._traceName());
         this.voxSignaling.addHandler(this);
         this.voxSignaling.setRPCHandler(RemoteEvent_1.RemoteEvent.handleIncomingConnection, function (id, callerid, displayName, headers, sdp) {
             _this.handleIncomingConnection(id, callerid, displayName, headers, sdp);
+        });
+        this.voxSignaling.setRPCHandler(RemoteEvent_1.RemoteEvent.onICEConfig, function (id, config) {
+            _this.onICEResult(id, true, config);
+        });
+        this.voxSignaling.setRPCHandler(RemoteEvent_1.RemoteEvent.onICEConfigFailed, function (id) {
+            _this.onICEResult(id, false);
         });
         this.voxSignaling.setRPCHandler(RemoteEvent_1.RemoteEvent.handleConnectionConnected, function (id, headers, sdp, endPointData) {
             _this.handleConnectionConnected(id, headers, sdp);
@@ -2844,7 +3032,7 @@ var CallManager = function () {
             settings = CallManager.addCustomDataToHeaders(settings);
             var id = Utils_1.Utils.generateUUID();
             if (this._calls[id]) {
-                this.log.error('Call ' + id + ' already exists');
+                this.logger.error('Call ' + id + ' already exists');
                 throw new Error('Internal error');
             }
             var call = this.getCallInstance(id, Authenticator_1.Authenticator.get().displayName, false, settings);
@@ -2896,7 +3084,7 @@ var CallManager = function () {
             settings = CallManager.addCustomDataToHeaders(settings);
             var id = Utils_1.Utils.generateUUID();
             if (this._calls[id]) {
-                this.log.error('Call ' + id + ' already exists');
+                this.logger.error('Call ' + id + ' already exists');
                 throw new Error('Internal error');
             }
             // console.error(settings);
@@ -2946,7 +3134,7 @@ var CallManager = function () {
         value: function handleConnectionFailed(id, code, reason, headers) {
             var c = this.findCall(id, 'handleConnectionFailed');
             if (typeof c == 'undefined') return;
-            delete this._calls[id];
+            this.removeCall(id);
             Client_1.Client.getInstance().stopProgressTone();
             c.onFailed(code, reason, headers);
         }
@@ -2977,11 +3165,11 @@ var CallManager = function () {
                 var call = this._calls[x[i].id()];
                 if (call) {
                     if (call.stateValue != Call_1.CallState.CONNECTED) {
-                        this.log.error('trying to transfer call ' + call.id() + ' in state ' + call.state());
+                        this.logger.error('trying to transfer call ' + call.id() + ' in state ' + call.state());
                         return;
                     }
                 } else {
-                    this.log.error('trying to transfer unknown call ' + call.id());
+                    this.logger.error('trying to transfer unknown call ' + call.id());
                     return;
                 }
             }
@@ -2995,6 +3183,7 @@ var CallManager = function () {
     }, {
         key: "removeCall",
         value: function removeCall(call_id) {
+            this.callStats.deleteCall(this._calls[call_id]);
             delete this._calls[call_id];
         }
     }, {
@@ -3077,17 +3266,6 @@ var CallManager = function () {
             });
         }
         /**
-         * @hidden
-         * @return {string}
-         * @private
-         */
-
-    }, {
-        key: "_traceName",
-        value: function _traceName() {
-            return 'CallManager';
-        }
-        /**
          * Handle incoming call
          * @hidden
          * @param id
@@ -3100,10 +3278,8 @@ var CallManager = function () {
     }, {
         key: "handleIncomingConnection",
         value: function handleIncomingConnection(id, callerid, displayName, headers, sdp) {
-            var _this7 = this;
-
             if (this._calls[id]) {
-                this.log.error('Call ' + id + ' already exists');
+                this.logger.error('Call ' + id + ' already exists');
                 throw new Error('Internal error');
             }
             var remoteDirections = SDPMuggle_1.SDPMuggle.detectDirections(sdp);
@@ -3126,13 +3302,18 @@ var CallManager = function () {
                 call.setActiveForce(false);
                 pcHold = true;
             }
+            Client_1.Client.getInstance().onIncomingCall(id, callerid, displayName, headers, this.isSDPHasVideo(sdp));
             if (typeof settings.extraHeaders[Constants_1.Constants.DIRECT_CALL_HEADER] === 'undefined' && this.protocolVersion == '2') {
                 call.peerConnection = PCFactory_1.PCFactory.get().getPeerConnect(id);
-                Client_1.Client.getInstance().onIncomingCall(id, callerid, displayName, headers, this.isSDPHasVideo(sdp));
             } else {
-                PCFactory_1.PCFactory.get().incomeDirectPC(id, { receiveVideo: true, sendVideo: true }, sdp, pcHold).then(function (pc) {
+                //If sdp from MS ll not use any iceServers
+                var selectedICEServers = [];
+                if (sdp.indexOf('VIMS') === -1) {
+                    //P2P detected! let's try select ICE servers or undefined
+                    selectedICEServers = this.iceServers[id];
+                }
+                PCFactory_1.PCFactory.get().incomeDirectPC(id, { receiveVideo: true, sendVideo: true }, sdp, pcHold, selectedICEServers).then(function (pc) {
                     call.peerConnection = pc;
-                    Client_1.Client.getInstance().onIncomingCall(id, callerid, displayName, headers, _this7.isSDPHasVideo(sdp));
                 });
             }
         }
@@ -3144,6 +3325,7 @@ var CallManager = function () {
                 call = new CallExMedia_1.CallExMedia(id, displayName, direction, settings);
             } else if (typeof settings.extraHeaders[Constants_1.Constants.DIRECT_CALL_HEADER] != 'undefined') call = new CallExMedia_1.CallExMedia(id, displayName, direction, settings);else call = new CallExServer_1.CallExServer(id, displayName, direction, settings);
             this._calls[id] = call;
+            this.callStats.addCall(call);
             EndpointManager_1.EndpointManager.get().registerCall(call);
             return call;
         }
@@ -3153,7 +3335,7 @@ var CallManager = function () {
             var c = this._calls[id];
             if (id === '') c = this._calls[Object.keys(this._calls)[0]];
             if (typeof c == 'undefined') {
-                this.log.warning('Received ' + functionName + ' for unknown call ' + id);
+                if (functionName !== 'onICEResult') this.logger.warning('Received ' + functionName + ' for unknown call ' + id);
                 return null;
             }
             return c;
@@ -3170,6 +3352,7 @@ var CallManager = function () {
     }, {
         key: "handleConnectionConnected",
         value: function handleConnectionConnected(id, headers, sdp) {
+            this.logger.info("handleConnectionConnected(), received SDP: \n" + sdp);
             var c = this.findCall(id, 'handleConnectionConnected');
             c.signalingConnected = true;
             c.canStartSendingCandidates();
@@ -3192,8 +3375,20 @@ var CallManager = function () {
             }
         }
     }, {
+        key: "onICEResult",
+        value: function onICEResult(id, result, config) {
+            if (result) {
+                this.iceServers[id] = config;
+                var call = this.findCall(id, 'onICEResult');
+                if (call) {
+                    call.peerConnection.setConfiguration(Object.assign({}, call.peerConnection.getConfiguration(), { iceServers: config }));
+                }
+            }
+        }
+    }, {
         key: "startEarlyMedia",
         value: function startEarlyMedia(id, headers, sdp) {
+            this.logger.info("startEarlyMedia(), received SDP: \n" + sdp);
             var c = this.findCall(id, 'startEarlyMedia');
             c.settings.hasEarlyMedia = true;
             if (typeof sdp != 'undefined') {
@@ -3204,15 +3399,15 @@ var CallManager = function () {
     }, {
         key: "handleConnectionDisconnected",
         value: function handleConnectionDisconnected(id, headers, params) {
-            var _this8 = this;
+            var _this7 = this;
 
             var c = this.findCall(id, 'handleConnectionDisconnected');
             if (!c) return;
             Client_1.Client.getInstance().stopProgressTone();
             c.onDisconnected(headers, params).then(function () {
-                delete _this8._calls[id];
+                return _this7.removeCall(id);
             }).catch(function (e) {
-                _this8.log.error("Can't remove the call " + id + ": " + e.message);
+                _this7.logger.error("Can't remove the call " + id + ": " + e.message);
             });
         }
     }, {
@@ -3272,6 +3467,7 @@ var CallManager = function () {
             var c = this.findCall(id, 'handleReinvite');
             if (typeof c == 'undefined') return;
             EndpointManager_1.EndpointManager.get().setEndpointDescription(c, scheme);
+            this.logger.info("handleInReinvite(), received SDP: \n" + sdp);
             c.runIncomingReInvite(headers, sdp);
             c.dispatchEvent({ name: CallEvents_1.CallEvents.PendingUpdate, result: true, call: c });
         }
@@ -3286,6 +3482,17 @@ var CallManager = function () {
                     this._numCalls++;
                 }
             }
+        }
+        /**
+         * @hidden
+         * @return {string}
+         * @private
+         */
+
+    }, {
+        key: "_traceName",
+        value: function _traceName() {
+            return 'CallManager';
         }
     }, {
         key: "calls",
@@ -3364,6 +3571,7 @@ __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.CALLMANAGER)], Call
 __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.CALLMANAGER)], CallManager.prototype, "findCall", null);
 __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.CALLMANAGER)], CallManager.prototype, "handleRingOut", null);
 __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.CALLMANAGER)], CallManager.prototype, "handleConnectionConnected", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.CALLMANAGER)], CallManager.prototype, "onICEResult", null);
 __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.CALLMANAGER)], CallManager.prototype, "handleConnectionDisconnected", null);
 __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.CALLEXSERVER)], CallManager.prototype, "handleSIPInfo", null);
 __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.CALLMANAGER)], CallManager.prototype, "stopRinging", null);
@@ -3378,146 +3586,456 @@ __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.CALLMANAGER)], Call
 exports.CallManager = CallManager;
 
 /***/ }),
-/* 6 */
+/* 7 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
 Object.defineProperty(exports, "__esModule", { value: true });
+var Logger_1 = __webpack_require__(0);
+var FF_1 = __webpack_require__(47);
+var Webkit_1 = __webpack_require__(48);
+var WebRTCPC_1 = __webpack_require__(49);
+var Edge_1 = __webpack_require__(60);
+var SignalingDTMFSender_1 = __webpack_require__(21);
+var Safari_1 = __webpack_require__(61);
+var Client_1 = __webpack_require__(1);
+var Bowser = __webpack_require__(62);
+var TransreceiverPC_1 = __webpack_require__(63);
 /**
- * The events that are triggered by [Call] instance.
- *
- * Use [Call.on] to subscribe on
- * any of these events.
- *
- *
- * Example:
- * ``` js
- * var currentCall = vox.call("exampleUser");
- * currentCall.on(VoxImplant.CallEvents.Connected,onConnected);
- * currentCall.on(VoxImplant.CallEvents.Disconnected,onDisconnected);
- * currentCall.on(VoxImplant.CallEvents.Failed,onFailed);
- * currentCall.on(VoxImplant.CallEvents.ICETimeout,onICETimeout)
- * ```
+ * Browser-specific implementation of webrtc functionality
+ * @hidden
  */
-var CallEvents;
-(function (CallEvents) {
-  /**
-   * Event is triggered when a reliable connection is established for the call. Depending on network conditions there can be a 2-3 seconds delay between first audio data and this event.
-   * Handler function receives [EventHandlers.CallEventWithHeaders] object as an argument.
-   */
-  CallEvents[CallEvents["Connected"] = "Connected"] = "Connected";
-  /**
-   *  Event is triggered when a call was disconnected
-   *  Handler function receives the [EventHandlers.Disconnected] object as an argument.
-   */
-  CallEvents[CallEvents["Disconnected"] = "Disconnected"] = "Disconnected";
-  /**
-   *  Event is triggered due to a call failure
-   *
-   *  Most frequent status codes:
-   *
-   * |Code|Description                      |
-   * |----|---------------------------------|
-   * |486 |Destination number is busy       |
-   * |487 |Request terminated               |
-   * |603 |Call was rejected                |
-   * |404 |Invalid number                   |
-   * |480 |Destination number is unavailable|
-   * |402 |Insufficient funds               |
-   *
-   * Handler function receives the [EventHandlers.Failed] object as an argument.
-   */
-  CallEvents[CallEvents["Failed"] = "Failed"] = "Failed";
-  /**
-   *  Event is triggered when a progress tone playback starts.
-   *  Handler function receives the [EventHandlers.CallEvent] object as an argument.
-   */
-  CallEvents[CallEvents["ProgressToneStart"] = "ProgressToneStart"] = "ProgressToneStart";
-  /**
-   *  Event is triggered when a progress tone playback stops.
-   *  Handler function receives the [EventHandlers.CallEvent] object as an argument.
-   */
-  CallEvents[CallEvents["ProgressToneStop"] = "ProgressToneStop"] = "ProgressToneStop";
-  /**
-   *  Event is triggered when a text message is received.
-   *  Handler function receives the [EventHandlers.MessageReceived] object as an argument.
-   */
-  CallEvents[CallEvents["MessageReceived"] = "onSendMessage"] = "MessageReceived";
-  /**
-   *  Event is triggered when the INFO message is received
-   *  Handler function receives [EventHandlers.InfoReceived] object as an argument.
-   */
-  CallEvents[CallEvents["InfoReceived"] = "InfoReceived"] = "InfoReceived";
-  /**
-   *  Event is triggered when a call has been transferred successfully.
-   *  Handler function receives the [EventHandlers.CallEvent] object as an argument.
-   */
-  CallEvents[CallEvents["TransferComplete"] = "TransferComplete"] = "TransferComplete";
-  /**
-   *  Event is triggered when a call transfer failed
-   *  Handler function receives the [EventHandlers.CallEvent] object as an argument.
-   */
-  CallEvents[CallEvents["TransferFailed"] = "TransferFailed"] = "TransferFailed";
-  /**
-   *  Event is triggered when connection was not established due to a network connection problem between 2 peers
-   *  Handler function receives [EventHandlers.CallEvent] object as an argument.
-   */
-  CallEvents[CallEvents["ICETimeout"] = "ICETimeout"] = "ICETimeout";
-  CallEvents[CallEvents["RTCStatsReceived"] = "RTCStatsReceived"] = "RTCStatsReceived";
-  /**
-   * Event is triggered when a new HTMLMediaElement for the call's media playback has been created
-   * Handler function receives [EventHandlers.MediaElementCreated] object as an argument.
-   * @hidden
-   * @deprecated
-   */
-  CallEvents[CallEvents["MediaElementCreated"] = "MediaElementCreated"] = "MediaElementCreated";
-  /**
-   * @hidden
-   * @deprecated
-   * @type {string}
-   */
-  CallEvents[CallEvents["MediaElementRemoved"] = "MediaElementRemoved"] = "MediaElementRemoved";
-  // VideoPlaybackStarted =<any>"VideoPlaybackStarted",
-  /**
-   *  Event is triggered when an ICE connection is complete
-   *  Handler function receives [EventHandlers.CallEvent] object as an argument.
-   */
-  CallEvents[CallEvents["ICECompleted"] = "ICECompleted"] = "ICECompleted";
-  /**
-   * Event is triggered when a call was updated. For example, video was added/removed.
-   * Handler function receives the [EventHandlers.Updated] object as an argument.
-   */
-  CallEvents[CallEvents["Updated"] = "Updated"] = "Updated";
-  /**
-   * Event is triggered when user receives the call update from another side. For example, a video was added/removed on the remote side.
-   * Handler function receives [EventHandlers.CallEvent] object as an argument.
-   * @hidden
-   * @deprecated
-   */
-  CallEvents[CallEvents["PendingUpdate"] = "PendingUpdate"] = "PendingUpdate";
-  /**
-   * Event is triggered when multiple participants tried to update the same call simultaneously. For example, video added/removed on a local and remote side at the same time.
-   * Handler function receives [EventHandlers.UpdateFailed] object as an argument.
-   * @hidden
-   * @deprecated
-   */
-  CallEvents[CallEvents["UpdateFailed"] = "UpdateFailed"] = "UpdateFailed";
-  /**
-   * Handler function receives [EventHandlers.LocalVideoStreamAdded] object as an argument.
-   * @deprecated
-   * @hidden
-   */
-  CallEvents[CallEvents["LocalVideoStreamAdded"] = "LocalVideoStreamAdded"] = "LocalVideoStreamAdded";
-  /**
-   * Event is triggered when a new Endpoint is created. [Endpoint] represents an another participant in your call or conference.
-   */
-  CallEvents[CallEvents["EndpointAdded"] = "EndpointAdded"] = "EndpointAdded";
-})(CallEvents = exports.CallEvents || (exports.CallEvents = {}));
+var BrowserSpecific;
+(function (BrowserSpecific) {
+    var Vendor = void 0;
+    (function (Vendor) {
+        Vendor[Vendor["Firefox"] = 1] = "Firefox";
+        Vendor[Vendor["Webkit"] = 2] = "Webkit";
+        Vendor[Vendor["Edge"] = 3] = "Edge";
+        Vendor[Vendor["Safari"] = 4] = "Safari";
+    })(Vendor || (Vendor = {}));
+    var vendor = void 0;
+    function applyIdealConstraint(constraints, name, value) {
+        var r = constraints;
+        if ((typeof r === "undefined" ? "undefined" : _typeof(r)) != "object") {
+            r = {};
+        }
+        r[name] = { ideal: value };
+        return r;
+    }
+    var browser = Bowser.getParser(window.navigator.userAgent);
+    function peerConnectionFactory(id, mode, videoEnabled, iceServers) {
+        Logger_1.LogManager.get().writeMessage(Logger_1.LogCategory.RTC, "Core", Logger_1.LogLevel.INFO, "Create WebRTC on the " + JSON.stringify(browser));
+        switch (vendor) {
+            case Vendor.Firefox:
+                return new WebRTCPC_1.WebRTCPC(id, mode, videoEnabled, iceServers);
+            case Vendor.Webkit:
+                var version = browser.getBrowserVersion().split('.');
+                var minorVersion = parseInt(version[0]);
+                if (!isNaN(minorVersion) && minorVersion >= 72) {
+                    return new TransreceiverPC_1.TransreceiverPC(id, mode, videoEnabled, iceServers);
+                } else {
+                    return new WebRTCPC_1.WebRTCPC(id, mode, videoEnabled, iceServers);
+                }
+            case Vendor.Safari:
+                return new WebRTCPC_1.WebRTCPC(id, mode, videoEnabled, iceServers);
+            case Vendor.Edge:
+                return new WebRTCPC_1.WebRTCPC(id, mode, videoEnabled, iceServers);
+            //return new ORTC(id, mode, videoEnabled);
+            default:
+                Logger_1.LogManager.get().writeMessage(Logger_1.LogCategory.RTC, "Core", Logger_1.LogLevel.INFO, "Unsupported browser " + navigator.userAgent);
+                return null;
+        }
+    }
+    BrowserSpecific.peerConnectionFactory = peerConnectionFactory;
+    function isIphone() {
+        if (Client_1.Client.getInstance().config().experiments && Client_1.Client.getInstance().config().experiments.emulate_ios) return true;
+        return navigator.userAgent.match(/iPhone/i) || navigator.userAgent.match(/iPod/i);
+    }
+    BrowserSpecific.isIphone = isIphone;
+    function isScreenSharingSupported() {
+        return vendor === Vendor.Firefox || vendor === Vendor.Webkit;
+    }
+    BrowserSpecific.isScreenSharingSupported = isScreenSharingSupported;
+    function defaultGetUserMedia(constraints) {
+        this.logger.info("[constraints]: " + JSON.stringify(constraints));
+        return navigator.mediaDevices.getUserMedia(constraints);
+    }
+    function defaultGetDTMFSender(pc, callId) {
+        return new SignalingDTMFSender_1.SignalingDTMFSender(callId);
+    }
+    function defaultScreenSharingSupported() {
+        return new Promise(function (resolve) {
+            resolve(false);
+        });
+    }
+    //Convert user specified config to constraints object that can be recognized by browser
+    function composeConstraintsDefault(config) {
+        var audioConstraints = false;
+        var videoConstraints = false;
+        if (config.audioEnabled) {
+            audioConstraints = true;
+            if (config.audioInputId) audioConstraints = applyIdealConstraint(audioConstraints, "deviceId", config.audioInputId);
+        }
+        if (config.videoEnabled) {
+            videoConstraints = true;
+            if (config.videoSettings) {
+                videoConstraints = config.videoSettings;
+            }
+            if (config.videoInputId) videoConstraints = applyIdealConstraint(videoConstraints, "deviceId", config.videoInputId);
+        }
+        return { peerIdentity: null, audio: audioConstraints, video: videoConstraints };
+    }
+    function getWSVendor() {
+        var connectivityCheck = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : true;
+
+        if (connectivityCheck === false) {
+            return "voxmobile";
+        }
+        if (!vendor) {
+            detectVendor();
+        }
+        switch (vendor) {
+            case Vendor.Firefox:
+                return "firefox";
+            case Vendor.Webkit:
+                return "chrome";
+            case Vendor.Safari:
+                return "safari";
+            case Vendor.Edge:
+                return "edge";
+            default:
+                return "";
+        }
+    }
+    BrowserSpecific.getWSVendor = getWSVendor;
+    function detectVendor() {
+        if (navigator["mozGetUserMedia"]) {
+            vendor = Vendor.Firefox;
+        } else if (navigator["webkitGetUserMedia"]) {
+            vendor = Vendor.Webkit;
+        } else if (navigator.mediaDevices && navigator.userAgent.match(/Edge\/(\d+).(\d+)$/)) {
+            vendor = Vendor.Edge;
+        } else if (navigator["getUserMedia"]) {
+            vendor = Vendor.Safari;
+        }
+    }
+    function detectFirefoxVersion() {}
+    //This function must be called before usage
+    function init() {
+        if (!vendor) {
+            detectVendor();
+        }
+        if (vendor) {
+            Logger_1.LogManager.get().writeMessage(Logger_1.LogCategory.RTC, "Core", Logger_1.LogLevel.INFO, "Detected browser " + Vendor[vendor]);
+        }
+        BrowserSpecific.getUserMedia = defaultGetUserMedia;
+        BrowserSpecific.getDTMFSender = defaultGetDTMFSender;
+        BrowserSpecific.screenSharingSupported = defaultScreenSharingSupported;
+        switch (vendor) {
+            case Vendor.Firefox:
+                BrowserSpecific.attachMedia = FF_1.FF.attachStream;
+                BrowserSpecific.detachMedia = FF_1.FF.detachStream;
+                BrowserSpecific.getScreenMedia = FF_1.FF.getScreenMedia;
+                BrowserSpecific.getRTCStats = FF_1.FF.getRTCStats;
+                BrowserSpecific.getUserMedia = FF_1.FF.getUserMedia;
+                BrowserSpecific.screenSharingSupported = FF_1.FF.screenSharingSupported;
+                BrowserSpecific.getDTMFSender = FF_1.FF.getDTMFSender;
+                break;
+            case Vendor.Webkit:
+                BrowserSpecific.attachMedia = Webkit_1.Webkit.attachStream;
+                BrowserSpecific.detachMedia = Webkit_1.Webkit.detachStream;
+                BrowserSpecific.getScreenMedia = Webkit_1.Webkit.getScreenMedia;
+                BrowserSpecific.getRTCStats = Webkit_1.Webkit.getRTCStats;
+                BrowserSpecific.getUserMedia = Webkit_1.Webkit.getUserMedia;
+                BrowserSpecific.screenSharingSupported = Webkit_1.Webkit.screenSharingSupported;
+                BrowserSpecific.getDTMFSender = Webkit_1.Webkit.getDTMFSender;
+                break;
+            case Vendor.Safari:
+                BrowserSpecific.attachMedia = Safari_1.Safari.attachStream;
+                BrowserSpecific.detachMedia = Safari_1.Safari.detachStream;
+                BrowserSpecific.getScreenMedia = Safari_1.Safari.getScreenMedia;
+                BrowserSpecific.getRTCStats = Safari_1.Safari.getRTCStats;
+                BrowserSpecific.getUserMedia = FF_1.FF.getUserMedia;
+                BrowserSpecific.getDTMFSender = Safari_1.Safari.getDTMFSender;
+                break;
+            case Vendor.Edge:
+                BrowserSpecific.attachMedia = Edge_1.Edge.attachStream;
+                BrowserSpecific.detachMedia = Edge_1.Edge.detachStream;
+                BrowserSpecific.getScreenMedia = Edge_1.Edge.getScreenMedia;
+                BrowserSpecific.screenSharingSupported = Edge_1.Edge.screenSharingSupported;
+                BrowserSpecific.getRTCStats = Edge_1.Edge.getRTCStats;
+                break;
+            default:
+                Logger_1.LogManager.get().writeMessage(Logger_1.LogCategory.RTC, "Core", Logger_1.LogLevel.INFO, "Unsupported browser " + navigator.userAgent);
+        }
+        BrowserSpecific.composeConstraints = composeConstraintsDefault;
+    }
+    BrowserSpecific.init = init;
+})(BrowserSpecific || (BrowserSpecific = {}));
+exports.default = BrowserSpecific;
 
 /***/ }),
-/* 7 */
+/* 8 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var __decorate = undefined && undefined.__decorate || function (decorators, target, key, desc) {
+    var c = arguments.length,
+        r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc,
+        d;
+    if ((typeof Reflect === "undefined" ? "undefined" : _typeof(Reflect)) === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);else for (var i = decorators.length - 1; i >= 0; i--) {
+        if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    }return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+var PeerConnection_1 = __webpack_require__(22);
+var VoxSignaling_1 = __webpack_require__(2);
+var Logger_1 = __webpack_require__(0);
+var CallManager_1 = __webpack_require__(6);
+var Call_1 = __webpack_require__(12);
+var BrowserSpecific_1 = __webpack_require__(7);
+var RemoteFunction_1 = __webpack_require__(3);
+var RemoteEvent_1 = __webpack_require__(13);
+var Client_1 = __webpack_require__(1);
+var index_1 = __webpack_require__(4);
+var SDPMuggle_1 = __webpack_require__(16);
+/**
+ * Peer connection manager
+ * @hidden
+ */
+
+var PCFactory = function () {
+    function PCFactory() {
+        var _this = this;
+
+        _classCallCheck(this, PCFactory);
+
+        this.iceConfig = null;
+        this._peerConnections = {};
+        this.waitingPeerConnections = {};
+        this.logger = Logger_1.LogManager.get().createLogger(Logger_1.LogCategory.RTC, this._traceName());
+        this._requireMedia = true;
+        if (BrowserSpecific_1.default.getWSVendor() === 'firefox') PCFactory.hasTransceivers = true;
+        VoxSignaling_1.VoxSignaling.get().setRPCHandler(RemoteEvent_1.RemoteEvent.createPC, function (id, sdpOffer) {
+            _this.rpcHandlerCreatePC(id, sdpOffer);
+        });
+        VoxSignaling_1.VoxSignaling.get().setRPCHandler(RemoteEvent_1.RemoteEvent.destroyPC, function (id) {
+            _this.rpcHandlerDestroyPC(id);
+        });
+        VoxSignaling_1.VoxSignaling.get().addHandler(this);
+    }
+
+    _createClass(PCFactory, [{
+        key: "setupDirectPC",
+        value: function setupDirectPC(id, mode, videoEnabled, pcHold) {
+            var _this2 = this;
+
+            var peerConnection = BrowserSpecific_1.default.peerConnectionFactory(id, mode, videoEnabled);
+            peerConnection.setHoldKey(pcHold);
+            var appConfig = Client_1.Client.getInstance().config();
+            var _sm = index_1.default.StreamManager.get();
+            var _call = CallManager_1.CallManager.get().calls[id];
+            return _sm.getCallStream(_call).then(function (stream) {
+                if (stream !== null) {
+                    peerConnection.fastAddCustomMedia(stream);
+                }
+                _this2._peerConnections[id] = peerConnection;
+                return peerConnection.getLocalOffer();
+            });
+        }
+    }, {
+        key: "incomeDirectPC",
+        value: function incomeDirectPC(id, videoEnabled, sdp, pcHold, iceServers) {
+            var _this3 = this;
+
+            var peerConnection = BrowserSpecific_1.default.peerConnectionFactory(id, PeerConnection_1.PeerConnectionMode.P2P, videoEnabled, iceServers);
+            peerConnection.setHoldKey(pcHold);
+            return peerConnection._setRemoteDescription(sdp).then(function () {
+                if (CallManager_1.CallManager.get().calls[id]) {
+                    _this3._peerConnections[id] = peerConnection;
+                    return peerConnection;
+                } else {
+                    peerConnection.close();
+                }
+            });
+        }
+    }, {
+        key: "getPeerConnect",
+        value: function getPeerConnect(id) {
+            return this._peerConnections[id];
+        }
+    }, {
+        key: "onSignalingConnected",
+        value: function onSignalingConnected() {}
+    }, {
+        key: "onSignalingClosed",
+        value: function onSignalingClosed() {
+            this.logger.info('Closing all peer connections because signaling connection has closed');
+            this.waitingPeerConnections = {};
+            for (var i in this._peerConnections) {
+                this._peerConnections[i].close();
+            }
+            this._peerConnections = {};
+        }
+        //Specifies if user media access is required in current application.
+
+    }, {
+        key: "onSignalingConnectionFailed",
+        value: function onSignalingConnectionFailed(errorMessage) {}
+    }, {
+        key: "onMediaConnectionFailed",
+        value: function onMediaConnectionFailed() {}
+        /**
+         * Close all current peer connections
+         * @hidden
+         */
+
+    }, {
+        key: "closeAll",
+        value: function closeAll() {
+            for (var i in this._peerConnections) {
+                this._peerConnections[i].close();
+            }this._peerConnections = {};
+        }
+    }, {
+        key: "setBandwidthParams",
+        value: function setBandwidthParams(bandwidt) {
+            this._bandwidthParams = bandwidt;
+        }
+    }, {
+        key: "addBandwidthParams",
+        value: function addBandwidthParams(sdp) {
+            if (this._bandwidthParams) sdp.sdp = sdp.sdp.replace(/(a=mid:video.*\r\n)/g, '$1b=AS:' + this._bandwidthParams + '\r\n');
+            return sdp;
+        }
+    }, {
+        key: "rpcHandlerCreatePC",
+        value: function rpcHandlerCreatePC(id, sdpOffer) {
+            this.logger.info("rpcHandlerCreatePC(), received SDP: \n" + sdpOffer.replace('<br>', '\n\r'));
+            sdpOffer = SDPMuggle_1.SDPMuggle.addSetupAttribute(sdpOffer);
+            var videoEnabled = PCFactory.sdpOffersVideo(sdpOffer);
+            var mode = PeerConnection_1.PeerConnectionMode.CLIENT_SERVER_V1;
+            VoxSignaling_1.VoxSignaling.get().callRemoteFunction(RemoteFunction_1.RemoteFunction.muteLocal, id, false);
+            var pc = BrowserSpecific_1.default.peerConnectionFactory(id, mode, videoEnabled);
+            this._peerConnections[id] = pc;
+            var call = CallManager_1.CallManager.get().calls[id];
+            index_1.default.StreamManager.get().getCallStream(call).then(function (stream) {
+                if (id === '__default') sdpOffer = sdpOffer.replace('a=sendrecv', 'a=recvonly');
+                pc.fastAddCustomMedia(stream);
+                pc.processRemoteOffer(sdpOffer).then(function (localAnswer) {
+                    if (typeof call === 'undefined' || call.checkCallMode(Call_1.CallMode.SERVER)) VoxSignaling_1.VoxSignaling.get().callRemoteFunction(RemoteFunction_1.RemoteFunction.confirmPC, id, localAnswer);else VoxSignaling_1.VoxSignaling.get().callRemoteFunction(RemoteFunction_1.RemoteFunction.acceptCall, [id, CallManager_1.CallManager.cleanHeaders(call.headers()), localAnswer]);
+                    if (id !== '__default' && typeof CallManager_1.CallManager.get().calls[id] !== 'undefined') {
+                        CallManager_1.CallManager.get().calls[id].peerConnection = pc;
+                    }
+                });
+            }).catch(function (e) {
+                if (typeof call !== 'undefined') {
+                    CallManager_1.CallManager.get().handleConnectionFailed(call.id(), 403, 'Media access denied', {});
+                } else {
+                    VoxSignaling_1.VoxSignaling.get().onConnectionFailedRPC();
+                }
+            });
+        }
+    }, {
+        key: "rpcHandlerDestroyPC",
+        value: function rpcHandlerDestroyPC(id) {
+            var _this4 = this;
+
+            if (this._peerConnections[id]) {
+                if (id === '__default') {
+                    setTimeout(function () {
+                        _this4._peerConnections[id].close();
+                        delete _this4._peerConnections[id];
+                    }, 200);
+                } else {
+                    this._peerConnections[id].close();
+                    delete this._peerConnections[id];
+                }
+            }
+            delete this.waitingPeerConnections[id];
+        }
+        /**
+         * @hidden
+         * @return {string}
+         * @private
+         */
+
+    }, {
+        key: "_traceName",
+        value: function _traceName() {
+            return 'PCFactory';
+        }
+    }, {
+        key: "peerConnections",
+        get: function get() {
+            return this._peerConnections;
+        }
+    }, {
+        key: "requireMedia",
+        get: function get() {
+            return this._requireMedia;
+        },
+        set: function set(b) {
+            this._requireMedia = b;
+        }
+    }], [{
+        key: "get",
+        value: function get() {
+            if (this.inst === null) {
+                this.inst = new PCFactory();
+            }
+            return this.inst;
+        }
+        /**
+         * Check if SDP contains video media
+         */
+
+    }, {
+        key: "sdpOffersVideo",
+        value: function sdpOffersVideo(sdpOffer) {
+            return { receiveVideo: sdpOffer.indexOf('m=video') !== -1, sendVideo: true };
+        }
+    }]);
+
+    return PCFactory;
+}();
+
+PCFactory.inst = null;
+/**
+ * Get state of transivers API
+ * @type {boolean}
+ */
+PCFactory.hasTransceivers = false;
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.PCFACTORY)], PCFactory.prototype, "setupDirectPC", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.PCFACTORY)], PCFactory.prototype, "incomeDirectPC", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.PCFACTORY)], PCFactory.prototype, "getPeerConnect", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.PCFACTORY)], PCFactory.prototype, "onSignalingConnected", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.PCFACTORY)], PCFactory.prototype, "onSignalingClosed", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.PCFACTORY)], PCFactory.prototype, "onSignalingConnectionFailed", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.PCFACTORY)], PCFactory.prototype, "onMediaConnectionFailed", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.PCFACTORY)], PCFactory.prototype, "closeAll", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.PCFACTORY)], PCFactory.prototype, "setBandwidthParams", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.PCFACTORY)], PCFactory.prototype, "addBandwidthParams", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.PCFACTORY)], PCFactory.prototype, "rpcHandlerCreatePC", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.PCFACTORY)], PCFactory.prototype, "rpcHandlerDestroyPC", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.PCFACTORY)], PCFactory, "sdpOffersVideo", null);
+exports.PCFactory = PCFactory;
+
+/***/ }),
+/* 9 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -3670,445 +4188,44 @@ module.exports = {
 
 
 /***/ }),
-/* 8 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
-
-Object.defineProperty(exports, "__esModule", { value: true });
-var Logger_1 = __webpack_require__(0);
-var FF_1 = __webpack_require__(41);
-var Webkit_1 = __webpack_require__(42);
-var WebRTCPC_1 = __webpack_require__(43);
-var Edge_1 = __webpack_require__(52);
-var SignalingDTMFSender_1 = __webpack_require__(19);
-var Safari_1 = __webpack_require__(53);
-var Client_1 = __webpack_require__(1);
-/**
- * Browser-specific implementation of webrtc functionality
- * @hidden
- */
-var BrowserSpecific;
-(function (BrowserSpecific) {
-    var Vendor = void 0;
-    (function (Vendor) {
-        Vendor[Vendor["Firefox"] = 1] = "Firefox";
-        Vendor[Vendor["Webkit"] = 2] = "Webkit";
-        Vendor[Vendor["Edge"] = 3] = "Edge";
-        Vendor[Vendor["Safari"] = 4] = "Safari";
-    })(Vendor || (Vendor = {}));
-    var vendor = void 0;
-    function applyIdealConstraint(constraints, name, value) {
-        var r = constraints;
-        if ((typeof r === "undefined" ? "undefined" : _typeof(r)) != "object") {
-            r = {};
-        }
-        r[name] = { ideal: value };
-        return r;
-    }
-    function peerConnectionFactory(id, mode, videoEnabled) {
-        switch (vendor) {
-            case Vendor.Firefox:
-                return new WebRTCPC_1.WebRTCPC(id, mode, videoEnabled);
-            case Vendor.Webkit:
-                return new WebRTCPC_1.WebRTCPC(id, mode, videoEnabled);
-            case Vendor.Safari:
-                return new WebRTCPC_1.WebRTCPC(id, mode, videoEnabled);
-            case Vendor.Edge:
-                return new WebRTCPC_1.WebRTCPC(id, mode, videoEnabled);
-            //return new ORTC(id, mode, videoEnabled);
-            default:
-                Logger_1.LogManager.get().writeMessage(Logger_1.LogCategory.RTC, "Core", Logger_1.LogLevel.INFO, "Unsupported browser " + navigator.userAgent);
-                return null;
-        }
-    }
-    BrowserSpecific.peerConnectionFactory = peerConnectionFactory;
-    function isIphone() {
-        if (Client_1.Client.getInstance().config().experiments && Client_1.Client.getInstance().config().experiments.emulate_ios) return true;
-        return navigator.userAgent.match(/iPhone/i) || navigator.userAgent.match(/iPod/i);
-    }
-    BrowserSpecific.isIphone = isIphone;
-    function isScreenSharingSupported() {
-        return vendor === Vendor.Firefox || vendor === Vendor.Webkit;
-    }
-    BrowserSpecific.isScreenSharingSupported = isScreenSharingSupported;
-    function defaultGetUserMedia(constraints) {
-        return navigator.mediaDevices.getUserMedia(constraints);
-    }
-    function defaultGetDTMFSender(pc, callId) {
-        return new SignalingDTMFSender_1.SignalingDTMFSender(callId);
-    }
-    function defaultScreenSharingSupported() {
-        return new Promise(function (resolve) {
-            resolve(false);
-        });
-    }
-    //Convert user specified config to constraints object that can be recognized by browser
-    function composeConstraintsDefault(config) {
-        var audioConstraints = false;
-        var videoConstraints = false;
-        if (config.audioEnabled) {
-            audioConstraints = true;
-            if (config.audioInputId) audioConstraints = applyIdealConstraint(audioConstraints, "deviceId", config.audioInputId);
-        }
-        if (config.videoEnabled) {
-            videoConstraints = true;
-            if (config.videoSettings) {
-                videoConstraints = config.videoSettings;
-            }
-            if (config.videoInputId) videoConstraints = applyIdealConstraint(videoConstraints, "deviceId", config.videoInputId);
-        }
-        return { peerIdentity: null, audio: audioConstraints, video: videoConstraints };
-    }
-    function getWSVendor() {
-        var connectivityCheck = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : true;
-
-        if (connectivityCheck === false) {
-            return "voxmobile";
-        }
-        if (!vendor) {
-            detectVendor();
-        }
-        switch (vendor) {
-            case Vendor.Firefox:
-                return "firefox";
-            case Vendor.Webkit:
-                return "chrome";
-            case Vendor.Safari:
-                return "safari";
-            case Vendor.Edge:
-                return "edge";
-            default:
-                return "";
-        }
-    }
-    BrowserSpecific.getWSVendor = getWSVendor;
-    function detectVendor() {
-        if (navigator["mozGetUserMedia"]) {
-            vendor = Vendor.Firefox;
-        } else if (navigator["webkitGetUserMedia"]) {
-            vendor = Vendor.Webkit;
-        } else if (navigator.mediaDevices && navigator.userAgent.match(/Edge\/(\d+).(\d+)$/)) {
-            vendor = Vendor.Edge;
-        } else if (navigator["getUserMedia"]) {
-            vendor = Vendor.Safari;
-        }
-    }
-    function detectFirefoxVersion() {}
-    //This function must be called before usage
-    function init() {
-        if (!vendor) {
-            detectVendor();
-        }
-        if (vendor) {
-            Logger_1.LogManager.get().writeMessage(Logger_1.LogCategory.RTC, "Core", Logger_1.LogLevel.INFO, "Detected browser " + Vendor[vendor]);
-        }
-        BrowserSpecific.getUserMedia = defaultGetUserMedia;
-        BrowserSpecific.getDTMFSender = defaultGetDTMFSender;
-        BrowserSpecific.screenSharingSupported = defaultScreenSharingSupported;
-        switch (vendor) {
-            case Vendor.Firefox:
-                BrowserSpecific.attachMedia = FF_1.FF.attachStream;
-                BrowserSpecific.detachMedia = FF_1.FF.detachStream;
-                BrowserSpecific.getScreenMedia = FF_1.FF.getScreenMedia;
-                BrowserSpecific.getRTCStats = FF_1.FF.getRTCStats;
-                BrowserSpecific.getUserMedia = FF_1.FF.getUserMedia;
-                BrowserSpecific.screenSharingSupported = FF_1.FF.screenSharingSupported;
-                BrowserSpecific.getDTMFSender = FF_1.FF.getDTMFSender;
-                break;
-            case Vendor.Webkit:
-                BrowserSpecific.attachMedia = Webkit_1.Webkit.attachStream;
-                BrowserSpecific.detachMedia = Webkit_1.Webkit.detachStream;
-                BrowserSpecific.getScreenMedia = Webkit_1.Webkit.getScreenMedia;
-                BrowserSpecific.getRTCStats = Webkit_1.Webkit.getRTCStats;
-                BrowserSpecific.getUserMedia = Webkit_1.Webkit.getUserMedia;
-                BrowserSpecific.screenSharingSupported = Webkit_1.Webkit.screenSharingSupported;
-                BrowserSpecific.getDTMFSender = Webkit_1.Webkit.getDTMFSender;
-                break;
-            case Vendor.Safari:
-                BrowserSpecific.attachMedia = Safari_1.Safari.attachStream;
-                BrowserSpecific.detachMedia = Safari_1.Safari.detachStream;
-                BrowserSpecific.getScreenMedia = Safari_1.Safari.getScreenMedia;
-                BrowserSpecific.getRTCStats = Safari_1.Safari.getRTCStats;
-                BrowserSpecific.getUserMedia = FF_1.FF.getUserMedia;
-                BrowserSpecific.getDTMFSender = Safari_1.Safari.getDTMFSender;
-                break;
-            case Vendor.Edge:
-                BrowserSpecific.attachMedia = Edge_1.Edge.attachStream;
-                BrowserSpecific.detachMedia = Edge_1.Edge.detachStream;
-                BrowserSpecific.getScreenMedia = Edge_1.Edge.getScreenMedia;
-                BrowserSpecific.screenSharingSupported = Edge_1.Edge.screenSharingSupported;
-                BrowserSpecific.getRTCStats = Edge_1.Edge.getRTCStats;
-                break;
-            default:
-                Logger_1.LogManager.get().writeMessage(Logger_1.LogCategory.RTC, "Core", Logger_1.LogLevel.INFO, "Unsupported browser " + navigator.userAgent);
-        }
-        BrowserSpecific.composeConstraints = composeConstraintsDefault;
-    }
-    BrowserSpecific.init = init;
-})(BrowserSpecific || (BrowserSpecific = {}));
-exports.default = BrowserSpecific;
-
-/***/ }),
-/* 9 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-var __decorate = undefined && undefined.__decorate || function (decorators, target, key, desc) {
-    var c = arguments.length,
-        r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc,
-        d;
-    if ((typeof Reflect === "undefined" ? "undefined" : _typeof(Reflect)) === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);else for (var i = decorators.length - 1; i >= 0; i--) {
-        if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    }return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-var PeerConnection_1 = __webpack_require__(24);
-var VoxSignaling_1 = __webpack_require__(2);
-var Logger_1 = __webpack_require__(0);
-var CallManager_1 = __webpack_require__(5);
-var Call_1 = __webpack_require__(13);
-var BrowserSpecific_1 = __webpack_require__(8);
-var RemoteFunction_1 = __webpack_require__(3);
-var RemoteEvent_1 = __webpack_require__(12);
-var Client_1 = __webpack_require__(1);
-var index_1 = __webpack_require__(4);
-var SDPMuggle_1 = __webpack_require__(20);
-/**
- * Peer connection manager
- * @hidden
- */
-
-var PCFactory = function () {
-    function PCFactory() {
-        var _this = this;
-
-        _classCallCheck(this, PCFactory);
-
-        this.iceConfig = null;
-        this._peerConnections = {};
-        this.waitingPeerConnections = {};
-        this.log = Logger_1.LogManager.get().createLogger(Logger_1.LogCategory.RTC, 'PCFactory');
-        this._requireMedia = true;
-        if (BrowserSpecific_1.default.getWSVendor() === 'firefox') PCFactory.hasTransceivers = true;
-        VoxSignaling_1.VoxSignaling.get().setRPCHandler(RemoteEvent_1.RemoteEvent.createPC, function (id, sdpOffer) {
-            _this.rpcHandlerCreatePC(id, sdpOffer);
-        });
-        VoxSignaling_1.VoxSignaling.get().setRPCHandler(RemoteEvent_1.RemoteEvent.destroyPC, function (id) {
-            _this.rpcHandlerDestroyPC(id);
-        });
-        VoxSignaling_1.VoxSignaling.get().addHandler(this);
-    }
-
-    _createClass(PCFactory, [{
-        key: "setupDirectPC",
-        value: function setupDirectPC(id, mode, videoEnabled, pcHold) {
-            var _this2 = this;
-
-            var peerConnection = BrowserSpecific_1.default.peerConnectionFactory(id, mode, videoEnabled);
-            peerConnection.setHoldKey(pcHold);
-            var appConfig = Client_1.Client.getInstance().config();
-            var _sm = index_1.default.StreamManager.get();
-            var _call = CallManager_1.CallManager.get().calls[id];
-            return _sm.getCallStream(_call).then(function (stream) {
-                if (stream !== null) {
-                    peerConnection.fastAddCustomMedia(stream);
-                }
-                _this2._peerConnections[id] = peerConnection;
-                return peerConnection.getLocalOffer();
-            });
-        }
-    }, {
-        key: "incomeDirectPC",
-        value: function incomeDirectPC(id, videoEnabled, sdp, pcHold) {
-            var _this3 = this;
-
-            var peerConnection = BrowserSpecific_1.default.peerConnectionFactory(id, PeerConnection_1.PeerConnectionMode.P2P, videoEnabled);
-            peerConnection.setHoldKey(pcHold);
-            return peerConnection._setRemoteDescription(sdp).then(function () {
-                _this3._peerConnections[id] = peerConnection;
-                return peerConnection;
-            });
-        }
-    }, {
-        key: "getPeerConnect",
-        value: function getPeerConnect(id) {
-            return this._peerConnections[id];
-        }
-    }, {
-        key: "onSignalingConnected",
-        value: function onSignalingConnected() {}
-    }, {
-        key: "onSignalingClosed",
-        value: function onSignalingClosed() {
-            this.log.info('Closing all peer connections because signaling connection has closed');
-            this.waitingPeerConnections = {};
-            for (var i in this._peerConnections) {
-                this._peerConnections[i].close();
-            }
-            this._peerConnections = {};
-        }
-        //Specifies if user media access is required in current application.
-
-    }, {
-        key: "onSignalingConnectionFailed",
-        value: function onSignalingConnectionFailed(errorMessage) {}
-    }, {
-        key: "onMediaConnectionFailed",
-        value: function onMediaConnectionFailed() {}
-        /**
-         * Close all current peer connections
-         * @hidden
-         */
-
-    }, {
-        key: "closeAll",
-        value: function closeAll() {
-            for (var i in this._peerConnections) {
-                this._peerConnections[i].close();
-            }this._peerConnections = {};
-        }
-    }, {
-        key: "setBandwidthParams",
-        value: function setBandwidthParams(bandwidt) {
-            this._bandwidthParams = bandwidt;
-        }
-    }, {
-        key: "addBandwidthParams",
-        value: function addBandwidthParams(sdp) {
-            if (this._bandwidthParams) sdp.sdp = sdp.sdp.replace(/(a=mid:video.*\r\n)/g, '$1b=AS:' + this._bandwidthParams + '\r\n');
-            return sdp;
-        }
-        /**
-         * @hidden
-         * @return {string}
-         * @private
-         */
-
-    }, {
-        key: "_traceName",
-        value: function _traceName() {
-            return 'PCFactory';
-        }
-    }, {
-        key: "rpcHandlerCreatePC",
-        value: function rpcHandlerCreatePC(id, sdpOffer) {
-            sdpOffer = SDPMuggle_1.SDPMuggle.addSetupAttribute(sdpOffer);
-            var videoEnabled = PCFactory.sdpOffersVideo(sdpOffer);
-            var mode = PeerConnection_1.PeerConnectionMode.CLIENT_SERVER_V1;
-            VoxSignaling_1.VoxSignaling.get().callRemoteFunction(RemoteFunction_1.RemoteFunction.muteLocal, id, false);
-            var pc = BrowserSpecific_1.default.peerConnectionFactory(id, mode, videoEnabled);
-            this._peerConnections[id] = pc;
-            var call = CallManager_1.CallManager.get().calls[id];
-            index_1.default.StreamManager.get().getCallStream(call).then(function (stream) {
-                if (id === '__default') sdpOffer = sdpOffer.replace('a=sendrecv', 'a=recvonly');
-                pc.fastAddCustomMedia(stream);
-                pc.processRemoteOffer(sdpOffer).then(function (localAnswer) {
-                    if (typeof call === 'undefined' || call.checkCallMode(Call_1.CallMode.SERVER)) VoxSignaling_1.VoxSignaling.get().callRemoteFunction(RemoteFunction_1.RemoteFunction.confirmPC, id, localAnswer);else VoxSignaling_1.VoxSignaling.get().callRemoteFunction(RemoteFunction_1.RemoteFunction.acceptCall, [id, CallManager_1.CallManager.cleanHeaders(call.headers()), localAnswer]);
-                    if (id !== '__default' && typeof CallManager_1.CallManager.get().calls[id] !== 'undefined') {
-                        CallManager_1.CallManager.get().calls[id].peerConnection = pc;
-                    }
-                });
-            }).catch(function (e) {
-                if (typeof call !== 'undefined') {
-                    CallManager_1.CallManager.get().handleConnectionFailed(call.id(), 403, 'Media access denied', {});
-                } else {
-                    VoxSignaling_1.VoxSignaling.get().onConnectionFailedRPC();
-                }
-            });
-        }
-    }, {
-        key: "rpcHandlerDestroyPC",
-        value: function rpcHandlerDestroyPC(id) {
-            var _this4 = this;
-
-            if (this._peerConnections[id]) {
-                if (id === '__default') {
-                    setTimeout(function () {
-                        _this4._peerConnections[id].close();
-                        delete _this4._peerConnections[id];
-                    }, 200);
-                } else {
-                    this._peerConnections[id].close();
-                    delete this._peerConnections[id];
-                }
-            }
-            delete this.waitingPeerConnections[id];
-        }
-    }, {
-        key: "peerConnections",
-        get: function get() {
-            return this._peerConnections;
-        }
-    }, {
-        key: "requireMedia",
-        get: function get() {
-            return this._requireMedia;
-        },
-        set: function set(b) {
-            this._requireMedia = b;
-        }
-    }], [{
-        key: "get",
-        value: function get() {
-            if (this.inst === null) {
-                this.inst = new PCFactory();
-            }
-            return this.inst;
-        }
-        /**
-         * Check if SDP contains video media
-         */
-
-    }, {
-        key: "sdpOffersVideo",
-        value: function sdpOffersVideo(sdpOffer) {
-            return { receiveVideo: sdpOffer.indexOf('m=video') !== -1, sendVideo: true };
-        }
-    }]);
-
-    return PCFactory;
-}();
-
-PCFactory.inst = null;
-/**
- * Get state of transivers API
- * @type {boolean}
- */
-PCFactory.hasTransceivers = false;
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.PCFACTORY)], PCFactory.prototype, "setupDirectPC", null);
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.PCFACTORY)], PCFactory.prototype, "incomeDirectPC", null);
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.PCFACTORY)], PCFactory.prototype, "getPeerConnect", null);
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.PCFACTORY)], PCFactory.prototype, "onSignalingConnected", null);
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.PCFACTORY)], PCFactory.prototype, "onSignalingClosed", null);
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.PCFACTORY)], PCFactory.prototype, "onSignalingConnectionFailed", null);
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.PCFACTORY)], PCFactory.prototype, "onMediaConnectionFailed", null);
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.PCFACTORY)], PCFactory.prototype, "closeAll", null);
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.PCFACTORY)], PCFactory.prototype, "setBandwidthParams", null);
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.PCFACTORY)], PCFactory.prototype, "addBandwidthParams", null);
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.PCFACTORY)], PCFactory.prototype, "rpcHandlerCreatePC", null);
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.PCFACTORY)], PCFactory.prototype, "rpcHandlerDestroyPC", null);
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.PCFACTORY)], PCFactory, "sdpOffersVideo", null);
-exports.PCFactory = PCFactory;
-
-/***/ }),
 /* 10 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+Object.defineProperty(exports, "__esModule", { value: true });
+/**
+ * @hidden
+ */
+
+var Constants = function Constants() {
+  _classCallCheck(this, Constants);
+};
+
+Constants.DIRECT_CALL_HEADER = "X-DirectCall";
+Constants.VIAMEDIA_CALL_HEADER = "X-ViaMedia";
+Constants.CALLSTATSIOID_HEADER = "X-CallstatsIOID";
+Constants.CALL_DATA_HEADER = "VI-CallData";
+Constants.ZINGAYA_IM_MIME_TYPE = "application/zingaya-im";
+Constants.P2P_SPD_FRAG_MIME_TYPE = "voximplant/sdpfrag";
+Constants.VI_HOLD_EMUL = "vi/holdemul";
+Constants.VI_SPD_OFFER_MIME_TYPE = "vi/sdpoffer";
+Constants.VI_SPD_ANSWER_MIME_TYPE = "vi/sdpanswer";
+Constants.VI_CONF_PARTICIPANT_INFO_ADDED = "vi/conf-info-added";
+Constants.VI_CONF_PARTICIPANT_INFO_REMOVED = "vi/conf-info-removed";
+Constants.VI_CONF_PARTICIPANT_INFO_UPDATED = "vi/conf-info-updated";
+exports.Constants = Constants;
+
+/***/ }),
+/* 11 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
@@ -4126,10 +4243,12 @@ var __decorate = undefined && undefined.__decorate || function (decorators, targ
 Object.defineProperty(exports, "__esModule", { value: true });
 var VoxSignaling_1 = __webpack_require__(2);
 var Logger_1 = __webpack_require__(0);
-var PCFactory_1 = __webpack_require__(9);
+var PCFactory_1 = __webpack_require__(8);
 var RemoteFunction_1 = __webpack_require__(3);
-var RemoteEvent_1 = __webpack_require__(12);
-var CallstatsIo_1 = __webpack_require__(21);
+var RemoteEvent_1 = __webpack_require__(13);
+var CallstatsIo_1 = __webpack_require__(17);
+var Client_1 = __webpack_require__(1);
+var ACDManager_1 = __webpack_require__(42);
 /**
  * @hidden
  */
@@ -4158,7 +4277,7 @@ var Authenticator = function () {
         this._authorized = false;
         this.signaling = VoxSignaling_1.VoxSignaling.get();
         this.currentState = AuthenticatorState.IDLE;
-        this.log = Logger_1.LogManager.get().createLogger(Logger_1.LogCategory.SIGNALING, "Authenticator");
+        this.logger = Logger_1.LogManager.get().createLogger(Logger_1.LogCategory.SIGNALING, this._traceName());
         //Register handlers for Server->Client RPC
         this.signaling.setRPCHandler(RemoteEvent_1.RemoteEvent.loginFailed, function (code, extra) {
             _this.onLoginFailed(code, extra);
@@ -4201,7 +4320,10 @@ var Authenticator = function () {
         value: function onLoginSuccesful(displayName, params) {
             this.currentState = AuthenticatorState.IDLE;
             this._authorized = true;
-            if (params) PCFactory_1.PCFactory.get().iceConfig = params.iceConfig;
+            PCFactory_1.PCFactory.get().iceConfig = params.iceConfig;
+            if (Client_1.Client.getInstance() && Client_1.Client.getInstance().config() && Client_1.Client.getInstance().config().experiments && Client_1.Client.getInstance().config().experiments.cleverACD) {
+                ACDManager_1.default.setConnectionId(params.connectionId);
+            }
             this._displayName = displayName;
             CallstatsIo_1.CallstatsIo.get().init({ userName: this._username, aliasName: this._displayName });
             this.handler.onLoginSuccessful(displayName, params.OAuth);
@@ -4214,7 +4336,7 @@ var Authenticator = function () {
         key: "basicLogin",
         value: function basicLogin(username, password, options) {
             if (this.currentState != AuthenticatorState.IDLE) {
-                this.log.error("Login operation already in progress");
+                this.logger.error("Login operation already in progress");
                 return;
             }
             this._username = username;
@@ -4225,7 +4347,7 @@ var Authenticator = function () {
         key: "tokenLogin",
         value: function tokenLogin(username, options) {
             if (this.currentState != AuthenticatorState.IDLE) {
-                this.log.error("Login operation already in progress");
+                this.logger.error("Login operation already in progress");
                 return;
             }
             this._username = username;
@@ -4241,7 +4363,7 @@ var Authenticator = function () {
         key: "loginUsingOneTimeKey",
         value: function loginUsingOneTimeKey(username, hash, options) {
             if (this.currentState != AuthenticatorState.IDLE) {
-                this.log.error("Login operation already in progress");
+                this.logger.error("Login operation already in progress");
                 return;
             }
             this._username = username;
@@ -4252,7 +4374,7 @@ var Authenticator = function () {
         key: "loginStage2",
         value: function loginStage2(username, code, options) {
             if (this.currentState != AuthenticatorState.IDLE) {
-                this.log.error("Login operation already in progress");
+                this.logger.error("Login operation already in progress");
                 return;
             }
             this._username = username;
@@ -4263,7 +4385,7 @@ var Authenticator = function () {
         key: "generateOneTimeKey",
         value: function generateOneTimeKey(username) {
             if (this.currentState != AuthenticatorState.IDLE) {
-                this.log.error("Login operation already in progress");
+                this.logger.error("Login operation already in progress");
                 return;
             }
             this.currentState = AuthenticatorState.IN_PROGRESS;
@@ -4347,89 +4469,7 @@ __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.AUTHENTICATOR)], Au
 exports.Authenticator = Authenticator;
 
 /***/ }),
-/* 11 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-Object.defineProperty(exports, "__esModule", { value: true });
-/**
- * @hidden
- */
-
-var Constants = function Constants() {
-  _classCallCheck(this, Constants);
-};
-
-Constants.DIRECT_CALL_HEADER = "X-DirectCall";
-Constants.VIAMEDIA_CALL_HEADER = "X-ViaMedia";
-Constants.CALLSTATSIOID_HEADER = "X-CallstatsIOID";
-Constants.CALL_DATA_HEADER = "VI-CallData";
-Constants.ZINGAYA_IM_MIME_TYPE = "application/zingaya-im";
-Constants.P2P_SPD_FRAG_MIME_TYPE = "voximplant/sdpfrag";
-Constants.VI_HOLD_EMUL = "vi/holdemul";
-Constants.VI_SPD_OFFER_MIME_TYPE = "vi/sdpoffer";
-Constants.VI_SPD_ANSWER_MIME_TYPE = "vi/sdpanswer";
-Constants.VI_CONF_PARTICIPANT_INFO_ADDED = "vi/conf-info-added";
-Constants.VI_CONF_PARTICIPANT_INFO_REMOVED = "vi/conf-info-removed";
-Constants.VI_CONF_PARTICIPANT_INFO_UPDATED = "vi/conf-info-updated";
-exports.Constants = Constants;
-
-/***/ }),
 /* 12 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", { value: true });
-/**
- * Enum for handle remote events
- * @hidden
- */
-var RemoteEvent;
-(function (RemoteEvent) {
-    RemoteEvent[RemoteEvent["loginFailed"] = "loginFailed"] = "loginFailed";
-    RemoteEvent[RemoteEvent["loginSuccessful"] = "loginSuccessful"] = "loginSuccessful";
-    RemoteEvent[RemoteEvent["handleError"] = "handleError"] = "handleError";
-    RemoteEvent[RemoteEvent["onPCStats"] = "__onPCStats"] = "onPCStats";
-    RemoteEvent[RemoteEvent["handleIncomingConnection"] = "handleIncomingConnection"] = "handleIncomingConnection";
-    RemoteEvent[RemoteEvent["handleConnectionConnected"] = "handleConnectionConnected"] = "handleConnectionConnected";
-    RemoteEvent[RemoteEvent["handleConnectionDisconnected"] = "handleConnectionDisconnected"] = "handleConnectionDisconnected";
-    RemoteEvent[RemoteEvent["handleRingOut"] = "handleRingOut"] = "handleRingOut";
-    RemoteEvent[RemoteEvent["startEarlyMedia"] = "startEarlyMedia"] = "startEarlyMedia";
-    RemoteEvent[RemoteEvent["stopRinging"] = "stopRinging"] = "stopRinging";
-    RemoteEvent[RemoteEvent["handleConnectionFailed"] = "handleConnectionFailed"] = "handleConnectionFailed";
-    RemoteEvent[RemoteEvent["handleSIPInfo"] = "handleSIPInfo"] = "handleSIPInfo";
-    RemoteEvent[RemoteEvent["handleSipEvent"] = "handleSipEvent"] = "handleSipEvent";
-    RemoteEvent[RemoteEvent["handleTransferStarted"] = "handleTransferStarted"] = "handleTransferStarted";
-    RemoteEvent[RemoteEvent["handleTransferComplete"] = "handleTransferComplete"] = "handleTransferComplete";
-    RemoteEvent[RemoteEvent["handleTransferFailed"] = "handleTransferFailed"] = "handleTransferFailed";
-    RemoteEvent[RemoteEvent["handleReInvite"] = "handleReInvite"] = "handleReInvite";
-    RemoteEvent[RemoteEvent["handleAcceptReinvite"] = "handleAcceptReinvite"] = "handleAcceptReinvite";
-    RemoteEvent[RemoteEvent["handleRejectReinvite"] = "handleRejectReinvite"] = "handleRejectReinvite";
-    RemoteEvent[RemoteEvent["createPC"] = "__createPC"] = "createPC";
-    RemoteEvent[RemoteEvent["destroyPC"] = "__destroyPC"] = "destroyPC";
-    RemoteEvent[RemoteEvent["connectionSuccessful"] = "__connectionSuccessful"] = "connectionSuccessful";
-    RemoteEvent[RemoteEvent["connectionFailed"] = "__connectionFailed"] = "connectionFailed";
-    RemoteEvent[RemoteEvent["createConnection"] = "__createConnection"] = "createConnection";
-    RemoteEvent[RemoteEvent["pong"] = "__pong"] = "pong";
-    RemoteEvent[RemoteEvent["increaseGain"] = "increaseGain"] = "increaseGain";
-    RemoteEvent[RemoteEvent["handlePreFlightCheckResult"] = "handlePreFlightCheckResult"] = "handlePreFlightCheckResult";
-    RemoteEvent[RemoteEvent["handleVoicemail"] = "handleVoicemail"] = "handleVoicemail";
-    RemoteEvent[RemoteEvent["onCallRemoteFunctionError"] = "onCallRemoteFunctionError"] = "onCallRemoteFunctionError";
-    RemoteEvent[RemoteEvent["refreshOauthTokenFailed"] = "refreshOauthTokenFailed"] = "refreshOauthTokenFailed";
-    RemoteEvent[RemoteEvent["refreshOauthTokenSuccessful"] = "refreshOauthTokenSuccessful"] = "refreshOauthTokenSuccessful";
-    RemoteEvent[RemoteEvent["sipRegisterSuccessful"] = "sipRegisterSuccessful"] = "sipRegisterSuccessful";
-    RemoteEvent[RemoteEvent["sipRegisterFailed"] = "sipRegisterFailed"] = "sipRegisterFailed";
-    RemoteEvent[RemoteEvent["onACDStatus"] = "onACDStatus"] = "onACDStatus";
-})(RemoteEvent = exports.RemoteEvent || (exports.RemoteEvent = {}));
-
-/***/ }),
-/* 13 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -4456,17 +4496,17 @@ var __decorate = undefined && undefined.__decorate || function (decorators, targ
     }return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-var CallEvents_1 = __webpack_require__(6);
+var CallEvents_1 = __webpack_require__(5);
 var VoxSignaling_1 = __webpack_require__(2);
-var Constants_1 = __webpack_require__(11);
+var Constants_1 = __webpack_require__(10);
 var Logger_1 = __webpack_require__(0);
-var PCFactory_1 = __webpack_require__(9);
-var CallManager_1 = __webpack_require__(5);
-var BrowserSpecific_1 = __webpack_require__(8);
+var PCFactory_1 = __webpack_require__(8);
+var CallManager_1 = __webpack_require__(6);
+var BrowserSpecific_1 = __webpack_require__(7);
 var RemoteFunction_1 = __webpack_require__(3);
 var Client_1 = __webpack_require__(1);
-var EventTarget_1 = __webpack_require__(14);
-var EndpointManager_1 = __webpack_require__(26);
+var EventTarget_1 = __webpack_require__(15);
+var EndpointManager_1 = __webpack_require__(23);
 var Hardware_1 = __webpack_require__(4);
 /**
  * The Call class represents a single call, inbound or outbound. For outbound call it is retrieved from the <a href="client.html#call">Client</a> class instance. For inbound call use a handler for the <a href="//voximplant.com/refs/websdk/enums/events.html#incomingcall">IncomingCall</a> event.
@@ -4488,7 +4528,7 @@ var Hardware_1 = __webpack_require__(4);
 
  */
 /**
- * @hidden
+ *
  */
 var CallState;
 (function (CallState) {
@@ -4538,7 +4578,7 @@ var Call = function (_EventTarget_1$EventT) {
         _this.settings.audioDirections = { sendAudio: true }; // always sendAudio by default
         _this.settings.videoDirections = typeof settings.video === 'boolean' ? { sendVideo: settings.video, receiveVideo: true } : settings.video; // set VideoDirection with backward compat
         _this.settings.hasEarlyMedia = false;
-        _this.log = Logger_1.LogManager.get().createLogger(Logger_1.LogCategory.CALL, 'Call ' + id);
+        _this.logger = Logger_1.LogManager.get().createLogger(Logger_1.LogCategory.CALL, "Call " + id);
         _this._callManager = CallManager_1.CallManager.get();
         return _this;
     }
@@ -4556,7 +4596,7 @@ var Call = function (_EventTarget_1$EventT) {
          * @returns {String}
          */
         value: function id() {
-            return this.settings.id;
+            if (this.settings) return this.settings.id;else return 'new';
         }
         /**
          * Returns dialed number or caller id
@@ -4597,6 +4637,42 @@ var Call = function (_EventTarget_1$EventT) {
             return this.settings.active;
         }
         /**
+         * @hidden
+         * @param newState
+         * @private
+         */
+
+    }, {
+        key: "_setActive",
+        value: function _setActive(newState) {
+            var event = {
+                call: this,
+                old: this.settings.active,
+                new: newState,
+                name: CallEvents_1.CallEvents.ActiveUpdated
+            };
+            this.settings.active = newState;
+            this.dispatchEvent(event);
+            this.muteIncomingStreams(newState);
+            return newState;
+        }
+        /**
+         * @hidden
+         * Client side patch till media server stops sending traffic in muted calls
+         */
+
+    }, {
+        key: "muteIncomingStreams",
+        value: function muteIncomingStreams(active) {
+            this.getEndpoints().forEach(function (endpoint) {
+                endpoint.mediaRenderers.forEach(function (renderer) {
+                    renderer.stream.getTracks().forEach(function (track) {
+                        track.enabled = active;
+                    });
+                });
+            });
+        }
+        /**
          * Get the current state of a call.
          * Possible values are: "ALERTING", "PROGRESSING", "CONNECTED", "ENDED".
          * @returns {String}
@@ -4608,6 +4684,25 @@ var Call = function (_EventTarget_1$EventT) {
             return CallState[this.settings.state];
         }
         /**
+         * @hidden
+         * @param newState
+         * @private
+         */
+
+    }, {
+        key: "_setState",
+        value: function _setState(newState) {
+            var event = {
+                call: this,
+                old: this.settings.state,
+                new: newState,
+                name: CallEvents_1.CallEvents.StateUpdated
+            };
+            this.settings.state = newState;
+            this.dispatchEvent(event);
+            return newState;
+        }
+        /**
          * Answer the incoming call. There are two methods for an <a href="//voximplant.com/refs/websdk/enums/events.html#incomingcall">incoming call</a>: <a href="#answer">answer</a> and <a href="#decline">decline</a>. Voice can be sended only after the <a href="#answer">answer</a> method call.
          * @param {String} customData Set custom string associated with call session. It can be later obtained from Call History <a href="//voximplant.com/docs/references/httpapi/#toc-getcallhistory">using HTTP API</a>, see the <a href="//voximplant.com/docs/references/httpapi/#struct_CallSessionInfoType">custom_data field in result</a>. Custom data can be retrieved on the part of Voxengine via the <a href="//voximplant.com/docs/references/appengine/VoxEngine.html#VoxEngine_customData">customData</a> method. Maximum size is 200 bytes.
          * @param {Object} extraHeaders Optional custom parameters (SIP headers) that are sent to another participant after accepting an incoming call. Header names have to begin with the 'X-' prefix. The "X-" headers could be handled only by SIP phones/devices.
@@ -4617,6 +4712,7 @@ var Call = function (_EventTarget_1$EventT) {
     }, {
         key: "answer",
         value: function answer(customData, extraHeaders, useVideo) {
+            this.logger.info("answer(" + JSON.stringify(useVideo) + ")");
             if (typeof customData != 'undefined') {
                 if (typeof extraHeaders == 'undefined' || (typeof extraHeaders === "undefined" ? "undefined" : _typeof(extraHeaders)) !== 'object') extraHeaders = {};
                 extraHeaders[Constants_1.Constants.CALL_DATA_HEADER] = customData;
@@ -4626,9 +4722,7 @@ var Call = function (_EventTarget_1$EventT) {
                 receiveVideo: Client_1.Client.getInstance().config().videoSupport
             };
             if (this.settings.state != CallState.ALERTING) throw new Error('WRONG_CALL_STATE');
-            if (typeof useVideo != 'undefined') {
-                this._peerConnection.setVideoFlags(useVideo);
-            }
+            if (typeof useVideo != 'undefined') this._peerConnection.setVideoFlags(useVideo);
         }
         /**
          * Reject incoming call on all devices, where this user logged in.
@@ -4638,6 +4732,7 @@ var Call = function (_EventTarget_1$EventT) {
     }, {
         key: "decline",
         value: function decline(extraHeaders) {
+            this.logger.info('decline()');
             if (this.settings.state != CallState.ALERTING) throw new Error('WRONG_CALL_STATE');
             VoxSignaling_1.VoxSignaling.get().callRemoteFunction(RemoteFunction_1.RemoteFunction.rejectCall, this.settings.id, false, CallManager_1.CallManager.cleanHeaders(extraHeaders));
         }
@@ -4649,6 +4744,7 @@ var Call = function (_EventTarget_1$EventT) {
     }, {
         key: "reject",
         value: function reject(extraHeaders) {
+            this.logger.info('reject()');
             if (this.settings.state != CallState.ALERTING) throw new Error('WRONG_CALL_STATE');
             VoxSignaling_1.VoxSignaling.get().callRemoteFunction(RemoteFunction_1.RemoteFunction.rejectCall, this.settings.id, true, CallManager_1.CallManager.cleanHeaders(extraHeaders));
         }
@@ -4660,6 +4756,7 @@ var Call = function (_EventTarget_1$EventT) {
     }, {
         key: "hangup",
         value: function hangup(extraHeaders) {
+            this.logger.info('hangup()');
             if (this.settings.state == CallState.CONNECTED || this.settings.state == CallState.UPDATING || this.settings.state == CallState.PROGRESSING) VoxSignaling_1.VoxSignaling.get().callRemoteFunction(RemoteFunction_1.RemoteFunction.disconnectCall, this.settings.id, CallManager_1.CallManager.cleanHeaders(extraHeaders));else if (this.settings.state == CallState.ALERTING) VoxSignaling_1.VoxSignaling.get().callRemoteFunction(RemoteFunction_1.RemoteFunction.rejectCall, this.settings.id, true, CallManager_1.CallManager.cleanHeaders(extraHeaders));else throw new Error('WRONG_CALL_STATE');
         }
         /**
@@ -4670,6 +4767,7 @@ var Call = function (_EventTarget_1$EventT) {
     }, {
         key: "sendTone",
         value: function sendTone(key) {
+            this.logger.info("sendTone(" + key + ")");
             if (this.settings.active) this._peerConnection.sendDTMF(key);
         }
         /**
@@ -4679,6 +4777,7 @@ var Call = function (_EventTarget_1$EventT) {
     }, {
         key: "mutePlayback",
         value: function mutePlayback() {
+            this.logger.info('mutePlayback()');
             this.remoteMuteState = false;
             EndpointManager_1.EndpointManager.get().getEndpoints(this).forEach(function (endPoint) {
                 endPoint.mediaRenderers.forEach(function (mediaRenderer) {
@@ -4693,6 +4792,7 @@ var Call = function (_EventTarget_1$EventT) {
     }, {
         key: "unmutePlayback",
         value: function unmutePlayback() {
+            this.logger.info('unmutePlayback()');
             this.remoteMuteState = true;
             EndpointManager_1.EndpointManager.get().getEndpoints(this).forEach(function (endPoint) {
                 endPoint.mediaRenderers.forEach(function (mediaRenderer) {
@@ -4724,6 +4824,7 @@ var Call = function (_EventTarget_1$EventT) {
     }, {
         key: "muteMicrophone",
         value: function muteMicrophone() {
+            this.logger.info('muteMicrophone()');
             this.peerConnection.muteMicrophone(true);
         }
         /**
@@ -4733,6 +4834,7 @@ var Call = function (_EventTarget_1$EventT) {
     }, {
         key: "unmuteMicrophone",
         value: function unmuteMicrophone() {
+            this.logger.info('unmuteMicrophone()');
             this.peerConnection.muteMicrophone(false);
         }
         /**
@@ -4800,6 +4902,7 @@ var Call = function (_EventTarget_1$EventT) {
     }, {
         key: "sendInfo",
         value: function sendInfo(mimeType, body, extraHeaders) {
+            this.logger.info("sendInfo(" + mimeType + ", " + JSON.stringify(body) + ")");
             var type,
                 subtype,
                 i = mimeType.indexOf('/');
@@ -4826,6 +4929,7 @@ var Call = function (_EventTarget_1$EventT) {
     }, {
         key: "sendMessage",
         value: function sendMessage(msg) {
+            this.logger.info('sendMessage()');
             this.sendInfo(Constants_1.Constants.ZINGAYA_IM_MIME_TYPE, msg, {});
         }
         /**
@@ -4840,6 +4944,7 @@ var Call = function (_EventTarget_1$EventT) {
     }, {
         key: "setVideoSettings",
         value: function setVideoSettings(settings, successCallback, failedCallback) {
+            this.logger.info("Setting call " + this.id() + " video settings: " + JSON.stringify(settings));
             Hardware_1.default.CameraManager.get().setCallVideoSettings(this, Hardware_1.default.CameraManager.legacyParamConverter(settings));
             Hardware_1.default.StreamManager.get().updateCallStream(this).then(function (stream) {
                 if (successCallback) successCallback(stream);
@@ -4870,7 +4975,7 @@ var Call = function (_EventTarget_1$EventT) {
         /**
          * Register a handler for the specified event. One event can have more than one handler; handlers are executed in order of registration.
          * Use the [removeEventListener] method to delete a handler.
-         * @param {Function} event Event class (i.e. [CallEvents.Connected]). See [CallEvents]
+         * @param {Function} event Event class (i.e. [CallEvents.Connected]). See [CallEvents].
          * @param {Function} handler Handler function. A single parameter is passed - object with event information
          * @deprecated
          * @hidden
@@ -4892,18 +4997,18 @@ var Call = function (_EventTarget_1$EventT) {
          *   currentCall.on(VoxImplant.CallEvents.Disconnected,onDisconnected);
          *   currentCall.on(VoxImplant.CallEvents.Failed,onFailed);
          *   currentCall.on(VoxImplant.CallEvents.ICETimeout,onICETimeout);
-         * @param {Function} event Event class (i.e. [CallEvents.Connected]. See [CallEvents]
+         * @param {Function} event Event class (i.e. [CallEvents.Connected]. See [CallEvents].
          * @param {Function} handler Handler function. A single parameter is passed - object with event information
          */
 
     }, {
         key: "on",
-        value: function on(event, handler) {
+        value: function on(event, handler, options) {
             _get(Call.prototype.__proto__ || Object.getPrototypeOf(Call.prototype), "on", this).call(this, event, handler);
         }
         /**
          * Remove handler for specified event
-         * @param {Function} event Event class (i.e. [CallEvents.Connected]). See [CallEvents]
+         * @param {Function} event Event class (i.e. [CallEvents.Connected]). See [CallEvents].
          * @param {Function} handler Handler function, if not specified all event handlers will be removed
          * @deprecated
          * @hidden
@@ -4916,7 +5021,7 @@ var Call = function (_EventTarget_1$EventT) {
         }
         /**
          * Remove a handler for the specified event. The method is a shorter equivalent for *removeEventListener*. If a number of events has the same function as a handler, the method can be called multiple times with the same handler argument.
-         * @param {Function} event Event class (i.e. [CallEvents.Connected]). See [VoxImplant.CallEvents].
+         * @param {Function} event Event class (i.e. [CallEvents.Connected]). See [CallEvents].
          * @param {Function} handler Handler function, if not specified all event handlers will be removed
          * @function
          */
@@ -4934,7 +5039,7 @@ var Call = function (_EventTarget_1$EventT) {
         key: "dispatchEvent",
         value: function dispatchEvent(e) {
             if (e.name === CallEvents_1.CallEvents.Updated || e.name === CallEvents_1.CallEvents.UpdateFailed) {
-                this.settings.state = CallState.CONNECTED;
+                this._setState(CallState.CONNECTED);
             }
             _get(Call.prototype.__proto__ || Object.getPrototypeOf(Call.prototype), "dispatchEvent", this).call(this, e);
         }
@@ -4950,7 +5055,7 @@ var Call = function (_EventTarget_1$EventT) {
         value: function onConnected(headers, sdp) {
             if (this.signalingConnected) {
                 if (!this.checkState([CallState.PROGRESSING, CallState.ALERTING], 'onConnected')) return false;
-                this.settings.state = CallState.CONNECTED;
+                this._setState(CallState.CONNECTED);
                 this.startTime = Date.now();
                 this.dispatchEvent({ name: 'Connected', call: this, headers: headers });
                 return true;
@@ -4974,7 +5079,7 @@ var Call = function (_EventTarget_1$EventT) {
                     reject(new Error("Call in the wrong state " + _this3.state()));
                     return false;
                 }
-                _this3.settings.state = CallState.ENDED;
+                _this3._setState(CallState.ENDED);
                 EndpointManager_1.EndpointManager.get().clear(_this3).then(function () {
                     resolve(true);
                     _this3.dispatchEvent({ name: 'Disconnected', call: _this3, headers: headers, params: params });
@@ -4997,7 +5102,7 @@ var Call = function (_EventTarget_1$EventT) {
             // if (!this.checkState(CallState.PROGRESSING, "onFailed"))
             //     return false;
             this.dispatchEvent({ name: 'Failed', call: this, headers: headers, code: code, reason: reason });
-            this.settings.state = CallState.ENDED;
+            this._setState(CallState.ENDED);
             EndpointManager_1.EndpointManager.get().clear(this);
             return true;
         }
@@ -5069,14 +5174,14 @@ var Call = function (_EventTarget_1$EventT) {
                 } else if (mimeType == Constants_1.Constants.P2P_SPD_FRAG_MIME_TYPE) {
                     var candidates = JSON.parse(body);
                     for (var i in candidates) {
-                        if (typeof call !== 'undefined' && typeof call.peerConnection !== 'undefined') call.peerConnection.addRemoteCandidate(candidates[i][1], candidates[i][0]);else this.log.info('Candidate skipped. Connection not created yet.');
+                        if (typeof call !== 'undefined' && typeof call.peerConnection !== 'undefined') call.peerConnection.addRemoteCandidate(candidates[i][1], candidates[i][0]);else this.logger.info('Candidate skipped. Connection not created yet.');
                     }
                 } else if (mimeType === Constants_1.Constants.VI_CONF_PARTICIPANT_INFO_ADDED || mimeType === Constants_1.Constants.VI_CONF_PARTICIPANT_INFO_REMOVED || mimeType === Constants_1.Constants.VI_CONF_PARTICIPANT_INFO_UPDATED) {
                     var endpointInfo = JSON.parse(body);
                     if (endpointInfo) {
                         EndpointManager_1.EndpointManager.get().endpointInfoUpdated(this, mimeType, endpointInfo);
                     } else {
-                        this.log.info('WARN: Wrong endpointInfo');
+                        this.logger.warning('Wrong endpoint info');
                     }
                 } else {
                     this.dispatchEvent({
@@ -5089,7 +5194,7 @@ var Call = function (_EventTarget_1$EventT) {
                 }
                 return true;
             } else {
-                this.log.warning('received handleSIPInfo for call: ' + call.id() + ' in invalid state: ' + call.state());
+                this.logger.warning('received handleSIPInfo for call: ' + call.id() + ' in invalid state: ' + call.state());
             }
         }
         /**
@@ -5105,6 +5210,7 @@ var Call = function (_EventTarget_1$EventT) {
         value: function setActive(flag) {
             var _this4 = this;
 
+            this.logger.info("setActive(" + flag + ")");
             return new Promise(function (resolve, reject) {
                 if (flag === _this4.settings.active) {
                     resolve({ name: CallEvents_1.CallEvents['Updated'], result: false, call: _this4 });
@@ -5116,8 +5222,8 @@ var Call = function (_EventTarget_1$EventT) {
                     return;
                 }
                 if (_this4.settings.state == CallState.CONNECTED) {
-                    _this4.settings.state = CallState.UPDATING;
-                    _this4.settings.active = flag;
+                    _this4._setState(CallState.UPDATING);
+                    _this4._setActive(flag);
                     if (!flag) VoxSignaling_1.VoxSignaling.get().callRemoteFunction(RemoteFunction_1.RemoteFunction.hold, _this4.settings.id);else VoxSignaling_1.VoxSignaling.get().callRemoteFunction(RemoteFunction_1.RemoteFunction.unhold, _this4.settings.id);
                     resolve({ name: CallEvents_1.CallEvents['Updated'], result: true, call: _this4 });
                 } else {
@@ -5164,22 +5270,46 @@ var Call = function (_EventTarget_1$EventT) {
         value: function sendVideo(flag) {
             var _this5 = this;
 
+            this.logger.info("sendVideo(" + flag + ")");
             if (!this.peerConnection) {
                 return new Promise(function (resolve, reject) {
                     resolve({ call: _this5, name: CallEvents_1.CallEvents[CallEvents_1.CallEvents.Updated], result: true });
                 });
             }
-            if (this.settings.videoDirections.sendVideo === flag) {
-                return new Promise(function (resolve, reject) {
-                    resolve({
-                        call: _this5,
-                        name: CallEvents_1.CallEvents[CallEvents_1.CallEvents.Updated],
-                        result: true
+            var oldSendVideo = this.settings.videoDirections.sendVideo;
+            this.settings.videoDirections.sendVideo = flag;
+            if (this.peerConnection.hasLocalVideo()) {
+                if (!flag && !oldSendVideo) {
+                    return new Promise(function (resolve, reject) {
+                        Hardware_1.default.StreamManager.get().updateCallStream(_this5).then(function () {
+                            return resolve({
+                                call: _this5,
+                                name: CallEvents_1.CallEvents[CallEvents_1.CallEvents.Updated],
+                                result: true
+                            });
+                        }).catch(reject);
                     });
+                } else {
+                    this.peerConnection.enableVideo(flag);
+                    return new Promise(function (resolve, reject) {
+                        resolve({
+                            call: _this5,
+                            name: CallEvents_1.CallEvents[CallEvents_1.CallEvents.Updated],
+                            result: true
+                        });
+                    });
+                }
+            } else if (flag) {
+                return new Promise(function (resolve, reject) {
+                    Hardware_1.default.StreamManager.get().updateCallStream(_this5).then(function () {
+                        return resolve({
+                            call: _this5,
+                            name: CallEvents_1.CallEvents[CallEvents_1.CallEvents.Updated],
+                            result: true
+                        });
+                    }).catch(reject);
                 });
             }
-            this.settings.videoDirections.sendVideo = flag;
-            return Hardware_1.default.StreamManager.get().updateCallStream(this);
         }
         /**
          * @hidden
@@ -5190,7 +5320,7 @@ var Call = function (_EventTarget_1$EventT) {
         value: function receiveVideo() {
             var _this6 = this;
 
-            this.settings.state = CallState.UPDATING;
+            this._setState(CallState.UPDATING);
             return new Promise(function (resolve, reject) {
                 if (_this6.settings.videoDirections.receiveVideo === true) {
                     reject();
@@ -5211,7 +5341,7 @@ var Call = function (_EventTarget_1$EventT) {
         value: function sendMedia(audio, video) {
             var _this7 = this;
 
-            this.settings.state = CallState.UPDATING;
+            this._setState(CallState.UPDATING);
             if (typeof audio === 'undefined' || audio === null) audio = this.settings.audioDirections.sendAudio;
             if (typeof video === 'undefined' || video === null) video = this.settings.videoDirections.sendVideo;
             return this.peerConnection.sendMedia(audio, video).then(function (e) {
@@ -5291,10 +5421,11 @@ var Call = function (_EventTarget_1$EventT) {
 
             var showLocalView = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
 
+            this.logger.info("shareScreen(" + showLocalView + ")");
             return new Promise(function (resolve, reject) {
                 var sharingStreamList = Hardware_1.default.StreamManager.get()._getScreenSharing(_this9);
                 if (sharingStreamList.length) {
-                    _this9.log.warning('Screen sharing already active.');
+                    _this9.logger.warning('Screen sharing already active.');
                     reject(new Error('Screen sharing already active.'));
                 }
                 if (BrowserSpecific_1.default.isScreenSharingSupported) {
@@ -5311,11 +5442,11 @@ var Call = function (_EventTarget_1$EventT) {
                             resolve({ name: CallEvents_1.CallEvents.Updated, result: true, call: _this9 });
                         });
                     }).catch(function (error) {
-                        _this9.log.warning(error.message);
+                        _this9.logger.warning(error.message);
                         reject(error);
                     });
                 } else {
-                    _this9.log.warning('Sorry, this browser does not support screen sharing.');
+                    _this9.logger.warning('Sorry, this browser does not support screen sharing.');
                     reject(new Error('Sorry, this browser does not support screen sharing.'));
                 }
             });
@@ -5330,6 +5461,7 @@ var Call = function (_EventTarget_1$EventT) {
         value: function stopSharingScreen() {
             var _this10 = this;
 
+            this.logger.info('stopSharingScreen()');
             return new Promise(function (resolve, reject) {
                 var sharingStreamList = Hardware_1.default.StreamManager.get()._getScreenSharing(_this10);
                 if (sharingStreamList) {
@@ -5349,13 +5481,13 @@ var Call = function (_EventTarget_1$EventT) {
                                 return;
                             }
                         }).catch(function (e) {
-                            _this10.log.warning(e.message);
+                            _this10.logger.warning(e.message);
                             reject(e);
                             return;
                         });
                     });
                 } else {
-                    _this10.log.warning('Sorry, screen sharing not started yet.');
+                    _this10.logger.warning('Sorry, screen sharing not started yet.');
                     reject(new Error('Sorry, screen sharing not started yet.'));
                 }
             });
@@ -5533,10 +5665,11 @@ var Call = function (_EventTarget_1$EventT) {
             if (this.settings.state === CallState.UPDATING) {
                 VoxSignaling_1.VoxSignaling.get().callRemoteFunction(RemoteFunction_1.RemoteFunction.rejectReInvite, this.settings.id, {});
             } else {
-                this.settings.state = CallState.UPDATING;
+                this._setState(CallState.UPDATING);
                 var hasVideo = CallManager_1.CallManager.get().isSDPHasVideo(sdp);
                 this.peerConnection.handleReinvite(headers, sdp, hasVideo).then(function () {
                     _this14.peerConnection.restoreMute();
+                    _this14.peerConnection.restoreVideoSending();
                 });
             }
         }
@@ -5548,18 +5681,7 @@ var Call = function (_EventTarget_1$EventT) {
     }, {
         key: "setActiveForce",
         value: function setActiveForce(state) {
-            this.settings.active = state;
-        }
-        /**
-         * @hidden
-         * @return {string}
-         * @private
-         */
-
-    }, {
-        key: "_traceName",
-        value: function _traceName() {
-            return 'Call';
+            this._setActive(state);
         }
         /**
          * Get the call duration
@@ -5602,15 +5724,26 @@ var Call = function (_EventTarget_1$EventT) {
                         }
                     }
                     if (!valid) {
-                        this.log.warning('Received ' + functionName + ' in invalid state ' + this.settings.state);
+                        this.logger.warning('Received ' + functionName + ' in invalid state ' + this.settings.state);
                         return false;
                     }
                 } else if (this.settings.state != validState) {
-                    this.log.warning('Received ' + functionName + ' in invalid state ' + this.settings.state);
+                    this.logger.warning('Received ' + functionName + ' in invalid state ' + this.settings.state);
                     return false;
                 }
             }
             return true;
+        }
+        /**
+         * @hidden
+         * @return {string}
+         * @private
+         */
+
+    }, {
+        key: "_traceName",
+        value: function _traceName() {
+            return 'Call';
         }
     }, {
         key: "promise",
@@ -5654,7 +5787,8 @@ __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.CALL)], Call.protot
 __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.CALL)], Call.prototype, "displayName", null);
 __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.CALL)], Call.prototype, "headers", null);
 __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.CALL)], Call.prototype, "active", null);
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.CALL)], Call.prototype, "state", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.CALL)], Call.prototype, "_setActive", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.CALL)], Call.prototype, "_setState", null);
 __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.CALL)], Call.prototype, "answer", null);
 __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.CALL)], Call.prototype, "decline", null);
 __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.CALL)], Call.prototype, "reject", null);
@@ -5712,716 +5846,61 @@ __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.CALL)], Call.protot
 exports.Call = Call;
 
 /***/ }),
+/* 13 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", { value: true });
+/**
+ * Enum for handle remote events
+ * @hidden
+ */
+var RemoteEvent;
+(function (RemoteEvent) {
+    RemoteEvent[RemoteEvent["loginFailed"] = 'loginFailed'] = "loginFailed";
+    RemoteEvent[RemoteEvent["loginSuccessful"] = 'loginSuccessful'] = "loginSuccessful";
+    RemoteEvent[RemoteEvent["handleError"] = 'handleError'] = "handleError";
+    RemoteEvent[RemoteEvent["onPCStats"] = '__onPCStats'] = "onPCStats";
+    RemoteEvent[RemoteEvent["handleIncomingConnection"] = 'handleIncomingConnection'] = "handleIncomingConnection";
+    RemoteEvent[RemoteEvent["handleConnectionConnected"] = 'handleConnectionConnected'] = "handleConnectionConnected";
+    RemoteEvent[RemoteEvent["handleConnectionDisconnected"] = 'handleConnectionDisconnected'] = "handleConnectionDisconnected";
+    RemoteEvent[RemoteEvent["handleRingOut"] = 'handleRingOut'] = "handleRingOut";
+    RemoteEvent[RemoteEvent["startEarlyMedia"] = 'startEarlyMedia'] = "startEarlyMedia";
+    RemoteEvent[RemoteEvent["stopRinging"] = 'stopRinging'] = "stopRinging";
+    RemoteEvent[RemoteEvent["handleConnectionFailed"] = 'handleConnectionFailed'] = "handleConnectionFailed";
+    RemoteEvent[RemoteEvent["handleSIPInfo"] = 'handleSIPInfo'] = "handleSIPInfo";
+    RemoteEvent[RemoteEvent["handleSipEvent"] = 'handleSipEvent'] = "handleSipEvent";
+    RemoteEvent[RemoteEvent["handleTransferStarted"] = 'handleTransferStarted'] = "handleTransferStarted";
+    RemoteEvent[RemoteEvent["handleTransferComplete"] = 'handleTransferComplete'] = "handleTransferComplete";
+    RemoteEvent[RemoteEvent["handleTransferFailed"] = 'handleTransferFailed'] = "handleTransferFailed";
+    RemoteEvent[RemoteEvent["handleReInvite"] = 'handleReInvite'] = "handleReInvite";
+    RemoteEvent[RemoteEvent["handleAcceptReinvite"] = 'handleAcceptReinvite'] = "handleAcceptReinvite";
+    RemoteEvent[RemoteEvent["handleRejectReinvite"] = 'handleRejectReinvite'] = "handleRejectReinvite";
+    RemoteEvent[RemoteEvent["createPC"] = '__createPC'] = "createPC";
+    RemoteEvent[RemoteEvent["destroyPC"] = '__destroyPC'] = "destroyPC";
+    RemoteEvent[RemoteEvent["connectionSuccessful"] = '__connectionSuccessful'] = "connectionSuccessful";
+    RemoteEvent[RemoteEvent["connectionFailed"] = '__connectionFailed'] = "connectionFailed";
+    RemoteEvent[RemoteEvent["createConnection"] = '__createConnection'] = "createConnection";
+    RemoteEvent[RemoteEvent["pong"] = '__pong'] = "pong";
+    RemoteEvent[RemoteEvent["increaseGain"] = 'increaseGain'] = "increaseGain";
+    RemoteEvent[RemoteEvent["handlePreFlightCheckResult"] = 'handlePreFlightCheckResult'] = "handlePreFlightCheckResult";
+    RemoteEvent[RemoteEvent["handleVoicemail"] = 'handleVoicemail'] = "handleVoicemail";
+    RemoteEvent[RemoteEvent["onCallRemoteFunctionError"] = 'onCallRemoteFunctionError'] = "onCallRemoteFunctionError";
+    RemoteEvent[RemoteEvent["refreshOauthTokenFailed"] = 'refreshOauthTokenFailed'] = "refreshOauthTokenFailed";
+    RemoteEvent[RemoteEvent["refreshOauthTokenSuccessful"] = 'refreshOauthTokenSuccessful'] = "refreshOauthTokenSuccessful";
+    RemoteEvent[RemoteEvent["sipRegisterSuccessful"] = 'sipRegisterSuccessful'] = "sipRegisterSuccessful";
+    RemoteEvent[RemoteEvent["sipRegisterFailed"] = 'sipRegisterFailed'] = "sipRegisterFailed";
+    RemoteEvent[RemoteEvent["onACDStatus"] = 'onACDStatus'] = "onACDStatus";
+    // ============================ICE
+    RemoteEvent[RemoteEvent["onICEConfig"] = 'onICEConfig'] = "onICEConfig";
+    RemoteEvent[RemoteEvent["onICEConfigFailed"] = 'onICEConfigFailed'] = "onICEConfigFailed";
+    // ============================ICE
+})(RemoteEvent = exports.RemoteEvent || (exports.RemoteEvent = {}));
+
+/***/ }),
 /* 14 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-var __decorate = undefined && undefined.__decorate || function (decorators, target, key, desc) {
-    var c = arguments.length,
-        r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc,
-        d;
-    if ((typeof Reflect === "undefined" ? "undefined" : _typeof(Reflect)) === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);else for (var i = decorators.length - 1; i >= 0; i--) {
-        if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    }return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-var Logger_1 = __webpack_require__(0);
-/**
- * @hidden
- */
-
-var EventTarget = function () {
-    function EventTarget() {
-        _classCallCheck(this, EventTarget);
-
-        /**
-         * @hidden
-         * @type {{}}
-         */
-        this.eventListeners = {};
-        /**
-         * @hidden
-         * @type {{}}
-         */
-        this.defaultEventListeners = {};
-    }
-    /**
-     * @hidden
-     * @deprecated
-     * @param {EventType} event
-     * @param {Function} handler
-     */
-
-
-    _createClass(EventTarget, [{
-        key: "addEventListener",
-        value: function addEventListener(event, handler) {
-            this.on(event, handler);
-        }
-        /**
-         * @hidden
-         * @param {EventType} event
-         * @param {Function} handler
-         */
-
-    }, {
-        key: "addDefaultEventListener",
-        value: function addDefaultEventListener(event, handler) {
-            this.defaultEventListeners[event] = handler;
-        }
-        /**
-         * @hidden
-         * @param {EventType} event
-         */
-
-    }, {
-        key: "removeDefaultEventListener",
-        value: function removeDefaultEventListener(event) {
-            this.defaultEventListeners[event] = undefined;
-        }
-        /**
-         * @hidden
-         * @param e
-         */
-
-    }, {
-        key: "dispatchEvent",
-        value: function dispatchEvent(e) {
-            Logger_1.LogManager.get().writeMessage(Logger_1.LogCategory.UTILS, '', Logger_1.LogLevel.INFO, e.name + " dispatched");
-            var event = e.name;
-            if (typeof this.eventListeners[event] != 'undefined') {
-                for (var i = 0; i < this.eventListeners[event].length; i++) {
-                    if (typeof this.eventListeners[event][i] == 'function') {
-                        try {
-                            this.eventListeners[event][i](e);
-                        } catch (e) {
-                            console.error(e);
-                            // LogManager.get().writeMessage(LogCategory.UTILS, '',
-                            //   LogLevel.ERROR,
-                            //   `There is some error on the ${e.name} event listener function: ${e.message}.`);
-                        }
-                    }
-                }
-            }
-            if (typeof this.eventListeners[event] === 'undefined' || this.eventListeners[event].length == 0) {
-                Logger_1.LogManager.get().writeMessage(Logger_1.LogCategory.UTILS, '', Logger_1.LogLevel.INFO, "The " + e.name + " event dispatched, but no handler registered for this event type.");
-                if (this.defaultEventListeners[event]) this.defaultEventListeners[event](e);
-            }
-        }
-        /**
-         * @hidden
-         * @deprecated
-         * @param {EventType} event
-         * @param {Function} handler
-         */
-
-    }, {
-        key: "removeEventListener",
-        value: function removeEventListener(event, handler) {
-            this.off(event, handler);
-        }
-    }, {
-        key: "on",
-        value: function on(event, handler) {
-            if (typeof this.eventListeners[event] == 'undefined') this.eventListeners[event] = [];
-            this.eventListeners[event].push(handler);
-        }
-    }, {
-        key: "off",
-        value: function off(event, handler) {
-            if (typeof this.eventListeners[event] == 'undefined') return;
-            if (typeof handler === 'function') {
-                for (var i = 0; i < this.eventListeners[event].length; i++) {
-                    if (this.eventListeners[event][i] == handler) {
-                        this.eventListeners[event].splice(i, 1);
-                        break;
-                    }
-                }
-            } else {
-                this.eventListeners[event] = [];
-            }
-        }
-    }]);
-
-    return EventTarget;
-}();
-
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.EVENTTARGET)], EventTarget.prototype, "addEventListener", null);
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.EVENTTARGET)], EventTarget.prototype, "addDefaultEventListener", null);
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.EVENTTARGET)], EventTarget.prototype, "removeDefaultEventListener", null);
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.EVENTTARGET)], EventTarget.prototype, "removeEventListener", null);
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.EVENTTARGET)], EventTarget.prototype, "on", null);
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.EVENTTARGET)], EventTarget.prototype, "off", null);
-exports.EventTarget = EventTarget;
-
-/***/ }),
-/* 15 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
-var __decorate = undefined && undefined.__decorate || function (decorators, target, key, desc) {
-    var c = arguments.length,
-        r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc,
-        d;
-    if ((typeof Reflect === "undefined" ? "undefined" : _typeof(Reflect)) === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);else for (var i = decorators.length - 1; i >= 0; i--) {
-        if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    }return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-var Logger_1 = __webpack_require__(0);
-var MsgEnums_1 = __webpack_require__(16);
-var VoxSignaling_1 = __webpack_require__(2);
-var EventTarget_1 = __webpack_require__(14);
-/**
- * Created by irbisadm on 24/10/2016.
- * @hidden
- */
-
-var MsgSignaling = function (_EventTarget_1$EventT) {
-    _inherits(MsgSignaling, _EventTarget_1$EventT);
-
-    function MsgSignaling() {
-        _classCallCheck(this, MsgSignaling);
-
-        var _this = _possibleConstructorReturn(this, (MsgSignaling.__proto__ || Object.getPrototypeOf(MsgSignaling)).call(this));
-
-        if (MsgSignaling.instance) {
-            throw new Error("Error - use Client.getMessagingInstance()");
-        }
-        _this.query = [];
-        setInterval(function () {
-            _this.updateQuery();
-        }, 220);
-        return _this;
-    }
-    /**
-     * Core event handler
-     * @hidden
-     * @param parsedData
-     */
-
-
-    _createClass(MsgSignaling, [{
-        key: "handleWsData",
-        value: function handleWsData(parsedData) {
-            var validEvents = ["onCreateConversation", "onEditConversation", "onRemoveConversation", "onJoinConversation", "onLeaveConversation", "onGetConversation", "onSendMessage", "onEditMessage", "onRemoveMessage", "onTyping", "onRetransmitEvents", "onEditUser", "onGetUser", "isRead", "isDelivered", "onError", "onSubscribe", "onUnSubscribe", "onSetStatus"];
-            if (validEvents.indexOf(parsedData.event) != -1) this.dispatchEvent(parsedData.event, parsedData);else throw new Error('Unknown messaging event ' + parsedData.event + ' with payload ' + JSON.stringify(parsedData.payload));
-        }
-    }, {
-        key: "sendPayload",
-
-        /**
-         * Core messaging sender
-         * @param event
-         * @param payload
-         * @returns {boolean}
-         */
-        value: function sendPayload(event, payload) {
-            var rawTemplate = {
-                service: MsgEnums_1.MsgService.Chat,
-                event: event,
-                payload: payload
-            };
-            this.query.push(rawTemplate);
-            return true;
-        }
-    }, {
-        key: "updateQuery",
-        value: function updateQuery() {
-            if (this.query.length) {
-                var item = this.query.splice(0, 1);
-                VoxSignaling_1.VoxSignaling.get().sendRaw(item[0]);
-            }
-        }
-    }, {
-        key: "dispatchEvent",
-        value: function dispatchEvent(event, data) {
-            if (typeof this.eventListeners[event] != 'undefined') for (var i = 0; i < this.eventListeners[event].length; i++) {
-                if (typeof this.eventListeners[event][i] == "function") this.eventListeners[event][i](data.payload);
-            }
-        }
-        /**
-         * @hidden
-         * @return {string}
-         * @private
-         */
-
-    }, {
-        key: "_traceName",
-        value: function _traceName() {
-            return 'MsgSignaling';
-        }
-    }], [{
-        key: "get",
-        value: function get() {
-            MsgSignaling.instance = MsgSignaling.instance || new MsgSignaling();
-            return MsgSignaling.instance;
-        }
-    }]);
-
-    return MsgSignaling;
-}(EventTarget_1.EventTarget);
-
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], MsgSignaling.prototype, "handleWsData", null);
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], MsgSignaling.prototype, "sendPayload", null);
-exports.MsgSignaling = MsgSignaling;
-
-/***/ }),
-/* 16 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", { value: true });
-/**
- * Created by irbisadm on 22/09/16.
- */
-/**
- * @hidden
- */
-var MsgService;
-(function (MsgService) {
-  MsgService[MsgService["Chat"] = "chat"] = "Chat";
-})(MsgService = exports.MsgService || (exports.MsgService = {}));
-/**
- * @hidden
- */
-var MsgAction;
-(function (MsgAction) {
-  MsgAction[MsgAction["createConversation"] = "createConversation"] = "createConversation";
-  MsgAction[MsgAction["editConversation"] = "editConversation"] = "editConversation";
-  MsgAction[MsgAction["removeConversation"] = "removeConversation"] = "removeConversation";
-  MsgAction[MsgAction["joinConversation"] = "joinConversation"] = "joinConversation";
-  MsgAction[MsgAction["leaveConversation"] = "leaveConversation"] = "leaveConversation";
-  MsgAction[MsgAction["getConversation"] = "getConversation"] = "getConversation";
-  MsgAction[MsgAction["getConversations"] = "getConversations"] = "getConversations";
-  MsgAction[MsgAction["sendMessage"] = "sendMessage"] = "sendMessage";
-  MsgAction[MsgAction["editMessage"] = "editMessage"] = "editMessage";
-  MsgAction[MsgAction["removeMessage"] = "removeMessage"] = "removeMessage";
-  MsgAction[MsgAction["typingMessage"] = "typingMessage"] = "typingMessage";
-  MsgAction[MsgAction["editUser"] = "editUser"] = "editUser";
-  MsgAction[MsgAction["getUser"] = "getUser"] = "getUser";
-  MsgAction[MsgAction["getUsers"] = "getUsers"] = "getUsers";
-  MsgAction[MsgAction["retransmitEvents"] = "retransmitEvents"] = "retransmitEvents";
-  MsgAction[MsgAction["isRead"] = "isRead"] = "isRead";
-  MsgAction[MsgAction["isDelivered"] = "isDelivered"] = "isDelivered";
-  MsgAction[MsgAction["addParticipants"] = "addParticipants"] = "addParticipants";
-  MsgAction[MsgAction["editParticipants"] = "editParticipants"] = "editParticipants";
-  MsgAction[MsgAction["removeParticipants"] = "removeParticipants"] = "removeParticipants";
-  MsgAction[MsgAction["addModerators"] = "addModerators"] = "addModerators";
-  MsgAction[MsgAction["removeModerators"] = "removeModerators"] = "removeModerators";
-  MsgAction[MsgAction["subscribe"] = "subscribe"] = "subscribe";
-  MsgAction[MsgAction["unsubscribe"] = "unsubscribe"] = "unsubscribe";
-  MsgAction[MsgAction["setStatus"] = "setStatus"] = "setStatus";
-})(MsgAction = exports.MsgAction || (exports.MsgAction = {}));
-/**
- * @hidden
- */
-var MsgEvent;
-(function (MsgEvent) {
-  MsgEvent[MsgEvent["onCreateConversation"] = "onCreateConversation"] = "onCreateConversation";
-  MsgEvent[MsgEvent["onEditConversation"] = "onEditConversation"] = "onEditConversation";
-  MsgEvent[MsgEvent["onRemoveConversation"] = "onRemoveConversation"] = "onRemoveConversation";
-  MsgEvent[MsgEvent["onJoinConversation"] = "onJoinConversation"] = "onJoinConversation";
-  MsgEvent[MsgEvent["onLeaveConversation"] = "onLeaveConversation"] = "onLeaveConversation";
-  MsgEvent[MsgEvent["onGetConversation"] = "onGetConversation"] = "onGetConversation";
-  MsgEvent[MsgEvent["onSendMessage"] = "onSendMessage"] = "onSendMessage";
-  MsgEvent[MsgEvent["onEditMessage"] = "onEditMessage"] = "onEditMessage";
-  MsgEvent[MsgEvent["onRemoveMessage"] = "onRemoveMessage"] = "onRemoveMessage";
-  MsgEvent[MsgEvent["onTyping"] = "onTyping"] = "onTyping";
-  MsgEvent[MsgEvent["onRetransmitEvents"] = "onRetransmitEvents"] = "onRetransmitEvents";
-  MsgEvent[MsgEvent["onEditUser"] = "onEditUser"] = "onEditUser";
-  MsgEvent[MsgEvent["onGetUser"] = "onGetUser"] = "onGetUser";
-  MsgEvent[MsgEvent["onError"] = "onError"] = "onError";
-  MsgEvent[MsgEvent["isRead"] = "isRead"] = "isRead";
-  MsgEvent[MsgEvent["isDelivered"] = "isDelivered"] = "isDelivered";
-  MsgEvent[MsgEvent["onsubscribe"] = "onsubscribe"] = "onsubscribe";
-  MsgEvent[MsgEvent["onUnSubscribe"] = "onUnSubscribe"] = "onUnSubscribe";
-  MsgEvent[MsgEvent["onSetStatus"] = "onSetStatus"] = "onSetStatus";
-})(MsgEvent = exports.MsgEvent || (exports.MsgEvent = {}));
-
-/***/ }),
-/* 17 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
-Object.defineProperty(exports, "__esModule", { value: true });
-var Implement = __webpack_require__(68);
-/**
- * Messaging allows exchanging instant messages between 2 or more participants.
- * Messaging supports text and metadata. The conversation doesn't bind or depend on the audio/video calls, but there is a possibility to integrate messaging in audio/video calls.
- *
- * FEATURES:
- * 1. messaging is the separate part of WEB SDK, but it uses the [Client.login], [Client.loginWithOneTimeKey] and [Client.loginWithToken] methods - in brief, if a user was already logged in he can use messaging functionality.
- * 1. messaging doesn't use backend JS scenario at all
- * See the minimum example to create messaging and to be able start a conversation:
- * @example
- * const voxSDK = VoxImplant.getInstance();
- * voxSDK.init({micRequired:false})
- *   .then(()=>voxSDK.connect())
- *   .then(()=>sdk.login('foo@bar.baz.voximplant.com', 'secretpass'))
- *   .then((e)=>{
- *     if(!e.result)
- *       throw e.message;
- *     console.log('[Voximplant] Ready, connected and logged in.');
- *     return VoxImplant.getMessenger();
- *   })
- *   .then((messaging)=>{
- *     messaging.on(VoxImplant.Messaging.MessengerEvents.CreateConversation,onCreateConversation);
- *     messaging.createConversation([]);
- *   })
- *   .catch(e=>console.error('[Voximplant] Oops! Something went wrong',e));
- *
- * function onCreateConversation(e){
- *   console.log(`[Voximplant] New conversation here! ID:${e.conversation.uuid}`);
- *   e.conversation.sendMessage('Hello world!');
- * }
- *
- * function onSendMessage(e){
- *   console.log(`[Voximplant] Message from ${e.message.sender}: ${e.message.text}`)
- * }
- *
- */
-var Messaging;
-(function (Messaging) {
-  /**
-   * Messaging supports these events. See the details within a particular event.
-   */
-  var EventHandlers = void 0;
-  (function (EventHandlers) {
-    ;
-    ;
-    ;
-    ;
-    ;
-    ;
-    ;
-    ;
-    ;
-  })(EventHandlers = Messaging.EventHandlers || (Messaging.EventHandlers = {}));
-  /**
-   * @hidden
-   * @deprecated
-   */
-  var MessengerEventsCallbacks = void 0;
-  (function (MessengerEventsCallbacks) {
-    ;
-    ;
-    ;
-    ;
-    ;
-    ;
-    ;
-    ;
-    ;
-  })(MessengerEventsCallbacks = Messaging.MessengerEventsCallbacks || (Messaging.MessengerEventsCallbacks = {}));
-  /**
-   * Conversation instance. Created by the [Messenger.createConversation] method. Used to send messages, add or remove users, change moderators list etc.
-   */
-
-  var Conversation = function (_Implement$Conversati) {
-    _inherits(Conversation, _Implement$Conversati);
-
-    function Conversation() {
-      _classCallCheck(this, Conversation);
-
-      return _possibleConstructorReturn(this, (Conversation.__proto__ || Object.getPrototypeOf(Conversation)).apply(this, arguments));
-    }
-
-    return Conversation;
-  }(Implement.Conversation);
-
-  Messaging.Conversation = Conversation;
-  ;
-  /**
-   * Describes single message. Received via the [MessengerEvents.SendMessage] or [MessengerEvents.EditMessage] events and used to serialize or edit the message.
-   */
-
-  var Message = function (_Implement$Message) {
-    _inherits(Message, _Implement$Message);
-
-    function Message() {
-      _classCallCheck(this, Message);
-
-      return _possibleConstructorReturn(this, (Message.__proto__ || Object.getPrototypeOf(Message)).apply(this, arguments));
-    }
-
-    return Message;
-  }(Implement.Message);
-
-  Messaging.Message = Message;
-  ;
-  /**
-   * Messenger class is used to control messaging functions. Can't be instantiated directly (singleton), please use [getMessenger] to get the class instance.
-   */
-
-  var Messenger = function (_Implement$Messenger) {
-    _inherits(Messenger, _Implement$Messenger);
-
-    function Messenger() {
-      _classCallCheck(this, Messenger);
-
-      return _possibleConstructorReturn(this, (Messenger.__proto__ || Object.getPrototypeOf(Messenger)).apply(this, arguments));
-    }
-
-    return Messenger;
-  }(Implement.Messenger);
-
-  Messaging.Messenger = Messenger;
-  ;
-  ;
-  ;
-  ;
-  ;
-  ;
-  ;
-  var MessengerEvents = void 0;
-  (function (MessengerEvents) {
-    /**
-     * New conversation created.
-     * You receive this event when anybody created a new conversation with the current user in participant array. Also this event dispatch on conversation creator.
-     */
-    MessengerEvents["CreateConversation"] = "CreateConversation";
-    /**
-     * Conversation properties were modified.
-     */
-    MessengerEvents["EditConversation"] = "EditConversation";
-    /**
-     * The conversation was removed.
-     */
-    MessengerEvents["RemoveConversation"] = "RemoveConversation";
-    /**
-     * Conversation description is received. Triggered in response to the 'getConversation'.
-     */
-    MessengerEvents["GetConversation"] = "GetConversation";
-    /**
-     * Event is triggered when a new message is received as a result of the [Conversation.sendMessage] method call.
-     */
-    MessengerEvents["SendMessage"] = "SendMessage";
-    /**
-     * Message was edited.
-     */
-    MessengerEvents["EditMessage"] = "EditMessage";
-    /**
-     * Message was removed.
-     */
-    MessengerEvents["RemoveMessage"] = "RemoveMessage";
-    /**
-     * Information that some user is typing something is received. Triggered in response to the 'typing' called by any user.
-     */
-    MessengerEvents["Typing"] = "Typing";
-    /**
-     * Dispatch when [Messenger.editUser] successful done into cloud. Triggered only for users specified in the 'subscribe' method call.
-     */
-    MessengerEvents["EditUser"] = "EditUser";
-    /**
-     * Return user, requested in [Messenger.getUser] function
-     */
-    MessengerEvents["GetUser"] = "GetUser";
-    /**
-     * Event is triggered in case of an error while creating a conversation. See the details in the [MessengerEventsCallbacks.ErrorEvent] interface.
-     */
-    MessengerEvents["Error"] = "Error";
-    /**
-     * Event is triggered after [Conversation.retransmitEvents] method is called on some conversation for this SDK instance.
-     */
-    MessengerEvents["RetransmitEvents"] = "RetransmitEvents";
-    /**
-     *  Event is triggered after another device with same logged in user called the [Conversation.markAsRead] method.
-     */
-    MessengerEvents["Read"] = "Read";
-    /**
-     * Event is triggered after another device with same logged in user called the [Conversation.markAsDelivered] method.
-     */
-    MessengerEvents["Delivered"] = "Delivered";
-    /**
-     * Event is triggered after the [Messenger.subscribe] method is called.
-     */
-    MessengerEvents["Subscribe"] = "Subscribe";
-    /**
-     * Event is triggered after the [Messenger.unsubscribe] method is called.
-     */
-    MessengerEvents["Unsubscribe"] = "Unsubscribe";
-    /**
-     * Event is triggered after the user presence state has changed.
-     */
-    MessengerEvents["SetStatus"] = "SetStatus";
-  })(MessengerEvents = Messaging.MessengerEvents || (Messaging.MessengerEvents = {}));
-  /**
-   * Available methods to manipulate the messaging flow. Note if the action triggers any of [MessengerEvents], the action's name will be set as a value of [ConversationEvent.messengerAction].
-   */
-  var MessengerAction = void 0;
-  (function (MessengerAction) {
-    MessengerAction[MessengerAction["createConversation"] = 'createConversation'] = "createConversation";
-    MessengerAction[MessengerAction["editConversation"] = 'editConversation'] = "editConversation";
-    MessengerAction[MessengerAction["removeConversation"] = 'removeConversation'] = "removeConversation";
-    MessengerAction[MessengerAction["joinConversation"] = 'joinConversation'] = "joinConversation";
-    MessengerAction[MessengerAction["leaveConversation"] = 'leaveConversation'] = "leaveConversation";
-    MessengerAction[MessengerAction["getConversation"] = 'getConversation'] = "getConversation";
-    MessengerAction[MessengerAction["getConversations"] = 'getConversations'] = "getConversations";
-    MessengerAction[MessengerAction["sendMessage"] = 'sendMessage'] = "sendMessage";
-    MessengerAction[MessengerAction["editMessage"] = 'editMessage'] = "editMessage";
-    MessengerAction[MessengerAction["removeMessage"] = 'removeMessage'] = "removeMessage";
-    MessengerAction[MessengerAction["typingMessage"] = 'typingMessage'] = "typingMessage";
-    MessengerAction[MessengerAction["editUser"] = 'editUser'] = "editUser";
-    MessengerAction[MessengerAction["getUser"] = 'getUser'] = "getUser";
-    MessengerAction[MessengerAction["getUsers"] = 'getUsers'] = "getUsers";
-    MessengerAction[MessengerAction["retransmitEvents"] = 'retransmitEvents'] = "retransmitEvents";
-    MessengerAction[MessengerAction["isRead"] = 'isRead'] = "isRead";
-    MessengerAction[MessengerAction["isDelivered"] = 'isDelivered'] = "isDelivered";
-    MessengerAction[MessengerAction["addParticipants"] = 'addParticipants'] = "addParticipants";
-    MessengerAction[MessengerAction["editParticipants"] = 'editParticipants'] = "editParticipants";
-    MessengerAction[MessengerAction["removeParticipants"] = 'removeParticipants'] = "removeParticipants";
-    MessengerAction[MessengerAction["addModerators"] = 'addModerators'] = "addModerators";
-    MessengerAction[MessengerAction["removeModerators"] = 'removeModerators'] = "removeModerators";
-    MessengerAction[MessengerAction["subscribe"] = 'subscribe'] = "subscribe";
-    MessengerAction[MessengerAction["unsubscribe"] = 'unsubscribe'] = "unsubscribe";
-    MessengerAction[MessengerAction["setStatus"] = 'setStatus'] = "setStatus";
-  })(MessengerAction = Messaging.MessengerAction || (Messaging.MessengerAction = {}));
-  /**
-   *
-   */
-  var MessengerError = void 0;
-  (function (MessengerError) {
-    /**
-     * Wrong transport message structure
-     */
-    MessengerError[MessengerError["Error_1"] = '1'] = "Error_1";
-    /**
-     * Unknown event name
-     */
-    MessengerError[MessengerError["Error_2"] = '2'] = "Error_2";
-    /**
-     * User not auth
-     */
-    MessengerError[MessengerError["Error_3"] = '3'] = "Error_3";
-    /**
-     * Wrong message structure
-     */
-    MessengerError[MessengerError["Error_4"] = '4'] = "Error_4";
-    /**
-     * Conversation not found or user not in participant list
-     */
-    MessengerError[MessengerError["Error_5"] = '5'] = "Error_5";
-    /**
-     * Conversation not found or user can't moderate conversation
-     */
-    MessengerError[MessengerError["Error_6"] = '6'] = "Error_6";
-    /**
-     * Conversation already exists
-     */
-    MessengerError[MessengerError["Error_7"] = '7'] = "Error_7";
-    /**
-     * Conversation does not exist
-     */
-    MessengerError[MessengerError["Error_8"] = '8'] = "Error_8";
-    /**
-     * Message already exists
-     */
-    MessengerError[MessengerError["Error_9"] = '9'] = "Error_9";
-    /**
-     * Message does not exist
-     */
-    MessengerError[MessengerError["Error_10"] = '10'] = "Error_10";
-    /**
-     * Message was deleted
-     */
-    MessengerError[MessengerError["Error_11"] = '11'] = "Error_11";
-    /**
-     * ACL error
-     */
-    MessengerError[MessengerError["Error_12"] = '12'] = "Error_12";
-    /**
-     * User already in participant list
-     */
-    MessengerError[MessengerError["Error_13"] = '13'] = "Error_13";
-    /**
-     * No rights to edit user
-     */
-    MessengerError[MessengerError["Error_14"] = '14'] = "Error_14";
-    /**
-     * Public join is not available in this conversation
-     */
-    MessengerError[MessengerError["Error_15"] = '15'] = "Error_15";
-    /**
-     * Conversation was deleted
-     */
-    MessengerError[MessengerError["Error_16"] = '16'] = "Error_16";
-    /**
-     * Conversation is distinct
-     */
-    MessengerError[MessengerError["Error_17"] = '17'] = "Error_17";
-    /**
-     * User validation Error
-     */
-    MessengerError[MessengerError["Error_18"] = '18'] = "Error_18";
-    /**
-     * Lists mismatch
-     */
-    MessengerError[MessengerError["Error_19"] = '19'] = "Error_19";
-    /**
-     * Range larger then allowed by service
-     */
-    MessengerError[MessengerError["Error_21"] = '21'] = "Error_21";
-    /**
-     * Number of requested objects is larger then allowed by service
-     */
-    MessengerError[MessengerError["Error_22"] = '22'] = "Error_22";
-    /**
-     * Message size so large
-     */
-    MessengerError[MessengerError["Error_23"] = '23'] = "Error_23";
-    /**
-     * Seq is too big
-     */
-    MessengerError[MessengerError["Error_24"] = '24'] = "Error_24";
-    /**
-     * IM service not available
-     */
-    MessengerError[MessengerError["Error_30"] = '30'] = "Error_30";
-    /**
-     * Internal error
-     */
-    MessengerError[MessengerError["Error_500"] = '500'] = "Error_500";
-    /**
-     * Oops! Something went wrong
-     */
-    MessengerError[MessengerError["Error_777"] = '777'] = "Error_777";
-  })(MessengerError = Messaging.MessengerError || (Messaging.MessengerError = {}));
-})(Messaging = exports.Messaging || (exports.Messaging = {}));
-exports.default = Messaging;
-
-/***/ }),
-/* 18 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -6460,7 +5939,7 @@ var Events;
    *    The event is triggered if a connection to the VoxImplant cloud couldn't be established.
    *    See [Client.connect] function
    *
-   * Handler function receives the [EventHandlers.ConnectionFailed] object as an argument.
+   *    Handler function receives the [EventHandlers.ConnectionFailed] object as an argument.
    */
   Events[Events["ConnectionFailed"] = 'ConnectionFailed'] = "ConnectionFailed";
   /**
@@ -6472,7 +5951,7 @@ var Events;
    */
   Events[Events["ConnectionClosed"] = 'ConnectionClosed'] = "ConnectionClosed";
   /**
-   * The event is triggered after the [Client.login], [Client.loginWithOneTimeKey], [Client.requestOneTimeLoginKey] and Client.loginWithCode methods call.
+   * The event is triggered after the [Client.login], [Client.loginWithOneTimeKey] and [Client.loginWithCode] methods call.
    *
    * Handler function receives [EventHandlers.AuthResult] object as an argument.
    */
@@ -6526,10 +6005,15 @@ var Events;
    * The event is triggered when ACD status of current user changed from SDK or from inside the ACD service.
    */
   Events[Events["ACDStatusUpdated"] = 'ACDStatusUpdated'] = "ACDStatusUpdated";
+  /**
+   * The event is triggered when the Web SDK detects incorrect use of the ACD module, e.g.,
+   * using the same credentials in the different browsers or multiple browser's windows.
+   */
+  Events[Events["ACDError"] = 'ACDError'] = "ACDError";
 })(Events = exports.Events || (exports.Events = {}));
 
 /***/ }),
-/* 19 */
+/* 15 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -6537,39 +6021,187 @@ var Events;
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
+var __decorate = undefined && undefined.__decorate || function (decorators, target, key, desc) {
+    var c = arguments.length,
+        r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc,
+        d;
+    if ((typeof Reflect === "undefined" ? "undefined" : _typeof(Reflect)) === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);else for (var i = decorators.length - 1; i >= 0; i--) {
+        if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    }return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-var VoxSignaling_1 = __webpack_require__(2);
-var RemoteFunction_1 = __webpack_require__(3);
+var Logger_1 = __webpack_require__(0);
 /**
  * @hidden
  */
 
-var SignalingDTMFSender = function () {
-    function SignalingDTMFSender(_id) {
-        _classCallCheck(this, SignalingDTMFSender);
-
-        this._id = _id;
+var EventTarget = function () {
+    function EventTarget() {
+        _classCallCheck(this, EventTarget);
     }
 
-    _createClass(SignalingDTMFSender, [{
-        key: "insertDTMF",
-        value: function insertDTMF(tones, duration, interToneGap) {
-            var _this = this;
+    _createClass(EventTarget, [{
+        key: "sysOn",
 
-            tones.split('').forEach(function (key) {
-                return _this.sendKey(key);
-            });
+        /**
+         *
+         * @param event
+         * @param handler
+         * @param options
+         * @hidden
+         */
+        value: function sysOn(event, handler, options) {
+            this._ETonTo('system', event, handler, options);
+        }
+        /**
+         *
+         * @param event
+         * @param handler
+         * @hidden
+         */
+
+    }, {
+        key: "sysOff",
+        value: function sysOff(event, handler) {
+            this._EToffTo('system', event, handler);
         }
     }, {
-        key: "sendKey",
-        value: function sendKey(key) {
-            var k = void 0;
-            if (key == '*') k = 10;else if (key == '#') k = 11;else {
-                k = parseInt(key);
+        key: "on",
+        value: function on(event, handler, options) {
+            this._ETonTo('user', event, handler, options);
+        }
+    }, {
+        key: "off",
+        value: function off(event, handler) {
+            this._EToffTo('user', event, handler);
+        }
+        /**
+         *
+         * @param namespace
+         * @param event
+         * @param handler
+         * @param options
+         * @private
+         * @hidden
+         */
+
+    }, {
+        key: "_ETonTo",
+        value: function _ETonTo(namespace, event, handler, options) {
+            if (typeof this.eventListeners == 'undefined') this.eventListeners = {};
+            var store = this.eventListeners;
+            if (typeof store[event] == 'undefined') store[event] = [];
+            var instance = {
+                listener: handler,
+                options: options,
+                _triggered: false,
+                _namespace: namespace
+            };
+            if (options && options.capture) store[event].unshift(instance);else store[event].push(instance);
+        }
+        /**
+         *
+         * @param namespace
+         * @param event
+         * @param handler
+         * @private
+         * @hidden
+         */
+
+    }, {
+        key: "_EToffTo",
+        value: function _EToffTo(namespace, event, handler) {
+            var store = this.eventListeners;
+            if (typeof store == 'undefined' || typeof store[event] == 'undefined') return;
+            if (typeof handler === 'function') {
+                for (var i = 0; i < store[event].length; i++) {
+                    if (store[event][i].listener == handler && store[event][i]._namespace === namespace) {
+                        store[event].splice(i, 1);
+                        break;
+                    }
+                }
+            } else store[event] = store[event].filter(function (item) {
+                return item._namespace !== namespace;
+            });
+        }
+        /**
+         * @hidden
+         * @param e
+         */
+
+    }, {
+        key: "dispatchEvent",
+        value: function dispatchEvent(e) {
+            if (typeof this.eventListeners != 'undefined' && typeof this.eventListeners[e.name] != 'undefined') {
+                var userListeners = this.eventListeners[e.name].filter(function (evt) {
+                    return evt._namespace === 'user';
+                });
+                Logger_1.LogManager.get().writeMessage(Logger_1.LogCategory.UTILS, '[event]', Logger_1.LogLevel.INFO, "" + e.name + (e.name.includes('QualityIssue') ? ' ' + e.level : '') + ", listeners: " + userListeners.length);
+                // TIP: system listeners run always. default runs only when user's not set
+                for (var i = 0; i < this.eventListeners[e.name].length; i++) {
+                    try {
+                        if ((!this.eventListeners[e.name][i].options || !this.eventListeners[e.name][i].options.once || !this.eventListeners[e.name][i]._triggered) && (this.eventListeners[e.name][i]._namespace === 'system' || this.eventListeners[e.name][i]._namespace === 'user' || this.eventListeners[e.name][i]._namespace === 'default' && !userListeners.length)) {
+                            var handlerResult = this.eventListeners[e.name][i].listener(e);
+                            if (handlerResult) Logger_1.LogManager.get().writeMessage(Logger_1.LogCategory.CLIENT, e.name + ": ", Logger_1.LogLevel.WARNING, "The handler returned `false`. As of August 12, 2019, this will break the handler chain. See the details here: https://voximplant.com/blog/web-sdk-api-events-changes");
+                            if (this.eventListeners[e.name][i]) this.eventListeners[e.name][i]._triggered = true;
+                        }
+                    } catch (e) {
+                        console.error(e);
+                    }
+                }
+            } else {
+                Logger_1.LogManager.get().writeMessage(Logger_1.LogCategory.UTILS, '[event]', Logger_1.LogLevel.INFO, "" + e.name + (e.name.includes('QualityIssue') ? ' ' + e.level : '') + ", listeners: 0");
             }
-            if (k >= 0 || k <= 11) VoxSignaling_1.VoxSignaling.get().callRemoteFunction(RemoteFunction_1.RemoteFunction.sendDTMF, this._id, k);
+        }
+        /**
+         * @hidden
+         * @deprecated
+         * @param {EventType} event
+         * @param {Function} handler
+         */
+
+    }, {
+        key: "removeEventListener",
+        value: function removeEventListener(event, handler) {
+            this.off(event, handler);
+        }
+        /**
+         * @hidden
+         * @deprecated
+         * @param {EventType} event
+         * @param {EventListenerObject} handler
+         * @param options
+         */
+
+    }, {
+        key: "addEventListener",
+        value: function addEventListener(event, handler, options) {
+            this.on(event, handler, options);
+        }
+        /**
+         * @hidden
+         * @param {EventType} event
+         * @param {EventListenerObject} handler
+         */
+
+    }, {
+        key: "addDefaultEventListener",
+        value: function addDefaultEventListener(event, handler) {
+            this._ETonTo('default', event, handler, {});
+        }
+        /**
+         * @hidden
+         * @param {EventType} event
+         */
+
+    }, {
+        key: "removeDefaultEventListener",
+        value: function removeDefaultEventListener(event) {
+            this._EToffTo('default', event);
         }
         /**
          * @hidden
@@ -6580,17 +6212,25 @@ var SignalingDTMFSender = function () {
     }, {
         key: "_traceName",
         value: function _traceName() {
-            return 'SignalingDTMFSender';
+            return 'EventTarget';
         }
     }]);
 
-    return SignalingDTMFSender;
+    return EventTarget;
 }();
 
-exports.SignalingDTMFSender = SignalingDTMFSender;
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.EVENTTARGET)], EventTarget.prototype, "sysOn", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.EVENTTARGET)], EventTarget.prototype, "sysOff", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.EVENTTARGET)], EventTarget.prototype, "on", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.EVENTTARGET)], EventTarget.prototype, "off", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.EVENTTARGET)], EventTarget.prototype, "removeEventListener", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.EVENTTARGET)], EventTarget.prototype, "addEventListener", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.EVENTTARGET)], EventTarget.prototype, "addDefaultEventListener", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.EVENTTARGET)], EventTarget.prototype, "removeDefaultEventListener", null);
+exports.EventTarget = EventTarget;
 
 /***/ }),
-/* 20 */
+/* 16 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -6675,6 +6315,26 @@ var SDPMuggle = function () {
                 return new RTCSessionDescription({ sdp: sdpLines.join('\r\n') + '\r\n', type: sdp.type });
             }
             return sdp;
+        }
+    }, {
+        key: "removeDoublePT",
+        value: function removeDoublePT(sdp) {
+            var sdpLines = sdp.sdp.split(/(\r\n|\r|\n)/).filter(SDPMuggle.validLine);
+            var lineParts = [];
+            for (var i = 0; i < sdpLines.length; i++) {
+                var line = sdpLines[i];
+                if (line.indexOf('m=video') === 0) {
+                    lineParts = line.split(' ');
+                    sdpLines[i] = lineParts.filter(function (val, idx) {
+                        if (idx === 0) return true;
+                        for (var j = idx - 1; j >= 2; j--) {
+                            if (lineParts[j] === val) return false;
+                        }
+                        return true;
+                    }).join(' ');
+                }
+            }
+            return new RTCSessionDescription({ sdp: sdpLines.join('\r\n') + '\r\n', type: sdp.type });
         }
     }, {
         key: "removeTransportCC",
@@ -6806,7 +6466,7 @@ var SDPMuggle = function () {
                     }).join(' ');
                 } else return line;
             });
-            return new RTCSessionDescription({ sdp: lines.join('\r\n') + '\r\n', type: sdp.type });
+            return { sdp: lines.join('\r\n') + '\r\n', type: sdp.type };
         }
     }]);
 
@@ -6817,7 +6477,7 @@ SDPMuggle.validLine = RegExp.prototype.test.bind(/^([a-z])=(.*)/);
 exports.SDPMuggle = SDPMuggle;
 
 /***/ }),
-/* 21 */
+/* 17 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -6976,7 +6636,7 @@ CallstatsIo.moduleEnabled = false;
 exports.CallstatsIo = CallstatsIo;
 
 /***/ }),
-/* 22 */
+/* 18 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -6984,9 +6644,15 @@ exports.CallstatsIo = CallstatsIo;
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
+var _get = function get(object, property, receiver) { if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { return get(parent, property, receiver); } } else if ("value" in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } };
+
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
 var __decorate = undefined && undefined.__decorate || function (decorators, target, key, desc) {
     var c = arguments.length,
@@ -6997,95 +6663,104 @@ var __decorate = undefined && undefined.__decorate || function (decorators, targ
     }return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-var GUID_1 = __webpack_require__(28);
 var Logger_1 = __webpack_require__(0);
-var MsgEnums_1 = __webpack_require__(16);
-var MsgSignaling_1 = __webpack_require__(15);
+var MsgEvent_1 = __webpack_require__(24);
+var VoxSignaling_1 = __webpack_require__(2);
+var EventTarget_1 = __webpack_require__(15);
+var Structures_1 = __webpack_require__(41);
+var GUID_1 = __webpack_require__(33);
 /**
+ * Created by irbisadm on 24/10/2016.
  * @hidden
  */
 
-var Message = function () {
-    /**
-     * @hidden
-     * @param {string} message
-     * @param {Array<Payload>} payload
-     */
-    function Message(message, payload) {
-        _classCallCheck(this, Message);
+var MsgSignaling = function (_EventTarget_1$EventT) {
+    _inherits(MsgSignaling, _EventTarget_1$EventT);
 
-        this._text = message;
-        if (typeof this.payload !== 'undefined') this._payload = payload;else this._payload = [];
-        this._uuid = new GUID_1.GUID().toString();
+    function MsgSignaling() {
+        _classCallCheck(this, MsgSignaling);
+
+        var _this = _possibleConstructorReturn(this, (MsgSignaling.__proto__ || Object.getPrototypeOf(MsgSignaling)).call(this));
+
+        if (MsgSignaling.instance) {
+            throw new Error("Error - use Client.getMessagingInstance()");
+        }
+        _this.query = [];
+        setInterval(function () {
+            _this.updateQuery();
+        }, 220);
+        return _this;
     }
-    /**
-     * Universally unique identifier of message. Can be used on client side for housekeeping.
-     * @returns {string}
-     */
 
-
-    _createClass(Message, [{
-        key: "sendTo",
-
-        /**
-         * @hidden
-         * @param conversation
-         */
-        value: function sendTo(conversation) {
-            this._conversation = conversation.uuid;
-            MsgSignaling_1.MsgSignaling.get().sendPayload(MsgEnums_1.MsgAction.sendMessage, this.getPayload());
+    _createClass(MsgSignaling, [{
+        key: "capitalize",
+        value: function capitalize(str) {
+            return str.toString()[0].toUpperCase() + str.toString().slice(1);
+        }
+    }, {
+        key: "updateQuery",
+        value: function updateQuery() {
+            if (this.query.length) {
+                var item = this.query.splice(0, 1);
+                VoxSignaling_1.VoxSignaling.get().sendRaw(item[0]);
+            }
+        }
+    }, {
+        key: "addEventListener",
+        value: function addEventListener(event, handler, options) {
+            _get(MsgSignaling.prototype.__proto__ || Object.getPrototypeOf(MsgSignaling.prototype), "addEventListener", this).call(this, event, handler, options);
+        }
+    }, {
+        key: "dispatchMsgEvent",
+        value: function dispatchMsgEvent(event, data) {
+            if (typeof this.eventListeners[event] != 'undefined') for (var i = 0; i < this.eventListeners[event].length; i++) {
+                if (this.eventListeners[event][i] && typeof this.eventListeners[event][i].listener == "function") {
+                    this.eventListeners[event][i].listener(data.payload, data.request_uuid);
+                }
+            }
         }
         /**
-         * @hidden
-         * @returns {{uuid: string, text: string, conversation: string}}
+         * Core event handler
+         * @param parsedData
          */
 
     }, {
-        key: "getPayload",
-        value: function getPayload() {
-            var str = {
-                uuid: this._uuid,
-                text: this._text,
-                conversation: this._conversation
+        key: "handleWsData",
+        value: function handleWsData(parsedData) {
+            if (Object.values(MsgEvent_1.MsgEvent).indexOf(parsedData.event) != -1) this.dispatchMsgEvent(parsedData.event, parsedData);else throw new Error('Unknown messaging event ' + parsedData.event + ' with payload ' + JSON.stringify(parsedData.payload));
+        }
+        /**
+         * Core messaging sender
+         * @param event
+         * @param payload
+         * @returns {string} request uuid
+         */
+
+    }, {
+        key: "sendWsMessage",
+        value: function sendWsMessage(event, payload) {
+            var typeNamespace = ['subscribe', 'unsubscribe', 'typingMessage', 'isRead', 'setStatus'].includes(event) ? 'CommonNamespace' : 'IncomingNamespace';
+            var msgEventType = {
+                setStatus: 'PresenceMessage',
+                isRead: 'StatusMessage',
+                typingMessage: 'TypingMessage',
+                subscribe: 'ManageSubscribes',
+                unsubscribe: 'ManageSubscribes',
+                addParticipants: 'ManageParticipants',
+                editParticipants: 'ManageParticipants',
+                manageNotification: 'ManageNotifications',
+                getPublicConversations: 'GetConversations',
+                retransmitEvents: 'RetransmitRequest'
             };
-            if (typeof this._payload !== 'undefined') str['payload'] = this._payload;else str['payload'] = [];
-            return str;
-        }
-        /**
-         * Sends text and payload changes to the server.
-         */
-
-    }, {
-        key: "update",
-        value: function update() {
-            MsgSignaling_1.MsgSignaling.get().sendPayload(MsgEnums_1.MsgAction.editMessage, this.getPayload());
-        }
-        /**
-         * Remove the message.
-         * Triggers the [MessengerEvents.RemoveMessage]
-         * event for all messenger objects on all clients, including this one.
-         */
-
-    }, {
-        key: "remove",
-        value: function remove() {
-            MsgSignaling_1.MsgSignaling.get().sendPayload(MsgEnums_1.MsgAction.removeMessage, { uuid: this._uuid, conversation: this.conversation });
-        }
-        /**
-         * Serialize message so it can be stored into some storage (like IndexedDB) and later restored via [Messenger.createMessageFromCache]
-         */
-
-    }, {
-        key: "toCache",
-        value: function toCache() {
-            return {
-                seq: this._seq,
-                uuid: this._uuid,
-                text: this._text,
-                payload: this._payload,
-                conversation: this._conversation,
-                sender: this._sender
+            var requestUuid = new GUID_1.default().toString();
+            var rawTemplate = {
+                service: Structures_1.MsgService.Chat,
+                event: event,
+                payload: Object.assign(payload, { '@type': "type/vox.store." + typeNamespace + "." + (msgEventType[event] || this.capitalize(event)) }),
+                request_uuid: requestUuid
             };
+            this.query.push(rawTemplate);
+            return requestUuid;
         }
         /**
          * @hidden
@@ -7096,111 +6771,420 @@ var Message = function () {
     }, {
         key: "_traceName",
         value: function _traceName() {
-            return 'Message';
+            return 'MsgSignaling';
         }
-    }, {
-        key: "uuid",
-        get: function get() {
-            return this._uuid;
-        }
-        /**
-         * UUID of the conversation this message belongs to.
-         */
-
-    }, {
-        key: "conversation",
-        get: function get() {
-            return this._conversation;
-        }
-        /**
-         * Message text.
-         */
-
-    }, {
-        key: "text",
-        get: function get() {
-            return this._text;
-        },
-        set: function set(value) {
-            this._text = value;
-        }
-        /**
-         * Array of 'Payload' objects associated with the message.
-         */
-
-    }, {
-        key: "payload",
-        get: function get() {
-            return this._payload;
-        },
-        set: function set(value) {
-            this._payload = value;
-        }
-        /**
-         * Message sequence number.
-         */
-
-    }, {
-        key: "seq",
-        get: function get() {
-            return this._seq;
-        }
-        //FIXME: remove!
-
-    }, {
-        key: "sender",
-        get: function get() {
-            return this._sender;
-        }
-        /**
-         * Create message from bus
-         * @param busMessage
-         * @param seq
-         * @hidden
-         */
-
     }], [{
-        key: "_createFromBus",
-        value: function _createFromBus(busMessage, seq) {
-            var message = new Message(busMessage.text, busMessage.payload);
-            message._uuid = busMessage.uuid;
-            message._conversation = busMessage.conversation;
-            message._sender = busMessage.sender;
-            message._seq = seq;
-            return message;
-        }
-        /**
-         * @hidden
-         * @param cacheMessage
-         * @returns {Message}
-         */
-
-    }, {
-        key: "createFromCache",
-        value: function createFromCache(cacheMessage) {
-            var message = new Message(cacheMessage.text, cacheMessage.payload);
-            message._uuid = cacheMessage.uuid;
-            message._conversation = cacheMessage.conversation;
-            message._sender = cacheMessage.sender;
-            message._seq = cacheMessage.seq;
-            return message;
+        key: "get",
+        value: function get() {
+            MsgSignaling.instance = MsgSignaling.instance || new MsgSignaling();
+            return MsgSignaling.instance;
         }
     }]);
 
-    return Message;
-}();
+    return MsgSignaling;
+}(EventTarget_1.EventTarget);
 
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], Message.prototype, "sendTo", null);
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], Message.prototype, "getPayload", null);
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], Message.prototype, "update", null);
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], Message.prototype, "remove", null);
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], Message.prototype, "toCache", null);
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], Message, "_createFromBus", null);
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], Message, "createFromCache", null);
-exports.Message = Message;
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], MsgSignaling.prototype, "handleWsData", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], MsgSignaling.prototype, "sendWsMessage", null);
+exports.MsgSignaling = MsgSignaling;
 
 /***/ }),
-/* 23 */
+/* 19 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+Object.defineProperty(exports, "__esModule", { value: true });
+var Messenger_1 = __webpack_require__(25);
+var Conversation_1 = __webpack_require__(34);
+var Message_1 = __webpack_require__(26);
+/**
+ * Messaging allows exchanging instant messages between 2 or more participants.
+ * Messaging supports text and metadata. The conversation doesn't bind or depend on the audio/video calls, but there is a possibility to integrate messaging in audio/video calls.
+ *
+ * FEATURES:
+ * 1. messaging is the separate part of WEB SDK, but it uses the [Client.login], [Client.loginWithOneTimeKey] and [Client.loginWithToken] methods - in brief, if a user was already logged in he can use messaging functionality.
+ * 1. messaging doesn't use backend JS scenario at all
+ * See the minimum example to create messaging and to be able start a conversation:
+ * @example
+ * const voxSDK = VoxImplant.getInstance();
+ * voxSDK.init({micRequired:false})
+ *   .then(()=>voxSDK.connect())
+ *   .then(()=>sdk.login('foo@bar.baz.voximplant.com', 'secretpass'))
+ *   .then((e)=>{
+ *     if(!e.result)
+ *       throw e.message;
+ *     console.logger('[Voximplant] Ready, connected and logged in.');
+ *     return VoxImplant.getMessenger();
+ *   })
+ *   .then((messaging)=>{
+ *     messaging.on(VoxImplant.Messaging.MessengerEvents.CreateConversation,onCreateConversation);
+ *     messaging.createConversation([]);
+ *   })
+ *   .catch(e=>console.error('[Voximplant] Oops! Something went wrong',e));
+ *
+ * function onCreateConversation(e){
+ *   console.logger(`[Voximplant] New conversation here! ID:${e.conversation.uuid}`);
+ *   e.conversation.sendMessage('Hello world!');
+ * }
+ *
+ * function onSendMessage(e){
+ *   console.logger(`[Voximplant] Message from ${e.message.sender}: ${e.message.text}`)
+ * }
+ *
+ */
+var Messaging;
+(function (Messaging) {
+  /**
+   * Method to get an instance of Messenger class which is used to control messaging functions.
+   */
+  function get() {
+    return Messenger.getInstance();
+  }
+  Messaging.get = get;
+  /**
+   * Messenger class is used to control messaging functions. Can't be instantiated directly (singleton), please use [getMessenger] or [Messaging.get] to get the class instance.
+   */
+
+  var Messenger = function (_Messenger_1$Messenge) {
+    _inherits(Messenger, _Messenger_1$Messenge);
+
+    function Messenger() {
+      _classCallCheck(this, Messenger);
+
+      return _possibleConstructorReturn(this, (Messenger.__proto__ || Object.getPrototypeOf(Messenger)).apply(this, arguments));
+    }
+
+    return Messenger;
+  }(Messenger_1.Messenger);
+
+  Messaging.Messenger = Messenger;
+  /**
+   * Conversation instance. Created by the [Messenger.createConversation] method. Used to send messages, add or remove users, change moderators list etc.
+   */
+
+  var Conversation = function (_Conversation_1$Conve) {
+    _inherits(Conversation, _Conversation_1$Conve);
+
+    function Conversation() {
+      _classCallCheck(this, Conversation);
+
+      return _possibleConstructorReturn(this, (Conversation.__proto__ || Object.getPrototypeOf(Conversation)).apply(this, arguments));
+    }
+
+    return Conversation;
+  }(Conversation_1.Conversation);
+
+  Messaging.Conversation = Conversation;
+  ;
+  /**
+   * Describes single message. Received via the [MessengerEvents.SendMessage] or [MessengerEvents.EditMessage] events and used to serialize or edit the message.
+   */
+
+  var Message = function (_Message_1$Message) {
+    _inherits(Message, _Message_1$Message);
+
+    function Message() {
+      _classCallCheck(this, Message);
+
+      return _possibleConstructorReturn(this, (Message.__proto__ || Object.getPrototypeOf(Message)).apply(this, arguments));
+    }
+
+    return Message;
+  }(Message_1.Message);
+
+  Messaging.Message = Message;
+  ;
+  /**
+   * Available methods to manipulate the messaging flow. Note that if an action triggers any of [MessengerEvents], the action's name will be set as a value of [ConversationEvent.messengerAction].
+   */
+  var MessengerAction = void 0;
+  (function (MessengerAction) {
+    /**
+     * @hidden
+     */
+    MessengerAction["UNKNOWN"] = "UNKNOWN";
+    MessengerAction["createConversation"] = "createConversation";
+    MessengerAction["editConversation"] = "editConversation";
+    /**
+     * @hidden
+     */
+    MessengerAction["removeConversation"] = "removeConversation";
+    MessengerAction["joinConversation"] = "joinConversation";
+    MessengerAction["leaveConversation"] = "leaveConversation";
+    MessengerAction["getConversation"] = "getConversation";
+    MessengerAction["getConversations"] = "getConversations";
+    MessengerAction["getPublicConversations"] = "getPublicConversations";
+    /**
+     * @hidden
+     */
+    MessengerAction["searchConversations"] = "searchConversations";
+    /**
+     * @hidden
+     */
+    MessengerAction["removeEmptyConversation"] = "removeEmptyConversation";
+    MessengerAction["addParticipants"] = "addParticipants";
+    MessengerAction["editParticipants"] = "editParticipants";
+    MessengerAction["removeParticipants"] = "removeParticipants";
+    MessengerAction["getUser"] = "getUser";
+    MessengerAction["getUsers"] = "getUsers";
+    MessengerAction["editUser"] = "editUser";
+    MessengerAction["setStatus"] = "setStatus";
+    MessengerAction["sendMessage"] = "sendMessage";
+    MessengerAction["editMessage"] = "editMessage";
+    MessengerAction["removeMessage"] = "removeMessage";
+    MessengerAction["typingMessage"] = "typingMessage";
+    MessengerAction["isRead"] = "isRead";
+    MessengerAction["subscribe"] = "subscribe";
+    MessengerAction["unsubscribe"] = "unsubscribe";
+    MessengerAction["manageNotification"] = "manageNotification";
+    MessengerAction["getSubscriptionList"] = "getSubscriptionList";
+    /**
+     * @hidden
+     */
+    MessengerAction["createBot"] = "createBot";
+    /**
+     * @hidden
+     */
+    MessengerAction["removeBot"] = "removeBot";
+    MessengerAction["retransmitEvents"] = "retransmitEvents";
+  })(MessengerAction = Messaging.MessengerAction || (Messaging.MessengerAction = {}));
+  var MessengerEvents = void 0;
+  (function (MessengerEvents) {
+    /**
+     * New conversation created.
+     * You receive this event when anybody created a new conversation with the current user in participant array. Also this event dispatch on conversation creator.
+     */
+    MessengerEvents["CreateConversation"] = "CreateConversation";
+    /**
+     * Conversation properties were modified.
+     */
+    MessengerEvents["EditConversation"] = "EditConversation";
+    /**
+     * The conversation was removed.
+     * @hidden
+     */
+    MessengerEvents["RemoveConversation"] = "RemoveConversation";
+    /**
+     * Conversation description is received. Triggered in response to the 'getConversation'.
+     */
+    MessengerEvents["GetConversation"] = "GetConversation";
+    /**
+     * Triggered in response to the 'getPublicConversation'.
+     */
+    MessengerEvents["GetPublicConversations"] = "GetPublicConversations";
+    /**
+     * Event is triggered when a new message is received as a result of the [Conversation.sendMessage] method call.
+     */
+    MessengerEvents["SendMessage"] = "SendMessage";
+    /**
+     * Message was edited.
+     */
+    MessengerEvents["EditMessage"] = "EditMessage";
+    /**
+     * Message was removed.
+     */
+    MessengerEvents["RemoveMessage"] = "RemoveMessage";
+    /**
+     * Information that some user is typing something is received. Triggered in response to the 'typing' called by any user.
+     */
+    MessengerEvents["Typing"] = "Typing";
+    /**
+     * Dispatch when [Messenger.editUser] successful done into cloud. Triggered only for users specified in the 'subscribe' method call.
+     */
+    MessengerEvents["EditUser"] = "EditUser";
+    /**
+     * Return user, requested in [Messenger.getUser] function
+     */
+    MessengerEvents["GetUser"] = "GetUser";
+    /**
+     * Event is triggered in case of an error while creating a conversation. See the details in the [MessengerEventsCallbacks.ErrorEvent] interface.
+     */
+    MessengerEvents["Error"] = "Error";
+    /**
+     * Event is triggered after [Conversation.retransmitEvents] method is called on some conversation for this SDK instance.
+     */
+    MessengerEvents["RetransmitEvents"] = "RetransmitEvents";
+    /**
+     *  Event is triggered after another device with same logged in user called the [Conversation.markAsRead] method.
+     */
+    MessengerEvents["Read"] = "Read";
+    /**
+     * Event is triggered after the [Messenger.subscribe] method is called.
+     */
+    MessengerEvents["Subscribe"] = "Subscribe";
+    /**
+     * Event is triggered after the [Messenger.unsubscribe] method is called.
+     */
+    MessengerEvents["Unsubscribe"] = "Unsubscribe";
+    /**
+     * Event is triggered after the user presence state has changed.
+     */
+    MessengerEvents["SetStatus"] = "SetStatus";
+    /**
+     * Event is triggered in response to the 'getSubscriptionList'.
+     */
+    MessengerEvents["GetSubscriptionList"] = "GetSubscriptionList";
+    /**
+     * @hidden
+     */
+    MessengerEvents["CreateBot"] = "CreateBot";
+    /**
+     * @hidden
+     */
+    MessengerEvents["RemoveBot"] = "RemoveBot";
+  })(MessengerEvents = Messaging.MessengerEvents || (Messaging.MessengerEvents = {}));
+  var MessengerError = void 0;
+  (function (MessengerError) {
+    /**
+     *  Something went wrong. Please check your input or required parameters.
+     */
+    MessengerError[MessengerError["Error_0"] = 0] = "Error_0";
+    /**
+     * Transport message structure is wrong. From GW.
+     */
+    MessengerError[MessengerError["Error_1"] = 1] = "Error_1";
+    /**
+     * Event name is unknown.
+     */
+    MessengerError[MessengerError["Error_2"] = 2] = "Error_2";
+    /**
+     * User is not authorized. From GW.
+     */
+    MessengerError[MessengerError["Error_3"] = 3] = "Error_3";
+    /**
+     * Conversation does not exist.
+     */
+    MessengerError[MessengerError["Error_8"] = 8] = "Error_8";
+    /**
+     * Message with this UUID does not exist in the conversation.
+     */
+    MessengerError[MessengerError["Error_10"] = 10] = "Error_10";
+    /**
+     *  Message with this UUID is deleted from the conversation.
+     */
+    MessengerError[MessengerError["Error_11"] = 11] = "Error_11";
+    /**
+     *  ACL error.
+     */
+    MessengerError[MessengerError["Error_12"] = 12] = "Error_12";
+    /**
+     *  User is already in the participants list.
+     */
+    MessengerError[MessengerError["Error_13"] = 13] = "Error_13";
+    /**
+     *  Public join is not available for this conversation.
+     */
+    MessengerError[MessengerError["Error_15"] = 15] = "Error_15";
+    /**
+     *  Conversation with this UUID is deleted.
+     */
+    MessengerError[MessengerError["Error_16"] = 16] = "Error_16";
+    /**
+     *  User validation error.
+     */
+    MessengerError[MessengerError["Error_18"] = 18] = "Error_18";
+    /**
+     *  User is not in the participants list.
+     */
+    MessengerError[MessengerError["Error_19"] = 19] = "Error_19";
+    /**
+     *  Number of requested objects is 0 or larger than allowed by the service.
+     */
+    MessengerError[MessengerError["Error_21"] = 21] = "Error_21";
+    /**
+     *  Number of requested objects is larger than allowed by the service.
+     */
+    MessengerError[MessengerError["Error_22"] = 22] = "Error_22";
+    /**
+     *  Message size exceeds the limit of 5000 symbols.
+     */
+    MessengerError[MessengerError["Error_23"] = 23] = "Error_23";
+    /**
+     *  The 'seq' parameter value is greater than currently possible.
+     */
+    MessengerError[MessengerError["Error_24"] = 24] = "Error_24";
+    /**
+     *  User is not found.
+     */
+    MessengerError[MessengerError["Error_25"] = 25] = "Error_25";
+    /**
+     *  The notification event is incorrect.
+     */
+    MessengerError[MessengerError["Error_26"] = 26] = "Error_26";
+    /**
+     *  The 'from' field value is greater than the 'to' field value.
+     */
+    MessengerError[MessengerError["Error_28"] = 28] = "Error_28";
+    /**
+     *  Messaging service is not available. Try again later. From GW.
+     */
+    MessengerError[MessengerError["Error_30"] = 30] = "Error_30";
+    /**
+     *  N messages per second limit reached. Please try again later. From GW.
+     */
+    MessengerError[MessengerError["Error_32"] = 32] = "Error_32";
+    /**
+     *  N messages per minute limit reached. Please try again later. From GW.
+     */
+    MessengerError[MessengerError["Error_33"] = 33] = "Error_33";
+    /**
+     *  Direct conversation cannot be public or uber.
+     */
+    MessengerError[MessengerError["Error_34"] = 34] = "Error_34";
+    /**
+     *  Direct conversation is allowed between two users only.
+     */
+    MessengerError[MessengerError["Error_35"] = 35] = "Error_35";
+    /**
+     *  Passing the 'eventsFrom', 'eventsTo' and 'count' parameters simultaneously is not allowed. You should use only two of them.
+     */
+    MessengerError[MessengerError["Error_36"] = 36] = "Error_36";
+    /**
+     *  Adding participant to a direct conversation is not allowed.
+     */
+    MessengerError[MessengerError["Error_37"] = 37] = "Error_37";
+    /**
+     *  Removing participant from a direct conversation is not allowed.
+     */
+    MessengerError[MessengerError["Error_38"] = 38] = "Error_38";
+    /**
+     *  Joining a direct conversation is not allowed.
+     */
+    MessengerError[MessengerError["Error_39"] = 39] = "Error_39";
+    /**
+     *  Leaving a direct conversation is not allowed.
+     */
+    MessengerError[MessengerError["Error_40"] = 40] = "Error_40";
+    /**
+     *  Specify at least two parameters: eventsFrom, eventsTo or count.
+     */
+    MessengerError[MessengerError["Error_41"] = 41] = "Error_41";
+    /**
+     *  Current messaging tier has been exceeded.
+     */
+    MessengerError[MessengerError["Error_42"] = 42] = "Error_42";
+    /**
+     *  Messaging tier is being upgraded. Please try again later.
+     */
+    MessengerError[MessengerError["Error_43"] = 43] = "Error_43";
+    /**
+     *  Internal error.
+     */
+    MessengerError[MessengerError["Error_500"] = 500] = "Error_500";
+  })(MessengerError = Messaging.MessengerError || (Messaging.MessengerError = {}));
+})(Messaging = exports.Messaging || (exports.Messaging = {}));
+exports.default = Messaging;
+
+/***/ }),
+/* 20 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -7223,7 +7207,7 @@ var __decorate = undefined && undefined.__decorate || function (decorators, targ
 Object.defineProperty(exports, "__esModule", { value: true });
 var Logger_1 = __webpack_require__(0);
 var Client_1 = __webpack_require__(1);
-var Authenticator_1 = __webpack_require__(10);
+var Authenticator_1 = __webpack_require__(11);
 var Hardware_1 = __webpack_require__(4);
 /**
  * @hidden
@@ -7246,55 +7230,14 @@ var Utils = function () {
             return 'Logger';
         }
     }], [{
-        key: "extend",
+        key: "cadScript",
 
-        /**
-         * @param objects Objects for merging
-         * @hidden
-         * @returns {Object}
-         */
-        value: function extend() {
-            for (var _len = arguments.length, objects = Array(_len), _key = 0; _key < _len; _key++) {
-                objects[_key] = arguments[_key];
-            }
-
-            var extended = {};
-            var merge = function merge(obj) {
-                for (var prop in obj) {
-                    if (Object.prototype.hasOwnProperty.call(obj, prop)) {
-                        extended[prop] = obj[prop];
-                    }
-                }
-            };
-            merge(arguments[0]);
-            for (var i = 1; i < arguments.length; i++) {
-                var obj = arguments[i];
-                merge(obj);
-            }
-            return extended;
-        }
-        /**
-         * Convert <tt>headersObj</tt> to string
-         * @param {Object} headersObj Object contains headers (as properties) to stringify
-         * @returns {String}
-         * @hidden
-         */
-
-    }, {
-        key: "stringifyExtraHeaders",
-        value: function stringifyExtraHeaders(headersObj) {
-            if (Object.prototype.toString.call(headersObj) == '[object Object]') headersObj = JSON.stringify(headersObj);else headersObj = null;
-            return headersObj;
-        }
         /**
          * Parse cadence sections
          * @param {String} script
          * @retruns {Object}
          * @hidden
          */
-
-    }, {
-        key: "cadScript",
         value: function cadScript(script) {
             var cads = script.split(';');
             return cads.map(function (cad) {
@@ -7414,7 +7357,7 @@ var Utils = function () {
         value: function playToneScript(script) {
             var loop = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
 
-            if (typeof window.AudioContext != 'undefined' || typeof window.webkitAudioContext != 'undefined') {
+            if (typeof window['AudioContext'] != 'undefined' || typeof window['webkitAudioContext'] != 'undefined') {
                 var context = Hardware_1.default.AudioDeviceManager.get().getAudioContext();
                 if (context === null) return;
                 var parsedToneScript = this.toneScript(script),
@@ -7491,74 +7434,6 @@ var Utils = function () {
             return false;
         }
         /**
-         * Makes cross-browser XmlHttpRequest
-         * @param {String} url URL for HTTP request
-         * @param {Function} [callback] Function to be called on compvarion
-         * @param {Function} [error] Function to be called in case of error
-         * @param {String} [postData] Data to be sent with POST request
-         * @hidden
-         */
-
-    }, {
-        key: "sendRequest",
-        value: function sendRequest(url, callback, error, postData) {
-            var xdr = false;
-            var createXMLHTTPObject = function createXMLHTTPObject() {
-                var XMLHttpFactories = [
-                //function() { return new XDomainRequest(); },
-                function () {
-                    return new XMLHttpRequest();
-                }, function () {
-                    return new ActiveXObject("Msxml2.XMLHTTP");
-                }, function () {
-                    return new ActiveXObject("Msxml3.XMLHTTP");
-                }, function () {
-                    return new ActiveXObject("Microsoft.XMLHTTP");
-                }];
-                var xmlhttp;
-                for (var i = 0; i < XMLHttpFactories.length; i++) {
-                    try {
-                        xmlhttp = XMLHttpFactories[i]();
-                        if (i === 0) xdr = true;
-                    } catch (e) {
-                        continue;
-                    }
-                    break;
-                }
-                return xmlhttp;
-            };
-            var req = createXMLHTTPObject();
-            if (!req) return;
-            var method = postData ? "POST" : "GET";
-            if (!xdr) {
-                req.open(method, url, true);
-                if (postData) req.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
-                req.onreadystatechange = function () {
-                    if (req.readyState != 4) return;
-                    if (req.status != 200 && req.status != 304) {
-                        error(req);
-                        return;
-                    }
-                    callback(req);
-                };
-                if (req.readyState == 4) return;
-                req.send(postData);
-            } else {
-                req.onerror = function () {
-                    error(req);
-                };
-                req.ontimeout = function () {
-                    error(req);
-                };
-                req.onload = function () {
-                    callback(req);
-                };
-                req.open(method, url);
-                req.timeout = 5000;
-                req.send();
-            }
-        }
-        /**
          * Makes request to VoxImplant Load Balancer to get media gateway IP address
          * @param {Function} callback Function to be called on compvarion
          * @param {Boolean} [reservedBalancer=false] Try reserved balancer if true
@@ -7567,20 +7442,13 @@ var Utils = function () {
 
     }, {
         key: "getServers",
-        value: function getServers(callback) {
-            var reservedBalancer = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
-            var vi = arguments[2];
+        value: function getServers() {
+            var reservedBalancer = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
 
-            var protocol = 'https:' == document.location.protocol ? 'https://' : 'http://';
-            var balancer_url = protocol + "balancer.voximplant.com/getNearestHost";
-            this.sendRequest(balancer_url, function (XHR) {
-                balancerCompare(XHR.responseText);
-            }, function (XHR) {
-                balancerCompare(null);
+            var balancerUrl = "https://balancer.voximplant.com/getNearestHost";
+            return fetch(balancerUrl).then(function (e) {
+                return e.text();
             });
-            function balancerCompare(data) {
-                if (data !== null) callback(data);else if (reservedBalancer !== true) Utils.getServers(callback, true, vi);else vi.dispatchEvent({ name: 'ConnectionFailed', message: "VoxImplant Cloud is unavailable" });
-            }
         }
         /**
          * @hidden
@@ -7625,19 +7493,8 @@ var Utils = function () {
                 i = length - str.length,
                 z = "0";
             for (; i > 0; i >>>= 1, z += z) {
-                if (i & 1) {
-                    str = z + str;
-                }
-            }
-            return str;
-        }
-    }, {
-        key: "filterXSS",
-        value: function filterXSS(content) {
-            var div = document.createElement("div");
-            div.appendChild(document.createTextNode(content));
-            content = div.innerHTML;
-            return content;
+                if (i & 1) str = z + str;
+            }return str;
         }
         /**
          * Check if !connected
@@ -7649,16 +7506,6 @@ var Utils = function () {
         value: function checkCA() {
             if (!Client_1.Client.getInstance().connected()) throw new Error("NOT_CONNECTED_TO_VOXIMPLANT");
             if (!Authenticator_1.Authenticator.get().authorized()) throw new Error("NOT_AUTHORIZED");
-        }
-        /**
-         * Promise to check browser compability level
-         * @param level 'webrtc'|'signaling'
-         */
-
-    }, {
-        key: "canRTC",
-        value: function canRTC(level) {
-            return;
         }
         /**
          * Complite defaults with settings
@@ -7677,14 +7524,15 @@ var Utils = function () {
             return left;
         }
     }, {
-        key: "makeRandomString",
-        value: function makeRandomString(length) {
-            var possible = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789+/";
-            var randomSrtring = '';
-            for (var i = 0; i < length; i++) {
-                randomSrtring += possible.charAt(Math.floor(Math.random() * possible.length));
+        key: "strFormat",
+        value: function strFormat(str) {
+            for (var _len = arguments.length, args = Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
+                args[_key - 1] = arguments[_key];
             }
-            return randomSrtring;
+
+            return str.replace(/{(\d+)}/g, function (match, number) {
+                return typeof args[number] != 'undefined' ? args[number] : match;
+            });
         }
     }]);
 
@@ -7692,24 +7540,77 @@ var Utils = function () {
 }();
 
 Utils.source = null;
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.UTILS)], Utils, "extend", null);
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.UTILS)], Utils, "stringifyExtraHeaders", null);
 __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.UTILS)], Utils, "cadScript", null);
 __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.UTILS)], Utils, "freqScript", null);
 __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.UTILS)], Utils, "toneScript", null);
 __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.UTILS)], Utils, "playToneScript", null);
 __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.UTILS)], Utils, "stopPlayback", null);
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.UTILS)], Utils, "sendRequest", null);
 __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.UTILS)], Utils, "getServers", null);
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.UTILS)], Utils, "generateUUID", null);
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.UTILS)], Utils, "_gri", null);
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.UTILS)], Utils, "_ha", null);
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.UTILS)], Utils, "filterXSS", null);
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.UTILS)], Utils, "checkCA", null);
 exports.Utils = Utils;
 
 /***/ }),
-/* 24 */
+/* 21 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+Object.defineProperty(exports, "__esModule", { value: true });
+var VoxSignaling_1 = __webpack_require__(2);
+var RemoteFunction_1 = __webpack_require__(3);
+/**
+ * @hidden
+ */
+
+var SignalingDTMFSender = function () {
+    function SignalingDTMFSender(_id) {
+        _classCallCheck(this, SignalingDTMFSender);
+
+        this._id = _id;
+    }
+
+    _createClass(SignalingDTMFSender, [{
+        key: "insertDTMF",
+        value: function insertDTMF(tones, duration, interToneGap) {
+            var _this = this;
+
+            tones.split('').forEach(function (key) {
+                return _this.sendKey(key);
+            });
+        }
+    }, {
+        key: "sendKey",
+        value: function sendKey(key) {
+            var k = void 0;
+            if (key == '*') k = 10;else if (key == '#') k = 11;else {
+                k = parseInt(key);
+            }
+            if (k >= 0 || k <= 11) VoxSignaling_1.VoxSignaling.get().callRemoteFunction(RemoteFunction_1.RemoteFunction.sendDTMF, this._id, k);
+        }
+        /**
+         * @hidden
+         * @return {string}
+         * @private
+         */
+
+    }, {
+        key: "_traceName",
+        value: function _traceName() {
+            return 'SignalingDTMFSender';
+        }
+    }]);
+
+    return SignalingDTMFSender;
+}();
+
+exports.SignalingDTMFSender = SignalingDTMFSender;
+
+/***/ }),
+/* 22 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -7732,11 +7633,11 @@ var __decorate = undefined && undefined.__decorate || function (decorators, targ
 Object.defineProperty(exports, "__esModule", { value: true });
 var Logger_1 = __webpack_require__(0);
 var VoxSignaling_1 = __webpack_require__(2);
-var CallManager_1 = __webpack_require__(5);
-var Call_1 = __webpack_require__(13);
-var Constants_1 = __webpack_require__(11);
+var CallManager_1 = __webpack_require__(6);
+var Call_1 = __webpack_require__(12);
+var Constants_1 = __webpack_require__(10);
 var RemoteFunction_1 = __webpack_require__(3);
-var ReInviteQ_1 = __webpack_require__(37);
+var ReInviteQ_1 = __webpack_require__(32);
 var Client_1 = __webpack_require__(1);
 var index_1 = __webpack_require__(4);
 /**
@@ -7782,9 +7683,9 @@ var PeerConnection = function () {
         this.mediaRepository = [];
         this.candidateList = [];
         this.localCandidateTimer = -1;
-        this.log = Logger_1.LogManager.get().createLogger(Logger_1.LogCategory.RTC, 'PeerConnection ' + id);
+        this.logger = Logger_1.LogManager.get().createLogger(Logger_1.LogCategory.RTC, this._traceName() + " " + id);
+        this.logger.info('PC created');
         this.state = PeerConnectionState.IDLE;
-        this.log.info('Created PC');
         this.pendingCandidates = [];
         if (id !== '_default' && CallManager_1.CallManager.get().calls[id]) this.reInviteQ = new ReInviteQ_1.ReInviteQ(CallManager_1.CallManager.get().calls[id], this._canReInvite);
     }
@@ -7803,22 +7704,21 @@ var PeerConnection = function () {
         key: "processRemoteAnswer",
         value: function processRemoteAnswer(headers, sdp) {
             // if (this.state == PeerConnectionState.ESTABLISHING) {
-            this.log.info('Called processRemoteAnswer');
             this.state = PeerConnectionState.ESTABLISHING;
             return this._processRemoteAnswer(headers, sdp);
             // } else {
-            //     this.log.error("Called processRemoteAnswer in state " + PeerConnectionState[this.state]);
+            //     this.logger.error("Called processRemoteAnswer in state " + PeerConnectionState[this.state]);
             // }
         }
     }, {
         key: "getLocalOffer",
         value: function getLocalOffer() {
             if (this.state === PeerConnectionState.IDLE || this.state === PeerConnectionState.ESTABLISHED || PeerConnectionState.LOCALOFFER) {
-                this.log.info('Called getLocalOffer');
+                this.logger.info('getLocalOffer()');
                 this.state = PeerConnectionState.LOCALOFFER;
                 return this._getLocalOffer();
             } else {
-                this.log.error('Called getLocalOffer in state ' + PeerConnectionState[this.state]);
+                this.logger.error('getLocalOffer() in state ' + PeerConnectionState[this.state]);
                 return new Promise(function (resolve, reject) {
                     reject('Invalid state');
                 });
@@ -7833,11 +7733,10 @@ var PeerConnection = function () {
         key: "processRemoteOffer",
         value: function processRemoteOffer(sdp) {
             if (this.state === PeerConnectionState.IDLE || this.state === PeerConnectionState.ESTABLISHED) {
-                this.log.info('Called processRemoteOffer');
                 this.state = PeerConnectionState.ESTABLISHING;
                 return this._processRemoteOffer(sdp);
             } else {
-                this.log.error('Called processRemoteOffer in state ' + PeerConnectionState[this.state]);
+                this.logger.error('processRemoteOffer() in state ' + PeerConnectionState[this.state]);
                 return new Promise(function (resolve, reject) {
                     reject('Invalid state');
                 });
@@ -7846,13 +7745,13 @@ var PeerConnection = function () {
     }, {
         key: "close",
         value: function close() {
-            this.log.info('Called close');
+            this.logger.info('close()');
             this._close();
         }
     }, {
         key: "addRemoteCandidate",
         value: function addRemoteCandidate(candidate, mLineIndex) {
-            this.log.info('Called addRemoteCandidate');
+            this.logger.info("addRemoteCandidate(" + candidate + ", " + mLineIndex + ")");
             return this._addRemoteCandidate(candidate, mLineIndex);
         }
     }, {
@@ -7953,6 +7852,7 @@ var PeerConnection = function () {
             var _this2 = this;
 
             return new Promise(function (_resolve2, reject) {
+                if (_this2.onHold === newState) _resolve2({ call: _this2._call, name: "Updated", result: true });
                 _this2.reInviteQ.add({
                     fx: function fx() {
                         _this2._hold(newState);
@@ -8016,16 +7916,29 @@ var PeerConnection = function () {
             }
         }
     }, {
-        key: "addCustomMedia",
-        value: function addCustomMedia(stream) {
+        key: "restoreVideoSending",
+        value: function restoreVideoSending() {
             var _this6 = this;
 
+            if (this._call.settings.active) {
+                setTimeout(function () {
+                    if (_this6._call.settings.state !== Call_1.CallState.ENDED) {
+                        _this6.enableVideo(_this6._call.settings.videoDirections.sendVideo);
+                    }
+                }, 0);
+            }
+        }
+    }, {
+        key: "addCustomMedia",
+        value: function addCustomMedia(stream) {
+            var _this7 = this;
+
             return new Promise(function (_resolve4, reject) {
-                _this6.reInviteQ.add({
+                _this7.reInviteQ.add({
                     fx: function fx() {
-                        _this6._addCustomMedia(stream);
+                        _this7._addCustomMedia(stream);
                     }, reject: reject, resolve: function resolve(e) {
-                        _this6.restoreMute();
+                        _this7.restoreMute();
                         _resolve4();
                     }
                 });
@@ -8054,18 +7967,68 @@ var PeerConnection = function () {
     }, {
         key: "removeCustomMedia",
         value: function removeCustomMedia(stream) {
-            var _this7 = this;
+            var _this8 = this;
 
             return new Promise(function (_resolve5, reject) {
-                _this7.reInviteQ.add({
+                _this8.reInviteQ.add({
                     fx: function fx() {
-                        _this7._removeCustomMedia(stream);
+                        _this8._removeCustomMedia(stream);
                     }, reject: reject, resolve: function resolve(e) {
-                        _this7.restoreMute();
+                        _this8.restoreMute();
                         _resolve5();
                     }
                 });
             });
+        }
+        /**
+         * @param {MediaStream} stream
+         */
+
+    }, {
+        key: "updateCustomMedia",
+        value: function updateCustomMedia(stream) {
+            this._updateCustomMedia(stream);
+        }
+    }, {
+        key: "setState",
+        value: function setState(st) {
+            this.logger.info('Transmitting from ' + PeerConnectionState[this.state] + ' to ' + PeerConnectionState[st]);
+            this.state = st;
+        }
+    }, {
+        key: "sendLocalCandidateToPeer",
+        value: function sendLocalCandidateToPeer(cand, mLineIndex) {
+            var _this9 = this;
+
+            this._call = CallManager_1.CallManager.get().calls[this.id];
+            if (this.mode === PeerConnectionMode.CLIENT_SERVER_V1) {
+                VoxSignaling_1.VoxSignaling.get().callRemoteFunction(RemoteFunction_1.RemoteFunction.addCandidate, this.id, cand, mLineIndex);
+            } else {
+                this.candidateList.push([mLineIndex, cand]);
+                if (this.localCandidateTimer <= 0) {
+                    this.localCandidateTimer = window.setTimeout(function () {
+                        window.clearTimeout(_this9.localCandidateTimer);
+                        _this9.localCandidateTimer = -1;
+                        if (CallManager_1.CallManager.get().calls[_this9.id]) CallManager_1.CallManager.get().calls[_this9.id].sendInfo(Constants_1.Constants.P2P_SPD_FRAG_MIME_TYPE, JSON.stringify(_this9.candidateList), {});
+                        _this9.candidateList = [];
+                    }, 200);
+                }
+            }
+        }
+    }, {
+        key: "startCandidateSendTimer",
+        value: function startCandidateSendTimer() {
+            var _this10 = this;
+
+            if (this.candidateSendTimer === null || typeof this.candidateSendTimer === 'undefined') {
+                this.candidateSendTimer = setTimeout(function () {
+                    _this10.candidateSendTimer = null;
+                    if (_this10.pendingCandidates.length > 0) {
+                        if (CallManager_1.CallManager.get().calls[_this10.id]) CallManager_1.CallManager.get().calls[_this10.id].sendInfo(Constants_1.Constants.P2P_SPD_FRAG_MIME_TYPE, JSON.stringify(_this10.pendingCandidates), {});
+                    }
+                    _this10.pendingCandidates = [];
+                }, this.SEND_CANDIDATE_DELAY);
+            }
         }
         /**
          * @hidden
@@ -8077,47 +8040,6 @@ var PeerConnection = function () {
         key: "_traceName",
         value: function _traceName() {
             return 'PeerConnection';
-        }
-    }, {
-        key: "setState",
-        value: function setState(st) {
-            this.log.info('Transmitting from ' + PeerConnectionState[this.state] + ' to ' + PeerConnectionState[st]);
-            this.state = st;
-        }
-    }, {
-        key: "sendLocalCandidateToPeer",
-        value: function sendLocalCandidateToPeer(cand, mLineIndex) {
-            var _this8 = this;
-
-            this._call = CallManager_1.CallManager.get().calls[this.id];
-            if (this.mode === PeerConnectionMode.CLIENT_SERVER_V1) {
-                VoxSignaling_1.VoxSignaling.get().callRemoteFunction(RemoteFunction_1.RemoteFunction.addCandidate, this.id, cand, mLineIndex);
-            } else {
-                this.candidateList.push([mLineIndex, cand]);
-                if (this.localCandidateTimer <= 0) {
-                    this.localCandidateTimer = window.setTimeout(function () {
-                        window.clearTimeout(_this8.localCandidateTimer);
-                        _this8.localCandidateTimer = -1;
-                        if (CallManager_1.CallManager.get().calls[_this8.id]) CallManager_1.CallManager.get().calls[_this8.id].sendInfo(Constants_1.Constants.P2P_SPD_FRAG_MIME_TYPE, JSON.stringify(_this8.candidateList), {});
-                        _this8.candidateList = [];
-                    }, 200);
-                }
-            }
-        }
-    }, {
-        key: "startCandidateSendTimer",
-        value: function startCandidateSendTimer() {
-            var _this9 = this;
-
-            if (this.candidateSendTimer === null || typeof this.candidateSendTimer === 'undefined') {
-                this.candidateSendTimer = setTimeout(function () {
-                    _this9.candidateSendTimer = null;
-                    if (_this9.pendingCandidates.length > 0) {
-                        if (CallManager_1.CallManager.get().calls[_this9.id]) CallManager_1.CallManager.get().calls[_this9.id].sendInfo(Constants_1.Constants.P2P_SPD_FRAG_MIME_TYPE, JSON.stringify(_this9.pendingCandidates), {});
-                    }
-                    _this9.pendingCandidates = [];
-                }, this.SEND_CANDIDATE_DELAY);
-            }
         }
     }, {
         key: "remoteStreams",
@@ -8149,17 +8071,19 @@ __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.RTC)], PeerConnecti
 __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.RTC)], PeerConnection.prototype, "hdnFRS", null);
 __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.RTC)], PeerConnection.prototype, "muteMicrophone", null);
 __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.RTC)], PeerConnection.prototype, "restoreMute", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.RTC)], PeerConnection.prototype, "restoreVideoSending", null);
 __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.RTC)], PeerConnection.prototype, "addCustomMedia", null);
 __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.RTC)], PeerConnection.prototype, "fastAddCustomMedia", null);
 __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.RTC)], PeerConnection.prototype, "fastRemoveCustomMedia", null);
 __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.RTC)], PeerConnection.prototype, "removeCustomMedia", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.RTC)], PeerConnection.prototype, "updateCustomMedia", null);
 __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.RTC)], PeerConnection.prototype, "setState", null);
 __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.RTC)], PeerConnection.prototype, "sendLocalCandidateToPeer", null);
 __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.RTC)], PeerConnection.prototype, "startCandidateSendTimer", null);
 exports.PeerConnection = PeerConnection;
 
 /***/ }),
-/* 25 */
+/* 23 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -8167,792 +8091,12 @@ exports.PeerConnection = PeerConnection;
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-var _get = function get(object, property, receiver) { if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { return get(parent, property, receiver); } } else if ("value" in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } };
-
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
-
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
-var __decorate = undefined && undefined.__decorate || function (decorators, target, key, desc) {
-    var c = arguments.length,
-        r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc,
-        d;
-    if ((typeof Reflect === "undefined" ? "undefined" : _typeof(Reflect)) === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);else for (var i = decorators.length - 1; i >= 0; i--) {
-        if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    }return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
 Object.defineProperty(exports, "__esModule", { value: true });
-var Logger_1 = __webpack_require__(0);
-var __1 = __webpack_require__(4);
-var EventTarget_1 = __webpack_require__(14);
-var CameraManager_1 = __webpack_require__(33);
-var BrowserSpecific_1 = __webpack_require__(8);
-var Events_1 = __webpack_require__(18);
-var Client_1 = __webpack_require__(1);
-var AudioDeviceManager_1 = __webpack_require__(32);
-var MediaRenderer_1 = __webpack_require__(34);
-/**
- * @hidden
- */
-
-var StreamManager = function (_EventTarget_1$EventT) {
-    _inherits(StreamManager, _EventTarget_1$EventT);
-
-    /**
-     * @hidden
-     */
-    function StreamManager() {
-        _classCallCheck(this, StreamManager);
-
-        var _this = _possibleConstructorReturn(this, (StreamManager.__proto__ || Object.getPrototypeOf(StreamManager)).call(this));
-
-        if (typeof StreamManager.instance !== 'undefined') throw new Error('Error - use StreamManager.get()');
-        _this._callStreams = {};
-        _this._localMediaRenderers = [];
-        _this._sharingStreams = {};
-        return _this;
-    }
-    /**
-     * Get the StreamManager instance
-     */
-
-
-    _createClass(StreamManager, [{
-        key: "getMirrorStream",
-
-        /**
-         * Return link to the mirror stream, if exist. Or get a new one.
-         * @hidden
-         * @return {Promise<MediaStream>}
-         */
-        value: function getMirrorStream() {
-            var _this2 = this;
-
-            // TODO: Переписать на общее получение медиа (irbisadm 15.09.18)
-            if (Client_1.Client.getInstance().config().experiments && Client_1.Client.getInstance().config().experiments.customMirrorMedia) {
-                return new Promise(function (resolve, reject) {
-                    Client_1.Client.getInstance().config().experiments.customMirrorMedia({
-                        videoSettings: CameraManager_1.CameraManager.get().getDefaultVideoSettings()
-                    }).then(function (stream) {
-                        _this2._mirrorStream = stream;
-                        _this2._mirrorStream.getTracks().forEach(function (track) {
-                            track.onended = function () {
-                                _this2.onMirrorEnded();
-                            };
-                            track.onmute = function () {
-                                _this2.onMirrorEnded;
-                            };
-                        });
-                        resolve(stream);
-                    }).catch(function (e) {
-                        reject(e);
-                    });
-                });
-            }
-            return new Promise(function (resolve, reject) {
-                if (typeof _this2._mirrorStream !== 'undefined') resolve(_this2._mirrorStream);else {
-                    if (BrowserSpecific_1.default.isIphone()) {
-                        return __1.default.IOSCacheManager.get().getStream({
-                            video: CameraManager_1.CameraManager.get().getCallConstraints('__local__'),
-                            audio: AudioDeviceManager_1.AudioDeviceManager.get().getCallConstraints('__local__')
-                        }).then(function (stream) {
-                            _this2._mirrorStream = stream;
-                            _this2._mirrorStream.getTracks().forEach(function (track) {
-                                track.onended = function () {
-                                    _this2.onMirrorEnded();
-                                };
-                                track.onmute = function () {
-                                    _this2.onMirrorEnded;
-                                };
-                            });
-                            resolve(stream);
-                        }, reject);
-                    } else {
-                        return navigator.mediaDevices.getUserMedia({ video: CameraManager_1.CameraManager.get().getCallConstraints('__local__') }).then(function (stream) {
-                            _this2._mirrorStream = stream;
-                            _this2._mirrorStream.getTracks().forEach(function (track) {
-                                track.onended = function () {
-                                    _this2.onMirrorEnded();
-                                };
-                                track.onmute = function () {
-                                    _this2.onMirrorEnded;
-                                };
-                            });
-                            resolve(stream);
-                        }, reject);
-                    }
-                }
-            });
-        }
-        /**
-         * @hidden
-         */
-
-    }, {
-        key: "remMirrorStream",
-        value: function remMirrorStream() {
-            if (typeof this._mirrorStream === 'undefined') return;
-            this._mirrorStream.getTracks().forEach(function (track) {
-                track.onended = undefined;
-                track.onmute = undefined;
-                track.stop();
-            });
-            this._mirrorStream = undefined;
-        }
-        /**
-         * @hidden
-         * @param {Call} call
-         * @returns {Promise<MediaStream>}
-         */
-
-    }, {
-        key: "getCallStream",
-        value: function getCallStream(call) {
-            var _this3 = this;
-
-            var ignore = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
-
-            // TODO: Переписать на общее получение медиа (irbisadm 15.09.18)
-            if (Client_1.Client.getInstance().config().experiments && Client_1.Client.getInstance().config().experiments.customCallMedia) {
-                return new Promise(function (resolve, reject) {
-                    var videoSettings = false;
-                    var audioSettings = AudioDeviceManager_1.AudioDeviceManager.get().getDefaultAudioSettings();
-                    if (call) {
-                        videoSettings = call.settings.videoDirections && call.settings.videoDirections.sendVideo ? CameraManager_1.CameraManager.get().getCallVideoSettings(call) : false;
-                        audioSettings = AudioDeviceManager_1.AudioDeviceManager.get().getCallAudioSettings(call);
-                    }
-                    Client_1.Client.getInstance().config().experiments.customCallMedia({
-                        call: call,
-                        audioSettings: audioSettings,
-                        videoSettings: videoSettings
-                    }).then(function (stream) {
-                        Client_1.Client.getInstance().dispatchEvent({
-                            name: Events_1.Events.MicAccessResult,
-                            result: true,
-                            stream: stream
-                        });
-                        resolve(stream);
-                    }).catch(function (e) {
-                        Client_1.Client.getInstance().dispatchEvent({
-                            name: Events_1.Events.MicAccessResult,
-                            result: false,
-                            stream: null
-                        });
-                        reject(e);
-                    });
-                });
-            }
-            return new Promise(function (resolve, reject) {
-                var callId = typeof call === 'undefined' ? '__default' : call.id();
-                if (_this3._callStreams[callId] && !ignore) {
-                    resolve(_this3._callStreams[callId]);
-                } else {
-                    var constraints = _this3._composeConstraints(call);
-                    if (!constraints.audio && !constraints.video && callId !== '__default') {
-                        resolve(null);
-                        return;
-                    }
-                    if (BrowserSpecific_1.default.getWSVendor() !== 'firefox') {
-                        if (BrowserSpecific_1.default.isIphone()) {
-                            __1.default.IOSCacheManager.get().getStream(constraints).then(function (stream) {
-                                _this3._callStreams[callId] = stream;
-                                stream.getTracks().forEach(function (track) {
-                                    track.onended = _this3.onCallEnded;
-                                    track.onmute = _this3.onCallEnded;
-                                });
-                                Client_1.Client.getInstance().dispatchEvent({
-                                    name: Events_1.Events.MicAccessResult,
-                                    result: true,
-                                    stream: stream
-                                });
-                                resolve(stream);
-                            });
-                        } else {
-                            navigator.mediaDevices.getUserMedia(constraints).then(function (stream) {
-                                _this3._callStreams[callId] = stream;
-                                stream.getTracks().forEach(function (track) {
-                                    track.onended = _this3.onCallEnded;
-                                    track.onmute = _this3.onCallEnded;
-                                });
-                                Client_1.Client.getInstance().dispatchEvent({
-                                    name: Events_1.Events.MicAccessResult,
-                                    result: true,
-                                    stream: stream
-                                });
-                                resolve(stream);
-                            }, function (e) {
-                                if (e.name === 'NotFoundError') {
-                                    var backupConstrains = { audio: true };
-                                    if (typeof call !== 'undefined') {
-                                        call.settings.videoDirections.sendVideo = false;
-                                        backupConstrains = _this3._composeConstraints(call);
-                                    }
-                                    navigator.mediaDevices.getUserMedia(backupConstrains).then(function (stream) {
-                                        _this3._callStreams[callId] = stream;
-                                        stream.getTracks().forEach(function (track) {
-                                            track.onended = _this3.onCallEnded;
-                                            track.onmute = _this3.onCallEnded;
-                                        });
-                                        Client_1.Client.getInstance().dispatchEvent({
-                                            name: Events_1.Events.MicAccessResult,
-                                            result: true,
-                                            stream: stream
-                                        });
-                                        resolve(stream);
-                                    }, function (e) {
-                                        Client_1.Client.getInstance().dispatchEvent({
-                                            name: Events_1.Events.MicAccessResult,
-                                            result: false,
-                                            stream: null
-                                        });
-                                        reject(e);
-                                    });
-                                } else {
-                                    Client_1.Client.getInstance().dispatchEvent({
-                                        name: Events_1.Events.MicAccessResult,
-                                        result: false,
-                                        stream: null
-                                    });
-                                    reject(e);
-                                }
-                            });
-                        }
-                    } else {
-                        var audioConstraint = null;
-                        var videoConstraint = null;
-                        if (constraints.audio) {
-                            audioConstraint = { audio: constraints.audio };
-                        }
-                        if (constraints.video) {
-                            videoConstraint = { video: constraints.video };
-                        }
-                        navigator.mediaDevices.getUserMedia(audioConstraint).then(function (stream) {
-                            if (!videoConstraint) {
-                                _this3._callStreams[callId] = stream;
-                                stream.getTracks().forEach(function (track) {
-                                    track.onended = _this3.onCallEnded;
-                                    track.onmute = _this3.onCallEnded;
-                                });
-                                Client_1.Client.getInstance().dispatchEvent({
-                                    name: Events_1.Events.MicAccessResult,
-                                    result: true,
-                                    stream: stream
-                                });
-                                resolve(stream);
-                            } else {
-                                navigator.mediaDevices.getUserMedia(videoConstraint).then(function (stream2) {
-                                    var fullStream = new MediaStream();
-                                    stream.getTracks().forEach(function (track) {
-                                        fullStream.addTrack(track);
-                                    });
-                                    stream2.getTracks().forEach(function (track) {
-                                        fullStream.addTrack(track);
-                                    });
-                                    _this3._callStreams[callId] = fullStream;
-                                    fullStream.getTracks().forEach(function (track) {
-                                        track.onended = _this3.onCallEnded;
-                                        track.onmute = _this3.onCallEnded;
-                                    });
-                                    Client_1.Client.getInstance().dispatchEvent({
-                                        name: Events_1.Events.MicAccessResult,
-                                        result: true,
-                                        stream: fullStream
-                                    });
-                                    resolve(fullStream);
-                                }, function () {
-                                    _this3._callStreams[callId] = stream;
-                                    stream.getTracks().forEach(function (track) {
-                                        track.onended = _this3.onCallEnded;
-                                        track.onmute = _this3.onCallEnded;
-                                    });
-                                    Client_1.Client.getInstance().dispatchEvent({
-                                        name: Events_1.Events.MicAccessResult,
-                                        result: true,
-                                        stream: stream
-                                    });
-                                    resolve(stream);
-                                });
-                            }
-                        }, function (e) {
-                            Client_1.Client.getInstance().dispatchEvent({
-                                name: Events_1.Events.MicAccessResult,
-                                result: false,
-                                stream: null
-                            });
-                            reject(e);
-                        });
-                    }
-                }
-            });
-        }
-        /**
-         * @hidden
-         * @param {Call} call
-         * @returns {Promise<MediaStream>}
-         * @private
-         */
-
-    }, {
-        key: "_updateCallStream",
-        value: function _updateCallStream(call) {
-            this.remCallStream(call);
-            return this.getCallStream(call);
-        }
-        /**
-         * @hidden
-         * @param {Call} call
-         * @returns {Promise<EventHandlers.Updated>}
-         */
-
-    }, {
-        key: "updateCallStream",
-        value: function updateCallStream(call) {
-            var _this4 = this;
-
-            return new Promise(function (resolve, reject) {
-                var oldMedia = _this4._callStreams[call.id()];
-                _this4.getCallStream(call, true).then(function (stream) {
-                    call.peerConnection.fastRemoveCustomMedia(oldMedia);
-                    _this4._remCallStream(oldMedia);
-                    call.peerConnection.addCustomMedia(stream).then(function (e) {
-                        resolve(e);
-                    }, function (e) {
-                        return reject(e);
-                    });
-                });
-            });
-        }
-        /**
-         * @hidden
-         * @param {Call} call
-         */
-
-    }, {
-        key: "remCallStream",
-        value: function remCallStream(call) {
-            var callId = typeof call === 'undefined' ? '__default' : call.id();
-            if (this._callStreams[callId]) {
-                this._remCallStream(this._callStreams[callId]);
-                this._callStreams[callId] = undefined;
-                delete this._callStreams[callId];
-            }
-        }
-        /**
-         * @hidden
-         * @param {Call} call
-         */
-
-    }, {
-        key: "_remCallStream",
-        value: function _remCallStream(stream) {
-            if (!stream) return;
-            if (BrowserSpecific_1.default.isIphone()) return;
-            stream.getTracks().forEach(function (track) {
-                track.onended = undefined;
-                track.onmute = undefined;
-                track.stop();
-                stream.removeTrack(track);
-            });
-        }
-        /**
-         * @hidden
-         */
-
-    }, {
-        key: "clear",
-        value: function clear() {
-            if (this._mirrorStream) {
-                this._mirrorStream.getTracks().forEach(function (track) {
-                    track.onended = undefined;
-                    track.onmute = undefined;
-                    track.stop();
-                });
-            }
-            this._mirrorStream = undefined;
-            for (var key in this._callStreams) {
-                if (this._callStreams.hasOwnProperty(key)) {
-                    var stream = this._callStreams[key];
-                    if (stream) {
-                        stream.getTracks().forEach(function (track) {
-                            track.onended = undefined;
-                            track.onmute = undefined;
-                            track.stop();
-                        });
-                    }
-                }
-            }
-            this._callStreams = {};
-        }
-        /**
-         * List of currently used containers for local audio and video streams.
-         */
-
-    }, {
-        key: "getLocalMediaRenderers",
-        value: function getLocalMediaRenderers() {
-            return this._localMediaRenderers;
-        }
-        /**
-         * Turn on local video. The container for local video elements must be specified via in the
-         * [Config.localVideoContainerId] field in the [Client.init] config.
-         *   If it's not specified, local videos will be appended to end of the *<body>* element.
-         *  Use the <a href="#hidelocalvideo">hideLocalVideo</a> method to turn off local video.
-         */
-
-    }, {
-        key: "showLocalVideo",
-        value: function showLocalVideo() {
-            var _this5 = this;
-
-            if (this._mirrorMediaRendererId) throw new Error('Local video already displayed. Please, use Hardware.StreamManager.get().hideLocalVideo ' + 'before request a new one.');else {
-                return new Promise(function (resolve, reject) {
-                    __1.default.StreamManager.get().getMirrorStream().then(function (stream) {
-                        var localRenderer = new MediaRenderer_1.MediaRenderer(stream, 'video', true, true, 'voximplantlocalvideo');
-                        _this5._localMediaRenderers.push(localRenderer);
-                        _this5._mirrorMediaRendererId = localRenderer.id;
-                        resolve(localRenderer);
-                        _this5.dispatchEvent({ name: __1.default.HardwareEvents.MediaRendererAdded, renderer: localRenderer });
-                    }).catch(reject);
-                });
-            }
-        }
-        /**
-         * Turn off local video. Use the <a href="#showlocalvideo">showLocalVideo</a> method to turn on local video.
-         */
-
-    }, {
-        key: "hideLocalVideo",
-        value: function hideLocalVideo() {
-            var _this6 = this;
-
-            if (!this._mirrorMediaRendererId) throw new Error('Local video not displayed yet. Please, use Hardware.StreamManager.get().showLocalVideo ' + 'to request a new one.');else {
-                return new Promise(function (resolve, reject) {
-                    var mirrorRendererList = _this6._localMediaRenderers.filter(function (r) {
-                        return r.id === _this6._mirrorMediaRendererId;
-                    });
-                    if (mirrorRendererList) mirrorRendererList.forEach(function (r) {
-                        r.clear();
-                    });
-                    _this6.remMirrorStream();
-                    _this6._localMediaRenderers = _this6._localMediaRenderers.filter(function (r) {
-                        return r.id !== _this6._mirrorMediaRendererId;
-                    });
-                    _this6._mirrorMediaRendererId = undefined;
-                    resolve();
-                });
-            }
-        }
-        /**
-         * Register a handler for the specified event. The method is a shorter equivalent for *addEventListener*. One event can have more than one handler; handlers are executed in order of registration.
-         * Use the [StreamManager.off] method to delete a handler.
-         */
-
-    }, {
-        key: "on",
-        value: function on(event, handler) {
-            _get(StreamManager.prototype.__proto__ || Object.getPrototypeOf(StreamManager.prototype), "on", this).call(this, event, handler);
-        }
-        /**
-         * Remove a handler for the specified event. The method is a shorter equivalent for *removeEventListener*. If a number of events has the same function as a handler, the method can be called multiple times with the same handler argument.
-         */
-
-    }, {
-        key: "off",
-        value: function off(event, handler) {
-            _get(StreamManager.prototype.__proto__ || Object.getPrototypeOf(StreamManager.prototype), "off", this).call(this, event, handler);
-        }
-        /**
-         * Get sharing media and create renderer if need.
-         * @hidden
-         * @param {Call} call
-         * @param {boolean} showLocalVideo
-         * @returns {Promise<Hardware.SharingStream>}
-         */
-
-    }, {
-        key: "_newScreenSharing",
-        value: function _newScreenSharing(call, showLocalVideo) {
-            var _this7 = this;
-
-            // TODO: Переписать на общее получение медиа (irbisadm 15.09.18)
-            if (Client_1.Client.getInstance().config().experiments && Client_1.Client.getInstance().config().experiments.customScreenMedia) {
-                return new Promise(function (resolve, reject) {
-                    Client_1.Client.getInstance().config().experiments.customScreenMedia({
-                        call: call
-                    }).then(function (stream) {
-                        var result = { stream: stream, renderer: null };
-                        if (showLocalVideo) {
-                            var localRenderer = new MediaRenderer_1.MediaRenderer(stream, 'sharing', true, true);
-                            result.renderer = localRenderer;
-                            _this7.dispatchEvent({ name: __1.default.HardwareEvents.MediaRendererAdded, renderer: localRenderer });
-                            localRenderer.onBeforeDestroy = function () {
-                                result.renderer = null;
-                                _this7._sharingStreams[call.id()] = _this7._sharingStreams[call.id()].filter(function (sharingStream) {
-                                    return sharingStream.stream.id !== stream.id;
-                                });
-                                call.peerConnection.removeCustomMedia(result.stream).then(function () {
-                                    result.stream = undefined;
-                                });
-                            };
-                        } else {
-                            stream.getTracks().forEach(function (track) {
-                                track.onended = function () {
-                                    if (!stream.getTracks().some(function (item) {
-                                        return item.readyState === 'live';
-                                    })) {
-                                        _this7._sharingStreams[call.id()] = _this7._sharingStreams[call.id()].filter(function (sharingStream) {
-                                            return sharingStream.stream.id !== stream.id;
-                                        });
-                                        call.peerConnection.removeCustomMedia(result.stream).then(function () {
-                                            result.stream = undefined;
-                                        });
-                                    }
-                                };
-                            });
-                        }
-                        if (typeof _this7._sharingStreams[call.id()] === 'undefined') {
-                            _this7._sharingStreams[call.id()] = [];
-                        }
-                        _this7._sharingStreams[call.id()].push(result);
-                        resolve(result);
-                    }).catch(function (e) {
-                        reject(e);
-                    });
-                });
-            }
-            return new Promise(function (resolve, reject) {
-                BrowserSpecific_1.default.getScreenMedia().then(function (stream) {
-                    var result = { stream: stream, renderer: null };
-                    if (showLocalVideo) {
-                        var localRenderer = new MediaRenderer_1.MediaRenderer(stream, 'sharing', true, true);
-                        result.renderer = localRenderer;
-                        _this7.dispatchEvent({ name: __1.default.HardwareEvents.MediaRendererAdded, renderer: localRenderer });
-                        localRenderer.onBeforeDestroy = function () {
-                            result.renderer = null;
-                            _this7._sharingStreams[call.id()] = _this7._sharingStreams[call.id()].filter(function (sharingStream) {
-                                return sharingStream.stream.id !== stream.id;
-                            });
-                            call.peerConnection.removeCustomMedia(result.stream).then(function () {
-                                result.stream = undefined;
-                            });
-                        };
-                    } else {
-                        stream.getTracks().forEach(function (track) {
-                            track.onended = function () {
-                                if (!stream.getTracks().some(function (item) {
-                                    return item.readyState === 'live';
-                                })) {
-                                    _this7._sharingStreams[call.id()] = _this7._sharingStreams[call.id()].filter(function (sharingStream) {
-                                        return sharingStream.stream.id !== stream.id;
-                                    });
-                                    call.peerConnection.removeCustomMedia(result.stream).then(function () {
-                                        result.stream = undefined;
-                                    });
-                                }
-                            };
-                        });
-                    }
-                    if (typeof _this7._sharingStreams[call.id()] === 'undefined') {
-                        _this7._sharingStreams[call.id()] = [];
-                    }
-                    _this7._sharingStreams[call.id()].push(result);
-                    resolve(result);
-                }).catch(function (e) {
-                    return reject(e);
-                });
-            });
-        }
-        /**
-         * @hidden
-         * @param {Call} call
-         * @returns {Hardware.SharingStream[]}
-         * @private
-         */
-
-    }, {
-        key: "_getScreenSharing",
-        value: function _getScreenSharing(call) {
-            if (typeof this._sharingStreams[call.id()] !== 'undefined') return this._sharingStreams[call.id()];else return [];
-        }
-        /**
-         * @hidden
-         * @param {Call} call
-         * @param {SharingStream} sharingStream
-         * @returns {Promise<void>}
-         * @private
-         */
-
-    }, {
-        key: "_clearScreenSharing",
-        value: function _clearScreenSharing(call, sharingStream) {
-            var _this8 = this;
-
-            return new Promise(function (resolve, reject) {
-                _this8._sharingStreams[call.id()] = _this8._sharingStreams[call.id()].filter(function (exSharingStream) {
-                    return exSharingStream.stream.id !== sharingStream.stream.id;
-                });
-                if (sharingStream.renderer) {
-                    _this8.dispatchEvent({ name: __1.default.HardwareEvents.BeforeMediaRendererRemoved, renderer: sharingStream.renderer });
-                    sharingStream.renderer.clear();
-                    _this8.dispatchEvent({ name: __1.default.HardwareEvents.MediaRendererRemoved, renderer: sharingStream.renderer });
-                    sharingStream.renderer = undefined;
-                }
-                var tracks = sharingStream.stream.getTracks();
-                tracks.forEach(function (track) {
-                    //sharingStream.stream.removeTrack(track);
-                    track.stop();
-                });
-                resolve();
-            });
-        }
-        /**
-         * @hidden
-         * @param {Call} call
-         * @returns {{[p: string]: TrackType}}
-         * @private
-         */
-
-    }, {
-        key: "_getTracksKind",
-        value: function _getTracksKind(call) {
-            var returns = {};
-            var localStreams = this._callStreams[call.id()];
-            if (typeof localStreams !== 'undefined') {
-                localStreams.getTracks().forEach(function (track) {
-                    return returns[track.id] = track.kind;
-                });
-            }
-            var sharingStreams = this._sharingStreams[call.id()];
-            if (typeof sharingStreams !== 'undefined') {
-                sharingStreams.forEach(function (sharingStream) {
-                    sharingStream.stream.getTracks().forEach(function (track) {
-                        return returns[track.id] = 'sharing';
-                    });
-                });
-            }
-            return returns;
-        }
-        /**
-         * @hidden
-         * @return {string}
-         * @private
-         */
-
-    }, {
-        key: "_traceName",
-        value: function _traceName() {
-            return 'StreamManager';
-        }
-        /**
-         * For onended and onmute callback of the mirror stream
-         * @hidden
-         */
-
-    }, {
-        key: "onMirrorEnded",
-        value: function onMirrorEnded() {
-            var _this9 = this;
-
-            this.remMirrorStream();
-            this.getMirrorStream().then(function (stream) {
-                _this9.dispatchEvent({ name: __1.default.HardwareEvents.BeforeMediaRendererRemoved, renderer: stream });
-                _this9.dispatchEvent({ name: __1.default.HardwareEvents.MediaRendererRemoved, renderer: null });
-            });
-        }
-        /**
-         * @hidden
-         */
-
-    }, {
-        key: "onCallEnded",
-        value: function onCallEnded() {}
-        /**
-         * @hidden
-         * @param {Call} call
-         * @returns {Object}
-         * @private
-         */
-
-    }, {
-        key: "_composeConstraints",
-        value: function _composeConstraints(call) {
-            var callId = typeof call === 'undefined' ? '__default' : call.id();
-            var constraints = {};
-            if (callId !== '__default' && typeof call !== 'undefined' && call.settings.videoDirections.sendVideo) {
-                constraints.video = CameraManager_1.CameraManager.get().getCallConstraints(callId);
-            } else {
-                constraints.video = false;
-            }
-            if (callId === '__default' || call.settings.audioDirections.sendAudio) {
-                constraints.audio = AudioDeviceManager_1.AudioDeviceManager.get().getCallConstraints(callId);
-            } else {
-                constraints.audio = false;
-            }
-            return constraints;
-        }
-    }], [{
-        key: "get",
-        value: function get() {
-            if (typeof StreamManager.instance === 'undefined') StreamManager.instance = new StreamManager();
-            return StreamManager.instance;
-        }
-    }]);
-
-    return StreamManager;
-}(EventTarget_1.EventTarget);
-
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.HARDWARE)], StreamManager.prototype, "getMirrorStream", null);
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.HARDWARE)], StreamManager.prototype, "remMirrorStream", null);
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.HARDWARE)], StreamManager.prototype, "getCallStream", null);
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.HARDWARE)], StreamManager.prototype, "_updateCallStream", null);
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.HARDWARE)], StreamManager.prototype, "updateCallStream", null);
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.HARDWARE)], StreamManager.prototype, "remCallStream", null);
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.HARDWARE)], StreamManager.prototype, "_remCallStream", null);
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.HARDWARE)], StreamManager.prototype, "clear", null);
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.HARDWARE)], StreamManager.prototype, "getLocalMediaRenderers", null);
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.HARDWARE)], StreamManager.prototype, "showLocalVideo", null);
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.HARDWARE)], StreamManager.prototype, "hideLocalVideo", null);
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.HARDWARE)], StreamManager.prototype, "on", null);
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.HARDWARE)], StreamManager.prototype, "off", null);
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.HARDWARE)], StreamManager.prototype, "_newScreenSharing", null);
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.HARDWARE)], StreamManager.prototype, "_getScreenSharing", null);
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.HARDWARE)], StreamManager.prototype, "_clearScreenSharing", null);
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.HARDWARE)], StreamManager.prototype, "_getTracksKind", null);
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.HARDWARE)], StreamManager.prototype, "onMirrorEnded", null);
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.HARDWARE)], StreamManager.prototype, "onCallEnded", null);
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.HARDWARE)], StreamManager.prototype, "_composeConstraints", null);
-exports.StreamManager = StreamManager;
-
-/***/ }),
-/* 26 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-var __decorate = undefined && undefined.__decorate || function (decorators, target, key, desc) {
-    var c = arguments.length,
-        r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc,
-        d;
-    if ((typeof Reflect === "undefined" ? "undefined" : _typeof(Reflect)) === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);else for (var i = decorators.length - 1; i >= 0; i--) {
-        if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    }return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-var Logger_1 = __webpack_require__(0);
-var PCFactory_1 = __webpack_require__(9);
-var TransceiversEndpointManager_1 = __webpack_require__(46);
-var PlainEndpointManager_1 = __webpack_require__(47);
+var PCFactory_1 = __webpack_require__(8);
+var TransceiversEndpointManager_1 = __webpack_require__(52);
+var PlainEndpointManager_1 = __webpack_require__(53);
 /**
  * @hidden
  */
@@ -8985,11 +8129,10 @@ var EndpointManager = function () {
     return EndpointManager;
 }();
 
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.ENDPOINT)], EndpointManager, "get", null);
 exports.EndpointManager = EndpointManager;
 
 /***/ }),
-/* 27 */
+/* 24 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -8997,115 +8140,35 @@ exports.EndpointManager = EndpointManager;
 
 Object.defineProperty(exports, "__esModule", { value: true });
 /**
- * Events that are triggered when Endpoint is updated/edited, removed or started/stopped to receive stream from another Endpoint.
- */
-var EndpointEvents;
-(function (EndpointEvents) {
-  /**
-   * Event is triggered when an Endpoint is updated/edited. E.g. when
-   * a display name is changed via the [setDisplayName](https://voximplant.com/docs/references/voxengine/conference/endpoint#setdisplayname) method.
-   * [Voxengine](https://voximplant.com/docs/references/voxengine) example:
-   * ```javascript
-   * require(Modules.Conference);
-   * // ...
-   * endpoint.setDisplayName("Chuck Spadina");
-   * ```
-   * Web SDK example:
-   * ```javascript
-   * Endpoint.on(Voximplant.EndpointEvents.InfoUpdated, (e)=>{
-   *   console.log(e.endpoint.displayName);
-   *   // > Chuck Spadina
-   * });
-   * ```
-   * Handler function receives the [EventHandlers.EndpointHandler] object as an argument.
-   */
-  EndpointEvents[EndpointEvents["InfoUpdated"] = 'InfoUpdated'] = "InfoUpdated";
-  /**
-   * Event is triggered when an Endpoint is removed. E.g. when a participant left the conference or [player](https://voximplant.com/docs/references/voxengine/player) was removed.
-   * Handler function receives the [EventHandlers.EndpointHandler] object as an argument.
-   */
-  EndpointEvents[EndpointEvents["Removed"] = 'Removed'] = "Removed";
-  /**
-   * Event is triggered when an Endpoint started to receive an audio / video / screensharing stream from another Endpoint.
-   * __IMPORTANT__: if you subscribe to the event, Web SDK will no longer render remote audio/video stream automatically; you have to render remote streams manually via the [MediaRenderer.render] method.
-   * Handler function receives the [EventHandlers.EndpointMediaHandler] object as an argument.
-   */
-  EndpointEvents[EndpointEvents["RemoteMediaAdded"] = 'RemoteMediaAdded'] = "RemoteMediaAdded";
-  /**
-   * Event is triggered when an Endpoint stopped to receive an audio / video / screensharing stream from another Endpoint.
-   * Handler function receives the [EventHandlers.EndpointMediaHandler] object as an argument.
-   */
-  EndpointEvents[EndpointEvents["RemoteMediaRemoved"] = 'RemoteMediaRemoved'] = "RemoteMediaRemoved";
-  /**
-   * @hidden
-   */
-  EndpointEvents[EndpointEvents["RTCStatsReceived"] = 'RTCStatsReceived'] = "RTCStatsReceived";
-})(EndpointEvents = exports.EndpointEvents || (exports.EndpointEvents = {}));
-
-/***/ }),
-/* 28 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-Object.defineProperty(exports, "__esModule", { value: true });
-/**
- * Created by irbisadm on 23/09/2016.
+ * IM gen 2
  * @hidden
  */
-
-var GUID = function () {
-    function GUID(str) {
-        _classCallCheck(this, GUID);
-
-        this.str = str || GUID.getNewGUIDString();
-    }
-
-    _createClass(GUID, [{
-        key: "toString",
-        value: function toString() {
-            return this.str;
-        }
-    }, {
-        key: "_traceName",
-
-        /**
-         * @hidden
-         * @return {string}
-         * @private
-         */
-        value: function _traceName() {
-            return 'GUID';
-        }
-    }], [{
-        key: "getNewGUIDString",
-        value: function getNewGUIDString() {
-            // your favourite guid generation function could go here
-            // ex: http://stackoverflow.com/a/8809472/188246
-            var d = new Date().getTime();
-            if (window.performance && typeof window.performance.now === "function") {
-                d += performance.now(); //use high-precision timer if available
-            }
-            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-                var r = (d + Math.random() * 16) % 16 | 0;
-                d = Math.floor(d / 16);
-                return (c == 'x' ? r : r & 0x3 | 0x8).toString(16);
-            });
-        }
-    }]);
-
-    return GUID;
-}();
-
-exports.GUID = GUID;
+var MsgEvent;
+(function (MsgEvent) {
+    MsgEvent["onError"] = "onError";
+    MsgEvent["onCreateConversation"] = "onCreateConversation";
+    MsgEvent["onEditConversation"] = "onEditConversation";
+    MsgEvent["onRemoveConversation"] = "onRemoveConversation";
+    MsgEvent["onGetConversation"] = "onGetConversation";
+    MsgEvent["onGetPublicConversations"] = "onGetPublicConversations";
+    MsgEvent["onGetUser"] = "onGetUser";
+    MsgEvent["onEditUser"] = "onEditUser";
+    MsgEvent["onSetStatus"] = "onSetStatus";
+    MsgEvent["onSendMessage"] = "onSendMessage";
+    MsgEvent["onEditMessage"] = "onEditMessage";
+    MsgEvent["onRemoveMessage"] = "onRemoveMessage";
+    MsgEvent["isRead"] = "isRead";
+    MsgEvent["onTyping"] = "onTyping";
+    MsgEvent["onSubscribe"] = "onSubscribe";
+    MsgEvent["onUnsubscribe"] = "onUnsubscribe";
+    MsgEvent["onGetSubscriptionList"] = "onGetSubscriptionList";
+    MsgEvent["onCreateBot"] = "onCreateBot";
+    MsgEvent["onRemoveBot"] = "onRemoveBot";
+    MsgEvent["onRetransmitEvents"] = "onRetransmitEvents";
+})(MsgEvent = exports.MsgEvent || (exports.MsgEvent = {}));
 
 /***/ }),
-/* 29 */
+/* 25 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -9127,659 +8190,21 @@ var __decorate = undefined && undefined.__decorate || function (decorators, targ
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 var Logger_1 = __webpack_require__(0);
-var GUID_1 = __webpack_require__(28);
-var Message_1 = __webpack_require__(22);
-var MsgEnums_1 = __webpack_require__(16);
-var MsgSignaling_1 = __webpack_require__(15);
-var ConversationManager_1 = __webpack_require__(39);
-var index_1 = __webpack_require__(17);
-var Messenger_1 = __webpack_require__(30);
+var MsgSignaling_1 = __webpack_require__(18);
+var MsgEvent_1 = __webpack_require__(24);
+var ConversationManager_1 = __webpack_require__(44);
+var Conversation_1 = __webpack_require__(34);
+var Message_1 = __webpack_require__(26);
+var __1 = __webpack_require__(19);
+var Authenticator_1 = __webpack_require__(11);
+var MessagingErrors_1 = __webpack_require__(45);
+var MsgAction_1 = __webpack_require__(27);
 /**
  * @hidden
  */
-
-var Conversation = function () {
-    /**
-     * @hidden
-     */
-    function Conversation(participants, distinct, publicJoin, customData, moderators) {
-        _classCallCheck(this, Conversation);
-
-        this._distinct = distinct;
-        this._publicJoin = publicJoin;
-        this._participants = participants;
-        this._customData = customData;
-        this._moderators = moderators;
-    }
-    /**
-     * Universally unique identifier of current conversation. Used in methods like 'get', 'remove' etc.
-     * @returns {string}
-     */
-
-
-    _createClass(Conversation, [{
-        key: "_getPayload",
-
-        /**
-         *
-         * @hidden
-         */
-        value: function _getPayload() {
-            if (typeof this._uuid == 'undefined') throw Error('You must create UUID with createUUID() function!');
-            var str = {
-                uuid: this._uuid,
-                participants: this._prepareParticipants(this._participants)
-            };
-            if (typeof this._title != 'undefined') str['title'] = this._title;else str['title'] = '';
-            if (typeof this._moderators != 'undefined') str['moderators'] = this._moderators;else str['moderators'] = [];
-            if (typeof this._lastRead != 'undefined') str['last_readed'] = this._lastRead;
-            if (typeof this._distinct != 'undefined') str['distinct'] = this._distinct;else str['distinct'] = false;
-            if (typeof this._publicJoin != 'undefined') str['enable_public_join'] = this._publicJoin;else str['enable_public_join'] = false;
-            if (typeof this._customData != 'undefined') str['custom_data'] = this._customData;else str['custom_data'] = {};
-            if (typeof this._createdAt != 'undefined') str['created_at'] = this._createdAt;
-            if (typeof this._createdAt != 'undefined') str['uber_conversation'] = this._uberConversation;
-            return str;
-        }
-        /**
-         *
-         * @hidden
-         */
-
-    }, {
-        key: "_getSimplePayload",
-        value: function _getSimplePayload() {
-            if (typeof this._uuid == 'undefined') throw Error('You must create UUID with createUUID() function!');
-            return {
-                uuid: this._uuid,
-                title: typeof this._title != 'undefined' ? this._title : '',
-                distinct: typeof this._distinct != 'undefined' ? this._distinct : false,
-                enable_public_join: typeof this._publicJoin != 'undefined' ? this._publicJoin : false,
-                custom_data: typeof this._customData != 'undefined' ? this._customData : {}
-            };
-        }
-        /**
-         * Generate UUID for new conversation
-         *
-         * @hidden
-         */
-
-    }, {
-        key: "_createUUID",
-        value: function _createUUID() {
-            if (typeof this._uuid != 'undefined') throw Error('UUID already created!');
-            this._uuid = new GUID_1.GUID().toString();
-        }
-        //==============msg part============
-        /**
-         * Serialize conversation so it can be stored into some storage (like IndexedDB) and later restored via [Messenger.createConversationFromCache]
-         * @returns {SerializedConversation}
-         */
-
-    }, {
-        key: "toCache",
-        value: function toCache() {
-            return {
-                uuid: this._uuid,
-                seq: this._lastSeq,
-                lastUpdate: this._lastUpdate,
-                moderators: this._moderators,
-                title: this._title,
-                createdAt: this._createdAt,
-                lastRead: this._lastRead,
-                distinct: this._distinct,
-                publicJoin: this._publicJoin,
-                participants: this._participants,
-                customData: this._customData
-            };
-        }
-    }, {
-        key: "sendMessage",
-        value: function sendMessage(message, payload) {
-            var msg = new Message_1.Message(message, payload);
-            msg.sendTo(this);
-            return msg;
-        }
-        /**
-         * Calling this method will inform backend that user is typing some text. Calls within 10s interval from the last call are discarded.
-         * @returns {boolean} 'true' is message was actually sent, 'false' if it was discarded.
-         */
-
-    }, {
-        key: "typing",
-        value: function typing() {
-            var _this = this;
-
-            if (this._debounceLock) return false;
-            setTimeout(function () {
-                _this._debounceLock = false;
-            }, 10000);
-            this._debounceLock = true;
-            MsgSignaling_1.MsgSignaling.get().sendPayload(MsgEnums_1.MsgAction.typingMessage, { conversation: this._uuid });
-            return true;
-        }
-        /**
-         * Mark the event with the specified sequence as 'read'. This affects 'lastRead' and is used to display unread messages and events. Triggers the [MessengerEvents.Read] event for all messenger objects on all connected clients, including this one.
-         * @param seq
-         */
-
-    }, {
-        key: "markAsRead",
-        value: function markAsRead(seq) {
-            MsgSignaling_1.MsgSignaling.get().sendPayload(MsgEnums_1.MsgAction.isRead, { conversation: this._uuid, seq: seq });
-            this._lastRead = seq;
-        }
-        /**
-         * Mark event as handled by current logged-in device. If single user is logged in on multiple devices, this can be used to display delivery status by subscribing to the [MessengerEvents.Delivered] event.
-         * @param seq
-         */
-
-    }, {
-        key: "markAsDelivered",
-        value: function markAsDelivered(seq) {
-            MsgSignaling_1.MsgSignaling.get().sendPayload(MsgEnums_1.MsgAction.isDelivered, { conversation: this._uuid, seq: seq });
-        }
-        /**
-         * Remove current conversation. All participants, including this one, will receive the [MessengerEvents.RemoveConversation] event.
-         */
-
-    }, {
-        key: "remove",
-        value: function remove() {
-            ConversationManager_1.ConversationManager.get().removeConversation(this._uuid);
-        }
-        /**
-         * Send conversation changes to the server: title, public join flag, distinct flag and custom data. Used to send all changes modified via properties. Changes via 'setTitle', 'setPublicJoin' etc are sent instantly.
-         */
-
-    }, {
-        key: "update",
-        value: function update() {
-            ConversationManager_1.ConversationManager.get().editConversation(this);
-        }
-        /**
-         * Set the conversation title and send changes to the server.
-         */
-
-    }, {
-        key: "setTitle",
-        value: function setTitle(title) {
-            this._title = title;
-            ConversationManager_1.ConversationManager.get().editConversation(this);
-        }
-        /**
-         * Set the public join flag and send changes to the server.
-         */
-
-    }, {
-        key: "setPublicJoin",
-        value: function setPublicJoin(publicJoin) {
-            this._publicJoin = publicJoin;
-            ConversationManager_1.ConversationManager.get().editConversation(this);
-        }
-        /**
-         * Set the distinct flag and send changes to the server.
-         */
-
-    }, {
-        key: "setDistinct",
-        value: function setDistinct(distinct) {
-            this._distinct = distinct;
-            ConversationManager_1.ConversationManager.get().editConversation(this);
-        }
-        /**
-         * Set the JS object custom data and send changes to the server.
-         */
-
-    }, {
-        key: "setCustomData",
-        value: function setCustomData(customData) {
-            this._customData = customData;
-            ConversationManager_1.ConversationManager.get().editConversation(this);
-        }
-        /**
-         * Add new participants to the conversation.
-         * Duplicated users are ignored.
-         * Will fail if any user does not exist.
-         * Triggers the [MessengerEvents.EditConversation]
-         * event for all messenger objects on all clients, including this one.
-         * @param participants
-         * @returns {Promise<EditConversation>|Promise}
-         */
-
-    }, {
-        key: "addParticipants",
-        value: function addParticipants(participants) {
-            var _this2 = this;
-
-            return new Promise(function (resolve, reject) {
-                if (participants.length == 0) reject();
-                MsgSignaling_1.MsgSignaling.get().sendPayload(MsgEnums_1.MsgAction.addParticipants, { uuid: _this2._uuid, participants: _this2._prepareParticipants(participants) });
-                Messenger_1.Messenger.getInstance()._registerPromise(index_1.default.MessengerEvents.EditConversation, resolve, reject);
-            });
-        }
-        /**
-         * Change access rights for the existing participants.
-         * This function doesn't apply any changes to the participant list.
-         * Use the [Conversation.addParticipants] or [Conversation.removeParticipants] methods instead.
-         * Triggers the [MessengerEvents.EditConversation]
-         * event for all messenger objects on all clients, including this one.
-         * @param participants
-         * @returns {Promise<EditConversation>|Promise}
-         */
-
-    }, {
-        key: "editParticipants",
-        value: function editParticipants(participants) {
-            var _this3 = this;
-
-            return new Promise(function (resolve, reject) {
-                if (participants.length == 0) reject();
-                MsgSignaling_1.MsgSignaling.get().sendPayload(MsgEnums_1.MsgAction.editParticipants, { uuid: _this3._uuid, participants: _this3._prepareParticipants(participants) });
-                Messenger_1.Messenger.getInstance()._registerPromise(index_1.default.MessengerEvents.EditConversation, resolve, reject);
-            });
-        }
-        /**
-         * Remove participants from the conversation.
-         * Duplicated users are ignored.
-         * Will fail if any user does not exist.
-         * Triggers the [MessengerEvents.EditConversation]
-         * event for all messenger objects on all clients, including this one.
-         * @param participants
-         * @returns {Promise<EditConversation>|Promise}
-         */
-
-    }, {
-        key: "removeParticipants",
-        value: function removeParticipants(participants) {
-            var _this4 = this;
-
-            return new Promise(function (resolve, reject) {
-                if (participants.length == 0) reject();
-                MsgSignaling_1.MsgSignaling.get().sendPayload(MsgEnums_1.MsgAction.removeParticipants, {
-                    uuid: _this4._uuid, participants: participants.map(function (item) {
-                        if (typeof item.userId !== 'undefined') return item.userId;
-                    })
-                });
-                Messenger_1.Messenger.getInstance()._registerPromise(index_1.default.MessengerEvents.EditConversation, resolve, reject);
-            });
-        }
-        /**
-         * Add new moderators to the conversation.
-         * Duplicated users are ignored.
-         * Will fail if any user does not exist.
-         * Triggers the [MessengerEvents.EditConversation]
-         * event for all messenger objects on all clients, including this one.
-         * @param participants
-         * @returns {Promise<EditConversation>|Promise}
-         */
-
-    }, {
-        key: "addModerators",
-        value: function addModerators(moderators) {
-            var _this5 = this;
-
-            return new Promise(function (resolve, reject) {
-                if (moderators.length == 0) reject();
-                MsgSignaling_1.MsgSignaling.get().sendPayload(MsgEnums_1.MsgAction.addModerators, { uuid: _this5._uuid, moderators: moderators });
-                Messenger_1.Messenger.getInstance()._registerPromise(index_1.default.MessengerEvents.EditConversation, resolve, reject);
-            });
-        }
-        /**
-         * Remove moderators from the conversation.
-         * Duplicated users are ignored.
-         * Will fail if any user does not exist.
-         * Triggers the [MessengerEvents.EditConversation]
-         * event for all messenger objects on all clients, including this one.
-         * @param participants
-         * @returns {Promise<EditConversation>|Promise}
-         */
-
-    }, {
-        key: "removeModerators",
-        value: function removeModerators(moderators) {
-            var _this6 = this;
-
-            return new Promise(function (resolve, reject) {
-                if (moderators.length == 0) reject();
-                MsgSignaling_1.MsgSignaling.get().sendPayload(MsgEnums_1.MsgAction.removeModerators, { uuid: _this6._uuid, moderators: moderators });
-                Messenger_1.Messenger.getInstance()._registerPromise(index_1.default.MessengerEvents.EditConversation, resolve, reject);
-            });
-        }
-        /**
-         * Request events in the specified sequence range to be sent from server into this client.
-         * Maximum 100 events can be requested by one method call.
-         * Sequence numbers of the resulting events may contain 'holes' due to the server-side implementation.
-         * Method is used to get history or get missed events in case of network disconnect.
-         * Please note that server will not push any events that was missed due to the client being offline.
-         * Client should use this method to request all events based on the last event sequence received from the server and last event sequence saved locally (if any).
-         * @param eventsFrom first event in range sequence, inclusive
-         * @param eventsTo last event in range sequence, inclusive
-         */
-
-    }, {
-        key: "retransmitEvents",
-        value: function retransmitEvents(eventsFrom, eventsTo) {
-            var _this7 = this;
-
-            return new Promise(function (resolve, reject) {
-                eventsFrom = eventsFrom | 0;
-                eventsTo = eventsTo | 0;
-                var callback = function callback(e) {
-                    index_1.default.Messenger.getInstance().off(index_1.default.MessengerEvents.RetransmitEvents, callback);
-                    index_1.default.Messenger.getInstance().off(index_1.default.MessengerEvents.Error, errorCallback);
-                    resolve(e);
-                };
-                var errorCallback = function errorCallback(e) {
-                    if (e.messengerAction == index_1.default.MessengerAction.getConversation) {
-                        index_1.default.Messenger.getInstance().off(index_1.default.MessengerEvents.RetransmitEvents, callback);
-                        index_1.default.Messenger.getInstance().off(index_1.default.MessengerEvents.Error, errorCallback);
-                        reject(e);
-                    }
-                };
-                index_1.default.Messenger.getInstance().on(index_1.default.MessengerEvents.RetransmitEvents, callback);
-                index_1.default.Messenger.getInstance().on(index_1.default.MessengerEvents.Error, errorCallback);
-                MsgSignaling_1.MsgSignaling.get().sendPayload(MsgEnums_1.MsgAction.retransmitEvents, {
-                    uuid: _this7._uuid,
-                    eventsFrom: eventsFrom,
-                    eventsTo: eventsTo
-                });
-            });
-        }
-        /**
-         * @hidden
-         * @param newSeq
-         */
-
-    }, {
-        key: "updateSeq",
-        value: function updateSeq(newSeq) {
-            if (newSeq > this._lastSeq) {
-                this._lastSeq = newSeq;
-            }
-            this._lastUpdate = Date.now() / 1000 | 0;
-        }
-        /**
-         * @hidden
-         * @return {string}
-         * @private
-         */
-
-    }, {
-        key: "_traceName",
-        value: function _traceName() {
-            return 'Conversation';
-        }
-        /**
-         * Correction participants list for backend
-         * @returns {Array}
-         * @hidden
-         */
-
-    }, {
-        key: "_prepareParticipants",
-        value: function _prepareParticipants(participants) {
-            var ret = [];
-            var _iteratorNormalCompletion = true;
-            var _didIteratorError = false;
-            var _iteratorError = undefined;
-
-            try {
-                for (var _iterator = participants[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-                    var participant = _step.value;
-
-                    if (typeof participant.userId != 'undefined') {
-                        var item = { user_id: ConversationManager_1.ConversationManager.extractUserName(participant.userId) };
-                        item['can_write'] = typeof participant.canWrite == 'undefined' ? true : participant.canWrite;
-                        item['can_manage_participants'] = typeof participant.canManageParticipants == 'undefined' ? false : participant.canManageParticipants;
-                        ret.push(item);
-                    }
-                }
-            } catch (err) {
-                _didIteratorError = true;
-                _iteratorError = err;
-            } finally {
-                try {
-                    if (!_iteratorNormalCompletion && _iterator.return) {
-                        _iterator.return();
-                    }
-                } finally {
-                    if (_didIteratorError) {
-                        throw _iteratorError;
-                    }
-                }
-            }
-
-            return ret;
-        }
-    }, {
-        key: "uuid",
-        get: function get() {
-            return this._uuid;
-        }
-        /**
-         * Conversation moderator names list.
-         */
-
-    }, {
-        key: "moderators",
-        get: function get() {
-            return this._moderators;
-        }
-    }, {
-        key: "createdAt",
-        get: function get() {
-            return this._createdAt;
-        }
-    }, {
-        key: "title",
-        get: function get() {
-            return this._title;
-        }
-        /**
-         * Sets current conversation title. Note that setting this property does not send changes to the server. Use the 'update' to send all changes at once or 'setTitle' to update and set the title.
-         * @param value
-         */
-        ,
-        set: function set(value) {
-            this._title = value;
-        }
-    }, {
-        key: "distinct",
-        get: function get() {
-            return this._distinct;
-        }
-        /**
-         * If two conversations are created with same set of users and moderators and both have 'distinct' flag, second create call will fail with the UUID of conversation already created. Note that changing users or moderators list will clear 'distinct' flag.
-         * Note that setting this property does not send changes to the server. Use the 'update' to send all changes at once or 'setDistinct' to update and set the distinct flag.
-         * @param value
-         */
-        ,
-        set: function set(value) {
-            this._distinct = value;
-        }
-    }, {
-        key: "publicJoin",
-        get: function get() {
-            return this._publicJoin;
-        }
-        /**
-         * If set to 'true', anyone can join conversation by UUID. Note that setting this property does not send changes to the server. Use the 'update' to send all changes at once or 'setPublicJoin' to update and set the public join flag.
-         * @param value
-         */
-        ,
-        set: function set(value) {
-            this._publicJoin = value;
-        }
-        /**
-         * Conversation participants list alongside with their rights.
-         */
-
-    }, {
-        key: "participants",
-        get: function get() {
-            return this._participants;
-        }
-    }, {
-        key: "customData",
-        get: function get() {
-            return this._customData;
-        }
-        /**
-         * JavaScript object with custom data, up to 5kb. Note that setting this property does not send changes to the server. Use the 'update' to send all changes at once or 'setCustomData' to update and set the custom data.
-         * @param value
-         */
-        ,
-        set: function set(value) {
-            this._customData = value;
-        }
-        /**
-         * Last event sequence for this conversation. Used with 'lastRead' to display unread messages and events.
-         */
-
-    }, {
-        key: "lastSeq",
-        get: function get() {
-            return this._lastSeq;
-        }
-        /**
-         * UNIX timestamp integer that specifies the time of the last event in the conversation. It's same as 'Date.now()' divided by 1000.
-         */
-
-    }, {
-        key: "lastUpdate",
-        get: function get() {
-            return this._lastUpdate;
-        }
-        /**
-         * Returns sequence of last event that was read by user. Used to display unread messages, events etc.
-         * @returns {any}
-         */
-
-    }, {
-        key: "lastRead",
-        get: function get() {
-            return this._lastRead;
-        }
-        /**
-         * @hidden
-         * @return {boolean}
-         */
-
-    }, {
-        key: "uberConversation",
-        get: function get() {
-            return this._uberConversation;
-        }
-        /**
-         * Create conversation from buss
-         * @param busConversation
-         * @hidden
-         */
-
-    }], [{
-        key: "_createFromBus",
-        value: function _createFromBus(busConversation, seq) {
-            var conversation = new Conversation([]);
-            conversation._lastSeq = seq;
-            conversation._uuid = busConversation.uuid;
-            conversation._title = busConversation.title;
-            conversation._moderators = busConversation.moderators;
-            conversation._createdAt = busConversation.created_at;
-            conversation._lastRead = busConversation.last_read;
-            conversation._distinct = busConversation.distinct;
-            conversation._publicJoin = busConversation.enable_public_join;
-            conversation._uberConversation = busConversation.uber_conversation;
-            if (busConversation.participants) conversation._participants = busConversation.participants.map(function (item) {
-                return {
-                    userId: item.user_id,
-                    canWrite: item.can_write,
-                    canManageParticipants: item.can_manage_participants
-                };
-            });
-            if (busConversation.custom_data) conversation._customData = busConversation.custom_data;
-            conversation._lastUpdate = busConversation.last_update;
-            return conversation;
-        }
-        /**
-         * Restore conversation from cache
-         * @param cacheConversation
-         * @returns {Conversation}
-         * @hidden
-         */
-
-    }, {
-        key: "createFromCache",
-        value: function createFromCache(cacheConversation) {
-            var conversation = new Conversation([]);
-            conversation._uuid = cacheConversation.uuid;
-            conversation._lastSeq = cacheConversation.seq;
-            conversation._lastUpdate = cacheConversation.lastUpdate;
-            conversation._title = cacheConversation.title;
-            conversation._moderators = cacheConversation.moderators;
-            conversation._createdAt = cacheConversation.createdAt;
-            conversation._lastRead = cacheConversation.lastRead;
-            conversation._distinct = cacheConversation.distinct;
-            conversation._publicJoin = cacheConversation.publicJoin;
-            conversation._participants = cacheConversation.participants;
-            conversation._customData = cacheConversation.customData;
-            conversation._uberConversation = cacheConversation.uberConversation;
-            return conversation;
-        }
-    }]);
-
-    return Conversation;
-}();
-
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], Conversation.prototype, "_getPayload", null);
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], Conversation.prototype, "_getSimplePayload", null);
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], Conversation.prototype, "_createUUID", null);
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], Conversation.prototype, "toCache", null);
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], Conversation.prototype, "markAsRead", null);
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], Conversation.prototype, "markAsDelivered", null);
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], Conversation.prototype, "remove", null);
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], Conversation.prototype, "update", null);
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], Conversation.prototype, "addParticipants", null);
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], Conversation.prototype, "editParticipants", null);
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], Conversation.prototype, "removeParticipants", null);
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], Conversation.prototype, "addModerators", null);
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], Conversation.prototype, "removeModerators", null);
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], Conversation.prototype, "retransmitEvents", null);
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], Conversation.prototype, "updateSeq", null);
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], Conversation.prototype, "_prepareParticipants", null);
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], Conversation, "_createFromBus", null);
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], Conversation, "createFromCache", null);
-exports.Conversation = Conversation;
-
-/***/ }),
-/* 30 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-var __decorate = undefined && undefined.__decorate || function (decorators, target, key, desc) {
-    var c = arguments.length,
-        r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc,
-        d;
-    if ((typeof Reflect === "undefined" ? "undefined" : _typeof(Reflect)) === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);else for (var i = decorators.length - 1; i >= 0; i--) {
-        if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    }return c > 3 && r && Object.defineProperty(target, key, r), r;
+var ERRORS = {
+    0: 'Something went wrong. Please check your input or required parameters.'
 };
-Object.defineProperty(exports, "__esModule", { value: true });
-var MsgSignaling_1 = __webpack_require__(15);
-var ConversationManager_1 = __webpack_require__(39);
-var MsgEnums_1 = __webpack_require__(16);
-var Logger_1 = __webpack_require__(0);
-var Authenticator_1 = __webpack_require__(10);
-var Conversation_1 = __webpack_require__(29);
-var Message_1 = __webpack_require__(22);
-var index_1 = __webpack_require__(17);
 /**
  * @hidden
  */
@@ -9793,65 +8218,87 @@ var Messenger = function () {
 
         _classCallCheck(this, Messenger);
 
-        if (Messenger.instance) {
-            throw new Error('Error - use Client.getIM()');
-        }
+        if (Messenger.instance) throw new Error(MessagingErrors_1.MESSAGING_ERR_1);
         this.eventListeners = {};
+        this.awaitPromiseList = {};
+        this.cm = ConversationManager_1.default.get();
         this.signalling = MsgSignaling_1.MsgSignaling.get();
-        this.cm = ConversationManager_1.ConversationManager.get();
-        this.signalling.addEventListener(MsgEnums_1.MsgEvent.onError, function (payload) {
-            _this._dispatchEvent(index_1.default.MessengerEvents.Error, payload);
+        this.signalling.addEventListener(MsgEvent_1.MsgEvent.onError, function (payload, uuid) {
+            _this._dispatchEvent(__1.default.MessengerEvents.Error, {
+                initiator: _this.currentUserId,
+                code: payload.code,
+                description: payload.description,
+                messengerAction: __1.default.MessengerAction[payload.on_incoming_event],
+                timestamp: typeof payload.timestamp == 'number' ? payload.timestamp * 1000 : undefined,
+                requestUuid: uuid
+            }, uuid);
         });
-        ConversationManager_1.ConversationManager.get();
-        this.signalling.addEventListener(MsgEnums_1.MsgEvent.onEditUser, function (payload) {
-            var eventPayload = payload.object;
-            var checkedPayload = {
+        this.signalling.addEventListener(MsgEvent_1.MsgEvent.onEditUser, function (payload, uuid) {
+            _this._dispatchEvent(__1.default.MessengerEvents.EditUser, {
                 user: {
-                    customData: eventPayload.custom_data,
-                    privateCustomData: eventPayload.private_custom_data,
-                    userId: eventPayload.user_id
+                    userId: Number(payload.object.user_id),
+                    userName: payload.object.user_name,
+                    displayName: payload.object.display_name,
+                    conversationsList: payload.object.conversations_list,
+                    notificationEvents: payload.object.notification_events ? payload.object.notification_events.map(_this.msgEventToMessengerEvent) : undefined,
+                    customData: payload.object.custom_data,
+                    privateCustomData: payload.object.private_custom_data
                 },
-                userId: payload.user_id,
-                seq: payload.seq,
-                onIncomingEvent: payload.on_incoming_event
-            };
-            _this._dispatchEvent(index_1.default.MessengerEvents.EditUser, checkedPayload);
+                initiator: Number(payload.initiator),
+                messengerAction: __1.default.MessengerAction[payload.on_incoming_event],
+                timestamp: typeof payload.timestamp == 'number' ? payload.timestamp * 1000 : undefined,
+                requestUuid: uuid
+            }, uuid);
         });
-        this.signalling.addEventListener(MsgEnums_1.MsgEvent.onGetUser, function (payload) {
-            var eventPayload = payload.object;
-            var checkedPayload = {
+        this.signalling.addEventListener(MsgEvent_1.MsgEvent.onGetUser, function (payload, uuid) {
+            _this._dispatchEvent(__1.default.MessengerEvents.GetUser, {
                 user: {
-                    conversationsList: eventPayload.conversations_list,
-                    leaveConversationList: eventPayload.leave_conversation_list,
-                    customData: eventPayload.custom_data,
-                    privateCustomData: eventPayload.private_custom_data,
-                    userId: eventPayload.user_id
+                    userId: Number(payload.object.user_id),
+                    userName: payload.object.user_name,
+                    displayName: payload.object.display_name,
+                    conversationsList: payload.object.conversations_list,
+                    notificationEvents: payload.object.notification_events ? payload.object.notification_events.map(_this.msgEventToMessengerEvent) : undefined,
+                    customData: payload.object.custom_data,
+                    privateCustomData: payload.object.private_custom_data
                 },
-                userId: payload.user_id,
-                seq: payload.seq,
-                onIncomingEvent: payload.on_incoming_event
-            };
-            _this._dispatchEvent(index_1.default.MessengerEvents.GetUser, checkedPayload);
+                initiator: Number(payload.initiator),
+                messengerAction: __1.default.MessengerAction[payload.on_incoming_event],
+                requestUuid: uuid
+            }, uuid);
         });
-        this.signalling.addEventListener(MsgEnums_1.MsgEvent.onsubscribe, function (payload) {
-            _this._dispatchEvent(index_1.default.MessengerEvents.Subscribe, { users: payload.users });
+        this.signalling.addEventListener(MsgEvent_1.MsgEvent.onSetStatus, function (payload, uuid) {
+            _this._dispatchEvent(__1.default.MessengerEvents.SetStatus, {
+                online: payload.object.online,
+                initiator: Number(payload.initiator),
+                messengerAction: __1.default.MessengerAction[payload.on_incoming_event],
+                timestamp: typeof payload.timestamp == 'number' ? payload.timestamp * 1000 : undefined,
+                requestUuid: uuid
+            }, uuid);
         });
-        this.signalling.addEventListener(MsgEnums_1.MsgEvent.onUnSubscribe, function (payload) {
-            _this._dispatchEvent(index_1.default.MessengerEvents.Unsubscribe, { users: payload.users });
+        this.signalling.addEventListener(MsgEvent_1.MsgEvent.onSubscribe, function (payload, uuid) {
+            _this._dispatchEvent(__1.default.MessengerEvents.Subscribe, {
+                users: payload.object.user_id,
+                initiator: Number(payload.initiator),
+                messengerAction: __1.default.MessengerAction[payload.on_incoming_event],
+                requestUuid: uuid
+            }, uuid);
         });
-        this.signalling.addEventListener(MsgEnums_1.MsgEvent.onSetStatus, function (payload) {
-            _this._dispatchEvent(index_1.default.MessengerEvents.SetStatus, {
-                user: {
-                    userId: payload.object.user_id,
-                    online: payload.object.online,
-                    timestamp: payload.object.timestamp
-                },
-                userId: payload.user_id,
-                seq: payload.seq,
-                onIncomingEvent: payload.on_incoming_event
-            });
+        this.signalling.addEventListener(MsgEvent_1.MsgEvent.onUnsubscribe, function (payload, uuid) {
+            _this._dispatchEvent(__1.default.MessengerEvents.Unsubscribe, {
+                users: payload.object.user_id,
+                initiator: Number(payload.initiator),
+                messengerAction: __1.default.MessengerAction[payload.on_incoming_event],
+                requestUuid: uuid
+            }, uuid);
         });
-        this.awaitPromiseList = [];
+        this.signalling.addEventListener(MsgEvent_1.MsgEvent.onGetSubscriptionList, function (payload, uuid) {
+            _this._dispatchEvent(__1.default.MessengerEvents.GetSubscriptionList, {
+                users: payload.object.subscriptions,
+                initiator: Number(payload.initiator),
+                messengerAction: __1.default.MessengerAction[payload.on_incoming_event],
+                requestUuid: uuid
+            }, uuid);
+        });
     }
     /**
      * @hidden
@@ -9859,168 +8306,8 @@ var Messenger = function () {
 
 
     _createClass(Messenger, [{
-        key: "createConversation",
+        key: "addEventListener",
 
-        /**
-         * Create a new conversation.
-         * Triggers either the [MessengerEvents.Error] or [MessengerEvents.CreateConversation] event on all connected clients that are mentioned in the 'participants' array.
-         * @see Messengerevents.CreateConversation
-         * @see Messengerevents.Error
-         * @param participants Array of participants alongside with access rights params
-         * @param moderators Array of moderators
-         * @param distinct If two conversations are created with same set of users and moderators and both have 'distinct' flag, second creation of conversation (with the same participants) will fail with the UUID of conversation already created. Note that changing users or moderators list will clear 'distinct' flag.
-         * @param enablePublicJoin The feature allows users from any Voximplant account to join the conversation using its uuid.
-         * @param customData JavaScript object with custom data, up to 5kb. Note that setting this property does not send changes to the server. Use [Conversation.update] to send all changes at once or [Conversation.setCustomData] to update and set the custom data.
-         * @param title conversation title
-         */
-        value: function createConversation(participants, title, distinct, enablePublicJoin, customData, moderators) {
-            this.cm.createConversation(participants, title, distinct, enablePublicJoin, customData, moderators);
-        }
-        /**
-         * Get conversation by it's UUID.The method triggers the [MessengerEvents.GetConversation] or [MessengerEvents.Error] event.
-         * The handler function receives the [EventHandlers.ConversationEvent] object with UUID etc.
-         * @see [MessengerEvents.GetConversation]
-         * @see [MessengerEvents.Error]
-         * @param uuid
-         */
-
-    }, {
-        key: "getConversation",
-        value: function getConversation(uuid) {
-            this.cm.getConversation(uuid);
-        }
-        /**
-         * Get multiple conversations by array of UUIDs. Maximum 30 conversation. Note that calling this method will result in *multiple* 'getConversation' events.
-         * @see [MessengerEvents.GetConversation]
-         * @see [MessengerEvents.Error]
-         * @param conversations Array of UUIDs
-         * @returns {Array<Conversation>}
-         */
-
-    }, {
-        key: "getConversations",
-        value: function getConversations(conversations) {
-            if (conversations.length > 30) {
-                Logger_1.LogManager.get().writeMessage(Logger_1.LogCategory.MESSAGING, 'Rate limit', Logger_1.LogLevel.ERROR, 'you can get maximum 30 conversation in one getConversations');
-                return;
-            }
-            return this.cm.getConversations(conversations);
-        }
-        /**
-         * @hidden
-         */
-
-    }, {
-        key: "getRawConversations",
-        value: function getRawConversations(conversations) {
-            return this.cm.getConversations(conversations);
-        }
-        /**
-         * Remove the conversation specified by the UUID
-         * @see [MessengerEvents.RemoveConversation]
-         * @see [MessengerEvents.Error]
-         * @param uuid Universally Unique Identifier of the conversation
-         */
-
-    }, {
-        key: "removeConversation",
-        value: function removeConversation(uuid) {
-            this.cm.removeConversation(uuid);
-        }
-        /**
-         * Join current user to the conversation specified by the UUID
-         * @see [MessengerEvents.EditConversation]
-         * @see [MessengerEvents.Error]
-         * @param uuid Universally Unique Identifier of the conversation
-         */
-
-    }, {
-        key: "joinConversation",
-        value: function joinConversation(uuid) {
-            this.signalling.sendPayload(MsgEnums_1.MsgAction.joinConversation, { uuid: uuid });
-        }
-        /**
-         * Leave current user from the conversation specified by the UUID
-         * @see [MessengerEvents.EditConversation]
-         * @see [MessengerEvents.Error]
-         * @param uuid  Universally Unique Identifier of the conversation
-         */
-
-    }, {
-        key: "leaveConversation",
-        value: function leaveConversation(uuid) {
-            this.signalling.sendPayload(MsgEnums_1.MsgAction.leaveConversation, { uuid: uuid });
-        }
-        /**
-         * Get user information for the user specified by the full Voximplant user identifier, ex 'username@appname.accname'
-         * @see [MessengerEvents.GetUser]
-         * @see [MessengerEvents.Error]
-         * @param user_id User identifier
-         */
-
-    }, {
-        key: "getUser",
-        value: function getUser(user_id) {
-            var _this2 = this;
-
-            return new Promise(function (resolve, reject) {
-                var resolveListener = function resolveListener(e) {
-                    if (e.user.userId === user_id) {
-                        resolve(e);
-                        _this2.off(index_1.default.MessengerEvents.GetUser, resolveListener);
-                        _this2.off(index_1.default.MessengerEvents.Error, rejectListener);
-                    }
-                };
-                var rejectListener = function rejectListener(e) {
-                    if (e.messengerAction == index_1.default.MessengerAction.getUser) {
-                        reject(e);
-                        _this2.off(index_1.default.MessengerEvents.GetUser, resolveListener);
-                        _this2.off(index_1.default.MessengerEvents.Error, rejectListener);
-                    }
-                };
-                _this2.on(index_1.default.MessengerEvents.GetUser, resolveListener);
-                _this2.on(index_1.default.MessengerEvents.Error, rejectListener);
-                _this2.signalling.sendPayload(MsgEnums_1.MsgAction.getUser, { user_id: user_id });
-            });
-        }
-        /**
-         * Get the full Voximplant user identifier, ex 'username@appname.accname', for the current user
-         * @returns {string} current user short identifier
-         */
-
-    }, {
-        key: "getMe",
-        value: function getMe() {
-            return ConversationManager_1.ConversationManager.extractUserName(Authenticator_1.Authenticator.get().username());
-        }
-        /**
-         * Edit current user information.
-         * @see [MessengerEvents.EditUser]
-         * @see [MessengerEvents.Error]
-         * @param custom_data Public custom data available for all users
-         * @param private_custom_data Private custom data available only to the user themselves.
-         */
-
-    }, {
-        key: "editUser",
-        value: function editUser(customData, privateCustomData) {
-            var user = { user_id: ConversationManager_1.ConversationManager.extractUserName(Authenticator_1.Authenticator.get().username()) };
-            if (customData) user['custom_data'] = customData;
-            if (privateCustomData) user['private_custom_data'] = privateCustomData;
-            this.signalling.sendPayload(MsgEnums_1.MsgAction.editUser, user);
-        }
-        /**
-         * Get user information for the users specified by the array of the full Voximplant user identifiers, ex 'username@appname.accname'
-         * @see [MessengerEvents.GetUser]
-         * @see [MessengerEvents.Error]
-         * @param users List of user identifiers
-         */
-
-    }, {
-        key: "getUsers",
-        value: function getUsers(users) {
-            this.signalling.sendPayload(MsgEnums_1.MsgAction.getUsers, { users: users });
-        }
         /**
          * Register handler for the specified event
          * @hidden
@@ -10028,9 +8315,6 @@ var Messenger = function () {
          * @param event Event identifier
          * @param handler JavaScript function that will be called when the specified event is triggered. Please note that function is called without 'this' binding.
          */
-
-    }, {
-        key: "addEventListener",
         value: function addEventListener(event, handler) {
             if (typeof this.eventListeners[event] === 'undefined') this.eventListeners[event] = [];
             this.eventListeners[event].push(handler);
@@ -10059,28 +8343,6 @@ var Messenger = function () {
             }
         }
         /**
-         * @hidden
-         * @param event
-         * @param payload
-         */
-
-    }, {
-        key: "_dispatchEvent",
-        value: function _dispatchEvent(event, payload) {
-            payload.name = index_1.default.MessengerEvents[event];
-            if (typeof this.eventListeners[event] !== 'undefined') this.eventListeners[event].forEach(function (item) {
-                if (typeof item === 'function') item(payload);
-            });
-            if (typeof this.awaitPromiseList[event] !== 'undefined' && this.awaitPromiseList[event].length != 0) {
-                var nowPromise = this.awaitPromiseList[event].splice(0, 1);
-                if (typeof nowPromise.resolve === 'undefined') nowPromise.resolve(payload);
-                window.clearTimeout(nowPromise.expire);
-            }
-            if (typeof this.eventListeners[event] === 'undefined' || this.eventListeners[event].length == 0) {
-                Logger_1.LogManager.get().writeMessage(Logger_1.LogCategory.MESSAGING, '', Logger_1.LogLevel.INFO, "The " + event + " event dispatched, but no handler registered for this event type.");
-            }
-        }
-        /**
          * Register a handler for the specified event. The method is a shorter equivalent for *addEventListener*. One event can have more than one handler; handlers are executed in order of registration.
          * Use the [Messenger.off] method to delete a handler.
          * @param event
@@ -10104,8 +8366,29 @@ var Messenger = function () {
             this.removeEventListener(event, handler);
         }
         /**
-         * Add new promice for awaiting.
+         * @hidden
          * @param event
+         * @param payload
+         */
+
+    }, {
+        key: "_dispatchEvent",
+        value: function _dispatchEvent(event, payload, uuid) {
+            if (typeof this.eventListeners[event] !== 'undefined') this.eventListeners[event].forEach(function (item) {
+                if (typeof item === 'function') item(payload);
+            });
+            if (uuid && typeof this.awaitPromiseList[uuid] !== 'undefined') {
+                if (event === __1.default.MessengerEvents.Error && typeof this.awaitPromiseList[uuid].reject === 'function') this.awaitPromiseList[uuid].reject(payload);
+                if (typeof this.awaitPromiseList[uuid].resolve === 'function') this.awaitPromiseList[uuid].resolve(payload);
+                window.clearTimeout(this.awaitPromiseList[uuid].expire);
+            }
+            if (typeof this.eventListeners[event] === 'undefined' || this.eventListeners[event].length == 0) {
+                Logger_1.LogManager.get().writeMessage(Logger_1.LogCategory.MESSAGING, '', Logger_1.LogLevel.INFO, "The " + event + " event dispatched, but no handler registered for this event type.");
+            }
+        }
+        /**
+         * Add new promise for awaiting.
+         * @param uuid
          * @param resolve
          * @param reject
          * @hidden
@@ -10113,13 +8396,83 @@ var Messenger = function () {
 
     }, {
         key: "_registerPromise",
-        value: function _registerPromise(event, resolve, reject) {
-            if (typeof this.awaitPromiseList[event] === 'undefined') this.awaitPromiseList[event] = [];
-            this.awaitPromiseList[event].push({
-                resolve: resolve, reject: reject, expire: setTimeout(function () {
-                    reject();
-                }, 20000)
-            });
+        value: function _registerPromise(uuid, resolve, reject) {
+            this.awaitPromiseList[uuid] = {
+                resolve: resolve,
+                reject: reject,
+                expire: window.setTimeout(reject, Messenger.rejectTimeout)
+            };
+        }
+        /**
+         * Get conversation by it's UUID.The method triggers the [MessengerEvents.GetConversation] or [MessengerEvents.Error] event.
+         * The handler function receives the [EventHandlers.GetConversationEvent] object with UUID etc.
+         * @see [MessengerEvents.GetConversation]
+         * @see [MessengerEvents.Error]
+         * @param uuid
+         * @returns {Promise<EventHandlers.GetConversationEvent>|Promise}
+         */
+
+    }, {
+        key: "getConversation",
+        value: function getConversation(uuid) {
+            return this.cm.getConversation(uuid);
+        }
+        /**
+         * Get multiple conversations by array of UUIDs. Maximum 30 conversation. Note that calling this method will result in *multiple* [MessengerEvents.GetConversation] events.
+         * @see [MessengerEvents.GetConversation]
+         * @see [MessengerEvents.Error]
+         * @param conversations Array of UUIDs
+         * @returns {Promise<EventHandlers.GetConversationEvent[]>|Promise}
+         */
+
+    }, {
+        key: "getConversations",
+        value: function getConversations(conversations) {
+            if (Array.isArray(conversations) && conversations.length > 30) {
+                Logger_1.LogManager.get().writeMessage(Logger_1.LogCategory.MESSAGING, 'Rate limit', Logger_1.LogLevel.ERROR, 'you can get maximum 30 conversation in a single getConversations call');
+                return;
+            }
+            return this.cm.getConversations(conversations);
+        }
+        /**
+         * Get uuids of all the public conversations created by the current user, other users of the same child account or any user of the main Voximplant account.
+         * @see [MessengerEvents.GetPublicConversations]
+         * @see [MessengerEvents.Error]
+         * @returns {Promise<EventHandlers.GetPublicConversationsEvent>|Promise}
+         */
+
+    }, {
+        key: "getPublicConversations",
+        value: function getPublicConversations() {
+            return this.cm.getPublicConversations();
+        }
+        /**
+         * @hidden
+         */
+
+    }, {
+        key: "getRawConversations",
+        value: function getRawConversations(conversations) {
+            return this.cm.getConversations(conversations);
+        }
+        /**
+         * Create a new conversation.
+         * Triggers either the [MessengerEvents.Error] or [MessengerEvents.CreateConversation] event on all connected clients that are mentioned in the 'participants' array.
+         * @see Messengerevents.CreateConversation
+         * @see Messengerevents.Error
+         * @param participants Array of participants alongside with access rights params. If all flags are set to false or undefined, [ConversationParticipant.canWrite], [ConversationParticipant.canEdit] and [ConversationParticipant.canRemove] will be set to true by default.
+         * @param title conversation title
+         * @param direct Direct conversation is a conversation between two users only. It cannot be public or uber.
+         * @param enablePublicJoin The feature allows users from any Voximplant account to join the conversation using its uuid.
+         * @param uberConversation If set to 'true', the conversation will restrict access to messages.
+         * @param customData JavaScript object with custom data, up to 5kb. Note that setting this property does not send changes to the server. Use [Conversation.update] to send all changes at once or [Conversation.setCustomData] to update and set the custom data.
+         * @returns {Promise<EventHandlers.CreateConversationEvent>|Promise}
+         */
+
+    }, {
+        key: "createConversation",
+        value: function createConversation(participants, title, direct, publicJoin, uber, customData) {
+            return this.cm.createConversation(participants, title, direct, publicJoin, uber, customData);
         }
         /**
          * Restore conversation from cache that is previously created by the 'toCache' method.
@@ -10130,8 +8483,349 @@ var Messenger = function () {
     }, {
         key: "createConversationFromCache",
         value: function createConversationFromCache(cacheConversation) {
-            if (typeof cacheConversation === 'undefined') return null;
+            if (!cacheConversation || (typeof cacheConversation === "undefined" ? "undefined" : _typeof(cacheConversation)) !== 'object') return null;
             return Conversation_1.Conversation.createFromCache(cacheConversation);
+        }
+        /**
+         * Add the current user to the conversation specified by the UUID. Calling this method triggers [MessengerEvents.EditConversation] or [MessengerEvents.Error] event.
+         * @see [MessengerEvents.EditConversation]
+         * @see [MessengerEvents.Error]
+         * @param uuid Universally Unique Identifier of the conversation
+         * @returns {Promise<EventHandlers.EditConversationEvent>|Promise}
+         */
+
+    }, {
+        key: "joinConversation",
+        value: function joinConversation(uuid) {
+            var _this2 = this;
+
+            return new Promise(function (resolve, reject) {
+                var requestUuid = _this2.signalling.sendWsMessage(MsgAction_1.MsgAction.joinConversation, { uuid: uuid });
+                Messenger.getInstance()._registerPromise(requestUuid, resolve, reject);
+            });
+        }
+        /**
+         * Remove the current user from the conversation specified by the UUID. Calling this method triggers [MessengerEvents.EditConversation] or [MessengerEvents.Error] event.
+         * @see [MessengerEvents.EditConversation]
+         * @see [MessengerEvents.Error]
+         * @param uuid  Universally Unique Identifier of the conversation
+         * @returns {Promise<EventHandlers.EditConversationEvent>|Promise}
+         */
+
+    }, {
+        key: "leaveConversation",
+        value: function leaveConversation(uuid) {
+            var _this3 = this;
+
+            return new Promise(function (resolve, reject) {
+                var requestUuid = _this3.signalling.sendWsMessage(MsgAction_1.MsgAction.leaveConversation, { uuid: uuid });
+                Messenger.getInstance()._registerPromise(requestUuid, resolve, reject);
+            });
+        }
+        /**
+         * Get the full Voximplant user names, ex 'username@appname.accname', for the current user.
+         * @returns {string} current user name
+         */
+
+    }, {
+        key: "getMe",
+        value: function getMe() {
+            return ConversationManager_1.default.extractUserName(Authenticator_1.Authenticator.get().username());
+        }
+        /**
+         * Get the Messaging user id for the current user.
+         * @returns {Promise<number>|Promise} current user id
+         */
+
+    }, {
+        key: "getMyId",
+        value: function getMyId() {
+            if (this.currentUserId) {
+                return Promise.resolve(this.currentUserId);
+            } else {
+                return this.getUser(this.getMe()).then(function (e) {
+                    return e.user.userId;
+                });
+            }
+        }
+        /**
+         * Get [User] information for the user specified by the full Voximplant user name, ex 'username@appname.accname'.
+         * @see [MessengerEvents.GetUser]
+         * @see [MessengerEvents.Error]
+         * @param user_name User name
+         * @returns {Promise<EventHandlers.GetUserEvent>|Promise}
+         */
+
+    }, {
+        key: "getUser",
+        value: function getUser(userName) {
+            var _this4 = this;
+
+            return new Promise(function (resolve, reject) {
+                var requestUuid = void 0;
+                var callback = function callback(e) {
+                    if (e.requestUuid === requestUuid) {
+                        clearTimeout(timeout);
+                        _this4.off(__1.default.MessengerEvents.GetUser, callback);
+                        _this4.off(__1.default.MessengerEvents.Error, errorCallback);
+                        if (e.user.userName === _this4.getMe()) {
+                            _this4.currentUserId = Number(e.user.userId);
+                        }
+                        resolve(e);
+                    }
+                };
+                var errorCallback = function errorCallback(e) {
+                    if (e.requestUuid === requestUuid) {
+                        clearTimeout(timeout);
+                        _this4.off(__1.default.MessengerEvents.GetUser, callback);
+                        _this4.off(__1.default.MessengerEvents.Error, errorCallback);
+                        reject(e);
+                    }
+                };
+                var timeout = setTimeout(function () {
+                    Messenger.getInstance().off(__1.default.MessengerEvents.GetUser, callback);
+                    Messenger.getInstance().off(__1.default.MessengerEvents.Error, errorCallback);
+                    Messenger.getInstance().reject(__1.default.MessengerError.Error_0, __1.default.MessengerAction.getUser).catch(reject);
+                }, Messenger.rejectTimeout);
+                _this4.on(__1.default.MessengerEvents.GetUser, callback);
+                _this4.on(__1.default.MessengerEvents.Error, errorCallback);
+                requestUuid = _this4.signalling.sendWsMessage(MsgAction_1.MsgAction.getUser, { user_name: userName });
+            });
+        }
+        /**
+         * Get [User] information for the user specified by the Messaging user id
+         * @see [MessengerEvents.GetUser]
+         * @see [MessengerEvents.Error]
+         * @param user_id user id
+         * @returns {Promise<EventHandlers.GetUserEvent>|Promise}
+         */
+
+    }, {
+        key: "getUserById",
+        value: function getUserById(userId) {
+            var _this5 = this;
+
+            return new Promise(function (resolve, reject) {
+                var requestUuid = _this5.signalling.sendWsMessage(MsgAction_1.MsgAction.getUser, { user_id: userId });
+                Messenger.getInstance()._registerPromise(requestUuid, resolve, reject);
+            });
+        }
+        /**
+         * Get [User] information for the users specified by the array of full Voximplant user names, ex 'username@appname.accname'.
+         * Note that calling this method will result in multiple [MessengerEvents.GetUser] events.
+         * @see [MessengerEvents.GetUser]
+         * @see [MessengerEvents.Error]
+         * @param users List of full user names
+         * @returns {Promise<EventHandlers.GetUserEvent[]>|Promise}
+         */
+
+    }, {
+        key: "getUsers",
+        value: function getUsers(users) {
+            if (!Array.isArray(users)) return Messenger.getInstance().reject(__1.default.MessengerError.Error_0, __1.default.MessengerAction.getUsers);
+            var requestUuid = void 0;
+            var result = Promise.all(users.map(function (user) {
+                return new Promise(function (resolve, reject) {
+                    var callback = function callback(e) {
+                        if (e.requestUuid === requestUuid && e.user.userName === user) {
+                            clearTimeout(timeout);
+                            Messenger.getInstance().off(__1.default.MessengerEvents.GetUser, callback);
+                            Messenger.getInstance().off(__1.default.MessengerEvents.Error, errorCallback);
+                            resolve(e);
+                        }
+                    };
+                    var errorCallback = function errorCallback(e) {
+                        if (e.requestUuid === requestUuid) {
+                            clearTimeout(timeout);
+                            Messenger.getInstance().off(__1.default.MessengerEvents.GetUser, callback);
+                            Messenger.getInstance().off(__1.default.MessengerEvents.Error, errorCallback);
+                            reject(e);
+                        }
+                    };
+                    var timeout = setTimeout(function () {
+                        Messenger.getInstance().off(__1.default.MessengerEvents.GetUser, callback);
+                        Messenger.getInstance().off(__1.default.MessengerEvents.Error, errorCallback);
+                        Messenger.getInstance().reject(__1.default.MessengerError.Error_0, __1.default.MessengerAction.getUsers).catch(reject);
+                    }, Messenger.rejectTimeout);
+                    Messenger.getInstance().on(__1.default.MessengerEvents.GetUser, callback);
+                    Messenger.getInstance().on(__1.default.MessengerEvents.Error, errorCallback);
+                });
+            }));
+            requestUuid = this.signalling.sendWsMessage(MsgAction_1.MsgAction.getUsers, {
+                users: users.map(function (user) {
+                    return { user_name: user };
+                })
+            });
+            return result;
+        }
+        /**
+         * Get [User] information for the users specified by the array of Messaging user ids.
+         * Note that calling this method will result in multiple [MessengerEvents.GetUser] events.
+         * @see [MessengerEvents.GetUser]
+         * @see [MessengerEvents.Error]
+         * @param users List of user ids
+         * @returns {Promise<EventHandlers.GetUserEvent[]>|Promise}
+         */
+
+    }, {
+        key: "getUsersById",
+        value: function getUsersById(userIds) {
+            if (!Array.isArray(userIds)) return Messenger.getInstance().reject(__1.default.MessengerError.Error_0, __1.default.MessengerAction.getUsers);
+            var requestUuid = void 0;
+            var result = Promise.all(userIds.map(function (userId) {
+                return new Promise(function (resolve, reject) {
+                    var callback = function callback(e) {
+                        if (e.requestUuid === requestUuid && e.user.userId === userId) {
+                            clearTimeout(timeout);
+                            Messenger.getInstance().off(__1.default.MessengerEvents.GetUser, callback);
+                            Messenger.getInstance().off(__1.default.MessengerEvents.Error, errorCallback);
+                            resolve(e);
+                        }
+                    };
+                    var errorCallback = function errorCallback(e) {
+                        if (e.requestUuid === requestUuid) {
+                            clearTimeout(timeout);
+                            Messenger.getInstance().off(__1.default.MessengerEvents.GetUser, callback);
+                            Messenger.getInstance().off(__1.default.MessengerEvents.Error, errorCallback);
+                            reject(e);
+                        }
+                    };
+                    var timeout = setTimeout(function () {
+                        Messenger.getInstance().off(__1.default.MessengerEvents.GetUser, callback);
+                        Messenger.getInstance().off(__1.default.MessengerEvents.Error, errorCallback);
+                        Messenger.getInstance().reject(__1.default.MessengerError.Error_0, __1.default.MessengerAction.getUsers).catch(reject);
+                    }, Messenger.rejectTimeout);
+                    Messenger.getInstance().on(__1.default.MessengerEvents.GetUser, callback);
+                    Messenger.getInstance().on(__1.default.MessengerEvents.Error, errorCallback);
+                });
+            }));
+            requestUuid = this.signalling.sendWsMessage(MsgAction_1.MsgAction.getUsers, {
+                users: userIds.map(function (user) {
+                    return { user_id: user };
+                })
+            });
+            return result;
+        }
+        /**
+         * Edit the current user information.
+         * @see [MessengerEvents.EditUser]
+         * @see [MessengerEvents.Error]
+         * @param custom_data Public custom data available for all users
+         * @param private_custom_data Private custom data available only to the user themselves.
+         * @returns {Promise<EventHandlers.EditUserEvent>|Promise}
+         */
+
+    }, {
+        key: "editUser",
+        value: function editUser(customData, privateCustomData) {
+            var _this6 = this;
+
+            var user = {};
+            if (customData) user.custom_data = customData;
+            if (privateCustomData) user.private_custom_data = privateCustomData;
+            return new Promise(function (resolve, reject) {
+                var requestUuid = _this6.signalling.sendWsMessage(MsgAction_1.MsgAction.editUser, user);
+                Messenger.getInstance()._registerPromise(requestUuid, resolve, reject);
+            });
+        }
+        /**
+         * Set user presence status.
+         * Triggers the [MessengerEvents.SetStatus] event for all messenger objects on all *connected* clients which are subscribed for notifications about this user. Including this one if conditions are met.
+         * @see [MessengerEvents.SetStatus]
+         * @see [MessengerEvents.Error]
+         * @param online True if the user is available for messaging.
+         * @returns {Promise<EventHandlers.SetStatusEvent>|Promise}
+         */
+
+    }, {
+        key: "setStatus",
+        value: function setStatus(online) {
+            var _this7 = this;
+
+            return new Promise(function (resolve, reject) {
+                var requestUuid = _this7.signalling.sendWsMessage(MsgAction_1.MsgAction.setStatus, { online: online });
+                Messenger.getInstance()._registerPromise(requestUuid, resolve, reject);
+            });
+        }
+        /**
+         * Subscribe for user information and presence status changes. A method call triggers the [MessengerEvents.Subscribe] event.
+         * @see [MessengerEvents.Subscribe]
+         * @see [MessengerEvents.Error]
+         * @param users List of Messaging user ids.
+         * @returns {Promise<EventHandlers.SubscribeEvent>|Promise}
+         */
+
+    }, {
+        key: "subscribe",
+        value: function subscribe(users) {
+            var _this8 = this;
+
+            return new Promise(function (resolve, reject) {
+                var requestUuid = _this8.signalling.sendWsMessage(MsgAction_1.MsgAction.subscribe, { user_id: users });
+                Messenger.getInstance()._registerPromise(requestUuid, resolve, reject);
+            });
+        }
+        /**
+         * Unsubscribe for user information change and presence status change. A method call triggers the [MessengerEvents.Unsubscribe] event.
+         * @see [MessengerEvents.Unsubscribe]
+         * @see [MessengerEvents.Error]
+         * @param users List of Messaging user ids.
+         * @param all Set to true to unsubscribe from all the conversation users.
+         * @returns {Promise<EventHandlers.UnsubscribeEvent>|Promise}
+         */
+
+    }, {
+        key: "unsubscribe",
+        value: function unsubscribe(users, all) {
+            var _this9 = this;
+
+            return new Promise(function (resolve, reject) {
+                var requestUuid = _this9.signalling.sendWsMessage(MsgAction_1.MsgAction.unsubscribe, { user_id: users, all: all });
+                Messenger.getInstance()._registerPromise(requestUuid, resolve, reject);
+            });
+        }
+        /**
+         * Unsubscribe for user information change and presence status change. A method call triggers the [MessengerEvents.GetSubscriptionList] event.
+         * @see [MessengerEvents.GetSubscriptionList]
+         * @see [MessengerEvents.Error]
+         * @param events List of [MessengerEvents]. Set to empty array to unsubscribe from all Messenger push notifications.
+         * @returns {Promise<EventHandlers.GetSubscriptionList>|Promise}
+         */
+
+    }, {
+        key: "getSubscriptionList",
+        value: function getSubscriptionList() {
+            var _this10 = this;
+
+            return new Promise(function (resolve, reject) {
+                var requestUuid = _this10.signalling.sendWsMessage(MsgAction_1.MsgAction.getSubscriptionList, {});
+                Messenger.getInstance()._registerPromise(requestUuid, resolve, reject);
+            });
+        }
+        /**
+         * Use to receive push notifications on specific Messenger events.
+         * Note that you need to set up push notifications to use this method.
+         * You'll find all the setup steps in our [Push Notifications tutorial](https://voximplant.com/docs/references/websdk/push-notifications).
+         * Possible events are [MessengerEvents.CreateConversation], [MessengerEvents.SendMessage] and [MessengerEvents.EditMessage].
+         * A method call triggers the [MessengerEvents.EditUser] event.
+         * @see [MessengerEvents.EditUserEvent]
+         * @see [MessengerEvents.Error]
+         * @returns {Promise<EventHandlers.ManageNotifications>|Promise}
+         */
+
+    }, {
+        key: "manageNotification",
+        value: function manageNotification(notifications) {
+            var _this11 = this;
+
+            return new Promise(function (resolve, reject) {
+                var requestUuid = _this11.signalling.sendWsMessage(MsgAction_1.MsgAction.manageNotification, {
+                    notifications: notifications.map(function (n) {
+                        return n === __1.default.MessengerEvents.CreateConversation ? MsgEvent_1.MsgEvent.onCreateConversation : n === __1.default.MessengerEvents.SendMessage ? MsgEvent_1.MsgEvent.onSendMessage : n === __1.default.MessengerEvents.EditMessage ? MsgEvent_1.MsgEvent.onEditMessage : undefined;
+                    })
+                });
+                Messenger.getInstance()._registerPromise(requestUuid, resolve, reject);
+            });
         }
         /**
          * Restore message from cache that is previously created by the 'toCache' method.
@@ -10142,56 +8836,33 @@ var Messenger = function () {
     }, {
         key: "createMessageFromCache",
         value: function createMessageFromCache(cacheMessage) {
-            if (typeof cacheMessage === 'undefined') return null;
+            if (!cacheMessage || (typeof cacheMessage === "undefined" ? "undefined" : _typeof(cacheMessage)) !== 'object') return null;
             return Message_1.Message.createFromCache(cacheMessage);
         }
         /**
-         * Subscribe for user information change and presence status change; a method call triggers the [MessengerEvents.Subscribe] event.
-         * @see [MessengerEvents.Subscribe]
-         * @see [MessengerEvents.Error]
-         * @param users List of full Voximplant user identifiers, ex 'username@appname.accname'
+         * @hidden
          */
 
     }, {
-        key: "subscribe",
-        value: function subscribe(users) {
-            this.signalling.sendPayload(MsgEnums_1.MsgAction.subscribe, { users: users });
-        }
-        /**
-         * Unsubscribe for user information change and presence status change; a method call triggers the [MessengerEvents.Unsubscribe] event.
-         * @see [MessengerEvents.Unsubscribe]
-         * @see [MessengerEvents.Error]
-         * @param users List of full Voximplant user identifiers, ex 'username@appname.accname'
-         */
-
-    }, {
-        key: "unsubscribe",
-        value: function unsubscribe(users) {
-            this.signalling.sendPayload(MsgEnums_1.MsgAction.unsubscribe, { users: users });
+        key: "reject",
+        value: function reject(errorCode, action) {
+            var payload = {
+                code: errorCode,
+                description: ERRORS[errorCode],
+                initiator: this.currentUserId,
+                messengerAction: action
+            };
+            this._dispatchEvent(__1.default.MessengerEvents.Error, payload);
+            return Promise.reject(payload);
         }
         /**
          * @hidden
-         * @deprecated
-         * @param status
          */
 
     }, {
-        key: "setPresence",
-        value: function setPresence(status) {
-            this.setStatus(status);
-        }
-        /**
-         * Set user presence status.
-         * Triggers the [MessengerEvents.SetStatus] event for all messenger objects on all *connected* clients which are subscribed for notifications about this user. Including this one if conditions are met.
-         * @see [MessengerEvents.SetStatus]
-         * @see [MessengerEvents.Error]
-         * @param status true if user is available for messaging.
-         */
-
-    }, {
-        key: "setStatus",
-        value: function setStatus(status) {
-            this.signalling.sendPayload(MsgEnums_1.MsgAction.setStatus, { online: status });
+        key: "msgEventToMessengerEvent",
+        value: function msgEventToMessengerEvent(e) {
+            return e === MsgEvent_1.MsgEvent.onCreateConversation ? __1.default.MessengerEvents.CreateConversation : e === MsgEvent_1.MsgEvent.onSendMessage ? __1.default.MessengerEvents.SendMessage : e === MsgEvent_1.MsgEvent.onEditMessage ? __1.default.MessengerEvents.EditMessage : e;
         }
         /**
          * @hidden
@@ -10214,35 +8885,347 @@ var Messenger = function () {
 
     return Messenger;
 }();
+/**
+ * @hidden
+ */
 
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], Messenger.prototype, "createConversation", null);
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], Messenger.prototype, "getConversation", null);
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], Messenger.prototype, "getConversations", null);
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], Messenger.prototype, "getRawConversations", null);
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], Messenger.prototype, "removeConversation", null);
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], Messenger.prototype, "joinConversation", null);
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], Messenger.prototype, "leaveConversation", null);
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], Messenger.prototype, "getUser", null);
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], Messenger.prototype, "getMe", null);
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], Messenger.prototype, "editUser", null);
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], Messenger.prototype, "getUsers", null);
+
+Messenger.rejectTimeout = 20000;
 __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], Messenger.prototype, "addEventListener", null);
 __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], Messenger.prototype, "removeEventListener", null);
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], Messenger.prototype, "_dispatchEvent", null);
 __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], Messenger.prototype, "on", null);
 __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], Messenger.prototype, "off", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], Messenger.prototype, "_dispatchEvent", null);
 __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], Messenger.prototype, "_registerPromise", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], Messenger.prototype, "getConversation", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], Messenger.prototype, "getConversations", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], Messenger.prototype, "getPublicConversations", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], Messenger.prototype, "getRawConversations", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], Messenger.prototype, "createConversation", null);
 __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], Messenger.prototype, "createConversationFromCache", null);
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], Messenger.prototype, "createMessageFromCache", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], Messenger.prototype, "joinConversation", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], Messenger.prototype, "leaveConversation", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], Messenger.prototype, "getMe", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], Messenger.prototype, "getMyId", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], Messenger.prototype, "getUser", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], Messenger.prototype, "getUserById", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], Messenger.prototype, "getUsers", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], Messenger.prototype, "getUsersById", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], Messenger.prototype, "editUser", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], Messenger.prototype, "setStatus", null);
 __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], Messenger.prototype, "subscribe", null);
 __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], Messenger.prototype, "unsubscribe", null);
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], Messenger.prototype, "setPresence", null);
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], Messenger.prototype, "setStatus", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], Messenger.prototype, "getSubscriptionList", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], Messenger.prototype, "manageNotification", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], Messenger.prototype, "createMessageFromCache", null);
 __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], Messenger, "getInstance", null);
 exports.Messenger = Messenger;
 
 /***/ }),
-/* 31 */
+/* 26 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var __decorate = undefined && undefined.__decorate || function (decorators, target, key, desc) {
+    var c = arguments.length,
+        r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc,
+        d;
+    if ((typeof Reflect === "undefined" ? "undefined" : _typeof(Reflect)) === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);else for (var i = decorators.length - 1; i >= 0; i--) {
+        if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    }return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+var Logger_1 = __webpack_require__(0);
+var MsgSignaling_1 = __webpack_require__(18);
+var MsgAction_1 = __webpack_require__(27);
+var Messenger_1 = __webpack_require__(25);
+
+var Message = function () {
+    /**
+     * @hidden
+     * @param {string} message
+     * @param {Array<object>} payload
+     */
+    function Message(message, payload) {
+        _classCallCheck(this, Message);
+
+        this._text = message;
+        if (typeof payload !== 'undefined' && Array.isArray(payload) && payload.every(function (el) {
+            return el && (typeof el === "undefined" ? "undefined" : _typeof(el)) === 'object';
+        })) this._payload = payload;else this._payload = [];
+    }
+    /**
+     * Universally unique identifier of message. Can be used on client side for housekeeping.
+     * @returns {string}
+     */
+
+
+    _createClass(Message, [{
+        key: "toCache",
+
+        /**
+         * Serialize message so it can be stored into a storage (like IndexedDB) and later restored via [Messenger2.createMessageFromCache]
+         */
+        value: function toCache() {
+            return {
+                uuid: this._uuid,
+                text: this._text,
+                payload: this._payload,
+                conversation: this._conversation,
+                sender: this._sender
+            };
+        }
+        /**
+         * @hidden
+         * @returns {{text: string, conversation: string, payload?: object[]}}
+         */
+
+    }, {
+        key: "getPayload",
+        value: function getPayload() {
+            var str = {
+                text: this._text,
+                conversation: this._conversation
+            };
+            if (typeof this._payload !== 'undefined' && Array.isArray(this._payload) && this._payload.every(function (el) {
+                return (typeof el === "undefined" ? "undefined" : _typeof(el)) === 'object';
+            })) str.payload = this._payload;else str.payload = [];
+            return str;
+        }
+        /**
+         * @hidden
+         * @param conversation
+         * @returns {Promise<EventHandlers.SendMessageEvent>|Promise}
+         */
+
+    }, {
+        key: "sendTo",
+        value: function sendTo(conversation) {
+            var _this = this;
+
+            this._conversation = conversation.uuid;
+            return new Promise(function (resolve, reject) {
+                var requestUuid = MsgSignaling_1.MsgSignaling.get().sendWsMessage(MsgAction_1.MsgAction.sendMessage, _this.getPayload());
+                Messenger_1.Messenger.getInstance()._registerPromise(requestUuid, resolve, reject);
+            });
+        }
+        /**
+         * Sends text and payload changes to the server.
+         * @returns {Promise<EventHandlers.EditMessageEvent>|Promise}
+         */
+
+    }, {
+        key: "update",
+        value: function update() {
+            var _this2 = this;
+
+            return new Promise(function (resolve, reject) {
+                var requestUuid = MsgSignaling_1.MsgSignaling.get().sendWsMessage(MsgAction_1.MsgAction.editMessage, Object.assign(_this2.getPayload(), { uuid: _this2._uuid }));
+                Messenger_1.Messenger.getInstance()._registerPromise(requestUuid, resolve, reject);
+            });
+        }
+        /**
+         * Remove the message.
+         * Triggers the [MessngerEvents.RemoveMessage] event for all the messenger objects on all the clients including this one.
+         * @returns {Promise<EventHandlers.RemoveMessageEvent>|Promise}
+         */
+
+    }, {
+        key: "remove",
+        value: function remove() {
+            var _this3 = this;
+
+            return new Promise(function (resolve, reject) {
+                var requestUuid = MsgSignaling_1.MsgSignaling.get().sendWsMessage(MsgAction_1.MsgAction.removeMessage, {
+                    uuid: _this3._uuid,
+                    conversation: _this3.conversation
+                });
+                Messenger_1.Messenger.getInstance()._registerPromise(requestUuid, resolve, reject);
+            });
+        }
+        /**
+         * @hidden
+         * @return {string}
+         * @private
+         */
+
+    }, {
+        key: "_traceName",
+        value: function _traceName() {
+            return 'Message';
+        }
+    }, {
+        key: "uuid",
+        get: function get() {
+            return this._uuid;
+        }
+        /**
+         * UUID of the conversation this message belongs to.
+         */
+
+    }, {
+        key: "conversation",
+        get: function get() {
+            return this._conversation;
+        }
+        /**
+         * Message text.
+         */
+
+    }, {
+        key: "text",
+        get: function get() {
+            return this._text;
+        }
+        /**
+         * Sets the message text.
+         * Setting this property does not send changes to the server.
+         * Use the 'update' method to send all the changes at once.
+         * @param value {string}
+         */
+        ,
+        set: function set(value) {
+            this._text = value;
+        }
+        /**
+         * Array of payload objects associated with the message.
+         */
+
+    }, {
+        key: "payload",
+        get: function get() {
+            return this._payload;
+        }
+        /**
+         * Sets the message payload.
+         * Setting this property does not send changes to the server.
+         * Use the 'update' method to send all the changes at once.
+         * @param value {Array<object>}
+         */
+        ,
+        set: function set(value) {
+            this._payload = value;
+        }
+    }, {
+        key: "sender",
+        get: function get() {
+            return this._sender;
+        }
+        /**
+         * @hidden
+         * @param busMessage
+         * @param seq
+         */
+
+    }], [{
+        key: "_createFromBus",
+        value: function _createFromBus(busMessage, sender) {
+            var message = new Message(busMessage.text, busMessage.payload);
+            message._uuid = busMessage.uuid;
+            message._conversation = busMessage.conversation;
+            message._sender = sender;
+            return message;
+        }
+        /**
+         * @hidden
+         * @param cacheMessage
+         * @returns {Message}
+         */
+
+    }, {
+        key: "createFromCache",
+        value: function createFromCache(cacheMessage) {
+            var message = new Message(cacheMessage.text, cacheMessage.payload);
+            message._uuid = cacheMessage.uuid;
+            message._conversation = cacheMessage.conversation;
+            message._sender = Number(cacheMessage.sender);
+            return message;
+        }
+    }]);
+
+    return Message;
+}();
+
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], Message.prototype, "toCache", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], Message.prototype, "getPayload", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], Message.prototype, "sendTo", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], Message.prototype, "update", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], Message.prototype, "remove", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], Message, "_createFromBus", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], Message, "createFromCache", null);
+exports.Message = Message;
+
+/***/ }),
+/* 27 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", { value: true });
+/**
+ * IM gen 2
+ * @hidden
+ */
+var MsgAction;
+(function (MsgAction) {
+  /**
+   * @hidden
+   */
+  MsgAction["UNKNOWN"] = "UNKNOWN";
+  MsgAction["createConversation"] = "createConversation";
+  MsgAction["editConversation"] = "editConversation";
+  MsgAction["removeConversation"] = "removeConversation";
+  MsgAction["joinConversation"] = "joinConversation";
+  MsgAction["leaveConversation"] = "leaveConversation";
+  MsgAction["getConversation"] = "getConversation";
+  MsgAction["getConversations"] = "getConversations";
+  MsgAction["getPublicConversations"] = "getPublicConversations";
+  /**
+   * @hidden
+   */
+  MsgAction["searchConversations"] = "searchConversations";
+  /**
+   * @hidden
+   */
+  MsgAction["removeEmptyConversation"] = "removeEmptyConversation";
+  MsgAction["addParticipants"] = "addParticipants";
+  MsgAction["editParticipants"] = "editParticipants";
+  MsgAction["removeParticipants"] = "removeParticipants";
+  MsgAction["getUser"] = "getUser";
+  MsgAction["getUsers"] = "getUsers";
+  MsgAction["editUser"] = "editUser";
+  MsgAction["setStatus"] = "setStatus";
+  MsgAction["sendMessage"] = "sendMessage";
+  MsgAction["editMessage"] = "editMessage";
+  MsgAction["removeMessage"] = "removeMessage";
+  MsgAction["typingMessage"] = "typingMessage";
+  MsgAction["isRead"] = "isRead";
+  MsgAction["subscribe"] = "subscribe";
+  MsgAction["unsubscribe"] = "unsubscribe";
+  MsgAction["manageNotification"] = "manageNotification";
+  MsgAction["getSubscriptionList"] = "getSubscriptionList";
+  /**
+   * @hidden
+   */
+  MsgAction["createBot"] = "createBot";
+  /**
+   * @hidden
+   */
+  MsgAction["removeBot"] = "removeBot";
+  MsgAction["retransmitEvents"] = "retransmitEvents";
+})(MsgAction = exports.MsgAction || (exports.MsgAction = {}));
+
+/***/ }),
+/* 28 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -10376,6 +9359,1375 @@ var OperatorACDStatuses;
 })(OperatorACDStatuses = exports.OperatorACDStatuses || (exports.OperatorACDStatuses = {}));
 
 /***/ }),
+/* 29 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _get = function get(object, property, receiver) { if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { return get(parent, property, receiver); } } else if ("value" in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } };
+
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var __decorate = undefined && undefined.__decorate || function (decorators, target, key, desc) {
+    var c = arguments.length,
+        r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc,
+        d;
+    if ((typeof Reflect === "undefined" ? "undefined" : _typeof(Reflect)) === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);else for (var i = decorators.length - 1; i >= 0; i--) {
+        if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    }return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+var Logger_1 = __webpack_require__(0);
+var __1 = __webpack_require__(4);
+var EventTarget_1 = __webpack_require__(15);
+var CameraManager_1 = __webpack_require__(36);
+var BrowserSpecific_1 = __webpack_require__(7);
+var Events_1 = __webpack_require__(14);
+var Client_1 = __webpack_require__(1);
+var AudioDeviceManager_1 = __webpack_require__(35);
+var MediaRenderer_1 = __webpack_require__(37);
+/**
+ * @hidden
+ */
+
+var StreamManager = function (_EventTarget_1$EventT) {
+    _inherits(StreamManager, _EventTarget_1$EventT);
+
+    /**
+     * @hidden
+     */
+    function StreamManager() {
+        _classCallCheck(this, StreamManager);
+
+        var _this = _possibleConstructorReturn(this, (StreamManager.__proto__ || Object.getPrototypeOf(StreamManager)).call(this));
+
+        if (typeof StreamManager.instance !== 'undefined') throw new Error('Error - use StreamManager.get()');
+        _this._callStreams = {};
+        _this._localMediaRenderers = [];
+        _this._sharingStreams = {};
+        _this.logger = Logger_1.LogManager.get().createLogger(Logger_1.LogCategory.HARDWARE, _this._traceName());
+        return _this;
+    }
+    /**
+     * Get the StreamManager instance
+     */
+
+
+    _createClass(StreamManager, [{
+        key: "getMirrorStream",
+
+        /**
+         * Return link to the mirror stream, if exist. Or get a new one.
+         * @hidden
+         * @return {Promise<MediaStream>}
+         */
+        value: function getMirrorStream() {
+            var _this2 = this;
+
+            // TODO: Переписать на общее получение медиа (irbisadm 15.09.18)
+            if (Client_1.Client.getInstance().config().experiments && Client_1.Client.getInstance().config().experiments.customMirrorMedia) {
+                return new Promise(function (resolve, reject) {
+                    Client_1.Client.getInstance().config().experiments.customMirrorMedia({
+                        videoSettings: CameraManager_1.CameraManager.get().getDefaultVideoSettings()
+                    }).then(function (stream) {
+                        _this2._mirrorStream = stream;
+                        _this2._mirrorStream.getTracks().forEach(function (track) {
+                            track.onended = function () {
+                                _this2.onMirrorEnded();
+                            };
+                            track.onmute = function () {
+                                _this2.onMirrorEnded;
+                            };
+                        });
+                        resolve(stream);
+                    }).catch(function (e) {
+                        reject(e);
+                    });
+                });
+            }
+            return new Promise(function (resolve, reject) {
+                if (typeof _this2._mirrorStream !== 'undefined') {
+                    if (_this2._mirrorStream.active) {
+                        resolve(_this2._mirrorStream);
+                        return;
+                    }
+                }
+                if (BrowserSpecific_1.default.isIphone()) {
+                    return __1.default.IOSCacheManager.get().getStream({
+                        video: CameraManager_1.CameraManager.get().getCallConstraints('__local__'),
+                        audio: AudioDeviceManager_1.AudioDeviceManager.get().getCallConstraints('__local__')
+                    }).then(function (stream) {
+                        _this2._mirrorStream = stream;
+                        _this2._mirrorStream.getTracks().forEach(function (track) {
+                            track.onended = function () {
+                                _this2.onMirrorEnded();
+                            };
+                            track.onmute = function () {
+                                _this2.onMirrorEnded;
+                            };
+                        });
+                        resolve(stream);
+                    }, reject);
+                } else {
+                    return navigator.mediaDevices.getUserMedia({ video: CameraManager_1.CameraManager.get().getCallConstraints('__local__') }).then(function (stream) {
+                        _this2.logger.info('Media access granted');
+                        _this2._mirrorStream = stream;
+                        _this2._mirrorStream.getTracks().forEach(function (track) {
+                            track.onended = function () {
+                                _this2.onMirrorEnded();
+                            };
+                            track.onmute = function () {
+                                _this2.onMirrorEnded;
+                            };
+                        });
+                        resolve(stream);
+                    }).catch(function (e) {
+                        _this2.logger.error("Media access denied: " + (e ? e.message || e.name || e : 'unknown'));
+                    });
+                }
+            });
+        }
+        /**
+         * @hidden
+         */
+
+    }, {
+        key: "remMirrorStream",
+        value: function remMirrorStream() {
+            if (!BrowserSpecific_1.default.isIphone()) {
+                if (typeof this._mirrorStream === 'undefined') return;
+                this._mirrorStream.getTracks().forEach(function (track) {
+                    track.onended = undefined;
+                    track.onmute = undefined;
+                    track.stop();
+                });
+                this._mirrorStream = undefined;
+            }
+        }
+        /**
+         * @hidden
+         * @param {Call} call
+         * @returns {Promise<MediaStream>}
+         */
+
+    }, {
+        key: "getCallStream",
+        value: function getCallStream(call) {
+            var _this3 = this;
+
+            var ignore = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
+
+            // TODO: Переписать на общее получение медиа (irbisadm 15.09.18)
+            if (Client_1.Client.getInstance().config().experiments && Client_1.Client.getInstance().config().experiments.customCallMedia) {
+                return new Promise(function (resolve, reject) {
+                    var videoSettings = false;
+                    var audioSettings = AudioDeviceManager_1.AudioDeviceManager.get().getDefaultAudioSettings();
+                    if (call) {
+                        videoSettings = call.settings.videoDirections && call.settings.videoDirections.sendVideo ? CameraManager_1.CameraManager.get().getCallVideoSettings(call) : false;
+                        audioSettings = AudioDeviceManager_1.AudioDeviceManager.get().getCallAudioSettings(call);
+                    }
+                    var constraints = {
+                        call: call,
+                        audioSettings: audioSettings,
+                        videoSettings: videoSettings
+                    };
+                    _this3.logger.info("[constraints]: " + JSON.stringify(constraints));
+                    Client_1.Client.getInstance().config().experiments.customCallMedia(constraints).then(function (stream) {
+                        _this3.logger.info('Media access granted');
+                        Client_1.Client.getInstance().dispatchEvent({
+                            name: Events_1.Events.MicAccessResult,
+                            result: true,
+                            stream: stream
+                        });
+                        resolve(stream);
+                    }).catch(function (e) {
+                        _this3.logger.error("Media access denied: " + (e ? e.message || e.name || e : 'unknown'));
+                        Client_1.Client.getInstance().dispatchEvent({
+                            name: Events_1.Events.MicAccessResult,
+                            result: false,
+                            stream: null
+                        });
+                        reject(e);
+                    });
+                });
+            }
+            return new Promise(function (resolve, reject) {
+                var callId = typeof call === 'undefined' ? '__default' : call.id();
+                if (_this3._callStreams[callId] && !ignore) {
+                    resolve(_this3._callStreams[callId]);
+                } else {
+                    var constraints = _this3._composeConstraints(call);
+                    _this3.logger.info("[constraints]: " + JSON.stringify(constraints));
+                    if (!constraints.audio && !constraints.video && callId !== '__default') {
+                        resolve(null);
+                        return;
+                    }
+                    if (BrowserSpecific_1.default.getWSVendor() !== 'firefox') {
+                        if (BrowserSpecific_1.default.isIphone()) {
+                            __1.default.IOSCacheManager.get().getStream(constraints).then(function (stream) {
+                                _this3._callStreams[callId] = stream;
+                                stream.getTracks().forEach(function (track) {
+                                    track.onended = _this3.onCallEnded;
+                                    track.onmute = _this3.onCallEnded;
+                                });
+                                Client_1.Client.getInstance().dispatchEvent({
+                                    name: Events_1.Events.MicAccessResult,
+                                    result: true,
+                                    stream: stream
+                                });
+                                resolve(stream);
+                            });
+                        } else {
+                            navigator.mediaDevices.getUserMedia(constraints).then(function (stream) {
+                                _this3.logger.info('Media access granted');
+                                _this3._callStreams[callId] = stream;
+                                stream.getTracks().forEach(function (track) {
+                                    track.onended = _this3.onCallEnded;
+                                    track.onmute = _this3.onCallEnded;
+                                });
+                                Client_1.Client.getInstance().dispatchEvent({
+                                    name: Events_1.Events.MicAccessResult,
+                                    result: true,
+                                    stream: stream
+                                });
+                                resolve(stream);
+                            }, function (e) {
+                                if (e.name === 'NotFoundError') {
+                                    var backupConstrains = { audio: true };
+                                    _this3.logger.info("[backup constraints]: " + JSON.stringify(constraints));
+                                    if (typeof call !== 'undefined') {
+                                        call.settings.videoDirections.sendVideo = false;
+                                        backupConstrains = _this3._composeConstraints(call);
+                                    }
+                                    navigator.mediaDevices.getUserMedia(backupConstrains).then(function (stream) {
+                                        _this3.logger.info('Media access granted');
+                                        _this3._callStreams[callId] = stream;
+                                        stream.getTracks().forEach(function (track) {
+                                            track.onended = _this3.onCallEnded;
+                                            track.onmute = _this3.onCallEnded;
+                                        });
+                                        Client_1.Client.getInstance().dispatchEvent({
+                                            name: Events_1.Events.MicAccessResult,
+                                            result: true,
+                                            stream: stream
+                                        });
+                                        resolve(stream);
+                                    }, function (e) {
+                                        _this3.logger.error("Media access denied: " + (e ? e.message || e.name || e : 'unknown'));
+                                        Client_1.Client.getInstance().dispatchEvent({
+                                            name: Events_1.Events.MicAccessResult,
+                                            result: false,
+                                            stream: null
+                                        });
+                                        reject(e);
+                                    });
+                                } else {
+                                    _this3.logger.error("Media access denied: " + (e ? e.message || e.name || e : 'unknown'));
+                                    Client_1.Client.getInstance().dispatchEvent({
+                                        name: Events_1.Events.MicAccessResult,
+                                        result: false,
+                                        stream: null
+                                    });
+                                    reject(e);
+                                }
+                            });
+                        }
+                    } else {
+                        var audioConstraint = null;
+                        var videoConstraint = null;
+                        if (constraints.audio) {
+                            audioConstraint = { audio: constraints.audio };
+                        }
+                        if (constraints.video) {
+                            videoConstraint = { video: constraints.video };
+                        }
+                        navigator.mediaDevices.getUserMedia(audioConstraint).then(function (stream) {
+                            _this3.logger.info('Audio access granted');
+                            if (!videoConstraint) {
+                                _this3._callStreams[callId] = stream;
+                                stream.getTracks().forEach(function (track) {
+                                    track.onended = _this3.onCallEnded;
+                                    track.onmute = _this3.onCallEnded;
+                                });
+                                Client_1.Client.getInstance().dispatchEvent({
+                                    name: Events_1.Events.MicAccessResult,
+                                    result: true,
+                                    stream: stream
+                                });
+                                resolve(stream);
+                            } else {
+                                navigator.mediaDevices.getUserMedia(videoConstraint).then(function (stream2) {
+                                    _this3.logger.info('Video access granted');
+                                    var fullStream = new MediaStream();
+                                    stream.getTracks().forEach(function (track) {
+                                        fullStream.addTrack(track);
+                                    });
+                                    stream2.getTracks().forEach(function (track) {
+                                        fullStream.addTrack(track);
+                                    });
+                                    _this3._callStreams[callId] = fullStream;
+                                    fullStream.getTracks().forEach(function (track) {
+                                        track.onended = _this3.onCallEnded;
+                                        track.onmute = _this3.onCallEnded;
+                                    });
+                                    Client_1.Client.getInstance().dispatchEvent({
+                                        name: Events_1.Events.MicAccessResult,
+                                        result: true,
+                                        stream: fullStream
+                                    });
+                                    resolve(fullStream);
+                                }, function (e) {
+                                    _this3.logger.error("Video access denied: " + (e ? e.message || e.name || e : 'unknown'));
+                                    _this3._callStreams[callId] = stream;
+                                    stream.getTracks().forEach(function (track) {
+                                        track.onended = _this3.onCallEnded;
+                                        track.onmute = _this3.onCallEnded;
+                                    });
+                                    Client_1.Client.getInstance().dispatchEvent({
+                                        name: Events_1.Events.MicAccessResult,
+                                        result: true,
+                                        stream: stream
+                                    });
+                                    resolve(stream);
+                                });
+                            }
+                        }, function (e) {
+                            _this3.logger.error("Audio access denied: " + (e ? e.message || e.name || e : 'unknown'));
+                            Client_1.Client.getInstance().dispatchEvent({
+                                name: Events_1.Events.MicAccessResult,
+                                result: false,
+                                stream: null
+                            });
+                            reject(e);
+                        });
+                    }
+                }
+            });
+        }
+        /**
+         * @hidden
+         * @param {Call} call
+         * @returns {Promise<MediaStream>}
+         * @private
+         */
+
+    }, {
+        key: "_updateCallStream",
+        value: function _updateCallStream(call) {
+            this.remCallStream(call);
+            return this.getCallStream(call);
+        }
+        /**
+         * @hidden
+         * @param {Call} call
+         * @returns {Promise<EventHandlers.Updated>}
+         */
+
+    }, {
+        key: "updateCallStream",
+        value: function updateCallStream(call) {
+            var _this4 = this;
+
+            this.logger.info("Updating call " + call.id() + " stream");
+            return new Promise(function (resolve, reject) {
+                var oldMedia = _this4._callStreams[call.id()];
+                _this4.getCallStream(call, true).then(function (stream) {
+                    var oldTracks = oldMedia.getTracks();
+                    var newTracks = stream.getTracks();
+                    var oldTrackKinds = oldTracks.map(function (track) {
+                        return track.kind;
+                    }).sort();
+                    var newTrackKinds = newTracks.map(function (track) {
+                        return track.kind;
+                    }).sort();
+                    if (oldTracks.length === newTracks.length && oldTrackKinds.every(function (kind, idx) {
+                        return kind === newTrackKinds[idx];
+                    })) return call.peerConnection.updateCustomMedia(stream);else {
+                        call.peerConnection.fastRemoveCustomMedia(oldMedia);
+                        _this4._remCallStream(oldMedia);
+                        return call.peerConnection.addCustomMedia(stream);
+                    }
+                }).then(resolve).catch(reject);
+            });
+        }
+        /**
+         * @hidden
+         * @param {Call} call
+         */
+
+    }, {
+        key: "remCallStream",
+        value: function remCallStream(call) {
+            var callId = typeof call === 'undefined' ? '__default' : call.id();
+            if (this._callStreams[callId]) {
+                this._remCallStream(this._callStreams[callId]);
+                this._callStreams[callId] = undefined;
+                delete this._callStreams[callId];
+            }
+        }
+        /**
+         * @hidden
+         * @param {Call} call
+         */
+
+    }, {
+        key: "_remCallStream",
+        value: function _remCallStream(stream) {
+            if (!stream) return;
+            if (BrowserSpecific_1.default.isIphone()) return;
+            stream.getTracks().forEach(function (track) {
+                track.onended = undefined;
+                track.onmute = undefined;
+                track.stop();
+                stream.removeTrack(track);
+            });
+        }
+        /**
+         * @hidden
+         */
+
+    }, {
+        key: "clear",
+        value: function clear() {
+            if (this._mirrorStream) {
+                this._mirrorStream.getTracks().forEach(function (track) {
+                    track.onended = undefined;
+                    track.onmute = undefined;
+                    track.stop();
+                });
+            }
+            this._mirrorStream = undefined;
+            for (var key in this._callStreams) {
+                if (this._callStreams.hasOwnProperty(key)) {
+                    var stream = this._callStreams[key];
+                    if (stream) {
+                        stream.getTracks().forEach(function (track) {
+                            track.onended = undefined;
+                            track.onmute = undefined;
+                            track.stop();
+                        });
+                    }
+                }
+            }
+            this._callStreams = {};
+        }
+        /**
+         * List of currently used containers for local audio and video streams.
+         */
+
+    }, {
+        key: "getLocalMediaRenderers",
+        value: function getLocalMediaRenderers() {
+            return this._localMediaRenderers;
+        }
+        /**
+         * Turn on local video. The container for local video elements must be specified via in the
+         * [Config.localVideoContainerId] field in the [Client.init] config.
+         *   If it's not specified, local videos will be appended to end of the *<body>* element.
+         *  Use the <a href="#hidelocalvideo">hideLocalVideo</a> method to turn off local video.
+         */
+
+    }, {
+        key: "showLocalVideo",
+        value: function showLocalVideo() {
+            var _this5 = this;
+
+            var placeOnDom = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : true;
+
+            if (this._mirrorMediaRendererId) throw new Error('Local video already displayed. Please, use Hardware.StreamManager.get().hideLocalVideo ' + 'before request a new one.');else {
+                return new Promise(function (resolve, reject) {
+                    __1.default.StreamManager.get().getMirrorStream().then(function (stream) {
+                        var localRenderer = new MediaRenderer_1.MediaRenderer(stream, 'video', placeOnDom, true, 'voximplantlocalvideo');
+                        _this5._localMediaRenderers.push(localRenderer);
+                        _this5._mirrorMediaRendererId = localRenderer.id;
+                        resolve(localRenderer);
+                        _this5.dispatchEvent({ name: __1.default.HardwareEvents.MediaRendererAdded, renderer: localRenderer });
+                    }).catch(reject);
+                });
+            }
+        }
+        /**
+         * Turn off local video. Use the <a href="#showlocalvideo">showLocalVideo</a> method to turn on local video.
+         */
+
+    }, {
+        key: "hideLocalVideo",
+        value: function hideLocalVideo() {
+            var _this6 = this;
+
+            if (!this._mirrorMediaRendererId) throw new Error('Local video not displayed yet. Please, use Hardware.StreamManager.get().showLocalVideo ' + 'to request a new one.');else {
+                return new Promise(function (resolve, reject) {
+                    var mirrorRendererList = _this6._localMediaRenderers.filter(function (r) {
+                        return r.id === _this6._mirrorMediaRendererId;
+                    });
+                    if (mirrorRendererList) mirrorRendererList.forEach(function (r) {
+                        r.clear();
+                    });
+                    _this6.remMirrorStream();
+                    _this6._localMediaRenderers = _this6._localMediaRenderers.filter(function (r) {
+                        return r.id !== _this6._mirrorMediaRendererId;
+                    });
+                    _this6._mirrorMediaRendererId = undefined;
+                    resolve();
+                });
+            }
+        }
+        /**
+         * Register a handler for the specified event. The method is a shorter equivalent for *addEventListener*. One event can have more than one handler; handlers are executed in order of registration.
+         * Use the [StreamManager.off] method to delete a handler.
+         */
+
+    }, {
+        key: "on",
+        value: function on(event, handler, options) {
+            _get(StreamManager.prototype.__proto__ || Object.getPrototypeOf(StreamManager.prototype), "on", this).call(this, event, handler);
+        }
+        /**
+         * Remove a handler for the specified event. The method is a shorter equivalent for *removeEventListener*. If a number of events has the same function as a handler, the method can be called multiple times with the same handler argument.
+         */
+
+    }, {
+        key: "off",
+        value: function off(event, handler) {
+            _get(StreamManager.prototype.__proto__ || Object.getPrototypeOf(StreamManager.prototype), "off", this).call(this, event, handler);
+        }
+        /**
+         * Get sharing media and create renderer if need.
+         * @hidden
+         * @param {Call} call
+         * @param {boolean} showLocalVideo
+         * @returns {Promise<Hardware.SharingStream>}
+         */
+
+    }, {
+        key: "_newScreenSharing",
+        value: function _newScreenSharing(call, showLocalVideo) {
+            var _this7 = this;
+
+            // TODO: Переписать на общее получение медиа (irbisadm 15.09.18)
+            if (Client_1.Client.getInstance().config().experiments && Client_1.Client.getInstance().config().experiments.customScreenMedia) {
+                return new Promise(function (resolve, reject) {
+                    Client_1.Client.getInstance().config().experiments.customScreenMedia({
+                        call: call
+                    }).then(function (stream) {
+                        var result = { stream: stream, renderer: null };
+                        if (showLocalVideo) {
+                            var localRenderer = new MediaRenderer_1.MediaRenderer(stream, 'sharing', true, true);
+                            result.renderer = localRenderer;
+                            _this7.dispatchEvent({ name: __1.default.HardwareEvents.MediaRendererAdded, renderer: localRenderer });
+                            localRenderer.onBeforeDestroy = function () {
+                                result.renderer = null;
+                                _this7._sharingStreams[call.id()] = _this7._sharingStreams[call.id()].filter(function (sharingStream) {
+                                    return sharingStream.stream.id !== stream.id;
+                                });
+                                call.peerConnection.removeCustomMedia(result.stream).then(function () {
+                                    result.stream = undefined;
+                                });
+                            };
+                        } else {
+                            stream.getTracks().forEach(function (track) {
+                                track.onended = function () {
+                                    if (!stream.getTracks().some(function (item) {
+                                        return item.readyState === 'live';
+                                    })) {
+                                        _this7._sharingStreams[call.id()] = _this7._sharingStreams[call.id()].filter(function (sharingStream) {
+                                            return sharingStream.stream.id !== stream.id;
+                                        });
+                                        call.peerConnection.removeCustomMedia(result.stream).then(function () {
+                                            result.stream = undefined;
+                                        });
+                                    }
+                                };
+                            });
+                        }
+                        if (typeof _this7._sharingStreams[call.id()] === 'undefined') {
+                            _this7._sharingStreams[call.id()] = [];
+                        }
+                        _this7._sharingStreams[call.id()].push(result);
+                        resolve(result);
+                    }).catch(function (e) {
+                        reject(e);
+                    });
+                });
+            }
+            return new Promise(function (resolve, reject) {
+                BrowserSpecific_1.default.getScreenMedia().then(function (stream) {
+                    _this7.logger.info('Media access granted');
+                    var result = { stream: stream, renderer: null };
+                    if (showLocalVideo) {
+                        var localRenderer = new MediaRenderer_1.MediaRenderer(stream, 'sharing', true, true);
+                        result.renderer = localRenderer;
+                        _this7.dispatchEvent({ name: __1.default.HardwareEvents.MediaRendererAdded, renderer: localRenderer });
+                        localRenderer.onBeforeDestroy = function () {
+                            result.renderer = null;
+                            _this7._sharingStreams[call.id()] = _this7._sharingStreams[call.id()].filter(function (sharingStream) {
+                                return sharingStream.stream.id !== stream.id;
+                            });
+                            call.peerConnection.removeCustomMedia(result.stream).then(function () {
+                                result.stream = undefined;
+                            });
+                        };
+                    } else {
+                        stream.getTracks().forEach(function (track) {
+                            track.onended = function () {
+                                if (!stream.getTracks().some(function (item) {
+                                    return item.readyState === 'live';
+                                })) {
+                                    _this7._sharingStreams[call.id()] = _this7._sharingStreams[call.id()].filter(function (sharingStream) {
+                                        return sharingStream.stream.id !== stream.id;
+                                    });
+                                    call.peerConnection.removeCustomMedia(result.stream).then(function () {
+                                        result.stream = undefined;
+                                    });
+                                }
+                            };
+                        });
+                    }
+                    if (typeof _this7._sharingStreams[call.id()] === 'undefined') {
+                        _this7._sharingStreams[call.id()] = [];
+                    }
+                    _this7._sharingStreams[call.id()].push(result);
+                    resolve(result);
+                }).catch(function (e) {
+                    _this7.logger.error("Media access denied: " + (e ? e.message || e.name || e : 'unknown'));
+                    reject(e);
+                });
+            });
+        }
+        /**
+         * @hidden
+         * @param {Call} call
+         * @returns {Hardware.SharingStream[]}
+         * @private
+         */
+
+    }, {
+        key: "_getScreenSharing",
+        value: function _getScreenSharing(call) {
+            if (typeof this._sharingStreams[call.id()] !== 'undefined') return this._sharingStreams[call.id()];else return [];
+        }
+        /**
+         * @hidden
+         * @param {Call} call
+         * @param {SharingStream} sharingStream
+         * @returns {Promise<void>}
+         * @private
+         */
+
+    }, {
+        key: "_clearScreenSharing",
+        value: function _clearScreenSharing(call, sharingStream) {
+            var _this8 = this;
+
+            return new Promise(function (resolve, reject) {
+                _this8._sharingStreams[call.id()] = _this8._sharingStreams[call.id()].filter(function (exSharingStream) {
+                    return exSharingStream.stream.id !== sharingStream.stream.id;
+                });
+                if (sharingStream.renderer) {
+                    _this8.dispatchEvent({
+                        name: __1.default.HardwareEvents.BeforeMediaRendererRemoved,
+                        renderer: sharingStream.renderer
+                    });
+                    sharingStream.renderer.clear();
+                    _this8.dispatchEvent({ name: __1.default.HardwareEvents.MediaRendererRemoved, renderer: sharingStream.renderer });
+                    sharingStream.renderer = undefined;
+                }
+                var tracks = sharingStream.stream.getTracks();
+                tracks.forEach(function (track) {
+                    //sharingStream.stream.removeTrack(track);
+                    track.stop();
+                });
+                resolve();
+            });
+        }
+        /**
+         * @hidden
+         * @param {Call} call
+         * @returns {{[p: string]: TrackType}}
+         * @private
+         */
+
+    }, {
+        key: "_getTracksKind",
+        value: function _getTracksKind(call) {
+            var returns = {};
+            var localStreams = this._callStreams[call.id()];
+            if (typeof localStreams !== 'undefined') {
+                localStreams.getTracks().forEach(function (track) {
+                    return returns[track.id] = track.kind;
+                });
+            }
+            var sharingStreams = this._sharingStreams[call.id()];
+            if (typeof sharingStreams !== 'undefined') {
+                sharingStreams.forEach(function (sharingStream) {
+                    sharingStream.stream.getTracks().forEach(function (track) {
+                        return returns[track.id] = 'sharing';
+                    });
+                });
+            }
+            return returns;
+        }
+        /**
+         * @hidden
+         * @return {string}
+         * @private
+         */
+
+    }, {
+        key: "_traceName",
+        value: function _traceName() {
+            return 'StreamManager';
+        }
+        /**
+         * For onended and onmute callback of the mirror stream
+         * @hidden
+         */
+
+    }, {
+        key: "onMirrorEnded",
+        value: function onMirrorEnded() {
+            var _this9 = this;
+
+            this.remMirrorStream();
+            this.getMirrorStream().then(function (stream) {
+                _this9.dispatchEvent({ name: __1.default.HardwareEvents.BeforeMediaRendererRemoved, renderer: stream });
+                _this9.dispatchEvent({ name: __1.default.HardwareEvents.MediaRendererRemoved, renderer: null });
+            });
+        }
+        /**
+         * @hidden
+         */
+
+    }, {
+        key: "onCallEnded",
+        value: function onCallEnded() {}
+        /**
+         * @hidden
+         * @param {Call} call
+         * @returns {Object}
+         * @private
+         */
+
+    }, {
+        key: "_composeConstraints",
+        value: function _composeConstraints(call) {
+            var callId = typeof call === 'undefined' ? '__default' : call.id();
+            var constraints = {};
+            if (callId !== '__default' && typeof call !== 'undefined' && call.settings.videoDirections.sendVideo) {
+                constraints.video = CameraManager_1.CameraManager.get().getCallConstraints(callId);
+            } else {
+                constraints.video = false;
+            }
+            if (callId === '__default' || call.settings.audioDirections.sendAudio) {
+                constraints.audio = AudioDeviceManager_1.AudioDeviceManager.get().getCallConstraints(callId);
+            } else {
+                constraints.audio = false;
+            }
+            return constraints;
+        }
+    }], [{
+        key: "get",
+        value: function get() {
+            if (typeof StreamManager.instance === 'undefined') StreamManager.instance = new StreamManager();
+            return StreamManager.instance;
+        }
+    }]);
+
+    return StreamManager;
+}(EventTarget_1.EventTarget);
+
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.HARDWARE)], StreamManager.prototype, "getMirrorStream", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.HARDWARE)], StreamManager.prototype, "remMirrorStream", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.HARDWARE)], StreamManager.prototype, "getCallStream", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.HARDWARE)], StreamManager.prototype, "_updateCallStream", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.HARDWARE)], StreamManager.prototype, "updateCallStream", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.HARDWARE)], StreamManager.prototype, "remCallStream", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.HARDWARE)], StreamManager.prototype, "_remCallStream", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.HARDWARE)], StreamManager.prototype, "clear", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.HARDWARE)], StreamManager.prototype, "getLocalMediaRenderers", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.HARDWARE)], StreamManager.prototype, "showLocalVideo", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.HARDWARE)], StreamManager.prototype, "hideLocalVideo", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.HARDWARE)], StreamManager.prototype, "on", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.HARDWARE)], StreamManager.prototype, "off", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.HARDWARE)], StreamManager.prototype, "_newScreenSharing", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.HARDWARE)], StreamManager.prototype, "_getScreenSharing", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.HARDWARE)], StreamManager.prototype, "_clearScreenSharing", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.HARDWARE)], StreamManager.prototype, "_getTracksKind", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.HARDWARE)], StreamManager.prototype, "onMirrorEnded", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.HARDWARE)], StreamManager.prototype, "onCallEnded", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.HARDWARE)], StreamManager.prototype, "_composeConstraints", null);
+exports.StreamManager = StreamManager;
+
+/***/ }),
+/* 30 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", { value: true });
+/**
+ * Events that are triggered when Endpoint is updated/edited, removed or started/stopped to receive stream from another Endpoint.
+ */
+var EndpointEvents;
+(function (EndpointEvents) {
+  /**
+   * Event is triggered when an Endpoint is updated/edited. E.g. when
+   * a display name is changed via the [setDisplayName](https://voximplant.com/docs/references/voxengine/conference/endpoint#setdisplayname) method.
+   * [Voxengine](https://voximplant.com/docs/references/voxengine) example:
+   * ```javascript
+   * require(Modules.Conference);
+   * // ...
+   * endpoint.setDisplayName("Chuck Spadina");
+   * ```
+   * Web SDK example:
+   * ```javascript
+   * Endpoint.on(Voximplant.EndpointEvents.InfoUpdated, (e)=>{
+   *   console.logger(e.endpoint.displayName);
+   *   // > Chuck Spadina
+   * });
+   * ```
+   * Handler function receives the [EventHandlers.EndpointHandler] object as an argument.
+   */
+  EndpointEvents[EndpointEvents["InfoUpdated"] = 'InfoUpdated'] = "InfoUpdated";
+  /**
+   * Event is triggered when an Endpoint is removed. E.g. when a participant left the conference or [player](https://voximplant.com/docs/references/voxengine/player) was removed.
+   * Handler function receives the [EventHandlers.EndpointHandler] object as an argument.
+   */
+  EndpointEvents[EndpointEvents["Removed"] = 'Removed'] = "Removed";
+  /**
+   * Event is triggered when an Endpoint started to receive an audio / video / screensharing stream from another Endpoint.
+   * __IMPORTANT__: if you subscribe to the event, Web SDK will no longer render remote audio/video stream automatically; you have to render remote streams manually via the [MediaRenderer.render] method.
+   * Handler function receives the [EventHandlers.EndpointMediaHandler] object as an argument.
+   */
+  EndpointEvents[EndpointEvents["RemoteMediaAdded"] = 'RemoteMediaAdded'] = "RemoteMediaAdded";
+  /**
+   * Event is triggered when an Endpoint stopped to receive an audio / video / screensharing stream from another Endpoint.
+   * Handler function receives the [EventHandlers.EndpointMediaHandler] object as an argument.
+   */
+  EndpointEvents[EndpointEvents["RemoteMediaRemoved"] = 'RemoteMediaRemoved'] = "RemoteMediaRemoved";
+  /**
+   * @hidden
+   */
+  EndpointEvents[EndpointEvents["RTCStatsReceived"] = 'RTCStatsReceived'] = "RTCStatsReceived";
+})(EndpointEvents = exports.EndpointEvents || (exports.EndpointEvents = {}));
+
+/***/ }),
+/* 31 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
+function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var __decorate = undefined && undefined.__decorate || function (decorators, target, key, desc) {
+    var c = arguments.length,
+        r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc,
+        d;
+    if ((typeof Reflect === "undefined" ? "undefined" : _typeof(Reflect)) === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);else for (var i = decorators.length - 1; i >= 0; i--) {
+        if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    }return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+var Logger_1 = __webpack_require__(0);
+var Call_1 = __webpack_require__(12);
+var Client_1 = __webpack_require__(1);
+var CallEvents_1 = __webpack_require__(5);
+var Hardware_1 = __webpack_require__(4);
+var Types_1 = __webpack_require__(58);
+var Structures_1 = __webpack_require__(59);
+/**
+ * @hidden
+ */
+
+var CallStatsAnalyzer = function () {
+    function CallStatsAnalyzer() {
+        _classCallCheck(this, CallStatsAnalyzer);
+
+        this._calls = new WeakMap();
+        this.preferredVideoCodec = '';
+        this.preferredVideoCodec = Client_1.Client.getInstance().config().H264first ? 'video/H264' : Client_1.Client.getInstance().config().VP8first ? 'video/VP8' : '';
+    }
+
+    _createClass(CallStatsAnalyzer, [{
+        key: "addCall",
+        value: function addCall(call) {
+            if (call && (typeof call === "undefined" ? "undefined" : _typeof(call)) === 'object') {
+                this._calls.set(call, {
+                    codecMismatch: {
+                        audioLevel: Structures_1.Statistic.QualityIssueLevel.None,
+                        videoLevel: Structures_1.Statistic.QualityIssueLevel.None,
+                        sharingLevel: Structures_1.Statistic.QualityIssueLevel.None,
+                        audioChecks: 0,
+                        videoChecks: 0,
+                        sharingChecks: 0
+                    },
+                    highMediaLatency: {
+                        levels: [],
+                        latencies: [],
+                        lastJitterBuffers: {},
+                        prevLevel: Structures_1.Statistic.QualityIssueLevel.None
+                    },
+                    ICEDisconnected: {
+                        level: Structures_1.Statistic.QualityIssueLevel.None
+                    },
+                    localVideoDegradation: {
+                        videoLevel: Structures_1.Statistic.QualityIssueLevel.None,
+                        sharingLevel: Structures_1.Statistic.QualityIssueLevel.None
+                    },
+                    noAudioSignal: {
+                        level: Structures_1.Statistic.QualityIssueLevel.None
+                    },
+                    packetLoss: {
+                        level: Structures_1.Statistic.QualityIssueLevel.None,
+                        lastLost: 0,
+                        lastTotal: 0,
+                        checks: 0
+                    }
+                });
+            }
+        }
+    }, {
+        key: "deleteCall",
+        value: function deleteCall(call) {
+            if (call && (typeof call === "undefined" ? "undefined" : _typeof(call)) === 'object' && this._calls.has(call)) {
+                this._calls.delete(call);
+            }
+        }
+    }, {
+        key: "analyzeCallStats",
+        value: function analyzeCallStats(call, stats) {
+            if (call && (typeof call === "undefined" ? "undefined" : _typeof(call)) === 'object' && this._calls.has(call)) {
+                var callIssues = this._calls.get(call);
+                var callTracks = Hardware_1.default.StreamManager.get()._getTracksKind(call);
+                var isCallOnHold = call.state() === Call_1.CallState.ALERTING || call.state() === Call_1.CallState.PROGRESSING || call.state() === Call_1.CallState.ENDED;
+                if (!isCallOnHold) {
+                    callIssues.codecMismatch = this.checkCodecMismatch(call, stats, callTracks, callIssues.codecMismatch);
+                    callIssues.highMediaLatency = this.checkMediaLatency(call, stats, callTracks, callIssues.highMediaLatency);
+                    callIssues.localVideoDegradation = this.checkLocalVideoDegradation(call, stats, callTracks, callIssues.localVideoDegradation);
+                    // ToDo: check in Chrome 76
+                    // issues.noAudioSignal = this.checkAudioSignal(call, lastStats, callTracks, callStats.issues.noAudioSignal);
+                    callIssues.packetLoss = this.checkPacketLoss(call, stats, callIssues.packetLoss);
+                }
+                this._calls.set(call, callIssues);
+            }
+        }
+    }, {
+        key: "checkICEConnection",
+        value: function checkICEConnection(call, iceConnectionState) {
+            if (call && (typeof call === "undefined" ? "undefined" : _typeof(call)) === 'object' && this._calls.has(call)) {
+                var callIssues = this._calls.get(call);
+                if (iceConnectionState === 'failed' && callIssues.ICEDisconnected.level !== Structures_1.Statistic.QualityIssueLevel.Critical) {
+                    call.dispatchEvent({
+                        call: call,
+                        name: CallEvents_1.CallEvents.QualityIssueICEDisconnected,
+                        level: Structures_1.Statistic.QualityIssueLevel.Critical
+                    });
+                    callIssues.ICEDisconnected.level = Structures_1.Statistic.QualityIssueLevel.Critical;
+                    this._calls.set(call, callIssues);
+                } else if (iceConnectionState !== 'failed' && callIssues.ICEDisconnected.level === Structures_1.Statistic.QualityIssueLevel.Critical) {
+                    call.dispatchEvent({
+                        call: call,
+                        name: CallEvents_1.CallEvents.QualityIssueICEDisconnected,
+                        level: Structures_1.Statistic.QualityIssueLevel.None
+                    });
+                    callIssues.ICEDisconnected.level = Structures_1.Statistic.QualityIssueLevel.None;
+                    this._calls.set(call, callIssues);
+                }
+            }
+        }
+    }, {
+        key: "checkCodecMismatch",
+        value: function checkCodecMismatch(call, stats, callTracks, issueStory) {
+            var codecs = stats.filter(function (e) {
+                return e.type === 'codec';
+            });
+            if (codecs.length) {
+                var videoTrackId = Object.keys(callTracks).find(function (key) {
+                    return callTracks[key] === Types_1.TrackType.video;
+                });
+                var audioTrackId = Object.keys(callTracks).find(function (key) {
+                    return callTracks[key] === Types_1.TrackType.audio;
+                });
+                var sharingTrackId = Object.keys(callTracks).find(function (key) {
+                    return callTracks[key] === Types_1.TrackType.sharing;
+                });
+                var tracks = stats.filter(function (e) {
+                    return e.type === 'track';
+                });
+                var outboundRTPs = stats.filter(function (e) {
+                    return e.type === 'outbound-rtp';
+                });
+                var videoTrackStatsId = (tracks.find(function (t) {
+                    return t.trackIdentifier === videoTrackId;
+                }) || { id: undefined }).id;
+                var audioTrackStatsId = (tracks.find(function (t) {
+                    return t.trackIdentifier === audioTrackId;
+                }) || { id: undefined }).id;
+                var sharingTrackStatsId = (tracks.find(function (t) {
+                    return t.trackIdentifier === sharingTrackId;
+                }) || { id: undefined }).id;
+                var videoRTP = outboundRTPs.find(function (t) {
+                    return t.trackId === videoTrackStatsId;
+                });
+                var audioRTP = outboundRTPs.find(function (t) {
+                    return t.trackId === audioTrackStatsId;
+                });
+                var sharingRTP = outboundRTPs.find(function (t) {
+                    return t.trackId === sharingTrackStatsId;
+                });
+                var videoCodecId = videoRTP && videoRTP.codecId ? videoRTP.codecId : undefined;
+                var audioCodecId = audioRTP && audioRTP.codecId ? audioRTP.codecId : undefined;
+                var sharingCodecId = sharingRTP && sharingRTP.codecId ? sharingRTP.codecId : undefined;
+                var videoCodec = (codecs.find(function (c) {
+                    return c.id === videoCodecId;
+                }) || { mimeType: undefined }).mimeType;
+                var audioCodec = (codecs.find(function (c) {
+                    return c.id === audioCodecId;
+                }) || { mimeType: undefined }).mimeType;
+                var sharingCodec = (codecs.find(function (c) {
+                    return c.id === sharingCodecId;
+                }) || { mimeType: undefined }).mimeType;
+                var preferredVideoCodec = call.settings.H264first ? 'video/H264' : call.settings.VP8first ? 'video/VP8' : this.preferredVideoCodec;
+                //Todo: write audio codec checker when SDP parser is ready
+                // const actualCodecList = call._peerConnection && new CodecSorter(call._peerConnection.srcLocalSDP).getUserCodecList();
+                var noVideo = videoCodec === undefined;
+                var noAudio = videoCodec === undefined;
+                var noSharing = videoCodec === undefined;
+                if (audioRTP) {
+                    //ToDo
+                }
+                if (videoRTP && videoRTP.bytesSent) {
+                    if (noVideo) {
+                        if (issueStory.videoLevel === Structures_1.Statistic.QualityIssueLevel.Critical && issueStory.videoChecks > CallStatsAnalyzer.MAX_STATS_CHECKS) {
+                            call.dispatchEvent({
+                                call: call,
+                                name: CallEvents_1.CallEvents.QualityIssueCodecMismatch,
+                                level: Structures_1.Statistic.QualityIssueLevel.Critical,
+                                kind: Types_1.TrackType.video,
+                                sendCodec: videoCodec
+                            });
+                            issueStory.videoLevel = Structures_1.Statistic.QualityIssueLevel.Critical;
+                            issueStory.videoChecks = 0;
+                        } else {
+                            issueStory.videoLevel = Structures_1.Statistic.QualityIssueLevel.Critical;
+                            issueStory.videoChecks = issueStory.videoChecks + 1;
+                        }
+                    } else if (preferredVideoCodec && preferredVideoCodec !== videoCodec) {
+                        call.dispatchEvent({
+                            call: call,
+                            name: CallEvents_1.CallEvents.QualityIssueCodecMismatch,
+                            level: Structures_1.Statistic.QualityIssueLevel.Major,
+                            kind: Types_1.TrackType.video,
+                            sendCodec: videoCodec
+                        });
+                        issueStory.videoLevel = Structures_1.Statistic.QualityIssueLevel.Major;
+                        issueStory.videoChecks = 0;
+                    }
+                }
+                if (sharingRTP && sharingRTP.bytesSent) {
+                    if (noSharing) {
+                        if (issueStory.sharingLevel === Structures_1.Statistic.QualityIssueLevel.Critical && issueStory.sharingChecks > CallStatsAnalyzer.MAX_STATS_CHECKS) {
+                            call.dispatchEvent({
+                                call: call,
+                                name: CallEvents_1.CallEvents.QualityIssueCodecMismatch,
+                                level: Structures_1.Statistic.QualityIssueLevel.Critical,
+                                kind: Types_1.TrackType.sharing,
+                                sendCodec: sharingCodec
+                            });
+                            issueStory.sharingLevel = Structures_1.Statistic.QualityIssueLevel.Critical;
+                            issueStory.sharingChecks = 0;
+                        } else {
+                            issueStory.sharingLevel = Structures_1.Statistic.QualityIssueLevel.Critical;
+                            issueStory.sharingChecks = issueStory.videoChecks + 1;
+                        }
+                    } else if (preferredVideoCodec && preferredVideoCodec !== sharingCodec) {
+                        call.dispatchEvent({
+                            call: call,
+                            name: CallEvents_1.CallEvents.QualityIssueCodecMismatch,
+                            level: Structures_1.Statistic.QualityIssueLevel.Major,
+                            kind: Types_1.TrackType.sharing,
+                            sendCodec: sharingCodec
+                        });
+                        issueStory.sharingLevel = Structures_1.Statistic.QualityIssueLevel.Major;
+                        issueStory.sharingChecks = 0;
+                    }
+                }
+            }
+            return issueStory;
+        }
+    }, {
+        key: "checkMediaLatency",
+        value: function checkMediaLatency(call, stats, callTracks, issueStory) {
+            var candidatePair = stats.find(function (e) {
+                return e.type === 'candidate-pair' && (e.selected || e.nominated && e.state === 'succeeded');
+            });
+            var inboundRTPs = stats.filter(function (e) {
+                return e.type === 'inbound-rtp';
+            });
+            var inboundTracks = stats.filter(function (e) {
+                return e.type === 'track' && inboundRTPs.some(function (rtp) {
+                    return rtp.trackId === e.id;
+                });
+            });
+            var biggestJitterBufferMs = inboundTracks.reduce(function (biggest, track) {
+                var delay = track.jitterBufferDelay !== undefined ? track.jitterBufferDelay - (issueStory.lastJitterBuffers[track.id] || { delay: 0 }).delay : undefined;
+                var emittedCount = track.jitterBufferEmittedCount !== undefined ? track.jitterBufferEmittedCount - (issueStory.lastJitterBuffers[track.id] || { emittedCount: 0 }).emittedCount : undefined;
+                var jitterBufferMs = delay !== undefined && emittedCount ? delay * 1000 / emittedCount : 0;
+                return jitterBufferMs > biggest ? jitterBufferMs : biggest;
+            }, 0);
+            var rtt = (candidatePair && candidatePair.currentRoundTripTime || 0) * 1000;
+            var latency = Math.round(rtt / 2 + biggestJitterBufferMs);
+            issueStory.latencies.push(latency);
+            if (latency > 300) {
+                issueStory.levels.push(Structures_1.Statistic.QualityIssueLevel.Critical);
+            } else if (latency > 200) {
+                issueStory.levels.push(Structures_1.Statistic.QualityIssueLevel.Major);
+            } else if (latency > 100) {
+                issueStory.levels.push(Structures_1.Statistic.QualityIssueLevel.Minor);
+            } else {
+                issueStory.levels.push(Structures_1.Statistic.QualityIssueLevel.None);
+            }
+            if (issueStory.levels.length === 5) {
+                var levels = [Structures_1.Statistic.QualityIssueLevel.Critical, Structures_1.Statistic.QualityIssueLevel.Major, Structures_1.Statistic.QualityIssueLevel.Minor, Structures_1.Statistic.QualityIssueLevel.None];
+                var levelFreqs = issueStory.levels.reduce(function (freqs, level) {
+                    freqs[levels.indexOf(level)]++;
+                    return freqs;
+                }, [0, 0, 0, 0]);
+                if (levelFreqs.includes(5)) {
+                    var level = levels[levelFreqs.indexOf(5)];
+                    if (level !== Structures_1.Statistic.QualityIssueLevel.None || issueStory.prevLevel !== Structures_1.Statistic.QualityIssueLevel.None) {
+                        call.dispatchEvent({
+                            call: call,
+                            name: CallEvents_1.CallEvents.QualityIssueHighMediaLatency,
+                            level: level,
+                            latency: latency
+                        });
+                    }
+                    issueStory.prevLevel = level;
+                } else {
+                    var twoMostSevereLevelIdxes = levelFreqs.reduce(function (severeIdxes, levelFreq, idx) {
+                        if (severeIdxes.length !== 2 && levelFreq) {
+                            severeIdxes.push(idx);
+                        }
+                        return severeIdxes;
+                    }, []);
+                    var levelThreshold = Math.log1p(levelFreqs[twoMostSevereLevelIdxes[0]]) - Math.log1p(levelFreqs[twoMostSevereLevelIdxes[1]]);
+                    var _level = levels[levelThreshold > .5 ? twoMostSevereLevelIdxes[0] : twoMostSevereLevelIdxes[1]];
+                    var levelLatencies = issueStory.levels.map(function (l, idx) {
+                        return l === _level ? issueStory.latencies[idx] : 0;
+                    });
+                    if (_level !== Structures_1.Statistic.QualityIssueLevel.None || issueStory.prevLevel !== Structures_1.Statistic.QualityIssueLevel.None) {
+                        call.dispatchEvent({
+                            call: call,
+                            name: CallEvents_1.CallEvents.QualityIssueHighMediaLatency,
+                            level: _level,
+                            latency: Math.max.apply(Math, _toConsumableArray(levelLatencies))
+                        });
+                    }
+                    issueStory.prevLevel = _level;
+                }
+                issueStory.levels = [];
+                issueStory.latencies = [];
+            }
+            issueStory.lastJitterBuffers = inboundTracks.reduce(function (acc, t) {
+                return Object.assign(acc, _defineProperty({}, t.id, { delay: t.jitterBufferDelay, emittedCount: t.jitterBufferEmittedCount }));
+            }, {});
+            return issueStory;
+        }
+    }, {
+        key: "checkLocalVideoDegradation",
+        value: function checkLocalVideoDegradation(call, stats, callTracks, issueStory) {
+            var videoTrackId = callTracks ? Object.keys(callTracks).find(function (id) {
+                return callTracks[id] === Types_1.TrackType.video;
+            }) : undefined;
+            var sharingTrackId = callTracks ? Object.keys(callTracks).find(function (id) {
+                return callTracks[id] === Types_1.TrackType.sharing;
+            }) : undefined;
+            if (videoTrackId) {
+                var videoTrackStats = stats.filter(function (e) {
+                    return e.type === 'track';
+                }).find(function (t) {
+                    return t.trackIdentifier === videoTrackId;
+                });
+                if (videoTrackStats && videoTrackStats.frameHeight && videoTrackStats.frameWidth) {
+                    var cameraParams = Hardware_1.default.CameraManager.get().getCallVideoSettings(call);
+                    var resolutionRate = Math.min(videoTrackStats.frameWidth, videoTrackStats.frameHeight) / Math.min(cameraParams.frameWidth || 320, cameraParams.frameHeight || 240);
+                    var issueLevel = Structures_1.Statistic.QualityIssueLevel.None;
+                    if (resolutionRate < 0.5) {
+                        issueLevel = Structures_1.Statistic.QualityIssueLevel.Critical;
+                    } else if (resolutionRate <= 0.7) {
+                        issueLevel = Structures_1.Statistic.QualityIssueLevel.Major;
+                    } else if (resolutionRate <= 0.85) {
+                        issueLevel = Structures_1.Statistic.QualityIssueLevel.Minor;
+                    } else {
+                        issueLevel = Structures_1.Statistic.QualityIssueLevel.None;
+                    }
+                    if (issueStory.videoLevel !== issueLevel) {
+                        call.dispatchEvent({
+                            call: call,
+                            name: CallEvents_1.CallEvents.QualityIssueLocalVideoDegradation,
+                            level: issueLevel,
+                            kind: Types_1.TrackType.video,
+                            targetWidth: cameraParams.frameWidth || 320,
+                            targetHeight: cameraParams.frameHeight || 240,
+                            actualWidth: videoTrackStats.frameWidth,
+                            actualHeight: videoTrackStats.frameHeight
+                        });
+                        issueStory.videoLevel = issueLevel;
+                    }
+                }
+            }
+            if (sharingTrackId) {
+                var sharingTrackStats = stats.filter(function (e) {
+                    return e.type === 'track';
+                }).find(function (t) {
+                    return t.trackIdentifier === sharingTrackId;
+                });
+                if (sharingTrackStats && sharingTrackStats.framesPerSecond !== undefined) {
+                    var _issueLevel = Structures_1.Statistic.QualityIssueLevel.None;
+                    if (sharingTrackStats.framesPerSecond < 4) {
+                        _issueLevel = Structures_1.Statistic.QualityIssueLevel.Critical;
+                    } else if (sharingTrackStats.framesPerSecond < 8) {
+                        _issueLevel = Structures_1.Statistic.QualityIssueLevel.Major;
+                    } else if (sharingTrackStats.framesPerSecond < 15) {
+                        _issueLevel = Structures_1.Statistic.QualityIssueLevel.Minor;
+                    } else {
+                        _issueLevel = Structures_1.Statistic.QualityIssueLevel.None;
+                    }
+                    if (issueStory.sharingLevel !== _issueLevel) {
+                        call.dispatchEvent({
+                            call: call,
+                            name: CallEvents_1.CallEvents.QualityIssueLocalVideoDegradation,
+                            level: _issueLevel,
+                            kind: Types_1.TrackType.sharing,
+                            fps: sharingTrackStats.framesPerSecond
+                        });
+                        issueStory.sharingLevel = _issueLevel;
+                    }
+                }
+            }
+            return issueStory;
+        }
+    }, {
+        key: "checkAudioSignal",
+        value: function checkAudioSignal(call, stats, callTracks, issueStory) {
+            var audioTrackId = callTracks ? Object.keys(callTracks).find(function (id) {
+                return callTracks[id] === Types_1.TrackType.audio;
+            }) : undefined;
+            if (audioTrackId) {
+                var audioTrackStats = stats.filter(function (e) {
+                    return e.type === 'track';
+                }).find(function (t) {
+                    return t.trackIdentifier === audioTrackId;
+                });
+                if (audioTrackStats && audioTrackStats.audioLevel !== undefined && audioTrackStats.audioLevel > 0 && issueStory.level === Structures_1.Statistic.QualityIssueLevel.Critical) {
+                    call.dispatchEvent({
+                        call: call,
+                        name: CallEvents_1.CallEvents.QualityIssueNoAudioSignal,
+                        level: Structures_1.Statistic.QualityIssueLevel.None
+                    });
+                    issueStory.level = Structures_1.Statistic.QualityIssueLevel.None;
+                }
+                if (audioTrackStats && audioTrackStats.audioLevel !== undefined && audioTrackStats.audioLevel === 0) {
+                    call.dispatchEvent({
+                        call: call,
+                        name: CallEvents_1.CallEvents.QualityIssueNoAudioSignal,
+                        level: Structures_1.Statistic.QualityIssueLevel.Critical
+                    });
+                    issueStory.level = Structures_1.Statistic.QualityIssueLevel.Critical;
+                }
+            }
+            return issueStory;
+        }
+    }, {
+        key: "checkPacketLoss",
+        value: function checkPacketLoss(call, stats, issueStory) {
+            var inboundRTPs = stats.filter(function (e) {
+                return e.type === 'inbound-rtp';
+            });
+            issueStory.checks = issueStory.checks + 1;
+            if (issueStory.checks === 5) {
+                var currentSum = inboundRTPs.length ? inboundRTPs.reduce(function (acc, e) {
+                    return {
+                        lost: acc.lost + (e.packetsLost || 0),
+                        total: acc.total + (e.packetsLost || 0) + (e.packetsReceived || 0)
+                    };
+                }, { lost: 0, total: 0 }) : { lost: 0, total: 0 };
+                var averageLoss = currentSum.total - issueStory.lastTotal ? (currentSum.lost - issueStory.lastLost) / (currentSum.total - issueStory.lastTotal) : 0;
+                var issueLevel = Structures_1.Statistic.QualityIssueLevel.None;
+                if (averageLoss >= 0.15) {
+                    issueLevel = Structures_1.Statistic.QualityIssueLevel.Critical;
+                } else if (averageLoss >= 0.1) {
+                    issueLevel = Structures_1.Statistic.QualityIssueLevel.Major;
+                } else if (averageLoss >= 0.05) {
+                    issueLevel = Structures_1.Statistic.QualityIssueLevel.Minor;
+                } else {
+                    issueLevel = Structures_1.Statistic.QualityIssueLevel.None;
+                }
+                if (issueStory.level !== issueLevel) {
+                    call.dispatchEvent({
+                        call: call,
+                        name: CallEvents_1.CallEvents.QualityIssuePacketLoss,
+                        level: issueLevel,
+                        packetLoss: averageLoss
+                    });
+                    issueStory.level = issueLevel;
+                }
+                issueStory.lastLost = currentSum.lost;
+                issueStory.lastTotal = currentSum.total;
+                issueStory.checks = 0;
+            }
+            return issueStory;
+        }
+        /*
+        * анализ качества видео:
+        * - качество видео сводится к метрике "биты на пиксель" bpp (битрейт делим на fps и на размер закодированного изображения)
+        * - дальше будет море экспериметов, при которых "на глаз" составляется таблица для bpp  для каждого кодека (столбцы: ос/хардверный/софтверный; строки - разрешения изображения
+        * - дальше bpp сравнивается с табличным значением и определяется качество по битрейту (Qbr)
+        * - также можно усложнить формулу качества Q = Qbr * Qfps * Qsize, если  Qfps и Qsize не равны единице
+        * */
+
+    }, {
+        key: "checkLowBandwidth",
+        value: function checkLowBandwidth() {}
+    }], [{
+        key: "get",
+        value: function get() {
+            if (typeof this.inst == 'undefined') {
+                this.inst = new CallStatsAnalyzer();
+            }
+            return this.inst;
+        }
+    }]);
+
+    return CallStatsAnalyzer;
+}();
+
+CallStatsAnalyzer.MAX_STATS_CHECKS = 4;
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.RTC)], CallStatsAnalyzer.prototype, "addCall", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.RTC)], CallStatsAnalyzer.prototype, "deleteCall", null);
+exports.CallStatsAnalyzer = CallStatsAnalyzer;
+
+/***/ }),
 /* 32 */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -10397,8 +10749,792 @@ var __decorate = undefined && undefined.__decorate || function (decorators, targ
     }return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+var CallEvents_1 = __webpack_require__(5);
 var Logger_1 = __webpack_require__(0);
-var StreamManager_1 = __webpack_require__(25);
+/**
+ * @hidden
+ */
+
+var ReInviteQ = function () {
+    function ReInviteQ(call, _pcStatus) {
+        var _this = this;
+
+        _classCallCheck(this, ReInviteQ);
+
+        this._pcStatus = _pcStatus;
+        this._q = [];
+        call.on(CallEvents_1.CallEvents.Updated, function (e) {
+            Logger_1.LogManager.get().writeMessage(Logger_1.LogCategory.REINVITEQ, 'CallEvent', Logger_1.LogLevel.TRACE, "Updated with result " + e.result);
+            if (ReInviteQ._currentReinvite) {
+                var reinvite = ReInviteQ._currentReinvite;
+                if (e.result) reinvite.resolve(e);else reinvite.reject(e);
+                ReInviteQ._currentReinvite = undefined;
+            }
+            _this.runNext();
+        });
+        call.on(CallEvents_1.CallEvents.PendingUpdate, function (e) {
+            Logger_1.LogManager.get().writeMessage(Logger_1.LogCategory.REINVITEQ, 'CallEvent', Logger_1.LogLevel.TRACE, "IncomingUpdate. Local RI==" + _typeof(ReInviteQ._currentReinvite));
+            if (ReInviteQ._currentReinvite) {
+                ReInviteQ._currentReinvite.reject();
+                ReInviteQ._currentReinvite = undefined;
+            }
+        });
+        call.on(CallEvents_1.CallEvents.UpdateFailed, function (e) {
+            Logger_1.LogManager.get().writeMessage(Logger_1.LogCategory.REINVITEQ, 'CallEvent', Logger_1.LogLevel.TRACE, "UpdateFailed");
+            if (ReInviteQ._currentReinvite) {
+                ReInviteQ._currentReinvite.reject();
+                ReInviteQ._currentReinvite = undefined;
+            }
+        });
+    }
+
+    _createClass(ReInviteQ, [{
+        key: "runNext",
+        value: function runNext() {
+            if (typeof ReInviteQ._currentReinvite === "undefined" && this._q.length > 0 && this._pcStatus()) {
+                ReInviteQ._currentReinvite = this._q.splice(0, 1)[0];
+                ReInviteQ._currentReinvite.fx();
+            }
+        }
+    }, {
+        key: "add",
+        value: function add(member) {
+            this._q.push(member);
+            this.runNext();
+        }
+    }, {
+        key: "clear",
+        value: function clear() {
+            this._q.forEach(function (member) {
+                member.reject();
+            });
+        }
+        /**
+         * @hidden
+         * @return {string}
+         * @private
+         */
+
+    }, {
+        key: "_traceName",
+        value: function _traceName() {
+            return 'ReInviteQ';
+        }
+    }]);
+
+    return ReInviteQ;
+}();
+
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.REINVITEQ)], ReInviteQ.prototype, "runNext", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.REINVITEQ)], ReInviteQ.prototype, "add", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.REINVITEQ)], ReInviteQ.prototype, "clear", null);
+exports.ReInviteQ = ReInviteQ;
+
+/***/ }),
+/* 33 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+Object.defineProperty(exports, "__esModule", { value: true });
+/**
+ * Created by irbisadm on 23/09/2016.
+ * @hidden
+ */
+
+var GUID = function () {
+    function GUID(str) {
+        _classCallCheck(this, GUID);
+
+        this.str = str || GUID.getNewGUIDString();
+    }
+
+    _createClass(GUID, [{
+        key: "toString",
+        value: function toString() {
+            return this.str;
+        }
+    }, {
+        key: "_traceName",
+
+        /**
+         * @hidden
+         * @return {string}
+         * @private
+         */
+        value: function _traceName() {
+            return 'GUID';
+        }
+    }], [{
+        key: "getNewGUIDString",
+        value: function getNewGUIDString() {
+            // your favourite guid generation function could go here
+            // ex: http://stackoverflow.com/a/8809472/188246
+            var d = new Date().getTime();
+            if (window.performance && typeof window.performance.now === "function") {
+                d += performance.now(); //use high-precision timer if available
+            }
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+                var r = (d + Math.random() * 16) % 16 | 0;
+                d = Math.floor(d / 16);
+                return (c == 'x' ? r : r & 0x3 | 0x8).toString(16);
+            });
+        }
+    }]);
+
+    return GUID;
+}();
+
+exports.default = GUID;
+
+/***/ }),
+/* 34 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var __decorate = undefined && undefined.__decorate || function (decorators, target, key, desc) {
+    var c = arguments.length,
+        r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc,
+        d;
+    if ((typeof Reflect === "undefined" ? "undefined" : _typeof(Reflect)) === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);else for (var i = decorators.length - 1; i >= 0; i--) {
+        if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    }return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+var Logger_1 = __webpack_require__(0);
+var Messenger_1 = __webpack_require__(25);
+var ConversationManager_1 = __webpack_require__(44);
+var Message_1 = __webpack_require__(26);
+var MsgSignaling_1 = __webpack_require__(18);
+var MsgAction_1 = __webpack_require__(27);
+var Structures_1 = __webpack_require__(41);
+var __1 = __webpack_require__(19);
+
+var Conversation = function () {
+    /**
+     * @hidden
+     */
+    function Conversation(data) {
+        _classCallCheck(this, Conversation);
+
+        /**
+         * @hidden
+         */
+        this._backup = {};
+        this._uuid = data.uuid;
+        this._participants = data.participants;
+        this._title = data.title;
+        this._direct = data.direct;
+        this._publicJoin = data.publicJoin;
+        this._uberConversation = data.uberConversation;
+        this._customData = data.customData;
+        this._createdAt = data.createdAt;
+        this._lastUpdate = data.lastUpdate;
+        this._lastSeq = Number(data.lastSeq);
+    }
+    /**
+     * Universally unique identifier of current conversation. Used in methods like 'get', 'remove' etc.
+     * @returns {string}
+     */
+
+
+    _createClass(Conversation, [{
+        key: "updateSeq",
+
+        /**
+         * @hidden
+         * @param newSeq
+         */
+        value: function updateSeq(newSeq) {
+            if (typeof newSeq == 'number' && newSeq > this._lastSeq) {
+                this._lastSeq = newSeq;
+            }
+            this._lastUpdate = Date.now() / 1000 | 0;
+        }
+        /**
+         * Create conversation from buss
+         * @param busConversation
+         * @returns {Conversation}
+         * @hidden
+         */
+
+    }, {
+        key: "toCache",
+
+        /**
+         * Serialize conversation so it can be stored into some storage (like IndexedDB) and later restored via [Messenger.createConversationFromCache]
+         * @returns {SerializedConversation}
+         */
+        value: function toCache() {
+            return {
+                uuid: this._uuid,
+                title: this._title,
+                participants: this._participants,
+                direct: this._direct,
+                publicJoin: this._publicJoin,
+                uberConversation: this._uberConversation,
+                createdAt: this._createdAt,
+                lastUpdate: this._lastUpdate,
+                customData: this._customData,
+                lastSeq: this._lastSeq
+            };
+        }
+        /**
+         * @hidden
+         */
+
+    }, {
+        key: "_getCreatePayload",
+        value: function _getCreatePayload() {
+            return {
+                participants: this._prepareParticipants(this._participants).map(function (p) {
+                    return Object.assign(p, { flags: p.flags ? p.flags : 7 });
+                }),
+                title: typeof this._title == 'string' ? this._title : '',
+                direct: typeof this._direct == 'boolean' ? this._direct : false,
+                enable_public_join: typeof this._publicJoin == 'boolean' ? this._publicJoin : false,
+                uber_conversation: typeof this._uberConversation == 'boolean' ? this._uberConversation : undefined,
+                custom_data: _typeof(this._customData) == 'object' ? this._customData : {}
+            };
+        }
+        /**
+         *
+         * @hidden
+         */
+
+    }, {
+        key: "_getEditPayload",
+        value: function _getEditPayload() {
+            if (typeof this._uuid == 'undefined') throw Error('You must get conversation UUID with MessengetAction.getConversation() action!');
+            return {
+                uuid: this._uuid,
+                title: typeof this._title == 'string' ? this._title : '',
+                enable_public_join: typeof this._publicJoin == 'boolean' ? this._publicJoin : false,
+                custom_data: _typeof(this._customData) == 'object' ? this._customData : {}
+            };
+        }
+        /**
+         * @hidden
+         * Get user permissions decimal equivalent
+         */
+
+    }, {
+        key: "_getUserPermissions",
+        value: function _getUserPermissions(user) {
+            var permissions = (user.isOwner ? '1000000000' : '') + [user.canRemoveAll, user.canEditAll, user.canManageParticipants, user.canRemove, user.canEdit, user.canWrite].map(function (flag) {
+                return flag ? 1 : 0;
+            }).join('');
+            return parseInt(permissions, 2);
+        }
+        /**
+         * @hidden
+         * Correction participants list for backend
+         * @returns {Array}
+         */
+
+    }, {
+        key: "_prepareParticipants",
+        value: function _prepareParticipants(participants) {
+            var _this = this;
+
+            return participants.map(function (p) {
+                return {
+                    user_id: p.userId,
+                    flags: _this._getUserPermissions(p),
+                    last_read: p.lastRead
+                };
+            });
+        }
+        /**
+         * @hidden
+         * Revert changes if [Conversation.update], [Conversation.setTitle], [Conversation.setPublicJoin] or [Conversation.setCustomData] fails.
+         */
+
+    }, {
+        key: "_revertChanges",
+        value: function _revertChanges() {
+            var _this2 = this;
+
+            Object.keys(this._backup).forEach(function (key) {
+                _this2[key] = _this2._backup[key];
+            });
+            this._backup = {};
+        }
+        /**
+         * Send conversation changes to the server: title, public join flag and custom data. Used to send all changes modified via properties. Changes via 'setTitle', 'setPublicJoin' etc are sent instantly.
+         * Trigger the [MessengerEvents.EditConversation] event.
+         * @returns {Promise<EventHandlers.EditConversationEvent>|Promise}
+         */
+
+    }, {
+        key: "update",
+        value: function update() {
+            return ConversationManager_1.default.get().editConversation(this);
+        }
+        /**
+         * Set the conversation title and send changes to the server.
+         * Trigger the [MessengerEvents.EditConversation] event.
+         * @returns {Promise<EventHandlers.EditConversationEvent>|Promise}
+         */
+
+    }, {
+        key: "setTitle",
+        value: function setTitle(title) {
+            if (typeof title != 'string') return Messenger_1.Messenger.getInstance().reject(__1.default.MessengerError.Error_0, __1.default.MessengerAction.editConversation);
+            this._backup.title = this._title;
+            this._title = title;
+            return ConversationManager_1.default.get().editConversation(this);
+        }
+        /**
+         * Set the public join flag and send changes to the server.
+         * Trigger the [MessengerEvents.EditConversation] event.
+         * @returns {Promise<EventHandlers.EditConversationEvent>|Promise}
+         */
+
+    }, {
+        key: "setPublicJoin",
+        value: function setPublicJoin(publicJoin) {
+            if (typeof publicJoin != 'boolean') return Messenger_1.Messenger.getInstance().reject(__1.default.MessengerError.Error_0, __1.default.MessengerAction.editConversation);
+            this._backup.publicJoin = this._publicJoin;
+            this._publicJoin = publicJoin;
+            return ConversationManager_1.default.get().editConversation(this);
+        }
+        /**
+         * Set the JS object custom data and send changes to the server.
+         * Trigger the [MessengerEvents.EditConversation] event.
+         * @returns {Promise<EventHandlers.EditConversationEvent>|Promise}
+         */
+
+    }, {
+        key: "setCustomData",
+        value: function setCustomData(customData) {
+            if (!customData || Array.isArray(customData) || (typeof customData === "undefined" ? "undefined" : _typeof(customData)) != 'object') return Messenger_1.Messenger.getInstance().reject(__1.default.MessengerError.Error_0, __1.default.MessengerAction.editConversation);
+            this._backup.customData = this._customData;
+            this._customData = customData;
+            return ConversationManager_1.default.get().editConversation(this);
+        }
+        /**
+         * Add new participants to the conversation.
+         * Duplicated users are ignored.
+         * Will fail if any user does not exist.
+         * Triggers the [MessengerEvents.EditConversation] event for all the messenger objects on all rhe clients, including this one.
+         * @param participants
+         * @returns {Promise<EventHandlers.EditConversationEvent>|Promise}
+         */
+
+    }, {
+        key: "addParticipants",
+        value: function addParticipants(participants) {
+            var _this3 = this;
+
+            if (!Array.isArray(participants) || participants.length == 0) return Messenger_1.Messenger.getInstance().reject(__1.default.MessengerError.Error_0, __1.default.MessengerAction.addParticipants);
+            return new Promise(function (resolve, reject) {
+                var requestUuid = MsgSignaling_1.MsgSignaling.get().sendWsMessage(MsgAction_1.MsgAction.addParticipants, {
+                    uuid: _this3._uuid,
+                    participants: _this3._prepareParticipants(participants)
+                });
+                Messenger_1.Messenger.getInstance()._registerPromise(requestUuid, resolve, reject);
+            });
+        }
+        /**
+         * Change access rights for the existing participants.
+         * This function doesn't apply any changes to the participant list.
+         * Use the [Conversation.addParticipants] or [Conversation.removeParticipants] methods instead.
+         * Triggers the [MessengerEvents.EditConversation] event for all the messenger objects on all the clients, including this one.
+         * @param participants
+         * @returns {Promise<EventHandlers.EditConversationEvent>|Promise}
+         */
+
+    }, {
+        key: "editParticipants",
+        value: function editParticipants(participants) {
+            var _this4 = this;
+
+            if (!Array.isArray(participants) || participants.length == 0) return Messenger_1.Messenger.getInstance().reject(__1.default.MessengerError.Error_0, __1.default.MessengerAction.editParticipants);
+            return new Promise(function (resolve, reject) {
+                var requestUuid = MsgSignaling_1.MsgSignaling.get().sendWsMessage(MsgAction_1.MsgAction.editParticipants, {
+                    uuid: _this4._uuid,
+                    participants: _this4._prepareParticipants(participants)
+                });
+                Messenger_1.Messenger.getInstance()._registerPromise(requestUuid, resolve, reject);
+            });
+        }
+        /**
+         * Remove participants from the conversation.
+         * Duplicated users are ignored.
+         * Will fail if any user does not exist.
+         * Triggers the [MessengerEvents.EditConversation] event for all the messenger objects on all the clients, including this one.
+         * @param participants
+         * @returns {Promise<EventHandlers.EditConversationEvent>|Promise}
+         */
+
+    }, {
+        key: "removeParticipants",
+        value: function removeParticipants(participants) {
+            var _this5 = this;
+
+            if (!Array.isArray(participants) || participants.length == 0) return Messenger_1.Messenger.getInstance().reject(__1.default.MessengerError.Error_0, __1.default.MessengerAction.removeParticipants);
+            return new Promise(function (resolve, reject) {
+                var requestUuid = MsgSignaling_1.MsgSignaling.get().sendWsMessage(MsgAction_1.MsgAction.removeParticipants, {
+                    uuid: _this5._uuid,
+                    participants: participants.filter(function (i) {
+                        return typeof i.userId !== 'undefined';
+                    }).map(function (i) {
+                        return i.userId;
+                    })
+                });
+                Messenger_1.Messenger.getInstance()._registerPromise(requestUuid, resolve, reject);
+            });
+        }
+        //============================ MSG PART START ==========================
+        /**
+         * Send message to the conversation
+         * @param test
+         * @param payload
+         * @returns {Promise<EventHandlers.SendMessageEvent>|Promise}
+         */
+
+    }, {
+        key: "sendMessage",
+        value: function sendMessage(text, payload) {
+            if (typeof text != 'string' || !(typeof payload !== 'undefined' && Array.isArray(payload) && payload.every(function (el) {
+                return el && (typeof el === "undefined" ? "undefined" : _typeof(el)) === 'object';
+            }))) return Messenger_1.Messenger.getInstance().reject(__1.default.MessengerError.Error_0, __1.default.MessengerAction.sendMessage);
+            var msg = new Message_1.Message(text, payload);
+            return msg.sendTo(this);
+        }
+        /**
+         * Calling this method will inform backend that user is typing some text. Calls within 10s interval from the last call are discarded.
+         * @returns {Promise<EventHandlers.TypingEvent | false>|Promise} Resolves to [EventHandlers.TypingEvent] if notification was actually sent to the server the server, 'false' if it was discarded.
+         */
+
+    }, {
+        key: "typing",
+        value: function typing() {
+            var _this6 = this;
+
+            if (this._debounceLock) return Promise.resolve(false);
+            setTimeout(function () {
+                _this6._debounceLock = false;
+            }, 10000);
+            this._debounceLock = true;
+            return new Promise(function (resolve, reject) {
+                var requestUuid = MsgSignaling_1.MsgSignaling.get().sendWsMessage(MsgAction_1.MsgAction.typingMessage, { conversation: _this6._uuid });
+                Messenger_1.Messenger.getInstance()._registerPromise(requestUuid, resolve, reject);
+            });
+        }
+        /**
+         * Mark the event with the specified sequence as 'read'.
+         * This affects 'lastRead' and is used to display unread messages and events. Triggers the [MessengerEvents.Read] event for all the messenger objects on all the connected clients, including this one.
+         * @param seq
+         * @returns {Promise<EventHandlers.ReadEvent>|Promise}
+         */
+
+    }, {
+        key: "markAsRead",
+        value: function markAsRead(seq) {
+            var _this7 = this;
+
+            return new Promise(function (resolve, reject) {
+                var requestUuid = MsgSignaling_1.MsgSignaling.get().sendWsMessage(MsgAction_1.MsgAction.isRead, {
+                    conversation: _this7._uuid,
+                    seq: seq
+                });
+                Messenger_1.Messenger.getInstance()._registerPromise(requestUuid, resolve, reject);
+            });
+        }
+        //============================= MSG PART END ============================
+        /**
+         * Request events in the specified sequence range to be sent from server into this client.
+         * Maximum 100 events can be requested by one method call.
+         * Sequence numbers of the resulting events may contain 'holes' due to the server-side implementation.
+         * Method is used to get history or get missed events in case of network disconnect.
+         * Please note that server will not push any events that was missed due to the client being offline.
+         * Client should use this method to request all events based on the last event sequence received from the server and last event sequence saved locally (if any).
+         * Not that calling this method will result in multiple [MessengerEvents.RetransmitEvents] events.
+         * @param eventsFrom first event in range sequence, inclusive
+         * @param eventsTo last event in range sequence, inclusive
+         * @returns {Promise<EventHandlers.RetransmitEventsEvent>|Promise}
+         */
+
+    }, {
+        key: "retransmitEvents",
+        value: function retransmitEvents(eventsFrom, eventsTo, count) {
+            var _this8 = this;
+
+            if (typeof eventsTo != 'number' || typeof eventsFrom != 'number') return Messenger_1.Messenger.getInstance().reject(__1.default.MessengerError.Error_0, __1.default.MessengerAction.retransmitEvents);
+            return new Promise(function (resolve, reject) {
+                var requestUuid = void 0;
+                var initiator = void 0;
+                var messengerAction = void 0;
+                Promise.all(Array(eventsTo - eventsFrom + 1).fill(0).map(function (e, idx) {
+                    return idx + eventsFrom;
+                }).map(function (eventSeq) {
+                    return new Promise(function (resolve, reject) {
+                        var callback = function callback(e) {
+                            if (e.events && e.events[0] && Number(e.events[0].seq) === eventSeq) {
+                                clearTimeout(timeout);
+                                Messenger_1.Messenger.getInstance().off(__1.default.MessengerEvents.RetransmitEvents, callback);
+                                Messenger_1.Messenger.getInstance().off(__1.default.MessengerEvents.Error, errorCallback);
+                                if (!initiator) {
+                                    initiator = e.initiator;
+                                }
+                                if (!messengerAction) {
+                                    messengerAction = e.messengerAction;
+                                }
+                                resolve(e.events[0]);
+                            }
+                        };
+                        var errorCallback = function errorCallback(e) {
+                            if (e.messengerAction == __1.default.MessengerAction.retransmitEvents && e.events && e.events[0] && Number(e.events[0].seq) === eventSeq) {
+                                clearTimeout(timeout);
+                                Messenger_1.Messenger.getInstance().off(__1.default.MessengerEvents.RetransmitEvents, callback);
+                                Messenger_1.Messenger.getInstance().off(__1.default.MessengerEvents.Error, errorCallback);
+                                reject(e);
+                            }
+                        };
+                        var timeout = setTimeout(function () {
+                            Messenger_1.Messenger.getInstance().off(__1.default.MessengerEvents.RetransmitEvents, callback);
+                            Messenger_1.Messenger.getInstance().off(__1.default.MessengerEvents.Error, errorCallback);
+                            Messenger_1.Messenger.getInstance().reject(__1.default.MessengerError.Error_0, __1.default.MessengerAction.retransmitEvents).catch(reject);
+                        }, Messenger_1.Messenger.rejectTimeout);
+                        Messenger_1.Messenger.getInstance().on(__1.default.MessengerEvents.RetransmitEvents, callback);
+                        Messenger_1.Messenger.getInstance().on(__1.default.MessengerEvents.Error, errorCallback);
+                    });
+                })).then(function (es) {
+                    return resolve({
+                        initiator: initiator,
+                        messengerAction: messengerAction,
+                        events: es,
+                        requestUuid: requestUuid
+                    });
+                }).catch(reject);
+                requestUuid = MsgSignaling_1.MsgSignaling.get().sendWsMessage(MsgAction_1.MsgAction.retransmitEvents, {
+                    conversation: _this8._uuid,
+                    events_from: eventsFrom | 0,
+                    events_to: eventsTo | 0,
+                    count: count
+                });
+            });
+        }
+        /**
+         * @hidden
+         * @return {string}
+         * @private
+         */
+
+    }, {
+        key: "_traceName",
+        value: function _traceName() {
+            return 'Conversation';
+        }
+    }, {
+        key: "uuid",
+        get: function get() {
+            return this._uuid;
+        }
+    }, {
+        key: "title",
+        get: function get() {
+            return this._title;
+        }
+        /**
+         * Sets the conversation title.
+         * Setting this property does not send changes to the server.
+         * Use the 'update' method to send all the changes at once or 'setTitle' to update or set the title.
+         * @param value
+         */
+        ,
+        set: function set(value) {
+            this._backup.title = this._title;
+            this._title = value;
+        }
+    }, {
+        key: "createdAt",
+        get: function get() {
+            return this._createdAt;
+        }
+        /**
+         * UNIX timestamp integer that specifies the time of the last event in the conversation. It's same as 'Date.now()' divided by 1000.
+         */
+
+    }, {
+        key: "lastUpdate",
+        get: function get() {
+            return this._lastUpdate;
+        }
+    }, {
+        key: "direct",
+        get: function get() {
+            return this._direct;
+        }
+        /**
+         * @return {boolean}
+         */
+
+    }, {
+        key: "uberConversation",
+        get: function get() {
+            return this._uberConversation;
+        }
+    }, {
+        key: "publicJoin",
+        get: function get() {
+            return this._publicJoin;
+        }
+        /**
+         * If set to 'true', anyone can join conversation by UUID. Note that setting this property does not send changes to the server. Use the 'update' to send all changes at once or 'setPublicJoin' to update and set the public join flag.
+         * @param value
+         */
+        ,
+        set: function set(value) {
+            this._backup.publicJoin = this._publicJoin;
+            this._publicJoin = value;
+        }
+        /**
+         * Conversation participants list alongside with their rights.
+         */
+
+    }, {
+        key: "participants",
+        get: function get() {
+            return this._participants;
+        }
+    }, {
+        key: "customData",
+        get: function get() {
+            return this._customData;
+        }
+        /**
+         * JavaScript object with custom data, up to 5kb. Note that setting this property does not send changes to the server. Use the 'update' to send all changes at once or 'setCustomData' to update and set the custom data.
+         * @param value
+         */
+        ,
+        set: function set(value) {
+            this._backup.customData = this._customData;
+            this._customData = value;
+        }
+        /**
+         * Last event sequence for this conversation. Used with 'lastRead' to display unread messages and events.
+         */
+
+    }, {
+        key: "lastSeq",
+        get: function get() {
+            return this._lastSeq;
+        }
+    }], [{
+        key: "_createFromBus",
+        value: function _createFromBus(busConversation, seq) {
+            return new Conversation({
+                participants: busConversation.participants && Array.isArray(busConversation.participants) ? busConversation.participants.map(function (item) {
+                    var all = Number(item.flags) === Structures_1.MsgPermissions.all;
+                    var isOwner = Number(item.flags) > Structures_1.MsgPermissions.is_owner && item.flags < Structures_1.MsgPermissions.all;
+                    var permissions = Number(item.flags).toString(2).slice(-6).split('').reverse();
+                    return {
+                        userId: Number(item.user_id),
+                        lastRead: item.last_read,
+                        isOwner: all || isOwner,
+                        canWrite: all || permissions[0] === '1',
+                        canEdit: all || permissions[1] === '1',
+                        canRemove: all || permissions[2] === '1',
+                        canManageParticipants: all || permissions[3] === '1',
+                        canEditAll: all || permissions[4] === '1',
+                        canRemoveAll: all || permissions[5] === '1'
+                    };
+                }) : [],
+                title: busConversation.title,
+                uuid: busConversation.uuid,
+                direct: busConversation.direct,
+                publicJoin: busConversation.enable_public_join,
+                uberConversation: busConversation.uber_conversation,
+                createdAt: busConversation.created_at,
+                lastUpdate: busConversation.last_update,
+                lastSeq: seq,
+                customData: busConversation.custom_data && _typeof(busConversation.custom_data) === 'object' ? busConversation.custom_data : undefined
+            });
+        }
+        /**
+         * Restore conversation from cache
+         * @param cacheConversation
+         * @returns {Conversation}
+         * @hidden
+         */
+
+    }, {
+        key: "createFromCache",
+        value: function createFromCache(cacheConversation) {
+            return new Conversation({
+                uuid: cacheConversation.uuid,
+                title: cacheConversation.title,
+                participants: cacheConversation.participants || [],
+                direct: cacheConversation.direct,
+                publicJoin: cacheConversation.publicJoin,
+                uberConversation: cacheConversation.uberConversation,
+                createdAt: cacheConversation.createdAt,
+                lastUpdate: cacheConversation.lastUpdate,
+                customData: cacheConversation.customData
+            });
+        }
+    }]);
+
+    return Conversation;
+}();
+
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], Conversation.prototype, "updateSeq", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], Conversation.prototype, "toCache", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], Conversation.prototype, "_getCreatePayload", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], Conversation.prototype, "_getEditPayload", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], Conversation.prototype, "_prepareParticipants", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], Conversation.prototype, "_revertChanges", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], Conversation.prototype, "update", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], Conversation.prototype, "addParticipants", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], Conversation.prototype, "editParticipants", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], Conversation.prototype, "removeParticipants", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], Conversation.prototype, "typing", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], Conversation.prototype, "markAsRead", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], Conversation.prototype, "retransmitEvents", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], Conversation, "_createFromBus", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], Conversation, "createFromCache", null);
+exports.Conversation = Conversation;
+
+/***/ }),
+/* 35 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var __decorate = undefined && undefined.__decorate || function (decorators, target, key, desc) {
+    var c = arguments.length,
+        r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc,
+        d;
+    if ((typeof Reflect === "undefined" ? "undefined" : _typeof(Reflect)) === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);else for (var i = decorators.length - 1; i >= 0; i--) {
+        if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    }return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+var Logger_1 = __webpack_require__(0);
+var StreamManager_1 = __webpack_require__(29);
 /**
  * @hidden
  */
@@ -10411,11 +11547,12 @@ var AudioDeviceManager = function () {
         _classCallCheck(this, AudioDeviceManager);
 
         if (typeof AudioDeviceManager.instance !== 'undefined') throw new Error('Error - use StreamManager.get()');
-        if (navigator.mediaDevices.getSupportedConstraints) this._supportedConstraints = navigator.mediaDevices.getSupportedConstraints();else this._supportedConstraints = {};
+        if (navigator && navigator.mediaDevices && navigator.mediaDevices.getSupportedConstraints) this._supportedConstraints = navigator.mediaDevices.getSupportedConstraints();else this._supportedConstraints = {};
         this.__defaultParams = {};
         this._lastAudioInputDevices = [];
         this._lastAudioOutputDevices = [];
         this._callParams = {};
+        this.logger = Logger_1.LogManager.get().createLogger(Logger_1.LogCategory.USERMEDIA, this._traceName());
     }
     /**
      * @hidden
@@ -10461,6 +11598,7 @@ var AudioDeviceManager = function () {
             var _this = this;
 
             return navigator.mediaDevices.enumerateDevices().then(function (devices) {
+                _this.logger.info("Got input devices: " + JSON.stringify(devices));
                 _this._lastAudioInputDevices = devices.map(function (device) {
                     if (device.kind === 'audio' || device.kind === 'audioinput') {
                         return {
@@ -10485,6 +11623,7 @@ var AudioDeviceManager = function () {
             var _this2 = this;
 
             return navigator.mediaDevices.enumerateDevices().then(function (devices) {
+                _this2.logger.info("Got output devices: " + JSON.stringify(devices));
                 _this2._lastAudioOutputDevices = devices.map(function (device) {
                     if (device.kind === 'audiooutput') {
                         return {
@@ -10515,6 +11654,7 @@ var AudioDeviceManager = function () {
     }, {
         key: "setDefaultAudioSettings",
         value: function setDefaultAudioSettings(params) {
+            this.logger.info("Set default audio settings: " + JSON.stringify(params));
             this.__defaultParams = params;
         }
         /**
@@ -10526,10 +11666,12 @@ var AudioDeviceManager = function () {
         value: function setCallAudioSettings(call, params) {
             var _this3 = this;
 
+            this.logger.info("Setting call " + call.id + " audio settings: " + JSON.stringify(params));
             return new Promise(function (resolve, reject) {
                 if (_this3._callParams[call.id()] === params) resolve();
                 var mustUpdateRenderers = _this3._callParams[call.id()].outputId !== params.outputId;
                 var mustUpdateSource = _this3._callParams[call.id()].inputId !== params.inputId || _this3._callParams[call.id()].noiseSuppression !== params.noiseSuppression || _this3._callParams[call.id()].echoCancellation !== params.echoCancellation || _this3._callParams[call.id()].disableAudio !== params.disableAudio;
+                _this3.logger.info("Must update renderers: " + mustUpdateRenderers + ", must update source: " + mustUpdateSource);
                 _this3._callParams[call.id()] = params;
                 if (mustUpdateRenderers) {
                     call.getEndpoints().forEach(function (ep) {
@@ -10542,6 +11684,7 @@ var AudioDeviceManager = function () {
                     StreamManager_1.StreamManager.get().updateCallStream(call).then(function () {
                         resolve();
                     }).catch(function (e) {
+                        _this3.logger.warning("Failed to update call " + call.id() + " stream: " + e);
                         reject(e);
                     });
                 } else {
@@ -10588,10 +11731,8 @@ var AudioDeviceManager = function () {
                     })) {
                         audioConstraints['deviceId'] = {};
                         audioConstraints['deviceId'][constraintsType] = params.inputId;
-                    } else Logger_1.LogManager.get().writeMessage(Logger_1.LogCategory.USERMEDIA, 'Warning:', Logger_1.LogLevel.WARNING, "There is no audio input device with id " + params.inputId);
-                } else {
-                    Logger_1.LogManager.get().writeMessage(Logger_1.LogCategory.USERMEDIA, 'Warning:', Logger_1.LogLevel.WARNING, "There is no audio input device with id " + params.inputId);
-                }
+                    } else this.logger.warning("There is no audio input device with id " + params.inputId);
+                } else this.logger.warning("There is no audio input device with id " + params.inputId);
             }
             if (params.echoCancellation && this._supportedConstraints['echoCancellation']) {
                 audioConstraints['echoCancellation'] = params.echoCancellation;
@@ -10634,11 +11775,10 @@ __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.HARDWARE)], AudioDe
 __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.HARDWARE)], AudioDeviceManager.prototype, "getCallAudioSettings", null);
 __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.HARDWARE)], AudioDeviceManager.prototype, "getCallConstraints", null);
 __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.HARDWARE)], AudioDeviceManager.prototype, "_getAudioConstraints", null);
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.HARDWARE)], AudioDeviceManager, "get", null);
 exports.AudioDeviceManager = AudioDeviceManager;
 
 /***/ }),
-/* 33 */
+/* 36 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -10660,7 +11800,7 @@ var __decorate = undefined && undefined.__decorate || function (decorators, targ
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 var Logger_1 = __webpack_require__(0);
-var StreamManager_1 = __webpack_require__(25);
+var StreamManager_1 = __webpack_require__(29);
 var __1 = __webpack_require__(4);
 /**
  * @hidden
@@ -10674,10 +11814,11 @@ var CameraManager = function () {
         _classCallCheck(this, CameraManager);
 
         if (typeof CameraManager.instance !== 'undefined') throw new Error('Error - use StreamManager.get()');
-        if (navigator.mediaDevices.getSupportedConstraints) this._supportedConstraints = navigator.mediaDevices.getSupportedConstraints();else this._supportedConstraints = {};
+        if (navigator && navigator.mediaDevices && navigator.mediaDevices.getSupportedConstraints) this._supportedConstraints = navigator.mediaDevices.getSupportedConstraints();else this._supportedConstraints = {};
         this._callParams = {};
         this._lastCameraDevices = [];
         this.__defaultParams = {};
+        this.logger = Logger_1.LogManager.get().createLogger(Logger_1.LogCategory.USERMEDIA, this._traceName());
     }
     /**
      * Get the CameraManager instance
@@ -10693,8 +11834,9 @@ var CameraManager = function () {
         value: function setDefaultVideoSettings(params) {
             var _this = this;
 
-            return new Promise(function (resolve, reject) {
+            return new Promise(function (resolve) {
                 var validParams = _this._validateCameraParams(params);
+                _this.logger.info("Setting  default video settings, params: " + JSON.stringify(params) + ", valid params: " + JSON.stringify(validParams));
                 _this.__defaultParams = validParams;
                 resolve(null);
             });
@@ -10715,12 +11857,16 @@ var CameraManager = function () {
     }, {
         key: "setCallVideoSettings",
         value: function setCallVideoSettings(call, params) {
+            var _this2 = this;
+
             var validParams = this._validateCameraParams(params);
+            this.logger.info("Setting call " + call.id() + " video settings, params: " + JSON.stringify(params) + ", valid params: " + JSON.stringify(validParams));
             this._callParams[call.id()] = validParams;
             return new Promise(function (resolve, reject) {
                 StreamManager_1.StreamManager.get().updateCallStream(call).then(function () {
                     resolve();
                 }).catch(function (e) {
+                    _this2.logger.warning("Failed to set call " + call.id() + " video settings: " + e);
                     reject(e);
                 });
             });
@@ -10753,10 +11899,11 @@ var CameraManager = function () {
     }, {
         key: "getInputDevices",
         value: function getInputDevices() {
-            var _this2 = this;
+            var _this3 = this;
 
             return navigator.mediaDevices.enumerateDevices().then(function (devices) {
-                _this2._lastCameraDevices = devices.map(function (device) {
+                _this3.logger.info("Got input devices: " + JSON.stringify(devices));
+                _this3._lastCameraDevices = devices.map(function (device) {
                     if (device.kind === 'video' || device.kind === 'videoinput') {
                         return {
                             id: device.deviceId,
@@ -10767,7 +11914,7 @@ var CameraManager = function () {
                 }).filter(function (e) {
                     return typeof e !== "undefined";
                 });
-                return _this2._lastCameraDevices;
+                return _this3._lastCameraDevices;
             });
         }
         /**
@@ -10786,8 +11933,8 @@ var CameraManager = function () {
                     })) {
                         videoConstraints['deviceId'] = {};
                         videoConstraints['deviceId'][constraintsType] = params.cameraId;
-                    } else Logger_1.LogManager.get().writeMessage(Logger_1.LogCategory.USERMEDIA, 'Warning:', Logger_1.LogLevel.WARNING, "There is no video device with id " + params.cameraId);
-                } else Logger_1.LogManager.get().writeMessage(Logger_1.LogCategory.USERMEDIA, 'Warning:', Logger_1.LogLevel.WARNING, "There is no video device with id " + params.cameraId);
+                    } else this.logger.warning("There is no video device with id " + params.cameraId);
+                } else this.logger.warning("There is no video device with id " + params.cameraId);
             } else if (typeof params.facingMode !== 'undefined') {
                 if (params.facingMode === false) {
                     videoConstraints['facingMode'] = 'environment';
@@ -10820,7 +11967,7 @@ var CameraManager = function () {
         key: "_validateCameraParams",
         value: function _validateCameraParams(params) {
             if (params.videoQuality) {
-                if (params.frameHeight || params.frameWidth) Logger_1.LogManager.get().writeMessage(Logger_1.LogCategory.USERMEDIA, 'Warning:', Logger_1.LogLevel.WARNING, '"videoQuality" parameter detected. The "frameHeight" ' + 'and the "frameWidth" params will be ignored');
+                if (params.frameHeight || params.frameWidth) this.logger.warning('"videoQuality" parameter detected. The "frameHeight" and the "frameWidth" params will be ignored');
                 var format = this._videoQualityToSize(params.videoQuality);
                 params.frameWidth = format.w;
                 params.frameHeight = format.h;
@@ -10883,12 +12030,12 @@ var CameraManager = function () {
          * @returns {Promise<any>}
          */
         value: function testResolutions(cameraId) {
-            var _this3 = this;
+            var _this4 = this;
 
             var testQuality = [__1.Hardware.VideoQuality.VIDEO_SIZE_QQVGA, __1.Hardware.VideoQuality.VIDEO_SIZE_QCIF, __1.Hardware.VideoQuality.VIDEO_SIZE_QVGA, __1.Hardware.VideoQuality.VIDEO_SIZE_CIF, __1.Hardware.VideoQuality.VIDEO_SIZE_nHD, __1.Hardware.VideoQuality.VIDEO_SIZE_VGA, __1.Hardware.VideoQuality.VIDEO_SIZE_SVGA, __1.Hardware.VideoQuality.VIDEO_SIZE_HD, __1.Hardware.VideoQuality.VIDEO_SIZE_UXGA, __1.Hardware.VideoQuality.VIDEO_SIZE_FHD, __1.Hardware.VideoQuality.VIDEO_SIZE_UHD];
             if (this._lastResolutionTestResult) {
                 return new Promise(function (resolve, reject) {
-                    resolve(_this3._lastResolutionTestResult);
+                    resolve(_this4._lastResolutionTestResult);
                 });
             } else {
                 return this._testResolutions(testQuality, {}, cameraId);
@@ -10906,7 +12053,7 @@ var CameraManager = function () {
     }, {
         key: "_testResolutions",
         value: function _testResolutions(testQuality, result, cameraId) {
-            var _this4 = this;
+            var _this5 = this;
 
             if (testQuality.length) {
                 var quality = testQuality.shift();
@@ -10921,14 +12068,16 @@ var CameraManager = function () {
                 }
                 var constrains = { video: this._getVideoConstraints(settings) };
                 return navigator.mediaDevices.getUserMedia(constrains).then(function (e) {
+                    _this5.logger.info('_testResolutions(): Media access granted');
                     e.getTracks().forEach(function (t) {
                         return t.stop();
                     });
                     result[__1.Hardware.VideoQuality[quality]] = true;
-                    return _this4._testResolutions(testQuality, result, cameraId);
+                    return _this5._testResolutions(testQuality, result, cameraId);
                 }, function (e) {
+                    _this5.logger.error("_testResolutions(): Media access denied: " + (e ? e.message || e.name || e : 'unknown'));
                     result[__1.Hardware.VideoQuality[quality]] = false;
-                    return _this4._testResolutions(testQuality, result, cameraId);
+                    return _this5._testResolutions(testQuality, result, cameraId);
                 });
             } else {
                 this._lastResolutionTestResult = result;
@@ -11030,12 +12179,11 @@ __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.HARDWARE)], CameraM
 __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.HARDWARE)], CameraManager.prototype, "getInputDevices", null);
 __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.HARDWARE)], CameraManager.prototype, "_getVideoConstraints", null);
 __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.HARDWARE)], CameraManager.prototype, "_validateCameraParams", null);
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.HARDWARE)], CameraManager, "get", null);
 __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.HARDWARE)], CameraManager, "legacyParamConverter", null);
 exports.CameraManager = CameraManager;
 
 /***/ }),
-/* 34 */
+/* 37 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -11056,10 +12204,10 @@ var __decorate = undefined && undefined.__decorate || function (decorators, targ
     }return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-var BrowserSpecific_1 = __webpack_require__(8);
+var BrowserSpecific_1 = __webpack_require__(7);
 var Client_1 = __webpack_require__(1);
 var Logger_1 = __webpack_require__(0);
-var Utils_1 = __webpack_require__(23);
+var Utils_1 = __webpack_require__(20);
 /**
  * It is the wrapper for the HTMLMediaElement and its MediaStream.
  *   You can get this object on
@@ -11121,7 +12269,7 @@ var MediaRenderer = function () {
             this.kind = stream.getVideoTracks().length ? "video" : "audio";
         }
         this._id = Utils_1.Utils.generateUUID();
-        this._logger = new Logger_1.Logger(Logger_1.LogCategory.USERMEDIA, 'MediaRenderer', Logger_1.LogManager.get());
+        this.logger = Logger_1.LogManager.get().createLogger(Logger_1.LogCategory.USERMEDIA, this._traceName());
         this.stream.getTracks().forEach(function (track) {
             track.onended = function () {
                 _this.checkStreamActive(stream);
@@ -11191,6 +12339,7 @@ var MediaRenderer = function () {
         value: function render(container) {
             var _this2 = this;
 
+            this.logger.info('render()');
             if (Client_1.Client.getInstance().config() && Client_1.Client.getInstance().config().experiments && Client_1.Client.getInstance().config().experiments.preventRendering) {
                 return;
             }
@@ -11204,7 +12353,7 @@ var MediaRenderer = function () {
             this.element.play().then(function () {}, function (e) {
                 setTimeout(function () {
                     _this2.element.play().then(function () {}, function (e) {
-                        _this2._logger.warning("Can't start playing MediaRenderer ID:" + _this2._id);
+                        _this2.logger.warning("Can't start playing MediaRenderer ID:" + _this2._id);
                     });
                 }, 400);
             });
@@ -11218,7 +12367,7 @@ var MediaRenderer = function () {
         key: "clear",
         value: function clear() {
             if (this.isRemoving) {
-                this._logger.trace("MediaRendered ID:" + this._id + " already removing. Ignored.");
+                this.logger.info("MediaRendered ID: already removing " + this._id + ". Ignored.");
                 return;
             }
             this.isRemoving = true;
@@ -11242,6 +12391,7 @@ var MediaRenderer = function () {
     }, {
         key: "setVolume",
         value: function setVolume(level) {
+            this.logger.info("setVolume(" + level + ")");
             if (this.element) {
                 this.element.volume = level;
             }
@@ -11254,11 +12404,23 @@ var MediaRenderer = function () {
     }, {
         key: "useAudioOutput",
         value: function useAudioOutput(id) {
+            this.logger.info("useAudioOutput(" + id + ")");
             try {
                 this.element.setSinkId(id);
             } catch (e) {
-                this._logger.warning('Set audio output is impossible. Browser not support this option.');
+                this.logger.warning('Set audio output is impossible. Browser not support this option.');
             }
+        }
+        /**
+         * @hidden
+         * @return {string}
+         * @private
+         */
+
+    }, {
+        key: "_traceName",
+        value: function _traceName() {
+            return 'MediaRenderer';
         }
     }, {
         key: "id",
@@ -11279,7 +12441,7 @@ __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.USERMEDIA)], MediaR
 exports.MediaRenderer = MediaRenderer;
 
 /***/ }),
-/* 35 */
+/* 38 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -11301,11 +12463,11 @@ var __decorate = undefined && undefined.__decorate || function (decorators, targ
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 var Logger_1 = __webpack_require__(0);
-var Endpoint_1 = __webpack_require__(36);
-var MediaRenderer_1 = __webpack_require__(34);
-var EndpointEvents_1 = __webpack_require__(27);
-var CallEvents_1 = __webpack_require__(6);
-var Constants_1 = __webpack_require__(11);
+var Endpoint_1 = __webpack_require__(39);
+var MediaRenderer_1 = __webpack_require__(37);
+var EndpointEvents_1 = __webpack_require__(30);
+var CallEvents_1 = __webpack_require__(5);
+var Constants_1 = __webpack_require__(10);
 /**
  * @hidden
  */
@@ -11331,7 +12493,7 @@ var AbstractEndpointManager = function () {
          * All active MediaRenders
          */
         this._mediaRendererList = {};
-        this._logger = new Logger_1.Logger(Logger_1.LogCategory.ENDPOINT, 'EndpointManager', Logger_1.LogManager.get());
+        this.logger = Logger_1.LogManager.get().createLogger(Logger_1.LogCategory.ENDPOINT, 'EndpointManager');
     }
     /**
      * Set volume level for all EndPoints in the call
@@ -11374,17 +12536,25 @@ var AbstractEndpointManager = function () {
         key: "addEndPoint",
         value: function addEndPoint(call, endpoint) {
             var endpointInfo = this._endpointInfo[call.id()];
-            this._endpointList[call.id()][endpoint.id] = endpoint;
-            if (endpointInfo[endpoint.id]) {
-                endpoint.displayName = endpointInfo[endpoint.id].displayName;
-                endpoint.place = endpointInfo[endpoint.id].place;
-                endpoint.sipUri = endpointInfo[endpoint.id].sipURI;
-                endpoint.userName = endpointInfo[endpoint.id].username;
-                call.dispatchEvent({
-                    name: CallEvents_1.CallEvents.EndpointAdded,
-                    call: call,
-                    endpoint: endpoint
-                });
+            if (endpointInfo) {
+                this._endpointList[call.id()][endpoint.id] = endpoint;
+                if (endpointInfo[endpoint.id]) {
+                    endpoint.displayName = endpointInfo[endpoint.id].displayName;
+                    endpoint.place = endpointInfo[endpoint.id].place;
+                    endpoint.sipUri = endpointInfo[endpoint.id].sipURI;
+                    endpoint.userName = endpointInfo[endpoint.id].username;
+                    call.dispatchEvent({
+                        name: CallEvents_1.CallEvents.EndpointAdded,
+                        call: call,
+                        endpoint: endpoint
+                    });
+                } else if (endpoint.isDefault) {
+                    call.dispatchEvent({
+                        name: CallEvents_1.CallEvents.EndpointAdded,
+                        call: call,
+                        endpoint: endpoint
+                    });
+                }
             }
             return endpoint;
         }
@@ -11421,7 +12591,7 @@ var AbstractEndpointManager = function () {
                 });
                 endpoint.dispatchEvent({ name: EndpointEvents_1.EndpointEvents.Removed, call: call, endpoint: endpoint });
                 delete this._endpointList[call.id()][endpoint.id];
-            } else this._logger.error("Trying remove non existing endpoint with id:" + endpoint.id + " on the call: " + call.id());
+            } else this.logger.error("Trying remove non existing endpoint with id:" + endpoint.id + " on the call: " + call.id());
         }
     }, {
         key: "addStreamToEndpoint",
@@ -11498,7 +12668,8 @@ var AbstractEndpointManager = function () {
 
             if (call.settings.isConference) {
                 if (!track.muted) this.addStream(call, new MediaStream([track]));else track.onunmute = function () {
-                    return _this2.addStream(call, new MediaStream([track]));
+                    track.onunmute = void 0;
+                    _this2.addStream(call, new MediaStream([track]));
                 };
             } else this.addStream(call, new MediaStream([track]));
         }
@@ -11654,11 +12825,18 @@ __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.ENDPOINT)], Abstrac
 __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.ENDPOINT)], AbstractEndpointManager.prototype, "getDefaultEndPoint", null);
 __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.ENDPOINT)], AbstractEndpointManager.prototype, "deleteEndpoint", null);
 __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.ENDPOINT)], AbstractEndpointManager.prototype, "addStreamToEndpoint", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.ENDPOINT)], AbstractEndpointManager.prototype, "addStream", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.ENDPOINT)], AbstractEndpointManager.prototype, "addTrack", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.ENDPOINT)], AbstractEndpointManager.prototype, "clear", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.ENDPOINT)], AbstractEndpointManager.prototype, "endpointInfoUpdated", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.ENDPOINT)], AbstractEndpointManager.prototype, "setEndpointDescription", null);
 __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.ENDPOINT)], AbstractEndpointManager.prototype, "useAudioOutput", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.ENDPOINT)], AbstractEndpointManager.prototype, "getEndpoints", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.ENDPOINT)], AbstractEndpointManager.prototype, "registerCall", null);
 exports.AbstractEndpointManager = AbstractEndpointManager;
 
 /***/ }),
-/* 36 */
+/* 39 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -11675,8 +12853,9 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var EventTarget_1 = __webpack_require__(14);
-var EndpointEvents_1 = __webpack_require__(27);
+var EventTarget_1 = __webpack_require__(15);
+var EndpointEvents_1 = __webpack_require__(30);
+var Logger_1 = __webpack_require__(0);
 /**
  * Interface that represents any remote media unit in a call. Current endpoints can be retrieved via the [Call.getEndpoints] method.
  *
@@ -11719,6 +12898,7 @@ var Endpoint = function (_EventTarget_1$EventT) {
     _this.addDefaultEventListener(EndpointEvents_1.EndpointEvents.RemoteMediaAdded, function (e) {
       e.mediaRenderer.renderDefault();
     });
+    _this.logger = Logger_1.LogManager.get().createLogger(Logger_1.LogCategory.ENDPOINT, _this._traceName() + " " + _this.id);
     return _this;
   }
   /**
@@ -11730,6 +12910,7 @@ var Endpoint = function (_EventTarget_1$EventT) {
   _createClass(Endpoint, [{
     key: "useAudioOutput",
     value: function useAudioOutput(id) {
+      this.logger.info("useAudioOutput(" + id + ")");
       if (this.mediaRenderers) this.mediaRenderers.forEach(function (mediaRenderer) {
         return mediaRenderer.useAudioOutput(id);
       });
@@ -11747,24 +12928,13 @@ var Endpoint = function (_EventTarget_1$EventT) {
       this.userName = data.username;
     }
     /**
-     * @hidden
-     * @return {string}
-     * @private
-     */
-
-  }, {
-    key: "_traceName",
-    value: function _traceName() {
-      return 'Endpoint';
-    }
-    /**
      * Register a handler for the specified event. The method is a shorter equivalent for *addEventListener*. One event can have more than one handler; handlers are executed in order of registration.
      * Use the [Endpoint.off] method to delete a handler.
      */
 
   }, {
     key: "on",
-    value: function on(event, handler) {
+    value: function on(event, handler, options) {
       _get(Endpoint.prototype.__proto__ || Object.getPrototypeOf(Endpoint.prototype), "on", this).call(this, event, handler);
     }
     /**
@@ -11776,6 +12946,17 @@ var Endpoint = function (_EventTarget_1$EventT) {
     value: function off(event, handler) {
       _get(Endpoint.prototype.__proto__ || Object.getPrototypeOf(Endpoint.prototype), "off", this).call(this, event, handler);
     }
+    /**
+     * @hidden
+     * @return {string}
+     * @private
+     */
+
+  }, {
+    key: "_traceName",
+    value: function _traceName() {
+      return 'Endpoint';
+    }
   }]);
 
   return Endpoint;
@@ -11784,7 +12965,7 @@ var Endpoint = function (_EventTarget_1$EventT) {
 exports.Endpoint = Endpoint;
 
 /***/ }),
-/* 37 */
+/* 40 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -11792,102 +12973,456 @@ exports.Endpoint = Endpoint;
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
-
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var __decorate = undefined && undefined.__decorate || function (decorators, target, key, desc) {
-    var c = arguments.length,
-        r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc,
-        d;
-    if ((typeof Reflect === "undefined" ? "undefined" : _typeof(Reflect)) === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);else for (var i = decorators.length - 1; i >= 0; i--) {
-        if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    }return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
 Object.defineProperty(exports, "__esModule", { value: true });
-var CallEvents_1 = __webpack_require__(6);
-var Logger_1 = __webpack_require__(0);
 /**
  * @hidden
  */
 
-var ReInviteQ = function () {
-    function ReInviteQ(call, _pcStatus) {
-        var _this = this;
+var CodecSorter = function () {
+    function CodecSorter(sdp) {
+        _classCallCheck(this, CodecSorter);
 
-        _classCallCheck(this, ReInviteQ);
-
-        this._pcStatus = _pcStatus;
-        this._q = [];
-        call.on(CallEvents_1.CallEvents.Updated, function (e) {
-            Logger_1.LogManager.get().writeMessage(Logger_1.LogCategory.REINVITEQ, 'CallEvent', Logger_1.LogLevel.TRACE, "Updated with result " + e.result);
-            if (ReInviteQ._currentReinvite) {
-                var reinvite = ReInviteQ._currentReinvite;
-                if (e.result) reinvite.resolve(e);else reinvite.reject(e);
-                ReInviteQ._currentReinvite = undefined;
-            }
-            _this.runNext();
-        });
-        call.on(CallEvents_1.CallEvents.PendingUpdate, function (e) {
-            Logger_1.LogManager.get().writeMessage(Logger_1.LogCategory.REINVITEQ, 'CallEvent', Logger_1.LogLevel.TRACE, "IncomingUpdate. Local RI==" + _typeof(ReInviteQ._currentReinvite));
-            if (ReInviteQ._currentReinvite) {
-                ReInviteQ._currentReinvite.reject();
-                ReInviteQ._currentReinvite = undefined;
-            }
-        });
-        call.on(CallEvents_1.CallEvents.UpdateFailed, function (e) {
-            Logger_1.LogManager.get().writeMessage(Logger_1.LogCategory.REINVITEQ, 'CallEvent', Logger_1.LogLevel.TRACE, "UpdateFailed");
-            if (ReInviteQ._currentReinvite) {
-                ReInviteQ._currentReinvite.reject();
-                ReInviteQ._currentReinvite = undefined;
-            }
-        });
+        this.originalSDP = sdp;
     }
 
-    _createClass(ReInviteQ, [{
-        key: "runNext",
-        value: function runNext() {
-            if (typeof ReInviteQ._currentReinvite === "undefined" && this._q.length > 0 && this._pcStatus()) {
-                ReInviteQ._currentReinvite = this._q.splice(0, 1)[0];
-                ReInviteQ._currentReinvite.fx();
+    _createClass(CodecSorter, [{
+        key: "getCodecList",
+
+        /**
+         * Parcing source sdp to inner codec list
+         *
+         * @returns {CodecSorterCodecList}
+         */
+        value: function getCodecList() {
+            this.originalCodecList = {
+                prefix: '',
+                sections: [],
+                sufix: ''
+            };
+            var validLine = RegExp.prototype.test.bind(/^([a-z])=(.*)/);
+            var sections = CodecSorter.splitSections(this.originalSDP);
+            this.originalCodecList.prefix = sections[0];
+            for (var i = 1; i < sections.length; i++) {
+                var mediaCodec = {
+                    kind: 'audio',
+                    firstLine: '',
+                    prefix: '',
+                    sufix: '',
+                    codec: []
+                };
+                var preparced = sections[i].split('\na=rtpmap');
+                preparced = preparced.map(function (part, index) {
+                    return (index > 0 ? 'a=rtpmap' + part : part).trim() + '\r\n';
+                });
+                mediaCodec.prefix = preparced.shift();
+                var tempsufix = preparced.pop();
+                tempsufix = tempsufix.split(/(\r\n|\r|\n)/).filter(validLine);
+                var needparse = true;
+                preparced.push('');
+                while (needparse) {
+                    needparse = false;
+                    if (tempsufix.length !== 0) {
+                        var el = tempsufix.shift();
+                        if (el.indexOf('a=rtpmap') === 0 || el.indexOf('a=rtcp-fb') === 0 || el.indexOf('a=fmtp') === 0 || el.indexOf('a=x-caps') === 0 || el.indexOf('a=maxptime') === 0) {
+                            preparced[preparced.length - 1] += el + '\r\n';
+                            needparse = true;
+                        } else tempsufix.unshift(el);
+                    }
+                }
+                for (var j = 0; j < preparced.length; j++) {
+                    mediaCodec.codec.push(preparced[j].split(/(\r\n|\r|\n)/).filter(validLine));
+                }
+                var parsedPrefix = mediaCodec.prefix.split(/(\r\n|\r|\n)/).filter(validLine);
+                mediaCodec.firstLine = parsedPrefix.shift();
+                var firstLineSplited = mediaCodec.firstLine.split(' ');
+                firstLineSplited.splice(-1 * mediaCodec.codec.length, mediaCodec.codec.length);
+                mediaCodec.kind = firstLineSplited[0].substring(2);
+                mediaCodec.prefix = parsedPrefix.join('\r\n') + '\r\n';
+                mediaCodec.firstLine = firstLineSplited.join(' ');
+                if (tempsufix.length > 0) mediaCodec.sufix = tempsufix.join('\r\n') + '\r\n';
+                this.originalCodecList.sections.push(mediaCodec);
+            }
+            return this.originalCodecList;
+        }
+        /**
+         * Return user readable list of sections with list of codec inside
+         *
+         * @returns {CodecSorterUserCodecList}
+         */
+
+    }, {
+        key: "getUserCodecList",
+        value: function getUserCodecList() {
+            if (typeof this.originalCodecList === 'undefined') this.getCodecList();
+            var userChL = {
+                sections: []
+            };
+            userChL.sections = this.originalCodecList.sections.filter(function (value) {
+                return value.kind === 'video' || value.kind === 'audio';
+            }).map(function (currentValue, index, array) {
+                var list = {
+                    kind: currentValue.kind,
+                    codec: currentValue.codec.map(function (item) {
+                        return CodecSorter.codecToUserCodec(item);
+                    })
+                };
+                var resultArr = [];
+                var _iteratorNormalCompletion = true;
+                var _didIteratorError = false;
+                var _iteratorError = undefined;
+
+                try {
+                    for (var _iterator = list.codec[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+                        var item = _step.value;
+
+                        if (resultArr.indexOf(item) === -1) resultArr.push(item);
+                    }
+                } catch (err) {
+                    _didIteratorError = true;
+                    _iteratorError = err;
+                } finally {
+                    try {
+                        if (!_iteratorNormalCompletion && _iterator.return) {
+                            _iterator.return();
+                        }
+                    } finally {
+                        if (_didIteratorError) {
+                            throw _iteratorError;
+                        }
+                    }
+                }
+
+                list.codec = resultArr;
+                return list;
+            });
+            return userChL;
+        }
+    }, {
+        key: "setUserCodecList",
+        value: function setUserCodecList(userCL) {
+            if (typeof this.originalCodecList === 'undefined') this.getCodecList();
+            for (var i = 0; i < userCL.sections.length; i++) {
+                if (userCL.sections[i].kind === this.originalCodecList.sections[i].kind) {
+                    this.originalCodecList.sections[i].codec = CodecSorter.resortSection(userCL.sections[i].codec, this.originalCodecList.sections[i].codec);
+                }
             }
         }
     }, {
-        key: "add",
-        value: function add(member) {
-            this._q.push(member);
-            this.runNext();
+        key: "getSDP",
+        value: function getSDP() {
+            var resultSDP = this.originalCodecList.prefix;
+            for (var i = 0; i < this.originalCodecList.sections.length; i++) {
+                var codecPart = '';
+                var codecOrder = [];
+                for (var j = 0; j < this.originalCodecList.sections[i].codec.length; j++) {
+                    codecOrder.push(this.originalCodecList.sections[i].codec[j][0].split(' ')[0].substring(9));
+                    codecPart += this.originalCodecList.sections[i].codec[j].join('\r\n') + '\r\n';
+                }
+                resultSDP += this.originalCodecList.sections[i].firstLine + ' ' + codecOrder.join(' ') + '\r\n';
+                resultSDP += this.originalCodecList.sections[i].prefix;
+                resultSDP += codecPart;
+                resultSDP += this.originalCodecList.sections[i].sufix;
+            }
+            return resultSDP;
         }
     }, {
-        key: "clear",
-        value: function clear() {
-            this._q.forEach(function (member) {
-                member.reject();
-            });
-        }
+        key: "_traceName",
+
         /**
          * @hidden
          * @return {string}
          * @private
          */
-
-    }, {
-        key: "_traceName",
         value: function _traceName() {
-            return 'ReInviteQ';
+            return 'CodecSorter';
+        }
+    }], [{
+        key: "splitSections",
+        value: function splitSections(blob) {
+            var parts = blob.split('\nm=');
+            return parts.map(function (part, index) {
+                return (index > 0 ? 'm=' + part : part).trim() + '\r\n';
+            });
+        }
+    }, {
+        key: "codecToUserCodec",
+        value: function codecToUserCodec(item) {
+            var splited = item[0].split(' ');
+            splited.shift();
+            return splited.join(' ');
+        }
+    }, {
+        key: "resortSection",
+        value: function resortSection(userCodec, originalCodec) {
+            var newCodecs = [];
+            for (var i = 0; i < userCodec.length; i++) {
+                for (var j = 0; j < originalCodec.length; j++) {
+                    if (userCodec[i] === CodecSorter.codecToUserCodec(originalCodec[j])) {
+                        newCodecs.push(originalCodec[j]);
+                    }
+                }
+            }
+            return newCodecs;
+        }
+    }, {
+        key: "downOpusBandwidth",
+        value: function downOpusBandwidth(sdp) {
+            return new Promise(function (resolve, reject) {
+                var validLine = RegExp.prototype.test.bind(/^([a-z])=(.*)/);
+                var sdpLines = sdp.sdp.split(/(\r\n|\r|\n)/).filter(validLine);
+                var changed = false;
+                for (var i = 0; i < sdpLines.length; i++) {
+                    if (sdpLines[i].indexOf('a=fmtp:114') !== -1) {
+                        sdpLines[i] = 'a=fmtp:114 minptime=10; useinbandfec=1; sprop-maxcapturerate=8000';
+                        changed = true;
+                    }
+                    if (sdpLines[i].indexOf('a=fmtp:111') !== -1) {
+                        sdpLines[i] = 'a=fmtp:111 minptime=10; useinbandfec=1; sprop-maxcapturerate=8000';
+                        changed = true;
+                    }
+                }
+                if (!changed) {
+                    reject(sdp);
+                }
+                resolve(new RTCSessionDescription({ sdp: sdpLines.join('\r\n') + '\r\n', type: sdp.type }));
+            });
         }
     }]);
 
-    return ReInviteQ;
+    return CodecSorter;
 }();
 
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.REINVITEQ)], ReInviteQ.prototype, "runNext", null);
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.REINVITEQ)], ReInviteQ.prototype, "add", null);
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.REINVITEQ)], ReInviteQ.prototype, "clear", null);
-exports.ReInviteQ = ReInviteQ;
+exports.CodecSorter = CodecSorter;
 
 /***/ }),
-/* 38 */
+/* 41 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+// ====================================== START ======================================
+// ================ Contracts between the Web SDK and the IM server ==================
+// ====================================== START ======================================
+
+Object.defineProperty(exports, "__esModule", { value: true });
+var MsgEvent_1 = __webpack_require__(24);
+/**
+ * @hidden
+ */
+var MsgService;
+(function (MsgService) {
+    MsgService[MsgService["Chat"] = "chat"] = "Chat";
+})(MsgService = exports.MsgService || (exports.MsgService = {}));
+/**
+ * @hidden
+ */
+var MsgPermissions;
+(function (MsgPermissions) {
+    MsgPermissions[MsgPermissions["none"] = 0] = "none";
+    MsgPermissions[MsgPermissions["can_write"] = 1] = "can_write";
+    MsgPermissions[MsgPermissions["can_edit"] = 2] = "can_edit";
+    MsgPermissions[MsgPermissions["can_remove"] = 4] = "can_remove";
+    MsgPermissions[MsgPermissions["can_manage_participants"] = 8] = "can_manage_participants";
+    MsgPermissions[MsgPermissions["can_edit_all"] = 16] = "can_edit_all";
+    MsgPermissions[MsgPermissions["can_remove_all"] = 32] = "can_remove_all";
+    MsgPermissions[MsgPermissions["is_owner"] = 32768] = "is_owner";
+    MsgPermissions[MsgPermissions["all"] = 65535] = "all";
+})(MsgPermissions = exports.MsgPermissions || (exports.MsgPermissions = {}));
+// ======================================= END =======================================
+// =============================== Client-side structures =============================
+// ======================================= END =======================================
+
+/***/ }),
+/* 42 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+Object.defineProperty(exports, "__esModule", { value: true });
+var GUID_1 = __webpack_require__(33);
+var Structures_1 = __webpack_require__(28);
+var Logger_1 = __webpack_require__(0);
+var RemoteFunction_1 = __webpack_require__(3);
+var VoxSignaling_1 = __webpack_require__(2);
+var Utils_1 = __webpack_require__(20);
+var Events_1 = __webpack_require__(14);
+var Client_1 = __webpack_require__(1);
+/**@hidden*/
+var ACD_ERR_1 = "You can't set an operator status before login.";
+/**@hidden*/
+var ACD_ERR_2 = "The {0} status is not acceptable for the current operator state. The operator is {1} now. Please, check the ACD module documentation for details.";
+/**@hidden*/
+var ACD_ERR_3 = "The {0} status is set in your code after {1}. The {0} status is ignored.";
+/**@hidden*/
+var ACD_ERR_4 = "The operator status update failed by timeout.";
+/**@hidden*/
+var ACD_ERR_5 = "You try to perform multiple ACD operations at the same time. This can lead to an unexpected behavior of your application.";
+/**@hidden*/
+var ACD_ERR_6 = "You probably use the same credentials in the different browsers or multiple browser's windows. This can cause conflicts between instances.";
+/**@hidden*/
+var ACD_ERR_7 = "Wrong ACD status name {0}";
+/**@hidden*/
+var ACD_TIMEOUT = 58000;
+/**@hidden*/
+
+var ACDManager = function () {
+    function ACDManager() {
+        _classCallCheck(this, ACDManager);
+    }
+
+    _createClass(ACDManager, null, [{
+        key: "setConnectionId",
+        value: function setConnectionId(connectionId) {
+            this._connectionId = connectionId;
+        }
+    }, {
+        key: "removeConnectionId",
+        value: function removeConnectionId() {
+            this._connectionId = void 0;
+        }
+    }, {
+        key: "setStatus",
+        value: function setStatus(status) {
+            var _this = this;
+
+            return new Promise(function (resolve, reject) {
+                ACDManager._checkBeforeRun(Structures_1.OperatorACDStatuses[status], reject);
+                var uuid = ACDManager.newUUID;
+                VoxSignaling_1.VoxSignaling.get().callRemoteFunction(RemoteFunction_1.RemoteFunction.setOperatorACDStatus, status, uuid);
+                _this._acdRequests.push({
+                    resolve: resolve,
+                    reject: reject,
+                    timer: window.setTimeout(function () {
+                        ACDManager._acdRequests = ACDManager._acdRequests.filter(function (a) {
+                            return a.uuid !== uuid;
+                        });
+                        reject(ACD_ERR_4);
+                    }, ACD_TIMEOUT),
+                    uuid: uuid,
+                    status: status
+                });
+            });
+        }
+    }, {
+        key: "getStatus",
+        value: function getStatus() {
+            var _this2 = this;
+
+            return new Promise(function (resolve, reject) {
+                ACDManager._checkBeforeRun(void 0, reject);
+                var uuid = ACDManager.newUUID;
+                VoxSignaling_1.VoxSignaling.get().callRemoteFunction(RemoteFunction_1.RemoteFunction.getOperatorACDStatus, uuid);
+                _this2._acdRequests.push({
+                    resolve: resolve,
+                    reject: reject,
+                    timer: window.setTimeout(function () {
+                        ACDManager._acdRequests = ACDManager._acdRequests.filter(function (a) {
+                            return a.uuid !== uuid;
+                        });
+                        reject(ACD_ERR_4);
+                    }, ACD_TIMEOUT),
+                    uuid: uuid
+                });
+            });
+        }
+    }, {
+        key: "onStatusUpdated",
+        value: function onStatusUpdated(statusStr, uuid) {
+            ACDManager._checkConnectionId(uuid);
+
+            var _ACDManager$_getActor = ACDManager._getActorByUUID(uuid),
+                actor = _ACDManager$_getActor.actor,
+                actorIdx = _ACDManager$_getActor.actorIdx;
+
+            if (actor) {
+                clearTimeout(actor.timer);
+                if (actorIdx !== 0) {
+                    for (var i = 0; i < actorIdx; i++) {
+                        clearTimeout(ACDManager._acdRequests[i].timer);
+                        ACDManager._acdRequests[i].reject(new Error(Utils_1.Utils.strFormat(ACD_ERR_3, actor.status || 'get operation', statusStr)));
+                    }
+                }
+                if (typeof actor.status === 'undefined' || actor.status === statusStr) {
+                    actor.resolve(statusStr);
+                } else {
+                    actor.reject(new Error(Utils_1.Utils.strFormat(ACD_ERR_2, actor.status, statusStr)));
+                }
+                ACDManager._acdRequests.splice(0, actorIdx + 1);
+            }
+            Client_1.Client.getInstance().dispatchEvent({
+                name: Events_1.Events.ACDStatusUpdated,
+                id: ACDManager._getConnectonIdFromUUID(uuid),
+                status: statusStr
+            });
+        }
+    }, {
+        key: "_checkBeforeRun",
+        value: function _checkBeforeRun(statusStr, reject) {
+            if (!ACDManager._connectionId) reject(new Error(ACD_ERR_1));
+            if (ACDManager._acdRequests.length > 0) {
+                Logger_1.LogManager.get().writeMessage(Logger_1.LogCategory.CLIENT, 'ACD', Logger_1.LogLevel.WARNING, ACD_ERR_5);
+                Client_1.Client.getInstance().dispatchEvent({
+                    name: Events_1.Events.ACDError,
+                    code: 5,
+                    message: ACD_ERR_5
+                });
+            }
+            if (typeof statusStr !== 'undefined' && !Object.values(Structures_1.OperatorACDStatuses).includes(statusStr)) reject(new Error(Utils_1.Utils.strFormat(ACD_ERR_7, statusStr)));
+        }
+    }, {
+        key: "_getActorByUUID",
+        value: function _getActorByUUID(uuid) {
+            var actorIdx = -1;
+            var actor = this._acdRequests.find(function (actor, idx) {
+                if (actor.uuid === uuid) {
+                    actorIdx = idx;
+                    return true;
+                }
+            });
+            return { actor: actor, actorIdx: actorIdx };
+        }
+    }, {
+        key: "_getConnectonIdFromUUID",
+        value: function _getConnectonIdFromUUID(uuid) {
+            var uuidParts = uuid.split('_');
+            if (uuidParts.length === 1 || uuidParts[1] === 'gw') return ACDManager._connectionId;
+            return uuidParts[1];
+        }
+    }, {
+        key: "_checkConnectionId",
+        value: function _checkConnectionId(uuid) {
+            var uuidParts = uuid.split('_');
+            if (uuidParts.length === 1 || uuidParts[1] !== ACDManager._connectionId) {
+                Client_1.Client.getInstance().dispatchEvent({
+                    name: Events_1.Events.ACDError,
+                    code: 6,
+                    message: ACD_ERR_6
+                });
+                Logger_1.LogManager.get().writeMessage(Logger_1.LogCategory.CLIENT, 'ACD', Logger_1.LogLevel.WARNING, ACD_ERR_6);
+            }
+        }
+    }, {
+        key: "newUUID",
+        get: function get() {
+            return new GUID_1.default().toString() + '_' + ACDManager._connectionId;
+        }
+    }]);
+
+    return ACDManager;
+}();
+
+ACDManager._acdRequests = [];
+exports.default = ACDManager;
+
+/***/ }),
+/* 43 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -12577,7 +14112,7 @@ if (true) {
 
 
 /***/ }),
-/* 39 */
+/* 44 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -12598,13 +14133,15 @@ var __decorate = undefined && undefined.__decorate || function (decorators, targ
     }return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-var MsgSignaling_1 = __webpack_require__(15);
-var Conversation_1 = __webpack_require__(29);
-var MsgEnums_1 = __webpack_require__(16);
-var Messenger_1 = __webpack_require__(30);
-var Message_1 = __webpack_require__(22);
+var MsgSignaling_1 = __webpack_require__(18);
+var Messenger_1 = __webpack_require__(25);
+var Conversation_1 = __webpack_require__(34);
+var Message_1 = __webpack_require__(26);
 var Logger_1 = __webpack_require__(0);
-var index_1 = __webpack_require__(17);
+var __1 = __webpack_require__(19);
+var MsgEvent_1 = __webpack_require__(24);
+var MessagingErrors_1 = __webpack_require__(45);
+var MsgAction_1 = __webpack_require__(27);
 /**
  * @hidden
  */
@@ -12615,230 +14152,103 @@ var ConversationManager = function () {
 
         _classCallCheck(this, ConversationManager);
 
-        if (ConversationManager.instance) throw new Error('Error - use ConversationManager.get()');
+        if (ConversationManager.instance) throw new Error(MessagingErrors_1.MESSAGING_ERR_2);
         this.signalling = MsgSignaling_1.MsgSignaling.get();
-        this.awaitingConversations = {};
-        this.signalling.addEventListener(MsgEnums_1.MsgEvent.onEditConversation, function (payload) {
-            _this.resolveEvent(payload, index_1.default.MessengerEvents.EditConversation);
+        this.signalling.addEventListener(MsgEvent_1.MsgEvent.onCreateConversation, function (payload, uuid) {
+            _this.resolveEvent(payload, __1.default.MessengerEvents.CreateConversation, uuid);
         });
-        this.signalling.addEventListener(MsgEnums_1.MsgEvent.onGetConversation, function (payload) {
-            _this.resolveEvent(payload, index_1.default.MessengerEvents.GetConversation);
+        this.signalling.addEventListener(MsgEvent_1.MsgEvent.onEditConversation, function (payload, uuid) {
+            _this.resolveEvent(payload, __1.default.MessengerEvents.EditConversation, uuid);
         });
-        this.signalling.addEventListener(MsgEnums_1.MsgEvent.onRemoveConversation, function (payload) {
-            _this.resolveEvent(payload, index_1.default.MessengerEvents.RemoveConversation);
-        });
-        this.signalling.addEventListener(MsgEnums_1.MsgEvent.onCreateConversation, function (payload) {
-            _this.resolveEvent(payload, index_1.default.MessengerEvents.CreateConversation);
-        });
-        this.signalling.addEventListener(MsgEnums_1.MsgEvent.onSendMessage, function (payload) {
-            _this.resolveMessageEvent(payload, index_1.default.MessengerEvents.SendMessage);
-        });
-        this.signalling.addEventListener(MsgEnums_1.MsgEvent.onEditMessage, function (payload) {
-            _this.resolveMessageEvent(payload, index_1.default.MessengerEvents.EditMessage);
-        });
-        this.signalling.addEventListener(MsgEnums_1.MsgEvent.onRemoveMessage, function (payload) {
-            _this.resolveMessageEvent(payload, index_1.default.MessengerEvents.RemoveMessage);
-        });
-        this.signalling.addEventListener(MsgEnums_1.MsgEvent.isRead, function (payload) {
-            var realPayload = payload.object;
-            Messenger_1.Messenger.getInstance()._dispatchEvent(index_1.default.MessengerEvents.Read, {
-                conversation: realPayload.conversation,
-                timestamp: new Date(realPayload.timestamp * 1000),
-                userId: payload.user_id,
-                seq: realPayload.seq,
-                onIncomingEvent: payload.on_incoming_event,
-                name: index_1.default.MessengerEvents[index_1.default.MessengerEvents.Read]
-            });
-        });
-        this.signalling.addEventListener(MsgEnums_1.MsgEvent.isDelivered, function (payload) {
-            var realPayload = payload.object;
-            Messenger_1.Messenger.getInstance()._dispatchEvent(index_1.default.MessengerEvents.Delivered, {
-                conversation: realPayload.conversation,
-                timestamp: new Date(realPayload.timestamp * 1000),
-                userId: payload.user_id,
-                seq: realPayload.seq,
-                onIncomingEvent: payload.on_incoming_event,
-                name: index_1.default.MessengerEvents[index_1.default.MessengerEvents.Delivered]
-            });
-        });
-        this.signalling.addEventListener(MsgEnums_1.MsgEvent.onTyping, function (payload) {
-            Messenger_1.Messenger.getInstance()._dispatchEvent(index_1.default.MessengerEvents.Typing, {
-                name: index_1.default.MessengerEvents[index_1.default.MessengerEvents.Typing],
-                conversation: payload.object.conversation,
-                userId: payload.user_id,
-                onIncomingEvent: payload.on_incoming_event
-            });
-        });
-        this.signalling.addEventListener(MsgEnums_1.MsgEvent.onRetransmitEvents, function (payload) {
-            Messenger_1.Messenger.getInstance()._dispatchEvent(index_1.default.MessengerEvents.RetransmitEvents, {
-                events: payload.object.map(function (item) {
-                    if (item.event) {
-                        if (item.event.indexOf('Message') == -1) return {
-                            name: item.event,
-                            conversation: Conversation_1.Conversation._createFromBus(item.payload.object, item.payload.seq),
-                            userId: item.payload.user_id,
-                            seq: item.payload.seq,
-                            onIncomingEvent: item.payload.on_incoming_event
-                        };else return {
-                            name: item.event,
-                            message: Message_1.Message._createFromBus(item.payload.object, item.payload.seq),
-                            userId: item.payload.user_id,
-                            seq: item.payload.seq,
-                            onIncomingEvent: item.payload.on_incoming_event
-                        };
-                    }
-                }),
-                userId: payload.user_id,
+        this.signalling.addEventListener(MsgEvent_1.MsgEvent.onRemoveConversation, function (payload, uuid) {
+            Messenger_1.Messenger.getInstance()._dispatchEvent(__1.default.MessengerEvents.RemoveConversation, {
+                uuid: payload.object.uuid,
                 seq: payload.seq,
-                from: payload.from,
-                to: payload.to,
-                onIncomingEvent: payload.on_incoming_event
-            });
+                messengerAction: __1.default.MessengerAction[payload.on_incoming_event],
+                initiator: Number(payload.initiator),
+                timestamp: typeof payload.timestamp == 'number' ? payload.timestamp * 1000 : undefined,
+                requestUuid: uuid
+            }, uuid);
         });
-        this._converasationList = [];
+        this.signalling.addEventListener(MsgEvent_1.MsgEvent.onGetConversation, function (payload, uuid) {
+            _this.resolveEvent(payload, __1.default.MessengerEvents.GetConversation, uuid);
+        });
+        this.signalling.addEventListener(MsgEvent_1.MsgEvent.onGetPublicConversations, function (payload, uuid) {
+            Messenger_1.Messenger.getInstance()._dispatchEvent(__1.default.MessengerEvents.GetPublicConversations, {
+                conversations: payload.object.uuid,
+                initiator: Number(payload.initiator),
+                messengerAction: __1.default.MessengerAction[payload.on_incoming_event],
+                requestUuid: uuid
+            }, uuid);
+        });
+        this.signalling.addEventListener(MsgEvent_1.MsgEvent.onSendMessage, function (payload, uuid) {
+            _this.resolveMessageEvent(payload, __1.default.MessengerEvents.SendMessage, uuid);
+        });
+        this.signalling.addEventListener(MsgEvent_1.MsgEvent.onEditMessage, function (payload, uuid) {
+            _this.resolveMessageEvent(payload, __1.default.MessengerEvents.EditMessage, uuid);
+        });
+        this.signalling.addEventListener(MsgEvent_1.MsgEvent.onRemoveMessage, function (payload, uuid) {
+            _this.resolveMessageEvent(payload, __1.default.MessengerEvents.RemoveMessage, uuid);
+        });
+        this.signalling.addEventListener(MsgEvent_1.MsgEvent.isRead, function (payload, uuid) {
+            Messenger_1.Messenger.getInstance()._dispatchEvent(__1.default.MessengerEvents.Read, {
+                conversation: payload.object.conversation,
+                seq: payload.object.seq,
+                initiator: Number(payload.initiator),
+                messengerAction: __1.default.MessengerAction[payload.on_incoming_event],
+                requestUuid: uuid
+            }, uuid);
+        });
+        this.signalling.addEventListener(MsgEvent_1.MsgEvent.onTyping, function (payload, uuid) {
+            Messenger_1.Messenger.getInstance()._dispatchEvent(__1.default.MessengerEvents.Typing, {
+                conversation: payload.object.conversation,
+                initiator: Number(payload.initiator),
+                messengerAction: __1.default.MessengerAction[payload.on_incoming_event],
+                requestUuid: uuid
+            }, uuid);
+        });
+        this.signalling.addEventListener(MsgEvent_1.MsgEvent.onRetransmitEvents, function (payload, uuid) {
+            Messenger_1.Messenger.getInstance()._dispatchEvent(__1.default.MessengerEvents.RetransmitEvents, {
+                events: [payload.object && payload.object.event ? payload.object.event.indexOf('Message') == -1 && payload.object.payload ? {
+                    conversation: Conversation_1.Conversation._createFromBus(payload.object.payload.object, payload.object.payload.seq),
+                    initiator: Number(payload.object.payload.initiator),
+                    seq: payload.object.payload.seq,
+                    messengerAction: __1.default.MessengerAction[payload.object.payload.on_incoming_event],
+                    timestamp: typeof payload.object.payload.timestamp == 'number' ? payload.object.payload.timestamp * 1000 : undefined
+                } : {
+                    message: Message_1.Message._createFromBus(payload.object.payload.object, Number(payload.object.payload.initiator)),
+                    initiator: Number(payload.object.payload.initiator),
+                    seq: payload.object.payload.seq,
+                    timestamp: typeof payload.object.payload.timestamp == 'number' ? payload.object.payload.timestamp * 1000 : undefined,
+                    messengerAction: __1.default.MessengerAction[payload.object.payload.on_incoming_event]
+                } : undefined],
+                initiator: Number(payload.initiator),
+                messengerAction: __1.default.MessengerAction[payload.on_incoming_event],
+                requestUuid: uuid
+            }, uuid);
+        });
     }
 
     _createClass(ConversationManager, [{
-        key: "createConversation",
+        key: "resolveEvent",
 
-        /**
-         * Create new conversation
-         * @param participants
-         * @param title
-         * @param distinct
-         * @param enablePublicJoin
-         * @param customData
-         * @returns {Promise<Conversation>|Promise}
-         */
-        value: function createConversation(participants, title, distinct, enablePublicJoin, customData, moderators) {
-            var newConversation = new Conversation_1.Conversation(participants, distinct, enablePublicJoin, customData, moderators);
-            newConversation.title = title;
-            newConversation._createUUID();
-            this.signalling.sendPayload(MsgEnums_1.MsgAction.createConversation, newConversation._getPayload());
-        }
-        /**
-         * Remove conversation
-         * @param uuid
-         * @returns {Promise<Conversation>|Promise}
-         */
-
-    }, {
-        key: "removeConversation",
-        value: function removeConversation(uuid) {
-            this.signalling.sendPayload(MsgEnums_1.MsgAction.removeConversation, { uuid: uuid });
-        }
-        /**
-         * Edit conversation
-         * @param conversation
-         * @returns {Promise<Conversation>|Promise}
-         */
-
-    }, {
-        key: "editConversation",
-        value: function editConversation(conversation) {
-            this.signalling.sendPayload(MsgEnums_1.MsgAction.editConversation, conversation._getSimplePayload());
-        }
-        /**
-         * Return conversation from memory. If not exist, or "force" set to true - get conversation from backend
-         * @param uuid
-         * @returns {Promise<Conversation>|Promise}
-         */
-
-    }, {
-        key: "getConversation",
-        value: function getConversation(uuid) {
-            this.signalling.sendPayload(MsgEnums_1.MsgAction.getConversation, { uuid: uuid });
-        }
-    }, {
-        key: "getConversationByUUID",
-        value: function getConversationByUUID(uuid) {
-            var _this2 = this;
-
-            return new Promise(function (resolve, reject) {
-                var _iteratorNormalCompletion = true;
-                var _didIteratorError = false;
-                var _iteratorError = undefined;
-
-                try {
-                    for (var _iterator = _this2._converasationList[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-                        var conversation = _step.value;
-
-                        if (conversation.uuid === uuid) {
-                            Messenger_1.Messenger.getInstance()._dispatchEvent(index_1.default.MessengerEvents.GetConversation, { conversation: conversation });
-                            resolve(conversation);
-                            return;
-                        }
-                    }
-                } catch (err) {
-                    _didIteratorError = true;
-                    _iteratorError = err;
-                } finally {
-                    try {
-                        if (!_iteratorNormalCompletion && _iterator.return) {
-                            _iterator.return();
-                        }
-                    } finally {
-                        if (_didIteratorError) {
-                            throw _iteratorError;
-                        }
-                    }
-                }
-
-                _this2.awaitingConversations[uuid] = resolve;
-            });
-        }
-    }, {
-        key: "getConversations",
-        value: function getConversations(conversations) {
-            this.signalling.sendPayload(MsgEnums_1.MsgAction.getConversations, { uuids: conversations });
-        }
-        /**
-         * @hidden
-         * @return {string}
-         * @private
-         */
-
-    }, {
-        key: "_traceName",
-        value: function _traceName() {
-            return 'ConversationManager';
-        }
         /**
          * Resolve Event
          * @param payload
          * @param seq
          * @param realEvent
          */
-
-    }, {
-        key: "resolveEvent",
-        value: function resolveEvent(payload, realEvent) {
-            if (index_1.default.MessengerEvents[realEvent] === index_1.default.MessengerEvents[index_1.default.MessengerEvents.RemoveConversation]) {
-                var payloadObject = payload.object;
-                Messenger_1.Messenger.getInstance()._dispatchEvent(realEvent, {
-                    name: index_1.default.MessengerEvents[realEvent],
-                    uuid: payloadObject.uuid,
-                    userId: payload.user_id,
-                    seq: payload.seq,
-                    onIncomingEvent: payload.on_incoming_event
-                });
-                return;
-            }
+        value: function resolveEvent(payload, realEvent, uuid) {
             var conversation = Conversation_1.Conversation._createFromBus(payload.object, payload.seq);
-            this.registerConversation(conversation);
             if (typeof conversation != 'undefined') conversation.updateSeq(payload.seq);
             Messenger_1.Messenger.getInstance()._dispatchEvent(realEvent, {
-                name: index_1.default.MessengerEvents[realEvent],
                 conversation: conversation,
-                userId: payload.user_id,
+                initiator: Number(payload.initiator),
                 seq: payload.seq,
-                onIncomingEvent: payload.on_incoming_event
-            });
-            //resolve awaiting conversation events, such new message
-            if (realEvent === index_1.default.MessengerEvents.GetConversation && typeof this.awaitingConversations[conversation.uuid] !== 'undefined') {
-                this.awaitingConversations[conversation.uuid](conversation);
-                delete this.awaitingConversations[conversation.uuid];
-            }
+                messengerAction: __1.default.MessengerAction[payload.on_incoming_event],
+                timestamp: typeof payload.timestamp == 'number' ? payload.timestamp * 1000 : undefined,
+                requestUuid: uuid
+            }, uuid);
         }
         /**
          * Resolve message Event
@@ -12849,52 +14259,15 @@ var ConversationManager = function () {
 
     }, {
         key: "resolveMessageEvent",
-        value: function resolveMessageEvent(payload, realEvent) {
-            var message = Message_1.Message._createFromBus(payload.object, payload.seq);
-            if (typeof this._converasationList[message.conversation] != 'undefined') this._converasationList[message.conversation].updateSeq(payload.seq);
+        value: function resolveMessageEvent(payload, realEvent, uuid) {
+            var message = Message_1.Message._createFromBus(payload.object, Number(payload.initiator));
             Messenger_1.Messenger.getInstance()._dispatchEvent(realEvent, {
-                name: index_1.default.MessengerEvents[realEvent],
                 message: message,
-                userId: payload.user_id,
+                initiator: Number(payload.initiator),
                 seq: payload.seq,
-                onIncomingEvent: payload.on_incoming_event
-            });
-        }
-        /**
-         * Add conversation to conversation list and database
-         * @param conversation
-         */
-
-    }, {
-        key: "registerConversation",
-        value: function registerConversation(conversation) {
-            this._converasationList.filter(function (item) {
-                return item.uuid !== conversation.uuid;
-            });
-            this._converasationList.push(conversation);
-        }
-    }], [{
-        key: "get",
-        value: function get() {
-            ConversationManager.instance = ConversationManager.instance || new ConversationManager();
-            return ConversationManager.instance;
-        }
-        /**
-         * Remove custom domain ending
-         * @param username
-         * @returns {string}
-         */
-
-    }, {
-        key: "extractUserName",
-        value: function extractUserName(username) {
-            if (username.indexOf('@') === -1) {
-                return username;
-            } else {
-                var userParts = username.split('@');
-                userParts[1] = userParts[1].split('.').splice(0, 2).join('.');
-                return userParts.join('@');
-            }
+                messengerAction: __1.default.MessengerAction[payload.on_incoming_event],
+                timestamp: typeof payload.timestamp == 'number' ? payload.timestamp * 1000 : undefined
+            }, uuid);
         }
         /**
          * Deserialize conversation from disc cache
@@ -12903,6 +14276,170 @@ var ConversationManager = function () {
          * @returns {Conversation}
          */
 
+    }, {
+        key: "createConversation",
+
+        /**
+         * Create new conversation
+         * @param participants
+         * @param title
+         * @param direct
+         * @param enablePublicJoin
+         * @param uberConversation
+         * @param customData
+         * @returns {Promise<EventHandlers.CreateConversationEvent>|Promise}
+         */
+        value: function createConversation(participants, title, direct, publicJoin, uber, customData) {
+            var _this2 = this;
+
+            return new Promise(function (resolve, reject) {
+                var requestUuid = _this2.signalling.sendWsMessage(MsgAction_1.MsgAction.createConversation, new Conversation_1.Conversation({
+                    participants: participants,
+                    title: title,
+                    direct: direct,
+                    publicJoin: publicJoin,
+                    customData: customData,
+                    uberConversation: uber
+                })._getCreatePayload());
+                Messenger_1.Messenger.getInstance()._registerPromise(requestUuid, resolve, reject);
+            });
+        }
+        /**
+         * Edit conversation
+         * @param conversation Conversation object
+         * @returns {Promise<EventHandlers.EditConversationEvent>|Promise}
+         */
+
+    }, {
+        key: "editConversation",
+        value: function editConversation(conversation) {
+            var _this3 = this;
+
+            return new Promise(function (resolve, reject) {
+                var requestUuid = void 0;
+                var callback = function callback(e) {
+                    if (e.requestUuid === requestUuid) {
+                        clearTimeout(timeout);
+                        Messenger_1.Messenger.getInstance().off(__1.default.MessengerEvents.EditConversation, callback);
+                        Messenger_1.Messenger.getInstance().off(__1.default.MessengerEvents.Error, errorCallback);
+                        resolve(e);
+                    }
+                };
+                var errorCallback = function errorCallback(e) {
+                    if (e.requestUuid === requestUuid) {
+                        clearTimeout(timeout);
+                        Messenger_1.Messenger.getInstance().off(__1.default.MessengerEvents.EditConversation, callback);
+                        Messenger_1.Messenger.getInstance().off(__1.default.MessengerEvents.Error, errorCallback);
+                        conversation._revertChanges();
+                        reject(e);
+                    }
+                };
+                var timeout = setTimeout(function () {
+                    Messenger_1.Messenger.getInstance().off(__1.default.MessengerEvents.EditConversation, callback);
+                    Messenger_1.Messenger.getInstance().off(__1.default.MessengerEvents.Error, errorCallback);
+                    Messenger_1.Messenger.getInstance().reject(__1.default.MessengerError.Error_0, __1.default.MessengerAction.editConversation).catch(reject);
+                }, Messenger_1.Messenger.rejectTimeout);
+                Messenger_1.Messenger.getInstance().on(__1.default.MessengerEvents.EditConversation, callback);
+                Messenger_1.Messenger.getInstance().on(__1.default.MessengerEvents.Error, errorCallback);
+                requestUuid = _this3.signalling.sendWsMessage(MsgAction_1.MsgAction.editConversation, conversation._getEditPayload());
+            });
+        }
+        /**
+         * Get conversation by uuid
+         * @param uuid
+         * @returns {Promise<EventHandlers.GetConversationEvent>|Promise}
+         */
+
+    }, {
+        key: "getConversation",
+        value: function getConversation(uuid) {
+            var _this4 = this;
+
+            return new Promise(function (resolve, reject) {
+                var requestUuid = _this4.signalling.sendWsMessage(MsgAction_1.MsgAction.getConversation, { uuid: uuid });
+                Messenger_1.Messenger.getInstance()._registerPromise(requestUuid, resolve, reject);
+            });
+        }
+        /**
+         * Get conversation list.
+         * Note that calling this method will result in multiple [MessengerEvents.GetConversation] events.
+         * @param conversations
+         * @returns {Promise<EventHandlers.GetConversationEvent[]|Promise}
+         */
+
+    }, {
+        key: "getConversations",
+        value: function getConversations(conversations) {
+            if (!Array.isArray(conversations)) return Messenger_1.Messenger.getInstance().reject(__1.default.MessengerError.Error_0, __1.default.MessengerAction.getConversations);
+            var requestUuid = void 0;
+            var result = Promise.all(conversations.map(function (uuid) {
+                return new Promise(function (resolve, reject) {
+                    var callback = function callback(e) {
+                        if (e.requestUuid === requestUuid && e.conversation.uuid === uuid) {
+                            clearTimeout(timeout);
+                            Messenger_1.Messenger.getInstance().off(__1.default.MessengerEvents.GetConversation, callback);
+                            Messenger_1.Messenger.getInstance().off(__1.default.MessengerEvents.Error, errorCallback);
+                            resolve(e);
+                        }
+                    };
+                    var errorCallback = function errorCallback(e) {
+                        if (e.requestUuid === requestUuid) {
+                            clearTimeout(timeout);
+                            Messenger_1.Messenger.getInstance().off(__1.default.MessengerEvents.GetConversation, callback);
+                            Messenger_1.Messenger.getInstance().off(__1.default.MessengerEvents.Error, errorCallback);
+                            reject(e);
+                        }
+                    };
+                    var timeout = setTimeout(function () {
+                        Messenger_1.Messenger.getInstance().off(__1.default.MessengerEvents.GetConversation, callback);
+                        Messenger_1.Messenger.getInstance().off(__1.default.MessengerEvents.Error, errorCallback);
+                        Messenger_1.Messenger.getInstance().reject(__1.default.MessengerError.Error_0, __1.default.MessengerAction.getConversation).catch(reject);
+                    }, Messenger_1.Messenger.rejectTimeout);
+                    Messenger_1.Messenger.getInstance().on(__1.default.MessengerEvents.GetConversation, callback);
+                    Messenger_1.Messenger.getInstance().on(__1.default.MessengerEvents.Error, errorCallback);
+                });
+            }));
+            requestUuid = this.signalling.sendWsMessage(MsgAction_1.MsgAction.getConversations, { uuid: conversations });
+            return result;
+        }
+        /**
+         * Get public conversation list.
+         * @returns {Promise<EventHandlers.GetPublicConversationsEvent|Promise}
+         */
+
+    }, {
+        key: "getPublicConversations",
+        value: function getPublicConversations() {
+            var _this5 = this;
+
+            return new Promise(function (resolve, reject) {
+                var requestUuid = _this5.signalling.sendWsMessage(MsgAction_1.MsgAction.getPublicConversations, {});
+                Messenger_1.Messenger.getInstance()._registerPromise(requestUuid, resolve, reject);
+            });
+        }
+        /**
+         * Remove custom domain ending
+         * @param username
+         * @returns {string}
+         */
+
+    }, {
+        key: "_traceName",
+
+        /**
+         * @hidden
+         * @return {string}
+         * @private
+         */
+        value: function _traceName() {
+            return 'ConversationManager';
+        }
+    }], [{
+        key: "get",
+        value: function get() {
+            ConversationManager.instance = ConversationManager.instance || new ConversationManager();
+            return ConversationManager.instance;
+        }
     }, {
         key: "deserialize",
         value: function deserialize(value) {
@@ -12919,28 +14456,48 @@ var ConversationManager = function () {
         value: function serialize(conversation) {
             return conversation.toCache();
         }
+    }, {
+        key: "extractUserName",
+        value: function extractUserName(username) {
+            if (username.indexOf('@') === -1) {
+                return username;
+            } else {
+                var userParts = username.split('@');
+                userParts[1] = userParts[1].split('.').splice(0, 2).join('.');
+                return userParts.join('@');
+            }
+        }
     }]);
 
     return ConversationManager;
 }();
 
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], ConversationManager.prototype, "createConversation", null);
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], ConversationManager.prototype, "removeConversation", null);
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], ConversationManager.prototype, "editConversation", null);
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], ConversationManager.prototype, "getConversation", null);
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], ConversationManager.prototype, "getConversationByUUID", null);
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], ConversationManager.prototype, "getConversations", null);
 __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], ConversationManager.prototype, "resolveEvent", null);
 __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], ConversationManager.prototype, "resolveMessageEvent", null);
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], ConversationManager.prototype, "registerConversation", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], ConversationManager.prototype, "createConversation", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], ConversationManager.prototype, "editConversation", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], ConversationManager.prototype, "getConversation", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], ConversationManager.prototype, "getConversations", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], ConversationManager.prototype, "getPublicConversations", null);
 __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], ConversationManager, "get", null);
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], ConversationManager, "extractUserName", null);
 __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], ConversationManager, "deserialize", null);
 __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], ConversationManager, "serialize", null);
-exports.ConversationManager = ConversationManager;
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.MESSAGING)], ConversationManager, "extractUserName", null);
+exports.default = ConversationManager;
 
 /***/ }),
-/* 40 */
+/* 45 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.MESSAGING_ERR_1 = 'Error - use Client.getIM()';
+exports.MESSAGING_ERR_2 = 'Error - use ConversationManager.get()';
+
+/***/ }),
+/* 46 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -12954,20 +14511,20 @@ function __export(m) {
 Object.defineProperty(exports, "__esModule", { value: true });
 var Client_1 = __webpack_require__(1);
 // import '../node_modules/webrtc-adapter/out/adapter_no_edge.js';
-__webpack_require__(56);
-var Authenticator_1 = __webpack_require__(10);
-var index_1 = __webpack_require__(17);
-var Events_1 = __webpack_require__(18);
+__webpack_require__(66);
+var Authenticator_1 = __webpack_require__(11);
+var Messaging_1 = __webpack_require__(19);
+var Messaging_2 = __webpack_require__(19);
+exports.Messaging = Messaging_2.Messaging;
+var Events_1 = __webpack_require__(14);
 exports.Events = Events_1.Events;
-var CallEvents_1 = __webpack_require__(6);
+var CallEvents_1 = __webpack_require__(5);
 exports.CallEvents = CallEvents_1.CallEvents;
-var Endpoint_1 = __webpack_require__(36);
+var Endpoint_1 = __webpack_require__(39);
 exports.Endpoint = Endpoint_1.Endpoint;
-var EndpointEvents_1 = __webpack_require__(27);
+var EndpointEvents_1 = __webpack_require__(30);
 exports.EndpointEvents = EndpointEvents_1.EndpointEvents;
-var Messenger_1 = __webpack_require__(17);
-exports.Messaging = Messenger_1.Messaging;
-var Structures_1 = __webpack_require__(31);
+var Structures_1 = __webpack_require__(28);
 exports.OperatorACDStatuses = Structures_1.OperatorACDStatuses;
 var Logger_1 = __webpack_require__(0);
 exports.LogCategory = Logger_1.LogCategory;
@@ -12997,12 +14554,12 @@ exports.version = Client_1.Client.getInstance().version;
  */
 function getMessenger() {
     if (!Authenticator_1.Authenticator.get().authorized()) throw new Error("NOT_AUTHORIZED");
-    return index_1.default.Messenger.getInstance();
+    return Messaging_1.default.Messenger.getInstance();
 }
 exports.getMessenger = getMessenger;
 
 /***/ }),
-/* 41 */
+/* 47 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -13013,7 +14570,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var SignalingDTMFSender_1 = __webpack_require__(19);
+var SignalingDTMFSender_1 = __webpack_require__(21);
 var Logger_1 = __webpack_require__(0);
 /**
  * Firefox specific implementation
@@ -13083,11 +14640,27 @@ var FF = function () {
                 pc.getStats(null).then(function (e) {
                     var resultArray = [];
                     e.forEach(function (result) {
-                        if (result.type == "inboundrtp" || result.type == "outboundrtp") resultArray.push(result);
+                        if (result.type == "inbound-rtp" || result.type == "outbound-rtp") resultArray.push(result);
                     });
-                    resolve(resultArray);
+                    resolve({ raw: resultArray, formatted: FF.prepareRTCStats(e) });
                 }).catch(reject);
             });
+        }
+    }, {
+        key: "prepareRTCStats",
+        value: function prepareRTCStats(stats) {
+            var preparedStats = [];
+            stats.forEach(function (e) {
+                if (e.type === 'outbound-rtp' || e.isRemote) {
+                    preparedStats.push(Object.assign(e, {
+                        framesPerSecond: e.framesPerSecond ? e.framesPerSecond : e.framerateMean,
+                        encoderBitrate: e.bitrateMean
+                    }));
+                } else {
+                    preparedStats.push(e);
+                }
+            });
+            return preparedStats;
         }
     }, {
         key: "getUserMedia",
@@ -13119,7 +14692,7 @@ var FF = function () {
 exports.FF = FF;
 
 /***/ }),
-/* 42 */
+/* 48 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -13130,7 +14703,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var SignalingDTMFSender_1 = __webpack_require__(19);
+var SignalingDTMFSender_1 = __webpack_require__(21);
 var Client_1 = __webpack_require__(1);
 var Logger_1 = __webpack_require__(0);
 /**
@@ -13202,19 +14775,25 @@ var Webkit = function () {
         key: "screenSharingSupported",
         value: function screenSharingSupported() {
             return new Promise(function (resolve, reject) {
-                var listener = function listener(event) {
-                    if (event.origin === window.location.origin && event.data === 'VoximplantWebsdkExtensionLoaded') {
+                if (navigator['getDisplayMedia']) {
+                    resolve(true);
+                } else if (navigator.mediaDevices && navigator.mediaDevices['getDisplayMedia']) {
+                    resolve(true);
+                } else {
+                    var listener = function listener(event) {
+                        if (event.origin === window.location.origin && event.data === 'VoximplantWebsdkExtensionLoaded') {
+                            window.removeEventListener('message', listener);
+                            clearTimeout(_failTimer);
+                            resolve(true);
+                        }
+                    };
+                    window.addEventListener('message', listener);
+                    window.postMessage('VoximplantWebsdkCheckExtension', '*');
+                    var _failTimer = setTimeout(function () {
                         window.removeEventListener('message', listener);
-                        clearTimeout(failTimer);
-                        resolve(true);
-                    }
-                };
-                window.addEventListener('message', listener);
-                window.postMessage('VoximplantWebsdkCheckExtension', '*');
-                var failTimer = setTimeout(function () {
-                    window.removeEventListener('message', listener);
-                    resolve(false);
-                }, 800);
+                        resolve(false);
+                    }, 800);
+                }
             });
         }
     }, {
@@ -13222,6 +14801,8 @@ var Webkit = function () {
         value: function getScreenMedia() {
             if (navigator['getDisplayMedia']) {
                 return navigator.getDisplayMedia({ video: true });
+            } else if (navigator.mediaDevices && navigator.mediaDevices['getDisplayMedia']) {
+                return navigator.mediaDevices['getDisplayMedia']({ video: true });
             } else {
                 return new Promise(function (resolve, reject) {
                     window.postMessage('voximplantWebsdkGetSourceId', '*');
@@ -13243,8 +14824,12 @@ var Webkit = function () {
                                     optional: [{ googTemporalLayeredScreencast: true }]
                                 }
                             };
-                            Logger_1.LogManager.get().writeMessage(Logger_1.LogCategory.USERMEDIA, '[constraints]', Logger_1.LogLevel.TRACE, JSON.stringify(mediaParams));
-                            navigator.mediaDevices.getUserMedia(mediaParams).then(resolve, reject);
+                            Logger_1.LogManager.get().writeMessage(Logger_1.LogCategory.USERMEDIA, '[constraints]', Logger_1.LogLevel.INFO, JSON.stringify(mediaParams));
+                            navigator.mediaDevices.getUserMedia(mediaParams).then(function (stream) {
+                                resolve(stream);
+                            }, function (e) {
+                                reject(e);
+                            });
                         }
                     };
                     window.addEventListener('message', listener);
@@ -13262,10 +14847,25 @@ var Webkit = function () {
                             resultArray.push(result);
                         }
                     });
-                    resolve(resultArray);
+                    resolve({ raw: resultArray, formatted: Webkit.prepareRTCStats(e) });
                     return;
                 }).catch(reject);
             });
+        }
+    }, {
+        key: "prepareRTCStats",
+        value: function prepareRTCStats(stats) {
+            var preparedStats = [];
+            stats.forEach(function (e) {
+                if (e.type === 'inbound-rtp' && e.isRemote) {
+                    preparedStats.push(Object.assign(e, { type: 'remote-inbound-rtp' }));
+                } else if (e.type === 'outbound-rtp' && e.isRemote) {
+                    preparedStats.push(Object.assign(e, { type: 'remote-outbound-rtp' }));
+                } else {
+                    preparedStats.push(e);
+                }
+            });
+            return preparedStats;
         }
     }]);
 
@@ -13275,7 +14875,7 @@ var Webkit = function () {
 exports.Webkit = Webkit;
 
 /***/ }),
-/* 43 */
+/* 49 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -13300,22 +14900,23 @@ var __decorate = undefined && undefined.__decorate || function (decorators, targ
     }return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-var PeerConnection_1 = __webpack_require__(24);
-var BrowserSpecific_1 = __webpack_require__(8);
-var PCFactory_1 = __webpack_require__(9);
+var PeerConnection_1 = __webpack_require__(22);
+var BrowserSpecific_1 = __webpack_require__(7);
+var PCFactory_1 = __webpack_require__(8);
 var Logger_1 = __webpack_require__(0);
 var VoxSignaling_1 = __webpack_require__(2);
-var CallManager_1 = __webpack_require__(5);
+var CallManager_1 = __webpack_require__(6);
 var RemoteFunction_1 = __webpack_require__(3);
-var CodecSorter_1 = __webpack_require__(51);
-var CallEvents_1 = __webpack_require__(6);
-var CallstatsIo_1 = __webpack_require__(21);
-var Constants_1 = __webpack_require__(11);
-var SDPMuggle_1 = __webpack_require__(20);
+var CodecSorter_1 = __webpack_require__(40);
+var CallEvents_1 = __webpack_require__(5);
+var CallstatsIo_1 = __webpack_require__(17);
+var Constants_1 = __webpack_require__(10);
+var SDPMuggle_1 = __webpack_require__(16);
 var Client_1 = __webpack_require__(1);
-var ReInviteQ_1 = __webpack_require__(37);
+var ReInviteQ_1 = __webpack_require__(32);
 var index_1 = __webpack_require__(4);
-var EndpointManager_1 = __webpack_require__(26);
+var EndpointManager_1 = __webpack_require__(23);
+var CallStatsAnalyzer_1 = __webpack_require__(31);
 /**
  * @hidden
  */
@@ -13342,7 +14943,7 @@ var RTCIceRole;
 var WebRTCPC = function (_PeerConnection_1$Pee) {
     _inherits(WebRTCPC, _PeerConnection_1$Pee);
 
-    function WebRTCPC(id, mode, videoEnabled) {
+    function WebRTCPC(id, mode, videoEnabled, iceServers) {
         _classCallCheck(this, WebRTCPC);
 
         var _this = _possibleConstructorReturn(this, (WebRTCPC.__proto__ || Object.getPrototypeOf(WebRTCPC)).call(this, id, mode, videoEnabled));
@@ -13359,98 +14960,100 @@ var WebRTCPC = function (_PeerConnection_1$Pee) {
          * @type {number}
          */
         _this.RENEGOTIATION_TIMEOUT = 15000;
+        _this.canDeliverStats = true;
         _this._canReInvite = function () {
             return _this.impl.iceConnectionState === 'connected' || _this.impl.iceConnectionState === 'completed';
         };
+        _this._needIceRestart = false;
         var cfg = PCFactory_1.PCFactory.get().iceConfig;
         var xconf = cfg;
         if (typeof xconf === 'undefined' || xconf === null) {
             xconf = { gatherPolicy: 'all', iceServers: [] };
         }
+        if (iceServers) {
+            xconf.iceServers = iceServers;
+        }
         xconf.bundlePolicy = 'max-compat';
         if (BrowserSpecific_1.default.getWSVendor() === "chrome" && Client_1.Client.getInstance().config().experiments && Client_1.Client.getInstance().config().experiments.unifiedPlan) xconf.sdpSemantics = "unified-plan";
-        if (_this.mode === PeerConnection_1.PeerConnectionMode.CONFERENCE && BrowserSpecific_1.default.getWSVendor() === 'chrome') {
-            var sdpOptional = { mandatory: {}, optional: [{ googHighStartBitrate: true }, { googHighBitrate: true }, { googSkipEncodingUnusedStreams: true }, { googScreencastMinBitrate: 400 }, { googVeryHighBitrate: true }, { googCpuOveruseDetection: true }, { googCpuOveruseEncodeUsage: true }, { googCpuUnderuseThreshold: 55 }, { googCpuOveruseThreshold: 85 }] };
-            var xRTCPeerConnection = RTCPeerConnection;
-            _this.impl = new xRTCPeerConnection(xconf, sdpOptional);
-        } else {
-            _this.impl = new RTCPeerConnection(xconf);
-        }
-        // (this.impl as any).ondatachannel = (e)=>{
-        //   console.error('DATA CHANNEL CREATED');
-        //   let receiveChannel = e.channel;
-        //   receiveChannel.onmessage = (ev)=>{
-        //     console.error('NEW DATA CHANNEL MESSAGE');
-        //     console.error((event as any).data);
-        //   };
-        //   receiveChannel.onopen = ()=>{
-        //     console.error('DATA CHANNEL OPPENED');
-        //   };
-        //   receiveChannel.onclose = ()=>{
-        //     console.error('DATA CHANNEL CLOSED');
-        //   };
-        // }
-        if (_this.impl.getTransceivers && BrowserSpecific_1.default.getWSVendor() === "firefox") // Check if we have transivers. They better
-            PCFactory_1.PCFactory.hasTransceivers = true;
-        // FF 44 implementation
-        if (typeof _this.impl.ontrack !== 'undefined') {
-            _this.impl.ontrack = function (e) {
-                return _this.onAddTrack(e);
-            };
-        } else if (typeof _this.impl['onaddtrack'] !== 'undefined') {
-            _this.impl['onaddtrack'] = function (e) {
-                return _this.onAddTrack(e);
-            };
-        } else {
-            _this.impl['onaddstream'] = function (e) {
-                return _this.onAddStream(e);
-            };
-        }
-        _this.impl.onicecandidate = function (ev) {
-            _this.onICECandidate(ev['candidate']);
-        };
-        _this.impl.oniceconnectionstatechange = function (e) {
-            if (_this.impl.iceConnectionState === 'completed' || _this.impl.iceConnectionState === 'connected') {
-                _this.iceTimer && clearTimeout(_this.iceTimer);
-                _this.iceTimer = null;
-                if (_this.reInviteQ) _this.reInviteQ.runNext();
-            }
-        };
-        _this.rtpSenders = [];
-        _this.renegotiationInProgress = false;
-        _this.impl.onnegotiationneeded = function (e) {
-            return _this.onRenegotiation();
-        };
-        _this.impl.onsignalingstatechange = function (e) {
-            return _this.onSignalingStateChange();
-        };
-        _this.impl.oniceconnectionstatechange = function (e) {
-            return _this.onConnectionChange();
-        };
-        _this.iceRole = RTCIceRole.controlling;
-        _this._remoteStreams = [];
-        _this.banReinviteAnswer = false;
-        _this._call = CallManager_1.CallManager.get().calls[_this.id];
-        //Check if call not active, set HOLD
-        if (typeof _this._call != 'undefined') _this.onHold = !_this._call.active();else _this.onHold = false;
-        _this.rtcCollectingCycle = setInterval(function () {
-            _this.getPCStats();
-        }, CallManager_1.CallManager.get().rtcStatsCollectionInterval);
-        // Callstats.io integration
-        if (typeof _this._call !== 'undefined') {
-            var CSIOID = _this._call.headers()[Constants_1.Constants.CALLSTATSIOID_HEADER];
-            if (typeof CSIOID === 'undefined') CSIOID = _this._call.id();
-            CallstatsIo_1.CallstatsIo.get().addNewFabric(_this.impl, _this._call.number(), videoEnabled ? CallstatsIo_1.CallstatsIoFabricUsage.multiplex : CallstatsIo_1.CallstatsIoFabricUsage.audio, CSIOID);
-        }
-        _this.needTransportRestart = false;
-        if (id !== '_default' && CallManager_1.CallManager.get().calls[id]) _this.reInviteQ = new ReInviteQ_1.ReInviteQ(CallManager_1.CallManager.get().calls[id], _this._canReInvite);
+        _this._createImpl(xconf);
         return _this;
     }
 
     _createClass(WebRTCPC, [{
+        key: "_createImpl",
+        value: function _createImpl(config) {
+            var _this2 = this;
+
+            if (this.mode === PeerConnection_1.PeerConnectionMode.CONFERENCE && BrowserSpecific_1.default.getWSVendor() === 'chrome') {
+                var sdpOptional = { mandatory: {}, optional: [{ googHighStartBitrate: true }, { googHighBitrate: true }, { googSkipEncodingUnusedStreams: true }, { googScreencastMinBitrate: 400 }, { googVeryHighBitrate: true }, { googCpuOveruseDetection: true }, { googCpuOveruseEncodeUsage: true }, { googCpuUnderuseThreshold: 55 }, { googCpuOveruseThreshold: 85 }] };
+                var xRTCPeerConnection = RTCPeerConnection;
+                this.impl = new xRTCPeerConnection(config, sdpOptional);
+            } else {
+                this.impl = new RTCPeerConnection(config);
+            }
+            if (this.impl.getTransceivers && BrowserSpecific_1.default.getWSVendor() === "firefox") // Check if we have transivers. They better
+                PCFactory_1.PCFactory.hasTransceivers = true;
+            // FF 44 implementation
+            if (typeof this.impl.ontrack !== 'undefined') {
+                this.impl.ontrack = function (e) {
+                    return _this2.onAddTrack(e);
+                };
+            } else if (typeof this.impl['onaddtrack'] !== 'undefined') {
+                this.impl['onaddtrack'] = function (e) {
+                    return _this2.onAddTrack(e);
+                };
+            } else {
+                this.impl['onaddstream'] = function (e) {
+                    return _this2.onAddStream(e);
+                };
+            }
+            this.impl.onicecandidate = function (ev) {
+                _this2.onICECandidate(ev['candidate']);
+            };
+            this.impl.oniceconnectionstatechange = function (e) {
+                if (_this2.impl.iceConnectionState === 'completed' || _this2.impl.iceConnectionState === 'connected') {
+                    _this2.iceTimer && clearTimeout(_this2.iceTimer);
+                    _this2.iceTimer = null;
+                    if (_this2.reInviteQ) _this2.reInviteQ.runNext();
+                }
+                if (_this2.impl.iceConnectionState === 'failed') {
+                    _this2.renegotiationInProgress = false;
+                    _this2._runReinvite(true);
+                }
+            };
+            this.rtpSenders = [];
+            this.renegotiationInProgress = false;
+            this.impl.onnegotiationneeded = function (e) {
+                return _this2.onRenegotiation();
+            };
+            this.impl.onsignalingstatechange = function (e) {
+                return _this2.onSignalingStateChange();
+            };
+            this.impl.oniceconnectionstatechange = function (e) {
+                return _this2.onConnectionChange();
+            };
+            this.iceRole = RTCIceRole.controlling;
+            this._remoteStreams = [];
+            this.banReinviteAnswer = false;
+            this._call = CallManager_1.CallManager.get().calls[this.id];
+            //Check if call not active, set HOLD
+            if (typeof this._call != 'undefined') this.onHold = !this._call.active();else this.onHold = false;
+            this.rtcCollectingCycle = setInterval(function () {
+                _this2.getPCStats();
+            }, CallManager_1.CallManager.get().rtcStatsInquiryInterval);
+            // Callstats.io integration
+            if (typeof this._call !== 'undefined') {
+                var CSIOID = this._call.headers()[Constants_1.Constants.CALLSTATSIOID_HEADER];
+                if (typeof CSIOID === 'undefined') CSIOID = this._call.id();
+                CallstatsIo_1.CallstatsIo.get().addNewFabric(this.impl, this._call.number(), this.videoEnabled ? CallstatsIo_1.CallstatsIoFabricUsage.multiplex : CallstatsIo_1.CallstatsIoFabricUsage.audio, CSIOID);
+            }
+            this.needTransportRestart = false;
+            if (this.id !== '_default' && CallManager_1.CallManager.get().calls[this.id]) this.reInviteQ = new ReInviteQ_1.ReInviteQ(CallManager_1.CallManager.get().calls[this.id], this._canReInvite);
+        }
+    }, {
         key: "onSignalingStateChange",
         value: function onSignalingStateChange() {
-            this.log.info('Signal state changed to ' + this.impl.signalingState + ' for PC:' + this.id);
+            this.logger.info('Signal state changed to ' + this.impl.signalingState + ' for PC: ' + this.id);
             if (this.impl.signalingState === 'stable') {
                 //TODO: there was screen sharing
             }
@@ -13458,10 +15061,10 @@ var WebRTCPC = function (_PeerConnection_1$Pee) {
     }, {
         key: "getPCStats",
         value: function getPCStats() {
-            var _this2 = this;
+            var _this3 = this;
 
-            BrowserSpecific_1.default.getRTCStats(this.impl).then(function (statistic) {
-                if (typeof _this2._call !== 'undefined') _this2._call.dispatchEvent({ name: 'RTCStatsReceived', stats: statistic });
+            BrowserSpecific_1.default.getRTCStats(this.impl).then(function (res) {
+                return CallManager_1.CallManager.get().callStats.sendStatistics(_this3._call, res);
             });
         }
     }, {
@@ -13477,6 +15080,7 @@ var WebRTCPC = function (_PeerConnection_1$Pee) {
                 this.iceTimer = null;
                 if (this.reInviteQ) this.reInviteQ.runNext();
             }
+            CallStatsAnalyzer_1.CallStatsAnalyzer.get().checkICEConnection(this._call, this.impl.iceConnectionState);
         }
         /**
          * Testing variant for renegotiation function
@@ -13486,63 +15090,60 @@ var WebRTCPC = function (_PeerConnection_1$Pee) {
     }, {
         key: "onRenegotiation",
         value: function onRenegotiation() {
-            var _this3 = this;
-
             if (typeof this.impl === 'undefined') return;
             if (this.impl.connectionState === 'disconnected' || this.impl.connectionState === 'failed') {
-                this.log.info('Renegotiation requested on closed PeerConnection');
+                this.logger.info('Renegotiation requested on closed PeerConnection');
                 return;
             }
             if (this.impl.localDescription === null) {
-                this.log.info('Renegotiation needed, but no local SD, skipping');
+                this.logger.info('Renegotiation needed, but no local SD. Skipping');
                 return;
             }
             if (this.impl.iceConnectionState !== 'connected' && this.impl.iceConnectionState !== 'completed') {
-                this.log.info('Renegotiation requested while ice state is ' + this.impl.iceConnectionState + '. Postponing');
+                this.logger.info('Renegotiation requested while ice state is ' + this.impl.iceConnectionState + '. Postponing');
                 setTimeout(this.onRenegotiation, 100);
                 return;
             }
             if (this.renegotiationInProgress) {
-                this.log.info('Renegotiation in progress. Queueing');
+                this.logger.info('Renegotiation in progress. Queueing');
                 return;
             } else {
-                this.log.info('Renegotiation started');
+                this.logger.info('Renegotiation started');
             }
-            if (this.renegotiationInProgress === false) {
-                this.renegotiationInProgress = true;
-                var offerOption = {};
-                if (!(this.impl.getTransceivers && BrowserSpecific_1.default.getWSVendor() === "firefox")) offerOption = this.getReceiveOptions();
-                this.updateHoldState();
-                this.impl.createOffer(offerOption).then(function (sdp) {
-                    return _this3.codecRearrange(sdp);
-                }).then(function (sdp) {
+            this._runReinvite();
+        }
+    }, {
+        key: "_getLocalOfferRegular",
+        value: function _getLocalOfferRegular() {
+            var _this4 = this;
+
+            this.iceRole = RTCIceRole.controlling;
+            return new Promise(function (resolve, reject) {
+                var rtcOfferOptions = _this4.getReceiveOptions();
+                _this4.impl.createOffer(rtcOfferOptions).then(function (sdp) {
+                    _this4.logger.info("_getLocalOfferRegular(), created local SDP: \n" + sdp.sdp);
                     var tempsdp = { type: sdp.type, sdp: sdp.sdp };
                     tempsdp = PCFactory_1.PCFactory.get().addBandwidthParams(tempsdp);
-                    tempsdp = SDPMuggle_1.SDPMuggle.removeTelephoneEvents(tempsdp);
-                    tempsdp = SDPMuggle_1.SDPMuggle.removeDoubleOpus(tempsdp);
-                    tempsdp = SDPMuggle_1.SDPMuggle.fixVideoRecieve(tempsdp, _this3.videoEnabled.receiveVideo);
                     // remove transportCC
                     if (Client_1.Client.getInstance().config().experiments && Client_1.Client.getInstance().config().experiments.removeTransportCC) {
                         tempsdp = SDPMuggle_1.SDPMuggle.removeTransportCC(tempsdp);
                     }
+                    tempsdp = SDPMuggle_1.SDPMuggle.removeDoublePT(tempsdp);
                     // add xAS
                     if (Client_1.Client.getInstance().config().experiments && Client_1.Client.getInstance().config().experiments.xas) {
                         tempsdp = SDPMuggle_1.SDPMuggle.addXAS(tempsdp);
                     }
-                    return tempsdp;
+                    return _this4.codecRearrange(tempsdp);
                 }).then(function (sdp) {
-                    _this3.srcLocalSDP = sdp.sdp;
-                    _this3.pendingOffer = sdp;
-                    return sdp;
+                    _this4.srcLocalSDP = sdp.sdp;
+                    _this4.logger.info("_getLocalOfferRegular(), set local SDP: \n" + sdp.sdp);
+                    return _this4.impl.setLocalDescription(sdp);
                 }).then(function () {
-                    var extra = { tracks: _this3.getTrackKind() };
-                    VoxSignaling_1.VoxSignaling.get().callRemoteFunction(RemoteFunction_1.RemoteFunction.reInvite, _this3._call.id(), {}, _this3.pendingOffer.sdp, extra);
+                    resolve(_this4.impl.localDescription);
                 }).catch(function (e) {
-                    _this3.log.error('Error when renegatiation start ' + e.message);
+                    reject(e);
                 });
-            } else {
-                this.log.error('Another renegatiation in progress');
-            }
+            });
         }
     }, {
         key: "getReceiveOptions",
@@ -13555,16 +15156,16 @@ var WebRTCPC = function (_PeerConnection_1$Pee) {
     }, {
         key: "updateHoldState",
         value: function updateHoldState() {
-            var _this4 = this;
+            var _this5 = this;
 
             this.impl['getLocalStreams']().forEach(function (stream) {
                 stream.getTracks().forEach(function (track) {
-                    track.enabled = !_this4.onHold;
+                    track.enabled = !_this5.onHold;
                 });
             });
             this.impl['getRemoteStreams']().forEach(function (stream) {
                 stream.getTracks().forEach(function (track) {
-                    track.enabled = !_this4.onHold;
+                    track.enabled = !_this5.onHold;
                 });
             });
         }
@@ -13579,7 +15180,7 @@ var WebRTCPC = function (_PeerConnection_1$Pee) {
             if (cand && cand !== null) {
                 this.sendLocalCandidateToPeer('a=' + cand.candidate, cand.sdpMLineIndex);
             } else {
-                this.log.info('End of candidates');
+                this.logger.info('End of candidates');
             }
         }
         /**
@@ -13604,65 +15205,60 @@ var WebRTCPC = function (_PeerConnection_1$Pee) {
     }, {
         key: "_processRemoteAnswer",
         value: function _processRemoteAnswer(headers, sdp) {
-            var _this5 = this;
+            var _this6 = this;
 
-            if (sdp.length === 0 && this._call) {
-                this.log.error('Empty SDP from server. Call will be terminated.');
-                this._call.hangup({ 'X-WebRTCError': 'no sdp' });
-                return;
+            if (this._pendingOffer) {
+                return new Promise(function (resolve, reject) {
+                    _this6.logger.info("_processRemoteAnswer(), set local SDP: \n" + _this6._pendingOffer.sdp);
+                    _this6.impl.setLocalDescription(_this6._pendingOffer).then(function () {
+                        resolve(_this6._processRemoteAnswer(headers, sdp));
+                    });
+                    _this6._pendingOffer = void 0;
+                });
+            } else {
+                if (sdp.length === 0 && this._call) {
+                    this.logger.error('Empty SDP from server. Call will be terminated.');
+                    this._call.hangup({ 'X-WebRTCError': 'no sdp' });
+                    return;
+                }
+                this.iceTimer = setTimeout(function () {
+                    _this6._call.notifyICETimeout();
+                }, this.ICE_TIMEOUT);
+                this.pendingEvent = [headers, sdp];
+                if (this.impl.remoteDescription !== null) if (this.impl.remoteDescription.sdp != '') return;
+                var d = { sdp: sdp, type: RTCSdpType.answer };
+                this.srcRemoteSDP = sdp;
+                d = SDPMuggle_1.SDPMuggle.removeTIAS(d);
+                this.logger.info("_processRemoteAnswer(), set remote SDP: \n" + d.sdp);
+                return this.impl.setRemoteDescription(d).then(function (_) {
+                    if (_this6._needIceRestart) {
+                        _this6._runReinvite(true);
+                    }
+                });
             }
-            this.iceTimer = setTimeout(function () {
-                _this5._call.notifyICETimeout();
-            }, this.ICE_TIMEOUT);
-            this.pendingEvent = [headers, sdp];
-            if (this.impl.remoteDescription !== null) if (this.impl.remoteDescription.sdp != '') return;
-            var d = { sdp: sdp, type: RTCSdpType.answer };
-            this.srcRemoteSDP = sdp;
-            d = SDPMuggle_1.SDPMuggle.removeTIAS(d);
-            return this.impl.setRemoteDescription(d);
         }
     }, {
         key: "_getLocalOffer",
         value: function _getLocalOffer() {
-            var _this6 = this;
+            if (BrowserSpecific_1.default.getWSVendor() === 'firefox' && this.impl.remoteDescription && this.impl.remoteDescription.sdp && this.impl.remoteDescription.sdp.indexOf('VIMS') === -1) {
+                return this._getLocalOfferFF();
+            } else {
+                return this._getLocalOfferRegular();
+            }
+        }
+    }, {
+        key: "_getLocalOfferFF",
+        value: function _getLocalOfferFF() {
+            var _this7 = this;
 
             this.iceRole = RTCIceRole.controlling;
             return new Promise(function (resolve, reject) {
-                var rtcOfferOptions = _this6.getReceiveOptions();
-                _this6.impl.createOffer(rtcOfferOptions).then(function (sdp) {
+                var rtcOfferOptions = _this7.getReceiveOptions();
+                _this7.impl.createOffer(rtcOfferOptions).then(function (sdp) {
+                    _this7.logger.info("_getLocalOfferFF(), created local SDP: \n" + sdp.sdp);
                     var tempsdp = { type: sdp.type, sdp: sdp.sdp };
+                    tempsdp = SDPMuggle_1.SDPMuggle.removeDoublePT(tempsdp);
                     tempsdp = PCFactory_1.PCFactory.get().addBandwidthParams(tempsdp);
-                    // remove transportCC
-                    if (Client_1.Client.getInstance().config().experiments && Client_1.Client.getInstance().config().experiments.removeTransportCC) {
-                        tempsdp = SDPMuggle_1.SDPMuggle.removeTransportCC(tempsdp);
-                    }
-                    // add xAS
-                    if (Client_1.Client.getInstance().config().experiments && Client_1.Client.getInstance().config().experiments.xas) {
-                        tempsdp = SDPMuggle_1.SDPMuggle.addXAS(tempsdp);
-                    }
-                    return _this6.codecRearrange(tempsdp);
-                }).then(function (sdp) {
-                    _this6.srcLocalSDP = sdp.sdp;
-                    return _this6.impl.setLocalDescription(sdp);
-                }).then(function () {
-                    resolve(_this6.impl.localDescription);
-                }).catch(function (e) {
-                    reject(e);
-                });
-            });
-        }
-    }, {
-        key: "_getLocalAnswer",
-        value: function _getLocalAnswer() {
-            var _this7 = this;
-
-            this.iceRole = RTCIceRole.controlled;
-            return new Promise(function (resolve, reject) {
-                var rtcAnswerOptions = { mandatory: _this7.getReceiveOptions() };
-                _this7.impl.createAnswer(rtcAnswerOptions).then(function (sdp) {
-                    var tempsdp = { type: sdp.type, sdp: sdp.sdp };
-                    tempsdp = PCFactory_1.PCFactory.get().addBandwidthParams(tempsdp);
-                    tempsdp = SDPMuggle_1.SDPMuggle.fixVideoRecieve(tempsdp, _this7._call.settings.videoDirections.receiveVideo);
                     // remove transportCC
                     if (Client_1.Client.getInstance().config().experiments && Client_1.Client.getInstance().config().experiments.removeTransportCC) {
                         tempsdp = SDPMuggle_1.SDPMuggle.removeTransportCC(tempsdp);
@@ -13674,38 +15270,54 @@ var WebRTCPC = function (_PeerConnection_1$Pee) {
                     return _this7.codecRearrange(tempsdp);
                 }).then(function (sdp) {
                     _this7.srcLocalSDP = sdp.sdp;
-                    return _this7.impl.setLocalDescription(sdp);
-                }).then(function () {
-                    resolve({ type: RTCSdpType.answer, sdp: _this7.impl.localDescription.sdp });
+                    _this7._pendingOffer = sdp;
+                    resolve(sdp);
                 }).catch(function (e) {
                     reject(e);
                 });
             });
         }
     }, {
-        key: "_setRemoteDescription",
-        value: function _setRemoteDescription(sdp) {
-            if (sdp.length === 0 && this._call) {
-                this.log.error('Empty SDP from server. Call will be terminated.');
-                this._call.hangup({ 'X-WebRTCError': 'no sdp' });
-                return;
-            }
-            var d = new RTCSessionDescription({ sdp: sdp, type: RTCSdpType.offer });
-            d = SDPMuggle_1.SDPMuggle.removeTIAS(d);
-            // remove transportCC
-            if (Client_1.Client.getInstance().config().experiments && Client_1.Client.getInstance().config().experiments.removeTransportCC) {
-                d = SDPMuggle_1.SDPMuggle.removeTransportCC(d);
-            }
-            this.srcRemoteSDP = sdp;
-            return this.impl.setRemoteDescription(d);
+        key: "_getLocalAnswer",
+        value: function _getLocalAnswer() {
+            var _this8 = this;
+
+            this.iceRole = RTCIceRole.controlled;
+            return new Promise(function (resolve, reject) {
+                var rtcAnswerOptions = { mandatory: _this8.getReceiveOptions() };
+                _this8.impl.createAnswer(rtcAnswerOptions).then(function (sdp) {
+                    _this8.logger.info("_getLocalAnswer(), created local SDP: \n" + sdp.sdp);
+                    var tempsdp = { type: sdp.type, sdp: sdp.sdp };
+                    tempsdp = PCFactory_1.PCFactory.get().addBandwidthParams(tempsdp);
+                    tempsdp = SDPMuggle_1.SDPMuggle.removeDoublePT(tempsdp);
+                    tempsdp = SDPMuggle_1.SDPMuggle.fixVideoRecieve(tempsdp, _this8._call.settings.videoDirections.receiveVideo);
+                    // remove transportCC
+                    if (Client_1.Client.getInstance().config().experiments && Client_1.Client.getInstance().config().experiments.removeTransportCC) {
+                        tempsdp = SDPMuggle_1.SDPMuggle.removeTransportCC(tempsdp);
+                    }
+                    // add xAS
+                    if (Client_1.Client.getInstance().config().experiments && Client_1.Client.getInstance().config().experiments.xas) {
+                        tempsdp = SDPMuggle_1.SDPMuggle.addXAS(tempsdp);
+                    }
+                    return _this8.codecRearrange(tempsdp);
+                }).then(function (sdp) {
+                    _this8.srcLocalSDP = sdp.sdp;
+                    _this8.logger.info("_getLocalAnswer(), set local SDP: \n" + sdp.sdp);
+                    return _this8.impl.setLocalDescription(sdp);
+                }).then(function () {
+                    resolve({ type: RTCSdpType.answer, sdp: _this8.impl.localDescription.sdp });
+                }).catch(function (e) {
+                    reject(e);
+                });
+            });
         }
     }, {
         key: "_processRemoteOffer",
         value: function _processRemoteOffer(sdp) {
-            var _this8 = this;
+            var _this9 = this;
 
             if (sdp.length === 0 && this._call) {
-                this.log.error('Empty SDP from server. Call will be terminated.');
+                this.logger.error('Empty SDP from server. Call will be terminated.');
                 this._call.hangup({ 'X-WebRTCError': 'no sdp' });
                 return;
             }
@@ -13716,25 +15328,29 @@ var WebRTCPC = function (_PeerConnection_1$Pee) {
                 if (Client_1.Client.getInstance().config().experiments && Client_1.Client.getInstance().config().experiments.removeTransportCC) {
                     d = SDPMuggle_1.SDPMuggle.removeTransportCC(d);
                 }
-                _this8.srcRemoteSDP = sdp;
+                _this9.srcRemoteSDP = sdp;
                 d = SDPMuggle_1.SDPMuggle.removeTIAS(d);
                 d = SDPMuggle_1.SDPMuggle.fixFFMIDBug(d);
-                _this8.impl.setRemoteDescription(d).then(function () {
-                    var rtcAnswerOptions = { mandatory: _this8.getReceiveOptions() };
-                    return _this8.impl.createAnswer(rtcAnswerOptions);
+                _this9.logger.info("_processRemoteOffer(), set remote SDP: \n" + d.sdp);
+                _this9.impl.setRemoteDescription(d).then(function () {
+                    var rtcAnswerOptions = { mandatory: _this9.getReceiveOptions() };
+                    return _this9.impl.createAnswer(rtcAnswerOptions);
                 }).then(function (sdp) {
+                    _this9.logger.info("_processRemoteOffer(), created local SDP: \n" + sdp.sdp);
                     // remove transportCC
                     if (Client_1.Client.getInstance().config().experiments && Client_1.Client.getInstance().config().experiments.removeTransportCC) {
                         sdp = SDPMuggle_1.SDPMuggle.removeTransportCC(sdp);
                     }
+                    sdp = SDPMuggle_1.SDPMuggle.removeDoublePT(sdp);
                     // add xAS
                     if (Client_1.Client.getInstance().config().experiments && Client_1.Client.getInstance().config().experiments.xas) {
                         sdp = SDPMuggle_1.SDPMuggle.addXAS(sdp);
                     }
-                    return _this8.codecRearrange(sdp);
+                    return _this9.codecRearrange(sdp);
                 }).then(function (sdp) {
-                    _this8.srcLocalSDP = sdp.sdp;
-                    return _this8.impl.setLocalDescription(sdp);
+                    _this9.srcLocalSDP = sdp.sdp;
+                    _this9.logger.info("_processRemoteOffer(), set local SDP: \n" + sdp.sdp);
+                    return _this9.impl.setLocalDescription(sdp);
                 }).then(function () {
                     // let receiveChannel = (this.impl as any).createDataChannel('title',{ordered:true});
                     // console.error('DATA CHANNEL CREATING');
@@ -13748,10 +15364,145 @@ var WebRTCPC = function (_PeerConnection_1$Pee) {
                     // receiveChannel.onclose = () => {
                     //   console.error('DATA CHANNEL CLOSED');
                     // };
-                    resolve(_this8.impl.localDescription.sdp);
+                    resolve(_this9.impl.localDescription.sdp);
                 }).catch(function (e) {
                     reject(e);
                 });
+            });
+        }
+    }, {
+        key: "_setRemoteDescription",
+        value: function _setRemoteDescription(sdp) {
+            if (sdp.length === 0 && this._call) {
+                this.logger.error('Empty SDP from server. Call will be terminated.');
+                this._call.hangup({ 'X-WebRTCError': 'no sdp' });
+                return;
+            }
+            var d = new RTCSessionDescription({ sdp: sdp, type: RTCSdpType.offer });
+            d = SDPMuggle_1.SDPMuggle.removeTIAS(d);
+            // remove transportCC
+            if (Client_1.Client.getInstance().config().experiments && Client_1.Client.getInstance().config().experiments.removeTransportCC) {
+                d = SDPMuggle_1.SDPMuggle.removeTransportCC(d);
+            }
+            this.srcRemoteSDP = sdp;
+            this.logger.info("_setRemoteDescription(), set remote SDP: \n" + d.sdp);
+            return this.impl.setRemoteDescription(d);
+        }
+        /**
+         * Action for ReInvite message from server
+         * if incoming sdp empty: start renegotiation - else create answer
+         *
+         * @author Igor Sheko
+         * @param headers
+         * @param sdp
+         * @returns {Promise<void>|Promise}
+         * @private
+         */
+
+    }, {
+        key: "_handleReinvite",
+        value: function _handleReinvite(headers, sdp) {
+            var _this10 = this;
+
+            if (sdp.length === 0 && this._call) {
+                this.logger.error('Empty SDP from server. Call will be terminated.');
+                this._call.hangup({ 'X-WebRTCError': 'no sdp' });
+                return;
+            }
+            return new Promise(function (resolve, reject) {
+                if (_this10.banReinviteAnswer) {
+                    reject(new Error());
+                }
+                if (_this10.renegotiationInProgress === false) {
+                    _this10.renegotiationInProgress = true;
+                    var d = { sdp: sdp, type: RTCSdpType.offer };
+                    // remove transportCC
+                    if (Client_1.Client.getInstance().config().experiments && Client_1.Client.getInstance().config().experiments.removeTransportCC) {
+                        d = SDPMuggle_1.SDPMuggle.removeTransportCC(d);
+                    }
+                    _this10.srcRemoteSDP = sdp;
+                    d = SDPMuggle_1.SDPMuggle.removeTIAS(d);
+                    _this10.logger.info("_handleReinvite(), set remote SDP: \n" + d.sdp);
+                    _this10.impl.setRemoteDescription(d).then(function () {
+                        var rtcAnswerOptions = { mandatory: _this10.getReceiveOptions() };
+                        _this10.impl.createAnswer(rtcAnswerOptions).then(function (localSDP) {
+                            _this10.logger.info("_handleReinvite(), created local SDP: \n" + localSDP.sdp);
+                            var tempsdp = { type: localSDP.type, sdp: localSDP.sdp };
+                            // tempsdp = SDPMuggle.removeDoubleOpus(tempsdp);
+                            tempsdp = SDPMuggle_1.SDPMuggle.fixVideoRecieve(tempsdp, _this10.videoEnabled.receiveVideo);
+                            tempsdp = SDPMuggle_1.SDPMuggle.removeDoublePT(tempsdp);
+                            // remove transportCC
+                            if (Client_1.Client.getInstance().config().experiments && Client_1.Client.getInstance().config().experiments.removeTransportCC) {
+                                tempsdp = SDPMuggle_1.SDPMuggle.removeTransportCC(tempsdp);
+                            }
+                            // add xAS
+                            if (Client_1.Client.getInstance().config().experiments && Client_1.Client.getInstance().config().experiments.xas) {
+                                tempsdp = SDPMuggle_1.SDPMuggle.addXAS(tempsdp);
+                            }
+                            _this10.srcLocalSDP = tempsdp.sdp;
+                            try {
+                                _this10.logger.info("_handleReinvite(), set local SDP: \n" + tempsdp.sdp);
+                                _this10.impl.setLocalDescription(tempsdp).then(function () {
+                                    var extra = { tracks: _this10.getTrackKind() };
+                                    VoxSignaling_1.VoxSignaling.get().callRemoteFunction(RemoteFunction_1.RemoteFunction.acceptReInvite, _this10._call.id(), headers, _this10.impl.localDescription.sdp, extra);
+                                    _this10.renegotiationInProgress = false;
+                                    _this10._call.dispatchEvent({ name: CallEvents_1.CallEvents.Updated, result: true, call: _this10._call });
+                                    _this10.updateHoldState();
+                                    setTimeout(function (_) {
+                                        return _this10._fixTransreceiver();
+                                    }, 0);
+                                    resolve();
+                                });
+                            } catch (e) {
+                                _this10.renegotiationInProgress = false;
+                                setTimeout(function (_) {
+                                    return _this10._fixTransreceiver();
+                                }, 0);
+                                reject(e);
+                            }
+                        });
+                    });
+                } else if (_this10.renegotiationInProgress === true) {
+                    //get remoteAnswer
+                    var _d = { sdp: sdp, type: RTCSdpType.answer };
+                    _this10.renegotiationInProgress = false;
+                    // remove transportCC
+                    if (Client_1.Client.getInstance().config().experiments && Client_1.Client.getInstance().config().experiments.removeTransportCC) {
+                        _d = SDPMuggle_1.SDPMuggle.removeTransportCC(_d);
+                    }
+                    // add xAS
+                    if (Client_1.Client.getInstance().config().experiments && Client_1.Client.getInstance().config().experiments.xas) {
+                        _d = SDPMuggle_1.SDPMuggle.addXAS(_d);
+                    }
+                    _this10.srcRemoteSDP = sdp;
+                    _d = SDPMuggle_1.SDPMuggle.removeTIAS(_d);
+                    //d = SDPMuggle.fixFMTP(d);
+                    _this10.logger.info("_handleReinvite(), set local SDP: \n" + _this10.pendingOffer.sdp);
+                    _this10.impl.setLocalDescription(_this10.pendingOffer).then(function () {
+                        try {
+                            _this10.logger.info("_handleReinvite(), set remote SDP: \n" + _d.sdp);
+                            _this10.impl.setRemoteDescription(_d).then(function () {
+                                _this10._call.dispatchEvent({ name: CallEvents_1.CallEvents.Updated, result: true, call: _this10._call });
+                                _this10.updateHoldState();
+                                setTimeout(function (_) {
+                                    return _this10._fixTransreceiver();
+                                }, 0);
+                                resolve();
+                            });
+                        } catch (e) {
+                            _this10._call.dispatchEvent({ name: CallEvents_1.CallEvents.Updated, result: false, call: _this10._call });
+                            _this10.renegotiationInProgress = false;
+                            _this10.logger.error(JSON.stringify(e));
+                            setTimeout(function (_) {
+                                return _this10._fixTransreceiver();
+                            }, 0);
+                            reject(e);
+                        }
+                        clearTimeout(_this10.renegotiationTimer);
+                    });
+                } else {
+                    reject(new Error('Universe was broken!'));
+                }
             });
         }
         /**
@@ -13763,20 +15514,20 @@ var WebRTCPC = function (_PeerConnection_1$Pee) {
     }, {
         key: "_close",
         value: function _close() {
-            var _this9 = this;
+            var _this11 = this;
 
             clearInterval(this.rtcCollectingCycle);
             this.impl.onnegotiationneeded = null;
             var appConfig = Client_1.Client.getInstance().config();
             if (this.impl.removeTrack) {
                 this.rtpSenders.forEach(function (sender) {
-                    _this9.impl.removeTrack(sender);
+                    _this11.impl.removeTrack(sender);
                 });
                 index_1.default.StreamManager.get().remCallStream(this._call);
             } else {
                 index_1.default.StreamManager.get().remCallStream(this._call);
                 this.impl['getLocalStreams']().forEach(function (stream) {
-                    _this9.impl['removeStream'](stream);
+                    _this11.impl['removeStream'](stream);
                 });
             }
             this.impl.close();
@@ -13796,11 +15547,11 @@ var WebRTCPC = function (_PeerConnection_1$Pee) {
     }, {
         key: "_addRemoteCandidate",
         value: function _addRemoteCandidate(candidate, mLineIndex) {
-            var _this10 = this;
+            var _this12 = this;
 
             return new Promise(function (resolve, reject) {
                 try {
-                    _this10.impl.addIceCandidate(new RTCIceCandidate({
+                    _this12.impl.addIceCandidate(new RTCIceCandidate({
                         candidate: candidate.substring(2),
                         sdpMLineIndex: mLineIndex
                     })).then(function () {
@@ -13813,104 +15564,57 @@ var WebRTCPC = function (_PeerConnection_1$Pee) {
                 }
             });
         }
-        /**
-         * Action for ReInvite message from server
-         * if incoming sdp empty: start renegotiation - else create answer
-         *
-         * @author Igor Sheko
-         * @param headers
-         * @param sdp
-         * @returns {Promise<void>|Promise}
-         * @private
-         */
-
     }, {
-        key: "_handleReinvite",
-        value: function _handleReinvite(headers, sdp) {
-            var _this11 = this;
+        key: "setConfiguration",
+        value: function setConfiguration(config) {
+            var _this13 = this;
 
-            if (sdp.length === 0 && this._call) {
-                this.log.error('Empty SDP from server. Call will be terminated.');
-                this._call.hangup({ 'X-WebRTCError': 'no sdp' });
-                return;
-            }
-            return new Promise(function (resolve, reject) {
-                if (_this11.banReinviteAnswer) {
-                    reject(new Error());
-                }
-                if (_this11.renegotiationInProgress === false) {
-                    _this11.renegotiationInProgress = true;
-                    var d = { sdp: sdp, type: RTCSdpType.offer };
-                    // remove transportCC
-                    if (Client_1.Client.getInstance().config().experiments && Client_1.Client.getInstance().config().experiments.removeTransportCC) {
-                        d = SDPMuggle_1.SDPMuggle.removeTransportCC(d);
-                    }
-                    _this11.srcRemoteSDP = sdp;
-                    d = SDPMuggle_1.SDPMuggle.removeTIAS(d);
-                    _this11.impl.setRemoteDescription(d).then(function () {
-                        var rtcAnswerOptions = { mandatory: _this11.getReceiveOptions() };
-                        _this11.impl.createAnswer(rtcAnswerOptions).then(function (localSDP) {
-                            var tempsdp = { type: localSDP.type, sdp: localSDP.sdp };
-                            tempsdp = SDPMuggle_1.SDPMuggle.removeDoubleOpus(tempsdp);
-                            tempsdp = SDPMuggle_1.SDPMuggle.fixVideoRecieve(tempsdp, _this11.videoEnabled.receiveVideo);
-                            // remove transportCC
-                            if (Client_1.Client.getInstance().config().experiments && Client_1.Client.getInstance().config().experiments.removeTransportCC) {
-                                tempsdp = SDPMuggle_1.SDPMuggle.removeTransportCC(tempsdp);
-                            }
-                            // add xAS
-                            if (Client_1.Client.getInstance().config().experiments && Client_1.Client.getInstance().config().experiments.xas) {
-                                tempsdp = SDPMuggle_1.SDPMuggle.addXAS(tempsdp);
-                            }
-                            _this11.srcLocalSDP = tempsdp.sdp;
-                            try {
-                                _this11.impl.setLocalDescription(tempsdp).then(function () {
-                                    var extra = { tracks: _this11.getTrackKind() };
-                                    VoxSignaling_1.VoxSignaling.get().callRemoteFunction(RemoteFunction_1.RemoteFunction.acceptReInvite, _this11._call.id(), headers, _this11.impl.localDescription.sdp, extra);
-                                    _this11.renegotiationInProgress = false;
-                                    _this11._call.dispatchEvent({ name: CallEvents_1.CallEvents.Updated, result: true, call: _this11._call });
-                                    _this11.updateHoldState();
-                                    resolve();
+            if (this.impl) {
+                setTimeout(function () {
+                    if (_this13.srcRemoteSDP && _this13.srcRemoteSDP.indexOf('VIMS') === -1) {
+                        if (_this13.impl && _this13.impl.setConfiguration) {
+                            _this13.impl.setConfiguration(config);
+                            _this13.renegotiationInProgress = false;
+                            _this13._runReinvite(true);
+                        } else {
+                            if (_this13._pendingOffer) {
+                                var tracks = [];
+                                _this13.impl.getTransceivers().map(function (tr) {
+                                    if (tr.sender.track) tracks.push(tr.sender.track);
                                 });
-                            } catch (e) {
-                                _this11.renegotiationInProgress = false;
-                                reject(e);
+                                _this13._createImpl(config);
+                                tracks.forEach(function (track) {
+                                    _this13.impl.addTrack(track, new MediaStream([track]));
+                                });
+                                _this13.impl.createOffer().then(function (sdp) {
+                                    _this13.logger.info("setConfiguration(), created local SDP: \n" + sdp.sdp);
+                                    _this13._needIceRestart = true;
+                                    _this13.logger.info("setConfiguration(), set local SDP: \n" + _this13._pendingOffer.sdp);
+                                    return _this13.impl.setLocalDescription(_this13._pendingOffer);
+                                }).then(function () {
+                                    _this13._pendingOffer = void 0;
+                                }).catch(function (ev) {
+                                    console.error(ev);
+                                });
                             }
-                        });
-                    });
-                } else if (_this11.renegotiationInProgress === true) {
-                    //get remoteAnswer
-                    var _d = { sdp: sdp, type: RTCSdpType.answer };
-                    _this11.renegotiationInProgress = false;
-                    // remove transportCC
-                    if (Client_1.Client.getInstance().config().experiments && Client_1.Client.getInstance().config().experiments.removeTransportCC) {
-                        _d = SDPMuggle_1.SDPMuggle.removeTransportCC(_d);
-                    }
-                    // add xAS
-                    if (Client_1.Client.getInstance().config().experiments && Client_1.Client.getInstance().config().experiments.xas) {
-                        _d = SDPMuggle_1.SDPMuggle.addXAS(_d);
-                    }
-                    _this11.srcRemoteSDP = sdp;
-                    _d = SDPMuggle_1.SDPMuggle.removeTIAS(_d);
-                    _d = SDPMuggle_1.SDPMuggle.fixFMTP(_d);
-                    _this11.impl.setLocalDescription(_this11.pendingOffer).then(function () {
-                        try {
-                            _this11.impl.setRemoteDescription(_d).then(function () {
-                                _this11._call.dispatchEvent({ name: CallEvents_1.CallEvents.Updated, result: true, call: _this11._call });
-                                _this11.updateHoldState();
-                                resolve();
-                            });
-                        } catch (e) {
-                            _this11._call.dispatchEvent({ name: CallEvents_1.CallEvents.Updated, result: false, call: _this11._call });
-                            _this11.renegotiationInProgress = false;
-                            _this11.log.error(JSON.stringify(e));
-                            reject(e);
                         }
-                        clearTimeout(_this11.renegotiationTimer);
-                    });
-                } else {
-                    reject(new Error('Universe was broken!'));
-                }
-            });
+                    } else {}
+                }, 800); //TODO: change on signaling
+            }
+        }
+    }, {
+        key: "_fixTransreceiver",
+        value: function _fixTransreceiver() {
+            if (this.impl && this.impl.getTransceivers) {
+                this.impl.getTransceivers().forEach(function (transceivers) {
+                    if (transceivers.currentDirection === 'inactive' && transceivers.receiver.track && !transceivers.sender.track) {
+                        if (transceivers.receiver.track.onended) {
+                            transceivers.receiver.track.stop();
+                            transceivers.receiver.track.onended(null);
+                        }
+                    }
+                });
+            }
         }
         /**
          * Promise to rearrange codec by user
@@ -13923,10 +15627,10 @@ var WebRTCPC = function (_PeerConnection_1$Pee) {
     }, {
         key: "codecRearrange",
         value: function codecRearrange(sdp) {
-            var _this12 = this;
+            var _this14 = this;
 
             return new Promise(function (resolve, reject) {
-                var call = CallManager_1.CallManager.get().calls[_this12.id];
+                var call = CallManager_1.CallManager.get().calls[_this14.id];
                 if (typeof call !== 'undefined') {
                     var codecSorter = new CodecSorter_1.CodecSorter(sdp.sdp);
                     var userCodecList = codecSorter.getUserCodecList();
@@ -13935,11 +15639,11 @@ var WebRTCPC = function (_PeerConnection_1$Pee) {
                             codecSorter.setUserCodecList(newCodecList);
                             resolve({ type: sdp.type, sdp: codecSorter.getSDP() });
                         }, function (e) {
-                            _this12.log.error(JSON.stringify(e));
+                            _this14.logger.error(JSON.stringify(e));
                             reject(e);
                         });
                     } else {
-                        _this12.log.info('No sdp transformer registered');
+                        _this14.logger.info('No sdp transformer registered');
                         codecSorter.setUserCodecList(userCodecList);
                         resolve({ type: sdp.type, sdp: codecSorter.getSDP() });
                     }
@@ -13976,15 +15680,19 @@ var WebRTCPC = function (_PeerConnection_1$Pee) {
     }, {
         key: "_hold",
         value: function _hold(newState) {
+            var _this15 = this;
+
             CallstatsIo_1.CallstatsIo.get().sendFabricEvent(this.impl, newState ? CallstatsIo_1.CallstatsIoFabricEvent.fabricHold : CallstatsIo_1.CallstatsIoFabricEvent.fabricResume, this._call.id());
             this.onHold = newState;
-            if (this.impl.getTransceivers && BrowserSpecific_1.default.getWSVendor() === "firefox") {
-                this.impl.getTransceivers().forEach(function (transceiver) {
-                    if (newState) transceiver.direction = "sendonly";else transceiver.direction = "sendrecv";
-                });
-            } else {
-                this.onRenegotiation();
-            }
+            setTimeout(function () {
+                if (_this15.impl.getTransceivers && BrowserSpecific_1.default.getWSVendor() === "firefox") {
+                    _this15.impl.getTransceivers().forEach(function (transceiver) {
+                        if (newState) transceiver.direction = "sendonly";else transceiver.direction = "sendrecv";
+                    });
+                } else {
+                    _this15.onRenegotiation();
+                }
+            }, 0);
         }
     }, {
         key: "_getDirections",
@@ -14049,11 +15757,11 @@ var WebRTCPC = function (_PeerConnection_1$Pee) {
     }, {
         key: "hasLocalVideo",
         value: function hasLocalVideo() {
-            var _this13 = this;
+            var _this16 = this;
 
             return this.impl['getLocalStreams']().some(function (stream) {
                 return stream.getVideoTracks().some(function (track) {
-                    if (!_this13.shareScreenMedia || !_this13.shareScreenMedia.some(function (sStream) {
+                    if (!_this16.shareScreenMedia || !_this16.shareScreenMedia.some(function (sStream) {
                         return sStream.getTracks().some(function (sTrack) {
                             return sTrack.id === track.id;
                         });
@@ -14099,14 +15807,14 @@ var WebRTCPC = function (_PeerConnection_1$Pee) {
     }, {
         key: "_addCustomMedia",
         value: function _addCustomMedia(stream) {
-            var _this14 = this;
+            var _this17 = this;
 
             if (!stream) return;
             if (BrowserSpecific_1.default.getWSVendor() === 'firefox') {
                 stream.getTracks().forEach(function (track) {
                     var newStream = new MediaStream([track]);
-                    _this14.rtpSenders.push(_this14.impl.addTrack(track, newStream));
-                    _this14.onRenegotiation();
+                    _this17.rtpSenders.push(_this17.impl.addTrack(track, newStream));
+                    _this17.onRenegotiation();
                 });
             } else {
                 this.impl['addStream'](stream);
@@ -14119,7 +15827,7 @@ var WebRTCPC = function (_PeerConnection_1$Pee) {
     }, {
         key: "_removeCustomMedia",
         value: function _removeCustomMedia(stream) {
-            var _this15 = this;
+            var _this18 = this;
 
             if (!stream) return;
             if (BrowserSpecific_1.default.getWSVendor() === 'firefox') {
@@ -14134,7 +15842,7 @@ var WebRTCPC = function (_PeerConnection_1$Pee) {
                     });
                 } else {
                     this.impl.getSenders().forEach(function (sender) {
-                        if (stream.getTracks().indexOf(sender.track) !== -1) _this15.impl.removeTrack(sender);
+                        if (stream.getTracks().indexOf(sender.track) !== -1) _this18.impl.removeTrack(sender);
                     });
                 }
             } else {
@@ -14142,14 +15850,27 @@ var WebRTCPC = function (_PeerConnection_1$Pee) {
             }
         }
     }, {
+        key: "_updateCustomMedia",
+        value: function _updateCustomMedia(stream) {
+            var _this19 = this;
+
+            if (!stream || this.impl.signalingState === 'closed') return;
+            stream.getTracks().forEach(function (track) {
+                var sender = _this19.impl.getSenders().find(function (sender) {
+                    return sender.track && sender.track.kind === track.kind;
+                });
+                if (sender) sender.replaceTrack(track);
+            });
+        }
+    }, {
         key: "_fixFFSoundBug",
         value: function _fixFFSoundBug() {
-            var _this16 = this;
+            var _this20 = this;
 
             if (BrowserSpecific_1.default.getWSVendor() === 'firefox' && PCFactory_1.PCFactory.hasTransceivers) {
                 setTimeout(function () {
-                    if (_this16.impl.getSenders) {
-                        var senders = _this16.impl.getSenders();
+                    if (_this20.impl.getSenders) {
+                        var senders = _this20.impl.getSenders();
                         senders.forEach(function (sender) {
                             if (sender.replaceTrack) {
                                 var track = sender.track;
@@ -14160,15 +15881,72 @@ var WebRTCPC = function (_PeerConnection_1$Pee) {
                 }, 1000);
             }
         }
+    }, {
+        key: "getConfiguration",
+        value: function getConfiguration() {
+            if (this.impl) return this.impl.getConfiguration();
+            return null;
+        }
+    }, {
+        key: "_runReinvite",
+        value: function _runReinvite() {
+            var _this21 = this;
+
+            var restart = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
+
+            if (this.renegotiationInProgress === false) {
+                this.renegotiationInProgress = true;
+                var offerOption = {};
+                if (!(this.impl.getTransceivers && BrowserSpecific_1.default.getWSVendor() === 'firefox')) offerOption = this.getReceiveOptions();
+                if (restart) {
+                    offerOption.iceRestart = true;
+                }
+                this.logger.trace(JSON.stringify(offerOption));
+                this.updateHoldState();
+                this.impl.createOffer(offerOption).then(function (sdp) {
+                    _this21.logger.info("_runReinvite(), created local SDP: \n" + sdp.sdp);
+                    return _this21.codecRearrange(sdp);
+                }).then(function (sdp) {
+                    var tempsdp = { type: sdp.type, sdp: sdp.sdp };
+                    tempsdp = PCFactory_1.PCFactory.get().addBandwidthParams(tempsdp);
+                    tempsdp = SDPMuggle_1.SDPMuggle.removeDoublePT(tempsdp);
+                    tempsdp = SDPMuggle_1.SDPMuggle.removeTelephoneEvents(tempsdp);
+                    // tempsdp = SDPMuggle.removeDoubleOpus(tempsdp);
+                    tempsdp = SDPMuggle_1.SDPMuggle.fixVideoRecieve(tempsdp, _this21.videoEnabled.receiveVideo);
+                    // remove transportCC
+                    if (Client_1.Client.getInstance().config().experiments && Client_1.Client.getInstance().config().experiments.removeTransportCC) {
+                        tempsdp = SDPMuggle_1.SDPMuggle.removeTransportCC(tempsdp);
+                    }
+                    // add xAS
+                    if (Client_1.Client.getInstance().config().experiments && Client_1.Client.getInstance().config().experiments.xas) {
+                        tempsdp = SDPMuggle_1.SDPMuggle.addXAS(tempsdp);
+                    }
+                    return tempsdp;
+                }).then(function (sdp) {
+                    _this21.srcLocalSDP = sdp.sdp;
+                    _this21.pendingOffer = sdp;
+                    return sdp;
+                }).then(function () {
+                    var extra = { tracks: _this21.getTrackKind() };
+                    VoxSignaling_1.VoxSignaling.get().callRemoteFunction(RemoteFunction_1.RemoteFunction.reInvite, _this21._call.id(), {}, _this21.pendingOffer.sdp, extra);
+                }).catch(function (e) {
+                    _this21.logger.error('Error when renegatiation start ' + e.message);
+                });
+            } else {
+                this.logger.error('Another renegatiation in progress');
+            }
+        }
     }]);
 
     return WebRTCPC;
 }(PeerConnection_1.PeerConnection);
 
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.RTC)], WebRTCPC.prototype, "_createImpl", null);
 __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.RTC)], WebRTCPC.prototype, "onSignalingStateChange", null);
 __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.RTC)], WebRTCPC.prototype, "getPCStats", null);
 __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.RTC)], WebRTCPC.prototype, "onConnectionChange", null);
 __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.RTC)], WebRTCPC.prototype, "onRenegotiation", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.RTC)], WebRTCPC.prototype, "_getLocalOfferRegular", null);
 __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.RTC)], WebRTCPC.prototype, "getReceiveOptions", null);
 __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.RTC)], WebRTCPC.prototype, "updateHoldState", null);
 __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.RTC)], WebRTCPC.prototype, "onICECandidate", null);
@@ -14176,12 +15954,13 @@ __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.RTC)], WebRTCPC.pro
 __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.RTC)], WebRTCPC.prototype, "onAddStream", null);
 __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.RTC)], WebRTCPC.prototype, "_processRemoteAnswer", null);
 __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.RTC)], WebRTCPC.prototype, "_getLocalOffer", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.RTC)], WebRTCPC.prototype, "_getLocalOfferFF", null);
 __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.RTC)], WebRTCPC.prototype, "_getLocalAnswer", null);
 __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.RTC)], WebRTCPC.prototype, "_setRemoteDescription", null);
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.RTC)], WebRTCPC.prototype, "_processRemoteOffer", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.RTC)], WebRTCPC.prototype, "_handleReinvite", null);
 __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.RTC)], WebRTCPC.prototype, "_close", null);
 __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.RTC)], WebRTCPC.prototype, "_addRemoteCandidate", null);
-__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.RTC)], WebRTCPC.prototype, "_handleReinvite", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.RTC)], WebRTCPC.prototype, "setConfiguration", null);
 __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.RTC)], WebRTCPC.prototype, "codecRearrange", null);
 __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.RTC)], WebRTCPC.prototype, "_sendDTMF", null);
 __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.RTC)], WebRTCPC.prototype, "_hold", null);
@@ -14194,11 +15973,13 @@ __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.RTC)], WebRTCPC.pro
 __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.RTC)], WebRTCPC.prototype, "enableVideo", null);
 __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.RTC)], WebRTCPC.prototype, "_addCustomMedia", null);
 __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.RTC)], WebRTCPC.prototype, "_removeCustomMedia", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.RTC)], WebRTCPC.prototype, "_updateCustomMedia", null);
 __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.RTC)], WebRTCPC.prototype, "_fixFFSoundBug", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.RTC)], WebRTCPC.prototype, "getConfiguration", null);
 exports.WebRTCPC = WebRTCPC;
 
 /***/ }),
-/* 44 */
+/* 50 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -14208,26 +15989,26 @@ Object.defineProperty(exports, "__esModule", { value: true });
 /**
  * @hidden
  */
-var AudioDeviceManager_1 = __webpack_require__(32);
+var AudioDeviceManager_1 = __webpack_require__(35);
 exports.AudioDeviceManager = AudioDeviceManager_1.AudioDeviceManager;
 /**
  * @hidden
  */
-var CameraManager_1 = __webpack_require__(33);
+var CameraManager_1 = __webpack_require__(36);
 exports.CameraManager = CameraManager_1.CameraManager;
 /**
  * @hidden
  */
-var StreamManager_1 = __webpack_require__(25);
+var StreamManager_1 = __webpack_require__(29);
 exports.StreamManager = StreamManager_1.StreamManager;
 /**
  * @hidden
  */
-var IOSCacheManager_1 = __webpack_require__(45);
+var IOSCacheManager_1 = __webpack_require__(51);
 exports.IOSCacheManager = IOSCacheManager_1.IOSCacheManager;
 
 /***/ }),
-/* 45 */
+/* 51 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -14238,11 +16019,16 @@ var _createClass = function () { function defineProperties(target, props) { for 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 Object.defineProperty(exports, "__esModule", { value: true });
+var Logger_1 = __webpack_require__(0);
+/**
+ * @hidden
+ */
 
 var IOSCacheManager = function () {
     function IOSCacheManager() {
         _classCallCheck(this, IOSCacheManager);
 
+        this._cachedChecksum = 0;
         this._lastCameraParams = {};
         this._lastAudioParams = {};
         if (typeof IOSCacheManager.instance !== 'undefined') throw new Error('Error - use StreamManager.get()');
@@ -14254,17 +16040,28 @@ var IOSCacheManager = function () {
             var _this = this;
 
             return new Promise(function (resolve, reject) {
-                if (_this._localMedia) {
+                if (_this._localMedia && _this._localMedia.active && _this._cachedChecksum === _this.getChecksumm(constrains)) {
                     resolve(_this._localMedia);
                     return;
                 }
                 navigator.mediaDevices.getUserMedia(constrains).then(function (stream) {
+                    Logger_1.LogManager.get().writeMessage(Logger_1.LogCategory.USERMEDIA, 'IOSCacheManager', Logger_1.LogLevel.INFO, 'Media access granted');
+                    _this._cachedChecksum = _this.getChecksumm(constrains);
                     _this._localMedia = stream;
                     resolve(stream);
                 }).catch(function (e) {
-                    return reject(e);
+                    Logger_1.LogManager.get().writeMessage(Logger_1.LogCategory.USERMEDIA, 'IOSCacheManager', Logger_1.LogLevel.ERROR, "Media access denied: " + (e ? e.message || e.name || e : 'unknown'));
+                    reject(e);
                 });
             });
+        }
+    }, {
+        key: "getChecksumm",
+        value: function getChecksumm(constrains) {
+            var cs = 0;
+            if (constrains.audio) cs++;
+            if (constrains.video) cs++;
+            return cs;
         }
     }, {
         key: "clear",
@@ -14317,7 +16114,7 @@ var IOSCacheManager = function () {
 exports.IOSCacheManager = IOSCacheManager;
 
 /***/ }),
-/* 46 */
+/* 52 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -14342,9 +16139,9 @@ var __decorate = undefined && undefined.__decorate || function (decorators, targ
     }return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-var AbstractEndpointManager_1 = __webpack_require__(35);
+var AbstractEndpointManager_1 = __webpack_require__(38);
 var Logger_1 = __webpack_require__(0);
-var SDPMuggle_1 = __webpack_require__(20);
+var SDPMuggle_1 = __webpack_require__(16);
 /**
  * Endpoint manager for browsers, witch support Transceivers API
  * @hidden
@@ -14407,7 +16204,7 @@ __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.ENDPOINT)], Transce
 exports.TransceiversEndpointManager = TransceiversEndpointManager;
 
 /***/ }),
-/* 47 */
+/* 53 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -14422,7 +16219,7 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var AbstractEndpointManager_1 = __webpack_require__(35);
+var AbstractEndpointManager_1 = __webpack_require__(38);
 /**
  * Endpoint manager based on track names
  * @hidden
@@ -14466,7 +16263,7 @@ var PlainEndpointManager = function (_AbstractEndpointMana) {
 exports.PlainEndpointManager = PlainEndpointManager;
 
 /***/ }),
-/* 48 */
+/* 54 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -14493,9 +16290,9 @@ var __decorate = undefined && undefined.__decorate || function (decorators, targ
     }return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-var Call_1 = __webpack_require__(13);
+var Call_1 = __webpack_require__(12);
 var VoxSignaling_1 = __webpack_require__(2);
-var CallManager_1 = __webpack_require__(5);
+var CallManager_1 = __webpack_require__(6);
 var Logger_1 = __webpack_require__(0);
 var RemoteFunction_1 = __webpack_require__(3);
 /**
@@ -14541,7 +16338,7 @@ __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.CALLEXSERVER)], Cal
 exports.CallExServer = CallExServer;
 
 /***/ }),
-/* 49 */
+/* 55 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -14568,14 +16365,14 @@ var __decorate = undefined && undefined.__decorate || function (decorators, targ
     }return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-var Call_1 = __webpack_require__(13);
+var Call_1 = __webpack_require__(12);
 var VoxSignaling_1 = __webpack_require__(2);
 var Logger_1 = __webpack_require__(0);
 var RemoteFunction_1 = __webpack_require__(3);
-var Constants_1 = __webpack_require__(11);
+var Constants_1 = __webpack_require__(10);
 var Client_1 = __webpack_require__(1);
 var index_1 = __webpack_require__(4);
-var CallEvents_1 = __webpack_require__(6);
+var CallEvents_1 = __webpack_require__(5);
 /**
  * @hidden
  */
@@ -14599,20 +16396,29 @@ var CallExMedia = function (_Call_1$Call) {
                 if (typeof extraHeaders == 'undefined' || (typeof extraHeaders === "undefined" ? "undefined" : _typeof(extraHeaders)) !== "object") extraHeaders = {};
                 extraHeaders[Constants_1.Constants.CALL_DATA_HEADER] = customData;
             }
+            this._answerHeaders = extraHeaders;
             var appConfig = Client_1.Client.getInstance().config();
             return new Promise(function (resolve, reject) {
+                _this2._answerPromise = resolve;
                 if ((typeof useVideo === "undefined" ? "undefined" : _typeof(useVideo)) === "object") _this2.settings.videoDirections = useVideo;
-                index_1.default.StreamManager.get().getCallStream(_this2).then(function (stream) {
-                    _this2._peerConnection.fastAddCustomMedia(stream);
-                    _this2._peerConnection.getLocalAnswer().then(function (activeLocalSD) {
-                        var extra = { tracks: _this2.peerConnection.getTrackKind() };
-                        VoxSignaling_1.VoxSignaling.get().callRemoteFunction(RemoteFunction_1.RemoteFunction.acceptCall, _this2.id(), extraHeaders, activeLocalSD.sdp, extra);
-                        _this2._peerConnection._fixFFSoundBug();
-                        resolve();
+                var setupPC = function setupPC() {
+                    index_1.default.StreamManager.get().getCallStream(_this2).then(function (stream) {
+                        _this2._peerConnection.fastAddCustomMedia(stream);
+                        _this2._peerConnection.getLocalAnswer().then(function (activeLocalSD) {
+                            var extra = { tracks: _this2.peerConnection.getTrackKind() };
+                            VoxSignaling_1.VoxSignaling.get().callRemoteFunction(RemoteFunction_1.RemoteFunction.acceptCall, _this2.id(), _this2._answerHeaders, activeLocalSD.sdp, extra);
+                            _this2._peerConnection._fixFFSoundBug();
+                            _this2._answerPromise();
+                        }).catch(function () {});
+                    }).catch(function (e) {
+                        return reject(e);
                     });
-                }).catch(function (e) {
-                    return reject(e);
-                });
+                };
+                if (_this2._peerConnection) {
+                    setupPC();
+                } else {
+                    setTimeout(setupPC, 600);
+                }
             });
         }
         /**
@@ -14630,7 +16436,7 @@ var CallExMedia = function (_Call_1$Call) {
                     resolve({ name: CallEvents_1.CallEvents['Updated'], result: false, call: _this3 });
                 });
             }
-            this.settings.active = newState;
+            this._setActive(newState);
             return this.peerConnection.hold(!newState);
         }
         /**
@@ -14642,7 +16448,7 @@ var CallExMedia = function (_Call_1$Call) {
     }, {
         key: "_traceName",
         value: function _traceName() {
-            return 'CallExMedia';
+            return "CallExMedia";
         }
     }]);
 
@@ -14654,7 +16460,7 @@ __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.CALL)], CallExMedia
 exports.CallExMedia = CallExMedia;
 
 /***/ }),
-/* 50 */
+/* 56 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -14748,7 +16554,7 @@ __decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.RTC)], CodecSorterH
 exports.CodecSorterHelpers = CodecSorterHelpers;
 
 /***/ }),
-/* 51 */
+/* 57 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -14756,231 +16562,416 @@ exports.CodecSorterHelpers = CodecSorterHelpers;
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
+var __decorate = undefined && undefined.__decorate || function (decorators, target, key, desc) {
+    var c = arguments.length,
+        r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc,
+        d;
+    if ((typeof Reflect === "undefined" ? "undefined" : _typeof(Reflect)) === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);else for (var i = decorators.length - 1; i >= 0; i--) {
+        if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    }return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
 Object.defineProperty(exports, "__esModule", { value: true });
+var CallEvents_1 = __webpack_require__(5);
+var CallManager_1 = __webpack_require__(6);
+var Logger_1 = __webpack_require__(0);
+var CallStatsAnalyzer_1 = __webpack_require__(31);
 /**
  * @hidden
  */
 
-var CodecSorter = function () {
-    function CodecSorter(sdp) {
-        _classCallCheck(this, CodecSorter);
+var CallStatsManager = function () {
+    function CallStatsManager() {
+        _classCallCheck(this, CallStatsManager);
 
-        this.originalSDP = sdp;
+        this._calls = new WeakMap();
     }
 
-    _createClass(CodecSorter, [{
-        key: "getCodecList",
-
-        /**
-         * Parcing source sdp to inner codec list
-         *
-         * @returns {CodecSorterCodecList}
-         */
-        value: function getCodecList() {
-            this.originalCodecList = {
-                prefix: '',
-                sections: [],
-                sufix: ''
-            };
-            var validLine = RegExp.prototype.test.bind(/^([a-z])=(.*)/);
-            var sections = CodecSorter.splitSections(this.originalSDP);
-            this.originalCodecList.prefix = sections[0];
-            for (var i = 1; i < sections.length; i++) {
-                var mediaCodec = {
-                    kind: 'audio',
-                    firstLine: '',
-                    prefix: '',
-                    sufix: '',
-                    codec: []
-                };
-                var preparced = sections[i].split('\na=rtpmap');
-                preparced = preparced.map(function (part, index) {
-                    return (index > 0 ? 'a=rtpmap' + part : part).trim() + '\r\n';
-                });
-                mediaCodec.prefix = preparced.shift();
-                var tempsufix = preparced.pop();
-                tempsufix = tempsufix.split(/(\r\n|\r|\n)/).filter(validLine);
-                var needparse = true;
-                preparced.push('');
-                while (needparse) {
-                    needparse = false;
-                    if (tempsufix.length !== 0) {
-                        var el = tempsufix.shift();
-                        if (el.indexOf('a=rtpmap') === 0 || el.indexOf('a=rtcp-fb') === 0 || el.indexOf('a=fmtp') === 0 || el.indexOf('a=x-caps') === 0 || el.indexOf('a=maxptime') === 0) {
-                            preparced[preparced.length - 1] += el + '\r\n';
-                            needparse = true;
-                        } else tempsufix.unshift(el);
-                    }
-                }
-                for (var j = 0; j < preparced.length; j++) {
-                    mediaCodec.codec.push(preparced[j].split(/(\r\n|\r|\n)/).filter(validLine));
-                }
-                var parsedPrefix = mediaCodec.prefix.split(/(\r\n|\r|\n)/).filter(validLine);
-                mediaCodec.firstLine = parsedPrefix.shift();
-                var firstLineSplited = mediaCodec.firstLine.split(' ');
-                firstLineSplited.splice(-1 * mediaCodec.codec.length, mediaCodec.codec.length);
-                mediaCodec.kind = firstLineSplited[0].substring(2);
-                mediaCodec.prefix = parsedPrefix.join('\r\n') + '\r\n';
-                mediaCodec.firstLine = firstLineSplited.join(' ');
-                if (tempsufix.length > 0) mediaCodec.sufix = tempsufix.join('\r\n') + '\r\n';
-                this.originalCodecList.sections.push(mediaCodec);
+    _createClass(CallStatsManager, [{
+        key: "addCall",
+        value: function addCall(call) {
+            if (call && (typeof call === "undefined" ? "undefined" : _typeof(call)) === 'object') {
+                this._calls.set(call, {});
+                CallStatsAnalyzer_1.CallStatsAnalyzer.get().addCall(call);
             }
-            return this.originalCodecList;
         }
-        /**
-         * Return user readable list of sections with list of codec inside
-         *
-         * @returns {CodecSorterUserCodecList}
-         */
-
     }, {
-        key: "getUserCodecList",
-        value: function getUserCodecList() {
-            if (typeof this.originalCodecList === 'undefined') this.getCodecList();
-            var userChL = {
-                sections: []
-            };
-            userChL.sections = this.originalCodecList.sections.filter(function (value) {
-                return value.kind === 'video' || value.kind === 'audio';
-            }).map(function (currentValue, index, array) {
-                var list = {
-                    kind: currentValue.kind,
-                    codec: currentValue.codec.map(function (item) {
-                        return CodecSorter.codecToUserCodec(item);
-                    })
-                };
-                var resultArr = [];
-                var _iteratorNormalCompletion = true;
-                var _didIteratorError = false;
-                var _iteratorError = undefined;
+        key: "deleteCall",
+        value: function deleteCall(call) {
+            if (call && (typeof call === "undefined" ? "undefined" : _typeof(call)) === 'object' && this._calls.has(call)) {
+                this._calls.get(call).nextDeliveryTimer && clearTimeout(this._calls.get(call).nextDeliveryTimer);
+                this._calls.delete(call);
+            }
+            CallStatsAnalyzer_1.CallStatsAnalyzer.get().deleteCall(call);
+            return Promise.resolve(true);
+        }
+    }, {
+        key: "sendStatistics",
+        value: function sendStatistics(call, statistics) {
+            var _this = this;
 
-                try {
-                    for (var _iterator = list.codec[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-                        var item = _step.value;
-
-                        if (resultArr.indexOf(item) === -1) resultArr.push(item);
-                    }
-                } catch (err) {
-                    _didIteratorError = true;
-                    _iteratorError = err;
-                } finally {
-                    try {
-                        if (!_iteratorNormalCompletion && _iterator.return) {
-                            _iterator.return();
-                        }
-                    } finally {
-                        if (_didIteratorError) {
-                            throw _iteratorError;
-                        }
-                    }
+            if (call && (typeof call === "undefined" ? "undefined" : _typeof(call)) === 'object') {
+                if (!this._calls.has(call)) {
+                    this.addCall(call);
                 }
+                var callStore = this._calls.get(call);
+                if (!callStore.nextDeliveryTimer) {
+                    var inboundRTPs = statistics.formatted.filter(function (e) {
+                        return e.type === 'inbound-rtp';
+                    });
+                    var inboundTracks = statistics.formatted.filter(function (e) {
+                        return e.type === 'track' && inboundRTPs.some(function (rtp) {
+                            return rtp.trackId === e.id;
+                        });
+                    });
+                    var prevStats = {
+                        jitterBuffer: inboundTracks.reduce(function (acc, t) {
+                            return Object.assign(acc, _defineProperty({}, t.id, { delay: t.jitterBufferDelay, emittedCount: t.jitterBufferEmittedCount }));
+                        }, {})
+                    };
+                    var timer = window.setTimeout(function () {
+                        return _this._calls.set(call, { prevStats: prevStats });
+                    }, CallManager_1.CallManager.get().rtcStatsCollectionInterval);
+                    call.dispatchEvent({ name: CallEvents_1.CallEvents.RTCStatsReceived, stats: statistics.raw });
+                    call.dispatchEvent({
+                        name: CallEvents_1.CallEvents.CallStatsReceived,
+                        stats: this.getCallStats(call, statistics.formatted, callStore.prevStats)
+                    });
+                    this._calls.set(call, { nextDeliveryTimer: timer });
+                }
+                CallStatsAnalyzer_1.CallStatsAnalyzer.get().analyzeCallStats(call, statistics.formatted);
+            }
+        }
+    }, {
+        key: "getCallStats",
+        value: function getCallStats(call) {
+            var _this2 = this;
 
-                list.codec = resultArr;
-                return list;
+            var stats = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [];
+            var prevStats = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+
+            var candidatePair = stats.find(function (e) {
+                return e.type === 'candidate-pair' && (e.selected || e.nominated && e.state === 'succeeded');
             });
-            return userChL;
-        }
-    }, {
-        key: "setUserCodecList",
-        value: function setUserCodecList(userCL) {
-            if (typeof this.originalCodecList === 'undefined') this.getCodecList();
-            for (var i = 0; i < userCL.sections.length; i++) {
-                if (userCL.sections[i].kind === this.originalCodecList.sections[i].kind) {
-                    this.originalCodecList.sections[i].codec = CodecSorter.resortSection(userCL.sections[i].codec, this.originalCodecList.sections[i].codec);
+            var localCandidate = candidatePair && stats.find(function (e) {
+                return e.type === 'local-candidate' && e.id === candidatePair.localCandidateId;
+            });
+            var timestamp = candidatePair ? candidatePair.timestamp : stats[0] && stats[0].timestamp;
+            var tracksStats = stats.filter(function (e) {
+                return e.type === 'track';
+            });
+            var codecs = stats.filter(function (e) {
+                return e.type === 'codec';
+            });
+            var inboundRTPs = stats.filter(function (e) {
+                return e.type === 'inbound-rtp';
+            });
+            var inboundAudioRTPs = inboundRTPs.filter(function (e) {
+                return e.mediaType === 'audio';
+            });
+            var inboundVideoRTPs = inboundRTPs.filter(function (e) {
+                return e.mediaType === 'video';
+            });
+            var outboundRTPs = stats.filter(function (e) {
+                return e.type === 'outbound-rtp';
+            });
+            var outboundAudioRTPs = outboundRTPs.filter(function (e) {
+                return e.mediaType === 'audio';
+            });
+            var outboundVideoRTPs = outboundRTPs.filter(function (e) {
+                return e.mediaType === 'video';
+            });
+            var endpoints = call.getEndpoints();
+            var reshapeStreamStats = function reshapeStreamStats(tracks) {
+                var streamStats = tracks.reduce(function (streamStats, t) {
+                    var trackStats = tracksStats.find(function (tStats) {
+                        return tStats.kind === t.kind && tStats.trackIdentifier === t.id;
+                    }) || {};
+                    var trackRtpStats = trackStats && inboundRTPs.find(function (rtp) {
+                        return rtp.trackId === trackStats.id;
+                    }) || {};
+                    var prevJitterBufDelay = prevStats.jitterBuffer && prevStats.jitterBuffer[trackStats.id] && prevStats.jitterBuffer[trackStats.id].delay ? prevStats.jitterBuffer[trackStats.id].delay : 0;
+                    var prevJitterBufEmittedCount = prevStats.jitterBuffer && prevStats.jitterBuffer[trackStats.id] && prevStats.jitterBuffer[trackStats.id].emittedCount ? prevStats.jitterBuffer[trackStats.id].emittedCount : 0;
+                    var audioStats = {
+                        bytesReceived: (trackRtpStats.bytesReceived || 0) + (streamStats.bytesReceived || 0),
+                        packetsReceived: (trackRtpStats.packetsReceived || 0) + (streamStats.packetsReceived || 0),
+                        packetsLost: (trackRtpStats.packetsLost || 0) + (streamStats.packetsLost || 0),
+                        loss: _this2.getLoss(trackRtpStats),
+                        jitterBufferMs: trackStats.jitterBufferDelay !== undefined && trackStats.jitterBufferEmittedCount !== undefined ? trackStats.jitterBufferEmittedCount - prevJitterBufEmittedCount ? (trackStats.jitterBufferDelay - prevJitterBufDelay) * 1000 / (trackStats.jitterBufferEmittedCount - prevJitterBufEmittedCount) + (streamStats.jitterBufferMs || 0) : 0 : undefined,
+                        codec: (trackRtpStats && trackRtpStats.codecId && codecs.find(function (c) {
+                            return c.id === trackRtpStats.codecId;
+                        }) || { mimeType: undefined }).mimeType,
+                        timestamp: timestamp
+                    };
+                    if (t.kind === 'video') {
+                        return Object.assign(audioStats, {
+                            frameHeight: trackStats && trackStats.frameHeight,
+                            frameWidth: trackStats && trackStats.frameWidth
+                        });
+                    }
+                    return audioStats;
+                }, {});
+                if (tracks.length > 1 && streamStats.jitterBufferMs) {
+                    streamStats.jitterBufferMs = streamStats.jitterBufferMs / tracks.length;
                 }
-            }
+                return streamStats;
+            };
+            return {
+                availableOutgoingBitrate: candidatePair && candidatePair.availableOutgoingBitrate,
+                localCandidateType: localCandidate && localCandidate.candidateType,
+                networkType: localCandidate && localCandidate.networkType,
+                remoteCandidateType: candidatePair && (stats.find(function (e) {
+                    return e.type === 'remote-candidate' && e.id === candidatePair.remoteCandidateId;
+                }) || {}).candidateType,
+                rtt: candidatePair && candidatePair.currentRoundTripTime,
+                timestamp: timestamp,
+                totalBytesReceived: this.sumByProp(inboundRTPs, 'bytesReceived'),
+                totalBytesSent: this.sumByProp(outboundRTPs, 'bytesSent'),
+                totalLoss: this.getLoss(inboundRTPs),
+                totalPacketsLost: this.sumByProp(inboundRTPs, 'packetsLost'),
+                totalPacketsReceived: this.sumByProp(inboundRTPs, 'packetsReceived'),
+                totalPacketsSent: this.sumByProp(outboundRTPs, 'packetsSent'),
+                audioBytesReceived: this.sumByProp(inboundAudioRTPs, 'bytesReceived'),
+                audioBytesSent: this.sumByProp(outboundAudioRTPs, 'bytesSent'),
+                audioLoss: this.getLoss(inboundAudioRTPs),
+                audioPacketsLost: this.sumByProp(inboundAudioRTPs, 'packetsLost'),
+                audioPacketsReceived: this.sumByProp(inboundAudioRTPs, 'packetsReceived'),
+                audioPacketsSent: this.sumByProp(outboundAudioRTPs, 'packetsSent'),
+                videoBytesReceived: this.sumByProp(inboundVideoRTPs, 'bytesReceived'),
+                videoBytesSent: this.sumByProp(outboundVideoRTPs, 'bytesSent'),
+                videoLoss: this.getLoss(inboundVideoRTPs),
+                videoPacketsLost: this.sumByProp(inboundVideoRTPs, 'packetsLost'),
+                videoPacketsReceived: this.sumByProp(inboundVideoRTPs, 'packetsReceived'),
+                videoPacketsSent: this.sumByProp(outboundVideoRTPs, 'packetsSent'),
+                localAudioStats: outboundAudioRTPs.length ? outboundAudioRTPs.reduce(function (map, p) {
+                    return map.set(p.id, {
+                        bytesSent: p.bytesSent,
+                        packetsSent: p.packetsSent,
+                        timestamp: p.timestamp,
+                        audioLevel: (tracksStats.find(function (t) {
+                            return t.id === p.trackId;
+                        }) || { audioLevel: undefined }).audioLevel,
+                        codec: (codecs.find(function (c) {
+                            return c.id === p.codecId;
+                        }) || { mimeType: undefined }).mimeType
+                    });
+                }, new Map()) : new Map(),
+                localVideoStats: outboundVideoRTPs.length ? outboundVideoRTPs.reduce(function (map, p) {
+                    return map.set(p.id, {
+                        bytesSent: p.bytesSent,
+                        packetsSent: p.packetsSent,
+                        timestamp: p.timestamp,
+                        frameHeight: (tracksStats.find(function (t) {
+                            return t.id === p.trackId;
+                        }) || { frameHeight: undefined }).frameHeight,
+                        frameWidth: (tracksStats.find(function (t) {
+                            return t.id === p.trackId;
+                        }) || { frameWidth: undefined }).frameWidth,
+                        encoderBitrate: p.encoderBitrate,
+                        targetBitrate: p.targetBitrate,
+                        fps: p.framesPerSecond,
+                        codec: (codecs.find(function (c) {
+                            return c.id === p.codecId;
+                        }) || { mimeType: undefined }).mimeType
+                    });
+                }, new Map()) : new Map(),
+                endpointStats: endpoints.length ? endpoints.reduce(function (map, e) {
+                    var inboundAudioStreams = e.mediaRenderers.reduce(function (acc, r) {
+                        return r.stream && r.stream.getTracks().filter(function (t) {
+                            return t.kind === 'audio';
+                        }).length ? Object.assign(acc, _defineProperty({}, r.stream.id, reshapeStreamStats(r.stream.getTracks().filter(function (t) {
+                            return t.kind === 'audio';
+                        })))) : acc;
+                    }, {});
+                    var inboundVideoStreams = e.mediaRenderers.reduce(function (acc, r) {
+                        return r.stream && r.stream.getTracks().filter(function (t) {
+                            return t.kind === 'video';
+                        }).length ? Object.assign(acc, _defineProperty({}, r.stream.id, reshapeStreamStats(r.stream.getTracks().filter(function (t) {
+                            return t.kind === 'video';
+                        })))) : acc;
+                    }, {});
+                    var mediaStreams = Object.values(inboundAudioStreams).concat(Object.values(inboundVideoStreams));
+                    return map.set(e.id, {
+                        audioBytesReceived: _this2.sumByProp(Object.values(inboundAudioStreams), 'bytesReceived'),
+                        audioPacketsLost: _this2.sumByProp(Object.values(inboundAudioStreams), 'packetsLost'),
+                        audioPacketsReceived: _this2.sumByProp(Object.values(inboundAudioStreams), 'packetsReceived'),
+                        videoBytesReceived: _this2.sumByProp(Object.values(inboundVideoStreams), 'bytesReceived'),
+                        videoPacketsLost: _this2.sumByProp(Object.values(inboundVideoStreams), 'packetsLost'),
+                        videoPacketsReceived: _this2.sumByProp(Object.values(inboundVideoStreams), 'packetsReceived'),
+                        totalBytesReceived: _this2.sumByProp(mediaStreams, 'bytesReceived'),
+                        totalPacketsReceived: _this2.sumByProp(mediaStreams, 'packetsReceived'),
+                        remoteAudioStats: inboundAudioStreams,
+                        remoteVideoStats: inboundVideoStreams,
+                        timestamp: timestamp
+                    });
+                }, new Map()) : new Map()
+            };
         }
     }, {
-        key: "getSDP",
-        value: function getSDP() {
-            var resultSDP = this.originalCodecList.prefix;
-            for (var i = 0; i < this.originalCodecList.sections.length; i++) {
-                var codecPart = '';
-                var codecOrder = [];
-                for (var j = 0; j < this.originalCodecList.sections[i].codec.length; j++) {
-                    codecOrder.push(this.originalCodecList.sections[i].codec[j][0].split(' ')[0].substring(9));
-                    codecPart += this.originalCodecList.sections[i].codec[j].join('\r\n') + '\r\n';
-                }
-                resultSDP += this.originalCodecList.sections[i].firstLine + ' ' + codecOrder.join(' ') + '\r\n';
-                resultSDP += this.originalCodecList.sections[i].prefix;
-                resultSDP += codecPart;
-                resultSDP += this.originalCodecList.sections[i].sufix;
+        key: "getLoss",
+        value: function getLoss(rtps) {
+            if (!rtps.length) {
+                return 0;
             }
-            return resultSDP;
+            var sum = rtps.reduce(function (acc, e) {
+                return {
+                    lost: acc.lost + (e.packetsLost || 0),
+                    total: acc.total + (e.packetsLost || 0) + (e.packetsReceived || 0)
+                };
+            }, { lost: 0, total: 0 });
+            return sum.total ? sum.lost / sum.total : 0;
         }
     }, {
-        key: "_traceName",
-
+        key: "sumByProp",
+        value: function sumByProp(objects, propName) {
+            return objects.length ? objects.map(function (e) {
+                return e[propName];
+            }).reduce(function (acc) {
+                var num = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
+                return acc + num;
+            }, 0) : 0;
+        }
         /**
          * @hidden
          * @return {string}
          * @private
          */
+
+    }, {
+        key: "_traceName",
         value: function _traceName() {
-            return 'CodecSorter';
+            return 'CallStatsManager';
+        }
+    }, {
+        key: "calls",
+        get: function get() {
+            return this._calls;
         }
     }], [{
-        key: "splitSections",
-        value: function splitSections(blob) {
-            var parts = blob.split('\nm=');
-            return parts.map(function (part, index) {
-                return (index > 0 ? 'm=' + part : part).trim() + '\r\n';
-            });
-        }
-    }, {
-        key: "codecToUserCodec",
-        value: function codecToUserCodec(item) {
-            var splited = item[0].split(' ');
-            splited.shift();
-            return splited.join(' ');
-        }
-    }, {
-        key: "resortSection",
-        value: function resortSection(userCodec, originalCodec) {
-            var newCodecs = [];
-            for (var i = 0; i < userCodec.length; i++) {
-                for (var j = 0; j < originalCodec.length; j++) {
-                    if (userCodec[i] === CodecSorter.codecToUserCodec(originalCodec[j])) {
-                        newCodecs.push(originalCodec[j]);
-                    }
-                }
+        key: "get",
+        value: function get() {
+            if (typeof this.inst == "undefined") {
+                this.inst = new CallStatsManager();
             }
-            return newCodecs;
-        }
-    }, {
-        key: "downOpusBandwidth",
-        value: function downOpusBandwidth(sdp) {
-            return new Promise(function (resolve, reject) {
-                var validLine = RegExp.prototype.test.bind(/^([a-z])=(.*)/);
-                var sdpLines = sdp.sdp.split(/(\r\n|\r|\n)/).filter(validLine);
-                var changed = false;
-                for (var i = 0; i < sdpLines.length; i++) {
-                    if (sdpLines[i].indexOf('a=fmtp:114') !== -1) {
-                        sdpLines[i] = 'a=fmtp:114 minptime=10; useinbandfec=1; sprop-maxcapturerate=8000';
-                        changed = true;
-                    }
-                    if (sdpLines[i].indexOf('a=fmtp:111') !== -1) {
-                        sdpLines[i] = 'a=fmtp:111 minptime=10; useinbandfec=1; sprop-maxcapturerate=8000';
-                        changed = true;
-                    }
-                }
-                if (!changed) {
-                    reject(sdp);
-                }
-                resolve(new RTCSessionDescription({ sdp: sdpLines.join('\r\n') + '\r\n', type: sdp.type }));
-            });
+            return this.inst;
         }
     }]);
 
-    return CodecSorter;
+    return CallStatsManager;
 }();
 
-exports.CodecSorter = CodecSorter;
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.RTC)], CallStatsManager.prototype, "addCall", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.RTC)], CallStatsManager.prototype, "deleteCall", null);
+exports.CallStatsManager = CallStatsManager;
 
 /***/ }),
-/* 52 */
+/* 58 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", { value: true });
+/**
+ * @hidden
+ */
+var BrowserMode;
+(function (BrowserMode) {
+  BrowserMode[BrowserMode["Firefox"] = 0] = "Firefox";
+  BrowserMode[BrowserMode["Chrome"] = 1] = "Chrome";
+})(BrowserMode = exports.BrowserMode || (exports.BrowserMode = {}));
+/**
+ * @hidden
+ */
+var TrackType;
+(function (TrackType) {
+  TrackType[TrackType["audio"] = "audio"] = "audio";
+  TrackType[TrackType["video"] = "video"] = "video";
+  TrackType[TrackType["sharing"] = "sharing"] = "sharing";
+})(TrackType = exports.TrackType || (exports.TrackType = {}));
+/**
+ * Call related errors.
+ * @hidden
+ */
+var CallError;
+(function (CallError) {
+  /**
+   * The call is already in requested state
+   */
+  CallError[CallError["ALREADY_IN_THIS_STATE"] = 0] = "ALREADY_IN_THIS_STATE";
+  /**
+   * Requested functionality is disabled
+   */
+  CallError[CallError["FUNCTIONALITY_IS_DISABLED"] = 1] = "FUNCTIONALITY_IS_DISABLED";
+  /**
+   * Operation is incorrect, f.ex.
+   */
+  CallError[CallError["INCORRECT_OPERATION"] = 2] = "INCORRECT_OPERATION";
+  /**
+   * Internal error occurred
+   */
+  CallError[CallError["INTERNAL_ERROR"] = 3] = "INTERNAL_ERROR";
+  /**
+   * Operation can't be performed due to the call is on hold.
+   */
+  CallError[CallError["MEDIA_IS_ON_HOLD"] = 4] = "MEDIA_IS_ON_HOLD";
+  /**
+   * Operation is rejected
+   */
+  CallError[CallError["REJECTED"] = 5] = "REJECTED";
+  /**
+   * Operation is not completed in time
+   */
+  CallError[CallError["TIMEOUT"] = 6] = "TIMEOUT";
+})(CallError = exports.CallError || (exports.CallError = {}));
+
+/***/ }),
+/* 59 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", { value: true });
+var Statistic;
+(function (Statistic) {
+  /**
+   * Enumeration of the call quality issue levels.
+   * Quality issue events are [CallEvents.QualityIssueCodecMismatch], [CallEvents.QualityIssueHighMediaLatency], [CallEvents.QualityIssueICEDisconnected], [CallEvents.QualityIssueLocalVideoDegradation], [CallEvents.QualityIssueLowBandwidth], [CallEvents.QualityIssueNoAudioSignal] and [CallEvents.QualityIssuePacketLoss].
+   */
+  var QualityIssueLevel = void 0;
+  (function (QualityIssueLevel) {
+    /**
+     * Indicates that a detected issue has a critical impact on a call quality.
+     * In most cases it results in lost media stream between call participants or broken functionality.
+     */
+    QualityIssueLevel[QualityIssueLevel["Critical"] = "CRITICAL"] = "Critical";
+    /**
+     * Indicates that a detected issue may have a major impact on a call quality.
+     * For audio calls it may result in a corrupted stream (discord or robotic voice) for call participants, audio delays and glitches.
+     * For video calls it may result in significant video artifacts (pixelating, blurring, color bleeding, flickering, noise), one-way/no video stream between the call participants
+     */
+    QualityIssueLevel[QualityIssueLevel["Major"] = "MAJOR"] = "Major";
+    /**
+     * Indicates that a detected issue may have a minor impact on a call quality.
+     * For audio calls it may result in temporary audio artifacts.
+     * For video calls it may result in video artifacts in case of a dynamically changing video stream.
+     */
+    QualityIssueLevel[QualityIssueLevel["Minor"] = "MINOR"] = "Minor";
+    /**
+     * Indicates that no issue is detected or it is already resolved.
+     */
+    QualityIssueLevel[QualityIssueLevel["None"] = "NONE"] = "None";
+  })(QualityIssueLevel = Statistic.QualityIssueLevel || (Statistic.QualityIssueLevel = {}));
+})(Statistic = exports.Statistic || (exports.Statistic = {}));
+
+/***/ }),
+/* 60 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -15060,7 +17051,7 @@ var Edge = function () {
 exports.Edge = Edge;
 
 /***/ }),
-/* 53 */
+/* 61 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -15071,7 +17062,8 @@ var _createClass = function () { function defineProperties(target, props) { for 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var SignalingDTMFSender_1 = __webpack_require__(19);
+var SignalingDTMFSender_1 = __webpack_require__(21);
+var Logger_1 = __webpack_require__(0);
 /**
  * @hidden
  */
@@ -15109,7 +17101,10 @@ var Safari = function () {
     }, {
         key: "getDTMFSender",
         value: function getDTMFSender(pc, callId) {
-            if (!!pc.createDTMFSender) return pc.createDTMFSender(pc.getLocalStreams()[0].getAudioTracks()[0]);else return new SignalingDTMFSender_1.SignalingDTMFSender(callId);
+            // if(!!pc.createDTMFSender)
+            //     return pc.createDTMFSender(pc.getLocalStreams()[0].getAudioTracks()[0]);
+            // else
+            return new SignalingDTMFSender_1.SignalingDTMFSender(callId);
         }
     }, {
         key: "getScreenMedia",
@@ -15137,6 +17132,7 @@ var Safari = function () {
                                     }]
                                 }
                             };
+                            Logger_1.LogManager.get().writeMessage(Logger_1.LogCategory.USERMEDIA, '[constraints]', Logger_1.LogLevel.INFO, JSON.stringify(mediaParams));
                             navigator.mediaDevices.getUserMedia(mediaParams).then(function (stream) {
                                 resolve(stream);
                             }).catch(function (e) {
@@ -15162,9 +17158,28 @@ var Safari = function () {
                             resultArray.push(item);
                         }
                     });
-                    resolve(resultArray);
+                    resolve({ raw: resultArray, formatted: Safari.prepareRTCStats(e) });
                 }).catch(reject);
             });
+        }
+    }, {
+        key: "prepareRTCStats",
+        value: function prepareRTCStats(stats) {
+            var preparedStats = [];
+            stats.forEach(function (e) {
+                if (e.type === 'track' && !e.kind) {
+                    preparedStats.push(Object.assign(e, {
+                        kind: e.id.includes('audio') ? 'audio' : e.id.includes('video') ? 'video' : undefined
+                    }));
+                } else if (e.type === "outbound-rtp" || e.type === 'inbound-rtp') {
+                    preparedStats.push(Object.assign(e, {
+                        trackId: e.mediaTrackId
+                    }));
+                } else {
+                    preparedStats.push(e);
+                }
+            });
+            return preparedStats;
         }
     }]);
 
@@ -15174,7 +17189,1109 @@ var Safari = function () {
 exports.Safari = Safari;
 
 /***/ }),
-/* 54 */
+/* 62 */
+/***/ (function(module, exports, __webpack_require__) {
+
+!function(e,t){ true?module.exports=t():"function"==typeof define&&define.amd?define([],t):"object"==typeof exports?exports.bowser=t():e.bowser=t()}(this,function(){return function(e){var t={};function r(n){if(t[n])return t[n].exports;var i=t[n]={i:n,l:!1,exports:{}};return e[n].call(i.exports,i,i.exports,r),i.l=!0,i.exports}return r.m=e,r.c=t,r.d=function(e,t,n){r.o(e,t)||Object.defineProperty(e,t,{enumerable:!0,get:n})},r.r=function(e){"undefined"!=typeof Symbol&&Symbol.toStringTag&&Object.defineProperty(e,Symbol.toStringTag,{value:"Module"}),Object.defineProperty(e,"__esModule",{value:!0})},r.t=function(e,t){if(1&t&&(e=r(e)),8&t)return e;if(4&t&&"object"==typeof e&&e&&e.__esModule)return e;var n=Object.create(null);if(r.r(n),Object.defineProperty(n,"default",{enumerable:!0,value:e}),2&t&&"string"!=typeof e)for(var i in e)r.d(n,i,function(t){return e[t]}.bind(null,i));return n},r.n=function(e){var t=e&&e.__esModule?function(){return e.default}:function(){return e};return r.d(t,"a",t),t},r.o=function(e,t){return Object.prototype.hasOwnProperty.call(e,t)},r.p="",r(r.s=86)}({17:function(e,t,r){var n,i,s;i=[t],void 0===(s="function"==typeof(n=function(r){"use strict";function n(e,t){for(var r=0;r<t.length;r++){var n=t[r];n.enumerable=n.enumerable||!1,n.configurable=!0,"value"in n&&(n.writable=!0),Object.defineProperty(e,n.key,n)}}Object.defineProperty(r,"__esModule",{value:!0}),r.default=void 0;var i=function(){function e(){!function(e,t){if(!(e instanceof t))throw new TypeError("Cannot call a class as a function")}(this,e)}return t=e,i=[{key:"getFirstMatch",value:function(e,t){var r=t.match(e);return r&&r.length>0&&r[1]||""}},{key:"getSecondMatch",value:function(e,t){var r=t.match(e);return r&&r.length>1&&r[2]||""}},{key:"matchAndReturnConst",value:function(e,t,r){if(e.test(t))return r}},{key:"getWindowsVersionName",value:function(e){switch(e){case"NT":return"NT";case"XP":return"XP";case"NT 5.0":return"2000";case"NT 5.1":return"XP";case"NT 5.2":return"2003";case"NT 6.0":return"Vista";case"NT 6.1":return"7";case"NT 6.2":return"8";case"NT 6.3":return"8.1";case"NT 10.0":return"10";default:return}}},{key:"getAndroidVersionName",value:function(e){var t=e.split(".").splice(0,2).map(function(e){return parseInt(e,10)||0});if(t.push(0),!(1===t[0]&&t[1]<5))return 1===t[0]&&t[1]<6?"Cupcake":1===t[0]&&t[1]>=6?"Donut":2===t[0]&&t[1]<2?"Eclair":2===t[0]&&2===t[1]?"Froyo":2===t[0]&&t[1]>2?"Gingerbread":3===t[0]?"Honeycomb":4===t[0]&&t[1]<1?"Ice Cream Sandwich":4===t[0]&&t[1]<4?"Jelly Bean":4===t[0]&&t[1]>=4?"KitKat":5===t[0]?"Lollipop":6===t[0]?"Marshmallow":7===t[0]?"Nougat":8===t[0]?"Oreo":void 0}},{key:"getVersionPrecision",value:function(e){return e.split(".").length}},{key:"compareVersions",value:function(t,r){var n=arguments.length>2&&void 0!==arguments[2]&&arguments[2],i=e.getVersionPrecision(t),s=e.getVersionPrecision(r),a=Math.max(i,s),o=0,u=e.map([t,r],function(t){var r=a-e.getVersionPrecision(t),n=t+new Array(r+1).join(".0");return e.map(n.split("."),function(e){return new Array(20-e.length).join("0")+e}).reverse()});for(n&&(o=a-Math.min(i,s)),a-=1;a>=o;){if(u[0][a]>u[1][a])return 1;if(u[0][a]===u[1][a]){if(a===o)return 0;a-=1}else if(u[0][a]<u[1][a])return-1}}},{key:"map",value:function(e,t){var r,n=[];if(Array.prototype.map)return Array.prototype.map.call(e,t);for(r=0;r<e.length;r+=1)n.push(t(e[r]));return n}}],(r=null)&&n(t.prototype,r),i&&n(t,i),e;var t,r,i}();r.default=i,e.exports=t.default})?n.apply(t,i):n)||(e.exports=s)},86:function(e,t,r){var n,i,s;i=[t,r(87)],void 0===(s="function"==typeof(n=function(r,n){"use strict";function i(e,t){for(var r=0;r<t.length;r++){var n=t[r];n.enumerable=n.enumerable||!1,n.configurable=!0,"value"in n&&(n.writable=!0),Object.defineProperty(e,n.key,n)}}var s;Object.defineProperty(r,"__esModule",{value:!0}),r.default=void 0,n=(s=n)&&s.__esModule?s:{default:s};var a=function(){function e(){!function(e,t){if(!(e instanceof t))throw new TypeError("Cannot call a class as a function")}(this,e)}return t=e,s=[{key:"getParser",value:function(e){var t=arguments.length>1&&void 0!==arguments[1]&&arguments[1];if("string"!=typeof e)throw new Error("UserAgent should be a string");return new n.default(e,t)}},{key:"parse",value:function(e){return new n.default(e).getResult()}}],(r=null)&&i(t.prototype,r),s&&i(t,s),e;var t,r,s}();r.default=a,e.exports=t.default})?n.apply(t,i):n)||(e.exports=s)},87:function(e,t,r){var n,i,s;i=[t,r(88),r(89),r(90),r(91),r(17)],void 0===(s="function"==typeof(n=function(r,n,i,s,a,o){"use strict";function u(e){return e&&e.__esModule?e:{default:e}}function c(e){return(c="function"==typeof Symbol&&"symbol"==typeof Symbol.iterator?function(e){return typeof e}:function(e){return e&&"function"==typeof Symbol&&e.constructor===Symbol&&e!==Symbol.prototype?"symbol":typeof e})(e)}function d(e,t){for(var r=0;r<t.length;r++){var n=t[r];n.enumerable=n.enumerable||!1,n.configurable=!0,"value"in n&&(n.writable=!0),Object.defineProperty(e,n.key,n)}}Object.defineProperty(r,"__esModule",{value:!0}),r.default=void 0,n=u(n),i=u(i),s=u(s),a=u(a),o=u(o);var f=function(){function e(t){var r=arguments.length>1&&void 0!==arguments[1]&&arguments[1];if(function(e,t){if(!(e instanceof t))throw new TypeError("Cannot call a class as a function")}(this,e),null==t||""===t)throw new Error("UserAgent parameter can't be empty");this._ua=t,this.parsedResult={},!0!==r&&this.parse()}return t=e,(r=[{key:"getUA",value:function(){return this._ua}},{key:"test",value:function(e){return e.test(this._ua)}},{key:"parseBrowser",value:function(){var e=this;this.parsedResult.browser={};var t=n.default.find(function(t){if("function"==typeof t.test)return t.test(e);if(t.test instanceof Array)return t.test.some(function(t){return e.test(t)});throw new Error("Browser's test function is not valid")});return t&&(this.parsedResult.browser=t.describe(this.getUA())),this.parsedResult.browser}},{key:"getBrowser",value:function(){return this.parsedResult.browser?this.parsedResult.browser:this.parseBrowser()}},{key:"getBrowserName",value:function(e){return e?String(this.getBrowser().name).toLowerCase()||"":this.getBrowser().name||""}},{key:"getBrowserVersion",value:function(){return this.getBrowser().version}},{key:"getOS",value:function(){return this.parsedResult.os?this.parsedResult.os:this.parseOS()}},{key:"parseOS",value:function(){var e=this;this.parsedResult.os={};var t=i.default.find(function(t){if("function"==typeof t.test)return t.test(e);if(t.test instanceof Array)return t.test.some(function(t){return e.test(t)});throw new Error("Browser's test function is not valid")});return t&&(this.parsedResult.os=t.describe(this.getUA())),this.parsedResult.os}},{key:"getOSName",value:function(e){var t=this.getOS(),r=t.name;return e?String(r).toLowerCase()||"":r||""}},{key:"getOSVersion",value:function(){return this.getOS().version}},{key:"getPlatform",value:function(){return this.parsedResult.platform?this.parsedResult.platform:this.parsePlatform()}},{key:"getPlatformType",value:function(){var e=arguments.length>0&&void 0!==arguments[0]&&arguments[0],t=this.getPlatform(),r=t.type;return e?String(r).toLowerCase()||"":r||""}},{key:"parsePlatform",value:function(){var e=this;this.parsedResult.platform={};var t=s.default.find(function(t){if("function"==typeof t.test)return t.test(e);if(t.test instanceof Array)return t.test.some(function(t){return e.test(t)});throw new Error("Browser's test function is not valid")});return t&&(this.parsedResult.platform=t.describe(this.getUA())),this.parsedResult.platform}},{key:"getEngine",value:function(){return this.parsedResult.engine?this.parsedResult.engine:this.parseEngine()}},{key:"getEngineName",value:function(e){return e?String(this.getEngine().name).toLowerCase()||"":this.getEngine().name||""}},{key:"parseEngine",value:function(){var e=this;this.parsedResult.engine={};var t=a.default.find(function(t){if("function"==typeof t.test)return t.test(e);if(t.test instanceof Array)return t.test.some(function(t){return e.test(t)});throw new Error("Browser's test function is not valid")});return t&&(this.parsedResult.engine=t.describe(this.getUA())),this.parsedResult.engine}},{key:"parse",value:function(){return this.parseBrowser(),this.parseOS(),this.parsePlatform(),this.parseEngine(),this}},{key:"getResult",value:function(){return Object.assign({},this.parsedResult)}},{key:"satisfies",value:function(e){var t=this,r={},n=0,i={},s=0,a=Object.keys(e);if(a.forEach(function(t){var a=e[t];"string"==typeof a?(i[t]=a,s+=1):"object"===c(a)&&(r[t]=a,n+=1)}),n>0){var o=Object.keys(r),u=o.find(function(e){return t.isOS(e)});if(u){var d=this.satisfies(r[u]);if(void 0!==d)return d}var f=o.find(function(e){return t.isPlatform(e)});if(f){var l=this.satisfies(r[f]);if(void 0!==l)return l}}if(s>0){var v=Object.keys(i),p=v.find(function(e){return t.isBrowser(e)});if(void 0!==p)return this.compareVersion(i[p])}}},{key:"isBrowser",value:function(e){return this.getBrowserName(!0)===String(e).toLowerCase()}},{key:"compareVersion",value:function(e){var t=[0],r=e,n=!1,i=this.getBrowserVersion();if("string"==typeof i)return">"===e[0]||"<"===e[0]?(r=e.substr(1),"="===e[1]?(n=!0,r=e.substr(2)):t=[],">"===e[0]?t.push(1):t.push(-1)):"="===e[0]?r=e.substr(1):"~"===e[0]&&(n=!0,r=e.substr(1)),t.indexOf(o.default.compareVersions(i,r,n))>-1}},{key:"isOS",value:function(e){return this.getOSName(!0)===String(e).toLowerCase()}},{key:"isPlatform",value:function(e){return this.getPlatformType(!0)===String(e).toLowerCase()}},{key:"isEngine",value:function(e){return this.getEngineName(!0)===String(e).toLowerCase()}},{key:"is",value:function(e){return this.isBrowser(e)||this.isOS(e)||this.isPlatform(e)}},{key:"some",value:function(){var e=this,t=arguments.length>0&&void 0!==arguments[0]?arguments[0]:[];return t.some(function(t){return e.is(t)})}}])&&d(t.prototype,r),u&&d(t,u),e;var t,r,u}();r.default=f,e.exports=t.default})?n.apply(t,i):n)||(e.exports=s)},88:function(e,t,r){var n,i,s;i=[t,r(17)],void 0===(s="function"==typeof(n=function(r,n){"use strict";var i;Object.defineProperty(r,"__esModule",{value:!0}),r.default=void 0,n=(i=n)&&i.__esModule?i:{default:i};var s=/version\/(\d+(\.?_?\d+)+)/i,a=[{test:[/googlebot/i],describe:function(e){var t={name:"Googlebot"},r=n.default.getFirstMatch(/googlebot\/(\d+(\.\d+))/i,e)||n.default.getFirstMatch(s,e);return r&&(t.version=r),t}},{test:[/opera/i],describe:function(e){var t={name:"Opera"},r=n.default.getFirstMatch(s,e)||n.default.getFirstMatch(/(?:opera)[\s\/](\d+(\.?_?\d+)+)/i,e);return r&&(t.version=r),t}},{test:[/opr\/|opios/i],describe:function(e){var t={name:"Opera"},r=n.default.getFirstMatch(/(?:opr|opios)[\s\/](\S+)/i,e)||n.default.getFirstMatch(s,e);return r&&(t.version=r),t}},{test:[/SamsungBrowser/i],describe:function(e){var t={name:"Samsung Internet for Android"},r=n.default.getFirstMatch(s,e)||n.default.getFirstMatch(/(?:SamsungBrowser)[\s\/](\d+(\.?_?\d+)+)/i,e);return r&&(t.version=r),t}},{test:[/Whale/i],describe:function(e){var t={name:"NAVER Whale Browser"},r=n.default.getFirstMatch(s,e)||n.default.getFirstMatch(/(?:whale)[\s\/](\d+(?:\.\d+)+)/i,e);return r&&(t.version=r),t}},{test:[/MZBrowser/i],describe:function(e){var t={name:"MZ Browser"},r=n.default.getFirstMatch(/(?:MZBrowser)[\s\/](\d+(?:\.\d+)+)/i,e)||n.default.getFirstMatch(s,e);return r&&(t.version=r),t}},{test:[/focus/i],describe:function(e){var t={name:"Focus"},r=n.default.getFirstMatch(/(?:focus)[\s\/](\d+(?:\.\d+)+)/i,e)||n.default.getFirstMatch(s,e);return r&&(t.version=r),t}},{test:[/swing/i],describe:function(e){var t={name:"Swing"},r=n.default.getFirstMatch(/(?:swing)[\s\/](\d+(?:\.\d+)+)/i,e)||n.default.getFirstMatch(s,e);return r&&(t.version=r),t}},{test:[/coast/i],describe:function(e){var t={name:"Opera Coast"},r=n.default.getFirstMatch(s,e)||n.default.getFirstMatch(/(?:coast)[\s\/](\d+(\.?_?\d+)+)/i,e);return r&&(t.version=r),t}},{test:[/yabrowser/i],describe:function(e){var t={name:"Yandex Browser"},r=n.default.getFirstMatch(s,e)||n.default.getFirstMatch(/(?:yabrowser)[\s\/](\d+(\.?_?\d+)+)/i,e);return r&&(t.version=r),t}},{test:[/ucbrowser/i],describe:function(e){var t={name:"UC Browser"},r=n.default.getFirstMatch(s,e)||n.default.getFirstMatch(/(?:ucbrowser)[\s\/](\d+(\.?_?\d+)+)/i,e);return r&&(t.version=r),t}},{test:[/Maxthon|mxios/i],describe:function(e){var t={name:"Maxthon"},r=n.default.getFirstMatch(s,e)||n.default.getFirstMatch(/(?:Maxthon|mxios)[\s\/](\d+(\.?_?\d+)+)/i,e);return r&&(t.version=r),t}},{test:[/epiphany/i],describe:function(e){var t={name:"Epiphany"},r=n.default.getFirstMatch(s,e)||n.default.getFirstMatch(/(?:epiphany)[\s\/](\d+(\.?_?\d+)+)/i,e);return r&&(t.version=r),t}},{test:[/puffin/i],describe:function(e){var t={name:"Puffin"},r=n.default.getFirstMatch(s,e)||n.default.getFirstMatch(/(?:puffin)[\s\/](\d+(\.?_?\d+)+)/i,e);return r&&(t.version=r),t}},{test:[/sleipnir/i],describe:function(e){var t={name:"Sleipnir"},r=n.default.getFirstMatch(s,e)||n.default.getFirstMatch(/(?:sleipnir)[\s\/](\d+(\.?_?\d+)+)/i,e);return r&&(t.version=r),t}},{test:[/k-meleon/i],describe:function(e){var t={name:"K-Meleon"},r=n.default.getFirstMatch(s,e)||n.default.getFirstMatch(/(?:k-meleon)[\s\/](\d+(\.?_?\d+)+)/i,e);return r&&(t.version=r),t}},{test:[/micromessenger/i],describe:function(e){var t={name:"WeChat"},r=n.default.getFirstMatch(/(?:micromessenger)[\s\/](\d+(\.?_?\d+)+)/i,e)||n.default.getFirstMatch(s,e);return r&&(t.version=r),t}},{test:[/msie|trident/i],describe:function(e){var t={name:"Internet Explorer"},r=n.default.getFirstMatch(/(?:msie |rv:)(\d+(\.?_?\d+)+)/i,e);return r&&(t.version=r),t}},{test:[/edg([ea]|ios)/i],describe:function(e){var t={name:"Microsoft Edge"},r=n.default.getSecondMatch(/edg([ea]|ios)\/(\d+(\.?_?\d+)+)/i,e);return r&&(t.version=r),t}},{test:[/vivaldi/i],describe:function(e){var t={name:"Vivaldi"},r=n.default.getFirstMatch(/vivaldi\/(\d+(\.?_?\d+)+)/i,e);return r&&(t.version=r),t}},{test:[/seamonkey/i],describe:function(e){var t={name:"SeaMonkey"},r=n.default.getFirstMatch(/seamonkey\/(\d+(\.?_?\d+)+)/i,e);return r&&(t.version=r),t}},{test:[/sailfish/i],describe:function(e){var t={name:"Sailfish"},r=n.default.getFirstMatch(/sailfish\s?browser\/(\d+(\.\d+)?)/i,e);return r&&(t.version=r),t}},{test:[/silk/i],describe:function(e){var t={name:"Amazon Silk"},r=n.default.getFirstMatch(/silk\/(\d+(\.?_?\d+)+)/i,e);return r&&(t.version=r),t}},{test:[/phantom/i],describe:function(e){var t={name:"PhantomJS"},r=n.default.getFirstMatch(/phantomjs\/(\d+(\.?_?\d+)+)/i,e);return r&&(t.version=r),t}},{test:[/slimerjs/i],describe:function(e){var t={name:"SlimerJS"},r=n.default.getFirstMatch(/slimerjs\/(\d+(\.?_?\d+)+)/i,e);return r&&(t.version=r),t}},{test:[/blackberry|\bbb\d+/i,/rim\stablet/i],describe:function(e){var t={name:"BlackBerry"},r=n.default.getFirstMatch(s,e)||n.default.getFirstMatch(/blackberry[\d]+\/(\d+(\.?_?\d+)+)/i,e);return r&&(t.version=r),t}},{test:[/(web|hpw)[o0]s/i],describe:function(e){var t={name:"WebOS Browser"},r=n.default.getFirstMatch(s,e)||n.default.getFirstMatch(/w(?:eb)?[o0]sbrowser\/(\d+(\.?_?\d+)+)/i,e);return r&&(t.version=r),t}},{test:[/bada/i],describe:function(e){var t={name:"Bada"},r=n.default.getFirstMatch(/dolfin\/(\d+(\.?_?\d+)+)/i,e);return r&&(t.version=r),t}},{test:[/tizen/i],describe:function(e){var t={name:"Tizen"},r=n.default.getFirstMatch(/(?:tizen\s?)?browser\/(\d+(\.?_?\d+)+)/i,e)||n.default.getFirstMatch(s,e);return r&&(t.version=r),t}},{test:[/qupzilla/i],describe:function(e){var t={name:"QupZilla"},r=n.default.getFirstMatch(/(?:qupzilla)[\s\/](\d+(\.?_?\d+)+)/i,e)||n.default.getFirstMatch(s,e);return r&&(t.version=r),t}},{test:[/firefox|iceweasel|fxios/i],describe:function(e){var t={name:"Firefox"},r=n.default.getFirstMatch(/(?:firefox|iceweasel|fxios)[\s\/](\d+(\.?_?\d+)+)/i,e);return r&&(t.version=r),t}},{test:[/chromium/i],describe:function(e){var t={name:"Chromium"},r=n.default.getFirstMatch(/(?:chromium)[\s\/](\d+(\.?_?\d+)+)/i,e)||n.default.getFirstMatch(s,e);return r&&(t.version=r),t}},{test:[/chrome|crios|crmo/i],describe:function(e){var t={name:"Chrome"},r=n.default.getFirstMatch(/(?:chrome|crios|crmo)\/(\d+(\.?_?\d+)+)/i,e);return r&&(t.version=r),t}},{test:function(e){var t=!e.test(/like android/i),r=e.test(/android/i);return t&&r},describe:function(e){var t={name:"Android Browser"},r=n.default.getFirstMatch(s,e);return r&&(t.version=r),t}},{test:[/playstation 4/i],describe:function(e){var t={name:"PlayStation 4"},r=n.default.getFirstMatch(s,e);return r&&(t.version=r),t}},{test:[/safari|applewebkit/i],describe:function(e){var t={name:"Safari"},r=n.default.getFirstMatch(s,e);return r&&(t.version=r),t}},{test:[/.*/i],describe:function(e){return{name:n.default.getFirstMatch(/^(.*)\/(.*) /,e),version:n.default.getSecondMatch(/^(.*)\/(.*) /,e)}}}];r.default=a,e.exports=t.default})?n.apply(t,i):n)||(e.exports=s)},89:function(e,t,r){var n,i,s;i=[t,r(17)],void 0===(s="function"==typeof(n=function(r,n){"use strict";var i;Object.defineProperty(r,"__esModule",{value:!0}),r.default=void 0,n=(i=n)&&i.__esModule?i:{default:i};var s=[{test:[/windows phone/i],describe:function(e){var t=n.default.getFirstMatch(/windows phone (?:os)?\s?(\d+(\.\d+)*)/i,e);return{name:"Windows Phone",version:t}}},{test:[/windows/i],describe:function(e){var t=n.default.getFirstMatch(/Windows ((NT|XP)( \d\d?.\d)?)/i,e),r=n.default.getWindowsVersionName(t);return{name:"Windows",version:t,versionName:r}}},{test:[/macintosh/i],describe:function(e){var t=n.default.getFirstMatch(/mac os x (\d+(\.?_?\d+)+)/i,e).replace(/[_\s]/g,".");return{name:"macOS",version:t}}},{test:[/(ipod|iphone|ipad)/i],describe:function(e){var t=n.default.getFirstMatch(/os (\d+([_\s]\d+)*) like mac os x/i,e).replace(/[_\s]/g,".");return{name:"iOS",version:t}}},{test:function(e){var t=!e.test(/like android/i),r=e.test(/android/i);return t&&r},describe:function(e){var t=n.default.getFirstMatch(/android[\s\/-](\d+(\.\d+)*)/i,e),r=n.default.getAndroidVersionName(t),i={name:"Android",version:t};return r&&(i.versionName=r),i}},{test:[/(web|hpw)[o0]s/i],describe:function(e){var t=n.default.getFirstMatch(/(?:web|hpw)[o0]s\/(\d+(\.\d+)*)/i,e),r={name:"WebOS"};return t&&t.length&&(r.version=t),r}},{test:[/blackberry|\bbb\d+/i,/rim\stablet/i],describe:function(e){var t=n.default.getFirstMatch(/rim\stablet\sos\s(\d+(\.\d+)*)/i,e)||n.default.getFirstMatch(/blackberry\d+\/(\d+([_\s]\d+)*)/i,e)||n.default.getFirstMatch(/\bbb(\d+)/i,e);return{name:"BlackBerry",version:t}}},{test:[/bada/i],describe:function(e){var t=n.default.getFirstMatch(/bada\/(\d+(\.\d+)*)/i,e);return{name:"Bada",version:t}}},{test:[/tizen/i],describe:function(e){var t=n.default.getFirstMatch(/tizen[\/\s](\d+(\.\d+)*)/i,e);return{name:"Tizen",version:t}}},{test:[/linux/i],describe:function(){return{name:"Linux"}}},{test:[/CrOS/],describe:function(){return{name:"Chrome OS"}}},{test:[/PlayStation 4/],describe:function(e){var t=n.default.getFirstMatch(/PlayStation 4[\/\s](\d+(\.\d+)*)/i,e);return{name:"PlayStation 4",version:t}}}];r.default=s,e.exports=t.default})?n.apply(t,i):n)||(e.exports=s)},90:function(e,t,r){var n,i,s;i=[t,r(17)],void 0===(s="function"==typeof(n=function(r,n){"use strict";var i;Object.defineProperty(r,"__esModule",{value:!0}),r.default=void 0,n=(i=n)&&i.__esModule?i:{default:i};var s={tablet:"tablet",mobile:"mobile",desktop:"desktop",tv:"tv"},a=[{test:[/googlebot/i],describe:function(){return{type:"bot",vendor:"Google"}}},{test:[/huawei/i],describe:function(e){var t=n.default.getFirstMatch(/(can-l01)/i,e)&&"Nova",r={type:s.mobile,vendor:"Huawei"};return t&&(r.model=t),r}},{test:[/nexus\s*(?:7|8|9|10).*/i],describe:function(){return{type:s.tablet,vendor:"Nexus"}}},{test:[/ipad/i],describe:function(){return{type:s.tablet,vendor:"Apple",model:"iPad"}}},{test:[/kftt build/i],describe:function(){return{type:s.tablet,vendor:"Amazon",model:"Kindle Fire HD 7"}}},{test:[/silk/i],describe:function(){return{type:s.tablet,vendor:"Amazon"}}},{test:[/tablet/i],describe:function(){return{type:s.tablet}}},{test:function(e){var t=e.test(/ipod|iphone/i),r=e.test(/like (ipod|iphone)/i);return t&&!r},describe:function(e){var t=n.default.getFirstMatch(/(ipod|iphone)/i,e);return{type:s.mobile,vendor:"Apple",model:t}}},{test:[/nexus\s*[0-6].*/i,/galaxy nexus/i],describe:function(){return{type:s.mobile,vendor:"Nexus"}}},{test:[/[^-]mobi/i],describe:function(){return{type:s.mobile}}},{test:function(e){return"blackberry"===e.getBrowserName(!0)},describe:function(){return{type:s.mobile,vendor:"BlackBerry"}}},{test:function(e){return"bada"===e.getBrowserName(!0)},describe:function(){return{type:s.mobile}}},{test:function(e){return"windows phone"===e.getBrowserName()},describe:function(){return{type:s.mobile,vendor:"Microsoft"}}},{test:function(e){var t=Number(String(e.getOSVersion()).split(".")[0]);return"android"===e.getOSName(!0)&&t>=3},describe:function(){return{type:s.tablet}}},{test:function(e){return"android"===e.getOSName(!0)},describe:function(){return{type:s.mobile}}},{test:function(e){return"macos"===e.getOSName(!0)},describe:function(){return{type:s.desktop,vendor:"Apple"}}},{test:function(e){return"windows"===e.getOSName(!0)},describe:function(){return{type:s.desktop}}},{test:function(e){return"linux"===e.getOSName(!0)},describe:function(){return{type:s.desktop}}},{test:function(e){return"playstation 4"===e.getOSName(!0)},describe:function(){return{type:s.tv}}}];r.default=a,e.exports=t.default})?n.apply(t,i):n)||(e.exports=s)},91:function(e,t,r){var n,i,s;i=[t,r(17)],void 0===(s="function"==typeof(n=function(r,n){"use strict";var i;Object.defineProperty(r,"__esModule",{value:!0}),r.default=void 0,n=(i=n)&&i.__esModule?i:{default:i};var s=[{test:function(e){return"microsoft edge"===e.getBrowserName(!0)},describe:function(e){var t=n.default.getFirstMatch(/edge\/(\d+(\.?_?\d+)+)/i,e);return{name:"EdgeHTML",version:t}}},{test:[/trident/i],describe:function(e){var t={name:"Trident"},r=n.default.getFirstMatch(/trident\/(\d+(\.?_?\d+)+)/i,e);return r&&(t.version=r),t}},{test:function(e){return e.test(/presto/i)},describe:function(e){var t={name:"Presto"},r=n.default.getFirstMatch(/presto\/(\d+(\.?_?\d+)+)/i,e);return r&&(t.version=r),t}},{test:function(e){var t=e.test(/gecko/i),r=e.test(/like gecko/i);return t&&!r},describe:function(e){var t={name:"Gecko"},r=n.default.getFirstMatch(/gecko\/(\d+(\.?_?\d+)+)/i,e);return r&&(t.version=r),t}},{test:[/(apple)?webkit\/537\.36/i],describe:function(){return{name:"Blink"}}},{test:[/(apple)?webkit/i],describe:function(e){var t={name:"WebKit"},r=n.default.getFirstMatch(/webkit\/(\d+(\.?_?\d+)+)/i,e);return r&&(t.version=r),t}}];r.default=s,e.exports=t.default})?n.apply(t,i):n)||(e.exports=s)}})});
+
+/***/ }),
+/* 63 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var __decorate = undefined && undefined.__decorate || function (decorators, target, key, desc) {
+    var c = arguments.length,
+        r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc,
+        d;
+    if ((typeof Reflect === "undefined" ? "undefined" : _typeof(Reflect)) === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);else for (var i = decorators.length - 1; i >= 0; i--) {
+        if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    }return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+var PeerConnection_1 = __webpack_require__(22);
+var BrowserSpecific_1 = __webpack_require__(7);
+var PCFactory_1 = __webpack_require__(8);
+var Logger_1 = __webpack_require__(0);
+var VoxSignaling_1 = __webpack_require__(2);
+var CallManager_1 = __webpack_require__(6);
+var RemoteFunction_1 = __webpack_require__(3);
+var CodecSorter_1 = __webpack_require__(40);
+var CallEvents_1 = __webpack_require__(5);
+var CallstatsIo_1 = __webpack_require__(17);
+var Constants_1 = __webpack_require__(10);
+var SDPMuggle_1 = __webpack_require__(16);
+var Client_1 = __webpack_require__(1);
+var ReInviteQ_1 = __webpack_require__(32);
+var index_1 = __webpack_require__(4);
+var EndpointManager_1 = __webpack_require__(23);
+var CallStatsAnalyzer_1 = __webpack_require__(31);
+/**
+ * @hidden
+ */
+var RTCSdpType;
+(function (RTCSdpType) {
+    RTCSdpType[RTCSdpType["offer"] = 'offer'] = "offer";
+    RTCSdpType[RTCSdpType["answer"] = 'answer'] = "answer";
+    RTCSdpType[RTCSdpType["pranswer"] = 'pranswer'] = "pranswer";
+    RTCSdpType[RTCSdpType["rollback"] = 'rollback'] = "rollback";
+})(RTCSdpType || (RTCSdpType = {}));
+/**
+ * @hidden
+ */
+var RTCIceRole;
+(function (RTCIceRole) {
+    RTCIceRole[RTCIceRole["controlling"] = 'controlling'] = "controlling";
+    RTCIceRole[RTCIceRole["controlled"] = 'controlled'] = "controlled";
+})(RTCIceRole || (RTCIceRole = {}));
+//WebRTC implementation of PeerConnection
+/**
+ * @hidden
+ */
+
+var TransreceiverPC = function (_PeerConnection_1$Pee) {
+    _inherits(TransreceiverPC, _PeerConnection_1$Pee);
+
+    function TransreceiverPC(id, mode, videoEnabled, iceServers) {
+        _classCallCheck(this, TransreceiverPC);
+
+        var _this = _possibleConstructorReturn(this, (TransreceiverPC.__proto__ || Object.getPrototypeOf(TransreceiverPC)).call(this, id, mode, videoEnabled));
+
+        _this.iceTimer = null;
+        _this.needTransportRestart = true;
+        /**
+         * Max time to ICE
+         * @type {number}
+         */
+        _this.ICE_TIMEOUT = 20000;
+        /**
+         * max renegotiation time
+         * @type {number}
+         */
+        _this.RENEGOTIATION_TIMEOUT = 15000;
+        _this.canDeliverStats = true;
+        _this._canReInvite = function () {
+            return _this.impl.iceConnectionState === 'connected' || _this.impl.iceConnectionState === 'completed';
+        };
+        _this._needIceRestart = false;
+        var cfg = PCFactory_1.PCFactory.get().iceConfig;
+        var xconf = cfg;
+        if (typeof xconf === 'undefined' || xconf === null) {
+            xconf = { gatherPolicy: 'all', iceServers: [] };
+        }
+        if (iceServers) {
+            xconf.iceServers = iceServers;
+        }
+        xconf.bundlePolicy = 'max-compat';
+        if (BrowserSpecific_1.default.getWSVendor() === "chrome" && Client_1.Client.getInstance().config().experiments && Client_1.Client.getInstance().config().experiments.unifiedPlan) xconf.sdpSemantics = "unified-plan";
+        _this._createImpl(xconf);
+        return _this;
+    }
+
+    _createClass(TransreceiverPC, [{
+        key: "_createImpl",
+        value: function _createImpl(config) {
+            var _this2 = this;
+
+            if (this.mode === PeerConnection_1.PeerConnectionMode.CONFERENCE && BrowserSpecific_1.default.getWSVendor() === 'chrome') {
+                var sdpOptional = {
+                    mandatory: {}, optional: [{ googHighStartBitrate: true }, { googHighBitrate: true }, { googSkipEncodingUnusedStreams: true }, { googScreencastMinBitrate: 400 }, { googVeryHighBitrate: true }, { googCpuOveruseDetection: true }, { googCpuOveruseEncodeUsage: true }, { googCpuUnderuseThreshold: 55 }, { googCpuOveruseThreshold: 85 }]
+                };
+                var xRTCPeerConnection = RTCPeerConnection;
+                this.impl = new xRTCPeerConnection(config, sdpOptional);
+            } else {
+                this.impl = new RTCPeerConnection(config);
+            }
+            if (this.impl.getTransceivers && BrowserSpecific_1.default.getWSVendor() === "firefox") // Check if we have transivers. They better
+                PCFactory_1.PCFactory.hasTransceivers = true;
+            // FF 44 implementation
+            if (typeof this.impl.ontrack !== 'undefined') {
+                this.impl.ontrack = function (e) {
+                    return _this2.onAddTrack(e);
+                };
+            } else if (typeof this.impl['onaddtrack'] !== 'undefined') {
+                this.impl['onaddtrack'] = function (e) {
+                    return _this2.onAddTrack(e);
+                };
+            } else {
+                this.impl['onaddstream'] = function (e) {
+                    return _this2.onAddStream(e);
+                };
+            }
+            this.impl.onicecandidate = function (ev) {
+                _this2.onICECandidate(ev['candidate']);
+            };
+            this.impl.oniceconnectionstatechange = function (e) {
+                if (_this2.impl.iceConnectionState === 'completed' || _this2.impl.iceConnectionState === 'connected') {
+                    _this2.iceTimer && clearTimeout(_this2.iceTimer);
+                    _this2.iceTimer = null;
+                    if (_this2.reInviteQ) _this2.reInviteQ.runNext();
+                }
+                if (_this2.impl.iceConnectionState === 'failed') {
+                    _this2.renegotiationInProgress = false;
+                    _this2._runReinvite(true);
+                }
+            };
+            this.rtpSenders = [];
+            this.renegotiationInProgress = false;
+            this.impl.onnegotiationneeded = function (e) {
+                return _this2.onRenegotiation();
+            };
+            this.impl.onsignalingstatechange = function (e) {
+                return _this2.onSignalingStateChange();
+            };
+            this.impl.oniceconnectionstatechange = function (e) {
+                return _this2.onConnectionChange();
+            };
+            this.iceRole = RTCIceRole.controlling;
+            this._remoteStreams = [];
+            this.banReinviteAnswer = false;
+            this._call = CallManager_1.CallManager.get().calls[this.id];
+            //Check if call not active, set HOLD
+            if (typeof this._call != 'undefined') this.onHold = !this._call.active();else this.onHold = false;
+            this.rtcCollectingCycle = setInterval(function () {
+                _this2.getPCStats();
+            }, CallManager_1.CallManager.get().rtcStatsInquiryInterval);
+            // Callstats.io integration
+            if (typeof this._call !== 'undefined') {
+                var CSIOID = this._call.headers()[Constants_1.Constants.CALLSTATSIOID_HEADER];
+                if (typeof CSIOID === 'undefined') CSIOID = this._call.id();
+                CallstatsIo_1.CallstatsIo.get().addNewFabric(this.impl, this._call.number(), this.videoEnabled ? CallstatsIo_1.CallstatsIoFabricUsage.multiplex : CallstatsIo_1.CallstatsIoFabricUsage.audio, CSIOID);
+            }
+            this.needTransportRestart = false;
+            if (this.id !== '_default' && CallManager_1.CallManager.get().calls[this.id]) this.reInviteQ = new ReInviteQ_1.ReInviteQ(CallManager_1.CallManager.get().calls[this.id], this._canReInvite);
+        }
+    }, {
+        key: "onSignalingStateChange",
+        value: function onSignalingStateChange() {
+            this.logger.info('Signal state changed to ' + this.impl.signalingState + ' for PC: ' + this.id);
+            if (this.impl.signalingState === 'stable') {
+                //TODO: there was screen sharing
+            }
+        }
+    }, {
+        key: "getPCStats",
+        value: function getPCStats() {
+            var _this3 = this;
+
+            BrowserSpecific_1.default.getRTCStats(this.impl).then(function (res) {
+                return CallManager_1.CallManager.get().callStats.sendStatistics(_this3._call, res);
+            });
+        }
+    }, {
+        key: "onConnectionChange",
+        value: function onConnectionChange() {
+            if (this.impl.iceConnectionState === 'completed') {
+                if (typeof this._call !== 'undefined') {
+                    this._call.dispatchEvent({ name: 'ICECompleted', call: this._call });
+                }
+            }
+            if (this.impl.iceConnectionState === 'completed' || this.impl.iceConnectionState === 'connected') {
+                this.iceTimer && clearTimeout(this.iceTimer);
+                this.iceTimer = null;
+                if (this.reInviteQ) this.reInviteQ.runNext();
+            }
+            CallStatsAnalyzer_1.CallStatsAnalyzer.get().checkICEConnection(this._call, this.impl.iceConnectionState);
+        }
+        /**
+         * Testing variant for renegotiation function
+         *
+         */
+
+    }, {
+        key: "onRenegotiation",
+        value: function onRenegotiation() {
+            if (typeof this.impl === 'undefined') return;
+            if (this.impl.connectionState === 'disconnected' || this.impl.connectionState === 'failed') {
+                this.logger.info('Renegotiation requested on closed PeerConnection');
+                return;
+            }
+            if (this.impl.localDescription === null) {
+                this.logger.info('Renegotiation needed, but no local SD. Skipping');
+                return;
+            }
+            if (this.impl.iceConnectionState !== 'connected' && this.impl.iceConnectionState !== 'completed') {
+                this.logger.info('Renegotiation requested while ice state is ' + this.impl.iceConnectionState + '. Postponing');
+                setTimeout(this.onRenegotiation, 100);
+                return;
+            }
+            if (this.renegotiationInProgress) {
+                this.logger.info('Renegotiation in progress. Queueing');
+                return;
+            } else {
+                this.logger.info('Renegotiation started');
+            }
+            this._runReinvite();
+        }
+    }, {
+        key: "_getLocalOfferRegular",
+        value: function _getLocalOfferRegular() {
+            var _this4 = this;
+
+            this.iceRole = RTCIceRole.controlling;
+            return new Promise(function (resolve, reject) {
+                var rtcOfferOptions = _this4.getReceiveOptions();
+                _this4.impl.createOffer(rtcOfferOptions).then(function (sdp) {
+                    _this4.logger.info("_getLocalOfferRegular(), created local SDP: \n" + sdp.sdp);
+                    var tempsdp = { type: sdp.type, sdp: sdp.sdp };
+                    tempsdp = PCFactory_1.PCFactory.get().addBandwidthParams(tempsdp);
+                    // remove transportCC
+                    if (Client_1.Client.getInstance().config().experiments && Client_1.Client.getInstance().config().experiments.removeTransportCC) {
+                        tempsdp = SDPMuggle_1.SDPMuggle.removeTransportCC(tempsdp);
+                    }
+                    tempsdp = SDPMuggle_1.SDPMuggle.removeDoublePT(tempsdp);
+                    // add xAS
+                    if (Client_1.Client.getInstance().config().experiments && Client_1.Client.getInstance().config().experiments.xas) {
+                        tempsdp = SDPMuggle_1.SDPMuggle.addXAS(tempsdp);
+                    }
+                    return _this4.codecRearrange(tempsdp);
+                }).then(function (sdp) {
+                    _this4.srcLocalSDP = sdp.sdp;
+                    _this4.logger.info("_getLocalOfferRegular(), set local SDP: \n" + sdp.sdp);
+                    return _this4.impl.setLocalDescription(sdp);
+                }).then(function () {
+                    resolve(_this4.impl.localDescription);
+                }).catch(function (e) {
+                    reject(e);
+                });
+            });
+        }
+    }, {
+        key: "getReceiveOptions",
+        value: function getReceiveOptions() {
+            return {
+                'offerToReceiveAudio': !this.onHold,
+                'offerToReceiveVideo': this.videoEnabled.receiveVideo && !this.onHold
+            };
+        }
+    }, {
+        key: "updateHoldState",
+        value: function updateHoldState() {
+            var _this5 = this;
+
+            this.impl.getTransceivers().forEach(function (transreceiver) {
+                if (transreceiver.sender.track) {
+                    if (transreceiver.sender.track.kind === 'audio') transreceiver.sender.track.enabled = !_this5.onHold && !_this5.muteMicState;else transreceiver.sender.track.enabled = !_this5.onHold;
+                }
+            });
+        }
+        /**
+         * Callback to add new local candidates to send
+         * @param cand
+         */
+
+    }, {
+        key: "onICECandidate",
+        value: function onICECandidate(cand) {
+            if (cand && cand !== null) {
+                this.sendLocalCandidateToPeer('a=' + cand.candidate, cand.sdpMLineIndex);
+            } else {
+                this.logger.info('End of candidates');
+            }
+        }
+        /**
+         * Callback to add new Track
+         * @param e
+         */
+
+    }, {
+        key: "onAddTrack",
+        value: function onAddTrack(e) {
+            if (this._call) {
+                EndpointManager_1.EndpointManager.get().addTrack(this._call, e.track);
+            }
+        }
+    }, {
+        key: "onAddStream",
+        value: function onAddStream(e) {
+            if (this._call) {
+                EndpointManager_1.EndpointManager.get().addStream(this._call, e.stream);
+            }
+        }
+    }, {
+        key: "_processRemoteAnswer",
+        value: function _processRemoteAnswer(headers, sdp) {
+            var _this6 = this;
+
+            if (this._pendingOffer) {
+                return new Promise(function (resolve, reject) {
+                    _this6.logger.info("_processRemoteAnswer(), set local SDP: \n" + _this6._pendingOffer.sdp);
+                    _this6.impl.setLocalDescription(_this6._pendingOffer).then(function () {
+                        resolve(_this6._processRemoteAnswer(headers, sdp));
+                    });
+                    _this6._pendingOffer = void 0;
+                });
+            } else {
+                if (sdp.length === 0 && this._call) {
+                    this.logger.error('Empty SDP from server. Call will be terminated.');
+                    this._call.hangup({ 'X-WebRTCError': 'no sdp' });
+                    return;
+                }
+                this.iceTimer = setTimeout(function () {
+                    _this6._call.notifyICETimeout();
+                }, this.ICE_TIMEOUT);
+                this.pendingEvent = [headers, sdp];
+                if (this.impl.remoteDescription !== null) if (this.impl.remoteDescription.sdp != '') return;
+                var d = { sdp: sdp, type: RTCSdpType.answer };
+                this.srcRemoteSDP = sdp;
+                d = SDPMuggle_1.SDPMuggle.removeTIAS(d);
+                this.logger.info("_processRemoteAnswer(), set remote SDP: \n" + d.sdp);
+                return this.impl.setRemoteDescription(d).then(function (_) {
+                    if (_this6._needIceRestart) {
+                        _this6._runReinvite(true);
+                    }
+                });
+            }
+        }
+    }, {
+        key: "_getLocalOffer",
+        value: function _getLocalOffer() {
+            if (BrowserSpecific_1.default.getWSVendor() === 'firefox' && this.impl.remoteDescription && this.impl.remoteDescription.sdp && this.impl.remoteDescription.sdp.indexOf('VIMS') === -1) {
+                return this._getLocalOfferFF();
+            } else {
+                return this._getLocalOfferRegular();
+            }
+        }
+    }, {
+        key: "_getLocalOfferFF",
+        value: function _getLocalOfferFF() {
+            var _this7 = this;
+
+            this.iceRole = RTCIceRole.controlling;
+            return new Promise(function (resolve, reject) {
+                var rtcOfferOptions = _this7.getReceiveOptions();
+                _this7.impl.createOffer(rtcOfferOptions).then(function (sdp) {
+                    _this7.logger.info("_getLocalOfferFF(), created local SDP: \n" + sdp.sdp);
+                    var tempsdp = { type: sdp.type, sdp: sdp.sdp };
+                    tempsdp = PCFactory_1.PCFactory.get().addBandwidthParams(tempsdp);
+                    // remove transportCC
+                    if (Client_1.Client.getInstance().config().experiments && Client_1.Client.getInstance().config().experiments.removeTransportCC) {
+                        tempsdp = SDPMuggle_1.SDPMuggle.removeTransportCC(tempsdp);
+                    }
+                    tempsdp = SDPMuggle_1.SDPMuggle.removeDoublePT(tempsdp);
+                    // add xAS
+                    if (Client_1.Client.getInstance().config().experiments && Client_1.Client.getInstance().config().experiments.xas) {
+                        tempsdp = SDPMuggle_1.SDPMuggle.addXAS(tempsdp);
+                    }
+                    return _this7.codecRearrange(tempsdp);
+                }).then(function (sdp) {
+                    _this7.srcLocalSDP = sdp.sdp;
+                    _this7._pendingOffer = sdp;
+                    resolve(sdp);
+                }).catch(function (e) {
+                    reject(e);
+                });
+            });
+        }
+    }, {
+        key: "_runReinvite",
+        value: function _runReinvite() {
+            var _this8 = this;
+
+            var restart = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
+
+            if (this.renegotiationInProgress === false) {
+                this.renegotiationInProgress = true;
+                var offerOption = {};
+                if (!(this.impl.getTransceivers && BrowserSpecific_1.default.getWSVendor() === 'firefox')) offerOption = this.getReceiveOptions();
+                if (restart) {
+                    offerOption.iceRestart = true;
+                }
+                this.logger.trace(JSON.stringify(offerOption));
+                this.updateHoldState();
+                this.impl.createOffer(offerOption).then(function (sdp) {
+                    _this8.logger.info("_runReinvite(), created local SDP: \n" + sdp.sdp);
+                    return _this8.codecRearrange(sdp);
+                }).then(function (sdp) {
+                    var tempsdp = { type: sdp.type, sdp: sdp.sdp };
+                    tempsdp = PCFactory_1.PCFactory.get().addBandwidthParams(tempsdp);
+                    tempsdp = SDPMuggle_1.SDPMuggle.removeTelephoneEvents(tempsdp);
+                    tempsdp = SDPMuggle_1.SDPMuggle.removeDoubleOpus(tempsdp);
+                    tempsdp = SDPMuggle_1.SDPMuggle.removeDoublePT(tempsdp);
+                    tempsdp = SDPMuggle_1.SDPMuggle.fixVideoRecieve(tempsdp, _this8.videoEnabled.receiveVideo);
+                    // remove transportCC
+                    if (Client_1.Client.getInstance().config().experiments && Client_1.Client.getInstance().config().experiments.removeTransportCC) {
+                        tempsdp = SDPMuggle_1.SDPMuggle.removeTransportCC(tempsdp);
+                    }
+                    // add xAS
+                    if (Client_1.Client.getInstance().config().experiments && Client_1.Client.getInstance().config().experiments.xas) {
+                        tempsdp = SDPMuggle_1.SDPMuggle.addXAS(tempsdp);
+                    }
+                    return tempsdp;
+                }).then(function (sdp) {
+                    _this8.srcLocalSDP = sdp.sdp;
+                    _this8.pendingOffer = sdp;
+                    return sdp;
+                }).then(function () {
+                    var extra = { tracks: _this8.getTrackKind() };
+                    VoxSignaling_1.VoxSignaling.get().callRemoteFunction(RemoteFunction_1.RemoteFunction.reInvite, _this8._call.id(), {}, _this8.pendingOffer.sdp, extra);
+                }).catch(function (e) {
+                    _this8.logger.error('Error when renegatiation start ' + e.message);
+                });
+            } else {
+                this.logger.error('Another renegatiation in progress');
+            }
+        }
+    }, {
+        key: "_getLocalAnswer",
+        value: function _getLocalAnswer() {
+            var _this9 = this;
+
+            this.iceRole = RTCIceRole.controlled;
+            return new Promise(function (resolve, reject) {
+                var rtcAnswerOptions = { mandatory: _this9.getReceiveOptions() };
+                _this9.impl.createAnswer(rtcAnswerOptions).then(function (sdp) {
+                    _this9.logger.info("_getLocalAnswer(), created local SDP: \n" + sdp.sdp);
+                    var tempsdp = { type: sdp.type, sdp: sdp.sdp };
+                    tempsdp = PCFactory_1.PCFactory.get().addBandwidthParams(tempsdp);
+                    tempsdp = SDPMuggle_1.SDPMuggle.removeDoublePT(tempsdp);
+                    tempsdp = SDPMuggle_1.SDPMuggle.fixVideoRecieve(tempsdp, _this9._call.settings.videoDirections.receiveVideo);
+                    // remove transportCC
+                    if (Client_1.Client.getInstance().config().experiments && Client_1.Client.getInstance().config().experiments.removeTransportCC) {
+                        tempsdp = SDPMuggle_1.SDPMuggle.removeTransportCC(tempsdp);
+                    }
+                    // add xAS
+                    if (Client_1.Client.getInstance().config().experiments && Client_1.Client.getInstance().config().experiments.xas) {
+                        tempsdp = SDPMuggle_1.SDPMuggle.addXAS(tempsdp);
+                    }
+                    return _this9.codecRearrange(tempsdp);
+                }).then(function (sdp) {
+                    _this9.srcLocalSDP = sdp.sdp;
+                    _this9.logger.info("_getLocalAnswer(), set local SDP: \n" + sdp.sdp);
+                    return _this9.impl.setLocalDescription(sdp);
+                }).then(function () {
+                    resolve({ type: RTCSdpType.answer, sdp: _this9.impl.localDescription.sdp });
+                }).catch(function (e) {
+                    reject(e);
+                });
+            });
+        }
+    }, {
+        key: "_setRemoteDescription",
+        value: function _setRemoteDescription(sdp) {
+            if (sdp.length === 0 && this._call) {
+                this.logger.error('Empty SDP from server. Call will be terminated.');
+                this._call.hangup({ 'X-WebRTCError': 'no sdp' });
+                return;
+            }
+            var d = new RTCSessionDescription({ sdp: sdp, type: RTCSdpType.offer });
+            d = SDPMuggle_1.SDPMuggle.removeTIAS(d);
+            // remove transportCC
+            if (Client_1.Client.getInstance().config().experiments && Client_1.Client.getInstance().config().experiments.removeTransportCC) {
+                d = SDPMuggle_1.SDPMuggle.removeTransportCC(d);
+            }
+            this.srcRemoteSDP = sdp;
+            this.logger.info("_setRemoteDescription(), set remote SDP: \n" + d.sdp);
+            return this.impl.setRemoteDescription(d);
+        }
+    }, {
+        key: "_processRemoteOffer",
+        value: function _processRemoteOffer(sdp) {
+            var _this10 = this;
+
+            if (sdp.length === 0 && this._call) {
+                this.logger.error('Empty SDP from server. Call will be terminated.');
+                this._call.hangup({ 'X-WebRTCError': 'no sdp' });
+                return;
+            }
+            this.iceRole = RTCIceRole.controlled;
+            return new Promise(function (resolve, reject) {
+                var d = new RTCSessionDescription({ sdp: sdp, type: RTCSdpType.offer });
+                // remove transportCC
+                if (Client_1.Client.getInstance().config().experiments && Client_1.Client.getInstance().config().experiments.removeTransportCC) {
+                    d = SDPMuggle_1.SDPMuggle.removeTransportCC(d);
+                }
+                _this10.srcRemoteSDP = sdp;
+                d = SDPMuggle_1.SDPMuggle.removeTIAS(d);
+                d = SDPMuggle_1.SDPMuggle.fixFFMIDBug(d);
+                _this10.logger.info("_processRemoteOffer(), set remote SDP: \n" + d.sdp);
+                _this10.impl.setRemoteDescription(d).then(function () {
+                    var rtcAnswerOptions = { mandatory: _this10.getReceiveOptions() };
+                    return _this10.impl.createAnswer(rtcAnswerOptions);
+                }).then(function (sdp) {
+                    _this10.logger.info("_processRemoteOffer(), created local SDP: \n" + sdp.sdp);
+                    // remove transportCC
+                    if (Client_1.Client.getInstance().config().experiments && Client_1.Client.getInstance().config().experiments.removeTransportCC) {
+                        sdp = SDPMuggle_1.SDPMuggle.removeTransportCC(sdp);
+                    }
+                    sdp = SDPMuggle_1.SDPMuggle.removeDoublePT(sdp);
+                    // add xAS
+                    if (Client_1.Client.getInstance().config().experiments && Client_1.Client.getInstance().config().experiments.xas) {
+                        sdp = SDPMuggle_1.SDPMuggle.addXAS(sdp);
+                    }
+                    return _this10.codecRearrange(sdp);
+                }).then(function (sdp) {
+                    _this10.srcLocalSDP = sdp.sdp;
+                    _this10.logger.info("_processRemoteOffer(), set local SDP: \n" + sdp.sdp);
+                    return _this10.impl.setLocalDescription(sdp);
+                }).then(function () {
+                    // let receiveChannel = (this.impl as any).createDataChannel('title',{ordered:true});
+                    // console.error('DATA CHANNEL CREATING');
+                    // receiveChannel.onmessage = (ev) => {
+                    //   console.error('NEW DATA CHANNEL MESSAGE');
+                    //   console.error((event as any).data);
+                    // };
+                    // receiveChannel.onopen = () => {
+                    //   console.error('DATA CHANNEL OPPENED');
+                    // };
+                    // receiveChannel.onclose = () => {
+                    //   console.error('DATA CHANNEL CLOSED');
+                    // };
+                    resolve(_this10.impl.localDescription.sdp);
+                }).catch(function (e) {
+                    reject(e);
+                });
+            });
+        }
+        /**
+         * Close curent PeerConnection
+         *
+         * @private
+         */
+
+    }, {
+        key: "_close",
+        value: function _close() {
+            var _this11 = this;
+
+            clearInterval(this.rtcCollectingCycle);
+            this.impl.onnegotiationneeded = null;
+            var appConfig = Client_1.Client.getInstance().config();
+            if (this.impl.removeTrack) {
+                this.rtpSenders.forEach(function (sender) {
+                    _this11.impl.removeTrack(sender);
+                });
+                index_1.default.StreamManager.get().remCallStream(this._call);
+            } else {
+                index_1.default.StreamManager.get().remCallStream(this._call);
+                this.impl['getLocalStreams']().forEach(function (stream) {
+                    _this11.impl['removeStream'](stream);
+                });
+            }
+            this.impl.close();
+            if (typeof this._call !== 'undefined') CallstatsIo_1.CallstatsIo.get().sendFabricEvent(this.impl, CallstatsIo_1.CallstatsIoFabricEvent.fabricTerminated, this._call.id());
+            this._localStream = null;
+            this._remoteStreams = null;
+        }
+        /**
+         * Add remote candidate from peer
+         *
+         * @param candidate
+         * @param mLineIndex
+         * @returns {Promise<void>}
+         * @private
+         */
+
+    }, {
+        key: "_addRemoteCandidate",
+        value: function _addRemoteCandidate(candidate, mLineIndex) {
+            var _this12 = this;
+
+            return new Promise(function (resolve, reject) {
+                try {
+                    _this12.impl.addIceCandidate(new RTCIceCandidate({
+                        candidate: candidate.substring(2),
+                        sdpMLineIndex: mLineIndex
+                    })).then(function () {
+                        resolve();
+                    }).catch(function () {
+                        resolve();
+                    });
+                } catch (e) {
+                    resolve();
+                }
+            });
+        }
+        /**
+         * Action for ReInvite message from server
+         * if incoming sdp empty: start renegotiation - else create answer
+         *
+         * @author Igor Sheko
+         * @param headers
+         * @param sdp
+         * @returns {Promise<void>|Promise}
+         * @private
+         */
+
+    }, {
+        key: "_handleReinvite",
+        value: function _handleReinvite(headers, sdp) {
+            var _this13 = this;
+
+            if (sdp.length === 0 && this._call) {
+                this.logger.error('Empty SDP from server. Call will be terminated.');
+                this._call.hangup({ 'X-WebRTCError': 'no sdp' });
+                return;
+            }
+            return new Promise(function (resolve, reject) {
+                if (_this13.banReinviteAnswer) {
+                    reject(new Error());
+                }
+                if (_this13.renegotiationInProgress === false) {
+                    _this13.renegotiationInProgress = true;
+                    var d = { sdp: sdp, type: RTCSdpType.offer };
+                    // remove transportCC
+                    if (Client_1.Client.getInstance().config().experiments && Client_1.Client.getInstance().config().experiments.removeTransportCC) {
+                        d = SDPMuggle_1.SDPMuggle.removeTransportCC(d);
+                    }
+                    _this13.srcRemoteSDP = sdp;
+                    d = SDPMuggle_1.SDPMuggle.removeTIAS(d);
+                    _this13.logger.info("_handleReinvite(), set remote SDP: \n" + d.sdp);
+                    _this13.impl.setRemoteDescription(d).then(function () {
+                        var rtcAnswerOptions = { mandatory: _this13.getReceiveOptions() };
+                        _this13.impl.createAnswer(rtcAnswerOptions).then(function (localSDP) {
+                            _this13.logger.info("_handleReinvite(), created local SDP: \n" + localSDP.sdp);
+                            var tempsdp = {
+                                type: localSDP.type,
+                                sdp: localSDP.sdp
+                            };
+                            tempsdp = SDPMuggle_1.SDPMuggle.removeDoubleOpus(tempsdp);
+                            tempsdp = SDPMuggle_1.SDPMuggle.removeDoublePT(tempsdp);
+                            tempsdp = SDPMuggle_1.SDPMuggle.fixVideoRecieve(tempsdp, _this13.videoEnabled.receiveVideo);
+                            // remove transportCC
+                            if (Client_1.Client.getInstance().config().experiments && Client_1.Client.getInstance().config().experiments.removeTransportCC) {
+                                tempsdp = SDPMuggle_1.SDPMuggle.removeTransportCC(tempsdp);
+                            }
+                            // add xAS
+                            if (Client_1.Client.getInstance().config().experiments && Client_1.Client.getInstance().config().experiments.xas) {
+                                tempsdp = SDPMuggle_1.SDPMuggle.addXAS(tempsdp);
+                            }
+                            _this13.srcLocalSDP = tempsdp.sdp;
+                            try {
+                                _this13.logger.info("_handleReinvite(), set local SDP: \n" + tempsdp.sdp);
+                                _this13.impl.setLocalDescription(tempsdp).then(function () {
+                                    var extra = { tracks: _this13.getTrackKind() };
+                                    VoxSignaling_1.VoxSignaling.get().callRemoteFunction(RemoteFunction_1.RemoteFunction.acceptReInvite, _this13._call.id(), headers, _this13.impl.localDescription.sdp, extra);
+                                    _this13.renegotiationInProgress = false;
+                                    _this13._call.dispatchEvent({ name: CallEvents_1.CallEvents.Updated, result: true, call: _this13._call });
+                                    _this13.updateHoldState();
+                                    setTimeout(function (_) {
+                                        return _this13._fixTransreceiver();
+                                    }, 0);
+                                    resolve();
+                                });
+                            } catch (e) {
+                                _this13.renegotiationInProgress = false;
+                                setTimeout(function (_) {
+                                    return _this13._fixTransreceiver();
+                                }, 0);
+                                reject(e);
+                            }
+                        });
+                    });
+                } else if (_this13.renegotiationInProgress === true) {
+                    //get remoteAnswer
+                    var _d = { sdp: sdp, type: RTCSdpType.answer };
+                    _this13.renegotiationInProgress = false;
+                    // remove transportCC
+                    if (Client_1.Client.getInstance().config().experiments && Client_1.Client.getInstance().config().experiments.removeTransportCC) {
+                        _d = SDPMuggle_1.SDPMuggle.removeTransportCC(_d);
+                    }
+                    // add xAS
+                    if (Client_1.Client.getInstance().config().experiments && Client_1.Client.getInstance().config().experiments.xas) {
+                        _d = SDPMuggle_1.SDPMuggle.addXAS(_d);
+                    }
+                    _this13.srcRemoteSDP = sdp;
+                    _d = SDPMuggle_1.SDPMuggle.removeTIAS(_d);
+                    //d = SDPMuggle.fixFMTP(d);
+                    _this13.logger.info("_handleReinvite(), set local SDP: \n" + _this13.pendingOffer.sdp);
+                    _this13.impl.setLocalDescription(_this13.pendingOffer).then(function () {
+                        try {
+                            _this13.logger.info("_handleReinvite(), set remote SDP: \n" + _d.sdp);
+                            _this13.impl.setRemoteDescription(_d).then(function () {
+                                _this13._call.dispatchEvent({ name: CallEvents_1.CallEvents.Updated, result: true, call: _this13._call });
+                                _this13.updateHoldState();
+                                setTimeout(function (_) {
+                                    return _this13._fixTransreceiver();
+                                }, 0);
+                                resolve();
+                            });
+                        } catch (e) {
+                            _this13._call.dispatchEvent({ name: CallEvents_1.CallEvents.Updated, result: false, call: _this13._call });
+                            _this13.renegotiationInProgress = false;
+                            _this13.logger.error(JSON.stringify(e));
+                            setTimeout(function (_) {
+                                return _this13._fixTransreceiver();
+                            }, 0);
+                            reject(e);
+                        }
+                        clearTimeout(_this13.renegotiationTimer);
+                    });
+                } else {
+                    reject(new Error('Universe was broken!'));
+                }
+            });
+        }
+    }, {
+        key: "_fixTransreceiver",
+        value: function _fixTransreceiver() {
+            if (this.impl && this.impl.getTransceivers) {
+                this.impl.getTransceivers().forEach(function (transceivers) {
+                    if (transceivers.currentDirection === 'inactive' && transceivers.receiver.track && !transceivers.sender.track) {
+                        if (transceivers.receiver.track.onended) {
+                            transceivers.receiver.track.stop();
+                            transceivers.receiver.track.onended(null);
+                        }
+                    }
+                });
+            }
+        }
+        /**
+         * Promise to rearrange codec by user
+         *
+         * @author Igor Sheko
+         * @param sdp
+         * @returns {Promise<RTCSessionDescription>|Promise}
+         */
+
+    }, {
+        key: "codecRearrange",
+        value: function codecRearrange(sdp) {
+            var _this14 = this;
+
+            return new Promise(function (resolve, reject) {
+                var call = CallManager_1.CallManager.get().calls[_this14.id];
+                if (typeof call !== 'undefined') {
+                    var codecSorter = new CodecSorter_1.CodecSorter(sdp.sdp);
+                    var userCodecList = codecSorter.getUserCodecList();
+                    if (typeof call.rearangeCodecs !== 'undefined') {
+                        call.rearangeCodecs(userCodecList, call.settings.incoming).then(function (newCodecList) {
+                            codecSorter.setUserCodecList(newCodecList);
+                            resolve({ type: sdp.type, sdp: codecSorter.getSDP() });
+                        }, function (e) {
+                            _this14.logger.error(JSON.stringify(e));
+                            reject(e);
+                        });
+                    } else {
+                        codecSorter.setUserCodecList(userCodecList);
+                        _this14.logger.info('No sdp codecs transformer registered');
+                        resolve({ type: sdp.type, sdp: codecSorter.getSDP() });
+                    }
+                } else {
+                    resolve(sdp);
+                }
+            });
+        }
+        /**
+         * Sed DTMF via WebRTC if can
+         *
+         * @author Igor Sheko
+         * @param key
+         * @param duration
+         * @param gap
+         * @private
+         */
+
+    }, {
+        key: "_sendDTMF",
+        value: function _sendDTMF(key, duration, gap) {
+            if (typeof this.dtmfSender !== 'undefined') {
+                this.dtmfSender.insertDTMF(key, duration, gap);
+            }
+        }
+        /**
+         * Hold call by remove local stream and start renegotiation process
+         * Hold call by add local stream and start renegotiation process
+         * @param newState
+         * @returns {undefined}
+         * @private
+         */
+
+    }, {
+        key: "_hold",
+        value: function _hold(newState) {
+            CallstatsIo_1.CallstatsIo.get().sendFabricEvent(this.impl, newState ? CallstatsIo_1.CallstatsIoFabricEvent.fabricHold : CallstatsIo_1.CallstatsIoFabricEvent.fabricResume, this._call.id());
+            this.onHold = newState;
+            this.impl.getTransceivers().forEach(function (transceiver) {
+                if (newState) transceiver.direction = "sendonly";else transceiver.direction = "sendrecv";
+            });
+        }
+    }, {
+        key: "_getDirections",
+        value: function _getDirections() {
+            var directions = {};
+            directions['local'] = SDPMuggle_1.SDPMuggle.detectDirections(this.impl.localDescription.sdp);
+            directions['remote'] = SDPMuggle_1.SDPMuggle.detectDirections(this.impl.remoteDescription.sdp);
+            return directions;
+        }
+    }, {
+        key: "_getStreamActivity",
+        value: function _getStreamActivity() {
+            var status = {};
+            status['local'] = this.getMediaActivity(this.impl['getLocalStreams']());
+            status['remote'] = this.getMediaActivity(this.impl['getRemoteStreams']());
+            return status;
+        }
+    }, {
+        key: "getMediaActivity",
+        value: function getMediaActivity(streams) {
+            return streams.map(function (item) {
+                return item.getTracks().map(function (x_item) {
+                    return {
+                        id: x_item.id,
+                        kind: x_item.kind,
+                        mutted: x_item.muted,
+                        active: x_item.enabled,
+                        label: x_item.label
+                    };
+                });
+            });
+        }
+    }, {
+        key: "_hdnFRSPrep",
+        value: function _hdnFRSPrep() {
+            this.banReinviteAnswer = true;
+        }
+    }, {
+        key: "_hdnFRS",
+        value: function _hdnFRS() {
+            this.renegotiationInProgress = false;
+            this.onRenegotiation();
+        }
+        /**
+         * @hidden
+         * @return {string}
+         * @private
+         */
+
+    }, {
+        key: "_traceName",
+        value: function _traceName() {
+            return 'TransreceiverPC';
+        }
+    }, {
+        key: "hasLocalAudio",
+        value: function hasLocalAudio() {
+            return this.impl['getLocalStreams']().some(function (stream) {
+                if (stream.getAudioTracks().length) return true;else return false;
+            });
+        }
+    }, {
+        key: "hasLocalVideo",
+        value: function hasLocalVideo() {
+            var _this15 = this;
+
+            return this.impl['getLocalStreams']().some(function (stream) {
+                return stream.getVideoTracks().some(function (track) {
+                    if (!_this15.shareScreenMedia || !_this15.shareScreenMedia.some(function (sStream) {
+                        return sStream.getTracks().some(function (sTrack) {
+                            return sTrack.id === track.id;
+                        });
+                    })) {
+                        return true;
+                    } else {
+                        return false;
+                    }
+                });
+            });
+        }
+    }, {
+        key: "enableVideo",
+        value: function enableVideo(flag) {
+            var sharingList = [];
+            if (this._call) sharingList = index_1.default.StreamManager.get()._getScreenSharing(this._call) || [];
+            var sharingIds = [];
+            sharingList.forEach(function (sharingData) {
+                return sharingData.stream.getTracks().forEach(function (track) {
+                    return sharingIds.push(track.id);
+                });
+            });
+            this.impl['getLocalStreams']().forEach(function (stream) {
+                stream.getVideoTracks().forEach(function (track) {
+                    if (!sharingIds.some(function (id) {
+                        return track.id === id;
+                    })) {
+                        track.enabled = flag;
+                    }
+                });
+            });
+        }
+    }, {
+        key: "getTransceivers",
+        value: function getTransceivers() {
+            if (this.impl.getTransceivers) return this.impl.getTransceivers();else return [];
+        }
+    }, {
+        key: "getRemoteDescription",
+        value: function getRemoteDescription() {
+            if (this.impl.remoteDescription && this.impl.remoteDescription.sdp) return this.impl.remoteDescription.sdp;else return '';
+        }
+    }, {
+        key: "_addCustomMedia",
+        value: function _addCustomMedia(stream) {
+            var _this16 = this;
+
+            if (!stream || this.impl.signalingState === 'closed') return;
+            if (BrowserSpecific_1.default.getWSVendor() === 'firefox') {
+                stream.getTracks().forEach(function (track) {
+                    var newStream = new MediaStream([track]);
+                    _this16.rtpSenders.push(_this16.impl.addTrack(track, newStream));
+                    _this16.onRenegotiation();
+                });
+            } else {
+                this.impl['addStream'](stream);
+            }
+            if (!this.dtmfSender && this._call) {
+                var newSender = BrowserSpecific_1.default.getDTMFSender(this.impl, this._call.id());
+                if (newSender) this.dtmfSender = newSender;
+            }
+        }
+    }, {
+        key: "_removeCustomMedia",
+        value: function _removeCustomMedia(stream) {
+            var _this17 = this;
+
+            if (!stream) return;
+            if (BrowserSpecific_1.default.getWSVendor() === 'firefox') {
+                if (this.impl.getTransceivers) {
+                    var transceiverList = this.impl.getTransceivers();
+                    transceiverList.forEach(function (transceiver) {
+                        if (stream.getTracks().find(function (track) {
+                            return track.id === transceiver.sender.track.id;
+                        })) {
+                            transceiver.stop();
+                        }
+                    });
+                } else {
+                    this.impl.getSenders().forEach(function (sender) {
+                        if (stream.getTracks().indexOf(sender.track) !== -1) _this17.impl.removeTrack(sender);
+                    });
+                }
+            } else {
+                this.impl['removeStream'](stream);
+            }
+        }
+    }, {
+        key: "_updateCustomMedia",
+        value: function _updateCustomMedia(stream) {
+            var _this18 = this;
+
+            if (!stream || this.impl.signalingState === 'closed') return;
+            stream.getTracks().forEach(function (track) {
+                var sender = _this18.impl.getSenders().find(function (sender) {
+                    return sender.track && sender.track.kind === track.kind;
+                });
+                if (sender) sender.replaceTrack(track);
+            });
+        }
+    }, {
+        key: "_fixFFSoundBug",
+        value: function _fixFFSoundBug() {
+            var _this19 = this;
+
+            if (BrowserSpecific_1.default.getWSVendor() === 'firefox' && PCFactory_1.PCFactory.hasTransceivers) {
+                setTimeout(function () {
+                    if (_this19.impl.getSenders) {
+                        var senders = _this19.impl.getSenders();
+                        senders.forEach(function (sender) {
+                            if (sender.replaceTrack) {
+                                var track = sender.track;
+                                sender.replaceTrack(track);
+                            }
+                        });
+                    }
+                }, 1000);
+            }
+        }
+    }, {
+        key: "getConfiguration",
+        value: function getConfiguration() {
+            if (this.impl) return this.impl.getConfiguration();
+            return null;
+        }
+    }, {
+        key: "setConfiguration",
+        value: function setConfiguration(config) {
+            var _this20 = this;
+
+            if (this.impl) {
+                setTimeout(function () {
+                    if (_this20.srcRemoteSDP && _this20.srcRemoteSDP.indexOf('VIMS') === -1) {
+                        if (_this20.impl && _this20.impl.setConfiguration) {
+                            _this20.impl.setConfiguration(config);
+                            _this20.renegotiationInProgress = false;
+                            _this20._runReinvite(true);
+                        } else {
+                            if (_this20._pendingOffer) {
+                                var tracks = [];
+                                _this20.impl.getTransceivers().map(function (tr) {
+                                    if (tr.sender.track) tracks.push(tr.sender.track);
+                                });
+                                _this20._createImpl(config);
+                                tracks.forEach(function (track) {
+                                    _this20.impl.addTrack(track, new MediaStream([track]));
+                                });
+                                _this20.impl.createOffer().then(function (sdp) {
+                                    _this20.logger.info("setConfiguration(), created local SDP: \n" + sdp.sdp);
+                                    _this20._needIceRestart = true;
+                                    _this20.logger.info("setConfiguration(), set local SDP: \n" + _this20._pendingOffer.sdp);
+                                    return _this20.impl.setLocalDescription(_this20._pendingOffer);
+                                }).then(function () {
+                                    _this20._pendingOffer = void 0;
+                                }).catch(function (ev) {
+                                    console.error(ev);
+                                });
+                            }
+                        }
+                    } else {}
+                }, 800); //TODO: change on signaling
+            }
+        }
+    }]);
+
+    return TransreceiverPC;
+}(PeerConnection_1.PeerConnection);
+
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.RTC)], TransreceiverPC.prototype, "_createImpl", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.RTC)], TransreceiverPC.prototype, "onSignalingStateChange", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.RTC)], TransreceiverPC.prototype, "getPCStats", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.RTC)], TransreceiverPC.prototype, "onConnectionChange", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.RTC)], TransreceiverPC.prototype, "onRenegotiation", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.RTC)], TransreceiverPC.prototype, "_getLocalOfferRegular", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.RTC)], TransreceiverPC.prototype, "getReceiveOptions", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.RTC)], TransreceiverPC.prototype, "updateHoldState", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.RTC)], TransreceiverPC.prototype, "onICECandidate", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.RTC)], TransreceiverPC.prototype, "onAddTrack", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.RTC)], TransreceiverPC.prototype, "onAddStream", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.RTC)], TransreceiverPC.prototype, "_processRemoteAnswer", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.RTC)], TransreceiverPC.prototype, "_getLocalOffer", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.RTC)], TransreceiverPC.prototype, "_getLocalOfferFF", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.RTC)], TransreceiverPC.prototype, "_getLocalAnswer", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.RTC)], TransreceiverPC.prototype, "_setRemoteDescription", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.RTC)], TransreceiverPC.prototype, "_close", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.RTC)], TransreceiverPC.prototype, "_addRemoteCandidate", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.RTC)], TransreceiverPC.prototype, "_handleReinvite", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.RTC)], TransreceiverPC.prototype, "codecRearrange", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.RTC)], TransreceiverPC.prototype, "_sendDTMF", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.RTC)], TransreceiverPC.prototype, "_hold", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.RTC)], TransreceiverPC.prototype, "_getStreamActivity", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.RTC)], TransreceiverPC.prototype, "getMediaActivity", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.RTC)], TransreceiverPC.prototype, "_hdnFRSPrep", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.RTC)], TransreceiverPC.prototype, "_hdnFRS", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.RTC)], TransreceiverPC.prototype, "hasLocalAudio", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.RTC)], TransreceiverPC.prototype, "hasLocalVideo", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.RTC)], TransreceiverPC.prototype, "enableVideo", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.RTC)], TransreceiverPC.prototype, "_addCustomMedia", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.RTC)], TransreceiverPC.prototype, "_removeCustomMedia", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.RTC)], TransreceiverPC.prototype, "_updateCustomMedia", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.RTC)], TransreceiverPC.prototype, "_fixFFSoundBug", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.RTC)], TransreceiverPC.prototype, "getConfiguration", null);
+__decorate([Logger_1.LogManager.d_trace(Logger_1.LogCategory.RTC)], TransreceiverPC.prototype, "setConfiguration", null);
+exports.TransreceiverPC = TransreceiverPC;
+
+/***/ }),
+/* 64 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -15185,13 +18302,13 @@ var _createClass = function () { function defineProperties(target, props) { for 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 Object.defineProperty(exports, "__esModule", { value: true });
-var Events_1 = __webpack_require__(18);
-var CallManager_1 = __webpack_require__(5);
+var Events_1 = __webpack_require__(14);
+var CallManager_1 = __webpack_require__(6);
 var VoxSignaling_1 = __webpack_require__(2);
 var RemoteFunction_1 = __webpack_require__(3);
-var RemoteEvent_1 = __webpack_require__(12);
-var Authenticator_1 = __webpack_require__(10);
-var CallEvents_1 = __webpack_require__(6);
+var RemoteEvent_1 = __webpack_require__(13);
+var Authenticator_1 = __webpack_require__(11);
+var CallEvents_1 = __webpack_require__(5);
 var Hardware_1 = __webpack_require__(4);
 /**
  * @hidden
@@ -15256,7 +18373,7 @@ var ZingayaAPI = function () {
      * @hidden
      */
     this.onNetStatsReceived = null;
-    //console.log(`[ZA] constructor`);
+    //console.logger(`[ZA] constructor`);
     CallManager_1.CallManager.get().protocolVersion == "2";
     client.on(Events_1.Events.ConnectionFailed, function (event) {
       return _this.runLegacyCallback(_this.onConnectionFailed, event);
@@ -15283,7 +18400,7 @@ var ZingayaAPI = function () {
   _createClass(ZingayaAPI, [{
     key: "connectTo",
     value: function connectTo(serverAddress, referrer, extra, appName) {
-      //console.log(`[ZA] connectTo(${serverAddress},${referrer},${extra},${appName}`);
+      //console.logger(`[ZA] connectTo(${serverAddress},${referrer},${extra},${appName}`);
       var signaling = VoxSignaling_1.VoxSignaling.get();
       Authenticator_1.Authenticator.get().ziAuthorized(true);
       signaling.lagacyConnectTo(serverAddress, referrer, extra, appName);
@@ -15295,7 +18412,7 @@ var ZingayaAPI = function () {
   }, {
     key: "connect",
     value: function connect() {
-      //console.log(`[ZA] connect`);
+      //console.logger(`[ZA] connect`);
     }
   }, {
     key: "requestMedia",
@@ -15323,7 +18440,7 @@ var ZingayaAPI = function () {
      * @param headers
      */
     value: function hangupCall(callId, headers) {
-      //console.log(`[ZA] hangupCall(${callId},${JSON.stringify(headers)})`);
+      //console.logger(`[ZA] hangupCall(${callId},${JSON.stringify(headers)})`);
       CallManager_1.CallManager.get().calls[callId].hangup(headers);
       VoxSignaling_1.VoxSignaling.get().callRemoteFunction(RemoteFunction_1.RemoteFunction.disconnectCall, callId, {});
     }
@@ -15338,7 +18455,7 @@ var ZingayaAPI = function () {
      * @param extraParams
      */
     value: function callTo(destination, useVideo, headers, extraParams) {
-      //console.log(`[ZA] callTo(${destination},${useVideo},${JSON.stringify(headers)},${JSON.stringify(extraParams)})`);
+      //console.logger(`[ZA] callTo(${destination},${useVideo},${JSON.stringify(headers)},${JSON.stringify(extraParams)})`);
       this.currentCall = this.client.call({
         number: destination,
         video: useVideo,
@@ -15356,7 +18473,7 @@ var ZingayaAPI = function () {
      * @param callId
      */
     value: function voicemailPromptFinished(callId) {
-      //console.log(`[ZA] voicemailPromptFinished(${callId})`);
+      //console.logger(`[ZA] voicemailPromptFinished(${callId})`);
       VoxSignaling_1.VoxSignaling.get().callRemoteFunction(RemoteFunction_1.RemoteFunction.zPromptFinished, callId);
     }
   }, {
@@ -15367,7 +18484,7 @@ var ZingayaAPI = function () {
      * @param len
      */
     value: function makeid(len) {
-      //console.log(`[ZA] makeid(${len})`);
+      //console.logger(`[ZA] makeid(${len})`);
       var text = "";
       var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
       for (var i = 0; i < len; i++) {
@@ -15382,7 +18499,7 @@ var ZingayaAPI = function () {
      * @param doMute
      */
     value: function muteMicrophone(doMute) {
-      //console.log(`[ZA] muteMicrophone(${doMute})`);
+      //console.logger(`[ZA] muteMicrophone(${doMute})`);
       var cm = CallManager_1.CallManager.get();
       for (var call in cm.calls) {
         if (cm.calls.hasOwnProperty(call)) {
@@ -15399,7 +18516,7 @@ var ZingayaAPI = function () {
      * @param digit
      */
     value: function sendDigit(callId, digit) {
-      //console.log(`[ZA] sendDigit(${callId},${digit})`);
+      //console.logger(`[ZA] sendDigit(${callId},${digit})`);
       VoxSignaling_1.VoxSignaling.get().callRemoteFunction(RemoteFunction_1.RemoteFunction.sendDTMF, callId, digit);
     }
   }, {
@@ -15411,7 +18528,7 @@ var ZingayaAPI = function () {
      * @param net
      */
     value: function startPreFlightCheck(mic, net) {
-      //console.log(`[ZA] startPreFlightCheck(${mic},${net})`);
+      //console.logger(`[ZA] startPreFlightCheck(${mic},${net})`);
       if (this.onCheckComplete) this.onCheckComplete(true, true, true);
     }
   }, {
@@ -15423,7 +18540,7 @@ var ZingayaAPI = function () {
      * @param event
      */
     value: function runLegacyCallback(callback, event) {
-      //console.log(`[ZA] runLegacyCallback(${event.name})`);
+      //console.logger(`[ZA] runLegacyCallback(${event.name})`);
       if (typeof callback !== "undefined" && callback !== null) {
         callback(event);
       }
@@ -15494,7 +18611,7 @@ var ZingayaAPI = function () {
 exports.ZingayaAPI = ZingayaAPI;
 
 /***/ }),
-/* 55 */
+/* 65 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -15559,7 +18676,7 @@ var PushService = function () {
 exports.PushService = PushService;
 
 /***/ }),
-/* 56 */
+/* 66 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -15574,13 +18691,13 @@ exports.PushService = PushService;
 
 
 
-var adapterFactory = __webpack_require__(58);
+var adapterFactory = __webpack_require__(68);
 module.exports = adapterFactory({window: global.window});
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(57)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(67)))
 
 /***/ }),
-/* 57 */
+/* 67 */
 /***/ (function(module, exports) {
 
 var g;
@@ -15607,7 +18724,7 @@ module.exports = g;
 
 
 /***/ }),
-/* 58 */
+/* 68 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -15622,7 +18739,7 @@ module.exports = g;
 
 
 
-var utils = __webpack_require__(7);
+var utils = __webpack_require__(9);
 // Shimming starts here.
 module.exports = function(dependencies, opts) {
   var window = dependencies && dependencies.window;
@@ -15659,11 +18776,11 @@ module.exports = function(dependencies, opts) {
   // require('./utils').disableLog(false);
 
   // Browser shims.
-  var chromeShim = __webpack_require__(59) || null;
-  var edgeShim = __webpack_require__(61) || null;
-  var firefoxShim = __webpack_require__(64) || null;
-  var safariShim = __webpack_require__(66) || null;
-  var commonShim = __webpack_require__(67) || null;
+  var chromeShim = __webpack_require__(69) || null;
+  var edgeShim = __webpack_require__(71) || null;
+  var firefoxShim = __webpack_require__(74) || null;
+  var safariShim = __webpack_require__(76) || null;
+  var commonShim = __webpack_require__(77) || null;
 
   // Shim browser if found.
   switch (browserDetails.browser) {
@@ -15676,7 +18793,7 @@ module.exports = function(dependencies, opts) {
       logging('adapter.js shimming chrome.');
       // Export to the adapter global object visible in the browser.
       adapter.browserShim = chromeShim;
-      //commonShim.shimCreateObjectURL(window);
+      // commonShim.shimCreateObjectURL(window);
 
       chromeShim.shimGetUserMedia(window);
       chromeShim.shimMediaStream(window);
@@ -15753,7 +18870,7 @@ module.exports = function(dependencies, opts) {
 
 
 /***/ }),
-/* 59 */
+/* 69 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -15767,7 +18884,7 @@ module.exports = function(dependencies, opts) {
  */
  /* eslint-env node */
 
-var utils = __webpack_require__(7);
+var utils = __webpack_require__(9);
 var logging = utils.log;
 
 var chromeShim = {
@@ -16428,12 +19545,12 @@ module.exports = {
   shimGetSendersWithDtmf: chromeShim.shimGetSendersWithDtmf,
   shimSourceObject: chromeShim.shimSourceObject,
   shimPeerConnection: chromeShim.shimPeerConnection,
-  shimGetUserMedia: __webpack_require__(60)
+  shimGetUserMedia: __webpack_require__(70)
 };
 
 
 /***/ }),
-/* 60 */
+/* 70 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -16446,7 +19563,7 @@ module.exports = {
  */
  /* eslint-env node */
 
-var utils = __webpack_require__(7);
+var utils = __webpack_require__(9);
 var logging = utils.log;
 
 // Expose public methods.
@@ -16680,7 +19797,7 @@ module.exports = function(window) {
 
 
 /***/ }),
-/* 61 */
+/* 71 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -16694,11 +19811,11 @@ module.exports = function(window) {
  /* eslint-env node */
 
 
-var utils = __webpack_require__(7);
-var shimRTCPeerConnection = __webpack_require__(62);
+var utils = __webpack_require__(9);
+var shimRTCPeerConnection = __webpack_require__(72);
 
 module.exports = {
-  shimGetUserMedia: __webpack_require__(63),
+  shimGetUserMedia: __webpack_require__(73),
   shimPeerConnection: function(window) {
     var browserDetails = utils.detectBrowser(window);
 
@@ -16767,7 +19884,7 @@ module.exports = {
 
 
 /***/ }),
-/* 62 */
+/* 72 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -16781,7 +19898,7 @@ module.exports = {
  /* eslint-env node */
 
 
-var SDPUtils = __webpack_require__(38);
+var SDPUtils = __webpack_require__(43);
 
 function fixStatsType(stat) {
   return {
@@ -18591,7 +21708,7 @@ module.exports = function(window, edgeVersion) {
 
 
 /***/ }),
-/* 63 */
+/* 73 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -18632,7 +21749,7 @@ module.exports = function(window) {
 
 
 /***/ }),
-/* 64 */
+/* 74 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -18646,7 +21763,7 @@ module.exports = function(window) {
  /* eslint-env node */
 
 
-var utils = __webpack_require__(7);
+var utils = __webpack_require__(9);
 
 var firefoxShim = {
   shimOnTrack: function(window) {
@@ -18858,12 +21975,12 @@ module.exports = {
   shimSourceObject: firefoxShim.shimSourceObject,
   shimPeerConnection: firefoxShim.shimPeerConnection,
   shimRemoveStream: firefoxShim.shimRemoveStream,
-  shimGetUserMedia: __webpack_require__(65)
+  shimGetUserMedia: __webpack_require__(75)
 };
 
 
 /***/ }),
-/* 65 */
+/* 75 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -18877,7 +21994,7 @@ module.exports = {
  /* eslint-env node */
 
 
-var utils = __webpack_require__(7);
+var utils = __webpack_require__(9);
 var logging = utils.log;
 
 // Expose public methods.
@@ -19079,7 +22196,7 @@ module.exports = function(window) {
 
 
 /***/ }),
-/* 66 */
+/* 76 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -19091,7 +22208,7 @@ module.exports = function(window) {
  *  tree.
  */
 
-var utils = __webpack_require__(7);
+var utils = __webpack_require__(9);
 
 var safariShim = {
   // TODO: DrAlex, should be here, double check against LayoutTests
@@ -19394,7 +22511,7 @@ module.exports = {
 
 
 /***/ }),
-/* 67 */
+/* 77 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -19408,8 +22525,8 @@ module.exports = {
  /* eslint-env node */
 
 
-var SDPUtils = __webpack_require__(38);
-var utils = __webpack_require__(7);
+var SDPUtils = __webpack_require__(43);
+var utils = __webpack_require__(9);
 
 // Wraps the peerconnection event eventNameToWrap in a function
 // which returns the modified event object.
@@ -19565,21 +22682,6 @@ module.exports = {
   }
 };
 
-
-/***/ }),
-/* 68 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", { value: true });
-var Conversation_1 = __webpack_require__(29);
-exports.Conversation = Conversation_1.Conversation;
-var Message_1 = __webpack_require__(22);
-exports.Message = Message_1.Message;
-var Messenger_1 = __webpack_require__(30);
-exports.Messenger = Messenger_1.Messenger;
 
 /***/ })
 /******/ ]);

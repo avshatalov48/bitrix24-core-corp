@@ -38,7 +38,7 @@ $className =
 
 
 <!--Верстка нового поиска-->
-<div class="title-search-result title-search-result-header search-title-top-result-header" style="position: absolute; top: 54px; left: 285px; width: 575px;display: none !important;">
+<div class="title-search-result title-search-result-header search-title-top-result-header" style="position: absolute; top: 54px; left: 285px; width: 575px; display: none!important;">
 	<div class="search-title-top-result">
 		<div class="search-title-top-nothing">
 			<div class="search-title-top-nothing-icon"></div>
@@ -46,7 +46,7 @@ $className =
 				<span class="search-title-top-nothing-text">Ничего не найдено</span>
 			</div>
 		</div>
-<!--		<div class="search-title-top-block search-title-top-block-users">
+		<!--<div class="search-title-top-block search-title-top-block-users">
 			<div class="search-title-top-subtitle">
 				<span class="search-title-top-subtitle-text">Сотрудники</span>
 			</div>
@@ -232,6 +232,28 @@ $className =
 				</div>
 				<div class="search-title-top-arrow"></div>
 			</div>
-		</div>-->
+		</div>
+		<div class="search-title-top-block search-title-top-block-limits">
+			<div class="search-title-top-subtitle">
+				<span class="search-title-top-subtitle-text">CRM: Сделки</span>
+			</div>
+			<div class="search-title-top-list-wrap">
+				<div class="search-title-top-list">
+					<div class="search-title-top-list-limits">
+						<div class="search-title-top-list-limits-block">
+							<span class="search-title-top-list-limits-icon"></span>
+						</div>
+						<div class="search-title-top-list-limits-block">
+							<div class="search-title-top-list-limits-name">Достигнут лимит в 5000 лидов</div>
+							<div class="search-title-top-list-limits-content">
+								<p>Мы стремимся постоянно улучшать скорость работы и качество обслуживания в соответствии с вашим масштабом бизнеса. Растет компания, растет объем данных (число задач, сделок или других элементов) и активность использования Битрикс24.</p>
+								<p>Чем больше масштаб вашего бизнеса, тем по большему объему информации приходится искать, и основная нагрузка ложится на поиск. Чтобы выполнять поиск быстрее и качественнее,  выбирайте тариф в зависимости от объема ваших данных.</p>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		-->
 	</div>
 </div>

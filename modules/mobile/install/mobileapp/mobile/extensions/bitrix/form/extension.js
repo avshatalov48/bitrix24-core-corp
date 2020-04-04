@@ -39,6 +39,17 @@ var FormItemDateType = {
 		 * @param {Iterable.<FormItem>|null} [items]
 		 * @param {Iterable.<FormSection>|null} [sections]
 		 */
+		static create(id, title, items = null, sections = null)
+		{
+			return new this(id, title, items, sections);
+		}
+
+		/**
+		 * @param {String} id
+		 * @param {String} title
+		 * @param {Iterable.<FormItem>|null} [items]
+		 * @param {Iterable.<FormSection>|null} [sections]
+		 */
 		constructor(id, title, items = null, sections = null)
 		{
 			let variables = {id, title};
@@ -320,6 +331,19 @@ var FormItemDateType = {
 
 	this.FormItem = class FormItem
 	{
+		/**
+		 *
+		 * @param {string} id
+		 * @param {FormItemType} type
+		 * @param {string} [title]
+		 * @param {string} [subtitle]
+		 * @param {string} [sectionCode]
+		 */
+		static create(id, type, title, subtitle = '', sectionCode = 'main')
+		{
+			return new this(id, type, title, subtitle, sectionCode);
+		}
+
 		/**
 		 *
 		 * @param {string} id
@@ -725,6 +749,18 @@ var FormItemDateType = {
 
 	this.FormSection = class FormSection
 	{
+		/**
+		 *
+		 * @param id
+		 * @param [title]
+		 * @param [footer]
+		 * @param {Iterable.<FormItem>|null} [items]
+		 */
+		static create(id = 'main', title = '', footer = '', items = null)
+		{
+			return new this(id, title, footer, items);
+		}
+
 		/**
 		 *
 		 * @param id

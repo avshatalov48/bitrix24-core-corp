@@ -1,6 +1,5 @@
 <?
 $MESS["IMOL_SESSION_LINE_IS_CLOSED"] = "Открытая линия не активна, сообщения не будут отправлены клиенту.";
-$MESS["IMOL_SESSION_SKIP_ALONE"] = "Вы не можете отказаться от диалога, так как в данный момент в очереди больше никого нет.";
 $MESS["IMOL_SESSION_LEAD_ADD"] = "В CRM был создан лид \"#LEAD_NAME#\"";
 $MESS["IMOL_SESSION_CRM_FOUND"] = "Пользователь добавлен к CRM записи: \"#ENTITY_NAME#\"";
 $MESS["IMOL_SESSION_CLOSE_M"] = "#USER# завершил работу с диалогом";

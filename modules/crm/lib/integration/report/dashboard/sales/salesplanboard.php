@@ -12,15 +12,10 @@ use Bitrix\Report\VisualConstructor\Helper\Util;
 
 class SalesPlanBoard
 {
-	const VERSION = 'v0';
+	const VERSION = 'v1';
 	const BOARD_KEY = 'crm_sales_plan';
 
 	public static function get()
-	{
-		return self::buildSalesPlanDefaultBoard();
-	}
-
-	private static function buildSalesPlanDefaultBoard()
 	{
 		$board = new Dashboard();
 		$board->setVersion(self::VERSION);
@@ -48,13 +43,13 @@ class SalesPlanBoard
 		$salesTarget->setCategoryKey('crm');
 		$salesTarget->setBoardId(self::BOARD_KEY);
 
-		$salesTarget->getWidgetHandler()->updateFormElementValue(
+		$salesTarget->getWidgetHandler(true)->updateFormElementValue(
 			'label',
 			Loc::getMessage(
 				'CRM_REPORT_DASHBOARD_SALES_TARGET_WIDGET_TITLE'
 			)
 		);
-		$salesTarget->addConfigurations($salesTarget->getWidgetHandler()->getConfigurations());
+		$salesTarget->addConfigurations($salesTarget->getWidgetHandler(true)->getConfigurations());
 
 		return $salesTarget;
 	}

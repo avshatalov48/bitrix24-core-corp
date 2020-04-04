@@ -27,5 +27,6 @@ $MESS["VOX_CONFIG_EDIT_DISCONNECT_NUMBER"] = "Disconnect number";
 $MESS["VOX_CONFIG_EDIT_MELODIES"] = "Hold music";
 $MESS["VOX_CONFIG_EDIT_OTHER"] = "Other";
 $MESS["VOX_CONFIG_EDIT_RECORDING_AND_RATING"] = "Recording and rating";
+$MESS["VOX_CONFIG_EDIT_SIP_NUMBERS"] = "SIP PBX numbers";
 $MESS["VOX_CONFIG_EDIT_WORKTIME"] = "Working hours";
 ?>

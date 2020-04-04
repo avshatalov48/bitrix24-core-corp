@@ -74,8 +74,8 @@ if ($arParams["TEMPLATE_TYPE"] == "IM_NEW_NOTIFY" || $arParams["TEMPLATE_TYPE"] 
 		}
 	}
 
-
-	$arParams["MESSAGE"] = preg_replace('~(http|https|ftp|ftps)://([a-zA-Z0-9-./?#=&]+)~', '<a href="$1://$2">$1://$2</a>', $arParams["MESSAGE"]);
+	$parser = new CTextParser();
+	$arParams["MESSAGE"] = $parser->convertText($arParams["MESSAGE"]);
 }
 
 $this->IncludeComponentTemplate();

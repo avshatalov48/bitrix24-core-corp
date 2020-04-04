@@ -186,6 +186,14 @@ class CCrmDocumentContact extends CCrmDocument
 
 		$arResult += parent::getAssignedByFields();
 		$arResult += array(
+			'CREATED_BY_ID' => array(
+				'Name' => GetMessage('CRM_DOCUMENT_FIELD_CREATED_BY_ID_CONTACT'),
+				'Type' => 'user',
+			),
+			'MODIFY_BY_ID' => array(
+				'Name' => GetMessage('CRM_DOCUMENT_FIELD_MODIFY_BY_ID'),
+				'Type' => 'user',
+			),
 			'SOURCE_ID' => array(
 				'Name' => GetMessage('CRM_FIELD_SOURCE_ID'),
 				'Type' => 'select',
@@ -313,6 +321,9 @@ class CCrmDocumentContact extends CCrmDocument
 
 		//append UTM fields
 		$arResult += parent::getUtmFields();
+
+		//append FORM fields
+		$arResult += parent::getSiteFormFields(CCrmOwnerType::Contact);
 
 		return $arResult;
 	}

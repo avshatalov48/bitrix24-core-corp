@@ -103,7 +103,17 @@ class ReCaptcha
 				'remoteip' => $remoteIp ? $remoteIp : Context::getCurrent()->getServer()->get('REMOTE_ADDR'),
 			)
 		);
-		$response = Json::decode($rawResponse);
+
+		try
+		{
+			$response = Json::decode($rawResponse);
+		}
+		catch (\Exception $exception)
+		{
+			$this->error = $exception->getMessage();
+			return false;
+		}
+
 		if (!empty($response['error-codes']))
 		{
 			switch ($response['error-codes'][0])

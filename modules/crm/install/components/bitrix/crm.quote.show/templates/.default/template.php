@@ -168,6 +168,7 @@ $activityEditorSettings = array(
 	'ENABLE_EMAIL_ADD' => true,
 	'OWNER_TYPE' => CCrmOwnerType::QuoteName,
 	'OWNER_ID' => $arResult['ELEMENT']['ID'],
+	'SKIP_VISUAL_COMPONENTS' => 'Y',
 );
 
 if (empty($arResult['EMAIL_COMMUNICATIONS']) && $arResult['ELEMENT']['LEAD_ID'] > 0)

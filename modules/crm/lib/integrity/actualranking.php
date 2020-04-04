@@ -4,8 +4,7 @@ namespace Bitrix\Crm\Integrity;
 use Bitrix\Crm\DealTable;
 use Bitrix\Crm\LeadTable;
 use Bitrix\Crm\PhaseSemantics;
-use Bitrix\Main\Entity\ExpressionField;
-use Bitrix\Main\Entity\Query;
+use Bitrix\Main\ORM;
 use Bitrix\Crm\Binding;
 use Bitrix\Crm\Order;
 
@@ -36,14 +35,14 @@ class ActualRanking
 	/** @var integer|null Top entity id in ranked list */
 	protected $entityId;
 
-	/** @var integer|null Deal id of top entity in ranked list */
-	protected $dealId;
+	/** @var int[] Deal id of top entity in ranked list */
+	protected $deals = [];
 
 	/** @var int[] Order id list of top entity in ranked list */
 	protected $orders = [];
 
-	/** @var integer|null Lead(return customer type) id of top entity in ranked list. */
-	protected $returnCustomerLeadId;
+	/** @var int[] Lead(return customer type) id of top entity in ranked list. */
+	protected $leads;
 
 	protected function clearRuntime()
 	{
@@ -52,9 +51,9 @@ class ActualRanking
 		$this->entityTypeId = null;
 
 		$this->entityId = null;
-		$this->dealId = null;
+		$this->deals = [];
 		$this->orders = [];
-		$this->returnCustomerLeadId = null;
+		$this->leads = [];
 	}
 
 	/**
@@ -137,7 +136,7 @@ class ActualRanking
 	 */
 	public function getDealId()
 	{
-		return $this->dealId;
+		return empty($this->deals) ? null : $this->deals[0];
 	}
 
 	/**
@@ -151,13 +150,33 @@ class ActualRanking
 	}
 
 	/**
+	 * Get deals of top entity in ranked list.
+	 *
+	 * @return int[]
+	 */
+	public function getDeals()
+	{
+		return $this->deals;
+	}
+
+	/**
+	 * Get leads of top entity in ranked list.
+	 *
+	 * @return int[]
+	 */
+	public function getLeads()
+	{
+		return $this->leads;
+	}
+
+	/**
 	 * Get lead(return customer type) id of top entity in ranked list.
 	 *
-	 * @return integer|null
+	 * @return int|null
 	 */
 	public function getReturnCustomerLeadId()
 	{
-		return $this->returnCustomerLeadId;
+		return empty($this->returnCustomerLeadId) ? null : $this->returnCustomerLeadId[0];
 	}
 
 	/**
@@ -207,33 +226,41 @@ class ActualRanking
 		$this->entityTypeId = $entityTypeId;
 		$this->setRankedList($list);
 
-		if (count($this->list) === 0 || !$isRankable)
-		{
-			return $this;
-		}
-
-		// filter or sort by custom modifiers
-		$this->runModifiers();
-
-		// filter by active status
-		$this->filterByActiveStatus();
-
 		if (count($this->list) === 0)
 		{
 			return $this;
 		}
 
+		if ($isRankable)
+		{
+			// filter or sort by custom modifiers
+			$this->runModifiers();
+
+			// filter by active status
+			$this->filterByActiveStatus();
+
+			if (count($this->list) === 0)
+			{
+				return $this;
+			}
+		}
+		else
+		{
+			$this->entityId = $this->list[0];
+			return $this;
+		}
+
 		// ranking by deals
-		$findDealIdOnly = !$this->entityId ? false : true;
-		$this->rankByDeals($findDealIdOnly);
+		$findDealsOnly = !$this->entityId? false : true;
+		$this->rankByDeals($findDealsOnly);
 
 		// ranking by orders
 		$findOrdersOnly = !$this->entityId ? false : true;
 		$this->rankByOrders($findOrdersOnly);
 
 		// ranking by repeated leads
-		$findLeadIdOnly = !$this->entityId ? false : true;
-		$this->rankByReturnCustomerLeads($findLeadIdOnly);
+		$findLeadsOnly = !$this->entityId ? false : true;
+		$this->rankByLeads($findLeadsOnly);
 
 		// other ranking
 		// ...
@@ -290,7 +317,7 @@ class ActualRanking
 		$this->list = $rankedList;
 	}
 
-	protected function rankByReturnCustomerLeads($findLeadIdOnly = false)
+	protected function rankByLeads($findLeadsOnly = false)
 	{
 		if ($this->isRanked)
 		{
@@ -302,8 +329,8 @@ class ActualRanking
 			PhaseSemantics::PROCESS
 		));
 		$query->addFilter('=IS_RETURN_CUSTOMER', 'Y');
-		$leadId = $this->rankByQuery($query, $findLeadIdOnly ? 1 : null);
-		if (!$leadId)
+		$leads = $this->rankByQuery($query, $findLeadsOnly ? 1 : null);
+		if (empty($leads))
 		{
 			return;
 		}
@@ -311,17 +338,18 @@ class ActualRanking
 		$this->isRanked = true;
 
 		// set return customer lead id
-		$this->returnCustomerLeadId = $leadId;
+		$this->leads = $leads;
 	}
 
-	protected function rankByDeals($findDealIdOnly = false)
+	protected function rankByDeals($findDealsOnly = false)
 	{
 		$query = DealTable::query();
 		$query->addFilter('=STAGE_SEMANTIC_ID', array(
 			PhaseSemantics::PROCESS
 		));
-		$dealId = $this->rankByQuery($query, $findDealIdOnly ? 1 : null);
-		if (!$dealId)
+		$query->addFilter('=IS_RECURRING', 'N');
+		$deals = $this->rankByQuery($query, $findDealsOnly ? 1 : null);
+		if (empty($deals))
 		{
 			return;
 		}
@@ -329,7 +357,7 @@ class ActualRanking
 		$this->isRanked = true;
 
 		// set deal Id
-		$this->dealId = $dealId;
+		$this->deals = $deals;
 	}
 
 	protected function rankByOrders($findOrdersOnly = false)
@@ -364,6 +392,7 @@ class ActualRanking
 
 			if ($topEntityId == $item['ENTITY_ID'] && !in_array($item['ORDER_ID'], $this->orders))
 			{
+				// find all, even from ::setEntity
 				$this->orders[] = $item['ORDER_ID'];
 			}
 
@@ -394,7 +423,7 @@ class ActualRanking
 		$this->updateListByRankedList($rankedList);
 	}
 
-	protected function rankByQuery(Query $query, $limit = null)
+	protected function rankByQuery(ORM\Query\Query $query, $limit = null)
 	{
 		switch ($this->entityTypeId)
 		{
@@ -408,13 +437,15 @@ class ActualRanking
 				return null;
 		}
 
+		$rankingEntitiesQuery = clone $query;
+
 		$queryId = null;
 		$rankedList = array();
 		$query->setSelect(array($fieldName, 'MAX_ID'));
-		$query->addFilter('=' . $fieldName, $this->list);
-		$query->registerRuntimeField(new ExpressionField('MAX_DATE_MODIFY', 'MAX(%s)', 'DATE_MODIFY'));
-		$query->registerRuntimeField(new ExpressionField('MAX_DATE_CREATE', 'MAX(%s)', 'DATE_CREATE'));
-		$query->registerRuntimeField(new ExpressionField('MAX_ID', 'MAX(%s)', 'ID'));
+		$query->whereIn($fieldName, $this->list);
+		$query->registerRuntimeField(new ORM\Fields\ExpressionField('MAX_DATE_MODIFY', 'MAX(%s)', 'DATE_MODIFY'));
+		$query->registerRuntimeField(new ORM\Fields\ExpressionField('MAX_DATE_CREATE', 'MAX(%s)', 'DATE_CREATE'));
+		$query->registerRuntimeField(new ORM\Fields\ExpressionField('MAX_ID', 'MAX(%s)', 'ID'));
 		$query->setOrder(array(
 			'MAX_DATE_MODIFY' => 'DESC',
 			'MAX_DATE_CREATE' => 'DESC',
@@ -436,16 +467,36 @@ class ActualRanking
 		}
 
 		$isRanked = $queryId > 0;
-
 		if (!$isRanked)
 		{
-			return null;
+			return [];
 		}
 
 		// set entity id
 		if (!$this->entityId)
 		{
 			$this->entityId = $rankedList[0];
+		}
+
+		$queryId = [$queryId];
+		if (!$limit && $this->entityId && !empty($queryId))
+		{
+			// find only if its not from ::setEntity
+
+			$rankingEntitiesResult = $rankingEntitiesQuery
+				->setSelect(['ID'])
+				->where($fieldName, $this->entityId)
+				->setOrder([
+					'DATE_MODIFY' => 'DESC',
+					'DATE_CREATE' => 'DESC',
+					'ID' => 'DESC',
+				])
+				->exec()
+				->fetchAll();
+			if (count($rankingEntitiesResult) > 0)
+			{
+				$queryId = array_column($rankingEntitiesResult, 'ID');
+			}
 		}
 
 		if ($limit)

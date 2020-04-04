@@ -295,10 +295,17 @@
 					}
 				}, this)
 			);
+
+			BX.addCustomEvent(
+				"Rest:AppLayout:ApplicationInstall",
+				BX.delegate(function(installed, eventResult) {
+					this.reload();
+				}, this)
+			);
 		},
 		reload: function ()
 		{
-			this.loader.show();
+			//this.loader.show();
 
 			BX.ajax.runComponentAction(this.componentName, 'reload', {
 				mode: 'class',
@@ -311,13 +318,13 @@
 						BX('intranet-contact-list').innerHTML = elem.querySelector('#intranet-contact-list').innerHTML;
 						this.appearance.loadPage(response.data.js_data);
 						BX.remove(elem);
-						this.loader.hide();
+						//this.loader.hide();
 					},
 					this
 				),
 				BX.delegate(
 					function(response) {
-						this.loader.hide();
+						//this.loader.hide();
 					},
 					this
 				)
@@ -407,17 +414,6 @@
 				{
 					new BX.ContactCenter.Menu(params.menu[i]);
 				}
-			}
-
-			this.placement = params.restPlacement;
-
-			if (BX('app-banner'))
-			{
-				BX.bind(
-					BX('app-banner'),
-					'click',
-					this.openMarketplaceSlider
-				);
 			}
 		},
 		loadItem: function(item, params)
@@ -520,40 +516,6 @@
 					block.style.backgroundColor = style.backgroundColor;
 				}
 			}
-		},
-		openMarketplaceSlider: function ()
-		{
-			var placement = this.placement || 'CONTACT_CENTER';
-			var url = '/bitrix/components/bitrix/rest.marketplace/lazyload.ajax.php';
-			var category = 'all';
-			url = BX.util.add_url_param(url, {placement: placement, category: category});
-
-			BX.SidePanel.Instance.open(
-				url,
-				{
-					cacheable: false,
-					allowChangeHistory: false,
-					requestMethod: 'post',
-					requestParams: {
-						sessid: BX.bitrix_sessid()
-					},
-					events: {
-						onClose: function(e) {
-							BX.SidePanel.Instance.postMessage(e.getSlider(), 'ContactCenter:reload', {})
-						}
-					}
-				}
-			);
-
-			var slider = BX.SidePanel.Instance.getTopSlider();
-			top.BX.addCustomEvent(top, 'Rest:AppLayout:ApplicationInstall', function(installed, eventResult){
-				eventResult.redirect = false;
-				//slider.close();
-			});
-
-			/*BX.rest.Marketplace.open({
-				PLACEMENT: placement
-			});*/
 		}
 	};
 

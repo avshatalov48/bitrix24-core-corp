@@ -4,11 +4,14 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Landing\Config;
 use \Bitrix\Landing\Manager;
+use \Bitrix\Landing\Assets;
 use \Bitrix\Main\Localization\Loc;
 use \Bitrix\Main\UI\Extension;
 
 Loc::loadMessages(__FILE__);
+Loc::loadMessages(Manager::getDocRoot() . '/bitrix/modules/landing/lib/mutator.php');
 
 Extension::load([
 	'ui.buttons',
@@ -19,12 +22,16 @@ Extension::load([
 	'popup_menu',
 	'marketplace',
 	'applayout',
-	'landing_master'
 ]);
-Extension::load(
-	\Bitrix\Landing\Config::get('js_core_edit')
+$assets = Assets\Manager::getInstance();
+$assets->addAsset(
+	'landing_master',
+	Assets\Location::LOCATION_KERNEL
 );
-
+$assets->addAsset(
+	Config::get('js_core_edit'),
+	Assets\Location::LOCATION_KERNEL
+);
 
 if ($arResult['ERRORS'])
 {
@@ -52,6 +59,7 @@ if ($arResult['ERRORS'])
 			</div>
 		</div>
 		<?
+		return;
 	}
 	elseif (isset($errors['SITE_IS_NOW_CREATING']))
 	{
@@ -73,14 +81,32 @@ if ($arResult['ERRORS'])
 			});
 		</script>
 		<?
+		return;
 	}
 	else
 	{
-		\showError(
-			implode("\n", $errors)
-		);
+		// send to user all other errors
+		foreach ($errors as $errorCode => $errorMessage)
+		{
+			$errorMessage .= $this->getComponent()->getSettingLinkByError(
+				$errorCode
+			);
+			?>
+			<script type="text/javascript">
+				BX.ready(function()
+				{
+					top.window.opener.landingAlertMessage(
+						'<?= \CUtil::jsEscape($errorMessage);?>',
+						<?= $this->getComponent()->isTariffError($errorCode) ? 'true' : 'false';?>
+					);
+					top.window.close();
+				});
+			</script>
+			<?
+			break;
+		}
+		unset($errorCode, $errorMessage);
 	}
-	return;
 }
 
 $site = $arResult['SITE'];
@@ -107,6 +133,7 @@ if (!$request->offsetExists('landing_mode')):
 		'action' => 'publication',
 		'param' => $arResult['LANDING']->getId(),
 		'code' => $arResult['LANDING']->getXmlId(),
+		'site_code' => $site['XML_ID'],
 		'sessid' => bitrix_sessid()
 	));
 	$uriPubAll = new \Bitrix\Main\Web\Uri($curUrl);
@@ -115,6 +142,7 @@ if (!$request->offsetExists('landing_mode')):
 		'param' => $arResult['LANDING']->getId(),
 		'site_id' => $arResult['LANDING']->getSiteId(),
 		'code' => $arResult['LANDING']->getXmlId(),
+		'site_code' => $site['XML_ID'],
 		'sessid' => bitrix_sessid()
 	));
 	$uriUnPub = new \Bitrix\Main\Web\Uri($curUrl);
@@ -122,6 +150,7 @@ if (!$request->offsetExists('landing_mode')):
 		'action' => 'unpublic',
 		'param' => $arResult['LANDING']->getId(),
 		'code' => $arResult['LANDING']->getXmlId(),
+		'site_code' => $site['XML_ID'],
 		'sessid' => bitrix_sessid()
 	));
 	$uriPreview = new \Bitrix\Main\Web\Uri($curUrl);
@@ -130,6 +159,7 @@ if (!$request->offsetExists('landing_mode')):
 		'landing_mode' => 'preview',
 		'param' => $arResult['LANDING']->getId(),
 		'code' => $arResult['LANDING']->getXmlId(),
+		'site_code' => $site['XML_ID'],
 		'sessid' => bitrix_sessid()
 	));
 	// b24 title
@@ -174,13 +204,12 @@ if (!$request->offsetExists('landing_mode')):
 			</a><?
 			?><strong class="landing-ui-panel-top-chain-link-separator"><span></span></strong>
 			<?endif;?><?
-				$sitesCount = $component->getSitesCount();
 				$pagesCount = $component->getPagesCount();
-			?><<?=$sitesCount <= 1 ? "a href=\"".$arParams['PAGE_URL_LANDINGS']."\"" : "span"?> class="ui-btn ui-btn-xs ui-btn-light ui-btn-round landing-ui-panel-top-chain-link landing-ui-panel-top-chain-link-site<?=($sitesCount <= 1 ? " landing-ui-no-icon" : "")?>" title="<?= \htmlspecialcharsbx($site['TITLE']);?>">
+			?><<?= $arResult['SITES_COUNT'] <= 1 ? 'a href="' . $arParams['PAGE_URL_LANDINGS'] . '"' : 'span';?> class="ui-btn ui-btn-xs ui-btn-light ui-btn-round landing-ui-panel-top-chain-link landing-ui-panel-top-chain-link-site<?= ($arResult['SITES_COUNT'] <= 1 ? ' landing-ui-no-icon' : '');?>" title="<?= \htmlspecialcharsbx($site['TITLE']);?>">
 				<?= \htmlspecialcharsbx($site['TITLE']);?>
-			</<?=$sitesCount <= 1 ? "a" : "span"?>><?
+			</<?= $arResult['SITES_COUNT'] <= 1 ? 'a' : 'span';?>><?
 			?><strong class="landing-ui-panel-top-chain-link-separator"><span></span></strong><?
-			?><span class="ui-btn ui-btn-xs ui-btn-light ui-btn-round landing-ui-panel-top-chain-link landing-ui-panel-top-chain-link-page<?=($pagesCount <= 1 ? " landing-ui-no-icon" : "")?>" title="<?= \htmlspecialcharsbx($arResult['LANDING']->getTitle());?>"><?
+			?><span class="ui-btn ui-btn-xs ui-btn-light ui-btn-round landing-ui-panel-top-chain-link landing-ui-panel-top-chain-link-page<?=($arResult['PAGES_COUNT'] <= 1 ? ' landing-ui-no-icon' : '');?>" title="<?= \htmlspecialcharsbx($arResult['LANDING']->getTitle());?>"><?
 				echo \htmlspecialcharsbx($arResult['LANDING']->getTitle());
 			?></span>
 		</div>
@@ -202,15 +231,16 @@ if (!$request->offsetExists('landing_mode')):
 			</span><?
 			?><a href="<?= $uriPreview->getUri();?>" class="ui-btn ui-btn-light-border landing-ui-panel-top-menu-link landing-btn-menu" target="_blank"><?= Loc::getMessage('LANDING_TPL_PREVIEW_URL');?></a><?
 			?>
-			<div class="ui-btn-split ui-btn-primary landing-btn-menu">
-				<a href="<?= $arParams['TYPE'] == 'STORE' ? $uriPubAll->getUri() : $uriPub->getUri();?>" id="landing-publication" class="ui-btn-main" target="_blank">
-					<?= Loc::getMessage('LANDING_TPL_PUBLIC_URL');?>
-				</a>
-				<?if (
-					$arResult['CAN_PUBLICATION_PAGE'] &&
-					$arResult['CAN_PUBLICATION_SITE']
-				):?>
-				<span id="landing-publication-submenu" class="ui-btn-extra"></span>
+			<div class="ui-btn-split ui-btn-primary landing-btn-menu<?= !$arResult['CAN_PUBLIC_SITE'] ? ' ui-btn-disabled' : '';?>">
+				<?if (!$arResult['CAN_PUBLIC_SITE']):?>
+					<span class="ui-btn-main">
+						<?= Loc::getMessage('LANDING_TPL_PUBLIC_URL');?>
+					</span>
+				<?else:?>
+					<a href="<?= $arParams['TYPE'] == 'STORE' ? $uriPubAll->getUri() : $uriPub->getUri();?>" id="landing-publication" class="ui-btn-main" target="_blank">
+						<?= Loc::getMessage('LANDING_TPL_PUBLIC_URL');?>
+					</a>
+					<span id="landing-publication-submenu" class="ui-btn-extra"></span>
 				<?endif;?>
 			</div>
 			<?
@@ -228,6 +258,12 @@ endif;
 ?>
 <script type="text/javascript">
 	var landingParams = <?= \CUtil::phpToJSObject($arParams);?>;
+	BX.ready(function()
+	{
+		BX.message({
+			LANDING_PUBLIC_PAGE_REACHED: '<?= \CUtil::jsEscape(Loc::getMessage('LANDING_PUBLIC_PAGE_REACHED'));?>'
+		});
+	});
 </script>
 <?
 
@@ -236,6 +272,10 @@ if ($request->offsetExists('landing_mode'))
 	if ($request->get('landing_mode') == 'edit')
 	{
 		Manager::setPageView('MainClass', 'landing-edit-mode');
+		if (!$arResult['CAN_EDIT_SITE'])
+		{
+			Manager::setPageView('MainClass', 'landing-ui-hide-controls');
+		}
 	}
 	$arResult['LANDING']->view();
 	?>
@@ -313,11 +353,13 @@ else
 						items: [
 							{
 								href: '<?= \CUtil::JSEscape($arParams['PAGE_URL_LANDING_EDIT']);?>',
-								text: '<?= \CUtil::JSEscape(Loc::getMessage('LANDING_TPL_SETTINGS_PAGE_URL'));?>'
+								text: '<?= \CUtil::JSEscape(Loc::getMessage('LANDING_TPL_SETTINGS_PAGE_URL'));?>',
+								disabled: <?= !$arResult['CAN_SETTINGS_SITE'] ? 'true' : 'false';?>
 							},
 							{
 								href: '<?= \CUtil::JSEscape($arParams['PAGE_URL_SITE_EDIT']);?>',
-								text: '<?= \CUtil::JSEscape(Loc::getMessage('LANDING_TPL_SETTINGS_SITE_URL'));?>'
+								text: '<?= \CUtil::JSEscape(Loc::getMessage('LANDING_TPL_SETTINGS_SITE_URL'));?>',
+								disabled: <?= !$arResult['CAN_SETTINGS_SITE'] ? 'true' : 'false';?>
 							}
 							<?if (
 								($arParams['TYPE'] == 'STORE') ||
@@ -329,13 +371,14 @@ else
 							?>
 							, {
 								href: '<?= \CUtil::JSEscape($uriSettCatalog->getUri());?>',
-								text: '<?= \CUtil::JSEscape(Loc::getMessage('LANDING_TPL_SETTINGS_CATALOG_URL'));?>'
+								text: '<?= \CUtil::JSEscape(Loc::getMessage('LANDING_TPL_SETTINGS_CATALOG_URL'));?>',
+								disabled: <?= !$arResult['CAN_SETTINGS_SITE'] ? 'true' : 'false';?>
 							}
 							<?endif;?>
 							, {
 								href: '<?= \CUtil::JSEscape($uriUnPub->getUri());?>',
 								text: '<?= \CUtil::JSEscape(Loc::getMessage('LANDING_TPL_SETTINGS_UNPUBLIC'));?>',
-								disabled : <?= $arResult['LANDING']->isActive() ? 'false' : 'true';?>
+								disabled : <?= ($arResult['CAN_PUBLIC_SITE'] && $arResult['LANDING']->isActive()) ? 'false' : 'true';?>
 							}
 							<?
 							if (!empty($arResult['PLACEMENTS_SETTINGS']))
@@ -424,28 +467,6 @@ else
 					}
 				})
 			};
-
-			/**
-			 * Check limit for publication.
-			 */
-			<?if (
-				!$arResult['CAN_PUBLICATION_PAGE'] ||
-				!$arResult['CAN_PUBLICATION_SITE']
-			):?>
-			BX.bind(
-				BX("landing-publication"),
-				"click",
-				function(e)
-				{
-					BX.Landing.PaymentAlertShow({
-						message: "<?= !$arResult['CAN_PUBLICATION_PAGE']
-									? \CUtil::jsEscape(Loc::getMessage('LANDING_PUBLIC_PAGE_REACHED'))
-									: \CUtil::jsEscape(Loc::getMessage('LANDING_PUBLIC_SITE_REACHED'));?>"
-					});
-					e.preventDefault();
-				}
-			);
-			<?endif;?>
 
 			/**
 			 * Force top and style panel initialization

@@ -1,6 +1,7 @@
 <?
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Tasks\CheckList\Template\TemplateCheckListFacade;
 use Bitrix\Tasks\Integration;
 use Bitrix\Tasks\Integration\SocialNetwork;
 use Bitrix\Tasks\UI;
@@ -75,7 +76,9 @@ $arParams["PATH_TO_TEMPLATES_TEMPLATE"] = str_replace("#user_id#", $arParams["US
 
 $this->__component->tryParseStringParameter($arParams["PATH_TO_TASKS_TEMPLATE_VIEW"], CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_TEMPLATES_TEMPLATE"], array("template_id" => $template->getId(), "action" => "view")));
 $this->__component->tryParseStringParameter($arParams["PATH_TO_TASKS_TEMPLATE_EDIT"], CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_TEMPLATES_TEMPLATE"], array("template_id" => $template->getId(), "action" => "edit")));
-$arParams["PATH_TO_TASKS_TEMPLATE_EDIT"] = Util::replaceUrlParameters($arParams["PATH_TO_TASKS_TEMPLATE_EDIT"], array(
+
+$isIframe = $_REQUEST['IFRAME'] && $_REQUEST['IFRAME'] == 'Y';
+$arParams["PATH_TO_TASKS_TEMPLATE_EDIT"] = Util::replaceUrlParameters($arParams["PATH_TO_TASKS_TEMPLATE_EDIT"].($isIframe?'?IFRAME=Y':''), array(
 	'BACKURL' => $arParams['PATH_TO_TASKS_TEMPLATE_VIEW'],
 ), array(), array('encode' => true));
 
@@ -285,10 +288,14 @@ if($template->getId())
 }
 $arResult['TEMPLATE_DATA']['HAVE_SUB_TEMPLATES'] = $haveSub;
 
+$checkListItems = TemplateCheckListFacade::getItemsForEntity($template->getId(), $template->getUserId());
+$arResult['TEMPLATE_DATA']['SE_CHECKLIST'] = $checkListItems;
+
 $arResult['JS_DATA']= array(
 	'data' => array(
 		// todo: you may use $template->export('~'); here
 		'ID' => $template->getId(),
+		'USER_ID' => $arParams['USER_ID'],
 		'PRIORITY' => $template['PRIORITY'],
 	),
 	'can' => array(

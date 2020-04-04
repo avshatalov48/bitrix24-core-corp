@@ -61,6 +61,10 @@ return array(
 			'name' => Loc::getMessage('LANDING_BLOCK_28_6_TEAM_4_COLS--MEMBER_EMAIL'),
 			'type' => 'typo-link',
 		),
+		'.landing-block-inner' => array(
+			'name' => Loc::getMessage('LANDING_BLOCK_28_6_TEAM_4_COLS--INNER'),
+			'type' => 'row-align',
+		),
 	),
 	'assets' => array(
 		'ext' => array('landing_carousel'),

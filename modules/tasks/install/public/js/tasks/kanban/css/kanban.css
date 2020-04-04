@@ -704,11 +704,35 @@ a.tasks-kanban-item-super-blue:hover,
 	opacity: 1;
 }
 
+.task-kanban-column-revert .main-kanban-column-title-bg {
+	left: 13px;
+	right: -3px;
+	border-radius: 0 3px 3px 0;
+}
 
+.task-kanban-column-revert .main-kanban-column-title-right {
+	right: auto;
+	left: 3px;
+	transform: scaleX(-1);
+}
 
+.main-kanban-column:first-child .main-kanban-column-title-bg {
+	left: 0;
+	border-radius: 3px;
+}
 
+.main-kanban-column:last-child .task-kanban-column-revert  .main-kanban-column-title-right {
+	display: block;
+}
 
+.main-kanban-column:first-child .task-kanban-column-revert .main-kanban-column-title-right {
+	display: none;
+}
 
+.task-kanban-column-revert .main-kanban-column-title-text {
+	padding-left: 6px;
+}
 
-
-
+.main-kanban-column:first-child .task-kanban-column-revert .main-kanban-column-title-text {
+	padding-left: 2px;
+}

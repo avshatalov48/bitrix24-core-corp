@@ -10,6 +10,7 @@ return array(
 	'block' => array(
 		'name' => Loc::getMessage('LANDING_BLOCK_0.MENU_1_NAME_NEW'),
 		'section' => 'menu',
+		'dynamic' => false,
 		'subtype' => 'menu',
 		'subtype_params' => array(
 			'selector' => '.landing-block-node-menu-list-item-link',
@@ -38,7 +39,7 @@ return array(
 			'name' => Loc::getMessage('LANDING_BLOCK_0.MENU_1_NODES_LANDINGBLOCKNODEMENULOGO'),
 			'type' => 'img',
 			'group' => 'logo',
-			'dimensions' => array('width' => 180, 'height' => 60),
+			'dimensions' => array('maxWidth' => 180, 'maxHeight' => 60),
 		),
 	),
 	'style' => array(

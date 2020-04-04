@@ -4,6 +4,7 @@ namespace Bitrix\Imopenlines;
 
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\ModuleManager;
+use Bitrix\Bitrix24\Feature;
 
 class Limit
 {
@@ -11,6 +12,9 @@ class Limit
 	const OPTION_LAST_TRACKER_COUNTER_UPDATE = "tracker_month";
 	const TRACKER_COUNTER = "tracker_count";
 
+	/**
+	 * @return bool
+	 */
 	public static function isDemoLicense()
 	{
 		if (!\CModule::IncludeModule('bitrix24'))
@@ -19,26 +23,20 @@ class Limit
 		return \CBitrix24::getLicenseType() == 'demo';
 	}
 
+	/**
+	 * @return int
+	 */
 	public static function getLinesLimit()
 	{
 		if (!\CModule::IncludeModule('bitrix24'))
 			return 0;
 
-		if (\CBitrix24::IsNfrLicense())
-			return 0;
-
-		if (in_array(\CBitrix24::getLicenseType(), Array('company', 'demo', 'edu', 'bis_inc', 'crm', 'team')))
-			return 0;
-
-		if (in_array(\CBitrix24::getLicenseType(), Array('project')))
-			return Option::get('imopenlines', 'demo_max_openlines', 1);
-
-		if (in_array(\CBitrix24::getLicenseType(), Array('tf')))
-			return 2;
-
-		return Option::get('imopenlines', 'team_max_openlines', 2);
+		return (int)Feature::getVariable('imopenlines_max_lines_limit');
 	}
 
+	/**
+	 * @return array|bool
+	 */
 	public static function getLicenseUsersLimit()
 	{
 		if (!\CModule::IncludeModule('bitrix24'))
@@ -50,31 +48,57 @@ class Limit
 		return \CBitrix24BusinessTools::getUnlimUsers();
 	}
 
+	/**
+	 * @return bool|mixed
+	 */
 	public static function canUseQueueAll()
 	{
 		if (!\CModule::IncludeModule('bitrix24'))
 			return true;
 
-		if (\CBitrix24::getLicenseType() != 'project')
-			return true;
-
-		return !\Bitrix\Main\Config\Option::get('imopenlines', 'limit_queue_all');
+		return Feature::getVariable('imopenlines_can_use_queue_all');
 	}
 
+	/**
+	 * @return bool
+	 */
 	public static function canUseVoteClient()
 	{
 		if (!\CModule::IncludeModule('bitrix24'))
 			return true;
 
-		return \CBitrix24::getLicenseType() != 'project';
+		return Feature::isFeatureEnabled("imopenlines_can_use_vote_client");
 	}
 
+	/**
+	 * @return bool
+	 */
 	public static function canUseVoteHead()
 	{
 		if (!\CModule::IncludeModule('bitrix24'))
 			return true;
 
-		return !in_array(\CBitrix24::getLicenseType(), Array('project', 'tf'));
+		return Feature::isFeatureEnabled("imopenlines_can_use_vote_head");
+	}
+
+	/**
+	 * @return bool
+	 */
+	public static function canRemoveCopyright()
+	{
+		if(!\CModule::IncludeModule('bitrix24'))
+			return true;
+
+		return \CBitrix24::IsLicensePaid();
+	}
+
+	/**
+	 * @param \Bitrix\Main\Event $event
+	 */
+	public static function onBitrix24LicenseChange(\Bitrix\Main\Event $event)
+	{
+		Config::checkLinesLimit();
+		QueueManager::checkBusinessUsers();
 	}
 
 	/**
@@ -138,22 +162,5 @@ class Limit
 		\CGlobalCounter::Increment(self::TRACKER_COUNTER, \CGlobalCounter::ALL_SITES);
 
 		return true;
-	}
-
-	public static function canRemoveCopyright()
-	{
-		if(!\CModule::IncludeModule('bitrix24'))
-			return true;
-
-		if(\CBitrix24::IsDemoLicense())
-			return true;
-
-		return \CBitrix24::IsLicensePaid();
-	}
-
-	public static function onBitrix24LicenseChange(\Bitrix\Main\Event $event)
-	{
-		Config::checkLinesLimit();
-		QueueManager::checkBusinessUsers();
 	}
 }

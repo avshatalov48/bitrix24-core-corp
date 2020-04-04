@@ -236,7 +236,9 @@ if(!empty($htmlEditorConfigs))
 				{
 					data: <?=CUtil::PhpToJSObject($arResult['ENTITY_CONFIG'])?>,
 					scope: "<?=CUtil::JSEscape($arResult['ENTITY_CONFIG_SCOPE'])?>",
-					canUpdateConfiguration: <?=$arResult['CAN_UPDATE_CONFIGURATION'] ? 'true' : 'false'?>,
+					enableScopeToggle: <?=$arResult['ENABLE_CONFIG_SCOPE_TOGGLE'] ? 'true' : 'false'?>,
+					canUpdatePersonalConfiguration: <?=$arResult['CAN_UPDATE_PERSONAL_CONFIGURATION'] ? 'true' : 'false'?>,
+					canUpdateCommonConfiguration: <?=$arResult['CAN_UPDATE_COMMON_CONFIGURATION'] ? 'true' : 'false'?>,
 					options: <?=CUtil::PhpToJSObject($arResult['ENTITY_CONFIG_OPTIONS'])?>,
 					serviceUrl: "<?='/bitrix/components/bitrix/crm.entity.editor/settings.php?'.bitrix_sessid_get()?>"
 				}
@@ -418,6 +420,9 @@ if(!empty($htmlEditorConfigs))
 				companyToCreateTag: "<?=GetMessageJS('CRM_ENTITY_ED_NEW_COMPANY')?>",
 				contactToCreateLegend: "<?=GetMessageJS('CRM_ENTITY_ED_NEW_CONTACT_LEGEND')?>",
 				companyToCreateLegend: "<?=GetMessageJS('CRM_ENTITY_ED_NEW_COMPANY_LEGEND')?>",
+				contactChangeButtonHint: "<?=GetMessageJS('CRM_ENTITY_ED_CONTACT_CHANGE_BUTTON_HINT')?>",
+				companyChangeButtonHint: "<?=GetMessageJS('CRM_ENTITY_ED_COMPANY_CHANGE_BUTTON_HINT')?>",
+				entityEditTag: "<?=GetMessageJS('CRM_ENTITY_ED_EDIT_TAG')?>",
 				notFound: "<?=GetMessageJS('CRM_ENTITY_ED_NOT_FOUND')?>",
 				unnamed: "<?=CUtil::JSEscape(\CCrmContact::GetDefaultName())?>",
 				untitled: "<?=CUtil::JSEscape(\CCrmCompany::GetDefaultTitle())?>"
@@ -444,7 +449,9 @@ if(!empty($htmlEditorConfigs))
 				enableContact: "<?=GetMessageJS('CRM_ENTITY_ED_ENABLE_CLIENT_CONTACT')?>",
 				disableContact: "<?=GetMessageJS('CRM_ENTITY_ED_DISABLE_CLIENT_CONTACT')?>",
 				displayContactAtFirst: "<?=GetMessageJS('CRM_ENTITY_ED_DISPLAY_CONTACT_AT_FIRST')?>",
-				displayCompanyAtFirst: "<?=GetMessageJS('CRM_ENTITY_ED_DISPLAY_COMPANY_AT_FIRST')?>"
+				displayCompanyAtFirst: "<?=GetMessageJS('CRM_ENTITY_ED_DISPLAY_COMPANY_AT_FIRST')?>",
+				enableQuickEdit: "<?=GetMessageJS('CRM_ENTITY_ED_ENABLE_QUICK_EDIT')?>",
+				disableQuickEdit: "<?=GetMessageJS('CRM_ENTITY_ED_DISABLE_QUICK_EDIT')?>"
 			};
 
 			BX.Crm.EntityEditorProductRowSummary.messages =
@@ -622,14 +629,19 @@ if(!empty($htmlEditorConfigs))
 					apology: "<?=Bitrix\Crm\Color\PhaseColorScheme::FAILURE_COLOR?>"
 				};
 
-			var bizprocManager = BX.Crm.EntityBizprocManager.create(
+			var bizprocManager = null;
+			var restPlacementTabManager = null;
+			<?if(!$arResult['IS_EMBEDDED']){?>
+			bizprocManager = BX.Crm.EntityBizprocManager.create(
 				"<?=CUtil::JSEscape($guid)?>",
 				<?=\Bitrix\Main\Web\Json::encode($arResult['BIZPROC_MANAGER_CONFIG'])?>
 			);
-			var restPlacementTabManager = BX.Crm.EntityRestPlacementManager.create(
+
+			restPlacementTabManager = BX.Crm.EntityRestPlacementManager.create(
 				"<?=CUtil::JSEscape($guid)?>",
 				<?=\CUtil::PhpToJSObject($arResult['REST_PLACEMENT_TAB_CONFIG'])?>
 			);
+			<?}?>
 
 			BX.Crm.EntityEditor.setDefault(
 				BX.Crm.EntityEditor.create(
@@ -651,8 +663,10 @@ if(!empty($htmlEditorConfigs))
 						duplicateControl: <?=CUtil::PhpToJSObject($arResult['DUPLICATE_CONTROL'])?>,
 						initialMode: "<?=CUtil::JSEscape($arResult['INITIAL_MODE'])?>",
 						enableModeToggle: <?=$arResult['ENABLE_MODE_TOGGLE'] ? 'true' : 'false'?>,
+						enableVisibilityPolicy: <?=$arResult['ENABLE_VISIBILITY_POLICY'] ? 'true' : 'false'?>,
 						enableToolPanel: <?=$arResult['ENABLE_TOOL_PANEL'] ? 'true' : 'false'?>,
 						enableBottomPanel: <?=$arResult['ENABLE_BOTTOM_PANEL'] ? 'true' : 'false'?>,
+						enableFieldsContextMenu: <?=$arResult['ENABLE_FIELDS_CONTEXT_MENU'] ? 'true' : 'false'?>,
 						enablePageTitleControls: <?=$arResult['ENABLE_PAGE_TITLE_CONTROLS'] ? 'true' : 'false'?>,
 						readOnly: <?=$arResult['READ_ONLY'] ? 'true' : 'false'?>,
 						enableAjaxForm: <?=$arResult['ENABLE_AJAX_FORM'] ? 'true' : 'false'?>,
@@ -672,14 +686,17 @@ if(!empty($htmlEditorConfigs))
 						contextId: "<?=CUtil::JSEscape($arResult['CONTEXT_ID'])?>",
 						context: <?=CUtil::PhpToJSObject($arResult['CONTEXT'])?>,
 						contactCreateUrl: "<?=CUtil::JSEscape($arResult['PATH_TO_CONTACT_CREATE'])?>",
+						contactEditUrl: "<?=CUtil::JSEscape($arResult['PATH_TO_CONTACT_EDIT'])?>",
 						contactRequisiteSelectUrl: "<?=CUtil::JSEscape($arResult['PATH_TO_CONTACT_REQUISITE_SELECT'])?>",
 						companyCreateUrl: "<?=CUtil::JSEscape($arResult['PATH_TO_COMPANY_CREATE'])?>",
+						companyEditUrl: "<?=CUtil::JSEscape($arResult['PATH_TO_COMPANY_EDIT'])?>",
 						companyRequisiteSelectUrl: "<?=CUtil::JSEscape($arResult['PATH_TO_COMPANY_REQUISITE_SELECT'])?>",
 						requisiteEditUrl: "<?=CUtil::JSEscape($arResult['PATH_TO_REQUISITE_EDIT'])?>",
 						options: <?=CUtil::PhpToJSObject($arResult['EDITOR_OPTIONS'])?>,
 						inlineEditSpotlightId: "<?=CUtil::JSEscape($arResult['INLINE_EDIT_SPOTLIGHT_ID'])?>",
 						enableInlineEditSpotlight: <?=$arResult['ENABLE_INLINE_EDIT_SPOTLIGHT'] ? 'true' : 'false'?>,
 						attributeConfig: <?=CUtil::PhpToJSObject($arResult['ATTRIBUTE_CONFIG'])?>,
+						showEmptyFields: <?=$arResult['SHOW_EMPTY_FIELDS'] ? 'true' : 'false'?>,
 						isEmbedded: <?=$arResult['IS_EMBEDDED'] ? 'true' : 'false'?>
 					}
 				)

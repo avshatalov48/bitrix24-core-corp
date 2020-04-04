@@ -50,6 +50,16 @@ BX.ViPermissionEdit.prototype =
 			selectRoleNodes[i].removeEventListener('change', this.handleSelectRoleChange.bind(this));
 			selectRoleNodes[i].addEventListener('change', this.handleSelectRoleChange.bind(this));
 		}
+
+		BX.addCustomEvent(
+			"SidePanel.Slider:onMessage",
+			BX.delegate(function(event) {
+				if (event.getEventId() === "ImOpenLines:reloadRoles")
+				{
+					document.location.reload();
+				}
+			}, this)
+		);
 	},
 
 	handleDeleteRoleClick: function(e)

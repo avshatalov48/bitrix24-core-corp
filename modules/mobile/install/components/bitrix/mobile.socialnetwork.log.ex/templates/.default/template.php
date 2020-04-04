@@ -83,6 +83,12 @@ else
 			MSLPullDownText1: '<?=CUtil::JSEscape(GetMessage("MOBILE_LOG_NEW_PULL"))?>',
 			MSLPullDownText2: '<?=CUtil::JSEscape(GetMessage("MOBILE_LOG_NEW_PULL_RELEASE"))?>',
 			MSLPullDownText3: '<?=CUtil::JSEscape(GetMessage("MOBILE_LOG_NEW_PULL_LOADING"))?>',
+
+            MOBILE_TASKS_VIEW_TAB_TASK: '<?=CUtil::JSEscape(GetMessage("MOBILE_TASKS_VIEW_TAB_TASK"))?>',
+            MOBILE_TASKS_VIEW_TAB_CHECKLIST: '<?=CUtil::JSEscape(GetMessage("MOBILE_TASKS_VIEW_TAB_CHECKLIST"))?>',
+            MOBILE_TASKS_VIEW_TAB_FILES: '<?=CUtil::JSEscape(GetMessage("MOBILE_TASKS_VIEW_TAB_FILES"))?>',
+            MOBILE_TASKS_VIEW_TAB_COMMENT: '<?=CUtil::JSEscape(GetMessage("MOBILE_TASKS_VIEW_TAB_COMMENT"))?>',
+
 			MSLExtranetSiteId: <?=(!empty($arResult["extranetSiteId"]) ? "'".CUtil::JSEscape($arResult["extranetSiteId"])."'" : "false")?>,
 			MSLExtranetSiteDir: <?=(!empty($arResult["extranetSiteDir"]) ? "'".CUtil::JSEscape($arResult["extranetSiteDir"])."'" : "false")?>
 		});
@@ -1062,7 +1068,7 @@ else
 
 		// sonet_log_content
 		?><script type="text/javascript">
-			var maxScroll = 0;
+
 			var isPullDownEnabled = false;
 			var isPullDownLocked = false;
 

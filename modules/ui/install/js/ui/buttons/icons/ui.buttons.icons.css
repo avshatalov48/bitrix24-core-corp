@@ -110,6 +110,48 @@
 
 /*endregion*/
 
+/*region ui-btn-icon-disk*/
+.ui-btn-icon-disk.ui-btn,
+.ui-btn-icon-disk.ui-btn-split,
+.ui-btn-icon-disk.ui-btn-double,
+.ui-btn-icon-disk.ui-btn-danger,
+.ui-btn-icon-disk.ui-btn-primary,
+.ui-btn-icon-disk.ui-btn-default,
+.ui-btn-icon-disk.ui-btn-danger-dark,
+.ui-btn-icon-disk.ui-btn-success-dark,
+.ui-btn-icon-disk.ui-btn-primary-dark,
+.bitrix24-light-theme .ui-btn-icon-disk.ui-btn-themes { --ui-btn-icon: url(/bitrix/js/ui/buttons/icons/images/ui-disk-light.svg?v=1.1); }
+
+.ui-btn-icon-disk.ui-btn-link,
+.ui-btn-icon-disk.ui-btn-light,
+.ui-btn-icon-disk.ui-btn-success,
+.ui-btn-icon-disk.ui-btn-secondary,
+.ui-btn-icon-disk.ui-btn-light-border,
+.bitrix24-dark-theme .ui-btn-icon-disk.ui-btn-themes { --ui-btn-icon: url(/bitrix/js/ui/buttons/icons/images/ui-disk-dark.svg?v=1.1); }
+
+/*endregion*/
+
+/*region ui-btn-icon-done*/
+.ui-btn-icon-done.ui-btn,
+.ui-btn-icon-done.ui-btn-split,
+.ui-btn-icon-done.ui-btn-double,
+.ui-btn-icon-done.ui-btn-danger,
+.ui-btn-icon-done.ui-btn-primary,
+.ui-btn-icon-done.ui-btn-default,
+.ui-btn-icon-done.ui-btn-danger-dark,
+.ui-btn-icon-done.ui-btn-success-dark,
+.ui-btn-icon-done.ui-btn-primary-dark,
+.bitrix24-light-theme .ui-btn-icon-done.ui-btn-themes { --ui-btn-icon: url(/bitrix/js/ui/buttons/icons/images/ui-done-light.svg?v=1.1); }
+
+.ui-btn-icon-done.ui-btn-link,
+.ui-btn-icon-done.ui-btn-light,
+.ui-btn-icon-done.ui-btn-success,
+.ui-btn-icon-done.ui-btn-secondary,
+.ui-btn-icon-done.ui-btn-light-border,
+.bitrix24-dark-theme .ui-btn-icon-done.ui-btn-themes { --ui-btn-icon: url(/bitrix/js/ui/buttons/icons/images/ui-done-dark.svg?v=1.1); }
+
+/*endregion*/
+
 /*region ui-btn-icon-business-warning*/
 .ui-btn-icon-business-warning.ui-btn,
 .ui-btn-icon-business-warning.ui-btn-split,
@@ -383,6 +425,27 @@
 
 /*endregion*/
 
+/*region ui-btn-icon-phone-call*/
+.ui-btn-icon-phone-call.ui-btn,
+.ui-btn-icon-phone-call.ui-btn-split,
+.ui-btn-icon-phone-call.ui-btn-double,
+.ui-btn-icon-phone-call.ui-btn-danger,
+.ui-btn-icon-phone-call.ui-btn-primary,
+.ui-btn-icon-phone-call.ui-btn-default,
+.ui-btn-icon-phone-call.ui-btn-danger-dark,
+.ui-btn-icon-phone-call.ui-btn-success-dark,
+.ui-btn-icon-phone-call.ui-btn-primary-dark,
+.bitrix24-light-theme .ui-btn-icon-phone-call.ui-btn-themes { --ui-btn-icon: url(/bitrix/js/ui/buttons/icons/images/ui-phone-call-white.svg?v=1.1); }
+
+.ui-btn-icon-phone-call.ui-btn-link,
+.ui-btn-icon-phone-call.ui-btn-light,
+.ui-btn-icon-phone-call.ui-btn-success,
+.ui-btn-icon-phone-call.ui-btn-secondary,
+.ui-btn-icon-phone-call.ui-btn-light-border,
+.bitrix24-dark-theme .ui-btn-icon-phone-call.ui-btn-themes { --ui-btn-icon: url(/bitrix/js/ui/buttons/icons/images/ui-phone-call-black.svg?v=1.1); }
+
+/*endregion*/
+
 /*region ui-btn-icon-start*/
 .ui-btn-icon-start.ui-btn,
 .ui-btn-icon-start.ui-btn-split,
@@ -590,6 +653,46 @@
 .ui-btn-icon-page.ui-btn-secondary,
 .ui-btn-icon-page.ui-btn-light-border,
 .bitrix24-dark-theme .ui-btn-icon-page.ui-btn-themes { --ui-btn-icon: url(/bitrix/js/ui/buttons/icons/images/ui-page-black.svg?v=1.2); }
+
+/*endregion*/
+
+/*region ui-btn-icon-mail*/
+.ui-btn-icon-mail.ui-btn,
+.ui-btn-icon-mail.ui-btn-split,
+.ui-btn-icon-mail.ui-btn-double,
+.ui-btn-icon-mail.ui-btn-danger,
+.ui-btn-icon-mail.ui-btn-primary,
+.ui-btn-icon-mail.ui-btn-default,
+.ui-btn-icon-mail.ui-btn-danger-dark,
+.ui-btn-icon-mail.ui-btn-success-dark,
+.ui-btn-icon-mail.ui-btn-primary-dark,
+.bitrix24-light-theme .ui-btn-icon-mail.ui-btn-themes { --ui-btn-icon: url(/bitrix/js/ui/buttons/icons/images/ui-mail-white.svg?v=1.2); }
+
+.ui-btn-icon-mail.ui-btn-link,
+.ui-btn-icon-mail.ui-btn-light,
+.ui-btn-icon-mail.ui-btn-success,
+.ui-btn-icon-mail.ui-btn-secondary,
+.ui-btn-icon-mail.ui-btn-light-border,
+.bitrix24-dark-theme .ui-btn-icon-mail.ui-btn-themes { --ui-btn-icon: url(/bitrix/js/ui/buttons/icons/images/ui-mail-black.svg?v=1.2); }
+
+/*region ui-btn-icon-chat*/
+.ui-btn-icon-chat.ui-btn,
+.ui-btn-icon-chat.ui-btn-split,
+.ui-btn-icon-chat.ui-btn-double,
+.ui-btn-icon-chat.ui-btn-danger,
+.ui-btn-icon-chat.ui-btn-primary,
+.ui-btn-icon-chat.ui-btn-default,
+.ui-btn-icon-chat.ui-btn-danger-dark,
+.ui-btn-icon-chat.ui-btn-success-dark,
+.ui-btn-icon-chat.ui-btn-primary-dark,
+.bitrix24-light-theme .ui-btn-icon-chat.ui-btn-themes { --ui-btn-icon: url(/bitrix/js/ui/buttons/icons/images/ui-chat-white.svg?v=1.2); }
+
+.ui-btn-icon-chat.ui-btn-link,
+.ui-btn-icon-chat.ui-btn-light,
+.ui-btn-icon-chat.ui-btn-success,
+.ui-btn-icon-chat.ui-btn-secondary,
+.ui-btn-icon-chat.ui-btn-light-border,
+.bitrix24-dark-theme .ui-btn-icon-chat.ui-btn-themes { --ui-btn-icon: url(/bitrix/js/ui/buttons/icons/images/ui-chat-black.svg?v=1.2); }
 
 /*endregion*/
 

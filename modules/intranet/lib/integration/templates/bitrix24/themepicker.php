@@ -29,6 +29,7 @@ class ThemePicker
 	private $templateId = null;
 	private $templatePath = null;
 	private $siteId = null;
+	private $userId = 0;
 	private $currentTheme = null;
 	private $zoneId = null;
 
@@ -38,9 +39,9 @@ class ThemePicker
 	 * @param string $templateId
 	 * @param bool $siteId
 	 *
-	 * @throws ArgumentException
+	 * @param int $userId
 	 */
-	public function __construct($templateId, $siteId = false)
+	public function __construct($templateId, $siteId = false, $userId = 0)
 	{
 		if (!static::isValidTemplateId($templateId))
 		{
@@ -49,8 +50,20 @@ class ThemePicker
 
 		$this->templateId = $templateId;
 		$this->templatePath = \getLocalPath("templates/".$templateId, BX_PERSONAL_ROOT);
-
 		$this->siteId = is_string($siteId) ? substr(preg_replace("/[^a-z0-9_]/i", "", $siteId), 0, 2) : SITE_ID;
+
+		if (is_numeric($userId) && $userId > 0)
+		{
+			$this->userId = $userId;
+		}
+		else
+		{
+			$user = &$GLOBALS["USER"];
+			if ($user instanceof \CUser)
+			{
+				$this->userId = intval($user->getId());
+			}
+		}
 
 		if (Loader::includeModule("bitrix24"))
 		{
@@ -62,7 +75,13 @@ class ThemePicker
 			$this->zoneId = $context !== null ? $context->getLanguage() : "en";
 		}
 
-		$currentThemeId = \CUserOptions::getOption("intranet", $this->getCurrentThemeOptionName(), null);
+		$currentThemeId = \CUserOptions::getOption(
+			"intranet",
+			$this->getCurrentThemeOptionName(),
+			null,
+			$this->getUserId()
+		);
+
 		if ($currentThemeId !== null && $this->isValidTheme($currentThemeId))
 		{
 			$this->currentTheme = $this->getTheme($currentThemeId);
@@ -166,19 +185,19 @@ class ThemePicker
 		$creationDate = \COption::getOptionInt("main", "~controller_date_create", 0);
 		if ($creationDate === 0)
 		{
-			return \CUserOptions::getOption("intranet", $this->getHintOptionName(), true);
+			return \CUserOptions::getOption("intranet", $this->getHintOptionName(), true, $this->getUserId());
 		}
 
 		return
 			$creationDate < mktime(0, 0, 0, 9, 30, 2017) &&
 			time() - $creationDate > 86400 * 14 &&
-			\CUserOptions::getOption("intranet", $this->getHintOptionName(), true)
+			\CUserOptions::getOption("intranet", $this->getHintOptionName(), true, $this->getUserId())
 		;
 	}
 
 	public function hideHint()
 	{
-		\CUserOptions::setOption("intranet", $this->getHintOptionName(), false);
+		\CUserOptions::setOption("intranet", $this->getHintOptionName(), false, false, $this->getUserId());
 	}
 
 	public function getCurrentThemeId()
@@ -210,11 +229,17 @@ class ThemePicker
 			//Standard or Custom Own Themes
 			if ($themeId !== $this->getDefaultThemeId())
 			{
-				\CUserOptions::setOption("intranet", $this->getCurrentThemeOptionName(), $themeId);
+				\CUserOptions::setOption(
+					"intranet",
+					$this->getCurrentThemeOptionName(),
+					$themeId,
+					false,
+					$this->getUserId()
+				);
 			}
 			else
 			{
-				\CUserOptions::deleteOption("intranet", $this->getCurrentThemeOptionName());
+				\CUserOptions::deleteOption("intranet", $this->getCurrentThemeOptionName(), false, $this->getUserId());
 			}
 
 			$this->currentTheme = $this->getTheme($themeId);
@@ -224,7 +249,7 @@ class ThemePicker
 		elseif ($themeId === $this->getDefaultThemeId())
 		{
 			//Custom Admin Theme
-			\CUserOptions::deleteOption("intranet", $this->getCurrentThemeOptionName());
+			\CUserOptions::deleteOption("intranet", $this->getCurrentThemeOptionName(), false, $this->getUserId());
 			return true;
 		}
 
@@ -328,7 +353,7 @@ class ThemePicker
 
 		if ($this->getCurrentThemeId() === $themeId)
 		{
-			\CUserOptions::deleteOption("intranet", $this->getCurrentThemeOptionName());
+			\CUserOptions::deleteOption("intranet", $this->getCurrentThemeOptionName(), false, $this->getUserId());
 		}
 
 		return true;
@@ -648,6 +673,11 @@ class ThemePicker
 		return $this->zoneId;
 	}
 
+	public function getUserId()
+	{
+		return $this->userId;
+	}
+
 	public function getCurrentThemeOptionName()
 	{
 		return "bitrix24_theme_".$this->getTemplateId()."_".$this->getSiteId();
@@ -736,7 +766,12 @@ class ThemePicker
 	private function setLastUsage($themeId, $autoPrepend = true)
 	{
 		/** @var array $themesUsage */
-		$themesUsage = \CUserOptions::getOption("intranet", $this->getLastThemesOptionName(), array());
+		$themesUsage = \CUserOptions::getOption(
+			"intranet",
+			$this->getLastThemesOptionName(),
+			[],
+			$this->getUserId()
+		);
 
 		foreach ($themesUsage as $index => $id)
 		{
@@ -752,7 +787,7 @@ class ThemePicker
 			array_unshift($themesUsage, $themeId);
 		}
 
-		\CUserOptions::setOption("intranet", $this->getLastThemesOptionName(), $themesUsage);
+		\CUserOptions::setOption("intranet", $this->getLastThemesOptionName(), $themesUsage, false, $this->getUserId());
 	}
 
 	private function registerJsExtension()
@@ -827,7 +862,7 @@ class ThemePicker
 	private function sortItems(&$themes)
 	{
 		/** @var array $themesUsage */
-		$themesUsage = \CUserOptions::getOption("intranet", $this->getLastThemesOptionName(), array());
+		$themesUsage = \CUserOptions::getOption("intranet", $this->getLastThemesOptionName(), [], $this->getUserId());
 		$themesUsage = array_flip($themesUsage);
 
 		foreach ($themes as &$theme)
@@ -927,11 +962,22 @@ class ThemePicker
 	private function getCustomThemesOptions($userId = false)
 	{
 		/** @noinspection PhpIncompatibleReturnTypeInspection */
-		return \CUserOptions::getOption("intranet", $this->getCustomThemesOptionName(), array(), $userId);
+		return \CUserOptions::getOption(
+			"intranet",
+			$this->getCustomThemesOptionName(),
+			[],
+			$userId !== false ? $userId : $this->getUserId()
+		);
 	}
 
-	private function setCustomThemesOptions($customThemes, $userId = false)
+	private function setCustomThemesOptions($customThemes)
 	{
-		\CUserOptions::setOption("intranet", $this->getCustomThemesOptionName(), $customThemes, false, $userId);
+		\CUserOptions::setOption(
+			"intranet",
+			$this->getCustomThemesOptionName(),
+			$customThemes,
+			false,
+			$this->getUserId()
+		);
 	}
 }

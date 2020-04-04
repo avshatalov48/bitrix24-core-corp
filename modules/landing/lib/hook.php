@@ -2,6 +2,8 @@
 namespace Bitrix\Landing;
 
 use \Bitrix\Landing\Internals\HookDataTable as HookData;
+use \Bitrix\Main\Event;
+use \Bitrix\Main\EventResult;
 
 class Hook
 {
@@ -130,6 +132,30 @@ class Hook
 			return ($a->getSort() < $b->getSort()) ? -1 : 1;
 		});
 
+		// check custom exec
+		$event = new Event('landing', 'onHookExec');
+		$event->send();
+		foreach ($event->getResults() as $result)
+		{
+			if ($result->getType() != EventResult::ERROR)
+			{
+				if ($customExec = $result->getModified())
+				{
+					foreach ((array)$customExec as $code => $itemExec)
+					{
+						$code = strtoupper($code);
+						if (isset($hooks[$code]) && is_callable($itemExec))
+						{
+							$hooks[$code]->setCustomExec($itemExec);
+						}
+					}
+					unset($code, $itemExec);
+				}
+				unset($customExec);
+			}
+		}
+		unset($event, $result);
+
 		// then fill hook with data
 		if (!empty($hooks) && $id > 0)
 		{
@@ -161,21 +187,49 @@ class Hook
 	/**
 	 * Get hooks for site.
 	 * @param int $id Site id.
-	 * @return array
+	 * @return \Bitrix\Landing\Hook\Page[]
 	 */
 	public static function getForSite($id)
 	{
-		return self::getList($id, self::ENTITY_TYPE_SITE);
+		if (!Landing::getEditMode())
+		{
+			static $hooks = [];
+		}
+		else
+		{
+			$hooks = [];
+		}
+
+		if (!$hooks)
+		{
+			$hooks = self::getList($id, self::ENTITY_TYPE_SITE);
+		}
+
+		return $hooks;
 	}
 
 	/**
 	 * Get hooks for landing.
 	 * @param int $id Landing id.
-	 * @return array
+	 * @return \Bitrix\Landing\Hook\Page[]
 	 */
 	public static function getForLanding($id)
 	{
-		return self::getList($id, self::ENTITY_TYPE_LANDING);
+		if (!Landing::getEditMode())
+		{
+			static $hooks = [];
+		}
+		else
+		{
+			$hooks = [];
+		}
+
+		if (!$hooks)
+		{
+			$hooks = self::getList($id, self::ENTITY_TYPE_LANDING);
+		}
+
+		return $hooks;
 	}
 
 	/**
@@ -263,20 +317,20 @@ class Hook
 		$data = self::prepareData($data);
 		$hooks = self::getList($id, $type, $data);
 		$dataSave = self::getData($id, $type, true);
-		$enableHook = Manager::checkFeature(Manager::FEATURE_ENABLE_ALL_HOOKS);
 
 		// get hooks with new new data (not saved yet)
 		foreach ($hooks as $hook)
 		{
-			if (!$hook->isFree() && !$enableHook)
-			{
-				continue;
-			}
+			$hookLocked = $hook->isLocked();
 			$codeHook = $hook->getCode();
 			// modify $dataSave ...
 			foreach ($hook->getFields() as $field)
 			{
 				$codeVal = $field->getCode();
+				if ($hookLocked && !$field->isEmptyValue())
+				{
+					continue;
+				}
 				if (!isset($data[$codeHook][$codeVal]))
 				{
 					continue;

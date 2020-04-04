@@ -63,7 +63,7 @@ class WaitEntry
 		$counterCodes = EntityCounterManager::prepareCodes(
 			$ownerTypeID,
 			EntityCounterType::getAll(true),
-			array('ENTITY_ID' => $ownerID, 'EXTENDED_MODE' => false)
+			array('ENTITY_ID' => $ownerID, 'EXTENDED_MODE' => true)
 		);
 		if(!empty($counterCodes))
 		{
@@ -204,7 +204,7 @@ class WaitEntry
 			$counterCodes = EntityCounterManager::prepareCodes(
 				$ownerTypeID,
 				EntityCounterType::getAll(true),
-				array('ENTITY_ID' => $ownerID, 'EXTENDED_MODE' => false)
+				array('ENTITY_ID' => $ownerID, 'EXTENDED_MODE' => true)
 			);
 			if(!empty($counterCodes))
 			{
@@ -231,7 +231,7 @@ class WaitEntry
 			$counterCodes = EntityCounterManager::prepareCodes(
 				$ownerTypeID,
 				EntityCounterType::getAll(true),
-				array('ENTITY_ID' => $ownerID, 'EXTENDED_MODE' => false)
+				array('ENTITY_ID' => $ownerID, 'EXTENDED_MODE' => true)
 			);
 			if(!empty($counterCodes))
 			{
@@ -302,7 +302,7 @@ class WaitEntry
 		$counterCodes = EntityCounterManager::prepareCodes(
 			$ownerTypeID,
 			EntityCounterType::getAll(true),
-			array('ENTITY_ID' => $ownerID, 'EXTENDED_MODE' => false)
+			array('ENTITY_ID' => $ownerID, 'EXTENDED_MODE' => true)
 		);
 		if(!empty($counterCodes))
 		{

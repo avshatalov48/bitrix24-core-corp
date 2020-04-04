@@ -507,7 +507,7 @@ class CSocNetLogRestService extends IRestService
 
 	public static function addBlogPost($arFields)
 	{
-		global $USER;
+		global $USER, $CACHE_MANAGER;
 
 		$siteId = (
 			is_set($arFields, "SITE_ID")
@@ -683,6 +683,75 @@ class CSocNetLogRestService extends IRestService
 		}
 
 		if (
+			isset($arFields["IMPORTANT"])
+			&& $arFields["IMPORTANT"] == "Y"
+		)
+		{
+			\CBlogUserOptions::setOption($result, "BLOG_POST_IMPRTNT", "Y", $authorId);
+
+			if (defined("BX_COMP_MANAGED_CACHE"))
+			{
+				$CACHE_MANAGER->ClearByTag('blogpost_important_all');
+			}
+		}
+
+		$inlineTagsList = \Bitrix\Socialnetwork\Util::detectTags($postFields, ($postFields["MICRO"] == 'Y' ? [ 'DETAIL_TEXT' ] : [ 'DETAIL_TEXT', 'TITLE' ]));
+		if (!empty($inlineTagsList))
+		{
+			$inlineTagsList = array_unique(array_map('ToLower', $inlineTagsList));
+
+			$existingCategoriesList = [];
+			$res = CBlogCategory::getList(
+				array(),
+				array(
+					"@NAME" => $inlineTagsList,
+					"BLOG_ID" => $postFields["BLOG_ID"]
+				),
+				false,
+				false,
+				[ 'ID', 'NAME' ]
+			);
+			while ($category = $res->fetch())
+			{
+				$existingCategoriesList[$category['NAME']] = $category['ID'];
+			}
+
+			$categoryIdList = [];
+
+			foreach($inlineTagsList as $tag)
+			{
+				if (array_key_exists($tag, $existingCategoriesList))
+				{
+					$categoryIdList[] = $existingCategoriesList[$tag];
+				}
+				else
+				{
+					$categoryIdList[] = \CBlogCategory::add([
+						"BLOG_ID" => $postFields["BLOG_ID"],
+						"NAME" => $tag
+					]);
+				}
+			}
+
+			foreach($categoryIdList as $categoryId)
+			{
+				\CBlogPostCategory::add([
+					"BLOG_ID" => $postFields["BLOG_ID"],
+					"POST_ID" => $result,
+					"CATEGORY_ID" => $categoryId
+				]);
+			}
+
+			\CBlogPost::update(
+				$result,
+				[
+					"CATEGORY_ID" => implode(",", $categoryIdList),
+					"HAS_TAGS" => "Y"
+				]
+			);
+		}
+
+		if (
 			isset($arFields["FILES"])
 			&& Option::get('disk', 'successfully_converted', false)
 			&& Loader::includeModule('disk')
@@ -741,6 +810,17 @@ class CSocNetLogRestService extends IRestService
 		);
 
 		$logId = \CBlogPost::notify($postFields, $blog, $paramsNotify);
+
+		if ($logId)
+		{
+			if ($post = \Bitrix\Blog\Item\Post::getById($result))
+			{
+				\CSocNetLog::update(intval($logId), [
+					"SOURCE_ID" => $result, // table column field
+					"TAG" => $post->getTags()
+				]);
+			}
+		}
 
 		$postUrl = \CComponentEngine::makePathFromTemplate(htmlspecialcharsBack($pathToPost), array(
 			"post_id" => $result,

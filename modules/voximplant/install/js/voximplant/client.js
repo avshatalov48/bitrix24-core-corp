@@ -6,6 +6,18 @@
 
 	BX.namespace("BX.Voximplant");
 
+	var init = function(config)
+	{
+		return new Promise(function(resolve, reject)
+		{
+			if(client.alreadyInitialized)
+			{
+				return resolve();
+			}
+			client.init(config).then(resolve).catch(reject)
+		});
+	};
+
 	var connect = function()
 	{
 		return new Promise(function(resolve, reject)
@@ -129,7 +141,7 @@
 			client = VoxImplant.getInstance();
 		}
 
-		if(client.getClientState() === "LOGGED_ID")
+		if(client.getClientState() === "LOGGED_IN")
 		{
 			result.resolve(client);
 			return result;
@@ -155,7 +167,7 @@
 			clientParameters = BX.util.objectMerge(clientParameters, config.apiParameters);
 		}
 
-		client.init(clientParameters)
+		init(clientParameters)
 			.then(connect)
 			.then(authorize)
 			.then(function(e)

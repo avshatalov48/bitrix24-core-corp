@@ -463,8 +463,5 @@ unset($visibleFields);
 $arResult['PRODUCT_PROPS_USER_TYPES'] = $arPropUserTypeList;
 $arResult['PRODUCT_PROPS'] = $arProps;
 
-$arResult['ENABLE_SUBMIT_WITHOUT_LAYOUT'] = !isset($arParams['ENABLE_SUBMIT_WITHOUT_LAYOUT'])
-	|| $arParams['ENABLE_SUBMIT_WITHOUT_LAYOUT'] === 'Y';
-
 /** @var CBitrixComponent $this */
 $this->IncludeComponentTemplate();

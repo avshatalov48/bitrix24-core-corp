@@ -4,7 +4,8 @@
 }
 
 .crm-kanban-item {
-	padding: 10px 30px 20px 12px;
+	padding: 10px 30px 8px 12px;
+	overflow: hidden;
 	background: #fff;
 	position: relative;
 	min-height: 77px;
@@ -162,10 +163,11 @@
 }
 
 .crm-kanban-item-planner {
-	position: absolute;
-	left: 10px;
-	right: 10px;
-	bottom: 7px;
+	clear: both;
+	display: block;
+	/*left: 10px;*/
+	/*right: 10px;*/
+	/*bottom: 7px;*/
 	overflow: hidden;
 	-webkit-transition: .2s;
 	transition: .2s;
@@ -515,11 +517,6 @@
 .main-kanban-column-top-button-shown .crm-kanban-column-add-item-button,
 .main-kanban-column-bottom-button-shown .crm-kanban-column-add-item-button {
 	margin-right: 12px !important;
-}
-
-.main-kanban-column .crm-entity-widget-content-block-field-container-inner {
-	padding: 0;
-	border: none;
 }
 
 .main-kanban-column:first-child .crm-kanban-column-add-item-button,
@@ -929,144 +926,6 @@ a.crm-kanban-sidepanel:hover {
 	transition: .1s;
 }
 
-.crm-kanban-quick-form {
-	display: block;
-	overflow: hidden;
-	position: relative;
-	text-align: left;
-	margin: 0 1px 0 0;
-	background: #fff;
-	opacity: 0;
-	height: 0;
-	border-radius: 1px;
-}
-
-.crm-kanban-quick-form-container {
-	opacity: 0;
-}
-
-.crm-kanban-quick-form-show .crm-kanban-quick-form-container {
-	animation: crm-kanban-quick-form-show .2s cubic-bezier(0.88, -0.08, 0.46, 0.91) forwards;
-}
-
-@keyframes crm-kanban-quick-form-show {
-	from {
-		opacity: 0;
-	}
-	to {
-		opacity: 1;
-	}
-}
-
-.crm-kanban-quick-form:empty:after {
-	border: none;
-}
-
-.crm-kanban-quick-form .crm-entity-widget-content {
-	padding: 13px 0 8px 0;
-}
-
-.crm-kanban-quick-form .crm-entity-widget-content-block {
-	padding: 0 16px !important;
-	margin-bottom: 15px;
-}
-
-.crm-kanban-quick-form .crm-entity-widget-content-inner {
-	padding: 8px 7px 3px 9px;
-}
-
-.crm-kanban-quick-form .crm-entity-widget-actions-btn-add {
-	display: none;
-}
-
-.crm-kanban-quick-form .crm-entity-widget-content-block-field-container {
-	margin-bottom: 0;
-}
-
-.crm-kanban-quick-form .crm-entity-widget-content-input {
-	overflow: hidden;
-	white-space: nowrap;
-	text-overflow: ellipsis;
-}
-
-.crm-kanban-quick-form .crm-entity-widget-content-inner {
-	border: none;
-	padding: 0;
-}
-
-.crm-kanban-quick-form .crm-entity-widget-content-inner-row .crm-entity-widget-content-block-title {
-	display: none;
-}
-
-.crm-kanban-quick-form .crm-entity-widget-content-block[data-cid="CLIENT"] .crm-entity-widget-content-block-title-text {
-	width: 100%;
-	display: block;
-}
-
-.crm-kanban-quick-form .crm-entity-card-widget-edit .crm-entity-widget-content-block-inner {
-	margin-bottom: 0;
-}
-
-.crm-kanban-quick-form .crm-entity-widget-content-search-row {
-	margin-bottom: 11px;
-}
-
-.crm-kanban-quick-form .crm-entity-widget-content-inner-row:last-child .crm-entity-widget-content-search-row {
-	margin-bottom: 0;
-}
-
-.crm-kanban-quick-form .crm-entity-card-widget-edit {
-	box-shadow: none;
-}
-
-.crm-kanban-quick-form  .crm-entity-card-widget-add-btn-container {
-	line-height: normal;
-	margin-bottom: 0;
-	padding: 0 17px;
-}
-
-.crm-kanban-quick-form .crm-entity-card-widget-edit {
-	margin-bottom: 0;
-}
-
-.crm-kanban-qiuck-form-buttons {
-	line-height: normal;
-	padding: 15px 16px 13px 16px;
-}
-
-.crm-kanban-qiuck-form-buttons .ui-btn {
-	/*margin: 0 12px 10px 0 !important;*/
-	margin-bottom: 10px !important;
-}
-
-.crm-kanban-quick-form ::-webkit-input-placeholder {
-	color: #e2e2e2;
-}
-.crm-kanban-quick-form ::-moz-placeholder {
-	color: #e2e2e2;
-}
-.crm-kanban-quick-form :-ms-input-placeholder {
-	color: #e2e2e2;
-}
-.crm-kanban-quick-form :-moz-placeholder {
-	color: #e2e2e2;
-}
-
-.crm-kanban-quick-form .crm-entity-card-widget-edit .crm-entity-widget-content-block {
-	animation: none;
-}
-
-.crm-kanban-quick-form .crm-entity-widget-content-input,
-.crm-kanban-quick-form .crm-entity-widget-content-block-inner {
-	transform: none;
-	transition: none;
-}
-
-.crm-kanban-qiuck-form .crm-entity-widget-content-search-row .crm-entity-widget-btn-close,
-.crm-kanban-quick-form .crm-entity-add-widget-btn {
-	display: none;
-}
-
 .crm-kanban-popup-cancel .popup-window-content {
 	padding: 10px 10px 0 10px;
 	font-size: 14px;
@@ -1100,4 +959,288 @@ a.crm-kanban-sidepanel:hover {
 
 .main-kanban-item-drag-multi .main-kanban-item-wrapper {
 	box-shadow: 0 0 3px rgba(0,0,0,.2);
+}
+
+.crm-kanban-popup-field-wrapper  {
+	display: block;
+	column-count: 3;
+	margin-bottom: 7px;
+}
+
+.crm-kanban-popup-field-wrapper:last-child {
+	margin-bottom: 0;
+}
+
+.crm-kanban-popup-field-item {
+	display: block;
+	position: relative;
+	margin-bottom: 2px;
+	max-width: 250px;
+}
+
+.crm-kanban-popup-field-item-label {
+	display: block;
+	overflow: hidden;
+	padding: 0 9px 0 29px;
+	height: 33px;
+	line-height: 33px;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-size: 14px;
+	color: #535c69;
+	cursor: pointer;
+	border-radius: 3px;
+	transition: .1s;
+}
+
+.crm-kanban-popup-field-item-label:hover {
+	background: rgba(177,234,253,.3);
+}
+
+.crm-kanban-popup-field-item-input:checked + .crm-kanban-popup-field-item-label {
+	background: rgba(177,234,253,.7) !important;
+}
+
+.crm-kanban-popup-field-item-input {
+	position: absolute;
+	top: 50%;
+	margin: 0;
+	transform: translateY(-50%);
+	left: 8px;
+	pointer-events: none;
+}
+
+.crm-kanban-popup-field-title {
+	display: block;
+	overflow: hidden;
+	padding: 9px 0;
+	color: #535c69;
+	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-size: 13px;
+	line-height: 17px;
+	border-bottom: 1px solid rgba(82,92,105,.1);
+	margin-bottom: 9px;
+}
+
+.crm-kanban-popup-field-title:first-child {
+	padding-top: 0;
+}
+
+.crm-kanban-popup-field {
+	margin: -23px -9px 40px -9px;
+}
+
+.crm-kanban-popup-field:last-child {
+	margin-bottom: 0 !important;
+}
+
+.crm-kanban-popup-field .popup-window-titlebar-text {
+	color: #535c69;
+}
+
+.crm-kanban-popup-field .popup-window-buttons {
+	border-top: 1px solid rgba(82,92,105,.1);
+	margin: 0 11px;
+}
+
+.crm-kanban-popup-field-loader {
+	display: block;
+	overflow: hidden;
+	height: 80px;
+	position: relative;
+}
+
+.crm-kanban-quick-form {
+	display: block;
+	overflow: hidden;
+	border-radius: 2px 2px 0 0;
+	transition: .2s;
+}
+
+.crm-kanban-quick-form-wait {
+	opacity: .9;
+	pointer-events: none;
+}
+
+.crm-kanban-quick-form-hide {
+	height: 0;
+}
+
+.crm-kanban-quick-form-container-bottom {
+	display: block;
+	overflow: hidden;
+	background: #fff;
+	padding: 5px 10px 10px 10px;
+}
+
+.crm-kanban-quick-form * {
+	animation: none !important;
+	transition: none !important;
+}
+
+.crm-kanban-qiuck-form-buttons {
+	margin: -15px 0 0 0;
+	padding: 15px;
+	background: #fff;
+	position: relative;
+	border-radius: 0 0 2px 2px;
+}
+
+.crm-kanban-quick-form-container {
+	padding-bottom: 7px;
+}
+
+.crm-kanban-quick-form .crm-entity-card-widget,
+.crm-kanban-quick-form .crm-entity-card-widget-edit {
+	box-shadow: none;
+	border-radius: 0;
+}
+
+.crm-kanban-column-add-item-button-wait:before {
+	display: inline-block;
+	vertical-align: middle;
+	margin-right: 7px;
+	font-size: 20px;
+	width: 27px;
+	height: 27px;
+	opacity: .5;
+	background: no-repeat center;
+	background-image: url(/bitrix/js/ui/buttons/images/ui-loader-wait-white.min.svg?v=1.1);
+	content: '';
+	transition: 160ms color linear, 160ms transform linear, 160ms opacity linear, 160ms background-color linear;
+}
+
+.crm-kanban-item-fields {
+	clear: both;
+	display: block;
+	overflow: hidden;
+}
+
+.crm-kanban-item-fields {
+	clear: both;
+	display: block;
+	overflow: hidden;
+	padding-bottom: 10px;
+}
+
+.crm-kanban-item-fields-item {
+	display: block;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	margin-bottom: 8px;
+}
+
+.crm-kanban-item-fields-item:last-child {
+	margin-bottom: 0;
+}
+
+.crm-kanban-item-fields-item-title,
+.crm-kanban-item-fields-item-value {
+	display: block;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.crm-kanban-item-fields-item-title {
+	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-size: 11px;
+	color: #868d96;
+	margin-bottom: 3px;
+}
+
+.crm-kanban-item-fields-item-value {
+	font-family: "OpenSans-SemiBold", Arial, "Helvetica Neue", sans-serif;
+	color: #525c69;
+	font-size: 12px;
+	white-space: normal;
+	display: -webkit-box;
+	-webkit-line-clamp: 3;
+	-webkit-box-orient: vertical;
+	word-break: break-word;
+}
+
+.bx-ie .crm-kanban-item-fields-item-value,
+.bx-firefox .crm-kanban-item-fields-item-value {
+	max-height: 51px;
+	position: relative;
+}
+
+.bx-ie .crm-kanban-item-fields-item-value:after,
+.bx-firefox .crm-kanban-item-ficrm-entity-card-widget-editelds-item-value:after {
+	content: "\02026";
+	position: absolute;
+	float: right;
+	top: 34px;
+	right: 0;
+	width: 30px;
+	text-align: right;
+	background-size: 100% 100%;
+	background: linear-gradient(to right, rgba(255, 255, 255, 0), white 50%, white);
+}
+
+.crm-kanban-quick-form .crm-entity-widget-content-block-field-half-width { width: 100%; }
+
+.main-kanban-column-subtitle {
+	min-height: 36px;
+}
+
+.crm-kanban-quick-form .crm-entity-widget-content-block .crm-entity-card-private,
+.crm-kanban-quick-form .crm-entity-widget-content-block .crm-entity-card-common {
+	width: 25px;
+	height: 14px;
+	margin-top: 2px;
+	background: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2225%22%20height%3D%2214%22%20viewBox%3D%220%200%2025%2014%22%3E%0A%20%20%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%0A%20%20%20%20%3Cg%20fill%3D%22%23A8ADB4%22%3E%0A%20%20%20%20%20%20%3Cpath%20d%3D%22M16.1445419%2C13.0929481%20L4.73809724%2C13.0929481%20L4.73809724%2C11.463996%20C4.73609147%2C11.1216409%204.88601532%2C10.7963939%205.14602205%2C10.5772838%20C6.17995996%2C9.73234272%207.30103183%2C9.00310928%208.48961523%2C8.4019588%20C8.52540761%2C8.3848407%208.54836843%2C8.34786665%208.54836843%2C8.30746802%20L8.54836843%2C7.18727206%20C8.38696483%2C6.90996632%208.27688738%2C6.60526307%208.22353506%2C6.28823707%20C8.09927412%2C6.27796624%207.93651164%2C6.10062624%207.76025552%2C5.47135959%20C7.51984182%2C4.60860923%207.77578801%2C4.48262969%207.99188665%2C4.50180621%20L7.99121139%2C4.50180621%20C7.9513666%2C4.38745878%207.92030095%2C4.27037336%207.89801602%2C4.15123006%20C7.81292385%2C3.77737566%207.81292385%2C3.3891301%207.89801602%2C3.01527571%20C8.00674508%2C2.57432103%208.23230623%2C2.17238548%208.55172829%2C1.8533086%20C8.73204716%2C1.65952764%208.9353252%2C1.48904246%209.15682532%2C1.3466209%20C9.33781842%2C1.21720922%209.53568515%2C1.11450444%209.7443572%2C1.04191764%20C9.91724207%2C0.982347746%2010.0968867%2C0.947426856%2010.2785368%2C0.938525728%20C10.7424907%2C0.888540581%2011.2098157%2C0.989879874%2011.6136747%2C1.22747059%20C11.8824589%2C1.36852314%2012.108696%2C1.58146485%2012.2667127%2C1.84302971%20C12.2667127%2C1.84302971%2013.3506144%2C1.92177262%2012.9839083%2C4.15332651%20L12.9845837%2C4.15332651%20C12.9622971%2C4.27246805%2012.9312332%2C4.38956224%2012.8913884%2C4.50390265%20C13.1074945%2C4.48267702%2013.3634506%2C4.61071969%2013.1230196%2C5.47345604%20C12.9501348%2C6.10270516%2012.7772499%2C6.28006163%2012.65974%2C6.29033351%20L12.6590648%2C6.28964884%20C12.6057142%2C6.60394035%2012.4956349%2C6.90520796%2012.3342314%2C7.17841195%20L12.3342314%2C8.31299905%20C12.3342314%2C8.35271232%2012.3571922%2C8.38968759%2012.3929846%2C8.40748984%20C13.5815679%2C9.00662447%2014.7025534%2C9.73447312%2015.7365778%2C10.5773809%20C15.9965793%2C10.796491%2016.1465051%2C11.121738%2016.1445419%2C11.4640932%20L16.1445419%2C13.0929481%20Z%22/%3E%0A%20%20%20%20%20%20%3Crect%20width%3D%225.22%22%20height%3D%221.225%22%20x%3D%22.708%22%20y%3D%223.999%22%20rx%3D%22.612%22/%3E%0A%20%20%20%20%20%20%3Crect%20width%3D%225.22%22%20height%3D%221.225%22%20x%3D%22.708%22%20y%3D%221.999%22%20rx%3D%22.612%22/%3E%0A%20%20%20%20%20%20%3Crect%20width%3D%224.157%22%20height%3D%221.225%22%20x%3D%22.708%22%20y%3D%226.123%22%20rx%3D%22.612%22/%3E%0A%20%20%20%20%3C/g%3E%0A%20%20%20%20%3Cpolygon%20fill%3D%22%23BABEC3%22%20points%3D%2220.004%203.045%2024.004%207.045%2020.004%207.045%22%20transform%3D%22rotate%28-45%2022.004%205.045%29%22/%3E%0A%20%20%3C/g%3E%0A%3C/svg%3E') center center no-repeat;
+	float: right;
+	opacity: .8;
+	cursor: pointer;
+}
+
+.crm-kanban-quick-form .crm-entity-widget-content-block .crm-entity-card-common {
+	width: 34px;
+	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2231%22%20height%3D%2213%22%20viewBox%3D%220%200%2031%2013%22%3E%0A%20%20%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%0A%20%20%20%20%3Cg%20fill%3D%22%23A8ADB4%22%3E%0A%20%20%20%20%20%20%3Cg%20transform%3D%22translate%284%29%22%3E%0A%20%20%20%20%20%20%20%20%3Cpath%20d%3D%22M12.3786077%2C12.634926%20L0.913582318%2C12.634926%20L0.913582318%2C10.9433092%20C0.911566253%2C10.5877839%201.06226007%2C10.2500248%201.32360213%2C10.0224857%20C2.36285009%2C9.14504031%203.48967953%2C8.38775373%204.68436719%2C7.76347743%20C4.72034337%2C7.7457008%204.74342214%2C7.70730439%204.74342214%2C7.66535165%20L4.74342214%2C6.50206249%20C4.58118965%2C6.21408899%204.47054675%2C5.897664%204.41692049%2C5.56844221%20C4.29202132%2C5.55777627%204.12842298%2C5.37361413%203.95126166%2C4.72014%20C3.70961327%2C3.8242002%203.96687393%2C3.69337432%204.1840824%2C3.71328853%20L4.18340365%2C3.71328853%20C4.14335424%2C3.59454225%204.11212901%2C3.47295262%204.0897297%2C3.34922595%20C4.00420049%2C2.96098963%204.00420049%2C2.55780852%204.0897297%2C2.16957219%20C4.19901712%2C1.71165428%204.42573669%2C1.29425654%204.74679924%2C0.962904979%20C4.92804426%2C0.761669391%205.13236625%2C0.58462576%205.35500386%2C0.436725337%20C5.53692662%2C0.302335277%205.73580952%2C0.195679505%205.94555323%2C0.120300349%20C6.119326%2C0.0584388352%206.29989327%2C0.0221745618%206.48247626%2C0.012931013%20C6.94881281%2C-0.0389770293%207.41853793%2C0.0662607196%207.82447116%2C0.31299139%20C8.09463564%2C0.459470147%208.32203467%2C0.680603577%208.48086294%2C0.952230665%20C8.48086294%2C0.952230665%209.57033124%2C1.03400276%209.20174181%2C3.35140305%20L9.20242079%2C3.35140305%20C9.18001977%2C3.47512789%209.14879624%2C3.59672662%209.10874686%2C3.71546563%20C9.32596274%2C3.69342346%209.58323333%2C3.82639186%209.34156754%2C4.72231709%20C9.16779485%2C5.37577301%208.99402208%2C5.55995227%208.87590874%2C5.57061931%20L8.87522993%2C5.56990829%20C8.82160546%2C5.89629039%208.71096084%2C6.20914757%208.54872836%2C6.49286153%20L8.54872836%2C7.67109546%20C8.54872836%2C7.71233646%208.57180713%2C7.75073415%208.60778323%2C7.76922124%20C9.80247098%2C8.39140419%2010.9292135%2C9.14725268%2011.9685483%2C10.0225865%20C12.2298852%2C10.2501256%2012.3805809%2C10.5878848%2012.3786077%2C10.94341%20L12.3786077%2C12.634926%20Z%22/%3E%0A%20%20%20%20%20%20%20%20%3Cpath%20d%3D%22M12.5755254%2C8.20858886%20L12.5755254%2C8.75889524%20C12.5766475%2C8.82016764%2012.5603786%2C8.88028428%2012.529525%2C8.93231246%20C12.7062398%2C9.06699749%2012.8840749%2C9.20919701%2013.0607754%2C9.35833075%20L13.0613366%2C9.35833075%20C13.4282228%2C9.67336443%2013.6391462%2C10.1415866%2013.6357856%2C10.6340773%20L13.6357856%2C12.0075051%20L17.653626%2C12.0075051%20L17.653626%2C10.7080671%20C17.6194061%2C10.3439042%2017.4011844%2C10.025393%2017.079177%2C9.87047324%20C16.8110241%2C9.73232102%2016.5299749%2C9.62133482%2016.2405101%2C9.53925059%20C16.2248018%2C9.53058%2015.3317172%2C9.28895793%2014.9076159%2C9.05658563%20L14.8700297%2C9.03288529%20L14.8705906%2C9.03288529%20C14.7808329%2C8.97334716%2014.7269783%2C8.87044816%2014.7269783%2C8.76063246%20L14.7269783%2C8.19242061%20C14.7269783%2C8.19242061%2015.9549781%2C8.23114982%2016.5367802%2C7.61842273%20C16.5367802%2C7.61842273%2015.6896976%2C7.37101572%2015.8417255%2C5.78022075%20C15.9937534%2C4.18942578%2015.6521142%2C2.79399341%2014.4056028%2C2.91252503%20C14.4056028%2C2.91252503%2013.8687371%2C2.24661705%2012.7984379%2C2.66511802%20C12.4366068%2C2.81309757%2011.4442173%2C3.17726045%2011.5014468%2C5.38083874%20C11.5592278%2C7.58440224%2010.740747%2C7.60053201%2010.740747%2C7.60053201%20C10.740747%2C7.60053201%2011.1569927%2C8.22192773%2012.575681%2C8.20863918%20L12.5755254%2C8.20858886%20Z%22/%3E%0A%20%20%20%20%20%20%3C/g%3E%0A%20%20%20%20%20%20%3Cg%20transform%3D%22translate%28.415%201.58%29%22%3E%0A%20%20%20%20%20%20%20%20%3Crect%20width%3D%225.22%22%20height%3D%221.225%22%20y%3D%222%22%20rx%3D%22.612%22/%3E%0A%20%20%20%20%20%20%20%20%3Crect%20width%3D%225.22%22%20height%3D%221.225%22%20rx%3D%22.612%22/%3E%0A%20%20%20%20%20%20%20%20%3Crect%20width%3D%224.157%22%20height%3D%221.225%22%20y%3D%224.123%22%20rx%3D%22.612%22/%3E%0A%20%20%20%20%20%20%3C/g%3E%0A%20%20%20%20%3C/g%3E%0A%20%20%20%20%3Cpolygon%20fill%3D%22%23BABEC3%22%20points%3D%2226.004%203.045%2030.004%207.045%2026.004%207.045%22%20transform%3D%22rotate%28-45%2028.004%205.045%29%22/%3E%0A%20%20%3C/g%3E%0A%3C/svg%3E%0A');
+}
+
+.crm-kanban-quick-form .crm-entity-widget-content-block .crm-entity-card-private:hover,
+.crm-kanban-quick-form .crm-entity-widget-content-block .crm-entity-card-common:hover {
+	opacity: 1;
+}
+
+.crm-kanban-item-fields-item-value-user {
+	display: block;
+	overflow: hidden;
+	padding: 2px 0;
+	white-space: nowrap;
+}
+
+.crm-kanban-item-fields-item-value-userpic {
+	display: inline-block;
+	vertical-align: middle;
+	width: 18px;
+	height: 18px;
+	margin-right: 5px;
+	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2040%2040%22%3E%0A%20%20%20%20%3Ccircle%20cx%3D%2220%22%20cy%3D%2220%22%20r%3D%2220%22%20fill%3D%22%23525C68%22/%3E%0A%20%20%20%20%3Cpath%20fill%3D%22%23FFFFFF%22%20d%3D%22M30.4364902%2C31.4100231%20C30.4364902%2C29.9871769%2028.8398242%2C23.9680557%2028.8398242%2C23.9680557%20C28.8398242%2C23.0883414%2027.6898708%2C22.083459%2025.4253473%2C21.4978674%20C24.6581347%2C21.2838747%2023.9288072%2C20.9520366%2023.2634349%2C20.514215%20C23.1179216%2C20.4310645%2023.1400361%2C19.6628072%2023.1400361%2C19.6628072%20L22.4107003%2C19.5517925%20C22.4107003%2C19.4894296%2022.3483374%2C18.5681401%2022.3483374%2C18.5681401%20C23.2209751%2C18.274902%2023.1311903%2C16.5451067%2023.1311903%2C16.5451067%20C23.6853794%2C16.8524981%2024.0462878%2C15.4836113%2024.0462878%2C15.4836113%20C24.7017612%2C13.5817654%2023.719878%2C13.6967607%2023.719878%2C13.6967607%20C23.8916546%2C12.5357299%2023.8916546%2C11.3557413%2023.719878%2C10.1947105%20C23.283338%2C6.34325128%2016.7109122%2C7.38882426%2017.4902268%2C8.64669632%20C15.5693624%2C8.29286451%2016.0076715%2C12.6635719%2016.0076715%2C12.6635719%20L16.4243085%2C13.7953913%20C15.6060724%2C14.326139%2016.1748571%2C14.9679015%2016.2031636%2C15.7065254%20C16.243412%2C16.7972119%2016.9108272%2C16.5712018%2016.9108272%2C16.5712018%20C16.9519602%2C18.3713211%2017.8396357%2C18.6057347%2017.8396357%2C18.6057347%20C18.0063789%2C19.7362273%2017.9024408%2C19.5438313%2017.9024408%2C19.5438313%20L17.1125113%2C19.6393659%20C17.1232047%2C19.896452%2017.1022601%2C20.1538778%2017.0501485%2C20.405854%20C16.12134%2C20.8198372%2015.921425%2C21.0626543%2014.9983663%2C21.4673494%20C13.215054%2C22.2488754%2011.2769403%2C23.2652573%2010.9323966%2C24.6337018%20C10.5878529%2C26.0021463%209.56350982%2C31.4100231%209.56350982%2C31.4100231%20L30.4356056%2C31.4100231%20L30.4356056%2C31.4100231%20L30.4356056%2C31.4100231%20L30.4364902%2C31.4100231%20Z%22/%3E%0A%3C/svg%3E%0A');
+	background-size: cover;
+	border-radius: 9px;
+}
+
+.crm-kanban-item-fields-item-value-name {
+	display: inline-block;
+	vertical-align: middle;
+	padding-top: 1px;
+	max-width: calc(100% - 18px - 5px);
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	border-bottom: 1px solid transparent;
+}
+
+.crm-kanban-item-fields-item-value-name:hover {
+	border-bottom: 1px solid #2067b0;
+}
+
+#workarea-content {
+	opacity: unset !important;
 }

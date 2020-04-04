@@ -8,6 +8,6 @@ namespace Bitrix\Crm\Integration\Report\Dashboard\LeadAnalytic;
  */
 class RepeatLead extends CommonLead
 {
-	const VERSION = 'v1';
+	const VERSION = 'v13';
 	const BOARD_KEY = 'crm_repeat_lead_analytics';
 }

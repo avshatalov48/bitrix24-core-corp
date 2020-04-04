@@ -1,11 +1,3 @@
-table.bx-layout-inner-inner-table td.bx-layout-inner-inner-cont {
-	padding-right: 63px;
-}
-
-.start-page table.bx-layout-inner-inner-table td.bx-layout-inner-inner-cont {
-	padding-right: 81px;
-}
-
 .bx-im-fullscreen-popup {
 	position: fixed;
 	z-index: 1000;

@@ -16,6 +16,8 @@ class Multiple extends Value
 	public function toString($modifier = '')
 	{
 		$options = $this->getOptions($modifier);
+
+		$modifier = preg_replace('#mseparator=\d#', '', $modifier);
 		$separator = $this->getSeparatorByCode($options['mseparator']);
 
 		if(is_array($this->value) || $this->value instanceof \Traversable)

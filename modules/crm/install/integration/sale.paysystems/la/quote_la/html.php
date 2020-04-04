@@ -394,7 +394,8 @@ if (!empty($arBasketItems))
 
 	if (CSalePaySystemAction::GetParamValue('QUOTE_LA_TOTAL_SHOW') == 'Y')
 	{
-		if ($sum < $GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["PRICE"])
+		$eps = 0.0001;
+		if ($GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["PRICE"] - $sum > $eps)
 		{
 			$arCells[++$n] = array();
 			for ($i = 0; $i < $columnCount; $i++)

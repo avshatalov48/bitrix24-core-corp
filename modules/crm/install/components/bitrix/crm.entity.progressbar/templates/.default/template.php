@@ -82,7 +82,8 @@ $backgroundImageCss = 'url(data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D
 					readOnly: <?=$arResult['READ_ONLY'] ? 'true' : 'false'?>,
 					containerId: "<?=CUtil::JSEscape($containerId)?>",
 					serviceUrl: "<?=CUtil::JSEscape($arResult['SERVICE_URL'])?>",
-					terminationTitle: "<?=CUtil::JSEscape($arResult['TERMINATION_TITLE'])?>"
+					terminationTitle: "<?=CUtil::JSEscape($arResult['TERMINATION_TITLE'])?>",
+					verboseMode: <?=$arResult['VERBOSE_MODE'] ? 'true' : 'false'?>
 				}
 			);
 

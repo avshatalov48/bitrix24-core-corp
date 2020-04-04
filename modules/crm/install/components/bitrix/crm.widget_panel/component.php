@@ -99,16 +99,25 @@ if(!$enableDemo && isset($options['rows']))
 	$arParams['ROWS'] = $options['rows'];
 }
 
+$arResult['HIDE_FILTER'] = (bool)$arParams['HIDE_FILTER'] ?? false;
 $arParams['FILTER'] = isset($arParams['FILTER']) ? $arParams['FILTER'] : array();
 $arResult['FILTER'] = array(
 	array(
 		'id' => 'RESPONSIBLE_ID',
 		'name' => GetMessage('CRM_FILTER_FIELD_RESPONSIBLE'),
 		'default' => true,
-		'type' => 'custom_entity',
-		'selector' => array(
-			'TYPE' => 'user',
-			'DATA' => array('ID' => 'responsible', 'FIELD_ID' => 'RESPONSIBLE_ID')
+		'type' => 'dest_selector',
+		'params' => array(
+			'context' => 'CRM_WIDGET_FILTER_RESPONSIBLE_ID',
+			'multiple' => 'N',
+			'contextCode' => 'U',
+			'enableAll' => 'N',
+			'enableSonetgroups' => 'N',
+			'allowEmailInvitation' => 'N',
+			'allowSearchEmailUsers' => 'N',
+			'departmentSelectDisable' => 'Y',
+			'isNumeric' => 'Y',
+			'prefix' => 'U',
 		)
 	),
 	array(

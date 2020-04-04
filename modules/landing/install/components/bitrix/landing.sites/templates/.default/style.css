@@ -142,6 +142,7 @@
     height: 100%;
     float: right;
     padding-left: 15px;
+    user-select: none;
 }
 
 .landing-title-btn:before {
@@ -643,17 +644,19 @@
 .bitrix24-light-theme .landing-navigation .navigation-disabled .navigation-text-cont,
 .bitrix24-light-theme .landing-navigation .navigation-button,
 .bitrix24-light-theme .landing-navigation .navigation .navigation-page-numb {
-	color: #fff;
+	color: #5c6470;
 }
 
 .bitrix24-light-theme .landing-navigation {
-	background: rgba(255, 255, 255, .37);
+	background: #fff;
 	border-color: transparent;
 }
 
 .bitrix24-light-theme .landing-navigation .navigation-current-page {
-	background: rgba(255, 255, 255, .3);
-	color: #fff !important;
+	background: transparent;
+	color: #000 !important;
+    margin: 0;
+    padding: 0 5px;
 }
 
 .bitrix24-light-theme .landing-navigation .navigation .navigation-page-numb:hover {

@@ -1454,7 +1454,7 @@ td.task-report-efficiency-column { border-right: 1px solid #e5e5e5 !important; b
 .task-menu-popup-item-pause .menu-popup-item-icon {  background: url(images/task-sprite_8.png?2) no-repeat -35px -1160px;  }
 
 /* Teplates List Popup */
-.task-template-selector { display: inline-block; }
+.task-template-selector { display: inline-block; margin-left: 12px; }
 .task-popup-templates { margin: 3px 10px 7px 5px; font:normal normal normal 13px/normal Arial, Helvetica, sans-serif; }
 .task-popup-templates-title { margin: 0 0 7px 0; padding: 0 0 0 0; color:#7f7f7f;  white-space:nowrap;  }
 .task-popup-templates-empty { margin: 5px 0; }

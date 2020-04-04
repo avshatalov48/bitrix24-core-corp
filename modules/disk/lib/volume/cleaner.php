@@ -16,11 +16,11 @@ use Bitrix\Disk\Internals\Error\IErrorable;
  */
 class Cleaner implements IErrorable, Volume\IVolumeTimeLimit
 {
+	/** @implements Volume\IVolumeTimeLimit */
+	use Volume\TimeLimit;
+
 	/** @var ErrorCollection */
 	private $errorCollection;
-
-	/** @var Volume\Timer */
-	private $timer;
 
 	/** @var Volume\Task */
 	private $task;
@@ -679,15 +679,22 @@ class Cleaner implements IErrorable, Volume\IVolumeTimeLimit
 			$file = \Bitrix\Disk\File::getById($fileId);
 			if ($file instanceof \Bitrix\Disk\File)
 			{
-				$securityContext = $this->getSecurityContext($this->getOwner(), $file);
-				if($file->canDelete($securityContext))
+				if (!$this->isAllowClearFolder($file->getParent()))
 				{
-					$this->deleteFile($file);
-					$countFileErasure ++;
+					$this->collectError(new Error("Access denied to file #$fileId", 'ACCESS_DENIED'));
 				}
 				else
 				{
-					$this->collectError(new Error("Access denied to file #$fileId", 'ACCESS_DENIED'));
+					$securityContext = $this->getSecurityContext($this->getOwner(), $file);
+					if (!$file->canDelete($securityContext))
+					{
+						$this->collectError(new Error("Access denied to file #$fileId", 'ACCESS_DENIED'));
+					}
+					else
+					{
+						$this->deleteFile($file);
+						$countFileErasure++;
+					}
 				}
 			}
 
@@ -1039,13 +1046,14 @@ class Cleaner implements IErrorable, Volume\IVolumeTimeLimit
 			$version = \Bitrix\Disk\Version::getById($versionId);
 			if(!$version instanceof \Bitrix\Disk\Version)
 			{
+				//$this->collectError(new Error('Version '.$versionId.' was not found'));
 				continue;
 			}
 
 			// is a head
-			//if ($version->isHead())
 			if ($version->getFileId() == $file->getFileId())
 			{
+				//$this->collectError(new Error('Version '.$versionId.' is a head'));
 				continue;
 			}
 
@@ -1060,6 +1068,7 @@ class Cleaner implements IErrorable, Volume\IVolumeTimeLimit
 			));
 			if($attachedList->getSelectedRowsCount() > 0)
 			{
+				$this->collectError(new Error('Version '.$versionId.' has attachments'));
 				continue;
 			}
 
@@ -1075,6 +1084,7 @@ class Cleaner implements IErrorable, Volume\IVolumeTimeLimit
 			));
 			if($externalLinkList->getSelectedRowsCount() > 0)
 			{
+				$this->collectError(new Error('Version '.$versionId.' has external links'));
 				continue;
 			}
 
@@ -1095,7 +1105,7 @@ class Cleaner implements IErrorable, Volume\IVolumeTimeLimit
 			}
 			catch (Main\SystemException $exception)
 			{
-				$this->collectError(new Error($exception->getMessage(), $exception->getCode()), true, false);
+				$this->collectError(new Error($exception->getMessage(), $exception->getCode()));
 			}
 
 			if (!$this->checkTimeEnd())
@@ -1123,6 +1133,17 @@ class Cleaner implements IErrorable, Volume\IVolumeTimeLimit
 		{
 			$this->collectError(
 				new Error('Access denied to storage #'. $folder->getStorageId(), 'ACCESS_DENIED'),
+				false,
+				true
+			);
+
+			return false;
+		}
+
+		if (!$this->isAllowClearFolder($folder))
+		{
+			$this->collectError(
+				new Error('Not allowed to drop #'. $folder->getId(), 'ACCESS_DENIED'),
 				false,
 				true
 			);
@@ -1335,6 +1356,46 @@ class Cleaner implements IErrorable, Volume\IVolumeTimeLimit
 	}
 
 	/**
+	 * Check ability to empty folder.
+	 * @param \Bitrix\Disk\Folder $folder Folder to clear.
+	 * @return boolean
+	 */
+	public function isAllowClearFolder(\Bitrix\Disk\Folder $folder)
+	{
+		$allowClear = true;
+
+		if ($folder->isDeleted())
+		{
+			return true;
+		}
+
+		/** @var \Bitrix\Disk\Volume\IClearFolderConstraint[] $clearFolderConstraintList */
+		static $clearFolderConstraintList;
+		if (empty($clearFolderConstraintList))
+		{
+			$clearFolderConstraintList = array();
+
+			// full list available indicators
+			$constraintIdList = \Bitrix\Disk\Volume\Base::listClearFolderConstraint();
+			foreach ($constraintIdList as $indicatorId => $indicatorIdClass)
+			{
+				$clearFolderConstraintList[$indicatorId] = new $indicatorIdClass();
+			}
+		}
+
+		/** @var \Bitrix\Disk\Volume\IClearFolderConstraint $indicator */
+		foreach ($clearFolderConstraintList as $indicatorId => $indicator)
+		{
+			if (!$indicator->isAllowClearFolder($folder))
+			{
+				$allowClear = false;
+			}
+		}
+
+		return $allowClear;
+	}
+
+	/**
 	 * Check ability to clear storage.
 	 * @param \Bitrix\Disk\Storage $storage Storage to clear.
 	 * @return boolean
@@ -1420,98 +1481,6 @@ class Cleaner implements IErrorable, Volume\IVolumeTimeLimit
 
 
 
-	/**
-	 * Gets timer.
-	 * @return Volume\Timer
-	 */
-	public function instanceTimer()
-	{
-		if (!($this->timer instanceof Volume\Timer))
-		{
-			$this->timer = new Volume\Timer();
-
-			if (self::isCronRun() === true)
-			{
-				// increase time limit for cron running task up to 10 minutes
-				$this->timer->setTimeLimit(\Bitrix\Disk\Volume\Timer::MAX_EXECUTION_TIME * 20);
-			}
-		}
-
-		return $this->timer;
-	}
-
-	/**
-	 * Sets start up time.
-	 * @return void
-	 */
-	public function startTimer()
-	{
-		// running on hint
-		if (self::isCronRun() === false && defined('START_EXEC_TIME') && START_EXEC_TIME > 0)
-		{
-			$this->instanceTimer()->startTimer(START_EXEC_TIME * 1000);
-		}
-		else
-		{
-			$this->instanceTimer()->startTimer();
-		}
-	}
-
-	/**
-	 * Checks timer for time limitation.
-	 * @return bool
-	 */
-	public function checkTimeEnd()
-	{
-		return $this->instanceTimer()->checkTimeEnd();
-	}
-
-	/**
-	 * Tells true if time limit reached.
-	 * @return boolean
-	 */
-	public function hasTimeLimitReached()
-	{
-		return $this->instanceTimer()->hasTimeLimitReached();
-	}
-
-	/**
-	 * Sets limitation time in seconds.
-	 * @param int $timeLimit Timeout in seconds.
-	 * @return void
-	 */
-	public function setTimeLimit($timeLimit)
-	{
-		$this->instanceTimer()->setTimeLimit($timeLimit);
-	}
-
-	/**
-	 * Gets limitation time in seconds.
-	 * @return int
-	 */
-	public function getTimeLimit()
-	{
-		return $this->instanceTimer()->getTimeLimit();
-	}
-
-	/**
-	 * Gets step identification.
-	 * @return string|null
-	 */
-	public function getStepId()
-	{
-		return $this->instanceTimer()->getStepId();
-	}
-
-	/**
-	 * Sets step identification.
-	 * @param string $stepId Step id.
-	 * @return void
-	 */
-	public function setStepId($stepId)
-	{
-		$this->instanceTimer()->setStepId($stepId);
-	}
 
 	/**
 	 * Gets dropped file count.

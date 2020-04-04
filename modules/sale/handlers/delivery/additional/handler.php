@@ -21,7 +21,8 @@ use Bitrix\Main\Error,
 	Sale\Handlers\Delivery\Additional\Location,
 	Sale\Handlers\Delivery\Additional\RestClient,
 	Bitrix\Sale\Internals\ServiceRestrictionTable,
-	Sale\Handlers\Delivery\Additional\DeliveryRequests\RusPost;
+	Sale\Handlers\Delivery\Additional\DeliveryRequests\RusPost,
+	Sale\Handlers\Delivery\Additional\RusPost\Reliability;
 
 Loc::loadMessages(__FILE__);
 
@@ -419,6 +420,19 @@ class AdditionalHandler extends Base
 		return self::$canHasProfiles;
 	}
 
+	public static function onAfterUpdate($serviceId, array $fields = array())
+	{
+		/** @var self $service */
+		$service = new self($fields);
+
+		if ($service->getServiceType() == 'RUSPOST')
+		{
+			$config = $service->getConfigValues();
+			$doInstall = isset($config['MAIN']['RELIABILITY']) && $config['MAIN']['RELIABILITY'] == 'Y';
+			self::installReliability($serviceId, $doInstall);
+		}
+	}
+
 	/**
 	 * @param int $serviceId
 	 * @param array $fields
@@ -474,7 +488,26 @@ class AdditionalHandler extends Base
 			}
 		}
 
+		if ($srv->getServiceType() == 'RUSPOST')
+		{
+			$config = $srv->getConfigValues();
+			$doInstall = isset($config['MAIN']['RELIABILITY']) && $config['MAIN']['RELIABILITY'] == 'Y';
+			self::installReliability($serviceId, $doInstall);
+		}
+
 		return $result;
+	}
+
+	protected static function installReliability(int $serviceId, bool $doInstall)
+	{
+		if($doInstall)
+		{
+			Reliability\Service::install($serviceId);
+		}
+		else
+		{
+			Reliability\Service::unInstall($serviceId);
+		}
 	}
 
 	/**
@@ -621,7 +654,7 @@ class AdditionalHandler extends Base
 	public function execAdminAction()
 	{
 		$result = new \Bitrix\Sale\Result();
-		Asset::getInstance()->addJs("/bitrix/js/main/core/core.js");
+		\Bitrix\Main\UI\Extension::load("main.core");
 		Asset::getInstance()->addJs("/bitrix/js/sale/additional_delivery.js");
 		Asset::getInstance()->addString('<link rel="stylesheet" type="text/css" href="/bitrix/css/sale/additional_delivery.css">');
 		Asset::getInstance()->addString('<script language="javascript">
@@ -868,7 +901,6 @@ class AdditionalHandler extends Base
 			);
 
 			$price += $itemFieldValues["PRICE"] * $itemFieldValues["QUANTITY"];
-			$weight += $itemFieldValues["WEIGHT"] * $itemFieldValues["QUANTITY"];
 
 			if(!empty($itemFieldValues["DIMENSIONS"]) && is_string($itemFieldValues["DIMENSIONS"]))
 				$itemFieldValues["DIMENSIONS"] = unserialize($itemFieldValues["DIMENSIONS"]);
@@ -897,7 +929,7 @@ class AdditionalHandler extends Base
 
 		$delivery= Manager::getObjectById($shipment->getDeliveryId());
 		$result['DELIVERY_SERVICE_CONFIG'] = $delivery->getConfigValues();
-		$result['WEIGHT'] = $weight;
+		$result['WEIGHT'] = $shipment->getWeight();
 		$result['PRICE'] = $price;
 		$result['SHIPMENT_ID'] = $shipment->getId();
 		$result['PRICE_DELIVERY'] = $shipment->getField('PRICE_DELIVERY');

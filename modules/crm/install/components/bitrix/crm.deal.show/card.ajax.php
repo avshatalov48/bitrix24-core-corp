@@ -23,42 +23,24 @@ if ($iDealId > 0)
 {
 	\Bitrix\Main\Localization\Loc::loadMessages(__FILE__);
 
-	$arParams['PATH_TO_DEAL_SHOW'] = CrmCheckPath('PATH_TO_DEAL_SHOW', $arParams['PATH_TO_DEAL_SHOW'], $APPLICATION->GetCurPage().'?deal_id=#deal_id#&show');
-	$arParams['PATH_TO_DEAL_EDIT'] = CrmCheckPath('PATH_TO_DEAL_EDIT', $arParams['PATH_TO_DEAL_EDIT'], $APPLICATION->GetCurPage().'?deal_id=#deal_id#&edit');
-	$arParams['PATH_TO_CONTACT_SHOW'] = CrmCheckPath('PATH_TO_CONTACT_SHOW', $arParams['PATH_TO_CONTACT_SHOW'], $APPLICATION->GetCurPage().'?contact_id=#contact_id#&show');
-	$arParams['PATH_TO_COMPANY_SHOW'] = CrmCheckPath('PATH_TO_COMPANY_SHOW', $arParams['PATH_TO_COMPANY_SHOW'], $APPLICATION->GetCurPage().'?company_id=#company_id#&show');
-
-	$arResult['STAGE_LIST'] = CCrmStatus::GetStatusListEx('DEAL_STAGE');
-
 	$obRes = CCrmDeal::GetListEx(array(), array('=ID' => $iDealId));
 	$arDeal = $obRes->Fetch();
 	if ($arDeal == false)
 		return ;
+
+	$arResult['STAGE_LIST'] = CCrmDeal::GetStageNames(
+		isset($arDeal['CATEGORY_ID']) ? (int)$arDeal['CATEGORY_ID'] : 0
+	);
+
 	$res = CCrmFieldMulti::GetList(array('ID' => 'asc'), array('ENTITY_ID' => 'DEAL', 'ELEMENT_ID' => $iDealId));
 	while($ar = $res->Fetch())
 		if (empty($arDeal[$ar['COMPLEX_ID']]))
 			$arDeal[$ar['COMPLEX_ID']] = CCrmFieldMulti::GetTemplateByComplex($ar['COMPLEX_ID'], $ar['VALUE']);
 
-	$arDeal['PATH_TO_DEAL_SHOW'] = CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_DEAL_SHOW'],
-		array(
-			'deal_id' => $iDealId
-		)
-	);
-	$arDeal['PATH_TO_DEAL_EDIT'] = CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_DEAL_EDIT'],
-		array(
-			'deal_id' => $iDealId
-		)
-	);
-	$arDeal['PATH_TO_CONTACT_SHOW'] = CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_CONTACT_SHOW'],
-		array(
-			'contact_id' => $arDeal['CONTACT_ID']
-		)
-	);
-	$arDeal['PATH_TO_COMPANY_SHOW'] = CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_COMPANY_SHOW'],
-		array(
-			'company_id' => $arDeal['COMPANY_ID']
-		)
-	);
+	$arDeal['PATH_TO_DEAL_SHOW'] = \CCrmOwnerType::GetEntityShowPath(\CCrmOwnerType::Deal, $iDealId, false);
+	$arDeal['PATH_TO_DEAL_EDIT'] = \CCrmOwnerType::GetEntityEditPath(\CCrmOwnerType::Deal, $iDealId, false);
+	$arDeal['PATH_TO_CONTACT_SHOW'] = \CCrmOwnerType::GetEntityShowPath(\CCrmOwnerType::Contact, $arDeal['CONTACT_ID'], false);
+	$arDeal['PATH_TO_COMPANY_SHOW'] = \CCrmOwnerType::GetEntityShowPath(\CCrmOwnerType::Company, $arDeal['COMPANY_ID'], false);
 
 	$arDeal['CONTACT_FORMATTED_NAME'] = $arDeal['CONTACT_ID'] <= 0 ? ''
 		: CCrmContact::PrepareFormattedName(
@@ -80,7 +62,7 @@ if ($iDealId > 0)
 		if (!empty($arDeal['STAGE_ID']))
 		{
 			$fields .= '<span class="bx-ui-tooltip-field-row">
-				<span class="bx-ui-tooltip-field-name">'.GetMessage('CRM_COLUMN_STAGE_ID').'</span>: <span class="bx-ui-tooltip-field-value"><span class="fields enumeration">'.$arResult['STAGE_LIST'][$arDeal['STAGE_ID']].'</span></span>
+				<span class="bx-ui-tooltip-field-name">'.GetMessage('CRM_COLUMN_STAGE_ID').'</span>: <span class="bx-ui-tooltip-field-value"><span class="fields enumeration">'.htmlspecialcharsbx($arResult['STAGE_LIST'][$arDeal['STAGE_ID']]).'</span></span>
 			</span>';
 		}
 		if(count($arProductRows) > 0)
@@ -130,7 +112,7 @@ if ($iDealId > 0)
 		if (!empty($arDeal['STAGE_ID']))
 		{
 			$strCard .= '<span class="field-name">'.GetMessage('CRM_COLUMN_STAGE_ID').'</span>:
-		<span class="fields enumeration">'.$arResult['STAGE_LIST'][$arDeal['STAGE_ID']].'</span>
+		<span class="fields enumeration">'.htmlspecialcharsbx($arResult['STAGE_LIST'][$arDeal['STAGE_ID']]).'</span>
 		<br />';
 		}
 
@@ -171,7 +153,7 @@ if ($iDealId > 0)
 </div>';
 	}
 
-	$strPhoto = '<a href="'.$arDeal['PATH_TO_DEAL_SHOW'].'" class="bx-user-info-data-photo no-photo" target="_blank"></a>';
+	$strPhoto = '<a href="'.$arDeal['PATH_TO_DEAL_SHOW'].'" class="bx-ui-tooltip-info-data-photo no-photo" target="_blank"></a>';
 
 	$strToolbar2 = '
 <div class="bx-user-info-data-separator"></div>

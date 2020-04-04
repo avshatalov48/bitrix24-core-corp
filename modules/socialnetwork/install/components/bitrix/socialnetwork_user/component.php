@@ -111,8 +111,11 @@ $arDefaultUrlTemplates404 = array(
 	"user_files_webdav_start_bizproc" => "user/#user_id#/files/bizproc/start/#element_id#/",
 
 	"user_blog" => "user/#user_id#/blog/",
+	"user_grat" => "user/#user_id#/grat/",
 	"user_blog_post_important" => "user/#user_id#/blog/important/",
 	"user_blog_post_edit" => "user/#user_id#/blog/edit/#post_id#/",
+	"user_blog_post_edit_profile" => "user/#user_id#/blog/edit/profile/#post_id#/",
+	"user_blog_post_edit_grat" => "user/#user_id#/blog/edit/grat/#post_id#/",
 	"user_blog_rss" => "user/#user_id#/blog/rss/#type#/",
 	"user_blog_post_rss" => "user/#user_id#/blog/rss/#type#/#post_id#/",
 	"user_blog_draft" => "user/#user_id#/blog/draft/",
@@ -145,8 +148,11 @@ $arDefaultUrlTemplates404 = array(
 	"user_forum_message_edit" => "user/#user_id#/forum/message/#action#/#topic_id#/#message_id#/",
 
 	"user_security" => "user/#user_id#/security/",
+	"user_common_security" => "user/#user_id#/common_security/",
 	"user_codes" => "user/#user_id#/codes/",
 	"user_passwords" => "user/#user_id#/passwords/",
+
+	"user_stresslevel" => "user/#user_id#/stresslevel/",
 );
 
 $taskPageTitles = array(
@@ -304,7 +310,10 @@ $arDefaultUrlTemplatesN404 = array(
 	"user_files_webdav_start_bizproc" => "page=user_files_webdav_start_bizproc&user_id=#user_id#&element_id=#element_id#",
 
 	"user_blog" => "page=user_blog&user_id=#user_id#",
+	"user_grat" => "page=user_grat&user_id=#user_id#",
 	"user_blog_post_edit" => "page=user_blog_post_edit&user_id=#user_id#&post_id=#post_id#",
+	"user_blog_post_edit_profile" => "page=user_blog_post_edit_profile&user_id=#user_id#&post_id=#post_id#",
+	"user_blog_post_edit_grat" => "page=user_blog_post_edit_grat&user_id=#user_id#&post_id=#post_id#",
 	"user_blog_rss" => "page=user_blog_rss&user_id=#user_id#&type=#type#",
 	"user_blog_post_rss" => "page=user_blog_post_rss&user_id=#user_id#&type=#type#&post_id=#post_id#",
 	"user_blog_draft" => "page=user_blog_draft&user_id=#user_id#",
@@ -334,7 +343,10 @@ $arDefaultUrlTemplatesN404 = array(
 	"user_forum_message_edit" => "page=user_forum_message_edit&user_id=#user_id#&topic_id=#topic_id#&message_id=#message_id#&action=#action#",
 
 	"user_security" => "page=user_security&user_id=#user_id#",
+	"user_common_security" => "page=user_common_security&user_id=#user_id#",
 	"user_passwords" => "page=user_passwords&user_id=#user_id#",
+
+	"user_stresslevel" => "page=user_stresslevel&user_id=#user_id#",
 );
 $arDefaultVariableAliases404 = array();
 $arDefaultVariableAliases = array();
@@ -1314,7 +1326,9 @@ if (
 		return;
 	}
 
-	if (!CSocNetUser::CanProfileView($USER->GetID(), intval($arResult["VARIABLES"]["user_id"]), SITE_ID, $arContext))
+	if (
+		$this->request->get('IFRAME_TYPE') != 'SIDE_SLIDER'
+		&& !CSocNetUser::CanProfileView($USER->GetID(), intval($arResult["VARIABLES"]["user_id"]), SITE_ID, $arContext))
 	{
 		$bAccessFound = false;
 		if ($componentPage == "user_blog_post")

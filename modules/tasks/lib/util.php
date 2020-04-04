@@ -185,6 +185,17 @@ class Util
 		return $localTime->getOffset();
 	}
 
+	/**
+	 * Gets portal create date in unix timestamp.
+	 * @return string
+	 */
+	public static function getPortalCreateTimestamp()
+	{
+		return (int)Option::get(
+			'main', '~controller_date_create'
+		);
+	}
+
 	public static function log($info)
 	{
 		$handler = Application::getInstance()->getExceptionHandler();

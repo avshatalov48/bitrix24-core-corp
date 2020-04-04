@@ -31,6 +31,10 @@ class Quote extends EntityBase
 	{
 		return QuoteTable::getEntity();
 	}
+	protected function getDbTableAlias()
+	{
+		return \CCrmQuote::TABLE_ALIAS;
+	}
 
 	//region Permissions
 	protected function buildPermissionSql(array $params)
@@ -110,6 +114,31 @@ class Quote extends EntityBase
 		);
 		$fields = is_object($dbResult) ? $dbResult->Fetch() : null;
 		return is_array($fields) && isset($fields['ASSIGNED_BY_ID']) ? (int)$fields['ASSIGNED_BY_ID'] : 0;
+	}
+
+	/**
+	 * Check if Entity exists.
+	 * @param int $entityID Entity ID.
+	 * @return bool
+	 * @throws Main\ArgumentException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
+	public function isExists($entityID)
+	{
+		if(!is_int($entityID))
+		{
+			$entityID = (int)$entityID;
+		}
+
+		$dbResult = QuoteTable::getList(
+			array(
+				'select' => array('ID'),
+				'filter' => array('=ID' => $entityID)
+			)
+		);
+
+		return is_array($dbResult->fetch());
 	}
 
 	/**

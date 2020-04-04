@@ -120,11 +120,6 @@ class CAllSaleOrderUserProps
 			{
 				$fileList = array();
 
-				if ($arOrderProperty['MULTIPLE'] === 'N')
-				{
-					$curVal = [$curVal];
-				}
-
 				foreach ($curVal as $fileDat)
 				{
 					if (!empty($fileDat['ID']))

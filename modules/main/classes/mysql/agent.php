@@ -132,15 +132,14 @@ class CAgent extends CAllAgent
 		/** @var callable|false $logFunction */
 		$logFunction = (defined("BX_AGENTS_LOG_FUNCTION") && function_exists(BX_AGENTS_LOG_FUNCTION)? BX_AGENTS_LOG_FUNCTION : false);
 
+		ignore_user_abort(true);
+
 		for($i = 0, $n = count($agents_array); $i < $n; $i++)
 		{
 			$arAgent = $agents_array[$i];
 
 			if ($logFunction)
 				$logFunction($arAgent, "start");
-
-			@set_time_limit(0);
-			ignore_user_abort(true);
 
 			if(strlen($arAgent["MODULE_ID"])>0 && $arAgent["MODULE_ID"]!="main")
 			{

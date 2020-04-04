@@ -17,6 +17,18 @@ class Limits
 	const OPTION_IGNORE_MAXIMUM_GROUPS = "ignore_maximum_groups";
 	const OPTION_IGNORE_MAXIMUM_GROUP_MEMBERS = "ignore_maximum_group_members";
 
+	public static function getRecordLimit()
+	{
+		if (Loader::includeModule('bitrix24'))
+		{
+			return Bitrix24\Feature::getVariable('voximplant_records_limit');
+		}
+		else
+		{
+			return 0;
+		}
+	}
+
 	/**
 	 * @param string $lineMode Line mode (\CVoxImplantConfig::MODE_SIP or \CVoxImplantConfig::MODE_RENT)
 	 * @return int|false
@@ -87,15 +99,14 @@ class Limits
 	 */
 	public static function getIvrDepth()
 	{
-		if (!Loader::includeModule('bitrix24'))
-			return 0;
-
-		if(\CBitrix24::getLicenseType() === 'team')
-			return 2;
-		else if(\CBitrix24::getLicenseType() === 'crm')
-			return 2;
+		if (Loader::includeModule('bitrix24'))
+		{
+			return Bitrix24\Feature::getVariable('voximplant_ivr_depth');
+		}
 		else
+		{
 			return 0;
+		}
 	}
 
 	/**

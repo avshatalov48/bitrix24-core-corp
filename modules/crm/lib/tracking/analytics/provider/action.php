@@ -190,7 +190,7 @@ class Action extends Base
 		$list = [];
 		foreach (Tracking\Provider::getActualAdSources() as $source)
 		{
-			$ad = new Tracking\Analytics\Ad($source['CODE']);
+			$ad = new Tracking\Analytics\Ad($source);
 			if (!$ad->isConnected())
 			{
 				continue;

@@ -67,7 +67,8 @@ class Day extends Base
 		{
 			if ($this->type === self::TYPE_ALTERNATING_DAYS)
 			{
-				if ($this->interval > 0)
+				$today = new Date();
+				if ($this->interval > 1 || $this->startDate->getTimestamp() !== $today->getTimestamp())
 				{
 					$this->interval--;
 				}

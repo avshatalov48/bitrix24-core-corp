@@ -97,10 +97,23 @@ class Bitrix24Manager
 			return $jsAction;
 		}
 
-		$featureInMessage = strtoupper($feature);
-		$title = GetMessageJS("DISK_B24_FEATURES_{$featureInMessage}_TITLE");
-		$descr = GetMessageJS("DISK_B24_FEATURES_{$featureInMessage}_DESCR");
+		['title' => $title, 'descr' => $descr] = self::processFeatureToMessageCode($feature);
 
 		return "BX.Bitrix24.LicenseInfoPopup.show('{$feature}', '{$title}', '{$descr}')";
+	}
+
+	private static function processFeatureToMessageCode($feature): array
+	{
+		if ($feature === 'disk_manual_external_link')
+		{
+			$feature = 'disk_external_link';
+		}
+
+		$featureInMessage = strtoupper($feature);
+
+		return [
+			'title' => GetMessageJS("DISK_B24_FEATURES_{$featureInMessage}_1_TITLE"),
+			'descr' => GetMessageJS("DISK_B24_FEATURES_{$featureInMessage}_1_DESCR")
+		];
 	}
 }

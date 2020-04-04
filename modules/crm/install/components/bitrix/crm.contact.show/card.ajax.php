@@ -33,22 +33,9 @@ if ($iContactId > 0)
 	if ($arContact == false)
 		return ;
 
-	$arContact['PATH_TO_CONTACT_SHOW'] = CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_CONTACT_SHOW'],
-		array(
-			'contact_id' => $iContactId
-		)
-	);
-	$arContact['PATH_TO_CONTACT_EDIT'] = CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_CONTACT_EDIT'],
-		array(
-			'contact_id' => $iContactId
-		)
-	);
-
-	$arContact['PATH_TO_COMPANY_SHOW'] = CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_COMPANY_SHOW'],
-		array(
-			'company_id' => $arContact['COMPANY_ID']
-		)
-	);
+	$arContact['PATH_TO_CONTACT_SHOW'] = \CCrmOwnerType::GetEntityShowPath(\CCrmOwnerType::Contact, $iContactId, false);
+	$arContact['PATH_TO_CONTACT_EDIT'] = \CCrmOwnerType::GetEntityEditPath(\CCrmOwnerType::Contact, $iContactId, false);
+	$arContact['PATH_TO_COMPANY_SHOW'] = \CCrmOwnerType::GetEntityShowPath(\CCrmOwnerType::Company, $arContact['COMPANY_ID'], false);
 
 	$arContact['FORMATTED_NAME'] = CCrmContact::PrepareFormattedName(
 		array(
@@ -201,12 +188,12 @@ if ($iContactId > 0)
 			$imageImg = CFile::ShowImage($arFileTmp['src'], 102, 104, "border='0'", '');
 		}
 		if (strlen($imageImg)>0)
-			$strPhoto = '<a href="'.$arContact['PATH_TO_CONTACT_SHOW'].'" class="bx-user-info-data-photo" target="_blank">'.$imageImg.'</a>';
+			$strPhoto = '<a href="'.$arContact['PATH_TO_CONTACT_SHOW'].'" class="bx-ui-tooltip-info-data-photo" target="_blank">'.$imageImg.'</a>';
 		else
-			$strPhoto = '<a href="'.$arContact['PATH_TO_CONTACT_SHOW'].'" class="bx-user-info-data-photo no-photo" target="_blank"></a>';
+			$strPhoto = '<a href="'.$arContact['PATH_TO_CONTACT_SHOW'].'" class="bx-ui-tooltip-info-data-photo no-photo" target="_blank"></a>';
 	}
 	else
-		$strPhoto = '<a href="'.$arContact['PATH_TO_CONTACT_SHOW'].'" class="bx-user-info-data-photo no-photo" target="_blank"></a>';
+		$strPhoto = '<a href="'.$arContact['PATH_TO_CONTACT_SHOW'].'" class="bx-ui-tooltip-info-data-photo no-photo" target="_blank"></a>';
 
 	$strToolbar2 = '
 <div class="bx-user-info-data-separator"></div>

@@ -113,11 +113,21 @@ class CCatalogProductSetAll
 		return false;
 	}
 
+	/**
+	 * @param int $intProductID
+	 * @param int $intSetType
+	 * @return bool
+	 */
 	public static function isProductInSet($intProductID, $intSetType = 0)
 	{
 		return false;
 	}
 
+	/**
+	 * @param int|array $arProductID
+	 * @param int $intSetType
+	 * @return bool
+	 */
 	public static function isProductHaveSet($arProductID, $intSetType = 0)
 	{
 		return false;
@@ -138,11 +148,20 @@ class CCatalogProductSetAll
 		return true;
 	}
 
+	/**
+	 * @param int $intProductID
+	 * @param int $intSetType
+	 * @return array|false
+	 */
 	public static function getAllSetsByProduct($intProductID, $intSetType)
 	{
 		return false;
 	}
 
+	/**
+	 * @param int $intID
+	 * @return array|false
+	 */
 	public static function getSetByID($intID)
 	{
 		return false;
@@ -184,10 +203,11 @@ class CCatalogProductSetAll
 		return true;
 	}
 
-	public static function recalculateSetsByProduct($product)
-	{
-
-	}
+	/**
+	 * @param int $product
+	 * @return void
+	 */
+	public static function recalculateSetsByProduct($product) {}
 
 	public static function recalculateSet($setID, $productID = 0)
 	{

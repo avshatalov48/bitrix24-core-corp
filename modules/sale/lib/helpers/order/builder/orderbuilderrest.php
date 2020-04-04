@@ -105,7 +105,7 @@ class OrderBuilderRest extends OrderBuilder
 	{
 		$result = new Result();
 
-		if(is_array($products))// пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ products, пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+		if(is_array($products))// если передан products, то считаем, что табличная счасть для отгрузки передана
 		{
 			if($this->getSettingsContainer()->getItemValue('deleteShipmentItemIfNotExists'))
 			{
@@ -367,16 +367,6 @@ class OrderBuilderRest extends OrderBuilder
 		return $result;
 	}
 
-	protected function getSettableShipmentFields()
-	{
-		return Shipment::getAvailableFields();
-	}
-
-	protected function getSettablePaymentFields()
-	{
-		return Payment::getAvailableFields();
-	}
-
 	protected function getSettableOrderFields()
 	{
 		return Order::getAvailableFields();
@@ -384,7 +374,7 @@ class OrderBuilderRest extends OrderBuilder
 
 	protected function checkDeliveryRestricted($shipment, $deliveryService, $shipmentFields)
 	{
-		// пїЅпїЅпїЅ rest пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ. пїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+		// для rest нет проверки на ограничения. всё что приходит от ключениа считаем корреткным
 		return true;
 	}
 

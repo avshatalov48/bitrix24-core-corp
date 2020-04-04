@@ -1,0 +1,17 @@
+<?php
+$MESS["SPP_SALESCENTER_MODULE_ERROR"] = "Модуль \"Продажи в чате\" не установлен";
+$MESS["SPP_PAYSYSTEM_CASH_TITLE"] = "Оплата наличными";
+$MESS["SPP_PAYSYSTEM_SBERBANKONLINE_TITLE"] = "Оплата картой (Сбербанк)";
+$MESS["SPP_PAYSYSTEM_YANDEXCHECKOUT_BANK_CARD_TITLE"] = "Оплата картой (Яндекс.Касса)";
+$MESS["SPP_PAYSYSTEM_YANDEXCHECKOUT_SBERBANK_TITLE"] = "Оплата Сбербанк Онлайн";
+$MESS["SPP_PAYSYSTEM_YANDEXCHECKOUT_SBERBANK_SMS_TITLE"] = "Оплата Сбербанк по SMS";
+$MESS["SPP_PAYSYSTEM_YANDEXCHECKOUT_ALFABANK_TITLE"] = "Оплата Альфа-Клик";
+$MESS["SPP_PAYSYSTEM_YANDEXCHECKOUT_YANDEX_MONEY_TITLE"] = "Оплата Яндекс.Деньги";
+$MESS["SPP_PAYSYSTEM_YANDEXCHECKOUT_QIWI_TITLE"] = "Оплата Qiwi";
+$MESS["SPP_PAYSYSTEM_YANDEXCHECKOUT_WEBMONEY_TITLE"] = "Оплата WebMoney";
+$MESS["SPP_PAYSYSTEM_PAYPAL_TITLE"] = "Оплата PayPal";
+$MESS["SPP_PAYSYSTEM_QIWI_TITLE"] = "Оплата Qiwi";
+$MESS["SPP_PAYSYSTEM_WEBMONEY_TITLE"] = "Оплата WebMoney";
+$MESS["SPP_PAYSYSTEM_LIQPAY_TITLE"] = "Оплата LiqPay";
+$MESS["SPP_PAYSYSTEM_ADD"] = "Добавить платёжную систему";
+$MESS["SPP_PAYSYSTEM_SETTINGS"] = "Настроить #PAYSYSTEM_NAME#";

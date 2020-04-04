@@ -19,10 +19,10 @@
 			<span class="login-item-alignment"></span><span class="login-label"><?=GetMessage("AUTH_CHECKWORD")?></span><input class="login-inp" type="text"  name="USER_CHECKWORD" maxlength="50" value="<?=$arResult["USER_CHECKWORD"]?>"/>
 		</div>
 		<div class="login-item">
-			<span class="login-item-alignment"></span><span class="login-label"><?=GetMessage("AUTH_NEW_PASSWORD_REQ")?></span><input class="login-inp" type="password" name="USER_PASSWORD" maxlength="50" value="<?=$arResult["USER_PASSWORD"]?>"/>
+			<span class="login-item-alignment"></span><span class="login-label"><?=GetMessage("AUTH_NEW_PASSWORD_REQ")?></span><input class="login-inp" type="password" name="USER_PASSWORD" maxlength="255" value="<?=$arResult["USER_PASSWORD"]?>"/>
 		</div>
 		<div class="login-item">
-			<span class="login-item-alignment"></span><span class="login-label"><?=GetMessage("AUTH_NEW_PASSWORD_CONFIRM")?></span><input class="login-inp" type="password"  name="USER_CONFIRM_PASSWORD" maxlength="50" value="<?=$arResult["USER_CONFIRM_PASSWORD"]?>"/>
+			<span class="login-item-alignment"></span><span class="login-label"><?=GetMessage("AUTH_NEW_PASSWORD_CONFIRM")?></span><input class="login-inp" type="password"  name="USER_CONFIRM_PASSWORD" maxlength="255" value="<?=$arResult["USER_CONFIRM_PASSWORD"]?>"/>
 		</div>
 <?if ($arResult["USE_CAPTCHA"]):?>
 		<div class="login-item">

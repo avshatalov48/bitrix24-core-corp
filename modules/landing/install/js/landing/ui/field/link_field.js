@@ -35,6 +35,8 @@
 		this.content.href = trim(escapeText(this.content.href));
 		this.content.target = trim(escapeText(this.content.target));
 		this.skipContent = data.skipContent;
+		this.customUrlDisabled = data.disableCustomURL;
+		this.detailPageMode = data.detailPageMode === true;
 
 		if (!this.containsImage() && !this.containsHtml())
 		{
@@ -42,7 +44,7 @@
 		}
 
 		this.input = new BX.Landing.UI.Field.Text({
-			placeholder: BX.message("FIELD_LINK_TEXT_LABEL"),
+			placeholder: BX.Landing.Loc.getMessage("FIELD_LINK_TEXT_LABEL"),
 			selector: this.selector,
 			content: this.content.text,
 			textOnly: true,
@@ -59,8 +61,8 @@
 		}
 
 		this.hrefInput = new BX.Landing.UI.Field.LinkURL({
-			title: BX.message("FIELD_LINK_HREF_LABEL"),
-			placeholder: BX.message("FIELD_LINK_HREF_PLACEHOLDER"),
+			title: BX.Landing.Loc.getMessage("FIELD_LINK_HREF_LABEL"),
+			placeholder: BX.Landing.Loc.getMessage("FIELD_LINK_HREF_PLACEHOLDER"),
 			selector: this.selector,
 			content: this.content.href,
 			onInput: this.onHrefInput.bind(this),
@@ -70,6 +72,8 @@
 			disableBlocks: data.disableBlocks,
 			disableCustomURL: data.disableCustomURL,
 			allowedTypes: data.allowedTypes,
+			detailPageMode: data.detailPageMode === true,
+			sourceField: data.sourceField,
 			onValueChange: function() {
 				this.onValueChangeHandler(this);
 				this.noHrefValueChange();
@@ -78,14 +82,14 @@
 		});
 
 		this.targetInput = new BX.Landing.UI.Field.DropdownInline({
-			title: BX.message("FIELD_LINK_TARGET_LABEL"),
+			title: BX.Landing.Loc.getMessage("FIELD_LINK_TARGET_LABEL"),
 			selector: this.selector,
 			className: "landing-ui-field-dropdown-inline",
 			content: this.content.target,
 			items: {
-				"_self": BX.message("FIELD_LINK_TARGET_SELF"),
-				"_blank": BX.message("FIELD_LINK_TARGET_BLANK"),
-				"_popup": BX.message("FIELD_LINK_TARGET_POPUP")
+				"_self": BX.Landing.Loc.getMessage("FIELD_LINK_TARGET_SELF"),
+				"_blank": BX.Landing.Loc.getMessage("FIELD_LINK_TARGET_BLANK"),
+				"_popup": BX.Landing.Loc.getMessage("FIELD_LINK_TARGET_POPUP")
 			},
 			onValueChange: function() {
 				this.onValueChangeHandler(this);
@@ -94,9 +98,10 @@
 		});
 
 		this.mediaButton = new BX.Landing.UI.Button.BaseButton(this.selector + "_media", {
-			html: "<span class=\"fa fa-bolt\"></span>&nbsp;" + BX.message("LANDING_CONTENT_URL_MEDIA_BUTTON"),
+			html: "<span class=\"fa fa-bolt\"></span>&nbsp;" + BX.Landing.Loc.getMessage("LANDING_CONTENT_URL_MEDIA_BUTTON"),
 			className: "landing-ui-field-link-media",
-			onClick: this.onMediaClick.bind(this)
+			onClick: this.onMediaClick.bind(this),
+			disabled: true,
 		});
 
 		this.mediaLayout = BX.create("div", {props: {className: "landing-ui-field-link-media-layout"}});
@@ -135,7 +140,16 @@
 
 		this.layout.classList.add("landing-ui-field-link");
 
-		this.adjustVideo();
+		if (!this.customUrlDisabled)
+		{
+			this.adjustVideo();
+		}
+		if (this.content.target === '_popup')
+		{
+			this.adjustVideo();
+		}
+
+		this.adjustEditLink();
 	};
 
 
@@ -214,6 +228,58 @@
 			//
 			// 		}.bind(this));
 			// }
+		},
+
+		adjustEditLink: function()
+		{
+			var type = this.hrefInput.getPlaceholderType();
+
+			[].slice.call(this.layout.querySelectorAll('.landing-ui-field-edit-link'))
+				.forEach(BX.remove);
+
+			if (type === "landing")
+			{
+				var value = this.hrefInput.getValue();
+
+				if (BX.type.isString(value) && value.length > 0)
+				{
+					this.hrefInput
+						.getPageData(value)
+						.then(function(result) {
+							var urlMask = BX.Landing.Main.getInstance()
+								.options.params.sef_url.landing_view;
+
+							var href = urlMask
+								.replace("#site_show#", result.siteId)
+								.replace("#landing_edit#", result.id);
+
+							this.editLink = this.createEditLink(
+								BX.Landing.Loc.getMessage("LANDING_LINK_FILED__EDIT_PAGE_LINK_LABEL"),
+								href
+							);
+							this.layout.appendChild(this.editLink);
+						}.bind(this));
+				}
+			}
+		},
+
+		createEditLink: function(text, href)
+		{
+			return BX.create("div", {
+				props: {
+					className: "landing-ui-field-edit-link"
+				},
+				children: [
+					BX.create("a", {
+						attrs: {
+							href: href,
+							target: "_blank",
+							title: BX.Landing.Loc.getMessage("LANDING_LINK_FILED__EDIT_LINK_TITLE")
+						},
+						text: text
+					})
+				]
+			});
 		},
 
 		/**
@@ -296,6 +362,8 @@
 				this.hrefInput.setValue(value.href);
 				this.targetInput.setValue(escapeText(value.target));
 			}
+
+			this.adjustEditLink();
 		},
 
 
@@ -316,12 +384,15 @@
 
 		disableMedia: function()
 		{
-			this.mediaButton.disable();
-			this.targetInput.enable();
-			this.targetInput.closePopup();
-			this.targetInput.setValue("_self");
-			this.hideMediaPreview();
-			this.hideMediaSettings();
+			if (this.isEnabledMedia())
+			{
+				this.mediaButton.disable();
+				this.targetInput.enable();
+				this.targetInput.closePopup();
+				this.targetInput.setValue("_self");
+				this.hideMediaPreview();
+				this.hideMediaSettings();
+			}
 		},
 
 
@@ -371,7 +442,14 @@
 			{
 				if (!this.isEnabledMedia())
 				{
-					this.enableMedia();
+					if (!this.mediaService)
+					{
+						this.adjustVideo();
+					}
+					else
+					{
+						this.enableMedia();
+					}
 				}
 				else
 				{
@@ -390,11 +468,11 @@
 						children: [
 							BX.create("div", {
 								props: {className: "landing-ui-field-link-media-help-popup-content-title"},
-								html: BX.message("LANDING_CONTENT_URL_MEDIA_HELP_TITLE")
+								html: BX.Landing.Loc.getMessage("LANDING_CONTENT_URL_MEDIA_HELP_TITLE")
 							}),
 							BX.create("div", {
 								props: {className: "landing-ui-field-link-media-help-popup-content-content"},
-								html: BX.message("LANDING_CONTENT_URL_MEDIA_HELP")
+								html: BX.Landing.Loc.getMessage("LANDING_CONTENT_URL_MEDIA_HELP")
 							})
 						]
 					}).outerHTML,
@@ -444,7 +522,7 @@
 
 					// Make and show URL preview
 					this.video = element;
-					this.video.title = BX.message("LANDING_CONTENT_URL_PREVIEW_TITLE");
+					this.video.title = BX.Landing.Loc.getMessage("LANDING_CONTENT_URL_PREVIEW_TITLE");
 					this.mediaLayout.appendChild(this.video);
 					this.video.addEventListener("click", this.onVideoPreviewClick.bind(this));
 					this.showMediaSettings();
@@ -491,7 +569,11 @@
 
 		onHrefInput: function()
 		{
-			this.adjustVideo();
+			if (!this.customUrlDisabled)
+			{
+				this.adjustVideo();
+			}
+			this.adjustEditLink();
 		}
 	}
 })();

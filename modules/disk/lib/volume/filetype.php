@@ -151,6 +151,7 @@ class FileType extends Volume\Base
 						{$queryTypeFileSql},
 						files.STORAGE_ID
 						{$subGroupSql}
+					ORDER BY NULL
 				) CNT_FILES
 			";
 		};
@@ -199,6 +200,7 @@ class FileType extends Volume\Base
 						{$queryTypeFileSql},
 						files.STORAGE_ID
 						{$subGroupSql}
+					ORDER BY NULL
 				) CNT_PREVIEW
 					ON CNT_PREVIEW.TYPE_FILE = CNT_FILES.TYPE_FILE 
 					AND CNT_PREVIEW.STORAGE_ID = CNT_FILES.STORAGE_ID 
@@ -246,6 +248,7 @@ class FileType extends Volume\Base
 						{$queryTypeFileSql},
 						files.STORAGE_ID
 						{$subGroupSql}
+					ORDER BY NULL
 				) CNT_ATTACH
 					ON CNT_ATTACH.TYPE_FILE = CNT_FILES.TYPE_FILE 
 					AND CNT_ATTACH.STORAGE_ID = CNT_FILES.STORAGE_ID 
@@ -293,6 +296,7 @@ class FileType extends Volume\Base
 						{$queryTypeFileSql},
 						files.STORAGE_ID
 						{$subGroupSql}
+					ORDER BY NULL
 				) CNT_LINK
 					ON CNT_LINK.TYPE_FILE = CNT_FILES.TYPE_FILE
 					AND CNT_LINK.STORAGE_ID = CNT_FILES.STORAGE_ID
@@ -339,6 +343,7 @@ class FileType extends Volume\Base
 						{$queryTypeFileSql},
 						files.STORAGE_ID
 						{$subGroupSql}
+					ORDER BY NULL
 				) CNT_SHARING
 					ON CNT_SHARING.TYPE_FILE = CNT_FILES.TYPE_FILE
 					AND CNT_SHARING.STORAGE_ID = CNT_FILES.STORAGE_ID
@@ -394,6 +399,7 @@ class FileType extends Volume\Base
 								SELECT  object_id, max(id) as id
 								FROM b_disk_version 
 								GROUP BY object_id
+								ORDER BY NULL
 							) head ON head.OBJECT_ID = files.ID
 	
 							LEFT JOIN b_disk_attached_object  attached
@@ -420,10 +426,12 @@ class FileType extends Volume\Base
 							{$queryTypeFileSql},
 							files.STORAGE_ID
 							{$subGroupSql}
+						ORDER BY NULL
 					) src
 					GROUP BY
 						src.TYPE_FILE,
 						src.STORAGE_ID
+					ORDER BY NULL
 				) CNT_FREE
 					ON CNT_FREE.TYPE_FILE = CNT_FILES.TYPE_FILE
 					AND CNT_FREE.STORAGE_ID = CNT_FILES.STORAGE_ID
@@ -480,7 +488,14 @@ class FileType extends Volume\Base
 				{$fromSql}
 		";
 
+		VolumeTable::createTemporally();
 		$tableName = VolumeTable::getTableName();
+		$temporallyTableName = VolumeTable::getTemporallyName();
+
+		$columnList = Volume\QueryHelper::prepareInsert($columns, $this->getSelect());
+		$connection->queryExecute("INSERT INTO {$temporallyTableName} ({$columnList}) {$querySql}");
+
+		$temporallyDataSource = "SELECT {$columnList} FROM {$temporallyTableName}";
 
 		if ($this->getFilterId() > 0)
 		{
@@ -488,7 +503,7 @@ class FileType extends Volume\Base
 			$sql = "
 				UPDATE 
 					{$tableName} destinationTbl, 
-					({$querySql}) sourceQuery 
+					({$temporallyDataSource}) sourceQuery 
 				SET {$columnList} 
 				WHERE 
 					destinationTbl.INDICATOR_TYPE = '{$indicatorType}'
@@ -512,9 +527,10 @@ class FileType extends Volume\Base
 		}
 		else
 		{
-			$columnList = Volume\QueryHelper::prepareInsert($columns, $this->getSelect());
-			$connection->queryExecute("INSERT INTO {$tableName} ({$columnList}) {$querySql}");
+			$connection->queryExecute("INSERT INTO {$tableName} ({$columnList}) {$temporallyDataSource}");
 		}
+
+		VolumeTable::dropTemporally();
 
 		$this->recalculatePercent();
 

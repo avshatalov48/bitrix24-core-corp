@@ -12,10 +12,12 @@
 
 namespace Bitrix\Tasks\Dispatcher\PublicAction;
 
+use Bitrix\Main\Data\Cache;
 use Bitrix\Main\Result;
 use Bitrix\Tasks\Item;
 use Bitrix\Tasks\Manager;
 use Bitrix\Tasks\Util;
+use CTasks;
 
 final class Task extends \Bitrix\Tasks\Dispatcher\RestrictedAction
 {
@@ -162,6 +164,7 @@ final class Task extends \Bitrix\Tasks\Dispatcher\RestrictedAction
 					'PUBLIC_MODE' => true,
 					'ERRORS' => $this->errors,
 					'THROTTLE_MESSAGES' => $parameters[ 'THROTTLE_MESSAGES' ],
+					'DONT_SAVE_CHECKLIST' => ($parameters['DONT_SAVE_CHECKLIST'] ?: false),
 
 					// there also could be RETURN_CAN or RETURN_DATA, or both as RETURN_ENTITY
 					'RETURN_ENTITY' => $parameters[ 'RETURN_ENTITY' ],
@@ -199,7 +202,18 @@ final class Task extends \Bitrix\Tasks\Dispatcher\RestrictedAction
 			// todo: move to \Bitrix\Tasks\Item\Task
 			// this will ONLY delete tags, members, favorites, old depedences, old files, clear cache
 			$task = \CTaskItem::getInstance($id, Util\User::getId());
-			$task->delete();
+
+			try
+            {
+                $task->delete();
+
+                $cache = Cache::createInstance();
+                $cache->clean(CTasks::FILTER_LIMIT_CACHE_KEY, \CTasks::CACHE_TASKS_COUNT_DIR_NAME);
+            }
+            catch(\TasksException $e)
+            {
+
+            }
 		}
 
 		return $result;
@@ -227,6 +241,37 @@ final class Task extends \Bitrix\Tasks\Dispatcher\RestrictedAction
 
 			$task = \CTaskItem::getInstance($id, Util\User::getId());
 			$task->update(array('DEADLINE' => $newDeadline));
+		}
+
+		return $result;
+	}
+
+	/**
+	 * Set task to the Sprint id.
+	 * @param int $id Task id.
+	 * @param int $sprintId Sprint id.
+	 * @return array
+	 */
+	public function setSprint($id, $sprintId)
+	{
+		$result = ['result' => false];
+		$taskId = intval($id);
+		$sprintId = intval($sprintId);
+
+		if ($taskId && $sprintId)
+		{
+			$res = \Bitrix\Tasks\Kanban\SprintTable::addToSprint(
+				$sprintId,
+				$taskId
+			);
+			if ($res->isSuccess())
+			{
+				$result = ['result' => true];
+			}
+			else
+			{
+				$result['ERRORS'] = $res->getErrorMessages();
+			}
 		}
 
 		return $result;

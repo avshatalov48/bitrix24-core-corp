@@ -6,4 +6,5 @@ $MESS["TASKS_CHANGE_STATUS_COMPLETED"] = "Completed";
 $MESS["TASKS_CHANGE_STATUS_DEFERRED"] = "Deferred";
 $MESS["TASKS_CHANGE_STATUS_EMPTY_PROP"] = "Final status is not specified";
 $MESS["TASKS_CHANGE_STATUS_STATUS"] = "New status";
+$MESS["TASKS_CHANGE_STATUS_MODIFIED_BY"] = "Change on behalf of";
 ?>

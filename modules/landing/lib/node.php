@@ -34,4 +34,62 @@ abstract class Node
 	 * @return array|null Return null no delete from manifest.
 	 */
 	//abstract public static function prepareManifest(\Bitrix\Landing\Block $block, array $manifest, array &$manifestFull = array());
+
+	/**
+	 * Prepare field definition for node.
+	 *
+	 * @param array $field
+	 * @return array|null
+	 */
+	public static function prepareFieldDefinition(array $field)
+	{
+		$field = array_change_key_case($field, CASE_LOWER);
+		$field['id'] = static::prepareStringValue($field, 'id');
+		$field['type'] = static::prepareStringValue($field, 'type');
+		$field['name'] = static::prepareStringValue($field, 'name');
+		if (empty($field['id']) || empty($field['type']) || empty($field['name']))
+		{
+			return null;
+		}
+
+		/** @var Node $className */
+		$className = Node\Type::getClassName($field['type']);
+		if (!class_exists($className))
+		{
+			return null;
+		}
+		return $className::validateFieldDefinition($field);
+	}
+
+	/**
+	 * @param array $field
+	 * @return array|null
+	 */
+	protected static function validateFieldDefinition(array $field)
+	{
+		return [
+			'id' => $field['id'],
+			'type' => $field['type'],
+			'name' => $field['name']
+		];
+	}
+
+	/**
+	 * @param array $row
+	 * @param string $name
+	 * @return string|null
+	 */
+	protected static function prepareStringValue(array $row, $name)
+	{
+		if (empty($row[$name]) || !is_string($row[$name]))
+		{
+			return null;
+		}
+		$row[$name] = trim($row[$name]);
+		if ($row[$name] === '')
+		{
+			return null;
+		}
+		return $row[$name];
+	}
 }

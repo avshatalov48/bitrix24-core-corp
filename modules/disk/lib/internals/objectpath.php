@@ -8,7 +8,7 @@ use Bitrix\Main\Type\Collection;
 
 /**
  * Class ObjectPathTable
- * 
+ *
  * Fields:
  * <ul>
  * <li> ID int mandatory
@@ -117,7 +117,7 @@ final class ObjectPathTable extends DataManager
 		";
 
 		$connection->queryExecute($sql);
-		
+
 		$sql = "
 			INSERT INTO {$table} (PARENT_ID, OBJECT_ID, DEPTH_LEVEL)
 				SELECT stree.PARENT_ID, subtree.OBJECT_ID, stree.DEPTH_LEVEL+subtree.DEPTH_LEVEL+1
@@ -145,7 +145,7 @@ final class ObjectPathTable extends DataManager
 			'select' => array('ID', 'PARENT_ID', 'OBJECT_ID', 'DEPTH_LEVEL'),
 			'filter' => array(
 				'PARENT_ID' => $objectId,
-				'!OBJECT_ID' => $objectId,
+				'!=OBJECT_ID' => $objectId,
 			),
 		))->fetchAll();
 
@@ -193,7 +193,7 @@ final class ObjectPathTable extends DataManager
 			'select' => array('ID', 'PARENT_ID', 'OBJECT_ID', 'DEPTH_LEVEL'),
 			'filter' => array(
 				'OBJECT_ID' => $objectId,
-				'!PARENT_ID' => $objectId,
+				'!=PARENT_ID' => $objectId,
 			),
 		))->fetchAll();
 
@@ -227,7 +227,7 @@ final class ObjectPathTable extends DataManager
 		$paths = static::getList(array(
 			'select' => array('ID'),
 			'filter' => array(
-				'!OBJECT_ID' => $objectId,
+				'!=OBJECT_ID' => $objectId,
 				'PARENT_ID' => $objectId,
 			),
 			'limit' => 1,

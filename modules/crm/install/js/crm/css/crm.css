@@ -4490,11 +4490,16 @@ tr.crm-offer-row[draggable="true"]
 }
 
 .crm-lead-header-comments .crm-lead-header-inner-cell-title {
-	width: 0;
+	max-width: 300px;
+	width: auto;
 }
 
 .crm-lead-header-com-cell {
 	width: 100%;
+}
+
+	.crm-lead-header-comments .crm-lead-header-com-cell {
+	width: auto;
 }
 
 .crm-lead-header-inner-cell-move {
@@ -7269,6 +7274,7 @@ div.crm-client-summary-wrapper .crm-client-info-wrapper {
 	list-style: none;
 	margin: -7px -10px -5px;
 	padding: 0;
+	max-width: 396px;
 }
 
 .popup-search-result-item {
@@ -8831,4 +8837,8 @@ a.crm-client-contacts-block-text-mail:hover{
 	border-radius: 100%;
 	text-align: center;
 	overflow: hidden;
+}
+
+.bitrix24-default-theme .crm-btn-toolbar-add {
+	margin-right: 17px;
 }

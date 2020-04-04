@@ -514,23 +514,6 @@ BX.Tasks.GridActions = {
 
 };
 
-BX.SidePanel.Instance.bindAnchors({
-	rules: [
-		{
-			condition: ['/company/personal/user/(\\d+)/tasks/import/'],
-			loader: 'default-loader',
-			options: {
-				cacheable: false,
-				events: {
-					onClose: function() {
-						BX.Tasks.GridActions.reloadGrid();
-					}
-				}
-			}
-		}
-	]
-});
-
 BX(function() {
 	"use strict";
 

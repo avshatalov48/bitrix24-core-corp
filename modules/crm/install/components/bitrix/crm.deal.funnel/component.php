@@ -439,6 +439,7 @@ foreach ($arResult['STAGE_LIST'] as $k => $v)
 	unset($info);
 }
 
+$arResult['DB_FILTER'] = $arFilter;
 $arResult['ENABLE_CONTROL_PANEL'] = isset($arParams['ENABLE_CONTROL_PANEL']) ? $arParams['ENABLE_CONTROL_PANEL'] : true;
 $this->IncludeComponentTemplate();
 $APPLICATION->SetTitle(GetMessage('CRM_DEAL_NAV_TITLE_LIST'));

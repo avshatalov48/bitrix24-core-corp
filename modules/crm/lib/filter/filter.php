@@ -120,6 +120,10 @@ class Filter
 		return $this->entityDataProvider;
 	}
 
+	public function prepareQuery()
+	{
+	}
+
 	/**
 	 * Prepare list filter params.
 	 * @param array $filter Source Filter.

@@ -51,7 +51,6 @@ CREATE TABLE b_disk_object
 	DELETED_TYPE int(11) DEFAULT 0,
 	PREVIEW_ID int(11),
 	VIEW_ID int(11),
-	SEARCH_INDEX  MEDIUMTEXT NULL,
 
 	PRIMARY KEY (ID),
 
@@ -63,7 +62,34 @@ CREATE TABLE b_disk_object
 	KEY IX_DISK_O_6 (STORAGE_ID, XML_ID),
 	KEY IX_DISK_O_7 (UPDATE_TIME),
 	KEY IX_DISK_O_8 (SYNC_UPDATE_TIME),
-	KEY IX_DISK_O_10 (STORAGE_ID, GLOBAL_CONTENT_VERSION)
+# 	FULLTEXT INDEX IX_DISK_O_9 (SEARCH_INDEX),
+	KEY IX_DISK_O_10 (STORAGE_ID, GLOBAL_CONTENT_VERSION),
+	KEY IX_DISK_O_11 (FILE_ID)
+);
+
+CREATE TABLE b_disk_object_head_index
+(
+	OBJECT_ID int(11) not null,
+	UPDATE_TIME datetime,
+	SEARCH_INDEX  mediumtext null,
+
+	PRIMARY KEY (OBJECT_ID),
+
+	FULLTEXT INDEX IX_DISK_HI_1 (SEARCH_INDEX),
+	KEY IX_DISK_HI_2 (UPDATE_TIME)
+);
+
+CREATE TABLE b_disk_object_extended_index
+(
+	OBJECT_ID int(11) not null,
+	UPDATE_TIME datetime,
+	SEARCH_INDEX  mediumtext null,
+	STATUS tinyint not null default 2,
+
+	PRIMARY KEY (OBJECT_ID),
+
+	FULLTEXT INDEX IX_DISK_EI_1 (SEARCH_INDEX),
+	KEY IX_DISK_EI_2 (STATUS, UPDATE_TIME)
 );
 
 CREATE TABLE b_disk_object_lock
@@ -233,10 +259,10 @@ CREATE TABLE b_disk_external_link
 CREATE TABLE b_disk_sharing
 (
 	ID int(11) not null auto_increment,
-  PARENT_ID int(11),
-  CREATED_BY int(11),
+	PARENT_ID int(11),
+	CREATED_BY int(11),
 
-  FROM_ENTITY VARCHAR(50) not null,
+	FROM_ENTITY VARCHAR(50) not null,
 	TO_ENTITY VARCHAR(50) not null,
 
 	LINK_STORAGE_ID int(11),
@@ -259,7 +285,8 @@ CREATE TABLE b_disk_sharing
 	KEY IX_DISK_S_2 (FROM_ENTITY),
 	KEY IX_DISK_S_3 (TO_ENTITY),
 	KEY IX_DISK_S_4 (LINK_STORAGE_ID, LINK_OBJECT_ID),
-	KEY IX_DISK_S_5 (TYPE, PARENT_ID)
+	KEY IX_DISK_S_5 (TYPE, PARENT_ID),
+	KEY IX_DISK_S_6 (REAL_OBJECT_ID, LINK_OBJECT_ID)
 );
 
 CREATE TABLE b_disk_edit_session
@@ -336,6 +363,22 @@ CREATE TABLE b_disk_deleted_log
 	KEY IX_DISK_DL_1 (STORAGE_ID, CREATE_TIME),
 	KEY IX_DISK_DL_2 (OBJECT_ID),
 	KEY IX_DISK_DL_3 (CREATE_TIME)
+);
+
+CREATE TABLE b_disk_deleted_log_v2
+(
+    ID bigint unsigned not null auto_increment,
+	USER_ID int(11) not null,
+	STORAGE_ID int(11) not null,
+	OBJECT_ID int(11) not null,
+	TYPE int(11) not null,
+	CREATE_TIME datetime not null,
+
+    PRIMARY KEY (ID),
+
+	UNIQUE KEY (OBJECT_ID, STORAGE_ID),
+	KEY IX_DISK_DL_V2_1 (STORAGE_ID, CREATE_TIME),
+	KEY IX_DISK_DL_V2_2 (CREATE_TIME)
 );
 
 CREATE TABLE b_disk_cloud_import

@@ -8,6 +8,6 @@ $MESS["CRM_ORDER_MODIFICATION_REASON_CANCELED"] = "Причина отмены �
 $MESS["CRM_ORDER_MODIFICATION_RESTORED"] = "Заказ восстановлен";
 $MESS["CRM_ORDER_CANCELLED"] = "Отменен";
 $MESS["CRM_ORDER_ACTIVE"] = "В работе";
-$MESS["CRM_ORDER_CREATION_MESSAGE"] = "№#ACCOUNT_NUMBER# от #DATE_INSERT#";
+$MESS["CRM_ORDER_CREATION_TITLE"] = "#TITLE# от #DATE_INSERT#";
 $MESS["CRM_ORDER_CREATION_MESSAGE_SUM"] = "(на сумму #PRICE_WITH_CURRENCY#)";
 ?>

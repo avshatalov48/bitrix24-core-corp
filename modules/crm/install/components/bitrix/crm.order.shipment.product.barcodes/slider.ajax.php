@@ -26,15 +26,17 @@ if (!CModule::IncludeModule('crm')
 
 global $APPLICATION;
 
-$template = strlen($_REQUEST['template']) > 0 ? trim($_REQUEST['template']) : '';
+$template = strlen($_REQUEST['template']) > 0 ? trim($_REQUEST['template']) : 'withmarkingcodes';
 $basketId = (int)$_REQUEST['basketId'] > 0 ? (int)$_REQUEST['basketId'] : 0;
 $storeId = (int)$_REQUEST['storeId'] > 0 ? (int)$_REQUEST['storeId'] : 0;
+$additionalCssPath = isset($_REQUEST['additionalCssPath']) ? (string)$_REQUEST['additionalCssPath'] : '';
 
 $APPLICATION->IncludeComponent('bitrix:crm.order.shipment.product.barcodes',
 	$template,
 	[
 		'BASKET_ID' => $basketId,
-		'STORE_ID' => $storeId
+		'STORE_ID' => $storeId,
+		'ADDITIONAL_CSS_PATH' => $additionalCssPath
 	],
 	false,
 	array('HIDE_ICONS' => 'Y', 'ACTIVE_COMPONENT' => 'Y')

@@ -33,6 +33,7 @@ return array(
 	'footer' => Loc::getMessage('LD_BLOCK_SECTION_FOOTER'),
 	
 	'forms' => Loc::getMessage('LD_BLOCK_SECTION_FORMS'),
+	'news' => Loc::getMessage('LD_BLOCK_SECTION_NEWS'),
 	'schedule' => Loc::getMessage('LD_BLOCK_SECTION_SCHEDULE'),
 	
 	'store' => Loc::getMessage('LD_BLOCK_SECTION_STORE_NEW'),

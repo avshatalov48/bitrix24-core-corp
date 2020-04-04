@@ -2246,9 +2246,9 @@ if (!$useSaleDiscountOnly || $catalogCount > 0)
 			unset($userListID[0]);
 		if (!empty($userListID))
 		{
-			$strClearQuantityDate = Option::get('catalog', 'clear_quantity_date');
-			$strClearQuantityReservedDate = Option::get('catalog', 'clear_reserved_quantity_date');
-			$strClearStoreDate = Option::get('catalog', 'clear_store_date');
+			$strClearQuantityDate = (string)Option::get('catalog', 'clear_quantity_date');
+			$strClearQuantityReservedDate = (string)Option::get('catalog', 'clear_reserved_quantity_date');
+			$strClearStoreDate = (string)Option::get('catalog', 'clear_store_date');
 
 			$arUserList = array();
 			$strNameFormat = CSite::GetNameFormat(true);
@@ -2267,13 +2267,14 @@ if (!$useSaleDiscountOnly || $catalogCount > 0)
 			{
 				$arOneUser['ID'] = (int)$arOneUser['ID'];
 				if ($canViewUserList)
-					$arUserList[$arOneUser['ID']] = '<a href="/bitrix/admin/user_edit.php?lang='.LANGUAGE_ID.'&ID='.$arOneUser['ID'].'">'.CUser::FormatName($strNameFormat, $arOneUser).'</a>';
+					$arUserList[$arOneUser['ID']] = '['.$arOneUser['ID'].'] <a href="/bitrix/admin/user_edit.php?lang='.LANGUAGE_ID.'&ID='.$arOneUser['ID'].'">'.CUser::FormatName($strNameFormat, $arOneUser).'</a>';
 				else
-					$arUserList[$arOneUser['ID']] = CUser::FormatName($strNameFormat, $arOneUser);
+					$arUserList[$arOneUser['ID']] = '['.$arOneUser['ID'].'] '.CUser::FormatName($strNameFormat, $arOneUser);
 			}
 			unset($arOneUser, $userIterator, $canViewUserList);
 			if (isset($arUserList[$clearQuantityUser]))
 				$strQuantityUser = $arUserList[$clearQuantityUser];
+
 			if (isset($arUserList[$clearQuantityReservedUser]))
 				$strQuantityReservedUser = $arUserList[$clearQuantityReservedUser];
 			if (isset($arUserList[$clearStoreUser]))
@@ -2330,7 +2331,7 @@ if (!$useSaleDiscountOnly || $catalogCount > 0)
 		<td>
 			<input type="button" value="<? echo Loc::getMessage("CAT_CLEAR_ACTION"); ?>" id="cat_clear_reserved_quantity_btn" onclick="catClearQuantity(this, 'clearReservedQuantity')">
 			<?
-			if (0 < $clearQuantityUser)
+			if (0 < $clearQuantityReservedUser)
 			{
 				?><span style="font-size: smaller;"><?=$strQuantityReservedUser;?>&nbsp;<?=$strClearQuantityReservedDate;?></span><?
 			}

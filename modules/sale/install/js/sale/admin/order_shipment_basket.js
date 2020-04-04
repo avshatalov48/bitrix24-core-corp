@@ -1028,7 +1028,6 @@ BX.Sale.Admin.ShipmentBasketEdit.prototype.recoveryBarcode = function(product, e
 		if (!product['BARCODE_INFO'].hasOwnProperty(storeId))
 			continue;
 
-		console.log('recoveryBarcode');
 		var stackElement = stack[stack.length - 1];
 		var barcodeInfo = product['BARCODE_INFO'][storeId];
 
@@ -2197,7 +2196,7 @@ BX.Sale.Admin.SystemShipmentBasketEdit.prototype.addProductSearch = function()
 		return;
 	}
 
-	var thead = '<thead><tr><td><span class="adm-s-order-table-title-icon"></span></td><td></td>';
+	var thead = '<thead><tr><td class="adm-s-order-table-context-menu-column"><span class="adm-s-order-table-title-icon"></span></td><td></td>';
 	var i = null;
 
 	for (i in this.visibleColumns)

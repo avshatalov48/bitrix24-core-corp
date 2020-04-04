@@ -364,11 +364,11 @@ abstract class CCrmReportHelperBase extends CReportHelper
 							'def' => array(
 								'data_type' => 'float',
 								'expression' => array(
-									"(IF(".
+									"(IFNULL(IF(".
 									"LOCATE('|', %s) > 0, ".
 									"CAST(SUBSTR(%s, 1, LOCATE('|', %s) - 1) AS DECIMAL(18,2)), ".
 									"CAST(%s AS DECIMAL(18,2))".
-									"))", $fieldName, $fieldName, $fieldName, $fieldName
+									"), 0))", $fieldName, $fieldName, $fieldName, $fieldName
 								)
 							),
 							'name' => $fieldName.self::UF_MONEY_NUMBER_POSTFIX
@@ -377,7 +377,7 @@ abstract class CCrmReportHelperBase extends CReportHelper
 							'def' => array(
 								'data_type' => 'string',
 								'expression' => array(
-									"(IF(LOCATE('|', %s) > 0, SUBSTR(%s, LOCATE('|', %s) + 1), NULL))",
+									"(IFNULL(IF(LOCATE('|', %s) > 0, SUBSTR(%s, LOCATE('|', %s) + 1), NULL), ''))",
 									$fieldName, $fieldName, $fieldName
 								)
 							),
@@ -632,11 +632,22 @@ abstract class CCrmReportHelperBase extends CReportHelper
 									}
 									else
 									{
-										$newFilter[] = [
-											'LOGIC' => 'AND',
-											$filterOperation.$numberFieldName => $numberValue,
-											'='.$currencyFieldName => $currencyValue
-										];
+										if ($filterOperation === '!')
+										{
+											$newFilter[] = [
+												'LOGIC' => 'OR',
+												$filterOperation.$numberFieldName => $numberValue,
+												'!'.$currencyFieldName => $currencyValue
+											];
+										}
+										else
+										{
+											$newFilter[] = [
+												'LOGIC' => 'AND',
+												$filterOperation.$numberFieldName => $numberValue,
+												'='.$currencyFieldName => $currencyValue
+											];
+										}
 									}
 								}
 							}
@@ -1151,6 +1162,7 @@ class CCrmReportHelper extends CCrmReportHelperBase
 				'NAME',
 				'LAST_NAME',
 				'SECOND_NAME',
+				'BIRTHDATE',
 				'COMPANY_TITLE',
 				'POST',
 				'ADDRESS',
@@ -1185,6 +1197,7 @@ class CCrmReportHelper extends CCrmReportHelperBase
 				'NAME',
 				'LAST_NAME',
 				'SECOND_NAME',
+				'BIRTHDATE',
 				'POST',
 				'ADDRESS',
 				'TYPE_BY.STATUS_ID',
@@ -1252,7 +1265,6 @@ class CCrmReportHelper extends CCrmReportHelperBase
 				'ProductRow:DEAL_OWNER.QUANTITY',
 				'ProductRow:DEAL_OWNER.SUM_ACCOUNT'
 			),
-			'ProductRow:DEAL_OWNER.IBLOCK_ELEMENT_GRC.NAME',
 			'ORIGINATOR_BY.ID'
 		);
 
@@ -1320,6 +1332,11 @@ class CCrmReportHelper extends CCrmReportHelperBase
 		}
 
 		return $columnList;
+	}
+
+	public static function getFiltrableColumnGroups()
+	{
+		return array_merge(parent::getFiltrableColumnGroups(), ['PRODUCT_ROW']);
 	}
 
 	public static function setRuntimeFields(\Bitrix\Main\Entity\Base $entity, $sqlTimeInterval)
@@ -1401,11 +1418,6 @@ class CCrmReportHelper extends CCrmReportHelperBase
 			'ProductRow:DEAL_OWNER.PRICE_ACCOUNT' => 'float',
 			'COMPANY_BY.REVENUE' => 'float'
 		);
-	}
-	//Enable grouping by product name
-	public static function getGrcColumns()
-	{
-		return array('ProductRow:DEAL_OWNER.IBLOCK_ELEMENT_GRC.NAME');
 	}
 	public static function getDefaultColumns()
 	{
@@ -1498,6 +1510,8 @@ class CCrmReportHelper extends CCrmReportHelperBase
 	{
 		parent::beforeViewDataQuery($select, $filter, $group, $order, $limit, $options, $runtime);
 
+		self::rewriteCategoryFilter($filter);
+
 		if(!isset($select['CRM_DEAL_COMPANY_BY_ID']))
 		{
 			foreach($select as $k => $v)
@@ -1581,6 +1595,27 @@ class CCrmReportHelper extends CCrmReportHelperBase
 					'=IS_RECURRING' => 'N'
 				);
 
+			}
+		}
+	}
+
+	protected static function rewriteCategoryFilter(&$filter)
+	{
+		foreach ($filter as $k => &$v)
+		{
+			if (is_array($v))
+			{
+				// (CATEGORY_ID != 0 OR CATEGORY_ID IS NULL) => (CATEGORY_ID != 0)
+				if (count($v) === 3 && isset($v['LOGIC']) && $v['LOGIC'] === 'OR'
+					&& isset($v['!CATEGORY_ID']) && ($v['!CATEGORY_ID'] === 0 || $v['!CATEGORY_ID'] === '0')
+					&& isset($v['=CATEGORY_ID']) && $v['=CATEGORY_ID'] === false)
+				{
+					unset($v['=CATEGORY_ID']);
+				}
+				else
+				{
+					self::rewriteCategoryFilter($v);
+				}
 			}
 		}
 	}
@@ -1870,7 +1905,7 @@ class CCrmReportHelper extends CCrmReportHelperBase
 					'title' => GetMessage('CRM_REPORT_DEFAULT_PRODUCTS_PROFIT'),
 					'description' => GetMessage('CRM_REPORT_DEFAULT_PRODUCTS_PROFIT_DESCR'),
 					'mark_default' => 2,
-					'settings' => unserialize('a:7:{s:6:"entity";s:7:"CrmDeal";s:6:"period";a:2:{s:4:"type";s:5:"month";s:5:"value";N;}s:6:"select";a:4:{i:4;a:2:{s:4:"name";s:37:"ProductRow:DEAL_OWNER.CP_PRODUCT_NAME";s:5:"alias";s:0:"";}i:5;a:3:{s:4:"name";s:2:"ID";s:5:"alias";s:0:"";s:4:"aggr";s:14:"COUNT_DISTINCT";}i:6;a:3:{s:4:"name";s:30:"ProductRow:DEAL_OWNER.QUANTITY";s:5:"alias";s:0:"";s:4:"aggr";s:3:"SUM";}i:7;a:3:{s:4:"name";s:33:"ProductRow:DEAL_OWNER.SUM_ACCOUNT";s:5:"alias";s:0:"";s:4:"aggr";s:3:"SUM";}}s:6:"filter";a:1:{i:0;a:9:{i:0;a:5:{s:4:"type";s:5:"field";s:4:"name";s:45:"ProductRow:DEAL_OWNER.IBLOCK_ELEMENT_GRC.NAME";s:7:"compare";s:8:"CONTAINS";s:5:"value";s:0:"";s:10:"changeable";s:1:"1";}i:1;a:5:{s:4:"type";s:5:"field";s:4:"name";s:8:"STAGE_ID";s:7:"compare";s:5:"EQUAL";s:5:"value";s:3:"WON";s:10:"changeable";s:1:"0";}i:2;a:5:{s:4:"type";s:5:"field";s:4:"name";s:7:"TYPE_ID";s:7:"compare";s:5:"EQUAL";s:5:"value";s:0:"";s:10:"changeable";s:1:"1";}i:3;a:5:{s:4:"type";s:5:"field";s:4:"name";s:36:"COMPANY_BY.COMPANY_TYPE_BY.STATUS_ID";s:7:"compare";s:5:"EQUAL";s:5:"value";s:0:"";s:10:"changeable";s:1:"1";}i:4;a:5:{s:4:"type";s:5:"field";s:4:"name";s:10:"COMPANY_BY";s:7:"compare";s:5:"EQUAL";s:5:"value";s:0:"";s:10:"changeable";s:1:"1";}i:5;a:5:{s:4:"type";s:5:"field";s:4:"name";s:28:"CONTACT_BY.TYPE_BY.STATUS_ID";s:7:"compare";s:5:"EQUAL";s:5:"value";s:0:"";s:10:"changeable";s:1:"1";}i:6;a:5:{s:4:"type";s:5:"field";s:4:"name";s:10:"CONTACT_BY";s:7:"compare";s:5:"EQUAL";s:5:"value";s:0:"";s:10:"changeable";s:1:"1";}i:7;a:5:{s:4:"type";s:5:"field";s:4:"name";s:11:"ASSIGNED_BY";s:7:"compare";s:5:"EQUAL";s:5:"value";s:0:"";s:10:"changeable";s:1:"1";}s:5:"LOGIC";s:3:"AND";}}s:4:"sort";i:7;s:9:"sort_type";s:4:"DESC";s:5:"limit";N;}')
+					'settings' => unserialize('a:7:{s:6:"entity";s:7:"CrmDeal";s:6:"period";a:2:{s:4:"type";s:5:"month";s:5:"value";N;}s:6:"select";a:4:{i:4;a:2:{s:4:"name";s:37:"ProductRow:DEAL_OWNER.CP_PRODUCT_NAME";s:5:"alias";s:0:"";}i:5;a:3:{s:4:"name";s:2:"ID";s:5:"alias";s:0:"";s:4:"aggr";s:14:"COUNT_DISTINCT";}i:6;a:3:{s:4:"name";s:30:"ProductRow:DEAL_OWNER.QUANTITY";s:5:"alias";s:0:"";s:4:"aggr";s:3:"SUM";}i:7;a:3:{s:4:"name";s:33:"ProductRow:DEAL_OWNER.SUM_ACCOUNT";s:5:"alias";s:0:"";s:4:"aggr";s:3:"SUM";}}s:6:"filter";a:1:{i:0;a:9:{i:0;a:5:{s:4:"type";s:5:"field";s:4:"name";s:37:"ProductRow:DEAL_OWNER.CP_PRODUCT_NAME";s:7:"compare";s:8:"CONTAINS";s:5:"value";s:0:"";s:10:"changeable";s:1:"1";}i:1;a:5:{s:4:"type";s:5:"field";s:4:"name";s:8:"STAGE_ID";s:7:"compare";s:5:"EQUAL";s:5:"value";s:3:"WON";s:10:"changeable";s:1:"0";}i:2;a:5:{s:4:"type";s:5:"field";s:4:"name";s:7:"TYPE_ID";s:7:"compare";s:5:"EQUAL";s:5:"value";s:0:"";s:10:"changeable";s:1:"1";}i:3;a:5:{s:4:"type";s:5:"field";s:4:"name";s:36:"COMPANY_BY.COMPANY_TYPE_BY.STATUS_ID";s:7:"compare";s:5:"EQUAL";s:5:"value";s:0:"";s:10:"changeable";s:1:"1";}i:4;a:5:{s:4:"type";s:5:"field";s:4:"name";s:10:"COMPANY_BY";s:7:"compare";s:5:"EQUAL";s:5:"value";s:0:"";s:10:"changeable";s:1:"1";}i:5;a:5:{s:4:"type";s:5:"field";s:4:"name";s:28:"CONTACT_BY.TYPE_BY.STATUS_ID";s:7:"compare";s:5:"EQUAL";s:5:"value";s:0:"";s:10:"changeable";s:1:"1";}i:6;a:5:{s:4:"type";s:5:"field";s:4:"name";s:10:"CONTACT_BY";s:7:"compare";s:5:"EQUAL";s:5:"value";s:0:"";s:10:"changeable";s:1:"1";}i:7;a:5:{s:4:"type";s:5:"field";s:4:"name";s:11:"ASSIGNED_BY";s:7:"compare";s:5:"EQUAL";s:5:"value";s:0:"";s:10:"changeable";s:1:"1";}s:5:"LOGIC";s:3:"AND";}}s:4:"sort";i:7;s:9:"sort_type";s:4:"DESC";s:5:"limit";N;}')
 				),
 				array(
 					'title' => GetMessage('CRM_REPORT_DEFAULT_VOLUME_BY_CONTACTS'),
@@ -2085,7 +2120,8 @@ class CCrmInvoiceReportHelper extends CCrmReportHelperBase
 				'SHORT_NAME',
 				'NAME',
 				'LAST_NAME',
-				'SECOND_NAME'
+				'SECOND_NAME',
+				'BIRTHDATE'
 			),
 			'INVOICE_UTS.COMPANY_BY' => array(
 				'ID',
@@ -2733,6 +2769,7 @@ class CCrmLeadReportHelper extends CCrmReportHelperBase
 			'NAME',
 			'LAST_NAME',
 			'SECOND_NAME',
+			'BIRTHDATE',
 			'COMPANY_TITLE',
 			'POST',
 			'ADDRESS',
@@ -2768,7 +2805,13 @@ class CCrmLeadReportHelper extends CCrmReportHelperBase
 				'LAST_NAME',
 				'WORK_POSITION'
 			),
-			'ProductRow:LEAD_OWNER.IBLOCK_ELEMENT_GRC.NAME'
+			'PRODUCT_ROW' => array(
+				'ProductRow:LEAD_OWNER.IBLOCK_ELEMENT.ID',
+				'ProductRow:LEAD_OWNER.CP_PRODUCT_NAME',
+				'ProductRow:LEAD_OWNER.PRICE_ACCOUNT',
+				'ProductRow:LEAD_OWNER.QUANTITY',
+				'ProductRow:LEAD_OWNER.SUM_ACCOUNT'
+			)
 		);
 
 		// Append user fields
@@ -2793,6 +2836,11 @@ class CCrmLeadReportHelper extends CCrmReportHelperBase
 		}
 
 		return $columnList;
+	}
+
+	public static function getFiltrableColumnGroups()
+	{
+		return array_merge(parent::getFiltrableColumnGroups(), ['PRODUCT_ROW']);
 	}
 
 	public static function setRuntimeFields(\Bitrix\Main\Entity\Base $entity, $sqlTimeInterval)
@@ -2886,7 +2934,9 @@ class CCrmLeadReportHelper extends CCrmReportHelperBase
 			'STATUS_ID' => 'string',
 			'CURRENCY_ID' => 'string',
 			'SOURCE_ID' => 'string',
-			'OPPORTUNITY' => 'float'
+			'OPPORTUNITY' => 'float',
+			'ProductRow:LEAD_OWNER.SUM_ACCOUNT' => 'float',
+			'ProductRow:LEAD_OWNER.PRICE_ACCOUNT' => 'float'
 		);
 	}
 	public static function getDefaultColumns()
@@ -2906,7 +2956,8 @@ class CCrmLeadReportHelper extends CCrmReportHelperBase
 				'IS_WORK' => array('SUM'),
 				'IS_REJECT' => array('SUM'),
 				'IS_CONVERT' => array('SUM'),
-				'ProductRow:LEAD_OWNER.IBLOCK_ELEMENT_GRC.NAME' => array('COUNT_DISTINCT', 'GROUP_CONCAT')
+				'ProductRow:LEAD_OWNER.IBLOCK_ELEMENT.ID' => array('COUNT_DISTINCT', 'GROUP_CONCAT'),
+				'ProductRow:LEAD_OWNER.CP_PRODUCT_NAME' => array('COUNT_DISTINCT', 'GROUP_CONCAT')
 			)
 		);
 	}
@@ -3697,6 +3748,7 @@ class CCrmProductReportHelper extends CCrmReportHelperBase
 					'NAME',
 					'LAST_NAME',
 					'SECOND_NAME',
+					'BIRTHDATE',
 					'POST',
 					'ADDRESS',
 					'TYPE_BY.STATUS_ID',

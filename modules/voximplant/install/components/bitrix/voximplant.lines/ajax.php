@@ -220,6 +220,7 @@ class VoximplantLinesAjaxController extends \Bitrix\Main\Engine\Controller
 		unset($configFields["ID"]);
 		unset($configFields["PHONE_NAME"]);
 		$configFields["PORTAL_MODE"] = CVoxImplantConfig::MODE_RENT;
+		$configFields["USE_SIP_TO"] = "N";
 
 		foreach ($numbers as $numberFields)
 		{

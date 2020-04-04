@@ -90,6 +90,24 @@ if($arParams['TYPE'] === 'details')
 
 	$scripts = isset($arParams['~SCRIPTS']) && is_array($arParams['~SCRIPTS']) ? $arParams['~SCRIPTS'] : array();
 
+	//region APPLICATION PLACEMENT
+	$placementGroupInfos = \Bitrix\Crm\Integration\Rest\AppPlacementManager::getHandlerInfos(
+		\Bitrix\Crm\Integration\Rest\AppPlacement::COMPANY_DETAIL_TOOLBAR
+	);
+	foreach($placementGroupInfos as $placementGroupName => $placementInfos)
+	{
+		$arResult['BUTTONS'][] = array(
+			'TYPE' => 'rest-app-toolbar',
+			'NAME' => $placementGroupName,
+			'DATA' => array(
+				'OWNER_INFO' => isset($arParams['OWNER_INFO']) ? $arParams['OWNER_INFO'] : array(),
+				'PLACEMENT' => \Bitrix\Crm\Integration\Rest\AppPlacement::COMPANY_DETAIL_TOOLBAR,
+				'APP_INFOS' => $placementInfos
+			)
+		);
+	}
+	//endregion
+
 	if (!empty($arParams['BIZPROC_STARTER_DATA']))
 	{
 		$arResult['BUTTONS'][] = array(
@@ -140,17 +158,14 @@ if($arParams['TYPE'] === 'details')
 		);
 	}
 
-	$documentLinks = \Bitrix\Crm\Integration\DocumentGeneratorManager::getInstance()->getPreviewList(\Bitrix\Crm\Integration\DocumentGenerator\DataProvider\Company::class, $arParams['ELEMENT_ID']);
-	if(!empty($documentLinks))
+	if(\Bitrix\Crm\Integration\DocumentGeneratorManager::getInstance()->isDocumentButtonAvailable())
 	{
 		$arResult['BUTTONS'][] = [
 			'TEXT' => GetMessage('DOCUMENT_BUTTON_TEXT'),
 			'TITLE' => GetMessage('DOCUMENT_BUTTON_TITLE'),
 			'TYPE' => 'crm-document-button',
-			'ITEMS' => $documentLinks,
+			'PARAMS' => \Bitrix\Crm\Integration\DocumentGeneratorManager::getInstance()->getDocumentButtonParameters(\Bitrix\Crm\Integration\DocumentGenerator\DataProvider\Company::class, $arParams['ELEMENT_ID']),
 		];
-
-		\Bitrix\Crm\Integration\DocumentGeneratorManager::getInstance()->showSpotlight('.crm-btn-dropdown-document');
 	}
 
 	$this->IncludeComponentTemplate();
@@ -220,7 +235,7 @@ if($arParams['TYPE'] === 'list')
 		);
 		if (isset($_REQUEST['WG']) && strtoupper($_REQUEST['WG']) === 'Y')
 		{
-			$widgetDataFilter = \Bitrix\Crm\Widget\Data\Activity\DataSource::extractDetailsPageUrlParams($_REQUEST);
+			$widgetDataFilter = \Bitrix\Crm\Widget\Data\Company\DataSource::extractDetailsPageUrlParams($_REQUEST);
 			if (!empty($widgetDataFilter))
 			{
 				$componentParams['WIDGET_DATA_FILTER'] = $widgetDataFilter;

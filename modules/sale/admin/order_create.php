@@ -113,6 +113,8 @@ if($isSavingOperation || $needFieldsRestore)
 				$result->addErrors($payRes->getErrors());
 		}
 
+		OrderEdit::fillOrderProperties($order, $_POST, $_FILES);
+
 		if($isSavingOperation && $result->isSuccess())
 		{
 			$res = OrderEdit::saveCoupons($order->getUserId(), $_POST);
@@ -126,13 +128,27 @@ if($isSavingOperation || $needFieldsRestore)
 
 			$res = $basket->refreshData(array('PRICE', 'QUANTITY', 'COUPONS'));
 
-			if(!$res->isSuccess())
+			if (!$res->isSuccess())
+			{
 				$result->addErrors($res->getErrors());
-			/* * */
+			}
 
-			$res = $order->save();
+			$res = $order->verify();
+			if (!$res->isSuccess())
+			{
+				$result->addErrors($res->getErrors());
+			}
 
-			if($res->isSuccess())
+			if ($result->isSuccess())
+			{
+				$res = $order->save();
+				if (!$res->isSuccess())
+				{
+					$result->addErrors($res->getErrors());
+				}
+			}
+
+			if ($result->isSuccess())
 			{
 				if(isset($_POST["BUYER_PROFILE_ID"]))
 					$profileId = intval($_POST["BUYER_PROFILE_ID"]);
@@ -191,10 +207,6 @@ if($isSavingOperation || $needFieldsRestore)
 					LocalRedirect("/bitrix/admin/sale_order.php?lang=".LANGUAGE_ID);
 				else
 					LocalRedirect("/bitrix/admin/sale_order_edit.php?lang=".LANGUAGE_ID."&ID=".$order->getId());
-			}
-			else
-			{
-				$result->addErrors($res->getErrors());
 			}
 		}
 	}
@@ -572,6 +584,20 @@ elseif($isRestoringOrderOperation) // Restore order from archive
 		break;
 
 	}
+
+	foreach ($profileList as $id => $propertyProfileValue)
+	{
+		$property = $propertyCollection->getItemByOrderPropertyId($id);
+		if($property)
+		{
+			try
+			{
+				$property->setValue($propertyProfileValue);
+			}
+			catch(\Exception $e)
+			{}
+		}
+	}
 }
 elseif($isCopyingOrderOperation) // copy order
 {
@@ -700,6 +726,8 @@ elseif($isCopyingOrderOperation) // copy order
 
 			$shipment->setBasePriceDelivery($basePrice, ($customPriceDelivery == 'Y'));
 		}
+
+		$propCollection->setValuesFromPost($properties, $files);
 
 		$order->getDiscount()->calculate();
 	}

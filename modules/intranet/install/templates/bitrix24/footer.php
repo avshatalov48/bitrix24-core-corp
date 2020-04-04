@@ -37,7 +37,7 @@ if ($isCompositeMode && !$isIndexPage)
 							<span id="copyright">
 								<?if ($isBitrix24Cloud):?>
 									<a id="bitrix24-logo" target="_blank" class="bitrix24-logo-<?=(LANGUAGE_ID == "ua") ? LANGUAGE_ID : Loc::getDefaultLang(LANGUAGE_ID)?>" href="<?=GetMessage("BITRIX24_URL")?>"></a>
-									<?include_once($_SERVER["DOCUMENT_ROOT"].SITE_TEMPLATE_PATH."/languages.php");?>
+									<?include($_SERVER["DOCUMENT_ROOT"].SITE_TEMPLATE_PATH."/languages.php");?>
 									<span class="bx-lang-btn <?=LANGUAGE_ID?>" id="bx-lang-btn" onclick="B24.openLanguagePopup(this)">
 										<span class="bx-lang-btn-icon"><?=$b24Languages[LANGUAGE_ID]["NAME"]?></span>
 									</span>
@@ -76,25 +76,40 @@ if ($isCompositeMode && !$isIndexPage)
 									$licenseType = CBitrix24::getLicenseType();
 								}
 								?>
-								<?if ($isBitrix24Cloud && $partnerID = COption::GetOptionString("bitrix24", "partner_id", "")):
-									$arParamsPartner = array();
-									$arParamsPartner["MESS"] = array(
-										"BX24_PARTNER_TITLE" => GetMessage("BX24_SITE_PARTNER"),
-										"BX24_CLOSE_BUTTON" => GetMessage("BX24_CLOSE_BUTTON"),
-										"BX24_LOADING" => GetMessage("BX24_LOADING"),
-									);
-								?>
-									<a href="javascript:void(0)" onclick="showPartnerForm(<?echo CUtil::PhpToJSObject($arParamsPartner)?>); return false;" class="footer-discuss-link"><?=GetMessage("BITRIX24_PARTNER_CONNECT")?></a>
-								<?elseif (
+								<?
+								if ($isBitrix24Cloud && $partnerID = COption::GetOptionString("bitrix24", "partner_id", ""))
+								{
+									if ($partnerID != "9409443") //sber
+									{
+										$arParamsPartner = array();
+										$arParamsPartner["MESS"] = array(
+											"BX24_PARTNER_TITLE" => GetMessage("BX24_SITE_PARTNER"),
+											"BX24_CLOSE_BUTTON"  => GetMessage("BX24_CLOSE_BUTTON"),
+											"BX24_LOADING"       => GetMessage("BX24_LOADING"),
+										);
+										?>
+										<a href="javascript:void(0)" onclick="showPartnerForm(<?echo CUtil::PhpToJSObject($arParamsPartner)?>); return false;" class="footer-discuss-link"><?=GetMessage("BITRIX24_PARTNER_CONNECT")?></a>
+										<?
+									}
+								}
+								elseif (
 									CModule::IncludeModule("bitrix24")
 									&& ($licensePrefix == "ru" || in_array($licenseType, array("project", "demo")))
-								):
+								)
+								{
 									$orderParams = \CBitrix24::getPartnerOrderFormParams();
 								?>
 									<a class="b24-web-form-popup-btn-57 footer-discuss-link" onclick="B24.showPartnerOrderForm(<?=CUtil::PhpToJSObject($orderParams)?>);"><?=GetMessage("BITRIX24_PARTNER_ORDER")?></a>
-								<?else:?>
-									<a href="javascript:void(0)" onclick="BX.Helper.show();" class="footer-discuss-link"><?=GetMessage("BITRIX24_MENU_CLOUDMAN")?></a><?
-								endif?>
+								<?
+								}
+								else
+								{
+								?>
+									<a href="javascript:void(0)" onclick="BX.Helper.show();"
+									   class="footer-discuss-link"><?=GetMessage("BITRIX24_MENU_CLOUDMAN")?></a>
+								<?
+								}
+								?>
 
 								<span
 									class="footer-link"
@@ -116,7 +131,6 @@ if ($isCompositeMode && !$isIndexPage)
 </table>
 
 <?
-$APPLICATION->ShowViewContent("im");
 $APPLICATION->ShowBodyScripts();
 
 if (defined("BX24_HOST_NAME")):?>
@@ -149,7 +163,7 @@ if ($isBitrix24Cloud)
 	$APPLICATION->IncludeComponent("bitrix:bitrix24.notify.panel", "", array());
 	//$APPLICATION->IncludeComponent("bitrix:bitrix24.broadcast", "", array());
 }
-
+$APPLICATION->IncludeComponent("bitrix:ui.info.helper", "", array());
 ?>
 <script>
 	BX.message({

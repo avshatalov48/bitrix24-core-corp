@@ -1005,6 +1005,9 @@ BX.Disk.MeasureClass = (function ()
 
 	var grid;
 
+	/**
+	 * @return {BX.Main.grid}
+	 */
 	MeasureClass.prototype.getGrid = function ()
 	{
 		if (typeof(grid) !== "object" || typeof(grid.instance) !== "object" || !grid.instance instanceof BX.Main.grid)

@@ -6,6 +6,12 @@ if (!CModule::IncludeModule('crm'))
 	ShowError(GetMessage('CRM_MODULE_NOT_INSTALLED'));
 	return;
 }
+
+if (empty($arParams['~ACTIVITY']) || !is_array($arParams['~ACTIVITY']))
+{
+	ShowError(GetMessage('CRM_ACTIVITY_SMS_EMPTY_PARAMETERS'));
+	return;
+}
 $arResult = array(
 	'activity' => $arParams['~ACTIVITY']
 );

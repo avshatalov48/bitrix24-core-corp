@@ -1,4 +1,5 @@
 <?php
+
 use Bitrix\Landing\Manager;
 
 $pathJS = '/bitrix/js/landing';
@@ -9,17 +10,12 @@ $pathTemplate24 .= Manager::getTemplateId(
 $pathCSS = '/bitrix/js/landing/css';
 $pathLang = BX_ROOT . '/modules/landing/lang/' . LANGUAGE_ID;
 
-
 $jsConfig = array(
 	'landing_master' => array(
 		'js' => array(
-			$pathJS . '/utils.js',
-			$pathJS . '/backend.js',
 			$pathJS . '/bxdom.js',
 			$pathJS . '/page_object.js',
 			$pathJS . '/typedef.js',
-			$pathJS . '/cache/cache-storage.js',
-			$pathJS . '/cache/cache-entry.js',
 			$pathJS . '/ui/editor_config.js',
 			$pathJS . '/ui/style_factory.js',
 			$pathJS . '/ui/field_factory.js',
@@ -42,6 +38,7 @@ $jsConfig = array(
 			$pathJS . '/ui/card/block_html_preview.js',
 			$pathJS . '/ui/card/icon_preview.js',
 			$pathJS . '/ui/card/tab_card.js',
+			$pathJS . '/ui/card/dynamic_fields_group.js',
 			$pathJS . '/ui/collection/button_collection.js',
 			$pathJS . '/ui/collection/panel_collection.js',
 			$pathJS . '/ui/collection/form_collection.js',
@@ -65,6 +62,7 @@ $jsConfig = array(
 			$pathJS . '/ui/button/create_link.js',
 			$pathJS . '/ui/button/font_action.js',
 			$pathJS . '/ui/button/change_tag.js',
+			$pathJS . '/ui/button/text_background_color.js',
 			$pathJS . '/ui/panel/base_panel.js',
 			$pathJS . '/ui/panel/base_button_panel.js',
 			$pathJS . '/ui/panel/editor_panel.js',
@@ -85,11 +83,14 @@ $jsConfig = array(
 			$pathJS . '/ui/panel/google_images_settings_panel.js',
 			$pathJS . '/ui/panel/catalog_panel.js',
 			$pathJS . '/ui/panel/status_panel.js',
+			$pathJS . '/ui/panel/detail_page_panel.js',
 			$pathJS . '/ui/form/base_form.js',
 			$pathJS . '/ui/form/card_form.js',
 			$pathJS . '/ui/form/cards_form.js',
 			$pathJS . '/ui/form/style_form.js',
 			$pathJS . '/ui/form/balloon_form.js',
+			$pathJS . '/ui/form/dynamic_cards_form.js',
+			$pathJS . '/ui/form/dynamic_block_form.js',
 			$pathJS . '/ui/field/base_field.js',
 			$pathJS . '/ui/field/text_field.js',
 			$pathJS . '/ui/field/image_field.js',
@@ -115,6 +116,11 @@ $jsConfig = array(
 			$pathJS . '/ui/field/switch_field.js',
 			$pathJS . '/ui/field/embed_field.js',
 			$pathJS . '/ui/field/date_field.js',
+			$pathJS . '/ui/field/source_field.js',
+			$pathJS . '/ui/field/block_source_field.js',
+			$pathJS . '/ui/field/dynamic_image_field.js',
+			$pathJS . '/ui/field/pages_field.js',
+			$pathJS . '/ui/field/click_action_field.js',
 			$pathJS . '/ui/style_node.js',
 			$pathJS . '/ui/highlight_node.js',
 			$pathJS . '/events/block_event.js',
@@ -150,6 +156,7 @@ $jsConfig = array(
 			$pathJS . '/history/action/history_action_remove_card.js',
 			$pathJS . '/history/action/history_action_sort_block.js',
 			$pathJS . '/history/action/history_action_update_icon.js',
+			$pathJS . '/history/action/history_action_update_block_state.js',
 			$pathJS . '/icons/fontawesome.js',
 			$pathJS . '/icons/simple-line-icon.js',
 			$pathJS . '/icons/simple-line-icon-pro1.js',
@@ -169,8 +176,6 @@ $jsConfig = array(
 			$pathJS . '/mediaservice/service_factory.js',
 			$pathJS . '/error_manager.js',
 			$pathJS . '/external/webfontloader/webfontloader.js',
-			$pathJS . '/external/image-compressor/image-compressor.js',
-			$pathJS . '/compressor/compressor.js',
 		),
 		'css' => array(
 			$pathCSS . '/landing_master.css',
@@ -199,11 +204,13 @@ $jsConfig = array(
 			$pathCSS . '/ui/panel/google_fonts_panel.css',
 			$pathCSS . '/ui/panel/catalog_panel.css',
 			$pathCSS . '/ui/panel/status_panel.css',
+			$pathCSS . '/ui/panel/detail_page_panel.css',
 			$pathCSS . '/ui/form/base_form.css',
 			$pathCSS . '/ui/form/card_form.css',
 			$pathCSS . '/ui/form/cards_form.css',
 			$pathCSS . '/ui/form/style_form.css',
 			$pathCSS . '/ui/form/balloon_form.css',
+			$pathCSS . '/ui/form/dynamic_cards_form.css',
 			$pathCSS . '/ui/field/base_field.css',
 			$pathCSS . '/ui/field/image_field.css',
 			$pathCSS . '/ui/field/link_field.css',
@@ -224,13 +231,14 @@ $jsConfig = array(
 			$pathCSS . '/ui/field/font_field.css',
 			$pathCSS . '/ui/field/html_field.css',
 			$pathCSS . '/ui/field/switch_field.css',
-			$pathCSS . '/ui/field/embed_field.css',
+			$pathCSS . '/ui/field/source_field.css',
+			$pathCSS . '/ui/field/block_source_field.css',
+			$pathCSS . '/ui/field/pages_field.css',
 			$pathCSS . '/ui/card/base_card.css',
 			$pathCSS . '/ui/card/block_preview_card.css',
 			$pathCSS . '/ui/card/field_group.css',
 			$pathCSS . '/ui/card/add_your_first_block.css',
 			$pathCSS . '/ui/card/unsplash_card.css',
-			$pathCSS . '/ui/card/google_images_card.css',
 			$pathCSS . '/ui/card/base_image_library_card.css',
 			$pathCSS . '/ui/card/uploader_card.css',
 			$pathCSS . '/ui/card/loader.css',
@@ -240,14 +248,15 @@ $jsConfig = array(
 			$pathCSS . '/ui/card/icons_section.css',
 			$pathCSS . '/ui/card/icon_preview.css',
 			$pathCSS . '/ui/card/tab_card.css',
-			$pathCSS . '/ui/style_node.css',
+			$pathCSS . '/ui/card/dynamic_fields_group.css',
 			$pathCSS . '/mediaservice/base_mediaservice.css',
 			$pathCSS . '/ui/tool/suggests.css',
 			$pathCSS . '/ui/tool/popup.css',
-			$pathCSS . '/ui/tool/menu.css'
 		),
 		'rel' => array(
-			'polyfill',
+			'main.core',
+			'main.polyfill.intersectionobserver',
+			'main.polyfill.customevent',
 			'popup',
 			'color_picker',
 			'dnd',
@@ -257,7 +266,15 @@ $jsConfig = array(
 			'loader',
 			'mediaplayer',
 			'date',
-			'main.imageeditor'
+			'main.imageeditor',
+			'landing.backend',
+			'ui.alerts',
+			'landing.imagecompressor',
+			'landing.imageeditor',
+			'landing.imageuploader',
+			'landing.loc',
+			'landing.env',
+			'landing.utils',
 		),
 		'lang' => $pathLang . '/js/landing_master.php',
 		'bundle_js' => 'landing_master',
@@ -266,11 +283,13 @@ $jsConfig = array(
 	'mediaplayer' => array(
 		'js' => array(
 			'https://www.youtube.com/iframe_api',
-			$pathJS . '/utils.js',
 			$pathJS . '/mediaplayer/base_mediaplayer.js',
 			$pathJS . '/mediaplayer/youtube_mediaplayer.js',
 			$pathJS . '/mediaplayer/mediaplayer_factory.js'
-		)
+		),
+		'rel' => [
+			'landing.utils',
+		]
 	),
 
 	'landing_inline_video' => array(
@@ -281,7 +300,6 @@ $jsConfig = array(
 
 	'map_provider' => array(
 		'js' => array(
-			$pathJS . '/utils.js',
 			$pathJS . '/collection/base_collection.js',
 			$pathJS . '/provider/map/base-map-provider.js',
 			$pathJS . '/provider/map/google-map.js',
@@ -293,7 +311,10 @@ $jsConfig = array(
 		),
 		'css' => array(
 			$pathCSS . '/provider/map/google-map.css',
-		)
+		),
+		'rel' => [
+			'landing.utils',
+		],
 	),
 
 	'polyfill' => array(
@@ -315,58 +336,99 @@ $jsConfig = array(
 		),
 		'lang' => $pathLang . '/js/action_dialog.php'
 	),
-
-	'landing_public' => array(
-		'js' => array(
-			$pathJS . '/polyfill.js',
-			$pathJS . '/utils.js',
-			$pathJS . '/ui/tool/auto-font-scale.js',
-			$pathJS . '/ui/tool/auto-font-scale-entry.js',
+	
+	'landing_public' => [
+		'js' => [
 			$pathJS . '/events/block_event.js',
-			$pathJS . '/public.js'
-		),
-		'rel' => array('landing_event_tracker', 'mediaplayer')
-	),
-
+			$pathJS . '/public.js',
+			$pathTemplate24 . '/assets/js/helpers/popup_init.js',
+		],
+		'css' => [
+			$pathCSS . '/landing_public.css',
+		],
+		'rel' => [
+			'landing_event_tracker',
+			'mediaplayer',
+			'polyfill',
+			'landing.utils',
+		],
+	],
+	
 	'landing_event_tracker' => array(
 		'js' => array(
-			$pathJS . '/utils.js',
 			$pathJS . '/event-tracker/event-tracker.js',
 			$pathJS . '/event-tracker/services/base-service.js',
 			$pathJS . '/event-tracker/services/google-analytics-service.js'
-		)
+		),
+		'rel' => [
+			'landing.utils',
+		],
 	),
 
-//	vendors scripts for ALL blocks, included always
+	// vendors scripts for ALL blocks, included always
 	'landing_core' => array(
 		'js' => array(
-			$pathJS . '/utils.js',
-			//$pathTemplate24 . '/assets/vendor/vendors_base.js',
+			$pathTemplate24 . '/assets/vendor/jquery/jquery-3.2.1.js',
+			$pathTemplate24 . '/assets/vendor/jquery.easing/js/jquery.easing.js',
+			$pathTemplate24 . '/assets/vendor/bootstrap/js/dist/util.js',
+			$pathTemplate24 . '/assets/vendor/bootstrap/js/dist/collapse.js',
+			$pathTemplate24 . '/assets/vendor/fancybox/jquery.fancybox.js',
+			$pathTemplate24 . '/assets/js/components/hs.core_landing.js',
 			$pathTemplate24 . '/assets/js/helpers/onscroll-animation_init.js',
+			$pathTemplate24 . '/assets/js/components/hs.go-to.js',
 			$pathTemplate24 . '/assets/js/helpers/go_to_init.js',
-			$pathTemplate24 . '/assets/js/helpers/popup_init.js',
-			$pathTemplate24 . '/assets/js/helpers/hamburgers_init.js',
 		),
 		'css' => array(
-			$pathTemplate24 . '/assets/vendor/vendors_base.css',
-			$pathTemplate24 . '/assets/vendor/icon-awesome/css/font-awesome.css',
-			$pathTemplate24 . '/assets/vendor/icon-line/css/simple-line-icons.css',
-			$pathTemplate24 . '/assets/vendor/icon-line-pro/style.css',
-			$pathTemplate24 . '/assets/vendor/icon-hs/style.css',
-			$pathTemplate24 . '/assets/vendor/icon-etlinefont/style.css',
+			$pathTemplate24 . '/assets/vendor/bootstrap/bootstrap.css',
+			$pathTemplate24 . '/assets/vendor/fancybox/jquery.fancybox.css',
 			$pathTemplate24 . '/themes/themes_core.css',
 			$pathTemplate24 . '/assets/css/custom.css',
 			$pathTemplate24 . '/assets/css/themes_custom.css',
+			$pathTemplate24 . '/assets/vendor/animate.css',
 		),
-		'rel' => array('landing_public'),
+		'rel' => [
+			'mediaplayer',
+			'landing_icon_fonts',
+			'main.polyfill.intersectionobserver',
+			'landing.utils',
+		],
 	),
 	
+	'landing_critical_grid' => [
+		'css' => [
+			$pathTemplate24 . '/assets/vendor/bootstrap/bootstrap.css',
+			$pathTemplate24 . '/assets/css/custom-grid.css',
+			$pathTemplate24 . '/themes/themes_core.css',
+		],
+		'js' => [
+			$pathTemplate24 . '/assets/vendor/jquery/jquery-3.2.1.js',
+		]
+	],
+	
+	'landing_icon_fonts' => array(
+		'css' => array(
+			$pathTemplate24 . '/assets/vendor/icon-awesome/css/font-awesome.css',
+			$pathTemplate24 . '/assets/vendor/icon-etlinefont/style.css',
+			$pathTemplate24 . '/assets/vendor/icon-hs/style.css',
+			$pathTemplate24 . '/assets/vendor/icon-line/css/simple-line-icons.css',
+			$pathTemplate24 . '/assets/vendor/icon-line-pro/style.css'
+		),
+	),
+
 	'landing_menu' => array(
-		'js' => array(
+		'js' => [
+			$pathTemplate24 . '/assets/js/components/hs.header.js',
+			$pathTemplate24 . '/assets/js/components/hs.scroll-nav.js',
+			$pathTemplate24 . '/assets/js/components/hs.hamburgers.js',
+			$pathTemplate24 . '/assets/js/helpers/hamburgers_init.js',
 			$pathTemplate24 . '/assets/js/helpers/header_menu_init.js',
-		),
+		],
+		'css' => [
+			$pathTemplate24 . '/assets/vendor/hamburgers/hamburgers.css',
+		],
+		'rel' => ['landing_core'],
 	),
-	
+
 	'landing_form' => array(
 		'js' => array(
 			$pathTemplate24 . '/assets/js/helpers/form_init.js',
@@ -385,15 +447,15 @@ $jsConfig = array(
 		'js' => array(
 			$pathTemplate24 . '/assets/vendor/slick-carousel/slick/slick.js',
 			$pathTemplate24 . '/assets/js/components/hs.carousel.js',
-			$pathTemplate24 . '/assets/js/helpers/carousel_helper.js',
-			$pathTemplate24 . '/assets/js/helpers/base_carousel_init.js',
+			$pathTemplate24 . '/assets/js/helpers/carousel/carousel_helper.js',
+			$pathTemplate24 . '/assets/js/helpers/carousel/base_carousel_init.js',
 		),
 		'css' => array(
 			$pathTemplate24 . '/assets/vendor/slick-carousel/slick/slick.css',
 		),
 		'rel' => array('landing_core'),
 	),
-	
+
 	'landing_countdown' => array(
 		'js' => array(
 			$pathTemplate24 . '/assets/vendor/jquery.countdown/jquery.countdown.js',
@@ -403,23 +465,6 @@ $jsConfig = array(
 		'rel' => array('landing_core'),
 	),
 
-	'landing_chart' => array(
-		'js' => array(
-			$pathTemplate24 . '/assets/vendor/circles/circles.js',
-			$pathTemplate24 . '/assets/js/components/hs.chart-pie.js',
-			$pathTemplate24 . '/assets/js/helpers/chart_pie_init.js',
-		),
-		'rel' => array('landing_core'),
-	),
-	
-	'landing_bars' => array(
-		'js' => array(
-			$pathTemplate24 . '/assets/js/components/hs.progress-bar.js',
-			$pathTemplate24 . '/assets/js/helpers/bars_init.js',
-		),
-		'rel' => array('landing_core'),
-	),
-	
 	'landing_google_maps_new' => array(
 		'js' => array(
 			$pathTemplate24 . '/assets/js/helpers/google_maps_new.js'
@@ -427,8 +472,23 @@ $jsConfig = array(
 		'rel' => array(
 			'map_provider'
 		)
-	)
+	),
+	
+	'landing_lazyload' => [
+		'js' => [
+			$pathTemplate24 . '/assets/js/helpers/lazy_load.js',
+		],
+	],
+	
+	'landing_auto_font_scale' => [
+		'js' => [
+			$pathJS . '/ui/tool/auto-font-scale.js',
+			$pathJS . '/ui/tool/auto-font-scale-entry.js',
+			$pathTemplate24 . '/assets/js/helpers/auto_font_scale_init.js',
+		],
+	],
 );
+
 
 foreach ($jsConfig as $code => $ext)
 {

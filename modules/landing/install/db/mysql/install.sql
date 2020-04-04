@@ -2,6 +2,7 @@ create table if not exists b_landing
 (
     ID int(18) not null auto_increment,
     CODE varchar(255) default null,
+    INITIATOR_APP_CODE varchar(255) default null,
     RULE varchar(255) default null,
     ACTIVE char(1) not null default 'Y',
     DELETED char(1) not null default 'N',
@@ -36,12 +37,14 @@ create table if not exists b_landing_block
     PARENT_ID int(18) default null,
     LID int(18) not null,
     CODE varchar(255) not null,
+    INITIATOR_APP_CODE varchar(255) not null,
     ANCHOR varchar(255) null,
     SORT int(18) default 500,
     ACTIVE char(1) not null default 'Y',
     PUBLIC char(1) not null default 'Y',
     DELETED char(1) not null default 'N',
     ACCESS char(1) not null default 'X',
+    SOURCE_PARAMS mediumtext default null,
     CONTENT mediumtext not null,
     CREATED_BY_ID int(18) not null,
     MODIFIED_BY_ID int(18) not null,
@@ -270,6 +273,52 @@ create table if not exists b_landing_urlrewrite
     DATE_MODIFY timestamp not null,
     PRIMARY KEY(ID),
     INDEX IX_SITE_RULE (SITE_ID, RULE),
-    INDEX IX_SITE_ID (SITE_ID),
     INDEX IX_LANDING_ID (LANDING_ID)
+);
+
+create table if not exists b_landing_entity_rights (
+    ID int(18) not null auto_increment,
+    ENTITY_ID int(18) not null,
+    ENTITY_TYPE char(1) not null,
+    TASK_ID int(11) not null,
+    ACCESS_CODE varchar(50) not null,
+    ROLE_ID int(18) default 0,
+    INDEX IX_ENTITY (ENTITY_ID, ENTITY_TYPE),
+    INDEX IX_ROLE (ROLE_ID),
+    PRIMARY KEY (ID)
+);
+
+create table if not exists b_landing_role (
+    ID int(18) not null auto_increment,
+    TITLE varchar(255) default null,
+    XML_ID varchar(255) default null,
+    ACCESS_CODES text default null,
+    ADDITIONAL_RIGHTS text default null,
+    CREATED_BY_ID int(18) not null,
+    MODIFIED_BY_ID int(18) not null,
+    DATE_CREATE timestamp null,
+    DATE_MODIFY timestamp not null,
+    PRIMARY KEY(ID)
+);
+
+create table if not exists b_landing_filter_entity (
+    ID int(18) not null auto_increment,
+    SOURCE_ID varchar(255) not null,
+    FILTER_HASH char(32) not null,
+    FILTER text default null,
+    CREATED_BY_ID int(18) not null,
+    MODIFIED_BY_ID int(18) not null,
+    DATE_CREATE timestamp null,
+    DATE_MODIFY timestamp not null,
+    PRIMARY KEY(ID),
+    UNIQUE IX_B_FILTER_HASH (FILTER_HASH)
+);
+
+create table if not exists b_landing_filter_block (
+    ID int(18) not null auto_increment,
+    FILTER_ID int(18) not null,
+    BLOCK_ID int(18) not null,
+    PRIMARY KEY(ID),
+    INDEX IX_B_FILTER_ID (FILTER_ID),
+    UNIQUE IX_B_FILTER_BLOCK (FILTER_ID, BLOCK_ID)
 );

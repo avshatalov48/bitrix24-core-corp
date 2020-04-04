@@ -33,14 +33,12 @@ class AudienceVkontakte extends Audience
 
 	public function add(array $data)
 	{
-		//https://vk.com/dev/ads.createTargetGroup
-
-		$response = $this->request->send(array(
-			'method' => 'GET',
-			'endpoint' => 'ads.createTargetGroup',
-			'fields' => array(
-				'account_id' => $data['ACCOUNT_ID'],
+		$response = $this->getRequest()->send(array(
+			'methodName' => 'retargeting.audience.add',
+			'parameters' => array(
+				'accountId' => $this->accountId,
 				'name' => $data['NAME'],
+				'description' => ''
 			)
 		));
 
@@ -71,18 +69,15 @@ class AudienceVkontakte extends Audience
 
 	public function importContacts($audienceId, array $contacts = array(), array $options)
 	{
-		//https://vk.com/dev/ads.importTargetContacts
-		$response = $this->getRequest()->send(array(
-			'method' => 'POST',
-			'endpoint' => 'ads.importTargetContacts',
-			'fields' => array(
-				'account_id' => $this->accountId,
-				'target_group_id' => $audienceId,
-				'contacts' => $this->prepareContacts($contacts),
+
+		return $this->getRequest()->send(array(
+			'methodName' => 'retargeting.audience.contacts.add',
+			'parameters' => array(
+				'accountId' => $this->accountId,
+				'audienceId' => $audienceId,
+				'contacts' => $this->prepareContacts($contacts)
 			)
 		));
-
-		return $response;
 	}
 
 	public function removeContacts($audienceId, array $contacts = array(), array $options)
@@ -94,11 +89,15 @@ class AudienceVkontakte extends Audience
 	public function getList()
 	{
 		return $this->getRequest()->send(array(
-			'method' => 'POST',
-			'endpoint' => 'ads.getTargetGroups',
-			'fields' => array(
-				'account_id' => $this->accountId,
+			'methodName' => 'retargeting.audience.list',
+			'parameters' => array(
+				'accountId' => $this->accountId
 			)
 		));
+	}
+
+	public static function isSupportAddAudience()
+	{
+		return true;
 	}
 }

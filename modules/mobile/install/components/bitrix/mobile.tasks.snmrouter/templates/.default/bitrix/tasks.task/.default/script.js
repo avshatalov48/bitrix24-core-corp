@@ -5,17 +5,22 @@
 	BX.namespace("BX.Mobile.Tasks.edit");
 	var counter = 0,
 		getId = function(){ return 'TaskEdit' + (++counter) + BX.util.getRandomString(); },
-		initCheckList = (function () {
+		checkListEditMode = (function () {
 		var d = function(id, checkList) {
+			this.canAdd = false;
+			this.counter = 0;
+			this.sort = 0;
 			this.clickAdd = BX.delegate(this.clickAdd, this);
 			this.clickSeparator = BX.delegate(this.clickSeparator, this);
 			this.clickMenu = BX.delegate(this.clickMenu, this);
 			this.callback = BX.delegate(this.callback, this);
 			var ii;
 			this.taskId = id;
+			this.ids = {};
 			checkList = (checkList || []);
 			for (ii = 0; ii < checkList.length; ii++)
 			{
+				this.ids[checkList[ii]] = checkList[ii];
 				this.bindItem(checkList[ii]);
 			}
 			this.container = BX("checkList" + id + "Container");
@@ -30,8 +35,6 @@
 			}
 		};
 		d.prototype = {
-			canAdd : false,
-			container : null,
 			bindItem : function(id) {
 				if (BX("checkListItem" + id + "Menu"))
 					BX.bind(BX("checkListItem" + id + "Menu"), "click", BX.proxy(function(e){ this.clickMenu(e, id); }, this));
@@ -100,8 +103,6 @@
 					(new window.BXMobileApp.UI.ActionSheet( { buttons : buttons }, "textPanelSheet" )).show();
 				return BX.PreventDefault(e);
 			},
-			counter : 0,
-			sort : 0,
 			clickSeparator :  function(e) {
 				if (this.canAdd)
 					this.callback({text : '===', extraData : { id : 'n' + (this.counter++)} }, {separator : true});
@@ -140,7 +141,7 @@
 							{
 								var text = BX('checkListItem' + id + 'Text').value,
 									node = BX('checkListItem' + id + 'Label');
-								if (BX.type.isNotEmptyString(text))
+								if (BX.type.isNotEmptyString(text.trim()))
 									this.callback({text : text, extraData: { id : id }}, {replaceNode : BX('checkListItem' + id + 'Label')});
 								else if (node && node.parentNode)
 									node.parentNode.removeChild(node);
@@ -239,28 +240,27 @@
 			},
 			fireEvent : function(id, eventName, data) {
 				BX.onCustomEvent(this, "onChange", [this, BX("checkListItem" + id), eventName, data]);
+			},
+			getId : function(id) {
+				return (this.ids[id] || id);
 			}
 		};
 		return d;
 		})(),
-		initCheckListView = (function () {
+		checkListViewMode = (function () {
 			var d = function(select, eventNode, container) {
-				initCheckListView.superclass.constructor.apply(this, arguments);
+				checkListViewMode.superclass.constructor.apply(this, arguments);
 				this.actCallback = BX.delegate(this.actCallback, this);
+				this.queue = [];
 			};
-			BX.extend(d, initCheckList);
-			d.prototype.ids = {};
-			d.prototype.queue = [];
-			d.prototype.getId = function(id) {
-				return (this.ids[id] || id);
-			};
+			BX.extend(d, checkListEditMode);
 			d.prototype.fireEvent = function(id, eventName, params) {
 				this.queue.push([BX.proxy(function(){
 					var node = BX("checkListItem" + id);
 					if (node && node.form)
 					{
 						if (eventName == "remove")
-							this.remove(id);
+							this.remove(id, {checked: node.checked, isSeparator:node.getAttribute('bx-separator')});
 						else if (eventName == "toggle")
 							this.toggle(id, node);
 						else
@@ -319,6 +319,7 @@
 				this.checkQueue();
 			};
 			d.prototype.create = function(id, data) {
+				BX.onCustomEvent('onMobileTaskViewCheckListAdd', {id:id, data:data});
 				this.
 				getQuery().
 				add('task.checklist.add', {data : {
@@ -336,6 +337,8 @@
 					}
 					else
 					{
+						BXMobileApp.Events.postToComponent('onMobileTaskViewCheckListAdd', {checklistItem: result["RESULT"]["DATA"]});
+
 						this.ids[id] = result["RESULT"]["DATA"]["ID"];
 					}
 					this.checkQueue();
@@ -355,27 +358,38 @@
 					this.actCallback).
 				execute();
 			};
-			d.prototype.remove = function(id) {
+			d.prototype.remove = function(id, data) {
 				var realId = this.getId(id);
+				var isSeparator = data.isSeparator || 'N';
+				var isChecked = data.checked || false;
+
+				delete this.ids[id];
+
+				BXMobileApp.Events.postToComponent('onMobileTaskViewCheckListRemove', {id:id, checked: isChecked, isSeparator:isSeparator});
+
+				BX.onCustomEvent('onMobileTaskViewCheckListRemove', [{length: Object.keys(this.ids).length}]);
+
 				this.
 				getQuery().
 				add(
 					'task.checklist.delete',
 					{id: realId},
 					{},
-					this.actCallback).
+					this.actCallback()
+				).
 				execute();
 			};
 			d.prototype.toggle = function(id, node) {
 				var realId = this.getId(id);
-				this.
-				getQuery().
-				add(
-					'task.checklist.' + (node.checked ? 'complete' : 'renew'),
-					{id: realId},
-					{},
-					this.actCallback).
-				execute();
+				var actionName = 'tasks.task.checklist.' + (node.checked ? 'complete' : 'renew');
+				var actionData = {
+					taskId: this.taskId,
+					checkListItemId: realId
+				};
+
+				BX.ajax.runAction(actionName, {data: actionData}).then(function() {
+					this.statusQueue = "ready";
+				}.bind(this));
 			};
 			return d;
 		})(),
@@ -791,7 +805,7 @@
 		},
 		initRestricted : function(obj) {
 			this.restricted = true;
-			new initCheckListView(this.task["ID"], this.task["CHECKLIST"]);
+			new checkListViewMode(this.task["ID"], this.task["CHECKLIST"]);
 			new timetracker(this.task["ID"], this.task);
 
 			var i = obj.elements.length;
@@ -803,10 +817,9 @@
 			{
 				BX.addCustomEvent(obj.elements[ii], "onChange", f);
 			}
-
 		},
 		initFull :  function(obj) {
-			obj.elements.push(new initCheckList(this.task["ID"], this.task["CHECKLIST"]));
+			obj.elements.push(new checkListEditMode(this.task["ID"], this.task["CHECKLIST"]));
 			obj.elements.push(new parentId(this.task["ID"]));
 			obj.elements.push(new duration(this.task["ID"]));
 			obj.elements.push(new timeEstimate(this.task["ID"]));
@@ -865,6 +878,7 @@
 			if (node.name == "data[PRIORITY]")
 			{
 				node.nextSibling.innerHTML = BX.message("TASKS_PRIORITY_" + (node.checked ? "2" : "0"));
+				this.savePriority(this.task["ID"], node.checked ? "2" : "0");
 			}
 			else if (node.name == "data[ADD_TO_FAVORITE]")
 			{
@@ -909,10 +923,11 @@
 				delete data["SE_CHECKLIST"];
 			}
 
-			var params = {id : id, userid : BX.message("USER_ID"), taskid : id, data : data, parameters : {RETURN_ENTITY : true}};
+			var params = {id : id, userid : BX.message("USER_ID"), taskid : id, data : data, parameters : {RETURN_ENTITY : true, DONT_SAVE_CHECKLIST: true}};
 
 			(new BX.Tasks.Util.Query({url: url})).add((id > 0 ? 'task.update' : 'task.add'), params, {}, {
-				onExecuted : BX.proxy(function(response) {
+				onExecuted : BX.proxy(function(response)
+				{
 					if (response && response.response && response.response.status == 'failed')
 					{
 						window.app.BasicAuth( {
@@ -953,19 +968,36 @@
 						{
 							//
 						}
-						var args = arguments ;
+						var args = Array.from(arguments);
+						args.push(nullObj);
 
 						setTimeout((function(){
 							this.actExecute.apply(this, args);
 						}).bind(this), 500);
-
-
-
 					}
 				}, this)}).
 				execute();
 		},
-		actExecute : function(errorConnection, data) {
+
+		savePriority: function(id, value)
+		{
+			console.log('savePriority', id, value);
+			BX.ajax.runAction('tasks.task.update', {
+				data: {
+					taskId: id,
+					fields: {
+						PRIORITY: value
+					}
+				}
+			}).then(function (response) {
+				console.log(response);
+			}, function (response) {
+				console.log(response);
+			});
+		},
+
+		actExecute : function(errorConnection, data, nullObj)
+		{
 			/*
 			@ errorConnection BX.Tasks.Util.Query.ErrorCollection
 			 */
@@ -981,7 +1013,7 @@
 			}
 			else
 			{
-				window.BXMobileApp.onCustomEvent((this.task["ID"] > 0 ? "onTaskWasUpdated" : "onTaskWasCreated"), [this.task["ID"], this.variable("id"), data["RESULT"]["DATA"], data], true, true);
+				window.BXMobileApp.onCustomEvent((this.task["ID"] > 0 ? "onTaskWasUpdated" : "onTaskWasCreated"), [this.task["ID"], this.variable("id"), data["RESULT"]["DATA"], data, nullObj], true, true);
 				if (!this.restricted)
 				{
 					window.app.closeModalDialog( { } );

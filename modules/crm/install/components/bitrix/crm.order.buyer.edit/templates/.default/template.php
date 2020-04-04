@@ -1,7 +1,7 @@
 <? if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 
-use \Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Localization\Loc;
 
 /**
  * @var CBitrixComponentTemplate $this
@@ -44,7 +44,10 @@ else
 										?>
 										<div class="crm-entity-widget-content-block crm-entity-widget-content-block-field-text">
 											<div class="crm-entity-widget-content-block-title">
-												<?=$field['NAME']?><?=($field['REQUIRED'] ? '<span style="color: rgb(255, 0, 0);">*</span>' : '')?>
+												<span class="crm-entity-widget-content-block-title-text">
+													<?=$field['NAME']?>
+													<?=($field['REQUIRED'] ? '<span style="color: rgb(255, 0, 0);">*</span>' : '')?>
+												</span>
 											</div>
 											<div class="crm-entity-widget-content-block-inner">
 												<?
@@ -60,7 +63,7 @@ else
 														?>
 														<input type="hidden" name="<?=$field['ID']?>" value="N">
 														<input type="checkbox" name="<?=$field['ID']?>" value="Y"
-																checked="<?=($checked ? 'checked' : '')?>">
+															<?=($checked ? 'checked="checked"' : '')?>>
 														<?
 													}
 													else

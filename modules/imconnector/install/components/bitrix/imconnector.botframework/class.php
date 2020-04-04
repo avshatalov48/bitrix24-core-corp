@@ -117,8 +117,10 @@ class ImConnectorBotframework extends \CBitrixComponent
 
 						if(!empty($this->arResult["FORM"]))
 						{
-							if(empty($this->arResult["REGISTER_STATUS"]))
+							if (!empty($this->arResult['REGISTER_STATUS']))
+							{
 								$this->connectorOutput->unregister();
+							}
 
 							$saved = $this->connectorOutput->saveSettingsBotFramework($this->arResult["FORM"]);
 

@@ -51,11 +51,8 @@ class CMailClientConfigComponent extends CBitrixComponent implements Main\Engine
 
 		$APPLICATION->setTitle(Loc::getMessage('MAIL_CLIENT_CONFIG_TITLE'));
 
-		if (!$this->canConnectNewMailbox())
-		{
-			showError(Loc::getMessage('MAIL_CLIENT_DENIED'));
-			return;
-		}
+		$this->arResult['MAX_ALLOWED_CONNECTED_MAILBOXES'] = LicenseManager::getUserMailboxesLimit();
+		$this->arResult['CAN_CONNECT_NEW_MAILBOX'] = $this->canConnectNewMailbox();
 
 		$res = Mail\MailServicesTable::getList(array(
 			'filter' => array(
@@ -232,6 +229,22 @@ class CMailClientConfigComponent extends CBitrixComponent implements Main\Engine
 			if ($new || empty($mailbox['PASSWORD']))
 			{
 				$this->arParams['SERVICE']['oauth'] = Mail\MailServicesTable::getOAuthHelper($service);
+			}
+		}
+
+		if (empty($this->arParams['SERVICE']['oauth_user']['email']))
+		{
+			unset($this->arParams['SERVICE']['oauth_user']);
+		}
+
+		if (Main\ModuleManager::isModuleInstalled('bitrix24'))
+		{
+			if (empty($this->arParams['SERVICE']['oauth_user']) && !empty($this->arParams['SERVICE']['oauth']))
+			{
+				if ($this->arParams['SERVICE']['oauth']->getServiceName() == 'google')
+				{
+					unset($this->arParams['SERVICE']['oauth']);
+				}
 			}
 		}
 
@@ -414,6 +427,8 @@ class CMailClientConfigComponent extends CBitrixComponent implements Main\Engine
 	public function saveAction($fields)
 	{
 		global $USER;
+
+		$this->arParams['IS_SMTP_AVAILABLE'] = Main\Loader::includeModule('bitrix24');
 
 		if (!empty($fields['site_id']))
 		{
@@ -670,7 +685,7 @@ class CMailClientConfigComponent extends CBitrixComponent implements Main\Engine
 				$maxAge = (int) $fields['msg_max_age'];
 				$maxAgeLimit = LicenseManager::getSyncOldLimit();
 
-				if ($maxAgeLimit >= 0 && $maxAge > $maxAgeLimit)
+				if ($maxAgeLimit > 0 && $maxAge > $maxAgeLimit)
 				{
 					return $this->error(Loc::getMessage('MAIL_CLIENT_CONFIG_MAX_AGE_ERROR'));
 				}
@@ -692,10 +707,8 @@ class CMailClientConfigComponent extends CBitrixComponent implements Main\Engine
 			return $this->error($errors instanceof Main\ErrorCollection ? $errors : $error);
 		}
 
-		if (!empty($fields['use_smtp']) && !empty($mailboxData['EMAIL']))
+		if (!empty($mailboxData['EMAIL']) && $this->arParams['IS_SMTP_AVAILABLE'])
 		{
-			$smtpConfirmed = array();
-
 			$senderFields = array(
 				'NAME' => $mailboxData['USERNAME'],
 				'EMAIL' => $mailboxData['EMAIL'],
@@ -740,12 +753,26 @@ class CMailClientConfigComponent extends CBitrixComponent implements Main\Engine
 				}
 			}
 
+			if (empty($fields['use_smtp']) && empty($smtpConfirmed))
+			{
+				unset($senderFields);
+			}
+		}
+
+		if (!empty($senderFields))
+		{
 			$smtpConfig = array(
 				'server'   => $service['SMTP_SERVER'] ?: trim($fields['server_smtp']),
 				'port'     => $service['SMTP_PORT'] ?: (int) $fields['port_smtp'],
 				'login'    => $service['SMTP_LOGIN_AS_IMAP'] == 'Y' ? $mailboxData['LOGIN'] : $fields['login_smtp'],
-				'password' => $smtpConfirmed['password'],
+				'password' => '',
 			);
+
+			if (!empty($smtpConfirmed) && is_array($smtpConfirmed))
+			{
+				// server, port, login, password
+				$smtpConfig = array_filter($smtpConfig) + $smtpConfirmed;
+			}
 
 			if ($service['SMTP_PASSWORD_AS_IMAP'] == 'Y' && !$fields['oauth_uid'])
 			{
@@ -777,10 +804,13 @@ class CMailClientConfigComponent extends CBitrixComponent implements Main\Engine
 
 			$senderFields['OPTIONS']['smtp'] = $smtpConfig;
 
-			$senderFields['IS_CONFIRMED'] = !array_diff(
-				array('server', 'port', 'login', 'password'),
-				array_keys(array_intersect_assoc($smtpConfig, $smtpConfirmed))
-			);
+			if (!empty($smtpConfirmed))
+			{
+				$senderFields['IS_CONFIRMED'] = !array_diff(
+					array('server', 'port', 'login', 'password'),
+					array_keys(array_intersect_assoc($smtpConfig, $smtpConfirmed))
+				);
+			}
 		}
 
 		if ($fields['use_crm'] == 'Y')

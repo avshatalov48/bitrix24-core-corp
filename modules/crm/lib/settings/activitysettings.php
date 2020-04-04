@@ -4,7 +4,6 @@ use Bitrix\Main;
 class ActivitySettings
 {
 	const VIEW_LIST = 1;
-	const VIEW_WIDGET = 2;
 
 	const UNDEFINED = 0;
 	const KEEP_COMPLETED_CALLS = 1;
@@ -22,12 +21,16 @@ class ActivitySettings
 	private static $descriptions = null;
 	/** @var IntegerSetting */
 	private $defaultListView = null;
+	/** @var IntegerSetting */
 	private $outgoingEmailOwnerType = null;
+	/** @var BooleanSetting */
+	private $enableDeadlineSync = null;
 
 	public function __construct()
 	{
 		$this->defaultListView = new IntegerSetting('activity_default_list_view', self::VIEW_LIST);
 		$this->outgoingEmailOwnerType = new IntegerSetting('activity_outgoing_email_owner_type', \CCrmOwnerType::Contact);
+		$this->enableDeadlineSync = new BooleanSetting('activity_enable_deadline_sync', true);
 	}
 
 	/**
@@ -159,6 +162,25 @@ class ActivitySettings
 	{
 		$this->outgoingEmailOwnerType->set($ownerTypeId);
 	}
+	/**
+	 * Check if synchronization of the 'DEADLINE' field is enabled.
+	 * If enabled DEADLINE' field will be updated then activity mark as completed.
+	 * @return bool
+	 */
+	public function isDeadlineSyncEnabled()
+	{
+		return $this->enableDeadlineSync->get();
+	}
+
+	/**
+	 * Enable synchronization of the 'DEADLINE' field
+	 * @param bool $enabled Enabled Flag.
+	 * @return void
+	 */
+	public function enableDeadlineSync($enabled)
+	{
+		$this->enableDeadlineSync->set($enabled);
+	}
 
 	/**
 	 * Get descriptions of views supported in current context
@@ -172,7 +194,6 @@ class ActivitySettings
 
 			self::$descriptions= array(
 				self::VIEW_LIST => GetMessage('CRM_ACTIVITY_SETTINGS_VIEW_LIST'),
-				self::VIEW_WIDGET => GetMessage('CRM_ACTIVITY_SETTINGS_VIEW_WIDGET')
 			);
 		}
 		return self::$descriptions;

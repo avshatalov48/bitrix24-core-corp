@@ -30,7 +30,7 @@ $MESS["TRIAL_ATTENTION_TEXT5_1c_bitrix_gossite"] = "You can purchase the full ve
 $MESS["TRIAL_ATTENTION_TEXT5_1c_bitrix_portal"] = "You can purchase the full version of 1C-Bitrix Intranet from the <a href=\"http://www.bitrixsoft.com/buy/\">http://www.bitrixsoft.com/buy/</a> page.";
 $MESS["TRIAL_ATTENTION_TEXT5_bitrix"] = "You can purchase the full version of Bitrix Site Manager from the <a href=\"http://www.bitrixsoft.com/buy/\">http://www.bitrixsoft.com/buy/</a> page.";
 $MESS["TRIAL_ATTENTION_TEXT5_bitrix_portal"] = "You can purchase the full version of Bitrix24 from the <a href=\"https://www.bitrix24.com/prices/self-hosted.php\">https://www.bitrix24.com/prices/self-hosted.php</a> page.";
-$MESS["admin_panel_browser"] = "Control Panel doesn't support Internet Explorer 7 or below. Please install a modern browser: <a href=\"http://www.firefox.com\">Firefox</a>, <a href=\"http://www.google.com/chrome/\">Chrome</a>, <a href=\"http://www.opera.com\">Opera</a> or <a href=\"http://www.microsoft.com/windows/internet-explorer/\">a new version of Internet Explorer</a>.";
+$MESS["admin_panel_browser"] = "Control Panel doesn't support Internet Explorer 7 or below. Please install a modern browser: <a href=\"http://www.firefox.com\">Firefox</a>, <a href=\"http://www.google.com/chrome/\">Chrome</a>, <a href=\"http://www.opera.com\">Opera</a> or <a href=\"http://www.microsoft.com/windows/internet-explorer/\">Microsoft Edge</a>.";
 $MESS["main_prolog_help"] = "Help";
 $MESS["prolog_admin_headers_sent"] = "Attention! Invalid characters have been detected in the following system file: #FILE#, line #LINE#.";
 $MESS["prolog_main_hide_menu"] = "Hide menu";

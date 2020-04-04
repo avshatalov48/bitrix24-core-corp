@@ -21,12 +21,12 @@ $name = $arResult["NAME"];
 
 	<?foreach ($arResult["CURRENT_TASKS"] as $task):?>
 		O_<?=$name?>.arSelected[<?=$task["ID"]?>] = {
-			id : <?=CUtil::JSEscape($task["ID"])?>,
+			id : '<?=CUtil::JSEscape($task["ID"])?>',
 			name : "<?=CUtil::JSEscape($task["TITLE"])?>",
 			status : <?=$task["STATUS"]?>
 		};
 		TasksTask.arTasksData[<?=$task["ID"]?>] = {
-			id : <?=CUtil::JSEscape($task["ID"])?>,
+			id : '<?=CUtil::JSEscape($task["ID"])?>',
 			name : "<?=CUtil::JSEscape($task["TITLE"])?>",
 			status : <?=$task["STATUS"]?>
 		};
@@ -34,7 +34,7 @@ $name = $arResult["NAME"];
 
 	<?foreach ($arResult["LAST_TASKS"] as $task):?>
 		TasksTask.arTasksData[<?=$task["ID"]?>] = {
-			id : <?=CUtil::JSEscape($task["ID"])?>,
+			id : '<?=CUtil::JSEscape($task["ID"])?>',
 			name : "<?=CUtil::JSEscape($task["TITLE"])?>",
 			status : <?=$task["STATUS"]?>
 		};

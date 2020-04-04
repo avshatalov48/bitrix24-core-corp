@@ -35,4 +35,5 @@ $MESS["MENU_IMOL_DETAILED_STATISTICS"] = "Детальная статистик�
 $MESS["MENU_IMOL_LIST_LINES"] = "Список";
 $MESS["MENU_REPORT_ANALYTICS"] = "CRM-аналитика";
 $MESS["MENU_AI_SECTION"] = "Лаборатория AI";
+$MESS["MENU_SALESCENTER_SECTION"] = "Центр продаж";
 ?>

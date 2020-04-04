@@ -3,7 +3,7 @@ class CVoxImplantHttp
 {
 	const TYPE_BITRIX24 = 'B24';
 	const TYPE_CP = 'CP';
-	const VERSION = 18;
+	const VERSION = 20;
 
 	private $controllerUrl = 'https://telephony.bitrix.info/telephony/portal.php';
 	private $licenceCode = '';
@@ -853,6 +853,39 @@ class CVoxImplantHttp
 		));
 	}
 
+	public function sendClosingDocumentsRequest($period, $addressIndex, $address, $email)
+	{
+		$query = $this->Query('sendClosingDocumentsRequest', array(
+			'PERIOD' => $period,
+			'ADDRESS_INDEX' => $addressIndex,
+			'ADDRESS' => $address,
+			'EMAIL' => $email
+		));
+
+		if (isset($query->error))
+		{
+			$this->error = new CVoxImplantError(__METHOD__, $query->error->code, $query->error->msg);
+			return false;
+		}
+
+		return $query;
+	}
+
+	public function listInvoices(array $filter = [])
+	{
+		return $this->Query("listInvoices", $filter, ['returnArray' => true]);
+	}
+
+	public function generateInvoice($invoiceNumber)
+	{
+		return $this->Query("generateInvoice", ["INVOICE_NUMBER" => $invoiceNumber], ['returnRaw' => true]);
+	}
+
+	public function getBillingUrl()
+	{
+		return $this->Query("getBillingUrl", [], ['returnArray' => true]);
+	}
+
 	public function GetError()
 	{
 		return $this->error;
@@ -869,6 +902,9 @@ class CVoxImplantHttp
 		{
 			return false;
 		}
+
+		$returnArray = $options["returnArray"] === true;
+		$returnRaw = $options["returnRaw"] === true;
 
 		$params['BX_COMMAND'] = $command;
 		$params['BX_LICENCE'] = $this->licenceCode;
@@ -906,11 +942,48 @@ class CVoxImplantHttp
 		}
 
 		$response = $httpClient->getResult();
-		$decodedResponse = json_decode($response);
-		if (!$decodedResponse)
+		if($returnRaw)
 		{
-			CVoxImplantHistory::WriteToLog($response, 'ERROR QUERY EXECUTE');
-			return (object)array('error' => array('code' => 'CONNECT_ERROR', 'msg' => 'Parse error or connect error from server'));
+			// check for errors
+
+			try
+			{
+				if($response != "" && $response[0] == "{")
+				{
+					$decodedResponse = \Bitrix\Main\Web\Json::decode($response);
+					if(isset($decodedResponse['error']))
+					{
+						$this->error = new CVoxImplantError(__METHOD__, $decodedResponse['error']['code'], $decodedResponse['error']['msg']);
+						return false;
+					}
+				}
+			}
+			catch (\Bitrix\Main\ArgumentException $e)
+			{
+			}
+
+			return $response;
+		}
+		else if($returnArray)
+		{
+			try
+			{
+				$decodedResponse = \Bitrix\Main\Web\Json::decode($response);
+			}
+			catch (\Bitrix\Main\ArgumentException $e)
+			{
+				CVoxImplantHistory::WriteToLog($response, 'ERROR QUERY EXECUTE');
+				return (object)array('error' => array('code' => 'CONNECT_ERROR', 'msg' => $e->getMessage()));
+			}
+		}
+		else
+		{
+			$decodedResponse = json_decode($response);
+			if (!$decodedResponse)
+			{
+				CVoxImplantHistory::WriteToLog($response, 'ERROR QUERY EXECUTE');
+				return (object)array('error' => array('code' => 'CONNECT_ERROR', 'msg' => 'Parse error or connect error from server'));
+			}
 		}
 
 		return $decodedResponse;

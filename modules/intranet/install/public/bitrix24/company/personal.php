@@ -29,7 +29,7 @@ $arEditableFields = array(
 	23 => "UF_WEB_SITES",
 	24 => "TIME_ZONE",
 	25 => "GROUP_ID",
-	26 => "WORK_POSITION"
+	26 => "WORK_POSITION",
 );
 if ($GLOBALS["USER"]->CanDoOperation("edit_all_users"))
 	$arEditableFields[] = "UF_DEPARTMENT";

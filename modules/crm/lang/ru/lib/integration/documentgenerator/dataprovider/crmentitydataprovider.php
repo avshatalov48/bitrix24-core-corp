@@ -12,3 +12,10 @@ $MESS["CRM_DOCGEN_CRMENTITYDATAPROVIDER_STAMPS_DISABLED_NO_TEMPLATE"] = "В ша
 $MESS["CRM_DOCGEN_CRMENTITYDATAPROVIDER_STAMPS_DISABLED_EMPTY_FIELDS"] = "У вас не загружены печать и подпись в реквизитах компании.";
 $MESS["CRM_DOCGEN_CRMENTITYDATAPROVIDER_EDIT_MY_COMPANY"] = "<a href=\"#URL#\" target='_blank'>Редактировать поля моей компании</a>";
 $MESS["CRM_DOCGEN_CRMENTITYDATAPROVIDER_CUSTOMER_REQUISITE_TITLE"] = "Реквизиты клиента";
+$MESS["CRM_DOCGEN_CRMENTITYDATAPROVIDER_LEAD_TITLE"] = "Лид";
+$MESS["DOCGEN_TAX_INCLUDED"] = "НДС включен в цену";
+$MESS["DOCGEN_TAX_NOT_INCLUDED"] = "НДС не включен в цену";
+$MESS["DOCGEN_TAX_INCLUDED_NOT_VAT"] = "Налог (не НДС) включен в цену";
+$MESS["DOCGEN_TAX_NOT_INCLUDED_NOT_VAT"] = "Налог (не НДС) не включен в цену";
+$MESS["DOCGEN_UF_TYPE_BOOLEAN_YES"] = "Да";
+$MESS["DOCGEN_UF_TYPE_BOOLEAN_NO"] = "Нет";

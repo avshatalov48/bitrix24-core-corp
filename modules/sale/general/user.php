@@ -686,8 +686,9 @@ class CAllSaleUserAccount
 	//********** EVENTS **************//
 	public static function OnBeforeCurrencyDelete($Currency)
 	{
-		if (strlen($Currency)<=0)
-			return false;
+		$Currency = (string)$Currency;
+		if ($Currency === '')
+			return true;
 
 		$cnt = CSaleUserAccount::GetList(array(), array("CURRENCY" => $Currency), array());
 		if ($cnt > 0)

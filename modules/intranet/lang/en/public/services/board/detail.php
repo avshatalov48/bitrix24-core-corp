@@ -1,3 +1,3 @@
 <?
-$MESS["SERVICES_TITLE"] = "Ad details";
+$MESS["SERVICES_TITLE"] = "Ad Details";
 ?>

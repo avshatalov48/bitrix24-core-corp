@@ -61,6 +61,25 @@ if ($arResult["ITEM"])
 		$viSip = new CVoxImplantSip();
 		$arResult["SIP_CONFIG"] = $viSip->Get($arParams["ID"]);
 		$arResult["SIP_CONFIG"]['PHONE_NAME'] = $arResult['ITEM']['PHONE_NAME'];
+
+		$sipNumbers = \Bitrix\Voximplant\Model\ExternalLineTable::getList([
+			"filter" => [
+				"=SIP_ID" => $arResult["SIP_CONFIG"]["ID"]
+			]
+		])->fetchAll();
+		$arResult["SIP_CONFIG"]["NUMBERS"] = array_map(
+			function($numberFields)
+			{
+				return [
+					"id" => $numberFields["NUMBER"],
+					"name" => \Bitrix\Main\PhoneNumber\Parser::getInstance()->parse($numberFields["NUMBER"])->format(),
+					"data" => [
+						"canRemove" => $numberFields["IS_MANUAL"] === "Y"
+					]
+				];
+			},
+			$sipNumbers
+		);
 	}
 	else if($arResult["ITEM"]["PORTAL_MODE"] == CVoxImplantConfig::MODE_RENT)
 	{
@@ -121,7 +140,10 @@ if ($request->isPost() && check_bitrix_sessid())
 			'SERVER' => $post['SIP']['SERVER'],
 			'LOGIN' => $post['SIP']['LOGIN'],
 			'PASSWORD' => $post['SIP']['PASSWORD'],
-			'NEED_UPDATE' => $post['SIP']['NEED_UPDATE']
+			'NEED_UPDATE' => $post['SIP']['NEED_UPDATE'],
+			'DETECT_LINE_NUMBER' => $post['SIP']['DETECT_LINE_NUMBER'] == 'Y' ? 'Y' : 'N',
+			'LINE_DETECT_HEADER_ORDER' => $post['SIP']['LINE_DETECT_HEADER_ORDER'],
+
 		);
 
 		if ($arResult["SIP_CONFIG"]['TYPE'] == CVoxImplantSip::TYPE_CLOUD)
@@ -475,15 +497,29 @@ $arResult['CONFIG_MENU']["routing"] = [
 	]
 ];
 
+if($arResult['ITEM']['PORTAL_MODE'] === CVoxImplantConfig::MODE_SIP)
+{
+	$arResult['CONFIG_MENU']["sip-numbers"] = [
+		"PAGE" => "sip-numbers",
+		"NAME" => Loc::getMessage("VOX_CONFIG_EDIT_SIP_NUMBERS"),
+		"ATTRIBUTES" => [
+			"data-role" => "menu-item",
+			"data-page" => "sip-numbers"
+		]
+	];
+}
 
-$arResult['CONFIG_MENU']["crm"] = [
-	"PAGE" => "crm",
-	"NAME" => Loc::getMessage("VOX_CONFIG_EDIT_CRM_INTEGRATION"),
-	"ATTRIBUTES" => [
-		"data-role" => "menu-item",
-		"data-page" => "crm"
-	]
-];
+if(IsModuleInstalled("crm"))
+{
+	$arResult['CONFIG_MENU']["crm"] = [
+		"PAGE" => "crm",
+		"NAME" => Loc::getMessage("VOX_CONFIG_EDIT_CRM_INTEGRATION"),
+		"ATTRIBUTES" => [
+			"data-role" => "menu-item",
+			"data-page" => "crm"
+		]
+	];
+}
 
 $arResult['CONFIG_MENU']["recording"] = [
 	"PAGE" => "recording",

@@ -1763,7 +1763,7 @@ $tabControl->BeginNextTab();
 				<input type="hidden" name="VERSION" value="<?=$str_VERSION?>">
 				<?if($str_VERSION==1)echo GetMessage("IB_E_COMMON_STORAGE")?>
 				<?if($str_VERSION==2)echo GetMessage("IB_E_SEPARATE_STORAGE")?>
-				<br><a href="/bitrix/admin/iblock_convert.php?lang=<?=LANG?>&amp;IBLOCK_ID=<?echo $str_ID?>"><?=$str_LAST_CONV_ELEMENT>0?"<span class=\"required\">".GetMessage("IB_E_CONVERT_CONTINUE"):GetMessage("IB_E_CONVERT_START")."</span>"?></a>
+				<br><a href="/bitrix/admin/iblock_convert.php?lang=<?=LANGUAGE_ID; ?>&amp;IBLOCK_ID=<?echo $str_ID?>"><?=$str_LAST_CONV_ELEMENT>0?"<span class=\"required\">".GetMessage("IB_E_CONVERT_CONTINUE"):GetMessage("IB_E_CONVERT_START")."</span>"?></a>
 			</td>
 		</tr>
 		<tr>

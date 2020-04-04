@@ -1760,9 +1760,9 @@ class CIntranetUtils
 		if (isModuleInstalled('bitrix24'))
 		{
 			$pid = (int) COption::getOptionInt('bitrix24', 'partner_id', 0);
-			$tar = substr(COption::getOptionString('main', '~controller_group_name'), 3);
+			$isNfr = \CBitrix24::IsNfrLicense();
 
-			if ($pid > 0 && $tar == 'nfr')
+			if ($pid > 0 && $isNfr)
 			{
 				$params .= '&p='.$pid;
 				if ($source)

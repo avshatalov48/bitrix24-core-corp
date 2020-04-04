@@ -34,7 +34,7 @@ class LogTable extends DataManager
 	 * Returns entity map definition.
 	 *
 	 * @return array
-	 * @throws \Bitrix\Main\ObjectException
+	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function getMap()
 	{
@@ -44,7 +44,7 @@ class LogTable extends DataManager
 				'autocomplete' => true,
 			)),
 			new DatetimeField('DATA_TIME', array(
-				'default_value' => new DateTime,
+				'default_value' => [__CLASS__, 'getCurrentDate'],
 			)),
 			new StringField('LINE_ID', array(
 				'validation' => array(__CLASS__, 'validateString')
@@ -59,6 +59,9 @@ class LogTable extends DataManager
 			new TextField('DATA', array(
 				'serialized' => true,
 			)),
+			new TextField('TRACE', array(
+				'serialized' => true,
+			)),
 		);
 	}
 
@@ -67,5 +70,10 @@ class LogTable extends DataManager
 		return array(
 			new Length(null, 255),
 		);
+	}
+
+	public static function getCurrentDate()
+	{
+		return new DateTime();
 	}
 }

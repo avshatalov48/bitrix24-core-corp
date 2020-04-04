@@ -5,7 +5,10 @@
  * @global CAdminMenu $adminMenu */
 
 use Bitrix\Sale\Location;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Config\Option;
+use Bitrix\Main\ModuleManager;
+use Bitrix\Main\EventManager;
 
 IncludeModuleLangFile(__FILE__);
 $aMenu = array();
@@ -21,7 +24,7 @@ $boolImportEdit = false;
 $boolImportExec = false;
 $discountView = false;
 
-$catalogInstalled = \Bitrix\Main\ModuleManager::isModuleInstalled('catalog');
+$catalogInstalled = ModuleManager::isModuleInstalled('catalog');
 if ($catalogInstalled)
 {
 	$bViewAll = $USER->CanDoOperation('catalog_read');
@@ -78,7 +81,7 @@ if ($APPLICATION->GetGroupRight("sale")!="D")
 	else
 	{
 		/* Orders Begin*/
-		$aMenu[] = array(
+		$arMenu = array(
 			"parent_menu" => "global_menu_store",
 			"sort" => 100,
 			"text" => GetMessage("SALE_ORDERS"),
@@ -95,7 +98,12 @@ if ($APPLICATION->GetGroupRight("sale")!="D")
 				"sale_order_create.php",
 				"sale_order_view.php"
 			),
-			"items" => array(
+			"items" => array()
+		);
+
+		if (Loader::includeModule('sale') && !\Bitrix\Sale\Update\CrmEntityCreatorStepper::isNeedStub())
+		{
+			$arMenu["items"] = array(
 				array(
 					"text" => GetMessage("SALE_ORDER_PAYMENT"),
 					"title" => GetMessage("SALE_ORDER_PAYMENT_DESCR"),
@@ -132,8 +140,10 @@ if ($APPLICATION->GetGroupRight("sale")!="D")
 					),
 					"items_id" => "sale_order_archive",
 				)
-			)
-		);
+			);
+		}
+
+		$aMenu[] = $arMenu;
 	}
 
 	/* Orders End*/
@@ -235,8 +245,9 @@ if ($APPLICATION->GetGroupRight("sale")!="D")
 			"url" => "sale_synchronizer_settings.php?lang=".LANGUAGE_ID,
 			"more_url" => array("sale_synchronizer_settings.php"),
 			"items_id" => "sale_synchronizer_settings",
-			"sort" => 301,
+			"sort" => 302,
 		);
+
 		$aMenu[] = $arMenu;
 	}
 	/* CRM End*/
@@ -546,7 +557,7 @@ if ($APPLICATION->GetGroupRight("sale") == "W" ||
 			}
 			$arMenu["items"][] = array(
 				"text" => GetMessage("SALE_COMPANY"),
-				"title" => GetMessage("SALE_SALE_COMPANY_DESCR"),
+				"title" => GetMessage("SALE_COMPANY_DESCR"),
 				"url" => "sale_company.php?lang=".LANGUAGE_ID,
 				"more_url" => array("sale_company_edit.php"),
 				"items_id" => "sale_company",
@@ -704,7 +715,7 @@ if ($APPLICATION->GetGroupRight("sale") == "W" ||
 
 		$arMenu["items"][] = array(
 			"text" => GetMessage("SALE_ARCHIVE"),
-			"title" => GetMessage("SALE_ARHIVE_DESCR"),
+			"title" => GetMessage("SALE_ARCHIVE_DESCR"),
 			"url" => "sale_archive.php?lang=".LANGUAGE_ID,
 			"items_id" => "sale_archive",
 			"sort" => 716,
@@ -1030,5 +1041,37 @@ if ($APPLICATION->GetGroupRight("sale") != "D" && $USER->CanDoOperation('install
 		"items_id" => "update_system_market",
 	);
 }
+
+$eventManager = EventManager::getInstance();
+$eventManager->addEventHandler("main", "OnBuildGlobalMenu", function (&$arGlobalMenu, &$arModuleMenu) {
+	if (LANGUAGE_ID === "ru"
+		&&
+		(
+			!ModuleManager::isModuleInstalled("intranet")
+			|| Option::get("sale", "~IS_CRM_SITE_MASTER_OPENED", "N") === "Y"
+		)
+	)
+	{
+		$arGlobalMenu["global_menu_crm_site_master"] = [
+			"menu_id" => "crm-site-master",
+			"text" => GetMessage("SALE_MENU_CRM_SITE_MASTER"),
+			"title" => GetMessage("SALE_MENU_CRM_SITE_MASTER"),
+			"sort" => 475,
+			"items_id" => "global_menu_crm_site_master",
+			"help_section" => "crm-site-master",
+			"items" => [
+				[
+					"parent_menu" => "global_menu_crm_site_master",
+					"text" => GetMessage("SALE_MENU_CRM_SITE_MASTER_ITEM"),
+					"title" => GetMessage("SALE_MENU_CRM_SITE_MASTER_ITEM"),
+					"url" => "sale_crm_site_master.php?lang=".LANGUAGE_ID,
+					"icon" => "sale_crm_site_master_icon",
+					"sort" => 100,
+				]
+			],
+		];
+	}
+});
+unset($eventManager);
 
 return (!empty($aMenu) ? $aMenu : false);

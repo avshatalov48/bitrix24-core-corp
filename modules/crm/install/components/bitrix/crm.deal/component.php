@@ -220,16 +220,18 @@ if(isset($_GET['redirect_to']))
 	$pathKey = "PATH_TO_DEAL_{$viewName}";
 	if(isset($arResult[$pathKey]))
 	{
-		LocalRedirect(CComponentEngine::makePathFromTemplate(
-			$arResult[$pathKey],
-			array('category_id' => $currentCategoryID))
+		$redirectUrl = CHTTP::urlAddParams(
+			CComponentEngine::makePathFromTemplate($arResult[$pathKey], array('category_id' => $currentCategoryID)),
+			array_diff_key($_GET, array_flip(array('redirect_to'))),
+			array('encode' => true)
 		);
+		LocalRedirect($redirectUrl);
 	}
 }
 
 if($componentPage === 'list' || $componentPage === 'recur_category' || $componentPage === 'category' || $componentPage === 'kanbancategory' || $componentPage === 'calendarcategory' || $componentPage === 'calendar')
 {
-	$categoryID = isset($arResult['VARIABLES']['category_id']) ? $arResult['VARIABLES']['category_id'] : -1;
+	$categoryID = isset($arResult['VARIABLES']['category_id']) ? (int)$arResult['VARIABLES']['category_id'] : -1;
 	$currentCategoryID = (int)CUserOptions::GetOption('crm', 'current_deal_category', -1);
 	if(($componentPage === 'list' || $componentPage === 'recur_category') && $currentCategoryID >= 0)
 	{

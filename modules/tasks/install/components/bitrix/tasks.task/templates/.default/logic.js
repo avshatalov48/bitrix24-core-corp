@@ -306,6 +306,8 @@ BX.namespace('Tasks.Component');
 
 				this.bindControl('cancel-button', 'click', BX.delegate(this.onCancelButtonClick, this));
 				this.bindControl('title', 'keyup', BX.delegate(this.onTitleChange, this));
+				this.bindControl('to-checklist', 'mousedown', BX.delegate(this.onToCheckListMouseDown, this));
+				this.bindControl('to-checklist', 'click', BX.delegate(this.onToCheckListClick, this));
 
 				var elements = this.scope().getElementsByClassName("js-id-wg-optbar-flag-match-work-time");
 				if (elements.length)
@@ -317,28 +319,9 @@ BX.namespace('Tasks.Component');
 				this.bindDelegateControl('submit', 'click', this.passCtx(this.onSubmitClick));
 
 				this.bindNestedControls();
-
 				this.bindSliderEvents();
 
 				BX.Tasks.Util.hintManager.bindHelp(this.control('options'));
-				BX.addCustomEvent('SidePanel.Slider:onMessage', BX.delegate(function(event)
-				{
-					if (event.getEventId() == 'sonetGroupEvent')
-					{
-						var eventData = event.getData();
-						if (
-							BX.type.isNotEmptyString(eventData.code)
-							&& eventData.code == 'afterCreate'
-							&& typeof eventData.data != 'undefined'
-							&& typeof eventData.data.group != 'undefined'
-						)
-						{
-							var data = eventData.data.group;
-							var instance = BX.Tasks.Component.TasksWidgetMemberSelector.getInstance(this.sys.id + '-project');
-							instance.getSelector().onSelectorItemSelected({id:data.ID, entityType:"SG", networkId:'', DISPLAY:data.FIELDS.NAME});
-						}
-					}
-				}, this));
 			},
 
 			bindNestedControls: function()
@@ -357,6 +340,26 @@ BX.namespace('Tasks.Component');
 			{
 				BX.addCustomEvent("SidePanel.Slider:onLoad", this.setEditorBeforeUnloadEvent.bind(this, true));
 				BX.addCustomEvent("SidePanel.Slider:onClose", this.setEditorBeforeUnloadEvent.bind(this, false));
+				BX.addCustomEvent('SidePanel.Slider:onMessage', BX.delegate(function(event) {
+					if (event.getEventId() == 'sonetGroupEvent')
+					{
+						var eventData = event.getData();
+						if (
+							BX.type.isNotEmptyString(eventData.code)
+							&& eventData.code == 'afterCreate'
+							&& typeof eventData.data != 'undefined'
+							&& typeof eventData.data.group != 'undefined'
+						)
+						{
+							var data = eventData.data.group;
+							var instance = BX.Tasks.Component.TasksWidgetMemberSelector.getInstance(this.sys.id + '-project');
+							instance.getSelector().onSelectorItemSelected({id:data.ID, entityType:"SG", networkId:'', DISPLAY:data.FIELDS.NAME});
+						}
+					}
+				}, this));
+				BX.addCustomEvent('SidePanel.Slider:onCloseByEsc', function(event) {
+					event.denyAction();
+				});
 			},
 
 			setEditorBeforeUnloadEvent: function(flag)
@@ -509,6 +512,7 @@ BX.namespace('Tasks.Component');
 				}
 
 				BX.addClass(node, 'ui-btn-clock');
+
 				this.vars.submitting = true;
 			},
 
@@ -607,20 +611,28 @@ BX.namespace('Tasks.Component');
 			{
 				var target = BX.data(node, 'target');
 
-				if(typeof target != 'undefined' && BX.type.isNotEmptyString(target))
+				if (typeof target != 'undefined' && BX.type.isNotEmptyString(target))
 				{
-					var way = this.toggleBlock(target);
-
-					if(way && target == 'checklist') // pre-open checklist add form on empty checklist
+					// pre-open checklist add form on empty checklist
+					if (target === 'checklist')
 					{
-						BX.Tasks.Util.Dispatcher.find(this.id()+'-checklist').then(function(ctrl){
-
-							if(!ctrl.count())
+						var self = this;
+						this.toggleBlock(target).then(function() {
+							if (!BX.hasClass(self.control(target), 'invisible'))
 							{
-								ctrl.openForm();
+								var treeStructure = BX.Tasks.CheckListInstance.getTreeStructure();
+								if (treeStructure.getDescendantsCount() === 0)
+								{
+									BX.Tasks.CheckListInstance.addCheckList().then(function(newCheckList) {
+										newCheckList.addCheckListItem();
+									});
+								}
 							}
-
-						}.bind(this));
+						});
+					}
+					else
+					{
+						this.toggleBlock(target);
 					}
 				}
 			},
@@ -861,6 +873,190 @@ BX.namespace('Tasks.Component');
 				{
 					BX.removeClass(title, 'task-field-error')
 				}
+			},
+
+			getEditorSelectedText: function()
+			{
+				var text = '';
+				var container = this.control('editor-container');
+				var isBbCode = container.querySelector('.bxhtmled-iframe-cnt').style.display === 'none';
+
+				if (isBbCode)
+				{
+					var textArea = container.querySelector('.bxhtmled-textarea');
+					var start = textArea.selectionStart;
+					var end = textArea.selectionEnd;
+
+					text = textArea.value.substring(start, end);
+				}
+				else
+				{
+					var editor = container.querySelector('.bx-editor-iframe').contentDocument;
+					if (editor.getSelection)
+					{
+						var selection = editor.getSelection().getRangeAt(0);
+						text = selection.commonAncestorContainer.innerText || selection.toString() || '';
+					}
+					else if (editor.selection)
+					{
+						text = editor.selection.createRange().text;
+					}
+				}
+
+				return text;
+			},
+
+			onToCheckListMouseDown: function()
+			{
+				if (!this.editorSelectedText || this.editorSelectedText === '')
+				{
+					this.editorSelectedText = this.getEditorSelectedText();
+				}
+			},
+
+			onToCheckListClick: function()
+			{
+				var hintPopup = new BX.PopupWindow({
+					bindElement: this.control('to-checklist'),
+					content: BX.message('TASKS_TASK_COMPONENT_TEMPLATE_TO_CHECKLIST_HINT'),
+					className: "tasks-to-checklist-popup",
+					darkMode: true,
+					autoHide: true,
+					closeByEsc: true,
+					angle: true,
+					offsetLeft: this.control('to-checklist').offsetWidth / 2,
+					events: {
+						onPopupClose: function()
+						{
+							this.destroy();
+						}
+					}
+				});
+
+				if (this.editorSelectedText !== '')
+				{
+					var titles = this.editorSelectedText.split(/\r\n|\r|\n/g);
+					if (titles.length > 0)
+					{
+						var treeStructure = BX.Tasks.CheckListInstance.getTreeStructure();
+
+						if (treeStructure.getDescendantsCount() === 0)
+						{
+							var items = this.getCheckListItemsFromTitles(titles);
+
+							BX.Tasks.CheckListInstance.addCheckList().then(function(newCheckList) {
+								items.forEach(function(item) {
+									newCheckList.addCheckListItem(item);
+								});
+								newCheckList.handleTaskOptions();
+							});
+
+							if (BX.hasClass(this.control('checklist'), 'invisible'))
+							{
+								this.toggleBlock('checklist');
+							}
+						}
+						else
+						{
+							var menu = new BX.PopupMenuWindow({
+								bindElement: this.control('to-checklist'),
+								items: this.getToCheckListPopupMenuItems(titles),
+							});
+
+							menu.show();
+						}
+					}
+					else
+					{
+						hintPopup.show();
+
+						setTimeout(function() {
+							hintPopup.close();
+						}, 2000);
+					}
+				}
+				else
+				{
+					hintPopup.show();
+
+					setTimeout(function() {
+						hintPopup.close();
+					}, 2000);
+				}
+
+				this.editorSelectedText = '';
+			},
+
+			getToCheckListPopupMenuItems: function(titles)
+			{
+				var self = this;
+				var treeStructure = BX.Tasks.CheckListInstance.getTreeStructure();
+
+				var popupMenuItems = [
+					{
+						text: "+ " + BX.message('TASKS_TASK_COMPONENT_TEMPLATE_TO_CHECKLIST_ADD_NEW_CHECKLIST'),
+						onclick: function(event, item)
+						{
+							item.getMenuWindow().close();
+
+							var items = self.getCheckListItemsFromTitles(titles);
+
+							BX.Tasks.CheckListInstance.addCheckList().then(function(newCheckList) {
+								items.forEach(function(item) {
+									newCheckList.addCheckListItem(item);
+								});
+								newCheckList.handleTaskOptions();
+							});
+
+							if (BX.hasClass(self.control('checklist'), 'invisible'))
+							{
+								self.toggleBlock('checklist');
+							}
+						}
+					},
+					{ delimiter: true }
+				];
+
+				treeStructure.getDescendants().forEach(function(descendant) {
+					popupMenuItems.push({
+						text: descendant.fields.getDisplayTitle(),
+						onclick: function(event, item)
+						{
+							item.getMenuWindow().close();
+
+							var items = self.getCheckListItemsFromTitles(titles);
+
+							items.forEach(function(item) {
+								descendant.addCheckListItem(item);
+							});
+
+							items[0].handleTaskOptions();
+
+							if (BX.hasClass(self.control('checklist'), 'invisible'))
+							{
+								self.toggleBlock('checklist');
+							}
+						}
+					});
+				});
+
+				return popupMenuItems;
+			},
+
+			getCheckListItemsFromTitles: function(titles)
+			{
+				var items = [];
+
+				titles.forEach(function(title) {
+					var parsedTitle = BX.util.htmlspecialchars(title.trim());
+					if (parsedTitle.length > 0)
+					{
+						var newCheckListItem = new BX.Tasks.CheckListItem({TITLE: parsedTitle});
+						items.push(newCheckListItem);
+					}
+				});
+
+				return items;
 			},
 
 			getCalendar: function()

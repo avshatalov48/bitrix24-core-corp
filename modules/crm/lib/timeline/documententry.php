@@ -49,6 +49,7 @@ class DocumentEntry extends TimelineEntry
 		$ID = $result->getId();
 		$bindings = isset($params['BINDINGS']) && is_array($params['BINDINGS']) ? $params['BINDINGS'] : array();
 		self::registerBindings($ID, $bindings);
+		self::buildSearchContent($ID);
 		return $ID;
 	}
 
@@ -62,11 +63,11 @@ class DocumentEntry extends TimelineEntry
 		Entity\TimelineBindingTable::attach($srcEntityTypeID, $srcEntityID, $targEntityTypeID, $targEntityID, array(TimelineType::DOCUMENT));
 	}
 
-	public static function update($primary, array $params)
+	public static function update($ID, array $params)
 	{
 		$result = new Main\Result();
 
-		if ($primary <= 0)
+		if ($ID <= 0)
 		{
 			$result->addError(new Main\Error('Wrong entity ID'));
 			return $result;
@@ -75,13 +76,20 @@ class DocumentEntry extends TimelineEntry
 		$updateData = array();
 
 		if (isset($params['COMMENT']))
+		{
 			$updateData['COMMENT'] = $params['COMMENT'];
+		}
 
 		if (isset($params['SETTINGS']) && is_array($params['SETTINGS']))
+		{
 			$updateData['SETTINGS'] = $params['SETTINGS'];
+		}
 
 		if (!empty($updateData))
-			$result = TimelineTable::update($primary, $updateData);
+		{
+			$result = TimelineTable::update($ID, $updateData);
+			self::buildSearchContent($ID);
+		}
 
 		return $result;
 	}

@@ -1,0 +1,34 @@
+.b24-form-basket {
+	border: 1px solid #0f58d0;
+	border: 1px solid var(--b24-primary-color);
+	border-radius: 6px;
+	font: 14px/16px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 14px/16px var(--b24-font-family);
+	color: #000;
+	color: var(--b24-text-color);
+	text-align: right;
+}
+
+.b24-form-basket table { width: 100%; }
+
+.b24-form-basket-label { width: 100%; }
+
+.b24-form-basket-value {
+	padding: 2px 5px;
+	white-space: nowrap;
+}
+
+.b24-form-basket-discount {
+	color: #0f58d0;
+	color: var(--b24-primary-color);
+}
+
+.b24-form-basket-discount .b24-form-basket-value { text-decoration: line-through; }
+
+.b24-form-basket-sum,
+.b24-form-basket-pay {
+	color: #000;
+	color: var(--b24-text-color);
+}
+
+.b24-form-basket-pay .b24-form-basket-value { font-weight: bold; }

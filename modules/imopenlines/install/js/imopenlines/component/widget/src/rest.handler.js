@@ -76,6 +76,15 @@ class WidgetRestAnswerHandler extends BaseRestAnswerHandler
 			gender: data.gender,
 			position: data.position,
 		});
+		this.store.dispatch('users/set', [{
+			id: data.id,
+			name: data.name,
+			firstName: data.firstName,
+			lastName: data.lastName,
+			avatar: data.avatar,
+			gender: data.gender,
+			workPosition: data.position,
+		}]);
 		this.store.commit('application/set', {common: {
 			userId: data.id
 		}});
@@ -125,6 +134,16 @@ class WidgetRestAnswerHandler extends BaseRestAnswerHandler
 	handleImMessageAddError(error, message)
 	{
 		this.widget.messagesQueue = this.widget.messagesQueue.filter(el => el.id != message.id);
+	}
+
+	handleImDiskFileCommitSuccess(result, message)
+	{
+		this.widget.messagesQueue = this.widget.messagesQueue.filter(el => el.id != message.id);
+
+		this.widget.sendEvent({
+			type: SubscriptionType.userFile,
+			data: {}
+		});
 	}
 }
 

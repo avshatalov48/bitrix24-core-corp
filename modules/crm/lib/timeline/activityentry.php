@@ -15,6 +15,8 @@ class ActivityEntry extends TimelineEntry
 			throw new Main\ArgumentException('Activity Type ID must be greater than zero.', 'activityTypeID');
 		}
 
+		$activityProviderID = isset($params['ACTIVITY_PROVIDER_ID']) ? $params['ACTIVITY_PROVIDER_ID'] : '';
+
 		$entityID = isset($params['ENTITY_ID']) ? (int)$params['ENTITY_ID'] : 0;
 		if($entityID <= 0)
 		{
@@ -37,6 +39,7 @@ class ActivityEntry extends TimelineEntry
 				'CREATED' => $created,
 				'AUTHOR_ID' => $authorID,
 				'ASSOCIATED_ENTITY_TYPE_ID' => \CCrmOwnerType::Activity,
+				'ASSOCIATED_ENTITY_CLASS_NAME' => $activityProviderID,
 				'ASSOCIATED_ENTITY_ID' => $entityID
 			)
 		);
@@ -49,6 +52,7 @@ class ActivityEntry extends TimelineEntry
 		$ID = $result->getId();
 		$bindings = isset($params['BINDINGS']) && is_array($params['BINDINGS']) ? $params['BINDINGS'] : array();
 		self::registerBindings($ID, $bindings);
+		self::buildSearchContent($ID);
 		return $ID;
 	}
 	public static function rebind($entityTypeID, $oldEntityID, $newEntityID)

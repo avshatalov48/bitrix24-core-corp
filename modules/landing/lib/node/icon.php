@@ -31,7 +31,17 @@ class Icon extends \Bitrix\Landing\Node
 						? $value['classList']
 						: (array)$value;
 			$className = implode(' ', $classList);
-			$url = isset($value['url']) ? trim($value['url']) : '';
+
+			if (isset($value['url']))
+			{
+				$url = is_array($value['url'])
+						? json_encode($value['url'])
+						: $value['url'];
+			}
+			else
+			{
+				$url = '';
+			}
 
 			if ($classList)
 			{

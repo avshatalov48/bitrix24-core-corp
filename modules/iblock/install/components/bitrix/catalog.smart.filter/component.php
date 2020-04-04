@@ -738,6 +738,11 @@ if ($arResult["FACET_FILTER"] && $this->arResult["CURRENCIES"])
 	);
 }
 
+if (!empty($preFilter))
+{
+	${$FILTER_NAME} = array_merge($preFilter, ${$FILTER_NAME});
+}
+
 /*Save to session if needed*/
 if($arParams["SAVE_IN_SESSION"])
 {

@@ -409,6 +409,7 @@ class CrmActivityEmailAjax
 				foreach ($activity['FILES'] as $item)
 				{
 					$activity['__files'][] = array(
+						'fileId' => $item['fileID'],
 						'fileName' => $item['fileName'],
 						'viewURL'  => $item['fileURL'],
 						'fileSize' => \CFile::formatSize($item['fileSize']),
@@ -420,6 +421,7 @@ class CrmActivityEmailAjax
 				foreach($activity['WEBDAV_ELEMENTS'] as $item)
 				{
 					$activity['__files'][] = array(
+						'fileId' => $item['FILE_ID'],
 						'fileName' => $item['NAME'],
 						'viewURL'  => $item['VIEW_URL'],
 						'fileSize' => $item['SIZE'],
@@ -431,8 +433,10 @@ class CrmActivityEmailAjax
 				foreach($activity['DISK_FILES'] as $item)
 				{
 					$activity['__files'][] = array(
+						'fileId' => $item['FILE_ID'],
 						'fileName' => $item['NAME'],
 						'viewURL'  => $item['VIEW_URL'],
+						'previewURL' => $item['PREVIEW_URL'],
 						'fileSize' => $item['SIZE'],
 					);
 				}

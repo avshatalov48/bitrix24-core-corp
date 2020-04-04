@@ -12,6 +12,11 @@ use Bitrix\Main\Application;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Tasks;
+use Bitrix\Tasks\CheckList\Internals\CheckList;
+use Bitrix\Tasks\CheckList\Task\TaskCheckListConverterHelper;
+use Bitrix\Tasks\CheckList\Task\TaskCheckListFacade;
+use Bitrix\Tasks\CheckList\Template\TemplateCheckListConverterHelper;
+use Bitrix\Tasks\CheckList\Template\TemplateCheckListFacade;
 use Bitrix\Tasks\Integration;
 use Bitrix\Tasks\Integration\Forum\Task\Topic;
 use Bitrix\Tasks\Integration\SocialNetwork;
@@ -420,13 +425,44 @@ class TasksTaskComponent extends TasksBaseComponent
 						$respIds[] = intval($user['ID']);
 					}
 					$template['RESPONSIBLES'] = $respIds;
+					$template['SE_CHECKLIST'] = new Tasks\Item\Task\CheckList();
 
 					// todo: move logic from \Bitrix\Tasks\Manager\Task\Template::manageTaskReplication() here,
 					// todo: mark the entire Manager namespace as deprecated
 					// $template['REPLICATE_PARAMS'] = $operation['ARGUMENTS']['data']['SE_TEMPLATE']['REPLICATE_PARAMS'];
 
 					$saveResult = $template->save();
-					if(!$saveResult->isSuccess())
+
+					if ($saveResult->isSuccess())
+					{
+						$checkListItems = TaskCheckListFacade::getByEntityId($taskId);
+						$checkListItems = array_map(
+							static function($item)
+							{
+								$item['COPIED_ID'] = $item['ID'];
+								unset($item['ID']);
+								return $item;
+							},
+							$checkListItems
+						);
+
+						$checkListRoots = TemplateCheckListFacade::getObjectStructuredRoots(
+							$checkListItems,
+							$template->getId(),
+							$this->userId
+						);
+						foreach ($checkListRoots as $root)
+						{
+							/** @var CheckList $root */
+							$checkListSaveResult = $root->save();
+							if (!$checkListSaveResult->isSuccess())
+							{
+								$saveResult->loadErrors($checkListSaveResult->getErrors());
+							}
+						}
+					}
+
+					if (!$saveResult->isSuccess())
 					{
 						$conversionResult->abortConversion();
 
@@ -463,6 +499,20 @@ class TasksTaskComponent extends TasksBaseComponent
 			{
 				$fields = $op['ARGUMENTS']['data'];
 
+				$checkListItems = $fields['SE_CHECKLIST'];
+				$checkListItemsExists = (is_array($checkListItems) && !empty($checkListItems));
+				unset($fields['SE_CHECKLIST']);
+
+				if ($checkListItemsExists)
+				{
+					foreach ($checkListItems as $id => $item)
+					{
+						$checkListItems[$id]['ID'] = ($item['ID'] === 'null' ? null : (int)$item['ID']);
+						$checkListItems[$id]['IS_COMPLETE'] = ($item['IS_COMPLETE'] === 'true');
+						$checkListItems[$id]['IS_IMPORTANT'] = ($item['IS_IMPORTANT'] === 'true');
+					}
+				}
+
 				foreach($responsibles as $user)
 				{
 					if($fields[Task\Originator::getCode(true)]['ID'] == $user['ID'])
@@ -481,6 +531,26 @@ class TasksTaskComponent extends TasksBaseComponent
 						$subResult = $subTask->save();
 						if($subResult->isSuccess())
 						{
+							if ($checkListItemsExists)
+							{
+								$checkListRoots = TaskCheckListFacade::getObjectStructuredRoots(
+									$checkListItems,
+									$subResult->getInstance()->getId(),
+									$this->userId,
+									'PARENT_NODE_ID'
+								);
+
+								foreach ($checkListRoots as $root)
+								{
+									/** @var CheckList $root */
+									$checkListSaveResult = $root->save();
+									if (!$checkListSaveResult->isSuccess())
+									{
+										$subResult->loadErrors($checkListSaveResult->getErrors());
+									}
+								}
+							}
+
 							$tasks[] = $subTask->getId();
 						}
 					}
@@ -513,9 +583,25 @@ class TasksTaskComponent extends TasksBaseComponent
 
 			if($replicator)
 			{
-				$replicator->produceSub($source['ID'], $taskId, array(
-					'MULTITASKING' => false,
-				), $this->userId);
+				$parameters = ['MULTITASKING' => false];
+
+				if ($source['TYPE'] == static::DATA_SOURCE_TEMPLATE)
+				{
+					$templates = Util::getOption('propagate_to_sub_templates');
+					if ($templates)
+					{
+						$templates = unserialize($templates);
+						if (in_array((int)$source['ID'], $templates))
+						{
+							$taskData = $this->arResult['ACTION_RESULT']['task_action']['ARGUMENTS']['data'];
+
+							$parameters['RESPONSIBLE_ID'] = current($taskData['SE_RESPONSIBLE'])['ID'];
+							$parameters['GROUP_ID'] = $taskData['SE_PROJECT']['ID'];
+						}
+					}
+				}
+
+				$replicator->produceSub($source['ID'], $taskId, $parameters, $this->userId);
 			}
 		}
 	}
@@ -649,6 +735,27 @@ class TasksTaskComponent extends TasksBaseComponent
 			$data[Task\Tag::getCode(true)] = $trans;
 		}
 
+		// deadline
+		$deadline = $this->hitState->get('INITIAL_TASK_DATA.DEADLINE');
+		if(!empty($deadline))
+		{
+			$data['DEADLINE'] = $deadline;
+		}
+
+		// START_DATE_PLAN
+		$startDatePlan = $this->hitState->get('INITIAL_TASK_DATA.START_DATE_PLAN');
+		if(!empty($startDatePlan))
+		{
+			$data['START_DATE_PLAN'] = $startDatePlan;
+		}
+
+		// END_DATE_PLAN
+		$endDatePlan = $this->hitState->get('INITIAL_TASK_DATA.END_DATE_PLAN');
+		if(!empty($endDatePlan))
+		{
+			$data['END_DATE_PLAN'] = $endDatePlan;
+		}
+
 		return array('DATA' => $data);
 	}
 
@@ -669,6 +776,7 @@ class TasksTaskComponent extends TasksBaseComponent
 				'ESCAPE_DATA' => static::getEscapedData(), // do not delete
 				'ERRORS' => $this->errors
 			));
+			$this->arResult['DATA']['CHECKLIST_CONVERTED'] = TaskCheckListConverterHelper::checkEntityConverted($this->task->getId());
 
 			if($this->errors->checkHasFatals())
 			{
@@ -684,6 +792,7 @@ class TasksTaskComponent extends TasksBaseComponent
 		else // get from other sources: default task data, or other task data, or template data
 		{
 			$data = $this->getDataDefaults();
+			$this->arResult['DATA']['CHECKLIST_CONVERTED'] = true;
 
 			if($formSubmitted)
 			{
@@ -704,7 +813,7 @@ class TasksTaskComponent extends TasksBaseComponent
 
 				try
 				{
-					if ($templateId = intval($this->request['TEMPLATE'])) // copy from template?
+					if ($templateId = (int)$this->request['TEMPLATE']) // copy from template?
 					{
 						$request = Application::getInstance()->getContext()->getRequest();
 
@@ -734,7 +843,11 @@ class TasksTaskComponent extends TasksBaseComponent
 
 						$driver = \Bitrix\Disk\Driver::getInstance();
 						$userFieldManager = $driver->getUserFieldManager();
-						$attachedObjects = $userFieldManager->getAttachedObjectByEntity('TASKS_TASK_TEMPLATE', $templateId, 'UF_TASK_WEBDAV_FILES');
+						$attachedObjects = $userFieldManager->getAttachedObjectByEntity(
+							'TASKS_TASK_TEMPLATE',
+							$templateId,
+							'UF_TASK_WEBDAV_FILES'
+						);
 
 						foreach ($attachedObjects as $attachedObject)
 						{
@@ -743,13 +856,15 @@ class TasksTaskComponent extends TasksBaseComponent
 						}
 
 						$this->setDataSource(static::DATA_SOURCE_TEMPLATE, $this->request['TEMPLATE']);
+						$this->arResult['DATA']['CHECKLIST_CONVERTED'] = TemplateCheckListConverterHelper::checkEntityConverted($templateId);
 					}
-					elseif(intval($this->request['COPY']) || intval($this->request['_COPY'])) // copy from another task?
+					elseif ((int)$this->request['COPY'] || (int)$this->request['_COPY']) // copy from another task?
 					{
-						$taskIdToCopy = (intval($this->request['COPY'])?: intval($this->request['_COPY']));
+						$taskIdToCopy = ((int)$this->request['COPY']?: (int)$this->request['_COPY']);
 						$sourceData = $this->cloneDataFromTask($taskIdToCopy);
 
 						$this->setDataSource(static::DATA_SOURCE_TASK, $taskIdToCopy);
+						$this->arResult['DATA']['CHECKLIST_CONVERTED'] = TaskCheckListConverterHelper::checkEntityConverted($taskIdToCopy);
 					}
 					else // get some from request
 					{
@@ -831,6 +946,11 @@ class TasksTaskComponent extends TasksBaseComponent
 	 * @param $itemId
 	 * @return array
 	 *
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\DB\SqlQueryException
+	 * @throws \Bitrix\Main\NotImplementedException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
 	 * @access private
 	 */
 	private function cloneDataFromTemplate($itemId)
@@ -854,6 +974,14 @@ class TasksTaskComponent extends TasksBaseComponent
 				}
 			}
 			$data['SE_RESPONSIBLE'] = $responsibles;
+
+			$checkListItems = TemplateCheckListFacade::getItemsForEntity($itemId, $this->userId);
+			foreach (array_keys($checkListItems) as $id)
+			{
+				$checkListItems[$id]['COPIED_ID'] = $id;
+				unset($checkListItems[$id]['ID']);
+			}
+			$data['SE_CHECKLIST'] = $checkListItems;
 		}
 
 		return array('DATA' => $data);
@@ -862,8 +990,8 @@ class TasksTaskComponent extends TasksBaseComponent
 	/**
 	 * @param $itemId
 	 * @return array
-	 *
-	 * @access private
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\SystemException
 	 */
 	private function cloneDataFromTask($itemId)
 	{
@@ -877,6 +1005,14 @@ class TasksTaskComponent extends TasksBaseComponent
 
 			// exception for responsibles, it may be multiple in the form
 			$data['SE_RESPONSIBLE'] = array(array('ID' => $task['RESPONSIBLE_ID']));
+
+			$checkListItems = TaskCheckListFacade::getItemsForEntity($itemId, $this->userId);
+			foreach (array_keys($checkListItems) as $id)
+			{
+				$checkListItems[$id]['COPIED_ID'] = $id;
+				unset($checkListItems[$id]['ID']);
+			}
+			$data['SE_CHECKLIST'] = $checkListItems;
 		}
 
 		return array('DATA' => $data);
@@ -1106,8 +1242,6 @@ class TasksTaskComponent extends TasksBaseComponent
 		$this->arResult['DATA']['GROUP'] = Group::getData($this->groups2Get);
 		$this->arResult['DATA']['USER'] = User::getData($this->users2Get);
 
-		$this->arResult['DATA']['LAST_TASKS'] = static::getLastTasks();
-
 		$this->getCurrentUserData();
 	}
 
@@ -1177,7 +1311,7 @@ class TasksTaskComponent extends TasksBaseComponent
 
 	private function getEffective()
 	{
-		$filter['IS_VIOLATION'] = 'Y';
+		$filter['=IS_VIOLATION'] = 'Y';
 		$filter['TASK_ID']=$this->task->getId();
 
 		$res = Tasks\Internals\Counter\EffectiveTable::getList(array(
@@ -1185,7 +1319,7 @@ class TasksTaskComponent extends TasksBaseComponent
 			'order' => array('DATETIME' => 'DESC'),
 			'count_total' => true
 		));
-		
+
 		return array('COUNT'=>$res->getCount(), 'ITEMS'=> $res->fetchAll());
 	}
 
@@ -1285,36 +1419,6 @@ class TasksTaskComponent extends TasksBaseComponent
 		}
 
 		return $tasks;
-	}
-
-	protected function getLastTasks()
-	{
-		$lastTasks = [];
-
-		$order = ['STATUS' => 'ASC', 'DEADLINE' => 'DESC', 'PRIORITY' => 'DESC', 'ID' => 'DESC'];
-		$filter = [
-			'DOER' => User::getId(),
-			'STATUS' => [
-				CTasks::METASTATE_VIRGIN_NEW,
-				CTasks::METASTATE_EXPIRED,
-				CTasks::STATE_NEW,
-				CTasks::STATE_PENDING,
-				CTasks::STATE_IN_PROGRESS
-			]
-		];
-		$select = ['ID', 'TITLE', 'STATUS'];
-		$params = [
-			'MAKE_ACCESS_FILTER' => false,
-			'NAV_PARAMS' => ['nTopCount' => 15]
-		];
-
-		$tasksDdRes = CTasks::GetList($order, $filter, $select, $params);
-		while ($task = $tasksDdRes->Fetch())
-		{
-			$lastTasks[] = $task;
-		}
-
-		return $lastTasks;
 	}
 
 	protected static function getUserFields($entityId = 0, $entityName = 'TASKS_TASK')
@@ -1498,7 +1602,8 @@ class TasksTaskComponent extends TasksBaseComponent
 		return array(
 			'setState',
 			'getFiles',
-			'getFileCount'
+			'getFileCount',
+			'saveCheckList',
 		);
 	}
 
@@ -1557,6 +1662,48 @@ class TasksTaskComponent extends TasksBaseComponent
 		}
 		return array("fileCount" => $fileCount);
 	}
+
+	/**
+	 * @param $items
+	 * @param $taskId
+	 * @param $userId
+	 * @return array|Util\Result
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\NotImplementedException
+	 * @throws \Bitrix\Main\ObjectException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	public static function saveCheckList($items, $taskId, $userId)
+	{
+		if (!is_array($items))
+		{
+			$items = [];
+		}
+
+		foreach ($items as $id => $item)
+		{
+			$item['ID'] = ((int)$item['ID'] === 0? null : (int)$item['ID']);
+			$item['IS_COMPLETE'] = (int)$item['IS_COMPLETE'] > 0;
+			$item['IS_IMPORTANT'] = (int)$item['IS_IMPORTANT'] > 0;
+
+			if (is_array($item['MEMBERS']))
+			{
+				$members = [];
+
+				foreach ($item['MEMBERS'] as $member)
+				{
+					$members[key($member)] = current($member);
+				}
+
+				$item['MEMBERS'] = $members;
+			}
+
+			$items[$item['NODE_ID']] = $item;
+			unset($items[$id]);
+		}
+
+		return TaskCheckListFacade::merge($taskId, $userId, $items);
+	}
 }
 
 if(CModule::IncludeModule('tasks'))
@@ -1598,6 +1745,9 @@ if(CModule::IncludeModule('tasks'))
 								return $value;
 							}
 						),
+						'DEADLINE' => array('VALUE' => StructureChecker::TYPE_STRING),
+						'START_DATE_PLAN' => array('VALUE' => StructureChecker::TYPE_STRING),
+						'END_DATE_PLAN' => array('VALUE' => StructureChecker::TYPE_STRING)
 					),
 					'DEFAULT' => array(),
 				),

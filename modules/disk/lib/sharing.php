@@ -1350,7 +1350,7 @@ final class Sharing extends Internals\Model
 		}
 		$sharingModel = static::loadByNotifyTag($tag);
 
-		if(!$sharingModel)
+		if(!$sharingModel || !$sharingModel->getRealObject())
 		{
 			return;
 		}

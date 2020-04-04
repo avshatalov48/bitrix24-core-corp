@@ -14,7 +14,7 @@ use Bitrix\Crm\Tracking;
  *
  * @package Bitrix\Crm\Tracking\Channel
  */
-class Site extends Base implements iSite
+class Site extends Base implements Features\Site
 {
 	protected $code = self::Site;
 
@@ -42,5 +42,28 @@ class Site extends Base implements iSite
 		}
 
 		return Tracking\Internals\SiteTable::getHostBySiteId($value);
+	}
+
+	/**
+	 * Get items.
+	 *
+	 * @return array
+	 */
+	public function getItems()
+	{
+		$list = Tracking\Internals\SiteTable::getList([
+			'select' => ['ID', 'NAME' => 'HOST', 'ACTIVE', 'IS_INSTALLED'],
+			'order' => ['ID' => 'DESC'],
+			'cache' => ['ttl' => 36000]
+		])->fetchAll();
+
+		foreach ($list as $index => $item)
+		{
+			$item['ACTIVE'] = ($item['ACTIVE'] === 'Y' && $item['IS_INSTALLED'] === 'Y') ? 'Y' : 'N';
+			unset($item['IS_INSTALLED']);
+			$list[$index] = $item;
+		}
+
+		return $list;
 	}
 }

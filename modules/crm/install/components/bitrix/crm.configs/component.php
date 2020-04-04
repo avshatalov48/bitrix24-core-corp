@@ -22,6 +22,7 @@ if(!CCrmPerms::IsAccessEnabled())
 }
 
 $arResult['BITRIX24'] = \Bitrix\Main\ModuleManager::isModuleInstalled('bitrix24');
+$arResult['IS_EXCLUSION_ACCESSIBLE'] = \Bitrix\Crm\Exclusion\Access::current()->canRead();
 $arResult['IS_BIZPRPOC_ENABLED'] = CModule::IncludeModule('bizproc') && CBPRuntime::isFeatureEnabled();
 $arResult['IS_AUTOMATION_LEAD_ENABLED'] = \Bitrix\Crm\Automation\Factory::isAutomationAvailable(\CCrmOwnerType::Lead);
 $arResult['IS_AUTOMATION_DEAL_ENABLED'] = \Bitrix\Crm\Automation\Factory::isAutomationAvailable(\CCrmOwnerType::Deal);

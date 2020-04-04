@@ -415,10 +415,20 @@ class CAllCrmCatalog
 	public static function GetDefaultID()
 	{
 		$ID = intval(COption::GetOptionString('crm', 'default_product_catalog_id', '0'));
-		// Check if IBlock exists
-		if($ID > 0 && intval(CIBlock::GetArrayByID($ID, 'ID')) !== $ID)
+
+		//Check if IBlock exists. Using if \Bitrix\Iblock\IblockTable::getList to avoid using of the IBlock cache.
+		if($ID > 0 && CModule::IncludeModule('iblock'))
 		{
-			$ID = 0;
+			$dbResult = \Bitrix\Iblock\IblockTable::getList(
+				array(
+					'select' => array('ID'),
+					'filter' => array('=ID' => $ID)
+				)
+			);
+			if(!is_array($dbResult->fetch()))
+			{
+				$ID = 0;
+			}
 		}
 
 		return $ID;

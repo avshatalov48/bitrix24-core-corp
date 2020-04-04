@@ -1,11 +1,20 @@
 <?php
 namespace Bitrix\ImOpenLines;
 
-use Bitrix\Main,
-	Bitrix\Main\Localization\Loc;
+use \Bitrix\Main,
+	\Bitrix\Main\Event,
+	\Bitrix\Main\Type\DateTime,
+	\Bitrix\Main\Localization\Loc;
 
-use \Bitrix\Im\Model\ChatTable,
-	\Bitrix\Im\User as ImUser;
+use \Bitrix\Im\User as ImUser,
+	\Bitrix\Im\Model\ChatTable;
+
+use \Bitrix\Pull;
+
+use \Bitrix\Im\Model\RelationTable,
+	\Bitrix\ImOpenLines\Tools\DbNameLock,
+	\Bitrix\ImOpenlines\Model\ConfigTable,
+	\Bitrix\ImOpenLines\Model\OperatorTransferTable;
 
 Loc::loadMessages(__FILE__);
 
@@ -35,6 +44,7 @@ class Chat
 	const TRANSFER_MODE_BOT = 'BOT';
 
 	const TEXT_WELCOME = 'WELCOME';
+	const TEXT_DEFAULT = 'DEFAULT';
 
 	const CHAT_TYPE_OPERATOR = 'LINES';
 	const CHAT_TYPE_CLIENT = 'LIVECHAT';
@@ -44,6 +54,7 @@ class Chat
 	private $isCreated = false;
 	private $isDataLoaded = false;
 	private $joinByUserId = 0;
+	private $chat = [];
 
 	const IMOL_CRM_ERROR_NOT_GIVEN_CORRECT_DATA = 'IMOL CRM ERROR NOT GIVEN THE CORRECT DATA';
 
@@ -74,7 +85,7 @@ class Chat
 			if ($chatId > 0)
 			{
 				$chat = \Bitrix\Im\Model\ChatTable::getById($chatId)->fetch();
-				if ($chat && in_array($chat['ENTITY_TYPE'], Array(self::CHAT_TYPE_OPERATOR, self::CHAT_TYPE_CLIENT)))
+				if (!empty($chat) && in_array($chat['ENTITY_TYPE'], Array(self::CHAT_TYPE_OPERATOR, self::CHAT_TYPE_CLIENT)))
 				{
 					if (isset($params['CONNECTOR']['chat']['description']) && $chat['DESCRIPTION'] != $params['CONNECTOR']['chat']['description'])
 					{
@@ -146,10 +157,10 @@ class Chat
 
 				if ($connectorId != 'livechat' || !empty($user['NAME']))
 				{
-					$userName = \Bitrix\Im\User::getInstance($params['USER_ID'])->getFullName(false);
+					$userName = ImUser::getInstance($params['USER_ID'])->getFullName(false);
 				}
 				$chatColorCode = \Bitrix\Im\Color::getCodeByNumber($params['USER_ID']);
-				if (\Bitrix\Im\User::getInstance($params['USER_ID'])->getGender() == 'M')
+				if (ImUser::getInstance($params['USER_ID'])->getGender() == 'M')
 				{
 					$replaceColor = \Bitrix\Im\Color::getReplaceColors();
 					if (isset($replaceColor[$chatColorCode]))
@@ -196,7 +207,7 @@ class Chat
 	 * @param $userId
 	 * @param bool $skipSession
 	 * @param bool $skipMessage
-	 * @return bool
+	 * @return Result
 	 * @throws Main\ArgumentException
 	 * @throws Main\LoaderException
 	 * @throws Main\ObjectException
@@ -205,299 +216,343 @@ class Chat
 	 */
 	public function answer($userId, $skipSession = false, $skipMessage = false)
 	{
+		$result = new Result();
+		$result->setResult(true);
+		$answerTag = 'answer_'.$this->chat['ID'];
+		$session = null;
+
 		if ($this->chat['AUTHOR_ID'] == $userId)
 		{
-			return true;
-		}
-		$answerTag = 'answer_'.$this->chat['ID'];
-		if (Common::getCacheTag($answerTag, 60))
-		{
-			return true;
+			$result->addError(new Error(Loc::getMessage('IMOL_CHAT_ERROR_ANSWER_ALREADY_RESPONSIBLE'), 'IMOL_CHAT_ERROR_ANSWER_ALREADY_RESPONSIBLE', __METHOD__, ['$userId' => $userId]));
 		}
 
-		Common::setCacheTag($answerTag, 60);
-
-		$chat = new \CIMChat(0);
-		$relations = \CIMChat::GetRelationById($this->chat['ID']);
-
-		if (!isset($relations[$userId]))
+		if(!$this->isDataLoaded())
 		{
-			$chat->AddUser($this->chat['ID'], $userId, false, true);
+			$result->addError(new Error(Loc::getMessage('IMOL_CHAT_ERROR_NOT_LOAD_DATA'), 'IMOL_CHAT_ERROR_NOT_LOAD_DATA', __METHOD__, ['chat' => $this->chat]));
 		}
 
-		$session = null;
-		if ($skipSession)
+		if($result->isSuccess())
 		{
-			Common::removeCacheTag($answerTag);
-		}
-		else
-		{
-			$session = new Session();
-			$result = $session->load(Array(
-				'USER_CODE' => $this->chat['ENTITY_ID'],
-				'MODE' => Session::MODE_OUTPUT,
-				'OPERATOR_ID' => $userId
-			));
-			if (!$result)
+			if(DbNameLock::set($answerTag))
 			{
-				Common::removeCacheTag($answerTag);
-				return false;
-			}
-			else if($session->isNowCreated())
-			{
-				Common::removeCacheTag($answerTag);
-			}
-		}
+				$chat = new \CIMChat(0);
+				$relations = \CIMChat::GetRelationById($this->chat['ID']);
 
-		if ($skipSession)
-		{
-			list(, $lineId) = explode('|', $this->chat['ENTITY_ID']);
-			$configManager = new Config();
-			$config = $configManager->get($lineId);
-		}
-		else if ($session && !$session->isNowCreated())
-		{
-			$session->setOperatorId($userId, false, false);
-
-			if ($session->getData('CRM_ACTIVITY_ID') > 0)
-			{
-				$closeDate = new Main\Type\DateTime();
-				$closeDate->add(intval($session->getConfig('AUTO_CLOSE_TIME')).' SECONDS');
-				$closeDate->add('1 DAY');
-
-				$crmManager = new Crm($session);
-				if($crmManager->isLoaded())
+				if (!isset($relations[$userId]))
 				{
-					$crmManager->setSessionAnswered(['DATE_CLOSE' => $closeDate]);
+					$chat->AddUser($this->chat['ID'], $userId, false, true);
 				}
-			}
 
-			$sessionUpdate = Array(
-				'OPERATOR_ID' => $userId,
-				'WAIT_ACTION' => 'N',
-				'WAIT_ANSWER' => 'N',
-				'DATE_MODIFY' => new \Bitrix\Main\Type\DateTime(),
-				'CHECK_DATE_CLOSE' => null,
-				'SEND_NO_ANSWER_TEXT' => 'Y'
-			);
-			if (!\Bitrix\Im\User::getInstance($userId)->isBot() && $session->getData('DATE_OPERATOR_ANSWER') <= 0)
-			{
-				$currentDate = new \Bitrix\Main\Type\DateTime();
-				$sessionUpdate['DATE_OPERATOR_ANSWER'] = $currentDate;
-				$sessionUpdate['TIME_ANSWER'] = $currentDate->getTimestamp()-$session->getData('DATE_CREATE')->getTimestamp();
-			}
-
-			$session->update($sessionUpdate);
-			$config = $session->getConfig();
-		}
-		else if ($session)
-		{
-			$config = $session->getConfig();
-		}
-
-		$relations = \CIMChat::GetRelationById($this->chat['ID']);
-		foreach ($relations as $relation)
-		{
-			if ($userId == $relation['USER_ID'])
-				continue;
-
-			if (\Bitrix\Im\User::getInstance($relation['USER_ID'])->isConnector())
-				continue;
-
-			if ($config['WELCOME_BOT_LEFT'] == Config::BOT_LEFT_CLOSE && \Bitrix\Im\User::getInstance($relation['USER_ID'])->isBot())
-				continue;
-
-			$chat->DeleteUser($this->chat['ID'], $relation['USER_ID'], false, true);
-		}
-
-		$this->update(Array(
-			'AUTHOR_ID' => $userId
-		));
-
-		\Bitrix\Pull\Event::add($userId, Array(
-			'module_id' => 'imopenlines',
-			'command' => 'linesAnswer',
-			'params' => Array(
-				'chatId' => $this->chat['ID']
-			)
-		));
-
-		if (!$skipMessage)
-		{
-			$userAnswer = \Bitrix\Im\User::getInstance($userId);
-
-			Im::addMessage(Array(
-				"FROM_USER_ID" => $userId,
-				"TO_CHAT_ID" => $this->chat['ID'],
-				"MESSAGE" => Loc::getMessage('IMOL_CHAT_ANSWER_'.$userAnswer->getGender(), Array('#USER#' => '[USER='.$userAnswer->getId().']'.$userAnswer->getFullName(false).'[/USER]')),
-				"SYSTEM" => 'Y',
-			));
-		}
-
-		Common::removeCacheTag($answerTag);
-
-		if ($session)
-		{
-			$eventData = array(
-				'RUNTIME_SESSION' => $session,
-				'USER_ID' => $userId,
-			);
-			$event = new \Bitrix\Main\Event("imopenlines", "OnChatAnswer", $eventData);
-			$event->send();
-		}
-
-		return true;
-	}
-
-	public function intercept($userId)
-	{
-		if ($this->chat['AUTHOR_ID'] <= 0 || $this->chat['AUTHOR_ID'] == $userId)
-		{
-			return false;
-		}
-
-		$previousOwnerId = $this->chat['AUTHOR_ID'];
-
-		$this->answer($userId, false, true);
-
-		$previousOwner = \Bitrix\Im\User::getInstance($previousOwnerId);
-		$newOwner = \Bitrix\Im\User::getInstance($userId);
-
-		\CIMChat::AddMessage(Array(
-			"FROM_USER_ID" => $userId,
-			"TO_CHAT_ID" => $this->chat['ID'],
-			"MESSAGE" => Loc::getMessage('IMOL_CHAT_INTERCEPT_'.$newOwner->getGender(), Array(
-				'#USER_1#' => '[USER='.$newOwner->getId().']'.$newOwner->getFullName(false).'[/USER]',
-				'#USER_2#' => '[USER='.$previousOwner->getId().']'.$previousOwner->getFullName(false).'[/USER]'
-			)),
-			"SYSTEM" => 'Y',
-		));
-
-		return true;
-	}
-
-	public function skip($userId = 0)
-	{
-		$session = new Session();
-		$result = $session->load(Array(
-			'USER_CODE' => $this->chat['ENTITY_ID'],
-			'SKIP_CREATE' => 'Y'
-		));
-		if (!$result)
-		{
-			if ($userId > 0)
-			{
-				$chat = new \CIMChat();
-				$chat->DeleteUser($this->chat['ID'], $userId, false);
-			}
-
-			return false;
-		}
-
-		if ($session)
-		{
-			$eventData = array(
-				'RUNTIME_SESSION' => $session,
-				'USER_ID' => $userId,
-			);
-			$event = new \Bitrix\Main\Event("imopenlines", "OnChatSkip", $eventData);
-			$event->send();
-		}
-
-
-		if ($userId)
-		{
-			$userSkip = \Bitrix\Im\User::getInstance($userId);
-
-			Im::addMessage(Array(
-				"FROM_USER_ID" => $userId,
-				"TO_CHAT_ID" => $this->chat['ID'],
-				"MESSAGE" => Loc::getMessage('IMOL_CHAT_SKIP_'.$userSkip->getGender(), Array('#USER#' => '[USER='.$userSkip->getId().']'.$userSkip->getFullName(false).'[/USER]')),
-				"SYSTEM" => 'Y',
-			));
-		}
-
-		if ($session->getConfig('QUEUE_TYPE') == Config::QUEUE_TYPE_ALL && $userId)
-		{
-			$count = 0;
-			$relations = \CIMChat::GetRelationById($this->chat['ID']);
-			foreach ($relations as $relation)
-			{
-				if ($userId == $relation['USER_ID'])
-					continue;
-
-				if (\Bitrix\Im\User::getInstance($relation['USER_ID'])->isConnector())
-					continue;
-
-				if (\Bitrix\Im\User::getInstance($relation['USER_ID'])->isBot())
-					continue;
-
-				$count++;
-			}
-			if ($count > 0)
-			{
-				$chat = new \CIMChat(0);
-				$chat->DeleteUser($this->chat['ID'], $userId, false, true);
-			}
-			else
-			{
-				$session->transferToNextInQueue();
-			}
-		}
-		else
-		{
-			$session->transferToNextInQueue();
-		}
-
-		return true;
-	}
-
-	public function endBotSession()
-	{
-		$session = new Session();
-		$result = $session->load(Array(
-			'USER_CODE' => $this->chat['ENTITY_ID']
-		));
-		if ($result && \Bitrix\Im\User::getInstance($session->getData('OPERATOR_ID'))->isBot())
-		{
-			if ($session->getConfig('QUEUE_TYPE') == Config::QUEUE_TYPE_ALL)
-			{
-				$chat = new \CIMChat(0);
-				if ($session->getConfig('WELCOME_BOT_LEFT') != Config::BOT_LEFT_CLOSE)
+				if ($skipSession)
 				{
-					$chat->DeleteUser($this->chat['ID'], $session->getData('OPERATOR_ID'), false, true);
+					DbNameLock::delete($answerTag);
 				}
 				else
 				{
-					$chat->SetOwner($this->chat['ID'], 0);
+					$session = new Session();
+					$resultLoad = $session->load([
+						'USER_CODE' => $this->chat['ENTITY_ID'],
+						'MODE' => Session::MODE_OUTPUT,
+						'OPERATOR_ID' => $userId
+					]);
+					if (!$resultLoad)
+					{
+						DbNameLock::delete($answerTag);
+						$result->setResult(false);
+						$result->addError(new Error(Loc::getMessage('IMOL_CHAT_ERROR_ANSWER_NOT_LOAD_SESSION'), 'IMOL_CHAT_ERROR_ANSWER_NOT_LOAD_SESSION', __METHOD__, ['USER_CODE' => $this->chat['ENTITY_ID'], 'MODE' => Session::MODE_OUTPUT, 'OPERATOR_ID' => $userId]));
+					}
+					else
+					{
+						if($this->validationAction($session->getData('CHAT_ID')))
+						{
+							if($session->isNowCreated())
+							{
+								DbNameLock::delete($answerTag);
+							}
+						}
+						else
+						{
+							$result->addError(new Error(Loc::getMessage('IMOL_CHAT_ERROR_NOT_LOAD_DATA'), 'IMOL_CHAT_ERROR_NOT_LOAD_DATA', __METHOD__, ['chat' => $this->chat]));
+						}
+					}
 				}
 
-				$queue = $session->getQueue();
-				$this->join($queue['USER_LIST'], true);
+				if($result->isSuccess())
+				{
+					$config = [];
 
-				Im::addMessage(Array(
-					"TO_CHAT_ID" => $this->chat['ID'],
-					"MESSAGE" => Loc::getMessage('IMOL_CHAT_TO_QUEUE_NEW'),
-					"SYSTEM" => 'Y',
-				));
+					if ($skipSession)
+					{
+						list(, $lineId) = explode('|', $this->chat['ENTITY_ID']);
+						$configManager = new Config();
+						$config = $configManager->get($lineId);
+					}
+					else if ($session && !$session->isNowCreated())
+					{
+						$session->setOperatorId($userId, false, false);
+
+						if ($session->getData('CRM_ACTIVITY_ID') > 0)
+						{
+							$closeDate = new Main\Type\DateTime();
+							$closeDate->add(intval($session->getConfig('AUTO_CLOSE_TIME')).' SECONDS');
+							$closeDate->add('1 DAY');
+
+							$crmManager = new Crm($session);
+							if($crmManager->isLoaded())
+							{
+								$crmManager->setSessionAnswered(['DATE_CLOSE' => $closeDate]);
+							}
+						}
+
+						$sessionUpdate = Array(
+							'OPERATOR_ID' => $userId,
+							'WAIT_ACTION' => 'N',
+							'WAIT_ANSWER' => 'N',
+							'SEND_NO_ANSWER_TEXT' => 'Y'
+						);
+						if (!ImUser::getInstance($userId)->isBot() && $session->getData('DATE_OPERATOR_ANSWER') <= 0)
+						{
+							$currentDate = new DateTime();
+							$sessionUpdate['DATE_OPERATOR_ANSWER'] = $currentDate;
+							$sessionUpdate['TIME_ANSWER'] = $currentDate->getTimestamp()-$session->getData('DATE_CREATE')->getTimestamp();
+						}
+
+						$session->update($sessionUpdate);
+						$config = $session->getConfig();
+					}
+					else if ($session)
+					{
+						$config = $session->getConfig();
+					}
+
+					$relations = \CIMChat::GetRelationById($this->chat['ID']);
+					foreach ($relations as $relation)
+					{
+						if(
+							!ImUser::getInstance($relation['USER_ID'])->isConnector() &&
+							!ImUser::getInstance($relation['USER_ID'])->isBot() &&
+							$userId != $relation['USER_ID']
+						)
+						{
+							$chat->DeleteUser($this->chat['ID'], $relation['USER_ID'], false, true);
+						}
+					}
+
+					$this->update(Array(
+						'AUTHOR_ID' => $userId
+					));
+
+					Pull\Event::add($userId, Array(
+						'module_id' => 'imopenlines',
+						'command' => 'linesAnswer',
+						'params' => Array(
+							'chatId' => $this->chat['ID']
+						)
+					));
+
+					if (!$skipMessage)
+					{
+						$userAnswer = ImUser::getInstance($userId);
+
+						Im::addMessage(Array(
+							"FROM_USER_ID" => $userId,
+							"TO_CHAT_ID" => $this->chat['ID'],
+							"MESSAGE" => Loc::getMessage('IMOL_CHAT_ANSWER_'.$userAnswer->getGender(), Array('#USER#' => '[USER='.$userAnswer->getId().']'.$userAnswer->getFullName(false).'[/USER]')),
+							"SYSTEM" => 'Y',
+						));
+					}
+
+					DbNameLock::delete($answerTag);
+
+					if ($session)
+					{
+						$eventData = array(
+							'RUNTIME_SESSION' => $session,
+							'USER_ID' => $userId,
+						);
+						$event = new Event("imopenlines", "OnChatAnswer", $eventData);
+						$event->send();
+					}
+				}
 			}
 			else
 			{
-				$session->transferToNextInQueue();
+				$result->addError(new Error(Loc::getMessage('IMOL_CHAT_ERROR_ANSWER_COMPETITIVE_REQUEST'), 'IMOL_CHAT_ERROR_ANSWER_COMPETITIVE_REQUEST', __METHOD__, ['$userId' => $userId]));
 			}
-
-			return true;
 		}
 
-		return false;
+		return $result;
 	}
 
+	/**
+	 * @param $userId
+	 * @return bool
+	 * @throws Main\ArgumentException
+	 * @throws Main\LoaderException
+	 * @throws Main\ObjectException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
+	public function intercept($userId)
+	{
+		$result = false;
+
+		if(
+			$this->isDataLoaded() &&
+			$this->chat['AUTHOR_ID'] > 0 &&
+			$this->chat['AUTHOR_ID'] != $userId
+		)
+		{
+			$previousOwnerId = $this->chat['AUTHOR_ID'];
+
+			$resultAnswer = $this->answer($userId, false, true);
+
+			if($resultAnswer->isSuccess())
+			{
+				$previousOwner = ImUser::getInstance($previousOwnerId);
+				$newOwner = ImUser::getInstance($userId);
+
+				\CIMChat::AddMessage(Array(
+					"FROM_USER_ID" => $userId,
+					"TO_CHAT_ID" => $this->chat['ID'],
+					"MESSAGE" => Loc::getMessage('IMOL_CHAT_INTERCEPT_'.$newOwner->getGender(), Array(
+						'#USER_1#' => '[USER='.$newOwner->getId().']'.$newOwner->getFullName(false).'[/USER]',
+						'#USER_2#' => '[USER='.$previousOwner->getId().']'.$previousOwner->getFullName(false).'[/USER]'
+					)),
+					"SYSTEM" => 'Y',
+				));
+
+				$result = true;
+			}
+		}
+
+		return $result;
+	}
+
+	/**
+	 * Skip the dialogue.
+	 *
+	 * @param int $userId
+	 * @return bool
+	 * @throws Main\ArgumentException
+	 * @throws Main\LoaderException
+	 * @throws Main\ObjectException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
+	public function skip($userId = 0)
+	{
+		$result = false;
+
+		if($this->isDataLoaded())
+		{
+			$session = new Session();
+			$resultLoad = $session->load(Array(
+				'USER_CODE' => $this->chat['ENTITY_ID'],
+				'SKIP_CREATE' => 'Y'
+			));
+			if ($resultLoad)
+			{
+				if($this->validationAction($session->getData('CHAT_ID')))
+				{
+					$eventData = array(
+						'RUNTIME_SESSION' => $session,
+						'USER_ID' => $userId,
+					);
+					$event = new Event("imopenlines", "OnChatSkip", $eventData);
+					$event->send();
+
+					if ($userId)
+					{
+						$userSkip = ImUser::getInstance($userId);
+
+						Im::addMessage(Array(
+							"FROM_USER_ID" => $userId,
+							"TO_CHAT_ID" => $this->chat['ID'],
+							"MESSAGE" => Loc::getMessage('IMOL_CHAT_SKIP_'.$userSkip->getGender(), Array('#USER#' => '[USER='.$userSkip->getId().']'.$userSkip->getFullName(false).'[/USER]')),
+							"SYSTEM" => 'Y',
+						));
+					}
+
+					$result = $session->transferToNextInQueue();
+				}
+			}
+			else
+			{
+				if ($userId > 0)
+				{
+					$chat = new \CIMChat();
+					$chat->DeleteUser($this->chat['ID'], $userId, false);
+				}
+			}
+		}
+
+		return $result;
+	}
+
+	/**
+	 * The end of the session of the bot.
+	 *
+	 * @return bool
+	 * @throws Main\ArgumentException
+	 * @throws Main\LoaderException
+	 * @throws Main\ObjectException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
+	public function endBotSession()
+	{
+		$result = false;
+
+		if($this->isDataLoaded())
+		{
+			$session = new Session();
+			$resultLoadSession = $session->load(Array(
+				'USER_CODE' => $this->chat['ENTITY_ID']
+			));
+			if ($resultLoadSession && ImUser::getInstance($session->getData('OPERATOR_ID'))->isBot())
+			{
+				if($this->validationAction($session->getData('CHAT_ID')))
+				{
+					$chat = new \CIMChat(0);
+					if ($session->getConfig('WELCOME_BOT_LEFT') != Config::BOT_LEFT_CLOSE)
+					{
+						$chat->DeleteUser($this->chat['ID'], $session->getData('OPERATOR_ID'), false, true);
+					}
+					else
+					{
+						$chat->SetOwner($this->chat['ID'], 0);
+					}
+
+					$session->transferToNextInQueue();
+
+					Im::addMessage(Array(
+						"TO_CHAT_ID" => $this->chat['ID'],
+						"MESSAGE" => Loc::getMessage('IMOL_CHAT_TO_QUEUE_NEW'),
+						"SYSTEM" => 'Y',
+					));
+
+					$result =  true;
+				}
+			}
+		}
+
+		return $result;
+	}
+
+	/**
+	 * @param $userId
+	 * @throws Main\ArgumentException
+	 * @throws Main\LoaderException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
 	public function waitAnswer($userId)
 	{
-		$this->update(Array(
+		$this->update([
 			'AUTHOR_ID' => $userId,
 			self::getFieldName(self::FIELD_SILENT_MODE) => 'N'
-		));
+		]);
 	}
 
 	/**
@@ -511,272 +566,383 @@ class Chat
 	 */
 	public function transfer($params)
 	{
-		$mode = in_array($params['MODE'], Array(self::TRANSFER_MODE_AUTO, self::TRANSFER_MODE_BOT))? $params['MODE']: self::TRANSFER_MODE_MANUAL;
-		$selfExit = isset($params['LEAVE']) && $params['LEAVE'] == 'N'? false: true;
-		$skipCheck = isset($params['SKIP_CHECK']) && $params['SKIP_CHECK'] == 'Y';
+		$result = false;
 
-		$session = new Session();
-		$result = $session->load(Array(
-			'USER_CODE' => $this->chat['ENTITY_ID']
-		));
-		if (!$result)
+		if($this->isDataLoaded())
 		{
-			return false;
-		}
+			$keyLock = Queue\Queue::PREFIX_KEY_LOCK . $this->chat['ID'];
 
-		$event = new \Bitrix\Main\Event("imopenlines", "OnOperatorTransfer", [
-			'CHAT' => $this->chat,
-			'SESSION' => $session,
-			'TRANSFER' => [
-				'MODE' => $mode,
-				'FROM' => $params['FROM'],
-				'TO' => $params['TO'],
-			]
-		]);
-		$event->send();
-
-		foreach($event->getResults() as $eventResult)
-		{
-			if ($eventResult->getType() != \Bitrix\Main\EventResult::SUCCESS)
-				continue;
-
-			$newValues = $eventResult->getParameters();
-			if (!empty($newValues['TRANSFER_ID']))
+			if(Tools\Lock::getInstance()->set($keyLock))
 			{
-				$params['TO'] = $newValues['TRANSFER_ID'];
+				$mode = in_array($params['MODE'], [self::TRANSFER_MODE_AUTO, self::TRANSFER_MODE_BOT])? $params['MODE']: self::TRANSFER_MODE_MANUAL;
+				$selfExit = isset($params['LEAVE']) && $params['LEAVE'] == 'N'? false: true;
+				$skipCheck = isset($params['SKIP_CHECK']) && $params['SKIP_CHECK'] == 'Y';
+
+				$session = new Session();
+				$resultLoadSession = $session->load([
+					'USER_CODE' => $this->chat['ENTITY_ID']
+				]);
+				if ($resultLoadSession)
+				{
+					if($this->validationAction($session->getData('CHAT_ID')))
+					{
+						//Event
+						$event = new Event("imopenlines", "OnOperatorTransfer", [
+							'CHAT' => $this->chat,
+							'SESSION' => $session,
+							'TRANSFER' => [
+								'MODE' => $mode,
+								'FROM' => $params['FROM'],
+								'TO' => $params['TO'],
+							]
+						]);
+						$event->send();
+
+						foreach($event->getResults() as $eventResult)
+						{
+							if ($eventResult->getType() != \Bitrix\Main\EventResult::SUCCESS)
+								continue;
+
+							$newValues = $eventResult->getParameters();
+							if (!empty($newValues['TRANSFER_ID']))
+							{
+								$params['TO'] = $newValues['TRANSFER_ID'];
+							}
+						}
+						// END Event
+
+						//Transfer to queue
+						if (substr($params['TO'], 0, 5) == 'queue')
+						{
+							$result = $this->transferToQueue($params, $session, $mode);
+						}
+						//Transfer to the operator
+						else
+						{
+							$result = $this->transferToOperator($params, $session, $mode, $selfExit, $skipCheck);
+						}
+					}
+				}
+
+				Tools\Lock::getInstance()->delete($keyLock);
 			}
 		}
 
-		if (substr($params['TO'], 0, 5) == 'queue')
+		return $result;
+	}
+
+	/**
+	 * Transfer to queue.
+	 *
+	 * @param $params
+	 * @param Session $session
+	 * @param $mode
+	 * @return bool
+	 * @throws Main\ArgumentException
+	 * @throws Main\LoaderException
+	 * @throws Main\ObjectException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
+	protected function transferToQueue($params, $session, $mode)
+	{
+		$result = false;
+
+		if($this->isDataLoaded())
 		{
+			$userFrom = ImUser::getInstance($params['FROM']);
+
+			$lineFromId = $session->getConfig('ID');
+			$lineFrom = $session->getConfig('LINE_NAME');
+			$userCode = $session->getData('USER_CODE');
+
+			//Transfer the same queue
 			if($params['TO']  == 'queue')
 			{
-				$queueId = 0;
+				$queueId = $lineFromId;
 			}
 			else
 			{
 				$queueId = intval(substr($params['TO'], 5));
+			}
 
-				$config = \Bitrix\ImOpenlines\Model\ConfigTable::getById($queueId)->fetch();
-				if (!$config)
+			$config = ConfigTable::getById($queueId)->fetch();
+			if ($config)
+			{
+				$session->setOperatorId(0, true, $mode ==  self::TRANSFER_MODE_MANUAL ? false : true);
+				$this->update(['AUTHOR_ID' => 0]);
+				$this->updateFieldData([Chat::FIELD_SESSION => ['LINE_ID' => $queueId]]);
+
+				$chat = new \CIMChat(0);
+				$relations = \CIMChat::GetRelationById($this->chat['ID']);
+				foreach ($relations as $relation)
 				{
-					return false;
-				}
-			}
+					if (ImUser::getInstance($relation['USER_ID'])->isConnector())
+						continue;
 
-			$session->setOperatorId(0, true, $mode ==  self::TRANSFER_MODE_MANUAL ? false : true);
-			$this->update(Array('AUTHOR_ID' => 0));
+					if (ImUser::getInstance($relation['USER_ID'])->isBot())
+						continue;
 
-			$userFrom = \Bitrix\Im\User::getInstance($params['FROM']);
-
-			$lineFromId = $session->getConfig('ID');
-			$lineFrom = $session->getConfig('LINE_NAME');
-
-			if($queueId == 0)
-			{
-				$queueId = $lineFromId;
-			}
-
-			Log::write(Array($params['FROM'], $queueId), 'TRANSFER TO LINE');
-
-			\Bitrix\ImOpenLines\Model\OperatorTransferTable::Add(Array(
-				'CONFIG_ID' => $session->getData('CONFIG_ID'),
-				'SESSION_ID' => $session->getData('ID'),
-				'USER_ID' => $params['FROM'],
-				'TRANSFER_MODE' => $mode,
-				'TRANSFER_TYPE' => 'QUEUE',
-				'TRANSFER_LINE_ID' => $queueId
-			));
-
-			if ($userFrom->isBot() && !$session->getData('DATE_OPERATOR'))
-			{
-				$currentDate = new \Bitrix\Main\Type\DateTime();
-				$session->update(Array(
-					'CONFIG_ID' => $queueId,
-					'DATE_OPERATOR' => $currentDate,
-					'QUEUE_HISTORY' => Array(),
-					'TIME_BOT' => $currentDate->getTimestamp()-$session->getData('DATE_CREATE')->getTimestamp(),
-					'CHECK_DATE_CLOSE' => null,
-				));
-			}
-			else
-			{
-				$session->update(Array(
-					'CONFIG_ID' => $queueId,
-					'QUEUE_HISTORY' => Array(),
-					'CHECK_DATE_CLOSE' => null,
-				));
-			}
-			$lineTo = $session->getConfig('LINE_NAME');
-
-			if($params['TO']  == 'queue')
-			{
-				$message = Loc::getMessage('IMOL_CHAT_RETURNED_TO_QUEUE_NEW');
-			}
-			else if ($lineFromId == $queueId)
-			{
-				$message = Loc::getMessage('IMOL_CHAT_SKIP_'.$userFrom->getGender(), Array(
-					'#USER#' => '[USER='.$userFrom->getId().']'.$userFrom->getFullName(false).'[/USER]',
-				));
-			}
-			else
-			{
-				$message = Loc::getMessage('IMOL_CHAT_TRANSFER_LINE_'.$userFrom->getGender(), Array(
-					'#USER_FROM#' => '[USER='.$userFrom->getId().']'.$userFrom->getFullName(false).'[/USER]',
-					'#LINE_FROM#' => '[b]'.$lineFrom.'[/b]',
-					'#LINE_TO#' => '[b]'.$lineTo.'[/b]',
-				));
-			}
-
-			$queue = $session->getQueue();
-
-			$chat = new \CIMChat(0);
-			$relations = \CIMChat::GetRelationById($this->chat['ID']);
-			foreach ($relations as $relation)
-			{
-				if (\Bitrix\Im\User::getInstance($relation['USER_ID'])->isConnector())
-					continue;
-
-				if (\Bitrix\Im\User::getInstance($relation['USER_ID'])->isBot())
-					continue;
-
-				if (!in_array($relation['USER_ID'], $queue['USER_LIST']))
-				{
 					$chat->DeleteUser($this->chat['ID'], $relation['USER_ID'], false, true);
 				}
-			}
 
-			if ($session->getConfig('QUEUE_TYPE') == Config::QUEUE_TYPE_ALL)
-			{
-				$chat = new \CIMChat(0);
-				$chat->SetOwner($this->chat['ID'], 0);
+				if($queueId == 0)
+				{
+					$queueId = $lineFromId;
+				}
 
-				$this->join($queue['USER_LIST'], true);
+				Log::write([$params['FROM'], $queueId], 'TRANSFER TO LINE');
 
-				Im::addMessage(Array(
-					"TO_CHAT_ID" => $this->chat['ID'],
-					"MESSAGE" => $message,
-					"SYSTEM" => 'Y',
-				));
-			}
-			else
-			{
-				Im::addMessage(Array(
-					"TO_CHAT_ID" => $this->chat['ID'],
-					"MESSAGE" => $message,
-					"SYSTEM" => 'Y',
-				));
+				OperatorTransferTable::Add([
+					'CONFIG_ID' => $session->getData('CONFIG_ID'),
+					'SESSION_ID' => $session->getData('ID'),
+					'USER_ID' => $params['FROM'],
+					'TRANSFER_MODE' => $mode,
+					'TRANSFER_TYPE' => 'QUEUE',
+					'TRANSFER_LINE_ID' => $queueId
+				]);
+
+				$updateData = array(
+					'CONFIG_ID' => $queueId,
+					'QUEUE_HISTORY' => [],
+					'SKIP_DATE_CLOSE' => true,
+					'DATE_MODIFY' => new DateTime()
+				);
+
+				if ($userFrom->isBot() && !$session->getData('DATE_OPERATOR'))
+				{
+					$currentDate = new DateTime();
+					$updateData['DATE_OPERATOR'] = $currentDate;
+					$updateData['TIME_BOT'] = $currentDate->getTimestamp() - $session->getData('DATE_CREATE')->getTimestamp();
+				}
+
+				$session->update($updateData);
+
+				$lineTo = $session->getConfig('LINE_NAME');
+
+				if($params['TO']  == 'queue')
+				{
+					$message = Loc::getMessage('IMOL_CHAT_RETURNED_TO_QUEUE_NEW');
+				}
+				else if ($lineFromId == $queueId)
+				{
+					$message = Loc::getMessage('IMOL_CHAT_SKIP_'.$userFrom->getGender(), [
+						'#USER#' => '[USER='.$userFrom->getId().']'.$userFrom->getFullName(false).'[/USER]',
+					]);
+				}
+				else
+				{
+					$message = Loc::getMessage('IMOL_CHAT_TRANSFER_LINE_'.$userFrom->getGender(), [
+						'#USER_FROM#' => '[USER='.$userFrom->getId().']'.$userFrom->getFullName(false).'[/USER]',
+						'#LINE_FROM#' => '[b]'.$lineFrom.'[/b]',
+						'#LINE_TO#' => '[b]'.$lineTo.'[/b]',
+					]);
+				}
 
 				$session->transferToNextInQueue(false);
+
+				Im::addMessage([
+					"TO_CHAT_ID" => $this->chat['ID'],
+					"MESSAGE" => $message,
+					"SYSTEM" => 'Y',
+				]);
+
+				$result = true;
 			}
 		}
-		else
+
+		return $result;
+	}
+
+	/**
+	 * Transfer to the operator.
+	 *
+	 * @param $params
+	 * @param Session $session
+	 * @param $mode
+	 * @param $selfExit
+	 * @param $skipCheck
+	 * @return bool
+	 * @throws Main\ArgumentException
+	 * @throws Main\LoaderException
+	 * @throws Main\ObjectException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
+	protected function transferToOperator($params, $session, $mode, $selfExit, $skipCheck)
+	{
+		$result = false;
+
+		if($this->isDataLoaded())
 		{
 			$transferUserId = intval($params['TO']);
 
-			if (!$skipCheck)
+			if($skipCheck ||
+				(
+					!ImUser::getInstance($transferUserId)->isBot() &&
+					!ImUser::getInstance($transferUserId)->isExtranet() &&
+					!ImUser::getInstance($transferUserId)->isConnector()
+				))
 			{
-				if (
-					\Bitrix\Im\User::getInstance($transferUserId)->isBot() ||
-					\Bitrix\Im\User::getInstance($transferUserId)->isExtranet() ||
-					\Bitrix\Im\User::getInstance($transferUserId)->isConnector()
-				)
+				$chat = new \CIMChat(0);
+				$relations = \CIMChat::GetRelationById($this->chat['ID']);
+				foreach ($relations as $relation)
 				{
-					return false;
+					if(
+						!ImUser::getInstance($relation['USER_ID'])->isConnector() &&
+						!ImUser::getInstance($relation['USER_ID'])->isBot() &&
+						$relation['USER_ID'] != $params['FROM']
+					)
+					{
+						$chat->DeleteUser($this->chat['ID'], $relation['USER_ID'], false, true);
+					}
 				}
-			}
 
-			$chat = new \CIMChat(0);
-			$relations = \CIMChat::GetRelationById($this->chat['ID']);
-			foreach ($relations as $relation)
-			{
-				if (\Bitrix\Im\User::getInstance($relation['USER_ID'])->isConnector())
-					continue;
-
-				if (\Bitrix\Im\User::getInstance($relation['USER_ID'])->isBot())
-					continue;
-
-				if ($relation['USER_ID'] != $params['FROM'] || $selfExit)
+				if($params['FROM'] > 0 && $selfExit)
 				{
-					$chat->DeleteUser($this->chat['ID'], $relation['USER_ID'], false, true);
+					$chat->DeleteUser($this->chat['ID'], $params['FROM'], false, true);
 				}
-			}
 
-			if ($session->getConfig('ACTIVE') == 'Y')
-			{
-				$this->update(Array('AUTHOR_ID' => 0));
-			}
-			else
-			{
-				$this->update(Array('AUTHOR_ID' => $transferUserId));
-			}
-			if($transferUserId > 0)
-			{
-				$chat->AddUser($this->chat['ID'], $transferUserId, false, true);
-			}
+				if ($session->getConfig('ACTIVE') == 'Y')
+				{
+					$this->update(Array('AUTHOR_ID' => 0));
+				}
+				else
+				{
+					$this->update(Array('AUTHOR_ID' => $transferUserId));
+				}
+				if($transferUserId > 0)
+				{
+					$chat->AddUser($this->chat['ID'], $transferUserId, false, true);
+				}
 
-			$userFrom = \Bitrix\Im\User::getInstance($params['FROM']);
-			if($transferUserId > 0)
-			{
-				$userTo = \Bitrix\Im\User::getInstance($transferUserId);
-			}
+				$userFrom = ImUser::getInstance($params['FROM']);
+				if($transferUserId > 0)
+				{
+					$userTo = ImUser::getInstance($transferUserId);
+				}
 
-			Log::write(Array($params['FROM'], $transferUserId), 'TRANSFER TO USER');
+				Log::write(Array($params['FROM'], $transferUserId), 'TRANSFER TO USER');
 
-			if ($transferUserId > 0 && $params['FROM'] > 0 && ($mode == self::TRANSFER_MODE_MANUAL || $mode == self::TRANSFER_MODE_BOT))
-			{
-				$message = Loc::getMessage('IMOL_CHAT_TRANSFER_'.$userFrom->getGender(), Array(
-					'#USER_FROM#' => '[USER='.$userFrom->getId().']'.$userFrom->getFullName(false).'[/USER]',
-					'#USER_TO#' => '[USER='.$userTo->getId().']'.$userTo->getFullName(false).'[/USER]')
-				);
-			}
-			else if(empty($transferUserId))
-			{
-				$message = Loc::getMessage('IMOL_CHAT_NO_OPERATOR_AVAILABLE_IN_QUEUE_NEW');
-			}
-			else
-			{
-				$message = Loc::getMessage('IMOL_CHAT_NEXT_IN_QUEUE_NEW', Array('#USER_TO#' => '[USER='.$userTo->getId().']'.$userTo->getFullName(false).'[/USER]'));
-			}
+				if ($transferUserId > 0 && $params['FROM'] > 0 && ($mode == self::TRANSFER_MODE_MANUAL || $mode == self::TRANSFER_MODE_BOT))
+				{
+					$message = Loc::getMessage('IMOL_CHAT_TRANSFER_'.$userFrom->getGender(), [
+							'#USER_FROM#' => '[USER='.$userFrom->getId().']'.$userFrom->getFullName(false).'[/USER]',
+							'#USER_TO#' => '[USER='.$userTo->getId().']'.$userTo->getFullName(false).'[/USER]']
+					);
+				}
+				else if(empty($transferUserId))
+				{
+					$message = Loc::getMessage('IMOL_CHAT_NO_OPERATOR_AVAILABLE_IN_QUEUE_NEW');
+				}
+				else
+				{
+					$message = Loc::getMessage('IMOL_CHAT_NEXT_IN_QUEUE_NEW', ['#USER_TO#' => '[USER='.$userTo->getId().']'.$userTo->getFullName(false).'[/USER]']);
+				}
 
-			\Bitrix\ImOpenLines\Model\OperatorTransferTable::Add(Array(
-				'CONFIG_ID' => $session->getData('CONFIG_ID'),
-				'SESSION_ID' => $session->getData('ID'),
-				'USER_ID' => intval($params['FROM']),
-				'TRANSFER_MODE' => $mode,
-				'TRANSFER_TYPE' => 'USER',
-				'TRANSFER_USER_ID' => $transferUserId
-			));
+				OperatorTransferTable::Add([
+					'CONFIG_ID' => $session->getData('CONFIG_ID'),
+					'SESSION_ID' => $session->getData('ID'),
+					'USER_ID' => intval($params['FROM']),
+					'TRANSFER_MODE' => $mode,
+					'TRANSFER_TYPE' => 'USER',
+					'TRANSFER_USER_ID' => $transferUserId
+				]);
 
-			Im::addMessage(Array(
-				"TO_CHAT_ID" => $this->chat['ID'],
-				"MESSAGE" => $message,
-				"SYSTEM" => 'Y',
-			));
+				Im::addMessage([
+					"TO_CHAT_ID" => $this->chat['ID'],
+					"MESSAGE" => $message,
+					"SYSTEM" => 'Y',
+				]);
 
-			if ($userFrom->isBot() && !$session->getData('DATE_OPERATOR'))
-			{
-				$currentDate = new \Bitrix\Main\Type\DateTime();
-				$session->update(Array(
-					'DATE_OPERATOR' => $currentDate,
-					'TIME_BOT' => $currentDate->getTimestamp()-$session->getData('DATE_CREATE')->getTimestamp(),
-				));
-			}
+				if ($userFrom->isBot() && !$session->getData('DATE_OPERATOR'))
+				{
+					$currentDate = new DateTime();
+					$session->update([
+						'DATE_OPERATOR' => $currentDate,
+						'TIME_BOT' => $currentDate->getTimestamp()-$session->getData('DATE_CREATE')->getTimestamp(),
+					]);
+				}
 
-			if ($mode == self::TRANSFER_MODE_MANUAL)
-			{
-				$this->answer($transferUserId, false, true);
-			}
-			else
-			{
-				$session->setOperatorId($transferUserId, true, true);
-				$session->update(Array(
-					'CHECK_DATE_CLOSE' => null,
-				));
+				if ($mode == self::TRANSFER_MODE_MANUAL)
+				{
+					$this->answer($transferUserId, false, true);
+					$session->update([
+						'DATE_MODIFY' => new DateTime(),
+						'SKIP_DATE_CLOSE' => true
+					]);
+				}
+				else
+				{
+					$session->setOperatorId($transferUserId, true, true);
+				}
+
+				$result = true;
 			}
 		}
 
-		return true;
+		return $result;
+	}
+
+	/**
+	 * Set the chat operators who see the chat.
+	 *
+	 * @param array $users
+	 * @param bool $skipMessage
+	 * @param bool $skipRecent
+	 * @return bool
+	 * @throws Main\ArgumentException
+	 * @throws Main\LoaderException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
+	public function setOperators($users = array(), $skipMessage = true, $skipRecent = false)
+	{
+		$result = false;
+
+		if($this->isDataLoaded() /*&& !empty($users)*/ && is_array($users))
+		{
+			$users = array_unique($users);
+
+			$delete = [];
+			$relationList = RelationTable::getList(array(
+				"select" => array("ID", "USER_ID"),
+				"filter" => array(
+					"=CHAT_ID" => $this->chat['ID']
+				),
+			));
+
+			while ($relation = $relationList->fetch())
+			{
+				if(Queue::isRealOperator($relation['USER_ID']))
+				{
+					if(!in_array($relation['USER_ID'], $users))
+					{
+						$delete[] = $relation['USER_ID'];
+					}
+				}
+			}
+
+			if(!empty($users) || !empty($delete))
+			{
+				$chat = new \CIMChat($this->joinByUserId);
+
+				if(!empty($users))
+				{
+					$result = $chat->AddUser($this->chat['ID'], $users, false, $skipMessage, $skipRecent);
+					self::chatAutoAddRecent($this->chat['ID'], $users);
+				}
+				if(!empty($delete))
+				{
+					foreach ($delete as $userId)
+					{
+						$result = $chat->DeleteUser($this->chat['ID'], $userId, false, $skipMessage);
+					}
+				}
+			}
+		}
+
+		return $result;
 	}
 
 	/**
@@ -791,7 +957,7 @@ class Chat
 	{
 		$result = false;
 
-		if($this->isDataLoaded && !empty($userId))
+		if($this->isDataLoaded() && !empty($userId))
 		{
 			$chat = new \CIMChat($this->joinByUserId);
 			$result = $chat->AddUser($this->chat['ID'], $userId, false, $skipMessage, $skipRecent);
@@ -810,7 +976,7 @@ class Chat
 	{
 		$result = false;
 
-		if ($this->isDataLoaded)
+		if ($this->isDataLoaded())
 		{
 			$chat = new \CIMChat(0);
 			$result = $chat->DeleteUser($this->chat['ID'], $userId, false, true);
@@ -819,39 +985,54 @@ class Chat
 		return $result;
 	}
 
+	/**
+	 * @return bool
+	 * @throws Main\ArgumentException
+	 * @throws Main\LoaderException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
 	public function close()
 	{
-		if (!$this->isDataLoaded)
-			return false;
+		$result = false;
 
-		$relationList = \Bitrix\Im\Model\RelationTable::getList(array(
-			"select" => array("ID", "USER_ID", "EXTERNAL_AUTH_ID" => "USER.EXTERNAL_AUTH_ID"),
-			"filter" => array(
-				"=CHAT_ID" => $this->chat['ID']
-			),
-		));
-		while ($relation = $relationList->fetch())
+		if($this->isDataLoaded())
 		{
-			if ($relation['EXTERNAL_AUTH_ID'] == "imconnector")
-				continue;
+			$relationList = RelationTable::getList(array(
+				"select" => array("ID", "USER_ID", "EXTERNAL_AUTH_ID" => "USER.EXTERNAL_AUTH_ID"),
+				"filter" => array(
+					"=CHAT_ID" => $this->chat['ID']
+				),
+			));
+			while ($relation = $relationList->fetch())
+			{
+				if ($relation['EXTERNAL_AUTH_ID'] == "imconnector")
+					continue;
 
-			$this->leave($relation['USER_ID']);
-		}
+				$this->leave($relation['USER_ID']);
+			}
 
-		$this->updateFieldData([Chat::FIELD_SESSION => [
+			$this->updateFieldData([Chat::FIELD_SESSION => [
 				'ID' => '0',
 				'PAUSE' => 'N',
 				'WAIT_ACTION' => 'N'
 			]]);
 
-		$this->update(Array(
-			'AUTHOR_ID' => 0,
-			self::getFieldName(self::FIELD_SILENT_MODE) => 'N'
-		));
+			$this->update(Array(
+				'AUTHOR_ID' => 0,
+				self::getFieldName(self::FIELD_SILENT_MODE) => 'N'
+			));
 
-		return true;
+			$result = true;
+		}
+
+		return $result;
 	}
 
+	/**
+	 * @param $userId
+	 * @return bool
+	 */
 	public function setUserIdForJoin($userId)
 	{
 		$this->joinByUserId = intval($userId);
@@ -965,48 +1146,86 @@ class Chat
 		return $result;
 	}
 
+	/**
+	 * @param $status
+	 * @return bool
+	 */
 	public function updateSessionStatus($status)
 	{
-		$users = Array();
-		$relations = \Bitrix\Im\Chat::getRelation($this->chat['ID'], Array(
-			'SELECT' => Array('USER_ID'),
-			'USER_DATA' => 'Y',
-		));
-		foreach ($relations as $relation)
+		$result = false;
+
+		if($this->isDataLoaded())
 		{
-			if ($relation['USER_DATA']["EXTERNAL_AUTH_ID"] == 'imconnector')
+			$users = [];
+			$relations = \Bitrix\Im\Chat::getRelation($this->chat['ID'], [
+				'SELECT' => Array('USER_ID'),
+				'USER_DATA' => 'Y',
+			]);
+			foreach ($relations as $relation)
 			{
-				continue;
+				if ($relation['USER_DATA']["EXTERNAL_AUTH_ID"] == 'imconnector')
+				{
+					continue;
+				}
+				$users[] = $relation['USER_ID'];
 			}
-			$users[] = $relation['USER_ID'];
+
+			Pull\Event::add($users, [
+				'module_id' => 'imopenlines',
+				'command' => 'updateSessionStatus',
+				'params' => [
+					'chatId' => $this->chat['ID'],
+					'status' => (int)$status
+				],
+			]);
+
+			$result = true;
 		}
 
-		\Bitrix\Pull\Event::add($users, Array(
-			'module_id' => 'imopenlines',
-			'command' => 'updateSessionStatus',
-			'params' => Array(
-				'chatId' => $this->chat['ID'],
-				'status' => (int)$status
-			),
-		));
-
-		return true;
+		return $result;
 	}
 
+	/**
+	 * @return bool
+	 * @throws Main\ArgumentException
+	 * @throws Main\LoaderException
+	 * @throws Main\ObjectException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
 	public function finish()
 	{
-		$session = new Session();
-		$result = $session->load(Array(
-			'USER_CODE' => $this->chat['ENTITY_ID']
-		));
-		if (!$result)
+		$result = false;
+
+		if($this->isDataLoaded())
 		{
-			return false;
+			$session = new Session();
+			$resultLoadSession = $session->load([
+				'USER_CODE' => $this->chat['ENTITY_ID']
+			]);
+			if ($resultLoadSession)
+			{
+				if($this->validationAction($session->getData('CHAT_ID')))
+				{
+					$eventData = [
+						'RUNTIME_SESSION' => $session
+					];
+
+					$event = new Event("imopenlines", "OnChatFinish", $eventData);
+					$event->send();
+
+					$session->finish();
+
+					$result = true;
+				}
+			}
+			else
+			{
+				$this->validationAction();
+			}
 		}
 
-		$session->finish();
-
-		return true;
+		return $result;
 	}
 
 	/**
@@ -1025,216 +1244,355 @@ class Chat
 		$session = new Session();
 
 		if (
-			$session->load(Array(
-			'USER_CODE' => $this->chat['ENTITY_ID'],
-			'SKIP_CREATE' => 'Y'
-		))
+			$this->isDataLoaded() &&
+			$session->load([
+				'USER_CODE' => $this->chat['ENTITY_ID'],
+				'SKIP_CREATE' => 'Y'
+			])
 		)
 		{
-			$user = \Bitrix\Im\User::getInstance($userId);
-			$message = Loc::getMessage('IMOL_CHAT_MARK_SPAM_'.$user->getGender(), Array(
-				'#USER#' => '[USER='.$user->getId().']'.$user->getFullName(false).'[/USER]',
-			));
-
-			Im::addMessage(Array(
-				"TO_CHAT_ID" => $this->chat['ID'],
-				"MESSAGE" => $message,
-				"SYSTEM" => 'Y',
-			));
-
-			if (\Bitrix\ImOpenLines\Connector::isLiveChat($session->getData('SOURCE')))
+			if($this->validationAction($session->getData('CHAT_ID')))
 			{
-				$parsedUserCode = Session\Common::parseUserCode($session->getData('USER_CODE'));
-				$chatId = $parsedUserCode['EXTERNAL_CHAT_ID'];
-				$liveChat = new Chat($chatId);
-				$liveChat->updateFieldData([Chat::FIELD_LIVECHAT => [
-					'SESSION_ID' => 0,
-					'SHOW_FORM' => 'N'
-				]]);
+				$queueManager = Queue::initialization($session);
+
+				if($queueManager && $queueManager->startLock())
+				{
+					$user = ImUser::getInstance($userId);
+					$message = Loc::getMessage('IMOL_CHAT_MARK_SPAM_'.$user->getGender(), Array(
+						'#USER#' => '[USER='.$user->getId().']'.$user->getFullName(false).'[/USER]',
+					));
+
+					Im::addMessage(Array(
+						"TO_CHAT_ID" => $this->chat['ID'],
+						"MESSAGE" => $message,
+						"SYSTEM" => 'Y',
+					));
+
+					if (\Bitrix\ImOpenLines\Connector::isLiveChat($session->getData('SOURCE')))
+					{
+						$parsedUserCode = Session\Common::parseUserCode($session->getData('USER_CODE'));
+						$chatId = $parsedUserCode['EXTERNAL_CHAT_ID'];
+						$liveChat = new Chat($chatId);
+						$liveChat->updateFieldData([Chat::FIELD_LIVECHAT => [
+							'SESSION_ID' => 0,
+							'SHOW_FORM' => 'N'
+						]]);
+					}
+
+					$eventData = array(
+						'RUNTIME_SESSION' => $session,
+						'USER_ID' => $userId,
+					);
+					$event = new Event("imopenlines", "OnChatMarkSpam", $eventData);
+					$event->send();
+
+					$session->markSpam();
+					$session->finish();
+
+					$queueManager->stopLock();
+					$result = true;
+				}
 			}
-
-			$session->markSpam();
-			$session->finish();
-
-			$result = true;
+		}
+		else
+		{
+			$this->validationAction();
 		}
 
 		return $result;
 	}
 
+	/**
+	 * @return bool
+	 * @throws Main\ArgumentException
+	 * @throws Main\LoaderException
+	 * @throws Main\ObjectException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
 	public function dismissedOperatorFinish()
 	{
-		$session = new Session();
-		$result = $session->load(Array(
-			'USER_CODE' => $this->chat['ENTITY_ID']
-		));
-		if (!$result)
+		$result = false;
+
+		if($this->isDataLoaded())
 		{
-			return false;
+			$session = new Session();
+
+			$params = [
+				'SKIP_CREATE' => 'Y',
+				'USER_CODE' => $this->chat['ENTITY_ID']
+			];
+
+			$parsedUserCode = Session\Common::parseUserCode($this->chat['ENTITY_ID']);
+
+			$params['USER_ID'] = $parsedUserCode['CONNECTOR_USER_ID'];
+			$params['SOURCE'] = $parsedUserCode['CONNECTOR_ID'];
+			$params['CHAT_ID'] = $parsedUserCode['EXTERNAL_CHAT_ID'];
+			$params['CONFIG_ID'] = $parsedUserCode['CONFIG_ID'];
+
+			$resultStart = $session->start($params);
+
+			if ($resultStart->isSuccess() && $resultStart->getResult() == true)
+			{
+				$session->dismissedOperatorFinish();
+
+				$result = true;
+			}
 		}
 
-		$session->dismissedOperatorFinish();
-
-		return true;
+		return $result;
 	}
 
+	/**
+	 * @param $userId
+	 * @return bool
+	 * @throws Main\ArgumentException
+	 * @throws Main\LoaderException
+	 * @throws Main\ObjectException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
 	public function startSession($userId)
 	{
-		$session = new Session();
-		$session->load(Array(
-			'USER_CODE' => $this->chat['ENTITY_ID'],
-			'MODE' => Session::MODE_OUTPUT,
-			'OPERATOR_ID' => $userId,
-		));
-		if ($session->isNowCreated())
-		{
-			$dateClose = new \Bitrix\Main\Type\DateTime();
-			$dateClose->add('1 MONTH');
+		$result = false;
 
-			$sessionUpdate = Array(
-				'CHECK_DATE_CLOSE' => $dateClose
-			);
-			$session->update($sessionUpdate);
-		}
-		else
+		if($this->isDataLoaded())
 		{
-			$this->join($userId, false);
+			$session = new Session();
+			$resultLoad = $session->load(Array(
+				'USER_CODE' => $this->chat['ENTITY_ID'],
+				'MODE' => Session::MODE_OUTPUT,
+				'OPERATOR_ID' => $userId,
+			));
+
+			if($resultLoad)
+			{
+				if($this->validationAction($session->getData('CHAT_ID')))
+				{
+					if ($session->isNowCreated())
+					{
+						$dateClose = new DateTime();
+						$dateClose->add('1 MONTH');
+
+						$sessionUpdate = Array(
+							'CHECK_DATE_CLOSE' => $dateClose
+						);
+						$session->update($sessionUpdate);
+					}
+					else
+					{
+						$this->join($userId, false);
+					}
+
+					$result = true;
+				}
+			}
 		}
 
-		return true;
+		return $result;
 	}
 
+	/**
+	 * Create a new dialog based on an old message.
+	 *
+	 * @param $userId
+	 * @param $messageId
+	 * @return bool
+	 * @throws Main\ArgumentException
+	 * @throws Main\LoaderException
+	 * @throws Main\ObjectException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
 	public function startSessionByMessage($userId, $messageId)
 	{
-		$session = new Session();
-		$result = $session->load(Array(
-			'USER_CODE' => $this->chat['ENTITY_ID']
-		));
-		if (!$result)
+		$result = false;
+
+		if($this->isDataLoaded())
 		{
-			return false;
+			$session = new Session();
+			$resultLoad = $session->load([
+				'USER_CODE' => $this->chat['ENTITY_ID']
+			]);
+			if ($resultLoad)
+			{
+				if($this->validationAction($session->getData('CHAT_ID')))
+				{
+					$message = \CIMMessenger::GetById($messageId);
+					if ($message['CHAT_ID'] == $this->chat['ID'])
+					{
+						$user = ImUser::getInstance($userId);
+						Im::addMessage(Array(
+							"TO_CHAT_ID" => $this->chat['ID'],
+							"SYSTEM" => 'Y',
+							"MESSAGE" => Loc::getMessage('IMOL_CHAT_CLOSE_FOR_OPEN_'.$user->getGender(), Array(
+								'#USER#' => '[USER='.$user->getId().']'.$user->getFullName(false).'[/USER]',
+							)),
+						));
+
+						$configId = $session->getData('CONFIG_ID');
+						$sessionId = $session->getData('SESSION_ID');
+
+						$session->finish(false, true, false);
+
+						$session = new Session();
+						$session->load(Array(
+							'USER_CODE' => $this->chat['ENTITY_ID'],
+							'MODE' => Session::MODE_OUTPUT,
+							'OPERATOR_ID' => $userId,
+							'CONFIG_ID' => $configId,
+							'PARENT_ID' => $sessionId
+						));
+
+						if ($this->chat['AUTHOR_ID'] == $userId)
+						{
+							$resultAnswer = true;
+						}
+						else
+						{
+							$resultAnswer = $this->answer($userId, false, true)->isSuccess();
+						}
+
+						if($resultAnswer)
+						{
+							Im::addMessage(Array(
+								"TO_CHAT_ID" => $this->chat['ID'],
+								"FROM_USER_ID" => $message['AUTHOR_ID'],
+								"MESSAGE" => $message['MESSAGE'],
+								"PARAMS" => $message['PARAMS'],
+								"SKIP_CONNECTOR" => 'Y',
+							));
+
+							$dateClose = new DateTime();
+							$dateClose->add('1 MONTH');
+
+							$sessionUpdate = Array(
+								'CHECK_DATE_CLOSE' => $dateClose
+							);
+							$session->update($sessionUpdate);
+
+							$result = true;
+						}
+					}
+				}
+			}
 		}
 
-		$message = \CIMMessenger::GetById($messageId);
-		if ($message['CHAT_ID'] != $this->chat['ID'])
-		{
-			return false;
-		}
-
-		$user = \Bitrix\Im\User::getInstance($userId);
-		Im::addMessage(Array(
-			"TO_CHAT_ID" => $this->chat['ID'],
-			"SYSTEM" => 'Y',
-			"MESSAGE" => Loc::getMessage('IMOL_CHAT_CLOSE_FOR_OPEN_'.$user->getGender(), Array(
-				'#USER#' => '[USER='.$user->getId().']'.$user->getFullName(false).'[/USER]',
-			)),
-		));
-
-		$configId = $session->getData('CONFIG_ID');
-		$sessionId = $session->getData('SESSION_ID');
-
-		$session->finish(false, true, false);
-
-		$session = new Session();
-		$session->load(Array(
-			'USER_CODE' => $this->chat['ENTITY_ID'],
-			'MODE' => Session::MODE_OUTPUT,
-			'OPERATOR_ID' => $userId,
-			'CONFIG_ID' => $configId,
-			'PARENT_ID' => $sessionId
-		));
-
-		Im::addMessage(Array(
-			"TO_CHAT_ID" => $this->chat['ID'],
-			"FROM_USER_ID" => $message['AUTHOR_ID'],
-			"MESSAGE" => $message['MESSAGE'],
-			"PARAMS" => $message['PARAMS'],
-			"SKIP_CONNECTOR" => 'Y',
-		));
-
-		$this->answer($userId, false, true);
-
-		$dateClose = new \Bitrix\Main\Type\DateTime();
-		$dateClose->add('1 MONTH');
-
-		$sessionUpdate = Array(
-			'CHECK_DATE_CLOSE' => $dateClose
-		);
-		$session->update($sessionUpdate);
-
-		return true;
+		return $result;
 	}
 
+	/**
+	 * @param bool $active
+	 * @return bool
+	 * @throws Main\LoaderException
+	 */
 	public function setSilentMode($active = true)
 	{
-		$active = $active? 'Y': '';
-		if ($this->chat[self::getFieldName(self::FIELD_SILENT_MODE)] == $active)
-			return true;
+		$result = false;
 
-		\Bitrix\Im\Model\ChatTable::update($this->chat['ID'], Array(
-			self::getFieldName(self::FIELD_SILENT_MODE) => $active
-		));
+		if($this->isDataLoaded())
+		{
+			$active = $active? 'Y': '';
+			if ($this->chat[self::getFieldName(self::FIELD_SILENT_MODE)] == $active)
+			{
+				$result = true;
+			}
+			else
+			{
+				\Bitrix\Im\Model\ChatTable::update($this->chat['ID'], Array(
+					self::getFieldName(self::FIELD_SILENT_MODE) => $active
+				));
 
-		Im::addMessage(Array(
-			"TO_CHAT_ID" => $this->chat['ID'],
-			"MESSAGE" => Loc::getMessage($active? 'IMOL_CHAT_STEALTH_ON': 'IMOL_CHAT_STEALTH_OFF'),
-			"SYSTEM" => 'Y',
-		));
+				Im::addMessage(Array(
+					"TO_CHAT_ID" => $this->chat['ID'],
+					"MESSAGE" => Loc::getMessage($active? 'IMOL_CHAT_STEALTH_ON': 'IMOL_CHAT_STEALTH_OFF'),
+					"SYSTEM" => 'Y',
+				));
 
-		return true;
+				$result = true;
+			}
+		}
+
+		return $result;
 	}
 
+	/**
+	 * @return bool
+	 */
 	public function isSilentModeEnabled()
 	{
-		return $this->chat[self::getFieldName(self::FIELD_SILENT_MODE)] == 'Y';
+		$result = false;
+
+		if($this->isDataLoaded())
+		{
+			$result = $this->chat[self::getFieldName(self::FIELD_SILENT_MODE)] == 'Y';;
+		}
+
+		return $result;
 	}
 
+	/**
+	 * @param $params
+	 * @return bool
+	 * @throws Main\ArgumentException
+	 * @throws Main\LoaderException
+	 * @throws Main\ObjectException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
 	public function setPauseFlag($params)
 	{
+		$result = false;
+
 		$pause = $params['ACTIVE'] == 'Y'? 'Y': 'N';
 		$sessionField = $this->getFieldData(self::FIELD_SESSION);
 		if ($sessionField['PAUSE'] == $pause)
 		{
-			return true;
+			$result = true;
 		}
-
-		$session = new Session();
-		$result = $session->load(Array(
-			'USER_CODE' => $this->chat['ENTITY_ID']
-		));
-		if (!$result)
+		elseif($this->isDataLoaded())
 		{
-			return false;
-		}
-
-		$session->pause($pause == 'Y');
-
-		$this->updateFieldData([self::FIELD_SESSION => [
-			'PAUSE' => $pause
-		]]);
-
-		if ($pause == 'Y')
-		{
-			$datePause = new \Bitrix\Main\Type\DateTime();
-			$datePause->add('1 WEEK');
-
-			$formattedDate = \FormatDate('d F', $datePause->getTimestamp());
-			Im::addMessage(Array(
-				"TO_CHAT_ID" => $this->chat['ID'],
-				"MESSAGE" => Loc::getMessage('IMOL_CHAT_PAUSE_ON', array('#DATE#' => '[b]'.$formattedDate.'[/b]')),
-				"SYSTEM" => 'Y',
+			$session = new Session();
+			$resultLoad = $session->load(Array(
+				'USER_CODE' => $this->chat['ENTITY_ID']
 			));
-		}
-		else
-		{
-			Im::addMessage(Array(
-				"TO_CHAT_ID" => $this->chat['ID'],
-				"MESSAGE" => Loc::getMessage('IMOL_CHAT_PAUSE_OFF_NEW'),
-				"SYSTEM" => 'Y',
-			));
+			if ($resultLoad)
+			{
+				if($this->validationAction($session->getData('CHAT_ID')))
+				{
+					$session->pause($pause == 'Y');
+
+					$this->updateFieldData([self::FIELD_SESSION => [
+						'PAUSE' => $pause
+					]]);
+
+					if ($pause == 'Y')
+					{
+						$datePause = new DateTime();
+						$datePause->add('1 WEEK');
+
+						$formattedDate = \FormatDate('d F', $datePause->getTimestamp());
+						Im::addMessage([
+							"TO_CHAT_ID" => $this->chat['ID'],
+							"MESSAGE" => Loc::getMessage('IMOL_CHAT_ASSIGN_ON', ['#DATE#' => '[b]'.$formattedDate.'[/b]']),
+							"SYSTEM" => 'Y',
+						]);
+					}
+					else
+					{
+						Im::addMessage([
+							"TO_CHAT_ID" => $this->chat['ID'],
+							"MESSAGE" => Loc::getMessage('IMOL_CHAT_ASSIGN_OFF'),
+							"SYSTEM" => 'Y',
+						]);
+					}
+				}
+			}
+
+			$result = true;
 		}
 
-		return true;
+		return $result;
 	}
 
 	/**
@@ -1254,28 +1612,31 @@ class Chat
 		{
 			$result = true;
 		}
-		else
+		elseif($this->isDataLoaded())
 		{
 			$session = new Session();
-			if($session->load(Array(
+			if($session->load([
 				'USER_CODE' => $this->chat['ENTITY_ID']
-			)))
+			]))
 			{
-				$crmManager = new Crm($session);
-				if($crmManager->isLoaded())
+				if($this->validationAction($session->getData('CHAT_ID')))
 				{
-					$crmFieldsManager = $crmManager->getFields();
-					$crmFieldsManager->setTitle($session->getChat()->getData('TITLE'));
-					$crmFieldsManager->setDataFromUser();
-					$crmManager->setSkipSearch();
-					$crmManager->setSkipAutomationTrigger();
-
-					$rawResult = $crmManager->registrationChanges();
-					$crmManager->sendCrmImMessages();
-
-					if($rawResult->isSuccess())
+					$crmManager = new Crm($session);
+					if($crmManager->isLoaded())
 					{
-						$result = true;
+						$crmFieldsManager = $crmManager->getFields();
+						$crmFieldsManager->setTitle($session->getChat()->getData('TITLE'));
+						$crmFieldsManager->setDataFromUser();
+						$crmManager->setSkipSearch();
+						$crmManager->setSkipAutomationTrigger();
+
+						$rawResult = $crmManager->registrationChanges();
+						$crmManager->sendCrmImMessages();
+
+						if($rawResult->isSuccess())
+						{
+							$result = true;
+						}
 					}
 				}
 			}
@@ -1305,7 +1666,8 @@ class Chat
 					'CRM_ENTITY_ID' => '0',
 					'PAUSE' => 'N',
 					'WAIT_ACTION' => 'N',
-					'DATE_CREATE' => '0'
+					'DATE_CREATE' => '0',
+					'LINE_ID' => 0
 				];
 
 				$fieldData = explode("|", $this->chat[self::getFieldName($field)]);
@@ -1336,6 +1698,10 @@ class Chat
 				if (isset($fieldData[6]))
 				{
 					$data['DATE_CREATE'] = intval($fieldData[6]);
+				}
+				if (isset($fieldData[7]) && $fieldData[7] > 0)
+				{
+					$data['LINE_ID'] = intval($fieldData[7]);
 				}
 			}
 			else if ($field == self::FIELD_CRM)
@@ -1394,6 +1760,12 @@ class Chat
 		return $data;
 	}
 
+	/**
+	 * @param $lineName
+	 * @param string $userName
+	 * @param string $userColor
+	 * @return array
+	 */
 	public function getTitle($lineName, $userName = '', $userColor = '')
 	{
 		if (!$userName)
@@ -1426,7 +1798,12 @@ class Chat
 		$result = new Result;
 		$updateDate = [];
 
-		if(is_array($fields))
+		if(!$this->isDataLoaded())
+		{
+			$result->addError(new Error(Loc::getMessage('IMOL_CHAT_ERROR_NOT_LOAD_DATA'), 'IMOL_CHAT_ERROR_NOT_LOAD_DATA', __METHOD__, ['chat' => $this->chat]));
+		}
+
+		if($result->isSuccess() && is_array($fields))
 		{
 			foreach ($fields as $fieldType => $fieldData)
 			{
@@ -1461,10 +1838,14 @@ class Chat
 						}
 						if (isset($fieldData['DATE_CREATE']))
 						{
-							$data['DATE_CREATE'] = $fieldData['DATE_CREATE'] instanceof \Bitrix\Main\Type\DateTime? $fieldData['DATE_CREATE']->getTimestamp(): intval($fieldData['DATE_CREATE']);
+							$data['DATE_CREATE'] = $fieldData['DATE_CREATE'] instanceof DateTime? $fieldData['DATE_CREATE']->getTimestamp(): intval($fieldData['DATE_CREATE']);
+						}
+						if (isset($fieldData['LINE_ID']) && intval($fieldData['LINE_ID']) > 0)
+						{
+							$data['LINE_ID'] = intval($fieldData['LINE_ID']);
 						}
 
-						$updateDate[self::getFieldName($fieldType)] = $this->chat[self::getFieldName($fieldType)] = $data['CRM'].'|'.$data['CRM_ENTITY_TYPE'].'|'.$data['CRM_ENTITY_ID'].'|'.$data['PAUSE'].'|'.$data['WAIT_ACTION'].'|'.$data['ID'].'|'.$data['DATE_CREATE'];
+						$updateDate[self::getFieldName($fieldType)] = $this->chat[self::getFieldName($fieldType)] = $data['CRM'].'|'.$data['CRM_ENTITY_TYPE'].'|'.$data['CRM_ENTITY_ID'].'|'.$data['PAUSE'].'|'.$data['WAIT_ACTION'].'|'.$data['ID'].'|'.$data['DATE_CREATE'].'|'.$data['LINE_ID'];
 					}
 					else if ($fieldType == self::FIELD_CRM)
 					{
@@ -1513,7 +1894,7 @@ class Chat
 						}
 						if (isset($fieldData['READED_TIME']))
 						{
-							$data['READED_TIME'] = $fieldData['READED_TIME'] instanceof \Bitrix\Main\Type\DateTime? date('c', $fieldData['READED_TIME']->getTimestamp()): false;
+							$data['READED_TIME'] = $fieldData['READED_TIME'] instanceof DateTime? date('c', $fieldData['READED_TIME']->getTimestamp()): false;
 						}
 						if (isset($fieldData['SESSION_ID']))
 						{
@@ -1529,7 +1910,7 @@ class Chat
 			}
 		}
 
-		if(empty($updateDate))
+		if($result->isSuccess() && empty($updateDate))
 		{
 			$result->addError(new Error(Loc::getMessage('IMOL_CRM_ERROR_NOT_GIVEN_CORRECT_DATA'), self::IMOL_CRM_ERROR_NOT_GIVEN_CORRECT_DATA, __METHOD__));
 		}
@@ -1547,7 +1928,7 @@ class Chat
 		if($result->isSuccess())
 		{
 			$users = [];
-			$relationList = \Bitrix\Im\Model\RelationTable::getList([
+			$relationList = RelationTable::getList([
 				"select" => array("ID", "USER_ID", "EXTERNAL_AUTH_ID" => "USER.EXTERNAL_AUTH_ID"),
 				"filter" => array(
 					"=CHAT_ID" => $this->chat['ID']
@@ -1570,7 +1951,7 @@ class Chat
 			{
 				foreach ($updateDate as $name => $value)
 				{
-					\Bitrix\Pull\Event::add($users, Array(
+					Pull\Event::add($users, Array(
 						'module_id' => 'im',
 						'command' => 'chatUpdateParam',
 						'params' => Array(
@@ -1587,79 +1968,116 @@ class Chat
 		return $result;
 	}
 
+	/**
+	 * @param $fields
+	 * @return bool
+	 * @throws Main\ArgumentException
+	 * @throws Main\LoaderException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
 	public function update($fields)
 	{
-		foreach($fields as $field => $value)
+		$result = false;
+
+		if($this->isDataLoaded())
 		{
-			if ($this->chat[$field] === $value)
+			foreach($fields as $field => $value)
 			{
-				unset($fields[$field]);
+				if ($this->chat[$field] === $value)
+				{
+					unset($fields[$field]);
+				}
+				else
+				{
+					$this->chat[$field] = $value;
+				}
+			}
+
+			if (!empty($fields))
+			{
+				\Bitrix\Im\Model\ChatTable::update($this->chat['ID'], $fields);
+
+				$relations = \CIMChat::GetRelationById($this->chat['ID']);
+				foreach ($relations as $rel)
+				{
+					\CIMContactList::CleanChatCache($rel['USER_ID']);
+
+					if (isset($fields['AUTHOR_ID']))
+					{
+						if ($rel['USER_ID'] == $this->chat['AUTHOR_ID'])
+						{
+							RelationTable::update($rel['ID'], Array('MANAGER' => 'N'));
+						}
+						if ($rel['USER_ID'] == $fields['AUTHOR_ID'])
+						{
+							RelationTable::update($rel['ID'], Array('MANAGER' => 'Y'));
+						}
+					}
+				}
+
+				if (array_key_exists('AUTHOR_ID', $fields))
+				{
+					//CRM
+					if(!empty($fields['AUTHOR_ID']) && !ImUser::getInstance($fields['AUTHOR_ID'])->isBot())
+					{
+						$session = new Session();
+						$loadSession = $session->load(Array(
+							'USER_CODE' => $this->chat['ENTITY_ID']
+						));
+						if($loadSession)
+						{
+							$crmManager = new Crm($session);
+
+							$crmManager->setOperatorId($fields['AUTHOR_ID'], false);
+						}
+					}
+					//END CRM
+
+					$parsedUserCode = Session\Common::parseUserCode($this->chat['ENTITY_ID']);
+					if (\Bitrix\ImOpenLines\Connector::isLiveChat($parsedUserCode['CONNECTOR_ID']))
+					{
+						Pull\Event::add($parsedUserCode['CONNECTOR_USER_ID'], Array(
+							'module_id' => 'imopenlines',
+							'command' => 'sessionOperatorChange',
+							'params' => Array(
+								'chatId' => (int)$parsedUserCode['EXTERNAL_CHAT_ID'],
+								'operator' => Rest::objectEncode(
+									Queue::getUserData($parsedUserCode['CONFIG_ID'], $fields['AUTHOR_ID'])
+								)
+							)
+						));
+					}
+				}
+			}
+
+			$result = true;
+		}
+
+		return $result;
+	}
+
+	/**
+	 * @param string $field
+	 * @return array|bool|false|mixed|null
+	 */
+	public function getData($field = '')
+	{
+		$result = false;
+
+		if($this->isDataLoaded())
+		{
+			if ($field)
+			{
+				$result = isset($this->chat[$field])? $this->chat[$field]: null;
 			}
 			else
 			{
-				$this->chat[$field] = $value;
+				$result = $this->chat;
 			}
 		}
 
-		if (empty($fields))
-		{
-			return true;
-		}
-
-		\Bitrix\Im\Model\ChatTable::update($this->chat['ID'], $fields);
-
-		$relations = \CIMChat::GetRelationById($this->chat['ID']);
-		foreach ($relations as $rel)
-		{
-			\CIMContactList::CleanChatCache($rel['USER_ID']);
-
-			if (isset($fields['AUTHOR_ID']))
-			{
-				if ($rel['USER_ID'] == $this->chat['AUTHOR_ID'])
-				{
-					\Bitrix\Im\Model\RelationTable::update($rel['ID'], Array('MANAGER' => 'N'));
-				}
-				if ($rel['USER_ID'] == $fields['AUTHOR_ID'])
-				{
-					\Bitrix\Im\Model\RelationTable::update($rel['ID'], Array('MANAGER' => 'Y'));
-				}
-			}
-		}
-
-		if (array_key_exists('AUTHOR_ID', $fields))
-		{
-			$parsedUserCode = Session\Common::parseUserCode($this->chat['ENTITY_ID']);
-			if (\Bitrix\ImOpenLines\Connector::isLiveChat($parsedUserCode['CONNECTOR_ID']))
-			{
-				\Bitrix\Pull\Event::add($parsedUserCode['CONNECTOR_USER_ID'], Array(
-					'module_id' => 'imopenlines',
-					'command' => 'sessionOperatorChange',
-					'params' => Array(
-						'chatId' => (int)$parsedUserCode['EXTERNAL_CHAT_ID'],
-						'operator' => Rest::objectEncode(
-							Queue::getUserData($parsedUserCode['CONFIG_ID'], $fields['AUTHOR_ID'])
-						)
-					)
-				));
-			}
-		}
-
-		return true;
-	}
-
-	public function getData($field = '')
-	{
-		if (!$this->isDataLoaded)
-			return false;
-
-		if ($field)
-		{
-			return isset($this->chat[$field])? $this->chat[$field]: null;
-		}
-		else
-		{
-			return $this->chat;
-		}
+		return $result;
 	}
 
 	public static function getGuestName($chatColorCode = '')
@@ -1706,77 +2124,183 @@ class Chat
 		return self::$fieldAssoc[$field];
 	}
 
+	/**
+	 * @param $userList
+	 * @return bool|int
+	 * @throws Main\LoaderException
+	 */
 	public function sendJoinMessage($userList)
 	{
-		if (empty($userList))
-			return false;
+		$result = false;
 
-		if (count($userList) == 1)
+		if (!empty($userList) && $this->isDataLoaded())
 		{
-			$toUserId = $userList[0];
-			$userName = \Bitrix\Im\User::getInstance($toUserId)->getFullName(false);
-			$message = Loc::getMessage('IMOL_CHAT_ASSIGN_OPERATOR_NEW', Array('#USER#' => '[USER='.$toUserId.']'.$userName.'[/USER]'));
-		}
-		else
-		{
-			$message = Loc::getMessage('IMOL_CHAT_ASSIGN_OPERATOR_LIST_NEW');
+			if (count($userList) == 1)
+			{
+				$toUserId = $userList[0];
+				$userName = ImUser::getInstance($toUserId)->getFullName(false);
+				$message = Loc::getMessage('IMOL_CHAT_ASSIGN_OPERATOR_NEW', Array('#USER#' => '[USER='.$toUserId.']'.$userName.'[/USER]'));
+			}
+			else
+			{
+				$message = Loc::getMessage('IMOL_CHAT_ASSIGN_OPERATOR_LIST_NEW');
+			}
+
+			$messageId = Im::addMessage(Array(
+				"TO_CHAT_ID" => $this->chat['ID'],
+				"FROM_USER_ID" => 0,
+				"MESSAGE" => $message,
+				"SYSTEM" => 'Y',
+				"IMPORTANT_CONNECTOR" => 'N'
+			));
+
+			$result = $messageId;
 		}
 
-		$messageId = Im::addMessage(Array(
-			"TO_CHAT_ID" => $this->chat['ID'],
-			"FROM_USER_ID" => 0,
-			"MESSAGE" => $message,
-			"SYSTEM" => 'Y',
-			"IMPORTANT_CONNECTOR" => 'N'
-		));
-
-		return $messageId;
+		return $result;
 	}
 
-	public function sendAutoMessage($type = null)
+	/**
+	 * @param null $type
+	 * @param string $message
+	 * @return bool|int
+	 * @throws Main\ArgumentException
+	 * @throws Main\LoaderException
+	 * @throws Main\ObjectException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
+	public function sendAutoMessage($type = null, $message = '')
 	{
+		$result = false;
+
 		if (!$type)
-			return true;
-
-		$session = new Session();
-		$result = $session->load(Array(
-			'USER_CODE' => $this->chat['ENTITY_ID']
-		));
-		if (!$result)
 		{
-			return false;
+			$result = true;
 		}
-
-		$messageId = false;
-		if ($type == self::TEXT_WELCOME)
+		elseif($this->isDataLoaded())
 		{
-			if ($session->getConfig('WELCOME_MESSAGE') == 'Y' && $session->getConfig('SOURCE') != 'network')
+			$session = new Session();
+			$resultLoad = $session->load([
+				'USER_CODE' => $this->chat['ENTITY_ID']
+			]);
+			if ($resultLoad)
 			{
-				$messageId = Im::addMessage(Array(
-					"TO_CHAT_ID" => $this->chat['ID'],
-					"MESSAGE" => $session->getConfig('WELCOME_MESSAGE_TEXT'),
-					"SYSTEM" => 'Y',
-					"IMPORTANT_CONNECTOR" => 'Y',
-					"PARAMS" => Array(
-						"CLASS" => "bx-messenger-content-item-ol-output"
-					)
-				));
+				if($this->validationAction($session->getData('CHAT_ID')))
+				{
+					$messageId = false;
+					if ($type == self::TEXT_WELCOME)
+					{
+						if ($session->getConfig('WELCOME_MESSAGE') == 'Y' && $session->getConfig('SOURCE') != 'network')
+						{
+							$messageId = Im::addMessage(Array(
+								"TO_CHAT_ID" => $this->chat['ID'],
+								"MESSAGE" => $session->getConfig('WELCOME_MESSAGE_TEXT'),
+								"SYSTEM" => 'Y',
+								"IMPORTANT_CONNECTOR" => 'Y',
+								"PARAMS" => Array(
+									"CLASS" => "bx-messenger-content-item-ol-output"
+								)
+							));
+						}
+					}
+					elseif($type == self::TEXT_DEFAULT)
+					{
+						if (!empty($message))
+						{
+							$messageId = Im::addMessage(
+								Array(
+									"TO_CHAT_ID" => $this->chat['ID'],
+									"MESSAGE" => $message,
+									"SYSTEM" => 'Y',
+									"IMPORTANT_CONNECTOR" => 'Y',
+									"PARAMS" => Array(
+										"CLASS" => "bx-messenger-content-item-ol-output"
+									)
+								)
+							);
+						}
+					}
+
+					$result = $messageId;
+				}
 			}
 		}
 
-		return $messageId;
+
+
+		return $result;
 	}
 
+	/**
+	 * @param $entityId
+	 * @throws Main\ArgumentException
+	 * @throws Main\LoaderException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
+	public function updateChatLineData($entityId)
+	{
+		$this->update(array('ENTITY_ID' => $entityId));
+
+		$entity = explode('|', $entityId);
+
+		if (strtolower($entity[0] == 'livechat'))
+		{
+			$relationChat = new self($entity[2]);
+			$relationEntityId = $entity[1] . '|' . $entity[3];
+			$relationChat->update(array('ENTITY_ID' => $relationEntityId));
+		}
+	}
+
+	/**
+	 * Check before action that the same dialog was loaded.
+	 *
+	 * @param $loadChatId
+	 * @return bool
+	 * @throws Main\ArgumentException
+	 * @throws Main\LoaderException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
+	protected function validationAction($loadChatId = 0)
+	{
+		$result = false;
+
+		if($this->isDataLoaded())
+		{
+			if($this->chat['ID'] == $loadChatId)
+			{
+				$result = true;
+			}
+			else
+			{
+				$this->close();
+			}
+		}
+
+		return $result;
+	}
+
+	/**
+	 * @return bool
+	 */
 	public function isNowCreated()
 	{
 		return $this->isCreated;
 	}
 
+	/**
+	 * @return bool
+	 */
 	public function isDataLoaded()
 	{
 		return $this->isDataLoaded;
 	}
 
+	/**
+	 * @return BasicError|null
+	 */
 	public function getError()
 	{
 		return $this->error;
@@ -1846,8 +2370,8 @@ class Chat
 				}
 				else
 				{
-					$userName = \Bitrix\Im\User::getInstance($fromUserId)->getFullName(false);
-					$userGender = \Bitrix\Im\User::getInstance($fromUserId)->getGender();
+					$userName = ImUser::getInstance($fromUserId)->getFullName(false);
+					$userGender = ImUser::getInstance($fromUserId)->getGender();
 
 					if($type == self::RATING_TYPE_HEAD)
 					{
@@ -1904,22 +2428,30 @@ class Chat
 		return $result;
 	}
 
+	/**
+	 * @return array
+	 */
 	public static function onGetNotifySchema()
 	{
-		return array(
-			"imopenlines" => array(
-				"rating_client" => Array(
+		return [
+			"imopenlines" => [
+				"rating_client" => [
 					"NAME" => Loc::getMessage('IMOL_CHAT_NOTIFY_SCHEMA_RATING_CLIENT_new'),
 					"LIFETIME" => 86400*7
-				),
-				"rating_head" => Array(
+				],
+				"rating_head" => [
 					"NAME" => Loc::getMessage('IMOL_CHAT_NOTIFY_SCHEMA_RATING_HEAD'),
 					"LIFETIME" => 86400*7
-				),
-			),
-		);
+				],
+			],
+		];
 	}
 
+	/**
+	 * @param $icon
+	 * @param null $lang
+	 * @return array|bool
+	 */
 	public static function onAppLang($icon, $lang = null)
 	{
 		$title = Loc::getMessage('IMOL_CHAT_APP_ICON_QUICK_TITLE', null, $lang);
@@ -1928,13 +2460,54 @@ class Chat
 		$result = false;
 		if (strlen($title) > 0)
 		{
-			$result = Array(
+			$result = [
 				'TITLE' => $title,
 				'DESCRIPTION' => $description,
 				'COPYRIGHT' => ''
-			);
+			];
 		}
 
 		return $result;
+	}
+
+	/**
+	 * @param $dialogId
+	 * @param $user
+	 * @throws Main\ArgumentException
+	 * @throws Main\LoaderException
+	 * @throws Main\ObjectException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
+	public static function chatAutoAddRecent($dialogId, $user)
+	{
+		if (Main\Loader::includeModule("im"))
+		{
+			if (!is_array($user))
+			{
+				$user = [$user];
+			}
+
+			foreach($user as $userId)
+			{
+				\Bitrix\Im\Recent::show($dialogId, $userId);
+			}
+		}
+	}
+
+	/**
+	 * @deprecated Use \Bitrix\ImOpenLines\Crm\Common::getLastChatIdByCrmEntity instead.
+	 *
+	 * @param $crmEntityType
+	 * @param $crmEntityId
+	 * @return int
+	 * @throws Main\ArgumentException
+	 * @throws Main\LoaderException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
+	public static function getLastChatIdByCrmEntity($crmEntityType, $crmEntityId): int
+	{
+		return \Bitrix\ImOpenLines\Crm\Common::getLastChatIdByCrmEntity($crmEntityType, $crmEntityId);
 	}
 }

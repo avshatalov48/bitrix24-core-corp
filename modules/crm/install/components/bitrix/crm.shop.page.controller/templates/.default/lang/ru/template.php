@@ -1,5 +1,7 @@
 <?
 $MESS["SHOP_MENU_SHOP_TITLE"] = "Магазины";
+$MESS["SHOP_MENU_SHOP_LIST_TITLE"] = "Список магазинов";
+$MESS["SHOP_MENU_SHOP_ROLES_TITLE"] = "Права доступа";
 $MESS["SHOP_MENU_ORDER_TITLE"] = "Заказы";
 $MESS["SHOP_MENU_BUYER_GROUP_TITLE"] = "Группы покупателей";
 $MESS["SHOP_MENU_ORDER_FORM_SETTINGS_TITLE"] = "Настройка формы оформления заказа";

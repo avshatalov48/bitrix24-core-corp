@@ -284,7 +284,6 @@ if(is_array($params))
 		elseif($params["COMMAND"] == "OutgoingGetConfig")
 		{
 			$phoneNumber = (string)$params['PHONE_NUMBER'];
-			$lineId = (string)$params['LINE_ID'];
 
 			$specialNumberHandler = CVoxImplantOutgoing::getSpecialNumberHandler($phoneNumber);
 			if ($specialNumberHandler)
@@ -293,7 +292,8 @@ if(is_array($params))
 			}
 			else
 			{
-				$result = CVoxImplantOutgoing::GetConfig($params['USER_ID'], $lineId, $phoneNumber);
+				$lineId = (string)CVoxImplantOutgoing::findLineId($phoneNumber) ?: (string)$params['LINE_ID'];
+				$result = CVoxImplantOutgoing::GetConfig($params['USER_ID'], $lineId);
 			}
 
 			CVoxImplantHistory::WriteToLog($result, 'PORTAL GET OUTGOING CONFIG');

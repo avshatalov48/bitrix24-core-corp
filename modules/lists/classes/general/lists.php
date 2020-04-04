@@ -12,6 +12,12 @@ Loc::loadMessages(__FILE__);
 
 class CLists
 {
+	private static $iblockTypeList = array(
+		"lists" => true,
+		"bitrix_processes" => true,
+		"lists_socnet" => true
+	);
+
 	private static $featuresCache = array();
 
 	function SetPermission($iblock_type_id, $arGroups)
@@ -609,6 +615,7 @@ class CLists
 	 * @param $iblockId
 	 * @param array $errors - an array of errors that occurred array(0 => 'error message')
 	 * @return bool or int
+	 * @deprecated
 	 */
 	public static function copyIblock($iblockId, array &$errors)
 	{
@@ -1024,6 +1031,14 @@ class CLists
 	 */
 	public static function getIblockAttachedCrm($entityType)
 	{
+		if (
+			(!self::isFeatureEnabled("lists")) &&
+			(!self::isFeatureEnabled("lists_processes"))
+		)
+		{
+			return [];
+		}
+
 		$cacheTime = defined('BX_COMP_MANAGED_CACHE') ? 3153600 : 3600*4;
 		$cacheId = 'lists-crm-attached-'.strtolower($entityType);
 		$cacheDir = '/lists/crm/attached/'.strtolower($entityType).'/';
@@ -1058,30 +1073,35 @@ class CLists
 					}
 				}
 			}
-			$isFeatureEnabled = self::isFeatureEnabled();
-			foreach($listProperty as $iblockId => $listPropertyId)
+			$isListsFeatureEnabled = self::isFeatureEnabled("lists");
+			$isProcessesFeatureEnabled = self::isFeatureEnabled("lists_processes");
+			foreach ($listProperty as $iblockId => $listPropertyId)
 			{
 				$iblockObject = Bitrix\Iblock\IblockTable::getList(array(
 					'select' => array('ID', 'NAME', 'IBLOCK_TYPE_ID'),
 					'filter' => array('=ACTIVE' => 'Y', '=ID' => $iblockId)
 				));
-				if($iblock = $iblockObject->fetch())
+				if ($iblock = $iblockObject->fetch())
 				{
 					switch ($iblock['IBLOCK_TYPE_ID'])
 					{
 						case "CRM_PRODUCT_CATALOG":
 						{
 							continue;
-							break;
 						}
 						case "bitrix_processes":
 						{
-							if (!$isFeatureEnabled)
+							if (!$isProcessesFeatureEnabled)
 							{
 								continue;
 							}
 							break;
 						}
+						default:
+							if (!$isListsFeatureEnabled)
+							{
+								continue;
+							}
 					}
 					$listIblock[$iblockId] = $iblock['NAME'];
 				}
@@ -1203,16 +1223,12 @@ class CLists
 	 */
 	public static function OnBeforeIBlockElementAdd(&$fields)
 	{
-		$availableIblockTypeId = array("lists", "bitrix_processes", "lists_socnet");
-		$queryObject = CIBlock::getList(array(), array("ID" => $fields["IBLOCK_ID"]));
-		if($iblock = $queryObject->fetch())
+		$iblockTypeId = (string)CIBlock::GetArrayByID($fields["IBLOCK_ID"], 'IBLOCK_TYPE_ID');
+		if (isset(self::$iblockTypeList[$iblockTypeId]))
 		{
-			if(in_array($iblock["IBLOCK_TYPE_ID"], $availableIblockTypeId))
-			{
-				$fields["SEARCHABLE_CONTENT"] = self::createSeachableContent($fields);
-			}
+			$fields["SEARCHABLE_CONTENT"] = self::createSeachableContent($fields);
 		}
-
+		unset($iblockTypeId);
 		return true;
 	}
 
@@ -1224,16 +1240,12 @@ class CLists
 	 */
 	public static function OnBeforeIBlockElementUpdate(&$fields)
 	{
-		$availableIblockTypeId = array("lists", "bitrix_processes", "lists_socnet");
-		$queryObject = CIBlock::getList(array(), array("ID" => $fields["IBLOCK_ID"]));
-		if($iblock = $queryObject->fetch())
+		$iblockTypeId = (string)CIBlock::GetArrayByID($fields["IBLOCK_ID"], 'IBLOCK_TYPE_ID');
+		if (isset(self::$iblockTypeList[$iblockTypeId]))
 		{
-			if(in_array($iblock["IBLOCK_TYPE_ID"], $availableIblockTypeId))
-			{
-				$fields["SEARCHABLE_CONTENT"] = self::createSeachableContent($fields);
-			}
+			$fields["SEARCHABLE_CONTENT"] = self::createSeachableContent($fields);
 		}
-
+		unset($iblockTypeId);
 		return true;
 	}
 
@@ -1553,19 +1565,20 @@ class CLists
 						{
 							foreach($properties[$propertyId] as $value)
 							{
-								if(is_string($value))
+								if (is_string($value))
 								{
 									$unserialize = unserialize($value);
 									if($unserialize)
 										$value = $unserialize;
 								}
-								if(strlen(trim($value["TEXT"])) <= 0)
-									continue;
-								if(isset($value["TYPE"]))
+								if (is_array($value) && strlen(trim($value["TEXT"])) > 0)
 								{
-									$value["TYPE"] = strtoupper($value["TYPE"]);
-									if($value["TYPE"] == "HTML")
-										$propertyValues[] = HTMLToTxt($value["TEXT"]);
+									if (isset($value["TYPE"]))
+									{
+										$value["TYPE"] = strtoupper($value["TYPE"]);
+										if ($value["TYPE"] == "HTML")
+											$propertyValues[] = HTMLToTxt($value["TEXT"]);
+									}
 								}
 							}
 							break;
@@ -1805,9 +1818,6 @@ class CLists
 
 	public static function isFeatureEnabled($featureName = '')
 	{
-		if (!IsModuleInstalled("bizproc"))
-			return false;
-
 		if (!CModule::IncludeModule("bitrix24"))
 			return true;
 
@@ -1847,6 +1857,17 @@ class CLists
 		}
 
 		return false;
+	}
+
+	public static function isEnabledLockFeature($iblockId)
+	{
+		$optionData = Option::get("lists", "iblock_lock_feature");
+		$iblockIdsWithLockFeature = unserialize($optionData);
+		if (!is_array($iblockIdsWithLockFeature))
+		{
+			$iblockIdsWithLockFeature = [];
+		}
+		return isset($iblockIdsWithLockFeature[$iblockId]);
 	}
 }
 ?>

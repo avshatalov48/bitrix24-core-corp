@@ -359,7 +359,6 @@ class Marta extends Base
 		return true;
 	}
 
-
 	public static function onAnswerAdd($command, $params)
 	{
 		if($command == "AnswerMessage")
@@ -655,7 +654,7 @@ class Marta extends Base
 			}
 			if (!$attach->IsEmpty())
 			{
-				$answer .= Loc::getMessage('IMBOT_BOT_MESSAGE_CALEND_1_'.mt_rand(1, 4), null, $language).'[BR][ATTACH=1][BR]';
+				$answer .= Loc::getMessage('IMBOT_BOT_MESSAGE_CALEND_1_'.mt_rand(1, 4), null, $language);
 				$attaches[] = $attach;
 			}
 		}

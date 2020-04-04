@@ -190,6 +190,7 @@ $APPLICATION->IncludeComponent(
 		'SERVICE_URL' => '/bitrix/components/bitrix/crm.lead.show/ajax.php?'.bitrix_sessid_get(),
 		'CONVERSION_SCHEME' => isset($arResult['CONVERSION_SCHEME']) ? $arResult['CONVERSION_SCHEME'] : null,
 		'CONVERSION_TYPE_ID' => $arResult['CONVERSION_TYPE_ID'],
+		'CAN_CONVERT' => $arResult['CAN_CONVERT'],
 		'SHOW_SETTINGS' => 'Y'
 	),
 	$component,

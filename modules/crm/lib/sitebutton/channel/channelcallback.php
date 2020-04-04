@@ -13,6 +13,7 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Config\Option;
 use Bitrix\Crm\WebForm\Internals\FormTable;
 use Bitrix\Crm\WebForm\Script as WebFormScript;
+use Bitrix\Crm\WebForm;
 
 Loc::loadMessages(__FILE__);
 
@@ -130,6 +131,7 @@ class ChannelCallback implements iProvider
 					'LANGUAGE_ID' => $lang
 				)
 			),
+			'freeze' => WebForm\Manager::isEmbeddingEnabled($id),
 			'sort' => 200,
 			'useColors' => true,
 			'classList' => array('b24-widget-button-' . $type),
@@ -139,7 +141,7 @@ class ChannelCallback implements iProvider
 					'siteButton' => true,
 				]
 			),
-			'hide' => 'BX.SiteButton.classes.remove(document.getElementById(\'bx24_form_container_' . $id . '\'), \'open-sidebar\'); BX.SiteButton.onWidgetClose();',
+			'hide' => WebFormScript::getCrmButtonWidgetHider($id),
 		);
 		$widgets[] = $widget;
 

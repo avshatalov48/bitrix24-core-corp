@@ -1,0 +1,183 @@
+.b24-form-control-file {
+	border-radius: 4px;
+	border: 1px solid rgba(0, 0, 0, 0.05);
+	background-color: rgba(0, 0, 0, 0.07);
+	width: 100%;
+	padding: 9px 10px;
+	font: 14px var(--b24-font-family);
+	letter-spacing: -0.3px;
+}
+
+.b24-form-control-file .b24-form-control-label {
+	display: block;
+	font-size: 13px;
+}
+
+.b24-form-control-file .b24-form-control {
+	margin: 2px 9px 0 0;
+	padding: 8px 10px 8px 30px !important;
+	border-radius: 3px;
+	border: 1px solid #000;
+	border: 1px solid var(--b24-text-color);
+	font-size: 15px;
+	color: #000;
+	color: var(--b24-text-color);
+	opacity: 0.71;
+	display: inline-block;
+	white-space: nowrap;
+	cursor: pointer;
+	position: relative;
+	transition: 250ms linear all;
+}
+
+.b24-form-control-file .b24-form-control:hover { background-color: rgba(0, 0, 0, 0.12); }
+
+.b24-form-control-file .b24-form-control:after,
+.b24-form-control-file .b24-form-control:before {
+	content: '';
+	background-color: #000;
+	background-color: var(--b24-text-color);
+	top: 50%;
+	display: block;
+	position: absolute;
+	transition: 250ms linear all;
+}
+
+.b24-form-control-file .b24-form-control:after {
+	width: 11px;
+	height: 1px;
+	margin-top: -0.5px;
+	left: 11px;
+}
+
+.b24-form-control-file .b24-form-control:before {
+	height: 11px;
+	width: 1px;
+	left: 15.5px;
+	margin-top: -5.5px;
+}
+
+.b24-form-control-file .b24-form-control-string {
+	font-size: 15px;
+	color: #000;
+	color: var(--b24-text-color);
+}
+
+.b24-form-control-checked .b24-form-control-string { color: #fff; }
+
+.b24-form-control-filelist { margin-top: 5px; }
+
+.b24-form-control-file-item {
+	border: 1px solid rgba(0, 0, 0, 0.15);
+	border-radius: 3px;
+	background-color: #fff;
+	background-color: var(--b24-field-background-color);
+	height: 35px;
+	position: relative;
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	-webkit-box-align: stretch;
+	-ms-flex-align: stretch;
+	align-items: stretch;
+	margin-bottom: 7px;
+}
+
+.b24-form-control-file-item-preview { }
+
+.b24-form-control-file-item-preview-image {
+	height: 33px;
+	width: auto;
+	border-radius: 2px 0 0 2px;
+}
+
+.b24-form-control-file-item-preview-file {
+	background: rgba(216, 216, 216, 0.2) url(file.svg) no-repeat center;
+	width: 33px;
+	height: 33px;
+}
+
+.b24-form-control-file-item-preview-image-popup {
+	position: absolute;
+	top: 100%;
+	left: 0;
+	max-width: 300px;
+	width: 100%;
+	padding: 4px;
+	background-color: #fff;
+	border: 1px solid rgba(0, 0, 0, 0.15);
+	z-index: 10;
+	display: none;
+	pointer-events: none;
+}
+
+.b24-form-control-file-item-name:hover .b24-form-control-file-item-preview-image-popup {
+	display: block;
+	animation: showPopop 250ms ease-in-out;
+}
+
+@keyframes showPopop {
+	from {
+		opacity: 0;
+		display: block;
+	}
+	to { opacity: 1; }
+}
+
+.b24-form-control-file-item-preview-image-popup img {
+	max-width: 100%;
+	width: 100%;
+	height: auto;
+}
+
+.b24-form-control-file-item-name {
+	-webkit-box-flex: 1;
+	-ms-flex: 1;
+	flex: 1;
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	-webkit-box-align: center;
+	-ms-flex-align: center;
+	align-items: center;
+	padding-left: 10px;
+	position: relative;
+	color: #000;
+	color: var(--b24-text-color);
+}
+
+.b24-form-control-file-item-name-string {
+	font-size: 12px;
+	color: #000;
+	color: var(--b24-text-color);
+	border-bottom: 1px dashed #c4c4c4;
+}
+
+.b24-form-control-file-item-remove {
+	cursor: pointer;
+	opacity: .7;
+	transition: 250ms linear all;
+	width: 33px;
+	height: 33px;
+	position: relative;
+}
+
+.b24-form-control-file-item-remove:hover {opacity: .9;}
+
+.b24-form-control-file-item-remove:after,
+.b24-form-control-file-item-remove:before {
+	position: absolute;
+	width: 2px;
+	height: 12px;
+	content: '';
+	left: 50%;
+	top: 50%;
+	transform-origin: 0 0;
+	display: block;
+	background-color: #000;
+	background-color: var(--b24-text-color);
+}
+
+.b24-form-control-file-item-remove:after { transform: rotate(-45deg) translate(-50%, -50%); }
+
+.b24-form-control-file-item-remove:before { transform: rotate(45deg) translate(-50%, -50%); }

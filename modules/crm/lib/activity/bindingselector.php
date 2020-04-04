@@ -40,14 +40,38 @@ class BindingSelector
 	 */
 	public static function sortBindings(array $bindings)
 	{
-		$list = array();
-		$uniqueList = array();
+		$list = [];
+		$uniqueList = [];
+
+		$multipleTypes = array(\CCrmOwnerType::Deal, \CCrmOwnerType::Lead, \CCrmOwnerType::Order);
 		foreach ($bindings as $binding)
 		{
-			$uniqueList[$binding['OWNER_TYPE_ID']] = $binding;
+			$ownerTypeId = $binding['OWNER_TYPE_ID'];
+			if (!isset($uniqueList[$ownerTypeId]) || !in_array($ownerTypeId, $multipleTypes, true))
+			{
+				$uniqueList[$ownerTypeId] = [];
+			}
+
+			$uniqueList[$ownerTypeId][] = $binding;
 		}
 
-		$orderByTypeId = array(\CCrmOwnerType::Deal, \CCrmOwnerType::Lead);
+		// unique
+		foreach ($uniqueList as $ownerTypeId => $bindingList)
+		{
+			$uniqueList[$ownerTypeId] = array_map(
+				function ($ownerId) use ($ownerTypeId)
+				{
+					return [
+						'OWNER_TYPE_ID' => $ownerTypeId,
+						'OWNER_ID' => $ownerId,
+					];
+				},
+				array_unique(array_column($bindingList, 'OWNER_ID'))
+			);
+		}
+
+		// keep order by type
+		$orderByTypeId = [\CCrmOwnerType::Deal, \CCrmOwnerType::Lead];
 		foreach ($orderByTypeId as $typeId)
 		{
 			if (!isset($uniqueList[$typeId]))
@@ -55,14 +79,14 @@ class BindingSelector
 				continue;
 			}
 
-			$list[] = $uniqueList[$typeId];
+			$list = array_merge($list, $uniqueList[$typeId]);
 			unset($uniqueList[$typeId]);
 		}
 
 		ksort($uniqueList);
-		foreach ($uniqueList as $binding)
+		foreach ($uniqueList as $bindingList)
 		{
-			$list[] = $binding;
+			$list = array_merge($list, $bindingList);
 		}
 
 		return $list;
@@ -162,19 +186,25 @@ class BindingSelector
 		{
 			if ($selector->getCompanyDealId())
 			{
-				$list[] = array(
-					'OWNER_TYPE_ID' => \CCrmOwnerType::Deal,
-					'OWNER_ID' => $selector->getCompanyDealId()
-				);
+				foreach ($selector->getCompanyDeals() as $dealId)
+				{
+					$list[] = array(
+						'OWNER_TYPE_ID' => \CCrmOwnerType::Deal,
+						'OWNER_ID' => $dealId
+					);
+				}
 
 				$isDealAdded = true;
 			}
 			elseif ($selector->getCompanyReturnCustomerLeadId())
 			{
-				$list[] = array(
-					'OWNER_TYPE_ID' => \CCrmOwnerType::Lead,
-					'OWNER_ID' => $selector->getCompanyReturnCustomerLeadId()
-				);
+				foreach ($selector->getCompanyReturnCustomerLeads() as $leadId)
+				{
+					$list[] = array(
+						'OWNER_TYPE_ID' => \CCrmOwnerType::Lead,
+						'OWNER_ID' => $leadId
+					);
+				}
 
 				$isReturnCustomerLeadAdded = true;
 			}
@@ -220,20 +250,26 @@ class BindingSelector
 		{
 			if ($selector->getContactDealId() && !$isDealAdded)
 			{
-				$list[] = array(
-					'OWNER_TYPE_ID' => \CCrmOwnerType::Deal,
-					'OWNER_ID' => $selector->getContactDealId()
-				);
+				foreach ($selector->getContactDeals() as $dealId)
+				{
+					$list[] = array(
+						'OWNER_TYPE_ID' => \CCrmOwnerType::Deal,
+						'OWNER_ID' => $dealId
+					);
+				}
 
 				$isDealAdded = true;
 			}
 
 			if ($selector->getContactReturnCustomerLeadId() && !$isReturnCustomerLeadAdded && !$isDealAdded)
 			{
-				$list[] = array(
-					'OWNER_TYPE_ID' => \CCrmOwnerType::Lead,
-					'OWNER_ID' => $selector->getContactReturnCustomerLeadId()
-				);
+				foreach ($selector->getContactReturnCustomerLeads() as $leadId)
+				{
+					$list[] = array(
+						'OWNER_TYPE_ID' => \CCrmOwnerType::Lead,
+						'OWNER_ID' => $leadId
+					);
+				}
 
 				$isReturnCustomerLeadAdded = true;
 			}
@@ -247,6 +283,8 @@ class BindingSelector
 						'OWNER_ID' => $orderId
 					);
 				}
+
+				$isOrdersAdded = true;
 			}
 
 			$list[] = array(
@@ -273,10 +311,13 @@ class BindingSelector
 		// append deal if it was set by setEntity
 		if (!$isDealAdded && $selector->getDealId())
 		{
-			$list[] = array(
-				'OWNER_TYPE_ID' => \CCrmOwnerType::Deal,
-				'OWNER_ID' => $selector->getDealId()
-			);
+			foreach ($selector->getDeals() as $dealId)
+			{
+				$list[] = array(
+					'OWNER_TYPE_ID' => \CCrmOwnerType::Deal,
+					'OWNER_ID' => $dealId
+				);
+			}
 
 			$isDealAdded = true;
 		}
@@ -284,10 +325,13 @@ class BindingSelector
 		// append rc-lead if it was set by setEntity
 		if (!$isReturnCustomerLeadAdded && !$isDealAdded && $selector->getReturnCustomerLeadId())
 		{
-			$list[] = array(
-				'OWNER_TYPE_ID' => \CCrmOwnerType::Lead,
-				'OWNER_ID' => $selector->getReturnCustomerLeadId()
-			);
+			foreach ($selector->getReturnCustomerLeads() as $leadId)
+			{
+				$list[] = array(
+					'OWNER_TYPE_ID' => \CCrmOwnerType::Lead,
+					'OWNER_ID' => $leadId
+				);
+			}
 		}
 
 		// append orders if it was set by setEntity

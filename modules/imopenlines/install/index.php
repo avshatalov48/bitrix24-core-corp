@@ -16,7 +16,7 @@ Class imopenlines extends CModule
 	var $MODULE_DESCRIPTION;
 	var $MODULE_GROUP_RIGHTS = "Y";
 
-	function imopenlines()
+	public function __construct()
 	{
 		$arModuleVersion = array();
 
@@ -39,7 +39,7 @@ Class imopenlines extends CModule
 		$this->MODULE_DESCRIPTION = GetMessage("IMOPENLINES_MODULE_DESCRIPTION");
 	}
 
-	function DoInstall()
+	public function DoInstall()
 	{
 		global $DOCUMENT_ROOT, $APPLICATION, $step;
 		$step = IntVal($step);
@@ -62,7 +62,7 @@ Class imopenlines extends CModule
 		return true;
 	}
 
-	function InstallEvents()
+	public function InstallEvents()
 	{
 		$orm = \Bitrix\Main\Mail\Internal\EventTypeTable::getList(array(
 			'select' => array('ID'),
@@ -79,7 +79,7 @@ Class imopenlines extends CModule
 		return true;
 	}
 
-	function CheckModules()
+	public function CheckModules()
 	{
 		global $APPLICATION;
 
@@ -117,7 +117,7 @@ Class imopenlines extends CModule
 		}
 	}
 
-	function InstallDB($params = Array())
+	public function InstallDB($params = Array())
 	{
 		global $DB, $APPLICATION;
 
@@ -195,6 +195,23 @@ Class imopenlines extends CModule
 		$eventManager->registerEventHandler('imopenlines', 'OnChatSkip', 'imopenlines', '\Bitrix\ImOpenLines\Integrations\Report\Statistics\EventHandler', 'onChatSkip');
 		$eventManager->registerEventHandler('imopenlines', 'OnSessionVote', 'imopenlines', '\Bitrix\ImOpenLines\Integrations\Report\Statistics\EventHandler', 'onSessionVote');
 
+		$eventManager->registerEventHandler('imopenlines', 'OnImopenlineChangeQueueType', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'onQueueTypeChange');
+		$eventManager->registerEventHandler('imopenlines', 'OnQueueOperatorsAdd', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'onQueueOperatorsAdd');
+		$eventManager->registerEventHandler('imopenlines', 'OnQueueOperatorsDelete', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'onQueueOperatorsDelete');
+		$eventManager->registerEventHandler('main', 'OnAfterUserUpdate', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'onUserUpdate');
+		$eventManager->registerEventHandler('main', 'OnUserDelete', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'onUserDelete');
+		$eventManager->registerEventHandler('timeman', 'OnAfterTMDayStart', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'onAfterTMDayStart');
+		$eventManager->registerEventHandler('timeman', 'OnAfterTMDayPause', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'onAfterTMDayPause');
+		$eventManager->registerEventHandler('timeman', 'OnAfterTMDayContinue', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'onAfterTMDayContinue');
+		$eventManager->registerEventHandler('timeman', 'OnAfterTMDayEnd', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'onAfterTMDayEnd');
+		$eventManager->registerEventHandler('intranet', 'OnStartAbsence', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'OnStartAbsence');
+		$eventManager->registerEventHandler('intranet', 'OnEndAbsence', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'OnEndAbsence');
+
+		$eventManager->registerEventHandler('imopenlines', 'OnChatAnswer', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'checkFreeSlotOnChatAnswer');
+		$eventManager->registerEventHandler('imopenlines', 'OnOperatorTransfer', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'checkFreeSlotOnOperatorTransfer');
+		$eventManager->registerEventHandler('imopenlines', 'OnChatSkip', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'checkFreeSlotOnFinish');
+		$eventManager->registerEventHandler('imopenlines', 'OnChatMarkSpam', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'checkFreeSlotOnFinish');
+		$eventManager->registerEventHandler('imopenlines', 'OnChatFinish', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'checkFreeSlotOnFinish');
 
 		CAgent::AddAgent('\Bitrix\ImOpenLines\Integrations\Report\Statistics\Manager::calculateStatisticsInQueue();', 'imopenlines', 'N');
 
@@ -203,6 +220,8 @@ Class imopenlines extends CModule
 		CAgent::AddAgent('\Bitrix\ImOpenLines\Session::mailByTimeAgent(0);', "imopenlines", "N", 60);
 		CAgent::AddAgent('\Bitrix\ImOpenLines\Common::deleteBrokenSession();', "imopenlines", "N", 86400, "", "Y", \ConvertTimeStamp(time()+\CTimeZone::GetOffset()+86400, "FULL"));
 		CAgent::AddAgent('\Bitrix\ImOpenLines\Session::dismissedOperatorAgent(0);', "imopenlines", "N", 86400);
+		CAgent::AddAgent('\Bitrix\ImOpenLines\Session\Agent::sendMessageNoAnswer();', "imopenlines", "N", 60);
+		CAgent::AddAgent('\Bitrix\ImOpenLines\KpiManager::setExpiredMessagesAgent();', "imopenlines", "N", 60, "", "Y", \ConvertTimeStamp(time()+\CTimeZone::GetOffset()+60, "FULL"));
 
 		if (!IsModuleInstalled('bitrix24'))
 		{
@@ -210,7 +229,7 @@ Class imopenlines extends CModule
 		}
 
 		\CModule::IncludeModule("imopenlines");
-		$errors = $DB->RunSQLBatch($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/imopenlines/install/mysql/install_ft.sql");
+		$errors = $DB->RunSQLBatch($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/imopenlines/install/db/mysql/install_ft.sql");
 		if ($errors === false)
 		{
 			\Bitrix\Imopenlines\Model\SessionIndexTable::getEntity()->enableFullTextIndex("SEARCH_CONTENT");
@@ -227,7 +246,7 @@ Class imopenlines extends CModule
 		return true;
 	}
 
-	function InstallFiles()
+	public function InstallFiles()
 	{
 		\CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/imopenlines/install/public", $_SERVER["DOCUMENT_ROOT"]."/", true, true);
 		\CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/imopenlines/install/js", $_SERVER["DOCUMENT_ROOT"]."/bitrix/js", true, true);
@@ -235,11 +254,12 @@ Class imopenlines extends CModule
 		\CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/imopenlines/install/activities", $_SERVER["DOCUMENT_ROOT"]."/bitrix/activities", true, true);
 		\CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/imopenlines/install/templates", $_SERVER["DOCUMENT_ROOT"]."/bitrix/templates", true, true);
 		\CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/imconnector/install/pub", $_SERVER["DOCUMENT_ROOT"]."/pub", true, true);
+		\CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/imopenlines/install/tools", $_SERVER["DOCUMENT_ROOT"]."/bitrix/tools", true, true);
 
 		return true;
 	}
 
-	function InstallChatApps()
+	public function InstallChatApps()
 	{
 		if (!\CModule::IncludeModule("im"))
 		{
@@ -270,7 +290,7 @@ Class imopenlines extends CModule
 		return true;
 	}
 
-	function UnInstallChatApps()
+	public function UnInstallChatApps()
 	{
 		if (!\CModule::IncludeModule("im"))
 		{
@@ -308,7 +328,7 @@ Class imopenlines extends CModule
 		return $iconId;
 	}
 
-	function UnInstallEvents()
+	public function UnInstallEvents()
 	{
 		global $DB;
 
@@ -317,7 +337,7 @@ Class imopenlines extends CModule
 		return true;
 	}
 
-	function DoUninstall()
+	public function DoUninstall()
 	{
 		global $DOCUMENT_ROOT, $APPLICATION, $step;
 		$step = IntVal($step);
@@ -338,7 +358,7 @@ Class imopenlines extends CModule
 		}
 	}
 
-	function UnInstallDB($arParams = Array())
+	public function UnInstallDB($arParams = Array())
 	{
 		global $APPLICATION, $DB, $errors;
 
@@ -383,6 +403,22 @@ Class imopenlines extends CModule
 		$eventManager->unRegisterEventHandler('main', 'Bitrix\Disk\Controller\File::'.\Bitrix\Main\Engine\Controller::EVENT_ON_BEFORE_ACTION, 'imopenlines', '\Bitrix\ImOpenLines\Widget\Auth', 'onDiskCheckAuth');
 		$eventManager->unRegisterEventHandler('rest', 'onRestCheckAuth', 'imopenlines', '\Bitrix\ImOpenLines\Widget\Auth', 'onRestCheckAuth');
 		$eventManager->unRegisterEventHandler('rest', 'onRestCheckAuth', 'rest', '\Bitrix\ImOpenLines\Widget\Auth', 'onRestCheckAuth');
+		$eventManager->unRegisterEventHandler('imopenlines', 'OnImopenlineChangeQueueType', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'onQueueTypeChange');
+		$eventManager->unRegisterEventHandler('imopenlines', 'OnQueueOperatorsAdd', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'onQueueOperatorsAdd');
+		$eventManager->unRegisterEventHandler('imopenlines', 'OnQueueOperatorsDelete', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'onQueueOperatorsDelete');
+		$eventManager->unRegisterEventHandler('main', 'OnAfterUserUpdate', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'onUserUpdate');
+		$eventManager->unRegisterEventHandler('main', 'OnUserDelete', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'onUserDelete');
+		$eventManager->unRegisterEventHandler('timeman', 'OnAfterTMDayStart', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'onAfterTMDayStart');
+		$eventManager->unRegisterEventHandler('timeman', 'OnAfterTMDayPause', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'onAfterTMDayPause');
+		$eventManager->unRegisterEventHandler('timeman', 'OnAfterTMDayContinue', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'onAfterTMDayContinue');
+		$eventManager->unRegisterEventHandler('timeman', 'OnAfterTMDayEnd', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'onAfterTMDayEnd');
+		$eventManager->unRegisterEventHandler('intranet', 'OnStartAbsence', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'OnStartAbsence');
+		$eventManager->unRegisterEventHandler('intranet', 'OnEndAbsence', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'OnEndAbsence');
+		$eventManager->unRegisterEventHandler('imopenlines', 'OnChatAnswer', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'checkFreeSlotOnChatAnswer');
+		$eventManager->unRegisterEventHandler('imopenlines', 'OnOperatorTransfer', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'checkFreeSlotOnOperatorTransfer');
+		$eventManager->unRegisterEventHandler('imopenlines', 'OnChatSkip', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'checkFreeSlotOnFinish');
+		$eventManager->unRegisterEventHandler('imopenlines', 'OnChatMarkSpam', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'checkFreeSlotOnFinish');
+		$eventManager->unRegisterEventHandler('imopenlines', 'OnChatFinish', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'checkFreeSlotOnFinish');
 
 		$this->UnInstallChatApps();
 
@@ -391,7 +427,7 @@ Class imopenlines extends CModule
 		return true;
 	}
 
-	function UnInstallFiles($arParams = array())
+	public function UnInstallFiles($arParams = array())
 	{
 		return true;
 	}

@@ -25,7 +25,14 @@ var CrmFormEditor = function(params)
 		this.isFrame = params.isFrame;
 		this.isSaved = params.isSaved;
 		this.reloadList = params.reloadList;
+		this.designPageUrl = params.designPageUrl;
+		this.isAvailableDesign = params.isAvailableDesign;
 		this.fields = [];
+
+		if(!this.reloadList)
+		{
+			this.actionRequestUrl = BX.util.add_url_param(this.actionRequestUrl, {RELOAD_LIST: 'N'});
+		}
 
 		/* init slider support  */
 		this.initSlider();
@@ -118,6 +125,11 @@ var CrmFormEditor = function(params)
 
 		if (this.isSaved)
 		{
+			var slider = BX.SidePanel.Instance.getSliderByWindow(window);
+			if(slider)
+			{
+				slider.getData().set('formId', this.id);
+			}
 			BX.SidePanel.Instance.close(false,
 				this.reloadList
 					?
@@ -344,6 +356,17 @@ var CrmFormEditor = function(params)
 
 			}, this));
 		}
+
+		if (this.isAvailableDesign)
+		{
+			var v2Element = document.querySelector('.crm-webform-edit-v2-settings');
+			BX.bind(v2Element, 'click', function () {
+				BX.SidePanel.Instance.open(this.designPageUrl, {
+					cacheable: false,
+					width: 1050,
+				});
+			}.bind(this));
+		}
 	};
 
 	this.submitForm = function()
@@ -499,6 +522,9 @@ var CrmFormEditor = function(params)
 				'value': '',
 				'items': '',
 				'settings_items': '',
+				'settings_data_quantity_min': '',
+				'settings_data_quantity_max': '',
+				'settings_data_quantity_step': '',
 				'url_display_style': params.entity_field_name.substring(0, 3) == 'UF_' ? 'initial' : 'none',
 				'entity_field_name': params.entity_field_name,
 				'entity_field_caption': params.caption,
@@ -577,12 +603,24 @@ var CrmFormEditor = function(params)
 		var dictField = this.findDictionaryField(field.name);
 		if(!dictField)
 		{
-			dictField = {
-				code: field.name,
-				type: field.type,
-				required: false,
-				multiple: false
-			};
+			if (field.type === 'product')
+			{
+				dictField = {
+					code: field.name,
+					type: field.type,
+					required: false,
+					multiple: true
+				};
+			}
+			else
+			{
+				dictField = {
+					code: field.name,
+					type: field.type,
+					required: false,
+					multiple: false
+				};
+			}
 		}
 		field.dict = dictField;
 
@@ -640,6 +678,8 @@ var CrmFormEditor = function(params)
 		var multipleAddNode = field.node.querySelector('[data-bx-web-form-btn-add]');
 		var requiredValueNode = field.node.querySelector('[data-bx-web-form-btn-required-value]');
 		var requiredCheckboxNode = field.node.querySelector('[data-bx-web-form-btn-required]');
+		var bigPicValueNode = field.node.querySelector('[data-bx-web-form-btn-big-pic-value]');
+		var bigPicCheckboxNode = field.node.querySelector('[data-bx-web-form-btn-big-pic]');
 		if(multipleNode && multipleValueNode && multipleCheckboxNode)
 		{
 			if(!field.dict.multiple)
@@ -651,7 +691,7 @@ var CrmFormEditor = function(params)
 			{
 				multipleCheckboxNode.checked = multipleValueNode.value == 'Y';
 
-				if(field.dict.type == 'checkbox')
+				if(field.dict.type === 'checkbox')
 				{
 					var clickHandler = function(){
 						multipleValueNode.value = multipleCheckboxNode.checked ? 'Y' : 'N';
@@ -673,12 +713,22 @@ var CrmFormEditor = function(params)
 		}
 		if(requiredValueNode && requiredCheckboxNode)
 		{
-			if(requiredValueNode.value == 'Y')
+			if(requiredValueNode.value === 'Y')
 			{
 				requiredCheckboxNode.checked = true;
 			}
 			BX.bind(requiredCheckboxNode, 'change', function(){
 				requiredValueNode.value = requiredCheckboxNode.checked ? 'Y' : 'N';
+			});
+		}
+		if(bigPicValueNode && bigPicCheckboxNode)
+		{
+			if(bigPicValueNode.value === 'Y')
+			{
+				bigPicCheckboxNode.checked = true;
+			}
+			BX.bind(bigPicCheckboxNode, 'change', function(){
+				bigPicValueNode.value = bigPicCheckboxNode.checked ? 'Y' : 'N';
 			});
 		}
 
@@ -752,6 +802,11 @@ var CrmFormEditor = function(params)
 	};
 
 	this.initFieldTypeSection = function(field)
+	{
+		this.bindEditInline(field.node, 'dynamic-field');
+	};
+
+	this.initFieldTypePage = function(field)
 	{
 		this.bindEditInline(field.node, 'dynamic-field');
 	};
@@ -894,7 +949,7 @@ var CrmFormEditor = function(params)
 		this.dragdrop.removeItem(field.node);
 		BX.remove(field.node);
 
-		var itemIndex = BX.util.array_search(field, this.fields);
+		var itemIndex = this.fields.indexOf(field);
 		if(itemIndex > -1)
 		{
 			delete this.fields[itemIndex];
@@ -912,7 +967,7 @@ var CrmFormEditor = function(params)
 	this.sortFields = function ()
 	{
 		this.fields.forEach(function(field){
-			field.sortValue = BX.util.array_search(field.node, field.node.parentNode.children);
+			field.sortValue = BX.convert.nodeListToArray(field.node.parentNode.children).indexOf(field.node);
 		});
 
 		this.fields.sort(function(fieldA, fieldB){
@@ -1424,7 +1479,8 @@ CrmWebFormEditEntityScheme.prototype =
 						'tmpl_field_product_items_draw',
 						{
 							'name': item.VALUE || '',
-							'price': item.PRICE || ''
+							'price': item.PRICE || '',
+							'discount': item.DISCOUNT || ''
 						}
 					);
 				}, this);
@@ -1500,15 +1556,44 @@ function CrmWebFormEditFormButton(params)
 	this.buttonColorFontNode = BX('BUTTON_COLOR_FONT');
 	this.popupButtonNameNode = BX('CRM_WEB_FORM_POPUP_BUTTON_NAME');
 
+	top.BX.addCustomEvent('crm-webform-design-save', this.onChangeDesign.bind(this));
+
 	this.init();
 }
 CrmWebFormEditFormButton.prototype =
 {
+	onChangeDesign: function(design)
+	{
+		this.setTextColor(design.color.primaryText.substr(0, 7));
+		this.setBackgroundColor(design.color.primary.substr(0, 7));
+	},
 	init: function()
 	{
 		BX.bind(this.buttonNode.parentNode, 'click', BX.proxy(this.editButton, this));
 		BX.bind(this.buttonInputNode, 'bxchange', BX.proxy(this.onButtonCaptionChange, this));
-		this.initColorPicker();
+
+		//this.initColorPicker();
+
+		this.picker = new BX.ColorPicker({
+			'popupOptions': {
+				'offsetLeft': 15,
+				'offsetTop': 5
+			}
+		});
+
+		BX.bind(
+			this.buttonColorBgNode.nextElementSibling,
+			'click',
+			this.showPickerBackground.bind(this)
+		);
+		BX.bind(
+			this.buttonColorFontNode.nextElementSibling,
+			'click',
+			this.showPickerTextColor.bind(this)
+		);
+
+		this.setTextColor(this.buttonColorFontNode.value);
+		this.setBackgroundColor(this.buttonColorBgNode.value);
 	},
 
 	editButton: function()
@@ -1535,65 +1620,41 @@ CrmWebFormEditFormButton.prototype =
 		this.buttonNode.style.color = this.buttonColorFontNode.value;
 	},
 
-	initColorPicker: function()
+	showPickerBackground: function ()
 	{
-		this.picker = new window.BXColorPicker({'id': "picker", 'name': 'picker'});
-		this.picker.Create();
+		this.picker.close();
+		this.picker.open({
+			defaultColor: '',
+			allowCustomColor: true,
+			bindElement: this.buttonColorBgNode.nextElementSibling,
+			onColorSelected: this.setBackgroundColor.bind(this)
+		});
+	},
 
-		var _this = this;
+	showPickerTextColor: function ()
+	{
+		this.picker.close();
+		this.picker.open({
+			defaultColor: '',
+			allowCustomColor: true,
+			bindElement: this.buttonColorFontNode.nextElementSibling,
+			onColorSelected: this.setTextColor.bind(this)
+		});
+	},
 
-		var clickHandler = function ()
-		{
-			var element = this;
-			element.parentNode.appendChild(_this.picker.pCont);
-			_this.picker.oPar.OnSelect = BX.proxy(function (color)
-			{
-				if(!color)
-					color = '';
+	setBackgroundColor: function(value)
+	{
+		this.buttonColorBgNode.value = value;
+		this.buttonColorBgNode.nextElementSibling.style.background = value;
+		this.updateButtonColors();
+	},
 
-				element.value = color;
-				var colorBox = BX.nextSibling(element);
-				if(colorBox)
-				{
-					colorBox.style.background = color;
-				}
-				BX.fireEvent(element, 'change');
-			}, _this);
-
-			_this.picker.pCont.style.display = '';
-			_this.picker.Close();
-			_this.picker.Open(element);
-			_this.picker.pCont.style.display = 'none';
-
-		};
-
-		var changeHandler = function()
-		{
-			var colorBox = BX.nextSibling(this);
-			if (colorBox)
-			{
-				colorBox.style.background = this.value;
-				_this.updateButtonColors();
-			}
-		};
-
-
-		var inputList = this.context.querySelectorAll('[data-web-form-color-picker]');
-		inputList = BX.convert.nodeListToArray(inputList);
-		for(var i in inputList)
-		{
-			var inputCtrl = inputList[i];
-			var colorBox = BX.nextSibling(inputCtrl);
-
-			BX.bind(colorBox, 'click', BX.proxy(clickHandler, inputCtrl));
-			BX.bind(inputCtrl, 'click', clickHandler);
-			BX.bind(inputCtrl, "focus", clickHandler);
-
-			BX.bind(inputCtrl, "bxchange", BX.delegate(changeHandler, inputCtrl));
-			BX.fireEvent(inputCtrl, 'change');
-		}
-	}
-
+	setTextColor: function(value)
+	{
+		this.buttonColorFontNode.value = value;
+		this.buttonColorFontNode.nextElementSibling.style.background = value;
+		this.updateButtonColors();
+	},
 };
 
 
@@ -1874,6 +1935,9 @@ CrmFormEditorFieldSelector.prototype =
 			case 'section':
 				fieldParams.caption = this.caller.mess.newFieldSectionCaption;
 				break;
+			case 'page':
+				fieldParams.caption = this.caller.mess.newFieldPageCaption;
+				break;
 			case 'hr':
 				break;
 			case 'br':
@@ -2082,7 +2146,7 @@ CrmFormEditorDependencies.prototype =
 		{
 			defaultOptionText = this.caller.mess.selectField;
 			fields = this.caller.fields.filter(function(field){
-				return (field.type != 'section' && !BX.util.in_array(field.type, exceptFieldTypes));
+				return (field.type != 'section' && field.type != 'page' && !BX.util.in_array(field.type, exceptFieldTypes));
 			}, this);
 		}
 
@@ -2867,7 +2931,8 @@ CrmFormEditorProductSelector.prototype =
 		this.addFieldItem({
 			'id': 'n' + this.helper.generateId(),
 			'name': '',
-			'price': ''
+			'price': '',
+			'discount': ''
 		});
 	},
 
@@ -2927,12 +2992,14 @@ CrmFormEditorProductSelector.prototype =
 			'item_id': itemData.id,
 			'item_value': itemData.name,
 			'item_price': itemData.price,
+			'item_discount': itemData.discount || '',
 			'currency_short_name': this.caller.currency.SHORT_NAME
 		});
 
 		var fieldItem = {
 			'ID': itemData.id,
 			'PRICE': itemData.price,
+			'DISCOUNT': itemData.DISCOUNT,
 			'VALUE': itemData.name
 		};
 

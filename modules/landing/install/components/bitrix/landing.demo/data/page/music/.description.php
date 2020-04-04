@@ -157,7 +157,7 @@ return array(
 				'CONTENT' => '<section class="landing-block g-bg-gray-light-v5 g-pt-30 g-pb-20">
 
         <div class="container">
-            <div class="row">
+            <div class="row landing-block-inner">
 
                 <div class="landing-block-card col-sm-6 col-md-4 js-animation fadeIn">
                     <article class="u-shadow-v28 g-bg-white">

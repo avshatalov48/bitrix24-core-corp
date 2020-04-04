@@ -1027,7 +1027,6 @@ else if (isset($_REQUEST['import']) && isset($_SESSION['CRM_IMPORT_FILE']))
 
 			if (!$errorOccured && $requisiteImportHelper->isReady())
 			{
-				
 				// preparation of hierarchy with data of requisites
 				$result = $requisiteImportHelper->parseRequisiteData();
 				if (!$result->isSuccess())
@@ -1283,8 +1282,15 @@ else if (isset($_REQUEST['import']) && isset($_SESSION['CRM_IMPORT_FILE']))
 				unset($requisiteDupParams);
 			}
 
-			$adapter = \Bitrix\Crm\EntityAdapterFactory::create($arCompany, CCrmOwnerType::Company);
-			$dups = $dupChecker->findDuplicates($adapter, new \Bitrix\Crm\Integrity\DuplicateSearchParams($fieldNames));
+			$dups = [];
+			if (!empty($fieldNames))
+			{
+				$adapter = \Bitrix\Crm\EntityAdapterFactory::create($arCompany, CCrmOwnerType::Company);
+				$dups = $dupChecker->findDuplicates(
+					$adapter,
+					new \Bitrix\Crm\Integrity\DuplicateSearchParams($fieldNames)
+				);
+			}
 
 			if ($importRequisite && $enableDupCtrlByRequisite
 				&& is_object($requisiteImportHelper) && $requisiteImportHelper->isReady()
@@ -1580,7 +1586,8 @@ else if (isset($_REQUEST['import']) && isset($_SESSION['CRM_IMPORT_FILE']))
 
 									__CrmImportWriteDataToFile(
 										$errataFilePath,
-										isset($_SESSION['CRM_IMPORT_FILE_HEADERS']) ? $_SESSION['CRM_IMPORT_FILE_HEADERS'] : null,
+										isset($_SESSION['CRM_IMPORT_FILE_HEADERS']) ?
+											$_SESSION['CRM_IMPORT_FILE_HEADERS'] : null,
 										$errRows
 									);
 									unset($errRows);
@@ -1589,7 +1596,9 @@ else if (isset($_REQUEST['import']) && isset($_SESSION['CRM_IMPORT_FILE']))
 							}
 						}
 
-						if ($importRequisite && is_object($requisiteImportHelper) && $requisiteImportHelper->isReady())
+						if ($importRequisite
+							&& is_object($requisiteImportHelper)
+							&& $requisiteImportHelper->isReady())
 						{
 							$rqImportResult = $requisiteImportHelper->importParsedRequisites(
 								CCrmOwnerType::Company,
@@ -1610,7 +1619,8 @@ else if (isset($_REQUEST['import']) && isset($_SESSION['CRM_IMPORT_FILE']))
 
 									__CrmImportWriteDataToFile(
 										$errataFilePath,
-										isset($_SESSION['CRM_IMPORT_FILE_HEADERS']) ? $_SESSION['CRM_IMPORT_FILE_HEADERS'] : null,
+										isset($_SESSION['CRM_IMPORT_FILE_HEADERS']) ?
+											$_SESSION['CRM_IMPORT_FILE_HEADERS'] : null,
 										$requisiteImportHelper->getRows()
 									);
 								}
@@ -1620,6 +1630,7 @@ else if (isset($_REQUEST['import']) && isset($_SESSION['CRM_IMPORT_FILE']))
 
 						if (!$errorOccured)
 						{
+							$CCrmUserType->PrepareForSave($item);
 							if(!$CCrmCompany->Update($item['ID'], $item))
 							{
 								if ($importRequisite && is_object($requisiteImportHelper))
@@ -1635,7 +1646,8 @@ else if (isset($_REQUEST['import']) && isset($_SESSION['CRM_IMPORT_FILE']))
 
 								__CrmImportWriteDataToFile(
 									$errataFilePath,
-									isset($_SESSION['CRM_IMPORT_FILE_HEADERS']) ? $_SESSION['CRM_IMPORT_FILE_HEADERS'] : null,
+									isset($_SESSION['CRM_IMPORT_FILE_HEADERS']) ?
+										$_SESSION['CRM_IMPORT_FILE_HEADERS'] : null,
 									$errRows
 								);
 							}
@@ -1715,7 +1727,8 @@ else if (isset($_REQUEST['import']) && isset($_SESSION['CRM_IMPORT_FILE']))
 
 							__CrmImportWriteDataToFile(
 								$errataFilePath,
-								isset($_SESSION['CRM_IMPORT_FILE_HEADERS']) ? $_SESSION['CRM_IMPORT_FILE_HEADERS'] : null,
+								isset($_SESSION['CRM_IMPORT_FILE_HEADERS']) ?
+									$_SESSION['CRM_IMPORT_FILE_HEADERS'] : null,
 								$errRows
 							);
 							unset($errRows);
@@ -1724,7 +1737,9 @@ else if (isset($_REQUEST['import']) && isset($_SESSION['CRM_IMPORT_FILE']))
 					}
 				}
 
-				if ($importRequisite && is_object($requisiteImportHelper) && $requisiteImportHelper->isReady())
+				if ($importRequisite
+					&& is_object($requisiteImportHelper)
+					&& $requisiteImportHelper->isReady())
 				{
 					$rqImportResult = $requisiteImportHelper->importParsedRequisites(
 						CCrmOwnerType::Company,
@@ -1745,7 +1760,8 @@ else if (isset($_REQUEST['import']) && isset($_SESSION['CRM_IMPORT_FILE']))
 
 							__CrmImportWriteDataToFile(
 								$errataFilePath,
-								isset($_SESSION['CRM_IMPORT_FILE_HEADERS']) ? $_SESSION['CRM_IMPORT_FILE_HEADERS'] : null,
+								isset($_SESSION['CRM_IMPORT_FILE_HEADERS']) ?
+									$_SESSION['CRM_IMPORT_FILE_HEADERS'] : null,
 								$requisiteImportHelper->getRows()
 							);
 						}

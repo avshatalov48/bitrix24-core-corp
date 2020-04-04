@@ -29,7 +29,7 @@ CModule::AddAutoloadClasses(
 
 class CXDILFEventHandlers
 {
-	function OnFillSocNetAllowedSubscribeEntityTypes(&$arSocNetAllowedSubscribeEntityTypes)
+	public static function OnFillSocNetAllowedSubscribeEntityTypes(&$arSocNetAllowedSubscribeEntityTypes)
 	{
 		define("SONET_SUBSCRIBE_ENTITY_PROVIDER", "P");
 		$arSocNetAllowedSubscribeEntityTypes[] = SONET_SUBSCRIBE_ENTITY_PROVIDER;
@@ -45,7 +45,7 @@ class CXDILFEventHandlers
 		);
 	}
 
-	function OnFillSocNetLogEvents(&$arSocNetLogEvents)
+	public static function OnFillSocNetLogEvents(&$arSocNetLogEvents)
 	{
 		$arSocNetLogEvents["data"] = array(
 			"ENTITIES" =>	array(
@@ -113,7 +113,7 @@ class CXDILFEventHandlers
 		{
 			$arResult["ENTITY"] = CSocNetLogTools::FormatEvent_GetEntity($arFields, $arParams, $bMail);
 
-			if ($arFields["ENTITY_TYPE"] == SONET_SUBSCRIBE_ENTITY_GROUP) // group
+			if ($arFields["ENTITY_TYPE"] == SONET_SUBSCRIBE_ENTITY_GROUP)
 			{
 				$arDestination = array(
 					array(
@@ -122,6 +122,9 @@ class CXDILFEventHandlers
 						"URL" => $arResult["ENTITY"]["FORMATTED"]["URL"],
 						"IS_EXTRANET" => (is_array($GLOBALS["arExtranetGroupID"]) && in_array($arFields["ENTITY_ID"], $GLOBALS["arExtranetGroupID"]))
 					)
+				);
+				$arResult["ENTITY"]["FORMATTED"] = array(
+					"NAME" => $arResult["EVENT"]["TITLE"]
 				);
 			}
 		}
@@ -181,8 +184,8 @@ class CXDILFEventHandlers
 		if ($arParams["IS_HTML"] == "Y")
 		{
 			$sanitizer = new CBXSanitizer();
-			$sanitizer->ApplyHtmlSpecChars(false);
 			$sanitizer->SetLevel(CBXSanitizer::SECURE_LEVEL_LOW);
+			$sanitizer->ApplyDoubleEncode(false);
 			$message = htmlspecialcharsEx($sanitizer->SanitizeHtml(htmlspecialcharsback($arFields["MESSAGE"])));
 		}
 		else
@@ -194,7 +197,7 @@ class CXDILFEventHandlers
 		{
 			$message = (
 				!$bMail
-					? "<b><a href='".$arFields["URL"]."'>".$arFields["TITLE"]."</a></b><br />".$message
+					? ($arFields["ENTITY_TYPE"] == SONET_SUBSCRIBE_ENTITY_USER ? "<b><a href='".$arFields["URL"]."'>".$arFields["TITLE"]."</a></b><br />" : "").$message
 					: $arFields["TITLE"]."#BR##BR#".$message
 			);
 		}
@@ -361,7 +364,8 @@ class CXDILFEventHandlers
 					"MULTIPLE_BR" => "N",
 					"VIDEO" => "Y", "LOG_VIDEO" => "N",
 					"USERFIELDS" => $arFields["UF"],
-					"USER" => ($arParams["IM"] == "Y" ? "N" : "Y")
+					"USER" => ($arParams["IM"] == "Y" ? "N" : "Y"),
+					"TAG" => "Y"
 				);
 
 				if (!$parserLog)

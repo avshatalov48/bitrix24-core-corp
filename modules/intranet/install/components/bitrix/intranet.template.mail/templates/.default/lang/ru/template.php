@@ -13,4 +13,5 @@ $MESS['INTRANET_BITRIX24'] = "Битрикс24";
 $MESS['INTRANET_CHANGE_NOTIFY_SETTINGS'] = "Изменить настройки уведомлений";
 $MESS['INTRANET_OPEN'] = "Посмотреть";
 $MESS['INTRANET_OPEN_NOTIFY'] = "Перейти к уведомлениям";
+$MESS['INTRANET_MAIL_EVENTS_UNSUBSCRIBE'] = "Отписаться от всех писем";
 ?>

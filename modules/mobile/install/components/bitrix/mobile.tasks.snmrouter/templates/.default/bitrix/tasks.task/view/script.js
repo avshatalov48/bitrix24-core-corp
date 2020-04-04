@@ -56,6 +56,8 @@
 			this.actSuccess = BX.delegate(this.actSuccess, this);
 			this.actFailure = BX.delegate(this.actFailure, this);
 
+			this.resetMenu(this.getDefaultMenu());
+
 			BX.onCustomEvent("onTaskWasLoaded", [this.task]);
 			if (typeof this.task['LOG_ID'] != 'undefined')
 			{
@@ -414,6 +416,7 @@
 				var url = BX.util.add_url_param(BX.message("TASK_PATH_TO_AJAX"), {act : 'get', id : this.task["ID"]});
 				(new BX.Tasks.Util.Query({url: url})).add('task.get', {id: this.task["ID"], "jsAction" : "perform"}, {}, {onExecuted: this.actExecute}).execute();
 			}
+			
 			if (reset)
 				this.resetMenu(this.getDefaultMenu());
 		},
@@ -421,4 +424,15 @@
 			window.app.alert({text: BX.message("TASKS_LIST_GROUP_ACTION_ERROR1"), title : BX.message("MB_TASKS_TASK_ERROR_TITLE")});
 		}
 	});
+
+	if (BX.MobileUI.TextField.defaultParams)
+	{
+		window.BX.MobileUI.TextField.show();
+	}
+	else
+	{
+		BX.addCustomEvent(BX.MobileUI.events.MOBILE_UI_TEXT_FIELD_SET_PARAMS, function(){
+			window.BX.MobileUI.TextField.show();
+		});
+	}
 }());

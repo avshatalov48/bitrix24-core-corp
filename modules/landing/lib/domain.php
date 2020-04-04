@@ -4,6 +4,16 @@ namespace Bitrix\Landing;
 class Domain extends \Bitrix\Landing\Internals\BaseTable
 {
 	/**
+	 * Bitrix24 domains.
+	 */
+	const B24_DOMAINS = [
+		'bitrix24.site',
+		'bitrix24.shop',
+		'bitrix24site.by',
+		'bitrix24shop.by'
+	];
+
+	/**
 	 * Internal class.
 	 * @var string
 	 */
@@ -29,6 +39,22 @@ class Domain extends \Bitrix\Landing\Internals\BaseTable
 		}
 
 		return $domain;
+	}
+
+	/**
+	 * Gets Bitrix24 sub domain name.
+	 * @param string $domainName Full domain name.
+	 * @return string Null, if $domainName is't sub domain of B24.
+	 */
+	public static function getBitrix24Subdomain($domainName)
+	{
+		$re = '/^([a-z0-9]+)\.(' . implode('|', self::B24_DOMAINS) . ')$/i';
+		if (preg_match($re, $domainName, $matches))
+		{
+			return $matches[1];
+		}
+
+		return null;
 	}
 
 	/**

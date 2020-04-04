@@ -41,7 +41,7 @@ if ($APPLICATION->GetShowIncludeAreas() && $USER->IsAdmin())
 				)
 			),
 			'ICON' => 'edit',
-			'TITLE' => 'пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ',
+			'TITLE' => 'Редактировать пользователя',
 			'MODE' => array('configure')
 		),
 	);

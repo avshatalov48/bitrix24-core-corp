@@ -70,6 +70,7 @@ final class CCrmOrderShipmentProductListBarcodes extends \CBitrixComponent
 
 		$this->arResult['BASKET_ID'] = isset($this->arParams['BASKET_ID']) ? intval($this->arParams['BASKET_ID']) : 0;
 		$this->arResult['STORE_ID'] = isset($this->arParams['STORE_ID']) ? intval($this->arParams['STORE_ID']) : 0;
+		$this->arResult['ADDITIONAL_CSS_PATH'] = isset($this->arParams['ADDITIONAL_CSS_PATH']) ? trim($this->arParams['ADDITIONAL_CSS_PATH']) : '';
 		$this->arResult['SERVICE_URL'] = $this->getPath().'/ajax.php';
 		$this->IncludeComponentTemplate();
 	}

@@ -232,4 +232,14 @@ $MESS["main_install_sms_event_restore_descr"] = "#USER_PHONE# - phone number
 $MESS["main_install_sms_event_restore_name"] = "Recover password using SMS";
 $MESS["main_install_sms_template_confirm_mess"] = "Confirmation code: #CODE#";
 $MESS["main_install_sms_template_restore_mess"] = "Code to recover password: #CODE#";
-?>
+$MESS["MAIN_DEFAULT_LANGUAGE_SHORT_DATE_FORMAT"] = "n/j/Y";
+$MESS["MAIN_DEFAULT_LANGUAGE_MEDIUM_DATE_FORMAT"] = "M j, Y";
+$MESS["MAIN_DEFAULT_LANGUAGE_LONG_DATE_FORMAT"] = "F j, Y";
+$MESS["MAIN_DEFAULT_LANGUAGE_FULL_DATE_FORMAT"] = "l, F j, Y";
+$MESS["MAIN_DEFAULT_LANGUAGE_DAY_MONTH_FORMAT"] = "F j";
+$MESS["MAIN_DEFAULT_LANGUAGE_SHORT_TIME_FORMAT"] = "g:i a";
+$MESS["MAIN_DEFAULT_LANGUAGE_LONG_TIME_FORMAT"] = "g:i:s a";
+$MESS["MAIN_DEFAULT_LANGUAGE_AM_VALUE"] = "am";
+$MESS["MAIN_DEFAULT_LANGUAGE_PM_VALUE"] = "pm";
+$MESS["MAIN_DEFAULT_LANGUAGE_NUMBER_THOUSANDS_SEPARATOR"] = ",";
+$MESS["MAIN_DEFAULT_LANGUAGE_NUMBER_DECIMAL_SEPARATOR"] = ".";

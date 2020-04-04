@@ -274,6 +274,15 @@ input.pagetitle-item {
 .bizproc-automation-status-name-bg,
 .crm-automation-status-name-bg { background: #eef2f4 !important; }
 
+.bitrix24-light-theme:not(.side-panel) .bizproc-automation-status-name-bg {
+	background: transparent !important;
+	color: #fff;
+}
+
+.bitrix24-dark-theme:not(.side-panel) .bizproc-automation-status-name-bg {
+	background: transparent !important;
+}
+
 .bizproc-automation-status-title-right,
 .crm-automation-status-title-right { background-color: #eef2f4 !important; }
 
@@ -287,9 +296,7 @@ input.pagetitle-item {
 	background-color: #fff;
 }
 
-.pagetitle-inner-container .ui-btn-double.ui-btn-primary {
-	margin: 0 17px 0 0;
-}
+.pagetitle-inner-container .ui-btn-double.ui-btn-primary { margin-right: 17px; }
 
 .pagetitle-inner-container .ui-btn-double.ui-btn-primary .ui-btn-extra {
 	width: 32px;

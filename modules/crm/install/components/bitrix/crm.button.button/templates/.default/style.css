@@ -273,7 +273,6 @@ html.bx-ios.bx-ios-fix-frame-focus, .bx-ios.bx-ios-fix-frame-focus body {
 	margin: 0 10px 10px 0;
 	width: 45px;
 	height: 44px;
-	background-color: #fff;
 	background-size: 100%;
 	border-radius: 25px;
 	-webkit-box-shadow: 0 8px 6px -6px rgba(33,33,33,.2);
@@ -288,10 +287,11 @@ html.bx-ios.bx-ios-fix-frame-focus, .bx-ios.bx-ios-fix-frame-focus body {
     transition: box-shadow .17s cubic-bezier(0,0,.2,1);
 }
 /* ICONS */
-.connector-icon-45 {
+.ui-icon.b24-widget-button-social-item,
+.ui-icon.connector-icon-45 {
 	width: 46px;
 	height: 46px;
-	--ui-icon-size-md: 46px;
+	--ui-icon-size-md: 46px
 }
 
 .b24-widget-button-callback {
@@ -323,17 +323,25 @@ html.bx-ios.bx-ios-fix-frame-focus, .bx-ios.bx-ios-fix-frame-focus body {
 	left: -9000px;
 	display: inline-block;
 	padding: 5px 10px;
+	max-width: 360px;
 	/*border: 2px solid #2fc7f7;*/
 	border-radius: 10px;
 	font: 13px/15px "Helvetica Neue", Arial, Helvetica, sans-serif;
 	color: #000;
 	background: #fff;
 	text-align: center;
-	-webkit-transform: translate(0,-50%);
+	text-overflow: ellipsis;
+	white-space: nowrap;
 	transform: translate(0,-50%);
-	-webkit-transition: opacity .6s linear;
 	transition: opacity .6s linear;
 	opacity: 0;
+	overflow: hidden;
+}
+
+@media (max-width: 480px) {
+	.b24-widget-button-social-tooltip {
+		max-width: 200px;
+	}
 }
 
 .b24-widget-button-social-item:hover .b24-widget-button-social-tooltip {

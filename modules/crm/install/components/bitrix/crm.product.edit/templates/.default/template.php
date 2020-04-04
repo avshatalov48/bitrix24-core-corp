@@ -8,6 +8,9 @@ if(SITE_TEMPLATE_ID === 'bitrix24')
 	$APPLICATION->SetAdditionalCSS("/bitrix/themes/.default/bitrix24/crm-entity-show.css");
 }
 
+$isCopyMode = (isset($arResult['IS_COPY_MODE']) &&
+	($arResult['IS_COPY_MODE'] === 'Y' || $arResult['IS_COPY_MODE'] === true));
+
 // Product properties
 foreach($arResult['PROPS'] as $propID => $arProp)
 {
@@ -442,8 +445,11 @@ $arTabs[] = array(
 );
 
 $arResult['CRM_CUSTOM_PAGE_TITLE'] =
-	$arResult['PRODUCT_ID'] > 0
-		? GetMessage('CRM_PRODUCT_NAV_TITLE_EDIT', array('#NAME#' => $arResult['PRODUCT']['NAME']))
+	($arResult['PRODUCT_ID'] > 0) ?
+		GetMessage(
+			'CRM_PRODUCT_NAV_TITLE_'.($isCopyMode ? 'COPY' : 'EDIT'),
+			array('#NAME#' => $arResult['PRODUCT']['NAME'])
+		)
 		: GetMessage('CRM_PRODUCT_NAV_TITLE_ADD');
 
 CCrmGridOptions::SetTabNames($arResult['FORM_ID'], $arTabs);
@@ -462,7 +468,7 @@ $APPLICATION->IncludeComponent(
 			'back_url' => $arResult['BACK_URL'],
 			'custom_html' => $formCustomHtml
 		),
-		'IS_NEW' => $arResult['PRODUCT_ID'] <= 0,
+		'IS_NEW' => ($arResult['PRODUCT_ID'] <= 0 || $isCopyMode),
 		'TITLE' => $arResult['CRM_CUSTOM_PAGE_TITLE'],
 		'ENABLE_TACTILE_INTERFACE' => 'Y',
 		'ENABLE_USER_FIELD_CREATION' => 'N',

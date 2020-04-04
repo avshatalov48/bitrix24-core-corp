@@ -170,7 +170,8 @@ class Domain
 				),
 				'filter' => array(
 					'DOMAIN_ID' => $domainRow['ID'],
-					'=DELETED' => 'Y'
+					'=DELETED' => 'Y',
+					'CHECK_PERMISSIONS' => 'N'
 				)
 			));
 			if ($resSite->fetch())
@@ -183,6 +184,7 @@ class Domain
 		// external available check
 		if (
 			$return['available'] &&
+			$return['domain'] &&
 			Manager::isB24()
 		)
 		{
@@ -191,9 +193,10 @@ class Domain
 				$siteController = Manager::getExternalSiteController();
 				if ($siteController)
 				{
-					$return['available'] = !(boolean)$siteController::isDomainExists(
+				 	$checkResult = $siteController::isDomainExists(
 						$return['domain']
 					);
+					$return['available'] = $checkResult < 2;
 				}
 			}
 			catch (SystemException $ex)

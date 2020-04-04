@@ -113,6 +113,10 @@ $data = array(
 			'GROUP' => 'GENERAL_SETTINGS',
 			"INPUT" => array(
 				'TYPE' => 'Y/N'
+			),
+			'DEFAULT' => array(
+				"PROVIDER_KEY" => "INPUT",
+				"PROVIDER_VALUE" => "Y",
 			)
 		)
 	)

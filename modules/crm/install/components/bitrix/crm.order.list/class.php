@@ -7,7 +7,7 @@ use Bitrix\Main;
 use Bitrix\Crm\Order;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm\Settings\LayoutSettings;
-use Bitrix\Crm\WebForm\Manager as WebFormManager;
+use Bitrix\Crm\Agent\Search\OrderSearchContentRebuildAgent;
 
 Loc::loadMessages(__FILE__);
 
@@ -17,13 +17,14 @@ class CCrmOrderListComponent extends \CBitrixComponent
 	protected $userPermissions;
 	protected $errors = array();
 	protected $isInternal = false;
+	private $exportParams = [];
 	
 	public function getEntityTypeId()
 	{
 		return \CCrmOwnerType::Order;
 	}
 
-	public function onPrepareComponentParams($arParams)
+	public function prepareParams($arParams)
 	{
 		global  $APPLICATION;
 
@@ -38,7 +39,23 @@ class CCrmOrderListComponent extends \CBitrixComponent
 		$arParams['PATH_TO_BUYER_PROFILE'] = CrmCheckPath('PATH_TO_BUYER_PROFILE', $arParams['PATH_TO_BUYER_PROFILE'], '/shop/settings/sale_buyers_profile/?USER_ID=#user_id#&lang='.LANGUAGE_ID);
 		$arParams['PATH_TO_USER_BP'] = CrmCheckPath('PATH_TO_USER_BP', $arParams['PATH_TO_USER_BP'], '/company/personal/bizproc/');
 		$arParams['NAME_TEMPLATE'] = empty($arParams['NAME_TEMPLATE']) ? CSite::GetNameFormat(false) : str_replace(array("#NOBR#","#/NOBR#"), array("",""), $arParams["NAME_TEMPLATE"]);
+
+		if ($this->isExportMode())
+		{
+			$this->prepareExportParams($arParams);
+		}
+
 		return $arParams;
+	}
+
+	private function prepareExportParams($params)
+	{
+		$isStepperExport = (isset($params['STEXPORT_MODE']) && $params['STEXPORT_MODE'] === 'Y');
+		$isExportAllFields = (isset($params['STEXPORT_INITIAL_OPTIONS']['EXPORT_ALL_FIELDS'])
+			&& $params['STEXPORT_INITIAL_OPTIONS']['EXPORT_ALL_FIELDS'] === 'Y');
+		$this->exportParams['STEXPORT_EXPORT_ALL_FIELDS'] = ($isStepperExport && $isExportAllFields) ? 'Y' : 'N';
+		$this->exportParams['STEXPORT_MODE'] = $isStepperExport ? 'Y' : 'N';
+		$this->exportParams['STEXPORT_TOTAL_ITEMS'] = max((int)$params['STEXPORT_TOTAL_ITEMS'], 0);
 	}
 
 	protected function init()
@@ -79,7 +96,40 @@ class CCrmOrderListComponent extends \CBitrixComponent
 		$this->isInternal = !empty($this->arParams['INTERNAL_FILTER']);
 		CUtil::InitJSCore(array('ajax', 'tooltip'));
 
+		$request = Bitrix\Main\Application::getInstance()->getContext()->getRequest();
+		if (!empty($this->arParams['EXPORT_TYPE']))
+		{
+			$exportType = (string)($this->arParams['EXPORT_TYPE']);
+		}
+		elseif ($request->get('type'))
+		{
+			$exportType = $request->get('type');
+		}
+
+		if (!empty($exportType))
+		{
+			$exportType = strtolower(trim($exportType));
+			switch ($exportType)
+			{
+				case 'csv':
+				case 'excel':
+					$this->exportParams['TYPE'] = $exportType;
+					break;
+			}
+
+			if ($this->isExportMode() && !\Bitrix\Crm\Order\Permissions\Order::checkExportPermission($this->userPermissions))
+			{
+				$this->addError(Loc::getMessage('CRM_PERMISSION_DENIED'));
+				return false;
+			}
+		}
+
 		return true;
+	}
+
+	private function isExportMode()
+	{
+		return !empty($this->exportParams) && !empty($this->exportParams['TYPE']);
 	}
 
 	protected function showErrors()
@@ -214,82 +264,29 @@ class CCrmOrderListComponent extends \CBitrixComponent
 			}
 
 			if(empty($counterUserIDs))
+			{
 				$counterUserIDs[] = $this->userId;
-
-			if($counterTypeID == \Bitrix\Crm\Counter\EntityCounterType::IDLE)
-			{
-				$runtime[] =
-					new Main\Entity\ReferenceField('USER_ACTIVITY',
-						\Bitrix\Crm\UserActivityTable::getEntity(),
-						array(
-							'=ref.OWNER_ID' => 'this.ID',
-							'=ref.OWNER_TYPE_ID' => new Main\DB\SqlExpression($this->getEntityTypeId()),
-							'=ref.USER_ID' => new Main\DB\SqlExpression(0)
-						),
-						array('join_type' => 'LEFT')
-					);
-
-				$glFilter['=USER_ACTIVITY.OWNER_ID'] = null;
-
-				$runtime[] =
-					new Main\Entity\ReferenceField('WAIT',
-						\Bitrix\Crm\Pseudoactivity\Entity\WaitTable::getEntity(),
-						array(
-							'=ref.OWNER_ID' => 'this.ID',
-							'=ref.OWNER_TYPE_ID' => new Main\DB\SqlExpression($this->getEntityTypeId()),
-							'=ref.COMPLETED' => new Main\DB\SqlExpression("'N'")
-						),
-						array('join_type' => 'LEFT')
-					);
-
-				$glFilter['=WAIT.OWNER_ID'] = null;
-				$glFilter['=CANCELED'] = 'N';
-				$glFilter['=STATUS_ID'] =  Order\OrderStatus::getSemanticProcessStatuses();
-				$glFilter['=RESPONSIBLE_ID'] = $counterUserIDs;
 			}
-			elseif(
-				$counterTypeID == \Bitrix\Crm\Counter\EntityCounterType::OVERDUE
-				|| $counterTypeID == \Bitrix\Crm\Counter\EntityCounterType::PENDING)
+
+			$counter = Bitrix\Crm\Counter\EntityCounterFactory::create(
+				\CCrmOwnerType::Order,
+				$counterTypeID,
+				0
+			);
+			$activityFilterSql = $counter->getEntityListSqlExpression([
+				'USER_IDS' => $counterUserIDs
+			]);
+			if (!empty($activityFilterSql))
 			{
-				$runtime[] =
-					new Main\Entity\ReferenceField('COUNTER_ACTIVITY_BIND',
-						\Bitrix\Crm\ActivityBindingTable::getEntity(),
-						array(
-							'=ref.OWNER_ID' => 'this.ID',
-							'=ref.OWNER_TYPE_ID' => new Main\DB\SqlExpression($this->getEntityTypeId())
-						),
-						array('join_type' => 'INNER')
-					);
-
-				$runtime[] =
-					new Main\Entity\ReferenceField('COUNTER_ACTIVITY',
-						\Bitrix\Crm\ActivityTable::getEntity(),
-						array(
-							'=ref.ID' => 'this.COUNTER_ACTIVITY_BIND.ACTIVITY_ID'
-						),
-						array('join_type' => 'INNER')
-					);
-
-				$glFilter['=CANCELED'] = 'N';
-				$glFilter['=STATUS_ID'] =  Order\OrderStatus::getSemanticProcessStatuses();
-				$glFilter['=COUNTER_ACTIVITY.COMPLETED'] = 'N';
-				$glFilter['=COUNTER_ACTIVITY.RESPONSIBLE_ID'] = $counterUserIDs;
-
-				if($counterTypeID == \Bitrix\Crm\Counter\EntityCounterType::OVERDUE)
+				if (isset($glFilter['@ID']))
 				{
-					$highBound = new Main\Type\DateTime();
-					$highBound->setTime(0, 0, 0);
-					$glFilter['<COUNTER_ACTIVITY.DEADLINE'] = $highBound;
+					$glFilter[] = [
+						'@ID' => new Bitrix\Main\DB\SqlExpression($activityFilterSql)
+					];
 				}
-				elseif($counterTypeID == \Bitrix\Crm\Counter\EntityCounterType::PENDING)
+				else
 				{
-					$lowhBound = new Main\Type\DateTime();
-					$lowhBound->setTime(0, 0, 0);
-					$glFilter['>=COUNTER_ACTIVITY.DEADLINE'] = $lowhBound;
-
-					$highBound = new Main\Type\DateTime();
-					$highBound->setTime(23, 59, 59);
-					$glFilter['<=COUNTER_ACTIVITY.DEADLINE'] = $highBound;
+					$glFilter['@ID'] =  new Bitrix\Main\DB\SqlExpression($activityFilterSql);
 				}
 			}
 		}
@@ -494,7 +491,8 @@ class CCrmOrderListComponent extends \CBitrixComponent
 			array('id' => 'STATUS_ID', 'name' => Loc::getMessage('CRM_COLUMN_STATUS_ID'), 'sort' => 'STATUS_ID', 'default' => true),
 			array('id' => 'SUM', 'name' => Loc::getMessage('CRM_COLUMN_SUM'), 'sort' => 'PRICE', 'first_order' => 'desc', 'default' => true, 'editable' => false, 'align' => 'right'),
 			array('id' => 'RESPONSIBLE_BY', 'name' => Loc::getMessage('CRM_COLUMN_RESPONSIBLE_BY'), 'default' => true, 'sort' => 'RESPONSIBLE_ID', 'editable' => false),
-			array('id' => 'PAYED', 'name' => Loc::getMessage('CRM_COLUMN_PAYED'), 'sort' => 'PAYED', 'editable' => false, 'default' => true));
+			array('id' => 'PAYED', 'name' => Loc::getMessage('CRM_COLUMN_PAYED'), 'sort' => 'PAYED', 'editable' => false, 'default' => true)
+		);
 
 		// Dont display activities in INTERNAL mode.
 		if(!$this->isInternal)
@@ -513,7 +511,6 @@ class CCrmOrderListComponent extends \CBitrixComponent
 			array(
 				array('id' => 'SOURCE', 'name' => Loc::getMessage('CRM_COLUMN_SOURCE'), 'default' => true, 'editable' => false),
 				array('id' => 'USER', 'name' => Loc::getMessage('CRM_COLUMN_USER_ID'), 'sort' => 'USER_ID', 'editable' => false, 'default' => true),
-//				array('id' => 'LID', 'name' => Loc::getMessage('CRM_COLUMN_LID'), 'sort' => 'LID', 'default' => false),
 				array('id' => 'ID', 'name' => Loc::getMessage('CRM_COLUMN_ID'), 'sort' => 'ID', 'editable' => false, 'type' => 'int'),
 				array('id' => 'PERSON_TYPE_ID', 'name' => Loc::getMessage('CRM_COLUMN_PERSON_TYPE_ID'), 'sort' => 'PERSON_TYPE_ID', 'default' => false, 'editable' => false, 'class' => 'username'),
 				array('id' => 'DATE_PAYED', 'name' => Loc::getMessage('CRM_COLUMN_DATE_PAYED'), 'sort' => 'DATE_PAYED', 'editable' => false, 'type' => 'date', 'class' => 'date'),
@@ -525,7 +522,6 @@ class CCrmOrderListComponent extends \CBitrixComponent
 				array('id' => 'DATE_STATUS', 'name' => Loc::getMessage('CRM_COLUMN_DATE_STATUS'), 'sort' => 'DATE_STATUS', 'editable' => false, 'type' => 'date', 'class' => 'date'),
 				array('id' => 'EMP_STATUS_ID', 'name' => Loc::getMessage('CRM_COLUMN_EMP_STATUS_ID'), 'sort' => 'EMP_STATUS_ID'),
 				array('id' => 'PRICE_DELIVERY', 'name' => Loc::getMessage('CRM_COLUMN_PRICE_DELIVERY'), 'sort' => 'PRICE_DELIVERY', 'editable' => false),
-//				array('id' => 'PRICE_PAYMENT', 'name' => Loc::getMessage('CRM_COLUMN_PRICE_PAYMENT'), 'sort' => 'PRICE_PAYMENT', 'editable' => false, 'type' => 'date', 'class' => 'date'),
 				array('id' => 'ALLOW_DELIVERY', 'name' => Loc::getMessage('CRM_COLUMN_ALLOW_DELIVERY'), 'sort' => 'ALLOW_DELIVERY', 'default' => false, 'editable' => false),
 				array('id' => 'DATE_ALLOW_DELIVERY', 'name' => Loc::getMessage('CRM_COLUMN_DATE_ALLOW_DELIVERY'), 'sort' => false, 'editable' => false, 'type' => 'date', 'class' => 'date'),
 				array('id' => 'EMP_ALLOW_DELIVERY_ID', 'name' => Loc::getMessage('CRM_COLUMN_EMP_ALLOW_DELIVERY'), 'sort' => 'EMP_ALLOW_DELIVERY_ID', 'default' => false),
@@ -533,19 +529,23 @@ class CCrmOrderListComponent extends \CBitrixComponent
 				array('id' => 'DATE_DEDUCTED', 'name' => Loc::getMessage('CRM_COLUMN_DATE_DEDUCTED'), 'sort' => false, 'editable' => false),
 				array('id' => 'EMP_DEDUCTED_ID', 'name' => Loc::getMessage('CRM_COLUMN_EMP_DEDUCTED_ID'), 'sort' => false),
 				array('id' => 'MARKED', 'name' => Loc::getMessage('CRM_COLUMN_MARKED'), 'sort' => 'MARKED', 'editable' => false),
-//				array('id' => 'REASON_MARKED', 'name' => Loc::getMessage('CRM_COLUMN_REASON_MARKED'), 'sort' => 'REASON_MARKED', 'editable' => false),
 				array('id' => 'RESERVED', 'name' => Loc::getMessage('CRM_COLUMN_RESERVED'), 'sort' => 'RESERVED', 'editable' => false),
-//				array('id' => 'PRICE', 'name' => Loc::getMessage('CRM_COLUMN_PRICE'), 'sort' => 'PRICE', 'editable' => false),
 				array('id' => 'CURRENCY', 'name' => Loc::getMessage('CRM_COLUMN_CURRENCY'), 'sort' => 'CURRENCY', 'editable' => false),
 				array('id' => 'DISCOUNT_VALUE', 'name' => Loc::getMessage('CRM_COLUMN_DISCOUNT_VALUE'), 'sort' => false, 'editable' => false),
-//				array('id' => 'PAY_SYSTEM_ID', 'name' => Loc::getMessage('CRM_COLUMN_PAY_SYSTEM_ID'), 'sort' => 'PAY_SYSTEM_ID', 'editable' => false),
-//				array('id' => 'DELIVERY_ID', 'name' => Loc::getMessage('CRM_COLUMN_DELIVERY_ID'), 'sort' => 'DELIVERY_ID', 'editable' => false),
 				array('id' => 'DATE_UPDATE', 'name' => Loc::getMessage('CRM_COLUMN_DATE_UPDATE'), 'sort' => 'DATE_UPDATE', 'editable' => false, 'type' => 'date', 'class' => 'date'),
 				array('id' => 'COMMENTS', 'name' => Loc::getMessage('CRM_COLUMN_COMMENTS'), 'sort' => 'COMMENTS', 'editable' => false),
 				array('id' => 'TAX_VALUE', 'name' => Loc::getMessage('CRM_COLUMN_TAX_VALUE'), 'sort' => 'TAX_VALUE', 'editable' => false),
 				array('id' => 'SUM_PAID', 'name' => Loc::getMessage('CRM_COLUMN_SUM_PAID'), 'sort' => 'SUM_PAID', 'editable' => false),
 				array('id' => 'CREATED_BY', 'name' => Loc::getMessage('CRM_COLUMN_CREATED_BY'), 'sort' => 'CREATED_BY', 'editable' => false),
-				array('id' => 'ACCOUNT_NUMBER', 'name' => Loc::getMessage('CRM_COLUMN_ACCOUNT_NUMBER'), 'sort' => 'ACCOUNT_NUMBER', 'editable' => false)
+				array('id' => 'ACCOUNT_NUMBER', 'name' => Loc::getMessage('CRM_COLUMN_ACCOUNT_NUMBER'), 'sort' => 'ACCOUNT_NUMBER', 'editable' => false),
+				array('id' => 'ORDER_TOPIC', 'name' => Loc::getMessage('CRM_COLUMN_ORDER_TOPIC2'), 'sort' => 'order_topic', 'default' => false, 'editable' => false),
+				array('id' => 'BASKET', 'name' => Loc::getMessage('CRM_COLUMN_ORDER_BASKET'), 'default' => false, 'editable' => false),
+				array('id' => 'SHIPMENT', 'name' => Loc::getMessage('CRM_COLUMN_ORDER_SHIPMENT'), 'default' => false, 'editable' => false),
+				array('id' => 'PAYMENT', 'name' => Loc::getMessage('CRM_COLUMN_ORDER_PAYMENT'), 'default' => false, 'editable' => false),
+				array('id' => 'PROPS', 'name' => Loc::getMessage('CRM_COLUMN_ORDER_PROPS'), 'default' => false, 'editable' => false),
+				array('id' => 'CLIENT', 'name' => Loc::getMessage('CRM_COLUMN_ORDER_CLIENT'), 'default' => false, 'editable' => false),
+				array('id' => 'COMPANY', 'name' => Loc::getMessage('CRM_COLUMN_ORDER_COMPANY'), 'default' => false, 'editable' => false),
+				array('id' => 'CONTACT', 'name' => Loc::getMessage('CRM_COLUMN_ORDER_CONTACT'), 'default' => false, 'editable' => false),
 			)
 		);
 
@@ -600,30 +600,85 @@ class CCrmOrderListComponent extends \CBitrixComponent
 		return $filter;
 	}
 
-	protected function createGlFilter($filter)
+	public function createGlFilter(array $filter, array &$runtime)
 	{
 		global $USER;
 
 		$result = array();
 		$orderFields = array_flip(\Bitrix\Crm\Order\Order::getAllFields());
 
+		$contactIds = [];
+		$companyId = null;
+
+		$filter = $this->formatUIFilter($filter);
+		if(isset($filter['FIND']))
+		{
+			if(is_string($filter['FIND']))
+			{
+				$filter = array_merge($filter, $this->prepareSearchFilterValue($filter['FIND']));
+			}
+			unset($filter['FIND']);
+		}
+
+		$propertyItterator = 0;
 		foreach($filter as $k => $v)
 		{
 			$name = preg_replace('/^\W+/', '', $k);
 
 			if ($name === 'COMPANY_ID')
 			{
-				$result['CLIENT.ENTITY_ID'] = $v;
-				$result['CLIENT.ENTITY_TYPE_ID'] = CCrmOwnerType::Company;
+				$companyId = $v;
 			}
 			elseif ($name === 'ASSOCIATED_CONTACT_ID')
 			{
-				$result['CLIENT.ENTITY_ID'] = $v;
-				$result['CLIENT.ENTITY_TYPE_ID'] = CCrmOwnerType::Contact;
+				if(!is_array($v))
+				{
+					$contactIds = [$v];
+				}
+				else
+				{
+					$contactIds = $v;
+				}
 			}
 			elseif ($name === 'SOURCE_ID')
 			{
-				$result['TRADING_PLATFORM_ORDER.TRADING_PLATFORM_ID'] = $v;
+				$result['TRADING_PLATFORM.TRADING_PLATFORM_ID'] = $v;
+			}
+			elseif ($name === 'PAY_SYSTEM')
+			{
+				$result['PAYMENT.PAY_SYSTEM_ID'] = $v;
+			}
+			elseif ($name === 'DELIVERY_SERVICE')
+			{
+				$result['SHIPMENT.DELIVERY_ID'] = $v;
+				$result['SHIPMENT.SYSTEM'] = 'N';
+			}
+			elseif($name === 'ASSOCIATED_DEAL_ID')
+			{
+				$result['=ORDER_DEAL.DEAL_ID'] = $v;
+
+				$runtime[] = new Main\ORM\Fields\Relations\Reference('ORDER_DEAL',
+					\Bitrix\Crm\Binding\OrderDealTable::getEntity(),
+					['=ref.ORDER_ID' => 'this.ID',],
+					['join_type' => 'LEFT',]
+				);
+			}
+			elseif($name === 'COUPON')
+			{
+				$result['=ORDER_COUPONS.COUPON'] = $v;
+			}
+			elseif($name === 'XML_ID')
+			{
+				$result['%XML_ID'] = $v;
+			}
+			elseif($name === 'SHIPMENT_TRACKING_NUMBER')
+			{
+				$result['%SHIPMENT.TRACKING_NUMBER'] = $v;
+			}
+			elseif($name === 'SHIPMENT_DELIVERY_DOC_DATE')
+			{
+				$docDateName = str_replace('SHIPMENT_DELIVERY_DOC_DATE', 'SHIPMENT.DELIVERY_DOC_DATE', $k);
+				$result[$docDateName] = $v;
 			}
 			elseif ($name === 'USER')
 			{
@@ -636,10 +691,60 @@ class CCrmOrderListComponent extends \CBitrixComponent
 					$result[$key] = $userFilterItem;
 				}
 			}
-			elseif (isset($orderFields[$name]))
+			if (preg_match("/^PROPERTY_/", $name))
+			{
+				$propertyId = (int)str_replace('PROPERTY_', '', $name);
+				if ("PROPERTY_{$propertyId}" !== $name)
+				{
+					continue;
+				}
+				$propertyTableName = "PROPERTY_{$propertyItterator}";
+
+				$propertyValueCode = str_replace($name, "{$propertyTableName}.VALUE", $k);
+				$runtime[] =
+					new Main\Entity\ReferenceField($propertyTableName,
+						\Bitrix\Sale\Internals\OrderPropsValueTable::getEntity(),
+						array(
+							'=ref.ORDER_ID' => 'this.ID',
+						),
+						array('join_type' => 'inner')
+					);
+
+				$result[] = [
+					"={$propertyTableName}.ORDER_PROPS_ID" => $propertyId,
+					$propertyValueCode => $v
+				];
+
+				$propertyItterator++;
+			}
+			elseif (isset($orderFields[$name]) || preg_match("/^UF_/", $name))
 			{
 				$result[$k] = $v;
 			}
+		}
+
+		if(isset($this->arParams['EXTERNAL_FILTER']['USER_ID']) && intval($this->arParams['EXTERNAL_FILTER']['USER_ID']) > 0)
+		{
+			$result['=USER_ID'] = intval($this->arParams['EXTERNAL_FILTER']['USER_ID']);
+		}
+
+		if(isset($filter['ACTIVITY_COUNTER']))
+		{
+			$this->addActivityCounterFilter($filter, $result, $runtime);
+		}
+
+		$contactCompanyFilter = $this->prepareContactCompanyFilter($companyId, $contactIds);
+		if (!empty($contactCompanyFilter))
+		{
+			$result = array_merge($result, $contactCompanyFilter);
+			$runtime[] =
+				new Main\Entity\ReferenceField('CLIENT',
+					\Bitrix\Crm\Binding\OrderContactCompanyTable::getEntity(),
+					array(
+						'=ref.ORDER_ID' => 'this.ID',
+					),
+					array('join_type' => 'LEFT')
+				);
 		}
 
 		if (!(is_object($USER) && $USER->IsAdmin())
@@ -655,12 +760,103 @@ class CCrmOrderListComponent extends \CBitrixComponent
 
 			if(strlen($permissionSql) > 0)
 			{
-				$result['@ID'] = new Bitrix\Main\DB\SqlExpression($permissionSql);
+				if (isset($result['@ID']))
+				{
+					$result[] = [
+						'@ID' => new Bitrix\Main\DB\SqlExpression($permissionSql)
+					];
+				}
+				else
+				{
+					$result['@ID'] = new Bitrix\Main\DB\SqlExpression($permissionSql);
+				}
 			}
 		}
 
 		return $result;
 	}
+
+	private function formatUIFilter(array $filter)
+	{
+		foreach($filter as $k => $v)
+		{
+			if (preg_match('/(.*)_from$/i'.BX_UTF_PCRE_MODIFIER, $k, $arMatch))
+			{
+				\Bitrix\Crm\UI\Filter\Range::prepareFrom($filter, $arMatch[1], $v);
+			}
+			elseif (preg_match('/(.*)_to$/i'.BX_UTF_PCRE_MODIFIER, $k, $arMatch))
+			{
+				$dateFieldNames = ['DATE_INSERT', 'DATE_UPDATE', 'SHIPMENT_DELIVERY_DOC_DATE'];
+				if ($v != '' && in_array($arMatch[1], $dateFieldNames) && !preg_match('/\d{1,2}:\d{1,2}(:\d{1,2})?$/'.BX_UTF_PCRE_MODIFIER, $v))
+				{
+					$v = CCrmDateTimeHelper::SetMaxDayTime($v);
+				}
+
+				\Bitrix\Crm\UI\Filter\Range::prepareTo($filter, $arMatch[1], $v);
+			}
+		}
+		return $filter;
+	}
+
+	private function prepareSearchFilterValue($value)
+	{
+		$preparedFindFilter = [];
+		$find = trim($value);
+		if($find !== '')
+		{
+			$preparedFindFilter = \Bitrix\Crm\Search\SearchEnvironment::prepareEntityFilter(
+				CCrmOwnerType::Order,
+				array(
+					'SEARCH_CONTENT' => \Bitrix\Crm\Search\SearchEnvironment::prepareSearchContent($find)
+				)
+			);
+		}
+		return $preparedFindFilter;
+	}
+
+	private function prepareContactCompanyFilter($companyId, array $contactIds)
+	{
+		$result = [];
+		if(isset($this->arParams['EXTERNAL_FILTER']) && is_array($this->arParams['EXTERNAL_FILTER']))
+		{
+			if(isset($this->arParams['EXTERNAL_FILTER']['CONTACT_IDS']) && is_array($this->arParams['EXTERNAL_FILTER']['CONTACT_IDS']))
+			{
+				$contactIds = $this->arParams['EXTERNAL_FILTER']['CONTACT_IDS'];
+			}
+			if(isset($this->arParams['EXTERNAL_FILTER']['COMPANY_ID']))
+			{
+				$companyId = $this->arParams['EXTERNAL_FILTER']['COMPANY_ID'];
+			}
+		}
+
+		if($companyId > 0 && !empty($contactIds))
+		{
+			$result[] = [
+				'LOGIC' => 'OR',
+				[
+					'CLIENT.ENTITY_TYPE_ID' => CCrmOwnerType::Company,
+					'CLIENT.ENTITY_ID' => $companyId,
+				],
+				[
+					'CLIENT.ENTITY_TYPE_ID' => CCrmOwnerType::Contact,
+					'CLIENT.ENTITY_ID' => $contactIds,
+				],
+			];
+		}
+		elseif($companyId > 0)
+		{
+			$result['CLIENT.ENTITY_ID'] = $companyId;
+			$result['CLIENT.ENTITY_TYPE_ID'] = CCrmOwnerType::Company;
+		}
+		elseif(!empty($contactIds))
+		{
+			$result['CLIENT.ENTITY_ID'] = $contactIds;
+			$result['CLIENT.ENTITY_TYPE_ID'] = CCrmOwnerType::Contact;
+		}
+
+		return $result;
+	}
+
 	protected function getActionData()
 	{
 		//region Try to extract user action data
@@ -830,6 +1026,8 @@ class CCrmOrderListComponent extends \CBitrixComponent
 			return false;
 		}
 
+		$this->arParams = $this->prepareParams($this->arParams);
+
 		$currentPage = $APPLICATION->GetCurPage();
 		$this->arResult['CURRENT_USER_ID'] = CCrmSecurityHelper::GetCurrentUserID();
 		$this->arResult['PATH_TO_ORDER_LIST'] = $this->arParams['PATH_TO_ORDER_LIST'] = CrmCheckPath('PATH_TO_ORDER_LIST', $this->arParams['PATH_TO_ORDER_LIST'], $APPLICATION->GetCurPage());
@@ -870,6 +1068,7 @@ class CCrmOrderListComponent extends \CBitrixComponent
 			$this->arResult['TIME_FORMAT'] = preg_replace('/:s$/', '', Main\Type\DateTime::convertFormatToPhp(FORMAT_DATETIME));
 		}
 
+		$this->arResult['SALESCENTER_MODE'] = ($this->arParams['SALESCENTER_MODE'] === true);
 		$this->arResult['CALL_LIST_UPDATE_MODE'] = isset($_REQUEST['call_list_context']) && isset($_REQUEST['call_list_id']) && IsModuleInstalled('voximplant');
 		$this->arResult['CALL_LIST_CONTEXT'] = (string)$_REQUEST['call_list_context'];
 		$this->arResult['CALL_LIST_ID'] = (int)$_REQUEST['call_list_id'];
@@ -910,7 +1109,7 @@ class CCrmOrderListComponent extends \CBitrixComponent
 
 		$this->arResult['IS_EXTERNAL_FILTER'] = false;
 		$CCrmUserType = new CCrmUserType($USER_FIELD_MANAGER, Order\Order::getUfId());
-		$this->arResult['GRID_ID'] = 'CRM_ORDER_LIST_V12'.($this->isInternal && !empty($this->arParams['GRID_ID_SUFFIX']) ? '_'.$this->arParams['GRID_ID_SUFFIX'] : '');
+		$this->arResult['GRID_ID'] = $this->combineGridIdentifier();
 		$this->arResult['EVENT_LIST'] = CCrmStatus::GetStatusListEx('EVENT_TYPE');
 		$this->arResult['FILTER'] = array();
 		$this->arResult['FILTER_PRESETS'] = array();
@@ -982,28 +1181,26 @@ class CCrmOrderListComponent extends \CBitrixComponent
 		$USER_FIELD_MANAGER->AdminListAddFilter(Order\Order::getUfId(), $filter);
 
 		// converts data from filter
-		if(isset($filter['FIND']))
-		{
-			if(is_string($filter['FIND']))
-			{
-				$find = trim($filter['FIND']);
-				if($find !== '')
-				{
-					$filter['SEARCH_CONTENT'] = $find;
-				}
-			}
-			unset($filter['FIND']);
-		}
-
 		\Bitrix\Crm\UI\Filter\EntityHandler::internalize($this->arResult['FILTER'], $filter);
 
-		$_arSort = $gridOptions->GetSorting(array(
+		$visibleColumns = $gridOptions->GetVisibleColumns();
+
+		$sort = $gridOptions->GetSorting(array(
 			'sort' => array('ID' => 'desc'),
 			'vars' => array('by' => 'by', 'order' => 'order')
 		));
-		$this->arResult['SORT'] = !empty($arSort) ? $arSort : $_arSort['sort'];
-		$this->arResult['SORT_VARS'] = $_arSort['vars'];
-		$visibleColumns = $gridOptions->GetVisibleColumns();
+
+		foreach($sort['sort'] as $sortField => $sortDirection)
+		{
+			if(!in_array($sortField, $visibleColumns))
+			{
+				unset($sort['sort'][$sortField]);
+			}
+		}
+
+		$this->arResult['SORT'] = !empty($arSort) ? $arSort : $sort['sort'];
+		$this->arResult['SORT_VARS'] = $sort['vars'];
+
 
 		// Fill in default values if empty
 		if (empty($visibleColumns))
@@ -1037,10 +1234,42 @@ class CCrmOrderListComponent extends \CBitrixComponent
 			unset($fieldName);
 		}
 
-		$arSelect = array_intersect($visibleColumns, \Bitrix\Crm\Order\Order::getAllFields());
+		if ($CCrmUserType->NormalizeFields($visibleColumns))
+		{
+			$gridOptions->SetVisibleColumns($visibleColumns);
+		}
 
-		if ($CCrmUserType->NormalizeFields($arSelect))
-			$gridOptions->SetVisibleColumns($arSelect);
+		$columns = $visibleColumns;
+		if ($this->isExportMode() && $this->exportParams['STEXPORT_EXPORT_ALL_FIELDS'] === 'Y')
+		{
+			$columns = array_column($this->arResult['HEADERS'], 'id');
+		}
+		$arSelect = array_intersect($columns, \Bitrix\Crm\Order\Order::getAllFields());
+
+		$userFields = $CCrmUserType->GetFields();
+
+		$ufColumns = [];
+		if(is_array($userFields) && !empty($userFields))
+		{
+			if ($this->isExportMode() && $this->exportParams['STEXPORT_EXPORT_ALL_FIELDS'] === 'Y')
+			{
+				$ufColumns = array_keys($userFields);
+			}
+			else
+			{
+				$ufColumns = array_intersect(array_keys($userFields), $visibleColumns);
+			}
+
+			if(!empty($ufColumns))
+			{
+				$arSelect = array_merge($arSelect, $ufColumns);
+			}
+		}
+		if ($this->isExportMode())
+		{
+			$this->exportParams['SELECTED_HEADERS'] = array_merge($columns, $ufColumns);
+		}
+		$arSelect[] = 'ORDER_TOPIC';
 
 		$this->arResult['ENABLE_TASK'] = IsModuleInstalled('tasks');
 
@@ -1106,19 +1335,10 @@ class CCrmOrderListComponent extends \CBitrixComponent
 			$arSelect[] = 'CURRENCY';
 		}
 
-		if(in_array('SOURCE', $visibleColumns, true) || !empty($filter['SOURCE_ID']))
+		if(in_array('SOURCE', $visibleColumns, true))
 		{
-			$runtime[] =
-				new Main\Entity\ReferenceField('TRADING_PLATFORM_ORDER',
-					\Bitrix\Sale\TradingPlatform\OrderTable::getEntity(),
-					array(
-						'=ref.ORDER_ID' => 'this.ID',
-					),
-					array('join_type' => 'LEFT')
-				);
-
-			$arSelect["TRADING_PLATFORM_CODE"] = 'TRADING_PLATFORM_ORDER.TRADING_PLATFORM.CODE';
-			$arSelect["TRADING_PLATFORM_CLASS"] = 'TRADING_PLATFORM_ORDER.TRADING_PLATFORM.CLASS';
+			$arSelect["TRADING_PLATFORM_CODE"] = 'TRADING_PLATFORM.TRADING_PLATFORM.CODE';
+			$arSelect["TRADING_PLATFORM_CLASS"] = 'TRADING_PLATFORM.TRADING_PLATFORM.CLASS';
 		}
 
 		if(in_array('RESPONSIBLE_BY', $visibleColumns, true))
@@ -1157,32 +1377,6 @@ class CCrmOrderListComponent extends \CBitrixComponent
 			$arSelect[] = 'USER_ID';
 			$this->addUserInfoSelection('USER_ID', 'USER', $arSelect, $runtime);
 		}
-
-		$addictFields = array();
-
-		if(in_array('ORDER_CLIENT', $arSelect, true))
-		{
-			$addictFields = array(
-				'CONTACT_ID', 'COMPANY_ID', 'COMPANY_TITLE', 'CONTACT_HONORIFIC',
-				'CONTACT_NAME', 'CONTACT_SECOND_NAME','CONTACT_LAST_NAME'
-			);
-		}
-		else
-		{
-			if(in_array('CONTACT_ID', $arSelect, true))
-			{
-				$addictFields = array(
-					'CONTACT_ID', 'CONTACT_HONORIFIC', 'CONTACT_NAME', 'CONTACT_SECOND_NAME','CONTACT_LAST_NAME'
-				);
-			}
-			if(in_array('COMPANY_ID', $arSelect, true))
-			{
-				$arSelect[] = 'COMPANY_TITLE';
-			}
-		}
-
-		$arSelect = array_merge($arSelect, $addictFields);
-		unset($addictFields);
 
 		// Always need to remove the menu items
 		if (!in_array('STATUS_ID', $arSelect))
@@ -1240,7 +1434,9 @@ class CCrmOrderListComponent extends \CBitrixComponent
 		}
 
 		if(isset($this->arParams['IS_EXTERNAL_CONTEXT']))
+		{
 			$arOptions['IS_EXTERNAL_CONTEXT'] = $this->arParams['IS_EXTERNAL_CONTEXT'];
+		}
 
 		//FIELD_OPTIONS
 		$arSelect = array_unique($arSelect, SORT_STRING);
@@ -1249,118 +1445,13 @@ class CCrmOrderListComponent extends \CBitrixComponent
 		$this->arResult['ORDER_ID'] = array();
 		$this->arResult['ORDER_UF'] = array();
 
-		foreach($filter as $k => $v)
-		{
-			if (preg_match('/(.*)_from$/i'.BX_UTF_PCRE_MODIFIER, $k, $arMatch))
-			{
-				\Bitrix\Crm\UI\Filter\Range::prepareFrom($filter, $arMatch[1], $v);
-			}
-			elseif (preg_match('/(.*)_to$/i'.BX_UTF_PCRE_MODIFIER, $k, $arMatch))
-			{
-				if ($v != '' && ($arMatch[1] == 'DATE_INSERT' || $arMatch[1] == 'DATE_UPDATE') && !preg_match('/\d{1,2}:\d{1,2}(:\d{1,2})?$/'.BX_UTF_PCRE_MODIFIER, $v))
-				{
-					$v = CCrmDateTimeHelper::SetMaxDayTime($v);
-				}
-
-				\Bitrix\Crm\UI\Filter\Range::prepareTo($filter, $arMatch[1], $v);
-			}
-		}
-
-		$glFilter = $this->createGlFilter($filter);
-
-		if(isset($filter['ACTIVITY_COUNTER']))
-		{
-			$this->addActivityCounterFilter($filter, $glFilter, $runtime);
-		}
+		$glFilter = $this->createGlFilter($filter, $runtime);
 
 		// POST & GET actions processing -->
 		$this->requestProcessing($actionData, $glFilter);
 
-		if (isset($glFilter['CLIENT.ENTITY_TYPE_ID']))
-		{
-			$runtime[] =
-				new Main\Entity\ReferenceField('CLIENT',
-					\Bitrix\Crm\Binding\OrderContactCompanyTable::getEntity(),
-					array(
-						'=ref.ORDER_ID' => 'this.ID',
-					),
-					array('join_type' => 'LEFT')
-				);
-		}
-
 		//region Navigation data initialization
-		$pageNum = 0;
-		$total = null;
-		$pageSize = (int)(isset($arNavParams['nPageSize']) ? $arNavParams['nPageSize'] : $this->arParams['ORDER_COUNT']);
-
-		if(isset($_REQUEST['apply_filter']) && $_REQUEST['apply_filter'] === 'Y')
-		{
-			$pageNum = 1;
-		}
-		elseif($pageSize > 0 && isset($_REQUEST['page']))
-		{
-			$pageNum = (int)$_REQUEST['page'];
-			if($pageNum < 0)
-			{
-				//Backward mode
-				$offset = -($pageNum + 1);
-
-				$res = Bitrix\Crm\Order\Order::getList(array(
-					'filter' => $glFilter,
-					'select' => $arSelect,
-					'count_total' => true,
-					'runtime' => $runtime)
-				);
-
-				$total = $res->getCount();
-				$pageNum = (int)(ceil($total / $pageSize)) - $offset;
-				if($pageNum <= 0)
-				{
-					$pageNum = 1;
-				}
-			}
-		}
-
-		if($pageNum > 0)
-		{
-			if(!isset($_SESSION['CRM_PAGINATION_DATA']))
-			{
-				$_SESSION['CRM_PAGINATION_DATA'] = array();
-			}
-			$_SESSION['CRM_PAGINATION_DATA'][$this->arResult['GRID_ID']] = array('PAGE_NUM' => $pageNum, 'PAGE_SIZE' => $pageSize);
-		}
-		else
-		{
-			if(!$this->isInternal
-				&& !(isset($_REQUEST['clear_nav']) && $_REQUEST['clear_nav'] === 'Y')
-				&& isset($_SESSION['CRM_PAGINATION_DATA'])
-				&& isset($_SESSION['CRM_PAGINATION_DATA'][$this->arResult['GRID_ID']])
-			)
-			{
-				$paginationData = $_SESSION['CRM_PAGINATION_DATA'][$this->arResult['GRID_ID']];
-				if(isset($paginationData['PAGE_NUM'])
-					&& isset($paginationData['PAGE_SIZE'])
-					&& $paginationData['PAGE_SIZE'] == $pageSize
-				)
-				{
-					$pageNum = (int)$paginationData['PAGE_NUM'];
-				}
-			}
-
-			if($pageNum <= 0)
-			{
-				$pageNum  = 1;
-			}
-		}
-		//endregion
-
-		$nav = new \Bitrix\Main\UI\PageNavigation("crm-order-list");
-
-		$nav->allowAllRecords(true)
-			->setPageSize($pageSize)
-			->setCurrentPage($pageNum)
-			->initFromUri();
-
+		$nav = $this->getNavigation($arNavParams, $glFilter, $arSelect, $runtime);
 		$glParams = array(
 			'filter' => $glFilter,
 			'order' => $arSort,
@@ -1369,11 +1460,19 @@ class CCrmOrderListComponent extends \CBitrixComponent
 			'limit' => $nav->getLimit()
 		);
 
-		if($total === null)
-			$glParams['count_total'] = true;
+		if (is_array($glFilter))
+		{
+			$filterKeys = array_keys($glFilter);
+			if (preg_grep("/^SHIPMENT./", $filterKeys) || preg_grep("/^PAYMENT./", $filterKeys))
+			{
+				$glParams['group'] = 'ID';
+			}
+		}
 
 		if(!empty($runtime))
-			$glParams['runtime'] =$runtime;
+		{
+			$glParams['runtime'] = $runtime;
+		}
 
 		$dbResult = Bitrix\Crm\Order\Order::getList($glParams);
 
@@ -1384,18 +1483,28 @@ class CCrmOrderListComponent extends \CBitrixComponent
 			$this->arResult['ORDER_UF'][$arOrder['ID']] = array();
 		}
 
-		if($total === null)
-		{
-			$total = $dbResult->getCount();
-		}
 
-		$nav->setRecordCount($total);
-		$this->arResult['ROWS_COUNT'] = $total;
+		$this->arResult['ROWS_COUNT'] = $nav->getRecordCount();
+		$enableNextPage = ($nav->getPageCount() > $nav->getCurrentPage());
+		if ($this->isExportMode())
+		{
+			$this->exportParams['STEXPORT_IS_FIRST_PAGE'] = 'N';
+			$this->exportParams['STEXPORT_IS_LAST_PAGE'] = 'N';
+			if ($nav->getCurrentPage() === 1)
+			{
+				$this->exportParams['STEXPORT_TOTAL_ITEMS'] = $nav->getRecordCount();
+				$this->exportParams['STEXPORT_IS_FIRST_PAGE'] = 'Y';
+			}
+			elseif ($enableNextPage)
+			{
+				$this->exportParams['STEXPORT_IS_LAST_PAGE'] = 'Y';
+			}
+		}
 
 		//region Navigation data storing
 		$this->arResult['PAGINATION'] = array(
-			'PAGE_NUM' => $pageNum,
-			'ENABLE_NEXT_PAGE' => ($nav->getPageCount() > $pageNum),
+			'PAGE_NUM' => $nav->getCurrentPage(),
+			'ENABLE_NEXT_PAGE' => $enableNextPage,
 			'NAV_OBJECT' => $nav,
 			//"SEF_MODE" => "Y",
 			"SHOW_COUNT" => "N"
@@ -1422,6 +1531,40 @@ class CCrmOrderListComponent extends \CBitrixComponent
 
 		$currencyList = \CCrmCurrencyHelper::PrepareListItems();
 		$personTypes = \Bitrix\Crm\Order\PersonType::load(SITE_ID);
+
+		$ordersIds = array_keys($this->arResult['ORDER']);
+
+		$basketData = [];
+
+		if(in_array('BASKET', $visibleColumns, true))
+		{
+			$basketData = $this->loadBasketData($ordersIds);
+		}
+
+		$shipmentData = [];
+
+		if(in_array('SHIPMENT', $visibleColumns, true))
+		{
+			$shipmentData = $this->loadShipmentData($ordersIds);
+		}
+
+		$paymentData = [];
+
+		if(in_array('PAYMENT', $visibleColumns, true))
+		{
+			$paymentData = $this->loadPaymentData($ordersIds);
+		}
+
+
+		$clientData = [];
+		$needContactAndCompany = in_array('CLIENT', $visibleColumns, true);
+		$needContact = $needContactAndCompany || in_array('CONTACT', $visibleColumns, true);
+		$needCompany = $needContactAndCompany || in_array('COMPANY', $visibleColumns, true);
+
+		if($needContact || $needCompany)
+		{
+			$clientData = $this->loadClientData($ordersIds, $needContact, $needCompany);
+		}
 
 		foreach($this->arResult['ORDER'] as &$arOrder)
 		{
@@ -1667,14 +1810,6 @@ class CCrmOrderListComponent extends \CBitrixComponent
 				}
 			}
 
-			if(isset($arOrder['CONTACT_INFO']))
-			{
-				$arOrder['CLIENT_INFO'] = $arOrder['CONTACT_INFO'];
-			}
-			elseif(isset($arOrder['COMPANY_INFO']))
-			{
-				$arOrder['CLIENT_INFO'] = $arOrder['COMPANY_INFO'];
-			}
 			//endregion
 
 			if(isset($arOrder['ACTIVITY_TIME']))
@@ -1781,6 +1916,45 @@ class CCrmOrderListComponent extends \CBitrixComponent
 				);
 			}
 
+			if(!empty( $basketData[$entityID]))
+			{
+				$arOrder['BASKET'] = $basketData[$entityID];
+			}
+
+			if(!empty( $shipmentData[$entityID]))
+			{
+				$arOrder['SHIPMENT'] = $shipmentData[$entityID];
+			}
+
+			if(!empty( $paymentData[$entityID]))
+			{
+				$arOrder['PAYMENT'] = $paymentData[$entityID];
+			}
+
+			if(!empty( $clientData[$entityID][\CCrmOwnerType::Company]))
+			{
+				$arOrder['COMPANY'] = $clientData[$entityID][\CCrmOwnerType::Company];
+			}
+
+			if(!empty( $clientData[$entityID][\CCrmOwnerType::Contact]))
+			{
+				$arOrder['CONTACT'] = $clientData[$entityID][\CCrmOwnerType::Contact];
+			}
+
+			if(isset($arOrder['CONTACT']))
+			{
+				$arOrder['CLIENT'] = $arOrder['CONTACT'];
+			}
+			elseif(isset($arOrder['COMPANY']))
+			{
+				$arOrder['CLIENT'] = $arOrder['COMPANY'];
+			}
+
+			if(in_array('PROPS', $visibleColumns, true))
+			{
+				$arOrder['PROPS'] = $this->loadPropsData($entityID);
+			}
+
 			$this->arResult['ORDER'][$entityID] = $arOrder;
 
 			$userActivityID = isset($arOrder['USER_ACTIVITY_ID']) ? intval($arOrder['USER_ACTIVITY_ID']) : 0;
@@ -1806,7 +1980,6 @@ class CCrmOrderListComponent extends \CBitrixComponent
 			}
 		}
 
-		/*
 		$CCrmUserType->ListAddEnumFieldsValue(
 			$this->arResult,
 			$this->arResult['ORDER'],
@@ -1818,7 +1991,7 @@ class CCrmOrderListComponent extends \CBitrixComponent
 					'/bitrix/components/bitrix/crm.order.details/show_file.php?ownerId=#owner_id#&fieldName=#field_name#&fileId=#file_id#'
 			)
 		);
-	*/
+
 		$this->arResult['ENABLE_TOOLBAR'] = isset($this->arParams['ENABLE_TOOLBAR']) ? $this->arParams['ENABLE_TOOLBAR'] : false;
 		if($this->arResult['ENABLE_TOOLBAR'])
 		{
@@ -1865,6 +2038,19 @@ class CCrmOrderListComponent extends \CBitrixComponent
 
 			$this->arResult['NEED_FOR_REFRESH_ACCOUNTING'] = \Bitrix\Crm\Agent\Accounting\OrderAccountSyncAgent::getInstance()->isEnabled();
 
+			/** @var OrderSearchContentRebuildAgent $agent */
+			$agent = OrderSearchContentRebuildAgent::getInstance();
+			$isAgentEnabled = $agent->isEnabled();
+			if ($isAgentEnabled)
+			{
+				if (!$agent->isActive())
+				{
+					$agent->enable(false);
+					$isAgentEnabled = false;
+				}
+			}
+			$arResult['NEED_FOR_REBUILD_SEARCH_CONTENT'] = $isAgentEnabled;
+
 			if(CCrmPerms::IsAdmin())
 			{
 				if(COption::GetOptionString('crm', '~CRM_REBUILD_ORDER_ATTR', 'N') === 'Y')
@@ -1884,9 +2070,544 @@ class CCrmOrderListComponent extends \CBitrixComponent
 			$this->showErrors();
 		}
 
+		if ($this->isExportMode())
+		{
+			$this->arResult = array_merge($this->arResult, $this->exportParams);
+			$this->IncludeComponentTemplate($this->exportParams['TYPE']);
+
+			return array(
+				'PROCESSED_ITEMS' => count($this->arResult['ORDER']),
+				'TOTAL_ITEMS' => $this->arResult['STEXPORT_TOTAL_ITEMS']
+			);
+		}
+
 		$this->IncludeComponentTemplate();
 		include_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/components/bitrix/crm.order/include/nav.php');
 		return $this->arResult['ROWS_COUNT'];
+	}
+
+	/**
+	 * @return string
+	 */
+	protected function combineGridIdentifier()
+	{
+		if(isset($this->arParams['GRID_ID']) && is_string($this->arParams['GRID_ID']) && !empty($this->arParams['GRID_ID']))
+		{
+			return $this->arParams['GRID_ID'];
+		}
+		return 'CRM_ORDER_LIST_V12'.($this->isInternal && !empty($this->arParams['GRID_ID_SUFFIX']) ? '_'.$this->arParams['GRID_ID_SUFFIX'] : '');
+	}
+
+	/**
+	 * @param array $arNavParams
+	 * @param array $glFilter
+	 * @param array $arSelect
+	 * @param array $runtime
+	 *
+	 * @return Main\UI\PageNavigation
+	 * @throws Main\ArgumentException
+	 * @throws Main\ObjectPropertyException
+	 */
+	private function getNavigation(array $arNavParams, array $glFilter, array $arSelect, array $runtime)
+	{
+		$pageNum = 0;
+		if ($this->isExportMode() &&  (int)$this->arParams['STEXPORT_PAGE_SIZE'] > 0)
+		{
+			$pageSize = (int)$this->arParams['STEXPORT_PAGE_SIZE'];
+		}
+		else
+		{
+			$pageSize = (int)(isset($arNavParams['nPageSize']) ? $arNavParams['nPageSize'] : $this->arParams['ORDER_COUNT']);
+		}
+
+		$res = Bitrix\Crm\Order\Order::getList(array(
+			'filter' => $glFilter,
+			'select' => $arSelect,
+			'count_total' => true,
+			'runtime' => $runtime)
+		);
+
+		$total = $res->getCount();
+
+		if (isset($_REQUEST['apply_filter']) && $_REQUEST['apply_filter'] === 'Y')
+		{
+			$pageNum = 1;
+		}
+		elseif ($pageSize > 0 && (isset($this->arParams['PAGE_NUMBER']) || isset($_REQUEST['page'])))
+		{
+			$pageNum = (int)$this->arParams['PAGE_NUMBER'] > 0 ? (int)$this->arParams['PAGE_NUMBER'] : (int)$_REQUEST['page'];
+			if ($pageNum < 0)
+			{
+				//Backward mode
+				$offset = -($pageNum + 1);
+				$pageNum = (int)(ceil($total / $pageSize)) - $offset;
+				if ($pageNum <= 0)
+				{
+					$pageNum = 1;
+				}
+			}
+		}
+
+		if ($pageNum > 0)
+		{
+			if (!isset($_SESSION['CRM_PAGINATION_DATA']))
+			{
+				$_SESSION['CRM_PAGINATION_DATA'] = array();
+			}
+			$_SESSION['CRM_PAGINATION_DATA'][$this->arResult['GRID_ID']] = array('PAGE_NUM' => $pageNum, 'PAGE_SIZE' => $pageSize);
+		}
+		else
+		{
+			if (!$this->isInternal
+				&& !(isset($_REQUEST['clear_nav']) && $_REQUEST['clear_nav'] === 'Y')
+				&& isset($_SESSION['CRM_PAGINATION_DATA'])
+				&& isset($_SESSION['CRM_PAGINATION_DATA'][$this->arResult['GRID_ID']])
+			)
+			{
+				$paginationData = $_SESSION['CRM_PAGINATION_DATA'][$this->arResult['GRID_ID']];
+				if (isset($paginationData['PAGE_NUM'])
+					&& isset($paginationData['PAGE_SIZE'])
+					&& $paginationData['PAGE_SIZE'] == $pageSize
+				)
+				{
+					$pageNum = (int)$paginationData['PAGE_NUM'];
+				}
+			}
+
+			if ($pageNum <= 0)
+			{
+				$pageNum = 1;
+			}
+		}
+		//endregion
+
+		$nav = new Main\UI\PageNavigation("crm-order-list");
+		$nav->allowAllRecords(true)
+			->setPageSize($pageSize)
+			->setCurrentPage($pageNum)
+			->setRecordCount($total)
+			->initFromUri();
+		return $nav;
+	}
+
+	protected function loadClientData(array $orderIds, bool $needContact, bool $needCompany): array
+	{
+		if(empty($orderIds) || (!$needCompany && !$needContact))
+		{
+			return [];
+		}
+
+		$result = [];
+		$runtime = [];
+		$select = ['*'];
+
+		if($needCompany)
+		{
+			$runtime[] = new Main\Entity\ReferenceField(
+				'COMPANY',
+				\Bitrix\Crm\CompanyTable::class,
+				[
+					'=this.ENTITY_ID' => 'ref.ID',
+					'=this.ENTITY_TYPE_ID' => new Main\DB\SqlExpression('?i', \CCrmOwnerType::Company)
+				],
+				[
+					'join_type' => 'LEFT'
+				]
+			);
+
+			$select['COMPANY_TITLE'] = 'COMPANY.TITLE';
+		}
+
+		if($needContact)
+		{
+			$runtime[] = new Main\Entity\ReferenceField(
+				'CONTACT',
+				\Bitrix\Crm\ContactTable::class,
+				[
+					'=this.ENTITY_ID' => 'ref.ID',
+					'=this.ENTITY_TYPE_ID' => new Main\DB\SqlExpression('?i', \CCrmOwnerType::Contact)
+				],
+				[
+					'join_type' => 'LEFT'
+				]
+			);
+
+			$select['CONTACT_FULL_NAME'] = 'CONTACT.FULL_NAME';
+			$select['CONTACT_COMPANY_TITLE'] = 'CONTACT.COMPANY.TITLE';
+		}
+
+		$res = Order\ContactCompanyCollection::getList([
+			'filter' => [
+				'=ORDER_ID' => $orderIds,
+				'=IS_PRIMARY' => 'Y',
+			],
+			'runtime' => $runtime,
+			'select' => $select
+		]);
+
+		while ($row = $res->fetch())
+		{
+			$item = [
+				'ENTITY_TYPE_ID' => $row['ENTITY_TYPE_ID'],
+				'ENTITY_ID' => $row['ENTITY_ID'],
+				'PREFIX' => 'ORDER_'.$row['ORDER_ID'],
+			];
+
+			if((int)$row['ENTITY_TYPE_ID'] === \CCrmOwnerType::Contact)
+			{
+				$item['TITLE'] = $row['CONTACT_FULL_NAME'];
+				$item['DESCRIPTION'] = $row['CONTACT_COMPANY_TITLE'];
+			}
+			elseif((int)$row['ENTITY_TYPE_ID'] === \CCrmOwnerType::Company)
+			{
+				$item['TITLE'] = $row['COMPANY_TITLE'];
+			}
+			else
+			{
+				continue;
+			}
+
+			if(!isset($result[$row['ORDER_ID']]))
+			{
+				$result[$row['ORDER_ID']] = [];
+			}
+
+			$result[$row['ORDER_ID']][$row['ENTITY_TYPE_ID']] = $item;
+		}
+
+		return $result;
+	}
+
+	protected function loadPaymentData(array $orderIds): array
+	{
+		if(empty($orderIds))
+		{
+			return [];
+		}
+
+		$result = [];
+		$urlTemplate = '/shop/orders/payment/details/#PAYMENT_ID#/';
+
+		$res = Order\Payment::getList(array(
+			'order' => array('ID' => 'ASC'),
+			'filter' => array('ORDER_ID' => $orderIds)
+		));
+
+		while($item = $res->fetch())
+		{
+			$item['URL'] = str_replace(
+				'#PAYMENT_ID#',
+				$item['ID'],
+				$urlTemplate
+			);
+
+			$item['SUM'] = SaleFormatCurrency($item["SUM"], $item["CURRENCY"]);
+			$result[$item['ORDER_ID']][] = $item;
+		}
+
+		return $result;
+	}
+
+	protected function loadShipmentData(array $orderIds): array
+	{
+		if(empty($orderIds))
+		{
+			return [];
+		}
+
+		$result = [];
+		$urlTemplate = '/shop/orders/shipment/details/#SHIPMENT_ID#/?order_id=#ORDER_ID#';
+
+		$dbItemsList = Order\Shipment::getList([
+			'order' => ['ID' => 'ASC'],
+			'filter' => ['ORDER_ID' => $orderIds, '!=SYSTEM' => 'Y'],
+			'select' => [
+				'*',
+				'ORDER_SITE_ID' => 'ORDER.LID'
+			]
+		]);
+
+		while ($item = $dbItemsList->fetch())
+		{
+			$item['DELIVERY_NAME'] = htmlspecialcharsbx($item['DELIVERY_NAME']);
+			$item['STATUS'] = $this->getShipmentStatus($item['STATUS_ID'], LANGUAGE_ID);
+			$item['PRICE_DELIVERY'] = SaleFormatCurrency($item["PRICE_DELIVERY"], $item["CURRENCY"]);
+			$item['URL'] = str_replace(
+				['#SHIPMENT_ID#', '#ORDER_ID#'],
+				[$item['ID'], $item['ORDER_ID']],
+				$urlTemplate
+			);
+			$item['WEIGHT'] = $this->getReadableWeight((float)$item['WEIGHT'], 1, $item['ORDER_SITE_ID']);
+			$result[$item['ORDER_ID']][] = $item;
+		}
+
+		return $result;
+	}
+
+	protected function getShipmentStatus(string $statusId, string $lang)
+	{
+		if(strlen($statusId) <= 0)
+		{
+			return '';
+		}
+
+		static $data = null;
+
+		if($data === null)
+		{
+			$data = $this->loadShipmentStatusData($lang);
+		}
+
+		return isset($data[$statusId]) ? $data[$statusId] : '';
+	}
+
+	protected function loadShipmentStatusData(string $lang)
+	{
+		if(strlen($lang) <= 0)
+		{
+			return [];
+		}
+
+		$result = [];
+
+		$dbRes = Order\DeliveryStatus::getList([
+			'select' => ['ID', 'NAME' => 'Bitrix\Sale\Internals\StatusLangTable:STATUS.NAME'],
+			'filter' => [
+				'=Bitrix\Sale\Internals\StatusLangTable:STATUS.LID' => $lang
+			],
+		]);
+
+		while ($shipmentStatus = $dbRes->fetch())
+		{
+			$result[$shipmentStatus["ID"]] = $shipmentStatus["NAME"] . " [" . $shipmentStatus["ID"] . "]";
+		}
+
+		return $result;
+	}
+
+	/**
+	 * @param int[] $orderIds
+	 * @return array
+	 * @throws Main\ArgumentException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 * Notice: we suggest that iblock module was included with catalog module
+	 */
+	protected function loadBasketData(array $orderIds): array
+	{
+		if(empty($orderIds))
+		{
+			return [];
+		}
+
+		$result = [];		
+		$basketItems = [];
+		$dbItemsList = Order\Basket::getList(array(
+			'order' => ['ID' => 'ASC'],
+			'filter' => ['=ORDER_ID' => $orderIds],
+			'select' => [
+				'*',
+				'ORDER_SITE_ID' => 'ORDER.LID',
+				'PRODUCT__ID' => 'PRODUCT.ID',
+				'IBLOCK_ID' => 'PRODUCT.IBLOCK.IBLOCK_ID',
+				'IBLOCK_SECTION_ID' => 'PRODUCT.IBLOCK.IBLOCK_SECTION_ID'
+			]
+		));
+
+		while ($item = $dbItemsList->fetch())
+		{
+			$item['NAME'] = htmlspecialcharsbx($item['NAME']);
+
+			$item['EDIT_PAGE_URL'] = '';
+
+			if((int)$item['IBLOCK_ID'] > 0 && (int)$item['PRODUCT__ID'] > 0)
+			{
+				$item['EDIT_PAGE_URL'] = \CIBlock::GetAdminElementEditLink(
+					(int)$item['IBLOCK_ID'],
+					(int)$item['PRODUCT__ID'],
+					array(
+						"find_section_section" => (int)$item['IBLOCK_SECTION_ID'] > 0 ? (int)$item['IBLOCK_SECTION_ID'] : null,
+						'WF' => 'Y'
+					));
+
+				if(strlen($item['EDIT_PAGE_URL']) > 0)
+				{
+					$item['EDIT_PAGE_URL'] = str_replace(
+						[".php","/bitrix/admin/"],
+						["/", "/shop/settings/"],
+						$item['EDIT_PAGE_URL']
+					);
+
+					$item['EDIT_PAGE_URL'] = '/shop/settings/'.$item['EDIT_PAGE_URL'].'&'.bitrix_sessid_get();
+				}
+			}
+
+			$item['PRICE'] = SaleFormatCurrency($item['PRICE'], $item['CURRENCY']);
+			$measure = isset($arItem["MEASURE_NAME"]) ? $item["MEASURE_NAME"] : Loc::getMessage("CRM_ORDER_LIST_DEFAULT_MEASURE");
+			$item['WEIGHT'] = $this->getReadableWeight((float)$item['WEIGHT'], (float)$item['QUANTITY'], $item['ORDER_SITE_ID']);
+			$item["QUANTITY"] = htmlspecialcharsbx(Order\BasketItem::formatQuantity($item["QUANTITY"])) . " " . htmlspecialcharsbx($measure);
+			$item["PROPS"] = [];
+			$basketItems[$item['ID']] = $item;
+		}
+
+		if (!empty($basketItems))
+		{
+			$basketItemsIds = array_keys($basketItems);
+			$propertyItemRaw = Order\BasketPropertyItem::getList([
+				'filter' => [
+					'=BASKET_ID' => $basketItemsIds,
+					"!CODE" => ["CATALOG.XML_ID", "PRODUCT.XML_ID"]
+				]
+			]);
+			while($propertyItem = $propertyItemRaw->fetch())
+			{
+				$basketItems[$propertyItem['BASKET_ID']]['PROPS'][] = $propertyItem;
+			}
+
+			foreach($basketItems as $item)
+			{
+				if(!is_array($result[$item['ORDER_ID']]))
+				{
+					$result[$item['ORDER_ID']] = [];
+				}
+
+				$result[$item['ORDER_ID']][] = $item;
+			}
+		}
+
+		return $result;
+	}
+
+	protected function getReadableWeight(float $weight, float $quantity, string $orderSiteId)
+	{
+		if($weight <= 0)
+		{
+			return '';
+		}
+
+		$siteData = $this->getSiteData($orderSiteId);
+
+		$result = $weight;
+
+		if((float)$siteData['WEIGHT_KOEF'] > 0)
+		{
+			$result = (float)($weight / $siteData['WEIGHT_KOEF']);
+		}
+
+		if((float)($quantity) > 0)
+		{
+			$result *= $quantity;
+		}
+
+		$weightUnit = isset($siteData['WEIGHT_UNIT']) ? ' '.$siteData['WEIGHT_UNIT'] : '';
+		return htmlspecialcharsbx(roundEx($result, SALE_WEIGHT_PRECISION).$weightUnit);
+	}
+
+	protected function getSiteData(string $siteId)
+	{
+		static $data = null;
+
+		if($data === null)
+		{
+			$data = $this->loadSiteData();
+		}
+
+		return $data[$siteId] ? $data[$siteId] : [];
+	}
+
+	protected function loadSiteData()
+	{
+		$result = [];
+		$dbRes = Main\SiteTable::getList();
+
+		while ($row = $dbRes->fetch())
+		{
+			$serverName = $row['SERVER_NAME'];
+
+			if(strlen($serverName) <= 0)
+			{
+				if(defined('SITE_SERVER_NAME') && strlen(SITE_SERVER_NAME) > 0)
+					$serverName = SITE_SERVER_NAME;
+				else
+					$serverName = \Bitrix\Main\Config\Option::get('main', 'server_name', '');
+			}
+
+			$result[$row['LID']] = [
+				'SERVER_NAME' => $serverName,
+				'WEIGHT_UNIT' => htmlspecialcharsbx(\Bitrix\Main\Config\Option::get('sale', 'weight_unit', '', $row['LID'])),
+				'WEIGHT_KOEF' => htmlspecialcharsbx(\Bitrix\Main\Config\Option::get('sale', 'weight_koef', 1, $row['LID']))
+			];
+		}
+
+		return $result;
+	}
+
+	//todo: for all by one query
+	protected function loadPropsData(int $orderId)
+	{
+		if($orderId <= 0)
+		{
+			return [];
+		}
+
+		if(!($propOrder = $this->loadOrder($orderId)))
+		{
+			return [];
+		}
+
+		if(!($collection = $propOrder->getPropertyCollection()))
+		{
+			return [];
+		}
+
+		$result = [];
+
+		foreach ($collection->getGroups() as $group)
+		{
+			$items = [];
+
+			/** @var Order\PropertyValue $property */
+			foreach ($collection->getPropertiesByGroupId($group['ID']) as $property)
+			{
+				if(!($propertyValue = $property->getValue()))
+				{
+					continue;
+				}
+
+				$items[] = [
+					'NAME' => htmlspecialcharsbx($property->getName()),
+					'VALUE' => $property->getViewHtml()
+				];
+			}
+
+			if(!empty($items))
+			{
+				$result[] = [
+					'NAME' => htmlspecialcharsbx($group['NAME']),
+					'ITEMS' => $items
+				];
+			}
+		}
+
+		return $result;
+	}
+
+	protected function getOrder(int $orderId)
+	{
+		$orders = [];
+
+		if(!isset($orders[$orderId]))
+		{
+			$orders[$orderId] = $this->loadOrder($orderId);
+		}
+
+		return $orders[$orderId];
+
+	}
+
+	protected function loadOrder(int $orderId)
+	{
+		return Order\Order::load($orderId);
 	}
 }
 ?>

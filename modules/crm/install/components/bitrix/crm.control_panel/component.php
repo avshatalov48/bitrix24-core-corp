@@ -22,6 +22,7 @@ use Bitrix\Crm\Settings\ContactSettings;
 use Bitrix\Crm\Settings\DealSettings;
 use Bitrix\Crm\Settings\LeadSettings;
 use Bitrix\Crm\Settings\InvoiceSettings;
+use Bitrix\Crm\Settings\OrderSettings;
 use Bitrix\Crm\Settings\QuoteSettings;
 use Bitrix\Crm\Counter\EntityCounterFactory;
 use Bitrix\Crm\Counter\EntityCounterType;
@@ -33,32 +34,30 @@ global $APPLICATION;
 
 // Preparing of URL templates -->
 $arParams['PATH_TO_START'] = CrmCheckPath('PATH_TO_START', isset($arParams['PATH_TO_START']) ? $arParams['PATH_TO_START'] : '', Option::get('crm', 'path_to_start', '/crm/start/', false));
+
+$arParams['PATH_TO_ORDER_LIST'] = isset($arParams['PATH_TO_ORDER_LIST']) ? $arParams['PATH_TO_ORDER_LIST'] : '#SITE_DIR#shop/orders/list/';
+$arParams['PATH_TO_ORDER_KANBAN'] = isset($arParams['PATH_TO_ORDER_KANBAN']) ? $arParams['PATH_TO_ORDER_KANBAN'] : '#SITE_DIR#shop/orders/kanban/';
+
 $arParams['PATH_TO_ACTIVITY_LIST'] = (isset($arParams['PATH_TO_ACTIVITY_LIST']) && $arParams['PATH_TO_ACTIVITY_LIST'] !== '') ? $arParams['PATH_TO_ACTIVITY_LIST'] : '#SITE_DIR#crm/activity/';
-$arParams['PATH_TO_ACTIVITY_WIDGET'] = (isset($arParams['PATH_TO_ACTIVITY_WIDGET']) && $arParams['PATH_TO_ACTIVITY_WIDGET'] !== '') ? $arParams['PATH_TO_ACTIVITY_WIDGET'] : '#SITE_DIR#crm/activity/widget/';
 $arParams['PATH_TO_COMPANY_LIST'] = CrmCheckPath('PATH_TO_COMPANY_LIST', isset($arParams['PATH_TO_COMPANY_LIST']) ? $arParams['PATH_TO_COMPANY_LIST'] : '', '#SITE_DIR#crm/company/list/');
 $arParams['PATH_TO_COMPANY_EDIT'] = (isset($arParams['PATH_TO_COMPANY_EDIT']) && $arParams['PATH_TO_COMPANY_EDIT'] !== '') ? $arParams['PATH_TO_COMPANY_EDIT'] : '#SITE_DIR#crm/company/edit/#company_id#/';
-$arParams['PATH_TO_COMPANY_WIDGET'] = (isset($arParams['PATH_TO_COMPANY_WIDGET']) && $arParams['PATH_TO_COMPANY_WIDGET'] !== '') ? $arParams['PATH_TO_COMPANY_WIDGET'] : '#SITE_DIR#crm/company/widget/';
 $arParams['PATH_TO_COMPANY_DETAILS'] = CrmCheckPath('PATH_TO_COMPANY_DETAILS', $arParams['PATH_TO_COMPANY_DETAILS'], '#SITE_DIR#crm/company/details/#company_id#/');
 
 $arParams['PATH_TO_CONTACT_LIST'] = CrmCheckPath('PATH_TO_CONTACT_LIST', isset($arParams['PATH_TO_CONTACT_LIST']) ? $arParams['PATH_TO_CONTACT_LIST'] : '', '#SITE_DIR#crm/contact/list/');
 $arParams['PATH_TO_CONTACT_EDIT'] = (isset($arParams['PATH_TO_CONTACT_EDIT']) && $arParams['PATH_TO_CONTACT_EDIT'] !== '') ? $arParams['PATH_TO_CONTACT_EDIT'] : '#SITE_DIR#crm/contact/edit/#contact_id#/';
-$arParams['PATH_TO_CONTACT_WIDGET'] = (isset($arParams['PATH_TO_CONTACT_WIDGET']) && $arParams['PATH_TO_CONTACT_WIDGET'] !== '') ? $arParams['PATH_TO_CONTACT_WIDGET'] : '#SITE_DIR#crm/contact/widget/';
 $arParams['PATH_TO_CONTACT_DETAILS'] = CrmCheckPath('PATH_TO_CONTACT_DETAILS', $arParams['PATH_TO_CONTACT_DETAILS'], '#SITE_DIR#crm/contact/details/#contact_id#/');
 
 $arParams['PATH_TO_DEAL_LIST'] = CrmCheckPath('PATH_TO_DEAL_LIST', isset($arParams['PATH_TO_DEAL_LIST']) ? $arParams['PATH_TO_DEAL_LIST'] : '', '#SITE_DIR#crm/deal/list/');
 $arParams['PATH_TO_DEAL_EDIT'] = (isset($arParams['PATH_TO_DEAL_EDIT']) && $arParams['PATH_TO_DEAL_EDIT'] !== '') ? $arParams['PATH_TO_DEAL_EDIT'] : '#SITE_DIR#crm/deal/edit/#deal_id#/';
-$arParams['PATH_TO_DEAL_WIDGET'] = (isset($arParams['PATH_TO_DEAL_WIDGET']) && $arParams['PATH_TO_DEAL_WIDGET'] !== '') ? $arParams['PATH_TO_DEAL_WIDGET'] : '#SITE_DIR#crm/deal/widget/';
 $arParams['PATH_TO_DEAL_KANBAN'] = (isset($arParams['PATH_TO_DEAL_KANBAN']) && $arParams['PATH_TO_DEAL_KANBAN'] !== '') ? $arParams['PATH_TO_DEAL_KANBAN'] : '#SITE_DIR#crm/deal/kanban/';
 $arParams['PATH_TO_DEAL_CALENDAR'] = (isset($arParams['PATH_TO_DEAL_CALENDAR']) && $arParams['PATH_TO_DEAL_CALENDAR'] !== '') ? $arParams['PATH_TO_DEAL_CALENDAR'] : '#SITE_DIR#crm/deal/calendar/';
 $arParams['PATH_TO_DEAL_KANBANCATEGORY'] = (isset($arParams['PATH_TO_DEAL_KANBANCATEGORY']) && $arParams['PATH_TO_DEAL_KANBANCATEGORY'] !== '') ? $arParams['PATH_TO_DEAL_KANBANCATEGORY'] : '#SITE_DIR#crm/deal/kanban/category/#category_id#/';
 $arParams['PATH_TO_DEAL_CALENDARCATEGORY'] = (isset($arParams['PATH_TO_DEAL_CALENDARCATEGORY']) && $arParams['PATH_TO_DEAL_CALENDARCATEGORY'] !== '') ? $arParams['PATH_TO_DEAL_CALENDARCATEGORY'] : '#SITE_DIR#crm/deal/calendar/category/#category_id#/';
 $arParams['PATH_TO_DEAL_CATEGORY'] = (isset($arParams['PATH_TO_DEAL_CATEGORY']) && $arParams['PATH_TO_DEAL_CATEGORY'] !== '') ? $arParams['PATH_TO_DEAL_CATEGORY'] : '#SITE_DIR#crm/deal/category/#category_id#/';
-$arParams['PATH_TO_DEAL_WIDGETCATEGORY'] = (isset($arParams['PATH_TO_DEAL_WIDGETCATEGORY']) && $arParams['PATH_TO_DEAL_WIDGETCATEGORY'] !== '') ? $arParams['PATH_TO_DEAL_WIDGETCATEGORY'] : '#SITE_DIR#crm/deal/widget/category/#category_id#/';
 $arParams['PATH_TO_DEAL_DETAILS'] = CrmCheckPath('PATH_TO_DEAL_DETAILS', $arParams['PATH_TO_DEAL_DETAILS'], '#SITE_DIR#crm/deal/details/#deal_id#/');
 
 $arParams['PATH_TO_LEAD_LIST'] = CrmCheckPath('PATH_TO_LEAD_LIST', isset($arParams['PATH_TO_LEAD_LIST']) ? $arParams['PATH_TO_LEAD_LIST'] : '', '#SITE_DIR#crm/lead/list/');
 $arParams['PATH_TO_LEAD_EDIT'] = (isset($arParams['PATH_TO_LEAD_EDIT']) && $arParams['PATH_TO_LEAD_EDIT'] !== '') ? $arParams['PATH_TO_LEAD_EDIT'] : '#SITE_DIR#crm/lead/edit/#lead_id#/';
-$arParams['PATH_TO_LEAD_WIDGET'] = (isset($arParams['PATH_TO_LEAD_WIDGET']) && $arParams['PATH_TO_LEAD_WIDGET'] !== '') ? $arParams['PATH_TO_LEAD_WIDGET'] : '#SITE_DIR#crm/lead/widget/';
 $arParams['PATH_TO_LEAD_KANBAN'] = (isset($arParams['PATH_TO_LEAD_KANBAN']) && $arParams['PATH_TO_LEAD_KANBAN'] !== '') ? $arParams['PATH_TO_LEAD_KANBAN'] : '#SITE_DIR#crm/lead/kanban/';
 $arParams['PATH_TO_LEAD_CALENDAR'] = (isset($arParams['PATH_TO_LEAD_CALENDAR']) && $arParams['PATH_TO_LEAD_CALENDAR'] !== '') ? $arParams['PATH_TO_LEAD_CALENDAR'] : '#SITE_DIR#crm/lead/calendar/';
 $arParams['PATH_TO_LEAD_DETAILS'] = CrmCheckPath('PATH_TO_LEAD_DETAILS', $arParams['PATH_TO_LEAD_DETAILS'], '#SITE_DIR#crm/lead/details/#lead_id#/');
@@ -71,7 +70,6 @@ $arParams['PATH_TO_QUOTE_DETAILS'] = CrmCheckPath('PATH_TO_QUOTE_DETAILS', $arPa
 $arParams['PATH_TO_INVOICE_LIST'] = CrmCheckPath('PATH_TO_INVOICE_LIST', isset($arParams['PATH_TO_INVOICE_LIST']) ? $arParams['PATH_TO_INVOICE_LIST'] : '', '#SITE_DIR#crm/invoice/list/');
 $arParams['PATH_TO_INVOICE_RECUR'] = CrmCheckPath('PATH_TO_INVOICE_RECUR', isset($arParams['PATH_TO_INVOICE_RECUR']) ? $arParams['PATH_TO_INVOICE_RECUR'] : '', '#SITE_DIR#crm/invoice/recur/');
 $arParams['PATH_TO_INVOICE_EDIT'] = (isset($arParams['PATH_TO_INVOICE_EDIT']) && $arParams['PATH_TO_INVOICE_EDIT'] !== '') ? $arParams['PATH_TO_INVOICE_EDIT'] : '#SITE_DIR#crm/invoice/edit/#invoice_id#/';
-$arParams['PATH_TO_INVOICE_WIDGET'] = (isset($arParams['PATH_TO_INVOICE_WIDGET']) && $arParams['PATH_TO_INVOICE_WIDGET'] !== '') ? $arParams['PATH_TO_INVOICE_WIDGET'] : '#SITE_DIR#crm/invoice/widget/';
 $arParams['PATH_TO_INVOICE_KANBAN'] = (isset($arParams['PATH_TO_INVOICE_KANBAN']) && $arParams['PATH_TO_INVOICE_KANBAN'] !== '') ? $arParams['PATH_TO_INVOICE_KANBAN'] : '#SITE_DIR#crm/invoice/kanban/';
 $arParams['PATH_TO_REPORT_LIST'] = (isset($arParams['PATH_TO_REPORT_LIST']) && $arParams['PATH_TO_REPORT_LIST'] !== '') ? $arParams['PATH_TO_REPORT_LIST'] : '#SITE_DIR#crm/reports/report/';
 $arParams['PATH_TO_DEAL_FUNNEL'] = (isset($arParams['PATH_TO_DEAL_FUNNEL']) && $arParams['PATH_TO_DEAL_FUNNEL'] !== '') ? $arParams['PATH_TO_DEAL_FUNNEL'] : '#SITE_DIR#crm/reports/';
@@ -97,10 +95,6 @@ if($currentCategoryID >= 0)
 		$arParams['PATH_TO_DEAL_KANBANCATEGORY'],
 		array('category_id' => $currentCategoryID)
 	);
-	$arParams['PATH_TO_DEAL_WIDGET'] = CComponentEngine::makePathFromTemplate(
-		$arParams['PATH_TO_DEAL_WIDGETCATEGORY'],
-		array('category_id' => $currentCategoryID)
-	);
 }
 
 // set default view from settings
@@ -108,20 +102,21 @@ if($currentCategoryID >= 0)
 $defaultViews = array(
 	'DEAL' => array(
 		DealSettings::VIEW_LIST => $arParams['PATH_TO_DEAL_LIST'],
-		DealSettings::VIEW_WIDGET => $arParams['PATH_TO_DEAL_WIDGET'],
 		DealSettings::VIEW_KANBAN => $arParams['PATH_TO_DEAL_KANBAN'],
 		DealSettings::VIEW_CALENDAR => $arParams['PATH_TO_DEAL_CALENDAR']
 	),
 	'LEAD' => array(
 		LeadSettings::VIEW_LIST => $arParams['PATH_TO_LEAD_LIST'],
-		LeadSettings::VIEW_WIDGET => $arParams['PATH_TO_LEAD_WIDGET'],
 		LeadSettings::VIEW_KANBAN => $arParams['PATH_TO_LEAD_KANBAN'],
 		LeadSettings::VIEW_CALENDAR => $arParams['PATH_TO_LEAD_CALENDAR']
 	),
 	'INVOICE' => array(
 		InvoiceSettings::VIEW_LIST => $arParams['PATH_TO_INVOICE_LIST'],
-		InvoiceSettings::VIEW_WIDGET => $arParams['PATH_TO_INVOICE_WIDGET'],
 		InvoiceSettings::VIEW_KANBAN => $arParams['PATH_TO_INVOICE_KANBAN']
+	),
+	'ORDER' => array(
+		OrderSettings::VIEW_LIST => $arParams['PATH_TO_ORDER_LIST'],
+		OrderSettings::VIEW_KANBAN => $arParams['PATH_TO_ORDER_KANBAN']
 	),
 	'QUOTE' => array(
 		QuoteSettings::VIEW_LIST => $arParams['PATH_TO_QUOTE_LIST'],
@@ -129,15 +124,12 @@ $defaultViews = array(
 	),
 	'COMPANY' => array(
 		CompanySettings::VIEW_LIST => $arParams['PATH_TO_COMPANY_LIST'],
-		CompanySettings::VIEW_WIDGET => $arParams['PATH_TO_COMPANY_WIDGET']
 	),
 	'CONTACT' => array(
 		ContactSettings::VIEW_LIST => $arParams['PATH_TO_CONTACT_LIST'],
-		ContactSettings::VIEW_WIDGET => $arParams['PATH_TO_CONTACT_WIDGET']
 	),
 	'ACTIVITY' => array(
 		ActivitySettings::VIEW_LIST => $arParams['PATH_TO_ACTIVITY_LIST'],
-		ActivitySettings::VIEW_WIDGET => $arParams['PATH_TO_ACTIVITY_WIDGET']
 	)
 );
 
@@ -237,7 +229,8 @@ if($isAdmin || CCrmLead::CheckReadPermission(0, $userPermissions))
 		'NAME' => GetMessage('CRM_CTRL_PANEL_ITEM_LEAD'),
 		'TITLE' => GetMessage('CRM_CTRL_PANEL_ITEM_LEAD_TITLE'),
 		'URL' => CComponentEngine::MakePathFromTemplate(
-			$arParams['PATH_TO_LEAD_INDEX'] !== '' ? $arParams['PATH_TO_LEAD_INDEX'] : $arParams['PATH_TO_LEAD_LIST']
+			 isset($arParams['PATH_TO_LEAD_INDEX']) && $arParams['PATH_TO_LEAD_INDEX'] !== ''
+				 ? $arParams['PATH_TO_LEAD_INDEX'] : $arParams['PATH_TO_LEAD_LIST']
 		),
 		'ICON' => 'lead',
 		'COUNTER' => $counter->getValue(),
@@ -293,7 +286,8 @@ if($isAdmin || CCrmDeal::CheckReadPermission(0, $userPermissions))
 		'NAME' => GetMessage('CRM_CTRL_PANEL_ITEM_DEAL'),
 		'TITLE' => GetMessage('CRM_CTRL_PANEL_ITEM_DEAL_TITLE'),
 		'URL' => CComponentEngine::MakePathFromTemplate(
-			$arParams['PATH_TO_DEAL_INDEX'] !== '' ? $arParams['PATH_TO_DEAL_INDEX'] : $arParams['PATH_TO_DEAL_LIST']
+			isset($arParams['PATH_TO_DEAL_INDEX']) && $arParams['PATH_TO_DEAL_INDEX'] !== ''
+				? $arParams['PATH_TO_DEAL_INDEX'] : $arParams['PATH_TO_DEAL_LIST']
 		),
 		'ICON' => 'deal',
 		'COUNTER' => $counter->getValue(),
@@ -338,7 +332,8 @@ if($isAdmin || CCrmContact::CheckReadPermission(0, $userPermissions))
 		'NAME' => GetMessage('CRM_CTRL_PANEL_ITEM_CONTACT'),
 		'TITLE' => GetMessage('CRM_CTRL_PANEL_ITEM_CONTACT_TITLE'),
 		'URL' => CComponentEngine::MakePathFromTemplate(
-			$arParams['PATH_TO_CONTACT_INDEX'] !== '' ? $arParams['PATH_TO_CONTACT_INDEX'] : $arParams['PATH_TO_CONTACT_LIST']
+			isset($arParams['PATH_TO_CONTACT_INDEX']) && $arParams['PATH_TO_CONTACT_INDEX'] !== ''
+				? $arParams['PATH_TO_CONTACT_INDEX'] : $arParams['PATH_TO_CONTACT_LIST']
 		),
 		'ICON' => 'contact',
 		'COUNTER' => $counter->getValue(),
@@ -383,7 +378,8 @@ if($isAdmin || CCrmCompany::CheckReadPermission(0, $userPermissions))
 		'NAME' => GetMessage('CRM_CTRL_PANEL_ITEM_COMPANY'),
 		'TITLE' => GetMessage('CRM_CTRL_PANEL_ITEM_COMPANY_TITLE'),
 		'URL' => CComponentEngine::MakePathFromTemplate(
-			$arParams['PATH_TO_COMPANY_INDEX'] !== '' ? $arParams['PATH_TO_COMPANY_INDEX'] : $arParams['PATH_TO_COMPANY_LIST']
+			isset($arParams['PATH_TO_COMPANY_INDEX']) && $arParams['PATH_TO_COMPANY_INDEX'] !== ''
+				? $arParams['PATH_TO_COMPANY_INDEX'] : $arParams['PATH_TO_COMPANY_LIST']
 		),
 		'ICON' => 'company',
 		'COUNTER' => $counter->getValue(),
@@ -392,7 +388,19 @@ if($isAdmin || CCrmCompany::CheckReadPermission(0, $userPermissions))
 	);
 }
 
-if($isAdmin || $userPermissions->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'READ'))
+
+if (\Bitrix\Main\Loader::includeModule('report') && \Bitrix\Report\VisualConstructor\Helper\Analytic::isEnable())
+{
+	$stdItems['ANALYTICS'] = [
+		'ID' => 'ANALYTICS',
+		'MENU_ID' => 'menu_crm_analytics',
+		'NAME' => \Bitrix\Main\Localization\Loc::getMessage('CRM_CTRL_PANEL_ITEM_ANALYTICS'),
+		'TITLE' => \Bitrix\Main\Localization\Loc::getMessage('CRM_CTRL_PANEL_ITEM_ANALYTICS_TITLE'),
+		'URL' => SITE_DIR."report/analytics/",
+	];
+}
+
+if ($isAdmin || $userPermissions->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'READ'))
 {
 	$stdItems['CATALOGUE'] = array(
 		'ID' => 'PRODUCT',
@@ -401,6 +409,20 @@ if($isAdmin || $userPermissions->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'READ'))
 		'TITLE' => GetMessage('CRM_CTRL_PANEL_ITEM_CATALOGUE_2'),
 		'URL' => CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_PRODUCT_LIST']),
 		'ICON' => 'catalog'
+	);
+}
+
+if (\Bitrix\Main\Config\Option::get("crm", "crm_shop_enabled", "N") === 'Y')
+{
+	$stdItems['ORDER'] = array(
+		'ID' => 'ORDER',
+		'MENU_ID' => 'menu_crm_order',
+		'NAME' => GetMessage('CRM_CTRL_PANEL_ITEM_ORDER'),
+		'TITLE' => GetMessage('CRM_CTRL_PANEL_ITEM_ORDER'),
+		'URL' => CComponentEngine::MakePathFromTemplate(
+			 isset($arParams['PATH_TO_ORDER_INDEX']) && $arParams['PATH_TO_ORDER_INDEX'] !== ''
+				 ? $arParams['PATH_TO_ORDER_INDEX'] : $arParams['PATH_TO_ORDER_LIST']
+		),
 	);
 }
 
@@ -421,7 +443,8 @@ if($isAdmin || !$userPermissions->HavePerm('INVOICE', BX_CRM_PERM_NONE, 'READ'))
 		'NAME' => GetMessage('CRM_CTRL_PANEL_ITEM_INVOICE'),
 		'TITLE' => GetMessage('CRM_CTRL_PANEL_ITEM_INVOICE_TITLE'),
 		'URL' => CComponentEngine::MakePathFromTemplate(
-			$arParams['PATH_TO_INVOICE_INDEX'] !== '' ? $arParams['PATH_TO_INVOICE_INDEX'] : $arParams['PATH_TO_INVOICE_LIST']
+			isset($arParams['PATH_TO_INVOICE_INDEX']) && $arParams['PATH_TO_INVOICE_INDEX'] !== ''
+				? $arParams['PATH_TO_INVOICE_INDEX'] : $arParams['PATH_TO_INVOICE_LIST']
 		),
 		'ICON' => 'invoice',
 		'ACTIONS' => array(
@@ -495,7 +518,8 @@ if($isAdmin || CCrmQuote::CheckReadPermission(0, $userPermissions))
 		'NAME' => GetMessage('CRM_CTRL_PANEL_ITEM_QUOTE'),
 		'TITLE' => GetMessage('CRM_CTRL_PANEL_ITEM_QUOTE_TITLE'),
 		'URL' => CComponentEngine::MakePathFromTemplate(
-			$arParams['PATH_TO_QUOTE_INDEX'] !== '' ? $arParams['PATH_TO_QUOTE_INDEX'] : $arParams['PATH_TO_QUOTE_LIST']
+			isset($arParams['PATH_TO_QUOTE_INDEX']) && $arParams['PATH_TO_QUOTE_INDEX'] !== ''
+				? $arParams['PATH_TO_QUOTE_INDEX'] : $arParams['PATH_TO_QUOTE_LIST']
 		),
 		'ICON' => 'quote',
 		'ACTIONS' => $actions,
@@ -591,7 +615,8 @@ $stdItems['MY_ACTIVITY'] = array(
 	'NAME' => GetMessage('CRM_CTRL_PANEL_ITEM_MY_ACTIVITY'),
 	'TITLE' => GetMessage('CRM_CTRL_PANEL_ITEM_MY_ACTIVITY_TITLE'),
 	'URL' => CComponentEngine::MakePathFromTemplate(
-		$arParams['PATH_TO_ACTIVITY_INDEX'] !== '' ? $arParams['PATH_TO_ACTIVITY_INDEX'] : $arParams['PATH_TO_ACTIVITY_LIST']
+		isset($arParams['PATH_TO_ACTIVITY_INDEX']) && $arParams['PATH_TO_ACTIVITY_INDEX'] !== ''
+			? $arParams['PATH_TO_ACTIVITY_INDEX'] : $arParams['PATH_TO_ACTIVITY_LIST']
 	),
 	'ICON' => 'activity',
 	'IS_DISABLED' => true

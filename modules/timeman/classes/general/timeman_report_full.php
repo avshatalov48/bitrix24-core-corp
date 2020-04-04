@@ -515,7 +515,7 @@ class CUserReportFull
 		{
 			$this->SETTINGS["UF_LAST_REPORT_DATE"] = $LastDate;
 			$this->SETTINGS["UF_DELAY_TIME"] = "";
-
+			CReportSettings::clearCache($USER_ID);
 			return true;
 		}
 		return false;
@@ -565,7 +565,14 @@ class CUserReportFull
 						else
 							$arFields["DATE_FROM"] = strtotime("next mon",$last_date);
 						$arFields["DATE_TO"] = strtotime("next sun", $arFields["DATE_FROM"]);
-						$arFields["DATE_SUBMIT"] = strtotime("next ".$this->days[$arParams["UF_TM_DAY"]-1], $arFields["DATE_TO"])+$time;
+						if ($arParams["UF_TM_DAY"] === null)
+						{
+							$arFields["DATE_SUBMIT"] = strtotime("next " . reset($this->days), $arFields["DATE_TO"]) + $time;
+						}
+						else
+						{
+							$arFields["DATE_SUBMIT"] = strtotime("next " . $this->days[$arParams["UF_TM_DAY"] - 1], $arFields["DATE_TO"]) + $time;
+						}
 
 					}
 					else//fri,sat,sun
@@ -575,7 +582,14 @@ class CUserReportFull
 						else
 							$arFields["DATE_FROM"] = strtotime("mon next week",$last_date-date('Z'));
 						$arFields["DATE_TO"] = strtotime("next sun", $arFields["DATE_FROM"]);
-						$arFields["DATE_SUBMIT"] = strtotime("last ".$this->days[$arParams["UF_TM_DAY"]-1], $arFields["DATE_TO"])+$time;
+						if ($arParams["UF_TM_DAY"] === null)
+						{
+							$arFields["DATE_SUBMIT"] = strtotime("last " . reset($this->days), $arFields["DATE_TO"]) + $time;
+						}
+						else
+						{
+							$arFields["DATE_SUBMIT"] = strtotime("last " . $this->days[$arParams["UF_TM_DAY"] - 1], $arFields["DATE_TO"]) + $time;
+						}
 					}
 
 				break;
@@ -602,7 +616,7 @@ class CUserReportFull
 						if ($last_date && $last_date>strtotime("first day of this month") && $last_date<strtotime("last day of this month") || $last_date>=strtotime("last day of this month"))
 							$arFields["DATE_FROM"] = $last_date+3600*24;
 						else
-							$arFields["DATE_FROM"] = strtotime("first day of this month");
+							$arFields["DATE_FROM"] = strtotime("first day of this month", $last_date);
 
 						$arFields["DATE_TO"] = strtotime("last day of this month", $arFields["DATE_FROM"]);
 						$arFields["DATE_SUBMIT"] = strtotime("last day of last month", CTimeMan::RemoveHoursTS($arFields["DATE_TO"]))+$arParams["UF_TM_REPORT_DATE"]*3600*24+$time;
@@ -679,7 +693,7 @@ class CUserReportFull
 					$arLastDate = strtotime("last day of last month -1 month");
 				else
 					$arLastDate = strtotime("last day of last month");
-				if ($last_date_report && $last_date_report>=$arLastDate)
+				if ($last_date_report)
 					$arLastDate = $last_date_report;
 			break;
 		}

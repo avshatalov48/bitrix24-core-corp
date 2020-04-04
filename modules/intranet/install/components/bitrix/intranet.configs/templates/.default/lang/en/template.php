@@ -24,15 +24,18 @@ $MESS["CONFIG_DATE_FORMAT"] = "Date format";
 $MESS["CONFIG_DEFAULT_TOALL"] = "Use \"All users\" as default recipient";
 $MESS["CONFIG_DISK_ALLOW_DOCUMENT_TRANSFORMATION"] = "Auto generate PDF and JPG files for documents";
 $MESS["CONFIG_DISK_ALLOW_EDIT_OBJECT_IN_UF"] = "Allow involved users to edit documents attached to posts, tasks, comments, etc. <br>(Access can be configured manually under My Drive - Uploaded files at any time)";
+$MESS["CONFIG_DISK_ALLOW_USE_EXTENDED_FULLTEXT"] = "Search Drive documents";
 $MESS["CONFIG_DISK_ALLOW_USE_EXTERNAL_LINK"] = "Allow public links";
 $MESS["CONFIG_DISK_ALLOW_VIDEO_TRANSFORMATION"] = "Auto generate MP4 and JPG files for video media";
-$MESS["CONFIG_DISK_LIMIT_HISTORY_LOCK_POPUP_TEXT"] = "Unlimited document history is available on the Plus plan and above.";
+$MESS["CONFIG_DISK_EXTENDED_FULLTEXT_INFO"] = "Search is temporarily unavailable. Please contact the Helpdesk to enable search.";
+$MESS["CONFIG_DISK_LIMIT_HISTORY_LOCK_POPUP_TEXT"] = "Unlimited document history is available in <a href=\"/settings/license_all.php\" target=\"_blank\">selected commercial plans</a>.";
 $MESS["CONFIG_DISK_LIMIT_LOCK_POPUP_TEXT"] = "Enjoy even more useful Bitrix24 features with Advanced Drive:<br/><br/>
 + Document update history (modified when and by whom)<br/>
 + Recover any previous document version from history<br/><br/>
 <a href=\"https://www.bitrix24.com/pro/drive.php\" target='_blank'>Learn more</a><br/><br/>
 Advanced Drive is available in \"Standard\" plan and higher.";
 $MESS["CONFIG_DISK_LIMIT_LOCK_POPUP_TITLE"] = "Available only in extended Bitrix24.Drive";
+$MESS["CONFIG_DISK_LOCK_EXTENDED_FULLTEXT_POPUP_TEXT"] = "Available on selected commercial plans";
 $MESS["CONFIG_DISK_LOCK_POPUP_TEXT"] = "Advanced Drive features:
 
 <br/><br/>
@@ -147,6 +150,8 @@ $MESS["CONFIG_PHONE_NUMBER_DEFAULT_COUNTRY"] = "Phone number format: default cou
 $MESS["CONFIG_SAVE"] = "Save";
 $MESS["CONFIG_SAVE_SUCCESSFULLY"] = "Settings have been updated successfully";
 $MESS["CONFIG_SHOW_FIRED_EMPLOYEES"] = "Show dismissed employees";
+$MESS["CONFIG_SHOW_YEAR_FOR_FEMALE"] = "Show date of birth in female profiles";
+$MESS["CONFIG_STRESSLEVEL_AVAILABLE"] = "Allow to measure and show stress level in user profile";
 $MESS["CONFIG_TIME_FORMAT"] = "Time format";
 $MESS["CONFIG_TIME_FORMAT_12"] = "12 hour";
 $MESS["CONFIG_TIME_FORMAT_24"] = "24 hour";

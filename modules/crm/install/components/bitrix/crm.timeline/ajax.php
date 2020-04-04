@@ -1,9 +1,18 @@
 <?php
 define('NO_KEEP_STATISTIC', 'Y');
 define('NO_AGENT_STATISTIC','Y');
-define('NO_AGENT_CHECK', true);
 define('DisableEventsCheck', true);
 define('DisableMessageServiceCheck', false);
+
+$action = isset($_REQUEST['ACTION']) ? $_REQUEST['ACTION'] : '';
+/**
+ * AGENTS ARE REQUIRED FOR FOLLOWING ACTIONS:
+ * 	BUILD_TIMELINE_SEARCH_CONTENT
+ */
+define(
+	'NO_AGENT_CHECK',
+	!in_array($action, array('REBUILD_TIMELINE_SEARCH_CONTENT'), true)
+);
 
 require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/prolog_before.php');
 
@@ -50,7 +59,6 @@ if (!$currentUser || !$currentUser->IsAuthorized() || !check_bitrix_sessid() || 
 CUtil::JSPostUnescape();
 $GLOBALS['APPLICATION']->RestartBuffer();
 Header('Content-Type: application/x-javascript; charset='.LANG_CHARSET);
-$action = isset($_POST['ACTION']) ? $_POST['ACTION'] : '';
 if(strlen($action) == 0)
 {
 	__CrmTimelineEndResponse(array('ERROR' => 'Invalid data.'));
@@ -64,6 +72,10 @@ if($action == 'SAVE_COMMENT')
 	$ownerTypeID = isset($_POST['OWNER_TYPE_ID']) ? (int)$_POST['OWNER_TYPE_ID'] : 0;
 	$ownerID = isset($_POST['OWNER_ID']) ? (int)$_POST['OWNER_ID'] : 0;
 	$text = isset($_POST['TEXT']) ? $_POST['TEXT'] : '';
+	if($text === '')
+	{
+		__CrmTimelineEndResponse(array('ERROR' => 'Empty comment message.'));
+	}
 	$authorID = CCrmSecurityHelper::GetCurrentUserID();
 	$attachments = isset($_POST['ATTACHMENTS']) && is_array($_POST['ATTACHMENTS']) ? $_POST['ATTACHMENTS'] : array();
 
@@ -379,6 +391,7 @@ elseif($action == 'GET_HISTORY_ITEMS')
 {
 	$params = isset($_POST['PARAMS']) && is_array($_POST['PARAMS']) ? $_POST['PARAMS'] : array();
 
+	$guid = isset($params['GUID']) ? $params['GUID'] : '';
 	$ownerTypeID = isset($params['OWNER_TYPE_ID']) ? (int)$params['OWNER_TYPE_ID'] : 0;
 	$ownerID = isset($params['OWNER_ID']) ? (int)$params['OWNER_ID'] : 0;
 
@@ -387,15 +400,20 @@ elseif($action == 'GET_HISTORY_ITEMS')
 		__CrmTimelineEndResponse(array('ERROR' => 'Access denied.'));
 	}
 
+	$component->setGuid($guid);
 	$component->setEntityTypeID($ownerTypeID);
 	$component->setEntityID($ownerID);
 
+	$component->prepareHistoryFilter();
+
 	$navigation = isset($params['NAVIGATION']) ? $params['NAVIGATION'] : array();
-	$offsetTime = \Bitrix\Main\Type\DateTime::tryParse(
-		isset($navigation['OFFSET_TIMESTAMP']) ? $navigation['OFFSET_TIMESTAMP'] : '',
-		'Y-m-d H:i:s'
-	);
+	$offsetTime = null;
+	if(isset($navigation['OFFSET_TIMESTAMP']))
+	{
+		$offsetTime = \Bitrix\Main\Type\DateTime::tryParse($navigation['OFFSET_TIMESTAMP'], 'Y-m-d H:i:s');
+	}
 	$offsetID = isset($navigation['OFFSET_ID']) ? (int)$navigation['OFFSET_ID'] : 0;
+
 	$component->prepareHistoryItems($offsetTime, $offsetID);
 
 	__CrmTimelineEndResponse(
@@ -813,7 +831,15 @@ elseif($action == 'DELETE_DOCUMENT')
 			$entry = \Bitrix\Crm\Timeline\DocumentEntry::getByID($id);
 			if(is_array($entry) && isset($entry['SETTINGS']) && isset($entry['SETTINGS']['DOCUMENT_ID']))
 			{
-				$result = \Bitrix\DocumentGenerator\Model\DocumentTable::delete($entry['SETTINGS']['DOCUMENT_ID']);
+				$documentId = $entry['SETTINGS']['DOCUMENT_ID'];
+				if(\Bitrix\DocumentGenerator\Driver::getInstance()->getUserPermissions()->canModifyDocument($documentId))
+				{
+					$result = \Bitrix\DocumentGenerator\Model\DocumentTable::delete($entry['SETTINGS']['DOCUMENT_ID']);
+				}
+				else
+				{
+					$result->addError(new \Bitrix\Main\Error(GetMessage('CRM_PERMISSION_DENIED')));
+				}
 			}
 		}
 		if($result->isSuccess())
@@ -892,4 +918,25 @@ elseif($action === 'GET_PERMISSIONS')
 		);
 	}
 	__CrmTimelineEndResponse(array('ERROR' => 'Type is not supported'));
+}
+elseif($action === 'REBUILD_TIMELINE_SEARCH_CONTENT')
+{
+	$agent = \Bitrix\Crm\Agent\Search\TimelineSearchContentRebuildAgent::getInstance();
+	if($agent->isEnabled() && !$agent->isActive())
+	{
+		$agent->enable(false);
+	}
+	if(!$agent->isEnabled())
+	{
+		__CrmTimelineEndResponse(array('STATUS' => 'COMPLETED'));
+	}
+
+	$progressData = $agent->getProgressData();
+	__CrmTimelineEndResponse(
+		array(
+			'STATUS' => 'PROGRESS',
+			'PROCESSED_ITEMS' => $progressData['PROCESSED_ITEMS'],
+			'TOTAL_ITEMS' => $progressData['TOTAL_ITEMS']
+		)
+	);
 }

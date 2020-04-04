@@ -23,10 +23,34 @@ use \Bitrix\Main\Localization\Loc; ?>
 				name="CONFIG[WELCOME_MESSAGE_TEXT]"><?=htmlspecialcharsbx($arResult["CONFIG"]["WELCOME_MESSAGE_TEXT"])?></textarea>
 			</div>
 		</div>
+
+		<div class="imopenlines-control-container imopenlines-control-select">
+			<div class="imopenlines-control-subtitle">
+				<?=Loc::getMessage('IMOL_CONFIG_EDIT_NA_TIME_NEW')?>
+			</div>
+			<div class="imopenlines-control-inner">
+				<select class="imopenlines-control-input" name="CONFIG[NO_ANSWER_TIME]">
+					<option value="60" <?if($arResult["CONFIG"]["NO_ANSWER_TIME"] == "60") { ?>selected<? }?>><?=Loc::getMessage("IMOL_CONFIG_EDIT_QUEUE_TIME_1")?></option>
+					<option value="180" <?if($arResult["CONFIG"]["NO_ANSWER_TIME"] == "180") { ?>selected<? }?>><?=Loc::getMessage("IMOL_CONFIG_EDIT_QUEUE_TIME_3")?></option>
+					<option value="300" <?if($arResult["CONFIG"]["NO_ANSWER_TIME"] == "300") { ?>selected<? }?>><?=Loc::getMessage("IMOL_CONFIG_EDIT_QUEUE_TIME_5")?></option>
+					<option value="600" <?if($arResult["CONFIG"]["NO_ANSWER_TIME"] == "600") { ?>selected<? }?>><?=Loc::getMessage("IMOL_CONFIG_EDIT_QUEUE_TIME_10")?></option>
+					<option value="900" <?if($arResult["CONFIG"]["NO_ANSWER_TIME"] == "900") { ?>selected<? }?>><?=Loc::getMessage("IMOL_CONFIG_EDIT_QUEUE_TIME_15")?></option>
+					<option value="1800" <?if($arResult["CONFIG"]["NO_ANSWER_TIME"] == "1800") { ?>selected<? }?>><?=Loc::getMessage("IMOL_CONFIG_EDIT_QUEUE_TIME_30")?></option>
+
+					<option value="3600" <?if($arResult["CONFIG"]["NO_ANSWER_TIME"] == "3600") { ?>selected<? }?>><?=Loc::getMessage("IMOL_CONFIG_EDIT_QUEUE_TIME_60")?></option>
+					<option value="7200" <?if($arResult["CONFIG"]["NO_ANSWER_TIME"] == "7200") { ?>selected<? }?>><?=Loc::getMessage("IMOL_CONFIG_EDIT_QUEUE_TIME_120")?></option>
+					<option value="10800" <?if($arResult["CONFIG"]["NO_ANSWER_TIME"] == "10800") { ?>selected<? }?>><?=Loc::getMessage("IMOL_CONFIG_EDIT_QUEUE_TIME_180")?></option>
+					<option value="21600" <?if($arResult["CONFIG"]["NO_ANSWER_TIME"] == "21600") { ?>selected<? }?>><?=Loc::getMessage("IMOL_CONFIG_EDIT_QUEUE_TIME_360")?></option>
+					<option value="28800" <?if($arResult["CONFIG"]["NO_ANSWER_TIME"] == "28800") { ?>selected<? }?>><?=Loc::getMessage("IMOL_CONFIG_EDIT_QUEUE_TIME_480")?></option>
+					<option value="43200" <?if($arResult["CONFIG"]["NO_ANSWER_TIME"] == "43200") { ?>selected<? }?>><?=Loc::getMessage("IMOL_CONFIG_EDIT_QUEUE_TIME_720")?></option>
+				</select>
+			</div>
+		</div>
+
 		<div class="imopenlines-control-container imopenlines-control-select">
 			<div class="imopenlines-control-subtitle">
 				<?=Loc::getMessage('IMOL_CONFIG_NO_ANSWER_RULE')?>
-				<span data-hint="<?=htmlspecialcharsbx(Loc::getMessage('IMOL_CONFIG_NO_ANSWER_DESC'))?>"></span>
+				<span data-hint="<?=htmlspecialcharsbx(Loc::getMessage('IMOL_CONFIG_NO_ANSWER_DESC_NEW'))?>"></span>
 			</div>
 			<div class="imopenlines-control-inner">
 				<select name="CONFIG[NO_ANSWER_RULE]" id="imol_no_answer_rule" class="imopenlines-control-input">
@@ -43,6 +67,7 @@ use \Bitrix\Main\Localization\Loc; ?>
 				</select>
 			</div>
 		</div>
+
 		<div class="imopenlines-control-container imopenlines-control-select" id="imol_no_answer_rule_form_form">
 			<div class="imopenlines-control-subtitle">
 				<?=Loc::getMessage("IMOL_CONFIG_NO_ANSWER_FORM_ID")?>
@@ -201,12 +226,12 @@ use \Bitrix\Main\Localization\Loc; ?>
 					}
 					?>
 				</select>
-				<button class="ui-btn ui-btn-light-border" id="imol_quick_answer_manage" data-url="<?=$arResult['QUICK_ANSWERS_MANAGE_URL']?>">
+				<div class="ui-btn ui-btn-light-border" id="imol_quick_answer_manage" data-url="<?=$arResult['QUICK_ANSWERS_MANAGE_URL']?>">
 					<?
 					$code = ($arResult['CONFIG']['QUICK_ANSWERS_IBLOCK_ID'] > 0 ? 'IMOL_CONFIG_QUICK_ANSWERS_CONFIG' : 'IMOL_CONFIG_QUICK_ANSWERS_CREATE');
 					echo Loc::getMessage($code);
 					?>
-				</button>
+				</div>
 			</div>
 			<div class="imopenlines-control-subtitle imopenlines-control-subtitle-answer">
 				<?=Loc::getMessage("IMOL_CONFIG_QUICK_ANSWERS_DESC_NEW")?>

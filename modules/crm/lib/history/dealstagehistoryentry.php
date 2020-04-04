@@ -218,11 +218,13 @@ class DealStageHistoryEntry
 			DealStageHistoryTable::delete($latest['ID']);
 		}
 
+		DealStageHistoryWithSupposedEntry::register($ownerID);
 		return true;
 	}
 	public static function unregister($ownerID)
 	{
 		DealStageHistoryTable::deleteByOwner($ownerID);
+		DealStageHistoryWithSupposedEntry::unregister($ownerID);
 	}
 	public static function synchronize($ownerID, array $entityFields = null)
 	{
@@ -296,6 +298,7 @@ class DealStageHistoryEntry
 				'RESPONSIBLE_ID' => $responsibleID
 			)
 		);
+
 		return true;
 	}
 	public static function processCagegoryChange($ownerID)

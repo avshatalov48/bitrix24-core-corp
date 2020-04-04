@@ -1,4 +1,5 @@
 <?php
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
@@ -91,22 +92,52 @@ if (isset($arParams['FILTER']) && is_array($arParams['FILTER']))
 	<div class="tasks-interface-filter-container">
 		<? endif ?>
 
-		<div
-			class="pagetitle-container<? if (!$isBitrix24Template): ?> pagetitle-container-light<? endif ?> pagetitle-flexible-space">
-			<? $APPLICATION->IncludeComponent(
+		<?php
+		$taskUrlTemplate = ($arParams['MENU_GROUP_ID'] > 0 ? $arParams['PATH_TO_GROUP_TASKS_TASK'] : $arParams['PATH_TO_USER_TASKS_TASK']);
+		$taskTemplateUrlTemplate = $arParams['PATH_TO_USER_TASKS_TEMPLATES'];
+		$taskTemplateUrlTemplateAction = $arParams['PATH_TO_USER_TASKS_TEMPLATES_ACTION'];
+
+		if ($arParams['MENU_GROUP_ID'] == 0 || $arParams['SHOW_CREATE_TASK_BUTTON'] != 'N')
+		{
+			?><div style="margin-right: 12px" class="ui-btn-double ui-btn-primary tasks-interface-filter-btn-add">
+				<a class="ui-btn-main" id="tasks-buttonAdd"
+				   href="<?=CComponentEngine::makePathFromTemplate(
+					   $taskUrlTemplate,
+					   array(
+						   'action'   => 'edit',
+						   'task_id'  => 0,
+						   'user_id'  => $arParams['USER_ID'],
+						   'group_id' => $arParams['MENU_GROUP_ID']
+					   )
+				   )?>"
+				><?=GetMessage('TASKS_BTN_ADD_TASK')?></a>
+				<span id="tasks-popupMenuAdd" class="ui-btn-extra"></span>
+			</div><?
+		}?>
+
+		<div class="tasks-interface-filter pagetitle-container<?php if (!$isBitrix24Template): ?> pagetitle-container-light<? endif ?> pagetitle-flexible-space">
+            <?php
+			$filterComponentData = [
+				"FILTER_ID" => $arParams["FILTER_ID"],
+				"GRID_ID" => $arParams["GRID_ID"],
+				"FILTER" => $arParams["FILTER"],
+				"FILTER_PRESETS" => $arParams["PRESETS"],
+				"ENABLE_LABEL" => true,
+				'ENABLE_LIVE_SEARCH' => $arParams['USE_LIVE_SEARCH'] == 'Y',
+				'RESET_TO_DEFAULT_MODE' => true,
+			];
+
+			if ($arResult['LIMIT_EXCEEDED'])
+			{
+				$filterComponentData['LIMITS'] = $arResult['LIMITS'];
+			}
+
+			$APPLICATION->IncludeComponent(
 				"bitrix:main.ui.filter",
 				"",
-				array(
-					"FILTER_ID"             => $arParams["FILTER_ID"],
-					"GRID_ID"               => $arParams["GRID_ID"],
-					"FILTER"                => $arParams["FILTER"],
-					"FILTER_PRESETS"        => $arParams["PRESETS"],
-					"ENABLE_LABEL"          => true,
-					'ENABLE_LIVE_SEARCH'    => $arParams['USE_LIVE_SEARCH'] == 'Y',
-					'RESET_TO_DEFAULT_MODE' => true
-				),
+				$filterComponentData,
 				$component,
-				array("HIDE_ICONS" => true)
+				["HIDE_ICONS" => true]
 			); ?>
 		</div>
 
@@ -173,6 +204,39 @@ if (isset($arParams['FILTER']) && is_array($arParams['FILTER']))
 			</script>
 		<? endif; ?>
 
+		<?if ($arResult['SPRINTS'] && isset($arResult['SPRINTS'][$arParams['SPRINT_ID']])):
+			$currentSprint = $arResult['SPRINTS'][$arParams['SPRINT_ID']];
+			$containerID = 'tasks_sprint_selector';
+			?>
+			<div class="pagetitle-container pagetitle-flexible-space">
+				<div id="<?= $containerID;?>"
+					 class="tasks-interface-toolbar-button-container">
+					<div class="webform-small-button webform-small-button-transparent webform-small-button-dropdown">
+						<span class="webform-small-button-text"
+							  id="<?= $containerID;?>_text">
+								<?= \htmlspecialcharsbx($currentSprint['START_TIME'])?>
+								&mdash;
+								<?= \htmlspecialcharsbx($currentSprint['FINISH_TIME'])?>
+							</span>
+						<span class="webform-small-button-icon"></span>
+					</div>
+				</div>
+			</div>
+			<script type="text/javascript">
+				BX.ready(function()
+				{
+					BX.Tasks.SprintSelector(
+						<?= $containerID;?>,
+						<?= \CUtil::phpToJSObject(array_values($arResult['SPRINTS']));?>,
+						{
+							sprintId: <?= $arParams['SPRINT_ID'];?>,
+							groupId: <?= $arParams['GROUP_ID'];?>
+						}
+					);
+				});
+			</script>
+		<?endif;?>
+
 		<div class="pagetitle-container pagetitle-align-right-container">
 
 			<?php if ($arParams['SHOW_USER_SORT'] == 'Y' ||
@@ -191,31 +255,6 @@ if (isset($arParams['FILTER']) && is_array($arParams['FILTER']))
 				></button>
 			<? endif ?>
 
-			<?php
-			$taskUrlTemplate = $arParams['MENU_GROUP_ID'] > 0 ? $arParams['PATH_TO_GROUP_TASKS_TASK']
-				: $arParams['PATH_TO_USER_TASKS_TASK'];
-			$taskTemplateUrlTemplate = $arParams['PATH_TO_USER_TASKS_TEMPLATES'];
-			$taskTemplateUrlTemplateAction = $arParams['PATH_TO_USER_TASKS_TEMPLATES_ACTION'];
-			?>
-
-			<?php
-			if($arParams['MENU_GROUP_ID'] == 0 || $arParams['SHOW_CREATE_TASK_BUTTON'] != 'N'):
-			?>
-			<div class="ui-btn-double ui-btn-primary tasks-interface-filter-btn-add">
-				<a class="ui-btn-main" id="tasks-buttonAdd"
-				   href="<?=CComponentEngine::makePathFromTemplate(
-				   		$taskUrlTemplate,
-						array(
-							'action'   => 'edit',
-							'task_id'  => 0,
-							'user_id'  => $arParams['USER_ID'],
-							'group_id' => $arParams['MENU_GROUP_ID']
-						)
-				   )?>"
-				><?=GetMessage('TASKS_BTN_ADD_TASK')?></a>
-				<span id="tasks-popupMenuAdd" class="ui-btn-extra"></span>
-			</div>
-			<?php endif?>
 		</div>
 
 		<? if (!$isBitrix24Template): ?>
@@ -285,7 +324,7 @@ if (isset($arParams['FILTER']) && is_array($arParams['FILTER']))
 							}
 							else
 							{
-								top.BX.reload(true);
+                                window.location.reload();
 							}
 						}
 					}));
@@ -331,7 +370,7 @@ if (isset($arParams['FILTER']) && is_array($arParams['FILTER']))
 							}
 							else
 							{
-								top.BX.reload(true);
+                                window.location.reload();
 							}
 						}
 					}));

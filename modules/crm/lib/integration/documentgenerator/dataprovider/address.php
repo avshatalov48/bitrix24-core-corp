@@ -2,6 +2,8 @@
 
 namespace Bitrix\Crm\Integration\DocumentGenerator\DataProvider;
 
+\Bitrix\Main\Loader::includeModule('documentgenerator');
+
 use Bitrix\Crm\EntityAddress;
 use Bitrix\DocumentGenerator\DataProvider\HashDataProvider;
 

@@ -197,17 +197,48 @@ else
 				$taskId = (int)$arParams["CRM_ACTIVITY2TASK"][$arEvent["EVENT"]["ENTITY_ID"]];
 			}
 
-			if ($taskId)
+			if ($taskId && \Bitrix\Main\Loader::includeModule('tasks') && \Bitrix\Main\Loader::includeModule('mobileapp'))
 			{
-				$strTaskPath = str_replace(
-					array("__ROUTE_PAGE__", "#USER_ID#"),
-					array("view", (int) $GLOBALS["USER"]->GetID()),
-					$arParams["PATH_TO_TASKS_SNM_ROUTER"]
-					."&TASK_ID=".$taskId
-				);
-				$arOnClickParams["path"] = $strTaskPath;
-				$strOnClickParams = CUtil::PhpToJSObject($arOnClickParams);
-				$strOnClick = " onclick=\"__MSLOpenLogEntryNew(".$strOnClickParams.", event);\"";
+				if (\Bitrix\MobileApp\Mobile::getApiVersion() >= 31)
+				{
+					try
+					{
+						$taskData = \CTaskItem::getInstanceFromPool($taskId, \Bitrix\Tasks\Util\User::getId())->getData(false);
+
+						$creatorIcon = \Bitrix\Tasks\UI\Avatar::getPerson($taskData['CREATED_BY_PHOTO']);
+						$responsibleIcon = \Bitrix\Tasks\UI\Avatar::getPerson($taskData['RESPONSIBLE_PHOTO']);
+
+						$eventName = '\'taskbackground::task::action\'';
+						$taskInfoParameter = '{title: \''.htmlspecialcharsbx($taskData['TITLE']).'\', creatorIcon: \''.$creatorIcon.'\', responsibleIcon: \''.$responsibleIcon.'\'}';
+						$taskDataParameter = '{id: ' . $taskId . ', title: \'TASK\', taskInfo: '.$taskInfoParameter.'}';
+
+						$str = 'BXMobileApp.Events.postToComponent('
+							.$eventName.', '
+							.'['
+								.$taskDataParameter.', '
+								.$taskId.', '
+								.'{taskId: '.$taskId.', getTaskInfo: true}'
+							.']'
+						.');';
+						$strOnClick = " onclick=\"$str\"";
+					}
+					catch(TasksException $exception)
+					{
+						$strOnClick = '';
+					}
+				}
+				else
+				{
+					$strTaskPath = str_replace(
+						array("__ROUTE_PAGE__", "#USER_ID#"),
+						array("view", (int) $GLOBALS["USER"]->GetID()),
+						$arParams["PATH_TO_TASKS_SNM_ROUTER"]
+						."&TASK_ID=".$taskId
+					);
+					$arOnClickParams["path"] = $strTaskPath;
+					$strOnClickParams = CUtil::PhpToJSObject($arOnClickParams);
+					$strOnClick = " onclick=\"__MSLOpenLogEntryNew(".$strOnClickParams.", event);\"";
+				}
 			}
 			elseif (
 				isset($arEvent["EVENT"])
@@ -350,8 +381,39 @@ else
 					$arOnClickParamsCommentsTop["focus_comments"] = true;
 					$arOnClickParamsCommentsTop["show_full"] = in_array($arEvent["EVENT"]["EVENT_ID"], array("timeman_entry", "report", "calendar"));
 					$strOnClickParamsCommentsTop = CUtil::PhpToJSObject($arOnClickParamsCommentsTop);
-					$strOnClickCommentsTop = ($arParams["IS_LIST"] ? " onclick=\"__MSLOpenLogEntryNew(".$strOnClickParamsCommentsTop.", event);\"" : "");
 
+					if($taskId && \Bitrix\MobileApp\Mobile::getApiVersion() >= 31 && \Bitrix\Main\Loader::includeModule('tasks'))
+					{
+						try
+						{
+							$taskData = \CTaskItem::getInstanceFromPool($taskId, \Bitrix\Tasks\Util\User::getId())->getData(false);
+
+							$creatorIcon = \Bitrix\Tasks\UI\Avatar::getPerson($taskData['CREATED_BY_PHOTO']);
+							$responsibleIcon = \Bitrix\Tasks\UI\Avatar::getPerson($taskData['RESPONSIBLE_PHOTO']);
+
+							$eventName = '\'taskbackground::task::action\'';
+							$taskInfoParameter = '{title: \''.htmlspecialcharsbx($taskData['TITLE']).'\', creatorIcon: \''.$creatorIcon.'\', responsibleIcon: \''.$responsibleIcon.'\'}';
+							$taskDataParameter = '{id: ' . $taskId . ', title: \'TASK\', taskInfo: '.$taskInfoParameter.'}';
+
+							$str = 'BXMobileApp.Events.postToComponent('
+								.$eventName.', '
+								.'['
+									.$taskDataParameter.', '
+									.$taskId.', '
+									.'{taskId: '.$taskId.', getTaskInfo: true}'
+								.']'
+							.');';
+							$strOnClickCommentsTop = " onclick=\"$str\"";
+						}
+						catch(TasksException $exception)
+						{
+							$strOnClickCommentsTop = '';
+						}
+					}
+					else
+					{
+						$strOnClickCommentsTop = ($arParams["IS_LIST"] ? " onclick=\"__MSLOpenLogEntryNew(".$strOnClickParamsCommentsTop.", event);\"" : "");
+					}
 					?><div id="comments_control_<?=intval($arEvent["EVENT"]["ID"])?>" class="post-item-informers post-item-inform-comments"<?=$strOnClickCommentsTop?>><?
 						$num_comments = intval($arParams["EVENT"]["COMMENTS_COUNT"]);
 						?><div class="post-item-inform-left" id="informer_comments_text2_<?=$arEvent["EVENT"]["ID"]?>" style="display: <?=($num_comments > 0 ? "inline-block" : "none")?>;"><?

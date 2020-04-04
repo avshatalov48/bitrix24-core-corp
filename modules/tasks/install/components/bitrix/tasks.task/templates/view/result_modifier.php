@@ -212,6 +212,11 @@ $arResult["TEMPLATE_DATA"]["TASK_TEMPLATES_PATH"] = CComponentEngine::makePathFr
 	array("user_id" => \Bitrix\Tasks\Util\User::getId())
 );
 
+$arResult["TEMPLATE_DATA"]["TASK_VIEW_PATH"] = CComponentEngine::makePathFromTemplate(
+	$arParams["PATH_TO_TASKS_TASK"],
+	array("action" => "view", "task_id" => $taskData["ID"])
+);
+
 //Tuning
 $component->tryParseBooleanParameter($arParams["ENABLE_MENU_TOOLBAR"], true);
 

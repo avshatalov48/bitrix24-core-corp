@@ -290,10 +290,18 @@ $arResult['FILTER'] = array(
 		'id' => "{$filterFieldPrefix}RESPONSIBLE_ID",
 		'name' => GetMessage('CRM_ACTIVITY_FILTER_RESPONSIBLE'),
 		'default' => true,
-		'type' => 'custom_entity',
-		'selector' => array(
-			'TYPE' => 'user',
-			'DATA' => array('ID' => 'responsible_id', 'FIELD_ID' => "{$filterFieldPrefix}RESPONSIBLE_ID")
+		'type' => 'dest_selector',
+		'params' => array(
+			'context' => 'CRM_ACTIVITY_FILTER_RESPONSIBLE_ID',
+			'multiple' => 'N',
+			'contextCode' => 'U',
+			'enableAll' => 'N',
+			'enableSonetgroups' => 'N',
+			'allowEmailInvitation' => 'N',
+			'allowSearchEmailUsers' => 'N',
+			'departmentSelectDisable' => 'Y',
+			'isNumeric' => 'Y',
+			'prefix' => 'U',
 		)
 	),
 	array('id' => "{$filterFieldPrefix}START",  'name' => GetMessage('CRM_ACTIVITY_FILTER_START'), 'default' => false, 'type' => 'date'),
@@ -307,15 +315,25 @@ if($displayReference)
 	$arResult['FILTER'][] = array(
 		'id' => "{$filterFieldPrefix}REFERENCE",
 		'name' => GetMessage('CRM_ACTIVITY_COLUMN_REFERENCE'),
-		'type' => 'custom_entity',
-		'selector' => array(
-			'TYPE' => 'crm_entity',
-			'DATA' => array(
-				'ID' => "REFERENCE",
-				'FIELD_ID' => "{$filterFieldPrefix}REFERENCE",
-				'ENTITY_TYPE_NAMES' => array(CCrmOwnerType::LeadName, CCrmOwnerType::DealName),
-				'IS_MULTIPLE' => false
-			)
+		'type' => 'dest_selector',
+		'params' => array(
+			'apiVersion' => 3,
+			'context' => 'CRM_ACTIVITY_FILTER_REFERENCE',
+			'contextCode' => 'CRM',
+			'useClientDatabase' => 'N',
+			'enableAll' => 'N',
+			'enableDepartments' => 'N',
+			'enableUsers' => 'N',
+			'enableSonetgroups' => 'N',
+			'allowEmailInvitation' => 'N',
+			'allowSearchEmailUsers' => 'N',
+			'departmentSelectDisable' => 'Y',
+			'enableCrm' => 'Y',
+			'enableCrmLeads' => 'Y',
+			'enableCrmDeals' => 'Y',
+			'addTabCrmLeads' => 'Y',
+			'addTabCrmDeals' => 'Y',
+			'convertJson' => 'Y'
 		)
 	);
 }
@@ -325,15 +343,25 @@ if($displayClient)
 	$arResult['FILTER'][] = array(
 		'id' => "{$filterFieldPrefix}CLIENT",
 		'name' => GetMessage('CRM_ACTIVITY_COLUMN_CLIENT'),
-		'type' => 'custom_entity',
-		'selector' => array(
-			'TYPE' => 'crm_entity',
-			'DATA' => array(
-				'ID' => "CLIENT",
-				'FIELD_ID' => "{$filterFieldPrefix}CLIENT",
-				'ENTITY_TYPE_NAMES' => array(CCrmOwnerType::ContactName, CCrmOwnerType::CompanyName),
-				'IS_MULTIPLE' => false
-			)
+		'type' => 'dest_selector',
+		'params' => array(
+			'apiVersion' => 3,
+			'context' => 'CRM_ACTIVITY_FILTER_REFERENCE',
+			'contextCode' => 'CRM',
+			'useClientDatabase' => 'N',
+			'enableAll' => 'N',
+			'enableDepartments' => 'N',
+			'enableUsers' => 'N',
+			'enableSonetgroups' => 'N',
+			'allowEmailInvitation' => 'N',
+			'allowSearchEmailUsers' => 'N',
+			'departmentSelectDisable' => 'Y',
+			'enableCrm' => 'Y',
+			'enableCrmContacts' => 'Y',
+			'enableCrmCompanies' => 'Y',
+			'addTabCrmCompanies' => 'Y',
+			'addTabCrmContacts' => 'Y',
+			'convertJson' => 'Y'
 		)
 	);
 }
@@ -342,6 +370,7 @@ $arResult['FILTER_PRESETS'] = array(
 	'not_completed' => array(
 		'name' => GetMessage('CRM_PRESET_NOT_COMPLETED'),
 		'default' => true,
+		'disallow_for_all' => true,
 		'fields' => array(
 			"{$filterFieldPrefix}COMPLETED" => array('selN' => 'N'),
 			"{$filterFieldPrefix}RESPONSIBLE_ID_name" => $currentUserName,
@@ -350,6 +379,7 @@ $arResult['FILTER_PRESETS'] = array(
 	),
 	'completed' => array(
 		'name' => GetMessage('CRM_PRESET_COMPLETED'),
+		'disallow_for_all' => true,
 		'fields' => array(
 			"{$filterFieldPrefix}COMPLETED" => array('selY' => 'Y'),
 			"{$filterFieldPrefix}RESPONSIBLE_ID_name" => $currentUserName,

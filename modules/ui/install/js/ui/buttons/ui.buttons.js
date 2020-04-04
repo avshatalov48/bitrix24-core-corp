@@ -30,7 +30,7 @@ BX.UI.BaseButton = function(options)
 {
 	options = BX.type.isPlainObject(options) ? options : {};
 
-	this.button = null;
+	this.button = options.buttonContainer || null;
 	this.text = "";
 	this.props = {};
 	this.events = {};
@@ -41,10 +41,207 @@ BX.UI.BaseButton = function(options)
 	this.setText(options.text);
 	this.setProps(options.props);
 	this.setDataSet(options.dataset);
-	this.setClass(options.className);
+	this.addClass(options.className);
 
 	this.bindEvent("click", options.onclick);
 	this.bindEvents(options.events);
+};
+
+/**
+ *
+ * @param {Element} node
+ * @param {?object} options
+ */
+BX.namespace("BX.UI.ButtonManager");
+BX.UI.ButtonManager.buttons = {};
+BX.UI.ButtonManager.createFromNode = function(node, options)
+{
+	options = BX.type.isPlainObject(options) ? options : {};
+	if (!BX.type.isDomNode(node))
+	{
+		throw new Error("BX.UI.Button.Manager.buildByNode: {node} has to be DomNode.");
+	}
+
+	var jsonOptions = node.dataset.jsonOptions? JSON.parse(node.dataset.jsonOptions) : {};
+	if (!jsonOptions.jsClass || !BX.getClass(jsonOptions.jsClass))
+	{
+		throw new Error("BX.UI.Button.Manager.buildByNode: {jsonOptions.jsClass} has to be set.");
+	}
+
+	if (node.nodeName === 'A')
+	{
+		options.tag = BX.UI.Button.Tag.LINK;
+	}
+	else if (node.nodeName === 'BUTTON')
+	{
+		options.tag = BX.UI.Button.Tag.BUTTON;
+	}
+	else if (node.nodeName === 'INPUT' && node.type === 'button')
+	{
+		options.tag = BX.UI.Button.Tag.INPUT;
+	}
+	else if (node.nodeName === 'INPUT' && node.type === 'submit')
+	{
+		options.tag = BX.UI.Button.Tag.SUBMIT;
+	}
+
+	options.props = BX.type.isPlainObject(options.props) ? options.props : {};
+	if (!options.props.hasOwnProperty('disabled') && node.disabled)
+	{
+		options.props.disabled = options.props;
+	}
+
+	for (var size in BX.UI.Button.Size)
+	{
+		if (!BX.UI.Button.Size.hasOwnProperty(size))
+		{
+			continue;
+		}
+		if (node.classList.contains(BX.UI.Button.Size[size]))
+		{
+			options.size = BX.UI.Button.Size[size];
+		}
+	}
+	for (var color in BX.UI.Button.Color)
+	{
+		if (!BX.UI.Button.Color.hasOwnProperty(color))
+		{
+			continue;
+		}
+		if (node.classList.contains(BX.UI.Button.Color[color]))
+		{
+			options.color = BX.UI.Button.Color[color];
+		}
+	}
+	for (var state in BX.UI.Button.State)
+	{
+		if (!BX.UI.Button.State.hasOwnProperty(state))
+		{
+			continue;
+		}
+		if (node.classList.contains(BX.UI.Button.State[state]))
+		{
+			options.state = BX.UI.Button.State[state];
+		}
+	}
+	for (var icon in BX.UI.Button.Icon)
+	{
+		if (!BX.UI.Button.Icon.hasOwnProperty(icon))
+		{
+			continue;
+		}
+		if (node.classList.contains(BX.UI.Button.Icon[icon]))
+		{
+			options.icon = BX.UI.Button.Icon[icon];
+		}
+	}
+
+	options = BX.mergeEx(options, jsonOptions);
+	options.buttonContainer = node;
+
+	var c = BX.getClass(jsonOptions.jsClass);
+
+	if (c.prototype instanceof BX.UI.SplitButton || jsonOptions.jsClass === 'BX.UI.SplitButton')
+	{
+		var querySelectors = options.querySelectors;
+		if (querySelectors)
+		{
+			var mainButtonContainer = querySelectors.mainButton? document.querySelector(querySelectors.mainButton) : null;
+			var menuButtonContainer = querySelectors.menuButton? document.querySelector(querySelectors.menuButton) : null;
+
+			options.mainButton? options.mainButton.buttonContainer = mainButtonContainer : null;
+			options.menuButton? options.menuButton.buttonContainer = menuButtonContainer : null;
+		}
+	}
+
+	var convertEventHandler = function (handler) {
+		if (BX.type.isFunction(handler))
+		{
+			return handler;
+		}
+
+		if (!BX.type.isObject(handler))
+		{
+			throw "Event handler must be described as object or function.";
+		}
+
+		if (BX.type.isString(handler.handler))
+		{
+			return function() {
+				var fn = BX.getClass(handler.handler);
+				if (BX.type.isFunction(fn))
+				{
+					var context = this;
+					if (handler.context)
+					{
+						context = BX.getClass(handler.context);
+					}
+
+					return fn.apply(context, arguments);
+				}
+				console.warn("Be aware, the handler " + handler.handler + " is not a function.");
+
+				return null;
+			};
+		}
+
+		return null;
+	};
+	var processEvents = function(events) {
+		if (BX.type.isPlainObject(events))
+		{
+			for (var eventName in events)
+			{
+				events[eventName] = convertEventHandler(events[eventName]);
+			}
+		}
+	};
+	var processMenuItemsEvents = function (items) {
+		if (BX.type.isArray(items))
+		{
+			items.forEach(function(item){
+				if (item.onclick)
+				{
+					item.onclick = convertEventHandler(item.onclick);
+				}
+				if (BX.type.isArray(item.items))
+				{
+					processMenuItemsEvents(item.items);
+				}
+			});
+		}
+	};
+
+
+	if (options.click)
+	{
+		options.click = convertEventHandler(options.click);
+	}
+
+	processEvents(options.events);
+	options.mainButton && processEvents(options.mainButton.events);
+	options.menuButton && processEvents(options.menuButton.events);
+	options.menu && processMenuItemsEvents(options.menu.items);
+
+	var button = new c(options);
+
+	BX.UI.ButtonManager.buttons[button.getDataSet()['btnUniqid']] = button;
+
+	return button;
+};
+/**
+ *
+ * @param uniqId
+ * @return {null|BX.UI.Button}
+ */
+BX.UI.ButtonManager.getByUniqid = function(uniqId)
+{
+	if(BX.UI.ButtonManager.buttons[uniqId])
+	{
+		return BX.UI.ButtonManager.buttons[uniqId];
+	}
+
+	return null;
 };
 
 BX.UI.BaseButton.prototype =
@@ -265,7 +462,7 @@ BX.UI.BaseButton.prototype =
 	 * @param {string} className
 	 * @return {BX.UI.BaseButton}
 	 */
-	setClass: function(className)
+	addClass: function(className)
 	{
 		if (BX.type.isNotEmptyString(className))
 		{
@@ -446,7 +643,7 @@ BX.UI.Button = function(options)
 	this.state = null;
 	this.id = null;
 	this.context = null;
-	
+
 	this.menuWindow = null;
 	this.handleMenuClick = this.handleMenuClick.bind(this);
 	this.handleMenuClose = this.handleMenuClose.bind(this);
@@ -533,7 +730,10 @@ BX.UI.Button.Icon = {
 	CAMERA: "ui-btn-icon-camera",
 	PHONE_UP: "ui-btn-icon-phone-up",
 	PHONE_DOWN: "ui-btn-icon-phone-down",
-	BACK: "ui-btn-icon-back"
+	BACK: "ui-btn-icon-back",
+	REMOVE: "ui-btn-icon-remove",
+	DONE: "ui-btn-icon-done",
+	DISK: "ui-btn-icon-disk"
 };
 
 /**
@@ -718,7 +918,6 @@ BX.UI.Button.prototype =
 				options.items,
 				options
 			);
-
 			BX.addCustomEvent(this.menuWindow.getPopupWindow(), "onPopupClose", this.handleMenuClose);
 			this.getMenuClickElement().addEventListener("click", this.handleMenuClick);
 		}
@@ -1329,6 +1528,16 @@ BX.UI.SplitButton.prototype =
 	setRound: function(flag)
 	{
 		throw new Error("BX.UI.SplitButton can't be round.");
+	},
+
+	/**
+	 *
+	 * @param {boolean} [flag=true]
+	 * @return {BX.UI.Button}
+	 */
+	setDropdown: function(flag)
+	{
+		return this;
 	}
 };
 

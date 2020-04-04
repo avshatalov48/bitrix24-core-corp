@@ -52,7 +52,7 @@ class CDavCrmContacts
 			$map["TITLE"] = $contact["POST"];
 		if (!empty($contact['COMPANY_TITLE']))
 			$map['ORG'] = $contact['COMPANY_TITLE'];
-		$map["URL"] = 'bitrix24://@%';
+		$map["URL"][] = 'bitrix24://@%';
 		$map['IMG'] = !empty($contact['PHOTO']) ? $contact['PHOTO'] : '';
 		return $map;
 	}

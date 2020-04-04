@@ -1,16 +1,13 @@
-<?
-/**
- * Class ChecklistItemsTable
- *
- * @package Bitrix\Tasks
- **/
-
+<?php
 namespace Bitrix\Tasks\Internals\Task;
 
-use Bitrix\Main,
-	Bitrix\Main\Localization\Loc;
-//Loc::loadMessages(__FILE__);
+use Bitrix\Main;
 
+/**
+ * Class CheckListTable
+ *
+ * @package Bitrix\Tasks\Internals\Task
+ */
 class CheckListTable extends Main\Entity\DataManager
 {
 	/**
@@ -29,6 +26,14 @@ class CheckListTable extends Main\Entity\DataManager
 	public static function getClass()
 	{
 		return get_called_class();
+	}
+
+	/**
+	 * @return string|null
+	 */
+	public static function getUfId()
+	{
+		return 'TASKS_TASK_CHECKLIST';
 	}
 
 	/**
@@ -66,6 +71,10 @@ class CheckListTable extends Main\Entity\DataManager
 				'data_type' => 'boolean',
 				'values' => array('N', 'Y'),
 			),
+			'IS_IMPORTANT' => array(
+				'data_type' => 'boolean',
+				'values' => array('N', 'Y'),
+			),
 			'SORT_INDEX' => array(
 				'data_type' => 'integer',
 				'required' => true,
@@ -84,5 +93,28 @@ class CheckListTable extends Main\Entity\DataManager
 		return array(
 			new Main\Entity\Validator\Length(null, 255),
 		);
+	}
+
+	/**
+	 * @return string
+	 */
+	public static function getSortColumnName()
+	{
+		return 'SORT_INDEX';
+	}
+
+	/**
+	 * @param string $ids - string of type (1,2,...,7)
+	 */
+	public static function deleteByCheckListsIds($ids)
+	{
+		global $DB;
+
+		$tableName = static::getTableName();
+
+		$DB->Query("
+			DELETE FROM {$tableName}
+			WHERE ID IN {$ids} 
+		");
 	}
 }

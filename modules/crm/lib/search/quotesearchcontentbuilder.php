@@ -41,12 +41,15 @@ class QuoteSearchContentBuilder extends SearchContentBuilder
 		$operation = $this->isFullTextSearchEnabled() ? '*' : '*%';
 		return array("{$operation}SEARCH_CONTENT" => SearchEnvironment::prepareToken($value));
 	}
+
 	/**
 	 * Prepare search map.
 	 * @param array $fields Entity Fields.
+	 * @param array|null $options Options.
 	 * @return SearchMap
+	 * @throws \Bitrix\Main\ArgumentException
 	 */
-	protected function prepareSearchMap(array $fields)
+	protected function prepareSearchMap(array $fields, array $options = null)
 	{
 		$map = new SearchMap();
 
@@ -57,7 +60,6 @@ class QuoteSearchContentBuilder extends SearchContentBuilder
 		}
 
 		$map->add($entityID);
-		$map->addField($fields, 'ID');
 		$map->addField($fields, 'TITLE');
 
 		$map->addField($fields, 'OPPORTUNITY');

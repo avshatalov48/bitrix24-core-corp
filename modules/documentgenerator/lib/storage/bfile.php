@@ -19,19 +19,16 @@ class BFile extends File
 	{
 		if(intval($fileId) > 0)
 		{
+			$fileArray = \CFile::MakeFileArray($fileId);
+			if($fileArray && $fileArray['tmp_name'])
+			{
+				return parent::read($fileArray['tmp_name']);
+			}
 			$path = \CFile::getPath($fileId);
 			if($path)
 			{
 				return parent::read($path);
 			}
-			else
-			{
-				echo 'file '.$fileId.' not found';
-			}
-		}
-		else
-		{
-			echo 'file id '.$fileId.' is not integer';
 		}
 
 		return false;
@@ -74,7 +71,8 @@ class BFile extends File
 				{
 					$fileDescription['MODULE_ID'] = $options['MODULE_ID'];
 				}
-				$fileId = \CFile::SaveFile($fileDescription, Driver::MODULE_ID);
+				$path = $this->getPath($fileDescription);
+				$fileId = \CFile::SaveFile($fileDescription, $path);
 				parent::delete($filePath);
 				$result->setId($fileId);
 			}
@@ -104,10 +102,6 @@ class BFile extends File
 			}
 			\CFile::ViewByUser($fileDescription, $options);
 			return true;
-		}
-		else
-		{
-			echo 'file id '.$fileId.' is not integer';
 		}
 
 		return false;
@@ -152,7 +146,8 @@ class BFile extends File
 	public function upload(array $file)
 	{
 		$result = new AddResult();
-		$fileId = \CFile::saveFile($file, Driver::MODULE_ID, true, true);
+		$path = $this->getPath($file);
+		$fileId = \CFile::saveFile($file, $path, true, true);
 		if($fileId > 0)
 		{
 			$result->setId($fileId);
@@ -178,14 +173,6 @@ class BFile extends File
 			{
 				return $file['FILE_SIZE'];
 			}
-			else
-			{
-				echo 'file '.$fileId.' not found';
-			}
-		}
-		else
-		{
-			echo 'file id '.$fileId.' is not integer';
 		}
 
 		return false;
@@ -208,5 +195,20 @@ class BFile extends File
 		}
 
 		return $fileName;
+	}
+
+	/**
+	 * @param array $file
+	 * @return string
+	 */
+	protected function getPath(array $file)
+	{
+		$path = Driver::MODULE_ID;
+		if($file['isTemplate'] === true)
+		{
+			$path = Path::combine('templates', $path);
+		}
+
+		return $path;
 	}
 }

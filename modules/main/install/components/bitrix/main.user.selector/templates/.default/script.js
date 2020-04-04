@@ -19,7 +19,7 @@
 		this.inputName = params.inputName;
 		this.inputId = params.inputName;
 		this.isInputMultiple = params.isInputMultiple;
-		this.inputNode = this.container.querySelector('input[name="' + params.inputName + '"]');
+		this.inputNode = (this.container ? this.container.querySelector('input[name="' + params.inputName + '"]') : null);
 		this.useSymbolicId = params.useSymbolicId;
 		this.openDialogWhenInit = !!params.openDialogWhenInit;
 
@@ -37,6 +37,7 @@
 
 		BX.addCustomEvent(this.selector, this.selector.events.buttonSelect, this.openDialog.bind(this));
 		BX.addCustomEvent(this.selector, this.selector.events.tileRemove, this.removeTile.bind(this));
+		BX.addCustomEvent(this.selector, this.selector.events.tileClick, this.clickTile.bind(this));
 		BX.Main.User.SelectorController.init(this);
 	}
 	UserSelector.prototype = {
@@ -58,6 +59,27 @@
 		{
 			this.unsetValue(tile.id);
 		},
+		clickTile: function(tile)
+		{
+			if (
+				BX.type.isNotEmptyObject(tile.data)
+				&& BX.type.isNotEmptyString(tile.data.url)
+			)
+			{
+				if (
+					BX.type.isNotEmptyString(tile.data.urlUseSlider)
+					&& tile.data.urlUseSlider == 'Y'
+					&& BX.type.isNotEmptyObject(BX.SidePanel)
+				)
+				{
+					BX.SidePanel.Instance.open(tile.data.url);
+				}
+				else
+				{
+					window.open(tile.data.url, '_blank');
+				}
+			}
+		},
 		setUsers: function(list)
 		{
 			list = list || [];
@@ -69,6 +91,7 @@
 			else
 			{
 				this.inputNode.value = list.join(',');
+				BX.fireEvent(this.inputNode, "change");
 			}
 		},
 		getUsers: function()
@@ -164,7 +187,8 @@
 			inputNode.type = 'hidden';
 			inputNode.name = this.inputName;
 			inputNode.value = value;
-			this.container.insertBefore(inputNode, this.container.firstElementChild);
+			this.container.appendChild(inputNode);
+			BX.fireEvent(inputNode, "change");
 		},
 		addInputs: function(list)
 		{
@@ -172,6 +196,16 @@
 			list.forEach(function (value) {
 				this.addInput(value);
 			}, this);
+
+			if (
+				list.length <= 0
+				&& this.isInputMultiple
+			)
+			{
+				this.addInput('');
+			}
+
+
 		},
 		getInputs: function()
 		{
@@ -180,6 +214,7 @@
 		removeInputs: function()
 		{
 			this.getInputs().forEach(function (inputNode) {
+				BX.fireEvent(inputNode, "change");
 				BX.remove(inputNode);
 			});
 		}
@@ -283,6 +318,14 @@
 			{
 				data.entityType = params.entityType;
 			}
+			if (BX.type.isNotEmptyString(params.item.url))
+			{
+				data.url = params.item.url;
+			}
+			if (BX.type.isNotEmptyString(params.item.urlUseSlider))
+			{
+				data.urlUseSlider = params.item.urlUseSlider;
+			}
 			if (
 				BX.type.isNotEmptyString(params.item.isExtranet)
 				&& params.item.isExtranet == 'Y'
@@ -298,7 +341,7 @@
 				data.crmEmail = true;
 			}
 
-			userSelector.selector.addTile(params.item.name, data, entityId);
+			userSelector.selector.addTile(BX.util.htmlspecialcharsback(params.item.name), data, entityId);
 			userSelector.selector.input.value = '';
 
 			if (
@@ -353,6 +396,16 @@
 						delete selectorInstance.itemsSelected[params.item.id];
 					}
 				}
+			}
+
+			if (
+				!userSelector.isInputMultiple
+				|| !BX.type.isNotEmptyString(params.tab)
+				|| params.tab != 'search'
+			)
+			{
+				userSelector.selector.input.style.display = 'none';
+				userSelector.selector.buttonSelect.style.display = '';
 			}
 
 			BX.onCustomEvent('BX.Main.User.SelectorController:unSelect', [ {
@@ -419,7 +472,13 @@
 		getUserSelector: function (id)
 		{
 			var userSelector = this.list.filter(function (selector) {
-				return selector.id === id;
+				return (
+					selector.id === id
+					&& (
+						!selector.container
+						|| document.body.contains(selector.container)
+					)
+				);
 			});
 
 			return userSelector[0];

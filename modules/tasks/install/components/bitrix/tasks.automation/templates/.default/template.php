@@ -9,8 +9,8 @@ if (\Bitrix\Tasks\Integration\Bizproc\Document\Task::isProjectTask($arResult['DO
 }
 elseif (\Bitrix\Tasks\Integration\Bizproc\Document\Task::isPlanTask($arResult['DOCUMENT_TYPE']))
 {
-	$titleView = GetMessage('TASKS_AUTOMATION_CMP_TITLE_VIEW_PLAN');
-	$titleEdit = GetMessage('TASKS_AUTOMATION_CMP_TITLE_TASK_EDIT_PLAN');
+	$titleView = GetMessage('TASKS_AUTOMATION_CMP_TITLE_VIEW_PLAN_1');
+	$titleEdit = GetMessage('TASKS_AUTOMATION_CMP_TITLE_TASK_EDIT_PLAN_1');
 }
 else
 {
@@ -58,7 +58,7 @@ global $APPLICATION;
 
 		if (viewType === 'plan')
 		{
-			selectorNode.textContent = '<?=GetMessageJS('TASKS_AUTOMATION_CMP_SELECTOR_ITEM_PLAN')?>';
+			selectorNode.textContent = '<?=GetMessageJS('TASKS_AUTOMATION_CMP_SELECTOR_ITEM_PLAN_1')?>';
 		}
 		else if (viewType === 'personal')
 		{
@@ -146,7 +146,7 @@ global $APPLICATION;
 							items: projectMenuItems
 						},
 						{
-							text: '<?=GetMessageJS('TASKS_AUTOMATION_CMP_SELECTOR_ITEM_PLAN')?>',
+							text: '<?=GetMessageJS('TASKS_AUTOMATION_CMP_SELECTOR_ITEM_PLAN_1')?>',
 							onclick: function(e, item)
 							{
 								menu.close();

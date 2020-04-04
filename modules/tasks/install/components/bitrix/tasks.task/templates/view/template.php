@@ -65,6 +65,7 @@ if ($arParams["ENABLE_MENU_TOOLBAR"])
 		'bitrix:tasks.interface.filter.buttons',
 		'.default',
 		array(
+			'TASK_ID' => $arParams['ID'],
 			'SECTION' => 'VIEW_TASK',
 			'ADD_BUTTON' => array(
 				'NAME' => Loc::getMessage("TASKS_ADD_TASK_SHORT"),
@@ -127,22 +128,22 @@ if ($arParams["ENABLE_MENU_TOOLBAR"])
 
 		<?if ($can["EDIT"] || $can["CHECKLIST.ADD"] || !empty($taskData["SE_CHECKLIST"])):?>
 			<div class="task-detail-checklist">
-				<?$APPLICATION->IncludeComponent(
-					'bitrix:tasks.widget.checklist',
-					'',
-					array(
-						'DATA' => $taskData['SE_CHECKLIST'],
-						'CAN_ADD' => $can['CHECKLIST.ADD'],
-						'CAN_REORDER' => $can['CHECKLIST.REORDER'],
-						'ENTITY_ID' => $taskData['ID'],
-						'ENTITY_ROUTE' => 'task',
-						'COMPATIBILITY_MODE' => true,
-						'ENABLE_SYNC' => true,
-						'CONFIRM_DELETE' => true
-					),
-					null,
-					array("HIDE_ICONS" => "Y", "ACTIVE_COMPONENT" => "Y")
-				);?>
+				<?
+					$APPLICATION->IncludeComponent(
+						'bitrix:tasks.widget.checklist.new',
+						'',
+						[
+							'ENTITY_ID' => $taskData['ID'],
+							'ENTITY_TYPE' => 'TASK',
+							'DATA' => $taskData['SE_CHECKLIST'],
+							'PATH_TO_USER_PROFILE' => $arParams['PATH_TO_USER_PROFILE'],
+							'CONVERTED' => $arResult['DATA']['CHECKLIST_CONVERTED'],
+							'CAN_ADD_ACCOMPLICE' => $can['EDIT'],
+						],
+						null,
+						['HIDE_ICONS' => 'Y', 'ACTIVE_COMPONENT' => 'Y']
+					);
+				?>
 			</div>
 		<?endif?>
 
@@ -639,6 +640,7 @@ if ($arParams["ENABLE_MENU_TOOLBAR"])
 							'PLACEMENT' => \CTaskRestService::PLACEMENT_TASK_VIEW_TAB,
 							'PLACEMENT_ID' => $app['ID'],
 							"PLACEMENT_OPTIONS" => ['taskId'=>$taskData["ID"]],
+							'SET_TITLE' => 'N'
 						],
 						null,
 						array('HIDE_ICONS' => 'Y')
@@ -649,6 +651,20 @@ if ($arParams["ENABLE_MENU_TOOLBAR"])
 			<?php
 			}?>
 		</div>
+	</div>
+	<div class="task-footer-wrap" id="footerWrap">
+		<?$APPLICATION->IncludeComponent('bitrix:ui.button.panel', '', [
+			'BUTTONS' => [
+				[
+					'TYPE' => 'save',
+					'ID' => 'saveButton',
+				],
+				[
+					'TYPE' => 'custom',
+					'LAYOUT' => '<a class="ui-btn ui-btn-link" id="cancelButton">'.Loc::getMessage("TASKS_TASK_CANCEL_BUTTON_TEXT").'</a>',
+				],
+			],
+		]);?>
 	</div>
 </div>
 
@@ -725,14 +741,25 @@ $this->EndViewTarget();
 			TASKS_STATUS_7: "<?=CUtil::JSEscape(Loc::getMessage("TASKS_STATUS_7"))?>",
 
 			tasksAjaxEmpty: "<?=CUtil::JSEscape(Loc::getMessage('TASKS_AJAX_EMPTY_TEMPLATES'))?>",
-			tasksAjaxErrorLoad: "<?=CUtil::JSEscape(Loc::getMessage('TASKS_AJAX_ERROR_LOAD_TEMPLATES'))?>"
+			tasksAjaxErrorLoad: "<?=CUtil::JSEscape(Loc::getMessage('TASKS_AJAX_ERROR_LOAD_TEMPLATES'))?>",
+
+			TASKS_CLOSE_SLIDER_CONFIRMATION_POPUP_HEADER: "<?=CUtil::JSEscape(Loc::getMessage('TASKS_TASK_CLOSE_SLIDER_CONFIRMATION_POPUP_HEADER'))?>",
+			TASKS_CLOSE_SLIDER_CONFIRMATION_POPUP_CONTENT: "<?=CUtil::JSEscape(Loc::getMessage('TASKS_TASK_CLOSE_SLIDER_CONFIRMATION_POPUP_CONTENT'))?>",
+			TASKS_CLOSE_SLIDER_CONFIRMATION_POPUP_BUTTON_CLOSE: "<?=CUtil::JSEscape(Loc::getMessage('TASKS_TASK_CLOSE_SLIDER_CONFIRMATION_POPUP_BUTTON_CLOSE'))?>",
+			TASKS_CLOSE_SLIDER_CONFIRMATION_POPUP_BUTTON_CANCEL: "<?=CUtil::JSEscape(Loc::getMessage('TASKS_TASK_CLOSE_SLIDER_CONFIRMATION_POPUP_BUTTON_CANCEL'))?>",
+			TASKS_DISABLE_CHANGES_CONFIRMATION_POPUP_HEADER: "<?=CUtil::JSEscape(Loc::getMessage('TASKS_TASK_DISABLE_CHANGES_CONFIRMATION_POPUP_HEADER'))?>",
+			TASKS_DISABLE_CHANGES_CONFIRMATION_POPUP_CONTENT: "<?=CUtil::JSEscape(Loc::getMessage('TASKS_TASK_DISABLE_CHANGES_CONFIRMATION_POPUP_CONTENT'))?>",
+			TASKS_DISABLE_CHANGES_CONFIRMATION_POPUP_BUTTON_YES: "<?=CUtil::JSEscape(Loc::getMessage('TASKS_TASK_DISABLE_CHANGES_CONFIRMATION_POPUP_BUTTON_YES'))?>",
+			TASKS_DISABLE_CHANGES_CONFIRMATION_POPUP_BUTTON_NO: "<?=CUtil::JSEscape(Loc::getMessage('TASKS_TASK_DISABLE_CHANGES_CONFIRMATION_POPUP_BUTTON_NO'))?>"
 		},
 		paths: {
 			newTask: "<?=CUtil::JSEscape($templateData["NEW_TASK_PATH"])?>",
 			newSubTask: "<?=CUtil::JSEscape($templateData["NEW_SUBTASK_PATH"])?>",
-			taskTemplates: "<?=CUtil::JSEscape($templateData["TASK_TEMPLATES_PATH"])?>"
+			taskTemplates: "<?=CUtil::JSEscape($templateData["TASK_TEMPLATES_PATH"])?>",
+			taskView: "<?=CUtil::JSEscape($templateData["TASK_VIEW_PATH"])?>"
 		},
 		taskId: <?=$taskData["ID"]?>,
+		userId: <?=$arParams["USER_ID"]?>,
 		project: <?=CUtil::PhpToJSObject($taskData["SE_PROJECT"])?>,
 		eventTaskUgly: eventTaskUgly,
 		componentData: {

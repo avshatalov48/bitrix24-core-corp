@@ -25,6 +25,7 @@ $MESS["SERVICE_VIDEO"] = "Video Conferencing";
 $MESS["SERVICE_BPV"] = "Business Processes";
 $MESS["SERVICE_WIKI"] = "Knowledge Base (Wiki)";
 $MESS["SERVICE_CRM"] = "CRM";
+$MESS["SERVICE_DOCUMENTGENERATOR"] = "Document Generator";
 $MESS["SERVICE_TIMEMAN"] = "Working Time Management";
 $MESS["SERVICE_MEETING"] = "Meetings and events";
 $MESS["SERVICE_MEDIALIBRARY"] = "Media Library";

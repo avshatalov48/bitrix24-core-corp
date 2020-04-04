@@ -1497,7 +1497,7 @@ BX.CDialog.prototype.SetHead = function(head)
 	this.adjustSize();
 };
 
-BX.CDialog.prototype.Notify = function(note, bError)
+BX.CDialog.prototype.Notify = function(note, bError, html)
 {
 	if (!this.PARTS.NOTIFY)
 	{
@@ -1522,6 +1522,11 @@ BX.CDialog.prototype.Notify = function(note, bError)
 		BX.addClass(this.PARTS.NOTIFY, 'adm-warning-block-red');
 	else
 		BX.removeClass(this.PARTS.NOTIFY, 'adm-warning-block-red');
+
+	if(html !== true)
+	{
+		note = BX.util.htmlspecialchars(note);
+	}
 
 	this.PARTS.NOTIFY.firstChild.innerHTML = note || '&nbsp;';
 	this.PARTS.NOTIFY.firstChild.style.width = (this.PARAMS.width-50) + 'px';

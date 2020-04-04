@@ -433,7 +433,8 @@ $APPLICATION->IncludeComponent(
 		'TOOLBAR_ID' => $toolbarID,
 		'FORM_ID' => $arResult['FORM_ID'],
 		'EDITOR_ITEMS' => $editorItems,
-		'DISABLE_STORAGE_EDIT' => isset($arResult['DISABLE_STORAGE_EDIT']) && $arResult['DISABLE_STORAGE_EDIT']
+		'DISABLE_STORAGE_EDIT' => isset($arResult['DISABLE_STORAGE_EDIT']) && $arResult['DISABLE_STORAGE_EDIT'],
+		'SKIP_VISUAL_COMPONENTS' => 'Y'
 	),
 	null,
 	array('HIDE_ICONS' => 'Y')

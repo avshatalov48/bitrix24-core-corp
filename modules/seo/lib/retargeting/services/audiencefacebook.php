@@ -11,7 +11,7 @@ class AudienceFacebook extends Audience
 
 	const MAX_CONTACTS_PER_PACKET = 10000;
 	const MIN_CONTACTS_FOR_ACTIVATING = 50;
-	const URL_AUDIENCE_LIST = 'https://www.facebook.com/ads/manager/audiences/manage/';
+	const URL_AUDIENCE_LIST = 'https://business.facebook.com/adsmanager/audiences';
 
 	protected static $listRowMap = array(
 		'ID' => 'ID',
@@ -28,14 +28,11 @@ class AudienceFacebook extends Audience
 
 	public function add(array $data)
 	{
-		// https://developers.facebook.com/docs/marketing-api/reference/custom-audience/#Creating
-
 		$response = $this->getRequest()->send(array(
-			'method' => 'GET',
-			'endpoint' => 'act_' . $data['ACCOUNT_ID'] . '/customaudiences',
-			'fields' => array(
+			'methodName' => 'retargeting.audience.add',
+			'parameters' => array(
+				'accountId' => $this->accountId,
 				'name' => $data['NAME'],
-				'subtype' => 'CUSTOM',
 				'description' => $data['DESCRIPTION'],
 			)
 		));
@@ -85,45 +82,52 @@ class AudienceFacebook extends Audience
 		);
 	}
 
-	protected function changeUsers($method = 'POST', $schema = 'EMAIL', $audienceId, array $contacts = array())
-	{
-		$response = $this->getRequest()->send(array(
-			'method' => $method == 'DELETE' ? 'DELETE' : 'POST',
-			'endpoint' => $audienceId . '/users',
-			'fields' => array(
-				'payload' => Json::encode(
-					$this->prepareContacts($contacts)
-				),
-			)
-		));
-
-		return $response;
-	}
-
 	public function importContacts($audienceId, array $contacts = array(), array $options)
 	{
-		// https://developers.facebook.com/docs/marketing-api/reference/custom-audience/users/#Updating
-		return $this->changeUsers('POST', 'EMAIL', $audienceId, $contacts);
+		return $this->getRequest()->send(array(
+			'methodName' => 'retargeting.audience.contacts.add',
+			'parameters' => array(
+				'accountId' => $this->accountId,
+				'audienceId' => $audienceId,
+				'contacts' => Json::encode(
+					$this->prepareContacts($contacts)
+				)
+			)
+		));
 	}
 
 	public function removeContacts($audienceId, array $contacts = array(), array $options)
 	{
-		// https://developers.facebook.com/docs/marketing-api/reference/custom-audience/users/#Deleting
-		return $this->changeUsers('DELETE', 'EMAIL', $audienceId, $contacts);
+		return $this->getRequest()->send(array(
+			'methodName' => 'retargeting.audience.contacts.remove',
+			'parameters' => array(
+				'accountId' => $this->accountId,
+				'audienceId' => $audienceId,
+				'contacts' => Json::encode(
+					$this->prepareContacts($contacts)
+				)
+			)
+		));
 	}
 
 	public function getList()
 	{
-		// https://developers.facebook.com/docs/marketing-api/reference/ad-account/customaudiences/#Reading
-		// https://developers.facebook.com/docs/marketing-api/reference/custom-audience/
 		$response = $this->getRequest()->send(array(
-			'method' => 'GET',
-			'endpoint' => 'act_' . $this->accountId . '/customaudiences',
-			'fields' => array(
-				'fields' => 'id,name,approximate_count'
+			'methodName' => 'retargeting.audience.list',
+			'parameters' => array(
+				'accountId' => $this->accountId
 			)
 		));
-
+		$data = $response->getData();
+		$data = array_values(array_filter($data, function ($item) {
+			return ($item['subtype'] == 'CUSTOM'); // only CUSTOM type (list of clients) is supported
+		}));
+		$response->setData($data);
 		return $response;
+	}
+
+	public static function isSupportAddAudience()
+	{
+		return true;
 	}
 }

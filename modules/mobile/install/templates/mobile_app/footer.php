@@ -29,19 +29,11 @@
 		{
 			if(this.hostname == document.location.hostname)
 			{
+				var func = BX.MobileTools.resolveOpenFunction(this.href);
 
-				var params = BX.MobileTools.getMobileUrlParams(this.href);
-				var userId = BX.MobileTools.userIdFromUrl(this.href);
-
-				if(userId)
+				if(func)
 				{
-					console.log(userId);
-					BXMobileApp.Events.postToComponent("onUserProfileOpen", [userId]);
-					return BX.PreventDefault(e);
-				}
-				else if (params)
-				{
-					BXMobileApp.PageManager.loadPageBlank(params);
+					func();
 					return BX.PreventDefault(e);
 				}
 			}

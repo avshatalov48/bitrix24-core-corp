@@ -10,6 +10,7 @@ return array(
 	'block' => array(
 		'name' => Loc::getMessage('LANDING_BLOCK_49_JUST_VIDEO_NAME'),
 		'section' => array('video'),
+		'dynamic' => false,
 		'version' => '18.5.0',
 	),
 	'nodes' => array(

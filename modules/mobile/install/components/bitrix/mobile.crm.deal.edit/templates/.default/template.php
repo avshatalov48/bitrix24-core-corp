@@ -5,7 +5,7 @@ CJSCore::Init(array('mobile_crm'));
 use \Bitrix\Crm\Conversion\DealConversionScheme;
 
 $mode = $arResult['MODE'];
-$formTitle = GetMessage("M_CRM_DEAL_EDIT_{$mode}_TITLE");
+$formTitle = GetMessageJS("M_CRM_DEAL_EDIT_{$mode}_TITLE");
 $formId = "MOBILE_CRM_DEAL_EDIT_".$arResult['ELEMENT_ID'];
 $ajaxPath = '/mobile/?mobile_action=mobile_crm_deal_actions';
 

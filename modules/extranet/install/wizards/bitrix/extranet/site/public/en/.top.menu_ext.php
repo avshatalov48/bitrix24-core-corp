@@ -16,6 +16,18 @@ if (!\Bitrix\Main\Loader::includeModule("socialnetwork") || !\Bitrix\Main\Loader
 	return;
 }
 
+if (!function_exists("getLeftMenuItemLink"))
+{
+	function getLeftMenuItemLink($sectionId, $defaultLink = "")
+	{
+		$settings = CUserOptions::GetOption("UI", $sectionId);
+		return
+			is_array($settings) && isset($settings["firstPageLink"]) && strlen($settings["firstPageLink"]) ?
+				$settings["firstPageLink"] :
+				$defaultLink;
+	}
+}
+
 IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/extranet/public/.left.menu_ext.php");
 
 $userId = $GLOBALS["USER"]->getId();
@@ -28,7 +40,7 @@ $menuItems = array(
 		GetMessage("EXTRANET_LEFT_MENU_LIVE_FEED"),
 		SITE_DIR,
 		array(),
-		array("name" => "live_feed"),
+		array("name" => "live_feed", "counter_id" => "live-feed", "menu_item_id"=>"menu_live_feed"),
 		""
 	)
 );
@@ -55,7 +67,13 @@ if ($GLOBALS["USER"]->IsAuthorized())
 			array(
 				"name" => "tasks",
 				"counter_id" => "tasks_total",
-				"sub_link" => SITE_DIR."contacts/personal/user/".$userId."/tasks/task/edit/0/"
+				"sub_link" => SITE_DIR."contacts/personal/user/".$userId."/tasks/task/edit/0/",
+				"real_link" => getLeftMenuItemLink(
+					"tasks_panel_menu",
+					SITE_DIR."contacts/personal/user/".$userId."/tasks/"
+				),
+				"menu_item_id"=>"menu_tasks",
+				"top_menu_id" => "tasks_panel_menu",
 			),
 			"CBXFeatures::IsFeatureEnabled('Tasks')"
 		);
@@ -68,7 +86,9 @@ if ($GLOBALS["USER"]->IsAuthorized())
 			GetMessage("EXTRANET_LEFT_MENU_DISK"),
 			SITE_DIR."contacts/personal/user/".$userId.($diskEnabled ? "/disk/path/" : "/files/lib/"),
 			array(),
-			array(),
+			array(
+				"menu_item_id"=>"menu_files",
+			),
 			"CBXFeatures::IsFeatureEnabled('PersonalFiles')"
 		);
 	}
@@ -79,7 +99,9 @@ if ($GLOBALS["USER"]->IsAuthorized())
 			GetMessage("EXTRANET_LEFT_MENU_PHOTO"),
 			SITE_DIR."contacts/personal/user/".$userId."/photo/",
 			array(),
-			array(),
+			array(
+				"menu_item_id"=>"menu_photo",
+			),
 			"CBXFeatures::IsFeatureEnabled('PersonalPhoto')"
 		);
 	}
@@ -90,7 +112,15 @@ if ($GLOBALS["USER"]->IsAuthorized())
 			GetMessage("EXTRANET_LEFT_MENU_BLOG"),
 			SITE_DIR."contacts/personal/user/".$userId."/blog/",
 			array(),
-			array("counter_id" => "blog_post"),
+			array(
+				"real_link" => getLeftMenuItemLink(
+					"blog_messages_panel_menu",
+					SITE_DIR."contacts/personal/user/".$userId."/blog/"
+				),
+				"counter_id" => "blog_post",
+				"menu_item_id"=>"menu_blog",
+				"top_menu_id" => "blog_messages_panel_menu"
+			),
 			"CBXFeatures::IsFeatureEnabled('PersonalBlog')"
 		);
 	}
@@ -102,7 +132,15 @@ if (CBXFeatures::IsFeatureEnabled("Workgroups") && CBXFeatures::IsFeatureEnabled
 		GetMessage("EXTRANET_LEFT_MENU_GROUPS"),
 		SITE_DIR."workgroups/",
 		array(),
-		array("class" => "menu-groups-extranet"),
+		array(
+			"class" => "menu-groups-extranet",
+			"real_link" => getLeftMenuItemLink(
+				"sonetgroups_panel_menu",
+				SITE_DIR."workgroups/"
+			),
+			"menu_item_id"=>"menu_all_groups",
+			"top_menu_id" => "sonetgroups_panel_menu",
+		),
 		""
 	);
 
@@ -132,10 +170,25 @@ if (CBXFeatures::IsFeatureEnabled("Workgroups") && CBXFeatures::IsFeatureEnabled
 	}
 }
 
+$menuItems[] = array(
+	GetMessage("EXTRANET_LEFT_MENU_CONTACTS"),
+	SITE_DIR."contacts/",
+	Array(),
+	Array(
+		"real_link" => getLeftMenuItemLink(
+			"top_menu_id_extranet_contacts",
+			SITE_DIR."contacts/"
+		),
+		"menu_item_id" => "menu_company",
+		"top_menu_id" => "top_menu_id_extranet_contacts",
+	),
+	""
+);
+
 foreach ($aMenuLinks as $item)
 {
 	$menuLink = $item[1];
-	if (!preg_match("~(/workgroups/|".SITE_DIR."index.php|".SITE_DIR.")$~i", $menuLink))
+	if (!preg_match("~(/workgroups/|/contacts/|".SITE_DIR."index.php|".SITE_DIR.")$~i", $menuLink))
 	{
 		$menuItems[] = $item;
 	}

@@ -13,31 +13,22 @@ return [
 	],
 	'rel' => [
 		'main.polyfill.core',
+		'pull.components.status',
 		'main.date',
-		'main.md5',
-
-		'rest.client',
-
-		'pull.client',
-
-		'ui.dexie',
-
-		'ui.vue',
-		'ui.vue.vuex',
-
-		'im.const',
-		'im.controller',
+		'mobile.pull.client',
 		'im.model',
-
+		'im.controller',
 		'im.provider.pull',
-
-		'im.component.dialog',
-
-		'im.utils',
+		'im.provider.rest',
 		'im.tools.localstorage',
 		'im.tools.timer',
 		'im.tools.logger',
+		'im.const',
+		'im.utils',
+		'im.component.dialog',
+		'im.component.quotepanel',
+		'ui.vue.vuex',
+		'ui.vue',
 	],
 	'skip_core' => true,
-	'bundle_js' => 'mobile_im_dialog',
 ];

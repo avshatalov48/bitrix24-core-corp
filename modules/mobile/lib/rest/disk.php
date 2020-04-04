@@ -3,6 +3,7 @@
 namespace Bitrix\Mobile\Rest;
 
 use Bitrix\Disk\Driver;
+use Bitrix\Disk\Folder;
 use Bitrix\Disk\Internals\FolderTable;
 use Bitrix\Main\Loader;
 
@@ -75,42 +76,56 @@ class Disk extends \IRestService
 
 			if ($storage)
 			{
-				$targetFolder = $storage->getRootObjectId();
+				$targetFolderId = $storage->getRootObjectId();
 				if ($folderId)
 				{
-					$targetFolder = $folderId;
+					$targetFolderId = $folderId;
 				}
 				$securityContext = $storage->getCurrentUserSecurityContext();
 				$parameters = Driver::getInstance()->getRightsManager()->addRightsCheck($securityContext, $parameters, ['ID', 'CREATED_BY']);
-				$childrenRows = FolderTable::getChildren($targetFolder, $parameters);
-				$children = [];
-				foreach ($childrenRows as $childrenRow)
+
+				$folder = Folder::getById($targetFolderId);
+				if($folder)
 				{
-					$children[] = \Bitrix\Disk\BaseObject::buildFromArray($childrenRow);
+					$childrenRows = FolderTable::getChildren($folder->getRealObjectId(), $parameters);
+					$children = [];
+					foreach ($childrenRows as $childrenRow)
+					{
+						$children[] = \Bitrix\Disk\BaseObject::buildFromArray($childrenRow);
+					}
+
+					$items = array_map(function (\Bitrix\Disk\BaseObject $item) {
+						$arrayData = $item->toArray();
+						$arrayData["CREATE_TIME"] = \CRestUtil::ConvertDateTime($arrayData["CREATE_TIME"]);
+						$arrayData["UPDATE_TIME"] = \CRestUtil::ConvertDateTime($arrayData["UPDATE_TIME"]);
+						$arrayData["SYNC_UPDATE_TIME"] = \CRestUtil::ConvertDateTime($arrayData["SYNC_UPDATE_TIME"]);
+						unset($arrayData["PARENT"]);
+						$arrayData["TYPE"] = $arrayData["TYPE"] == "2" ? "folder" : "file";
+						if($arrayData["TYPE"] == "file")
+							$arrayData["PREVIEW_URL"] = \Bitrix\Main\Engine\UrlManager::getInstance()->create('disk.api.file.showImage', [
+								'fileId' => $arrayData["ID"],
+								'signature' => \Bitrix\Disk\Security\ParameterSigner::getImageSignature($arrayData["ID"], 400, 400),
+								'width' => 400,
+								'height' => 400,
+							])->getUri();
+
+						return $arrayData;
+					}, $children);
+
+					$result["items"] = $items;
+					$result["storageId"] = $storage->getId();
+					$result["folderId"] = $targetFolderId;
+					$result["name"] = $folder->getName();
+					$result["rootFolderId"] = $storage->getRootObjectId();
+
+					$count = $childrenRows->getCount();
+					if (($offset + count($items)) < $count)
+					{
+						$result['next'] = $offset + count($items);
+					}
+
+					$result['total'] = $count;
 				}
-
-				$items = array_map(function (\Bitrix\Disk\BaseObject $item) {
-					$arrayData = $item->toArray();
-					$arrayData["CREATE_TIME"] = \CRestUtil::ConvertDateTime($arrayData["CREATE_TIME"]);
-					$arrayData["UPDATE_TIME"] = \CRestUtil::ConvertDateTime($arrayData["UPDATE_TIME"]);
-					$arrayData["SYNC_UPDATE_TIME"] = \CRestUtil::ConvertDateTime($arrayData["SYNC_UPDATE_TIME"]);
-					unset($arrayData["PARENT"]);
-					$arrayData["TYPE"] = $arrayData["TYPE"] == "2" ? "folder" : "file";
-					return $arrayData;
-				}, $children);
-
-				$result["items"] = $items;
-				$result["storageId"] = $storage->getId();
-				$result["folderId"] = $targetFolder;
-				$result["rootFolderId"] = $storage->getRootObjectId();
-
-				$count = $childrenRows->getCount();
-				if (($offset + count($items)) < $count)
-				{
-					$result['next'] = $offset + count($items);
-				}
-				$result['total'] = $count;
-
 			}
 		}
 

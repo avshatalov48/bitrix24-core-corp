@@ -29,7 +29,8 @@ Loc::loadMessages(__FILE__);
 class ChannelOpenLine implements iProvider
 {
 	private static $excludedConnectors = array(
-		'facebookcomments'
+		'facebookcomments',
+		'yandex'
 	);
 	/**
 	 * Return true if it can be used.
@@ -403,11 +404,7 @@ class ChannelOpenLine implements iProvider
 			}
 
 			$id = str_replace('.', '-', $code);
-			if ($code == 'facebook')
-			{
-				$title = 'Facebook';
-			}
-			else if ($code == 'vkgroup')
+			if (!empty($connector['name']))
 			{
 				$title = $connector['name'];
 			}

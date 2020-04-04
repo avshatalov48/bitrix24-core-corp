@@ -146,6 +146,80 @@ class CompanyMerger extends EntityMerger
 			$recoveryData->setResponsibleID((int)$fields['ASSIGNED_BY_ID']);
 		}
 	}
+
+	/**
+	 * @param array $seed
+	 * @param array $targ
+	 * @param bool $skipEmpty
+	 * @param array $options
+	 * @throws Main\ArgumentException
+	 * @throws Main\ArgumentOutOfRangeException
+	 * @throws Main\NotSupportedException
+	 */
+	protected function innerMergeBoundEntities(array &$seed, array &$targ, $skipEmpty = false, array $options = array())
+	{
+		$seedID = isset($seed['ID']) ? (int)$seed['ID'] : 0;
+		$targID = isset($targ['ID']) ? (int)$targ['ID'] : 0;
+
+		//region Contacts
+		$seedBindings = null;
+		if($seedID > 0)
+		{
+			$seedBindings = Binding\ContactCompanyTable::getCompanyBindings($seedID);
+		}
+		elseif(isset($seed['CONTACT_ID']))
+		{
+			$seedBindings = Binding\EntityBinding::prepareEntityBindings(
+				\CCrmOwnerType::Contact,
+				is_array($seed['CONTACT_ID']) ? $seed['CONTACT_ID'] : array($seed['CONTACT_ID'])
+			);
+		}
+
+		$targBindings = null;
+		if($targID > 0)
+		{
+			$targBindings = Binding\ContactCompanyTable::getCompanyBindings($targID);
+		}
+		elseif(isset($targ['CONTACT_ID']))
+		{
+			$targBindings = Binding\EntityBinding::prepareEntityBindings(
+				\CCrmOwnerType::Contact,
+				is_array($targ['CONTACT_ID']) ? $targ['CONTACT_ID'] : array($targ['CONTACT_ID'])
+			);
+		}
+
+		//TODO: Rename SKIP_MULTIPLE_USER_FIELDS -> ENABLE_MULTIPLE_FIELDS_ENRICHMENT
+		$skipMultipleFields = isset($options['SKIP_MULTIPLE_USER_FIELDS']) && $options['SKIP_MULTIPLE_USER_FIELDS'];
+		if($seedBindings !== null && count($seedBindings) > 0)
+		{
+			if(!$skipMultipleFields)
+			{
+				if($targBindings === null || count($targBindings) === 0)
+				{
+					$targBindings = $seedBindings;
+				}
+				else
+				{
+					self::mergeEntityBindings(\CCrmOwnerType::Contact, $seedBindings, $targBindings);
+				}
+
+				$targ['CONTACT_ID'] = Binding\EntityBinding::prepareEntityIDs(
+					\CCrmOwnerType::Contact,
+					$targBindings
+				);
+			}
+			elseif($targBindings === null || (count($targBindings) === 0 && !$skipEmpty))
+			{
+				$targ['CONTACT_ID'] = Binding\EntityBinding::prepareEntityIDs(
+					\CCrmOwnerType::Contact,
+					$seedBindings
+				);
+			}
+		}
+		//endregion
+
+		parent::innerMergeBoundEntities($seed, $targ, $skipEmpty, $options);
+	}
 	/**
 	 * Update entity
 	 * @param int $entityID Entity ID.
@@ -158,6 +232,8 @@ class CompanyMerger extends EntityMerger
 	protected function updateEntity($entityID, array &$fields, $roleID, array $options = array())
 	{
 		$entity = $this->getEntity();
+		//Required for set current user as last modification author
+		unset($fields['CREATED_BY_ID'], $fields['DATE_CREATE'], $fields['MODIFY_BY_ID'], $fields['DATE_MODIFY']);
 		if(!$entity->Update($entityID, $fields, true, true, $options))
 		{
 			throw new EntityMergerException(
@@ -212,7 +288,10 @@ class CompanyMerger extends EntityMerger
 		\CCrmSonetRelation::RebindRelations(\CCrmOwnerType::Company, $seedID, $targID);
 		\CCrmEvent::Rebind(\CCrmOwnerType::Company, $seedID, $targID);
 		EntityRequisite::rebind(\CCrmOwnerType::Company, $seedID, $targID);
+
 		Timeline\ActivityEntry::rebind(\CCrmOwnerType::Company, $seedID, $targID);
+		Timeline\CreationEntry::rebind(\CCrmOwnerType::Company, $seedID, $targID);
+		Timeline\MarkEntry::rebind(\CCrmOwnerType::Company, $seedID, $targID);
 		Timeline\CommentEntry::rebind(\CCrmOwnerType::Company, $seedID, $targID);
 	}
 	/**

@@ -35,6 +35,7 @@ $MESS["JS_CORE_TM_REOPEN"] = "Продолжить рабочий день";
 $MESS["JS_CORE_TM_WD_CLOSED"] = "Внимание! Рабочий день не начат.";
 $MESS["JS_CORE_TM_WD_EXPIRED"] = "Вы не закрыли предыдущий рабочий день.";
 $MESS["JS_CORE_TM_WD_OPENED"] = "Длительность рабочего дня:";
+$MESS["JS_CORE_TM_WD_CLOCK_SET_CUSTOM_DATE"] = "Изменить день";
 $MESS["JS_CORE_TM_WD_PAUSED"] = "Длительность перерыва:";
 $MESS["JS_CORE_TM_WD_PAUSED_1"] = "Длительность перерыва";
 $MESS["JS_CORE_TM_PAUSE"] = "Перерыв";

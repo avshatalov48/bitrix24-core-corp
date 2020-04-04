@@ -60,7 +60,7 @@ class CDiskUfFileComponent extends BaseComponent
 			'FILES' => $this->loadFilesData(),
 			'UID' => $this->getComponentId(),
 		);
-		$driver = \Bitrix\Disk\Driver::getInstance();
+		$driver = Driver::getInstance();
 
 		$this->arResult['CLOUD_DOCUMENT'] = array();
 		if($this->arParams['DISABLE_CREATING_FILE_BY_CLOUD'])
@@ -72,41 +72,7 @@ class CDiskUfFileComponent extends BaseComponent
 			$this->arResult['CAN_CREATE_FILE_BY_CLOUD'] = Configuration::canCreateFileByCloud();
 		}
 
-		static $documentHandlerName = null;
-		static $documentHandlerCode = null;
-		static $isLocal = null;
-
-		if($documentHandlerName === null && Configuration::canCreateFileByCloud())
-		{
-			$documentServiceCode = \Bitrix\Disk\UserConfiguration::getDocumentServiceCode();
-			if(!$documentServiceCode)
-			{
-				$documentServiceCode = LocalDocumentController::getCode();
-			}
-			if($this->arParams['DISABLE_LOCAL_EDIT'] && LocalDocumentController::isLocalService($documentServiceCode))
-			{
-				$documentServiceCode = GoogleHandler::getCode();
-			}
-			if(LocalDocumentController::isLocalService($documentServiceCode))
-			{
-				$documentHandlerName = LocalDocumentController::getName();
-				$documentHandlerCode = LocalDocumentController::getCode();
-				$isLocal = true;
-			}
-			else
-			{
-				$defaultDocumentHandler = \Bitrix\Disk\Driver::getInstance()
-					->getDocumentHandlersManager()
-					->getDefaultServiceForCurrentUser()
-				;
-				if($defaultDocumentHandler)
-				{
-					$documentHandlerName = $defaultDocumentHandler->getName();
-					$documentHandlerCode = $defaultDocumentHandler->getCode();
-					$isLocal = false;
-				}
-			}
-		}
+		list($documentHandlerName, $documentHandlerCode, $isLocal) = $this->getConfigurationOfCloudDocument();
 		if($documentHandlerCode)
 		{
 			$this->arResult['CLOUD_DOCUMENT'] = array(
@@ -134,7 +100,7 @@ class CDiskUfFileComponent extends BaseComponent
 
 			//now we show checkbox only if it's create post, etc.
 			$this->arResult['DISK_ATTACHED_OBJECT_ALLOW_EDIT'] = empty($this->arResult['FILES']);
-			$userFieldManager = \Bitrix\Disk\Driver::getInstance()->getUserFieldManager();
+			$userFieldManager = Driver::getInstance()->getUserFieldManager();
 			$this->arResult['INPUT_NAME_OBJECT_ALLOW_EDIT'] = $userFieldManager->getInputNameForAllowEditByEntityType($this->arParams['PARAMS']['arUserField']['ENTITY_ID']);
 
 
@@ -163,12 +129,14 @@ class CDiskUfFileComponent extends BaseComponent
 
 		if ($this->arParams['INLINE'] === 'Y' && !$this->editMode)
 		{
-			//so we decided to remove groups when objects are inline
+			//we have to regenerate id, because it will be inline in the post and it's another group.
 			foreach ($this->arResult['FILES'] as $file)
 			{
 				/** @var \Bitrix\Main\UI\Viewer\ItemAttributes $attr */
 				$attr = $file['ATTRIBUTES_FOR_VIEWER'];
-				$attr->unsetGroupBy();
+				$attr->setGroupBy(
+					$attr->getGroupBy() . 'inline'
+				);
 			}
 		}
 
@@ -221,7 +189,7 @@ class CDiskUfFileComponent extends BaseComponent
 			$values = array($values);
 		}
 		$files = array();
-		$driver = \Bitrix\Disk\Driver::getInstance();
+		$driver = Driver::getInstance();
 		$urlManager = $driver->getUrlManager();
 		$userFieldManager = $driver->getUserFieldManager();
 		$isEnabledObjectLock = Configuration::isEnabledObjectLock();
@@ -399,35 +367,47 @@ class CDiskUfFileComponent extends BaseComponent
 					->addAction([
 						'type' => 'download',
 					])
-					->addAction([
-						'type' => 'copyToMe',
-						'text' => Loc::getMessage('DISK_UF_ACTION_SAVE_TO_OWN_FILES'),
-						'action' => 'BX.Disk.Viewer.Actions.runActionCopyToMe',
-						'params' => [
-							'attachedObjectId' => $attachedModel->getId(),
-						],
-						'extension' => 'disk.viewer.actions',
-						'buttonIconClass' => 'ui-btn-icon-cloud',
-					])
 				;
 
-				if ($data['CAN_UPDATE'] && $data['EDITABLE'])
+				if (!$this->arParams['DISABLE_LOCAL_EDIT'])
+				{
+					$attr->addAction([
+							'type' => 'copyToMe',
+							'text' => Loc::getMessage('DISK_UF_ACTION_SAVE_TO_OWN_FILES'),
+							'action' => 'BX.Disk.Viewer.Actions.runActionCopyToMe',
+							'params' => [
+								'attachedObjectId' => $attachedModel->getId(),
+							],
+							'extension' => 'disk.viewer.actions',
+							'buttonIconClass' => 'ui-btn-icon-cloud',
+						])
+					;
+				}
+
+				if ($data['CAN_UPDATE'] && !$this->arParams['DISABLE_LOCAL_EDIT'])
 				{
 					$documentName = \CUtil::JSEscape($attachedModel->getName());
+					$forcedService = null;
 					$items = [];
-					foreach ($this->getDocumentHandlersForEditingFile() as $handlerData)
+					if ($data['EDITABLE'])
 					{
-						$items[] = [
-							'text' => $handlerData['name'],
-							'onclick' => "BX.Disk.Viewer.Actions.runActionEdit({name: '{$documentName}', attachedObjectId: {$attachedModel->getId()}, serviceCode: '{$handlerData['code']}'})",
-						];
+						foreach ($this->getDocumentHandlersForEditingFile() as $handlerData)
+						{
+							$items[] = [
+								'text' => $handlerData['name'],
+								'onclick' => "BX.Disk.Viewer.Actions.runActionEdit({name: '{$documentName}', attachedObjectId: {$attachedModel->getId()}, serviceCode: '{$handlerData['code']}'})",
+							];
+						}
 					}
+
 					$attr->addAction([
 						'type' => 'edit',
+						'buttonIconClass' => ' ',
 						'action' => 'BX.Disk.Viewer.Actions.runActionDefaultEdit',
 						'params' => [
 							'attachedObjectId' => $attachedModel->getId(),
 							'name' => $documentName,
+							'dependsOnService' => $items? null : LocalDocumentController::getCode(),
 						],
 						'items' => $items,
 					]);
@@ -451,6 +431,7 @@ class CDiskUfFileComponent extends BaseComponent
 					'ID' => $attachedObject->getFileId(),
 					'CONTENT_TYPE' => $attachedObject->getExtra()->get('FILE_CONTENT_TYPE'),
 					'ORIGINAL_NAME' => $attachedObject->getName(),
+					'FILE_SIZE' => $attachedObject->getExtra()->get('FILE_SIZE'),
 				],
 				$sourceUri
 			);
@@ -514,5 +495,48 @@ class CDiskUfFileComponent extends BaseComponent
 			'code' => LocalDocumentController::getCode(),
 			'name' => LocalDocumentController::getName(),
 		]]);
+	}
+
+	/**
+	 * @return array
+	 * @throws \Bitrix\Main\NotImplementedException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	protected function getConfigurationOfCloudDocument()
+	{
+		static $documentHandlerName = null;
+		static $documentHandlerCode = null;
+		static $isLocal = null;
+
+		if ($documentHandlerName === null && Configuration::canCreateFileByCloud())
+		{
+			$documentServiceCode = \Bitrix\Disk\UserConfiguration::getDocumentServiceCode();
+			if (!$documentServiceCode)
+			{
+				$documentServiceCode = LocalDocumentController::getCode();
+			}
+			if ($this->arParams['DISABLE_LOCAL_EDIT'] && LocalDocumentController::isLocalService($documentServiceCode))
+			{
+				$documentServiceCode = GoogleHandler::getCode();
+			}
+			if (LocalDocumentController::isLocalService($documentServiceCode))
+			{
+				$documentHandlerName = LocalDocumentController::getName();
+				$documentHandlerCode = LocalDocumentController::getCode();
+				$isLocal = true;
+			}
+			else
+			{
+				$defaultDocumentHandler = Driver::getInstance()->getDocumentHandlersManager()->getDefaultServiceForCurrentUser();
+				if ($defaultDocumentHandler)
+				{
+					$documentHandlerName = $defaultDocumentHandler->getName();
+					$documentHandlerCode = $defaultDocumentHandler->getCode();
+					$isLocal = false;
+				}
+			}
+		}
+
+		return [$documentHandlerName, $documentHandlerCode, $isLocal];
 	}
 }

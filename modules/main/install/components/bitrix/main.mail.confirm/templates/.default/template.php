@@ -1,5 +1,5 @@
 <? if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die(); ?>
-<?\Bitrix\Main\UI\Extension::load("ui.notification");?>
+<? \Bitrix\Main\UI\Extension::load('ui.notification'); ?>
 <div id="new_from_email_dialog_content" style="display: none; ">
 	<div class="new-from-email-dialog-error" style="display: none; "></div>
 	<div class="new-from-email-dialog-content">
@@ -138,7 +138,14 @@
 		MAIN_MAIL_CONFIRM_EMPTY_CODE: '<?=\CUtil::jsEscape(getMessage('MAIN_MAIL_CONFIRM_EMPTY_CODE')) ?>',
 		MAIN_MAIL_CONFIRM_DELETE: '<?=\CUtil::jsEscape(getMessage('MAIN_MAIL_CONFIRM_DELETE')) ?>',
 		MAIN_MAIL_CONFIRM_DELETE_SENDER_CONFIRM: '<?=\CUtil::jsEscape(getMessage('MAIN_MAIL_CONFIRM_DELETE_SENDER_CONFIRM')) ?>',
-		MAIN_MAIL_DELETE_SENDER_ERROR: '<?=\CUtil::jsEscape(getMessage('MAIN_MAIL_DELETE_SENDER_ERROR')) ?>'
+		MAIN_MAIL_DELETE_SENDER_ERROR: '<?=\CUtil::jsEscape(getMessage('MAIN_MAIL_DELETE_SENDER_ERROR')) ?>',
+		MAIN_MAIL_CONFIRM_MENU_PLACEHOLDER: '<?=\CUtil::jsEscape(getMessage('MAIN_MAIL_CONFIRM_MENU_PLACEHOLDER')) ?>',
+		MAIN_MAIL_CONFIRM_MENU_UNKNOWN: '<?=\CUtil::jsEscape(getMessage('MAIN_MAIL_CONFIRM_MENU_UNKNOWN')) ?>'
+	});
+
+	BX.ready(function ()
+	{
+		BXMainMailConfirm.init({mailboxes: <?=Bitrix\Main\Web\Json::encode($arParams['MAILBOXES']) ?>});
 	});
 
 </script>

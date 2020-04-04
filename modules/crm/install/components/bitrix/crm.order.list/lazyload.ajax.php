@@ -62,7 +62,9 @@ $contactID = isset($filter['ASSOCIATED_CONTACT_ID'])
 $companyID = isset($filter['COMPANY_ID']) ? $filter['COMPANY_ID'] : 0;
 $leadID = isset($filter['LEAD_ID']) ? $filter['LEAD_ID'] : 0;
 $quoteID = isset($filter['QUOTE_ID']) ? $filter['QUOTE_ID'] : 0;
-$dealID = isset($filter['DEAL_ID']) ? $filter['DEAL_ID'] : 0;
+$dealID = isset($filter['ASSOCIATED_DEAL_ID'])
+	? $filter['ASSOCIATED_DEAL_ID']
+	: (isset($filter['DEAL_ID']) ? $filter['DEAL_ID'] : 0);
 
 $isPermitted = false;
 if($contactID > 0)

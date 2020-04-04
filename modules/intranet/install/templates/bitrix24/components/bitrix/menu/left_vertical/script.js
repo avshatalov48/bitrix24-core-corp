@@ -1,18 +1,18 @@
-BX.namespace("BX.Bitrix24.LeftMenuClass");
+BX.namespace("BX.Bitrix24");
 
-BX.Bitrix24.LeftMenuClass = {
+BX.Bitrix24.LeftMenu = {
 	init: function (params)
 	{
 		params = typeof params === "object" ? params : {};
 
 		this.ajaxPath = params.ajaxPath || null;
 		this.isAdmin = params.isAdmin === "Y";
-		this.hiddenCounters = params.hiddenCounters || {};
+		this.hiddenCounters = params.hiddenCounters || [];
 		this.allCounters = params.allCounters || {};
 		this.isBitrix24 = params.isBitrix24 === "Y";
 		this.siteId = params.siteId || null;
 		this.siteDir = params.siteDir || null;
-		this.isExtranet = params.isExtranet == "Y";
+		this.isExtranet = params.isExtranet === "Y";
 		this.isCompositeMode = params.isCompositeMode === true;
 		this.isCollapsedMode = params.isCollapsedMode === true;
 		this.activeItemsId = [];
@@ -25,23 +25,131 @@ BX.Bitrix24.LeftMenuClass = {
 		this.isCurrentPageStandard = false;
 		this.topMenuSelectedNode = null;
 		this.topItemSelectedObj = null;
-		this.isPublicConverted = params.isPublicConverted == "Y";
+		this.isPublicConverted = params.isPublicConverted === "Y";
+		this.spotlightId = BX.type.isNotEmptyString(params.spotlightId) ? params.spotlightId : null;
+		this.lastScrollOffset = 0;
 
-		this.menuContainer = BX("bx-left-menu");
-		this.menuResizer = BX("left-menu-resizer");
-		this.menuResizerButton = BX("left-menu-resizer-button");
-		this.menuMoreButton = BX("left-menu-more-btn");
-		this.menuItemsBlock = BX("left-menu-list");
-		this.menuSettingsButton = BX("left-menu-settings");
-		this.leftColumnBottom = null;
-		this.timeout = {};
+		this.logoMaskNeeded = null;
+		this.islogoMaskMode = false;
+		this.isScrollMode = false;
+		this.scrollModeThreshold = 20;
+
+		this.menuContainer = document.getElementById("menu-items-block");
 
 		if (!this.menuContainer)
 		{
 			return false;
 		}
 
+		this.templateHeaderHeight = null;
+		this.menuHeader = this.menuContainer.querySelector(".menu-items-header");
+		this.menuBody = this.menuContainer.querySelector(".menu-items-body");
+		this.menuMoreButton = this.menuContainer.querySelector(".menu-favorites-more-btn");
+		this.menuItemsBlock = this.menuContainer.querySelector(".menu-items");
+
+		this.inviteEmployeesBox = this.menuContainer.querySelector(".menu-invite-employees");
+		this.licenseBox = this.menuContainer.querySelector(".menu-license-all-container");
+
+		this.settingsBox = this.menuContainer.querySelector(".menu-settings-btn");
+		this.settingsIconBox = this.settingsBox.querySelector(".menu-settings-icon-box");
+		this.settingsBtnText = this.settingsBox.querySelector(".menu-settings-btn-text");
+		this.settingsSaveBtn = this.menuContainer.querySelector(".menu-settings-save-btn");
+
+		this.timeout = {};
+
 		this.highlight(document.location.pathname + document.location.search);
+		this.makeTextIcons();
+
+		this.handleMenuItemMouseEnter = this.handleMenuItemMouseEnter.bind(this);
+		this.handleMenuItemMouseClick = this.handleMenuItemMouseClick.bind(this);
+
+		this.templateHeaderHeight = null;
+
+		this.fixedAdminPanelHeight = 0;
+		this.adminPanel = BX("bx-panel");
+		this.adminPanelHeight = null;
+
+		if (this.adminPanel)
+		{
+			var adminPanelState = BX.getClass("BX.admin.panel.state");
+			if (adminPanelState && adminPanelState.fixed)
+			{
+				this.fixedAdminPanelHeight = this.getAdminPanelHeight();
+			}
+
+			BX.addCustomEvent("onTopPanelCollapse", this.handleAdminPanelCollapse.bind(this));
+			BX.addCustomEvent("onTopPanelFix", this.handleAdminPanelFix.bind(this));
+
+			this.adjustAdminPanel();
+		}
+
+		document.addEventListener("scroll", this.handleDocumentScroll.bind(this));
+
+		this.slidingModeTimeoutId = null;
+		BX.bind(this.menuContainer, "dblclick", this.handleMenuDoubleClick.bind(this));
+		BX.bind(this.menuContainer, "mouseenter", this.handleMenuMouseEnter.bind(this));
+		BX.bind(this.menuContainer, "mouseleave", this.handleMenuMouseLeave.bind(this));
+		BX.bind(this.menuContainer, "transitionend", this.handleSlidingTransitionEnd.bind(this));
+
+		this.isMenuMouseEnterBlocked = false;
+		this.isMenuMouseLeaveBlocked = false;
+
+		this.mainTable = document.querySelector(".bx-layout-table");
+
+		this.header = document.querySelector("#header");
+		this.headerBurger = this.header.querySelector(".menu-switcher");
+		this.headerLogo = this.header.querySelector(".logo");
+		this.headerLogoBlock = this.header.querySelector(".header-logo-block");
+		this.headerSettings = this.header.querySelector(".header-logo-block-settings");
+
+		this.menuHeaderLogo = this.menuHeader.querySelector(".logo");
+		this.menuHeaderBurger = this.menuHeader.querySelector(".menu-switcher");
+		this.menuHeaderTitle = this.menuHeader.querySelector(".menu-items-header-title");
+
+		if (this.headerSettings)
+		{
+			BX.bind(this.headerLogoBlock, "mouseenter", this.handleHeaderLogoMouserEnter.bind(this));
+			BX.bind(this.headerLogoBlock, "mouseleave", this.handleHeaderLogoMouserLeave.bind(this));
+			BX.bind(this.menuHeader, "mouseenter", this.handleHeaderLogoMouserEnter.bind(this));
+			BX.bind(this.menuHeader, "mouseleave", this.handleHeaderLogoMouserLeave.bind(this));
+		}
+
+		BX.bind(this.menuHeaderBurger, "click", this.handleBurgerClick.bind(this));
+		BX.bind(this.menuHeaderTitle, "click", this.handleBurgerClick.bind(this, true));
+
+		this.siteMapItem = this.menuContainer.querySelector(".menu-sitemap-btn");
+		if (this.siteMapItem)
+		{
+			BX.bind(this.siteMapItem, "click", this.handleSiteMapClick.bind(this));
+			BX.bind(this.siteMapItem, "click", this.handleMenuItemMouseClick);
+			BX.bind(this.siteMapItem, "mouseenter", this.handleMenuItemMouseEnter);
+		}
+
+		this.upButton = this.menuContainer.querySelector(".menu-btn-arrow-up");
+		BX.bind(this.upButton, "click", this.handleUpButtonClick.bind(this));
+		BX.bind(this.upButton, "mouseenter", this.handleUpButtonMouseEnter.bind(this));
+		BX.bind(this.upButton, "mouseleave", this.handleUpButtonMouseLeave.bind(this));
+
+		BX.bind(BX("left-menu-hidden-separator"), "click", BX.proxy(this.showHideMoreItems, this));
+		BX.bind(this.menuMoreButton, "click", BX.proxy(this.showHideMoreItems, this));
+
+
+		BX.bind(this.settingsBox, "mouseenter", this.handleMenuItemMouseEnter);
+		BX.bind(this.settingsBox, "click", this.showSettingsPopup.bind(this));
+		BX.bind(this.settingsBox, "click", this.handleMenuItemMouseClick);
+		BX.bind(this.settingsSaveBtn, "click", function() {
+			this.applyEditMode();
+		}.bind(this));
+
+		if (this.inviteEmployeesBox)
+		{
+			BX.bind(this.inviteEmployeesBox, "mouseenter", this.handleMenuItemMouseEnter);
+		}
+
+		if (this.licenseBox)
+		{
+			BX.bind(this.licenseBox, "mouseenter", this.handleMenuItemMouseEnter);
+		}
 
 		//drag&drop
 		jsDD.Enable();
@@ -57,30 +165,13 @@ BX.Bitrix24.LeftMenuClass = {
 				jsDD.registerDest(items[i], 100);
 				jsDD.registerObject(items[i]);
 
-				BX.bind(items[i], "mouseenter", BX.proxy(function (){
-					this.editByMouseEnter(BX.proxy_context)
-				}, this));
-
-				BX.bind(items[i], "mouseleave", BX.proxy(function (event){
-					this.removeEditByMouseLeave(BX.proxy_context)
-				}, this));
+				BX.bind(items[i], "mouseenter", this.handleMenuItemMouseEnter);
+				BX.bind(items[i], "click", this.handleMenuItemMouseClick);
 			}
 		}
 
-		BX.bind(this.menuContainer, "dblclick", BX.proxy(this.onMenuDoubleClick, this));
-		BX.ready(function ()
-		{
-			this.leftColumnBottom = BX("layout-left-column-bottom");
-			BX.bind(this.leftColumnBottom, "dblclick", BX.proxy(this.onMenuDoubleClick, this));
-		}.bind(this));
-
-		BX.bind(this.menuResizer, "mouseover", BX.proxy(this.onResizerMouseOver, this));
-		BX.bind(this.menuResizer, "mouseout", BX.proxy(this.onResizerMouseOut, this));
-		BX.bind(this.menuResizer, "click", BX.proxy(this.onResizerClick, this));
-
-		BX.bind(BX("left-menu-hidden-separator"), "click", BX.proxy(this.showHideMoreItems, this));
-		BX.bind(this.menuMoreButton, "click", BX.proxy(this.showHideMoreItems, this));
-		BX.bind(this.menuSettingsButton, "click", BX.proxy(this.showSettingsPopup, this));
+		BX.addCustomEvent("BX.Bitrix24.GroupPanel:onOpen", this.handleGroupPanelOpen.bind(this));
+		BX.addCustomEvent("BX.Bitrix24.GroupPanel:onClose", this.handleGroupPanelClose.bind(this));
 
 		BX.addCustomEvent("BX.Main.InterfaceButtons:onFirstItemChange", BX.proxy(function (firstPageLink, firstNode)
 		{
@@ -111,6 +202,9 @@ BX.Bitrix24.LeftMenuClass = {
 					link.href = dataItem.URL;
 					itemInfo.link = BX.util.htmlspecialcharsback(link.pathname + link.search);
 
+					//IE11 omits slash in the pathname
+					itemInfo.link = itemInfo.link[0] !== "/" ? "/" + itemInfo.link : itemInfo.link;
+
 					if (isItemInLeftMenu)
 					{
 						this.deleteStandardItem(dataItem.DATA_ID);
@@ -135,8 +229,7 @@ BX.Bitrix24.LeftMenuClass = {
 			});
 		}.bind(this));
 
-		BX.addCustomEvent("BX.Main.InterfaceButtons:onBeforeResetMenu", function (promises)
-		{
+		BX.addCustomEvent("BX.Main.InterfaceButtons:onBeforeResetMenu", function (promises) {
 			promises.push(function ()
 			{
 				var p = new BX.Promise();
@@ -164,11 +257,6 @@ BX.Bitrix24.LeftMenuClass = {
 			}.bind(this));
 		}.bind(this));
 
-		BX.addCustomEvent("BX.Intranet.LeftMenu:onMenuPopupClose", BX.proxy(function (menuItemId)
-		{
-			this.hideEditButton(menuItemId);
-		}, this));
-
 		if (this.showPresetPopup)
 		{
 			this.showPresetPopupFunction("global");
@@ -183,122 +271,61 @@ BX.Bitrix24.LeftMenuClass = {
 		var currentPath = document.location.pathname;
 		var currentFullPath = document.location.pathname + document.location.search;
 
-		if (leftMenuSelectedUrl == currentPath || leftMenuSelectedUrl == currentFullPath)
+		if (leftMenuSelectedUrl === currentPath || leftMenuSelectedUrl === currentFullPath)
 		{
 			this.isCurrentPageInLeftMenu = true;
 		}
 
+		//Emulate document scroll because init() can be invoked after page load scroll (a hard reload with script at the bottom).
+		this.handleDocumentScroll();
+
 		return true;
 	},
 
-	editByMouseEnter: function(item)
-	{
-		if (this.isEditMode())
-			return;
-
-		if (!BX.type.isDomNode(item))
-			return;
-
-		if (item.getAttribute("data-id") == "menu_all_groups")
-			return;
-
-		this.timeout[item.id] = setTimeout(function () {
-			var editButton = BX.findChild(item, {className: "menu-fav-editable-btn-js"}, true, false);
-			if (BX.type.isDomNode(editButton))
-			{
-				BX.addClass(editButton, "menu-fav-editable-btn-showed");
-			}
-		}, 600);
-	},
-
-	removeEditByMouseLeave: function(item)
-	{
-		if (this.isEditMode())
-			return;
-
-		var currentContextPopup = BX.PopupMenu.getCurrentMenu();
-		if (currentContextPopup)
-		{
-			for (var i in BX.PopupWindowManager._popups)
-			{
-				if (BX.PopupWindowManager._popups[i].uniquePopupId.indexOf("menu-popup-popup_") !== -1)
-				{
-					var popupItemId = BX.PopupWindowManager._popups[i].uniquePopupId;
-					popupItemId = popupItemId.replace("menu-popup-popup_", "");
-
-					if (item.getAttribute("data-id") == popupItemId && BX.PopupWindowManager._popups[i].isShown())
-						return;
-				}
-			}
-		}
-
-		clearTimeout(this.timeout[item.id]);
-		var editButton = BX.findChild(item, {className: "menu-fav-editable-btn-js"}, true, false);
-		if (BX.type.isDomNode(editButton))
-		{
-			BX.removeClass(editButton, "menu-fav-editable-btn-showed");
-		}
-	},
-
-	hideEditButton: function(menuItemId)
-	{
-		var itemNode = BX("bx_left_menu_" + menuItemId);
-		var editButton = BX.findChild(itemNode, {className: "menu-fav-editable-btn-js"}, true, false);
-		if (BX.type.isDomNode(editButton))
-		{
-			BX.removeClass(editButton, "menu-fav-editable-btn-showed");
-		}
-	},
-
-	isEditMode: function ()
+	isEditMode: function()
 	{
 		return BX.hasClass(this.menuContainer, 'menu-favorites-editable');
 	},
 
-	applyEditMode: function ()
+	isCollapsed: function()
 	{
-		var isEditMode = this.isEditMode();
+		return this.isCollapsedMode;
+	},
 
-		if (BX.type.isDomNode(this.menuContainer))
+	switchToEditMode: function()
+	{
+		if (this.isEditMode())
 		{
-			if (isEditMode)
-				BX.removeClass(this.menuContainer, "menu-favorites-editable");
-			else
-				BX.addClass(this.menuContainer, "menu-favorites-editable");
+			return;
 		}
 
-		if (!isEditMode)
-		{
-			BX.addClass(this.menuSettingsButton, 'menu-favorites-btn-active');
+		this.toggle(true);
 
-			var allActiveItems = BX.findChildren(this.menuContainer, {className: "menu-item-active"}, true);
-			for (var obj in allActiveItems)
-			{
-				if (allActiveItems.hasOwnProperty(obj))
-				{
-					BX.removeClass(allActiveItems[obj], 'menu-item-active');
-					this.activeItemsId.push(allActiveItems[obj].id);
-				}
-			}
-		}
-		else
-		{
-			BX.removeClass(this.menuSettingsButton, 'menu-favorites-btn-active');
-			for (var key in this.activeItemsId)
-			{
-				BX.addClass(BX(this.activeItemsId[key]), 'menu-item-active');
-			}
-			this.activeItemsId = [];
+		BX.addClass(this.menuContainer, "menu-favorites-editable");
 
-			var showedEditBtns = BX.findChildren(this.menuItemsBlock, {className: "menu-fav-editable-btn-showed"}, true);
-			if (showedEditBtns)
-			{
-				for (var i in showedEditBtns)
-				{
-					BX.removeClass(showedEditBtns[i], "menu-fav-editable-btn-showed");
-				}
-			}
+		var activeItems = this.menuContainer.querySelectorAll(".menu-item-active");
+		for (var i = 0; i < activeItems.length; i++)
+		{
+			BX.removeClass(activeItems[i], "menu-item-active");
+			this.activeItemsId.push(activeItems[i].id);
 		}
+	},
+
+	applyEditMode: function()
+	{
+		if (!this.isEditMode())
+		{
+			return;
+		}
+
+		BX.removeClass(this.menuContainer, "menu-favorites-editable");
+
+		for (var key in this.activeItemsId)
+		{
+			BX.addClass(BX(this.activeItemsId[key]), "menu-item-active");
+		}
+
+		this.activeItemsId = [];
 	},
 
 	areMoreItemsShowed: function ()
@@ -361,12 +388,19 @@ BX.Bitrix24.LeftMenuClass = {
 		}
 
 		BX.toggleClass(this.menuMoreButton, 'menu-favorites-more-btn-open');
-		BX.toggleClass(BX('menu-hidden-counter'), 'menu-hidden-counter');
-		BX.firstChild(this.menuMoreButton).innerHTML =
-			(BX.firstChild(this.menuMoreButton).innerHTML == BX.message('more_items_hide'))
-				? BX.message('more_items_show')
-				: BX.message('more_items_hide')
-		;
+
+		var moreBtnText = BX("menu-more-btn-text");
+		if (moreBtnText)
+		{
+			if (moreBtnText.innerHTML === BX.message("more_items_hide"))
+			{
+				moreBtnText.innerHTML =  BX.message("more_items_show");
+			}
+			else
+			{
+				moreBtnText.innerHTML = BX.message("more_items_hide");
+			}
+		}
 	},
 
 	openMenuPopup: function (bindElement, menuItemId)
@@ -381,7 +415,7 @@ BX.Bitrix24.LeftMenuClass = {
 		var itemType = itemNode.getAttribute("data-type");
 
 		//hide item
-		if (itemNode.getAttribute("data-status") == "show")
+		if (itemNode.getAttribute("data-status") === "show")
 		{
 			contextMenuItems.push({
 				text: BX.message("hide_item"),
@@ -397,7 +431,7 @@ BX.Bitrix24.LeftMenuClass = {
 		}
 
 		//show item
-		if (itemNode.getAttribute("data-status") == "hide")
+		if (itemNode.getAttribute("data-status") === "hide")
 		{
 			contextMenuItems.push({
 				text: BX.message("show_item"),
@@ -428,7 +462,7 @@ BX.Bitrix24.LeftMenuClass = {
 			});
 		}
 
-		if (itemType == "self")
+		if (itemType === "self")
 		{
 			contextMenuItems.push({
 				text: BX.message("MENU_DELETE_SELF_ITEM"),
@@ -445,7 +479,6 @@ BX.Bitrix24.LeftMenuClass = {
 						content: BX.message("MENU_DELETE_SELF_ITEM_CONFIRM"),
 						onsuccess: BX.proxy(function ()
 						{
-							BX.proxy_context.popupWindow.close();
 							this.deleteSelfItem(menuItemId);
 							BX.PopupMenu.destroy("popup_" + menuItemId);
 						}, this),
@@ -480,7 +513,7 @@ BX.Bitrix24.LeftMenuClass = {
 			});
 		}
 
-		if (itemType == "standard")
+		if (itemType === "standard")
 		{
 			contextMenuItems.push({
 				text: BX.message("MENU_RENAME_ITEM"),
@@ -512,7 +545,7 @@ BX.Bitrix24.LeftMenuClass = {
 		if (this.isAdmin)
 		{
 			//add to favorite all
-			if (itemDeletePerm == "Y")
+			if (itemDeletePerm === "Y")
 			{
 				contextMenuItems.push({
 					text: BX.message("MENU_ADD_ITEM_TO_ALL"),
@@ -526,9 +559,9 @@ BX.Bitrix24.LeftMenuClass = {
 			}
 
 			//delete from favorite all
-			if (itemDeletePerm == "A")
+			if (itemDeletePerm === "A")
 			{
-				if (itemType == "custom")
+				if (itemType === "custom")
 				{
 					contextMenuItems.push({
 						text: BX.message("MENU_DELETE_CUSTOM_ITEM_FROM_ALL"),
@@ -565,28 +598,37 @@ BX.Bitrix24.LeftMenuClass = {
 			onclick: BX.proxy(function ()
 			{
 				BX.PopupMenu.destroy("popup_" + menuItemId);
-				this.applyEditMode();
+				this.isEditMode() ? this.applyEditMode() : this.switchToEditMode();
 			}, this)
 		});
 
-		BX.PopupMenu.show("popup_" + menuItemId, bindElement, contextMenuItems,
-			{
-				offsetTop: 0,
-				offsetLeft: 12,
-				angle: true,
-				events: {
-					onPopupClose: function ()
-					{
-						BX.removeClass(bindElement, 'menu-favorites-btn-active');
-						BX.onCustomEvent(window, 'BX.Intranet.LeftMenu:onMenuPopupClose', [menuItemId]);
-						//BX.PopupMenu.destroy("popup_" + menuItemId);
-					}
-				}
-			});
-		BX.addClass(bindElement, 'menu-favorites-btn-active');
+		BX.PopupMenu.show({
+			id: "popup_" + menuItemId,
+			bindElement: bindElement,
+			items: contextMenuItems,
+			offsetTop: 0,
+			offsetLeft: 12,
+			angle: true,
+			events: {
+				onPopupShow: function() {
+					this.isMenuMouseLeaveBlocked = true;
+					BX.addClass(itemNode, "menu-item-block-hover");
+				}.bind(this),
+
+				onPopupClose: function() {
+					this.isMenuMouseLeaveBlocked = false;
+					BX.removeClass(itemNode, "menu-item-block-hover");
+				}.bind(this),
+
+				onPopupDestroy: function() {
+					this.isMenuMouseLeaveBlocked = false;
+					BX.removeClass(itemNode, "menu-item-block-hover");
+				}.bind(this)
+			}
+		});
 	},
 
-	showSettingsPopup: function (event)
+	showSettingsPopup: function(event)
 	{
 		var menuId = "leftMenuSettingsPopup";
 		if (BX.PopupMenu.getMenuById(menuId))
@@ -603,7 +645,7 @@ BX.Bitrix24.LeftMenuClass = {
 			itemType = this.menuSelectedNode.getAttribute("data-type");
 		}
 
-		if (this.isCurrentPageInLeftMenu && itemType == "default")
+		if (this.isCurrentPageInLeftMenu && itemType === "default")
 		{
 			itemPageToLeftMenu = {
 				text: BX.message(this.isCurrentPageInLeftMenu ? "MENU_DELETE_PAGE_FROM_LEFT_MENU" : "MENU_ADD_PAGE_TO_LEFT_MENU"),
@@ -637,16 +679,16 @@ BX.Bitrix24.LeftMenuClass = {
 				onclick: function ()
 				{
 					this.popupWindow.close();
-					self.applyEditMode();
+					self.switchToEditMode();
 				}
 			},
 			{
-				text: BX.message("MENU_COLLAPSE"),
+				text: this.isCollapsedMode ? BX.message("MENU_EXPAND") : BX.message("MENU_COLLAPSE"),
 				className: "menu-popup-no-icon",
 				onclick: BX.proxy(function ()
 				{
 					BX.proxy_context.popupWindow.close();
-					this.toggle(false);
+					this.toggle();
 				}, this)
 			},
 			itemPageToLeftMenu,
@@ -656,10 +698,14 @@ BX.Bitrix24.LeftMenuClass = {
 				onclick: BX.proxy(function ()
 				{
 					BX.proxy_context.popupWindow.close();
-					this.showSelfItemPopup(this.menuSettingsButton);
+					this.showSelfItemPopup(this.settingsBox);
 				}, this)
-			},
-			{
+			}
+		];
+
+		if (!this.isExtranet)
+		{
+			menuItems.push({
 				text: BX.message("MENU_SET_DEFAULT2"),
 				className: "menu-popup-no-icon",
 				onclick: function ()
@@ -667,17 +713,18 @@ BX.Bitrix24.LeftMenuClass = {
 					this.popupWindow.close();
 					self.setDefaultMenu(true);
 				}
-			},
+			});
+		}
+
+		menuItems.push({
+			text: BX.message("MENU_SET_DEFAULT"),
+			className: "menu-popup-no-icon",
+			onclick: function ()
 			{
-				text: BX.message("MENU_SET_DEFAULT"),
-				className: "menu-popup-no-icon",
-				onclick: function ()
-				{
-					this.popupWindow.close();
-					self.setDefaultMenu();
-				}
+				this.popupWindow.close();
+				self.setDefaultMenu();
 			}
-		];
+		});
 
 		//custom preset
 		if (this.isCustomPresetAvailable && this.isAdmin)
@@ -693,16 +740,24 @@ BX.Bitrix24.LeftMenuClass = {
 			});
 		}
 
-		BX.PopupMenu.show(menuId, this.menuSettingsButton, menuItems,
+		BX.PopupMenu.show(menuId, this.settingsBox, menuItems,
 			{
 				offsetTop: 0,
-				offsetLeft: 12,
+				offsetLeft: 50,
 				angle: true,
 				events: {
-					onPopupClose: function ()
-					{
+					onPopupShow: function() {
+						this.isMenuMouseLeaveBlocked = true;
+					}.bind(this),
+					onPopupClose: function() {
+						this.isMenuMouseLeaveBlocked = false;
+						this.switchToSlidingMode(false);
 						BX.PopupMenu.destroy(menuId);
-					}
+					}.bind(this),
+					onPopupDestroy: function() {
+						this.isMenuMouseLeaveBlocked = false;
+						this.switchToSlidingMode(false);
+					}.bind(this),
 				}
 			});
 	},
@@ -712,8 +767,8 @@ BX.Bitrix24.LeftMenuClass = {
 		var popup = BX.PopupWindowManager.create("left-menu-message", bindElement, {
 			content: '<div class="left-menu-message-popup">' + message + '</div>',
 			darkMode: true,
-			offsetTop: position == "right" ? -45 : 2,
-			offsetLeft: position == "right" ? 215 : 0,
+			offsetTop: position === "right" ? -45 : 2,
+			offsetLeft: position === "right" ? 215 : 0,
 			angle: position === "right" ? {position: "left"} : true,
 			events: {
 				onPopupClose: function ()
@@ -773,7 +828,7 @@ BX.Bitrix24.LeftMenuClass = {
 			this.showMessage(firstNode, BX.message("MENU_ITEM_MAIN_SECTION_PAGE"));
 		}
 
-		if (BX.type.isDomNode(leftMenuNode) && BX.previousSibling(leftMenuNode) == BX("left-menu-empty-item"))
+		if (BX.type.isDomNode(leftMenuNode) && BX.previousSibling(leftMenuNode) === BX("left-menu-empty-item"))
 		{
 			var ajaxData = {
 				sessid: BX.bitrix_sessid(),
@@ -883,6 +938,7 @@ BX.Bitrix24.LeftMenuClass = {
 		BX.PopupWindowManager.create("menu-self-item-popup", bindElement, {
 			closeIcon: true,
 			offsetTop: 1,
+			offsetLeft: 20,
 			//overlay : { opacity : 20 },
 			lightShadow: true,
 			draggable: {restrict: true},
@@ -896,8 +952,6 @@ BX.Bitrix24.LeftMenuClass = {
 					events: {
 						click: BX.proxy(function ()
 						{
-							BX.addClass(button.buttonNode, "popup-window-button-wait");
-
 							var form = document.forms["menuAddToFavoriteForm"];
 							var textField = form.elements["menuPageToFavoriteName"];
 							var linkField = form.elements["menuPageToFavoriteLink"];
@@ -922,6 +976,8 @@ BX.Bitrix24.LeftMenuClass = {
 							}
 							else
 							{
+								BX.addClass(button.buttonNode, "popup-window-button-wait");
+
 								BX.removeClass(textField, "menu-form-input-error");
 								BX.removeClass(linkField, "menu-form-input-error");
 
@@ -996,12 +1052,12 @@ BX.Bitrix24.LeftMenuClass = {
 		BX.ajax({
 			method: "POST",
 			dataType: "json",
-			url: this.ajaxPath + (mode == "edit" ? "" : "?analyticsLabel=selfItem"),
+			url: this.ajaxPath + (mode === "edit" ? "" : "?analyticsLabel=selfItem"),
 			data: {
 				sessid: BX.bitrix_sessid(),
 				site_id: this.siteId,
 				itemData: itemData,
-				action: mode == "edit" ? "update_self_item" : "add_self_item"
+				action: mode === "edit" ? "update_self_item" : "add_self_item"
 			},
 			onsuccess: BX.proxy(function (json)
 			{
@@ -1015,15 +1071,15 @@ BX.Bitrix24.LeftMenuClass = {
 						text: itemData.text,
 						link: itemData.link,
 						type: "self",
-						openInNewPage: itemData.openInNewPage == "Y" ? "Y" : "N"
+						openInNewPage: itemData.openInNewPage === "Y" ? "Y" : "N"
 					};
 
-					if (mode == "add" && json.hasOwnProperty("itemId"))
+					if (mode === "add" && json.hasOwnProperty("itemId"))
 					{
 						itemParams.id = json.itemId;
 						this.generateItemHtml(itemParams);
 					}
-					else if (mode == "edit")
+					else if (mode === "edit")
 					{
 						itemParams.id = itemData.id;
 						this.updateItemHtml(itemParams);
@@ -1047,7 +1103,7 @@ BX.Bitrix24.LeftMenuClass = {
 		if (!BX.type.isDomNode(itemNode))
 			return;
 
-		if (itemNode.getAttribute("data-delete-perm") == "A") //delete from all
+		if (itemNode.getAttribute("data-delete-perm") === "A") //delete from all
 		{
 			this.deleteItemFromAll(itemId);
 		}
@@ -1119,7 +1175,7 @@ BX.Bitrix24.LeftMenuClass = {
 			itemText = itemTextNode.innerText,
 			itemCounterId = itemNode.getAttribute("data-counter-id"),
 			itemLinkNode = BX.findChild(itemNode, {tagName: "a"}, true, false),
-			openInNewPage = BX.type.isDomNode(itemLinkNode) && itemLinkNode.hasAttribute("target") && itemLinkNode.getAttribute("target") == "_blank";
+			openInNewPage = BX.type.isDomNode(itemLinkNode) && itemLinkNode.hasAttribute("target") && itemLinkNode.getAttribute("target") === "_blank";
 
 		BX.ajax({
 			method: 'POST',
@@ -1193,7 +1249,7 @@ BX.Bitrix24.LeftMenuClass = {
 
 		var itemType = itemNode.getAttribute("data-type");
 
-		if (itemType != "custom")
+		if (itemType !== "custom")
 			return;
 
 		BX.ajax({
@@ -1220,15 +1276,15 @@ BX.Bitrix24.LeftMenuClass = {
 		});
 	},
 
-	updateCounters : function(counters, send)
+	updateCounters: function(counters, send)
 	{
-		send = send == false ? false : true;
+		send = send !== false;
 
 		for (var id in counters)
 		{
 			this.allCounters[id] = counters[id];
 
-			if (id == "**")
+			if (id === "**")
 			{
 				oCounter = {
 					iCommentsMenuRead: 0
@@ -1238,14 +1294,12 @@ BX.Bitrix24.LeftMenuClass = {
 				counters[id] -= oCounter.iCommentsMenuRead;
 			}
 
-			var counter = BX(id == "**" ? "menu-counter-live-feed" : "menu-counter-" + id.toLowerCase(), true);
+			var counter = BX(id === "**" ? "menu-counter-live-feed" : "menu-counter-" + id.toLowerCase(), true);
 			if (counter)
 			{
 				if (counters[id] > 0)
 				{
-					counter.innerHTML = id == "mail_unseen"
-						? (counters[id] > 99 ? "99+" : counters[id])
-						: (counters[id] > 50 ? "50+" : counters[id]);
+					counter.innerHTML = counters[id] > 99 ? "99+" : counters[id];
 					BX.addClass(counter.parentNode.parentNode.parentNode, "menu-item-with-index");
 				}
 				else
@@ -1270,18 +1324,26 @@ BX.Bitrix24.LeftMenuClass = {
 		}
 
 		var sumHiddenCounters = 0;
-		for(var i = 0, l = this.hiddenCounters.length; i < l; i++)
+		for (var i = 0, l = this.hiddenCounters.length; i < l; i++)
 		{
 			if (this.allCounters[this.hiddenCounters[i]])
 			{
-				sumHiddenCounters+= (+this.allCounters[this.hiddenCounters[i]]);
+				sumHiddenCounters += (+this.allCounters[this.hiddenCounters[i]]);
 			}
 		}
 
 		if (BX.type.isDomNode(BX("menu-hidden-counter")))
 		{
-			BX("menu-hidden-counter").style.display = (sumHiddenCounters > 0) ? "inline-block" : "none";
-			BX("menu-hidden-counter").innerHTML = sumHiddenCounters > 50 ? "50+" : sumHiddenCounters;
+			if (sumHiddenCounters > 0)
+			{
+				BX.removeClass(BX("menu-hidden-counter"), "menu-hidden-counter");
+			}
+			else
+			{
+				BX.addClass(BX("menu-hidden-counter"), "menu-hidden-counter");
+			}
+
+			BX("menu-hidden-counter").innerHTML = sumHiddenCounters > 99 ? "99+" : sumHiddenCounters;
 		}
 	},
 
@@ -1289,12 +1351,15 @@ BX.Bitrix24.LeftMenuClass = {
 	{
 		var curSumCounters = 0;
 		var hiddenItems = BX.findChildren(BX("left-menu-hidden-items-list"), {className: "menu-item-block"}, true);
+		this.hiddenCounters = [];
 
 		if (hiddenItems)
 		{
 			for (var i = 0, l = hiddenItems.length; i < l; i++)
 			{
 				var curCounter = hiddenItems[i].getAttribute("data-counter-id");
+				this.hiddenCounters.push(curCounter);
+
 				if (this.allCounters[curCounter])
 				{
 					curSumCounters += Number(this.allCounters[curCounter]);
@@ -1302,13 +1367,21 @@ BX.Bitrix24.LeftMenuClass = {
 			}
 		}
 
-		BX("menu-hidden-counter").innerHTML = curSumCounters > 50 ? "50+" : curSumCounters;
-		BX("menu-hidden-counter").style.display = curSumCounters > 0 ? "inline-block" : "none";
+		if (curSumCounters > 0)
+		{
+			BX.removeClass(BX("menu-hidden-counter"), "menu-hidden-counter");
+		}
+		else
+		{
+			BX.addClass(BX("menu-hidden-counter"), "menu-hidden-counter");
+		}
+
+		BX("menu-hidden-counter").innerHTML = curSumCounters > 99 ? "99+" : curSumCounters;
 	},
 
 	checkMoreButton: function (status)
 	{
-		var btn = BX("left-menu-more-btn");
+		var btn = this.menuMoreButton;
 		if (status === true || status === false)
 		{
 			if (status)
@@ -1389,16 +1462,16 @@ BX.Bitrix24.LeftMenuClass = {
 
 		for (var i = 0; i < items.length; i++)
 		{
-			if (i == 0)
+			if (i === 0)
 			{
 				firstItemLink = items[i].getAttribute("data-link");
 			}
 
-			if (items[i].getAttribute("data-status") == "show")
+			if (items[i].getAttribute("data-status") === "show")
 			{
 				showMenuItems.push(items[i].getAttribute("data-id"));
 			}
-			else if (items[i].getAttribute("data-status") == "hide")
+			else if (items[i].getAttribute("data-status") === "hide")
 			{
 				hideMenuItems.push(items[i].getAttribute("data-id"));
 			}
@@ -1426,6 +1499,57 @@ BX.Bitrix24.LeftMenuClass = {
 		});
 	},
 
+	showItemWarning: function(options)
+	{
+		options = BX.type.isPlainObject(options) ? options : {};
+
+		var itemId = BX.type.isNotEmptyString(options.itemId) ? options.itemId : "";
+		var itemNode = BX("bx_left_menu_" + itemId);
+		if (!BX.type.isDomNode(itemNode))
+		{
+			return;
+		}
+
+		this.removeItemWarning(itemId);
+
+		var warningNode = BX.create(
+			'a',
+			{
+				props: {
+					className: "menu-post-warn-icon"
+				},
+				attrs: {
+					title: BX.type.isNotEmptyString(options.title) ? options.title : "",
+				},
+				events: BX.type.isNotEmptyObject(options.events) ? options.events : {}
+			}
+		);
+
+		var link = itemNode.querySelector(".menu-item-link");
+		if (link)
+		{
+			BX.addClass(itemNode, "menu-item-warning-state");
+			link.appendChild(warningNode);
+		}
+	},
+
+	removeItemWarning: function(itemId)
+	{
+		var itemNode = BX("bx_left_menu_" + itemId);
+		if (!BX.type.isDomNode(itemNode))
+		{
+			return;
+		}
+
+		var warningNode = itemNode.querySelector(".menu-post-warn-icon");
+		if (warningNode)
+		{
+			BX.remove(warningNode);
+		}
+
+		BX.removeClass(itemNode, "menu-item-warning-state");
+	},
+
 	animateTopItemToLeft: function (itemInfo, startX, startY)
 	{
 		if (typeof itemInfo !== "object")
@@ -1441,7 +1565,7 @@ BX.Bitrix24.LeftMenuClass = {
 
 		document.body.appendChild(topMenuNode);
 
-		var finishY = BX("left-menu-list").getBoundingClientRect().bottom;
+		var finishY = this.menuItemsBlock.getBoundingClientRect().bottom;
 		if (this.areMoreItemsShowed())
 		{
 			finishY -= BX("left-menu-hidden-items-list").offsetHeight;
@@ -1503,6 +1627,8 @@ BX.Bitrix24.LeftMenuClass = {
 	{
 		if (typeof itemInfo !== "object")
 		{
+			this.checkCurrentPageInTopMenu();
+
 			if (this.isCurrentPageStandard && BX.type.isDomNode(this.topMenuSelectedNode))
 			{
 				var menuNodeCoord = this.topMenuSelectedNode.getBoundingClientRect();
@@ -1571,9 +1697,9 @@ BX.Bitrix24.LeftMenuClass = {
 
 						this.animateTopItemToLeft(itemInfo, startX, startY);
 
-						this.showMessage(BX("pagetitle-star"), BX.message("MENU_ITEM_WAS_ADDED_TO_LEFT"));
-						BX("pagetitle-star").title = BX.message("MENU_DELETE_PAGE_FROM_LEFT_MENU");
-						BX.addClass(BX("pagetitle-star"), "pagetitle-star-active");
+						this.showMessage(BX("uiToolbarStar"), BX.message("MENU_ITEM_WAS_ADDED_TO_LEFT"));
+						BX("uiToolbarStar").title = BX.message("MENU_DELETE_PAGE_FROM_LEFT_MENU");
+						BX.addClass(BX("uiToolbarStar"), "ui-toolbar-star-active");
 						this.isCurrentPageInLeftMenu = true;
 					}
 				}
@@ -1586,15 +1712,18 @@ BX.Bitrix24.LeftMenuClass = {
 
 	deleteStandardItem: function (itemId)
 	{
+		var itemData = {};
+		this.checkCurrentPageInTopMenu();
+
 		if (itemId && BX.type.isDomNode(BX("bx_left_menu_" + itemId)))
 		{
-			var itemData = {
+			itemData = {
 				id: itemId
 			};
 		}
 		else if (this.isCurrentPageStandard && this.topItemSelectedObj.DATA_ID)
 		{
-			var itemData = {
+			itemData = {
 				id: this.topItemSelectedObj.DATA_ID
 			};
 		}
@@ -1640,15 +1769,15 @@ BX.Bitrix24.LeftMenuClass = {
 						if (!BX.type.isDomNode(itemNode))
 							return;
 
-						if (itemNode.getAttribute("data-delete-perm") == "A") //delete from all
+						if (itemNode.getAttribute("data-delete-perm") === "A") //delete from all
 						{
 							this.deleteItemFromAll(json.itemId);
 						}
 
-						this.showMessage(BX("pagetitle-star"), BX.message("MENU_ITEM_WAS_DELETED_FROM_LEFT"));
-						BX("pagetitle-star").title = BX.message("MENU_ADD_PAGE_TO_LEFT_MENU");
+						this.showMessage(BX("uiToolbarStar"), BX.message("MENU_ITEM_WAS_DELETED_FROM_LEFT"));
+						BX("uiToolbarStar").title = BX.message("MENU_ADD_PAGE_TO_LEFT_MENU");
 						this.animateTopItemFromLeft("bx_left_menu_" + json.itemId);
-						BX.removeClass(BX("pagetitle-star"), "pagetitle-star-active");
+						BX.removeClass(BX("uiToolbarStar"), "ui-toolbar-star-active");
 						this.isCurrentPageInLeftMenu = false;
 					}
 				}
@@ -1823,6 +1952,19 @@ BX.Bitrix24.LeftMenuClass = {
 
 		var itemChildren = [
 			BX.create("span", {
+				attrs: {
+					className: "menu-item-icon-box",
+				},
+				children: [
+					BX.create("span", {
+						attrs: {
+							className: "menu-item-icon",
+						},
+						text: this.getShortName(itemParams.text)
+					}),
+				]
+			}),
+			BX.create("span", {
 				text: itemParams.text,
 				attrs: {
 					className: "menu-item-link-text",
@@ -1851,18 +1993,19 @@ BX.Bitrix24.LeftMenuClass = {
 		var self = this;
 		var newItemNode = BX.create("li", {
 			attrs: {
-				className: "menu-item-block" + (isCounterExisted && itemParams.counterValue ? " menu-item-with-index" : ""),
+				className: "menu-item-block menu-item-no-icon-state "
+							+ (isCounterExisted && itemParams.counterValue ? " menu-item-with-index" : ""),
 				id: "bx_left_menu_" + itemParams.id,
-				"data-type": itemParams.type == "standard" ? "standard" : "self",
+				"data-type": itemParams.type === "standard" ? "standard" : "self",
 				"data-delete-perm": "Y",
 				"data-id": itemParams.id,
 				"data-link": itemParams.link,
 				"data-status": "show",
-				"data-new-page" : itemParams.openInNewPage == "Y" ? "Y" : "N"
+				"data-new-page" : itemParams.openInNewPage === "Y" ? "Y" : "N"
 			},
 			children: [
 				BX.create("span", {
-					attrs: {className: "menu-fav-editable-btn menu-favorites-btn menu-fav-editable-btn-js"},
+					attrs: {className: "menu-fav-editable-btn menu-favorites-btn"},
 					children: [
 						BX.create("span", {
 							attrs: {className: "menu-favorites-btn-icon"}
@@ -1897,7 +2040,7 @@ BX.Bitrix24.LeftMenuClass = {
 					attrs: {
 						href: itemParams.link,
 						className: "menu-item-link",
-						target: (itemParams.openInNewPage == "Y" ? "_blank" : "")
+						target: (itemParams.openInNewPage === "Y" ? "_blank" : "")
 					},
 					children: itemChildren
 				})
@@ -1934,7 +2077,6 @@ BX.Bitrix24.LeftMenuClass = {
 			if (BX.type.isDomNode(linkNode))
 			{
 				linkNode.setAttribute("href", itemParams.link);
-				linkNode.setAttribute("title", itemParams.text);
 				if (itemParams.hasOwnProperty("openInNewPage"))
 				{
 					linkNode.setAttribute("target", itemParams.openInNewPage == "Y" ? "_blank" : "");
@@ -1942,12 +2084,18 @@ BX.Bitrix24.LeftMenuClass = {
 				}
 			}
 		}
+
 		if (itemParams.text)
 		{
 			var textNode = itemNode.querySelector("[data-role='item-text']");
 			if (BX.type.isDomNode(textNode))
 			{
-				textNode.innerText = itemParams.text;
+				textNode.textContent = itemParams.text;
+				var icon = itemNode.querySelector(".menu-item-icon");
+				if (icon)
+				{
+					icon.textContent = this.getShortName(textNode.textContent);
+				}
 			}
 		}
 	},
@@ -2027,12 +2175,14 @@ BX.Bitrix24.LeftMenuClass = {
 						"OK",
 					className: "popup-window-button-create",
 					events: {
-						click: BX.type.isFunction(options.onsuccess) ?
-							options.onsuccess :
-							function ()
+						click: function() {
+							if (BX.type.isFunction(options.onsuccess))
 							{
-								this.popupWindow.destroy();
+								options.onsuccess();
 							}
+
+							this.popupWindow.destroy();
+						}
 					}
 				}),
 
@@ -2108,7 +2258,7 @@ BX.Bitrix24.LeftMenuClass = {
 			}
 		}
 
-		if (dragElement.getAttribute("data-type") == "self")
+		if (dragElement.getAttribute("data-type") === "self")
 		{
 			jsDD.unregisterDest(BX("left-menu-empty-item"));
 		}
@@ -2158,7 +2308,7 @@ BX.Bitrix24.LeftMenuClass = {
 		if (y > menuItemsBlockHeight - this.itemHeight)
 			y = menuItemsBlockHeight - this.itemHeight;
 
-		this.draggableBlock.style.top = y + 'px';
+		this.draggableBlock.style.top = y - 5 + 'px';
 	},
 
 	menuItemDragHover: function (dest, x, y)
@@ -2255,7 +2405,7 @@ BX.Bitrix24.LeftMenuClass = {
 	},
 	/* drag&drop finishing*/
 
-	clearCompositeCache: function ()
+	clearCompositeCache: function()
 	{
 		BX.ajax.post(
 			this.ajaxPath,
@@ -2270,130 +2420,840 @@ BX.Bitrix24.LeftMenuClass = {
 		);
 	},
 
-	onResizerMouseOver: function ()
+	adjustAdminPanel: function()
 	{
-		if (this.isCollapsedMode)
+		if (!this.adminPanel)
 		{
 			return;
 		}
 
-		if (this.resizerTimeout)
+		var rect = this.adminPanel.getBoundingClientRect();
+
+		if (rect.bottom > 0)
 		{
-			clearTimeout(this.resizerTimeout);
+			this.menuContainer.style.top = Math.max(rect.bottom, this.fixedAdminPanelHeight) + "px";
+		}
+		else
+		{
+			this.menuContainer.style.top = Math.max(0, this.fixedAdminPanelHeight) + "px";
 		}
 
-		this.resizerTimeout = setTimeout(BX.proxy(function ()
+		/*if (this.isCollapsed())
 		{
-			this.menuResizerButton.style.opacity = 1;
-		}, this), 150);
+			if (this.lastObserverEntries && this.lastObserverEntries[0].isIntersecting)
+			{
+				this.menuContainer.style.top =
+					Math.max(
+						this.lastObserverEntries[0].boundingClientRect.bottom - this.getTemplateHeaderHeight(),
+						this.fixedAdminPanelHeight
+					) + "px"
+				;
+			}
+			else
+			{
+				this.menuContainer.style.top = Math.max(0, this.fixedAdminPanelHeight) + "px";
+			}
+		}
+		else
+		{
+			if (this.lastObserverEntries && this.lastObserverEntries[0].isIntersecting)
+			{
+				this.menuContainer.style.top =
+					Math.max(
+						this.lastObserverEntries[0].boundingClientRect.bottom,
+						this.fixedAdminPanelHeight + this.getTopPadding()
+					) + "px"
+				;
+
+				this.menuContainer.style.removeProperty("padding-top");
+			}
+			else
+			{
+				this.menuContainer.style.top =
+					Math.max(
+						0,
+						this.fixedAdminPanelHeight > 0 ? this.fixedAdminPanelHeight + this.getTopPadding() : 0
+					) + "px"
+				;
+
+				if (this.fixedAdminPanelHeight === 0)
+				{
+					this.menuContainer.style.paddingTop = this.getTopPadding() + "px";
+				}
+			}
+		}*/
 	},
 
-	onResizerMouseOut: function ()
+	//Temporary method
+	adjustSpotlight: function(show)
 	{
-		if (this.isCollapsedMode)
+		if (this.spotlightId === null)
 		{
 			return;
 		}
 
-		if (this.resizerTimeout)
+		var manager = BX.getClass("BX.SpotLight.Manager");
+		if (manager === null)
 		{
-			clearTimeout(this.resizerTimeout);
+			return;
 		}
 
-		this.resizerTimeout = setTimeout(BX.proxy(function ()
+		var spotlight = manager.get(this.spotlightId);
+		if (spotlight)
 		{
-			this.menuResizerButton.style.opacity = 0;
-		}, this), 200);
-	},
+			if (show)
+			{
+				spotlight.show();
+			}
+			else
+			{
+				spotlight.close();
+			}
 
-	onResizerClick: function (event)
-	{
-		this.toggle();
-		event.stopPropagation();
-	},
-
-	onMenuDoubleClick: function (event)
-	{
-		if (event.target === this.menuContainer)
-		{
-			this.toggle(false);
 		}
-		else if (event.target === this.leftColumnBottom)
+	},
+
+	//Temporary method
+	handleSpotlightMouseEnter: function()
+	{
+		BX.Bitrix24.LeftMenu.spotlightId = null;
+	},
+
+	handleBurgerClick: function(open)
+	{
+		this.menuHeaderBurger.classList.add("menu-switcher-hover");
+
+		this.toggle(open, function() {
+
+			this.isMenuMouseEnterBlocked = true;
+
+			setTimeout(function() {
+				this.menuHeaderBurger.classList.remove("menu-switcher-hover");
+
+				this.isMenuMouseEnterBlocked = false;
+
+			}.bind(this), 100);
+
+		}.bind(this));
+	},
+
+	handleMenuMouseEnter: function(event)
+	{
+		if (!this.isCollapsed())
+		{
+			return;
+		}
+
+		if (!this.isMenuMouseEnterBlocked)
+		{
+			if (this.slidingModeTimeoutId)
+			{
+				clearTimeout(this.slidingModeTimeoutId);
+			}
+
+			this.slidingModeTimeoutId = setTimeout(function() {
+				this.slidingModeTimeoutId = null;
+				this.switchToSlidingMode(true);
+			}.bind(this), 400);
+		}
+	},
+
+	handleMenuMouseLeave: function(event)
+	{
+		clearTimeout(this.slidingModeTimeoutId);
+		this.slidingModeTimeoutId = null;
+
+		if (!this.isMenuMouseLeaveBlocked)
+		{
+			this.switchToSlidingMode(false);
+		}
+	},
+
+	handleMenuDoubleClick: function(event)
+	{
+		if (event.target === this.menuBody)
 		{
 			this.toggle();
 		}
 	},
 
-	toggle: function (flag)
+	handleHeaderLogoMouserEnter: function(event)
 	{
+		BX.addClass(this.headerSettings, "header-logo-block-settings-show");
+	},
+
+	handleHeaderLogoMouserLeave: function(event)
+	{
+		if (!this.headerSettings.hasAttribute("data-rename-portal"))
+		{
+			BX.removeClass(this.headerSettings, "header-logo-block-settings-show");
+		}
+	},
+
+	handleAdminPanelCollapse: function(isCollapsed)
+	{
+		this.adminPanelHeight = null;
+
+		if (BX.admin.panel.isFixed())
+		{
+			this.fixedAdminPanelHeight = this.getAdminPanelHeight();
+		}
+
+		this.adjustAdminPanel();
+	},
+
+	handleAdminPanelFix: function(isFixed)
+	{
+		if (isFixed)
+		{
+			this.fixedAdminPanelHeight = this.getAdminPanelHeight();
+		}
+		else
+		{
+			this.fixedAdminPanelHeight = 0;
+		}
+
+		this.adjustAdminPanel();
+	},
+
+	handleSiteMapClick: function()
+	{
+		this.switchToSlidingMode(false);
+
+		BX.SidePanel.Instance.open("bitrix24-sitemap", {
+			cacheable: false,
+			contentCallback: function() {
+				var promise = new BX.Promise();
+
+				promise.fulfill(BX("sitemap").innerHTML);
+
+				return promise;
+			}
+		});
+	},
+
+	handleUpButtonClick: function()
+	{
+		this.isMenuMouseEnterBlocked = true;
+
+		if (this.isUpButtonReversed())
+		{
+			window.scrollTo(0, this.lastScrollOffset);
+			this.lastScrollOffset = 0;
+			this.unreverseUpButton();
+		}
+		else
+		{
+			this.lastScrollOffset = window.pageYOffset;
+			window.scrollTo(0, 0);
+			this.reverseUpButton();
+		}
+
+		setTimeout(function() {
+			clearTimeout(this.slidingModeTimeoutId);
+			this.slidingModeTimeoutId = null;
+			this.isMenuMouseEnterBlocked = false;
+		}.bind(this), 100);
+	},
+
+	handleUpButtonMouseEnter: function()
+	{
+		this.isMenuMouseEnterBlocked = true;
+		clearTimeout(this.slidingModeTimeoutId);
+		this.slidingModeTimeoutId = null;
+	},
+
+	handleUpButtonMouseLeave: function()
+	{
+		this.isMenuMouseEnterBlocked = false;
+	},
+
+	handleMenuItemMouseEnter: function(event)
+	{
+		this.handleMenuMouseEnter(event);
+	},
+
+	handleMenuItemMouseClick: function(event)
+	{
+		if (this.isCollapsed())
+		{
+			clearTimeout(this.slidingModeTimeoutId);
+			this.slidingModeTimeoutId = null;
+		}
+	},
+
+	handleDocumentScroll: function()
+	{
+		this.adjustAdminPanel();
+		this.applyScrollMode();
+
+		if (window.pageYOffset > document.documentElement.clientHeight)
+		{
+			this.showUpButton();
+
+			if (this.isUpButtonReversed())
+			{
+				this.unreverseUpButton();
+				this.lastScrollOffset = 0;
+			}
+		}
+		else
+		{
+			if (!this.isUpButtonReversed())
+			{
+				this.hideUpButton();
+			}
+		}
+
+		if (window.pageXOffset > 0)
+		{
+			this.menuContainer.style.left = -window.pageXOffset + "px";
+			this.upButton.style.left = -window.pageXOffset + (this.isCollapsed() ? 0 : 172) + "px";
+		}
+		else
+		{
+			this.menuContainer.style.removeProperty("left");
+			this.upButton.style.removeProperty("left");
+		}
+	},
+
+	handleGroupPanelOpen: function()
+	{
+		this.isMenuMouseLeaveBlocked = true;
+	},
+
+	handleGroupPanelClose: function()
+	{
+		this.isMenuMouseLeaveBlocked = false;
+	},
+
+	showUpButton: function()
+	{
+		this.menuContainer.classList.add("menu-up-button-active");
+	},
+
+	hideUpButton: function()
+	{
+		this.menuContainer.classList.remove("menu-up-button-active");
+	},
+
+	reverseUpButton: function()
+	{
+		this.menuContainer.classList.add("menu-up-button-reverse");
+	},
+
+	unreverseUpButton: function()
+	{
+		this.menuContainer.classList.remove("menu-up-button-reverse");
+	},
+
+	isUpButtonReversed: function()
+	{
+		return this.menuContainer.classList.contains("menu-up-button-reverse");
+	},
+
+	isDefaultTheme: function()
+	{
+		return document.body.classList.contains("bitrix24-default-theme");
+	},
+
+	getTopPadding: function()
+	{
+		return this.isDefaultTheme() ? 0 : 9;
+	},
+
+	getAdminPanelHeight: function()
+	{
+		if (this.adminPanelHeight !== null)
+		{
+			return this.adminPanelHeight;
+		}
+
+		if (this.adminPanel)
+		{
+			this.adminPanelHeight = this.adminPanel.offsetHeight;
+		}
+		else
+		{
+			this.adminPanelHeight = 0;
+		}
+
+		return this.adminPanelHeight;
+	},
+
+	getTemplateHeaderHeight: function()
+	{
+		if (this.templateHeaderHeight === null)
+		{
+			var header = BX("header");
+			if (header)
+			{
+				this.templateHeaderHeight = header.offsetHeight;
+			}
+		}
+
+		return this.templateHeaderHeight ? this.templateHeaderHeight : 0;
+	},
+
+	switchToSlidingMode: function(enable, immediately)
+	{
+		if (enable === false)
+		{
+			if (this.slidingModeTimeoutId)
+			{
+				clearTimeout(this.slidingModeTimeoutId);
+				this.slidingModeTimeoutId = null;
+			}
+
+			if (BX.hasClass(this.mainTable, "menu-sliding-mode"))
+			{
+				if (immediately !== true)
+				{
+					BX.addClass(this.mainTable, "menu-sliding-closing-mode");
+				}
+
+				BX.removeClass(this.mainTable, "menu-sliding-mode menu-sliding-opening-mode");
+			}
+		}
+		else if (this.isCollapsedMode && !BX.hasClass(this.mainTable, "menu-sliding-mode"))
+		{
+			BX.removeClass(this.mainTable, "menu-sliding-closing-mode");
+
+			if (immediately !== true)
+			{
+				BX.addClass(this.mainTable, "menu-sliding-opening-mode");
+			}
+
+			BX.addClass(this.mainTable, "menu-sliding-mode");
+		}
+	},
+
+	handleSlidingTransitionEnd: function(event)
+	{
+		if (event.target === this.menuContainer)
+		{
+			BX.removeClass(this.mainTable, "menu-sliding-opening-mode menu-sliding-closing-mode");
+		}
+	},
+
+	switchToScrollMode: function(enable)
+	{
+		if (enable === false)
+		{
+			if (this.isScrollMode === true)
+			{
+				this.adjustSpotlight(true); //temporary
+
+				BX.removeClass(this.mainTable, "menu-scroll-mode");
+				this.isScrollMode = false;
+			}
+		}
+		else
+		{
+			if (this.isScrollMode === false)
+			{
+				this.adjustSpotlight(false); //temporary
+
+				BX.addClass(this.mainTable, "menu-scroll-mode");
+				this.isScrollMode = true;
+			}
+		}
+	},
+
+	switchToLogoMaskMode: function(enable)
+	{
+		if (enable === false)
+		{
+			if (this.islogoMaskMode === true)
+			{
+				BX.removeClass(this.mainTable, "menu-logo-mask-mode");
+				this.islogoMaskMode = false;
+			}
+		}
+		else
+		{
+			if (this.islogoMaskMode === false)
+			{
+				BX.addClass(this.mainTable, "menu-logo-mask-mode");
+				this.islogoMaskMode = true;
+			}
+		}
+	},
+
+	applyScrollMode: function()
+	{
+		if (this.isLogoMaskNeeded())
+		{
+			this.switchToLogoMaskMode(true);
+		}
+
+		var threshold = this.scrollModeThreshold;
+		if (this.fixedAdminPanelHeight === 0 && this.adminPanel)
+		{
+			threshold += this.getAdminPanelHeight()
+		}
+
+		if (window.pageYOffset > threshold)
+		{
+			this.switchToScrollMode(true);
+		}
+		else
+		{
+			this.switchToScrollMode(false);
+		}
+	},
+
+	isLogoMaskNeeded: function()
+	{
+		if (this.logoMaskNeeded === null)
+		{
+			if (this.menuHeaderLogo.querySelector(".logo-image-container"))
+			{
+				this.logoMaskNeeded = false;
+			}
+			else
+			{
+				var logo = this.menuHeaderLogo;
+				if (logo.offsetWidth === 0)
+				{
+					logo = this.headerLogo;
+				}
+
+				this.logoMaskNeeded = logo.offsetWidth > 200;
+			}
+		}
+
+		return this.logoMaskNeeded;
+	},
+
+	toggle: function (flag, fn) {
+
 		var leftColumn = BX("layout-left-column");
-		/* we have to modify bitrix24 template */
-		var table = BX.findParent(leftColumn, {tagName: "table"});
 		if (!leftColumn)
 		{
 			return;
 		}
 
-		var isOpened = !BX.hasClass(table, "menu-collapsed-mode");
-		if ((flag === true && isOpened) || (flag === false && !isOpened))
+		var isOpen = !BX.hasClass(this.mainTable, "menu-collapsed-mode");
+
+		if ((flag === true && isOpen) || (flag === false && !isOpen) || BX.hasClass(this.mainTable, "menu-animation-mode"))
 		{
 			return;
 		}
 
+		if (this.isEditMode())
+		{
+		 	this.applyEditMode();
+		}
+
 		BX.onCustomEvent("BX.Bitrix24.LeftMenuClass:onMenuToggle", [flag, this]);
 
-		leftColumn.style.overflow = "hidden";
-		if (!isOpened)
+		var logoImageContainer = this.menuHeader.querySelector(".logo-image-container");
+		if (logoImageContainer)
 		{
-			leftColumn.style.opacity = 0;
+			var logoWidth = this.header.querySelector(".logo-image-container").offsetWidth;
+			if (logoWidth > 0)
+			{
+				logoImageContainer.style.width = logoWidth + "px";
+			}
 		}
-		this.menuResizer.style.display = "none";
-		this.menuResizerButton.style.opacity = 0;
-		BX.addClass(leftColumn, "menu-animation-mode");
+
+		this.isMenuMouseEnterBlocked = true;
+		this.switchToSlidingMode(false, true);
+		this.applyScrollMode();
+
+		leftColumn.style.overflow = "hidden";
+		BX.addClass(
+			this.mainTable,
+			"menu-animation-mode " + (isOpen ? "menu-animation-closing-mode" : "menu-animation-opening-mode")
+		);
+
+		var menuLinks = [].slice.call(leftColumn.querySelectorAll('.menu-item-link'));
+		var menuMoreBtn = leftColumn.querySelector('.menu-collapsed-more-btn');
+		var menuMoreBtnDefault = leftColumn.querySelector('.menu-default-more-btn');
+
+		var menuSitemapIcon = leftColumn.querySelector('.menu-sitemap-icon-box');
+		var menuSitemapText = leftColumn.querySelector('.menu-sitemap-btn-text');
+
+		var menuEmployeesText = leftColumn.querySelector('.menu-invite-employees-text');
+		var menuEmployeesIcon = leftColumn.querySelector('.menu-invite-icon-box');
+
+		var licenseContainer = leftColumn.querySelector('.menu-license-all-container');
+		var licenseBtn = leftColumn.querySelector('.menu-license-all-default');
+		var licenseCollapsedBtn = leftColumn.querySelector('.menu-license-all-collapsed');
+		var menuTextDivider = leftColumn.querySelector('.menu-item-separator');
+		var menuMoreCounter = leftColumn.querySelector('.menu-item-index-more');
+
+		var pageHeader = this.mainTable.querySelector(".page-header");
+		var imBar = document.getElementById("bx-im-bar");
+		var imBarWidth = imBar ? imBar.offsetWidth : 0;
 
 		(new BX.easing({
-			duration: 400,
+			duration: 300,
 			start: {
-				width: isOpened ? 240 : 40, /* these values are duplicated in style.css as well */
-				opacity: isOpened ? 100 : 0
+				translateIcon: isOpen ? -100 : 0,
+				translateText: isOpen ? 0 : -100,
+				translateMoreBtn: isOpen ? 0 : -84,
+				translateLicenseBtn: isOpen ? 0 : -100,
+				burgerMenuWidth: isOpen ? 33 : 66,
+				sidebarWidth: isOpen ? 240 : 66, /* these values are duplicated in style.css as well */
+				opacity: isOpen ? 100 : 0,
+				opacityRevert: isOpen ? 0 : 100
 			},
 			finish: {
-				width: isOpened ? 40 : 240,
-				opacity: isOpened ? 0 : 100
+				translateIcon: isOpen ? 0 : -100,
+				translateText: isOpen ? -100 : -18,
+				translateMoreBtn: isOpen ? -84 : 0,
+				translateLicenseBtn: isOpen ? -100 : 0,
+				burgerMenuWidth: isOpen ? 66 : 33,
+				sidebarWidth: isOpen ? 66 : 240,
+				opacity: isOpen ? 0 : 100,
+				opacityRevert: isOpen ? 100 : 0
 			},
 			transition: BX.easing.makeEaseOut(BX.easing.transitions.quart),
 			step: function (state)
 			{
-				leftColumn.style.width = state.width + "px";
-				leftColumn.style.opacity = state.opacity / 100;
-			},
-			complete: BX.proxy(function ()
-			{
-				leftColumn.style.cssText = "";
-				this.menuResizer.style.cssText = "";
+				leftColumn.style.width = state.sidebarWidth + "px";
+				this.menuContainer.style.width = state.sidebarWidth + "px";
+				this.menuHeaderBurger.style.width = state.burgerMenuWidth + "px";
+				this.headerBurger.style.width = state.burgerMenuWidth + "px";
 
-				if (isOpened)
+				//Change this formula in template_style.css as well
+				if (pageHeader)
+				{
+					pageHeader.style.maxWidth = "calc(100vw - " + state.sidebarWidth + "px - " + imBarWidth + "px)";
+				}
+
+				if (isOpen)
+				{
+					//Closing Mode
+					if (menuSitemapIcon)
+					{
+						menuSitemapIcon.style.transform = "translateX(" + state.translateIcon + "px)";
+						menuSitemapIcon.style.opacity = state.opacityRevert / 100;
+					}
+
+					if (menuSitemapText)
+					{
+						menuSitemapText.style.transform = "translateX(" + state.translateText + "px)";
+						menuSitemapText.style.opacity = state.opacity / 100;
+					}
+
+					if (menuEmployeesIcon)
+					{
+						menuEmployeesIcon.style.transform = "translateX(" + state.translateIcon + "px)";
+						menuEmployeesIcon.style.opacity = state.opacityRevert / 100;
+					}
+
+					if (menuEmployeesText)
+					{
+						menuEmployeesText.style.transform = "translateX(" + state.translateText + "px)";
+						menuEmployeesText.style.opacity = state.opacity / 100;
+					}
+
+					this.settingsIconBox.style.transform = "translateX(" + state.translateIcon + "px)";
+					this.settingsIconBox.style.opacity = state.opacityRevert / 100;
+
+					this.settingsBtnText.style.transform = "translateX(" + state.translateText + "px)";
+					this.settingsBtnText.style.opacity = state.opacity / 100;
+
+					menuMoreBtn.style.transform = "translateX(" + state.translateIcon + "px)";
+					menuMoreBtn.style.opacity = state.opacityRevert / 100;
+
+					menuMoreBtnDefault.style.transform = "translateX(" + state.translateMoreBtn + "px)";
+					menuMoreBtnDefault.style.opacity = state.opacity / 100;
+
+					if (menuMoreCounter)
+					{
+						menuMoreCounter.style.transform = "translateX(" + state.translateIcon + "px)";
+						menuMoreCounter.style.opacity = state.opacityRevert / 100;
+					}
+
+					if (licenseContainer)
+					{
+						licenseBtn.style.transform = "translateX(" + state.translateLicenseBtn + "px)";
+						licenseBtn.style.opacity = state.opacity / 100;
+
+						licenseCollapsedBtn.style.transform = "translateX(" + state.translateIcon + "px)";
+						licenseCollapsedBtn.style.opacity = state.opacityRevert / 100;
+					}
+
+					menuLinks.forEach(function(item) {
+						var menuIcon = item.querySelector(".menu-item-icon-box");
+						var menuLinkText = item.querySelector(".menu-item-link-text");
+						var menuCounter = item.querySelector(".menu-item-index");
+
+						menuLinkText.style.transform = "translateX(" + state.translateText + "px)";
+						menuLinkText.style.opacity = state.opacity / 100;
+
+						menuIcon.style.transform = "translateX(" + state.translateIcon + "px)";
+						menuIcon.style.opacity = state.opacityRevert / 100;
+
+						if (menuCounter)
+						{
+							menuCounter.style.transform = "translateX(" + state.translateIcon + "px)";
+							menuCounter.style.opacity = state.opacityRevert / 100;
+						}
+					});
+				}
+				else
+				{
+					//Opening Mode
+					menuTextDivider.style.opacity = 0;
+
+					if (menuSitemapIcon)
+					{
+						menuSitemapIcon.style.transform = "translateX(" + state.translateIcon + "px)";
+						menuSitemapIcon.style.opacity = state.opacityRevert / 100;
+					}
+
+					if (menuSitemapText)
+					{
+						menuSitemapText.style.transform = "translateX(" + state.translateText + "px)";
+						menuSitemapText.style.opacity = state.opacity / 100;
+					}
+
+					if (menuEmployeesIcon)
+					{
+						menuEmployeesIcon.style.transform = "translateX(" + state.translateIcon + "px)";
+						menuEmployeesIcon.style.opacity = state.opacityRevert / 100;
+					}
+
+					if (menuEmployeesText)
+					{
+						menuEmployeesText.style.transform = "translateX(" + state.translateText + "px)";
+						menuEmployeesText.style.opacity = state.opacity / 100;
+					}
+
+					this.settingsIconBox.style.transform = "translateX(" + state.translateIcon + "px)";
+					this.settingsIconBox.style.opacity = state.opacityRevert / 100;
+
+					this.settingsBtnText.style.transform = "translateX(" + state.translateText + "px)";
+					this.settingsBtnText.style.opacity = state.opacity / 100;
+
+					menuMoreBtn.style.transform = "translateX(" + state.translateIcon + "px)";
+					menuMoreBtn.style.opacity = state.opacityRevert / 100;
+
+					menuMoreBtnDefault.style.transform = "translateX(" + state.translateMoreBtn + "px)";
+					menuMoreBtnDefault.style.opacity = state.opacity / 100;
+
+					if (menuMoreCounter)
+					{
+						menuMoreCounter.style.transform = "translateX(" + state.translateText + "px)";
+					}
+
+					if (licenseContainer)
+					{
+						licenseBtn.style.transform = "translateX(" + state.translateLicenseBtn + "px)";
+						licenseBtn.style.opacity = state.opacity / 100;
+
+						licenseCollapsedBtn.style.transform = "translateX(" + state.translateIcon + "px)";
+						licenseCollapsedBtn.style.opacity = state.opacityRevert / 100;
+					}
+
+					menuLinks.forEach(function(item) {
+						var menuIcon = item.querySelector(".menu-item-icon-box");;
+						var menuLinkText = item.querySelector(".menu-item-link-text");
+						var menuCounter = item.querySelector(".menu-item-index");
+
+						menuLinkText.style.transform = "translateX(" + state.translateText + "px)";
+						menuLinkText.style.opacity = state.opacity / 100;
+						menuLinkText.style.display = "inline-block";
+
+						menuIcon.style.transform = "translateX(" + state.translateIcon + "px)";
+						menuIcon.style.opacity = state.opacityRevert / 100;
+
+						if (menuCounter)
+						{
+							menuCounter.style.transform = "translateX(" + state.translateText + "px)";
+						}
+					});
+				}
+
+				var event = document.createEvent("Event");
+				event.initEvent("resize", true, true);
+				window.dispatchEvent(event);
+
+			}.bind(this),
+			complete: function ()
+			{
+				if (isOpen)
 				{
 					this.isCollapsedMode = true;
-					this.menuResizerButton.style.cssText = "";
-					BX.addClass(table, "menu-collapsed-mode");
-					BX.removeClass(leftColumn, "menu-animation-mode");
+					BX.addClass(this.mainTable, "menu-collapsed-mode");
+
 				}
 				else
 				{
 					this.isCollapsedMode = false;
-					BX.removeClass(leftColumn, "menu-animation-mode");
-					BX.removeClass(table, "menu-collapsed-mode");
+					BX.removeClass(this.mainTable, "menu-collapsed-mode");
 				}
 
+				BX.removeClass(
+					this.mainTable,
+					"menu-animation-mode menu-animation-opening-mode menu-animation-closing-mode"
+				);
+
+				var containers = [
+					leftColumn,
+					menuTextDivider,
+					this.menuHeaderBurger,
+					this.headerBurger,
+					this.settingsIconBox,
+					this.settingsBtnText,
+					menuMoreBtnDefault,
+					menuMoreBtn,
+					logoImageContainer,
+					menuSitemapIcon,
+					menuSitemapText,
+					menuEmployeesIcon,
+					menuEmployeesText,
+					menuMoreCounter,
+					licenseBtn,
+					licenseCollapsedBtn,
+					this.menuContainer,
+					pageHeader
+				];
+
+				containers.forEach(function(container) {
+					if (container)
+					{
+						container.style.cssText = "";
+					}
+				});
+
+				menuLinks.forEach(function(item) {
+					var menuIcon = item.querySelector(".menu-item-icon-box");
+					var menuLinkText = item.querySelector(".menu-item-link-text");
+					var menuCounter = item.querySelector(".menu-item-index");
+
+					item.style.cssText = "";
+					menuLinkText.style.cssText = "";
+					menuIcon.style.cssText = "";
+
+					if (menuCounter)
+					{
+						menuCounter.style.cssText = "";
+					}
+				});
+
+				this.isMenuMouseEnterBlocked = false;
+				this.adjustAdminPanel();
+
+				if (BX.type.isFunction(fn))
+				{
+					fn();
+				}
+
+				var action = isOpen ? "collapse_menu" : "expand_menu";
 				BX.ajax({
 					method: "POST",
 					dataType: "json",
-					url: this.ajaxPath,
+					url: BX.util.add_url_param(this.ajaxPath, { analyticsLabel: action }),
 					data: {
 						sessid: BX.bitrix_sessid(),
 						site_id: this.siteId,
-						action: isOpened ? "collapse_menu" : "expand_menu"
+						action: action
 					}
 				});
 
@@ -2401,7 +3261,7 @@ BX.Bitrix24.LeftMenuClass = {
 				event.initEvent("resize", true, true);
 				window.dispatchEvent(event);
 
-			}, this)
+			}.bind(this)
 		})).animate();
 	},
 
@@ -2500,6 +3360,77 @@ BX.Bitrix24.LeftMenuClass = {
 		}
 
 		return true;
+	},
+
+	makeTextIcons: function()
+	{
+		var items = this.menuContainer.getElementsByTagName("li");
+
+		for (var i = 0, length = items.length; i < length; i++)
+		{
+			var item = items[i];
+			var hasIcon = !item.classList.contains("menu-item-no-icon-state");
+			if (hasIcon)
+			{
+				continue;
+			}
+
+			var icon = item.querySelector(".menu-item-icon");
+			var text = item.querySelector(".menu-item-link-text");
+
+			if (icon && text)
+			{
+				icon.textContent = this.getShortName(text.textContent);
+			}
+		}
+
+	},
+
+	getShortName: function(name)
+	{
+		if (!BX.type.isString(name) || !BX.type.isNotEmptyString(name.trim()))
+		{
+			return "...";
+		}
+
+		var shortName = "";
+		name = name.replace(/['`".,:;~|{}*^$#@&+\-=?!()[\]<>\n\r]+/g, "").trim();
+		if (!BX.type.isNotEmptyString(name))
+		{
+			shortName = name.substring(0, 2);
+		}
+		else if (name.length === 2)
+		{
+			shortName = name;
+		}
+
+		var words = name.split(/[\s,]+/);
+		if (words.length <= 1)
+		{
+			shortName = name.substring(0, 1);
+		}
+		else if (words.length === 2)
+		{
+			shortName = words[0].substring(0, 1) + words[1].substring(0, 1);
+		}
+		else
+		{
+			var firstWord = words[0];
+			var secondWord = words[1];
+
+			for (var i = 1; i < words.length; i++)
+			{
+				if (words[i].length > 3)
+				{
+					secondWord = words[i];
+					break;
+				}
+			}
+
+			shortName = firstWord.substring(0, 1) + secondWord.substring(0, 1);
+		}
+
+		return shortName.toUpperCase();
 	},
 
 	getSelectedItem: function (currentUrl, allLinks)
@@ -2703,10 +3634,17 @@ BX.Bitrix24.LeftMenuClass = {
 
 					var link = document.createElement("a");
 					link.href = this.topItemSelectedObj.URL;
-					this.topItemSelectedObj.URL = BX.util.htmlspecialcharsback(link.pathname + link.search);
+
+					//IE11 omits slash in the pathname
+					var path = link.pathname[0] !== "/" ? "/" + link.pathname : link.pathname;
+
+					this.topItemSelectedObj.URL = BX.util.htmlspecialcharsback(path + link.search);
 					this.topItemSelectedObj.TEXT = BX.util.htmlspecialcharsback(this.topItemSelectedObj.TEXT);
 
-					this.isCurrentPageStandard = (this.topItemSelectedObj.URL == currentFullPath) && this.topItemSelectedObj.URL.indexOf("workgroups") == -1;
+					this.isCurrentPageStandard =
+						this.topItemSelectedObj.URL === currentFullPath &&
+						this.topItemSelectedObj.URL.indexOf("workgroups") === -1
+					;
 				}
 			}
 		}
@@ -2769,7 +3707,7 @@ BX.Bitrix24.LeftMenuClass = {
 	{
 		this.checkCurrentPageInTopMenu();
 
-		var starContNode = BX("pagetitle-star");
+		var starContNode = BX("uiToolbarStar");
 		if (!starContNode)
 		{
 			return false;
@@ -2780,12 +3718,12 @@ BX.Bitrix24.LeftMenuClass = {
 		var currentPageInMenu = this.checkLinkInMenu(currentFullPath);
 		if (typeof currentPageInMenu == "object")
 		{
-			BX.addClass(starContNode, "pagetitle-star-active");
+			BX.addClass(starContNode, "ui-toolbar-star-active");
 		}
-		starContNode.title = BX.message(BX.hasClass(starContNode, "pagetitle-star-active") ? "MENU_DELETE_PAGE_FROM_LEFT_MENU" : "MENU_ADD_PAGE_TO_LEFT_MENU");
+		starContNode.title = BX.message(BX.hasClass(starContNode, "ui-toolbar-star-active") ? "MENU_DELETE_PAGE_FROM_LEFT_MENU" : "MENU_ADD_PAGE_TO_LEFT_MENU");
 
 		//default page
-		if (typeof currentPageInMenu == "object" && currentPageInMenu.getAttribute("data-type") == "default")
+		if (typeof currentPageInMenu == "object" && currentPageInMenu.getAttribute("data-type") === "default")
 		{
 			starContNode.title = BX.message("MENU_STAR_TITLE_DEFAULT_PAGE");
 			BX.bind(starContNode, "click", BX.proxy(function ()
@@ -2799,7 +3737,7 @@ BX.Bitrix24.LeftMenuClass = {
 		//any page
 		BX.bind(starContNode, "click", BX.proxy(function ()
 		{
-			if (BX.hasClass(starContNode, "pagetitle-star-active"))
+			if (BX.hasClass(starContNode, "ui-toolbar-star-active"))
 			{
 				this.deleteStandardItem();
 			}
@@ -2858,7 +3796,7 @@ BX.Bitrix24.LeftMenuClass = {
 				lightShadow: true,
 				contentColor: "white",
 				draggable: {restrict: true},
-				closeByEsc: true,
+				closeByEsc: false,
 				content: BX("left-menu-preset-popup"),
 				buttons: [
 					(button = new BX.PopupWindowButton({
@@ -2929,7 +3867,11 @@ BX.Bitrix24.LeftMenuClass = {
 								BX.ajax({
 									method: 'POST',
 									dataType: 'json',
-									url: this.ajaxPath + "?analyticsLabel=later" + (mode == "global" ? "&analyticsFirst=y" : "")
+									url: this.ajaxPath + "?analyticsLabel=later" + (mode == "global" ? "&analyticsFirst=y" : ""),
+									data: {
+										sessid: BX.bitrix_sessid(),
+										action: "delay_set_preset"
+									},
 								});
 								BX.proxy_context.popupWindow.close();
 							}, this)
@@ -3112,6 +4054,8 @@ BX.Bitrix24.LeftMenuClass = {
 		document.body.appendChild(loader);
 	}
 };
+
+BX.Bitrix24.LeftMenuClass = BX.Bitrix24.LeftMenu; //old alias
 
 BX.namespace("BX.Intranet.ExpandTariff");
 BX.Intranet.ExpandTariff =

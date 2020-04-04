@@ -352,6 +352,7 @@ if(!is_array($arBasketItems))
 $pdf->SetFont($fontFamily, '', $fontSize);
 
 $arCols = array();
+$arCells = array();
 // items list
 if (!empty($arBasketItems))
 {
@@ -392,7 +393,6 @@ if (!empty($arBasketItems))
 	$sum = 0.00;
 	$vat = 0;
 	$vats = array();
-	$arCells = array();
 	$arProps = array();
 
 	foreach($arBasketItems as &$arBasket)
@@ -550,7 +550,8 @@ if (!empty($arBasketItems))
 
 	if (CSalePaySystemAction::GetParamValue('QUOTE_LA_TOTAL_SHOW') == 'Y')
 	{
-		if ($sum < $GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["PRICE"])
+		$eps = 0.0001;
+		if ($GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["PRICE"] - $sum > $eps)
 		{
 			$arCells[++$n] = array();
 			for ($i = 0; $i < $columnCount; $i++)

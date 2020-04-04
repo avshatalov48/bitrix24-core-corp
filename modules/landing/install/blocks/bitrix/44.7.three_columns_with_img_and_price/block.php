@@ -1,6 +1,6 @@
 <section class="landing-block g-pt-65 g-pb-65">
 	<div class="container">
-		<div class="row">
+		<div class="row landing-block-inner">
 			<div class="landing-block-node-card js-animation fadeInLeft col-md-6 col-lg-4 g-mb-30">
 				<!-- Article -->
 				<article
@@ -22,7 +22,7 @@
 					<!-- End Article Image -->
 
 					<!-- Article Content -->
-					<div class="landing-block-node-card-container-bottom h-100 g-pa-40 d-flex flex-column">
+					<div class="landing-block-node-card-container-bottom flex-grow-1 g-pa-40 d-flex flex-column">
 						<div class="g-mb-15">
 							<div class="landing-block-node-card-price-subtitle g-font-size-default g-color-gray-light-v1">
 								From
@@ -68,7 +68,7 @@
 					<!-- End Article Image -->
 
 					<!-- Article Content -->
-					<div class="landing-block-node-card-container-bottom h-100 g-pa-40 d-flex flex-column">
+					<div class="landing-block-node-card-container-bottom flex-grow-1 g-pa-40 d-flex flex-column">
 						<div class="g-mb-15">
 							<div class="landing-block-node-card-price-subtitle g-font-size-default g-color-gray-light-v1">
 								From
@@ -114,7 +114,7 @@
 					<!-- End Article Image -->
 
 					<!-- Article Content -->
-					<div class="landing-block-node-card-container-bottom h-100 g-pa-40 d-flex flex-column">
+					<div class="landing-block-node-card-container-bottom flex-grow-1 g-pa-40 d-flex flex-column">
 						<div class="g-mb-15">
 							<div class="landing-block-node-card-price-subtitle g-font-size-default g-color-gray-light-v1">
 								From

@@ -70,7 +70,8 @@ if(!$isInternal)
 			'OWNER_ID' => 0,
 			'READ_ONLY' => false,
 			'ENABLE_UI' => false,
-			'ENABLE_TOOLBAR' => false
+			'ENABLE_TOOLBAR' => false,
+			'SKIP_VISUAL_COMPONENTS' => 'Y'
 		),
 		null,
 		array('HIDE_ICONS' => 'Y')
@@ -191,7 +192,8 @@ foreach($arResult['ORDER_PAYMENT'] as $sKey => $payment)
 			'SUM' => CCrmCurrency::MoneyToString($payment['SUM'], $payment['CURRENCY']),
 			'CURRENCY' => CCrmCurrency::GetCurrencyName($payment['CURRENCY']),
 			'PAY_SYSTEM_FULL' => $paySystemFull,
-			'PAID' => Loc::getMessage($messageCode)
+			'PAID' => Loc::getMessage($messageCode),
+			'USER_ID' => strlen($payment['BUYER_FORMATTED_NAME']) > 0 ? '<a href="/'.$payment['PATH_TO_BUYER'].'">'.$payment['BUYER_FORMATTED_NAME'].'</a>' : ''
 		)
 	);
 

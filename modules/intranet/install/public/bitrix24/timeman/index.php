@@ -31,7 +31,7 @@ else
 	?>
 	<p><?=GetMessage("TARIFF_RESTRICTION_TEXT")?></p>
 	<div style="text-align: center;"><img src="images/<?=$lang?>/absence.png"/></div>
-	<p><?=GetMessage("TARIFF_RESTRICTION_TEXT2")?></p>
+	<p><?=GetMessage("ABSENCE_TARIFF_RESTRICTION_TITLE")?></p>
 	<br/>
 	<div style="text-align: center;"><?CBitrix24::showTariffRestrictionButtons("absence")?></div>
 	<?

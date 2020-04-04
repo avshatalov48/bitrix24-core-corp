@@ -2,6 +2,8 @@
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 use \Bitrix\Main\Localization\Loc;
 
+use \Bitrix\ImOpenLines\Config;
+
 if ($arResult['CAN_EDIT'])
 {
 	CJSCore::Init(array('avatar_editor'));
@@ -120,28 +122,6 @@ if ($arResult['CAN_EDIT'])
 				}
 				?>
 			</div>
-			<?
-			if(defined('IMOL_FDC'))
-			{
-				?>
-				<div class="imopenlines-form-settings-inner">
-					<div class="imopenlines-control-subtitle">
-						<?=Loc::getMessage('IMOL_CONFIG_EDIT_LANG_SESSION_PRIORITY')?>
-						<span data-hint="<?=htmlspecialcharsbx(Loc::getMessage("IMOL_CONFIG_EDIT_LANG_SESSION_PRIORITY_TIP_NEW"))?>"></span>
-					</div>
-					<div class="imopenlines-control-inner" style="min-width: 80px;width: 80px">
-						<input type="number"
-							   min="0"
-							   max="86400"
-							   class="imopenlines-control-input"
-							   name="CONFIG[SESSION_PRIORITY]"
-							   value="<?=htmlspecialcharsbx($arResult['CONFIG']['SESSION_PRIORITY'])?>">
-					</div>
-					<div class="imopenlines-control-subtitle"><?=Loc::getMessage('IMOL_CONFIG_EDIT_LANG_SESSION_PRIORITY_2')?></div>
-				</div>
-				<?
-			}
-			?>
 		</div>
 		<div class="imopenlines-form-settings-inner">
 			<div class="imopenlines-control-container imopenlines-control-select">
@@ -151,18 +131,17 @@ if ($arResult['CAN_EDIT'])
 				</div>
 				<div class="imopenlines-control-inner">
 					<select name="CONFIG[QUEUE_TYPE]" id="imol_queue_type" class="imopenlines-control-input">
-						<option value="evenly" <?if($arResult["CONFIG"]["QUEUE_TYPE"] == "evenly") { ?>selected<? }?>>
+						<option value="evenly" <?if($arResult["CONFIG"]["QUEUE_TYPE"] == Config::QUEUE_TYPE_EVENLY) { ?>selected<? }?>>
 							<?=Loc::getMessage("IMOL_CONFIG_EDIT_QUEUE_TYPE_EVENLY")?>
 						</option>
-						<option value="strictly" <?if($arResult["CONFIG"]["QUEUE_TYPE"] == "strictly") { ?>selected<? }?>>
+						<option value="strictly" <?if($arResult["CONFIG"]["QUEUE_TYPE"] == Config::QUEUE_TYPE_STRICTLY) { ?>selected<? }?>>
 							<?=Loc::getMessage("IMOL_CONFIG_EDIT_QUEUE_TYPE_STRICTLY")?>
 						</option>
-						<option value="all" <?if($arResult["CONFIG"]["QUEUE_TYPE"] == "all") { ?>selected<? }?>
+						<option value="all" <?if($arResult["CONFIG"]["QUEUE_TYPE"] == Config::QUEUE_TYPE_ALL) { ?>selected<? }?>
 								<?if(!\Bitrix\Imopenlines\Limit::canUseQueueAll()) { ?>disabled<? }?>>
 							<?=Loc::getMessage("IMOL_CONFIG_EDIT_QUEUE_TYPE_ALL")?>
 						</option>
 					</select>
-					<input type="hidden" name="CONFIG[NO_ANSWER_RULE]" id="imol_no_answer_rule_hidden" value="<?=$arResult["CONFIG"]["NO_ANSWER_RULE"]?>">
 				</div>
 			</div>
 		</div>
@@ -177,12 +156,12 @@ if ($arResult['CAN_EDIT'])
 						   id="imol_workers_time_link"
 						   class="imopenlines-control-checkbox"
 						   <? if($arResult['SHOW_WORKERS_TIME']) { ?>checked<? } ?>>
-					<?= ($arResult["CONFIG"]["QUEUE_TYPE"] == "all") ? Loc::getMessage('IMOL_CONFIG_EDIT_NA_TIME_NEW') : Loc::getMessage('IMOL_CONFIG_EDIT_QUEUE_TIME')?>
+					<?= ($arResult["CONFIG"]["QUEUE_TYPE"] == Config::QUEUE_TYPE_ALL) ? Loc::getMessage('IMOL_CONFIG_EDIT_NA_TIME_NEW') : Loc::getMessage('IMOL_CONFIG_EDIT_QUEUE_TIME')?>
 				</label>
 			</div>*/?>
-			<div class="imopenlines-control-container imopenlines-control-select  <? /*if($arResult['SHOW_WORKERS_TIME'] != 'Y') { ?>invisible<? }*/ ?>" id="imol_workers_time_block">
+			<div class="imopenlines-control-container imopenlines-control-select  <? if($arResult["VISIBLE"]["QUEUE_TIME"] == false) { ?>invisible<? } ?>" id="imol_workers_time_block">
 				<div class="imopenlines-control-subtitle" id="imol_queue_time_title">
-					<?= ($arResult["CONFIG"]["QUEUE_TYPE"] == "all") ? Loc::getMessage('IMOL_CONFIG_EDIT_NA_TIME_NEW') : Loc::getMessage('IMOL_CONFIG_EDIT_QUEUE_TIME_NEW')?>
+					<?=Loc::getMessage('IMOL_CONFIG_EDIT_QUEUE_TIME_NEW')?>
 				</div>
 				<div class="imopenlines-control-inner">
 					<select class="imopenlines-control-input" name="CONFIG[QUEUE_TIME]">
@@ -202,32 +181,21 @@ if ($arResult['CAN_EDIT'])
 					</select>
 				</div>
 			</div>
-			<div class="imopenlines-control-checkbox-container">
+			<div id="imol_check_available_block" class="imopenlines-control-checkbox-container">
 				<label class="imopenlines-control-checkbox-label">
-					<input id="imol_timeman"
+					<input id="imol_check_available"
 						   type="checkbox"
-						   name="CONFIG[TIMEMAN]"
+						   name="CONFIG[CHECK_AVAILABLE]"
 						   value="Y"
 						   class="imopenlines-control-checkbox"
-						   <?if($arResult["CONFIG"]["TIMEMAN"] == "Y") { ?>checked<? }?>>
-					<?=Loc::getMessage("IMOL_CONFIG_EDIT_TIMEMAN")?>
-					<span data-hint="<?=htmlspecialcharsbx(Loc::getMessage('IMOL_CONFIG_EDIT_TIMEMAN_DESCRIPTION'))?>"></span>
+						   <?if($arResult["CONFIG"]["CHECK_AVAILABLE"] == "Y") { ?>checked<? }?>>
+					<?=Loc::getMessage("IMOL_CONFIG_EDIT_CHECK_OPERATOR_AVAILABLE")?>
+					<span data-hint="<?=htmlspecialcharsbx(Loc::getMessage('IMOL_CONFIG_EDIT_CHECK_OPERATOR_AVAILABLE_DESC'))?>"></span>
 				</label>
 			</div>
-			<?
-			if (!IsModuleInstalled("timeman"))
-			{
-				?>
-				<script type="text/javascript">
-					BX.bind(BX('imol_timeman'), 'change', function(e){
-						BX('imol_timeman').checked = false;
-						alert('<?=GetMessageJS(!IsModuleInstalled("bitrix24")? "IMOL_CONFIG_EDIT_TIMEMAN_SUPPORT_B24_NEW": "IMOL_CONFIG_EDIT_TIMEMAN_SUPPORT_CP")?>');
-					});
-				</script>
-				<?
-			}
-			?>
-			<div class="imopenlines-control-checkbox-container">
+
+
+			<div id="imol_check_online_block" class="imopenlines-control-checkbox-container<?if ($arResult['VISIBLE']['CHECK_ONLINE_BLOCK'] == false){?> invisible<?}?>">
 				<label class="imopenlines-control-checkbox-label">
 					<input id="imol_check_online"
 						   type="checkbox"
@@ -238,19 +206,7 @@ if ($arResult['CAN_EDIT'])
 					<?=Loc::getMessage("IMOL_CONFIG_EDIT_CHECK_OPERATOR_ONLINE")?>
 				</label>
 			</div>
-			<div id="imol_check_online_block" class="imopenlines-control-checkbox-container<?if ($arResult["CONFIG"]["CHECK_ONLINE"] != "Y"){?> invisible<?}?>">
-				<label class="imopenlines-control-checkbox-label">
-					<input id="imol_checking_offline"
-						   type="checkbox"
-						   name="CONFIG[CHECKING_OFFLINE]"
-						   value="Y"
-						   class="imopenlines-control-checkbox"
-						   <?if($arResult["CONFIG"]["CHECKING_OFFLINE"] == "Y") { ?>checked<? }?>>
-					<?=Loc::getMessage("IMOL_CONFIG_EDIT_CHECKING_OPERATOR_OFFLINE")?>
-					<span data-hint="<?=htmlspecialcharsbx(Loc::getMessage('IMOL_CONFIG_EDIT_CHECKING_OPERATOR_OFFLINE_DESC'))?>"></span>
-				</label>
-			</div>
-			<div id="imol_limitation_max_chat_block" <? if ($arResult["CONFIG"]["QUEUE_TYPE"] == "all") { ?>class="invisible"<? } ?>>
+			<div id="imol_limitation_max_chat_block" <? if ($arResult['VISIBLE']['LIMITATION_MAX_CHAT'] == false) { ?>class="invisible"<? } ?>>
 				<div class="imopenlines-control-checkbox-container">
 					<label class="imopenlines-control-checkbox-label">
 						<input id="imol_limitation_max_chat"
@@ -263,7 +219,7 @@ if ($arResult['CAN_EDIT'])
 						<span data-hint="<?=htmlspecialcharsbx(Loc::getMessage('IMOL_CONFIG_EDIT_LIMITATION_MAX_CHAT_DESC'))?>"></span>
 					</label>
 				</div>
-				<div <?if($arResult["CONFIG"]["MAX_CHAT"] == "0" || empty($arResult["CONFIG"]["MAX_CHAT"] || $arResult["CONFIG"]["QUEUE_TYPE"] == "all")) {?>class="invisible"<?}?> id="imol_max_chat">
+				<div <?if($arResult['VISIBLE']['MAX_CHAT'] == false) {?>class="invisible"<?}?> id="imol_max_chat">
 					<div class="imopenlines-control-container imopenlines-control-select">
 						<div class="imopenlines-control-subtitle">
 							<?= Loc::getMessage('IMOL_CONFIG_EDIT_TYPE_MAX_CHAT_TITLE_NEW') ?>
@@ -281,12 +237,34 @@ if ($arResult['CAN_EDIT'])
 						<div class="imopenlines-control-subtitle">
 							<?= Loc::getMessage('IMOL_CONFIG_EDIT_MAX_CHAT_TITLE_NEW') ?>
 						</div>
-						<div class="imopenlines-control-inner">
+						<div class="imopenlines-control-inner width-80">
 							<input type="text" name="CONFIG[MAX_CHAT]" class="imopenlines-control-input" value="<?=$arResult["CONFIG"]["MAX_CHAT"]?>">
 						</div>
 					</div>
 				</div>
 			</div>
+			<?
+			if(defined('IMOL_FDC'))
+			{
+				?>
+				<div class="imopenlines-form-settings-inner">
+					<div class="imopenlines-control-subtitle">
+						<?=Loc::getMessage('IMOL_CONFIG_EDIT_LANG_SESSION_PRIORITY')?>
+						<span data-hint="<?=htmlspecialcharsbx(Loc::getMessage("IMOL_CONFIG_EDIT_LANG_SESSION_PRIORITY_TIP_NEW"))?>"></span>
+					</div>
+					<div class="imopenlines-control-inner width-80">
+						<input type="number"
+							   min="0"
+							   max="86400"
+							   class="imopenlines-control-input"
+							   name="CONFIG[SESSION_PRIORITY]"
+							   value="<?=htmlspecialcharsbx($arResult['CONFIG']['SESSION_PRIORITY'])?>">
+					</div>
+					<div class="imopenlines-control-subtitle"><?=Loc::getMessage('IMOL_CONFIG_EDIT_LANG_SESSION_PRIORITY_2')?></div>
+				</div>
+				<?
+			}
+			?>
 		</div>
 	</div>
 </div>
@@ -388,11 +366,11 @@ if ($arResult['CAN_EDIT'])
 					</div>
 					<div class="imopenlines-control-inner">
 						<select name="CONFIG[CRM_SOURCE]" id="imol_crm_source_select" class="imopenlines-control-input">
-							<?
+							<?php
 							foreach ($arResult['CRM_SOURCES'] as $value => $name)
 							{
 								?>
-								<option value="<?=$value?>" <?if($arResult["CONFIG"]["CRM_SOURCE"] == $value) { ?>selected<? }?> >
+								<option value="<?=$value?>" <?if($arResult['CONFIG']['CRM_SOURCE'] === (string)$value) { ?>selected<? }?> >
 									<?=htmlspecialcharsbx($name)?>
 								</option>
 								<?

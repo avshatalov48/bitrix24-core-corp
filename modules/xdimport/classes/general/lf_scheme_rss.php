@@ -117,7 +117,7 @@ class CXDILFSchemeRSS
 		return $arRSSResult;
 	}
 
-	private function FormatArray(&$arRes)
+	private static function FormatArray(&$arRes)
 	{
 		if(is_array($arRes["title"][0]["#"]))
 			$arRes["title"][0]["#"] = $arRes["title"][0]["#"]["cdata-section"][0]["#"];

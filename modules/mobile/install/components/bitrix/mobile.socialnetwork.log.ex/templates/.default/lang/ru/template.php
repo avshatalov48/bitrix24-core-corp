@@ -92,4 +92,10 @@ $MESS["MOBILE_LOG_CREATE_TASK_LINK_BLOG_POST"] = "сообщения Живой 
 $MESS["MOBILE_LOG_CREATE_TASK_LINK_BLOG_COMMENT"] = "комментария к сообщению Живой ленты";
 $MESS["MOBILE_LOG_ERROR_ENTRY_NOT_FOUND"] = "Ошибка: запись живой ленты не найдена.";
 $MESS["MOBILE_PLAYER_ERROR_MESSAGE"] = "К сожалению, приложение не может воспроизвести этот файл.<br />Вы можете <span class=\"disk-mobile-player-download\">скачать</span> и посмотреть его на вашем устройстве";
+
+
+$MESS['MOBILE_TASKS_VIEW_TAB_COMMENT'] = "Комментарии";
+$MESS['MOBILE_TASKS_VIEW_TAB_CHECKLIST'] = "Чек-лист";
+$MESS['MOBILE_TASKS_VIEW_TAB_FILES'] = "Файлы";
+$MESS['MOBILE_TASKS_VIEW_TAB_TASK'] = "Задача";
 ?>

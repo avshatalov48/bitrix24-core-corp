@@ -1,7 +1,9 @@
 <?
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
+use Bitrix\Main;
 use Bitrix\Main\Mail;
+use Bitrix\Crm;
 
 class CBPCrmSendEmailActivity extends CBPActivity
 {
@@ -22,6 +24,7 @@ class CBPCrmSendEmailActivity extends CBPActivity
 			"MessageTextType" => '',
 			"MessageTextEncoded" => 0,
 			"EmailType" => null,
+			"UseLinkTracker" => 'Y',
 			'AttachmentType' => static::ATTACHMENT_TYPE_FILE,
 			'Attachment' => array()
 		);
@@ -61,7 +64,6 @@ class CBPCrmSendEmailActivity extends CBPActivity
 
 		$from = $fromInfo['from'];
 		$userImap = $fromInfo['userImap'];
-		$crmImap = $fromInfo['crmImap'];
 		$injectUrn = $fromInfo['injectUrn'];
 		$reply = $fromInfo['reply'];
 		$fromEmail = $fromInfo['fromEmail'];
@@ -239,6 +241,8 @@ class CBPCrmSendEmailActivity extends CBPActivity
 					'replyTo' => $reply,
 					'to'      => $to,
 				),
+				'BP_ACTIVITY_ID' => $this->GetName(),
+				'BP_TEMPLATE_ID' => $this->GetWorkflowTemplateId()
 			),
 		), false, false, array('REGISTER_SONET_EVENT' => true));
 
@@ -278,30 +282,38 @@ class CBPCrmSendEmailActivity extends CBPActivity
 		$context->setCategory(Mail\Context::CAT_EXTERNAL);
 		$context->setPriority(Mail\Context::PRIORITY_LOW);
 
-		$outgoingParams = array(
+		$outgoingParams = [
 			'CHARSET'      => SITE_CHARSET,
 			'CONTENT_TYPE' => 'html',
 			'ATTACHMENT'   => $attachments,
 			'TO'           => join(', ', $rcpt),
 			'SUBJECT'      => $outgoingSubject,
 			'BODY'         => $outgoingBody,
-			'HEADER'       => array(
+			'HEADER'       => [
 				'From'       => $fromEncoded ?: $fromEmail,
 				'Reply-To'   => $reply ?: $fromEmail,
 				'Message-Id' => $messageId,
-			),
-			'TRACK_READ' => array(
+			],
+			'TRACK_READ' => [
 				'MODULE_ID' => 'crm',
-				'FIELDS'    => array('urn' => $urn),
+				'FIELDS'    => ['urn' => $urn],
 				'URL_PAGE' => '/pub/mail/read.php',
-			),
-			'TRACK_CLICK' => array(
-				'MODULE_ID' => 'crm',
-				'FIELDS'    => array('urn' => $urn),
-				'URL_PAGE' => '/pub/mail/click.php',
-			),
+			],
+			'TRACK_CLICK' => ($this->UseLinkTracker === 'Y') ? [
+					'MODULE_ID' => 'crm',
+					'FIELDS'    => ['urn' => $urn],
+					'URL_PAGE' => '/pub/mail/click.php',
+					'URL_PARAMS' => [],
+				] : null,
 			'CONTEXT' => $context,
-		);
+		];
+
+		if (Crm\WebForm\Manager::isEmbeddingAvailable())
+		{
+			$outgoingParams['TRACK_CLICK']['URL_PARAMS'][Crm\WebForm\Embed\Sign::uriParameterName] = (new Crm\WebForm\Embed\Sign())
+				->addEntity($ownerTypeId, $ownerId)
+				->pack();
+		}
 
 		$sendResult = Mail\Mail::send($outgoingParams);
 
@@ -312,7 +324,14 @@ class CBPCrmSendEmailActivity extends CBPActivity
 			return CBPActivityExecutionStatus::Closed;
 		}
 
-		if (!empty($userImap['need_sync']) || !empty($crmImap['need_sync']))
+		addEventToStatFile(
+			'crm',
+			'send_email_message',
+			sprintf('bp_%s_%s', $this->getWorkflowTemplateId(), $this->getName()),
+			trim(trim($messageId), '<>')
+		);
+
+		if (!empty($userImap))
 		{
 			class_exists('Bitrix\Mail\Helper');
 
@@ -331,10 +350,7 @@ class CBPCrmSendEmailActivity extends CBPActivity
 				)
 			));
 
-			if (!empty($userImap['need_sync']))
-				\Bitrix\Mail\Helper::addImapMessage($userImap, (string) $outgoing, $err);
-			if (!empty($crmImap['need_sync']))
-				\Bitrix\Mail\Helper::addImapMessage($crmImap, (string) $outgoing, $err);
+			\Bitrix\Mail\Helper::addImapMessage($userImap, (string) $outgoing, $err);
 		}
 
 		// Try add event to entity
@@ -345,15 +361,23 @@ class CBPCrmSendEmailActivity extends CBPActivity
 		$eventText .= GetMessage('CRM_SEMA_EMAIL_FROM').': '.$from."\n\r";
 		$eventText .= GetMessage('CRM_SEMA_EMAIL_TO').': '.$to."\n\r\n\r";
 		$eventText .= $messageHtml;
-		// Register event only for owner
+
+		$eventBindings = array();
+		foreach($bindings as $item)
+		{
+			$bindingEntityID = $item['OWNER_ID'];
+			$bindingEntityTypeID = $item['OWNER_TYPE_ID'];
+			$bindingEntityTypeName = \CCrmOwnerType::resolveName($bindingEntityTypeID);
+
+			$eventBindings["{$bindingEntityTypeName}_{$bindingEntityID}"] = array(
+				'ENTITY_TYPE' => $bindingEntityTypeName,
+				'ENTITY_ID' => $bindingEntityID
+			);
+		}
+
 		$CCrmEvent->Add(
 			array(
-				'ENTITY' => array(
-					$ownerId => array(
-						'ENTITY_TYPE' => \CCrmOwnerType::ResolveName($ownerTypeId),
-						'ENTITY_ID' => $ownerId
-					)
-				),
+				'ENTITY' => $eventBindings,
 				'EVENT_ID' => 'MESSAGE',
 				'EVENT_TEXT_1' => $eventText,
 				'FILES' => $arRawFiles
@@ -366,75 +390,30 @@ class CBPCrmSendEmailActivity extends CBPActivity
 
 	private function getFromEmail($userId, $from = '')
 	{
-		$userImap = $crmImap = $defaultFrom = null;
+		$userImap = null;
 		$injectUrn = false;
 		$reply = '';
 		$from = trim((string)$from);
-		$fromEmail = '';
-		$fromEncoded = '';
 		$crmEmail = \CCrmMailHelper::extractEmail(\COption::getOptionString('crm', 'mail', ''));
 
+		$mailboxes = [];
 		if (CModule::includeModule('mail'))
 		{
-			$res = \Bitrix\Mail\MailboxTable::getList(array(
-				'select' => array('*', 'LANG_CHARSET' => 'SITE.CULTURE.CHARSET'),
-				'filter' => array(
-					'=LID'    => SITE_ID,
-					'=ACTIVE' => 'Y',
-					array(
-						'LOGIC'    => 'OR',
-						'=USER_ID' => $userId,
-						array(
-							'USER_ID'      => 0,
-							'=SERVER_TYPE' => 'imap',
-						),
-					),
-				),
-				'order'  => array('ID' => 'DESC'),
-			));
-
-			while ($mailbox = $res->fetch())
-			{
-				if (!empty($mailbox['OPTIONS']['flags']) && in_array('crm_connect', (array)$mailbox['OPTIONS']['flags']))
-				{
-					$mailbox['EMAIL_FROM'] = null;
-					if (check_email($mailbox['NAME'], true))
-						$mailbox['EMAIL_FROM'] = strtolower($mailbox['NAME']);
-					elseif (check_email($mailbox['LOGIN'], true))
-						$mailbox['EMAIL_FROM'] = strtolower($mailbox['LOGIN']);
-
-					if ($mailbox['USER_ID'] > 0)
-						$userImap = $mailbox;
-					else
-						$crmImap = $mailbox;
-				}
-			}
-
-			$defaultFrom = \Bitrix\Mail\User::getDefaultEmailFrom();
+			$mailboxes = \Bitrix\Mail\MailboxTable::getUserMailboxes($userId);
 		}
 
 		if ($from === '')
 		{
-			if (!empty($userImap))
+			$availableMailboxes = Main\Mail\Sender::prepareUserMailboxes($userId);
+			if (!empty($availableMailboxes))
 			{
-				$from = $userImap['EMAIL_FROM'] ?: $defaultFrom;
-				$userImap['need_sync'] = true;
-			}
-			elseif (!empty($crmImap))
-			{
-				$from = $crmImap['EMAIL_FROM'] ?: $defaultFrom;
-				$crmImap['need_sync'] = true;
-			}
-			else
-			{
-				$from = $crmEmail;
+				$from = reset($availableMailboxes)['email'];
 			}
 
 			if ($from === '')
+			{
 				$from = CUserOptions::GetOption('crm', 'activity_email_addresser', '', $userId);
-
-			if ($from === '')
-				$from = $defaultFrom;
+			}
 
 			$fromData = $this->parseFromString($from);
 			$fromEmail = $fromData['email'];
@@ -450,29 +429,6 @@ class CBPCrmSendEmailActivity extends CBPActivity
 			{
 				$from = '';
 			}
-			else
-			{
-				if (!empty($userImap['EMAIL_FROM']) && $userImap['EMAIL_FROM'] === $fromEmail)
-					$userImap['need_sync'] = true;
-				if (!empty($crmImap['EMAIL_FROM']) && $crmImap['EMAIL_FROM'] === $fromEmail)
-					$crmImap['need_sync'] = true;
-
-				if (empty($userImap['need_sync']) && empty($crmImap['need_sync']))
-				{
-					if ($crmEmail == '' || $crmEmail != $fromEmail)
-					{
-						if (!empty($userImap['EMAIL_FROM']))
-							$reply = $fromEmail . ', ' . $userImap['EMAIL_FROM'];
-						else if (!empty($crmImap['EMAIL_FROM']))
-							$reply = $fromEmail . ', ' . $crmImap['EMAIL_FROM'];
-						else if ($crmEmail != '')
-							$reply = $fromEmail . ', ' . $crmEmail;
-					}
-
-					$injectUrn = true;
-				}
-			}
-
 		}
 
 		if (empty($from))
@@ -480,11 +436,29 @@ class CBPCrmSendEmailActivity extends CBPActivity
 			return false;
 		}
 
+		foreach ($mailboxes as $mailbox)
+		{
+			if ($fromEmail === $mailbox['EMAIL'])
+			{
+				$userImap = $mailbox;
+				break;
+			}
+		}
+
+		if (empty($userImap))
+		{
+			if ($crmEmail != '' && $crmEmail != $fromEmail)
+			{
+				$reply = $fromEmail . ', ' . $crmEmail;
+			}
+
+			$injectUrn = true;
+		}
+
 		return array(
 			'from' => $from,
 			'fromEmail' => $fromEmail,
 			'userImap' => $userImap,
-			'crmImap' => $crmImap,
 			'reply' => $reply,
 			'injectUrn' => $injectUrn,
 			'fromEncoded' => $fromEncoded
@@ -510,6 +484,28 @@ class CBPCrmSendEmailActivity extends CBPActivity
 				$comEntityTypeId = \CCrmOwnerType::Contact;
 				$comEntityId = $contactId;
 			}
+
+			if (empty($to))
+			{
+				$dealContactIds = \Bitrix\Crm\Binding\DealContactTable::getDealContactIDs($entityId);
+				if ($dealContactIds)
+				{
+					foreach ($dealContactIds as $contId)
+					{
+						if ($contId !== $contactId)
+						{
+							$to = $this->getEntityEmail(\CCrmOwnerType::Contact, $contId, $emailType);
+							$comEntityTypeId = \CCrmOwnerType::Contact;
+							$comEntityId = $contId;
+							if ($to)
+							{
+								break;
+							}
+						}
+					}
+				}
+			}
+
 			if (empty($to) && $companyId > 0)
 			{
 				$to = $this->getEntityEmail(\CCrmOwnerType::Company, $companyId, $emailType);
@@ -625,25 +621,6 @@ class CBPCrmSendEmailActivity extends CBPActivity
 		return array('email' => $fromEmail, 'name' => $fromName, 'nameEncoded' => $fromEncoded);
 	}
 
-	private static function getMailboxes()
-	{
-		$mailboxes = array();
-
-		ob_start(); //prevent error showing when component is not found
-		CBitrixComponent::includeComponentClass('bitrix:main.mail.confirm');
-		ob_end_clean();
-
-		if (
-			class_exists('MainMailConfirmComponent')
-			&& method_exists('MainMailConfirmComponent', 'prepareMailboxes')
-		)
-		{
-			$mailboxes = (array)MainMailConfirmComponent::prepareMailboxes();
-		}
-
-		return $mailboxes;
-	}
-
 	private static function makeMailboxesSelectOptions(array $mailboxes)
 	{
 		$options = array();
@@ -736,31 +713,35 @@ class CBPCrmSendEmailActivity extends CBPActivity
 				'Options' =>
 					['' => GetMessage('CRM_SEMA_EMAIL_TYPE_EMPTY_OPTION')]
 					+ \CCrmFieldMulti::GetEntityTypeList(\CCrmFieldMulti::EMAIL)
+			),
+			'UseLinkTracker' => array(
+				'Name' => GetMessage('CRM_SEMA_USE_LINK_TRACKER'),
+				'FieldName' => 'use_link_tracker',
+				'Type' => 'bool',
+				'Default' => 'Y'
 			)
 		);
 
-		$mailboxes = static::getMailboxes();
+		$mailboxes = Main\Mail\Sender::prepareUserMailboxes();
 
-		if (!empty($mailboxes))
-		{
-			//deprecated
-			$map['From'] = array(
-				'Name' => GetMessage('CRM_SEMA_EMAIL_FROM'),
-				'FieldName' => 'from',
-				'Type' => 'string'
-			);
+		//deprecated "From"
+		$map['From'] = array(
+			'Name' => GetMessage('CRM_SEMA_EMAIL_FROM'),
+			'FieldName' => 'from',
+			'Type' => 'string'
+		);
 
-			$map['MessageFrom'] = array(
-				'Name' => GetMessage('CRM_SEMA_EMAIL_FROM'),
-				'FieldName' => 'message_from',
-				'Type' => 'select',
-				'Options' => static::makeMailboxesSelectOptions($mailboxes)
-			);
+		$map['MessageFrom'] = array(
+			'Name' => GetMessage('CRM_SEMA_EMAIL_FROM'),
+			'FieldName' => 'message_from',
+			'Type' => 'select',
+			'Options' => static::makeMailboxesSelectOptions($mailboxes)
+		);
 
-			$dialog->setRuntimeData(array(
-				'mailboxes' => $mailboxes
-			));
-		}
+		$dialog->setRuntimeData(array(
+			'mailboxes' => $mailboxes
+		));
+
 		$dialog->setMap($map);
 
 		return $dialog;
@@ -777,6 +758,7 @@ class CBPCrmSendEmailActivity extends CBPActivity
 			'AttachmentType' => (string)$arCurrentValues["attachment_type"],
 			'MessageFrom' => (string)$arCurrentValues["message_from"],
 			'EmailType' => (string)$arCurrentValues["email_type"],
+			'UseLinkTracker' => $arCurrentValues["use_link_tracker"] === 'Y' ? 'Y' : 'N',
 
 			'MessageTextEncoded' => 0,
 			'Attachment' => array()

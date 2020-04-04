@@ -226,7 +226,8 @@ class CIntranetContactCenterListComponent extends \CBitrixComponent implements C
 				$itemParams = array(
 					'width' => 700,
 					'moduleId' => 'imopenlines',
-					'itemCode' => $itemCode
+					'itemCode' => $itemCode,
+					'allowChangeHistory' => false
 				);
 				$item["ONCLICK"] = $this->getOnclickScript($item["LINK"], $itemParams);
 			}
@@ -250,10 +251,37 @@ class CIntranetContactCenterListComponent extends \CBitrixComponent implements C
 	private function restGetItems()
 	{
 		$itemsList = $this->getContactCenterHandler()->restGetItems()->getData();
+		$systemItems = ["ccplacement", "chatbot", "telephonybot"];
+		//$canInstallApplication = \CRestUtil::canInstallApplication();
+		$canInstallApplication = true; //because we have to show this blocks for all users - whatever they can't install it without admin permission
 
-		foreach ($itemsList as &$item)
+		if ($canInstallApplication)
 		{
-			$item["ONCLICK"] = "BX.rest.AppLayout.openApplication(".$item["APP_ID"].",{ID:".$item["PLACEMENT_ID"]."},{PLACEMENT:'".\CIntranetRestService::CONTACT_CENTER_PLACEMENT."', PLACEMENT_ID:".$item["PLACEMENT_ID"]."})";
+			$itemsList["ccplacement"]["ONCLICK"] = "BX.rest.Marketplace.open({PLACEMENT: '".\CIntranetRestService::CONTACT_CENTER_PLACEMENT."'});";
+			$itemsList["chatbot"]["ONCLICK"] = "BX.rest.Marketplace.open({}, 'chat_bots');";
+			$itemsList["telephonybot"]["ONCLICK"] = "BX.rest.Marketplace.open({PLACEMENT: 'IVR_BOT'});";
+		}
+
+		foreach ($itemsList as $itemCode => &$item)
+		{
+			if (in_array($itemCode, $systemItems))
+			{
+				if (!$canInstallApplication)
+				{
+					unset($itemsList[$itemCode]);
+				}
+			}
+			else
+			{
+				$variableItemCode = "closeHandler".str_replace('.', '_', $itemCode);
+				$item["ONCLICK"] =  "var ".$variableItemCode." = function(){var curSlider = BX.SidePanel.Instance.getTopSlider();".
+									"BX.SidePanel.Instance.postMessage(curSlider, 'ContactCenter:reloadItem', {moduleId:'rest',itemCode:'".$itemCode."'})}; ".
+									"BX.rest.AppLayout.openApplication(".$item["APP_ID"].",".
+									"{ID:".$item["PLACEMENT_ID"]."},".
+									"{PLACEMENT:'".\CIntranetRestService::CONTACT_CENTER_PLACEMENT."', PLACEMENT_ID:".$item["PLACEMENT_ID"]."},".
+									$variableItemCode.",".
+									");";
+			}
 		}
 
 		return $itemsList;
@@ -367,7 +395,6 @@ class CIntranetContactCenterListComponent extends \CBitrixComponent implements C
 	{
 		$this->jsParams["signedParameters"] = $this->getSignedParameters();
 		$this->jsParams["componentName"] = $this->getName();
-		$this->jsParams["restPlacement"] = \CIntranetRestService::CONTACT_CENTER_PLACEMENT;
 
 		return $this->jsParams;
 	}
@@ -401,6 +428,10 @@ class CIntranetContactCenterListComponent extends \CBitrixComponent implements C
 		if (!empty($itemParams["moduleId"]) && !empty($itemParams["itemCode"]))
 		{
 			$reloadParams = "{moduleId:'".$itemParams["moduleId"]."',itemCode:'".$itemParams["itemCode"]."'}";
+		}
+		if (isset($itemParams["allowChangeHistory"]) && $itemParams["allowChangeHistory"] === false)
+		{
+			$params[] = "allowChangeHistory:false";
 		}
 
 		$params[] = "events: {onClose: function(e){BX.SidePanel.Instance.postMessage(e.getSlider(), 'ContactCenter:reloadItem', ".$reloadParams.")}}";
@@ -450,11 +481,6 @@ class CIntranetContactCenterListComponent extends \CBitrixComponent implements C
 			$this->arResult["ITEMS"] = $this->getItems();
 			$this->arResult["JS_PARAMS"] = $this->getJsParams();
 			$this->arResult["ADDITIONAL_STYLES"] = $this->additionalStyles;
-			$this->arResult["SHOW_APP_BANNER"] = false;
-			/*if (Loader::includeModule("rest"))
-			{
-				$this->arResult["SHOW_APP_BANNER"] = \CRestUtil::canInstallApplication();
-			}*/
 
 			$this->includeComponentTemplate();
 		}

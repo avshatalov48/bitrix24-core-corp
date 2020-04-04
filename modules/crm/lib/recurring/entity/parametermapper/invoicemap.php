@@ -38,6 +38,10 @@ abstract class InvoiceMap extends Map
 	const FIELD_DATE_PAY_BEFORE_TYPE = 61;
 	const FIELD_DATE_PAY_BEFORE_PERIOD = 62;
 	const FIELD_DATE_PAY_BEFORE_OFFSET = 63;
+	/** Additional fields */
+	const FIELD_IS_ALLOWED_TO_SEND_BILL = 70;
+	const FIELD_EMAIL_ID = 71;
+	const FIELD_EMAIL_TEMPLATE_ID = 72;
 
 	/**
 	 * @return array
@@ -156,18 +160,22 @@ abstract class InvoiceMap extends Map
 	{
 		$intervalCodes = [
 			Calculator::SALE_TYPE_DAY_OFFSET => [
-				DateType\Day::TYPE_ALTERNATING_DAYS => self::FIELD_DAILY_INTERVAL
+				DateType\Day::TYPE_ALTERNATING_DAYS => self::FIELD_DAILY_INTERVAL,
+				DateType\Day::TYPE_A_FEW_DAYS_AFTER => self::FIELD_INTERVAL,
 			],
 			Calculator::SALE_TYPE_WEEK_OFFSET => [
-				DateType\Day::TYPE_ALTERNATING_DAYS => self::FIELD_WEEKLY_INTERVAL
+				DateType\Day::TYPE_ALTERNATING_DAYS => self::FIELD_WEEKLY_INTERVAL,
+				DateType\Week::TYPE_A_FEW_WEEKS_AFTER => self::FIELD_INTERVAL,
 			],
 			Calculator::SALE_TYPE_MONTH_OFFSET => [
 				DateType\Month::TYPE_DAY_OF_ALTERNATING_MONTHS => self::FIELD_MONTHLY_FIRST_TYPE_INTERVAL,
 				DateType\Month::TYPE_WEEKDAY_OF_ALTERNATING_MONTHS => self::FIELD_MONTHLY_SECOND_TYPE_INTERVAL,
+				DateType\Month::TYPE_A_FEW_MONTHS_AFTER => self::FIELD_INTERVAL,
 			],
 			Calculator::SALE_TYPE_YEAR_OFFSET => [
 				DateType\Year::TYPE_DAY_OF_CERTAIN_MONTH => self::FIELD_YEARLY_FIRST_TYPE_INTERVAL_MONTH,
 				DateType\Year::TYPE_WEEKDAY_OF_CERTAIN_MONTH => self::FIELD_YEARLY_SECOND_TYPE_INTERVAL_MONTH,
+				DateType\Year::TYPE_ALTERNATING_YEAR => self::FIELD_INTERVAL,
 			],
 		];
 

@@ -3,7 +3,7 @@ require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/start.php");
 error_reporting(COption::GetOptionInt("main", "error_reporting", E_COMPILE_ERROR|E_ERROR|E_CORE_ERROR|E_PARSE));
 class CMainPage
 {
-	// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅ HTTP_HOST пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
+	// определяет сайт по HTTP_HOST в таблице сайтов
 	function GetSiteByHost()
 	{
 		$cur_host = $_SERVER["HTTP_HOST"];
@@ -38,7 +38,7 @@ class CMainPage
 		return false;
 	}
 
-	// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅ HTTP_ACCEPT_LANGUAGE
+	// определяет сайт по HTTP_ACCEPT_LANGUAGE
 	function GetSiteByAcceptLanguage($compare_site_id=false)
 	{
 		$site_id = false;
@@ -69,7 +69,7 @@ class CMainPage
 		return $site_id;
 	}
 
-	// пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅ
+	// делает перенаправление на сайт
 	function RedirectToSite($site)
 	{
 		if(strlen($site)<=0) return false;
@@ -82,7 +82,7 @@ class CMainPage
 		}
 	}
 
-	// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
+	// подключает страницу с папки другого сайта
 	function GetIncludeSitePage($site)
 	{
 		if(strlen($site)<=0) return false;

@@ -137,7 +137,7 @@
 					text = text.replace(new RegExp('\n', 'g'), '<br>');
 				}
 
-				document.execCommand("insertHTML", false, text);
+				document.execCommand("insertHTML", false, BX.Landing.Utils.escapeHtml(text));
 			}
 			else
 			{
@@ -149,7 +149,7 @@
 					text = text.replace(new RegExp('\n', 'g'), '<br>');
 				}
 
-				document.execCommand("paste", true, text);
+				document.execCommand("paste", true, BX.Landing.Utils.escapeHtml(text));
 			}
 		},
 

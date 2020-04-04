@@ -261,15 +261,18 @@
 	background-color: green;
 	color: white;
 }
+
 .docs-template-load-num-btn-block {
 	font-size: 0;
 	display: flex;
 	flex: 1;
 	align-items: center;
 }
+
 .docs-template-load-num-select-wrap{
 	display: flex;
 }
+
 .docs-template-load-num-btn {
 	color: #216bb6;
 	cursor: pointer;
@@ -308,13 +311,16 @@
 	box-sizing: border-box;
 	cursor: pointer;
 }
+
 .docs-template-load-row {
 	display: flex;
 	align-items: center;
 }
+
 .docs-template-load-box {
 	margin: 38px 0 18px 0;
 }
+
 .docs-template-load-caption {
 	font: 13px/22px "Helvetica Neue", Helvetica, Arial, sans-serif;
 	color: #A9ADB2;

@@ -4184,7 +4184,7 @@ class SmartMigrationWebdav
 					");
 
 					$this->connection->queryExecute("
-						INSERT INTO b_disk_deleted_log (STORAGE_ID, OBJECT_ID, TYPE, USER_ID, CREATE_TIME) VALUES
+						INSERT IGNORE INTO b_disk_deleted_log_v2 (STORAGE_ID, OBJECT_ID, TYPE, USER_ID, CREATE_TIME) VALUES
 						({$trashChild['STORAGE_ID']}, {$trashChild['ID']}, {$trashChild['TYPE']}, {$trashChild['UPDATED_BY']}, " . $this->sqlHelper->getCurrentDateTimeFunction() . ")
 					");
 
@@ -4420,7 +4420,7 @@ class SmartMigrationWebdav
 					");
 
 					$this->connection->queryExecute("
-						INSERT INTO b_disk_deleted_log (STORAGE_ID, OBJECT_ID, TYPE, USER_ID, CREATE_TIME)
+						INSERT IGNORE INTO b_disk_deleted_log_v2 (STORAGE_ID, OBJECT_ID, TYPE, USER_ID, CREATE_TIME)
 						SELECT {$trashChild['STORAGE_ID']}, p.OBJECT_ID, obj.TYPE, obj.UPDATED_BY, " . $this->sqlHelper->getCurrentDateTimeFunction() . " FROM b_disk_object obj
 							INNER JOIN b_disk_object_path p ON obj.ID = p.OBJECT_ID
 						WHERE p.PARENT_ID = {$trashChild['ID']}

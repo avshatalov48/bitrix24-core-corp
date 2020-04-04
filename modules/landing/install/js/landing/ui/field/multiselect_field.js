@@ -78,7 +78,7 @@
 		this.fields = new BaseCollection();
 
 		this.button = new BX.Landing.UI.Button.BaseButton("dropdown_button", {
-			text: BX.message("LINK_URL_SUGGESTS_SELECT"),
+			text: BX.Landing.Loc.getMessage("LINK_URL_SUGGESTS_SELECT"),
 			className: "landing-ui-button-select-link",
 			onClick: this.onButtonClick.bind(this)
 		});

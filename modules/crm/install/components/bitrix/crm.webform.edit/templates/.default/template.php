@@ -3,7 +3,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Json;
-use \Bitrix\Main\UI\Extension;
+use Bitrix\Main\UI\Extension;
+use Bitrix\Crm\UI\Webpack;
 
 /** @var array $arResult Component result. */
 /** @var array $arParams Component parameters. */
@@ -25,8 +26,9 @@ if(!$arResult['FORM']['LICENCE_BUTTON_CAPTION'])
 	$arResult['FORM']['LICENCE_BUTTON_CAPTION'] = Loc::getMessage('CRM_WEBFORM_EDIT_LICENCE_BUTTON_CAPTION_DEFAULT');
 }
 
-Extension::load('ui.buttons');
-Extension::load("ui.alerts");
+$isAvailableDesign = $arResult['IS_AVAILABLE_EMBEDDING'] && $arResult['FORM']['ID'];
+
+Extension::load(['ui.alerts', 'ui.buttons', 'color_picker',]);
 CUtil::InitJSCore(['date', 'sidepanel']);
 if(\Bitrix\Main\Loader::includeModule("socialnetwork"))
 {
@@ -56,10 +58,6 @@ $userBlockController = new CrmWebFormEditUserBlockController(
 
 <?$jsEventsManagerId = 'PageEventsManager_'.$arResult['COMPONENT_ID'];?>
 <script>
-	jsColorPickerMess = window.jsColorPickerMess = {
-		DefaultColor: '<?echo GetMessageJS('CRM_WEBFORM_EDIT_COLOR_BUTTON_DEFAULT');?>'
-	};
-
 	BX.ready(function()
 	{
 		BX.message['CRM_WEBFORM_EDIT_JS_PRODUCT_CHOICE'] = '<?=GetMessageJS('CRM_WEBFORM_EDIT_JS_PRODUCT_CHOICE')?>';
@@ -77,7 +75,7 @@ $userBlockController = new CrmWebFormEditUserBlockController(
 			booleanFieldItems: <?=CUtil::PhpToJSObject($arResult['BOOLEAN_FIELD_ITEMS'])?>,
 			isFrame: <?=CUtil::PhpToJSObject($arParams['IFRAME'])?>,
 			isSaved: <?=CUtil::PhpToJSObject($arParams['IS_SAVED'])?>,
-			reloadList: true,
+			reloadList: <?=CUtil::PhpToJSObject($arParams['RELOAD_LIST'])?>,
 			templates: {
 				field: 'tmpl_field_%type%',
 				dependency: 'tmpl_field_dependency',
@@ -92,11 +90,14 @@ $userBlockController = new CrmWebFormEditUserBlockController(
 			'detailPageUrlTemplate': '<?=CUtil::JSEscape($arParams['PATH_TO_WEB_FORM_EDIT'])?>',
 			'canRemoveCopyright': <?=($arResult['CAN_REMOVE_COPYRIGHT'] ? 'true' : 'false')?>,
 			currency: <?=CUtil::PhpToJSObject($arResult['CURRENCY'])?>,
+			designPageUrl: '<?=CUtil::JSEscape($arParams['PATH_TO_WEB_FORM_DESIGN'])?>',
+			isAvailableDesign: '<?=CUtil::JSEscape($isAvailableDesign)?>',
 			mess: <?=CUtil::PhpToJSObject(array(
 				'selectField' => Loc::getMessage('CRM_WEBFORM_EDIT_SELECT_FIELD'),
 				'selectFieldOrSection' => Loc::getMessage('CRM_WEBFORM_EDIT_SELECT_FIELD_OR_SECTION'),
 				'selectValue' => Loc::getMessage('CRM_WEBFORM_EDIT_SELECT_FIELD_VALUE'),
 				'newFieldSectionCaption' => Loc::getMessage('CRM_WEBFORM_EDIT_NEW_FIELD_SECTION_CAPTION'),
+				'newFieldPageCaption' => Loc::getMessage('CRM_WEBFORM_EDIT_NEW_FIELD_PAGE_CAPTION'),
 				'newFieldProductsCaption' => Loc::getMessage('CRM_WEBFORM_EDIT_NEW_FIELD_PRODUCT_CAPTION'),
 				'dlgContinue' => Loc::getMessage('CRM_WEBFORM_EDIT_CONTINUE'),
 				'dlgCancel' => Loc::getMessage('CRM_WEBFORM_EDIT_CANCEL'),
@@ -151,20 +152,38 @@ if (!empty($arResult['ERRORS']))
 		<div class="task-info-editor"></div>
 	</div>
 
-	<div class="crm-webform-edit-about-container">
-
+	<div class="crm-webform-edit-about-container" style="<?=(!$arResult['IS_AVAILABLE_EMBEDDING_PORTAL'] ? 'margin-bottom: 17px;' : '')?>">
 		<div class="crm-webform-edit-about-tune-container">
 			<span id="CRM_WEBFORM_STICKER_ENTITY_SCHEME_NAV" class="crm-webform-edit-about-tune"><?=Loc::getMessage('CRM_WEBFORM_EDIT_EDIT')?></span>
-		</div><!--crm-webform-edit-about-tune-container-->
+		</div>
 		<div class="crm-webform-edit-about-info-container">
 			<span id="CRM_WEBFORM_STICKER_ENTITY_SCHEME_TEXT" class="crm-webform-edit-about-info"><?=Loc::getMessage('CRM_WEBFORM_EDIT_DOCUMENT_CREATE')?>:
 				<span id="ENTITY_SCHEMES_TOP_DESCRIPTION" class="crm-webform-edit-about-info-deal">
 					<?=htmlspecialcharsbx($arResult['ENTITY_SCHEMES']['SELECTED_DESCRIPTION'])?>
 				</span>
 			</span>
-		</div><!--crm-webform-edit-about-info-container-->
+		</div>
+	</div>
 
-	</div><!--crm-webform-edit-about-container-->
+	<?if($arResult['IS_AVAILABLE_EMBEDDING_PORTAL']):?>
+	<div class="crm-webform-edit-v2-settings" <?=($isAvailableDesign ? '' : 'onclick="return false;"')?>>
+		<span class="ui-btn ui-btn-light-border ui-btn-xs <?=($isAvailableDesign ? '' : 'ui-btn-disabled')?>">
+			<?=Loc::getMessage('CRM_WEBFORM_EDIT_V2_DESIGN_SETUP')?>
+		</span>
+		<span class="crm-webform-edit-v2-settings-item-label">
+			<?if($arResult['FORM']['ID']):?>
+				<?if($arResult['IS_AVAILABLE_EMBEDDING']):?>
+					<?=Loc::getMessage('CRM_WEBFORM_EDIT_V2_DESIGN_TEXT')?>
+				<?else:?>
+					<?=Loc::getMessage('CRM_WEBFORM_EDIT_V2_DESIGN_TEXT_UNAVAILABLE')?>
+				<?endif;?>
+			<?else:?>
+				<?=Loc::getMessage('CRM_WEBFORM_EDIT_V2_DESIGN_TEXT_AFTER_CREATE')?>
+			<?endif;?>
+		</span>
+	</div>
+	<?endif;?>
+
 
 	<div class="crm-webform-edit-constructor-container" id="FORM_CONTAINER">
 
@@ -220,6 +239,11 @@ if (!empty($arResult['ERRORS']))
 					<li class="crm-webform-edit-right-add-element-list-item">
 						<span data-bx-crm-wf-selector-btn-add="br" class="crm-webform-element-list-line-break"><?=Loc::getMessage('CRM_WEBFORM_EDIT_FORM_TREE_ADD_FIELD_BR')?></span>
 					</li>
+					<?if($arResult['IS_AVAILABLE_EMBEDDING_PORTAL']):?>
+					<li class="crm-webform-edit-right-add-element-list-item">
+						<span data-bx-crm-wf-selector-btn-add="page" class="crm-webform-element-list-line-page"><?=Loc::getMessage('CRM_WEBFORM_EDIT_FORM_TREE_ADD_FIELD_PAGE')?></span>
+					</li>
+					<?endif;?>
 				</ul>
 			</div><!--crm-webform-edit-constructor-right-add-element-container-->
 
@@ -352,22 +376,8 @@ if (!empty($arResult['ERRORS']))
 						<span class="crm-webform-edit-left-field-colorpick-text-circle"></span>
 						<span class="crm-web-form-color-picker crm-webform-edit-left-field-colorpick-text"><?=Loc::getMessage('CRM_WEBFORM_EDIT_BUTTON_COLOR_FONT')?></span>
 					</span>
-
-					<?$APPLICATION->IncludeComponent(
-						"bitrix:main.colorpicker",
-						"",
-						Array(
-							"COMPONENT_TEMPLATE" => ".default",
-							"ID" => "",
-							"NAME" => "",
-							"ONSELECT" => "",
-							"SHOW_BUTTON" => "N"
-						)
-					);?>
-				</div><!--crm-webform-edit-left-field-colorpick-container-->
-			</div><!--crm-webform-edit-left-field-button-container-->
-
-
+				</div>
+			</div>
 		</div><!--crm-webform-edit-constructor-left-block-->
 
 	</div><!--crm-webform-edit-field-constructor-container-->
@@ -1004,6 +1014,7 @@ if (!empty($arResult['ERRORS']))
 			'',
 			array(
 				'FORM' => $arResult['FORM'],
+				'IS_AVAILABLE_EMBEDDING' => $arResult['IS_AVAILABLE_EMBEDDING'],
 				'PATH_TO_WEB_FORM_FILL' => $arParams['PATH_TO_WEB_FORM_FILL']
 			),
 			null,
@@ -1019,6 +1030,23 @@ if (!empty($arResult['ERRORS']))
 	<div class="task-additional-block" id="CRM_WEBFORM_ADDITIONAL_OPTIONS">
 
 		<div id="FIXED_OPTION_PLACE" class="crm-webform-edit-task-options task-openable-block">
+
+			<?if($arResult['IS_AVAILABLE_EMBEDDING_PORTAL']):?>
+			<div class="crm-webform-edit-task-options-item-destination-wrap">
+				<div class="crm-webform-edit-task-options-item crm-webform-edit-task-options-item-destination">
+					<span class="crm-webform-edit-task-options-item-param"><?=Loc::getMessage('CRM_WEBFORM_EDIT_LANGUAGE')?>:</span>
+					<div class="crm-webform-edit-task-options-item-open-inner">
+						<select name="LANGUAGE_ID" class="crm-webform-edit-task-options-rule-select">
+							<?foreach($arResult['LANGUAGES'] as  $languageId => $language):?>
+								<option value="<?=htmlspecialcharsbx($languageId)?>" <?=($language['SELECTED'] ? 'selected' : '')?>>
+									<?=htmlspecialcharsbx($language['NAME'])?>
+								</option>
+							<?endforeach;?>
+						</select>
+					</div>
+				</div>
+			</div>
+			<?endif;?>
 
 			<div id="CRM_WEBFORM_RESPONSIBLE" class="crm-webform-edit-task-options-item-destination-wrap">
 

@@ -251,6 +251,7 @@ $currency = trim(str_replace('#', '', $arCurFormat['FORMAT_STRING']));
 
 $vat = 0;
 $arCols = array();
+$arCells = array();
 
 $vat = 0;
 if (!empty($arBasketItems))
@@ -260,7 +261,6 @@ if (!empty($arBasketItems))
 
 	$arBasketItems = getMeasures($arBasketItems);
 
-	$arCells = array();
 	$arProps = array();
 
 	$columnList = array('NUMBER', 'NAME', 'QUANTITY', 'MEASURE', 'PRICE', 'VAT_RATE', 'DISCOUNT', 'SUM');
@@ -440,7 +440,8 @@ if (!empty($arBasketItems))
 
 	if (CSalePaySystemAction::GetParamValue('QUOTE_TOTAL_SHOW') == 'Y')
 	{
-		if ($sum < $GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["PRICE"])
+		$eps = 0.0001;
+		if ($GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["PRICE"] - $sum > $eps)
 		{
 			$arCells[++$n] = array();
 			for ($i = 0; $i < $columnCount; $i++)

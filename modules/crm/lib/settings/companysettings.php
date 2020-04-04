@@ -4,7 +4,6 @@ use Bitrix\Main;
 class CompanySettings
 {
 	const VIEW_LIST = EntityViewSettings::LIST_VIEW;
-	const VIEW_WIDGET = EntityViewSettings::WIDGET_VIEW;
 
 	/** @var CompanySettings  */
 	private static $current = null;
@@ -160,7 +159,6 @@ class CompanySettings
 
 			self::$descriptions= array(
 				self::VIEW_LIST => GetMessage('CRM_COMPANY_SETTINGS_VIEW_LIST'),
-				self::VIEW_WIDGET => GetMessage('CRM_COMPANY_SETTINGS_VIEW_WIDGET')
 			);
 		}
 		return self::$descriptions;

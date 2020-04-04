@@ -1,3 +1,3 @@
 <?
-$MESS["TITLE"] = "Search contacts";
+$MESS["TITLE"] = "Search Contacts";
 ?>

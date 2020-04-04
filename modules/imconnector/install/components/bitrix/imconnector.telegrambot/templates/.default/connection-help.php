@@ -23,12 +23,7 @@ use \Bitrix\Main\Localization\Loc;
 		   class="imconnector-field-button imconnector-field-button-connect">
 			<div class="imconnector-field-button-icon"></div>
 			<div class="imconnector-field-button-text">
-				<div class="imconnector-field-button-subtitle">
-					<?=Loc::getMessage('IMCONNECTOR_COMPONENT_TELEGRAMBOT_USING_TITLE')?>
-				</div>
-				<div class="imconnector-field-button-name">
-					<?=Loc::getMessage('IMCONNECTOR_COMPONENT_TELEGRAMBOT_CONNECT_BOT')?>
-				</div>
+				<?=Loc::getMessage('IMCONNECTOR_COMPONENT_TELEGRAMBOT_CONNECT_HELP')?>
 			</div>
 		</div>
 	</div>

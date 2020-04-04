@@ -10,7 +10,7 @@
 	position: relative;
 	height: 34px;
 	flex:1;
-	order:2;
+	order: 3;
 	/*top: 15px;*/
 	overflow: hidden;
 }
@@ -403,4 +403,37 @@
 	opacity: .3;
 	font-size: 26px;
 	line-height: 32px;
+}
+
+.search-title-top-list-limits {
+	display: flex;
+	padding: 0 29px 0 11px;
+	color: #525C69;
+}
+
+.search-title-top-list-limits-icon {
+	display: inline-block;
+	margin: 5px 18px 0 0;
+	width: 20px;
+	height: 24px;
+	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20viewBox%3D%220%200%2020%2024%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M8.907%2018.676a.81.81%200%200%200%20.808.808.81.81%200%200%200%20.808-.808v-2.164a1.73%201.73%200%200%200-.808-3.263%201.732%201.732%200%200%200-.808%203.263v2.164zm-6.678%203.11H17.56V9.34H2.23v12.446zM3.59%207.832V4.82A4.825%204.825%200%200%201%208.41%200h2.773a4.825%204.825%200%200%201%204.82%204.82v3.012h1.824c.665%200%201.205.54%201.205%201.205v13.052c0%20.666-.54%201.205-1.205%201.205H1.962c-.665%200-1.204-.54-1.204-1.205V9.037c0-.666.539-1.205%201.204-1.205H3.59zm1.561%200h9.29V4.82c0-1.989-1.27-3.26-3.258-3.26H8.41c-1.988%200-3.259%201.271-3.259%203.26v3.012z%22%20fill%3D%22%23469AF9%22%20fill-rule%3D%22evenodd%22/%3E%3C/svg%3E');
+	background-repeat: no-repeat;
+}
+
+.search-title-top-list-limits-name {
+	display: block;
+	margin: 0 0 12px 0;
+	font: 19px/32px "OpenSans-Light", "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+.search-title-top-list-limits-content {
+	font: 13px/18px "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+.search-title-top-list-limits-content p {
+	margin: 0 0 20px 0;
+}
+
+.search-title-top-list-limits-content p:last-child {
+	margin: 0;
 }

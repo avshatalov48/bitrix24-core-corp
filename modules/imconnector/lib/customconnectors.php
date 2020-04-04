@@ -352,6 +352,8 @@ class CustomConnectors
 
 			if(!empty($connector["ICON"]["DATA_IMAGE"]))
 			{
+				$connector["ICON"]["COLOR"] = !empty($connector["ICON"]["COLOR"]) ? $connector["ICON"]["COLOR"] : "#90be00";
+
 				$style = '.connector-icon-' . str_replace('.', '_', $connector['ID']) . ' {
 	' . (!empty($connector["ICON"]["COLOR"])? 'background-color: ' . $connector["ICON"]["COLOR"] : '') . ';
 	' . (!empty($connector["ICON"]["SIZE"])? 'background-size: ' . $connector["ICON"]["SIZE"] : '') . ';

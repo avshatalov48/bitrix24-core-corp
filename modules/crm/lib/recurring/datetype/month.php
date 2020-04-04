@@ -110,7 +110,7 @@ class Month extends Base
 			$this->interval === 1
 			&& $this->type === self::TYPE_DAY_OF_ALTERNATING_MONTHS
 			&& (int)$this->params[Day::FIELD_INTERVAL_NAME] > 0
-			&& (int)$this->startDate->format("j") >= (int)$this->params[Day::FIELD_INTERVAL_NAME]
+			&& (int)$this->startDate->format("j") > (int)$this->params[Day::FIELD_INTERVAL_NAME]
 		)
 		{
 			$monthValue++;

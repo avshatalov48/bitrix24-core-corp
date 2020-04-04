@@ -5,6 +5,7 @@ namespace Bitrix\Crm\Integration\DocumentGenerator\DataProvider;
 use Bitrix\Crm\Binding\DealContactTable;
 use Bitrix\Crm\Category\DealCategory;
 use Bitrix\Crm\DealTable;
+use Bitrix\Crm\Integration\DocumentGenerator\Value\Money;
 use Bitrix\DocumentGenerator\DataProvider\ArrayDataProvider;
 use Bitrix\DocumentGenerator\DataProvider\Filterable;
 use Bitrix\DocumentGenerator\DataProviderManager;
@@ -22,17 +23,20 @@ class Deal extends ProductsDataProvider implements Nameable, Filterable
 			$this->fields['STAGE'] = [
 				'TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_DEAL_STAGE_TITLE'),
 			];
+			$this->fields['CATEGORY'] = [
+				'TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_DEAL_CATEGORY_TITLE'),
+				'VALUE' => [$this, 'getCategory'],
+			];
+			$this->fields['CATEGORY_ID']['TITLE'] = GetMessage('CRM_DOCGEN_DATAPROVIDER_DEAL_CATEGORY_ID_TITLE');
 			$this->fields['TYPE'] = [
 				'TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_DEAL_TYPE_TITLE'),
 			];
 			$this->fields['EVENT'] = [
 				'TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_DEAL_EVENT_TITLE'),
 			];
-	//		$this->fields['LEAD'] = [
-	//			'PROVIDER' => Lead::class,
-	//			'VALUE' => 'LEAD_ID',
-	//			'TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_DEAL_LEAD_TITLE'),
-	//		];
+			$this->fields['SOURCE'] = [
+				'TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_DEAL_SOURCE_TITLE'),
+			];
 			$this->fields['CONTACTS'] = [
 				'TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_DEAL_CONTACTS_TITLE'),
 				'PROVIDER' => ArrayDataProvider::class,
@@ -47,6 +51,8 @@ class Deal extends ProductsDataProvider implements Nameable, Filterable
 				],
 				'VALUE' => [$this, 'getContacts'],
 			];
+			$this->fields['OPPORTUNITY']['TYPE'] = Money::class;
+			$this->fields['OPPORTUNITY']['FORMAT'] = ['CURRENCY_ID' => $this->getCurrencyId()];
 		}
 
 		return $this->fields;
@@ -105,6 +111,11 @@ class Deal extends ProductsDataProvider implements Nameable, Filterable
 		return $this->contacts;
 	}
 
+	public function getCategory()
+	{
+		return DealCategory::getName($this->getRawValue('CATEGORY_ID'));
+	}
+
 	protected function getTableClass()
 	{
 		return DealTable::class;
@@ -137,7 +148,6 @@ class Deal extends ProductsDataProvider implements Nameable, Filterable
 			'MODIFY_BY_ID',
 			'MODIFY_BY',
 			'EVENT_RELATION',
-			'LEAD_ID',
 			'LEAD_BY',
 			'CONTACT_ID',
 			'CONTACT_BY',
@@ -165,6 +175,7 @@ class Deal extends ProductsDataProvider implements Nameable, Filterable
 				'STAGE' => 'STAGE_BY.NAME',
 				'TYPE' => 'TYPE_BY.NAME',
 				'EVENT' => 'EVENT_BY.NAME',
+				'SOURCE' => 'SOURCE_BY.NAME',
 			],
 		]);
 	}
@@ -191,6 +202,18 @@ class Deal extends ProductsDataProvider implements Nameable, Filterable
 	}
 
 	/**
+	 * @param array $category
+	 * @return array
+	 */
+	public static function getExtendedProviderByCategory(array $category)
+	{
+		return [
+			'NAME' => static::getLangName().' ('.$category['NAME'].')',
+			'PROVIDER' => strtolower(static::class).'_category_'.$category['ID'],
+		];
+	}
+
+	/**
 	 * @return array
 	 */
 	public static function getExtendedList()
@@ -203,10 +226,7 @@ class Deal extends ProductsDataProvider implements Nameable, Filterable
 			$categories = DealCategory::getAll(true);
 			foreach($categories as $category)
 			{
-				$list[] = [
-					'NAME' => static::getLangName().' ('.$category['NAME'].')',
-					'PROVIDER' => strtolower(static::class).'_category_'.$category['ID'],
-				];
+				$list[] = static::getExtendedProviderByCategory($category);
 			}
 		}
 
@@ -225,5 +245,13 @@ class Deal extends ProductsDataProvider implements Nameable, Filterable
 		}
 
 		return static::class.'_%';
+	}
+
+	/**
+	 * @return bool
+	 */
+	protected function hasLeadField()
+	{
+		return true;
 	}
 }

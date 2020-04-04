@@ -10,24 +10,41 @@ if(SITE_TEMPLATE_ID === 'bitrix24')
 }
 
 // Product properties
-foreach($arResult['PROPS'] as $propID => $arProp)
+$editableProps = is_array($arResult['EDITABLE_PROPS']) ? $arResult['EDITABLE_PROPS'] : [];
+$editablePropsUserTypes = is_array($arResult['EDITABLE_PROP_USER_TYPES']) ? $arResult['EDITABLE_PROP_USER_TYPES'] : [];
+$propsUserTypes = is_array($arResult['PROP_USER_TYPES']) ? $arResult['PROP_USER_TYPES'] : [];
+foreach ($editableProps as $propID => $arProp)
 {
-	if (isset($arProp['USER_TYPE']) && !empty($arProp['USER_TYPE'])
-		&& !array_key_exists($arProp['USER_TYPE'], $arResult['PROP_USER_TYPES'])
-	)
-		continue;
-
-	if (isset($arResult['PROPERTY_VALUES'][$propID]))
+	if (!isset($arProp['USER_TYPE']) || empty($arProp['USER_TYPE'])
+		|| array_key_exists($arProp['USER_TYPE'], $editablePropsUserTypes))
 	{
+		if ($arProp['PROPERTY_TYPE'] === 'L' && $arProp['MULTIPLE'] === 'Y' && empty($arProp['USER_TYPE']))
+		{
+			$id = $propID.'[]';
+		}
+		else
+		{
+			$id = $propID;
+		}
+		$isHidden = false;
+		if (!isset($arResult['PROPERTY_VALUES'][$propID])
+			|| (isset($arProp['USER_TYPE']) && !empty($arProp['USER_TYPE'])
+				&& !array_key_exists($arProp['USER_TYPE'], $propsUserTypes)))
+		{
+			$isHidden = true;
+		}
 		$arResult['FIELDS']['tab_1'][] = array(
-			'id' => ($arProp['PROPERTY_TYPE'] === 'L' && $arProp['MULTIPLE'] === 'Y' && empty($arProp['USER_TYPE'])) ? $propID.'[]' : $propID,
+			'id' => $id,
 			'name' => $arProp['NAME'],
 			'type' => 'custom',
 			'value' => $arResult['PROPERTY_VALUES'][$propID],
-			'isTactile' => true
+			'isTactile' => true,
+			'isHidden' => $isHidden
 		);
+		unset($isHidden);
 	}
 }
+unset($editableProps, $editablePropsUserTypes, $propsUserTypes);
 
 $arTabs = array();
 $arTabs[] = array(

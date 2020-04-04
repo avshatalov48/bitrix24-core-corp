@@ -581,7 +581,7 @@ class ContactCompanyTable extends Entity\DataManager
 		);
 	}
 	/**
-	 * Prepage SQL join filter condition for specified entity.
+	 * Prepare SQL join filter condition for specified entity.
 	 * @param int $entityTypeID Entity type ID for filter.
 	 * @param int $entityID Entity ID for filter.
 	 * @param string $tableAlias Alias of primary table.
@@ -622,6 +622,53 @@ class ContactCompanyTable extends Entity\DataManager
 		elseif($entityTypeID === \CCrmOwnerType::Contact)
 		{
 			return "INNER JOIN b_crm_contact_company CC ON CC.CONTACT_ID = {$entityID} AND CC.COMPANY_ID = {$tableAlias}.ID";
+		}
+
+		$entityTypeName = \CCrmOwnerType::ResolveName($entityTypeID);
+		throw new Main\NotSupportedException("Entity type: '{$entityTypeName}' is not supported in current context");
+	}
+
+	/**
+	 * Prepare SQL join filter condition for specified entity by entity title.
+	 * @param int $entityTypeID Entity type ID for filter.
+	 * @param string $entityTitle Entity Title for filter.
+	 * @param string $tableAlias Alias of primary table.
+	 * @return string
+	 * @throws Main\ArgumentOutOfRangeException
+	 * @throws Main\NotSupportedException
+	 */
+	public static function prepareFilterJoinSqlByTitle($entityTypeID, $entityTitle, $tableAlias)
+	{
+		if(!is_int($entityTypeID))
+		{
+			$entityTypeID = (int)$entityTypeID;
+		}
+
+		if(!\CCrmOwnerType::IsDefined($entityTypeID))
+		{
+			throw new Main\ArgumentOutOfRangeException('entityTypeID',
+				\CCrmOwnerType::FirstOwnerType,
+				\CCrmOwnerType::LastOwnerType
+			);
+		}
+
+		if(!is_string($entityTitle))
+		{
+			$entityTitle = (string)$entityTitle;
+		}
+
+		if($entityTitle === '')
+		{
+			return '';
+		}
+
+		$entityTitle = \CSQLWhere::ForLIKE($entityTitle);
+		if($entityTypeID === \CCrmOwnerType::Company)
+		{
+			return "INNER JOIN (
+				SELECT CC.CONTACT_ID FROM b_crm_contact_company CC INNER JOIN b_crm_company C 
+					ON C.ID = CC.COMPANY_ID AND C.TITLE LIKE '{$entityTitle}%' ESCAPE '!' GROUP BY CC.CONTACT_ID
+			) CC ON {$tableAlias}.ID = CC.CONTACT_ID";
 		}
 
 		$entityTypeName = \CCrmOwnerType::ResolveName($entityTypeID);

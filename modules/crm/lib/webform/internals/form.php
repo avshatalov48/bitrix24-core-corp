@@ -61,6 +61,9 @@ class FormTable extends ORM\Data\DataManager
 				'data_type' => 'datetime',
 				'default_value' => new DateTime(),
 			),
+			'LANGUAGE_ID' => array(
+				'data_type' => 'string',
+			),
 			'NAME' => array(
 				'data_type' => 'string',
 				'required' => true,

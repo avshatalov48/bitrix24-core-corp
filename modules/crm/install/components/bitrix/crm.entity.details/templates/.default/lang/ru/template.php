@@ -40,4 +40,6 @@ $MESS["CRM_ENT_DETAIL_DEAL_CATEGORY_DLG_TITLE"] = "Настройка сделк
 $MESS["CRM_ENT_DETAIL_DEAL_CATEGORY_DLG_FIELD"] = "Направление";
 $MESS["CRM_ENT_DETAIL_BUTTON_SAVE"] = "Сохранить";
 $MESS["CRM_ENT_DETAIL_BUTTON_CANCEL"] = "Отмена";
+$MESS["CRM_ENT_DETAIL_DELETION_WARNING"] = "Обратите внимание, что удаление данных может привести к искажению аналитических отчётов.";
+$MESS["CRM_ENT_DETAIL_DELETION_GO_TO_DETAILS"] = "Подробнее";
 

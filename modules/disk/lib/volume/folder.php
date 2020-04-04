@@ -141,6 +141,7 @@ class Folder extends Volume\Base implements Volume\IVolumeIndicatorLink, Volume\
 					GROUP BY 
 						pth.PARENT_ID
 						{$subGroupSql}
+					ORDER BY NULL
 				) CNT_FILES
 
 				INNER JOIN b_disk_object_path path ON CNT_FILES.PARENT_ID = path.OBJECT_ID
@@ -228,6 +229,7 @@ class Folder extends Volume\Base implements Volume\IVolumeIndicatorLink, Volume\
 					GROUP BY 
 						files.PARENT_ID
 						{$subGroupSql}
+					ORDER BY NULL
 				) CNT_FILES
 
 				INNER JOIN b_disk_object folder ON folder.ID = CNT_FILES.PARENT_ID
@@ -291,6 +293,7 @@ class Folder extends Volume\Base implements Volume\IVolumeIndicatorLink, Volume\
 					GROUP BY
 						pth.PARENT_ID
 						{$subGroupSql}
+					ORDER BY NULL
 				) CNT_PREVIEW
 					ON CNT_PREVIEW.PARENT_ID = CNT_FILES.PARENT_ID
 			";
@@ -346,6 +349,7 @@ class Folder extends Volume\Base implements Volume\IVolumeIndicatorLink, Volume\
 					GROUP BY
 						files.PARENT_ID
 						{$subGroupSql}
+					ORDER BY NULL
 				) CNT_PREVIEW
 					ON CNT_PREVIEW.PARENT_ID = CNT_FILES.PARENT_ID
 			";
@@ -398,7 +402,7 @@ class Folder extends Volume\Base implements Volume\IVolumeIndicatorLink, Volume\
 					GROUP BY 
 						pth.PARENT_ID
 						{$subGroupSql}
-					
+					ORDER BY NULL
 				) CNT_ATTACH
 					ON CNT_ATTACH.PARENT_ID = CNT_FILES.PARENT_ID
 			";
@@ -451,7 +455,7 @@ class Folder extends Volume\Base implements Volume\IVolumeIndicatorLink, Volume\
 					GROUP BY 
 						pth.PARENT_ID
 						{$subGroupSql}
-					
+					ORDER BY NULL
 				) CNT_LINK
 					ON CNT_LINK.PARENT_ID = CNT_FILES.PARENT_ID
 			";
@@ -505,6 +509,7 @@ class Folder extends Volume\Base implements Volume\IVolumeIndicatorLink, Volume\
 					GROUP BY 
 						pth.PARENT_ID
 						{$subGroupSql}
+					ORDER BY NULL
 				) CNT_SHARING
 					ON CNT_FILES.PARENT_ID = CNT_SHARING.PARENT_ID
 			";
@@ -569,6 +574,7 @@ class Folder extends Volume\Base implements Volume\IVolumeIndicatorLink, Volume\
 								SELECT  object_id, max(id) as id
 								FROM b_disk_version 
 								GROUP BY object_id
+								ORDER BY NULL
 							) head ON head.OBJECT_ID = files.ID
 	
 							LEFT JOIN b_disk_attached_object  attached
@@ -594,9 +600,11 @@ class Folder extends Volume\Base implements Volume\IVolumeIndicatorLink, Volume\
 							files.ID,
 							pth.PARENT_ID
 							{$subGroupSql}
+						ORDER BY NULL
 					) src
 					GROUP BY
 						src.PARENT_ID
+					ORDER BY NULL
 				) CNT_FREE
 					ON CNT_FREE.PARENT_ID = CNT_FILES.PARENT_ID
 			";
@@ -660,6 +668,7 @@ class Folder extends Volume\Base implements Volume\IVolumeIndicatorLink, Volume\
 								SELECT  object_id, max(id) as id
 								FROM b_disk_version 
 								GROUP BY object_id
+								ORDER BY NULL
 							) head ON head.OBJECT_ID = files.ID
 	
 							LEFT JOIN b_disk_attached_object  attached
@@ -685,9 +694,11 @@ class Folder extends Volume\Base implements Volume\IVolumeIndicatorLink, Volume\
 							files.ID,
 							files.PARENT_ID
 							{$subGroupSql}
+						ORDER BY NULL
 					) src
 					GROUP BY
 						src.PARENT_ID
+					ORDER BY NULL
 				) CNT_FREE
 					ON CNT_FREE.PARENT_ID = CNT_FILES.PARENT_ID
 			";
@@ -850,15 +861,22 @@ class Folder extends Volume\Base implements Volume\IVolumeIndicatorLink, Volume\
 
 		$querySql = implode("\n\n UNION \n\n", $queries);
 
+		VolumeTable::createTemporally();
 		$tableName = VolumeTable::getTableName();
+		$temporallyTableName = VolumeTable::getTemporallyName();
+
+		$columnList = Volume\QueryHelper::prepareInsert($columns, $this->getSelect());
+		$connection->queryExecute("INSERT INTO {$temporallyTableName} ({$columnList}) {$querySql}");
+
+		$temporallyDataSource = "SELECT {$columnList} FROM {$temporallyTableName}";
 
 		if ($this->getFilterId() > 0)
 		{
 			$columnList = Volume\QueryHelper::prepareUpdateOnSelect($columns, $this->getSelect(), 'destinationTbl', 'sourceQuery');
-			$sql = "
+			$connection->queryExecute("
 				UPDATE 
 					{$tableName} destinationTbl, 
-					({$querySql}) sourceQuery 
+					({$temporallyDataSource}) sourceQuery 
 				SET {$columnList} 
 				WHERE 
 					destinationTbl.INDICATOR_TYPE = '{$indicatorType}'
@@ -867,14 +885,14 @@ class Folder extends Volume\Base implements Volume\IVolumeIndicatorLink, Volume\
 					AND destinationTbl.FOLDER_ID = sourceQuery.FOLDER_ID
 					AND (destinationTbl.PARENT_ID = sourceQuery.PARENT_ID 
 						OR (destinationTbl.PARENT_ID IS NULL AND sourceQuery.PARENT_ID IS NULL))
-			";
-			$connection->queryExecute($sql);
+			");
 		}
 		else
 		{
-			$columnList = Volume\QueryHelper::prepareInsert($columns, $this->getSelect());
-			$connection->queryExecute("INSERT INTO {$tableName} ({$columnList}) {$querySql}");
+			$connection->queryExecute("INSERT INTO {$tableName} ({$columnList}) {$temporallyDataSource}");
 		}
+
+		VolumeTable::dropTemporally();
 
 		$this->recalculatePercent();
 
@@ -1079,8 +1097,11 @@ class Folder extends Volume\Base implements Volume\IVolumeIndicatorLink, Volume\
 			throw new ArgumentTypeException('Fragment must be subclass of '.\Bitrix\Disk\Folder::className());
 		}
 
-		//$storage = $fragment->getStorage();
 		if (in_array($fragment->getEntityType(), \Bitrix\Disk\Volume\Module\Im::getEntityType()))
+		{
+			return null;
+		}
+		if (in_array($fragment->getEntityType(), \Bitrix\Disk\Volume\Module\Mail::getEntityType()))
 		{
 			return null;
 		}

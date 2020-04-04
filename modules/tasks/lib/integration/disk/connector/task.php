@@ -40,19 +40,21 @@ class Task extends StubConnector
 	public function getDataToShow()
 	{
 		$data = $this->loadTaskData($this->getUser()->getId());
-		if(!$data)
+
+		if (!$data)
 		{
 			return null;
 		}
-		return array(
+
+		return [
 			'TITLE' => $this->getTitle(),
-			'DETAIL_URL' => \CComponentEngine::makePathFromTemplate($this->getPathToTask(), array(
-				"user_id" => $data['RESPONSIBLE_ID'],
-				"task_id" => $data['ID'],
-			)),
+			'DETAIL_URL' => \CComponentEngine::makePathFromTemplate($this->getPathToTask(), [
+				'user_id' => $data['RESPONSIBLE_ID'],
+				'task_id' => $data['ID'],
+			]),
 			'DESCRIPTION' => Ui\Text::killTags($data['TITLE']),
 			'MEMBERS' => $this->getDestinations(),
-		);
+		];
 	}
 
 	protected function getTitle()
@@ -67,41 +69,34 @@ class Task extends StubConnector
 
 	protected function getDestinations()
 	{
-		if($this->taskPostData === null)
+		if ($this->taskPostData === null)
 		{
-			return array();
+			return [];
 		}
-		$members = array();
 
-		if(!empty($this->taskPostData['RESPONSIBLE_ID']))
+		$members = [];
+		$possibleMembers = [
+			'RESPONSIBLE' => 'RESPONSIBLE_ID',
+			'CREATED_BY' => 'CREATED_BY',
+		];
+
+		foreach ($possibleMembers as $role => $idKey)
 		{
-			$members[] = array(
-				"NAME" => \CUser::formatName('#NAME# #LAST_NAME#', array(
-					'NAME' => $this->taskPostData['RESPONSIBLE_NAME'],
-					'LAST_NAME' => $this->taskPostData['RESPONSIBLE_LAST_NAME'],
-					'SECOND_NAME' => $this->taskPostData['RESPONSIBLE_SECOND_NAME'],
-					'ID' => $this->taskPostData['RESPONSIBLE_ID'],
-					'LOGIN' => $this->taskPostData['RESPONSIBLE_LOGIN'],
-				), true, false),
-				"LINK" => \CComponentEngine::makePathFromTemplate($this->getPathToUser(), array("user_id" => $this->taskPostData['RESPONSIBLE_ID'])),
-				'AVATAR_SRC' => Ui\Avatar::getPerson($this->taskPostData['RESPONSIBLE_PHOTO']),
-				"IS_EXTRANET" => "N",
-			);
-		}
-		if(!empty($this->taskPostData['CREATED_BY']))
-		{
-			$members[] = array(
-				"NAME" => \CUser::formatName('#NAME# #LAST_NAME#', array(
-					'NAME' => $this->taskPostData['CREATED_BY_NAME'],
-					'LAST_NAME' => $this->taskPostData['CREATED_BY_LAST_NAME'],
-					'SECOND_NAME' => $this->taskPostData['CREATED_BY_SECOND_NAME'],
-					'ID' => $this->taskPostData['CREATED_BY'],
-					'LOGIN' => $this->taskPostData['CREATED_BY_LOGIN'],
-				), true, false),
-				"LINK" => \CComponentEngine::makePathFromTemplate($this->getPathToUser(), array("user_id" => $this->taskPostData['CREATED_BY'])),
-				'AVATAR_SRC' => Ui\Avatar::getPerson($this->taskPostData['CREATED_BY_PHOTO']),
-				"IS_EXTRANET" => "N",
-			);
+			if (!empty($this->taskPostData[$idKey]))
+			{
+				$members[$this->taskPostData[$idKey]] = [
+					'NAME' => \CUser::formatName('#NAME# #LAST_NAME#', [
+						'NAME' => $this->taskPostData[$role.'_NAME'],
+						'LAST_NAME' => $this->taskPostData[$role.'_LAST_NAME'],
+						'SECOND_NAME' => $this->taskPostData[$role.'_SECOND_NAME'],
+						'ID' => $this->taskPostData[$idKey],
+						'LOGIN' => $this->taskPostData[$role.'_LOGIN'],
+					], true, false),
+					'LINK' => \CComponentEngine::makePathFromTemplate($this->getPathToUser(), ['user_id' => $this->taskPostData[$idKey]]),
+					'AVATAR_SRC' => Ui\Avatar::getPerson($this->taskPostData[$role.'_PHOTO']),
+					'IS_EXTRANET' => 'N',
+				];
+			}
 		}
 
 		return $members;

@@ -20,9 +20,27 @@ class CBPCreateCrmDealDocumentActivity
 			return CBPActivityExecutionStatus::Closed;
 		}
 
-		$documentId = \CCrmBizProcHelper::ResolveDocumentType(\CCrmOwnerType::Deal);
+		$documentType = \CCrmBizProcHelper::ResolveDocumentType(\CCrmOwnerType::Deal);
 		$documentService = $this->workflow->GetService('DocumentService');
-		$this->DealId = $documentService->CreateDocument($documentId, $this->Fields);
+
+		$fields = $this->Fields;
+
+		foreach (['BEGINDATE', 'CLOSEDATE'] as $dateFields)
+		{
+			if (isset($fields[$dateFields]))
+			{
+				$fieldTypeObject = $documentService->getFieldTypeObject($documentType, ['Type' => 'datetime']);
+				if ($fieldTypeObject)
+				{
+					$fields[$dateFields] = $fieldTypeObject->externalizeValue(
+						'Document',
+						$fields[$dateFields]
+					);
+				}
+			}
+		}
+
+		$this->DealId = $documentService->CreateDocument($documentType, $fields);
 
 		return CBPActivityExecutionStatus::Closed;
 	}

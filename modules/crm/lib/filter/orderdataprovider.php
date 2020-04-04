@@ -2,10 +2,12 @@
 namespace Bitrix\Crm\Filter;
 
 use Bitrix\Main;
+use Bitrix\Sale;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm\Counter\EntityCounterType;
 
 Loc::loadMessages(__FILE__);
+Main\Loader::includeModule('sale');
 
 class OrderDataProvider extends EntityDataProvider
 {
@@ -65,7 +67,7 @@ class OrderDataProvider extends EntityDataProvider
 			),
 			'RESPONSIBLE_ID' => $this->createField(
 				'RESPONSIBLE_ID',
-				array('type' => 'custom_entity', 'default' => true, 'partial' => true)
+				array('type' => 'dest_selector', 'default' => true, 'partial' => true)
 			),
 			'STATUS_ID' => $this->createField(
 				'STATUS_ID',
@@ -81,11 +83,11 @@ class OrderDataProvider extends EntityDataProvider
 			),
 			'CONTACT_ID' => $this->createField(
 				'CONTACT_ID',
-				array('type' => 'custom_entity', 'partial' => true)
+				array('type' => 'dest_selector', 'partial' => true)
 			),
 			'COMPANY_ID' => $this->createField(
 				'COMPANY_ID',
-				array('type' => 'custom_entity', 'partial' => true)
+				array('type' => 'dest_selector', 'partial' => true)
 			),
 			'ACTIVITY_COUNTER' => $this->createField(
 				'ACTIVITY_COUNTER',
@@ -94,8 +96,22 @@ class OrderDataProvider extends EntityDataProvider
 			'SOURCE_ID' => $this->createField(
 				'SOURCE_ID',
 				array('type' => 'list', 'default' => true, 'partial' => true)
-			)
+			),
+			'PAY_SYSTEM' => $this->createField(
+				'PAY_SYSTEM',
+				array('type' => 'list', 'default' => true, 'partial' => true)
+			),
+			'DELIVERY_SERVICE' => $this->createField(
+				'DELIVERY_SERVICE',
+				array('type' => 'list', 'default' => true, 'partial' => true)
+			),
+			'COUPON' => $this->createField('COUPON'),
+			'SHIPMENT_TRACKING_NUMBER' => $this->createField('SHIPMENT_TRACKING_NUMBER'),
+			'SHIPMENT_DELIVERY_DOC_DATE' => $this->createField('SHIPMENT_DELIVERY_DOC_DATE', array('type' => 'date')),
+			'XML_ID' => $this->createField('XML_ID'),
 		);
+
+		$result = array_merge($result, $this->getPropertyFields());
 
 		return $result;
 	}
@@ -111,9 +127,17 @@ class OrderDataProvider extends EntityDataProvider
 		if ($fieldID === 'RESPONSIBLE_ID')
 		{
 			return array(
-				'selector' => array(
-					'TYPE' => 'user',
-					'DATA' => array('ID' => 'responsible', 'FIELD_ID' => 'RESPONSIBLE_ID')
+				'params' => array(
+					'context' => 'CRM_ORDER_FILTER_RESPONSIBLE_ID',
+					'multiple' => 'Y',
+					'contextCode' => 'U',
+					'enableAll' => 'N',
+					'enableSonetgroups' => 'N',
+					'allowEmailInvitation' => 'N',
+					'allowSearchEmailUsers' => 'N',
+					'departmentSelectDisable' => 'Y',
+					'isNumeric' => 'Y',
+					'prefix' => 'U',
 				)
 			);
 		}
@@ -144,34 +168,49 @@ class OrderDataProvider extends EntityDataProvider
 		{
 			return array(
 				'params' => array('multiple' => 'N'),
-				'items' =>  \Bitrix\Crm\Order\PersonType::load(SITE_ID)
+				'items' =>  $this->getPersonTypes()
 			);
 		}
 		elseif($fieldID === 'CONTACT_ID')
 		{
 			return array(
-				'selector' => array(
-					'TYPE' => 'crm_entity',
-					'DATA' => array(
-						'ID' => 'contact',
-						'FIELD_ID' => 'CONTACT_ID',
-						'FIELD_ALIAS' => 'ASSOCIATED_CONTACT_ID',
-						'ENTITY_TYPE_NAMES' => array(\CCrmOwnerType::ContactName)
-						//'IS_MULTIPLE' => true
-					)
+				'alias' => 'ASSOCIATED_CONTACT_ID',
+				'params' => array(
+					'apiVersion' => 3,
+					'context' => 'CRM_ORDER_FILTER_CONTACT_ID',
+					'contextCode' => 'CRM',
+					'useClientDatabase' => 'N',
+					'enableAll' => 'N',
+					'enableDepartments' => 'N',
+					'enableUsers' => 'N',
+					'enableSonetgroups' => 'N',
+					'allowEmailInvitation' => 'N',
+					'allowSearchEmailUsers' => 'N',
+					'departmentSelectDisable' => 'Y',
+					'enableCrm' => 'Y',
+					'enableCrmContacts' => 'Y',
+					'convertJson' => 'Y'
 				)
 			);
 		}
 		elseif($fieldID === 'COMPANY_ID')
 		{
 			return array(
-				'selector' => array(
-					'TYPE' => 'crm_entity',
-					'DATA' => array(
-						'ID' => 'company',
-						'FIELD_ID' => 'COMPANY_ID',
-						'ENTITY_TYPE_NAMES' => array(\CCrmOwnerType::CompanyName)
-					)
+				'params' => array(
+					'apiVersion' => 3,
+					'context' => 'CRM_ORDER_FILTER_COMPANY_ID',
+					'contextCode' => 'CRM',
+					'useClientDatabase' => 'N',
+					'enableAll' => 'N',
+					'enableDepartments' => 'N',
+					'enableUsers' => 'N',
+					'enableSonetgroups' => 'N',
+					'allowEmailInvitation' => 'N',
+					'allowSearchEmailUsers' => 'N',
+					'departmentSelectDisable' => 'Y',
+					'enableCrm' => 'Y',
+					'enableCrmCompanies' => 'Y',
+					'convertJson' => 'Y'
 				)
 			);
 		}
@@ -189,33 +228,36 @@ class OrderDataProvider extends EntityDataProvider
 				'items' => $this->getSources()
 			);
 		}
+		elseif($fieldID === 'PAY_SYSTEM')
+		{
+			return array(
+				'params' => array('multiple' => 'Y'),
+				'items' => $this->getPaySystems()
+			);
+		}
+		elseif($fieldID === 'DELIVERY_SERVICE')
+		{
+			return array(
+				'params' => array('multiple' => 'Y'),
+				'items' => $this->getDeliveryServices()
+			);
+		}
+		elseif (preg_match("/^PROPERTY_/", $fieldID))
+		{
+			return $this->getPropertyListData($fieldID);
+		}
 
 		return null;
 	}
 
-	/**
-	 * Prepare Field additional HTML.
-	 * @param Field $field Field.
-	 * @return string
-	 */
-	public function prepareFieldHtml(Field $field)
+	private function getPersonTypes()
 	{
-		$info = $field->getDataItem('selector');
-		if(!is_array($info))
+		static $personTypes = null;
+		if (empty($personTypes))
 		{
-			return '';
+			$personTypes = \Bitrix\Crm\Order\PersonType::load(SITE_ID);
 		}
-
-		$type = isset($info['TYPE']) ? $info['TYPE'] : '';
-		if($type === 'user')
-		{
-			return $this->getUserSelectorHtml($field);
-		}
-		elseif($type === 'crm_entity')
-		{
-			return $this->getCrmSelectorHtml($field);
-		}
-		return '';
+		return $personTypes;
 	}
 
 	/**
@@ -225,7 +267,7 @@ class OrderDataProvider extends EntityDataProvider
 	private function getSources()
 	{
 		$result = [];
-		if (Main\Loader::includeModule('landing') && Main\Loader::includeModule('sale'))
+		if (Main\Loader::includeModule('landing'))
 		{
 			$tradingPlatforms = [];
 			$platformData = \Bitrix\Landing\Site::getList([
@@ -257,6 +299,245 @@ class OrderDataProvider extends EntityDataProvider
 			}
 		}
 
+		return $result;
+	}
+
+	/**
+	 * @return array
+	 */
+	private function getProperties()
+	{
+		static $properties = [];
+		if (empty($properties))
+		{
+			$propertiesRaw = \Bitrix\Crm\Order\Property::getList(
+				array(
+					'filter' => array(
+						'=ACTIVE' => 'Y',
+						'=IS_FILTERED' => 'Y',
+						'=TYPE' => ['STRING', 'NUMBER', 'Y/N', 'ENUM', 'DATE']
+					),
+					'order' => array(
+						"PERSON_TYPE_ID" => "ASC", "SORT" => "ASC"
+					),
+					'select' => array(
+						"ID", "NAME", "PERSON_TYPE_NAME" => "PERSON_TYPE.NAME", "LID" => "PERSON_TYPE.LID", "PERSON_TYPE_ID", "SORT", "IS_FILTERED", "TYPE", "CODE", "SETTINGS"
+					),
+				)
+			);
+
+			while ($property = $propertiesRaw->fetch())
+			{
+				$properties['PROPERTY_'.$property['ID']] = $property;
+			}
+		}
+
+		return $properties;
+	}
+
+	/**
+	 * @return array
+	 */
+	private function getPropertyFields()
+	{
+		$result = [];
+		foreach ($this->getProperties() as $key => $property)
+		{
+			if ($property['TYPE'] === 'Y/N')
+			{
+				$type = 'checkbox';
+			}
+			elseif ($property['TYPE'] === 'ENUM')
+			{
+				$type = 'list';
+			}
+			else
+			{
+				$type = strtolower($property['TYPE']);
+			}
+
+			$name = htmlspecialcharsbx("{$property['NAME']} ({$property['PERSON_TYPE_NAME']}) [{$property['LID']}]");
+
+			$result[$key] = $this->createField(
+				$key,
+				[
+					'type' => $type,
+					'default' => false,
+					'name' => $name,
+					'partial' => true
+				]
+			);
+		}
+
+		return $result;
+	}
+
+	/**
+	 * @param $code
+	 */
+	private function getPropertyListData($code)
+	{
+		static $propertyValues = [];
+		$properties = $this->getProperties();
+		if (!isset($properties[$code]) || $properties[$code]['TYPE'] !== 'ENUM')
+		{
+			return null;
+		}
+
+		if (empty($propertyValues))
+		{
+			$propertyIds = [];
+			/** @var \Bitrix\Crm\Filter\Field $property */
+			foreach ($properties as $property)
+			{
+				if ($property['TYPE'] !== 'ENUM')
+				{
+					continue;
+				}
+				$propertyIds[] = (int)$property['ID'];
+			}
+
+			if (empty($propertyIds))
+			{
+				return [];
+			}
+
+			$result = \Bitrix\Crm\Order\PropertyVariant::getList([
+				'filter' => ['=ORDER_PROPS_ID' => $propertyIds],
+				'order' => ['SORT' => 'ASC']
+			]);
+			while ($row = $result->fetch())
+			{
+				$propertyCode = 'PROPERTY_'.$row['ORDER_PROPS_ID'];
+				$propertyValues[$propertyCode][$row['VALUE']] = htmlspecialcharsbx($row['NAME']);
+			}
+		}
+
+		return [
+			'params' => [
+				'multiple' => ($properties[$code]['MULTIPLE'] === 'Y') ? 'Y' : 'N'
+			],
+			'items' => $propertyValues[$code]
+		];
+	}
+
+	/**
+	 * @return array
+	 */
+	private function getPaySystems()
+	{
+		$result = [];
+		$personTypes = $this->getPersonTypes();
+
+		$res = Sale\PaySystem\Manager::getList(array(
+			'select' => array('ID', 'NAME'),
+			'filter' => array(
+				'ACTIVE' => 'Y',
+				'=ENTITY_REGISTRY_TYPE' => Sale\Registry::REGISTRY_TYPE_ORDER
+			),
+			'order' => array("SORT"=>"ASC", "NAME"=>"ASC")
+		));
+
+		$paySystemList = [];
+		while ($paySystem = $res->fetch())
+		{
+			$paySystemList[$paySystem['ID']]['NAME'] = $paySystem['NAME'];
+		}
+
+		if (!empty($paySystemList))
+		{
+			$restrictionsRaw = Sale\Services\PaySystem\Restrictions\Manager::getList(array(
+				'select' => array('SERVICE_ID', 'PARAMS'),
+				'filter' => array(
+					'=CLASS_NAME' => '\\'.Sale\Services\PaySystem\Restrictions\PersonType::class,
+					'SERVICE_ID' => array_keys($paySystemList)
+				)
+			));
+
+			while ($restriction = $restrictionsRaw->fetch())
+			{
+				$paySystemList[$restriction['SERVICE_ID']]['PERSON_TYPE_ID'] = $restriction['PARAMS']['PERSON_TYPE_ID'];
+			}
+
+			foreach ($paySystemList as $paySystemId => $paySystem)
+			{
+				$itemName = "[{$paySystemId}] ".$paySystem['NAME'];
+				if (!empty($paySystem['PERSON_TYPE_ID']))
+				{
+					$restrictedTypes = is_array($paySystem['PERSON_TYPE_ID']) ? $paySystem['PERSON_TYPE_ID'] : [$paySystem['PERSON_TYPE_ID']];
+					$paySystemPersonTypes = [];
+					foreach ($restrictedTypes as $typeId)
+					{
+						$paySystemPersonTypes[] = $personTypes[$typeId]['NAME']."/".$personTypes[$typeId]["LID"];
+					}
+					if (!empty($paySystemPersonTypes))
+					{
+						$itemName .= ' ('.join(', ', $paySystemPersonTypes).')';
+					}
+				}
+
+				$result[$paySystemId] = $itemName;
+			}
+		}
+
+		return $result;
+	}
+
+	/**
+	 * @return array
+	 */
+	private function getDeliveryServices()
+	{
+		Sale\Delivery\Services\Manager::getHandlersList();
+		$deliveryServiceParentListParent = array();
+		$deliveryServiceListAll = array();
+		$deliveryServiceList = array();
+
+		$res = Sale\Delivery\Services\Table::getList(array(
+			'select' => array('ID', 'NAME', 'PARENT_ID', 'CLASS_NAME', 'PARENT_NAME' => 'PARENT.NAME'),
+			'filter' => array('ACTIVE' => 'Y'),
+			'order' => array("SORT"=>"ASC", "NAME"=>"ASC")
+		));
+
+		while ($deliveryService = $res->fetch())
+		{
+			if(intval($deliveryService['PARENT_ID']) == 0)
+			{
+				$deliveryServiceParentListParent[$deliveryService['ID']] = $deliveryService['NAME'];
+			}
+			elseif(class_exists($deliveryService['CLASS_NAME']) && $deliveryService['CLASS_NAME']::canHasProfiles())
+			{
+				$deliveryServiceParentListParent[$deliveryService['ID']] = $deliveryService['PARENT_NAME'].':'.$deliveryService['NAME'];
+			}
+			else
+			{
+				$deliveryServiceListAll[$deliveryService['PARENT_ID']][$deliveryService['ID']] = $deliveryService['NAME'];
+			}
+		}
+
+		foreach($deliveryServiceParentListParent as $deliveryServiceParentId => $deliveryServiceParentName)
+		{
+			if (!empty($deliveryServiceListAll[$deliveryServiceParentId]))
+			{
+				foreach($deliveryServiceListAll[$deliveryServiceParentId] as $deliveryServiceId => $deliveryServiceName)
+				{
+					$deliveryServiceList[$deliveryServiceId] = $deliveryServiceParentName.":".$deliveryServiceName;
+				}
+			}
+			else
+			{
+				$deliveryServiceList[$deliveryServiceParentId] = $deliveryServiceParentName;
+			}
+
+		}
+		$result = [];
+		if (!empty($deliveryServiceList))
+		{
+			foreach ($deliveryServiceList as $deliveryServiceId => $deliveryServiceName)
+			{
+				$result[$deliveryServiceId] = "[{$deliveryServiceId}] {$deliveryServiceName}";
+			}
+		}
 		return $result;
 	}
 }

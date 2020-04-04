@@ -17,7 +17,8 @@ class CheckAccess extends Base
 			if($argument instanceof Document)
 			{
 				$userId = $this->action->getController()->getCurrentUser()->getId();
-				if(!$argument->hasAccess($userId))
+				$argument->setUserId($userId);
+				if(!$argument->hasAccess())
 				{
 					$this->errorCollection[] = new Error(
 						'Access denied', \Bitrix\DocumentGenerator\Controller\Document::ERROR_ACCESS_DENIED

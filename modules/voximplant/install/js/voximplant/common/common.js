@@ -73,6 +73,7 @@
 			autoHide: false,
 			titleBar: title,
 			content: text,
+			zIndex: 16000,
 			overlay: {
 				color: 'gray',
 				opacity: 30
@@ -165,6 +166,22 @@
 		{
 			B24.licenseInfoPopup.show(dialogId, licensePopup[dialogId].title, licensePopup[dialogId].content);
 		}
+	};
+
+	BX.Voximplant.openBilling = function()
+	{
+		BX.ajax.runAction("voximplant.urlmanager.getBillingUrl", {}).then(function(response)
+		{
+			var data = response.data;
+			var billingUrl = data['billingUrl'];
+
+			window.open(billingUrl);
+		}).catch(function(response)
+		{
+			var errors = response.errors;
+			var errorMessage = errors.map(function (err){return err.message}).join("\n");
+			BX.Voximplant.alert(BX.message('VOX_JS_COMMON_ERROR'), errorMessage);
+		});
 	};
 
 	if(typeof(BX.Voximplant.UserSelector) == "undefined")

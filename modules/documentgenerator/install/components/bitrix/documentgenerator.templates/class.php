@@ -1,6 +1,7 @@
 <?php
 
 use Bitrix\DocumentGenerator\DataProviderManager;
+use Bitrix\DocumentGenerator\Driver;
 use Bitrix\Main\Engine\Contract\Controllerable;
 use Bitrix\Main\Engine\Response\AjaxJson;
 use Bitrix\DocumentGenerator\Model\TemplateTable;
@@ -41,13 +42,6 @@ class DocumentsTemplateComponent extends CBitrixComponent implements Controllera
 	 */
 	public function executeComponent()
 	{
-		Loc::loadMessages(__FILE__);
-		if(!$this->includeModules())
-		{
-			echo Loc::getMessage('DOCGEN_TEMPLATE_DOWNLOAD_ADD_TEMPLATE_ERROR_MODULE');
-			$this->includeComponentTemplate();
-			return;
-		}
 		$request = \Bitrix\Main\Application::getInstance()->getContext()->getRequest();
 		if($request->get('IFRAME') === 'Y')
 		{
@@ -61,42 +55,69 @@ class DocumentsTemplateComponent extends CBitrixComponent implements Controllera
 				$this->arResult['TOP_VIEW_TARGET_ID'] = 'pagetitle';
 			}
 		}
+		if(!$this->includeModules())
+		{
+			$this->arResult['ERROR'] = Loc::getMessage('DOCGEN_TEMPLATE_DOWNLOAD_ADD_TEMPLATE_ERROR_MODULE');
+			$this->includeComponentTemplate();
+			return;
+		}
+		if(!Driver::getInstance()->getUserPermissions()->canModifyTemplates())
+		{
+			$this->arResult['ERROR'] = Loc::getMessage('DOCGEN_TEMPLATE_DOWNLOAD_PERMISSIONS_ERROR');
+			$this->includeComponentTemplate();
+			return;
+		}
+		if(!isset($this->arParams['USER_NAME_FORMAT']))
+		{
+			$this->arParams['USER_NAME_FORMAT'] = DataProviderManager::getInstance()->getCulture()->getNameFormat();
+		}
+		if(!isset($this->arParams['USER_PROFILE_URL']))
+		{
+			$this->arParams['USER_PROFILE_URL'] = \Bitrix\Main\Config\Option::get('intranet', 'path_user', '/company/personal/user/#USER_ID#/', SITE_ID);
+		}
 		if($this->getTemplateName() == 'upload')
 		{
 			$this->arResult['TITLE'] = Loc::getMessage('DOCGEN_TEMPLATE_DOWNLOAD_ADD_TEMPLATE');
 			$this->arResult['PROVIDERS'] = $this->getProviders();
-			$this->arResult['REGIONS'] = \Bitrix\DocumentGenerator\Driver::getInstance()->getRegionsList();
+			$this->arResult['REGIONS'] = Driver::getInstance()->getRegionsList();
 			if($this->arParams['ID'] > 0)
 			{
 				$template = \Bitrix\DocumentGenerator\Template::loadById($this->arParams['ID']);
 				if($template)
 				{
-					if($template->CODE)
+					if(!Driver::getInstance()->getUserPermissions()->canModifyTemplate($template->ID))
 					{
-						$defaultTemplates = \Bitrix\DocumentGenerator\Controller\Template::getDefaultTemplateList(['CODE' => $template->CODE, 'NAME' => $template->NAME]);
-						if($defaultTemplates->isSuccess() && isset($defaultTemplates->getData()[$template->CODE]))
+						$this->arResult['ERROR'] = Loc::getMessage('DOCGEN_TEMPLATE_DOWNLOAD_PERMISSIONS_ERROR_TEMPLATE');
+					}
+					else
+					{
+						if($template->CODE)
 						{
-							$this->arResult['params']['defaultCode'] = $template->CODE;
+							$defaultTemplates = \Bitrix\DocumentGenerator\Controller\Template::getDefaultTemplateList(['CODE' => $template->CODE, 'NAME' => $template->NAME]);
+							if($defaultTemplates->isSuccess() && isset($defaultTemplates->getData()[$template->CODE]))
+							{
+								$this->arResult['params']['defaultCode'] = $template->CODE;
+							}
 						}
+						$this->arResult['TITLE'] = Loc::getMessage('DOCGEN_TEMPLATE_DOWNLOAD_EDIT_TEMPLATE').' '.$template->NAME;
+						$this->arResult['params']['downloadUrl'] = $template->getDownloadUrl();
+						$this->arResult['TEMPLATE']['fileName'] = $template->getFileName();
+						$this->arResult['TEMPLATE']['fileSize'] = \Bitrix\DocumentGenerator\Model\FileTable::getSize($template->FILE_ID);
+						$this->arResult['TEMPLATE']['ACTIVE'] = $template->ACTIVE;
+						$this->arResult['TEMPLATE']['ID'] = $template->ID;
+						$this->arResult['TEMPLATE']['REGION'] = $template->REGION;
+						$this->arResult['TEMPLATE']['FILE_ID'] = $template->FILE_ID;
+						$this->arResult['TEMPLATE']['NAME'] = $template->NAME;
+						$this->arResult['TEMPLATE']['NUMERATOR_ID'] = $template->NUMERATOR_ID;
+						$this->arResult['TEMPLATE']['WITH_STAMPS'] = $template->WITH_STAMPS;
+						$this->arResult['TEMPLATE']['PROVIDERS'] = [];
+						foreach($template->getDataProviders() as $provider)
+						{
+							$this->arResult['TEMPLATE']['PROVIDERS'][] = $this->arResult['PROVIDERS'][$provider];
+						}
+						$users = $template->getUsers();
+						$this->arResult['TEMPLATE']['USERS'] = array_values($users);
 					}
-					$this->arResult['TITLE'] = Loc::getMessage('DOCGEN_TEMPLATE_DOWNLOAD_EDIT_TEMPLATE').' '.$template->NAME;
-					$this->arResult['params']['downloadUrl'] = $template->getDownloadUrl();
-					$this->arResult['TEMPLATE']['fileName'] = $template->getFileName();
-					$this->arResult['TEMPLATE']['fileSize'] = \Bitrix\DocumentGenerator\Model\FileTable::getSize($template->FILE_ID);
-					$this->arResult['TEMPLATE']['ACTIVE'] = $template->ACTIVE;
-					$this->arResult['TEMPLATE']['ID'] = $template->ID;
-					$this->arResult['TEMPLATE']['REGION'] = $template->REGION;
-					$this->arResult['TEMPLATE']['FILE_ID'] = $template->FILE_ID;
-					$this->arResult['TEMPLATE']['NAME'] = $template->NAME;
-					$this->arResult['TEMPLATE']['NUMERATOR_ID'] = $template->NUMERATOR_ID;
-					$this->arResult['TEMPLATE']['WITH_STAMPS'] = $template->WITH_STAMPS;
-					$this->arResult['TEMPLATE']['PROVIDERS'] = [];
-					foreach($template->getDataProviders() as $provider)
-					{
-						$this->arResult['TEMPLATE']['PROVIDERS'][] = $this->arResult['PROVIDERS'][$provider];
-					}
-					$users = $template->getUsers();
-					$this->arResult['TEMPLATE']['USERS'] = array_values($users);
 				}
 				else
 				{
@@ -109,15 +130,15 @@ class DocumentsTemplateComponent extends CBitrixComponent implements Controllera
 			}
 			if(!$this->arResult['TEMPLATE']['REGION'])
 			{
-				$this->arResult['TEMPLATE']['REGION'] = \Bitrix\DocumentGenerator\Driver::getInstance()->getCurrentRegion()['CODE'];
+				$this->arResult['TEMPLATE']['REGION'] = Driver::getInstance()->getCurrentRegion()['CODE'];
 			}
 			$this->arResult['params']['uploadUrl'] = Bitrix\Main\Engine\UrlManager::getInstance()->create('documentgenerator.api.file.upload')->getLocator();
 			$this->arResult['userSelectorName'] = 'add-template-users';
-			$numeratorList = \Bitrix\Main\Numerator\Numerator::getListByType(\Bitrix\DocumentGenerator\Driver::NUMERATOR_TYPE);
+			$numeratorList = \Bitrix\Main\Numerator\Numerator::getListByType(Driver::NUMERATOR_TYPE);
 			if (empty($numeratorList))
 			{
-				\Bitrix\DocumentGenerator\Driver::getInstance()->getDefaultNumerator();
-				$numeratorList = \Bitrix\Main\Numerator\Numerator::getListByType(\Bitrix\DocumentGenerator\Driver::NUMERATOR_TYPE);
+				Driver::getInstance()->getDefaultNumerator();
+				$numeratorList = \Bitrix\Main\Numerator\Numerator::getListByType(Driver::NUMERATOR_TYPE);
 			}
 			$this->arResult['numeratorList'] = $numeratorList;
 			$this->arResult['params']['addRegionUrl'] = $this->getRegionEditUrl();
@@ -131,7 +152,10 @@ class DocumentsTemplateComponent extends CBitrixComponent implements Controllera
 				{
 					foreach($request->getPost("ID") as $id)
 					{
-						TemplateTable::delete($id);
+						if(Driver::getInstance()->getUserPermissions()->canModifyTemplate($id))
+						{
+							TemplateTable::delete($id);
+						}
 					}
 				}
 			}
@@ -139,7 +163,7 @@ class DocumentsTemplateComponent extends CBitrixComponent implements Controllera
 			$this->arResult['params'] = [];
 			$this->arResult['params']['uploadUri'] = $this->arParams['UPLOAD_URI'];
 			$this->arResult['params']['settingsMenu'] = [];
-			$uri = \Bitrix\DocumentGenerator\Driver::getInstance()->getPlaceholdersListUri($this->arParams['PROVIDER'], $this->arParams['MODULE']);
+			$uri = Driver::getInstance()->getPlaceholdersListUri($this->arParams['PROVIDER'], $this->arParams['MODULE']);
 			if($uri)
 			{
 				$this->arResult['params']['settingsMenu'][] = [
@@ -147,17 +171,29 @@ class DocumentsTemplateComponent extends CBitrixComponent implements Controllera
 					'text' => Loc::getMessage('DOCGEN_TEMPLATE_LIST_PLACEHOLDERS'),
 				];
 			}
-			$componentPath = \CComponentEngine::makeComponentPath('bitrix:documentgenerator.config');
-			$componentPath = getLocalPath('components'.$componentPath.'/slider.php');
-			$uri = new \Bitrix\Main\Web\Uri($componentPath);
-			$this->arResult['params']['settingsMenu'][] = [
-				'uri' => $uri->getLocator(),
-				'text' => Loc::getMessage('DOCGEN_TEMPLATE_LIST_CONFIG'),
-			];
+			if(Driver::getInstance()->getUserPermissions()->canModifySettings())
+			{
+				$uri = $this->getConfigUri();
+				if($uri)
+				{
+					$this->arResult['params']['settingsMenu'][] = [
+						'uri' => $uri->getLocator(),
+						'text' => Loc::getMessage('DOCGEN_TEMPLATE_LIST_CONFIG'),
+					];
+				}
+				$uri = $this->getPermsUri();
+				if($uri)
+				{
+					$this->arResult['params']['settingsMenu'][] = [
+						'uri' => $uri->getLocator(),
+						'text' => Loc::getMessage('DOCGEN_TEMPLATE_LIST_PERMS'),
+					];
+				}
+			}
 			$menuItems = [];
 			$componentPath = \CComponentEngine::makeComponentPath('bitrix:documentgenerator.templates.default');
 			$componentPath = getLocalPath('components'.$componentPath.'/slider.php');
-			foreach(\Bitrix\DocumentGenerator\Driver::getInstance()->getDefaultRegions() as $region)
+			foreach(Driver::getInstance()->getDefaultRegions() as $region)
 			{
 				$uri = new \Bitrix\Main\Web\Uri($componentPath);
 				$uri->addParams(['REGION[]' => $region['CODE'], 'apply_filter' => 'Y']);
@@ -265,6 +301,18 @@ class DocumentsTemplateComponent extends CBitrixComponent implements Controllera
 				'default' => false,
 				'sort' => 'ACTIVE',
 			],
+			[
+				'id' => 'CREATED_BY',
+				'name' => Loc::getMessage('DOCGEN_TEMPLATE_LIST_CREATED_BY'),
+				'default' => false,
+				'sort' => 'CREATED_BY',
+			],
+			[
+				'id' => 'UPDATED_BY',
+				'name' => Loc::getMessage('DOCGEN_TEMPLATE_LIST_UPDATED_BY'),
+				'default' => false,
+				'sort' => 'UPDATED_BY',
+			]
 		];
 
 		$gridOptions = new Bitrix\Main\Grid\Options($this->gridId);
@@ -287,6 +335,7 @@ class DocumentsTemplateComponent extends CBitrixComponent implements Controllera
 
 		if(!empty($templates))
 		{
+			$users = $this->getUsers($templates);
 			$providerTypes = $this->getProviders();
 			foreach($templates as $template)
 			{
@@ -330,7 +379,9 @@ class DocumentsTemplateComponent extends CBitrixComponent implements Controllera
 						'PROVIDERS' => implode(', ', $template['PROVIDER_NAMES']),
 						'CREATE_TIME' => $template['CREATE_TIME'],
 						'SORT' => $template['SORT'],
-						'DOWNLOAD' => '<a href="'.$templateInstance->getDownloadUrl()->getLocator().'">'.Loc::getMessage('DOCGEN_TEMPLATE_LIST_DOWNLOAD').'</a>',
+						'DOWNLOAD' => '<a target="_blank" href="'.$templateInstance->getDownloadUrl()->getLocator().'">'.Loc::getMessage('DOCGEN_TEMPLATE_LIST_DOWNLOAD').'</a>',
+						'CREATED_BY' => $users[$template['CREATED_BY']],
+						'UPDATED_BY' => $users[$template['UPDATED_BY']],
 					],
 				];
 			}
@@ -461,7 +512,7 @@ class DocumentsTemplateComponent extends CBitrixComponent implements Controllera
 		$filterOptions = new Bitrix\Main\UI\Filter\Options($this->filterId);
 		$requestFilter = $filterOptions->getFilter($this->getDefaultFilterFields());
 
-		$filter = ['IS_DELETED' => 'N'];
+		$filter = ['=IS_DELETED' => 'N'];
 		if(isset($requestFilter['UPDATE_TIME_from']) && $requestFilter['UPDATE_TIME_from'])
 		{
 			$filter['>=UPDATE_TIME'] = $requestFilter['UPDATE_TIME_from'];
@@ -492,12 +543,14 @@ class DocumentsTemplateComponent extends CBitrixComponent implements Controllera
 		}
 		if(isset($requestFilter['ACTIVE']) && $requestFilter['ACTIVE'])
 		{
-			$filter['ACTIVE'] = $requestFilter['ACTIVE'];
+			$filter['=ACTIVE'] = $requestFilter['ACTIVE'];
 		}
 		if($this->arParams['MODULE'])
 		{
-			$filter['MODULE_ID'] = $this->arParams['MODULE'];
+			$filter['=MODULE_ID'] = $this->arParams['MODULE'];
 		}
+
+		$filter = array_merge($filter, Driver::getInstance()->getUserPermissions()->getFilterForTemplateList());
 
 		return $filter;
 	}
@@ -590,7 +643,7 @@ class DocumentsTemplateComponent extends CBitrixComponent implements Controllera
 		if($result === null)
 		{
 			$result = [];
-			$regions = \Bitrix\DocumentGenerator\Driver::getInstance()->getRegionsList();
+			$regions = Driver::getInstance()->getRegionsList();
 			foreach($regions as $region)
 			{
 				$result[$region['CODE']] = ['NAME' => $region['TITLE']];
@@ -620,5 +673,66 @@ class DocumentsTemplateComponent extends CBitrixComponent implements Controllera
 		}
 
 		return false;
+	}
+
+	/**
+	 * @return Uri|bool
+	 */
+	protected function getConfigUri()
+	{
+		$componentPath = \CComponentEngine::makeComponentPath('bitrix:documentgenerator.config');
+		$componentPath = getLocalPath('components'.$componentPath.'/slider.php');
+		if($componentPath)
+		{
+			return new \Bitrix\Main\Web\Uri($componentPath);
+		}
+
+		return false;
+	}
+
+	/**
+	 * @return Uri|bool
+	 */
+	protected function getPermsUri()
+	{
+		$componentPath = \CComponentEngine::makeComponentPath('bitrix:documentgenerator.settings.perms');
+		$componentPath = getLocalPath('components'.$componentPath.'/slider.php');
+		if($componentPath)
+		{
+			return new \Bitrix\Main\Web\Uri($componentPath);
+		}
+
+		return false;
+	}
+
+	/**
+	 * @param array $templates
+	 * @return array
+	 */
+	protected function getUsers(array $templates)
+	{
+		$users = [];
+		$userIds = [];
+		foreach($templates as $template)
+		{
+			$userIds[] = $template['CREATED_BY'];
+			$userIds[] = $template['UPDATED_BY'];
+		}
+		if(empty($userIds))
+		{
+			return $users;
+		}
+
+		$userList = \Bitrix\Main\UserTable::getList(['select' => [
+			'ID', 'NAME', 'SECOND_NAME', 'LAST_NAME', 'TITLE'
+		], 'filter' => [
+			'=ID' => $userIds,
+		]]);
+		while($user = $userList->fetch())
+		{
+			$users[$user['ID']] = '<a href="'.str_replace('#USER_ID#', $user['ID'], $this->arParams['USER_PROFILE_URL']).'" target="_blank">'.\CUser::FormatName($this->arParams['USER_NAME_FORMAT'], $user).'</a>';
+		}
+
+		return $users;
 	}
 }

@@ -1,5 +1,6 @@
 <?
 return [
 	'reload/listeners',
-	'cache'
+	'cache',
+	'task'
 ];

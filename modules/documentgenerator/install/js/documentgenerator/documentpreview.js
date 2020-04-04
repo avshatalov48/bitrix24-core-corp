@@ -426,6 +426,16 @@
 		{
 			this.popupConfirm.destroy();
 		}
+		if(!BX.type.isDomNode(content))
+		{
+			var node = document.createElement('div');
+			node.innerHTML = content;
+			content = node;
+		}
+		if(!BX.type.isArray(content))
+		{
+			content = [content];
+		}
 		this.popupConfirm = new BX.PopupWindow('bx-popup-documentgenerator-popup', null, {
 			zIndex: 200,
 			autoHide: true,
@@ -436,7 +446,7 @@
 			events : { onPopupClose : function() { this.destroy() }, onPopupDestroy : BX.delegate(function() { this.popupConfirm = null }, this)},
 			content : BX.create('span',{
 				attrs:{className:'bx-popup-documentgenerator-popup-content-text'},
-				children : content
+				children : content,
 			}),
 			titleBar: title,
 			contentColor: 'white',
@@ -573,7 +583,7 @@
 				}
 				this.progress = true;
 				this.showLoader();
-				BX.ajax.runAction('documentgenerator.api.template.getButtonTemplates', {
+				BX.ajax.runAction('documentgenerator.api.document.getButtonTemplates', {
 					data: {
 						moduleId: this.moduleId,
 						provider: this.provider,

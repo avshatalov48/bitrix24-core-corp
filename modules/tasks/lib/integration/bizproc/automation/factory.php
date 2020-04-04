@@ -1,6 +1,7 @@
 <?php
 namespace Bitrix\Tasks\Integration\Bizproc\Automation;
 
+use Bitrix\Bitrix24\Feature;
 use Bitrix\Tasks\Integration\Bizproc\Automation\Target;
 use Bitrix\Main\Loader;
 use Bitrix\Main\NotSupportedException;
@@ -13,7 +14,7 @@ class Factory
 
 	public static function canUseAutomation()
 	{
-		return static::isBizprocEnabled();
+		return static::isBizprocEnabled() && static::isFeatureEnabled();
 	}
 
 	public static function runOnAdd($documentType, $documentId, array $fields = null)
@@ -173,5 +174,18 @@ class Factory
 		}
 
 		return static::$isBizprocEnabled;
+	}
+
+	private static function isFeatureEnabled()
+	{
+		static $enabled;
+		if ($enabled === null)
+		{
+			$enabled = Loader::includeModule('bitrix24')
+				? Feature::isFeatureEnabled('tasks_automation')
+				: true;
+		}
+
+		return $enabled;
 	}
 }

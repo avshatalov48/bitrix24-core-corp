@@ -805,15 +805,7 @@ class Bot
 				if (isset($messageFields['SYSTEM']) && $messageFields['SYSTEM'] == 'Y')
 				{
 					$ar['SYSTEM'] = 'Y';
-
-					$attach = new \CIMMessageParamAttach(10000, \CIMMessageParamAttach::TRANSPARENT);
-					$attach->AddBot(Array(
-						"NAME" => \Bitrix\Im\User::getInstance($botId)->getFullName(),
-						"AVATAR" => \Bitrix\Im\User::getInstance($botId)->getAvatar(),
-						"BOT_ID" => $botId,
-					));
-					$ar['MESSAGE'] = "[ATTACH=10000]".$ar['MESSAGE'];
-					$ar['ATTACH'][] = $attach;
+					$ar['MESSAGE'] = \Bitrix\Im\User::getInstance($botId)->getFullName().":[br]".$ar['MESSAGE'];
 				}
 				if (isset($messageFields['URL_PREVIEW']) && $messageFields['URL_PREVIEW'] == 'N')
 				{

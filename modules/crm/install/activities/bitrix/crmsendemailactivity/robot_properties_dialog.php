@@ -21,7 +21,7 @@ $fromValue = $from ? $dialog->getCurrentValue($from['FieldName'], $dialog->getCu
 $runtimeData = $dialog->getRuntimeData();
 $mailboxes = $runtimeData['mailboxes'];
 
-if ($from && $mailboxes):?>
+if ($from):?>
 <div style="display:none;">
 <?
 	$APPLICATION->IncludeComponent('bitrix:main.mail.confirm', '');
@@ -148,7 +148,7 @@ endif;
 	$configAttributeValue = htmlspecialcharsbx(\Bitrix\Main\Web\Json::encode($config));
 ?>
 <div class="crm-automation-popup-settings" data-role="file-selector" data-config="<?=$configAttributeValue?>"></div>
-<?if ($from && $mailboxes):?>
+<?if ($from):?>
 <script>
 
 	BX.ready(function ()
@@ -201,7 +201,12 @@ endif;
 
 			if (window.BXMainMailConfirm)
 			{
-				menuItems.push({delimiter: true}, {
+				if (menuItems.length > 0)
+				{
+					menuItems.push({delimiter: true});
+				}
+
+				menuItems.push({
 					text: '<?=GetMessageJS('CRM_SEMA_RPD_FROM_ADD')?>',
 					onclick: function(e, item)
 					{
@@ -248,4 +253,14 @@ endif;
 		setMailbox(mailboxSelectorValue.value);
 	});
 </script>
-<?endif;
+<?endif;?>
+
+<div class="crm-automation-popup-checkbox">
+	<div class="crm-automation-popup-checkbox-item">
+		<label class="crm-automation-popup-chk-label">
+			<input type="checkbox" name="<?=htmlspecialcharsbx($map['UseLinkTracker']['FieldName'])?>" value="Y" class="crm-automation-popup-chk" <?=$dialog->getCurrentValue($map['UseLinkTracker']) === 'Y' ? 'checked' : ''?>>
+			<?=htmlspecialcharsbx($map['UseLinkTracker']['Name'])?>
+		</label>
+	</div>
+
+</div>

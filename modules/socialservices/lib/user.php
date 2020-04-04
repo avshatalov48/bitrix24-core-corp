@@ -103,7 +103,7 @@ class UserTable extends Entity\DataManager
 		return $fieldsMap;
 	}
 
-	public static function filterFields($fields)
+	public static function filterFields($fields, $oldValue = null)
 	{
 		$map = static::getMap();
 		foreach($fields as $key => $value)
@@ -120,7 +120,27 @@ class UserTable extends Entity\DataManager
 
 		if(array_key_exists('PERSONAL_PHOTO', $fields) && is_array($fields['PERSONAL_PHOTO']))
 		{
-			$fields['PERSONAL_PHOTO'] = \CFile::SaveFile($fields['PERSONAL_PHOTO'], 'socialservices');
+			$needUpdatePersonalPhoto = true;
+			$fields['PERSONAL_PHOTO']['MODULE_ID'] = 'socialservices';
+			$fields['PERSONAL_PHOTO']['external_id'] = md5_file($fields['PERSONAL_PHOTO']['tmp_name']);
+			if ($oldValue['PERSONAL_PHOTO'])
+			{
+				$oldPersonalPhoto = \CFile::GetByID($oldValue['PERSONAL_PHOTO'])->Fetch();
+				if ($oldPersonalPhoto['EXTERNAL_ID'] == $fields['PERSONAL_PHOTO']['external_id'])
+				{
+					$needUpdatePersonalPhoto = false;
+				}
+				$fields['PERSONAL_PHOTO']['del'] = 'Y';
+				$fields['PERSONAL_PHOTO']['old_file'] = $oldValue['PERSONAL_PHOTO'];
+			}
+			if ($needUpdatePersonalPhoto)
+			{
+				$fields['PERSONAL_PHOTO'] = \CFile::SaveFile($fields['PERSONAL_PHOTO'], 'socialservices');
+			}
+			else
+			{
+				unset($fields['PERSONAL_PHOTO']);
+			}
 		}
 
 		return $fields;
@@ -154,6 +174,11 @@ class UserTable extends Entity\DataManager
 				{
 					$interface->RevokeAuth();
 				}
+			}
+
+			if($userInfo["PERSONAL_PHOTO"])
+			{
+				\CFile::Delete($userInfo["PERSONAL_PHOTO"]);
 			}
 		}
 	}

@@ -2,10 +2,8 @@
 
 namespace Bitrix\Main\UrlPreview;
 
-use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Config\Option;
-use Bitrix\Main\DB\SqlQueryException;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Security\Sign\Signer;
 use Bitrix\Main\Web\HttpClient;
@@ -550,10 +548,11 @@ class UrlPreview
 			return false;
 
 		$htmlContentType = strtolower($httpClient->getHeaders()->getContentType());
+		$xFrameOptions = $httpClient->getHeaders()->get('X-Frame-Options', true);
+		$effectiveUrl = $httpClient->getEffectiveUrl();
 		$peerIpAddress = $httpClient->getPeerAddress();
 		if($htmlContentType !== 'text/html')
 		{
-
 			$metadata = static::getFileMetadata($httpClient->getEffectiveUrl(), $httpClient->getHeaders());
 			$metadata['EXTRA']['PEER_IP_ADDRESS'] = $peerIpAddress;
 			$metadata['EXTRA']['PEER_IP_PRIVATE'] = static::isIpAddressPrivate($peerIpAddress);
@@ -589,7 +588,9 @@ class UrlPreview
 			}
 			$metadata['EXTRA'] = array_merge($metadata['EXTRA'], array(
 				'PEER_IP_ADDRESS' => $peerIpAddress,
-				'PEER_IP_PRIVATE' => static::isIpAddressPrivate($peerIpAddress)
+				'PEER_IP_PRIVATE' => static::isIpAddressPrivate($peerIpAddress),
+				'X_FRAME_OPTIONS' => $xFrameOptions,
+				'EFFECTIVE_URL' => $effectiveUrl,
 			));
 
 			return $metadata;

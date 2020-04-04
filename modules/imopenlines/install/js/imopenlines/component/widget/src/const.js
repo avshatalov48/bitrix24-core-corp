@@ -72,6 +72,7 @@ export const SubscriptionType = Object.freeze({
 	operatorMessage: 'operatorMessage',
 	userForm: 'userForm',
 	userMessage: 'userMessage',
+	userFile: 'userFile',
 	userVote: 'userVote',
 	every: 'every',
 });

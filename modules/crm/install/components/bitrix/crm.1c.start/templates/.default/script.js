@@ -31,9 +31,16 @@
 
 })();
 
-function BXOneCStart()
+function BXOneCStart(type)
 {
-    var app_url = '/marketplace/detail/bitrix.1c/';
+	if (type === "doc")
+	{
+		var app_url = '/marketplace/detail/bitrix.1cdoc/';
+	}
+	else
+	{
+		var app_url = '/marketplace/detail/bitrix.1c/';
+	}
 
     BX.ready(function () {
 		if (BX.type.isDomNode(BX('b24-integration-active-button')))
@@ -52,7 +59,7 @@ function BXOneCStart()
 		}
 		else if(typeof window.LICENCE_RESTRICTED !== 'undefined' && window.LICENCE_RESTRICTED)
 		{
-			B24.licenseInfoPopup.show('onec-face-card-block', BX.message('CRM_1C_START_FACE_CARD_B24_BLOCK_TITLE'), BX.message('CRM_1C_START_FACE_CARD_B24_BLOCK_TEXT'));
+			B24.licenseInfoPopup.show('onec-face-card-block', BX.message('CRM_1C_START_FACE_CARD_B24_BLOCK_TITLE2'), BX.message('CRM_1C_START_FACE_CARD_B24_BLOCK_TEXT2'));
 		}
 		else if(typeof window.LICENCE_ACCEPTED !== 'undefined' && window.LICENCE_ACCEPTED === false)
 		{

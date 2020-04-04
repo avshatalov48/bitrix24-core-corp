@@ -228,12 +228,12 @@ $APPLICATION->IncludeComponent(
 		'FORM_ID' => $arResult['FORM_ID'],
 		'TAB_ID' => $arResult['TAB_ID'],
 		'AJAX_ID' => $arResult['AJAX_ID'],
+		'AJAX_MODE' => $arParams['AJAX_MODE'],
 		'AJAX_OPTION_JUMP' => $arResult['AJAX_OPTION_JUMP'],
 		'AJAX_OPTION_HISTORY' => $arResult['AJAX_OPTION_HISTORY'],
 		'AJAX_LOADER' => isset($arParams['AJAX_LOADER']) ? $arParams['AJAX_LOADER'] : null,
-		'FILTER' => $arResult['FILTER'],
-		'FILTER_PRESETS' => $arResult['FILTER_PRESETS'],
-		'ENABLE_LIVE_SEARCH' => true,
+		'ENABLE_LIVE_SEARCH' => false,
+		'HIDE_FILTER' => true,
 		'ACTION_PANEL' => $controlPanel,
 		'PAGINATION' => isset($arResult['PAGINATION']) && is_array($arResult['PAGINATION'])
 			? $arResult['PAGINATION'] : array(),
@@ -260,7 +260,8 @@ $APPLICATION->IncludeComponent(
 		'SHOW_ROW_CHECKBOXES' => false,
 		'SHOW_CHECK_ALL_CHECKBOXES' => false,
 		'SHOW_ACTION_PANEL' => false,
-		'NAME_TEMPLATE' => $arParams['NAME_TEMPLATE']
+		'NAME_TEMPLATE' => $arParams['NAME_TEMPLATE'],
+		'STYLES_LOADED' => 'Y',
 	),
 	$component
 );

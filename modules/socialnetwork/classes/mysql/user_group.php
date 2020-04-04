@@ -196,6 +196,7 @@ class CSocNetUserToGroup extends CAllSocNetUserToGroup
 			"GROUP_NUMBER_OF_MEMBERS" => Array("FIELD" => "G.NUMBER_OF_MEMBERS", "TYPE" => "string", "FROM" => "INNER JOIN b_sonet_group G ON (UG.GROUP_ID = G.ID)"),
 			"GROUP_DATE_ACTIVITY" => Array("FIELD" => "G.DATE_ACTIVITY", "TYPE" => "datetime", "FROM" => "INNER JOIN b_sonet_group G ON (UG.GROUP_ID = G.ID)"),
 			"GROUP_CLOSED" => Array("FIELD" => "G.CLOSED", "TYPE" => "string", "FROM" => "INNER JOIN b_sonet_group G ON (UG.GROUP_ID = G.ID)"),
+			"GROUP_LANDING" => Array("FIELD" => "G.LANDING", "TYPE" => "string", "FROM" => "INNER JOIN b_sonet_group G ON (UG.GROUP_ID = G.ID)"),
 			"USER_ACTIVE" => Array("FIELD" => "U.ACTIVE", "TYPE" => "string", "FROM" => "INNER JOIN b_user U ON (UG.USER_ID = U.ID)"),
 			"USER_NAME" => Array("FIELD" => "U.NAME", "TYPE" => "string", "FROM" => "INNER JOIN b_user U ON (UG.USER_ID = U.ID)"),
 			"USER_LAST_NAME" => Array("FIELD" => "U.LAST_NAME", "TYPE" => "string", "FROM" => "INNER JOIN b_user U ON (UG.USER_ID = U.ID)"),

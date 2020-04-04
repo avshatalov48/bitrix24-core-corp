@@ -87,11 +87,30 @@ function DiskRenderCellImportDoc()
 
 	$title = Loc::getMessage('DISK_UF_FILE_CLOUD_IMPORT_TITLE');
 
+	$googleSection = <<<HTML
+	<a class="wd-fa-add-file-editor-link-block diskuf-selector-link-cloud" data-bx-doc-handler="gdrive" href="javascript:void(0)">
+		<span class="wd-fa-add-file-editor-icon feed-file-icon-gdr"></span>
+		<span class="wd-fa-add-file-editor-link">{$gdrive}</span>
+	</a>
+HTML;
+
+	$handlersManager = \Bitrix\Disk\Driver::getInstance()->getDocumentHandlersManager();
+	$foundGoogle = array_filter($handlersManager->getHandlersForImport(), function($handler){
+		return $handler instanceof \Bitrix\Disk\Document\GoogleHandler;
+	});
+
+	$defaultCloud = \Bitrix\Disk\Document\GoogleHandler::getCode();
+	if (!$foundGoogle)
+	{
+		$googleSection = '';
+		$defaultCloud = \Bitrix\Disk\Document\Office365Handler::getCode();
+	}
+
 	return <<<HTML
 	<td class="wd-fa-add-file-light-cell">
 		<span class="wd-fa-add-file-light wd-test-file-create">
 			<span class="wd-fa-add-file-light-text">
-				<span class="wd-fa-add-file-light-title diskuf-selector-link-cloud" data-bx-doc-handler="gdrive">
+				<span class="wd-fa-add-file-light-title diskuf-selector-link-cloud" data-bx-doc-handler="{$defaultCloud}">
 					<span class="wd-fa-add-file-light-title-text">$title</span>
 				</span>
 				<span class="wd-fa-add-file-editor-file">
@@ -99,10 +118,7 @@ function DiskRenderCellImportDoc()
 						<span class="wd-fa-add-file-editor-icon feed-file-icon-office365"></span>
 						<span class="wd-fa-add-file-editor-link">{$office365}</span>
 					</a>
-					<a class="wd-fa-add-file-editor-link-block diskuf-selector-link-cloud" data-bx-doc-handler="gdrive" href="javascript:void(0)">
-						<span class="wd-fa-add-file-editor-icon feed-file-icon-gdr"></span>
-						<span class="wd-fa-add-file-editor-link">{$gdrive}</span>
-					</a>
+					{$googleSection}
 					<a class="wd-fa-add-file-editor-link-block diskuf-selector-link-cloud" data-bx-doc-handler="dropbox" href="javascript:void(0)">
 						<span class="wd-fa-add-file-editor-icon feed-file-icon-drb"></span>
 						<span class="wd-fa-add-file-editor-link">{$dropbox}</span>

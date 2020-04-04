@@ -14,6 +14,9 @@ class CCrmEntitySelectorHelper
 			$options = array();
 		}
 
+		$userPermissions = isset($options['USER_PERMISSIONS']) && $options['USER_PERMISSIONS'] instanceof \CCrmPerms
+			? $options['USER_PERMISSIONS'] : \CCrmPerms::GetCurrentUserPermissions();
+
 		$bEntityEditorFormat = (
 			isset($options['ENTITY_EDITOR_FORMAT'])
 			&& ($options['ENTITY_EDITOR_FORMAT'] === true || strtoupper($options['ENTITY_EDITOR_FORMAT']) === 'Y')
@@ -41,8 +44,12 @@ class CCrmEntitySelectorHelper
 				isset($options['REQUIRE_REQUISITE_DATA'])
 				&& ($options['REQUIRE_REQUISITE_DATA'] === true || $options['REQUIRE_REQUISITE_DATA'] === 'Y')
 			);
-
 		}
+
+		$normalizeMultifields = (
+			isset($options['NORMALIZE_MULTIFIELDS'])
+			&& ($options['NORMALIZE_MULTIFIELDS'] === true || $options['NORMALIZE_MULTIFIELDS'] === 'Y')
+		);
 
 		$result = array();
 		if ($bEntityEditorFormat)
@@ -75,9 +82,11 @@ class CCrmEntitySelectorHelper
 		$contactTypeKey = $bEntityEditorFormat ? 'contactType' : 'CONTACT_TYPE';
 		$contactTypeIdKey = $bEntityEditorFormat ? 'id' : 'ID';
 		$contactTypeNameKey = $bEntityEditorFormat ? 'name' : 'NAME';
-		$multyFieldsKey = $bEntityEditorFormat ? 'multiFields' : 'MULTI_FIELDS';
+		$multiFieldsKey = $bEntityEditorFormat ? 'multiFields' : 'MULTI_FIELDS';
 		$requisiteDataKey = $bEntityEditorFormat ? 'requisiteData' : 'REQUISITE_DATA';
 		$bindingDataKey = $bEntityEditorFormat ? 'bindings' : 'BINDINGS';
+		$permissionsKey = $bEntityEditorFormat ? 'permissions' : 'PERMISSIONS';
+		$canUpdateKey = $bEntityEditorFormat ? 'canUpdate' : 'CAN_UPDATE';
 
 		if($entityTypeName === 'CONTACT')
 		{
@@ -95,6 +104,8 @@ class CCrmEntitySelectorHelper
 			}
 			else
 			{
+				$result[$permissionsKey] = array($canUpdateKey => \CCrmContact::CheckUpdatePermission($entityID, $userPermissions));
+
 				$arImages = array();
 				$arLargeImages = array();
 				$contactTypes = CCrmStatus::GetStatusList('CONTACT_TYPE');
@@ -167,17 +178,17 @@ class CCrmEntitySelectorHelper
 
 								if (!is_array($result[$advancedInfoKey]))
 									$result[$advancedInfoKey] = array();
-								if (!is_array($result[$advancedInfoKey][$multyFieldsKey]))
-									$result[$advancedInfoKey][$multyFieldsKey] = array();
-								$result[$advancedInfoKey][$multyFieldsKey][] = array(
-									'ID' => $entityID,
-									'ENTITY_ID' => $arRes['ID'],
+								if (!is_array($result[$advancedInfoKey][$multiFieldsKey]))
+									$result[$advancedInfoKey][$multiFieldsKey] = array();
+								$result[$advancedInfoKey][$multiFieldsKey][] = array(
+									'ID' => $normalizeMultifields ? $arRes['ID'] : $entityID,
+									'ENTITY_ID' => $normalizeMultifields ? $entityID : $arRes['ID'],
 									'TYPE_ID' => $arRes['TYPE_ID'],
 									'VALUE_TYPE' => $arRes['VALUE_TYPE'],
 									'VALUE' => $arRes['VALUE'],
 									'VALUE_FORMATTED' => $formattedValue,
 									'COMPLEX_ID' => $arRes['COMPLEX_ID'],
-									'COMPLEX_NAME' => \CCrmFieldMulti::GetEntityNameByComplex($arRes['COMPLEX_ID'], false),
+									'COMPLEX_NAME' => \CCrmFieldMulti::GetEntityNameByComplex($arRes['COMPLEX_ID'], false)
 								);
 							}
 						}
@@ -213,6 +224,8 @@ class CCrmEntitySelectorHelper
 			}
 			else
 			{
+				$result[$permissionsKey] = array($canUpdateKey => \CCrmCompany::CheckUpdatePermission($entityID, $userPermissions));
+
 				$arImages = array();
 				$arLargeImages = array();
 
@@ -268,17 +281,17 @@ class CCrmEntitySelectorHelper
 
 								if (!is_array($result[$advancedInfoKey]))
 									$result[$advancedInfoKey] = array();
-								if (!is_array($result[$advancedInfoKey][$multyFieldsKey]))
-									$result[$advancedInfoKey][$multyFieldsKey] = array();
-								$result[$advancedInfoKey][$multyFieldsKey][] = array(
-									'ID' => $entityID,
-									'ENTITY_ID' => $arRes['ID'],
+								if (!is_array($result[$advancedInfoKey][$multiFieldsKey]))
+									$result[$advancedInfoKey][$multiFieldsKey] = array();
+								$result[$advancedInfoKey][$multiFieldsKey][] = array(
+									'ID' => $normalizeMultifields ? $arRes['ID'] : $entityID,
+									'ENTITY_ID' => $normalizeMultifields ? $entityID : $arRes['ID'],
 									'TYPE_ID' => $arRes['TYPE_ID'],
 									'VALUE_TYPE' => $arRes['VALUE_TYPE'],
 									'VALUE' => $arRes['VALUE'],
 									'VALUE_FORMATTED' => $formattedValue,
 									'COMPLEX_ID' => $arRes['COMPLEX_ID'],
-									'COMPLEX_NAME' => \CCrmFieldMulti::GetEntityNameByComplex($arRes['COMPLEX_ID'], false),
+									'COMPLEX_NAME' => \CCrmFieldMulti::GetEntityNameByComplex($arRes['COMPLEX_ID'], false)
 								);
 							}
 						}
@@ -303,6 +316,8 @@ class CCrmEntitySelectorHelper
 			}
 			else
 			{
+				$result[$permissionsKey] = array($canUpdateKey => \CCrmLead::CheckUpdatePermission($entityID, $userPermissions));
+
 				$obRes = CCrmLead::GetListEx(
 					array(),
 					array('=ID'=> $entityID),
@@ -356,17 +371,17 @@ class CCrmEntitySelectorHelper
 
 								if (!is_array($result[$advancedInfoKey]))
 									$result[$advancedInfoKey] = array();
-								if (!is_array($result[$advancedInfoKey][$multyFieldsKey]))
-									$result[$advancedInfoKey][$multyFieldsKey] = array();
-								$result[$advancedInfoKey][$multyFieldsKey][] = array(
-									'ID' => $entityID,
-									'ENTITY_ID' => $arRes['ID'],
+								if (!is_array($result[$advancedInfoKey][$multiFieldsKey]))
+									$result[$advancedInfoKey][$multiFieldsKey] = array();
+								$result[$advancedInfoKey][$multiFieldsKey][] = array(
+									'ID' => $normalizeMultifields ? $arRes['ID'] : $entityID,
+									'ENTITY_ID' => $normalizeMultifields ? $entityID : $arRes['ID'],
 									'TYPE_ID' => $arRes['TYPE_ID'],
 									'VALUE_TYPE' => $arRes['VALUE_TYPE'],
 									'VALUE' => $arRes['VALUE'],
 									'VALUE_FORMATTED' => $formattedValue,
 									'COMPLEX_ID' => $arRes['COMPLEX_ID'],
-									'COMPLEX_NAME' => \CCrmFieldMulti::GetEntityNameByComplex($arRes['COMPLEX_ID'], false),
+									'COMPLEX_NAME' => \CCrmFieldMulti::GetEntityNameByComplex($arRes['COMPLEX_ID'], false)
 								);
 							}
 						}
@@ -385,6 +400,8 @@ class CCrmEntitySelectorHelper
 			}
 			else
 			{
+				$result[$permissionsKey] = array($canUpdateKey => \CCrmDeal::CheckUpdatePermission($entityID, $userPermissions));
+
 				$obRes = CCrmDeal::GetListEx(
 					array(),
 					array('=ID'=> $entityID),
@@ -421,6 +438,8 @@ class CCrmEntitySelectorHelper
 			}
 			else
 			{
+				$result[$permissionsKey] = array($canUpdateKey => \CCrmQuote::CheckUpdatePermission($entityID, $userPermissions));
+
 				$obRes = CCrmQuote::GetList(
 					array(), array('=ID'=> $entityID), false, false,
 					array('QUOTE_NUMBER', 'TITLE', 'COMPANY_TITLE', 'CONTACT_FULL_NAME')
@@ -907,11 +926,13 @@ class CCrmEntitySelectorHelper
 			}
 			$bSelected = false;
 
-			$fieldsAllowed = array();
+			$fieldsAllowedMap = array();
 			foreach ($fieldsInfo as $fieldName => $fieldInfo)
 			{
 				if ($fieldInfo['isRQ'])
-					$fieldsAllowed[] = $fieldName;
+				{
+					$fieldsAllowedMap[$fieldName] = true;
+				}
 			}
 			unset($fieldName, $fieldInfo);
 			$select = array_keys($fieldsInfo);
@@ -1020,12 +1041,13 @@ class CCrmEntitySelectorHelper
 						}
 						unset($fName, $fValue);
 
-						$presetFieldsIndex = array();
-						$presetFieldsSort = array(
-							'ID' => array(),
-							'SORT' => array(),
-							'FIELD_NAME' => array()
-						);
+						$presetFieldsMap = [];
+						$presetFieldsIndex = [];
+						$presetFieldsSort = [
+							'ID' => [],
+							'SORT' => [],
+							'FIELD_NAME' => []
+						];
 						if (is_array($presetList[$fields['PRESET_ID']]))
 						{
 							if (is_array($presetList[$fields['PRESET_ID']]['SETTINGS']))
@@ -1054,6 +1076,7 @@ class CCrmEntitySelectorHelper
 								$presetFieldsSort['ID'], SORT_ASC, SORT_NUMERIC,
 								$presetFieldsSort['FIELD_NAME']))
 							{
+								$presetFieldsMap = array_fill_keys($presetFieldsSort['FIELD_NAME'], true);
 								$presetFieldsIndex = array_flip($presetFieldsSort['FIELD_NAME']);
 							}
 						}
@@ -1096,22 +1119,28 @@ class CCrmEntitySelectorHelper
 
 						$requisiteData = array();
 						if (!$viewDataOnly)
+						{
 							$requisiteData['fields'] = $dataFields;
-						$requisiteData['viewData'] = $requisite->prepareViewData($viewDataFields, $fieldsAllowed);
+						}
+						$fieldsInView = array_intersect_assoc($presetFieldsMap, $fieldsAllowedMap);
+						$requisiteData['viewData'] = $requisite->prepareViewData($viewDataFields, $fieldsInView);
+						unset($presetFields, $fieldsInView);
 						if ($bankDetailCountryId <= 0)
 							$bankDetailCountryId = \Bitrix\Crm\EntityPreset::getCurrentCountryId();
 						$bankDetailsData = self::PrepareBankDetailsData(
 							\CCrmOwnerType::Requisite,
 							$requisiteId,
 							array(
-								'VIEW_DATA_ONLY' => true,
+								'VIEW_DATA_ONLY' => $viewDataOnly,
 								'SKIP_CHECK_PERMISSION' => true,
 								'COUNTRY_ID' => $bankDetailCountryId,
 								'BANK_DETAIL_ID_SELECTED' => $bankDetailIdSelected
 							)
 						);
 						if (!$viewDataOnly)
+						{
 							$requisiteData['bankDetailFieldsList'] = &$bankDetailsData['bankDetailFieldsList'];
+						}
 						$requisiteData['bankDetailViewDataList'] = &$bankDetailsData['bankDetailViewDataList'];
 						$requisiteData['bankDetailIdSelected'] = &$bankDetailsData['bankDetailIdSelected'];
 						unset($viewDataFields, $bankDetailsData);
@@ -1166,9 +1195,11 @@ class CCrmEntitySelectorHelper
 							);
 
 							if (!$viewDataOnly)
+							{
 								$resultItem['requisiteDataSign'] = $requisiteDataSign;
-							$resultItem['selected'] =
-								(!$bSelected && $index === 0 || $requisiteIdSelected === intval($requisiteId));
+							}
+							$resultItem['selected'] = (!$bSelected && $index === 0
+								|| $requisiteIdSelected === intval($requisiteId));
 							$result[$index++] = $resultItem;
 							unset($resultItem);
 						}

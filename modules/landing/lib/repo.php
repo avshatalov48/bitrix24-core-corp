@@ -158,6 +158,7 @@ class Repo extends \Bitrix\Landing\Internals\BaseTable
 					$manifestLocal['block']['subtype'] = $blockDesc['subtype'];
 				}
 				$manifest[$id] = $manifestLocal;
+				$manifest[$id]['timestamp'] = $block['DATE_MODIFY']->getTimeStamp();
 			}
 		}
 

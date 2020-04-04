@@ -1,5 +1,7 @@
 <?php
 global $MESS;
+
+use Bitrix\Main\Application;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Localization\Loc;
 
@@ -107,6 +109,8 @@ Class disk extends CModule
 		CAgent::addAgent('Bitrix\\Disk\\Internals\\Cleaner::emptyOldDeletedLogEntries();', 'disk', 'N', 2592000);
 		CAgent::addAgent('Bitrix\\Disk\\Internals\\Rights\\Healer::restartSetupSession();', 'disk', 'N', 3600);
 		CAgent::addAgent('Bitrix\\Disk\\Internals\\Rights\\Healer::markBadSetupSession();', 'disk', 'N');
+		CAgent::addAgent('Bitrix\\Disk\\Search\\Reindex\\ExtendedIndex::processWithStatusExtended();', 'disk', 'N', 1800);
+
 		if(!$isWebdavInstalled)
 		{
 			require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/disk/lib/configuration.php");
@@ -119,6 +123,22 @@ Class disk extends CModule
 				'disk',
 				'disk_revision_api',
 				\Bitrix\Disk\Configuration::REVISION_API
+			);
+			/** @see \Bitrix\Disk\Search\Reindex\BaseObjectIndex::STATUS_STOP */
+			/** @see \Bitrix\Disk\Search\Reindex\BaseObjectIndex::stopExecution(); */
+			\Bitrix\Main\Config\Option::set(
+				'disk',
+				'needBaseObjectIndex',
+				'N'
+			);
+
+			/** @see \Bitrix\Disk\Search\Reindex\HeadIndex::STATUS_FINISH */
+			/** @see \Bitrix\Disk\Search\Reindex\HeadIndex::finishExecution(); */
+			/** @see \Bitrix\Disk\Search\Reindex\HeadIndex::isReady(); */
+			\Bitrix\Main\Config\Option::set(
+				'disk',
+				'needHeadIndexStepper',
+				'F'
 			);
 		}
 		else
@@ -134,13 +154,6 @@ Class disk extends CModule
 		}
 
 		self::tryToEnableZipNginx();
-		if (\Bitrix\Main\Loader::includeModule('disk'))
-		{
-			if ($DB->Query("CREATE FULLTEXT INDEX IX_DISK_O_9 ON b_disk_object (SEARCH_INDEX)", true))
-			{
-				\Bitrix\Disk\Internals\ObjectTable::getEntity()->enableFullTextIndex("SEARCH_INDEX");
-			}
-		}
 
 		return true;
 	}
@@ -174,15 +187,16 @@ Class disk extends CModule
 			RegisterModuleDependences("search", "OnReindex", "disk", "\\Bitrix\\Disk\\Search\\IndexManager", "onSearchReindex");
 			RegisterModuleDependences("search", "OnSearchGetURL", "disk", "\\Bitrix\\Disk\\Search\\IndexManager", "onSearchGetUrl");
 
-			RegisterModuleDependences('socialnetwork', 'OnSocNetFeaturesAdd', 'disk', "\\Bitrix\\Disk\\SocialnetworkHandlers", 'onSocNetFeaturesAdd');
-			RegisterModuleDependences('socialnetwork', 'OnSocNetFeaturesUpdate', 'disk', "\\Bitrix\\Disk\\SocialnetworkHandlers", 'onSocNetFeaturesUpdate');
-			RegisterModuleDependences('socialnetwork', 'OnSocNetUserToGroupAdd', 'disk', "\\Bitrix\\Disk\\SocialnetworkHandlers", 'onSocNetUserToGroupAdd');
-			RegisterModuleDependences('socialnetwork', 'OnSocNetUserToGroupUpdate', 'disk', "\\Bitrix\\Disk\\SocialnetworkHandlers", 'onSocNetUserToGroupUpdate');
-			RegisterModuleDependences('socialnetwork', 'OnSocNetUserToGroupDelete', 'disk', "\\Bitrix\\Disk\\SocialnetworkHandlers", 'onSocNetUserToGroupDelete');
-			RegisterModuleDependences('socialnetwork', 'OnSocNetGroupDelete', 'disk', "\\Bitrix\\Disk\\SocialnetworkHandlers", 'onSocNetGroupDelete');
-			RegisterModuleDependences('socialnetwork', 'OnSocNetGroupAdd', 'disk', "\\Bitrix\\Disk\\SocialnetworkHandlers", 'onSocNetGroupAdd');
+			RegisterModuleDependences("socialnetwork", "OnSocNetFeaturesAdd", "disk", "\\Bitrix\\Disk\\SocialnetworkHandlers", "onSocNetFeaturesAdd");
+			RegisterModuleDependences("socialnetwork", "OnSocNetFeaturesUpdate", "disk", "\\Bitrix\\Disk\\SocialnetworkHandlers", "onSocNetFeaturesUpdate");
+			RegisterModuleDependences("socialnetwork", "OnSocNetUserToGroupAdd", "disk", "\\Bitrix\\Disk\\SocialnetworkHandlers", "onSocNetUserToGroupAdd");
+			RegisterModuleDependences("socialnetwork", "OnSocNetUserToGroupUpdate", "disk", "\\Bitrix\\Disk\\SocialnetworkHandlers", "onSocNetUserToGroupUpdate");
+			RegisterModuleDependences("socialnetwork", "OnSocNetUserToGroupDelete", "disk", "\\Bitrix\\Disk\\SocialnetworkHandlers", "onSocNetUserToGroupDelete");
+			RegisterModuleDependences("socialnetwork", "OnBeforeSocNetGroupDelete", "disk", "\\Bitrix\\Disk\\SocialnetworkHandlers", "onBeforeSocNetGroupDelete");
+			RegisterModuleDependences("socialnetwork", "OnSocNetGroupDelete", "disk", "\\Bitrix\\Disk\\SocialnetworkHandlers", "onSocNetGroupDelete");
+			RegisterModuleDependences("socialnetwork", "OnSocNetGroupAdd", "disk", "\\Bitrix\\Disk\\SocialnetworkHandlers", "onSocNetGroupAdd");
 			RegisterModuleDependences("socialnetwork", "OnSocNetGroupUpdate", "disk", "\\Bitrix\\Disk\\SocialnetworkHandlers", "onSocNetGroupUpdate");
-			RegisterModuleDependences('socialnetwork', 'OnAfterFetchDiskUfEntity', 'disk', "\\Bitrix\\Disk\\SocialnetworkHandlers", 'onAfterFetchDiskUfEntity');
+			RegisterModuleDependences('socialnetwork', "OnAfterFetchDiskUfEntity", "disk", "\\Bitrix\\Disk\\SocialnetworkHandlers", "onAfterFetchDiskUfEntity");
 			RegisterModuleDependences("im", "OnBeforeConfirmNotify", "disk", "\\Bitrix\\Disk\\Sharing", "OnBeforeConfirmNotify");
 			RegisterModuleDependences("im", "OnGetNotifySchema", "disk", "\\Bitrix\\Disk\\Integration\\NotifySchema", "onGetNotifySchema");
 
@@ -251,6 +265,7 @@ Class disk extends CModule
 		UnRegisterModuleDependences('socialnetwork', 'OnSocNetUserToGroupUpdate', 'disk', "\\Bitrix\\Disk\\SocialnetworkHandlers", 'onSocNetUserToGroupUpdate');
 		UnRegisterModuleDependences('socialnetwork', 'OnSocNetUserToGroupDelete', 'disk', "\\Bitrix\\Disk\\SocialnetworkHandlers", 'onSocNetUserToGroupDelete');
 		UnRegisterModuleDependences('socialnetwork', 'OnSocNetGroupDelete', 'disk', "\\Bitrix\\Disk\\SocialnetworkHandlers", 'onSocNetGroupDelete');
+		UnRegisterModuleDependences("socialnetwork", "OnBeforeSocNetGroupDelete", "disk", "\\Bitrix\\Disk\\SocialnetworkHandlers", "onBeforeSocNetGroupDelete");
 		UnRegisterModuleDependences('socialnetwork', 'OnSocNetGroupAdd', 'disk', "\\Bitrix\\Disk\\SocialnetworkHandlers", 'onSocNetGroupAdd');
 		UnRegisterModuleDependences("socialnetwork", "OnSocNetGroupUpdate", "disk", "\\Bitrix\\Disk\\SocialnetworkHandlers", "onSocNetGroupUpdate");
 		UnRegisterModuleDependences('socialnetwork', 'OnAfterFetchDiskUfEntity', 'disk', "\\Bitrix\\Disk\\SocialnetworkHandlers", 'onAfterFetchDiskUfEntity');
@@ -438,6 +453,7 @@ Class disk extends CModule
 					'ID' => array(
 						'b_disk_attached_object' => 'OBJECT_ID',
 						'b_disk_deleted_log' => 'OBJECT_ID',
+						'b_disk_deleted_log_v2' => 'OBJECT_ID',
 						'b_disk_edit_session' => 'OBJECT_ID',
 						'b_disk_object' => 'REAL_OBJECT_ID',
 						'b_disk_object^' => 'PARENT_ID',
@@ -465,6 +481,7 @@ Class disk extends CModule
 						'b_disk_sharing' => 'REAL_STORAGE_ID',
 						'b_disk_sharing^' => 'LINK_STORAGE_ID',
 						'b_disk_deleted_log' => 'STORAGE_ID',
+						'b_disk_deleted_log_v2' => 'STORAGE_ID',
 					)
 				),
 				'b_disk_version' => array(
@@ -502,6 +519,7 @@ Class disk extends CModule
 						'b_disk_edit_session' => 'USER_ID',
 						'b_disk_edit_session^' => 'OWNER_ID',
 						'b_disk_deleted_log' => 'USER_ID',
+						'b_disk_deleted_log_v2' => 'USER_ID',
 						'b_disk_cloud_import' => 'USER_ID',
 						'b_disk_object_lock' => 'CREATED_BY',
 					)
@@ -529,7 +547,7 @@ Class disk extends CModule
 			),
 		);
 	}
-	
+
 	public static function OnBeforeIBlockDelete($id)
 	{
 		$id = (int)$id;

@@ -54,7 +54,7 @@ class ImConnectorLiveChat extends \CBitrixComponent
 		$this->arResult["REGISTER_STATUS"] = $this->status->getRegister();
 		$this->arResult["ERROR_STATUS"] = $this->status->getError();
 		$this->arResult["PATH_TO_INDEX_OL"] = \Bitrix\ImOpenLines\Common::getPublicFolder();
-		$this->arResult["PUBLIC_TO_BUTTON_OL"] = $this->arResult["PATH_TO_INDEX_OL"] . 'button.php';
+		$this->arResult["PUBLIC_TO_BUTTON_OL"] = Loader::includeModule('crm') ? \Bitrix\Crm\SiteButton\Manager::getUrl() : $this->arResult["PATH_TO_INDEX_OL"] . 'button.php';
 
 		$this->cacheId = Connector::getCacheIdConnector($this->arParams['LINE'], $this->connector);
 	}
@@ -223,6 +223,11 @@ class ImConnectorLiveChat extends \CBitrixComponent
 				$this->arResult["OPEN_BLOCK"] = '';
 			else
 				$this->arResult["OPEN_BLOCK"] = 'Y';
+
+			if(empty($this->request['open_block_phrases']))
+				$this->arResult["OPEN_BLOCK_PHRASES"] = '';
+			else
+				$this->arResult["OPEN_BLOCK_PHRASES"] = 'Y';
 		}
 		else
 		{

@@ -1,7 +1,7 @@
 ;(function(){
 	if (window["LHEPostForm"])
 		return;
-var repo = { controller : {}, handler : {}};
+var repo = { controller : {}, handler : {}, form : {}};
 BX.addCustomEvent(window, "BFileDLoadFormControllerWasBound", function(obj) { repo.controller[obj.id] = true;});
 BX.addCustomEvent(window, "WDLoadFormControllerInit", function(obj) { repo.controller[obj.CID] = obj; });
 BX.addCustomEvent(window, "WDLoadFormControllerWasBound", function(obj) { repo.controller[obj.CID] = true; });
@@ -949,6 +949,7 @@ var LHEPostForm = function(formID, params)
 	this.oEditorId = params['LHEJsObjId'];
 	this.__divId = (params['LHEJsObjName'] || params['LHEJsObjId']);
 	repo.handler[this.oEditorId] = this;
+	repo.form[this.formID] = this;
 	this.oEditor = LHEPostForm.getEditor(this.oEditorId);
 	this.urlPreview = this.initUrlPreview(params);
 
@@ -1704,6 +1705,7 @@ LHEPostForm.prototype = {
 		}
 		else
 		{
+			MPFMention.node = null;
 			BX.onCustomEvent(this.eventNode, 'OnClickCancel', [this]);
 			BX.onCustomEvent(this.eventNode, 'OnShowLHE', ['hide']);
 		}
@@ -1718,8 +1720,10 @@ LHEPostForm.prototype = {
 
 		BX.addCustomEvent(editor, 'OnCtrlEnter', function() {
 			editor.SaveContent();
-			if (_this.params && _this.params['ctrlEnterHandler'] && typeof window[_this.params['ctrlEnterHandler']] == 'function')
+			if (BX.type.isNotEmptyString(_this.params['ctrlEnterHandler']) && typeof window[_this.params['ctrlEnterHandler']] == 'function')
 				window[_this.params['ctrlEnterHandler']]();
+			else if (BX.type.isFunction(_this.params['ctrlEnterHandler']))
+				_this.params['ctrlEnterHandler']();
 			else
 				BX.submit(BX(_this.formID));
 		});
@@ -1922,6 +1926,7 @@ LHEPostForm.prototype = {
 		BX.addCustomEvent(editor, "OnImageDataUriHandle", BX.proxy(function(){BX.onCustomEvent(this.eventNode, "OnImageDataUriHandle", arguments);}, this));
 
 		BX.addCustomEvent(editor, "OnAfterUrlConvert", this.OnAfterUrlConvert.bind(this));
+		BX.addCustomEvent(editor, "OnAfterLinkInserted", this.OnAfterUrlConvert.bind(this));
 		BX.addCustomEvent(editor, "OnBeforeCommandExec", this.OnBeforeCommandExec.bind(this));
 		// Contextmenu changing for images/files
 		editor.contextMenu.items['postimage'] =
@@ -2095,6 +2100,10 @@ LHEPostForm.getEditor = function(editor)
 LHEPostForm.getHandler = function(editor)
 {
 	return repo.handler[(typeof editor == "object" ? editor.id : editor)];
+};
+LHEPostForm.getHandlerByFormId = function(formId)
+{
+	return repo.form[formId];
 };
 LHEPostForm.unsetHandler = function(editor)
 {
@@ -2394,7 +2403,9 @@ var MPFMention = {
 	listen: false,
 	plus : false,
 	text : '',
-	bSearch: false
+	bSearch: false,
+	node: null,
+	mode: null
 };
 
 window.onKeyDownHandler = function(e, editor, formID)
@@ -2405,6 +2416,32 @@ window.onKeyDownHandler = function(e, editor, formID)
 		return true;
 
 	var selectorId = window.MPFgetSelectorId('bx-mention-' + formID + '-id');
+
+	if (
+		keyCode === editor.KEY_CODES['backspace']
+		&& MPFMention.node
+	)
+	{
+		var mentText = BX.util.trim(editor.util.GetTextContent(MPFMention.node));
+		if (
+			mentText === '+'
+			|| mentText === '@'
+			|| (
+				MPFMention.mode == 'button'
+				&& mentText.length == 1
+			)
+		)
+		{
+			window['BXfpdStopMent' + formID]();
+		}
+		else if (
+			MPFMention.mode == 'button'
+			&& mentText.length == 1
+		)
+		{
+			window['BXfpdStopMent' + formID]();
+		}
+	}
 
 	if (
 		BX.util.in_array(keyCode, [107, 187])
@@ -2448,21 +2485,22 @@ window.onKeyDownHandler = function(e, editor, formID)
 				MPFMention.listenFlag = true;
 				MPFMention.text = '';
 				MPFMention.leaveContent = true;
+				MPFMention.mode = 'plus';
 
 				range.setStart(range.endContainer, range.endOffset - 1);
 				range.setEnd(range.endContainer, range.endOffset);
 				editor.selection.SetSelection(range);
-				var mentNode = BX.create("SPAN", {props: {id: "bx-mention-node"}}, doc);
-				editor.selection.Surround(mentNode, range);
-				range.setStart(mentNode, 1);
-				range.setEnd(mentNode, 1);
+				MPFMention.node = BX.create("SPAN", {props: {id: "bx-mention-node"}}, doc);
+				editor.selection.Surround(MPFMention.node, range);
+				range.setStart(MPFMention.node, 1);
+				range.setEnd(MPFMention.node, 1);
 				editor.selection.SetSelection(range);
 
 				if (BX.type.isNotEmptyString(selectorId))
 				{
 					BX.onCustomEvent(window, 'BX.MPF.MentionSelector:open', [{
 						id: selectorId,
-						bindPosition: getMentionNodePosition(mentNode, editor)
+						bindPosition: getMentionNodePosition(MPFMention.node, editor)
 					}]);
 				}
 			}
@@ -2499,7 +2537,11 @@ window.onKeyDownHandler = function(e, editor, formID)
 		}
 	}
 
-	if (!MPFMention.listen && MPFMention.listenFlag && keyCode === editor.KEY_CODES["enter"])
+	if (
+		!MPFMention.listen
+		&& MPFMention.listenFlag
+		&& keyCode === editor.KEY_CODES["enter"]
+	)
 	{
 		var range = editor.selection.GetRange();
 		if (range.collapsed)
@@ -2531,7 +2573,7 @@ window.onKeyUpHandler = function(e, editor, formID)
 {
 	var
 		keyCode = e.keyCode,
-		doc, range, mentText;
+		range, mentText;
 
 	if (!window['BXfpdStopMent' + formID])
 		return true;
@@ -2550,12 +2592,9 @@ window.onKeyUpHandler = function(e, editor, formID)
 			&& keyCode !== editor.KEY_CODES["down"]
 		)
 		{
-			doc = editor.GetIframeDoc();
-			var mentNode = doc.getElementById('bx-mention-node');
-
-			if (mentNode)
+			if (BX(MPFMention.node))
 			{
-				mentText = BX.util.trim(editor.util.GetTextContent(mentNode));
+				mentText = BX.util.trim(editor.util.GetTextContent(MPFMention.node));
 				var mentTextOrig = mentText;
 
 				mentText = mentText.replace(/^[\+@]*/, '');
@@ -2586,7 +2625,7 @@ window.onKeyUpHandler = function(e, editor, formID)
 					{
 						BX.onCustomEvent(window, 'BX.MPF.MentionSelector:open', [{
 							id: selectorId,
-							bindPosition: getMentionNodePosition(mentNode, editor)
+							bindPosition: getMentionNodePosition(MPFMention.node, editor)
 						}]);
 					}
 				}
@@ -2613,8 +2652,9 @@ window.onKeyUpHandler = function(e, editor, formID)
 			range = editor.selection.GetRange();
 			if (range.collapsed)
 			{
-				var node = range.endContainer;
-				doc = editor.GetIframeDoc();
+				var
+					node = range.endContainer,
+					doc = editor.GetIframeDoc();
 
 				if (node)
 				{
@@ -2765,6 +2805,7 @@ window.onTextareaKeyUpHandler = function(e, editor, formID)
 					MPFMention.text = '';
 					MPFMention.textarea = true;
 					MPFMention.bSearch = false;
+					MPFMention.mode = 'plus';
 
 					if (BX.type.isNotEmptyString(selectorId))
 					{
@@ -2808,7 +2849,6 @@ window.BxInsertMention = function (params)
 			var
 				doc = editor.GetIframeDoc(),
 				range = editor.selection.GetRange(),
-				mentNode = doc.getElementById('bx-mention-node'),
 				mention = BX.create('SPAN',
 					{
 						props: {className: 'bxhtmled-metion'},
@@ -2819,9 +2859,12 @@ window.BxInsertMention = function (params)
 
 			editor.SetBxTag(mention, {tag: "postuser", params: {value : item.entityId}});
 
-			if (mentNode)
+			if (
+				BX(MPFMention.node)
+				&& MPFMention.node.parentNode
+			)
 			{
-				editor.util.ReplaceNode(mentNode, mention);
+				editor.util.ReplaceNode(MPFMention.node, mention);
 			}
 			else
 			{
@@ -3008,19 +3051,35 @@ window.MPFMentionInit = function(formId, params)
 				return;
 			}
 
-			if (!BX.type.isNotEmptyObject(selectorInstance.entities.USERS.items[item.id]))
-			{
-				selectorInstance.entities.USERS.items[item.id] = item;
-			}
+			var componentSelector = BX.Main.selectorManagerV2.getById(selectorInstance.id);
 
-			selectorInstance.setOption('focusInputOnSelectItem', 'N');
-
-			if (!BX.type.isNotEmptyString(selectorInstance.itemsSelected[item.id]))
+			if (
+				BX.type.isNotEmptyObject(componentSelector)
+				&& BX.type.isBoolean(componentSelector.initialized)
+			)
 			{
-				selectorInstance.selectItem({
-					itemId: item.id,
-					entityType: 'USERS'
-				});
+				if (componentSelector.initialized)
+				{
+					if (!BX.type.isNotEmptyObject(selectorInstance.entities.USERS.items[item.id]))
+					{
+						selectorInstance.entities.USERS.items[item.id] = item;
+					}
+
+					selectorInstance.setOption('focusInputOnSelectItem', 'N');
+
+					if (!BX.type.isNotEmptyString(selectorInstance.itemsSelected[item.id]))
+					{
+						selectorInstance.selectItem({
+							itemId: item.id,
+							entityType: 'USERS'
+						});
+					}
+				}
+				else
+				{
+					selectorInstance.itemsSelected[item.id] = 'users';
+					componentSelector.initDialog();
+				}
 			}
 		});
 	}
@@ -3079,14 +3138,14 @@ window.MPFMentionInit = function(formId, params)
 							MPFMention.listenFlag = true;
 							MPFMention.text = '';
 							MPFMention.leaveContent = false;
+							MPFMention.mode = 'button';
 
 							var
-								range = editor.selection.GetRange(),
-								mentNode = doc.getElementById('bx-mention-node');
+								range = editor.selection.GetRange();
 
-							if (mentNode)
+							if (BX(MPFMention.node))
 							{
-								BX.remove(mentNode);
+								BX.remove(BX(MPFMention.node));
 							}
 							editor.InsertHtml('<span id="bx-mention-node">' + editor.INVISIBLE_SPACE + '</span>', range);
 
@@ -3100,20 +3159,25 @@ window.MPFMentionInit = function(formId, params)
 									}]);
 								}
 
-								var mentionNode = doc.getElementById('bx-mention-node');
-								if (mentionNode)
+								MPFMention.node = doc.getElementById('bx-mention-node');
+								if (MPFMention.node)
 								{
-									range.setStart(mentionNode, 0);
-									if (mentionNode.firstChild && mentionNode.firstChild.nodeType == 3 && mentionNode.firstChild.nodeValue.length > 0)
+									range.setStart(MPFMention.node, 0);
+									if (
+										MPFMention.node.firstChild
+										&& MPFMention.node.firstChild.nodeType == 3
+										&& MPFMention.node.firstChild.nodeValue.length > 0
+									)
 									{
-										range.setEnd(mentionNode, 1);
+										range.setEnd(MPFMention.node, 1);
 									}
 									else
 									{
-										range.setEnd(mentionNode, 0);
+										range.setEnd(MPFMention.node, 0);
 									}
 									editor.selection.SetSelection(range);
 								}
+
 								editor.Focus();
 							}, 100);
 						}
@@ -3123,6 +3187,7 @@ window.MPFMentionInit = function(formId, params)
 							MPFMention.listenFlag = true;
 							MPFMention.text = '';
 							MPFMention.leaveContent = false;
+							MPFMention.mode = 'button';
 
 							// TODO: get current cusrsor position
 
@@ -3165,19 +3230,18 @@ window.BXfpdOnDialogClose = function (params)
 			if(editor)
 			{
 				var
-					doc = editor.GetIframeDoc(),
-					mentNode = doc.getElementById('bx-mention-node');
+					doc = editor.GetIframeDoc();
 
-				if (mentNode)
+				if (BX(MPFMention.node))
 				{
-					editor.selection.SetAfter(mentNode);
+					editor.selection.SetAfter(MPFMention.node);
 					if (MPFMention.leaveContent)
 					{
-						editor.util.ReplaceWithOwnChildren(mentNode);
+						editor.util.ReplaceWithOwnChildren(MPFMention.node);
 					}
 					else
 					{
-						BX.remove(mentNode);
+						BX.remove(BX(MPFMention.node));
 					}
 				}
 				editor.Focus();

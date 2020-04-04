@@ -246,6 +246,7 @@
 
 		var randomId = Math.floor(Math.random() * (10000 - 100 + 1)) + 100;
 		html = html.replace(new RegExp("%CONNECTOR_NUM%",'g'), randomId);
+
 		html = this.getConnectorForm(
 			{
 				'%CONNECTOR_FILTER_ID%': connectorData.FILTER_ID,
@@ -330,7 +331,11 @@
 			return;
 		}
 
-		var items = this.availableConnectors.map(function (item) {
+		var items = this.availableConnectors
+			.filter(function (item) {
+				return item.ID !== 'sender_contact_list';
+			})
+			.map(function (item) {
 			return {
 				id: item.ID,
 				text: item.NAME,
@@ -402,7 +407,12 @@
 				continue;
 			}
 
-			html = html.replace(new RegExp(key,'g'), data[key]);
+			var value = data[key];
+			if (BX.type.isString(value))
+			{
+				value = value.replace(new RegExp('\\$','g'), '$$$');
+			}
+			html = html.replace(new RegExp(key,'g'), value);
 		}
 
 		return html;

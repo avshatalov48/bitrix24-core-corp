@@ -217,42 +217,92 @@ if (!$arResult['INTERNAL'] || $arResult['SHOW_INTERNAL_FILTER'])
 	{
 		$enabledEntityTypeNames = array();
 		$currentUserPerms = CCrmPerms::GetCurrentUserPermissions();
-		if(!$currentUserPerms->HavePerm('LEAD', BX_CRM_PERM_NONE, 'READ'))
+		if(!$currentUserPerms->HavePerm(\CCrmOwnerType::LeadName, BX_CRM_PERM_NONE, 'READ'))
 		{
-			$enabledEntityTypeNames[] = 'LEAD';
+			$enabledEntityTypeNames[] = \CCrmOwnerType::LeadName;
 		}
-		if(!$currentUserPerms->HavePerm('CONTACT', BX_CRM_PERM_NONE, 'READ'))
+		if(!$currentUserPerms->HavePerm(\CCrmOwnerType::ContactName, BX_CRM_PERM_NONE, 'READ'))
 		{
-			$enabledEntityTypeNames[] = 'CONTACT';
+			$enabledEntityTypeNames[] = \CCrmOwnerType::ContactName;
 		}
-		if(!$currentUserPerms->HavePerm('COMPANY', BX_CRM_PERM_NONE, 'READ'))
+		if(!$currentUserPerms->HavePerm(\CCrmOwnerType::CompanyName, BX_CRM_PERM_NONE, 'READ'))
 		{
-			$enabledEntityTypeNames[] = 'COMPANY';
+			$enabledEntityTypeNames[] = \CCrmOwnerType::CompanyName;
 		}
 		if(CCrmDeal::CheckReadPermission(0, $currentUserPerms))
 		{
-			$enabledEntityTypeNames[] = 'DEAL';
+			$enabledEntityTypeNames[] = \CCrmOwnerType::DealName;
 		}
-		if(!$currentUserPerms->HavePerm('QUOTE', BX_CRM_PERM_NONE, 'READ'))
+		if(!$currentUserPerms->HavePerm(\CCrmOwnerType::QuoteName, BX_CRM_PERM_NONE, 'READ'))
 		{
-			$enabledEntityTypeNames[] = 'QUOTE';
+			$enabledEntityTypeNames[] = \CCrmOwnerType::QuoteName;
 		}
 
 		if(!empty($enabledEntityTypeNames))
 		{
+			$destSelectorParams = array(
+				'apiVersion' => 3,
+				'context' => 'CRM_EVENT_FILTER_ENTITY',
+				'contextCode' => 'CRM',
+				'useClientDatabase' => 'N',
+				'enableAll' => 'N',
+				'enableDepartments' => 'N',
+				'enableUsers' => 'N',
+				'enableSonetgroups' => 'N',
+				'allowEmailInvitation' => 'N',
+				'allowSearchEmailUsers' => 'N',
+				'departmentSelectDisable' => 'Y',
+				'enableCrm' => 'Y',
+				'convertJson' => 'Y'
+			);
+
+			$entityTypeCounter = 0;
+			foreach($enabledEntityTypeNames as $entityTypeName)
+			{
+				switch($entityTypeName)
+				{
+					case \CCrmOwnerType::LeadName:
+						$destSelectorParams['enableCrmLeads'] = 'Y';
+						$destSelectorParams['addTabCrmLeads'] = 'Y';
+						$entityTypeCounter++;
+						break;
+					case \CCrmOwnerType::DealName:
+						$destSelectorParams['enableCrmDeals'] = 'Y';
+						$destSelectorParams['addTabCrmDeals'] = 'Y';
+						$entityTypeCounter++;
+						break;
+					case \CCrmOwnerType::ContactName:
+						$destSelectorParams['enableCrmContacts'] = 'Y';
+						$destSelectorParams['addTabCrmContacts'] = 'Y';
+						$entityTypeCounter++;
+						break;
+					case \CCrmOwnerType::CompanyName:
+						$destSelectorParams['enableCrmCompanies'] = 'Y';
+						$destSelectorParams['addTabCrmCompanies'] = 'Y';
+						$entityTypeCounter++;
+						break;
+					case \CCrmOwnerType::QuoteName:
+						$destSelectorParams['enableCrmQuotes'] = 'Y';
+						$destSelectorParams['addTabCrmQuotes'] = 'Y';
+						$entityTypeCounter++;
+						break;
+					default:
+				}
+			}
+			if ($entityTypeCounter <= 1)
+			{
+				$destSelectorParams['addTabCrmLeads'] = 'N';
+				$destSelectorParams['addTabCrmDeals'] = 'N';
+				$destSelectorParams['addTabCrmContacts'] = 'N';
+				$destSelectorParams['addTabCrmCompanies'] = 'N';
+				$destSelectorParams['addTabCrmQuotes'] = 'N';
+			}
+
 			$arResult['FILTER'][] = array(
 				'id' => 'ENTITY',
 				'name' => GetMessage('CRM_COLUMN_ENTITY'),
-				'type' => 'custom_entity',
-				'selector' => array(
-					'TYPE' => 'crm_entity',
-					'DATA' => array(
-						'ID' => 'entity',
-						'FIELD_ID' => 'ENTITY',
-						'ENTITY_TYPE_NAMES' => $enabledEntityTypeNames,
-						'IS_MULTIPLE' => false
-					)
-				)
+				'type' => 'dest_selector',
+				'params' => $destSelectorParams
 			);
 
 			$arResult['FILTER'][] = array(
@@ -279,10 +329,18 @@ if (!$arResult['INTERNAL'] || $arResult['SHOW_INTERNAL_FILTER'])
 		'id' => 'CREATED_BY_ID',
 		'name' => GetMessage('CRM_COLUMN_CREATED_BY_ID'),
 		'default' => true,
-		'type' => 'custom_entity',
-		'selector' => array(
-			'TYPE' => 'user',
-			'DATA' => array('ID' => 'created_by_id', 'FIELD_ID' => 'CREATED_BY_ID')
+		'type' => 'dest_selector',
+		'params' => array(
+			'context' => 'CRM_EVENT_FILTER_CREATED_BY_ID',
+			'multiple' => 'N',
+			'contextCode' => 'U',
+			'enableAll' => 'N',
+			'enableSonetgroups' => 'N',
+			'allowEmailInvitation' => 'N',
+			'allowSearchEmailUsers' => 'N',
+			'departmentSelectDisable' => 'Y',
+			'isNumeric' => 'Y',
+			'prefix' => 'U',
 		)
 	);
 	$arResult['FILTER'][] = array('id' => 'DATE_CREATE', 'name' => GetMessage('CRM_COLUMN_DATE_CREATE'), 'default' => true, 'type' => 'date');

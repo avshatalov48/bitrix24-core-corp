@@ -414,6 +414,6 @@ final class Diag
 
 			}
 		};
-		register_shutdown_function($shutdown->bindTo($this));
+		register_shutdown_function($shutdown->bindTo($this, $this));
 	}
-} 
+}

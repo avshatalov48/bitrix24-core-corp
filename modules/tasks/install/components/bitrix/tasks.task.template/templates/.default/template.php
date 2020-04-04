@@ -14,7 +14,45 @@ $helper = $arResult['HELPER'];
 $arParams =& $helper->getComponent()->arParams; // make $arParams the same variable as $this->__component->arParams, as it really should be
 
 $toList = str_replace("#user_id#", $arParams["USER_ID"], $arParams["PATH_TO_USER_TASKS_TEMPLATES"]);
+
+
+$isIFrame = isset($_REQUEST["IFRAME"]) && $_REQUEST["IFRAME"] === "Y";
+
+if ($isIFrame)
+{
+$APPLICATION->RestartBuffer();
 ?>
+<!DOCTYPE html>
+<html>
+<head>
+    <?$APPLICATION->ShowHead(); ?>
+    <script data-skip-moving="true">
+        // Prevent loading page without header and footer
+        if (window === window.top)
+        {
+            window.location = "<?=CUtil::JSEscape($APPLICATION->GetCurPageParam("", array("IFRAME", "IFRAME_TYPE"))); ?>" + window.location.hash;
+        }
+    </script>
+</head>
+<body class="template-<?=SITE_TEMPLATE_ID?> <?$APPLICATION->ShowProperty("BodyClass");?> <?if($isSideSlider):?>task-iframe-popup-side-slider<?endif?>" onload="window.top.BX.onCustomEvent(window.top, 'tasksIframeLoad');" onunload="window.top.BX.onCustomEvent(window.top, 'tasksIframeUnload');">
+<div class="tasks-iframe-header">
+    <div class="pagetitle-wrap">
+        <div class="pagetitle-inner-container" style="padding: 0 18px 0 30px">
+            <div class="pagetitle" >
+                <span id="pagetitle" class="pagetitle-item"><?$APPLICATION->ShowTitle(false);?><?if($existingTask):?><span class="task-page-link-btn js-id-copy-page-url" title="<?=Loc::getMessage('TASKS_TIP_TEMPLATE_COPY_CURRENT_URL')?>"></span><?endif?></span>
+            </div>
+            <?
+            echo $APPLICATION->ShowViewContent("inside_pagetitle");
+            ?>
+        </div>
+        <div class="pagetitle-below" style="padding: 0 18px 0 30px"><?$APPLICATION->ShowViewContent("below_pagetitle")?></div>
+    </div>
+</div>
+<div style="padding: 0 30px;">
+    <?}
+
+?>
+
 
 <?if($arParams["ENABLE_MENU_TOOLBAR"]):?>
 
@@ -60,6 +98,21 @@ $toList = str_replace("#user_id#", $arParams["USER_ID"], $arParams["PATH_TO_USER
 
 <?endif?>
 
+<?$this->SetViewTarget(($isIFrame? 'inside_pagetitle' : 'pagetitle'), 100);?>
+	<div class="task-list-toolbar">
+		<div class="task-list-toolbar-actions">
+			<?php
+			$APPLICATION->IncludeComponent(
+				'bitrix:ui.feedback.form',
+				'',
+				$arResult['DATA']['FEEDBACK_FORM_PARAMETERS']
+			);
+			?>
+			<button class="ui-btn ui-btn-light-border ui-btn-themes ui-btn-icon-setting webform-cogwheel" id="templateEditPopupMenuOptions"></button>
+		</div>
+	</div>
+<?$this->EndViewTarget();?>
+
 <?$helper->displayFatals();?>
 <?if(!$helper->checkHasFatals()):?>
 	<?$helper->displayWarnings();?>
@@ -104,6 +157,11 @@ $toList = str_replace("#user_id#", $arParams["USER_ID"], $arParams["PATH_TO_USER
 		<?endif?>
 
 		<input type="hidden" name="SITE_ID" value="<?=SITE_ID?>" />
+
+        <?php if($_REQUEST['IFRAME']):?>
+		<input type="hidden" name="IFRAME" value="<?=$_REQUEST['IFRAME']=='Y'?'Y':'N'?>" />
+		<?php endif?>
+
 		<input class="js-id-task-template-edit-csrf" type="hidden" name="sessid" value="<?=bitrix_sessid()?>" />
 		<input type="hidden" name="EMITTER" value="<?=htmlspecialcharsbx($arResult['COMPONENT_DATA']['ID'])?>" /> <?// a page-unique component id that performs the query ?>
 
@@ -170,7 +228,10 @@ $toList = str_replace("#user_id#", $arParams["USER_ID"], $arParams["PATH_TO_USER
 				'EXTRA_BUTTONS' => array(
 					'Checklist' => array(
 						'HTML' => '<span class="js-id-wfr-edit-form-toggler tasks-task-mpf-link" data-target="se_checklist">'.Loc::getMessage('TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_CHECKLIST').'</span>'
-					)
+					),
+					'ToCheckList' => [
+						'HTML' => '<span class="js-id-task-template-edit-to-checklist tasks-task-mpf-link">'.Loc::getMessage('TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_TO_CHECKLIST').'</span>',
+					],
 				),
 				'USER_NAME_FORMAT' => $helper->findParameterValue('NAME_TEMPLATE'),
 				'USER_FIELDS' => $template->getUserFieldScheme(true, array(
@@ -184,16 +245,16 @@ $toList = str_replace("#user_id#", $arParams["USER_ID"], $arParams["PATH_TO_USER
 
 		ob_start();
 		$APPLICATION->IncludeComponent(
-			'bitrix:tasks.widget.checklist',
+			'bitrix:tasks.widget.checklist.new',
 			'',
 			array(
-				'TEMPLATE_CONTROLLER_ID' => $helper->getId().'-checklist',
-				'INPUT_PREFIX' => $inputPrefix.'[SE_CHECKLIST]',
-				'DATA' => $template['SE_CHECKLIST'],
-				'CAN_ADD' => 'Y',
-				'CAN_REORDER' => 'Y',
 				'ENTITY_ID' => $template->getId(),
-				'ENTITY_ROUTE' => 'task.template',
+				'ENTITY_TYPE' => 'TEMPLATE',
+				'DATA' => $arResult['TEMPLATE_DATA']['SE_CHECKLIST'],
+				'INPUT_PREFIX' => $inputPrefix . '[SE_CHECKLIST]',
+				'PATH_TO_USER_PROFILE' => $arParams['PATH_TO_USER_PROFILE'],
+				'CONVERTED' => $arResult['CHECKLIST_CONVERTED'],
+				'CAN_ADD_ACCOMPLICE' => true,
 			),
 			$helper->getComponent(),
 			array("HIDE_ICONS" => "Y", "ACTIVE_COMPONENT" => "Y")
@@ -201,7 +262,7 @@ $toList = str_replace("#user_id#", $arParams["USER_ID"], $arParams["PATH_TO_USER
 		$blocks['HEAD_BOTTOM'][] = array(
 			'CODE' => 'SE_CHECKLIST',
 			'HTML' => ob_get_clean(),
-			'IS_PINABLE' => true,
+			'IS_PINABLE' => false,
 			'FILLED' => $blockData['SE_CHECKLIST']['FILLED'],
 		);
 
@@ -447,6 +508,26 @@ $toList = str_replace("#user_id#", $arParams["USER_ID"], $arParams["PATH_TO_USER
 					'HELP_TEXT' => Loc::getMessage('TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_HINT_TPARAM_TYPE'),
 				);
 			}
+
+			$users = Util::getOption('propagate_to_sub_templates_users');
+			if ($users && in_array($arParams['USER_ID'], unserialize($users)))
+			{
+				$templates = Util::getOption('propagate_to_sub_templates');
+				if ($templates)
+				{
+					$templates = unserialize($templates);
+					$value = (in_array($arParams['ID'], $templates));
+
+					$options[] = [
+						'CODE' => 'PROPAGATE_TO_SUB_TEMPLATES',
+						'YES_VALUE' => '1',
+						'NO_VALUE' => '0',
+						'VALUE' => $value,
+						'TEXT' => Loc::getMessage('TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_PROPAGATE_TO_SUB_TEMPLATES'),
+						'HELP_TEXT' => Loc::getMessage('TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_HINT_PROPAGATE_TO_SUB_TEMPLATES'),
+					];
+				}
+			}
 			?>
 
 			<?$APPLICATION->IncludeComponent(
@@ -472,10 +553,72 @@ $toList = str_replace("#user_id#", $arParams["USER_ID"], $arParams["PATH_TO_USER
 
 		$blocks['STATIC'][] = $dates;
 
+
+
+
+
+
+
+
+
+
+
+
+        ob_start();
+        $replicationEnabled = !$template['BASE_TEMPLATE_ID'] && $template['TPARAM_TYPE'] != 1;
+        ?>
+                <label class="js-id-hint-help js-id-task-template-edit-hint-replication task-field-label task-field-label-repeat" data-hint-enabled="<?=!intval($replicationEnabled)?>" data-hint-text="<?=Loc::getMessage('TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_NO_REPLICATION_TEMPLATE_NOTICE', array('#TPARAM_FOR_NEW_USER#' => Loc::getMessage('TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_TPARAM_TYPE')))?>">
+                    <input class="js-id-task-template-edit-flag js-id-task-template-edit-flag-replication task-options-checkbox"
+                           data-target="replication"
+                           data-flag-name="REPLICATE"
+                           type="checkbox" <?=($template['REPLICATE'] == 'Y' ? 'checked' : '')?>
+                        <?=($replicationEnabled ? '' : 'disabled')?>
+                    ><?=Loc::getMessage('TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_MAKE_REPLICABLE')?>
+                    <input class="js-id-task-template-edit-replication"
+                           type="hidden"
+                           name="<?=$inputPrefix?>[REPLICATE]"
+                           value="<?=htmlspecialcharsbx($template['REPLICATE'])?>"
+                    />
+                </label>
+                <div class="js-id-task-template-edit-replication-panel task-options-repeat task-openable-block<?=($template['REPLICATE'] == 'Y' ? '' : ' invisible')?>">
+
+                    <?$APPLICATION->IncludeComponent(
+                        'bitrix:tasks.widget.replication',
+                        '',
+                        array(
+                            'INPUT_PREFIX' => $inputPrefix.'[REPLICATE_PARAMS]',
+                            'DATA' => $template['REPLICATE_PARAMS'],
+                            'COMPANY_WORKTIME' => $arResult['AUX_DATA']['COMPANY_WORKTIME'],
+                            'TEMPLATE_CREATED_BY' => $template['CREATED_BY'],
+                        ),
+                        $helper->getComponent(),
+                        array("HIDE_ICONS" => "Y", "ACTIVE_COMPONENT" => "Y")
+                    );?>
+
+                </div>
+                <?
+                $blockCode = 'REPLICATION';
+                $blocks['STATIC'][] = array(
+                    'CODE' => $blockCode,
+                    'TITLE' => Loc::getMessage('TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_BLOCK_TITLE_'.$blockCode.'_2'),
+                    'TITLE_SHORT' => Loc::getMessage('TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_BLOCK_HEADER_'.$blockCode).'2',
+                    'HTML' => ob_get_clean(),
+                    'IS_PINABLE' => false,
+                    'FILLED' => true//$blockData[$blockCode]['FILLED'],
+                );
+
+
+
+
+
+
+
+
+
 		//////// DYNAMIC ///////////////////////////////////////////////
 
 		$DYNAMICBlocks = array(
-			'PROJECT', 'CRM', 'USER_FIELDS', 'REPLICATION', 'TIME_MANAGER', 'TAG', 'RELATED_TASK', 'PARENT', 'ACCESS',
+			'PROJECT', 'CRM', 'USER_FIELDS', /*'REPLICATION',*/ 'TIME_MANAGER', 'TAG', 'RELATED_TASK', 'PARENT', 'ACCESS',
 		);
 
 		foreach($DYNAMICBlocks as $blockCode)
@@ -705,23 +848,25 @@ $toList = str_replace("#user_id#", $arParams["USER_ID"], $arParams["PATH_TO_USER
 				'INPUT_PREFIX' => 'ACTION[1]',
 				'BLOCKS' => $blocks,
 				'FRAME_ID' => 'task-template-edit',
-				'FOOTER' => array(
+				'FOOTER' => [
 					'IS_ENABLED' => $arParams['ENABLE_FOOTER'],
 					'IS_PINABLE' => $arParams['ENABLE_FOOTER_UNPIN'],
-					'BUTTONS' => array(
-						array(
-							'CODE' => 'APPLY',
-							'TYPE' => 'BUTTON',
-							'TEXT' => Loc::getMessage('TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_'.($template->getId() ? 'SAVE_TASK' : 'ADD_TASK_TEMPLATE')),
-						),
-						array(
-							'CODE' => 'CANCEL',
-							'TYPE' => 'LINK',
-							'TEXT' => Loc::getMessage('TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_CANCEL'),
-							'URL' => Util::secureBackUrl($arResult['TEMPLATE_DATA']['CANCELURL']),
-						),
-					),
-				),
+					'BUTTONS' => [
+					        'save',
+                            ['TYPE'=>'cancel', 'LINK'=>Util::secureBackUrl($arResult['TEMPLATE_DATA']['CANCELURL'])]
+//						[
+//							'CODE' => 'APPLY',
+//							'TYPE' => 'BUTTON',
+//							'TEXT' => Loc::getMessage('TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_'.($template->getId() ? 'SAVE_TASK' : 'ADD_TASK_TEMPLATE')),
+//                        ],
+//						[
+//							'CODE' => 'CANCEL',
+//							'TYPE' => 'LINK',
+//							'TEXT' => Loc::getMessage('TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_CANCEL'),
+//							'URL' => Util::secureBackUrl($arResult['TEMPLATE_DATA']['CANCELURL']),
+//                        ],
+                    ],
+                ],
 			),
 			null, //$helper->getComponent(),
 			array("HIDE_ICONS" => "Y", "ACTIVE_COMPONENT" => "Y")
@@ -739,3 +884,10 @@ $toList = str_replace("#user_id#", $arParams["USER_ID"], $arParams["PATH_TO_USER
 	<?$helper->initializeExtension();?>
 
 <?endif?>
+<?
+if (isset($_REQUEST["IFRAME"]) && $_REQUEST["IFRAME"] === "Y")
+{
+    require($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/epilog_after.php');
+    exit;
+}
+?>

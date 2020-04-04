@@ -20,6 +20,8 @@ use Bitrix\Crm\Color\LeadStatusColorScheme;
 use Bitrix\Crm\Color\QuoteStatusColorScheme;
 use Bitrix\Crm\Category\DealCategory;
 use Bitrix\Crm\Rest;
+use Bitrix\Crm\Tracking;
+use Bitrix\Crm\WebForm;
 use Bitrix\Crm\Settings\RestSettings;
 use Bitrix\Crm\EntityPreset;
 use Bitrix\Crm\EntityRequisite;
@@ -32,6 +34,7 @@ use Bitrix\Crm\Binding\DealContactTable;
 use Bitrix\Crm\Binding\QuoteContactTable;
 use Bitrix\Crm\Binding\ContactCompanyTable;
 use Bitrix\Crm\Security\EntityAuthorization;
+use Bitrix\Crm\Integration\Rest\AppPlacement;
 
 Loc::loadMessages(__FILE__);
 
@@ -39,6 +42,10 @@ final class CCrmRestService extends IRestService
 {
 	const SCOPE_NAME = 'crm';
 	private static $METHOD_NAMES = array(
+		//region Mode
+		'crm.settings.mode.get',
+		//endregion
+
 		//region Status
 		'crm.status.fields',
 		'crm.status.add',
@@ -58,6 +65,7 @@ final class CCrmRestService extends IRestService
 		'crm.invoice.status.delete',
 		//endregion
 		//region Enumeration
+		'crm.enum.settings.mode',
 		'crm.enum.fields',
 		'crm.enum.ownertype',
 		'crm.enum.addresstype',
@@ -67,6 +75,7 @@ final class CCrmRestService extends IRestService
 		'crm.enum.activitydirection',
 		'crm.enum.activitynotifytype',
 		'crm.enum.activitystatus',
+		'crm.enum.entityeditor.configuration.scope',
 		//endregion
 		//region Lead
 		'crm.lead.fields',
@@ -214,6 +223,11 @@ final class CCrmRestService extends IRestService
 		'crm.activity.update',
 		'crm.activity.delete',
 		'crm.activity.communication.fields',
+		//endregion
+		//region Activity Type
+		'crm.activity.type.add',
+		'crm.activity.type.list',
+		'crm.activity.type.delete',
 		//endregion
 		//region Quote
 		'crm.quote.fields',
@@ -368,30 +382,32 @@ final class CCrmRestService extends IRestService
 		'crm.timeline.comment.get',
 		'crm.timeline.comment.delete',
 		'crm.timeline.comment.update',
-		'crm.timeline.comment.bind',
-		'crm.timeline.comment.unbind',
 		'crm.timeline.bindings.fields',
 		'crm.timeline.bindings.list',
 		'crm.timeline.bindings.bind',
 		'crm.timeline.bindings.unbind',
 		//endregion
-	);
-	private static $PLACEMENT_NAMES = array(
-		'CRM_LEAD_LIST_MENU',
-		'CRM_DEAL_LIST_MENU',
-		'CRM_INVOICE_LIST_MENU',
-		'CRM_QUOTE_LIST_MENU',
-		'CRM_CONTACT_LIST_MENU',
-		'CRM_COMPANY_LIST_MENU',
-		'CRM_ACTIVITY_LIST_MENU',
-		'CRM_LEAD_DETAIL_TAB',
-		'CRM_DEAL_DETAIL_TAB',
-		'CRM_CONTACT_DETAIL_TAB',
-		'CRM_COMPANY_DETAIL_TAB',
-		'CRM_LEAD_DETAIL_ACTIVITY',
-		'CRM_DEAL_DETAIL_ACTIVITY',
-		'CRM_CONTACT_DETAIL_ACTIVITY',
-		'CRM_COMPANY_DETAIL_ACTIVITY',
+		//region Details Page Configuration
+		'crm.lead.details.configuration.get',
+		'crm.lead.details.configuration.set',
+		'crm.lead.details.configuration.reset',
+		'crm.lead.details.configuration.forceCommonScopeForAll',
+
+		'crm.deal.details.configuration.get',
+		'crm.deal.details.configuration.set',
+		'crm.deal.details.configuration.reset',
+		'crm.deal.details.configuration.forceCommonScopeForAll',
+
+		'crm.contact.details.configuration.get',
+		'crm.contact.details.configuration.set',
+		'crm.contact.details.configuration.reset',
+		'crm.contact.details.configuration.forceCommonScopeForAll',
+
+		'crm.company.details.configuration.get',
+		'crm.company.details.configuration.set',
+		'crm.company.details.configuration.reset',
+		'crm.company.details.configuration.forceCommonScopeForAll',
+		//endregion
 	);
 	private static $DESCRIPTION = null;
 	private static $PROXIES = array();
@@ -409,7 +425,7 @@ final class CCrmRestService extends IRestService
 			}
 
 			$bindings[\CRestUtil::PLACEMENTS] = array();
-			foreach(self::$PLACEMENT_NAMES as $name)
+			foreach(\Bitrix\Crm\Integration\Rest\AppPlacement::getAll() as $name)
 			{
 				$bindings[\CRestUtil::PLACEMENTS][$name] = array();
 			}
@@ -429,6 +445,12 @@ final class CCrmRestService extends IRestService
 			CCrmRequisiteBankDetailRestProxy::registerEventBindings($bindings);
 			CCrmAddressRestProxy::registerEventBindings($bindings);
 			CCrmMeasureRestProxy::registerEventBindings($bindings);
+			CCrmDealRecurringRestProxy::registerEventBindings($bindings);
+			CCrmInvoiceRecurringRestProxy::registerEventBindings($bindings);
+			CCrmTimelineCommentRestProxy::registerEventBindings($bindings);
+
+			Tracking\Rest::register($bindings);
+			WebForm\Embed\Rest::register($bindings);
 
 			self::$DESCRIPTION = array('crm' => $bindings);
 		}
@@ -467,7 +489,11 @@ final class CCrmRestService extends IRestService
 
 		if(!$proxy)
 		{
-			if($typeName === 'ENUM')
+			if($typeName === 'SETTINGS')
+			{
+				$proxy = self::$PROXIES[$typeName] = new CCrmSettingsRestProxy();
+			}
+			elseif($typeName === 'ENUM')
 			{
 				$proxy = self::$PROXIES[$typeName] = new CCrmEnumerationRestProxy();
 			}
@@ -566,7 +592,14 @@ final class CCrmRestService extends IRestService
 			}
 			elseif($typeName === 'ACTIVITY')
 			{
-				$proxy = self::$PROXIES[$typeName] = new CCrmActivityRestProxy();
+				if($subType === 'TYPE')
+				{
+					$proxy = self::$PROXIES[$typeName.'.'.$subType] = new \Bitrix\Crm\Activity\Rest\TypeProxy();
+				}
+				else
+				{
+					$proxy = self::$PROXIES[$typeName] = new CCrmActivityRestProxy();
+				}
 			}
 			elseif($typeName === 'DUPLICATE')
 			{
@@ -652,6 +685,11 @@ final class CCrmRestService extends IRestService
 
 class CCrmRestHelper
 {
+	const PARAM_KEY_SCHEME_LOWER_CASE = 1;
+	const PARAM_KEY_SCHEME_UPPER_CASE = 2;
+	const PARAM_KEY_SCHEME_LOWER_CAMEL_CASE = 3;
+	const PARAM_KEY_SCHEME_UPPER_CAMEL_CASE = 4;
+
 	public static function resolveEntityID(array &$arParams)
 	{
 		return isset($arParams['ID']) ? (int)$arParams['ID'] : (isset($arParams['id']) ? (int)$arParams['id'] : 0);
@@ -695,6 +733,16 @@ class CCrmRestHelper
 	}
 	public static function resolveParam(array &$arParams, $name, $default = null)
 	{
+		if(!is_string($name))
+		{
+			$name = (string)$name;
+		}
+
+		if($name === '')
+		{
+			return $default;
+		}
+
 		if(isset($arParams[$name]))
 		{
 			return $arParams[$name];
@@ -723,6 +771,137 @@ class CCrmRestHelper
 
 		return $default;
 	}
+
+	public static function resolveParamName(array &$arParams, array $nameParts)
+	{
+		if(empty($nameParts))
+		{
+			return '';
+		}
+
+		$keys = self::prepareKeys(
+			$nameParts,
+			array(
+				self::PARAM_KEY_SCHEME_LOWER_CASE,
+				self::PARAM_KEY_SCHEME_UPPER_CASE,
+				self::PARAM_KEY_SCHEME_LOWER_CAMEL_CASE,
+				self::PARAM_KEY_SCHEME_UPPER_CAMEL_CASE
+			)
+		);
+
+		foreach($keys as $key)
+		{
+			if(isset($arParams[$key]))
+			{
+				return $key;
+			}
+		}
+
+		return '';
+	}
+
+	public static function renameParam(array &$arParams, array $oldNameParts, $newName)
+	{
+		if(empty($arParams))
+		{
+			return;
+		}
+
+		$oldName = self::resolveParamName($arParams, $oldNameParts);
+		if($oldName !== '' && isset($arParams[$oldName]))
+		{
+			$arParams[$newName] = $arParams[$oldName];
+			unset($arParams[$oldName]);
+		}
+	}
+
+	public static function prepareKeys(array $parts, array $schemes)
+	{
+		$map = array();
+		foreach($schemes as $scheme)
+		{
+			$map[self::prepareKey($parts, $scheme)] = true;
+		}
+		return array_keys($map);
+	}
+	public static function prepareKey(array $parts, $scheme)
+	{
+		if(empty($parts))
+		{
+			return '';
+		}
+
+		if($scheme === self::PARAM_KEY_SCHEME_LOWER_CASE)
+		{
+			return implode('', array_map('strtolower', $parts));
+		}
+
+		if($scheme === self::PARAM_KEY_SCHEME_UPPER_CASE)
+		{
+			return implode('', array_map('strtoupper', $parts));
+		}
+
+		if($scheme === self::PARAM_KEY_SCHEME_LOWER_CAMEL_CASE)
+		{
+			$first = array_shift($parts);
+
+			return implode(
+				'',
+				array_merge(
+					array(strtolower($first)),
+					array_map(
+						function($s){ return ucfirst(strtolower($s)); },
+						$parts
+					)
+				)
+			);
+		}
+
+		if($scheme === self::PARAM_KEY_SCHEME_UPPER_CAMEL_CASE)
+		{
+			return implode(
+				'',
+				array_map(
+					function($s){ return ucfirst(strtolower($s)); },
+					$parts
+				)
+			);
+		}
+
+		return implode('', $parts);
+	}
+
+	protected function tryResolveParam(array $arParams, $name, &$value)
+	{
+		$key = '';
+
+		// Check for lower case notation (type, etc)
+		$nameLC = strtolower($name);
+		if(isset($arParams[$nameLC]))
+		{
+			$value = $arParams[$nameLC];
+			return true;
+		}
+
+		// Check for upper case notation (TYPE, etc)
+		$nameUC = strtoupper($name);
+		if(isset($arParams[$nameUC]))
+		{
+			$value = $arParams[$nameUC];
+			return true;
+		}
+
+		// Check for capitalized notation (Type, etc)
+		$capitalized = ucfirst($nameLC);
+		if(isset($arParams[$capitalized]))
+		{
+			$value = $arParams[$capitalized];
+			return true;
+		}
+
+		return false;
+	}
+
 	public static function prepareFieldInfos(array &$fieldsInfo)
 	{
 		$result = array();
@@ -983,7 +1162,12 @@ abstract class CCrmRestProxyBase implements ICrmRestProxy
 	}
 	public function add(&$fields, array $params = null)
 	{
-		$this->internalizeFields($fields, $this->getFieldsInfo(), array());
+		$fieldsInfo = $this->getFieldsInfo();
+		$fieldsInfo['TRACE'] = [
+			'TYPE' => 'string',
+			'ATTRIBUTES' => [\CCrmFieldInfoAttr::Immutable]
+		];
+		$this->internalizeFields($fields, $fieldsInfo, array());
 
 		$errors = array();
 		$result = $this->innerAdd($fields, $errors, $params);
@@ -1315,7 +1499,7 @@ abstract class CCrmRestProxyBase implements ICrmRestProxy
 			}
 			elseif($nameSuffix === 'GET')
 			{
-				return $ufProxy->get($this->resolveParam($arParams, 'id', ''));
+				return $ufProxy->get($this->resolveEntityID($arParams));
 			}
 			elseif($nameSuffix === 'LIST')
 			{
@@ -1335,15 +1519,27 @@ abstract class CCrmRestProxyBase implements ICrmRestProxy
 			}
 			elseif($nameSuffix === 'UPDATE')
 			{
-				return $ufProxy->update(
-					$this->resolveParam($arParams, 'id'),
-					$this->resolveArrayParam($arParams, 'fields')
-				);
+				$ID = $this->resolveEntityID($arParams);
+
+				$fields = $fields = $this->resolveArrayParam($arParams, 'fields');
+				if(!is_array($fields))
+				{
+					throw new RestException("Parameter 'fields' must be array.");
+				}
+
+				return $ufProxy->update($ID, $fields);
 			}
 			elseif($nameSuffix === 'DELETE')
 			{
-				return $ufProxy->delete($this->resolveParam($arParams, 'id', ''));
+				return $ufProxy->delete($this->resolveEntityID($arParams));
 			}
+		}
+		elseif($name === 'DETAILS')
+		{
+			$editorRequestDetails = $nameDetails;
+			$editorRequestName = array_shift($editorRequestDetails);
+			$entityEditorProxy = new CCrmEntityEditorRestProxy($ownerTypeID);
+			return $entityEditorProxy->processMethodRequest($editorRequestName, $editorRequestDetails, $arParams, $nav, $server);
 		}
 
 		throw new RestException("Resource '{$name}' is not supported in current context.");
@@ -3206,6 +3402,28 @@ abstract class CCrmRestProxyBase implements ICrmRestProxy
 	{
 		return array($moduleName, $eventName, $callback, array('category' => \Bitrix\Rest\Sqs::CATEGORY_CRM));
 	}
+	protected function traceEntity($entityTypeId, $entityId, $fields)
+	{
+		Tracking\Entity::onRestAfterAdd($entityTypeId, $entityId, $fields);
+	}
+}
+
+class CCrmSettingsRestProxy extends CCrmRestProxyBase
+{
+	public function processMethodRequest($name, $nameDetails, $arParams, $nav, $server)
+	{
+		$name = strtoupper($name);
+		$nameSuffix = strtoupper(!empty($nameDetails) ? implode('_', $nameDetails) : '');
+		if($name === 'MODE')
+		{
+			if($nameSuffix === 'GET')
+			{
+				return \Bitrix\Crm\Settings\Mode::getCurrent();
+			}
+		}
+
+		return parent::processMethodRequest($name, $nameDetails, $arParams, $nav, $server);
+	}
 }
 
 class CCrmEnumerationRestProxy extends CCrmRestProxyBase
@@ -3239,7 +3457,15 @@ class CCrmEnumerationRestProxy extends CCrmRestProxyBase
 		$descriptions = null;
 
 		$name = strtoupper($name);
-		if($name === 'OWNERTYPE')
+		$nameSuffix = strtoupper(!empty($nameDetails) ? implode('_', $nameDetails) : '');
+		if($name === 'SETTINGS')
+		{
+			if($nameSuffix === 'MODE')
+			{
+				$descriptions = \Bitrix\Crm\Settings\Mode::getAllDescriptions();
+			}
+		}
+		elseif($name === 'OWNERTYPE')
 		{
 			$descriptions = CCrmOwnerType::GetDescriptions(
 				array(
@@ -3287,6 +3513,13 @@ class CCrmEnumerationRestProxy extends CCrmRestProxyBase
 		elseif($name === 'ACTIVITYSTATUS')
 		{
 			$descriptions = CCrmActivityStatus::GetAllDescriptions();
+		}
+		elseif($name === 'ENTITYEDITOR')
+		{
+			if($nameSuffix === 'CONFIGURATION_SCOPE')
+			{
+				$descriptions = \Bitrix\Crm\Entity\EntityEditorConfigScope::getCaptions();
+			}
 		}
 
 		if(!is_array($descriptions))
@@ -5051,14 +5284,18 @@ class CCrmLeadRestProxy extends CCrmRestProxyBase
 		{
 			$errors[] = $entity->LAST_ERROR;
 		}
-		elseif(self::isBizProcEnabled())
+		else
 		{
-			CCrmBizProcHelper::AutoStartWorkflows(
-				CCrmOwnerType::Lead,
-				$result,
-				CCrmBizProcEventType::Create,
-				$errors
-			);
+			self::traceEntity(\CCrmOwnerType::Lead, $result, $fields);
+			if (self::isBizProcEnabled())
+			{
+				CCrmBizProcHelper::AutoStartWorkflows(
+					CCrmOwnerType::Lead,
+					$result,
+					CCrmBizProcEventType::Create,
+					$errors
+				);
+			}
 		}
 
 		//Region automation
@@ -5254,6 +5491,8 @@ class CCrmLeadRestProxy extends CCrmRestProxyBase
 	}
 	public function setProductRows($ID, $rows)
 	{
+		global $APPLICATION;
+
 		$ID = intval($ID);
 		if($ID <= 0)
 		{
@@ -5301,7 +5540,16 @@ class CCrmLeadRestProxy extends CCrmRestProxyBase
 			$actualRows[] = $row;
 		}
 
-		return CCrmLead::SaveProductRows($ID, $actualRows, true, true, true);
+		$result = CCrmLead::SaveProductRows($ID, $actualRows, true, true, true);
+		if(!$result)
+		{
+			$exp = $APPLICATION->GetException();
+			if($exp)
+			{
+				throw new RestException($exp->GetString());
+			}
+		}
+		return $result;
 	}
 	public function processMethodRequest($name, $nameDetails, $arParams, $nav, $server)
 	{
@@ -5430,7 +5678,8 @@ class CCrmDealRestProxy extends CCrmRestProxyBase
 				$defaultRequisiteLinkParams['BANK_DETAIL_ID']
 			);
 
-			if(self::isBizProcEnabled())
+			self::traceEntity(\CCrmOwnerType::Deal, $result, $fields);
+			if (self::isBizProcEnabled())
 			{
 				CCrmBizProcHelper::AutoStartWorkflows(
 					CCrmOwnerType::Deal,
@@ -5650,6 +5899,8 @@ class CCrmDealRestProxy extends CCrmRestProxyBase
 	}
 	public function setProductRows($ID, $rows)
 	{
+		global $APPLICATION;
+
 		$ID = intval($ID);
 		if($ID <= 0)
 		{
@@ -5705,7 +5956,16 @@ class CCrmDealRestProxy extends CCrmRestProxyBase
 			$actualRows[] = $row;
 		}
 
-		return CCrmDeal::SaveProductRows($ID, $actualRows, true, true, true);
+		$result = CCrmDeal::SaveProductRows($ID, $actualRows, true, true, true);
+		if(!$result)
+		{
+			$exp = $APPLICATION->GetException();
+			if($exp)
+			{
+				throw new RestException($exp->GetString());
+			}
+		}
+		return $result;
 	}
 	public function processMethodRequest($name, $nameDetails, $arParams, $nav, $server)
 	{
@@ -6043,14 +6303,17 @@ class CCrmDealRecurringRestProxy extends CCrmRestProxyBase
 		$userPermissions = CCrmPerms::GetCurrentUserPermissions();
 		if (empty($fields) || (int)$fields['DEAL_ID'] <= 0)
 		{
-			$errors[] = 'Not found';
+			$errors[] = 'Recurring deal is not found.';
 			return false;
 		}
 		$categoryID = CCrmDeal::GetCategoryID($fields['DEAL_ID']);
 		if($categoryID < 0)
 		{
-			$errors[] = !CCrmDeal::CheckReadPermission(0, $userPermissions) ? 'Access denied' : 'Not found';
-			return false;
+			if (!CCrmDeal::CheckReadPermission(0, $userPermissions))
+			{
+				$errors[] =  'Access denied';
+				return false;
+			}
 		}
 		elseif(!CCrmDeal::CheckReadPermission($ID, CCrmPerms::GetCurrentUserPermissions(), $categoryID))
 		{
@@ -6181,6 +6444,12 @@ class CCrmDealRecurringRestProxy extends CCrmRestProxyBase
 			else
 			{
 				unset($newRecurringFields['DEAL_ID']);
+				$dealUserType = new \CCrmUserType($GLOBALS['USER_FIELD_MANAGER'], \CCrmDeal::GetUserFieldEntityID());
+				$userFields = $dealUserType->GetEntityFields($dealId);
+				foreach ($userFields as $key => $ufField)
+				{
+					$dealFields[$key] = $ufField['VALUE'];
+				}
 				$result = $dealRecurringInstance->createEntity($dealFields, $newRecurringFields);
 				if ($result->isSuccess())
 				{
@@ -6208,7 +6477,6 @@ class CCrmDealRecurringRestProxy extends CCrmRestProxyBase
 		$result = $this->innerGet($ID, $errors);
 		if (!$result)
 		{
-			$errors[] = 'Not found.';
 			return false;
 		}
 		elseif(!CCrmDeal::CheckUpdatePermission($result['DEAL_ID'], CCrmPerms::GetCurrentUserPermissions()))
@@ -6240,7 +6508,12 @@ class CCrmDealRecurringRestProxy extends CCrmRestProxyBase
 		try
 		{
 			$dealRecurring = \Bitrix\Crm\Recurring\Entity\Deal::getInstance();
-			$dealRecurring->update($ID, $fields);
+			$r = $dealRecurring->update($ID, $fields);
+			if (!$r->isSuccess())
+			{
+				$errors = $r->getErrorMessages();
+				return false;
+			}
 			return true;
 		}
 		catch(Main\SystemException $ex)
@@ -6251,13 +6524,24 @@ class CCrmDealRecurringRestProxy extends CCrmRestProxyBase
 	}
 	protected function innerDelete($ID, &$errors, array $params = null)
 	{
-		$result = $this->innerGet($ID, $errors);
-		if (!$result)
+		$recurringInstance = \Bitrix\Crm\Recurring\Entity\Deal::getInstance();
+		if (!$recurringInstance->isAllowedExpose())
 		{
-			$errors[] = 'Not found.';
+			$errors[] = 'Recurring is not allowed';
 			return false;
 		}
-		elseif(!CCrmDeal::CheckDeletePermission($result['DEAL_ID'], CCrmPerms::GetCurrentUserPermissions()))
+
+		$recurringDataRaw = $recurringInstance->getList([
+			'filter' => ['ID' => (int)$ID],
+			'limit' => 1
+		]);
+
+		if (!($recurringDataRaw->fetch()))
+		{
+			$errors[] = 'Recurring deal is not found.';
+			return false;
+		}
+		elseif(!CCrmDeal::CheckDeletePermission(0, CCrmPerms::GetCurrentUserPermissions()))
 		{
 			$errors[] = 'Access denied.';
 			return false;
@@ -6265,7 +6549,13 @@ class CCrmDealRecurringRestProxy extends CCrmRestProxyBase
 
 		try
 		{
-			\Bitrix\Crm\DealRecurTable::delete($ID);
+			$dealRecurring = \Bitrix\Crm\Recurring\Entity\Deal::getInstance();
+			$r = $dealRecurring->delete($ID);
+			if (!$r->isSuccess())
+			{
+				$errors = $r->getErrorMessages();
+				return false;
+			}
 			return true;
 		}
 		catch(Main\SystemException $ex)
@@ -6357,6 +6647,86 @@ class CCrmDealRecurringRestProxy extends CCrmRestProxyBase
 
 		throw new RestException("Resource '{$name}' is not supported in current context.");
 	}
+	public static function registerEventBindings(array &$bindings)
+	{
+		if(!isset($bindings[CRestUtil::EVENTS]))
+		{
+			$bindings[CRestUtil::EVENTS] = array();
+		}
+
+		$callback = ['CCrmDealRecurringRestProxy', 'processEvent'];
+
+		$bindings[CRestUtil::EVENTS]['onCrmDealRecurringAdd'] = self::createEventInfo('crm', 'OnAfterCrmDealRecurringAdd', $callback);
+		$bindings[CRestUtil::EVENTS]['onCrmDealRecurringUpdate'] = self::createEventInfo('crm', 'OnAfterCrmDealRecurringUpdate', $callback);
+		$bindings[CRestUtil::EVENTS]['onCrmDealRecurringDelete'] = self::createEventInfo('crm', 'OnAfterCrmDealRecurringDelete', $callback);
+		$bindings[CRestUtil::EVENTS]['onCrmDealRecurringExpose'] = self::createEventInfo('crm', 'OnAfterCrmDealRecurringExpose', $callback);
+	}
+	public static function processEvent(array $arParams, array $arHandler)
+	{
+		$event = $arParams[0];
+		$eventFields = [];
+		if ($event instanceof Main\Event)
+		{
+			$eventFields = $event->getParameters();
+		}
+		$eventName = strtolower($arHandler['EVENT_NAME']);
+		if ($eventName === 'oncrmdealrecurringexpose')
+		{
+			$id = isset($eventFields['ID']) ? (int)$eventFields['ID'] : 0;
+			if($id <= 0)
+			{
+				throw new RestException("Could not find entity ID in fields of event \"{$eventName}\"");
+			}
+
+			$newDealId = isset($eventFields['DEAL_ID']) ? (int)$eventFields['DEAL_ID'] : 0;
+			if($newDealId <= 0)
+			{
+				throw new RestException("Could not find new deal ID in fields of event \"{$eventName}\"");
+			}
+
+			$recurringId = isset($eventFields['RECURRING_ID']) ? (int)$eventFields['RECURRING_ID'] : 0;
+
+			return [
+				'FIELDS' => [
+					'ID' => $id,
+					'RECURRING_DEAL_ID' => $recurringId,
+					'DEAL_ID' => $newDealId,
+				]
+			];
+		}
+		else
+		{
+			switch ($eventName)
+			{
+				case 'oncrmdealrecurringadd':
+				case 'oncrmdealrecurringupdate':
+					{
+						$ID = isset($eventFields['ID']) ? (int)$eventFields['ID'] : 0;
+						$dealId = isset($eventFields['DEAL_ID']) ? (int)$eventFields['DEAL_ID'] : 0;
+						$resultFields = [
+							'ID' => $ID,
+							'RECURRING_DEAL_ID' => $dealId
+						];
+					}
+					break;
+				case 'oncrmdealrecurringdelete':
+					{
+						$ID = isset($eventFields['ID']) ? (int)$eventFields['ID'] : 0;
+						$resultFields['ID'] = $ID;
+					}
+					break;
+				default:
+					throw new RestException("The Event \"{$eventName}\" is not supported in current context");
+			}
+
+			if($ID <= 0)
+			{
+				throw new RestException("Could not find entity ID in fields of event \"{$eventName}\"");
+			}
+
+			return ['FIELDS' => $resultFields];
+		}
+	}
 }
 
 class CCrmInvoiceRecurringRestProxy extends CCrmRestProxyBase
@@ -6447,7 +6817,7 @@ class CCrmInvoiceRecurringRestProxy extends CCrmRestProxyBase
 		$userPermissions = CCrmPerms::GetCurrentUserPermissions();
 		if (empty($fields) || (int)$fields['INVOICE_ID'] <= 0)
 		{
-			$errors[] = 'Not found';
+			$errors[] = 'Recurring invoice is not found';
 			return false;
 		}
 
@@ -6608,7 +6978,6 @@ class CCrmInvoiceRecurringRestProxy extends CCrmRestProxyBase
 		$result = $this->innerGet($ID, $errors);
 		if (!$result)
 		{
-			$errors[] = 'Not found.';
 			return false;
 		}
 		elseif(!CCrmInvoice::CheckUpdatePermission($result['INVOICE_ID'], CCrmPerms::GetCurrentUserPermissions()))
@@ -6651,13 +7020,25 @@ class CCrmInvoiceRecurringRestProxy extends CCrmRestProxyBase
 	}
 	protected function innerDelete($ID, &$errors, array $params = null)
 	{
-		$result = $this->innerGet($ID, $errors);
-		if (!$result)
+		$invoiceRecurring = \Bitrix\Crm\Recurring\Entity\Invoice::getInstance();
+		if (!$invoiceRecurring->isAllowedExpose())
 		{
-			$errors[] = 'Not found.';
+			$errors[] = 'Recurring is not allowed';
 			return false;
 		}
-		elseif(!CCrmInvoice::CheckDeletePermission($result['INVOICE_ID'], CCrmPerms::GetCurrentUserPermissions()))
+
+		$recurringDataRaw = $invoiceRecurring->getList([
+			'filter' => ['ID' => (int)$ID],
+			'limit' => 1
+		]);
+
+		if (!($recurringDataRaw->fetch()))
+		{
+			$errors[] = 'Recurring invoice is not found';
+			return false;
+		}
+
+		elseif(!CCrmInvoice::CheckDeletePermission(0, CCrmPerms::GetCurrentUserPermissions()))
 		{
 			$errors[] = 'Access denied.';
 			return false;
@@ -6665,7 +7046,12 @@ class CCrmInvoiceRecurringRestProxy extends CCrmRestProxyBase
 
 		try
 		{
-			\Bitrix\Crm\InvoiceRecurTable::delete($ID);
+			$r = $invoiceRecurring->delete($ID);
+			if (!$r->isSuccess())
+			{
+				$errors = $r->getErrorMessages();
+				return false;
+			}
 			return true;
 		}
 		catch(Main\SystemException $ex)
@@ -6752,6 +7138,86 @@ class CCrmInvoiceRecurringRestProxy extends CCrmRestProxyBase
 
 		throw new RestException("Resource '{$name}' is not supported in current context.");
 	}
+	public static function registerEventBindings(array &$bindings)
+	{
+		if(!isset($bindings[CRestUtil::EVENTS]))
+		{
+			$bindings[CRestUtil::EVENTS] = array();
+		}
+
+		$callback = ['CCrmInvoiceRecurringRestProxy', 'processEvent'];
+
+		$bindings[CRestUtil::EVENTS]['onCrmInvoiceRecurringAdd'] = self::createEventInfo('crm', 'OnAfterCrmInvoiceRecurringAdd', $callback);
+		$bindings[CRestUtil::EVENTS]['onCrmInvoiceRecurringUpdate'] = self::createEventInfo('crm', 'OnAfterCrmInvoiceRecurringUpdate', $callback);
+		$bindings[CRestUtil::EVENTS]['onCrmInvoiceRecurringDelete'] = self::createEventInfo('crm', 'OnAfterCrmInvoiceRecurringDelete', $callback);
+		$bindings[CRestUtil::EVENTS]['onCrmInvoiceRecurringExpose'] = self::createEventInfo('crm', 'OnAfterCrmInvoiceRecurringExpose', $callback);
+	}
+	public static function processEvent(array $arParams, array $arHandler)
+	{
+		$eventName = strtolower($arHandler['EVENT_NAME']);
+		$event = $arParams[0];
+		$eventFields = [];
+		if ($event instanceof Main\Event)
+		{
+			$eventFields = $event->getParameters();
+		}
+		if ($eventName === 'oncrminvoicerecurringexpose')
+		{
+			$id = isset($eventFields['ID']) ? (int)$eventFields['ID'] : 0;
+			if($id <= 0)
+			{
+				throw new RestException("Could not find entity ID in fields of event \"{$eventName}\"");
+			}
+
+			$newInvoiceId = isset($eventFields['INVOICE_ID']) ? (int)$eventFields['INVOICE_ID'] : 0;
+			if($newInvoiceId <= 0)
+			{
+				throw new RestException("Could not find new invoice ID in fields of event \"{$eventName}\"");
+			}
+
+			$recurringId = isset($eventFields['RECURRING_ID']) ? (int)$eventFields['RECURRING_ID'] : 0;
+
+			return [
+				'FIELDS' => [
+					'ID' => $id,
+					'RECURRING_INVOICE_ID' => $recurringId,
+					'INVOICE_ID' => $newInvoiceId,
+				]
+			];
+		}
+		else
+		{
+			switch ($eventName)
+			{
+				case 'oncrminvoicerecurringadd':
+				case 'oncrminvoicerecurringupdate':
+					{
+						$ID = isset($eventFields['ID']) ? (int)$eventFields['ID'] : 0;
+						$invoiceId = isset($eventFields['INVOICE_ID']) ? (int)$eventFields['INVOICE_ID'] : 0;
+						$resultFields = [
+							'ID' => $ID,
+							'RECURRING_INVOICE_ID' => $invoiceId
+						];
+					}
+					break;
+				case 'oncrminvoicerecurringdelete':
+					{
+						$ID = isset($eventFields['ID']) ? (int)$eventFields['ID'] : 0;
+						$resultFields['ID'] = $ID;
+					}
+					break;
+				default:
+					throw new RestException("The Event \"{$eventName}\" is not supported in current context");
+			}
+
+			if($ID <= 0)
+			{
+				throw new RestException("Could not find entity ID in fields of event \"{$eventName}\"");
+			}
+
+			return ['FIELDS' => $resultFields];
+		}
+	}
 }
 class CCrmCompanyRestProxy extends CCrmRestProxyBase
 {
@@ -6821,14 +7287,18 @@ class CCrmCompanyRestProxy extends CCrmRestProxyBase
 		{
 			$errors[] = $entity->LAST_ERROR;
 		}
-		elseif(self::isBizProcEnabled())
+		else
 		{
-			CCrmBizProcHelper::AutoStartWorkflows(
-				CCrmOwnerType::Company,
-				$result,
-				CCrmBizProcEventType::Create,
-				$errors
-			);
+			self::traceEntity(\CCrmOwnerType::Company, $result, $fields);
+			if (self::isBizProcEnabled())
+			{
+				CCrmBizProcHelper::AutoStartWorkflows(
+					CCrmOwnerType::Company,
+					$result,
+					CCrmBizProcEventType::Create,
+					$errors
+				);
+			}
 		}
 		return $result;
 	}
@@ -7097,14 +7567,18 @@ class CCrmContactRestProxy extends CCrmRestProxyBase
 		{
 			$errors[] = $entity->LAST_ERROR;
 		}
-		elseif(self::isBizProcEnabled())
+		else
 		{
-			CCrmBizProcHelper::AutoStartWorkflows(
-				CCrmOwnerType::Contact,
-				$result,
-				CCrmBizProcEventType::Create,
-				$errors
-			);
+			self::traceEntity(\CCrmOwnerType::Contact, $result, $fields);
+			if (self::isBizProcEnabled())
+			{
+				CCrmBizProcHelper::AutoStartWorkflows(
+					CCrmOwnerType::Contact,
+					$result,
+					CCrmBizProcEventType::Create,
+					$errors
+				);
+			}
 		}
 		return $result;
 	}
@@ -7762,6 +8236,12 @@ class CCrmStatusRestProxy extends CCrmRestProxyBase
 		}
 
 		$entity = new CCrmStatus($currentFields['ENTITY_ID']);
+		if(isset($currentFields['STATUS_ID']) && $entity->existsEntityWithStatus($currentFields['STATUS_ID']))
+		{
+			$errors[] = 'There are active items in this status.';
+			return false;
+		}
+
 		$result = $entity->Delete($ID);
 		if($result === false)
 		{
@@ -8262,6 +8742,12 @@ class CCrmActivityRestProxy extends CCrmRestProxyBase
 			);
 		}
 
+		if(!isset($fields['SUBJECT']) || trim($fields['SUBJECT']) === '')
+		{
+			$errors[] = 'The field SUBJECT is not defined or empty.';
+			return false;
+		}
+
 		$responsibleID = isset($fields['RESPONSIBLE_ID']) ? intval($fields['RESPONSIBLE_ID']) : 0;
 		if($responsibleID <= 0 && $ownerTypeID > 0 && $ownerID > 0)
 		{
@@ -8350,15 +8836,33 @@ class CCrmActivityRestProxy extends CCrmRestProxyBase
 			return false;
 		}
 
-		foreach($bindings as &$binding)
+		foreach($bindings as $binding)
 		{
+			$bindingOwnerTypeName = CCrmOwnerType::ResolveName($binding['OWNER_TYPE_ID']);
+			if($bindingOwnerTypeName === '')
+			{
+				$bindingOwnerTypeName = "[{$binding['OWNER_TYPE_ID']}]";
+			}
+
+			$entity = \Bitrix\Crm\Entity\EntityManager::resolveByTypeID($binding['OWNER_TYPE_ID']);
+			if($entity === null)
+			{
+				$errors[] = "Entity type '{$bindingOwnerTypeName}' is not supported in current context";
+				return false;
+			}
+
+			if(!$entity->isExists($binding['OWNER_ID']))
+			{
+				$errors[] = "Could not find '{$bindingOwnerTypeName}' with ID: {$binding['OWNER_ID']}";
+				return false;
+			}
+
 			if(!CCrmActivity::CheckUpdatePermission($binding['OWNER_TYPE_ID'], $binding['OWNER_ID']))
 			{
 				$errors[] = 'Access denied.';
 				return false;
 			}
 		}
-		unset($binding);
 
 		$fields['BINDINGS'] = array_values($bindings);
 		$fields['COMMUNICATIONS'] = $communications;
@@ -8467,6 +8971,13 @@ class CCrmActivityRestProxy extends CCrmRestProxyBase
 				unset($error);
 				return false;
 			}
+
+			addEventToStatFile(
+				'crm',
+				'send_email_message',
+				sprintf('rest_%s', $this->getServer()->getClientId() ?: 'undefined'),
+				trim(trim($fields['SETTINGS']['MESSAGE_HEADERS']['Message-Id']), '<>')
+			);
 		}
 		return $ID;
 	}
@@ -8728,7 +9239,7 @@ class CCrmActivityRestProxy extends CCrmRestProxyBase
 	protected function externalizeFields(&$fields, &$fieldsInfo)
 	{
 		$storageTypeID = isset($fields['STORAGE_TYPE_ID'])
-			? $fields['STORAGE_TYPE_ID'] : CCrmActivity::GetDefaultStorageTypeID();
+			? (int)$fields['STORAGE_TYPE_ID'] : CCrmActivity::GetDefaultStorageTypeID();
 
 		if(isset($fields['STORAGE_ELEMENT_IDS']))
 		{
@@ -10115,7 +10626,12 @@ class CCrmUserFieldRestProxy extends UserFieldProxy implements ICrmRestProxy
 	}
 	protected function checkReadPermission()
 	{
-		return $this->isAuthorizedUser();
+		//Check only entity read permission to allow non-administrator users to call crm.*.userfield.get, crm.*.userfield.list
+		return \Bitrix\Crm\Security\EntityAuthorization::checkReadPermission(
+			$this->ownerTypeID,
+			0,
+			CCrmPerms::GetUserPermissions($this->user->GetID())
+		);
 	}
 	protected function checkUpdatePermission()
 	{
@@ -10174,8 +10690,7 @@ class CCrmUserFieldRestProxy extends UserFieldProxy implements ICrmRestProxy
 	}
 	public function update($ID, array $fields)
 	{
-		$ufId = (int)$ID;
-		if ($ufId > 0 && $this->entityID === CCrmInvoice::GetUserFieldEntityID() && parent::checkUpdatePermission())
+		if ($ID > 0 && $this->entityID === CCrmInvoice::GetUserFieldEntityID() && parent::checkUpdatePermission())
 		{
 			$invoiceReservedFields = array_fill_keys(CCrmInvoice::GetUserFieldsReserved(), true);
 
@@ -10192,8 +10707,7 @@ class CCrmUserFieldRestProxy extends UserFieldProxy implements ICrmRestProxy
 	}
 	public function delete($ID)
 	{
-		$ufId = (int)$ID;
-		if ($ufId > 0 && $this->entityID === CCrmInvoice::GetUserFieldEntityID() && parent::checkDeletePermission())
+		if ($ID > 0 && $this->entityID === CCrmInvoice::GetUserFieldEntityID() && parent::checkDeletePermission())
 		{
 			$invoiceReservedFields = array_fill_keys(CCrmInvoice::GetUserFieldsReserved(), true);
 
@@ -10288,6 +10802,8 @@ class CCrmQuoteRestProxy extends CCrmRestProxyBase
 				$defaultRequisiteLinkParams['MC_REQUISITE_ID'],
 				$defaultRequisiteLinkParams['MC_BANK_DETAIL_ID']
 			);
+
+			self::traceEntity(\CCrmOwnerType::Quote, $result, $fields);
 		}
 
 		return $result;
@@ -10448,6 +10964,8 @@ class CCrmQuoteRestProxy extends CCrmRestProxyBase
 	}
 	public function setProductRows($ID, $rows)
 	{
+		global $APPLICATION;
+
 		$ID = intval($ID);
 		if($ID <= 0)
 		{
@@ -10495,7 +11013,16 @@ class CCrmQuoteRestProxy extends CCrmRestProxyBase
 			$actualRows[] = $row;
 		}
 
-		return CCrmQuote::SaveProductRows($ID, $actualRows, true, true, true);
+		$result = CCrmQuote::SaveProductRows($ID, $actualRows, true, true, true);
+		if(!$result)
+		{
+			$exp = $APPLICATION->GetException();
+			if($exp)
+			{
+				throw new RestException($exp->GetString());
+			}
+		}
+		return $result;
 	}
 	public function processMethodRequest($name, $nameDetails, $arParams, $nav, $server)
 	{
@@ -13787,6 +14314,22 @@ class CCrmTimelineCommentRestProxy extends CCrmRestProxyBase
 			]
 		];
 
+		if (is_array($order))
+		{
+			$sortFields = [];
+			foreach ($order as $fieldName => $direction)
+			{
+				if (in_array($fieldName, ['ID', 'CREATED', 'AUTHOR_ID'], true))
+				{
+					$sortFields[$fieldName] = ($direction === 'DESC') ? 'DESC' : 'ASC';
+				}
+			}
+			if (!empty($sortFields))
+			{
+				$params['order'] = $sortFields;
+			}
+		}
+
 		$page = isset($navigation['iNumPage']) ? (int)$navigation['iNumPage'] : 1;
 		$limit = isset($navigation['nPageSize']) ? (int)$navigation['nPageSize'] : CCrmRestService::LIST_LIMIT;
 
@@ -13796,7 +14339,7 @@ class CCrmTimelineCommentRestProxy extends CCrmRestProxyBase
 		{
 			$fields['ENTITY_ID'] = $entityId;
 			$fields['ENTITY_TYPE'] = strtolower(CCrmOwnerType::ResolveName($entityTypeId));
-			$items[] = $this->prepareGetResult($fields);
+			$items[] = $this->prepareGetResult($fields, $select);
 		}
 
 		$dbResult = new CDBResult();
@@ -13804,10 +14347,14 @@ class CCrmTimelineCommentRestProxy extends CCrmRestProxyBase
 		$dbResult->NavStart($limit, false, $page);
 		return $dbResult;
 	}
-	private function prepareGetResult(array $comment)
+	private function prepareGetResult(array $comment, $select = null)
 	{
 		$result = [];
 		$resultFieldNames = ['ID', 'ENTITY_ID', 'ENTITY_TYPE', 'CREATED', 'COMMENT', 'AUTHOR_ID'];
+		if (!empty($select) && is_array($select))
+		{
+			$resultFieldNames = array_intersect($resultFieldNames, $select);
+		}
 		foreach ($resultFieldNames as $fieldName)
 		{
 			$result[$fieldName] = $comment[$fieldName];
@@ -14051,6 +14598,41 @@ class CCrmTimelineCommentRestProxy extends CCrmRestProxyBase
 		}
 
 		throw new RestException('Method not found!', RestException::ERROR_METHOD_NOT_FOUND, CRestServer::STATUS_NOT_FOUND);
+	}
+	public static function registerEventBindings(array &$bindings)
+	{
+		if(!isset($bindings[CRestUtil::EVENTS]))
+		{
+			$bindings[CRestUtil::EVENTS] = array();
+		}
+
+		$callback = ['CCrmTimelineCommentRestProxy', 'processEvent'];
+
+		$bindings[CRestUtil::EVENTS]['onCrmTimelineCommentAdd'] = self::createEventInfo('crm', 'OnAfterCrmTimelineCommentAdd', $callback);
+		$bindings[CRestUtil::EVENTS]['onCrmTimelineCommentUpdate'] = self::createEventInfo('crm', 'OnAfterCrmTimelineCommentUpdate', $callback);
+		$bindings[CRestUtil::EVENTS]['onCrmTimelineCommentDelete'] = self::createEventInfo('crm', 'OnAfterCrmTimelineCommentDelete', $callback);
+	}
+	public static function processEvent(array $arParams, array $arHandler)
+	{
+		$eventName = $arHandler['EVENT_NAME'];
+		switch (strtolower($eventName))
+		{
+			case 'oncrmtimelinecommentadd':
+			case 'oncrmtimelinecommentupdate':
+			case 'oncrmtimelinecommentdelete':
+				/* @var Main\Event $event */
+				$event = $arParams[0];
+				$ID = $event->getParameter('ID');
+				break;
+			default:
+				throw new RestException("The Event \"{$eventName}\" is not supported in current context");
+		}
+
+		if($ID === '')
+		{
+			throw new RestException("Could not find entity ID in fields of event \"{$eventName}\"");
+		}
+		return array('FIELDS' => array('ID' => $ID));
 	}
 }
 
@@ -14328,5 +14910,165 @@ class CCrmSiteButtonRestProxy implements ICrmRestProxy
 			}
 		}
 		throw new RestException("Resource '{$name}' is not supported in current context.");
+	}
+}
+
+class CCrmEntityEditorRestProxy implements ICrmRestProxy
+{
+	protected $entityTypeID = CCrmOwnerType::Undefined;
+	function __construct($entityTypeID)
+	{
+		$this->setEntityTypeID($entityTypeID);
+	}
+
+	public function setEntityTypeID($entityTypeID)
+	{
+		if(is_int($entityTypeID))
+		{
+			$entityTypeID = (int)$entityTypeID;
+		}
+
+		if(!CCrmOwnerType::IsDefined($entityTypeID))
+		{
+			throw new RestException("Parameter 'entityTypeID' is not defined");
+		}
+
+		$this->entityTypeID = $entityTypeID;
+	}
+	public function getEntityTypeID()
+	{
+		return $this->entityTypeID;
+	}
+
+	/** @var CRestServer|null  */
+	private $server = null;
+
+	/**
+	 * Get REST-server
+	 * @return CRestServer
+	 */
+	public function getServer()
+	{
+		return $this->server;
+	}
+
+	/**
+	 * Set REST-server
+	 * @param CRestServer $server
+	 */
+	public function setServer(CRestServer $server)
+	{
+		$this->server = $server;
+	}
+
+	public function processMethodRequest($name, $nameDetails, $arParams, $nav, $server)
+	{
+		$name = strtoupper($name);
+		if($name !== 'CONFIGURATION')
+		{
+			throw new RestException("Resource '{$name}' is not supported in current context.");
+		}
+
+		if(!\Bitrix\Crm\Entity\EntityEditorConfig::isEntityTypeSupported($this->entityTypeID))
+		{
+			$entityTypeName = \CCrmOwnerType::ResolveName($this->entityTypeID);
+			throw new RestException("The entity type '{$entityTypeName}' is not supported in current context.");
+		}
+
+		$userID = (int)\CCrmRestHelper::resolveParam(
+			$arParams,
+			\CCrmRestHelper::resolveParamName($arParams, array('user', 'id')),
+			0
+		);
+		if($userID <= 0)
+		{
+			$userID = CCrmSecurityHelper::GetCurrentUserID();
+		}
+
+		$scope = \CCrmRestHelper::resolveParam($arParams, 'scope', '');
+		if(!\Bitrix\Crm\Entity\EntityEditorConfigScope::isDefined($scope))
+		{
+			$scope = \Bitrix\Crm\Entity\EntityEditorConfigScope::PERSONAL;
+		}
+
+		$extras = \CCrmRestHelper::resolveArrayParam($arParams, 'extras', null);
+		if(!is_array($extras))
+		{
+			$extras = array();
+		}
+
+		if(!empty($extras))
+		{
+			switch($this->entityTypeID)
+			{
+				case CCrmOwnerType::Deal:
+					\CCrmRestHelper::renameParam($extras, array('deal', 'category', 'id'), 'DEAL_CATEGORY_ID');
+					break;
+				case CCrmOwnerType::Lead:
+					\CCrmRestHelper::renameParam($extras, array('lead', 'customer', 'type'), 'LEAD_CUSTOMER_TYPE');
+					break;
+			}
+		}
+
+		$config = new \Bitrix\Crm\Entity\EntityEditorConfig($this->entityTypeID, $userID, $scope, $extras);
+
+		$nameSuffix = strtoupper(!empty($nameDetails) ? implode('_', $nameDetails) : '');
+		if($nameSuffix === 'GET')
+		{
+			if(!$config->canDoOperation(\Bitrix\Crm\Entity\EntityEditorConfigOperation::GET))
+			{
+				throw new RestException('Access denied.');
+			}
+
+			return $config->get();
+		}
+		elseif($nameSuffix === 'SET')
+		{
+			if(!$config->canDoOperation(\Bitrix\Crm\Entity\EntityEditorConfigOperation::SET))
+			{
+				throw new RestException('Access denied.');
+			}
+
+			$data = \CCrmRestHelper::resolveArrayParam($arParams, 'data', null);
+			if(!is_array($data))
+			{
+				throw new RestException("Parameter 'data' must be array.");
+			}
+
+			if(empty($data))
+			{
+				throw new RestException("There are no data to write.");
+			}
+
+			$errors = array();
+			if(!$config->check($data, $errors))
+			{
+				throw new RestException(implode("\n", $errors));
+			}
+
+			$data = $config->sanitize($data);
+			return !empty($data) && $config->set($data);
+		}
+		elseif($nameSuffix === 'RESET')
+		{
+			if(!$config->canDoOperation(\Bitrix\Crm\Entity\EntityEditorConfigOperation::RESET))
+			{
+				throw new RestException('Access denied.');
+			}
+
+			$config->reset();
+			return true;
+		}
+		elseif($nameSuffix === 'FORCECOMMONSCOPEFORALL')
+		{
+			if(!$config->canDoOperation(\Bitrix\Crm\Entity\EntityEditorConfigOperation::FORCE_COMMON_SCOPE_FOR_ALL))
+			{
+				throw new RestException('Access denied.');
+			}
+
+			$config->forceCommonScopeForAll();
+			return true;
+		}
+		throw new RestException("Operation '{$nameSuffix}' is not supported in current context.");
 	}
 }

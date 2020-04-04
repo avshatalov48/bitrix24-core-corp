@@ -1,8 +1,10 @@
 <?php
 namespace Bitrix\ImOpenLines;
 
-use Bitrix\Main,
-	Bitrix\Main\Localization\Loc;
+use \Bitrix\Main,
+	\Bitrix\Main\Localization\Loc,
+	\Bitrix\ImOpenLines\Crm\Common;
+
 
 if(!\Bitrix\Main\Loader::includeModule('rest'))
 	return;
@@ -40,6 +42,15 @@ class Rest extends \IRestService
 				'imopenlines.widget.user.get' =>  array('callback' => array(__CLASS__, 'widgetUserGet'), 'options' => array()),
 				'imopenlines.widget.vote.send' =>  array('callback' => array(__CLASS__, 'widgetVoteSend'), 'options' => array()),
 				'imopenlines.widget.form.send' =>  array('callback' => array(__CLASS__, 'widgetFormSend'), 'options' => array()),
+
+				'imopenlines.config.get' => array(__CLASS__, 'configGet'),
+				'imopenlines.config.list.get' => array(__CLASS__, 'configListGet'),
+				'imopenlines.config.update' => array(__CLASS__, 'configUpdate'),
+				'imopenlines.config.add' => array(__CLASS__, 'configAdd'),
+				'imopenlines.config.delete' => array(__CLASS__, 'configDelete'),
+
+				'imopenlines.crm.chat.user.add' => array(__CLASS__, 'crmChatUserAdd'),
+				'imopenlines.crm.chat.getLastId' => array(__CLASS__, 'crmLastChatIdGet')
 			),
 		);
 	}
@@ -220,7 +231,8 @@ class Rest extends \IRestService
 		}
 
 		$chat = new \Bitrix\Imopenlines\Chat($arParams['CHAT_ID']);
-		$chat->sendAutoMessage($arParams['NAME']);
+		$arParams['MESSAGE'] = !empty($arParams['MESSAGE']) ? $arParams['MESSAGE'] : '';
+		$chat->sendAutoMessage($arParams['NAME'], $arParams['MESSAGE']);
 
 		return true;
 	}
@@ -526,15 +538,6 @@ class Rest extends \IRestService
 		}
 
 		$params = array_change_key_case($params, CASE_UPPER);
-		if (
-			$_SESSION['LIVECHAT']['REGISTER']
-			&& !(
-				isset($params['USER_HASH']) && trim($params['USER_HASH']) && preg_match("/^[a-fA-F0-9]{32}$/i", $params['USER_HASH'])
-			)
-		)
-		{
-			return $_SESSION['LIVECHAT']['REGISTER'];
-		}
 
 		$params['CONFIG_ID'] = intval($params['CONFIG_ID']);
 		if ($params['CONFIG_ID'] <= 0)
@@ -546,6 +549,16 @@ class Rest extends \IRestService
 		if (!$config)
 		{
 			throw new \Bitrix\Rest\RestException("Config is not found.", "CONFIG_NOT_FOUND", \CRestServer::STATUS_WRONG_REQUEST);
+		}
+
+		if (
+			$_SESSION['LIVECHAT']['REGISTER']
+			&& !(
+				isset($params['USER_HASH']) && trim($params['USER_HASH']) && preg_match("/^[a-fA-F0-9]{32}$/i", $params['USER_HASH'])
+			)
+		)
+		{
+			$params['USER_HASH'] = $_SESSION['LIVECHAT']['REGISTER']['hash'];
 		}
 
 		$userData = \Bitrix\Imopenlines\Widget\User::register([
@@ -588,7 +601,6 @@ class Rest extends \IRestService
 		];
 
 		$_SESSION['LIVECHAT']['REGISTER'] = $result;
-
 		$_SESSION['LIVECHAT']['TRACE_DATA'] = (string)$params['TRACE_DATA'];
 		$_SESSION['LIVECHAT']['CUSTOM_DATA'] = (string)$params['CUSTOM_DATA'];
 
@@ -631,7 +643,7 @@ class Rest extends \IRestService
 		{
 			return false;
 		}
-		
+
 		$chat = \Bitrix\Im\Model\ChatTable::getList(array(
 			'select' => ['ID'],
 			'filter' => array(
@@ -670,7 +682,7 @@ class Rest extends \IRestService
 			throw new \Bitrix\Rest\RestException("Session id is not specified.", "SESSION_ID_EMPTY", \CRestServer::STATUS_WRONG_REQUEST);
 		}
 
-		$action = strtolower($params['ACTION']) !== 'like';
+		$action = strtolower($params['ACTION']);
 
 		\Bitrix\ImOpenlines\Session::voteAsUser($params['SESSION_ID'], $action);
 
@@ -799,6 +811,149 @@ class Rest extends \IRestService
 		);
 
 		return $result;
+	}
+
+	public static function configGet($arParams, $n, \CRestServer $server)
+	{
+		$arParams['CONFIG_ID'] = intval($arParams['CONFIG_ID']);
+
+		if ($arParams['CONFIG_ID'] <= 0)
+		{
+			throw new \Bitrix\Rest\RestException("Config ID can't be empty", "CONFIG_ID_EMPTY", \CRestServer::STATUS_WRONG_REQUEST);
+		}
+
+		$arParams['WITH_QUEUE'] = isset($arParams['WITH_QUEUE']) ? $arParams['WITH_QUEUE'] == 'Y' : true;
+		$arParams['SHOW_OFFLINE'] = isset($arParams['SHOW_OFFLINE']) ? $arParams['SHOW_OFFLINE'] == 'Y' : true;
+
+		$config = new Config();
+
+		return $config->get($arParams['CONFIG_ID'], $arParams['WITH_QUEUE'], $arParams['SHOW_OFFLINE']);
+	}
+
+	public static function configListGet($arParams, $n, \CRestServer $server)
+	{
+		$config = new Config();
+
+		$arParams['PARAMS'] = !empty($arParams['PARAMS']) && is_array($arParams['PARAMS']) ? $arParams['PARAMS'] : [];
+		$arParams['OPTIONS'] = !empty($arParams['OPTIONS']) && is_array($arParams['OPTIONS']) ? $arParams['OPTIONS'] : [];
+
+		return $config->getList($arParams['PARAMS'], $arParams['OPTIONS']);
+	}
+
+	public static function configUpdate($arParams, $n, \CRestServer $server)
+	{
+		$arParams['CONFIG_ID'] = intval($arParams['CONFIG_ID']);
+
+		if ($arParams['CONFIG_ID'] <= 0)
+		{
+			throw new \Bitrix\Rest\RestException("Config ID can't be empty", "CONFIG_ID_EMPTY", \CRestServer::STATUS_WRONG_REQUEST);
+		}
+
+		if (!Config::canEditLine($arParams['CONFIG_ID']))
+		{
+			throw new \Bitrix\Rest\RestException("Permission denied", "CONFIG_WRONG_USER_PERMISSION", \CRestServer::STATUS_FORBIDDEN);
+		}
+
+		$arParams['PARAMS'] = !empty($arParams['PARAMS']) && is_array($arParams['PARAMS']) ? $arParams['PARAMS'] : [];
+		$config = new Config();
+
+		return $config->update($arParams['CONFIG_ID'], $arParams['PARAMS']);
+	}
+
+	public static function configAdd($arParams, $n, \CRestServer $server)
+	{
+		$arParams['PARAMS'] = !empty($arParams['PARAMS']) && is_array($arParams['PARAMS']) ? $arParams['PARAMS'] : [];
+		$config = new Config();
+
+		return $config->create($arParams['PARAMS']);
+	}
+
+	public static function configDelete($arParams, $n, \CRestServer $server)
+	{
+		$arParams['CONFIG_ID'] = intval($arParams['CONFIG_ID']);
+
+		if ($arParams['CONFIG_ID'] <= 0)
+		{
+			throw new \Bitrix\Rest\RestException("Config ID can't be empty", "CONFIG_ID_EMPTY", \CRestServer::STATUS_WRONG_REQUEST);
+		}
+
+		if (!Config::canEditLine($arParams['CONFIG_ID']))
+		{
+			throw new \Bitrix\Rest\RestException("Permission denied", "CONFIG_WRONG_USER_PERMISSION", \CRestServer::STATUS_FORBIDDEN);
+		}
+
+		$config = new Config();
+
+		return $config->delete($arParams['CONFIG_ID']);
+	}
+
+	/**
+	 * Add user to chat by connected crm entity data
+	 */
+	public static function crmChatUserAdd($arParams, $n, \CRestServer $server)
+	{
+		if (empty($arParams['CRM_ENTITY_TYPE']) || empty($arParams['CRM_ENTITY']))
+		{
+			throw new \Bitrix\Rest\RestException("Empty CRM data", "CRM_CHAT_EMPTY_CRM_DATA", \CRestServer::STATUS_WRONG_REQUEST);
+		}
+
+		if (!Main\Loader::includeModule('im'))
+		{
+			throw new \Bitrix\Rest\RestException("Messenger is not installed.", "IM_NOT_INSTALLED", \CRestServer::STATUS_WRONG_REQUEST);
+		}
+
+		$chatId = Common::getLastChatIdByCrmEntity($arParams['CRM_ENTITY_TYPE'], $arParams['CRM_ENTITY']);
+
+		if ($chatId > 0)
+		{
+			if (!Config::canJoin($chatId, $arParams['CRM_ENTITY_TYPE'], $arParams['CRM_ENTITY']))
+			{
+				throw new \Bitrix\Rest\RestException("You don't have access to join user to chat", "CHAT_JOIN_PERMISSION_DENIED", \CRestServer::STATUS_FORBIDDEN);
+			}
+
+			$arParams['USER_ID'] = intval($arParams['USER_ID']);
+			if ($arParams['USER_ID'] <= 0)
+			{
+				throw new \Bitrix\Rest\RestException("Empty User ID", "CRM_CHAT_EMPTY_USER", \CRestServer::STATUS_WRONG_REQUEST);
+			}
+
+			$user = \Bitrix\Im\User::getInstance($arParams['USER_ID']);
+
+			if (!$user->isExists() || !$user->isActive())
+			{
+				throw new \Bitrix\Rest\RestException("User not active", "CRM_CHAT_USER_NOT_ACTIVE", \CRestServer::STATUS_WRONG_REQUEST);
+			}
+
+			$CIMChat = new \CIMChat(0);
+			$result = $CIMChat->AddUser($chatId, $arParams['USER_ID']);
+
+			if (!$result)
+			{
+				throw new \Bitrix\Rest\RestException("You don't have access or user already member in chat", "WRONG_REQUEST", \CRestServer::STATUS_WRONG_REQUEST);
+			}
+		}
+
+		return $chatId;
+	}
+
+	/**
+	 * Get last chat id from crm entity data
+	 */
+	public static function crmLastChatIdGet($arParams, $n, \CRestServer $server): int
+	{
+		if (empty($arParams['CRM_ENTITY_TYPE']) || empty($arParams['CRM_ENTITY']))
+		{
+			throw new \Bitrix\Rest\RestException('Empty CRM data', 'CRM_CHAT_EMPTY_CRM_DATA', \CRestServer::STATUS_WRONG_REQUEST);
+		}
+
+		$chatId = Common::getLastChatIdByCrmEntity($arParams['CRM_ENTITY_TYPE'], $arParams['CRM_ENTITY']);
+
+		if ($chatId === 0)
+		{
+			throw new \Bitrix\Rest\RestException('Could not find CRM entity', 'CRM_CHAT_EMPTY_CRM_DATA', \CRestServer::STATUS_WRONG_REQUEST);
+		}
+
+		return $chatId;
 	}
 
 	public static function objectEncode($data, $options = [])

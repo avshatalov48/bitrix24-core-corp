@@ -1435,7 +1435,7 @@ class CAllIBlock
 		}
 	}
 
-	function SetMessages($ID, $arFields)
+	public static function SetMessages($ID, $arFields)
 	{
 		/** @global CDatabase $DB */
 		global $DB;
@@ -2144,7 +2144,7 @@ REQ
 		return $arRes;
 	}
 
-	function GetPermission($IBLOCK_ID, $FOR_USER_ID = false)
+	public static function GetPermission($IBLOCK_ID, $FOR_USER_ID = false)
 	{
 		/** @global CDatabase $DB */
 		global $DB;
@@ -2203,7 +2203,7 @@ REQ
 		return $CACHE[$CACHE_KEY];
 	}
 
-	function OnBeforeLangDelete($lang)
+	public static function OnBeforeLangDelete($lang)
 	{
 		/** @global CDatabase $DB */
 		global $DB;
@@ -2230,12 +2230,12 @@ REQ
 		}
 	}
 
-	function OnLangDelete($lang)
+	public static function OnLangDelete($lang)
 	{
 		return true;
 	}
 
-	function OnGroupDelete($group_id)
+	public static function OnGroupDelete($group_id)
 	{
 		/** @global CDatabase $DB */
 		global $DB;
@@ -2292,7 +2292,7 @@ REQ
 		return CIBlock::FilterCreateEx($field_name, $values, $type, $bFullJoin, $cOperationType, $bSkipEmpty);
 	}
 
-	function ForLIKE($str)
+	public static function ForLIKE($str)
 	{
 		/** @global CDatabase $DB */
 		global $DB;
@@ -2397,7 +2397,9 @@ REQ
 					elseif($cOperationType=="FTL")
 					{
 						$sqlWhere = new CSQLWhere();
-						$res[] = $sqlWhere->matchLike($fname, $val);
+						$condition = $sqlWhere->matchLike($fname, $val);
+						if ($condition != '')
+							$res[] = $condition;
 					}
 					else
 					{
@@ -2461,12 +2463,16 @@ REQ
 					if($cOperationType=="FT" || $cOperationType=="FTI")
 					{
 						$sqlWhere = new CSQLWhere();
-						$res[] = $sqlWhere->match($fname, $val, $cOperationType=="FT");
+						$condition = $sqlWhere->match($fname, $val, $cOperationType=="FT");
+						if ($condition != '')
+							$res[] = $condition;
 					}
 					elseif($cOperationType=="FTL")
 					{
 						$sqlWhere = new CSQLWhere();
-						$res[] = $sqlWhere->matchLike($fname, $val);
+						$condition = $sqlWhere->matchLike($fname, $val);
+						if ($condition != '')
+							$res[] = $condition;
 					}
 					elseif($cOperationType=="?")
 					{
@@ -2571,7 +2577,7 @@ REQ
 		return array();
 	}
 
-	function OnSearchGetURL($arFields)
+	public static function OnSearchGetURL($arFields)
 	{
 		/** @global CDatabase $DB */
 		global $DB;
@@ -2619,7 +2625,7 @@ REQ
 		return CIBlock::ReplaceDetailUrl($url, $arr, $server_name, $arrType);
 	}
 
-	function _GetProductUrl($OF_ELEMENT_ID, $OF_IBLOCK_ID, $server_name = false, $arrType = false)
+	public static function _GetProductUrl($OF_ELEMENT_ID, $OF_IBLOCK_ID, $server_name = false, $arrType = false)
 	{
 		static $arIBlockCache = array();
 		static $arElementCache = array();
@@ -2846,7 +2852,7 @@ REQ
 	}
 
 
-	function OnSearchReindex($NS=Array(), $oCallback=NULL, $callback_method="")
+	public static function OnSearchReindex($NS=Array(), $oCallback=NULL, $callback_method="")
 	{
 		/** @global CUserTypeManager $USER_FIELD_MANAGER */
 		global $USER_FIELD_MANAGER;
@@ -3154,7 +3160,7 @@ REQ
 		return $arResult;
 	}
 
-	function GetElementCount($iblock_id)
+	public static function GetElementCount($iblock_id)
 	{
 		/** @global CDatabase $DB */
 		global $DB;
@@ -3771,7 +3777,7 @@ REQ
 		$DB->Query("UPDATE b_iblock set TMP_ID = '".md5(mt_rand())."' WHERE ID = ".$IBLOCK_ID);
 	}
 
-	function isShortDate($strDate)
+	public static function isShortDate($strDate)
 	{
 		$arDate = ParseDateTime($strDate, FORMAT_DATETIME);
 		unset($arDate["DD"]);

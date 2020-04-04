@@ -202,6 +202,14 @@
 	background: #dbf5fd;
 }
 
+.crm-start-graph-head-inactive {
+	opacity: .5;
+}
+
+.crm-start-graph-head-inactive .crm-start-graph-title-position {
+	color: #ff8683;
+}
+
 .crm-start-graph-content {
 	transition: .2s;
 	border-radius: 0 0 3px 3px;
@@ -783,6 +791,15 @@
 .crm-start-popup-row-remove {
 	-webkit-animation: crmStartPopupRemoveBlock .2s linear forwards;
 	animation: crmStartPopupRemoveBlock .2s linear forwards;
+}
+
+.crm-start-popup-row-inactive {
+	opacity: .5;
+}
+
+.crm-start-popup-row-inactive .crm-start-popup-personal-title-position
+{
+	color: #ff8683;
 }
 
 @keyframes crmStartPopupRemoveBlock {

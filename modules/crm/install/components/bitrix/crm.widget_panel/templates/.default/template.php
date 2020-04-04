@@ -12,9 +12,11 @@
 
 use Bitrix\Crm;
 
-CJSCore::Init(array('amcharts', 'amcharts_funnel', 'amcharts_serial', 'amcharts_pie', 'fx', 'drag_drop', 'popup', 'date'));
+CJSCore::Init(array('amcharts', 'amcharts_funnel', 'amcharts_serial', 'amcharts_pie', 'fx', 'drag_drop', 'popup', 'date', 'sidepanel'));
 $asset = Bitrix\Main\Page\Asset::getInstance();
 $asset->addJs('/bitrix/js/crm/common.js');
+$asset->addJs('/bitrix/js/crm/autorun_proc.js');
+$asset->addCss('/bitrix/js/crm/css/autorun_proc.css');
 $asset->addCss('/bitrix/themes/.default/crm-entity-show.css');
 $asset->addCss('/bitrix/js/crm/css/crm.css');
 
@@ -183,7 +185,7 @@ if($arResult['ENABLE_NAVIGATION'])
 	);
 }
 
-if(!isset($arParams['NOT_CALCULATE_DATA']) || $arParams['NOT_CALCULATE_DATA'] == true)
+if(!$arResult['HIDE_FILTER'] && (!isset($arParams['NOT_CALCULATE_DATA']) || $arParams['NOT_CALCULATE_DATA'] == true))
 {
 	$APPLICATION->IncludeComponent(
 		'bitrix:crm.interface.filter',
@@ -620,30 +622,47 @@ endif;
 				requestError: "<?=GetMessageJS('CRM_WGT_LRP_DLG_REQUEST_ERR')?>"
 			};
 
-			var builderData, builderSettings, builderPanel, builderId, builderPrefix;
+			var builderData, builderType, builderSettings, builderPanel, builderId, builderPrefix;
 			var prefix = "<?=CUtil::JSEscape($prefix)?>";
 			<?foreach($arResult['BUILDERS'] as $builderData):?>
 			builderData = <?=CUtil::PhpToJSObject($builderData)?>;
 			builderId = BX.type.isNotEmptyString(builderData["ID"]) ? builderData["ID"] : "";
-			builderPrefix = builderId !== "" ? (prefix + "_" + builderId.toLowerCase()) : prefix;
+			builderType = BX.type.isNotEmptyString(builderData["TYPE"]) ? builderData["TYPE"] : "";
 			builderSettings = BX.type.isPlainObject(builderData["SETTINGS"]) ? builderData["SETTINGS"] : {};
-			builderPanel = BX.CrmLongRunningProcessPanel.create(
-				builderId,
-				{
-					"containerId": "rebuildMessageWrapper",
-					"prefix": builderPrefix,
-					"active": true,
-					"message": BX.type.isNotEmptyString(builderData["MESSAGE"]) ? builderData["MESSAGE"] : "",
-					"manager":
-						{
-							dialogTitle: BX.type.isNotEmptyString(builderSettings["TITLE"]) ? builderSettings["TITLE"] : "",
-							dialogSummary: BX.type.isNotEmptyString(builderSettings["SUMMARY"]) ? builderSettings["SUMMARY"] : "",
-							actionName: BX.type.isNotEmptyString(builderSettings["ACTION"]) ? builderSettings["ACTION"] : "",
-							serviceUrl: BX.type.isNotEmptyString(builderSettings["URL"]) ? builderSettings["URL"] : ""
-						}
-				}
-			);
-			builderPanel.layout();
+
+			if(builderType === "AUTO_RUN")
+			{
+				BX.AutorunProcessManager.create(builderId,
+					{
+						title: BX.prop.getString(builderSettings, "TITLE"),
+						stateTemplate: BX.prop.getString(builderSettings, "STATE_TEMPLATE"),
+						serviceUrl: BX.prop.getString(builderSettings, "URL"),
+						actionName: BX.prop.getString(builderSettings, "ACTION"),
+						container: "rebuildMessageWrapper",
+						enableLayout: true
+					}
+				).runAfter(200);
+			}
+			else
+			{
+				builderPanel = BX.CrmLongRunningProcessPanel.create(
+					builderId,
+					{
+						"containerId": "rebuildMessageWrapper",
+						"prefix":  builderId !== "" ? (prefix + "_" + builderId.toLowerCase()) : prefix,
+						"active": true,
+						"message": BX.type.isNotEmptyString(builderData["MESSAGE"]) ? builderData["MESSAGE"] : "",
+						"manager":
+							{
+								dialogTitle: BX.type.isNotEmptyString(builderSettings["TITLE"]) ? builderSettings["TITLE"] : "",
+								dialogSummary: BX.type.isNotEmptyString(builderSettings["SUMMARY"]) ? builderSettings["SUMMARY"] : "",
+								actionName: BX.type.isNotEmptyString(builderSettings["ACTION"]) ? builderSettings["ACTION"] : "",
+								serviceUrl: BX.type.isNotEmptyString(builderSettings["URL"]) ? builderSettings["URL"] : ""
+							}
+					}
+				);
+				builderPanel.layout();
+			}
 			<?endforeach;?>
 		}
 	);

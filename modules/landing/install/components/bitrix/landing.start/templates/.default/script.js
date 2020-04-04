@@ -25,7 +25,7 @@
 	{
 		var msg = BX.Landing.UI.Tool.ActionDialog.getInstance();
 		var promise = msg.show({
-			title: params.title ? params.title : null,
+			title: params.title ? params.title : BX.message('LANDING_TPL_JS_PAY_TARIFF_TITLE'),
 			content: '<div class="landing-payrate-popup-content"><span class="landing-payrate-popup-text">' +
 			params.message +
 			'</span></div>',

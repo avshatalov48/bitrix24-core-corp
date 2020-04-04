@@ -28,6 +28,9 @@ abstract class CAllTimeManReport
 		return true;
 	}
 
+	/**
+	 * @deprecated use \Bitrix\Timeman\Model\Worktime\Report\WorktimeReportTable
+	 */
 	public static function Add($arFields)
 	{
 		global $DB;
@@ -54,6 +57,9 @@ abstract class CAllTimeManReport
 		return $ID;
 	}
 
+	/**
+	 * @deprecated use \Bitrix\Timeman\Model\Worktime\Report\WorktimeReportTable
+	 */
 	public static function Update($ID, $arFields)
 	{
 		global $DB;

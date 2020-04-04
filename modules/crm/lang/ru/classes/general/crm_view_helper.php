@@ -30,7 +30,7 @@ $MESS["CRM_LEAD_STATUS_MANAGER_SELECTOR_TTL"] = "Закрытие лида";
 $MESS["CRM_INVOICE_STATUS_MANAGER_SELECTOR_TTL"] = "Закрытие счёта";
 $MESS["CRM_INVOICE_STATUS_MANAGER_SET_DATE"] = "Указать дату";
 $MESS["CRM_INVOICE_STATUS_MANAGER_DATE_LABEL"] = "Дата";
-$MESS["CRM_INVOICE_STATUS_MANAGER_PAY_VOUCHER_NUM_LABEL"] = "Номер документа";
+$MESS["CRM_INVOICE_STATUS_MANAGER_PAY_VOUCHER_NUM_LABEL_1"] = "Номер документа";
 $MESS["CRM_INVOICE_STATUS_MANAGER_COMMENT_LABEL"] = "Комментарий";
 $MESS["CRM_INVOICE_FIELD_PAY_VOUCHER_DATE"] = "Дата оплаты";
 $MESS["CRM_INVOICE_FIELD_PAY_VOUCHER_NUM"] = "Номер документа";
@@ -72,4 +72,5 @@ $MESS["CRM_ORDER_SHIPMENT_STATUS_MANAGER_FAILURE_TTL"] = "Не отгружен"
 $MESS["CRM_DEAL_STAGE_MANAGER_CHECK_ERROR_TTL"] = "Для изменения стадии сделки заполните обязательные поля";
 $MESS["CRM_LEAD_STAGE_MANAGER_CHECK_ERROR_TTL"] = "Для изменения статуса лида заполните обязательные поля";
 $MESS["CRM_QUOTE_STAGE_MANAGER_CHECK_ERROR_TTL"] = "Для изменения статуса предложения заполните обязательные поля";
+$MESS["CRM_STAGE_MANAGER_CHECK_ERROR_HELP"] = "Подробнее об обязательных полях";
 ?>

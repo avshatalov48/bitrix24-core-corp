@@ -22,6 +22,12 @@ class CCrmExternalSale
 		);
 	}
 
+	public static function OnMigrateToBox()
+	{
+		COption::RemoveOption("crm", "~limit_max_shops");
+		COption::RemoveOption("crm", "~limit_max_days");
+	}
+
 	public static function GetDefaultSettings($id)
 	{
 		$result = null;

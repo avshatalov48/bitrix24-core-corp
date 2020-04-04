@@ -290,6 +290,39 @@ if(typeof BX.Crm.EntityDetailManager === "undefined")
 				return;
 			}
 
+			window.top.BX.UI.Notification.Center.notify(
+				{
+					autoHideDelay: 5000,
+					content: this.getMessage("deletionWarning"),
+					actions:
+					[
+						{
+							title: this.getMessage("goToDetails"),
+							events:
+								{
+									click:
+										function(event, balloon, action)
+										{
+											balloon.close();
+
+											//HACK: Try to get parent window from event for this window may be already deleted.
+											var targetWindow = event.target.ownerDocument.defaultView;
+											if(!targetWindow)
+											{
+												targetWindow = window;
+											}
+
+											if(targetWindow.BX.Helper)
+											{
+												targetWindow.BX.Helper.show("redirect=detail&code=8969825");
+											}
+										}
+								}
+						}
+					]
+				}
+			);
+
 			var current = BX.Crm.Page.getTopSlider();
 
 			var eventParams = null;

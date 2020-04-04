@@ -40,7 +40,7 @@ $menuItems = array(
 		GetMessage("EXTRANET_LEFT_MENU_LIVE_FEED"),
 		SITE_DIR,
 		array(),
-		array("name" => "live_feed"),
+		array("name" => "live_feed", "counter_id" => "live-feed", "menu_item_id"=>"menu_live_feed"),
 		""
 	)
 );
@@ -72,6 +72,7 @@ if ($GLOBALS["USER"]->IsAuthorized())
 					"tasks_panel_menu",
 					SITE_DIR."contacts/personal/user/".$userId."/tasks/"
 				),
+				"menu_item_id"=>"menu_tasks",
 				"top_menu_id" => "tasks_panel_menu",
 			),
 			"CBXFeatures::IsFeatureEnabled('Tasks')"
@@ -85,7 +86,9 @@ if ($GLOBALS["USER"]->IsAuthorized())
 			GetMessage("EXTRANET_LEFT_MENU_DISK"),
 			SITE_DIR."contacts/personal/user/".$userId.($diskEnabled ? "/disk/path/" : "/files/lib/"),
 			array(),
-			array(),
+			array(
+				"menu_item_id"=>"menu_files",
+			),
 			"CBXFeatures::IsFeatureEnabled('PersonalFiles')"
 		);
 	}
@@ -96,7 +99,9 @@ if ($GLOBALS["USER"]->IsAuthorized())
 			GetMessage("EXTRANET_LEFT_MENU_PHOTO"),
 			SITE_DIR."contacts/personal/user/".$userId."/photo/",
 			array(),
-			array(),
+			array(
+				"menu_item_id"=>"menu_photo",
+			),
 			"CBXFeatures::IsFeatureEnabled('PersonalPhoto')"
 		);
 	}
@@ -113,6 +118,7 @@ if ($GLOBALS["USER"]->IsAuthorized())
 					SITE_DIR."contacts/personal/user/".$userId."/blog/"
 				),
 				"counter_id" => "blog_post",
+				"menu_item_id"=>"menu_blog",
 				"top_menu_id" => "blog_messages_panel_menu"
 			),
 			"CBXFeatures::IsFeatureEnabled('PersonalBlog')"
@@ -132,6 +138,7 @@ if (CBXFeatures::IsFeatureEnabled("Workgroups") && CBXFeatures::IsFeatureEnabled
 				"sonetgroups_panel_menu",
 				SITE_DIR."workgroups/"
 			),
+			"menu_item_id"=>"menu_all_groups",
 			"top_menu_id" => "sonetgroups_panel_menu",
 		),
 		""
@@ -172,6 +179,7 @@ $menuItems[] = array(
 			"top_menu_id_extranet_contacts",
 			SITE_DIR."contacts/"
 		),
+		"menu_item_id" => "menu_company",
 		"top_menu_id" => "top_menu_id_extranet_contacts",
 	),
 	""

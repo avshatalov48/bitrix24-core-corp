@@ -186,6 +186,7 @@ class SaleBasketLineComponent extends CBitrixComponent
 
 		$this->arResult = array(
 			"TOTAL_PRICE" => 0,
+			"TOTAL_PRICE_RAW" => 0,
 			"NUM_PRODUCTS" => 0,
 			"CATEGORIES" => array(),
 			"ERROR_MESSAGE" => '',
@@ -217,6 +218,7 @@ class SaleBasketLineComponent extends CBitrixComponent
 
 			$this->arResult["NUM_PRODUCTS"] = \Bitrix\Sale\BasketComponentHelper::getFUserBasketQuantity($this->getFuserId(), $this->getSiteId());
 		}
+		$this->arResult["TOTAL_PRICE_RAW"] = $this->arResult["TOTAL_PRICE"];
 
 		if($this->arParams["SHOW_TOTAL_PRICE"] == "Y")
 			$this->arResult["TOTAL_PRICE"] = CCurrencyLang::CurrencyFormat($this->arResult["TOTAL_PRICE"], CSaleLang::GetLangCurrency($this->getSiteId()), true);

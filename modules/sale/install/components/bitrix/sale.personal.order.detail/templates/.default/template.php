@@ -141,8 +141,8 @@ else
 
 								<div class="col-md-4 col-sm-6 sale-order-detail-about-order-inner-container-status">
 									<div class="sale-order-detail-about-order-inner-container-status-title">
-										<?= Loc::getMessage('SPOD_LIST_CURRENT_STATUS', array(
-											'#DATE_ORDER_CREATE#' => $arResult["DATE_INSERT_FORMATED"]
+										<?= Loc::getMessage('SPOD_LIST_CURRENT_STATUS_DATE', array(
+											'#DATE_STATUS#' => $arResult["DATE_STATUS_FORMATED"]
 										)) ?>
 									</div>
 									<div class="sale-order-detail-about-order-inner-container-status-detail">

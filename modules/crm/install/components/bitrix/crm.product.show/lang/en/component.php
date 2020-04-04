@@ -6,6 +6,7 @@ $MESS["CRM_SECTION_PRODUCT_INFO"] = "Product information";
 $MESS["CRM_PRODUCT_FIELD_NAME"] = "Name";
 $MESS["CRM_FIELD_DESCRIPTION"] = "Description";
 $MESS["CRM_FIELD_ACTIVE"] = "Active";
+$MESS["CRM_FIELD_CURRENCY"] = "Currency";
 $MESS["CRM_FIELD_PRICE"] = "Price";
 $MESS["CRM_FIELD_SORT"] = "Sort";
 $MESS["CRM_PRODUCT_NAV_TITLE_EDIT"] = "Product: #NAME#";

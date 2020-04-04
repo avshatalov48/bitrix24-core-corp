@@ -35,7 +35,7 @@ BX.timeman_query = function(action, data, callback, bForce)
 	{
 		callback = data;data = {};
 	}
-
+	data['device'] = 'browser';
 	var query_data = {
 		'method': 'POST',
 		'dataType': 'json',
@@ -574,6 +574,10 @@ BX.CTimeMan.prototype._checkQueryError = function(data)
 		{
 			this._showReportField(data.error);
 		}
+		else if (data.error_id == 'ALERT_WARNING')
+		{
+			alert(data.error);
+		}
 		else if (data.error_id == 'CHOOSE_CALENDAR')
 		{
 			this._showCalendarField(data.error);
@@ -725,7 +729,16 @@ BX.CTimeMan.prototype.ShowFormWeekly = function(data)
 
 BX.CTimeMan.prototype.CloseDay = function(e)
 {
-	this.Query('close', {timestamp: selectedTimestamp, report: errorReport}, BX.proxy(this._Update, this));
+	var data = {timestamp: selectedTimestamp, report: errorReport};
+	if (this.WND && this.WND.CLOCKWND && (this.WND.CLOCKWND.customUserDate !== undefined))
+	{
+		data.customUserDate = this.WND.CLOCKWND.customUserDate;
+	}
+	if (this.DATA.RECORD_ID !== undefined)
+	{
+		data.recordId = this.DATA.RECORD_ID;
+	}
+	this.Query('close', data, BX.proxy(this._Update, this));
 	this.setTimestamp(0);
 	this.setReport('');
 	return BX.PreventDefault(e);
@@ -733,7 +746,12 @@ BX.CTimeMan.prototype.CloseDay = function(e)
 
 BX.CTimeMan.prototype.OpenDay = function(e)
 {
-	this.Query('open', {timestamp: selectedTimestamp, report: errorReport}, BX.proxy(this._Update, this));
+	var data = {timestamp: selectedTimestamp, report: errorReport};
+	if (this.WND && this.WND.CLOCKWND && (this.WND.CLOCKWND.customUserDate !== undefined))
+	{
+		data.customUserDate = this.WND.CLOCKWND.customUserDate;
+	}
+	this.Query('open', data, BX.proxy(this._Update, this));
 	this.setTimestamp(0);
 	this.setReport('');
 	return BX.PreventDefault(e);
@@ -741,9 +759,14 @@ BX.CTimeMan.prototype.OpenDay = function(e)
 
 BX.CTimeMan.prototype.ReOpenDay = function(e)
 {
+	var newActionName = 'reopen';
+	if (this.DATA && this.DATA.INFO && this.DATA.INFO.PAUSED)
+	{
+		newActionName = 'continue';
+	}
 	this.setTimestamp(0);
 	this.setReport('');
-	this.Query('reopen', {}, BX.proxy(this._Update, this));
+	this.Query('reopen', {newActionName: newActionName}, BX.proxy(this._Update, this));
 	return BX.PreventDefault(e);
 }
 
@@ -952,23 +975,26 @@ BX.CTimeManWindow.prototype.Create = function(DATA)
 			content: this.CreateReport()
 		});
 
-		this.call_report = BX.create("SPAN",{
-			attrs:{id:"work_report_call_link"},
-			props:{className:"wr-call-lable"},
-			html:BX.message("JS_CORE_TMR_REPORT_FULL_" + this.PARENT.REPORT_FULL_MODE),
-			events:{"click":BX.proxy(BXTIMEMAN.CheckNeedToReportImm,BXTIMEMAN)}
-		});
-
-		if(BXTIMEMAN.ShowCallReport == true)
+		if(this.PARENT.REPORT_FULL_MODE)
 		{
-			this.call_report.style.display ="inline-block";
-		}
-		else
-		{
-			this.call_report.style.display = "none";
-		}
+			this.call_report = BX.create("SPAN", {
+				attrs: {id: "work_report_call_link"},
+				props: {className: "wr-call-lable"},
+				html: BX.message("JS_CORE_TMR_REPORT_FULL_" + this.PARENT.REPORT_FULL_MODE),
+				events: {"click": BX.proxy(BXTIMEMAN.CheckNeedToReportImm, BXTIMEMAN)}
+			});
 
-		this.TABCONTROL.HEAD.appendChild(this.call_report);
+			if (BXTIMEMAN.ShowCallReport == true)
+			{
+				this.call_report.style.display = "inline-block";
+			}
+			else
+			{
+				this.call_report.style.display = "none";
+			}
+
+			this.TABCONTROL.HEAD.appendChild(this.call_report);
+		}
 
 		BX.addCustomEvent(this.PARENT, 'onTimeManDataRecieved', BX.delegate(this.CreateDashboard, this));
 		BX.addCustomEvent('onPlannerQueryResult', BX.delegate(function(data){
@@ -1323,24 +1349,16 @@ BX.CTimeManWindow.prototype.CreateMainRow = function(DATA)
 			html: '<span class="webform-small-button tm-popup-main-button webform-small-button-' + (DATA.STATE != 'CLOSED' ? 'decline' : 'accept') + '"><span class="webform-small-button-text">' + BX.message('JS_CORE_TM_' + btn) + '</span></span>'
 		}));
 
-		if(!!DATA.SOCSERV_ENABLED)
+		if(DATA.CAN_OPEN_AND_RELAUNCH)
 		{
 			this.MAIN_ROW_CELL_BTN.appendChild(BX.create('span', {
-				props: {className: 'tm-popup-social-btn', id: 'tm_popup_social_btn'},
+				props: {className: 'webform-small-button tm-popup-relaunch-btn', id: 'tm_popup_relaunch_new'},
 				events: {
 					click: BX.proxy(function(){
-						if(!this.SOCSERV_WND)
-						{
-							BX.loadScript(
-								'/bitrix/tools/oauth/socserv.ajax.php?action=getsettings&site_id=' + BX.message('SITE_ID') + '&sessid=' + BX.bitrix_sessid()
-							)
-						}
-						else
-						{
-							this.SOCSERV_WND.showWnd();
-						}
+						this.ACTIONS.REOPEN();
 					}, this)
-				}
+				},
+				text: BX.message('JS_CORE_TM_UNPAUSE')
 			}));
 		}
 
@@ -2166,6 +2184,14 @@ BX.CTimeManClock.prototype.Ready = function(data)
 {
 	this.content = this.CreateContent(data);
 	this.WND.setContent(this.content);
+	if (window.BXTIMEMAN && window.BXTIMEMAN.WND && window.BXTIMEMAN.WND.onSelectDateLinkClick)
+	{
+		var dateLinks = this.content.querySelectorAll('[data-role="date-picker"]');
+		for (var i = 0; i < dateLinks.length; i++)
+		{
+			BX.bind(dateLinks[i], 'click', BX.proxy(window.BXTIMEMAN.WND.onSelectDateLinkClick, this));
+		}
+	}
 
 	this.isReady = true;
 	BX.timeman.closeWait();
@@ -2261,6 +2287,100 @@ BX.CTimeManTimeSelector = function(parent, params)
 }
 BX.extend(BX.CTimeManTimeSelector, BX.CTimeManClock);
 
+BX.CTimeManWindow.prototype.onSelectDateLinkClick = function (event)
+{
+	var defaultDate = new Date();
+	if (this.parent && this.parent.DATA && this.parent.DATA.INFO && this.parent.DATA.INFO.DATE_START
+		&& this.parent.DATA.INFO.CURRENT_STATUS && this.parent.DATA.INFO.CURRENT_STATUS !== 'CLOSED')
+	{
+		if (this.parent.DATA.INFO.RECOMMENDED_CLOSE_TIMESTAMP && this.parent.DATA.INFO.RECOMMENDED_CLOSE_TIMESTAMP > 0)
+		{
+			defaultDate = new Date(this.parent.DATA.INFO.RECOMMENDED_CLOSE_TIMESTAMP * 1000);
+		}
+		else
+		{
+			defaultDate = new Date(this.parent.DATA.INFO.DATE_START * 1000);
+		}
+	}
+	var defaultDateValue = BX.date.format(
+		BX.date.convertBitrixFormat(BX.message("FORMAT_DATE")),
+		defaultDate
+	);
+	var title = BX.create('INPUT', {
+		props: {
+			type: 'text',
+			className: 'bx-tm-popup-clock-wnd-custom-date-picker',
+			value: defaultDateValue
+		},
+		events: {
+			click: function (event)
+			{
+				BX.calendar({node: event.currentTarget, field: event.currentTarget, bTime: false});
+			},
+			change: BX.delegate(function (event)
+				{
+					if (window.BXTIMEMAN && window.BXTIMEMAN.WND)
+					{
+						if (event.currentTarget.dataset.type === 'start')
+						{
+							window.BXTIMEMAN.WND.startUserDate = event.currentTarget.value
+						}
+						else if (event.currentTarget.dataset.type === 'end')
+						{
+							window.BXTIMEMAN.WND.endUserDate = event.currentTarget.value
+						}
+						else if (window.BXTIMEMAN.WND.CLOCKWND && event.currentTarget.dataset.type === 'single')
+						{
+							window.BXTIMEMAN.WND.CLOCKWND.customUserDate = event.currentTarget.value
+						}
+					}
+				}, this
+			)
+		}
+	});
+	if (window.BXTIMEMAN && window.BXTIMEMAN.WND)
+	{
+		if (event.currentTarget.dataset.type === 'start')
+		{
+			window.BXTIMEMAN.WND.startUserDate = event.currentTarget.value;
+			this.bChanged = true;
+			if (this.SetSaveButton)
+			{
+				this.SetSaveButton({className: "popup-window-button-create"});
+			}
+		}
+		else if (event.currentTarget.dataset.type === 'end')
+		{
+			window.BXTIMEMAN.WND.endUserDate = event.currentTarget.value;
+			this.bChanged = true;
+			if (this.SetSaveButton)
+			{
+				this.SetSaveButton({className: "popup-window-button-create"});
+			}
+		}
+		else if (window.BXTIMEMAN.WND.CLOCKWND && event.currentTarget.dataset.type === 'single')
+		{
+			window.BXTIMEMAN.WND.CLOCKWND.customUserDate = event.currentTarget.value
+		}
+	}
+	title.dataset.role = event.currentTarget.dataset.role;
+	title.dataset.type = event.currentTarget.dataset.type;
+
+	event.currentTarget.parentNode.appendChild(title);
+	title.style.width = title.value.length.toString() + 'px!important';
+	event.currentTarget.classList.add('timeman-hide');
+	BX.calendar({node: title, field: title, bTime: false});
+};
+BX.CTimeManTimeSelector.prototype.buildCustomDatePicker = function()
+{
+	return (BX.create('SPAN', {
+		text: BX.message('JS_CORE_TM_WD_CLOCK_SET_CUSTOM_DATE'),
+		props: {
+			className: 'bx-tm-popup-clock-wnd-custom-date-link'
+		},
+		dataset: {role: 'date-picker', type: 'single'}
+	}));
+};
 BX.CTimeManTimeSelector.prototype.CreateContent = function(data)
 {
 	if (!this.content)
@@ -2270,6 +2390,8 @@ BX.CTimeManTimeSelector.prototype.CreateContent = function(data)
 
 		var cell = row.insertCell(-1);
 		cell.innerHTML = '<div class="bx-tm-popup-clock-wnd-clock">' + data + '</div>';
+
+		var contentChildren = [table];
 
 		if (!this.free_mode)
 		{
@@ -2283,26 +2405,43 @@ BX.CTimeManTimeSelector.prototype.CreateContent = function(data)
 						},
 						html: BX.message('JS_CORE_TM_CHTIME_CAUSE')
 					})),
-					(this.REPORT = BX.create('TEXTAREA'))
+					(this.REPORT = BX.create('TEXTAREA', {
+						props: {
+							className: 'bx-tm-popup-clock-wnd-reason'
+						}
+					})),
+					(BX.create('DIV', {
+						props: {
+							className: 'bx-tm-popup-clock-wnd-custom-date-block'
+						},
+						children: [this.buildCustomDatePicker.bind(this)()]
+					}))
 				]
 			}));
 		}
 		else
 		{
 			table.setAttribute('align', 'center');
+			contentChildren.push(
+				(BX.create('DIV', {
+					props: {
+						className: 'bx-tm-popup-clock-wnd-custom-date-link-wrapper'
+					},
+					children: [this.buildCustomDatePicker.bind(this)()]
+				}))
+			);
 		}
-
 		this.content = (BX.create('DIV', {
-			props: {className: 'bx-tm-popup-clock-wnd bx-tm-popup-time-selector-wnd'},
+			props: {className: 'bx-tm-popup-clock-wnd bx-tm-popup-time-selector-wnd bx-tm-popup-date-selector-wnd'},
 			children: [
 				(this.content_title = BX.create('DIV', {
-					props: {className: 'bx-tm-popup-clock-wnd-title'},
+					props: {className: 'bx-tm-popup-clock-wnd-title bx-tm-popup-clock-wnd-title-sm'},
 					html: BX.message('JS_CORE_TM_CHTIME_' + this.parent.DATA.STATE)
 				})),
 				_createHR(),
 				BX.create('DIV', {
 					props: {className: this.free_mode ? 'bx-tm-popup-clock-free-mode' : ''},
-					children: [table]
+					children: contentChildren
 				})
 			]
 		}));
@@ -2551,16 +2690,6 @@ BX.CTimeManEditPopup.prototype._input_onchange = function()
 
 	v1[1] = parseInt(v1[1], 10);
 	v2[1] = parseInt(v2[1], 10);
-
-	if (v1[0]*3600 + v1[1]*60 >= v2[0]*3600 + v2[1]*60)
-	{
-		if (input.name == 'timeman_edit_from')
-			window['bxClock_' + this.obClocks[this.CLOCK_ID]].SetTime.apply(window['bxClock_' + this.obClocks[this.CLOCK_ID]], v2[1] > 0 ? [v2[0], v2[1]-5] : [v2[0]-1, 55]);
-		else
-		{
-			window['bxClock_' + this.obClocks[this.CLOCK_ID_1]].SetTime.apply(window['bxClock_' + this.obClocks[this.CLOCK_ID_1]], v1[1] < 55 ? [v1[0], v1[1]+5] : [v1[0]+1, 0]);
-		}
-	}
 }
 
 BX.CTimeManEditPopup.prototype.CreateContent = function(data)
@@ -2602,11 +2731,19 @@ BX.CTimeManEditPopup.prototype.CreateContent = function(data)
 		arChildren.push(BX.create('DIV', {style: {height: '1px', clear: 'both'}}));
 
 		this.content = (BX.create('DIV', {
-			props: {className: 'bx-tm-popup-clock-wnd bx-tm-popup-edit-clock-wnd'},
+			props: {className: 'bx-tm-popup-clock-wnd bx-tm-popup-edit-clock-wnd bx-tm-popup-edit-time-date-wnd'},
 			children: arChildren
 		}));
 
 		this.WNDSTATE = _getStateHash(this.params.entry, ['STATE', 'CAN_EDIT']) + '/' + _getStateHash(this.params.entry.INFO, ['DATE_START', 'DATE_FINISH', 'TIME_LEAKS']);
+		if (window.BXTIMEMAN && window.BXTIMEMAN.WND && window.BXTIMEMAN.WND.onSelectDateLinkClick)
+		{
+			var dateLinks = this.content.querySelectorAll('[data-role="date-picker"]');
+			for (var i = 0; i < dateLinks.length; i++)
+			{
+				BX.bind(dateLinks[i], 'click', BX.proxy(window.BXTIMEMAN.WND.onSelectDateLinkClick, this));
+			}
+		}
 	}
 	else
 	{
@@ -2758,7 +2895,14 @@ BX.CTimeManEditPopup.prototype.setValue = function(e)
 		}
 
 		data.report = r;
-
+		if (window.BXTIMEMAN && window.BXTIMEMAN.WND && (window.BXTIMEMAN.WND.startUserDate !== undefined))
+		{
+			data.startUserDate = window.BXTIMEMAN.WND.startUserDate;
+		}
+		if (window.BXTIMEMAN && window.BXTIMEMAN.WND && (window.BXTIMEMAN.WND.endUserDate !== undefined))
+		{
+			data.endUserDate = window.BXTIMEMAN.WND.endUserDate;
+		}
 		this.parent.PARENT.Query('save', data, BX.proxy(this.parent.PARENT._Update, this.parent.PARENT));
 
 		this.bChanged = false;
@@ -5886,7 +6030,14 @@ BX.CTimeManReportForm.prototype.ActionEdit = function(e)
 			data.timeman_edit_to = this.external_finish_ts
 			data.report = this.external_finish_ts_report;
 		}
-
+		if (window.BXTIMEMAN && window.BXTIMEMAN.WND && (window.BXTIMEMAN.WND.startUserDate !== undefined))
+		{
+			data.startUserDate = window.BXTIMEMAN.WND.startUserDate;
+		}
+		if (window.BXTIMEMAN && window.BXTIMEMAN.WND && (window.BXTIMEMAN.WND.endUserDate !== undefined))
+		{
+			data.endUserDate = window.BXTIMEMAN.WND.endUserDate;
+		}
 		this.parent.Query('close', data, BX.proxy(this._ActionEdit, this));
 	}
 
@@ -6983,10 +7134,9 @@ BX.TimeManSlider = function(user,start,type)
 
 BX.TimeManSlider.prototype.Load = function(ID)
 {
-	BX.timeman_query('admin_entry', {
-		ID: ID,
-		slider_type: this.type
-	}, BX.proxy(this.Show, this));
+	BX.timeman.closeWait();
+	var url = BX.util.add_url_param('/bitrix/components/bitrix/timeman.worktime.record.report/slider.php', {RECORD_ID: ID});
+	BX.SidePanel.Instance.open(url, {width: 800, cacheable: false});
 }
 
 BX.TimeManSlider.prototype.Show = function(data)

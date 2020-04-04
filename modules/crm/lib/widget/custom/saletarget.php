@@ -3,6 +3,7 @@ namespace Bitrix\Crm\Widget\Custom;
 
 use Bitrix\Crm\Widget\Custom\Entity\SaleTargetTable;
 use Bitrix\Main;
+use Bitrix\Main\Localization\Loc;
 
 class SaleTarget
 {
@@ -55,7 +56,7 @@ class SaleTarget
 
 			if ($configuration['type'] === static::TYPE_USER && is_array($configuration['target']['goal']))
 			{
-				$configuration['users'] = $this->getUsers(array_keys($configuration['target']['goal']));
+				$configuration['users'] = $this->getUsers(array_keys($configuration['target']['goal']), true);
 			}
 		}
 		return array(
@@ -87,7 +88,7 @@ class SaleTarget
 			$configuration = $this->makeConfiguration($row);
 			if ($configuration['type'] === static::TYPE_USER && is_array($configuration['target']['goal']))
 			{
-				$configuration['users'] = $this->getUsers(array_keys($configuration['target']['goal']));
+				$configuration['users'] = $this->getUsers(array_keys($configuration['target']['goal']), true);
 			}
 			$configurations[] = $configuration;
 		}
@@ -536,7 +537,7 @@ class SaleTarget
 		return $departments;
 	}
 
-	private function getUsers(array $userIds)
+	private function getUsers(array $userIds, $inactive = false)
 	{
 		$users = array();
 		if (!$userIds)
@@ -545,9 +546,16 @@ class SaleTarget
 		}
 		$userNameFormat = \CSite::GetNameFormat(false);
 
+		$filter = ["ID" => implode("|", array_unique($userIds)), 'ACTIVE' => 'Y'];
+
+		if ($inactive)
+		{
+			unset($filter['ACTIVE']);
+		}
+
 		$dbRes = \CUser::getList(($by = "ID"), ($order = "ASC"),
-			["ID" => implode("|", array_unique($userIds)), 'ACTIVE' => 'Y'],
-			["FIELDS" => array("ID", "NAME", "LAST_NAME", "SECOND_NAME", "LOGIN", "TITLE", "PERSONAL_PHOTO", "WORK_POSITION")]
+			$filter,
+			["FIELDS" => ["ID", "NAME", "LAST_NAME", "SECOND_NAME", "LOGIN", "TITLE", "PERSONAL_PHOTO", "WORK_POSITION", 'ACTIVE']]
 		);
 
 		while($user = $dbRes->fetch())
@@ -555,10 +563,17 @@ class SaleTarget
 			$users[] = array(
 				'id' => $user['ID'],
 				'name' => \CUser::FormatName($userNameFormat, $user, false, false),
-				'title' => $user['WORK_POSITION'],
-				'photo' => $this->getUserAvatarSrc($user['PERSONAL_PHOTO'])
+				'title' => $user['ACTIVE'] === 'Y' ? $user['WORK_POSITION'] : Loc::getMessage("CRM_WIDGET_SALETARGET_USER_INACTIVE"),
+				'photo' => $this->getUserAvatarSrc($user['PERSONAL_PHOTO']),
+				'active' => ($user['ACTIVE'] === 'Y')
 			);
 		}
+
+		if ($users)
+		{
+			Main\Type\Collection::sortByColumn($users, ['active' => SORT_DESC]);
+		}
+
 		return $users;
 	}
 

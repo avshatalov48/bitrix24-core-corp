@@ -10,6 +10,15 @@ Loc::loadMessages(__FILE__);
 \Bitrix\Main\UI\Extension::load("ui.buttons");
 \Bitrix\Main\UI\Extension::load("ui.buttons.icons");
 
+
+
+$isIFrame = isset($_REQUEST["IFRAME"]) && $_REQUEST["IFRAME"] === "Y";
+if($isIFrame)
+{
+    $templateAddUrl .= '?IFRAME=Y';
+}
+
+
 $helper = $arResult['HELPER'];
 $arParams =& $helper->getComponent(
 )->arParams; // make $arParams the same variable as $this->__component->arParams, as it really should be
@@ -33,6 +42,9 @@ $templateAddUrl = CComponentEngine::MakePathFromTemplate(
 		"template_id" => 0
 	]
 );
+
+
+
 ?>
 <?php
 if ($arParams['HIDE_MENU'] != 'Y')
@@ -278,3 +290,4 @@ if ($arParams['HIDE_FILTER'] != 'Y')
 		});
 	</script>
 <? endif ?>
+

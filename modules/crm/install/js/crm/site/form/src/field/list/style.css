@@ -1,0 +1,99 @@
+.b24-form-control-list .b24-form-control-container:after {
+	content: "";
+	position: absolute;
+	height: 7px;
+	width: 7px;
+	border-right: 2px solid #000;
+	border-right: 2px solid var(--b24-text-color);
+	border-bottom: 2px solid #000;
+	border-bottom: 2px solid var(--b24-text-color);
+	top: 24px;
+	right: 10px;
+	transition: all 250ms ease;
+	-webkit-transform-origin: center;
+	-moz-transform-origin: center;
+	-ms-transform-origin: center;
+	-o-transform-origin: center;
+	transform-origin: center;
+	opacity: .37;
+	-webkit-transform: translateX(-50%) translateY(-50%) rotate(45deg);
+	-moz-transform: translateX(-50%) translateY(-50%) rotate(45deg);
+	-ms-transform: translateX(-50%) translateY(-50%) rotate(45deg);
+	-o-transform: translateX(-50%) translateY(-50%) rotate(45deg);
+	transform: translateX(-50%) translateY(-50%) rotate(45deg);
+}
+
+.b24-form-control-list:hover .b24-form-control-container:after { opacity: 1; }
+
+/*region dropdown*/
+
+.b24-form-control-list-selector-item {
+	width: 100%;
+	border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	-webkit-box-align: center;
+	-ms-flex-align: center;
+	align-items: center;
+	-webkit-box-pack: start;
+	-ms-flex-pack: start;
+	justify-content: flex-start;
+	background-color: #fff;
+	background-color: var(--b24-background-color);
+	padding: 11px;
+	cursor: pointer;
+	transition: 250ms linear all;
+}
+
+/*.b24-form-control-list-selector-item:hover{ background-color: #ebebeb; }*/
+.b24-form-control-list-selector-item:hover { opacity: .7; }
+
+.b24-form-control-list-selector-item-image {
+	width: 52px;
+	height: auto;
+	border-radius: 4px;
+}
+
+.b24-form-control-list-selector-item-title {
+	font: 16px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 16px var(--b24-font-family);
+	color: #000;
+	color: var(--b24-text-color);
+	-webkit-box-flex: 1;
+	-ms-flex: 1;
+	flex: 1;
+}
+
+.b24-form-control-list-selector-item-image + .b24-form-control-list-selector-item-title {padding-left: 10px;}
+
+.b24-form-control-list-selector-item-price {
+	font: 17px/23px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 17px/23px var(--b24-font-family);
+	padding-right: 8px;
+	min-width: 56px;
+}
+
+.b24-form-control-list-selector-item-price-old {
+	text-align: right;
+	text-decoration: line-through;
+	font-size: 15px;
+	color: #000;
+	color: var(--b24-text-color);
+	opacity: .5;
+}
+
+.b24-form-control-list-selector-item-price-current {
+	text-align: right;
+	font-weight: bold;
+	font-size: 16px;
+	color: #000;
+	color: var(--b24-text-color);
+}
+
+/*endregion*/
+
+/*region UF*/
+.b24-form-control-list {}
+
+/*endregion*/

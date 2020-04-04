@@ -55,6 +55,8 @@ final class RestManager extends IRestService implements IErrorable
 			'disk.folder.restore',
 			'disk.folder.uploadFile',
 			'disk.folder.getExternalLink',
+			'disk.folder.shareToUser',
+			'disk.folder.listAllowedOperations',
 
 			'disk.file.getFields',
 			'disk.file.get',
@@ -68,6 +70,7 @@ final class RestManager extends IRestService implements IErrorable
 			'disk.file.getExternalLink',
 			'disk.file.getVersions',
 			'disk.file.restoreFromVersion',
+			'disk.file.listAllowedOperations',
 
 			'disk.version.get',
 

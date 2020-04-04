@@ -82,7 +82,8 @@ $runtimeFields = [];
 
 $dbPerson = \Bitrix\Sale\Internals\BusinessValuePersonDomainTable::getList([
 	'select' => [
-		'DOMAIN', 'PT_ID' => 'PERSON_TYPE_REFERENCE.ID',
+		'DOMAIN',
+		'PT_ID' => 'PERSON_TYPE_REFERENCE.ID',
 	],
 	'filter' => [
 		'PERSON_TYPE_REFERENCE.ENTITY_REGISTRY_TYPE' => \Bitrix\Sale\Registry::REGISTRY_TYPE_ORDER
@@ -1339,15 +1340,22 @@ if (!empty($presetImport['CRM_COMPANY']) && !empty($currentPresetInfo['CRM_COMPA
 	}
 }
 
-$res = $DB->Query("SELECT * FROM `b_sale_person_type` WHERE 1=1");
+$businessValueMap = [
+	Bitrix\Sale\BusinessValue::INDIVIDUAL_DOMAIN => "CRM_CONTACT",
+	Bitrix\Sale\BusinessValue::ENTITY_DOMAIN => "CRM_COMPANY",
+];
+
+$res = $DB->Query("SELECT * FROM `b_sale_person_type` WHERE ENTITY_REGISTRY_TYPE = 'ORDER'");
 while ($personType = $res->Fetch())
 {
-	$personTypeCode = isset($personType['CODE']) ? $personType['CODE'] : $personType['NAME'];
+	$domain = \Bitrix\Sale\Internals\BusinessValuePersonDomainTable::getList([
+		'filter' => array("PERSON_TYPE_ID" => $personType['ID'])
+	])->fetch()['DOMAIN'];
 
-	if (!empty($matches[$personTypeCode]))
+	$personTypeMatches = $matches[$businessValueMap[$domain]];
+
+	if ($personTypeMatches)
 	{
-		$personTypeMatches = $matches[$personTypeCode];
-
 		$existingProps = [];
 		$propRes = $DB->Query("SELECT `ID`, `CODE` FROM `b_sale_order_props` WHERE `PERSON_TYPE_ID` = ".$personType['ID']." AND ENTITY_REGISTRY_TYPE = 'ORDER'");
 		while ($property = $propRes->Fetch())
@@ -1385,7 +1393,7 @@ while ($personType = $res->Fetch())
 	}
 }
 
-unset($currentPresetInfo, $currentMap, $presetImport, $matches);
+unset($currentPresetInfo, $currentMap, $presetImport, $matches, $businessValueMap);
 
 
 // Create order statuses
@@ -1400,7 +1408,6 @@ foreach ($statusList as $status)
 	{
 		$result = \Bitrix\Sale\Internals\StatusTable::add([
 			'ID' => $status['STATUS_ID'],
-			'COLOR' => 'N',
 			'SORT' => $status['SORT'],
 			'TYPE' => \Bitrix\Crm\Order\OrderStatus::TYPE
 		]);
@@ -1428,7 +1435,6 @@ foreach ($statusList as $status)
 	{
 		$result = \Bitrix\Sale\Internals\StatusTable::add([
 			'ID' => $status['STATUS_ID'],
-			'COLOR' => 'N',
 			'SORT' => $status['SORT'],
 			'TYPE' => \Bitrix\Crm\Order\DeliveryStatus::TYPE
 		]);
@@ -1469,7 +1475,7 @@ if (!$res->fetch())
 		]
 	];
 
-	if (\Bitrix\Main\Loader::includeModule('documentgenerator') && $shopLocalization == 'ru')
+	if (\Bitrix\Crm\Integration\DocumentGeneratorManager::getInstance()->isEnabled() && $shopLocalization == 'ru')
 	{
 		$templateId = 0;
 
@@ -1664,20 +1670,23 @@ if(!$res->fetch())
 	}
 }
 
-//Install robot presets
-\Bitrix\Crm\Automation\Demo\Wizard::installOrderPresets();
+if (Bitrix\Main\Config\Option::get("sale", "~IS_SALE_CRM_SITE_MASTER_FINISH", "N") !== "Y")
+{
+	//Install robot presets
+	\Bitrix\Crm\Automation\Demo\Wizard::installOrderPresets();
 
-COption::SetOptionString("sale", "status_on_paid", '');
-COption::SetOptionString("sale", "status_on_half_paid", '');
-COption::SetOptionString("sale", "status_on_allow_delivery", '');
-COption::SetOptionString("sale", "status_on_allow_delivery_one_of", '');
-COption::SetOptionString("sale", "status_on_shipped_shipment", '');
-COption::SetOptionString("sale", "status_on_shipped_shipment_one_of", '');
-COption::SetOptionString("sale", "shipment_status_on_allow_delivery", '');
-COption::SetOptionString("sale", "shipment_status_on_shipped", '');
-COption::SetOptionString("sale", "status_on_payed_2_allow_delivery", '');
-COption::SetOptionString("sale", "status_on_change_allow_delivery_after_paid", 'N');
-COption::SetOptionString("sale", "allow_deduction_on_delivery", '');
+	COption::SetOptionString("sale", "status_on_paid", '');
+	COption::SetOptionString("sale", "status_on_half_paid", '');
+	COption::SetOptionString("sale", "status_on_allow_delivery", '');
+	COption::SetOptionString("sale", "status_on_allow_delivery_one_of", '');
+	COption::SetOptionString("sale", "status_on_shipped_shipment", '');
+	COption::SetOptionString("sale", "status_on_shipped_shipment_one_of", '');
+	COption::SetOptionString("sale", "shipment_status_on_allow_delivery", '');
+	COption::SetOptionString("sale", "shipment_status_on_shipped", '');
+	COption::SetOptionString("sale", "status_on_payed_2_allow_delivery", '');
+	COption::SetOptionString("sale", "status_on_change_allow_delivery_after_paid", 'N');
+	COption::SetOptionString("sale", "allow_deduction_on_delivery", '');
+}
 
 // Add groups for crm shop
 $groupObject = new CGroup;

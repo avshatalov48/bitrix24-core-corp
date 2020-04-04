@@ -15,7 +15,7 @@ abstract class Base
 {
 	const TYPE_GUEST = 'guest';
 	const TYPE_SITE_BUTTON = 'button';
-	const TYPE_WEB_FORM = 'form';
+	const TYPE_FORM = 'form';
 	const TYPE_CALL_TRACKER= 'call.tracker';
 	const TYPE_CALL_TRACKER_EDITOR = 'call.tracker.ed';
 	const TYPE_GLOBAL = 'global';
@@ -35,9 +35,15 @@ abstract class Base
 	/** @var int $fileName Filename. */
 	protected $fileName;
 
-
 	/** @var int $file dir. */
 	protected $fileDir = 'tag';
+
+	/** @var int $cacheTtl Cache ttl. */
+	protected $cacheTtl = 60;
+
+	/** @var array $tagAttributes Tag attributes. */
+	protected $tagAttributes = [];
+	protected $skipMoving = false;
 
 	/** @var string $embeddedModuleName Embedded module name. */
 	protected $embeddedModuleName;
@@ -199,14 +205,27 @@ abstract class Base
 	}
 
 	/**
+	 * Get tag attributes.
+	 *
+	 * @return array
+	 */
+	public function getTagAttributes()
+	{
+		$this->getLoader();
+		return $this->tagAttributes;
+	}
+
+	/**
 	 * Get embedded script.
 	 *
 	 * @return string
 	 */
 	public function getEmbeddedScript()
 	{
-		$this->configureFileOnce();
-		return $this->controller->getLoader()->getString();
+		return $this->getLoader()
+			->setTagAttributes($this->tagAttributes)
+			->setSkipMoving($this->skipMoving)
+			->getString();
 	}
 
 	/**
@@ -216,8 +235,40 @@ abstract class Base
 	 */
 	public function getEmbeddedBody()
 	{
+		return $this->getLoader()->getStringJs();
+	}
+
+	/**
+	 * Get embedded body.
+	 *
+	 * @param int $cacheTtl Cache ttl.
+	 * @return $this
+	 */
+	public function setCacheTtl($cacheTtl)
+	{
+		$this->cacheTtl = $cacheTtl;
+		return $this;
+	}
+
+	/**
+	 * Get embedded body.
+	 *
+	 * @return WebPacker\Loader
+	 */
+	public function getLoader()
+	{
 		$this->configureFileOnce();
-		return $this->controller->getLoader()->getStringJs();
+		return $this->controller->getLoader()->setCacheTtl($this->cacheTtl);
+	}
+
+	/**
+	 * Get embedded body.
+	 *
+	 * @return string
+	 */
+	public function getEmbeddedFileUrl()
+	{
+		return $this->getLoader()->getFileUrl();
 	}
 
 	/**
@@ -238,6 +289,16 @@ abstract class Base
 		$module = (new WebPacker\Module($this->embeddedModuleName))->setPackage($package);
 
 		return $module;
+	}
+
+	/**
+	 * Return true if it was built.
+	 *
+	 * @return bool
+	 */
+	public function isBuilt()
+	{
+		return !empty($this->fileId);
 	}
 
 	/**

@@ -1,0 +1,19 @@
+.voximplant-docsrequest-address-index {
+	display: inline-block;
+	width: 60px;
+	border-right: black 1px solid;
+	vertical-align: middle;
+}
+
+.voximplant-docsrequest-address-address {
+	display: inline-block;
+	vertical-align: middle;
+}
+
+.voximplant-docsrequest-address-input {
+	font: 14px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	border: none;
+	width: 100%;
+	overflow: hidden;
+	vertical-align: middle;
+}

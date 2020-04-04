@@ -68,7 +68,12 @@ class CAllCrmActivity
 			$arFields['STORAGE_TYPE_ID'] = StorageType::getDefaultTypeID();
 		}
 
-		if (!self::CheckFields('ADD', $arFields, 0, null))
+		$params = array();
+		if(isset($options['PRESERVE_CREATION_TIME']))
+		{
+			$params['PRESERVE_CREATION_TIME'] = $options['PRESERVE_CREATION_TIME'];
+		}
+		if (!self::CheckFields('ADD', $arFields, 0, $params))
 		{
 			return false;
 		}
@@ -209,7 +214,13 @@ class CAllCrmActivity
 
 		if(!$isRestoration)
 		{
-			\Bitrix\Crm\Timeline\ActivityController::getInstance()->onCreate($ID, array('FIELDS' => $arFields));
+			\Bitrix\Crm\Timeline\ActivityController::getInstance()->onCreate(
+				$ID,
+				array(
+					'FIELDS' => $arFields,
+					'PRESERVE_CREATION_TIME' => isset($options['PRESERVE_CREATION_TIME']) && $options['PRESERVE_CREATION_TIME'] === true
+				)
+			);
 		}
 
 		//region Search content index
@@ -340,6 +351,14 @@ class CAllCrmActivity
 									'DEADLINE' => $arFields['DEADLINE']
 								),
 							));
+			}
+
+			if($arFields['COMPLETED'] === 'Y')
+			{
+				Crm\Ml\Scoring::queuePredictionUpdate($arFields['OWNER_TYPE_ID'], $arFields['OWNER_ID'], [
+					'EVENT_TYPE' => Crm\Ml\Scoring::EVENT_ACTIVITY,
+					'ASSOCIATED_ACTIVITY_ID'=> $ID
+				]);
 			}
 		}
 
@@ -782,6 +801,16 @@ class CAllCrmActivity
 		);
 		$event->send();
 
+		if($arFields['COMPLETED'] === 'Y')
+		{
+			$ownerId = $arFields['OWNER_ID'] ?: $arPrevEntity['OWNER_ID'];
+			$ownerTypeId = $arFields['OWNER_TYPE_ID'] ?: $arPrevEntity['OWNER_TYPE_ID'];
+			Crm\Ml\Scoring::queuePredictionUpdate($ownerTypeId, $ownerId, [
+				'EVENT_TYPE' => Crm\Ml\Scoring::EVENT_ACTIVITY,
+				'ASSOCIATED_ACTIVITY_ID'=> $ID
+			]);
+		}
+
 		if(defined("BX_COMP_MANAGED_CACHE"))
 		{
 			$GLOBALS["CACHE_MANAGER"]->ClearByTag("CRM_ACTIVITY_".$ID);
@@ -973,6 +1002,8 @@ class CAllCrmActivity
 			$ID,
 			array('FIELDS' => $ary, 'BINDINGS' => $arBindings, 'MOVED_TO_RECYCLE_BIN' => $movedToRecycleBin)
 		);
+
+		\Bitrix\Crm\Ml\Scoring::onActivityDelete($ID);
 
 		if(!$movedToRecycleBin)
 		{
@@ -1366,6 +1397,11 @@ class CAllCrmActivity
 		}
 		$prevFields = null;
 
+		if(!is_array($params))
+		{
+			$params = array();
+		}
+
 		if($action == 'ADD')
 		{
 			// Validation
@@ -1446,15 +1482,22 @@ class CAllCrmActivity
 				$fields['IS_HANDLEABLE'] = $fields['COMPLETED'] === 'N' ? 'Y' : 'N';
 			}
 
-			if (isset($fields['CREATED']))
+			//region CREATED & LAST_UPDATED
+			unset($fields['~CREATED'], $fields['LAST_UPDATED'], $fields['~LAST_UPDATED']);
+			if(!(isset($params['PRESERVE_CREATION_TIME']) && $params['PRESERVE_CREATION_TIME'] === true))
 			{
 				unset($fields['CREATED']);
 			}
-			if (isset($fields['LAST_UPDATED']))
+
+			if(isset($fields['CREATED']))
 			{
-				unset($fields['LAST_UPDATED']);
+				$fields['LAST_UPDATED'] = $fields['CREATED'];
 			}
-			$fields['~CREATED'] = $fields['~LAST_UPDATED'] = $DB->CurrentTimeFunction();
+			else
+			{
+				$fields['~CREATED'] = $fields['~LAST_UPDATED'] = $DB->CurrentTimeFunction();
+			}
+			//endregion
 
 			if(!isset($fields['AUTHOR_ID']))
 			{
@@ -1507,7 +1550,7 @@ class CAllCrmActivity
 		}
 		else//if($action == 'UPDATE')
 		{
-			$prevFields = is_array($params) && isset($params['PREVIOUS_FIELDS']) && is_array($params['PREVIOUS_FIELDS'])
+			$prevFields = isset($params['PREVIOUS_FIELDS']) && is_array($params['PREVIOUS_FIELDS'])
 				? $params['PREVIOUS_FIELDS'] : null;
 
 			if(!is_array($prevFields) && !self::Exists($ID, false))
@@ -2279,23 +2322,34 @@ class CAllCrmActivity
 		$bindingTableName = CCrmActivity::BINDING_TABLE_NAME;
 		$communicationTableName = CCrmActivity::COMMUNICATION_TABLE_NAME;
 
-		$sql= "SELECT ID FROM ".CCrmActivity::BINDING_TABLE_NAME." WHERE OWNER_TYPE_ID = {$ownerTypeID} AND OWNER_ID = {$oldOwnerID}";
-		CSqlUtil::PrepareSelectTop($sql, 1, CCrmActivity::DB_TYPE);
+		$items = array();
+		$responsibleIDs = array();
+		$sql= "SELECT A.ID, A.TYPE_ID, A.PROVIDER_ID, A.ASSOCIATED_ENTITY_ID, A.RESPONSIBLE_ID FROM {$bindingTableName} B INNER JOIN {$tableName} A ON A.ID = B.ACTIVITY_ID AND B.OWNER_TYPE_ID = {$ownerTypeID} AND B.OWNER_ID = {$oldOwnerID}";
 		$dbResult = $DB->Query($sql, false, 'File: '.__FILE__.'<br>Line: '.__LINE__);
-		if(!(is_object($dbResult) && is_array($dbResult->Fetch())))
+		if(is_object($dbResult))
+		{
+			while($item = $dbResult->Fetch())
+			{
+				$items[] = $item;
+				if(isset($item['RESPONSIBLE_ID']))
+				{
+					$responsibleIDs[] = (int)$item['RESPONSIBLE_ID'];
+				}
+			}
+		}
+
+		if(empty($items))
 		{
 			return;
 		}
 
-		$responsibleIDs = array();
-		$sql =  "SELECT DISTINCT A.RESPONSIBLE_ID FROM {$bindingTableName} B INNER JOIN {$tableName} A ON A.ID = B.ACTIVITY_ID AND B.OWNER_TYPE_ID = {$ownerTypeID} AND B.OWNER_ID = {$oldOwnerID}";
+		$enableCalendarEvents = false;
+		$sql =  "SELECT B.ACTIVITY_ID FROM {$bindingTableName} B INNER JOIN {$tableName} A ON A.ID = B.ACTIVITY_ID AND B.OWNER_TYPE_ID = {$ownerTypeID} AND B.OWNER_ID = {$oldOwnerID} WHERE A.CALENDAR_EVENT_ID > 0";
+		CSqlUtil::PrepareSelectTop($sql, 1, CCrmActivity::DB_TYPE);
 		$dbResult = $DB->Query($sql, false, 'File: '.__FILE__.'<br>Line: '.__LINE__);
-		if(is_object($dbResult))
+		if(is_object($dbResult) && is_array($dbResult->Fetch()))
 		{
-			while($fields = $dbResult->Fetch())
-			{
-				$responsibleIDs[] = (int)$fields['RESPONSIBLE_ID'];
-			}
+			$enableCalendarEvents = true;
 		}
 
 		$comm = array('ENTITY_ID'=> $newOwnerID, 'ENTITY_TYPE_ID' => $ownerTypeID);
@@ -2326,6 +2380,17 @@ class CAllCrmActivity
 			'File: '.__FILE__.'<br>Line: '.__LINE__
 		);
 
+		foreach($items as $item)
+		{
+			$associatedEntityID = isset($item['ASSOCIATED_ENTITY_ID']) ? (int)$item['ASSOCIATED_ENTITY_ID'] : 0;
+			$provider = \CCrmActivity::GetActivityProvider($item);
+			if($associatedEntityID > 0 && $provider)
+			{
+				$provider::rebindAssociatedEntity($associatedEntityID, $ownerTypeID, $ownerTypeID, $oldOwnerID, $newOwnerID);
+			}
+		}
+
+		$responsibleIDs = array_unique($responsibleIDs);
 		if(!empty($responsibleIDs))
 		{
 			EntityCounterManager::reset(
@@ -2341,6 +2406,11 @@ class CAllCrmActivity
 				self::SynchronizeUserActivity($ownerTypeID, $oldOwnerID, $responsibleID);
 				self::SynchronizeUserActivity($ownerTypeID, $newOwnerID, $responsibleID);
 			}
+		}
+
+		if($enableCalendarEvents)
+		{
+			self::ChangeCalendarEventOwner($ownerTypeID, $oldOwnerID, $ownerTypeID, $newOwnerID);
 		}
 		self::SynchronizeUserActivity($ownerTypeID, $oldOwnerID, 0);
 		self::SynchronizeUserActivity($ownerTypeID, $newOwnerID, 0);
@@ -2373,6 +2443,56 @@ class CAllCrmActivity
 		\Bitrix\Main\Application::getInstance()->getConnection()->queryExecute("
 			UPDATE {$tableName} SET ACTIVITY_ID = {$newID} WHERE ACTIVITY_ID = '{$oldID}'
 		");
+	}
+
+	protected static function ChangeCalendarEventOwner($oldOwnerTypeID, $oldOwnerID, $newOwnerTypeID, $newOwnerID)
+	{
+		if(!(IsModuleInstalled('calendar') && CModule::IncludeModule('calendar')))
+		{
+			return;
+		}
+
+		$oldSlug = CUserTypeCrm::GetShortEntityType(CCrmOwnerType::ResolveName($oldOwnerTypeID)).'_'.$oldOwnerID;
+		$events = CCalendarEvent::GetList(
+			array(
+				'arFilter' => array(
+					'UF_CRM_CAL_EVENT' => $oldSlug,
+					'DELETED' => 'N'
+				),
+				'arSelect' => array('ID'),
+				'getUserfields' => true,
+				'checkPermissions' => false
+			)
+		);
+
+		if(!is_array($events))
+		{
+			return;
+		}
+
+		$newSlug = CUserTypeCrm::GetShortEntityType(CCrmOwnerType::ResolveName($newOwnerTypeID)).'_'.$newOwnerID;
+		foreach($events as $event)
+		{
+			if(!(isset($event['UF_CRM_CAL_EVENT']) && is_array($event['UF_CRM_CAL_EVENT'])))
+			{
+				continue;
+			}
+
+			for($i = 0, $length = count($event['UF_CRM_CAL_EVENT']); $i < $length; $i++)
+			{
+				if($event['UF_CRM_CAL_EVENT'][$i] !== $oldSlug)
+				{
+					continue;
+				}
+
+				$event['UF_CRM_CAL_EVENT'][$i] = $newSlug;
+				CCalendarEvent::UpdateUserFields(
+					$event['ID'],
+					array('UF_CRM_CAL_EVENT' => $event['UF_CRM_CAL_EVENT'])
+				);
+				break;
+			}
+		}
 	}
 
 	public static function ChangeOwner($oldOwnerTypeID, $oldOwnerID, $newOwnerTypeID, $newOwnerID)
@@ -3237,7 +3357,7 @@ class CAllCrmActivity
 				{
 					$arFields['FILES'][] = array(
 						'fileID' => $arData['ID'],
-						'fileName' => $arData['FILE_NAME'],
+						'fileName' => $arData['ORIGINAL_NAME'] ?: $arData['FILE_NAME'],
 						'fileURL' =>  CCrmUrlUtil::UrnEncode($arData['SRC']),
 						'fileSize' => $arData['FILE_SIZE']
 					);
@@ -3249,7 +3369,7 @@ class CAllCrmActivity
 			$infos = array();
 			foreach($storageElementIDs as $elementID)
 			{
-				$infos[] = \CCrmWebDavHelper::GetElementInfo($elementID, $storageTypeID);
+				$infos[] = \CCrmWebDavHelper::GetElementInfo($elementID, false);
 			}
 			$arFields['WEBDAV_ELEMENTS'] = &$infos;
 			unset($infos);
@@ -3259,11 +3379,15 @@ class CAllCrmActivity
 			$infos = array();
 			foreach($storageElementIDs as $elementID)
 			{
-				$infos[] = Bitrix\Crm\Integration\DiskManager::getFileInfo(
+				$diskFileInfo = Bitrix\Crm\Integration\DiskManager::getFileInfo(
 					$elementID,
 					false,
 					array('OWNER_TYPE_ID' => CCrmOwnerType::Activity, 'OWNER_ID' => $arFields['ID'])
 				);
+				if ($diskFileInfo)
+				{
+					$infos[] = $diskFileInfo;
+				}
 			}
 			$arFields['DISK_FILES'] = &$infos;
 			unset($infos);
@@ -4656,25 +4780,27 @@ class CAllCrmActivity
 			array('#NAME#' => self::GetEventName($arFields))
 		);
 
-		$arBindings = isset($arFields['BINDINGS']) ? $arFields['BINDINGS'] : self::GetBindings($ID);
-		foreach($arBindings as &$arBinding)
+		if($eventName !== '')
 		{
-			self::RegisterEvents(
-				$arBinding['OWNER_TYPE_ID'],
-				$arBinding['OWNER_ID'],
-				array(
+			$arBindings = isset($arFields['BINDINGS']) ? $arFields['BINDINGS'] : self::GetBindings($ID);
+			foreach($arBindings as &$arBinding)
+			{
+				self::RegisterEvents(
+					$arBinding['OWNER_TYPE_ID'],
+					$arBinding['OWNER_ID'],
 					array(
-						'EVENT_NAME' => $eventName,
-						'EVENT_TEXT_1' => $arComm['VALUE'],
-						'EVENT_TEXT_2' => '',
-						'USER_ID' => isset($arFields['EDITOR_ID']) ? $arFields['EDITOR_ID'] : 0
-					)
-				),
-				$checkPerms
-			);
+						array(
+							'EVENT_NAME' => $eventName,
+							'EVENT_TEXT_1' => $arComm['VALUE'],
+							'EVENT_TEXT_2' => '',
+							'USER_ID' => isset($arFields['EDITOR_ID']) ? $arFields['EDITOR_ID'] : 0
+						)
+					),
+					$checkPerms
+				);
+			}
+			unset($arBinding);
 		}
-		unset($arBinding);
-
 		return true;
 	}
 	public static function GetActivityType(&$arFields)
@@ -5035,10 +5161,12 @@ class CAllCrmActivity
 		$firstNameSql = '';
 		$lastNameSql = '';
 
+		$personFormatID = \Bitrix\Crm\Format\PersonNameFormatter::getFormatID();
+
 		$nameParts = array();
 		\Bitrix\Crm\Format\PersonNameFormatter::tryParseName(
 			$needle,
-			\Bitrix\Crm\Format\PersonNameFormatter::getFormatID(),
+			$personFormatID,
 			$nameParts
 		);
 
@@ -5056,7 +5184,16 @@ class CAllCrmActivity
 		{
 			if($firstNameSql !== '' && $lastNameSql !== '')
 			{
-				$sql  = "SELECT C.ID AS ELEMENT_ID, '' AS VALUE_TYPE, '' AS VALUE, C.NAME, C.SECOND_NAME, C.LAST_NAME, C.HONORIFIC, C.PHOTO, CO.TITLE COMPANY_TITLE FROM {$contactTableName} C LEFT OUTER JOIN {$companyTableName} CO ON C.COMPANY_ID = CO.ID WHERE C.NAME LIKE '{$firstNameSql}' AND C.LAST_NAME LIKE '{$lastNameSql}'";
+				if($personFormatID === \Bitrix\Crm\Format\PersonNameFormatter::FirstSecondLast
+					|| $personFormatID === \Bitrix\Crm\Format\PersonNameFormatter::LastFirstSecond
+				)
+				{
+					$sql  = "SELECT C.ID AS ELEMENT_ID, '' AS VALUE_TYPE, '' AS VALUE, C.NAME, C.SECOND_NAME, C.LAST_NAME, C.HONORIFIC, C.PHOTO, CO.TITLE COMPANY_TITLE FROM {$contactTableName} C LEFT OUTER JOIN {$companyTableName} CO ON C.COMPANY_ID = CO.ID WHERE C.NAME LIKE '{$firstNameSql}' AND (C.LAST_NAME LIKE '{$lastNameSql}' OR C.SECOND_NAME LIKE '{$lastNameSql}')";
+				}
+				else
+				{
+					$sql  = "SELECT C.ID AS ELEMENT_ID, '' AS VALUE_TYPE, '' AS VALUE, C.NAME, C.SECOND_NAME, C.LAST_NAME, C.HONORIFIC, C.PHOTO, CO.TITLE COMPANY_TITLE FROM {$contactTableName} C LEFT OUTER JOIN {$companyTableName} CO ON C.COMPANY_ID = CO.ID WHERE C.NAME LIKE '{$firstNameSql}' AND C.LAST_NAME LIKE '{$lastNameSql}'";
+				}
 			}
 			else
 			{
@@ -5085,7 +5222,16 @@ class CAllCrmActivity
 		//Search by Name
 		if($firstNameSql !== '' && $lastNameSql !== '')
 		{
-			$sql  = "SELECT FM.ELEMENT_ID, FM.VALUE_TYPE, FM.VALUE, C.NAME, C.SECOND_NAME, C.LAST_NAME, C.HONORIFIC, C.PHOTO, CO.TITLE COMPANY_TITLE FROM {$fieldMultiTableName} FM INNER JOIN {$contactTableName} C ON FM.ELEMENT_ID = C.ID AND FM.ENTITY_ID = 'CONTACT' AND FM.TYPE_ID = '{$DB->ForSql($communicationType)}' AND C.NAME LIKE '{$firstNameSql}' AND C.LAST_NAME LIKE '{$lastNameSql}' LEFT OUTER JOIN {$companyTableName} CO ON C.COMPANY_ID = CO.ID";
+			if($personFormatID === \Bitrix\Crm\Format\PersonNameFormatter::FirstSecondLast
+				|| $personFormatID === \Bitrix\Crm\Format\PersonNameFormatter::LastFirstSecond
+			)
+			{
+				$sql  = "SELECT FM.ELEMENT_ID, FM.VALUE_TYPE, FM.VALUE, C.NAME, C.SECOND_NAME, C.LAST_NAME, C.HONORIFIC, C.PHOTO, CO.TITLE COMPANY_TITLE FROM {$fieldMultiTableName} FM INNER JOIN {$contactTableName} C ON FM.ELEMENT_ID = C.ID AND FM.ENTITY_ID = 'CONTACT' AND FM.TYPE_ID = '{$DB->ForSql($communicationType)}' AND C.NAME LIKE '{$firstNameSql}' AND (C.LAST_NAME LIKE '{$lastNameSql}' OR C.SECOND_NAME LIKE '{$lastNameSql}') LEFT OUTER JOIN {$companyTableName} CO ON C.COMPANY_ID = CO.ID";
+			}
+			else
+			{
+				$sql  = "SELECT FM.ELEMENT_ID, FM.VALUE_TYPE, FM.VALUE, C.NAME, C.SECOND_NAME, C.LAST_NAME, C.HONORIFIC, C.PHOTO, CO.TITLE COMPANY_TITLE FROM {$fieldMultiTableName} FM INNER JOIN {$contactTableName} C ON FM.ELEMENT_ID = C.ID AND FM.ENTITY_ID = 'CONTACT' AND FM.TYPE_ID = '{$DB->ForSql($communicationType)}' AND C.NAME LIKE '{$firstNameSql}' AND C.LAST_NAME LIKE '{$lastNameSql}' LEFT OUTER JOIN {$companyTableName} CO ON C.COMPANY_ID = CO.ID";
+			}
 		}
 		else
 		{
@@ -5727,7 +5873,7 @@ class CAllCrmActivity
 					'OWNER_TYPE_ID' => $ownerTypeID,
 					'ACTIVITY_ID' => $activityID,
 					'ACTIVITY_TIME' => $deadline,
-					'SORT' => ($userID > 0 ? '1' : '0').date('YmdHis', MakeTimeStamp($deadline))
+					'SORT' => ($userID > 0 ? '1' : '0').date('YmdHis', MakeTimeStamp($deadline) - CTimeZone::GetOffset())
 				)
 			);
 		}
@@ -6826,7 +6972,7 @@ class CAllCrmActivity
 					preg_replace(
 						'/(<br[^>]*>)+/is'.BX_UTF_PCRE_MODIFIER,
 						"\n",
-						html_entity_decode($description)
+						html_entity_decode($description, ENT_QUOTES)
 					)
 			);
 		}
@@ -6858,7 +7004,7 @@ class CAllCrmActivity
 						" ",
 						""
 					),
-					$descriptionHtml
+					html_entity_decode($descriptionHtml, ENT_QUOTES)
 				)
 			);
 		}
@@ -7292,8 +7438,6 @@ class CCrmActivityEmailSender
 
 	public static function TrySendEmail($ID, &$arFields, &$arErrors)
 	{
-		global $APPLICATION;
-
 		if (!CModule::IncludeModule('subscribe'))
 		{
 			$arErrors[] = array('CODE' => self::ERR_CANT_LOAD_SUBSCRIBE);
@@ -7587,6 +7731,10 @@ class CCrmActivityEmailSender
 		}
 		// <-- Creating Email
 
+		$arFields['COMPLETED'] = $arUpdateFields['COMPLETED'];
+		$arFields['ASSOCIATED_ENTITY_ID'] = $arUpdateFields['ASSOCIATED_ENTITY_ID'];
+		$arFields['SETTINGS'] = $arUpdateFields['SETTINGS'];
+
 		// Attaching files -->
 		$storageTypeID = isset($arFields['STORAGE_TYPE_ID'])
 			? intval($arFields['STORAGE_TYPE_ID']) : StorageType::Undefined;
@@ -7677,25 +7825,31 @@ class CCrmActivityEmailSender
 		// Try add event to entity
 		$CCrmEvent = new CCrmEvent();
 
-		$ownerID = isset($arFields['OWNER_ID']) ? intval($arFields['OWNER_ID']) : 0;
-		$ownerTypeID = isset($arFields['OWNER_TYPE_ID']) ? intval($arFields['OWNER_TYPE_ID']) : 0;
-
-		if($ownerID > 0 && $ownerTypeID > 0)
+		$bindings = \CCrmActivity::GetBindings($ID);
+		if(!empty($bindings))
 		{
 			$eventText  = '';
 			$eventText .= GetMessage('CRM_ACTIVITY_EMAIL_SUBJECT').': '.$subject."\n\r";
 			$eventText .= GetMessage('CRM_ACTIVITY_EMAIL_FROM').': '.$from."\n\r";
 			$eventText .= GetMessage('CRM_ACTIVITY_EMAIL_TO').': '.implode(',', $to)."\n\r\n\r";
 			$eventText .= $description;
-			// Register event only for owner
+
+			$eventBindings = array();
+			foreach($bindings as $item)
+			{
+				$bindingEntityID = $item['OWNER_ID'];
+				$bindingEntityTypeID = $item['OWNER_TYPE_ID'];
+				$bindingEntityTypeName = \CCrmOwnerType::resolveName($bindingEntityTypeID);
+
+				$eventBindings["{$bindingEntityTypeName}_{$bindingEntityID}"] = array(
+					'ENTITY_TYPE' => $bindingEntityTypeName,
+					'ENTITY_ID' => $bindingEntityID
+				);
+			}
+
 			$CCrmEvent->Add(
 				array(
-					'ENTITY' => array(
-						$ownerID => array(
-							'ENTITY_TYPE' => CCrmOwnerType::ResolveName($ownerTypeID),
-							'ENTITY_ID' => $ownerID
-						)
-					),
+					'ENTITY' => $eventBindings,
 					'EVENT_ID' => 'MESSAGE',
 					'EVENT_TEXT_1' => $eventText,
 					'FILES' => $arRawFiles

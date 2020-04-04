@@ -14,7 +14,7 @@ function bxFullscreenInit()
 function bxFullscreenClose()
 {
 	var redirect = '/';
-	var items = BX.findChildrenByClassName(BX('bx-left-menu'), "menu-item-link");
+	var items = BX.findChildrenByClassName(BX('menu-items-block'), "menu-item-link");
 	if (items)
 	{
 		if (BX.hasClass(items[0].parentNode, 'menu-item-active'))

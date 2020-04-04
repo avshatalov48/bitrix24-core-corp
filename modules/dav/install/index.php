@@ -1,8 +1,7 @@
-<?
-global $MESS;
-$strPath2Lang = str_replace("\\", "/", __FILE__);
-$strPath2Lang = substr($strPath2Lang, 0, strlen($strPath2Lang)-strlen("/install/index.php"));
-include(GetLangFileName($strPath2Lang."/lang/", "/install/index.php"));
+<?php
+
+use Bitrix\Main\Localization\Loc;
+Loc::loadMessages(__FILE__);
 
 Class dav extends CModule
 {
@@ -14,7 +13,7 @@ Class dav extends CModule
 	var $MODULE_CSS;
 	var $MODULE_GROUP_RIGHTS = "Y";
 
-	function dav()
+	function __construct()
 	{
 		$arModuleVersion = array();
 
@@ -25,8 +24,8 @@ Class dav extends CModule
 		$this->MODULE_VERSION = $arModuleVersion["VERSION"];
 		$this->MODULE_VERSION_DATE = $arModuleVersion["VERSION_DATE"];
 
-		$this->MODULE_NAME = GetMessage("DAV_INSTALL_NAME");
-		$this->MODULE_DESCRIPTION = GetMessage("DAV_INSTALL_DESCRIPTION");
+		$this->MODULE_NAME = Loc::getMessage("DAV_INSTALL_NAME");
+		$this->MODULE_DESCRIPTION = Loc::getMessage("DAV_INSTALL_DESCRIPTION");
 	}
 
 	function InstallDB($install_wizard = true)
@@ -165,11 +164,11 @@ Class dav extends CModule
 		$arCurPhpVer = Explode(".", $curPhpVer);
 		if (IntVal($arCurPhpVer[0]) < 5)
 		{
-			$this->errors = array(GetMessage("DAV_PHP_L439", array("#VERS#" => $curPhpVer)));
+			$this->errors = array(Loc::getMessage("DAV_PHP_L439", array("#VERS#" => $curPhpVer)));
 		}
 		elseif (!CBXFeatures::IsFeatureEditable("DAV"))
 		{
-			$this->errors = array(GetMessage("DAV_ERROR_EDITABLE"));
+			$this->errors = array(Loc::getMessage("DAV_ERROR_EDITABLE"));
 		}
 		else
 		{
@@ -181,7 +180,7 @@ Class dav extends CModule
 		}
 
 		$GLOBALS["errors"] = $this->errors;
-		$APPLICATION->IncludeAdminFile(GetMessage("DAV_INSTALL_TITLE"), $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/dav/install/step2.php");
+		$APPLICATION->IncludeAdminFile(Loc::getMessage("DAV_INSTALL_TITLE"), $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/dav/install/step2.php");
 	}
 
 	function DoUninstall()
@@ -193,7 +192,7 @@ Class dav extends CModule
 		$step = IntVal($step);
 		if($step<2)
 		{
-			$APPLICATION->IncludeAdminFile(GetMessage("DAV_INSTALL_TITLE"), $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/dav/install/unstep1.php");
+			$APPLICATION->IncludeAdminFile(Loc::getMessage("DAV_INSTALL_TITLE"), $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/dav/install/unstep1.php");
 		}
 		elseif($step==2)
 		{
@@ -207,7 +206,7 @@ Class dav extends CModule
 			CBXFeatures::SetFeatureEnabled("DAV", false);
 			$GLOBALS["errors"] = $this->errors;
 
-			$APPLICATION->IncludeAdminFile(GetMessage("DAV_INSTALL_TITLE"), $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/dav/install/unstep2.php");
+			$APPLICATION->IncludeAdminFile(Loc::getMessage("DAV_INSTALL_TITLE"), $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/dav/install/unstep2.php");
 		}
 	}
 
@@ -216,9 +215,9 @@ Class dav extends CModule
 		$arr = array(
 			"reference_id" => array("D", "R", "W"),
 			"reference" => array(
-					"[D] ".GetMessage("DAV_PERM_D"),
-					"[R] ".GetMessage("DAV_PERM_R"),
-					"[W] ".GetMessage("DAV_PERM_W")
+					"[D] ".Loc::getMessage("DAV_PERM_D"),
+					"[R] ".Loc::getMessage("DAV_PERM_R"),
+					"[W] ".Loc::getMessage("DAV_PERM_W")
 				)
 			);
 		return $arr;

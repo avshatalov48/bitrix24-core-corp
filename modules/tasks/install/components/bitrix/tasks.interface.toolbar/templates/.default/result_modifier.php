@@ -40,10 +40,10 @@ $arResult['JS_DATA'] = array(
 	'classes'=>array(
 		'total'=>'',
 		'wo_deadline'=>'',
-		'expired'=>'task-status-text-color-overdue',
-		'expired_soon'=>'task-status-text-color-waiting',
-		'not_viewed'=>'task-status-text-color-new',
-		'wait_ctrl'=>'task-status-text-color-waiting',
+//		'expired'=>'task-status-text-color-overdue',
+//		'expired_soon'=>'task-status-text-color-waiting',
+//		'not_viewed'=>'task-status-text-color-new',
+//		'wait_ctrl'=>'task-status-text-color-waiting',
 	),
 	'messages'=>array(
 		'empty'=>GetMessageJS('TASKS_COUNTER_EMPTY'),

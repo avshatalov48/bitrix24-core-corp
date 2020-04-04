@@ -89,7 +89,8 @@ BX.Crm.Widget.Custom.SaleTarget.UserSelector = (function(BX)
 							id: parseInt(item['entityId']),
 							name: BX.util.htmlspecialcharsback(item['name']),
 							title: BX.util.htmlspecialcharsback(item['desc']),
-							photo: item['avatar']
+							photo: item['avatar'],
+							active: true
 						};
 
 						addCallback(user);

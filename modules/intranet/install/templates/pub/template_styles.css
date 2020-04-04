@@ -444,3 +444,12 @@ h1 {
 	padding: 0;
 	padding-bottom: 20px;
 }
+
+.feed-com-text a.blog-p-user-name,
+.feed-com-text a.blog-p-user-name:link,
+.feed-com-text a.blog-p-user-name:visited {
+	color: currentColor;
+	cursor: not-allowed;
+	text-decoration: none;
+	pointer-events: none;
+}

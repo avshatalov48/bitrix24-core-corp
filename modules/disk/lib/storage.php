@@ -334,10 +334,10 @@ final class Storage extends Internals\Model
 
 	/**
 	 * Tells if is possible to upload new content, which has size $fileSize, to the storage.
-	 * 
+	 *
 	 * @param int $fileSize Size in bytes.
 	 * @return bool
-	 * @internal 
+	 * @internal
 	 */
 	public function isPossibleToUpload($fileSize)
 	{
@@ -598,7 +598,7 @@ final class Storage extends Internals\Model
 	/**
 	 * @param SecurityContext $securityContext
 	 * @param array           $parameters
-	 * @return array|\Object[]
+	 * @return array|BaseObject[]
 	 */
 	public function getChildren(SecurityContext $securityContext, array $parameters = array())
 	{
@@ -938,13 +938,18 @@ final class Storage extends Internals\Model
 	 */
 	public static function loadById($id, array $with = array())
 	{
-		if(isset(self::$loadedStorages[$id]))
+		if(self::isLoaded($id))
 		{
 			return self::$loadedStorages[$id];
 		}
 		self::$loadedStorages[$id] = parent::loadById($id, $with);
 
 		return self::$loadedStorages[$id];
+	}
+
+	public static function isLoaded($id)
+	{
+		return isset(self::$loadedStorages[$id]);
 	}
 
 	/**
@@ -956,7 +961,7 @@ final class Storage extends Internals\Model
 	 */
 	public static function buildFromArray(array $attributes, array &$aliases = null)
 	{
-		if(isset(self::$loadedStorages[$attributes['ID']]))
+		if(self::isLoaded($attributes['ID']))
 		{
 			return self::$loadedStorages[$attributes['ID']];
 		}

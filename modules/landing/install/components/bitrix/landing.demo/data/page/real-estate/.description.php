@@ -160,7 +160,7 @@ return array(
 
 		<div class="landing-block-node-card js-slide">
 			<!-- Promo Block -->
-			<div class="landing-block-node-card-img g-flex-centered g-min-height-100vh g-bg-cover g-bg-pos-center g-bg-img-hero g-bg-black-opacity-0_2--after" style="background-image: url(https://cdn.bitrix24.site/bitrix/images/landing/business/1920x1280/img25.jpg);">
+			<div class="landing-block-node-card-img g-flex-centered g-min-height-100vh h-100 g-pt-10 g-pb-30 g-bg-cover g-bg-pos-center g-bg-img-hero g-bg-black-opacity-0_2--after" style="background-image: url(https://cdn.bitrix24.site/bitrix/images/landing/business/1920x1280/img25.jpg);">
 				<div class="landing-block-node-text-container js-animation fadeIn container text-center g-z-index-1 animated g-mx-0">
 					<h3 class="landing-block-node-card-subtitle h6 g-font-size-32 g-color-white g-mb-10 g-mb-25--md">
 						<span style="font-weight: bold;">$3.500</span> / per month
@@ -177,7 +177,7 @@ return array(
 		</div>
 		<div class="landing-block-node-card js-slide">
 			<!-- Promo Block -->
-			<div class="landing-block-node-card-img g-flex-centered g-min-height-100vh g-bg-cover g-bg-pos-center g-bg-img-hero g-bg-black-opacity-0_2--after" style="background-image: url(https://cdn.bitrix24.site/bitrix/images/landing/business/1920x1280/img26.jpg);">
+			<div class="landing-block-node-card-img g-flex-centered g-min-height-100vh h-100 g-pt-10 g-pb-30 g-bg-cover g-bg-pos-center g-bg-img-hero g-bg-black-opacity-0_2--after" style="background-image: url(https://cdn.bitrix24.site/bitrix/images/landing/business/1920x1280/img26.jpg);">
 				<div class="landing-block-node-text-container js-animation fadeIn container text-center g-z-index-1 animated g-mx-0">
 					<h3 class="landing-block-node-card-subtitle h6 g-font-size-32 g-color-white g-mb-10 g-mb-25--md">
 						<span style="font-weight: bold;">$3.500</span> / per month
@@ -194,7 +194,7 @@ return array(
 		</div>
 		<div class="landing-block-node-card js-slide">
 			<!-- Promo Block -->
-			<div class="landing-block-node-card-img g-flex-centered g-min-height-100vh g-bg-cover g-bg-pos-center g-bg-img-hero g-bg-black-opacity-0_2--after" style="background-image: url(https://cdn.bitrix24.site/bitrix/images/landing/business/1920x1280/img27.jpg);">
+			<div class="landing-block-node-card-img g-flex-centered g-min-height-100vh h-100 g-pt-10 g-pb-30 g-bg-cover g-bg-pos-center g-bg-img-hero g-bg-black-opacity-0_2--after" style="background-image: url(https://cdn.bitrix24.site/bitrix/images/landing/business/1920x1280/img27.jpg);">
 				<div class="landing-block-node-text-container js-animation fadeIn container text-center g-z-index-1 animated g-mx-0">
 					<h3 class="landing-block-node-card-subtitle h6 g-font-size-32 g-color-white g-mb-10 g-mb-25--md">
 						<span style="font-weight: bold;">$3.500</span> / per month
@@ -212,7 +212,7 @@ return array(
 
 		<div class="landing-block-node-card js-slide">
 			<!-- Promo Block -->
-			<div class="landing-block-node-card-img g-flex-centered g-min-height-100vh g-bg-cover g-bg-pos-center g-bg-img-hero g-bg-black-opacity-0_2--after" style="background-image: url(https://cdn.bitrix24.site/bitrix/images/landing/business/1920x1280/img28.jpg);">
+			<div class="landing-block-node-card-img g-flex-centered g-min-height-100vh h-100 g-pt-10 g-pb-30 g-bg-cover g-bg-pos-center g-bg-img-hero g-bg-black-opacity-0_2--after" style="background-image: url(https://cdn.bitrix24.site/bitrix/images/landing/business/1920x1280/img28.jpg);">
 				<div class="landing-block-node-text-container js-animation fadeIn container text-center g-z-index-1 animated g-mx-0">
 					<h3 class="landing-block-node-card-subtitle h6 g-font-size-32 g-color-white g-mb-10 g-mb-25--md">
 						<span style="font-weight: bold;">$3.500</span> / per month
@@ -1367,8 +1367,8 @@ return array(
 	
 	<div class="container">
 		<!-- Team Block -->
-		<div class="row">
-			<div class="landing-block-card-employee js-animation col-md-6 col-lg-3 g-mb-30 g-mb-0--lg fadeIn animated g-min-height-$1vh">
+		<div class="row landing-block-inner">
+			<div class="landing-block-card-employee js-animation col-md-6 col-lg-3 g-mb-30 g-mb-0--lg fadeIn animated ">
 				<div class="text-center">
 					<!-- Figure -->
 					<figure class="g-pos-rel g-parent g-mb-30">
@@ -1377,8 +1377,8 @@ return array(
 						<!-- End Figure Image -->
 
 						<!-- Figure Caption -->
-						<figcaption class="g-pos-abs g-top-0 g-left-0 g-flex-middle w-100 h-100 g-bg-primary-opacity-0_8 opacity-0 g-opacity-1--parent-hover g-pa-20 g-transition-0_2 g-transition--ease-in">
-							<div class="landing-block-node-employee-quote text-uppercase g-flex-middle-item g-line-height-1_4 g-font-weight-700 g-font-size-16 g-color-white">Changing
+						<figcaption class="g-pos-abs g-top-0 g-left-0 g-flex-middle w-100 h-100 g-bg-primary-opacity-0_8 opacity-0 g-opacity-1--parent-hover g-pa-20 g-transition-0_2 g-transition--ease-in g-pointer-events-none g-mt-0">
+							<div class="landing-block-node-employee-quote g-pointer-events-all text-uppercase g-flex-middle-item g-line-height-1_4 g-font-weight-700 g-font-size-16 g-color-white">Changing
 								your mind and changing world</div>
 						
 						<!-- End Figure Caption -->
@@ -1393,7 +1393,7 @@ return array(
 				</div>
 			</div>
 
-			<div class="landing-block-card-employee js-animation col-md-6 col-lg-3 g-mb-30 g-mb-0--lg fadeIn animated g-min-height-$1vh">
+			<div class="landing-block-card-employee js-animation col-md-6 col-lg-3 g-mb-30 g-mb-0--lg fadeIn animated ">
 				<div class="text-center">
 					<!-- Figure -->
 					<figure class="g-pos-rel g-parent g-mb-30">
@@ -1402,8 +1402,8 @@ return array(
 						<!-- End Figure Image -->
 
 						<!-- Figure Caption -->
-						<figcaption class="g-pos-abs g-top-0 g-left-0 g-flex-middle w-100 h-100 g-bg-primary-opacity-0_8 opacity-0 g-opacity-1--parent-hover g-pa-20 g-transition-0_2 g-transition--ease-in">
-							<div class="landing-block-node-employee-quote text-uppercase g-flex-middle-item g-line-height-1_4 g-font-weight-700 g-font-size-16 g-color-white">Changing
+						<figcaption class="g-pos-abs g-top-0 g-left-0 g-flex-middle w-100 h-100 g-bg-primary-opacity-0_8 opacity-0 g-opacity-1--parent-hover g-pa-20 g-transition-0_2 g-transition--ease-in g-pointer-events-none g-mt-0">
+							<div class="landing-block-node-employee-quote g-pointer-events-all text-uppercase g-flex-middle-item g-line-height-1_4 g-font-weight-700 g-font-size-16 g-color-white">Changing
 								your mind and changing world</div>
 						
 						<!-- End Figure Caption -->
@@ -1418,7 +1418,7 @@ return array(
 				</div>
 			</div>
 
-			<div class="landing-block-card-employee js-animation col-md-6 col-lg-3 g-mb-30 g-mb-0--lg fadeIn animated g-min-height-$1vh">
+			<div class="landing-block-card-employee js-animation col-md-6 col-lg-3 g-mb-30 g-mb-0--lg fadeIn animated ">
 				<div class="text-center">
 					<!-- Figure -->
 					<figure class="g-pos-rel g-parent g-mb-30">
@@ -1427,8 +1427,8 @@ return array(
 						<!-- End Figure Image -->
 
 						<!-- Figure Caption -->
-						<figcaption class="g-pos-abs g-top-0 g-left-0 g-flex-middle w-100 h-100 g-bg-primary-opacity-0_8 opacity-0 g-opacity-1--parent-hover g-pa-20 g-transition-0_2 g-transition--ease-in">
-							<div class="landing-block-node-employee-quote text-uppercase g-flex-middle-item g-line-height-1_4 g-font-weight-700 g-font-size-16 g-color-white">Changing
+						<figcaption class="g-pos-abs g-top-0 g-left-0 g-flex-middle w-100 h-100 g-bg-primary-opacity-0_8 opacity-0 g-opacity-1--parent-hover g-pa-20 g-transition-0_2 g-transition--ease-in g-pointer-events-none g-mt-0">
+							<div class="landing-block-node-employee-quote g-pointer-events-all text-uppercase g-flex-middle-item g-line-height-1_4 g-font-weight-700 g-font-size-16 g-color-white">Changing
 								your mind and changing world</div>
 						
 						<!-- End Figure Caption -->
@@ -1443,7 +1443,7 @@ return array(
 				</div>
 			</div>
 
-			<div class="landing-block-card-employee js-animation col-md-6 col-lg-3 g-mb-30 g-mb-0--lg fadeIn animated g-min-height-$1vh">
+			<div class="landing-block-card-employee js-animation col-md-6 col-lg-3 g-mb-30 g-mb-0--lg fadeIn animated ">
 				<div class="text-center">
 					<!-- Figure -->
 					<figure class="g-pos-rel g-parent g-mb-30">
@@ -1452,8 +1452,8 @@ return array(
 						<!-- End Figure Image -->
 
 						<!-- Figure Caption -->
-						<figcaption class="g-pos-abs g-top-0 g-left-0 g-flex-middle w-100 h-100 g-bg-primary-opacity-0_8 opacity-0 g-opacity-1--parent-hover g-pa-20 g-transition-0_2 g-transition--ease-in">
-							<div class="landing-block-node-employee-quote text-uppercase g-flex-middle-item g-line-height-1_4 g-font-weight-700 g-font-size-16 g-color-white">Changing
+						<figcaption class="g-pos-abs g-top-0 g-left-0 g-flex-middle w-100 h-100 g-bg-primary-opacity-0_8 opacity-0 g-opacity-1--parent-hover g-pa-20 g-transition-0_2 g-transition--ease-in g-pointer-events-none g-mt-0">
+							<div class="landing-block-node-employee-quote g-pointer-events-all text-uppercase g-flex-middle-item g-line-height-1_4 g-font-weight-700 g-font-size-16 g-color-white">Changing
 								your mind and changing world</div>
 						
 						<!-- End Figure Caption -->
@@ -1511,9 +1511,9 @@ return array(
 				'SORT' => '7000',
 				'CONTENT' => '<section class="landing-block g-pb-60 g-pt-20">
 	<div class="container">
-		<div class="row">
+		<div class="row landing-block-inner">
 
-			<div class="landing-block-card col-lg-6 g-mb-40 g-mb-0--lg js-animation fadeIn animated g-min-height-$1vh">
+			<div class="landing-block-card col-lg-6 g-mb-40 g-mb-0--lg js-animation fadeIn animated ">
 				<div class="landing-block-card-header text-uppercase u-heading-v2-4--bottom g-brd-primary g-mb-40">
 					<h4 class="landing-block-node-subtitle h6 g-font-weight-800 g-font-size-12 g-letter-spacing-1 g-color-primary g-mb-20"> </h4>
 					<h2 class="landing-block-node-title h1 u-heading-v2__title g-line-height-1_3 g-font-weight-600 g-mb-minus-10 g-font-size-20 g-text-break-word">Spencer Family</h2>
@@ -1522,7 +1522,7 @@ return array(
 				<div class="landing-block-node-text g-font-size-14 g-color-gray-dark-v5"><p>Ut augue diam, lacinia fringilla erat eu, vehicula commodo quam. Aliquam eget accumsan ligula. Maecenas sit amet consectetur lectus. Suspendisse commodo et magna non pulvinar. Quisque et ultricies sem, et vulputate dui. Morbi aliquam leo id ipsum tempus mollis.</p></div>
 			</div>
 
-			<div class="landing-block-card col-lg-6 g-mb-40 g-mb-0--lg js-animation fadeIn animated g-min-height-$1vh">
+			<div class="landing-block-card col-lg-6 g-mb-40 g-mb-0--lg js-animation fadeIn animated ">
 				<div class="landing-block-card-header text-uppercase u-heading-v2-4--bottom g-brd-primary g-mb-40">
 					<h4 class="landing-block-node-subtitle h6 g-font-weight-800 g-font-size-12 g-letter-spacing-1 g-color-primary g-mb-20"> </h4>
 					<h2 class="landing-block-node-title h1 u-heading-v2__title g-line-height-1_3 g-font-weight-600 g-mb-minus-10 g-font-size-20 g-text-break-word">Melani Shnaider</h2>

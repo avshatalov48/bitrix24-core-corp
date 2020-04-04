@@ -22,19 +22,23 @@
 		renderSubtitleTime: 6,
 		subtitleNode: null,
 		pathToAdd: null,
-		editorNodeTransition: 200,
 		editorNodeWaiting: null,
 		editorNodeIsBlock: null,
-		editorNodeIsVissible: false,
+		editorNodeIsVisible: false,
 		editorNode: null,
 		editorNodeContainer: null,
 		editorNodeCreate: null,
+		editorNodeSelectFields: null,
+		editorNodeSelectPopup: null,
 		editorLoaded: false,
+		editorOpen: false,
 		quickFormSaveButton: null,
 		quickFormCancelButton: null,
 		editorId: null,
 		editor: null,
 		loader: null,
+		isKeyMetaPressed: false,
+		clickStatus: null,
 
 		/**
 		 * Custom format method from BXcrm-kanban-quick-form-show .2s cubic-bezier(0.88, -0.08, 0.46, 0.91) forwards.Currency.
@@ -141,6 +145,10 @@
 			{
 				wrapperId = "crm_invoice_toolbar";
 			}
+			else if (type === "order")
+			{
+				wrapperId = "toolbar_order_kanban";
+			}
 			else
 			{
 				wrapperId = "toolbar_" + type + "_list";
@@ -149,8 +157,11 @@
 			if (BX(wrapperId))
 			{
 				button = BX(wrapperId).querySelector("a");
-				this.pathToAdd = button.getAttribute("href");
-				this.pathToAdd += this.pathToAdd.indexOf("?") === -1 ? "?" : "&";
+				if (BX.type.isDomNode(button))
+				{
+					this.pathToAdd = button.getAttribute("href");
+					this.pathToAdd += this.pathToAdd.indexOf("?") === -1 ? "?" : "&";
+				}
 			}
 			
 			return this.pathToAdd;
@@ -339,9 +350,6 @@
 		processQuickEditor: function()
 		{
 			this.editor.save();
-			this.getLoader().show();
-			BX.addClass(this.quickFormSaveButton, "ui-btn-wait");
-			this.resetQuickEditor();
 		},
 
 		/**
@@ -355,22 +363,34 @@
 		},
 
 		/**
+		 * Gets quick editor instance.
+		 * @return {BX.Crm.EntityEditor}
+		 */
+		getQuickEditor: function()
+		{
+			return this.editor;
+		},
+
+		/**
 		 * Show quick editor form.
 		 * @param {boolean} hidden
 		 * @returns {void}
 		 */
 		showQuickEditor: function(hidden)
 		{
-			if (hidden !== true)
+			if(!hidden)
 			{
-				this.animateShowQuickEditor();
-				this.getLoader().show();
-				// return
+				this.editorOpen = true;
 			}
 
+			this.getBody().scrollTop = 0;
+			
 			var gridData = this.getGridData();
 			var entityType = gridData.entityType;
-			this.editorId = "quick_editor_" + this.getId() + "_" + entityType.toLowerCase();
+			var categoryId = gridData.params.CATEGORY_ID
+							? parseInt(gridData.params.CATEGORY_ID)
+							: 0;
+			this.editorId = "quick_editor_v6_" + this.getId() + "_" + entityType.toLowerCase() + "_" + categoryId;
 
 			if (typeof gridData.quickEditorPath[entityType.toLowerCase()] === "undefined")
 			{
@@ -382,8 +402,19 @@
 			};
 			context[((entityType === "DEAL") ? "STAGE_ID" : "STATUS_ID")] = this.getId();
 
+			// fields for form
+			var formFields = (entityType === "DEAL")
+				? ["TITLE", "OPPORTUNITY_WITH_CURRENCY", "CLIENT"]
+				: ["TITLE", "CLIENT"];
+
 			if (!this.editorNodeContainer.innerHTML)
 			{
+				if(!hidden)
+				{
+					this.layout.subTitleAddButton.classList.add("crm-kanban-column-add-item-button-wait");
+					this.disabledAddButton();
+				}
+
 				BX.ajax.post(
 					gridData.quickEditorPath[entityType.toLowerCase()],
 					{
@@ -391,41 +422,61 @@
 						ACTION_ENTITY_TYPE_NAME: entityType,
 						ACTION_ENTITY_ID: 0,
 						GUID: this.editorId,
+						CONFIG_ID: gridData.editorConfigId,
+						FORCE_DEFAULT_CONFIG: "N",
+						FORCE_DEFAULT_OPTIONS:  "Y",
 						IS_EMBEDDED: "Y",
+						ENABLE_CONFIG_SCOPE_TOGGLE: "Y",
+						ENABLE_CONFIGURATION_UPDATE: "Y",
 						ENABLE_REQUIRED_USER_FIELD_CHECK: "N",
-						FIELDS:
-							entityType === "DEAL"
-							? ["TITLE", "OPPORTUNITY_WITH_CURRENCY", "CLIENT"]
-							: ["TITLE", "CLIENT"],
+						ENABLE_FIELDS_CONTEXT_MENU: "N",
+						FIELDS: formFields,
 						CONTEXT: context
 					},
 					function(result)
 					{
+
 						this.editorNodeContainer.innerHTML = result;
 						this.editorNodeContainer.appendChild(this.editorNodeCreate);
+
+						if(!this.editorOpen)
+						{
+							this.layout.subTitleAddButton.classList.remove("crm-kanban-column-add-item-button-wait");
+							return;
+						}
 
 						if(hidden)
 						{
 							return;
 						}
 
-						BX.removeClass(this.quickFormSaveButton, "ui-btn-wait");
-						this.getLoader().hide();
-						this.animateShowQuickEditor();
-						this.editorNodeWaiting = setTimeout(function() {
-							this.setHeightAuto();
-						}.bind(this), this.editorNodeTransition);
+						this.editorNode.style.height = "0px";
+
+						var interval = setInterval(function() {
+							if(this.editorNodeContainer.offsetHeight < 150)
+							{
+								return
+							}
+
+							this.editorNode.style.height = this.editorNodeContainer.offsetHeight + "px";
+							this.layout.subTitleAddButton.classList.remove("crm-kanban-column-add-item-button-wait");
+
+							var autoHideEditor = function()
+							{
+								this.editorNode.style.height = null;
+								BX.unbind(this.editorNode, 'transitionend', autoHideEditor);
+							}.bind(this);
+
+							BX.bind(this.editorNode, 'transitionend', autoHideEditor);
+							clearInterval(interval);
+						}.bind(this), 100);
 					}.bind(this)
 				);
 			}
 			else
 			{
 				this.getLoader().hide();
-				this.animateShowQuickEditor();
 				BX.removeClass(this.quickFormSaveButton, "ui-btn-wait");
-				setTimeout(function() {
-					this.setHeightAuto();
-				}.bind(this), this.editorNodeTransition)
 			}
 
 			// catch editor instance after load
@@ -445,6 +496,33 @@
 
 				BX.addCustomEvent(
 					window,
+					"onCrmEntityCreateError",
+					function(params)
+					{
+						if (typeof params.error !== "undefined")
+						{
+							this.quickFormSaveButton.classList.remove("ui-btn-wait");
+							this.editorNode.classList.remove("crm-kanban-quick-form-wait");
+
+							BX.Kanban.Utils.showErrorDialog(
+								params.error
+							);
+						}
+					}.bind(this)
+				);
+
+				BX.addCustomEvent(
+					window,
+					"BX.Crm.EntityEditor:onFailedValidation",
+					function(params)
+					{
+						this.quickFormSaveButton.classList.remove("ui-btn-wait");
+						this.editorNode.classList.remove("crm-kanban-quick-form-wait");
+					}.bind(this)
+				);
+
+				BX.addCustomEvent(
+					window,
 					"onCrmEntityCreate",
 					function(entityData)
 					{
@@ -459,50 +537,109 @@
 								true
 							);
 						}
+
+						if(this.editorOpen)
+						{
+							this.quickFormSaveButton.classList.remove("ui-btn-wait");
+							this.editorNode.classList.remove("crm-kanban-quick-form-wait");
+
+							entityData.isCancelled = true;
+						}
 					}.bind(this)
 				);
 
-				BX.bind(window, "keydown", function(ev)
-				{
-					if(!this.editorNodeIsVissible)
+				var currentColumn = this;
+
+				BX.addCustomEvent("CRM.Kanban.Column:clickAddButton", function() {
+					if(currentColumn !== this)
+					{
+						currentColumn.hideQuickFormEditor();
+						currentColumn.enabledAddButton();
+						currentColumn.cleanEditor();
+					}
+				});
+
+				BX.bind(window, "click", function(ev) {
+					if(
+						BX.hasClass(ev.target, "crm-kanban-column-add-item-button") ||
+						currentColumn.isQuickFormEditor(ev.target) ||
+						currentColumn.isQuickFormPopup(ev.target) ||
+						ev.target.className === "crm-entity-widget-btn-close" ||
+						ev.target.className === "crm-widget-employee-remove" ||
+						ev.target.getAttribute("data-bx-role") === "file-delete" ||
+						!currentColumn.editorOpen
+					)
 					{
 						return;
 					}
 
-					if(ev.key === "Enter" && this.editorNodeIsVissible)
-					{
-						this.processQuickEditor();
-						return;
-					}
+					currentColumn.hideQuickFormEditor();
+					currentColumn.enabledAddButton();
+					currentColumn.cleanEditor();
+				});
 
-					if(ev.key === "Escape" && !this.editorNodeIsBlock)
+				BX.bind(window, "keydown", function(ev) {
+					if(	ev.code === "MetaRight" ||
+						ev.code === "MetaLeft" ||
+						ev.code === "ControlRight" ||
+						ev.code === "ControlLeft" )
 					{
-						this.hideQuickFormEditor();
-						this.enabledAddButton();
+						this.isKeyMetaPressed = true;
 					}
 				}.bind(this));
 
-				BX.bind(window, "click", function(ev)
-				{
-					if(this.isQuickFormPopup(ev.target) || this.isQuickFormEditor(ev.target))
+				BX.bind(window, "keyup", function(ev) {
+					if(	ev.code === "MetaRight" ||
+						ev.code === "MetaLeft" ||
+						ev.code === "ControlRight" ||
+						ev.code === "ControlRight" )
 					{
-						return;
+						this.isKeyMetaPressed = false;
+					}
+				}.bind(this));
+
+				BX.bind(window, "keydown", function(ev) {
+					if(
+						(ev.code === "Enter" || ev.code === "NumpadEnter")
+						&& this.isKeyMetaPressed && this.editorOpen)
+					{
+						this.processQuickEditor();
+						this.quickFormSaveButton.classList.add("ui-btn-wait");
+						this.editorNode.classList.add("crm-kanban-quick-form-wait");
+						BX.PreventDefault(ev);
+					}
+				}.bind(this));
+
+				BX.addCustomEvent(window, "BX.CRM.Kanban.Item.select", this.hideQuickFormEditor.bind(this));
+				BX.addCustomEvent(window, "BX.CRM.Kanban.Item.select", this.enabledAddButton.bind(this));
+				BX.addCustomEvent(window, "Kanban.Column:render", this.hideQuickFormEditor.bind(this));
+				BX.addCustomEvent(window, "Kanban.Column:render", this.enabledAddButton.bind(this));
+				BX.addCustomEvent(window, "Kanban.Grid:onItemDragStart", this.enabledAddButton.bind(this));
+				BX.addCustomEvent(window, "Kanban.Grid:onItemDragStart", function()
+				{
+					if(this.editorOpen)
+					{
+						BX.bind(this.editorNode, "transitionend", function() {
+							for (var i = 0; i < this.items.length; i++)
+							{
+								this.items[i].makeDroppable();
+							}
+						}.bind(this))
 					}
 
 					this.hideQuickFormEditor();
 					this.enabledAddButton();
 				}.bind(this));
-				BX.addCustomEvent(window, "BX.CRM.Kanban.Item.select", this.hideQuickFormEditor.bind(this));
-				BX.addCustomEvent(window, "BX.CRM.Kanban.Item.select", this.enabledAddButton.bind(this));
-				BX.addCustomEvent(window, "Kanban.Column:render", this.hideQuickFormEditor.bind(this));
-				BX.addCustomEvent(window, "Kanban.Column:render", this.enabledAddButton.bind(this));
-				BX.addCustomEvent(window, "Kanban.Grid:onItemDragStart", this.hideQuickFormEditor.bind(this));
-				BX.addCustomEvent(window, "Kanban.Grid:onItemDragStart", this.enabledAddButton.bind(this));
 			}
 			
 			this.editorLoaded = true;
 
 			this.layout.items.insertBefore(this.editorNode, this.layout.items.firstChild);
+		},
+
+		isEditorOpen: function()
+		{
+			return this.editorOpen;
 		},
 
 		/**
@@ -511,80 +648,27 @@
 		 */
 		hideQuickFormEditor: function()
 		{
-			BX.removeClass(this.editorNode, "crm-kanban-quick-form-show");
-			this.editorNode.style.opacity = "0";
+			if(!this.editorOpen)
+			{
+				return
+			}
+
+			this.editorOpen = false;
 			this.editorNode.style.height = this.editorNode.offsetHeight + "px";
-			this.editorNode.style.marginBottom = "0";
 
-			setTimeout(function() {
-				this.editorNode.style.height = "0";
-			}.bind(this));
-
-			this.editorNodeIsBlock = true;
-
-			setTimeout(function() {
-				this.editorNodeIsBlock = false;
-				this.editorNodeIsVissible = false;
-			}.bind(this), this.editorNodeTransition * 2);
-
+			setTimeout(function(){
+				this.editorNode.style.height = "0px";
+			}.bind(this), 10);
 		},
 
-		removeQuickFormEditor: function()
+		disabledAddButton: function()
 		{
-			this.editorNode.parentNode.removeChild(this.editorNode);
-		},
-
-		disabledAddButton: function(target)
-		{
-			BX.addClass(target, "crm-kanban-column-add-item-button-event");
+			BX.addClass(this.layout.subTitleAddButton, "crm-kanban-column-add-item-button-event");
 		},
 
 		enabledAddButton: function()
 		{
 			BX.removeClass(this.layout.subTitleAddButton, "crm-kanban-column-add-item-button-event");
-		},
-
-		/**
-		 * Animate show quick editor.
-		 * @return {void}
-		 */
-		animateShowQuickEditor: function()
-		{
-			BX.addClass(this.editorNode, "crm-kanban-quick-form-show");
-			this.editorNode.style.opacity = "1";
-			this.editorNode.style.height = "0px";
-			this.editorNode.style.marginBottom = "6px";
-
-			setTimeout(function() {
-				this.editorNode.style.height = this.getGridData().encodingType === "DEAL" ? "358px" : "285px";
-			}.bind(this));
-
-			this.editorNodeIsBlock = true;
-
-			setTimeout(function() {
-				this.editorNodeIsBlock = false;
-				this.editorNodeIsVissible = true;
-				this.editorNodeContainer.style.height = 'auto';
-			}.bind(this), this.editorNodeTransition * 2);
-		},
-
-		setHeightAuto: function()
-		{
-			this.editorNode.style.height = "auto";
-		},
-
-		/**
-		 * Is show form button?
-		 * @param {Element} target
-		 * @return {boolean}
-		 */
-		isShowFormButton: function(target)
-		{
-			var isNode = BX.findParent(target, {
-				className: "crm-kanban-column-add-item-button"
-			});
-
-			return isNode === this.editorNode;
 		},
 
 		/**
@@ -607,7 +691,7 @@
 		isQuickFormEditor: function(target)
 		{
 			return BX.findParent(target, {
-				className: "crm-kanban-quick-form"
+				className: "crm-entity-card-widget-edit"
 			});
 		},
 
@@ -619,6 +703,11 @@
 		{
 			var data = this.getData();
 			var gridData = this.getGridData();
+
+			if (this.canAddItem === null)
+			{
+				this.canAddItem = true;
+			}
 
 			// render layout first time
 
@@ -704,25 +793,16 @@
 						className: "crm-kanban-quick-form"
 					},
 					style: {
-						transition: this.editorNodeTransition + "ms"
+						height: "0px"
 					},
 					children: [
 						this.editorNodeContainer = BX.create("div", {
 							props: {
 								className: "crm-kanban-quick-form-container"
-							},
-							style: {
-								animationDelay: this.editorNodeTransition + "ms"
 							}
 						})
 					]
 				});
-
-				BX.addCustomEvent(window, "CRM.Kanban.Column:clickAddButton", function()
-				{
-					this.hideQuickFormEditor();
-					this.enabledAddButton();
-				}.bind(this));
 
 				this.editorNodeCreate = BX.create("div", {
 					props: {
@@ -738,6 +818,8 @@
 							events: {
 								click: function(ev) {
 									this.processQuickEditor();
+									this.quickFormSaveButton.classList.add("ui-btn-wait");
+									this.editorNode.classList.add("crm-kanban-quick-form-wait");
 									BX.PreventDefault(ev);
 								}.bind(this)
 							}
@@ -752,14 +834,18 @@
 								click: function() {
 									this.enabledAddButton();
 									this.hideQuickFormEditor();
+									this.cleanEditor();
 								}.bind(this)
 							}
 						})
 					]
 				})
-			};
+			}
 
-			if (gridData.entityType === "LEAD" || gridData.entityType === "DEAL")
+			if (
+				this.canAddItem &&
+				(gridData.entityType === "LEAD" || gridData.entityType === "DEAL")
+			)
 			{
 				this.layout.subTitleAddButton = BX.create("div", {
 					text: plusTitle,
@@ -771,27 +857,88 @@
 							? function(ev) {
 								if(document.getElementsByTagName("html")[0].classList.contains("bx-ie"))
 								{
-									BX.SidePanel.Instance.open("/crm/lead/details/0/");
+									if(gridData.entityType === "LEAD")
+									{
+										BX.SidePanel.Instance.open("/crm/lead/details/0/?category_id=" + gridData.params.CATEGORY_ID);
+									}
+
+									if(gridData.entityType === "DEAL")
+									{
+										BX.SidePanel.Instance.open("/crm/deal/details/0/");
+
+									}
 									return;
 								}
 
-								if(BX.hasClass(this.layout.subTitleAddButton, "crm-kanban-column-add-item-button-event") || this.editorNodeIsVissible)
+								if(BX.hasClass(this.layout.subTitleAddButton, "crm-kanban-column-add-item-button-event"))
 								{
-									BX.PreventDefault(ev);
 									return;
 								}
 
-								BX.onCustomEvent(this, "CRM.Kanban.Column:clickAddButton");
+								this.disabledAddButton();
 
-								this.disabledAddButton(ev.target);
-								this.showQuickEditor();
-								BX.PreventDefault(ev);
+								if(!this.editorNodeContainer.innerHTML)
+								{
+									var columns = this.getGrid().getColumns();
+
+									for (var i = 0; i < columns.length; i++)
+									{
+										if(columns[i] !== this)
+										{
+											if(columns[i].editor)
+											{
+												columns[i].editor.release();
+												columns[i].editor = null;
+												columns[i].editorOpen = false;
+												columns[i].editorLoaded = false;
+												BX.cleanNode(columns[i].editorNodeContainer);
+											}
+
+											columns[i].hideQuickFormEditor();
+											columns[i].enabledAddButton();
+											columns[i].cleanEditor();
+										}
+									}
+
+									this.showQuickEditor();
+									return;
+								}
+
+								BX.onCustomEvent(this, "CRM.Kanban.Column:clickAddButton", this);
+
+								if(!this.editorNode.parentNode)
+								{
+									this.layout.items.insertBefore(this.editorNode, this.layout.items.firstElementChild);
+								}
+
+								this.getBody().scrollTop = 0;
+
+								this.editorNode.style.height = "0px";
+								this.editorOpen = true;
+
+								setTimeout(function(){
+									this.editorNode.style.height = this.editorNodeContainer.offsetHeight + "px";
+
+									var autoHideEditor = function()
+									{
+										this.editorNode.style.height = null;
+										BX.unbind(this.editorNode, 'transitionend', autoHideEditor);
+									}.bind(this);
+
+									BX.bind(this.editorNode, 'transitionend', autoHideEditor);
+
+
+									if(this.editor)
+									{
+										this.editor.refreshLayout({ reset: true });
+									}
+								}.bind(this), 10);
 							}.bind(this)
 							: null
 					}
 				});
 			}
-			else
+			else if (this.canAddItem)
 			{
 				this.layout.subTitleAddButton = (
 					this.getAddPath()
@@ -838,7 +985,7 @@
 				]
 			});
 
-			if (loadEditor)
+			if (loadEditor && this.canAddItem)
 			{
 				setTimeout(function() {
 					this.showQuickEditor(true);
@@ -846,6 +993,19 @@
 			}
 
 			return this.subtitleNode;
+		},
+
+		cleanEditorNode: function()
+		{
+			BX.cleanNode(this.editorNodeContainer);
+		},
+
+		cleanEditor: function()
+		{
+			if(this.editor) {
+				this.editor.rollback();
+				this.editor.refreshLayout();
+			}
 		},
 
 		/**
@@ -964,6 +1124,33 @@
 			{
 				this.getGrid().accessNotify();
 			}
+		},
+
+		focusTextBox: function()
+		{
+			setTimeout(function () {
+				this.getTitleTextBox().focus();
+			}.bind(this))
+		},
+
+		makeDroppable: function()
+		{
+			if (!this.isDroppable())
+			{
+				return;
+			}
+
+			var columnBody = this.getBody();
+
+			columnBody.onbxdestdraghover = BX.delegate(this.onDragEnter, this);
+			columnBody.onbxdestdraghout = BX.delegate(this.onDragLeave, this);
+			columnBody.onbxdestdragfinish = BX.delegate(this.onDragDrop, this);
+
+			columnBody.onbxdestdragstop = BX.delegate(this.onItemDragEnd, this);
+
+			jsDD.registerDest(columnBody, 10);
+
+			this.disableDropping();
 		}
 	};
 

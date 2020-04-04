@@ -109,6 +109,12 @@ foreach ($jsTemplates->getChildren() as $jsTemplate)
 						<td class="disk-detail-table-param"><?= Loc::getMessage('DISK_FILE_VIEW_FILE_UPDATE_TIME') ?>:</td>
 						<td class="disk-detail-table-value"><?= $arResult['FILE']['UPDATE_TIME'] ?></td>
 					</tr>
+					<? if(!empty($arResult['EXTERNAL_LINK']['ID'])): ?>
+					<tr>
+						<td class="disk-detail-table-param"><?= Loc::getMessage('DISK_FILE_VIEW_FILE_DOWNLOAD_COUNT_BY_EXT_LINK') ?>:</td>
+						<td class="disk-detail-table-value"><?= $arResult['EXTERNAL_LINK']['DOWNLOAD_COUNT'] ?></td>
+					</tr>
+					<? endif; ?>
 					<? if($arResult['FILE']['IS_DELETED'])
 					{
 						?>

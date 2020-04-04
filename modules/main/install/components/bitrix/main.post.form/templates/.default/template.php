@@ -270,7 +270,7 @@ foreach($arParams["BUTTONS"] as $val)
 		}
 		else
 		{
-			?><input type="text" id="post-tags-popup-input-<?=$arParams["FORM_ID"]?>" tabindex="<?=($arParams["TEXT"]["TABINDEX"]++)?>" name="<?=$arParams["TAGS"]["NAME"]?>" size="30" value=""><?
+			?><input type="text" id="post-tags-popup-input-<?=$arParams["FORM_ID"]?>" tabindex="<?=($arParams["TEXT"]["TABINDEX"]++)?>" name="<?=$arParams["TAGS"]["NAME"]."_".$arParams["FORM_ID"]?>" size="30" value=""><?
 		}?>
 		</div>
 		<script type="text/javascript">

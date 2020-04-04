@@ -1,6 +1,7 @@
 <?
 $MESS["CONFIG_ENTITY_ID_FIELD"] = "ID";
 $MESS["CONFIG_ENTITY_LINE_NAME_FIELD"] = "Название";
+$MESS["CONFIG_ENTITY_ACTIVE_FIELD"] = "Активность";
 $MESS["CONFIG_ENTITY_CRM_FIELD"] = "Проверка по базе CRM";
 $MESS["CONFIG_ENTITY_CRM_TRANSFER_CHANGE_FIELD"] = "Изменение ответственного при перенаправлении";
 $MESS["CONFIG_ENTITY_CRM_FORWARD_FIELD"] = "Перенаправление на ответственного CRM";
@@ -9,10 +10,9 @@ $MESS["CONFIG_ENTITY_CRM_CREATE_FIELD"] = "Правило при отсутст�
 $MESS["CONFIG_ENTITY_BOT_ID_FIELD"] = "Идентификатор чат-бота";
 $MESS["CONFIG_ENTITY_BOT_TIME_FIELD"] = "Задержка перед переходом сообщения к сотрудникам в очереди";
 $MESS["CONFIG_ENTITY_QUEUE_TIME_FIELD_NEW"] = "Задержка перед переходом между сотрудниками в очереди";
+$MESS["CONFIG_ENTITY_NO_ANSWER_TIME_FIELD"] = "Время до отметки обращения как неотвеченного";
 $MESS["CONFIG_ENTITY_QUEUE_TYPE_FIELD"] = "Тип распределения звонков между сотрудниками в очереди";
-$MESS["CONFIG_ENTITY_TIMEMAN_FIELD"] = "Поддержка учета рабочего времени";
-$MESS["CONFIG_ENTITY_CHECKING_OFFLINE_FIELD_NEW"] = "Постоянная проверка оператора на онлайн";
-$MESS["CONFIG_ENTITY_CHECK_ONLINE_FIELD_NEW"] = "Проверять, что оператор онлайн, при распределении";
+$MESS["CONFIG_ENTITY_CHECK_AVAILABLE_FIELD"] = "Проверка доступности оператора";
 $MESS["CONFIG_ENTITY_NO_ANSWER_RULE_FIELD"] = "Правило при отсутствии ответа";
 $MESS["CONFIG_ENTITY_NO_ANSWER_FORM_ID_FIELD"] = "ID формы CRM при отсутствии ответа";
 $MESS["CONFIG_ENTITY_NO_ANSWER_BOT_ID_FIELD"] = "ID чат-бота при отсутствии ответа";
@@ -59,4 +59,10 @@ $MESS["CONFIG_ENTITY_VOTE_MESSAGE_2_LIKE_FIELD"] = "Текст положите�
 $MESS["CONFIG_ENTITY_VOTE_MESSAGE_2_DISLIKE_FIELD"] = "Текст отрицательной оценки (категория 2)";
 $MESS["CONFIG_ENTITY_OPERATOR_DATA_FIELD"] = "Информация об операторах в очереди";
 $MESS["CONFIG_ENTITY_DEFAULT_OPERATOR_DATA_FIELD"] = "Информация о стандартном операторе";
+$MESS["CONFIG_ENTITY_KPI_FIRST_ANSWER_TIME"] = "Время ожидания первого ответа";
+$MESS["CONFIG_ENTITY_KPI_FURTHER_ANSWER_TIME"] = "Время ожидания последующих ответов";
+$MESS["CONFIG_ENTITY_KPI_ANSWER_ALERT"] = "Направлять уведомление, если чат не успели обработать в отведённое время";
+$MESS["CONFIG_ENTITY_KPI_ANSWER_LIST"] = "Список пользователей, которым отправлять уведомление";
+$MESS["CONFIG_ENTITY_KPI_ANSWER_TEXT"] = "Текст уведомления";
+$MESS["CONFIG_ENTITY_KPI_CHECK_OPERATOR_ACTIVITY"] = "Останавливать таймер, если ответственный оператор недоступен";
 ?>

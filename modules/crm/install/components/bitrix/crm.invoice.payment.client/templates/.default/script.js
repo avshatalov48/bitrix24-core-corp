@@ -28,9 +28,11 @@ BX.crmInvoicePaymentClient = (function()
 			this.frame.contentDocument.close();
 			this.frame.contentDocument.head.appendChild(base);
 			this.frame.contentDocument.body.innerHTML = this.templateBill;
+			BX.html(this.frame.contentDocument.body, this.templateBill).then(BX.delegate(this.resizeForm, this));
 			this.frame.contentDocument.body.style.overflow = 'hidden';
-			BX.ready(BX.proxy(this.init, this));
 		}
+
+		BX.ready(BX.proxy(this.init, this));
 	};
 	
 	classDescription.prototype.init = function()
@@ -89,10 +91,8 @@ BX.crmInvoicePaymentClient = (function()
 			window.parent.setTimeout(BX.delegate(function()
 			{
 				this.resizeForm();
-			},this), 100);
+			},this), 1000);
 		}
-
-		BX.bind(window,'load', BX.proxy(this.resizeForm, this));
 
 		BX.bind(this.pdfButton,'click', BX.proxy(
 			function(event)

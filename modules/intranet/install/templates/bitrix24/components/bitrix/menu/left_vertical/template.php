@@ -1,45 +1,56 @@
-<?if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+<?
+
+use Bitrix\Intranet\Integration\Templates\Bitrix24\ThemePicker;
+use Bitrix\Main\Localization\Loc;
+
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 $isCompositeMode = defined("USE_HTML_STATIC_CACHE") ? true : false;
 $this->setFrameMode(true);
 
 if (empty($arResult))
+{
 	return;
+}
 
 $sumHiddenCounters = 0;
 $arHiddenItemsCounters = array();
 $arAllItemsCounters = array();
 $groupPopupExists = false;
-
 ?>
-<div class="menu-items-block" id="bx-left-menu">
-	<div class="menu-resize-container" id="left-menu-resizer">
-		<div class="menu-resize-item" id="left-menu-resizer-button">
-			<span class="menu-resize-btn"></span>
-		</div>
+<div class="menu-items-block" id="menu-items-block">
+	<div class="menu-items-header"><?
+		include($_SERVER["DOCUMENT_ROOT"]."/bitrix/templates/bitrix24/logo.php");
+		?><div class="menu-items-header-title"><?=Loc::getMessage("MENU_EXPAND")?></div>
 	</div>
-	<ul class="menu-items" id="left-menu-list">
-		<li class="menu-items-empty-li" id="left-menu-empty-item" style="height: 3px;"></li>
-	<?
-	foreach(array("show", "hide") as $status)
-	{
-		if ($status=="hide")
+	<div class="menu-items-body"><?
+		?><ul class="menu-items"><?
+			?><li class="menu-items-empty-li" id="left-menu-empty-item" style="height: 3px;"></li><?
+		foreach (array("show", "hide") as $status)
 		{
-		?>
-		<li class="menu-item-favorites-more" id="left-menu-hidden-items-block">
-			<ul class="menu-items-fav-more-block" id="left-menu-hidden-items-list">
-				<li class="menu-item-separator" id="left-menu-hidden-separator">
-					<span class="menu-item-sepor-text"><?=GetMessage("MENU_HIDDEN_ITEMS")?></span>
-				</li>
-		<?
-		}
-
-		if (isset($arResult["ITEMS"][$status]) && is_array($arResult["ITEMS"][$status]))
-		{
-			foreach ($arResult["ITEMS"][$status] as $item)
+			if ($status === "hide")
 			{
-				if ($item["PERMISSION"] > "D")
+				?><li class="menu-item-favorites-more" id="left-menu-hidden-items-block"><?
+					?><ul class="menu-items-fav-more-block" id="left-menu-hidden-items-list"><?
+						?><li class="menu-item-separator" id="left-menu-hidden-separator">
+							<span class="menu-item-sepor-text-line"></span><?
+							?><span class="menu-item-sepor-text"><?=Loc::getMessage("MENU_HIDDEN_ITEMS")?></span>
+							<span class="menu-item-sepor-text-line"></span><?
+						?></li><?
+			}
+
+			if (isset($arResult["ITEMS"][$status]) && is_array($arResult["ITEMS"][$status]))
+			{
+				foreach ($arResult["ITEMS"][$status] as $item)
 				{
+					if ($item["PERMISSION"] <= "D")
+					{
+						continue;
+					}
+
 					$counterId = "";
 					$counter = 0;
 					if (array_key_exists("counter_id", $item["PARAMS"]) && strlen($item["PARAMS"]["counter_id"]) > 0)
@@ -64,15 +75,10 @@ $groupPopupExists = false;
 						$addLinks = implode(",", $item["ADDITIONAL_LINKS"]);
 					}
 
-					if ($item["PARAMS"]["real_link"])
+					if (isset($item["PARAMS"]["real_link"]))
 					{
 						$addLinks .= ($addLinks === "" ? "" : ",").$item["LINK"];
 					}
-
-					$id = "";
-					//if (in_array($item["PARAMS"]["menu_item_id"],$arResult["ALL_FAVOURITE_ITEMS_ID"]))
-					//	$id.= "hidden_";
-					$id .= $item["PARAMS"]["menu_item_id"];
 
 					$curLink = isset($item["PARAMS"]["real_link"]) ? $item["PARAMS"]["real_link"] : $item["LINK"];
 					if (preg_match("~^".SITE_DIR."index\\.php~i", $curLink))
@@ -83,8 +89,32 @@ $groupPopupExists = false;
 					{
 						$curLink = "";
 					}
-					?>
-					<li id="bx_left_menu_<?=$id?>"
+
+					$itemId = $item["PARAMS"]["menu_item_id"];
+					$isCustomItem = preg_match("/^[0-9]+$/", $itemId) === 1;
+
+					$itemClass = "menu-item-block";
+					if (!$isCustomItem)
+					{
+						$itemClass .= " ".str_replace("_", "-", $itemId);
+					}
+
+					if ($isCompositeMode === false && $counter > 0 && strlen($counterId) > 0)
+					{
+						$itemClass .= " menu-item-with-index";
+					}
+
+					if (IsModuleInstalled("bitrix24") && $item["PARAMS"]["menu_item_id"] == "menu_live_feed")
+					{
+						$itemClass .= " menu-item-live-feed";
+					}
+
+					if ($item["ITEM_TYPE"] !== "default" || $isCustomItem)
+					{
+						$itemClass .= " menu-item-no-icon-state";
+					}
+
+					?><li id="bx_left_menu_<?=$itemId?>"
 						data-status="<?=$status?>"
 						data-id="<?=$item["PARAMS"]["menu_item_id"]?>"
 						data-counter-id="<?=$counterId?>"
@@ -99,122 +129,158 @@ $groupPopupExists = false;
 							data-top-menu-id="<?=$item["PARAMS"]["top_menu_id"]?>"
 						<?endif ?>
 						data-new-page="<?=(isset($item["OPEN_IN_NEW_PAGE"]) && $item["OPEN_IN_NEW_PAGE"])? "Y" : "N"?>"
-						class="menu-item-block<? if ($isCompositeMode === false && $counter > 0 && strlen($counterId) > 0):?> menu-item-with-index<?endif ?><? if (IsModuleInstalled("bitrix24") && $item["PARAMS"]["menu_item_id"] == "menu_live_feed"):?> menu-item-live-feed<?endif ?>"
-					>
-						<span
-							class="menu-fav-editable-btn menu-favorites-btn menu-fav-editable-btn-js"
-							onclick="BX.Bitrix24.LeftMenuClass.openMenuPopup(this, '<?=CUtil::JSEscape($item["PARAMS"]["menu_item_id"])?>')">
-								<span class="menu-favorites-btn-icon"></span>
-						</span>
-
-						<span
+						class="<?=$itemClass?>"
+					><?
+						?><span
 							class="menu-favorites-btn menu-favorites-draggable"
-							onmousedown="BX.addClass(this.parentNode, 'menu-item-draggable');"
-							onmouseup="BX.removeClass(this.parentNode, 'menu-item-draggable');">
-							<span class="menu-fav-draggable-icon"></span>
-						</span>
+							onmousedown="BX.addClass(this.parentNode, 'menu-item-draggable')"
+							onmouseup="BX.removeClass(this.parentNode, 'menu-item-draggable')"
+						><?
+							?><span class="menu-fav-draggable-icon"></span>
+						</span><?
 
-						<? if (isset($item["PARAMS"]["sub_link"])):?>
-							<span class="menu-item-plus">
-								<a href="<?=htmlspecialcharsbx($item["PARAMS"]["sub_link"])?>" class="menu-item-plus-icon"></a>
-							</span>
-						<? endif?>
-						<a class="menu-item-link"
+						if (isset($item["PARAMS"]["sub_link"])):
+							?><a href="<?=htmlspecialcharsbx($item["PARAMS"]["sub_link"])?>" class="menu-item-plus">
+								<span class="menu-item-plus-icon"></span>
+							</a><?
+						endif
+
+						?><a
+							class="menu-item-link"
 							href="<?=(isset($item["PARAMS"]["onclick"])) ? "javascript:void(0)" : $curLink?>"
-							title="<?=$item["TEXT"]?>"
 							<?if (isset($item["OPEN_IN_NEW_PAGE"]) && $item["OPEN_IN_NEW_PAGE"]):?>
-							target="_blank"
+								target="_blank"
 							<?endif?>
 							onclick="if (BX.Bitrix24.LeftMenuClass.isEditMode()) return false;
 							<?if (isset($item["PARAMS"]["onclick"])):?>
 								<?=htmlspecialcharsbx($item["PARAMS"]["onclick"])?>
 							<?endif?>">
-							<span class="menu-item-link-text" data-role="item-text">
-								<?=$item["TEXT"]?>
-								<?if (isset($item["PARAMS"]["is_beta"])):?>
-								<span class="menu-item-link-text-beta">beta</span>
-								<?endif?>
-							</span><?
+							<span class="menu-item-icon-box"><span class="menu-item-icon"></span></span><?
+							?><span class="menu-item-link-text <? echo isset($item["PARAMS"]["is_beta"]) ? ' menu-item-link-beta' : ''?>" data-role="item-text"><?
+								echo $item["TEXT"];
+							?></span><?
 							if (strlen($counterId) > 0):
 								$itemCounter = "";
-								$crmAttrs = "";
 								if ($isCompositeMode === false)
 								{
-									$itemCounter = ($item["PARAMS"]["counter_id"] == "mail_unseen" ? ($counter > 99 ? "99+" : $counter) : ($counter > 50 ? "50+" : $counter));
+									$itemCounter =  $counter > 99 ? "99+" : $counter;
 								}
 								?><span class="menu-item-index-wrap"><?
-									?><span class="menu-item-index"
-											id="menu-counter-<?=strtolower($item["PARAMS"]["counter_id"])?>"><?=$itemCounter?></span>
+								?><span
+									class="menu-item-index"
+									id="menu-counter-<?=strtolower($item["PARAMS"]["counter_id"])?>"><?=$itemCounter?></span>
 								</span>
-								<? if (!empty($item["PARAMS"]["warning_link"])):?>
-								<span
-									onclick="window.location.replace('<?=$item["PARAMS"]["warning_link"];?>'); return false; "
-									<? if (!empty($item["PARAMS"]["warning_title"])): ?>title="<?=$item["PARAMS"]["warning_title"];?>"<?endif ?>
-									class="menu-post-warn-icon"
-									id="menu-counter-warning-<?=strtolower($item["PARAMS"]["counter_id"]);?>"></span>
-								<?endif ?>
-							<?endif; ?>
-						</a>
-						<?
-						if (
-							$item["PARAMS"]["menu_item_id"] === "menu_all_groups" &&
-							count($arResult["GROUPS"])
-						):
+							<?endif ?>
+						</a><?
+						$editBtnHideClass = "";
+						if ($item["PARAMS"]["menu_item_id"] === "menu_all_groups" && count($arResult["GROUPS"])):
 							$groupPopupExists = true;
-							?><span class="menu-item-show-link" id="menu-all-groups-link"><?=GetMessage("MENU_SHOW")?></span><?
-						endif ?>
-					</li>
-					<?
+							$editBtnHideClass = " menu-fav-editable-btn-hide";
+							?><span class="menu-item-show-link" id="menu-all-groups-link"><?=Loc::getMessage("MENU_SHOW")?></span><?
+						endif
+						?><span
+							class="menu-fav-editable-btn menu-favorites-btn<?=$editBtnHideClass?>"
+							onclick="BX.Bitrix24.LeftMenuClass.openMenuPopup(this, '<?=CUtil::JSEscape($item["PARAMS"]["menu_item_id"])?>')"><?
+							?><span class="menu-favorites-btn-icon"></span><?
+						?></span><?
+					?></li><?
 				}
 			}
+
+			if ($status === "hide")
+			{
+						?><li class="menu-items-hidden-empty-li" id="left-menu-hidden-empty-item"></li><?
+					?></ul><?
+				?></li><?
+			}
 		}
-
-		if ($status=="hide"):?>
-				<li class="menu-items-hidden-empty-li" id="left-menu-hidden-empty-item"></li>
-			</ul>
-		</li>
-		<?endif;
-	}
-	?>
-	</ul>
-
-	<div class="menu-favorites-more-btn<?if (!is_array($arResult["ITEMS"]["hide"])):?> menu-favorites-more-btn-hidden<?endif?>" id="left-menu-more-btn">
-		<span class="menu-favorites-more-text"><?=GetMessage("MENU_MORE_ITEMS_SHOW")?></span>
-		<span class="menu-favorites-more-icon"></span>
-		<span class="menu-item-index menu-item-index-more" id="menu-hidden-counter" <?if ($isCompositeMode || $sumHiddenCounters <= 0):?>style="display:none"<?endif?>><?= ($isCompositeMode ? "" : ($sumHiddenCounters > 50 ? "50+" : $sumHiddenCounters))?></span>
-	</div>
-
-	<div class="menu-favorites-settings-btn" id="menu-favorites-settings-btn">
-		<span class="menu-items-title-text" id="left-menu-settings">
-			<?=GetMessage("MENU_SETTINGS_TITLE")?>
-		</span>
-		<span class="menu-favorites-btn-done" onclick="BX.Bitrix24.LeftMenuClass.applyEditMode();"><?=GetMessage("MENU_EDIT_READY_FULL")?></span>
-	</div>
-
-	<?
-	$showInviteButton = CModule::IncludeModule("bitrix24") && CBitrix24::isInvitingUsersAllowed();
-
-	if ($showInviteButton && CModule::IncludeModule("intranet")):?>
-	<div class="menu-invite-employees">
-		<span
-			class="menu-invite-employees-text"
-			onclick="<?=CIntranetInviteDialog::ShowInviteDialogLink()?>"><?=GetMessage("BITRIX24_INVITE_ACTION")?></span>
-	</div>
-	<? endif ?>
-
-	<?
-	if ($arResult["SHOW_LICENSE_BUTTON"]):?>
-		<?
-		$arJsParams = array(
-			"LICENSE_PATH" => $arResult["B24_LICENSE_PATH"],
-			"COUNTER_URL" => $arResult["LICENSE_BUTTON_COUNTER_URL"],
-			"HOST" => $arResult["HOST_NAME"]
-		);
 		?>
-		<a class="menu-license-all<?if (!$showInviteButton) echo " menu-license-all-shift";?>" href="javascript:void(0)" onclick="if (BX.getClass('B24.upgradeButtonRedirect')) B24.upgradeButtonRedirect(<?=CUtil::PhpToJSObject($arJsParams)?>)" >
-			<span class="menu-license-all-text"><?=GetMessage("MENU_LICENSE_ALL")?></span>
-		</a>
-	<?endif?>
+		</ul>
+
+		<div class="menu-favorites-more-btn<?if (empty($arResult["ITEMS"]["hide"])):?> menu-favorites-more-btn-hidden<?endif?>">
+			<div class="menu-collapsed-more-btn">
+				<span class="menu-favorites-more-icon"></span>
+			</div>
+			<div class="menu-default-more-btn">
+				<span
+					class="menu-favorites-more-text"
+					id="menu-more-btn-text"
+				><?=Loc::getMessage("MENU_MORE_ITEMS_SHOW")?></span>
+				<span class="menu-favorites-more-icon"></span>
+			</div>
+			<span id="menu-hidden-counter" class="menu-item-index menu-item-index-more<?
+				if ($isCompositeMode || $sumHiddenCounters <= 0):?> menu-hidden-counter<?endif?>"><?
+				?><?=($isCompositeMode ? "" : ($sumHiddenCounters > 99 ? "99+" : $sumHiddenCounters))
+			?></span>
+		</div>
+
+		<div class="menu-extra-btn-box">
+
+			<div class="menu-settings-save-btn"><?=Loc::getMessage("MENU_EDIT_READY_FULL")?></div>
+
+			<? if (count($arResult["MAP_ITEMS"])): ?>
+			<div class="menu-sitemap-btn">
+				<span class="menu-sitemap-icon-box">
+					<span class="menu-sitemap-icon"></span>
+				</span>
+				<span class="menu-sitemap-btn-text"><?=Loc::getMessage("MENU_SITE_MAP")?></span>
+			</div>
+			<? endif ?>
+
+			<div class="menu-settings-btn">
+				<span class="menu-settings-icon-box">
+					<span class="menu-settings-icon"></span>
+				</span>
+				<span class="menu-settings-btn-text"><?=Loc::getMessage("MENU_SETTINGS_TITLE")?></span>
+			</div>
+
+			<?
+			$showInviteButton = CModule::IncludeModule("bitrix24") && CBitrix24::isInvitingUsersAllowed();
+			if ($showInviteButton && CModule::IncludeModule("intranet")):?>
+				<div class="menu-invite-employees" onclick="<?=CIntranetInviteDialog::ShowInviteDialogLink()?>">
+					<span class="menu-invite-icon-box">
+						<span class="menu-invite-icon"></span>
+					</span>
+					<span
+						class="menu-invite-employees-text"
+						onclick="<?=CIntranetInviteDialog::ShowInviteDialogLink()?>"
+					><?=Loc::getMessage("BITRIX24_INVITE_ACTION")?></span>
+				</div>
+			<? endif ?>
+
+			<?
+			if ($arResult["SHOW_LICENSE_BUTTON"]):
+
+				$arJsParams = array(
+					"LICENSE_PATH" => $arResult["B24_LICENSE_PATH"],
+					"COUNTER_URL" => $arResult["LICENSE_BUTTON_COUNTER_URL"],
+					"HOST" => $arResult["HOST_NAME"]
+				);
+				?>
+				<div class="menu-license-all-container">
+					<span
+						class="menu-license-all menu-license-all-collapsed"
+						onclick="
+							if (BX.getClass('B24.upgradeButtonRedirect'))
+								B24.upgradeButtonRedirect(<?=CUtil::PhpToJSObject($arJsParams)?>)"
+					>
+						<span class="menu-license-all-text"></span>
+					</span>
+					<span
+						class="menu-license-all menu-license-all-default"
+						onclick="
+							if (BX.getClass('B24.upgradeButtonRedirect'))
+								B24.upgradeButtonRedirect(<?=CUtil::PhpToJSObject($arJsParams)?>)"
+					>
+					<span class="menu-license-all-text"><?=Loc::getMessage("MENU_LICENSE_ALL")?></span>
+				</span>
+				</div>
+			<?endif?>
+		</div>
+	</div>
+	<div class="menu-btn-arrow-up">
+		<span class="menu-btn-arrow-up-icon"></span>
+	</div>
 </div>
 
 <?
@@ -228,6 +294,7 @@ $arJSParams = array(
 	"isBitrix24" => IsModuleInstalled("bitrix24") ? "Y" : "N",
 	"siteId" => SITE_ID,
 	"siteDir" => SITE_DIR,
+	"spotlightId" => $arResult["SPOTLIGHT_ID"],
 	"isExtranet" => $arResult["IS_EXTRANET"] ? "Y" : "N",
 	"isCompositeMode" => $isCompositeMode,
 	"isCollapsedMode" => CUserOptions::GetOption("intranet", "left_menu_collapsed") === "Y",
@@ -284,6 +351,7 @@ $arJSParams = array(
 		MENU_EMPTY_FORM_ERROR: '<?=GetMessageJS("MENU_EMPTY_FORM_ERROR")?>',
 		MENU_SELF_ITEM_FIRST_ERROR: '<?=GetMessageJS("MENU_SELF_ITEM_FIRST_ERROR")?>',
 		MENU_COLLAPSE: '<?=GetMessageJS("MENU_COLLAPSE")?>',
+		MENU_EXPAND: '<?=GetMessageJS("MENU_EXPAND")?>',
 		MENU_CONFIRM_BUTTON: '<?=GetMessageJS("MENU_CONFIRM_BUTTON")?>',
 		MENU_DELAY_BUTTON: '<?=GetMessageJS("MENU_DELAY_BUTTON")?>',
 		MENU_STAR_TITLE_DEFAULT_PAGE: '<?=GetMessageJS("MENU_STAR_TITLE_DEFAULT_PAGE")?>',
@@ -306,7 +374,7 @@ $arJSParams = array(
 		MENU_EDIT_READY_FULL: '<?=GetMessageJS("MENU_EDIT_READY_FULL")?>'
 	});
 
-	BX.Bitrix24.LeftMenuClass.init(<?=CUtil::PhpToJSObject($arJSParams)?>);
+	BX.Bitrix24.LeftMenu.init(<?=CUtil::PhpToJSObject($arJSParams)?>);
 </script>
 
 <?
@@ -314,10 +382,10 @@ $arJSParams = array(
 $js = <<<HTML
 
 <script>
-if (!BX.Bitrix24.LeftMenuClass.initPagetitleStar())
+if (!BX.Bitrix24.LeftMenu.initPagetitleStar())
 {
 	BX.ready(function() {
-		BX.Bitrix24.LeftMenuClass.initPagetitleStar()
+		BX.Bitrix24.LeftMenu.initPagetitleStar()
 	});
 }
 
@@ -327,54 +395,46 @@ HTML;
 
 $APPLICATION->AddViewContent("below_pagetitle", $js, 10);
 
-// item map for header
 if (count($arResult["MAP_ITEMS"]))
 {
-?>
-	<div class="sitemap-content" id="sitemap-content">
-		<? $previousDepthLevel = 0; ?>
-		<? foreach ($arResult["MAP_ITEMS"] as $index => $item):
+?><div style="display: none" id="sitemap">
+		<div class="sitemap-window">
+			<div class="sitemap-title"><?=Loc::getMessage("MENU_SITE_MAP")?></div>
+			<div class="sitemap-content">
+				<? $previousDepthLevel = 0; ?>
+				<? foreach ($arResult["MAP_ITEMS"] as $index => $item):
 
-			if ($item["PERMISSION"] <= "D")
-			{
-				continue;
-			}
+					if ($item["PERMISSION"] <= "D")
+					{
+						continue;
+					}
 
-			$link = isset($item["PARAMS"]["real_link"]) ? $item["PARAMS"]["real_link"] : $item["LINK"];
+					$link = isset($item["PARAMS"]["real_link"]) ? $item["PARAMS"]["real_link"] : $item["LINK"];
 
-			$link = htmlspecialcharsbx($link, ENT_COMPAT, false);
-			$item["TEXT"] = htmlspecialcharsbx($item["TEXT"], ENT_COMPAT, false);
-		?>
-			<? if ($item["DEPTH_LEVEL"] === 1): ?>
-				<? if ($previousDepthLevel):?>
+					$link = htmlspecialcharsbx($link, ENT_COMPAT, false);
+					$item["TEXT"] = htmlspecialcharsbx($item["TEXT"], ENT_COMPAT, false);
+				?>
+					<? if ($item["DEPTH_LEVEL"] === 1): ?>
+						<? if ($previousDepthLevel):?>
+							</div>
+						</div>
+						<? endif ?>
+					<div class="sitemap-section">
+						<a class="sitemap-section-title" href="<?=$link?>"><?=$item["TEXT"]?></a>
+						<div class="sitemap-section-items">
+					<? else: ?>
+						<a class="sitemap-section-item" href="<?=$link?>"><?=$item["TEXT"]?></a>
+					<? endif ?>
+					<? $previousDepthLevel = $item["DEPTH_LEVEL"] ?>
+				<? endforeach ?>
+
+				<? if ($previousDepthLevel): ?>
+						</div>
 					</div>
-				</div>
 				<? endif ?>
-			<div class="sitemap-section">
-				<a class="sitemap-section-title" href="<?=$link?>"><?=$item["TEXT"]?></a>
-				<div class="sitemap-section-items">
-			<? else: ?>
-				<a class="sitemap-section-item" href="<?=$link?>"><?=$item["TEXT"]?></a>
-			<? endif ?>
-			<? $previousDepthLevel = $item["DEPTH_LEVEL"] ?>
-		<? endforeach ?>
-
-		<? if ($previousDepthLevel): ?>
-				</div>
 			</div>
-		<? endif ?>
-		<div class="sitemap-close-link" id="sitemap-close-link" title="<?=GetMessage("MAP_CLOSE_LINK")?>"></div>
-	</div>
-	<script>
-		BX.ready(function() {
-			new BX.Bitrix24.Map();
-		});
-	</script>
-
-	<?
-	$this->SetViewTarget("sitemap");
-		?><div class="sitemap-menu" id="sitemap-menu"><span class="sitemap-menu-lines"></span></div><?
-	$this->EndViewTarget();
+		</div>
+	</div><?
 }
 
 if ($groupPopupExists):
@@ -426,3 +486,24 @@ $filter = CUserOptions::GetOption("intranet", "left_menu_group_filter_".SITE_ID,
 	<div class="sitemap-close-link group-panel-close-link" id="group-panel-close-link"></div>
 </div>
 <? endif ?>
+
+
+<?
+
+$APPLICATION->includeComponent("bitrix:spotlight", "", [
+	"ID" => $arResult["SPOTLIGHT_ID"],
+	"JS_OPTIONS" => [
+		"targetElement" => ".menu-items-header .menu-switcher",
+		"content" => Loc::getMessage("MENU_SPOTLIGHT_HINT"),
+		"targetVertex" => "middle-center",
+		"observerTimeout" => 100,
+		"events" => [
+			"onTargetEnter" => "BX.Bitrix24.LeftMenu.handleSpotlightMouseEnter"
+		],
+		"lightMode" => ThemePicker::getInstance()->getCurrentBaseThemeId() !== "dark",
+		"END_DATE" => gmmktime(8, 30, 0, 6, 7, 2019),
+	]
+]
+);
+
+?>

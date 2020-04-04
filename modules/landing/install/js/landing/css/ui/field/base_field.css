@@ -26,14 +26,10 @@
 	word-wrap: break-word;
 }
 
-.landing-ui-field-input.landing-ui-active {
-
-}
-
 .landing-ui-field-input[contenteditable="true"],
 .landing-ui-field-input[contenteditable="plaintext-only"],
 .landing-ui-field-input.landing-ui-active {
-	background: none;
+	background: #ffffff;
 	border-color: #66AFE9;
 }
 

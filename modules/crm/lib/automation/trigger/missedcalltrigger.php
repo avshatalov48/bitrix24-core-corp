@@ -2,6 +2,7 @@
 namespace Bitrix\Crm\Automation\Trigger;
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Loader;
 
 Loc::loadMessages(__FILE__);
 
@@ -9,7 +10,7 @@ class MissedCallTrigger extends BaseTrigger
 {
 	public static function isEnabled()
 	{
-		return false; //TODO: to do a realization in voximplant
+		return (Loader::includeModule('voximplant') && \CVoxImplantHttp::VERSION >= 19);
 	}
 
 	public static function getCode()
@@ -20,5 +21,30 @@ class MissedCallTrigger extends BaseTrigger
 	public static function getName()
 	{
 		return Loc::getMessage('CRM_AUTOMATION_TRIGGER_MISSED_CALL_NAME');
+	}
+
+	public function checkApplyRules(array $trigger)
+	{
+		if (!parent::checkApplyRules($trigger))
+		{
+			return false;
+		}
+
+		if (empty($trigger['APPLY_RULES']['LINE_NUMBER']))
+		{
+			return true;
+		}
+
+		$lineA = (string) $trigger['APPLY_RULES']['LINE_NUMBER'];
+		$lineB = (string) $this->getInputData('LINE_NUMBER');
+
+		return ($lineA === $lineB);
+	}
+
+	public static function toArray()
+	{
+		$result = parent::toArray();
+		$result['LINES'] = array_values(\CVoxImplantConfig::GetLines(false, true));
+		return $result;
 	}
 }

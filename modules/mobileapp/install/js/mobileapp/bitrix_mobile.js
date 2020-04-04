@@ -162,7 +162,6 @@
 
 	BXCordovaPlugin.prototype.exec = function (funcName, params, convertBoolean)
 	{
-
 		var pluginParams = {};
 
 		if(typeof convertBoolean == "undefined")
@@ -221,7 +220,7 @@
 	window.app = app;
 
 	document.addEventListener("DOMContentLoaded", function(){
-		app.db = new BX.dataBase.create({
+		app.db = BX.dataBase.create({
 			name: "Bitrix Base",
 			displayName: "Bitrix Base",
 			capacity: 1024 * 1024 * 4,

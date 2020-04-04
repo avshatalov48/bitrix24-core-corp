@@ -31,7 +31,7 @@ if(typeof(BX.Crm.BatchDeletionManager) === "undefined")
 	{
 		initialize: function(id, settings)
 		{
-			this._id = BX.type.isNotEmptyString(id) ? id : "crm_batch_conversion_mgr_" + Math.random().toString().substring(2);
+			this._id = BX.type.isNotEmptyString(id) ? id : "crm_batch_deletion_mgr_" + Math.random().toString().substring(2);
 			this._settings = settings ? settings : {};
 
 			this._gridId = BX.prop.getString(this._settings, "gridId", this._id);

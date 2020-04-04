@@ -38,7 +38,7 @@ $arResult['TOOLBAR_ID'] = $toolbarID;
 
 $arResult['BUTTONS'] = array();
 
-if ($arParams['TYPE'] == 'list')
+if ($arParams['TYPE'] == 'list' || $arParams['TYPE'] == 'kanban')
 {
 	$bRead   = Permissions\Order::checkReadPermission(0, $CrmPerms);
 	$bExport = Permissions\Order::checkExportPermission($CrmPerms);
@@ -89,7 +89,6 @@ if($arParams['TYPE'] === 'details')
 			'DATA' => $arParams['BIZPROC_STARTER_DATA']
 		);
 	}
-
 
 	\Bitrix\Crm\Order\Permissions\Order::prepareConversionPermissionFlags($arParams['ELEMENT_ID'], $arResult, $CrmPerms);
 
@@ -144,6 +143,18 @@ if($arParams['TYPE'] === 'details')
 			."', {loader: \"crm-webform-view-loader\"})",
 		'ICON' => 'btn-edit'
 	);
+
+	$arResult['BUTTONS'][] = [
+		'CODE' => 'document',
+		'TEXT' => GetMessage('ORDER_DOCUMENT_BUTTON_TEXT'),
+		'TITLE' => GetMessage('ORDER_DOCUMENT_BUTTON_TITLE'),
+		'TYPE' => 'crm-document-button',
+		'PARAMS' => \Bitrix\Crm\Integration\DocumentGeneratorManager::getInstance()
+			->getDocumentButtonParameters(
+				\Bitrix\Crm\Integration\DocumentGenerator\DataProvider\Order::class,
+				$arParams['ELEMENT_ID']
+			),
+	];
 
 	$this->IncludeComponentTemplate();
 	return;
@@ -224,8 +235,74 @@ if($bAdd)
 	}
 }
 
-$qty = count($arResult['BUTTONS']);
+if($arParams['TYPE'] === 'list')
+{
+	if ($bExport)
+	{
+		$arResult['BUTTONS'][] = ['NEWBAR' => true];
 
+		$entityType = CCrmOwnerType::OrderName;
+		$stExportId = 'STEXPORT_'.$entityType.'_MANAGER';
+		$randomSequence = new Bitrix\Main\Type\RandomSequence($stExportId);
+		$stExportManagerId = $stExportId.'_'.$randomSequence->randString();
+		$componentName = 'bitrix:crm.order.list';
+
+		$componentParams = array(
+			'ORDER_COUNT' => '20',
+			'PATH_TO_ORDER_SHOW' => $arResult['PATH_TO_ORDER_SHOW'],
+			'PATH_TO_ORDER_EDIT' => $arResult['PATH_TO_ORDER_EDIT'],
+			'NAME_TEMPLATE' => $arParams['NAME_TEMPLATE'],
+			'NAVIGATION_CONTEXT_ID' => $entityType
+		);
+
+		$arResult['STEXPORT_PARAMS'] = array(
+			'componentName' => $componentName,
+			'siteId' => SITE_ID,
+			'entityType' => $entityType,
+			'stExportId' => $stExportId,
+			'managerId' => $stExportManagerId,
+			'sToken' => 's'.time(),
+			'initialOptions' => array(
+				'EXPORT_ALL_FIELDS' => array(
+					'name' => 'EXPORT_ALL_FIELDS',
+					'type' => 'checkbox',
+					'title' => GetMessage('ORDER_STEXPORT_OPTION_EXPORT_ALL_FIELDS'),
+					'value' => 'N'
+				),
+			),
+			'componentParams' => \Bitrix\Main\Component\ParameterSigner::signParameters($componentName, $componentParams),
+			'messages' => array(
+				'stExportExcelDlgTitle' => GetMessage('ORDER_EXPORT_EXCEL_TITLE'),
+				'stExportExcelDlgSummary' => GetMessage('ORDER_STEXPORT_SUMMARY'),
+				'stExportCsvDlgTitle' => GetMessage('ORDER_EXPORT_CSV_TITLE'),
+				'stExportCsvDlgSummary' => GetMessage('ORDER_STEXPORT_SUMMARY')
+			)
+		);
+
+		$arResult['BUTTONS'][] = array(
+			'TITLE' => GetMessage('ORDER_EXPORT_CSV_TITLE'),
+			'TEXT' => GetMessage('ORDER_EXPORT_CSV'),
+			'ONCLICK' => "BX.Crm.ExportManager.items['".CUtil::JSEscape($stExportManagerId)."'].startExport('csv')",
+			'ICON' => 'btn-export'
+		);
+
+		$arResult['BUTTONS'][] = array(
+			'TITLE' => GetMessage('ORDER_EXPORT_EXCEL_TITLE'),
+			'TEXT' => GetMessage('ORDER_EXPORT_EXCEL'),
+			'ONCLICK' => "BX.Crm.ExportManager.items['".CUtil::JSEscape($stExportManagerId)."'].startExport('excel')",
+			'ICON' => 'btn-export'
+		);
+
+		unset($entityType, $stExportId, $randomSequence, $stExportManagerId);
+	}
+}
+
+$qty = count($arResult['BUTTONS']);
+if ($arParams['TYPE'] === 'kanban' && $GLOBALS['USER']->canDoOperation('edit_other_settings'))
+{
+	$arResult['BUTTONS'][] = array('NEWBAR' => true);
+	$arResult['BUTTONS'][] = array('NEWBAR' => true);
+}
 if ($qty >= 3)
 {
 	$arResult['BUTTONS'][] = array('NEWBAR' => true);

@@ -1,6 +1,7 @@
 <?
 use Bitrix\Main\Localization\Loc;
 
+use Bitrix\Tasks\CheckList\Template\TemplateCheckListFacade;
 use Bitrix\Tasks\Util;
 use Bitrix\Tasks\Util\Site;
 use Bitrix\Tasks\UI;
@@ -314,6 +315,23 @@ elseif(intval($template['BASE_TEMPLATE_ID']))
 	}
 }
 $arResult['TEMPLATE_DATA']['TEMPLATE']['SE_PARENTITEM'] = $seParentItem;
+
+if (isset($arResult['COPIED_FROM']))
+{
+	$copiedFrom = $arResult['COPIED_FROM'];
+
+	$checkListItems = TemplateCheckListFacade::getItemsForEntity($copiedFrom, $arResult['USER_ID']);
+	foreach (array_keys($checkListItems) as $id)
+	{
+		$checkListItems[$id]['COPIED_ID'] = $id;
+		unset($checkListItems[$id]['ID']);
+	}
+}
+else
+{
+	$checkListItems = TemplateCheckListFacade::getItemsForEntity($template->getId(), $template->getUserId());
+}
+$arResult['TEMPLATE_DATA']['SE_CHECKLIST'] = $checkListItems;
 
 $matchWorkTime = $template['MATCH_WORK_TIME'] == 'Y';
 $arResult['JS_DATA']['deadline'] = $helper->detectUnitType($matchWorkTime, $template['DEADLINE_AFTER']);

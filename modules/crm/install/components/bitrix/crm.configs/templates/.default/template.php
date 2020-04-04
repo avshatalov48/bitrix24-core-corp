@@ -177,10 +177,6 @@ if($arResult['PERM_CONFIG'])
 		$items['tab_content_other']['FACE_TRACKER']['NAME'] = GetMessage("CRM_CONFIGS_FACE_TRACER");
 	}
 
-	$items['tab_content_other']['EXCLUSION']['URL'] = $siteDir.'/crm/configs/exclusion/';
-	$items['tab_content_other']['EXCLUSION']['ICON_CLASS'] = 'img-other';
-	$items['tab_content_other']['EXCLUSION']['NAME'] = GetMessage("CRM_CONFIGS_EXCLUSION");
-
 	/*
 	$items['tab_content_other']['REFERENCE']['URL'] = '#';
 	$items['tab_content_other']['REFERENCE']['ICON_CLASS'] = 'img-help';
@@ -212,6 +208,14 @@ if($arResult['PERM_CONFIG'])
 		$items['tab_content_apps']['MIGRATION_OTHER_CRM']['NAME'] = GetMessage("CRM_CONFIGS_MIGRATION_OTHER_CRM");
 	}
 }
+
+if ($arResult['IS_EXCLUSION_ACCESSIBLE'])
+{
+	$items['tab_content_other']['EXCLUSION']['URL'] = $siteDir.'/crm/configs/exclusion/';
+	$items['tab_content_other']['EXCLUSION']['ICON_CLASS'] = 'img-other';
+	$items['tab_content_other']['EXCLUSION']['NAME'] = GetMessage("CRM_CONFIGS_EXCLUSION");
+}
+
 if($arResult['IS_ACCESS_ENABLED'])
 {
 	$items['tab_content_work_with_mail']['MAIL_TEMPLATES']['URL'] = $siteDir.'/crm/configs/mailtemplate/';

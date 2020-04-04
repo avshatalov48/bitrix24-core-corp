@@ -6,7 +6,8 @@ use Bitrix\Main\Localization\Loc,
 	Bitrix\Crm\Category\DealCategory,
 	Bitrix\Crm\Recurring\Manager,
 	Bitrix\Crm\Recurring\Entity\Invoice,
-	Bitrix\Crm\Recurring\Entity\Base;
+	Bitrix\Crm\Recurring\Entity\Base,
+	Bitrix\Crm\Restriction\RestrictionManager;
 
 Loc::loadMessages(__FILE__);
 
@@ -66,25 +67,16 @@ class CrmInterfaceFormRecurring extends CBitrixComponent
 
 		if (CModule::IncludeModule('bitrix24'))
 		{
-			$this->arResult['RESTRICTED_LICENCE'] = !Manager::isAllowedExpose($this->type) ? "Y" : "N";
-			switch (LANGUAGE_ID)
+			if ($this->type === Manager::DEAL)
 			{
-				case "ru":
-				case "kz":
-				case "by":
-					$link = 'https://www.bitrix24.ru/pro/crm.php ';
-					break;
-				case "de":
-					$link = 'https://www.bitrix24.de/pro/crm.php';
-					break;
-				case "ua":
-					$link = 'https://www.bitrix24.ua/pro/crm.php';
-					break;
-				default:
-					$link = 'https://www.bitrix24.com/pro/crm.php';
+				$restriction = RestrictionManager::getDealRecurringRestriction();
 			}
-			$this->arResult["TRIAL_TEXT"]['TITLE'] = Loc::getMessage("CRM_RECURRING_{$this->arParams['ENTITY_TYPE']}_B24_BLOCK_TITLE");
-			$this->arResult["TRIAL_TEXT"]['TEXT'] = Loc::getMessage("CRM_RECURRING_{$this->arParams['ENTITY_TYPE']}_B24_BLOCK_TEXT", array("#LINK#" => $link));
+			else
+			{
+				$restriction = RestrictionManager::getInvoiceRecurringRestriction();
+			}
+			$this->arResult['RESTRICTED_LICENCE'] = !$restriction->hasPermission() ? "Y" : "N";
+			$this->arResult["TRIAL_TEXT"]['LOCK_SCRIPT'] = $restriction->preparePopupScript();
 		}
 
 		$this->includeComponentTemplate();

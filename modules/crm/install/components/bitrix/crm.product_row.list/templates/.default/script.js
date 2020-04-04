@@ -405,28 +405,6 @@ if (typeof(BX.CrmProductEditor) === "undefined")
 				return;
 			}
 
-			if(!this._hasLayout && !this.getSetting("enableSubmitWithoutLayout", true))
-			{
-				field.value = '';
-				if(settingField)
-				{
-					settingField.value = '';
-				}
-				this._form.appendChild(
-					BX.create("input", { props: { type: "hidden", name: fieldName + "_INVALIDATE", value: "Y" } })
-				);
-				return;
-			}
-
-			BX.remove(
-				BX.findChild(
-					this._form,
-					{ tagName: "input", attr: { name: fieldName + "_INVALIDATE" } },
-					true,
-					false
-				)
-			);
-
 			if(this._hasLayout)
 			{
 				this.cleanProductRows();
@@ -440,6 +418,14 @@ if (typeof(BX.CrmProductEditor) === "undefined")
 				settingField.value = '{"ENABLE_DISCOUNT": "' + (this.isDiscountEnabled() ? 'Y' : 'N') + '",' +
 					'"ENABLE_TAX": "' + (this.isTaxEnabled() ? 'Y' : 'N') + '"}';
 			}
+		},
+		handleControlSave: function(data)
+		{
+			var fieldName = this.getSetting("dataFieldName", "PRODUCT_ROW_DATA");
+			data[fieldName] = this.productsToJson();
+			data[fieldName + "_SETTINGS"] = '{"ENABLE_DISCOUNT": "' + (this.isDiscountEnabled() ? 'Y' : 'N') + '",' +
+				'"ENABLE_TAX": "' + (this.isTaxEnabled() ? 'Y' : 'N') + '"}';
+			return data;
 		},
 		handleChoiceProductButtonClick: function(e)
 		{
@@ -2328,6 +2314,7 @@ if (typeof(BX.CrmProduct) === "undefined")
 		this._dragButton = null;
 		this._sumValueAfterBlur = null;
 		this._hasLayout = false;
+		this._keyDownHandler = BX.delegate(this._handleKeyDown, this);
 	};
 	BX.CrmProduct.prototype =
 	{
@@ -2952,6 +2939,11 @@ if (typeof(BX.CrmProduct) === "undefined")
 
 			this._handleProductNameChange(productName);
 
+			if (this._container && BX.type.isDomNode(this._container))
+			{
+				BX.bind(this._container, "keydown", this._keyDownHandler);
+			}
+
 			this._bindEventsHandlers();
 			this.initializeDragDropAbilities();
 
@@ -2963,6 +2955,11 @@ if (typeof(BX.CrmProduct) === "undefined")
 			{
 				this._container.parentNode.removeChild(this._container);
 				this.releaseDragDropAbilities();
+
+				if (BX.type.isDomNode(this._container))
+				{
+					BX.unbind(this._container, "keydown", this._keyDownHandler);
+				}
 			}
 
 			this._hasLayout = false;
@@ -3736,6 +3733,18 @@ if (typeof(BX.CrmProduct) === "undefined")
 				BX.PreventDefault(e);
 			}
 		},
+		_handleKeyDown: function(e)
+		{
+			// handle Alt+Enter
+			if (!this._editor || !e || typeof(e) !== "object" || e.repeat
+				|| e.keyCode !== 13 || e.type !== "keydown" || !e.altKey)
+			{
+				return;
+			}
+			this._editor.productRowAdd();
+
+			return e.preventDefault();
+		},
 		refreshCurrencyText: function()
 		{
 			var row, discountTypeView, discountTypeText, discountText, discountTypeControls, cEdit, cView;
@@ -3974,7 +3983,7 @@ if (typeof(BX.CrmProduct) === "undefined")
 			var sum = this._settings['TAX_INCLUDED']
 				? this._settings['PRICE'] * this._settings['QUANTITY']
 				: BX.CrmProduct.calculateInclusivePrice(
-					(this._settings['PRICE_EXCLUSIVE'] * this._settings['QUANTITY']),
+					this._round(this._settings['PRICE_EXCLUSIVE'] * this._settings['QUANTITY'], 2),
 					this._settings['TAX_RATE']
 				);
 			return this._round(sum, 2);

@@ -21,6 +21,7 @@ class CAllCrmLead
 	static public $sUFEntityID = 'CRM_LEAD';
 	const USER_FIELD_ENTITY_ID = 'CRM_LEAD';
 	const SUSPENDED_USER_FIELD_ENTITY_ID = 'CRM_LEAD_SPD';
+	const TOTAL_COUNT_CACHE_ID =  'crm_lead_total_count';
 
 	public $LAST_ERROR = '';
 	protected $checkExceptions = array();
@@ -66,7 +67,8 @@ class CAllCrmLead
 					'ATTRIBUTES' => array(CCrmFieldInfoAttr::Required)
 				),
 				'HONORIFIC' => array(
-					'TYPE' => 'string'
+					'TYPE' => 'crm_status',
+					'CRM_STATUS_TYPE' => 'HONORIFIC'
 				),
 				'NAME' => array(
 					'TYPE' => 'string'
@@ -96,13 +98,15 @@ class CAllCrmLead
 				),
 				'STATUS_ID' => array(
 					'TYPE' => 'crm_status',
-					'CRM_STATUS_TYPE' => 'STATUS'
+					'CRM_STATUS_TYPE' => 'STATUS',
+					'ATTRIBUTES' => array(CCrmFieldInfoAttr::Progress)
 				),
 				'STATUS_DESCRIPTION' => array(
 					'TYPE' => 'string'
 				),
 				'STATUS_SEMANTIC_ID' => array(
-					'TYPE' => 'string'
+					'TYPE' => 'string',
+					'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
 				),
 				'POST' => array(
 					'TYPE' => 'string'
@@ -178,7 +182,12 @@ class CAllCrmLead
 					'TYPE' => 'crm_company'
 				),
 				'CONTACT_ID' => array(
-					'TYPE' => 'crm_contact'
+					'TYPE' => 'crm_contact',
+					'ATTRIBUTES' => array(CCrmFieldInfoAttr::Deprecated)
+				),
+				'CONTACT_IDS' => array(
+					'TYPE' => 'crm_contact',
+					'ATTRIBUTES' => array(CCrmFieldInfoAttr::Multiple)
 				),
 				'IS_RETURN_CUSTOMER' => array(
 					'TYPE' => 'char',
@@ -389,12 +398,53 @@ class CAllCrmLead
 			}
 		}
 
-		if (!empty($arFilter['ACTIVE_TIME_PERIOD_from']) && !empty($arFilter['ACTIVE_TIME_PERIOD_to']))
+		if (!empty($arFilter['ACTIVE_TIME_PERIOD_from']) || !empty($arFilter['%STATUS_ID_FROM_HISTORY']) || !empty($arFilter['%STATUS_ID_FROM_SUPPOSED_HISTORY']) || !empty($arFilter['%STATUS_SEMANTIC_ID_FROM_HISTORY']))
 		{
 			global $DB;
-			$sqlData['WHERE'][] = "L.DATE_CREATE <= ".$DB->CharToDateFunction($arFilter['ACTIVE_TIME_PERIOD_to']);
-			$sqlData['WHERE'][] = "(L.DATE_CLOSED IS NULL OR L.DATE_CLOSED >= ".$DB->CharToDateFunction($arFilter['ACTIVE_TIME_PERIOD_from']).")";
+			$supposedHistoryCaseSql = "L.ID IN (SELECT DISTINCT LSHWS.OWNER_ID FROM b_crm_lead_status_history_with_supposed LSHWS WHERE ";
+			$supposedHistoryCaseSqlWhereStarted = false;
+			if (!empty($arFilter['ACTIVE_TIME_PERIOD_from']) && !empty($arFilter['ACTIVE_TIME_PERIOD_to']))
+			{
+				$supposedHistoryCaseSql .= "LSHWS.LAST_UPDATE_DATE <= ".
+										   $DB->CharToDateFunction($arFilter['ACTIVE_TIME_PERIOD_to'], 'SHORT');
+				$supposedHistoryCaseSql .= " AND LSHWS.CLOSE_DATE >= ".
+										   $DB->CharToDateFunction($arFilter['ACTIVE_TIME_PERIOD_from'], 'SHORT');
+
+				$supposedHistoryCaseSqlWhereStarted = true;
+			}
+
+
+			if (!empty($arFilter['%STATUS_SEMANTIC_ID_FROM_HISTORY']))
+			{
+				$statusSemanticIdsFromFilter = is_array($arFilter['%STATUS_SEMANTIC_ID_FROM_HISTORY']) ? $arFilter['%STATUS_SEMANTIC_ID_FROM_HISTORY'] : array($arFilter['%STATUS_SEMANTIC_ID_FROM_HISTORY']);
+				$supposedHistoryCaseSql .= $supposedHistoryCaseSqlWhereStarted ? ' AND ' : ' ';
+				$supposedHistoryCaseSql  .= " LSHWS.IS_SUPPOSED = 'N' AND LSHWS.STATUS_SEMANTIC_ID  IN (" . implode(',', array_map(function($el) {return "'" . $el . "'";}, $statusSemanticIdsFromFilter)) . ")";
+				$supposedHistoryCaseSqlWhereStarted = true;
+			}
+
+
+			if (!empty($arFilter['%STATUS_ID_FROM_HISTORY']))
+			{
+				$statusIdsFromFilter = is_array($arFilter['%STATUS_ID_FROM_HISTORY']) ? $arFilter['%STATUS_ID_FROM_HISTORY'] : array($arFilter['%STATUS_ID_FROM_HISTORY']);
+				$supposedHistoryCaseSql .= $supposedHistoryCaseSqlWhereStarted ? ' AND ' : ' ';
+				$supposedHistoryCaseSql .= " LSHWS.IS_SUPPOSED = 'N' AND LSHWS.STATUS_ID  IN (" . implode(',', array_map(function($el) {return "'" . $el . "'";}, $statusIdsFromFilter)) . ")";
+				$supposedHistoryCaseSqlWhereStarted = true;
+			}
+
+			if (!empty($arFilter['%STATUS_ID_FROM_SUPPOSED_HISTORY']))
+			{
+				$statusIdsFromFilter = is_array($arFilter['%STATUS_ID_FROM_SUPPOSED_HISTORY']) ? $arFilter['%STATUS_ID_FROM_SUPPOSED_HISTORY'] : array($arFilter['%STATUS_ID_FROM_SUPPOSED_HISTORY']);
+				$supposedHistoryCaseSql .= $supposedHistoryCaseSqlWhereStarted ? ' AND ' : ' ';
+				$supposedHistoryCaseSql .= " LSHWS.STATUS_ID  IN (" . implode(',', array_map(function($el) {return "'" . $el . "'";}, $statusIdsFromFilter)) . ")";
+				$supposedHistoryCaseSqlWhereStarted = true;
+			}
+
+			$supposedHistoryCaseSql .=" )";
+
+			$sqlData['WHERE'][] = $supposedHistoryCaseSql;
 		}
+
+
 
 		if(isset($arFilter['CALENDAR_DATE_FROM']) && $arFilter['CALENDAR_DATE_FROM'] !== ''
 		&& isset($arFilter['CALENDAR_DATE_TO']) && $arFilter['CALENDAR_DATE_TO'] !== '')
@@ -572,6 +622,29 @@ class CAllCrmLead
 			$results[] = (int)$field['ID'];
 		}
 		return $results;
+	}
+
+	public static function GetTotalCount()
+	{
+		if(defined('BX_COMP_MANAGED_CACHE') && $GLOBALS['CACHE_MANAGER']->Read(600, self::TOTAL_COUNT_CACHE_ID, 'b_crm_lead'))
+		{
+			return $GLOBALS['CACHE_MANAGER']->Get(self::TOTAL_COUNT_CACHE_ID);
+		}
+
+		$result = (int)self::GetListEx(
+			array(),
+			array('CHECK_PERMISSIONS' => 'N'),
+			array(),
+			false,
+			array(),
+			array('ENABLE_ROW_COUNT_THRESHOLD' => false)
+		);
+
+		if(defined('BX_COMP_MANAGED_CACHE'))
+		{
+			$GLOBALS['CACHE_MANAGER']->Set(self::TOTAL_COUNT_CACHE_ID, $result);
+		}
+		return $result;
 	}
 
 	public static function GetRightSiblingID($ID)
@@ -1202,10 +1275,18 @@ class CAllCrmLead
 			$arFields['BIRTHDAY_SORT'] = \Bitrix\Crm\BirthdayReminder::prepareSorting('');
 		}
 
-		if (!isset($arFields['STATUS_ID']) || $arFields['STATUS_ID'] === '')
-			$arFields['STATUS_ID'] = 'NEW';
+		if(!isset($arFields['STATUS_ID']) || $arFields['STATUS_ID'] === '')
+		{
+			$arFields['STATUS_ID'] = self::GetStartStatusID(
+				$this->bCheckPermission
+					? Bitrix\Crm\Security\EntityPermissionType::CREATE
+					: Bitrix\Crm\Security\EntityPermissionType::UNDEFINED
+			);
+		}
 
-		$arFields['STATUS_SEMANTIC_ID'] = self::GetSemanticID($arFields['STATUS_ID']);
+		$arFields['STATUS_SEMANTIC_ID'] = self::IsStatusExists($arFields['STATUS_ID'])
+			? self::GetSemanticID($arFields['STATUS_ID'])
+			: Bitrix\Crm\PhaseSemantics::UNDEFINED;
 
 		if (isset($arFields['DATE_CLOSED']))
 			unset($arFields['DATE_CLOSED']);
@@ -1356,29 +1437,26 @@ class CAllCrmLead
 		//endregion
 
 		//region Synchronize CustomerType
-		if(self::GetSemanticID($arFields['STATUS_ID']) === Bitrix\Crm\PhaseSemantics::PROCESS)
+		$customerType = isset($arFields['IS_RETURN_CUSTOMER']) && $arFields['IS_RETURN_CUSTOMER'] === 'Y'
+			? CustomerType::RETURNING : CustomerType::GENERAL;
+
+		$effectiveCustomerType = CustomerType::GENERAL;
+
+		$companyID = isset($arFields['COMPANY_ID']) ? (int)$arFields['COMPANY_ID'] : 0;
+		if($companyID > 0)
 		{
-			$customerType = isset($arFields['IS_RETURN_CUSTOMER']) && $arFields['IS_RETURN_CUSTOMER'] === 'Y'
-				? CustomerType::RETURNING : CustomerType::GENERAL;
+			$effectiveCustomerType = CustomerType::RETURNING;
+		}
+		elseif((is_array($contactIDs) && !empty($contactIDs))
+			|| !is_array($contactIDs) && !empty($originalContactIDs)
+		)
+		{
+			$effectiveCustomerType = CustomerType::RETURNING;
+		}
 
-			$effectiveCustomerType = CustomerType::GENERAL;
-
-			$companyID = isset($arFields['COMPANY_ID']) ? (int)$arFields['COMPANY_ID'] : 0;
-			if($companyID > 0)
-			{
-				$effectiveCustomerType = CustomerType::RETURNING;
-			}
-			elseif((is_array($contactIDs) && !empty($contactIDs))
-				|| !is_array($contactIDs) && !empty($originalContactIDs)
-			)
-			{
-				$effectiveCustomerType = CustomerType::RETURNING;
-			}
-
-			if($customerType !== $effectiveCustomerType)
-			{
-				$arFields['IS_RETURN_CUSTOMER'] = $effectiveCustomerType === CustomerType::RETURNING ? 'Y' : 'N';
-			}
+		if($customerType !== $effectiveCustomerType)
+		{
+			$arFields['IS_RETURN_CUSTOMER'] = $effectiveCustomerType === CustomerType::RETURNING ? 'Y' : 'N';
 		}
 		//endregion
 
@@ -1405,14 +1483,19 @@ class CAllCrmLead
 		unset($arFields['ID']);
 		$ID = intval($DB->Add('b_crm_lead', $arFields, array(), '', false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__));
 		//Append ID to TITLE if required
-		if($ID > 0 && substr(rtrim($arFields['TITLE']), -1) === '#')
+		if($ID > 0 && $arFields['TITLE'] === self::GetDefaultTitle())
 		{
-			$arFields['TITLE'] .= $ID;
+			$arFields['TITLE'] = self::GetDefaultTitle($ID);
 			$sUpdate = $DB->PrepareUpdate('b_crm_lead', array('TITLE' => $arFields['TITLE']));
 			if(strlen($sUpdate) > 0)
 			{
 				$DB->Query("UPDATE b_crm_lead SET {$sUpdate} WHERE ID = {$ID}", false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
 			};
+		}
+
+		if(defined('BX_COMP_MANAGED_CACHE'))
+		{
+			$GLOBALS['CACHE_MANAGER']->CleanDir('b_crm_lead');
 		}
 
 		$arFields['ID'] = $ID;
@@ -1472,10 +1555,10 @@ class CAllCrmLead
 
 		//Statistics & History -->
 		Bitrix\Crm\Statistics\LeadSumStatisticEntry::register($ID, $arFields);
-		Bitrix\Crm\History\LeadStatusHistoryEntry::register($ID, $arFields, array('IS_NEW' => true));
+		Bitrix\Crm\History\LeadStatusHistoryEntry::register($ID, $arFields, array('IS_NEW' => !$isRestoration));
 		if($arFields['STATUS_ID'] === 'CONVERTED')
 		{
-			Bitrix\Crm\Statistics\LeadConversionStatisticsEntry::register($ID, $arFields, array('IS_NEW' => true));
+			Bitrix\Crm\Statistics\LeadConversionStatisticsEntry::register($ID, $arFields, array('IS_NEW' => !$isRestoration));
 		}
 		//Bitrix\Crm\Statistics\LeadProcessStatisticsEntry::register($ID, $arFields, array('IS_NEW' => true));
 		//<-- Statistics & History
@@ -1518,8 +1601,8 @@ class CAllCrmLead
 			);
 		}
 
-		// add utm fields
-		UtmTable::addEntityUtmFromFields(CCrmOwnerType::Lead, $ID, $arFields);
+		// tracking of entity
+		Tracking\Entity::onAfterAdd(CCrmOwnerType::Lead, $ID, $arFields);
 
 		//region Save contacts
 		if(!empty($contactBindings))
@@ -1730,6 +1813,7 @@ class CAllCrmLead
 		{
 			$options = array();
 		}
+		$isSystemAction = isset($options['IS_SYSTEM_ACTION']) && $options['IS_SYSTEM_ACTION'];
 
 		$arFilterTmp = array('ID' => $ID);
 		if (!$this->bCheckPermission)
@@ -1764,7 +1848,14 @@ class CAllCrmLead
 			unset($arFields['DATE_MODIFY']);
 		}
 
-		$arFields['~DATE_MODIFY'] = $DB->CurrentTimeFunction();
+		if(!$isSystemAction)
+		{
+			$arFields['~DATE_MODIFY'] = $DB->CurrentTimeFunction();
+			if(!isset($arFields['MODIFY_BY_ID']) || $arFields['MODIFY_BY_ID'] <= 0)
+			{
+				$arFields['MODIFY_BY_ID'] = $iUserId;
+			}
+		}
 
 		if (isset($arFields['DATE_CLOSED']))
 		{
@@ -1776,11 +1867,6 @@ class CAllCrmLead
 			self::EnsureStatusesLoaded();
 			if (in_array($arFields['STATUS_ID'], self::$LEAD_STATUSES_BY_GROUP['FINISHED']))
 				$arFields['~DATE_CLOSED'] = $DB->CurrentTimeFunction();
-		}
-
-		if(!isset($arFields['MODIFY_BY_ID']) || $arFields['MODIFY_BY_ID'] <= 0)
-		{
-			$arFields['MODIFY_BY_ID'] = $iUserId;
 		}
 
 		if(isset($arFields['ASSIGNED_BY_ID']) && $arFields['ASSIGNED_BY_ID'] <= 0)
@@ -1821,10 +1907,6 @@ class CAllCrmLead
 				$arFields['ID'] = $ID;
 			}
 
-			$originalObserverIDs = Crm\Observer\ObserverManager::getEntityObserverIDs(CCrmOwnerType::Lead, $ID);
-			$observerIDs = isset($arFields['OBSERVER_IDS']) && is_array($arFields['OBSERVER_IDS'])
-				? $arFields['OBSERVER_IDS'] : null;
-
 			$enableSystemEvents = !isset($options['ENABLE_SYSTEM_EVENTS']) || $options['ENABLE_SYSTEM_EVENTS'] === true;
 			//region Before update event
 			if($enableSystemEvents)
@@ -1852,6 +1934,9 @@ class CAllCrmLead
 			$arAttr = array();
 			$arAttr['STATUS_ID'] = !empty($arFields['STATUS_ID']) ? $arFields['STATUS_ID'] : $arRow['STATUS_ID'];
 
+			$originalObserverIDs = Crm\Observer\ObserverManager::getEntityObserverIDs(CCrmOwnerType::Lead, $ID);
+			$observerIDs = isset($arFields['OBSERVER_IDS']) && is_array($arFields['OBSERVER_IDS'])
+				? $arFields['OBSERVER_IDS'] : null;
 			if($observerIDs !== null && count($observerIDs) > 0)
 			{
 				$arAttr['CONCERNED_USER_IDS'] = $observerIDs;
@@ -1861,11 +1946,13 @@ class CAllCrmLead
 				$arAttr['CONCERNED_USER_IDS'] = $originalObserverIDs;
 			}
 
-			//region Semantic ID depends on Stage ID and can't be assigned directly
+			//region Semantic ID depends on Status ID and can't be assigned directly
 			$syncStatusSemantics = isset($options['SYNCHRONIZE_STATUS_SEMANTICS']) && $options['SYNCHRONIZE_STATUS_SEMANTICS'];
 			if(isset($arFields['STATUS_ID']) && ($syncStatusSemantics || $arFields['STATUS_ID'] !== $arRow['STATUS_ID']))
 			{
-				$arFields['STATUS_SEMANTIC_ID'] = self::GetSemanticID($arFields['STATUS_ID']);
+				$arFields['STATUS_SEMANTIC_ID'] = self::IsStatusExists($arFields['STATUS_ID'])
+					? self::GetSemanticID($arFields['STATUS_ID'])
+					: Bitrix\Crm\PhaseSemantics::UNDEFINED;
 			}
 			else
 			{
@@ -1875,12 +1962,16 @@ class CAllCrmLead
 
 			$arAttr['OPENED'] = !empty($arFields['OPENED']) ? $arFields['OPENED'] : $arRow['OPENED'];
 			$arEntityAttr = self::BuildEntityAttr($assignedByID, $arAttr);
-			$sEntityPerm = $this->cPerms->GetPermType('LEAD', 'WRITE', $arEntityAttr);
-			$this->PrepareEntityAttrs($arEntityAttr, $sEntityPerm);
-			//Prevent 'OPENED' field change by user restricted by BX_CRM_PERM_OPEN permission
-			if($sEntityPerm === BX_CRM_PERM_OPEN && isset($arFields['OPENED']) && $arFields['OPENED'] !== 'Y' && $assignedByID !== $iUserId)
+			if($this->bCheckPermission)
 			{
-				$arFields['OPENED'] = 'Y';
+				$sEntityPerm = $this->cPerms->GetPermType('LEAD', 'WRITE', $arEntityAttr);
+				//HACK: Ensure that entity accessible for user restricted by BX_CRM_PERM_OPEN
+				$this->PrepareEntityAttrs($arEntityAttr, $sEntityPerm);
+				//HACK: Prevent 'OPENED' field change by user restricted by BX_CRM_PERM_OPEN permission
+				if($sEntityPerm === BX_CRM_PERM_OPEN && isset($arFields['OPENED']) && $arFields['OPENED'] !== 'Y' && $assignedByID !== $iUserId)
+				{
+					$arFields['OPENED'] = 'Y';
+				}
 			}
 
 			if (isset($arFields['ASSIGNED_BY_ID']) && $arRow['ASSIGNED_BY_ID'] != $arFields['ASSIGNED_BY_ID'])
@@ -1962,7 +2053,9 @@ class CAllCrmLead
 			//endregion
 
 			//region Synchronize CustomerType
-			if(self::GetSemanticID($statusID) === Bitrix\Crm\PhaseSemantics::PROCESS)
+			if(self::GetSemanticID($statusID) !== Bitrix\Crm\PhaseSemantics::SUCCESS &&
+				!Bitrix\Crm\History\LeadStatusHistoryEntry::checkStatus($ID, 'CONVERTED')
+			)
 			{
 				$effectiveCustomerType = CustomerType::GENERAL;
 				if($companyID > 0)
@@ -2626,6 +2719,14 @@ class CAllCrmLead
 			//endregion
 
 			\Bitrix\Crm\Kanban\SupervisorTable::sendItem($ID, CCrmOwnerType::LeadName, 'kanban_update');
+
+			$statusSemanticsId = $arFields['STATUS_SEMANTIC_ID'] ?: $arRow['STATUS_SEMANTIC_ID'];
+			if(Crm\Ml\Scoring::isMlAvailable() && !Crm\PhaseSemantics::isFinal($statusSemanticsId))
+			{
+				Crm\Ml\Scoring::queuePredictionUpdate(CCrmOwnerType::Lead, $ID, [
+					'EVENT_TYPE' => Crm\Ml\Scoring::EVENT_ENTITY_UPDATE
+				]);
+			}
 		}
 
 		return $bResult;
@@ -2735,6 +2836,12 @@ class CAllCrmLead
 		$obRes = $DB->Query($sSql, false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
 		if (is_object($obRes) && $obRes->AffectedRowsCount() > 0)
 		{
+			if(defined('BX_COMP_MANAGED_CACHE'))
+			{
+				$GLOBALS['CACHE_MANAGER']->CleanDir('b_crm_lead');
+				$GLOBALS['CACHE_MANAGER']->ClearByTag('b_crm_lead');
+			}
+
 			CCrmSearch::DeleteSearch('LEAD', $ID);
 			Bitrix\Crm\Kanban\SortTable::clearEntity($ID, \CCrmOwnerType::LeadName);
 
@@ -2823,6 +2930,7 @@ class CAllCrmLead
 				Crm\Timeline\TimelineEntry::deleteByOwner(CCrmOwnerType::Lead, $ID);
 				Crm\Pseudoactivity\WaitEntry::deleteByOwner(CCrmOwnerType::Lead, $ID);
 				Crm\Observer\ObserverManager::deleteByOwner(CCrmOwnerType::Lead, $ID);
+				Crm\Ml\Scoring::onEntityDelete(CCrmOwnerType::Lead, $ID);
 
 				Crm\Integration\Im\Chat::deleteChat(
 					array(
@@ -3736,6 +3844,12 @@ class CAllCrmLead
 		return $result;
 	}
 
+	public static function IsStatusExists($statusID)
+	{
+		$statusList = self::GetStatuses();
+		return isset($statusList[$statusID]);
+	}
+
 	public static function IsStatusFinished($statusID)
 	{
 		self::EnsureStatusesLoaded();
@@ -3789,6 +3903,43 @@ class CAllCrmLead
 
 		return (self::GetStatusSort($statusID) > self::GetFinalStatusSort())
 			? Bitrix\Crm\PhaseSemantics::FAILURE : Bitrix\Crm\PhaseSemantics::PROCESS;
+	}
+
+	/**
+	 * Get start Status ID for specified Permission Type.
+	 * If Permission Type is not defined permission check will be disabled.
+	 * @param int $permissionTypeID Permission Type (see \Bitrix\Crm\Security\EntityPermissionType).
+	 * @param CCrmPerms $userPermissions User Permissions
+	 * @return string
+	 */
+	public static function GetStartStatusID($permissionTypeID = 0, CCrmPerms $userPermissions = null)
+	{
+		$statusIDs = array_keys(self::GetStatuses());
+		if(empty($statusIDs))
+		{
+			return '';
+		}
+
+		$permissionType = Bitrix\Crm\Security\EntityPermissionType::resolveName($permissionTypeID);
+		if($permissionType === '')
+		{
+			return $statusIDs[0];
+		}
+
+		if($userPermissions === null)
+		{
+			$userPermissions = CCrmPerms::GetCurrentUserPermissions();
+		}
+
+		foreach($statusIDs as $statusID)
+		{
+			$permission = $userPermissions->GetPermType(self::$TYPE_NAME, $permissionType, array("STATUS_ID{$statusID}"));
+			if($permission !== BX_CRM_PERM_NONE)
+			{
+				return $statusID;
+			}
+		}
+		return '';
 	}
 
 	public static function GetAssociatedIDs($entityTypeID, $entityID)
@@ -4026,15 +4177,30 @@ class CAllCrmLead
 				//<-- History
 
 				//--> Statistics
-				if($enableConversionStatistics
-						&& ($forced || !Bitrix\Crm\Statistics\LeadConversionStatisticsEntry::isRegistered($ID))
-						&& $statusID === 'CONVERTED')
+				if($enableConversionStatistics && $statusID === 'CONVERTED')
 				{
-					Bitrix\Crm\Statistics\LeadConversionStatisticsEntry::register(
-						$ID,
-						$fields,
-						array('IS_NEW' => $isNew)
-					);
+					$isRegistered = false;
+					if($forced)
+					{
+						Bitrix\Crm\Statistics\LeadConversionStatisticsEntry::unregister($ID);
+					}
+					else
+					{
+						$isRegistered = Bitrix\Crm\Statistics\LeadConversionStatisticsEntry::isRegistered($ID);
+					}
+
+					$statusHistory = \Bitrix\Crm\History\LeadStatusHistoryEntry::getLatest($ID);
+					if($statusHistory && ($forced || !$isRegistered))
+					{
+						Bitrix\Crm\Statistics\LeadConversionStatisticsEntry::register(
+							$ID,
+							$fields,
+							array(
+								'IS_NEW' => $isNew,
+								'DATE' => $statusHistory['CREATED_DATE']
+							)
+						);
+					}
 				}
 				//<-- Statistics
 			}
@@ -4084,7 +4250,18 @@ class CAllCrmLead
 			}
 
 			$updateFields = array('STATUS_ID' => isset($fields['STATUS_ID']) ? $fields['STATUS_ID'] : '');
-			$entity->Update($ID, $updateFields, false, false, array('SYNCHRONIZE_STATUS_SEMANTICS' => true, 'REGISTER_SONET_EVENT' => false));
+			$entity->Update(
+				$ID,
+				$updateFields,
+				false,
+				false,
+				array(
+					'SYNCHRONIZE_STATUS_SEMANTICS' => true,
+					'REGISTER_SONET_EVENT' => false,
+					'ENABLE_SYSTEM_EVENTS' => false,
+					'IS_SYSTEM_ACTION' => true
+				)
+			);
 		}
 	}
 
@@ -4126,7 +4303,8 @@ class CAllCrmLead
 				false,
 				array(
 					'REGISTER_SONET_EVENT' => false,
-					'ENABLE_SYSTEM_EVENTS' => false
+					'ENABLE_SYSTEM_EVENTS' => false,
+					'IS_SYSTEM_ACTION' => true
 				)
 			);
 		}
@@ -4134,13 +4312,38 @@ class CAllCrmLead
 
 	public static function ProcessContactDeletion($contactID)
 	{
-		global $DB;
-		$DB->Query("UPDATE b_crm_lead SET CONTACT_ID = NULL WHERE CONTACT_ID = {$contactID}", false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
+		//We have to call update for each entity for synchronize customer type.
+		$entity = new CCrmLead(false);
+		foreach(\Bitrix\Crm\Binding\LeadContactTable::getContactLeadIDs($contactID) as $ID)
+		{
+			$fields = array(
+				'CONTACT_IDS' => array_filter(
+					\Bitrix\Crm\Binding\LeadContactTable::getLeadContactIDs($ID),
+					function($currentContactID) use($contactID)
+					{
+						return $currentContactID != $contactID;
+					}
+				)
+			);
+			$entity->Update($ID, $fields);
+		}
 	}
 	public static function ProcessCompanyDeletion($companyID)
 	{
-		global $DB;
-		$DB->Query("UPDATE b_crm_lead SET COMPANY_ID = NULL WHERE COMPANY_ID = {$companyID}", false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
+		$dbResult = self::GetListEx(
+			array(),
+			array('=COMPANY_ID' => $companyID, 'CHECK_PERMISSIONS' => 'N'),
+			false,
+			false,
+			array('ID')
+		);
+
+		$entity = new CCrmLead(false);
+		while($fields = $dbResult->Fetch())
+		{
+			$fields['COMPANY_ID'] = 0;
+			$entity->Update($fields['ID'], $fields);
+		}
 	}
 	public static function ProcessStatusModification(array $fields)
 	{
@@ -4166,6 +4369,48 @@ class CAllCrmLead
 		{
 			Crm\Attribute\FieldAttributeManager::processPhaseDeletion($statusID, \CCrmOwnerType::Lead, '');
 		}
+	}
+
+	protected static function SynchronizeCustomerType($ID, array $fields = null)
+	{
+		if(!is_array($fields))
+		{
+			$dbResult = self::GetListEx(
+				array(),
+				array('ID' => $ID, 'CHECK_PERMISSIONS' => 'N'),
+				false,
+				false,
+				array('ID', 'IS_RETURN_CUSTOMER', 'STATUS_ID', 'COMPANY_ID', 'CONTACT_ID')
+			);
+
+			$fields = $dbResult->Fetch();
+		}
+
+		if(!is_array($fields))
+		{
+			return;
+		}
+
+		$customerType = isset($fields['IS_RETURN_CUSTOMER']) && $fields['IS_RETURN_CUSTOMER'] === 'Y'
+			? CustomerType::RETURNING : CustomerType::GENERAL;
+
+		$effectiveCustomerType = CustomerType::GENERAL;
+		if(
+			(isset($fields['COMPANY_ID']) && $fields['COMPANY_ID'] > 0)
+			|| (isset($fields['CONTACT_ID']) && $fields['CONTACT_ID'] > 0)
+		)
+		{
+			$effectiveCustomerType = CustomerType::RETURNING;
+		}
+
+		if($customerType === $effectiveCustomerType)
+		{
+			return;
+		}
+
+		$entity = new CCrmLead(false);
+		$updateFields = array('IS_RETURN_CUSTOMER' => $effectiveCustomerType === CustomerType::RETURNING ? 'Y' : 'N');
+		$entity->Update($ID, $updateFields, false, false);
 	}
 
 	public static function GetSubsidiaryEntities($ID)
@@ -4215,9 +4460,79 @@ class CAllCrmLead
 		);
 	}
 
-	public static function GetDefaultTitle()
+	public static function GetDefaultTitleTemplate()
 	{
-		return GetMessage('CRM_LEAD_DEFAULT_TITLE');
+		return GetMessage('CRM_LEAD_DEFAULT_TITLE_TEMPLATE');
+	}
+
+	public static function SynchronizeMultifieldMarkers($sourceID, array $fields = null)
+	{
+		global $DB;
+
+		if($sourceID <= 0)
+		{
+			return;
+		}
+
+		if($fields === null)
+		{
+			$dbResult = self::GetListEx(
+				array(),
+				array('=ID' => $sourceID, 'CHECK_PERMISSIONS' => 'N'),
+				false,
+				false,
+				array('ID', 'HAS_EMAIL', 'HAS_PHONE', 'HAS_IMOL')
+			);
+
+			if(is_object($dbResult))
+			{
+				$fields = $dbResult->Fetch();
+			}
+		}
+
+		if($fields === null)
+		{
+			return;
+		}
+
+		$multifields = isset($fields['FM']) && is_array($fields['FM']) ? $fields['FM'] : null;
+		if($multifields === null)
+		{
+			$multifields = DuplicateCommunicationCriterion::prepareEntityMultifieldValues(
+				CCrmOwnerType::Lead,
+				$sourceID
+			);
+		}
+
+		$hasEmail = CCrmFieldMulti::HasValues($multifields, CCrmFieldMulti::EMAIL) ? 'Y' : 'N';
+		$hasPhone = CCrmFieldMulti::HasValues($multifields, CCrmFieldMulti::PHONE) ? 'Y' : 'N';
+		$hasImol = CCrmFieldMulti::HasImolValues($multifields) ? 'Y' : 'N';
+
+		if(!isset($fields['HAS_EMAIL']) || $fields['HAS_EMAIL'] !== $hasEmail ||
+			!isset($fields['HAS_PHONE']) || $fields['HAS_PHONE'] !== $hasPhone ||
+			!isset($fields['HAS_IMOL']) || $fields['HAS_IMOL'] !== $hasImol
+		)
+		{
+			$DB->Query("UPDATE b_crm_lead SET HAS_EMAIL = '{$hasEmail}', HAS_PHONE = '{$hasPhone}', HAS_IMOL = '{$hasImol}' WHERE ID = {$sourceID}", false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
+		}
+	}
+
+	public static function GetDefaultTitle($number = '')
+	{
+		return GetMessage('CRM_LEAD_DEFAULT_TITLE_TEMPLATE', array('%NUMBER%' => $number));
+	}
+
+	public static function existsEntityWithStatus($statusId)
+	{
+		$queryObject = self::getListEx(
+			['ID' => 'DESC'],
+			['STATUS_ID' => $statusId, 'CHECK_PERMISSIONS' => 'N'],
+			false,
+			false,
+			['ID']
+		);
+
+		return (bool) $queryObject->fetch();
 	}
 }
 ?>

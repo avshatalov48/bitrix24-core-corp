@@ -190,7 +190,13 @@ BX.DocumentGenerator.UploadTemplate.init = function(params)
 			event.preventDefault();
 			if(BX.SidePanel)
 			{
-				BX.SidePanel.Instance.open(this.addRegionUrl, {width: 480, cacheable: false});
+				BX.SidePanel.Instance.open(this.addRegionUrl, {
+					width: 480,
+					cacheable: false,
+					events: {
+						onClose: BX.DocumentGenerator.UploadTemplate.reloadRegions
+					}
+				});
 			}
 			else
 			{
@@ -219,7 +225,7 @@ BX.DocumentGenerator.UploadTemplate.init = function(params)
 
 	BX.bind(BX(this.regionSelectorId), 'change', BX.proxy(function()
 	{
-		if(this.regions[BX(this.regionSelectorId).value] && this.regions[BX(this.regionSelectorId).value].ID > 0)
+		if(this.regions[BX(this.regionSelectorId).value] && this.regions[BX(this.regionSelectorId).value].id > 0)
 		{
 			BX.show(BX(this.editRegionNode));
 		}
@@ -233,9 +239,9 @@ BX.DocumentGenerator.UploadTemplate.init = function(params)
 	{
 		event.preventDefault();
 		var editUrl, regionId = false;
-		if(this.regions[BX(this.regionSelectorId).value] && this.regions[BX(this.regionSelectorId).value].ID > 0)
+		if(this.regions[BX(this.regionSelectorId).value] && this.regions[BX(this.regionSelectorId).value].id > 0)
 		{
-			regionId = this.regions[BX(this.regionSelectorId).value].ID;
+			regionId = this.regions[BX(this.regionSelectorId).value].id;
 		}
 		if(regionId)
 		{
@@ -247,7 +253,13 @@ BX.DocumentGenerator.UploadTemplate.init = function(params)
 		}
 		if(BX.SidePanel)
 		{
-			BX.SidePanel.Instance.open(editUrl, {width: 480, cacheable: false});
+			BX.SidePanel.Instance.open(editUrl, {
+				width: 480,
+				cacheable: false,
+				events: {
+					onClose: BX.DocumentGenerator.UploadTemplate.reloadRegions
+				}
+			});
 		}
 		else
 		{
@@ -775,6 +787,63 @@ BX.DocumentGenerator.UploadTemplate.stopProgress = function()
 	this.getLoader().hide();
 	BX(this.saveButton).disabled = false;
 	this.progress = false;
+};
+
+BX.DocumentGenerator.UploadTemplate.reloadRegions = function()
+{
+	BX.DocumentGenerator.UploadTemplate.startProgress();
+	BX.ajax.runAction('documentgenerator.region.list').then(function(response)
+	{
+		BX.DocumentGenerator.UploadTemplate.stopProgress();
+		var selectedRegion, regions = [], code, i;
+		selectedRegion = BX(BX.DocumentGenerator.UploadTemplate.regionSelectorId).value;
+		if(BX.type.isNotEmptyObject(response.data.regions))
+		{
+			BX.DocumentGenerator.UploadTemplate.regions = response.data.regions;
+			var defaultRegions = []; var customRegions = [];
+			for(code in response.data.regions)
+			{
+				if(response.data.regions.hasOwnProperty(code))
+				{
+					if(parseInt(code) > 0)
+					{
+						customRegions.push(response.data.regions[code]);
+					}
+					else
+					{
+						defaultRegions.push(response.data.regions[code]);
+					}
+				}
+			}
+			for(i = 0; i < defaultRegions.length; i++)
+			{
+				regions.push(defaultRegions[i]);
+			}
+			for(i = 0; i < customRegions.length; i++)
+			{
+				regions.push(customRegions[i]);
+			}
+		}
+		BX.cleanNode(BX(BX.DocumentGenerator.UploadTemplate.regionSelectorId), false);
+		for(i = 0; i < regions.length; i++)
+		{
+			var attrs = {
+				value: regions[i]['code'],
+			};
+			if(selectedRegion === regions[i]['code'])
+			{
+				attrs['selected'] = 'selected';
+			}
+			BX(BX.DocumentGenerator.UploadTemplate.regionSelectorId).appendChild(BX.create('option', {
+				attrs: attrs,
+				text: regions[i]['title']
+			}));
+		}
+	}, function(response)
+	{
+		BX.DocumentGenerator.UploadTemplate.stopProgress();
+		BX.DocumentGenerator.UploadTemplate.showUploadError(response.errors.pop().message);
+	});
 };
 
 })(window);

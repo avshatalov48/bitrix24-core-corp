@@ -54,9 +54,10 @@ class LeadSearchContentBuilder extends SearchContentBuilder
 	/**
 	 * Prepare search map.
 	 * @param array $fields Entity Fields.
+	 * @param array|null $options Options.
 	 * @return SearchMap
 	 */
-	protected function prepareSearchMap(array $fields)
+	protected function prepareSearchMap(array $fields, array $options = null)
 	{
 		$map = new SearchMap();
 
@@ -67,23 +68,24 @@ class LeadSearchContentBuilder extends SearchContentBuilder
 		}
 
 		$map->add($entityID);
-		$map->addField($fields, 'ID');
-		$map->addField($fields, 'TITLE');
 
 		$title = isset($fields['TITLE']) ? $fields['TITLE'] : '';
 		if($title !== '')
 		{
-			$delimiterIndex = strpos($title, '#');
-			if($delimiterIndex !== false)
+			$map->addText($title);
+			$map->addText(SearchEnvironment::prepareSearchContent($title));
+
+			$customerNumber = $this->parseCustomerNumber($title, \CCrmLead::GetDefaultTitleTemplate());
+			if($customerNumber != $entityID)
 			{
-				$map->addTextFragments(substr($title, $delimiterIndex + 1));
+				$map->addTextFragments($customerNumber);
 			}
 		}
 
 		$map->addField($fields, 'LAST_NAME');
 		$map->addField($fields, 'NAME');
 		$map->addField($fields, 'SECOND_NAME');
-
+		$map->addField($fields, 'COMPANY_TITLE');
 		$map->addField($fields, 'OPPORTUNITY');
 		$map->add(
 			\CCrmCurrency::GetCurrencyName(

@@ -6,7 +6,7 @@ global $USER_FIELD_MANAGER;
 $arResult["IS_BITRIX24"] = CModule::IncludeModule("bitrix24");
 if (
 	!$arResult["IS_BITRIX24"] && in_array("GROUP_ID", $arParams['EDITABLE_FIELDS'])
-	|| ($arResult["IS_BITRIX24"] && \CBitrix24::isIntegrator($USER->GetID()))
+	|| ($arResult["IS_BITRIX24"] && \Bitrix\Bitrix24\Integrator::isIntegrator($USER->GetID()))
 )
 {
 	$key = array_search("GROUP_ID", $arParams['EDITABLE_FIELDS']);

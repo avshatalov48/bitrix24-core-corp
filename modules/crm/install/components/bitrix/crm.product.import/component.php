@@ -27,6 +27,7 @@ $arResult['HEADERS'] = array(
 	array('id' => 'ID', 'name' => 'ID'),
 	array('id' => 'XML_ID', 'name' => GetMessage('CRM_PRODUCT_IMP_COL_XML_ID')),
 	array('id' => 'NAME', 'name' => GetMessage('CRM_PRODUCT_IMP_COL_NAME')),
+	array('id' => 'CODE', 'name' => GetMessage('CRM_PRODUCT_IMP_COL_CODE')),
 	array('id' => 'DESCRIPTION', 'name' => GetMessage('CRM_PRODUCT_IMP_COL_DESCRIPTION')),
 	array('id' => 'DESCRIPTION_TYPE', 'name' => GetMessage('CRM_PRODUCT_IMP_COL_DESCRIPTION_TYPE')),
 	array('id' => 'ACTIVE', 'name' => GetMessage('CRM_PRODUCT_IMP_COL_ACTIVE')),
@@ -99,6 +100,7 @@ if(isset($_REQUEST['getSample']) && $_REQUEST['getSample'] == 'csv')
 		$arDemo[$i] = array(
 			'ID' => '1001',
 			'NAME' => ($i === 0) ? GetMessage('CRM_PRODUCT_IMP_SAMPLE_NAME') : '',
+			'CODE' => ($i === 0) ? 'imported_product' : '',
 			'DESCRIPTION' => ($i === 0) ? GetMessage('CRM_PRODUCT_IMP_SAMPLE_DESCRIPTION') : '',
 			'ACTIVE' => ($i === 0) ? GetMessage('MAIN_YES') : '',
 			'CURRENCY_ID' => ($i === 0) ? CCrmCurrency::GetBaseCurrencyID() : '',
@@ -978,16 +980,6 @@ else if (isset($_REQUEST['import']) && isset($_SESSION['CRM_IMPORT_FILE']))
 				unset($strLevel, $arProduct[$key]);
 			}
 		}
-		$arProduct['SECTION_ID'] = $sectionHelper->ImportSectionArray($arProductSections);
-
-		if (isset($arProduct['DESCRIPTION_TYPE'])
-			&& $arProduct['DESCRIPTION_TYPE'] === 'html'
-			&& isset($arProduct['DESCRIPTION'])
-			&& is_string($arProduct['DESCRIPTION'])
-			&& $arProduct['DESCRIPTION'] !== '')
-		{
-			$arProduct['DESCRIPTION'] = \Bitrix\Crm\Format\TextHelper::sanitizeHtml($arProduct['DESCRIPTION']);
-		}
 
 		$row = null;
 		$xmlId = '';
@@ -1015,6 +1007,20 @@ else if (isset($_REQUEST['import']) && isset($_SESSION['CRM_IMPORT_FILE']))
 			}
 		}
 		unset($res, $row, $xmlId);
+
+		if ($productId <= 0 || (is_array($arProductSections) && !empty($arProductSections)))
+		{
+			$arProduct['SECTION_ID'] = $sectionHelper->ImportSectionArray($arProductSections);
+		}
+
+		if (isset($arProduct['DESCRIPTION_TYPE'])
+			&& $arProduct['DESCRIPTION_TYPE'] === 'html'
+			&& isset($arProduct['DESCRIPTION'])
+			&& is_string($arProduct['DESCRIPTION'])
+			&& $arProduct['DESCRIPTION'] !== '')
+		{
+			$arProduct['DESCRIPTION'] = \Bitrix\Crm\Format\TextHelper::sanitizeHtml($arProduct['DESCRIPTION']);
+		}
 
 		$err = null;
 		if ($productId > 0)

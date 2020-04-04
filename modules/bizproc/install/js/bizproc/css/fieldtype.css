@@ -68,6 +68,7 @@
 	margin-left: -27px;
 	vertical-align: middle;
 	opacity: 0;
+	margin-right: 15px;
 }
 
 .bizproc-type-control-int,
@@ -77,11 +78,12 @@
 
 .bizproc-type-control-bool,
 .bizproc-type-control-select,
-.bizproc-type-control-internalselect {
+.bizproc-type-control-internalselect,
+.bizproc-type-control-date-lc {
 	display: inline-block;
 	min-width: 155px;
 	padding: 10px 30px 10px 10px;
-	height: 38px;
+	height: 36px;
 	outline: none;
 	margin: 0 10px 0 0;
 	font: 13px "HelveticaNeue", Arial, Helvetica, sans-serif;
@@ -104,7 +106,14 @@
 	-moz-appearance: none;
 	-ms-appearance: none;
 	appearance: none !important;
-	vertical-align: middle;
+	vertical-align: top;
+}
+.bizproc-type-control-date-lc {
+	max-width: 180px !important;
+}
+.bizproc-type-control-date-lc-multiple {
+	margin-top: 1px;
+	margin-bottom: 1px;
 }
 
 .bizproc-type-control-bool.bizproc-type-control-multiple,

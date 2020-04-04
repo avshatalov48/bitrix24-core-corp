@@ -139,32 +139,68 @@ class CProductQueryBuilder
 	 * @param string $field
 	 * @return bool
 	 */
+	public static function isCatalogFilterField($field)
+	{
+		return self::isEntityFilterField(
+			$field,
+			[
+				self::ENTITY_PRODUCT => true,
+				self::ENTITY_OLD_PRODUCT => true,
+				self::ENTITY_OLD_PRICE => true,
+				self::ENTITY_PRICE => true,
+				self::ENTITY_FLAT_PRICE => true,
+				self::ENTITY_WARENHOUSE => true,
+				self::ENTITY_FLAT_WAREHNOUSE => true,
+				self::ENTITY_OLD_STORE => true
+			]
+		);
+	}
+
+	/**
+	 * @param string $field
+	 * @return bool
+	 */
+	public static function isProductFilterField($field)
+	{
+		return self::isEntityFilterField(
+			$field,
+			[
+				self::ENTITY_PRODUCT => true,
+				self::ENTITY_OLD_PRODUCT => true
+			]
+		);
+	}
+
+	/**
+	 * @param string $field
+	 * @return bool
+	 */
 	public static function isPriceFilterField($field)
 	{
-		$result = false;
+		return self::isEntityFilterField(
+			$field,
+			[
+				self::ENTITY_OLD_PRICE => true,
+				self::ENTITY_PRICE => true,
+				self::ENTITY_FLAT_PRICE => true
+			]
+		);
+	}
 
-		if (!is_string($field))
-			return $result;
-		if (is_numeric($field))
-			return $result;
-
-		self::initEntityDescription();
-		self::initEntityFields();
-
-		$filterItem = \CIBlock::MkOperationFilter($field);
-		$prepareField = self::parseField($filterItem['FIELD']);
-		if (self::checkPreparedField($prepareField))
-		{
-			if (
-				$prepareField['ENTITY'] == self::ENTITY_OLD_PRICE
-				|| $prepareField['ENTITY'] == self::ENTITY_PRICE
-				|| $prepareField['ENTITY'] == self::ENTITY_FLAT_PRICE
-			)
-				$result = true;
-		}
-		unset($prepareField, $filterItem);
-
-		return $result;
+	/**
+	 * @param string $field
+	 * @return bool
+	 */
+	public static function isWarenhouseFilterField($field)
+	{
+		return self::isEntityFilterField(
+			$field,
+			[
+				self::ENTITY_WARENHOUSE => true,
+				self::ENTITY_FLAT_WAREHNOUSE => true,
+				self::ENTITY_OLD_STORE => true
+			]
+		);
 	}
 
 	/**
@@ -685,7 +721,7 @@ class CProductQueryBuilder
 					'NAME' => 'PRICE_SCALE',
 					'ALIAS' => 'SCALED_PRICE_#ENTITY_ID#',
 					'TYPE' => 'float',
-					'ALLOWED' => self::FIELD_ALLOWED_FILTER|self::FIELD_ALLOWED_ORDER,
+					'ALLOWED' => self::FIELD_ALLOWED_ALL,
 					'ORDER_NULLABLE' => true,
 				],
 				'EXTRA_ID' => [
@@ -1277,6 +1313,38 @@ class CProductQueryBuilder
 	}
 
 	/**
+	 * @param string $field
+	 * @param array $entityList
+	 * @return bool
+	 */
+	private static function isEntityFilterField($field, array $entityList)
+	{
+		$result = false;
+
+		if (!is_string($field))
+			return $result;
+		if (is_numeric($field))
+			return $result;
+
+		self::initEntityDescription();
+		self::initEntityFields();
+
+		$filterItem = \CIBlock::MkOperationFilter($field);
+		$prepareField = self::parseField($filterItem['FIELD']);
+		if (
+			self::checkPreparedField($prepareField)
+			&& self::checkAllowedAction($prepareField['ALLOWED'], self::FIELD_ALLOWED_FILTER)
+		)
+		{
+			if (isset($entityList[$prepareField['ENTITY']]))
+				$result = true;
+		}
+		unset($prepareField, $filterItem);
+
+		return $result;
+	}
+
+	/**
 	 * @param array $field
 	 * @return string
 	 */
@@ -1826,6 +1894,10 @@ class CProductQueryBuilder
 		unset($modifier, $index);
 	}
 
+	/**
+	 * @param array &$list
+	 * @return void
+	 */
 	private static function filterModify(array &$list)
 	{
 		foreach (array_keys($list) as $index)

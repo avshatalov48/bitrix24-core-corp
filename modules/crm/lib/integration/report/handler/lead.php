@@ -2,17 +2,21 @@
 
 namespace Bitrix\Crm\Integration\Report\Handler;
 
+use Bitrix\Crm\History\Entity\LeadStatusHistoryWithSupposedTable;
 use Bitrix\Crm\Integration\Report\View\ColumnFunnel;
+use Bitrix\Crm\Integration\Report\View\FunnelGrid;
 use Bitrix\Crm\LeadTable;
 use Bitrix\Crm\Security\EntityAuthorization;
 use Bitrix\Crm\StatusTable;
 use Bitrix\Crm\UtmTable;
+use Bitrix\Main\Application;
 use Bitrix\Main\Entity\Query;
 use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ORM\Fields\ExpressionField;
-use Bitrix\Main\Type\DateTime;
+use Bitrix\Main\Web\Uri;
 use Bitrix\Report\VisualConstructor\Fields\Valuable\DropDown;
+use Bitrix\Report\VisualConstructor\Fields\Valuable\Hidden;
 use Bitrix\Report\VisualConstructor\IReportMultipleData;
 use Bitrix\Report\VisualConstructor\IReportMultipleGroupedData;
 use Bitrix\Report\VisualConstructor\IReportSingleData;
@@ -25,29 +29,16 @@ use Bitrix\Report\VisualConstructor\IReportSingleData;
 class Lead extends Base implements IReportSingleData, IReportMultipleData, IReportMultipleGroupedData
 {
 	const WHAT_WILL_CALCULATE_LEAD_COUNT = 'LEAD_COUNT';
-	const WHAT_WILL_CALCULATE_GOOD_LEAD_COUNT = 'LEAD_COUNT';
+	const WHAT_WILL_CALCULATE_GOOD_LEAD_COUNT = 'GOOD_LEAD_COUNT';
 	const WHAT_WILL_CALCULATE_LEAD_CONVERSION = 'LEAD_CONVERSION';
 	const WHAT_WILL_CALCULATE_LEAD_LOSES = 'LEAD_LOSES';
 	const WHAT_WILL_CALCULATE_ACTIVE_LEAD_COUNT = 'ACTIVE_LEAD_COUNT';
 	const WHAT_WILL_CALCULATE_CONVERTED_LEAD_COUNT = 'CONVERTED_LEAD_COUNT';
 	const WHAT_WILL_CALCULATE_LOST_LEAD_COUNT = 'LOST_LEAD_COUNT';
 
-	const WHAT_WILL_CALCULATE_NEW_LEAD_COUNT = 'NEW_LEAD_COUNT';
-	const WHAT_WILL_CALCULATE_NEW_GOOD_LEAD_COUNT = 'NEW_GOOD_LEAD_COUNT';
-	const WHAT_WILL_CALCULATE_NEW_LEAD_CONVERSION = 'NEW_LEAD_CONVERSION';
-	const WHAT_WILL_CALCULATE_NEW_LEAD_LOSES = 'NEW_LEAD_LOSES';
-	const WHAT_WILL_CALCULATE_NEW_ACTIVE_LEAD_COUNT = 'NEW_ACTIVE_LEAD_COUNT';
-	const WHAT_WILL_CALCULATE_NEW_CONVERTED_LEAD_COUNT = 'NEW_CONVERTED_LEAD_COUNT';
-	const WHAT_WILL_CALCULATE_NEW_LOST_LEAD_COUNT = 'NEW_LOST_LEAD_COUNT';
+	const WHAT_WILL_CALCULATE_LEAD_DATA_FOR_FUNNEL = 'LEAD_DATA_FOR_FUNNEL';
+	const WHAT_WILL_CALCULATE_SUCCESS_LEAD_DATA_FOR_FUNNEL = 'SUCCESS_LEAD_DATA_FOR_FUNNEL';
 
-
-	const WHAT_WILL_CALCULATE_REPEATED_LEAD_COUNT = 'REPEATED_LEAD_COUNT';
-	const WHAT_WILL_CALCULATE_REPEATED_GOOD_LEAD_COUNT = 'REPEATED_GOOD_LEAD_COUNT';
-	const WHAT_WILL_CALCULATE_REPEATED_LEAD_CONVERSION = 'REPEATED_LEAD_CONVERSION';
-	const WHAT_WILL_CALCULATE_REPEATED_LEAD_LOSES = 'REPEATED_LEAD_LOSES';
-	const WHAT_WILL_CALCULATE_REPEATED_ACTIVE_LEAD_COUNT = 'REPEATED_ACTIVE_LEAD_COUNT';
-	const WHAT_WILL_CALCULATE_REPEATED_CONVERTED_LEAD_COUNT = 'REPEATED_CONVERTED_LEAD_COUNT';
-	const WHAT_WILL_CALCULATE_REPEATED_LOST_LEAD_COUNT = 'REPEATED_LOST_LEAD_COUNT';
 
 	const GROUPING_BY_STATE = 'STATE';
 	const GROUPING_BY_DATE = 'DATE';
@@ -75,6 +66,13 @@ class Lead extends Base implements IReportSingleData, IReportMultipleData, IRepo
 	protected function collectFormElements()
 	{
 		parent::collectFormElements();
+		$disableSuccessStatusField = new Hidden('disableSuccessStates');
+		$disableSuccessStatusField->setDefaultValue(false);
+		$this->addFormElement($disableSuccessStatusField);
+
+		$shortModeField = new Hidden('shortMode');
+		$shortModeField->setDefaultValue(false);
+		$this->addFormElement($shortModeField);
 	}
 
 
@@ -111,7 +109,7 @@ class Lead extends Base implements IReportSingleData, IReportMultipleData, IRepo
 
 		foreach ($filterParameters as $key => $value)
 		{
-			if ($key == 'TIME_PERIOD' || (strpos($key, 'UF_') === 0))
+			if (in_array($key, ['TIME_PERIOD', 'FIND']) || (strpos($key, 'UF_') === 0))
 			{
 				continue;
 			}
@@ -157,8 +155,6 @@ class Lead extends Base implements IReportSingleData, IReportMultipleData, IRepo
 	 */
 	public function prepare()
 	{
-		$filterParameters = $this->getFilterParameters();
-
 		/** @var DropDown $grouping */
 		$groupingField = $this->getFormElement('groupingBy');
 		$groupingValue = $groupingField ? $groupingField->getValue() : null;
@@ -166,7 +162,8 @@ class Lead extends Base implements IReportSingleData, IReportMultipleData, IRepo
 		$calculateField = $this->getFormElement('calculate');
 		$calculateValue = $calculateField ? $calculateField->getValue() : null;
 
-
+		$disableSuccessStatesField = $this->getFormElement('disableSuccessStates');
+		$disableSuccessStatesValue = $disableSuccessStatesField ? $disableSuccessStatesField->getValue() : false;
 
 		$query = new Query(LeadTable::getEntity());
 
@@ -178,8 +175,8 @@ class Lead extends Base implements IReportSingleData, IReportMultipleData, IRepo
 				$query->addGroup('DATE_CREATE_DAY');
 				break;
 			case self::GROUPING_BY_STATE:
-				$query->addGroup('STATUS_ID');
-				$query->addSelect('STATUS_ID');
+				$query->addSelect('FULL_HISTORY.STATUS_ID', 'STATUS_KEY');
+				$query->addGroup('FULL_HISTORY.STATUS_ID');
 
 				$statusNameListByStatusId = [];
 				foreach ($this->getStatusNameList() as $status)
@@ -204,124 +201,88 @@ class Lead extends Base implements IReportSingleData, IReportMultipleData, IRepo
 				break;
 		}
 
-
-		$query->addSelect(new ExpressionField('VALUE', 'COUNT(*)'));
-
 		switch ($calculateValue)
 		{
-			case self::WHAT_WILL_CALCULATE_REPEATED_GOOD_LEAD_COUNT:
-			case self::WHAT_WILL_CALCULATE_REPEATED_LEAD_COUNT:
-			case self::WHAT_WILL_CALCULATE_REPEATED_LEAD_CONVERSION:
-			case self::WHAT_WILL_CALCULATE_REPEATED_LEAD_LOSES:
-			case self::WHAT_WILL_CALCULATE_REPEATED_ACTIVE_LEAD_COUNT:
-			case self::WHAT_WILL_CALCULATE_REPEATED_CONVERTED_LEAD_COUNT:
-			case self::WHAT_WILL_CALCULATE_REPEATED_LOST_LEAD_COUNT:
-				$query->where('IS_RETURN_CUSTOMER', 'Y');
+			case self::WHAT_WILL_CALCULATE_LEAD_DATA_FOR_FUNNEL:
+			case self::WHAT_WILL_CALCULATE_SUCCESS_LEAD_DATA_FOR_FUNNEL:
+				$query->addSelect(Query::expr()->max('OPPORTUNITY_ACCOUNT'), 'MAX_OPPORTUNITY_ACCOUNT');
+				$query->addSelect('FULL_HISTORY.OWNER_ID', 'FULL_HISTORY_OWNER_ID');
+				$query->addSelect('FULL_HISTORY.IS_SUPPOSED', 'FULL_HISTORY_IS_SUPPOSED');
+				$query->addSelect(Query::expr()->max('FULL_HISTORY.SPENT_TIME'), 'FULL_HISTORY_SPENT_TIME');
+				$query->addSelect(Query::expr()->max('ACCOUNT_CURRENCY_ID'), 'MAX_ACCOUNT_CURRENCY_ID');
 				break;
-			case self::WHAT_WILL_CALCULATE_NEW_LEAD_COUNT:
-			case self::WHAT_WILL_CALCULATE_NEW_GOOD_LEAD_COUNT:
-			case self::WHAT_WILL_CALCULATE_NEW_LEAD_CONVERSION:
-			case self::WHAT_WILL_CALCULATE_NEW_LEAD_LOSES:
-			case self::WHAT_WILL_CALCULATE_NEW_ACTIVE_LEAD_COUNT:
-			case self::WHAT_WILL_CALCULATE_NEW_CONVERTED_LEAD_COUNT:
-			case self::WHAT_WILL_CALCULATE_NEW_LOST_LEAD_COUNT:
-				$query->where('IS_RETURN_CUSTOMER', 'N');
-				break;
+			default:
+				$query->addSelect(new \Bitrix\Main\Entity\ExpressionField('VALUE', 'COUNT(DISTINCT %s)', 'FULL_HISTORY.OWNER_ID'));
 		}
+
+
+
 
 
 
 		switch ($calculateValue)
 		{
 			case self::WHAT_WILL_CALCULATE_GOOD_LEAD_COUNT:
-			case self::WHAT_WILL_CALCULATE_NEW_GOOD_LEAD_COUNT:
-			case self::WHAT_WILL_CALCULATE_REPEATED_GOOD_LEAD_COUNT:
-				$query->whereIn('STATUS_SEMANTIC_ID', ['P', 'S']);
+				$query->whereIn('FULL_HISTORY.STATUS_SEMANTIC_ID', ['P', 'S']);
 				break;
 			case self::WHAT_WILL_CALCULATE_ACTIVE_LEAD_COUNT:
-			case self::WHAT_WILL_CALCULATE_NEW_ACTIVE_LEAD_COUNT:
-			case self::WHAT_WILL_CALCULATE_REPEATED_ACTIVE_LEAD_COUNT:
-				$query->where('STATUS_SEMANTIC_ID', 'P');
+				$query->where('FULL_HISTORY.STATUS_SEMANTIC_ID', 'P');
 				break;
 			case self::WHAT_WILL_CALCULATE_CONVERTED_LEAD_COUNT:
-			case self::WHAT_WILL_CALCULATE_NEW_CONVERTED_LEAD_COUNT:
-			case self::WHAT_WILL_CALCULATE_REPEATED_CONVERTED_LEAD_COUNT:
-				$query->where('STATUS_SEMANTIC_ID', 'S');
+			case self::WHAT_WILL_CALCULATE_SUCCESS_LEAD_DATA_FOR_FUNNEL:
+				$query->where('FULL_HISTORY.STATUS_SEMANTIC_ID', 'S');
 				break;
 			case self::WHAT_WILL_CALCULATE_LOST_LEAD_COUNT:
-			case self::WHAT_WILL_CALCULATE_NEW_LOST_LEAD_COUNT:
-			case self::WHAT_WILL_CALCULATE_REPEATED_LOST_LEAD_COUNT:
-				$query->where('STATUS_SEMANTIC_ID', 'F');
+				$query->where('FULL_HISTORY.STATUS_SEMANTIC_ID', 'F');
 				break;
 			case self::WHAT_WILL_CALCULATE_LEAD_CONVERSION:
 			case self::WHAT_WILL_CALCULATE_LEAD_LOSES:
-			case self::WHAT_WILL_CALCULATE_NEW_LEAD_CONVERSION:
-			case self::WHAT_WILL_CALCULATE_NEW_LEAD_LOSES:
-			case self::WHAT_WILL_CALCULATE_REPEATED_LEAD_CONVERSION:
-			case self::WHAT_WILL_CALCULATE_REPEATED_LEAD_LOSES:
-				$query->addGroup('STATUS_SEMANTIC_ID');
-				$query->addSelect('STATUS_SEMANTIC_ID');
+				$query->addGroup('FULL_HISTORY.STATUS_SEMANTIC_ID');
+				$query->addSelect('FULL_HISTORY.STATUS_SEMANTIC_ID', 'STATUS_SEMANTIC_ID_VALUE');
 				break;
 		}
 
-		foreach ($filterParameters as $key => $value)
+
+		$this->addToQueryFilterCase($query);
+		$this->addPermissionsCheck($query);
+
+
+		switch ($calculateValue)
 		{
-			if ($key === 'TIME_PERIOD')
-			{
-				if ($value['from'] !== "" && $value['to'] !== "")
-				{
-					$query->where('DATE_CREATE', '<=', $value['to'])
-						  ->where(
-							  Query::filter()
-								   ->logic('or')
-								   ->whereNull('DATE_CLOSED')
-								   ->where('DATE_CLOSED', '>=', $value['from'])
-						  );
-
-					continue;
-				}
-			}
-
-			switch 	($value['type'])
-			{
-				case 'date':
-				case 'diapason':
-					if ($value['from'] !== "")
-					{
-						$query->where($key, '>=', $value['from']);
-					}
-
-					if ($value['to'] !== "")
-					{
-						$query->where($key, '<=', $value['to']);
-					}
-					break;
-				case 'none':
-				case 'list':
-				case 'text':
-				case 'checkbox':
-				case 'custom_entity':
-					$query->addFilter($key, $value['value']);
-					break;
-
-			}
+			case self::WHAT_WILL_CALCULATE_SUCCESS_LEAD_DATA_FOR_FUNNEL:
+			case self::WHAT_WILL_CALCULATE_LEAD_DATA_FOR_FUNNEL:
+				$querySql = "SELECT res.STATUS_KEY, (SUM(res.FULL_HISTORY_SPENT_TIME) / SUM(CASE WHEN res.FULL_HISTORY_IS_SUPPOSED = 'N' AND res.FULL_HISTORY_SPENT_TIME IS NOT NULL THEN 1 ELSE 0 END)) as SPENT_TIME,  COUNT(DISTINCT res.FULL_HISTORY_OWNER_ID) as VALUE, SUM(res.MAX_OPPORTUNITY_ACCOUNT) as SUM, MAX_ACCOUNT_CURRENCY_ID as ACCOUNT_CURRENCY_ID FROM(";
+				$querySql .= $query->getQuery();
+				$querySql .= ") as res GROUP BY res.STATUS_KEY";
+				$results = Application::getConnection()->query($querySql);
+				break;
+			default:
+				$results = $query->exec()->fetchAll();
 		}
 
-		$this->addPermissionsCheck($query);
-		$results = $query->exec()->fetchAll();
 
 
-		$amountValue = 0;
+		$amountLeadCount = 0;
+		$amountLeadSum = 0;
 		switch ($calculateValue)
 		{
 			case self::WHAT_WILL_CALCULATE_LEAD_CONVERSION:
-			case self::WHAT_WILL_CALCULATE_NEW_LEAD_CONVERSION:
-			case self::WHAT_WILL_CALCULATE_REPEATED_LEAD_CONVERSION:
 				$allLeadCount = [];
 				$successLeadCount = [];
 				$successAmountLeadCount = 0;
-				$allAmountLeadCount = 0;
 				$groupingFieldName = 'withoutGrouping';
+
+				switch ($groupingValue)
+				{
+					case self::GROUPING_BY_RESPONSIBLE:
+						$allLeadCount = $this->getLeadAmountCountByResponsible();
+						$allAmountLeadCount = array_sum($allLeadCount);
+						break;
+					default:
+						$allLeadCount['withoutGrouping'] = $this->getLeadAmountCount();
+						$allAmountLeadCount = $allLeadCount['withoutGrouping'];
+				}
+
 				foreach ($results as $result)
 				{
 					switch ($groupingValue)
@@ -334,10 +295,7 @@ class Lead extends Base implements IReportSingleData, IReportMultipleData, IRepo
 							$groupingFieldValue = 'withoutGrouping';
 					}
 
-
-					$allLeadCount[$groupingFieldValue] += $result['VALUE'];
-					$allAmountLeadCount += $result['VALUE'];
-					if ($result['STATUS_SEMANTIC_ID'] == 'S')
+					if ($result['STATUS_SEMANTIC_ID_VALUE'] == 'S')
 					{
 						$successLeadCount[$groupingFieldValue] += $result['VALUE'];
 						$successAmountLeadCount += $result['VALUE'];
@@ -364,17 +322,26 @@ class Lead extends Base implements IReportSingleData, IReportMultipleData, IRepo
 
 				}
 
-				$amountValue = $allAmountLeadCount ? (($successAmountLeadCount / $allAmountLeadCount) * 100) : 0;
+				$amountLeadCount = $allAmountLeadCount ? (($successAmountLeadCount / $allAmountLeadCount) * 100) : 0;
 
 				break;
 			case self::WHAT_WILL_CALCULATE_LEAD_LOSES:
-			case self::WHAT_WILL_CALCULATE_NEW_LEAD_LOSES:
-			case self::WHAT_WILL_CALCULATE_REPEATED_LEAD_LOSES:
 				$allLeadCount = [];
 				$loseLeadCount = [];
 				$losesAmountLeadCount = 0;
-				$allAmountLeadCount = 0;
 				$groupingFieldName = 'withoutGrouping';
+
+				switch ($groupingValue)
+				{
+					case self::GROUPING_BY_RESPONSIBLE:
+						$allLeadCount = $this->getLeadAmountCountByResponsible();
+						$allAmountLeadCount = array_sum($allLeadCount);
+						break;
+					default:
+						$allLeadCount['withoutGrouping'] = $this->getLeadAmountCount();
+						$allAmountLeadCount = $allLeadCount['withoutGrouping'];
+				}
+
 				foreach ($results as $result)
 				{
 					switch ($groupingValue)
@@ -387,10 +354,7 @@ class Lead extends Base implements IReportSingleData, IReportMultipleData, IRepo
 							$groupingFieldValue = 'withoutGrouping';
 					}
 
-
-					$allLeadCount[$groupingFieldValue] += $result['VALUE'];
-					$allAmountLeadCount += $result['VALUE'];
-					if ($result['STATUS_SEMANTIC_ID'] == 'F')
+					if ($result['STATUS_SEMANTIC_ID_VALUE'] == 'F')
 					{
 						$loseLeadCount[$groupingFieldValue] += $result['VALUE'];
 						$losesAmountLeadCount += $result['VALUE'];
@@ -417,7 +381,7 @@ class Lead extends Base implements IReportSingleData, IReportMultipleData, IRepo
 
 				}
 
-				$amountValue = $allAmountLeadCount ? (($losesAmountLeadCount / $allAmountLeadCount) * 100) : 0;
+				$amountLeadCount = $allAmountLeadCount ? (($losesAmountLeadCount / $allAmountLeadCount) * 100) : 0;
 				break;
 		}
 
@@ -426,17 +390,19 @@ class Lead extends Base implements IReportSingleData, IReportMultipleData, IRepo
 		$leadCalculatedValue = [];
 		$percentageMetricsList = [
 			self::WHAT_WILL_CALCULATE_LEAD_CONVERSION,
-			self::WHAT_WILL_CALCULATE_NEW_LEAD_CONVERSION,
-			self::WHAT_WILL_CALCULATE_REPEATED_LEAD_CONVERSION,
 			self::WHAT_WILL_CALCULATE_LEAD_LOSES,
-			self::WHAT_WILL_CALCULATE_NEW_LEAD_LOSES,
-			self::WHAT_WILL_CALCULATE_REPEATED_LEAD_LOSES,
 		];
+
+		$statusNum = 0;
 		foreach ($results as $result)
 		{
 			if (!in_array($calculateValue, $percentageMetricsList))
 			{
-				$amountValue += $result['VALUE'];
+				$statusNum++;
+				if ($this->getView()->getKey() !== ColumnFunnel::VIEW_KEY)
+				{
+					$amountLeadCount += $result['VALUE'];
+				}
 			}
 
 			switch ($groupingValue)
@@ -446,15 +412,46 @@ class Lead extends Base implements IReportSingleData, IReportMultipleData, IRepo
 					$leadCalculatedValue[$result['DATE_CREATE_DAY']]['title'] = $result['DATE_CREATE_DAY'];
 					break;
 				case self::GROUPING_BY_STATE:
-					$leadCalculatedValue[$result['STATUS_ID']]['value'] = $result['VALUE'];
-					$leadCalculatedValue[$result['STATUS_ID']]['title'] = !empty($statusNameListByStatusId[$result['STATUS_ID']]) ? $statusNameListByStatusId[$result['STATUS_ID']] : '';
-					$leadCalculatedValue[$result['STATUS_ID']]['color'] = $this->getStatusColor($result['STATUS_ID']);
+					if ($statusNum === 1)
+					{
+						$leadCountAndSum = $this->getLeadAmountCountAndSum();
+						$amountLeadCount = $leadCountAndSum['COUNT'];
+						$amountLeadSum = $leadCountAndSum['SUM'];
+					}
+
+					$leadCalculatedValue[$result['STATUS_KEY']]['value'] = $result['VALUE'];
+
+
+					$leadCalculatedValue[$result['STATUS_KEY']]['additionalValues']['sum']['VALUE'] = 0;
+					$leadCalculatedValue[$result['STATUS_KEY']]['additionalValues']['sum']['currencyId'] = 'RUB';
+
+					if ($result['SUM'])
+					{
+						$leadCalculatedValue[$result['STATUS_KEY']]['additionalValues']['sum'] = [
+							'VALUE' => $result['SUM'],
+							'currencyId' => !empty($result['ACCOUNT_CURRENCY_ID']) ? $result['ACCOUNT_CURRENCY_ID'] : null
+						];
+					}
+
+					$leadCalculatedValue[$result['STATUS_KEY']]['additionalValues']['avgSpentTime']['VALUE'] = 0;
+					if ($result['SPENT_TIME'])
+					{
+						$leadCalculatedValue[$result['STATUS_KEY']]['additionalValues']['avgSpentTime'] = [
+							'VALUE' => $result['SPENT_TIME'],
+						];
+					}
+					$leadCalculatedValue[$result['STATUS_KEY']]['title'] = !empty($statusNameListByStatusId[$result['STATUS_KEY']]) ? $statusNameListByStatusId[$result['STATUS_KEY']] : '';
+					$leadCalculatedValue[$result['STATUS_KEY']]['color'] = $this->getStatusColor($result['STATUS_KEY']);
 					break;
 				case self::GROUPING_BY_SOURCE:
 					$leadCalculatedValue[$result['SOURCE_ID']]['value'] = $result['VALUE'];
 					$leadCalculatedValue[$result['SOURCE_ID']]['title'] = !empty($sourceNameListByStatusId[$result['SOURCE_ID']]) ? $sourceNameListByStatusId[$result['SOURCE_ID']] : '';
 					break;
 				case self::GROUPING_BY_RESPONSIBLE:
+					if ($result['ASSIGNED_BY_ID']  == 0)
+					{
+						continue 2;
+					}
 					//TODO optimise here
 					$userInfo = $this->getUserInfo($result['ASSIGNED_BY_ID']);
 					$leadCalculatedValue[$result['ASSIGNED_BY_ID']]['value'] = $result['VALUE'];
@@ -470,16 +467,11 @@ class Lead extends Base implements IReportSingleData, IReportMultipleData, IRepo
 
 		}
 
-		if ($groupingValue === self::GROUPING_BY_STATE && isset($statusNameListByStatusId))
+		if ($groupingValue === self::GROUPING_BY_STATE && isset($statusNameListByStatusId) && $calculateValue !==self::WHAT_WILL_CALCULATE_SUCCESS_LEAD_DATA_FOR_FUNNEL)
 		{
 			$sortedLeadCountListByStatus = [];
 			foreach ($statusNameListByStatusId as $statusId => $statusName)
 			{
-				if ($statusId === $this->getLeadUnSuccessStatusName())
-				{
-					continue;
-				}
-
 				if (!empty($leadCalculatedValue[$statusId]))
 				{
 					$sortedLeadCountListByStatus[$statusId] = $leadCalculatedValue[$statusId];
@@ -496,10 +488,230 @@ class Lead extends Base implements IReportSingleData, IReportMultipleData, IRepo
 			$leadCalculatedValue = $sortedLeadCountListByStatus;
 		}
 
-		$leadCalculatedValue['amount'] = $amountValue;
+
+		$leadCalculatedValue['amount']['count'] = $amountLeadCount;
+		$leadCalculatedValue['amount']['sum'] = $amountLeadSum;
+
+		if ($calculateValue !== self::WHAT_WILL_CALCULATE_SUCCESS_LEAD_DATA_FOR_FUNNEL)
+		{
+			$leadCalculatedValue['amount']['successPassTime'] = $this->getLeadPassingTime();
+		}
+
+
+		if ($disableSuccessStatesValue)
+		{
+			unset($leadCalculatedValue['CONVERTED']);
+		}
+
+
+
+		//replace converted value to the end in column funnel
+		if ($calculateValue === self::WHAT_WILL_CALCULATE_LEAD_DATA_FOR_FUNNEL)
+		{
+			if (!empty($leadCalculatedValue['CONVERTED']))
+			{
+				$convertedValue = $leadCalculatedValue['CONVERTED'];
+				unset($leadCalculatedValue['CONVERTED']);
+
+				$leadCalculatedValue['CONVERTED'] = $convertedValue;
+			}
+		}
+
 		return $leadCalculatedValue;
 	}
 
+
+	private function getLeadPassingTime()
+	{
+		$query = new Query(LeadTable::getEntity());
+		$query->addSelect(new \Bitrix\Main\Entity\ExpressionField('AVG_SPENT_TIME', 'AVG(%s)', 'FULL_HISTORY.SPENT_TIME'));
+		$this->addToQueryFilterCase($query);
+		$this->addPermissionsCheck($query);
+		$query->whereNot('FULL_HISTORY.STATUS_SEMANTIC_ID', 'S');
+		$query->where('FULL_HISTORY.IS_SUPPOSED', 'N');
+		//$query->addGroup('FULL_HISTORY.STATUS_ID');
+
+		$results = $query->exec()->fetchAll();
+
+		$successSpentTime = 0;
+		if (!$results)
+		{
+			return $successSpentTime;
+		}
+		foreach ($results as $result)
+		{
+			$successSpentTime += $result['AVG_SPENT_TIME'];
+		}
+
+		return $successSpentTime;
+	}
+
+	private function getLeadAmountCount()
+	{
+		static $result;
+		if (!$result)
+		{
+			$query = new Query(LeadTable::getEntity());
+			$query->addSelect(new \Bitrix\Main\Entity\ExpressionField('COUNT', 'COUNT(DISTINCT %s)', 'FULL_HISTORY.OWNER_ID'));
+			$this->addToQueryFilterCase($query);
+			$this->addPermissionsCheck($query);
+			$result = $query->exec()->fetchAll();
+			$result = !empty($result[0]['COUNT']) ? $result[0]['COUNT'] : 0;
+		}
+
+		return $result;
+	}
+
+	private function getLeadAmountCountByResponsible()
+	{
+		$query = new Query(LeadTable::getEntity());
+		$query->addSelect(new \Bitrix\Main\Entity\ExpressionField('COUNT', 'COUNT(DISTINCT %s)', 'FULL_HISTORY.OWNER_ID'));
+		$query->addSelect('ASSIGNED_BY_ID');
+		$query->addGroup('ASSIGNED_BY_ID');
+		$this->addToQueryFilterCase($query);
+		$this->addPermissionsCheck($query);
+		$results = $query->exec()->fetchAll();
+
+		$amountByResponsible = [];
+		foreach ($results as $result)
+		{
+			$amountByResponsible[$result['ASSIGNED_BY_ID']] = $result['COUNT'];
+		}
+		return $amountByResponsible;
+	}
+
+	private function getLeadAmountCountAndSum()
+	{
+
+		$query = new Query(LeadTable::getEntity());
+		$query->addSelect(new \Bitrix\Main\Entity\ExpressionField('DISTINCT_OWNER_ID', 'DISTINCT %s', 'FULL_HISTORY.OWNER_ID'));
+		$query->addSelect('OPPORTUNITY_ACCOUNT');
+		$query->addSelect('ACCOUNT_CURRENCY_ID', 'CURRENCY');
+		$this->addToQueryFilterCase($query);
+		$this->addPermissionsCheck($query);
+
+
+
+		$connection = Application::getConnection();
+
+		$querySql = 'SELECT SUM(res.OPPORTUNITY_ACCOUNT) as SUM, COUNT(res.DISTINCT_OWNER_ID) COUNT, res.CURRENCY as CURRENCY FROM(';
+		$querySql .= $query->getQuery();
+		$querySql .= ') as res';
+		$queryWithResult = $connection->query($querySql);
+		$result = $queryWithResult->fetchAll();
+		return !empty($result[0]) ? $result[0] : ['COUNT' => 0, 'SUM' => 0, 'CURRENCY' => 'RUB'];
+	}
+
+	private function addToQueryFilterCase(Query $query)
+	{
+		$filterParameters = $this->getFilterParameters();
+
+
+		if (!$this->isConversionCalculateMode())
+		{
+			$query->where('FULL_HISTORY.IS_SUPPOSED', 'N');
+		}
+
+		foreach ($filterParameters as $key => $value)
+		{
+			if ($key === 'TIME_PERIOD')
+			{
+				if ($value['from'] !== "" && $value['to'] !== "")
+				{
+					$query->where('FULL_HISTORY.LAST_UPDATE_DATE', '<=', $this->getConvertedToServerTime($value['to']))
+						->where('FULL_HISTORY.CLOSE_DATE', '>=', $this->getConvertedToServerTime($value['from']));
+					continue;
+				}
+			}
+
+			if ($key === 'FIND')
+			{
+				if ($value !== '')
+				{
+					$query->whereMatch('SEARCH_CONTENT', $value);
+				}
+				continue;
+			}
+
+			switch 	($value['type'])
+			{
+				case 'date':
+					if ($value['from'] !== "")
+					{
+						$query->where($key, '>=', $this->getConvertedToServerTime($value['from']));
+					}
+
+					if ($value['to'] !== "")
+					{
+						$query->where($key, '<=', $this->getConvertedToServerTime($value['to']));
+					}
+					break;
+				case 'diapason':
+					if ($value['from'] !== "")
+					{
+						$query->where($key, '>=', $value['from']);
+					}
+
+					if ($value['to'] !== "")
+					{
+						$query->where($key, '<=', $value['to']);
+					}
+					break;
+				case 'text':
+					$query->whereLike($key, '%'.$value['value'].'%');
+					break;
+				case 'none':
+				case 'list':
+				case 'checkbox':
+				case 'custom_entity':
+				case 'dest_selector':
+					$query->addFilter($key, $value['value']);
+					break;
+
+			}
+
+			if ($key === 'STAGE_SEMANTIC_ID')
+			{
+				$subQuery = LeadStatusHistoryWithSupposedTable::query();
+				$subQuery->addSelect('*');
+				if (!empty($filterParameters['TIME_PERIOD']))
+				{
+					$subQuery->where('LAST_UPDATE_DATE', '<=', $this->getConvertedToServerTime($filterParameters['TIME_PERIOD']['to']))
+						->where('CLOSE_DATE', '>=', $this->getConvertedToServerTime($filterParameters['TIME_PERIOD']['from']));
+				}
+
+				$subQuery->addFilter('STATUS_SEMANTIC_ID', $value['value']);
+
+				$query->whereExists($subQuery);
+			}
+		}
+	}
+
+	private function isConversionCalculateMode()
+	{
+		$result = false;
+		$viewKey = $this->getView()->getKey();
+		if ($viewKey === ColumnFunnel::VIEW_KEY)
+		{
+			$funnelCalculateModeField = $this->getWidgetHandler()->getFormElement('calculateMode');
+			$funnelCalculateModeValue = $funnelCalculateModeField->getValue();
+			if ($funnelCalculateModeValue === ColumnFunnel::CONVERSION_CALCULATE_MODE)
+			{
+				$result = true;
+			}
+		}
+		elseif ($viewKey === FunnelGrid::VIEW_KEY)
+		{
+			$gridCalculationModeField = $this->getWidgetHandler()->getFormElement('calculateMode');
+			$gridCalculationModeValue = $gridCalculationModeField->getValue();
+			if ($gridCalculationModeValue === FunnelGrid::CONVERSION_CALCULATE_MODE)
+			{
+				$result = true;
+			}
+		}
+
+		return $result;
+	}
 
 	private function getLeadFieldsToOrmMap()
 	{
@@ -514,6 +726,8 @@ class Lead extends Base implements IReportSingleData, IReportMultipleData, IRepo
 			'DATE_CREATE' => 'DATE_CREATE',
 			'DATE_MODIFY' => 'DATE_MODIFY',
 			'STATUS_ID' => 'STATUS_ID',
+			'STATUS_ID_FROM_HISTORY' => 'HISTORY.STATUS_ID',
+			'STATUS_SEMANTIC_ID_FROM_HISTORY' => 'HISTORY.STATUS_SEMANTIC_ID',
 			'STATUS_SEMANTIC_ID' => 'STATUS_SEMANTIC_ID',
 			//'STATUS_CONVERTED' => 'STATUS_CONVERTED',
 			'OPPORTUNITY' => 'OPPORTUNITY',
@@ -544,8 +758,6 @@ class Lead extends Base implements IReportSingleData, IReportMultipleData, IRepo
 			'COMMENTS' => 'COMMENTS',
 			'PRODUCT_ROW_PRODUCT_ID' => 'PRODUCT_ROW.PRODUCT_ID',
 			'WEBFORM_ID' => 'WEBFORM_ID',
-			//'TRACKING_SOURCE' => 'TRACKING_SOURCE',
-			//'TRACKING_ASSIGNED' => 'TRACKING_ASSIGNED',
 		);
 
 		//region UTM
@@ -683,68 +895,6 @@ class Lead extends Base implements IReportSingleData, IReportMultipleData, IRepo
 		return $sourceListQuery->exec()->fetchAll();
 	}
 
-
-	/**
-	 * @param $userId
-	 * @return mixed|null
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
-	 */
-	public function getUserInfo($userId)
-	{
-		static $users = array();
-
-		if(!$userId)
-		{
-			return null;
-		}
-
-		if(!$users[$userId])
-		{
-			// prepare link to profile
-			$replaceList = array('user_id' => $userId);
-			$template = '/company/personal/user/#user_id#/';
-			$link = \CComponentEngine::makePathFromTemplate($template, $replaceList);
-
-			$userFields = \Bitrix\Main\UserTable::getRowById($userId);
-			if(!$userFields)
-			{
-				return null;
-			}
-
-			// format name
-			$userName = \CUser::FormatName(
-				\CSite::GetNameFormat(),
-				array(
-					'LOGIN' => $userFields['LOGIN'],
-					'NAME' => $userFields['NAME'],
-					'LAST_NAME' => $userFields['LAST_NAME'],
-					'SECOND_NAME' => $userFields['SECOND_NAME']
-				),
-				true, false
-			);
-
-			// prepare icon
-			$fileTmp = \CFile::ResizeImageGet(
-				$userFields['PERSONAL_PHOTO'],
-				array('width' => 42, 'height' => 42),
-				BX_RESIZE_IMAGE_EXACT,
-				false
-			);
-			$userIcon = $fileTmp['src'];
-
-			$users[$userId] = array(
-				'id' => $userId,
-				'name' => $userName,
-				'link' => $link,
-				'icon' => $userIcon
-			);
-		}
-
-		return $users[$userId];
-	}
-
 	/**
 	 * @return mixed
 	 */
@@ -782,8 +932,6 @@ class Lead extends Base implements IReportSingleData, IReportMultipleData, IRepo
 		{
 			case self::WHAT_WILL_CALCULATE_LEAD_CONVERSION:
 			case self::WHAT_WILL_CALCULATE_LEAD_LOSES:
-			case self::WHAT_WILL_CALCULATE_REPEATED_LEAD_CONVERSION:
-			case self::WHAT_WILL_CALCULATE_REPEATED_LEAD_LOSES:
 				$result['config']['unitOfMeasurement'] = '%';
 				$result['value'] = round($result['value'], 2);
 				break;
@@ -824,12 +972,14 @@ class Lead extends Base implements IReportSingleData, IReportMultipleData, IRepo
 		{
 			$calculateField = $this->getFormElement('calculate');
 			$calculateValue = $calculateField ? $calculateField->getValue() : null;
+
+			$shortModeField = $this->getFormElement('shortMode');
+			$shortModeValue = $shortModeField ? $shortModeField->getValue() : false;
+
 			switch ($calculateValue)
 			{
 				case self::WHAT_WILL_CALCULATE_LEAD_CONVERSION:
 				case self::WHAT_WILL_CALCULATE_LEAD_LOSES:
-				case self::WHAT_WILL_CALCULATE_REPEATED_LEAD_CONVERSION:
-				case self::WHAT_WILL_CALCULATE_REPEATED_LEAD_LOSES:
 					$config['mode'] = 'singleData';
 					$config['unitOfMeasurement'] = '%';
 					$item['value'] = round($calculatedData['withoutGrouping'], 2);
@@ -837,56 +987,140 @@ class Lead extends Base implements IReportSingleData, IReportMultipleData, IRepo
 					$items[] = $item;
 					break;
 				default:
-					$amountLeadCount = 0;
+					$itemCount = 0;
 					foreach ($calculatedData as $key => $data)
 					{
 						if ($key === 'amount')
 						{
 							continue;
 						}
-						//TEMP solution for funnel
 
-						$amountLeadCount += $data['value'];
-						if ($this->getView()->getKey() === ColumnFunnel::VIEW_KEY)
-						{
-							$funnelCalculateModeField = $this->getWidgetHandler()->getFormElement('calculateMode');
-							$funnelCalculateModeValue = $funnelCalculateModeField->getValue();
 
-							if ($funnelCalculateModeValue === ColumnFunnel::CLASSIC_CALCULATE_MODE)
-							{
-								foreach ($items as &$previewsItem)
-								{
-									$previewsItem['value'] += $data['value'];
-								}
-							}
-
-						}
-
-						$items[] = [
+						$item = [
 							'label' => $data['title'],
 							'value' => $data['value'],
 							'color' => $data['color'],
 						];
+
+						if ($calculateValue === self::WHAT_WILL_CALCULATE_LEAD_DATA_FOR_FUNNEL)
+						{
+							if ($this->isConversionCalculateMode())
+							{
+								$item['link'] = $this->getTargetUrl('/crm/lead/analytics/list/', [
+									'STATUS_ID_FROM_SUPPOSED_HISTORY' => $key
+								]);
+							}
+							else
+							{
+								$item['link'] = $this->getTargetUrl('/crm/lead/analytics/list/', [
+									'STATUS_ID_FROM_HISTORY' => $key
+								]);
+							}
+						}
+
+						$config['additionalValues']['firstAdditionalValue']['titleShort'] =  Loc::getMessage('CRM_REPORT_LEAD_HANDLER_LEAD_COUNT_SHORT_TITLE');
+						$item['additionalValues']['firstAdditionalValue'] = [
+							'value' => $data['value']
+						];
+
+						if (isset($data['additionalValues']['sum']))
+						{
+							$amountLeadCurrencyId = $data['additionalValues']['sum']['currencyId'];
+							$config['additionalValues']['secondAdditionalValue']['titleShort'] = Loc::getMessage('CRM_REPORT_LEAD_HANDLER_LEAD_SUM_SHORT_TITLE');
+
+							$item['additionalValues']['secondAdditionalValue'] = [
+								'value' => \CCrmCurrency::MoneyToString($data['additionalValues']['sum']['VALUE'], $data['additionalValues']['sum']['currencyId']),
+								'currencyId' => $data['additionalValues']['sum']['currencyId']
+							];
+						}
+
+
+						if (isset($data['additionalValues']['avgSpentTime']))
+						{
+							$config['additionalValues']['thirdAdditionalValue']['titleShort'] = Loc::getMessage('CRM_REPORT_LEAD_HANDLER_LEAD_SPENT_TIME_SHORT_TITLE');
+							$item['additionalValues']['thirdAdditionalValue'] = [
+								'value' => $this->getFormattedPassTime($data['additionalValues']['avgSpentTime']['VALUE'])
+							];
+						}
+
+
+						$config['additionalValues']['forthAdditionalValue']['titleShort'] = Loc::getMessage('CRM_REPORT_LEAD_HANDLER_LEAD_CONVERSION_SHORT_TITLE');;
+						$item['additionalValues']['forthAdditionalValue'] = [
+							'value' => $calculatedData['amount']['count'] ? round(($data['value'] / $calculatedData['amount']['count']) * 100, 2) : 0,
+							'unitOfMeasurement' => '%',
+							'helpLink' => 'someLink',
+							'helpInSlider' => true
+						];
+
+						//hidden conversion on first column
+						if ($calculateValue !== self::WHAT_WILL_CALCULATE_SUCCESS_LEAD_DATA_FOR_FUNNEL && $itemCount < 1)
+						{
+							unset($item['additionalValues']['forthAdditionalValue']);
+						}
+
+						$itemCount++;
+
+
+						$items[] = $item;
 					}
 					$config['titleShort'] = Loc::getMessage('CRM_REPORT_LEAD_HANDLER_LEAD_COUNT_SHORT_TITLE');
 					$config['titleMedium'] = 'meduim';
 
 					$config['valuesAmount'] = [
 						'firstAdditionalAmount' => [
-							'title' => Loc::getMessage('CRM_REPORT_LEAD_HANDLER_LEAD_COUNT_SHORT_TITLE'),
-							'value' => $amountLeadCount
-						]
+							'title' => Loc::getMessage('CRM_REPORT_LEAD_HANDLER_LEAD_SUM_SHORT_TITLE'),
+							'value' => \CCrmCurrency::MoneyToString($calculatedData['amount']['sum'], $amountLeadCurrencyId),
+							'targetUrl' => $this->getTargetUrl('/crm/lead/analytics/list/'),
+						],
+//						'secondAdditionalAmount' => [
+//							'title' => Loc::getMessage('CRM_REPORT_LEAD_HANDLER_LEAD_COUNT_SHORT_TITLE'),
+//							'value' => $calculatedData['amount']['count']
+//						],
+//						'secondAdditionalAmount' => [
+//							'title' => Loc::getMessage('CRM_REPORT_LEAD_HANDLER_LEAD_PASS_AVG_TIME_SHORT_TITLE'),
+//							'value' => $calculatedData['amount']['successPassTime'] . ' ' . Loc::getMessage('CRM_REPORT_LEAD_HANDLER_LEAD_SPENT_TIME_DAYS')
+//						],
+//						'thirdAdditionalAmount' => [
+//							'title' => Loc::getMessage('CRM_REPORT_LEAD_HANDLER_LEAD_PASS_AVG_TIME_SHORT_TITLE'),
+//							'value' => $calculatedData['amount']['successPassTime'] . Loc::getMessage('CRM_REPORT_LEAD_HANDLER_LEAD_SPENT_TIME_DAYS')
+//						]
 					];
+
+					if ($calculatedData['amount']['successPassTime'])
+					{
+						$config['valuesAmount']['secondAdditionalAmount'] = [
+							'title' => Loc::getMessage('CRM_REPORT_LEAD_HANDLER_LEAD_PASS_AVG_TIME_SHORT_TITLE'),
+							'value' => $this->getFormattedPassTime($calculatedData['amount']['successPassTime'])
+						];
+					}
+
+					switch ($calculateValue)
+					{
+						case self::WHAT_WILL_CALCULATE_SUCCESS_LEAD_DATA_FOR_FUNNEL:
+							$config['topAdditionalTitle'] = Loc::getMessage('CRM_REPORT_LEAD_HANDLER_LEAD_CONVERSION_SHORT_TITLE');
+							$config['topAdditionalValue'] = !empty($items[0]['additionalValues']['forthAdditionalValue']['value']) ? $items[0]['additionalValues']['forthAdditionalValue']['value'] : 0;
+							$config['topAdditionalValueUnit'] = '%';
+							$config['valuesAmount']['firstAdditionalAmount']['value'] = $items[0]['additionalValues']['secondAdditionalValue']['value'];
+							//$config['valuesAmount']['secondAdditionalAmount']['value'] = $items[0]['additionalValues']['thirdAdditionalValue']['value'];
+
+							if ($shortModeValue)
+							{
+								$config['mode'] = 'singleData';
+							}
+							unset($config['valuesAmount']['thirdAdditionalAmount']);
+							$config['additionalValues']['thirdAdditionalValue'];
+							break;
+					}
 			}
 
 		}
 
-
-
-		return [
+		$result = [
 			'items' => $items,
 			'config' => $config
 		];
+
+		return $result;
 	}
 
 
@@ -965,15 +1199,11 @@ class Lead extends Base implements IReportSingleData, IReportMultipleData, IRepo
 		$amount['prefix'] = '';
 		$amount['postfix'] = '';
 
-		$amountCalculateItem = $calculatedData['amount'];
+		$amountCalculateItem = $calculatedData['amount']['count'];
 		switch ($calculateValue)
 		{
 			case self::WHAT_WILL_CALCULATE_LEAD_CONVERSION:
 			case self::WHAT_WILL_CALCULATE_LEAD_LOSES:
-			case self::WHAT_WILL_CALCULATE_NEW_LEAD_CONVERSION:
-			case self::WHAT_WILL_CALCULATE_REPEATED_LEAD_CONVERSION:
-			case self::WHAT_WILL_CALCULATE_NEW_LEAD_LOSES:
-			case self::WHAT_WILL_CALCULATE_REPEATED_LEAD_LOSES:
 				$amount['value'] += round($amountCalculateItem, 2);
 				$amount['postfix'] = '%';
 				break;
@@ -990,10 +1220,6 @@ class Lead extends Base implements IReportSingleData, IReportMultipleData, IRepo
 			{
 				case self::WHAT_WILL_CALCULATE_LEAD_CONVERSION:
 				case self::WHAT_WILL_CALCULATE_LEAD_LOSES:
-				case self::WHAT_WILL_CALCULATE_NEW_LEAD_CONVERSION:
-				case self::WHAT_WILL_CALCULATE_REPEATED_LEAD_CONVERSION:
-				case self::WHAT_WILL_CALCULATE_NEW_LEAD_LOSES:
-				case self::WHAT_WILL_CALCULATE_REPEATED_LEAD_LOSES:
 					$config['unitOfMeasurement'] = '%';
 					$items[] = [
 						'groupBy' => $groupingKey,
@@ -1009,10 +1235,9 @@ class Lead extends Base implements IReportSingleData, IReportMultipleData, IRepo
 						'value' => $item['value'],
 						'slider' => true,
 						'targetUrl' => $this->getTargetUrl('/crm/lead/analytics/list/', [
-							'ASSIGNED_BY_ID_name[]' => $item['title'],
-							'ASSIGNED_BY_ID_label[]' => $item['title'],
-							'ASSIGNED_BY_ID_value[]' => $groupingKey,
-							'ASSIGNED_BY_ID[]' => $groupingKey,
+							'ASSIGNED_BY_ID_label' => $item['title'],
+							'ASSIGNED_BY_ID_value' => $groupingKey,
+							'ASSIGNED_BY_ID' => $groupingKey,
 						]),
 					);
 			}
@@ -1027,11 +1252,7 @@ class Lead extends Base implements IReportSingleData, IReportMultipleData, IRepo
 
 		$sliderDisableCalculateTypes = [
 			self::WHAT_WILL_CALCULATE_LEAD_CONVERSION,
-			self::WHAT_WILL_CALCULATE_LEAD_LOSES,
-			self::WHAT_WILL_CALCULATE_NEW_LEAD_CONVERSION,
-			self::WHAT_WILL_CALCULATE_REPEATED_LEAD_CONVERSION,
-			self::WHAT_WILL_CALCULATE_NEW_LEAD_LOSES,
-			self::WHAT_WILL_CALCULATE_REPEATED_LEAD_LOSES,
+			self::WHAT_WILL_CALCULATE_LEAD_LOSES
 		];
 
 		if (!in_array($calculateValue, $sliderDisableCalculateTypes))
@@ -1057,67 +1278,45 @@ class Lead extends Base implements IReportSingleData, IReportMultipleData, IRepo
 	{
 		$calculateField = $this->getFormElement('calculate');
 		$calculateValue = $calculateField ? $calculateField->getValue() : null;
-		$filterParameters = $this->getFilterParameters();
 
-		if (!empty($filterParameters['TIME_PERIOD']))
-		{
-			/** @var DateTime $from */
-			$from = $filterParameters['TIME_PERIOD']['from'];
-			/** @var DateTime $to */
-			$to = $filterParameters['TIME_PERIOD']['to'];
-
-
-			$params['ACTIVE_TIME_PERIOD_datesel'] =  $filterParameters['TIME_PERIOD']['datesel'];
-			$params['ACTIVE_TIME_PERIOD_month'] =  $filterParameters['TIME_PERIOD']['month'];
-			$params['ACTIVE_TIME_PERIOD_year'] =  $filterParameters['TIME_PERIOD']['year'];
-			$params['ACTIVE_TIME_PERIOD_quarter'] =  $filterParameters['TIME_PERIOD']['quarter'];
-			$params['ACTIVE_TIME_PERIOD_days'] =  $filterParameters['TIME_PERIOD']['days'];
-			$params['ACTIVE_TIME_PERIOD_from'] =  $from->toString();
-			$params['ACTIVE_TIME_PERIOD_to'] =  $to->toString();
-
-
-		}
 
 		switch ($calculateValue)
 		{
-			case self::WHAT_WILL_CALCULATE_REPEATED_LEAD_COUNT:
-			case self::WHAT_WILL_CALCULATE_REPEATED_GOOD_LEAD_COUNT:
-			case self::WHAT_WILL_CALCULATE_REPEATED_CONVERTED_LEAD_COUNT:
-			case self::WHAT_WILL_CALCULATE_REPEATED_ACTIVE_LEAD_COUNT:
-				$params['IS_RETURN_CUSTOMER'] = 'Y';
-				break;
-			case self::WHAT_WILL_CALCULATE_NEW_LEAD_COUNT:
-			case self::WHAT_WILL_CALCULATE_NEW_GOOD_LEAD_COUNT:
-			case self::WHAT_WILL_CALCULATE_NEW_CONVERTED_LEAD_COUNT:
-			case self::WHAT_WILL_CALCULATE_NEW_ACTIVE_LEAD_COUNT:
-				$params['IS_RETURN_CUSTOMER'] = 'N';
-				break;
-		}
-
-		switch ($calculateValue)
-		{
-			case self::WHAT_WILL_CALCULATE_NEW_LOST_LEAD_COUNT:
-			case self::WHAT_WILL_CALCULATE_REPEATED_LOST_LEAD_COUNT:
 			case self::WHAT_WILL_CALCULATE_LOST_LEAD_COUNT:
-				$params['STATUS_SEMANTIC_ID'] = 'F';
+				$params['STATUS_SEMANTIC_ID_FROM_HISTORY'] = 'F';
 				break;
-			case self::WHAT_WILL_CALCULATE_NEW_GOOD_LEAD_COUNT:
-			case self::WHAT_WILL_CALCULATE_REPEATED_GOOD_LEAD_COUNT:
 			case self::WHAT_WILL_CALCULATE_GOOD_LEAD_COUNT:
-				$params['STATUS_SEMANTIC_ID'] = ['P', 'S'];
+				$params['STATUS_SEMANTIC_ID_FROM_HISTORY'] = ['P', 'S'];
 				break;
-			case self::WHAT_WILL_CALCULATE_NEW_CONVERTED_LEAD_COUNT:
-			case self::WHAT_WILL_CALCULATE_REPEATED_CONVERTED_LEAD_COUNT:
+			case self::WHAT_WILL_CALCULATE_SUCCESS_LEAD_DATA_FOR_FUNNEL:
 			case self::WHAT_WILL_CALCULATE_CONVERTED_LEAD_COUNT:
-				$params['STATUS_SEMANTIC_ID'] = 'S';
+				$params['STATUS_SEMANTIC_ID_FROM_HISTORY'] = 'S';
 				break;
-			case self::WHAT_WILL_CALCULATE_NEW_ACTIVE_LEAD_COUNT:
-			case self::WHAT_WILL_CALCULATE_REPEATED_ACTIVE_LEAD_COUNT:
 			case self::WHAT_WILL_CALCULATE_ACTIVE_LEAD_COUNT:
-				$params['STATUS_SEMANTIC_ID'] = 'P';
+				$params['STATUS_SEMANTIC_ID_FROM_HISTORY'] = 'P';
 				break;
 		}
-		return parent::getTargetUrl($baseUri, $params); // TODO: Change the autogenerated stub
+		$result = parent::getTargetUrl($baseUri, $params);
+
+		//HACK to clear stage semantic filter from url if it is succeed or failed data
+		switch ($calculateValue)
+		{
+			case self::WHAT_WILL_CALCULATE_LOST_LEAD_COUNT:
+				$uri = new Uri($result);
+				$uri->deleteParams(['STATUS_SEMANTIC_ID']);
+				$uri->addParams(['STATUS_SEMANTIC_ID_FROM_HISTORY' => 'F']);
+				$result = $uri->getUri();
+				break;
+			case self::WHAT_WILL_CALCULATE_SUCCESS_LEAD_DATA_FOR_FUNNEL:
+			case self::WHAT_WILL_CALCULATE_CONVERTED_LEAD_COUNT:
+				$uri = new Uri($result);
+				$uri->deleteParams(['STATUS_SEMANTIC_ID']);
+				$uri->addParams(['STATUS_SEMANTIC_ID_FROM_HISTORY' => 'S']);
+				$result = $uri->getUri();
+				break;
+		}
+
+		return $result;
 	}
 
 	/**

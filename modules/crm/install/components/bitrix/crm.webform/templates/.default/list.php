@@ -28,17 +28,20 @@ $APPLICATION->IncludeComponent(
 	$component
 );
 
-$requisiteEditResult = $APPLICATION->IncludeComponent(
-	'bitrix:crm.webform.list',
+$componentParameters = [
+	'PATH_TO_WEB_FORM_LIST' => $arResult['PATH_TO_WEB_FORM_LIST'],
+	'PATH_TO_WEB_FORM_EDIT' => $arResult['PATH_TO_WEB_FORM_EDIT'],
+	'PATH_TO_WEB_FORM_FILL' => $arResult['PATH_TO_WEB_FORM_FILL'],
+	'PATH_TO_WEB_FORM_ADS' => $arResult['PATH_TO_WEB_FORM_ADS'],
+	'PATH_TO_USER_PROFILE' => $arResult['PATH_TO_USER_PROFILE']
+];
+
+$APPLICATION->IncludeComponent(
+	'bitrix:ui.sidepanel.wrapper',
 	'',
-	array(
-		'IFRAME' => $arParams['IFRAME'],
-		'PATH_TO_WEB_FORM_LIST' => $arResult['PATH_TO_WEB_FORM_LIST'],
-		'PATH_TO_WEB_FORM_EDIT' => $arResult['PATH_TO_WEB_FORM_EDIT'],
-		'PATH_TO_WEB_FORM_FILL' => $arResult['PATH_TO_WEB_FORM_FILL'],
-		'PATH_TO_WEB_FORM_ADS' => $arResult['PATH_TO_WEB_FORM_ADS'],
-		'PATH_TO_USER_PROFILE' => $arResult['PATH_TO_USER_PROFILE']
-	),
-	$component
+	[
+		'POPUP_COMPONENT_NAME' => 'bitrix:crm.webform.list',
+		'POPUP_COMPONENT_TEMPLATE_NAME' => '',
+		'POPUP_COMPONENT_PARAMS' => $componentParameters,
+	]
 );
-?>

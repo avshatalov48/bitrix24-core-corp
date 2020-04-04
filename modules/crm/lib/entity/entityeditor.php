@@ -55,6 +55,63 @@ class EntityEditor
 	}
 
 	/**
+	 * Prepare Entity Fields received from editor for copy.
+	 * @param array $entityFields Entity Fields.
+	 * @param \CCrmUserType $userType User Type Entity.
+	 * @return void
+	 */
+	public static function prepareForCopy(array &$entityFields, \CCrmUserType $userType)
+	{
+		$request = Main\Context::getCurrent()->getRequest();
+
+		$userFields = $userType->GetFields();
+		foreach($userFields as $fieldName => $userField)
+		{
+			if(!isset($entityFields[$fieldName]))
+			{
+				continue;
+			}
+
+			if($userField['USER_TYPE_ID'] !== 'file')
+			{
+				continue;
+			}
+
+			$deletionKey = "{$fieldName}_del";
+			if(isset($userField['MULTIPLE']) && $userField['MULTIPLE'] === 'Y')
+			{
+				$results = array();
+				if(is_array($entityFields[$fieldName]))
+				{
+					$deletedFileIDs = isset($request[$deletionKey]) && is_array($request[$deletionKey])
+						? $request[$deletionKey] : array();
+					foreach($entityFields[$fieldName] as $fileInfo)
+					{
+						if(is_numeric($fileInfo) && in_array($fileInfo, $deletedFileIDs))
+						{
+							continue;
+						}
+
+						$results[] = $fileInfo;
+					}
+				}
+				$entityFields[$fieldName] = $results;
+			}
+			else
+			{
+				$fileInfo = $entityFields[$fieldName];
+				if(is_numeric($fileInfo)
+					&& isset($request[$deletionKey])
+					&& ($request[$deletionKey] === 'Y' || $request[$deletionKey] == $fileInfo)
+				)
+				{
+					$entityFields[$fieldName] = false;
+				}
+			}
+		}
+	}
+
+	/**
 	 * @param \Bitrix\Crm\Conversion\EntityConversionWizard $wizard
 	 * @param int $entityTypeID
 	 * @param array $entityFields

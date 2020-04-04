@@ -609,17 +609,18 @@ html:not(.bx-ie) .disk-folder-list-context-menu-item-accept-animate.menu-popup-i
 }
 
 .disk-folder-list-no-data-inner-variable {
-	display: flex;
+	display: block;
 	overflow: hidden;
 	font-size: 0;
+	white-space: nowrap;
 }
 
 .disk-folder-list-no-data-inner-create-file,
 .disk-folder-list-no-data-inner-create-folder {
 	position: relative;
-	display: flex;
-	flex: 1;
+	display: inline-block;
 	height: 115px;
+	line-height: 115px;
 	max-width: calc(50% - 9px);
 	margin-right: 9px;
 	padding: 0 90px;
@@ -629,9 +630,6 @@ html:not(.bx-ie) .disk-folder-list-context-menu-item-accept-animate.menu-popup-i
 	font-size: 22px;
 	text-decoration: none;
 	cursor: pointer;
-	text-align: center;
-	align-items: center;
-	justify-content: center;
 	white-space: nowrap;
 	background: transparent;
 	transition: .1s;

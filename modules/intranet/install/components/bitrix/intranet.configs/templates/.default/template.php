@@ -1,4 +1,7 @@
-<?if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();?>
+<?if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+
+use \Bitrix\Bitrix24\Feature;
+?>
 <?CJSCore::Init(array("access"));?>
 
 <?if(isset($_GET['success'])): ?>
@@ -57,7 +60,7 @@
 		<?endif?>
 
 		<?if (
-			$arResult["IS_BITRIX24"] && in_array($arResult["LICENSE_TYPE"], array("team", "company", "nfr", "edu", "demo", "bis_inc"))
+			$arResult["IS_BITRIX24"] && \Bitrix\Bitrix24\Feature::isFeatureEnabled("remove_logo24")
 			|| !$arResult["IS_BITRIX24"]
 		):
 			$logo24show = COption::GetOptionString("bitrix24", "logo24show", "Y");
@@ -249,7 +252,7 @@
 		<tr>
 			<td class="content-edit-form-field-name content-edit-form-field-name-left">
 				<label for="disk_version_limit_per_file"><?=GetMessage('CONFIG_DISK_VERSION_LIMIT_PER_FILE')?></label>
-				<?if ($arResult["IS_BITRIX24"] && in_array($arResult["LICENSE_TYPE"], array("project", "self"))):?>
+				<?if ($arResult["IS_BITRIX24"] && !Feature::isFeatureEnabled("disk_version_limit_per_file")):?>
 					<?
 					CBitrix24::initLicenseInfoPopupJS("disk_version_limit_per_file");
 					?>
@@ -270,7 +273,7 @@
 
 			</td>
 			<td class="content-edit-form-field-input">
-				<select name="disk_version_limit_per_file" <?if ($arResult["IS_BITRIX24"] && in_array($arResult["LICENSE_TYPE"], array("project", "self"))) echo "disabled";?>>
+				<select name="disk_version_limit_per_file" <?if ($arResult["IS_BITRIX24"] && !Feature::isFeatureEnabled("disk_version_limit_per_file")) echo "disabled";?>>
 					<?foreach($arResult["DISK_LIMIT_PER_FILE"] as $code => $name):?>
 						<option value="<?=$code?>" <?if ($code == $arResult["DISK_LIMIT_PER_FILE_SELECTED"]) echo "selected"?>><?=$name?></option>
 					<?endforeach?>
@@ -282,9 +285,9 @@
 		<tr>
 			<td class="content-edit-form-field-name content-edit-form-field-name-left">
 				<label for="disk_allow_use_external_link"><?=GetMessage('CONFIG_DISK_ALLOW_USE_EXTERNAL_LINK')?></label>
-				<?if ($arResult["IS_BITRIX24"] && !in_array($arResult["LICENSE_TYPE"], array("team", "company", "nfr", "demo", "edu", "bis_inc"))):?>
+				<?if ($arResult["IS_BITRIX24"] && !Feature::isFeatureEnabled("disk_switch_external_link")):?>
 					<?
-					CBitrix24::initLicenseInfoPopupJS("disk_allow_use_external_link");
+					CBitrix24::initLicenseInfoPopupJS("disk_switch_external_link");
 					?>
 					<img src="<?=$this->GetFolder();?>/images/lock.png" data-role="config-lock-disk-external-link" style="position: relative;bottom: -1px; margin-left: 5px;"/>
 					<script>
@@ -293,7 +296,7 @@
 							if (lock1)
 							{
 								BX.bind(lock1, "click", function(){
-									B24.licenseInfoPopup.show('disk_allow_use_external_link', '<?=GetMessageJS("CONFIG_DISK_LOCK_POPUP_TITLE")?>',
+									B24.licenseInfoPopup.show('disk_switch_external_link', '<?=GetMessageJS("CONFIG_DISK_LOCK_POPUP_TITLE")?>',
 										'<?=GetMessageJS("CONFIG_DISK_LOCK_POPUP_TEXT")?>');
 								});
 							}
@@ -302,7 +305,18 @@
 				<?endif?>
 			</td>
 			<td class="content-edit-form-field-input">
-				<input type="checkbox" <?if ($arResult["IS_BITRIX24"] && !in_array($arResult["LICENSE_TYPE"], array("team", "company", "nfr", "demo", "edu", "bis_inc"))) echo "disabled";?> id="disk_allow_use_external_link" name="disk_allow_use_external_link" <?if (COption::GetOptionString("disk", "disk_allow_use_external_link", "Y") == "Y"):?>checked<?endif?> class="content-edit-form-field-input-selector"/>
+				<input type="checkbox"
+					<?if ($arResult["IS_BITRIX24"] && !Feature::isFeatureEnabled("disk_switch_external_link")) echo "disabled";?>
+					id="disk_allow_use_external_link"
+					name="disk_allow_use_external_link"
+					<?if (
+						COption::GetOptionString("disk", "disk_allow_use_external_link", "Y") == "Y"
+						&& (!$arResult["IS_BITRIX24"] || $arResult["IS_BITRIX24"] && Feature::isFeatureEnabled("disk_manual_external_link"))
+					):?>
+						checked
+					<?endif?>
+					class="content-edit-form-field-input-selector"
+				/>
 			</td>
 			<td class="content-edit-form-field-error"></td>
 		</tr>
@@ -310,7 +324,7 @@
 		<tr>
 			<td class="content-edit-form-field-name content-edit-form-field-name-left">
 				<label for="disk_object_lock_enabled"><?=GetMessage('CONFIG_DISK_OBJECT_LOCK_ENABLED')?></label>
-				<?if ($arResult["IS_BITRIX24"] && !in_array($arResult["LICENSE_TYPE"], array("team", "company", "nfr", "demo", "edu", "bis_inc"))):?>
+				<?if ($arResult["IS_BITRIX24"] && !Feature::isFeatureEnabled("disk_object_lock_enabled")):?>
 					<?
 					CBitrix24::initLicenseInfoPopupJS("disk_object_lock_enabled");
 					?>
@@ -330,7 +344,49 @@
 				<?endif?>
 			</td>
 			<td class="content-edit-form-field-input">
-				<input type="checkbox" <?if ($arResult["IS_BITRIX24"] && !in_array($arResult["LICENSE_TYPE"], array("team", "company", "nfr", "demo", "edu", "bis_inc"))) echo "disabled";?> id="disk_object_lock_enabled" name="disk_object_lock_enabled" <?if (COption::GetOptionString("disk", "disk_object_lock_enabled", "N") == "Y"):?>checked<?endif?> class="content-edit-form-field-input-selector"/>
+				<input type="checkbox" <?if ($arResult["IS_BITRIX24"] && !Feature::isFeatureEnabled("disk_object_lock_enabled")) echo "disabled";?> id="disk_object_lock_enabled" name="disk_object_lock_enabled" <?if (COption::GetOptionString("disk", "disk_object_lock_enabled", "N") == "Y"):?>checked<?endif?> class="content-edit-form-field-input-selector"/>
+			</td>
+			<td class="content-edit-form-field-error"></td>
+		</tr>
+
+		<tr>
+			<td class="content-edit-form-field-name content-edit-form-field-name-left">
+				<label for="disk_allow_use_extended_fulltext"><?=GetMessage('CONFIG_DISK_ALLOW_USE_EXTENDED_FULLTEXT')?></label>
+				<?if ($arResult["IS_BITRIX24"] && !Feature::isFeatureEnabled("disk_allow_use_extended_fulltext")):?>
+					<?
+					CBitrix24::initLicenseInfoPopupJS("disk_allow_use_extended_fulltext");
+					?>
+					<img src="<?=$this->GetFolder();?>/images/lock.png" data-role="config-lock-disk-allow-use-extended-fulltext" style="position: relative;bottom: -1px; margin-left: 5px;"/>
+					<script>
+						BX.ready(function(){
+							var lockDiskFullText = document.querySelector("[data-role='config-lock-disk-allow-use-extended-fulltext']");
+							if (BX.type.isDomNode(lockDiskFullText))
+							{
+								BX.bind(lockDiskFullText, "click", function(){
+									B24.licenseInfoPopup.show('disk_allow_use_extended_fulltext', '<?=GetMessageJS("CONFIG_DISK_LOCK_POPUP_TITLE")?>',
+										'<?=GetMessageJS("CONFIG_DISK_LOCK_EXTENDED_FULLTEXT_POPUP_TEXT")?>', false);
+								});
+							}
+						});
+					</script>
+				<?endif?>
+			</td>
+			<td class="content-edit-form-field-input">
+				<input
+					type="checkbox"
+					<?if ($arResult["IS_BITRIX24"] && !Feature::isFeatureEnabled("disk_allow_use_extended_fulltext")) echo "disabled";?>
+					id="disk_allow_use_extended_fulltext"
+					name="disk_allow_use_extended_fulltext"
+					<?if (COption::GetOptionString("disk", "disk_allow_use_extended_fulltext", "N") == "Y"):?>checked<?endif?>
+					class="content-edit-form-field-input-selector"
+					<?if (
+						$arResult["IS_BITRIX24"]
+						&& Feature::isFeatureEnabled("disk_allow_use_extended_fulltext")
+						&& COption::GetOptionString("disk", "disk_allow_use_extended_fulltext", "N") != "Y"
+					):?>
+					onclick="BX.Bitrix24.Configs.Functions.showDiskExtendedFullTextInfo(event, this);"
+					<?endif?>
+				/>
 			</td>
 			<td class="content-edit-form-field-error"></td>
 		</tr>
@@ -482,62 +538,95 @@ $mpUserAllowInstall = count($arResult['MP_ALLOW_USER_INSTALL']) > 0;
 		if ($arResult["IS_BITRIX24"])
 		{
 		?>
-		<tr>
-			<td class="content-edit-form-field-name content-edit-form-field-name-left"><label for="configs_allow_register"><?=GetMessage('CONFIG_ALLOW_SELF_REGISTER')?></label></td>
-			<td class="content-edit-form-field-input"><input type="checkbox" name="allow_register" id="configs_allow_register" <?if ($arResult["ALLOW_SELF_REGISTER"] == "Y"):?>checked<?endif?> class="content-edit-form-field-input-selector"/></td>
-			<td class="content-edit-form-field-error"></td>
-		</tr>
+			<tr>
+				<td class="content-edit-form-field-name content-edit-form-field-name-left"><label for="configs_allow_register"><?=GetMessage('CONFIG_ALLOW_SELF_REGISTER')?></label></td>
+				<td class="content-edit-form-field-input"><input type="checkbox" name="allow_register" id="configs_allow_register" <?if ($arResult["ALLOW_SELF_REGISTER"] == "Y"):?>checked<?endif?> class="content-edit-form-field-input-selector"/></td>
+				<td class="content-edit-form-field-error"></td>
+			</tr>
 
-		<tr>
-			<td class="content-edit-form-field-name content-edit-form-field-name-left"><label for="configs_allow_invite_users"><?=GetMessage('CONFIG_ALLOW_INVITE_USERS')?></label></td>
-			<td class="content-edit-form-field-input"><input type="checkbox" name="allow_invite_users" value="Y" id="configs_allow_invite_users" <?if ($arResult["ALLOW_INVITE_USERS"] == "Y"):?>checked<?endif?> class="content-edit-form-field-input-selector"/></td>
-			<td class="content-edit-form-field-error"></td>
-		</tr>
+			<tr>
+				<td class="content-edit-form-field-name content-edit-form-field-name-left"><label for="configs_allow_invite_users"><?=GetMessage('CONFIG_ALLOW_INVITE_USERS')?></label></td>
+				<td class="content-edit-form-field-input"><input type="checkbox" name="allow_invite_users" value="Y" id="configs_allow_invite_users" <?if ($arResult["ALLOW_INVITE_USERS"] == "Y"):?>checked<?endif?> class="content-edit-form-field-input-selector"/></td>
+				<td class="content-edit-form-field-error"></td>
+			</tr>
 
-		<tr>
-			<td class="content-edit-form-field-name content-edit-form-field-name-left"><label for="configs_allow_new_user_lf"><?=GetMessage('CONFIG_ALLOW_NEW_USER_LF')?></label></td>
-			<td class="content-edit-form-field-input"><input type="checkbox" name="allow_new_user_lf" value="Y" id="configs_allow_new_user_lf" <?if ($arResult["ALLOW_NEW_USER_LF"] == "Y"):?>checked<?endif?> class="content-edit-form-field-input-selector"/></td>
-			<td class="content-edit-form-field-error"></td>
-		</tr>
-
-		<tr>
-			<td class="content-edit-form-field-name content-edit-form-field-name-left">
-				<label for="network_avaiable"><?=GetMessage('CONFIG_NETWORK_AVAILABLE')?></label>
-				<?
-				$disabled = $arResult['ALLOW_NETWORK_CHANGE'] !== 'Y';
-				if($arResult["IS_BITRIX24"] && !$arResult['CREATOR_CONFIRMED']):
-				?>
-					<img src="<?=$this->GetFolder();?>/images/lock.png"  style="position: relative;bottom: -1px; margin-left: 5px;" onmouseover="BX.hint(this, '<?=htmlspecialcharsbx(CUtil::JSEscape(GetMessage('CONFIG_NETWORK_AVAILABLE_NOT_CONFIRMED')))?>')" />
-				<?
-				elseif ($arResult['ALLOW_NETWORK_CHANGE'] === 'N'):
-
+			<tr>
+				<td class="content-edit-form-field-name content-edit-form-field-name-left"><label for="configs_allow_new_user_lf"><?=GetMessage('CONFIG_ALLOW_NEW_USER_LF')?></label></td>
+				<td class="content-edit-form-field-input"><input type="checkbox" name="allow_new_user_lf" value="Y" id="configs_allow_new_user_lf" <?if ($arResult["ALLOW_NEW_USER_LF"] == "Y"):?>checked<?endif?> class="content-edit-form-field-input-selector"/></td>
+				<td class="content-edit-form-field-error"></td>
+			</tr>
+			<?
+			if (in_array($arResult["LICENSE_PREFIX"], array("ru", "ua", "kz", "by")))
+			{
+			?>
+			<tr>
+				<td class="content-edit-form-field-name content-edit-form-field-name-left">
+					<label for="network_avaiable"><?=GetMessage('CONFIG_NETWORK_AVAILABLE')?></label>
+					<?
+					$disabled = $arResult['ALLOW_NETWORK_CHANGE'] !== 'Y';
+					if ($arResult["IS_BITRIX24"] && !$arResult['CREATOR_CONFIRMED']):
+						?>
+					<img src="<?=$this->GetFolder();?>/images/lock.png"
+						 style="position: relative;bottom: -1px; margin-left: 5px;"
+						 onmouseover="BX.hint(this, '<?=htmlspecialcharsbx(CUtil::JSEscape(GetMessage('CONFIG_NETWORK_AVAILABLE_NOT_CONFIRMED')))?>')"/>
+					<?
+					elseif ($arResult['ALLOW_NETWORK_CHANGE'] === 'N'):
 					CBitrix24::initLicenseInfoPopupJS("network_available");
-				?>
-					<img src="<?=$this->GetFolder();?>/images/lock.png" data-role="config-lock-network-available" style="position: relative;bottom: -1px; margin-left: 5px;"/>
-					<script>
-						BX.ready(function(){
-							var lock3 = document.querySelector("[data-role='config-lock-network-available']");
-							if (lock3)
-							{
-								BX.bind(lock3, "click", function(){
-									B24.licenseInfoPopup.show('network-available', '<?=GetMessageJS("CONFIG_NETWORK_AVAILABLE_TITLE")?>',
-										'<?=GetMessageJS("CONFIG_NETWORK_AVAILABLE_TEXT_NEW", array("#PRICE#" => $arResult["PROJECT_PRICE"]))?>', false);
-								});
-							}
-						});
-					</script>
-				<?
-				endif;
-				?>
-			</td>
-			<td class="content-edit-form-field-input">
-				<input type="checkbox"  <?if($disabled) echo "disabled";?>  name="network_avaiable" value="Y" id="network_avaiable" <?if ($arResult["NETWORK_AVAILABLE"] == "Y"):?>checked<?endif?> class="content-edit-form-field-input-selector"/>
-			</td>
+					?>
+					<img src="<?=$this->GetFolder();?>/images/lock.png" data-role="config-lock-network-available"
+						 style="position: relative;bottom: -1px; margin-left: 5px;"/>
+						<script>
+							BX.ready(function () {
+								var lock3 = document.querySelector("[data-role='config-lock-network-available']");
+								if (lock3)
+								{
+									BX.bind(lock3, "click", function () {
+										B24.licenseInfoPopup.show('network-available', '<?=GetMessageJS("CONFIG_NETWORK_AVAILABLE_TITLE")?>',
+											'<?=GetMessageJS("CONFIG_NETWORK_AVAILABLE_TEXT_NEW", array("#PRICE#" => $arResult["PROJECT_PRICE"]))?>', false);
+									});
+								}
+							});
+						</script>
+					<?
+					endif; ?>
+				</td>
+				<td class="content-edit-form-field-input">
+					<input type="checkbox"
+						<?if ($disabled) echo "disabled"; ?>
+						name="network_avaiable" value="Y" id="network_avaiable"
+						<?if ($arResult["NETWORK_AVAILABLE"] == "Y"): ?>checked<?endif?>
+						class="content-edit-form-field-input-selector"
+					/>
+				</td>
+				<td class="content-edit-form-field-error"></td>
+			</tr>
+		<?
+			}
+		}
+		?>
+
+		<tr>
+			<td class="content-edit-form-field-name content-edit-form-field-name-left"><label for="show_year_for_female"><?=GetMessage('CONFIG_SHOW_YEAR_FOR_FEMALE')?></label></td>
+			<td class="content-edit-form-field-input"><input type="checkbox" name="show_year_for_female" value="N" id="show_year_for_female" <?if ($arResult["SHOW_YEAR_FOR_FEMALE"] == "Y"):?>checked<?endif?> class="content-edit-form-field-input-selector"/></td>
 			<td class="content-edit-form-field-error"></td>
 		</tr>
 		<?
+
+		if (
+			!$arResult["IS_BITRIX24"]
+			|| \Bitrix\Bitrix24\Release::isAvailable('stresslevel')
+		)
+		{
+			?>
+			<tr>
+				<td class="content-edit-form-field-name content-edit-form-field-name-left"><label for="stresslevel_available"><?=GetMessage('CONFIG_STRESSLEVEL_AVAILABLE')?></label></td>
+				<td class="content-edit-form-field-input"><input type="checkbox" name="stresslevel_available" value="Y" id="stresslevel_available" <?if ($arResult["STRESSLEVEL_AVAILABLE"] == "Y"):?>checked<?endif?> class="content-edit-form-field-input-selector"/></td>
+				<td class="content-edit-form-field-error"></td>
+			</tr>
+			<?
 		}
 		?>
+
 	<!-- GDPR for Europe-->
 		<?
 		if ($arResult["IS_BITRIX24"])
@@ -698,18 +787,18 @@ $mpUserAllowInstall = count($arResult['MP_ALLOW_USER_INSTALL']) > 0;
 				<input type="checkbox" name="feature_crm" id="feature_crm" <?if (IsModuleInstalled("crm")) echo "checked"?>/>
 				<label for="feature_crm"><?=GetMessage("CONFIG_FEATURES_CRM")?></label><br/>
 
-				<?if (in_array($arResult["LICENSE_TYPE"], array("team", "company", "nfr", "edu"))):?>
-					<input type="checkbox" name="feature_extranet" id="feature_extranet" <?if (IsModuleInstalled("extranet")) echo "checked"?>/>
-					<label for="feature_extranet"><?=GetMessage("CONFIG_FEATURES_EXTRANET")?></label><br/>
-				<?endif?>
+				<input type="checkbox" name="feature_extranet" id="feature_extranet" <?if (IsModuleInstalled("extranet")) echo "checked"?>/>
+				<label for="feature_extranet"><?=GetMessage("CONFIG_FEATURES_EXTRANET")?></label><br/>
 
-				<?if ($arResult["LICENSE_TYPE"] == "company" || $arResult["LICENSE_TYPE"] == "nfr" || $arResult["LICENSE_TYPE"] == "edu"):?>
+				<?if (Feature::isFeatureEnabled("timeman")):?>
 					<input type="checkbox" name="feature_timeman" id="feature_timeman" <?if (IsModuleInstalled("timeman")) echo "checked"?>/>
 					<label for="feature_timeman"><?=GetMessage("CONFIG_FEATURES_TIMEMAN")?></label><br/>
-
+				<?endif?>
+				<?if (Feature::isFeatureEnabled("meeting")):?>
 					<input type="checkbox" name="feature_meeting" id="feature_meeting" <?if (IsModuleInstalled("meeting")) echo "checked"?>/>
 					<label for="feature_meeting"><?=GetMessage("CONFIG_FEATURES_MEETING")?></label><br/>
-
+				<?endif?>
+				<?if (Feature::isFeatureEnabled("lists")):?>
 					<input type="checkbox" name="feature_lists" id="feature_lists" <?if (IsModuleInstalled("lists")) echo "checked"?>/>
 					<label for="feature_lists"><?=GetMessage("CONFIG_FEATURES_LISTS")?></label><br/>
 				<?endif?>
@@ -717,7 +806,7 @@ $mpUserAllowInstall = count($arResult['MP_ALLOW_USER_INSTALL']) > 0;
 		</tr>
 	<!--ip -->
 		<?
-		if (in_array($arResult["LICENSE_TYPE"], array("team", "company", "nfr", "edu", "demo", "bis_inc")))
+		if (Feature::isFeatureEnabled("ip_access_rights"))
 		{
 			$arCurIpRights = $arResult["IP_RIGHTS"];
 			if (!is_array($arCurIpRights))
@@ -862,7 +951,7 @@ $mpUserAllowInstall = count($arResult['MP_ALLOW_USER_INSTALL']) > 0;
 <br/><br/><br/><br/>
 <!-- logo -->
 <?
-if ($arResult["IS_BITRIX24"] && in_array($arResult["LICENSE_TYPE"], array("team", "company", "nfr", "edu", "demo", "bis_inc")) || !$arResult["IS_BITRIX24"])
+if ($arResult["IS_BITRIX24"] && Feature::isFeatureEnabled("set_logo") || !$arResult["IS_BITRIX24"])
 {
 	$clientLogoID = COption::GetOptionInt("bitrix24", "client_logo", "");
 	$clientLogoRetinaID = COption::GetOptionInt("bitrix24", "client_logo_retina", "");
@@ -999,7 +1088,8 @@ if (isset($_GET["otp"]))
 		SLToAllDel: '<?=CUtil::JSEscape(GetMessage("CONFIG_TOALL_DEL"))?>',
 		LogoDeleteConfirm: '<?=GetMessageJS("CONFIG_ADD_LOGO_DELETE_CONFIRM")?>',
 		CONFIG_OTP_SECURITY_SWITCH_OFF_INFO: '<?=GetMessageJS("CONFIG_OTP_SECURITY_SWITCH_OFF_INFO")?>',
-		CONFIG_OTP_ADMIN_IS_REQUIRED_INFO: '<?=GetMessageJS("CONFIG_OTP_ADMIN_IS_REQUIRED_INFO")?>'
+		CONFIG_OTP_ADMIN_IS_REQUIRED_INFO: '<?=GetMessageJS("CONFIG_OTP_ADMIN_IS_REQUIRED_INFO")?>',
+		CONFIG_DISK_EXTENDED_FULLTEXT_INFO: "<?=GetMessageJS("CONFIG_DISK_EXTENDED_FULLTEXT_INFO")?>"
 	});
 
 	var B24ConfigsLogo = new BX.Bitrix24.Configs.LogoClass("<?=CUtil::JSEscape(POST_FORM_ACTION_URI)?>");
@@ -1008,7 +1098,13 @@ if (isset($_GET["otp"]))
 		BX.Bitrix24.Configs.Functions.init();
 	});
 
-	<?if (in_array($arResult["LICENSE_TYPE"], array("team", "company", "nfr", "edu", "demo", "bis_inc"))):?>
+	<?if ($arResult["IS_BITRIX24"] && Feature::isFeatureEnabled("ip_access_rights")):?>
 	var B24ConfigsIpObj = new BX.Bitrix24.Configs.IpSettingsClass(<?=CUtil::PhpToJSObject(array_keys($arCurIpRights))?>);
+	<?endif?>
+	<?if ($arResult['SHOW_RENAME_POPUP']):?>
+		BX.ready(function(){
+			if (typeof BX.Bitrix24.renamePortal != 'undefined')
+				BX.Bitrix24.renamePortal();
+		});
 	<?endif?>
 </script>

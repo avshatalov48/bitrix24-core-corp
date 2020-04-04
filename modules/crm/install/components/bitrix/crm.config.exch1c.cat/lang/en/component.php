@@ -23,4 +23,6 @@ $MESS["CAT_1CE_INTERVAL"] = "Import step duration, sec. (0 - import all at once)
 $MESS["CAT_1CE_ELEMENTS_PER_STEP"] = "Items per step (0 - import all at once)";
 $MESS["CRM_CATALOG_XML_ID"] = "Exchange catalog ID";
 $MESS["CRM_SELECTED_CATALOG_GROUP_ID"] = "CRM price type";
+$MESS["CRM_TAB_CATALOG_IMPORT"] = "Products: import";
+$MESS["CRM_TAB_CATALOG_EXPORT"] = "Products: export";
 ?>

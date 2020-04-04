@@ -49,7 +49,6 @@ $MESS["CRM_CF_PRODUCT_RESERVE_CONDITION"] = "Reserve items";
 $MESS["CRM_CF_PRODUCT_RESERVE_CLEAR_PERIOD"] = "Days to keep reservation";
 $MESS["CRM_CF_COUNT_DELIVERY_TAX"] = "Calculate delivery tax";
 $MESS["CRM_CF_SALE_ADMIN_NEW_PRODUCT"] = "New items can be added directly in the order edit form";
-$MESS["CRM_CF_USE_ADVANCE_CHECK_BY_DEFAULT"] = "Print advance receipt upon receipt of payment";
 $MESS["CRM_CF_DEF_CURRENCY"] = "Default currency";
 $MESS["CRM_CF_USE_STORE_CONTROL"] = "Enable stock control";
 $MESS["CRM_CF_ENABLE_RESERVATION"] = "Enable reservations";

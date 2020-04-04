@@ -63,6 +63,11 @@ final class CCrmOrderProductListComponent extends \CBitrixComponent
 			if($this->order)
 			{
 				$this->arResult['SITE_ID'] = $this->order->getSiteId();
+				if ((int)$this->arParams['FUSER_ID'] > 0)
+				{
+					$basket = \Bitrix\Sale\Basket::loadItemsForFUser((int)$this->arParams['FUSER_ID'], $this->order->getSiteId());
+					$this->order->setBasket($basket);
+				}
 			}
 		}
 
@@ -366,6 +371,7 @@ final class CCrmOrderProductListComponent extends \CBitrixComponent
 			{
 				$data["PARENT_ID"] = $values["PARENT_ID"];
 			}
+			$data["DISCOUNT_PRICE"] = CCrmCurrency::MoneyToString($values['DISCOUNT_PRICE'], $values['CURRENCY']);
 			$rows[] = $data;
 		}
 

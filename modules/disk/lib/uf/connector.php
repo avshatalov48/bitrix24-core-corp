@@ -63,6 +63,14 @@ abstract class Connector
 	}
 
 	/**
+	 * @return bool
+	 */
+	public function isAnonymousAllowed()
+	{
+		return false;
+	}
+
+	/**
 	 * @param $userId
 	 * @return bool
 	 */

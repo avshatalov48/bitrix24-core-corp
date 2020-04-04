@@ -442,9 +442,6 @@
 				});
 			}
 
-			// init gallery
-			(top.BX.viewElementBind || BX.viewElementBind)(BX('activity_'+this.options.activityId+'_files_images_list'), {});
-
 			// show hidden rcpt items
 			var rcptMore = BX.findChildrenByClassName(this.__wrapper, 'crm-task-list-mail-item-to-list-more');
 			for (var i in rcptMore)

@@ -40,7 +40,7 @@ class ButtonTable extends \Bitrix\Main\Entity\DataManager
 				'autocomplete' => true,
 			),
 			'DATE_CREATE' => array(
-				'data_type' => 'integer',
+				'data_type' => 'datetime',
 				'default_value' => new DateTime(),
 			),
 			'CREATED_BY' => array(
@@ -53,7 +53,7 @@ class ButtonTable extends \Bitrix\Main\Entity\DataManager
 				'values' => array('N', 'Y')
 			),
 			'ACTIVE_CHANGE_DATE' => array(
-				'data_type' => 'integer',
+				'data_type' => 'datetime',
 				'default_value' => new DateTime(),
 			),
 			'ACTIVE_CHANGE_BY' => array(

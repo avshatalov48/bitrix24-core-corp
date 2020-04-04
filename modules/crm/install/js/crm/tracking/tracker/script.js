@@ -28,15 +28,20 @@
 		},
 		getFromHref: function (element, type)
 		{
-			var value = element.pathname || '';
+			var value = element.href || '';
 			if (!value)
 			{
 				return null;
 			}
+			value = value.substr(element.protocol.length || 0).trim();
 
 			return {
 				'node': element,
-				'values': [{'type': type, 'value': value}]
+				'values': [{
+					'type': type,
+					'value': value,
+					'cleaned': Util.clean(type, value)
+				}]
 			};
 		},
 		isItemValid: function (item)
@@ -64,6 +69,11 @@
 		},
 		replaceItem: function (item)
 		{
+			if (this.map.length === 0)
+			{
+				return;
+			}
+
 			var href = item.node.href;
 			item.values.forEach(function (value) {
 				var result = Util.replaceByMap(this.map, href, value.type, value.value, true);
@@ -242,7 +252,8 @@
 					.map(function (value) {
 						return {
 							'type': type.code,
-							'value': value
+							'value': value,
+							'cleaned': Util.clean(type.code, value)
 						};
 					})
 					.concat(item.values);
@@ -265,6 +276,7 @@
 		{
 			var initialText = item.node.nodeValue;
 			var text = initialText;
+
 			item.values.forEach(function (value) {
 				var result = Util.replaceByMap(this.map, text, value.type, value.value);
 				if (result.text)
@@ -277,16 +289,14 @@
 				}
 			}, this);
 
-			if (text !== initialText)
+
+			if (this.isEnrichTextual)
 			{
-				if (this.isEnrichTextual)
-				{
-					TextConverter.enrich(this.map, item, text);
-				}
-				else
-				{
-					item.node.nodeValue = text;
-				}
+				TextConverter.enrich(this.map, item, text);
+			}
+			else if (text !== initialText)
+			{
+				item.node.nodeValue = text;
 			}
 		},
 
@@ -300,6 +310,10 @@
 		replace: function (context)
 		{
 			context = context || document.body;
+			if (!context)
+			{
+				return;
+			}
 
 			this.search(context).forEach(this.replaceItem, this);
 		},
@@ -449,8 +463,9 @@
 			else
 			{
 				var containerNode = document.createElement('DIV');
-				var nodeList = [];
+				var parentNode = item.node.parentNode;
 				pieces.forEach(function (piece) {
+					var nodeList = [];
 					if (piece.isHtml)
 					{
 						containerNode.innerHTML = piece.text;
@@ -460,13 +475,14 @@
 					{
 						nodeList.push(document.createTextNode(piece.text));
 					}
+
+					nodeList.forEach(function (node) {
+						parentNode.insertBefore(node, item.node);
+					});
 				});
 
-				var parentNode = item.node.parentNode;
-				nodeList.forEach(function (node) {
-					parentNode.insertBefore(node, item.node);
-				});
 				parentNode.removeChild(item.node);
+				//item.node = parentNode;
 			}
 		}
 	};
@@ -481,26 +497,20 @@
 		{
 			return (v || '').length > 0;
 		},
+		clean: function (type, value)
+		{
+			return (type === 'phone' ? Util.cleanPhone(value) : Util.trim(value));
+		},
 		cleanPhone: function (value)
 		{
 			return value.trim().replace(/[^\d+]/gim, '');
 		},
 		filterMap: function (map, type, formattedValue)
 		{
-			var cleanedValue;
-			if (type === 'phone')
-			{
-				cleanedValue = Util.cleanPhone(formattedValue);
-			}
-			else
-			{
-				cleanedValue = Util.trim(formattedValue);
-			}
-
-
+			var cleanedValue = Util.clean(type, formattedValue);
 			if (!cleanedValue)
 			{
-				return '';
+				return [];
 			}
 
 			return map.filter(function (item) {
@@ -705,7 +715,7 @@
 					return;
 				}
 
-				webPacker.addEventListener(item.node, 'click', this.onClick.bind(this, item.values[0].value))
+				webPacker.addEventListener(item.node, 'click', this.onClick.bind(this, item.values[0].value));
 				item.node.isTrackingHandled = true;
 			}, this);
 		},
@@ -731,7 +741,7 @@
 			{
 				'code': 'phone',
 				'selector': 'a[href^="tel:"], a[href^="callto:"]',
-				'regexp': /([+]?([\d][- ()\u00A0]{0,2}){6,16})/gi, //'regexp': /([\+]?([\d][- \(\)\u00A0]{0,2}){6,16})/gi,
+				'regexp': /([+]?([\d][- ()\u00A0]{0,2}){5,15}[\d])/gi, //'regexp': /([\+]?([\d][- \(\)\u00A0]{0,2}){6,16})/gi,
 				'cleaner': Util.cleanPhone
 			},
 			{
@@ -757,6 +767,11 @@
 	Manager.prototype = {
 		load: function (options)
 		{
+			if (webPacker.url.parameter.get('b24_tracker_debug_enabled') === 'y')
+			{
+				debugger;
+			}
+
 			if (this.loaded)
 			{
 				return;
@@ -767,7 +782,15 @@
 			options.editor = options.editor || {resources: []};
 
 			options.b24SiteOnly = EditorStatus.init(options);
-			this.run(options);
+
+			if (["complete", "loaded", "interactive"].indexOf(document.readyState) > -1)
+			{
+				this.run(options);
+			}
+			else
+			{
+				webPacker.addEventListener(window, 'DOMContentLoaded', this.run.bind(this, options))
+			}
 		},
 		run: function (options)
 		{
@@ -780,9 +803,9 @@
 			this.configure(options);
 			Performance.end('Load');
 
-			if (this.map.length > 0)
+			this.replace();
+			if (this.map.length > 0 && this.source)
 			{
-				this.replace();
 				this.resolveDuplicates();
 			}
 
@@ -806,10 +829,10 @@
 				var hosts = webPacker.type.isArray(site.host) ? site.host : [site.host];
 				hosts = hosts.map(function (host) {
 					a.href = 'http://' + host;
-					return a.host;
+					return a.hostname;
 				});
 
-				return hosts.indexOf(window.location.host) > -1;
+				return hosts.indexOf(window.location.hostname) > -1;
 			})[0];
 			if (!site)
 			{
@@ -834,43 +857,65 @@
 			}
 
 			var source = options.sources.filter(function (source) {
-				return source.utm === utmSource;
+				return source.utm.filter(function (sourceUtmSouce) {
+					return sourceUtmSouce === utmSource;
+				}).length > 0;
 			})[0];
-			if (!source)
-			{
-				return;
-			}
 
 			if (site.replacement === 'all')
 			{
 				site.replacement = this.search();
 			}
 
-			var types = this.types.filter(function (item) {
-				return !!source.replacement[item.code];
-			}).reduce(function (accumulator, item) {
+			var types = this.types;
+			types = types.reduce(function (accumulator, item) {
 				accumulator[item.code] = item;
 				return accumulator;
 			}, {});
-			site.replacement.forEach(function (item) {
-				var type = types[item.type];
-				if (!type)
-				{
-					return;
-				}
 
-				var final = source.replacement[item.type];
-				this.map.push({
-					'origin': {
-						'cleaned': type.cleaner.apply(this, [item.value]),
-						'formatted': [item.value]
-					},
-					'final': {
-						'cleaned': type.cleaner.apply(this, [final]),
-						'formatted': final
+			this.map = site.replacement
+				.filter(function (item) {
+					return !!types[item.type];
+				})
+				.map(function (item) {
+					var type = types[item.type];
+					var final = item.value;
+					if (source && source.replacement[item.type])
+					{
+						var repl = source.replacement[item.type];
+						var filtered = [];
+						filtered = filtered.length > 0
+							? filtered
+							: repl.filter(function (replItem) {
+								return typeof replItem === 'string' || replItem.host === site.host;
+							});
+						filtered = filtered.length > 0
+							? filtered
+							: repl.filter(function (replItem) {
+								return !replItem.host;
+							});
+						filtered = filtered.length > 0
+							? filtered
+							: repl;
+
+						final = filtered.length > 0
+							? typeof filtered[0] === 'string'
+								? filtered[0]
+								: filtered[0].value
+							: final
 					}
-				});
-			}, this);
+
+					return {
+						'origin': {
+							'cleaned': type.cleaner(item.value),
+							'formatted': [item.value]
+						},
+						'final': {
+							'cleaned': type.cleaner(final),
+							'formatted': final
+						}
+					};
+				}, this);
 
 			this.site = site;
 			this.source = source;
@@ -990,6 +1035,8 @@
 
 	var EditorStatus = {
 		checkingName: 'b24_tracker_checking_origin',
+		debugName: 'bx_debug',
+		debug: false,
 		timeout: 600,
 		options: {},
 		fields: {
@@ -1049,27 +1096,42 @@
 
 			return (Date.now() - this.fields.get('timestamp')) < this.timeout * 1000;
 		},
+		log: function (mess)
+		{
+			if (this.debug && window.console && 'log' in console)
+			{
+				console.log('b24Tracker[EditorStatus]:', mess);
+			}
+		},
 		check: function ()
 		{
+			this.debug = webPacker.url.parameter.get(this.debugName) === 'y';
+
 			if (!window.opener)
 			{
+				this.log('window.opener is empty');
 				return;
 			}
 
 			var origin = webPacker.url.parameter.get(this.checkingName);
-			if (!origin || origin !== webPacker.getAddress())
+			if (!origin)
 			{
+				this.log('Origin parameter is empty');
+				return;
+			}
+			if (origin !== webPacker.getAddress() && !this.debug)
+			{
+				this.log('Origin parameter not equal `' + webPacker.getAddress() + '`');
 				return;
 			}
 
-			window.opener.postMessage(
-				JSON.stringify({
-					source: 'b24Tracker',
-					action: 'init',
-					items: Manager.Instance.search()
-				}),
-				origin
-			);
+			var data = JSON.stringify({
+				source: 'b24Tracker',
+				action: 'init',
+				items: Manager.Instance.search()
+			});
+			window.opener.postMessage(data, origin);
+			this.log('Send to `' + origin + '` data ' + data);
 		},
 		init: function (options)
 		{

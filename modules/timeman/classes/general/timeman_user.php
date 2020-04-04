@@ -1,4 +1,12 @@
 <?
+
+use Bitrix\Timeman\Form\Worktime\WorktimeRecordForm;
+use Bitrix\Timeman\Helper\TimeHelper;
+use Bitrix\Timeman\Model\Worktime\Record\WorktimeRecord;
+use Bitrix\Timeman\Model\Worktime\Record\WorktimeRecordTable;
+use Bitrix\Timeman\UseCase\Worktime\Manage;
+use Bitrix\Timeman\Service\Worktime\Result\WorktimeServiceResult;
+
 class CTimeManUser
 {
 	public $SITE_ID = SITE_ID;
@@ -10,12 +18,14 @@ class CTimeManUser
 	protected $UF_DEPARTMENT;
 
 	protected static $instance = null;
-	protected static $LAST_ENTRY = array();
+	protected static $LAST_ENTRY = [];
 
 	public static function instance()
 	{
 		if (!self::$instance)
+		{
 			self::$instance = new CTimeManUser();
+		}
 
 		return self::$instance;
 	}
@@ -41,7 +51,7 @@ class CTimeManUser
 		if (!$arSettings['UF_TM_FREE'] && $timestamp !== false)
 		{
 			// $timestamp is in server time yet
-			if (abs(time()-$timestamp) > $arSettings['UF_TM_ALLOWED_DELTA'])
+			if (abs(time() - $timestamp) > $arSettings['UF_TM_ALLOWED_DELTA'])
 			{
 				$APPLICATION->ThrowException('Time was changed manually', 'TIME_CHANGE');
 				return false;
@@ -51,442 +61,314 @@ class CTimeManUser
 		return true;
 	}
 
-	public function EditDay($arParams)
+	/**
+	 * @param null $eventName
+	 * @return WorktimeRecordForm
+	 */
+	private function createWorktimeRecordForm($eventName = null)
+	{
+		$recordForm = WorktimeRecordForm::createWithEventForm($eventName);
+		$recordForm->userId = $this->USER_ID;
+
+		return $recordForm;
+	}
+
+	private function buildEditForm($arParams)
+	{
+		$recordForm = WorktimeRecordForm::createWithEventForm();
+		$recordForm->editedBy = $this->USER_ID;
+		$recordForm->recordedStartSeconds = $arParams['TIME_START'];
+		$recordForm->recordedStartDateFormatted = $arParams['DATE_START'];
+		$recordForm->recordedStopSeconds = $arParams['TIME_FINISH'];
+		$recordForm->recordedStopDateFormatted = $arParams['DATE_FINISH'];
+		$recordForm->recordedBreakLength = $arParams['TIME_LEAKS'];
+		$recordForm->device = $arParams['DEVICE'];
+		$recordForm->getFirstEventForm()->reason = $arParams['REPORT'];
+		if (isset($arParams['LAT_CLOSE']))
+		{
+			$recordForm->latitudeClose = $arParams['LAT_CLOSE'];
+		}
+		if (isset($arParams['LON_CLOSE']))
+		{
+			$recordForm->longitudeClose = $arParams['LAT_CLOSE'];
+		}
+		$recordForm->ipClose = $_SERVER['REMOTE_ADDR'];
+		return $recordForm;
+	}
+
+	public function editDay($arParams)
 	{
 		global $APPLICATION;
 
-		$arSettings = $this->GetSettings();
+		$recordForm = $this->buildEditForm($arParams);
 
-		if (
-			(!$arSettings['UF_TM_FREE'] && strlen($arParams['REPORT']) < 0)
-			|| COption::GetOptionString('timeman', 'workday_can_edit_current', 'Y') !== 'Y'
-		)
+		if ($recordForm->validate())
 		{
-			if ($this->State() == 'EXPIRED')
+			$result = (new Manage\Edit\Handler())->handle($recordForm);
+			if ($result->isSuccess())
 			{
-				unset($arParams['TIME_START']);
-				unset($arParams['TIME_LEAKS']);
+				static::clearFullReportCache();
+				return WorktimeRecordTable::convertFieldsCompatible($result->getWorktimeRecord()->collectValues());
+			}
+			if (!empty($result->getErrors()) && $result->getErrors()[0]->getCode() === WorktimeServiceResult::ERROR_FOR_USER)
+			{
+				$APPLICATION->ThrowException($result->getErrors()[0]->getMessage(), 'ALERT_WARNING');
 			}
 			else
 			{
-				$GLOBALS['APPLICATION']->ThrowException('Access denied');
-				return false;
+				$APPLICATION->ThrowException($result->getErrorMessages()[0]);
+			}
+			return false;
+		}
+		if ($recordForm->getFirstError()->getCode() === 'recordedBreakLength')
+		{
+			$APPLICATION->ThrowException($recordForm->getFirstError()->getMessage(), 'ALERT_WARNING');
+		}
+		else
+		{
+			$APPLICATION->ThrowException($recordForm->getFirstError()->getMessage());
+		}
+		return false;
+	}
+
+	private function buildStartForm($timestamp, $report, $extraInformation)
+	{
+		$recordForm = $this->createWorktimeRecordForm();
+		$recordForm->recordedStartSeconds = $timestamp > 0 ? $timestamp : null;
+		$recordForm->getFirstEventForm()->reason = $report;
+		$recordForm->latitudeOpen = $extraInformation['LAT_OPEN'];
+		$recordForm->longitudeOpen = $extraInformation['LON_OPEN'];
+		$recordForm->ipOpen = $extraInformation['IP_OPEN'];
+		$recordForm->device = $extraInformation['DEVICE'];
+		$recordForm->recordedStartDateFormatted = isset($extraInformation['CUSTOM_DATE']) ? $extraInformation['CUSTOM_DATE'] : null;
+
+		if (($lastEntry = $this->_getLastData()) && $lastEntry['TASKS'])
+		{
+			$arTasks = $this->getTasks($lastEntry['TASKS'], true);
+			foreach ($arTasks as $task)
+			{
+				$recordForm->tasks[] = $task['ID'];
 			}
 		}
+		return $recordForm;
+	}
 
-		if (!isset($arParams['TIME_START']) && !isset($arParams['TIME_FINISH']) && !isset($arParams['TIME_LEAKS']))
-			return;
+	public function openDay($timestamp = false, $report = '', $extraInformation = [])
+	{
+		global $APPLICATION;
 
-		if ($last_entry = $this->_GetLastData(true))
+		$recordForm = $this->buildStartForm($timestamp, $report, $extraInformation);
+
+		if ($recordForm->validate())
 		{
-			$arFields = array(
-				'ACTIVE' => 'N',
-				'REPORTS' => array()
-			);
+			$result = (new Manage\Start\Handler())->handle($recordForm);
 
-			$strDate = ConvertTimeStamp(MakeTimeStamp($last_entry['DATE_START'], FORMAT_DATETIME), 'SHORT');
-
-			if ($arParams['TIME_START'] !== null)
+			if ($result->isSuccess())
 			{
-				$arFields['REPORTS'][] = array(
-					'REPORT_TYPE' => 'ERR_OPEN',
-					'REPORT' => 'TIME_CHANGE;'.date('c').';Time was changed manually',
-				);
-				$arFields['REPORTS'][] = array(
-					'REPORT_TYPE' => 'REPORT_OPEN',
-					'REPORT' => $arParams['REPORT'],
-				);
+				CUser::setLastActivityDate($this->USER_ID);
+				$APPLICATION->resetException();
+				unset($_SESSION['BX_TIMEMAN_LAST_PAUSE_' . $this->USER_ID]);
+				static::clearFullReportCache();
 
-				$timestamp = CTimeMan::ConvertShortTS($arParams['TIME_START'], $strDate);
-				$arFields['DATE_START'] = ConvertTimeStamp($timestamp, 'FULL');
-			}
-			else
-			{
-				$arFields['DATE_START'] = $last_entry['DATE_START'];
-			}
+				$data = WorktimeRecordTable::convertFieldsCompatible($result->getWorktimeRecord()->collectValues());
 
-			if ($arParams['TIME_FINISH'] !== null)
-			{
-				if ($this->State() == 'OPEN' || $this->State() == 'EXPIRED')
+				$e = GetModuleEvents('timeman', 'OnAfterTMDayStart');
+				while ($a = $e->Fetch())
 				{
-					$arFields['IP_CLOSE'] = $_SERVER['REMOTE_ADDR'];
+					ExecuteModuleEventEx($a, [$data]);
 				}
 
-				$arFields['PAUSED'] = 'N';
-
-				$arFields['REPORTS'][] = array(
-					'REPORT_TYPE' => 'ERR_CLOSE',
-					'REPORT' => 'TIME_CHANGE;'.date('c').';Time was changed manually',
-				);
-				$arFields['REPORTS'][] = array(
-					'REPORT_TYPE' => 'REPORT_CLOSE',
-					'REPORT' => $arParams['REPORT'],
-				);
-
-				$timestamp = CTimeMan::ConvertShortTS($arParams['TIME_FINISH'], $strDate);
-				$arFields['DATE_FINISH'] = ConvertTimeStamp($timestamp, 'FULL');
+				return $data;
+			}
+			if ($result->getErrors()[0]->getCode() === WorktimeServiceResult::ERROR_FOR_USER)
+			{
+				$APPLICATION->ThrowException($result->getErrors()[0]->getMessage(), 'ALERT_WARNING');
 			}
 			else
 			{
-				$arFields['DATE_FINISH'] = $last_entry['DATE_FINISH'];
+				$APPLICATION->ThrowException($result->getErrorMessages()[0]);
 			}
+			return false;
+		}
+		$APPLICATION->ThrowException($recordForm->getFirstError()->getMessage());
+		return false;
+	}
 
-			// pause finished
-			if ($arParams['TIME_LEAKS'] !== null)
+	private function buildStopForm($timestamp, $report, $extraInformation)
+	{
+		$recordForm = $this->createWorktimeRecordForm();
+		$recordForm->recordedStopSeconds = $timestamp > 0 ? $timestamp : null;
+		$recordForm->getFirstEventForm()->reason = $report;
+		$recordForm->latitudeClose = $extraInformation['LAT_CLOSE'];
+		$recordForm->longitudeClose = $extraInformation['LON_CLOSE'];
+		$recordForm->ipClose = $_SERVER['REMOTE_ADDR'];
+		$recordForm->device = $extraInformation['DEVICE'];
+		$recordForm->recordedStopDateFormatted = isset($extraInformation['CUSTOM_DATE']) ? $extraInformation['CUSTOM_DATE'] : null;
+		return $recordForm;
+	}
+
+	public function closeDay($timestamp = false, $report = '', $bFieldsOnly = false, $extraInformation = [])
+	{
+		global $APPLICATION;
+		if ($this->State() == 'EXPIRED' && !$timestamp)
+		{
+			$GLOBALS['APPLICATION']->ThrowException('Workday is expired', 'WD_EXPIRED');
+			return false;
+		}
+		$recordForm = $this->buildStopForm($timestamp, $report, $extraInformation);
+		if ($this->State() == 'EXPIRED')
+		{
+			$recordForm->editedBy = $this->USER_ID;
+		}
+		if ($recordForm->validate())
+		{
+			$result = (new Manage\Stop\Handler())->handle($recordForm);
+
+			if ($result->isSuccess())
 			{
-				$arFields['TIME_LEAKS'] = $arParams['TIME_LEAKS'] % 86400;
+				CUser::SetLastActivityDate($this->USER_ID);
+				$recordFields = WorktimeRecordTable::convertFieldsCompatible($result->getWorktimeRecord()->collectValues());
 
-				$arFields['REPORTS'][] = array(
-					'REPORT_TYPE' => 'ERR_DURATION',
-					'REPORT' => 'TIME_CHANGE;'.date('c').';Time was changed manually',
-				);
-				$arFields['REPORTS'][] = array(
-					'REPORT_TYPE' => 'REPORT_DURATION',
-					'REPORT' => $arParams['REPORT'],
-				);
-			}
-
-			if(isset($arParams['LAT_CLOSE']))
-			{
-				$arFields['LAT_CLOSE'] = $arParams['LAT_CLOSE'];
-			}
-
-			if(isset($arParams['LON_CLOSE']))
-			{
-				$arFields['LON_CLOSE'] = $arParams['LON_CLOSE'];
-			}
-
-			if ($arSettings['UF_TM_FREE'])
-			{
-				$arFields['ACTIVE'] = 'Y';
-				unset($arFields['REPORTS']);
-			}
-
-			if (CTimeManEntry::Update($last_entry['ID'], $arFields))
-			{
-				if (isset($arFields['ACTIVE']) && $arFields['ACTIVE'] == 'N')
-					CTimeManNotify::SendMessage($last_entry['ID']);
+				if (isset($arFields['ACTIVE']) && $recordFields['ACTIVE'] == 'N')
+				{
+					CTimeManNotify::SendMessage($recordFields['ID']);
+				}
 
 				static::clearFullReportCache();
 
-				return $this->_GetLastData(true);
+				$e = GetModuleEvents('timeman', 'OnAfterTMDayEnd');
+				while ($a = $e->Fetch())
+				{
+					ExecuteModuleEventEx($a, [$recordFields]);
+				}
+
+				return $recordFields;
+			}
+			else
+			{
+				foreach ($result->getErrors() as $error)
+				{
+					if ($error->getCode() === WorktimeServiceResult::ERROR_REASON_NEEDED
+						|| $error->getCode() === WorktimeServiceResult::ERROR_EXPIRED_REASON_NEEDED)
+					{
+						$APPLICATION->ThrowException($error->getMessage(), 'REPORT_NEEDED');
+					}
+				}
+				if ($result->getErrors()[0]->getCode() === WorktimeServiceResult::ERROR_FOR_USER)
+				{
+					$APPLICATION->ThrowException($result->getErrors()[0]->getMessage(), 'ALERT_WARNING');
+				}
 			}
 		}
-		else
-		{
-			$GLOBALS['APPLICATION']->ThrowException('WD_NOT_OPEN');
-		}
-
 		return false;
 	}
 
-	public function OpenDay($timestamp = false, $report = '')
+	private function buildReopenForm($extraInformation)
+	{
+		$recordForm = $this->createWorktimeRecordForm();
+		$recordForm->device = $extraInformation['DEVICE'];
+		return $recordForm;
+	}
+
+	public function reopenDay($bSkipCheck = false, $site_id = SITE_ID, $extraInformation = [])
 	{
 		global $APPLICATION;
+		$lastEntry = $this->_GetLastData(true);
 
-		if ($this->OpenAction() !== 'OPEN')
+		$recordForm = $this->buildReopenForm($extraInformation);
+
+		if ($recordForm->validate())
 		{
-			return false;
-		}
+			$result = (new Manage\Relaunch\Handler())->handle($recordForm);
 
-		if ($timestamp <= 0)
-			$timestamp = false;
-		else
-		{
-			if (
-				$timestamp > COption::GetOptionInt('timeman', 'workday_min_finish', 64800)
-				&& $_SESSION['TM_LAST_TIME_OPEN'] != $timestamp
-			)
+			if ($result->isSuccess())
 			{
-				$_SESSION['TM_LAST_TIME_OPEN'] = $timestamp;
-				$APPLICATION->ThrowException(str_replace('#TIME#', CTimeMan::FormatTimeOut($timestamp), GetMessage('TM_CONFIRM_LATE_OPEN')), 'REPORT_NEEDED');
-				return false;
-			}
-			unset($_SESSION['TM_LAST_TIME_OPEN']);
-
-			$timestamp = CTimeMan::ConvertShortTS($timestamp - CTimeZone::GetOffset());
-		}
-		$arFields = array(
-			'USER_ID' => $this->USER_ID,
-			'DATE_START' => ConvertTimeStamp(($timestamp ? $timestamp : time()) + CTimeZone::GetOffset(), 'FULL'),
-//			'DATE_START' => $GLOBALS['DB']->FormatDate(ConvertTimeStamp(($timestamp ? $timestamp : time()) + CTimeZone::GetOffset(), 'FULL'), FORMAT_DATETIME, "DD.MM.YYYY HH:MI:SS"),
-		);
-
-		if ($this->isEntryValid('OPEN', $timestamp))
-		{
-			$arFields['ACTIVE'] = 'Y';
-		}
-		else
-		{
-			$arFields['ACTIVE'] = 'N';
-
-			if (strlen($report) > 0)
-			{
-				$arFields['REPORTS'] = array();
-				if ($ex = $APPLICATION->GetException())
-				{
-					$arFields['REPORTS'][] = array(
-						'REPORT_TYPE' => 'ERR_OPEN',
-						'REPORT' => $ex->GetId().';'.date('c').';'.$ex->GetString(),
-					);
-				}
-
-				$arFields['REPORTS'][] = array(
-					'REPORT_TYPE' => 'REPORT_OPEN',
-					'REPORT' => $report,
-				);
-			}
-			else
-			{
-				if ($ex = $APPLICATION->GetException())
-				{
-					$APPLICATION->ThrowException($ex->GetString(), 'REPORT_NEEDED');
-				}
-
-				return false;
-			}
-		}
-
-		if (($last_entry = $this->_GetLastData()) && $last_entry['TASKS'])
-		{
-			$arTasks = $this->GetTasks($last_entry['TASKS'], true);
-			$arFields['TASKS'] = array();
-			foreach ($arTasks as $task)
-				$arFields['TASKS'][] = $task['ID'];
-		}
-
-		$arFields['IP_OPEN'] = $_SERVER['REMOTE_ADDR'];
-
-		$ENTRY_ID = CTimeManEntry::Add($arFields);
-		if ($ENTRY_ID > 0)
-		{
-			CUser::SetLastActivityDate($this->USER_ID);
-
-			$APPLICATION->ResetException();
-			unset($_SESSION['BX_TIMEMAN_LAST_PAUSE_'.$this->USER_ID]);
-
-			if (isset($arFields['ACTIVE']) && $arFields['ACTIVE'] == 'N')
-				CTimeManNotify::SendMessage($ENTRY_ID);
-
-			static::clearFullReportCache();
-
-			$data = $this->_GetLastData(true);
-
-			$e = GetModuleEvents('timeman', 'OnAfterTMDayStart');
-			while ($a = $e->Fetch())
-				ExecuteModuleEventEx($a, array($data));
-
-			return $data;
-		}
-
-		return false;
-	}
-
-	public function CloseDay($timestamp = false, $report = '', $bFieldsOnly = false)
-	{
-		global $APPLICATION;
-
-		if (($last_entry = $this->_GetLastData(true)) && (!$last_entry['DATE_FINISH'] || $last_entry['PAUSED'] == 'Y'))
-		{
-			if ($this->OpenAction() === 'REOPEN')
-				$last_entry = $this->ReopenDay();
-			if ($timestamp <= 0)
-			{
-				$timestamp = false;
-			}
-			else
-			{
-				$ts = CTimeMan::ConvertShortTS(
-					$timestamp - CTimeZone::GetOffset(),
-					ConvertTimeStamp(MakeTimeStamp($last_entry['DATE_START'], FORMAT_DATETIME) - $last_entry['TIME_START'] + $timestamp - CTimeZone::GetOffset(), 'SHORT')
-				);
-
-				$timestamp = $ts;
-
-			}
-
-			if ($this->State() == 'EXPIRED' && !$timestamp)
-			{
-				$GLOBALS['APPLICATION']->ThrowException('Workday is expired', 'WD_EXPIRED');
-				return false;
-			}
-
-			$arFields = array(
-				'USER_ID' => $this->USER_ID,
-				'DATE_START' => $last_entry['DATE_START'],
-				'DATE_FINISH' => ConvertTimeStamp(($timestamp ? $timestamp : time()) + CTimeZone::GetOffset(), 'FULL'),
-//				'DATE_FINISH' => $GLOBALS['DB']->FormatDate(ConvertTimeStamp(($timestamp ? $timestamp : time()) + CTimeZone::GetOffset(), 'FULL'), FORMAT_DATETIME, "DD.MM.YYYY HH:MI:SS"),
-				'PAUSED' => 'N',
-			);
-
-			if (!$this->isEntryValid('CLOSE', $timestamp))
-			{
-				$arFields['ACTIVE'] = 'N';
-
-				if (strlen($report) > 0)
-				{
-					$arFields['REPORTS'] = array();
-					if ($ex = $APPLICATION->GetException())
-					{
-						$arFields['REPORTS'][] = array(
-							'REPORT_TYPE' => 'ERR_CLOSE',
-							'REPORT' => $ex->GetId().';'.date('c').';'.$ex->GetString(),
-						);
-					}
-
-					$arFields['REPORTS'][] = array(
-						'REPORT_TYPE' => 'REPORT_CLOSE',
-						'REPORT' => $report,
-					);
-				}
-				else
-				{
-					if ($ex = $APPLICATION->GetException())
-					{
-						$APPLICATION->ThrowException($ex->GetString(), 'REPORT_NEEDED');
-					}
-
-					return false;
-				}
-			}
-
-			if ($timestamp === false)
-				$timestamp = time();
-
-			if ($timestamp + CTimeZone::GetOffset() < MakeTimeStamp($last_entry['DATE_START']))
-				return false;
-
-			$arFields['IP_CLOSE'] = $_SERVER['REMOTE_ADDR'];
-
-			if ($bFieldsOnly)
-			{
-				return $arFields;
-			}
-			else
-			{
-				if (CTimeManEntry::Update($last_entry['ID'], $arFields))
-				{
-					CUser::SetLastActivityDate($this->USER_ID);
-
-					if (isset($arFields['ACTIVE']) && $arFields['ACTIVE'] == 'N')
-						CTimeManNotify::SendMessage($last_entry['ID']);
-
-					static::clearFullReportCache();
-
-					$data = $this->_GetLastData(true);
-
-					$e = GetModuleEvents('timeman', 'OnAfterTMDayEnd');
-					while ($a = $e->Fetch())
-						ExecuteModuleEventEx($a, array($data));
-
-					return $data;
-				}
-			}
-		}
-		else
-		{
-			$GLOBALS['APPLICATION']->ThrowException('WD_NOT_OPEN');
-		}
-
-		return false;
-	}
-
-	public function ReopenDay($bSkipCheck = false, $site_id = SITE_ID)
-	{
-		$this->SITE_ID = $site_id;
-		if (($last_entry = $this->_GetLastData(true)) && $this->OpenAction($bSkipCheck) === 'REOPEN')
-		{
-			$arFields = array(
-				'DATE_FINISH' => false,
-				'TIME_FINISH' => false,
-				'DURATION' => 0,
-				'PAUSED' => 'N',
-				'ACTIVE' => $this->_ReopenGetActivity($last_entry['ID']) ? 'Y' : 'N'
-			);
-
-			$ts_finish = MakeTimeStamp($last_entry['DATE_FINISH']) - CTimeZone::GetOffset();
-			$leak = time() - $ts_finish;
-
-			if ($leak > BX_TIMEMAN_ALLOWED_TIME_DELTA)
-				$arFields['TIME_LEAKS_ADD'] = $leak;
-
-			if (CTimeManEntry::Update($last_entry['ID'], $arFields))
-			{
+				$ts_finish = MakeTimeStamp($lastEntry['DATE_FINISH']) - CTimeZone::GetOffset();
+				$leak = time() - $ts_finish;
 				CUser::SetLastActivityDate($this->USER_ID);
-
-				CTimeManReport::Reopen($last_entry['ID']);
-				CTimeManReportDaily::Reopen($last_entry['ID']);
+				CTimeManReport::Reopen($lastEntry['ID']);
+				CTimeManReportDaily::Reopen($lastEntry['ID']);
 
 				if ($leak > BX_TIMEMAN_ALLOWED_TIME_DELTA)
 				{
-					$_SESSION['BX_TIMEMAN_LAST_PAUSE_'.$this->USER_ID] = array(
+					$_SESSION['BX_TIMEMAN_LAST_PAUSE_' . $this->USER_ID] = [
 						'DATE_START' => $ts_finish,
-						'DATE_FINISH' => $ts_finish + $leak
+						'DATE_FINISH' => $ts_finish + $leak,
+					];
+					$report = \Bitrix\Timeman\Model\Worktime\Report\WorktimeReport::createReopenReport(
+						$lastEntry['USER_ID'],
+						$lastEntry['ID']
 					);
-
-					CTimeManReport::Add(array(
-						'ENTRY_ID' => $last_entry['ID'],
-						'USER_ID' => $last_entry['USER_ID'],
-						'ACTIVE' => 'Y',
-						'REPORT_TYPE' => 'REOPEN',
-						'REPORT' => 'REOPEN;'.date('c').';Entry was reopened.',
-					));
+					$report->save();
 				}
-
 				static::clearFullReportCache();
 
-				$data = $this->_GetLastData(true);
+				$data = WorktimeRecordTable::convertFieldsCompatible($result->getWorktimeRecord()->collectValues());
 
 				$e = GetModuleEvents('timeman', 'OnAfterTMDayContinue');
 				while ($a = $e->Fetch())
-					ExecuteModuleEventEx($a, array($data));
+				{
+					ExecuteModuleEventEx($a, [$data]);
+				}
 
 				return $data;
+			}
+			if ($result->getErrors()[0]->getCode() === WorktimeServiceResult::ERROR_FOR_USER)
+			{
+				$APPLICATION->ThrowException($result->getErrors()[0]->getMessage(), 'ALERT_WARNING');
 			}
 		}
 
 		return false;
 	}
 
-	public function PauseDay()
+	private function buildPauseForm($extraInformation)
+	{
+		$recordForm = $this->createWorktimeRecordForm();
+		$recordForm->latitudeClose = empty($extraInformation['LAT_CLOSE']) ? null : $extraInformation['LAT_CLOSE'];
+		$recordForm->longitudeClose = empty($extraInformation['LON_CLOSE']) ? null : $extraInformation['LON_CLOSE'];
+		$recordForm->ipClose = empty($extraInformation['IP_CLOSE']) ? null : $extraInformation['IP_CLOSE'];
+		$recordForm->device = $extraInformation['DEVICE'];
+		return $recordForm;
+	}
+
+	public function pauseDay($extraInformation = [])
 	{
 		global $APPLICATION;
 
-		if (($last_entry = $this->_GetLastData(true)) && !$last_entry['DATE_FINISH'])
+		$recordForm = $this->buildPauseForm($extraInformation);
+
+		if ($recordForm->validate())
 		{
-			if (time() + CTimeZone::GetOffset() < MakeTimeStamp($last_entry['DATE_START']))
-				return false;
+			$result = (new Manage\Pause\Handler())->handle($recordForm);
 
-			$arFields = array(
-				'USER_ID' => $this->USER_ID,
-				'DATE_START' => $last_entry['DATE_START'],
-				'DATE_FINISH' => ConvertTimeStamp(time() + CTimeZone::GetOffset(), 'FULL'),
-				'IP_CLOSE' => $_SERVER['REMOTE_ADDR'],
-				'PAUSED' => 'Y'
-			);
-
-			if (CTimeManEntry::Update($last_entry['ID'], $arFields))
+			if ($result->isSuccess())
 			{
 				CUser::SetLastActivityDate($this->USER_ID);
 
 				static::clearFullReportCache();
 
-				$data = $this->_GetLastData(true);
+				$data = WorktimeRecordTable::convertFieldsCompatible($result->getWorktimeRecord()->collectValues());
 
 				$e = GetModuleEvents('timeman', 'OnAfterTMDayPause');
 				while ($a = $e->Fetch())
-					ExecuteModuleEventEx($a, array($data));
+				{
+					ExecuteModuleEventEx($a, [$data]);
+				}
 
 				return $data;
 			}
-		}
-		else
-		{
-			$GLOBALS['APPLICATION']->ThrowException('WD_NOT_OPEN');
+			if ($result->getErrors()[0]->getCode() === WorktimeServiceResult::ERROR_FOR_USER)
+			{
+				$APPLICATION->ThrowException($result->getErrors()[0]->getMessage(), 'ALERT_WARNING');
+			}
+			else
+			{
+				$APPLICATION->ThrowException('WD_NOT_OPEN');
+			}
 		}
 
 		return false;
-
 	}
 
 	public function SetReport($report, $report_ts, $entry_id = null)
@@ -496,18 +378,22 @@ class CTimeManUser
 		if ($last_entry = $this->_GetLastData())
 		{
 			if ($entry_id && $entry_id != $last_entry['ID'])
+			{
 				$report_ts = 0;
+			}
 
-			$dbRes = CTimeManReport::GetList(array(), array('ENTRY_ID' => $last_entry['ID'], 'REPORT_TYPE' => 'REPORT'));
+			$dbRes = CTimeManReport::GetList([], ['ENTRY_ID' => $last_entry['ID'], 'REPORT_TYPE' => 'REPORT']);
 			if ($arRes = $dbRes->Fetch())
 			{
 				$ID = $arRes['ID'];
 
 				$current_report_ts = MakeTimeStamp($arRes['TIMESTAMP_X']);
 				if ($current_report_ts > $report_ts)
+				{
 					return $arRes;
+				}
 
-				$arFields = array('REPORT' => $report);
+				$arFields = ['REPORT' => $report];
 				if (!CTimeManReport::Update($ID, $arFields))
 				{
 					return false;
@@ -515,13 +401,13 @@ class CTimeManUser
 			}
 			else
 			{
-				$arFields = array(
+				$arFields = [
 					'ENTRY_ID' => $last_entry['ID'],
 					'USER_ID' => $USER->GetID(), // not $last_entry['USER_ID']!
 					'ACTIVE' => 'Y',
 					'REPORT_TYPE' => 'REPORT',
 					'REPORT' => $report,
-				);
+				];
 
 				if (!($ID = CTimeManReport::Add($arFields)))
 				{
@@ -559,28 +445,33 @@ class CTimeManUser
 
 	public function GetExpiredRecommendedDate()
 	{
-		$rec_time = COption::GetOptionInt('timeman', 'workday_finish', 18*3600);
+		$recDefaultSeconds = COption::GetOptionInt('timeman', 'workday_finish', 18 * 3600);
 
-		if ($last_entry = $this->_GetLastData())
+		if ($lastEntry = $this->_GetLastData())
 		{
-			$ts_start = CTimeMan::GetTimeTS($last_entry['DATE_START']);
-			if ($rec_time < $ts_start)
-				$rec_time = $ts_start + intval($last_entry['TIME_LEAKS']) + 300;
+			$recommendedTimestamp = WorktimeRecord::getRecommendedWorktimeStopTimestamp($lastEntry);
+			if ($recommendedTimestamp > 0)
+			{
+				return TimeHelper::getInstance()->convertUtcTimestampToDaySeconds(
+					$recommendedTimestamp,
+					TimeHelper::getInstance()->getUserTimezone($lastEntry['USER_ID'])
+				);
+			}
 		}
 
-		return $rec_time;
+		return $recDefaultSeconds;
 	}
 
 	// check if day is currently opened
 	public function isDayOpen()
 	{
-		return (is_array($this->_GetLastData()) && !CTimeManUser::$LAST_ENTRY[$this->USER_ID]['DATE_FINISH']);
+		return WorktimeRecord::isRecordOpened($this->_GetLastData());
 	}
 
 	// check if day is paused
 	public function isDayPaused()
 	{
-		return (is_array($this->_GetLastData()) && !$this->isDayOpen() && CTimeManUser::$LAST_ENTRY[$this->USER_ID]['PAUSED'] === 'Y');
+		return WorktimeRecord::isRecordPaused($this->_GetLastData());
 	}
 
 	public function getDayStartOffset($entry, $bTs = false)
@@ -616,42 +507,33 @@ class CTimeManUser
 	// check if user forgot to close wd
 	public function isDayExpired()
 	{
-		if (!$this->isDayOpen() && !$this->isDayPaused())
-			return false;
-
-		return !$this->isDayOpenedToday();
+		return WorktimeRecord::isRecordExpired($this->_GetLastData(true));
 	}
 
 	public function OpenAction($bSkipCheck = false)
 	{
-		if ($last_entry = $this->_GetLastData())
+		$list = \Bitrix\Timeman\Service\DependencyManager::getInstance()
+			->getWorktimeActionList();
+		$actionList = $list->buildPossibleActionsListForUser($this->USER_ID);
+
+		if (empty($actionList->getStartActions()) && empty($actionList->getRelaunchActions()) && empty($actionList->getContinueActions()))
 		{
-			if (!$last_entry['DATE_FINISH'])
-				return false;
-
-			if ($last_entry['PAUSED'] === 'Y')
-				$bSkipCheck = true;
-
-			if ($this->isDayOpenedToday())
-			{
-				if (
-					$bSkipCheck
-					|| COption::GetOptionString('timeman', 'workday_close_undo', 'Y') === 'Y'
-				)
-				{
-					return 'REOPEN';
-				}
-
-				return false;
-			}
+			return false;
 		}
-
+		if (!empty($actionList->getRelaunchActions()) && !empty($actionList->getStartActions()))
+		{
+			return 'OPEN'; // as main action
+		}
+		if (!empty($actionList->getRelaunchActions()) || !empty($actionList->getContinueActions()))
+		{
+			return 'REOPEN';
+		}
 		return 'OPEN';
 	}
 
 	public function GetEvents($date)
 	{
-		$arEvents = array();
+		$arEvents = [];
 
 		if (CBXFeatures::IsFeatureEnabled('Calendar'))
 		{
@@ -663,18 +545,18 @@ class CTimeManUser
 
 				if ($calendar2)
 				{
-					$arFilter = array(
-						'arFilter' => array(
+					$arFilter = [
+						'arFilter' => [
 							"OWNER_ID" => $this->USER_ID,
 							"FROM_LIMIT" => ConvertTimeStamp($ts, 'FULL'),
-							"TO_LIMIT" => ConvertTimeStamp($ts+86399, 'FULL')
-						),
+							"TO_LIMIT" => ConvertTimeStamp($ts + 86399, 'FULL'),
+						],
 						'parseRecursion' => true,
 						'userId' => $this->USER_ID,
 						'skipDeclined' => true,
 						'fetchAttendees' => false,
-						'fetchMeetings' => true
-					);
+						'fetchMeetings' => true,
+					];
 
 					$arNewEvents = CCalendarEvent::GetList($arFilter);
 					if (count($arNewEvents) > 0)
@@ -686,11 +568,13 @@ class CTimeManUser
 								$ts_from = MakeTimeStamp($arEvent['DT_FROM']);
 								$ts_to = MakeTimeStamp($arEvent['DT_TO']);
 
-								if ($ts_to < $ts || $ts_from > $ts+86399)
+								if ($ts_to < $ts || $ts_from > $ts + 86399)
+								{
 									continue;
+								}
 							}
 
-							$arEvents[] = array(
+							$arEvents[] = [
 								'ID' => $arEvent['ID'],
 								'OWNER_ID' => $this->USER_ID,
 								'CREATED_BY' => $arEvent['CREATED_BY'],
@@ -700,26 +584,28 @@ class CTimeManUser
 								'DATE_TO' => $arEvent['DT_TO'],
 								'IMPORTANCE' => $arEvent['IMPORTANCE'],
 								'ACCESSIBILITY' => $arEvent['ACCESSIBILITY'],
-							);
+							];
 						}
 					}
 				}
 				else
 				{
 					$arEvents = CEventCalendar::GetNearestEventsList(
-						array(
+						[
 							'userId' => $this->USER_ID,
 							'bCurUserList' => true,
 							'fromLimit' => ConvertTimeStamp($ts, 'FULL'),
-							'toLimit' => ConvertTimeStamp($ts+86399, 'FULL'),
+							'toLimit' => ConvertTimeStamp($ts + 86399, 'FULL'),
 							'iblockId' => COption::GetOptionInt('intranet', 'iblock_calendar'),
-						)
+						]
 					);
 
 					foreach ($arEvents as $key => $event)
 					{
 						if ($event['STATUS'] === 'N')
+						{
 							unset($arEvents[$key]);
+						}
 					}
 				}
 
@@ -730,65 +616,77 @@ class CTimeManUser
 		return false;
 	}
 
-	public function GetTasks($arIDs = array(), $bOpened = false, $USER_ID = null)
+	public function GetTasks($arIDs = [], $bOpened = false, $USER_ID = null)
 	{
 		$res = null;
 
-		if  (!is_array($arIDs) && strlen($arIDs) > 0)
+		if (!is_array($arIDs) && strlen($arIDs) > 0)
+		{
 			$arIDs = unserialize($arIDs);
+		}
 
 		$arIDs = array_values($arIDs);
 
 		if (!$USER_ID)
+		{
 			$USER_ID = $this->USER_ID;
+		}
 
 		if (CBXFeatures::IsFeatureEnabled('Tasks') && CModule::IncludeModule('tasks'))
 		{
-			$res = array();
+			$res = [];
 			if (count($arIDs) > 0)
 			{
-				$arFilter = array('ID' => $arIDs);
+				$arFilter = ['ID' => $arIDs];
 				if ($bOpened)
-					$arFilter['!STATUS'] = array(4,5,7);
+				{
+					$arFilter['!STATUS'] = [4, 5, 7];
+				}
 
-				$dbRes = CTasks::GetList(array(), $arFilter);
+				$dbRes = CTasks::GetList([], $arFilter);
 				while ($arRes = $dbRes->Fetch())
 				{
-					$arRes['ACCOMPLICES'] = $arRes['AUDITORS'] = array();
+					$arRes['ACCOMPLICES'] = $arRes['AUDITORS'] = [];
 					$rsMembers = CTaskMembers::GetList(
-						array(),
-						array('TASK_ID' => $arRes['ID'])
-						);
+						[],
+						['TASK_ID' => $arRes['ID']]
+					);
 
 					while ($arMember = $rsMembers->Fetch())
 					{
 						if ($arMember['TYPE'] == 'A')
+						{
 							$arRes['ACCOMPLICES'][] = $arMember['USER_ID'];
+						}
 						elseif ($arMember['TYPE'] == 'U')
+						{
 							$arRes['AUDITORS'][] = $arMember['USER_ID'];
+						}
 					}
 
 					// Permit only for responsible user, accomplices or auditors
-					$isPermited = ( ($arRes['RESPONSIBLE_ID'] == $USER_ID)
-						|| in_array($USER_ID, $arRes['ACCOMPLICES'])
-						|| in_array($USER_ID, $arRes['AUDITORS'])
-						);
+					$isPermited = (($arRes['RESPONSIBLE_ID'] == $USER_ID)
+								   || in_array($USER_ID, $arRes['ACCOMPLICES'])
+								   || in_array($USER_ID, $arRes['AUDITORS'])
+					);
 
-					if ( ! $isPermited )
+					if (!$isPermited)
+					{
 						continue;
+					}
 
-					$res[] = array(
+					$res[] = [
 						'ID' => $arRes['ID'],
 						'PRIORITY' => $arRes['PRIORITY'],
 						'STATUS' => $arRes['STATUS'],
 						'TITLE' => $arRes['TITLE'],
 						'TASK_CONTROL' => $arRes['TASK_CONTROL'],
 						'URL' => str_replace(
-							array('#USER_ID#', '#TASK_ID#'),
-							array($this->USER_ID, $arRes['ID']),
+							['#USER_ID#', '#TASK_ID#'],
+							[$this->USER_ID, $arRes['ID']],
 							COption::GetOptionString('intranet', 'path_task_user_entry', '/company/personal/user/#USER_ID#/tasks/task/view/#TASK_ID#/')
-						)
-					);
+						),
+					];
 				}
 			}
 		}
@@ -800,13 +698,15 @@ class CTimeManUser
 	{
 		global $BX_TIMEMAN_TASKS_MIGRATION_RULES;
 
-		$arTasks = $this->GetTasks(array($id));
+		$arTasks = $this->GetTasks([$id]);
 
 		if (is_array($arTasks) && count($arTasks) === 1)
 		{
 			$current_status = $arTasks[0]['STATUS'];
 			if ($status === 5)
+			{
 				$status = 4;
+			}
 
 			if (
 				is_array($BX_TIMEMAN_TASKS_MIGRATION_RULES[$current_status])
@@ -819,8 +719,10 @@ class CTimeManUser
 				}
 
 				$obt = new CTasks();
-				if ($obt->Update($id, array('STATUS' => $status)))
+				if ($obt->Update($id, ['STATUS' => $status]))
+				{
 					return $this->_GetLastData(true);
+				}
 			}
 		}
 	}
@@ -828,7 +730,7 @@ class CTimeManUser
 	public function TaskActions($arActions, $site_id = SITE_ID)
 	{
 		if (
-			($last_entry = $this->_GetLastData())
+		($last_entry = $this->_GetLastData())
 			//&& $this->isDayOpen()
 			//&& !$this->isDayExpired()
 		)
@@ -837,30 +739,38 @@ class CTimeManUser
 			$arTasks = $last_entry['TASKS'];
 
 			if (!is_array($arTasks))
-				$arTasks = array();
+			{
+				$arTasks = [];
+			}
 
 			if (strlen($arActions['name']) > 0)
 			{
 				$obt = new CTasks();
-				if ($ID = $obt->Add(array(
+				if ($ID = $obt->Add([
 					'RESPONSIBLE_ID' => $this->USER_ID,
 					'TITLE' => $arActions['name'],
-					'TAGS' => array(),
+					'TAGS' => [],
 					'STATUS' => 2,
-					'SITE_ID' => $this->SITE_ID
-				)))
+					'SITE_ID' => $this->SITE_ID,
+				]))
 				{
 					if (!is_array($arActions['add']))
-						$arActions['add'] = array($ID);
+					{
+						$arActions['add'] = [$ID];
+					}
 					else
+					{
 						$arActions['add'][] = $ID;
+					}
 				}
 			}
 
 			if (is_array($arActions['add']))
 			{
 				foreach ($arActions['add'] as $task_id)
+				{
 					$arTasks[] = intval($task_id);
+				}
 
 				$GLOBALS['BX_TIMEMAN_RECENTLY_ADDED_TASK_ID'] = $task_id;
 			}
@@ -882,13 +792,15 @@ class CTimeManUser
 				}
 			}
 
-			$arFields = array('TASKS' => array());
+			$arFields = ['TASKS' => []];
 
 			if (count($arTasks) > 0)
 			{
 				$arCheck = $this->GetTasks($arTasks);
 				foreach ($arCheck as $a)
+				{
 					$arFields['TASKS'][] = $a['ID'];
+				}
 			}
 
 			if (CTimeManEntry::Update($last_entry['ID'], $arFields))
@@ -910,17 +822,29 @@ class CTimeManUser
 		$arSettings = $this->__GetSettings($arNeededSettings, true);
 
 		if (isset($arSettings['UF_TIMEMAN']) && $arSettings['UF_TIMEMAN'] !== '')
+		{
 			$arSettings['UF_TIMEMAN'] = $arSettings['UF_TIMEMAN'] == 'Y';
+		}
 		if (isset($arSettings['UF_TM_MAX_START']) && $arSettings['UF_TM_MAX_START'] == '0')
+		{
 			$arSettings['UF_TM_MAX_START'] = '';
+		}
 		if (isset($arSettings['UF_TM_MIN_FINISH']) && $arSettings['UF_TM_MIN_FINISH'] == '0')
+		{
 			$arSettings['UF_TM_MIN_FINISH'] = '';
+		}
 		if (isset($arSettings['UF_TM_MIN_DURATION']) && $arSettings['UF_TM_MIN_DURATION'] == '0')
+		{
 			$arSettings['UF_TM_MIN_DURATION'] = '';
+		}
 		if (isset($arSettings['UF_TM_FREE']) && $arSettings['UF_TM_FREE'] !== '')
+		{
 			$arSettings['UF_TM_FREE'] = $arSettings['UF_TM_FREE'] == 'Y';
+		}
 		if (isset($arSettings['UF_TM_ALLOWED_DELTA']) && $arSettings['UF_TM_ALLOWED_DELTA'] >= 0)
+		{
 			$arSettings['UF_TM_ALLOWED_DELTA'] = CTimeMan::MakeShortTS($arSettings['UF_TM_ALLOWED_DELTA']);
+		}
 
 		return $arSettings;
 	}
@@ -931,17 +855,17 @@ class CTimeManUser
 
 		$cat = intval($bPersonal);
 
-		if(!is_array($this->SETTINGS[$cat]))
+		if (!is_array($this->SETTINGS[$cat]))
 		{
-			$this->SETTINGS[$cat] = array();
+			$this->SETTINGS[$cat] = [];
 
-			$cache_id = 'timeman|structure_settings|u'.$this->USER_ID.'_'.$cat;
+			$cache_id = 'timeman|structure_settings|u' . $this->USER_ID . '_' . $cat;
 
-			if(CACHED_timeman_settings !== false
+			if (CACHED_timeman_settings !== false
 				&& $CACHE_MANAGER->Read(
 					CACHED_timeman_settings,
 					$cache_id,
-					"timeman_structure_".COption::GetOptionInt('intranet', 'iblock_structure', false)
+					"timeman_structure_" . COption::GetOptionInt('intranet', 'iblock_structure', false)
 				)
 			)
 			{
@@ -957,6 +881,22 @@ class CTimeManUser
 				}
 			}
 		}
+		if (is_null($arNeededSettings) ||
+			(is_array($arNeededSettings) && array_key_exists('UF_TM_FREE', $arNeededSettings)))
+		{
+			$this->SETTINGS[$cat]['UF_TM_FREE'] = false;
+			$userSchedules = \Bitrix\Timeman\Service\DependencyManager::getInstance()
+				->getScheduleProvider()
+				->findSchedulesByUserId($this->USER_ID, ['select' => ['ID', 'SCHEDULE_TYPE',]]);
+			foreach ($userSchedules as $userSchedule)
+			{
+				if ($userSchedule->isFlexible())
+				{
+					$this->SETTINGS[$cat]['UF_TM_FREE'] = true;
+					break;
+				}
+			}
+		}
 
 		$arSettings = $this->SETTINGS[$cat];
 
@@ -965,7 +905,9 @@ class CTimeManUser
 			foreach ($arSettings as $set => $value)
 			{
 				if (!in_array($set, $arNeededSettings))
+				{
 					unset($arSettings[$set]);
+				}
 			}
 		}
 
@@ -976,13 +918,12 @@ class CTimeManUser
 	{
 		global $USER_FIELD_MANAGER;
 
-		$arPersonalSettings = array();
+		$arPersonalSettings = [];
 
 		$dbRes = CUser::GetByID($this->USER_ID);
 		if ($arUser = $dbRes->Fetch())
 		{
-			$arFields = array('UF_TM_MAX_START', 'UF_TM_MIN_FINISH','UF_REPORT_PERIOD','UF_LAST_REPORT', 'UF_TM_MIN_DURATION', 'UF_TM_REPORT_REQ', 'UF_TM_REPORT_TPL', 'UF_TM_FREE', 'UF_TM_ALLOWED_DELTA', );
-			$arPersonalSettings = array(
+			$arPersonalSettings = [
 				'UF_TIMEMAN' => $arUser['UF_TIMEMAN'],
 				'UF_TM_MAX_START' => CTimeMan::MakeShortTS($arUser['UF_TM_MAX_START']),
 				'UF_TM_MIN_FINISH' => CTimeMan::MakeShortTS($arUser['UF_TM_MIN_FINISH']),
@@ -995,57 +936,51 @@ class CTimeManUser
 				'UF_TM_TIME' => $arUser['UF_TM_TIME'],
 				'UF_TM_DAY' => $arUser['UF_TM_DAY'],
 				'UF_TM_REPORT_TPL' => $arUser['UF_TM_REPORT_TPL'],
-				'UF_TM_FREE' => $arUser['UF_TM_FREE'],
 				'UF_TM_ALLOWED_DELTA' => $arUser['UF_TM_ALLOWED_DELTA'],
-			);
+			];
 
 			$this->UF_DEPARTMENT = $arUser['UF_DEPARTMENT'];
 
-			if ($arPersonalSettings['UF_TIMEMAN'] || $arPersonalSettings['UF_TM_REPORT_REQ'] || $arPersonalSettings['UF_TM_FREE'] || $arPersonalSettings['UF_REPORT_PERIOD'] )
+			if ($arPersonalSettings['UF_TIMEMAN'] || $arPersonalSettings['UF_TM_REPORT_REQ'] || $arPersonalSettings['UF_REPORT_PERIOD'])
 			{
 				$arAllFields = $USER_FIELD_MANAGER->GetUserFields('USER');
 
 				if ($arPersonalSettings['UF_TIMEMAN'])
 				{
-					$dbRes = CUserFieldEnum::GetList(array(), array(
+					$dbRes = CUserFieldEnum::GetList([], [
 						'USER_FIELD_ID' => $arAllFields['UF_TIMEMAN']['ID'],
-						'ID' => $arPersonalSettings['UF_TIMEMAN']
-					));
+						'ID' => $arPersonalSettings['UF_TIMEMAN'],
+					]);
 
 					if ($arRes = $dbRes->Fetch())
+					{
 						$arPersonalSettings['UF_TIMEMAN'] = $arRes['XML_ID'];
+					}
 				}
 				if ($arPersonalSettings['UF_REPORT_PERIOD'])
 				{
-					$dbRes = CUserFieldEnum::GetList(array(), array(
+					$dbRes = CUserFieldEnum::GetList([], [
 						'USER_FIELD_ID' => $arAllFields['UF_REPORT_PERIOD']['ID'],
-						'ID' => $arPersonalSettings['UF_REPORT_PERIOD']
-					));
+						'ID' => $arPersonalSettings['UF_REPORT_PERIOD'],
+					]);
 
 					if ($arRes = $dbRes->Fetch())
+					{
 						$arPersonalSettings['UF_REPORT_PERIOD'] = $arRes['XML_ID'];
+					}
 
 				}
 				if ($arPersonalSettings['UF_TM_REPORT_REQ'])
 				{
-					$dbRes = CUserFieldEnum::GetList(array(), array(
+					$dbRes = CUserFieldEnum::GetList([], [
 						'USER_FIELD_ID' => $arAllFields['UF_TM_REPORT_REQ']['ID'],
-						'ID' => $arPersonalSettings['UF_TM_REPORT_REQ']
-					));
+						'ID' => $arPersonalSettings['UF_TM_REPORT_REQ'],
+					]);
 
 					if ($arRes = $dbRes->Fetch())
+					{
 						$arPersonalSettings['UF_TM_REPORT_REQ'] = $arRes['XML_ID'];
-				}
-
-				if ($arPersonalSettings['UF_TM_FREE'])
-				{
-					$dbRes = CUserFieldEnum::GetList(array(), array(
-						'USER_FIELD_ID' => $arAllFields['UF_TM_FREE']['ID'],
-						'ID' => $arPersonalSettings['UF_TM_FREE']
-					));
-
-					if ($arRes = $dbRes->Fetch())
-						$arPersonalSettings['UF_TM_FREE'] = $arRes['XML_ID'];
+					}
 				}
 			}
 		}
@@ -1057,29 +992,34 @@ class CTimeManUser
 	{
 		global $USER_FIELD_MANAGER;
 
-		$arRes = array();
+		$arRes = [];
 
 		$arRes = $this->_GetPersonalSettings();
 		if ($arRes)
 		{
 			if ($arRes['UF_TIMEMAN'] === 'N')
 			{
-				return array('UF_TIMEMAN' => false);
+				return ['UF_TIMEMAN' => false];
 			}
 
 			$cnt = 0;
-			if ($arRes['UF_TIMEMAN'] !== 'Y') $cnt++;
+			if ($arRes['UF_TIMEMAN'] !== 'Y')
+			{
+				$cnt++;
+			}
 			foreach ($arRes as $fld => $value)
 			{
 				if (!$arRes[$fld] || $arRes[$fld] == '00:00')
+				{
 					$cnt++;
+				}
 			}
 
 			if ($cnt > 0)
 			{
 				if (is_array($this->UF_DEPARTMENT) && count($this->UF_DEPARTMENT) > 0)
 				{
-					$allSet = array(
+					$allSet = [
 						'UF_TIMEMAN' => $arRes['UF_TIMEMAN'] ? $arRes['UF_TIMEMAN'] : false,
 						'UF_TM_MAX_START' => 86401,
 						'UF_TM_MIN_FINISH' => false,
@@ -1089,61 +1029,73 @@ class CTimeManUser
 						'UF_TM_REPORT_DATE' => $arRes['UF_TM_REPORT_DATE'],
 						'UF_TM_TIME' => $arRes['UF_TM_TIME'],
 						'UF_TM_DAY' => $arRes['UF_TM_DAY'],
-						'UF_TM_REPORT_TPL' => array(),
-						'UF_TM_FREE' => false,
+						'UF_TM_REPORT_TPL' => [],
 						'UF_TM_ALLOWED_DELTA' => -1,
-					);
+					];
 
 					foreach ($this->UF_DEPARTMENT as $dpt)
 					{
 						$dptSet = CTimeMan::GetSectionSettings($dpt);
 
 						if ($allSet['UF_TIMEMAN'] !== 'Y' && $dptSet['UF_TIMEMAN'])
+						{
 							$allSet['UF_TIMEMAN'] = $dptSet['UF_TIMEMAN'];
+						}
 						if ($dptSet['UF_TM_MAX_START'])
+						{
 							$allSet['UF_TM_MAX_START'] = min($dptSet['UF_TM_MAX_START'], $allSet['UF_TM_MAX_START']);
+						}
 
 						$allSet['UF_TM_MAX_START'] = min($dptSet['UF_TM_MAX_START'], $allSet['UF_TM_MAX_START']);
 						$allSet['UF_TM_MIN_FINISH'] = max($dptSet['UF_TM_MIN_FINISH'], $allSet['UF_TM_MIN_FINISH']);
 						$allSet['UF_TM_MIN_DURATION'] = max($dptSet['UF_TM_MIN_DURATION'], $allSet['UF_TM_MIN_DURATION']);
 
 						if ($dptSet['UF_TM_REPORT_REQ'])
+						{
 							$allSet['UF_TM_REPORT_REQ'] = $dptSet['UF_TM_REPORT_REQ'];
+						}
 
 						if ((!is_array($allSet['UF_TM_REPORT_TPL']) || count($allSet['UF_TM_REPORT_TPL']) <= 0) && $dptSet['UF_TM_REPORT_TPL'])
+						{
 							$allSet['UF_TM_REPORT_TPL'] = $dptSet['UF_TM_REPORT_TPL'];
-
-						if ($dptSet['UF_TM_FREE'])
-							$allSet['UF_TM_FREE'] = $dptSet['UF_TM_FREE'];
+						}
 
 						if ($dptSet['UF_TM_ALLOWED_DELTA'])
 						{
 							if ($allSet['UF_TM_ALLOWED_DELTA'] == -1 || $dptSet['UF_TM_ALLOWED_DELTA'] < $allSet['UF_TM_ALLOWED_DELTA'])
+							{
 								$allSet['UF_TM_ALLOWED_DELTA'] = $dptSet['UF_TM_ALLOWED_DELTA'];
+							}
 						}
 					}
 
 					//report fields
-					$allSet["UF_REPORT_PERIOD"] = (!$allSet["UF_REPORT_PERIOD"] && $dptSet["UF_REPORT_PERIOD"])?$dptSet["UF_REPORT_PERIOD"]:$allSet["UF_REPORT_PERIOD"];
-					$allSet["UF_TM_TIME"] = (!$allSet["UF_TM_TIME"] && $dptSet["UF_TM_TIME"])?$dptSet["UF_TM_TIME"]:$allSet["UF_TM_TIME"];
-					$allSet["UF_TM_DAY"] = (!$allSet["UF_TM_DAY"] && $dptSet["UF_TM_DAY"])?$dptSet["UF_TM_DAY"]:$allSet["UF_TM_DAY"];
-					$allSet["UF_TM_REPORT_DATE"] = (!$allSet["UF_TM_REPORT_DATE"] && $dptSet["UF_TM_REPORT_DATE"])?$dptSet["UF_TM_REPORT_DATE"]:$allSet["UF_TM_REPORT_DATE"];
+					$allSet["UF_REPORT_PERIOD"] = (!$allSet["UF_REPORT_PERIOD"] && $dptSet["UF_REPORT_PERIOD"]) ? $dptSet["UF_REPORT_PERIOD"] : $allSet["UF_REPORT_PERIOD"];
+					$allSet["UF_TM_TIME"] = (!$allSet["UF_TM_TIME"] && $dptSet["UF_TM_TIME"]) ? $dptSet["UF_TM_TIME"] : $allSet["UF_TM_TIME"];
+					$allSet["UF_TM_DAY"] = (!$allSet["UF_TM_DAY"] && $dptSet["UF_TM_DAY"]) ? $dptSet["UF_TM_DAY"] : $allSet["UF_TM_DAY"];
+					$allSet["UF_TM_REPORT_DATE"] = (!$allSet["UF_TM_REPORT_DATE"] && $dptSet["UF_TM_REPORT_DATE"]) ? $dptSet["UF_TM_REPORT_DATE"] : $allSet["UF_TM_REPORT_DATE"];
 
 					if ($arRes['UF_TM_ALLOWED_DELTA'] === '0')
+					{
 						unset($allSet['UF_TM_ALLOWED_DELTA']);
-					foreach  ($allSet as $key => $value)
+					}
+					foreach ($allSet as $key => $value)
 					{
 						if (!$arRes[$key] || $arRes[$key] === '00:00')
+						{
 							$arRes[$key] = $value;
+						}
 					}
 
 					if ($arRes['UF_TIMEMAN'] === 'N')
-						return ($arRes = array('UF_TIMEMAN' => false));
+					{
+						return ($arRes = ['UF_TIMEMAN' => false]);
+					}
 				}
 				elseif ($arRes['UF_TIMEMAN'] !== 'Y')
 				{
-// if user is not attached to company structure tm can be allowed only in his own profile
-					return ($arRes = array('UF_TIMEMAN' => false));
+					// if user is not attached to company structure tm can be allowed only in his own profile
+					return ($arRes = ['UF_TIMEMAN' => false]);
 				}
 			} //if ($cnt > 0)
 
@@ -1165,17 +1117,14 @@ class CTimeManUser
 				: COption::GetOptionString('timeman', 'workday_report_required', 'A');
 			$arRes['UF_TM_REPORT_TPL'] = $arRes['UF_TM_REPORT_TPL']
 				? $arRes['UF_TM_REPORT_TPL']
-				: array();
-			$arRes['UF_TM_FREE'] = $arRes['UF_TM_FREE']
-				? $arRes['UF_TM_FREE'] == 'Y'
-				: false;
+				: [];
 			$arRes['UF_TM_ALLOWED_DELTA'] = $arRes['UF_TM_ALLOWED_DELTA'] > -1
 				? $arRes['UF_TM_ALLOWED_DELTA']
 				: COption::GetOptionInt('timeman', 'workday_allowed_delta', '900');
 		}
 		else
 		{
-			return array('UF_TIMEMAN' => false);
+			return ['UF_TIMEMAN' => false];
 		}
 
 		return $arRes;
@@ -1202,9 +1151,13 @@ class CTimeManUser
 	protected function _cacheId()
 	{
 		if ($this->CACHE_ID)
+		{
 			return $this->CACHE_ID;
+		}
 		else
-			return ($this->CACHE_ID = 'TIMEMAN_USER_'.$this->USER_ID.'|'.FORMAT_DATETIME);
+		{
+			return ($this->CACHE_ID = 'TIMEMAN_USER_' . $this->USER_ID . '|' . FORMAT_DATETIME);
+		}
 	}
 
 	protected function _GetLastData($clear = false)
@@ -1216,26 +1169,27 @@ class CTimeManUser
 			CTimeManUser::$LAST_ENTRY[$this->USER_ID] = CTimeManEntry::GetLast($this->USER_ID);
 			$CACHE_MANAGER->Clean($this->_cacheId(), 'b_timeman_entries');
 		}
-		else if (!CTimeManUser::$LAST_ENTRY[$this->USER_ID])
+		else
 		{
-			if ($CACHE_MANAGER->Read(86400, $this->_cacheId(), 'b_timeman_entries'))
+			if (!CTimeManUser::$LAST_ENTRY[$this->USER_ID])
 			{
-				$DATA = $CACHE_MANAGER->Get($this->_cacheId());
-			}
-			else
-			{
-				$DATA = CTimeManEntry::GetLast($this->USER_ID);
-				$CACHE_MANAGER->Set($this->_cacheId(), $DATA);
-			}
+				if ($CACHE_MANAGER->Read(86400, $this->_cacheId(), 'b_timeman_entries'))
+				{
+					$DATA = $CACHE_MANAGER->Get($this->_cacheId());
+				}
+				else
+				{
+					$DATA = CTimeManEntry::GetLast($this->USER_ID);
+					$CACHE_MANAGER->Set($this->_cacheId(), $DATA);
+				}
 
-			CTimeManUser::$LAST_ENTRY[$this->USER_ID] = $DATA;
+				CTimeManUser::$LAST_ENTRY[$this->USER_ID] = $DATA;
+			}
 		}
 
-		if (!empty(CTimeManUser::$LAST_ENTRY[$this->USER_ID]) && isset($_SESSION['BX_TIMEMAN_LAST_PAUSE_'.$this->USER_ID]))
+		if (!empty(CTimeManUser::$LAST_ENTRY[$this->USER_ID]) && isset($_SESSION['BX_TIMEMAN_LAST_PAUSE_' . $this->USER_ID]))
 		{
-			CTimeManUser::$LAST_ENTRY[$this->USER_ID]['LAST_PAUSE'] = $_SESSION['BX_TIMEMAN_LAST_PAUSE_'.$this->USER_ID];
-			// CTimeManUser::$LAST_ENTRY['LAST_PAUSE']['DATE_START'] += CTimeZone::GetOffset();
-			// CTimeManUser::$LAST_ENTRY['LAST_PAUSE']['DATE_FINISH'] += CTimeZone::GetOffset();
+			CTimeManUser::$LAST_ENTRY[$this->USER_ID]['LAST_PAUSE'] = $_SESSION['BX_TIMEMAN_LAST_PAUSE_' . $this->USER_ID];
 		}
 		else
 		{
@@ -1248,14 +1202,19 @@ class CTimeManUser
 	protected function _ReopenGetActivity($entry_id)
 	{
 		$dbRes = CTimeManReport::GetList(
-			array('ID' => 'ASC'),
-			array('ENTRY_ID' => $entry_id, 'REPORT_TYPE' => 'ERR_OPEN', 'ACTIVE' => 'Y')
+			['ID' => 'ASC'],
+			['ENTRY_ID' => $entry_id, 'REPORT_TYPE' => 'ERR_OPEN', 'ACTIVE' => 'Y']
 		);
 
 		if ($arRes = $dbRes->Fetch())
+		{
 			return false;
+		}
 		else
+		{
 			return true;
+		}
 	}
 }
+
 ?>

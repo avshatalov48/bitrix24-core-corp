@@ -2,14 +2,16 @@
 namespace Bitrix\Crm\Timeline;
 
 use Bitrix\Main;
-use Bitrix\Main\Type\DateTime;
-use Bitrix\Crm\Timeline\Entity\TimelineTable;
 
 class CommentEntry extends TimelineEntry
 {
+	const ON_CRM_TIMELINE_COMMENT_ADD_EVENT = "OnAfterCrmTimelineCommentAdd";
+	const ON_CRM_TIMELINE_COMMENT_UPDATE_EVENT = "OnAfterCrmTimelineCommentUpdate";
+	const ON_CRM_TIMELINE_COMMENT_DELETE_EVENT = "OnAfterCrmTimelineCommentDelete";
+
 	public static function create(array $params)
 	{
-		$text = isset($params['TEXT']) ? $params['TEXT'] : '';
+		$text = isset($params['TEXT']) ? \Bitrix\Main\Text\Emoji::encode($params['TEXT']) : '';
 		if($text === '')
 		{
 			throw new Main\ArgumentException('Text must be greater not empty string.', 'text');
@@ -23,10 +25,10 @@ class CommentEntry extends TimelineEntry
 
 		$settings = isset($params['SETTINGS']) && is_array($params['SETTINGS']) ? $params['SETTINGS'] : array();
 
-		$created = isset($params['CREATED']) && ($params['CREATED'] instanceof DateTime)
-			? $params['CREATED'] : new DateTime();
+		$created = isset($params['CREATED']) && ($params['CREATED'] instanceof Main\Type\DateTime)
+			? $params['CREATED'] : new Main\Type\DateTime();
 
-		$result = TimelineTable::add(
+		$result = Entity\TimelineTable::add(
 			array(
 				'TYPE_ID' => TimelineType::COMMENT,
 				'TYPE_CATEGORY_ID' => 0,
@@ -51,21 +53,27 @@ class CommentEntry extends TimelineEntry
 			self::attachFiles($ID, $params['FILES']);
 		}
 		self::registerBindings($ID, $bindings);
+
+		self::buildSearchContent($ID);
+
+		$event = new Main\Event("crm", self::ON_CRM_TIMELINE_COMMENT_ADD_EVENT, ['ID' => $ID]);
+		$event->send();
+
 		return $ID;
 	}
 	/**
-	 * @param $id
+	 * @param $ID
 	 * @param array $attachment
 	 */
-	private static function attachFiles($id, array $attachment)
+	private static function attachFiles($ID, array $attachment)
 	{
-		$id = (int)$id;
-		if($id <= 0)
+		$ID = (int)$ID;
+		if($ID <= 0)
 		{
 			return;
 		}
 
-		$GLOBALS['USER_FIELD_MANAGER']->Update(CommentController::UF_FIELD_NAME, $id, array(
+		$GLOBALS['USER_FIELD_MANAGER']->Update(CommentController::UF_FIELD_NAME, $ID, array(
 			CommentController::UF_COMMENT_FILE_NAME => $attachment
 		));
 	}
@@ -77,11 +85,11 @@ class CommentEntry extends TimelineEntry
 	{
 		Entity\TimelineBindingTable::attach($srcEntityTypeID, $srcEntityID, $targEntityTypeID, $targEntityID, array(TimelineType::COMMENT));
 	}
-	public static function update($primary, array $params)
+	public static function update($ID, array $params)
 	{
 		$result = new Main\Result();
 		
-		if ($primary <= 0)
+		if ($ID <= 0)
 		{
 			$result->addError(new Main\Error('Wrong entity ID'));
 			return $result;
@@ -96,18 +104,27 @@ class CommentEntry extends TimelineEntry
 			$updateData['SETTINGS'] = $params['SETTINGS'];
 
 		if (!empty($updateData))
-			$result = TimelineTable::update($primary, $updateData);
+			$result = Entity\TimelineTable::update($ID, $updateData);
 
 		if (isset($params['FILES']) && is_array($params['FILES']))
 		{
-			self::attachFiles($primary, $params['FILES']);
+			self::attachFiles($ID, $params['FILES']);
 		}
+
+		self::buildSearchContent($ID);
+
+		$event = new Main\Event("crm", self::ON_CRM_TIMELINE_COMMENT_UPDATE_EVENT, ['ID' => $ID]);
+		$event->send();
 
 		return $result;
 	}
 	public static function delete($ID)
 	{
 		parent::delete($ID);
+
 		$GLOBALS['USER_FIELD_MANAGER']->Delete(CommentController::UF_FIELD_NAME, $ID);
+
+		$event = new Main\Event("crm", self::ON_CRM_TIMELINE_COMMENT_DELETE_EVENT, ['ID' => $ID]);
+		$event->send();
 	}
 }

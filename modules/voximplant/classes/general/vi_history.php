@@ -69,11 +69,18 @@ class CVoxImplantHistory
 		if (strlen($params["CALL_DIRECTION"]) > 0)
 			$arFields["CALL_DIRECTION"] = $params["CALL_DIRECTION"];
 
-		if (strlen($params["PORTAL_NUMBER"]) > 0)
+		if ($call->getExternalLineId() && $externalLine = VI\Model\ExternalLineTable::getRowById($call->getExternalLineId()))
+		{
+			$arFields["PORTAL_NUMBER"] = $externalLine["NORMALIZED_NUMBER"];
+		}
+		else if (strlen($params["PORTAL_NUMBER"]) > 0)
+		{
 			$arFields["PORTAL_NUMBER"] = $params["PORTAL_NUMBER"];
-
-		if (strlen($params["ACCOUNT_SEARCH_ID"]) > 0)
+		}
+		else if (strlen($params["ACCOUNT_SEARCH_ID"]) > 0)
+		{
 			$arFields["PORTAL_NUMBER"] = $params["ACCOUNT_SEARCH_ID"];
+		}
 
 		if($arFields['CALL_VOTE'] < 1 || $arFields['CALL_VOTE'] > 5)
 			$arFields['CALL_VOTE'] = null;
@@ -140,6 +147,11 @@ class CVoxImplantHistory
 			\CVoxImplantCrmHelper::StartCallTrigger($call);
 		}
 
+		if($arFields["CALL_FAILED_CODE"] == 304 && ($call->getIncoming() == \CVoxImplantMain::CALL_INCOMING || $call->getIncoming() == \CVoxImplantMain::CALL_INCOMING_REDIRECT))
+		{
+			\CVoxImplantCrmHelper::StartMissedCallTrigger($call);
+		}
+
 		$arFields['COMMENT'] = $call->getComment() ?: null;
 
 		$insertResult = Bitrix\VoxImplant\StatisticTable::add($arFields);
@@ -168,6 +180,11 @@ class CVoxImplantHistory
 					'WORKTIME_SKIPPED' => $call->isWorktimeSkipped() ? 'Y' : 'N',
 					'CRM_BINDINGS' => $call->getCrmBindings()
 				));
+
+				if($call->getCrmActivityId() && CVoxImplantCrmHelper::shouldCompleteActivity($arFields))
+				{
+					CVoxImplantCrmHelper::completeActivity($call->getCrmActivityId());
+				}
 			}
 
 			VI\StatisticTable::update($arFields['ID'], array(
@@ -215,8 +232,8 @@ class CVoxImplantHistory
 
 			$startDownloadAgent = false;
 
-			$recordLimit = COption::GetOptionInt("voximplant", "record_limit");
-			if ($recordLimit > 0 && !CVoxImplantAccount::IsPro())
+			$recordLimit = VI\Limits::getRecordLimit();
+			if ($recordLimit > 0)
 			{
 				$sipConnectorActive = CVoxImplantConfig::GetModeStatus(CVoxImplantConfig::MODE_SIP);
 				if ($params['PORTAL_TYPE'] == CVoxImplantConfig::MODE_SIP && $sipConnectorActive)
@@ -625,6 +642,8 @@ class CVoxImplantHistory
 		if (strlen($callFields["PHONE_NUMBER"]) > 0 && $callFields["PORTAL_USER_ID"] > 0 && $callFields["CALL_FAILED_CODE"] != 423)
 		{
 			$formattedNumber = \Bitrix\Main\PhoneNumber\Parser::getInstance()->parse($callFields["PHONE_NUMBER"])->format();
+			$formattedNumber = "[CALL={$formattedNumber}]" . $formattedNumber . "[/CALL]";
+
 			if ($callFields["INCOMING"] == CVoxImplantMain::CALL_OUTGOING)
 			{
 				if ($callFields['CALL_FAILED_CODE'] == '603-S')

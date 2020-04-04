@@ -80,6 +80,10 @@ $data = array(
 			"INPUT" => array(
 				'TYPE' => 'Y/N'
 			),
+			'DEFAULT' => array(
+				"PROVIDER_KEY" => "INPUT",
+				"PROVIDER_VALUE" => "Y",
+			)
 		),
 		"PS_IS_TEST" => array(
 			"NAME" => Loc::getMessage("SALE_HPS_YANDEX_IS_TEST"),

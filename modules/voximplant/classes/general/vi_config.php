@@ -10,6 +10,7 @@ class CVoxImplantConfig
 	const MODE_LINK = 'LINK';
 	const MODE_RENT = 'RENT';
 	const MODE_SIP = 'SIP';
+	const MODE_FAKE = 'FAKE';
 	const MODE_GROUP = 'GROUP';
 	const MODE_REST_APP = 'REST_APP';
 
@@ -105,13 +106,42 @@ class CVoxImplantConfig
 		return $result;
 	}
 
+	/**
+	 * @param bool $showBaseNumber // not used anymore
+	 * @param bool $showRestApps
+	 * @return array
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
 	public static function GetLines($showBaseNumber = true, $showRestApps = false)
 	{
+		return static::GetLinesEx([
+			'showRestApps' => $showRestApps
+		]);
+	}
+
+	/**
+	 * Returns known portal lines.
+	 *
+	 * @param array $params Parameters.
+	 * <li> showRestApps bool Should the method return rest applications pseudo-lines. Default false.
+	 * <li> showInboundOnly bool Should the method return inbound only lines (like SIP PBX lines, gathered from the diversion header).
+	 * @return array
+	 */
+	public static function GetLinesEx(array $params = [])
+	{
+		$showRestApps = $params['showRestApps'] == true;
+		$showInboundOnly = $params['showInboundOnly'] == true;
+
 		$cacheTtl = 86400; //1 day
 		$result = Array();
 
 		$cursor = VI\Model\NumberTable::getList([
-			'select' => ['ID', 'NUMBER']
+			'select' => ['ID', 'NUMBER'],
+			'cache' => [
+				'ttl' => $cacheTtl
+			]
 		]);
 		while ($row = $cursor->fetch())
 		{
@@ -158,7 +188,7 @@ class CVoxImplantConfig
 					break;
 
 				default:
-					continue;
+					continue 2;
 			}
 
 			$result[$searchId] = array(
@@ -169,11 +199,12 @@ class CVoxImplantConfig
 			);
 		}
 
-		if($showRestApps)
+		$externalRestNumbers = array();
+		$externalSipNumbers = array();
+		if($showRestApps || $showInboundOnly)
 		{
-			$restApps = VI\Rest\Helper::getExternalCallHandlers();
-			$externalNumbers = array();
 			$externalNumbersCursor = VI\Model\ExternalLineTable::getList(array(
+				'select' => ['*', 'CONFIG_ID' => 'SIP.CONFIG_ID', 'SEARCH_ID' => 'SIP.CONFIG.SEARCH_ID'],
 				'cache' => array(
 					'ttl' => $cacheTtl
 				)
@@ -181,8 +212,40 @@ class CVoxImplantConfig
 
 			foreach ($externalNumbersCursor->getIterator() as $row)
 			{
-				$externalNumbers[$row['REST_APP_ID']][] = $row;
+				switch ($row['TYPE'])
+				{
+					case VI\Model\ExternalLineTable::TYPE_SIP:
+						if($row['CONFIG_ID'] > 0)
+						{
+							$externalSipNumbers[] = $row;
+						}
+						break;
+					case VI\Model\ExternalLineTable::TYPE_REST_APP:
+						$externalRestNumbers[$row['REST_APP_ID']][] = $row;
+						break;
+				}
 			}
+		}
+
+		if($showInboundOnly)
+		{
+			foreach ($externalSipNumbers as $externalNumber)
+			{
+				$formattedNumber = PhoneNumber\Parser::getInstance()->parse($externalNumber['NUMBER'])->format();
+				$result[$externalNumber['NORMALIZED_NUMBER']] = array(
+					'LINE_NUMBER' => $externalNumber['NORMALIZED_NUMBER'],
+					'SHORT_NAME' => $formattedNumber,
+					'FULL_NAME' => $formattedNumber,
+					'TYPE' => 'SIP',
+					'PARENT_ID' => $externalNumber['SEARCH_ID']
+				) ;
+			}
+		}
+
+		if($showRestApps)
+		{
+			$restApps = VI\Rest\Helper::getExternalCallHandlers();
+
 			foreach ($restApps as $restAppId => $restAppName)
 			{
 				if($restAppName == '')
@@ -196,9 +259,9 @@ class CVoxImplantConfig
 					'TYPE' => 'REST',
 					'REST_APP_ID' => $restAppId
 				);
-				if($externalNumbers[$restAppId])
+				if($externalRestNumbers[$restAppId])
 				{
-					foreach ($externalNumbers[$restAppId] as $externalNumber)
+					foreach ($externalRestNumbers[$restAppId] as $externalNumber)
 					{
 						$result[$externalNumber['NUMBER']] = array(
 							'LINE_NUMBER' => $externalNumber['NUMBER'],
@@ -472,15 +535,15 @@ class CVoxImplantConfig
 		}
 
 		return array(
-			"MELODY_WELCOME" => "http://dl.bitrix24.com/telephony/".$lang."01.mp3",
-			"MELODY_WAIT" => "http://dl.bitrix24.com/telephony/MELODY.mp3",
-			"MELODY_ENQUEUE" => "http://dl.bitrix24.com/telephony/".$lang."07.mp3",
-			"MELODY_HOLD" => "http://dl.bitrix24.com/telephony/MELODY.mp3",
-			"MELODY_VOICEMAIL" => "http://dl.bitrix24.com/telephony/".$lang."03.mp3",
-			"MELODY_VOTE" => "http://dl.bitrix24.com/telephony/".$lang."04.mp3",
-			"MELODY_VOTE_END" => "http://dl.bitrix24.com/telephony/".$lang."05.mp3",
-			"MELODY_RECORDING" => "http://dl.bitrix24.com/telephony/".$lang."06.mp3",
-			"WORKTIME_DAYOFF_MELODY" => "http://dl.bitrix24.com/telephony/".$lang."03.mp3",
+			"MELODY_WELCOME" => "https://dl.bitrix24.com/telephony/".$lang."01.mp3",
+			"MELODY_WAIT" => "https://dl.bitrix24.com/telephony/MELODY.mp3",
+			"MELODY_ENQUEUE" => "https://dl.bitrix24.com/telephony/".$lang."07.mp3",
+			"MELODY_HOLD" => "https://dl.bitrix24.com/telephony/MELODY.mp3",
+			"MELODY_VOICEMAIL" => "https://dl.bitrix24.com/telephony/".$lang."03.mp3",
+			"MELODY_VOTE" => "https://dl.bitrix24.com/telephony/".$lang."04.mp3",
+			"MELODY_VOTE_END" => "https://dl.bitrix24.com/telephony/".$lang."05.mp3",
+			"MELODY_RECORDING" => "https://dl.bitrix24.com/telephony/".$lang."06.mp3",
+			"WORKTIME_DAYOFF_MELODY" => "https://dl.bitrix24.com/telephony/".$lang."03.mp3",
 		);
 	}
 
@@ -600,11 +663,14 @@ class CVoxImplantConfig
 
 			if($sipResult)
 			{
+				$result['SIP_ID'] = $sipResult['ID'];
 				$result['SIP_SERVER'] = $sipResult['SERVER'];
 				$result['SIP_LOGIN'] = $sipResult['LOGIN'];
 				$result['SIP_PASSWORD'] = $sipResult['PASSWORD'];
 				$result['SIP_TYPE'] = $sipResult['TYPE'];
 				$result['SIP_REG_ID'] = $sipResult['REG_ID'];
+				$result['SIP_DETECT_LINE_NUMBER'] = $sipResult['DETECT_LINE_NUMBER'];
+				$result['SIP_LINE_DETECT_HEADER_ORDER'] = $sipResult['LINE_DETECT_HEADER_ORDER'];
 			}
 			else
 			{
@@ -613,6 +679,8 @@ class CVoxImplantConfig
 				$result['SIP_PASSWORD'] = '';
 				$result['SIP_TYPE'] = '';
 				$result['SIP_REG_ID'] = '';
+				$result['SIP_DETECT_LINE_NUMBER'] = '';
+				$result['SIP_LINE_DETECT_HEADER_ORDER'] = '';
 			}
 		}
 
@@ -726,14 +794,29 @@ class CVoxImplantConfig
 		$filter = array();
 
 		if(isset($params['ID']))
+		{
 			$filter['=ID'] = $params['ID'];
+		}
 		else if (isset($params['SEARCH_ID']))
-			$filter['=SEARCH_ID'] = $params['SEARCH_ID'];
+		{
+			$searchId = $params['SEARCH_ID'];
+
+			$filter = [
+				'LOGIC' => 'OR',
+				'=SEARCH_ID' => (string)$searchId,
+				'=NUMBER.NUMBER' => (string)$searchId,
+				'=GROUP_NUMBER.NUMBER' => (string)$searchId,
+				'=CALLER_ID.NUMBER' => (string)$searchId,
+			];
+		}
 		else
+		{
 			throw new \Bitrix\Main\ArgumentException('Params should contain either ID or SEARCH_ID', 'params');
-		
+		}
+
 		$result = VI\ConfigTable::getList(array(
 			'select' => array(
+				'ID' => 'ID',
 				'PHONE_NAME' => 'PHONE_NAME',
 				'SEARCH_ID' => 'SEARCH_ID',
 				'LINE_TYPE' => 'PORTAL_MODE',
@@ -749,10 +832,24 @@ class CVoxImplantConfig
 
 		if(!$result)
 			return false;
-		
-		if($result['LINE_TYPE'] === self::MODE_LINK)
+
+		if ($result['LINE_TYPE'] == self::MODE_LINK)
 		{
-			$result['LINE_NUMBER'] = CVoxImplantPhone::GetLinkNumber();
+			$row = VI\Model\CallerIdTable::getRow([
+				'filter' => [
+					'=CONFIG_ID' => $result['ID']
+				]
+			]);
+			$result['SEARCH_ID'] = $result['LINE_NUMBER'] = $result['PHONE_NAME'] = $row['NUMBER'];
+		}
+		else if($result['LINE_TYPE'] == self::MODE_RENT)
+		{
+			$row = VI\Model\NumberTable::getRow([
+				'filter' => [
+					'=CONFIG_ID' => $result['ID']
+				]
+			]);
+			$result['SEARCH_ID'] = $result['LINE_NUMBER'] = $result['PHONE_NAME'] = $row['NUMBER'];
 		}
 
 		return $result;
@@ -845,7 +942,7 @@ class CVoxImplantConfig
 		COption::SetOptionString("voximplant", "common_backup_line", $backupLine);
 
 		$controllerApi = new CVoxImplantHttp();
-		if($backupNumber)
+		if($backupNumber && $backupLine)
 		{
 			$controllerApi->setCommonBackupNumber(
 				$backupNumber,

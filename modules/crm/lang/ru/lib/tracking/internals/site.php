@@ -1,2 +1,3 @@
 <?
 $MESS["CRM_TRACKING_INTERNALS_SITE_TITLE_ADDRESS"] = "Адрес сайта";
+$MESS["CRM_TRACKING_INTERNALS_SITE_ERROR_UNIQUE_HOST"] = "Сайт с таким адресом уже добавлен.";

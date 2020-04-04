@@ -46,7 +46,7 @@ if($arResult['IFRAME'])
 		?>
 
 		<?$APPLICATION->ShowHead();?>
-
+		<title><?$APPLICATION->ShowTitle()?></title>
 		<style>.crm-iframe-popup,
 			.crm-iframe-popup.crm-form-page,
 			.crm-iframe-popup.crm-detail-page{
@@ -189,7 +189,10 @@ elseif($arResult['ENTITY_TYPE_ID'] === CCrmOwnerType::Order)
 	$APPLICATION->IncludeComponent(
 		'bitrix:crm.order.details',
 		'',
-		array('ENTITY_ID' => $arResult['ENTITY_ID'])
+		array(
+			'ENTITY_ID' => $arResult['ENTITY_ID'],
+			'EXTRAS' => $arResult['EXTRAS']
+		)
 	);
 }
 elseif($arResult['ENTITY_TYPE_ID'] === CCrmOwnerType::OrderCheck)

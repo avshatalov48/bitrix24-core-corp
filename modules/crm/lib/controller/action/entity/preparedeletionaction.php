@@ -66,18 +66,13 @@ class PrepareDeletionAction extends Main\Engine\Action
 
 				$entityFilter->prepareListFilterParams($filterFields);
 				Crm\Search\SearchEnvironment::convertEntityFilterValues($entityTypeID, $filterFields);
-
 				\CCrmEntityHelper::PrepareMultiFieldFilter($filterFields, array(), '=%', false);
 			}
-			$extras = isset($params['extras']) && is_array($params['extras']) ? $params['extras'] : array();
-			if($entityTypeID === \CCrmOwnerType::Deal)
-			{
-				if(isset($extras['CATEGORY_ID']) && $extras['CATEGORY_ID'] >= 0)
-				{
-					$filterFields['CATEGORY_ID'] = (int)$extras['CATEGORY_ID'];
-				}
 
-				$filterFields['IS_RECURRING'] = isset($extras['IS_RECURRING']) && $extras['IS_RECURRING'] === 'Y' ? 'Y' : 'N';
+			$entity = Crm\Entity\EntityManager::resolveByTypeID($entityTypeID);
+			if($entity)
+			{
+				$entity->prepareFilter($filterFields, $params);
 			}
 
 			ksort($filterFields, SORT_STRING);

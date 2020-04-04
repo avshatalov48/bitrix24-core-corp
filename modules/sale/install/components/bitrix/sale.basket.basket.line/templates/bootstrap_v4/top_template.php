@@ -14,8 +14,6 @@ $compositeStub = (isset($arResult['COMPOSITE_STUB']) && $arResult['COMPOSITE_STU
 			$name = trim($USER->GetFullName());
 			if (! $name)
 				$name = trim($USER->GetLogin());
-			if (strlen($name) > 15)
-				$name = substr($name, 0, 12).'...';
 			?>
 			<a class="basket-line-block-icon-profile" href="<?=$arParams['PATH_TO_PROFILE']?>"><?=htmlspecialcharsbx($name)?></a>
 			<a style='margin-right: 0;' href="?logout=yes"><?=GetMessage('TSB1_LOGOUT')?></a>
@@ -32,7 +30,8 @@ $compositeStub = (isset($arResult['COMPOSITE_STUB']) && $arResult['COMPOSITE_STU
 				"confirm_user_id",
 				"logout_butt",
 				"auth_service_id",
-				"clear_cache"
+				"clear_cache",
+				"backurl",
 			);
 
 			$currentUrl = urlencode($APPLICATION->GetCurPageParam("", $arParamsToDelete));

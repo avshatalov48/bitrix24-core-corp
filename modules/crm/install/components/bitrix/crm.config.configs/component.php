@@ -293,6 +293,13 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 				);
 			}
 
+			if(isset($_POST['CREATE_DEAL_ON_ORDER']))
+			{
+				\Bitrix\Crm\Settings\DealSettings::getCurrent()->enableCreateDealOnOrder(
+					strtoupper($_POST['CREATE_DEAL_ON_ORDER']) === 'Y'
+				);
+			}
+
 			if($_POST['DEAL_DEFAULT_LIST_VIEW'])
 			{
 				\Bitrix\Crm\Settings\DealSettings::getCurrent()->setDefaultListViewID($_POST['DEAL_DEFAULT_LIST_VIEW']);
@@ -525,7 +532,8 @@ $arResult['FIELDS']['tab_main'][] = array(
 	'id' => 'AUTO_GEN_RC',
 	'name' => GetMessage('CRM_FIELD_AUTO_GEN_RC'),
 	'type' => 'checkbox',
-	'value' => \Bitrix\Crm\Settings\LeadSettings::getCurrent()->isAutoGenRcEnabled(),
+	'show' => Settings\LeadSettings::getCurrent()->isEnabled() ? 'Y' : 'N',
+	'value' => Settings\LeadSettings::getCurrent()->isAutoGenRcEnabled(),
 	'required' => false
 );
 
@@ -533,8 +541,12 @@ $arResult['FIELDS']['tab_main'][] = array(
 	'id' => 'AUTO_USING_FINISHED_LEAD',
 	'name' => GetMessage('CRM_FIELD_AUTO_USING_FINISHED_LEAD'),
 	'type' => 'checkbox',
-	'show' => \Bitrix\Crm\Settings\LeadSettings::getCurrent()->isAutoGenRcEnabled() ? 'N' : 'Y',
-	'value' => \Bitrix\Crm\Settings\LeadSettings::getCurrent()->isAutoUsingFinishedLeadEnabled(),
+	'show' => (
+			Settings\LeadSettings::getCurrent()->isAutoGenRcEnabled()
+			||
+			!Settings\LeadSettings::getCurrent()->isEnabled()
+		) ? 'N' : 'Y',
+	'value' => Settings\LeadSettings::getCurrent()->isAutoUsingFinishedLeadEnabled(),
 	'required' => false
 );
 
@@ -620,6 +632,14 @@ $arResult['FIELDS']['tab_main'][] = array(
 	'name' => GetMessage('CRM_FIELD_EXPORT_PRODUCT_ROWS'),
 	'type' => 'checkbox',
 	'value' => \Bitrix\Crm\Settings\DealSettings::getCurrent()->isProductRowExportEnabled(),
+	'required' => false
+);
+
+$arResult['FIELDS']['tab_main'][] = array(
+	'id' => 'CREATE_DEAL_ON_ORDER',
+	'name' => GetMessage('CRM_FIELD_CREATE_DEAL_ON_ORDER'),
+	'type' => 'checkbox',
+	'value' => \Bitrix\Crm\Settings\DealSettings::getCurrent()->isCreateDealOnOrderEnabled(),
 	'required' => false
 );
 

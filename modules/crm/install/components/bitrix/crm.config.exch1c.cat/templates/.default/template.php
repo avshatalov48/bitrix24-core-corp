@@ -29,26 +29,19 @@ if (!(isset($_REQUEST["IFRAME"]) && $_REQUEST["IFRAME"] === "Y"))
 	}
 }
 
-$customButtons = '<input type="submit" name="save" value="'.htmlspecialcharsbx(GetMessage("CRM_BUTTON_SAVE")).'" title="'.htmlspecialcharsbx(GetMessage("CRM_BUTTON_SAVE_TITLE")).'" />';
-//$customButtons .= '<input type="button" name="cancel" value="'.htmlspecialcharsbx(GetMessage("CRM_BUTTON_CANCEL")).'" title="'.htmlspecialcharsbx(GetMessage("CRM_BUTTON_CANCEL_TITLE")).'" onclick="window.location=\''.htmlspecialcharsbx($arResult['BACK_URL']).'\'" />';
+$path = POST_FORM_ACTION_URI;
+$path.= strripos(POST_FORM_ACTION_URI, "&") ? "&" : "?";
+$path.= bitrix_sessid_get();
 
-$sections = array(
-	array(
-		'ID' => 'tab_catalog_import',
-		"TITLE" => GetMessage('CRM_TAB_CATALOG_IMPORT'),
-		"FIELDS" => $arResult['FIELDS']['tab_catalog_import']
-	),
-	array(
-		'ID' => 'tab_catalog_export',
-		"TITLE" => GetMessage('CRM_TAB_CATALOG_EXPORT'),
-		"FIELDS" => $arResult['FIELDS']['tab_catalog_export']
-	)
-);
 $APPLICATION->IncludeComponent("bitrix:ui.form", "", array(
-	'FORM_ID' => $arResult['FORM_ID'],
-	"SECTIONS" => $sections,
-	'BUTTONS' => array(
-		'standard_buttons' =>  array("save")
-	)
+	'GUID' => $arResult['FORM_ID'],
+	'CONFIG_ID' => $arResult['FORM_ID'],
+	'IS_IDENTIFIABLE_ENTITY' => false,
+	'INITIAL_MODE' => 'edit',
+	'ENTITY_FIELDS' => $arResult['FIELDS'],
+	'ENTITY_CONFIG' => $arResult['FIELDS_CONFIG'],
+	'ENTITY_DATA' => $arResult['FIELDS_DATA'],
+	"ENABLE_BOTTOM_PANEL" => false,
+	'SERVICE_URL' => $path,
 ));
 ?>

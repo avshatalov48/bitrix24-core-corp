@@ -1,3 +1,3 @@
 <?
-$MESS["TITLE"] = "Registration confirmation";
+$MESS["TITLE"] = "Registration Confirmation";
 ?>

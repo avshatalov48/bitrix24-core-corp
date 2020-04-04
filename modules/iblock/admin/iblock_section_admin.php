@@ -2,6 +2,8 @@
 /** @global CMain $APPLICATION */
 /** @global $DB CDatabase */
 /** @global CUserTypeManager $USER_FIELD_MANAGER */
+use Bitrix\Main;
+
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_before.php");
 CModule::IncludeModule("iblock");
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/iblock/prolog.php");
@@ -42,7 +44,7 @@ if($_GET["tree"]=="Y")
 	$order = "asc";
 }
 
-$oSort = new CAdminSorting($sTableID, "timestamp_x", "desc");
+$oSort = new CAdminUiSorting($sTableID, "timestamp_x", "desc");
 global $by, $order;
 $arOrder = (strtoupper($by) === "ID"? array($by => $order): array($by => $order, "ID" => "ASC"));
 $lAdmin = new CAdminUiList($sTableID, $oSort);
@@ -314,6 +316,22 @@ $arHeaders = array(
 		"sort" => "xml_id",
 	),
 	array(
+		"id" => "PICTURE",
+		"content" => GetMessage("IBSEC_A_PICTURE"),
+		"align" => "right",
+		"default" => false,
+		"editable" => false,
+		"prevent_default" => false
+	),
+	array(
+		"id" => "DETAIL_PICTURE",
+		"content" => GetMessage("IBSEC_A_DETAIL_PICTURE"),
+		"align" => "right",
+		"default" => false,
+		"editable" => false,
+		"prevent_default" => false
+	),
+	array(
 		"id" => "ELEMENT_CNT",
 		"content" => GetMessage("IBSEC_A_ELEMENT_CNT"),
 		"sort" => "element_cnt",
@@ -399,6 +417,14 @@ $listElementScriptName = CIBlock::GetAdminElementListScriptName($IBLOCK_ID);
 $listSectionScriptName = CIBlock::GetAdminSectionListScriptName($IBLOCK_ID);
 $baseLink = ($publicMode ? $selfFolderUrl.$listSectionScriptName : $APPLICATION->GetCurPage());
 
+$listImageSize = Main\Config\Option::get('iblock', 'list_image_size');
+$minImageSize = array('W' => 1, 'H' => 1);
+$maxImageSize = array(
+	'W' => $listImageSize,
+	'H' => $listImageSize
+);
+unset($listImageSize);
+
 $rsData = new CAdminUiResult($rsData, $sTableID);
 $rsData->NavStart();
 $lAdmin->SetNavigationParams($rsData, array("BASE_LINK" => $baseLink));
@@ -431,7 +457,8 @@ while ($arRes = $rsData->NavNext(false))
 		"replace_script_name" => true
 	)));
 
-	$el_list_url = \CHTTP::urlAddParams($el_list_url, array("SECTION_ID" => $arRes["ID"], "apply_filter" => "Y"));
+	$elementListUrl = CHTTP::urlAddParams($el_list_url, array("SECTION_ID" => $arRes["ID"], "INCLUDE_SUBSECTIONS" => "N", "apply_filter" => "Y"));
+	$nestedElementListUrl = CHTTP::urlAddParams($el_list_url, array("SECTION_ID" => $arRes["ID"], "INCLUDE_SUBSECTIONS" => "Y", "apply_filter" => "Y"));
 	$sec_list_url = \CHTTP::urlAddParams($sec_list_url, array("SECTION_ID" => $arRes["ID"], "apply_filter" => "Y"));
 
 	$arRows[$arRes["ID"]] = $row = $lAdmin->AddRow($arRes["ID"], $arRes, $sec_list_url, GetMessage("IBSEC_A_LIST"));
@@ -440,7 +467,7 @@ while ($arRes = $rsData->NavNext(false))
 	$row->AddViewField("ID", '<a href="'.$edit_url.'" title="'.GetMessage("IBSEC_A_EDIT").'">'.$arRes["ID"].'</a>');
 	$row->AddViewField("NAME", '<a href="'.CHTTP::URN2URI($sec_list_url).'" '.($_GET["tree"] == "Y" ? 'style="padding-left:'.(($arRes["DEPTH_LEVEL"] - 1) * 22).'px"' : '').' class="adm-list-table-icon-link" title="'.GetMessage("IBSEC_A_LIST").'"><span class="adm-submenu-item-link-icon adm-list-table-icon iblock-section-icon"></span><span class="adm-list-table-link">'.htmlspecialcharsbx($arRes["NAME"]).'</span></a>');
 	if (array_key_exists("ELEMENT_CNT", $arVisibleColumnsMap))
-		$row->AddViewField("ELEMENT_CNT", '<a href="'.CHTTP::URN2URI($el_list_url).'&find_el_subsections=N" title="'.GetMessage("IBSEC_A_ELLIST").'">'.$arRes["ELEMENT_CNT"].'</a>('.'<a href="'.CHTTP::URN2URI($el_list_url).'&find_el_subsections=Y" title="'.GetMessage("IBSEC_A_ELLIST_TITLE").'">'.IntVal(CIBlockSection::GetSectionElementsCount($arRes["ID"], array(
+		$row->AddViewField("ELEMENT_CNT", '<a href="'.CHTTP::URN2URI($elementListUrl).'" title="'.GetMessage("IBSEC_A_ELLIST").'">'.$arRes["ELEMENT_CNT"].'</a>('.'<a href="'.CHTTP::URN2URI($nestedElementListUrl).'" title="'.GetMessage("IBSEC_A_ELLIST_TITLE").'">'.IntVal(CIBlockSection::GetSectionElementsCount($arRes["ID"], array(
 			"CNT_ALL" => "Y",
 		))).'</a>) [<a href="'.$el_add_url.'" title="'.GetMessage("IBSEC_A_ELADD_TITLE").'">+</a>]');
 
@@ -461,6 +488,46 @@ while ($arRes = $rsData->NavNext(false))
 	{
 		if ($html = GetUserProfileLink($arRes["CREATED_BY"], GetMessage("IBSEC_A_USERINFO")))
 			$row->AddViewField("CREATED_BY", $html);
+	}
+	if (isset($arVisibleColumnsMap["PICTURE"]))
+	{
+		$row->AddFileField("PICTURE", array(
+			"IMAGE" => "Y",
+			"PATH" => "Y",
+			"FILE_SIZE" => "Y",
+			"DIMENSIONS" => "Y",
+			"IMAGE_POPUP" => "Y",
+			"MAX_SIZE" => $maxImageSize,
+			"MIN_SIZE" => $minImageSize,
+		), array(
+				'upload' => false,
+				'medialib' => false,
+				'file_dialog' => false,
+				'cloud' => false,
+				'del' => false,
+				'description' => false,
+			)
+		);
+	}
+	if (isset($arVisibleColumnsMap["DETAIL_PICTURE"]))
+	{
+		$row->AddFileField("DETAIL_PICTURE", array(
+			"IMAGE" => "Y",
+			"PATH" => "Y",
+			"FILE_SIZE" => "Y",
+			"DIMENSIONS" => "Y",
+			"IMAGE_POPUP" => "Y",
+			"MAX_SIZE" => $maxImageSize,
+			"MIN_SIZE" => $minImageSize,
+		), array(
+				'upload' => false,
+				'medialib' => false,
+				'file_dialog' => false,
+				'cloud' => false,
+				'del' => false,
+				'description' => false,
+			)
+		);
 	}
 }
 
@@ -515,9 +582,9 @@ foreach ($arRows as $id => $row)
 			"ACTION" => $lAdmin->ActionRedirect(CIBlock::GetAdminElementListLink($IBLOCK_ID, array(
 				'find_section_section' => $id,
 				'SECTION_ID' => $id,
+				'INCLUDE_SUBSECTIONS' => 'Y',
 				'apply_filter' => 'y',
-				'tree' => $_GET["tree"] == "Y"? 'Y' : null,
-				'find_el_subsections' => 'N',
+				'tree' => $_GET["tree"] == "Y"? 'Y' : null
 			))),
 		);
 	}

@@ -60,7 +60,7 @@ class MessageDeal extends MessageBase
 				],
 			],
 			[
-				'type' => 'string',
+				'type' => Message\ConfigurationOption::TYPE_USER_LIST,
 				'code' => 'ASSIGNED_BY',
 				'name' => Loc::getMessage('SENDER_INTEGRATION_CRM_RC_MESSAGE_CONFIG_ASSIGNED_BY'),
 				'required' => true,

@@ -8,12 +8,13 @@
 namespace Bitrix\Crm;
 
 use Bitrix\Main\Entity;
+use Bitrix\Main\ORM;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ORM\Fields\StringField;
 
 Loc::loadMessages(__FILE__);
 
-class ContactTable extends Entity\DataManager
+class ContactTable extends ORM\Data\DataManager
 {
 	public static function getTableName()
 	{
@@ -127,6 +128,10 @@ class ContactTable extends Entity\DataManager
 			'COMPANY_ID' => array(
 				'data_type' => 'integer'
 			),
+			'COMPANY' => array(
+				'data_type' => '\Bitrix\Crm\Company',
+				'reference' => array('=this.COMPANY_ID' => 'ref.ID')
+			),
 			'SEARCH_CONTENT' => array(
 				'data_type' => 'string'
 			),
@@ -184,6 +189,21 @@ class ContactTable extends Entity\DataManager
 					'ID'
 				)
 			),
+			'EMAIL_MAILING' => array(
+				'data_type' => 'string',
+				'expression' => array(
+					'('.$DB->TopSql(
+						'SELECT FM.VALUE '.
+						'FROM b_crm_field_multi FM '.
+						'WHERE FM.ENTITY_ID = \'CONTACT\' '.
+						'AND FM.ELEMENT_ID = %s '.
+						'AND FM.TYPE_ID = \'EMAIL\' '.
+						'AND FM.VALUE_TYPE = \'MAILING\' '.
+						'ORDER BY FM.ID', 1
+					).')',
+					'ID'
+				)
+			),
 			'PHONE_MOBILE' => array(
 				'data_type' => 'string',
 				'expression' => array(
@@ -209,6 +229,21 @@ class ContactTable extends Entity\DataManager
 						'AND FM.ELEMENT_ID = %s '.
 						'AND FM.TYPE_ID = \'PHONE\' '.
 						'AND FM.VALUE_TYPE = \'WORK\' '.
+						'ORDER BY FM.ID', 1
+					).')',
+					'ID'
+				)
+			),
+			'PHONE_MAILING' => array(
+				'data_type' => 'string',
+				'expression' => array(
+					'('.$DB->TopSql(
+						'SELECT FM.VALUE '.
+						'FROM b_crm_field_multi FM '.
+						'WHERE FM.ENTITY_ID = \'CONTACT\' '.
+						'AND FM.ELEMENT_ID = %s '.
+						'AND FM.TYPE_ID = \'PHONE\' '.
+						'AND FM.VALUE_TYPE = \'MAILING\' '.
 						'ORDER BY FM.ID', 1
 					).')',
 					'ID'

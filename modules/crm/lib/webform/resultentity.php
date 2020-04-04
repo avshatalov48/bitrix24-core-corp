@@ -12,6 +12,7 @@ use Bitrix\Crm\EntityManageFacility;
 use Bitrix\Crm\Integration\UserConsent as CrmIntegrationUserConsent;
 use Bitrix\Crm\Integrity\ActualEntitySelector;
 use Bitrix\Crm\Merger\EntityMerger;
+use Bitrix\Main;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Context;
 use Bitrix\Main\Loader;
@@ -21,10 +22,10 @@ use Bitrix\Crm\Activity\Provider;
 use Bitrix\Crm\Activity\BindingSelector;
 use Bitrix\Crm\Integration\Channel\WebFormTracker;
 //use Bitrix\Crm\Integration\Channel\SiteButtonTracker as CallBackWebFormTracker;
-use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\UserConsent\Consent;
 use Bitrix\Crm\Settings\LayoutSettings;
 use Bitrix\Crm\Tracking;
+use Bitrix\Crm\UtmTable;
 
 Loc::loadMessages(__FILE__);
 
@@ -70,6 +71,10 @@ class ResultEntity
 
 	/** @var ActualEntitySelector  */
 	protected $selector = null;
+	/** @var Tracking\Trace $trace  */
+	protected $trace;
+	protected $traceId;
+	protected $entities = [];
 
 	public static function getDuplicateModes()
 	{
@@ -184,7 +189,7 @@ class ResultEntity
 				}
 				foreach ($entityFields as $key => $value)
 				{
-					if ($value === null)
+					if ($value === null || $value === '' || $value === false)
 					{
 						unset($entityFields[$key]);
 					}
@@ -319,7 +324,8 @@ class ResultEntity
 				'PRODUCT_ID' => (int) $product['ID'],
 				'PRODUCT_NAME' => $product['NAME'],
 				'PRICE' => $product['PRICE'],
-				'QUANTITY' => 1,
+				'DISCOUNT_SUM' => $product['DISCOUNT'],
+				'QUANTITY' => $product['QUANTITY'],
 				'VAT_INCLUDED' => isset($product['VAT_INCLUDED']) ? $product['VAT_INCLUDED'] : null,
 				'VAT_RATE' => isset($product['VAT_RATE']) ? $product['VAT_RATE'] : null,
 			);
@@ -360,7 +366,7 @@ class ResultEntity
 		$result = 0;
 		foreach($this->productRows as $productRow)
 		{
-			$result += $productRow['PRICE'];
+			$result += $productRow['PRICE'] - $productRow['DISCOUNT'];
 		}
 
 		return $result;
@@ -442,7 +448,7 @@ class ResultEntity
 
 		if(!$isEntityInvoice)
 		{
-			$entityFields = $entityFields + $this->commonFields;
+			$entityFields = $entityFields + $this->getCommonFields();
 		}
 		$entityFields = $this->fillFieldsByPresetFields($entityName, $entityFields);
 
@@ -487,7 +493,10 @@ class ResultEntity
 
 			/** @var \CCrmLead $entityInstance */
 			$entityInstance = new $entityClassName(false);
-			$addOptions = array('DISABLE_USER_FIELD_CHECK' => true);
+			$addOptions = [
+				'DISABLE_USER_FIELD_CHECK' => true,
+				'CURRENT_USER' => $this->assignedById
+			];
 			if($isEntityInvoice)
 			{
 				/** @var \CCrmInvoice $entityInstance */
@@ -500,10 +509,7 @@ class ResultEntity
 				$entityFields['WEBFORM_ID'] = $this->formId;
 				if($isEntityLead)
 				{
-					if ($this->duplicateMode == self::DUPLICATE_CONTROL_MODE_NONE)
-					{
-						$facility->setRegisterMode(EntityManageFacility::REGISTER_MODE_ALWAYS_ADD);
-					}
+					$facility->setRegisterMode(EntityManageFacility::REGISTER_MODE_ALWAYS_ADD);
 					$id = $facility->addLead($entityFields, true, $addOptions);
 				}
 				else
@@ -778,10 +784,32 @@ class ResultEntity
 
 
 		$billList = \CCrmPaySystem::GetPaySystemsListItems($currentPersonTypeId);
-		foreach($billList as $billId => $billName)
+		if ($billList)
 		{
-			$params['FIELDS']['PAY_SYSTEM_ID'] = $billId;
-			break;
+			foreach ($billList as $billId => $billName)
+			{
+				$params['FIELDS']['PAY_SYSTEM_ID'] = $billId;
+				break;
+			}
+		}
+		else
+		{
+			if (Loader::includeModule('sale'))
+			{
+				$dbRes = \Bitrix\Sale\PaySystem\Manager::getList([
+					'filter' => [
+						'=PERSON_TYPE_ID' => $currentPersonTypeId,
+						'=ENTITY_REGISTRY_TYPE' => REGISTRY_TYPE_CRM_INVOICE,
+						'%ACTION_FILE' => ['bill', 'invoicedocument']
+					]
+				]);
+
+				while ($data = $dbRes->fetch())
+				{
+					$params['FIELDS']['PAY_SYSTEM_ID'] = $data['ID'];
+					break;
+				}
+			}
 		}
 
 		$params['SET_PRODUCTS'] = true;
@@ -798,11 +826,47 @@ class ResultEntity
 		Consent::addByContext(
 			$this->formData['AGREEMENT_ID'],
 			CrmIntegrationUserConsent::PROVIDER_CODE,
-			$this->activityId
+			$this->activityId,
+			[
+				'URL' => $this->trace->getUrl()
+			]
 		);
 	}
 
-	protected function addTrace()
+	protected function performTrace()
+	{
+		if ($this->trace)
+		{
+			return $this->trace;
+		}
+
+		$traceId = isset($this->commonData['TRACE_ID']) ? $this->commonData['TRACE_ID'] : null;
+		if ($traceId)
+		{
+			$this->trace = new Tracking\Trace(); // TODO: restore data
+		}
+		else
+		{
+			$string = isset($this->commonData['TRACE']) ? $this->commonData['TRACE'] : null;
+			$trace = Tracking\Trace::create($string);
+			if ($this->isCallback)
+			{
+				$trace->addChannel(new Tracking\Channel\Callback($this->formId));
+			}
+			else
+			{
+				$trace->addChannel(new Tracking\Channel\Form($this->formId));
+			}
+			$traceId = $trace->save();
+			$this->trace = $trace;
+		}
+
+		$this->traceId = $traceId;
+
+		return $this->trace;
+	}
+
+	protected function fillTrace()
 	{
 		$entities = [];
 		foreach($this->resultEntityPack as $entity)
@@ -823,21 +887,10 @@ class ResultEntity
 			return;
 		}
 
-		$string = isset($this->commonData['TRACE']) ? $this->commonData['TRACE'] : null;
-		$trace = Tracking\Trace::create($string);
-		if ($this->isCallback)
-		{
-			$trace->addChannel(new Tracking\Channel\Callback($this->formId));
-		}
-		else
-		{
-			$trace->addChannel(new Tracking\Channel\Form($this->formId));
-		}
-		$traceId = $trace->save();
 		foreach ($entities as $entity)
 		{
 			Tracking\Trace::appendEntity(
-				$traceId,
+				$this->traceId,
 				$entity['ENTITY_TYPE_ID'],
 				$entity['ENTITY_ID']
 			);
@@ -864,7 +917,7 @@ class ResultEntity
 			'PROVIDER_TYPE_ID' => $this->formId,
 			'DIRECTION' => \CCrmActivityDirection::Incoming,
 			'ASSOCIATED_ENTITY_ID' => $this->resultId,
-			'START_TIME' => new DateTime(),
+			'START_TIME' => new Main\Type\DateTime(),
 			'COMPLETED' => LayoutSettings::getCurrent()->isSliderEnabled() ? 'Y' : 'N',
 			'PRIORITY' => \CCrmActivityPriority::Medium,
 			'DESCRIPTION' => '',
@@ -883,7 +936,19 @@ class ResultEntity
 					'IP' => Context::getCurrent()->getRequest()->getRemoteAddress(),
 					'LINK' => Script::getUrlContext($this->formData)
 				),
-				'VISITED_PAGES' => isset($this->commonData['VISITED_PAGES']) ? $this->commonData['VISITED_PAGES'] : array()
+				'VISITED_PAGES' => array_map(
+					function ($page)
+					{
+						return [
+							'HREF' => $page['URL'],
+							'DATE' => ($page['DATE_INSERT'] instanceof Main\Type\DateTime)
+								? $page['DATE_INSERT']->getTimestamp()
+								: null,
+							'TITLE' => $page['TITLE']
+						];
+					},
+					$this->trace->getPages()
+				)
 			)
 		);
 
@@ -1087,6 +1152,27 @@ class ResultEntity
 					$entityFields[$field['entity_name']]['FM'][$field['entity_field_name']] = $valuesTmp;
 					continue 2;
 					break;
+
+				case 'date':
+				case 'datetime':
+					foreach($values as $valueIndex => $value)
+					{
+						if (empty($value))
+						{
+							continue;
+						}
+
+						if ($field['type'] === 'date' && !Main\Type\Date::isCorrect($value))
+						{
+							$values[$valueIndex] = (new Main\Type\Date())->toString();
+						}
+
+						if ($field['type'] === 'datetime' && !Main\Type\DateTime::isCorrect($value))
+						{
+							$values[$valueIndex] = (new Main\Type\DateTime())->toString();
+						}
+					}
+					break;
 			}
 
 			$values = $field['multiple_original'] ? $values : $values[0];
@@ -1096,8 +1182,10 @@ class ResultEntity
 		return $entityFields;
 	}
 
-	protected static function createSelector(array $fields)
+	protected function createSelector()
 	{
+		$fields = $this->fields;
+
 		$targetFields = array(
 			'FM' => array()
 		);
@@ -1184,11 +1272,29 @@ class ResultEntity
 			)
 		);
 
-		return (new ActualEntitySelector)
+		$selector = (new ActualEntitySelector)
 			->setCriteria($criteria)
 			->enableFullSearch()
-			->disableExclusionChecking()
-			->search();
+			->disableExclusionChecking();
+
+		$scheme = Entity::getSchemes($this->scheme);
+		foreach ($this->entities as $entity)
+		{
+			if (empty($entity['typeId']) || empty($entity['id']))
+			{
+				continue;
+			}
+
+			$entityName = \CCrmOwnerType::ResolveName($entity['typeId']);
+			if(!$entityName || !$scheme || !in_array($entityName, $scheme['ENTITIES']))
+			{
+				continue;
+			}
+
+			$selector->setEntity($entity['typeId'], $entity['id']);
+		}
+
+		return $selector->search();
 	}
 
 	public function add($scheme, $fields)
@@ -1196,7 +1302,8 @@ class ResultEntity
 		$this->entityMap = Entity::getMap();
 		$this->scheme = $scheme;
 		$this->fields = $this->prepareFields($fields);
-		$this->selector = self::createSelector($this->fields);
+		$this->selector = $this->createSelector();
+		$this->performTrace();
 
 		try
 		{
@@ -1235,7 +1342,7 @@ class ResultEntity
 					break;
 			}
 
-			$this->addTrace();
+			$this->fillTrace();
 			$this->addActivity();
 			$this->addConsent();
 			$this->runAutomation();
@@ -1308,12 +1415,23 @@ class ResultEntity
 	}
 
 	/**
-	 * Set common fields
+	 * Set common fields.
+	 *
 	 * @param array $commonFields Common fields
 	 */
-	public function setCommonFields($commonFields = array())
+	public function setCommonFields($commonFields = [])
 	{
 		$this->commonFields = $commonFields;
+	}
+
+	/**
+	 * Get common fields.
+	 *
+	 * @return array
+	 */
+	public function getCommonFields()
+	{
+		return $this->commonFields + $this->trace->getUtm();
 	}
 
 	/**
@@ -1336,6 +1454,18 @@ class ResultEntity
 	{
 		$this->isCallback = $isCallback;
 		$this->callbackPhone = $callbackPhone;
+	}
+
+	/*
+	 * Set callback data.
+	 *
+	 * @param bool $isCallback Is callback form
+	 * @param string $callbackPhone Callback phone
+	 * @return void
+	 */
+	public function setEntities(array $entities)
+	{
+		$this->entities = $entities;
 	}
 
 

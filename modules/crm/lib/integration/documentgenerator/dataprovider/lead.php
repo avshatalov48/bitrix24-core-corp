@@ -2,11 +2,17 @@
 
 namespace Bitrix\Crm\Integration\DocumentGenerator\DataProvider;
 
+use Bitrix\Crm\Binding\LeadContactTable;
+use Bitrix\Crm\LeadAddress;
 use Bitrix\Crm\LeadTable;
+use Bitrix\DocumentGenerator\DataProvider\ArrayDataProvider;
+use Bitrix\DocumentGenerator\DataProviderManager;
 use Bitrix\DocumentGenerator\Nameable;
 
 class Lead extends ProductsDataProvider implements Nameable
 {
+	protected $contacts;
+
 	/**
 	 * @return array
 	 */
@@ -17,15 +23,27 @@ class Lead extends ProductsDataProvider implements Nameable
 			parent::getFields();
 			$this->fields['STATUS'] = ['TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_LEAD_STATUS_TITLE'),];
 			$this->fields['SOURCE'] = ['TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_LEAD_SOURCE_TITLE'),];
-			$this->fields['IMOL'] = ['TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_LEAD_IMOL_TITLE'),];
+			$this->fields['IMOL'] = [
+				'TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_LEAD_IMOL_TITLE'),
+				'VALUE' => [$this, 'getClientIm'],
+				'FORMAT' => [
+					'mfirst' => true,
+				],
+			];
 			$this->fields['PHONE_ANOTHER'] = [
 				'TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_PHONE_ANOTHER_TITLE'),
 				'VALUE' => [$this, 'getAnotherPhone'],
 				'TYPE' => 'PHONE',
+				'FORMAT' => [
+					'mfirst' => true,
+				],
 			];
 			$this->fields['EMAIL_ANOTHER'] = [
 				'TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_EMAIL_ANOTHER_TITLE'),
 				'VALUE' => [$this, 'getAnotherEmail'],
+				'FORMAT' => [
+					'mfirst' => true,
+				],
 			];
 			$this->fields['COMPANY_NAME'] = [
 				'TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_LEAD_COMPANY_NAME_TITLE'),
@@ -33,8 +51,40 @@ class Lead extends ProductsDataProvider implements Nameable
 			];
 
 			$this->fields['PHONE_MOBILE']['TYPE'] = 'PHONE';
+			$this->fields['PHONE_MOBILE']['FORMAT'] = ['mfirst' => true,];
+			$this->fields['PHONE_MOBILE']['VALUE'] = [$this, 'getMobilePhone'];
 			$this->fields['PHONE_WORK']['TYPE'] = 'PHONE';
+			$this->fields['PHONE_WORK']['FORMAT'] = ['mfirst' => true,];
+			$this->fields['PHONE_WORK']['VALUE'] = [$this, 'getWorkPhone'];
+			$this->fields['PHONE_HOME']['TITLE'] = GetMessage('CRM_DOCGEN_DATAPROVIDER_LEAD_PHONE_HOME_TITLE');
+			$this->fields['PHONE_HOME']['TYPE'] = 'PHONE';
+			$this->fields['PHONE_HOME']['FORMAT'] = ['mfirst' => true,];
+			$this->fields['PHONE_HOME']['VALUE'] = [$this, 'getHomePhone'];
 			$this->fields['PHONE']['TYPE'] = 'PHONE';
+			$this->fields['PHONE']['FORMAT'] = ['mfirst' => true,];
+			$this->fields['PHONE']['VALUE'] = [$this, 'getClientPhone'];
+
+			$this->fields['EMAIL_HOME']['FORMAT'] = ['mfirst' => true,];
+			$this->fields['EMAIL_HOME']['VALUE'] = [$this, 'getHomeEmail'];
+			$this->fields['EMAIL_WORK']['FORMAT'] = ['mfirst' => true,];
+			$this->fields['EMAIL_WORK']['VALUE'] = [$this, 'getWorkEmail'];
+			$this->fields['EMAIL']['FORMAT'] = ['mfirst' => true,];
+			$this->fields['EMAIL']['VALUE'] = [$this, 'getClientEmail'];
+			$this->fields['BIRTHDATE']['TITLE'] = GetMessage('CRM_DOCGEN_DATAPROVIDER_BIRTHDATE_TITLE');
+			$this->fields['CONTACTS'] = [
+				'TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_LEAD_CONTACTS_TITLE'),
+				'PROVIDER' => ArrayDataProvider::class,
+				'OPTIONS' => [
+					'ITEM_PROVIDER' => Contact::class,
+					'ITEM_NAME' => 'CONTACT',
+					'ITEM_TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_LEAD_CONTACT_TITLE'),
+					'ITEM_OPTIONS' => [
+						'DISABLE_MY_COMPANY' => true,
+						'isLightMode' => true,
+					],
+				],
+				'VALUE' => [$this, 'getContacts'],
+			];
 		}
 
 		return $this->fields;
@@ -71,6 +121,46 @@ class Lead extends ProductsDataProvider implements Nameable
 		return LeadTable::class;
 	}
 
+	public function getContacts()
+	{
+		if($this->contacts === null)
+		{
+			$this->contacts = [];
+			if(intval($this->source) > 0)
+			{
+				$contactBindings = LeadContactTable::getLeadBindings($this->source);
+				foreach($contactBindings as $binding)
+				{
+					$contact = DataProviderManager::getInstance()->getDataProvider(Contact::class, $binding['CONTACT_ID'], [
+						'isLightMode' => true,
+						'DISABLE_MY_COMPANY' => true,
+					], $this);
+					$this->contacts[] = $contact;
+				}
+			}
+		}
+
+		return $this->contacts;
+	}
+
+	protected function fetchData()
+	{
+		parent::fetchData();
+		if(empty($this->data['ADDRESS']))
+		{
+			unset($this->data['ADDRESS']);
+		}
+		else
+		{
+			$address = LeadAddress::getByOwner(LeadAddress::Primary, $this->getCrmOwnerType(), $this->source);
+			if($address)
+			{
+				$this->data['ADDRESS'] = new \Bitrix\Crm\Integration\DocumentGenerator\Value\Address($address);
+			}
+		}
+	}
+
+
 	/**
 	 * @return array
 	 */
@@ -99,6 +189,16 @@ class Lead extends ProductsDataProvider implements Nameable
 			'DATE_MODIFY_SHORT',
 			'FACE_ID',
 			'COMPANY_TITLE',
+			'OPPORTUNITY_ACCOUNT',
+			'ACCOUNT_CURRENCY_ID',
+			'IS_RETURN_CUSTOMER',
+			'STATUS_SEMANTIC_ID',
+			'ORIGIN_ID',
+			'ORIGINATOR_ID',
+			'ADDRESS_ENTITY',
+			'PRODUCT_ROW',
+			'COMPANY_ID',
+			'CONTACT_ID',
 		]);
 	}
 
@@ -111,15 +211,8 @@ class Lead extends ProductsDataProvider implements Nameable
 			'select' => [
 				'STATUS' => 'STATUS_BY.NAME',
 				'SOURCE' => 'SOURCE_BY.NAME',
-				'PHONE',
-				'PHONE_WORK',
-				'PHONE_MOBILE',
-				'EMAIL_HOME',
-				'EMAIL_WORK',
 				'SKYPE',
 				'ICQ',
-				'IMOL',
-				'EMAIL',
 			],
 		]);
 	}
@@ -149,10 +242,11 @@ class Lead extends ProductsDataProvider implements Nameable
 	}
 
 	/**
-	 * @return array|null
+	 * @return array
 	 */
-	protected function getMultiFields()
+	protected function loadMultiFields()
 	{
+		$result = [];
 		if($this->isLoaded())
 		{
 			if($this->multiFields === null)
@@ -187,12 +281,9 @@ class Lead extends ProductsDataProvider implements Nameable
 					}
 				}
 			}
-		}
-		else
-		{
-			return [];
+			$result = $this->multiFields;
 		}
 
-		return $this->multiFields;
+		return $result;
 	}
 }

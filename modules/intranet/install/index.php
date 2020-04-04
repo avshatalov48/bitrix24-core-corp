@@ -83,7 +83,6 @@ Class intranet extends CModule
 		RegisterModuleDependences("iblock", "OnIBlockPropertyBuildList", "intranet", "CIBlockPropertyEmployee", "GetUserTypeDescription");
 
 		RegisterModuleDependences("main", "OnBeforeProlog", "intranet", "CIntranetEventHandlers", "OnCreatePanel");
-		RegisterModuleDependences("main", "OnBeforeProlog", "intranet", "CIntranetEventHandlers", "OnBeforeProlog");
 
 		// subordination cache
 		RegisterModuleDependences("iblock", "OnAfterIBlockSectionAdd", "intranet", "CIntranetEventHandlers", "OnAfterIBlockSectionAdd");
@@ -93,6 +92,7 @@ Class intranet extends CModule
 		RegisterModuleDependences("main", "OnBeforeUserUpdate", "intranet", "CIntranetEventHandlers", "OnBeforeUserUpdate");
 		RegisterModuleDependences("main", "OnAfterUserUpdate", "intranet", "CIntranetEventHandlers", "OnAfterUserUpdate");
 		RegisterModuleDependences("main", "OnAfterUserDelete", "intranet", "CIntranetEventHandlers", "OnAfterUserDelete");
+		RegisterModuleDependences("socialservices", "OnAfterSocServUserAdd", "intranet", "CIntranetEventHandlers", "OnAfterSocServUserAdd");
 
 		// cache
 		RegisterModuleDependences("main", "onUserDelete", "intranet", "CIntranetEventHandlers", "ClearAllUsersCache");
@@ -172,6 +172,7 @@ Class intranet extends CModule
 
 		$eventManager = \Bitrix\Main\EventManager::getInstance();
 		$eventManager->registerEventHandler('main', 'onApplicationScopeError', 'intranet', '\Bitrix\Intranet\PublicApplication', 'onApplicationScopeError');
+		$eventManager->registerEventHandler('socialservices', '\Bitrix\Socialservices\User::'.\Bitrix\Main\Entity\DataManager::EVENT_ON_AFTER_ADD, 'intranet', 'CIntranetEventHandlers', 'OnAfterSocServUserAdd');
 
 		// for main user online status
 		$eventManager->registerEventHandlerCompatible('main', 'onUserOnlineStatusGetCustomOfflineStatus', 'intranet', '\Bitrix\Intranet\UserAbsence', 'onUserOnlineStatusGetCustomOfflineStatus');
@@ -517,10 +518,23 @@ Class intranet extends CModule
 				'SHOW_IN_LIST' => 'Y',
 				'EDIT_IN_LIST' => 'Y',
 				'IS_SEARCHABLE' => 'Y'
-			)
+			),
+			'UF_EMPLOYMENT_DATE' => array(
+				'ENTITY_ID' => 'USER',
+				'FIELD_NAME' => 'UF_EMPLOYMENT_DATE',
+				'USER_TYPE_ID' => 'date',
+				'XML_ID' => '',
+				'SORT' => 100,
+				'MULTIPLE' => 'N',
+				'MANDATORY' => 'N',
+				'SHOW_FILTER' => 'E',
+				'SHOW_IN_LIST' => 'Y',
+				'EDIT_IN_LIST' => 'Y',
+				'IS_SEARCHABLE' => 'Y',
+			),
 		);
 
-		$arLanguages = Array();
+		$arLanguages = array();
 		$rsLanguage = CLanguage::GetList($by, $order, array());
 		while($arLanguage = $rsLanguage->Fetch())
 			$arLanguages[] = $arLanguage["LID"];
@@ -607,6 +621,17 @@ Class intranet extends CModule
 
 
 		return $arResult;
+	}
+
+	public function migrateToBox()
+	{
+		if (
+			\Bitrix\Main\ModuleManager::isModuleInstalled('extranet')
+			&& \Bitrix\Main\IO\Directory::isDirectoryExists(\Bitrix\Main\Application::getDocumentRoot().'/bitrix/modules/extranet')
+		)
+		{
+			\Bitrix\Main\ModuleManager::delete('extranet');
+		}
 	}
 }
 ?>

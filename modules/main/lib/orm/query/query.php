@@ -14,6 +14,7 @@ use Bitrix\Main\ORM\Fields\ScalarField;
 use Bitrix\Main\ORM\Fields\TextField;
 use Bitrix\Main\ORM\Query\Filter\ConditionTree as Filter;
 use Bitrix\Main\ORM\Query\Filter\Expressions\ColumnExpression;
+use Bitrix\Main\Text\StringHelper;
 
 /**
  * Query builder for Entities.
@@ -1840,7 +1841,7 @@ class Query
 					{
 						if (is_null($table_alias))
 						{
-							$table_alias = Entity::camel2snake($dst_entity->getName()) . '_' . strtolower($ref_field->getName());
+							$table_alias = StringHelper::camel2snake($dst_entity->getName()) . '_' . strtolower($ref_field->getName());
 							$table_alias = $prev_alias.'_'.$table_alias;
 
 							if (strlen($table_alias.$this->table_alias_postfix) > $aliasLength)
@@ -2208,8 +2209,9 @@ class Query
 
 			$this->buildJoinMap();
 
-			$sqlSelect = $this->buildSelect();
 			$sqlJoin = $this->buildJoin();
+
+			$sqlSelect = $this->buildSelect();
 			$sqlWhere = $this->buildWhere();
 			$sqlGroup = $this->buildGroup();
 			$sqlHaving = $this->buildHaving();
@@ -2534,8 +2536,15 @@ class Query
 				elseif (strpos($field, 'ref.') === 0)
 				{
 					$definition = str_replace(\CSQLWhere::getOperationByCode($operation).'ref.', '', $k);
-					$absDefinition = strlen($refDefinition) ? $refDefinition . '.' . $definition : $definition;
 
+					if (strpos($definition, '.') !== false)
+					{
+						throw new Main\ArgumentException(sprintf(
+							'Reference chain `%s` is not allowed here. First-level definitions only.', $field
+						));
+					}
+
+					$absDefinition = strlen($refDefinition) ? $refDefinition . '.' . $definition : $definition;
 					$chain = $this->getRegisteredChain($absDefinition, true);
 
 					if ($isBackReference)
@@ -2621,8 +2630,15 @@ class Query
 					elseif (strpos($v, 'ref.') === 0)
 					{
 						$definition = str_replace('ref.', '', $v);
-						$absDefinition = strlen($refDefinition) ? $refDefinition . '.' . $definition : $definition;
 
+						if (strpos($definition, '.') !== false)
+						{
+							throw new Main\ArgumentException(sprintf(
+								'Reference chain `%s` is not allowed here. First-level definitions only.', $v
+							));
+						}
+
+						$absDefinition = strlen($refDefinition) ? $refDefinition . '.' . $definition : $definition;
 						$chain = $this->getRegisteredChain($absDefinition, true);
 
 						if ($isBackReference)

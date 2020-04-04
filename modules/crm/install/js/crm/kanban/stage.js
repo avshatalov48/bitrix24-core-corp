@@ -27,7 +27,6 @@
 
 		hideparentblock: function()
 		{
-			console.log(this.renderto);
 			this.renderto.style.opacity = "0";
 			this.renderto.style.transition = ".2s";
 			this.renderto.style.pointerevents = "none";
@@ -42,7 +41,6 @@
 
 		render: function()
 		{
-			console.log("render");
 		},
 
 		getstagecontainer: function()

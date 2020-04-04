@@ -227,6 +227,11 @@ abstract class Base extends \CBitrixComponent
 	 */
 	public static function getSettingsScript($componentPath, $settingsName)
 	{
+		if ($settingsName === 'filter_conditions')
+		{
+			if (Loader::includeModule('catalog'))
+				\CJSCore::Init(['core_condtree']);
+		}
 		$path = $componentPath.'/settings/'.$settingsName.'/script.js';
 		$file = new Main\IO\File(Main\Application::getDocumentRoot().$path);
 
@@ -1656,11 +1661,31 @@ abstract class Base extends \CBitrixComponent
 	 */
 	protected function getSelect()
 	{
-		return [
+		$result = [
 			'ID', 'IBLOCK_ID', 'CODE', 'XML_ID', 'NAME', 'ACTIVE', 'DATE_ACTIVE_FROM', 'DATE_ACTIVE_TO', 'SORT',
 			'PREVIEW_TEXT', 'PREVIEW_TEXT_TYPE', 'DETAIL_TEXT', 'DETAIL_TEXT_TYPE', 'DATE_CREATE', 'CREATED_BY', 'TAGS',
 			'TIMESTAMP_X', 'MODIFIED_BY', 'IBLOCK_SECTION_ID', 'DETAIL_PAGE_URL', 'DETAIL_PICTURE', 'PREVIEW_PICTURE'
 		];
+
+		$checkPriceProperties = (
+			!$this->useCatalog
+			|| (
+				isset($this->arParams['IBLOCK_ID'])
+				&& $this->arParams['IBLOCK_ID'] > 0
+				&& !isset($this->storage['CATALOGS'][$this->arParams['IBLOCK_ID']])
+			)
+		);
+
+		if ($checkPriceProperties && !empty($this->storage['PRICES']))
+		{
+			foreach ($this->storage['PRICES'] as $row)
+			{
+				if (!empty($row['SELECT']))
+					$result[] = $row['SELECT'];
+			}
+		}
+
+		return $result;
 	}
 
 	/**
@@ -2217,6 +2242,7 @@ abstract class Base extends \CBitrixComponent
 				$element['~CATALOG_QUANTITY_TRACE'] = $element['PRODUCT']['QUANTITY_TRACE'];
 				$element['CATALOG_QUANTITY_TRACE'] = $element['PRODUCT']['QUANTITY_TRACE'];
 				$element['~CATALOG_CAN_BUY_ZERO'] = $element['PRODUCT']['CAN_BUY_ZERO'];
+				$element['CATALOG_CAN_BUY_ZERO'] = $element['PRODUCT']['CAN_BUY_ZERO'];
 				$element['~CATALOG_SUBSCRIBE'] = $element['PRODUCT']['SUBSCRIBE'];
 				$element['CATALOG_SUBSCRIBE'] = $element['PRODUCT']['SUBSCRIBE'];
 			}
@@ -3429,7 +3455,7 @@ abstract class Base extends \CBitrixComponent
 				$element['MIN_PRICE'] = \CIBlockPriceTools::getMinPriceFromList($element['PRICES']);
 			}
 
-			$element['CAN_BUY'] = \CIBlockPriceTools::CanBuy($element['IBLOCK_ID'], $this->storage['PRICES'], $element);
+			$element['CAN_BUY'] = !empty($element['PRICES']);
 		}
 	}
 
@@ -3661,6 +3687,7 @@ abstract class Base extends \CBitrixComponent
 					$row['~CATALOG_QUANTITY_TRACE'] = $row['PRODUCT']['QUANTITY_TRACE'];
 					$row['CATALOG_QUANTITY_TRACE'] = $row['PRODUCT']['QUANTITY_TRACE'];
 					$row['~CATALOG_CAN_BUY_ZERO'] = $row['PRODUCT']['CAN_BUY_ZERO'];
+					$row['CATALOG_CAN_BUY_ZERO'] = $row['PRODUCT']['CAN_BUY_ZERO'];
 					$row['~CATALOG_SUBSCRIBE'] = $row['PRODUCT']['SUBSCRIBE'];
 					$row['CATALOG_SUBSCRIBE'] = $row['PRODUCT']['SUBSCRIBE'];
 				}
@@ -3820,8 +3847,8 @@ abstract class Base extends \CBitrixComponent
 	protected function getOffersSort()
 	{
 		$offersOrder = array(
-			$this->arParams['OFFERS_SORT_FIELD'] => $this->arParams['OFFERS_SORT_ORDER'],
-			$this->arParams['OFFERS_SORT_FIELD2'] => $this->arParams['OFFERS_SORT_ORDER2']
+			strtoupper($this->arParams['OFFERS_SORT_FIELD']) => $this->arParams['OFFERS_SORT_ORDER'],
+			strtoupper($this->arParams['OFFERS_SORT_FIELD2']) => $this->arParams['OFFERS_SORT_ORDER2']
 		);
 		if (!isset($offersOrder['ID']))
 			$offersOrder['ID'] = 'DESC';

@@ -2,6 +2,7 @@
 
 namespace Bitrix\Sale\Helpers\Admin\Blocks;
 
+use Bitrix\Main\Type\Date;
 use Bitrix\Sale\Helpers\Admin\OrderEdit;
 use Bitrix\Sale\Internals\StatusLangTable;
 use Bitrix\Sale\Internals\StatusTable;
@@ -276,8 +277,8 @@ class OrderStatus
 			}
 
 			$result = array(
-				"DATE_INSERT" => $order->getDateInsert()->toString(),
-				"DATE_UPDATE" => $order->getField('DATE_UPDATE')->toString(),
+				"DATE_INSERT" => ($order->getDateInsert() instanceof Date) ? $order->getDateInsert()->toString() : '',
+				"DATE_UPDATE" => ($order->getField('DATE_UPDATE') instanceof Date) ? $order->getField('DATE_UPDATE')->toString() : '',
 				"CREATOR_USER_NAME" => $creatorName,
 				"CREATOR_USER_ID" => $creator["ID"],
 				"STATUS_ID" => $order->getField('STATUS_ID'),

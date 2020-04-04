@@ -90,7 +90,7 @@ class ComplexCollection extends Dictionary
 	 *
 	 * @param Complex $complex An entity object.
 	 * @param bool $uniqueOnly Add unique entity only.
-	 * @param $offset Offset in the array.
+	 * @param int $offset Offset in the array.
 	 * @return void
 	 */
 	public function setComplex(Complex $complex, $uniqueOnly = false, $offset = null)
@@ -170,15 +170,16 @@ class ComplexCollection extends Dictionary
 	/**
 	 * Convert to array of identificators.
 	 *
+	 * @param array $keys Keys of array.
 	 * @return array
 	 */
-	public function toSimpleArray()
+	public function toSimpleArray(array $keys = ['ENTITY_TYPE_ID', 'ENTITY_ID'])
 	{
 		return array_map(
-			function ($item)
+			function ($item) use ($keys)
 			{
 				/** @var Complex $item */
-				return $item->toArray();
+				return $item->toArray($keys);
 			},
 			$this->toArray()
 		);

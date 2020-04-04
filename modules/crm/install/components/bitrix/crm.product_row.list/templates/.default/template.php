@@ -5,8 +5,6 @@
 global $APPLICATION;
 $APPLICATION->SetAdditionalCSS('/bitrix/js/crm/css/crm.css');
 $APPLICATION->SetAdditionalCSS("/bitrix/themes/.default/crm-entity-show.css");
-$bodyClass = $APPLICATION->GetPageProperty("BodyClass");
-$APPLICATION->SetPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "")."flexible-layout");
 
 if(SITE_TEMPLATE_ID === 'bitrix24')
 {
@@ -620,8 +618,6 @@ $jsEventsManagerId = 'PageEventsManager_'.$arResult['COMPONENT_ID'];
 			'jsEventsManagerId' => $jsEventsManagerId,
 			'initLayout' => $arResult['INIT_LAYOUT']
 		);
-
-		$productEditorCfg['enableSubmitWithoutLayout'] = $arResult['ENABLE_SUBMIT_WITHOUT_LAYOUT'];
 
 		$productEditorCfg['hideTaxIncludedColumn'] = $arResult['HIDE_TAX_INCLUDED_COLUMN'];
 		$productEditorCfg['hideAllTaxes'] = $arResult['HIDE_ALL_TAXES'];

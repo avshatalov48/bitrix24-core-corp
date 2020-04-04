@@ -6,12 +6,12 @@ use Bitrix\Disk\Bitrix24Disk\PageState;
 use Bitrix\Disk\Bitrix24Disk\TmpFile;
 use Bitrix\Disk\Configuration;
 use Bitrix\Disk\Driver;
-use Bitrix\Disk\Internals\DeletedLogTable;
 use Bitrix\Disk\Sharing;
 use Bitrix\Disk\SpecificFolder;
 use Bitrix\Disk\Storage;
 use Bitrix\Disk\Ui;
 use Bitrix\Disk\User;
+use Bitrix\Main\Application;
 use Bitrix\Main\Data;
 use Bitrix\Disk\File;
 use Bitrix\Disk\Folder;
@@ -23,13 +23,15 @@ use Bitrix\Disk\Bitrix24Disk\Legacy\Exceptions\AccessDeniedException;
 use Bitrix\Disk\Internals\Error\Error;
 use Bitrix\Disk\Internals\Error\ErrorCollection;
 use Bitrix\Main\Entity\ExpressionField;
+use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\IO\Path;
 use Bitrix\Main\Type\DateTime;
+use \Bitrix\Disk\Internals;
 
 class DiskStorage extends AbstractStorage
 {
 	const ERROR_CREATE_FORK_FILE = 'DS_F_22001';
-	
+
 	/** @var  Storage */
 	protected $storage;
 	/** @var int */
@@ -37,8 +39,14 @@ class DiskStorage extends AbstractStorage
 
 	/** @var bool */
 	protected $isEnabledObjectLock = false;
+	/** @var \Bitrix\Main\DB\Connection */
+	protected $connection;
 	private $cacheBreadcrumbs = array();
 	private $errorCollection = array();
+	/** @var array */
+	protected $sharedData = array();
+	/** @var bool */
+	private $isLoadedSharedStatuses = false;
 
 	public function __construct($user = null)
 	{
@@ -47,6 +55,7 @@ class DiskStorage extends AbstractStorage
 
 		global $USER;
 		$this->userId = User::resolveUserId($user?: $USER);
+		$this->connection = Application::getConnection();
 	}
 
 	public function getErrors()
@@ -153,7 +162,66 @@ class DiskStorage extends AbstractStorage
 	{
 		$this->loadFormattedFolderTreeAndBreadcrumbs();
 	}
-	
+
+	/**
+	 * Loads data which tells the object is shared or not by current user.
+	 *
+	 * @return void
+	 */
+	protected function loadSharedData()
+	{
+		if($this->isLoadedSharedStatuses)
+		{
+			return;
+		}
+
+		$cache = Data\Cache::createInstance();
+		if($cache->initCache(15768000, 'storage_isshared_' . $this->storage->getId(), 'disk'))
+		{
+			list($this->sharedData,) = $cache->getVars();
+		}
+		else
+		{
+			$this->buildSharedData();
+
+			$cache->startDataCache();
+			$cache->endDataCache(array($this->sharedData,));
+		}
+
+		$this->isLoadedSharedStatuses = true;
+	}
+
+	protected function buildSharedData()
+	{
+		$storageId = $this->storage->getId();
+		$rootObjectId = $this->storage->getRootObjectId();
+		$fromEntity = $this->connection->getSqlHelper()->forSql(Sharing::CODE_USER . $this->storage->getEntityId());
+
+		$query = new Internals\Entity\Query(Internals\SharingTable::getEntity());
+		$query->addSelect('PATH.OBJECT_ID', 'OBJECT_ID');
+		$query->registerRuntimeField('',
+			new ReferenceField('PATH',
+				Internals\ObjectPathTable::getEntity(),
+				array('=this.REAL_OBJECT_ID' => 'ref.OBJECT_ID'),
+				array('join_type' => 'INNER')
+			)
+		);
+		$query->addFilter('REAL_STORAGE_ID', $storageId);
+		$query->addFilter('PATH.PARENT_ID', $rootObjectId);
+		$query->addFilter('=FROM_ENTITY', $fromEntity);
+		$query->addFilter('!==TO_ENTITY', $fromEntity);
+
+		foreach($query->exec() as $sharedRow)
+		{
+			$this->sharedData[$sharedRow['OBJECT_ID']] = true;
+		}
+	}
+
+	protected function isSharedObject($objectId)
+	{
+		return isset($this->sharedData[$objectId]);
+	}
+
 	private function loadFormattedFolderTreeAndBreadcrumbs($returnTree = false)
 	{
 		$cache = Data\Cache::createInstance();
@@ -163,22 +231,11 @@ class DiskStorage extends AbstractStorage
 		}
 		else
 		{
-			$querySharedFolders = Sharing::getList(array(
-				'filter' => array(
-					'=FROM_ENTITY' => Sharing::CODE_USER . $this->getUser()->getId(),
-					'!=TO_ENTITY' => Sharing::CODE_USER . $this->getUser()->getId(),
-				),
-			));
-			$sharedFolders = array();
-			while($sharedFolder = $querySharedFolders->fetch())
-			{
-				$sharedFolders[$sharedFolder['REAL_OBJECT_ID']] = $sharedFolder['REAL_OBJECT_ID'];
-			}
 			$formattedFolders = array();
 			foreach($this->walkAndBuildTree($this->storage->getRootObject()) as $folder)
 			{
 				/** @var Folder $folder */
-				$formattedFolders[] = $this->formatFolderToResponse($folder, isset($sharedFolders[$folder->getId()]));
+				$formattedFolders[] = $this->formatFolderToResponse($folder);
 			}
 			unset($folder);
 
@@ -331,9 +388,10 @@ class DiskStorage extends AbstractStorage
 			return array();
 		}
 		//we have to flush to DB deleted log entries, which can be added on the hit.
-		Driver::getInstance()->getDeletedLogManager()->finalize();
+		$deletedLogManager = Driver::getInstance()->getDeletedLogManager();
+		$deletedLogManager->finalize();
 
-		$q = DeletedLogTable::getList(array(
+		$q = $deletedLogManager->getEntries(array(
 			'filter' => array(
 				'STORAGE_ID' => $this->storage->getId(),
 				'>=CREATE_TIME' => DateTime::createFromTimestamp($version),
@@ -486,7 +544,15 @@ class DiskStorage extends AbstractStorage
 			$folderData['UPDATE_TIME'] = DateTime::createFromTimestamp($this->convertFromExternalVersion($data['originalTimestamp']));
 		}
 
-		$sub = $folder->addSubFolder($folderData);
+		if(isset($data['code']) && $data['code'] === 'saved_files')
+		{
+			$sub = $this->storage->getFolderForSavedFiles();
+		}
+		else
+		{
+			$sub = $folder->addSubFolder($folderData);
+		}
+
 		if($sub)
 		{
 			$this->loadTree();
@@ -672,6 +738,14 @@ class DiskStorage extends AbstractStorage
 		else
 		{
 			$fileArray = \CFile::makeFileArray($tmpFile->getAbsolutePath());
+			if(!$fileArray)
+			{
+				$this->errorCollection->addOne(new Error("Could not " . __METHOD__ . " MakeFileArray", 110155));
+				$tmpFile->delete();
+
+				return array();
+			}
+
 			$fileArray['name'] = $name;
 			$fileData = array('NAME' => $name, 'CREATED_BY' => $this->getUser()->getId());
 			if(!empty($data['originalTimestamp']))
@@ -957,9 +1031,10 @@ class DiskStorage extends AbstractStorage
 			return false;
 		}
 		//we have to flush to DB deleted log entries, which can be added on the hit.
-		Driver::getInstance()->getDeletedLogManager()->finalize();
+		$deletedLogManager = Driver::getInstance()->getDeletedLogManager();
+		$deletedLogManager->finalize();
 
-		$v = DeletedLogTable::getList(array(
+		$v = $deletedLogManager->getEntries(array(
 				'filter' => array(
 						'STORAGE_ID' => $this->storage->getId(),
 						'OBJECT_ID' => $element['extra']['id'],
@@ -1097,7 +1172,7 @@ class DiskStorage extends AbstractStorage
 			'action' => 'default',
 		), true);
 	}
-	
+
 	public function lockFile(array $file)
 	{
 		if(!Configuration::isEnabledObjectLock())
@@ -1106,10 +1181,10 @@ class DiskStorage extends AbstractStorage
 				'Lock is disabled',
 				181551
 			);
-			
+
 			return false;
 		}
-		
+
 		/** @var File $file */
 		$file = File::loadById($file['extra']['id']);
 		if(!$file)
@@ -1117,7 +1192,7 @@ class DiskStorage extends AbstractStorage
 			$this->errorCollection->add(array(new Error("Could not " . __METHOD__ . " by id {$file['extra']['id']}", 181606)));
 			return false;
 		}
-		
+
 		if(!$file->canLock($this->storage->getSecurityContext($this->userId)))
 		{
 			throw new AccessDeniedException;
@@ -1130,13 +1205,13 @@ class DiskStorage extends AbstractStorage
 				181552
 			);
 			$this->errorCollection->add($file->getErrors());
-			
+
 			return false;
 		}
 
 		return true;
 	}
-	
+
 	public function unlockFile(array $file)
 	{
 		if(!Configuration::isEnabledObjectLock())
@@ -1145,10 +1220,10 @@ class DiskStorage extends AbstractStorage
 				'Lock is disabled',
 				181551
 			);
-			
+
 			return false;
 		}
-		
+
 		/** @var File $file */
 		$file = File::loadById($file['extra']['id']);
 		if(!$file)
@@ -1156,7 +1231,7 @@ class DiskStorage extends AbstractStorage
 			$this->errorCollection->add(array(new Error("Could not " . __METHOD__ . " by id {$file['extra']['id']}", 181696)));
 			return false;
 		}
-		
+
 		if(!$file->canUnlock($this->storage->getSecurityContext($this->userId)))
 		{
 			throw new AccessDeniedException;
@@ -1169,7 +1244,7 @@ class DiskStorage extends AbstractStorage
 				181558
 			);
 			$this->errorCollection->add($file->getErrors());
-			
+
 			return false;
 		}
 
@@ -1266,7 +1341,7 @@ class DiskStorage extends AbstractStorage
 		return $object->getSyncUpdateTime();
 	}
 
-	protected function formatFolderToResponse(Folder $folder, $markIsShared = false)
+	protected function formatFolderToResponse(Folder $folder)
 	{
 		if(empty($folder) || strlen($folder->getName()) === 0)
 		{
@@ -1279,13 +1354,15 @@ class DiskStorage extends AbstractStorage
 			return array();
 		}
 
+		$this->loadSharedData();
+
 		$dateTime = $this->getUpdateDateTimeFromObject($folder);
 		$result = array(
 			'id' => $this->generateId(array('FILE' => false, 'ID' => $folder->getId())),
 			'isDirectory' => true,
-			'isShared' => (bool)$markIsShared,
+			'isShared' => $this->isSharedObject($folder->getId()),
 			'isSymlinkDirectory' => $folder instanceof FolderLink,
-			'isDeleted' => false,
+			'isDeleted' => $folder->isDeleted(),
 			'storageId' => $this->getStringStorageId(),
 			'path' => '/' . trim($path, '/'),
 			'name' => (string)$folder->getName(),
@@ -1324,11 +1401,15 @@ class DiskStorage extends AbstractStorage
 			return array();
 		}
 
+		$this->loadSharedData();
+
 		$dateTime = $this->getUpdateDateTimeFromObject($file);
 		$result = array(
 			'id' => $this->generateId(array('FILE' => true, 'ID' => $file->getId())),
 			'isDirectory' => false,
-			'isDeleted' => false,
+			'isShared' => $this->isSharedObject($file->getId()),
+			'isSymlinkFile' => $file->isLink(),
+			'isDeleted' => $file->isDeleted(),
 			'storageId' => $this->getStringStorageId(),
 			'path' => '/' . trim($path, '/'),
 			'name' => (string)$file->getName(),

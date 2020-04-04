@@ -2,6 +2,7 @@
 
 namespace Bitrix\Disk\Volume\Module;
 
+use Bitrix\Disk\Internals\VolumeTable;
 use Bitrix\Main\ObjectException;
 use Bitrix\Main\ArgumentTypeException;
 use Bitrix\Disk\Volume;
@@ -11,7 +12,9 @@ use Bitrix\Crm\Integration\StorageFileType as IMS;
  * Disk storage volume measurement class.
  * @package Bitrix\Disk\Volume
  */
-class Crm extends Volume\Module\Module implements Volume\IVolumeIndicatorLink, Volume\IDeleteConstraint, Volume\IVolumeTimeLimit
+class Crm
+	extends Volume\Module\Module
+	implements Volume\IVolumeIndicatorLink, Volume\IDeleteConstraint, Volume\IVolumeTimeLimit
 {
 	/** @var string */
 	protected static $moduleId = 'crm';
@@ -22,8 +25,23 @@ class Crm extends Volume\Module\Module implements Volume\IVolumeIndicatorLink, V
 	/** @var \Bitrix\Disk\Folder[]|array */
 	private $folderList = array();
 
-	/** @var Volume\Timer */
-	private $timer;
+	/** @implements Volume\IVolumeTimeLimit */
+	use Volume\TimeLimit;
+
+	/**
+	 * Returns measure process stages list.
+	 * @return string[]
+	 */
+	public function getMeasureStages()
+	{
+		return array(
+			'UserFields',
+			'ActElemFile',
+			'ActElemDisk',
+			'CrmEvent',
+			'CrmFolder',
+		);
+	}
 
 	/**
 	 * Runs measure test to get volumes of selecting objects.
@@ -42,19 +60,16 @@ class Crm extends Volume\Module\Module implements Volume\IVolumeIndicatorLink, V
 		$indicatorType = $connection->getSqlHelper()->forSql(static::className());
 		$ownerId = (string)$this->getOwner();
 
-		$tableName = \Bitrix\Disk\Internals\VolumeTable::getTableName();
+		$tableName = VolumeTable::getTableName();
 
-		$stepId = '';
-		if ($this->timer instanceof Volume\Timer)
+		$stageId = $this->getStage();
+		if (empty($stageId))
 		{
-			$stepId = $this->timer->getStepId();
-		}
-		if ($stepId == '')
-		{
-			$stepId = 'UserFields';
+			$stageId = 'UserFields';
+			$this->setStage($stageId);
 		}
 
-		switch($stepId)
+		switch($stageId)
 		{
 			case 'UserFields':
 			{
@@ -94,14 +109,11 @@ class Crm extends Volume\Module\Module implements Volume\IVolumeIndicatorLink, V
 				}
 				unset($querySql);
 
-				if ($this->timer instanceof Volume\Timer)
-				{
-					$this->timer->setStepId('ActElemFile');// go next
+				$this->setStage('ActElemFile');// go next
 
-					if (!$this->checkTimeEnd())
-					{
-						break;
-					}
+				if (!$this->checkTimeEnd())
+				{
+					break;
 				}
 			}
 
@@ -140,20 +152,18 @@ class Crm extends Volume\Module\Module implements Volume\IVolumeIndicatorLink, V
 							FROM {$crmActivityElememtTable}
 							WHERE STORAGE_TYPE_ID = '".\Bitrix\Crm\Integration\StorageType::File."'
 							GROUP BY ELEMENT_ID  
+							ORDER BY NULL
 						) elem
 							ON elem.ELEMENT_ID = f.ID
 				";
 				$connection->queryExecute($querySql);
 				unset($querySql);
 
-				if ($this->timer instanceof Volume\Timer)
-				{
-					$this->timer->setStepId('ActElemDisk');// go next
+				$this->setStage('ActElemDisk');// go next
 
-					if (!$this->checkTimeEnd())
-					{
-						break;
-					}
+				if (!$this->checkTimeEnd())
+				{
+					break;
 				}
 			}
 
@@ -245,6 +255,7 @@ class Crm extends Volume\Module\Module implements Volume\IVolumeIndicatorLink, V
 							FROM {$crmActivityElememtTable} 
 							WHERE STORAGE_TYPE_ID = '".\Bitrix\Crm\Integration\StorageType::Disk."'
 							GROUP BY ELEMENT_ID
+							ORDER BY NULL
 						) elem
 							ON files.ID = elem.ELEMENT_ID
 					WHERE
@@ -255,14 +266,11 @@ class Crm extends Volume\Module\Module implements Volume\IVolumeIndicatorLink, V
 				$connection->queryExecute($querySql);
 				unset($querySql);
 
-				if ($this->timer instanceof Volume\Timer)
-				{
-					$this->timer->setStepId('CrmEvent');// go next
+				$this->setStage('CrmEvent');// go next
 
-					if (!$this->checkTimeEnd())
-					{
-						break;
-					}
+				if (!$this->checkTimeEnd())
+				{
+					break;
 				}
 			}
 
@@ -355,14 +363,11 @@ class Crm extends Volume\Module\Module implements Volume\IVolumeIndicatorLink, V
 				$connection->queryExecute($querySql);
 				unset($querySql);
 
-				if ($this->timer instanceof Volume\Timer)
-				{
-					$this->timer->setStepId('CrmFolder');// go next
+				$this->setStage('CrmFolder');// go next
 
-					if (!$this->checkTimeEnd())
-					{
-						break;
-					}
+				if (!$this->checkTimeEnd())
+				{
+					break;
 				}
 			}
 
@@ -370,7 +375,8 @@ class Crm extends Volume\Module\Module implements Volume\IVolumeIndicatorLink, V
 			case 'CrmFolder':
 			{
 				// Scan specific folder list in a storage
-				\Bitrix\Disk\Internals\VolumeTable::createTemporally();
+				VolumeTable::createTemporally();
+				$temporallyTableName = VolumeTable::getTemporallyName();
 
 				$storageList = $this->getStorageList();
 				foreach ($storageList as $storage)
@@ -399,7 +405,7 @@ class Crm extends Volume\Module\Module implements Volume\IVolumeIndicatorLink, V
 						$folderIdSql = implode(',', $folderIds);
 
 						$querySql = "
-							INSERT INTO b_disk_volume_tmp
+							INSERT INTO {$temporallyTableName}
 							(
 								INDICATOR_TYPE,
 								OWNER_ID,
@@ -463,11 +469,12 @@ class Crm extends Volume\Module\Module implements Volume\IVolumeIndicatorLink, V
 						SUM(UNNECESSARY_VERSION_SIZE),
 						SUM(UNNECESSARY_VERSION_COUNT)
 					FROM 
-						b_disk_volume_tmp
+						{$temporallyTableName}
 					WHERE 
 						INDICATOR_TYPE = '{$indicatorType}'
 					GROUP BY
 						INDICATOR_TYPE
+					ORDER BY NULL
 				";
 				$columnList = Volume\QueryHelper::prepareInsert(
 					array(
@@ -490,12 +497,9 @@ class Crm extends Volume\Module\Module implements Volume\IVolumeIndicatorLink, V
 				);
 				$connection->queryExecute("INSERT INTO {$tableName} ({$columnList}) {$querySql}");
 
-				\Bitrix\Disk\Internals\VolumeTable::dropTemporally();
+				VolumeTable::dropTemporally();
 
-				if ($this->timer instanceof Volume\Timer)
-				{
-					$this->timer->setStepId(null);
-				}
+				$this->setStage(null);
 			}
 		}
 
@@ -525,8 +529,12 @@ class Crm extends Volume\Module\Module implements Volume\IVolumeIndicatorLink, V
 	 */
 	public function getFolderList($storage)
 	{
-		if ($storage instanceof \Bitrix\Disk\Storage && count($this->folderList[$storage->getId()]) == 0)
+		if (
+			$storage instanceof \Bitrix\Disk\Storage &&
+			(!isset($this->folderList[$storage->getId()]) || empty($this->folderList[$storage->getId()]))
+		)
 		{
+			$this->folderList[$storage->getId()] = array();
 			if ($this->isMeasureAvailable())
 			{
 				$typeFolderXmlId = self::getSpecialFolderXmlId();
@@ -799,72 +807,6 @@ class Crm extends Volume\Module\Module implements Volume\IVolumeIndicatorLink, V
 		}
 
 		return parent::getTitle($fragment);
-	}
-
-	/**
-	 * Sets start up time.
-	 * @return void
-	 */
-	public function startTimer()
-	{
-		$this->timer = new Volume\Timer();
-		$this->timer->startTimer();
-	}
-
-	/**
-	 * Checks timer for time limitation/
-	 * @return bool
-	 */
-	public function checkTimeEnd()
-	{
-		return $this->timer->checkTimeEnd();
-	}
-
-	/**
-	 * Tells true if time limit reached.
-	 * @return boolean
-	 */
-	public function hasTimeLimitReached()
-	{
-		return $this->timer->hasTimeLimitReached();
-	}
-
-	/**
-	 * Sets limitation time in seconds.
-	 * @param int $timeLimit Timeout in seconds.
-	 * @return void
-	 */
-	public function setTimeLimit($timeLimit)
-	{
-		$this->timer->setTimeLimit($timeLimit);
-	}
-
-	/**
-	 * Gets limitation time in seconds.
-	 * @return int
-	 */
-	public function getTimeLimit()
-	{
-		return $this->timer->getTimeLimit();
-	}
-
-	/**
-	 * Gets step identification.
-	 * @return string|null
-	 */
-	public function getStepId()
-	{
-		return $this->timer->getStepId();
-	}
-
-	/**
-	 * Sets step identification.
-	 * @param string $stepId Step id.
-	 * @return void
-	 */
-	public function setStepId($stepId)
-	{
-		$this->timer->setStepId($stepId);
 	}
 }
 

@@ -358,8 +358,7 @@ class CCrmQuoteDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 				'PATH_TO_PRODUCT_SHOW' => $this->arResult['PATH_TO_PRODUCT_SHOW'],
 				'INIT_LAYOUT' => 'N',
 				'INIT_EDITABLE' => $this->mode === ComponentMode::VIEW ? 'N' : 'Y',
-				'ENABLE_MODE_CHANGE' => 'N',
-				'ENABLE_SUBMIT_WITHOUT_LAYOUT' => 'N'
+				'ENABLE_MODE_CHANGE' => 'N'
 			),
 			false,
 			array('HIDE_ICONS' => 'Y', 'ACTIVE_COMPONENT'=>'Y')

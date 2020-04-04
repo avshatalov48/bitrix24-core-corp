@@ -1,9 +1,18 @@
 .task-form {
   font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
-.template-bitrix24 .task-info {
+.workarea-content-paddings .template-bitrix24 .task-info {
   margin: 0 -15px;
 }
+
+.template-bitrix24 .task-info .task-info-panel {
+  padding-top:12px;
+}
+
+.workarea-content-paddings .template-bitrix24 .task-info .task-info-panel {
+  padding-top:0;
+}
+
 .task-info-panel {
   background: #fff;
   border-bottom: 1px solid #edeef0;
@@ -297,6 +306,13 @@
   height: 0;
   opacity: 0;
 }
+
+.task-options-item:after {
+  content: '';
+  clear: both;
+  display: block;
+}
+
 .task-options-item-open-inner-sh .task-options-sheduling-block,
 .task-options-item-open-inner-sett .task-options-settings-block {
   height: auto;
@@ -306,6 +322,11 @@
 .task-options-destination-block {
   position: relative;
 }
+
+.task-options-item-destination-wrap > div:last-child .task-options-item {
+  border-bottom: none;
+}
+
 .task-options-destination {
   position: relative;
   background: #bcedfc;
@@ -1535,4 +1556,7 @@ select.task-options-inp {
 }
 .task-options-field-duration-deadline {
   margin-bottom: 15px;
+}
+.tasks-to-checklist-popup {
+  opacity: 0.7;
 }

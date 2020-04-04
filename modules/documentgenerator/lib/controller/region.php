@@ -6,14 +6,27 @@ namespace Bitrix\DocumentGenerator\Controller;
 
 use Bitrix\DocumentGenerator\DataProviderManager;
 use Bitrix\DocumentGenerator\Driver;
+use Bitrix\DocumentGenerator\Engine\CheckPermissions;
 use Bitrix\DocumentGenerator\Model\RegionPhraseTable;
 use Bitrix\DocumentGenerator\Model\RegionTable;
+use Bitrix\DocumentGenerator\UserPermissions;
 use Bitrix\Main\Engine\Response\Converter;
 use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
 
 class Region extends Base
 {
+	/**
+	 * @return array
+	 */
+	public function getDefaultPreFilters()
+	{
+		$filters = parent::getDefaultPreFilters();
+		$filters[] = new CheckPermissions(UserPermissions::ENTITY_TEMPLATES);
+
+		return $filters;
+	}
+
 	/**
 	 * @param string|int $id
 	 * @return array|null

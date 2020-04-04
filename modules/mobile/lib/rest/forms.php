@@ -15,6 +15,8 @@ class Forms extends \IRestService
 
 	public static function userProfile($params, $n, \CRestServer $server)
 	{
+		global $USER_FIELD_MANAGER;
+
 		$result = [];
 		$result["fields"] = [
 			'PERSONAL_PHOTO' =>
@@ -70,6 +72,14 @@ class Forms extends \IRestService
 					'id' => 'PERSONAL_MOBILE',
 					'type' => 'input',
 					'title' => Loc::getMessage('PERSONAL_MOBILE'),
+					'params'=>["openScheme"=>"tel"]
+				],
+			'PERSONAL_PHONE' =>
+				[
+					'sectionCode' => 'extra',
+					'id' => 'PERSONAL_PHONE',
+					'type' => 'input',
+					'title' => Loc::getMessage('PERSONAL_PHONE'),
 					'params'=>["openScheme"=>"tel"]
 				],
 			'PERSONAL_BIRTHDAY' =>
@@ -170,6 +180,29 @@ class Forms extends \IRestService
 				]
 		];
 
+		$userFields = [
+			"UF_PHONE_INNER",
+			"UF_SKYPE",
+			"UF_TWITTER",
+			"UF_FACEBOOK",
+			"UF_LINKEDIN",
+			"UF_XING",
+			"UF_SKILLS",
+			"UF_INTERESTS",
+			"UF_WEB_SITES",
+			"UF_DEPARTMENT"
+		];
+
+		$userFieldList= $USER_FIELD_MANAGER->GetUserFields("USER");
+
+		foreach ($userFields as $fieldId)
+		{
+			if(!array_key_exists($fieldId, $userFieldList))
+			{
+				unset($result["fields"][$fieldId]);
+			}
+		}
+
 		$result["sections"] = [
 			[
 				'id' => 'top',//avatar
@@ -184,12 +217,7 @@ class Forms extends \IRestService
 			[
 				'id' => 'extra',
 				'title' => Loc::getMessage("EXTRA"),
-			],
-//			[
-//				'id' => 'account',
-//				'title' => Loc::getMessage("ACCOUNT"),
-//				'footer' => Loc::getMessage("ACCOUNT_CHANGE_NOTE"),
-//			],
+			]
 		];
 
 		return $result;

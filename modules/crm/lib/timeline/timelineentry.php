@@ -1,26 +1,25 @@
 <?php
 namespace Bitrix\Crm\Timeline;
 
-use Bitrix\Crm\Integration\DocumentGeneratorManager;
 use Bitrix\Main;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\Entity\Query;
 
-use Bitrix\Crm\Timeline\Entity\TimelineTable;
-use Bitrix\Crm\Timeline\Entity\TimelineBindingTable;
+use Bitrix\Crm;
+use Bitrix\Crm\Integration\DocumentGeneratorManager;
 
 class TimelineEntry
 {
 	public static function getByID($ID)
 	{
-		$dbResult = TimelineTable::getList(array('filter' => array('=ID' => $ID), 'limit' => 1));
+		$dbResult = Entity\TimelineTable::getList(array('filter' => array('=ID' => $ID), 'limit' => 1));
 		$fields = $dbResult->fetch();
 		return is_array($fields) ? $fields : null;
 	}
 
 	public static function isAssociatedEntityExist($entityTypeID, $entityID)
 	{
-		$query = new Query(TimelineTable::getEntity());
+		$query = new Query(Entity\TimelineTable::getEntity());
 		$query->addFilter('=ASSOCIATED_ENTITY_ID', $entityID);
 		$query->addFilter('=ASSOCIATED_ENTITY_TYPE_ID', $entityTypeID);
 		$query->addSelect('ID');
@@ -49,7 +48,7 @@ class TimelineEntry
 			throw new Main\ArgumentException('Entity ID must be greater than zero.', 'entityID');
 		}
 
-		$query = new Query(TimelineTable::getEntity());
+		$query = new Query(Entity\TimelineTable::getEntity());
 		$query->addFilter('=ASSOCIATED_ENTITY_ID', $entityID);
 		$query->addFilter('=ASSOCIATED_ENTITY_TYPE_ID', $entityTypeID);
 		$query->addSelect('ID');
@@ -67,7 +66,7 @@ class TimelineEntry
 		}
 
 		$originalBindings = array();
-		$query = new Query(TimelineBindingTable::getEntity());
+		$query = new Query(Entity\TimelineBindingTable::getEntity());
 		$query->addFilter('=OWNER_ID', $entryIDs[0]);
 		$query->addSelect('ENTITY_TYPE_ID');
 		$query->addSelect('ENTITY_ID');
@@ -87,7 +86,7 @@ class TimelineEntry
 		{
 			foreach($removed as $binding)
 			{
-				TimelineBindingTable::delete(
+				Entity\TimelineBindingTable::delete(
 					array(
 						'OWNER_ID' => $entryID,
 						'ENTITY_TYPE_ID' => $binding['ENTITY_TYPE_ID'],
@@ -98,7 +97,7 @@ class TimelineEntry
 
 			foreach($added as $binding)
 			{
-				TimelineBindingTable::upsert(
+				Entity\TimelineBindingTable::upsert(
 					array(
 						'OWNER_ID' => $entryID,
 						'ENTITY_TYPE_ID' => $binding['ENTITY_TYPE_ID'],
@@ -204,11 +203,15 @@ class TimelineEntry
 			{
 				break;
 			}
+			$connection->queryExecute("DELETE FROM b_crm_timeline_search WHERE OWNER_ID IN ($conditionSql)");
 			$connection->queryExecute("DELETE FROM b_crm_timeline WHERE ID IN ($conditionSql)");
 		}
 		//endregion
 
 		//region Delete by entity associations
+		$connection->queryExecute(
+			"DELETE s.* FROM b_crm_timeline_search s INNER JOIN b_crm_timeline t ON s.OWNER_ID = t.ID AND t.ASSOCIATED_ENTITY_TYPE_ID = {$entityTypeID} AND t.ASSOCIATED_ENTITY_ID = {$entityID}"
+		);
 		$connection->queryExecute(
 			"DELETE b.* FROM b_crm_timeline_bind b INNER JOIN b_crm_timeline t ON b.OWNER_ID = t.ID AND t.ASSOCIATED_ENTITY_TYPE_ID = {$entityTypeID} AND t.ASSOCIATED_ENTITY_ID = {$entityID}"
 		);
@@ -219,7 +222,7 @@ class TimelineEntry
 	}
 	public static function deleteByAssociatedEntity($entityTypeID, $entityID)
 	{
-		$query = new Query(TimelineTable::getEntity());
+		$query = new Query(Entity\TimelineTable::getEntity());
 		$query->addFilter('=ASSOCIATED_ENTITY_TYPE_ID', $entityTypeID);
 		$query->addFilter('=ASSOCIATED_ENTITY_ID', $entityID);
 		$query->addSelect('ID');
@@ -242,8 +245,9 @@ class TimelineEntry
 		{
 			throw new Main\ArgumentException('Entity ID must be greater than zero.', 'ID');
 		}
-		TimelineBindingTable::deleteByOwner($ID);
-		TimelineTable::delete($ID);
+		Entity\TimelineBindingTable::deleteByOwner($ID);
+		Entity\TimelineSearchTable::deleteByOwner($ID);
+		Entity\TimelineTable::delete($ID);
 	}
 	public static function prepareEntityPushTag($entityTypeID, $entityID)
 	{
@@ -312,12 +316,18 @@ class TimelineEntry
 				{
 					$parameters['IS_FIXED'] = $binding['IS_FIXED'] ? 'Y' : 'N';
 				}
-				TimelineBindingTable::upsert($parameters);
+				Entity\TimelineBindingTable::upsert($parameters);
 			}
 		}
 	}
 	public static function shift($ID, DateTime $time)
 	{
 		Entity\TimelineTable::update($ID, array('CREATED' => $time));
+	}
+
+	public static function buildSearchContent($ID)
+	{
+		$builder = new Crm\Search\TimelineSearchContentBuilder();
+		$builder->build($ID);
 	}
 }

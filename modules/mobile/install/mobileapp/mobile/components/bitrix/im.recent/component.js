@@ -63,6 +63,8 @@ RecentList.init = function()
 	this.listEmpty = true;
 	this.blocked = {};
 
+	this.lastRecentRequest = null;
+
 	this.siteId = BX.componentParameters.get('SITE_ID', 's1');
 	this.siteDir = BX.componentParameters.get('SITE_DIR', '/');
 	this.languageId = BX.componentParameters.get('LANGUAGE_ID', 'en');
@@ -86,8 +88,12 @@ RecentList.init = function()
 	this.cache.database = new ReactDatabase(ChatDatabaseName, this.userId, this.languageId);
 
 	this.dialogCache = new ChatDialogCache();
-	this.dialogCache.setDatabase(this.cache.database);
-	this.dialogCache.getStore();
+
+	if (!Application.storage.getObject('settings.chat', {vueChat: true}).vueChat)
+	{
+		this.dialogCache.setDatabase(this.cache.database);
+		this.dialogCache.getStore();
+	}
 
 	ChatDataConverter.init({
 		'userId': this.userId,
@@ -182,6 +188,11 @@ RecentList.init = function()
 	return true;
 };
 
+RecentList.isDialogOpen = function()
+{
+	return PageManager.getNavigator().getAll().length > 1
+};
+
 RecentList.openDialog = function(dialogId, dialogTitleParams, waitHistory)
 {
 	clearTimeout(this.openDialogTimeout);
@@ -234,7 +245,8 @@ RecentList.openDialog = function(dialogId, dialogTitleParams, waitHistory)
 	if (Application.getApiVersion() >= 25 && Application.isWebComponentSupported())
 	{
 		let page = PageManager.getNavigator().getVisible();
-		if (page.type == 'Web' && page.pageId == 'im-'+dialogId)
+		let withAnimation = true;
+		if (page.type === 'Web' && page.pageId === 'im-'+dialogId)
 		{
 			if (!PageManager.getNavigator().isActiveTab())
 			{
@@ -242,7 +254,7 @@ RecentList.openDialog = function(dialogId, dialogTitleParams, waitHistory)
 			}
 			return false;
 		}
-		else if (Application.getApiVersion() == 25)
+		else if (Application.getApiVersion() === 25)
 		{
 			let pageIsOpened = false;
 			PageManager.getNavigator().getAll().forEach(page =>
@@ -265,6 +277,14 @@ RecentList.openDialog = function(dialogId, dialogTitleParams, waitHistory)
 				return true;
 			}
 		}
+		else if (Application.getApiVersion() >= 30)
+		{
+			if (page.type === 'Web' && page.pageId.toString().startsWith('im-'))
+			{
+				withAnimation = false;
+			}
+			PageManager.getNavigator().cleanUpToCurrent();
+		}
 		else
 		{
 			let result = PageManager.getNavigator().toPageByID('im-'+dialogId);
@@ -278,22 +298,81 @@ RecentList.openDialog = function(dialogId, dialogTitleParams, waitHistory)
 			}
 		}
 
-		let pageParams = {
-			page_id: 'im-'+dialogId,
-			data : this.getOpenDialogParams(dialogId, true),
-			url : "/mobile/web_mobile_component/im.dialog/?version="+BX.componentParameters.get('COMPONENT_CHAT_DIALOG_VERSION', '1.0.0'),
-			titleParams: titleParams,
-			textPanelParams:{
-				smileButton: {},
-				attachButton:{},
-				useImageButton:true,
-				placeholder: BX.message('IM_M_TEXTAREA'),
-				mentionDataSource: {
-					outsection: "NO",
-					url: env.siteDir+"/mobile/index.php?mobile_action=get_user_list&use_name_format=Y&with_bots"
-				}
+		let pageParams = {};
+
+		let mobileConfig = Application.storage.getObject('settings.chat', {
+			vueChat: true,
+			quoteEnable: ChatPerformance.isGestureQuoteSupported(),
+			quoteFromRight: Application.getApiVersion() < 31,
+			backgroundType: 'LIGHT_GRAY'
+		});
+
+		let element = this.getElement(dialogId, true);
+		if (
+			!RecentList.isOpenlinesRecent()
+			&& Application.getApiVersion() >= 29
+			&& mobileConfig.vueChat === true
+			&& (
+				/^[0-9]+$/.test(dialogId) // digit
+				|| !element
+				|| (element.chat.type !== 'lines' || typeof element.lines === 'undefined')
+			)
+		)
+		{
+			if (!ChatDialogBackground[mobileConfig.backgroundType])
+			{
+				mobileConfig.backgroundType = 'LIGHT_GRAY';
 			}
-		};
+
+			let backgroundConfig = Object.assign({}, ChatDialogBackground[mobileConfig.backgroundType]);
+			backgroundConfig.url = currentDomain+backgroundConfig.url;
+
+			pageParams = {
+				page_id: 'im-'+dialogId,
+				data : this.getOpenDialogParams(dialogId, true, true),
+				url : "/mobile/web_mobile_component/im.dialog.vue/?version="+BX.componentParameters.get('COMPONENT_CHAT_DIALOG_VUE_VERSION', '1.0.0'),
+				titleParams: titleParams,
+				animated: withAnimation,
+				useSystemSwipeBehavior: mobileConfig.quoteEnable && !mobileConfig.quoteFromRight,
+				textPanelParams:
+				{
+					smileButton: {},
+					attachButton: {},
+					useImageButton: true,
+					useAudioMessages: true,
+					placeholder: BX.message('IM_M_TEXTAREA'),
+					mentionDataSource:
+					{
+						outsection: "NO",
+						url: env.siteDir+"/mobile/index.php?mobile_action=get_user_list&use_name_format=Y&with_bots"
+					}
+				},
+				background: backgroundConfig
+			};
+			console.warn(pageParams);
+		}
+		else
+		{
+			pageParams = {
+				page_id: 'im-'+dialogId,
+				data : this.getOpenDialogParams(dialogId, true),
+				url : "/mobile/web_mobile_component/im.dialog/?version="+BX.componentParameters.get('COMPONENT_CHAT_DIALOG_VERSION', '1.0.0'),
+				animated: withAnimation,
+				titleParams: titleParams,
+				textPanelParams:
+				{
+					smileButton: {},
+					attachButton:{},
+					useImageButton:true,
+					placeholder: BX.message('IM_M_TEXTAREA'),
+					mentionDataSource: {
+						outsection: "NO",
+						url: env.siteDir+"/mobile/index.php?mobile_action=get_user_list&use_name_format=Y&with_bots"
+					}
+				},
+			};
+		}
+
 		PageManager.openWebComponent(pageParams);
 	}
 	else
@@ -314,9 +393,10 @@ RecentList.openDialog = function(dialogId, dialogTitleParams, waitHistory)
 	return true;
 };
 
-RecentList.getOpenDialogParams = function(dialogId, modern)
+RecentList.getOpenDialogParams = function(dialogId, modern, push)
 {
 	modern = modern === true;
+	push = push === true;
 
 	if (modern)
 	{
@@ -326,12 +406,16 @@ RecentList.getOpenDialogParams = function(dialogId, modern)
 			DIALOG_ID : dialogId,
 			USER_ID : this.userId,
 			SITE_ID : this.siteId,
+			SITE_DIR : env.siteDir,
 			LANGUAGE_ID : this.languageId,
+			STORED_EVENTS : push? this.pull.getStoredEvents(): [],
 
 			SEARCH_MIN_TOKEN_SIZE : this.searchMinTokenLength,
 			WIDGET_CHAT_USERS_VERSION : BX.componentParameters.get('WIDGET_CHAT_USERS_VERSION', '1.0.0'),
 			WIDGET_CHAT_RECIPIENTS_VERSION : BX.componentParameters.get('WIDGET_CHAT_RECIPIENTS_VERSION', '1.0.0'),
 			WIDGET_CHAT_TRANSFER_VERSION : BX.componentParameters.get('WIDGET_CHAT_TRANSFER_VERSION', '1.0.0'),
+
+			WIDGET_BACKDROP_MENU_VERSION : BX.componentParameters.get('WIDGET_BACKDROP_MENU_VERSION', '1.0.0'),
 		};
 	}
 	else
@@ -551,6 +635,14 @@ RecentList.refresh = function(params)
 			recentParams['SKIP_DIALOG'] = 'Y';
 		}
 	}
+
+	let sendRecentLimit = false;
+	if (this.lastRecentRequest)
+	{
+		sendRecentLimit = true;
+		recentParams['LAST_UPDATE'] = this.lastRecentRequest;
+	}
+
 	ChatRestRequest.abort('refresh');
 	console.info("RecentList.refresh: send request to server", recentParams);
 
@@ -570,9 +662,9 @@ RecentList.refresh = function(params)
 	if (this.isRecent())
 	{
 		requestMethods.userCounters = ['user.counters'];
-		requestMethods.lastSearch = ['im.search.last.get'];
 		if (params.start)
 		{
+			requestMethods.lastSearch = ['im.search.last.get'];
 			requestMethods.colleagues = ['im.department.colleagues.get', {'USER_DATA': 'Y', 'LIMIT': 50}];
 		}
 	}
@@ -601,7 +693,7 @@ RecentList.refresh = function(params)
 		let countersError = result.counters.error();
 		let userDataError = params.start? result.userData.error(): false;
 		let userCountersError = this.isRecent()? result.userCounters.error(): false;
-		let lastSearchError = this.isRecent()? result.lastSearch.error(): false;
+		let lastSearchError = this.isRecent() && params.start? result.lastSearch.error(): false;
 		let colleaguesError = this.isRecent() && params.start? result.colleagues.error(): false;
 		let businessUsersError = params.start? result.businessUsers.error(): false;
 
@@ -619,10 +711,29 @@ RecentList.refresh = function(params)
 		// recent block
 		if (result.recent && !recentError)
 		{
+			this.lastRecentRequest = result.recent.time().date_start;
+
 			console.info("RecentList.update: recent list", result.recent.data());
 
-			this.list = ChatDataConverter.getListFormat(result.recent.data());
-			this.redraw();
+			if (sendRecentLimit)
+			{
+				let recentList = ChatDataConverter.getListFormat(result.recent.data());
+				if (recentList.length > 0)
+				{
+					let recentIndex = recentList.map(element => element.id);
+					this.list = this.list.filter(element => !recentIndex.includes(element.id)).concat(recentList);
+					this.redraw();
+				}
+				else
+				{
+					dialogList.stopRefreshing();
+				}
+			}
+			else
+			{
+				this.list = ChatDataConverter.getListFormat(result.recent.data());
+				this.redraw();
+			}
 		}
 		// counters block
 		if (result.counters && !countersError)
@@ -755,21 +866,27 @@ RecentList.refresh = function(params)
 
 			if (error)
 			{
-				if (error.ex.error == 'ERROR_NETWORK')
-				{
-					console.error("RecentList.refresh: we have some problems with request, we will be check again soon", error.ex);
-
-					clearTimeout(this.refreshTimeout);
-					this.refreshTimeout = setTimeout(() => {
-						this.refresh();
-					}, this.listRequestAfterErrorInterval);
-				}
-				else if (error.ex.error == 'REQUEST_CANCELED')
+				if (error.ex.error == 'REQUEST_CANCELED')
 				{
 					console.error("RecentList.refresh: execute request canceled by user", error.ex);
 				}
 				else
 				{
+					this.loadingFlag = true;
+					dialogList.setTitle({text: BX.message('IM_REFRESH_TITLE'), useProgress:true});
+
+					let errorNoticeText = BX.message('IM_REFRESH_ERROR');
+					if (errorNoticeText && !this.errorNoticeFlag && this.isRecent())
+					{
+						this.errorNoticeFlag = true;
+
+						InAppNotifier.showNotification({
+							message: errorNoticeText,
+							backgroundColor: '#E6000000',
+							time: this.listRequestAfterErrorInterval/1000-2
+						});
+					}
+
 					console.error("RecentList.refresh: we have some problems with request, we will be check again soon", error.ex);
 
 					clearTimeout(this.refreshTimeout);
@@ -778,9 +895,17 @@ RecentList.refresh = function(params)
 					}, this.listRequestAfterErrorInterval);
 				}
 			}
-
-			dialogList.stopRefreshing();
+			else
+			{
+				this.errorNoticeFlag = false;
+			}
 		}
+		else
+		{
+			this.errorNoticeFlag = false;
+		}
+
+		dialogList.stopRefreshing();
 	}, false, (xhr) => {
 		ChatRestRequest.register('refresh', xhr);
 	});
@@ -803,6 +928,12 @@ RecentList.redraw = function()
 		listConverted = this.getEmptyElement();
 		this.listEmpty = true;
 		this.openEmptyScreen();
+	}
+	else if (this.listEmpty)
+	{
+		this.listEmpty = false;
+		dialogList.removeItem({"params.id" : "empty"});
+		this.closeEmptyScreen();
 	}
 
 	dialogList.setItems(listConverted);
@@ -1106,35 +1237,41 @@ RecentList.cache = {
 RecentList.cache.init = function ()
 {
 	let executeTimeRecent = new Date();
-	this.database.table(
-		(this.base.isRecent()? ChatTables.recent: ChatTables.recentLines)
-	).then(table =>
+
+	if (this.base.isRecent())
 	{
-		table.get().then(items =>
+		this.database.table(ChatTables.recent).then(table =>
 		{
-			if (items.length > 0)
+			table.get().then(items =>
 			{
-				let cacheData = JSON.parse(items[0].VALUE);
-
-				if (typeof(cacheData.list) == 'undefined')
+				if (items.length > 0)
 				{
-					console.info("RecentList.cache.init: cache file \"recent\" has been ignored because it's old");
-					return false;
+					let cacheData = JSON.parse(items[0].VALUE);
+
+					if (typeof(cacheData.list) == 'undefined')
+					{
+						console.info("RecentList.cache.init: cache file \"recent\" has been ignored because it's old");
+						return false;
+					}
+
+					this.base.list = ChatDataConverter.getListFormat(cacheData.list);
+					this.push.updateList(false);
+					this.base.redraw();
+
+					console.info("RecentList.cache.init: list items load from cache \"recent\" ("+(new Date() - executeTimeRecent)+'ms)', "count: "+this.base.list.length);
+
+					if (cacheData.userData)
+					{
+						this.base.userData = cacheData.userData;
+					}
 				}
-
-				this.base.list = ChatDataConverter.getListFormat(cacheData.list);
-				this.push.updateList(false);
-				this.base.redraw();
-
-				console.info("RecentList.cache.init: list items load from cache \"recent\" ("+(new Date() - executeTimeRecent)+'ms)', "count: "+this.base.list.length);
-
-				if (cacheData.userData)
-				{
-					this.base.userData = cacheData.userData;
-				}
-			}
-		})
-	});
+			})
+		});
+	}
+	else
+	{
+		this.base.redraw();
+	}
 
 	let executeTimeLastSearch = new Date();
 	this.database.table(ChatTables.lastSearch).then(table =>
@@ -1207,6 +1344,11 @@ RecentList.cache.init = function ()
 
 RecentList.cache.update = function (params)
 {
+	if (!this.base.isRecent())
+	{
+		return true;
+	}
+
 	params = params || {recent: true, lastSearch: true, colleagues: false, businessUsers: false};
 
 	clearTimeout(this.refreshTimeout);
@@ -1219,15 +1361,13 @@ RecentList.cache.update = function (params)
 
 		if (params.recent)
 		{
-			this.database.table(
-				(this.base.isRecent()? ChatTables.recent: ChatTables.recentLines)
-			).then(table => {
+			this.database.table(ChatTables.recent).then(table => {
 				table.delete().then(() =>
 				{
 					table.add({value : {
-							list: this.base.list,
-							userData: this.base.userData
-						}}).then(() =>
+						list: this.base.list,
+						userData: this.base.userData
+					}}).then(() =>
 					{
 						console.info("RecentList.cache.update: recent list items updated ("+(new Date() - executeTimeRecent)+'ms)', "count: "+this.base.list.length);
 					});
@@ -1308,14 +1448,68 @@ RecentList.push.updateList = function(draw)
 {
 	let list = this.manager.get();
 	if (!list || !list['IM_MESS'] || list['IM_MESS'].length <= 0)
+	{
 		return true;
+	}
 
 	console.info('RecentList.push.updateList: parse push messages', list['IM_MESS']);
 
-	list['IM_MESS'].map((push) => {
-		if (push.event.command == 'message' || push.event.command == 'messageChat')
+	let isDialogOpen = this.base.isDialogOpen();
+
+	list['IM_MESS'].forEach((push) =>
+	{
+		if (!push.data)
 		{
-			this.pull.eventExecute(push.event.command, push.event.params);
+			return false;
+		}
+
+		if (
+			(push.data.cmd === 'message' || push.data.cmd === 'messageChat')
+			&& typeof push.senderMessage !== 'undefined'
+		)
+		{
+			push.senderMessage = push.senderMessage.toString();
+
+			let event = {
+				module_id: 'im',
+				command: push.data.cmd,
+				params: ChatDataConverter.preparePushFormat(push.data)
+			};
+
+			event.params.userInChat[event.params.chatId] = [this.base.userId];
+
+			if (push.senderCut)
+			{
+				event.params.message.text = push.senderMessage.substr(push.senderCut)
+			}
+			else
+			{
+				event.params.message.text = push.senderMessage;
+			}
+
+			if (!event.params.message.textOriginal)
+			{
+				event.params.message.textOriginal = event.params.message.text;
+			}
+
+			let storedEvent = ChatUtils.objectClone(event.params);
+			if (storedEvent.message.params.FILE_ID && storedEvent.message.params.FILE_ID.length > 0)
+			{
+				storedEvent.message.text = '';
+				storedEvent.message.textOriginal = '';
+			}
+
+			if (isDialogOpen)
+			{
+				BX.postWebEvent("chatrecent::push::get", storedEvent)
+			}
+			else
+			{
+				this.pull.storedEvents = this.pull.storedEvents.filter(element => element.message.id !== storedEvent.message.id);
+				this.pull.storedEvents.push(storedEvent);
+			}
+
+			this.pull.eventExecute(event);
 		}
 	});
 
@@ -1354,14 +1548,14 @@ RecentList.push.actionExecute = function()
 	{
 		if (this.base.isRecent())
 		{
-			if (this.base.isOpenlinesOperator() && pushParams.CHAT_TYPE == 'L')
+			if (this.base.isOpenlinesOperator() && pushParams.CHAT_TYPE === 'L')
 			{
 				return false;
 			}
 		}
 		else
 		{
-			if (pushParams.CHAT_TYPE != 'L')
+			if (pushParams.CHAT_TYPE !== 'L')
 			{
 				return false;
 			}
@@ -1401,6 +1595,17 @@ RecentList.pull.init = function ()
 			callback: this.eventLinesExecute.bind(this)
 		});
 	}
+
+	this.storedEvents = [];
+};
+
+RecentList.pull.getStoredEvents = function()
+{
+	let list = [].concat(this.storedEvents);
+
+	this.storedEvents = [];
+
+	return list;
 };
 
 RecentList.pull.getUserDataFormat = function (user)
@@ -1559,6 +1764,15 @@ RecentList.pull.eventExecute = function(data)
 			if (command == 'messageChat' && params.chat[params.chatId].type == 'lines' && this.base.isOpenlinesOperator())
 			{
 				return false;
+			}
+
+			if (!this.base.isDialogOpen() && !params.message.push)
+			{
+				let storedEvent = ChatUtils.objectClone(params);
+				storedEvent.message.push = true;
+
+				this.storedEvents = this.storedEvents.filter(element => element.message.id !== storedEvent.message.id);
+				this.storedEvents.push(storedEvent);
 			}
 		}
 		else
@@ -1944,7 +2158,7 @@ RecentList.pull.eventExecute = function(data)
 			user: params.message.senderId > 0? params.users[params.message.senderId]: {id: 0},
 			lines: params.lines[params.chatId],
 			message: params.message,
-			counter: params.counter
+			counter: params.counter > 0 ? params.counter : 1
 		});
 
 		let addToRecent = params.notify !== true && params.notify.indexOf(this.base.userId) == -1? this.base.getElement(params.message.recipientId): true;
@@ -2291,7 +2505,12 @@ RecentList.notifier.init = function ()
 	this.inited = typeof InAppNotifier != 'undefined';
 	if (this.inited)
 	{
-		InAppNotifier.setHandler(data => this.base.openDialog(data.dialogId));
+		InAppNotifier.setHandler(data => {
+			if (data.dialogId)
+			{
+				this.base.openDialog(data.dialogId);
+			}
+		});
 	}
 
 	this.delayShow = {};
@@ -2314,7 +2533,7 @@ RecentList.notifier.show = function(params, delay)
 	if (PageManager.getNavigator().isActiveTab())
 	{
 		let page = PageManager.getNavigator().getVisible();
-		if (page.type == "UIChatList")
+		if (page.type != "Web")
 		{
 			return false;
 		}
@@ -2341,7 +2560,7 @@ RecentList.action = {};
 
 RecentList.action.init = function()
 {
-	dialogList.setPreviewUrlProvider(this.showPreview.bind(this));
+	//dialogList.setPreviewUrlProvider(this.showPreview.bind(this));
 
 	if (this.base.isRecent())
 	{
@@ -2718,6 +2937,8 @@ RecentList.event.init = function ()
 	BX.addCustomEvent("onOpenDialog", this.onOpenDialog.bind(this));
 	BX.addCustomEvent("onDialogIsOpen", this.onDialogIsOpen.bind(this));
 	BX.addCustomEvent("onLoadLastMessage", this.onLoadLastMessage.bind(this));
+	BX.addCustomEvent("chatdialog::counter::change", this.onDialogCounterChange.bind(this));
+	BX.addCustomEvent("chatbackground::task::status::success", this.onReadMessage.bind(this));
 };
 
 RecentList.event.router = function(eventName, listElement)
@@ -2752,6 +2973,23 @@ RecentList.event.onDialogIsOpen = function(event)
 	if (this.base.dialogCache.dialogs.has(event.dialogId.toString()))
 	{
 		this.base.dialogCache.dialogs.get(event.dialogId.toString()).unreadList = [];
+	}
+};
+
+RecentList.event.onDialogCounterChange = function(event)
+{
+	this.base.updateElement(event.dialogId, {counter: event.counter});
+};
+
+RecentList.event.onReadMessage = function(taskId, result)
+{
+	let action = taskId.toString().split('|')[0];
+	if (action === 'readMessage')
+	{
+		if (result)
+		{
+			this.base.updateElement(result.dialogId, {counter: result.counter});
+		}
 	}
 };
 

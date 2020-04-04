@@ -1,6 +1,6 @@
 <?php
 if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
-/** @var $this \CBitrixComponentTemplate */
+/** @var $this CBitrixComponentTemplate */
 /** @var array $arParams */
 /** @var array $arResult */
 /** @global CMain $APPLICATION */
@@ -11,15 +11,30 @@ if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
 /** @var string $templateFile */
 /** @var string $templateFolder */
 /** @var string $componentPath */
-/** @var \Bitrix\Disk\Internals\BaseComponent $component */
+/** @var BaseComponent $component */
+
+use Bitrix\Disk\Integration\Bitrix24Manager;
+use Bitrix\Disk\Integration\BizProcManager;
+use Bitrix\Disk\Internals\BaseComponent;
 use Bitrix\Disk\Internals\Grid\FolderListOptions;
+use Bitrix\UI\Toolbar\Facade\Toolbar;
+use Bitrix\Main\Application;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main;
+use Bitrix\Main\Page\Asset;
+use Bitrix\UI\Buttons\Button;
+use Bitrix\UI\Buttons\Color;
+use Bitrix\UI\Buttons\Icon;
+use Bitrix\UI\Buttons\JsHandler;
+use Bitrix\UI\Buttons\Tag;
+
 ?>
 
 <?
-$documentRoot = \Bitrix\Main\Application::getDocumentRoot();
+$documentRoot = Application::getDocumentRoot();
 $isBitrix24Template = (SITE_TEMPLATE_ID === 'bitrix24');
+$isInIframe = Main\Context::getCurrent()->getRequest()->get('IFRAME') === 'Y';
+
 
 CJSCore::Init(array(
 	'ui.viewer',
@@ -46,10 +61,11 @@ CJSCore::Init(array(
 	'disk.document',
 	'disk.viewer.document-item',
 	'disk.viewer.actions',
+	'clipboard',
 ));
 
-\Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/components/bitrix/disk.interface.grid/templates/.default/bitrix/main.interface.grid/.default/style.css');
-\Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/components/bitrix/disk.interface.toolbar/templates/.default/style.css');
+Asset::getInstance()->addCss('/bitrix/components/bitrix/disk.interface.grid/templates/.default/bitrix/main.interface.grid/.default/style.css');
+Asset::getInstance()->addCss('/bitrix/components/bitrix/disk.interface.toolbar/templates/.default/style.css');
 
 $bodyClasses = 'pagetitle-toolbar-field-view no-hidden no-all-paddings';
 if ($arResult['GRID']['MODE'] === FolderListOptions::VIEW_MODE_TILE)
@@ -68,6 +84,17 @@ foreach ($jsTemplates->getChildren() as $jsTemplate)
 }
 
 include('process.php');
+
+Toolbar::addFilter([
+   'GRID_ID' => $arResult['GRID']['ID'],
+   'FILTER_ID' => $arResult['FILTER']['FILTER_ID'],
+   'FILTER' => $arResult['FILTER']['FILTER'],
+   'FILTER_PRESETS' => $arResult['FILTER']['FILTER_PRESETS'],
+   'ENABLE_LIVE_SEARCH' => $arResult['FILTER']['ENABLE_LIVE_SEARCH'],
+   'ENABLE_LABEL' => $arResult['FILTER']['ENABLE_LABEL'],
+   'RESET_TO_DEFAULT_MODE' => $arResult['FILTER']['RESET_TO_DEFAULT_MODE'],
+]);
+Toolbar::setTitleMinWidth(158);
 
 $uri = new Main\Web\Uri(Bitrix\Main\Context::getCurrent()->getRequest()->getRequestUri());
 
@@ -90,7 +117,7 @@ if(!empty($arResult['STORAGE']['CAN_CHANGE_RIGHTS_ON_STORAGE']))
 		'href' => "javascript:BX.Disk['FolderListClass_{$component->getComponentId()}'].showRightsOnStorage(); BX.PopupMenu.destroy('settings_disk');",
 	);
 }
-if(!empty($arResult['STORAGE']['CAN_CHANGE_SETTINGS_ON_STORAGE']) && $arResult['STORAGE']['CAN_CHANGE_SETTINGS_ON_BIZPROC_EXCEPT_USER'] && \Bitrix\Disk\Integration\BizProcManager::isAvailable())
+if(!empty($arResult['STORAGE']['CAN_CHANGE_SETTINGS_ON_STORAGE']) && $arResult['STORAGE']['CAN_CHANGE_SETTINGS_ON_BIZPROC_EXCEPT_USER'] && BizProcManager::isAvailable())
 {
 	$jsSettingsDropdown[] = array(
 		'text' => Loc::getMessage('DISK_FOLDER_LIST_PAGE_TITLE_BIZPROC_SETTINGS'),
@@ -125,6 +152,7 @@ if (!empty($arResult["PATH_TO_DISK_VOLUME"]))
 		'text' => Loc::getMessage('DISK_FOLDER_LIST_VOLUME_PURIFY'),
 		'title' => Loc::getMessage('DISK_FOLDER_LIST_VOLUME_PURIFY'),
 		'href' => $arResult["PATH_TO_DISK_VOLUME"],
+		'target' => $isInIframe? '_blank' : '',
 	);
 }
 $currentPage = $APPLICATION->GetCurPageParam('', array($arResult['GRID']["SORT_VARS"]["order"], $arResult['GRID']["SORT_VARS"]["by"]));
@@ -142,57 +170,76 @@ $inverseDirection = strtolower($direction) == 'desc'? 'asc' : 'desc';
 $sortLabel = $arResult['GRID']['COLUMN_FOR_SORTING'][$byColumn]['LABEL'];
 $isMixSorting = $arResult['GRID']['SORT_MODE'] === FolderListOptions::SORT_MODE_MIX;
 
-?>
-<? $isBitrix24Template && $this->setViewTarget("inside_pagetitle", 10); ?>
-	<div class="pagetitle-container pagetitle-flexible-space" style="overflow: hidden;">
-		<?
-		$APPLICATION->IncludeComponent(
-			'bitrix:main.ui.filter',
-			'',
-			array(
-				'GRID_ID' => $arResult['GRID']['ID'],
-				'FILTER_ID' => $arResult['FILTER']['FILTER_ID'],
-				'FILTER' => $arResult['FILTER']['FILTER'],
-				'FILTER_PRESETS' => $arResult['FILTER']['FILTER_PRESETS'],
-				'ENABLE_LIVE_SEARCH' => $arResult['FILTER']['ENABLE_LIVE_SEARCH'],
-				'ENABLE_LABEL' => $arResult['FILTER']['ENABLE_LABEL'],
-				'RESET_TO_DEFAULT_MODE' => $arResult['FILTER']['RESET_TO_DEFAULT_MODE'],
-			),
-			$component
-		);
+if (!empty($arResult['STORAGE']['FOR_SOCNET_GROUP']))
+{
+	$connectBtn = new Button([
+		"color" => Color::LIGHT_BORDER,
+    	"icon" => Icon::DISK,
+		"click" => new JsHandler(
+			"BX.Disk.FolderListClass_{$component->getComponentId()}.onClickManageConnectButton",
+			"BX.Disk.FolderListClass_{$component->getComponentId()}"
+		),
+		"text" => Loc::getMessage('DISK_FOLDER_LIST_LABEL_CONNECT_DISK'),
+    ]);
 
-		?>
-		<div class="pagetitle-container pagetitle-align-right-container">
-			<? if(!empty($arResult['STORAGE']['FOR_SOCNET_GROUP'])){ ?>
-			<span id="bx-disk-disconnect-connect-disk" class="webform-small-button webform-small-button-transparent <?= ($arResult['STORAGE']['CONNECTED_SOCNET_GROUP_OBJECT_ID']? 'webform-small-button-check-round disconnect' : 'webform-small-button-disk connect') ?>">
-				<span class="webform-small-button-icon"></span>
-				<span class="webform-small-button-text" id="bx-disk-disconnect-connect-disk-text"><?= ($arResult['STORAGE']['CONNECTED_SOCNET_GROUP_OBJECT_ID']? Loc::getMessage('DISK_FOLDER_LIST_LABEL_ALREADY_CONNECT_DISK') : Loc::getMessage('DISK_FOLDER_LIST_LABEL_CONNECT_DISK')) ?></span>
-			</span>
-			<? } ?>
-			<? if(empty($arResult['IS_TRASH_MODE']))
-				{
-					?>
-					<a class="ui-btn ui-btn-light-border ui-btn-themes js-disk-trashcan-button" href="<?= $arResult['PATH_TO_USER_TRASHCAN_LIST'] ?>"><?= Loc::getMessage('DISK_FOLDER_LIST_GO_TO_TRASH') ?></a>
-					<?
-				}
-			?>
-			<span id="bx-disk-settings-change-btn" class="ui-btn ui-btn-light-border ui-btn-themes ui-btn-icon-setting"></span>
-			<? if (empty($arResult['IS_TRASH_MODE']))
-				{
-					?>
-					<span id="bx-disk-add-menu" class="ui-btn ui-btn-primary ui-btn-dropdown"><?= Loc::getMessage('DISK_FOLDER_LIST_TITLE_ADD_COMPLEX') ?></span>
-					<?
-				}
-				else
-				{
-					?>
-					<span id="bx-disk-destroy-btn" class="ui-btn ui-btn-primary"><?= Loc::getMessage('DISK_FOLDER_LIST_TITLE_EMPTY_TRASH') ?></span>
-					<?
-				}
-			?>
-		</div>
-	</div>
-<? $isBitrix24Template && $this->endViewTarget(); ?>
+	if ($arResult['STORAGE']['CONNECTED_SOCNET_GROUP_OBJECT_ID'])
+	{
+		$connectBtn->setText(Loc::getMessage('DISK_FOLDER_LIST_LABEL_ALREADY_CONNECT_DISK'));
+		$connectBtn->addClass(Icon::DONE);
+		$connectBtn->removeClass(Icon::DISK);
+	}
+
+    Toolbar::addButton($connectBtn);
+}
+
+if (empty($arResult['IS_TRASH_MODE']))
+{
+	$trashBtn = new Button([
+		"color" => Color::LIGHT_BORDER,
+		"icon" => Icon::REMOVE,
+        "tag" => Tag::LINK,
+        "className" => 'js-disk-trashcan-button ui-toolbar-btn-icon-hidden',
+		"link" => $arResult['PATH_TO_USER_TRASHCAN_LIST'],
+		"text" => Loc::getMessage('DISK_FOLDER_LIST_GO_TO_TRASH'),
+    ]);
+	if ($isInIframe)
+	{
+		$trashBtn->addAttribute("target", "_blank");
+	}
+
+    Toolbar::addButton($trashBtn);
+}
+
+
+Toolbar::addButton([
+	"className" => 'js-disk-settings-button',
+	"color" => Color::LIGHT_BORDER,
+	"icon" => Icon::SETTING,
+]);
+
+if (empty($arResult['IS_TRASH_MODE']))
+{
+	$addBtn = new Button([
+        "color" => Color::PRIMARY,
+		"className" => 'js-disk-add-button',
+		"text" => Loc::getMessage('DISK_FOLDER_LIST_TITLE_ADD_COMPLEX'),
+    ]);
+	$addBtn->setDropdown();
+
+    Toolbar::addButton($addBtn);
+}
+else
+{
+    Toolbar::addButton([
+        "color" => Color::PRIMARY,
+		"click" => new JsHandler(
+			"BX.Disk.FolderListClass_{$component->getComponentId()}.openConfirmEmptyTrash",
+			"BX.Disk.FolderListClass_{$component->getComponentId()}"
+		),
+		"text" => Loc::getMessage('DISK_FOLDER_LIST_TITLE_EMPTY_TRASH'),
+    ]);
+}
+?>
 
 <? $isBitrix24Template && $this->setViewTarget('below_pagetitle'); ?>
 <div class="disk-folder-list-toolbar" id="disk-folder-list-toolbar">
@@ -421,7 +468,7 @@ BX(function () {
 			fileListContainer: document.querySelector('.bx-disk-interface-filelist'),
 			trashCanButton: document.querySelector('.js-disk-trashcan-button'),
 			changeViewButtons: document.querySelectorAll('.js-disk-change-view'),
-			createItemsButton: document.querySelector('#bx-disk-add-menu'),
+			createItemsButton: document.querySelector('.js-disk-add-button'),
 			emptyBlockUploadFileButtonId: 'disk-folder-list-no-data-upload-file',
 			emptyBlockCreateFolderButtonId: 'disk-folder-list-no-data-create-folder'
 		},
@@ -456,7 +503,6 @@ BX(function () {
 				id: <?= $arResult['STORAGE']['ROOT_OBJECT_ID'] ?>
 			},
 			manage: {
-				connectButtonId: 'bx-disk-disconnect-connect-disk',
 				link: {
 					object: {
 						id: <?= isset($arResult['STORAGE']['CONNECTED_SOCNET_GROUP_OBJECT_ID'])? $arResult['STORAGE']['CONNECTED_SOCNET_GROUP_OBJECT_ID'] : 'null' ?>
@@ -482,13 +528,14 @@ BX(function () {
 		information: '<?= CUtil::JSEscape($arResult['GRID_INFORMATION']) ?>',
 		filterValueToSkipSearchUnderLinks: {
 			SEARCH_IN_CURRENT_FOLDER: 1,
-			SHARED: <?= \CDiskFolderListComponent::FILTER_SHARED_TO_ME ?>
+			SHARED: <?= CDiskFolderListComponent::FILTER_SHARED_TO_ME ?>
 		}
 	});
 
-	var buttonSettingsRect = BX('bx-disk-settings-change-btn').getBoundingClientRect();
+	var btnSettings = document.querySelector('.js-disk-settings-button');
+	var buttonSettingsRect = btnSettings.getBoundingClientRect();
 	BX.bind(
-		BX('bx-disk-settings-change-btn'),
+		btnSettings,
 		'click',
 		function(e){
 			BX.PreventDefault(e);
@@ -503,7 +550,7 @@ BX(function () {
 			}
 			BX.PopupMenu.show(
 				'settings_disk',
-				BX('bx-disk-settings-change-btn'),
+				btnSettings,
 				<?= CUtil::PhpToJSObject($jsSettingsDropdown) ?>,
 				{
 					autoHide : true,
@@ -546,14 +593,14 @@ BX(function () {
 					{
 						text: "<?=CUtil::JSEscape(Loc::getMessage('DISK_FOLDER_MW_CREATE_TYPE_DOC')) ?>",
 						onclick: function(event, popupItem){
-							popupItem.getMenuWindow().getParentMenuWindow().close()
+							popupItem.getMenuWindow().getParentMenuWindow().close();
 							BX.Disk['FolderListClass_<?= $component->getComponentId() ?>'].runCreatingFile('docx', '<?=$handler['code']?>');
 						}
 					},
 					{
 						text: "<?=CUtil::JSEscape(Loc::getMessage('DISK_FOLDER_MW_CREATE_TYPE_XLS')) ?>",
 						onclick: function(event, popupItem){
-							popupItem.getMenuWindow().getParentMenuWindow().close()
+							popupItem.getMenuWindow().getParentMenuWindow().close();
 							BX.Disk['FolderListClass_<?= $component->getComponentId() ?>'].runCreatingFile('xlsx', '<?=$handler['code']?>');
 						}
 
@@ -561,7 +608,7 @@ BX(function () {
 					{
 						text: "<?=CUtil::JSEscape(Loc::getMessage('DISK_FOLDER_MW_CREATE_TYPE_PPT')) ?>",
 						onclick: function(event, popupItem){
-							popupItem.getMenuWindow().getParentMenuWindow().close()
+							popupItem.getMenuWindow().getParentMenuWindow().close();
 							BX.Disk['FolderListClass_<?= $component->getComponentId() ?>'].runCreatingFile('pptx', '<?=$handler['code']?>');
 						}
 					}
@@ -576,10 +623,11 @@ BX(function () {
 	<? if (empty($arResult['IS_TRASH_MODE']))
 		{
 			?>
-				var buttonRect = BX("bx-disk-add-menu").getBoundingClientRect();
+				var addButton = document.querySelector('.js-disk-add-button');
+				var buttonRect = addButton.getBoundingClientRect();
 				var menu = BX.PopupMenu.create(
 					"popupMenuAdd",
-					BX("bx-disk-add-menu"),
+					addButton,
 					menuItemsLists,
 					{
 						closeByEsc: true,
@@ -592,7 +640,7 @@ BX(function () {
 					}
 				);
 
-				BX.bind(BX("bx-disk-add-menu"), "click", function()	{
+				BX.bind(addButton, "click", function()	{
 					if (!BX.hasClass(BX("bx-disk-add-menu"), 'ui-btn-disabled'))
 					{
 						menu.popupWindow.show();
@@ -613,7 +661,7 @@ $APPLICATION->IncludeComponent('bitrix:disk.help.network.drive','');
 
 global $USER;
 if(
-	\Bitrix\Disk\Integration\Bitrix24Manager::isEnabled()
+	Bitrix24Manager::isEnabled()
 )
 {
 	?>
@@ -622,13 +670,11 @@ if(
 	</div>
 	<script type="text/javascript">
 	BX.message({
-		disk_restriction: <?= (!\Bitrix\Disk\Integration\Bitrix24Manager::checkAccessEnabled('disk', $USER->getId())? 'true' : 'false') ?>
+		disk_restriction: <?= (!Bitrix24Manager::checkAccessEnabled('disk', $USER->getId())? 'true' : 'false') ?>
 	});
 	</script>
 	<?
-		$APPLICATION->IncludeComponent("bitrix:bitrix24.limit.lock", "", array(
-			"FEATURE_GROUP_NAME" => "disk_folder_sharing"
-		));
+		$APPLICATION->IncludeComponent("bitrix:bitrix24.limit.lock", "");
 	?>
 <?
 }

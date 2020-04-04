@@ -82,13 +82,13 @@ BX.Disk.Player.prototype.adjust = function()
 	}
 	if(BX.hasClass(this.container, 'player-adjust'))
 	{
+		BX.addClass(this.container, 'player-adjusting');
 		if(BX.Disk.Player.adjustWidth(this.container, this.player.width, this.player.height, this.player.vjsPlayer.videoWidth(), this.player.vjsPlayer.videoHeight()))
 		{
 			this.player.vjsPlayer.fluid(true);
 		}
 	}
 	BX.addClass(this.container, 'player-loaded');
-	BX.style(this.container, 'background-image', 'none');
 };
 
 BX.Disk.Player.prototype.onError = function()
@@ -108,7 +108,6 @@ BX.Disk.Player.prototype.onError = function()
 			'onsuccess': BX.proxy(function(data)
 			{
 				BX.addClass(this.container, 'player-loaded');
-				BX.style(this.container, 'background-image', 'none');
 				if(data.status && data.status == 'success' && data.html)
 				{
 					var html = BX.processHTML(data.html);
@@ -140,7 +139,6 @@ BX.Disk.Player.prototype.showError = function()
 	}
 	this.player.isDiskErrorShown = true;
 	BX.addClass(this.container, 'player-loaded');
-	BX.style(this.container, 'background-image', 'none');
 	var errorContainer = BX.create('div', {props: {className: 'disk-player-error-container'}, style: {width: this.player.width + 'px', height: this.player.height + 'px'}, children: [
 		BX.create('div', {props: {className: 'disk-player-error-icon'}, html: ''}),
 		BX.create('div', {props: {className: 'disk-player-error-message'}, html: BX.message('DISK_JS_PLAYER_ERROR_MESSAGE')})

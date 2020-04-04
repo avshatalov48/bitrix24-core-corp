@@ -39,25 +39,8 @@ class PropertyManager
 					$userType = $property["USER_TYPE"];
 					switch ($userType)
 					{
-						case "directory":
-							if (isset($property["PROPERTY_USER_TYPE"]["GetOptionsData"]))
-							{
-								$data = call_user_func_array(
-									$property["PROPERTY_USER_TYPE"]["GetOptionsData"],
-									array($property, array())
-								);
-								$field = array(
-									"id" => $fieldId,
-									"name" => $fieldName,
-									"type" => "list",
-									"items" => $data,
-									"params" => array("multiple" => "Y"),
-									"filterable" => ""
-								);
-							}
-							break;
-						case "employee":
-						case "UserID":
+						case "employee": //TODO: remove this row after intranet 18.3.100 will be stabled
+						case "UserID": //TODO: remove this row after main 18.5.200 will be stabled
 							$field = array(
 								"id" => $fieldId,
 								"name" => $fieldName,
@@ -66,7 +49,7 @@ class PropertyManager
 								"selector" => array("type" => "user"),
 							);
 							break;
-						case "ECrm":
+						case "ECrm": //TODO: remove this row after crm 18.7.200 will be stabled
 							$field = array(
 								"id" => $fieldId,
 								"name" => $fieldName,
@@ -218,6 +201,10 @@ class PropertyManager
 		return $this->filterFields;
 	}
 
+	/**
+	 * @param string $filterId
+	 * @return void
+	 */
 	public function renderCustomFields($filterId)
 	{
 		foreach ($this->getFilterFields() as $filterField)
@@ -233,55 +220,114 @@ class PropertyManager
 		}
 	}
 
+	/**
+	 * @param string $filterId
+	 * @param array &$filter
+	 * @return void
+	 */
 	public function AddFilter($filterId, array &$filter)
 	{
-		$listProperty = $this->getListProperty();
-		if (!empty($listProperty))
+		if (empty($filter))
 		{
-			$filterKeys = (!empty($filter) ? array_fill_keys(array_keys($filter), true) : []);
-			foreach ($listProperty as $property)
-			{
-				if (isset($property["PROPERTY_USER_TYPE"]["AddFilterFields"]))
-				{
-					$filtered = false;
-					call_user_func_array($property["PROPERTY_USER_TYPE"]["AddFilterFields"], array(
-						$property,
-						array("VALUE" => $property["FIELD_ID"], "FILTER_ID" => $filterId),
-						&$filter,
-						&$filtered,
-					));
-				}
-				else
-				{
-					if (isset($filterKeys[$property["FIELD_ID"]]))
-					{
-						if ($filter[$property["FIELD_ID"]] === "NOT_REF")
-						{
-							unset($filter[$property["FIELD_ID"]]);
-							$filter["?".$property["FIELD_ID"]] = false;
-						}
-					}
-				}
-			}
-			unset($filterKeys);
+			return;
+		}
 
-			foreach($this->getFilterFields() as $filterField)
+		$listProperty = $this->getListProperty();
+		if (empty($listProperty))
+		{
+			return;
+		}
+
+		$filterFields = [];
+		foreach($this->getFilterFields() as $row)
+		{
+			$filterFields[$row['id']] = $row;
+		}
+
+		foreach (array_keys($filter) as $index)
+		{
+			$indexData = \CIBlock::MkOperationFilter($index);
+			$propertyId = $indexData['FIELD'];
+
+			if (!isset($listProperty[$propertyId]))
 			{
-				if (isset($filterField["customFilter"]))
-				{
-					$filtered = false;
-					call_user_func_array($filterField["customFilter"], array(
-						$filterField["property"],
-						array(
-							"VALUE" => $filterField["id"],
+				continue;
+			}
+
+			if (isset($filterFields[$propertyId]['customFilter']))
+			{
+				$row = $filterFields[$propertyId];
+				$filtered = false;
+				call_user_func_array(
+					$row['customFilter'],
+					[
+						$row['property'],
+						[
+							"VALUE" => $row["id"],
 							"FILTER_ID" => $filterId,
-						),
+						],
 						&$filter,
-						&$filtered,
-					));
+						&$filtered
+					]
+				);
+				unset($filtered);
+				unset($row);
+			}
+			elseif (isset($listProperty[$propertyId]['PROPERTY_USER_TYPE']['AddFilterFields']))
+			{
+				$filtered = false;
+				$row = $listProperty[$propertyId];
+				call_user_func_array($row['PROPERTY_USER_TYPE']['AddFilterFields'], array(
+					$row,
+					array('VALUE' => $row['FIELD_ID'], 'FILTER_ID' => $filterId),
+					&$filter,
+					&$filtered,
+				));
+				unset($filtered);
+				unset($row);
+			}
+			else
+			{
+				switch ($listProperty[$propertyId]['PROPERTY_TYPE'])
+				{
+					case Iblock\PropertyTable::TYPE_STRING:
+					case Iblock\PropertyTable::TYPE_NUMBER:
+						$value = (string)$filter[$index];
+						if ($value === '')
+						{
+							unset($filter[$index]);
+						}
+						unset($value);
+						break;
+					case Iblock\PropertyTable::TYPE_LIST:
+					case Iblock\PropertyTable::TYPE_ELEMENT:
+					case IBlock\PropertyTable::TYPE_SECTION:
+						if (is_array($filter[$index]))
+						{
+							$newValues = [];
+							foreach ($filter[$index] as $value)
+							{
+								$newValues[] = ($value === 'NOT_REF' ? false : $value);
+							}
+							unset($filter[$index]);
+							if (!empty($newValues))
+								$filter['='.$propertyId] = $newValues;
+							unset($newValues);
+						}
+						else
+						{
+							$value = $filter[$index];
+							unset($filter[$index]);
+							if ($value === 'NOT_REF')
+								$value = false;
+							$filter['='.$propertyId] = $value;
+							unset($value);
+						}
+						break;
 				}
 			}
 		}
+		unset($filterFields);
 		unset($listProperty);
 	}
 
@@ -305,7 +351,7 @@ class PropertyManager
 				unset($property['USER_TYPE_SETTINGS_LIST']);
 				$property['PROPERTY_USER_TYPE'] = (!empty($property['USER_TYPE']) ?
 					\CIBlockProperty::GetUserType($property['USER_TYPE']) : []);
-				$this->listProperty[$property['ID']] = $property;
+				$this->listProperty[$property['FIELD_ID']] = $property;
 			}
 			unset($property, $iterator);
 		}

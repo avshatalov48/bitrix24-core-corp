@@ -86,30 +86,31 @@ $this->SetViewTarget("im-fullscreen");
 </div>
 <?$this->EndViewTarget()?>
 <?
-$this->SetViewTarget("im");
+$this->SetViewTarget("im", 100);
 ?>
 <div class="bx-im-bar <?=($arResult['OL_OPERATOR']?"bx-im-bar-with-ol":"")?>" id="bx-im-bar">
-	<div class="bx-im-informer <?=($arResult['OL_OPERATOR']?"":"bx-im-border-b")?>">
-		<div id="bx-im-bar-notify" class="bx-im-informer-icon" title="<?=GetMessage('IM_MESSENGER_OPEN_NOTIFY');?>">
-			<div class="bx-im-informer-num"></div>
+	<div class="help-block" id="bx-help-block" title="<?=GetMessage("AUTH_HELP")?>">
+		<div class="help-icon-border"></div>
+		<div class="help-block-icon"></div>
+		<div class="help-block-counter-wrap" id="bx-help-notify">
 		</div>
 	</div>
+
+	<div id="bx-im-bar-notify" class="bx-im-informer <?=($arResult['OL_OPERATOR']?"":"bx-im-border-b")?>">
+		<div class="bx-im-informer-icon" title="<?=GetMessage('IM_MESSENGER_OPEN_NOTIFY');?>"></div>
+		<div class="bx-im-informer-num"></div>
+	</div>
 	<?if ($arResult['OL_OPERATOR']):?>
-	<div class="bx-im-informer bx-im-informer-ol bx-im-border-b">
-		<div id="bx-im-bar-ol" class="bx-im-informer-ol-icon" title="<?=GetMessage('IM_MESSENGER_OPEN_OL');?>">
-			<div class="bx-im-informer-num"></div>
-		</div>
+	<div id="bx-im-bar-ol" class="bx-im-informer bx-im-informer-ol bx-im-border-b">
+		<div class="bx-im-informer-ol-icon" title="<?=GetMessage('IM_MESSENGER_OPEN_OL');?>"></div>
+		<div class="bx-im-informer-num"></div>
 	</div>
 	<?endif;?>
 	<div id="bx-im-bar-search" class="bx-im-search bx-im-border-b" title="<?=GetMessage('IM_MESSENGER_OPEN_SEARCH');?>">
 		<div class="bx-im-informer-num"></div>
 	</div>
 	<div class="bx-im-users-wrap">
-		<div class="bx-im-scroll-wrap" id="bx-im-external-recent-list">
-			<div class="bx-im-btn-wrap bx-im-btn-wrap-no-action">
-				<div class="bx-im-btn"><span class="bx-im-btn-loading"></span></div>
-			</div>
-		</div>
+		<div class="bx-im-scroll-wrap" id="bx-im-external-recent-list"></div>
 	</div>
 	<div class="bx-im-bottom-block" id="bx-im-bottom-block">
 		<?if($arResult['PHONE_ENABLED']):?>
@@ -118,9 +119,18 @@ $this->SetViewTarget("im");
 		</div>
 		<?endif;?>
 	</div>
+
+	<svg width="0" height="0" style="display: block">
+		<defs>
+			<clipPath id="clip-avatar">
+				<path d="M31.342 20.557a7.5 7.5 0 0 0-9.524 10.352A15.96 15.96 0 0 1 16 32C7.163 32 0 24.837 0 16S7.163 0 16 0s16 7.163 16 16c0 1.583-.23 3.113-.658 4.557z" fill="#D8D8D8" fill-rule="evenodd"/>
+			</clipPath>
+		</defs>
+	</svg>
 </div>
+
 <script>
-	bxImBarRedraw();
+	BX.Intranet.Bitrix24.ImBar.redraw();
 </script>
 <?$this->EndViewTarget()?>
 
@@ -130,8 +140,8 @@ $this->SetViewTarget("im");
 
 <script>
 	BX.ready(function() {
-		bxImBarInit();
+		BX.Intranet.Bitrix24.ImBar.init();
 	});
-	<?=CIMMessenger::GetTemplateJS(Array(), $arResult)?>
+	<?=CIMMessenger::GetTemplateJS([], $arResult)?>
 </script>
 <?$frame->end()?>

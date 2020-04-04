@@ -8,9 +8,12 @@ Main\Localization\Loc::loadMessages(__FILE__);
 
 class ContactController extends BaseController
 {
+	use MultiFieldControllerMixin {
+		recoverMultiFields as innerRecoverMultiFields;
+	}
+
 	use ActivityControllerMixin;
 	use AddressControllerMixin;
-	use MultiFieldControllerMixin;
 	use RequisiteControllerMixin;
 
 	/** @var ContactController|null  */
@@ -256,6 +259,7 @@ class ContactController extends BaseController
 		$this->suspendLiveFeed($entityID, $recyclingEntityID);
 		$this->suspendRequisites($entityID, $recyclingEntityID);
 		$this->suspendUtm($entityID, $recyclingEntityID);
+		$this->suspendTracing($entityID, $recyclingEntityID);
 
 		//region Relations
 		foreach($relations as $relation)
@@ -266,8 +270,6 @@ class ContactController extends BaseController
 		}
 		ContactRelationManager::getInstance()->registerRecycleBin($recyclingEntityID, $entityID, $slots);
 		//endregion
-
-		$this->fireAfterMoveToBinEvent($entityID, $recyclingEntityID);
 	}
 
 	/**
@@ -372,15 +374,12 @@ class ContactController extends BaseController
 
 		$this->recoverMultiFields($recyclingEntityID, $newEntityID);
 		$this->recoverAddresses($recyclingEntityID, $newEntityID);
-		$this->recoverTimeline(
-			$recyclingEntityID,
-			$newEntityID,
-			[ 'OLD_ENTITY_ID' => $entityID, 'RELATIONS' => $relationMap ]
-		);
+		$this->recoverTimeline($recyclingEntityID, $newEntityID);
 		$this->recoverDocuments($recyclingEntityID, $newEntityID);
 		$this->recoverLiveFeed($recyclingEntityID, $newEntityID);
 		$this->recoverRequisites($recyclingEntityID, $newEntityID);
 		$this->recoverUtm($recyclingEntityID, $newEntityID);
+		$this->recoverTracing($recyclingEntityID, $newEntityID);
 
 		$requisiteLinks = isset($slots['REQUISITE_LINKS']) ? $slots['REQUISITE_LINKS'] : null;
 		if(is_array($requisiteLinks) && !empty($requisiteLinks))
@@ -394,10 +393,22 @@ class ContactController extends BaseController
 		Relation::deleteJunks();
 		//endregion
 
+		$this->rebuildSearchIndex($newEntityID);
 		$this->startRecoveryWorkflows($newEntityID);
-		$this->fireAfterRecoverEvent($recyclingEntityID, $newEntityID);
 
 		return true;
+	}
+
+	/**
+	 * Recover entity multifields.
+	 * @param int $recyclingEntityID Recycle Bin Entity ID.
+	 * @param int $newEntityID New Entity ID.
+	 * @throws Main\ArgumentException
+	 */
+	protected function recoverMultiFields($recyclingEntityID, $newEntityID)
+	{
+		$this->innerRecoverMultiFields($recyclingEntityID, $newEntityID);
+		\CCrmContact::SynchronizeMultifieldMarkers($newEntityID);
 	}
 
 	/**
@@ -443,6 +454,7 @@ class ContactController extends BaseController
 		$this->eraseSuspendedLiveFeed($recyclingEntityID);
 		$this->eraseSuspendedRequisites($recyclingEntityID);
 		$this->eraseSuspendedUtm($recyclingEntityID);
+		$this->eraseSuspendedTracing($recyclingEntityID);
 		$this->eraseSuspendedUserFields($recyclingEntityID);
 
 		//region Files
@@ -453,7 +465,5 @@ class ContactController extends BaseController
 		//endregion
 
 		Relation::deleteByRecycleBin($recyclingEntityID);
-
-		$this->fireAfterEraseEvent($recyclingEntityID);
 	}
 }

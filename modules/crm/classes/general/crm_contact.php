@@ -23,6 +23,7 @@ class CAllCrmContact
 	static public $sUFEntityID = 'CRM_CONTACT';
 	const USER_FIELD_ENTITY_ID = 'CRM_CONTACT';
 	const SUSPENDED_USER_FIELD_ENTITY_ID = 'CRM_CONTACT_SPD';
+	const TOTAL_COUNT_CACHE_ID =  'crm_contact_total_count';
 
 	public $LAST_ERROR = '';
 	public $cPerms = null;
@@ -438,6 +439,29 @@ class CAllCrmContact
 			$results[] = (int)$field['ID'];
 		}
 		return $results;
+	}
+
+	public static function GetTotalCount()
+	{
+		if(defined('BX_COMP_MANAGED_CACHE') && $GLOBALS['CACHE_MANAGER']->Read(600, self::TOTAL_COUNT_CACHE_ID, 'b_crm_contact'))
+		{
+			return $GLOBALS['CACHE_MANAGER']->Get(self::TOTAL_COUNT_CACHE_ID);
+		}
+
+		$result = (int)self::GetListEx(
+			array(),
+			array('CHECK_PERMISSIONS' => 'N'),
+			array(),
+			false,
+			array(),
+			array('ENABLE_ROW_COUNT_THRESHOLD' => false)
+		);
+
+		if(defined('BX_COMP_MANAGED_CACHE'))
+		{
+			$GLOBALS['CACHE_MANAGER']->Set(self::TOTAL_COUNT_CACHE_ID, $result);
+		}
+		return $result;
 	}
 
 	public static function GetRightSiblingID($ID)
@@ -942,6 +966,20 @@ class CAllCrmContact
 			}
 		}
 
+		if(isset($arFilter['ASSOCIATED_COMPANY_TITLE']))
+		{
+			$sql = ContactCompanyTable::prepareFilterJoinSqlByTitle(
+				CCrmOwnerType::Company,
+				$arFilter['ASSOCIATED_COMPANY_TITLE'],
+				$sender->GetTableAlias()
+			);
+
+			if($sql !== '')
+			{
+				$sqlData['FROM'][] = $sql;
+			}
+			unset($arFilter['ASSOCIATED_COMPANY_TITLE']);
+		}
 		if(isset($arFilter['ASSOCIATED_COMPANY_ID']) && $arFilter['ASSOCIATED_COMPANY_ID'] > 0)
 		{
 			$sqlData['FROM'][] = ContactCompanyTable::prepareFilterJoinSql(
@@ -1219,6 +1257,12 @@ class CAllCrmContact
 			//endregion
 
 			$ID = intval($DB->Add('b_crm_contact', $arFields, array(), 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__));
+
+			if(defined('BX_COMP_MANAGED_CACHE'))
+			{
+				$GLOBALS['CACHE_MANAGER']->CleanDir('b_crm_contact');
+			}
+
 			$result = $arFields['ID'] = $ID;
 			CCrmPerms::UpdateEntityAttr('CONTACT', $ID, $arEntityAttr);
 
@@ -1304,8 +1348,8 @@ class CAllCrmContact
 			//endregion
 			DuplicateEntityRanking::registerEntityStatistics(CCrmOwnerType::Contact, $ID, $arFields);
 
-			// add utm fields
-			UtmTable::addEntityUtmFromFields(CCrmOwnerType::Contact, $ID, $arFields);
+			// tracking of entity
+			Tracking\Entity::onAfterAdd(CCrmOwnerType::Contact, $ID, $arFields);
 
 			if($bUpdateSearch)
 			{
@@ -1487,6 +1531,7 @@ class CAllCrmContact
 		{
 			$arOptions = array();
 		}
+		$isSystemAction = isset($options['IS_SYSTEM_ACTION']) && $arOptions['IS_SYSTEM_ACTION'];
 
 		$arFilterTmp = array('ID' => $ID);
 		if (!$this->bCheckPermission)
@@ -1518,11 +1563,14 @@ class CAllCrmContact
 		{
 			unset($arFields['DATE_MODIFY']);
 		}
-		$arFields['~DATE_MODIFY'] = $DB->CurrentTimeFunction();
 
-		if (!isset($arFields['MODIFY_BY_ID']) || $arFields['MODIFY_BY_ID'] <= 0)
+		if(!$isSystemAction)
 		{
-			$arFields['MODIFY_BY_ID'] = $iUserId;
+			$arFields['~DATE_MODIFY'] = $DB->CurrentTimeFunction();
+			if(!isset($arFields['MODIFY_BY_ID']) || $arFields['MODIFY_BY_ID'] <= 0)
+			{
+				$arFields['MODIFY_BY_ID'] = $iUserId;
+			}
 		}
 
 		if (isset($arFields['ASSIGNED_BY_ID']) && $arFields['ASSIGNED_BY_ID'] <= 0)
@@ -1572,12 +1620,16 @@ class CAllCrmContact
 			$arAttr = array();
 			$arAttr['OPENED'] = !empty($arFields['OPENED']) ? $arFields['OPENED'] : $arRow['OPENED'];
 			$arEntityAttr = self::BuildEntityAttr($assignedByID, $arAttr);
-			$sEntityPerm = $this->cPerms->GetPermType('CONTACT', 'WRITE', $arEntityAttr);
-			$this->PrepareEntityAttrs($arEntityAttr, $sEntityPerm);
-			//Prevent 'OPENED' field change by user restricted by BX_CRM_PERM_OPEN permission
-			if($sEntityPerm === BX_CRM_PERM_OPEN && isset($arFields['OPENED']) && $arFields['OPENED'] !== 'Y' && $assignedByID !== $iUserId)
+			if($this->bCheckPermission)
 			{
-				$arFields['OPENED'] = 'Y';
+				$sEntityPerm = $this->cPerms->GetPermType('CONTACT', 'WRITE', $arEntityAttr);
+				//HACK: Ensure that entity accessible for user restricted by BX_CRM_PERM_OPEN
+				$this->PrepareEntityAttrs($arEntityAttr, $sEntityPerm);
+				//HACK: Prevent 'OPENED' field change by user restricted by BX_CRM_PERM_OPEN permission
+				if($sEntityPerm === BX_CRM_PERM_OPEN && isset($arFields['OPENED']) && $arFields['OPENED'] !== 'Y' && $assignedByID !== $iUserId)
+				{
+					$arFields['OPENED'] = 'Y';
+				}
 			}
 
 			if(isset($arFields['PHOTO']))
@@ -2276,6 +2328,11 @@ class CAllCrmContact
 		$obRes = $DB->Query("DELETE FROM b_crm_contact WHERE ID = {$ID}{$sWherePerm}", false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
 		if (is_object($obRes) && $obRes->AffectedRowsCount() > 0)
 		{
+			if(defined('BX_COMP_MANAGED_CACHE'))
+			{
+				$GLOBALS['CACHE_MANAGER']->CleanDir('b_crm_contact');
+			}
+
 			if(!$enableRecycleBin)
 			{
 				self::ReleaseExternalResources($arFields);
@@ -2286,11 +2343,11 @@ class CAllCrmContact
 			$DB->Query("DELETE FROM b_crm_entity_perms WHERE ENTITY='CONTACT' AND ENTITY_ID = $ID", false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
 			$GLOBALS['USER_FIELD_MANAGER']->Delete(self::$sUFEntityID, $ID);
 
-			\Bitrix\Crm\Binding\ContactCompanyTable::unbindAllCompanies($ID);
-			\Bitrix\Crm\Binding\DealContactTable::unbindAllDeals($ID);
-			\Bitrix\Crm\Binding\LeadContactTable::unbindAllLeads($ID);
-			\Bitrix\Crm\Binding\QuoteContactTable::unbindAllQuotes($ID);
+			CCrmDeal::ProcessContactDeletion($ID);
+			CCrmLead::ProcessContactDeletion($ID);
 
+			\Bitrix\Crm\Binding\ContactCompanyTable::unbindAllCompanies($ID);
+			\Bitrix\Crm\Binding\QuoteContactTable::unbindAllQuotes($ID);
 
 			if(!$enableDeferredMode)
 			{
@@ -2366,9 +2423,6 @@ class CAllCrmContact
 				UtmTable::deleteEntityUtm(CCrmOwnerType::Contact, $ID);
 				Tracking\Entity::deleteTrace(CCrmOwnerType::Contact, $ID);
 			}
-
-			CCrmLead::ProcessContactDeletion($ID);
-			CCrmDeal::ProcessContactDeletion($ID);
 
 			\Bitrix\Crm\Timeline\ContactController::getInstance()->onDelete(
 				$ID,
@@ -3128,6 +3182,58 @@ class CAllCrmContact
 
 		$requisiteEntity = new Crm\EntityRequisite();
 		return $requisiteEntity->add($requisiteFields)->isSuccess();
+	}
+
+	public static function SynchronizeMultifieldMarkers($sourceID, array $fields = null)
+	{
+		global $DB;
+
+		if($sourceID <= 0)
+		{
+			return;
+		}
+
+		if($fields === null)
+		{
+			$dbResult = self::GetListEx(
+				array(),
+				array('=ID' => $sourceID, 'CHECK_PERMISSIONS' => 'N'),
+				false,
+				false,
+				array('ID', 'HAS_EMAIL', 'HAS_PHONE', 'HAS_IMOL')
+			);
+
+			if(is_object($dbResult))
+			{
+				$fields = $dbResult->Fetch();
+			}
+		}
+
+		if($fields === null)
+		{
+			return;
+		}
+
+		$multifields = isset($fields['FM']) && is_array($fields['FM']) ? $fields['FM'] : null;
+		if($multifields === null)
+		{
+			$multifields = DuplicateCommunicationCriterion::prepareEntityMultifieldValues(
+				CCrmOwnerType::Contact,
+				$sourceID
+			);
+		}
+
+		$hasEmail = CCrmFieldMulti::HasValues($multifields, CCrmFieldMulti::EMAIL) ? 'Y' : 'N';
+		$hasPhone = CCrmFieldMulti::HasValues($multifields, CCrmFieldMulti::PHONE) ? 'Y' : 'N';
+		$hasImol = CCrmFieldMulti::HasImolValues($multifields) ? 'Y' : 'N';
+
+		if(!isset($fields['HAS_EMAIL']) || $fields['HAS_EMAIL'] !== $hasEmail ||
+			!isset($fields['HAS_PHONE']) || $fields['HAS_PHONE'] !== $hasPhone ||
+			!isset($fields['HAS_IMOL']) || $fields['HAS_IMOL'] !== $hasImol
+		)
+		{
+			$DB->Query("UPDATE b_crm_contact SET HAS_EMAIL = '{$hasEmail}', HAS_PHONE = '{$hasPhone}', HAS_IMOL = '{$hasImol}' WHERE ID = {$sourceID}", false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
+		}
 	}
 
 	public static function GetDefaultName()

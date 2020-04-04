@@ -1,4 +1,4 @@
-var REVISION = 2; // api revision - check module/pull/include.php
+var REVISION = 3; // api revision - check module/pull/include.php
 
 var CloseReasons = {
 	CONFIG_REPLACED : 3000,
@@ -12,6 +12,11 @@ var SystemCommands = {
 	CHANNEL_EXPIRE : 0,
 	CONFIG_EXPIRE : 1,
 	SERVER_RESTART : 2
+};
+var PullStatus = {
+	Online: 'online',
+	Offline: 'offline',
+	Connecting: 'connect'
 };
 var WebsocketReadyState = {
 	0 : 'CONNECTING',
@@ -196,6 +201,9 @@ WebSocketConnector.prototype = {
 				break;
 			}
 		}
+
+		this.sendPullStatus(PullStatus.Connecting);
+
 		this.connectionTimeoutTime = (new Date()).getTime();
 		this.connectionTimeoutId = setTimeout(() =>
 		{
@@ -232,22 +240,52 @@ WebSocketConnector.prototype = {
 			this.delegate.updateConfig();
 		}
 	},
+	sendPullStatus : function (status)
+	{
+		if(this.offlineTimeout)
+		{
+			clearTimeout(this.offlineTimeout);
+			this.offlineTimeout = null;
+		}
+		BX.postWebEvent("onPullStatus", {status : status});
+		BX.postComponentEvent("onPullStatus", [{status : status}]);
+	},
 	onopen : function ()
 	{
 		this.state = "connected";
 		this.connectAttempt = 0;
 		console.info("WebSocket -> onopen");
+
+		this.sendPullStatus(PullStatus.Online);
+
 		this.delegate.onOpen.apply(this.delegate, arguments);
 	},
 	onclose : function ()
 	{
 		console.info("WebSocket -> onclose", arguments);
+
+		if(
+			arguments[0].code !== CloseReasons.CONFIG_EXPIRED
+			&& arguments[0].code !== CloseReasons.CHANNEL_EXPIRED
+			&& arguments[0].code !== CloseReasons.CONFIG_REPLACED
+		)
+		{
+			this.sendPullStatus(PullStatus.Offline);
+		}
+		else
+		{
+			this.offlineTimeout = setTimeout(() => this.sendPullStatus(PullStatus.Offline), 5000);
+		}
+
 		this.delegate.onClose.apply(this.delegate, [arguments[0], this.waitingConnectionAfterBackground]);
 		this.waitingConnectionAfterBackground = false;
 	},
 	onerror : function ()
 	{
 		console.error("WebSocket -> onerror", arguments);
+
+		this.sendPullStatus(PullStatus.Offline);
+
 		this.delegate.onError.apply(this.delegate, [arguments[0], this.waitingConnectionAfterBackground]);
 		this.waitingConnectionAfterBackground = false;
 	},
@@ -265,6 +303,8 @@ WebSocketConnector.prototype = {
  */
 function Connection(config)
 {
+	config = config || CONFIG.PULL_CONFIG;
+
 	this.config = {
 		channels : {},
 		server : {
@@ -274,6 +314,7 @@ function Connection(config)
 			log: BX.componentParameters.get('PULL_DEBUG', true),
 			logFunction: BX.componentParameters.get('PULL_DEBUG_FUNCTION', false)
 		},
+		clientId: null,
 		actual: false,
 	};
 	this.session = {
@@ -344,6 +385,13 @@ Connection.prototype.setConfig = function (config)
 			CONFIG.PULL_CONFIG.server[configId] = config.server[configId];
 			isUpdated = true;
 		}
+	}
+
+	if (config.clientId != this.config.clientId)
+	{
+		this.config.clientId = config.clientId;
+		CONFIG.PULL_CONFIG.clientId = config.clientId;
+		isUpdated = true;
 	}
 	if (!isUpdated)
 	{
@@ -439,6 +487,8 @@ Connection.prototype.updateConfig = function ()
 	this.configRequest()
 		.catch((result) =>
 		{
+			this.connector.sendPullStatus(PullStatus.Offline);
+
 			let error = result.error();
 			if (error.status == 0)
 			{
@@ -517,8 +567,6 @@ Connection.prototype.parseResponse = function (response)
 	}
 	catch(e)
 	{
-		BX.postWebEvent("onPullStatus", {status : "offline"});
-		BX.postComponentEvent("onPullStatus", [{status : "offline"}]);
 		let text = "Connection.parseResponse:\n" +
 			"========= PULL ERROR ===========\n" +
 			"Error type: broadcastMessages execute error\n" +
@@ -793,6 +841,10 @@ Connection.prototype.getPath = function ()
 	if (this.session.time)
 	{
 		path = path+"&time=" + this.session.time;
+	}
+	if (this.config.server.mode === "shared")
+	{
+		path = path+"&clientId=" + this.config.clientId;
 	}
 
 	return path;

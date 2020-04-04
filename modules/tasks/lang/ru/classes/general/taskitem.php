@@ -13,3 +13,4 @@ $MESS['TASKS_ACCESS_DENIED_TO_TASK_UPDATE'] = "Нет доступа к реда
 $MESS['TASKS_ACCESS_DENIED_TO_TASK_DELETE'] = "Нет доступа к удалению задачи";
 $MESS['TASKS_ACTION_NOT_ALLOWED'] = "Действие не доступно";
 $MESS['TASKS_WRONG_PERSON_DELEGATION'] = "К сожалению, Вы не можете делегировать задачу на выбранного сотрудника";
+$MESS['TASKS_ERROR_TASK_ADD'] = "Не удалось создать задачу";

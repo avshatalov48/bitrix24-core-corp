@@ -36,6 +36,7 @@ class CAllCatalogDiscount
 	static protected $useSaleDiscount = null;
 	static protected $getPriceTypesOnly = false;
 	static protected $getPercentFromBasePrice = null;
+	static private $needDiscountCache = null;
 
 	private static function calculatePriceByDiscount($basePrice, $currentPrice, $oneDiscount, &$needErase)
 	{
@@ -1069,6 +1070,15 @@ class CAllCatalogDiscount
 				$basketItem = null;
 			}
 		}
+		if ($basket !== null)
+		{
+			$orderedBasket = $basket->getOrder() !== null;
+			if ($orderedBasket !== $isRenewal)
+			{
+				$basket = null;
+				$basketItem = null;
+			}
+		}
 		if ($basket === null)
 		{
 			$basket = Sale\Basket::create($siteId);
@@ -1124,6 +1134,7 @@ class CAllCatalogDiscount
 
 		if ($freezeCoupons)
 			Sale\DiscountCouponsManager::unFreezeCouponStorage();
+		$discount->setExecuteModuleFilter(array('all', 'sale', 'catalog'));
 
 		return static::getReformattedDiscounts($finalDiscountList, $calcResults, $siteId, $isRenewal);
 	}
@@ -1226,12 +1237,35 @@ class CAllCatalogDiscount
 
 		if (self::$useSaleDiscount && Loader::includeModule('sale'))
 		{
+			if (self::$needDiscountCache === null)
+			{
+				self::$needDiscountCache = false;
+
+				$cache = Sale\Discount\RuntimeCache\DiscountCache::getInstance();
+				$ids = $cache->getDiscountIds($arUserGroups);
+				if (!empty($ids))
+				{
+					$discountList = $cache->getDiscounts(
+						$ids,
+						['all', 'catalog'],
+						$siteID,
+						[]
+					);
+					if (!empty($discountList))
+					{
+						self::$needDiscountCache = true;
+					}
+					unset($discountList);
+				}
+				unset($ids, $cache);
+			}
+
 			$product = array(
 				'ID' => $intProductID,
 				'MODULE' => 'catalog',
 			);
 
-			if ($arCatalogGroups !== array(-1))
+			if (self::$needDiscountCache && $arCatalogGroups !== array(-1))
 			{
 				Catalog\Product\Price\Calculation::pushConfig();
 				Catalog\Product\Price\Calculation::setConfig([
@@ -1408,7 +1442,8 @@ class CAllCatalogDiscount
 								'LOGIC' => 'OR',
 								'ACTIVE_TO' => '',
 								'>=ACTIVE_TO' => $currentDatetime
-							)
+							),
+							'=RENEWAL' => $strRenewal
 						);
 						if (empty($couponsDiscount))
 						{

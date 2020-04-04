@@ -297,7 +297,7 @@ class DocumentsPlaceholderComponent extends CBitrixComponent
 					unset($placeholders[$placeholder]);
 					continue;
 				}
-				if(isset($requestFilter['title']) && isset($field['TITLE']) && $functionName($field['TITLE'], $requestFilter['title']) === false)
+				if(isset($requestFilter['title']) && isset($field['TITLE']) && $functionName($field['TITLE'], $requestFilter['title']) === false || !isset($field['TITLE']))
 				{
 					unset($placeholders[$placeholder]);
 					continue;

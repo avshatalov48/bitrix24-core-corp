@@ -8,13 +8,18 @@ use Bitrix\Disk\Driver;
 use Bitrix\Disk\File;
 use Bitrix\Disk\Folder;
 use Bitrix\Disk\Internals\Error\ErrorCollection;
+use Bitrix\Disk\Internals\Index\ObjectExtendedIndexTable;
+use Bitrix\Disk\Internals\Index\ObjectHeadIndexTable;
 use Bitrix\Disk\Internals\ObjectSaveIndexTable;
 use Bitrix\Disk\Internals\ObjectTable;
 use Bitrix\Disk\Internals\SimpleRightTable;
 use Bitrix\Disk\ProxyType\Group;
+use Bitrix\Disk\Search\Reindex\HeadIndex;
 use Bitrix\Disk\Storage;
 use Bitrix\Disk\ProxyType;
+use Bitrix\Main\Application;
 use Bitrix\Main\Loader;
+use Bitrix\Main\ModuleManager;
 use Bitrix\Main\Text;
 use CSearch;
 
@@ -25,6 +30,7 @@ final class IndexManager
 	/** @var ContentManager */
 	protected $contentManager;
 	protected $useSearchModule = true;
+	protected $allowUseExtendedFullText = true;
 
 	/**
 	 * Constructor IndexManager.
@@ -33,6 +39,13 @@ final class IndexManager
 	{
 		$this->errorCollection = new ErrorCollection;
 		$this->contentManager = new ContentManager;
+
+		$this->initDefaultConfiguration();
+	}
+
+	public function initDefaultConfiguration()
+	{
+		$this->allowUseExtendedFullText = Configuration::allowUseExtendedFullText();
 	}
 
 	/**
@@ -46,20 +59,90 @@ final class IndexManager
 		return $this;
 	}
 
-	protected function saveFullText(BaseObject $object, $content)
+	public function disableUsingExtendedFullText()
 	{
-		if (Configuration::allowFullTextIndex())
-		{
-			$fulltextContent = FullTextBuilder::create()
-				->addText($content)
-				->addUser($object->getCreatedBy())
-				->getSearchValue()
-			;
+		$this->allowUseExtendedFullText = false;
 
-			ObjectSaveIndexTable::update($object->getId(), array(
-				'SEARCH_INDEX' => $fulltextContent,
-			));
+		return $this;
+	}
+
+	protected function saveExtendedFullTextByContent(BaseObject $object, $content = null)
+	{
+		$textBuilder = $this->getTextBuilder($object);
+
+		if ($object instanceof Folder)
+		{
+			ObjectExtendedIndexTable::upsert(
+				$object->getId(),
+				$textBuilder->getSearchValue(),
+				ObjectExtendedIndexTable::STATUS_EXTENDED
+			);
+
+			return;
 		}
+
+		$status = $content? ObjectExtendedIndexTable::STATUS_EXTENDED : ObjectExtendedIndexTable::STATUS_SHORT;
+		if ($content)
+		{
+			//try to update by short version of search index
+			ObjectExtendedIndexTable::upsert(
+				$object->getId(),
+				$textBuilder->getSearchValue(),
+				$status
+			);
+		}
+
+		if (is_callable($content))
+		{
+			$content = $content();
+		}
+
+		ObjectExtendedIndexTable::upsert(
+			$object->getId(),
+			$textBuilder->addText($content)->getSearchValue(),
+			$status
+		);
+	}
+
+	protected function getTextBuilder(BaseObject $object)
+	{
+		return FullTextBuilder::create()
+			->addText($object->getName())
+			->addUser($object->getCreatedBy())
+		;
+	}
+
+	/**
+	 * @param BaseObject $object
+	 * @deprecated
+	 */
+	protected function saveOldFullText(BaseObject $object)
+	{
+		$textBuilder = $this->getTextBuilder($object);
+		if (!ModuleManager::isModuleInstalled('bitrix24') && ($object instanceof File))
+		{
+			$content = $this->getFileContent($object);
+			$maxIndexSize = Configuration::getMaxIndexSize();
+			if ($maxIndexSize > 0)
+			{
+				//yes, we know that substr may kills some last characters
+				$content = Text\BinaryString::getSubstring($content, 0, $maxIndexSize);
+			}
+
+			$textBuilder->addText($content);
+		}
+
+		ObjectSaveIndexTable::update($object->getId(), array(
+			'SEARCH_INDEX' => $textBuilder->getSearchValue(),
+		));
+	}
+
+	protected function saveFullTextByHead(BaseObject $object)
+	{
+		ObjectHeadIndexTable::upsert(
+			$object->getId(),
+			$this->getTextBuilder($object)->getSearchValue()
+		);
 	}
 
 	/**
@@ -75,37 +158,22 @@ final class IndexManager
 	 */
 	public function indexFile(File $file, array $additionalData = array())
 	{
-		//here we place configuration by Module (Options). Example, we can deactivate index for big files in Disk.
-		if (!Configuration::allowIndexFiles())
+		if (!$this->allowIndex($file))
 		{
 			return;
 		}
 
-		$storage = $file->getStorage();
-		if (!$storage || !$storage->getProxyType()->canIndexBySearch())
-		{
-			return;
-		}
+		$this->saveFullTextByHead($file);
+		$this->updateFileContent($file);
+		$this->indexFileByModuleSearch($file);
+	}
 
-		//save the short information about file
-		$this->saveFullText($file, $this->getFileContent($file, ['withoutBody' => true]));
-
-		if (array_key_exists('content', $additionalData))
-		{
-			$fileContent = $this->processIndexContent($additionalData['content']);
-		}
-		else
-		{
-			//try to extract full text from file
-			$fileContent = $this->getFileContent($file);
-		}
-
-		if ($fileContent)
-		{
-			//if we don't have content we don't have to rewrite data which was saved before (only title).
-			$this->saveFullText($file, $fileContent);
-		}
-
+	/**
+	 * @param File $file
+	 * @deprecated
+	 */
+	public function indexFileByModuleSearch(File $file)
+	{
 		if (!$this->useSearchModule)
 		{
 			return;
@@ -116,6 +184,7 @@ final class IndexManager
 			return;
 		}
 
+		$storage = $file->getStorage();
 		$searchData = array(
 			'LAST_MODIFIED' => $file->getUpdateTime()?: $file->getCreateTime(),
 			'TITLE' => $file->getName(),
@@ -125,7 +194,7 @@ final class IndexManager
 			'URL' => $this->getDetailUrl($file),
 			'PERMISSIONS' => $this->getSimpleRights($file),
 			//CSearch::killTags
-			'BODY' => strip_tags($file->getCreateUser()->getFormattedName()) . "\r\n" . $fileContent,
+			'BODY' => strip_tags($file->getCreateUser()->getFormattedName()) . "\r\n" . $this->getFileContent($file),
 		);
 		if ($storage->getProxyType() instanceof Group)
 		{
@@ -146,6 +215,64 @@ final class IndexManager
 		CSearch::index(Driver::INTERNAL_MODULE_ID, $this->getItemId($file), $searchData, true);
 	}
 
+	private function allowIndex(BaseObject $object)
+	{
+		//here we place configuration by Module (Options). Example, we can deactivate index for big files in Disk.
+		if (!Configuration::allowIndexFiles())
+		{
+			return false;
+		}
+
+		$storage = $object->getStorage();
+		if (!$storage || !$storage->getProxyType()->canIndexBySearch())
+		{
+			return false;
+		}
+
+		return true;
+	}
+
+	public function updateFileContent(File $file)
+	{
+		if (!$this->allowIndex($file))
+		{
+			return;
+		}
+
+		$connection = Application::getConnection();
+		if (!HeadIndex::isReady() && $connection->getTableField(ObjectTable::getTableName(), 'SEARCH_INDEX'))
+		{
+			$this->saveOldFullText($file);
+		}
+
+		if ($this->allowUseExtendedFullText)
+		{
+			$this->saveExtendedFullTextByContent($file);
+		}
+	}
+
+	public function indexFolderWithExtendedIndex(Folder $folder)
+	{
+		if (!$this->allowIndex($folder) || !$this->allowUseExtendedFullText)
+		{
+			return;
+		}
+
+		$this->saveExtendedFullTextByContent($folder);
+	}
+
+	public function indexFileWithExtendedIndex(File $file)
+	{
+		if (!$this->allowIndex($file) || !$this->allowUseExtendedFullText)
+		{
+			return;
+		}
+
+		$this->saveExtendedFullTextByContent($file, function() use ($file) {
+			return $this->getFileContent($file);
+		});
+	}
+
 	/**
 	 * Runs index by folder.
 	 * @param Folder $folder Target folder.
@@ -154,31 +281,42 @@ final class IndexManager
 	 */
 	public function indexFolder(Folder $folder)
 	{
-		//here we place configuration by Module (Options). Example, we can deactivate index for big files in Disk.
-		if (!Configuration::allowIndexFiles())
+		if (!$this->allowIndex($folder))
 		{
 			return;
 		}
 
-		$storage = $folder->getStorage();
-		if (!$storage || !$storage->getProxyType()->canIndexBySearch())
+		$connection = Application::getConnection();
+		if (!HeadIndex::isReady() && $connection->getTableField(ObjectTable::getTableName(), 'SEARCH_INDEX'))
 		{
-			return;
+			$this->saveOldFullText($folder);
 		}
 
-		$folderContent = $this->getFolderContent($folder);
-		$this->saveFullText($folder, $folderContent);
+		$this->saveFullTextByHead($folder);
+		if ($this->allowUseExtendedFullText)
+		{
+			$this->saveExtendedFullTextByContent($folder);
+		}
+		$this->indexFolderByModuleSearch($folder);
+	}
 
+	/**
+	 * @param Folder $folder
+	 * @deprecated
+	 */
+	public function indexFolderByModuleSearch(Folder $folder)
+	{
 		if (!$this->useSearchModule)
 		{
 			return;
 		}
 
-		if(!Loader::includeModule('search'))
+		if (!Loader::includeModule('search'))
 		{
 			return;
 		}
 
+		$storage = $folder->getStorage();
 		$searchData = array(
 			'LAST_MODIFIED' => $folder->getUpdateTime()?: $folder->getCreateTime(),
 			'TITLE' => $folder->getName(),
@@ -188,9 +326,9 @@ final class IndexManager
 			'URL' => $this->getDetailUrl($folder),
 			'PERMISSIONS' => $this->getSimpleRights($folder),
 			//CSearch::killTags
-			'BODY' => $folderContent,
+			'BODY' => $this->getTextBuilder($folder)->getSearchValue(),
 		);
-		if($storage->getProxyType() instanceof Group)
+		if ($storage->getProxyType() instanceof Group)
 		{
 			$searchData['PARAMS'] = array(
 				'socnet_group' => $storage->getEntityId(),
@@ -210,26 +348,11 @@ final class IndexManager
 	 */
 	public function changeName(BaseObject $object)
 	{
-		//here we place configuration by Module (Options). Example, we can deactivate index for big files in Disk.
-		if(!Configuration::allowIndexFiles())
-		{
-			return;
-		}
-		$storage = $object->getStorage();
-		if(!$storage)
-		{
-			return;
-		}
-		if(!$storage->getProxyType()->canIndexBySearch())
-		{
-			return;
-		}
-
-		if($object instanceof Folder)
+		if ($object instanceof Folder)
 		{
 			$this->indexFolder($object);
 		}
-		elseif($object instanceof File)
+		elseif ($object instanceof File)
 		{
 			$this->indexFile($object);
 		}
@@ -242,7 +365,19 @@ final class IndexManager
 	 */
 	public function dropIndex(BaseObject $object)
 	{
-		if(!Loader::includeModule('search'))
+		ObjectHeadIndexTable::delete($object->getId());
+		ObjectExtendedIndexTable::delete($object->getId());
+
+		$this->dropIndexByModuleSearch($object);
+	}
+
+	/**
+	 * @param BaseObject $object
+	 * @deprecated
+	 */
+	public function dropIndexByModuleSearch(BaseObject $object)
+	{
+		if (!Loader::includeModule('search'))
 		{
 			return;
 		}
@@ -255,6 +390,7 @@ final class IndexManager
 	 * @param BaseObject $object Target object (can be folder or file).
 	 * @throws \Bitrix\Main\LoaderException
 	 * @return void
+	 * @deprecated
 	 */
 	public function recalculateRights(BaseObject $object)
 	{
@@ -299,6 +435,7 @@ final class IndexManager
 	 * Event listener which return url for resource by fields.
 	 * @param array $fields Fields from search module.
 	 * @return string
+	 * @deprecated
 	 */
 	public static function onSearchGetUrl($fields)
 	{
@@ -332,6 +469,7 @@ final class IndexManager
 	 * @param BaseObject $object File or Folder.
 	 *
 	 * @return null|array
+	 * @deprecated
 	 */
 	public function getStoredIndex(BaseObject $object)
 	{
@@ -352,6 +490,7 @@ final class IndexManager
 	 * @param null   $searchObject Search object.
 	 * @param string $method Method.
 	 * @return array|bool
+	 * @deprecated
 	 */
 	public static function onSearchReindex($nextStepData = array(), $searchObject = null, $method = "")
 	{
@@ -526,33 +665,14 @@ final class IndexManager
 		return $defaultSite['LID'];
 	}
 
-	private function processIndexContent($content)
-	{
-		$maxIndexSize = Configuration::getMaxIndexSize();
-		if ($maxIndexSize > 0)
-		{
-			//yes, we know that substr may kills some last characters
-			return Text\BinaryString::getSubstring($content, 0, $maxIndexSize);
-		}
-
-		return $content;
-	}
-
 	private function getObjectContent(BaseObject $object, array $options = null)
 	{
-		return $this->processIndexContent(
-			$this->contentManager->getObjectContent($object, $options)
-		);
-	}
-
-	private function getFolderContent(Folder $folder)
-	{
-		return $this->getObjectContent($folder);
+		return $this->contentManager->getObjectContent($object, $options);
 	}
 
 	private function getFileContent(File $file, array $options = null)
 	{
-		return $this->getObjectContent($file, $options);
+		return $this->contentManager->getObjectContent($file, $options);
 	}
 
 	private function getSimpleRights(BaseObject $object)
@@ -610,4 +730,4 @@ final class IndexManager
 
 		return $detailUrl;
 	}
-} 
+}

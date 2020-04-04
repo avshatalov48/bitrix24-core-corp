@@ -1,10 +1,24 @@
 <?php
 use Bitrix\Main\Context;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Text\HtmlFilter;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm\WebForm\Internals\FieldTable;
+use Bitrix\Crm\WebForm;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
+
+if ($arParams['VIEW_TYPE'] !== 'frame' && $arResult['IS_EMBEDDING_AVAILABLE'])
+{
+	$this->addExternalCss($this->GetFolder() . '/mobile.css');
+	echo WebForm\Script::getListContext($arResult['FORM'], [])['INLINE']['text'];
+	return;
+}
+
+if (Loader::includeModule('calendar'))
+{
+	CUtil::InitJSCore(array('userfield_resourcebooking'));
+}
 
 /** @var CBitrixComponentTemplate $this */
 /** @var array $arParams */
@@ -89,9 +103,15 @@ $frame = $this->createFrame('')->begin('');
 								$fieldClassHidden = $field['hidden'] ? 'crm-webform-hide' : '';
 								$requiredClassName = ($field['required'] ? 'crm-webform-label-required-field' : '');
 
+								if($field['type'] == 'page')
+								{
+									continue;
+								}
+
 								if($field['type'] == 'product')
 								{
 									$hasProduct = true;
+									$field['multiple'] = false;
 								}
 
 								if(in_array($field['type'], array('br', 'hr')))
@@ -216,10 +236,15 @@ $frame = $this->createFrame('')->begin('');
 												$input .= '<mark class="crm-webform-file-text-field">';
 												$input .= '<span>' . Loc::getMessage('CRM_WEBFORM_FILL_FILE_NOT_SELECTED') . '</span><span></span>';
 												$input .= '</mark>';
-												$input .= '<input class="crm-webform-input" type="file" name="' . $inputName . '" id="' . $inputId . '">';
+												$inputAccept = in_array($inputName, ['CONTACT_PHOTO', 'COMPANY_LOGO'])
+													? 'image/*'
+													: '';
+												$input .= '<input class="crm-webform-input"'
+													. ' type="file"'
+													. ($inputAccept ? " accept=\"$inputAccept\"" : '')
+													. ' name="' . $inputName . '" id="' . $inputId . '">';
 												$input .= '<b class="tooltip crm-webform-tooltip-bottom-right">' . Loc::getMessage('CRM_WEBFORM_FILL_ERROR_FIELD_EMPTY') . '</b>';
 												$input .= '</label>';
-
 												break;
 
 											case 'phone':

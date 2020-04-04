@@ -332,15 +332,23 @@ if($arParams["CATEGORY_ID"])
 {
 	$arFilter["CATEGORY_ID_F"] = $arParams["CATEGORY_ID"];
 }
-$arPostUserFields = $USER_FIELD_MANAGER->GetUserFields("BLOG_POST");
-if (isset($arPostUserFields['UF_IMPRTANT_DATE_END']))
+
+if (
+	!empty($arParams["FILTER"])
+	&& isset($arParams["FILTER"][">UF_BLOG_POST_IMPRTNT"])
+)
 {
-	$arFilter[] = array(
-		"LOGIC" => "OR",
-		"=UF_IMPRTANT_DATE_END" => false,
-		">=UF_IMPRTANT_DATE_END" => ConvertTimeStamp(time() + CTimeZone::GetOffset(), "SHORT"),
-	);
+	$arPostUserFields = $USER_FIELD_MANAGER->GetUserFields("BLOG_POST");
+	if (isset($arPostUserFields['UF_IMPRTANT_DATE_END']))
+	{
+		$arFilter[] = array(
+			"LOGIC" => "OR",
+			"=UF_IMPRTANT_DATE_END" => false,
+			">=UF_IMPRTANT_DATE_END" => ConvertTimeStamp(time() + CTimeZone::GetOffset(), "SHORT"),
+		);
+	}
 }
+
 $arResult["NAV_RESULT"] = "";
 $arResult["NAV_STRING"] = "";
 $arResult["POST"] = Array();

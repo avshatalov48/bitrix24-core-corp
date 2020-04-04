@@ -15,9 +15,6 @@ use Bitrix\Main,
 	Bitrix\Main\Application,
 	Bitrix\Catalog;
 
-if (!Catalog\Config\Feature::isProductSetsEnabled())
-	return;
-
 $arParams['IBLOCK_ID'] = isset($arParams['IBLOCK_ID']) ? (int)$arParams['IBLOCK_ID'] : 0;
 if ($arParams['IBLOCK_ID'] <= 0)
 	return;
@@ -56,6 +53,11 @@ if($this->startResultCache(false, array($elementID, ($arParams["CACHE_GROUPS"]==
 	if (!Loader::includeModule('catalog'))
 	{
 		ShowError(GetMessage("CATALOG_MODULE_NOT_INSTALLED"));
+		$this->abortResultCache();
+		return;
+	}
+	if (!Catalog\Config\Feature::isProductSetsEnabled())
+	{
 		$this->abortResultCache();
 		return;
 	}
@@ -215,6 +217,20 @@ if($this->startResultCache(false, array($elementID, ($arParams["CACHE_GROUPS"]==
 		false,
 		$select
 	);
+	if (Main\ModuleManager::isModuleInstalled('bitrix24'))
+	{
+		$detailUrl = '';
+		if (isset($arParams['DETAIL_URL']))
+		{
+			$detailUrl = trim($arParams['DETAIL_URL']);
+		}
+		if ($detailUrl !== '')
+		{
+			$itemsIterator->SetUrlTemplates($detailUrl);
+		}
+		unset($detailUrl);
+	}
+
 	while ($item = $itemsIterator->GetNext())
 	{
 		$correct = (

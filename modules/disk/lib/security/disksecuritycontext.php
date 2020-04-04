@@ -51,6 +51,15 @@ class DiskSecurityContext extends SecurityContext
 		unset($operations);
 	}
 
+	public function preloadOperationsForSpecifiedObjects($parentObjectId, array $objectIds)
+	{
+		$rightsManager = Driver::getInstance()->getRightsManager();
+		foreach ($rightsManager->getUserOperationsForChildren($parentObjectId, $this->userId, $objectIds) as $objectId => $operations)
+		{
+			$this->operationsCache[$objectId] = $operations;
+		}
+	}
+
 	/**
 	 * @param $targetId
 	 * @return bool

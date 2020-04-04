@@ -1,3 +1,3 @@
 <?
-$MESS["OL_PAGE_PERMISSIONS_TITLE"] = "Access permissions";
+$MESS["OL_PAGE_PERMISSIONS_TITLE"] = "Access Permissions";
 ?>

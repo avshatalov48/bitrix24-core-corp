@@ -40,11 +40,17 @@ $arResult["bIntranetInstalled"] = ModuleManager::isModuleInstalled("intranet");
 $arResult["bExtranetInstalled"] = ($arResult["bIntranetInstalled"] && CModule::IncludeModule("extranet"));
 $arResult["bExtranetSite"] = ($arResult["bExtranetInstalled"] && CExtranet::IsExtranetSite());
 $arResult["bExtranetUser"] = ($arResult["bExtranetInstalled"] && !CExtranet::IsIntranetUser());
-$arResult["ReadOnly"] = (isset($arParams["GROUP_READ_ONLY"]) && $arParams["GROUP_READ_ONLY"] == "Y");
+$arResult["ReadOnly"] = (
+	(isset($arParams["GROUP_READ_ONLY"]) && $arParams["GROUP_READ_ONLY"] == "Y")
+	|| (isset($arParams["MODE"]) && $arParams["MODE"] == "LANDING")
+);
 
 $folderUsers = COption::GetOptionString("socialnetwork", "user_page", false, SITE_ID);
 $arParams["PATH_TO_LOG_TAG"] = $folderUsers."log/?TAG=#tag#";
-if (SITE_TEMPLATE_ID == 'bitrix24')
+if (
+	defined('SITE_TEMPLATE_ID')
+	&& SITE_TEMPLATE_ID == 'bitrix24'
+)
 {
 	$arParams["PATH_TO_LOG_TAG"] .= "&apply_filter=Y";
 }
@@ -75,8 +81,9 @@ $arResult["bTasksAvailable"] = (
 	&& $arResult["bTasksInstalled"]
 	&& (
 		!CModule::IncludeModule('bitrix24')
-		|| CBitrix24BusinessTools::isToolAvailable($USER->GetID(), "tasks")
+		|| CBitrix24BusinessTools::isToolAvailable($USER->getId(), "tasks")
 	)
+	&& CSocNetFeaturesPerms::CurrentUserCanPerformOperation(SONET_ENTITY_USER, $USER->getId(), "tasks", "create_tasks")
 );
 
 if (!$arResult["bPublicPage"])
@@ -1342,6 +1349,8 @@ if(
 
 					if (
 						count($arResult["Post"]["SPERM"]) == 1
+						&& isset($arResult["Post"]["SPERM"]["U"])
+						&& is_array($arResult["Post"]["SPERM"]["U"])
 						&& count($arResult["Post"]["SPERM"]["U"]) == 1
 						&& $bAll
 					)
@@ -1418,13 +1427,31 @@ if(
 			$arResult["arUser"]["urlToPostImportant"] = CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_POST_IMPORTANT"], array("user_id"=> $arPost["AUTHOR_ID"]));
 
 			$arResult["CanComment"] = (
-				!$arResult["ReadOnly"]
-				&& (
-					!isset($arResult["Post"]["ONLY_CLOSED_GROUPS"])
-					|| !$arResult["Post"]["ONLY_CLOSED_GROUPS"]
-					|| COption::GetOptionString("socialnetwork", "work_with_closed_groups", "N") == "Y"
-				)
+				!isset($arResult["Post"]["ONLY_CLOSED_GROUPS"])
+				|| !$arResult["Post"]["ONLY_CLOSED_GROUPS"]
+				|| COption::GetOptionString("socialnetwork", "work_with_closed_groups", "N") == "Y"
 			);
+
+			if (!empty($arParams['SONET_GROUP_ID'])	)
+			{
+				if (
+					$arResult["CanComment"]
+					&& $arResult["ReadOnly"]
+				)
+				{
+					$arResult["CanComment"] = \Bitrix\Socialnetwork\ComponentHelper::checkCanCommentInWorkgroup([
+						'userId' => $arResult["USER_ID"],
+						'workgroupId' => $arParams['SONET_GROUP_ID']
+					]);
+				}
+			}
+			else
+			{
+				$arResult["CanComment"] = (
+					$arResult["CanComment"]
+					&& !$arResult["ReadOnly"]
+				);
+			}
 
 			$arResult["dest_users"] = array();
 			foreach ($arResult["Post"]["SPERM"] as $key => $value) 
@@ -1476,7 +1503,7 @@ if(
 							)
 							|| (
 								$group_code == "U"
-								&& isset($arUserIdVisible)
+								&& isset($arUserIdVisible) // current extranet user
 								&& is_array($arUserIdVisible)
 								&& !in_array($entity_id, $arUserIdVisible)
 							)

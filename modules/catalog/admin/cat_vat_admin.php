@@ -28,7 +28,7 @@ IncludeModuleLangFile(__FILE__);
 
 $sTableID = "tbl_catalog_vat";
 
-$oSort = new CAdminSorting($sTableID, "C_SORT", "ASC");
+$oSort = new CAdminUiSorting($sTableID, "C_SORT", "ASC");
 $lAdmin = new CAdminUiList($sTableID, $oSort);
 
 $filterFields = array(

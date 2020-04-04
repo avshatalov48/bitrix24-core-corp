@@ -649,7 +649,7 @@ if(typeof(BX.Crm.ProcessSummaryPanel) === "undefined")
 			this._id = id;
 			this._settings = settings ? settings : {};
 
-			this._container = BX(BX.prop.getString(this._settings, "container"));
+			this._container = BX(BX.prop.get(this._settings, "container"));
 			if(!BX.type.isElementNode(this._container))
 			{
 				throw "BatchConversionPanel: Could not find container.";

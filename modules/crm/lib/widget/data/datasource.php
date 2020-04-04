@@ -1,8 +1,10 @@
 <?php
 namespace Bitrix\Crm\Widget\Data;
-use Bitrix\Main;
+
 use Bitrix\Crm\Widget\Filter;
 use Bitrix\Crm\Integration\Channel\ChannelType;
+use Bitrix\Main\Type\Date;
+use Bitrix\Main\Type\DateTime;
 
 abstract class DataSource
 {
@@ -376,5 +378,18 @@ abstract class DataSource
 		$this->cache->StartDataCache();
 		$this->cache->EndDataCache($data);
 		return true;
+	}
+
+	protected function getLocalDate(Date $date, $format)
+	{
+		try
+		{
+			$dateTime = new DateTime($date->format($format), $format);
+			return $dateTime->toUserTime()->format($format);
+		}
+		catch (\Exception $exception)
+		{
+			return '9999-12-31';
+		}
 	}
 }

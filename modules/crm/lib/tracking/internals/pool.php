@@ -3,6 +3,7 @@ namespace Bitrix\Crm\Tracking\Internals;
 
 use Bitrix\Main\ORM\Data\DataManager;
 use Bitrix\Main\Type\DateTime;
+use Bitrix\Main\DB;
 
 use Bitrix\Crm\Communication;
 
@@ -42,6 +43,15 @@ class PoolTable extends DataManager
 			'VALUE' => [
 				'data_type' => 'string',
 			],
+			/*
+			'PHONE_NUMBER' => [
+				'data_type' => PhoneNumberTable::class,
+				'reference' => [
+					'=this.TYPE_ID' => new DB\SqlExpression('?', Communication\Type::PHONE),
+					'=this.VALUE' => 'ref.VALUE',
+				],
+			],
+			*/
 		];
 	}
 

@@ -2,27 +2,11 @@
 
 namespace Bitrix\Crm\Controller\DocumentGenerator;
 
-use Bitrix\Crm\Integration\DocumentGeneratorManager;
-use Bitrix\DocumentGenerator\Engine\CheckNumeratorType;
 use Bitrix\Main\Engine\Response\DataType\Page;
 use Bitrix\Main\UI\PageNavigation;
 
 class Numerator extends Base
 {
-	/**
-	 * @return array
-	 */
-	public function getDefaultPreFilters()
-	{
-		$filters = parent::getDefaultPreFilters();
-		if(DocumentGeneratorManager::getInstance()->isEnabled())
-		{
-			$filters[] = new CheckNumeratorType();
-		}
-
-		return $filters;
-	}
-
 	/**
 	 * @return \Bitrix\DocumentGenerator\Controller\Base
 	 */

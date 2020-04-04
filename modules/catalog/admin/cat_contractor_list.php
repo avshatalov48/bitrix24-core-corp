@@ -32,7 +32,7 @@ if ($ex = $APPLICATION->GetException())
 }
 
 $sTableID = "b_catalog_contractor";
-$oSort = new CAdminSorting($sTableID, "ID", "ASC");
+$oSort = new CAdminUiSorting($sTableID, "ID", "ASC");
 $lAdmin = new CAdminUiList($sTableID, $oSort);
 
 $filterFields = array(

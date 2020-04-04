@@ -5,7 +5,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 use \Bitrix\Landing\Landing;
-use Bitrix\Landing\Manager;
+use \Bitrix\Landing\Manager;
+use \Bitrix\Landing\Rights;
 use \Bitrix\Main\Entity;
 
 \CBitrixComponent::includeComponentClass('bitrix:landing.base');
@@ -28,7 +29,8 @@ class LandingLandingsComponent extends LandingBaseComponent
 	{
 		$res = \Bitrix\Landing\PublicAction\Landing::copy(
 			$id,
-			isset($additional['siteId']) ? $additional['siteId'] : false
+			isset($additional['siteId']) ? $additional['siteId'] : null,
+			isset($additional['folderId']) ? $additional['folderId'] : null
 		);
 
 		if ($res->getError()->isEmpty())
@@ -93,6 +95,17 @@ class LandingLandingsComponent extends LandingBaseComponent
 			$this->checkParam('ACTION_FOLDER', 'folderId');
 			$this->checkParam('PAGE_URL_LANDING_EDIT', '');
 			$this->checkParam('PAGE_URL_LANDING_VIEW', '');
+			$this->checkParam('~AGREEMENT', []);
+
+			// check agreements for Bitrix24
+			if (Manager::isB24())
+			{
+				$this->arResult['AGREEMENT'] = $this->arParams['~AGREEMENT'];
+			}
+			else
+			{
+				$this->arResult['AGREEMENT'] = [];
+			}
 
 			// make filter
 			$filter = LandingFilterComponent::getFilter(
@@ -115,6 +128,17 @@ class LandingLandingsComponent extends LandingBaseComponent
 			$this->arResult['IS_DELETED'] = LandingFilterComponent::isDeleted();
 			$this->arResult['SITES'] = $sites = $this->getSites();
 
+			// access
+			$rights = Rights::getOperationsForSite(
+				$this->arParams['SITE_ID']
+			);
+			$this->arResult['ACCESS_SITE'] = [
+				'EDIT' => in_array(Rights::ACCESS_TYPES['edit'], $rights) ? 'Y' : 'N',
+				'SETTINGS' => in_array(Rights::ACCESS_TYPES['sett'], $rights) ? 'Y' : 'N',
+				'PUBLICATION' => in_array(Rights::ACCESS_TYPES['public'], $rights) ? 'Y' : 'N',
+				'DELETE' => in_array(Rights::ACCESS_TYPES['delete'], $rights) ? 'Y' : 'N'
+			];
+
 			// get list
 			$this->arResult['LANDINGS'] = $this->getLandings(array(
 				'select' => array(
@@ -124,8 +148,15 @@ class LandingLandingsComponent extends LandingBaseComponent
 				),
 				'filter' => $filter,
 				'runtime' => array(
-					new Entity\ExpressionField('DATE_MODIFY_UNIX', 'UNIX_TIMESTAMP(%s)', array('DATE_MODIFY')),
-					new Entity\ExpressionField('DATE_PUBLIC_UNIX', 'UNIX_TIMESTAMP(%s)', array('DATE_PUBLIC'))
+					new Entity\ExpressionField(
+						'DATE_MODIFY_UNIX', 'UNIX_TIMESTAMP(%s)', array('DATE_MODIFY')
+					),
+					new Entity\ExpressionField(
+						'DATE_PUBLIC_UNIX', 'UNIX_TIMESTAMP(%s)', array('DATE_PUBLIC')
+					),
+					new Entity\ExpressionField(
+						'CHANGED', 'CASE WHEN %s > %s THEN 1 ELSE 0 END', ['DATE_MODIFY', 'DATE_PUBLIC']
+					)
 				),
 				'order' => $this->arResult['IS_DELETED']
 					? array(
@@ -139,7 +170,6 @@ class LandingLandingsComponent extends LandingBaseComponent
 			$this->arResult['NAVIGATION'] = $this->getLastNavigation();
 
 			// base data
-			$firstItem = false;
 			foreach ($this->arResult['LANDINGS'] as &$item)
 			{
 				if (isset($sites[$item['SITE_ID']]))
@@ -150,9 +180,13 @@ class LandingLandingsComponent extends LandingBaseComponent
 				{
 					$item['IS_HOMEPAGE'] = false;
 				}
-				if (!$firstItem)
+				if ($item['IS_HOMEPAGE'])
 				{
-					$firstItem = &$item;
+					$item['SORT'] = PHP_INT_MAX;
+				}
+				else
+				{
+					$item['SORT'] = $item['ID'];
 				}
 				$landing = Landing::createInstance($item['ID'], array(
 					'blocks_limit' => 1,
@@ -184,11 +218,7 @@ class LandingLandingsComponent extends LandingBaseComponent
 			// sort by homepage additional
 			uasort($this->arResult['LANDINGS'], function($a, $b)
 			{
-				if ($a['IS_HOMEPAGE'] === $b['IS_HOMEPAGE'])
-				{
-					return 0;
-				}
-				return ($a['IS_HOMEPAGE'] < $b['IS_HOMEPAGE']) ? 1 : -1;
+				return ($a['SORT'] < $b['SORT']) ? 1 : -1;
 			});
 
 			// public url

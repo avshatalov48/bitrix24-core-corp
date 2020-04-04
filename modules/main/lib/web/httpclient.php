@@ -60,6 +60,8 @@ class HttpClient
 
 	protected $effectiveUrl;
 
+	protected $contextOptions = [];
+
 	/**
 	 * @param array $options Optional array with options:
 	 *		"redirect" bool Follow redirects (default true)
@@ -589,6 +591,17 @@ class HttpClient
 		return $this->effectiveUrl;
 	}
 
+	/**
+	 * Sets context options and parameters.
+	 *
+	 * @param array $options Context options and parameters
+	 * @return void
+	 */
+	public function setContextOptions(array $options)
+	{
+		$this->contextOptions = array_replace_recursive($this->contextOptions, $options);
+	}
+
 	protected function connect(Uri $url)
 	{
 		if($this->proxyHost <> '')
@@ -613,7 +626,9 @@ class HttpClient
 		}
 
 		$context = $this->createContext();
-		if ($context)
+
+		//$context can be FALSE
+		if($context)
 		{
 			$res = stream_socket_client($proto.$host.":".$port, $errno, $errstr, $this->socketTimeout, STREAM_CLIENT_CONNECT, $context);
 		}
@@ -649,14 +664,14 @@ class HttpClient
 
 	protected function createContext()
 	{
-		$contextOptions = array();
 		if ($this->sslVerify === false)
 		{
-			$contextOptions["ssl"]["verify_peer_name"] = false;
-			$contextOptions["ssl"]["verify_peer"] = false;
-			$contextOptions["ssl"]["allow_self_signed"] = true;
+			$this->contextOptions["ssl"]["verify_peer_name"] = false;
+			$this->contextOptions["ssl"]["verify_peer"] = false;
+			$this->contextOptions["ssl"]["allow_self_signed"] = true;
 		}
-		$context = stream_context_create($contextOptions);
+
+		$context = stream_context_create($this->contextOptions);
 		return $context;
 	}
 

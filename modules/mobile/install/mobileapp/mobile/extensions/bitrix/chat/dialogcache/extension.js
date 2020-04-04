@@ -90,7 +90,6 @@
 			{
 				if (!this.database)
 				{
-					console.warn('ChatDialogCache.getStore: database is not initialized!');
 					reject(false);
 					return false;
 				}
@@ -128,7 +127,6 @@
 			{
 				if (!this.database)
 				{
-					console.warn('ChatDialogCache.getDialog: database is not initialized!');
 					reject(false);
 					return true;
 				}
@@ -175,7 +173,6 @@
 		{
 			if (!this.database)
 			{
-				console.warn('ChatDialogCache.addDialog: database is not initialized!');
 				return null;
 			}
 
@@ -259,7 +256,6 @@
 		{
 			if (!this.database)
 			{
-				console.warn('ChatDialogCache.updateDialog: database is not initialized!');
 				return null;
 			}
 
@@ -355,7 +351,6 @@
 		{
 			if (!this.database)
 			{
-				console.warn('ChatDialogCache.addMessage: database is not initialized!');
 				return null;
 			}
 
@@ -417,7 +412,6 @@
 		{
 			if (!this.database)
 			{
-				console.warn('ChatDialogCache.updateMessage: database is not initialized!');
 				return null;
 			}
 
@@ -475,7 +469,6 @@
 		{
 			if (!this.database)
 			{
-				console.warn('ChatDialogCache.deleteMessage: database is not initialized!');
 				return null;
 			}
 

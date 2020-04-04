@@ -127,7 +127,7 @@ foreach ($arResult['FILES'] as $file)
 	}
 	else
 	{
-		$file["preview_url"] = "javascript:void();";
+		$file["preview_url"] = "data:image/png;base64,";
 	}
 ?>
 				<tr class="wd-inline-file" id="disk-edit-attach<?=$file['ID']?>" bx-attach-file-id="<?=\Bitrix\Disk\Uf\FileUserType::NEW_FILE_PREFIX?><?=$file['FILE_ID']?>"<?

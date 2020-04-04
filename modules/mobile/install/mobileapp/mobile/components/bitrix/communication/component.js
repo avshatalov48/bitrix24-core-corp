@@ -3,14 +3,14 @@
 
 	if (typeof this.SocketConnection == 'undefined')
 	{
-		this.SocketConnection = new Connection(CONFIG.PULL_CONFIG);
+		this.SocketConnection = new Connection();
 		this.SocketConnection.start();
 	}
 	else
 	{
 		SocketConnection.disconnect(1000, "restart");
 		setTimeout(() => {
-			this.SocketConnection = new Connection(CONFIG.PULL_CONFIG);
+			this.SocketConnection = new Connection();
 			this.SocketConnection.start();
 		}, 2000);
 	}
@@ -320,7 +320,7 @@
 					}
 
 					let cacheData = JSON.parse(items[0].VALUE);
-					for (counterType of cacheData.counterTypes)
+					for (let counterType of cacheData.counterTypes)
 					{
 						this.config[counterType.type] = counterType.value;
 					}
@@ -425,7 +425,7 @@
 						}
 
 						BX.ajax({
-							url : "/mobile/",
+							url : env.siteDir + "mobile/",
 							method : "POST",
 							dataType : "json",
 							tokenSaveRequest : true,
@@ -435,7 +435,6 @@
 								uuid : device.uuid,
 								device_token : token,
 								device_type : dt,
-								sessid : BX.bitrix_sessid()
 							}
 						})
 							.then((data) => console.log(data))
@@ -466,9 +465,7 @@
 
 			if (
 				tag.substr(0, 10) == 'BLOG|POST|'
-				|| tag.substr(0, 13) == 'BLOG|COMMENT|'
 				|| tag.substr(0, 18) == 'BLOG|POST_MENTION|'
-				|| tag.substr(0, 21) == 'BLOG|COMMENT_MENTION|'
 				|| tag.substr(0, 11) == 'BLOG|SHARE|'
 				|| tag.substr(0, 17) == 'BLOG|SHARE2USERS|'
 			)
@@ -476,13 +473,26 @@
 				params = tag.split("|");
 				result = link + "mobile/log/?ACTION=CONVERT&ENTITY_TYPE_ID=BLOG_POST&ENTITY_ID=" + params[2];
 			}
+
+			else if (
+				tag.substr(0, 13) == 'BLOG|COMMENT|'
+				|| tag.substr(0, 21) == 'BLOG|COMMENT_MENTION|'
+			)
+			{
+				params = tag.split("|");
+				result = link + "mobile/log/?ACTION=CONVERT&ENTITY_TYPE_ID=BLOG_POST&ENTITY_ID=" + params[2] + "&commentId=" + params[3];
+			}
+
 			else if(
 				tag.substr(0, 11) == 'TASKS|TASK|'
 				|| tag.substr(0, 14) == 'TASKS|COMMENT|'
 			)
 			{
 				params = tag.split("|");
-				result = link + "mobile/tasks/snmrouter/?routePage=view&TASK_ID=" + params[2];
+				BX.postComponentEvent(
+					'taskbackground::task::action',
+					[{id: params[2]}, params[2], {taskId: params[2], getTaskInfo: true}]
+				);
 			}
 			else if (tag.substr(0, 12) == 'SONET|EVENT|')
 			{
@@ -558,9 +568,10 @@
 	 * User Profile
 	 */
 
-	BX.addCustomEvent("onUserProfileOpen", userId =>
+	BX.addCustomEvent("onUserProfileOpen", (userId, options = {}) =>
 	{
-		console.log("onUserProfileOpen", userId);
+		console.log("onUserProfileOpen", userId, options);
+
 		if(Application.getApiVersion() >= 27)
 		{
 			let url = "/mobile/mobile_component/user.profile/?version=1";
@@ -570,15 +581,34 @@
 				url = availableComponents["user.profile"]["publicUrl"];
 			}
 
+			let backdropOptions = {};
+			let isBackdrop = false;
+			if (options.backdrop)
+			{
+				if (typeof options.backdrop === 'object' && options.backdrop)
+				{
+					backdropOptions = {backdrop: options.backdrop};
+					isBackdrop = true;
+				}
+				else if (typeof options.backdrop === 'boolean' && options.backdrop)
+				{
+					backdropOptions = {backdrop: {}};
+					isBackdrop = true;
+				}
+			}
+
 			PageManager.openComponent("JSStackComponent",
 				{
 					scriptPath: url,
-					params: {"userId": userId},
+					params: {userId, isBackdrop},
 					canOpenInDefault:true,
-					rootWidget:{
+					rootWidget: {
 						name: "list",
 						groupStyle: true,
-						settings:{objectName: "form", groupStyle: true,}
+						settings: Object.assign({
+							objectName: "form",
+							groupStyle: true,
+						}, backdropOptions)
 					}
 				});
 		}

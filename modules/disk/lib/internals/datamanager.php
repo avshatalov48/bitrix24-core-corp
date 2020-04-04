@@ -6,6 +6,9 @@ use Bitrix\Disk\Internals\Db\SqlHelper;
 use Bitrix\Disk\Internals\Entity\Query;
 use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentNullException;
+use Bitrix\Main\Error;
+use Bitrix\Main\ORM\Data\AddResult;
+use Bitrix\Main\SystemException;
 
 abstract class DataManager extends \Bitrix\Main\Entity\DataManager
 {
@@ -29,20 +32,60 @@ abstract class DataManager extends \Bitrix\Main\Entity\DataManager
 		return new Query(static::getEntity());
 	}
 
-	public static function mergeData(array $insert, array $update)
+	public static function merge(array $data)
 	{
-		$entity = static::getEntity();
-		$connection = $entity->getConnection();
-		$helper = $connection->getSqlHelper();
+		$result = new AddResult();
 
-		$sql = $helper->prepareMerge($entity->getDBTableName(), $entity->getPrimaryArray(), $insert, $update);
-
-		$sql = current($sql);
-		if($sql <> '')
+		$helper = Application::getConnection()->getSqlHelper();
+		$insertData = $data;
+		$updateData = $data;
+		$mergeFields = static::getPrimaryFieldsForMerge();
+		foreach ($mergeFields as $field)
 		{
-			$connection->queryExecute($sql);
-			$entity->cleanCache();
+			unset($updateData[$field]);
 		}
+
+		// use save modifiers
+		$entity = static::getEntity();
+		foreach ($updateData as $fieldName => $value)
+		{
+			$field = $entity->getField($fieldName);
+			$updateData[$fieldName] = $field->modifyValueBeforeSave($value, $updateData);
+		}
+		foreach ($insertData as $fieldName => $value)
+		{
+			$field = $entity->getField($fieldName);
+			$insertData[$fieldName] = $field->modifyValueBeforeSave($value, $insertData);
+		}
+
+		$merge = $helper->prepareMerge(
+			static::getTableName(),
+			static::getPrimaryFieldsForMerge(),
+			$insertData,
+			$updateData
+		);
+
+		if ($merge[0] != "")
+		{
+			Application::getConnection()->query($merge[0]);
+			$id = Application::getConnection()->getInsertedId();
+			$result->setId($id);
+			$result->setData($data);
+		}
+		else
+		{
+			$result->addError(new Error('Error constructing query'));
+		}
+
+		return $result;
+	}
+
+	/**
+	 * @return array
+	 */
+	protected static function getPrimaryFieldsForMerge()
+	{
+		throw new SystemException("Method should be implemented in class " . get_called_class());
 	}
 
 	/**

@@ -59,6 +59,8 @@ class CCrmLeadDetailsComponent extends CBitrixComponent
 	/** @var bool */
 	private $isCopyMode = false;
 	/** @var bool */
+	private $isTaxMode = false;
+	/** @var bool */
 	private $enableDupControl = false;
 	/** @var array|null */
 	private $defaultFieldValues = null;
@@ -79,6 +81,8 @@ class CCrmLeadDetailsComponent extends CBitrixComponent
 
 		$this->multiFieldInfos = CCrmFieldMulti::GetEntityTypeInfos();
 		$this->multiFieldValueTypeInfos = CCrmFieldMulti::GetEntityTypes();
+
+		$this->isTaxMode = \CCrmTax::isTaxMode();
 	}
 	public function executeComponent()
 	{
@@ -360,17 +364,6 @@ class CCrmLeadDetailsComponent extends CBitrixComponent
 			$currencyID = $this->entityData['CURRENCY_ID'];
 		}
 
-		$bTaxMode = \CCrmTax::isTaxMode();
-
-		$companyID = isset($this->entityData['COMPANY_ID']) ? (int)$this->entityData['COMPANY_ID'] : 0;
-		// Determine person type
-		$personTypes = CCrmPaySystem::getPersonTypeIDs();
-		$personTypeID = 0;
-		if (isset($arPersonTypes['COMPANY']) && isset($arPersonTypes['CONTACT']))
-		{
-			$personTypeID = $companyID > 0 ? $personTypes['COMPANY'] : $personTypes['CONTACT'];
-		}
-
 		ob_start();
 		$APPLICATION->IncludeComponent('bitrix:crm.product_row.list',
 			'',
@@ -382,9 +375,9 @@ class CCrmLeadDetailsComponent extends CBitrixComponent
 				'OWNER_TYPE' => 'L',
 				'PERMISSION_TYPE' => $this->arResult['READ_ONLY'] ? 'READ' : 'WRITE',
 				'PERMISSION_ENTITY_TYPE' => $this->arResult['PERMISSION_ENTITY_TYPE'],
-				'PERSON_TYPE_ID' => $personTypeID,
+				'PERSON_TYPE_ID' =>  $this->resolvePersonTypeID($this->entityData),
 				'CURRENCY_ID' => $currencyID,
-				'LOCATION_ID' => $bTaxMode && isset($this->entityData['LOCATION_ID']) ? $this->entityData['LOCATION_ID'] : '',
+				'LOCATION_ID' => $this->isTaxMode && isset($this->entityData['LOCATION_ID']) ? $this->entityData['LOCATION_ID'] : '',
 				'CLIENT_SELECTOR_ID' => '', //TODO: Add Client Selector
 				//'PRODUCT_ROWS' =>  null,
 				'HIDE_MODE_BUTTON' => !$this->isEditMode ? 'Y' : 'N',
@@ -395,8 +388,7 @@ class CCrmLeadDetailsComponent extends CBitrixComponent
 				'PATH_TO_PRODUCT_SHOW' => $this->arResult['PATH_TO_PRODUCT_SHOW'],
 				'INIT_LAYOUT' => 'N',
 				'INIT_EDITABLE' => $this->arResult['READ_ONLY'] ? 'N' : 'Y',
-				'ENABLE_MODE_CHANGE' => 'N',
-				'ENABLE_SUBMIT_WITHOUT_LAYOUT' => 'N'
+				'ENABLE_MODE_CHANGE' => 'N'
 			),
 			false,
 			array('HIDE_ICONS' => 'Y', 'ACTIVE_COMPONENT'=>'Y')
@@ -478,7 +470,10 @@ class CCrmLeadDetailsComponent extends CBitrixComponent
 					'templates' => CBPDocument::getTemplatesForStart(
 						$this->userID,
 						array('crm', 'CCrmDocumentLead', 'LEAD'),
-						array('crm', 'CCrmDocumentLead', 'LEAD_'.$this->entityID)
+						array('crm', 'CCrmDocumentLead', 'LEAD_'.$this->entityID),
+						[
+							'DocumentStates' => []
+						]
 					),
 					'moduleId' => 'crm',
 					'entity' => 'CCrmDocumentLead',
@@ -622,6 +617,25 @@ class CCrmLeadDetailsComponent extends CBitrixComponent
 		}
 		//endregion
 
+		//region SCORING
+		$stageSemanticId = \CCrmLead::GetSemanticID($this->entityData['STATUS_ID']);
+		$this->arResult['IS_STAGE_FINAL'] = Crm\PhaseSemantics::isFinal($stageSemanticId);
+
+		if($this->entityID > 0)
+		{
+			if(!$this->arResult['IS_STAGE_FINAL'])
+			{
+				Crm\Ml\ViewHelper::subscribePredictionUpdate(CCrmOwnerType::Lead, $this->entityID);
+			}
+			$this->arResult['SCORING'] = Crm\Ml\ViewHelper::prepareData(CCrmOwnerType::Lead, $this->entityID);
+		}
+
+		if(!Crm\Ml\Scoring::isEnabled())
+		{
+			CBitrix24::initLicenseInfoPopupJS();
+		}
+		//endregion
+
 		$this->includeComponentTemplate();
 	}
 	public function isSearchHistoryEnabled()
@@ -746,6 +760,20 @@ class CCrmLeadDetailsComponent extends CBitrixComponent
 				'name' => 'ID',
 				'title' => Loc::getMessage('CRM_LEAD_FIELD_ID'),
 				'type' => 'text',
+				'editable' => false,
+				'enableAttributes' => false
+			),
+			array(
+				'name' => 'DATE_CREATE',
+				'title' => Loc::getMessage('CRM_LEAD_FIELD_DATE_CREATE'),
+				'type' => 'datetime',
+				'editable' => false,
+				'enableAttributes' => false
+			),
+			array(
+				'name' => 'DATE_MODIFY',
+				'title' => Loc::getMessage('CRM_LEAD_FIELD_DATE_MODIFY'),
+				'type' => 'datetime',
 				'editable' => false,
 				'enableAttributes' => false
 			),
@@ -1577,12 +1605,14 @@ class CCrmLeadDetailsComponent extends CBitrixComponent
 				array(
 					'ENTITY_EDITOR_FORMAT' => true,
 					'IS_HIDDEN' => !$isEntityReadPermitted,
+					'USER_PERMISSIONS' => $this->userPermissions,
 					'REQUIRE_REQUISITE_DATA' => true,
 					'REQUIRE_MULTIFIELDS' => true,
+					'NORMALIZE_MULTIFIELDS' => true,
 					'NAME_TEMPLATE' => \Bitrix\Crm\Format\PersonNameFormatter::getFormat()
 				)
 			);
-			$clientInfo['COMPANY_DATA'] = $companyInfo;
+			$clientInfo['COMPANY_DATA'] = array($companyInfo);
 		}
 
 		$contactBindings = array();
@@ -1613,8 +1643,10 @@ class CCrmLeadDetailsComponent extends CBitrixComponent
 				array(
 					'ENTITY_EDITOR_FORMAT' => true,
 					'IS_HIDDEN' => !$isEntityReadPermitted,
+					'USER_PERMISSIONS' => $this->userPermissions,
 					'REQUIRE_REQUISITE_DATA' => true,
 					'REQUIRE_MULTIFIELDS' => true,
+					'NORMALIZE_MULTIFIELDS' => true,
 					'REQUIRE_BINDINGS' => true,
 					'NAME_TEMPLATE' => \Bitrix\Crm\Format\PersonNameFormatter::getFormat()
 				)
@@ -1687,59 +1719,38 @@ class CCrmLeadDetailsComponent extends CBitrixComponent
 
 		//region Product row
 		$productRowCount = 0;
-		$productRowTotalSum = 0.0;
 		$productRowInfos = array();
 		if($this->entityID > 0)
 		{
-			$dbResult = \CCrmProductRow::GetList(
-				array('SORT' => 'ASC', 'ID'=>'ASC'),
-				array(
-					'OWNER_ID' => $this->entityID, 'OWNER_TYPE' => 'L'
-				),
-				false,
-				false,
-				array(
-					'PRODUCT_ID',
-					'PRODUCT_NAME',
-					'ORIGINAL_PRODUCT_NAME',
-					'PRICE',
-					'PRICE_EXCLUSIVE',
-					'QUANTITY',
-					'TAX_INCLUDED',
-					'TAX_RATE'
-				)
-			);
-
-			while($fields = $dbResult->Fetch())
+			$productRows = \CCrmProductRow::LoadRows('L', $this->entityID);
+			foreach($productRows as $productRow)
 			{
-				$productName = isset($fields['PRODUCT_NAME']) ? $fields['PRODUCT_NAME'] : '';
-				if($productName === '' && isset($fields['ORIGINAL_PRODUCT_NAME']))
+				$productName = isset($productRow['PRODUCT_NAME']) ? $productRow['PRODUCT_NAME'] : '';
+				if($productName === '' && isset($productRow['ORIGINAL_PRODUCT_NAME']))
 				{
-					$productName = $fields['ORIGINAL_PRODUCT_NAME'];
+					$productName = $productRow['ORIGINAL_PRODUCT_NAME'];
 				}
 
-				$productID = isset($fields['PRODUCT_ID']) ? (int)$fields['PRODUCT_ID'] : 0;
+				$productID = isset($productRow['PRODUCT_ID']) ? (int)$productRow['PRODUCT_ID'] : 0;
 				$url = '';
 				if($productID > 0)
 				{
 					$url = CComponentEngine::MakePathFromTemplate(
 						$this->arResult['PATH_TO_PRODUCT_SHOW'],
-						array('product_id' => $fields['PRODUCT_ID'])
+						array('product_id' => $productRow['PRODUCT_ID'])
 					);
 				}
 
-				if($fields['TAX_INCLUDED'] === 'Y')
+				if($productRow['TAX_INCLUDED'] === 'Y')
 				{
-					$sum = $fields['PRICE'] * $fields['QUANTITY'];
+					$sum = $productRow['PRICE'] * $productRow['QUANTITY'];
 				}
 				else
 				{
-					$sum = $fields['PRICE_EXCLUSIVE'] * $fields['QUANTITY'] * (1 + $fields['TAX_RATE'] / 100);
+					$sum = round($productRow['PRICE_EXCLUSIVE'] * $productRow['QUANTITY'], 2) * (1 + $productRow['TAX_RATE'] / 100);
 				}
 
-				$productRowTotalSum += $sum;
 				$productRowCount++;
-
 				if($productRowCount <= 10)
 				{
 					$productRowInfos[] = array(
@@ -1749,9 +1760,29 @@ class CCrmLeadDetailsComponent extends CBitrixComponent
 					);
 				}
 			}
+
+			$calculateOptions = array();
+			if($this->isTaxMode)
+			{
+				$calcOptions['ALLOW_LD_TAX'] = 'Y';
+				$calcOptions['LOCATION_ID'] = isset($this->entityData['LOCATION_ID']) ? $this->entityData['LOCATION_ID'] : '';
+			}
+
+			$result = CCrmSaleHelper::Calculate(
+				$productRows,
+				$this->entityData['CURRENCY_ID'],
+				$this->resolvePersonTypeID($this->entityData),
+				false,
+				SITE_ID,
+				$calculateOptions
+			);
+
 			$this->entityData['PRODUCT_ROW_SUMMARY'] = array(
 				'count' => $productRowCount,
-				'total' => CCrmCurrency::MoneyToString($productRowTotalSum, $this->entityData['CURRENCY_ID']),
+				'total' => CCrmCurrency::MoneyToString(
+					isset($result['PRICE']) ? round((double)$result['PRICE'], 2) : 0.0,
+					$this->entityData['CURRENCY_ID']
+				),
 				'items' => $productRowInfos
 			);
 		}
@@ -1898,6 +1929,18 @@ class CCrmLeadDetailsComponent extends CBitrixComponent
 	{
 		return isset($this->entityData['STATUS_ID'])
 			? CCrmLead::GetSemanticID($this->entityData['STATUS_ID']) : Bitrix\Crm\PhaseSemantics::UNDEFINED;
+	}
+	protected function resolvePersonTypeID(array $entityData)
+	{
+		$companyID = isset($entityData['COMPANY_ID']) ? (int)$entityData['COMPANY_ID'] : 0;
+		$personTypes = CCrmPaySystem::getPersonTypeIDs();
+		$personTypeID = 0;
+		if (isset($personTypes['COMPANY']) && isset($personTypes['CONTACT']))
+		{
+			$personTypeID = $companyID > 0 ? $personTypes['COMPANY'] : $personTypes['CONTACT'];
+		}
+
+		return $personTypeID;
 	}
 	protected function tryGetFieldValueFromRequest($name, array &$params)
 	{

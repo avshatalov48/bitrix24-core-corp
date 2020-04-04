@@ -1285,3 +1285,13 @@ th.task-time-comment-column {
 .bitrix24-default-theme .task-list-back:hover {
 	color: #535c69;
 }
+
+/* -------------------------------------------------- footer wrap -------------------------------------------------- */
+
+.task-footer-wrap {
+	visibility: collapse;
+}
+
+.task-footer-wrap.task-footer-wrap-active {
+	visibility: visible;
+}

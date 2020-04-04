@@ -183,7 +183,7 @@ select {
 }
 
 .crm-webform-edit-about-container {
-	margin: 17px 0;
+	margin: 17px 0 0 0;
 	padding: 12px 16px 13px 16px;
 	background: rgba(187,237,33, .2);
 }
@@ -2335,6 +2335,22 @@ span.crm-webform-edit-task-options-destination-wrap {
 
 .crm-webform-edit-left-field-header-title:-ms-input-placeholder {
 	color: #a9a9a9;
+}
+
+.crm-webform-edit-v2-settings {
+	margin: 0 0 13px 0;
+	padding: 8px 16px;
+	max-height: 48px;
+	background: #eef2f5;
+	-webkit-box-flex: 0;
+	-ms-flex: 0 1 auto;
+	flex: 0 1 auto;
+	-webkit-box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	box-sizing: border-box;
+}
+.crm-webform-edit-v2-settings-item-label {
+	margin: 0 0 0 15px;
 }
 
 .crm-webform-edit-left-field-colorpick {

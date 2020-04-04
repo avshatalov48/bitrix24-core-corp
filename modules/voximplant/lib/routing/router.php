@@ -456,6 +456,10 @@ class Router
 		else if($action->getCommand() == Command::PSTN)
 		{
 			$firstUserId = (int)$action->getParameter('USER_ID');
+			if($firstUserId > 0)
+			{
+				$this->call->addUsers([$firstUserId], CallUserTable::ROLE_CALLEE, CallUserTable::STATUS_INVITING);
+			}
 		}
 		else if($action->getCommand() == Command::VOICEMAIL)
 		{
@@ -468,7 +472,7 @@ class Router
 
 		if($firstUserId > 0)
 		{
-			if($this->call->getIncoming() == \CVoxImplantMain::CALL_INCOMING)
+			if(in_array($this->call->getIncoming(), [\CVoxImplantMain::CALL_INCOMING, \CVoxImplantMain::CALL_INCOMING_REDIRECT, \CVoxImplantMain::CALL_CALLBACK]))
 			{
 				$this->call->updateUserId($firstUserId);
 			}

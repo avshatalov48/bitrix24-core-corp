@@ -6,6 +6,7 @@ $MESS["CRM_EMPTY_PERSON_TYPE_LIST"] = "Для редактирования фо�
 $MESS["CRM_ORDERFORM_TITLE"] = "Настройка формы оформления заказа";
 $MESS["CRM_ORDERFORM_ENTITY_SCHEME_CLIENT"] = "Клиент";
 $MESS["CRM_ORDERFORM_ENTITY_SCHEME_CLIENT_DESC"] = "контакт или компания";
+$MESS["CRM_ORDERFORM_ENTITY_SCHEME_CLIENT_DESC2"] = "Покупатель без привязки к контакту или компании";
 $MESS["CRM_ORDERFORM_RESULT_ENTITY_DC_NONE"] = "Разрешать дубли";
 $MESS["CRM_ORDERFORM_RESULT_ENTITY_DC_REPLACE"] = "Заменять";
 $MESS["CRM_ORDERFORM_RESULT_ENTITY_DC_MERGE"] = "Объединять";

@@ -5,5 +5,6 @@ return [
 	'chat/utils',
 	'chat/restrequest',
 	'chat/timer',
+	'chat/dataconverter',
 	'user/profile',
 ];

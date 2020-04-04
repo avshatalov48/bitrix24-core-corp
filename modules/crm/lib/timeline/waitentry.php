@@ -40,6 +40,7 @@ class WaitEntry extends TimelineEntry
 
 		$ID = $result->getId();
 		self::registerBindings($ID, $bindings);
+		self::buildSearchContent($ID);
 		return $ID;
 	}
 }

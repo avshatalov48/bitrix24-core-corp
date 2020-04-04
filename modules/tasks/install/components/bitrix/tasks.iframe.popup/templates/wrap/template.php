@@ -162,8 +162,8 @@ endif?>
 				</script>
 			", false, \Bitrix\Main\Page\AssetLocation::AFTER_CSS);
 			?>
-
 			<? $APPLICATION->ShowHead(); ?>
+			<title><?$APPLICATION->ShowTitle()?></title>
 		</head>
 		<body id="tasks-iframe-popup-scope" class="
 			template-<?=SITE_TEMPLATE_ID?> <?$APPLICATION->ShowProperty("BodyClass");?> <?if($isSideSlider):?>task-iframe-popup-side-slider<?endif?>" onload="window.top.BX.onCustomEvent(window.top, 'tasksIframeLoad');" onunload="window.top.BX.onCustomEvent(window.top, 'tasksIframeUnload');">

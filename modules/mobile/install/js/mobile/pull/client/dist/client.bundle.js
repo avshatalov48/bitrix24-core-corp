@@ -40,7 +40,7 @@
 	var PullEvents =
 	/*#__PURE__*/
 	function () {
-	  function PullEvents(method, options) {
+	  function PullEvents() {
 	    babelHelpers.classCallCheck(this, PullEvents);
 	    this._subscribers = {};
 	    this._eventListener = {};
@@ -51,6 +51,7 @@
 	   *
 	   * @param {Object} params
 	   * @param {string} [params.type] Subscription type (for possible values see SubscriptionType).
+	   * @param {string} [params.command] command
 	   * @param {string} [params.moduleId] Name of the module.
 	   * @param {Function} params.callback Function, that will be called for incoming messages.
 	   * @returns {Function} - Unsubscribe callback function
@@ -77,59 +78,71 @@
 	      var eventName = '';
 	      var eventType = params.type;
 
-	      if (typeof env !== 'undefined') {
-	        if (eventType == SubscriptionType.Server) {
-	          eventName = "onPullEvent-" + params.moduleId;
-	        } else if (eventType == SubscriptionType.Client) {
-	          eventName = "onPullClientEvent-" + params.moduleId;
-	        } else if (eventType == SubscriptionType.Online) {
-	          eventName = "onPullOnlineEvent";
+	      if (eventType === SubscriptionType.Server || eventType === SubscriptionType.Client || eventType === SubscriptionType.Online) {
+	        if (eventType === SubscriptionType.Server) {
+	          eventName = typeof env !== 'undefined' ? "onPullEvent-" + params.moduleId : "onPull-" + params.moduleId;
+	        } else if (eventType === SubscriptionType.Client) {
+	          eventName = typeof env !== 'undefined' ? "onPullClientEvent-" + params.moduleId : "onPullClient-" + params.moduleId;
+	        } else if (eventType === SubscriptionType.Online) {
+	          eventName = typeof env !== 'undefined' ? "onPullOnlineEvent" : 'onPullOnline';
 	        }
 
 	        if (eventName && !this._eventListener[eventName]) {
 	          this._eventListener[eventName] = true;
-	          BX.addCustomEvent(eventName, function (command, params, extra, moduleId) {
-	            var event = {
-	              type: eventType,
-	              moduleId: moduleId,
-	              data: {
-	                command: command,
-	                params: Utils.clone(params),
-	                extra: Utils.clone(params)
+
+	          if (typeof env !== 'undefined') {
+	            BX.addCustomEvent(eventName, function (command, params, extra, moduleId) {
+	              if (eventType === SubscriptionType.Online) {
+	                moduleId = 'online';
 	              }
-	            };
 
-	            if (!(eventType == SubscriptionType.Server || eventType == SubscriptionType.Client)) {
-	              delete event.moduleId;
-	            }
+	              _this.emit({
+	                type: eventType,
+	                moduleId: moduleId,
+	                data: {
+	                  command: command,
+	                  params: Utils.clone(params),
+	                  extra: Utils.clone(extra)
+	                }
+	              });
+	            });
+	          } else {
+	            this.receiveComponentEvent(eventName, function (data) {
+	              if (eventType === SubscriptionType.Online) {
+	                data.module_id = 'online';
+	              }
 
-	            _this.emit(event);
-	          });
+	              _this.emit({
+	                type: eventType,
+	                moduleId: data.module_id,
+	                data: Utils.clone(data)
+	              });
+	            });
+	          }
 	        }
-	      } else {
-	        if (eventType == SubscriptionType.Server) {
-	          eventName = "onPull-" + params.moduleId;
-	        } else if (eventType == SubscriptionType.Client) {
-	          eventName = "onPullClient-" + params.moduleId;
-	        } else if (eventType == SubscriptionType.Online) {
-	          eventName = "onPullOnline";
-	        }
+	      } else if (eventType === SubscriptionType.Status) {
+	        eventName = 'onPullStatus';
 
 	        if (eventName && !this._eventListener[eventName]) {
 	          this._eventListener[eventName] = true;
-	          this.receiveComponentEvent(eventName, function (data) {
-	            var event = {
-	              type: SubscriptionType.Server,
-	              moduleId: data.module_id,
-	              data: Utils.clone(data)
-	            };
 
-	            if (!(eventType == SubscriptionType.Server || eventType == SubscriptionType.Client)) {
-	              delete event.moduleId;
-	            }
-
-	            _this.emit(event);
-	          });
+	          if (typeof env !== 'undefined') {
+	            BX.addCustomEvent(eventName, function (status) {
+	              _this.emit({
+	                type: eventType,
+	                data: {
+	                  status: status
+	                }
+	              });
+	            });
+	          } else {
+	            this.receiveComponentEvent(eventName, function (data) {
+	              _this.emit({
+	                type: eventType,
+	                data: Utils.clone(data)
+	              });
+	            });
+	          }
 	        }
 	      }
 	      /**
@@ -139,7 +152,7 @@
 
 	      params.command = params.command || null;
 
-	      if (params.type == SubscriptionType.Server || params.type == SubscriptionType.Client) {
+	      if (params.type === SubscriptionType.Server || params.type === SubscriptionType.Client) {
 	        if (typeof this._subscribers[params.type] === 'undefined') {
 	          this._subscribers[params.type] = {};
 	        }
@@ -347,7 +360,7 @@
 	       */
 	      params = params || {};
 
-	      if (params.type == SubscriptionType.Server || params.type == SubscriptionType.Client) {
+	      if (params.type === SubscriptionType.Server || params.type === SubscriptionType.Client) {
 	        if (typeof this._subscribers[params.type] === 'undefined') {
 	          this._subscribers[params.type] = {};
 	        }
@@ -402,13 +415,13 @@
 
 	var Utils = {
 	  isArray: function isArray(item) {
-	    return item && Object.prototype.toString.call(item) == "[object Array]";
+	    return item && Object.prototype.toString.call(item) === "[object Array]";
 	  },
 	  isDomNode: function isDomNode(item) {
 	    return item && babelHelpers.typeof(item) == "object" && "nodeType" in item;
 	  },
 	  isDate: function isDate(item) {
-	    return item && Object.prototype.toString.call(item) == "[object Date]";
+	    return item && Object.prototype.toString.call(item) === "[object Date]";
 	  },
 	  clone: function clone(obj, bCopyObj) {
 	    var _obj, i, l;

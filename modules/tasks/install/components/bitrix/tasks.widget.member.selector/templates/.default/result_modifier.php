@@ -159,4 +159,5 @@ $arResult['JS_DATA'] = array(
 	'types' => $arParams['TYPES'],
 	'inputSpecial' => $arParams['SOLE_INPUT_IF_MAX_1'] && $arParams['MAX'] == 1,
 	'readOnly' => $arParams['READ_ONLY'],
+	'userType' => substr($arParams['TEMPLATE_CONTROLLER_ID'], strpos($arParams['TEMPLATE_CONTROLLER_ID'], '-') + 1),
 );

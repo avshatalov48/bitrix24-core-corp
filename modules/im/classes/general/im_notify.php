@@ -195,10 +195,11 @@ class CIMNotify
 					M.AUTHOR_ID FROM_USER_ID
 				FROM b_im_message M
 				WHERE M.CHAT_ID = ".$chatId." AND M.NOTIFY_READ = 'N'
+				ORDER BY ID DESC
 			";
 			if (!$bTimeZone)
 				CTimeZone::Enable();
-			$strSql = $DB->TopSql($strSql, 500);
+			$strSql = $DB->TopSql($strSql, 100);
 			$dbRes = $DB->Query($strSql, false, "File: ".__FILE__."<br>Line: ".__LINE__);
 
 			$arMark = Array();
@@ -414,7 +415,7 @@ class CIMNotify
 
 		$CCTP->link_target = "_self";
 		$arNotify = Array(
-			'tempId' => $arFields['TEMP_ID']? $arFields['TEMP_ID']: '',
+			'templateId' => $arFields['TEMPLATE_ID']? $arFields['TEMPLATE_ID']: '',
 			'id' => $arFields['ID'],
 			'type' => $arFields['NOTIFY_TYPE'],
 			'date' => \Bitrix\Main\Type\DateTime::createFromTimestamp($arFields['DATE_CREATE']),
@@ -941,7 +942,7 @@ class CIMNotify
 		if (!$arRes)
 			return false;
 
-		CIMMessageParam::DeleteAll($ID);
+		CIMMessageParam::DeleteAll($ID, true);
 		\Bitrix\Im\Model\MessageTable::delete($ID);
 
 		$counter = \CIMNotify::GetCounter($arRes['CHAT_ID']);

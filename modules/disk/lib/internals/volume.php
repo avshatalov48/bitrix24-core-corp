@@ -2,10 +2,9 @@
 
 namespace Bitrix\Disk\Internals;
 
-use Bitrix\Crm\Widget\Filter;
+use Bitrix\Main;
 use Bitrix\Disk\TypeFile;
 use Bitrix\Disk\Volume;
-use Bitrix\Main\Type\DateTime;
 
 /**
  * Class VolumeTable
@@ -90,7 +89,7 @@ final class VolumeTable extends DataManager
 			'CREATE_TIME' => array(
 				'data_type' => 'datetime',
 				'default_value' => function() {
-					return new DateTime();
+					return new Main\Type\DateTime();
 				},
 			),
 			'TITLE' => array(
@@ -329,7 +328,8 @@ final class VolumeTable extends DataManager
 	 */
 	public static function deleteBatch(array $filter)
 	{
-		$connection = \Bitrix\Main\Application::getConnection();
+		$connection = Main\Application::getConnection();
+		$tableName = static::getTableName();
 
 		$filterSql = array();
 		$fieldList = static::getMap();
@@ -351,8 +351,11 @@ final class VolumeTable extends DataManager
 		}
 		if (count($filterSql) > 0)
 		{
-			$tableName = static::getTableName();
 			$connection->queryExecute("DELETE FROM {$tableName} WHERE ".implode(' AND ', $filterSql));
+		}
+		else
+		{
+			$connection->truncateTable($tableName);
 		}
 	}
 
@@ -362,8 +365,16 @@ final class VolumeTable extends DataManager
 	 */
 	public static function purify()
 	{
-		$connection = \Bitrix\Main\Application::getConnection();
-		$connection->truncateTable('b_disk_volume');
+		Main\Application::getConnection()->truncateTable(static::getTableName());
+	}
+
+	/**
+	 * Returns temporally table name.
+	 * @return string
+	 */
+	public static function getTemporallyName()
+	{
+		return 'b_disk_volume_tmp';
 	}
 
 	/**
@@ -372,11 +383,11 @@ final class VolumeTable extends DataManager
 	 */
 	public static function dropTemporally()
 	{
-		$connection = \Bitrix\Main\Application::getConnection();
-
-		if ($connection->isTableExists('b_disk_volume_tmp'))
+		$connection = Main\Application::getConnection();
+		$tableName = static::getTemporallyName();
+		if ($connection->isTableExists($tableName))
 		{
-			$connection->query('DROP TABLE b_disk_volume_tmp');
+			$connection->query("DROP TABLE {$tableName}");
 		}
 	}
 
@@ -386,8 +397,9 @@ final class VolumeTable extends DataManager
 	 */
 	public static function createTemporally()
 	{
-		$connection = \Bitrix\Main\Application::getConnection();
-		$connection->query('CREATE TEMPORARY TABLE IF NOT EXISTS b_disk_volume_tmp LIKE b_disk_volume');
+		$tableName = static::getTemporallyName();
+		$sourceTableName = static::getTableName();
+		Main\Application::getConnection()->query("CREATE TEMPORARY TABLE IF NOT EXISTS {$tableName} LIKE {$sourceTableName}");
 	}
 
 	/**
@@ -396,8 +408,7 @@ final class VolumeTable extends DataManager
 	 */
 	public static function checkTemporally()
 	{
-		$connection = \Bitrix\Main\Application::getConnection();
-		return $connection->isTableExists('b_disk_volume_tmp');
+		return Main\Application::getConnection()->isTableExists(static::getTemporallyName());
 	}
 
 	/**
@@ -406,7 +417,6 @@ final class VolumeTable extends DataManager
 	 */
 	public static function clearTemporally()
 	{
-		$connection = \Bitrix\Main\Application::getConnection();
-		$connection->truncateTable('b_disk_volume_tmp');
+		Main\Application::getConnection()->truncateTable(static::getTemporallyName());
 	}
 }

@@ -8,10 +8,9 @@ use Bitrix\Main\Engine\AutoWire\ExactParameter;
 use Bitrix\Main\Engine\Response\DataType\Page;
 use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
-use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Result;
 use Bitrix\Main\UI\PageNavigation;
 use Bitrix\Sale\Helpers\Order\Builder\SettingsContainer;
-use Bitrix\Sale\Provider;
 
 class BasketItem extends Controller
 {
@@ -92,34 +91,39 @@ class BasketItem extends Controller
 		$data['ORDER']['ID'] = $fields['ORDER_ID'];
 		$data['ORDER']['BASKET_ITEMS'] = [$fields];
 
-		$builder = $this->getBuilder(
-			new SettingsContainer([
-				'deleteBaketItemsIfNotExists' => false
-			])
-		);
-		$builder->buildEntityBasket($data);
-
-		if($builder->getErrorsContainer()->getErrorCollection()->count()>0)
+		$r = $this->addValidate($fields);
+		if($r->isSuccess())
 		{
-			$this->addErrors($builder->getErrorsContainer()->getErrors());
-			return null;
-		}
+			$builder = $this->getBuilder(
+				new SettingsContainer([
+					'deleteBaketItemsIfNotExists' => false
+				])
+			);
+			$builder->buildEntityBasket($data);
 
-		$order = $builder->getOrder();
-
-		$idx=0;
-		$collection = $order->getBasket();
-		/** @var \Bitrix\Sale\BasketItem $basketItem */
-		foreach($collection as $basketItem)
-		{
-			if($basketItem->getId() <= 0)
+			if($builder->getErrorsContainer()->getErrorCollection()->count()>0)
 			{
-				$idx = $basketItem->getInternalIndex();
-				break;
+				$this->addErrors($builder->getErrorsContainer()->getErrors());
+				return null;
 			}
+
+			$order = $builder->getOrder();
+
+			$idx=0;
+			$collection = $order->getBasket();
+			/** @var \Bitrix\Sale\BasketItem $basketItem */
+			foreach($collection as $basketItem)
+			{
+				if($basketItem->getId() <= 0)
+				{
+					$idx = $basketItem->getInternalIndex();
+					break;
+				}
+			}
+
+			$r = $order->save();
 		}
 
-		$r = $order->save();
 		if(!$r->isSuccess())
 		{
 			$this->addErrors($r->getErrors());
@@ -443,5 +447,26 @@ class BasketItem extends Controller
 		}
 
 		return $r;
+	}
+
+	protected function addValidate($fields)
+	{
+		$result = new Result();
+
+		if(isset($fields['ORDER_ID']) == false || intval($fields['ORDER_ID'])<=0)
+		{
+			$result->addError(new Error('Required fields: fields[ORDER_ID]'));
+		}
+		else
+		{
+			$order = \Bitrix\Sale\Order::load($fields['ORDER_ID']);
+			if($order->getCurrency() <> $fields['CURRENCY'])
+			{
+				$result->addError(new Error('Currency must be the currency of the order'));
+			}
+		}
+
+		return $result;
+
 	}
 }

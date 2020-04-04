@@ -561,6 +561,47 @@ abstract class BaseController
 	}
 	//endregion
 
+	//region Trace
+	/**
+	 * Suspend entity tracing data.
+	 * @param int $entityID Entity ID.
+	 * @param int $recyclingEntityID Recycle Bin Entity ID.
+	 * @throws Main\ArgumentException
+	 * @throws Main\Db\SqlQueryException
+	 */
+	protected function suspendTracing($entityID, $recyclingEntityID)
+	{
+		Crm\Tracking\Entity::rebindTrace(
+			$this->getEntityTypeID(), $entityID,
+			$this->getSuspendedEntityTypeID(), $recyclingEntityID
+		);
+	}
+
+	/**
+	 * Recover entity UTM.
+	 * @param int $recyclingEntityID Recycle Bin Entity ID.
+	 * @param int $newEntityID New Entity ID.
+	 * @throws Main\ArgumentException
+	 * @throws Main\Db\SqlQueryException
+	 */
+	protected function recoverTracing($recyclingEntityID, $newEntityID)
+	{
+		Crm\Tracking\Entity::rebindTrace(
+			$this->getSuspendedEntityTypeID(), $recyclingEntityID,
+			$this->getEntityTypeID(), $newEntityID
+		);
+	}
+
+	/**
+	 * Erase Suspended entity tracing data.
+	 * @param int $recyclingEntityID Recycle Bin Entity ID.
+	 */
+	protected function eraseSuspendedTracing($recyclingEntityID)
+	{
+		Crm\Tracking\Entity::deleteTrace($this->getSuspendedEntityTypeID(), $recyclingEntityID);
+	}
+	//endregion
+
 	//region Document Generator
 	/**
 	 * Suspend entity Documents.
@@ -607,6 +648,56 @@ abstract class BaseController
 	protected function eraseSuspendedDocuments($recyclingEntityID)
 	{
 		//Documents will be deleted in Crm\Timeline\TimelineEntry::deleteByOwner
+	}
+	//endregion
+
+	//region Scoring
+	/**
+	 * Suspend scoring history records.
+	 * @param int $entityID Entity ID.
+	 * @param int $recyclingEntityID Recycle Bin Entity ID.
+	 */
+	protected function suspendScoringHistory($entityID, $recyclingEntityID)
+	{
+		if(Crm\Ml\Scoring::isMlAvailable())
+		{
+			Crm\Ml\Scoring::replaceAssociatedEntity(
+				$this->getEntityTypeID(),
+				$entityID,
+				$this->getSuspendedEntityTypeID(),
+				$recyclingEntityID
+			);
+		}
+	}
+
+	/**
+	 * Recover entity Documents.
+	 * @param int $recyclingEntityID Recycle Bin Entity ID.
+	 * @param int $newEntityID New Entity ID.
+	 */
+	protected function recoverScoringHistory($recyclingEntityID, $newEntityID)
+	{
+		if(Crm\Ml\Scoring::isMlAvailable())
+		{
+			Crm\Ml\Scoring::replaceAssociatedEntity(
+				$this->getSuspendedEntityTypeID(),
+				$recyclingEntityID,
+				$this->getEntityTypeID(),
+				$newEntityID
+			);
+		}
+	}
+
+	/**
+	 * Erase Suspended Entity UTM.
+	 * @param int $recyclingEntityID Recycle Bin Entity ID.
+	 */
+	protected function eraseSuspendedScoringHistory($recyclingEntityID)
+	{
+		if(Crm\Ml\Scoring::isMlAvailable())
+		{
+			Crm\Ml\Scoring::onEntityDelete($this->getSuspendedEntityTypeID(), $recyclingEntityID);
+		}
 	}
 	//endregion
 
@@ -691,6 +782,17 @@ abstract class BaseController
 		}
 	}
 	//endregion
+
+	protected function rebuildSearchIndex($entityID)
+	{
+		try
+		{
+			Crm\Search\SearchContentBuilderFactory::create($this->getEntityTypeID())->build($entityID);
+		}
+		catch(Main\NotSupportedException $ex)
+		{
+		}
+	}
 
 	public function getEntityInfos($entityIDs)
 	{

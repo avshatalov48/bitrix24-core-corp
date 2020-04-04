@@ -1,9 +1,11 @@
 <?
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Loader;
+use Bitrix\Main\Text\Encoding;
 use Bitrix\Main\Web\PostDecodeFilter;
 use Bitrix\Main\UserConsent\Agreement;
 
+use Bitrix\Crm\WebForm;
 use Bitrix\Crm\WebForm\ReCaptcha;
 use Bitrix\Crm\WebForm\Form;
 use Bitrix\Crm\WebForm\Helper;
@@ -100,7 +102,7 @@ class CCrmWebFormFillComponent extends \CBitrixComponent
 					continue;
 				}
 
-				$placeholders[$presetKey] = \Bitrix\Main\Text\Encoding::convertEncoding(
+				$placeholders[$presetKey] = Encoding::convertEncoding(
 					$presetVal, 'UTF-8', SITE_CHARSET
 				);
 			}
@@ -207,6 +209,10 @@ class CCrmWebFormFillComponent extends \CBitrixComponent
 				if($field['type'] == 'file')
 				{
 					$values = $request->getFile($field['name']);
+					if (!empty($values['name']))
+					{
+						$values['name'] = Encoding::convertEncoding($values['name'], 'UTF-8', SITE_CHARSET);
+					}
 					if(is_array($values['tmp_name']))
 					{
 						$valuesTmp = array();
@@ -420,6 +426,10 @@ class CCrmWebFormFillComponent extends \CBitrixComponent
 
 		$this->form->load($this->formId);
 		$this->arResult['FORM'] = $this->form->get();
+		$this->arResult['IS_EMBEDDING_AVAILABLE'] = WebForm\Manager::isEmbeddingAvailable()
+			&& $this->form->isEmbeddingEnabled()
+			&& $this->form->isEmbeddingAvailable()
+		;
 		$this->arResult['FIELDS'] = $this->prepareResultFields();
 		$this->arResult['HAS_PHONE_FIELD'] = false;
 		foreach($this->arResult['FIELDS'] as $field)
@@ -724,13 +734,6 @@ class CCrmWebFormFillComponent extends \CBitrixComponent
 		{
 			$this->showErrors();
 			return;
-		}
-
-		CUtil::InitJSCore(array('core', 'ls', 'ajax', 'date', 'popup'));
-
-		if (Loader::includeModule('calendar'))
-		{
-			CUtil::InitJSCore(array('userfield_resourcebooking'));
 		}
 
 		if($this->request->isPost())

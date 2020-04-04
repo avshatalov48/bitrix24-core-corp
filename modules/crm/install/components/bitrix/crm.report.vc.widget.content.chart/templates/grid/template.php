@@ -99,7 +99,7 @@ $containerId = 'crm-analytics-report-view-chart-grid' . ($arParams['IS_TRAFFIC']
 		{
 			$path = str_replace('#id#', $row['ID'], '/crm/tracking/expenses/#id#/?add=Y');
 			$path = CUtil::JSEscape(htmlspecialcharsbx($path));
-			$row['COSTS'] .= '<div><span onclick="BX.SidePanel.Instance.open(\'' . $path . '\', {width: 670});" '
+			$row['COSTS'] .= '<div><span onclick="BX.SidePanel.Instance.open(\'' . $path . '\', {width: 670, cacheable: false});" '
 				. 'class="crm-report-chart-grid-link-expenses">'
 				. Loc::getMessage('CRM_REPORT_VC_W_C_CHART_EXPENSES_ADD')
 				. '</span></div>';

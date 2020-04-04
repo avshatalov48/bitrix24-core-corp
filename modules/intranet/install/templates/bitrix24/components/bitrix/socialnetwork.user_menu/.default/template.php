@@ -1,4 +1,9 @@
-<?if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();?>
+<?if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+
+use Bitrix\Main\Application;
+use Bitrix\Tasks\Internals\Counter;
+use Bitrix\Tasks\Internals\Counter\Name;
+use Bitrix\Tasks\Util\User; ?>
 <?
 CUtil::InitJSCore(array("popup"));
 
@@ -14,11 +19,20 @@ if (
 	return;
 }
 
+
 $this->addExternalCss(SITE_TEMPLATE_PATH."/css/profile_menu.css");
 $bodyClass = $APPLICATION->GetPageProperty("BodyClass");
 $APPLICATION->SetPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "")."profile-menu-mode");
 
-$this->SetViewTarget("above_pagetitle", 100);
+if (!(isset($_REQUEST["IFRAME"]) && $_REQUEST["IFRAME"] === "Y"))
+{
+	$this->SetViewTarget("above_pagetitle", 100);
+}
+elseif($arParams['PAGE_ID'] == 'user')
+{
+	$this->SetViewTarget("below_pagetitle", 100);
+}
+
 $className = '';
 if ($arResult["User"]["TYPE"] == 'extranet')
 {
@@ -48,171 +62,235 @@ elseif ($arResult["User"]["IS_EXTRANET"] == 'Y')
 }
 ?>
 
-<div class="profile-menu">
-	<div class="profile-menu-inner">
-		<?
-			$isOffline = !array_key_exists("IS_ONLINE", $arResult) || !$arResult["IS_ONLINE"];
-			$avatar = $arResult["User"]["PersonalPhotoFile"]["src"];
-		?>
-		<a
-			href="<?=htmlspecialcharsbx($arResult['Urls']['main']) ?>"
-			class="profile-menu-avatar user-default-avatar<?if ($isOffline):?> profile-menu-avatar-offline<?endif?>"
-			<?if (strlen($avatar) > 0):?>
-				style="background:url('<?=$avatar?>') no-repeat center center; background-size: cover;"
-			<?endif;?>
-			><i></i>
-		</a>
-		<div class="profile-menu-right">
-			<div class="profile-menu-info<?=$className?>">
-				<a href="<?=htmlspecialcharsbx($arResult['Urls']['main']) ?>" class="profile-menu-name"><?=$arResult["User"]["NAME_FORMATTED"]?></a><?if (array_key_exists("IS_ABSENT", $arResult) && $arResult["IS_ABSENT"]):?><span class="profile-menu-status"><?=GetMessage("SONET_UM_ABSENT")?></span><?endif;
-				if (
-					isset($arResult["User"]["ID"])
-					&& (
-						$arResult["CAN_MESSAGE"]
-						|| $arResult["CAN_MESSAGE_HISTORY"]
-					)
-				)
-				{
-					?><span class="profile-menu-user-menu" onclick="openProfileMenuPopup(this);"></span><?
-				}
-				if(strlen($arResult["User"]["WORK_POSITION"]) > 0):?><span class="profile-menu-description"><?=$arResult["User"]["WORK_POSITION"]?></span><?endif?><?if(array_key_exists("IS_BIRTHDAY", $arResult) && $arResult["IS_BIRTHDAY"]):?><span
-				class="profile-menu-birthday-icon" title="<?=GetMessage("SONET_UM_BIRTHDAY")?>"></span><?endif?><?if(array_key_exists("IS_HONOURED", $arResult) && $arResult["IS_HONOURED"]):?><span class="profile-menu-leaderboard-icon" title="<?=GetMessage("SONET_UM_HONOUR")?>"></span><?endif?>
-			</div>
+<?
+$requestUri = Application::getInstance()->getContext()->getRequest()->getRequestUri();
 
-			<div id="profile-menu-filter" class="profile-menu-items"><?
-				?><a href="<?=htmlspecialcharsbx($arResult['Urls']['main']) ?>" class="profile-menu-item<?if ($arParams["PAGE_ID"] == "user"):?> profile-menu-item-active<?endif?>"><?=GetMessage("SONET_UM_GENERAL")?></a><?
-				if (is_array($arResult["CanView"]))
-				{
-					foreach ($arResult["CanView"] as $key => $val)
-					{
-						if (!$val)
-						{
-							continue;
-						}
-						?><a
-							href="<?=htmlspecialcharsbx($arResult['Urls'][$key]) ?>"
-							class="profile-menu-item
-							<?if ($arParams["PAGE_ID"] == "user_".$key):?>
-								profile-menu-item-active<?endif?>
-							"><?=$arResult["Title"][$key]?>
-						</a><?
-					}
-				}
-				?>
-			</div>
-		</div>
-	</div>
-</div>
+$items = array(
+	"profile" => array
+	(
+		"TEXT" => GetMessage("SONET_UM_GENERAL"),
+		"CLASS" => "",
+		"CLASS_SUBMENU_ITEM" => "",
+		"ID" => "profile",
+		"SUB_LINK" => "",
+		"COUNTER" => "",
+		"COUNTER_ID" => "",
+		"IS_ACTIVE" => true,
+		"IS_LOCKED" => "",
+		"IS_DISABLED" => 1
+	),
+);
 
-<script type="text/javascript">
-function openProfileMenuPopup(bindElement)
+if (
+	is_array($arResult["CanView"])
+	&& !!$arResult["CanView"]['tasks']
+)
 {
-	BX.addClass(bindElement, "profile-menu-user-active");
+	$uri = new \Bitrix\Main\Web\Uri($arResult["Urls"]['tasks']);
+	$uri->addParams(array("IFRAME" => "Y"));
+	$redirect = $uri->getUri();
 
-	var menu = [];
+	$items = array_merge($items, array(
+		"tasks" => array
+		(
+			"ID" => "tasks",
+			"TEXT" => $arResult["Title"]['tasks'],
+			"ON_CLICK" => "BX.SidePanel.Instance.open('".$uri->getUri()."', { width: 1000, loader: '".$this->getFolder()."/images/slider/taskslist.min.svg', })",
+			'SUB_LINK' => array(
+				'CLASS' => '',
+				'URL' => SITE_DIR."company/personal/user/".$arResult["User"]["ID"]."/tasks/task/edit/0/"
+			),
+			'IS_ACTIVE' => (strpos($requestUri, $arResult["Urls"]['tasks']) === 0)
+		)
+	));
+}
 
-	<?if ($arResult["CAN_MESSAGE"] && $arResult["User"]["ACTIVE"] != "N"):?>
-		menu.push(
-			{
-				text : "<?=GetMessage("SONET_UM_SEND_MESSAGE")?>",
+if (
+	is_array($arResult["CanView"])
+	&& !!$arResult["CanView"]['calendar']
+)
+{
+	$uri = new \Bitrix\Main\Web\Uri($arResult["Urls"]['calendar']);
+	$uri->addParams(array("IFRAME" => "Y"));
+	$redirect = $uri->getUri();
 
-				onclick : function() {
-					this.popupWindow.close();
-					BXIM.openMessenger(<?=$arResult["User"]["ID"]?>);
-				}
-			}
-		);
-	<?endif;
+	$items = array_merge($items, array(
+		"calendar" => array
+		(
+			"ID" => "calendar",
+			"TEXT" => $arResult["Title"]['calendar'],
+			"ON_CLICK" => "BX.SidePanel.Instance.open('".$uri->getUri()."', { width: 1000, loader: '".$this->getFolder()."/images/slider/calendar.min.svg' })",
+			'IS_ACTIVE' => (strpos($requestUri, $arResult["Urls"]['calendar']) === 0)
+		)
+	));
+}
 
-	if ($arResult["CAN_MESSAGE_HISTORY"]):?>
-		menu.push(
-			{
-				text : "<?=GetMessage("SONET_UM_MESSAGE_HISTORY")?>",
-				onclick : function() {
-					this.popupWindow.close();
-					BXIM.openHistory(<?=$arResult["User"]["ID"]?>);
-				}
-			}
-		);
-	<?endif;
+if (
+	is_array($arResult["CanView"])
+	&& !!$arResult["CanView"]['files']
+)
+{
+	$uri = new \Bitrix\Main\Web\Uri($arResult["Urls"]['files']);
+	$uri->addParams(array("IFRAME" => "Y"));
+	$redirect = $uri->getUri();
 
-	if ($arResult["CurrentUserPerms"]["Operations"]["modifyuser"])
-	{
-		if ($arResult["CurrentUserPerms"]["Operations"]["modifyuser_main"])
-		{
-			?>
-			menu.push(
-				{
-					text : "<?=GetMessage("SONET_UM_EDIT_PROFILE")?>",
-					title: "<?=GetMessage("SONET_UM_EDIT_PROFILE")?>",
-					href: "<?=CUtil::JSUrlEscape(CUtil::JsEscape($arResult["Urls"]["Edit"]))?>"
-				}
-			);
-			<?
-		}
-		?>
-		menu.push(
-			{
-				text : "<?=GetMessage("SONET_UM_REQUESTS")?>",
-				title: "<?=GetMessage("SONET_UM_REQUESTS")?>",
-				href: "<?=CUtil::JSUrlEscape($arResult["Urls"]["UserRequests"])?>"
-			}
-		);
-		<?
-	}
+	$items = array_merge($items, array(
+		"files" => array
+		(
+			"ID" => "files",
+			"TEXT" => $arResult["Title"]['files'],
+			"ON_CLICK" => "BX.SidePanel.Instance.open('".$uri->getUri()."', { width: 1000, loader: '".$this->getFolder()."/images/slider/disk.min.svg' })",
+			'IS_ACTIVE' => (strpos($requestUri, $arResult["Urls"]['files']) === 0)
+		)
+	));
+}
 
+if (
+	is_array($arResult["CanView"])
+	&& !!$arResult["CanView"]['blog']
+)
+{
+	$uri = new \Bitrix\Main\Web\Uri($arResult["Urls"]['blog']);
+	$uri->addParams(array("IFRAME" => "Y"));
+	$redirect = $uri->getUri();
+
+	$items = array_merge($items, array(
+		"blog" => array
+		(
+			"ID" => "blog",
+			"TEXT" => $arResult["Title"]['blog'],
+			"ON_CLICK" => "BX.SidePanel.Instance.open('".$uri->getUri()."', {
+				loader: '".$this->getFolder()."/images/slider/livefeed.min.svg', 
+				width: 1000 
+			})",
+			'IS_ACTIVE' => (strpos($requestUri, $arResult["Urls"]['blog']) === 0)
+		)
+	));
+}
+
+if (
+	is_array($arResult["CanView"])
+	&& !!$arResult["CanView"]['tasks']
+	&& checkEffectiveRights($arResult["User"]["ID"])
+)
+{
+	$uri = new \Bitrix\Main\Web\Uri($arResult["Urls"]['tasks']);
+	$uri->addParams(array("IFRAME" => "Y"));
+	$redirect = $uri->getUri();
+	\CModule::includeModule('tasks');
+
+	$efficiencyUrl = (
+		$arResult['isExtranetSite']
+			? SITE_DIR."contacts/personal/user/".$arResult["User"]["ID"]."/tasks/effective/"
+			: SITE_DIR."company/personal/user/".$arResult["User"]["ID"]."/tasks/effective/"
+	);
+	$items['effective_counter'] = array(
+		"TEXT" => GetMessage("SONET_UM_EFFICIENCY"),
+		"ON_CLICK" => "BX.SidePanel.Instance.open('".$efficiencyUrl."', { width: 1000 })",
+		"COUNTER" => Counter::getInstance($arResult["User"]["ID"])->get(Name::EFFECTIVE),
+		'MAX_COUNTER_SIZE'=>100,
+		'COUNTER_ID' => 'effective_counter',
+		'ID' => 'effective_counter',
+		'CLASS' => 'effective_counter',
+		'IS_ACTIVE' => (strpos($requestUri, $efficiencyUrl) === 0)
+	);
+}
+
+if (
+	isset($items['effective_counter'])
+	&& isset($items['tasks'])
+	&& $items['effective_counter']['IS_ACTIVE']
+)
+{
+	$items['tasks']['IS_ACTIVE'] = false;
+}
+
+foreach($items as $key => $item)
+{
 	if (
-		($arResult["CurrentUserPerms"]["IsCurrentUser"] || $arResult["CurrentUserPerms"]["Operations"]["viewprofile"])
-		&& !class_exists("CSocNetSubscription")
-	):
-		?>
-		menu.push(
-			{
-				text : "<?=GetMessage("SONET_UM_SUBSCRIBE")?>",
-				title: "<?=GetMessage("SONET_UM_SUBSCRIBE")?>",
-				href: "<?=CUtil::JSUrlEscape($arResult["Urls"]["Subscribe"])?>"
-			}
-		);
-	<?endif;
-
-	if (IsModuleInstalled("bitrix24") && $arResult["CurrentUserPerms"]["Operations"]["modifyuser"]):?>
-		menu.push(
-			{
-				text : "<?=GetMessage("SONET_TELEPHONY_HISTORY")?>",
-				title: "<?=GetMessage("SONET_TELEPHONY_HISTORY")?>",
-				href: "/telephony/detail.php?USER_ID=<?=$arResult["User"]["ID"]?>"
-			}
-		);
-	<?endif;
-
-	/*if ($arResult["CurrentUserPerms"]["Operations"]["videocall"] && $arParams['PATH_TO_VIDEO_CALL']):
-		?>
-		menu.push(
-			{
-				text : "<?=GetMessage("SONET_UM_VIDEO_CALL")?>",
-				className : "profile-menu-videocall",
-				onclick : function() {
-					window.open('<?echo $arResult["Urls"]["VideoCall"] ?>', '', 'status=no,scrollbars=yes,resizable=yes,width=1000,height=600,top='+Math.floor((screen.height - 600)/2-14)+',left='+Math.floor((screen.width - 1000)/2-5));
-					return false;
-				}
-			}
-		);
-		<?
-	endif; */
-	?>
-	if (menu.length > 0)
+		$key != 'profile'
+		&& $item['IS_ACTIVE']
+	)
 	{
-		BX.PopupMenu.show("user-menu-profile", bindElement, menu, {
-			offsetTop: 5,
-			offsetLeft : 12,
-			angle : true,
-			events : {
-				onPopupClose : function() {
-					BX.removeClass(this.bindElement, "profile-menu-user-active");
-				}
-			}
-		});
+		$items['profile']['IS_ACTIVE'] = false;
 	}
 }
-</script>
+
+$items = array_values($items);
+
+function checkEffectiveRights($viewedUser)
+{
+	//TODO move to tasks/security later
+	\Bitrix\Main\Loader::includeModule('tasks');
+	$currentUser = User::getId();
+
+	if (!$viewedUser)
+	{
+		return false;
+	}
+
+	return
+		$currentUser == $viewedUser ||
+		User::isSuper($currentUser) ||
+		User::isBossRecursively($currentUser, $viewedUser);
+}
+
+if (
+	is_array($arResult["CurrentUserPerms"])
+	&& is_array($arResult["CurrentUserPerms"]["Operations"])
+	&& !!$arResult["CurrentUserPerms"]["Operations"]["timeman"]
+)
+{
+	$items = array_merge($items, array(
+		array
+		(
+			"ID" => "timeman",
+			"TEXT"     => GetMessage("SONET_UM_TIME"),
+			"ON_CLICK" => "BX.SidePanel.Instance.open('".SITE_DIR."timeman/timeman.php?USERS=U".$arResult["User"]["ID"]."&apply_filter=Y', { width: 1000, loader: '".$this->getFolder()."/images/slider/worktime.min.svg', })"
+		),
+		array
+		(
+			"ID" => "work_report",
+			"TEXT"     => GetMessage("SONET_UM_REPORTS"),
+			"ON_CLICK" => "BX.SidePanel.Instance.open('".SITE_DIR."timeman/work_report.php', { width: 1000, loader: '".$this->getFolder()."/images/slider/workreport.min.svg' })"
+		)
+	));
+}
+
+if (
+	is_array($arResult["CurrentUserPerms"])
+	&& is_array($arResult["CurrentUserPerms"]["Operations"])
+	&& !!$arResult["CurrentUserPerms"]["Operations"]['viewgroups']
+)
+{
+	$uri = new \Bitrix\Main\Web\Uri($arResult["Urls"]['groups']);
+	$uri->addParams(array("IFRAME" => "Y"));
+	$redirect = $uri->getUri();
+
+	$items = array_merge($items, array(
+		array
+		(
+			"ID" => "groups",
+			"TEXT" => GetMessage("SONET_UM_GROUPS"),
+			"ON_CLICK" => "BX.SidePanel.Instance.open('".$arResult["Urls"]['groups']."', { width: 1000, loader: '".$this->getFolder()."/images/slider/grouplist.min.svg' })"
+		)
+	));
+}
+
+$APPLICATION->IncludeComponent(
+	"bitrix:main.interface.buttons",
+	"",
+	array(
+		"ID" => "socialnetwork_profile_menu_user_".$arResult["User"]["ID"],
+		"ITEMS" => $items,
+		"DISABLE_SETTINGS" => !(
+			$USER->isAuthorized()
+			&& (
+				$USER->getId() == $arResult["User"]["ID"]
+				|| (\Bitrix\Main\Loader::includeModule('socialnetwork') && \CSocNetUser::isCurrentUserModuleAdmin())
+			)
+		)
+	)
+);
+?>
 <?$this->EndViewTarget();?>

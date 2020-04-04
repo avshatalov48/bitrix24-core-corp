@@ -32,6 +32,8 @@ body {
 .block-wrapper {
     position: relative;
 	box-sizing: border-box;
+	border-bottom: 1px solid transparent;
+	margin-bottom: -1px;
 }
 
 .block-wrapper::after {
@@ -682,19 +684,41 @@ body[style*="cursor: move;"] .landing-ui-panel-block-card-action {
 }
 
 
+/*for preview*/
 .l-d-lg-none,
 .l-d-md-none,
 .l-d-xs-none {
 	position: relative;
 }
 
+/* xl
+   Large devices more than 992px. In editor - show always
+ */
 @media (min-width: 992px) {
 	.l-d-lg-none {
 		display: block!important;
 	}
-
+	
 	.l-d-lg-none.g-flex-centered {
 		display: flex!important;
+	}
+}
+
+/* md
+   Medium devices less than 1200px and more than 576px
+*/
+@media (max-width: 991px) and (min-width: 576px) {
+	.block-wrapper .l-d-md-none {
+		display: none !important;
+	}
+}
+
+/* xs
+   Extra small devices less than 576px
+ */
+@media (max-width: 575px) {
+	.block-wrapper .l-d-xs-none {
+		display: none !important;
 	}
 }
 
@@ -868,6 +892,11 @@ only screen and (min-resolution: 2dppx) {
 
 .bx-ie.bx-ie11 body {
 	overflow: hidden;
+}
+
+.bx-ie.bx-ie11 .g-upper-show,
+.bx-ie.bx-ie11 .template-bitrix24 {
+	overflow-y: auto;
 }
 
 .landing-ui-block-selectable-overlay {

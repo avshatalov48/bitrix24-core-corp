@@ -25,6 +25,22 @@ $arParams['PATH_TO_PRODUCT_FILE'] = CrmCheckPath(
 	$APPLICATION->GetCurPage().'?product_id=#product_id#&field_id=#field_id#&file_id=#file_id#&file'
 );
 
+$productID = isset($arParams['PRODUCT_ID']) ? intval($arParams['PRODUCT_ID']) : 0;
+if ($productID <= 0)
+{
+	$productIDParName = isset($arParams['PRODUCT_ID_PAR_NAME']) ? strval($arParams['PRODUCT_ID_PAR_NAME']) : '';
+	if (strlen($productIDParName) == 0)
+	{
+		$productIDParName = 'product_id';
+	}
+
+	$productID = isset($_REQUEST[$productIDParName]) ? intval($_REQUEST[$productIDParName]) : 0;
+}
+$arResult['PRODUCT_ID'] = $productID;
+
+$isCopyMode = $arResult['IS_COPY_MODE'] = (isset($_REQUEST['copy']) && !empty($_REQUEST['copy']));
+$isEditMode = (!$isCopyMode && $productID > 0);
+
 $arResult['BACK_URL'] = CComponentEngine::MakePathFromTemplate(
 	$arParams['PATH_TO_PRODUCT_LIST'],
 	array(
@@ -62,6 +78,8 @@ $arResult['PROPS'] = $arProps;
 $baseCurrencyID = CCrmCurrency::GetBaseCurrencyID();
 $bVarsFromForm = false;
 $productFields = array();
+$product = [];
+
 if (check_bitrix_sessid())
 {
 	$bAjax = isset($_POST['ajax']);
@@ -82,7 +100,14 @@ if (check_bitrix_sessid())
 		}
 
 		$errors = array();
-		$productID = isset($_POST['product_id']) ? intval($_POST['product_id']) : 0;
+		$postProductID = isset($_POST['product_id']) ? intval($_POST['product_id']) : 0;
+		$srcProductFields = [];
+
+		if ($isCopyMode && $postProductID > 0)
+		{
+			$srcProductFields = CCrmProduct::GetByID($postProductID);
+		}
+
 		if (isset($_POST['NAME']))
 		{
 			$productFields['NAME'] = trim($_POST['NAME']);
@@ -91,7 +116,12 @@ if (check_bitrix_sessid())
 				$errors[] = GetMessage('CRM_PRODUCT_NAME_IS_TOO_LONG');
 			}
 		}
+		else if (isset($srcProductFields['~NAME']))
+		{
+			$productFields['NAME'] = trim($srcProductFields['~NAME']);
+		}
 
+		$check = false;
 		if (isset($_POST['DESCRIPTION']))
 		{
 			$description = isset($_POST['DESCRIPTION']) ? trim($_POST['DESCRIPTION']) : '';
@@ -105,23 +135,43 @@ if (check_bitrix_sessid())
 			$productFields['DESCRIPTION'] = $description;
 			unset($description, $isNeedSanitize);
 		}
+		else if (isset($srcProductFields['~DESCRIPTION']))
+		{
+			$productFields['DESCRIPTION'] = $srcProductFields['~DESCRIPTION'];
+			if (isset($srcProductFields['~DESCRIPTION_TYPE']))
+			{
+				$productFields['DESCRIPTION_TYPE'] = $srcProductFields['~DESCRIPTION_TYPE'];
+			}
+		}
 
 		if (isset($_POST['ACTIVE']))
 		{
 			$productFields['ACTIVE'] = $_POST['ACTIVE'] == 'Y' ? 'Y' : 'N';
+		}
+		else if (isset($srcProductFields['~ACTIVE']))
+		{
+			$productFields['ACTIVE'] = $srcProductFields['~ACTIVE'];
 		}
 
 		if (isset($_POST['CURRENCY']))
 		{
 			$productFields['CURRENCY_ID'] = strval($_POST['CURRENCY']);
 		}
+		else if (isset($srcProductFields['~CURRENCY']))
+		{
+			$productFields['CURRENCY'] = $srcProductFields['~CURRENCY'];
+		}
 
 		if (isset($_POST['PRICE']))
 		{
 			$productFields['PRICE'] = CCrmProductHelper::parseFloat($_POST['PRICE'], 2);
 		}
+		else if (isset($srcProductFields['~PRICE']))
+		{
+			$productFields['PRICE'] = $srcProductFields['~PRICE'];
+		}
 
-		if($productID <= 0)
+		if($postProductID <= 0)
 		{
 			if(empty($productFields['CURRENCY_ID']))
 			{
@@ -140,10 +190,18 @@ if (check_bitrix_sessid())
 			{
 				$productFields['VAT_ID'] = intval($_POST['VAT_ID']);
 			}
+			else if (isset($srcProductFields['~VAT_ID']))
+			{
+				$productFields['VAT_ID'] = $srcProductFields['~VAT_ID'];
+			}
 
 			if (isset($_POST['VAT_INCLUDED']))
 			{
 				$productFields['VAT_INCLUDED'] = ($_POST['VAT_INCLUDED'] === 'Y' || $_POST['VAT_INCLUDED'] === 'on') ? 'Y' : 'N';
+			}
+			else if (isset($srcProductFields['~VAT_INCLUDED']))
+			{
+				$productFields['VAT_INCLUDED'] = $srcProductFields['~VAT_INCLUDED'];
 			}
 		}
 
@@ -151,22 +209,62 @@ if (check_bitrix_sessid())
 		{
 			$productFields['MEASURE'] = intval($_POST['MEASURE']);
 		}
+		else if (isset($srcProductFields['~MEASURE']))
+		{
+			$productFields['MEASURE'] = $srcProductFields['~MEASURE'];
+		}
 
-		$productFields['SECTION_ID'] = isset($_POST['SECTION']) ? intval($_POST['SECTION']) : 0;
+		if (isset($_POST['SECTION']))
+		{
+			$productFields['SECTION_ID'] = intval($_POST['SECTION']);
+		}
+		else if (isset($srcProductFields['~SECTION']))
+		{
+			$productFields['SECTION_ID'] = $srcProductFields['~SECTION'];
+		}
 
 		if (isset($_POST['SORT']))
 		{
 			$productFields['SORT'] = intval($_POST['SORT']);
 		}
-
-		foreach (array('DETAIL_PICTURE', 'PREVIEW_PICTURE') as $fieldID)
+		else if (isset($srcProductFields['~SORT']))
 		{
-			$productFields[$fieldID] = $_FILES[$fieldID];
-			if (isset($_POST[$fieldID . '_del']) && $_POST[$fieldID . '_del'] == 'Y')
-				$productFields[$fieldID]['del'] = 'Y';
+			$productFields['SORT'] = $srcProductFields['~SORT'];
 		}
 
-		if ($productID <= 0)
+		foreach (['DETAIL_PICTURE', 'PREVIEW_PICTURE'] as $fieldID)
+		{
+			$delFile = (isset($_POST[$fieldID . '_del']) && $_POST[$fieldID . '_del'] == 'Y');
+			if (is_array($_FILES[$fieldID])
+				&& ((!isset($_FILES[$fieldID]['error']) || intval($_FILES[$fieldID]['error']) === 0)))
+			{
+				$productFields[$fieldID] = $_FILES[$fieldID];
+			}
+			else if (!$delFile && isset($srcProductFields['~'.$fieldID]) && $srcProductFields['~'.$fieldID] > 0)
+			{
+				$fileInfo = CFile::MakeFileArray($srcProductFields['~'.$fieldID]);
+				if (is_array($fileInfo))
+				{
+					$productFields[$fieldID] = $fileInfo;
+				}
+				else
+				{
+					$productFields[$fieldID] = [];
+				}
+				unset($fileInfo);
+			}
+			else
+			{
+				$productFields[$fieldID] = [];
+			}
+			if (!$isCopyMode && $delFile)
+			{
+				$productFields[$fieldID]['del'] = 'Y';
+			}
+		}
+		unset($delFile);
+
+		if ($postProductID <= 0 || $isCopyMode)
 		{
 			// Setup catalog ID for new product
 			$productFields['CATALOG_ID'] = $catalogID > 0 ? $catalogID : CCrmCatalog::EnsureDefaultExists();
@@ -176,30 +274,38 @@ if (check_bitrix_sessid())
 		$arPropsValues = array();
 		foreach ($arResult['PROPS'] as $propID => $arProp)
 		{
-			if ($arProp['PROPERTY_TYPE'] == 'F')
+			if ($arProp['PROPERTY_TYPE'] === 'F')
 			{
 				if (isset($_POST[$propID.'_del']))
+				{
 					$arDel = $_POST[$propID.'_del'];
+				}
 				else
+				{
 					$arDel = array();
+				}
 				$arPropsValues[$arProp['ID']] = array();
 				if (isset($_FILES[$propID]))
 				{
 					CFile::ConvertFilesToPost($_FILES[$propID], $arPropsValues[$arProp['ID']]);
-					foreach ($arPropsValues[$arProp['ID']] as $file_id => $arFile)
+					foreach ($arPropsValues[$arProp['ID']] as $fileID => $arFile)
 					{
 						if (
-							isset($arDel[$file_id])
+							isset($arDel[$fileID])
 							&& (
-								(!is_array($arDel[$file_id]) && $arDel[$file_id]=='Y')
-								|| (is_array($arDel[$file_id]) && $arDel[$file_id]['VALUE']=='Y')
+								(!is_array($arDel[$fileID]) && $arDel[$fileID]=='Y')
+								|| (is_array($arDel[$fileID]) && $arDel[$fileID]['VALUE'] === 'Y')
 							)
 						)
 						{
-							if (isset($arPropsValues[$arProp['ID']][$file_id]['VALUE']))
-								$arPropsValues[$arProp['ID']][$file_id]['VALUE']['del'] = 'Y';
+							if (isset($arPropsValues[$arProp['ID']][$fileID]['VALUE']))
+							{
+								$arPropsValues[$arProp['ID']][$fileID]['VALUE']['del'] = 'Y';
+							}
 							else
-								$arPropsValues[$arProp['ID']][$file_id]['del'] = 'Y';
+							{
+								$arPropsValues[$arProp['ID']][$fileID]['del'] = 'Y';
+							}
 						}
 					}
 				}
@@ -242,15 +348,15 @@ if (check_bitrix_sessid())
 				$arPropsValues[$arProp['ID']] = $_POST[$propID];
 			}
 		}
-		if(count($arPropsValues))
+		if(count($arPropsValues) || $isCopyMode)
 		{
 			$productFields['PROPERTY_VALUES'] = $arPropsValues;
-			if($productID > 0)
+			if($postProductID > 0)
 			{
-				//We have to read properties from database in order not to delete its values
+				// We have to read properties from database in order not to delete its values
 				$dbPropV = CIBlockElement::GetProperty(
 					$catalogID,
-					$productID,
+					$postProductID,
 					'sort', 'asc',
 					array('ACTIVE' => 'Y', 'CHECK_PERMISSIONS' => 'N')
 				);
@@ -260,25 +366,73 @@ if (check_bitrix_sessid())
 						&& !array_key_exists($arPropV['USER_TYPE'], $arPropUserTypeList))
 						continue;
 
-					if($arPropV['PROPERTY_TYPE'] != 'F' && !array_key_exists($arPropV['ID'], $arPropsValues))
+					$propID = $arPropV['ID'];
+					$propValId = $arPropV['PROPERTY_VALUE_ID'];
+
+					if($arPropV['PROPERTY_TYPE'] === 'F')
+					{
+						if ($isCopyMode)
+						{
+							$propVal = null;
+							if (is_array($arPropsValues[$arPropV['ID']][$propValId]['VALUE']))
+							{
+								$propVal = &$arPropsValues[$arPropV['ID']][$propValId]['VALUE'];
+							}
+							if (!is_array($productFields['PROPERTY_VALUES'][$arPropV['ID']][$propValId]['VALUE']))
+							{
+								$productFields['PROPERTY_VALUES'][$arPropV['ID']][$propValId]['VALUE'] = array();
+							}
+							$fileUploaded = false;
+							$deleteOldFile = false;
+							if (is_array($propVal) && !empty($propVal))
+							{
+								if (!isset($propVal['error']) || intval($propVal['error']) === 0)
+								{
+									$fileUploaded = true;
+								}
+								if (isset($propVal['del']) && $propVal['del'] == 'Y')
+								{
+									$deleteOldFile = true;
+								}
+							}
+							if ($fileUploaded)
+							{
+								$productFields['PROPERTY_VALUES'][$arPropV['ID']][$propValId]['VALUE'] = $propVal;
+							}
+							else if (!$deleteOldFile)
+							{
+								$fileInfo = CFile::MakeFileArray($arPropV['VALUE']);
+								if (is_array($fileInfo))
+								{
+									$productFields['PROPERTY_VALUES'][$arPropV['ID']][$propValId]['VALUE'] = $fileInfo;
+								}
+								unset($fileInfo);
+							}
+							unset($fileUploaded, $deleteOldFile, $propVal);
+						}
+					}
+					else if(!array_key_exists($arPropV['ID'], $arPropsValues))
 					{
 						if(!array_key_exists($arPropV['ID'], $productFields['PROPERTY_VALUES']))
 							$productFields['PROPERTY_VALUES'][$arPropV['ID']] = array();
 
-						$productFields['PROPERTY_VALUES'][$arPropV['ID']][$arPropV['PROPERTY_VALUE_ID']] = array(
+						$productFields['PROPERTY_VALUES'][$arPropV['ID']][$propValId] = array(
 							'VALUE' => $arPropV['VALUE'],
 							'DESCRIPTION' => $arPropV['DESCRIPTION'],
 						);
 					}
+
+					unset($propValId);
 				}
 			}
 		}
+		unset($srcProductFields);
 
 		if(empty($errors))
 		{
-			if ($productID > 0)
+			if (!$isCopyMode && $postProductID > 0)
 			{
-				if (!CCrmProduct::Update($productID, $productFields))
+				if (!CCrmProduct::Update($postProductID, $productFields))
 				{
 					$err = CCrmProduct::GetLastError();
 					if ($err === '')
@@ -290,8 +444,8 @@ if (check_bitrix_sessid())
 			}
 			else
 			{
-				$productID = CCrmProduct::Add($productFields);
-				if (!$productID)
+				$postProductID = CCrmProduct::Add($productFields);
+				if (!$postProductID)
 				{
 					$err = CCrmProduct::GetLastError();
 					if ($err === '')
@@ -315,8 +469,8 @@ if (check_bitrix_sessid())
 				$ajaxResponse['err'] = implode("\n", $errors);
 			else
 			{
-				$ajaxResponse['productId'] = $productID;
-				$dbRes = CCrmProduct::GetList(array(), array('ID' => $productID, '~REAL_PRICE' => true), array('ID', 'NAME', 'ACTIVE', 'PRICE', 'CURRENCY_ID', 'MEASURE', 'VAT_ID', 'VAT_INCLUDED'), array('nTopCount' => 1));
+				$ajaxResponse['productId'] = $postProductID;
+				$dbRes = CCrmProduct::GetList(array(), array('ID' => $postProductID, '~REAL_PRICE' => true), array('ID', 'NAME', 'ACTIVE', 'PRICE', 'CURRENCY_ID', 'MEASURE', 'VAT_ID', 'VAT_INCLUDED'), array('nTopCount' => 1));
 				if ($row = $dbRes->Fetch())
 				{
 					if ($row['ACTIVE'] === 'Y')
@@ -364,7 +518,7 @@ if (check_bitrix_sessid())
 				$redirectUrl = '';
 				if (isset($_POST['apply']))
 					$redirectUrl = CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_PRODUCT_EDIT'],
-						array('product_id' => $productID));
+						array('product_id' => $postProductID));
 				else if (isset($_POST['saveAndAdd']))
 					$redirectUrl = CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_PRODUCT_EDIT'],
 						array('product_id' => 0));
@@ -385,11 +539,11 @@ if (check_bitrix_sessid())
 	else if ($_SERVER['REQUEST_METHOD'] == 'GET' &&  isset($_GET['delete']))
 	{
 		$err = '';
-		$productID = isset($arParams['PRODUCT_ID']) ? intval($arParams['PRODUCT_ID']) : 0;
-		$product = $productID > 0 ? CCrmProduct::GetByID($productID, true) : null;
+		$postProductID = isset($arParams['PRODUCT_ID']) ? intval($arParams['PRODUCT_ID']) : 0;
+		$product = $postProductID > 0 ? CCrmProduct::GetByID($postProductID, true) : null;
 		if ($product)
 		{
-			if (!CCrmProduct::Delete($productID))
+			if (!CCrmProduct::Delete($postProductID))
 			{
 				$err = CCrmProduct::GetLastError();
 				if (!isset($err[0]))
@@ -416,19 +570,6 @@ if (check_bitrix_sessid())
 	}
 }
 
-$productID = isset($arParams['PRODUCT_ID']) ? intval($arParams['PRODUCT_ID']) : 0;
-if ($productID <= 0)
-{
-	$productIDParName = isset($arParams['PRODUCT_ID_PAR_NAME']) ? strval($arParams['PRODUCT_ID_PAR_NAME']) : '';
-	if (strlen($productIDParName) == 0)
-	{
-		$productIDParName = 'product_id';
-	}
-
-	$productID = isset($_REQUEST[$productIDParName]) ? intval($_REQUEST[$productIDParName]) : 0;
-}
-
-$product = array();
 if ($productID > 0)
 {
 	if (!($product = CCrmProduct::GetByID($productID, true)))
@@ -516,9 +657,7 @@ foreach (array('DETAIL_PICTURE', 'PREVIEW_PICTURE') as $fieldID)
 		$product[$fieldID] = '';
 }
 
-$arResult['PRODUCT_ID'] = $productID;
 $arResult['PRODUCT'] = $product;
-$isEditMode = $productID > 0;
 
 $arResult['CATALOG_TYPE_ID'] = CCrmCatalog::GetCatalogTypeID();
 $arResult['CATALOG_ID'] = $catalogID =
@@ -711,7 +850,7 @@ $obFileControl = $obFile = null;
 foreach ($arFields as $fieldID => $fieldName)
 {
 	$obFile = new CCrmProductFile(
-		$arResult['PRODUCT_ID'],
+		$productID,
 		$fieldID,
 		$product['~'.$fieldID]
 	);
@@ -746,7 +885,7 @@ foreach ($arProps as $propID => $arProp)
 		{
 			$propsFormData[$propID] = $_POST[$propID];
 		}
-		else if ($arResult['PRODUCT_ID'])
+		else if ($productID)
 		{
 			if (isset($arResult['PRODUCT_PROPS'][$arProp['ID']]))
 			{
@@ -780,7 +919,7 @@ foreach ($arProps as $propID => $arProp)
 		{
 			$propsFormData[$propID] = $_POST[$propID];
 		}
-		else if ($arResult['PRODUCT_ID'])
+		else if ($productID)
 		{
 			if (isset($arResult['PRODUCT_PROPS'][$arProp['ID']]))
 				$propsFormData[$propID] = $arResult['PRODUCT_PROPS'][$arProp['ID']]['VALUES_LIST'];
@@ -798,7 +937,7 @@ foreach ($arProps as $propID => $arProp)
 	}
 	else if ($arProp['PROPERTY_TYPE'] == 'F')
 	{
-		if ($arResult['PRODUCT_ID'])
+		if ($productID)
 		{
 			if (isset($arResult['PRODUCT_PROPS'][$arProp['ID']]))
 			{
@@ -824,7 +963,7 @@ foreach ($arProps as $propID => $arProp)
 		{
 			$propsFormData[$propID] = $_POST[$propID];
 		}
-		else if ($arResult['PRODUCT_ID'])
+		else if ($productID)
 		{
 			if (isset($arResult['PRODUCT_PROPS'][$arProp['ID']]))
 				$propsFormData[$propID] = $arResult['PRODUCT_PROPS'][$arProp['ID']]['VALUES_LIST'];
@@ -842,7 +981,7 @@ foreach ($arProps as $propID => $arProp)
 		{
 			$propsFormData[$propID] = $_POST[$propID];
 		}
-		else if ($arResult['PRODUCT_ID'])
+		else if ($productID)
 		{
 			if (isset($arResult['PRODUCT_PROPS'][$arProp['ID']]))
 			{

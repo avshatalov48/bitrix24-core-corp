@@ -38,7 +38,6 @@ if($isBitrix24Template)
 			container: BX('voximplant-rent'),
 			location: BX.message('LANGUAGE_ID').toUpperCase(),
 			publicFolder: '<?=CVoxImplantMain::GetPublicFolder()?>',
-			buyLink: '<?=CVoxImplantMain::GetBuyLink()?>',
 			canRent: <?= $arResult['CAN_RENT_NUMBER'] ? 'true' : 'false' ?>,
 			iframe: <?=CUtil::PhpToJSObject($arResult['IFRAME'])?>,
 			currentBalance: <?= (float)$arResult['CURRENT_BALANCE']?>,

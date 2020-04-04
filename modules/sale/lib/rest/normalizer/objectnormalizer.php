@@ -13,7 +13,7 @@ use Bitrix\Sale\ShipmentItemStore;
 /**
  * Class ObjectNormalizer
  * @package Bitrix\Sale\Rest\Normalizer
- * пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ SNAKE_CASE
+ * нотация всех ключей в результате должна быть SNAKE_CASE
  */
 class ObjectNormalizer
 {
@@ -111,7 +111,7 @@ class ObjectNormalizer
 		/** @var Shipment $shipment */
 		foreach ($this->getOrder()->getShipmentCollection() as $shipment)
 		{
-			// пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+			// рест магазина не оперирует системными отгрузками
 			if($shipment->isSystem())
 				continue;
 

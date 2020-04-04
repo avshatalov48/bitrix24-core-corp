@@ -24,6 +24,9 @@ if ($permissionRight == Translate\Permission::DENY)
 {
 	$APPLICATION->AuthForm(Loc::getMessage('ACCESS_DENIED'));
 }
+
+$request = Main\Context::getCurrent()->getRequest();
+
 // if it is POST upload_csv
 if ($request->isPost())
 {
@@ -39,17 +42,12 @@ if ($request->isPost())
 
 $hasPermissionEditPhp = $USER->CanDoOperation('edit_php');
 
-
-
 //endregion
 
 //-----------------------------------------------------------------------------------
 //region handle GET,POST
 
 @set_time_limit(0);
-
-
-$request = Main\Context::getCurrent()->getRequest();
 
 $isUtfMode = Translate\Translation::isUtfMode();
 $useTranslationRepository = Main\Localization\Translation::useTranslationRepository();
@@ -77,12 +75,7 @@ if ($request->isPost() && check_bitrix_sessid())
 				$mergeMode = ($request->getPost('rewrite_lang_files') === 'U');
 			}
 
-			$encodingIn = '';
-			$convertEncoding = ($request->getPost('localize_encoding') === 'Y');
-			if ($convertEncoding)
-			{
-				$encodingIn = ($request->getPost('encoding') !== null ? $request->getPost('encoding') : '');
-			}
+			$encodingIn = ($request->getPost('encoding') !== null ? $request->getPost('encoding') : '');
 
 			$errors = [];
 
@@ -173,7 +166,7 @@ $iterator = Main\Localization\LanguageTable::getList([
 		],
 		'=ACTIVE' => 'Y'
 	],
-	'order' => ['DEF' => 'DESC', 'SORT' => 'ASC']
+	'order' => ['SORT' => 'ASC']
 ]);
 while ($row = $iterator->fetch())
 {
@@ -692,11 +685,11 @@ $sFormValues = 1;
 $url = $APPLICATION->GetPopupLink(
 					array(
 						'URL' => "/bitrix/admin/translate_search.php?lang=".LANGUAGE_ID."&bxpublic=Y&path=".urlencode($path),
-								'PARAMS' => array(
-									'width' => 470,
-									'height' => 310,
-									'resizable' => false
-								)
+						'PARAMS' => array(
+							'width' => 470,
+							'height' => 310,
+							'resizable' => false
+						)
 					)
 				);
 $aContext[] = array(
@@ -763,7 +756,7 @@ $aTabs = array(
 		  "TITLE" => Loc::getMessage("TR_DOWNLOAD_CSV_TEXT"), 'ONSELECT' => "BX('tr_submit').value='".Loc::getMessage("TR_DOWNLOAD_SUBMIT_BUTTON")."'")
 );
 
-$tabControl = new \CAdminTabControl("tabControl", $aTabs, false);
+$tabControl = new \CAdminTabControl("tabControl", $aTabs, false, true);
 
 if ($permissionRight == Translate\Permission::WRITE)
 {
@@ -875,7 +868,7 @@ if ($permissionRight == Translate\Permission::WRITE)
 		<?endif?>
 
 
-		<tr <?/*if (!$isUtfMode && !$useTranslationRepository):?>style="display: none;"<?endif*/?>>
+		<tr>
 			<td><?= Loc::getMessage("TR_CONVERT_NATIONAL2_UTF8")?>:</td>
 			<td>
 				<input type="checkbox" name="convert_encoding" value="Y" checked="checked">
@@ -893,7 +886,7 @@ if ($permissionRight == Translate\Permission::WRITE)
 							'ID' => $enabledLanguages,
 							'=ACTIVE' => 'Y'
 						],
-						'order' => ['DEF' => 'DESC', 'SORT' => 'ASC']
+						'order' => ['SORT' => 'ASC']
 					]);
 					while ($row = $iterator->fetch())
 					{

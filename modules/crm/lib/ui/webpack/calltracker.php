@@ -131,14 +131,22 @@ class CallTracker extends Base
 		$result = [];
 		foreach (Tracking\Provider::getReadySources() as $source)
 		{
-			$phoneNumber = PhoneNumber\Parser::getInstance()->parse($source['PHONE'])->format();
+			$phoneNumbers = array_map(
+				function ($phoneNumber)
+				{
+					return (PhoneNumber\Parser::getInstance()->parse($phoneNumber)->format()
+						?: $phoneNumber
+					);
+				},
+				$source['PHONE']
+			);
 			$result[] = [
-				'code' => $withNames ? $source['UTM_SOURCE'] : null,
+				'code' => $withNames ? $source['UTM_SOURCE'][0] : null,
 				'name' => $withNames ? $source['NAME'] : null,
 				'utm' => $source['UTM_SOURCE'],
 				'replacement' => [
 					'email' => $source['EMAIL'],
-					'phone' => $phoneNumber ?: $source['PHONE']
+					'phone' => $phoneNumbers
 				]
 			];
 		}
@@ -157,19 +165,19 @@ class CallTracker extends Base
 			[
 				'code' => 'demo-source-1',
 				'name' => Loc::getMessage("CRM_UI_WEBPACK_CALL_TRACKER_DEMO_1"),
-				'utm' => 'demo-source-1',
+				'utm' => ['demo-source-1'],
 				'replacement' => [
-					'email' => 'demo1@example.com',
-					'phone' => '+1 111 111 111',
+					'email' => ['demo1@example.com'],
+					'phone' => ['+1 111 111 111'],
 				]
 			],
 			[
 				'code' => 'demo-source-2',
 				'name' => Loc::getMessage("CRM_UI_WEBPACK_CALL_TRACKER_DEMO_2"),
-				'utm' => 'demo-source-2',
+				'utm' => ['demo-source-2'],
 				'replacement' => [
-					'email' => 'demo2@example.com',
-					'phone' => '+2 222 222 222 ',
+					'email' => ['demo2@example.com'],
+					'phone' => ['+2 222 222 222 '],
 				]
 			]
 		];

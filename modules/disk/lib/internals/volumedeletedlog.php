@@ -2,7 +2,7 @@
 
 namespace Bitrix\Disk\Internals;
 
-use Bitrix\Main\Type\DateTime;
+use Bitrix\Main;
 
 /**
  * Class VolumeDeletedLogTable
@@ -116,7 +116,7 @@ final class VolumeDeletedLogTable extends DataManager
 				'data_type' => 'datetime',
 				'required' => true,
 				'default_value' => function() {
-					return new DateTime();
+					return new Main\Type\DateTime();
 				},
 			),
 			'DELETED_BY' => array(

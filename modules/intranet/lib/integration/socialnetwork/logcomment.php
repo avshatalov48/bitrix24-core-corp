@@ -15,18 +15,11 @@ use Bitrix\Socialnetwork\Item\LogIndex;
 class LogComment
 {
 	const EVENT_ID_INTRANET_NEW_USER_COMMENT = 'intranet_new_user_comment';
-	const EVENT_ID_BITRIX24_NEW_USER_COMMENT = 'bitrix24_new_user_comment';
 
 	public static function getEventIdList()
 	{
-		static $isB24 = null;
-
-		if ($isB24 === null)
-		{
-			$isB24 = ModuleManager::isModuleInstalled('bitrix24');
-		}
 		return array(
-			($isB24 ? self::EVENT_ID_BITRIX24_NEW_USER_COMMENT : self::EVENT_ID_INTRANET_NEW_USER_COMMENT)
+			self::EVENT_ID_INTRANET_NEW_USER_COMMENT
 		);
 	}
 

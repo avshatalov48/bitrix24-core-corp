@@ -1,4 +1,4 @@
-(function (exports,main_polyfill_customevent,pull_components_status,ui_vue_components_smiles,im_component_dialog,im_component_textarea,imopenlines_component_message,rest_client,main_md5,main_date,pull_client,im_model,im_controller,im_tools_localstorage,im_provider_rest,im_provider_pull,im_tools_logger,im_const,ui_icons,ui_forms,im_utils,ui_vue,ui_vue_vuex) {
+(function (exports,main_polyfill_customevent,pull_components_status,ui_vue_components_smiles,im_component_dialog,im_component_textarea,im_component_quotepanel,imopenlines_component_message,rest_client,main_md5,main_date,pull_client,im_model,im_controller,im_tools_localstorage,im_provider_rest,im_provider_pull,im_tools_logger,im_const,ui_icons,ui_forms,im_utils,ui_vue,ui_vue_vuex) {
 	'use strict';
 
 	/**
@@ -58,7 +58,7 @@
 	  5: 'bottom-center',
 	  4: 'bottom-right'
 	});
-	var SubscriptionType$1 = Object.freeze({
+	var SubscriptionType = Object.freeze({
 	  configLoaded: 'configLoaded',
 	  widgetOpen: 'widgetOpen',
 	  widgetClose: 'widgetClose',
@@ -68,10 +68,11 @@
 	  operatorMessage: 'operatorMessage',
 	  userForm: 'userForm',
 	  userMessage: 'userMessage',
+	  userFile: 'userFile',
 	  userVote: 'userVote',
 	  every: 'every'
 	});
-	var SubscriptionTypeCheck = GetObjectValues(SubscriptionType$1);
+	var SubscriptionTypeCheck = GetObjectValues(SubscriptionType);
 	var RestMethod = Object.freeze({
 	  widgetUserRegister: 'imopenlines.widget.user.register',
 	  widgetConfigGet: 'imopenlines.widget.config.get',
@@ -223,7 +224,6 @@
 	          operators: [],
 	          connectors: [],
 	          showForm: FormType.none,
-	          uploadFile: false,
 	          showed: false,
 	          reopen: false,
 	          dragged: false,
@@ -275,7 +275,6 @@
 	          showed: null,
 	          showConsent: null,
 	          showForm: null,
-	          uploadFile: null,
 	          location: null
 	        }
 	      };
@@ -318,15 +317,15 @@
 	          }
 
 	          if (im_utils.Utils.types.isPlainObject(payload.textMessages)) {
-	            if (typeof payload.textMessages.bxLivechatOnlineLine1 === 'string') {
+	            if (typeof payload.textMessages.bxLivechatOnlineLine1 === 'string' && payload.textMessages.bxLivechatOnlineLine1 !== '') {
 	              state.common.textMessages.bxLivechatOnlineLine1 = payload.textMessages.bxLivechatOnlineLine1;
 	            }
 
-	            if (typeof payload.textMessages.bxLivechatOnlineLine2 === 'string') {
+	            if (typeof payload.textMessages.bxLivechatOnlineLine2 === 'string' && payload.textMessages.bxLivechatOnlineLine2 !== '') {
 	              state.common.textMessages.bxLivechatOnlineLine2 = payload.textMessages.bxLivechatOnlineLine2;
 	            }
 
-	            if (typeof payload.textMessages.bxLivechatOffline === 'string') {
+	            if (typeof payload.textMessages.bxLivechatOffline === 'string' && payload.textMessages.bxLivechatOffline !== '') {
 	              state.common.textMessages.bxLivechatOffline = payload.textMessages.bxLivechatOffline;
 	            }
 	          }
@@ -349,11 +348,11 @@
 
 	          if (typeof payload.showed === 'boolean') {
 	            state.common.showed = payload.showed;
-	            payload.reopen = payload.showed;
+	            payload.reopen = im_utils.Utils.device.isMobile() ? false : payload.showed;
 	          }
 
 	          if (typeof payload.reopen === 'boolean') {
-	            state.common.reopen = payload.showed;
+	            state.common.reopen = payload.reopen;
 	          }
 
 	          if (typeof payload.copyright === 'boolean') {
@@ -370,14 +369,6 @@
 
 	          if (payload.connectors instanceof Array) {
 	            state.common.connectors = payload.connectors;
-	          }
-
-	          if (typeof payload.uploadFilePlus !== 'undefined') {
-	            state.common.uploadFile = state.common.uploadFile + 1;
-	          }
-
-	          if (typeof payload.uploadFileMinus !== 'undefined') {
-	            state.common.uploadFile = state.common.uploadFile - 1;
 	          }
 
 	          if (typeof payload.showForm === 'string' && typeof FormType[payload.showForm] !== 'undefined') {
@@ -745,6 +736,15 @@
 	        gender: data.gender,
 	        position: data.position
 	      });
+	      this.store.dispatch('users/set', [{
+	        id: data.id,
+	        name: data.name,
+	        firstName: data.firstName,
+	        lastName: data.lastName,
+	        avatar: data.avatar,
+	        gender: data.gender,
+	        workPosition: data.position
+	      }]);
 	      this.store.commit('application/set', {
 	        common: {
 	          userId: data.id
@@ -788,7 +788,7 @@
 	        return el.id != message.id;
 	      });
 	      this.widget.sendEvent({
-	        type: SubscriptionType$1.userMessage,
+	        type: SubscriptionType.userMessage,
 	        data: {
 	          id: messageId,
 	          text: message.text
@@ -800,6 +800,17 @@
 	    value: function handleImMessageAddError(error, message) {
 	      this.widget.messagesQueue = this.widget.messagesQueue.filter(function (el) {
 	        return el.id != message.id;
+	      });
+	    }
+	  }, {
+	    key: "handleImDiskFileCommitSuccess",
+	    value: function handleImDiskFileCommitSuccess(result, message) {
+	      this.widget.messagesQueue = this.widget.messagesQueue.filter(function (el) {
+	        return el.id != message.id;
+	      });
+	      this.widget.sendEvent({
+	        type: SubscriptionType.userFile,
+	        data: {}
 	      });
 	    }
 	  }]);
@@ -843,7 +854,7 @@
 	    value: function handleMessageChat(params, extra, command) {
 	      if (params.message.senderId != this.controller.getUserId()) {
 	        this.widget.sendEvent({
-	          type: SubscriptionType$1.operatorMessage,
+	          type: SubscriptionType.operatorMessage,
 	          data: params
 	        });
 
@@ -890,7 +901,7 @@
 	        userVote: VoteType.none
 	      });
 	      this.widget.sendEvent({
-	        type: SubscriptionType$1.sessionStart,
+	        type: SubscriptionType.sessionStart,
 	        data: {
 	          sessionId: params.sessionId
 	        }
@@ -903,7 +914,7 @@
 	        operator: params.operator
 	      });
 	      this.widget.sendEvent({
-	        type: SubscriptionType$1.sessionOperatorChange,
+	        type: SubscriptionType.sessionOperatorChange,
 	        data: {
 	          operator: params.operator
 	        }
@@ -917,7 +928,7 @@
 	        sessionClose: true
 	      });
 	      this.widget.sendEvent({
-	        type: SubscriptionType$1.sessionFinish,
+	        type: SubscriptionType.sessionFinish,
 	        data: {
 	          sessionId: params.sessionId
 	        }
@@ -1002,8 +1013,6 @@
 	    this.subscribers = {};
 	    this.dateFormat = null;
 	    this.messagesQueue = [];
-	    this.filesQueue = [];
-	    this.filesQueueIndex = 0;
 	    this.configRequestXhr = null;
 
 	    if (this.pageMode && this.pageMode.placeholder) {
@@ -1030,7 +1039,7 @@
 	        }
 	      });
 
-	      if (_this.store.state.widget.common.showed && _this.store.state.application.device.type == im_const.DeviceType.mobile && _this.store.state.application.device.orientation == im_const.DeviceOrientation.horizontal) {
+	      if (_this.store.state.widget.common.showed && _this.store.state.application.device.type === im_const.DeviceType.mobile && _this.store.state.application.device.orientation === im_const.DeviceOrientation.horizontal) {
 	        document.activeElement.blur();
 	      }
 	    });
@@ -1088,16 +1097,33 @@
 	      },
 	      dialog: {
 	        messageLimit: this.controller.getDefaultMessageLimit()
+	      },
+	      saveException: {
+	        common: {
+	          host: null,
+	          siteId: null,
+	          languageId: null
+	        },
+	        dialog: {
+	          messageLimit: null,
+	          messageExtraCount: null
+	        }
 	      }
 	    };
-	    new ui_vue_vuex.VuexBuilder().addModel(WidgetModel.create().setVariables(widgetVariables)).addModel(im_model.ApplicationModel.create().setVariables(applicationVariables)).addModel(im_model.MessagesModel.create()).addModel(im_model.DialoguesModel.create().setVariables({
+	    var cacheDialogues = !im_utils.Utils.browser.isIe();
+	    new ui_vue_vuex.VuexBuilder().addModel(WidgetModel.create().setVariables(widgetVariables)).addModel(im_model.ApplicationModel.create().setVariables(applicationVariables)).addModel(im_model.DialoguesModel.create().useDatabase(cacheDialogues).setVariables({
 	      host: this.host
-	    }).useDatabase(false)).addModel(im_model.UsersModel.create().setVariables({
+	    })).addModel(im_model.MessagesModel.create().useDatabase(cacheDialogues)).addModel(im_model.FilesModel.create().useDatabase(cacheDialogues).setVariables({
 	      host: this.host,
-	      defaultName: this.getLocalize('IM_MESSENGER_MESSAGE_USER_ANONYM')
-	    }).useDatabase(false)).addModel(im_model.FilesModel.create().setVariables({
-	      host: this.host
-	    }).useDatabase(false)).setDatabaseConfig({
+	      default: {
+	        name: this.getLocalize('IM_MESSENGER_MESSAGE_FILE_DELETED')
+	      }
+	    })).addModel(im_model.UsersModel.create().useDatabase(cacheDialogues).setVariables({
+	      host: this.host,
+	      default: {
+	        name: this.getLocalize('IM_MESSENGER_MESSAGE_USER_ANONYM')
+	      }
+	    })).setDatabaseConfig({
 	      name: 'imol/widget',
 	      type: ui_vue_vuex.VuexBuilder.DatabaseType.localStorage,
 	      siteId: this.getSiteId()
@@ -1107,7 +1133,7 @@
 
 	      _this.initRestClient();
 
-	      _this.controller.setVuexStore(_this.store);
+	      _this.controller.setStore(_this.store);
 
 	      _this.controller.setRestClient(_this.restClient);
 
@@ -1227,10 +1253,10 @@
 	          trace_data: this.getCrmTraceData(),
 	          custom_data: this.getCustomData()
 	        }];
-	        query[im_const.RestMethod.imChatGet] = [im_const.RestMethod.imChatGet, {
+	        query[im_const.RestMethodHandler.imChatGet] = [im_const.RestMethod.imChatGet, {
 	          dialog_id: '$result[' + RestMethod.widgetDialogGet + '][dialogId]'
 	        }];
-	        query[im_const.RestMethod.imDialogMessagesGet] = [im_const.RestMethod.imDialogMessagesGet, {
+	        query[im_const.RestMethodHandler.imDialogMessagesGetInit] = [im_const.RestMethod.imDialogMessagesGet, {
 	          chat_id: '$result[' + RestMethod.widgetDialogGet + '][chatId]',
 	          limit: this.controller.getRequestMessageLimit(),
 	          convert_text: 'Y'
@@ -1239,7 +1265,7 @@
 	        query[RestMethod.widgetUserRegister] = [RestMethod.widgetUserRegister, babelHelpers.objectSpread({
 	          config_id: '$result[' + RestMethod.widgetConfigGet + '][configId]'
 	        }, this.getUserRegisterFields())];
-	        query[im_const.RestMethod.imChatGet] = [im_const.RestMethod.imChatGet, {
+	        query[im_const.RestMethodHandler.imChatGet] = [im_const.RestMethod.imChatGet, {
 	          dialog_id: '$result[' + RestMethod.widgetUserRegister + '][dialogId]'
 	        }];
 
@@ -1249,7 +1275,7 @@
 	            trace_data: this.getCrmTraceData(),
 	            custom_data: this.getCustomData()
 	          }];
-	          query[im_const.RestMethod.imDialogMessagesGet] = [im_const.RestMethod.imDialogMessagesGet, {
+	          query[im_const.RestMethodHandler.imDialogMessagesGetInit] = [im_const.RestMethod.imDialogMessagesGet, {
 	            chat_id: '$result[' + RestMethod.widgetDialogGet + '][chatId]',
 	            limit: this.controller.getRequestMessageLimit(),
 	            convert_text: 'Y'
@@ -1302,7 +1328,7 @@
 
 	        _this3.executeRestAnswer(RestMethod.widgetUserGet, userGetResult);
 
-	        var chatGetResult = response[im_const.RestMethod.imChatGet];
+	        var chatGetResult = response[im_const.RestMethodHandler.imChatGet];
 
 	        if (chatGetResult.error()) {
 	          _this3.requestDataSend = false;
@@ -1312,7 +1338,7 @@
 	          return false;
 	        }
 
-	        _this3.executeRestAnswer(im_const.RestMethod.imChatGet, chatGetResult);
+	        _this3.executeRestAnswer(im_const.RestMethodHandler.imChatGet, chatGetResult);
 
 	        var dialogGetResult = response[RestMethod.widgetDialogGet];
 
@@ -1328,7 +1354,7 @@
 	          _this3.executeRestAnswer(RestMethod.widgetDialogGet, dialogGetResult);
 	        }
 
-	        var dialogMessagesGetResult = response[im_const.RestMethod.imDialogMessagesGet];
+	        var dialogMessagesGetResult = response[im_const.RestMethodHandler.imDialogMessagesGetInit];
 
 	        if (dialogMessagesGetResult) {
 	          if (dialogMessagesGetResult.error()) {
@@ -1339,7 +1365,12 @@
 	            return false;
 	          }
 
-	          _this3.executeRestAnswer(im_const.RestMethod.imDialogMessagesGet, dialogMessagesGetResult);
+	          _this3.store.dispatch('dialogues/saveDialog', {
+	            dialogId: _this3.controller.getDialogId(),
+	            chatId: _this3.controller.getChatId()
+	          });
+
+	          _this3.executeRestAnswer(im_const.RestMethodHandler.imDialogMessagesGetInit, dialogMessagesGetResult);
 	        }
 
 	        var userRegisterResult = response[RestMethod.widgetUserRegister];
@@ -1373,8 +1404,6 @@
 
 	        _this3.startPullClient(config).then(function () {
 	          _this3.processSendMessages();
-
-	          _this3.processSendFiles();
 	        }).catch(function (error) {
 	          _this3.setError(error.ex.error, error.ex.error_description);
 	        });
@@ -1382,7 +1411,7 @@
 	        _this3.requestDataSend = false;
 	      }, false, false, im_utils.Utils.getLogTrackingParams({
 	        name: 'widget.init.config',
-	        dialog: this.getDialogData()
+	        dialog: this.controller.getDialogData()
 	      }));
 	    }
 	  }, {
@@ -1397,6 +1426,10 @@
 	      var _this4 = this;
 
 	      if (Cookie.get(null, 'BITRIX_LIVECHAT_AUTH')) {
+	        return files;
+	      }
+
+	      if (!im_utils.Utils.types.isArray(files)) {
 	        return files;
 	      }
 
@@ -1492,7 +1525,7 @@
 	      this.pullConnectedFirstTime = this.pullClient.subscribe({
 	        type: pull_client.PullClient.SubscriptionType.Status,
 	        callback: function callback(result) {
-	          if (result.status == pull_client.PullClient.PullStatus.Online) {
+	          if (result.status === pull_client.PullClient.PullStatus.Online) {
 	            promise.resolve(true);
 
 	            _this5.pullConnectedFirstTime();
@@ -1505,7 +1538,9 @@
 	        this.template.$root.$emit('onBitrixPullClientInited', this.pullClient);
 	      }
 
-	      this.pullClient.start(config).catch(function () {
+	      this.pullClient.start(babelHelpers.objectSpread({}, config, {
+	        skipReconnectToLastSession: true
+	      })).catch(function () {
 	        promise.reject({
 	          ex: {
 	            error: 'PULL_CONNECTION_ERROR',
@@ -1538,17 +1573,12 @@
 
 	        if (this.pullRequestMessage) {
 	          this.getDialogUnread().then(function () {
-	            _this6.readMessage();
-
 	            _this6.processSendMessages();
-
-	            _this6.processSendFiles();
 	          });
 	          this.pullRequestMessage = false;
 	        } else {
 	          this.readMessage();
 	          this.processSendMessages();
-	          this.processSendFiles();
 	        }
 	      } else if (data.status === pull_client.PullClient.PullStatus.Offline) {
 	        this.pullRequestMessage = true;
@@ -1586,13 +1616,13 @@
 	          this.$bitrixPullClient = pullClient;
 	          this.$bitrixMessages = widgetContext.localize;
 	          widgetContext.sendEvent({
-	            type: SubscriptionType$1.widgetOpen,
+	            type: SubscriptionType.widgetOpen,
 	            data: {}
 	          });
 	        },
 	        destroyed: function destroyed() {
 	          widgetContext.sendEvent({
-	            type: SubscriptionType$1.widgetClose,
+	            type: SubscriptionType.widgetClose,
 	            data: {}
 	          });
 	          this.$bitrixWidget.template = null;
@@ -1604,6 +1634,7 @@
 	          this.$bitrixMessages = null;
 	        }
 	      });
+	      this.controller.setTemplateEngine(this.template);
 	      return true;
 	    }
 	  }, {
@@ -1631,26 +1662,37 @@
 	      var _this7 = this;
 
 	      var text = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '';
+	      var file = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
 
-	      if (!text) {
+	      if (!text && !file) {
 	        return false;
 	      }
 
-	      im_tools_logger.Logger.warn('addMessage', text);
+	      im_tools_logger.Logger.warn('addMessage', text, file);
 
 	      if (!this.controller.isUnreadMessagesLoaded()) {
 	        this.sendMessage({
 	          id: 0,
-	          text: text
+	          text: text,
+	          file: file
 	        });
 	        this.processSendMessages();
 	        return true;
 	      }
 
+	      this.store.commit('application/increaseDialogExtraCount');
+	      var params = {};
+
+	      if (file) {
+	        params.FILE_ID = [file.id];
+	      }
+
 	      this.store.dispatch('messages/add', {
 	        chatId: this.getChatId(),
 	        authorId: this.getUserId(),
-	        text: text
+	        text: text,
+	        params: params,
+	        sending: !file
 	      }).then(function (messageId) {
 	        if (!_this7.isDialogStart()) {
 	          _this7.store.commit('widget/common', {
@@ -1661,6 +1703,7 @@
 	        _this7.messagesQueue.push({
 	          id: messageId,
 	          text: text,
+	          file: file,
 	          sending: false
 	        });
 
@@ -1673,38 +1716,83 @@
 	      return true;
 	    }
 	  }, {
-	    key: "addFile",
-	    value: function addFile(fileInput) {
+	    key: "uploadFile",
+	    value: function uploadFile(fileInput) {
+	      var _this8 = this;
+
 	      if (!fileInput) {
 	        return false;
 	      }
 
-	      im_tools_logger.Logger.warn('addFile', fileInput.files[0].name, fileInput.files[0].size);
+	      im_tools_logger.Logger.warn('addFile', fileInput.files[0].name, fileInput.files[0].size, fileInput.files[0]);
+	      var file = fileInput.files[0];
+	      var fileType = 'file';
 
-	      if (!this.isDialogStart()) {
-	        this.store.commit('widget/common', {
-	          dialogStart: true
+	      if (file.type.toString().startsWith('image')) {
+	        fileType = 'image';
+	      }
+
+	      if (!this.controller.isUnreadMessagesLoaded()) {
+	        this.addMessage('', {
+	          id: 0,
+	          source: fileInput
+	        });
+	        return true;
+	      }
+
+	      this.store.dispatch('files/add', {
+	        chatId: this.getChatId(),
+	        authorId: this.getUserId(),
+	        name: file.name,
+	        type: fileType,
+	        extension: file.name.split('.').splice(-1)[0],
+	        size: file.size,
+	        image: false,
+	        status: im_const.FileStatus.upload,
+	        progress: 0,
+	        authorName: this.controller.getCurrentUser().name,
+	        urlPreview: ""
+	      }).then(function (fileId) {
+	        return _this8.addMessage('', {
+	          id: fileId,
+	          source: fileInput
+	        });
+	      });
+	      return true;
+	    }
+	  }, {
+	    key: "cancelUploadFile",
+	    value: function cancelUploadFile(fileId) {
+	      var _this9 = this;
+
+	      var element = this.messagesQueue.find(function (element) {
+	        return element.file && element.file.id === fileId;
+	      });
+
+	      if (element) {
+	        if (element.xhr) {
+	          element.xhr.abort();
+	        }
+
+	        this.store.dispatch('messages/delete', {
+	          chatId: this.getChatId(),
+	          id: element.id
+	        }).then(function () {
+	          _this9.store.dispatch('files/delete', {
+	            chatId: _this9.getChatId(),
+	            id: element.file.id
+	          });
+
+	          _this9.messagesQueue = _this9.messagesQueue.filter(function (el) {
+	            return el.id !== element.id;
+	          });
 	        });
 	      }
-
-	      this.filesQueue.push({
-	        id: this.filesQueueIndex,
-	        fileInput: fileInput
-	      });
-	      this.filesQueueIndex++;
-
-	      if (this.getChatId()) {
-	        this.processSendFiles();
-	      } else {
-	        this.requestData();
-	      }
-
-	      return true;
 	    }
 	  }, {
 	    key: "processSendMessages",
 	    value: function processSendMessages() {
-	      var _this8 = this;
+	      var _this10 = this;
 
 	      if (this.offline) {
 	        return false;
@@ -1715,37 +1803,42 @@
 	      }).forEach(function (element) {
 	        element.sending = true;
 
-	        _this8.sendMessage(element);
-	      });
-	      return true;
-	    }
-	  }, {
-	    key: "processSendFiles",
-	    value: function processSendFiles() {
-	      var _this9 = this;
-
-	      if (this.offline) {
-	        return false;
-	      }
-
-	      this.filesQueue.filter(function (element) {
-	        return !element.sending;
-	      }).forEach(function (element) {
-	        element.sending = true;
-
-	        _this9.sendFile(element);
+	        if (element.file) {
+	          _this10.sendMessageWithFile(element);
+	        } else {
+	          _this10.sendMessage(element);
+	        }
 	      });
 	      return true;
 	    }
 	  }, {
 	    key: "sendMessage",
 	    value: function sendMessage(message) {
-	      var _this10 = this;
+	      var _this11 = this;
 
 	      this.controller.stopWriting();
+	      var quiteId = this.store.getters['dialogues/getQuoteId'](this.getDialogId());
+
+	      if (quiteId) {
+	        var quoteMessage = this.store.getters['messages/getMessage'](this.getChatId(), quiteId);
+
+	        if (quoteMessage) {
+	          var user = this.store.getters['users/get'](quoteMessage.authorId);
+	          var newMessage = [];
+	          newMessage.push("------------------------------------------------------");
+	          newMessage.push(user.name ? user.name : this.getLocalize('BX_LIVECHAT_SYSTEM_MESSAGE'));
+	          newMessage.push(quoteMessage.text);
+	          newMessage.push('------------------------------------------------------');
+	          newMessage.push(message.text);
+	          message.text = newMessage.join("\n");
+	          this.quoteMessageClear();
+	        }
+	      }
+
+	      message.chatId = this.getChatId();
 	      this.restClient.callMethod(im_const.RestMethod.imMessageAdd, {
-	        'TEMP_ID': message.id,
-	        'CHAT_ID': this.getChatId(),
+	        'TEMPLATE_ID': message.id,
+	        'CHAT_ID': message.chatId,
 	        'MESSAGE': message.text
 	      }, null, null, im_utils.Utils.getLogTrackingParams({
 	        name: im_const.RestMethod.imMessageAdd,
@@ -1754,110 +1847,176 @@
 	        },
 	        dialog: this.getDialogData()
 	      })).then(function (response) {
-	        _this10.executeRestAnswer(im_const.RestMethod.imMessageAdd, response, message);
+	        _this11.executeRestAnswer(im_const.RestMethodHandler.imMessageAdd, response, message);
 	      }).catch(function (error) {
-	        _this10.executeRestAnswer(im_const.RestMethod.imMessageAdd, error, message);
+	        _this11.executeRestAnswer(im_const.RestMethodHandler.imMessageAdd, error, message);
 	      });
+	      return true;
 	    }
 	  }, {
-	    key: "sendFile",
-	    value: function sendFile(file) {
-	      var _this11 = this;
+	    key: "sendMessageWithFile",
+	    value: function sendMessageWithFile(message) {
+	      var _this12 = this;
 
-	      var fileName = file.fileInput.files[0].name;
-	      var fileType = 'file'; // TODO set type by fileInput type
-
+	      this.controller.stopWriting();
+	      var fileType = this.store.getters['files/get'](this.getChatId(), message.file.id, true).type;
 	      var diskFolderId = this.getDiskFolderId();
 	      var query = {};
 
 	      if (diskFolderId) {
-	        query[im_const.RestMethod.imDiskFileUpload] = [im_const.RestMethod.imDiskFileUpload, {
+	        query[im_const.RestMethodHandler.imDiskFileUpload] = [im_const.RestMethod.imDiskFileUpload, {
 	          id: diskFolderId,
 	          data: {
-	            NAME: fileName
+	            NAME: message.file.source.files[0].name
 	          },
-	          fileContent: file.fileInput,
+	          fileContent: message.file.source,
 	          generateUniqueName: true
 	        }];
 	      } else {
-	        query[im_const.RestMethod.imDiskFolderGet] = [im_const.RestMethod.imDiskFolderGet, {
+	        query[im_const.RestMethodHandler.imDiskFolderGet] = [im_const.RestMethod.imDiskFolderGet, {
 	          chat_id: this.getChatId()
 	        }];
-	        query[im_const.RestMethod.imDiskFileUpload] = [im_const.RestMethod.imDiskFileUpload, {
-	          id: '$result[' + im_const.RestMethod.imDiskFolderGet + '][ID]',
+	        query[im_const.RestMethodHandler.imDiskFileUpload] = [im_const.RestMethod.imDiskFileUpload, {
+	          id: '$result[' + im_const.RestMethodHandler.imDiskFolderGet + '][ID]',
 	          data: {
-	            NAME: fileName
+	            NAME: message.file.source.files[0].name
 	          },
-	          fileContent: file.fileInput,
+	          fileContent: message.file.source,
 	          generateUniqueName: true
 	        }];
 	      }
 
-	      query[im_const.RestMethod.imDiskFileCommit] = [im_const.RestMethod.imDiskFileCommit, {
-	        chat_id: this.getChatId(),
-	        upload_id: '$result[' + im_const.RestMethod.imDiskFileUpload + '][ID]'
-	      }];
-	      this.store.commit('widget/common', {
-	        uploadFilePlus: true
-	      }); // TODO remove this after create new file-loader
-
 	      this.restClient.callBatch(query, function (response) {
-	        _this11.store.commit('widget/common', {
-	          uploadFileMinus: true
-	        }); // TODO  remove this after create new file-loader
-
-
 	        if (!response) {
-	          _this11.requestDataSend = false;
+	          _this12.requestDataSend = false;
+	          console.warn('EMPTY_RESPONSE', 'Server returned an empty response. [1]');
 
-	          _this11.setError('EMPTY_RESPONSE', 'Server returned an empty response.');
+	          _this12.fileError(_this12.getChatId, message.file.id, message.id);
 
 	          return false;
 	        }
 
 	        if (!diskFolderId) {
-	          var diskFolderGet = response[im_const.RestMethod.imDiskFolderGet];
+	          var diskFolderGet = response[im_const.RestMethodHandler.imDiskFolderGet];
 
 	          if (diskFolderGet && diskFolderGet.error()) {
 	            console.warn(diskFolderGet.error().ex.error, diskFolderGet.error().ex.error_description);
+
+	            _this12.fileError(_this12.getChatId(), message.file.id, message.id);
+
 	            return false;
 	          }
 
-	          _this11.executeRestAnswer(im_const.RestMethod.imDiskFolderGet, diskFolderGet);
+	          _this12.executeRestAnswer(im_const.RestMethodHandler.imDiskFolderGet, diskFolderGet);
 	        }
 
-	        var diskFileUpload = response[im_const.RestMethod.imDiskFileUpload];
+	        var diskId = 0;
+	        var diskFileUpload = response[im_const.RestMethodHandler.imDiskFileUpload];
 
-	        if (diskFileUpload && diskFileUpload.error()) {
-	          console.warn(diskFileUpload.error().ex.error, diskFileUpload.error().ex.error_description);
-	          return false;
+	        if (diskFileUpload) {
+	          var result = diskFileUpload.data();
+
+	          if (diskFileUpload.error()) {
+	            console.warn(diskFileUpload.error().ex.error, diskFileUpload.error().ex.error_description);
+
+	            _this12.fileError(_this12.getChatId(), message.file.id, message.id);
+
+	            return false;
+	          } else if (!result) {
+	            console.warn('EMPTY_RESPONSE', 'Server returned an empty response. [2]');
+
+	            _this12.fileError(_this12.getChatId(), message.file.id, message.id);
+
+	            return false;
+	          }
+
+	          diskId = result.ID;
 	        } else {
-	          im_tools_logger.Logger.log('upload success', diskFileUpload.data());
-	        }
+	          console.warn('EMPTY_RESPONSE', 'Server returned an empty response. [3]');
 
-	        var diskFileCommit = response[im_const.RestMethod.imDiskFileCommit];
+	          _this12.fileError(_this12.getChatId(), message.file.id, message.id);
 
-	        if (diskFileCommit && diskFileCommit.error()) {
-	          console.warn(diskFileCommit.error().ex.error, diskFileCommit.error().ex.error_description);
 	          return false;
-	        } else {
-	          im_tools_logger.Logger.log('commit success', diskFileCommit.data());
 	        }
-	      }, false, false, im_utils.Utils.getLogTrackingParams({
-	        name: im_const.RestMethod.imDiskFileCommit,
+
+	        message.chatId = _this12.getChatId();
+
+	        _this12.store.dispatch('files/update', {
+	          chatId: message.chatId,
+	          id: message.file.id,
+	          fields: {
+	            status: im_const.FileStatus.wait,
+	            progress: 95
+	          }
+	        });
+
+	        _this12.fileCommit({
+	          chatId: message.chatId,
+	          uploadId: diskId,
+	          messageText: message.text,
+	          messageId: message.id,
+	          fileId: message.file.id,
+	          fileType: fileType
+	        }, message);
+	      }, false, function (xhr) {
+	        message.xhr = xhr;
+	      }, im_utils.Utils.getLogTrackingParams({
+	        name: im_const.RestMethodHandler.imDiskFileCommit,
 	        data: {
 	          timMessageType: fileType
 	        },
 	        dialog: this.getDialogData()
 	      }));
-	      this.filesQueue = this.filesQueue.filter(function (el) {
-	        return el.id != file.id;
+	    }
+	  }, {
+	    key: "fileError",
+	    value: function fileError(chatId, fileId) {
+	      var messageId = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 0;
+	      this.store.dispatch('files/update', {
+	        chatId: chatId,
+	        id: fileId,
+	        fields: {
+	          status: im_const.FileStatus.error,
+	          progress: 0
+	        }
 	      });
+
+	      if (messageId) {
+	        this.store.dispatch('messages/actionError', {
+	          chatId: chatId,
+	          id: messageId,
+	          retry: false
+	        });
+	      }
+	    }
+	  }, {
+	    key: "fileCommit",
+	    value: function fileCommit(params, message) {
+	      var _this13 = this;
+
+	      this.restClient.callMethod(im_const.RestMethod.imDiskFileCommit, {
+	        chat_id: params.chatId,
+	        upload_id: params.uploadId,
+	        message: params.messageText,
+	        template_id: params.messageId,
+	        file_template_id: params.fileId
+	      }, null, null, im_utils.Utils.getLogTrackingParams({
+	        name: im_const.RestMethod.imDiskFileCommit,
+	        data: {
+	          timMessageType: params.fileType
+	        },
+	        dialog: this.getDialogData()
+	      })).then(function (response) {
+	        _this13.executeRestAnswer(im_const.RestMethodHandler.imDiskFileCommit, response, message);
+	      }).catch(function (error) {
+	        _this13.executeRestAnswer(im_const.RestMethodHandler.imDiskFileCommit, error, message);
+	      });
+	      return true;
 	    }
 	  }, {
 	    key: "getDialogHistory",
 	    value: function getDialogHistory(lastId) {
-	      var _this12 = this;
+	      var _this14 = this;
 
 	      var limit = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : this.controller.getRequestMessageLimit();
 	      this.restClient.callMethod(im_const.RestMethod.imDialogMessagesGet, {
@@ -1866,13 +2025,13 @@
 	        'LIMIT': limit,
 	        'CONVERT_TEXT': 'Y'
 	      }).then(function (result) {
-	        _this12.executeRestAnswer(im_const.RestMethod.imDialogMessagesGet, result);
+	        _this14.executeRestAnswer(im_const.RestMethodHandler.imDialogMessagesGet, result);
 
-	        _this12.template.$emit('onDialogRequestHistoryResult', {
+	        _this14.template.$emit(im_const.EventType.dialog.requestHistoryResult, {
 	          count: result.data().messages.length
 	        });
 	      }).catch(function (result) {
-	        _this12.template.$emit('onDialogRequestHistoryResult', {
+	        _this14.template.$emit(im_const.EventType.dialog.requestHistoryResult, {
 	          error: result.error().ex
 	        });
 	      });
@@ -1880,18 +2039,17 @@
 	  }, {
 	    key: "getDialogUnread",
 	    value: function getDialogUnread(lastId) {
-	      var _query2,
-	          _this13 = this;
+	      var _this15 = this;
 
 	      var limit = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : this.controller.getRequestMessageLimit();
 	      var promise = new BX.Promise();
 
 	      if (!lastId) {
-	        lastId = this.store.getters['messages/getLastId'](this.getChatId());
+	        lastId = this.store.getters['messages/getLastId'](this.controller.getChatId());
 	      }
 
 	      if (!lastId) {
-	        this.template.$emit('onDialogRequestUnreadResult', {
+	        this.template.$emit(im_const.EventType.dialog.requestUnreadResult, {
 	          error: {
 	            error: 'LAST_ID_EMPTY',
 	            error_description: 'LastId is empty.'
@@ -1901,59 +2059,68 @@
 	        return promise;
 	      }
 
-	      var query = (_query2 = {}, babelHelpers.defineProperty(_query2, im_const.RestMethod.imChatGet, [im_const.RestMethod.imChatGet, {
-	        dialog_id: this.getDialogId()
-	      }]), babelHelpers.defineProperty(_query2, im_const.RestMethod.imDialogMessagesUnread, [im_const.RestMethod.imDialogMessagesGet, {
-	        chat_id: this.getChatId(),
-	        first_id: lastId,
-	        limit: limit,
-	        convert_text: 'Y'
-	      }]), _query2);
-	      this.restClient.callBatch(query, function (response) {
-	        if (!response) {
-	          _this13.template.$emit('onDialogRequestUnreadResult', {
-	            error: {
-	              error: 'EMPTY_RESPONSE',
-	              error_description: 'Server returned an empty response.'
-	            }
-	          });
+	      this.controller.readMessage(lastId, true, true).then(function () {
+	        var _query2;
 
-	          promise.reject();
-	          return false;
-	        }
+	        var query = (_query2 = {}, babelHelpers.defineProperty(_query2, im_const.RestMethodHandler.imDialogRead, [im_const.RestMethod.imDialogRead, {
+	          dialog_id: _this15.getDialogId(),
+	          message_id: lastId
+	        }]), babelHelpers.defineProperty(_query2, im_const.RestMethodHandler.imChatGet, [im_const.RestMethod.imChatGet, {
+	          dialog_id: _this15.getDialogId()
+	        }]), babelHelpers.defineProperty(_query2, im_const.RestMethodHandler.imDialogMessagesGetUnread, [im_const.RestMethod.imDialogMessagesGet, {
+	          chat_id: _this15.getChatId(),
+	          first_id: lastId,
+	          limit: limit,
+	          convert_text: 'Y'
+	        }]), _query2);
 
-	        var chatGetResult = response[im_const.RestMethod.imChatGet];
+	        _this15.restClient.callBatch(query, function (response) {
+	          if (!response) {
+	            _this15.template.$emit(im_const.EventType.dialog.requestUnreadResult, {
+	              error: {
+	                error: 'EMPTY_RESPONSE',
+	                error_description: 'Server returned an empty response.'
+	              }
+	            });
 
-	        if (!chatGetResult.error()) {
-	          _this13.executeRestAnswer(im_const.RestMethod.imChatGet, chatGetResult);
-	        }
+	            promise.reject();
+	            return false;
+	          }
 
-	        var dialogMessageUnread = response[im_const.RestMethod.imDialogMessagesUnread];
+	          var chatGetResult = response[im_const.RestMethodHandler.imChatGet];
 
-	        if (dialogMessageUnread.error()) {
-	          _this13.template.$emit('onDialogRequestUnreadResult', {
-	            error: dialogMessageUnread.error().ex
-	          });
-	        } else {
-	          _this13.executeRestAnswer(im_const.RestMethod.imDialogMessagesUnread, dialogMessageUnread);
+	          if (!chatGetResult.error()) {
+	            _this15.executeRestAnswer(im_const.RestMethodHandler.imChatGet, chatGetResult);
+	          }
 
-	          _this13.template.$emit('onDialogRequestUnreadResult', {
-	            count: dialogMessageUnread.data().messages.length
-	          });
-	        }
+	          var dialogMessageUnread = response[im_const.RestMethodHandler.imDialogMessagesGetUnread];
 
-	        promise.fulfill(response);
-	      }, false, false, im_utils.Utils.getLogTrackingParams({
-	        name: im_const.RestMethod.imDialogMessagesUnread,
-	        dialog: this.getDialogData()
-	      }));
+	          if (dialogMessageUnread.error()) {
+	            _this15.template.$emit(im_const.EventType.dialog.requestUnreadResult, {
+	              error: dialogMessageUnread.error().ex
+	            });
+	          } else {
+	            _this15.executeRestAnswer(im_const.RestMethodHandler.imDialogMessagesGetUnread, dialogMessageUnread);
+
+	            _this15.template.$emit(im_const.EventType.dialog.requestUnreadResult, {
+	              firstMessageId: dialogMessageUnread.data().messages.length > 0 ? dialogMessageUnread.data().messages[0].id : 0,
+	              count: dialogMessageUnread.data().messages.length
+	            });
+	          }
+
+	          promise.fulfill(response);
+	        }, false, false, im_utils.Utils.getLogTrackingParams({
+	          name: im_const.RestMethodHandler.imDialogMessagesGetUnread,
+	          dialog: _this15.getDialogData()
+	        }));
+	      });
 	      return promise;
 	    }
 	  }, {
 	    key: "retrySendMessage",
 	    value: function retrySendMessage(message) {
 	      if (this.messagesQueue.find(function (el) {
-	        return el.id == message.id;
+	        return el.id === message.id;
 	      })) {
 	        return false;
 	      }
@@ -1976,9 +2143,56 @@
 	      return this.controller.readMessage(messageId);
 	    }
 	  }, {
+	    key: "quoteMessage",
+	    value: function quoteMessage(id) {
+	      this.store.dispatch('dialogues/update', {
+	        dialogId: this.controller.getDialogId(),
+	        fields: {
+	          quoteId: id
+	        }
+	      });
+	    }
+	  }, {
+	    key: "reactMessage",
+	    value: function reactMessage(id, reaction) {
+	      this.controller.reactMessage(id, reaction.type, reaction.action);
+	    }
+	  }, {
+	    key: "execMessageKeyboardCommand",
+	    value: function execMessageKeyboardCommand(data) {
+	      if (data.action !== 'COMMAND') {
+	        return false;
+	      }
+
+	      var _data$params = data.params,
+	          dialogId = _data$params.dialogId,
+	          messageId = _data$params.messageId,
+	          botId = _data$params.botId,
+	          command = _data$params.command,
+	          params = _data$params.params;
+	      this.restClient.callMethod(im_const.RestMethod.imMessageCommand, {
+	        'MESSAGE_ID': messageId,
+	        'DIALOG_ID': dialogId,
+	        'BOT_ID': botId,
+	        'COMMAND': command,
+	        'COMMAND_PARAMS': params
+	      });
+	      return true;
+	    }
+	  }, {
+	    key: "quoteMessageClear",
+	    value: function quoteMessageClear() {
+	      this.store.dispatch('dialogues/update', {
+	        dialogId: this.controller.getDialogId(),
+	        fields: {
+	          quoteId: 0
+	        }
+	      });
+	    }
+	  }, {
 	    key: "sendDialogVote",
 	    value: function sendDialogVote(result) {
-	      var _this14 = this;
+	      var _this16 = this;
 
 	      if (!this.getSessionId()) {
 	        return false;
@@ -1988,12 +2202,12 @@
 	        'SESSION_ID': this.getSessionId(),
 	        'ACTION': result
 	      }).catch(function (result) {
-	        _this14.store.commit('widget/dialog', {
+	        _this16.store.commit('widget/dialog', {
 	          userVote: VoteType.none
 	        });
 	      });
 	      this.sendEvent({
-	        type: SubscriptionType$1.userVote,
+	        type: SubscriptionType.userVote,
 	        data: {
 	          vote: result
 	        }
@@ -2003,7 +2217,7 @@
 	    key: "sendForm",
 	    value: function sendForm(type, fields) {
 	      var _query3,
-	          _this15 = this;
+	          _this17 = this;
 
 	      im_tools_logger.Logger.info('LiveChatWidgetPrivate.sendForm:', type, fields);
 	      var query = (_query3 = {}, babelHelpers.defineProperty(_query3, RestMethod.widgetFormSend, [RestMethod.widgetFormSend, {
@@ -2013,9 +2227,9 @@
 	      }]), babelHelpers.defineProperty(_query3, RestMethod.widgetUserGet, [RestMethod.widgetUserGet, {}]), _query3);
 	      this.restClient.callBatch(query, function (response) {
 	        if (!response) {
-	          _this15.requestDataSend = false;
+	          _this17.requestDataSend = false;
 
-	          _this15.setError('EMPTY_RESPONSE', 'Server returned an empty response.');
+	          _this17.setError('EMPTY_RESPONSE', 'Server returned an empty response.');
 
 	          return false;
 	        }
@@ -2023,17 +2237,17 @@
 	        var userGetResult = response[RestMethod.widgetUserGet];
 
 	        if (userGetResult.error()) {
-	          _this15.requestDataSend = false;
+	          _this17.requestDataSend = false;
 
-	          _this15.setError(userGetResult.error().ex.error, userGetResult.error().ex.error_description);
+	          _this17.setError(userGetResult.error().ex.error, userGetResult.error().ex.error_description);
 
 	          return false;
 	        }
 
-	        _this15.executeRestAnswer(RestMethod.widgetUserGet, userGetResult);
+	        _this17.executeRestAnswer(RestMethod.widgetUserGet, userGetResult);
 
-	        _this15.sendEvent({
-	          type: SubscriptionType$1.userForm,
+	        _this17.sendEvent({
+	          type: SubscriptionType.userForm,
 	          data: {
 	            form: type,
 	            fields: fields
@@ -2137,7 +2351,7 @@
 	      }
 
 	      this.sendEvent({
-	        type: SubscriptionType$1.configLoaded,
+	        type: SubscriptionType.configLoaded,
 	        data: {}
 	      });
 
@@ -2241,14 +2455,14 @@
 	      return this.store.state.widget.common.configId;
 	    }
 	  }, {
-	    key: "getChatId",
-	    value: function getChatId() {
-	      return this.store.state.application.dialog.chatId;
-	    }
-	  }, {
 	    key: "isDialogStart",
 	    value: function isDialogStart() {
 	      return this.store.state.widget.common.dialogStart;
+	    }
+	  }, {
+	    key: "getChatId",
+	    value: function getChatId() {
+	      return this.store.state.application.dialog.chatId;
 	    }
 	  }, {
 	    key: "getDialogId",
@@ -2256,15 +2470,15 @@
 	      return this.store.state.application.dialog.dialogId;
 	    }
 	  }, {
+	    key: "getDiskFolderId",
+	    value: function getDiskFolderId() {
+	      return this.store.state.application.dialog.diskFolderId;
+	    }
+	  }, {
 	    key: "getDialogData",
 	    value: function getDialogData() {
 	      var dialogId = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : this.getDialogId();
 	      return this.store.state.dialogues.collection[dialogId];
-	    }
-	  }, {
-	    key: "getDiskFolderId",
-	    value: function getDiskFolderId() {
-	      return this.store.state.application.dialog.diskFolderId;
 	    }
 	  }, {
 	    key: "getSessionId",
@@ -2320,7 +2534,7 @@
 	        'www': this.userRegisterData.www || '',
 	        'gender': this.userRegisterData.gender || '',
 	        'position': this.userRegisterData.position || '',
-	        'user_hash': this.userRegisterData.hash || '',
+	        'user_hash': this.userRegisterData.hash || this.getUserHashCookie() || '',
 	        'consent_url': this.store.state.widget.common.consentUrl ? location.href : '',
 	        'trace_data': this.getCrmTraceData(),
 	        'custom_data': this.getCustomData()
@@ -2369,7 +2583,7 @@
 	        this.userRegisterData[_field] = params[_field];
 	      }
 
-	      if (this.userRegisterData.hash && this.getUserHash() && this.userRegisterData.hash != this.getUserHash()) {
+	      if (this.userRegisterData.hash && this.getUserHash() && this.userRegisterData.hash !== this.getUserHash()) {
 	        this.setNewAuthToken(this.userRegisterData.hash);
 	      }
 	    }
@@ -2377,7 +2591,6 @@
 	    key: "setNewAuthToken",
 	    value: function setNewAuthToken() {
 	      var authToken = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '';
-	      var siteId = this.getSiteId();
 	      this.storeCollector.clearModelState();
 	      Cookie.set(null, 'LIVECHAT_HASH', '', {
 	        expires: 365 * 86400,
@@ -2427,10 +2640,10 @@
 	      console.error("LiveChatWidget.error: ".concat(code, " (").concat(description, ")"));
 	      var localizeDescription = '';
 
-	      if (code == 'LIVECHAT_AUTH_FAILED') {
+	      if (code === 'LIVECHAT_AUTH_FAILED') {
 	        localizeDescription = this.getLocalize('BX_LIVECHAT_AUTH_FAILED').replace('#LINK_START#', '<a href="javascript:void();" onclick="location.reload()">').replace('#LINK_END#', '</a>');
 	        this.setNewAuthToken();
-	      } else if (code == 'LIVECHAT_AUTH_PORTAL_USER') {
+	      } else if (code === 'LIVECHAT_AUTH_PORTAL_USER') {
 	        localizeDescription = this.getLocalize('BX_LIVECHAT_PORTAL_USER_NEW').replace('#LINK_START#', '<a href="' + this.host + '">').replace('#LINK_END#', '</a>');
 	      } else if (code.endsWith('LOCALIZED')) {
 	        localizeDescription = description;
@@ -2515,8 +2728,8 @@
 	        });
 	      }
 
-	      if (this.subscribers[SubscriptionType$1.every] instanceof Array && this.subscribers[SubscriptionType$1.every].length > 0) {
-	        this.subscribers[SubscriptionType$1.every].forEach(function (callback) {
+	      if (this.subscribers[SubscriptionType.every] instanceof Array && this.subscribers[SubscriptionType.every].length > 0) {
+	        this.subscribers[SubscriptionType.every].forEach(function (callback) {
 	          return callback({
 	            type: params.type,
 	            data: params.data
@@ -2749,6 +2962,9 @@
 	    DeviceType: function DeviceType() {
 	      return im_const.DeviceType;
 	    },
+	    EventType: function EventType() {
+	      return im_const.EventType;
+	    },
 	    textareaHeightStyle: function textareaHeightStyle(state) {
 	      return 'flex: 0 0 ' + this.textareaHeight + 'px;';
 	    },
@@ -2756,8 +2972,8 @@
 	      return ui_vue.Vue.getFilteredPhrases('BX_LIVECHAT_', this.$root.$bitrixMessages);
 	    },
 	    widgetMobileDisabled: function widgetMobileDisabled(state) {
-	      if (state.application.device.type == im_const.DeviceType.mobile) {
-	        if (navigator.userAgent.toString().includes('iPad')) ; else if (state.application.device.orientation == im_const.DeviceOrientation.horizontal) {
+	      if (state.application.device.type === im_const.DeviceType.mobile) {
+	        if (navigator.userAgent.toString().includes('iPad')) ; else if (state.application.device.orientation === im_const.DeviceOrientation.horizontal) {
 	          if (navigator.userAgent.toString().includes('iPhone')) {
 	            return true;
 	          } else {
@@ -2778,9 +2994,9 @@
 	        className.push('bx-livechat-position-' + LocationStyle[state.widget.common.location]);
 	      }
 
-	      if (state.application.common.languageId == LanguageType.russian) {
+	      if (state.application.common.languageId === LanguageType.russian) {
 	        className.push('bx-livechat-logo-ru');
-	      } else if (state.application.common.languageId == LanguageType.ukraine) {
+	      } else if (state.application.common.languageId === LanguageType.ukraine) {
 	        className.push('bx-livechat-logo-ua');
 	      } else {
 	        className.push('bx-livechat-logo-en');
@@ -2798,7 +3014,7 @@
 	        className.push('bx-livechat-chat-start');
 	      }
 
-	      if (state.widget.dialog.operator.name && !(state.application.device.type == im_const.DeviceType.mobile && state.application.device.orientation == im_const.DeviceOrientation.horizontal)) {
+	      if (state.widget.dialog.operator.name && !(state.application.device.type === im_const.DeviceType.mobile && state.application.device.orientation === im_const.DeviceOrientation.horizontal)) {
 	        className.push('bx-livechat-has-operator');
 	      }
 
@@ -2824,6 +3040,33 @@
 	    },
 	    showMessageDialog: function showMessageDialog() {
 	      return this.messageCollection.length > 0;
+	    },
+	    quotePanelData: function quotePanelData() {
+	      var result = {
+	        id: 0,
+	        title: '',
+	        description: '',
+	        color: ''
+	      };
+
+	      if (!this.dialog.quoteId) {
+	        return result;
+	      }
+
+	      var message = this.$store.getters['messages/getMessage'](this.dialog.chatId, this.dialog.quoteId);
+
+	      if (!message) {
+	        return result;
+	      }
+
+	      var user = this.$store.getters['users/get'](message.authorId);
+	      result = {
+	        id: this.dialog.quoteId,
+	        title: user ? user.name : '',
+	        color: user ? user.color : '',
+	        description: message.textConverted ? message.textConverted : this.localize.BX_LIVECHAT_FILE_MESSAGE
+	      };
+	      return result;
 	    }
 	  }, ui_vue_vuex.Vuex.mapState({
 	    widget: function widget(state) {
@@ -2831,6 +3074,9 @@
 	    },
 	    application: function application(state) {
 	      return state.application;
+	    },
+	    dialog: function dialog(state) {
+	      return state.dialogues.collection[state.application.dialog.dialogId];
 	    },
 	    messageCollection: function messageCollection(state) {
 	      return state.messages.collection[state.application.dialog.chatId];
@@ -2863,7 +3109,7 @@
 	        return false;
 	      }
 
-	      if (this.widget.dialog.sessionClose && this.widget.dialog.userVote != VoteType.none) {
+	      if (this.widget.dialog.sessionClose && this.widget.dialog.userVote !== VoteType.none) {
 	        return false;
 	      }
 
@@ -2894,9 +3140,12 @@
 	    },
 	    hideForm: function hideForm() {
 	      clearTimeout(this.showFormTimeout);
-	      this.$store.commit('widget/common', {
-	        showForm: FormType.none
-	      });
+
+	      if (this.widget.common.showForm !== FormType.none) {
+	        this.$store.commit('widget/common', {
+	          showForm: FormType.none
+	        });
+	      }
 	    },
 	    showConsentWidow: function showConsentWidow() {
 	      this.$store.commit('widget/common', {
@@ -2912,7 +3161,7 @@
 	      if (this.storedMessage || this.storedFile) {
 	        if (this.storedMessage) {
 	          this.onTextareaSend({
-	            focus: this.application.device.type != im_const.DeviceType.mobile
+	            focus: this.application.device.type !== im_const.DeviceType.mobile
 	          });
 	          this.storedMessage = '';
 	        }
@@ -2921,8 +3170,8 @@
 	          this.onTextareaFileSelected();
 	          this.storedFile = '';
 	        }
-	      } else if (this.widget.common.showForm == FormType.none) {
-	        this.$root.$emit('onMessengerTextareaFocus');
+	      } else if (this.widget.common.showForm === FormType.none) {
+	        this.$root.$emit(im_const.EventType.textarea.focus);
 	      }
 	    },
 	    disagreeConsentWidow: function disagreeConsentWidow() {
@@ -2935,9 +3184,9 @@
 	      this.$root.$bitrixWidget.sendConsentDecision(false);
 
 	      if (this.storedMessage) {
-	        this.$root.$emit('onMessengerTextareaInsertText', {
+	        this.$root.$emit(im_const.EventType.textarea.insertText, {
 	          text: this.storedMessage,
-	          focus: this.application.device.type != im_const.DeviceType.mobile
+	          focus: this.application.device.type !== im_const.DeviceType.mobile
 	        });
 	        this.storedMessage = '';
 	      }
@@ -2946,8 +3195,8 @@
 	        this.storedFile = '';
 	      }
 
-	      if (this.application.device.type != im_const.DeviceType.mobile) {
-	        this.$root.$emit('onMessengerTextareaFocus');
+	      if (this.application.device.type !== im_const.DeviceType.mobile) {
+	        this.$root.$emit(im_const.EventType.textarea.focus);
 	      }
 	    },
 	    logEvent: function logEvent(name) {
@@ -2962,7 +3211,7 @@
 
 	      if (im_utils.Utils.device.isMobile()) {
 	        var viewPortMetaSiteNode = Array.from(document.head.getElementsByTagName('meta')).filter(function (element) {
-	          return element.name == 'viewport';
+	          return element.name === 'viewport';
 	        })[0];
 
 	        if (viewPortMetaSiteNode) {
@@ -3050,7 +3299,7 @@
 
 	      clearTimeout(this.showFormTimeout);
 
-	      if (event.type == FormType.welcome) {
+	      if (event.type === FormType.welcome) {
 	        if (event.delayed) {
 	          this.showFormTimeout = setTimeout(function () {
 	            _this2.showWelcomeForm();
@@ -3058,7 +3307,7 @@
 	        } else {
 	          this.showWelcomeForm();
 	        }
-	      } else if (event.type == FormType.offline) {
+	      } else if (event.type === FormType.offline) {
 	        if (event.delayed) {
 	          this.showFormTimeout = setTimeout(function () {
 	            _this2.showOfflineForm();
@@ -3066,7 +3315,7 @@
 	        } else {
 	          this.showOfflineForm();
 	        }
-	      } else if (event.type == FormType.like) {
+	      } else if (event.type === FormType.like) {
 	        if (event.delayed) {
 	          this.showFormTimeout = setTimeout(function () {
 	            _this2.showLikeForm();
@@ -3084,13 +3333,19 @@
 	    },
 	    onDialogMessageClickByUserName: function onDialogMessageClickByUserName(event) {
 	      // TODO name push to auto-replace mention holder - User Name -> [USER=274]User Name[/USER]
-	      this.$root.$emit('onMessengerTextareaInsertText', {
+	      this.$root.$emit(im_const.EventType.textarea.insertText, {
 	        text: event.user.name + ' '
 	      });
 	    },
+	    onDialogMessageClickByUploadCancel: function onDialogMessageClickByUploadCancel(event) {
+	      this.$root.$bitrixWidget.cancelUploadFile(event.file.id);
+	    },
+	    onDialogMessageClickByKeyboardButton: function onDialogMessageClickByKeyboardButton(event) {
+	      this.$root.$bitrixWidget.execMessageKeyboardCommand(event);
+	    },
 	    onDialogMessageClickByCommand: function onDialogMessageClickByCommand(event) {
 	      if (event.type === 'put') {
-	        this.$root.$emit('onMessengerTextareaInsertText', {
+	        this.$root.$emit(im_const.EventType.textarea.insertText, {
 	          text: event.value + ' '
 	        });
 	      } else if (event.type === 'send') {
@@ -3109,15 +3364,23 @@
 	    onDialogReadMessage: function onDialogReadMessage(event) {
 	      this.$root.$bitrixWidget.readMessage(event.id);
 	    },
+	    onDialogQuoteMessage: function onDialogQuoteMessage(event) {
+	      this.$root.$bitrixWidget.quoteMessage(event.message.id);
+	    },
+	    onDialogMessageReactionSet: function onDialogMessageReactionSet(event) {
+	      this.$root.$bitrixWidget.reactMessage(event.message.id, event.reaction);
+	    },
 	    onDialogClick: function onDialogClick(event) {
-	      this.$store.commit('widget/common', {
-	        showForm: FormType.none
-	      });
+	      if (this.widget.common.showForm !== FormType.none) {
+	        this.$store.commit('widget/common', {
+	          showForm: FormType.none
+	        });
+	      }
 	    },
 	    onTextareaSend: function onTextareaSend(event) {
 	      event.focus = event.focus !== false;
 
-	      if (this.widget.common.showForm == FormType.smile) {
+	      if (this.widget.common.showForm === FormType.smile) {
 	        this.$store.commit('widget/common', {
 	          showForm: FormType.none
 	        });
@@ -3142,7 +3405,7 @@
 	      this.$root.$bitrixWidget.addMessage(event.text);
 
 	      if (event.focus) {
-	        this.$root.$emit('onMessengerTextareaFocus');
+	        this.$root.$emit(im_const.EventType.textarea.focus);
 	      }
 
 	      return true;
@@ -3153,7 +3416,7 @@
 	    onTextareaFocus: function onTextareaFocus(event) {
 	      var _this3 = this;
 
-	      if (this.widget.common.copyright && this.application.device.type == im_const.DeviceType.mobile) {
+	      if (this.widget.common.copyright && this.application.device.type === im_const.DeviceType.mobile) {
 	        this.widget.common.copyright = false;
 	      }
 
@@ -3172,7 +3435,7 @@
 	      if (!this.widget.common.copyright && this.widget.common.copyright !== this.$root.$bitrixWidget.copyright) {
 	        this.widget.common.copyright = this.$root.$bitrixWidget.copyright;
 	        this.$nextTick(function () {
-	          _this4.$root.$emit('onMessengerDialogScrollToBottom', {
+	          _this4.$root.$emit(im_const.EventType.dialog.scrollToBottom, {
 	            force: true
 	          });
 	        });
@@ -3196,7 +3459,7 @@
 	      this.textareaDragCursorStartPoint = event.clientY;
 	      this.textareaDragHeightStartPoint = this.textareaHeight;
 	      this.onTextareaDragEventAdd();
-	      this.$root.$emit('onMessengerTextareaBlur', true);
+	      this.$root.$emit(im_const.EventType.textarea.blur, true);
 	    },
 	    onTextareaContinueDrag: function onTextareaContinueDrag(event) {
 	      if (!this.textareaDrag) {
@@ -3208,7 +3471,7 @@
 	      var textareaHeight = Math.max(Math.min(this.textareaDragHeightStartPoint + this.textareaDragCursorStartPoint - this.textareaDragCursorControlPoint, this.textareaMaximumHeight), this.textareaMinimumHeight);
 	      im_tools_logger.Logger.log('Livechat: textarea drag', 'new: ' + textareaHeight, 'curr: ' + this.textareaHeight);
 
-	      if (this.textareaHeight != textareaHeight) {
+	      if (this.textareaHeight !== textareaHeight) {
 	        this.textareaHeight = textareaHeight;
 	      }
 	    },
@@ -3223,7 +3486,7 @@
 	      this.$store.commit('widget/common', {
 	        textareaHeight: this.textareaHeight
 	      });
-	      this.$root.$emit('onMessengerDialogScrollToBottom', {
+	      this.$root.$emit(im_const.EventType.dialog.scrollToBottom, {
 	        force: true
 	      });
 	    },
@@ -3260,11 +3523,11 @@
 	        return false;
 	      }
 
-	      this.$root.$bitrixWidget.addFile(fileInput);
+	      this.$root.$bitrixWidget.uploadFile(fileInput);
 	    },
 	    onTextareaAppButtonClick: function onTextareaAppButtonClick(event) {
-	      if (event.appId == FormType.smile) {
-	        if (this.widget.common.showForm == FormType.smile) {
+	      if (event.appId === FormType.smile) {
+	        if (this.widget.common.showForm === FormType.smile) {
 	          this.$store.commit('widget/common', {
 	            showForm: FormType.none
 	          });
@@ -3274,23 +3537,26 @@
 	          });
 	        }
 	      } else {
-	        this.$root.$emit('onMessengerTextareaFocus');
+	        this.$root.$emit(im_const.EventType.textarea.focus);
 	      }
 	    },
 	    onPullRequestConfig: function onPullRequestConfig(event) {
 	      this.$root.$bitrixWidget.recoverPullConnection();
 	    },
 	    onSmilesSelectSmile: function onSmilesSelectSmile(event) {
-	      this.$root.$emit('onMessengerTextareaInsertText', {
+	      this.$root.$emit(im_const.EventType.textarea.insertText, {
 	        text: event.text
 	      });
 	    },
 	    onSmilesSelectSet: function onSmilesSelectSet() {
-	      this.$root.$emit('onMessengerTextareaFocus');
+	      this.$root.$emit(im_const.EventType.textarea.focus);
+	    },
+	    onQuotePanelClose: function onQuotePanelClose() {
+	      this.$root.$bitrixWidget.quoteMessageClear();
 	    },
 	    onWindowKeyDown: function onWindowKeyDown(event) {
-	      if (event.keyCode == 27) {
-	        if (this.widget.common.showForm != FormType.none) {
+	      if (event.keyCode === 27) {
+	        if (this.widget.common.showForm !== FormType.none) {
 	          this.$store.commit('widget/common', {
 	            showForm: FormType.none
 	          });
@@ -3302,7 +3568,7 @@
 
 	        event.preventDefault();
 	        event.stopPropagation();
-	        this.$root.$emit('onMessengerTextareaFocus');
+	        this.$root.$emit(im_const.EventType.textarea.focus);
 	      }
 	    },
 	    onWindowScroll: function onWindowScroll(event) {
@@ -3310,11 +3576,11 @@
 
 	      clearTimeout(this.onWindowScrollTimeout);
 	      this.onWindowScrollTimeout = setTimeout(function () {
-	        _this5.$root.$emit('onMessengerTextareaBlur', true);
+	        _this5.$root.$emit(im_const.EventType.textarea.blur, true);
 	      }, 50);
 	    }
 	  },
-	  template: "\n\t\t<transition enter-active-class=\"bx-livechat-show\" leave-active-class=\"bx-livechat-close\" @after-leave=\"onAfterClose\">\n\t\t\t<div :class=\"widgetClassName\" v-if=\"widget.common.showed\">\n\t\t\t\t<div class=\"bx-livechat-box\">\n\t\t\t\t\t<bx-livechat-head :isWidgetDisabled=\"widgetMobileDisabled\" @like=\"showLikeForm\" @history=\"showHistoryForm\" @close=\"close\"/>\n\t\t\t\t\t<template v-if=\"widgetMobileDisabled\">\n\t\t\t\t\t\t<bx-livechat-body-orientation-disabled/>\n\t\t\t\t\t</template>\n\t\t\t\t\t<template v-else-if=\"application.error.active\">\n\t\t\t\t\t\t<bx-livechat-body-error/>\n\t\t\t\t\t</template>\n\t\t\t\t\t<template v-else-if=\"!widget.common.configId\">\n\t\t\t\t\t\t<div class=\"bx-livechat-body\" key=\"loading-body\">\n\t\t\t\t\t\t\t<bx-livechat-body-loading/>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</template>\t\t\t\n\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t<template v-if=\"!widget.common.dialogStart\">\n\t\t\t\t\t\t\t<div class=\"bx-livechat-body\" key=\"welcome-body\">\n\t\t\t\t\t\t\t\t<bx-livechat-body-operators/>\n\t\t\t\t\t\t\t\t<keep-alive include=\"bx-livechat-smiles\">\n\t\t\t\t\t\t\t\t\t<template v-if=\"widget.common.showForm == FormType.smile\">\n\t\t\t\t\t\t\t\t\t\t<bx-livechat-smiles @selectSmile=\"onSmilesSelectSmile\" @selectSet=\"onSmilesSelectSet\"/>\t\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t</keep-alive>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</template>\n\t\t\t\t\t\t<template v-else-if=\"widget.common.dialogStart\">\n\t\t\t\t\t\t\t<bx-pull-status :canReconnect=\"true\" @reconnect=\"onPullRequestConfig\"/>\n\t\t\t\t\t\t\t<div :class=\"['bx-livechat-body', {'bx-livechat-body-with-message': showMessageDialog}]\" key=\"with-message\">\n\t\t\t\t\t\t\t\t<transition name=\"bx-livechat-animation-upload-file\">\n\t\t\t\t\t\t\t\t\t<template v-if=\"widget.common.uploadFile\">\n\t\t\t\t\t\t\t\t\t\t<div class=\"bx-livechat-file-upload\">\t\n\t\t\t\t\t\t\t\t\t\t\t<div class=\"bx-livechat-file-upload-sending\"></div>\n\t\t\t\t\t\t\t\t\t\t\t<div class=\"bx-livechat-file-upload-text\">{{localize.BX_LIVECHAT_FILE_UPLOAD}}</div>\n\t\t\t\t\t\t\t\t\t\t</div>\t\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t</transition>\t\n\t\t\t\t\t\t\t\t<template v-if=\"showMessageDialog\">\n\t\t\t\t\t\t\t\t\t<div class=\"bx-livechat-dialog\">\n\t\t\t\t\t\t\t\t\t\t<bx-messenger-dialog\n\t\t\t\t\t\t\t\t\t\t\t:userId=\"application.common.userId\" \n\t\t\t\t\t\t\t\t\t\t\t:dialogId=\"application.dialog.dialogId\"\n\t\t\t\t\t\t\t\t\t\t\t:chatId=\"application.dialog.chatId\"\n\t\t\t\t\t\t\t\t\t\t\t:messageLimit=\"application.dialog.messageLimit\"\n\t\t\t\t\t\t\t\t\t\t\t:enableEmotions=\"false\"\n\t\t\t\t\t\t\t\t\t\t\t:enableDateActions=\"false\"\n\t\t\t\t\t\t\t\t\t\t\t:enableCreateContent=\"false\"\n\t\t\t\t\t\t\t\t\t\t\t:showMessageAvatar=\"false\"\n\t\t\t\t\t\t\t\t\t\t\t:showMessageMenu=\"false\"\n\t\t\t\t\t\t\t\t\t\t\tlistenEventScrollToBottom=\"onMessengerDialogScrollToBottom\"\n\t\t\t\t\t\t\t\t\t\t\tlistenEventRequestHistory=\"onDialogRequestHistoryResult\"\n\t\t\t\t\t\t\t\t\t\t\tlistenEventRequestUnread=\"onDialogRequestUnreadResult\"\n\t\t\t\t\t\t\t\t\t\t\t@readMessage=\"onDialogReadMessage\"\n\t\t\t\t\t\t\t\t\t\t\t@requestHistory=\"onDialogRequestHistory\"\n\t\t\t\t\t\t\t\t\t\t\t@requestUnread=\"onDialogRequestUnread\"\n\t\t\t\t\t\t\t\t\t\t\t@clickByCommand=\"onDialogMessageClickByCommand\"\n\t\t\t\t\t\t\t\t\t\t\t@clickByUserName=\"onDialogMessageClickByUserName\"\n\t\t\t\t\t\t\t\t\t\t\t@clickByMessageMenu=\"onDialogMessageMenuClick\"\n\t\t\t\t\t\t\t\t\t\t\t@clickByMessageRetry=\"onDialogMessageRetryClick\"\n\t\t\t\t\t\t\t\t\t\t\t@click=\"onDialogClick\"\n\t\t\t\t\t\t\t\t\t\t />\n\t\t\t\t\t\t\t\t\t</div>\t \n\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t\t\t\t<bx-livechat-body-loading/>\n\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t<keep-alive include=\"bx-livechat-smiles\">\n\t\t\t\t\t\t\t\t\t<template v-if=\"widget.common.showForm == FormType.like && widget.common.vote.enable\">\n\t\t\t\t\t\t\t\t\t\t<bx-livechat-form-vote/>\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\t<template v-else-if=\"widget.common.showForm == FormType.welcome\">\n\t\t\t\t\t\t\t\t\t\t<bx-livechat-form-welcome/>\t\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\t<template v-else-if=\"widget.common.showForm == FormType.offline\">\n\t\t\t\t\t\t\t\t\t\t<bx-livechat-form-offline/>\t\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\t<template v-else-if=\"widget.common.showForm == FormType.history\">\n\t\t\t\t\t\t\t\t\t\t<bx-livechat-form-history/>\t\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\t<template v-else-if=\"widget.common.showForm == FormType.smile\">\n\t\t\t\t\t\t\t\t\t\t<bx-livechat-smiles @selectSmile=\"onSmilesSelectSmile\" @selectSet=\"onSmilesSelectSet\"/>\t\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t</keep-alive>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</template>\t\n\t\t\t\t\t\t<div class=\"bx-livechat-textarea\" :style=\"textareaHeightStyle\" ref=\"textarea\">\n\t\t\t\t\t\t\t<div class=\"bx-livechat-textarea-resize-handle\" @mousedown=\"onTextareaStartDrag\" @touchstart=\"onTextareaStartDrag\"></div>\n\t\t\t\t\t\t\t<bx-messenger-textarea\n\t\t\t\t\t\t\t\t:siteId=\"application.common.siteId\"\n\t\t\t\t\t\t\t\t:userId=\"application.common.userId\"\n\t\t\t\t\t\t\t\t:dialogId=\"application.dialog.dialogId\"\n\t\t\t\t\t\t\t\t:writesEventLetter=\"3\"\n\t\t\t\t\t\t\t\t:enableEdit=\"true\"\n\t\t\t\t\t\t\t\t:enableCommand=\"false\"\n\t\t\t\t\t\t\t\t:enableMention=\"false\"\n\t\t\t\t\t\t\t\t:enableFile=\"application.disk.enabled\"\n\t\t\t\t\t\t\t\t:autoFocus=\"application.device.type !== DeviceType.mobile\"\n\t\t\t\t\t\t\t\t:styles=\"{button: {backgroundColor: widget.common.styles.backgroundColor, iconColor: widget.common.styles.iconColor}}\"\n\t\t\t\t\t\t\t\tlistenEventInsertText=\"onMessengerTextareaInsertText\"\n\t\t\t\t\t\t\t\tlistenEventFocus=\"onMessengerTextareaFocus\"\n\t\t\t\t\t\t\t\tlistenEventBlur=\"onMessengerTextareaBlur\"\n\t\t\t\t\t\t\t\t@writes=\"onTextareaWrites\" \n\t\t\t\t\t\t\t\t@send=\"onTextareaSend\" \n\t\t\t\t\t\t\t\t@focus=\"onTextareaFocus\" \n\t\t\t\t\t\t\t\t@blur=\"onTextareaBlur\" \n\t\t\t\t\t\t\t\t@edit=\"logEvent('edit message', $event)\"\n\t\t\t\t\t\t\t\t@fileSelected=\"onTextareaFileSelected\"\n\t\t\t\t\t\t\t\t@appButtonClick=\"onTextareaAppButtonClick\"\n\t\t\t\t\t\t\t/>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<bx-livechat-form-consent @agree=\"agreeConsentWidow\" @disagree=\"disagreeConsentWidow\"/>\n\t\t\t\t\t\t<template v-if=\"widget.common.copyright\">\n\t\t\t\t\t\t\t<bx-livechat-footer/>\n\t\t\t\t\t\t</template>\n\t\t\t\t\t</template>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</transition>\n\t"
+	  template: "\n\t\t<transition enter-active-class=\"bx-livechat-show\" leave-active-class=\"bx-livechat-close\" @after-leave=\"onAfterClose\">\n\t\t\t<div :class=\"widgetClassName\" v-if=\"widget.common.showed\">\n\t\t\t\t<div class=\"bx-livechat-box\">\n\t\t\t\t\t<bx-livechat-head :isWidgetDisabled=\"widgetMobileDisabled\" @like=\"showLikeForm\" @history=\"showHistoryForm\" @close=\"close\"/>\n\t\t\t\t\t<template v-if=\"widgetMobileDisabled\">\n\t\t\t\t\t\t<bx-livechat-body-orientation-disabled/>\n\t\t\t\t\t</template>\n\t\t\t\t\t<template v-else-if=\"application.error.active\">\n\t\t\t\t\t\t<bx-livechat-body-error/>\n\t\t\t\t\t</template>\n\t\t\t\t\t<template v-else-if=\"!widget.common.configId\">\n\t\t\t\t\t\t<div class=\"bx-livechat-body\" key=\"loading-body\">\n\t\t\t\t\t\t\t<bx-livechat-body-loading/>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</template>\t\t\t\n\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t<template v-if=\"!widget.common.dialogStart\">\n\t\t\t\t\t\t\t<div class=\"bx-livechat-body\" key=\"welcome-body\">\n\t\t\t\t\t\t\t\t<bx-livechat-body-operators/>\n\t\t\t\t\t\t\t\t<keep-alive include=\"bx-livechat-smiles\">\n\t\t\t\t\t\t\t\t\t<template v-if=\"widget.common.showForm == FormType.smile\">\n\t\t\t\t\t\t\t\t\t\t<bx-livechat-smiles @selectSmile=\"onSmilesSelectSmile\" @selectSet=\"onSmilesSelectSet\"/>\t\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t</keep-alive>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</template>\n\t\t\t\t\t\t<template v-else-if=\"widget.common.dialogStart\">\n\t\t\t\t\t\t\t<bx-pull-status :canReconnect=\"true\" @reconnect=\"onPullRequestConfig\"/>\n\t\t\t\t\t\t\t<div :class=\"['bx-livechat-body', {'bx-livechat-body-with-message': showMessageDialog}]\" key=\"with-message\">\n\t\t\t\t\t\t\t\t<template v-if=\"showMessageDialog\">\n\t\t\t\t\t\t\t\t\t<div class=\"bx-livechat-dialog\">\n\t\t\t\t\t\t\t\t\t\t<bx-messenger-dialog\n\t\t\t\t\t\t\t\t\t\t\t:userId=\"application.common.userId\" \n\t\t\t\t\t\t\t\t\t\t\t:dialogId=\"application.dialog.dialogId\"\n\t\t\t\t\t\t\t\t\t\t\t:chatId=\"application.dialog.chatId\"\n\t\t\t\t\t\t\t\t\t\t\t:messageLimit=\"application.dialog.messageLimit\"\n\t\t\t\t\t\t\t\t\t\t\t:messageExtraCount=\"application.dialog.messageExtraCount\"\n\t\t\t\t\t\t\t\t\t\t\t:enableReactions=\"true\"\n\t\t\t\t\t\t\t\t\t\t\t:enableDateActions=\"false\"\n\t\t\t\t\t\t\t\t\t\t\t:enableCreateContent=\"false\"\n\t\t\t\t\t\t\t\t\t\t\t:enableGestureQuote=\"true\"\n\t\t\t\t\t\t\t\t\t\t\t:enableGestureMenu=\"true\"\n\t\t\t\t\t\t\t\t\t\t\t:showMessageAvatar=\"false\"\n\t\t\t\t\t\t\t\t\t\t\t:showMessageMenu=\"false\"\n\t\t\t\t\t\t\t\t\t\t\t:listenEventScrollToBottom=\"EventType.dialog.scrollToBottom\"\n\t\t\t\t\t\t\t\t\t\t\t:listenEventRequestHistory=\"EventType.dialog.requestHistoryResult\"\n\t\t\t\t\t\t\t\t\t\t\t:listenEventRequestUnread=\"EventType.dialog.requestUnreadResult\"\n\t\t\t\t\t\t\t\t\t\t\t@readMessage=\"onDialogReadMessage\"\n\t\t\t\t\t\t\t\t\t\t\t@requestHistory=\"onDialogRequestHistory\"\n\t\t\t\t\t\t\t\t\t\t\t@requestUnread=\"onDialogRequestUnread\"\n\t\t\t\t\t\t\t\t\t\t\t@quoteMessage=\"onDialogQuoteMessage\"\n\t\t\t\t\t\t\t\t\t\t\t@clickByCommand=\"onDialogMessageClickByCommand\"\n\t\t\t\t\t\t\t\t\t\t\t@clickByUserName=\"onDialogMessageClickByUserName\"\n\t\t\t\t\t\t\t\t\t\t\t@clickByUploadCancel=\"onDialogMessageClickByUploadCancel\"\n\t\t\t\t\t\t\t\t\t\t\t@clickByKeyboardButton=\"onDialogMessageClickByKeyboardButton\"\n\t\t\t\t\t\t\t\t\t\t\t@clickByMessageMenu=\"onDialogMessageMenuClick\"\n\t\t\t\t\t\t\t\t\t\t\t@clickByMessageRetry=\"onDialogMessageRetryClick\"\n\t\t\t\t\t\t\t\t\t\t\t@setMessageReaction=\"onDialogMessageReactionSet\"\n\t\t\t\t\t\t\t\t\t\t\t@click=\"onDialogClick\"\n\t\t\t\t\t\t\t\t\t\t />\n\t\t\t\t\t\t\t\t\t</div>\t \n\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t\t\t\t<bx-livechat-body-loading/>\n\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\t<bx-messenger-quote-panel :id=\"quotePanelData.id\" :title=\"quotePanelData.title\" :description=\"quotePanelData.description\" :color=\"quotePanelData.color\" @close=\"onQuotePanelClose\"/>\n\t\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\t<keep-alive include=\"bx-livechat-smiles\">\n\t\t\t\t\t\t\t\t\t<template v-if=\"widget.common.showForm == FormType.like && widget.common.vote.enable\">\n\t\t\t\t\t\t\t\t\t\t<bx-livechat-form-vote/>\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\t<template v-else-if=\"widget.common.showForm == FormType.welcome\">\n\t\t\t\t\t\t\t\t\t\t<bx-livechat-form-welcome/>\t\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\t<template v-else-if=\"widget.common.showForm == FormType.offline\">\n\t\t\t\t\t\t\t\t\t\t<bx-livechat-form-offline/>\t\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\t<template v-else-if=\"widget.common.showForm == FormType.history\">\n\t\t\t\t\t\t\t\t\t\t<bx-livechat-form-history/>\t\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\t<template v-else-if=\"widget.common.showForm == FormType.smile\">\n\t\t\t\t\t\t\t\t\t\t<bx-livechat-smiles @selectSmile=\"onSmilesSelectSmile\" @selectSet=\"onSmilesSelectSet\"/>\t\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t</keep-alive>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</template>\t\n\t\t\t\t\t\t<div class=\"bx-livechat-textarea\" :style=\"textareaHeightStyle\" ref=\"textarea\">\n\t\t\t\t\t\t\t<div class=\"bx-livechat-textarea-resize-handle\" @mousedown=\"onTextareaStartDrag\" @touchstart=\"onTextareaStartDrag\"></div>\n\t\t\t\t\t\t\t<bx-messenger-textarea\n\t\t\t\t\t\t\t\t:siteId=\"application.common.siteId\"\n\t\t\t\t\t\t\t\t:userId=\"application.common.userId\"\n\t\t\t\t\t\t\t\t:dialogId=\"application.dialog.dialogId\"\n\t\t\t\t\t\t\t\t:writesEventLetter=\"3\"\n\t\t\t\t\t\t\t\t:enableEdit=\"true\"\n\t\t\t\t\t\t\t\t:enableCommand=\"false\"\n\t\t\t\t\t\t\t\t:enableMention=\"false\"\n\t\t\t\t\t\t\t\t:enableFile=\"application.disk.enabled\"\n\t\t\t\t\t\t\t\t:autoFocus=\"application.device.type !== DeviceType.mobile\"\n\t\t\t\t\t\t\t\t:styles=\"{button: {backgroundColor: widget.common.styles.backgroundColor, iconColor: widget.common.styles.iconColor}}\"\n\t\t\t\t\t\t\t\t:listenEventInsertText=\"EventType.textarea.insertText\"\n\t\t\t\t\t\t\t\t:listenEventFocus=\"EventType.textarea.focus\"\n\t\t\t\t\t\t\t\t:listenEventBlur=\"EventType.textarea.blur\"\n\t\t\t\t\t\t\t\t@writes=\"onTextareaWrites\" \n\t\t\t\t\t\t\t\t@send=\"onTextareaSend\" \n\t\t\t\t\t\t\t\t@focus=\"onTextareaFocus\" \n\t\t\t\t\t\t\t\t@blur=\"onTextareaBlur\" \n\t\t\t\t\t\t\t\t@edit=\"logEvent('edit message', $event)\"\n\t\t\t\t\t\t\t\t@fileSelected=\"onTextareaFileSelected\"\n\t\t\t\t\t\t\t\t@appButtonClick=\"onTextareaAppButtonClick\"\n\t\t\t\t\t\t\t/>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<bx-livechat-form-consent @agree=\"agreeConsentWidow\" @disagree=\"disagreeConsentWidow\"/>\n\t\t\t\t\t\t<template v-if=\"widget.common.copyright\">\n\t\t\t\t\t\t\t<bx-livechat-footer/>\n\t\t\t\t\t\t</template>\n\t\t\t\t\t</template>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</transition>\n\t"
 	});
 
 	/**
@@ -3401,7 +3667,7 @@
 
 	      if (value) {
 	        setTimeout(function () {
-	          _this.$root.$emit('onMessengerDialogScrollToBottom');
+	          _this.$root.$emit(im_const.EventType.dialog.scrollToBottom);
 	        }, 300);
 	      }
 	    }
@@ -3924,12 +4190,12 @@
 	 */
 	BX.LiveChatWidget = WidgetPublicManager;
 	BX.LiveChatWidget.VoteType = VoteType;
-	BX.LiveChatWidget.SubscriptionType = SubscriptionType$1;
+	BX.LiveChatWidget.SubscriptionType = SubscriptionType;
 	BX.LiveChatWidget.LocationStyle = LocationStyle;
 	BX.LiveChatWidget.Cookie = Cookie;
 	window.dispatchEvent(new CustomEvent('onBitrixLiveChatSourceLoaded', {
 	  detail: {}
 	}));
 
-}((this.window = this.window || {}),BX,window,window,window,window,window,BX,BX,BX,BX,BX.Messenger.Model,BX.Messenger.Controller,BX.Messenger,BX.Messenger.Provider.Pull,BX.Messenger.Provider.Pull,BX.Messenger,BX.Messenger.Const,BX,BX,BX.Messenger,BX,BX));
+}((this.window = this.window || {}),BX,window,window,window,window,window,window,BX,BX,BX,BX,BX.Messenger.Model,BX.Messenger.Controller,BX.Messenger,BX.Messenger.Provider.Pull,BX.Messenger.Provider.Pull,BX.Messenger,BX.Messenger.Const,BX,BX,BX.Messenger,BX,BX));
 //# sourceMappingURL=widget.bundle.js.map

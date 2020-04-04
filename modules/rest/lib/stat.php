@@ -234,7 +234,7 @@ class StatTable extends Main\Entity\DataManager
 		$helper = $connection->getSqlHelper();
 
 		$hour = intval(date('G'));
-		$curDateSql = new Main\DB\SqlExpression($helper->getCurrentDateFunction());
+		$curDateSql = new Main\Type\Date();
 
 		$combinedStat = array();
 		foreach(static::$data as $methodType => $methodData)

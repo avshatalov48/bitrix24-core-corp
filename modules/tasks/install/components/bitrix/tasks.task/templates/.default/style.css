@@ -1820,3 +1820,7 @@ select.task-options-inp {
 .task-absence-message {
 	margin-top: 5px;
 }
+
+.tasks-to-checklist-popup {
+	opacity: 0.7;
+}

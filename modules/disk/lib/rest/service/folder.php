@@ -57,7 +57,7 @@ final class Folder extends BaseObject
 		$parameters = Disk\Driver::getInstance()->getRightsManager()->addRightsCheck($securityContext, $parameters, array('ID', 'CREATED_BY'));
 
 		$children = array();
-		$childrenRows = Disk\Internals\FolderTable::getChildren($folder->getId(), $parameters);
+		$childrenRows = Disk\Internals\FolderTable::getChildren($folder->getRealObjectId(), $parameters);
 		foreach ($childrenRows as $childrenRow)
 		{
 			$children[] = Disk\BaseObject::buildFromArray($childrenRow);
@@ -215,5 +215,58 @@ final class Folder extends BaseObject
 		}
 
 		return $file;
+	}
+
+	protected function shareToUser($id, $userId, $taskName)
+	{
+		$userId = (int)$userId;
+		$folder = $this->getFolderById($id);
+		if (!$this->isDiskStorage($folder))
+		{
+			throw new AccessException;
+		}
+
+		$securityContext = $folder->getStorage()->getCurrentUserSecurityContext();
+		$rightsManager = Disk\Driver::getInstance()->getRightsManager();
+		if (!$folder->canShare($securityContext) || !$rightsManager->isValidTaskName($taskName))
+		{
+			throw new AccessException;
+		}
+
+		$maxTaskName = $rightsManager->getPseudoMaxTaskByObjectForUser($folder, $this->userId);
+		if ($rightsManager->pseudoCompareTaskName($taskName, $maxTaskName) > 0)
+		{
+			throw new AccessException;
+		}
+
+		$sharing = Disk\Sharing::add(
+			[
+				'FROM_ENTITY' => Disk\Sharing::CODE_USER . $this->userId,
+				'REAL_OBJECT' => $folder,
+				'CREATED_BY' => $this->userId,
+				'CAN_FORWARD' => false,
+				'TO_ENTITY' => Disk\Sharing::CODE_USER . $userId,
+				'TASK_NAME' => $taskName,
+			],
+			$this->errorCollection
+		);
+
+		if(!$sharing)
+		{
+			return null;
+		}
+
+		return true;
+	}
+
+	private function isDiskStorage(Disk\Folder $folder)
+	{
+		$proxyType = $folder->getStorage()->getProxyType();
+
+		return
+			$proxyType instanceof Disk\ProxyType\User ||
+			$proxyType instanceof Disk\ProxyType\Group ||
+			$proxyType instanceof Disk\ProxyType\Common
+		;
 	}
 }

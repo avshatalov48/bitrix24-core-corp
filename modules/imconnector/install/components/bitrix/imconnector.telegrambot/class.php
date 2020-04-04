@@ -101,8 +101,10 @@ class ImConnectorTelegrambot extends \CBitrixComponent
 
 						if(!empty($this->arResult["FORM"]))
 						{
-							if(empty($this->arResult["REGISTER_STATUS"]))
+							if (!empty($this->arResult['REGISTER_STATUS']))
+							{
 								$this->connectorOutput->unregister();
+							}
 
 							$saved = $this->connectorOutput->saveSettings($this->arResult["FORM"]);
 

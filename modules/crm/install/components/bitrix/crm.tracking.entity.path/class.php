@@ -9,68 +9,27 @@ Loc::loadMessages(__FILE__);
 
 class CCrmTrackingEntityPathComponent extends CBitrixComponent
 {
-	public function getEntityPath($entityTypeId, $entityId)
+	public function getEntityPaths($entityTypeId, $entityId)
 	{
-		static $path = [];
+		static $paths = [];
 		static $lastEntityTypeId;
 		static $lastEntityId;
 
 		if ($lastEntityTypeId == $entityTypeId && $lastEntityId == $entityId)
 		{
-			return $path;
+			return $paths;
 		}
 
-		$path = [];
 		$lastEntityId = $entityId;
 		$lastEntityTypeId = $entityTypeId;
 
-		$row = Tracking\Internals\TraceEntityTable::getRowByEntity($entityTypeId, $entityId);
-		if (!$row)
-		{
-			return $path;
-		}
+		$paths = Tracking\Entity::getPaths(
+			$entityTypeId,
+			$entityId,
+			$this->arParams['LIMIT'] ?: null
+		);
 
-		static $actualSources = null;
-		if ($actualSources === null)
-		{
-			$actualSources = Tracking\Provider::getActualSources();
-			$actualSources = array_combine(
-				array_column($actualSources, 'ID'),
-				array_values($actualSources)
-			);
-		}
-
-		$trace = Tracking\Internals\TraceTable::getRow([
-			'select' => ['SOURCE_ID'],
-			'filter' => ['=ID' => $row['TRACE_ID']]
-		]);
-		if ($trace && $trace['SOURCE_ID'] && isset($actualSources[$trace['SOURCE_ID']]))
-		{
-			$source = $actualSources[$trace['SOURCE_ID']];
-			$path[] = [
-				'NAME' => $source['NAME'],
-				'DESC' => $source['DESCRIPTION'],
-				'ICON' => $source['ICON_CLASS'],
-				'ICON_COLOR' => $source['ICON_COLOR'],
-				'IS_SOURCE' => true,
-			];
-		}
-
-
-		$collection = Tracking\Channel\Factory::createCollection($row['TRACE_ID']);
-		foreach ($collection as $channel)
-		{
-			/** @var Tracking\Channel\Base $channel */
-			$path[] = [
-				'NAME' => $channel->getName(),
-				'DESC' => $channel->getDescription(),
-				'ICON' => null,
-				'ICON_COLOR' => null,
-				'IS_SOURCE' => false,
-			];
-		}
-
-		return $path;
+		return $paths;
 	}
 
 	public function executeComponent()
@@ -80,26 +39,64 @@ class CCrmTrackingEntityPathComponent extends CBitrixComponent
 			return;
 		}
 
-		$onlySourceIcon = isset($this->arParams['ONLY_SOURCE_ICON']) ? (bool) $this->arParams['ONLY_SOURCE_ICON'] : false;
-		$entityTypeId = $this->arParams['ENTITY_TYPE_ID'];
-		$entityId = $this->arParams['ENTITY_ID'];
+		$this->arParams['TRACE_ID'] = isset($this->arParams['TRACE_ID']) ? (int) $this->arParams['TRACE_ID'] : null;
+		$this->arParams['LIMIT'] = isset($this->arParams['LIMIT']) ? (int) $this->arParams['LIMIT'] : false;
+		$this->arParams['ONLY_SOURCE_ICON'] = isset($this->arParams['ONLY_SOURCE_ICON']) ? (bool) $this->arParams['ONLY_SOURCE_ICON'] : false;
+		$entityTypeId = (int) $this->arParams['ENTITY_TYPE_ID'];
+		$entityId = (int) $this->arParams['ENTITY_ID'];
 		if (!$entityTypeId || !$entityId)
 		{
 			return;
 		}
 
-		$path = $this->getEntityPath($entityTypeId, $entityId);
-		if ($onlySourceIcon)
+		$paths = $this->getEntityPaths($entityTypeId, $entityId);
+
+		if ($this->arParams['TRACE_ID'])
 		{
-			$path = array_filter(
-				$path,
-				function ($item)
-				{
-					return $item['IS_SOURCE'];
-				}
+			$traceId = $this->arParams['TRACE_ID'];
+			$pathsById = array_combine(
+				array_column($paths, 'TRACE_ID'),
+				array_values($paths)
 			);
+			$paths = isset($pathsById[$traceId]) ? [$pathsById[$traceId]] : [];
 		}
-		$this->arResult['PATH'] = $path;
+
+		if (empty($paths))
+		{
+			return;
+		}
+
+		$paths = array_column($paths, 'LIST');
+		if ($this->arParams['ONLY_SOURCE_ICON'])
+		{
+			foreach ($paths as $index => $path)
+			{
+				$path = array_filter(
+					$path,
+					function ($item)
+					{
+						return $item['IS_SOURCE'];
+					}
+				);
+				if (empty($path))
+				{
+					unset($paths[$index]);
+					continue;
+				}
+				$paths[$index] = $path;
+			}
+			if (empty($paths))
+			{
+				return;
+			}
+		}
+
+		if ($this->arParams['ONLY_SOURCE_ICON'])
+		{
+			$paths = [current($paths)];
+		}
+
+		$this->arResult['PATHS'] = $paths;
 
 		$this->includeComponentTemplate();
 	}

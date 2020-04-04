@@ -137,7 +137,7 @@ if($arResult['ACTIVE_INDEX'] < 0)
 	$arResult['ITEMS'][0]['IS_ACTIVE'] = true;
 }
 
-$arResult['CAN_CREATE_CATEGORY'] = CCrmPerms::IsAdmin();
+$arResult['CAN_CREATE_CATEGORY'] = $userPermissions->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE');
 if($arResult['CAN_CREATE_CATEGORY'])
 {
 	$restriction = RestrictionManager::getDealCategoryLimitRestriction();

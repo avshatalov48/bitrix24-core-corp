@@ -4,9 +4,9 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
 <div class="left-menu-popup-wrapper" id="left-menu-preset-popup" style="display: none">
 	<form method="POST" name="left-menu-preset-form">
-		<div class="left-menu-popup-close" onclick="BX.PopupWindowManager.getCurrentPopup().close();">
+		<!--<div class="left-menu-popup-close" onclick="BX.PopupWindowManager.getCurrentPopup().close();">
 			<div class="left-menu-popup-close-item"></div>
-		</div><!--left-menu-popup-close-->
+		</div>--><!--left-menu-popup-close-->
 		<div class="left-menu-popup-header">
 			<span class="left-menu-popup-header-item"><?=GetMessage("MENU_PRESET_TITLE")?></span>
 		</div><!--left-menu-popup-header-->

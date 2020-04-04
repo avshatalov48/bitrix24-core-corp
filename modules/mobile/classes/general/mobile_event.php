@@ -1,6 +1,8 @@
 <?
 
 use Bitrix\Main\Config\Option;
+use Bitrix\Mobile\Tab\Manager;
+use Bitrix\MobileApp\Janative\Entity\Component;
 
 IncludeModuleLangFile(__FILE__);
 
@@ -57,8 +59,41 @@ class CMobileEvent
 	{
 		return [
 			"install/mobileapp/mobile/components/bitrix"=>"/bitrix/mobileapp/mobile/components/bitrix/",
-			"install/mobileapp/mobile/extensions/bitrix"=>"/bitrix/mobileapp/mobile/extensions/bitrix/",
+			"install/mobileapp/mobile/extensions/bitrix"=>"/bitrix/mobileapp/mobile/erxtensions/bitrix/",
 		];
+	}
+
+	public static function onMobileMenuBuilt($data, $eventProvider = null)
+	{
+		/**
+		 * Tabs are not supported with web-version of menu
+		 */
+		if (!($eventProvider instanceof Component))
+			return $data;
+
+		/**
+		 * @var  $eventProvider Component
+		 */
+		$imageDir = $eventProvider->getPath() . "/images/";
+		$manager = new Manager();
+		$active = array_keys($manager->getActiveTabs());
+		$all = $manager->getAllTabIDs();
+		$diff = array_diff($all, $active);
+		$favorite = &$data[0]["items"];
+		foreach ($diff as $tabId)
+		{
+			$tab = $manager->getTabInstance($tabId);
+			if($tab->shouldShowInMenu())
+			{
+				$item = $tab->getMenuData();
+				if($item["imageUrl"])
+					$item["imageUrl"] = $imageDir. $item["imageUrl"];
+
+				array_unshift($favorite, $item);
+			}
+		}
+
+		return $data;
 	}
 }
 
@@ -79,6 +114,7 @@ class MobileApplication extends Bitrix\Main\Authentication\Application
 		"/bitrix/services/rest/index.php",
 		"/bitrix/services/main/ajax.php",
 		"/bitrix/services/mobileapp/jn.php",
+		"/bitrix/components/bitrix/main.urlpreview/",
 		"/mobileapp/",
 		"/rest/"
 	];

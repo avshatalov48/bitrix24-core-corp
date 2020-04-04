@@ -86,7 +86,6 @@ abstract class Base implements \Bitrix\Disk\Volume\IVolumeIndicator, IErrorable
 	const ERROR_MEASURE_UNAVAILABLE = 'DISK_VOLUME_MEASURE_UNAVAILABLE';
 
 	// type data to collect
-	const REGULAR_FILE = 'regular_file';
 	const DISK_FILE = 'disk_file';
 	const ATTACHED_OBJECT = 'attached_object';
 	const SHARING_OBJECT = 'sharing_object';
@@ -94,13 +93,18 @@ abstract class Base implements \Bitrix\Disk\Volume\IVolumeIndicator, IErrorable
 	const UNNECESSARY_VERSION = 'unnecessary_version';
 	const PREVIEW_FILE = 'preview_file';
 	const CRM_OBJECT = 'crm_object';
-	//const USER_FIELD = 'user_field';
+
+	/** @var string */
+	protected $stageId = null;
 
 	/** @var array Indicator list available in library. */
 	public static $indicatorTypeList = array();
 
 	/** @var string[] Clear constraint list. */
 	public static $clearConstraintList = array();
+
+	/** @var string[] Clear folder constraint list. */
+	public static $clearFolderConstraintList = array();
 
 	/** @var string[] Delete constraint list. */
 	public static $deleteConstraintList = array();
@@ -112,12 +116,43 @@ abstract class Base implements \Bitrix\Disk\Volume\IVolumeIndicator, IErrorable
 	 * @return $this
 	 * @throws Main\NotImplementedException
 	 */
-	public function measure($collectData = array(self::REGULAR_FILE, self::DISK_FILE, self::PREVIEW_FILE))
+	public function measure($collectData = array(self::DISK_FILE, self::PREVIEW_FILE))
 	{
 		// method must declared as abstract, but in some php 5.3 it throws Fatal error: Can't inherit abstract function .. previously declared abstract
 		// https://bugs.php.net/bug.php?id=66818
 		// therefore it throws exception
 		throw new Main\NotImplementedException();
+		return $this;
+	}
+
+	/**
+	 * Returns measure process stages list.
+	 * List types data to collect: ATTACHED_OBJECT, SHARING_OBJECT, EXTERNAL_LINK, UNNECESSARY_VERSION or PREVIEW_FILE.
+	 * @return string[]
+	 */
+	public function getMeasureStages()
+	{
+		return array();
+	}
+
+	/**
+	 * Gets current stage id.
+	 * @return string
+	 */
+	public function getStage()
+	{
+		return $this->stageId;
+	}
+
+	/**
+	 * Sets current stage id.
+	 * @param string $stageId Stage id.
+	 * @return $this
+	 */
+	public function setStage($stageId)
+	{
+		$this->stageId = $stageId;
+
 		return $this;
 	}
 
@@ -1044,6 +1079,7 @@ abstract class Base implements \Bitrix\Disk\Volume\IVolumeIndicator, IErrorable
 					SELECT  object_id, max(id) as id
 					FROM b_disk_version 
 					GROUP BY object_id
+					ORDER BY NULL
 				) head ON head.OBJECT_ID = files.ID
 			
 				LEFT JOIN b_disk_attached_object attached
@@ -1138,6 +1174,20 @@ abstract class Base implements \Bitrix\Disk\Volume\IVolumeIndicator, IErrorable
 	}
 
 	/**
+	 * Returns clearance constraint list.
+	 * @return string[]
+	 */
+	final public static function listClearFolderConstraint()
+	{
+		if (empty(self::$clearFolderConstraintList))
+		{
+			self::loadListIndicator();
+		}
+
+		return self::$clearFolderConstraintList;
+	}
+
+	/**
 	 * Returns delete constraint list.
 	 * @return string[]
 	 */
@@ -1182,6 +1232,10 @@ abstract class Base implements \Bitrix\Disk\Volume\IVolumeIndicator, IErrorable
 						if($reflection->implementsInterface(__NAMESPACE__.'\\IClearConstraint'))
 						{
 							self::$clearConstraintList[$class::getIndicatorId()] = $class::className();
+						}
+						if($reflection->implementsInterface(__NAMESPACE__.'\\IClearFolderConstraint'))
+						{
+							self::$clearFolderConstraintList[$class::getIndicatorId()] = $class::className();
 						}
 						if($reflection->implementsInterface(__NAMESPACE__.'\\IDeleteConstraint'))
 						{

@@ -14,6 +14,7 @@ interface IVolumeClearEvent extends \Bitrix\Crm\Volume\IVolumeClear
 	/**
 	 * Returns availability to drop entity activities.
 	 * @return boolean
+	 * @see \Bitrix\Crm\Volume\ClearEvent::canClearEvent
 	 */
 	public function canClearEvent();
 
@@ -33,6 +34,7 @@ interface IVolumeClearEvent extends \Bitrix\Crm\Volume\IVolumeClear
 	/**
 	 * Returns dropped count of associated entity activities.
 	 * @return int
+	 * @see \Bitrix\Crm\Volume\ClearEvent::getDroppedEventCount
 	 */
 	public function getDroppedEventCount();
 
@@ -40,6 +42,7 @@ interface IVolumeClearEvent extends \Bitrix\Crm\Volume\IVolumeClear
 	 * Sets dropped count of associated entity activities.
 	 * @param int $count Amount to set.
 	 * @return void
+	 * @see \Bitrix\Crm\Volume\ClearEvent::setDroppedEventCount
 	 */
 	public function setDroppedEventCount($count);
 
@@ -47,6 +50,7 @@ interface IVolumeClearEvent extends \Bitrix\Crm\Volume\IVolumeClear
 	 * Returns dropped count of associated entity activities.
 	 * @param int $count Amount to increment.
 	 * @return void
+	 * @see \Bitrix\Crm\Volume\ClearEvent::incrementDroppedEventCount
 	 */
 	public function incrementDroppedEventCount($count);
 }

@@ -430,6 +430,7 @@ class ActivityController extends BaseController
 		Relation::deleteJunks();
 		//endregion
 
+		$this->rebuildSearchIndex($newEntityID);
 		$this->fireAfterRecoverEvent($recyclingEntityID, $newEntityID);
 		return true;
 	}

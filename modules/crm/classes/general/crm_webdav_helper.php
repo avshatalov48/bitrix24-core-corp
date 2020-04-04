@@ -80,7 +80,8 @@ class CCrmWebDavHelper
 				'IBLOCK_ID',
 				'IBLOCK_SECTION_ID',
 				'SOCNET_GROUP_ID',
-				'CREATED_BY'
+				'CREATED_BY',
+				'PROPERTY_FILE',
 			)
 		);
 
@@ -226,6 +227,7 @@ class CCrmWebDavHelper
 
 		return array(
 			'ID' => $elementID,
+			'FILE_ID' => $arElement['PROPERTY_FILE_VALUE'],
 			'NAME' => $arElement['NAME'],
 			'EDIT_URL' => CHTTP::urlAddParams($editUrl, array('ncc' => '1')),
 			'VIEW_URL' => CHTTP::urlAddParams($viewUrl, array('ncc' => '1')),

@@ -49,6 +49,7 @@ $arAllOptions = array(
 	array("disk_allow_autoconnect_shared_objects", GetMessage("DISK_ALLOW_AUTOCONNECT_SHARED_OBJECTS"), "N", array("checkbox", "Y")),
 	array("disk_allow_edit_object_in_uf", GetMessage("DISK_ALLOW_EDIT_OBJECT_IN_UF"), "Y", array("checkbox", "Y")),
 	array("disk_allow_index_files", GetMessage("DISK_ALLOW_INDEX_FILES_2"), "Y", array("checkbox", "Y")),
+	array("disk_allow_use_extended_fulltext", GetMessage("DISK_ALLOW_USE_EXTENDED_FULLTEXT"), "N", array("checkbox", "Y")),
 	array("disk_max_file_size_for_index", GetMessage("DISK_MAX_FILE_SIZE_FOR_INDEX"), 1024, Array("text", "20")),
 	array("default_viewer_service", GetMessage("DISK_DEFAULT_VIEWER_SERVICE"), $arDefaultValues['default']['default_viewer_service'], array("selectbox", $optionList)),
 	array("disk_nginx_mod_zip_enabled", GetMessage("DISK_ENABLE_NGINX_MOD_ZIP_SUPPORT"), $arDefaultValues['default']['disk_nginx_mod_zip_enabled'], array("checkbox", "Y")),

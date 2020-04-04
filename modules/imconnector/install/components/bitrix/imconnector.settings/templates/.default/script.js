@@ -102,6 +102,8 @@
 
 	window.copyToClipboard = function() //new method with same function, as in method upper, but without using extra elements on page
 	{
+		this.timeoutIds = this.timeoutIds || [];
+
 		var input = document.createElement('input');
 		input.value = this.dataset.text;
 		document.body.appendChild(input);
@@ -114,8 +116,35 @@
 			message = BX.message('IMCONNECTOR_COMPONENT_SETTINGS_FAILED_TO_COPY');
 		}
 
-		alert(message);
 		document.body.removeChild(input);
+
+
+		var popupId = BX.util.getRandomString(5);
+		var hideTimeout = 1500;
+		var popupParams = {
+			content: message,
+			darkMode: true,
+			autoHide: true,
+			zIndex: 1000,
+			angle: true,
+			offsetLeft: 5,
+			bindOptions: {
+				position: 'top'
+			}
+		};
+		var popup = new BX.PopupWindow(
+			'clipboard_copy_status_' + popupId,
+			this,
+			popupParams
+		);
+		popup.show();
+
+		var timeoutId;
+		while(timeoutId = this.timeoutIds.pop()) clearTimeout(timeoutId);
+		timeoutId = setTimeout(function(){
+			popup.close();
+		}, hideTimeout);
+		this.timeoutIds.push(timeoutId);
 
 		return false;
 	};

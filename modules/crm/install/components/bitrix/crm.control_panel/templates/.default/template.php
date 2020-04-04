@@ -23,7 +23,7 @@ $APPLICATION->IncludeComponent(
 
 if ($isBitrix24)
 {
-	$this->EndViewTarget("sidebar");
+	$this->EndViewTarget();
 }
 
 if ($arResult["ENABLE_SEARCH"])

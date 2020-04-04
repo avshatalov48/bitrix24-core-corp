@@ -44,9 +44,6 @@ final class Item
 	public function persist()
 	{
 		$record = array(
-			'LIST_ID' => $this->listId,
-			'ENTITY_TYPE_id' => $this->entityTypeId,
-			'ELEMENT_ID' => $this->elementId,
 			'RANK' => $this->rank
 		);
 
@@ -57,7 +54,13 @@ final class Item
 			$record['CALL_ID'] = $this->callId;
 
 		if($this->new)
+		{
+			$record['LIST_ID'] = $this->listId;
+			$record['ENTITY_TYPE_ID'] = $this->entityTypeId;
+			$record['ELEMENT_ID'] = $this->elementId;
+
 			CallListItemTable::add($record);
+		}
 		else
 			CallListItemTable::update(
 				array(

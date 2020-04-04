@@ -189,9 +189,9 @@ endif;
 										<td width="30%">
 											<? if (trim($arAnswer["MESSAGE"]) != '') { ?>
 												<span class='vote-answer-lolight'>
-													<?=htmlspecialcharsbx($arGroupAnswer["~MESSAGE"])?>:&nbsp;</span>
+													<?=htmlspecialcharsbx($arGroupAnswer["MESSAGE"])?>:&nbsp;</span>
 											<? } ?>
-											<?=htmlspecialcharsbx($arGroupAnswer["~MESSAGE"])?></td>
+											<?=htmlspecialcharsbx($arGroupAnswer["MESSAGE"])?></td>
 										<td width="70%">
 											<table class="vote-bar-table">
 												<tr>

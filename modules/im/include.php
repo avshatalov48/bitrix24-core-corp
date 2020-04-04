@@ -60,6 +60,9 @@ define("IM_SPEED_GROUP", 3);
 define("IM_CHECK_UPDATE", 'update');
 define("IM_CHECK_DELETE", 'delete');
 
+define("IM_DESKTOP_WINDOWS", 'windows');
+define("IM_DESKTOP_MAC", 'mac');
+
 define("IM_NOTIFY_FEATURE_SITE", "site");
 define("IM_NOTIFY_FEATURE_XMPP", "xmpp");
 define("IM_NOTIFY_FEATURE_MAIL", "mail");
@@ -221,7 +224,7 @@ CJSCore::RegisterExt('im_window', array(
 CJSCore::RegisterExt('im_desktop', array(
 	'js' => '/bitrix/js/im/desktop.js',
 	'lang' => '/bitrix/modules/im/js_desktop.php',
-	'rel' => array('im_page', 'im_call'),
+	'rel' => array('im_page', 'im_call', 'socnetlogdest'),
 ));
 
 CJSCore::RegisterExt('im_timecontrol', array(

@@ -1,4 +1,6 @@
 <?
+
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
@@ -8,15 +10,15 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 
 Loc::loadMessages(__FILE__);
 
-$APPLICATION->SetAdditionalCSS($this->getFolder()."/map.css");
 $APPLICATION->SetAdditionalCSS($this->getFolder()."/groups.css");
+$APPLICATION->SetAdditionalCSS($this->getFolder()."/map.css");
 $APPLICATION->AddHeadScript($this->getFolder()."/map.js");
 
 if (!function_exists("recalculateCrmCounter"))
 {
 	function recalculateCrmCounter($counterId)
 	{
-		if (preg_match("~^crm_~i", $counterId) && \Bitrix\Main\Loader::includeModule("crm"))
+		if (preg_match("~^crm_~i", $counterId) && Loader::includeModule("crm"))
 		{
 			\Bitrix\Crm\Counter\EntityCounterManager::prepareValue($counterId);
 		}
@@ -49,10 +51,6 @@ if (
 $arResult["IS_EXTRANET"] = isModuleInstalled("extranet") && SITE_ID == COption::GetOptionString("extranet", "extranet_site");
 
 $arResult["SHOW_PRESET_POPUP"] = COption::GetOptionString("intranet", "show_menu_preset_popup", "N") == "Y";
-if ($arResult["SHOW_PRESET_POPUP"])
-{
-	COption::SetOptionString("intranet", "show_menu_preset_popup", "N");
-}
 
 $newItems = array();
 $mapItems = array();
@@ -69,7 +67,14 @@ foreach ($defaultItems as $itemIndex => $item)
 	//id to item
 	if (!isset($item["PARAMS"]["menu_item_id"]))
 	{
-		$item["PARAMS"]["menu_item_id"] = ($item["PARAMS"]["name"] == "live_feed") ? "menu_live_feed" : crc32($item["LINK"]);
+		if (isset($item["PARAMS"]["name"]) && $item["PARAMS"]["name"] === "live_feed")
+		{
+			$item["PARAMS"]["menu_item_id"] = "menu_live_feed";
+		}
+		else
+		{
+			$item["PARAMS"]["menu_item_id"] = crc32($item["LINK"]);
+		}
 	}
 
 	if (isset($item["PARAMS"]["my_tools_section"]) && $item["PARAMS"]["my_tools_section"] === true)
@@ -216,6 +221,7 @@ if (!empty($adminItems))
 //sorted items
 $sortedItems = array();
 $arResult["ITEMS"]["show"] = array();
+$arResult["ITEMS"]["hide"] = array();
 
 $presets = array(
 	"social" => array(
@@ -226,15 +232,18 @@ $presets = array(
 			"menu_all_groups",
 			"menu_files",
 			"menu_calendar",
-			"menu_external_mail",
-			"menu_contact_center",
+			"menu_timeman_sect",
 			"menu_crm_favorite",
 			"menu_sites",
-			"menu_timeman_sect",
 			"menu_company",
 		),
 		"hide" => array(
+			"menu_external_mail",
+			"menu_contact_center",
+			"menu_crm_tracking",
+			"menu_analytics",
 			"menu_marketing",
+			"menu-sale-center",
 			"menu_shop",
 			"menu_openlines",
 			"menu_telephony",
@@ -251,8 +260,11 @@ $presets = array(
 		"show" => array(
 			"menu_crm_favorite",
 			"menu_marketing",
+			"menu_analytics",
+			"menu_crm_tracking",
 			"menu_tasks",
 			"menu_external_mail",
+			"menu-sale-center",
 			"menu_shop",
 			"menu_sites",
 			"menu_contact_center",
@@ -291,9 +303,12 @@ $presets = array(
 			"menu_all_groups",
 			"menu_timeman_sect",
 			"menu_sites",
+			"menu-sale-center",
 			"menu_shop",
 			"menu_contact_center",
 			"menu_marketing",
+			"menu_analytics",
+			"menu_crm_tracking",
 			"menu_openlines",
 			"menu_telephony",
 			"menu_ai",
@@ -308,11 +323,14 @@ $presets = array(
 	"sites" => array(
 		"show" => array(
 			"menu_sites",
+			"menu-sale-center",
 			"menu_shop",
 			"menu_contact_center",
 			"menu_external_mail",
 			"menu_crm_favorite",
 			"menu_marketing",
+			"menu_analytics",
+			"menu_crm_tracking",
 			"menu_tasks",
 		),
 		"hide" => array(
@@ -337,6 +355,7 @@ $presets = array(
 	"shop" => array(
 		"show" => array(
 			"menu_shop",
+			"menu-sale-center",
 			"menu_crm_favorite",
 			"menu_marketing",
 			"menu_contact_center",
@@ -366,7 +385,7 @@ $presets = array(
 );
 
 $arResult["IS_CUSTOM_PRESET_AVAILABLE"] = true;
-if (\Bitrix\Main\Loader::includeModule("bitrix24"))
+if (Loader::includeModule("bitrix24"))
 {
 	if (!(CBitrix24::IsLicensePaid() || CBitrix24::IsDemoLicense() || CBitrix24::IsNfrLicense()))
 	{
@@ -375,7 +394,6 @@ if (\Bitrix\Main\Loader::includeModule("bitrix24"))
 }
 
 $arResult["CUSTOM_PRESET_EXISTS"] = COption::GetOptionString("intranet", "left_menu_custom_preset_sort", "") ? true : false;
-$arResult["CURRENT_PRESET_ID"] = "social";
 //personal
 $presetId = CUserOptions::GetOption("intranet", "left_menu_preset");
 if ($presetId)
@@ -403,8 +421,7 @@ if ($presetId == "custom")
 				"LINK" => htmlspecialcharsbx($item["LINK"]),
 				"PERMISSION" => "X",
 				"PARAMS" => array(
-					"menu_item_id" => htmlspecialcharsbx($item["ID"]),
-					"counter_id" => htmlspecialcharsbx($counterId)
+					"menu_item_id" => htmlspecialcharsbx($item["ID"])
 				),
 				"ITEM_TYPE" => "custom",
 				"DELETE_PERM" => "A",
@@ -417,14 +434,12 @@ if ($presetId == "custom")
 $sortedItemsId = CUserOptions::GetOption("intranet", "left_menu_sorted_items_".SITE_ID);
 if (!is_array($sortedItemsId) || empty($sortedItemsId))
 {
-	if (in_array($presetId, array("social", "tasks", "crm", "sites")))
+	if (in_array($presetId, array("social", "tasks", "crm", "sites", "shop")))
 	{
-		$arResult["CURRENT_PRESET_ID"] = $presetId;
 		$sortedItemsId = $presets[$presetId];
 	}
 	elseif ($arResult["IS_CUSTOM_PRESET_AVAILABLE"] && $presetId == "custom")
 	{
-		$arResult["CURRENT_PRESET_ID"] = $presetId;
 		$sortedItemsId = COption::GetOptionString("intranet", "left_menu_custom_preset_sort", "");
 		if ($sortedItemsId)
 		{
@@ -435,6 +450,15 @@ if (!is_array($sortedItemsId) || empty($sortedItemsId))
 	{
 		$sortedItemsId = $presets["social"];
 	}
+}
+
+if (in_array($presetId, array("social", "tasks", "crm", "sites")))
+{
+	$arResult["CURRENT_PRESET_ID"] = $presetId;
+}
+else
+{
+	$arResult["CURRENT_PRESET_ID"] = "social";
 }
 
 foreach (array("show", "hide") as $status)
@@ -455,7 +479,17 @@ foreach (array("show", "hide") as $status)
 //add unsorted items to the end
 if (!empty($newItems))
 {
-	$arResult["ITEMS"]["show"] = array_merge($arResult["ITEMS"]["show"], $newItems);
+	foreach ($newItems as $item)
+	{
+		if ($item["ITEM_TYPE"] == "default")
+		{
+			array_unshift($arResult["ITEMS"]["hide"], $item);
+		}
+		else
+		{
+			$arResult["ITEMS"]["show"][] = $item;
+		}
+	}
 }
 
 $counters = \CUserCounter::GetValues($USER->GetID(), SITE_ID);
@@ -494,15 +528,22 @@ if (!$arResult["IS_EXTRANET"] && $GLOBALS["USER"]->isAuthorized())
 
 $arResult["IS_PUBLIC_CONVERTED"] = file_exists($_SERVER["DOCUMENT_ROOT"].SITE_DIR."stream/");
 
+$arResult["SPOTLIGHT_ID"] = "new-collapsed-menu";
+
 //license button
-if (CModule::IncludeModule('bitrix24') && in_array(CBitrix24::getLicenseType(), array("project", "demo")))
+$arResult["SHOW_LICENSE_BUTTON"] = false;
+if (
+	Loader::includeModule('bitrix24')
+	&& in_array(CBitrix24::getLicenseType(), array("project", "demo"))
+	&& !(Loader::includeModule("extranet") && CExtranet::IsExtranetSite())
+)
 {
-	$arResult["SHOW_LICENSE_BUTTON"] = false;
+	$portalCreationDate = intval(COption::GetOptionString("main", "~controller_date_create", ""));
 	if (
-		!in_array(LANGUAGE_ID, array("ru", "ua"))
-		|| (
+		!in_array(LANGUAGE_ID, array("ru", "ua")) ||
+		(
 			in_array(LANGUAGE_ID, array("ru", "ua")) &&
-			(COption::GetOptionString("main", "~controller_date_create", "") + 86400 < time() || !intval(COption::GetOptionString("main", "~controller_date_create", "")))
+			($portalCreationDate + 86400 < time() || !$portalCreationDate)
 		)
 	)
 	{

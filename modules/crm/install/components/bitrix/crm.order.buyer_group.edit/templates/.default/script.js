@@ -22,7 +22,9 @@
 				if (this.params.IFRAME)
 				{
 					window.top.BX.SidePanel.Instance.postMessage(window, 'OrderBuyerGroupEdit::onSave', {});
-					window.top.BX.SidePanel.Instance.close();
+					window.top.BX.SidePanel.Instance.getTopSlider().close(false, function(slider) {
+						slider.destroy();
+					});
 				}
 				else if (BX.type.isNotEmptyString(data.redirectUrl))
 				{

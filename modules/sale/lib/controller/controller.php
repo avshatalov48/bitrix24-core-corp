@@ -89,6 +89,7 @@ class Controller extends Engine\Controller
 
 	protected static function getApplication()
 	{
+		/** @global \CMain $APPLICATION */
 		global $APPLICATION;
 
 		return $APPLICATION;
@@ -168,7 +169,7 @@ class Controller extends Engine\Controller
 
 	protected function toArray(\Bitrix\Sale\Order $order, array $fields=[])
 	{
-		//пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅ, пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+		//добавляем те поля, к существующим полям сущности, которые у неё отсутствуют
 		$fields = array_merge($fields, $this->getAdditionalFields($order));
 
 		if($this->isB24())

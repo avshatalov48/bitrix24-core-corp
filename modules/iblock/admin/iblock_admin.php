@@ -16,7 +16,7 @@ if($_REQUEST["admin"] == "Y")
 else
 	$sTableID = "tbl_iblock_".md5($type);
 
-$oSort = new CAdminSorting($sTableID, "TIMESTAMP_X", "desc");
+$oSort = new CAdminUiSorting($sTableID, "TIMESTAMP_X", "desc");
 $arOrder = (strtoupper($by) === "ID"? array($by => $order): array($by => $order, "ID" => "ASC"));
 $lAdmin = new CAdminUiList($sTableID, $oSort);
 

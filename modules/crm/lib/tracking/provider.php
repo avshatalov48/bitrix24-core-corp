@@ -80,6 +80,12 @@ class Provider
 				'CONFIGURED' => self::hasSourcesWithFilledPool(Communication\Type::EMAIL),
 				'CONFIGURABLE' => true,
 			],
+			[
+				'CODE' => Channel\Base::Order,
+				'ICON_CLASS' => 'ui-icon ui-icon-service-estore',
+				'CONFIGURED' => Channel\Order::isConfigured(),
+				'CONFIGURABLE' => true,
+			],
 		];
 
 		foreach ($list as $index => $item)
@@ -87,6 +93,7 @@ class Provider
 			$channel = Channel\Factory::create($item['CODE']);
 			$item['NAME'] = $channel->getGridName();
 			$item['SHORT_NAME'] = $channel->getName();
+			$item['ITEMS'] = $channel->getItems();
 			$list[$index] = $item;
 		}
 
@@ -119,6 +126,7 @@ class Provider
 					'CODE' => $itemId,
 					'NAME' => $item['NAME'],
 					'SHORT_NAME' => $item['NAME'],
+					'ITEMS' => [],
 					'ICON_CLASS' => $item['LOGO_CLASS'],
 					'CONFIGURED' => true,
 					'CONFIGURABLE' => false,
@@ -191,7 +199,9 @@ class Provider
 				'ICON_COLOR' => '#38659f',
 				'CONFIGURABLE' => true,
 				'HAS_PATH_TO_LIST' => true,
-				'REF_DOMAIN' => ['www.facebook.com', 'facebook.com'],
+				'REF_DOMAIN' => Settings::isSocialRefDomainUsed()
+					? ['www.facebook.com', 'facebook.com']
+					: [],
 			],
 			[
 				'CODE' => 'instagram',
@@ -199,7 +209,9 @@ class Provider
 				'ICON_COLOR' => '#d56c9a',
 				'CONFIGURABLE' => true,
 				'HAS_PATH_TO_LIST' => true,
-				'REF_DOMAIN' => ['www.instagram.com', 'instagram.com'],
+				'REF_DOMAIN' => Settings::isSocialRefDomainUsed()
+					? ['www.instagram.com', 'instagram.com']
+					: [],
 			],
 		];
 
@@ -211,7 +223,9 @@ class Provider
 				'ICON_COLOR' => '#3871ba',
 				'CONFIGURABLE' => true,
 				'HAS_PATH_TO_LIST' => true,
-				'REF_DOMAIN' => ['www.vk.com', 'vk.com'],
+				'REF_DOMAIN' => Settings::isSocialRefDomainUsed()
+					? ['www.vk.com', 'vk.com']
+					: [],
 			];
 			$list[] = [
 				'CODE' => 'yandex',
@@ -284,7 +298,7 @@ class Provider
 
 		foreach (self::getActualAdSources() as $source)
 		{
-			$ad = new Analytics\Ad($source['CODE']);
+			$ad = new Analytics\Ad($source);
 			if ($ad->isConnected())
 			{
 				return true;
@@ -327,7 +341,7 @@ class Provider
 		$sourceFields = Internals\SourceFieldTable::getSourceFields();
 
 		$list = Internals\SourceTable::getList([
-			'select' => ['ID', 'CODE', 'NAME', 'ICON_COLOR', 'UTM_SOURCE', 'EMAIL', 'PHONE'],
+			'select' => ['ID', 'CODE', 'NAME', 'ICON_COLOR', 'AD_CLIENT_ID', 'AD_ACCOUNT_ID'],
 			'filter' => ['=ACTIVE' => 'Y'],
 			'order' => ['ID' => 'ASC'],
 			'cache' => ['ttl' => 3600]
@@ -336,12 +350,13 @@ class Provider
 		{
 			if ($item['CODE'] && isset($adsSources[$item['CODE']]))
 			{
-				$item = $adsSources[$item['CODE']] + $item;
+				$item = ['NAME' => $item['NAME']] + $adsSources[$item['CODE']] + $item;
 			}
 
 			if (!$item['CODE'])
 			{
 				$userSources[] = $item['ID'];
+				$item['ICON_COLOR'] = $item['ICON_COLOR'] ?: '#55d0e0';
 			}
 
 			if (isset($sourceFields[$item['ID']]))

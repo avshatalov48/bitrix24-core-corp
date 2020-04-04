@@ -982,9 +982,17 @@
 	overflow: hidden;
 	height: 230px;
 }
-.feed-new-message-inf-wrap.feed-new-message-inf-wrap-first {
-	height: 40px;
+
+.feed-new-message-inf-wrap-first a {
+	pointer-events: none;
+	cursor: default;
 }
+.feed-new-message-inf-wrap-first.feed-new-message-inf-wrap-first-active a {
+	pointer-events: auto;
+	cursor: pointer;
+}
+.feed-new-message-inf-wrap-first { display: none; }
+.feed-new-message-inf-wrap-first.feed-new-message-inf-wrap-first-visible { display: block; }
 
 .feed-new-message-active {display: block;}
 
@@ -996,9 +1004,9 @@
 	cursor: pointer;
 	display: block;
 	height: 40px;
-	opacity: 0;
 	outline: none;
 	text-align: center;
+	position: relative;
 
 	-webkit-transition: opacity 0.2s linear;
 	transition: opacity 0.2s linear;
@@ -1175,6 +1183,9 @@
 }
 
 .feed-user-avatar {
+	position: relative;
+	width: 50px;
+	height: 50px;
 	background-color: #535c6a;
 	/*background-image: url("images/log/live_feed_sprite_6.png?3");*/
 	/*background-position: 13px -154px;*/
@@ -1184,14 +1195,18 @@
 	border-radius: 50%;
 	display: block;
 	float: left;
-	height: 50px;
 	margin-right: 11px;
 	overflow: hidden;
-	width: 50px;
 }
 
 .bx-opera .feed-user-avatar img {
 	border-radius: 50%;
+}
+
+.feed-user-avatar img {
+	display: block;
+	width: 100%;
+	min-height: 100%;
 }
 
 .feed-user-avatar.feed-user-avatar-white {
@@ -4667,4 +4682,46 @@ td.transparent {background: none;}
 .feed-com-text .bx-inline-tag:hover {
 	border-bottom: 1px solid;
 	cursor: pointer;
+}
+
+.feed-new-message-inf-loader-first-cont {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	margin: auto;
+	height: 29px;
+	width: 29px;
+}
+
+.feed-new-message-inf-loader-first-loader {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	z-index: 1500;
+	-webkit-animation: rotate 2s linear infinite;
+	animation: rotate 2s linear infinite;
+	-webkit-transform-origin: center center;
+	transform-origin: center center;
+}
+
+.feed-new-message-inf-loader-first-inner-path {
+	stroke: rgba(215,220,223,.17);
+	stroke-width: 1.5;
+	stroke-dasharray: 200, 200;
+	stroke-dashoffset: 0;
+	stroke-linecap: round;
+}
+
+.feed-new-message-inf-loader-first-path {
+	stroke: rgba(215,220,223,.74);
+	stroke-width: 1.5;
+	stroke-dasharray: 20, 200;
+	stroke-dashoffset: 0;
+	-webkit-animation: dash 1.5s ease-in-out infinite;
+	animation: dash 1.5s ease-in-out infinite;
+	stroke-linecap: round;
 }

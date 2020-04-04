@@ -38,6 +38,12 @@ $arResult['TEMPLATE_DATA'] = array(// contains data generated in result_modifier
 
 $taskTemplateUrlTemplate = $arParams['PATH_TO_USER_TASKS_TEMPLATE'];
 
+
+$strIframe = '';
+if($_REQUEST['IFRAME'])
+{
+    $strIframe = '?IFRAME='.($_REQUEST['IFRAME'] == 'Y' ? 'Y' : 'N');
+}
 $arResult['JS_DATA'] = [
 	'gridId' => $arParams['GRID_ID'],
 	'patternsUrl' => [
@@ -48,7 +54,7 @@ $arResult['JS_DATA'] = [
 				"template_id" => 0,
 				"action" => "edit"
 			)
-		),
+		).$strIframe,
 		'view' => CComponentEngine::MakePathFromTemplate(
 			$taskTemplateUrlTemplate,
 			array(
@@ -56,9 +62,11 @@ $arResult['JS_DATA'] = [
 				"template_id" => '\d+',
 				"action" => "view"
 			)
-		),
+		).$strIframe,
 	]
 ];
+
+
 
 /**
  * @param $row
@@ -68,6 +76,13 @@ $arResult['JS_DATA'] = [
  */
 function prepareTaskRowActions($row, $arParams)
 {
+    $strIframe = '';
+    if($_REQUEST['IFRAME'])
+    {
+        $strIframe = '?IFRAME='.($_REQUEST['IFRAME'] == 'Y' ? 'Y' : 'N');
+        $strIframe2 = '?IFRAME='.($_REQUEST['IFRAME'] == 'Y' ? 'Y' : 'N');
+    }
+
 	$userId = Util\User::getId();
 
 	$urlPath = $arParams['PATH_TO_USER_TASKS_TEMPLATES'];
@@ -87,7 +102,7 @@ function prepareTaskRowActions($row, $arParams)
 					'action'      => 'view',
 					'template_id' => $row['ID']
 				]
-			)
+			).$strIframe
 		];
 		$actions[] = [
 			"text" => GetMessageJS('TASKS_TEMPLATES_ROW_ACTION_COPY'),
@@ -98,7 +113,7 @@ function prepareTaskRowActions($row, $arParams)
 						'action'      => 'edit',
 						'template_id' => 0
 					]
-				).'?COPY='.$row['ID']
+				).'?COPY='.$row['ID'].$strIframe2
 		];
 	}
 
@@ -113,7 +128,7 @@ function prepareTaskRowActions($row, $arParams)
 						'action'  => 'edit',
 						'task_id' => 0
 				]
-				).'?TEMPLATE='.$row['ID']
+				).'?TEMPLATE='.$row['ID'].$strIframe2
 		];
 		$actions[] = [
 			"text" => GetMessageJS('TASKS_TEMPLATES_ROW_ACTION_CREATE_SUB_TEMPLATE'),
@@ -124,7 +139,7 @@ function prepareTaskRowActions($row, $arParams)
 						'action'      => 'edit',
 						'template_id' => 0
 					]
-				).'?BASE_TEMPLATE='.$row['ID']
+				).'?BASE_TEMPLATE='.$row['ID'].$strIframe2
 		];
 		$actions[] = [
 			"text" => GetMessageJS('TASKS_TEMPLATES_ROW_ACTION_EDIT'),
@@ -135,7 +150,7 @@ function prepareTaskRowActions($row, $arParams)
 					'action'      => 'edit',
 					'template_id' => $row['ID']
 				]
-			)
+			).$strIframe
 		];
 	}
 

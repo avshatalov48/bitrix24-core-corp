@@ -148,9 +148,10 @@
 		},
 		createItemIconNode: function (text, iconClass)
 		{
+			iconClass = iconClass || '';
 			var node = this.createNode('item/icon');
 			node.children[0].textContent = text;
-			node.children[0].classList.add(iconClass || 'b24-tracker-item-name-empty');
+			node.children[0].classList.add(iconClass.trim() || 'b24-tracker-item-name-empty');
 
 			return node;
 		}
