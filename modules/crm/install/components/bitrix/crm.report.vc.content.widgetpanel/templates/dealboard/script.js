@@ -15,13 +15,25 @@
 			if(!this.menu)
 			{
 				var categories = BX.CrmDealCategory.getListItems();
-				var menuItems = categories.map(function(categoryDescription)
+
+				var menuItems = [];
+
+				menuItems.push({
+					text: BX.message("CRM_REPORT_DEAL_ALL_DEALS"),
+					dataset: {
+						value: -1,
+						text: BX.message("CRM_REPORT_DEAL_ALL_DEALS")
+					},
+					onclick: this.onMenuItemClick.bind(this)
+				});
+
+				categories.forEach(function(categoryDescription)
 				{
-					return {
+					menuItems.push({
 						text: categoryDescription.text,
 						dataset: categoryDescription,
 						onclick: this.onMenuItemClick.bind(this)
-					}
+					})
 				}.bind(this));
 
 				this.menu = new BX.PopupMenuWindow('crm-select-category', element, menuItems);

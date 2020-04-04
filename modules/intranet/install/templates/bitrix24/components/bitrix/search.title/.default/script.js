@@ -922,12 +922,6 @@ BX.B24SearchTitle = function(arParams)
 					}, _this));
 
 					_this.RESULT.style.display = 'block';
-
-					var blocksCount = BX.findChildren(_this.RESULT, {className: "search-title-top-list-js"}, true);
-					if (blocksCount.length == 1)
-					{
-						_this.toggleGlobalCategories("open");
-					}
 				}
 				else
 				{
@@ -1020,22 +1014,20 @@ BX.B24SearchTitle = function(arParams)
 						}
 						BX.onCustomEvent(_this, 'onFinderAjaxSuccess', [ ajaxDbEntities, _this.ITEMS, 'sonetgroups' ]);
 					}
-/*
 					else if (_this.arParams.CATEGORIES_ALL[i].CODE == 'custom_users')
 					{
-						ajaxDbEntities = {};
+//						ajaxDbEntities = {};
 						for (j=0;j<result.CATEGORIES[i].ITEMS.length;j++)
 						{
-							ajaxDbEntities[result.CATEGORIES[i].ITEMS[j].ITEM_ID] = _this.ConvertAjaxToClientDB(result.CATEGORIES[i].ITEMS[j], 'users');
+//							ajaxDbEntities[result.CATEGORIES[i].ITEMS[j].ITEM_ID] = _this.ConvertAjaxToClientDB(result.CATEGORIES[i].ITEMS[j], 'users');
 							ajaxUserCodeList.push(result.CATEGORIES[i].ITEMS[j].ITEM_ID);
 						}
-						BX.onCustomEvent(_this, 'onFinderAjaxSuccess', [ ajaxDbEntities, _this.ITEMS, 'users' ]);
+//						BX.onCustomEvent(_this, 'onFinderAjaxSuccess', [ ajaxDbEntities, _this.ITEMS, 'users' ]);
 					}
-*/
 				}
 
 				var z = 0;
-/*
+
 				if (
 					_this.arParams.CATEGORIES_ALL[i].CODE == 'custom_users'
 					&& BX.type.isNotEmptyString(searchString)
@@ -1063,7 +1055,7 @@ BX.B24SearchTitle = function(arParams)
 						]);
 					}
 				}
-*/
+
 				if (
 					_this.arParams.CATEGORIES_ALL[i].CODE == 'custom_sonetgroups'
 					&& BX.type.isNotEmptyString(searchString)

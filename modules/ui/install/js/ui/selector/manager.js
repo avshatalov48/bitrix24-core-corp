@@ -312,6 +312,14 @@ BX.UI.SelectorManager = {
 			default:
 		}
 
+		var test = null;
+		if (test = entityType.match(/^([A-Z]+)\_MULTI$/))
+		{
+			result.push(test[1]);
+		}
+
+		result = BX.util.array_unique(result);
+
 		return result;
 	},
 

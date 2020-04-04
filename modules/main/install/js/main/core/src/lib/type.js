@@ -2,6 +2,9 @@ import getTag from '../internal/get-tag';
 
 const objectCtorString = Function.prototype.toString.call(Object);
 
+/**
+ * @memberOf BX
+ */
 export default class Type
 {
 	/**
@@ -12,6 +15,16 @@ export default class Type
 	static isString(value: any): boolean
 	{
 		return typeof value === 'string';
+	}
+
+	/**
+	 * Returns true if a value is not empty string
+	 * @param value
+	 * @returns {boolean}
+	 */
+	static isStringFilled(value: any): boolean
+	{
+		return this.isString(value) && value !== '';
 	}
 
 	/**
@@ -128,6 +141,16 @@ export default class Type
 	static isArray(value: any): boolean
 	{
 		return !Type.isNil(value) && Array.isArray(value);
+	}
+
+	/**
+	 * Returns true if a value is an array and it has at least one element
+	 * @param value
+	 * @returns {boolean}
+	 */
+	static isArrayFilled(value: any): boolean
+	{
+		return this.isArray(value) && value.length > 0;
 	}
 
 	/**

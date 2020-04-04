@@ -154,7 +154,6 @@ if ($public)
 		'skip_mask' => 0,
 		'skip_mask_array' => array(),
 		'dump_max_file_size' => 0,
-		'skip_symlinks' => 0,
 	);
 }
 else
@@ -184,7 +183,6 @@ else
 		'skip_mask' => IntOption('skip_mask', 0),
 		'skip_mask_array' => is_array($ar = unserialize(COption::GetOptionString("main","skip_mask_array_auto"))) ? $ar : array(),
 		'dump_max_file_size' => IntOption('dump_max_file_size', 0),
-		'skip_symlinks' => IntOption('skip_symlinks', 0),
 	);
 
 	if (!is_array($arExpertBackupParams))
@@ -824,9 +822,22 @@ function RaiseErrorAndDie($strError, $errCode = 0, $ITEM_ID = '', $delete = fals
 
 	if ($delete)
 	{
-		$name = $NS["arc_name"];
-		while(file_exists($name))
-			$delete = unlink($name) && $delete;
+		$arc_name = CTar::getFirstName(basename($NS['arc_name']));
+
+		if ($dir = opendir($path = DOCUMENT_ROOT.'/bitrix/backup'))
+		{
+			while($item = readdir($dir))
+			{
+				if (is_dir($path.'/'.$item))
+					continue;
+				if (CTar::getFirstName($item) == $arc_name)
+					$delete = unlink($path.'/'.$item) && $delete;
+			}
+			closedir($dir);
+		}
+		else
+			$delete = false;
+
 		$strError .= "\n".($delete ? 'The backup was incorrect and it was deleted' : 'The backup was incorrect but there was an error deleting it');
 	}
 

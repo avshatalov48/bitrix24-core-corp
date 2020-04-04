@@ -1517,7 +1517,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          _params$enableBigSmil2 = params.enableBigSmile,
 	          enableBigSmile = _params$enableBigSmil2 === void 0 ? true : _params$enableBigSmil2;
 	      var codeReplacement = [];
-	      text = text.replace(/\[CODE\]\n?([\0-\uFFFF]*?)\[\/CODE\]/ig, function (whole, text) {
+	      text = text.replace(/\[CODE\]\n?([\s\S]*?)\[\/CODE\]/ig, function (whole, text) {
 	        var id = codeReplacement.length;
 	        codeReplacement.push(text);
 	        return '####REPLACEMENT_MARK_' + id + '####';

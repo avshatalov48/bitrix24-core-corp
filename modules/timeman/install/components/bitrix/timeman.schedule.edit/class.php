@@ -10,22 +10,18 @@ use Bitrix\Main\ORM\Fields\Relations\Reference;
 use Bitrix\Main\ORM\Query\Join;
 use Bitrix\Timeman\Form\Schedule\ScheduleForm;
 use Bitrix\Timeman\Form\Schedule\ViolationForm;
-use Bitrix\Timeman\Form\Schedule\ViolationFormParams;
-use Bitrix\Timeman\Helper\EntityCodesHelper;
 use Bitrix\Timeman\Helper\Form\Schedule\CalendarFormHelper;
 use Bitrix\Timeman\Helper\Form\Schedule\ScheduleFormHelper;
 use Bitrix\Timeman\Helper\UserHelper;
-use Bitrix\Timeman\Model\Schedule\Assignment\Department\ScheduleDepartment;
-use Bitrix\Timeman\Model\Schedule\Assignment\User\ScheduleUser;
 use Bitrix\Timeman\Model\Schedule\Calendar\CalendarTable;
 use Bitrix\Timeman\Model\Schedule\Calendar\EO_Calendar_Collection;
-use Bitrix\Timeman\Model\Schedule\Schedule;
 use Bitrix\Timeman\Model\Schedule\ScheduleTable;
 use Bitrix\Timeman\Model\Schedule\Shift\ShiftTable;
 use Bitrix\Timeman\Model\Schedule\Violation\ViolationRules;
 use Bitrix\Timeman\Repository\Schedule\ScheduleRepository;
 use Bitrix\Timeman\Repository\Schedule\ViolationRulesRepository;
 use Bitrix\Timeman\Service\DependencyManager;
+use Bitrix\Timeman\TimemanUrlManager;
 
 if (!\Bitrix\Main\Loader::includeModule('timeman') ||
 	!\Bitrix\Main\Loader::includeModule('intranet'))
@@ -71,15 +67,16 @@ class TimemanScheduleComponent extends \Bitrix\Timeman\Component\BaseComponent
 		{
 			$this->arResult['ENTITY_CODE'] = $this->arParams['ENTITY_CODE'];
 		}
-
+		$this->arResult['hideShiftPlanBtn'] = $this->getRequest()->get('hideShiftPlanBtn') === 'Y';
 		return $arParams;
 	}
 
 	/** @inheritdoc */
 	public function executeComponent()
 	{
-		$editedSchedule = null;
+		$editingSchedule = null;
 		$this->arResult['isNewSchedule'] = true;
+		$this->arResult['showShiftPlanBtn'] = false;
 		if ($this->arResult['SCHEDULE_ID'])
 		{
 			if (!$this->userPermissionsManager->canReadSchedule($this->arResult['SCHEDULE_ID']))
@@ -89,11 +86,11 @@ class TimemanScheduleComponent extends \Bitrix\Timeman\Component\BaseComponent
 			$this->arResult['isNewSchedule'] = false;
 			if ($this->arResult['VIOLATIONS_ONLY'])
 			{
-				$editedSchedule = $this->scheduleRepository->findById($this->arResult['SCHEDULE_ID']);
+				$editingSchedule = $this->scheduleRepository->findById($this->arResult['SCHEDULE_ID']);
 			}
 			else
 			{
-				$editedSchedule = $this->scheduleRepository->findByIdWith($this->arResult['SCHEDULE_ID'], [
+				$editingSchedule = $this->scheduleRepository->findByIdWith($this->arResult['SCHEDULE_ID'], [
 					'CALENDAR',
 					'CALENDAR.EXCLUSIONS',
 					'SHIFTS',
@@ -102,9 +99,38 @@ class TimemanScheduleComponent extends \Bitrix\Timeman\Component\BaseComponent
 					'SCHEDULE_VIOLATION_RULES',
 				]);
 			}
-			if (!$editedSchedule)
+			if (!$editingSchedule)
 			{
 				return $this->showError(Loc::getMessage('TIMEMAN_SCHEDULE_EDIT_ERROR_SCHEDULE_NOT_FOUND'));
+			}
+			if ($editingSchedule->isShifted())
+			{
+				if (!$this->arResult['hideShiftPlanBtn'])
+				{
+					if ($this->userPermissionsManager->canUpdateShiftPlan($this->arResult['SCHEDULE_ID']))
+					{
+						$this->arResult['showShiftPlanBtn'] = true;
+					}
+					$this->arResult['shiftPlanLink'] = DependencyManager::getInstance()->getUrlManager()
+						->getUriTo(TimemanUrlManager::URI_SCHEDULE_SHIFTPLAN, ['SCHEDULE_ID' => $this->arResult['SCHEDULE_ID']]);
+				}
+				$shifts = $editingSchedule->obtainShifts();
+				$editingSchedule->removeAllShifts();
+				$sortedShifts = [];
+				foreach ($shifts as $shift)
+				{
+					$key = $shift->getWorkTimeStart();
+					while (in_array($key, array_keys($sortedShifts), true))
+					{
+						$key = $key + 1;
+					}
+					$sortedShifts[$key] = $shift;
+				}
+				ksort($sortedShifts);
+				foreach ($sortedShifts as $sortedShift)
+				{
+					$editingSchedule->addToShifts($sortedShift);
+				}
 			}
 		}
 		else
@@ -114,6 +140,7 @@ class TimemanScheduleComponent extends \Bitrix\Timeman\Component\BaseComponent
 				return $this->showError(Loc::getMessage('TIMEMAN_SCHEDULE_EDIT_ERROR_SCHEDULE_CREATE_ACCESS_DENIED'));
 			}
 		}
+		$this->arResult['hintWorktimeRestrictionMaxStartOffset'] = Loc::getMessage('TIMEMAN_SCHEDULE_EDIT_HINT_RESTRICTION_MAX_START_OFFSET');
 		$this->arResult['hintExactStartEndDay'] = Loc::getMessage('TIMEMAN_SCHEDULE_EDIT_HINT_EXACT_START_END_DAY');
 		$this->arResult['hintRelativeStartEndDay'] = Loc::getMessage('TIMEMAN_SCHEDULE_EDIT_HINT_RELATIVE_START_END_DAY');
 		$this->arResult['hintOffsetStartEndDay'] = Loc::getMessage('TIMEMAN_SCHEDULE_EDIT_HINT_OFFSET_START_END_DAY');
@@ -145,20 +172,23 @@ class TimemanScheduleComponent extends \Bitrix\Timeman\Component\BaseComponent
 				}
 			}
 		}
-		if ($editedSchedule && $editedSchedule->getCalendar() && $editedSchedule->getCalendar()->getParentCalendarId() > 0)
+		if ($editingSchedule && $editingSchedule->getCalendar() && $editingSchedule->getCalendar()->getParentCalendarId() > 0)
 		{
-			$parentCalendar = $this->calendarRepository->findByIdWithExclusions($editedSchedule->getCalendar()->getParentCalendarId());
+			$parentCalendar = $this->calendarRepository->findByIdWithExclusions($editingSchedule->getCalendar()->getParentCalendarId());
 			if ($parentCalendar)
 			{
-				$editedSchedule->getCalendar()->setParentCalendar($parentCalendar);
+				$editingSchedule->getCalendar()->setParentCalendar($parentCalendar);
 			}
 		}
-		$scheduleForm = new ScheduleForm($editedSchedule);
+		$scheduleForm = new ScheduleForm($editingSchedule);
 		$this->arResult['scheduleForm'] = $scheduleForm;
+		$this->arResult['selectedAssignmentCodes'] = $scheduleForm->assignments;
+		$this->arResult['selectedAssignmentCodesExcluded'] = $scheduleForm->assignmentsExcluded;
+
 		if ($this->arResult['VIOLATIONS_ONLY'])
 		{
 			$this->arResult['canUpdatePersonalViolations'] = $this->userPermissionsManager->canUpdateViolationRules($this->arResult['ENTITY_CODE']);
-			if ($editedSchedule->isFlexible())
+			if ($editingSchedule->isFlexible())
 			{
 				return $this->showError(Loc::getMessage('TIMEMAN_SCHEDULE_EDIT_ERROR_NO_VIOLATION_CONTROL'));
 			}
@@ -171,12 +201,9 @@ class TimemanScheduleComponent extends \Bitrix\Timeman\Component\BaseComponent
 			}
 			if (!$violationRules)
 			{
-				$violationRules = ViolationRules::create($editedSchedule->getId());
+				$violationRules = ViolationRules::create($editingSchedule->getId());
 			}
-			$this->arResult['violationForm'] = new ViolationForm((new ViolationFormParams())
-				->setSchedule($editedSchedule)
-				->setViolationRules($violationRules)
-			);
+			$this->arResult['violationForm'] = new ViolationForm($violationRules);
 			if ($foundByHierarchy)
 			{
 				$this->arResult['violationForm']->id = null;
@@ -205,7 +232,7 @@ class TimemanScheduleComponent extends \Bitrix\Timeman\Component\BaseComponent
 			}
 		}
 
-		$this->fillScheduleAssignmentsParams($scheduleForm->getSchedule());
+		$this->fillScheduleAssignmentsParams($scheduleForm);
 
 		$this->arResult['feedbackParams'] = [
 			'ID' => 'timeman-schedule',
@@ -322,47 +349,20 @@ class TimemanScheduleComponent extends \Bitrix\Timeman\Component\BaseComponent
 	}
 
 	/**
-	 * @param Schedule $showingSchedule
+	 * @param ScheduleForm $form
 	 * @throws \Bitrix\Main\ArgumentException
 	 * @throws \Bitrix\Main\ObjectPropertyException
 	 * @throws \Bitrix\Main\SystemException
 	 */
-	private function fillScheduleAssignmentsParams($showingSchedule)
+	private function fillScheduleAssignmentsParams($form)
 	{
 		$this->arResult['assignmentsMap'] = [];
-		if (!$showingSchedule)
+		if (!$form->getSchedule())
 		{
 			return;
 		}
-		$codes = [];
-		foreach ($showingSchedule->obtainDepartmentAssignments() as $departmentAssignment)
-		{
-			if (ScheduleDepartment::isDepartmentIncluded($departmentAssignment))
-			{
-				$codes[] = EntityCodesHelper::buildDepartmentCode($departmentAssignment['DEPARTMENT_ID']);
-			}
-		}
-		foreach ($showingSchedule->obtainUserAssignments() as $userAssignment)
-		{
-			if (ScheduleUser::isUserIncluded($userAssignment))
-			{
-				$codes[] = EntityCodesHelper::buildUserCode($userAssignment['USER_ID']);
-			}
-		}
-		$baseDepartmentId = null;
-		if ($showingSchedule->getIsForAllUsers())
-		{
-			$baseDepartmentId = DependencyManager::getInstance()
-				->getDepartmentRepository()
-				->getBaseDepartmentId();
-			if ($baseDepartmentId > 0)
-			{
-				$codes[] = EntityCodesHelper::buildDepartmentCode($baseDepartmentId);
-			}
-		}
 		$this->arResult['assignmentsMap'] = (new ScheduleFormHelper())
-			->calculateScheduleAssignmentsMap(array_unique($codes), $showingSchedule);
-
+			->calculateSchedulesMapBySchedule($form->getSchedule(), true);
 	}
 
 	/**

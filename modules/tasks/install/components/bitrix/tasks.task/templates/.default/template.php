@@ -42,7 +42,6 @@ if($arParams["ENABLE_MENU_TOOLBAR"])
 		'bitrix:tasks.interface.filter.buttons',
 		'.default',
 		array(
-			'TASK_ID' => $arParams['ID'],
 			'SECTION' => 'EDIT_TASK',
 			'TEMPLATES' => $arResult["AUX_DATA"]["TEMPLATE"],
 			'PATH_TO_TASKS_TASK' => $arParams['PATH_TO_TASKS_TASK'],
@@ -113,6 +112,9 @@ $hasFatals = false;?>
 			<?if(!empty($taskData['DISK_ATTACHED_OBJECT_ALLOW_EDIT'])):?>
 				<input type="hidden" name="TASKS_TASK_DISK_ATTACHED_OBJECT_ALLOW_EDIT" value="<?= $taskData['DISK_ATTACHED_OBJECT_ALLOW_EDIT']?>"/>
 			<?endif?>
+
+			<input type="hidden" id="checklistAnalyticsData" name="ACTION[0][ARGUMENTS][data][SE_CHECKLIST][analyticsData]" value=""/>
+			<input type="hidden" id="checklistFromDescription" name="ACTION[0][ARGUMENTS][data][SE_CHECKLIST][fromDescription]" value=""/>
 
 			<input type="hidden" name="SITE_ID" value="<?=SITE_ID?>" />
 			<input data-bx-id="task-edit-csrf" type="hidden" name="sessid" value="<?=bitrix_sessid()?>" />

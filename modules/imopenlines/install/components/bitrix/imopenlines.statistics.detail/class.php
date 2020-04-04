@@ -77,13 +77,15 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 	private function getConfigList()
 	{
 		$configManager = new \Bitrix\ImOpenLines\Config();
-		$result = $configManager->getList(Array(
-				'select' => Array(
-					'ID', 'LINE_NAME'
-				),
-				'filter' => Array('=TEMPORARY' => 'N')
-			),
-			Array('QUEUE' => 'N')
+		$result = $configManager->getList([
+				'select' => [
+					'ID',
+					'LINE_NAME'
+				],
+				'filter' => ['=TEMPORARY' => 'N'],
+				'order' => ['LINE_NAME']
+		],
+			['QUEUE' => 'N']
 		);
 
 		$lines = Array();
@@ -1505,21 +1507,35 @@ class ImOpenLinesComponentStatisticsDetail extends CBitrixComponent
 		}
 		//<- UF
 
-		if($this->excelMode)
+		if ($this->excelMode)
 		{
-			foreach ($gridHeaders as $gridHeader)
+			// We should use only selected grid columns for export
+			if (!empty($this->gridOptions->GetVisibleColumns()))
+			{
+				foreach ($gridHeaders as $gridHeader)
+				{
+					foreach ($this->arResult['HEADERS'] as $header)
+					{
+						if ($gridHeader === $header['id'])
+						{
+							$this->arResult['SELECTED_HEADERS'][] = $header;
+						}
+					}
+
+					if ($gridHeader === 'CRM_TEXT')
+					{
+						$this->arResult['SELECTED_HEADERS'][] = ['id' => 'CRM_LINK', 'name' => Loc::getMessage('OL_STATS_HEADER_CRM_LINK')];
+					}
+				}
+			}
+			else //case when grid columns are never changed
 			{
 				foreach ($this->arResult['HEADERS'] as $header)
 				{
-					if ($gridHeader === $header['id'])
+					if ($header['default'])
 					{
 						$this->arResult['SELECTED_HEADERS'][] = $header;
 					}
-				}
-
-				if($gridHeader === 'CRM_TEXT')
-				{
-					$this->arResult['SELECTED_HEADERS'][] = ['id' => 'CRM_LINK', 'name' => Loc::getMessage('OL_STATS_HEADER_CRM_LINK')];
 				}
 			}
 

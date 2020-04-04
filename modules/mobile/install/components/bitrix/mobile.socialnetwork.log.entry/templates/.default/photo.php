@@ -12,6 +12,15 @@
 ?>
 <div id="post_block_check_cont_<?=$arEvent["EVENT"]["ID"]?>" class="post-item-post-<?=($arEvent["EVENT"]["EVENT_ID"] == "photo" ? "block-full" : "img-block")?> post-item-block-inner post-item-contentview" bx-content-view-xml-id="<?=(!empty($arResult["CONTENT_ID"]) ? htmlspecialcharsBx($arResult["CONTENT_ID"]) : "")?>"<?=$strOnClick?>><?
 
+	if (
+		isset($arParams['TARGET'])
+		&& $arParams['TARGET'] == 'postContent'
+	)
+	{
+		$targetHtml = '';
+		ob_start();
+	}
+
 	$arPhotoItems = array();
 	$photo_section_id = false;
 	if ($arEvent["EVENT"]["EVENT_ID"] == "photo")
@@ -178,6 +187,14 @@
 				)
 			);?><?
 		}
+	}
+
+	if (
+		isset($arParams['TARGET'])
+		&& $arParams['TARGET'] == 'postContent'
+	)
+	{
+		$targetHtml = ob_get_contents();;
 	}
 
 ?></div>

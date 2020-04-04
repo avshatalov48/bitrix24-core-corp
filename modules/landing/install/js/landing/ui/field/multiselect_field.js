@@ -106,8 +106,9 @@
 		this.onInputClick = this.onInputClick.bind(this);
 		this.onCheckboxChange = this.onCheckboxChange.bind(this);
 
+		var rootWindow = BX.Landing.PageObject.getRootWindow();
 		bind(this.input, "click", this.onInputClick);
-		bind(top.document, "click", this.onDocumentClick.bind(this));
+		bind(rootWindow.document, "click", this.onDocumentClick.bind(this));
 
 		requestAnimationFrame(function() {
 			addPlaceholders(this.items, this, 0);

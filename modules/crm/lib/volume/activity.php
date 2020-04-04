@@ -15,9 +15,6 @@ class Activity
 	implements Volume\IVolumeClear, Volume\IVolumeUrl
 {
 
-	// todo: reemove it
-	use Volume\ClearActivity;
-
 	/** @var array */
 	protected static $entityList = array(
 		Crm\ActivityTable::class,
@@ -498,21 +495,6 @@ class Activity
 				continue;
 			}
 			$key0 = trim($key, '<>!=');
-			/*
-			if ($key0 === 'STAGE_SEMANTIC_ID')
-			{
-				$query->where(ORM\Query\Query::filter()
-					->logic('or')
-					->where(array(
-						array('DEAL.STAGE_SEMANTIC_ID', 'in', $value),
-						array('LEAD.STATUS_SEMANTIC_ID', 'in', $value),
-						array('QUOTE.STATUS_ID', 'in', Volume\Quote::getStatusSemantics($value)),
-						array('INVOICE.STATUS_ID', 'in', Volume\Invoice::getStatusSemantics($value)),
-					))
-				);
-			}
-			else
-			*/
 			if ($key0 === 'QUOTE_STAGE_SEMANTIC_ID')
 			{
 				$statuses = Volume\Quote::getStatusSemantics($value);
@@ -557,16 +539,6 @@ class Activity
 
 		$this->prepareFilter($query);
 
-		/*
-			// file type
-			$file = new ORM\Fields\Relations\Reference(
-				'FILE',
-				Main\FileTable::class,
-				ORM\Query\Join::on('this.ELEMENTS.ELEMENT_ID', 'ref.ID')
-								 ->where('this.ELEMENTS.STORAGE_TYPE_ID', Crm\Integration\StorageType::File),
-				array('join_type' => 'LEFT')
-			);
-		*/
 		// file type
 		$subQueryFile = Main\FileTable::query();
 		$elementCrmFile = new ORM\Fields\Relations\Reference(
@@ -604,16 +576,6 @@ class Activity
 		// disk type
 		if (parent::isModuleAvailable('disk'))
 		{
-			/*
-			$diskFile = new ORM\Fields\Relations\Reference(
-				'DISK_FILE',
-				Disk\Internals\FileTable::class,
-				ORM\Query\Join::on('this.ELEMENTS.ELEMENT_ID', 'ref.ID')
-								 ->where('this.ELEMENTS.STORAGE_TYPE_ID', '=', Crm\Integration\StorageType::Disk)
-								 ->where('ref.TYPE', '=', \Bitrix\Disk\Internals\ObjectTable::TYPE_FILE),
-				array('join_type' => 'LEFT')
-			);
-			*/
 			$subQueryDisk = Disk\Internals\FileTable::query();
 			$elementCrmDisk = new ORM\Fields\Relations\Reference(
 				'elem',
@@ -736,95 +698,94 @@ class Activity
 
 			$connection->queryExecute($querySql);
 
-			$entityList = self::getEntityList();
-			foreach ($entityList as $entityClass)
+			if ($this->collectEntityRowSize)
 			{
-				if ($entityClass == Crm\ActivityTable::class)
+				$entityList = self::getEntityList();
+				foreach ($entityList as $entityClass)
 				{
-					continue;
-				}
-				/**
-				 * @var \Bitrix\Main\ORM\Data\DataManager $entityClass
-				 */
-				$entityEntity = $entityClass::getEntity();
-
-				$fieldName = 'ACTIVITY_ID';
-				if ($entityEntity->hasField($fieldName))
-				{
-					$query = $this->prepareQuery();
-
-					if ($this->prepareFilter($query))
+					if ($entityClass == Crm\ActivityTable::class || $entityClass == Crm\ActivityBindingTable::class)
 					{
-						$reference = new ORM\Fields\Relations\Reference(
-							'RefEntity',
-							$entityClass,
-							array('this.ID' => 'ref.'.$fieldName),
-							array('join_type' => 'INNER')
-						);
-						$query->registerRuntimeField($reference);
+						continue;
+					}
+					/**
+					 * @var \Bitrix\Main\ORM\Data\DataManager $entityClass
+					 */
+					$entityEntity = $entityClass::getEntity();
 
-						$primary = $entityEntity->getPrimary();
-						if (is_array($primary) && !empty($primary))
+					$fieldName = 'ACTIVITY_ID';
+					if ($entityEntity->hasField($fieldName))
+					{
+						$query = $this->prepareQuery();
+
+						if ($this->prepareFilter($query))
 						{
-							array_walk($primary, function (&$item)
+							$reference = new ORM\Fields\Relations\Reference(
+								'RefEntity',
+								$entityClass,
+								array('this.ID' => 'ref.'.$fieldName),
+								array('join_type' => 'INNER')
+							);
+							$query->registerRuntimeField($reference);
+
+							$primary = $entityEntity->getPrimary();
+							if (is_array($primary) && !empty($primary))
 							{
-								$item = 'RefEntity.'.$item;
-							});
+								array_walk($primary, function (&$item) {
+									$item = 'RefEntity.'.$item;
+								});
+							}
+							elseif (!empty($primary))
+							{
+								$primary = array('RefEntity.'.$primary);
+							}
+
+							$query
+								//primary
+								->registerRuntimeField(new ORM\Fields\ExpressionField('COUNT_REF', 'COUNT(*)'))
+								->addSelect('COUNT_REF')
+								->setGroup($primary)
+
+								//date
+								->addSelect('DATE_CREATED_SHORT', 'DATE_CREATE')
+								->addGroup('DATE_CREATED_SHORT')
+
+								// STAGE_SEMANTIC_ID
+								->addSelect('STAGE_SEMANTIC_ID')
+								->addGroup('STAGE_SEMANTIC_ID');
+
+							$avgTableRowLength = (double)self::$tablesInformation[$entityClass::getTableName()]['AVG_SIZE'];
+
+							$query1 = new ORM\Query\Query($query);
+							$query1
+								->registerRuntimeField(new ORM\Fields\ExpressionField('INDICATOR_TYPE', '\''.static::getIndicatorId().'\''))
+								->addSelect('INDICATOR_TYPE')
+								->registerRuntimeField(new ORM\Fields\ExpressionField('OWNER_ID', '\''.$this->getOwner().'\''))
+								->addSelect('OWNER_ID')
+
+								//date
+								->addSelect('DATE_CREATE')
+								->addGroup('DATE_CREATE')
+
+								// STAGE_SEMANTIC_ID
+								->addSelect('STAGE_SEMANTIC_ID')
+								->addGroup('STAGE_SEMANTIC_ID')
+								->registerRuntimeField(new ORM\Fields\ExpressionField('REF_SIZE', 'SUM(COUNT_REF) * '.$avgTableRowLength))
+								->addSelect('REF_SIZE');
+
+							Crm\VolumeTmpTable::updateFromSelect(
+								$query1,
+								array('ENTITY_SIZE' => 'destination.ENTITY_SIZE + source.REF_SIZE'),
+								array(
+									'INDICATOR_TYPE',
+									'OWNER_ID',
+									'DATE_CREATE',
+									'STAGE_SEMANTIC_ID',
+								)
+							);
 						}
-						elseif (!empty($primary))
-						{
-							$primary = array('RefEntity.'.$primary);
-						}
-
-						$query
-							//primary
-							->registerRuntimeField(new ORM\Fields\ExpressionField('COUNT_REF', 'COUNT(*)'))
-							->addSelect('COUNT_REF')
-							->setGroup($primary)
-
-							//date
-							->addSelect('DATE_CREATED_SHORT', 'DATE_CREATE')
-							->addGroup('DATE_CREATED_SHORT')
-
-							// STAGE_SEMANTIC_ID
-							->addSelect('STAGE_SEMANTIC_ID')
-							->addGroup('STAGE_SEMANTIC_ID');
-
-						$avgTableRowLength = (double)self::$tablesInformation[$entityClass::getTableName()]['AVG_SIZE'];
-
-						$query1 = new ORM\Query\Query($query);
-						$query1
-							->registerRuntimeField(new ORM\Fields\ExpressionField('INDICATOR_TYPE', '\''.static::getIndicatorId().'\''))
-							->addSelect('INDICATOR_TYPE')
-
-							->registerRuntimeField(new ORM\Fields\ExpressionField('OWNER_ID', '\''.$this->getOwner().'\''))
-							->addSelect('OWNER_ID')
-
-							//date
-							->addSelect('DATE_CREATE')
-							->addGroup('DATE_CREATE')
-
-							// STAGE_SEMANTIC_ID
-							->addSelect('STAGE_SEMANTIC_ID')
-							->addGroup('STAGE_SEMANTIC_ID')
-
-							->registerRuntimeField(new ORM\Fields\ExpressionField('REF_SIZE', 'SUM(COUNT_REF) * '. $avgTableRowLength))
-							->addSelect('REF_SIZE');
-
-						Crm\VolumeTmpTable::updateFromSelect(
-							$query1,
-							array('ENTITY_SIZE' => 'destination.ENTITY_SIZE + source.REF_SIZE'),
-							array(
-								'INDICATOR_TYPE',
-								'OWNER_ID',
-								'DATE_CREATE',
-								'STAGE_SEMANTIC_ID',
-							)
-						);
 					}
 				}
 			}
-
 			$this->copyTemporallyData();
 		}
 
@@ -837,7 +798,7 @@ class Activity
 	 */
 	public function measureFiles()
 	{
-		$querySql = $this->prepareActivityRelationQuerySql(array(
+		$querySql = $this->prepareRelationQuerySql(array(
 			'DATE_CREATE' => 'DATE_CREATED_SHORT',
 			'STAGE_SEMANTIC_ID' => 'STAGE_SEMANTIC_ID',
 		));
@@ -984,5 +945,90 @@ class Activity
 		}
 
 		return $success;
+	}
+
+	/**
+	 * Gets SQL query code for activity count.
+	 *
+	 * @param array $entityGroupField Entity fields to group by.
+	 *
+	 * @return string
+	 */
+	private function prepareRelationQuerySql(array $entityGroupField = array())
+	{
+		$query = $this->prepareQuery();
+		if ($this->prepareFilter($query))
+		{
+			$activityVolume = new Volume\Activity();
+			$activityVolume->setFilter($this->getFilter());
+		}
+		else
+		{
+			return '';
+		}
+
+		//-----------
+
+		$activityQuery = $activityVolume->prepareQuery(static::className());
+		$activityVolume->prepareFilter($activityQuery);
+
+		$fileCount = new ORM\Fields\ExpressionField('FILE_SIZE', '0');
+		$fileBindingCount = new ORM\Fields\ExpressionField('FILE_COUNT', '0');
+		$activityQuery
+			->registerRuntimeField($fileCount)
+			->registerRuntimeField($fileBindingCount)
+			->addSelect('FILE_SIZE')
+			->addSelect('FILE_COUNT');
+
+		if (self::isModuleAvailable('disk'))
+		{
+			$diskCount = new ORM\Fields\ExpressionField('DISK_SIZE', '0');
+			$diskBindingCount = new ORM\Fields\ExpressionField('DISK_COUNT', '0');
+			$activityQuery
+				->registerRuntimeField($diskCount)
+				->registerRuntimeField($diskBindingCount)
+				->addSelect('DISK_SIZE')
+				->addSelect('DISK_COUNT');
+		}
+
+		$activityCount = new ORM\Fields\ExpressionField('ACTIVITY_COUNT', 'COUNT(DISTINCT %s)', 'ID');
+		$activityBindingCount = new ORM\Fields\ExpressionField('BINDINGS_COUNT', 'COUNT(%s)', 'BINDINGS.ID');
+		$activityQuery
+			->registerRuntimeField($activityCount)
+			->registerRuntimeField($activityBindingCount)
+			->addSelect('ACTIVITY_COUNT')
+			->addSelect('BINDINGS_COUNT');
+
+		foreach ($entityGroupField as $alias => $field)
+		{
+			$activityQuery->addSelect($field, $alias);
+			$activityQuery->addGroup($field);
+		}
+
+		//-----------
+
+		$activityFileQuery = $activityVolume->getActivityFileMeasureQuery(static::className(), $entityGroupField);
+
+		$activityCount = new ORM\Fields\ExpressionField('ACTIVITY_COUNT', '0');
+		$activityBindingCount = new ORM\Fields\ExpressionField('BINDINGS_COUNT', '0');
+		$activityFileQuery
+			->registerRuntimeField($activityCount)
+			->registerRuntimeField($activityBindingCount)
+			->addSelect('ACTIVITY_COUNT')
+			->addSelect('BINDINGS_COUNT');
+
+		foreach ($entityGroupField as $alias => $field)
+		{
+			$field = str_replace('.', '_', $field);
+			$activityFileQuery->addSelect($field, $alias);
+			$activityFileQuery->addGroup($field);
+		}
+
+		$sqlQuery =
+			$activityQuery->getQuery().
+			' UNION '.
+			$activityFileQuery->getQuery();
+
+		return $sqlQuery;
 	}
 }

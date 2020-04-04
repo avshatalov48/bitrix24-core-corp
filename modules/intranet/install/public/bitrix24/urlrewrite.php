@@ -220,6 +220,12 @@ $arUrlRewrite = array(
 		"PATH" => "/marketplace/local/index.php",
 	),
 	array(
+		"CONDITION" => "#^/marketplace/configuration/#",
+		"RULE" => "",
+		"ID" => "bitrix:rest.configuration",
+		"PATH" => "/marketplace/configuration/index.php",
+	),
+	array(
 		"CONDITION" => "#^/marketplace/hook/#",
 		"RULE" => "",
 		"ID" => "bitrix:rest.hook",
@@ -504,8 +510,8 @@ $arUrlRewrite = array(
 		"RULE" => "",
 		"ID" => "bitrix:landing.start",
 		"PATH" => "/sites/index.php",
-  	),
-  	array (
+	),
+	array (
 		"CONDITION" => "#^/stores/#",
 		"RULE" => "",
 		"ID" => "bitrix:landing.start",
@@ -523,7 +529,7 @@ $arUrlRewrite = array(
 		"ID" => "",
 		"PATH" => "/bitrix/services/mobile/webcomponent.php",
 	),
-  	array (
+	array (
 		"CONDITION" => "#^\\/?\\/mobile/jn\\/(.*)\\/.*#",
 		"RULE" => "componentName=$1",
 		"ID" => "",
@@ -648,6 +654,60 @@ $arUrlRewrite = array(
 		"RULE" => "",
 		"ID" => "bitrix:crm.ml",
 		"PATH" => "/crm/ml/index.php",
+	),
+	array(
+		"CONDITION" => "#^/knowledge/group/#",
+		"RULE" => "",
+		"ID" => "bitrix:landing.pub",
+		"PATH" => "/knowledge/group/index.php",
+	),
+	array(
+		"CONDITION" => "#^/knowledge/#",
+		"RULE" => "",
+		"ID" => "bitrix:landing.pub",
+		"PATH" => "/knowledge/index.php",
+	),
+	array(
+		"CONDITION" => "#^/extranet/knowledge/group/#",
+		"RULE" => "",
+		"ID" => "bitrix:landing.pub",
+		"PATH" => "/extranet/knowledge/group/index.php",
+	),
+	array(
+		"CONDITION" => "#^/mobile/knowledge/group/#",
+		"RULE" => "",
+		"ID" => "bitrix:landing.pub",
+		"PATH" => "/mobile/knowledge/group/index.php",
+	),
+	array(
+		"CONDITION" => "#^/mobile/knowledge/#",
+		"RULE" => "",
+		"ID" => "bitrix:landing.pub",
+		"PATH" => "/mobile/knowledge/index.php",
+	),
+	array(
+		"CONDITION" => "#^/kb/group/#",
+		"RULE" => "",
+		"ID" => "bitrix:landing.start",
+		"PATH" => "/kb/group/index.php",
+	),
+	array(
+		"CONDITION" => "#^/kb/#",
+		"RULE" => "",
+		"ID" => "bitrix:landing.start",
+		"PATH" => "/kb/index.php",
+	),
+	array(
+		"CONDITION" => "#^/rpa/#",
+		"RULE" => "",
+		"ID" => "bitrix:rpa.router",
+		"PATH" => "/rpa/index.php",
+	),
+	array(
+		"CONDITION" => "#^/extranet/marketplace/#",
+		"RULE" => "",
+		"ID" => "bitrix:rest.marketplace",
+		"PATH" => "/extranet/marketplace/index.php",
 	),
 );
 ?>

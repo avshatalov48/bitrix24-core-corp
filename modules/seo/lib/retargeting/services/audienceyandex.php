@@ -190,13 +190,20 @@ class AudienceYandex extends Audience
 			'parameters' => array()
 		));
 		$data = $response->getData();
-		$data = array_values(array_filter($data['segments'], function ($item) {
-			return (
-				$item['type'] == 'uploading' && // based on uploaded data
-				$item['content_type'] == 'crm' && // Data from crm
-				$item['status'] != 'is_processed' // Can't use segments which are processed right now
-			);
-		}));
+		if (is_array($data['segments']))
+		{
+			$data = array_values(array_filter($data['segments'], function ($item) {
+				return (
+					$item['type'] == 'uploading' && // based on uploaded data
+					$item['content_type'] == 'crm' && // Data from crm
+					$item['status'] != 'is_processed' // Can't use segments which are processed right now
+				);
+			}));
+		}
+		else
+		{
+			$data = [];
+		}
 
 		$data = $this->addNewAudienceValue($data);
 		$response->setData($data);

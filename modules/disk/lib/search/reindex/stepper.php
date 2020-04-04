@@ -60,7 +60,10 @@ abstract class Stepper extends \Bitrix\Main\Update\Stepper
 		$status = self::getStatus();
 		if ($status === self::STATUS_INDEX || $status === self::STATUS_PAUSE)
 		{
-			Option::set(static::getModuleId(), 'need' . static::getName(), self::STATUS_INDEX);
+			if ($status !== self::STATUS_INDEX)
+			{
+				Option::set(static::getModuleId(), 'need' . static::getName(), self::STATUS_INDEX);
+			}
 			static::bind();
 
 			return true;
@@ -74,7 +77,10 @@ abstract class Stepper extends \Bitrix\Main\Update\Stepper
 		$status = self::getStatus();
 		if ($status === self::STATUS_INDEX || $status === self::STATUS_PAUSE)
 		{
-			Option::set(static::getModuleId(), 'need' . static::getName(), self::STATUS_INDEX);
+			if ($status !== self::STATUS_INDEX)
+			{
+				Option::set(static::getModuleId(), 'need' . static::getName(), self::STATUS_INDEX);
+			}
 
 			$resultData = [];
 			$indexer = new static();

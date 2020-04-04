@@ -24,6 +24,44 @@ class Connector
 	const ERROR_CHOICE_DOMAIN_FOR_FEEDBACK = 'CHOICE_DOMAIN_FOR_FEEDBACK';
 
 	/**
+	 * @return bool
+	 * @throws \Bitrix\Main\LoaderException
+	 */
+	public static function isLocationRussia()
+	{
+		$result = false;
+
+		if(
+			(Loader::includeModule('bitrix24') && \CBitrix24::getPortalZone() === 'ru') ||
+			(!Loader::includeModule('bitrix24') && Loader::includeModule('intranet') && \CIntranetUtils::getPortalZone() === "ru")
+		)
+		{
+			$result = true;
+		}
+
+		return $result;
+	}
+
+	/**
+	 * @return bool
+	 * @throws \Bitrix\Main\LoaderException
+	 */
+	public static function isLocationUkraine()
+	{
+		$result = false;
+
+		if(
+			(!Loader::includeModule('bitrix24') && \CIntranetUtils::getPortalZone() === "ua") ||
+			(Loader::includeModule('bitrix24') && \CBitrix24::getPortalZone() === 'ua')
+		)
+		{
+			$result = true;
+		}
+
+		return $result;
+	}
+
+	/**
 	 * List of connectors, available on the client. connector id => connector Name.
 	 * @param bool|integer $reduced To shorten the channel names.
 	 * @param bool $customConnectors Return custom connectors
@@ -33,50 +71,44 @@ class Connector
 	 */
 	public static function getListConnector($reduced = false, $customConnectors = true)
 	{
-		$connectors = array(
-			"livechat" => Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_LIVECHAT'),
-			"whatsappbytwilio" => Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_WHATSAPPBYTWILIO'),
-		);
-
+		$connectors['livechat'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_LIVECHAT');
+		$connectors['whatsappbytwilio'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_WHATSAPPBYTWILIO');
 		// avito available only in Russia
-		if (!Loader::includeModule('bitrix24') || \CBitrix24::getPortalZone() === 'ru')
+		if (self::isLocationRussia())
 		{
 			$connectors['avito'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_AVITO');
 		}
-
-		// disabled in b24.ua
-		if(!Loader::includeModule('bitrix24') || \CBitrix24::getPortalZone() !== 'ua')
+		// disabled in UA
+		if(!self::isLocationUkraine())
+		{
 			$connectors["yandex"] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_YANDEX');
-
-		$connectors = array_merge($connectors, array(
-			"viber" => Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_VIBER_BOT'),
-			"telegrambot" => Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_TELEGRAM_BOT'),
-			"wechat" => Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_WECHAT')
-		));
-
-		// disabled in b24.ua
-		if(!Loader::includeModule('bitrix24') || \CBitrix24::getPortalZone() !== 'ua')
+		}
+		$connectors['viber'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_VIBER_BOT');
+		$connectors['telegrambot'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_TELEGRAM_BOT');
+		$connectors['wechat'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_WECHAT');
+		// disabled in UA
+		if(!self::isLocationUkraine())
+		{
 			$connectors["vkgroup"] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_VK_GROUP');
-
-		$connectors = array_merge($connectors, array(
-			"facebook" => Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_FACEBOOK_PAGE'),
-			"facebookcomments" => Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_FACEBOOK_COMMENTS_PAGE'),
-			"fbinstagram" => Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_FBINSTAGRAM'),
-			"instagram" => Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_INSTAGRAM'), //TODO: del
-			"network" => Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_NETWORK'),
-			//Virtual connectors.
-			"botframework.skype" => Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_BOTFRAMEWORK_SKYPE'),
-			"botframework.slack" => Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_BOTFRAMEWORK_SLACK'),
-			"botframework.kik" => Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_BOTFRAMEWORK_KIK'),
-			"botframework.groupme" => Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_BOTFRAMEWORK_GROUPME'),
-			"botframework.twilio" => Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_BOTFRAMEWORK_TWILIO'),
-			"botframework.msteams" => Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_BOTFRAMEWORK_MSTEAMS'),
-			"botframework.webchat" => Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_BOTFRAMEWORK_WEBCHAT'),
-			"botframework.emailoffice365" => Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_BOTFRAMEWORK_EMAILOFFICE365'),
-			"botframework.telegram" => Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_BOTFRAMEWORK_TELEGRAM'),
-			"botframework.facebookmessenger" => Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_BOTFRAMEWORK_FACEBOOKMESSENGER'),
-			"botframework.directline" => Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_BOTFRAMEWORK_DIRECTLINE'),
-		));
+		}
+		$connectors['facebook'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_FACEBOOK_PAGE');
+		$connectors['facebookcomments'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_FACEBOOK_COMMENTS_PAGE');
+		$connectors['fbinstagram'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_FBINSTAGRAM');
+		//TODO: del
+		$connectors['instagram'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_INSTAGRAM');
+		$connectors['network'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_NETWORK');
+		//Virtual connectors.
+		$connectors['botframework.skype'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_BOTFRAMEWORK_SKYPE');
+		$connectors['botframework.slack'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_BOTFRAMEWORK_SLACK');
+		$connectors['botframework.kik'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_BOTFRAMEWORK_KIK');
+		$connectors['botframework.groupme'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_BOTFRAMEWORK_GROUPME');
+		$connectors['botframework.twilio'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_BOTFRAMEWORK_TWILIO');
+		$connectors['botframework.msteams'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_BOTFRAMEWORK_MSTEAMS');
+		$connectors['botframework.webchat'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_BOTFRAMEWORK_WEBCHAT');
+		$connectors['botframework.emailoffice365'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_BOTFRAMEWORK_EMAILOFFICE365');
+		$connectors['botframework.telegram'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_BOTFRAMEWORK_TELEGRAM');
+		$connectors['botframework.facebookmessenger'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_BOTFRAMEWORK_FACEBOOKMESSENGER');
+		$connectors['botframework.directline'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_BOTFRAMEWORK_DIRECTLINE');
 
 		if($customConnectors === true)
 		{
@@ -113,40 +145,34 @@ class Connector
 	 */
 	public static function getListConnectorReal($reduced = false, $customConnectors = true)
 	{
-		$connectors = array(
-			"livechat" => Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_LIVECHAT'),
-			"whatsappbytwilio" => Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_WHATSAPPBYTWILIO'),
-		);
-
+		$connectors['livechat'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_LIVECHAT');
+		$connectors['whatsappbytwilio'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_WHATSAPPBYTWILIO');
 		// avito available only in Russia
-		if (!Loader::includeModule('bitrix24') || \CBitrix24::getPortalZone() === 'ru')
+		if (self::isLocationRussia())
 		{
 			$connectors['avito'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_AVITO');
 		}
-
-		// disabled in b24.ua
-		if(!Loader::includeModule('bitrix24') || \CBitrix24::getPortalZone() !== 'ua')
+		// disabled in UA
+		if(!self::isLocationUkraine())
+		{
 			$connectors["yandex"] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_YANDEX');
-
-		$connectors = array_merge($connectors, array(
-			"viber" => Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_VIBER_BOT'),
-			"telegrambot" => Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_TELEGRAM_BOT'),
-			"wechat" => Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_WECHAT')
-		));
-
-		// disabled in b24.ua
-		if(!Loader::includeModule('bitrix24') || \CBitrix24::getPortalZone() !== 'ua')
+		}
+		$connectors['viber'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_VIBER_BOT');
+		$connectors['telegrambot'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_TELEGRAM_BOT');
+		$connectors['wechat'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_WECHAT');
+		// disabled in UA
+		if(!self::isLocationUkraine())
+		{
 			$connectors["vkgroup"] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_VK_GROUP');
-
-		$connectors = array_merge($connectors, array(
-			"facebook" => Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_FACEBOOK_PAGE'),
-			"facebookcomments" => Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_FACEBOOK_COMMENTS_PAGE'),
-			"fbinstagram" => Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_FBINSTAGRAM'),
-			"instagram" => Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_INSTAGRAM'), //TODO: del
-			"network" => Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_NETWORK'),
-
-			"botframework" => Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_BOTFRAMEWORK'),
-		));
+		}
+		$connectors['facebook'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_FACEBOOK_PAGE');
+		$connectors['facebookcomments'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_FACEBOOK_COMMENTS_PAGE');
+		$connectors['fbinstagram'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_FBINSTAGRAM');
+		//TODO: del
+		$connectors['instagram'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_INSTAGRAM');
+		$connectors['network'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_NETWORK');
+		//Virtual connectors.
+		$connectors['botframework'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_BOTFRAMEWORK');
 
 		if($customConnectors === true)
 		{

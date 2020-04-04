@@ -6,9 +6,34 @@ use Bitrix\Timeman\Helper\EntityCodesHelper;
 use Bitrix\Timeman\Model\Schedule\Schedule;
 use Bitrix\Timeman\Model\Schedule\Shift\Shift;
 use Bitrix\Timeman\Model\Schedule\Violation\ViolationRules;
+use Bitrix\Timeman\Model\User\UserCollection;
+use Bitrix\Timeman\Provider\Schedule\ScheduleProvider;
+use Bitrix\Timeman\Repository\AbsenceRepository;
+use Bitrix\Timeman\Repository\DepartmentRepository;
+use Bitrix\Timeman\Repository\Schedule\CalendarRepository;
+use Bitrix\Timeman\Repository\Worktime\WorktimeRepository;
 
 class FixedScheduleViolationBuilder extends WorktimeViolationBuilder
 {
+	/** @var WorktimeRepository */
+	private $worktimeRepository;
+	/** @var DepartmentRepository */
+	private $departmentRepository;
+
+	public function __construct(
+		WorktimeViolationParams $params,
+		CalendarRepository $calendarRepository,
+		ScheduleProvider $scheduleProvider,
+		AbsenceRepository $absenceRepository,
+		WorktimeRepository $worktimeRepository,
+		DepartmentRepository $departmentRepository
+	)
+	{
+		parent::__construct($params, $calendarRepository, $scheduleProvider, $absenceRepository);
+		$this->worktimeRepository = $worktimeRepository;
+		$this->departmentRepository = $departmentRepository;
+	}
+
 	/**
 	 * @param WorktimeViolationParams $params
 	 * @param \DateTime $fromDateTime
@@ -32,6 +57,13 @@ class FixedScheduleViolationBuilder extends WorktimeViolationBuilder
 			return $result->addError(new Error('', WorktimeViolationResult::ERROR_CODE_SHIFT_NOT_FOUND));
 		}
 
+		$activeUsers = $this->findActiveUsers($schedule, $violationRules->getEntityCode());
+		if ($activeUsers->count() === 0)
+		{
+			return $result->addError(new Error('', WorktimeViolationResult::ERROR_CODE_NO_USERS_ASSIGNED_TO_SCHEDULE));
+		}
+
+
 		$workDays = [];
 		foreach ($shifts as $shift)
 		{
@@ -48,42 +80,10 @@ class FixedScheduleViolationBuilder extends WorktimeViolationBuilder
 				}
 			}
 		}
-		if ($violationRules->getEntityCode() === EntityCodesHelper::getAllUsersCode())
-		{
-			$activeUsers = $this->findActiveUsers($schedule);
-		}
-		else
-		{
-			if (EntityCodesHelper::isUser($violationRules->getEntityCode()))
-			{
-				$userIds = [EntityCodesHelper::getUserId($violationRules->getEntityCode())];
-			}
-			elseif (EntityCodesHelper::isDepartment($violationRules->getEntityCode()))
-			{
-				$departmentId = EntityCodesHelper::getDepartmentId($violationRules->getEntityCode());
-				$userIds = $this->scheduleRepository->getDepartmentRepository()
-					->getUsersOfDepartment($departmentId);
-			}
-			if (!empty($userIds))
-			{
-				$req = $this->scheduleRepository
-					->buildActiveScheduleUsersQuery(
-						$schedule->getId(),
-						$schedule->obtainDepartmentAssignments(),
-						['USER_IDS' => $userIds]
-					);
-				$activeUsers = $req->exec()->fetchAll();
-			}
-		}
 
-		if (empty($activeUsers))
-		{
-			return $result->addError(new Error('', WorktimeViolationResult::ERROR_CODE_NO_USERS_ASSIGNED_TO_SCHEDULE));
-		}
+		$this->setAbsenceData($this->findAbsenceForPeriod($fromDateTime, $toDateTime, $activeUsers->getIdList()));
 
-		$this->setAbsenceData($this->findAbsenceForPeriod($fromDateTime, $toDateTime, array_column($activeUsers, 'ID')));
-
-		$workedStatistics = $this->findRecordsForPeriod($fromDateTime, $toDateTime, $schedule, array_column($activeUsers, 'ID'));
+		$workedStatistics = $this->findRecordsForPeriod($fromDateTime, $toDateTime, $schedule, $activeUsers->getIdList());
 		$workedStatistics = array_combine(array_column($workedStatistics, 'USER_ID'), $workedStatistics);
 
 		$periodDates = $this->createPeriodDates($fromDateTime, $toDateTime);
@@ -92,32 +92,32 @@ class FixedScheduleViolationBuilder extends WorktimeViolationBuilder
 			$expectedSeconds = $this->calculateExpectedWorkedSecondsForPeriod(
 				$periodDates,
 				$workDays,
-				$user['ID']
+				$user->getId()
 			);
 			if ($expectedSeconds <= 0)
 			{
 				continue;
 			}
 
-			if (empty($workedStatistics[$user['ID']]['DURATION'])
-				|| $expectedSeconds - (int)$workedStatistics[$user['ID']]['DURATION'] > $violationRules->getMaxWorkTimeLackForPeriod())
+			if (empty($workedStatistics[$user->getId()]['DURATION'])
+				|| $expectedSeconds - (int)$workedStatistics[$user->getId()]['DURATION'] > $violationRules->getMaxWorkTimeLackForPeriod())
 			{
-				if (empty($workedStatistics[$user['ID']]))
+				if (empty($workedStatistics[$user->getId()]))
 				{
 					$recordSeconds = 0;
 					$violatedSeconds = $expectedSeconds;
 				}
 				else
 				{
-					$recordSeconds = $workedStatistics[$user['ID']]['DURATION'];
-					$violatedSeconds = $expectedSeconds - (int)$workedStatistics[$user['ID']]['DURATION'] - $violationRules->getMaxWorkTimeLackForPeriod();
+					$recordSeconds = $workedStatistics[$user->getId()]['DURATION'];
+					$violatedSeconds = $expectedSeconds - (int)$workedStatistics[$user->getId()]['DURATION'] - $violationRules->getMaxWorkTimeLackForPeriod();
 				}
 				$result->addViolation(
 					$this->createViolation(
 						WorktimeViolation::TYPE_TIME_LACK_FOR_PERIOD,
 						$recordSeconds,
 						$violatedSeconds,
-						$user['ID']
+						$user->getId()
 					)
 				);
 			}
@@ -161,9 +161,25 @@ class FixedScheduleViolationBuilder extends WorktimeViolationBuilder
 		return $checkingDates;
 	}
 
+	private function isRecordStartedOnHoliday()
+	{
+		$startDateTime = $this->buildRecordStartDateTime();
+		return $this->isDateTimeHoliday($startDateTime);
+	}
+
+	private function isDateTimeHoliday(\DateTime $dateTime)
+	{
+		$calendar = $this->getCalendar($this->getSchedule()->getCalendarId(), $dateTime->format('Y'));
+		if ($calendar && !empty($calendar->obtainFinalExclusions()[$dateTime->format('Y')]))
+		{
+			return isset($calendar->obtainFinalExclusions()[$dateTime->format('Y')][$dateTime->format('n')][$dateTime->format('j')]);
+		}
+		return false;
+	}
+
 	protected function skipViolationsCheck()
 	{
-		if (parent::skipViolationsCheck())
+		if (parent::skipViolationsCheck() || $this->isRecordStartedOnHoliday())
 		{
 			return true;
 		}
@@ -173,7 +189,7 @@ class FixedScheduleViolationBuilder extends WorktimeViolationBuilder
 			return true;
 		}
 		// if record has shift - check violations only if it is a working day based on shift configuration
-		return !Shift::isDateInShiftWorkDays($this->getRecordStartDateTime(), $this->getShift());
+		return !Shift::isDateInShiftWorkDays($this->buildRecordStartDateTime(), $this->getShift());
 	}
 
 	protected function buildStartViolations()
@@ -181,8 +197,8 @@ class FixedScheduleViolationBuilder extends WorktimeViolationBuilder
 		$record = $this->getRecord();
 		$violations = [];
 		$recordedStartSeconds = $this->getTimeHelper()->convertUtcTimestampToDaySeconds(
-			$record['RECORDED_START_TIMESTAMP'],
-			$record['START_OFFSET']
+			$record->getRecordedStartTimestamp(),
+			$record->getStartOffset()
 		);
 
 		$violations = array_merge($violations, $this->buildOffsetStartViolations($recordedStartSeconds));
@@ -195,14 +211,14 @@ class FixedScheduleViolationBuilder extends WorktimeViolationBuilder
 	protected function buildEndViolations()
 	{
 		$record = $this->getRecord();
-		if (!$this->issetProperty($record['RECORDED_STOP_TIMESTAMP']))
+		if (!$this->issetProperty($record->getRecordedStopTimestamp()))
 		{
 			return [];
 		}
 		$violations = [];
 		$recordedStopSeconds = $this->getTimeHelper()->convertUtcTimestampToDaySeconds(
-			$record['RECORDED_STOP_TIMESTAMP'],
-			$record['STOP_OFFSET']
+			$record->getRecordedStopTimestamp(),
+			$record->getStopOffset()
 		);
 		$violations = array_merge($violations, $this->buildOffsetStopViolations($recordedStopSeconds));
 		$violations = array_merge($violations, $this->buildExactStopViolations($recordedStopSeconds));
@@ -214,7 +230,7 @@ class FixedScheduleViolationBuilder extends WorktimeViolationBuilder
 	protected function buildDurationViolations()
 	{
 		$record = $this->getRecord();
-		if (!$this->issetProperty($record['RECORDED_DURATION']))
+		if (!$this->issetProperty($record->getRecordedDuration()))
 		{
 			return [];
 		}
@@ -224,123 +240,13 @@ class FixedScheduleViolationBuilder extends WorktimeViolationBuilder
 			return [];
 		}
 
-		if ($record['RECORDED_DURATION'] < $violationsConfig['MIN_DAY_DURATION'])
+		if ($record->getRecordedDuration() < $violationsConfig['MIN_DAY_DURATION'])
 		{
 			return [
 				$this->createViolation(
 					WorktimeViolation::TYPE_MIN_DAY_DURATION,
-					$record['RECORDED_DURATION'],
-					$record['RECORDED_DURATION'] - $violationsConfig['MIN_DAY_DURATION']
-				),
-			];
-		}
-		return [];
-	}
-
-	public function buildEditedWorktimeWarnings($checkAllowedDelta)
-	{
-		return $this->buildEditViolations($checkAllowedDelta);
-	}
-
-	protected function buildEditViolations($checkAllowedDelta = true)
-	{
-		$violationsConfig = $this->getViolationRules();
-		if ($checkAllowedDelta && !ViolationRules::isViolationConfigured($violationsConfig['MAX_ALLOWED_TO_EDIT_WORK_TIME']))
-		{
-			return [];
-		}
-		$violations = [];
-		if (!Schedule::isAutoStartingEnabledForSchedule($this->getSchedule()))
-		{
-			$violations = array_merge($violations, $this->buildEditStartViolations($checkAllowedDelta));
-		}
-		if (!Schedule::isAutoClosingEnabledForSchedule($this->getSchedule()))
-		{
-			$violations = array_merge($violations, $this->buildEditStopViolations($checkAllowedDelta));
-		}
-		return array_merge(
-			$violations,
-			$this->buildEditBreakLengthViolations($checkAllowedDelta)
-		);
-	}
-
-	private function buildEditStartViolations($checkAllowedDelta = true)
-	{
-		$record = $this->getRecord();
-
-		if (!($this->issetProperty($record['RECORDED_START_TIMESTAMP']) &&
-			  $this->issetProperty($record['ACTUAL_START_TIMESTAMP']))
-		)
-		{
-			return [];
-		}
-		$allowedDiff = 0;
-		if ($checkAllowedDelta)
-		{
-			$allowedDiff = $this->getViolationRules()['MAX_ALLOWED_TO_EDIT_WORK_TIME'];
-		}
-		if (abs($record['ACTUAL_START_TIMESTAMP'] - $record['RECORDED_START_TIMESTAMP']) > $allowedDiff)
-		{
-			return [
-				$this->createViolation(
-					WorktimeViolation::TYPE_EDITED_START,
-					$this->getTimeHelper()->convertUtcTimestampToDaySeconds(
-						$record['RECORDED_START_TIMESTAMP'],
-						$record['START_OFFSET']
-					),
-					$record['RECORDED_START_TIMESTAMP'] - $record['ACTUAL_START_TIMESTAMP']
-				),
-			];
-		}
-		return [];
-	}
-
-	private function buildEditBreakLengthViolations($checkAllowedDelta = true)
-	{
-		$record = $this->getRecord();
-		$allowedDiff = 0;
-		if ($checkAllowedDelta)
-		{
-			$allowedDiff = $this->getViolationRules()['MAX_ALLOWED_TO_EDIT_WORK_TIME'];
-		}
-		if (abs($record['ACTUAL_BREAK_LENGTH'] - $record['TIME_LEAKS']) > $allowedDiff)
-		{
-			return [
-				$this->createViolation(
-					WorktimeViolation::TYPE_EDITED_BREAK_LENGTH,
-					$record['TIME_LEAKS'],
-					$record['TIME_LEAKS'] - $record['ACTUAL_BREAK_LENGTH']
-				),
-			];
-		}
-		return [];
-	}
-
-	private function buildEditStopViolations($checkAllowedDelta = true)
-	{
-		$record = $this->getRecord();
-
-		if (!($this->issetProperty($record['RECORDED_STOP_TIMESTAMP']) &&
-			  $this->issetProperty($record['ACTUAL_STOP_TIMESTAMP']))
-		)
-		{
-			return [];
-		}
-		$allowedDiff = 0;
-		if ($checkAllowedDelta)
-		{
-			$allowedDiff = $this->getViolationRules()['MAX_ALLOWED_TO_EDIT_WORK_TIME'];
-		}
-		if (abs($record['RECORDED_STOP_TIMESTAMP'] - $record['ACTUAL_STOP_TIMESTAMP']) > $allowedDiff)
-		{
-			return [
-				$this->createViolation(
-					WorktimeViolation::TYPE_EDITED_ENDING,
-					$this->getTimeHelper()->convertUtcTimestampToDaySeconds(
-						$record['RECORDED_STOP_TIMESTAMP'],
-						$record['STOP_OFFSET']
-					),
-					$record['ACTUAL_STOP_TIMESTAMP'] - $record['RECORDED_STOP_TIMESTAMP']
+					$record->getRecordedDuration(),
+					$record->getRecordedDuration() - $violationsConfig['MIN_DAY_DURATION']
 				),
 			];
 		}
@@ -360,7 +266,7 @@ class FixedScheduleViolationBuilder extends WorktimeViolationBuilder
 		{
 			$violations[] = $this->createViolation(
 				WorktimeViolation::TYPE_LATE_START,
-				$recordedStartSeconds,
+				$this->getRecord()->getRecordedStartTimestamp(),
 				$recordedStartSeconds - $this->getShift()->getWorkTimeStart() - $maxOffsetStart
 			);
 		}
@@ -382,7 +288,7 @@ class FixedScheduleViolationBuilder extends WorktimeViolationBuilder
 		{
 			$violations[] = $this->createViolation(
 				WorktimeViolation::TYPE_LATE_START,
-				$recordedStartSeconds,
+				$this->getRecord()->getRecordedStartTimestamp(),
 				$recordedStartSeconds - $maxExactStart
 			);
 		}
@@ -401,7 +307,7 @@ class FixedScheduleViolationBuilder extends WorktimeViolationBuilder
 			{
 				$violations[] = $this->createViolation(
 					WorktimeViolation::TYPE_EARLY_START,
-					$recordedStartSeconds,
+					$this->getRecord()->getRecordedStartTimestamp(),
 					$recordedStartSeconds - $startFrom
 				);
 			}
@@ -414,7 +320,7 @@ class FixedScheduleViolationBuilder extends WorktimeViolationBuilder
 			{
 				$violations[] = $this->createViolation(
 					WorktimeViolation::TYPE_LATE_START,
-					$recordedStartSeconds,
+					$this->getRecord()->getRecordedStartTimestamp(),
 					$recordedStartSeconds - $startTo
 				);
 			}
@@ -436,7 +342,7 @@ class FixedScheduleViolationBuilder extends WorktimeViolationBuilder
 		{
 			$violations[] = $this->createViolation(
 				WorktimeViolation::TYPE_EARLY_ENDING,
-				$recordedStopSeconds,
+				$this->getRecord()->getRecordedStopTimestamp(),
 				$recordedStopSeconds - $this->getShift()->getWorkTimeEnd() + $minOffsetEnd
 			);
 		}
@@ -448,7 +354,7 @@ class FixedScheduleViolationBuilder extends WorktimeViolationBuilder
 	{
 		$violations = [];
 		$violationsConfig = $this->getViolationRules();
-		$minExactEnd = $violationsConfig['MIN_EXACT_END'];
+		$minExactEnd = $violationsConfig->getMinExactEnd();
 		if (!ViolationRules::isViolationConfigured($minExactEnd))
 		{
 			return [];
@@ -458,7 +364,7 @@ class FixedScheduleViolationBuilder extends WorktimeViolationBuilder
 		{
 			$violations[] = $this->createViolation(
 				WorktimeViolation::TYPE_EARLY_ENDING,
-				$recordedStopSeconds,
+				$this->getRecord()->getRecordedStopTimestamp(),
 				$recordedStopSeconds - $minExactEnd
 			);
 		}
@@ -477,7 +383,7 @@ class FixedScheduleViolationBuilder extends WorktimeViolationBuilder
 			{
 				$violations[] = $this->createViolation(
 					WorktimeViolation::TYPE_EARLY_ENDING,
-					$recordedStopSeconds,
+					$this->getRecord()->getRecordedStopTimestamp(),
 					$recordedStopSeconds - $stopFrom
 				);
 			}
@@ -490,7 +396,7 @@ class FixedScheduleViolationBuilder extends WorktimeViolationBuilder
 			{
 				$violations[] = $this->createViolation(
 					WorktimeViolation::TYPE_LATE_ENDING,
-					$recordedStopSeconds,
+					$this->getRecord()->getRecordedStopTimestamp(),
 					$recordedStopSeconds - $stopTo
 				);
 			}
@@ -498,9 +404,61 @@ class FixedScheduleViolationBuilder extends WorktimeViolationBuilder
 		return $violations;
 	}
 
-	protected function findActiveUsers(Schedule $schedule)
+	/**
+	 * @param Schedule $schedule
+	 * @param $checkingEntityCode
+	 * @return UserCollection
+	 */
+	protected function findActiveUsers(Schedule $schedule, $checkingEntityCode)
 	{
-		return $this->scheduleRepository->findActiveUsers($schedule);
+		$userCollection = new UserCollection();
+		if (EntityCodesHelper::getAllUsersCode() === $checkingEntityCode)
+		{
+			return $this->scheduleProvider->findActiveUsers($schedule);
+		}
+		$users = $this->scheduleProvider->findActiveScheduleUserIds($schedule);
+
+		if (EntityCodesHelper::isUser($checkingEntityCode))
+		{
+			if (in_array(EntityCodesHelper::getUserId($checkingEntityCode), $users, true))
+			{
+				$user = $this->scheduleProvider->getUsersBaseQuery()
+					->where('ID', EntityCodesHelper::getUserId($checkingEntityCode))
+					->exec()
+					->fetchObject();
+				if ($user)
+				{
+					$userCollection->add($user);
+				}
+			}
+		}
+		elseif (EntityCodesHelper::isDepartment($checkingEntityCode))
+		{
+			$includedUsers = [];
+			$depId = EntityCodesHelper::getDepartmentId($checkingEntityCode);
+			$departmentsIds = $this->departmentRepository->getAllChildDepartmentsIds($depId);
+			$departmentsIds[] = [$depId];
+			foreach ($departmentsIds as $departmentId)
+			{
+				$depUserIds = $this->departmentRepository->getUsersOfDepartment($departmentId);
+				foreach ($userCollection->getAll() as $user)
+				{
+					if (in_array($user->getId(), $depUserIds, true))
+					{
+						$includedUsers[$user->getId()] = true;
+					}
+				}
+			}
+			$includedUsers = array_keys($includedUsers);
+			foreach ($userCollection->getAll() as $user)
+			{
+				if (!in_array($user->getId(), $includedUsers, true))
+				{
+					$userCollection->removeByPrimary($user->getId());
+				}
+			}
+		}
+		return $userCollection;
 	}
 
 	/**
@@ -515,7 +473,6 @@ class FixedScheduleViolationBuilder extends WorktimeViolationBuilder
 			->findAbsences(
 				convertTimeStamp($fromDateTime->getTimestamp(), 'FULL'),
 				convertTimeStamp($toDateTime->getTimestamp(), 'FULL'),
-				$this->getCurrentUserId(),
 				$userIds
 			);
 	}
@@ -523,6 +480,6 @@ class FixedScheduleViolationBuilder extends WorktimeViolationBuilder
 	protected function findRecordsForPeriod(\DateTime $fromDateTime, \DateTime $toDateTime, Schedule $schedule, $userIds)
 	{
 		return $this->worktimeRepository
-			->findRecordsForPeriod($fromDateTime, $toDateTime, $schedule, $userIds);
+			->findAllForPeriod($fromDateTime, $toDateTime, $schedule, $userIds);
 	}
 }

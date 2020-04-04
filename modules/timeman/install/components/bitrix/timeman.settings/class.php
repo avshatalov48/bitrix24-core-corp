@@ -112,6 +112,14 @@ class TimemanSettingsComponent extends BaseComponent
 
 	private function includeWorktimeSettingsPermissions()
 	{
-		$this->getApplication()->IncludeComponent('bitrix:timeman.settings.permissions', '', []);
+		$this->getApplication()->IncludeComponent(
+			'bitrix:ui.sidepanel.wrapper',
+			'',
+			[
+				'POPUP_COMPONENT_NAME' => 'bitrix:timeman.settings.permissions',
+				'POPUP_COMPONENT_TEMPLATE_NAME' => '',
+				'POPUP_COMPONENT_PARAMS' => [],
+			]
+		);
 	}
 }

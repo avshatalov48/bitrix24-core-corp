@@ -25,6 +25,7 @@ export default class LsStorage implements ICacheStorage
 			if (Type.isPlainObject(parsedStack))
 			{
 				this.stack = parsedStack;
+				return this.stack;
 			}
 		}
 

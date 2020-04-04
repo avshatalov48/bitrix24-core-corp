@@ -157,10 +157,28 @@ if (
 )
 {
 	$userProfileUrl = \Bitrix\Main\Config\Option::get('intranet', 'search_user_url', '/user/#ID#/');
+	$userProfileUrl = str_replace(['#ID#', '#USER_ID#'], intval($arParams['SLIDER_PROFILE_USER_ID']), $userProfileUrl);
+
+	$request = \Bitrix\Main\Context::getCurrent()->getRequest();
+
+	if (
+		$request->get('entityType')
+		&& $request->get('entityId')
+	)
+	{
+		$uri = new Bitrix\Main\Web\Uri($userProfileUrl);
+		$uri->deleteParams(['entityType', 'entityId']);
+		$uri->addParams([
+			'entityType' => $request->get('entityType'),
+			'entityId' => $request->get('entityId')
+		]);
+		$userProfileUrl = $uri->getUri();
+	}
+
 	?><script>
 	BX.ready(function () {
 		BX.SidePanel.Instance.open(
-			'<?=str_replace(array('#ID#', '#USER_ID#'), intval($arParams['SLIDER_PROFILE_USER_ID']), $userProfileUrl)?>',
+			'<?=$userProfileUrl?>',
 			{
 				cacheable: false,
 				allowChangeHistory: false,

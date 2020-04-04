@@ -217,8 +217,15 @@ if($documentButton)
 	<script>
 		BX.ready(function()
 		{
-			var button = new BX.DocumentGenerator.Button('<?=htmlspecialcharsbx($documentButtonId);?>', <?=CUtil::PhpToJSObject($documentButton['PARAMS']);?>);
-			button.init();
+			if(BX.DocumentGenerator && BX.DocumentGenerator.Button)
+			{
+				var button = new BX.DocumentGenerator.Button('<?=htmlspecialcharsbx($documentButtonId);?>', <?=CUtil::PhpToJSObject($documentButton['PARAMS']);?>);
+				button.init();
+			}
+			else
+			{
+				console.warn('BX.DocumentGenerator.Button is not found')
+			}
 		});
 	</script>
 	<?

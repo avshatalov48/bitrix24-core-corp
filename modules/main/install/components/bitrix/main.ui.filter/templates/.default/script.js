@@ -2515,6 +2515,12 @@ this.BX = this.BX || {};
 	    this.isAddPresetModeState = false;
 	    this.firstInit = true;
 	    this.emitter = new BX.Event.EventEmitter();
+	    this.emitter.setEventNamespace('BX.Filter.Field');
+
+	    this.emitter.subscribe = function (eventName, listener) {
+	      BX.Event.EventEmitter.subscribe(this.emitter, eventName.replace('BX.Filter.Field:', ''), listener);
+	    }.bind(this);
+
 	    this.init();
 	  };
 	  /**
@@ -5491,6 +5497,9 @@ this.BX = this.BX || {};
 
 	    babelHelpers.classCallCheck(this, Field);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Field).call(this, options));
+
+	    _this.setEventNamespace('BX.Filter.Field');
+
 	    _this.id = options.options.NAME;
 	    _this.parent = options.parent;
 	    _this.node = options.node;
@@ -5513,6 +5522,7 @@ this.BX = this.BX || {};
 	    var selects = babelHelpers.toConsumableArray(_this.node.querySelectorAll('.main-ui-select'));
 	    selects.forEach(function (select) {
 	      MO.observe(select, {
+	        attributes: true,
 	        attributeFilter: ['data-value']
 	      });
 	    });
@@ -5521,9 +5531,14 @@ this.BX = this.BX || {};
 	  }
 
 	  babelHelpers.createClass(Field, [{
+	    key: "subscribe",
+	    value: function subscribe(eventName, listener) {
+	      main_core.Event.EventEmitter.subscribe(this, eventName.replace('BX.Filter.Field:', ''), listener);
+	    }
+	  }, {
 	    key: onValueChange,
 	    value: function value() {
-	      this.emit('BX.Filter.Field:change', {
+	      this.emit('change', {
 	        field: this,
 	        value: this.getValue()
 	      });
@@ -5743,8 +5758,15 @@ this.BX = this.BX || {};
 	                      nameNode.innerText = item.NAME;
 	                    }
 
-	                    fieldNode.click();
 	                    var result = BX.Main.ui.Factory.get(fieldNode);
+
+	                    if (!result) {
+	                      result = {
+	                        node: fieldNode,
+	                        instance: new BX.Main.ui.select(fieldNode)
+	                      };
+	                      BX.Main.ui.Factory.data.push(result);
+	                    }
 
 	                    if (main_core.Type.isPlainObject(result)) {
 	                      BX.onCustomEvent(window, 'UI::Select::Change', [result.instance, item]);
@@ -6073,7 +6095,7 @@ this.BX = this.BX || {};
 	        }]
 	      };
 	      var renderedField = BX.decl(field);
-	      this.parent.getEmitter().emit('BX.Filter.Field:init', {
+	      this.parent.getEmitter().emit('init', {
 	        field: new Field({
 	          parent: this.parent,
 	          options: babelHelpers.objectSpread({}, fieldData),
@@ -6115,7 +6137,7 @@ this.BX = this.BX || {};
 	      main_core.Event.bind(textarea, 'keyup', onChange);
 	      main_core.Event.bind(textarea, 'cut', onChange);
 	      main_core.Event.bind(textarea, 'paste', onChange);
-	      this.parent.getEmitter().emit('BX.Filter.Field:init', {
+	      this.parent.getEmitter().emit('init', {
 	        field: new Field({
 	          parent: this.parent,
 	          options: babelHelpers.objectSpread({}, fieldData),
@@ -6234,7 +6256,7 @@ this.BX = this.BX || {};
 	          fieldId: fieldData.NAME
 	        });
 	      }, this));
-	      this.parent.getEmitter().emit('BX.Filter.Field:init', {
+	      this.parent.getEmitter().emit('init', {
 	        field: new Field({
 	          parent: this.parent,
 	          options: babelHelpers.objectSpread({}, fieldData),
@@ -6345,7 +6367,7 @@ this.BX = this.BX || {};
 
 	      main_core.Event.bind(input, 'keydown', BX.proxy(this._onCustomEntityKeydown, this));
 	      main_core.Event.bind(field, 'click', BX.proxy(this._onCustomEntityFieldClick, this));
-	      this.parent.getEmitter().emit('BX.Filter.Field:init', {
+	      this.parent.getEmitter().emit('init', {
 	        field: new Field({
 	          parent: this.parent,
 	          options: babelHelpers.objectSpread({}, fieldData),
@@ -6530,7 +6552,7 @@ this.BX = this.BX || {};
 	        main_core.Runtime.html(control, html);
 	      }
 
-	      this.parent.getEmitter().emit('BX.Filter.Field:init', {
+	      this.parent.getEmitter().emit('init', {
 	        field: new Field({
 	          parent: this.parent,
 	          options: babelHelpers.objectSpread({}, fieldData),
@@ -6561,7 +6583,7 @@ this.BX = this.BX || {};
 	          valueDelete: false
 	        }
 	      });
-	      this.parent.getEmitter().emit('BX.Filter.Field:init', {
+	      this.parent.getEmitter().emit('init', {
 	        field: new Field({
 	          parent: this.parent,
 	          options: babelHelpers.objectSpread({}, fieldData),
@@ -6595,7 +6617,7 @@ this.BX = this.BX || {};
 	          valueDelete: true
 	        }
 	      });
-	      this.parent.getEmitter().emit('BX.Filter.Field:init', {
+	      this.parent.getEmitter().emit('init', {
 	        field: new Field({
 	          parent: this.parent,
 	          options: babelHelpers.objectSpread({}, fieldData),
@@ -6717,7 +6739,7 @@ this.BX = this.BX || {};
 	      group.content.push(months);
 	      group.content.push(years);
 	      var field = BX.decl(group);
-	      this.parent.getEmitter().emit('BX.Filter.Field:init', {
+	      this.parent.getEmitter().emit('init', {
 	        field: new Field({
 	          parent: this.parent,
 	          options: babelHelpers.objectSpread({}, fieldData),
@@ -6910,7 +6932,7 @@ this.BX = this.BX || {};
 	      }
 
 	      var field = BX.decl(fieldGroup);
-	      this.parent.getEmitter().emit('BX.Filter.Field:init', {
+	      this.parent.getEmitter().emit('init', {
 	        field: new Field({
 	          parent: this.parent,
 	          options: babelHelpers.objectSpread({}, options),
@@ -7234,7 +7256,7 @@ this.BX = this.BX || {};
 	        currentValues[key.replace(fieldName, '')] = value;
 	        delete currentValues[key];
 	      });
-	      this.parent.getEmitter().emit('BX.Filter.Field:init', {
+	      this.parent.getEmitter().emit('init', {
 	        field: new Field({
 	          parent: this.parent,
 	          options: babelHelpers.objectSpread({}, options, {

@@ -31,42 +31,40 @@
 
 		new BX.Timeman.Component.Popup.DurationPicker({
 			durationInput: this.selectOneByRole('min-offset-end-input'),
-			durationPopupToggle: this.selectOneByRole('min-offset-end-input'),
+			durationPopupToggle: this.selectOneByRole('min-offset-end-link'),
 			containerSelector: options.containerSelector
 		});
 		new BX.Timeman.Component.Popup.DurationPicker({
 			durationInput: this.selectOneByRole('max-offset-start-input'),
-			durationPopupToggle: this.selectOneByRole('max-offset-start-input'),
+			durationPopupToggle: this.selectOneByRole('max-offset-start-link'),
 			containerSelector: options.containerSelector
 		});
 
-		this.minDayDurationLink = this.selectOneByRole('min-day-duration-link');
 		new BX.Timeman.Component.Popup.DurationPicker({
-			durationInput: this.minDayDurationLink,
-			durationPopupToggle: this.minDayDurationLink,
+			durationInput: this.selectOneByRole('min-day-duration-input'),
+			durationPopupToggle: this.selectOneByRole('min-day-duration-link'),
 			containerSelector: options.containerSelector
 		});
 
-		this.maxAllowedToEditWorkTimeLink = this.selectOneByRole('allow-manual-change-time-link');
 		new BX.Timeman.Component.Popup.DurationPicker({
-			durationInput: this.maxAllowedToEditWorkTimeLink,
-			durationPopupToggle: this.maxAllowedToEditWorkTimeLink,
+			durationInput: this.selectOneByRole('allow-manual-change-time-input'),
+			durationPopupToggle: this.selectOneByRole('allow-manual-change-time-link'),
 			containerSelector: options.containerSelector
 		});
 		this.relativeStartTo = this.selectOneByRole('relative-start-to-link');
 		this.relativeStartFrom = this.selectOneByRole('relative-start-from-link');
 		this.relativeEndTo = this.selectOneByRole('relative-end-to-link');
 		this.relativeEndFrom = this.selectOneByRole('relative-end-from-link');
-		this.maxShiftStartDelay = this.selectOneByRole('allow-shift-start-delay-link');
 		new BX.Timeman.Component.Popup.DurationPicker({
-			durationInput: this.maxShiftStartDelay,
-			durationPopupToggle: this.maxShiftStartDelay,
+			durationInput: this.selectOneByRole('allow-shift-start-delay-input'),
+			durationPopupToggle: this.selectOneByRole('allow-shift-start-delay-link'),
 			containerSelector: options.containerSelector
 		});
 		this.plainTimeContent = this.selectOneByRole('plain-time-content');
 		this.plainTimeHiddenInput = this.container.querySelector('[name="plainTimeHidden"]');
 		this.fixViolations = this.selectAllByRole('violation-fix-schedule');
 		this.shiftViolations = this.selectAllByRole('violation-shift-schedule');
+		this.universalViolations = this.selectAllByRole('violation-any-schedule');
 		this.form = this.selectOneByRole('timeman-violations-personal-form');
 		this.savePersonalBtn = document.querySelector('#tm-schedule-personal-violations-save');
 		this._addEventHandlers();
@@ -102,6 +100,7 @@
 			this.showElement(this.container);
 			if (this.isShiftedSchedule(scheduleType))
 			{
+				this.showViolations(this.universalViolations);
 				this.hideViolations(this.fixViolations);
 				this.showViolations(this.shiftViolations);
 			}
@@ -111,6 +110,7 @@
 			}
 			else
 			{
+				this.showViolations(this.universalViolations);
 				this.showViolations(this.fixViolations);
 				this.hideViolations(this.shiftViolations);
 			}
@@ -251,7 +251,7 @@
 							}, this)
 						}
 					})
-				],
+				]
 			});
 		},
 		_onRelativeTimeBlockClick: function (e)
@@ -328,7 +328,7 @@
 			for (var i = 0; i < errorMessages.length; i++)
 			{
 				var erMsg = this.errorMsgTemplate.cloneNode(true);
-				erMsg.textContent = BX.util.htmlspecialchars(errorMessages[i].message);
+				erMsg.textContent = errorMessages[i].message;
 				this.errorBlock.appendChild(erMsg);
 				this.showElement(erMsg);
 			}

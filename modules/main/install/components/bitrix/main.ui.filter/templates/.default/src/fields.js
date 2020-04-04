@@ -138,7 +138,7 @@ export class Fields
 		const renderedField = BX.decl(field);
 
 		this.parent.getEmitter().emit(
-			'BX.Filter.Field:init',
+			'init',
 			{
 				field: new Field({
 					parent: this.parent,
@@ -188,7 +188,7 @@ export class Fields
 		Event.bind(textarea, 'paste', onChange);
 
 		this.parent.getEmitter().emit(
-			'BX.Filter.Field:init',
+			'init',
 			{
 				field: new Field({
 					parent: this.parent,
@@ -330,7 +330,7 @@ export class Fields
 		}, this));
 
 		this.parent.getEmitter().emit(
-			'BX.Filter.Field:init',
+			'init',
 			{
 				field: new Field({
 					parent: this.parent,
@@ -457,7 +457,7 @@ export class Fields
 		Event.bind(field, 'click', BX.proxy(this._onCustomEntityFieldClick, this));
 
 		this.parent.getEmitter().emit(
-			'BX.Filter.Field:init',
+			'init',
 			{
 				field: new Field({
 					parent: this.parent,
@@ -680,7 +680,7 @@ export class Fields
 		}
 
 		this.parent.getEmitter().emit(
-			'BX.Filter.Field:init',
+			'init',
 			{
 				field: new Field({
 					parent: this.parent,
@@ -716,7 +716,7 @@ export class Fields
 		});
 
 		this.parent.getEmitter().emit(
-			'BX.Filter.Field:init',
+			'init',
 			{
 				field: new Field({
 					parent: this.parent,
@@ -753,7 +753,7 @@ export class Fields
 		});
 
 		this.parent.getEmitter().emit(
-			'BX.Filter.Field:init',
+			'init',
 			{
 				field: new Field({
 					parent: this.parent,
@@ -879,7 +879,7 @@ export class Fields
 		const field = BX.decl(group);
 
 		this.parent.getEmitter().emit(
-			'BX.Filter.Field:init',
+			'init',
 			{
 				field: new Field({
 					parent: this.parent,
@@ -1101,7 +1101,7 @@ export class Fields
 		const field = BX.decl(fieldGroup);
 
 		this.parent.getEmitter().emit(
-			'BX.Filter.Field:init',
+			'init',
 			{
 				field: new Field({
 					parent: this.parent,
@@ -1502,7 +1502,7 @@ export class Fields
 		});
 
 		this.parent.getEmitter().emit(
-			'BX.Filter.Field:init',
+			'init',
 			{
 				field: new Field({
 					parent: this.parent,

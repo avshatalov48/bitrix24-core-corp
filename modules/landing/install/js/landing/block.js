@@ -181,6 +181,14 @@
 		return !!selector && selector.includes("@");
 	}
 
+	var onBlockInitDebounced = BX.debounce(function() {
+		BX.Landing.PageObject.getBlocks().forEach(function(block) {
+			block.adjustSortButtonsState();
+		});
+	}, 400);
+
+	onCustomEvent("BX.Landing.Block:init", onBlockInitDebounced);
+
 	/**
 	 * Implements interface for works with landing block
 	 *
@@ -223,6 +231,7 @@
 		this.changedNodes = new BaseCollection();
 		this.styles = new BaseCollection();
 		this.forms = new FormCollection();
+		this.menu = [];
 
 		if (isPlainObject(this.requiredUserActionOptions) && !isEmpty(this.requiredUserActionOptions))
 		{
@@ -236,7 +245,6 @@
 		this.onMouseMove = this.onMouseMove.bind(this);
 		this.onStorage = this.onStorage.bind(this);
 		this.onBlockRemove = this.onBlockRemove.bind(this);
-		this.onBlockInit = this.onBlockInit.bind(this);
 
 		// Make manifest read only
 		deepFreeze(this.manifest);
@@ -250,9 +258,10 @@
 		// Init panels
 		this.initPanels();
 		this.initStyles();
+		this.initMenu();
 		this.adjustContextSensitivityStyles();
 
-		top.BX.Landing.Block.storage.push(this);
+		BX.Landing.PageObject.getBlocks().push(this);
 
 		// Fire block init event
 
@@ -270,7 +279,6 @@
 		onCustomEvent("BX.Landing.Editor:enable", this.onEditorEnabled);
 		onCustomEvent("BX.Landing.Editor:disable", this.onEditorDisabled);
 		onCustomEvent("BX.Landing.Block:afterRemove", this.onBlockRemove);
-		onCustomEvent("BX.Landing.Block:init", this.onBlockInit);
 
 		bind(this.node, "mousemove", this.onMouseMove);
 		bind(this.node, "keydown", this.adjustPanelsPosition);
@@ -350,7 +358,11 @@
 					return node.node.contains(item);
 				});
 
-				if (!this.nodes.getByNode(item) && !isChildOfNode)
+				var isMenuItem = this.menu.some(function(menu) {
+					return menu.root.contains(item);
+				});
+
+				if (!this.nodes.getByNode(item) && !isChildOfNode && !isMenuItem)
 				{
 					item.style.pointerEvents = "none";
 				}
@@ -443,6 +455,23 @@
 			this.disableLinks();
 		},
 
+		initMenu: function()
+		{
+			if (BX.type.isPlainObject(this.manifest.menu))
+			{
+				this.menu = Object.entries(this.manifest.menu).map(function(entry) {
+					var code = entry[0];
+					var value = entry[1];
+
+					return new BX.Landing.Menu.Menu({
+						code: code,
+						root: this.node.querySelector(code),
+						manifest: value,
+						block: this.id,
+					});
+				}, this);
+			}
+		},
 
 		initCardsLabels: function()
 		{
@@ -632,6 +661,243 @@
 			}
 		},
 
+		isInSidebar: function()
+		{
+			return !!this.node.closest(".landing-sidebar");
+		},
+
+
+		initSidebarActionPanel: function()
+		{
+			if (this.isInSidebar() && !this.panels.contains("sidebar_actions"))
+			{
+				var sidebarActionsPanel = new BaseButtonPanel(
+					"sidebar_actions",
+					"landing-ui-panel-sidebar-actions"
+				);
+
+				sidebarActionsPanel.addButton(
+					new ActionButton("showSidebarActions", {
+						onClick: this.onShowSidebarActionsClick.bind(this),
+					})
+				);
+
+				this.addPanel(sidebarActionsPanel);
+				sidebarActionsPanel.show();
+			}
+		},
+
+		onShowSidebarActionsClick: function(event)
+		{
+			var bindElement = (
+				this.panels.get("sidebar_actions").buttons.get('showSidebarActions')
+			);
+
+			if (!this.sidebarActionsMenu)
+			{
+				this.sidebarActionsMenu = new Menu({
+					id: this.id + '_sidebar_actions',
+					bindElement: bindElement.layout,
+					className: "landing-ui-block-actions-popup",
+					angle: {position: "top", offset: 95},
+					offsetTop: -6,
+					offsetLeft: -26,
+					events: {
+						onPopupClose: function() {
+							this.panels.get("sidebar_actions").buttons.get("showSidebarActions").deactivate();
+							removeClass(this.node, "landing-ui-hover");
+						}.bind(this)
+					},
+					items: [
+						(function() {
+							if (isPlainObject(this.manifest.nodes) || isPlainObject(this.manifest.attrs))
+							{
+								return new BX.Main.MenuItem({
+									id: "content",
+									text: BX.Landing.Loc.getMessage("ACTION_BUTTON_CONTENT"),
+									onclick: function() {
+										this.onShowContentPanel();
+										this.sidebarActionsMenu.close();
+									}.bind(this)
+								});
+							}
+						}.bind(this))(),
+						(function() {
+							if (isPlainObject(this.manifest.style))
+							{
+								return new BX.Main.MenuItem({
+									id: "style",
+									text: BX.Landing.Loc.getMessage("ACTION_BUTTON_STYLE"),
+									onclick: function() {
+										this.onStyleShow();
+										this.sidebarActionsMenu.close();
+									}.bind(this),
+									className: this.access < ACCESS_V ? "landing-ui-disabled" : ""
+								});
+							}
+						}.bind(this))(),
+						new BX.Main.MenuItem({
+							delimiter: true,
+						}),
+						(function() {
+							var allPlacements = BX.Landing.Main.getInstance().options.placements.blocks;
+
+							if (isPlainObject(allPlacements) && (this.manifest.code in allPlacements || allPlacements["*"]))
+							{
+								var placementsList = [];
+
+								if (this.manifest.code in allPlacements)
+								{
+									Object.keys(allPlacements[this.manifest.code]).forEach(function(key) {
+										placementsList.push(allPlacements[this.manifest.code][key]);
+									}, this);
+								}
+
+								if (allPlacements["*"])
+								{
+									Object.keys(allPlacements["*"]).forEach(function(key) {
+										placementsList.push(allPlacements["*"][key]);
+									}, this);
+								}
+
+								if (placementsList.length)
+								{
+									if (typeof BX.Landing.PageObject.getRootWindow().BX.rest !== "undefined" &&
+										typeof BX.Landing.PageObject.getRootWindow().BX.rest.AppLayout !== "undefined")
+									{
+										var codes = ["*", this.manifest.code];
+										for (var i = 0, c = codes.length; i < c; i++)
+										{
+											var MessageInterface = BX.Landing.PageObject.getRootWindow().BX.rest.AppLayout.initializePlacement(
+												"LANDING_BLOCK_" + codes[i]
+											);
+											if (MessageInterface)
+											{
+												MessageInterface.prototype.refreshBlock = function(params, cb) {
+													var block = BX.Landing.PageObject.getBlocks().get(params.id);
+
+													if (block)
+													{
+														block
+															.reload()
+															.then(cb);
+													}
+												};
+											}
+
+										}
+									}
+
+									return new BX.Main.MenuItem({
+										id: "actions",
+										text: BX.Landing.Loc.getMessage("ACTION_BUTTON_CONTENT_MORE"),
+										items: placementsList.map(function(placement) {
+											return new BX.Main.MenuItem({
+												id: "placement_" + placement.id + "_" + random(),
+												text: encodeDataValue(placement.title),
+												onclick: this.onPlacementClick.bind(this, placement)
+											})
+										}, this),
+										className: this.access < ACCESS_V ? "landing-ui-disabled" : ""
+									});
+								}
+
+								addClass(contentPanel.buttons.get("style").layout, "landing-ui-no-rounded");
+							}
+						}.bind(this))(),
+
+						new BX.Main.MenuItem({
+							id: "down",
+							text: BX.Landing.Loc.getMessage("LANDING_TITLE_OF_BLOCK_ACTION_SORT_DOWN"),
+							onclick: function() {
+								this.moveDown();
+								this.sidebarActionsMenu.close();
+							}.bind(this)
+						}),
+						new BX.Main.MenuItem({
+							id: "up",
+							text: BX.Landing.Loc.getMessage("LANDING_TITLE_OF_BLOCK_ACTION_SORT_UP"),
+							onclick: function() {
+								this.moveUp();
+								this.sidebarActionsMenu.close();
+							}.bind(this)
+						}),
+						new BX.Main.MenuItem({
+							delimiter: true,
+						}),
+						new BX.Main.MenuItem({
+							id: "show_hide",
+							text: BX.Landing.Loc.getMessage(this.isEnabled() ? "ACTION_BUTTON_HIDE" : "ACTION_BUTTON_SHOW"),
+							className: this.access < ACCESS_W ? "landing-ui-disabled" : "",
+							onclick: function() {
+								this.onStateChange();
+								this.sidebarActionsMenu.close();
+							}.bind(this)
+						}),
+						new BX.Main.MenuItem({
+							delimiter: true,
+						}),
+						new BX.Main.MenuItem({
+							text: BX.Landing.Loc.getMessage("ACTION_BUTTON_ACTIONS_CUT"),
+							className: this.access < ACCESS_X ? "landing-ui-disabled" : "",
+							onclick: function() {
+								BX.Landing.Main.getInstance().onCutBlock.bind(BX.Landing.Main.getInstance(), this)();
+								this.sidebarActionsMenu.close();
+							}.bind(this)
+						}),
+						new BX.Main.MenuItem({
+							text: BX.Landing.Loc.getMessage("ACTION_BUTTON_ACTIONS_COPY"),
+							onclick: function() {
+								BX.Landing.Main.getInstance().onCopyBlock.bind(BX.Landing.Main.getInstance(), this)();
+								this.sidebarActionsMenu.close();
+							}.bind(this)
+						}),
+						new BX.Main.MenuItem({
+							id: "block_paste",
+							text: BX.Landing.Loc.getMessage("ACTION_BUTTON_ACTIONS_PASTE"),
+							title: window.localStorage.landingBlockName,
+							className: window.localStorage.landingBlockId ? "": "landing-ui-disabled",
+							onclick: function() {
+								BX.Landing.Main.getInstance().onPasteBlock.bind(BX.Landing.Main.getInstance(), this)();
+								this.sidebarActionsMenu.close();
+							}.bind(this)
+						}),
+						new BX.Main.MenuItem({
+							delimiter: true,
+						}),
+						new BX.Main.MenuItem({
+							text: BX.Landing.Loc.getMessage("LANDING_BLOCKS_ACTIONS_FEEDBACK_BUTTON"),
+							onclick: function() {
+								BX.Landing.Main.getInstance().showSliderFeedbackForm({
+									blockName: this.manifest.block.name,
+									blockCode: this.manifest.code,
+									blockSection: this.manifest.block.section,
+									landingId: BX.Landing.Main.getInstance().id,
+									target: "blockActions"
+								});
+								this.sidebarActionsMenu.close();
+							}.bind(this)
+						}),
+						new BX.Main.MenuItem({
+							delimiter: true,
+						}),
+						new BX.Main.MenuItem({
+							id: "remove",
+							text: BX.Landing.Loc.getMessage("LANDING_TITLE_OF_BLOCK_ACTION_REMOVE"),
+							onclick: function() {
+								this.deleteBlock();
+								this.sidebarActionsMenu.close();
+							}.bind(this),
+							className: this.access < ACCESS_X ? "landing-ui-disabled" : ""
+						})
+					]
+				});
+			}
+
+			this.sidebarActionsMenu.show();
+			addClass(this.node, "landing-ui-hover");
+		},
+
 
 		/**
 		 * Initializes action panels of block
@@ -639,15 +905,23 @@
 		 */
 		lazyInitPanels: function()
 		{
+			if (this.isInSidebar())
+			{
+				this.initSidebarActionPanel();
+			}
+
 			var allPlacements = BX.Landing.Main.getInstance().options.placements.blocks;
 
 			// Make content actions panel
-			if (!this.panels.contains("content_actions") &&
-				!this.requiredUserActionIsShown &&
-				(
-					(isPlainObject(this.manifest.nodes) && !isEmpty(this.manifest.nodes)) ||
-					(isPlainObject(this.manifest.style) && !isEmpty(this.manifest.style)) ||
-					(isPlainObject(allPlacements) && !isEmpty(allPlacements))))
+			if (
+				!this.panels.contains("content_actions")
+				&& !this.requiredUserActionIsShown
+				&& (
+					(isPlainObject(this.manifest.nodes) && !isEmpty(this.manifest.nodes))
+					|| (isPlainObject(this.manifest.style) && !isEmpty(this.manifest.style))
+					|| (isPlainObject(allPlacements) && !isEmpty(allPlacements))
+				)
+			)
 			{
 				var contentPanel = new BaseButtonPanel(
 					"content_actions",
@@ -712,19 +986,19 @@
 							})
 						);
 
-						if (typeof top.BX.rest !== "undefined" &&
-							typeof top.BX.rest.AppLayout !== "undefined")
+						if (typeof BX.Landing.PageObject.getRootWindow().BX.rest !== "undefined" &&
+							typeof BX.Landing.PageObject.getRootWindow().BX.rest.AppLayout !== "undefined")
 						{
 							var codes = ["*", this.manifest.code];
 							for (var i = 0, c = codes.length; i < c; i++)
 							{
-								var MessageInterface = top.BX.rest.AppLayout.initializePlacement(
+								var MessageInterface = BX.Landing.PageObject.getRootWindow().BX.rest.AppLayout.initializePlacement(
 									"LANDING_BLOCK_" + codes[i]
 								);
 								if (MessageInterface)
 								{
 									MessageInterface.prototype.refreshBlock = function(params, cb) {
-										var block = top.BX.Landing.Block.storage.get(params.id);
+										var block = BX.Landing.PageObject.getBlocks().get(params.id);
 
 										if (block)
 										{
@@ -891,7 +1165,7 @@
 				var blockActionMenuId = join("block_", this.id, "content_placement_actions_", random());
 
 				var menuItems = placements.map(function(placement) {
-					return new BX.PopupMenuItem({
+					return new BX.Main.MenuItem({
 						id: "placement_" + placement.id + "_" + random(),
 						text: encodeDataValue(placement.title),
 						onclick: this.onPlacementClick.bind(this, placement)
@@ -1047,9 +1321,10 @@
 
 		onStorage: function()
 		{
-			if (this.blockActionsMenu)
+			var menu = (this.blockActionsMenu || this.sidebarActionsMenu);
+			if (menu)
 			{
-				var item = this.blockActionsMenu.getMenuItem("block_paste");
+				var item = menu.getMenuItem("block_paste");
 
 				if (item)
 				{
@@ -1097,7 +1372,7 @@
 						}.bind(this)
 					},
 					items: [
-						new BX.PopupMenuItem({
+						new BX.Main.MenuItem({
 							id: "show_hide",
 							text: BX.Landing.Loc.getMessage(this.isEnabled() ? "ACTION_BUTTON_HIDE" : "ACTION_BUTTON_SHOW"),
 							className: this.access < ACCESS_W ? "landing-ui-disabled" : "",
@@ -1106,7 +1381,7 @@
 								this.blockActionsMenu.close();
 							}.bind(this)
 						}),
-						new BX.PopupMenuItem({
+						new BX.Main.MenuItem({
 							text: BX.Landing.Loc.getMessage("ACTION_BUTTON_ACTIONS_CUT"),
 							className: this.access < ACCESS_X ? "landing-ui-disabled" : "",
 							onclick: function() {
@@ -1114,14 +1389,14 @@
 								this.blockActionsMenu.close();
 							}.bind(this)
 						}),
-						new BX.PopupMenuItem({
+						new BX.Main.MenuItem({
 							text: BX.Landing.Loc.getMessage("ACTION_BUTTON_ACTIONS_COPY"),
 							onclick: function() {
 								landing.onCopyBlock.bind(landing, this)();
 								this.blockActionsMenu.close();
 							}.bind(this)
 						}),
-						new BX.PopupMenuItem({
+						new BX.Main.MenuItem({
 							id: "block_paste",
 							text: BX.Landing.Loc.getMessage("ACTION_BUTTON_ACTIONS_PASTE"),
 							title: window.localStorage.landingBlockName,
@@ -1131,7 +1406,7 @@
 								this.blockActionsMenu.close();
 							}.bind(this)
 						}),
-						new BX.PopupMenuItem({
+						new BX.Main.MenuItem({
 							text: BX.Landing.Loc.getMessage("LANDING_BLOCKS_ACTIONS_FEEDBACK_BUTTON"),
 							onclick: function() {
 								BX.Landing.Main.getInstance().showSliderFeedbackForm({
@@ -1309,7 +1584,9 @@
 		{
 			this.active = true;
 			removeClass(this.node, "landing-block-disabled");
-			setTextContent(this.blockActionsMenu.getMenuItem("show_hide").getLayout().text, BX.Landing.Loc.getMessage("ACTION_BUTTON_HIDE"));
+
+			var menu = (this.blockActionsMenu || this.sidebarActionsMenu);
+			setTextContent(menu.getMenuItem("show_hide").getLayout().text, BX.Landing.Loc.getMessage("ACTION_BUTTON_HIDE"));
 			BX.Landing.Backend.getInstance().action(
 				"Landing::showBlock",
 				{block: this.id, lid: this.lid, siteId: this.siteId},
@@ -1325,7 +1602,8 @@
 		{
 			this.active = false;
 			addClass(this.node, "landing-block-disabled");
-			setTextContent(this.blockActionsMenu.getMenuItem("show_hide").getLayout().text, BX.Landing.Loc.getMessage("ACTION_BUTTON_SHOW"));
+			var menu = (this.blockActionsMenu || this.sidebarActionsMenu);
+			setTextContent(menu.getMenuItem("show_hide").getLayout().text, BX.Landing.Loc.getMessage("ACTION_BUTTON_SHOW"));
 			BX.Landing.Backend.getInstance().action(
 				"Landing::hideBlock",
 				{block: this.id, lid: this.lid, siteId: this.siteId},
@@ -1376,7 +1654,7 @@
 						});
 						children.push(currentLabel);
 
-						onCustomEvent(labelNode.getField(), "BX.Landing.UI.Field:change", function(value) {
+						onCustomEvent(labelNode.getField(), "change", function(value) {
 							currentLabel.innerHTML = escapeText(create("div", {html: value}).innerText);
 						});
 
@@ -1391,7 +1669,7 @@
 						});
 						children.push(currentLabel);
 
-						onCustomEvent(labelNode.getField(), "BX.Landing.UI.Field:change", function(value) {
+						onCustomEvent(labelNode.getField(), "change", function(value) {
 							currentLabel.innerHTML = escapeText(value.text);
 						});
 
@@ -1406,7 +1684,7 @@
 						});
 						children.push(currentLabel);
 
-						onCustomEvent(labelNode.getField(), "BX.Landing.UI.Field:change", function(value) {
+						onCustomEvent(labelNode.getField(), "change", function(value) {
 							currentLabel.firstChild.className = "landing-card-title-icon " + value.classList.join(" ");
 						});
 
@@ -1424,7 +1702,7 @@
 						});
 						children.push(currentLabel);
 
-						onCustomEvent(labelNode.getField(), "BX.Landing.UI.Field:change", function(value) {
+						onCustomEvent(labelNode.getField(), "change", function(value) {
 							currentLabel.innerHTML = "";
 							currentLabel.appendChild(create('img', {props: {src: value.src}}));
 						});
@@ -2089,6 +2367,7 @@
 				.then(function(currentState) {
 					return preventHistory ? currentState : this.createHistoryEntry(currentState);
 				}.bind(this))
+				.then(this.applyMenuChanges.bind(this))
 				.then(this.applyContentChanges.bind(this))
 				.then(this.applyCardsChanges.bind(this))
 				.then(this.applyAttributeChanges.bind(this))
@@ -2619,7 +2898,7 @@
 			{
 				var value = data(element, fieldOptions.attribute);
 
-				if (value && isString(value))
+				if (BX.Type.isNil(value))
 				{
 					value = attr(element, fieldOptions.attribute);
 				}
@@ -2683,6 +2962,13 @@
 			requestData[selector] = requestData[selector] || {};
 			requestData[selector]["attrs"] = requestData[selector]["attrs"] || {};
 			requestData[selector]["attrs"][field.attribute] = value;
+			return requestData;
+		},
+
+
+		appendMenuValue: function(requestData, menu)
+		{
+			requestData[menu.code] = menu.serialize();
 			return requestData;
 		},
 
@@ -2797,7 +3083,12 @@
 
 			if (this.blockActionsMenu)
 			{
-				BX.PopupMenu.destroy(this.blockActionsMenu.id);
+				BX.Main.MenuManager.destroy(this.blockActionsMenu.id);
+			}
+
+			if (this.sidebarActionsMenu)
+			{
+				BX.Main.MenuManager.destroy(this.sidebarActionsMenu.id);
 			}
 
 			window.localStorage.removeItem("landingBlockId");
@@ -2818,7 +3109,7 @@
 					slice(this.node.querySelectorAll(".landing-ui-panel")).forEach(remove);
 					if ((isBoolean(preventHistory) && !preventHistory) || !isBoolean(preventHistory))
 					{
-						var prevBlock = top.BX.Landing.Block.storage.getByNode(
+						var prevBlock = BX.Landing.PageObject.getBlocks().getByNode(
 							BX.findPreviousSibling(this.node, {className: "block-wrapper"})
 						);
 
@@ -2837,7 +3128,7 @@
 						);
 					}
 
-					top.BX.Landing.Block.storage.remove(this);
+					BX.Landing.PageObject.getBlocks().remove(this);
 					remove(this.node);
 					fireCustomEvent("Landing.Block:onAfterDelete", [this]);
 					fireCustomEvent("BX.Landing.Block:afterRemove", [event]);
@@ -2911,6 +3202,14 @@
 					return false;
 				}
 
+				if (
+					BX.type.isPlainObject(this.manifest.menu)
+					&& selector in this.manifest.menu
+				)
+				{
+					return false;
+				}
+
 				try
 				{
 					if (selector !== "#block" + this.id && selector !== "")
@@ -2977,6 +3276,36 @@
 			return Promise.resolve(data);
 		},
 
+		applyMenuChanges: function(data)
+		{
+			if (!isPlainObject(data))
+			{
+				return Promise.reject(
+					new TypeError("BX.Landing.Block.applyContentChanges: data isn't object")
+				);
+			}
+
+			var menuKeys = Object.keys(this.manifest.menu || {});
+			if (menuKeys.length > 0)
+			{
+				menuKeys.forEach(function(code) {
+					if (code in data)
+					{
+						var menu = this.menu.find(function(menuItem) {
+							return menuItem.code === code;
+						});
+
+						menu.rebuild(data[code]);
+					}
+				}.bind(this));
+
+				data.forceReload = true;
+			}
+
+			this.initMenu();
+
+			return Promise.resolve(data);
+		},
 
 		/**
 		 * @private
@@ -3269,8 +3598,6 @@
 						nodes.add(this.nodes.getBySelector(selector));
 					}, this);
 
-
-
 					batch.updateNodes = {
 						action: "Block::updateNodes",
 						data: updateNodesData,
@@ -3298,6 +3625,29 @@
 							additional: cardsNodesAdditionalValues
 						}
 					};
+				}
+
+				if (data.cardsFirst)
+				{
+					var oldBatch = batch;
+					batch = {};
+
+					if (oldBatch.changeAnchor)
+					{
+						batch.changeAnchor = oldBatch.changeAnchor;
+					}
+
+					if (oldBatch.updateCards)
+					{
+						batch.updateCards = oldBatch.updateCards;
+					}
+
+					if (oldBatch.updateNodes)
+					{
+						batch.updateNodes = oldBatch.updateNodes;
+					}
+
+					delete data.cardsFirst;
 				}
 
 				return BX.Landing.Backend.getInstance()
@@ -3334,6 +3684,7 @@
 			forms.dynamicBlock = new FormCollection();
 			forms.content = new FormCollection();
 			forms.settings = new FormCollection();
+			forms.menu = new FormCollection();
 
 			panel.forms
 				.forEach(function(form) {
@@ -3356,7 +3707,7 @@
 				});
 			});
 
-			fetchFields(attrFields, all)
+			fetchFields(attrFields, true)
 				.reduce(proxy(this.appendAttrFieldValue, this), requestData);
 
 			forms.cards
@@ -3373,6 +3724,9 @@
 
 			fetchFields(forms.settings.fetchFields(), all)
 				.reduce(proxy(this.appendSettingsFieldValue, this), requestData);
+
+			forms.menu
+				.reduce(proxy(this.appendMenuValue, this), requestData);
 
 			requestData.dynamicState = Object.keys(this.manifest.cards)
 				.reduce(function(acc, cardsCode) {
@@ -3504,6 +3858,15 @@
 				contentPanel.hide();
 
 				this.fetchRequestData(contentPanel)
+					.then(function(requestData) {
+						return Object.assign(
+							{},
+							requestData,
+							{
+								cardsFirst: true
+							}
+						);
+					})
 					.then(this.updateBlockState.bind(this));
 			}
 		},
@@ -3635,6 +3998,13 @@
 			});
 
 			return blockForm;
+		},
+
+		getMenuEditForms: function()
+		{
+			return this.menu.map(function(menu) {
+				return menu.getForm();
+			}, this);
 		},
 
 		/**
@@ -3953,57 +4323,67 @@
 			}
 
 			var forms = new FormCollection();
-			var editAllowed = !(this.access < ACCESS_W || (
-				isEmpty(this.manifest.nodes) && isEmpty(this.manifest.attrs)
-			));
 
-			if (editAllowed)
+			if (this.access >= ACCESS_W)
 			{
-				// Block form
-				var blockEditForm = this.getBlockEditForm(preparedOptions);
+				var isEditable = !(
+					isEmpty(this.manifest.nodes)
+					&& isEmpty(this.manifest.attrs)
+					&& isEmpty(this.manifest.menu)
+				);
 
-				if (blockEditForm.fields.length > 0)
+				if (isEditable)
 				{
-					forms.add(blockEditForm);
+					// Block form
+					var blockEditForm = this.getBlockEditForm(preparedOptions);
+					if (blockEditForm.fields.length > 0)
+					{
+						forms.add(blockEditForm);
+					}
+
+					var menuEditForms = this.getMenuEditForms(preparedOptions);
+					if (menuEditForms.length > 0)
+					{
+						menuEditForms.forEach(function(menuForm) {
+							forms.add(menuForm);
+						});
+					}
+
+					if (!preparedOptions.nodesOnly)
+					{
+						// Attrs forms
+						var attrsEditForm = this.getAttrsEditForm();
+
+						if (attrsEditForm.fields.length > 0)
+						{
+							forms.add(attrsEditForm);
+						}
+
+						// Attrs additional forms
+						var attrsAdditionalEditForms = this.getAttrsAdditionalEditForms();
+						if (attrsAdditionalEditForms.length > 0)
+						{
+							attrsAdditionalEditForms.forEach(function(form) {
+								forms.add(form);
+							});
+						}
+
+						// Cards forms
+						var cardsEditForms = this.getCardsEditForms(preparedOptions.skipCardsState);
+						if (cardsEditForms.length > 0)
+						{
+							cardsEditForms.forEach(function(form) {
+								forms.add(form);
+							});
+						}
+					}
 				}
 
-				if (!preparedOptions.nodesOnly)
+				// Block settings
+				var blockSettingsForm = this.getBlockSettingsForm();
+				if (blockSettingsForm.fields.length > 0)
 				{
-					// Attrs forms
-					var attrsEditForm = this.getAttrsEditForm();
-
-					if (attrsEditForm.fields.length > 0)
-					{
-						forms.add(attrsEditForm);
-					}
-
-					// Attrs additional forms
-					var attrsAdditionalEditForms = this.getAttrsAdditionalEditForms();
-
-					if (attrsAdditionalEditForms.length > 0)
-					{
-						attrsAdditionalEditForms.forEach(function(form) {
-							forms.add(form);
-						});
-					}
-
-					// Cards forms
-					var cardsEditForms = this.getCardsEditForms(preparedOptions.skipCardsState);
-
-					if (cardsEditForms.length > 0)
-					{
-						cardsEditForms.forEach(function(form) {
-							forms.add(form);
-						});
-					}
-
-					// Block settings
-					var blockSettingsForm = this.getBlockSettingsForm();
-
-					if (blockSettingsForm.fields.length > 0)
-					{
-						forms.push(blockSettingsForm);
-					}
+					forms.push(blockSettingsForm);
 				}
 			}
 
@@ -4023,15 +4403,6 @@
 		 * Handles block remove event
 		 */
 		onBlockRemove: function()
-		{
-			this.adjustSortButtonsState();
-		},
-
-
-		/**
-		 * Handles block init event
-		 */
-		onBlockInit: function()
 		{
 			this.adjustSortButtonsState();
 		},
@@ -4120,7 +4491,12 @@
 			return fields.map(function(field) {
 				var type = this.getFieldType(field);
 
-				if (type !== "text" && type !== "img" && type !== "link")
+				if (
+					type !== "text"
+					&& type !== "img"
+					&& type !== "link"
+					&& type !== "link_ref"
+				)
 				{
 					return field;
 				}
@@ -4164,12 +4540,13 @@
 					});
 				}
 
-				return new BX.Landing.UI.Field.Dropdown({
+				return new BX.Landing.UI.Field.DynamicDropdown({
 					title: field.title,
 					selector: field.selector,
-					items: dropDownItems,
-					content: BX.type.isPlainObject(value) ? value.id : value
-				})
+					dropdownItems: dropDownItems,
+					value: BX.type.isString(value) ? {id: value} : value,
+					hideCheckbox: cardCode === "wrapper" || type === "link_ref"
+				});
 			}, this);
 		},
 
@@ -4206,6 +4583,19 @@
 						id: "references",
 						items: dynamicFields
 					});
+
+					var detailPageField = dynamicForm.detailPageGroup.fields[0];
+					if (!BX.Type.isStringFilled(detailPageField.getValue().href))
+					{
+						var content = {text: '', href: ''};
+						if (source && source.default && source.default.detail)
+						{
+							content.href = source.default.detail;
+						}
+
+						detailPageField.setValue(content);
+						detailPageField.hrefInput.makeDisplayedHrefValue();
+					}
 
 					var oldCard = dynamicForm.cards.get('references');
 					dynamicForm.replaceCard(oldCard, dynamicGroup);
@@ -4366,7 +4756,7 @@
 
 				if (form)
 				{
-					return form.isDynamicEnabled();
+					return form.isCheckboxChecked();
 				}
 			}
 

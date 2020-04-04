@@ -8,7 +8,7 @@ use Bitrix\Main\Localization\Loc;
 $startTimeInputName = $arResult['WORKTIME_RECORD_FORM_NAME'] . '[recordedStartTime]';
 $endTimeInputName = $arResult['WORKTIME_RECORD_FORM_NAME'] . '[recordedStopTime]';
 $breakLengthInputName = $arResult['WORKTIME_RECORD_FORM_NAME'] . '[recordedBreakLengthTime]';
-
+$recordFormHelper = new \Bitrix\Timeman\Helper\Form\Worktime\RecordFormHelper();
 $arResult['FIELD_CELLS']['START']['DATA_ROLE'] = 'start-time';
 $arResult['FIELD_CELLS']['BREAK']['DATA_ROLE'] = 'break-time';
 $arResult['FIELD_CELLS']['END']['DATA_ROLE'] = 'end-time';
@@ -30,8 +30,8 @@ $APPLICATION->IncludeComponent(
 		'SHOW_EDIT_BREAK_LENGTH' => true,
 		'SHOW_START_DATE_PICKER' => true,
 		'SHOW_END_DATE_PICKER' => true,
-		'START_DATE_DEFAULT_VALUE' => $arResult['startTimestamp'],
-		'END_DATE_DEFAULT_VALUE' => $arResult['endTimestamp'],
+		'START_DATE_DEFAULT_VALUE' => $arResult['FIELD_CELLS']['START']['TIME_PICKER_INIT_DATE'],
+		'END_DATE_DEFAULT_VALUE' => $arResult['FIELD_CELLS']['END']['TIME_PICKER_INIT_DATE'],
 		'EDIT_BREAK_LENGTH_ATTRIBUTE_NAME' => 'breakLength',
 		'EDIT_REASON_ATTRIBUTE_NAME' => $arResult['WORKTIME_EVENT_FORM_NAME'] . '[reason]',
 		'START_INIT_TIME' => $arResult['FIELD_CELLS']['START']['RECORDED_VALUE'],
@@ -43,7 +43,9 @@ $APPLICATION->IncludeComponent(
 <input type="hidden" name="shiftId" value="<?= htmlspecialcharsbx($arResult['record']['SHIFT_ID']) ?>">
 <div class="timeman-report-decs">
 	<form data-role="worktime-record-form">
-		<input type="hidden" name="<?php echo $arResult['WORKTIME_RECORD_FORM_NAME']; ?>[id]" value="<?= htmlspecialcharsbx($arResult['RECORD_ID']) ?>">
+		<input type="hidden" name="<?php echo $arResult['WORKTIME_RECORD_FORM_NAME']; ?>[useEmployeesTimezone]"
+				value="<?= $arResult['useEmployeesTimezone'] ? '1' : '0' ?>">
+		<input type="hidden" name="<?php echo $arResult['WORKTIME_RECORD_FORM_NAME']; ?>[id]" value="<?= htmlspecialcharsbx($arResult['record']['ID']) ?>">
 		<input type="hidden" name="<?php echo $arResult['WORKTIME_RECORD_FORM_NAME']; ?>[recordedStartDateFormatted]" data-role="start-date">
 		<input type="hidden" name="<?php echo $arResult['WORKTIME_RECORD_FORM_NAME']; ?>[recordedStopDateFormatted]" data-role="end-date">
 		<input type="hidden" name="<?= htmlspecialcharsbx($startTimeInputName); ?>"
@@ -72,29 +74,48 @@ $APPLICATION->IncludeComponent(
 						<? endforeach; ?>
 					<? endif; ?>
 				<? endif; ?>
-				<div class="timeman-report-time-item <?= htmlspecialcharsbx($cssClasses); ?> <?= $fieldCell['HIDE'] ? 'timeman-hide' : ''; ?>"
+				<div class="timeman-report-time-item <?= htmlspecialcharsbx($cssClasses); ?> <?= $fieldCell['HIDE'] && !$fieldCell['CHANGED_TIME'] ? 'timeman-hide' : ''; ?>"
 						data-role="<?= htmlspecialcharsbx($fieldCell['DATA_ROLE']) ?>-container">
 					<div class="timeman-report-time-item-title">
 						<span class="timeman-report-time-item-title-text"><?= htmlspecialcharsbx($fieldCell['TITLE']) ?></span>
 					</div>
 					<div class="timeman-report-time-item-inner">
 						<div class="timeman-report-time-item-data">
-								<span class="timeman-report-time-item-value" data-role="<?= htmlspecialcharsbx($fieldCell['DATA_ROLE']) ?>">
-									<?= htmlspecialcharsbx($fieldCell['RECORDED_VALUE']) ?>
-								</span>
+							<span class="timeman-report-time-item-value"
+									data-role="<?= htmlspecialcharsbx($fieldCell['DATA_ROLE']) ?>" <?
+							if (!empty($fieldCell['RECORDED_VALUE_HINT'])): ?>
+								data-hint-no-icon
+								data-hint="<?= htmlspecialcharsbx($fieldCell['RECORDED_VALUE_HINT']); ?>"
+							<? endif; ?>
+							><?=
+								htmlspecialcharsbx($fieldCell['RECORDED_VALUE'])
+								?></span>
 							<? if (isset($fieldCell['DATE'])): ?>
-								<span class="timeman-report-time-item-value-real">
-									<?= '(' . htmlspecialcharsbx($fieldCell['DATE']) . ')'; ?>
-								</span>
+								<span class="timeman-report-time-item-value-real"><?=
+									'(' . htmlspecialcharsbx($fieldCell['DATE']) . ')';
+									?></span>
 							<? endif; ?>
 							<div class="<?= $fieldCell['CHANGED_TIME'] ? '' : 'timeman-hide'; ?>">
-								<span class="timeman-report-time-item-value-real">
-									<?= '(' . htmlspecialcharsbx(Loc::getMessage('JS_CORE_TMR_REPORT_ORIG') . ' ' . $fieldCell['ACTUAL_VALUE']) . ')'; ?>
-								</span>
-								<div class="<?= empty($fieldCell['ACTUAL_INFO']) ? 'timeman-hide' : ''; ?>">
-									<div class="timeman-report-time-item-edited
-									<? echo $arResult['IS_RECORD_APPROVED'] ? 'timeman-report-time-item-edited-confirmed' : 'timeman-report-time-item-edited-warning'; ?>">
-										<?= htmlspecialcharsbx(Loc::getMessage('JS_CORE_TMR_A') . ' ' . $fieldCell['ACTUAL_INFO']['EDITED_USER_TIME']); ?>
+								<span class="timeman-report-time-item-value-real" <?
+								if (!empty($fieldCell['ACTUAL_VALUE_HINT'])): ?>
+									data-hint-no-icon
+									data-hint="<?= htmlspecialcharsbx($fieldCell['ACTUAL_VALUE_HINT']); ?>"
+								<? endif; ?>
+								><?=
+									'(' . htmlspecialcharsbx(Loc::getMessage('JS_CORE_TMR_REPORT_ORIG') . ' ' . $fieldCell['ACTUAL_VALUE']) . ')';
+									?></span>
+								<div class="<?= empty($fieldCell['ACTUAL_INFO']) ? 'timeman-hide' : ''; ?>" <?
+								if (!empty($fieldCell['ACTUAL_INFO_HINT'])): ?>
+									data-hint-no-icon
+									data-hint="<?= htmlspecialcharsbx($fieldCell['ACTUAL_INFO_HINT']); ?>"
+								<? endif; ?>>
+									<div class="timeman-report-time-item-edited">
+										<span class="timeman-record-violation-icon <?php echo $recordFormHelper->getCssClassForViolations(
+											$fieldCell['EDITED_VIOLATIONS'], $fieldCell['OTHER_VIOLATIONS'], $arResult['record']
+										) ?>"></span>
+										<span><?php echo
+											htmlspecialcharsbx(Loc::getMessage('JS_CORE_TMR_A') . ' ' . $fieldCell['ACTUAL_INFO']['EDITED_USER_TIME'])
+											?></span>
 									</div>
 								</div>
 							</div>

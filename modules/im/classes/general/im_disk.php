@@ -489,16 +489,29 @@ class CIMDisk
 		return true;
 	}
 
+	/**
+	 * @param $chatId
+	 * @param $files
+	 * @param string $text
+	 * @param array $options
+	 * @param bool $robot
+	 * @return bool
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\LoaderException
+	 * @throws \Bitrix\Main\ObjectException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
 	public static function UploadFileFromDisk($chatId, $files, $text = '', $options = [], $robot = false)
 	{
 		if (intval($chatId) <= 0)
 			return false;
 
-		$orm = \Bitrix\Im\Model\ChatTable::getList(Array(
-			'filter'=>Array(
+		$orm = \Bitrix\Im\Model\ChatTable::getList([
+			'filter'=>[
 				'=ID' => $chatId
-			)
-		));
+			]
+		]);
 		$chat = $orm->fetch();
 		if (!$chat)
 			return false;
@@ -558,26 +571,26 @@ class CIMDisk
 		}
 
 		$result['MESSAGE_ID'] = 0;
-		$ar = Array(
+		$ar = [
 			"TO_CHAT_ID" => $chatId,
 			"FROM_USER_ID" => self::GetUserId(),
 			"MESSAGE_TYPE" => $chat['TYPE'],
-			"PARAMS" => Array(
+			"PARAMS" => [
 				'FILE_ID' => $result['DISK_ID']
-			),
+			],
 			"SILENT_CONNECTOR" => $linesSilentMode?'Y':'N',
 			"SKIP_USER_CHECK" => $chat['ENTITY_TYPE'] == 'LIVECHAT',
 			"TEMPLATE_ID" => $templateId,
 			"FILE_TEMPLATE_ID" => $fileTemplateId,
-		);
+		];
 
 		if ($chat['ENTITY_TYPE'] == 'LIVECHAT')
 		{
 			list($lineId) = explode("|", $chat['ENTITY_ID']);
-			$ar["EXTRA_PARAMS"] = Array(
+			$ar["EXTRA_PARAMS"] = [
 				"CONTEXT" => "LIVECHAT",
 				"LINE_ID" => $lineId
-			);
+			];
 		}
 
 		$text = trim($text);
@@ -594,65 +607,32 @@ class CIMDisk
 
 		if (!$robot && !$linesSilentMode)
 		{
-			$uploadLiveChatFile = false;
-
 			if ($chat['ENTITY_TYPE'] == 'LIVECHAT' && CModule::IncludeModule('imopenlines'))
 			{
 				list($lineId, $userId) = explode("|", $chat['ENTITY_ID']);
 
 				$session = new \Bitrix\Imopenlines\Session();
-				if ($session->load(Array(
+				if ($session->load([
 					'USER_CODE' => 'livechat|'.$lineId.'|'.$chat['ID'].'|'.$userId,
 					'DEFERRED_JOIN' => 'Y',
-				)))
+				]))
 				{
-					$uploadLiveChatFile = true;
 					if ($session->isNowCreated())
 					{
 						\Bitrix\ImOpenLines\Connector::saveCustomData($session->getData('CHAT_ID'), $_SESSION['LIVECHAT']['CUSTOM_DATA']);
 
 						$session->joinUser();
 
-						$messageParams = Array(
+						$messageParams = [
 							'IMOL_SID' => $session->getData('ID'),
 							"IMOL_FORM" => "welcome",
 							"TYPE" => "lines",
 							"COMPONENT_ID" => "bx-imopenlines-message",
-						);
+						];
 						\CIMMessageParam::Set($messageId, $messageParams);
 						\CIMMessageParam::SendPull($messageId, array_keys($messageParams));
 					}
-					$connectorChatId = $session->getData('CHAT_ID');
-				}
-			}
-			else if ($chat['ENTITY_TYPE'] == 'LINES')
-			{
-				list($connectorId, $lineId, $connectorChatId) = explode("|", $chat['ENTITY_ID']);
-				$uploadLiveChatFile = $connectorId == 'livechat';
-			}
-
-			if ($uploadLiveChatFile)
-			{
-				$files = array_map(function($value) {
-					return str_replace('upload', 'disk', $value);
-				}, $files);
-
-				$uploadResult = self::UploadFileFromDisk($connectorChatId, $files, $text, false, true);
-				if ($uploadResult)
-				{
-					\Bitrix\Im\Model\MessageParamTable::add(array(
-						"MESSAGE_ID" => $messageId,
-						"PARAM_NAME" => 'CONNECTOR_MID',
-						"PARAM_VALUE" => $uploadResult['MESSAGE_ID']
-					));
-					\Bitrix\Im\Model\MessageParamTable::add(array(
-						"MESSAGE_ID" => $uploadResult['MESSAGE_ID'],
-						"PARAM_NAME" => 'CONNECTOR_MID',
-						"PARAM_VALUE" => $messageId
-					));
-
-					$event = new \Bitrix\Main\Event("imopenlines", "OnLivechatUploadFile", Array('FILES' => $uploadResult['DISK_ID']));
-					$event->send();
+					$session->getData('CHAT_ID');
 				}
 			}
 		}
@@ -689,6 +669,7 @@ class CIMDisk
 			else
 				$fileName = $file['ORIGINAL_NAME'];
 
+			$fileName = \Bitrix\Disk\Ui\Text::correctFilename($fileName);
 			$newFile = $folderModel->addFile(array(
 				'NAME' => $fileName,
 				'FILE_ID' => $fileId,

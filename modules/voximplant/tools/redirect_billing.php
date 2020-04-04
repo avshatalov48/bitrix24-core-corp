@@ -10,7 +10,7 @@ if(!\Bitrix\Main\Loader::includeModule('voximplant'))
 	return false;
 
 $apiClient = new CVoxImplantHttp();
-$result = $apiClient->getBillingUrl();
+$result = (array)$apiClient->getBillingUrl();
 
 if(isset($result['error']))
 {

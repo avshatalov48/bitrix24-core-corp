@@ -51,7 +51,7 @@ class Fonts extends \Bitrix\Landing\Hook\Page
 		);
 	}
 	
-//	dbg: speed: for find fonts in content and not adding all
+	// dbg: speed: for find fonts in content and not adding all
 	private static function getCustomIconFonts()
 	{
 		$pathTemplate24 = '/bitrix/templates/';

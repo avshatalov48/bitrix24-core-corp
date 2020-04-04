@@ -1093,44 +1093,26 @@ B24.showPartnerOrderForm = function (params)
 		offsetTop: 0,
 		overlay: true,
 		height: Math.min(document.documentElement.clientHeight - 100, 740),
-		width: 500,
+		width: 550,
 		draggable: {restrict:true},
 		closeByEsc: true,
 		contentColor: "white",
 		contentNoPaddings: true,
 		closeIcon: { right : "5px", top : "10px"},
 		content:
-			'<div style="" id="B24PartnerOrderPopup">' +
-				'<div class="intranet-loader-container intranet-loader-show" id="B24PartnerOrderLoader">' +
-					'<svg class="intranet-loader-circular" viewBox="25 25 50 50"> ' +
-						'<circle ' +
-							'class="intranet-loader-path" ' +
-							'cx="50" cy="50" r="20" fill="none" stroke-miterlimit="10" ' +
-						'/> ' +
-					'</svg>' +
-				'</div>' +
-			'</div>',
+			'<script data-b24-form="inline/'+params.id+'/'+params.sec+'" data-skip-moving="true">'+
+				'(function(w,d,u){'+
+					'var s=d.createElement("script");s.async=true;s.src=u+"?"+(Date.now()/180000|0);'+
+					'var h=d.getElementsByTagName("script")[0];h.parentNode.insertBefore(s,h);'+
+				'})(window,document,"https://cp.bitrix.ru/upload/crm/form/loader_${params.id}_${params.sec}.js");'+
+			'</script>',
 		events: {
 			onPopupFirstShow: function()
 			{
-				(function(w,d,u,b){w['Bitrix24FormObject']=b;w[b] = w[b] || function(){arguments[0].ref=u;
-						(w[b].forms=w[b].forms||[]).push(arguments[0])};
-					if(w[b]['forms']) return;
-					s=d.createElement('script');r=1*new Date();s.async=1;s.src=u+'?'+r;
-					h=d.getElementsByTagName('script')[0];h.parentNode.insertBefore(s,h);
-				})(window,document,'https://cp.bitrix.ru/bitrix/js/crm/form_loader.js','b24form');
-
-				b24form({
-					"id": params.id ? params.id : "",
-					"lang":params.lang ? params.lang : "",
-					"sec":params.sec ? params.sec : "",
-					"type":"inline_popup",
-					"node": BX("B24PartnerOrderPopup"),
-					"options": {'borders': false},
-					"handlers":{"load":function () {
-						BX.remove(BX("B24PartnerOrderLoader"));
-					}}
-				});
+				(function(w,d,u){
+					var s=d.createElement('script');s.async=true;s.src=u+'?'+(Date.now()/180000|0);
+					var h=d.getElementsByTagName('script')[0];h.parentNode.insertBefore(s,h);
+				})(window,document,'https://cp.bitrix.ru/upload/crm/form/loader_'+params.id+'_'+params.sec+'.js')
 			}
 		}
 	}).show();

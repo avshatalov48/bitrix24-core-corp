@@ -282,7 +282,9 @@ abstract class Check
 					));
 					if ($data = $dbResPayment->fetch())
 					{
-						$order = Order::load($data['ORDER_ID']);
+						/** @var Order $orderClass */
+						$orderClass = $registry->getOrderClassName();
+						$order = $orderClass::load($data['ORDER_ID']);
 					}
 				}
 				elseif ($entity['ENTITY_TYPE'] === CheckRelatedEntitiesTable::ENTITY_TYPE_SHIPMENT)
@@ -295,7 +297,9 @@ abstract class Check
 					));
 					if ($data = $dbResShipment->fetch())
 					{
-						$order = Order::load($data['ORDER_ID']);
+						/** @var Order $orderClass */
+						$orderClass = $registry->getOrderClassName();
+						$order = $orderClass::load($data['ORDER_ID']);
 					}
 				}
 
@@ -795,8 +799,8 @@ abstract class Check
 	 */
 	private function parseMarkingCode(string $code) : array
 	{
-		$gtin = substr($code, 0, 14);
-		$serial = substr($code, 14, 13);
+		$gtin = substr($code, 2, 14);
+		$serial = substr($code, 18, 13);
 		$reserve = substr($code, 27);
 
 		return [$gtin, $serial, $reserve];

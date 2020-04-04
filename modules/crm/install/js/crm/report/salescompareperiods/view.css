@@ -1,0 +1,52 @@
+.crm-report-sales-dynamics-modal {
+	display: inline-block;
+	top: 350px;
+	padding: 15px 16px 0 13px;
+	min-width: 157px;
+	border-left: 3px solid transparent;
+	background: #fff;
+	box-shadow: 0 6px 21px 0 rgba(83,92,105,.15);
+	box-sizing: border-box;
+}
+.crm-report-sales-dynamics-modal-title {
+	display: block;
+	margin: 0 0 17px 0;
+	padding: 0 0 12px 0;
+	border-bottom: 1px solid rgba(130,139,149,.19);
+	font: 13px "OpenSans-SemiBold", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	color: #333;
+}
+.crm-report-sales-dynamics-modal-subtitle {
+	display: block;
+	margin: 0 0 2px 0;
+	font: 11px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	color: #A8ADB4;
+	opacity: .84;
+}
+.crm-report-sales-dynamics-modal-main .crm-report-chart-card-subtitle {
+	font: 11px "Helvetica Neue", Arial, Helvetica, sans-serif;
+}
+.crm-report-sales-dynamics-modal-main {}
+.crm-report-sales-dynamics-modal-content {
+	display: flex;
+	padding: 0 0 18px 0;
+	align-items: baseline;
+	justify-content: space-between;
+}
+.crm-report-sales-dynamics-modal-value {
+	font: 20px "OpenSans-Regular", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	color: #333;
+}
+
+.crm-report-sales-dynamics-modal-percent-value {
+	font: 15px "OpenSans-Regular", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	margin-left: 20px;
+}
+
+.crm-report-sales-dynamics-modal-percent-value.red {
+	color: #FF5752;
+}
+
+.crm-report-sales-dynamics-modal-percent-value.green {
+	color: green;
+}

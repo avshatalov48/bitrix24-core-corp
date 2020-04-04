@@ -639,17 +639,18 @@ if ($arParams["EMPTY_PAGE"] != "Y")
 		}
 	}
 
-	if ($arTmpEvent["DATE_FOLLOW"])
-	{
-		$arResult["dateLastPageTS"] = MakeTimeStamp($arTmpEvent["DATE_FOLLOW"], CSite::GetDateFormat("FULL"));
-		$dateLastPage = ConvertTimeStamp($arResult["dateLastPageTS"], "FULL");
-	}
-	elseif (
+
+	if (
 		$arParams["USE_FOLLOW"] == "N"
 		&& $arTmpEvent["LOG_UPDATE"]
 	)
 	{
 		$arResult["dateLastPageTS"] = MakeTimeStamp($arTmpEvent["LOG_UPDATE"], CSite::GetDateFormat("FULL"));
+		$dateLastPage = ConvertTimeStamp($arResult["dateLastPageTS"], "FULL");
+	}
+	elseif ($arTmpEvent["DATE_FOLLOW"])
+	{
+		$arResult["dateLastPageTS"] = MakeTimeStamp($arTmpEvent["DATE_FOLLOW"], CSite::GetDateFormat("FULL"));
 		$dateLastPage = ConvertTimeStamp($arResult["dateLastPageTS"], "FULL");
 	}
 
@@ -886,6 +887,20 @@ if (
 }
 
 $arResult["USE_FRAMECACHE"] = ($arParams["SET_LOG_COUNTER"] == "Y");
+
+// knowledge for group
+$arResult["KNOWLEDGE_PATH"] = "";
+if (
+	$arParams["GROUP_ID"] > 0 &&
+	\Bitrix\Main\Loader::includeModule("landing") &&
+	\Bitrix\Landing\Connector\SocialNetwork::userInGroup($arParams["GROUP_ID"])
+)
+{
+	$arResult["KNOWLEDGE_PATH"] = \Bitrix\Landing\Connector\SocialNetwork::getSocNetMenuUrl(
+		$arParams["GROUP_ID"],
+		false
+	);
+}
 
 $this->IncludeComponentTemplate();
 ?>

@@ -144,17 +144,20 @@ if($arParams['TYPE'] === 'details')
 		'ICON' => 'btn-edit'
 	);
 
-	$arResult['BUTTONS'][] = [
-		'CODE' => 'document',
-		'TEXT' => GetMessage('ORDER_DOCUMENT_BUTTON_TEXT'),
-		'TITLE' => GetMessage('ORDER_DOCUMENT_BUTTON_TITLE'),
-		'TYPE' => 'crm-document-button',
-		'PARAMS' => \Bitrix\Crm\Integration\DocumentGeneratorManager::getInstance()
-			->getDocumentButtonParameters(
-				\Bitrix\Crm\Integration\DocumentGenerator\DataProvider\Order::class,
-				$arParams['ELEMENT_ID']
-			),
-	];
+	if(\Bitrix\Crm\Integration\DocumentGeneratorManager::getInstance()->isDocumentButtonAvailable())
+	{
+		$arResult['BUTTONS'][] = [
+			'CODE' => 'document',
+			'TEXT' => GetMessage('ORDER_DOCUMENT_BUTTON_TEXT'),
+			'TITLE' => GetMessage('ORDER_DOCUMENT_BUTTON_TITLE'),
+			'TYPE' => 'crm-document-button',
+			'PARAMS' => \Bitrix\Crm\Integration\DocumentGeneratorManager::getInstance()
+				->getDocumentButtonParameters(
+					\Bitrix\Crm\Integration\DocumentGenerator\DataProvider\Order::class,
+					$arParams['ELEMENT_ID']
+				),
+		];
+	}
 
 	$this->IncludeComponentTemplate();
 	return;

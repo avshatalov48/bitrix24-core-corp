@@ -4296,7 +4296,7 @@ class CIBlockCMLImport
 						array(
 							'fields' => $arProduct,
 							'external_fields' => array(
-								'IBLOCK_ID' => $this->next_step["IBLOCK_ID"]
+								'IBLOCK_ID' => $IBLOCK_ID
 							)
 						)
 					);
@@ -4307,7 +4307,7 @@ class CIBlockCMLImport
 						array(
 							'fields' => $arProduct,
 							'external_fields' => array(
-								'IBLOCK_ID' => $this->next_step["IBLOCK_ID"]
+								'IBLOCK_ID' => $IBLOCK_ID
 							)
 						)
 					);
@@ -4365,7 +4365,15 @@ class CIBlockCMLImport
 					if (!empty($internalFields))
 					{
 						$internalFields['QUANTITY'] -= $quantityReserved;
-						$internalResult = Catalog\Model\Product::update($arElement['ID'], ['fields' => $internalFields]);
+						$internalResult = Catalog\Model\Product::update(
+							$arElement['ID'],
+							array(
+								'fields' => $internalFields,
+								'external_fields' => array(
+									'IBLOCK_ID' => $IBLOCK_ID
+								)
+							)
+						);
 						if (!$internalResult->isSuccess())
 						{
 

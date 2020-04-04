@@ -38,6 +38,9 @@ class CAllCloudStorageBucket
 		if (defined("BX_CLOUDS_COUNTERS_DEBUG"))
 			\CCloudsDebug::getInstance()->endAction();
 
+		if ($file_size)
+			COption::SetOptionString("main_size", "~cloud", intval(COption::GetOptionString("main_size", "~cloud")) + $file_size);
+
 		if(CACHED_b_clouds_file_bucket !== false)
 			$CACHE_MANAGER->CleanDir("b_clouds_file_bucket");
 		return $res;
@@ -58,6 +61,9 @@ class CAllCloudStorageBucket
 
 		if (defined("BX_CLOUDS_COUNTERS_DEBUG"))
 			\CCloudsDebug::getInstance()->endAction();
+
+		if ($file_size)
+			COption::SetOptionString("main_size", "~cloud", intval(COption::GetOptionString("main_size", "~cloud")) - $file_size);
 
 		if(CACHED_b_clouds_file_bucket !== false)
 			$CACHE_MANAGER->CleanDir("b_clouds_file_bucket");

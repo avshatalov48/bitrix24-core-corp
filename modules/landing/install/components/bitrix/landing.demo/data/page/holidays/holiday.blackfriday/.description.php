@@ -199,10 +199,10 @@ return array(
 			),
 			'style' => array(
 				'.landing-block-node-title' => array(
-					0 => 'landing-block-node-title g-font-weight-400 g-my-0 g-color-white g-font-russo-one g-font-size-55',
+					0 => 'landing-block-node-title g-font-weight-400 g-my-0 g-color-white g-font-russo-one g-font-size-55 container g-pl-0 g-pr-0',
 				),
 				'#wrapper' => array(
-					0 => 'landing-block js-animation g-bg-primary-dark-v3 g-pb-0 g-pt-45 animation-none',
+					0 => 'landing-block js-animation g-bg-primary-dark-v3 g-pb-0 g-pt-45 animation-none text-center',
 				),
 			),
 		),

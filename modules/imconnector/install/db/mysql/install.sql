@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS b_imconnectors_custom_connectors (
 		primary key,
 	ID_CONNECTOR varchar(255) null,
 	NAME varchar(255) null,
-	ICON text null,
+	ICON mediumtext null,
 	ICON_DISABLED text null,
 	COMPONENT text null,
 	DEL_EXTERNAL_MESSAGES varchar(2) null,
@@ -45,12 +45,14 @@ CREATE TABLE IF NOT EXISTS b_imconnectors_custom_connectors (
 CREATE TABLE IF NOT EXISTS b_imconnectors_info_connectors(
     LINE_ID int(11) PRIMARY KEY,
     DATA LONGTEXT,
-    EXPIRES DATETIME
+    EXPIRES DATETIME,
+    HASH varchar(32) NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS b_imconnectors_chat_last_message(
     ID int(11) auto_increment PRIMARY KEY,
     EXTERNAL_CHAT_ID varchar(255) NOT NULL,
     CONNECTOR varchar(255) NOT NULL,
-    EXTERNAL_MESSAGE_ID varchar(255) NULL
+    EXTERNAL_MESSAGE_ID varchar(255) NULL,
+    INDEX BX_PERF_09012020 (EXTERNAL_CHAT_ID(255), CONNECTOR(76))
 );

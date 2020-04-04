@@ -44,43 +44,58 @@ class Schedule extends Controller
 		];
 	}
 
-	public function getSchedulesForEntityAction($entityCode)
+	public function getSchedulesForScheduleFormAction($exceptScheduleId = null, $exceptScheduleAssignmentCodes = [], $checkNestedEntities = false)
 	{
-		$schedulesForEntity = [];
-		if ($this->getRequest()->getPost('checkNestedEntities'))
+		$scheduleFormHelper = new ScheduleFormHelper();
+		if ($exceptScheduleId <= 0 && empty($exceptScheduleAssignmentCodes))
 		{
-			$codes = [$entityCode];
-			if ($entityCode === EntityCodesHelper::getAllUsersCode())
-			{
-				$id = $this->departmentRepository
-					->getBaseDepartmentId();
-				if ($id > 0)
-				{
-					$codes[] = EntityCodesHelper::buildDepartmentCode($id);
-				}
-			}
-			$schedule = null;
-			if ($this->getRequest()->getPost('currentScheduleId') > 0)
-			{
-				$schedule = $this->scheduleRepository
-					->findByIdWith($this->getRequest()->getPost('currentScheduleId'), [
-						'DEPARTMENT_ASSIGNMENTS',
-						'USER_ASSIGNMENTS',
-					]);
-			}
-			return (new ScheduleFormHelper())
-				->calculateScheduleAssignmentsMap($codes, $schedule);
+			$this->addError(new Main\Error('Schedule id or assignment codes are required'));
+			return [];
 		}
 
-		$schedulesMap = $this->scheduleRepository
-			->findSchedulesByEntityCodes([$entityCode], ['select' => ['ID', 'NAME', 'IS_FOR_ALL_USERS']]);
-
-		foreach ($schedulesMap as $schedules)
+		$schedule = null;
+		if ($exceptScheduleId > 0)
 		{
-			foreach ($schedules as $schedule)
+			$schedule = $this->scheduleRepository
+				->findByIdWith($exceptScheduleId, [
+					'DEPARTMENT_ASSIGNMENTS',
+					'USER_ASSIGNMENTS',
+				]);
+		}
+		if (!$schedule)
+		{
+			$schedule = (new ScheduleEntity(false))->setId(0);
+		}
+		$schedule->removeAllUserAssignments();
+		$schedule->removeAllDepartmentAssignments();
+		foreach ($exceptScheduleAssignmentCodes as $codeData)
+		{
+			$schedule->assignEntity($codeData['code'], $codeData['excluded'] === 'true');
+			if (EntityCodesHelper::isAllUsers($codeData['code']))
 			{
-				$schedulesForEntity[] = array_merge(
-					$schedule->collectValues(),
+				$schedule->setIsForAllUsers(true);
+			}
+		}
+
+		$schedulesForEntityCodes = $scheduleFormHelper->calculateSchedulesMapBySchedule(
+			$schedule,
+			$checkNestedEntities
+		);
+
+		return [
+			'schedules' => $schedulesForEntityCodes,
+		];
+	}
+
+	public function getSchedulesForEntityAction($entityCode)
+	{
+		$schedulesForEntityCodes = $this->scheduleRepository->findSchedulesByEntityCodes([$entityCode]);
+		$result = [];
+		foreach ((array)$schedulesForEntityCodes[$entityCode] as $schedule)
+		{
+			$result[] =
+				array_merge(
+					$schedule->collectRawValues(),
 					[
 						'LINKS' => [
 							'DETAIL' => DependencyManager::getInstance()->getUrlManager()
@@ -88,11 +103,10 @@ class Schedule extends Controller
 						],
 					]
 				);
-			}
 		}
 		return [
 			'entityCode' => $entityCode,
-			'schedules' => $schedulesForEntity,
+			'schedules' => $result,
 		];
 	}
 
@@ -140,7 +154,7 @@ class Schedule extends Controller
 			$this->addError(new Main\Error('Schedule not found', 'TIMEMAN_SCHEDULE_GET_SCHEDULE_NOT_FOUND'));
 			return [];
 		}
-		$result = $schedule->collectValues(Values::ALL, $fieldsMask = FieldTypeMask::SCALAR);
+		$result = $schedule->collectRawValues();
 		foreach ($schedule->obtainShifts() as $shift)
 		{
 			$result['SHIFTS'][] = $shift->collectValues(Values::ALL, $fieldsMask = FieldTypeMask::SCALAR);
@@ -221,15 +235,26 @@ class Schedule extends Controller
 	{
 		/** @var ScheduleEntity $schedule */
 		$schedule = $result->getSchedule();
+		$links = [
+			'update' => DependencyManager::getInstance()->getUrlManager()
+				->getUriTo(TimemanUrlManager::URI_SCHEDULE_UPDATE, ['SCHEDULE_ID' => $schedule->getId()]),
+		];
+		if ($schedule->isShifted())
+		{
+			$links['shiftPlan'] = DependencyManager::getInstance()->getUrlManager()
+				->getUriTo(TimemanUrlManager::URI_SCHEDULE_SHIFTPLAN, ['SCHEDULE_ID' => $schedule->getId()]);
+		}
+		$scheduleFormHelper = new ScheduleFormHelper();
 		return [
 			'schedule' => [
 				'id' => (int)$schedule->getId(),
 				'name' => $schedule->getName(),
 				'scheduleType' => $schedule->getScheduleType(),
 				'reportPeriod' => $schedule->getReportPeriod(),
-				'formattedType' => $schedule->getFormattedType(),
-				'formattedPeriod' => $schedule->getFormattedPeriod(),
+				'formattedType' => $scheduleFormHelper->getFormattedType($schedule->getScheduleType()),
+				'formattedPeriod' => $scheduleFormHelper->getFormattedPeriod($schedule->getReportPeriod()),
 				'userCount' => $schedule->obtainUsersCount() >= 0 ? $schedule->obtainUsersCount() : '',
+				'links' => $links,
 			],
 		];
 	}

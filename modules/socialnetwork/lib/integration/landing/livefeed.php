@@ -4,6 +4,7 @@ namespace Bitrix\Socialnetwork\Integration\Landing;
 use Bitrix\Blog\PostTable;
 use Bitrix\Main;
 use Bitrix\Landing;
+use Bitrix\Main\FileTable;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UserTable;
 use Bitrix\Socialnetwork\WorkgroupTable;
@@ -37,20 +38,20 @@ class Livefeed extends Landing\Source\DataLoader
 	 */
 	public static function onBuildSourceListHandler(Main\Event $event)
 	{
-		$siteId = null;
-		$restrictions = $event->getParameter('RESTRICTIONS');
-
-		if (!empty($restrictions['livefeed']))
-		{
-			if (!empty($restrictions['livefeed']['SITE_ID']))
-			{
-				$siteId = $restrictions['livefeed']['SITE_ID'];
-			}
-		}
-		unset($restrictions);
-
 		/** @var Landing\Source\Selector $selector */
 		$selector = $event->getParameter('SELECTOR');
+
+		$siteId = null;
+
+		$restrictions = $selector->getModuleRestrictions('socialnetwork');
+		if (
+			!empty($restrictions)
+			&& !empty($restrictions['SITE_ID'])
+		)
+		{
+			$siteId = $restrictions['SITE_ID'];
+		}
+		unset($restrictions);
 
 		$dataSettings = [
 			'ORDER' => self::getOrderFields(),
@@ -71,8 +72,23 @@ class Livefeed extends Landing\Source\DataLoader
 					'TYPE' => Landing\Node\Type::TEXT
 				],
 				[
+					'ID' => 'AUTHOR_NAME_FORMATTED',
+					'NAME' => Loc::getMessage('SONET_LANDING_DYNAMIC_BLOCK_LIVEFEED_FIELD_AUTHOR_NAME_FORMATTED'),
+					'TYPE' => Landing\Node\Type::TEXT
+				],
+				[
+					'ID' => 'LOG_DATE',
+					'NAME' => Loc::getMessage('SONET_LANDING_DYNAMIC_BLOCK_LIVEFEED_FIELD_LOG_DATE'),
+					'TYPE' => Landing\Node\Type::TEXT
+				],
+				[
 					'ID' => 'PICTURE',
 					'NAME' => Loc::getMessage('SONET_LANDING_DYNAMIC_BLOCK_LIVEFEED_FIELD_PICTURE'),
+					'TYPE' => Landing\Node\Type::IMAGE
+				],
+				[
+					'ID' => 'AUTHOR_AVATAR',
+					'NAME' => Loc::getMessage('SONET_LANDING_DYNAMIC_BLOCK_LIVEFEED_FIELD_AUTHOR_AVATAR'),
 					'TYPE' => Landing\Node\Type::IMAGE
 				],
 				[
@@ -142,7 +158,7 @@ class Livefeed extends Landing\Source\DataLoader
 
 				if (defined("BX_COMP_MANAGED_CACHE"))
 				{
-					$CACHE_MANAGER->RegisterTag("landing_dynamic_filter_".$filterField['value']);
+					$CACHE_MANAGER->registerTag("landing_dynamic_filter_".$filterField['value']);
 				}
 			}
 		}
@@ -439,23 +455,39 @@ class Livefeed extends Landing\Source\DataLoader
 				$urlManager = $driver->getUrlManager();
 			}
 
-			$iterator = PostTable::getList([
-				'order' => [
-					'DATE_PUBLISH' => 'DESC'
-				],
-				'filter' => [
-					'@ID' => $blogPostIdList
-				],
-				'select' => [
-					'ID', 'MICRO', 'TITLE', 'DETAIL_TEXT'
-				]
-			]);
 
+			$query = new \Bitrix\Main\Entity\Query(PostTable::getEntity());
+			$query->addOrder('DATE_PUBLISH', 'DESC');
+			$query->addFilter('@ID', $blogPostIdList);
+			$query->addSelect('ID');
+			$query->addSelect('MICRO');
+			$query->addSelect('TITLE');
+			$query->addSelect('DETAIL_TEXT');
+			$query->addSelect('AUTHOR_ID');
+			$query->addSelect('DATE_PUBLISH');
+
+			$query->registerRuntimeField(
+				'',
+				new \Bitrix\Main\Entity\ReferenceField('U',
+					UserTable::getEntity(),
+					array(
+						'=ref.ID' => 'this.AUTHOR_ID'
+					),
+					array('join_type' => 'INNER')
+				)
+			);
+			$query->addSelect('U.PERSONAL_PHOTO', 'AUTHOR_AVATAR');
+			$query->addSelect('U.NAME', 'AUTHOR_NAME');
+			$query->addSelect('U.LAST_NAME', 'AUTHOR_LAST_NAME');
+			$query->addSelect('U.SECOND_NAME', 'AUTHOR_SECOND_NAME');
+			$query->addSelect('U.LOGIN', 'AUTHOR_LOGIN');
+
+			$iterator = $query->exec();
 			while ($row = $iterator->fetch())
 			{
 				if (defined("BX_COMP_MANAGED_CACHE"))
 				{
-					$CACHE_MANAGER->RegisterTag("blog_post_".$row['ID']);
+					$CACHE_MANAGER->registerTag("blog_post_".$row['ID']);
 				}
 
 				$attachedFilesList = [];
@@ -572,6 +604,11 @@ class Livefeed extends Landing\Source\DataLoader
 					'\\2',
 					$clearedText
 				);
+				$clearedText = preg_replace(
+					'/\[URL(.*?)]((?:[^\ ]{1,19}\s+)+)\[\/URL\]/is'.BX_UTF_PCRE_MODIFIER,
+					'\\2',
+					$clearedText
+				);
 				$clearedText = \blogTextParser::killAllTags($clearedText);
 
 				$title = (
@@ -580,12 +617,43 @@ class Livefeed extends Landing\Source\DataLoader
 						: htmlspecialcharsEx($row["TITLE"])
 				);
 
+				$authorAvatar = '';
+				$authorName = '';
+				if (intval($row['AUTHOR_AVATAR']) > 0)
+				{
+					$fileRes = FileTable::getById(intval($row['AUTHOR_AVATAR']));
+					if ($fileFields = $fileRes->fetch())
+					{
+						$authorAvatar = [
+							'alt' => '',
+							'src' => \CFile::getFileSrc($fileFields)
+						];
+					}
+				}
+				if (intval($row['AUTHOR_ID']) > 0)
+				{
+					$authorName = \CUser::formatName(\CSite::getNameFormat(), [
+						"NAME" => $row["AUTHOR_NAME"],
+						"LAST_NAME" => $row["AUTHOR_LAST_NAME"],
+						"SECOND_NAME" => $row["AUTHOR_SECOND_NAME"],
+						"LOGIN" => $row["AUTHOR_LOGIN"],
+						"NAME_LIST_FORMATTED" => "",
+					]);
+				}
+				if ($row['DATE_PUBLISH'] instanceof \Bitrix\Main\Type\DateTime)
+				{
+					$logDate = $row['DATE_PUBLISH']->format(\Bitrix\Main\Type\Date::getFormat());
+				}
+
 				$result[] = [
 					'ID' => $row['ID'],
 					'TITLE' => $title,
 					'PREVIEW_TEXT' => truncateText($clearedText, 255),
 					'DETAIL_TEXT' => $parser->convert($detailText, false, [], $allow, $parserParams),
 					'PICTURE' => $picture,
+					'AUTHOR_AVATAR' => $authorAvatar,
+					'AUTHOR_NAME_FORMATTED' => $authorName,
+					'LOG_DATE' => $logDate,
 				];
 			}
 			if (!empty($result))
@@ -616,7 +684,7 @@ class Livefeed extends Landing\Source\DataLoader
 			&& Main\ModuleManager::isModuleInstalled('landing')
 		)
 		{
-			$CACHE_MANAGER->ClearByTag("landing_dynamic_filter_".$code);
+			$CACHE_MANAGER->clearByTag("landing_dynamic_filter_".$code);
 		}
 	}
 
@@ -655,18 +723,5 @@ class Livefeed extends Landing\Source\DataLoader
 			Main\Type\Collection::sortByColumn($result, ['key' => SORT_ASC]);
 		}
 		return $result;
-	}
-
-	/**
-	 * @param mixed $filter
-	 * @return string
-	 */
-	public function calculateFilterHash($filter)
-	{
-		if (!is_array($filter))
-		{
-			$filter = [];
-		}
-		return md5(serialize($filter));
 	}
 }

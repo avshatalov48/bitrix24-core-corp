@@ -9,7 +9,9 @@
 namespace Bitrix\FaceId;
 
 use Bitrix\Bitrix24\Feature;
+use Bitrix\Main\Application;
 use Bitrix\Main\Entity\DataManager;
+use Bitrix\Main\IO\Directory;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 
@@ -39,10 +41,30 @@ class FaceId
 
 	public static function isAvailable()
 	{
-		// check for b24 conditions
-		if (Loader::includeModule('bitrix24') && !Feature::isFaceIdAvailable())
+		if (Loader::includeModule('bitrix24'))
 		{
-			return false;
+			// check for b24 conditions
+			if (!Feature::isFaceIdAvailable())
+			{
+				return false;
+			}
+
+		}
+		else
+		{
+			// check for standalone conditions
+			if (!Directory::isDirectoryExists(Application::getDocumentRoot()."/bitrix/modules/main/lang/ru"))
+			{
+				return false;
+			}
+
+			if (Loader::includeModule('intranet'))
+			{
+				if (\CIntranetUtils::getPortalZone() !== 'ru')
+				{
+					return false;
+				}
+			}
 		}
 
 		return true;

@@ -103,7 +103,7 @@ class TasksKanbanComponent extends \CBitrixComponent
 		}
 
 		// get data of user or group
-		if ($this->taskType == static::TASK_TYPE_USER || $params['GROUP_ID_FORCED'])
+		if ($this->taskType == static::TASK_TYPE_USER)
 		{
 			$result['USER'] = \CUser::GetByID($params['USER_ID'])->fetch();
 			if (!$result['USER'])

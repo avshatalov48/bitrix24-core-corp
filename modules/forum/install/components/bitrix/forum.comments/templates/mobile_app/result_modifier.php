@@ -76,7 +76,7 @@ if (!empty($arResult["MESSAGES"]))
 	foreach ($arResult["MESSAGES"] as $key => $res)
 	{
 		$arResult["MESSAGES"][$key] = forumCommentsCommentMobile($res, $arParams, $arResult, $this->__component);
-		if (intval($arResult["RESULT"]) == intval($res["ID"]))
+		if (in_array($arResult["ACTION"], ["hide", "show", "edit", "add"]) && intval($arResult["RESULT"]) == intval($res["ID"]))
 		{
 			if ($this->__component->prepareMobileData)
 			{
@@ -87,14 +87,28 @@ if (!empty($arResult["MESSAGES"]))
 					$this->__component
 				);
 			}
+			if (in_array($arResult["ACTION"], array("hide", "show")))
+			{
+				$action = "MODERATE";
+			}
+			else
+			{
+				$action = ($arResult["ACTION"] == "edit" ? "EDIT" : "REPLY");
+			}
 			$arResult["PUSH&PULL"] = array(
 				"ID" => $arResult["RESULT"],
-				"ACTION" => $_REQUEST['REVIEW_ACTION'] == "EDIT" ? "EDIT" : "REPLY"
+				"ACTION" => $action
 			);
 		}
 	}
 }
-
+if ($arResult["ACTION"] == "del" && $arResult["RESULT"] > 0)
+{
+	$arResult["PUSH&PULL"] = array(
+		"ID" => $arResult["RESULT"],
+		"ACTION" => "DELETE"
+	);
+}
 $arResult["bTasksInstalled"] = \Bitrix\Main\Loader::includeModule("tasks");
 $arResult["bTasksAvailable"] = (
 	$arResult["bTasksInstalled"]

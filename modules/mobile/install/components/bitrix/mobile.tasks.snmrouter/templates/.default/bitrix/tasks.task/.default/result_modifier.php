@@ -90,18 +90,7 @@ $task["SE_AUDITOR"] = array();
 $task["ACCOMPLICES"] = (is_array($task["ACCOMPLICES"]) ? $task["ACCOMPLICES"] : array());
 $task["AUDITORS"] = (is_array($task["AUDITORS"]) ? $task["AUDITORS"] : array());
 $task["SE_TAG"] = (is_array($task["SE_TAG"]) ? $task["SE_TAG"] : array());
-
-$checklistItems = (is_array($task['SE_CHECKLIST']) ? $task['SE_CHECKLIST'] : []);
-$task['SE_CHECKLIST'] = $checklistItems;
-
-if (!empty($checklistItems))
-{
-	$arrayTreeStructure = TaskCheckListFacade::getArrayStructuredRoots($checklistItems);
-	if (function_exists('getSortedChecklistItems'))
-	{
-		$task['SE_CHECKLIST'] = getSortedChecklistItems($arrayTreeStructure);
-	}
-}
+$task['SE_CHECKLIST'] = (is_array($task['SE_CHECKLIST']) ? $task['SE_CHECKLIST'] : []);
 
 foreach ($task["ACCOMPLICES"] as $id)
 	$task["SE_ACCOMPLICE"][$id] = $users[$id];
@@ -122,33 +111,4 @@ if (array_key_exists("GROUP", $arResult["DATA"]) && is_array($arResult["DATA"]["
 		);
 		$group["AVATAR"] = $arFileTmp['src'];
 	}
-}
-
-/**
- * @param $checklistItems
- * @return array
- */
-function getSortedChecklistItems($checklistItems)
-{
-	$sortedItems = [];
-
-	foreach ($checklistItems as $item)
-	{
-		if (!$item['PARENT_ID'])
-		{
-			$item['TITLE'] = '---';
-			foreach ($item['ACTION'] as $id => $action)
-			{
-				$item['ACTION'][$id] = false;
-			}
-		}
-		$sortedItems[] = $item;
-
-		if ($item['SUB_TREE'])
-		{
-			$sortedItems = array_merge($sortedItems, getSortedChecklistItems($item['SUB_TREE']));
-		}
-	}
-
-	return $sortedItems;
 }

@@ -45,12 +45,13 @@ class Help
 			'fr' => '8460105'
 		),
 		'LANDING_EDIT' => array(
-			'ru' => 's93291',
-			'ua' => 's94173',
+			'ru' => 's105667',
+			'ua' => 's105681',
 			'en' => 's95157',
 			'de' => 's95161',
 			'es' => 's95265',
-			'br' => 's99169'
+			'br' => 's119713',
+			'fr' => 's110613'
 		),
 		'DOMAIN_EDIT' => array(
 			'ru' => '6624333',
@@ -106,7 +107,11 @@ class Help
 			'fr' => '9203285'
 		),
 		'DYNAMIC_BLOCKS' => array(
-			'ru' => '10104989'
+			'ru' => '10104989',
+			'en' => '10134346',
+			'de' => '10119494',
+			'es' => '10133942',
+			'fr' => '10133930'
 		),
 		'YACOUNTER' => array(
 			'ru' => '9494147'
@@ -164,7 +169,7 @@ class Help
 			return 'https://helpdesk.' . self::$domains[$helpZone] .
 					(
 						(substr($helpId, 0, 1) == 's')
-						? ('/#section' . substr($helpId, 1))
+						? ('/section/' . substr($helpId, 1) . '/')
 						: ('/open/' . $helpId . '/')
 					);
 		}

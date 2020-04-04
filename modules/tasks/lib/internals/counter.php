@@ -366,7 +366,6 @@ class Counter
 			'ACCOMPLICES' => $accomplice,
 			'AUDITORS' => $auditor
 		];
-		$mode = 'ADD';
 
 		$efficiencyMap = [];
 		foreach ($fields['ACCOMPLICES'] as $userId)
@@ -375,8 +374,11 @@ class Counter
 		}
 		$efficiencyMap[$fields['RESPONSIBLE_ID']] = 'R';
 
+		$mode = 'ADD';
+		$task = Task::makeInstanceFromSource($fields, User::getAdminId());
+
 		static::recalculateCounters($fields, $countersMap, $mode);
-		static::recalculateEfficiency($fields, $efficiencyMap, Task::makeInstanceFromSource($fields, 1), $mode);
+		static::recalculateEfficiency($fields, $efficiencyMap, $task, $mode);
 
 		if ($fields['DEADLINE'] && DateTime::createFrom($fields['DEADLINE']))
 		{
@@ -406,11 +408,11 @@ class Counter
 			}
 			else if (in_array($key, ['ACCOMPLICES', 'AUDITORS']))
 			{
-				if ($key == 'ACCOMPLICES')
+				if ($key === 'ACCOMPLICES')
 				{
 					$plan->push(Counter\Name::OPENED);
 
-					if ($mode == 'DELETE')
+					if ($mode === 'DELETE')
 					{
 						$plan->push(Counter\Name::CLOSED);
 					}
@@ -433,17 +435,19 @@ class Counter
 	 *
 	 * @param $fields
 	 * @param $map
-	 * @param Task $taskInstance
+	 * @param Task $task
 	 * @param $mode
+	 * @throws SqlQueryException
+	 * @throws Exception
 	 */
-	private static function recalculateEfficiency($fields, $map, Task $taskInstance, $mode)
+	private static function recalculateEfficiency($fields, $map, Task $task, $mode)
 	{
 		foreach ($map as $userId => $userType)
 		{
-			Effective::modify($userId, $userType, $taskInstance, $fields['GROUP_ID'], false);
+			Effective::modify($userId, $userType, $task, $fields['GROUP_ID'], false);
 		}
 
-		if ($mode == 'DELETE')
+		if ($mode === 'DELETE')
 		{
 			Effective::repair($fields['ID']);
 		}
@@ -547,7 +551,7 @@ class Counter
 	 */
 	public static function onAfterTaskUpdate($fields, $newFields, array $params = array())
 	{
-		if(self::fieldChanged('DEADLINE', $fields, $newFields))
+		if (self::fieldChanged('DEADLINE', $fields, $newFields))
 		{
 			if (!$newFields['DEADLINE'] || !DateTime::createFrom($newFields['DEADLINE']))
 			{
@@ -559,27 +563,25 @@ class Counter
 			}
 		}
 
-		if(
-			self::fieldChanged('STATUS', $fields, $newFields) ||
-			self::fieldChanged('DEADLINE', $fields, $newFields) ||
-			self::fieldChanged('GROUP_ID', $fields, $newFields) ||
-			self::fieldChanged('RESPONSIBLE_ID', $fields, $newFields) ||
-			self::fieldChanged('CREATED_BY', $fields, $newFields) ||
-			self::fieldChanged('AUDITORS', $fields, $newFields) ||
-			self::fieldChanged('ACCOMPLICES', $fields, $newFields) ||
-			(array_key_exists('FORCE_RECOUNT_COUNTER', $params) && $params['FORCE_RECOUNT_COUNTER'] == 'Y')
+		if (
+			$params['FORCE_RECOUNT_COUNTER'] === 'Y'
+			|| self::fieldChanged('STATUS', $fields, $newFields)
+			|| self::fieldChanged('DEADLINE', $fields, $newFields)
+			|| self::fieldChanged('GROUP_ID', $fields, $newFields)
+			|| self::fieldChanged('RESPONSIBLE_ID', $fields, $newFields)
+			|| self::fieldChanged('CREATED_BY', $fields, $newFields)
+			|| self::fieldChanged('AUDITORS', $fields, $newFields)
+			|| self::fieldChanged('ACCOMPLICES', $fields, $newFields)
 		)
 		{
-			$task = Task::getInstance($fields['ID'], 1);
+			$task = Task::getInstance($fields['ID'], User::getAdminId());
+			if ($task)
+			{
+				self::onAfterUpdateTaskInternal($fields, $task);
+				self::onAfterUpdateTaskInternal($newFields, $task);
 
-			$controller = $task->getAccessController()->spawn();
-			$controller->disable();
-			$task->setAccessController($controller);
-
-			self::onAfterUpdateTaskInternal($fields, $task);
-			self::onAfterUpdateTaskInternal($newFields, $task);
-
-			self::updateEffective($fields, $newFields, $task);
+				self::updateEffective($fields, $newFields, $task);
+			}
 		}
 
 	}
@@ -594,7 +596,7 @@ class Counter
 	 * @throws SystemException
 	 * @throws Exception
 	 */
-	private static function updateEffective($fields, $newFields, Task $task)
+	private static function updateEffective($fields, $newFields, Task $task): void
 	{
 		$responsibleChanged = self::fieldChanged('RESPONSIBLE_ID', $fields, $newFields);
 		$accomplicesChanged = self::fieldChanged('ACCOMPLICES', $fields, $newFields);
@@ -983,7 +985,7 @@ class Counter
 		$originator->push(Counter\Name::ORIGINATOR_EXPIRED);
 		$originator->push(Counter\Name::ORIGINATOR_WITHOUT_DEADLINE);
 
-		if ($fields['RESPONSIBLE_ID'] != $fields['CREATED_BY'])
+		if ((int)$fields['RESPONSIBLE_ID'] !== (int)$fields['CREATED_BY'])
 		{
 			$responsible->push(Counter\Name::MY_NOT_VIEWED);
 			$originator->push(Counter\Name::MY_NOT_VIEWED);
@@ -999,9 +1001,8 @@ class Counter
 			'RESPONSIBLE_ID' => $responsible,
 			'CREATED_BY' => $originator,
 			'ACCOMPLICES' => $accomplice,
-			'AUDITORS' => $auditor
+			'AUDITORS' => $auditor,
 		];
-		$mode = 'DELETE';
 
 		$efficiencyMap = [];
 		foreach ($fields['ACCOMPLICES'] as $userId)
@@ -1010,8 +1011,11 @@ class Counter
 		}
 		$efficiencyMap[$fields['RESPONSIBLE_ID']] = 'R';
 
+		$mode = 'DELETE';
+		$task = Task::makeInstanceFromSource($fields, User::getAdminId());
+
 		static::recalculateCounters($fields, $countersMap, $mode);
-		static::recalculateEfficiency($fields, $efficiencyMap, Task::makeInstanceFromSource($fields, 1), $mode);
+		static::recalculateEfficiency($fields, $efficiencyMap, $task, $mode);
 
 		Agent::remove($fields['ID']);
 	}
@@ -1205,10 +1209,9 @@ class Counter
 
 	private function isAccessToCounters()
 	{
-		return ($this->userId == User::getId()) ||
-			   User::isAdmin() ||
-			   \Bitrix\Tasks\Integration\Bitrix24\User::isAdmin() ||
-			   \CTasks::IsSubordinate($this->userId, User::getId());
+		return $this->userId == User::getId()
+			|| User::isSuper()
+			|| \CTasks::IsSubordinate($this->userId, User::getId());
 	}
 
 	private function calcOpened($reCache = false)

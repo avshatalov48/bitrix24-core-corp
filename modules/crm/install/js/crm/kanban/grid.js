@@ -65,6 +65,7 @@ BX.CRM.Kanban.Grid.prototype = {
 	checkedItems: [],
 	progressBarEditor: null,
 	ccItem: null,
+	restItem: null,
 	popupCancel: null,
 	dropZonesShow: false,
 	schemeInline: null,
@@ -280,6 +281,10 @@ BX.CRM.Kanban.Grid.prototype = {
 		if (this.ccItem && !gridData.contactCenterShow)
 		{
 			this.hideItem(this.ccItem);
+		}
+		if (this.restItem && !gridData.restDemoBlockShow)
+		{
+			this.hideItem(this.restItem);
 		}
 	},
 
@@ -1336,6 +1341,28 @@ BX.CRM.Kanban.Grid.prototype = {
 
 		this.ajax({
 				action: "toggleCC"
+			},
+			function()
+			{
+			}.bind(this),
+			function(error)
+			{
+			}.bind(this)
+		);
+	},
+
+	/**
+	 * Hide REST demo block.
+	 * @return {void}
+	 */
+	toggleRest: function()
+	{
+		if (this.restItem)
+		{
+			this.hideItem(this.restItem);
+		}
+		this.ajax({
+				action: "toggleRest"
 			},
 			function()
 			{

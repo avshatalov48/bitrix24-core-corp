@@ -333,6 +333,9 @@ final class Document
 					else
 					{
 						$data['isTransformationError'] = true;
+						$error = $transformResult->getErrors()[0];
+						$data['transformationErrorMessage'] = $error->getMessage();
+						$data['transformationErrorCode'] = $error->getCode();
 						if(!$skipTransformationError)
 						{
 							$this->result->addErrors($transformResult->getErrors());
@@ -1277,7 +1280,10 @@ final class Document
 				{
 					if(is_array($this->values[$placeholder]) || $value != htmlspecialcharsbx($this->values[$placeholder]))
 					{
-						$result[$placeholder] = $value;
+						if(!is_object($value) || class_exists($value))
+						{
+							$result[$placeholder] = $value;
+						}
 					}
 				}
 			}
@@ -1348,13 +1354,7 @@ final class Document
 		$transformer = $this->getTransformer();
 		if($transformer)
 		{
-			$result = $transformer->transform([static::IMAGE, static::PDF]);
-			if(!$result->isSuccess())
-			{
-				$result = (new Result())->addError(new Error(Loc::getMessage('DOCUMENT_TRANSOFMATION_ERROR'), static::ERROR_TRANSFORMATION));
-			}
-
-			return $result;
+			return $transformer->transform([static::IMAGE, static::PDF]);
 		}
 
 		return (new Result())->addError(new Error(Loc::getMessage('DOCUMENT_TRANSOFMER_MODULE_ERROR'), static::ERROR_NO_TRANSFORMER_MODULE));

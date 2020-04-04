@@ -25,6 +25,10 @@ if(CModule::IncludeModule('crm'))
 
 	//By default treat field as dynamic (for backward compatibility)
 	$options['is_dynamic'] = !isset($_REQUEST['dynamic']) || strtoupper($_REQUEST['dynamic']) !== 'N';
+	if(isset($_REQUEST['owner_token']))
+	{
+		$options['owner_token'] = $_REQUEST['owner_token'];
+	}
 	CCrmFileProxy::WriteFileToResponse(
 		CCrmOwnerType::Order,
 		isset($_REQUEST['ownerId']) ? intval($_REQUEST['ownerId']) : 0,

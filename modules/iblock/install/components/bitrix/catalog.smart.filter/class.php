@@ -476,7 +476,7 @@ class CBitrixCatalogSmartFilter extends CBitrixComponent
 					|| (float)$resultItem["VALUES"]["MIN"]["VALUE"] > $convertPrice
 				)
 				{
-					$resultItem["VALUES"]["MIN"]["VALUE"] = $price;
+					$resultItem["VALUES"]["MIN"]["VALUE"] = $convertPrice;
 					if ($existCurrency)
 					{
 						if ($this->convertCurrencyId)
@@ -492,7 +492,7 @@ class CBitrixCatalogSmartFilter extends CBitrixComponent
 					|| (float)$resultItem["VALUES"]["MAX"]["VALUE"] < $convertPrice
 				)
 				{
-					$resultItem["VALUES"]["MAX"]["VALUE"] = $price;
+					$resultItem["VALUES"]["MAX"]["VALUE"] = $convertPrice;
 					if ($existCurrency)
 					{
 						if ($this->convertCurrencyId)

@@ -2193,7 +2193,9 @@ class CSiteCheckerTest
 			'b_search_content_stem' => 'STEM',
 			'b_search_content_freq' => 'STEM',
 			'b_search_stem' => 'STEM',
-			'b_search_tags' => 'NAME'
+			'b_search_tags' => 'NAME',
+			'b_translate_path' => 'NAME',
+			'b_translate_phrase' => 'CODE',
 		);
 		while($f = $res->Fetch())
 		{
@@ -3078,7 +3080,21 @@ function InitPureDB()
 function TableFieldConstruct($f0)
 {
 	global $DB;
-	$tmp = '`'.$f0['Field'].'` '.$f0['Type'].($f0['Null'] == 'YES' ? ' NULL' : ' NOT NULL').($f0['Default'] === NULL ? ($f0['Null'] == 'YES' ? ' DEFAULT NULL ' : '') : ' DEFAULT '.($f0['Type'] == 'timestamp' && $f0['Default'] ? $f0['Default'] : '"'.$DB->ForSQL($f0['Default']).'"')).' '.$f0['Extra'];
+	$tmp = '`'.$f0['Field'].'` '.$f0['Type'].
+		($f0['Null'] == 'YES' ? ' NULL' : ' NOT NULL').
+		($f0['Default'] === NULL
+		?
+			($f0['Null'] == 'YES' ? ' DEFAULT NULL ' : '')
+		:
+			' DEFAULT '.
+			($f0['Type'] == 'timestamp' && !preg_match('#^\d{4}#', $f0['Default'])
+			?
+				$f0['Default']
+				:
+				'"'.$DB->ForSQL($f0['Default']).'"'
+			)
+		).
+		' '.$f0['Extra'];
 	return trim($tmp);
 }
 

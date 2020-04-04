@@ -186,15 +186,15 @@ class CAllBlogPost
 	{
 		global $DB, $APPLICATION;
 
-		if ((is_set($arFields, "TITLE") || $ACTION=="ADD") && strlen($arFields["TITLE"]) <= 0)
-		{
-			$APPLICATION->ThrowException(GetMessage("BLG_GP_EMPTY_TITLE"), "EMPTY_TITLE");
-			return false;
-		}
-
 		if ((is_set($arFields, "DETAIL_TEXT") || $ACTION=="ADD") && strlen(trim(str_replace("\xc2\xa0", ' ', $arFields["DETAIL_TEXT"]), " \t\n\r\0\x0B\xA0")) <= 0)
 		{
 			$APPLICATION->ThrowException(GetMessage("BLG_GP_EMPTY_DETAIL_TEXT"), "EMPTY_DETAIL_TEXT");
+			return false;
+		}
+
+		if ((is_set($arFields, "TITLE") || $ACTION=="ADD") && strlen($arFields["TITLE"]) <= 0)
+		{
+			$APPLICATION->ThrowException(GetMessage("BLG_GP_EMPTY_TITLE"), "EMPTY_TITLE");
 			return false;
 		}
 
@@ -799,7 +799,7 @@ class CAllBlogPost
 			}
 
 			$post = \Bitrix\Blog\Item\Post::getById($arPost["ID"]);
-			$arSoFields["TAGS"] = $post->getTags();
+			$arSoFields["TAG"] = $post->getTags();
 
 			$logID = CSocNetLog::Add($arSoFields, false);
 

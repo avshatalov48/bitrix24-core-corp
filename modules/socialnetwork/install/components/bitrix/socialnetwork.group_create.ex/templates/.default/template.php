@@ -177,10 +177,9 @@ else
 							<div class="social-group-create-container first-step"><?
 
 								$typeCode = \Bitrix\Socialnetwork\Item\Workgroup::getTypeCodeByParams(array(
-									'typesList' => $arResult['Types'],
-									'fields' => $arResult['POST']
+									"typesList" => $arResult["Types"],
+									"fields" => $arResult["POST"]
 								));
-
 								foreach($arResult["TypeRowList"] as $rowCode)
 								{
 									?><div class="social-group-create-inner">
@@ -321,7 +320,7 @@ else
 												"ID" => $selectorName,
 												"INPUT_NAME" => 'OWNER_CODE',
 												"LIST" => (!empty($arResult["POST"]) && !empty($arResult["POST"]["OWNER_ID"]) ? array('U'.$arResult["POST"]["OWNER_ID"]) : array('U'.$arResult["currentUserId"])),
-												"USE_SYMBOLIC_ID" => "Y",
+												"USE_SYMBOLIC_ID" => true,
 												"BUTTON_SELECT_CAPTION" => GetMessage('SONET_GCE_T_ADD_OWNER'),
 												"API_VERSION" => 3,
 												"SELECTOR_OPTIONS" => array(
@@ -372,7 +371,7 @@ else
 												"ID" => $selectorName,
 												"INPUT_NAME" => 'MODERATOR_CODES[]',
 												"LIST" => $moderatorsList,
-												"USE_SYMBOLIC_ID" => "Y",
+												"USE_SYMBOLIC_ID" => true,
 												"BUTTON_SELECT_CAPTION" => ($arResult["intranetInstalled"] ? GetMessage('SONET_GCE_T_ADD_EMPLOYEE') : GetMessage('SONET_GCE_T_ADD_USER')),
 												"BUTTON_SELECT_CAPTION_MORE" => GetMessage('SONET_GCE_T_DEST_LINK_2'),
 												"API_VERSION" => 3,
@@ -433,7 +432,7 @@ else
 												"ID" => $selectorName,
 												"INPUT_NAME" => 'USER_CODES[]',
 												"LIST" => $userLists,
-												"USE_SYMBOLIC_ID" => "Y",
+												"USE_SYMBOLIC_ID" => true,
 												"OPEN_DIALOG_WHEN_INIT" => ($arResult["POST"]["IS_EXTRANET_GROUP"] != "Y" && $arResult["TAB"] == "invite"),
 												"FIRE_CLICK_EVENT" => (
 														$arResult["POST"]["IS_EXTRANET_GROUP"] != "Y"
@@ -513,7 +512,7 @@ else
 														"ID" => $selectorName,
 														"INPUT_NAME" => 'USER_CODES[]',
 														"LIST" => $userLists,
-														"USE_SYMBOLIC_ID" => "Y",
+														"USE_SYMBOLIC_ID" => true,
 														"BUTTON_SELECT_CAPTION" => GetMessage('SONET_GCE_T_ADD_EXTRANET'),
 														"BUTTON_SELECT_CAPTION_MORE" => GetMessage('SONET_GCE_T_DEST_LINK_2'),
 														"API_VERSION" => 3,

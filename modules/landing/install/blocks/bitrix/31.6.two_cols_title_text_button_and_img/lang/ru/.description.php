@@ -1,6 +1,7 @@
 <?php
-$MESS['LANDING_BLOCK_31_6-NAME'] = 'Оперативно сделаный блок 2';
+$MESS['LANDING_BLOCK_31_6-NAME'] = 'Список страниц с картинкой справа и ссылкой слева';
 $MESS['LANDING_BLOCK_31_6-CARD'] = 'Карточка';
+$MESS['LANDING_BLOCK_31_6-COLUMN'] = 'Колонка';
 $MESS['LANDING_BLOCK_31_6-SUBTITLE'] = 'Подзаголовок';
 $MESS['LANDING_BLOCK_31_6-TITLE'] = 'Заголовок';
 $MESS['LANDING_BLOCK_31_6-TEXT'] = 'Текст';

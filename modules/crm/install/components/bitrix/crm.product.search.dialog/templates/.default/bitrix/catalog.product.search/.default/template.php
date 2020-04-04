@@ -44,6 +44,7 @@ function getImageField($property_value_id,$property_value)
 		)
 	);
 	$res = preg_replace('!<script[^>]*>.*</script>!isU','', $res);
+	$res = preg_replace('!onclick="ImgShw\([^)]+\)[^"]+" !isU','', $res);
 	return $res;
 }
 

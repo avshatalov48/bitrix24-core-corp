@@ -247,22 +247,21 @@ class CAdminUiList extends CAdminList
 			[$key => $this->prepareCustomKey(array_shift($keys), $keys)]);
 	}
 
+	/**
+	 * @return array|false
+	 */
 	public function GroupAction()
 	{
-		if (!check_bitrix_sessid())
+		$this->PrepareAction();
+
+		if ($this->GetAction() === null)
 		{
 			return false;
 		}
 
-		if (is_array($_REQUEST["action"]))
+		if (!check_bitrix_sessid())
 		{
-			foreach ($_REQUEST["action"] as $actionKey => $actionValue)
-				$_REQUEST[$actionKey] = $actionValue;
-		}
-		if (!empty($_REQUEST["action_button_".$this->table_id]))
-		{
-			$_REQUEST["action"] = $_REQUEST["action_button_".$this->table_id];
-			$_REQUEST["action_button"] = $_REQUEST["action_button_".$this->table_id];
+			return false;
 		}
 
 		if (!empty($_REQUEST["bxajaxid"]))
@@ -271,19 +270,20 @@ class CAdminUiList extends CAdminList
 			$adminSidePanelHelper->setSkipResponse(true);
 		}
 
-		if (!$this->IsGroupActionToAll() && isset($_REQUEST["ID"]))
+		if (!$this->IsGroupActionToAll())
 		{
-			if(!is_array($_REQUEST["ID"]))
-				$arID = array($_REQUEST["ID"]);
-			else
-				$arID = $_REQUEST["ID"];
-
-			return $arID;
+			$arID = $this->GetGroupIds();
+			if ($arID === null)
+			{
+				$arID = false;
+			}
 		}
 		else
 		{
-			return array("");
+			$arID = array("");
 		}
+
+		return $arID;
 	}
 
 	/**
@@ -297,6 +297,23 @@ class CAdminUiList extends CAdminList
 			isset($_REQUEST["action_all_rows_".$this->table_id])
 			&& $_REQUEST["action_all_rows_".$this->table_id] === 'Y'
 		);
+	}
+
+	/**
+	 * @return void
+	 */
+	protected function PrepareAction()
+	{
+		if (isset($_REQUEST["action"]) && is_array($_REQUEST["action"]))
+		{
+			foreach ($_REQUEST["action"] as $actionKey => $actionValue)
+				$_REQUEST[$actionKey] = $actionValue;
+		}
+		if (!empty($_REQUEST["action_button_".$this->table_id]))
+		{
+			$_REQUEST["action"] = $_REQUEST["action_button_".$this->table_id];
+			$_REQUEST["action_button"] = $_REQUEST["action_button_".$this->table_id];
+		}
 	}
 
 	public function ActionDoGroup($id, $action_id, $add_params = "")
@@ -321,12 +338,6 @@ class CAdminUiList extends CAdminList
 		), $addParams);
 
 		return $this->ActionAjaxPostGrid($postParams);
-	}
-
-	public function AddGroupActionTable($arActions, $arParams = array())
-	{
-		$this->arActions = $arActions;
-		$this->arActionsParams = $arParams;
 	}
 
 	public function ActionAjaxPostGrid($postParams)
@@ -480,7 +491,7 @@ class CAdminUiList extends CAdminList
 	public function &AddRow($id = false, $arRes = Array(), $link = false, $title = false)
 	{
 		$row = new CAdminUiListRow($this->aHeaders, $this->table_id);
-		$row->id = $id;
+		$row->id = ($id ? $id : randString(4));
 		$row->arRes = $arRes;
 		if ($this->isPublicMode)
 		{
@@ -702,6 +713,8 @@ class CAdminUiList extends CAdminList
 			}
 		}
 	}
+
+	public function ShowActionTable() {}
 
 	public function DisplayList($arParams = array())
 	{
@@ -1195,7 +1208,7 @@ class CAdminUiListActionPanel
 					]
 				]
 			]
-	 	];
+		];
 	 */
 	public function setActionSections(array $actionSections, $listKeyForDelete = [])
 	{
@@ -1902,7 +1915,7 @@ class CAdminUiContextMenu extends CAdminContextMenu
 			}
 			if (!empty($items)):?>
 				<? if (!empty($firstItem["ONCLICK"])): ?>
-					<div class="ui-btn-double ui-btn-primary">
+					<div class="ui-btn-split ui-btn-primary">
 						<button onclick="<?=HtmlFilter::encode($firstItem["ONCLICK"])?>" class="ui-btn-main">
 							<?=HtmlFilter::encode($firstItem["TEXT"])?>
 						</button>
@@ -1910,14 +1923,14 @@ class CAdminUiContextMenu extends CAdminContextMenu
 					</div>
 				<? else: ?>
 					<? if (isset($firstItem["DISABLE"])): ?>
-						<div class="ui-btn-double ui-btn-primary">
+						<div class="ui-btn-split ui-btn-primary">
 							<button onclick="<?=$menuUrl?>" class="ui-btn-main">
 								<?=HtmlFilter::encode($firstItem["TEXT"])?>
 							</button>
 							<button onclick="<?=$menuUrl?>" class="ui-btn-extra"></button>
 						</div>
 					<? else: ?>
-						<div class="ui-btn-double ui-btn-primary">
+						<div class="ui-btn-split ui-btn-primary">
 							<a href="<?=HtmlFilter::encode($firstItem["LINK"])?>" class="ui-btn-main">
 								<?=HtmlFilter::encode($firstItem["TEXT"])?>
 							</a>

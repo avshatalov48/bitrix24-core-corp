@@ -32,7 +32,7 @@ return array(
 	<div class="u-header__section g-bg-black-opacity-0_4 g-transition-0_3 g-py-8 g-py-17--md" data-header-fix-moment-exclude="g-bg-black-opacity-0_4 g-py-17--md" data-header-fix-moment-classes="u-theme-architecture-shadow-v1 g-bg-white g-py-10--md">
 		<nav class="navbar navbar-expand-lg p-0 g-px-15">
 			<div class="container">
-				<a href="/" class="landing-block-node-menu-logo-link-small g-hidden-lg-up navbar-brand mr-0 p-0" target="_self">
+				<a href="#" class="landing-block-node-menu-logo-link-small g-hidden-lg-up navbar-brand mr-0 p-0" target="_self">
 					<img class="landing-block-node-menu-logo-small d-block g-max-width-180" src="https://cdn.bitrix24.site/bitrix/images/landing/logos/valentine-logo-white.png" alt="" data-header-fix-moment-exclude="d-block" data-header-fix-moment-classes="d-none" />
 
 					<img class="landing-block-node-menu-logo-small-2 d-none g-max-width-180" src="https://cdn.bitrix24.site/bitrix/images/landing/logos/valentine-logo-black.png" alt="" data-header-fix-moment-exclude="d-none" data-header-fix-moment-classes="d-block" />

@@ -9,6 +9,7 @@ use Bitrix\Main\ORM\Query\Query;
 use Bitrix\SalesCenter\Fields\Manager;
 use Bitrix\SalesCenter\Integration\Bitrix24Manager;
 use Bitrix\SalesCenter\Integration\CrmManager;
+use Bitrix\SalesCenter\Integration\IntranetManager;
 use Bitrix\SalesCenter\Integration\LandingManager;
 use Bitrix\SalesCenter\Integration\SaleManager;
 use Bitrix\SalesCenter\Model\PageTable;
@@ -367,9 +368,15 @@ final class Driver
 	 */
 	public function isCashboxEnabled()
 	{
-		if(Bitrix24Manager::getInstance()->isEnabled())
+		if (
+			Bitrix24Manager::getInstance()->isEnabled()
+			|| IntranetManager::getInstance()->isEnabled()
+		)
 		{
-			return Bitrix24Manager::getInstance()->isCurrentZone('ru');
+			return
+				Bitrix24Manager::getInstance()->isCurrentZone('ru')
+				|| IntranetManager::getInstance()->isCurrentZone('ru')
+			;
 		}
 
 		return true;

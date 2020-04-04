@@ -19,9 +19,15 @@ $containerId = 'crm-tracking-entity-details-view';
 ?>
 <div id="<?=htmlspecialcharsbx($containerId)?>">
 	<?if (empty($arResult['TRACES'])):?>
-		<span style="opacity: 0.5;">
-			<?=Loc::getMessage('CRM_TRACKING_ENTITY_DETAILS_ORGANIC')?>
-		</span>
+		<div data-role="trace/def">
+			<span style="opacity: 0.5;">
+				<?=(
+					!empty($arResult['SOURCES'][0]['NAME'])
+						? $arResult['SOURCES'][0]['NAME']
+						: Loc::getMessage('CRM_TRACKING_ENTITY_DETAILS_ORGANIC')
+				)?>
+			</span>
+		</div>
 	<?else:?>
 	<div id="crm-tracking-entity-details" class="crm-tracking-entity-details">
 		<?
@@ -142,6 +148,14 @@ $containerId = 'crm-tracking-entity-details-view';
 					stopPropagation = false;
 				});
 			}, this);
+
+			let defView = context.querySelector('[data-role="trace/def"]');
+			if (defView)
+			{
+				BX.bind(defView, 'mouseup', function () {
+					stopPropagation = false;
+				});
+			}
 
 			let handler = function (e) {
 				if (!stopPropagation)

@@ -116,6 +116,15 @@ $aMenu = array(
 	)
 );
 
+if ($ID > 0 && $USER->CanDoOperation("controller_counters_view"))
+{
+		$aMenu[] = array(
+			"TEXT" => GetMessage("CTRL_COUNTER_EDIT_TOOLBAR_HISTORY_TEXT"),
+			"TITLE" => GetMessage("CTRL_COUNTER_EDIT_TOOLBAR_HISTORY"),
+			"LINK" => "controller_counter_history.php?find_id=".$ID."&set_filter=Y&lang=".LANG,
+		);
+}
+
 if ($ID > 0 && $USER->CanDoOperation("controller_counters_manage"))
 {
 	$aMenu[] = array("SEPARATOR" => "Y");
@@ -262,7 +271,7 @@ if ($message)
 					var check_boxes = document.getElementsByName('CONTROLLER_GROUP_ID[]');
 					for (var i = 0; i < check_boxes.length; i++)
 					{
-						if (check_boxes[i].parentNode.style.display == 'block')
+						if (check_boxes[i].parentNode.style.display != 'none')
 							check_boxes[i].checked = group_filter_checkbox.checked;
 					}
 				}

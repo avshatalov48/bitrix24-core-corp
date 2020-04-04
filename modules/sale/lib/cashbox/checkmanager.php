@@ -272,10 +272,10 @@ final class CheckManager
 				if (
 					class_exists('\Bitrix\Crm\Order\Order')
 					&& $order instanceof \Bitrix\Crm\Order\Order
-					&& $order->getDealBinding()->isExist()
+					&& $order->getDealBinding()
 				)
 				{
-					$order->getDealBinding()->addTimelineCheckEntry($checkId, ['PRINTED' => 'N']);
+					$order->addTimelineCheckEntryOnCreate($checkId, ['PRINTED' => 'N']);
 				}
 
 				if ($order !== null
@@ -377,10 +377,10 @@ final class CheckManager
 				if (
 					class_exists('\Bitrix\Crm\Order\Order')
 					&& $order instanceof \Bitrix\Crm\Order\Order
-					&& $order->getDealBinding()->isExist()
+					&& $order->getDealBinding()
 				)
 				{
-					$order->getDealBinding()->addTimelineCheckEntry($checkId, ['PRINTED' => 'Y']);
+					$order->addTimelineCheckEntryOnCreate($checkId, ['PRINTED' => 'Y']);
 				}
 			}
 			else

@@ -1,5 +1,4 @@
-<section
-		class="landing-block js-animation fadeIn landing-block-node-bgimg g-bg-img-hero u-bg-overlay g-bg-primary-opacity-0_9--after g-pt-60 g-pb-80"
+<section class="landing-block js-animation fadeIn landing-block-node-bgimg g-bg-img-hero u-bg-overlay g-bg-primary-opacity-0_9--after g-pt-60 g-pb-80"
 		style="background-image: url(https://cdn.bitrix24.site/bitrix/images/landing/business/1920x350/img1.jpg);">
 	<div class="container u-bg-overlay__inner text-center">
 		<div class="js-carousel row"

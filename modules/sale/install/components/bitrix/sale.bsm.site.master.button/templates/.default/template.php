@@ -18,7 +18,6 @@ Loc::loadMessages(__FILE__);
 
 <script type="text/javascript">
 	BX.bind(document.querySelector('.landing-item-add-developer-site span.landing-item-inner'), 'click', function(event) {
-		// window.location.href = event.currentTarget.dataset.href;
 		BX.SidePanel.Instance.open(event.currentTarget.dataset.href, {
 			allowChangeHistory: false
 		});

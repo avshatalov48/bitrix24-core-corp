@@ -1,9 +1,13 @@
 <?php
 namespace Bitrix\Iblock;
 
+use Bitrix\Iblock\ORM\ElementV1Entity;
+use Bitrix\Iblock\ORM\ElementV2Entity;
+use Bitrix\Iblock\ORM\Query;
 use Bitrix\Main,
 	Bitrix\Main\ORM,
 	Bitrix\Main\Localization\Loc;
+use Bitrix\Main\ORM\Fields\Relations\ManyToMany;
 
 Loc::loadMessages(__FILE__);
 
@@ -240,6 +244,12 @@ class ElementTable extends ORM\Data\DataManager
 				array('=this.WF_LOCKED_BY' => 'ref.ID'),
 				array('join_type' => 'LEFT')
 			),
+
+			(new ManyToMany('SECTIONS', SectionTable::class))
+				->configureMediatorEntity(SectionElementTable::class)
+				->configureLocalReference('REGULAR_ELEMENT')
+				->configureRemoteReference('IBLOCK_SECTION')
+
 		);
 	}
 	/**

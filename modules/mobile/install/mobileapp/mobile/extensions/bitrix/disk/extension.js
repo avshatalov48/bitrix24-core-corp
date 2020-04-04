@@ -364,9 +364,10 @@ include("InAppNotifier");
 			});
 
 			this.popupMenu.setData(popupPoints,
-				[{id: "usermenu", title: ""}, {id: "sort", title: BX.message("USER_DISK_MENU_SORT")}, {
-					id: "mix_sort", title: " "
-				}],
+				[
+					{id: "usermenu", title: ""},
+					{id: "sort", title: BX.message("USER_DISK_MENU_SORT")},
+					{id: "mix_sort", title: " "}],
 				(event, item) =>
 				{
 					if (event === "onItemSelected")
@@ -613,24 +614,30 @@ include("InAppNotifier");
 					}
 					else if (action.code === "send_to_user")
 					{
-						UserList.openPicker().then(user =>
+						UserList.openPicker({allowMultipleSelection: false}).then(data =>
 						{
-							notify.showIndicatorLoading();
-							let commitData = { 'DIALOG_ID': user.params.id, 'DISK_ID': item.id};
-							BX.rest.callMethod('im.disk.file.commit', commitData)
-								.then(result =>
-									notify.showIndicatorSuccess(
-										{
-											hideAfter: 1000,
-											fallbackText: BX.message("USER_DISK_FILE_SENT"),
-										}, 500))
-								.catch(error =>
-									notify.showIndicatorError(
-										{
-											hideAfter: 1000,
-											fallbackText: BX.message("USER_DISK_FILE_NOT_SEND"),
-											title: "Bitrix24"
-										}, 500));
+							if(data.length > 0)
+							{
+								let user = data[0];
+								notify.showIndicatorLoading();
+								let commitData = { 'DIALOG_ID': user.params.id, 'DISK_ID': item.id};
+								BX.rest.callMethod('im.disk.file.commit', commitData)
+									.then(result =>
+										notify.showIndicatorSuccess(
+											{
+												hideAfter: 1000,
+												fallbackText: BX.message("USER_DISK_FILE_SENT"),
+											}, 500))
+									.catch(error =>
+										notify.showIndicatorError(
+											{
+												hideAfter: 1000,
+												fallbackText: BX.message("USER_DISK_FILE_NOT_SEND"),
+												title: "Bitrix24"
+											}, 500));
+							}
+
+
 						});
 					}
 				},

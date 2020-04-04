@@ -8,8 +8,8 @@ use Bitrix\Timeman\Model\Schedule\Assignment\User\ScheduleUser;
 use Bitrix\Timeman\Model\Schedule\Assignment\User\ScheduleUserTable;
 use Bitrix\Timeman\Model\Schedule\Schedule;
 use Bitrix\Timeman\Model\Schedule\ScheduleTable;
+use Bitrix\Timeman\Provider\Schedule\ScheduleProvider;
 use Bitrix\Timeman\Repository\DepartmentRepository;
-use Bitrix\Timeman\Repository\Schedule\ScheduleRepository;
 use Bitrix\Timeman\Repository\Schedule\ShiftPlanRepository;
 use Bitrix\Timeman\Repository\Schedule\ShiftRepository;
 use Bitrix\Timeman\Service\BaseService;
@@ -22,8 +22,8 @@ use Bitrix\Timeman\Service\Schedule\Result\ScheduleServiceResult;
  */
 final class ScheduleAssignmentsService extends BaseService
 {
-	/** @var ScheduleRepository */
-	private $scheduleRepository;
+	/** @var ScheduleProvider */
+	private $scheduleProvider;
 	/** @var ShiftRepository */
 	private $shiftRepository;
 	/** @var ShiftPlanRepository */
@@ -32,13 +32,13 @@ final class ScheduleAssignmentsService extends BaseService
 	private $departmentRepository;
 
 	public function __construct(
-		ScheduleRepository $scheduleRepository,
+		ScheduleProvider $scheduleProvider,
 		ShiftRepository $shiftRepository,
 		ShiftPlanRepository $shiftPlanRepository,
 		DepartmentRepository $departmentRepository
 	)
 	{
-		$this->scheduleRepository = $scheduleRepository;
+		$this->scheduleProvider = $scheduleProvider;
 		$this->shiftRepository = $shiftRepository;
 		$this->shiftPlanRepository = $shiftPlanRepository;
 		$this->departmentRepository = $departmentRepository;
@@ -61,14 +61,14 @@ final class ScheduleAssignmentsService extends BaseService
 		}
 
 		return $this->wrapAction(function () use ($scheduleId, $scheduleForm) {
-			return $this->insertUsersAssignment($scheduleId, $scheduleForm->userIds, ScheduleUserTable::INCLUDED);
+			return $this->insertUsersAssignment($scheduleId, $scheduleForm->userIds);
 		});
 	}
 
 	/**
 	 * @param $scheduleId
 	 * @param ScheduleForm $scheduleForm
-	 * @return \Bitrix\Timeman\Service\BaseServiceResult
+	 * @return \Bitrix\Timeman\Service\BaseServiceResult|ScheduleServiceResult
 	 * @throws \Bitrix\Main\ArgumentException
 	 * @throws \Bitrix\Main\Db\SqlQueryException
 	 * @throws \Bitrix\Main\ObjectPropertyException
@@ -87,11 +87,10 @@ final class ScheduleAssignmentsService extends BaseService
 				return (new ScheduleServiceResult())->addError($scheduleForm->getFirstError());
 			}
 
-			$this->safeRun($this->insertUsersAssignment($scheduleId, $scheduleForm->userIdsExcluded, ScheduleUserTable::EXCLUDED));
-
-			$resDelete = $this->safeRun($this->deleteShiftPlansOfNotActiveUsers($scheduleId));
-
-			return $this->buildResultWithSchedule($resDelete->getSchedule());
+			$this->safeRun($this->insertUsersAssignment($scheduleId, $scheduleForm->userIdsExcluded, true));
+			return $this->buildResultWithSchedule(
+				$this->findScheduleWithUsers($scheduleId)
+			);
 		});
 	}
 
@@ -99,13 +98,13 @@ final class ScheduleAssignmentsService extends BaseService
 	{
 		/** @var Schedule $schedule */
 		$schedule->defineUsersCount(
-			$this->getScheduleRepository()->getUsersCount($schedule->getId(), $schedule->obtainDepartmentAssignments())
+			$this->scheduleProvider->getUsersCount($schedule)
 		);
 		return (new ScheduleServiceResult())
 			->setSchedule($schedule);
 	}
 
-	private function insertUsersAssignment($scheduleId, $userIds, $excluded)
+	private function insertUsersAssignment($scheduleId, $userIds, $excluded = false)
 	{
 		$schedule = $scheduleId;
 		if (!($schedule instanceof Schedule))
@@ -121,31 +120,42 @@ final class ScheduleAssignmentsService extends BaseService
 		$updated = [];
 		foreach ($userIds as $userId)
 		{
-			$user = $schedule->obtainFromAssignments($userId);
+			$user = $schedule->obtainUserAssignmentsById($userId);
 			if (!$user)
 			{
-				$insertData[] = ScheduleUser::create(
+				$newUser = ScheduleUser::create(
 					$scheduleId,
 					$userId,
 					$excluded
 				);
+				$insertData[] = $newUser;
+				$schedule->addToUserAssignments($newUser);
 			}
-			elseif ($user->getStatus() != $excluded)
+			else
 			{
-				$updated[] = $userId;
+				if ($excluded && $user->isIncluded())
+				{
+					$updated[] = $userId;
+					$user->setIsExcluded();
+				}
+				elseif (!$excluded && $user->isExcluded())
+				{
+					$updated[] = $userId;
+					$user->setIsIncluded();
+				}
 			}
 		}
 
-		$this->safeRun($this->getScheduleRepository()->addBatchUsers($insertData));
+		$this->safeRun($this->scheduleProvider->addBatchUsers($insertData));
 
-		$this->safeRun($this->getScheduleRepository()->updateBatchUsers($scheduleId, $updated, $excluded));
+		$this->safeRun($this->scheduleProvider->updateBatchUsers($scheduleId, $updated, $excluded ? ScheduleUserTable::EXCLUDED : ScheduleUserTable::INCLUDED));
 
 		return $this->buildResultWithSchedule($schedule);
 	}
 
 	private function findScheduleWithUsers($scheduleId)
 	{
-		return $this->getScheduleRepository()->findByIdWith((int)$scheduleId, ['USER_ASSIGNMENTS', 'DEPARTMENT_ASSIGNMENTS', 'ACTIVE_USERS', 'EXCLUDED_USERS']);
+		return $this->scheduleProvider->findByIdWith((int)$scheduleId, ['USER_ASSIGNMENTS', 'DEPARTMENT_ASSIGNMENTS',]);
 	}
 
 	/**
@@ -197,7 +207,7 @@ final class ScheduleAssignmentsService extends BaseService
 			)
 		);
 		# delete
-		$this->safeRun($this->getScheduleRepository()->deleteUsersAssignments($scheduleId, $deleteUserIds));
+		$this->safeRun($this->scheduleProvider->deleteUsersAssignments($scheduleId, $deleteUserIds));
 
 		# insert
 		$batchInsertUsersData = [];
@@ -209,7 +219,7 @@ final class ScheduleAssignmentsService extends BaseService
 				(int)in_array($insertUserId, $scheduleForm->userIdsExcluded)
 			);
 		}
-		$this->safeRun($this->getScheduleRepository()->addBatchUsers($batchInsertUsersData));
+		$this->safeRun($this->scheduleProvider->addBatchUsers($batchInsertUsersData));
 
 		# update
 		$userIdsToInclude = $userIdsToExclude = [];
@@ -224,8 +234,8 @@ final class ScheduleAssignmentsService extends BaseService
 				$userIdsToInclude[] = $updateUserId;
 			}
 		}
-		$this->safeRun($this->getScheduleRepository()->updateBatchUsers($scheduleId, $userIdsToInclude, ScheduleUserTable::INCLUDED));
-		$this->safeRun($this->getScheduleRepository()->updateBatchUsers($scheduleId, $userIdsToExclude, ScheduleUserTable::EXCLUDED));
+		$this->safeRun($this->scheduleProvider->updateBatchUsers($scheduleId, $userIdsToInclude, ScheduleUserTable::INCLUDED));
+		$this->safeRun($this->scheduleProvider->updateBatchUsers($scheduleId, $userIdsToExclude, ScheduleUserTable::EXCLUDED));
 
 
 		# DEPARTMENTS
@@ -248,7 +258,7 @@ final class ScheduleAssignmentsService extends BaseService
 			)
 		);
 		# delete
-		$this->safeRun($this->getScheduleRepository()->deleteDepartmentsAssignments($scheduleId, $deleteDepartmentIds));
+		$this->safeRun($this->scheduleProvider->deleteDepartmentsAssignments($scheduleId, $deleteDepartmentIds));
 
 		# insert
 		$batchInsertDepartmentsData = [];
@@ -257,10 +267,14 @@ final class ScheduleAssignmentsService extends BaseService
 			$item = new ScheduleDepartment(false);
 			$item->setScheduleId($schedule->getId());
 			$item->setDepartmentId($insertDepartmentId);
-			$item->setStatus((int)in_array($insertDepartmentId, $scheduleForm->departmentIdsExcluded));
+			$item->setIsIncluded();
+			if (in_array($insertDepartmentId, $scheduleForm->departmentIdsExcluded))
+			{
+				$item->setIsExcluded();
+			}
 			$batchInsertDepartmentsData[] = $item;
 		}
-		$this->safeRun($this->getScheduleRepository()->addBatchDepartments($batchInsertDepartmentsData));
+		$this->safeRun($this->scheduleProvider->addBatchDepartments($batchInsertDepartmentsData));
 
 		# update
 		$departmentsToInclude = $departmentsToExclude = [];
@@ -275,34 +289,8 @@ final class ScheduleAssignmentsService extends BaseService
 				$departmentsToInclude[] = $updateDepartmentId;
 			}
 		}
-		$this->safeRun($this->getScheduleRepository()->updateBatchDepartments($scheduleId, $departmentsToInclude, 0));
-		return $this->safeRun($this->getScheduleRepository()->updateBatchDepartments($scheduleId, $departmentsToExclude, 1));
-	}
-
-	public function deleteShiftPlansOfNotActiveUsers($scheduleId)
-	{
-		if (!($schedule = $this->findScheduleWithUsers($scheduleId)))
-		{
-			return (new ScheduleServiceResult())->addScheduleNotFoundError();
-		}
-
-		$shiftIds = $this->getShiftRepository()->findShiftIdsBySchedule($schedule->getId());
-		$activeUserIds = $schedule->obtainActiveUserIds();
-
-		if (empty($shiftIds))
-		{
-			return (new ScheduleServiceResult())->setSchedule($schedule);
-		}
-
-		if (empty($activeUserIds))
-		{
-			$this->getShiftPlanRepository()->deleteByShiftIds($shiftIds);
-		}
-		else
-		{
-			$this->getShiftPlanRepository()->deleteByShiftAndNotUsersIds($shiftIds, $activeUserIds);
-		}
-		return (new ScheduleServiceResult())->setSchedule($schedule);
+		$this->safeRun($this->scheduleProvider->updateBatchDepartments($scheduleId, $departmentsToInclude, 0));
+		return $this->safeRun($this->scheduleProvider->updateBatchDepartments($scheduleId, $departmentsToExclude, 1));
 	}
 
 	public function excludeDepartments($scheduleId, $depIds)
@@ -311,7 +299,7 @@ final class ScheduleAssignmentsService extends BaseService
 			foreach ($depIds as $depId)
 			{
 				$this->safeRun(
-					$this->getScheduleRepository()->excludeDepartment($scheduleId, $depId)
+					$this->scheduleProvider->excludeDepartment($scheduleId, $depId)
 				);
 			}
 			return new ScheduleServiceResult();
@@ -331,11 +319,11 @@ final class ScheduleAssignmentsService extends BaseService
 		{
 			return new Result();
 		}
-		$schedulesForAllUsers = $this->getScheduleRepository()
+		$schedulesForAllUsers = $this->scheduleProvider
 			->findSchedulesForAllUsers($exceptScheduleId);
 		$results = $this->fillCommonSchedulesAssignments($departmentIds, $schedulesForAllUsers);
 
-		$scheduleDepartmentsResult = $this->getScheduleRepository()
+		$scheduleDepartmentsResult = $this->scheduleProvider
 			->findDepartmentAssignmentsByIds($allDepIds, $exceptScheduleId);
 
 		$departmentAssignmentsResult = [];
@@ -361,7 +349,7 @@ final class ScheduleAssignmentsService extends BaseService
 		$departmentsRelationsData = [];
 		foreach ($departmentIds as $depId)
 		{
-			$departmentsRelationsData[$depId] = $this->getDepartmentRepository()
+			$departmentsRelationsData[$depId] = $this->departmentRepository
 				->findDepartmentsChain($depId);
 		}
 		return $departmentsRelationsData;
@@ -460,25 +448,5 @@ final class ScheduleAssignmentsService extends BaseService
 			}
 		}
 		return $results;
-	}
-
-	private function getScheduleRepository()
-	{
-		return $this->scheduleRepository;
-	}
-
-	private function getShiftRepository()
-	{
-		return $this->shiftRepository;
-	}
-
-	private function getShiftPlanRepository()
-	{
-		return $this->shiftPlanRepository;
-	}
-
-	private function getDepartmentRepository()
-	{
-		return $this->departmentRepository;
 	}
 }

@@ -159,7 +159,7 @@ class CDavExchangeClientRequest
 
 		if (!in_array($arParentFolderId["id"], self::$arDistinguishedFolderIdNameType))
 		{
-			$this->body .= "    <t:FolderId Id=\"".htmlspecialcharsbx($arParentFolderId["id"])."\"/>\r\n";
+			$this->body .= "    <t:FolderId Id=\"".htmlspecialcharsbx($arParentFolderId["id"])."\""." ChangeKey=\"".htmlspecialcharsbx($arParentFolderId['changekey'])."\""." />\r\n";
 		}
 		elseif (array_key_exists("mailbox", $arParentFolderId))
 		{
@@ -311,6 +311,7 @@ class CDavExchangeClientRequest
 
 		$id = (isset($itemId["id"]) ? $itemId["id"] : $itemId["XML_ID"]);
 		$changekey = (isset($itemId["changekey"]) ? $itemId["changekey"] : (isset($itemId["MODIFICATION_LABEL"]) ? $itemId["MODIFICATION_LABEL"] : null));
+
 
 		$this->body .= "     <ItemId Id=\"".htmlspecialcharsbx($id)."\"";
 		if (!is_null($changekey) && !empty($changekey))

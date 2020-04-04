@@ -82,7 +82,12 @@
 					currNode.hash === ''
 				)
 				{
-					addActive($(this).parent('.nav-item'));
+					var parentLi = $(this).parent('.nav-item');
+					addActive(parentLi);
+
+					// for multilevel
+					var parentUl = $(this).parents('.g-menu-sublevel');
+					addActive(parentUl);
 				}
 			});
 		}

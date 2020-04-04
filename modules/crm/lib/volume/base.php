@@ -111,6 +111,9 @@ abstract class Base
 	/** @var array */
 	protected $dateSplitPeriod = array(1, 'months');
 
+	/** @var false */
+	protected $collectEntityRowSize = false;
+
 
 	/**
 	 * @return string the fully qualified name of this class.
@@ -1871,14 +1874,13 @@ abstract class Base
 
 				if ($row0)
 				{
-					$coefficient = 1000;
-					if ((int)$row0['CNT'] > 500 * $coefficient)
+					if ((int)$row0['CNT'] > 500000)
 					{
-						$maxIdRange = 100 * $coefficient;
+						$maxIdRange = 100000;
 					}
-					elseif ((int)$row0['CNT'] > 100 * $coefficient)
+					elseif ((int)$row0['CNT'] > 100000)
 					{
-						$maxIdRange = 50 * $coefficient;
+						$maxIdRange = 50000;
 					}
 				}
 
@@ -1920,23 +1922,12 @@ abstract class Base
 
 				$query->setGroup(array('YY', 'MM', 'DD'))->setOrder(array('BRDR' => 'ASC'));
 
-				$count = 0;
-				$prevId = 0;
-
 				$res = $query->exec();
-				while ($row = $res->fetch())
+				if ($row = $res->fetch())
 				{
-					$count += $row['CNT'];
-
-					if ($count >= $maxIdRange)
+					$count = 0;
+					$appendQueueList = function($range) use ($actionCommands, $actionAliases, &$queueList, $indicatorId)
 					{
-						$range = '';
-						if ($prevId > 0)
-						{
-							$range .= $prevId;
-						}
-						$range .= '-'.$row['BRDR'];
-
 						foreach ($actionCommands as $command)
 						{
 							if (isset($actionAliases[$command]))
@@ -1948,25 +1939,40 @@ abstract class Base
 								);
 							}
 						}
+					};
 
-						$count = 0;
-						$prevId = $row['BRDR'];
-					}
-				}
-				if ($count >= 0 && $prevId > 0)
-				{
-					$range = $prevId.'-';
-
-					foreach ($actionCommands as $command)
+					$prevId = null;
+					do
 					{
-						if (isset($actionAliases[$command]))
+						if (
+							$row['CNT'] >= $maxIdRange ||
+							($count + (int)$row['CNT']) >= $maxIdRange * 1.3 ||
+							$count >= $maxIdRange
+						)
 						{
-							$queueList[] = array(
-								'indicatorId' => $indicatorId,
-								'action' => $actionAliases[$command],
-								'range' => $range,
-							);
+							$range = '';
+							if ($prevId > 0)
+							{
+								$range .= $prevId;
+							}
+							$range .= '-'.(int)$row['BRDR'];
+
+							$appendQueueList($range);
+
+							$count = 0;
+							$prevId = (int)$row['BRDR'];
+							continue;
 						}
+
+						$count += (int)$row['CNT'];
+					}
+					while ($row = $res->fetch());
+
+					if ($count >= 0 && $prevId > 0)
+					{
+						$range = $prevId.'-';
+
+						$appendQueueList($range);
 					}
 				}
 

@@ -126,16 +126,6 @@ class AdditionalHandler extends Base
 	}
 
 	/**
-	 * @param Shipment $shipment
-	 * @throws SystemException
-	 * @return \Bitrix\Sale\Delivery\CalculationResult
-	 */
-	protected function calculateConcrete(Shipment $shipment)
-	{
-		throw new SystemException("Only Additional Profiles can calculate concrete");
-	}
-
-	/**
 	 * @return array
 	 * @throws SystemException
 	 * todo: business values for default values

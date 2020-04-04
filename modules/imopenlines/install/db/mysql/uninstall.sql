@@ -19,4 +19,5 @@ DROP TABLE if exists b_imopenlines_treatment_by_hour_stat;
 DROP TABLE if exists b_imopenlines_log;
 DROP TABLE if exists b_imopenlines_exec_log;
 DROP TABLE if exists b_imopenlines_event_log;
-DROP TABLE if exists b_imopenlines_kpi_messages;
+DROP TABLE if exists b_imopenlines_session_kpi_messages;
+DROP TABLE if exists b_imopenlines_lock;

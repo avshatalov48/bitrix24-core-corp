@@ -2447,7 +2447,8 @@ class CCalendarEvent
 								CCalendarSync::DoSaveToDav(array(
 									'bCalDav' => $bCalDav,
 									'bExchange' => $bExchange,
-									'sectionId' => $childSectId
+									'sectionId' => $childSectId,
+									'modeSync' => true
 								), $childParams['arFields']);
 							}
 						}
@@ -2471,7 +2472,8 @@ class CCalendarEvent
 								CCalendarSync::DoSaveToDav(array(
 									'bCalDav' => $bCalDav,
 									'bExchange' => $bExchange,
-									'sectionId' => $childParams['currentEvent']['SECT_ID']
+									'sectionId' => $childParams['currentEvent']['SECT_ID'],
+									'modeSync' => true
 								), $childParams['arFields'], $childParams['currentEvent']);
 							}
 						}

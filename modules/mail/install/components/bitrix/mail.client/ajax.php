@@ -581,6 +581,8 @@ class CMailClientAjaxController extends \Bitrix\Main\Engine\Controller
 			),
 		);
 
+		$messageBindings = array();
+
 		// crm activity
 		if ($this->isCrmEnable && count($crmCommunication) > 0)
 		{
@@ -619,6 +621,8 @@ class CMailClientAjaxController extends \Bitrix\Main\Engine\Controller
 				return;
 			}
 
+			$messageBindings[] = Mail\Internals\MessageAccessTable::ENTITY_TYPE_CRM_ACTIVITY;
+
 			//$activityId = $activityFields['ID'];
 			//$urn = $messageFields['URN'];
 			$messageId = $messageFields['MSG_ID'];
@@ -645,6 +649,16 @@ class CMailClientAjaxController extends \Bitrix\Main\Engine\Controller
 		}
 		else
 		{
+			$eventKey = Main\EventManager::getInstance()->addEventHandler(
+				'mail',
+				'onBeforeUserFieldSave',
+				function (\Bitrix\Main\Event $event) use (&$messageBindings)
+				{
+					$params = $event->getParameters();
+					$messageBindings[] = $params['entity_type'];
+				}
+			);
+
 			$result = $mailboxHelper->mail(array_merge(
 				$outgoingParams,
 				array(
@@ -657,7 +671,16 @@ class CMailClientAjaxController extends \Bitrix\Main\Engine\Controller
 					),
 				)
 			));
+
+			Main\EventManager::getInstance()->removeEventHandler('mail', 'onBeforeUserFieldSave', $eventKey);
 		}
+
+		addEventToStatFile(
+			'mail',
+			(empty($data['IN_REPLY_TO']) ? 'send_message' : 'send_reply'),
+			join(',', array_unique(array_filter($messageBindings))),
+			trim(trim($messageId), '<>')
+		);
 
 		return;
 	}

@@ -11,6 +11,11 @@
 	margin-bottom: 250px;
 }
 
+.automation-base-script-mode{
+	width: auto;
+	min-width: auto;
+}
+
 .automation-base:before {
 	content: '';
 	display: none;
@@ -1820,7 +1825,10 @@
 	color: #89929e;
 }
 
-.bizproc-automation-popup-sms-symbol-counter-number-overhead { color: #d0011b; }
+.bizproc-automation-popup-sms-symbol-counter-number-overhead {
+	color: #d0011b;
+}
+
 .bizproc-automation-condition-wrapper:last-of-type .bizproc-automation-condition-joiner {
 	display: none;
 }

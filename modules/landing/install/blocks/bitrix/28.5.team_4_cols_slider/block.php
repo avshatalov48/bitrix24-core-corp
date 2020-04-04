@@ -35,7 +35,7 @@
 				 "selector": ".js-carousel",
 				 "class": "row"
 			   }]'>
-			<div class="landing-block-card-member js-slide js-animation fadeInLeft g-px-10--md col-12 col-sm-4 col-lg-3">
+			<div class="landing-block-card-member js-slide js-animation fadeInLeft g-px-10--md col-12 col-sm-4 col-lg-3 align-self-start">
 				<!-- Figure -->
 				<figure class="landing-block-card-member-container u-block-hover g-bg-gray-dark-v2 g-bg-primary--hover g-color-white mb-0 g-transition-0_2">
 					<div class="g-pos-rel">
@@ -47,7 +47,7 @@
 
 						<div class="u-block-hover__additional--fade g-flex-middle g-pointer-events-none">
 							<!-- Figure Contacts -->
-							<ul class="list-unstyled g-flex-middle-item--bottom g-pa-30 g-pointer-events-all">
+							<ul class="landing-block-text-container list-unstyled g-flex-middle-item--bottom g-pt-30 g-pb-30 g-pl-30 g-pr-30 g-pointer-events-all">
 								<li class="g-mb-5">
 									<span class="landing-block-node-member-contact-icon-container1 landing-block-node-member-contact-icon-container g-font-size-default g-color-primary g-mr-5">
 										<i class="landing-block-node-member-contact-icon1 landing-block-node-member-contact-icon fa fa-envelope"></i>
@@ -81,7 +81,7 @@
 				<!-- End Figure -->
 			</div>
 
-			<div class="landing-block-card-member js-slide js-animation fadeInLeft g-px-10--md col-12 col-sm-4 col-lg-3">
+			<div class="landing-block-card-member js-slide js-animation fadeInLeft g-px-10--md col-12 col-sm-4 col-lg-3 align-self-start">
 				<!-- Figure -->
 				<figure class="landing-block-card-member-container u-block-hover g-bg-gray-dark-v2 g-bg-primary--hover g-color-white mb-0 g-transition-0_2">
 					<div class="g-pos-rel">
@@ -93,7 +93,7 @@
 
 						<div class="u-block-hover__additional--fade g-flex-middle g-pointer-events-none">
 							<!-- Figure Contacts -->
-							<ul class="list-unstyled g-flex-middle-item--bottom g-pa-30 g-pointer-events-all">
+							<ul class="landing-block-text-container list-unstyled g-flex-middle-item--bottom g-pt-30 g-pb-30 g-pl-30 g-pr-30 g-pointer-events-all">
 								<li class="g-mb-5">
 									<span class="landing-block-node-member-contact-icon-container1 landing-block-node-member-contact-icon-container g-font-size-default g-color-primary g-mr-5">
 										<i class="landing-block-node-member-contact-icon1 landing-block-node-member-contact-icon fa fa-envelope"></i>
@@ -128,7 +128,7 @@
 				<!-- End Figure -->
 			</div>
 
-			<div class="landing-block-card-member js-slide js-animation fadeInLeft g-px-10--md col-12 col-sm-4 col-lg-3">
+			<div class="landing-block-card-member js-slide js-animation fadeInLeft g-px-10--md col-12 col-sm-4 col-lg-3 align-self-start">
 				<!-- Figure -->
 				<figure class="landing-block-card-member-container u-block-hover g-bg-gray-dark-v2 g-bg-primary--hover g-color-white mb-0 g-transition-0_2">
 					<div class="g-pos-rel">
@@ -140,7 +140,7 @@
 
 						<div class="u-block-hover__additional--fade g-flex-middle g-pointer-events-none">
 							<!-- Figure Contacts -->
-							<ul class="list-unstyled g-flex-middle-item--bottom g-pa-30 g-pointer-events-all">
+							<ul class="landing-block-text-container list-unstyled g-flex-middle-item--bottom g-pt-30 g-pb-30 g-pl-30 g-pr-30 g-pointer-events-all">
 								<li class="g-mb-5">
 									<span class="landing-block-node-member-contact-icon-container1 landing-block-node-member-contact-icon-container g-font-size-default g-color-primary g-mr-5">
 										<i class="landing-block-node-member-contact-icon1 landing-block-node-member-contact-icon fa fa-envelope"></i>
@@ -167,7 +167,7 @@
 						<h4 class="landing-block-node-member-name text-uppercase g-font-size-16 g-mb-5">Monica
 							Notrom</h4>
 						<div class="landing-block-node-member-text g-font-style-normal g-font-size-default g-color-white-opacity-0_75">
-							Cardio, Pilates, Zymba
+							Cardio, Pilates, Zymba, Crossfit
 						</div>
 					</div>
 					<!-- End Figure Info-->
@@ -175,7 +175,7 @@
 				<!-- End Figure -->
 			</div>
 
-			<div class="landing-block-card-member js-slide js-animation fadeInLeft g-px-10--md col-12 col-sm-4 col-lg-3">
+			<div class="landing-block-card-member js-slide js-animation fadeInLeft g-px-10--md col-12 col-sm-4 col-lg-3 align-self-start">
 				<!-- Figure -->
 				<figure class="landing-block-card-member-container u-block-hover g-bg-gray-dark-v2 g-bg-primary--hover g-color-white mb-0 g-transition-0_2">
 					<div class="g-pos-rel">
@@ -187,7 +187,7 @@
 
 						<div class="u-block-hover__additional--fade g-flex-middle g-pointer-events-none">
 							<!-- Figure Contacts -->
-							<ul class="list-unstyled g-flex-middle-item--bottom g-pa-30 g-pointer-events-all">
+							<ul class="landing-block-text-container list-unstyled g-flex-middle-item--bottom g-pt-30 g-pb-30 g-pl-30 g-pr-30 g-pointer-events-all">
 								<li class="g-mb-5">
 									<span class="landing-block-node-member-contact-icon-container1 landing-block-node-member-contact-icon-container g-font-size-default g-color-primary g-mr-5">
 										<i class="landing-block-node-member-contact-icon1 landing-block-node-member-contact-icon fa fa-envelope"></i>
@@ -221,7 +221,7 @@
 				<!-- End Figure -->
 			</div>
 
-			<div class="landing-block-card-member js-slide js-animation fadeInLeft g-px-10--md col-12 col-sm-4 col-lg-3">
+			<div class="landing-block-card-member js-slide js-animation fadeInLeft g-px-10--md col-12 col-sm-4 col-lg-3 align-self-start">
 				<!-- Figure -->
 				<figure class="landing-block-card-member-container u-block-hover g-bg-gray-dark-v2 g-bg-primary--hover g-color-white mb-0 g-transition-0_2">
 					<div class="g-pos-rel">
@@ -233,7 +233,7 @@
 
 						<div class="u-block-hover__additional--fade g-flex-middle g-pointer-events-none">
 							<!-- Figure Contacts -->
-							<ul class="list-unstyled g-flex-middle-item--bottom g-pa-30 g-pointer-events-all">
+							<ul class="landing-block-text-container list-unstyled g-flex-middle-item--bottom g-pt-30 g-pb-30 g-pl-30 g-pr-30 g-pointer-events-all">
 								<li class="g-mb-5">
 									<span class="landing-block-node-member-contact-icon-container1 landing-block-node-member-contact-icon-container g-font-size-default g-color-primary g-mr-5">
 										<i class="landing-block-node-member-contact-icon1 landing-block-node-member-contact-icon fa fa-envelope"></i>

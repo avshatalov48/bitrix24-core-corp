@@ -27,7 +27,7 @@ abstract class OAuth
 				OAuth\Google::getServiceName(),
 				OAuth\LiveId::getServiceName(),
 				OAuth\Yandex::getServiceName(),
-				//OAuth\Mailru::getServiceName(),
+				OAuth\Mailru::getServiceName(),
 			);
 		}
 

@@ -34,6 +34,12 @@ abstract class Field
 	protected $help;
 
 	/**
+	 * Searchable flag of field.
+	 * @var bool
+	 */
+	protected $searchable = false;
+
+	/**
 	 * Modificator, which called within getting value.
 	 * @var callable
 	 */
@@ -51,6 +57,7 @@ abstract class Field
 		$this->id = isset($params['id']) ? $params['id'] : '';
 		$this->title = isset($params['title']) ? $params['title'] : '';
 		$this->help = isset($params['help']) ? $params['help'] : '';
+		$this->searchable = isset($params['searchable']) && $params['searchable'] === true;
 		$this->fetchModificator = isset($params['fetch_data_modification']) ? $params['fetch_data_modification'] : null;
 	}
 
@@ -96,6 +103,15 @@ abstract class Field
 	public function getHelpValue()
 	{
 		return $this->help;
+	}
+
+	/**
+	 * Returns searchable flag of field.
+	 * @return bool
+	 */
+	public function isSearchable()
+	{
+		return $this->searchable;
 	}
 
 	/**

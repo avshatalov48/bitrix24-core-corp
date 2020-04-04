@@ -100,6 +100,10 @@ class DuplicateIndexBuilder
 	{
 		return $this->internalBuild($progressData);
 	}
+	public function getTotalCount()
+	{
+		return $this->getDataSource()->getTotalCount();
+	}
 	public function processMismatchRegistration(DuplicateCriterion $criterion, $entityID = 0)
 	{
 		if(!is_int($entityID))
@@ -129,7 +133,7 @@ class DuplicateIndexBuilder
 			);
 		}
 	}
-	public function processEntityDeletion(DuplicateCriterion $criterion, $entityID)
+	public function processEntityDeletion(DuplicateCriterion $criterion, $entityID, array $params = array())
 	{
 		if(!is_int($entityID))
 		{
@@ -142,17 +146,20 @@ class DuplicateIndexBuilder
 		}
 
 		$matchHash = $criterion->getMatchHash();
-		$rootEntityID = $this->getRootEntityID($matchHash);
 
-		if($rootEntityID <= 0)
+		$userID = $this->getUserID();
+		$entityTypeID = $this->getEntityTypeID();
+		$rootEntityID = $this->getRootEntityID($matchHash);
+		$enablePermissionCheck = $this->isPermissionCheckEnabled();
+
+		//Actual root entity is required for manual merging. User can select any entity as root entity.
+		$actualRootEntityID = isset($params['ROOT_ENTITY_ID']) ? (int)$params['ROOT_ENTITY_ID'] : 0;
+		if($actualRootEntityID <= 0)
 		{
-			return;
+			$actualRootEntityID = $rootEntityID;
 		}
 
-		$entityTypeID = $this->getEntityTypeID();
-		$userID = $this->getUserID();
-		$enablePermissionCheck = $this->isPermissionCheckEnabled();
-		$quantity = $criterion->getActualCount($entityTypeID, $rootEntityID, $userID, $enablePermissionCheck, 100);
+		$quantity = $criterion->getActualCount($entityTypeID, $actualRootEntityID, $userID, $enablePermissionCheck, 100);
 		if($quantity === 0)
 		{
 			Entity\DuplicateIndexTable::deleteByFilter(
@@ -280,6 +287,35 @@ class DuplicateIndexBuilder
 
 		Entity\DuplicateIndexTable::markAsJunk($entityTypeID, $entityID);
 	}
+
+	public static function setStatusID($userID, $entityTypeID, $typeID, $matchHash, $scope, $statusID)
+	{
+		if(!is_int($userID))
+		{
+			$userID = (int)$userID;
+		}
+
+		if(!is_int($entityTypeID))
+		{
+			$entityTypeID = (int)$entityTypeID;
+		}
+		if(!\CCrmOwnerType::IsDefined($entityTypeID))
+		{
+			throw new Main\ArgumentException("Is not defined or invalid", 'entityTypeID');
+		}
+
+		if(!is_int($typeID))
+		{
+			$typeID = (int)$typeID;
+		}
+		if(!DuplicateIndexType::isDefined($typeID))
+		{
+			throw new Main\ArgumentException("Is not defined or invalid", 'typeID');
+		}
+
+		Entity\DuplicateIndexTable::setStatusID($userID, $entityTypeID, $typeID, $matchHash, $scope, $statusID);
+	}
+
 	protected static function getTypeScopeMap($entityTypeID)
 	{
 		if (!\CCrmOwnerType::isDefined($entityTypeID))
@@ -343,6 +379,7 @@ class DuplicateIndexBuilder
 			}
 
 			$data = $this->prepareTableData($matchHash, $item, $sortParams, true);
+			$data['STATUS_ID'] = DuplicateStatus::PENDING;
 			Entity\DuplicateIndexTable::upsert($data);
 			$effectiveItemCount++;
 		}

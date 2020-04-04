@@ -3,6 +3,7 @@
 namespace Bitrix\Crm\Ml\Model;
 
 use Bitrix\Crm\Binding\DealContactTable;
+use Bitrix\Crm\Category\DealCategory;
 use Bitrix\Crm\Category\Entity\DealCategoryTable;
 use Bitrix\Crm\DealTable;
 use Bitrix\Crm\FieldMultiTable;
@@ -10,25 +11,20 @@ use Bitrix\Crm\Ml\DataProvider;
 use Bitrix\Crm\Ml\FeatureBuilder;
 use Bitrix\Crm\PhaseSemantics;
 use Bitrix\Main\ArgumentException;
-use Bitrix\Main\Entity\Query;
-use Bitrix\Main\Error;
-use Bitrix\Main\Loader;
-use Bitrix\Main\Result;
 use Bitrix\Main\Type\Date;
 use Bitrix\Main\Type\DateTime;
-
+use Bitrix\Main\Localization\Loc;
 
 class DealScoring extends Base
 {
-
 	protected $deals;
 
 	/**
-	 *
+	 * Returns available model names for the deal scoring.
+	 * @return string[]
 	 */
 	public static function getModelNames()
 	{
-
 		$cursor = DealCategoryTable::getList([
 			'select' => ['ID'],
 			'filter' => [
@@ -46,23 +42,6 @@ class DealScoring extends Base
 		}
 
 		return $result;
-	}
-
-	public static function createModel($categoryId)
-	{
-		$result = new Result();
-		if(!Loader::includeModule("ml"))
-		{
-			$result->addError(new Error("ML module is not installed"));
-			return $result;
-		}
-
-		$name = static::getModelName($categoryId);
-
-		// check
-
-		//$modelState =
-
 	}
 
 	/**
@@ -92,18 +71,7 @@ class DealScoring extends Base
 		$result["DATE_CREATE_MONTH"] = ["dataType" => "string"];
 		$result["DATE_CREATE_DAY_OF_WEEK"] = ["dataType" => "string"];
 		$result["DATE_CREATE_TIME"] = ["dataType" => "string"]; // category: morning, day, evening, night
-
-
-		// todo: подумать еще как учесть текущую стадию сделки / среднее (медианное) количество дней пребывания в стадии
-
-
-		// UF features
-
-		// todo: подумать еще над фичами из пользовательских полей. известные проблемы:
-		// - нам неизвестна семантика полей
-		// - поля десятками могут создавать бизнес-процессы
-		// - полями могут пользоваться для своих нужд приложения
-		// - поля могут быть обязательные для стадии - те они будут гарантированно заполнены, и это не будет ничего значить
+		$result["ASSIGNED_BY_ID"] = ["dataType" => "string"];
 
 		$ufFeatures = static::getUserFieldName();
 		if(count($ufFeatures) > 0)
@@ -185,7 +153,7 @@ class DealScoring extends Base
 			"runtime" => [
 				new \Bitrix\Main\ORM\Fields\ExpressionField(
 					"HAS_ACT",
-					"CASE WHEN EXISTS(SELECT 'x' FROM b_crm_act WHERE OWNER_TYPE_ID = 1 and OWNER_ID = %s) THEN 1 ELSE 0 END",
+					"CASE WHEN EXISTS(SELECT 'x' FROM b_crm_act WHERE OWNER_TYPE_ID = " . \CCrmOwnerType::Deal . " and OWNER_ID = %s) THEN 1 ELSE 0 END",
 					["ID"]
 				),
 			],
@@ -247,6 +215,7 @@ class DealScoring extends Base
 				"STAGE_SEMANTIC_ID",
 				"SOURCE_ID" => "SOURCE_ID",
 				"SOURCE_DESCRIPTION" => "SOURCE_DESCRIPTION",
+				"ASSIGNED_BY_ID",
 				"IS_RETURN_CUSTOMER" => "IS_RETURN_CUSTOMER",
 				"IS_REPEATED_APPROACH" => "IS_REPEATED_APPROACH",
 				"TITLE",
@@ -372,11 +341,6 @@ class DealScoring extends Base
 		return $result;
 	}
 
-	public static function onDealUpdate($dealId, $parameters)
-	{
-
-	}
-
 	public static function getModelNameByDeal($dealId)
 	{
 		$dealId = (int)$dealId;
@@ -418,6 +382,26 @@ class DealScoring extends Base
 		else {
 			throw new ArgumentException("Unknown model name $modelName");
 		}
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public function getTitle()
+	{
+		$dealCategory = static::getModelCategory($this->getName());
+
+		if($dealCategory > 0)
+		{
+			return Loc::getMessage("CRM_DEAL_SCORING_MODEL_TITLE", [
+				"#CATEGORY_NAME#" => DealCategory::getName($dealCategory)
+			]);
+		}
+		else
+		{
+			return Loc::getMessage("CRM_DEAL_SCORING_MODEL_TITLE_DEFAULT");
+		}
+
 	}
 
 	protected static function getUserFieldName()

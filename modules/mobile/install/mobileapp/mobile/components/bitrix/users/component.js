@@ -135,6 +135,11 @@
 			return items;
 		}
 
+		onSearchResult(items, sections, list, state)
+		{
+			list.setSearchResultItems(items, sections);
+		}
+
 		onUserSelected(user)
 		{
 			ProfileView.open(
@@ -152,6 +157,7 @@
 
 
 	this.userList = new UserList(list, new ListDelegate(), componentResult.get().nameFormat);
+	this.userList.init();
 
 })();
 

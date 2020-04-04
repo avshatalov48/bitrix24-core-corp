@@ -4,6 +4,7 @@ namespace Bitrix\Timeman\Model\Schedule\Shift;
 use Bitrix\Timeman\Helper\TimeDictionary;
 use Bitrix\Timeman\Helper\TimeHelper;
 use Bitrix\Timeman\Model\Schedule\Schedule;
+use Bitrix\Timeman\Model\Schedule\ShiftPlan\ShiftPlan;
 
 class Shift extends EO_Shift
 {
@@ -41,17 +42,21 @@ class Shift extends EO_Shift
 
 	public static function getShiftDuration($shift)
 	{
-		$duration = $shift['WORK_TIME_END'] - $shift['WORK_TIME_START'];
-		if ($duration < 0)
+		if ($shift instanceof Shift)
 		{
-			$duration = 24 * TimeDictionary::SECONDS_PER_HOUR - $shift['WORK_TIME_START'] + $shift['WORK_TIME_END'];
+			return $shift->getDuration();
 		}
-		return $duration;
+		return static::wakeUp($shift)->getDuration();
 	}
 
 	public function getDuration()
 	{
-		return static::getShiftDuration($this);
+		$duration = $this->getWorkTimeEnd() - $this->getWorkTimeStart();
+		if ($duration < 0)
+		{
+			$duration = 24 * TimeDictionary::SECONDS_PER_HOUR - $this->getWorkTimeStart() + $this->getWorkTimeEnd();
+		}
+		return $duration;
 	}
 
 	public function getStartHours()
@@ -119,8 +124,170 @@ class Shift extends EO_Shift
 		}
 	}
 
+	public function isForTime($seconds, $offset = 0)
+	{
+		if ($offset < 0)
+		{
+			$offset = 0;
+		}
+		$allowedStart = $this->normalizeSeconds($this->getWorkTimeStart() - $offset);
+		if ($allowedStart <= $this->getWorkTimeEnd())
+		{
+			return $seconds >= $allowedStart && $seconds <= $this->getWorkTimeEnd();
+		}
+		if ($seconds >= $allowedStart && $seconds <= TimeDictionary::SECONDS_PER_DAY)
+		{
+			return true;
+		}
+		if ($seconds >= 0 && $seconds <= $this->getWorkTimeEnd())
+		{
+			return true;
+		}
+
+		return false;
+	}
+
 	public function isForWeekDay($weekDay)
 	{
 		return in_array((int)$weekDay, array_map('intval', str_split($this->getWorkDays())), true);
+	}
+
+	/**
+	 * @param int $userId
+	 * @param Schedule|null $schedule
+	 */
+	public function isEligibleToStartByTime($userDateTime, $schedule = null)
+	{
+		return $this->buildStartDateTimeByArrivalDateTime($userDateTime, $schedule) !== null;
+	}
+
+	/**
+	 * @param \DateTime $userDateTime
+	 * @param Schedule $schedule
+	 * @return \DateTime|null
+	 * @throws \Exception
+	 */
+	public function buildStartDateTimeByArrivalDateTime($userDateTime, $schedule)
+	{
+		$allowedStartOffset = 0;
+		if ($schedule)
+		{
+			if ($schedule->isShifted())
+			{
+				if ($schedule->getAllowedMaxShiftStartOffset() > 0)
+				{
+					$allowedStartOffset = $schedule->getAllowedMaxShiftStartOffset();
+				}
+			}
+			elseif ($schedule->isFixed())
+			{
+				$allowedStartOffset = Schedule::FIXED_MAX_START_OFFSET;
+			}
+		}
+		$startEnds = $this->buildStartsEndsAroundDate($userDateTime);
+		foreach ($startEnds as $startEnd)
+		{
+			/** @var \DateTime[] $startEnd */
+			$currentStartDate = $startEnd[0];
+			$shiftEndModified = $startEnd[1];
+
+			if ($userDateTime->getTimestamp() >= ($currentStartDate->getTimestamp() - $allowedStartOffset)
+				&& $userDateTime->getTimestamp() <= $shiftEndModified->getTimestamp())
+			{
+				return $currentStartDate;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * @param \DateTime $userDateTime
+	 * @return array
+	 * @throws \Exception
+	 */
+	public function buildStartsEndsAroundDate($userDateTime)
+	{
+		$result = [];
+		$shiftTodayStart = clone $userDateTime;
+		TimeHelper::getInstance()->setTimeFromSeconds($shiftTodayStart, $this->getWorkTimeStart());
+
+		$shiftTodayEnd = clone $shiftTodayStart;
+		$shiftTodayEnd->add(new \DateInterval('PT' . $this->getDuration() . 'S'));
+
+		$intervals = ['', 'P1D', '+P1D'];
+		foreach ($intervals as $interval)
+		{
+			$currentStartDate = clone $shiftTodayStart;
+			$shiftEndModified = clone $shiftTodayEnd;
+
+			if ($interval)
+			{
+				if (substr($interval, 0, 1) === '+')
+				{
+					$currentStartDate->add(new \DateInterval(substr($interval, 1)));
+					$shiftEndModified->add(new \DateInterval(substr($interval, 1)));
+				}
+				else
+				{
+					$currentStartDate->sub(new \DateInterval($interval));
+					$shiftEndModified->sub(new \DateInterval($interval));
+				}
+			}
+			$result[TimeHelper::getInstance()->getDayOfWeek($currentStartDate)] = [$currentStartDate, $shiftEndModified];
+		}
+		return $result;
+	}
+
+	/**
+	 * @param ShiftPlan $shiftPlan
+	 * @return \DateTime
+	 */
+	public function buildUtcEndByShiftplan($shiftPlan)
+	{
+		$utcStart = $this->buildUtcStartByShiftplan($shiftPlan);
+		$utcStart->add(new \DateInterval('PT' . $this->getDuration() . 'S'));
+		return $utcStart;
+	}
+
+	/**
+	 * @param ShiftPlan $shiftPlan
+	 * @return \DateTime
+	 */
+	public function buildUtcStartByShiftplan($shiftPlan)
+	{
+		return $this->buildUtcDateTimeBySecondsUserDate(
+			$this->getWorkTimeStart(),
+			$shiftPlan->getUserId(),
+			$shiftPlan->getDateAssignedUtc()
+		);
+	}
+
+	/**
+	 * @param $seconds
+	 * @param $userId
+	 * @param \DateTime $userUtcDate
+	 * @return \DateTime|null
+	 */
+	public function buildUtcDateTimeBySecondsUserDate($seconds, $userId, $userUtcDate)
+	{
+		$utcStartSeconds = $this->normalizeSeconds($seconds - TimeHelper::getInstance()->getUserUtcOffset($userId));
+		$utcDate = TimeHelper::getInstance()->createDateTimeFromFormat('Y-m-d', $userUtcDate->format('Y-m-d'), 0);
+		TimeHelper::getInstance()->setTimeFromSeconds($utcDate, $utcStartSeconds);
+		return $utcDate === false ? null : $utcDate;
+	}
+
+	private function normalizeSeconds($seconds)
+	{
+		return TimeHelper::getInstance()->normalizeSeconds($seconds);
+	}
+
+	public function isDeleted()
+	{
+		return $this->getDeleted();
+	}
+
+	public function isActive()
+	{
+		return !$this->isDeleted();
 	}
 }

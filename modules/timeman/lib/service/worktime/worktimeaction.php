@@ -10,7 +10,7 @@ class WorktimeAction
 	const TYPE_START = 'START';
 	const TYPE_PAUSE = 'PAUSE';
 	const TYPE_CONTINUE = 'CONTINUE';
-	const TYPE_RELAUNCH = 'RELAUNCH';
+	const TYPE_REOPEN = 'RELAUNCH';
 	const TYPE_STOP = 'STOP';
 	const TYPE_EDIT = 'EDIT';
 
@@ -62,9 +62,9 @@ class WorktimeAction
 		return $action;
 	}
 
-	public static function createRelaunchAction($userId)
+	public static function createReopenAction($userId)
 	{
-		$action = new static($userId, static::TYPE_RELAUNCH);
+		$action = new static($userId, static::TYPE_REOPEN);
 		return $action;
 	}
 
@@ -145,9 +145,9 @@ class WorktimeAction
 		return $this->type === static::TYPE_CONTINUE;
 	}
 
-	public function isRelaunch()
+	public function isReopen()
 	{
-		return $this->type === static::TYPE_RELAUNCH;
+		return $this->type === static::TYPE_REOPEN;
 	}
 
 	public function isStop()

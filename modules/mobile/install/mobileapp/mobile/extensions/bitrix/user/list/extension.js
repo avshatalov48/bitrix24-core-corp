@@ -1,5 +1,5 @@
 /**
- * * @bxjs_lang_path extension.php
+ * @bxjs_lang_path extension.php
  * @let BaseList list
  */
 
@@ -8,38 +8,30 @@
 	/** @interface UserListDelegate */
 	class UserListDelegate
 	{
-		onUserSelected(item){}
-		formatUserData(item){}
-		filterUserList(items){}
-	}
-
-	class RequestSearchExecutor extends RequestExecutor
-	{
-		constructor(method, options)
+		onUserSelected(item)
 		{
-
-			super(method, options);
-			this.timeoutId = null;
-			this.timeout = 300;
 		}
 
-		call()
+		formatUserData(item)
 		{
-			clearTimeout(this.timeoutId);
-			this.timeoutId = setTimeout(() => super.call(), this.timeout)
 		}
+
+		filterUserList(items)
+		{
+		}
+
+		onSearchResult(items, sections, list)
+		{
+
+		}
+
+		eventHandlers()
+		{
+
+		}
+
 	}
 
-	let tables = {
-		users: {
-			name: "users",
-			fields: [{name: "id", unique: true}, "value"]
-		},
-		users_last_search: {
-			name: "users_last_search",
-			fields: [{name: "id", unique: true}, "value"]
-		},
-	};
 	class UserList
 	{
 		/**
@@ -50,19 +42,19 @@
 		 */
 		constructor(listObject = null, delegate = null, formatName = null)
 		{
-			if (listObject == null)
-			{
-				throw new Error("List object is null");
-			}
-
 			this.list = listObject;
-			this.hasRemoteData = false;
 			this._delegate = delegate;
-			this.db = new ReactDatabase("users");
+			this.inited = false;
+		}
+
+		init(enableEventListener = true)
+		{
+			if(this.list == null || this.inited === true)
+				return;
 
 			BX.onViewLoaded(() =>
 			{
-				if (Application.getPlatform() === "ios")
+				if (typeof this.list.setSearchFieldParams === "function")
 				{
 					this.list.setSearchFieldParams({placeholder: BX.message("SEARCH_PLACEHOLDER")})
 				}
@@ -71,37 +63,32 @@
 				]);
 			});
 
-			this.list.setListener((event, data) =>
-			{
-				if (this.eventHandlers[event])
-				{
-					this.eventHandlers[event].apply(this, [data]);
-				}
-			});
+			if(enableEventListener)
+				this.list.setListener((event, data) => reflectFunction(this.eventHandlers, event, this).call(this, data));
 
-			this.db.table(tables.users).then(
-				table =>
-					table.get().then(
-						items =>
-						{
-							if (items.length > 0)
-							{
-								let cachedItems = JSON.parse(items[0].VALUE);
-								if (!this.hasRemoteData)
-								{
-									this.items = cachedItems;
-									this.draw();
-								}
-							}
-						}
-					)
-			);
-
-			this.searcher = new Searcher(listObject, this.db, this._delegate);
+			this.searcher = new UserSearcher(this.list, this._delegate);
+			this.searcher.resultHandler = this.onSearchResult.bind(this);
 			this.request = new RequestExecutor("user.search",
-				{"IMAGE_RESIZE": "small", "SORT": "LAST_NAME", "ORDER": "ASC", "FILTER": {"ACTIVE": "Y", "HAS_DEPARTAMENT":"Y"}});
-			this.request.handler = this.answerHandler.bind(this);
-			this.request.call();
+				{
+					"IMAGE_RESIZE": "small",
+					"SORT": "LAST_NAME",
+					"ORDER": "ASC",
+					"FILTER": {"ACTIVE": "Y", "HAS_DEPARTAMENT": "Y"}
+				})
+				.setCacheHandler(data =>{
+					this.items = Utils.prepareListForDraw(data);
+					this.draw();
+				})
+				.setHandler(this.answerHandler.bind(this));
+
+			this.request.call(true);
+			this.inited = true;
+		}
+
+		abortAllRequests()
+		{
+			this.searcher.searchRequest.abortCurrentRequest();
+			this.request.abortCurrentRequest();
 		}
 
 		set setDelegate(delegate)
@@ -115,9 +102,18 @@
 			return this._delegate;
 		}
 
+		onSearchResult(items, sections, state)
+		{
+			reflectFunction(this.delegate, "onSearchResult")
+				.apply(this, [items, sections, this.list, state]);
+		}
+
 		answerHandler(users, loadMore, error = null)
 		{
-			this.list.stopRefreshing();
+			if (typeof this.list.stopRefreshing === "function")
+			{
+				this.list.stopRefreshing();
+			}
 			this.isLoading = false;
 
 			if (error != null)
@@ -127,30 +123,17 @@
 			}
 
 			let listData = Utils.prepareListForDraw(users);
-			let modifiledListData = this.prepareItems(listData);
-
-			this.hasRemoteData = true;
+			let modifiedListData = this.prepareItems(listData);
 
 			if (loadMore === false)
 			{
-				this.items = modifiledListData;
+				this.items = modifiedListData;
 				this.draw();
-				this.db.table(tables.users).then(
-					table =>
-					{
-						table.delete().then(() =>
-						{
-							table.add({value: listData}).then(() =>
-							{
-								console.info("User cached");
-							})
-						})
-					}
-				);
 			}
 			else
 			{
-				this.list.addItems(modifiledListData);
+				this.items = this.items.concat(modifiedListData);
+				this.list.addItems(modifiedListData);
 				if (this.request.hasNext())
 				{
 					this.list.updateItems([{
@@ -171,32 +154,59 @@
 			}
 		}
 
-		draw()
+		draw(params = {})
 		{
 			let items = [];
-			items = this.items;
-			if (this.request.hasNext())
+			if (params.filter)
 			{
-				items = items.concat({
-					title: BX.message("LOAD_MORE_USERS") + " (" + this.request.getNextCount() + ")",
-					type: "button",
-					unselectable: false,
-					sectionCode: "service",
-					params: {"code": "more"}
-				});
+				let ids = [];
+				let filterFunc = item =>
+				{
+					let query = params.filter.toLowerCase();
+					let match = (
+						ids.indexOf(item.params.id) < 0 &&
+						(item.title && item.title.toLowerCase().startsWith(query) ||
+						item.subtitle && item.subtitle.toLowerCase().startsWith(query) ||
+						item.sortValues.name && item.sortValues.name.toLowerCase().startsWith(query))
+					);
+
+					if (match)
+					{
+						ids.push(item.params.id);
+					}
+
+					return match;
+				};
+
+				items = this.items.filter(filterFunc).concat(this.searcher.currentSearchItems.filter(filterFunc));
+			}
+			else
+			{
+				items = this.prepareItems(this.items);
+				if (this.request.hasNext())
+				{
+					items = items.concat({
+						title: BX.message("LOAD_MORE_USERS") + " (" + this.request.getNextCount() + ")",
+						type: "button",
+						unselectable: false,
+						sectionCode: "service",
+						params: {"code": "more"}
+					});
+				}
 			}
 
-
-			BX.onViewLoaded(() => this.list.setItems(items));
+			BX.onViewLoaded(() => this.list.setItems(items, [{id: "people"}, {id: "service"}]));
 		}
 
 		prepareItems(items)
 		{
-			if(this.delegate)
+			if (this.delegate)
 			{
-				if(this.delegate.filterUserList)
+				if (this.delegate.filterUserList)
+				{
 					items = this.delegate.filterUserList(items);
-				if(this.delegate.formatUserData)
+				}
+				if (this.delegate.formatUserData)
 				{
 					items = items.map(item => this.delegate.formatUserData(item));
 				}
@@ -207,14 +217,13 @@
 
 		get eventHandlers()
 		{
-			return {
+			let defaultHandlers = {
 				onRefresh: function ()
 				{
 					this.request.call();
 				},
-				onViewRemoved: ()=>
+				onViewRemoved: () =>
 				{
-					console.log("onViewRemoved");
 				},
 				onUserTypeText: function (data)
 				{
@@ -226,8 +235,6 @@
 				},
 				onSearchItemSelected: function (data)
 				{
-
-
 					if (data.params.code)
 					{
 						if (data.params.code === "skip_handle")
@@ -247,15 +254,15 @@
 						this.searcher.addRecentSearchItem(data);
 					}
 
-					if(this.delegate)
+					if (this.delegate)
 					{
-						console.log("search selec11t", data);
 						this.delegate.onUserSelected(data);
 					}
 
 				},
-				onItemSelected: function (data)
+				onItemSelected: function (selectionData)
 				{
+					let data = selectionData.item || selectionData;
 					if (data.params.code)
 					{
 						if (data.params.code === "more")
@@ -279,7 +286,7 @@
 					}
 					else
 					{
-						if(this.delegate)
+						if (this.delegate)
 						{
 							this.delegate.onUserSelected(data);
 						}
@@ -292,80 +299,95 @@
 						this.searcher.removeRecentSearchItem(data);
 					}
 				}
+			};
+
+			if (typeof this.delegate.eventHandlers === "function")
+			{
+				let delegateHandlers = this.delegate.eventHandlers();
+				if (typeof delegateHandlers === "object")
+				{
+					defaultHandlers = Object.assign(defaultHandlers, delegateHandlers);
+				}
 			}
+
+			return defaultHandlers;
 		}
 
 		/**
 		 * @return {Promise}
 		 */
-		static openPicker ()
+		static openPicker(options = {})
 		{
-			return new Promise((resolve, reject)=>{
-				PageManager.openWidget(
-					"list",
-					{
-						backdrop: {
-							bounceEnable: true,
-							swipeAllowed: false,
-							showOnTop:true,
-						},
-						modal:true,
-						title: BX.message("USER_LIST_COMPANY"),
-						useSearch:true,
-						useClassicSearchField:true,
-						onReady: list => {
-							let delegate = {
-								onUserSelected: user=> list.close(() => resolve(user)),
-							formatUserData:(item)=>
-								{
-									item.type = "info";
-									return item;
-								}
-							};
-							(new UserList(list, delegate));
-						},
-						onError: error=> reject(error),
-					});
-			});
+			if(Application.getApiVersion()>=32)
+			{
+				return new Promise((resolve, reject)=>{
+						(new RecipientList(["users"]))
+							.open(options)
+							.then(data => resolve(data["users"]))
+							.catch(e => reject(e))
+				})
+			}
+			else
+			{
+				return new Promise((resolve, reject) =>
+				{
+					PageManager.openWidget(
+						"list",
+						{
+							backdrop: {
+								bounceEnable: true,
+								swipeAllowed: false,
+								showOnTop: true,
+							},
+							modal: true,
+							title: BX.message("USER_LIST_COMPANY"),
+							useSearch: true,
+							useClassicSearchField: true,
+							onReady: list =>
+							{
+								let delegate = {
+									onUserSelected: user => list.close(() => resolve([user])),
+									onSearchResult(items, sections, list, state)
+									{
+										list.setSearchResultItems(items, sections);
+									},
+									formatUserData: (item) =>
+									{
+										item.type = "info";
+										return item;
+									}
+								};
+								(new UserList(list, delegate)).init();
+							},
+							onError: error => reject(error),
+						});
+				});
+
+			}
 		}
 	}
 
-	class Searcher
+	class UserSearcher
 	{
 		/**
 		 *
 		 * @param {BaseList} list
-		 * @param {ReactDatabase} db
 		 * @param {UserListDelegate} delegate
 		 */
-		constructor(list = null, db = null, delegate = null)
+		constructor(list = null, delegate = null)
 		{
-			this.searchRequest = new RequestSearchExecutor("user.search",
+			this.searchRequest = new DelayedRestRequest("user.search",
 				{
 					"SORT": "LAST_NAME",
 					"ORDER": "ASC",
-					"FILTER": {"ACTIVE": "Y", "HAS_DEPARTAMENT":"Y"}
+					"FILTER": {"ACTIVE": "Y", "HAS_DEPARTAMENT": "Y"}
 				});
-
-			this.db = db;
+			this.resultHandler = null;
 			this.delegate = delegate;
 			this.list = list;
-			this.lastSearchItems = [];
-			if (this.db)
-			{
-				this.db.table(tables.users_last_search).then(
-					table =>
-						table.get().then(
-							items =>
-							{
-								if (items.length > 0)
-								{
-									this.lastSearchItems = JSON.parse(items[0].VALUE);
-								}
-							}
-						)
-				);
-			}
+			this.currentSearchItems = [];
+			this.currentQueryString = "";
+			this.lastSearchItems = Application.storage.getObject("users_last_search", {items: []})["items"];
 		}
 
 		fetchResults(data)
@@ -379,9 +401,11 @@
 				{
 					if (result)
 					{
-						if (!result.length)
+						let items = this.postProgressing(result, data.text);
+						items = this.prepareItems(items);
+						if (!items.length)
 						{
-							this.list.setSearchResultItems([{
+							this.sendResult([{
 								title: BX.message("SEARCH_EMPTY_RESULT"),
 								unselectable: true,
 								type: "button",
@@ -390,9 +414,6 @@
 						}
 						else
 						{
-							let items = this.postProgressing(result, data.text);
-							items = this.prepareItems(items);
-
 							this.currentSearchItems = items;
 							items = SearchUtils.setServiceCell(items,
 								this.searchRequest.hasNext()
@@ -400,14 +421,14 @@
 									: null
 							);
 
-							this.list.setSearchResultItems(items, [{id: "people"}, {id: "service"}])
+							this.sendResult(items, [{id: "people"}, {id: "service"}])
 						}
 					}
 					else if (error)
 					{
 						if (error.code !== "REQUEST_CANCELED")
 						{
-							this.list.setSearchResultItems([{
+							this.sendResult([{
 								title: BX.message("SEARCH_EMPTY_RESULT"),
 								unselectable: true,
 								type: "button",
@@ -416,28 +437,45 @@
 						}
 					}
 				};
-				this.list.setSearchResultItems([{
+
+				this.sendResult([{
 					title: BX.message("SEARCH_LOADING"),
 					unselectable: true,
+					sectionCode: "service",
 					type: "loading",
 					params: {"code": "skip_handle"}
-				}], []);
+				}], [{id: "service"}, {id: "people"}], "searching");
 				this.searchRequest.call();
 
 			}
-			else if (data.text.length === 0)
+			else
 			{
-				this.showRecentResults();
+				this.searchRequest.abortCurrentRequest();
+				if (data.text.length === 0)
+				{
+					this.showRecentResults();
+				}
+			}
+
+		}
+
+		sendResult(items, sections, state)
+		{
+			if (this.resultHandler)
+			{
+				this.resultHandler(items, sections, state);
 			}
 		}
 
 		prepareItems(items)
 		{
-			if(this.delegate)
+			if (this.delegate)
 			{
-				if(this.delegate.filterUserList)
+				if (this.delegate.filterUserList)
+				{
 					items = this.delegate.filterUserList(items);
-				if(this.delegate.formatUserData)
+				}
+				if (this.delegate.formatUserData)
 				{
 					items = items.map(item => this.delegate.formatUserData(item));
 				}
@@ -465,12 +503,12 @@
 							? SearchUtils.Const.SEARCH_MORE_RESULTS
 							: null
 					);
-					this.list.setSearchResultItems(items, [{id: "people"}, {id: "service"}])
+					this.sendResult(items, [{id: "people"}, {id: "service"}], "result")
 				};
 
 				let items = this.currentSearchItems;
 				items = SearchUtils.setServiceCell(items, SearchUtils.Const.SEARCH_LOADING);
-				this.list.setSearchResultItems(items, [{id: "people"}, {id: "service"}]);
+				this.sendResult(items, [{id: "service"}, {id: "people"}], "result_loading");
 				this.searchRequest.callNext();
 			}
 		}
@@ -487,7 +525,7 @@
 				}];
 				return item;
 			});
-			this.list.setSearchResultItems(this.prepareItems(preparedLastSearchItems), [
+			this.sendResult(this.prepareItems(preparedLastSearchItems), [
 				{
 					id: "people",
 					title: this.lastSearchItems.length > 0 ? BX.message("RECENT_SEARCH") : ""
@@ -499,38 +537,21 @@
 		{
 			this.lastSearchItems = this.lastSearchItems.filter(item => item.params.id !== data.params.id);
 			this.lastSearchItems.unshift(data);
-
-			this.db.table(tables.users_last_search).then(
-				table =>
-					table.delete().then(() =>
-					{
-						table.add({value: this.lastSearchItems}).then(() =>
-						{
-							console.info("Last search saved");
-						})
-					})
-			);
+			Application.storage.setObject("users_last_search", {items: this.lastSearchItems});
 		}
 
 		removeRecentSearchItem(data)
 		{
-			this.lastSearchItems = this.lastSearchItems.filter(item => item.params.id != data.item.params.id);
-			this.db.table(tables.users_last_search).then(
-				table =>
-					table.delete()
-						.then(() => table.add({value: this.lastSearchItems})
-							.then(() => console.info("Last search changed")))
-			);
+			this.lastSearchItems = this.lastSearchItems.filter(item => item.params.id !== data.item.params.id);
+			Application.storage.setObject("users_last_search", {items: this.lastSearchItems});
 		}
 
 		postProgressing(searchResult, query)
 		{
-			console.log("Post progressing", searchResult, query);
 			let finalResult = searchResult
 				.map(result =>
 				{
 					let weight = 0;
-
 					for (let key in this.searchFieldWeights)
 					{
 						if (result[key] && result[key].toUpperCase().indexOf(query.toUpperCase()) === 0)
@@ -549,7 +570,8 @@
 			return Utils.prepareListForDraw(finalResult);
 		}
 
-		get searchFieldWeights() {
+		get searchFieldWeights()
+		{
 			return {
 				NAME: 100,
 				LAST_NAME: 99,
@@ -565,66 +587,47 @@
 	let Utils = {
 		prepareListForDraw: function (list)
 		{
+			console.error("!!");
+			let result = [];
+			let userFormatFunction = user => ({
+				title: Utils.getFormattedName(user),
+				subtitle: user.WORK_POSITION,
+				sectionCode: "people",
+				color: "#5D5C67",
+				useLetterImage: true,
+				imageUrl: (user.PERSONAL_PHOTO === null ? undefined : encodeURI(user.PERSONAL_PHOTO)),
+				sortValues: {
+					name: user.LAST_NAME
+				},
+				params: {
+					id: user.ID,
+					profileUrl: "/mobile/users/?user_id=" + user.ID
+				},
+			});
+
 			if (list)
 			{
-				return list
-					.filter(user => user["UF_DEPARTMENT"] !== false)
-					.map(user => ({
-							title: Utils.getFormattedName(user),
-							subtitle: user.WORK_POSITION,
-							sectionCode: "people",
-							color: "#5D5C67",
-							useLetterImage: true,
-							imageUrl: (user.PERSONAL_PHOTO === null ? undefined : encodeURI(user.PERSONAL_PHOTO)),
-							sortValues: {
-								name: user.LAST_NAME
-							},
-							params: {
-								id: user.ID,
-								profileUrl: "/mobile/users/?user_id=" + user.ID
-							},
-						})
-					);
+				result = list
+					.filter(user => user["UF_DEPARTMENT"] !== false && Utils.getFormattedHumanName(user))
+					.map(userFormatFunction);
+				let unknownUsers = list
+					.filter(user => user["UF_DEPARTMENT"] !== false && !Utils.getFormattedHumanName(user))
+					.map(userFormatFunction)
+					.sort((u1, u2) => u1.title > u2.title ? 1 : (u1.title === u2.title ? 0 : -1));
+				console.log(unknownUsers);
+				result = unknownUsers.concat(result);
+
 			}
 
-			return [];
+			return result;
 
 		},
 		getFormattedName: function (userData, format = null)
 		{
-			let replace = {
-				"#NAME#": userData.NAME,
-				"#LAST_NAME#": userData.LAST_NAME,
-				"#SECOND_NAME#": userData.SECOND_NAME,
-
-			};
-
-			if(format == null)
+			let name = Utils.getFormattedHumanName(userData, format);
+			if (name === "")
 			{
-				format = "#NAME# #LAST_NAME#";
-			}
-
-
-			if (userData.LAST_NAME)
-			{
-				replace["#LAST_NAME_SHORT#"] = userData.LAST_NAME[0].toUpperCase() + ".";
-			}
-			if (userData.SECOND_NAME)
-			{
-				replace["#SECOND_NAME_SHORT#"] = userData.SECOND_NAME[0].toUpperCase() + ".";
-			}
-			if (userData.NAME)
-			{
-				replace["#NAME_SHORT#"] = userData.NAME[0].toUpperCase() + ".";
-			}
-			let name = format
-				.replace(/#NAME#|#LAST_NAME#|#SECOND_NAME#|#LAST_NAME_SHORT#|#SECOND_NAME_SHORT#|#NAME_SHORT#/gi,
-					match => (typeof replace[match] != "undefined" && replace[match] != null) ? replace[match] : "")
-				.trim();
-
-			if(name === "")
-			{
-				if(userData.EMAIL)
+				if (userData.EMAIL)
 				{
 					name = userData.EMAIL;
 				}
@@ -644,7 +647,39 @@
 
 			return name !== "" ? name : userData.EMAIL;
 
+		},
+		getFormattedHumanName:function(userData, format = null){
+			let replace = {
+				"#NAME#": userData.NAME,
+				"#LAST_NAME#": userData.LAST_NAME,
+				"#SECOND_NAME#": userData.SECOND_NAME,
+
+			};
+
+			if (format == null)
+			{
+				format = "#NAME# #LAST_NAME#";
+			}
+
+			if (userData.LAST_NAME)
+			{
+				replace["#LAST_NAME_SHORT#"] = userData.LAST_NAME[0].toUpperCase() + ".";
+			}
+			if (userData.SECOND_NAME)
+			{
+				replace["#SECOND_NAME_SHORT#"] = userData.SECOND_NAME[0].toUpperCase() + ".";
+			}
+			if (userData.NAME)
+			{
+				replace["#NAME_SHORT#"] = userData.NAME[0].toUpperCase() + ".";
+			}
+
+			return format
+				.replace(/#NAME#|#LAST_NAME#|#SECOND_NAME#|#LAST_NAME_SHORT#|#SECOND_NAME_SHORT#|#NAME_SHORT#/gi,
+					match => (typeof replace[match] != "undefined" && replace[match] != null) ? replace[match] : "")
+				.trim();
 		}
+
 
 	};
 

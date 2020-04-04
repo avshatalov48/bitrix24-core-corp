@@ -1,4 +1,4 @@
 <?
 return [
-	"db", "rest"
+	"db", "rest", "utils","recipient"
 ];

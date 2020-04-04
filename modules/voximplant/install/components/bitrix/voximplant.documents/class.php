@@ -23,14 +23,12 @@ class CVoxImplantComponentDocuments extends CBitrixComponent
 
 	protected function prepareData()
 	{
-		$this->showTemplate = false;
 		$documents = new CVoxImplantDocuments();
 		$request = Bitrix\Main\Context::getCurrent()->getRequest();
 
 		$this->arResult['DOCUMENTS'] = $documents->GetStatus();
 		if(is_array($this->arResult['DOCUMENTS']) && count($this->arResult['DOCUMENTS']) > 0)
 		{
-			$this->showTemplate = true;
 			foreach($this->arResult['DOCUMENTS'] as $key => $verification)
 			{
 				$this->arResult['DOCUMENTS'][$key]['COUNTRY_CODE'] = $this->arResult['DOCUMENTS'][$key]['REGION'];
@@ -48,7 +46,6 @@ class CVoxImplantComponentDocuments extends CBitrixComponent
 		$verifications = $addressVerification->getVerifications();
 		if(is_array($verifications['VERIFIED_ADDRESS']))
 		{
-			$this->showTemplate = true;
 			if(!is_array($this->arResult['DOCUMENTS']))
 				$this->arResult['DOCUMENTS'] = array();
 
@@ -73,7 +70,6 @@ class CVoxImplantComponentDocuments extends CBitrixComponent
 		)
 		{
 			$addressVerification->setFilledByUser($this->getCurrentUserId());
-			$this->showTemplate = true;
 			if(!is_array($this->arResult['DOCUMENTS']))
 				$this->arResult['DOCUMENTS'] = array();
 
@@ -86,7 +82,7 @@ class CVoxImplantComponentDocuments extends CBitrixComponent
 					$this->arResult['DOCUMENTS'][$key]['SHOW_UPLOAD_IFRAME'] = true;
 					if(!isset($this->arResult['DOCUMENTS'][$key]['UPLOAD_IFRAME_URL']))
 					{
-						$iframeUrl = $documents->GetUploadUrl($request['UPLOAD_COUNTRY_CODE'], $request['UPLOAD_ADDRESS_TYPE'], $request['UPLOAD_PHONE_CATEGORY'], $request['UPLOAD_REGION_CODE']);
+						$iframeUrl = $documents->GetUploadUrl($request['UPLOAD_COUNTRY_CODE'], $request['UPLOAD_ADDRESS_TYPE'], $request['UPLOAD_PHONE_CATEGORY'], $request['UPLOAD_REGION_CODE'], $request['UPLOAD_REGION_ID']);
 						if($iframeUrl === false)
 						{
 							$this->arResult['DOCUMENTS'][$key]['SHOW_UPLOAD_IFRAME'] = false;
@@ -109,7 +105,7 @@ class CVoxImplantComponentDocuments extends CBitrixComponent
 				$verification['SHOW_UPLOAD_IFRAME'] = true;
 				if(!isset($verification['UPLOAD_IFRAME_URL']))
 				{
-					$iframeUrl = $documents->GetUploadUrl($request['UPLOAD_COUNTRY_CODE'], $request['UPLOAD_ADDRESS_TYPE'], $request['UPLOAD_PHONE_CATEGORY'], $request['UPLOAD_REGION_CODE']);
+					$iframeUrl = $documents->GetUploadUrl($request['UPLOAD_COUNTRY_CODE'], $request['UPLOAD_ADDRESS_TYPE'], $request['UPLOAD_PHONE_CATEGORY'], $request['UPLOAD_REGION_CODE'], $request['UPLOAD_REGION_ID']);
 					if($iframeUrl === false)
 					{
 						$verification['SHOW_UPLOAD_IFRAME'] = false;

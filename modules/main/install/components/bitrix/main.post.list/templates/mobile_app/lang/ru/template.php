@@ -7,6 +7,7 @@ $MESS["BPC_MES_VOTE1"] = "Мне нравится";
 $MESS["BPC_MES_VOTE2"] = "Не нравится";
 $MESS["BPC_MES_DELETE"] = "Удалить";
 $MESS["BPC_MES_CREATETASK"] = "Создать задачу";
+$MESS["BPC_MES_COPYLINK"] = "Копировать ссылку";
 $MESS["BLOG_C_VIEW"] = "Смотреть комментарии";
 $MESS["BLOG_C_REPLY"] = "Ответить";
 $MESS["B_B_PC_COM_ERROR"] = "Ошибка:";

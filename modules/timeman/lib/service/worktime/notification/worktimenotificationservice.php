@@ -2,10 +2,9 @@
 namespace Bitrix\Timeman\Service\Worktime\Notification;
 
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Timeman\Helper\DateTimeHelper;
+use Bitrix\Timeman\Helper\TimeHelper;
 use Bitrix\Timeman\Helper\UserHelper;
 use Bitrix\Timeman\Model\Schedule\Schedule;
-use Bitrix\Timeman\Model\Schedule\ScheduleTable;
 use Bitrix\Timeman\Model\Schedule\Violation\ViolationRulesTable;
 use Bitrix\Timeman\Model\Worktime\Record\WorktimeRecord;
 use Bitrix\Timeman\Repository\Schedule\ScheduleRepository;
@@ -21,18 +20,18 @@ class WorktimeNotificationService
 	private $users = [];
 	/** @var TimemanUrlManager */
 	private $urlManager;
-	/** @var DateTimeHelper */
-	private $dateHelper;
+	/** @var TimeHelper */
+	private $timeHelper;
 
 	public function __construct(
 		ScheduleRepository $scheduleRepository,
 		WorktimeNotifierFactory $notifierFactory,
 		UserHelper $userHelper,
-		DateTimeHelper $dateHelper,
+		TimeHelper $timeHelper,
 		TimemanUrlManager $urlManager
 	)
 	{
-		$this->dateHelper = $dateHelper;
+		$this->timeHelper = $timeHelper;
 		$this->scheduleRepository = $scheduleRepository;
 		$this->userHelper = $userHelper;
 		$this->notifierFactory = $notifierFactory;
@@ -251,7 +250,7 @@ class WorktimeNotificationService
 			case WorktimeViolation::TYPE_EDITED_ENDING:
 			case WorktimeViolation::TYPE_EDITED_START:
 			case WorktimeViolation::TYPE_EDITED_BREAK_LENGTH:
-				$date = $this->dateHelper->formatDate('j F', $worktimeRecord->getRecordedStartTimestamp());
+				$date = $this->timeHelper->formatDateTime($worktimeRecord->getRecordedStartTimestamp(), 'j F');
 				$href = $this->urlManager->getUriTo('recordReport', ['RECORD_ID' => $worktimeRecord->getId()]);
 				$notifyMessage = Loc::getMessage(
 					'TM_VIOLATION_WORKTIME_MANAGER_EDIT_WITH_URL' . $gender,

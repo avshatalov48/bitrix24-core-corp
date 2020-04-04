@@ -245,6 +245,7 @@ class Provider
 		$list[] = [
 			'ID' => 0,
 			'CODE' => 'organic',
+			'DESCRIPTION' => Source\Base::getDescriptionByCode('organic'),
 			'ICON_CLASS' => 'ui-icon ui-icon-service-organic',
 			'ICON_COLOR' => '',
 			'CONFIGURED' => true,

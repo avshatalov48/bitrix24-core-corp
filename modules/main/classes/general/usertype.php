@@ -45,7 +45,7 @@ IncludeModuleLangFile(__FILE__);
 * create table b_user_field (
 	* ID		int(11) not null auto_increment,
 	* ENTITY_ID 	varchar(50),
-	* FIELD_NAME	varchar(20),
+	* FIELD_NAME	varchar(50),
 	* USER_TYPE_ID	varchar(50),
 	* XML_ID		varchar(255),
 	* SORT		int,
@@ -305,7 +305,7 @@ class CAllUserTypeEntity extends CDBResult
 	 * <li>ENTITY_ID - не должно содержать никаких символов кроме 0-9 A-Z и _
 	 * <li>FIELD_NAME - обязательное
 	 * <li>FIELD_NAME - не менее 4-х символов
-	 * <li>FIELD_NAME - не более 20-ти символов
+	 * <li>FIELD_NAME - не более 50-ти символов
 	 * <li>FIELD_NAME - не должно содержать никаких символов кроме 0-9 A-Z и _
 	 * <li>FIELD_NAME - должно начинаться на UF_
 	 * <li>USER_TYPE_ID - обязательное
@@ -340,8 +340,8 @@ class CAllUserTypeEntity extends CDBResult
 		{
 			if(strlen($arFields["FIELD_NAME"])<4)
 				$aMsg[] = array("id"=>"FIELD_NAME", "text"=>GetMessage("USER_TYPE_FIELD_NAME_TOO_SHORT"));
-			if(strlen($arFields["FIELD_NAME"])>20)
-				$aMsg[] = array("id"=>"FIELD_NAME", "text"=>GetMessage("USER_TYPE_FIELD_NAME_TOO_LONG"));
+			if(strlen($arFields["FIELD_NAME"])>50)
+				$aMsg[] = array("id"=>"FIELD_NAME", "text"=>GetMessage("USER_TYPE_FIELD_NAME_TOO_LONG1"));
 			if(strncmp($arFields["FIELD_NAME"], "UF_", 3)!==0)
 				$aMsg[] = array("id"=>"FIELD_NAME", "text"=>GetMessage("USER_TYPE_FIELD_NAME_NOT_UF"));
 			if(!preg_match('/^[0-9A-Z_]+$/', $arFields["FIELD_NAME"]))
@@ -516,20 +516,23 @@ class CAllUserTypeEntity extends CDBResult
 				return false;
 			}
 
-			$ddl = "ALTER TABLE b_uts_".strtolower($arFields["ENTITY_ID"])." ADD ".$arFields["FIELD_NAME"]." ".$strType;
-			if(!$DB->DDL($ddl, true, "FILE: ".__FILE__."<br>LINE: ".__LINE__))
+			if(!$DB->Query("select ".$arFields["FIELD_NAME"]." from b_uts_".strtolower($arFields["ENTITY_ID"])." where 1=0", true))
 			{
-				$aMsg = array();
-				$aMsg[] = array(
-					"id"=>"FIELD_NAME",
-					"text"=>GetMessage("USER_TYPE_ADD_ERROR", array(
-						"#FIELD_NAME#"=>htmlspecialcharsbx($arFields["FIELD_NAME"]),
-						"#ENTITY_ID#"=>htmlspecialcharsbx($arFields["ENTITY_ID"]),
-					))
-				);
-				$e = new CAdminException($aMsg);
-				$APPLICATION->ThrowException($e);
-				return false;
+				$ddl = "ALTER TABLE b_uts_".strtolower($arFields["ENTITY_ID"])." ADD ".$arFields["FIELD_NAME"]." ".$strType;
+				if(!$DB->DDL($ddl, true, "FILE: ".__FILE__."<br>LINE: ".__LINE__))
+				{
+					$aMsg = array();
+					$aMsg[] = array(
+						"id"=>"FIELD_NAME",
+						"text"=>GetMessage("USER_TYPE_ADD_ERROR", array(
+							"#FIELD_NAME#"=>htmlspecialcharsbx($arFields["FIELD_NAME"]),
+							"#ENTITY_ID#"=>htmlspecialcharsbx($arFields["ENTITY_ID"]),
+						))
+					);
+					$e = new CAdminException($aMsg);
+					$APPLICATION->ThrowException($e);
+					return false;
+				}
 			}
 		}
 
@@ -1079,6 +1082,17 @@ class CUserTypeManager
 
 		if(count($result)>0 && $value_id>0)
 		{
+			$values = $this->getUserFieldValuesByEvent($result, $entity_id, $value_id);
+			if(is_array($values))
+			{
+				foreach($values as $fieldName => $value)
+				{
+					$result[$fieldName]['VALUE'] = $values[$fieldName];
+					$result[$fieldName]['ENTITY_VALUE_ID'] = $value_id;
+				}
+				return $result;
+			}
+
 			$select = "VALUE_ID";
 			foreach($result as $FIELD_NAME=>$arUserField)
 			{
@@ -1223,6 +1237,11 @@ class CUserTypeManager
 		$rs = CUserTypeEntity::GetList(array(), $arFilter);
 		if($arUserField = $rs->Fetch())
 		{
+			$values = $this->getUserFieldValuesByEvent([$arUserField['FIELD_NAME'] => $arUserField], $entity_id, $value_id);
+			if(is_array($values))
+			{
+				return $values[$arUserField['FIELD_NAME']];
+			}
 			$arUserField["USER_TYPE"] = $this->GetUserType($arUserField["USER_TYPE_ID"]);
 			$arTableFields = $DB->GetTableFields($strTableName);
 			if(array_key_exists($field_id, $arTableFields))
@@ -1977,7 +1996,7 @@ class CUserTypeManager
 							),
 						)
 					);
-					if($html == '')
+					if ($html === '')
 						$html = '&nbsp;';
 					$row->AddViewField($arUserField["FIELD_NAME"], $html.$js.CAdminCalendar::ShowScript());
 				}
@@ -2705,9 +2724,15 @@ class CUserTypeManager
 	{
 		global $DB;
 
-		$result = false;
-
 		$entity_id = preg_replace("/[^0-9A-Z_]+/", "", $entity_id);
+
+		$result = $this->updateUserFieldValuesByEvent($entity_id, (int) $ID, $arFields);
+		if($result !== null)
+		{
+			return $result;
+		}
+
+		$result = false;
 
 		$arUpdate = array();
 		$arBinds = array();
@@ -2873,9 +2898,56 @@ class CUserTypeManager
 		return $result;
 	}
 
+	public function copy($entity_id, $id, $copiedId, $entityObject, $userId = false, $ignoreList = [])
+	{
+		$userFields = $this->getUserFields($entity_id, $id);
+
+		$fields = [];
+		foreach ($userFields as $fieldName => $userField)
+		{
+			if (!in_array($fieldName, $ignoreList))
+			{
+				if (is_callable([$userField["USER_TYPE"]["CLASS_NAME"], "onBeforeCopy"]))
+				{
+					$fields[$fieldName] = call_user_func_array(
+						[$userField["USER_TYPE"]["CLASS_NAME"], "onBeforeCopy"],
+						[$userField, $copiedId, $userField["VALUE"], $entityObject, $userId]
+					);
+				}
+				else
+				{
+					$fields[$fieldName] = $userField["VALUE"];
+				}
+			}
+		}
+
+		$this->update($entity_id, $copiedId, $fields, $userId);
+
+		foreach ($userFields as $fieldName => $userField)
+		{
+			if (!in_array($fieldName, $ignoreList))
+			{
+				if (is_callable([$userField["USER_TYPE"]["CLASS_NAME"], "onAfterCopy"]))
+				{
+					$fields[$fieldName] = call_user_func_array(
+						[$userField["USER_TYPE"]["CLASS_NAME"], "onAfterCopy"],
+						[$userField, $copiedId, $fields[$fieldName], $entityObject, $userId]
+					);
+				}
+			}
+		}
+	}
+
 	function Delete($entity_id, $ID)
 	{
 		global $DB;
+
+		$result = $this->deleteUserFieldValuesByEvent($entity_id, $ID);
+		if($result !== null)
+		{
+			return;
+		}
+
 		if($arUserFields = $this->GetUserFields($entity_id, $ID, false, 0))
 		{
 			foreach($arUserFields as $arUserField)
@@ -3028,6 +3100,84 @@ class CUserTypeManager
 		}
 
 		return array();
+	}
+
+	protected function getUserFieldValuesByEvent(array $userFields, string $entityId, int $value): ?array
+	{
+		$result = [];
+		if($value === 0)
+		{
+			return null;
+		}
+		$isGotByEvent = false;
+		$event = new \Bitrix\Main\Event('main', 'onGetUserFieldValues', ['userFields' => $userFields, 'entityId' => $entityId, 'value' => $value]);
+		$event->send();
+		foreach($event->getResults() as $eventResult)
+		{
+			if($eventResult->getType() === \Bitrix\Main\EventResult::SUCCESS)
+			{
+				$parameters = $eventResult->getParameters();
+				if(isset($parameters['values']) && is_array($parameters['values']))
+				{
+					$isGotByEvent = true;
+					foreach($userFields as $fieldName => $userField)
+					{
+						if(isset($parameters['values'][$fieldName]))
+						{
+							$result[$fieldName] = $parameters['values'][$fieldName];
+						}
+					}
+				}
+			}
+		}
+		if($isGotByEvent)
+		{
+			return $result;
+		}
+
+		return null;
+	}
+
+	protected function updateUserFieldValuesByEvent(string $entityId, int $id, array $fields): ?bool
+	{
+		$result = null;
+
+		$event = new \Bitrix\Main\Event('main', 'onUpdateUserFieldValues', ['entityId' => $entityId, 'id' => $id, 'fields' => $fields]);
+		$event->send();
+		foreach($event->getResults() as $eventResult)
+		{
+			if($eventResult->getType() === \Bitrix\Main\EventResult::SUCCESS)
+			{
+				$result = true;
+			}
+			elseif($eventResult->getType() === \Bitrix\Main\EventResult::ERROR)
+			{
+				$result = false;
+			}
+		}
+
+		return $result;
+	}
+
+	protected function deleteUserFieldValuesByEvent(string $entityId, int $id): ?bool
+	{
+		$result = null;
+
+		$event = new \Bitrix\Main\Event('main', 'onDeleteUserFieldValues', ['entityId' => $entityId, 'id' => $id]);
+		$event->send();
+		foreach($event->getResults() as $eventResult)
+		{
+			if($eventResult->getType() === \Bitrix\Main\EventResult::SUCCESS)
+			{
+				$result = true;
+			}
+			elseif($eventResult->getType() === \Bitrix\Main\EventResult::ERROR)
+			{
+				$result = false;
+			}
+		}
+
+		return $result;
 	}
 }
 

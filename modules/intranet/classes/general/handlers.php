@@ -1046,6 +1046,7 @@ class CIntranetEventHandlers
 		if (
 			$arUser['ID'] > 0
 			&& $arUser['ACTIVE'] == 'Y'
+			&& empty($arUser['CONFIRM_CODE'])
 			&& !in_array($arUser['EXTERNAL_AUTH_ID'], array('replica', 'email', 'bot', 'imconnector'))
 			&& !defined('INTR_SKIP_EVENT_ADD')
 			&& ($IBLOCK_ID = COption::GetOptionInt('intranet', 'iblock_state_history', ''))

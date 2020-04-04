@@ -64,6 +64,8 @@ $MESS["DEAL_SHOW_TITLE"] = "View Deal";
 $MESS["DEAL_STEXPORT_OPTION_EXPORT_ALL_FIELDS"] = "Export all deal fields";
 $MESS["DEAL_STEXPORT_OPTION_EXPORT_PRODUCT_FIELDS"] = "Export detailed SKU's";
 $MESS["DEAL_STEXPORT_SUMMARY"] = "This will create a deal export file. Exporting a considerable amount of data may take some time.";
+$MESS["DEAL_VERTICAL_CRM"] = "Solution presets";
+$MESS["DEAL_VERTICAL_CRM_TITLE"] = "Solution presets";
 $MESS["DOCUMENT_BUTTON_TEXT"] = "Document";
 $MESS["DOCUMENT_BUTTON_TITLE"] = "Create document based on deal";
 ?>

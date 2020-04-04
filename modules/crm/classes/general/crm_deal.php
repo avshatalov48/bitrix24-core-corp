@@ -412,11 +412,17 @@ class CAllCrmDeal
 					)
 				)
 			);
+			$options = [];
+			if (isset($arFilter['__ENABLE_SEARCH_CONTENT_PHONE_DETECTION']))
+			{
+				$options['ENABLE_PHONE_DETECTION'] = $arFilter['__ENABLE_SEARCH_CONTENT_PHONE_DETECTION'];
+				unset($arFilter['__ENABLE_SEARCH_CONTENT_PHONE_DETECTION']);
+			}
 			$query = $queryWhere->GetQuery(
 				Crm\Search\SearchEnvironment::prepareEntityFilter(
 					CCrmOwnerType::Deal,
 					array(
-						'SEARCH_CONTENT' => Crm\Search\SearchEnvironment::prepareSearchContent($arFilter['SEARCH_CONTENT'])
+						'SEARCH_CONTENT' => Crm\Search\SearchEnvironment::prepareSearchContent($arFilter['SEARCH_CONTENT'], $options)
 					)
 				)
 			);
@@ -1630,8 +1636,13 @@ class CAllCrmDeal
 
 				EntityBinding::markFirstAsPrimary($contactBindings);
 			}
-			elseif(is_array($contactBindings) && !is_array($contactIDs))
+			elseif(is_array($contactBindings))
 			{
+				if(EntityBinding::findPrimaryBinding($contactBindings) === null)
+				{
+					EntityBinding::markFirstAsPrimary($contactBindings);
+				}
+
 				$contactIDs = EntityBinding::prepareEntityIDs(
 					CCrmOwnerType::Contact,
 					$contactBindings
@@ -2474,8 +2485,13 @@ class CAllCrmDeal
 
 				EntityBinding::markFirstAsPrimary($contactBindings);
 			}
-			elseif(is_array($contactBindings) && !is_array($contactIDs))
+			elseif(is_array($contactBindings))
 			{
+				if(EntityBinding::findPrimaryBinding($contactBindings) === null)
+				{
+					EntityBinding::markFirstAsPrimary($contactBindings);
+				}
+
 				$contactIDs = EntityBinding::prepareEntityIDs(
 					CCrmOwnerType::Contact,
 					$contactBindings

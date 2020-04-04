@@ -656,7 +656,7 @@
 		{
 			var
 				delFunc = BX.delegate(function() { this.deleteFile(row, item); }, this),
-				replaceFunc = BX.delegate(function() { this.replaceFile(row, item); }, this),
+				replaceFunc = BX.delegate(function(e) { BX.PreventDefault(e); this.replaceFile(row, item); return false;}, this),
 				closeBtn = BX.findChild(row, {attribute: { id : item.id + 'Cancel'} }, true),
 				replaceBtn = BX.findChild(row, {attribute: { id : item.id + 'Replace'} }, true)/*,
 				restoreBtn = BX.findChild(row, {attribute: { id : item.id + 'Restore'} }, true)*/;

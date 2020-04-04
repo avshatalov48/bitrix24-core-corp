@@ -98,6 +98,18 @@
 					this.input.dataset.value = item.value;
 				}
 			}, this);
+		},
+
+		setItems: function(items)
+		{
+			if (BX.type.isArray(items))
+			{
+				this.items = BX.clone(items);
+				this.popup = null;
+
+				this.input.innerText = this.items[0].name;
+				this.input.dataset.value = this.items[0].value;
+			}
 		}
 	};
 })();

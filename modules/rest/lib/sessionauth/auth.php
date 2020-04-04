@@ -8,7 +8,6 @@
 
 namespace Bitrix\Rest\SessionAuth;
 
-
 use Bitrix\Main\Context;
 use Bitrix\Main\UserTable;
 
@@ -26,15 +25,7 @@ class Auth
 
 		$externalAuthId = $USER->GetParam('EXTERNAL_AUTH_ID');
 
-		// user without EXTERNAL_AUTH_ID is real user
-		if (!$externalAuthId)
-		{
-			return true;
-		}
-
-		// user with Controller or SocialServices authorization is real user
-		$whiteList = ["__controller", "socservices"];
-		if (in_array($externalAuthId, $whiteList, true))
+		if ($USER->IsAdmin() || $externalAuthId === "__controller")
 		{
 			return true;
 		}
@@ -46,31 +37,17 @@ class Auth
 			return false;
 		}
 
-		// If for some reason,
-		// EXTERNAL_AUTH_ID was not included in white or black lists
-		// check access using API (its very "fast")
-
-		// If REST use not in Bitrix24
 		if (!\Bitrix\Main\Loader::includeModule('intranet'))
-		{
-			return false;
-		}
-
-		$userId = $USER->GetID();
-		$userData = \Bitrix\Intranet\UserTable::getByPrimary($userId, ['select' => ['USER_TYPE_INNER']])->fetch();
-		if ($userData && $userData['USER_TYPE_INNER'] === 'employee')
 		{
 			return true;
 		}
 
-		if (!\Bitrix\Main\ModuleManager::isModuleInstalled('extranet'))
+		if (\Bitrix\Intranet\Util::isIntranetUser())
 		{
-			return false;
+			return true;
 		}
 
-		$extranetGroupId = (int)\Bitrix\Main\Config\Option::get('extranet', 'extranet_group', 0);
-		$userGroups = array_map(function($value) { return (int)$value; }, $USER->GetUserGroupArray());
-		if ($extranetGroupId && in_array($extranetGroupId, $userGroups, true))
+		if (\Bitrix\Intranet\Util::isExtranetUser())
 		{
 			return true;
 		}

@@ -18,6 +18,7 @@ use Bitrix\DocumentGenerator\Model\TemplateTable;
 use Bitrix\DocumentGenerator\UserPermissions;
 use Bitrix\Main\Engine\ActionFilter\Csrf;
 use Bitrix\Main\Engine\CurrentUser;
+use Bitrix\Main\Engine\Response\Component;
 use Bitrix\Main\Engine\Response\Converter;
 use Bitrix\Main\Engine\Response\DataType\ContentUri;
 use Bitrix\Main\Engine\Response\DataType\Page;
@@ -596,11 +597,12 @@ class Document extends Base
 			$result = [
 				'documentList' => $this->getDocumentListUrl(),
 				'canEditTemplate' => Driver::getInstance()->getUserPermissions()->canModifyTemplates(),
+				'isDocumentsLimitReached' => Bitrix24Manager::isDocumentsLimitReached(),
 			];
 
 			if(Driver::getInstance()->getUserPermissions()->canModifyDocuments())
 			{
-				$result['templates'] = TemplateTable::getListByClassName($provider, Driver::getInstance()->getUserId(), $value);
+				$result['templates'] = Converter::toJson()->process(TemplateTable::getListByClassName($provider, Driver::getInstance()->getUserId(), $value));
 			}
 		}
 		else
@@ -609,6 +611,11 @@ class Document extends Base
 		}
 
 		return $result;
+	}
+
+	public function getFeatureAction()
+	{
+		return new Component('bitrix:documentgenerator.feature');
 	}
 
 	/**

@@ -7,5 +7,6 @@ $MESS["LANDING_TABLE_FIELD_MODIFIED_BY_ID"] = "Modified by user ID";
 $MESS["LANDING_TABLE_FIELD_ROLE_ACCESS_CODES"] = "Available permissions";
 $MESS["LANDING_TABLE_FIELD_ROLE_ADDITIONAL_RIGHTS"] = "Additional permissions";
 $MESS["LANDING_TABLE_FIELD_ROLE_TITLE"] = "Role name";
+$MESS["LANDING_TABLE_FIELD_ROLE_TYPE"] = "Role type";
 $MESS["LANDING_TABLE_FIELD_ROLE_XML_ID"] = "Role symbolic code";
 ?>

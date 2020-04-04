@@ -63,7 +63,6 @@ else
 	<div data-bx-ads-block="login" style="display: none;" class="crm-ads-forms-block">
 		<div class="crm-ads-forms-social crm-ads-forms-social-<?=$type?>">
 			<a
-				target="_blank"
 				href="javascript: void(0);"
 				onclick="BX.util.popup('<?=htmlspecialcharsbx($provider['AUTH_URL'])?>', 800, 600);"
 				class="webform-small-button webform-small-button-transparent">

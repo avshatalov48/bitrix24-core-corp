@@ -210,14 +210,21 @@ class SocialnetworkHandlers
 		}
 	}
 
-	public static function onSocNetUserToGroupUpdate($id, $fields)
+	public static function onSocNetUserToGroupUpdate($id, $fields, $fieldsOld = [])
 	{
+		if (!Loader::includeModule('socialnetwork'))
+		{
+			return;
+		}
+
+		$memberRolesList = \Bitrix\Socialnetwork\UserToGroupTable::getRolesMember();
+
 		if(
 			isset($fields['ROLE']) &&
+			in_array($fields['ROLE'], $memberRolesList) &&
 			(
-				$fields['ROLE'] == SONET_ROLES_USER ||
-				$fields['ROLE'] == SONET_ROLES_MODERATOR ||
-				$fields['ROLE'] == SONET_ROLES_OWNER
+				empty($fieldsOld)
+				|| !in_array($fieldsOld['ROLE'], $memberRolesList)
 			)
 		)
 		{

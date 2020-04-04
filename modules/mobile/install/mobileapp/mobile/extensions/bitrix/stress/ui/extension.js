@@ -354,6 +354,7 @@
 	{
 		let params = {
 			scriptPath: availableComponents["stress"].publicUrl,
+			componentCode: "stress",
 			params: {
 				params: {
 					setCurrentData: false,

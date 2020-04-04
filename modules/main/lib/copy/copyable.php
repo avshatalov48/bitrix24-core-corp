@@ -1,4 +1,4 @@
-<?
+<?php
 namespace Bitrix\Main\Copy;
 
 use Bitrix\Main\Result;
@@ -8,8 +8,8 @@ interface Copyable
 	/**
 	 * Copies entity.
 	 *
-	 * @param ContainerManager $containerManager
+	 * @param ContainerCollection $containerCollection
 	 * @return Result
 	 */
-	public function copy(ContainerManager $containerManager);
+	public function copy(ContainerCollection $containerCollection);
 }

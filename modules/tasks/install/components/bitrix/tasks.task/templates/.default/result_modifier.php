@@ -448,6 +448,10 @@ if(Type::isIterable($arResult['DATA']['TASK'][$code]))
 {
 	foreach($arResult['DATA']['TASK'][$code] as &$item)
 	{
+		if (!is_array($item))
+		{
+			continue;
+		}
 		$item['TITLE_HTML'] = \Bitrix\Tasks\UI::convertBBCodeToHtmlSimple($item['TITLE']);
 	}
 }
@@ -461,6 +465,7 @@ $arResult['DATA']['CURRENT_TASKS'] = [
 	'PREVIOUS' => [],
 	'PARENT' => []
 ];
+$relatedTasks = $arResult['DATA']['RELATED_TASK'];
 
 if (is_array($arResult['DATA']['TASK']['SE_RELATEDTASK']))
 {
@@ -472,7 +477,10 @@ if (is_array($arResult['DATA']['TASK']['SE_RELATEDTASK']))
 		{
 			$arResult['DATA']['TASK']['DEPENDS_ON'][] = $taskId;
 		}
-		$arResult['DATA']['CURRENT_TASKS']['DEPENDS'][] = $arResult['DATA']['RELATED_TASK'][$taskId];
+		if ($relatedTasks[$taskId])
+		{
+			$arResult['DATA']['CURRENT_TASKS']['DEPENDS'][] = $relatedTasks[$taskId];
+		}
 	}
 }
 
@@ -481,14 +489,18 @@ if (is_array($arResult['DATA']['TASK']['SE_PROJECTDEPENDENCE']))
 	foreach ($arResult['DATA']['TASK']['SE_PROJECTDEPENDENCE'] as $item)
 	{
 		$taskId = $item['DEPENDS_ON_ID'];
-		$arResult['DATA']['CURRENT_TASKS']['PREVIOUS'][] = $arResult['DATA']['RELATED_TASK'][$taskId];
+
+		if ($relatedTasks[$taskId])
+		{
+			$arResult['DATA']['CURRENT_TASKS']['PREVIOUS'][] = $relatedTasks[$taskId];
+		}
 	}
 }
 
 $parentTaskId = $arResult['DATA']['TASK']['PARENT_ID'];
-if ($parentTaskId)
+if ($parentTaskId && $relatedTasks[$parentTaskId])
 {
-	$arResult['DATA']['CURRENT_TASKS']['PARENT'][] = $arResult['DATA']['RELATED_TASK'][$parentTaskId];
+	$arResult['DATA']['CURRENT_TASKS']['PARENT'][] = $relatedTasks[$parentTaskId];
 }
 
 $params = array();

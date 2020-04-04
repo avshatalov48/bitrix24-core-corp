@@ -887,7 +887,10 @@ class Workgroup
 				$connection = \Bitrix\Main\Application::getConnection();
 			}
 
-			$connection->query("UPDATE ".WorkgroupTable::getTableName()." SET SEARCH_INDEX = '{$DB->forSql($content)}' WHERE ID = {$groupId}");
+			$value = $DB->forSql($content);
+			$encryptedValue = sha1($content);
+
+			$connection->query("UPDATE ".WorkgroupTable::getTableName()." SET SEARCH_INDEX = IF(SHA1(SEARCH_INDEX) = '{$encryptedValue}', SEARCH_INDEX, '{$value}') WHERE ID = {$groupId}");
 		}
 	}
 

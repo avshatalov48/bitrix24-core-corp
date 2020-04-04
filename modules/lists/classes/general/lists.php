@@ -269,6 +269,8 @@ class CLists
 		$CACHE_MANAGER->Clean("b_lists_perm".$iblock_id);
 
 		CListFieldList::DeleteFields($iblock_id);
+
+		self::deleteLockFeatureOption($iblock_id);
 	}
 
 	public static function OnAfterIBlockUpdate(array &$fields)
@@ -369,7 +371,10 @@ class CLists
 		{
 			//Check if iblock is list
 			$arListsPerm = CLists::GetPermission($arIBlock["IBLOCK_TYPE_ID"]);
-			if(count($arListsPerm))
+			if(
+				is_array($arListsPerm)
+				&& count($arListsPerm)
+			)
 			{
 				//User groups
 				$arUserGroups = $USER->GetUserGroupArray();
@@ -1087,20 +1092,20 @@ class CLists
 					{
 						case "CRM_PRODUCT_CATALOG":
 						{
-							continue;
+							continue 2;
 						}
 						case "bitrix_processes":
 						{
 							if (!$isProcessesFeatureEnabled)
 							{
-								continue;
+								continue 2;
 							}
 							break;
 						}
 						default:
 							if (!$isListsFeatureEnabled)
 							{
-								continue;
+								continue 2;
 							}
 					}
 					$listIblock[$iblockId] = $iblock['NAME'];
@@ -1868,6 +1873,17 @@ class CLists
 			$iblockIdsWithLockFeature = [];
 		}
 		return isset($iblockIdsWithLockFeature[$iblockId]);
+	}
+
+	public static function deleteLockFeatureOption(int $iblockId)
+	{
+		$option = Option::get("lists", "iblock_lock_feature");
+		$iblockIdsWithLockFeature = ($option !== "" ? unserialize($option) : []);
+		if (isset($iblockIdsWithLockFeature[$iblockId]))
+		{
+			unset($iblockIdsWithLockFeature[$iblockId]);
+			Option::set("lists", "iblock_lock_feature", serialize($iblockIdsWithLockFeature));
+		}
 	}
 }
 ?>

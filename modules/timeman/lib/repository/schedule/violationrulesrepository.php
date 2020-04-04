@@ -3,7 +3,7 @@ namespace Bitrix\Timeman\Repository\Schedule;
 
 use Bitrix\Main\ORM\Query\Filter\ConditionTree;
 use Bitrix\Main\Result;
-use Bitrix\Timeman\Model\Schedule\Violation\EO_ViolationRules_Collection;
+use Bitrix\Timeman\Model\Schedule\Violation\ViolationRulesCollection;
 use Bitrix\Timeman\Model\Schedule\Violation\ViolationRules;
 use Bitrix\Timeman\Model\Schedule\Violation\ViolationRulesTable;
 use Bitrix\Timeman\Repository\DepartmentRepository;
@@ -37,7 +37,7 @@ class ViolationRulesRepository
 		elseif (preg_match('#DR[0-9]+#', $entityCode) === 1)
 		{
 			$departmentId = (int)substr($entityCode, 2);
-			$entitiesCodesData = $this->scheduleRepository->buildDepartmentsPriorityTree($departmentId);
+			$entitiesCodesData[] = $this->departmentRepository->buildDepartmentsPriorityTree($departmentId);
 		}
 		$uniqueCodes = [];
 		foreach ($entitiesCodesData as $entityCodeValues)
@@ -100,7 +100,7 @@ class ViolationRulesRepository
 	 * @param int $scheduleId
 	 * @param array $fieldsToSelect
 	 * @param ConditionTree $filter
-	 * @return EO_ViolationRules_Collection
+	 * @return ViolationRulesCollection
 	 */
 	public function findAllByScheduleId($scheduleId, $fieldsToSelect, $filter = null)
 	{
@@ -119,32 +119,15 @@ class ViolationRulesRepository
 	}
 
 	/**
-	 * @param $violationRulesList
+	 * @param ViolationRulesCollection $violationRulesList
 	 * @throws \Bitrix\Main\ArgumentException
 	 * @throws \Bitrix\Main\SystemException
 	 */
-	public function saveAll($violationRulesList)
+	public function saveAll($violationRulesList, $fieldsData)
 	{
-		$primaries = [];
-		foreach ($violationRulesList as $violationRules)
+		if (!empty($violationRulesList->getIdList()))
 		{
-			/** @var ViolationRules $violationRules */
-			if ($violationRules->getPeriodTimeLackAgentId() > 0)
-			{
-				$result = $violationRules->save();
-				if (!$result->isSuccess())
-				{
-					return $result;
-				}
-			}
-			else
-			{
-				$primaries[] = [$violationRules->getId()];
-			}
-		}
-		if (!empty($primaries))
-		{
-			return ViolationRulesTable::updateMulti($primaries, ['PERIOD_TIME_LACK_AGENT_ID' => 0], true);
+			return ViolationRulesTable::updateMulti($violationRulesList->getIdList(), $fieldsData, true);
 		}
 		return new Result();
 	}

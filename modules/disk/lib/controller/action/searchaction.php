@@ -17,6 +17,7 @@ class SearchAction extends Search\SearchAction
 		$filter = [
 			'=DELETED_TYPE' => ObjectTable::DELETED_TYPE_NONE,
 			'STORAGE.USE_INTERNAL_RIGHTS' => true,
+			'=STORAGE.MODULE_ID' => Driver::INTERNAL_MODULE_ID,
 			'@STORAGE.ENTITY_TYPE' => [
 				Disk\ProxyType\User::className(),
 				Disk\ProxyType\Group::className(),

@@ -22,7 +22,7 @@ class Strictly extends Queue
 	 */
 	public function getOperatorsQueue($currentOperator = 0)
 	{
-		$queueTime = $this->config['QUEUE_TIME'];
+		$queueTime = $this->getQueueTime();
 
 		$result = [
 			'RESULT' => false,
@@ -80,11 +80,6 @@ class Strictly extends Queue
 			else
 			{
 				$queueHistory[$operatorId] = true;
-			}
-
-			if($this->config['QUEUE_TIME'] > 0)
-			{
-				$queueTime = $this->config['QUEUE_TIME'];
 			}
 
 			$result = [

@@ -674,23 +674,28 @@
 	{
 		static camelize(str) {
 			return str
-				.replace("_", " ")
-				.replace(/(?:^\w|[A-Z]|\b\w)/g, (word, index) => index === 0
-					? word.toLowerCase()
-					: word.toUpperCase()).replace(/\s+/g, '');
+				.replace(/_/g, " ")
+				.replace(/(?:^\w|[A-Z]|\b\w)/g, (word, index) =>
+				{
+					return index === 0
+						? word.toLowerCase()
+						: word.toUpperCase();
+				}).replace(/\s+/g, '');
 		}
 
 	};
 
-	window.reflectFunction = function (object, funcName)
+	window.reflectFunction = function (object, funcName, thisObject)
 	{
 		return function(){
+			let context = thisObject || object;
 			let targetFunction = StringUtils.camelize(funcName);
-			console.log(targetFunction);
-			if(typeof object[targetFunction] == "function")
+			if(object && typeof object[targetFunction] == "function")
 			{
-				object[targetFunction].apply(object, arguments);
+				return object[targetFunction].apply(context, arguments);
 			}
+
+			return function(){};
 		}
 	}
 

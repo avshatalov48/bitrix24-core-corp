@@ -32,7 +32,7 @@ return array(
 		<nav class="navbar navbar-expand-lg py-0 g-px-10">
 			<div class="container">
 				<!-- Logo -->
-				<a href="/"
+				<a href="#"
 				   class="landing-block-node-menu-logo-link navbar-brand u-header__logo g-max-width-180 g-mr-60 p-0">
 					<img class="landing-block-node-menu-logo img-fluid u-header__logo-img u-header__logo-img--main"
 						 src="https://cdn.bitrix24.site/bitrix/images/landing/logos/accounting-logo-light.png" alt="">
@@ -264,10 +264,10 @@ return array(
 			array (
 				'CODE' => '31.1.two_cols_text_img',
 				'SORT' => '2000',
-				'CONTENT' => '<section class="landing-block g-bg-gray-dark-v2">
+				'CONTENT' => '<section class="landing-block g-bg-black-opacity-0_7">
 	<div>
 		<div class="row mx-0">
-			<div class="col-md-6 text-center text-md-left g-bg-gray-dark-v3 g-py-50 g-py-100--md g-px-15 g-px-50--md">
+			<div class="col-md-6 text-center text-md-left g-py-50 g-py-100--md g-px-15 g-px-50--md">
 				<h3 class="landing-block-node-title text-uppercase g-font-weight-700 g-font-size-default g-color-white g-mb-25 g-font-size-16 js-animation fadeInUp animated">
 					Part-time
 					cfo/controller</h3>
@@ -288,7 +288,7 @@ return array(
 				</div>
 			</div>
 
-			<div class="landing-block-node-img col-md-6 g-min-height-300 g-bg-img-hero g-px-0 g-bg-size-contain--xs g-bg-size-cover--sm" style="background-image: url(https://cdn.bitrix24.site/bitrix/images/landing/business/1200x960/img1.jpg);"></div>
+			<div class="landing-block-node-img col-md-6 g-min-height-300 g-bg-img-hero g-px-0 g-bg-size-cover" style="background-image: url(https://cdn.bitrix24.site/bitrix/images/landing/business/1200x960/img1.jpg);"></div>
 		</div>
 	</div>
 </section>',

@@ -379,20 +379,30 @@ $arComponentParameters = array(
 			"VALUE" => "Y",
 			"DEFAULT" =>(IsModuleInstalled("intranet") ? "N" : "Y"),
 			"PARENT" => "VISUAL",
-		),
-		"ALLOWALL_USER_PROFILE_FIELDS" => array(
-			"PARENT" => "ADDITIONAL_SETTINGS",
-			"NAME" => GetMessage("SONET_USER_ALLOWALL_USER_PROFILE_FIELDS"),
-			"TYPE" => "CHECKBOX",
-			"MULTIPLE" => "N",
-			"VALUE" => "Y",
-			"DEFAULT" =>(IsModuleInstalled("bitrix24") ? "Y" : "N"),
-			"REFRESH" => "Y",
 		)
 	)
 );
 
-if ($arCurrentValues["ALLOWALL_USER_PROFILE_FIELDS"] != 'Y')
+$viewFields = \Bitrix\Main\Config\Option::get("intranet", "user_profile_view_fields", false, $tmp_site_id);
+$editFields = \Bitrix\Main\Config\Option::get("intranet", "user_profile_edit_fields", false, $tmp_site_id);
+
+if ($viewFields === false)
+{
+	$arComponentParameters["PARAMETERS"]["ALLOWALL_USER_PROFILE_FIELDS"] = array(
+		"PARENT" => "ADDITIONAL_SETTINGS",
+		"NAME" => GetMessage("SONET_USER_ALLOWALL_USER_PROFILE_FIELDS"),
+		"TYPE" => "CHECKBOX",
+		"MULTIPLE" => "N",
+		"VALUE" => "Y",
+		"DEFAULT" =>(IsModuleInstalled("bitrix24") ? "Y" : "N"),
+		"REFRESH" => "Y",
+	);
+}
+
+if (
+	$arCurrentValues["ALLOWALL_USER_PROFILE_FIELDS"] != 'Y'
+	&& $viewFields === false
+)
 {
 	$arComponentParameters["PARAMETERS"]["USER_FIELDS_MAIN"] = array(
 		"PARENT" => "ADDITIONAL_SETTINGS",
@@ -435,13 +445,13 @@ if ($arCurrentValues["ALLOWALL_USER_PROFILE_FIELDS"] != 'Y')
 		"DEFAULT" => array(),
 	);
 	$arComponentParameters["PARAMETERS"]["USER_PROPERTY_PERSONAL"] = array(
-			"PARENT" => "ADDITIONAL_SETTINGS",
-			"NAME" => GetMessage("SONET_USER_PROPERTY_PERSONAL"),
-			"TYPE" => "LIST",
-			"VALUES" => $userProp,
-			"MULTIPLE" => "Y",
-			"DEFAULT" => array(),
-		);
+		"PARENT" => "ADDITIONAL_SETTINGS",
+		"NAME" => GetMessage("SONET_USER_PROPERTY_PERSONAL"),
+		"TYPE" => "LIST",
+		"VALUES" => $userProp,
+		"MULTIPLE" => "Y",
+		"DEFAULT" => array(),
+	);
 }
 $arComponentParameters["PARAMETERS"]["SET_NAV_CHAIN"] = Array(
 	"PARENT" => "ADDITIONAL_SETTINGS",
@@ -490,14 +500,18 @@ $arComponentParameters["PARAMETERS"]["PATH_TO_SEARCH_EXTERNAL"] = Array(
 		),
 		"AJAX_MODE" => Array(),
 */
-$arComponentParameters["PARAMETERS"]["EDITABLE_FIELDS"] = array(
-	"PARENT" => "ADDITIONAL_SETTINGS",
-	"NAME" => GetMessage("SONET_EDITABLE_FIELDS"),
-	"TYPE" => "LIST",
-	"VALUES" => array_merge($userPropEdit, $userProp),
-	"MULTIPLE" => "Y",
-	"DEFAULT" => array('LOGIN', 'NAME', 'SECOND_NAME', 'LAST_NAME', 'EMAIL', 'PERSONAL_BIRTHDAY', 'PERSONAL_CITY', 'PERSONAL_COUNTRY', 'PERSONAL_FAX', 'PERSONAL_GENDER', 'PERSONAL_ICQ', 'PERSONAL_MAILBOX', 'PERSONAL_MOBILE', 'PERSONAL_PAGER', 'PERSONAL_PHONE', 'PERSONAL_PHOTO', 'PERSONAL_STATE', 'PERSONAL_STREET', 'PERSONAL_WWW', 'PERSONAL_ZIP'),
-);
+if ($editFields === false)
+{
+	$arComponentParameters["PARAMETERS"]["EDITABLE_FIELDS"] = array(
+		"PARENT" => "ADDITIONAL_SETTINGS",
+		"NAME" => GetMessage("SONET_EDITABLE_FIELDS"),
+		"TYPE" => "LIST",
+		"VALUES" => array_merge($userPropEdit, $userProp),
+		"MULTIPLE" => "Y",
+		"DEFAULT" => array('LOGIN', 'NAME', 'SECOND_NAME', 'LAST_NAME', 'EMAIL', 'PERSONAL_BIRTHDAY', 'PERSONAL_CITY', 'PERSONAL_COUNTRY', 'PERSONAL_FAX', 'PERSONAL_GENDER', 'PERSONAL_ICQ', 'PERSONAL_MAILBOX', 'PERSONAL_MOBILE', 'PERSONAL_PAGER', 'PERSONAL_PHONE', 'PERSONAL_PHOTO', 'PERSONAL_STATE', 'PERSONAL_STREET', 'PERSONAL_WWW', 'PERSONAL_ZIP'),
+	);
+}
+
 $arComponentParameters["PARAMETERS"]["SHOW_YEAR"] = Array(
 	"PARENT" => "ADDITIONAL_SETTINGS",
 	"NAME" => GetMessage("SONET_SHOW_YEAR"),

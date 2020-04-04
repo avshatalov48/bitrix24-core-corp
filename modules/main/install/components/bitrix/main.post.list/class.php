@@ -39,7 +39,11 @@ final class MainPostList extends CBitrixComponent
 		$this->sign = (new \Bitrix\Main\Security\Sign\Signer());
 		if ($this->request->get("EXEMPLAR_ID"))
 			$this->exemplarId = $this->request->get("EXEMPLAR_ID");
-		else if ($this->request->isPost())
+		else if (
+			$this->request->isPost() ||
+			$this->request->get("sessid") !== null ||
+			$this->request->get("logajax") !== null/*socialnetwork*/
+		)
 			$this->exemplarId = implode("_", [$this->getUser()->getId(), randString(6)]);
 		else
 			$this->exemplarId = implode("_", [$this->getUser()->getId(), $this->randString(6)]);
@@ -306,19 +310,33 @@ HTML;
 		}
 
 		$res = $id;
-		if (is_integer($res))
+		if (!is_array($res))
 		{
 			if (!array_key_exists($res, static::$users))
 			{
 				$res = \CUser::GetById($res)->Fetch();
+				$avatarId = intval($res["PERSONAL_PHOTO"]);
 				$res = array(
 					"ID" => $res["ID"],
 					"NAME" => $res["NAME"],
 					"LAST_NAME" => $res["LAST_NAME"],
 					"SECOND_NAME" => $res["SECOND_NAME"],
-					"AVATAR" => $res["AVATAR"],
+					"AVATAR" => null,
 					"EXTERNAL_AUTH_ID" => $res["EXTERNAL_AUTH_ID"]
 				);
+				if (
+						$avatarId > 0 &&
+						(
+							$avatar = \CFile::ResizeImageGet(
+								$avatarId,
+								["width" => 42, "height" => 42],
+								BX_RESIZE_IMAGE_EXACT,
+								false)
+						)
+					)
+				{
+					$res["AVATAR"] = $avatar["src"];
+				}
 				static::$users[$id] = $res;
 			}
 			$res = static::$users[$id];

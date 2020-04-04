@@ -1,6 +1,13 @@
 this.BX = this.BX || {};
-(function (exports,main_core,landing_env) {
+(function (exports, main_core, landing_env) {
 	'use strict';
+
+	var pageTypeAlias = {
+	  GROUP: 'KNOWLEDGE'
+	};
+	/**
+	 * @memberOf BX.Landing
+	 */
 
 	var Loc =
 	/*#__PURE__*/
@@ -15,7 +22,10 @@ this.BX = this.BX || {};
 	  babelHelpers.createClass(Loc, null, [{
 	    key: "getMessage",
 	    value: function getMessage(key) {
-	      var pageType = landing_env.Env.getInstance().getType();
+	      var pageType = function () {
+	        var type = landing_env.Env.getInstance().getType();
+	        return pageTypeAlias[type] || type;
+	      }();
 
 	      if (pageType) {
 	        var typedMessageKey = "".concat(key, "__").concat(pageType);
@@ -33,5 +43,5 @@ this.BX = this.BX || {};
 
 	exports.Loc = Loc;
 
-}((this.BX.Landing = this.BX.Landing || {}),BX,BX.Landing));
+}(this.BX.Landing = this.BX.Landing || {}, BX, BX.Landing));
 //# sourceMappingURL=loc.bundle.js.map

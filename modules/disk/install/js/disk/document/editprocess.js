@@ -152,6 +152,13 @@
 		{
 			return this.commit().then(function(response){
 				console.log('commit', response);
+				if (response.status !== 'success')
+				{
+					BX.UI.Viewer.Instance.close();
+
+					BX.Disk.showModalWithStatusAction(response);
+					return response;
+				}
 
 				if (response.originalIsLocked)
 				{

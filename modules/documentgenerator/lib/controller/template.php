@@ -303,6 +303,7 @@ class Template extends Base
 		if($bodyFile->isExists())
 		{
 			$fileArray = \CFile::MakeFileArray($bodyFile->getPath(), $body->getFileMimeType());
+			$fileArray['isTemplate'] = true;
 			$saveResult = FileTable::saveFile($fileArray);
 			if($saveResult->isSuccess())
 			{
@@ -461,7 +462,7 @@ class Template extends Base
 			],
 			'filter' => [
 				'@CODE' => $codes,
-				'@NAME' => $names
+				'@NAME' => $names,
 			],
 		])->fetchAll();
 		$unFoundTemplates = $templates;

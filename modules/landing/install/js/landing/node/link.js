@@ -60,6 +60,11 @@
 
 			this.getField().setValue(this.getValue());
 		},
+		
+		isMenuMode: function()
+		{
+			return this.manifest.menuMode === true;
+		},
 
 		/**
 		 * Handles click event
@@ -68,7 +73,11 @@
 		onClick: function(event)
 		{
 			event.preventDefault();
-			event.stopPropagation();
+
+			if (!this.isMenuMode())
+			{
+				event.stopPropagation();
+			}
 
 			if (this.isAllowInlineEdit())
 			{

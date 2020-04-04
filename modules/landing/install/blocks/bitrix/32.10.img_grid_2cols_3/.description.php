@@ -17,7 +17,7 @@ return array(
 		'.landing-block-node-img' => array(
 			'name' => Loc::getMessage('LANDING_BLOCK_32.10.IMG_GRID_2_COLS_3_NODES_LANDINGBLOCKNODEIMG'),
 			'type' => 'img',
-			'dimensions' => array('width' => 1440, 'height' => 960),
+			'dimensions' => array('width' => 1080),
 			'allowInlineEdit' => false,
 		),
 		'.landing-block-node-img-title' => array(

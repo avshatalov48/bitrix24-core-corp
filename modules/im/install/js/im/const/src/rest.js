@@ -21,6 +21,7 @@ const RestMethod = Object.freeze({
 	imChatMute: 'im.chat.mute',
 	imChatParentJoin: 'im.chat.parent.join',
 
+	imDialogGet: 'im.dialog.get',
 	imDialogMessagesGet: 'im.dialog.messages.get',
 	imDialogRead: 'im.dialog.read',
 	imDialogUnread: 'im.dialog.unread',

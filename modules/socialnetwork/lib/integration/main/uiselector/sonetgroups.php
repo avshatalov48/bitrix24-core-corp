@@ -8,6 +8,26 @@ use Bitrix\Socialnetwork\WorkgroupTable;
 
 class SonetGroups extends \Bitrix\Main\UI\Selector\EntityBase
 {
+	public static function getFeatureOperations($feature = false)
+	{
+		$result = [];
+		if (!$feature)
+		{
+			return $result;
+		}
+
+		switch($feature)
+		{
+			case 'blog':
+				$result = [ 'premoderate_post', 'moderate_post', 'write_post', 'full_post' ];
+				break;
+			default:
+				$result = [];
+		}
+
+		return $result;
+	}
+
 	public function getData($params = array())
 	{
 		$result = array(
@@ -88,10 +108,23 @@ class SonetGroups extends \Bitrix\Main\UI\Selector\EntityBase
 		if (!empty($lastSonetGroupsList))
 		{
 			$filter = array(
-				'features' => array("blog", array("premoderate_post", "moderate_post", "write_post", "full_post")),
 				'id' => $lastSonetGroupsList,
 				'useProjects' => (!empty($options['enableProjects']) ? $options['enableProjects'] : 'N')
 			);
+
+			if (!empty($options['feature']))
+			{
+				$feature = $options['feature'];
+				if (strlen(trim($feature)) > 0)
+				{
+					$operations = self::getFeatureOperations($feature);
+					if (!empty($operations))
+					{
+						$filter['features'] = [ $feature, $operations ];
+					}
+				}
+			}
+
 			if (
 				!empty($options['landing'])
 				&& ModuleManager::isModuleInstalled('landing')
@@ -121,12 +154,24 @@ class SonetGroups extends \Bitrix\Main\UI\Selector\EntityBase
 
 		if (!empty($selectedSonetGroupsList))
 		{
-			// available to post
 			$filter = array(
-				'features' => array("blog", array("premoderate_post", "moderate_post", "write_post", "full_post")),
 				'id' => $selectedSonetGroupsList,
 				'useProjects' => (!empty($options['enableProjects']) ? $options['enableProjects'] : 'N')
 			);
+
+			if (!empty($options['feature']))
+			{
+				$feature = $options['feature'];
+				if (strlen(trim($feature)) > 0)
+				{
+					$operations = self::getFeatureOperations($feature);
+					if (!empty($operations))
+					{
+						$filter['features'] = [ $feature, $operations ];
+					}
+				}
+			}
+
 			if (
 				!empty($options['landing'])
 				&& ModuleManager::isModuleInstalled('landing')
@@ -257,9 +302,22 @@ class SonetGroups extends \Bitrix\Main\UI\Selector\EntityBase
 		{
 			$filter = array(
 				"SEARCH" => $requestFields['searchString'],
-				"FEATURES" => (!empty($entityOptions['searchFeatures']) ? $entityOptions['searchFeatures'] : false),
 				"LANDING" => (!empty($entityOptions['landing']) && ModuleManager::isModuleInstalled('landing') && $entityOptions['landing'] == 'Y' ? 'Y' : 'N')
 			);
+
+			if (!empty($entityOptions['feature']))
+			{
+				$feature = $entityOptions['feature'];
+				if (strlen(trim($feature)) > 0)
+				{
+					$operations = self::getFeatureOperations($feature);
+					if (!empty($operations))
+					{
+						$filter['FEATURES'] = [ $feature, $operations ];
+					}
+				}
+			}
+
 			if (!empty($entityOptions['siteId']))
 			{
 				$filter['SITE_ID'] = $entityOptions['siteId'];

@@ -6,8 +6,14 @@
  * @copyright 2001-2013 Bitrix
  */
 
-use \Bitrix\Tasks\Integration\Disk\Rest\Attachment;
+use Bitrix\Main\ObjectException;
+use Bitrix\Main\Type\DateTime;
+use Bitrix\Tasks\Integration\Disk\Rest\Attachment;
+use Bitrix\Tasks\Integration\Forum\Task\Comment;
 
+/**
+ * Class CTaskCommentItem
+ */
 final class CTaskCommentItem extends CTaskSubItemAbstract
 {
 	const ACTION_COMMENT_ADD    = 0x01;
@@ -15,28 +21,33 @@ final class CTaskCommentItem extends CTaskSubItemAbstract
 	const ACTION_COMMENT_REMOVE = 0x03;
 
 	/**
-	 * @param CTaskItemInterface $oTaskItem
-	 * @param array $arFields with mandatory elements POST_MESSAGE
-	 * @throws TasksException
+	 * @param CTaskItemInterface $task
+	 * @param array $fields
 	 * @return int
+	 * @throws ObjectException
+	 * @throws TasksException
 	 */
-	public static function add(CTaskItemInterface $oTaskItem, $arFields)
+	public static function add(CTaskItemInterface $task, $fields): int
 	{
-		if(!is_array($arFields))
+		if (!is_array($fields))
 		{
-			$arFields = array();
+			$fields = [];
 		}
 
-		if(!array_key_exists('AUTHOR_ID', $arFields))
+		if (!array_key_exists('AUTHOR_ID', $fields))
 		{
-			$arFields['AUTHOR_ID'] = $oTaskItem->getExecutiveUserId();
+			$fields['AUTHOR_ID'] = $task->getExecutiveUserId();
 		}
+		$fields = self::formatPostDateField($fields);
 
         // rights are checked inside forum`s taskEntity class, NO NEED to check rights here
-		$result = \Bitrix\Tasks\Integration\Forum\Task\Comment::add($oTaskItem->getId(), $arFields);
-		if(!$result->isSuccess())
+		$result = Comment::add($task->getId(), $fields);
+		if (!$result->isSuccess())
 		{
-			throw new TasksException(serialize($result->getErrors()->getMessages()), TasksException::TE_ACTION_FAILED_TO_BE_PROCESSED | TasksException::TE_FLAG_SERIALIZED_ERRORS_IN_MESSAGE);
+			$errorMessages = ($result->getErrors() ? $result->getErrors()->getMessages() : ['']);
+			$errorCode = TasksException::TE_ACTION_FAILED_TO_BE_PROCESSED | TasksException::TE_FLAG_SERIALIZED_ERRORS_IN_MESSAGE;
+
+			throw new TasksException(serialize($errorMessages), $errorCode);
 		}
 
 		$resultData = $result->getData();
@@ -44,92 +55,135 @@ final class CTaskCommentItem extends CTaskSubItemAbstract
 		return (int)$resultData['ID'];
 	}
 
-	public function update($arFields)
+	/**
+	 * @param $fields
+	 * @return bool
+	 * @throws TasksException
+	 * @throws ObjectException
+	 */
+	public function update($fields): bool
 	{
+		if (!is_array($fields))
+		{
+			$fields = [];
+		}
+
 		// Nothing to do?
-		if (empty($arFields))
+		if (empty($fields))
 		{
 			return false;
 		}
 
 		// rights are checked inside forum`s taskEntity class, NO NEED to check rights
 		// but for compatibility reasons, we have to leave exception throw here
-		if(!$this->isActionAllowed(self::ACTION_COMMENT_MODIFY))
-		{
-			throw new TasksException('', TasksException::TE_ACTION_NOT_ALLOWED);
-		}
-
-		$result = \Bitrix\Tasks\Integration\Forum\Task\Comment::update($this->itemId, $arFields, $this->taskId);
-		if(!$result->isSuccess())
-		{
-			throw new TasksException(serialize($result->getErrors()->getMessages()), TasksException::TE_ACTION_FAILED_TO_BE_PROCESSED | TasksException::TE_FLAG_SERIALIZED_ERRORS_IN_MESSAGE);
-		}
-
-		return true;
-	}
-
-	public function delete()
-	{
-		// rights are checked inside forum`s taskEntity class, NO NEED to check rights
-		// but for compatibility reasons, we have to leave exception throw here
-		if(!$this->isActionAllowed(self::ACTION_COMMENT_REMOVE))
+		if (!$this->isActionAllowed(self::ACTION_COMMENT_MODIFY))
 		{
 			throw new TasksException('Action is not allowed', TasksException::TE_ACTION_NOT_ALLOWED);
 		}
 
-		$result = \Bitrix\Tasks\Integration\Forum\Task\Comment::delete($this->itemId, $this->taskId);
-		if(!$result->isSuccess())
+		$fields = self::formatPostDateField($fields);
+		$result = Comment::update($this->itemId, $fields, $this->taskId);
+
+		if (!$result->isSuccess())
 		{
-			throw new TasksException(serialize($result->getErrors()->getMessages()), TasksException::TE_ACTION_FAILED_TO_BE_PROCESSED | TasksException::TE_FLAG_SERIALIZED_ERRORS_IN_MESSAGE);
+			$errorMessages = ($result->getErrors() ? $result->getErrors()->getMessages() : ['']);
+			$errorCode = TasksException::TE_ACTION_FAILED_TO_BE_PROCESSED | TasksException::TE_FLAG_SERIALIZED_ERRORS_IN_MESSAGE;
+
+			throw new TasksException(serialize($errorMessages), $errorCode);
 		}
 
 		return true;
 	}
 
-	public function isActionAllowed($actionId)
+	/**
+	 * @return bool
+	 * @throws TasksException
+	 */
+	public function delete(): bool
 	{
-		$isActionAllowed = false;
-		CTaskAssert::assertLaxIntegers($actionId);
-		$actionId = (int) $actionId;
-
-		if($actionId === self::ACTION_COMMENT_ADD)
-			return true; // you can view the task (if you reached this point, you obviously can)
-		elseif (($actionId === self::ACTION_COMMENT_MODIFY) || ($actionId === self::ACTION_COMMENT_REMOVE))
+		// rights are checked inside forum`s taskEntity class, NO NEED to check rights
+		// but for compatibility reasons, we have to leave exception throw here
+		if (!$this->isActionAllowed(self::ACTION_COMMENT_REMOVE))
 		{
-			$taskData = $this->oTaskItem->getData();
-			if(!intval($taskData['FORUM_TOPIC_ID'])) // task even doesnt have a forum topic
-			{
-				$isActionAllowed = false;
-			}
-			else
-			{
-				if($actionId === self::ACTION_COMMENT_REMOVE)
-				{
-					$isActionAllowed = CTaskComments::CanRemoveComment(
-						$this->oTaskItem->getId(),
-						$this->itemId,
-						$this->executiveUserId,
-						array(
-							'FORUM_TOPIC_ID' => $taskData['FORUM_TOPIC_ID']
-						)
-					);
-				}
-				elseif($actionId === self::ACTION_COMMENT_MODIFY)
-				{
-					$isActionAllowed = CTaskComments::CanUpdateComment(
-						$this->oTaskItem->getId(),
-						$this->itemId,
-						$this->executiveUserId,
-						array(
-							'FORUM_TOPIC_ID' => $taskData['FORUM_TOPIC_ID']
-						)
-					);
-				}
-
-			}
+			throw new TasksException('Action is not allowed', TasksException::TE_ACTION_NOT_ALLOWED);
 		}
 
-		return ($isActionAllowed);
+		$result = Comment::delete($this->itemId, $this->taskId);
+		if (!$result->isSuccess())
+		{
+			$errorMessages = ($result->getErrors() ? $result->getErrors()->getMessages() : ['']);
+			$errorCode = TasksException::TE_ACTION_FAILED_TO_BE_PROCESSED | TasksException::TE_FLAG_SERIALIZED_ERRORS_IN_MESSAGE;
+
+			throw new TasksException(serialize($errorMessages), $errorCode);
+		}
+
+		return true;
+	}
+
+	/**
+	 * @param $actionId
+	 * @return bool
+	 */
+	public function isActionAllowed($actionId): bool
+	{
+		CTaskAssert::assertLaxIntegers($actionId);
+		$actionId = (int)$actionId;
+
+		if (!in_array($actionId, [self::ACTION_COMMENT_ADD, self::ACTION_COMMENT_MODIFY, self::ACTION_COMMENT_REMOVE], true))
+		{
+			return false;
+		}
+
+		if ($actionId === self::ACTION_COMMENT_ADD)
+		{
+			return true; // you can view the task (if you reached this point, you obviously can)
+		}
+
+		$taskData = $this->oTaskItem->getData();
+		$forumTopicId = $taskData['FORUM_TOPIC_ID'];
+
+		if (!(int)$forumTopicId) // task even doesnt have a forum topic
+		{
+			return false;
+		}
+
+		if ($actionId === self::ACTION_COMMENT_MODIFY)
+		{
+			return CTaskComments::CanUpdateComment(
+				$this->oTaskItem->getId(),
+				$this->itemId,
+				$this->executiveUserId,
+				['FORUM_TOPIC_ID' => $forumTopicId]
+			);
+		}
+
+		if ($actionId === self::ACTION_COMMENT_REMOVE)
+		{
+			return CTaskComments::CanRemoveComment(
+				$this->oTaskItem->getId(),
+				$this->itemId,
+				$this->executiveUserId,
+				['FORUM_TOPIC_ID' => $forumTopicId]
+			);
+		}
+
+		return false;
+	}
+
+	/**
+	 * @param $fields
+	 * @return array
+	 * @throws ObjectException
+	 */
+	private static function formatPostDateField($fields): array
+	{
+		if (array_key_exists('POST_DATE', $fields) && $fields['POST_DATE'])
+		{
+			$localTimestamp = (new DateTime($fields['POST_DATE']))->getTimestamp();
+			$fields['POST_DATE'] = DateTime::createFromTimestamp($localTimestamp - \CTimeZone::GetOffset());
+		}
+
+		return $fields;
 	}
 
 	final protected function fetchListFromDb($taskData, $arOrder = array(), $arFilter = array())
@@ -169,9 +223,14 @@ final class CTaskCommentItem extends CTaskSubItemAbstract
 					continue;
 				}
 
-				foreach ($userFieldManager->getAttachedObjectByEntity('FORUM_MESSAGE', $arData['ID'], 'UF_FORUM_MESSAGE_DOC') as $attachedObject)
+				$attachedObjects = $userFieldManager->getAttachedObjectByEntity(
+					'FORUM_MESSAGE',
+					$arData['ID'],
+					'UF_FORUM_MESSAGE_DOC'
+				);
+				foreach ($attachedObjects as $object)
 				{
-					$arData['ATTACHED_OBJECTS_IDS'][] = $attachedObject->getId();
+					$arData['ATTACHED_OBJECTS_IDS'][] = $object->getId();
 				}
 
 				$arItemsData[] = $arData;
@@ -215,9 +274,13 @@ final class CTaskCommentItem extends CTaskSubItemAbstract
 		{
 			foreach ($result as $index => $comment)
 			{
-				foreach ($comment['ATTACHED_OBJECTS_IDS'] as $attachmentId)
+				$attachedObjectsIds = $comment['ATTACHED_OBJECTS_IDS'];
+				if (is_array($attachedObjectsIds))
 				{
-					$result[$index]['ATTACHED_OBJECTS'][$attachmentId] = Attachment::getById($attachmentId, array('SERVER' => $parameters['SERVER']));
+					foreach ($attachedObjectsIds as $attachmentId)
+					{
+						$result[$index]['ATTACHED_OBJECTS'][$attachmentId] = Attachment::getById($attachmentId, ['SERVER' => $parameters['SERVER']]);
+					}
 				}
 
 				unset($result[$index]['ATTACHED_OBJECTS_IDS']);
@@ -259,10 +322,9 @@ final class CTaskCommentItem extends CTaskSubItemAbstract
 		{
 			if ($methodName === 'add')
 			{
-				$taskId    = $argsParsed[0];
-				$arFields  = $argsParsed[1];
-				$oTaskItem = CTaskItem::getInstance($taskId, $executiveUserId);	// taskId in $argsParsed[0]
-				$itemId    = self::add($oTaskItem, $arFields);
+				[$taskId, $arFields] = $argsParsed;
+				$task = CTaskItem::getInstance($taskId, $executiveUserId);
+				$itemId = self::add($task, $arFields);
 
 				$returnValue = $itemId;
 			}
@@ -272,7 +334,7 @@ final class CTaskCommentItem extends CTaskSubItemAbstract
 				$order = is_array($argsParsed[1]) ? $argsParsed[1] : array();
 				$filter = is_array($argsParsed[2]) ? $argsParsed[2] : array();
 				$oTaskItem = CTaskItem::getInstance($taskId, $executiveUserId);
-				list($oCommentItems, $rsData) = self::fetchList($oTaskItem, $order, $filter);
+				[$oCommentItems, $rsData] = self::fetchList($oTaskItem, $order, $filter);
 
 				$returnValue = array();
 
@@ -378,7 +440,7 @@ final class CTaskCommentItem extends CTaskSubItemAbstract
 	 */
 	public static function getManifest()
 	{
-		$arWritableKeys = array('POST_MESSAGE');
+		$arWritableKeys = array('POST_MESSAGE', 'AUTHOR_ID', 'POST_DATE');
 		$arDateKeys = array('POST_DATE');
 		$arSortableKeys = array('ID', 'AUTHOR_ID', 'AUTHOR_NAME', 'AUTHOR_EMAIL', /*'EDITOR_ID',*/ 'POST_DATE');
 		$arReadableKeys = array_merge(

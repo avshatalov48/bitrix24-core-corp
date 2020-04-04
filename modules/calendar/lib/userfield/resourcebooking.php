@@ -7,6 +7,7 @@ use Bitrix\Main\Type;
 use Bitrix\Calendar\Internals;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Text\HtmlFilter;
+use Bitrix\Bitrix24;
 
 Loc::loadMessages(__FILE__);
 
@@ -1129,6 +1130,13 @@ class ResourceBooking extends \Bitrix\Main\UserField\TypeBase
 		$limit = -1;
 		if (\Bitrix\Main\Loader::includeModule('bitrix24'))
 		{
+			$b24limit = Bitrix24\Feature::getVariable('calendar_resourcebooking_limit');
+			if ($b24limit !== null)
+			{
+				return $b24limit;
+			}
+
+			//else: fallback
 			$licenseType = \CBitrix24::getLicenseType();
 
 			if ($licenseType == 'project' || $licenseType == 'self')
@@ -1139,7 +1147,7 @@ class ResourceBooking extends \Bitrix\Main\UserField\TypeBase
 			{
 				$limit = 12;
 			}
-			elseif ($licenseType == 'team')
+			elseif ($licenseType == 'team' || $licenseType == 'start_2019')
 			{
 				$limit = 24;
 			}

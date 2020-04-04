@@ -1,7 +1,7 @@
 <?
 
-use Bitrix\Socialnetwork\Livefeed\TasksTask;
 use Bitrix\Socialnetwork\LogTable;
+use Bitrix\Main\Loader;
 
 class CMobileHelper
 {
@@ -764,7 +764,7 @@ class CMobileHelper
 			$params = explode("|", $tag);
 			if ($params[1] == 'TASK')
 			{
-				if (!empty(($taskId = $params[2]) && \Bitrix\Main\Loader::includeModule('tasks')))
+				if (!empty(($taskId = $params[2]) && Loader::includeModule('tasks')))
 				{
 					return self::getTaskLink($taskId);
 				}
@@ -803,18 +803,17 @@ class CMobileHelper
 			if (
 				!empty($params[1])
 				&& !empty($params[2])
-				&& \Bitrix\Main\Loader::includeModule('socialnetwork')
+				&& Loader::includeModule('socialnetwork')
 			)
 			{
 				$liveFeedEntity = Bitrix\SocialNetwork\Livefeed\Provider::init([
-					'ENTITY_TYPE' => $params[1],
+					'ENTITY_TYPE' => \Bitrix\Socialnetwork\Livefeed\Provider::DATA_ENTITY_TYPE_FORUM_POST,
 					'ENTITY_ID' => $params[2]
 				]);
 
 				$suffix = $liveFeedEntity->getSuffix();
 				if ($suffix == 'TASK')
 				{
-
 					$res = LogTable::getList(array(
 						'filter' => array(
 							'ID' => $liveFeedEntity->getLogId()
@@ -873,7 +872,7 @@ class CMobileHelper
 			// TASKS|TASK_COMMENT|%task_id%|%user_id%|%comment_id%
 
 			$params = explode("|", $tag);
-			if (!empty(($taskId = $params[2]) && \Bitrix\Main\Loader::includeModule('tasks')))
+			if (!empty(($taskId = $params[2]) && Loader::includeModule('tasks')))
 			{
 				return self::getTaskLink($taskId);
 			}
@@ -961,7 +960,7 @@ class CMobileHelper
 	 * @param $taskId
 	 * @return string
 	 */
-	private static function getTaskLink($taskId)
+	public static function getTaskLink($taskId): string
 	{
 		$taskId = (int)$taskId;
 
@@ -1015,7 +1014,7 @@ class CMobileHelper
 			'SITE_DIR' => SITE_DIR
 		);
 		if (
-			\Bitrix\Main\Loader::includeModule('extranet')
+			Loader::includeModule('extranet')
 			&& !CExtranet::isIntranetUser()
 		) // current extranet user
 		{

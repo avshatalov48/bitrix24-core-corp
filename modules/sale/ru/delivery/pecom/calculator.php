@@ -165,7 +165,7 @@ class Calculator
 			"disableSslVerification" => true
 		));
 
-		$jsnData = $http->get("http://calc.pecom.ru/bitrix/components/pecom/calc/ajax.php?".$strParams);
+		$jsnData = $http->get("https://calc.pecom.ru/bitrix/components/pecom/calc/ajax.php?".$strParams);
 
 		$errors = $http->getError();
 

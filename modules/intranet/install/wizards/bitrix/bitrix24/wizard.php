@@ -8,7 +8,7 @@ class DataInstallStep extends CWizardStep
 		$this->SetStepID("data_install");
 		$this->SetTitle(GetMessage("wiz_install_data"));
 		$this->SetSubTitle(GetMessage("wiz_install_data"));
-		
+
 		$wizard =& $this->GetWizard();
 		$wizard->SetVar("siteID", 's1');
 	}
@@ -20,7 +20,7 @@ class DataInstallStep extends CWizardStep
 		$serviceStage = $wizard->GetVar("nextStepStage");
 
 		if ($serviceID == "finish")
-		{			
+		{
 			if (IsModuleInstalled("bitrix24"))
 			{
 				$wizard->SetCurrentStep("data_install_extranet");
@@ -35,9 +35,9 @@ class DataInstallStep extends CWizardStep
 
 			return;
 		}
-		
+
 		$arServices = WizardServices::GetServices($_SERVER["DOCUMENT_ROOT"].$wizard->GetPath(), "/site/services/");
-				
+
 		if ($serviceStage == "skip")
 			$success = true;
 		else
@@ -47,10 +47,11 @@ class DataInstallStep extends CWizardStep
 
 
 		if ($nextService == "finish")
-		{			
+		{
 			$formName = $wizard->GetFormName();
 			$response = "window.ajaxForm.StopAjax(); window.ajaxForm.SetStatus('100'); window.ajaxForm.Post('".$nextService."', '".$nextServiceStage."','".$status."');";
-			COption::SetOptionString("main", "wizard_first" . substr($wizard->GetID(), 7)  . "_" . $wizard->GetVar("siteID"), "Y", false, $siteID); 
+			COption::SetOptionString("main", "wizard_first" . substr($wizard->GetID(), 7)  . "_" . $wizard->GetVar("siteID"), "Y", false, $siteID);
+			COption::SetOptionString("main", "~wizard_first" . substr($wizard->GetID(), 7)  . "_" . $wizard->GetVar("siteID"), "Y");
 		}
 		else
 		{
@@ -125,13 +126,13 @@ class DataInstallStep extends CWizardStep
 		$siteID = WizardServices::GetCurrentSiteID($wizard->GetVar("siteID"));
 		define("WIZARD_SITE_ID", $siteID);
 		define("WIZARD_SITE_ROOT_PATH", $_SERVER["DOCUMENT_ROOT"]);
-		
+
 		$rsSites = CSite::GetByID($siteID);
 		if ($arSite = $rsSites->Fetch())
 			define("WIZARD_SITE_DIR", $arSite["DIR"]);
 		else
 			define("WIZARD_SITE_DIR", "/");
-		
+
 		define("WIZARD_SITE_PATH", str_replace("//", "/", WIZARD_SITE_ROOT_PATH."/".WIZARD_SITE_DIR."/"));
 
 		$wizardPath = $wizard->GetPath();
@@ -149,18 +150,18 @@ class DataInstallStep extends CWizardStep
 		define("WIZARD_SERVICE_ABSOLUTE_PATH", $_SERVER["DOCUMENT_ROOT"].$servicePath);
 		define("WIZARD_IS_INSTALLED", COption::GetOptionString("main", "wizard_is_installed") == "Y");
 		define("WIZARD_SITE_NAME", GetMessage("wiz_slogan")/*$wizard->GetVar("siteName")*/);
-		
+
 		/*if($firstStep == "N" || wizard->GetVar("installDemoData") == "Y")
 		{
-			COption::SetOptionString("main", "wizard_clear_exec", "N", "", $siteID); 
+			COption::SetOptionString("main", "wizard_clear_exec", "N", "", $siteID);
 		}*/
-		
+
 		$dbGroupUsers = CGroup::GetList($by="id", $order="asc", Array("ACTIVE" => "Y"));
 		$arGroupsId = Array("ADMIN_SECTION", "SUPPORT", "CREATE_GROUPS", "PERSONNEL_DEPARTMENT", "DIRECTION", "MARKETING_AND_SALES");
-	
-	
+
+
 		while($arGroupUser = $dbGroupUsers->Fetch()){
-	
+
 			if(in_array($arGroupUser["STRING_ID"], $arGroupsId))
 			{
 				define("WIZARD_".$arGroupUser["STRING_ID"]."_GROUP", $arGroupUser["ID"]);
@@ -173,7 +174,7 @@ class DataInstallStep extends CWizardStep
 				}
 			}
 		}
-		
+
 		if (!file_exists(WIZARD_SERVICE_ABSOLUTE_PATH."/".$serviceStage))
 			return false;
 
@@ -204,7 +205,7 @@ class DataInstallStep extends CWizardStep
 
 		if (!array_key_exists($currentService, $arServices))
 			return Array($nextService, $nextServiceStage, 0, $status); //Finish
-                           
+
 		if ($currentStage != "skip" && array_key_exists("STAGES", $arServices[$currentService]) && is_array($arServices[$currentService]["STAGES"]))
 		{
 			$stageIndex = array_search($currentStage, $arServices[$currentService]["STAGES"]);
@@ -252,7 +253,7 @@ class DataInstallExtranetStep extends CWizardStep
 		$this->SetStepID("data_install_extranet");
 		$this->SetTitle(GetMessage("wiz_install_data_extranet"));
 		$this->SetSubTitle(GetMessage("wiz_install_data_extranet"));
-		
+
 		COption::SetOptionString("main", "wizard_site_folder_extranet", "/extranet/");
 		COption::SetOptionString("main", "wizard_site_code_extranet", "ex");
 		COption::SetOptionString("main", "wizard_site_name_extranet", "Ёкстранет");
@@ -268,7 +269,7 @@ class DataInstallExtranetStep extends CWizardStep
 		{
 			if (!COption::GetOptionString("main", "wizard_is_installed"))
 				COption::SetOptionString("main", "wizard_is_installed", "Y");
-				
+
 			$wizard->SetCurrentStep("finish");
 			return;
 		}
@@ -365,7 +366,7 @@ class DataInstallExtranetStep extends CWizardStep
 
 		define("WIZARD_SITE_ID", $siteID);
 		define("WIZARD_SITE_DIR", $siteFolder);
-		define("WIZARD_SITE_NAME", $siteName);			
+		define("WIZARD_SITE_NAME", $siteName);
 		define("WIZARD_SITE_PATH", $_SERVER["DOCUMENT_ROOT"].$siteFolder);
 
 		$wizardPath = $wizard->GetPath();
@@ -471,13 +472,13 @@ class FinishStep extends CWizardStep
 	function ShowStep()
 	{
 		$wizard =& $this->GetWizard();
-		
+
 		$siteID = WizardServices::GetCurrentSiteID($wizard->GetVar("siteID"));
 		$rsSites = CSite::GetByID($siteID);
-		$siteDir = "/"; 
+		$siteDir = "/";
 		if ($arSite = $rsSites->Fetch())
 			$siteDir = $arSite["DIR"];
-			 
+
 		$wizard->SetFormActionScript(str_replace("//", "/", $siteDir."/?finish"));
 
 		if (!IsModuleInstalled("bitrix24"))
@@ -485,7 +486,7 @@ class FinishStep extends CWizardStep
 			$arEditions = array("Portal", "Communications", "Enterprise");
 			CBXFeatures::InitiateEditionsSettings($arEditions);
 		}
-		
+
 		$this->CreateNewIndex();
 		$this->content .= GetMessage("FINISH_STEP_CONTENT");
 	}
@@ -494,7 +495,7 @@ class FinishStep extends CWizardStep
 	{
 		$wizard =& $this->GetWizard();
 		$siteID = WizardServices::GetCurrentSiteID($wizard->GetVar("siteID"));
-		
+
 		define("WIZARD_SITE_ID", $siteID);
 		define("WIZARD_SITE_ROOT_PATH", $_SERVER["DOCUMENT_ROOT"]);
 
@@ -503,7 +504,7 @@ class FinishStep extends CWizardStep
 			define("WIZARD_SITE_DIR", $arSite["DIR"]);
 		else
 			define("WIZARD_SITE_DIR", "/");
-			
+
 		define("WIZARD_SITE_PATH", str_replace("//", "/", WIZARD_SITE_ROOT_PATH."/".WIZARD_SITE_DIR."/"));
 		//Copy index page
 		CopyDirFiles(

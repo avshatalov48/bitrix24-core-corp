@@ -6,9 +6,7 @@ use COption;
 
 class AbsenceRepository
 {
-	const DATE_FORMAT = 'd.m.Y';
-
-	public function findAbsences($dateStart, $dateFinish, $currentUserId, $users = false)
+	public function findAbsences($dateStart, $dateFinish, $users = false)
 	{
 		if (!\Bitrix\Main\Loader::includeModule('intranet'))
 		{
@@ -36,26 +34,16 @@ class AbsenceRepository
 				if ($activeFromTimestamp)
 				{
 					$activeFromTimestamp = $activeFromTimestamp - TimeHelper::getInstance()->getUserToServerOffset();
-					$userTimeAbsStart = TimeHelper::getInstance()->createUserDateTimeFromFormat('U', $activeFromTimestamp, $currentUserId);
+					$userTimeAbsStart = \DateTime::createFromFormat('U', $activeFromTimestamp);
 				}
 				$activeToTimestamp = MakeTimeStamp($absenceItem['DATE_ACTIVE_TO']);
 				if ($activeToTimestamp)
 				{
 					$activeToTimestamp = $activeToTimestamp - TimeHelper::getInstance()->getUserToServerOffset();
-					$userTimeAbsEnd = TimeHelper::getInstance()->createUserDateTimeFromFormat('U', $activeToTimestamp, $currentUserId);
+					$userTimeAbsEnd = \DateTime::createFromFormat('U', $activeToTimestamp);
 				}
-				if (!($userTimeAbsStart && $userTimeAbsEnd))
-				{
-					$absenceData[$userId][$index]['tm_absStartFormatted'] = '';
-					$absenceData[$userId][$index]['tm_absEndFormatted'] = '';
-				}
-				else
-				{
-					$absenceData[$userId][$index]['tm_absStartFormatted'] = $userTimeAbsStart->format(static::DATE_FORMAT);
-					$absenceData[$userId][$index]['tm_absEndFormatted'] = $userTimeAbsEnd->format(static::DATE_FORMAT);
-					$absenceData[$userId][$index]['tm_absStartDateTime'] = $userTimeAbsStart;
-					$absenceData[$userId][$index]['tm_absEndDateTime'] = $userTimeAbsEnd;
-				}
+				$absenceData[$userId][$index]['tm_absStartDateTime'] = $userTimeAbsStart;
+				$absenceData[$userId][$index]['tm_absEndDateTime'] = $userTimeAbsEnd;
 			}
 		}
 

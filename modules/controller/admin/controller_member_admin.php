@@ -648,14 +648,14 @@ require($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/prolog_admin_af
 	<tr>
 		<td nowrap>ID:</td>
 		<td nowrap>
-			<input type="text" name="find_id" value="<? echo htmlspecialcharsbx($adminFilter['ffind_id']) ?>" size="47">
+			<input type="text" name="find_id" value="<? echo htmlspecialcharsbx($adminFilter['find_id']) ?>" size="47">
 		</td>
 	</tr>
 
 	<tr>
 		<td nowrap><?=GetMessage("CTRL_MEMB_ADMIN_FILTER_URL")?>:</td>
 		<td nowrap>
-			<input type="text" name="find_url" value="<? echo htmlspecialcharsbx($adminFilter['ffind_url']) ?>" size="47">
+			<input type="text" name="find_url" value="<? echo htmlspecialcharsbx($adminFilter['find_url']) ?>" size="47">
 		</td>
 	</tr>
 	<tr>
@@ -664,7 +664,7 @@ require($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/prolog_admin_af
 			<select name="find_controller_group_id[]" multiple size="5">
 				<option value=""><? echo GetMessage("CTRL_MEMB_ADMIN_FILTER_ANY") ?></option>
 				<? foreach ($arGroups as $group_id => $group_name): ?>
-					<option value="<?=htmlspecialcharsbx($group_id)?>" <? if ($group_id == $adminFilter['ffind_controller_group_id'])
+					<option value="<?=htmlspecialcharsbx($group_id)?>" <? if ($group_id == $adminFilter['find_controller_group_id'])
 						echo 'selected="selected"' ?>><?=htmlspecialcharsEx($group_name)?></option>
 				<? endforeach; ?>
 			</select>
@@ -673,7 +673,7 @@ require($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/prolog_admin_af
 	<tr>
 		<td nowrap><?=GetMessage("CTRL_MEMB_ADMIN_FILTER_UNIQID")?>:</td>
 		<td nowrap>
-			<input type="text" name="find_member_id" value="<? echo htmlspecialcharsbx($adminFilter['ffind_member_id']) ?>" size="47">
+			<input type="text" name="find_member_id" value="<? echo htmlspecialcharsbx($adminFilter['find_member_id']) ?>" size="47">
 		</td>
 	</tr>
 	<tr>
@@ -683,7 +683,7 @@ require($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/prolog_admin_af
 				"reference" => Array(GetMessage("CTRL_MEMB_ADMIN_FILTER_ANY2"), GetMessage("MAIN_YES"), GetMessage("MAIN_NO")),
 				"reference_id" => array("", "Y", "N"),
 			);
-			echo SelectBoxFromArray("find_active", $arr, htmlspecialcharsbx($adminFilter['ffind_active']), GetMessage("MAIN_ALL"));
+			echo SelectBoxFromArray("find_active", $arr, htmlspecialcharsbx($adminFilter['find_active']), GetMessage("MAIN_ALL"));
 			?></td>
 	</tr>
 
@@ -694,36 +694,36 @@ require($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/prolog_admin_af
 				"reference" => Array(GetMessage("CTRL_MEMB_ADMIN_FILTER_ANY2"), GetMessage("MAIN_YES"), GetMessage("MAIN_NO"), GetMessage("CTRL_MEMB_ADMIN_DISCON")),
 				"reference_id" => array("", "Y", "N", "I"),
 			);
-			echo SelectBoxFromArray("find_disconnected", $arr, htmlspecialcharsbx($adminFilter['ffind_disconnected']), GetMessage("MAIN_ALL"));
+			echo SelectBoxFromArray("find_disconnected", $arr, htmlspecialcharsbx($adminFilter['find_disconnected']), GetMessage("MAIN_ALL"));
 			?></td>
 	</tr>
 
 	<tr>
 		<td nowrap><?=GetMessage("CTRL_MEMB_ADMIN_FILTER_MODIFIED")?>:</td>
-		<td nowrap><? echo CalendarPeriod("find_timestamp_x_from", $adminFilter['ffind_timestamp_x_from'], "find_timestamp_x_to", $adminFilter['ffind_timestamp_x_to'], "form1", "Y") ?></td>
+		<td nowrap><? echo CalendarPeriod("find_timestamp_x_from", $adminFilter['find_timestamp_x_from'], "find_timestamp_x_to", $adminFilter['find_timestamp_x_to'], "form1", "Y") ?></td>
 	</tr>
 	<tr>
 		<td nowrap><?=GetMessage("CTRL_MEMB_ADMIN_FILTER_CREATED")?>:</td>
-		<td nowrap><? echo CalendarPeriod("find_created_from", $adminFilter['ffind_created_from'], "find_created_to", $adminFilter['ffind_created_to'], "form1", "Y") ?></td>
+		<td nowrap><? echo CalendarPeriod("find_created_from", $adminFilter['find_created_from'], "find_created_to", $adminFilter['find_created_to'], "form1", "Y") ?></td>
 	</tr>
 	<tr>
 		<td nowrap><?=GetMessage("CTRL_MEMB_ADMIN_FILTER_ACT_FROM")?>:</td>
-		<td nowrap><? echo CalendarPeriod("find_active_from_from", $adminFilter['ffind_active_from_from'], "find_active_from_to", $adminFilter['ffind_active_from_to'], "form1", "Y") ?></td>
+		<td nowrap><? echo CalendarPeriod("find_active_from_from", $adminFilter['find_active_from_from'], "find_active_from_to", $adminFilter['find_active_from_to'], "form1", "Y") ?></td>
 	</tr>
 	<tr>
 		<td nowrap><?=GetMessage("CTRL_MEMB_ADMIN_FILTER_ACT_TO")?>:</td>
-		<td nowrap><? echo CalendarPeriod("find_active_to_from", $adminFilter['ffind_active_to_from'], "find_active_to_to", $adminFilter['ffind_active_to_to'], "form1", "Y") ?></td>
+		<td nowrap><? echo CalendarPeriod("find_active_to_from", $adminFilter['find_active_to_from'], "find_active_to_to", $adminFilter['find_active_to_to'], "form1", "Y") ?></td>
 	</tr>
 	<tr>
 		<td nowrap><?=GetMessage("CTRL_MEMB_ADMIN_CONTACT_PERSON")?>:</td>
 		<td nowrap>
-			<input type="text" name="find_contact_person" value="<? echo htmlspecialcharsbx($adminFilter['ffind_contact_person']) ?>" size="47">
+			<input type="text" name="find_contact_person" value="<? echo htmlspecialcharsbx($adminFilter['find_contact_person']) ?>" size="47">
 		</td>
 	</tr>
 	<tr>
 		<td nowrap><?=GetMessage("CTRL_MEMB_ADMIN_EMAIL")?>:</td>
 		<td nowrap>
-			<input type="text" name="find_email" value="<? echo htmlspecialcharsbx($adminFilter['ffind_email']) ?>" size="47">
+			<input type="text" name="find_email" value="<? echo htmlspecialcharsbx($adminFilter['find_email']) ?>" size="47">
 		</td>
 	</tr>
 

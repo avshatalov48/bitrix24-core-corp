@@ -62,7 +62,6 @@ abstract class CheckListFacade
 	protected static $nodeId = 0;
 	protected static $deferredActionsMode = false;
 	protected static $locPrefix = 'TASKS_CHECKLIST_FACADE_';
-	protected static $checkListPool = [];
 
 	protected static $selectFields = [];
 	protected static $filterFields = [];
@@ -188,11 +187,13 @@ abstract class CheckListFacade
 		$items = [];
 		while ($item = $res->fetch())
 		{
+			$itemId = $item['ID'];
+
 			$item = static::processItemMembers($item, $items, $select);
 			$item = static::processItemAttachments($item, $select);
 			$item = static::processItemCommons($item, $select);
 
-			$items[$item['ID']] = $item;
+			$items[$itemId] = $item;
 		}
 
 		return $items;
@@ -207,12 +208,7 @@ abstract class CheckListFacade
 	 */
 	public static function getByEntityId($entityId)
 	{
-		if (!isset(static::$checkListPool[$entityId]))
-		{
-			static::$checkListPool[$entityId] = static::getList([], [static::$entityIdName => $entityId]);
-		}
-
-		return static::$checkListPool[$entityId];
+		return static::getList([], [static::$entityIdName => $entityId]);
 	}
 
 	/**
@@ -529,13 +525,14 @@ abstract class CheckListFacade
 	 * @param int $entityId
 	 * @param int $userId
 	 * @param array $newItems
+	 * @param array $parameters
 	 * @return Result
 	 * @throws ArgumentException
 	 * @throws NotImplementedException
 	 * @throws ObjectException
 	 * @throws SystemException
 	 */
-	public static function merge($entityId, $userId, $newItems)
+	public static function merge($entityId, $userId, $newItems, $parameters = [])
 	{
 		$mergeResult = new Result();
 
@@ -548,6 +545,8 @@ abstract class CheckListFacade
 		{
 			static::deleteByCheckListsIds($oldItemsKeys);
 			static::doDeletePostActions($entityId, $userId, ['ITEMS' => static::$oldItemsToMerge]);
+
+			static::doMergePostActions($entityId, $userId, ['PARAMETERS' => $parameters]);
 
 			return $mergeResult;
 		}
@@ -585,7 +584,7 @@ abstract class CheckListFacade
 		static::deleteByCheckListsIds($itemsToRemoveKeys);
 		static::doDeletePostActions($entityId, $userId, ['ITEMS' => $itemsToRemove]);
 
-		static::doMergePostActions($entityId, $userId, ['ITEMS' => $traversedItems]);
+		static::doMergePostActions($entityId, $userId, ['ITEMS' => $traversedItems, 'PARAMETERS' => $parameters]);
 
 		static::disableDeferredActionsMode();
 
@@ -896,6 +895,7 @@ abstract class CheckListFacade
 	 */
 	public static function isActionAllowed($entityId, $checkList, $userId, $actionId)
 	{
+		$userId = (int)$userId;
 		$actionId = (int)$actionId;
 
 		if (array_key_exists($actionId, static::ACTIONS['COMMON']))
@@ -1058,6 +1058,11 @@ abstract class CheckListFacade
 
 		if (array_key_exists('MEMBERS', $fields))
 		{
+			if (!$fields['MEMBERS'])
+			{
+				$fields['MEMBERS'] = [];
+			}
+
 			foreach ($fields['MEMBERS'] as $id => $data)
 			{
 				$type = $data;

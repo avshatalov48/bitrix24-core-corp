@@ -131,7 +131,7 @@ class CSocNetUserToGroup extends CAllSocNetUserToGroup
 			$events = GetModuleEvents("socialnetwork", "OnSocNetUserToGroupUpdate");
 			while ($arEvent = $events->Fetch())
 			{
-				ExecuteModuleEventEx($arEvent, array($ID, $arFields));
+				ExecuteModuleEventEx($arEvent, array($ID, $arFields, $arUser2GroupOld));
 			}
 
 			if (array_key_exists($arUser2GroupOld["USER_ID"]."_".$arUser2GroupOld["GROUP_ID"], self::$roleCache))

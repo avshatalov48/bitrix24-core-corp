@@ -57,6 +57,11 @@ class Base
 	 */
 	public static function getDescriptionByCode($code = null, $name = null)
 	{
+		if ($code === 'organic')
+		{
+			return Loc::getMessage('CRM_TRACKING_SOURCE_BASE_DESC_ANOTHER');
+		}
+
 		$name = $name ?: static::getNameByCode($code);
 		if ($code)
 		{

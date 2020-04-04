@@ -316,7 +316,11 @@ abstract class CBPActivity
 	public function IsVariableExists($name)
 	{
 		$rootActivity = $this->GetRootActivity();
-		return array_key_exists($name, $rootActivity->arVariables);
+		return (
+			array_key_exists($name, $rootActivity->arVariables)
+			||
+			array_key_exists($name, $rootActivity->arVariablesTypes)
+		);
 	}
 
 	/************************************************/
@@ -425,7 +429,7 @@ abstract class CBPActivity
 		// array("Workflow", "id")
 		// "Hello, {=SequentialWorkflowActivity1:DocumentApprovers}, {=Document:IBLOCK_ID}!"
 
-		$parsed = $this->parseValueExpression($val);
+		$parsed = static::parseExpression($val);
 		if ($parsed)
 		{
 			$result = null;
@@ -784,30 +788,6 @@ abstract class CBPActivity
 		return $result;
 	}
 
-	/**
-	 * @param $text
-	 * @return array|bool
-	 */
-	private function parseValueExpression($text)
-	{
-		$matches = null;
-		if (is_string($text) && preg_match(static::ValuePattern, $text, $matches))
-		{
-			$result = array(
-				'object' => $matches['object'],
-				'field' => $matches['field'],
-				'modifiers' => array()
-			);
-			if (!empty($matches['mod1']))
-				$result['modifiers'][] = $matches['mod1'];
-			if (!empty($matches['mod2']))
-				$result['modifiers'][] = $matches['mod2'];
-
-			return $result;
-		}
-		return false;
-	}
-
 	public function ParseValue($value, $convertToType = null)
 	{
 		list($t, $r) = $this->GetPropertyValueRecursive($value, $convertToType);
@@ -849,6 +829,102 @@ abstract class CBPActivity
 
 	public function CollectNestedActivities()
 	{
+		return null;
+	}
+
+	public function collectUsages()
+	{
+		$usages = [];
+		$this->collectUsagesRecursive($this->arProperties, $usages);
+		return $usages;
+	}
+
+	private function collectUsagesRecursive($val, &$usages)
+	{
+		if (is_array($val))
+		{
+			foreach ($val as $v)
+			{
+				$this->collectUsagesRecursive($v, $usages);
+			}
+		}
+		elseif (is_string($val))
+		{
+			$parsed = static::parseExpression($val);
+			if ($parsed)
+			{
+				$usages[] = $this->getObjectSourceType($parsed['object'], $parsed['field']);
+			}
+			else
+			{
+				//TODO: check calc functions
+				/*$calc = new CBPCalc($this);
+				if (preg_match(self::CalcPattern, $val))
+				{
+					$r = $calc->Calculate($val);
+
+				}
+
+				//parse inline calculator
+				$val = preg_replace_callback(
+					static::CalcInlinePattern,
+					function($matches) use ($calc)
+					{
+						$r = $calc->Calculate($matches[1]);
+
+					},
+					$val
+				);*/
+
+				//parse properties
+				$val = preg_replace_callback(
+					static::ValueInlinePattern,
+					function($matches) use (&$usages)
+					{
+						$usages[] = $this->getObjectSourceType($matches['object'], $matches['field']);
+					},
+					$val
+				);
+			}
+		}
+	}
+
+	protected function getObjectSourceType($objectName, $fieldName)
+	{
+		if (substr($fieldName, -10) === '_printable')
+		{
+			$fieldName = substr($fieldName, 0, -10);
+		}
+
+		if ($objectName === 'Document')
+		{
+			return [Bizproc\Workflow\Template\SourceType::DocumentField, $fieldName];
+		}
+		elseif ($objectName === 'Template')
+		{
+			return [Bizproc\Workflow\Template\SourceType::Parameter, $fieldName];
+		}
+		elseif ($objectName === 'Variable')
+		{
+			return [Bizproc\Workflow\Template\SourceType::Variable, $fieldName];
+		}
+		elseif ($objectName === 'Constant')
+		{
+			return [Bizproc\Workflow\Template\SourceType::Constant, $fieldName];
+		}
+		elseif ($objectName === 'GlobalConst')
+		{
+			return [Bizproc\Workflow\Template\SourceType::GlobalConstant, $fieldName];
+		}
+		elseif (in_array($objectName, ['Workflow', 'User', 'System']))
+		{
+			return [Bizproc\Workflow\Template\SourceType::System, $objectName];
+		}
+		elseif ($objectName)
+		{
+			return [Bizproc\Workflow\Template\SourceType::Activity, $objectName];
+		}
+
 		return null;
 	}
 
@@ -1183,5 +1259,29 @@ abstract class CBPActivity
 				return true;
 		}
 		return false;
+	}
+
+	public static function parseExpression($exp): ?array
+	{
+		$matches = null;
+		if (is_string($exp) && preg_match(static::ValuePattern, $exp, $matches))
+		{
+			$result = [
+				'object' => $matches['object'],
+				'field' => $matches['field'],
+				'modifiers' => []
+			];
+			if (!empty($matches['mod1']))
+			{
+				$result['modifiers'][] = $matches['mod1'];
+			}
+			if (!empty($matches['mod2']))
+			{
+				$result['modifiers'][] = $matches['mod2'];
+			}
+
+			return $result;
+		}
+		return null;
 	}
 }

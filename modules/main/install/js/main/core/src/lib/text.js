@@ -24,7 +24,9 @@ const unescapeEntities = {
 	'&#34;': '"',
 };
 
-
+/**
+ * @memberOf BX
+ */
 export default class Text
 {
 	/**
@@ -84,5 +86,62 @@ export default class Text
 	{
 		const transformedValue = Type.isString(value) ? value.toLowerCase() : value;
 		return ['true', 'y', '1', 1, true, ...trueValues].includes(transformedValue);
+	}
+
+	static toCamelCase(str: string)
+	{
+		if (!Type.isStringFilled(str))
+		{
+			return str;
+		}
+
+		const regex = /[-_\s]+(.)?/g;
+		if (!regex.test(str))
+		{
+			return str.match(/^[A-Z]+$/) ? str.toLowerCase() : str[0].toLowerCase() + str.slice(1);
+		}
+
+		str = str.toLowerCase();
+		str = str.replace(regex, function(match, letter) {
+			return letter ? letter.toUpperCase() : '';
+		});
+
+		return str[0].toLowerCase() + str.substr(1);
+	}
+
+	static toPascalCase(str: string)
+	{
+		if (!Type.isStringFilled(str))
+		{
+			return str;
+		}
+
+		return this.capitalize(this.toCamelCase(str));
+	}
+
+	static toKebabCase(str: string)
+	{
+		if (!Type.isStringFilled(str))
+		{
+			return str;
+		}
+
+		const matches = str.match(/[A-Z]{2,}(?=[A-Z][a-z]+[0-9]*|\b)|[A-Z]?[a-z]+[0-9]*|[A-Z]|[0-9]+/g);
+		if (!matches)
+		{
+			return str;
+		}
+
+		return matches.map(x => x.toLowerCase()).join('-');
+	}
+
+	static capitalize(str: string)
+	{
+		if (!Type.isStringFilled(str))
+		{
+			return str;
+		}
+
+		return str[0].toUpperCase() + str.substr(1);
 	}
 }

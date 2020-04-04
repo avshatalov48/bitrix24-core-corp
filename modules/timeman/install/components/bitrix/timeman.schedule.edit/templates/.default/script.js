@@ -4,7 +4,6 @@
 
 	BX.namespace('BX.Timeman.Component.Schedule.Edit');
 	/**
-	 *
 	 * @extends BX.Timeman.Component.BaseComponent
 	 * @constructor
 	 */
@@ -16,15 +15,13 @@
 		this.scheduleId = options.scheduleId;
 		this.isSlider = options.isSlider;
 		this.options = options;
-		var assignmentsMapRaw = options.assignmentsMap;
-		this.assignmentsMap = {};
-		var keys = Object.keys(assignmentsMapRaw);
-		for (var i = 0; i < keys.length; i++)
-		{
-			this.fillSchedulesAssignmentsMap(assignmentsMapRaw, keys[i]);
-		}
 
-		this.assignmentsLoading = {};
+		this.defaultSelectedAssignmentCodesExcluded = options.selectedAssignmentCodesExcluded;
+		this.defaultSelectedAssignmentCodes = options.selectedAssignmentCodes;
+		var asKey = this.buildAssignmentsKey(this.defaultSelectedAssignmentCodes, this.defaultSelectedAssignmentCodesExcluded);
+		this.assignmentsMap = {};
+		this.assignmentsMap[asKey] = this.prepareSchedulesAssignmentsMap(this.options.assignmentsMap);
+		this.assignmentsLoading = false;
 		this.scheduleFormName = options.scheduleFormName;
 		this.scheduleNamePostfix = options.scheduleNamePostfix;
 
@@ -47,6 +44,11 @@
 		this.calendarExclusions = new BX.Timeman.Component.Schedule.Edit.Calendar.Exclusions(options);
 		this.violations = new BX.Timeman.Component.Schedule.Edit.Violations(options);
 		this.setScheduleNameFromTypeOption(0);
+		new BX.Timeman.Component.Popup.DurationPicker({
+			durationInput: this.selectOneByRole('max-shift-start-offset-input'),
+			durationPopupToggle: this.selectOneByRole('max-shift-start-offset-link'),
+			containerSelector: '[data-role="worktime-restrictions"]'
+		});
 
 		this.addEventHandlers(options);
 		var shiftForms = document.querySelectorAll('[data-role^="timeman-schedule-shift-form-container"]');
@@ -55,6 +57,7 @@
 			this.createShift('[data-role="' + shiftForms[i].dataset.role + '"]', {visible: i !== 0});
 		}
 		this.redrawFormByScheduleType(this.typeSelector.value, this.controlledActionsSelector.value);
+		BX.UI.Hint.init(this.container);
 	};
 
 	BX.Timeman.Component.Schedule.Edit.prototype = {
@@ -88,57 +91,128 @@
 				BX.bind(checkboxes[i], 'click', BX.delegate(this.onAllowDeviceClick, this));
 			}
 		},
-		updateAssignmentsWarnings: function ()
+		getCurrentExcludedCodes: function ()
 		{
-			this.clearErrors(this.assignmentsErrorBlock);
-			var selectedAssignments = this.assignmentsWrapper.querySelectorAll('[data-role="tile-item"][data-bx-id]');
-			for (var i = 0; i < selectedAssignments.length; i++)
+			var result = [];
+			var nodes = this.excludedContainer.querySelectorAll('[data-role="tile-item"][data-bx-id]');
+			for (var i = 0; i < nodes.length; i++)
 			{
-				if (!selectedAssignments[i].dataset.bxId)
+				if (!nodes[i].dataset.bxId)
 				{
 					continue;
 				}
-				this.drawUserAssignmentsWarning(selectedAssignments[i].dataset.bxId);
+				result.push(nodes[i].dataset.bxId);
 			}
+			return result;
 		},
-		drawUserAssignmentsWarning: function (entityCode)
+		getCurrentSelectedCodes: function ()
 		{
-			if (this.assignmentsMap[entityCode] === undefined)
+			var result = [];
+			var nodes = this.assignmentsWrapper.querySelectorAll('[data-role="tile-item"][data-bx-id]');
+			for (var i = 0; i < nodes.length; i++)
 			{
-				if (!this.assignmentsLoading[entityCode])
+				if (!nodes[i].dataset.bxId)
 				{
-					this.assignmentsLoading[entityCode] = true;
-					this.disableSaveBtn();
-					BX.ajax.runAction(
-						'timeman.schedule.getSchedulesForEntity',
-						{
-							data: {
-								entityCode: entityCode,
-								checkNestedEntities: true,
-								currentScheduleId: this.scheduleId
-							}
-						}
-					).then(
-						function (entityCode, response)
-						{
-							this.assignmentsLoading[entityCode] = false;
-							this.enableSaveBtn();
-							this.assignmentsMap[entityCode] = [];
-							this.fillSchedulesAssignmentsMap(response.data, entityCode);
-
-							this.drawUserAssignmentsWarning(entityCode);
-						}.bind(this, entityCode),
-						function (entityCode, response)
-						{
-							this.assignmentsLoading[entityCode] = false;
-							this.showErrors(response.errors);
-							this.enableSaveBtn();
-						}.bind(this, entityCode));
-
+					continue;
 				}
+				result.push(nodes[i].dataset.bxId);
+			}
+			return result;
+		},
+		buildAssignmentsKey: function (selectedAssignments, excludedAssignments)
+		{
+			if (selectedAssignments === undefined)
+			{
+				selectedAssignments = this.getCurrentSelectedCodes();
+			}
+			if (excludedAssignments === undefined)
+			{
+				excludedAssignments = this.getCurrentExcludedCodes();
+			}
+
+			var keys = [];
+			for (var i = 0; i < selectedAssignments.length; i++)
+			{
+				keys.push(selectedAssignments[i]);
+			}
+			var excludedKeys = [];
+			for (var i = 0; i < excludedAssignments.length; i++)
+			{
+				excludedKeys.push(excludedAssignments[i]);
+			}
+
+			if (keys.length !== 0)
+			{
+				keys.sort();
+				excludedKeys.sort();
+				return JSON.stringify(keys) + '|' + JSON.stringify(excludedKeys);
+			}
+			return null;
+		},
+		updateAssignmentsWarnings: function ()
+		{
+			this.clearErrors(this.assignmentsErrorBlock);
+			var key = this.buildAssignmentsKey();
+			if (key === null)
+			{
 				return;
 			}
-			var data = this.assignmentsMap[entityCode];
+			if (this.assignmentsMap[key] !== undefined)
+			{
+				this.drawUserAssignmentsWarning(this.assignmentsMap[key]);
+			}
+			else
+			{
+				if (this.assignmentsLoading)
+				{
+					return;
+				}
+				this.assignmentsLoading = true;
+				this.disableSaveBtn();
+				var checkingScheduleAssignmentCodes = [];
+				var keysActive = this.getCurrentSelectedCodes();
+				var keysExcluded = this.getCurrentExcludedCodes();
+				for (var i = 0; i < keysActive.length; i++)
+				{
+					checkingScheduleAssignmentCodes.push({
+						code: keysActive[i],
+						excluded: false
+					})
+				}
+				for (var i = 0; i < keysExcluded.length; i++)
+				{
+					checkingScheduleAssignmentCodes.push({
+						code: keysExcluded[i],
+						excluded: true
+					})
+				}
+				BX.ajax.runAction(
+					'timeman.schedule.getSchedulesForScheduleForm',
+					{
+						data: {
+							exceptScheduleAssignmentCodes: checkingScheduleAssignmentCodes,
+							exceptScheduleId: this.scheduleId,
+							checkNestedEntities: true
+						}
+					}
+				).then(
+					function (key, response)
+					{
+						this.assignmentsLoading = false;
+						this.enableSaveBtn();
+						this.assignmentsMap[key] = this.prepareSchedulesAssignmentsMap(response.data.schedules);
+						this.drawUserAssignmentsWarning(this.assignmentsMap[key]);
+					}.bind(this, key),
+					function (response)
+					{
+						this.assignmentsLoading = false;
+						this.showErrors(response.errors);
+						this.enableSaveBtn();
+					}.bind(this));
+			}
+		},
+		drawUserAssignmentsWarning: function (data)
+		{
 			if (data && data.length > 0)
 			{
 				for (var i = 0; i < data.length; i++)
@@ -151,7 +225,7 @@
 					}
 					var erMsg = this.errorMsgTemplate.cloneNode(true);
 					erMsg.dataset.uniqueId = uniqueId;
-					var scheduleName = '&nbsp;<a class="timeman-schedule-form-error-link" data-role="schedule-link" data-id="' + parseInt(schedule.id) + '" target="_blank"'
+					var scheduleName = '&nbsp;<a class="timeman-schedule-form-error-link" data-role="schedule-link" data-id="' + parseInt(schedule.id) + '"'
 						+ '" href="' + schedule.link + '">' + BX.util.htmlspecialchars(schedule.name) + '</a>';
 
 					if (schedule.entityCode.substr(0, 2) === 'DR')
@@ -183,64 +257,96 @@
 						erMsg.classList.add('ui-alert-success');
 					}
 					this.assignmentsErrorBlock.appendChild(erMsg);
-					BX.bind(this.selectOneByRole('schedule-link', erMsg), 'click', BX.delegate(this.onScheduleLinkClick, this));
 					this.showElement(erMsg);
 				}
 			}
 		},
-		fillSchedulesAssignmentsMap: function (schedules, entityCode)
+		prepareSchedulesAssignmentsMap: function (schedules)
 		{
+			var result = [];
 			var keys = Object.keys(schedules);
 			for (var i = 0; i < keys.length; i++)
 			{
-				for (var j = 0; j < Object.keys(schedules[keys[i]]).length; j++)
+				var entityCode = keys[i];
+				var schedulesIds = Object.keys(schedules[entityCode]);
+				for (var j = 0; j < schedulesIds.length; j++)
 				{
-					var schedule = schedules[keys[i]][Object.keys(schedules[keys[i]])[j]];
+					var schedule = schedules[entityCode][schedulesIds[j]];
 					if (parseInt(this.scheduleId) !== parseInt(schedule.ID))
 					{
 						var name = schedule.entityName;
 						if (!name)
 						{
-							var nameWrapperNode = this.container.querySelector('[data-role="tile-item"][data-bx-id="' + keys[i] + '"]');
+							var nameWrapperNode = this.container.querySelector('[data-role="tile-item"][data-bx-id="' + entityCode + '"]');
 							if (nameWrapperNode && nameWrapperNode.querySelector('[data-role="tile-item-name"]'))
 							{
 								name = nameWrapperNode.querySelector('[data-role="tile-item-name"]').textContent;
 							}
 						}
-						var scheduleEntityCode = schedule.entityCode ? schedule.entityCode : keys[i];
 						var item = {
 							'id': schedule.ID,
 							'name': schedule.NAME,
 							'link': schedule.LINKS.DETAIL,
 							'forAllUsers': schedule.IS_FOR_ALL_USERS,
 							'entityName': name,
-							'entityCode': scheduleEntityCode,
+							'entityCode': entityCode,
 							'entityGender': schedule.entityGender
 						};
-						if (this.assignmentsMap[entityCode] === undefined)
-						{
-							this.assignmentsMap[entityCode] = [];
-						}
-
-						this.assignmentsMap[entityCode].push(item);
+						result.push(item);
 					}
 				}
 			}
-		},
-		onScheduleLinkClick: function (event)
-		{
-			event.stopPropagation();
-			event.preventDefault();
-			var url = BX.util.add_url_param("/bitrix/components/bitrix/timeman.schedule.edit/slider.php", {SCHEDULE_ID: event.currentTarget.dataset.id});
-			window.top.BX.SidePanel.Instance.open(url, {width: 1200, cacheable: false});
+			return result;
 		},
 		onAssignmentUnselected: function (params)
 		{
-			this.updateAssignmentsWarnings();
+			if (params.selectorId === "ScheduleForm-exclude-assignments-id" ||
+				params.selectorId === "ScheduleForm-assignments-id")
+			{
+				if (this.getCurrentSelectedCodes().length === 0)
+				{
+					this.enableSaveBtn();
+				}
+				this.updateAssignmentsWarnings();
+			}
 		},
 		onAssignmentSelected: function (params)
 		{
-			this.updateAssignmentsWarnings();
+			if (params.selectorId === "ScheduleForm-exclude-assignments-id" ||
+				params.selectorId === "ScheduleForm-assignments-id")
+			{
+				if (this.initedAssignments(params))
+				{
+					this.updateAssignmentsWarnings();
+				}
+			}
+		},
+		initedAssignments: function (params)
+		{
+			if (params.selectorId === "ScheduleForm-exclude-assignments-id")
+			{
+				for (var i = 0; i < this.defaultSelectedAssignmentCodesExcluded.length; i++)
+				{
+					if (this.defaultSelectedAssignmentCodesExcluded[i] === params.item.id)
+					{
+						this.defaultSelectedAssignmentCodesExcluded.splice(i, 1);
+						break;
+					}
+				}
+			}
+			else if (params.selectorId === "ScheduleForm-assignments-id")
+			{
+				for (var i = 0; i < this.defaultSelectedAssignmentCodes.length; i++)
+				{
+					if (this.defaultSelectedAssignmentCodes[i] === params.item.id)
+					{
+						this.defaultSelectedAssignmentCodes.splice(i, 1);
+						break;
+					}
+				}
+			}
+			return this.defaultSelectedAssignmentCodes.length === 0
+				&& this.defaultSelectedAssignmentCodesExcluded.length === 0;
 		},
 		onExcludedUsersToggleClick: function ()
 		{
@@ -308,8 +414,10 @@
 			this.showElement(this.selectOneByRole('timeman-schedule-calendars-container'));
 			this.showElement(this.selectOneByRole('work-time-block'));
 			this.violations.redrawFormByScheduleType(selectedType, this.controlledActionsSelector.value);
+			this.hideElement(this.selectOneByRole('max-shift-start-offset-block'));
 			if (this.isShiftedSchedule(selectedType))
 			{
+				this.showElement(this.selectOneByRole('max-shift-start-offset-block'));
 				this.addShiftBtn.textContent = BX.message('TIMEMAN_SCHEDULE_EDIT_ADD_WORK_SHIFT_TITLE');
 				this.hideElement(this.selectOneByRole('timeman-schedule-calendars-container'));
 				if (this.controlledActionsSelector.dataset.autoaction === 'true')
@@ -343,8 +451,10 @@
 					{},
 					this.options,
 					{
+						isScheduleShifted: this.isShiftedSchedule(this.typeSelector.value),
 						containerSelector: containerSelector,
 						uniqueIndex: options && options.uniqueIndex !== undefined ? options.uniqueIndex : undefined,
+						defaultName: options && options.defaultName !== undefined ? options.defaultName : undefined,
 						visible: options && options.visible !== undefined ? options.visible : undefined,
 						prevShiftEnd: options && options.prevShiftEnd !== undefined ? options.prevShiftEnd : undefined,
 						prevShiftStart: options && options.prevShiftStart !== undefined ? options.prevShiftStart : undefined,
@@ -404,18 +514,57 @@
 		{
 			return value === this.options.shiftedScheduleTypeName;
 		},
+		buildShiftUniqueName: function ()
+		{
+			var defaultName = BX.message('TIMEMAN_SHIFT_EDIT_DEFAULT_NAME');
+			var hasName = false;
+			var uniqueNameIndex = 1;
+			do
+			{
+				hasName = false;
+				for (var shIndex = 0; shIndex < this.shifts.length; shIndex++)
+				{
+					if (this.shifts[shIndex].nameInput.value === defaultName)
+					{
+						hasName = true;
+						uniqueNameIndex++;
+						defaultName = BX.message('TIMEMAN_SHIFT_EDIT_DEFAULT_NAME') + ' ' + uniqueNameIndex;
+					}
+				}
+			}
+			while (hasName);
+			return defaultName;
+		},
+		buildShiftUniqueIndex: function ()
+		{
+			var uniqueIndex = document.querySelectorAll('[data-role^="timeman-schedule-shift-form-container"]').length;
+			var hasUniqueIndex = true;
+			while (hasUniqueIndex)
+			{
+				hasUniqueIndex = false;
+				uniqueIndex++;
+				for (var shIndex = 0; shIndex < this.shifts.length; shIndex++)
+				{
+					if (parseInt(this.shifts[shIndex].uniqueIndex) === parseInt(uniqueIndex))
+					{
+						hasUniqueIndex = true;
+					}
+				}
+			}
+			return uniqueIndex;
+		},
 		onAddShiftBtnClick: function ()
 		{
 			var shift = document.querySelector('[data-role^="timeman-schedule-shift-form-container"]');
 			var cln = shift.cloneNode(true);
-			var shifts = document.querySelectorAll('[data-role^="timeman-schedule-shift-form-container"]');
-			var uniqueIndex = shifts.length;
+			var uniqueIndex = this.buildShiftUniqueIndex();
+
 			var prevShiftEnd = null;
 			var prevShiftStart = null;
-			if (this.isShiftedSchedule(this.typeSelector.value))
+			if (this.isShiftedSchedule(this.typeSelector.value) && this.shifts.length > 1)
 			{
-				prevShiftEnd = shifts[shifts.length - 1].querySelector('[data-role="timeman-shift-link-end-time"]').value;
-				prevShiftStart = shifts[shifts.length - 1].querySelector('[data-role="timeman-shift-link-start-time"]').value;
+				prevShiftEnd = this.shifts[this.shifts.length - 1].workTimeEndLink.textContent;
+				prevShiftStart = this.shifts[this.shifts.length - 1].workTimeStartLink.textContent;
 			}
 
 			cln.dataset.role = "timeman-schedule-shift-form-container-" + uniqueIndex;
@@ -423,8 +572,9 @@
 			this.createShift('[data-role="' + cln.dataset.role + '"]', {
 				uniqueIndex: uniqueIndex,
 				visible: true,
+				defaultName: this.buildShiftUniqueName(),
 				prevShiftEnd: prevShiftEnd,
-				prevShiftStart: prevShiftStart,
+				prevShiftStart: prevShiftStart
 			});
 		},
 		disableSaveBtn: function ()
@@ -471,6 +621,11 @@
 		},
 		processSave: function (actionName, formData)
 		{
+			if (actionName === 'timeman.schedule.add' && this.isShiftedSchedule(this.typeSelector.value))
+			{
+				var loader = new BX.Loader({size: 250, target: this.container});
+				loader.show();
+			}
 			BX.ajax.runAction(
 				actionName,
 				{
@@ -483,7 +638,6 @@
 				function (response)
 				{
 					this.onSuccess(response, this.lastActionName);
-					this.enableSaveBtn();
 				}.bind(this),
 				function (response)
 				{
@@ -502,14 +656,24 @@
 					}
 				);
 			}
-
-			if (this.isSlider)
+			if (actionName === 'timeman.schedule.add' &&
+				response.data.schedule.links && response.data.schedule.links.shiftPlan)
 			{
-				this.closeSlider();
+				var url = BX.util.add_url_param(response.data.schedule.links.shiftPlan, {
+					IFRAME: this.isSlider ? 'Y' : 'N'
+				});
+				document.location.href = url;
 			}
 			else
 			{
-				document.location.reload();
+				if (this.isSlider)
+				{
+					this.closeSlider();
+				}
+				else
+				{
+					document.location.reload();
+				}
 			}
 		},
 		getSlider: function ()
@@ -542,7 +706,7 @@
 			for (var i = 0; i < errorMessages.length; i++)
 			{
 				var erMsg = this.errorMsgTemplate.cloneNode(true);
-				erMsg.textContent = BX.util.htmlspecialchars(errorMessages[i].message);
+				erMsg.textContent = errorMessages[i].message;
 				this.errorBlock.appendChild(erMsg);
 				this.showElement(erMsg);
 			}

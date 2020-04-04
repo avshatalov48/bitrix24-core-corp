@@ -184,8 +184,8 @@ class CCrmOwnerType
 			case self::SuspendedDealName:
 				return self::SuspendedDeal;
 
-			case self::SuspendedContact:
-				return self::SuspendedContactName;
+			case self::SuspendedContactName:
+				return self::SuspendedContact;
 
 			case self::SuspendedCompanyName:
 				return self::SuspendedCompany;
@@ -1744,6 +1744,7 @@ class CCrmOwnerType
 				}
 			}
 
+			$userProfilePath = isset($options['USER_PROFILE_PATH']) ? $options['USER_PROFILE_PATH'] : '';
 			$userInfos = array();
 			while($user = $dbUsers->Fetch())
 			{
@@ -1778,6 +1779,14 @@ class CCrmOwnerType
 					}
 				}
 
+				if($userProfilePath !== '')
+				{
+					$userInfo['URL'] = CComponentEngine::MakePathFromTemplate(
+						$userProfilePath,
+						array('user_id' => $userID)
+					);
+				}
+
 				$userInfos[$userID] = &$userInfo;
 				unset($userInfo);
 			}
@@ -1795,6 +1804,11 @@ class CCrmOwnerType
 						if(isset($userInfo['PHOTO_URL']))
 						{
 							$info['RESPONSIBLE_PHOTO_URL'] = $userInfo['PHOTO_URL'];
+						}
+
+						if(isset($userInfo['URL']))
+						{
+							$info['RESPONSIBLE_URL'] = $userInfo['URL'];
 						}
 
 						if(isset($userInfo['EMAIL']))

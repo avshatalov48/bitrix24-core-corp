@@ -1,6 +1,9 @@
 <?php
 
+use Bitrix\Main\Application;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Json;
+use Bitrix\Voximplant\StatisticTable;
 
 if(!CModule::IncludeModule("voximplant"))
 	return false;
@@ -299,6 +302,44 @@ if(is_array($params))
 			CVoxImplantHistory::WriteToLog($result, 'PORTAL GET OUTGOING CONFIG');
 
 			echo Json::encode($result);
+		}
+		elseif($params["COMMAND"] == "UpdateAccountInfo")
+		{
+			$accountInfo = (object)$params["ACCOUNT_INFO"];
+
+			$account = new CVoxImplantAccount();
+			$account->UpdateAccountInfo($accountInfo);
+		}
+		elseif($params["COMMAND"] == "UploadRecord")
+		{
+			$callId = $params["CALL_ID"];
+			$fileField = $params["FILE_FIELD"];
+
+			$recordFile = Application::getInstance()->getContext()->getRequest()->getFile($fileField);
+			if(!is_array($recordFile))
+			{
+				$answer = [
+					"success" => false,
+					"errors" => [
+						"code" => "NO_FILE",
+						"message" => "No file in request"
+					]
+				];
+			}
+			else
+			{
+				$result = CVoxImplantHistory::AttachRecord($callId, $recordFile);
+				$answer = [
+					"success" => $result->isSuccess()
+				];
+
+				if(!$result->isSuccess())
+				{
+					$answer["errors"] = $result->getErrors();
+				}
+			}
+
+			echo Json::encode($answer);
 		}
 
 		// CONTROLLER HITS

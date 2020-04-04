@@ -4,7 +4,17 @@
  * @var array $arParams
  */
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
-CJSCore::Init(array('voximplant.common', 'voximplant_transcript', 'crm_activity_planner', 'player', 'ui.buttons'));
+
+use Bitrix\Main\Localization\Loc;
+
+CJSCore::Init([
+	'main.polyfill.promise',
+	'voximplant.common',
+	'voximplant_transcript',
+	'crm_activity_planner',
+	'player',
+	'ui.buttons'
+]);
 
 \Bitrix\Main\Page\Asset::getInstance()->addCss("/bitrix/components/bitrix/voximplant.statistic.detail/player/skins/audio/audio.css");
 
@@ -62,6 +72,12 @@ if($isBitrix24Template)
 		echo Bitrix\Voximplant\Ui\Helper::getStatisticStepper();
 	}
 }
+$totalContainer = '
+	<div class="main-grid-panel-content">
+		<span class="main-grid-panel-content-title">' . Loc::getMessage("TEL_STAT_TOTAL") . ':</span>&nbsp;
+		<a href="#" onclick="BX.VoximplantStatisticDetail.Instance.onShowTotalClick(event);">' . Loc::getMessage("TEL_STAT_SHOW_COUNT") . '</a>
+	</div>
+';
 ?><div id="tel-stat-grid-container"><?
 	$APPLICATION->IncludeComponent(
 		"bitrix:main.ui.grid",
@@ -87,7 +103,7 @@ if($isBitrix24Template)
 				array("NAME" => "100", "VALUE" => "100"),
 			),
 			'SHOW_ACTION_PANEL' => true,
-			"TOTAL_ROWS_COUNT" => $arResult["ROWS_COUNT"],
+			"TOTAL_ROWS_COUNT_HTML" => $totalContainer,
 			"AJAX_MODE" => "Y",
 			"AJAX_ID" => CAjax::GetComponentID('bitrix:voximplant.statistic.detail', '.default', ''),
 			"AJAX_OPTION_JUMP" => "N",

@@ -24,8 +24,8 @@ foreach($arResult['IMAGES'] as $id => $file)
 	$height = $file['THUMB']['height'];
 	$name = HtmlFilter::encode($file['NAME']);
 
-	?><div class="checklist-item-attachment-file" id="disk-attach-<?=$file['ID']?>" data-bx-id="<?=$file['ID']?>">
-		<div class="checklist-item-attachment-file-cover" style="width: <?=$width?>px; height: <?=$height?>px;">
+	?><div class="tasks-checklist-item-attachment-file" id="disk-attach-<?=$file['ID']?>" data-bx-id="<?=$file['ID']?>">
+		<div class="tasks-checklist-item-attachment-file-cover" style="width: <?=$width?>px; height: <?=$height?>px;">
 			<img id="disk-attach-image-<?=$file['ID']?>"
 				 title="<?=$name?>"
 				 src="<?=$file['THUMB']['src']?>"
@@ -43,13 +43,13 @@ foreach($arResult['IMAGES'] as $id => $file)
 					 data-bx-full-size="<?=$file['SIZE']?>"<?php
 				 }?>
 			/>
-			<a class="checklist-item-attachment-file-download" href="<?=HtmlFilter::encode($file['DOWNLOAD_URL'])?>"></a>
+			<a class="tasks-checklist-item-attachment-file-download" href="<?=HtmlFilter::encode($file['DOWNLOAD_URL'])?>"></a>
 		</div>
-		<div class="checklist-item-attachment-file-name">
-			<label class="checklist-item-attachment-file-name-text"><?=$name?></label>
+		<div class="tasks-checklist-item-attachment-file-name">
+			<label class="tasks-checklist-item-attachment-file-name-text"><?=$name?></label>
 		</div>
-		<div class="checklist-item-attachment-file-size">
-			<label class="checklist-item-attachment-file-size-text"><?=$file['SIZE']?></label>
+		<div class="tasks-checklist-item-attachment-file-size">
+			<label class="tasks-checklist-item-attachment-file-size-text"><?=$file['SIZE']?></label>
 		</div>
 	</div><?php
 }
@@ -58,20 +58,20 @@ foreach($arResult['FILES'] as $file)
 {
 	$name = HtmlFilter::encode($file['NAME']);
 
-	?><div class="checklist-item-attachment-file" id="disk-attach-<?=$file['ID']?>"
+	?><div class="tasks-checklist-item-attachment-file" id="disk-attach-<?=$file['ID']?>"
 		   data-bx-id="<?=$file['ID']?>" data-bx-extension="<?=HtmlFilter::encode($file['EXTENSION'])?>">
-		<div class="checklist-item-attachment-file-cover">
+		<div class="tasks-checklist-item-attachment-file-cover">
 			<div class="ui-icon ui-icon-file"
 				 id="disk-attach-file-<?=$file['ID']?>" <?=$file['ATTRIBUTES_FOR_VIEWER']?> title="<?=$name?>">
 				<i></i>
 			</div>
-			<a class="checklist-item-attachment-file-download" href="<?=HtmlFilter::encode($file['DOWNLOAD_URL'])?>"></a>
+			<a class="tasks-checklist-item-attachment-file-download" href="<?=HtmlFilter::encode($file['DOWNLOAD_URL'])?>"></a>
 		</div>
-		<div class="checklist-item-attachment-file-name">
-			<label class="checklist-item-attachment-file-name-text"><?=$name?></label>
+		<div class="tasks-checklist-item-attachment-file-name">
+			<label class="tasks-checklist-item-attachment-file-name-text"><?=$name?></label>
 		</div>
-		<div class="checklist-item-attachment-file-size">
-			<label class="checklist-item-attachment-file-size-text"><?=$file['SIZE']?></label>
+		<div class="tasks-checklist-item-attachment-file-size">
+			<label class="tasks-checklist-item-attachment-file-size-text"><?=$file['SIZE']?></label>
 		</div>
 	</div><?php
 }
@@ -80,24 +80,24 @@ foreach($arResult['DELETED_FILES'] as $file)
 {
 	$name = HtmlFilter::encode($file['NAME']);
 
-	?><div class="checklist-item-attachment-file" id="disk-attach-<?=$file['ID']?>"
+	?><div class="tasks-checklist-item-attachment-file" id="disk-attach-<?=$file['ID']?>"
 		   data-bx-id="<?=$file['ID']?>" data-bx-deleted="<?=true?>" data-bx-extension="<?=HtmlFilter::encode($file['EXTENSION'])?>">
-		<div class="checklist-item-attachment-file-cover" title="<?=$name?>"
+		<div class="tasks-checklist-item-attachment-file-cover" title="<?=$name?>"
 			 <?=($file['IMAGE']? 'style="background-image: url('.HtmlFilter::encode($file['PREVIEW_URL']).')"' : '')?>><?php
 			if (!$file['IMAGE'])
 			{
 				?><div class="ui-icon ui-icon-file" id="disk-attach-file-<?=$file['ID']?>"><i></i></div><?php
 			}
 		?></div>
-		<div class="checklist-item-attachment-file-name">
-			<label class="checklist-item-attachment-file-name-text"><?=$name?></label>
+		<div class="tasks-checklist-item-attachment-file-name">
+			<label class="tasks-checklist-item-attachment-file-name-text"><?=$name?></label>
 		</div>
-		<div class="checklist-item-attachment-file-size">
-			<label class="checklist-item-attachment-file-size-text"><?=$file['SIZE']?></label>
+		<div class="tasks-checklist-item-attachment-file-size">
+			<label class="tasks-checklist-item-attachment-file-size-text"><?=$file['SIZE']?></label>
 		</div><?php
 		if ($file['CAN_RESTORE'] && $file['TRASHCAN_URL'])
 		{
-			?><div class="checklist-item-attachment-file-revert">
+			?><div class="tasks-checklist-item-attachment-file-revert">
 				<a href="<?=HtmlFilter::encode($file['TRASHCAN_URL'])?>"><?=Loc::getMessage('DISK_UF_FILE_CHECKLIST_RESTORE')?></a>
 			</div><?php
 		}

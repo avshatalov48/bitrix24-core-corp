@@ -87,7 +87,8 @@
 
 		this.init();
 
-		window.top.addEventListener("keydown", this.onKeydown.bind(this));
+		var rootWindow = BX.Landing.PageObject.getRootWindow();
+		rootWindow.addEventListener("keydown", this.onKeydown.bind(this));
 
 		BX.Landing.PageObject.getInstance().view().then(function(frame) {
 			void (!!frame && frame.contentWindow.addEventListener("keydown", this.onKeydown.bind(this)));

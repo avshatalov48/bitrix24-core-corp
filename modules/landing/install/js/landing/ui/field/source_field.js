@@ -67,7 +67,7 @@
 
 		this.sortByDropdown = this.createSortByField({
 			items: this.value.sort.items,
-			value: this.value.sort.by
+			value: this.value.sort.value ? this.value.sort.value.by : undefined
 		});
 		this.sortOrderDropdown = this.createSortOrderField(
 			this.value.sort.value ? this.value.sort.value.order : undefined
@@ -83,9 +83,10 @@
 		this.setValue(this.value);
 
 		this.currentSource = this.value.source;
-		bind(top.document, "click", this.onDocumentClick.bind(this));
+		var rootWindow = BX.Landing.PageObject.getRootWindow();
+		bind(rootWindow.document, "click", this.onDocumentClick.bind(this));
 
-		top.BX.addCustomEvent(top, "SidePanel.Slider:onMessage", this.onSliderMessageReducer.bind(this));
+		rootWindow.BX.addCustomEvent(rootWindow, "SidePanel.Slider:onMessage", this.onSliderMessageReducer.bind(this));
 	};
 
 
@@ -185,16 +186,36 @@
 				},
 				children: [
 					create("span", {
-						props: {className: "landing-ui-field-source-placeholder-text"},
+						props: {
+							className: (function() {
+								if (!item.url)
+								{
+									return "landing-ui-field-source-placeholder-text landing-ui-field-source-placeholder-text-plain";
+								}
+
+								return "landing-ui-field-source-placeholder-text";
+							})()
+						},
 						html: escapeHtml(item.name)
 					}),
-					create("span", {
-						props: {className: "landing-ui-field-source-placeholder-remove"},
-						events: {click: this.onPlaceholderRemoveClick.bind(this, item)}
-					})
+					(function() {
+						if (item.url)
+						{
+							return create("span", {
+								props: {className: "landing-ui-field-source-placeholder-remove"},
+								events: {click: this.onPlaceholderRemoveClick.bind(this, item)}
+							});
+						}
+					}.bind(this))()
 				],
 				events: {
-					click: this.onPlaceholderClick.bind(this, item.url)
+					click: (function() {
+						if (item.url)
+						{
+							this.onPlaceholderClick.bind(this, item.url)
+						}
+						return function() {};
+					}.bind(this))()
 				}
 			});
 
@@ -203,11 +224,27 @@
 
 		openSourceFilterSlider: function(url)
 		{
+			if (!url)
+			{
+				this.onFilterSliderSave({
+					getData: function() {
+						return {filter: this.getValue().filter};
+					}.bind(this)
+				});
+
+				return;
+			}
+
+			var siteId = BX.Landing.Env.getInstance().getOptions().site_id;
+
 			BX.SidePanel.Instance.open(url, {
 				cacheable: false,
 				requestMethod: "post",
 				requestParams: {
-					filter: this.getValue().filter
+					filter: this.getValue().filter,
+					landingParams: {
+						siteId: siteId
+					}
 				}
 			});
 		},
@@ -309,6 +346,14 @@
 			if (Boolean(item))
 			{
 				this.currentSource = item.value;
+				if (BX.type.isArray(item.filter))
+				{
+					var defaultValue = this.getValue();
+					defaultValue.filter = BX.clone(item.filter);
+					this.setValue(defaultValue, true);
+				}
+
+				BX.Dom.clean(this.input);
 				this.openSourceFilterSlider(item.url);
 			}
 
@@ -556,7 +601,7 @@
 
 					this.sortByDropdown = this.createSortByField({
 						items: this.value.sort.items,
-						value: this.value.sort.by
+						value: this.value.sort.value ? this.value.sort.value.by : undefined
 					});
 					this.sortOrderDropdown = this.createSortOrderField(
 						this.value.sort.value ? this.value.sort.value.order : undefined

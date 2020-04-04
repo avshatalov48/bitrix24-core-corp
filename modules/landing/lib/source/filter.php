@@ -42,11 +42,7 @@ abstract class Filter
 
 		foreach ($sourceFilter as $row)
 		{
-			if (empty($row) || !is_array($row))
-			{
-				continue;
-			}
-			if (empty($row['key']) || empty($row['value']) || !is_array($row['value']))
+			if (!BlockFilter::checkPreparedRow($row))
 			{
 				continue;
 			}

@@ -18,7 +18,15 @@ $MESS["STRESS_SAVING_DONE"] = "Done";
 $MESS["STRESS_SAVING_RESULT"] = "Saving...";
 $MESS["STRESS_SHARE_ALERT_GOTIT"] = "Got it!";
 $MESS["STRESS_SHARE_ALERT_TITLE"] = "This feature is not yet available";
+$MESS["STRESS_SHARE_CANCEL"] = "Cancel";
 $MESS["STRESS_SHARE_COMING_SOON"] = "Soon you will be able to share your results!";
+$MESS["STRESS_SHARE_LIVE_STREAM"] = "Activity Stream";
+$MESS["STRESS_SHARE_POST_MESSAGE"] = "Here's my stress level
+";
+$MESS["STRESS_SHARE_POST_TITLE"] = "My stress level!";
+$MESS["STRESS_SHARING_FAILED"] = "Darn! Something went wrong.
+Could not share the results.";
+$MESS["STRESS_SHARING_RESULT"] = "Sharing the results...";
 $MESS["STRESS_UNKNOWN_1"] = "Working hard or hardly working?";
 $MESS["STRESS_UNKNOWN_2"] = "Don't worry, be happy";
 $MESS["STRESS_UNKNOWN_3"] = "Stress free life - done";

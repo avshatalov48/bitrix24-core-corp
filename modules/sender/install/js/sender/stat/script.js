@@ -609,13 +609,14 @@
 			}
 
 			this.clickList.forEach(function (link) {
-				link.URL = BX.util.htmlspecialcharsback(decodeURIComponent(link.URL));
+				try
+				{
+					link.URL = BX.util.htmlspecialcharsback(decodeURIComponent(link.URL));
+				}
+				catch (e)
+				{}
 				var nodes = nodeList.filter(function (node) {
-					var href = node.href;
-					if (this.linkParams)
-					{
-						href += (href.indexOf('?') >=0 ? '&' : '?') + this.linkParams;
-					}
+					var href = this.prepareUrl(node.href);
 					return href === link.URL;
 				}, this);
 				if (nodes.length === 0)
@@ -630,6 +631,22 @@
 				});
 			}, this);
 			heatMap.draw();
+		},
+		prepareUrl: function(href)
+		{
+			try
+			{
+				href =  BX.util.htmlspecialcharsback(decodeURIComponent(href));
+			}
+			catch (e)
+			{}
+
+			href = href.replace(/\+/g, ' ');
+			if (this.linkParams)
+			{
+				href += (href.indexOf('?') >=0 ? '&' : '?') + this.linkParams;
+			}
+			return href;
 		}
 	});
 

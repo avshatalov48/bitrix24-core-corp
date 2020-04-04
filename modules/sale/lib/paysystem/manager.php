@@ -35,6 +35,9 @@ final class Manager
 	const HANDLER_AVAILABLE_TRUE = true;
 	const HANDLER_AVAILABLE_FALSE = false;
 
+	const HANDLER_INDEPENDENT_TRUE = true;
+	const HANDLER_INDEPENDENT_FALSE = false;
+
 	const EVENT_ON_GET_HANDLER_DESC = 'OnSaleGetHandlerDescription';
 	const CACHE_ID = "BITRIX_SALE_INNER_PS_ID";
 	const TTL = 31536000;
@@ -164,16 +167,9 @@ final class Manager
 			foreach (self::getHandlerDirectories() as $type => $path)
 			{
 				$className = '';
-
 				if (File::isFileExists($documentRoot.$path.$name.'/handler.php'))
 				{
-					$className = static::getClassNameFromPath($item['ACTION_FILE']);
-					if (!class_exists($className))
-						require_once($documentRoot.$path.$name.'/handler.php');
-				}
-				else if (static::isRestHandler($name))
-				{
-					$className = '\Bitrix\Sale\PaySystem\RestHandler';
+					list($className) = self::includeHandler($item['ACTION_FILE']);
 				}
 
 				if (class_exists($className) && is_callable(array($className, 'isMyResponse')))
@@ -262,7 +258,7 @@ final class Manager
 
 		while ($item = $items->fetch())
 		{
-			$data = self::getHandlerDescription($item['ACTION_FILE']);
+			$data = self::getHandlerDescription($item['ACTION_FILE'], $item['PS_MODE']);
 			$data['NAME'] = $item['NAME'];
 			$data['GROUP'] = 'PAYSYSTEM';
 			$data['PROVIDERS'] = [
@@ -371,6 +367,7 @@ final class Manager
 						$data = array();
 						$psTitle = '';
 						$isAvailable = null;
+						$isIndependent = null;
 
 						if (strpos($item->getName(), '.description') !== false)
 						{
@@ -384,6 +381,11 @@ final class Manager
 								if (isset($data['IS_AVAILABLE']))
 								{
 									$isAvailable = $data['IS_AVAILABLE'];
+								}
+
+								if (isset($data['IS_INDEPENDENT']))
+								{
+									$isIndependent = $data['IS_INDEPENDENT'];
 								}
 							}
 							else
@@ -405,6 +407,13 @@ final class Manager
 							{
 								if ($isAvailable !== null
 									&& $isAvailable === static::HANDLER_AVAILABLE_FALSE
+								)
+								{
+									continue(2);
+								}
+
+								if ($isIndependent !== null
+									&& $isIndependent === static::HANDLER_INDEPENDENT_FALSE
 								)
 								{
 									continue(2);
@@ -454,11 +463,14 @@ final class Manager
 
 	/**
 	 * @param $handler
+	 * @param null $psMode
 	 * @return array
+	 * @throws \Bitrix\Main\ArgumentNullException
+	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
 	 */
-	public static function getHandlerDescription($handler)
+	public static function getHandlerDescription($handler, $psMode = null)
 	{
-		$service = new Service(array('ACTION_FILE' => $handler));
+		$service = new Service(array('ACTION_FILE' => $handler, 'PS_MODE' => $psMode));
 		$data = $service->getHandlerDescription();
 
 		$eventParams = array('handler' => $handler);
@@ -596,6 +608,8 @@ final class Manager
 	 * @param $folder
 	 * @param int $paySystemId
 	 * @return array|mixed
+	 * @throws \Bitrix\Main\ArgumentNullException
+	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
 	 */
 	public static function getTariff($folder, $paySystemId = 0)
 	{
@@ -607,9 +621,7 @@ final class Manager
 		{
 			if (File::isFileExists($documentRoot.$path.'/handler.php'))
 			{
-				require_once $documentRoot.$path.'/handler.php';
-
-				$className = self::getClassNameFromPath($folder);
+				list($className) = self::includeHandler($path);
 				if (class_exists($className))
 				{
 					$interfaces = class_implements($className);
@@ -725,22 +737,40 @@ final class Manager
 
 	/**
 	 * @param array $data
-	 * @return null|EntityCollection|Payment
+	 * @return Payment|null
+	 * @throws ArgumentException
+	 * @throws \Bitrix\Main\ArgumentNullException
+	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
+	 * @throws \Bitrix\Main\NotImplementedException
+	 * @throws \Bitrix\Main\NotSupportedException
+	 * @throws \Bitrix\Main\ObjectException
+	 * @throws \Bitrix\Main\ObjectNotFoundException
+	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function getPaymentObjectByData(array $data)
 	{
 		$context = Application::getInstance()->getContext();
 
+		$registry = Registry::getInstance(Registry::REGISTRY_TYPE_ORDER);
+
+		/** @var Order $orderClass */
+		$orderClass = $registry->getOrderClassName();
+
 		/** @var Order $order */
-		$order = Order::create($context->getSite());
+		$order = $orderClass::create($context->getSite());
 		$order->setPersonTypeId($data['PERSON_TYPE_ID']);
 
-		$basket = Basket::create($context->getSite());
+		/** @var Basket $basketClass */
+		$basketClass = $registry->getBasketClassName();
+
+		$basket = $basketClass::create($context->getSite());
 		$order->setBasket($basket);
 
 		$collection = $order->getPaymentCollection();
 		if ($collection)
+		{
 			return $collection->createItem();
+		}
 
 		return null;
 	}
@@ -800,5 +830,58 @@ final class Manager
 	{
 		$dbRes = PaySystemRestHandlersTable::getList(array('filter' => array('CODE' => $handler)));
 		return (bool)$dbRes->fetch();
+	}
+
+	/**
+	 * @param $actionFile
+	 * @return array
+	 * @throws \Bitrix\Main\ArgumentNullException
+	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
+	 */
+	public static function includeHandler($actionFile)
+	{
+		$className = '';
+		$handlerType = '';
+
+		$name = self::getFolderFromClassName($actionFile);
+
+		foreach (self::getHandlerDirectories() as $type => $path)
+		{
+			if (File::isFileExists($_SERVER['DOCUMENT_ROOT'].$path.$name.'/handler.php'))
+			{
+				$className = self::getClassNameFromPath($actionFile);
+				if (!class_exists($className))
+					require_once($_SERVER['DOCUMENT_ROOT'].$path.$name.'/handler.php');
+
+				if (class_exists($className))
+				{
+					$handlerType = $type;
+					break;
+				}
+
+				$className = '';
+			}
+		}
+
+		if ($className === '')
+		{
+			if (self::isRestHandler($actionFile))
+			{
+				$className = '\Bitrix\Sale\PaySystem\RestHandler';
+				if (!class_exists($actionFile))
+				{
+					class_alias($className, $actionFile);
+				}
+			}
+			else
+			{
+				$className = '\Bitrix\Sale\PaySystem\CompatibilityHandler';
+			}
+		}
+
+		return [
+			$className,
+			$handlerType,
+		];
 	}
 }

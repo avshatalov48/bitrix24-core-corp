@@ -10,17 +10,22 @@ BX.Voximplant.Start = {
 	settingsGrid: null,
 	partnersGrid: null,
 	applicationUrlTemplate: '',
+	tariffsUrl: '',
 	isRestOnly: null,
+	balanceMenu: null,
 
 	balanceElements: [], // Element[]
+	lines: [],
 
 	init: function(config)
 	{
 		this.mainMenuItems = config.mainMenuItems.map(this.parseMenuItem, this);
 		this.settingsMenuItems = config.settingsMenuItems.map(this.parseMenuItem, this);
 		this.partnersMenuItems = config.partnersMenuItems.map(this.parseMenuItem, this);
+		this.lines = config.lines;
 
 		this.applicationUrlTemplate = config.applicationUrlTemplate || '';
+		this.tariffsUrl = config.tariffsUrl || '';
 		this.isRestOnly = config.isRestOnly === 'Y';
 
 		if(this.mainMenuItems.length > 0)
@@ -62,7 +67,8 @@ BX.Voximplant.Start = {
 			this.partnersGrid.draw();
 		}
 
-		BX.bind(BX('my-numbers'), 'click', this.onMyNumbersButtonClick.bind(this));
+		this.drawLines();
+
 		BX.bind(BX('balance-type'), 'change', function(e)
 		{
 			this.onBalanceTypeChange(e.currentTarget.value);
@@ -74,9 +80,130 @@ BX.Voximplant.Start = {
 		}
 
 		BX.bind(BX('balance-top-up'), 'click', this.onTopUpButtonClick.bind(this));
+		BX.bind(BX('balance-menu'), 'click', this.onBalanceMenuButtonClick.bind(this));
+
+		if(BX.PULL)
+		{
+			BX.PULL.subscribe({
+				moduleId: 'voximplant',
+				command: 'balanceUpdate',
+				callback: this.onBalanceUpdate.bind(this)
+			});
+			BX.PULL.extendWatch("vi_balance_change");
+		}
 
 		// workaround to prevent page title update after reloading grid in some side panel
 		BX.ajax.UpdatePageData = (function() {});
+	},
+
+	drawLines: function()
+	{
+		var n =document.getElementById("my-numbers-list");
+		if(n)
+		{
+			BX.cleanNode(n);
+			n.appendChild(this.renderLines())
+		}
+	},
+
+	renderLines: function()
+	{
+		var result = BX.createFragment();
+
+		result.appendChild(BX.create("div", {
+			props: {className: "voximplant-start-head-box-title"},
+			children: [
+				BX.create("div", {
+					props: {className: "voximplant-title-dark"},
+					text: BX.message("VOX_START_MY_NUMBERS") + (this.lines.length > 0 ? " (" + this.lines.length + ")" : ""),
+				}),
+				(this.lines.length > 0 ?
+					BX.create("div", {
+						props: {className: "ui-btn ui-btn-sm ui-btn-light-border"},
+						text: BX.message("VOX_START_SET_UP"),
+						events: {
+							click: this.onMyNumbersButtonClick.bind(this)
+						}
+					})
+					: null
+				)
+			]
+		}));
+
+		var linesContent = BX.create("div", {
+			props: {className: "voximplant-start-head-box-content"}
+		});
+
+		result.appendChild(linesContent);
+
+		if(this.lines.length === 0)
+		{
+			linesContent.appendChild(BX.create("div", {
+				props: {className: "voximplant-start-head-box-info"},
+				text: BX.message("VOX_START_RENT_OR_LINK_NUMBER")
+			}));
+		}
+		else
+		{
+			var hasRentedNumbers = false;
+			var itemClass;
+			for(var i = 0; i < Math.min(this.lines.length, 3); i++)
+			{
+				var item = this.lines[i];
+				switch (item["TYPE"])
+				{
+					case "RENT":
+						itemClass = "voximplant-start-payment voximplant-start-payment-rented-number";
+						hasRentedNumbers = true;
+						break;
+					case "LINK":
+						itemClass = "voximplant-start-payment voximplant-start-payment-anchored-number";
+						break;
+					case "SIP":
+						itemClass = "voximplant-start-payment voximplant-start-payment-sip-connector";
+						break;
+					default:
+						itemClass = "voximplant-start-payment";
+				}
+				var itemNode = BX.create("div", {
+					props: {className: itemClass},
+					children: [
+						BX.create("div", {
+							props: {className: "voximplant-start-payment-icon"}
+						}),
+						BX.create("div", {
+							props: {className: "voximplant-start-text-dark-bold"},
+							text: item["NAME"]
+						}),
+						BX.create("div", {
+							props: {className: "voximplant-start-division"}
+						}),
+						BX.create("div", {
+							props: {className: "voximplant-start-text-darkgrey"},
+							text: item["DESCRIPTION"]
+						}),
+					]
+				});
+				linesContent.appendChild(itemNode);
+			}
+
+			if(hasRentedNumbers)
+			{
+				linesContent.appendChild(
+					BX.create("div", {
+						props: {className: "voximplant-start-payment-btn-box"},
+						children: [
+							BX.create("div", {
+								props: {className: "voximplant-start-text-darkgrey"},
+								text: BX.message("VOX_START_AUTO_PROLONG")
+							})
+						]
+					})
+				);
+			}
+		}
+
+		return result;
 	},
 
 	parseMenuItem: function(menuItem)
@@ -110,7 +237,7 @@ BX.Voximplant.Start = {
 			cacheable: false,
 			allowChangeHistory: false,
 			events: {
-				onCloseComplete: this.reload
+				onCloseComplete: this.reload.bind(this)
 			}
 		});
 	},
@@ -121,7 +248,7 @@ BX.Voximplant.Start = {
 		BX.SidePanel.Instance.open(url, {
 			allowChangeHistory: false,
 			events: {
-				onCloseComplete: this.reload
+				onCloseComplete: this.reload.bind(this)
 			}
 		});
 	},
@@ -155,14 +282,44 @@ BX.Voximplant.Start = {
 			cacheable: false,
 			allowChangeHistory: false,
 			events: {
-				onCloseComplete: this.reload
+				onCloseComplete: this.reload.bind(this)
 			}
 		});
 	},
 
 	onTopUpButtonClick: function()
 	{
-		BX.Voximplant.openBilling();
+		var topUpButton = document.getElementById('balance-top-up');
+
+		topUpButton.parentElement.classList.add("ui-btn-wait");
+		BX.Voximplant.openBilling().then(function()
+		{
+			topUpButton.parentElement.classList.remove("ui-btn-wait");
+		});
+	},
+
+	onBalanceMenuButtonClick: function()
+	{
+		if(!this.balanceMenu)
+		{
+			this.balanceMenu = new BX.PopupMenuWindow(
+				'telephony-balance-menu',
+				BX('balance-menu'),
+				[
+					{
+						text: BX.message('VOX_START_TARIFFS'),
+						onclick: this.onTariffsButtonClick.bind(this)
+					}
+				]
+			);
+		}
+		this.balanceMenu.toggle();
+	},
+
+	onTariffsButtonClick: function()
+	{
+		this.balanceMenu.close();
+		window.open(this.tariffsUrl);
 	},
 
 	onBalanceTypeChange: function(balanceType)
@@ -182,6 +339,22 @@ BX.Voximplant.Start = {
 		});
 	},
 
+	onBalanceUpdate: function(params)
+	{
+		if(!BX.Currency)
+		{
+			return;
+		}
+		var balanceNode = document.getElementById("voximplant-balance");
+		if(!balanceNode)
+		{
+			return;
+		}
+
+		balanceNode.innerText = params.balanceFormatted;
+		balanceNode.title = params.balanceFormatted;
+	},
+
 	onRentButtonClick: function(packetSize)
 	{
 		packetSize = parseInt(packetSize) || 1;
@@ -196,7 +369,7 @@ BX.Voximplant.Start = {
 			cacheable: false,
 			allowChangeHistory: false,
 			events: {
-				onCloseComplete: this.reload
+				onCloseComplete: this.reload.bind(this)
 			}
 		});
 	},
@@ -204,7 +377,7 @@ BX.Voximplant.Start = {
 	onAddCallerIdButtonClick: function(e)
 	{
 		var a = new BX.Voximplant.CallerIdSlider({
-			onClose: this.reload
+			onClose: this.reload.bind(this)
 		});
 		a.show();
 	},
@@ -400,7 +573,30 @@ BX.Voximplant.Start = {
 
 	reload: function()
 	{
-		document.location.reload();
+		BX.ajax.runComponentAction("bitrix:voximplant.start", "getComponentResult").then(function(response)
+		{
+			var data = response.data;
+
+			this.mainMenuItems = data.mainMenuItems.map(this.parseMenuItem, this);
+			this.settingsMenuItems = data.settingsMenuItems.map(this.parseMenuItem, this);
+			this.partnersMenuItems = data.partnersMenuItems.map(this.parseMenuItem, this);
+			this.lines = data.lines;
+
+			this.drawLines();
+
+			if(this.mainGrid)
+			{
+				this.mainGrid.redraw(this.mainMenuItems);
+			}
+			if(this.settingsGrid)
+			{
+				this.settingsGrid.redraw(this.settingsMenuItems);
+			}
+			if(this.partnersGrid)
+			{
+				this.partnersGrid.redraw(this.partnersMenuItems);
+			}
+		}.bind(this));
 	}
 };
 
@@ -485,6 +681,7 @@ BX.Voximplant.Start.TileGridItem2 = function(options)
 	this.counter = options.counter;
 	this.count = options.count;
 	this.integration = options.integration;
+	this.restItem = options.restItem;
 	this.defaultImage = 'data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2021%2022%22%3E%3Cpath%20fill%3D%22%23FFF%22%20d%3D%22M10.415.008c-.022.006-.044.02-.067.03l-10%203.959c-.25.117-.34.373-.348.673v12.743c.003.285.152.556.349.632l9.902%203.916a.651.651%200%200%200%20.416.01l9.991-3.947c.197-.08.344-.356.342-.642V4.752c.005-.388-.091-.616-.35-.735L10.6.04c-.068-.035-.122-.05-.185-.031zm.059%201.357l8.299%203.294-8.299%203.274L2.168%204.65l8.306-3.284z%22/%3E%3C/svg%3E';
 };
 
@@ -567,6 +764,38 @@ BX.Voximplant.Start.TileGridItem2.prototype =
 		})
 	},
 
+	afterRender: function()
+	{
+		if (this.description)
+		{
+			this.clipTitle()
+		}
+	},
+
+	clipTitle: function()
+	{
+		if(!this.layout.description)
+		{
+			return;
+		}
+		BX.cleanNode(this.layout.description);
+		this.layout.descriptionWrapper = BX.create("span", {
+			text: this.description
+		});
+
+		this.layout.description.appendChild(this.layout.descriptionWrapper);
+		
+		var nodeHeight = this.layout.description.offsetHeight;
+		var text = this.description;
+
+		var a = 0;
+		while (nodeHeight <= this.layout.descriptionWrapper.offsetHeight && text.length > a)
+		{
+			a = a + 2;
+			this.layout.descriptionWrapper.innerText = text.slice(0, -a) + '...';
+		}
+	},
+
 	getContent: function ()
 	{
 		if(this.counter)
@@ -581,12 +810,17 @@ BX.Voximplant.Start.TileGridItem2.prototype =
 
 		return BX.create('div', {
 			props: {
-				className: this.image ? 'voximplant-marketplace-tile-item' : 'voximplant-marketplace-tile-item voximplant-marketplace-default-icon'
+				className: !this.image || this.restItem
+					? 'voximplant-marketplace-tile-item' +
+					' voximplant-marketplace-default-icon'
+					: 'voximplant-marketplace-tile-item'
 			},
 			children: [
 				BX.create('div', {
 					props: {
-						className: BX.type.isNotEmptyString(this.badge) ? 'voximplant-marketplace-tile-badge voximplant-marketplace-tile-badge-show' : 'voximplant-marketplace-tile-badge'
+						className: BX.type.isNotEmptyString(this.badge)
+							? 'voximplant-marketplace-tile-badge voximplant-marketplace-tile-badge-show'
+							: 'voximplant-marketplace-tile-badge'
 					},
 					text: this.badge,
 				}),
@@ -612,13 +846,17 @@ BX.Voximplant.Start.TileGridItem2.prototype =
 					children: [
 						BX.create('div', {
 							props: {
-								className: this.title ? 'voximplant-marketplace-tile-name' : 'voximplant-marketplace-tile-name voximplant-hide'
+								className: this.title
+									? 'voximplant-marketplace-tile-name'
+									: 'voximplant-marketplace-tile-name voximplant-hide'
 							},
 							text: this.title ? this.title : ''
 						}),
-						BX.create('div', {
+						this.layout.description = BX.create('div', {
 							props: {
-								className: this.description ? 'voximplant-marketplace-tile-desc' : 'voximplant-marketplace-tile-desc voximplant-hide'
+								className: this.description
+									? 'voximplant-marketplace-tile-desc'
+									: 'voximplant-marketplace-tile-desc voximplant-hide'
 							},
 							text: this.description ? this.description : ''
 						})

@@ -1,5 +1,7 @@
 <?
 $MESS["CRM_INVOICE_WGT_DEAL_PAYMENT_CONTROL"] = "Won deal payment control";
+$MESS["CRM_INVOICE_WGT_DEMO_CONTENT"] = "If you have no invoices, <a href=\"#URL#\" class=\"#CLASS_NAME#\">create one</a> right now!";
+$MESS["CRM_INVOICE_WGT_DEMO_TITLE"] = "This is a demo report. Hide it to access analytics for your invoices.";
 $MESS["CRM_INVOICE_WGT_FUNNEL"] = "Invoice funnel";
 $MESS["CRM_INVOICE_WGT_INVOCE_MANAGER"] = "Employees' invoice handling efficiency";
 $MESS["CRM_INVOICE_WGT_INVOCE_PAYMENT"] = "Debts and payments";

@@ -1,3 +1,1 @@
-(()=>{
-	let stressObject = new StressMeasure(stress, BX.componentParameters.get("params"));
-})();
+(()=> new StressMeasure(this.stress, BX.componentParameters.get("params")))();

@@ -362,8 +362,8 @@ if($bVarsFromForm)
 	$data["MULTIPLE"] = $_POST["MULTIPLE"];
 	$data["CODE"] = $_POST["CODE"];
 	$data["TYPE"] = $_POST["TYPE"];
-	if (isset($_POST["ROW_COUNT"]))
-		$data["ROW_COUNT"] = $_POST["ROW_COUNT"];
+	$data["ROW_COUNT"] = (isset($_POST["ROW_COUNT"]) ? $_POST["ROW_COUNT"] : 1);
+	$data["COL_COUNT"] = (isset($_POST["COL_COUNT"]) ? $_POST["COL_COUNT"] : 30);
 	if (isset($_POST["COL_COUNT"]))
 		$data["COL_COUNT"] = $_POST["COL_COUNT"];
 

@@ -84,9 +84,29 @@
 
 	function onKeydown(event)
 	{
-		if (event.which === 13 &&
-			event.target.nodeName !== "LI" &&
-			event.target.nodeName !== "UL")
+		if (
+			event.which === 9
+			&& event.target.nodeName !== "LI"
+		)
+		{
+			event.preventDefault();
+
+			if (!event.shiftKey)
+			{
+				document.execCommand('indent');
+			}
+			else
+			{
+				document.execCommand('outdent');
+			}
+		}
+
+		if (
+			event.which === 13
+			&& event.target.nodeName !== "LI"
+			&& event.target.nodeName !== "UL"
+			&& event.metaKey === true
+		)
 		{
 			event.preventDefault();
 
@@ -220,6 +240,16 @@
 			onClick: proxy(editor.adjustButtonsState, editor)
 		}));
 
+		var rights = BX.Landing.Env.getInstance().getOptions().rights;
+		if (rights.includes('edit'))
+		{
+			editor.addButton(new BX.Landing.UI.Button.CreatePage("createPage", {
+				html: "<span class=\"landing-ui-icon-editor-new-page\"></span>",
+				attrs: {title: BX.Landing.Loc.getMessage("LANDING_TITLE_OF_EDITOR_ACTION_CREATE_PAGE")},
+				onClick: proxy(editor.adjustButtonsState, editor)
+			}));
+		}
+
 		editor.addButton(new BX.Landing.UI.Button.EditorAction("unlink", {
 			html: "<span class=\"landing-ui-icon-editor-unlink\"></span>",
 			attrs: {title: BX.Landing.Loc.getMessage("LANDING_TITLE_OF_EDITOR_ACTION_UNLINK")},
@@ -230,6 +260,18 @@
 		// 	html: BX.Landing.Loc.getMessage("EDITOR_ACTION_FONT"),
 		// 	attrs: {title: BX.Landing.Loc.getMessage("LANDING_TITLE_OF_EDITOR_ACTION_FONT")}
 		// }));
+
+		editor.addButton(new BX.Landing.UI.Button.EditorAction("insertUnorderedList", {
+			html: "<span class=\"fa fa-list-ul\"></span>",
+			attrs: {title: BX.Landing.Loc.getMessage("LANDING_TITLE_OF_EDITOR_ACTION_UL")},
+			onClick: proxy(editor.adjustButtonsState, editor)
+		}));
+
+		editor.addButton(new BX.Landing.UI.Button.EditorAction("insertOrderedList", {
+			html: "<span class=\"fa fa-list-ol\"></span>",
+			attrs: {title: BX.Landing.Loc.getMessage("LANDING_TITLE_OF_EDITOR_ACTION_OL")},
+			onClick: proxy(editor.adjustButtonsState, editor)
+		}));
 
 		editor.addButton(new BX.Landing.UI.Button.EditorAction("removeFormat", {
 			html: "<span class=\"landing-ui-icon-editor-eraser\"></span>",
@@ -257,7 +299,39 @@
 		var nodeRect = node.getBoundingClientRect();
 		var left = nodeRect.left + (nodeRect.width / 2) - (editor.rect.width / 2);
 		var top = (nodeRect.top - editor.rect.height - 4);
-		top = (top > 0 ? top : nodeRect.bottom + 4) + window.pageYOffset;
+		var position = 'absolute';
+
+		var bodyContent = node.closest('.landing-ui-panel-content-body-content');
+		if (bodyContent)
+		{
+			top = bodyContent.getBoundingClientRect().top + 5;
+			position = 'fixed';
+		}
+		else
+		{
+			if (
+				top <= 5
+				&& (
+					nodeRect.bottom > window.innerHeight
+					|| nodeRect.height > (window.innerHeight / 1.5)
+				)
+			)
+			{
+				top = 5;
+				position = 'fixed';
+			}
+			else
+			{
+				if (top > 5)
+				{
+					top += window.pageYOffset;
+				}
+				else
+				{
+					top = nodeRect.bottom + 4 + window.pageYOffset;
+				}
+			}
+		}
 
 		if ((left + editor.rect.width) > (window.innerWidth - 20))
 		{
@@ -269,7 +343,7 @@
 		if (lastPosition.top !== top || lastPosition.left !== left || force)
 		{
 			BX.DOM.write(function() {
-				editor.layout.style.position = "absolute";
+				editor.layout.style.position = position;
 				editor.layout.style.top = top + "px";
 				editor.layout.style.left = left + "px";
 			});

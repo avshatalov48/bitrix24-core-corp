@@ -77,3 +77,9 @@ export type Template = {
 	TYPE: "PAGE" | "STORE",
 	XML_ID: string,
 };
+
+export type CreatePageOptions = {
+	title: string,
+	siteId?: number,
+	code?: string,
+};

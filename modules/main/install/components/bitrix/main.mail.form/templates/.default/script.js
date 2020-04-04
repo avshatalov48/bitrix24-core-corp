@@ -803,81 +803,91 @@
 			}
 		};
 
-		var selectorParams = {
-			name: field.selector,
-			searchInput: input,
-			bindMainPopup: {
-				node: wrapper,
-				offsetTop: '5px',
-				offsetLeft: '15px'
-			},
-			bindSearchPopup : {
-				node: wrapper,
-				offsetTop: '5px',
-				offsetLeft: '15px'
-			},
-			callback: {
-				select: select,
-				unSelect: unselect,
-				openDialog: BX.delegate(BX.SocNetLogDestination.BXfpOpenDialogCallback, {
-					inputBoxName: input.parentNode,
-					inputName: input,
-					tagInputName: link
-				}),
-				closeDialog: function()
-				{
-					BX.onCustomEvent(field.form, 'MailForm:field:rcptSelectorClose', [field.form, field]);
-					BX.SocNetLogDestination.BXfpCloseDialogCallback.apply({
+		if (field.form.options.version < 2)
+		{
+			var selectorParams = {
+				name: field.selector,
+				searchInput: input,
+				bindMainPopup: {
+					node: wrapper,
+					offsetTop: '5px',
+					offsetLeft: '15px'
+				},
+				bindSearchPopup : {
+					node: wrapper,
+					offsetTop: '5px',
+					offsetLeft: '15px'
+				},
+				callback: {
+					select: select,
+					unSelect: unselect,
+					openDialog: BX.delegate(BX.SocNetLogDestination.BXfpOpenDialogCallback, {
 						inputBoxName: input.parentNode,
 						inputName: input,
 						tagInputName: link
-					});
+					}),
+					closeDialog: function()
+					{
+						BX.onCustomEvent(field.form, 'MailForm:field:rcptSelectorClose', [field.form, field]);
+						BX.SocNetLogDestination.BXfpCloseDialogCallback.apply({
+							inputBoxName: input.parentNode,
+							inputName: input,
+							tagInputName: link
+						});
+					},
+					openSearch: BX.delegate(BX.SocNetLogDestination.BXfpOpenDialogCallback, {
+						inputBoxName: input.parentNode,
+						inputName: input,
+						tagInputName: link
+					})
 				},
-				openSearch: BX.delegate(BX.SocNetLogDestination.BXfpOpenDialogCallback, {
-					inputBoxName: input.parentNode,
-					inputName: input,
-					tagInputName: link
-				})
-			},
-			items: {},
-			itemsLast: {},
-			itemsSelected: {},
-			destSort: {}
-		};
+				items: {},
+				itemsLast: {},
+				itemsSelected: {},
+				destSort: {}
+			};
 
-		if (field.params.selector)
-		{
-			for (var i in field.params.selector)
-				selectorParams[i] = field.params.selector[i];
+			if (field.params.selector)
+			{
+				for (var i in field.params.selector)
+					selectorParams[i] = field.params.selector[i];
+			}
+
+			BX.SocNetLogDestination.init(selectorParams);
+
+			BX.bind(input, 'keydown', BX.delegate(BX.SocNetLogDestination.BXfpSearchBefore, {
+				formName: field.selector,
+				inputName: input
+			}));
+			BX.bind(input, 'keyup', BX.delegate(BX.SocNetLogDestination.BXfpSearch, {
+				formName: field.selector,
+				inputName: input,
+				tagInputName: link
+			}));
+			BX.bind(input, 'paste', BX.defer(BX.SocNetLogDestination.BXfpSearch, {
+				formName: field.selector,
+				inputName: input,
+				tagInputName: link,
+				onPasteEvent: true
+			}));
+			BX.bind(input, 'blur', BX.delegate(BX.SocNetLogDestination.BXfpBlurInput, {
+				inputBoxName: input.parentNode,
+				tagInputName: link
+			}));
+
+			BX.bind(wrapper, 'click', function(e)
+			{
+				BX.SocNetLogDestination.openDialog(field.selector);
+				BX.PreventDefault(e);
+			});
 		}
 
-		BX.SocNetLogDestination.init(selectorParams);
 
-		BX.bind(input, 'keydown', BX.delegate(BX.SocNetLogDestination.BXfpSearchBefore, {
-			formName: field.selector,
-			inputName: input
-		}));
-		BX.bind(input, 'keyup', BX.delegate(BX.SocNetLogDestination.BXfpSearch, {
-			formName: field.selector,
-			inputName: input,
-			tagInputName: link
-		}));
-		BX.bind(input, 'paste', BX.defer(BX.SocNetLogDestination.BXfpSearch, {
-			formName: field.selector,
-			inputName: input,
-			tagInputName: link,
-			onPasteEvent: true
-		}));
-		BX.bind(input, 'blur', BX.delegate(BX.SocNetLogDestination.BXfpBlurInput, {
-			inputBoxName: input.parentNode,
-			tagInputName: link
-		}));
 
-		BX.bind(wrapper, 'click', function(e)
-		{
-			BX.SocNetLogDestination.openDialog(field.selector);
-			BX.PreventDefault(e);
-		});
+
+
+
+
 
 		BX.bind(more, 'click', function(e)
 		{
@@ -917,9 +927,12 @@
 			editor, 'OnIframeClick',
 			function()
 			{
-				BX.SocNetLogDestination.abortSearchRequest();
-				BX.SocNetLogDestination.closeSearch();
-				BX.SocNetLogDestination.closeDialog();
+				if (field.form.options.version < 2)
+				{
+					BX.SocNetLogDestination.abortSearchRequest();
+					BX.SocNetLogDestination.closeSearch();
+					BX.SocNetLogDestination.closeDialog();
+				}
 
 				BX.onCustomEvent(field.form, 'MailForm::editor:click', []);
 			}
@@ -1106,20 +1119,31 @@
 
 	BXMainMailFormField.__types['rcpt'].setValue = function(field, value)
 	{
-		var selected = BX.SocNetLogDestination.getSelected(field.selector);
-		for (var id in selected)
-			BX.SocNetLogDestination.deleteItem(id, selected[id], field.selector);
+		if (field.form.options.version < 2)
+		{
+			var selected = BX.SocNetLogDestination.getSelected(field.selector);
+			for (var id in selected)
+				BX.SocNetLogDestination.deleteItem(id, selected[id], field.selector);
+		}
 
 		if (value && BX.type.isPlainObject(value))
 		{
-			for (var id in value)
+			if (field.form.options.version < 2)
 			{
-				if (value.hasOwnProperty(id))
+				for (var id in value)
 				{
-					BX.SocNetLogDestination.obItemsSelected[field.selector][id] = value[id];
-					BX.SocNetLogDestination.runSelectCallback(id, value[id], field.selector, false, 'init');
+					if (value.hasOwnProperty(id))
+					{
+						BX.SocNetLogDestination.obItemsSelected[field.selector][id] = value[id];
+						BX.SocNetLogDestination.runSelectCallback(id, value[id], field.selector, false, 'init');
+					}
 				}
 			}
+
+			BX.onCustomEvent("BX.Main.SelectorV2:reInitDialog", [ {
+				selectorId: field.params.id,
+				selectedItems: BX.clone(value)
+			} ]);
 		}
 	};
 

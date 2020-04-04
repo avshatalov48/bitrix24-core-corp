@@ -351,22 +351,32 @@ class ShipmentItemStore
 			return $result;
 		}
 
-		$fields = $this->fields->getChangedValues();
-
 		$this->callEventOnBeforeItemStoreEntitySaved();
 
 		$id = $this->getId();
 
 		if ($id > 0)
 		{
-			$r = $this->updateInternal($id, $fields);
+			$r = $this->updateInternal($id, $this->getFields()->getChangedValues());
 		}
 		else
 		{
-			$fields['DATE_CREATE'] = new Main\Type\DateTime();
-			$this->setFieldNoDemand('DATE_CREATE', $fields['DATE_CREATE']);
+			/** @var ShipmentItemStoreCollection $itemStoreCollection */
+			$itemStoreCollection = $this->getCollection();
 
-			$r = $this->addInternal($fields);
+			if (!$this->getField("ORDER_DELIVERY_BASKET_ID"))
+			{
+				$this->setFieldNoDemand('ORDER_DELIVERY_BASKET_ID', $itemStoreCollection->getShipmentItem()->getId());
+			}
+
+			if (!$this->getField("BASKET_ID"))
+			{
+				$this->setFieldNoDemand('BASKET_ID', $itemStoreCollection->getShipmentItem()->getBasketItem()->getId());
+			}
+
+			$this->setFieldNoDemand('DATE_CREATE', new Main\Type\DateTime());
+
+			$r = $this->addInternal($this->getFields()->getValues());
 			if ($r->isSuccess())
 			{
 				$id = $r->getId();

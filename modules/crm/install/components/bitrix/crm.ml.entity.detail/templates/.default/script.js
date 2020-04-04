@@ -170,7 +170,7 @@
 			else
 			{
 				var totalRecords = this.model["recordsFailed"] + this.model["recordsSuccess"];
-				var ratio = (this.currentTraining["RECORDS_SUCCESS"] + this.currentTraining["RECORDS_FAILED"]) / totalRecords;
+				var ratio = (parseInt(this.currentTraining["RECORDS_SUCCESS"], 10) + parseInt(this.currentTraining["RECORDS_FAILED"], 10)) / totalRecords;
 				return isNaN(ratio) ? 0 : Math.floor(ratio * 66);
 			}
 		},

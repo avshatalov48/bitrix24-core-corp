@@ -16,7 +16,7 @@ class SearchEnvironment
 		return $builder->prepareEntityFilter($params);
 	}
 
-	public static function prepareSearchFilter ($entityTypeID, &$filter)
+	public static function prepareSearchFilter($entityTypeID, &$filter, array $options = [])
 	{
 		if (!is_array($filter))
 		{
@@ -27,7 +27,7 @@ class SearchEnvironment
 		{
 			if (is_array($value))
 			{
-				self::prepareSearchFilter($entityTypeID, $value);
+				self::prepareSearchFilter($entityTypeID, $value, $options);
 			}
 		}
 
@@ -36,7 +36,7 @@ class SearchEnvironment
 			$searchFilter = SearchEnvironment::prepareEntityFilter(
 				$entityTypeID,
 				array(
-					'SEARCH_CONTENT' => SearchEnvironment::prepareSearchContent($filter['SEARCH_CONTENT'])
+					'SEARCH_CONTENT' => SearchEnvironment::prepareSearchContent($filter['SEARCH_CONTENT'], $options)
 				)
 			);
 			unset($filter['SEARCH_CONTENT']);
@@ -57,13 +57,20 @@ class SearchEnvironment
 		return $builder->isFullTextSearchEnabled();
 	}
 
-	public static function prepareSearchContent($str)
+	public static function prepareSearchContent($str, array $options = [])
 	{
-		$numCount = strlen(preg_replace('/[^0-9]/', '', $str));
-		if($numCount >= 3 && $numCount <= 15 && preg_match('/^[0-9\(\)\+\-\#\;\,\*\s]+$/', $str) === 1)
+		if(
+			!isset($options['ENABLE_PHONE_DETECTION'])
+			|| $options['ENABLE_PHONE_DETECTION'] !== false
+		)
 		{
-			return \NormalizePhone($str, 3);
+			$numCount = strlen(preg_replace('/[^0-9]/', '', $str));
+			if($numCount >= 3 && $numCount <= 15 && preg_match('/^[0-9\(\)\+\-\#\;\,\*\s]+$/', $str) === 1)
+			{
+				$str = \NormalizePhone($str, 3);
+			}
 		}
+
 		return $str;
 	}
 }

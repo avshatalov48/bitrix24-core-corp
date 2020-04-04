@@ -16,12 +16,54 @@ else
 $arComponentParameters = Array(
 	'PARAMETERS' => array(
 		'TYPE' => array(
-			'NAME' => getMessage('LANDING_CMP_PAR_LANDING_TYPE'),
+			'NAME' => getMessage('LANDING_CMP_PAR_TYPE'),
 			'TYPE' => 'LIST',
 			'VALUES' => $types
 		),
+		'STRICT_TYPE' => array(
+			'NAME' => getMessage('LANDING_CMP_PAR_STRICT_TYPE'),
+			'TYPE' => 'CHECKBOX'
+		),
 		'SHOW_MENU' => array(
 			'NAME' => getMessage('LANDING_CMP_PAR_SHOW_MENU'),
+			'TYPE' => 'CHECKBOX'
+		),
+		'REOPEN_LOCATION_IN_SLIDER' => array(
+			'NAME' => getMessage('LANDING_CMP_PAR_REOPEN_LOCATION_IN_SLIDER'),
+			'TYPE' => 'CHECKBOX'
+		),
+		'TILE_LANDING_MODE' => array(
+			'NAME' => getMessage('LANDING_CMP_PAR_TILE_LANDING_MODE'),
+			'TYPE' => 'LIST',
+			'DEFAULT' => 'edit',
+			'VALUES' => [
+				'edit' => getMessage('LANDING_CMP_PAR_TILE_LANDING_MODE_EDIT'),
+				'view' => getMessage('LANDING_CMP_PAR_TILE_LANDING_MODE_VIEW')
+			]
+		),
+		'TILE_SITE_MODE' => array(
+			'NAME' => getMessage('LANDING_CMP_PAR_TILE_SITE_MODE'),
+			'TYPE' => 'LIST',
+			'DEFAULT' => 'list',
+			'VALUES' => [
+				'list' => getMessage('LANDING_CMP_PAR_TILE_SITE_MODE_LIST'),
+				'view' => getMessage('LANDING_CMP_PAR_TILE_SITE_MODE_VIEW')
+			]
+		),
+		'EDIT_FULL_PUBLICATION' => array(
+			'NAME' => getMessage('LANDING_CMP_PAR_EDIT_FULL_PUBLICATION'),
+			'TYPE' => 'CHECKBOX'
+		),
+		'EDIT_PANEL_LIGHT_MODE' => array(
+			'NAME' => getMessage('LANDING_CMP_PAR_EDIT_PANEL_LIGHT_MODE'),
+			'TYPE' => 'CHECKBOX'
+		),
+		'EDIT_DONT_LEAVE_FRAME' => array(
+			'NAME' => getMessage('LANDING_CMP_PAR_EDIT_DONT_LEAVE_FRAME'),
+			'TYPE' => 'CHECKBOX'
+		),
+		'DRAFT_MODE' => array(
+			'NAME' => getMessage('LANDING_CMP_PAR_DRAFT_MODE'),
 			'TYPE' => 'CHECKBOX'
 		),
 		'VARIABLE_ALIASES' => Array(

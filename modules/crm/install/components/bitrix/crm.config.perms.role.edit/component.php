@@ -56,8 +56,13 @@ if($arResult['IS_PERMITTED'])
 				$arResult['ERROR_MESSAGE'] = $arFields['RESULT_MESSAGE'];
 		}
 
-		$currentUserIds = CCrmSaleHelper::getCurrentUsersShopGroups();
-		CCrmSaleHelper::addUserToShopGroup([], $currentUserIds);
+		if (IsModuleInstalled("bitrix24"))
+		{
+			CCrmSaleHelper::updateShopAccess();
+
+			$cache = new \CPHPCache;
+			$cache->CleanDir("/crm/list_crm_roles/");
+		}
 
 		if (empty($arResult['ERROR_MESSAGE']))
 		{

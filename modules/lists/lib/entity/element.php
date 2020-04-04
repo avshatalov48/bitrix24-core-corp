@@ -94,7 +94,7 @@ class Element implements Controllable, Errorable
 			return false;
 		}
 
-		$elementFields = $this->getElementFields($this->iblockId, $this->elementId, $this->params["FIELDS"]);
+		$elementFields = $this->getElementFields($this->elementId, $this->params["FIELDS"]);
 
 		$elementObject = new \CIBlockElement;
 		$this->elementId = $elementObject->add($elementFields, false, true, true);
@@ -173,7 +173,7 @@ class Element implements Controllable, Errorable
 
 		list($elementSelect, $elementFields, $elementProperty) = $this->getElementData();
 
-		$fields = $this->getElementFields($this->iblockId, $this->elementId, $this->params["FIELDS"]);
+		$fields = $this->getElementFields($this->elementId, $this->params["FIELDS"]);
 
 		$elementObject = new \CIBlockElement;
 		$updateResult = $elementObject->update($this->elementId, $fields, false, true, true);
@@ -240,47 +240,6 @@ class Element implements Controllable, Errorable
 			else
 				$this->errorCollection->setError(new Error("Unknown error", self::ERROR_UPDATE_ELEMENT));
 
-			return false;
-		}
-	}
-
-	/**
-	 * Copies a specific item. If you specify the ID of the target information block,
-	 * it will copy the element into another information block.
-	 *
-	 * @param int $iblockId The ID iblock
-	 * @param int $elementId The ID element.
-	 * @param int $targetIblockId The ID of the target information block.
-	 * @return bool
-	 */
-	public function copyById($iblockId, $elementId, $targetIblockId = 0)
-	{
-		$valuesToCopy = $this->getElementValuesToCopy($iblockId, $elementId);
-
-		$element = $this->getElementFields($iblockId, $elementId, $valuesToCopy);
-
-		if ($targetIblockId)
-		{
-			$element = $this->convertPropertyId($targetIblockId, $element);
-			$element["IBLOCK_ID"] = $targetIblockId;
-		}
-
-		$elementObject = new \CIBlockElement;
-		$elementId = $elementObject->add($element, false, true, true);
-		if ($elementId)
-		{
-			return $elementId;
-		}
-		else
-		{
-			if ($elementObject->LAST_ERROR)
-			{
-				$this->errorCollection->setError(new Error($elementObject->LAST_ERROR));
-			}
-			else
-			{
-				$this->errorCollection->setError(new Error("Unknown error"));
-			}
 			return false;
 		}
 	}
@@ -447,11 +406,11 @@ class Element implements Controllable, Errorable
 			}
 		}
 	}
-	
-	private function getElementFields($iblockId, $elementId, array $values)
+
+	private function getElementFields($elementId, array $values)
 	{
 		$elementFields = [
-			"IBLOCK_ID" => $iblockId,
+			"IBLOCK_ID" => $this->iblockId,
 			"CODE" => $this->params["ELEMENT_CODE"],
 			"ID" => $elementId,
 			"PROPERTY_VALUES" => []
@@ -470,7 +429,7 @@ class Element implements Controllable, Errorable
 				}
 				elseif ($fieldId == "PREVIEW_TEXT" || $fieldId == "DETAIL_TEXT")
 				{
-					$this->setTextValue($elementFields, $fieldId, $fieldValue);
+					$this->setTextValue($elementFields, $fieldId, $fieldValue, $fieldData);
 				}
 				else
 				{
@@ -538,7 +497,7 @@ class Element implements Controllable, Errorable
 		}
 	}
 
-	private function setTextValue(&$elementFields, $fieldId, $fieldValue)
+	private function setTextValue(&$elementFields, $fieldId, $fieldValue, $fieldData)
 	{
 		if (is_array($fieldValue))
 		{
@@ -694,32 +653,21 @@ class Element implements Controllable, Errorable
 	{
 		foreach($fieldValue as $key => $value)
 		{
-			if (is_array($value))
+			if (!is_array($value))
 			{
-				foreach($value as $k => $v)
-				{
-					if (CheckSerializedData($v))
-					{
-						$elementFields["PROPERTY_VALUES"][$fieldData["ID"]][$k]["VALUE"] = unserialize($v);
-					}
-					else
-					{
-						$elementFields["PROPERTY_VALUES"][$fieldData["ID"]][$k]["VALUE"]["TYPE"] = "html";
-						$elementFields["PROPERTY_VALUES"][$fieldData["ID"]][$k]["VALUE"]["TEXT"] = $v;
-					}
-
-				}
+				$value = [$key => $value];
 			}
-			else
+
+			foreach($value as $k => $v)
 			{
-				if (CheckSerializedData($value))
+				if (CheckSerializedData($v) && @unserialize($v))
 				{
-					$elementFields["PROPERTY_VALUES"][$fieldData["ID"]][$key]["VALUE"] = unserialize($value);
+					$elementFields["PROPERTY_VALUES"][$fieldData["ID"]][$k]["VALUE"] = unserialize($v);
 				}
 				else
 				{
-					$elementFields["PROPERTY_VALUES"][$fieldData["ID"]][$key]["VALUE"]["TYPE"] = "html";
-					$elementFields["PROPERTY_VALUES"][$fieldData["ID"]][$key]["VALUE"]["TEXT"] = $value;
+					$elementFields["PROPERTY_VALUES"][$fieldData["ID"]][$k]["VALUE"]["TYPE"] = "html";
+					$elementFields["PROPERTY_VALUES"][$fieldData["ID"]][$k]["VALUE"]["TEXT"] = $v;
 				}
 			}
 		}
@@ -1055,80 +1003,5 @@ class Element implements Controllable, Errorable
 		}
 
 		return $sefFolder;
-	}
-
-	private function getElementValuesToCopy($iblockId, $elementId)
-	{
-		$elementFields = [];
-
-		$fields = $this->listObject->getFields();
-		$propertyFields = [];
-		$elementSelect = ["ID", "IBLOCK_ID", "NAME", "IBLOCK_SECTION_ID", "CREATED_BY", "BP_PUBLISHED", "CODE"];
-		foreach ($fields as $fieldId => $field)
-		{
-			if ($this->listObject->is_field($fieldId))
-				$elementSelect[] = $fieldId;
-			else
-				$propertyFields[] = $fieldId;
-
-			if ($fieldId == "CREATED_BY")
-				$elementSelect[] = "CREATED_USER_NAME";
-			if ($fieldId == "MODIFIED_BY")
-				$elementSelect[] = "USER_NAME";
-		}
-
-		$filter = [
-			"IBLOCK_TYPE" => $this->params["IBLOCK_TYPE_ID"],
-			"IBLOCK_ID" => $iblockId,
-			"ID" => $elementId,
-			"CHECK_PERMISSIONS" => "N"
-		];
-		$queryObject = \CIBlockElement::getList([], $filter, false, false, $elementSelect);
-		if ($result = $queryObject->fetch())
-		{
-			$elementFields = $result;
-
-			if (!empty($propertyFields))
-			{
-				$propertyValuesObject = \CIblockElement::getPropertyValues($iblockId, ["ID" => $elementId]);
-				while ($propertyValues = $propertyValuesObject->fetch())
-				{
-					foreach ($propertyValues as $propertyId => $propertyValue)
-					{
-						if ($propertyId == "IBLOCK_ELEMENT_ID")
-							continue;
-						$elementFields['PROPERTY_'.$propertyId] = $propertyValue;
-					}
-				}
-			}
-		}
-
-		return $elementFields;
-	}
-
-	private function convertPropertyId($targetIblockId, array $element)
-	{
-		$fields = $this->listObject->getFields();
-		$targetFields = (new \CList($targetIblockId))->getFields();
-
-		foreach ($element["PROPERTY_VALUES"] as $propertyId => $propertyValue)
-		{
-			$fieldId = "PROPERTY_".$propertyId;
-			if (array_key_exists($fieldId, $fields))
-			{
-				$field = $fields[$fieldId];
-				foreach ($targetFields as $targetFieldId => $targetField)
-				{
-					$targetPropertyId = substr($targetFieldId, 9);
-					if ($targetField["CODE"] == $field["CODE"])
-					{
-						$element["PROPERTY_VALUES"][$targetPropertyId] = $propertyValue;
-					}
-				}
-				unset($element["PROPERTY_VALUES"][$propertyId]);
-			}
-		}
-
-		return $element;
 	}
 }

@@ -38,6 +38,16 @@ Class controller extends CModule
 		if (!$DB->Query("SELECT 'x' FROM b_controller_member WHERE 1=0", true))
 		{
 			$this->errors = $DB->RunSQLBatch($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/controller/install/db/".strtolower($DB->type)."/install.sql");
+			if (!$this->errors)
+			{
+				$DB->Query("
+					INSERT INTO b_controller_group (
+						ID, NAME, DATE_CREATE, CREATED_BY, MODIFIED_BY
+					) VALUES (
+						1, '(default)', now(), 1, 1
+					)
+				");
+			}
 		}
 
 		if ($this->errors !== false)

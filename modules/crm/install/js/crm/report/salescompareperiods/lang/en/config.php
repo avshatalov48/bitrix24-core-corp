@@ -1,0 +1,4 @@
+<?
+$MESS["CRM_REPORT_SALES_COMPARE_CURRENT_PERIOD"] = "Current period";
+$MESS["CRM_REPORT_SALES_COMPARE_PREV_PERIOD"] = "Previous period";
+?>

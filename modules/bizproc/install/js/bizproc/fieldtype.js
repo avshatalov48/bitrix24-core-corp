@@ -24,6 +24,11 @@
 				renderer = this.getRenderFunctionName(property),
 				needInit = true;
 
+			if (BX.type.isString(documentType))
+			{
+				documentType = documentType.split('@');
+			}
+
 			if (renderer)
 			{
 				if (isMultiple(property) && property.Type !== 'select')

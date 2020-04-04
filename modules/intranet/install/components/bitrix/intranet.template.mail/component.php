@@ -75,7 +75,48 @@ if ($arParams["TEMPLATE_TYPE"] == "IM_NEW_NOTIFY" || $arParams["TEMPLATE_TYPE"] 
 	}
 
 	$parser = new CTextParser();
+	$parser->allow = array('ANCHOR' => 'N');
 	$arParams["MESSAGE"] = $parser->convertText($arParams["MESSAGE"]);
+}
+
+if ($arParams["TEMPLATE_TYPE"] == "IM_NEW_MESSAGE_GROUP")
+{
+	$arResult["MESSAGES_FROM_USERS"] = array();
+	$fromUserId = explode(",", $arParams["FROM_USER_ID"]);
+
+	if (is_array($fromUserId) && !empty($fromUserId))
+	{
+		$rsUsers = CUser::GetList(($by="ID"), ($order="ASC"), array("ID" => implode("|", $fromUserId)), array("FIELDS" => array("ID", "PERSONAL_PHOTO")));
+		while ($arUser = $rsUsers->Fetch())
+		{
+			if (intval($arUser["PERSONAL_PHOTO"]) > 0)
+			{
+				$imageFile = CFile::GetFileArray($arUser["PERSONAL_PHOTO"]);
+				if ($imageFile !== false)
+				{
+					$arFileTmp = CFile::ResizeImageGet(
+						$imageFile,
+						array("width" => 40, "height" => 40),
+						BX_RESIZE_IMAGE_EXACT,
+						false,
+						false,
+						true
+					);
+					$arResult["FROM_USERS"][$arUser["ID"]] = $arFileTmp["src"];
+				}
+			}
+		}
+	}
+
+	$messagesFromUser = unserialize($arParams["~MESSAGES_FROM_USERS"]);
+
+	foreach ($messagesFromUser as $userId => $message)
+	{
+		$arResult["MESSAGES_FROM_USERS"][$userId] = [
+			"MESSAGE" => $message,
+			"USER_PHOTO" => $arResult["FROM_USERS"][$userId]
+		];
+	}
 }
 
 $this->IncludeComponentTemplate();

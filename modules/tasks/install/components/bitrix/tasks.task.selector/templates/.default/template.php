@@ -164,7 +164,7 @@ $name = $arResult["NAME"];
 								</div>
 								<a href="<?=CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_TASKS_TASK"], ["task_id" => $taskId, "action" => "view"])?>"
 								   target="_blank" class="finder-box-selected-item-text">
-									<?=$task["TITLE"]?>
+									<?=HtmlFilter::encode($task["TITLE"])?>
 								</a>
 							</div>
 						<?endforeach?>

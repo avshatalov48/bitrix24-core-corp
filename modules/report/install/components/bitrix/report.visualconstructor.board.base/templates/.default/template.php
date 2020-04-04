@@ -42,7 +42,7 @@ $APPLICATION->IncludeComponent(
 			rows: <?=CUtil::PhpToJSObject($arResult['ROWS'], false, false, true)?>,
 			demoMode: "<?=$arResult['IS_BOARD_DEMO'];?>",
 			defaultBoard: "<?=$arResult['IS_BOARD_DEFAULT'];?>",
-			filterId: "<?=CUtil::JSEscape($arResult['FILTER']->getFilterParameters()['FILTER_ID'])?>"
+			filterId: "<?=CUtil::JSEscape($arResult['FILTER_ID'])?>"
 
 		});
 	});

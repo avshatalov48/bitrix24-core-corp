@@ -1,0 +1,333 @@
+td#upload_comments{
+	color:#858585;
+	font-size:110%;}
+td#upload_comments a {
+	color:#858585;}
+td#description_views{
+	width:220px!important;
+	text-align:right;}
+
+/* PAGES Upload */
+table.image-uploader-table, table.image-uploader-table td {
+	border: none; 
+	padding: 0; 
+	margin: 0; 
+	font-size:13px;}
+table.image-uploader-table {
+	background-color: #EDEDED;
+	background-image: url("images/upload/line.gif");
+	background-position: right top;
+	background-repeat: repeat-y;
+	border-collapse:collapse;}
+table.image-uploader-table tr.top td {valign:top; height:3px; overflow:hidden;}
+table.image-uploader-table tr.bottom td {valign:bottom; height:3px; overflow:hidden;}
+table.image-uploader-table tr.top td.left, table.image-uploader-table tr.bottom td.left {text-align:left;}
+table.image-uploader-table tr.top td.right, table.image-uploader-table tr.bottom td.right {text-align:right;}
+
+table.image-uploader-table tr.top td div, table.image-uploader-table tr.bottom td div {
+	background-position: right top; background-repeat: no-repeat; width:3px; height:3px; overflow:hidden;}
+table.image-uploader-table tr.top td.left div, table.image-uploader-table tr.bottom td.left div {float:left;}
+table.image-uploader-table tr.top td.right div, table.image-uploader-table tr.bottom td.right div {float:right;}
+
+table.image-uploader-table tr.top td.left div.empty {
+	background-image: url("images/upload/corner_left_top.gif");}
+table.image-uploader-table tr.top td.right div.empty{background-image: url("images/upload/corner_right_top.gif");}
+
+table.image-uploader-table tr.bottom td.left div.empty{background-image: url("images/upload/corner_left_bottom.gif");}
+table.image-uploader-table tr.bottom td.right div.empty{background-image: url("images/upload/corner_right_bottom.gif");}
+
+table.image-uploader-table td.right{width:220px!important; overflow:hidden;}
+table.image-uploader-table tr.object td.right{height:260px;}
+table.image-uploader-table tr.object td.left {height:260px; vertical-align:top;}
+
+table.image-upload-table-bottom-applet td.right{width:220px!important; overflow:hidden;}
+table.image-upload-table-bottom-form td.right,
+table.image-upload-table-bottom-classic td.right {width:3px!important; overflow:hidden;}
+div.image-uploader-noscript table.image-upload-table-bottom-applet, table.image-upload-table-bottom-form, 
+table.image-upload-table-bottom-classic{
+	background: #EDEDED;}
+table.image-upload-table-bottom-applet tr.top {display: none;}
+table.image-upload-table-bottom-form tr.top td.right div.empty, 
+table.image-upload-table-bottom-classic tr.top td.right div.empty {
+	background-image: url("images/upload/corner_right__top.gif");}
+table.image-upload-table-bottom-form tr.bottom td.right div.empty, 
+table.image-upload-table-bottom-classic tr.bottom td.right div.empty {
+	background-image: url("images/upload/corner_right__bottom.gif");}
+
+div.image-uploader-settings {margin-bottom:2em;}
+div.image-upload-form-files {}
+div.image-upload-form-file{
+	float:left; 
+	width:275px;
+	padding:0px;
+	margin:0px 10px 10px 0px;
+	border:none;
+	background-color:#ededed;}
+div.image-upload-form-file div.wd-t, div.image-upload-form-file div.wd-r, 
+div.image-upload-form-file div.wd-b, div.image-upload-form-file div.wd-l{
+	background-image:url('images/upload/corner_left__top.gif');
+	background-position:top left;
+	background-repeat: no-repeat;}
+div.image-upload-form-file div.wd-r{
+	background-image: url('images/upload/corner_right_top.gif');
+	background-position:top right;}
+div.image-upload-form-file div.wd-b{
+	background-image: url('images/upload/corner_right__bottom.gif');
+	background-position:bottom right;}
+div.image-upload-form-file div.wd-l{
+	background-image: url('images/upload/corner_left_bottom.gif')!important;
+	background-position:bottom left;}
+div.image-upload-form-file div.wd-c{
+	width:275px;
+	overflow:hidden;
+	padding:0px;
+	margin:0px;}
+div.image-upload-form-file div.wd-title{
+	width:100%;
+	background-color:#D8D8D8;
+	padding:0px;
+	margin:0px;}
+div.image-upload-form-file div.wd-tl, div.image-upload-form-file div.wd-tr{
+	background-image: url('images/upload/corner_left__top.gif');
+	background-position:top left;
+	background-repeat: no-repeat;}
+div.image-upload-form-file div.wd-tr{
+	background-image: url('images/upload/corner_right_top.gif');
+	background-position:top right;}
+div.image-upload-form-file div.wd-title div{
+	padding:0px;
+	margin:0px;}
+div.image-upload-form-file div.wd-title div.wd-tl{
+	padding:6px 6px 6px 10px!important;}
+div.image-upload-form-file div.wd-title-header{
+	font-weight:bold;
+	font-size:110%;
+	height:19px;}
+div.image-upload-form-file div.wd-del{
+	width:19px; height:19px;
+	overfow:hidden;
+	float:right;
+	background-image: url('images/upload/delete.gif');
+	background-position:top right;
+	background-repeat: no-repeat;
+	cursor:hand;
+	cursor:pointer;}
+
+div.image-upload-form-file div.wd-c form, 
+div.image-upload-form-file div.wd-c div.reply div.inner, 
+div.image-upload-form-file div.wd-c div.form{
+	padding:13px 34px 13px 24px!important;}
+div.image-upload-form-file div.wd-c div span {
+	display:block;}
+div.image-upload-form-file div.iu-uploader-field-file input, 
+div.image-upload-form-file div.iu-uploader-field-title input, 
+div.image-upload-form-file div.iu-uploader-field-tags input, 
+div.image-upload-form-file div.iu-uploader-field-description textarea {width:215px!important;}
+
+div.image-upload-form-file span.wd-substrate-wait{
+	background-image: url('images/upload/wait.gif');
+	background-position:center center;
+	background-repeat: no-repeat;}
+div.image-uploader-result-upload-file{
+	width:100%;
+	height: 160px;
+	background-position:center;
+	background-repeat:no-repeat;}
+/* PAGES Upload Buttons */
+div.iu-uploader-button, div.iu-uploader-button-noscript {margin:0px; float:left; padding:0.452em;}
+div.iu-uploader-button a:link, 
+div.iu-uploader-button a:visited, 
+div.iu-uploader-button a:active, 
+div.iu-uploader-button a:hover{
+	border: none; 
+	padding: 0 6px 0 0 ; 
+	margin: 0;
+	display: block; 
+	height: 34px !important;
+	width: 156px !important;
+	overflow: hidden;
+	background-image: url("images/upload/button_03.gif");
+	background-position: right top;
+	background-repeat: no-repeat;
+	text-decoration: none;
+	outline: none;
+	cursor: default;}
+div.iu-uploader-button div{
+	border: none; 
+	padding: 0 0 0 6px ; 
+	margin: 0;
+	height: 34px !important;
+	width: 150px !important;
+	overflow: hidden;
+	background-image: url("images/upload/button_01.gif");
+	background-position: left top;
+	background-repeat: no-repeat;}
+div.iu-uploader-button div span{
+	border: none; 
+	padding:8px 5px 0 5px;
+	margin: 0;
+	display: block; 
+	height: 34px !important;
+	width: 144px !important;
+	overflow: hidden;
+	background-image: url("images/upload/button_02.gif");
+	background-position: left top;
+	background-repeat: repeat-x;
+	cursor: default;
+	text-align: center;
+	font-weight: bold;
+	color:#4e4ea5;}
+div.iu-uploader-button a:hover {
+	background-image: url("images/upload/button_push_03.gif");}
+div.iu-uploader-button a:hover div {
+	background-image: url("images/upload/button_push_01.gif");}
+div.iu-uploader-button a:hover div span{
+	background-image: url("images/upload/button_push_02.gif");}
+div.iu-uploader-button a.nonactive div span{
+	color:gray;}
+
+tr.buttons-top div.iu-uploader-buttons {padding:0.47em 1em 0.1em 1em;}
+div.iu-uploader-containers {padding:0.47em 1em 0.1em 1.4em;}
+tr.buttons-bottom div.iu-uploader-buttons {padding:1em 0.47em 0 1em;}
+
+td.right div.iu-uploader-fields, td.right div.iu-uploader-containers {padding:7px 10px 0px 10px;}
+div.iu-uploader-field {margin:5px 0px;}
+div.iu-uploader-fields div.iu-uploader-field-image {width:134px; height:140px;}
+div.iu-uploader-fields div.iu-uploader-field-image div{padding:20px 7px;}
+div.iu-uploader-field-file label, div.iu-uploader-field-title label, div.iu-uploader-field-tags label, 
+div.iu-uploader-field-description label {display: block;}
+div.iu-uploader-field-title {margin-top: 10px;}
+div.iu-uploader-field-title input, div.iu-uploader-field-tags input, div.iu-uploader-field-description textarea {width:197px;}
+div.iu-uploader-field-public input {float:left; margin-right:5px;}
+
+div.hr{margin:0.012em 0.5em; height:1px; background:#b1b1b1; overflow:hidden;}
+div.iu-button-removeall{float:right; font-weight:bold; white-space:nowrap;}
+div.iu-uploader-filecount{float:left; font-size:110%; font-weight: bold; white-space:nowrap; padding:0!important;}
+div.iu-uploader-filecount div {float:left;}
+	
+div.iu-uploader-container {padding:3px 0px;zoom:1;}
+div.iu-uploader-container label {float:left; padding-right: 5px;}
+
+div.nojava{padding:10px;}
+div.iu-help{
+	padding:10px;
+	height:315px;
+	overflow-y:auto;
+	background:white;
+	border:1px solid red;}
+
+div.image-upload-form-files div.wd-upload-file{
+	float:left; 
+	width:275px;
+	padding:0px;
+	margin:0px 10px 10px 0px;
+	border:none;
+	background-color:#ededed;}
+div.image-upload-form-files div.wd-upload-file div.wd-t, div.image-upload-form-files div.wd-upload-file div.wd-r, 
+div.image-upload-form-files div.wd-upload-file div.wd-b, div.image-upload-form-files div.wd-upload-file div.wd-l{
+	background-image: url('images/upload/corner_left__top.gif');
+	background-position:top left;
+	background-repeat: no-repeat;}
+div.image-upload-form-files div.wd-upload-file div.wd-r{
+	background-image: url('images/upload/corner_right_top.gif');
+	background-position:top right;}
+div.image-upload-form-files div.wd-upload-file div.wd-b{
+	background-image: url('images/upload/corner_right__bottom.gif');
+	background-position:bottom right;}
+div.image-upload-form-files div.wd-upload-file div.wd-l{
+	background-image: url('images/upload/corner_left_bottom.gif')!important;
+	background-position:bottom left;}
+div.image-upload-form-files div.wd-upload-file div.wd-c{
+	width:275px;
+	overflow:hidden;
+	padding:0px;
+	margin:0px;}
+div.image-upload-form-files div.wd-upload-file div.wd-title{
+	width:100%;
+	background-color:#D8D8D8;
+	padding:0px;
+	margin:0px;}
+div.image-upload-form-files div.wd-upload-file div.wd-tl, div.image-upload-form-files div.wd-upload-file div.wd-tr{
+	background-image: url('images/upload/corner_left__top.gif');
+	background-position:top left;
+	background-repeat: no-repeat;}
+div.image-upload-form-files div.wd-upload-file div.wd-tr{
+	background-image: url('images/upload/corner_right_top.gif');
+	background-position:top right;}
+div.image-upload-form-files div.wd-upload-file div.wd-title div{
+	padding:0px;
+	margin:0px;}
+div.image-upload-form-files div.wd-upload-file div.wd-title div.wd-tl{
+	padding:6px 6px 6px 10px!important;}
+div.image-upload-form-files div.wd-upload-file div.wd-title-header{
+	font-weight:bold;
+	font-size:110%;
+	height:19px;}
+div.image-upload-form-files div.wd-upload-file div.wd-del{
+	width:19px; height:19px;
+	overfow:hidden;
+	float:right;
+	background-image: url('images/upload/delete.gif');
+	background-position:top right;
+	background-repeat: no-repeat;
+	cursor:hand;
+	cursor:pointer;}
+
+div.image-upload-form-files div.wd-upload-file div.wd-c form, 
+div.image-upload-form-files div.wd-upload-file div.wd-c div.reply div.inner, 
+div.image-upload-form-files div.wd-upload-file div.wd-c div.form{
+	padding:13px 34px 13px 24px!important;}
+div.image-upload-form-files div.wd-upload-file div.wd-c div span {
+	display:block;}
+div.image-upload-form-files div.wd-upload-file div.wd-c input, div.image-upload-form-files div.wd-upload-file div.wd-c textarea{
+	width:215px;}
+div.image-upload-form-files div.wd-upload-file span.wd-substrate-wait{
+	background-image: url('images/upload/wait.gif');
+	background-position:center center;
+	background-repeat: no-repeat;}
+	
+ul.wd-upload-form-propeties, ul.wd-upload-form-propeties li, ul.wd-upload-form-propeties ol{
+	margin: 0; padding: 0; border: none; font-size: 100%; list-style-type: none;}
+div.wd-upload-form-propety-item-value{
+	margin-left:1em;}
+li.wd-upload-form-propety-item fieldset {
+	border: 1px solid #D8D8D8;
+	padding: 0 1.5em 1.5em 0.5em;
+	margin: 1em 1.452em 0 1.452em;
+	}
+table.image-upload-table-bottom-applet fieldset {
+	}
+table.image-upload-table-bottom-classic fieldset, table.image-upload-table-bottom-form fieldset {
+	width: 45em;}
+li.wd-upload-form-propety-item fieldset legend {
+	padding: 0 1em;
+	margin-left:2em;
+	font-size:110%;
+	color:#000000;}
+div.wd-upload-form-propety-item-description{
+	font-style:italic;
+	margin-bottom:1.3em;
+	margin-top:0.3em;
+	font-size:97%;}
+div.bizproc-workflow-template-param{
+	margin-top:0.7em;}
+div.bizproc-workflow-template-param label{
+	display:block;}
+div.bizproc-field-date label, div.bizproc-field-status label{
+	display:inline;}
+span.bizproc-field-value textarea{
+	height:4em;
+	width:25em;}
+span.bizproc-field-value-int input, span.bizproc-field-value-double input, span.bizproc-field-value-string input, 
+/*span.bizproc-field-value-text textarea,*/ span.bizproc-field-value-select select, /*span.bizproc-field-value-bool select, */
+ span.bizproc-field-value-date input, span.bizproc-field-value-datetime input/*, span.bizproc-field-value-user textarea*/ {
+ 	width:20em;}
+
+/* Standart */
+div.empty-clear{
+	clear:both;}
+form.wd-form{
+	padding:0;
+	margin:0;}
+font.starrequired{
+	color:red;}

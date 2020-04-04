@@ -76,7 +76,7 @@ abstract class InvoiceEntity extends BaseEntity
 
 	public static function getFormMapper(array $params = [])
 	{
-		return FirstFormInvoice::getInstance();
+		return new FirstFormInvoice();
 	}
 
 	/**

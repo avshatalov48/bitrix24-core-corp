@@ -31,8 +31,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && $_POST['ACTION'] == 'save' && check_
 	$CCrmRole = new CcrmRole();
 	$CCrmRole->SetRelation($arPerms);
 
-	$currentUserIds = CCrmSaleHelper::getCurrentUsersShopGroups();
-	CCrmSaleHelper::addUserToShopGroup([], $currentUserIds);
+	if (IsModuleInstalled("bitrix24"))
+	{
+		CCrmSaleHelper::updateShopAccess();
+
+		$cache = new \CPHPCache;
+		$cache->CleanDir("/crm/list_crm_roles/");
+	}
 
 	LocalRedirect($APPLICATION->GetCurPage());
 }

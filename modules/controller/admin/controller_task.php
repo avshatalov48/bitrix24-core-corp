@@ -12,13 +12,19 @@ require_once($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/controller/prolog.php")
 
 IncludeModuleLangFile(__FILE__);
 
+$sTableID = "t_controll_task";
 $arTask = CControllerTask::GetTaskArray();
-
 $arStatus = CControllerTask::GetStatusArray();
 
-$dbrTaskN = CControllerTask::GetList(Array(), Array("=STATUS" => Array('N', 'P')), true);
-$arTaskN = $dbrTaskN->Fetch();
-$iTaskNCnt = intval($arTaskN['C']);
+$iTaskNCnt = 0;
+if ($USER->CanDoOperation("controller_task_run"))
+{
+	$dbrTaskN = CControllerTask::GetList(Array(), Array("=STATUS" => Array('P', 'N', 'L')), true);
+	$iTaskNCnt = $dbrTaskN->Fetch()['C'];
+}
+
+$iCntExecuted = intval($_REQUEST["executed"]);
+$iCntTotal = intval($_REQUEST["cnt"]);
 
 if (
 	$_SERVER["REQUEST_METHOD"] == "POST"
@@ -28,39 +34,42 @@ if (
 )
 {
 	$strError = "";
-	$iCntExecuted = intval($_REQUEST["executed"]);
-	$iCntTotal = intval($_REQUEST["cnt"]);
 	$endTime = microtime(true) + COption::GetOptionString('controller', 'tasks_run_step_time');
 
 	require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_js.php");
 	if ($iTaskNCnt > 0)
 	{
-		$dbrTask = CControllerTask::GetList(Array("ID" => "ASC"), Array("=STATUS" => Array('N', 'P')));
-		$tTasksTime = microtime(true);
-		while ($arTask = $dbrTask->Fetch())
+		//1. Finish partial
+		//2. Execute new tasks
+		//3. Run low priority tasks
+		foreach (array('P', 'N', 'L') as $status2exec)
 		{
-			$status = CControllerTask::ProcessTask($arTask["ID"]);
-
-			if ($status === "0" && $e = $APPLICATION->GetException())
-			{
-				$strError = GetMessage("CTRLR_TASK_ERR_LOCK")."<br>".$e->GetString();
-				if (strpos($strError, "PLS-00201") !== false && strpos($strError, "'DBMS_LOCK'") !== false)
-					$strError .= "<br>".GetMessage("CTRLR_TASK_ERR_LOCK_ADVICE");
-				$APPLICATION->ResetException();
-				break;
-			}
-
-			$iCntExecuted++;
-
-			while ($status === "P")
+			$dbrTask = CControllerTask::GetList(Array("ID" => "ASC"), Array("=STATUS" => $status2exec));
+			while ($arTask = $dbrTask->Fetch())
 			{
 				$status = CControllerTask::ProcessTask($arTask["ID"]);
+
+				if ($status === "0" && $e = $APPLICATION->GetException())
+				{
+					$strError = GetMessage("CTRLR_TASK_ERR_LOCK")."<br>".$e->GetString();
+					if (strpos($strError, "PLS-00201") !== false && strpos($strError, "'DBMS_LOCK'") !== false)
+						$strError .= "<br>".GetMessage("CTRLR_TASK_ERR_LOCK_ADVICE");
+					$APPLICATION->ResetException();
+					break;
+				}
+
+				$iCntExecuted++;
+
+				while ($status === "P")
+				{
+					$status = CControllerTask::ProcessTask($arTask["ID"]);
+					if (microtime(true) > $endTime)
+						break;
+				}
+
 				if (microtime(true) > $endTime)
 					break;
 			}
-
-			if (microtime(true) > $endTime)
-				break;
 		}
 
 		if (strlen($strError))
@@ -96,17 +105,17 @@ if (
 			"PROGRESS_TOTAL" => $iCntTotal,
 			"PROGRESS_VALUE" => $iCntExecuted,
 		));
-		$message->Show();
+		echo $message->Show();
 		?>
 		<script>
 			CloseWaitWindow();
+			<?=$sTableID?>.GetAdminList('<?echo CUtil::JSEscape($APPLICATION->GetCurPage().'?lang='.urlencode(LANGUAGE_ID).'&executed='.$iCntExecuted.'&cnt='.$iCntTotal)?>');
 		</script>
 		<?
 	}
 	require($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/epilog_admin_js.php");
 }
 
-$sTableID = "t_controll_task";
 $oSort = new CAdminSorting($sTableID, "id", "desc");
 /** @global string $by */
 /** @global string $order */
@@ -140,13 +149,13 @@ $arFilterFields = Array(
 
 $adminFilter = $lAdmin->InitFilter($arFilterFields);
 
-if (!isset($find_status) || !is_array($find_status))
-	$find_status = array('N', 'P');
+if (!isset($find_status) || !is_array($find_status) && $_REQUEST["del_filter"] !== "Y")
+	$find_status = array('P', 'N', 'L');
 
 $arFilter = array(
 	"%TASK_ID" => $_REQUEST["find_task_id"],
 	"ID" => $_REQUEST["find_id"],
-	"=STATUS" => $_REQUEST["find_status"],
+	"=STATUS" => $find_status,
 	"CONTROLLER_MEMBER_ID" => $_REQUEST["find_controller_member_id"],
 	">=TIMESTAMP_X" => $_REQUEST["find_timestamp_x_from"],
 	"<=TIMESTAMP_X" => $_REQUEST["find_timestamp_x_to"],
@@ -191,9 +200,15 @@ if (
 			break;
 
 		case "repeat":
-			if (!CControllerTask::Update($ID, Array("STATUS" => "N", "DATE_EXECUTE" => false)))
+			if (CControllerTask::Update($ID, Array("STATUS" => "N", "DATE_EXECUTE" => false)))
+			{
+				$iTaskNCnt++;
+			}
+			else
+			{
 				if ($e = $APPLICATION->GetException())
 					$lAdmin->AddGroupError(GetMessage("CTRLR_TASK_REP_DELETE")." ".$ID.": ".$e->GetString(), $ID);
+			}
 			break;
 		}
 	}
@@ -227,9 +242,27 @@ $arHeaders = array(
 );
 
 $lAdmin->AddHeaders($arHeaders);
-
+$arSelectedFieldsMap = array_fill_keys($lAdmin->GetVisibleHeaderColumns(), true);
+$sourceTasks = array();
 while ($arRes = $rsData->Fetch())
 {
+	if (
+		isset($arSelectedFieldsMap["INIT_EXECUTE"])
+		&& $arRes['INIT_EXECUTE'] === ''.intval($arRes['INIT_EXECUTE']).''
+	)
+	{
+		$sourceTaskId = $arRes['INIT_EXECUTE'];
+		if (!isset($sourceTasks[$sourceTaskId]))
+		{
+			$sourceTasks[$sourceTaskId] = CControllerTask::GetArrayByID($arRes['INIT_EXECUTE']);
+		}
+
+		if ($sourceTasks[$sourceTaskId])
+		{
+			$arRes["INIT_EXECUTE"] = $sourceTasks[$sourceTaskId]["INIT_EXECUTE"];
+		}
+	}
+
 	$row =& $lAdmin->AddRow($arRes["ID"], $arRes);
 
 	if ($arRes["STATUS"] == 'N')
@@ -297,7 +330,7 @@ $lAdmin->BeginPrologContent();
 ?>
 <div id="progress">
 	<?
-	if ($iTaskNCnt > 0 && $USER->CanDoOperation("controller_task_run"))
+	if ($iTaskNCnt > 0)
 	{
 		$message = new CAdminMessage(array(
 			"TYPE" => "PROGRESS",
@@ -313,6 +346,18 @@ $lAdmin->BeginPrologContent();
 					"ONCLICK" => "Start($iTaskNCnt, 0);",
 				),
 			),
+		));
+		echo $message->Show();
+	}
+	elseif ($iCntExecuted > 0)
+	{
+		$message = new CAdminMessage(array(
+			"TYPE" => "PROGRESS",
+			"MESSAGE" => GetMessage("CTRLR_TASK_PROGRESS"),
+			"DETAILS" => GetMessage("CTRLR_TASK_PROGRESS_BAR")." $iCntExecuted ".GetMessage("CTRLR_TASK_PROGRESS_BAR_FROM")." $iCntTotal #PROGRESS_BAR#",
+			"HTML" => true,
+			"PROGRESS_TOTAL" => $iCntTotal,
+			"PROGRESS_VALUE" => $iCntExecuted,
 		));
 		echo $message->Show();
 	}
@@ -347,7 +392,7 @@ require($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/prolog_admin_af
 	<tr>
 		<td><?=GetMessage("CTRLR_TASK_FLR_ST")?>:</td>
 		<td>
-			<select name="find_status[]" multiple="multiple">
+			<select name="find_status[]" multiple="multiple" size="<?echo count($arStatus)?>">
 				<? foreach ($arStatus as $status_id => $status_name): ?>
 					<option value="<?=htmlspecialcharsbx($status_id)?>"<? if (in_array($status_id, $find_status)) echo ' selected' ?>><?=htmlspecialcharsEx($status_name)?></option>
 				<? endforeach ?>

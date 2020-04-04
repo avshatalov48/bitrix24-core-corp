@@ -70,7 +70,7 @@ return array(
 		),
 		'.landing-block-node-card-link' => array(
 			'name' => Loc::getMessage('LANDING_BLOCK_19.3.TEXT_BLOCKS_FAQ_NODES_LANDINGBLOCKNODECARD_LINK'),
-			'type' => 'typo',
+			'type' => 'typo-link',
 		),
 	),
 );

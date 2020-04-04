@@ -37,10 +37,10 @@ return array(
 			),
 			'style' => array(
 				'#wrapper' => array(
-					0 => 'landing-block js-animation animation-none g-pt-0 g-pb-5 u-block-border u-block-border-margin-sm animation-none',
+					0 => 'landing-block js-animation animation-none g-pt-0 g-pb-5 u-block-border u-block-border-margin-sm animation-none text-center',
 				),
 				'.landing-block-node-title' => array(
-					0 => 'landing-block-node-title h2 g-color-white text-left g-font-size-27',
+					0 => 'landing-block-node-title h2 g-color-white text-left g-font-size-27 container g-pl-0 g-pr-0',
 				),
 			),
 		),

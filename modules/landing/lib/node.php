@@ -11,20 +11,20 @@ abstract class Node
 
 	/**
 	 * Save data for this node.
-	 * @param \Bitrix\Landing\Block &$block Block instance.
+	 * @param \Bitrix\Landing\Block $block Block instance.
 	 * @param string $selector Selector.
 	 * @param array $data Data array.
 	 * @return void
 	 */
-	abstract public static function saveNode(\Bitrix\Landing\Block &$block, $selector, array $data);
+	abstract public static function saveNode(\Bitrix\Landing\Block $block, $selector, array $data);
 
 	/**
 	 * Get data for this node.
-	 * @param \Bitrix\Landing\Block &$block Block instance.
+	 * @param \Bitrix\Landing\Block $block Block instance.
 	 * @param string $selector Selector.
 	 * @return array
 	 */
-	abstract public static function getNode(\Bitrix\Landing\Block &$block, $selector);
+	abstract public static function getNode(\Bitrix\Landing\Block $block, $selector);
 
 	/**
 	 * Prepare item-node of manifest.
@@ -34,6 +34,31 @@ abstract class Node
 	 * @return array|null Return null no delete from manifest.
 	 */
 	//abstract public static function prepareManifest(\Bitrix\Landing\Block $block, array $manifest, array &$manifestFull = array());
+
+	/**
+	 * If exists, means that this node may participate in searching. Must returns content for search.
+	 * @param Block &$block Block instance.
+	 * @param string $selector Selector.
+	 * @return array
+	 */
+	//abstract public static function getSearchableNode($block, $selector);
+
+	/**
+	 * Prepares some content for search.
+	 * @param string $value Text value.
+	 * @return string
+	 */
+	protected static function prepareSearchContent($value)
+	{
+		if (is_string($value))
+		{
+			$value = strip_tags($value);
+			$value = preg_replace('/[\s]{2,}/', ' ', $value);
+			$value = trim($value);
+		}
+
+		return $value;
+	}
 
 	/**
 	 * Prepare field definition for node.

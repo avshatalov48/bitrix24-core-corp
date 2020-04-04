@@ -279,7 +279,7 @@ class CVoxImplantOutgoing
 
 	public static function GetConfigByUserId($userId)
 	{
-		$userId = intval($userId);
+		$userId = (int)$userId;
 		if ($userId > 0)
 		{
 			$viUser = new CVoxImplantUser();

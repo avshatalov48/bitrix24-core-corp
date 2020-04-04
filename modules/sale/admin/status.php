@@ -64,10 +64,15 @@ if (($arID = $lAdmin->GroupAction()) && $saleModulePermissions >= "W")
 
 				if (in_array($ID, $lockedStatusList))
 				{
-					continue;
+					continue 2;
 				}
 
-				$dbRes = Sale\Order::getList([
+				$registry = \Bitrix\Sale\Registry::getInstance(\Bitrix\Sale\Registry::REGISTRY_TYPE_ORDER);
+
+				/** @var Sale\Order $orderClass */
+				$orderClass = $registry->getOrderClassName();
+
+				$dbRes = $orderClass::getList([
 					'select' => ['ID'],
 					'filter' => ['=STATUS_ID' => $ID],
 				]);

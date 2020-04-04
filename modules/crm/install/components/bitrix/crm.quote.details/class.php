@@ -750,6 +750,11 @@ class CCrmQuoteDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 			return $this->entityData;
 		}
 
+		if($this->fileOwnershipData === null)
+		{
+			$this->fileOwnershipData = array();
+		}
+
 		if($this->conversionWizard !== null)
 		{
 			$this->entityData = array();
@@ -938,6 +943,20 @@ class CCrmQuoteDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 					'SIGNATURE' => $fieldSignature,
 					'IS_EMPTY' => false
 				);
+
+				if($fieldData['data']['fieldInfo']['USER_TYPE_ID'] === 'file')
+				{
+					if(!isset($this->fileOwnershipData[$fieldName]))
+					{
+						$this->fileOwnershipData[$fieldName] = array();
+					}
+
+					$values = is_array($fieldValue) ? $fieldValue : array($fieldValue);
+					foreach($values as $value)
+					{
+						$this->fileOwnershipData[$fieldName][$value] = $this->entityID;
+					}
+				}
 			}
 		}
 		//endregion

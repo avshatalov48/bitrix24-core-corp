@@ -2,6 +2,8 @@
 namespace Bitrix\Socialservices;
 
 use \Bitrix\Main\Entity;
+use Bitrix\Main\ORM\Event;
+use Bitrix\Socialservices\EncryptedToken\FieldValue;
 
 
 class UserTable extends Entity\DataManager
@@ -72,16 +74,19 @@ class UserTable extends Entity\DataManager
 				'serizalized' => true,
 			),
 			'OATOKEN' => array(
-				'data_type' => 'string',
+				'data_type' => '\\Bitrix\\Socialservices\\EncryptedToken\\CryptoField',
+				'encryption_complete' => static::cryptoEnabled('OATOKEN')
 			),
 			'OATOKEN_EXPIRES' => array(
 				'data_type' => 'integer',
 			),
 			'OASECRET' => array(
-				'data_type' => 'string',
+				'data_type' => '\\Bitrix\\Socialservices\\EncryptedToken\\CryptoField',
+				'encryption_complete' => static::cryptoEnabled('OASECRET')
 			),
 			'REFRESH_TOKEN' => array(
-				'data_type' => 'string',
+				'data_type' => '\\Bitrix\\Socialservices\\EncryptedToken\\CryptoField',
+				'encryption_complete' => static::cryptoEnabled('REFRESH_TOKEN')
 			),
 			'SEND_ACTIVITY' => array(
 				'data_type' => 'boolean',
@@ -146,7 +151,7 @@ class UserTable extends Entity\DataManager
 		return $fields;
 	}
 
-	public static function onBeforeDelete(Entity\Event $event)
+	public static function onBeforeDelete(Event $event)
 	{
 		$primary = $event->getParameter("primary");
 		$ID = $primary["ID"];
@@ -154,7 +159,7 @@ class UserTable extends Entity\DataManager
 		self::$deletedList[$ID] = $dbRes->fetch();
 	}
 
-	public static function onAfterDelete(Entity\Event $event)
+	public static function onAfterDelete(Event $event)
 	{
 		$primary = $event->getParameter("primary");
 		$ID = $primary["ID"];

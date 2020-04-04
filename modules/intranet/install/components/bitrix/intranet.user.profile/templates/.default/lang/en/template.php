@@ -22,6 +22,8 @@ $MESS["INTRANET_USER_PROFILE_CONTACT_INFO"] = "Contact information";
 $MESS["INTRANET_USER_PROFILE_DELETE"] = "Delete";
 $MESS["INTRANET_USER_PROFILE_DELETE_CONFIRM"] = "Are you sure you want to delete the invited user?";
 $MESS["INTRANET_USER_PROFILE_DESKTOP_APP"] = "Desktop application";
+$MESS["INTRANET_USER_PROFILE_DISK_INSTALLED"] = "Bitrix24.Drive installed";
+$MESS["INTRANET_USER_PROFILE_DISK_SPACE"] = "disk space: #VALUE#";
 $MESS["INTRANET_USER_PROFILE_FIELD_LAST_NAME"] = "Last name";
 $MESS["INTRANET_USER_PROFILE_FIELD_MANAGERS"] = "Supervisor";
 $MESS["INTRANET_USER_PROFILE_FIELD_NAME"] = "First name";
@@ -102,4 +104,6 @@ $MESS["INTRANET_USER_PROFILE_extranet"] = "Extranet";
 $MESS["INTRANET_USER_PROFILE_fired"] = "Dismissed";
 $MESS["INTRANET_USER_PROFILE_integrator"] = "Bitrix24 partner";
 $MESS["INTRANET_USER_PROFILE_invited"] = "Invited";
+$MESS["INTRANET_USER_PROFILE_shop"] = "Web store user";
+$MESS["INTRANET_USER_PROFILE_visitor"] = "Guest";
 ?>

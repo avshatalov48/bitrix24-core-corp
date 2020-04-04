@@ -73,14 +73,16 @@ class Chat
 	public static function getLastMessage($externalChatId, $connector)
 	{
 		$message = ChatLastMessageTable::getList(
-			array(
-				'filter' => array(
-					'EXTERNAL_CHAT_ID' => $externalChatId,
-					'CONNECTOR' => $connector
-				),
+			[
+				'filter' => [
+					'=EXTERNAL_CHAT_ID' => $externalChatId,
+					'=CONNECTOR' => $connector
+				],
 				'limit' => '1',
-				'order' => array('ID' => 'DESC')
-			)
+				'order' => [
+					'ID' => 'DESC'
+				]
+			]
 		)->fetch();
 
 		return $message;

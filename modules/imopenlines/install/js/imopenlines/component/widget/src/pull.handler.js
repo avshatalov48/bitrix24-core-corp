@@ -70,6 +70,7 @@ class WidgetImopenlinesPullCommandHandler
 		this.store.commit('widget/dialog', {
 			sessionId: params.sessionId,
 			sessionClose: false,
+			sessionStatus: 0,
 			userVote: VoteType.none,
 		});
 
@@ -95,17 +96,36 @@ class WidgetImopenlinesPullCommandHandler
 		});
 	}
 
+	handleSessionStatus(params, extra, command)
+	{
+		this.store.commit('widget/dialog', {
+			sessionId: params.sessionId,
+			sessionStatus: params.sessionStatus,
+			sessionClose: true,
+		});
+
+		this.widget.sendEvent({
+			type: SubscriptionType.sessionStatus,
+			data: {
+				sessionId: params.sessionId,
+				sessionStatus: params.sessionStatus
+			}
+		});
+	}
+
 	handleSessionFinish(params, extra, command)
 	{
 		this.store.commit('widget/dialog', {
 			sessionId: params.sessionId,
+			sessionStatus: params.sessionStatus,
 			sessionClose: true,
 		});
 
 		this.widget.sendEvent({
 			type: SubscriptionType.sessionFinish,
 			data: {
-				sessionId: params.sessionId
+				sessionId: params.sessionId,
+				sessionStatus: params.sessionStatus
 			}
 		});
 

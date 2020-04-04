@@ -2,6 +2,7 @@
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Voximplant\Asr\Language;
 
 CJSCore::RegisterExt('voximplant_config_edit', array(
 	'js' => '/bitrix/components/bitrix/voximplant.config.edit/templates/.default/script.js',
@@ -401,7 +402,7 @@ $APPLICATION->IncludeComponent("bitrix:ui.sidepanel.wrappermenu", "", array(
 						<?endif;?>
 					</div>
 					<div class="voximplant-number-settings-inner tel-set-height-animated" data-role="recording-settings"
-						 data-height="370px" style="max-height: <?= $arResult["ITEM"]["RECORDING"] == "Y" ? "370px" : "0"?>">
+						 data-height="470px" style="max-height: <?= $arResult["ITEM"]["RECORDING"] == "Y" ? "470px" : "0"?>">
 						<div class="voximplant-number-settings-text"><?= Loc::getMessage("VI_CONFIG_EDIT_RECORD_TIP_3") ?></div>
 						<div class="ui-alert ui-alert-warning">
 							<span class="ui-alert-message"><?= Loc::getMessage("VI_CONFIG_EDIT_RECORD_TIP2") ?></span>
@@ -433,9 +434,17 @@ $APPLICATION->IncludeComponent("bitrix:ui.sidepanel.wrappermenu", "", array(
 						</div>
 						<div class="voximplant-control-row">
 							<div class="voximplant-control-subtitle"><?= Loc::getMessage("VI_CONFIG_EDIT_TRANSCRIBE_LANGUAGE") ?></div>
-							<select name="TRANSCRIBE_LANG" class="voximplant-control-select">
+							<select name="TRANSCRIBE_LANG" class="voximplant-control-select" data-role="transcribe-language-select">
 								<? foreach ($arResult['TRANSCRIBE_LANGUAGES'] as $languageId => $languageName): ?>
 									<option value="<?= htmlspecialcharsbx($languageId) ?>" <?= ($arResult["ITEM"]["TRANSCRIBE_LANG"] == $languageId ? "selected" : "") ?>><?= htmlspecialcharsbx($languageName) ?></option>
+								<? endforeach ?>
+							</select>
+						</div>
+						<div class="voximplant-control-row tel-set-height-animated" data-role="transcribe-provider-wrap" data-height="120px" style="max-height: <?= $arResult["ITEM"]["TRANSCRIBE_LANG"] == Language::RUSSIAN_RU ? "120px" : "0"?>">
+							<div class="voximplant-control-subtitle"><?= Loc::getMessage("VI_CONFIG_EDIT_TRANSCRIBE_PROVIDER") ?></div>
+							<select name="TRANSCRIBE_PROVIDER" class="voximplant-control-select">
+								<? foreach ($arResult['TRANSCRIBE_PROVIDERS'] as $providerId => $providerName): ?>
+									<option value="<?= htmlspecialcharsbx($providerId) ?>" <?= ($arResult["ITEM"]["TRANSCRIBE_PROVIDER"] == $providerId ? "selected" : "") ?>><?= htmlspecialcharsbx($providerName) ?></option>
 								<? endforeach ?>
 							</select>
 						</div>
@@ -706,7 +715,7 @@ $APPLICATION->IncludeComponent("bitrix:ui.sidepanel.wrappermenu", "", array(
 									"ID" => "voximplant-line-access",
 									"LIST" => $arResult["ITEM"]["LINE_ACCESS"],
 									"INPUT_NAME" => "LINE_ACCESS[]",
-									"USE_SYMBOLIC_ID" => "Y",
+									"USE_SYMBOLIC_ID" => true,
 									"SELECTOR_OPTIONS" => [
 										"departmentSelectDisable" => "N",
 									]

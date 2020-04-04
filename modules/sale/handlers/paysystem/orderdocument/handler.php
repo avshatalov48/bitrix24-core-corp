@@ -54,6 +54,10 @@ class OrderDocumentHandler
 
 		$documentInfo = $document->getFile()->getData();
 		$params = array_merge($documentInfo, DocumentGenerator\Model\ExternalLinkTable::getPublicUrlsByDocumentId($document->ID));
+		if(!empty($params['hash']))
+		{
+			$params['isPublicMode'] = true;
+		}
 		if ($this->service->getField('NEW_WINDOW') === 'Y')
 		{
 			$params['IFRAME'] = 'Y';
@@ -69,7 +73,7 @@ class OrderDocumentHandler
 	 */
 	public function getCurrencyList()
 	{
-		return array('RUB');
+		return [];
 	}
 
 	/**

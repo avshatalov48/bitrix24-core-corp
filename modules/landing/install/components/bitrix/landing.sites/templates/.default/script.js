@@ -173,7 +173,15 @@
 							}
 							else
 							{
-								BX.onCustomEvent('BX.Main.Filter:apply');
+								if (top.window !== window)
+								{
+									// we are in slider
+									window.location.reload();
+								}
+								else
+								{
+									BX.onCustomEvent('BX.Landing.Filter:apply');
+								}
 							}
 						}
 					}
@@ -225,7 +233,7 @@
 										function()
 										{
 											this.transferPopup.close();
-											BX.onCustomEvent('BX.Main.Filter:apply');
+											BX.onCustomEvent('BX.Landing.Filter:apply');
 										}.bind(this)
 									);
 								}.bind(this)

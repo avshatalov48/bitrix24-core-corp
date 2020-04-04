@@ -9,6 +9,7 @@ return [
 	'js' => 'dist/backend.bundle.js',
 	'rel' => [
 		'main.core',
+		'landing.env',
 	],
 	'skip_core' => false,
 ];

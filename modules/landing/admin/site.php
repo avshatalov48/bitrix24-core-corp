@@ -274,6 +274,7 @@ if ($cmp == 'landing_edit')
 			'bitrix:landing.landing_edit',
 			'.default',
 			array(
+				'TYPE' => $type,
 				'SITE_ID' => $siteId,
 				'LANDING_ID' => $landing,
 				'PAGE_URL_LANDINGS' => $landingsPage,

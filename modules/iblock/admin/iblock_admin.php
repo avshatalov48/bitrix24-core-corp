@@ -129,7 +129,7 @@ if($lAdmin->EditAction())
 
 if($arID = $lAdmin->GroupAction())
 {
-	if($_REQUEST['action_target']=='selected')
+	if($lAdmin->IsGroupActionToAll())
 	{
 		$rsIBlocks = CIBlock::GetList($arOrder, $arFilter);
 		while($arRes = $rsIBlocks->Fetch())

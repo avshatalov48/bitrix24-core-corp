@@ -434,7 +434,7 @@ class Parser
 			// Check leading digits first
 			if(isset($countryMetadata['leadingDigits']))
 			{
-				$leadingDigitsRegex = '/^'.$countryMetadata['leadingDigits'].'/';
+				$leadingDigitsRegex = '/^('.$countryMetadata['leadingDigits'].')/';
 				if(preg_match($leadingDigitsRegex, $localNumber))
 				{
 					return $possibleCountry;

@@ -82,6 +82,9 @@
 			this.documentSigned = this.data.DOCUMENT_SIGNED;
 
 			this.bizprocEditorUrl = this.data.WORKFLOW_EDIT_URL;
+			this.constantsEditorUrl = this.data.CONSTANTS_EDIT_URL || null;
+			this.parametersEditorUrl = this.data.PARAMETERS_EDIT_URL || null;
+
 			this.documentStatuses = this.data.DOCUMENT_STATUS_LIST;
 			this.statusesSort = [];
 			for(var i = 0; i < this.documentStatuses.length; ++i)
@@ -329,7 +332,7 @@
 				ajax_action: 'save_automation',
 				document_signed: this.documentSigned,
 				triggers: this.triggerManager.serialize(),
-				templates: this.templateManager.serialize()
+				templates: this.templateManager.serialize(),
 			};
 
 			return BX.ajax({
@@ -630,7 +633,11 @@
 					this.createAddButton();
 
 				if (this.getTemplateId() > 0)
+				{
+					this.createConstantsEditButton();
+					this.createParametersEditButton();
 					this.createExternalEditTemplateButton();
+				}
 			}
 
 			if (this.viewMode === Component.ViewMode.View && this.component.canEdit())
@@ -687,26 +694,84 @@
 				return false;
 			}
 
+			var url = this.manager.component.bizprocEditorUrl.replace('#ID#', this.getTemplateId());
+
 			var me = this,
 				anchor = BX.create('a', {
 				text: BX.message('BIZPROC_AUTOMATION_CMP_EXTERNAL_EDIT'),
 				props: {
-					href: '#'
+					href: url
 				},
 				events: {
 					click: function(e)
 					{
-						e.preventDefault();
-						me.onExternalEditTemplateButtonClick(this);
+						if (!url.length)
+						{
+							e.preventDefault();
+							me.onExternalEditTemplateButtonClick(this);
+						}
 					}
 				},
-				attrs: { className: "bizproc-automation-robot-btn-set" }
+				attrs: {
+					className: "bizproc-automation-robot-btn-set",
+					target: '_top'
+				}
 			});
 
 			if (!this.manager.component.bizprocEditorUrl.length)
 			{
 				BX.addClass(anchor, 'bizproc-automation-robot-btn-set-locked');
 			}
+
+			this.buttonsNode.appendChild(anchor);
+		},
+		createConstantsEditButton: function()
+		{
+			if (this.manager.component.constantsEditorUrl === null)
+			{
+				return false;
+			}
+
+			var url = this.manager.component.constantsEditorUrl.replace('#ID#', this.getTemplateId());
+
+			if (!url.length)
+			{
+				return false;
+			}
+
+			var me = this,
+				anchor = BX.create('a', {
+				text: BX.message('BIZPROC_AUTOMATION_CMP_CONSTANTS_EDIT'),
+				props: {
+					href: url
+				},
+				attrs: { className: "bizproc-automation-robot-btn-set" }
+			});
+
+			this.buttonsNode.appendChild(anchor);
+		},
+		createParametersEditButton: function()
+		{
+			if (this.manager.component.parametersEditorUrl === null)
+			{
+				return false;
+			}
+
+			var url = this.manager.component.parametersEditorUrl.replace('#ID#', this.getTemplateId());
+
+			if (!url.length)
+			{
+				return false;
+			}
+
+			var me = this,
+				anchor = BX.create('a', {
+				text: BX.message('BIZPROC_AUTOMATION_CMP_PARAMETERS_EDIT'),
+				props: {
+					href: url
+				},
+				attrs: { className: "bizproc-automation-robot-btn-set" }
+			});
 
 			this.buttonsNode.appendChild(anchor);
 		},
@@ -2028,7 +2093,7 @@
 		},
 		clipTitle: function (fullTitle)
 		{
-			var title = fullTitle;
+			var title = BX.util.htmlspecialchars(fullTitle);
 			var arrTitle = title.split(" ");
 			var lastWord = "<span>" + arrTitle[arrTitle.length - 1] + "</span>";
 
@@ -2050,6 +2115,7 @@
 		serialize: function()
 		{
 			var result = BX.clone(this.data);
+			delete result['viewData'];
 
 			var fixData = function(data)
 			{
@@ -2068,6 +2134,10 @@
 						else if (BX.type.isPlainObject(data[key]))
 						{
 							fixData(data[key]);
+						}
+						else if (BX.type.isArray(data[key]) && !data[key].length)
+						{
+							data[key] = '';
 						}
 					}
 				}
@@ -4148,7 +4218,8 @@
 
 			var skipId = this.robot.getId();
 			var robotResults = [];
-			var templateRobots = this.robot.template ? this.robot.template.robots : [];
+			var tpl = this.robot.template;
+			var templateRobots = tpl ? tpl.robots : [];
 
 			templateRobots.forEach(function(robot)
 			{
@@ -4179,6 +4250,72 @@
 					text: BX.message('BIZPROC_AUTOMATION_CMP_ROBOT_LIST'),
 					items: robotResults
 				};
+			}
+
+			if (tpl && tpl.data.PARAMETERS)
+			{
+				var parameterList = [];
+				Object.keys(tpl.data.PARAMETERS).forEach(function(paramId)
+				{
+					var param = tpl.data.PARAMETERS[paramId];
+					parameterList.push({
+						text: param['Name'],
+						field: {Expression: '{=Parameter:'+paramId+'}'},
+						onclick: itemClickHandler
+					});
+				});
+
+				if (parameterList.length)
+				{
+					menuGroups['__PARAMETERS'] = {
+						text: BX.message('BIZPROC_AUTOMATION_CMP_PARAMETERS_LIST'),
+						items: parameterList
+					};
+				}
+			}
+
+			if (tpl && tpl.data.CONSTANTS)
+			{
+				var constantList = [];
+				Object.keys(tpl.data.CONSTANTS).forEach(function(paramId)
+				{
+					var param = tpl.data.CONSTANTS[paramId];
+					constantList.push({
+						text: param['Name'],
+						field: {Expression: '{=Constant:'+paramId+'}'},
+						onclick: itemClickHandler
+					});
+				});
+
+				if (constantList.length)
+				{
+					menuGroups['__CONSTANTS'] = {
+						text: BX.message('BIZPROC_AUTOMATION_CMP_CONSTANTS_LIST'),
+						items: constantList
+					};
+				}
+			}
+
+			if (this.component && this.component.data['GLOBAL_CONSTANTS'])
+			{
+				var globalConstantList = [];
+				Object.keys(this.component.data['GLOBAL_CONSTANTS']).forEach(function(paramId)
+				{
+					var param = this.component.data['GLOBAL_CONSTANTS'][paramId];
+					globalConstantList.push({
+						text: param['Name'],
+						field: {Expression: '{=GlobalConst:'+paramId+'}'},
+						onclick: itemClickHandler
+					});
+				}, this);
+
+				if (globalConstantList.length)
+				{
+					menuGroups['__GLOB_CONSTANTS'] = {
+						text: BX.message('BIZPROC_AUTOMATION_CMP_GLOB_CONSTANTS_LIST'),
+						items: globalConstantList
+					};
+				}
 			}
 
 			if (Object.keys(menuGroups).length < 2)
@@ -4784,8 +4921,7 @@
 */
 			//init modern Help tips
 			BX.UI.Hint.init(form);
-
-			var popup = new BX.PopupWindow('bizproc-automation-popup-set', this.labelNode, {
+			var popup = new BX.PopupWindow(Component.generateUniqueId(), this.labelNode, {
 				autoHide: true,
 				closeByEsc: true,
 				closeIcon: false,
@@ -4817,6 +4953,7 @@
 						{
 							me.valueTypeMenu.popupWindow.close();
 						}
+						this.destroy();
 					}
 				},
 				overlay: { backgroundColor: 'transparent' }
@@ -6069,7 +6206,10 @@
 						}
 					})
 				],
-				overlay: { backgroundColor: 'transparent' }
+				overlay: { backgroundColor: 'transparent' },
+				events: {
+					onPopupClose: function() {this.destroy()}
+				}
 			});
 
 			popup.show()

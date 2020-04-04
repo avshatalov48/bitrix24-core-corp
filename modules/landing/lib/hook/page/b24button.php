@@ -3,7 +3,7 @@ namespace Bitrix\Landing\Hook\Page;
 
 use \Bitrix\Landing\Field;
 use \Bitrix\Main\Localization\Loc;
-use Bitrix\Crm\SiteButton\Preset;
+use \Bitrix\Crm\SiteButton\Preset;
 
 Loc::loadMessages(__FILE__);
 

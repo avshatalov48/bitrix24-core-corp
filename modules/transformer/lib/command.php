@@ -26,6 +26,8 @@ class Command
 	const STATUS_ERROR = 1000;
 
 	const ERROR_CONNECTION = 50;
+	const ERROR_CONNECTION_COUNT = 51;
+	const ERROR_CONNECTION_RESPONSE = 60;
 	const ERROR_CONTROLLER_DOWNLOAD_STATUS = 100;
 	const ERROR_CONTROLLER_DOWNLOAD_TYPE = 101;
 	const ERROR_CONTROLLER_DOWNLOAD_SIZE = 102;
@@ -132,7 +134,7 @@ class Command
 		}
 		else
 		{
-			$result = $this->processError($response['result']['msg'], $response['result']['code']);
+			$result = $this->processError($response['result']['code'], $response['result']['msg']);
 		}
 		return $result;
 	}
@@ -166,6 +168,7 @@ class Command
 		}
 		$count = count($this->callback);
 		$success = 0;
+		$result['command'] = $this;
 		foreach($this->callback as $callback)
 		{
 			if(is_a($callback, 'Bitrix\Transformer\InterfaceCallback', true))
@@ -254,19 +257,31 @@ class Command
 	/**
 	 * Write error message to log, update status of the command, call callback with error status.
 	 *
-	 * @param string $error Error text.
 	 * @param int $errorCode
+	 * @param string $message
 	 * @return Result
 	 * @throws \Bitrix\Main\ObjectException
 	 */
-	protected function processError($error, $errorCode = 0)
+	protected function processError($errorCode = 0, $message = '')
 	{
+		if(!$errorCode)
+		{
+			$errorCode = Command::ERROR_CONTROLLER_UNKNOWN_ERROR;
+		}
+		if(!$message && $errorCode > 0)
+		{
+			$message = $this->getErrorMessages()[$errorCode];
+		}
+		if(!$message)
+		{
+			$message = $this->getErrorMessages()[Command::ERROR_CONTROLLER_UNKNOWN_ERROR];
+		}
 		$result = new Result();
-		$result->addError(new Error($error));
-		Log::write($error);
+		$result->addError(new Error($message, $errorCode));
+		Log::write($message);
 		if($this->id > 0)
 		{
-			$this->updateStatus(self::STATUS_ERROR, $error, $errorCode);
+			$this->updateStatus(self::STATUS_ERROR, $message, $errorCode);
 		}
 		if(!empty($this->callback))
 		{
@@ -466,6 +481,8 @@ class Command
 	{
 		return [
 			static::ERROR_CONNECTION => Loc::getMessage('TRANSFORMER_COMMAND_ERROR_CONNECTION'),
+			static::ERROR_CONNECTION_COUNT => Loc::getMessage('TRANSFORMER_COMMAND_ERROR_CONNECTION_COUNT'),
+			static::ERROR_CONNECTION_RESPONSE => Loc::getMessage('TRANSFORMER_COMMAND_ERROR_CONNECTION_RESPONSE'),
 			static::ERROR_CONTROLLER_DOWNLOAD_STATUS => Loc::getMessage('TRANSFORMER_COMMAND_ERROR_DOWNLOAD_STATUS'),
 			static::ERROR_CONTROLLER_DOWNLOAD_TYPE => Loc::getMessage('TRANSFORMER_COMMAND_ERROR_DOWNLOAD_TYPE'),
 			static::ERROR_CONTROLLER_DOWNLOAD_SIZE => Loc::getMessage('TRANSFORMER_COMMAND_ERROR_DOWNLOAD_SIZE'),

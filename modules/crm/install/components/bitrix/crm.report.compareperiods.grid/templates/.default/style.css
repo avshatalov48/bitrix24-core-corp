@@ -1,0 +1,75 @@
+.crm-report-salesdynamics-grid {}
+.crm-report-salesdynamics-grid-user,
+.crm-report-salesdynamics-grid-user-name {
+	display: flex;
+	align-items: center;
+}
+
+.crm-report-salesdynamics-grid-user-icon.ui-icon,
+.crm-report-salesdynamics-grid-company-icon.ui-icon {
+	display: inline-block;
+	margin: 0 9px 0 0;
+	width: 23px;
+	height: 23px;
+	border-radius: 100%;
+}
+
+.crm-report-salesdynamics-grid-user-name {
+	max-width: 100%;
+	font: bold 14px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	color: #2066B0;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	overflow: hidden;
+}
+
+.crm-report-salesdynamics-grid-total {
+	font: bold 14px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	color: #2066B0;
+}
+
+.crm-report-salesdynamics-bold {
+	font: bold 14px "Helvetica Neue", Arial, Helvetica, sans-serif;
+}
+
+.crm-report-salesdynamics-right {
+	text-align: right;
+}
+
+.crm-report-salesdynamics-grid-rating {
+	display: flex;
+	align-items: center;
+}
+.crm-report-salesdynamics-grid-rating-icon {
+	display: inline-block;
+	margin: 0 8px 0 0;
+	width: 10px;
+	height: 10px;
+	border-radius: 100%;
+	opacity: 0.6;
+}
+.crm-report-salesdynamics-grid-rating-value {
+	display: inline-block;
+	margin: 0 8px 0 0;
+	padding: 0 8px 0 0;
+	border-right: 1px solid rgba(82,92,105,.17);
+	font: 13px/10px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	color: #364150;
+}
+.crm-report-salesdynamics-grid-rating-text {
+	font: 10px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	text-transform: uppercase;
+}
+
+.crm-report-salesdynamics-grid-value {
+	display: inline-block;
+}
+
+.crm-report-salesdynamics-grid-value-clickable {
+	cursor: pointer;
+}
+
+.crm-report-salesdynamics-grid-value-clickable:hover {
+	color: #2066B0;
+	border-bottom: 1px dashed #2066B0;
+}

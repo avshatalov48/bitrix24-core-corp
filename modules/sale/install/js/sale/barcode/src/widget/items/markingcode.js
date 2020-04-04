@@ -1,4 +1,4 @@
-import {Tag} from 'main.core';
+import {Tag, Event} from 'main.core';
 
 export default class Markingcode
 {
@@ -6,6 +6,8 @@ export default class Markingcode
 	{
 		this._id = props.id || 0;
 		this._value = props.value || '';
+		this._readonly = props.readonly;
+		this._eventEmitter = new Event.EventEmitter();
 	}
 
 	get id()
@@ -20,11 +22,21 @@ export default class Markingcode
 
 	render()
 	{
-		return Tag.render`<input type="text" value="${this._value}" onchange="${this.onChange.bind(this)}">`;
+		let readonly = this._readonly ? ' readonly="readonly"' : '',
+			input = Tag.render`<input type="text" onchange="${this.onChange.bind(this)}"${readonly}>`;
+
+		input.value = this._value;
+		return input;
 	}
 
 	onChange(e)
 	{
 		this._value = e.target.value;
+		this._eventEmitter.emit('onChange', this);
+	}
+
+	onChangeSubscribe(callback)
+	{
+		this._eventEmitter.subscribe('onChange', callback);
 	}
 }

@@ -1,0 +1,29 @@
+<?
+$MESS["LOG_TYPE_DOCUMENTS"] = "Document Library";
+$MESS["LOG_TYPE_ELEMENT_ADD"] = "Add file";
+$MESS["LOG_TYPE_SECTION_ADD"] = "Create folder";
+$MESS["LOG_TYPE_ELEMENT_DELETE"] = "Delete file";
+$MESS["LOG_TYPE_SECTION_DELETE"] = "Delete folder";
+$MESS["LOG_TYPE_ELEMENT_TRASH"] = "Move file to recycle bin";
+$MESS["LOG_TYPE_SECTION_TRASH"] = "Move folder to recycle bin";
+$MESS["LOG_TYPE_ELEMENT_RESTORE"] = "Restore file from recycle bin";
+$MESS["LOG_TYPE_SECTION_RESTORE"] = "Restore folder from recycle bin";
+$MESS["LOG_TYPE_ELEMENT_MOVE"] = "Move file";
+$MESS["LOG_TYPE_SECTION_MOVE"] = "Move folder";
+$MESS["LOG_TYPE_ELEMENT_RENAME"] = "Rename file";
+$MESS["LOG_TYPE_SECTION_RENAME"] = "Rename folder";
+$MESS["LOG_TYPE_ELEMENT_UPDATE"] = "Update file";
+$MESS["LOG_WEBDAV_ELEMENT_ADD"] = "File #NAME# added";
+$MESS["LOG_WEBDAV_SECTION_ADD"] = "Folder #NAME# added";
+$MESS["LOG_WEBDAV_ELEMENT_DELETE"] = "File #NAME# deleted";
+$MESS["LOG_WEBDAV_SECTION_DELETE"] = "Folder #NAME# deleted";
+$MESS["LOG_WEBDAV_ELEMENT_TRASH"] = "File #NAME# moved to recycle bin";
+$MESS["LOG_WEBDAV_SECTION_TRASH"] = "Folder #NAME# moved to recycle bin";
+$MESS["LOG_WEBDAV_ELEMENT_RESTORE"] = "File #NAME# restored";
+$MESS["LOG_WEBDAV_SECTION_RESTORE"] = "Folder #NAME# restored";
+$MESS["LOG_WEBDAV_ELEMENT_MOVE"] = "File #NAME# moved to \"#MOVE_TO#\"";
+$MESS["LOG_WEBDAV_SECTION_MOVE"] = "Folder #NAME# moved to \"#MOVE_TO#\"";
+$MESS["LOG_WEBDAV_ELEMENT_RENAME"] = "File #NAME# renamed to #NAME#";
+$MESS["LOG_WEBDAV_SECTION_RENAME"] = "Folder #NAME# renamed to #NAME#";
+$MESS["LOG_WEBDAV_ELEMENT_UPDATE"] = "File #NAME# updated";
+?>

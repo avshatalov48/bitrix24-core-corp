@@ -140,6 +140,7 @@ abstract class Mailbox
 		$this->setCheckpoint();
 
 		$this->session = md5(uniqid(''));
+		$this->errors = new Main\ErrorCollection();
 		$this->warnings = new Main\ErrorCollection();
 	}
 
@@ -221,7 +222,7 @@ abstract class Mailbox
 		$this->session = md5(uniqid(''));
 
 		$count = $this->syncInternal();
-		$success = $count !== false && empty($this->errors);
+		$success = $count !== false && $this->errors->isEmpty();
 
 		$syncUnlock = $this->isTimeQuotaExceeded() ? 0 : -1;
 
@@ -248,9 +249,14 @@ abstract class Mailbox
 		$this->mailbox['OPTIONS']['sync_errors'] = $syncErrors;
 		$this->mailbox['OPTIONS']['next_sync'] = time() + $interval;
 
+		$optionsValue = $this->mailbox['OPTIONS'];
+		unset($optionsValue['imap']['dirsMd5']);
 		$unlockSql = sprintf(
 			"UPDATE b_mail_mailbox SET SYNC_LOCK = %d, OPTIONS = '%s' WHERE ID = %u AND SYNC_LOCK = %u",
-			$syncUnlock, $DB->forSql(serialize($this->mailbox['OPTIONS'])), $this->mailbox['ID'], $this->mailbox['SYNC_LOCK']
+			$syncUnlock,
+			$DB->forSql(serialize($optionsValue)),
+			$this->mailbox['ID'],
+			$this->mailbox['SYNC_LOCK']
 		);
 		if ($DB->query($unlockSql)->affectedRowsCount())
 		{
@@ -607,18 +613,7 @@ abstract class Mailbox
 	{
 		if (empty($params['origin']) && empty($params['replaces']))
 		{
-			$params['lazy_attachments'] = true;
-
-			foreach ($this->getFilters() as $filter)
-			{
-				foreach ($filter['__actions'] as $action)
-				{
-					if (empty($action['LAZY_ATTACHMENTS']))
-					{
-						$params['lazy_attachments'] = false;
-					}
-				}
-			}
+			$params['lazy_attachments'] = $this->isSupportLazyAttachments();
 		}
 
 		return \CMailMessage::addMessage(
@@ -664,6 +659,7 @@ abstract class Mailbox
 			),
 			array(
 				'outcome' => true,
+				'draft' => false,
 				'trash' => false,
 				'spam' => false,
 				'seen' => true,
@@ -967,6 +963,35 @@ abstract class Mailbox
 		return false;
 	}
 
+	public function downloadAttachments(array &$excerpt)
+	{
+		$body = $this->downloadMessage($excerpt);
+		if (!empty($body))
+		{
+			list(,,, $attachments) = \CMailMessage::parseMessage($body, $this->mailbox['LANG_CHARSET']);
+
+			return $attachments;
+		}
+
+		return false;
+	}
+
+	public function isSupportLazyAttachments()
+	{
+		foreach ($this->getFilters() as $filter)
+		{
+			foreach ($filter['__actions'] as $action)
+			{
+				if (empty($action['LAZY_ATTACHMENTS']))
+				{
+					return false;
+				}
+			}
+		}
+
+		return true;
+	}
+
 	public function getFilters($force = false)
 	{
 		if (is_null($this->filters) || $force)
@@ -1196,8 +1221,8 @@ abstract class Mailbox
 	}
 
 	abstract protected function syncInternal();
-	abstract protected function uploadMessage(Main\Mail\Mail $message, array $excerpt);
-	abstract protected function downloadMessage(array &$excerpt);
+	abstract public function uploadMessage(Main\Mail\Mail $message, array &$excerpt);
+	abstract public function downloadMessage(array &$excerpt);
 
 	public function getErrors()
 	{

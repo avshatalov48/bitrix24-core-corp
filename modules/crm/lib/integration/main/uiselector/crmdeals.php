@@ -244,7 +244,8 @@ class CrmDeals extends \Bitrix\Main\UI\Selector\EntityBase
 				[],
 				[
 					'SEARCH_CONTENT' => $search,
-					'%TITLE' => $search
+					'%TITLE' => $search,
+					'__ENABLE_SEARCH_CONTENT_PHONE_DETECTION' => false
 				],
 				false,
 				['nTopCount' => 20],

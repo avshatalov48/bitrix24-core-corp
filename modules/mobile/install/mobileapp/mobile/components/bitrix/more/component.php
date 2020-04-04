@@ -41,7 +41,7 @@ $ttl = (defined("BX_COMP_MANAGED_CACHE") ? 2592000 : 600);
 $extEnabled = IsModuleInstalled('extranet');
 $menuSavedModificationTime = \Bitrix\Main\Config\Option::get("mobile", "jscomponent.menu.date.modified.user_" . $userId, 0);
 $menuFile = new \Bitrix\Main\IO\File($this->path . ".mobile_menu.php");
-$version = \Bitrix\MobileApp\Janative\Manager::getComponentVersion("more");
+$version = $this->getVersion();
 $menuModificationTime = $menuFile->getModificationTime();
 $cacheIsActual = ($menuModificationTime == $menuSavedModificationTime);
 if (!$cacheIsActual)

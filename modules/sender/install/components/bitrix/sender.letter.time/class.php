@@ -25,6 +25,7 @@ class SenderLetterTimeComponent extends CBitrixComponent
 {
 	/** @var ErrorCollection $errors */
 	protected $errors;
+	protected $user_errors = [];
 
 	/** @var Entity\Letter $letter */
 	protected $letter;
@@ -73,6 +74,11 @@ class SenderLetterTimeComponent extends CBitrixComponent
 			$code = 'time';
 		}
 
+		$userId = Security\User::current()->getId();
+		if ($userId)
+		{
+			$this->letter->set('UPDATED_BY', $userId);
+		}
 		$method = $this->letter->getMethod();
 		if ($method->canChange())
 		{
@@ -124,6 +130,12 @@ class SenderLetterTimeComponent extends CBitrixComponent
 
 			if ($this->letter->hasErrors())
 			{
+				foreach ($this->letter->getErrorCollection() as $error)
+				{
+					/** @var \Bitrix\Main\Error $error Error. */
+					if ($error->getCode())
+						$this->user_errors[] = $error;
+				}
 				$this->errors->add($this->letter->getErrors());
 				return;
 			}
@@ -185,6 +197,7 @@ class SenderLetterTimeComponent extends CBitrixComponent
 		{
 			$this->preparePost();
 			$this->printErrors();
+			$this->arResult['USER_ERRORS'] = $this->user_errors;
 		}
 
 		$this->arResult['SUBMIT_FORM_URL'] = Context::getCurrent()->getRequest()->getRequestUri();
@@ -248,7 +261,10 @@ class SenderLetterTimeComponent extends CBitrixComponent
 	{
 		foreach ($this->errors as $error)
 		{
-			ShowError($error);
+			if (!in_array($error, $this->user_errors))
+			{
+				ShowError($error);
+			}
 		}
 	}
 

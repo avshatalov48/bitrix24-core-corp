@@ -58,9 +58,7 @@ class FinishStep extends \FinishStep
 	 */
 	public function showStep()
 	{
-		if (!CrmEntityCreatorStepper::isAgent()
-			&& !CrmEntityCreatorStepper::isFinished()
-		)
+		if (!$this->component->isSaleCrmSiteMasterFinish())
 		{
 			$this->component->setSaleCrmSiteMasterFinish();
 			$this->component->setSaleCrmSiteMasterStub();
@@ -78,6 +76,9 @@ class FinishStep extends \FinishStep
 			CrmEntityCreatorStepper::registerEventHandler();
 
 			SitePatcher::saveConfig1C();
+
+			// enable composite
+			SitePatcher::enableComposite();
 		}
 
 		ob_start();

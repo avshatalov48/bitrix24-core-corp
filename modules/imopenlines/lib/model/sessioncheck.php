@@ -79,6 +79,7 @@ class SessionCheckTable extends DataManager
 					'NOT_AVAILABLE',
 					'DEFAULT'
 				],
+				'default_value' => 'DEFAULT',
 			]),
 			new BooleanField('UNDISTRIBUTED', [
 				'values' => ['N', 'Y'],

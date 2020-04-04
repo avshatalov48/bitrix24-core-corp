@@ -289,11 +289,12 @@ array_unshift($tab["fields"], array(
 											endif;
 											?>
 											<div class="avatar"<?if(!empty($item["avatar"])):?> style="background-image:url('<?=htmlspecialcharsbx($item["avatar"])?>')"<?endif;?>></div>
-											<?/*
-                                            <span onclick="BXMobileApp.PageManager.loadPageBlank({url: '<?=str_replace("#ID#", $item["id"], $url)?>',bx24ModernStyle : true});"><?=htmlspecialcharsbx($item["name"])?></span>
-                                            */?>
-                                            <span onclick="BXMobileApp.Events.postToComponent('onUserProfileOpen', [<?=$item["id"]?>], 'communication');"><?=htmlspecialcharsbx($item["name"])?></span>
-										</div><?
+											<?php if ($field['type'] === 'select-user'):?>
+												<span onclick="BXMobileApp.Events.postToComponent('onUserProfileOpen', [<?=$item["id"]?>], 'communication');"><?=htmlspecialcharsbx($item["name"])?></span>
+											<?php else:?>
+												<span onclick="BXMobileApp.PageManager.loadPageBlank({url: '<?=str_replace("#ID#", $item["id"], $url)?>',bx24ModernStyle: true});"><?=htmlspecialcharsbx($item["name"])?></span>
+											<?php endif;?>
+										</div><?php
 									}
 									$users = ob_get_clean();
 									$html = "<select class=\"mobile-grid-data-select\" name=\"{$field["id"]}\" data-bx-type=\"{$field["type"]}\" bx-can-drop=\"".($field["canDrop"] === false ? "false" : "")."\" id=\"{$field["~id"]}\"{$params}>".$html."</select>".
@@ -311,11 +312,12 @@ array_unshift($tab["fields"], array(
 										$item = array_change_key_case($field["item"], CASE_LOWER);
 										?><div class="mobile-grid-field-select-user-item">
 											<div class="avatar"<?if(!empty($item["avatar"])):?> style="background-image:url('<?=htmlspecialcharsbx($item["avatar"])?>')"<?endif;?>></div>
-                                        <?/*
-                                        <span onclick="BXMobileApp.PageManager.loadPageBlank({url: '<?=str_replace("#ID#", $item["id"], $url)?>',bx24ModernStyle : true});"><?=htmlspecialcharsbx($item["name"])?></span>
-                                        */?>
-                                        <span onclick="BXMobileApp.Events.postToComponent('onUserProfileOpen', [<?=$item["id"]?>], 'communication');"><?=htmlspecialcharsbx($item["name"])?></span>
-										</div><?
+											<?php if ($field['type'] === 'user'):?>
+												<span onclick="BXMobileApp.Events.postToComponent('onUserProfileOpen', [<?=$item["id"]?>], 'communication');"><?=htmlspecialcharsbx($item["name"])?></span>
+											<?php else:?>
+												<span onclick="BXMobileApp.PageManager.loadPageBlank({url: '<?=str_replace("#ID#", $item["id"], $url)?>',bx24ModernStyle: true});"><?=htmlspecialcharsbx($item["name"])?></span>
+											<?php endif;?>
+										</div><?php
 									}
 									$users = ob_get_clean();
 									$html = "<div class=\"mobile-grid-field-select-user-container\">".$users."</div>";
@@ -347,12 +349,21 @@ array_unshift($tab["fields"], array(
 												endif;
 												?>
 												<div class="avatar"<?if (!empty($item["avatar"])): ?> style="background-image:url('<?=htmlspecialcharsbx($item["avatar"])?>')"<? endif; ?>></div>
-												<span onclick="BXMobileApp.PageManager.loadPageBlank({url: '<?=str_replace("#ID#", $item["id"], $url)?>',bx24ModernStyle:true});"><?=htmlspecialcharsbx($item["name"])?></span>
-											</div><?
+												<?php if ($field['type'] === 'select-user'):?>
+													<span onclick="BXMobileApp.Events.postToComponent('onUserProfileOpen', [<?=$item["id"]?>], 'communication');"><?=htmlspecialcharsbx($item["name"])?></span>
+												<?php else:?>
+													<span onclick="BXMobileApp.PageManager.loadPageBlank({url: '<?=str_replace("#ID#", $item["id"], $url)?>',bx24ModernStyle: true});"><?=htmlspecialcharsbx($item["name"])?></span>
+												<?php endif;?>
+											</div><?php
 										}
 									}
 									$users = ob_get_clean();
 
+									$addButton = (
+										!isset($field['canAdd']) || $field['canAdd']
+											? "<a class=\"mobile-grid-button select-user add\" id=\"{$field["~id"]}_select\" href=\"#\">".GetMessage("interface_form_add")."</a>"
+											: ''
+									);
 									$html = "<select class=\"mobile-grid-data-select\"  name=\"{$field["id"]}\" data-bx-type=\"{$field["type"]}\" bx-can-drop=\"".($field["canDrop"] === false ? "false" : "")."\" id=\"{$field["~id"]}\" multiple {$params}>".$html."</select>".
 										"<div class=\"mobile-grid-field-select-user-wrap\">".
 											"<input value=\"$u\" type=\"checkbox\" id=\"expand_{$field["~id"]}\" />".
@@ -362,7 +373,7 @@ array_unshift($tab["fields"], array(
 												"<span class=\"checked\">".GetMessage("interface_form_hide")."</span>".
 											"</label>".
 										"</div>".
-										"<a class=\"mobile-grid-button select-user add\" id=\"{$field["~id"]}_select\" href=\"#\">".GetMessage("interface_form_add")."</a>";
+										$addButton;
 									break;
 								case 'groups':
 								case 'users':
@@ -381,7 +392,11 @@ array_unshift($tab["fields"], array(
 
 											?><div class="mobile-grid-field-select-user-item">
 												<div class="avatar"<?if (!empty($item["avatar"])): ?> style="background-image:url('<?=htmlspecialcharsbx($item["avatar"])?>')"<? endif; ?>></div>
-												<span onclick="BXMobileApp.PageManager.loadPageBlank({url: '<?=str_replace("#ID#", $item["id"], $url)?>',bx24ModernStyle:true});"><?=htmlspecialcharsbx($item["name"])?></span>
+												<?php if ($field['type'] === 'users'):?>
+													<span onclick="BXMobileApp.Events.postToComponent('onUserProfileOpen', [<?=$item["id"]?>], 'communication');"><?=htmlspecialcharsbx($item["name"])?></span>
+												<?php else:?>
+													<span onclick="BXMobileApp.PageManager.loadPageBlank({url: '<?=str_replace("#ID#", $item["id"], $url)?>',bx24ModernStyle : true});"><?=htmlspecialcharsbx($item["name"])?></span>
+												<?php endif;?>
 											</div><?
 										}
 									}

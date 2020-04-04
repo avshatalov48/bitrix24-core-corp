@@ -296,15 +296,12 @@ class CCrmTimelineComponent extends CBitrixComponent
 		}
 		$this->arResult['SMS_CONFIG']['isDocumentsEnabled'] = $this->arResult['ENABLE_DOCUMENTS'];
 
-		$this->arResult['ENABLE_FILES'] = Main\Loader::includeModule('disk');
+        $this->arResult['SHOW_FILES_FEATURE'] = false;
+		$this->arResult['ENABLE_FILES'] = (Main\Loader::includeModule('disk') && \Bitrix\Disk\Configuration::isPossibleToShowExternalLinkControl());
 		if($this->arResult['ENABLE_FILES'])
 		{
 			$this->arResult['SMS_CONFIG']['isFilesEnabled'] = $this->arResult['ENABLE_FILES'];
-			$this->arResult['ENABLE_FILES_EXTERNAL_LINK'] = true;
-			if(Main\Loader::includeModule('bitrix24'))
-			{
-				$this->arResult['ENABLE_FILES_EXTERNAL_LINK'] = \Bitrix\Bitrix24\Feature::isFeatureEnabled('disk_external_link');
-			}
+			$this->arResult['ENABLE_FILES_EXTERNAL_LINK'] = \Bitrix\Disk\Configuration::isEnabledManualExternalLink();
 			$this->arResult['SMS_CONFIG']['isFilesExternalLinkEnabled'] = $this->arResult['ENABLE_FILES_EXTERNAL_LINK'];
 			if($this->arResult['ENABLE_FILES_EXTERNAL_LINK'])
 			{
@@ -317,6 +314,10 @@ class CCrmTimelineComponent extends CBitrixComponent
 					'urlUpload' => '/bitrix/tools/disk/uf.php?action=uploadFile&ncc=1',
 				];
 			}
+			else
+            {
+                $this->arResult['SHOW_FILES_FEATURE'] = \Bitrix\Crm\Integration\Bitrix24Manager::isEnabled();
+            }
 		}
 		else
 		{
@@ -475,7 +476,13 @@ class CCrmTimelineComponent extends CBitrixComponent
 
 		\Bitrix\Crm\Timeline\EntityController::prepareAuthorInfoBulk($items);
 
-		$communications = \CCrmActivity::PrepareCommunicationInfos(array_keys($items));
+		$communications = \CCrmActivity::PrepareCommunicationInfos(
+			array_keys($items),
+			array(
+				'ENABLE_PERMISSION_CHECK' => true,
+				'USER_PERMISSIONS' => $this->userPermissions
+			)
+		);
 		foreach($communications as $ID => $info)
 		{
 			$items[$ID]['ASSOCIATED_ENTITY']['COMMUNICATION'] = $info;

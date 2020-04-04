@@ -2253,7 +2253,7 @@ class CIMChat
 		if (isset($arParams['COLOR']) && IM\Color::isSafeColor($arParams['COLOR']))
 			$color = $arParams['COLOR'];
 
-		$skipAddMessage = isset($arParams['SKIP_ADD_MESSAGE']) && $arParams['SKIP_USER_CHECK'] == 'Y';
+		$skipAddMessage = isset($arParams['SKIP_ADD_MESSAGE']) && $arParams['SKIP_ADD_MESSAGE'] === 'Y';
 
 		$type = IM_MESSAGE_CHAT;
 
@@ -2518,7 +2518,7 @@ class CIMChat
 				));
 			}
 
-			if (count($arUsersName) >= 1 && !$skipUserAdd && !$skipAddMessage)
+			if (isset($arUsers[$this->user_id]) && count($arUsersName) >= 1 && !$skipUserAdd && !$skipAddMessage)
 			{
 				self::AddMessage(Array(
 					"TO_CHAT_ID" => $chatId,

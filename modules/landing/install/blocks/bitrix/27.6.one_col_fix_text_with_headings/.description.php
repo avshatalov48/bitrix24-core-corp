@@ -25,7 +25,11 @@ return array(
 		'nodes' => array(
 			'.landing-block-node-text' => array(
 				'name' => Loc::getMessage('LANDING_BLOCK_27_6_ONE_COL_FIX_TEXT_HEADINGS_NODES_LANDINGBLOCKNODE_TEXT'),
-				'type' => array('typo', 'border-color'),
+				'type' => array('typo'),
+			),
+			'.landing-block-node-text-container' => array(
+				'name' => Loc::getMessage('LANDING_BLOCK_27_6_ONE_COL_FIX_TEXT_HEADINGS_NODES_LANDINGBLOCKNODE_TEXT'),
+				'type' => array('border-color'),
 			),
 		),
 	),

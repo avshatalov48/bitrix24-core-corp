@@ -32,7 +32,7 @@ return array(
 	),
 	'style' => array(
 		'block' => array(
-			'block-default-wo-paddings'
+			'type' => 'block-default-wo-paddings'
 		),
 		'nodes' => array(
 			'.landing-block-node-menu-list-item-link' => array(

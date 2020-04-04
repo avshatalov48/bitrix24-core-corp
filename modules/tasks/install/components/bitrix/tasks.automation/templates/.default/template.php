@@ -109,10 +109,11 @@ global $APPLICATION;
 					projectMenuItems.push({
 						id: "new",
 						text: '<?=GetMessageJS('TASKS_AUTOMATION_CMP_CHOOSE_GROUP')?>',
-						onclick: function ()
+						onclick: function (event, item)
 						{
+							menu.getPopupWindow().setAutoHide(false);
 							var selector = new BX.Tasks.Integration.Socialnetwork.NetworkSelector({
-								scope: BX.proxy_context,
+								scope: item.getContainer(),
 								id: "group-selector",
 								mode: "group",
 								query: false,
@@ -122,6 +123,7 @@ global $APPLICATION;
 								popupOffsetTop: 5,
 								popupOffsetLeft: 40
 							});
+
 							selector.bindEvent("item-selected", function (data)
 							{
 								clickHandler(null, {
@@ -132,6 +134,12 @@ global $APPLICATION;
 								});
 								selector.close();
 							});
+
+							selector.bindEvent("close", function (data)
+							{
+								menu.getPopupWindow().setAutoHide(true);
+							});
+
 							selector.open();
 						}
 					});

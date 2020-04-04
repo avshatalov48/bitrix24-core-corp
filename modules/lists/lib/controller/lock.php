@@ -17,7 +17,7 @@ class Lock extends Element
 			return null;
 		}
 
-		\CIBlockElement::WF_Lock($params["ELEMENT_ID"]);
+		\CIBlockElement::WF_Lock($params["ELEMENT_ID"], false);
 	}
 
 	public function unLockAction()
@@ -32,6 +32,6 @@ class Lock extends Element
 			return null;
 		}
 
-		\CIBlockElement::WF_UnLock($params["ELEMENT_ID"]);
+		\CIBlockElement::WF_UnLock($params["ELEMENT_ID"], false);
 	}
 }

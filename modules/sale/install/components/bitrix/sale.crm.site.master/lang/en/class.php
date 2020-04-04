@@ -20,6 +20,5 @@ $MESS["SALE_CSM_MODULE_PULL_NAME"] = "Push and Pull";
 $MESS["SALE_CSM_MODULE_TASKS_NAME"] = "Tasks";
 $MESS["SALE_CSM_MODULE_TIMEMAN_NAME"] = "Working time management";
 $MESS["SALE_CSM_MODULE_VOXIMPLANT_NAME"] = "Telephony";
-$MESS["SALE_CSM_MODULE_WEBDAV_NAME"] = "Document library";
 $MESS["ORDER_CRM_SITE_MASTER_ACCESS_DENIED"] = "Access denied.";
 $MESS["SALE_CSM_MODULE_MAIN_NAME"] = "Main module";

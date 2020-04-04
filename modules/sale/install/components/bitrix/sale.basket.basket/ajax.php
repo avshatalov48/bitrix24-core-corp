@@ -18,7 +18,7 @@ if (isset($_REQUEST['site_template_id']) && is_string($_REQUEST['site_template_i
 {
 	$siteTemplateId = trim($_REQUEST['site_template_id']);
 
-	if ($siteTemplateId !== '')
+	if ($siteTemplateId !== '' && preg_match('/^[a-z0-9_]+$/i', $siteTemplateId))
 	{
 		define('SITE_TEMPLATE_ID', $siteTemplateId);
 	}

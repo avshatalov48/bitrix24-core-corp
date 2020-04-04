@@ -17,7 +17,7 @@ class StagesTable extends Entity\DataManager
 
 	/**
 	 * System type of stages (new, in progress, etc.).
-	 * Separated from other stages – timeline's stages, sprint's stages.
+	 * Separated from other stages - timeline's stages, sprint's stages.
 	 * @see TimeLineTable::getStages()
 	 * @see SprintTable::getStages()
 	 */
@@ -689,7 +689,10 @@ class StagesTable extends Entity\DataManager
 	 * @param int $fromEntityId From entity Id.
 	 * @param int $toEntityId To entity Id.
 	 * @param string $entityType Entity type.
-	 * @return void
+	 * @return array|bool
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function copyView($fromEntityId, $toEntityId, $entityType = self::WORK_MODE_GROUP)
 	{
@@ -702,6 +705,7 @@ class StagesTable extends Entity\DataManager
 			)
 		)
 		{
+			$result = [];
 			$res = self::getList(array(
 				'filter' => array(
 					'ENTITY_ID' => $fromEntityId,
@@ -713,9 +717,10 @@ class StagesTable extends Entity\DataManager
 			));
 			while ($row = $res->fetch())
 			{
+				$oldStageId = $row['ID'];
 				if (!$row['TITLE'])
 				{
-					$row['TITLE'] = $row['TITLE'] = Loc::getMessage('TASKS_STAGE_' . $row['SYSTEM_TYPE']);;
+					$row['TITLE'] = $row['TITLE'] = Loc::getMessage('TASKS_STAGE_' . $row['SYSTEM_TYPE']);
 				}
 				if (
 					$row['SYSTEM_TYPE'] &&
@@ -726,9 +731,13 @@ class StagesTable extends Entity\DataManager
 				}
 				unset($row['ID']);
 				$row['ENTITY_ID'] = $toEntityId;
-				self::add($row);
+				$newStageId = (($addResult = self::add($row)) ? $addResult->getId() : false);
+				$result[$oldStageId] = $newStageId;
 			}
+			return $result;
 		}
+
+		return false;
 	}
 
 	/**
@@ -998,10 +1007,6 @@ class StagesTable extends Entity\DataManager
 	{
 		if (($stage = StagesTable::getById($stageId)->fetch()))
 		{
-			if ($stage['ENTITY_TYPE'] == self::WORK_MODE_TIMELINE)
-			{
-				return;
-			}
 			$order = 'desc';
 			// get order
 			if ($stage['ENTITY_TYPE'] == self::WORK_MODE_GROUP)

@@ -100,4 +100,5 @@ $MESS["CRM_ACTIVITY_CHANGE_TASK_START_TIME"] = "Перенесено время 
 $MESS["CRM_ACTIVITY_CHANGE_MEETING_END_TIME"] = "Перенесено время завершения встречи \"#NAME#\"";
 $MESS["CRM_ACTIVITY_CHANGE_CALL_END_TIME"] = "Перенесено время завершения звонка \"#NAME#\"";
 $MESS["CRM_ACTIVITY_CHANGE_TASK_END_TIME"] = "Перенесено время завершения задачи \"#NAME#\"";
+$MESS["CRM_ACTIVITY_HIDDEN_CLIENT"] = "Скрытый клиент";
 ?>

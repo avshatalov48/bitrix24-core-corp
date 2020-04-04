@@ -295,7 +295,6 @@ $APPLICATION->IncludeComponent(
 			'allowSearchEmailUsers' => 'N',
 			'allowSearchCrmEmailUsers' => 'N',
 			'allowSearchNetworkUsers' => 'N',
-			'allowSonetGroupsAjaxSearchFeatures' => 'N',
 			'useNewCallback' => 'Y',
 		]
 	],

@@ -87,6 +87,21 @@ class CCloudStorageService_Yandex extends CCloudStorageService_AmazonS3
 		}
 	}
 	/**
+	 * @param array[string]string $arSettings
+	 * @param string $verb
+	 * @param string $bucket
+	 * @param string $file_name
+	 * @param string $params
+	 * @param string $content
+	 * @param array[string]string $additional_headers
+	 * @return mixed
+	*/
+	function SendRequest($arSettings, $verb, $bucket, $file_name='/', $params='', $content='', $additional_headers=/*.(array[string]string).*/array())
+	{
+		$file_name = str_replace("+", "%20", $file_name);
+		return parent::SendRequest($arSettings, $verb, $bucket, $file_name, $params, $content, $additional_headers);
+	}
+	/**
 	 * @param array[string]string $arBucket
 	 * @param mixed $arFile
 	 * @return string
@@ -127,7 +142,7 @@ class CCloudStorageService_Yandex extends CCloudStorageService_AmazonS3
 			$URI = $pref."/".$URI;
 		}
 
-		return $proto."://$host/".CCloudUtil::URLEncode($URI, "UTF-8");
+		return $proto."://$host/".str_replace("+", "%20", CCloudUtil::URLEncode($URI, "UTF-8"));
 	}
 	/**
 	 * @param array[string]string $arBucket

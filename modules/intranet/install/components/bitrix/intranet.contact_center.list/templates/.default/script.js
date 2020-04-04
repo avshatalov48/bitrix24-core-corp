@@ -213,9 +213,9 @@
 		},
 	};
 
-	BX.ContactCenter.Loader = function()
+	BX.ContactCenter.Loader = function(parentSelector)
 	{
-		this.parentNode = document.querySelector("#intranet-contact-list");
+		this.parentNode = document.querySelector("#" + parentSelector + "");
 		this.blockNode = this.parentNode.querySelector(".intranet-contact-item");
 		this.loaderIndicator = new BX.Loader({
 			size: 40,
@@ -270,7 +270,7 @@
 		this.signedParameters = params.signedParameters;
 		this.componentName = params.componentName;
 		this.sliderUrls = params.sliderUrls;
-		this.loader = new BX.ContactCenter.Loader();
+		this.loader = new BX.ContactCenter.Loader(params.parentSelector);
 		this.appearance = appearance;
 
 		this.init();
@@ -395,7 +395,7 @@
 
 			new BX.ContactCenter.TileGrid({
 				wrapper: wrapper,
-				inner: BX('intranet-contact-list'),
+				inner: BX(params.parentSelector),
 				tiles: title_list,
 				sizeSettings : {
 					minWidth : 190,
@@ -514,6 +514,20 @@
 				{
 					var style = getComputedStyle(iconBlock);
 					block.style.backgroundColor = style.backgroundColor;
+				}
+			}
+		},
+		setBlockImage: function (block, image)
+		{
+			block = BX(block);
+			var iconBlock = block.querySelector('.intranet-contact-logo i');
+
+			if (iconBlock)
+			{
+				if (!!image)
+				{
+					block.style.backgroundImage = color;
+					iconBlock.style.backgroundImage = color;
 				}
 			}
 		}

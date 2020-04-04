@@ -17,6 +17,7 @@ use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\ObjectException;
 use Bitrix\Main\SystemException;
 use Bitrix\Tasks\CheckList\Template\TemplateCheckListFacade;
+use Bitrix\Tasks\Manager;
 use Bitrix\Tasks\Integration;
 use Bitrix\Tasks\Integration\SocialServices\User;
 use Bitrix\Tasks\Internals\Task\Template\ReplicateParamsCorrector;
@@ -101,6 +102,8 @@ final class Template extends \Bitrix\Tasks\Dispatcher\PublicAction
 
 		if ($this->errors->checkNoFatals())
 		{
+			$analyticsData = Manager\Task\Template::getAnalyticsData($data);
+
 			$checkListItems = ($data['SE_CHECKLIST']?: []);
 			unset($data['SE_CHECKLIST']);
 
@@ -115,7 +118,12 @@ final class Template extends \Bitrix\Tasks\Dispatcher\PublicAction
 			{
 				$result['ID'] = $templateId;
 
-				$mergeResult = TemplateCheckListFacade::merge($templateId, Util\User::getId(), $checkListItems);
+				$mergeResult = TemplateCheckListFacade::merge(
+					$templateId,
+					Util\User::getId(),
+					$checkListItems,
+					['analyticsData' => $analyticsData]
+				);
 				if (!$mergeResult->isSuccess())
 				{
 					$saveResult->loadErrors($mergeResult->getErrors());
@@ -153,6 +161,8 @@ final class Template extends \Bitrix\Tasks\Dispatcher\PublicAction
 
 		if ($this->errors->checkNoFatals())
 		{
+			$analyticsData = Manager\Task\Template::getAnalyticsData($data);
+
 			$checkListItems = $data['SE_CHECKLIST'];
 			unset($data['SE_CHECKLIST']);
 
@@ -162,7 +172,12 @@ final class Template extends \Bitrix\Tasks\Dispatcher\PublicAction
 
 			if ($checkListItems && $saveResult->isSuccess())
 			{
-				$mergeResult = TemplateCheckListFacade::merge($id, Util\User::getId(), $checkListItems);
+				$mergeResult = TemplateCheckListFacade::merge(
+					$id,
+					Util\User::getId(),
+					$checkListItems,
+					['analyticsData' => $analyticsData]
+				);
 				if (!$mergeResult->isSuccess())
 				{
 					$saveResult->loadErrors($mergeResult->getErrors());

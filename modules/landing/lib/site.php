@@ -28,7 +28,7 @@ class Site extends \Bitrix\Landing\Internals\BaseTable
 		];
 		if ($deleted)
 		{
-			$filter['DELETED'] = ['Y', 'N'];
+			$filter['=DELETED'] = ['Y', 'N'];
 		}
 		$check = Site::getList([
 			'select' => [
@@ -41,7 +41,7 @@ class Site extends \Bitrix\Landing\Internals\BaseTable
 
 	/**
 	 * Get public url for site.
-	 * @param int[] $id Site id or array of ids.
+	 * @param int[]|int $id Site id or array of ids.
 	 * @param boolean $full Return full site url with relative path.
 	 * @return string|array
 	 */
@@ -50,10 +50,15 @@ class Site extends \Bitrix\Landing\Internals\BaseTable
 		$paths = [];
 		$isB24 = Manager::isB24();
 
+		$siteKeyCode = Site\Type::getKeyCode();
+		$defaultPubPath = rtrim(Manager::getPublicationPath(), '/');
+		$hostUrl = Domain::getHostUrl();
+		$disableCloud = Manager::isCloudDisable();
 		$res = self::getList(array(
 			'select' => array(
 				'DOMAIN_PROTOCOL' => 'DOMAIN.PROTOCOL',
 				'DOMAIN_NAME' => 'DOMAIN.DOMAIN',
+				'DOMAIN_ID',
 				'SMN_SITE_ID',
 				'CODE',
 				'TYPE',
@@ -70,18 +75,12 @@ class Site extends \Bitrix\Landing\Internals\BaseTable
 			$pubPath = '';
 			$isB24localVar = $isB24;
 
-			if (!$row['DOMAIN_NAME'])
-			{
-				$paths[$row['ID']] = Manager::getPublicationPath($row['ID']);
-				continue;
-			}
-
 			if ($row['TYPE'] == 'SMN')
 			{
 				$isB24localVar = false;
 			}
 
-			if (!$isB24localVar)
+			if (!$isB24localVar || $disableCloud)
 			{
 				$pubPath = Manager::getPublicationPath(
 					null,
@@ -90,14 +89,36 @@ class Site extends \Bitrix\Landing\Internals\BaseTable
 				$pubPath = rtrim($pubPath, '/');
 			}
 
+			if ($siteKeyCode == 'ID')
+			{
+				$row['CODE'] = '/' . $row['ID'] . '/';
+			}
+
 			// force https
 			if (Manager::isHttps())
 			{
 				$row['DOMAIN_PROTOCOL'] = \Bitrix\Landing\Internals\DomainTable::PROTOCOL_HTTPS;
 			}
 
-			$paths[$row['ID']] = $row['DOMAIN_PROTOCOL'] . '://' . $row['DOMAIN_NAME'] .
-							 	$pubPath . (!$isB24localVar && $full ? $row['CODE'] : '');
+			if ($row['DOMAIN_ID'])
+			{
+				$paths[$row['ID']] = ($disableCloud ? $hostUrl : $row['DOMAIN_PROTOCOL'] . '://' . $row['DOMAIN_NAME']) . $pubPath;
+				if ($full)
+				{
+					if ($disableCloud && $isB24localVar)
+					{
+						$paths[$row['ID']] .= $row['CODE'];
+					}
+					else if (!$isB24localVar)
+					{
+						$paths[$row['ID']] .= '/';
+					}
+				}
+			}
+			else
+			{
+				$paths[$row['ID']] = $hostUrl . $defaultPubPath . ($full ? $row['CODE'] : '');
+			}
 
 			unset($pubPath);
 		}
@@ -176,7 +197,9 @@ class Site extends \Bitrix\Landing\Internals\BaseTable
 			'PAGE' => Loc::getMessage('LANDING_TYPE_PAGE'),
 			'STORE' => Loc::getMessage('LANDING_TYPE_STORE'),
 			'SMN' => Loc::getMessage('LANDING_TYPE_SMN'),
-			'PREVIEW' => Loc::getMessage('LANDING_TYPE_PREVIEW')
+			'PREVIEW' => Loc::getMessage('LANDING_TYPE_PREVIEW'),
+			'KNOWLEDGE' => Loc::getMessage('LANDING_TYPE_KNOWLEDGE'),
+			'GROUP' => Loc::getMessage('LANDING_TYPE_GROUP')
 		);
 
 		return $types;
@@ -194,10 +217,33 @@ class Site extends \Bitrix\Landing\Internals\BaseTable
 	/**
 	 * Delete site by id.
 	 * @param int $id Site id.
+	 * @param bool $pagesDelete Delete all pages before.
 	 * @return \Bitrix\Main\Result
 	 */
-	public static function delete($id)
+	public static function delete($id, $pagesDelete = false)
 	{
+		// first delete all pages if you want
+		if ($pagesDelete)
+		{
+			$res = Landing::getList([
+				'select' => [
+					'ID'
+				],
+				'filter' => [
+					'SITE_ID' => $id,
+					'=DELETED' => ['Y', 'N']
+				]
+			]);
+			while ($row = $res->fetch())
+			{
+				$resDel = Landing::delete($row['ID'], true);
+				if (!$resDel->isSuccess())
+				{
+					return $resDel;
+				}
+			}
+		}
+		// delete site
 		$result = parent::delete($id);
 		return $result;
 	}
@@ -228,6 +274,11 @@ class Site extends \Bitrix\Landing\Internals\BaseTable
 				}
 				return $return;
 			}
+		}
+
+		if (($currentScope = Site\Type::getCurrentScopeId()))
+		{
+			Agent::addUniqueAgent('clearRecycleScope', [$currentScope]);
 		}
 
 		return parent::update($id, array(
@@ -269,6 +320,66 @@ class Site extends \Bitrix\Landing\Internals\BaseTable
 	}
 
 	/**
+	 * Copy site without site's pages.
+	 * @param int $siteId Site id.
+	 * @return \Bitrix\Main\Result
+	 */
+	public static function copy($siteId)
+	{
+		$siteId = intval($siteId);
+		$result = new \Bitrix\Main\Result;
+		$error = new Error;
+
+		$siteRow = Site::getList([
+			'filter' => [
+				'ID' => $siteId
+			]
+		])->fetch();
+
+		if (!$siteRow)
+		{
+			$error->addError(
+				'SITE_NOT_FOUND',
+				Loc::getMessage('LANDING_COPY_ERROR_SITE_NOT_FOUND')
+			);
+		}
+		else
+		{
+			$result = Site::add([
+				'CODE' => $siteRow['CODE'],
+				'ACTIVE' => 'N',
+				'TITLE' => $siteRow['TITLE'],
+				'XML_ID' => $siteRow['XML_ID'],
+				'DESCRIPTION' => $siteRow['DESCRIPTION'],
+				'TYPE' => $siteRow['TYPE'],
+				'SMN_SITE_ID' => $siteRow['SMN_SITE_ID'],
+				'LANG' => $siteRow['LANG']
+			]);
+
+			if ($result->isSuccess())
+			{
+				// copy hook data
+				Hook::copySite(
+					$siteId,
+					$result->getId()
+				);
+				// copy files
+				File::copySiteFiles(
+					$siteId,
+					$result->getId()
+				);
+			}
+		}
+
+		if (!$error->isEmpty())
+		{
+			$result->addError($error->getFirstError());
+		}
+
+		return $result;
+	}
+
+	/**
 	 * Get full data for site with pages.
 	 * @param int $siteForExport Site id.
 	 * @param array $params Some params.
@@ -277,6 +388,7 @@ class Site extends \Bitrix\Landing\Internals\BaseTable
 	public static function fullExport($siteForExport, $params = array())
 	{
 		$version = 3;//used in demo/class.php
+		$siteForExport = intval($siteForExport);
 		$tplsXml = array();
 		$export = array();
 		Landing::setEditMode(
@@ -291,6 +403,11 @@ class Site extends \Bitrix\Landing\Internals\BaseTable
 			'METAOG_IMAGE',
 			'BACKGROUND_PICTURE'
 		);
+
+		if (isset($params['scope']))
+		{
+			Site\Type::setScope($params['scope']);
+		}
 
 		// check params
 		if (
@@ -620,6 +737,7 @@ class Site extends \Bitrix\Landing\Internals\BaseTable
 						'repo_block' => $repoBlock,
 						'cards' => $exportBlock['cards'],
 						'nodes' => $exportBlock['nodes'],
+						'menu' => $exportBlock['menu'],
 						'style' => $exportBlock['style'],
 						'attrs' => $exportBlock['attrs'],
 						'dynamic' => $exportBlock['dynamic']
@@ -752,11 +870,16 @@ class Site extends \Bitrix\Landing\Internals\BaseTable
 			$hash[] = $domain;
 		}
 
-		$hash[] = rtrim(Manager::getPublicationPath($id), '/');
-		if (!Manager::isB24())
+		if (Manager::isB24())
 		{
+			$hash[] = rtrim(Manager::getPublicationPath($id), '/');
+		}
+		else
+		{
+			$hash[] = $id;
 			$hash[] = LICENSE_KEY;
 		}
+
 		$hashes[$id] = md5(implode('', $hash));
 
 		return $hashes[$id];

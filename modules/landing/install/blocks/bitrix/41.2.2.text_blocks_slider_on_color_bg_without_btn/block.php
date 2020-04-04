@@ -4,15 +4,14 @@
 				 data-pagi-classes="u-carousel-indicators-v1--white-inverse g-absolute-centered--x g-bottom-30">
 			<div class="landing-block-node-card js-slide">
 				<!-- Article -->
-				<article class="row flex-items-middle landing-block-node-card-container align-items-center text-center">
+				<article class="landing-block-node-card-container align-items-center row flex-items-middle text-center g-mb-50">
 					<div class="col-lg-6">
 						<!-- Article Image -->
 						<img class="landing-block-node-card-photo img-fluid g-width-360 g-width-auto--lg mx-auto"
 							 src="https://cdn.bitrix24.site/bitrix/images/landing/business/700x700/img1.png" alt="">
 						<!-- End Article Image -->
 					</div>
-
-					<div class="col-lg-6 g-mb-0 g-mb-50--lg">
+					<div class="col-lg-6 g-mb-0">
 						<div class="text-uppercase text-center u-heading-v5-3 u-heading-v5-color-primary u-heading-v5-rounded-50x g-mb-20">
 							<h4 class="landing-block-node-card-subtitle g-font-weight-700 g-font-size-12 g-color-white-opacity-0_7 g-mb-15">From
 								chef</h4>
@@ -25,7 +24,7 @@
 								vestibulum in. Donec in blandit dolor. Vivamus a fringilla lorem, vel faucibus ante.</p>
 						</div>
 
-						<div class="landing-block-node-card-price font-weight-bold g-color-white g-font-size-26 g-mb-30">$14.00</div>
+						<div class="landing-block-node-card-price font-weight-bold g-color-white g-font-size-26">$14.00</div>
 					</div>
 				</article>
 				<!-- End Article -->
@@ -33,14 +32,14 @@
 
 			<div class="landing-block-node-card js-slide">
 				<!-- Article -->
-				<article class="row flex-items-middle text-center landing-block-node-card-container align-items-center">
+				<article class="landing-block-node-card-container align-items-center row flex-items-middle text-center g-mb-50">
 					<div class="col-lg-6">
 						<!-- Article Image -->
 						<img class="landing-block-node-card-photo img-fluid g-width-360 g-width-auto--lg mx-auto"
 							 src="https://cdn.bitrix24.site/bitrix/images/landing/business/700x700/img2.png" alt="">
 						<!-- End Article Image -->
 					</div>
-					<div class="col-lg-6 g-mb-0 g-mb-50--lg">
+					<div class="col-lg-6 g-mb-0">
 						<div class="text-uppercase text-center u-heading-v5-3 u-heading-v5-color-primary u-heading-v5-rounded-50x g-mb-20">
 							<h4 class="landing-block-node-card-subtitle g-font-weight-700 g-font-size-12 g-color-white-opacity-0_7 g-mb-15">From
 								chef</h4>
@@ -53,7 +52,7 @@
 								vestibulum in. Donec in blandit dolor. Vivamus a fringilla lorem, vel faucibus ante.</p>
 						</div>
 
-						<div class="landing-block-node-card-price font-weight-bold g-color-white g-font-size-26 g-mb-30">$14.00</div>
+						<div class="landing-block-node-card-price font-weight-bold g-color-white g-font-size-26">$14.00</div>
 					</div>
 
 				</article>
@@ -62,14 +61,14 @@
 
 			<div class="landing-block-node-card js-slide">
 				<!-- Article -->
-				<article class="row flex-items-middle text-center landing-block-node-card-container align-items-center">
+				<article class="landing-block-node-card-container align-items-center row flex-items-middle text-center g-mb-50">
 					<div class="col-lg-6">
 						<!-- Article Image -->
 						<img class="landing-block-node-card-photo img-fluid g-width-360 g-width-auto--lg mx-auto"
 							 src="https://cdn.bitrix24.site/bitrix/images/landing/business/700x700/img3.png" alt="">
 						<!-- End Article Image -->
 					</div>
-					<div class="col-lg-6 g-mb-0 g-mb-50--lg">
+					<div class="col-lg-6 g-mb-0">
 						<div class="text-uppercase text-center u-heading-v5-3 u-heading-v5-color-primary u-heading-v5-rounded-50x g-mb-20">
 							<h4 class="landing-block-node-card-subtitle g-font-weight-700 g-font-size-12 g-color-white-opacity-0_7 g-mb-15">From
 								chef</h4>
@@ -82,7 +81,7 @@
 								vestibulum in. Donec in blandit dolor. Vivamus a fringilla lorem, vel faucibus ante.</p>
 						</div>
 
-						<div class="landing-block-node-card-price font-weight-bold g-color-white g-font-size-26 g-mb-30">$14.00</div>
+						<div class="landing-block-node-card-price font-weight-bold g-color-white g-font-size-26">$14.00</div>
 					</div>
 				</article>
 				<!-- End Article -->
@@ -90,14 +89,14 @@
 
 			<div class="landing-block-node-card js-slide">
 				<!-- Article -->
-				<article class="row flex-items-middle text-center landing-block-node-card-container align-items-center">
+				<article class="landing-block-node-card-container align-items-center row flex-items-middle text-center g-mb-50">
 					<div class="col-lg-6">
 						<!-- Article Image -->
 						<img class="landing-block-node-card-photo img-fluid g-width-360 g-width-auto--lg mx-auto"
 							 src="https://cdn.bitrix24.site/bitrix/images/landing/business/700x700/img4.png" alt="">
 						<!-- End Article Image -->
 					</div>
-					<div class="col-lg-6 g-mb-0 g-mb-50--lg">
+					<div class="col-lg-6 g-mb-0">
 						<div class="text-uppercase text-center u-heading-v5-3 u-heading-v5-color-primary u-heading-v5-rounded-50x g-mb-20">
 							<h4 class="landing-block-node-card-subtitle g-font-weight-700 g-font-size-12 g-color-white-opacity-0_7 g-mb-15">From
 								chef</h4>
@@ -110,7 +109,7 @@
 								vestibulum in. Donec in blandit dolor. Vivamus a fringilla lorem, vel faucibus ante.</p>
 						</div>
 
-						<div class="landing-block-node-card-price font-weight-bold g-color-white g-font-size-26 g-mb-30">$14.00</div>
+						<div class="landing-block-node-card-price font-weight-bold g-color-white g-font-size-26">$14.00</div>
 					</div>
 				</article>
 				<!-- End Article -->
@@ -118,15 +117,14 @@
 
 			<div class="landing-block-node-card js-slide">
 				<!-- Article -->
-				<article class="row flex-items-middle text-center landing-block-node-card-container align-items-center">
+				<article class="landing-block-node-card-container align-items-center row flex-items-middle text-center g-mb-50">
 					<div class="col-lg-6">
 						<!-- Article Image -->
 						<img class="landing-block-node-card-photo img-fluid g-width-360 g-width-auto--lg mx-auto"
 							 src="https://cdn.bitrix24.site/bitrix/images/landing/business/700x700/img5.png" alt="">
 						<!-- End Article Image -->
 					</div>
-
-					<div class="col-lg-6 g-mb-0 g-mb-50--lg">
+					<div class="col-lg-6 g-mb-0">
 						<div class="text-uppercase text-center u-heading-v5-3 u-heading-v5-color-primary u-heading-v5-rounded-50x g-mb-20">
 							<h4 class="landing-block-node-card-subtitle g-font-weight-700 g-font-size-12 g-color-white-opacity-0_7 g-mb-15">From
 								chef</h4>
@@ -139,7 +137,7 @@
 								vestibulum in. Donec in blandit dolor. Vivamus a fringilla lorem, vel faucibus ante.</p>
 						</div>
 
-						<div class="landing-block-node-card-price font-weight-bold g-color-white g-font-size-26 g-mb-30">$14.00</div>
+						<div class="landing-block-node-card-price font-weight-bold g-color-white g-font-size-26">$14.00</div>
 					</div>
 				</article>
 				<!-- End Article -->

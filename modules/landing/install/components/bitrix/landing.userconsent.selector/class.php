@@ -5,6 +5,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 use \Bitrix\Landing\Manager;
+use \Bitrix\Main\Loader;
 
 \CBitrixComponent::includeComponentClass('bitrix:landing.base');
 
@@ -19,6 +20,11 @@ class LandingUserConsentSelector extends LandingBaseComponent
 		$this->checkParam('ID', null);
 		$this->checkParam('INPUT_NAME', 'AGREEMENT_ID');
 		$this->checkParam('ACTION_REQUEST_URL', $this->getPath() . '/ajax.php');
+
+		if (!Loader::includeModule('landing'))
+		{
+			return;
+		}
 
 		if (Manager::isB24())
 		{

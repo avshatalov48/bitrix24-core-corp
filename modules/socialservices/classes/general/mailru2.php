@@ -17,7 +17,15 @@ class CSocServMailRu2 extends CSocServAuth
 		return array(
 			array("mailru2_client_id", GetMessage("socserv_mailru2_id"), "", Array("text", 40)),
 			array("mailru2_client_secret", GetMessage("socserv_mailru2_key"), "", Array("text", 40)),
-			array("note" => GetMessage("socserv_mailru2_sett_note", ['#URL#' => $this->getEntityOAuth()->GetRedirectURI()])),
+			array(
+				'note' => getMessage(
+					'socserv_mailru2_sett_note_2',
+					array(
+						'#URL#' => $this->getEntityOAuth()->getRedirectUri(),
+						'#MAIL_URL#' => \CHttp::urn2uri('/bitrix/tools/mail_oauth.php'),
+					)
+				),
+			),
 		);
 	}
 
@@ -302,9 +310,23 @@ class CMailRu2Interface extends CSocServOAuthTransport
 		{
 			$this->access_token = $token["OATOKEN"];
 			$this->accessTokenExpires = $token["OATOKEN_EXPIRES"];
-			$this->refresh_token = $token['REFRESH_TOKEN'];
 
-			return true;
+			if (!$this->code)
+			{
+				if ($this->checkAccessToken())
+				{
+					return true;
+				}
+				else if (isset($tokens['REFRESH_TOKEN']))
+				{
+					if ($this->getNewAccessToken($tokens['REFRESH_TOKEN'], $this->userId, true))
+					{
+						return true;
+					}
+				}
+			}
+
+			$this->deleteStorageTokens();
 		}
 
 		if ($this->code === false)
@@ -353,6 +375,68 @@ class CMailRu2Interface extends CSocServOAuthTransport
 		return false;
 	}
 
+	public function getNewAccessToken($refreshToken = false, $userId = 0, $save = false)
+	{
+		if ($this->appID == false || $this->appSecret == false)
+		{
+			return false;
+		}
+
+		if ($refreshToken == false)
+		{
+			$refreshToken = $this->refresh_token;
+		}
+
+		$http = new HttpClient(array(
+			'socketTimeout' => $this->httpTimeout,
+			'streamTimeout' => $this->httpTimeout,
+		));
+		$http->setHeader('User-Agent', 'Bitrix');
+
+		$result = $http->post(static::TOKEN_URL, array(
+			'refresh_token' => $refreshToken,
+			'client_id' => $this->appID,
+			'client_secret' => $this->appSecret,
+			'grant_type' => 'refresh_token',
+		));
+
+		try
+		{
+			$arResult = Json::decode($result);
+		}
+		catch (\Bitrix\Main\ArgumentException $e)
+		{
+			$arResult = array();
+		}
+
+		if (!empty($arResult['access_token']))
+		{
+			$this->access_token = $arResult['access_token'];
+			$this->accessTokenExpires = $arResult['expires_in'] + time();
+			if ($save && intval($userId) > 0)
+			{
+				$dbSocservUser = \Bitrix\Socialservices\UserTable::getList(array(
+					'filter' => array(
+						'=EXTERNAL_AUTH_ID' => static::SERVICE_ID,
+						'=USER_ID' => $userId,
+					),
+					'select' => array('ID')
+				));
+				if ($arOauth = $dbSocservUser->fetch())
+				{
+					\Bitrix\Socialservices\UserTable::update($arOauth['ID'], array(
+						'OATOKEN' => $this->access_token,
+						'OATOKEN_EXPIRES' => $this->accessTokenExpires)
+					);
+				}
+			}
+
+			return true;
+		}
+
+		return false;
+	}
+
 	public function GetCurrentUser()
 	{
 		if ($this->access_token === false)
@@ -379,4 +463,10 @@ class CMailRu2Interface extends CSocServOAuthTransport
 	{
 		return false;
 	}
+
+	public function getScopeEncode()
+	{
+		return implode(' ', array_map('urlencode', array_unique($this->getScope())));
+	}
+
 }

@@ -244,6 +244,11 @@ class TransportMail implements Transport\iBase, Transport\iDuration, Transport\i
 			'TRACK_CLICK' => $this->canTrackMails() ? $message->getClickTracker()->getArray() : null,
 			'CONTEXT' => $this->getMailContext(),
 		);
+		$linkDomain = $message->getReadTracker()->getLinkDomain();
+		if ($linkDomain)
+		{
+			$mailParams['LINK_DOMAIN'] = $linkDomain;
+		}
 
 		// event on sending email
 		$eventMailParams = $mailParams;

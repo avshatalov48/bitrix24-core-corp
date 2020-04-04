@@ -1146,24 +1146,35 @@ class CTopPanel
 			<div id="bx-panel-tabs">
 	';
 		$result .= '
-				<a id="bx-panel-menu" href="" '.CTopPanel::AddAttrHint(GetMessage('top_panel_start_menu_tooltip_title'), GetMessage('top_panel_start_menu_tooltip')).'><span id="bx-panel-menu-icon"></span><span id="bx-panel-menu-text">'.GetMessage("top_panel_menu").'</span></a><div id="bx-panel-btn-wrap">';
+			<a id="bx-panel-menu" href="" '.CTopPanel::AddAttrHint(GetMessage('top_panel_start_menu_tooltip_title'), GetMessage('top_panel_start_menu_tooltip')).'><span id="bx-panel-menu-icon"></span><span id="bx-panel-menu-text">'.GetMessage("top_panel_menu").'</span></a><div id="bx-panel-btn-wrap">';
 
 		$additionalSiteId = null;
 		$backUrlParamName = "back_url_pub";
 		$additionalTabButton = "";
-		$additionalTabMessage = "";
+		$additionalTabMessage = GetMessage("top_panel_b24");
+
 		if (\Bitrix\Main\Config\Option::get("sale", "~IS_SALE_CRM_SITE_MASTER_FINISH") === "Y")
 		{
 			$additionalSiteId = \Bitrix\Main\Config\Option::get("sale", "~CRM_WIZARD_SITE_ID");
-			$additionalTabMessage = GetMessage("top_panel_b24");
+		}
+		elseif (\Bitrix\Main\Config\Option::get("sale", "~IS_SALE_BSM_SITE_MASTER_FINISH") === "Y")
+		{
+			$additionalSiteId = \Bitrix\Main\Config\Option::get("sale", "~BSM_WIZARD_SITE_ID");
 		}
 
-		if ($additionalSiteId)
+		$additionalSite = \Bitrix\Main\SiteTable::getList([
+			"select" => ["SERVER_NAME"],
+			"filter" => ["LID" => $additionalSiteId]
+		])->fetch();
+
+		if ($additionalSite)
 		{
 			$defaultServerName = '';
 			$additionalServerName = '';
 
-			if ($additionalSiteId == SITE_ID)
+			if ($additionalSiteId == SITE_ID
+				&& \Bitrix\Main\Config\Option::get("sale", "~IS_SALE_CRM_SITE_MASTER_FINISH") === "Y"
+			)
 			{
 				$backUrlParamName = 'back_url_additional';
 
@@ -1171,8 +1182,7 @@ class CTopPanel
 					"select" => ["SERVER_NAME"],
 					"filter" => ["=DEF" => "Y"]
 				])->fetch();
-
-				if ($defaultSite && !empty($defaultSite["SERVER_NAME"]))
+				if (!empty($defaultSite["SERVER_NAME"]))
 				{
 					$defaultServerName = (\Bitrix\Main\Context::getCurrent()->getRequest()->isHttps() ? "https" : "http")."://".$defaultSite["SERVER_NAME"];
 				}
@@ -1183,33 +1193,68 @@ class CTopPanel
 			}
 			else
 			{
-				$additionalSite = \Bitrix\Main\SiteTable::getList([
-					"select" => ["SERVER_NAME"],
-					"filter" => ["LID" => $additionalSiteId]
-				])->fetch();
-
-				if ($additionalSite && isset($additionalSite["SERVER_NAME"]) && !empty($additionalSite["SERVER_NAME"]))
+				if (!empty($additionalSite["SERVER_NAME"]))
 				{
 					$additionalServerName = (\Bitrix\Main\Context::getCurrent()->getRequest()->isHttps() ? "https" : "http")."://".$additionalSite["SERVER_NAME"];
 				}
 			}
 
-			if ($defaultServerName)
+			if (\Bitrix\Main\Config\Option::get("sale", "~IS_SALE_CRM_SITE_MASTER_FINISH") === "Y")
 			{
-				$result .= '<a id="bx-panel-view-site" href="'.$defaultServerName.'"><span>'.GetMessage("top_panel_site").'</span></a>';
-			}
-			else
-			{
-				$result .= '<a id="bx-panel-view-tab"><span>'.GetMessage("top_panel_site").'</span></a>';
-			}
+				if ($defaultServerName)
+				{
+					$result .= '<a id="bx-panel-view-site" href="'.$defaultServerName.'"><span>'.GetMessage("top_panel_site").'</span></a>';
+				}
+				else
+				{
+					$result .= '<a id="bx-panel-view-tab"><span>'.GetMessage("top_panel_site").'</span></a>';
+				}
 
-			if ($additionalServerName)
-			{
-				$additionalTabButton = '<a id="bx-panel-view-site" href="'.$additionalServerName.'"><span>'.$additionalTabMessage.'</span></a>';
+				if ($additionalServerName)
+				{
+					$additionalTabButton = '<a id="bx-panel-view-site" href="'.$additionalServerName.'"><span>'.$additionalTabMessage.'</span></a>';
+				}
+				else
+				{
+					$additionalTabButton = '<a id="bx-panel-view-tab"><span>' . $additionalTabMessage . '</span></a>';
+				}
 			}
-			else
+			elseif (\Bitrix\Main\Config\Option::get("sale", "~IS_SALE_BSM_SITE_MASTER_FINISH") === "Y")
 			{
-				$additionalTabButton = '<a id="bx-panel-view-tab"><span>'.$additionalTabMessage.'</span></a>';
+				$defaultSite = \Bitrix\Main\SiteTable::getList([
+					"select" => ["LID", "SERVER_NAME"],
+					"filter" => ["=DEF" => "Y"]
+				])->fetch();
+				if ($defaultSite["LID"] === SITE_ID)
+				{
+					$backUrlParamName = 'back_url_additional';
+					$result .= '<a id="bx-panel-view-site" href="'.$additionalServerName.'"><span>'.GetMessage("top_panel_site").'</span></a>';
+				}
+				else
+				{
+					$result .= '<a id="bx-panel-view-tab"><span>'.GetMessage("top_panel_site").'</span></a>';
+				}
+
+				if ($additionalServerName)
+				{
+					if (!empty($defaultSite["SERVER_NAME"]))
+					{
+						$defaultServerName = (\Bitrix\Main\Context::getCurrent()->getRequest()->isHttps() ? "https" : "http")."://".$defaultSite["SERVER_NAME"];
+					}
+					elseif ($serverName = \Bitrix\Main\Config\Option::get("main", "server_name"))
+					{
+						$defaultServerName = (\Bitrix\Main\Context::getCurrent()->getRequest()->isHttps() ? "https" : "http")."://".$serverName;
+					}
+
+					if ($defaultSite["LID"] === SITE_ID)
+					{
+						$additionalTabButton = '<a id="bx-panel-view-tab"><span>'.$additionalTabMessage.'</span></a>';
+					}
+					else
+					{
+						$additionalTabButton = '<a id="bx-panel-view-site" href="'.$defaultServerName.'"><span>'.$additionalTabMessage.'</span></a>';
+					}
+				}
 			}
 		}
 		else

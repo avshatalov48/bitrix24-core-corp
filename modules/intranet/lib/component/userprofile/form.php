@@ -174,8 +174,8 @@ class Form
 			array(
 				"title" => Loc::getMessage("INTRANET_USER_PROFILE_FIELD_PERSONAL_MOBILE"),
 				"name" => "PERSONAL_MOBILE",
-				"type" => "text",
-				"editable" => true
+				"type" => "phone",
+				"editable" => true,
 			),
 			array(
 				"title" => Loc::getMessage("INTRANET_USER_PROFILE_FIELD_WORK_PHONE"),
@@ -309,6 +309,12 @@ class Form
 				"editable" => true
 			);
 			$fields[] = array(
+				"title" => Loc::getMessage("INTRANET_USER_PROFILE_FIELD_PERSONAL_PROFESSION"),
+				"name" => "PERSONAL_PROFESSION",
+				"type" => "text",
+				"editable" => true
+			);
+			$fields[] = array(
 				"title" => Loc::getMessage("INTRANET_USER_PROFILE_FIELD_WORK_CITY"),
 				"name" => "WORK_CITY",
 				"type" => "text",
@@ -326,7 +332,21 @@ class Form
 				"type" => "text",
 				"editable" => true
 			);
-
+			$fields[] = array(
+				"title" => Loc::getMessage("INTRANET_USER_PROFILE_FIELD_WORK_DEPARTMENT"),
+				"name" => "WORK_DEPARTMENT",
+				"type" => "text",
+				"editable" => true
+			);
+			$fields[] = array(
+				"title" => Loc::getMessage("INTRANET_USER_PROFILE_FIELD_WORK_NOTES"),
+				"name" => "WORK_NOTES",
+				"type" => "text",
+				"editable" => true,
+				"data" => [
+					"lineCount" => 3
+				]
+			);
 		}
 
 		$result = array_merge($fields, array_values($this->getUserFieldInfos()));
@@ -639,7 +659,14 @@ class Form
 			'PERSONAL_PHONE' => $result["User"]["PERSONAL_PHONE"],
 			'PERSONAL_STATE' => $result["User"]["PERSONAL_STATE"],
 			'PERSONAL_STREET' => $result["User"]["PERSONAL_STREET"],
-			'PERSONAL_ZIP' => $result["User"]["PERSONAL_ZIP"]
+			'PERSONAL_ZIP' => $result["User"]["PERSONAL_ZIP"],
+			'WORK_CITY' => $result["User"]["WORK_CITY"],
+			'WORK_COUNTRY' => $result["User"]["WORK_COUNTRY"],
+			'WORK_COMPANY' => $result["User"]["WORK_COMPANY"],
+			'WORK_DEPARTMENT' => $result["User"]["WORK_DEPARTMENT"],
+			'PERSONAL_PROFESSION' => $result["User"]["PERSONAL_PROFESSION"],
+			'DATE_REGISTER' => $result["User"]["DATE_REGISTER"],
+			'WORK_NOTES' => $result["User"]["WORK_NOTES"],
 		];
 
 		$userFields = $this->getUserFields();
@@ -690,6 +717,7 @@ class Form
 	public function prepareSettingsFields(&$arResult, $arParams)
 	{
 		$settingsFields = [];
+		$arResult["SettingsFieldsForConfig"] = [];
 
 		if (!is_array($arResult["FormFields"]) || empty($arResult["FormFields"]))
 		{
@@ -775,6 +803,11 @@ class Form
 			else
 			{
 				$arResult["FormFields"][$key]["editable"] = false;
+			}
+
+			if (in_array($field["name"], $viewFields) || in_array($field["name"], $editFields))
+			{
+				$arResult["SettingsFieldsForConfig"][] = $field["name"];
 			}
 
 			if (in_array($field["name"], $viewFields) && !in_array($field["name"], $editFields))

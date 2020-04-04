@@ -246,9 +246,19 @@ BX.TileGrid.Item.prototype =
 		this.layout.container.removeAttribute('tabindex')
 	},
 
-	removeNode: function()
+	removeNode: function(withAnimation)
 	{
+		withAnimation = withAnimation !== false;
 		var itemContainer = this.layout.container;
+
+		if(!itemContainer.parentNode)
+			return;
+
+		if(!withAnimation)
+		{
+			itemContainer.parentNode.removeChild(itemContainer);
+			return;
+		}
 
 		itemContainer.classList.add('ui-grid-tile-item-to-fade');
 		itemContainer.style.width = itemContainer.offsetWidth + 'px';
@@ -260,9 +270,6 @@ BX.TileGrid.Item.prototype =
 
 		setTimeout(function()
 		{
-			if(!itemContainer.parentNode)
-				return;
-
 			itemContainer.parentNode.removeChild(itemContainer);
 		}, 500);
 	},

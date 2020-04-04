@@ -1067,7 +1067,7 @@ if(typeof BX.UI.EntityEditor === "undefined")
 				}
 
 				var childElements = element.getElements();
-				for(var k = 0, childrenCount = childElements.length; k < childrenCount; j++)
+				for(var k = 0, childrenCount = childElements.length; k < childrenCount; k++)
 				{
 					if(childElements[k].isTransferable() &&  childElements[k].getName() !== "")
 					{

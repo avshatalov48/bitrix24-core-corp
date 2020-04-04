@@ -27,12 +27,14 @@ class LandingFilterComponent extends LandingBaseComponent
 	const STATUS_ACTIVE_CHANGED = 'active_changed';
 
 	/**
-	 * Some suffix for filter.
+	 * Some prefix and suffix for filter.
 	 */
+	const FILTER_PREFIX = 'LANDING_';
 	const FILTER_SUFFIX = '';
 
 	/**
 	 * Filter id prefix.
+	 * @deprecated since 19.500.0
 	 * @var string
 	 */
 	protected static $prefix = 'LANDING_';
@@ -42,6 +44,12 @@ class LandingFilterComponent extends LandingBaseComponent
 	 * @var bool
 	 */
 	protected static $isDeleted = false;
+
+	/**
+	 * External filter.
+	 * @var array
+	 */
+	protected static $externalFilter = [];
 
 	/**
 	 * Allowed or not some type.
@@ -57,16 +65,22 @@ class LandingFilterComponent extends LandingBaseComponent
 	/**
 	 * Get instance of grid.
 	 * @param string $type Filter type.
+	 * @param string $siteType Site type.
 	 * @return \CGridOptions
 	 */
-	protected static function getGrid($type)
+	protected static function getGrid($type, $siteType)
 	{
 		static $grid = array();
 
-		if (!isset($grid[$type]) && self::isTypeAllowed($type))
+		if (!self::isTypeAllowed($type))
+		{
+			$type = self::TYPE_SITE;
+		}
+
+		if (!isset($grid[$type]))
 		{
 			$grid[$type] = new \Bitrix\Main\UI\Filter\Options(
-				self::$prefix . $type . self::FILTER_SUFFIX,
+				self::FILTER_PREFIX . $siteType . '_' . $type . self::FILTER_SUFFIX,
 				self::getFilterPresets()
 			);
 		}
@@ -74,13 +88,28 @@ class LandingFilterComponent extends LandingBaseComponent
 	}
 
 	/**
+	 * Sets external filter.
+	 * @param string $key Filter row key.
+	 * @param mixed $value Filter row value.
+	 * @return void
+	 */
+	public static function setExternalFilter($key, $value)
+	{
+		if (is_string($key))
+		{
+			self::$externalFilter[$key] = $value;
+		}
+	}
+
+	/**
 	 * Returns current raw filter by type.
 	 * @param string $type Filter type.
+	 * @param string $siteType Site type.
 	 * @return array
 	 */
-	public static function getFilterRaw($type)
+	public static function getFilterRaw($type, $siteType = 'PAGE')
 	{
-		$grid = self::getGrid($type);
+		$grid = self::getGrid($type, $siteType);
 		$gridFilter = self::getFilterPresets();
 		$search = $grid->getFilter($gridFilter);
 
@@ -95,11 +124,12 @@ class LandingFilterComponent extends LandingBaseComponent
 	/**
 	 * Get current filter by type.
 	 * @param string $type Filter type.
+	 * @param string $siteType Site type.
 	 * @return array
 	 */
-	public static function getFilter($type)
+	public static function getFilter($type, $siteType = 'PAGE')
 	{
-		$filter = array();
+		$filter = self::$externalFilter;
 
 		// in slider filter must be ignored
 		$context = Application::getInstance()->getContext();
@@ -113,7 +143,7 @@ class LandingFilterComponent extends LandingBaseComponent
 		// if type correct, detect all filter keys from request
 		if (self::isTypeAllowed($type))
 		{
-			$grid = self::getGrid($type);
+			$grid = self::getGrid($type, $siteType);
 			$gridFilter = self::getFilterPresets();
 			$search = $grid->getFilter($gridFilter);
 
@@ -231,7 +261,7 @@ class LandingFilterComponent extends LandingBaseComponent
 	protected function getFilterFields()
 	{
 		// title for field will be to setup in result_modifier
-		return [
+		$return = [
 			'STATUS' => [
 				'id' => 'STATUS',
 				'default' => true,
@@ -289,6 +319,13 @@ class LandingFilterComponent extends LandingBaseComponent
 				'type' => 'date'
 			]
 		];
+
+		if ($this->arParams['DRAFT_MODE'] == 'Y')
+		{
+			unset($return['STATUS']);
+		}
+
+		return $return;
 	}
 
 	/**
@@ -326,9 +363,16 @@ class LandingFilterComponent extends LandingBaseComponent
 		{
 			$this->checkParam('FILTER_TYPE', '');
 			$this->checkParam('SETTING_LINK', '');
+			$this->checkParam('DRAFT_MODE', 'N');
 			$this->checkParam('FOLDER_SITE_ID', 0);
+
+			$this->arParams['TYPE'] = trim($this->arParams['TYPE']);
 			$this->arParams['FILTER_TYPE'] = trim($this->arParams['FILTER_TYPE']);
-			$this->arParams['FILTER_ID'] = self::$prefix . $this->arParams['FILTER_TYPE'] . self::FILTER_SUFFIX;
+			$this->arParams['FILTER_ID'] = self::FILTER_PREFIX;
+			$this->arParams['FILTER_ID'] .= $this->arParams['TYPE'] . '_';
+			$this->arParams['FILTER_ID'] .= $this->arParams['FILTER_TYPE'];
+			$this->arParams['FILTER_ID'] .= self::FILTER_SUFFIX;
+
 			$this->arResult['NAVIGATION_ID'] = $this::NAVIGATION_ID;
 			$this->arResult['CURRENT_PAGE'] = $this->request($this::NAVIGATION_ID);
 			$this->arResult['FILTER_FIELDS'] = $this->getFilterFields();

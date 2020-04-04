@@ -42,6 +42,7 @@ class Rest extends \IRestService
 				'imopenlines.widget.user.get' =>  array('callback' => array(__CLASS__, 'widgetUserGet'), 'options' => array()),
 				'imopenlines.widget.vote.send' =>  array('callback' => array(__CLASS__, 'widgetVoteSend'), 'options' => array()),
 				'imopenlines.widget.form.send' =>  array('callback' => array(__CLASS__, 'widgetFormSend'), 'options' => array()),
+//				'imopenlines.widget.form.fill' =>  array('callback' => array(__CLASS__, 'widgetFormFill'), 'options' => array()),
 
 				'imopenlines.config.get' => array(__CLASS__, 'configGet'),
 				'imopenlines.config.list.get' => array(__CLASS__, 'configListGet'),
@@ -722,6 +723,19 @@ class Rest extends \IRestService
 
 		return true;
 	}
+
+//	public static function widgetFormFill($params, $n, \CRestServer $server)
+//	{
+//		if ($server->getAuthType() != \Bitrix\Imopenlines\Widget\Auth::AUTH_TYPE)
+//		{
+//			throw new \Bitrix\Rest\RestException("Access for this method allowed only by livechat authorization.", "WRONG_AUTH_TYPE", \CRestServer::STATUS_FORBIDDEN);
+//		}
+//
+//		\CIMMessageParam::Set($params['MESSAGE_ID'], ['CRM_FORM_VALUE' => $params['CRM_FORM_VALUE']]);
+//		\CIMMessageParam::SendPull($params['MESSAGE_ID'], ['CRM_FORM_VALUE']);
+//
+//		return true;
+//	}
 
 	public static function widgetUserGet($params, $n, \CRestServer $server)
 	{

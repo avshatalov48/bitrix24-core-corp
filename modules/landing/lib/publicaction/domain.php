@@ -17,6 +17,7 @@ class Domain
 	public static function getList(array $params = array())
 	{
 		$result = new PublicActionResult();
+		$params = $result->sanitizeKeys($params);
 
 		$data = array();
 		$res = DomainCore::getList($params);
@@ -136,8 +137,14 @@ class Domain
 	 */
 	public static function check($domain, array $filter = [])
 	{
-		$puny = new \CBXPunycode;
 		$result = new PublicActionResult();
+
+		if (!is_string($domain))
+		{
+			return $result;
+		}
+
+		$puny = new \CBXPunycode;
 		$domain = trim($domain);
 		$return = [
 			'available' => true,

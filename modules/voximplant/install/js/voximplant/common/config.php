@@ -11,5 +11,8 @@ return array(
 	"css" => [
 		"/bitrix/js/voximplant/common/common.css",
 		"/bitrix/js/voximplant/common/telephony.css"
+	],
+	"rel" => [
+		"main.polyfill.promise"
 	]
 );

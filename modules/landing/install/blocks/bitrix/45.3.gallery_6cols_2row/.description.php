@@ -23,7 +23,7 @@ return [
 			'name' => Loc::getMessage('LANDING_BLOCK_45.3.GALLERY_6COLS_2ROW_NODES_LANDINGBLOCKNODECARDIMG'),
 			'type' => 'img',
 			'allowInlineEdit' => false,
-			'dimensions' => ['width' => 600, 'height' => 600],
+			'dimensions' => ['maxWidth' => 1350, 'maxHeight' => 900],
 		],
 	],
 	'style' => [

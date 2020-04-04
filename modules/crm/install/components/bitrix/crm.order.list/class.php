@@ -7,6 +7,7 @@ use Bitrix\Main;
 use Bitrix\Crm\Order;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm\Settings\LayoutSettings;
+use \Bitrix\Main\Grid;
 use Bitrix\Crm\Agent\Search\OrderSearchContentRebuildAgent;
 
 Loc::loadMessages(__FILE__);
@@ -489,7 +490,7 @@ class CCrmOrderListComponent extends \CBitrixComponent
 			array('id' => 'ORDER_SUMMARY', 'name' => Loc::getMessage('CRM_COLUMN_ORDER_SUMMARY'), 'sort' => 'ID', 'width' => 300, 'default' => true, 'editable' => false),
 			array('id' => 'DATE_INSERT', 'name' => Loc::getMessage('CRM_COLUMN_DATE_INSERT'), 'default' => true, 'sort' => 'DATE_INSERT', 'editable' => false, 'type' => 'date', 'class' => 'date'),
 			array('id' => 'STATUS_ID', 'name' => Loc::getMessage('CRM_COLUMN_STATUS_ID'), 'sort' => 'STATUS_ID', 'default' => true),
-			array('id' => 'SUM', 'name' => Loc::getMessage('CRM_COLUMN_SUM'), 'sort' => 'PRICE', 'first_order' => 'desc', 'default' => true, 'editable' => false, 'align' => 'right'),
+			array('id' => 'SUM', 'name' => Loc::getMessage('CRM_COLUMN_SUM'), 'sort' => 'PRICE', 'default' => true, 'editable' => false, 'align' => 'right'),
 			array('id' => 'RESPONSIBLE_BY', 'name' => Loc::getMessage('CRM_COLUMN_RESPONSIBLE_BY'), 'default' => true, 'sort' => 'RESPONSIBLE_ID', 'editable' => false),
 			array('id' => 'PAYED', 'name' => Loc::getMessage('CRM_COLUMN_PAYED'), 'sort' => 'PAYED', 'editable' => false, 'default' => true)
 		);
@@ -611,13 +612,26 @@ class CCrmOrderListComponent extends \CBitrixComponent
 		$companyId = null;
 
 		$filter = $this->formatUIFilter($filter);
-		if(isset($filter['FIND']))
+
+		$searchRestriction = \Bitrix\Crm\Restriction\RestrictionManager::getSearchLimitRestriction();
+		if(!$searchRestriction->isExceeded(CCrmOwnerType::Order))
 		{
-			if(is_string($filter['FIND']))
+			Bitrix\Crm\Search\SearchEnvironment::convertEntityFilterValues(CCrmOwnerType::Order, $filter);
+			if(isset($filter['SEARCH_CONTENT']))
 			{
-				$filter = array_merge($filter, $this->prepareSearchFilterValue($filter['FIND']));
+				$searchValue = $filter['SEARCH_CONTENT'];
+				unset($filter['SEARCH_CONTENT']);
+				if(is_string($searchValue))
+				{
+					$filter = array_merge($filter, $this->prepareSearchFilterValue($searchValue));
+				}
 			}
-			unset($filter['FIND']);
+		}
+		else
+		{
+			$this->arResult['LIVE_SEARCH_LIMIT_INFO'] = $searchRestriction->prepareStubInfo(
+				array('ENTITY_TYPE_ID' => CCrmOwnerType::Order)
+			);
 		}
 
 		$propertyItterator = 0;
@@ -1016,6 +1030,47 @@ class CCrmOrderListComponent extends \CBitrixComponent
 		return $tradingPlatform->getRealName();
 	}
 
+	/**
+	 * @param array $arSort
+	 * @param Grid\Options $gridOptions
+	 * @param array $visibleColumns
+	 * @param array $headers
+	 * @return array
+	 */
+	protected function getSortFields(array $arSort, Grid\Options $gridOptions, array $visibleColumns, array $headers): array
+	{
+		$gridSort = $gridOptions->GetSorting(array(
+			'sort' => array('ID' => 'desc'),
+			'vars' => array('by' => 'by', 'order' => 'order')
+		));
+
+		$tmpSort = !empty($arSort) ? $arSort : $gridSort['sort'];
+		$resultSort = [];
+
+		foreach($headers as $header)
+		{
+			if(empty($header['sort']))
+			{
+				continue;
+			}
+
+			$sortColumn = $header['sort'];
+
+			if(isset($tmpSort[$sortColumn]))
+			{
+				$resultSort[$sortColumn] = $tmpSort[$sortColumn];
+				unset($tmpSort[$sortColumn]);
+
+				if(empty($tmpSort[$sortColumn]))
+				{
+					break;
+				}
+			}
+		}
+
+		return [$resultSort, $gridSort['vars']];
+	}
+
 	public function executeComponent()
 	{
 		global $USER_FIELD_MANAGER, $APPLICATION, $USER;
@@ -1185,23 +1240,6 @@ class CCrmOrderListComponent extends \CBitrixComponent
 
 		$visibleColumns = $gridOptions->GetVisibleColumns();
 
-		$sort = $gridOptions->GetSorting(array(
-			'sort' => array('ID' => 'desc'),
-			'vars' => array('by' => 'by', 'order' => 'order')
-		));
-
-		foreach($sort['sort'] as $sortField => $sortDirection)
-		{
-			if(!in_array($sortField, $visibleColumns))
-			{
-				unset($sort['sort'][$sortField]);
-			}
-		}
-
-		$this->arResult['SORT'] = !empty($arSort) ? $arSort : $sort['sort'];
-		$this->arResult['SORT_VARS'] = $sort['vars'];
-
-
 		// Fill in default values if empty
 		if (empty($visibleColumns))
 		{
@@ -1233,6 +1271,13 @@ class CCrmOrderListComponent extends \CBitrixComponent
 			$this->arResult['ENABLE_BIZPROC'] = $hasBizprocFields;
 			unset($fieldName);
 		}
+
+		list($this->arResult['SORT'], $this->arResult['SORT_VARS']) = $this->getSortFields(
+			$arSort,
+			$gridOptions,
+			$visibleColumns,
+			$this->arResult['HEADERS']
+		);
 
 		if ($CCrmUserType->NormalizeFields($visibleColumns))
 		{
@@ -1452,6 +1497,7 @@ class CCrmOrderListComponent extends \CBitrixComponent
 
 		//region Navigation data initialization
 		$nav = $this->getNavigation($arNavParams, $glFilter, $arSelect, $runtime);
+
 		$glParams = array(
 			'filter' => $glFilter,
 			'order' => $arSort,

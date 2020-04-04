@@ -40,8 +40,22 @@ class BXInstallServices
 {
 	public static function CreateWizardIndex($wizardName, &$errorMessage)
 	{
+		$additionalInstallDefine = "";
+		if (defined("ADDITIONAL_INSTALL"))
+		{
+			$additionalInstallDefine = (ADDITIONAL_INSTALL) ? 'define("ADDITIONAL_INSTALL", true);' : 'define("ADDITIONAL_INSTALL", false);';
+		}
+
+		$personTypeDefine = "";
+		if (defined("NEED_PERSON_TYPE"))
+		{
+			$additionalInstallDefine = (NEED_PERSON_TYPE) ? 'define("NEED_PERSON_TYPE", true);' : 'define("NEED_PERSON_TYPE", false);';
+		}
+
 		$indexContent = '<'.'?'.
 			'define("WIZARD_DEFAULT_SITE_ID", "'.(defined("WIZARD_DEFAULT_SITE_ID") ? WIZARD_DEFAULT_SITE_ID : "s1").'");'.
+			$additionalInstallDefine.
+			$personTypeDefine.
 			'require('.'$'.'_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_before.php");'.
 			'require_once('.'$'.'_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/classes/general/wizard.php");'.
 			'$'.'wizard = new CWizard("'.$wizardName.'");'.

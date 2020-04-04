@@ -82,28 +82,40 @@ class Documentgenerator
 	 */
 	public function getFolderList($storage)
 	{
-		if ($storage instanceof \Bitrix\Disk\Storage && count($this->folderList[$storage->getId()]) == 0)
+		if (
+			$storage instanceof \Bitrix\Disk\Storage &&
+			$storage->getId() > 0 &&
+			(
+				!isset($this->folderList[$storage->getId()]) ||
+				empty($this->folderList[$storage->getId()])
+			)
+		)
 		{
+			$this->folderList[$storage->getId()] = array();
 			if ($this->isMeasureAvailable())
 			{
 				$typeFolderCodeList = self::getSpecialFolderCode();
-				foreach ($typeFolderCodeList as $code)
+				if (count($typeFolderCodeList) > 0)
 				{
-					$folder = \Bitrix\Disk\Folder::load(array(
-						'=CODE' => $code,
-						'=STORAGE_ID' => $storage->getId(),
-					));
-
-					if (
-						!($folder instanceof \Bitrix\Disk\Folder) ||
-						($folder->getCode() !== $code)
-					)
+					foreach ($typeFolderCodeList as $code)
 					{
-						continue;
-					}
+						$folder = \Bitrix\Disk\Folder::load(array(
+							'=CODE' => $code,
+							'=STORAGE_ID' => $storage->getId(),
+						));
 
-					$this->folderList[$storage->getId()][$code] = $folder;
+						if (
+							!($folder instanceof \Bitrix\Disk\Folder) ||
+							($folder->getCode() !== $code)
+						)
+						{
+							continue;
+						}
+
+						$this->folderList[$storage->getId()][$code] = $folder;
+					}
 				}
+
 				return $this->folderList[$storage->getId()];
 			}
 		}

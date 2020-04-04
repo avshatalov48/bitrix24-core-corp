@@ -80,7 +80,7 @@ function deleteAccessRowExtended(link)
 									row.cells[1].innerHTML = obSelected[provider][id].name;
 									row.cells[2].innerHTML = '<input type="hidden" name="' + name + '[ACCESS_CODE][]" value="' + id + '">' +
 															select.replace('#inc#', inc++);
-									row.cells[3].innerHTML = '<span onclick="deleteAccessRow(this);" data-id="' + id + '" class="table-blue-delete table-blue-delete-landing-role"></span>';
+									row.cells[3].innerHTML = '<span onclick="deleteAccessRow(this);" data-id="' + id + '" class="table-blue-delete table-blue-delete-landing-role bitrix24-metrika" data-metrika24="permission_delete"></span>';
 								}
 							}
 						}
@@ -190,7 +190,7 @@ function deleteAccessRowExtended(link)
 										html += '<input type="hidden" name="' + name + '[' + rightId + '][]" value="' + id + '">';
 										html += (providerType !== '') ? providerType + ': ' : '';
 										html += obSelected[provider][id].name;
-										html += '<span onclick="deleteAccessRowExtended(this);" data-code="' + rightId + '" data-id="' + id + '" class="table-blue-delete table-blue-delete-landing-role"></span>';
+										html += '<span onclick="deleteAccessRowExtended(this);" data-code="' + rightId + '" data-id="' + id + '" class="table-blue-delete table-blue-delete-landing-role bitrix24-metrika" data-metrika24="permission_delete"></span>';
 										html += '</div>';
 										BX('landing-additional-rights-fields-' + rightId).innerHTML += html;
 									}

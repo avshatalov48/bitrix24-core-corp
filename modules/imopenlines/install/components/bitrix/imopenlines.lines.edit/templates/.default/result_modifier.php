@@ -26,13 +26,13 @@ if (!function_exists('getImolUserDataInputElement'))
 		?>
 		<div class="%user_data_input_container_class%" data-id="%data_id%">
 			<div class="imopenlines-form-settings-user-info">
-				<span class="imopenlines-form-settings-user-img" style="background-image: url('%user_avatar_default%')"></span>
+				<span class="imopenlines-form-settings-user-img" style="background-image: url(%user_avatar_default%)"></span>
 				<span class="imopenlines-form-settings-user-name">%user_name_default%</span>
 			</div>
 			<div class="imopenlines-form-settings-user-add">
 			<span class="imopenlines-form-settings-user-img imopenlines-form-settings-user-img-add"
 				  id="button-avatar-user-%data_id%"
-				  style="background-image: url('%user_avatar_show%')"></span>
+				  style="background-image: url(%user_avatar_show%)"></span>
 				<div class="imopenlines-form-settings-user-input-block">
 					<input class="imopenlines-form-settings-user-input"
 						   type="text"

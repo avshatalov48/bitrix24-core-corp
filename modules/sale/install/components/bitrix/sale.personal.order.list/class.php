@@ -515,18 +515,20 @@ class CBitrixPersonalOrderListComponent extends CBitrixComponent
 			'order' => array("ID"=>"DESC")
 		);
 
+		/** @var Sale\Order $orderClass */
+		$orderClass = $this->registry->getOrderClassName();
 
 		if ($this->options['USE_ACCOUNT_NUMBER'])
 		{
 			$filter['filter']['ACCOUNT_NUMBER'] = $id;
-			$orderList = Sale\Order::getList($filter);
+			$orderList = $orderClass::getList($filter);
 			$orderResult = $orderList->fetch();
 		}
 
 		if (!$orderResult)
 		{
 			$filter['filter']['ID'] = $id;
-			$orderList = Sale\Order::getList($filter);
+			$orderList = $orderClass::getList($filter);
 			$orderResult = $orderList->fetch();
 		}
 
@@ -570,7 +572,10 @@ class CBitrixPersonalOrderListComponent extends CBitrixComponent
 			'order' => array("SORT" => "ASC")
 		);
 
-		$basketList = Sale\Basket::getList($filter);
+		/** @var Sale\Basket $basketClass */
+		$basketClass = $this->registry->getBasketClassName();
+
+		$basketList = $basketClass::getList($filter);
 
 		while ($basket = $basketList->fetch())
 		{
@@ -1181,6 +1186,28 @@ class CBitrixPersonalOrderListComponent extends CBitrixComponent
 
 				$this->formatDate($arOrder, $this->orderDateFields2Convert);
 
+				if (is_array($this->dbResult['ORDERS'][$k]['SHIPMENT']))
+				{
+					$formattedShipments = [];
+					foreach ($this->dbResult['ORDERS'][$k]['SHIPMENT'] as $i => $shipment)
+					{
+						$this->formatDate($shipment, $this->orderDateFields2Convert);
+						$formattedShipments[$i] = $shipment;
+					}
+					$this->dbResult['ORDERS'][$k]['SHIPMENT'] = $formattedShipments;
+				}
+
+				if (is_array($this->dbResult['ORDERS'][$k]['PAYMENT']))
+				{
+					$formattedPayments = [];
+					foreach ($this->dbResult['ORDERS'][$k]['PAYMENT'] as $i => $payment)
+					{
+						$this->formatDate($payment, $this->orderDateFields2Convert);
+						$formattedPayments[$i] = $payment;
+					}
+					$this->dbResult['ORDERS'][$k]['PAYMENT'] = $formattedPayments;
+				}
+
 				if ($this->arParams['DISALLOW_CANCEL'] === 'Y')
 				{
 					$arOrder["CAN_CANCEL"] = 'N';
@@ -1294,7 +1321,7 @@ class CBitrixPersonalOrderListComponent extends CBitrixComponent
 	 */
 	protected function setRegistry()
 	{
-		$this->registry = Sale\Registry::getInstance(Sale\Order::getRegistryType());
+		$this->registry = Sale\Registry::getInstance(Sale\Registry::REGISTRY_TYPE_ORDER);
 	}
 
 	/**

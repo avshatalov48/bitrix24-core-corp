@@ -2,10 +2,10 @@
 
 namespace Bitrix\Landing\Hook\Page;
 
-use Bitrix\Landing\Assets;
+use \Bitrix\Landing\Assets;
 use \Bitrix\Landing\Field;
-use Bitrix\Landing\Help;
-use Bitrix\Landing\Landing;
+use \Bitrix\Landing\Help;
+use \Bitrix\Landing\Landing;
 use \Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__FILE__);

@@ -322,9 +322,15 @@
 				var i, li, checkbox, title, actionCont;
 				for (i = 0; i < params.sectionList.length; i++)
 				{
+					if (!params.sectionList[i].DOM)
+					{
+						params.sectionList[i].DOM = {};
+					}
+
+					var sectionId = params.sectionList[i].id.toString();
 					li = listWrap.appendChild(BX.create('LI', {
 						props: {className: 'calendar-list-slider-item'},
-						attrs: {'data-bx-calendar-section': params.sectionList[i].id.toString()}
+						attrs: {'data-bx-calendar-section': sectionId}
 					}));
 
 					checkbox = li.appendChild(BX.create('DIV', {
@@ -337,22 +343,18 @@
 						text: params.sectionList[i].name
 					}));
 
-					actionCont = li.appendChild(BX.create('DIV', {
-						props: {className: 'calendar-list-slider-item-actions-container'},
-						attrs: {'data-bx-calendar-section-menu': params.sectionList[i].id.toString()},
-						html: '<span class="calendar-list-slider-item-context-menu"></span>'
-					}));
-
-					if (!params.sectionList[i].DOM)
-					{
-						params.sectionList[i].DOM = {};
-					}
-
 					params.sectionList[i].DOM.item = li;
 					params.sectionList[i].DOM.checkbox = checkbox;
 					params.sectionList[i].DOM.title = title;
-					params.sectionList[i].DOM.actionCont = actionCont;
-
+					if (sectionId !== 'tasks')
+					{
+						actionCont = li.appendChild(BX.create('DIV', {
+							props: {className: 'calendar-list-slider-item-actions-container'},
+							attrs: {'data-bx-calendar-section-menu': sectionId},
+							html: '<span class="calendar-list-slider-item-context-menu"></span>'
+						}));
+						params.sectionList[i].DOM.actionCont = actionCont;
+					}
 				}
 			}
 
@@ -577,7 +579,6 @@
 				return this.closeForms();
 
 			this.closeForms();
-			//setTimeout(BX.delegate(function(){
 				this.editSectionFormTitle = this.editSectionFormWrap.querySelector('.calendar-list-slider-card-widget-title-text');
 
 				this.editSectionForm = new SectionForm({
@@ -590,31 +591,31 @@
 					}, this)
 				});
 
-				var showAccessControl = true;
-				if (params.section && (!params.section.belongsToView() || params.section.isPseudo()))
-				{
-					this.editSectionFormTitle.innerHTML = BX.message('EC_SEC_SLIDER_EDIT_SECTION_PERSONAL');
-					showAccessControl = false;
-				}
-				else if (params.section && params.section.id)
-				{
-					this.editSectionFormTitle.innerHTML = BX.message('EC_SEC_SLIDER_EDIT_SECTION');
-				}
-				else
-				{
-					this.editSectionFormTitle.innerHTML = BX.message('EC_SEC_SLIDER_NEW_SECTION');
-				}
+			var showAccessControl = true;
+			if (params.section && (!params.section.belongsToView() || params.section.isPseudo()))
+			{
+				this.editSectionFormTitle.innerHTML = BX.message('EC_SEC_SLIDER_EDIT_SECTION_PERSONAL');
+				showAccessControl = false;
+			}
+			else if (params.section && params.section.id)
+			{
+				this.editSectionFormTitle.innerHTML = BX.message('EC_SEC_SLIDER_EDIT_SECTION');
+				showAccessControl = params.section.canDo('access');
+			}
+			else
+			{
+				this.editSectionFormTitle.innerHTML = BX.message('EC_SEC_SLIDER_NEW_SECTION');
+			}
 
-				this.editSectionForm.show({
-					showAccess: showAccessControl,
-					section: params.section || {
-						color: this.calendar.sectionController.getDefaultSectionColor(),
-						access: this.calendar.sectionController.getDefaultSectionAccess()
-					}
-				});
+			this.editSectionForm.show({
+				showAccess: showAccessControl,
+				section: params.section || {
+					color: this.calendar.sectionController.getDefaultSectionColor(),
+					access: this.calendar.sectionController.getDefaultSectionAccess()
+				}
+			});
 
-				this.denySliderClose();
-			//}, this), 100);
+			this.denySliderClose();
 		},
 
 		showTrackingTypesForm: function()

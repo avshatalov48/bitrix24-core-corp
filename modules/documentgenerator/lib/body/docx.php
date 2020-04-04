@@ -5,6 +5,7 @@ namespace Bitrix\DocumentGenerator\Body;
 use Bitrix\Main\Error;
 use Bitrix\Main\IO\File;
 use Bitrix\Main\Result;
+use Bitrix\Main\Security\Random;
 
 final class Docx extends ZipDocument
 {
@@ -373,7 +374,7 @@ final class Docx extends ZipDocument
 	 */
 	protected function importImage(File $image, \DOMElement $relationshipNode, $newId = '')
 	{
-		$newName = $image->getName();
+		$newName = Random::getString(15).'.'.$image->getExtension();
 		$this->zip->addFile($image->getPhysicalPath(), 'word/media/'.$newName);
 		$relationshipNode->removeAttribute('Target');
 		$relationshipNode->setAttribute('Target', 'media/'.$newName);

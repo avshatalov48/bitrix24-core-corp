@@ -394,9 +394,10 @@ BX.ajax.processRequestData = function(data, config)
 	{
 		case 'JSON':
 
-			BX.addCustomEvent(config.xhr, 'onParseJSONFailure', BX.proxy(BX.ajax._onParseJSONFailure, config));
-			result = BX.parseJSON(data, config.xhr);
-			BX.removeCustomEvent(config.xhr, 'onParseJSONFailure', BX.proxy(BX.ajax._onParseJSONFailure, config));
+			var context = config.xhr || {};
+			BX.addCustomEvent(context, 'onParseJSONFailure', BX.proxy(BX.ajax._onParseJSONFailure, config));
+			result = BX.parseJSON(data, context);
+			BX.removeCustomEvent(context, 'onParseJSONFailure', BX.proxy(BX.ajax._onParseJSONFailure, config));
 
 			if(!!result && BX.type.isArray(result['bxjs']))
 			{

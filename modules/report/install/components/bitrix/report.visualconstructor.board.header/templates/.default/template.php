@@ -1,6 +1,8 @@
 <?php
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
+use Bitrix\Report\VisualConstructor\Helper\Filter;
+
 /** @var \Bitrix\Report\VisualConstructor\Helper\Filter $filter */
 $filter = $arResult['FILTER'];
 
@@ -21,15 +23,19 @@ if ($isBitrix24Template)
 		<?if (!$arResult['IS_FRAME_MODE']):?>
 				<div class="pagetitle-container pagetitle-flexible-space">
 					<?
-					$APPLICATION->IncludeComponent(
-						'bitrix:main.ui.filter',
-						'',
-						$filter->getFilterParameters(),
-						$component,
-						array()
-					);
-					?>
-				</div>
+					if($arResult['FILTER'] instanceof Filter)
+					{
+
+						$APPLICATION->IncludeComponent(
+							'bitrix:main.ui.filter',
+							'',
+							$filter->getFilterParameters(
+							),
+							$component,
+							array()
+						);
+					}
+				?></div>
 
 				<?if ($arResult['WITH_ADD_BUTTON']):?>
 				<div class="pagetitle-container pagetitle-align-right-container">
@@ -69,20 +75,24 @@ if ($isBitrix24Template)
 }
 
 
-if ($arResult['IS_FRAME_MODE']):?>
-	<div class="filter">
-		<div class="pagetitle-container pagetitle-flexible-space">
-		<?
-		$APPLICATION->IncludeComponent(
-			'bitrix:main.ui.filter',
-			'',
-			$filter->getFilterParameters(),
-			$component,
-			array()
-		);
-		?>
+if ($arResult['FILTER'] instanceof Filter): ?>
+	<? foreach ($arResult['FILTER']->getStringList() as $str): ?>
+		<?= $str ?>
+	<? endforeach; ?>
+	<? if ($arResult['IS_FRAME_MODE']): ?>
+		<div class="filter">
+			<div class="pagetitle-container pagetitle-flexible-space">
+			<?
+			$APPLICATION->IncludeComponent(
+				'bitrix:main.ui.filter',
+				'',
+				$filter->getFilterParameters(),
+				$component,
+				array()
+			);
+			?>
+			</div>
 		</div>
-	</div>
-
+	<? endif ?>
 <?endif; ?>
 

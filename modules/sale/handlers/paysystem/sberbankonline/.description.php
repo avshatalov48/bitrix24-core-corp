@@ -1,5 +1,7 @@
 <?php
-use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Loader,
+	Bitrix\Main\Localization\Loc,
+	Bitrix\Sale\PaySystem;
 
 Loc::loadMessages(__FILE__);
 
@@ -10,12 +12,21 @@ $description = array(
 $request = \Bitrix\Main\Application::getInstance()->getContext()->getRequest();
 $host = $request->isHttps() ? 'https' : 'http';
 
-$isAvailable = \Bitrix\Sale\PaySystem\Manager::HANDLER_AVAILABLE_TRUE;
+$isAvailable = PaySystem\Manager::HANDLER_AVAILABLE_TRUE;
 
-$licensePrefix = \Bitrix\Main\Loader::includeModule("bitrix24") ? \CBitrix24::getLicensePrefix() : "";
-if (IsModuleInstalled("bitrix24") && !in_array($licensePrefix, ["ru"]))
+$licensePrefix = Loader::includeModule('bitrix24') ? \CBitrix24::getLicensePrefix() : "";
+$portalZone = Loader::includeModule('intranet') ? CIntranetUtils::getPortalZone() : "";
+
+if (Loader::includeModule("bitrix24"))
 {
-	$isAvailable = \Bitrix\Sale\PaySystem\Manager::HANDLER_AVAILABLE_FALSE;
+	if ($licensePrefix !== 'ru')
+	{
+		$isAvailable = PaySystem\Manager::HANDLER_AVAILABLE_FALSE;
+	}
+}
+elseif (Loader::includeModule('intranet') && $portalZone !== 'ru')
+{
+	$isAvailable = PaySystem\Manager::HANDLER_AVAILABLE_FALSE;
 }
 
 $data = array(

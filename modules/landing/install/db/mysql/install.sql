@@ -7,6 +7,8 @@ create table if not exists b_landing
     ACTIVE char(1) not null default 'Y',
     DELETED char(1) not null default 'N',
     PUBLIC char(1) not null default 'Y',
+    SYS char(1) not null default 'N',
+    VIEWS int(18) not null default 0,
     TITLE varchar(255) not null,
     XML_ID varchar(255) default null,
     DESCRIPTION varchar(255) default null,
@@ -16,6 +18,8 @@ create table if not exists b_landing
     SITEMAP char(1) not null default 'N',
     FOLDER char(1) not null default 'N',
     FOLDER_ID int(18),
+    SEARCH_CONTENT mediumtext default null,
+    VERSION int(18) not null default 1,
     CREATED_BY_ID int(18) not null,
     MODIFIED_BY_ID int(18) not null,
     DATE_CREATE timestamp null,
@@ -25,6 +29,7 @@ create table if not exists b_landing
     INDEX IX_B_LAND_CODE (CODE),
     INDEX IX_B_LAND_ACTIVE (ACTIVE),
     INDEX IX_B_LAND_DELETED (DELETED),
+    INDEX IX_B_LAND_SYS (SYS),
     INDEX IX_B_LAND_XML_ID (XML_ID),
     INDEX IX_B_LAND_SITEMAP (SITEMAP),
     INDEX IX_B_LAND_FOLDER (FOLDER),
@@ -46,6 +51,7 @@ create table if not exists b_landing_block
     ACCESS char(1) not null default 'X',
     SOURCE_PARAMS mediumtext default null,
     CONTENT mediumtext not null,
+    SEARCH_CONTENT mediumtext default null,
     CREATED_BY_ID int(18) not null,
     MODIFIED_BY_ID int(18) not null,
     DATE_CREATE timestamp null,
@@ -75,6 +81,7 @@ create table if not exists b_landing_site
     LANDING_ID_404 int(18) default null,
     LANDING_ID_503 int(18) default null,
     LANG char(2) default null,
+    SPECIAL char(1) not null default 'N',
     CREATED_BY_ID int(18) not null,
     MODIFIED_BY_ID int(18) not null,
     DATE_CREATE timestamp null,
@@ -83,7 +90,8 @@ create table if not exists b_landing_site
     INDEX IX_B_SITE_CODE (CODE),
     INDEX IX_B_SITE_ACTIVE (ACTIVE),
     INDEX IX_B_SITE_DELETED (DELETED),
-    INDEX IX_B_SITE_XML_ID (XML_ID)
+    INDEX IX_B_SITE_XML_ID (XML_ID),
+    INDEX IX_B_SITE_SPECIAL (SPECIAL)
 );
 
 create table if not exists b_landing_domain
@@ -163,6 +171,7 @@ create table if not exists b_landing_hook_data
     HOOK varchar(50) not null,
     CODE varchar(50) not null,
     VALUE text default null,
+    PUBLIC char(1) not null default 'N',
     PRIMARY KEY(ID),
     INDEX K_ENTITY (ENTITY_ID, ENTITY_TYPE)
 );
@@ -217,20 +226,6 @@ create table if not exists b_landing_demo
     INDEX IX_B_DEMO_XML_ID (XML_ID),
     INDEX IX_B_DEMO_APP_CODE (APP_CODE),
     INDEX IX_B_DEMO_TEMPLATE_ID (SITE_TEMPLATE_ID)
-);
-
-create table if not exists b_landing_manifest
-(
-    ID int(18) not null auto_increment,
-    CODE varchar(255) not null,
-    MANIFEST text not null,
-    CONTENT text not null,
-    CREATED_BY_ID int(18) not null,
-    MODIFIED_BY_ID int(18) not null,
-    DATE_CREATE timestamp null,
-    DATE_MODIFY timestamp not null,
-    PRIMARY KEY(ID),
-    UNIQUE IX_B_MANIFEST_CODE (CODE)
 );
 
 create table if not exists b_landing_placement
@@ -292,13 +287,15 @@ create table if not exists b_landing_role (
     ID int(18) not null auto_increment,
     TITLE varchar(255) default null,
     XML_ID varchar(255) default null,
+    TYPE varchar(255) default null,
     ACCESS_CODES text default null,
     ADDITIONAL_RIGHTS text default null,
     CREATED_BY_ID int(18) not null,
     MODIFIED_BY_ID int(18) not null,
     DATE_CREATE timestamp null,
-    DATE_MODIFY timestamp not null,
-    PRIMARY KEY(ID)
+    DATE_MODIFY timestamp not null default CURRENT_TIMESTAMP,
+    PRIMARY KEY(ID),
+    INDEX IX_B_ROLE_TYPE (TYPE)
 );
 
 create table if not exists b_landing_filter_entity (
@@ -321,4 +318,28 @@ create table if not exists b_landing_filter_block (
     PRIMARY KEY(ID),
     INDEX IX_B_FILTER_ID (FILTER_ID),
     UNIQUE IX_B_FILTER_BLOCK (FILTER_ID, BLOCK_ID)
+);
+
+create table if not exists b_landing_view (
+    ID int(18) not null auto_increment,
+    LID int(18) not null,
+    USER_ID int(18) not null,
+    VIEWS int(18) not null,
+    FIRST_VIEW datetime not null,
+    LAST_VIEW datetime not null,
+    PRIMARY KEY(ID),
+    INDEX IX_B_VIEW_LIDUID (LID, USER_ID)
+);
+
+create table if not exists b_landing_binding
+(
+    ID int(18) not null auto_increment,
+    ENTITY_ID int(18) not null,
+    ENTITY_TYPE char(1) not null,
+    BINDING_ID varchar(50) not null,
+    BINDING_TYPE char(1) not null,
+    PRIMARY KEY(ID),
+    INDEX IX_B_BINDING (BINDING_ID, BINDING_TYPE),
+    INDEX IX_B_ENTITY (ENTITY_ID, ENTITY_TYPE),
+    INDEX IX_B_BINDING_TYPE (BINDING_TYPE)
 );

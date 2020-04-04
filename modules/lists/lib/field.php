@@ -1510,7 +1510,8 @@ class Field
 				'CURRENT_ELEMENTS_ID' => $currentElements,
 				'POPUP' => 'Y',
 				'ONLY_READ' => $field['READ'],
-				'PANEL_SELECTED_VALUES' => 'Y'
+				'PANEL_SELECTED_VALUES' => 'Y',
+				'TEMPLATE_URL' => $field['LIST_ELEMENT_URL']
 			),
 			null, array('HIDE_ICONS' => 'Y')
 		);

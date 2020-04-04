@@ -201,7 +201,7 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 	{
 		$errorsInGridActions = $this->processGridActions();
 
-		$this->application->setTitle($this->storage->getProxyType()->getTitleForCurrentUser());
+		$this->application->setTitle(htmlspecialcharsbx($this->storage->getProxyType()->getTitleForCurrentUser()));
 
 		$securityContext = $this->storage->getCurrentUserSecurityContext();
 		$proxyType = $this->storage->getProxyType();
@@ -380,7 +380,7 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 		$this->folder->preloadOperationsForSpecifiedObjects($objectIds, $securityContext);
 		$isShowFromDifferentLevels = $this->isShowFromDifferentLevels($parameters['filter']);
 		$sharedObjectIds = [];
-		if (!$this->isTrashMode())
+		if (!$this->isTrashMode() && $objectIds)
 		{
 			$sharedObjectIds = $this->getUserShareObjectIds();
 			$crumbStorage = \Bitrix\Disk\CrumbStorage::getInstance();

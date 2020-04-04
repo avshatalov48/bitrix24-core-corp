@@ -40,7 +40,7 @@ class IvrAction extends Node
 		else if ($action['ACTION'] === \Bitrix\Voximplant\Ivr\Action::ACTION_PHONE)
 		{
 			$phoneNumber = $action['PARAMETERS']['PHONE_NUMBER'];
-			$pstnNode = new Pstn(\CVoxImplantPhone::Normalize($phoneNumber, 1), 'voicemail');
+			$pstnNode = new Pstn(\CVoxImplantPhone::stripLetters($phoneNumber), 'voicemail');
 			$this->setNext($pstnNode);
 		}
 		else if ($action['ACTION'] === \Bitrix\Voximplant\Ivr\Action::ACTION_DIRECT_CODE)

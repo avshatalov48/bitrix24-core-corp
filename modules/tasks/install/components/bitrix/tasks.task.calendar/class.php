@@ -13,7 +13,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 
 
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Tasks\Helper\Grid;
+use Bitrix\Tasks\Manager;
 use Bitrix\Tasks\Helper\Filter;
 use Bitrix\Tasks\Internals\Task\ParameterTable;
 use Bitrix\Tasks\Internals\Task\ProjectDependenceTable;
@@ -53,32 +53,91 @@ class TasksTaskCalendarComponent extends TasksTaskListComponent implements  \Bit
 
 	protected function getPageSize()
 	{
-		return 50;
+		return 300;
 	}
 
 	protected function getData()
 	{
-		parent::getData();
-
-		$taskIds = [];
-		$this->arResult['TASKS_LINKS'] = [];
-
-		foreach ($this->arResult['LIST'] as $item)
+		$request = \Bitrix\Main\Context::getCurrent()->getRequest()->toArray();
+		if (isset($request['task_calendar_action']) && $request['task_calendar_action'] === 'LOAD_ENTRIES')
 		{
-			$taskId = $item['ID'];
+			$parameters = ['ERRORS' => $this->errors];
+			$parameters['MAKE_ACCESS_FILTER'] = true;
 
-			$taskParameters = ParameterTable::getList(['filter' => ['TASK_ID' => $taskId]])->fetchAll();
-			$this->arResult['LIST'][$taskId]['SE_PARAMETER'] = $taskParameters;
+			$getListParameters = [
+				'order'        => $this->getOrder(),
+				'select'       => $this->getSelect(),
+				'legacyFilter' => $this->listParameters['filter'],
+			];
 
-			$taskIds[] = $taskId;
-		}
-
-		$res = ProjectDependenceTable::getListByLegacyTaskFilter($this->listParameters['filter']);
-		while ($item = $res->fetch())
-		{
-			if (in_array($item['TASK_ID'], $taskIds))
+			if (!isset($this->listParameters['filter']['::SUBFILTER-DEADLINE'])
+				&& \Bitrix\Main\Type\Date::isCorrect($request['deadlineFrom'])
+				&& \Bitrix\Main\Type\Date::isCorrect($request['deadlineTo'])
+			)
 			{
-				$this->arResult['TASKS_LINKS'][$item['TASK_ID']][] = $item;
+				$this->listParameters['filter']['::SUBFILTER-DEADLINE'] = [
+					'>=DEADLINE' => $request['deadlineFrom'],
+					'<=DEADLINE' => $request['deadlineTo']
+				];
+			}
+
+			if ($this->exportAs === false)
+			{
+				$getListParameters['NAV_PARAMS'] = [
+					'nPageSize'          => $this->getPageSize(),
+					'bDescPageNumbering' => false,
+					'NavShowAll'         => false,
+					'bShowAll'           => false,
+					'showAlways'         => false,
+					'SHOW_ALWAYS'        => false
+				];
+			}
+
+			if (isset($this->listParameters['filter']['PARENT_ID']))
+			{
+				$getListParameters['NAV_PARAMS']['NavShowAll'] = true;
+			}
+
+			if (array_key_exists('clear_nav', $_REQUEST) && $_REQUEST['clear_nav'] == 'Y')
+			{
+				$getListParameters['NAV_PARAMS']['iNumPage'] = 1;
+			}
+
+			$mgrResult = Manager\Task::getList($this->userId, $getListParameters, $parameters);
+
+			if (array_key_exists('TAG', array_flip($getListParameters['select'])))
+			{
+				$mgrResult['DATA'] = $this->mergeWithTags($mgrResult['DATA']);
+			}
+
+			$this->arResult['LIST'] = $mgrResult['DATA'];
+
+
+			if ($this->errors->checkHasFatals())
+			{
+				return;
+			}
+
+			$taskIds = [];
+			$this->arResult['TASKS_LINKS'] = [];
+
+			foreach($this->arResult['LIST'] as $item)
+			{
+				$taskId = $item['ID'];
+
+				$taskParameters = ParameterTable::getList(['filter' => ['TASK_ID' => $taskId]])->fetchAll();
+				$this->arResult['LIST'][$taskId]['SE_PARAMETER'] = $taskParameters;
+
+				$taskIds[] = $taskId;
+			}
+
+			$res = ProjectDependenceTable::getListByLegacyTaskFilter($this->listParameters['filter']);
+			while($item = $res->fetch())
+			{
+				if(in_array($item['TASK_ID'], $taskIds))
+				{
+					$this->arResult['TASKS_LINKS'][$item['TASK_ID']][] = $item;
+				}
 			}
 		}
 	}

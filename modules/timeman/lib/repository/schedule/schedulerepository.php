@@ -1,16 +1,12 @@
 <?php
 namespace Bitrix\Timeman\Repository\Schedule;
 
-use Bitrix\Intranet\Internals\UserToDepartmentTable;
 use Bitrix\Main\Application;
 use Bitrix\Main\Error;
-use Bitrix\Main\ORM\Fields\ExpressionField;
 use Bitrix\Main\ORM\Fields\Relations\OneToMany;
 use Bitrix\Main\ORM\Fields\Relations\Reference;
-use Bitrix\Main\ORM\Query\Join;
 use Bitrix\Main\ORM\Query\Query;
 use Bitrix\Main\Result;
-use Bitrix\Intranet\UserTable;
 use Bitrix\Timeman\Helper\EntityCodesHelper;
 use Bitrix\Timeman\Model\Schedule\Assignment\Department;
 use Bitrix\Timeman\Model\Schedule\Assignment\Department\ScheduleDepartmentTable;
@@ -19,6 +15,8 @@ use Bitrix\Timeman\Model\Schedule\Schedule;
 use Bitrix\Timeman\Model\Schedule\ScheduleTable;
 use Bitrix\Timeman\Model\Schedule\Assignment\User\ScheduleUserTable;
 use Bitrix\Timeman\Model\Schedule\Shift\ShiftTable;
+use Bitrix\Timeman\Model\User\EO_User_Query;
+use Bitrix\Timeman\Model\User\UserTable;
 use Bitrix\Timeman\Repository\DepartmentRepository;
 use CIntranetUtils;
 
@@ -55,14 +53,18 @@ class ScheduleRepository
 	 */
 	public function findByIdWithShifts($id)
 	{
+		if (!($id > 0))
+		{
+			return null;
+		}
 		return $this->getActiveSchedulesQuery()
-			->where('ID', $id)
+			->addSelect('*')
 			->addSelect('SHIFTS')
+			->where('ID', $id)
 			->where(Query::filter()->logic('or')
 				->where('SHIFTS.DELETED', ShiftTable::DELETED_NO)
 				->whereNull('SHIFTS.DELETED')
 			)
-			->addSelect('*')
 			->exec()
 			->fetchObject();
 	}
@@ -132,18 +134,6 @@ class ScheduleRepository
 			{
 				$schedule->addTo('USER_ASSIGNMENTS', $userAssign);
 			}
-		}
-		if ($schedule && in_array('ACTIVE_USERS', $withEntities, true))
-		{
-			$usersActive = $this->findActiveUsers($schedule);
-			$schedule->defineActiveUsers($usersActive);
-		}
-		if ($schedule && in_array('EXCLUDED_USERS', $withEntities, true))
-		{
-			$usersExcluded = $this->buildExcludedScheduleUsersQuery($id, $schedule->obtainDepartmentAssignments())
-				->exec()
-				->fetchAll();
-			$schedule->defineExcludedUsers($usersExcluded);
 		}
 		return $schedule;
 	}
@@ -284,6 +274,25 @@ class ScheduleRepository
 		return array_unique(array_map('intval', $ids));
 	}
 
+	public function findActiveByShiftId($shiftId, $select)
+	{
+		if (empty($select))
+		{
+			$select = ['ID'];
+		}
+		$query = $this->getActiveSchedulesQuery()
+			->addSelect('SHIFTS.ID');
+		$query->where('SHIFTS.ID', $shiftId);
+		$query->where('SHIFTS.DELETED', ShiftTable::DELETED_NO);
+		foreach ($select as $field)
+		{
+			$query->addSelect($field);
+		}
+		return $query
+			->exec()
+			->fetchObject();
+	}
+
 	/**
 	 * @param Department\ScheduleDepartment[] $departments
 	 */
@@ -313,7 +322,7 @@ class ScheduleRepository
 	}
 
 	/**
-	 * @return Query
+	 * @return EO_User_Query
 	 */
 	public function getUsersBaseQuery($idsOnly = false)
 	{
@@ -338,135 +347,6 @@ class ScheduleRepository
 	private function addUserEmployeeCondition($query)
 	{
 		$query->where('USER_TYPE_IS_EMPLOYEE', true);
-	}
-
-	private function buildUsersQuery($scheduleId, $departments, $options = [])
-	{
-		$limit = empty($options['limit']) ? null : $options['limit'];
-		$offset = empty($options['offset']) ? null : $options['offset'];
-		$whereUserIdIn = empty($options['USER_IDS']) ? [] : $options['USER_IDS'];
-		$scheduleId = (int)$scheduleId;
-		list($activeDepIds, $excludedDepIds) = $this->buildDepartmentsIds($departments);
-		$queryIncludedDeps = $this->getUsersBaseQuery(true)
-			->addSelect('INDIVIDUAL_PRIORITY')
-			->addSelect('DEPARTMENT_PRIORITY')
-			->registerRuntimeField(new ExpressionField('INDIVIDUAL_PRIORITY', '0'))
-			->registerRuntimeField(new ExpressionField('DEPARTMENT_PRIORITY', '1'))
-			->registerRuntimeField('USER_TO_DEP', new Reference('ref', UserToDepartmentTable::class, ['=this.ID' => 'ref.USER_ID'], ['join_type' => 'LEFT']))
-			->whereIn('USER_TO_DEP.DEPARTMENT_ID', array_merge([0], $activeDepIds));
-		$this->addUserEmployeeCondition($queryIncludedDeps);
-
-		$queryExcludedDeps = $this->getUsersBaseQuery(true)
-			->addSelect('INDIVIDUAL_PRIORITY')
-			->addSelect('DEPARTMENT_PRIORITY')
-			->registerRuntimeField(new ExpressionField('INDIVIDUAL_PRIORITY', '0'))
-			->registerRuntimeField(new ExpressionField('DEPARTMENT_PRIORITY', '-1'))
-			->registerRuntimeField('USER_TO_DEP', new Reference('ref', UserToDepartmentTable::class, ['=this.ID' => 'ref.USER_ID'], ['join_type' => 'LEFT']))
-			->whereIn('USER_TO_DEP.DEPARTMENT_ID', array_merge([0], $excludedDepIds));
-		$this->addUserEmployeeCondition($queryExcludedDeps);
-
-		$queryUsers = $this->getUsersBaseQuery(true)
-			->addSelect('INDIVIDUAL_PRIORITY')
-			->addSelect('DEPARTMENT_PRIORITY')
-			->registerRuntimeField((new Reference('SCHEDULE_USER', ScheduleUserTable::class, Join::on('this.ID', 'ref.USER_ID')))->configureJoinType('LEFT'))
-			->registerRuntimeField(new ExpressionField('INDIVIDUAL_PRIORITY', 'IF(%s = 0, 1, -1)', ['SCHEDULE_USER.STATUS',]))
-			->registerRuntimeField(new ExpressionField('DEPARTMENT_PRIORITY', '0'))
-			->where('SCHEDULE_USER.SCHEDULE_ID', $scheduleId);
-		$this->addUserEmployeeCondition($queryUsers);
-
-		if ($whereUserIdIn)
-		{
-			$queryUsers->whereIn('ID', $whereUserIdIn);
-			$queryIncludedDeps->whereIn('ID', $whereUserIdIn);
-			$queryExcludedDeps->whereIn('ID', $whereUserIdIn);
-		}
-		if ($this->isScheduleForAllUsers($scheduleId))
-		{
-			$queryAllUsers = $this->getUsersBaseQuery(true)
-				->addSelect('INDIVIDUAL_PRIORITY')
-				->addSelect('DEPARTMENT_PRIORITY')
-				->registerRuntimeField(new ExpressionField('INDIVIDUAL_PRIORITY', '0'))
-				->registerRuntimeField(new ExpressionField('DEPARTMENT_PRIORITY', '1'));
-			$this->addUserEmployeeCondition($queryAllUsers);
-
-			if ($whereUserIdIn)
-			{
-				$queryAllUsers->whereIn('ID', $whereUserIdIn);
-			}
-			$res = $queryIncludedDeps->unionAll($queryExcludedDeps, $queryUsers, $queryAllUsers);
-		}
-		else
-		{
-			$res = $queryIncludedDeps->unionAll($queryExcludedDeps, $queryUsers);
-		}
-
-		$entity = \Bitrix\Main\ORM\Entity::getInstanceByQuery($res);
-		$resultQuery = (new Query($entity))
-			->registerRuntimeField(new ExpressionField('INDIVIDUAL_POINTS', 'SUM(%s)', ['INDIVIDUAL_PRIORITY',]))
-			->registerRuntimeField(new ExpressionField('DEPARTMENT_POINTS', 'SUM(%s)', ['DEPARTMENT_PRIORITY',]));
-		if ($limit)
-		{
-			$resultQuery->setLimit($limit);
-		}
-		if ($offset)
-		{
-			$resultQuery->setOffset($offset);
-		}
-		return $resultQuery;
-	}
-
-	/**
-	 * @param $scheduleId
-	 * @param $departments
-	 * @param null $limit
-	 * @param null $offset
-	 * @return Query
-	 */
-	public function buildActiveScheduleUsersQuery($scheduleId, $departments, $options = [])
-	{
-		$query = $this->buildUsersQuery($scheduleId, $departments, $options);
-		$this->addSelectWithGroupToUsersQuery($query);
-		$this->addHavingForActiveUser($query);
-		$ids = $query->exec()->fetchAll();
-		return $this->getUsersBaseQuery()->whereIn('ID', array_merge(array_column($ids, 'ID'), [-1]));
-	}
-
-	private function addHavingForActiveUser($query)
-	{
-		$query->having(
-			Query::filter()->logic('or')
-				->where('INDIVIDUAL_POINTS', '>', 0)
-				->where(
-					Query::filter()->logic('and')
-						->where('INDIVIDUAL_POINTS', 0)
-						->where('DEPARTMENT_POINTS', '>', 0)
-				)
-		);
-	}
-
-	public function buildExcludedScheduleUsersQuery($scheduleId, $departments, $options = [])
-	{
-		$query = $this->buildUsersQuery($scheduleId, $departments, $options);
-		$this->addSelectWithGroupToUsersQuery($query);
-		$query->having(
-			Query::filter()->logic('or')
-				->where('INDIVIDUAL_POINTS', '<', 0)
-				->where(
-					Query::filter()->logic('and')
-						->where('INDIVIDUAL_POINTS', 0)
-						->where('DEPARTMENT_POINTS', '<', 0)
-				)
-		);
-		$ids = $query->exec()->fetchAll();
-		return $this->getUsersBaseQuery()->whereIn('ID', array_merge(array_column($ids, 'ID'), [-1]));
-	}
-
-	private function addSelectWithGroupToUsersQuery($resultQuery)
-	{
-		return $resultQuery->addSelect('INDIVIDUAL_POINTS')
-			->addSelect('DEPARTMENT_POINTS')
-			->addSelect('ID')
-			->addGroup('ID');
 	}
 
 	public function findAllNestedDepartmentsIds($departmentsIds)
@@ -510,14 +390,6 @@ class ScheduleRepository
 				->fetch();
 		}
 		return $schedulesForAllUsers[$scheduleId] !== false;
-	}
-
-	public function getUsersCount($scheduleId, $departments)
-	{
-		$res = $this->buildUsersQuery($scheduleId, $departments);
-		$this->addHavingForActiveUser($res);
-		$res->addSelect('ID')->exec();
-		return count($res->fetchAll());
 	}
 
 	/**
@@ -566,7 +438,7 @@ class ScheduleRepository
 		{
 			foreach ($departmentIdsParams as $departmentIdForSearch)
 			{
-				$entitiesPriorityTree['DR' . $departmentIdForSearch] = [$this->buildDepartmentsPriorityTree($departmentIdForSearch)];
+				$entitiesPriorityTree['DR' . $departmentIdForSearch] = [$this->departmentRepository->buildDepartmentsPriorityTree($departmentIdForSearch)];
 				$allDepartmentIdsForEntities = array_merge($allDepartmentIdsForEntities, $this->departmentRepository->getAllParentDepartmentsIds($departmentIdForSearch));
 			}
 		}
@@ -687,6 +559,26 @@ class ScheduleRepository
 		return (new Result());
 	}
 
+	public function findUserAssignmentsByIds($userIds, $exceptScheduleId = null)
+	{
+		if (empty($userIds))
+		{
+			return [];
+		}
+		$result = ScheduleUserTable::query()
+			->addSelect('*')
+			->registerRuntimeField(new Reference('SCHEDULE', ScheduleTable::class, ['this.SCHEDULE_ID' => 'ref.ID']))
+			->whereIn('SCHEDULE.DELETED', ScheduleTable::DELETED_NO)
+			->whereIn('USER_ID', $userIds);
+		if ($exceptScheduleId > 0)
+		{
+			$result->whereNot('SCHEDULE_ID', $exceptScheduleId);
+		}
+		return $result
+			->exec()
+			->fetchCollection();
+	}
+
 	public function findDepartmentAssignmentsByIds($departmentIds, $exceptScheduleId = null)
 	{
 		if (empty($departmentIds))
@@ -698,13 +590,13 @@ class ScheduleRepository
 			->registerRuntimeField(new Reference('SCHEDULE', ScheduleTable::class, ['this.SCHEDULE_ID' => 'ref.ID']))
 			->whereIn('DEPARTMENT_ID', $departmentIds)
 			->where('SCHEDULE.DELETED', ScheduleTable::DELETED_NO);
-		if ($exceptScheduleId !== null)
+		if ($exceptScheduleId > 0)
 		{
 			$departmentAssignmentsResult->whereNot('SCHEDULE_ID', $exceptScheduleId);
 		}
 		return $departmentAssignmentsResult
 			->exec()
-			->fetchAll();
+			->fetchCollection();
 	}
 
 	public function findSchedulesForAllUsers($exceptScheduleId = null)
@@ -744,48 +636,22 @@ class ScheduleRepository
 		return null;
 	}
 
-	public function buildDepartmentsPriorityTree($depId)
+	public function updateIsForAllUsers(Schedule $schedule)
 	{
-		$allParentDepartmentIds = $this->departmentRepository->getAllParentDepartmentsIds($depId);
-
-		return array_merge(
-			['DR' . $depId],
-			array_map(function ($id) {
-				return 'DR' . $id;
-			}, array_reverse($allParentDepartmentIds))
+		$schedules = ScheduleTable::query()
+			->addSelect('ID')
+			->where('IS_FOR_ALL_USERS', true)
+			->whereNot('ID', $schedule->getId())
+			->exec()
+			->fetchCollection();
+		if ($schedules->count() === 0)
+		{
+			return;
+		}
+		ScheduleTable::updateMulti(
+			$schedules->getIdList(),
+			['IS_FOR_ALL_USERS' => false]
 		);
-	}
-
-	/**
-	 * @param Schedule $schedule
-	 * @return array
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
-	 */
-	public function findActiveUsers($schedule)
-	{
-		if (!$schedule)
-		{
-			return [];
-		}
-		return $this->buildActiveScheduleUsersQuery($schedule->getId(), $schedule->obtainDepartmentAssignments())
-			->exec()
-			->fetchAll();
-	}
-
-	protected function findUserAssignmentsByIds($userIdsForSearch)
-	{
-		if (empty($userIdsForSearch))
-		{
-			return [];
-		}
-		return ScheduleUserTable::query()
-			->addSelect('*')
-			->registerRuntimeField(new Reference('SCHEDULE', ScheduleTable::class, ['this.SCHEDULE_ID' => 'ref.ID']))
-			->whereIn('USER_ID', $userIdsForSearch)
-			->where('SCHEDULE.DELETED', ScheduleTable::DELETED_NO)
-			->exec()
-			->fetchAll();
 	}
 
 	protected function findSchedulesByIdsForEntity($userScheduleIds, $fieldsToSelect = [])

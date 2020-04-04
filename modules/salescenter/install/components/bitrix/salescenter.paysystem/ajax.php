@@ -385,10 +385,18 @@ class SalesCenterPaySystemAjaxController extends \Bitrix\Main\Engine\Controller
 			$yandex = new Bitrix\Seo\Checkout\Services\AccountYandex();
 			$yandex->setService(Bitrix\Seo\Checkout\Service::getInstance());
 
-			$result = [
-				'hasAuth' => true,
-				'profile' => $yandex->getProfile(),
-			];
+			$this->registerWebhooks();
+			if ($this->errorCollection->isEmpty())
+			{
+				$result = [
+					'hasAuth' => true,
+					'profile' => $yandex->getProfile(),
+				];
+			}
+			else
+			{
+				$this->logoutProfileAction();
+			}
 		}
 
 		return $result;
@@ -399,7 +407,7 @@ class SalesCenterPaySystemAjaxController extends \Bitrix\Main\Engine\Controller
 	 * @throws \Bitrix\Main\LoaderException
 	 * @throws \Bitrix\Main\SystemException
 	 */
-	public function registerWebhooksAction()
+	public function registerWebhooks()
 	{
 		if (!Loader::includeModule('seo'))
 		{
@@ -411,7 +419,11 @@ class SalesCenterPaySystemAjaxController extends \Bitrix\Main\Engine\Controller
 		$yandex->setService(Bitrix\Seo\Checkout\Service::getInstance());
 
 		$registerPaymentSucceededResult = $yandex->registerPaymentSucceededWebhook();
-		if (!$registerPaymentSucceededResult->isSuccess())
+		if ($registerPaymentSucceededResult->isSuccess())
+		{
+			Option::set('sale', 'YANDEX_CHECKOUT_OAUTH_WEBHOOK_REGISTER', true);
+		}
+		else
 		{
 			$this->errorCollection->add($registerPaymentSucceededResult->getErrors());
 		}

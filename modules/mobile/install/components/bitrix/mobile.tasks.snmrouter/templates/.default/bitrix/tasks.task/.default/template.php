@@ -8,23 +8,49 @@
 /** @var CBitrixComponent $component */
 /** @var string $templateFolder */
 
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Page\Asset;
+
 $APPLICATION->SetPageProperty('BodyClass', 'task-card-page');
 if ($arResult["TEMPLATE_DATA"]["ERROR"])
 {
 	echo $arResult["TEMPLATE_DATA"]["ERROR"]["MESSAGE"];
 	return;
 }
-?><?=CJSCore::Init(array('tasks_util_query'), true);?><?
-\Bitrix\Main\Page\Asset::getInstance()->addJs(SITE_TEMPLATE_PATH.'/log_mobile.js');
-\Bitrix\Main\Page\Asset::getInstance()->addJs($templateFolder.'/../.default/script.js');
+?><?=CJSCore::Init(array('tasks_util_query'), true);?><?php
+Asset::getInstance()->addJs(SITE_TEMPLATE_PATH.'/log_mobile.js');
+Asset::getInstance()->addJs($templateFolder.'/../.default/script.js');
 
 $task = &$arResult["DATA"]["TASK"];
 $can = $arResult["CAN"]["TASK"]["ACTION"];
 $arResult["FORM_ID"] = 'MOBILE_TASK_EDIT';
 $arResult["GRID_ID"] = 'MOBILE_TASK_EDIT';
-$arResult["STATUSES"] = CTaskItem::getStatusMap();
-$task["STATUS"] = GetMessage("TASKS_STATUS_" . $arResult["STATUSES"][$task["REAL_STATUS"]]);
-$task["STATUS"] = ( empty($task["STATUS"]) ? GetMessage("TASKS_STATUS_STATE_UNKNOWN") : $task["STATUS"]);
+
+$statuses = CTaskItem::getStatusMap();
+$status = Loc::getMessage("TASKS_STATUS_".$statuses[$task["REAL_STATUS"]]);
+
+$task["STATUS"] = (empty($status) ? GetMessage("TASKS_STATUS_STATE_UNKNOWN") : $status);
+
+ob_start();
+$APPLICATION->IncludeComponent(
+	'bitrix:tasks.widget.checklist.new',
+	'mobile',
+	[
+		'ENTITY_ID' => $task['ID'],
+		'ENTITY_TYPE' => 'TASK',
+		'MODE' => 'edit',
+		'DATA' => $task['SE_CHECKLIST'],
+		'INPUT_PREFIX' => 'data[SE_CHECKLIST]',
+		'PATH_TO_USER_PROFILE' => $arParams['PATH_TO_USER_PROFILE'],
+		'CONVERTED' => $arResult['DATA']['CHECKLIST_CONVERTED'],
+		'CAN_ADD_ACCOMPLICE' => $can['EDIT'],
+		'TASK_GUID' => $arParams['GUID'],
+		'DISK_FOLDER_ID' => $arResult['AUX_DATA']['DISK_FOLDER_ID'],
+	],
+	null,
+	['HIDE_ICONS' => 'Y', 'ACTIVE_COMPONENT' => 'Y']
+);
+$checklistHtml = ob_get_clean();
 
 ob_start();
 
@@ -91,35 +117,12 @@ $APPLICATION->IncludeComponent(
 						"value" => $task["RESPONSIBLE_ID"],
 						"canDrop" => false
 					),
-					array(
-						"type" => "custom",
-						"id" => "tasks-check-list",
-						"class" => "mobile-grid-field-tasks-checklist",
-						"name" => GetMessage("MB_TASKS_TASK_SETTINGS_CHECKLIST"),
-						"value" => "<div id=\"checkList".$task["ID"]."Container\" class=\"mobile-grid-field-tasks-checklist-container\">".(($checkList = function($list, &$ids)
-							{
-								$result = "";
-								$ids = array();
-								foreach($list as $item)
-								{
-									$separator = \Bitrix\Tasks\UI\Task\CheckList::checkIsSeparatorValue($item["TITLE"]);
-									$ids[] = $item["ID"];
-									$item["TITLE"] = htmlspecialcharsbx($item["TITLE"]);
-									$result .=
-									"<label id=\"checkListItem".$item["ID"]."Label\" for=\"checkListItem".$item["ID"]."\" class=\"task-view-checklist task-view-checklist-toggle\">".
-										"<span class=\"".($separator ? "mobile-grid-field-divider" : "mobile-grid-field-tasks-checklist-item")."\">".
-											"<input type=\"hidden\" name=\"data[SE_CHECKLIST][".$item["ID"]."][ID]\" value=\"".$item["ID"]."\" />".
-											"<input type=\"checkbox\" name=\"data[SE_CHECKLIST][".$item["ID"]."][IS_COMPLETE]\" id=\"checkListItem".$item["ID"]."\"".($item["IS_COMPLETE"] == "Y" ? " checked " : "")." value=\"Y\" />".
-											($separator ? "" : "<span class=\"mobile-grid-field-tasks-checklist-item-text\">".$item["TITLE"]."</span>").
-											"<i class=\"mobile-grid-menu\" id=\"checkListItem".$item["ID"]."Menu\"></i>".
-											"<input type=\"hidden\" name=\"data[SE_CHECKLIST][".$item["ID"]."][TITLE]\" value=\"".$item["TITLE"]."\" />".
-											"<input type=\"hidden\" name=\"data[SE_CHECKLIST][".$item["ID"]."][SORT_INDEX]\" value=\"".$item["SORT_INDEX"]."\" />".
-										"</span>".
-									"</label>";
-								}
-								return $result;
-							}) ? $checkList($task["SE_CHECKLIST"], $task["CHECKLIST"]) : "")."</div>"
-					),
+					[
+						"type" => 'custom',
+						"id" => 'tasks-check-list',
+						"class" => 'mobile-grid-restricted',
+						"value" => $checklistHtml,
+					],
 					array(
 						"type" => ($can["EDIT"] || $can["EDIT.PLAN"] ? "datetime" : "datetimelabel"),
 						"id" => "data[DEADLINE]",
@@ -284,8 +287,8 @@ $APPLICATION->IncludeComponent(
 						"id" => "data[SE_PROJECT][ID]",
 						"class" => "mobile-grid-field-taskgroups",
 						"name" => GetMessage("MB_TASKS_TASK_SETTINGS_GROUP_ID"),
-						"item" => (is_array($arResult["DATA"]["GROUP"]) ? reset($arResult["DATA"]["GROUP"]) : null),
-						"value" => $task["GROUP_ID"]
+						"item" => ($task["GROUP_ID"] > 0 ? $arResult["DATA"]["GROUP"][$task["GROUP_ID"]] : null),
+						"value" => $task["GROUP_ID"],
 					),
 					array(
 						"type" => "custom",
@@ -346,6 +349,7 @@ BX.ready(function(){
 				"CHECKLIST" => $task["CHECKLIST"],
 		),
 		"formId" => $arResult['FORM_ID'],
+		"guid" => $arParams["GUID"],
 	))?>);
 });
 </script>

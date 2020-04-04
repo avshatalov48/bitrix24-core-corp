@@ -428,7 +428,7 @@ class CAllControllerMember
 
 		$arFields["SITE_ACTIVE"] = "X";
 		unset($arFields["TIMESTAMP_X"]);
-		unset($arFields["~TIMESTAMP_X"]);
+		$arFields["~TIMESTAMP_X"] = $DB->CurrentTimeFunction();
 
 		$ID = $DB->Add("b_controller_member", $arFields, array("NOTES"));
 		$USER_FIELD_MANAGER->Update("CONTROLLER_MEMBER", $ID, $arFields);

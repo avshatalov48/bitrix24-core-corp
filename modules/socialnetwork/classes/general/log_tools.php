@@ -4896,9 +4896,17 @@ class CSocNetLogTools
 		$user_site_id = (
 			IsModuleInstalled("extranet") 
 				? (
-					(!in_array($user_id, $arIntranetUsers) && $extranet_site_id) 
-						? $extranet_site_id 
-						: ($explicit_site_id ? $explicit_site_id : $intranet_site_id)
+					(
+						!in_array($user_id, $arIntranetUsers)
+						&& $extranet_site_id
+					)
+						? $extranet_site_id // extranet user
+						: (
+							$explicit_site_id
+							&& $explicit_site_id != $extranet_site_id
+								? $explicit_site_id
+								: $intranet_site_id
+						)
 				)
 				: ($explicit_site_id ? $explicit_site_id : SITE_ID)
 		);
@@ -5532,6 +5540,12 @@ class CSocNetLogTools
 							"type" => "TK",
 							"id" => $arTask['ID'],
 							"xml_id" => "TASK_".$arTask['ID']
+						),
+						(
+							is_object($USER)
+							&& $USER instanceof \CUser
+								? $USER->getId()
+								: (isset($arFields['CURRENT_USER_ID']) ? $arFields['CURRENT_USER_ID'] : 0)
 						)
 					);
 
@@ -6618,7 +6632,8 @@ class CSocNetLogComponent
 		if ($isWebDavEnabled === false)
 		{
 			$isWebDavEnabled = (
-				CModule::includeModule('webdav')
+				$isDiskEnabled == 'N'
+				&& CModule::includeModule('webdav')
 					? "Y"
 					: "N"
 			);
@@ -6652,7 +6667,7 @@ class CSocNetLogComponent
 				"ENABLED" => "N"
 			);
 
-			if ($isWebDavEnabled == "Y")
+			if ($isWebDavEnabled == "Y" && $USER instanceof \CUser)
 			{
 				$webDavData = CWebDavIblock::getRootSectionDataForUser($userId);
 

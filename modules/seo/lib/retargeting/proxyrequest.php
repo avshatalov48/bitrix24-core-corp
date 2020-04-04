@@ -31,6 +31,7 @@ class ProxyRequest extends Request
 			return false;
 		}
 		$parameters['proxy_client_id'] = $this->getAuthAdapter()->getClientId();
+		$parameters['lang'] = LANGUAGE_ID;
 
 		$transport = $engine->getInterface()->getTransport();
 		if ($params['timeout'])

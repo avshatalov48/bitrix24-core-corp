@@ -9220,6 +9220,9 @@
 	}
 
 	var objectCtorString = Function.prototype.toString.call(Object);
+	/**
+	 * @memberOf BX
+	 */
 
 	var Type =
 	/*#__PURE__*/
@@ -9238,6 +9241,17 @@
 	     */
 	    value: function isString(value) {
 	      return typeof value === 'string';
+	    }
+	    /**
+	     * Returns true if a value is not empty string
+	     * @param value
+	     * @returns {boolean}
+	     */
+
+	  }, {
+	    key: "isStringFilled",
+	    value: function isStringFilled(value) {
+	      return this.isString(value) && value !== '';
 	    }
 	    /**
 	     * Checks that value is function
@@ -9359,6 +9373,17 @@
 	    key: "isArray",
 	    value: function isArray(value) {
 	      return !Type.isNil(value) && Array.isArray(value);
+	    }
+	    /**
+	     * Returns true if a value is an array and it has at least one element
+	     * @param value
+	     * @returns {boolean}
+	     */
+
+	  }, {
+	    key: "isArrayFilled",
+	    value: function isArrayFilled(value) {
+	      return this.isArray(value) && value.length > 0;
 	    }
 	    /**
 	     * Checks that value is array like
@@ -9563,6 +9588,10 @@
 	  return Type;
 	}();
 
+	/**
+	 * @memberOf BX
+	 */
+
 	var Reflection =
 	/*#__PURE__*/
 	function () {
@@ -9655,6 +9684,9 @@
 	  '&quot;': '"',
 	  '&#34;': '"'
 	};
+	/**
+	 * @memberOf BX
+	 */
 
 	var Text =
 	/*#__PURE__*/
@@ -9728,6 +9760,60 @@
 	      var trueValues = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [];
 	      var transformedValue = Type.isString(value) ? value.toLowerCase() : value;
 	      return ['true', 'y', '1', 1, true].concat(babelHelpers.toConsumableArray(trueValues)).includes(transformedValue);
+	    }
+	  }, {
+	    key: "toCamelCase",
+	    value: function toCamelCase(str) {
+	      if (!Type.isStringFilled(str)) {
+	        return str;
+	      }
+
+	      var regex = /[-_\s]+(.)?/g;
+
+	      if (!regex.test(str)) {
+	        return str.match(/^[A-Z]+$/) ? str.toLowerCase() : str[0].toLowerCase() + str.slice(1);
+	      }
+
+	      str = str.toLowerCase();
+	      str = str.replace(regex, function (match, letter) {
+	        return letter ? letter.toUpperCase() : '';
+	      });
+	      return str[0].toLowerCase() + str.substr(1);
+	    }
+	  }, {
+	    key: "toPascalCase",
+	    value: function toPascalCase(str) {
+	      if (!Type.isStringFilled(str)) {
+	        return str;
+	      }
+
+	      return this.capitalize(this.toCamelCase(str));
+	    }
+	  }, {
+	    key: "toKebabCase",
+	    value: function toKebabCase(str) {
+	      if (!Type.isStringFilled(str)) {
+	        return str;
+	      }
+
+	      var matches = str.match(/[A-Z]{2,}(?=[A-Z][a-z]+[0-9]*|\b)|[A-Z]?[a-z]+[0-9]*|[A-Z]|[0-9]+/g);
+
+	      if (!matches) {
+	        return str;
+	      }
+
+	      return matches.map(function (x) {
+	        return x.toLowerCase();
+	      }).join('-');
+	    }
+	  }, {
+	    key: "capitalize",
+	    value: function capitalize(str) {
+	      if (!Type.isStringFilled(str)) {
+	        return str;
+	      }
+
+	      return str[0].toUpperCase() + str.substr(1);
 	    }
 	  }]);
 	  return Text;
@@ -9899,71 +9985,587 @@
 	  bind(target, eventName, once, options);
 	}
 
-	var instances = new Set();
-	var privateProps = new WeakMap();
+	var debugState = true;
+	function enableDebug() {
+	  debugState = true;
+	}
+	function disableDebug() {
+	  debugState = false;
+	}
+	function isDebugEnabled() {
+	  return debugState;
+	}
+	function debug() {
+	  if (isDebugEnabled() && Type.isObject(window.console)) {
+	    if (Type.isFunction(window.console.log)) {
+	      for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
+	        args[_key] = arguments[_key];
+	      }
 
-	function subscribe(context, eventName, listener) {
-	  if (!Type.isFunction(listener)) {
-	    throw new TypeError("The \"listener\" argument must be of type Function. Received type ".concat(babelHelpers.typeof(listener)));
+	      window.console.log('BX.debug: ', args.length > 0 ? args : args[0]);
+
+	      if (args[0] instanceof Error && args[0].stack) {
+	        window.console.log('BX.debug error stack trace', args[0].stack);
+	      }
+	    }
+
+	    if (Type.isFunction(window.console.trace)) {
+	      // eslint-disable-next-line
+	      console.trace();
+	    }
 	  }
-
-	  var _privateProps$get = privateProps.get(context),
-	      eventsMap = _privateProps$get.eventsMap,
-	      maxListeners = _privateProps$get.maxListeners;
-
-	  if (eventsMap.has(eventName)) {
-	    eventsMap.get(eventName).add(listener);
-	  } else {
-	    eventsMap.set(eventName, new Set([listener]));
-	  }
-
-	  var listeners = eventsMap.get(eventName);
-
-	  if (listeners.size > maxListeners) {
-	    console.warn("Possible BX.Event.EventEmitter memory leak detected. ".concat(listeners.size, " ").concat(eventName, " listeners added. Use emitter.setMaxListeners() to increase limit"));
-	  }
-
-	  return context;
 	}
 
-	function subscribeOnce(context, eventName, listener) {
-	  if (!Type.isFunction(listener)) {
-	    throw new TypeError("The \"listener\" argument must be of type Function. Received type ".concat(babelHelpers.typeof(listener)));
+	var Extension =
+	/*#__PURE__*/
+	function () {
+	  function Extension(options) {
+	    babelHelpers.classCallCheck(this, Extension);
+	    this.config = options.config || {};
+	    this.name = options.extension;
+	    this.state = 'scheduled'; // eslint-disable-next-line
+
+	    var result = BX.processHTML(options.html || '');
+	    this.inlineScripts = result.SCRIPT.reduce(inlineScripts, []);
+	    this.externalScripts = result.SCRIPT.reduce(externalScripts, []);
+	    this.externalStyles = result.STYLE.reduce(externalStyles, []);
 	  }
 
-	  var _privateProps$get = privateProps.get(context),
-	      onceMap = _privateProps$get.onceMap;
+	  babelHelpers.createClass(Extension, [{
+	    key: "load",
+	    value: function load() {
+	      var _this = this;
 
-	  if (onceMap.has(listener)) {
-	    return;
+	      if (this.state === 'error') {
+	        this.loadPromise = this.loadPromise || Promise.resolve(this);
+	        console.warn('Extension', this.name, 'not found');
+	      }
+
+	      if (!this.loadPromise && this.state) {
+	        this.state = 'load'; // eslint-disable-next-line
+
+	        this.inlineScripts.forEach(BX.evalGlobal);
+	        this.loadPromise = Promise.all([loadAll(this.externalScripts), loadAll(this.externalStyles)]).then(function () {
+	          _this.state = 'loaded';
+
+	          if (Type.isPlainObject(_this.config) && _this.config.namespace) {
+	            return Reflection.getClass(_this.config.namespace);
+	          }
+
+	          return window;
+	        });
+	      }
+
+	      return this.loadPromise;
+	    }
+	  }]);
+	  return Extension;
+	}();
+
+	var initialized = {};
+	var ajaxController = 'main.bitrix.main.controller.loadext.getextensions';
+
+	function makeIterable(value) {
+	  return Type.isArray(value) ? value : [value];
+	}
+	function isInitialized(extension) {
+	  return extension in initialized;
+	}
+	function getInitialized(extension) {
+	  return initialized[extension];
+	}
+	function isAllInitialized(extensions) {
+	  return extensions.every(isInitialized);
+	}
+	function loadExtensions(extensions) {
+	  return Promise.all(extensions.map(function (item) {
+	    return item.load();
+	  }));
+	}
+	function mergeExports(exports) {
+	  return exports.reduce(function (acc, currentExports) {
+	    if (Type.isObject(currentExports)) {
+	      return babelHelpers.objectSpread({}, currentExports);
+	    }
+
+	    return currentExports;
+	  }, {});
+	}
+	function inlineScripts(acc, item) {
+	  if (item.isInternal) {
+	    acc.push(item.JS);
 	  }
 
-	  var once = function once() {
-	    context.unsubscribe(eventName, once);
-	    onceMap.delete(listener);
-	    listener.apply(void 0, arguments);
+	  return acc;
+	}
+	function externalScripts(acc, item) {
+	  if (!item.isInternal) {
+	    acc.push(item.JS);
+	  }
+
+	  return acc;
+	}
+	function externalStyles(acc, item) {
+	  if (Type.isString(item) && item !== '') {
+	    acc.push(item);
+	  }
+
+	  return acc;
+	}
+	function request(options) {
+	  return new Promise(function (resolve) {
+	    // eslint-disable-next-line
+	    BX.ajax.runAction(ajaxController, {
+	      data: options
+	    }).then(resolve);
+	  });
+	}
+	function prepareExtensions(response) {
+	  if (response.status !== 'success') {
+	    response.errors.map(console.warn);
+	    return [];
+	  }
+
+	  return response.data.map(function (item) {
+	    var initializedExtension = getInitialized(item.extension);
+
+	    if (initializedExtension) {
+	      return initializedExtension;
+	    }
+
+	    initialized[item.extension] = new Extension(item);
+	    return initialized[item.extension];
+	  });
+	}
+	function loadAll(items) {
+	  var itemsList = makeIterable(items);
+
+	  if (!itemsList.length) {
+	    return Promise.resolve();
+	  }
+
+	  return new Promise(function (resolve) {
+	    // eslint-disable-next-line
+	    BX.load(itemsList, resolve);
+	  });
+	}
+
+	/**
+	 * Loads extensions asynchronously
+	 * @param {string|Array<string>} extension
+	 * @return {Promise<Array<Extension>>}
+	 */
+	function loadExtension(extension) {
+	  var extensions = makeIterable(extension);
+	  var isAllInitialized$$1 = isAllInitialized(extensions);
+
+	  if (isAllInitialized$$1) {
+	    var initializedExtensions = extensions.map(getInitialized);
+	    return loadExtensions(initializedExtensions).then(mergeExports);
+	  }
+
+	  return request({
+	    extension: extensions
+	  }).then(prepareExtensions).then(loadExtensions).then(mergeExports);
+	}
+
+	var cloneableTags = ['[object Object]', '[object Array]', '[object RegExp]', '[object Arguments]', '[object Date]', '[object Error]', '[object Map]', '[object Set]', '[object ArrayBuffer]', '[object DataView]', '[object Float32Array]', '[object Float64Array]', '[object Int8Array]', '[object Int16Array]', '[object Int32Array]', '[object Uint8Array]', '[object Uint16Array]', '[object Uint32Array]', '[object Uint8ClampedArray]'];
+
+	function isCloneable(value) {
+	  var isCloneableValue = Type.isObjectLike(value) && cloneableTags.includes(getTag(value));
+	  return isCloneableValue || Type.isDomNode(value);
+	}
+
+	function internalClone(value, map) {
+	  if (map.has(value)) {
+	    return map.get(value);
+	  }
+
+	  if (isCloneable(value)) {
+	    if (Type.isArray(value)) {
+	      var cloned = Array.from(value);
+	      map.set(value, cloned);
+	      value.forEach(function (item, index) {
+	        cloned[index] = internalClone(item, map);
+	      });
+	      return map.get(value);
+	    }
+
+	    if (Type.isDomNode(value)) {
+	      return value.cloneNode(true);
+	    }
+
+	    if (Type.isMap(value)) {
+	      var _result = new Map();
+
+	      map.set(value, _result);
+	      value.forEach(function (item, key) {
+	        _result.set(internalClone(key, map), internalClone(item, map));
+	      });
+	      return _result;
+	    }
+
+	    if (Type.isSet(value)) {
+	      var _result2 = new Set();
+
+	      map.set(value, _result2);
+	      value.forEach(function (item) {
+	        _result2.add(internalClone(item, map));
+	      });
+	      return _result2;
+	    }
+
+	    if (Type.isDate(value)) {
+	      return new Date(value);
+	    }
+
+	    if (Type.isRegExp(value)) {
+	      var regExpFlags = /\w*$/;
+	      var flags = regExpFlags.exec(value);
+
+	      var _result3 = new RegExp(value.source);
+
+	      if (flags && Type.isArray(flags)) {
+	        _result3 = new RegExp(value.source, flags[0]);
+	      }
+
+	      _result3.lastIndex = value.lastIndex;
+	      return _result3;
+	    }
+
+	    var proto = Object.getPrototypeOf(value);
+	    var result = Object.assign(Object.create(proto), value);
+	    map.set(value, result);
+	    Object.keys(value).forEach(function (key) {
+	      result[key] = internalClone(value[key], map);
+	    });
+	    return result;
+	  }
+
+	  return value;
+	}
+	/**
+	 * Clones any cloneable object
+	 * @param value
+	 * @return {*}
+	 */
+
+	function clone(value) {
+	  return internalClone(value, new WeakMap());
+	}
+
+	function merge(current, target) {
+	  return Object.entries(target).reduce(function (acc, _ref) {
+	    var _ref2 = babelHelpers.slicedToArray(_ref, 2),
+	        key = _ref2[0],
+	        value = _ref2[1];
+
+	    if (!Type.isDomNode(acc[key]) && Type.isObjectLike(acc[key]) && Type.isObjectLike(value)) {
+	      acc[key] = merge(acc[key], value);
+	      return acc;
+	    }
+
+	    acc[key] = value;
+	    return acc;
+	  }, current);
+	}
+
+	function createComparator(fields) {
+	  var orders = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [];
+	  return function (a, b) {
+	    var field = fields[0];
+	    var order = orders[0] || 'asc';
+
+	    if (Type.isUndefined(field)) {
+	      return 0;
+	    }
+
+	    var valueA = a[field];
+	    var valueB = b[field];
+
+	    if (Type.isString(valueA) && Type.isString(valueB)) {
+	      valueA = valueA.toLowerCase();
+	      valueB = valueB.toLowerCase();
+	    }
+
+	    if (valueA < valueB) {
+	      return order === 'asc' ? -1 : 1;
+	    }
+
+	    if (valueA > valueB) {
+	      return order === 'asc' ? 1 : -1;
+	    }
+
+	    return createComparator(fields.slice(1), orders.slice(1))(a, b);
 	  };
-
-	  onceMap.set(listener);
-	  context.subscribe(eventName, once);
 	}
 
-	function unsubscribe(context, eventName, listener) {
-	  if (!Type.isFunction(listener)) {
-	    throw new TypeError("The \"listener\" argument must be of type Function. Received type ".concat(typeof event === "undefined" ? "undefined" : babelHelpers.typeof(event)));
+	/**
+	 * @memberOf BX
+	 */
+
+	var Runtime =
+	/*#__PURE__*/
+	function () {
+	  function Runtime() {
+	    babelHelpers.classCallCheck(this, Runtime);
 	  }
 
-	  var _privateProps$get = privateProps.get(context),
-	      eventsMap = _privateProps$get.eventsMap;
+	  babelHelpers.createClass(Runtime, null, [{
+	    key: "debounce",
+	    value: function debounce(func) {
+	      var wait = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
+	      var context = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
+	      var timeoutId;
+	      return function debounced() {
+	        var _this = this;
 
-	  if (eventsMap.has(eventName)) {
-	    eventsMap.get(eventName).delete(listener);
+	        for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
+	          args[_key] = arguments[_key];
+	        }
+
+	        if (Type.isNumber(timeoutId)) {
+	          clearTimeout(timeoutId);
+	        }
+
+	        timeoutId = setTimeout(function () {
+	          func.apply(context || _this, args);
+	        }, wait);
+	      };
+	    }
+	  }, {
+	    key: "throttle",
+	    value: function throttle(func) {
+	      var wait = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
+	      var context = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
+	      var timer = 0;
+	      var invoke;
+	      return function wrapper() {
+	        for (var _len2 = arguments.length, args = new Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
+	          args[_key2] = arguments[_key2];
+	        }
+
+	        invoke = true;
+
+	        if (!timer) {
+	          var q = function q() {
+	            if (invoke) {
+	              func.apply(context || this, args);
+	              invoke = false;
+	              timer = setTimeout(q, wait);
+	            } else {
+	              timer = null;
+	            }
+	          };
+
+	          q();
+	        }
+	      };
+	    }
+	  }, {
+	    key: "html",
+	    value: function html(node, _html) {
+	      var params = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+
+	      if (Type.isNil(_html) && Type.isDomNode(node)) {
+	        return node.innerHTML;
+	      } // eslint-disable-next-line
+
+
+	      var parsedHtml = BX.processHTML(_html);
+	      var externalCss = parsedHtml.STYLE.reduce(externalStyles, []);
+	      var externalJs = parsedHtml.SCRIPT.reduce(externalScripts, []);
+	      var inlineJs = parsedHtml.SCRIPT.reduce(inlineScripts, []);
+
+	      if (Type.isDomNode(node)) {
+	        if (params.htmlFirst || !externalJs.length && !externalCss.length) {
+	          node.innerHTML = parsedHtml.HTML;
+	        }
+	      }
+
+	      return Promise.all([loadAll(externalJs), loadAll(externalCss)]).then(function () {
+	        if (Type.isDomNode(node) && (externalJs.length > 0 || externalCss.length > 0)) {
+	          node.innerHTML = parsedHtml.HTML;
+	        } // eslint-disable-next-line
+
+
+	        inlineJs.forEach(function (script) {
+	          return BX.evalGlobal(script);
+	        });
+
+	        if (Type.isFunction(params.callback)) {
+	          params.callback();
+	        }
+	      });
+	    }
+	    /**
+	     * Merges objects or arrays
+	     * @param targets
+	     * @return {any}
+	     */
+
+	  }, {
+	    key: "merge",
+	    value: function merge$$1() {
+	      for (var _len3 = arguments.length, targets = new Array(_len3), _key3 = 0; _key3 < _len3; _key3++) {
+	        targets[_key3] = arguments[_key3];
+	      }
+
+	      if (Type.isArray(targets[0])) {
+	        targets.unshift([]);
+	      } else if (Type.isObject(targets[0])) {
+	        targets.unshift({});
+	      }
+
+	      return targets.reduce(function (acc, item) {
+	        return merge(acc, item);
+	      }, targets[0]);
+	    }
+	  }, {
+	    key: "orderBy",
+	    value: function orderBy(collection) {
+	      var fields = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [];
+	      var orders = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : [];
+	      var comparator = createComparator(fields, orders);
+	      return Object.values(collection).sort(comparator);
+	    }
+	  }]);
+	  return Runtime;
+	}();
+
+	babelHelpers.defineProperty(Runtime, "debug", debug);
+	babelHelpers.defineProperty(Runtime, "loadExtension", loadExtension);
+	babelHelpers.defineProperty(Runtime, "clone", clone);
+
+	var _isError = Symbol.for('BX.BaseError.isError');
+	/**
+	 * @memberOf BX
+	 */
+
+
+	var BaseError =
+	/*#__PURE__*/
+	function () {
+	  function BaseError(message, code, customData) {
+	    babelHelpers.classCallCheck(this, BaseError);
+	    this[_isError] = true;
+	    this.message = '';
+	    this.code = null;
+	    this.customData = null;
+	    this.setMessage(message);
+	    this.setCode(code);
+	    this.setCustomData(customData);
 	  }
-	}
+	  /**
+	   * Returns a brief description of the error
+	   * @returns {string}
+	   */
+
+
+	  babelHelpers.createClass(BaseError, [{
+	    key: "getMessage",
+	    value: function getMessage() {
+	      return this.message;
+	    }
+	    /**
+	     * Sets a message of the error
+	     * @param {string} message
+	     * @returns {this}
+	     */
+
+	  }, {
+	    key: "setMessage",
+	    value: function setMessage(message) {
+	      if (Type.isString(message)) {
+	        this.message = message;
+	      }
+
+	      return this;
+	    }
+	    /**
+	     * Returns a code of the error
+	     * @returns {?string}
+	     */
+
+	  }, {
+	    key: "getCode",
+	    value: function getCode() {
+	      return this.code;
+	    }
+	    /**
+	     * Sets a code of the error
+	     * @param {string} code
+	     * @returns {this}
+	     */
+
+	  }, {
+	    key: "setCode",
+	    value: function setCode(code) {
+	      if (Type.isStringFilled(code) || code === null) {
+	        this.code = code;
+	      }
+
+	      return this;
+	    }
+	    /**
+	     * Returns custom data of the error
+	     * @returns {null|*}
+	     */
+
+	  }, {
+	    key: "getCustomData",
+	    value: function getCustomData() {
+	      return this.customData;
+	    }
+	    /**
+	     * Sets custom data of the error
+	     * @returns {this}
+	     */
+
+	  }, {
+	    key: "setCustomData",
+	    value: function setCustomData(customData) {
+	      if (!Type.isUndefined(customData)) {
+	        this.customData = customData;
+	      }
+
+	      return this;
+	    }
+	  }, {
+	    key: "toString",
+	    value: function toString() {
+	      var code = this.getCode();
+	      var message = this.getMessage();
+
+	      if (!Type.isStringFilled(code) && !Type.isStringFilled(message)) {
+	        return '';
+	      } else if (!Type.isStringFilled(code)) {
+	        return "Error: ".concat(message);
+	      } else if (!Type.isStringFilled(message)) {
+	        return code;
+	      } else {
+	        return "".concat(code, ": ").concat(message);
+	      }
+	    }
+	    /**
+	     * Returns true if the object is an instance of BaseError
+	     * @param error
+	     * @returns {boolean}
+	     */
+
+	  }], [{
+	    key: "isError",
+	    value: function isError(error) {
+	      return Type.isObject(error) && error[_isError] === true;
+	    }
+	  }]);
+	  return BaseError;
+	}();
 
 	/**
 	 * Implements base event object interface
 	 */
+
 	var BaseEvent =
 	/*#__PURE__*/
 	function () {
@@ -9973,17 +10575,135 @@
 	    };
 	    babelHelpers.classCallCheck(this, BaseEvent);
 	    this.type = '';
-	    this.isTrusted = true;
-	    this.data = options.data;
+	    this.data = null;
+	    this.target = null;
+	    this.compatData = null;
 	    this.defaultPrevented = false;
 	    this.immediatePropagationStopped = false;
+	    this.errors = [];
+	    this.setData(options.data);
+	    this.setCompatData(options.compatData);
 	  }
-	  /**
-	   * Prevents default action
-	   */
-
 
 	  babelHelpers.createClass(BaseEvent, [{
+	    key: "getType",
+
+	    /**
+	     * Returns the name of the event
+	     * @returns {string}
+	     */
+	    value: function getType() {
+	      return this.type;
+	    }
+	    /**
+	     *
+	     * @param {string} type
+	     */
+
+	  }, {
+	    key: "setType",
+	    value: function setType(type) {
+	      if (Type.isStringFilled(type)) {
+	        this.type = type;
+	      }
+
+	      return this;
+	    }
+	    /**
+	     * Returns an event data
+	     */
+
+	  }, {
+	    key: "getData",
+	    value: function getData() {
+	      return this.data;
+	    }
+	    /**
+	     * Sets an event data
+	     * @param data
+	     */
+
+	  }, {
+	    key: "setData",
+	    value: function setData(data) {
+	      if (!Type.isUndefined(data)) {
+	        this.data = data;
+	      }
+
+	      return this;
+	    }
+	    /**
+	     * Returns arguments for BX.addCustomEvent handlers (deprecated).
+	     * @returns {array | null}
+	     */
+
+	  }, {
+	    key: "getCompatData",
+	    value: function getCompatData() {
+	      return this.compatData;
+	    }
+	    /**
+	     * Sets arguments for BX.addCustomEvent handlers (deprecated)
+	     * @param data
+	     */
+
+	  }, {
+	    key: "setCompatData",
+	    value: function setCompatData(data) {
+	      if (Type.isArrayLike(data)) {
+	        this.compatData = data;
+	      }
+
+	      return this;
+	    }
+	    /**
+	     * Sets a event target
+	     * @param target
+	     */
+
+	  }, {
+	    key: "setTarget",
+	    value: function setTarget(target) {
+	      this.target = target;
+	      return this;
+	    }
+	    /**
+	     * Returns a event target
+	     */
+
+	  }, {
+	    key: "getTarget",
+	    value: function getTarget() {
+	      return this.target;
+	    }
+	    /**
+	     * Returns an array of event errors
+	     * @returns {[]}
+	     */
+
+	  }, {
+	    key: "getErrors",
+	    value: function getErrors() {
+	      return this.errors;
+	    }
+	    /**
+	     * Adds an error of the event.
+	     * Event listeners can prevent emitter's default action and set the reason of this behavior.
+	     * @param error
+	     */
+
+	  }, {
+	    key: "setError",
+	    value: function setError(error) {
+	      if (BaseError.isError(error)) {
+	        this.errors.push(error);
+	      }
+	    }
+	    /**
+	     * Prevents default action
+	     */
+
+	  }, {
 	    key: "preventDefault",
 	    value: function preventDefault() {
 	      this.defaultPrevented = true;
@@ -10017,141 +10737,342 @@
 	    value: function isImmediatePropagationStopped() {
 	      return this.immediatePropagationStopped;
 	    }
+	  }], [{
+	    key: "create",
+	    value: function create(options) {
+	      return new this(options);
+	    }
 	  }]);
 	  return BaseEvent;
 	}();
 
-	function emit(context, eventName, event) {
-	  var _privateProps$get = privateProps.get(context),
-	      eventsMap = _privateProps$get.eventsMap;
-
-	  if (eventsMap.has(eventName)) {
-	    var listeners = eventsMap.get(eventName);
-	    return babelHelpers.toConsumableArray(listeners.values()).map(function (listener) {
-	      return listener(event);
-	    });
+	var EventStore =
+	/*#__PURE__*/
+	function () {
+	  function EventStore() {
+	    var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+	    babelHelpers.classCallCheck(this, EventStore);
+	    this.defaultMaxListeners = Type.isNumber(options.defaultMaxListeners) ? options.defaultMaxListeners : 10;
+	    this.eventStore = new WeakMap();
 	  }
 
-	  return [];
-	}
+	  babelHelpers.createClass(EventStore, [{
+	    key: "add",
+	    value: function add(target) {
+	      var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+	      var record = this.getRecordScheme();
 
-	function setMaxListener(context, count) {
-	  if (!Type.isNumber(count) || count < 0) {
-	    throw new TypeError("The value of \"count\" is out of range. It must be a non-negative number. Received ".concat(count));
-	  } // eslint-disable-next-line
+	      if (Type.isNumber(options.maxListeners)) {
+	        record.maxListeners = options.maxListeners;
+	      }
 
-
-	  privateProps.get(context).maxListeners = count;
-	}
-
-	function getMaxListeners(context) {
-	  return privateProps.get(context).maxListeners;
-	}
-
-	function getListeners(context, eventName) {
-	  return privateProps.get(context).eventsMap.get(eventName);
-	}
-
-	function prepareEvent(context, eventName, event, target) {
-	  var preparedEvent = event;
-
-	  if (!(event instanceof BaseEvent)) {
-	    preparedEvent = new BaseEvent();
-	  }
-
-	  if (!Type.isNil(event)) {
-	    if (Type.isPlainObject(event)) {
-	      preparedEvent.data = babelHelpers.objectSpread({}, preparedEvent.data, event);
-	    } else {
-	      preparedEvent.data.value = event;
+	      this.eventStore.set(target, record);
+	      return record;
 	    }
+	  }, {
+	    key: "get",
+	    value: function get(target) {
+	      return this.eventStore.get(target);
+	    }
+	  }, {
+	    key: "getOrAdd",
+	    value: function getOrAdd(target) {
+	      var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+	      return this.get(target) || this.add(target, options);
+	    }
+	  }, {
+	    key: "delete",
+	    value: function _delete(context) {
+	      this.eventStore.delete(context);
+	    }
+	  }, {
+	    key: "getRecordScheme",
+	    value: function getRecordScheme() {
+	      return {
+	        eventsMap: new Map(),
+	        onceMap: new Map(),
+	        maxListeners: this.getDefaultMaxListeners(),
+	        eventsMaxListeners: new Map()
+	      };
+	    }
+	  }, {
+	    key: "getDefaultMaxListeners",
+	    value: function getDefaultMaxListeners() {
+	      return this.defaultMaxListeners;
+	    }
+	  }]);
+	  return EventStore;
+	}();
+
+	var WarningStore =
+	/*#__PURE__*/
+	function () {
+	  function WarningStore() {
+	    babelHelpers.classCallCheck(this, WarningStore);
+	    this.warnings = new Map();
+	    this.printDelayed = Runtime.debounce(this.print.bind(this), 500);
 	  }
 
-	  preparedEvent.type = eventName;
-	  preparedEvent.isTrusted = !Type.isFunction(target);
-	  return Object.seal(preparedEvent);
-	}
+	  babelHelpers.createClass(WarningStore, [{
+	    key: "add",
+	    value: function add(target, eventName, listeners) {
+	      var contextWarnings = this.warnings.get(target);
 
-	/**
-	 * Implements EventEmitter interface
-	 */
+	      if (!contextWarnings) {
+	        contextWarnings = Object.create(null);
+	        this.warnings.set(target, contextWarnings);
+	      }
+
+	      if (!contextWarnings[eventName]) {
+	        contextWarnings[eventName] = {};
+	      }
+
+	      contextWarnings[eventName].size = listeners.size;
+
+	      if (!Type.isArray(contextWarnings[eventName].errors)) {
+	        contextWarnings[eventName].errors = [];
+	      }
+
+	      contextWarnings[eventName].errors.push(new Error());
+	    }
+	  }, {
+	    key: "print",
+	    value: function print() {
+	      var _iteratorNormalCompletion = true;
+	      var _didIteratorError = false;
+	      var _iteratorError = undefined;
+
+	      try {
+	        for (var _iterator = this.warnings[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+	          var _step$value = babelHelpers.slicedToArray(_step.value, 2),
+	              target = _step$value[0],
+	              warnings = _step$value[1];
+
+	          for (var eventName in warnings) {
+	            console.groupCollapsed('Possible BX.Event.EventEmitter memory leak detected. ' + warnings[eventName].size + ' "' + eventName + '" listeners added. ' + 'Use emitter.setMaxListeners() to increase limit.');
+	            console.dir(warnings[eventName].errors);
+	            console.groupEnd();
+	          }
+	        }
+	      } catch (err) {
+	        _didIteratorError = true;
+	        _iteratorError = err;
+	      } finally {
+	        try {
+	          if (!_iteratorNormalCompletion && _iterator.return != null) {
+	            _iterator.return();
+	          }
+	        } finally {
+	          if (_didIteratorError) {
+	            throw _iteratorError;
+	          }
+	        }
+	      }
+
+	      this.clear();
+	    }
+	  }, {
+	    key: "clear",
+	    value: function clear() {
+	      this.warnings.clear();
+	    }
+	  }, {
+	    key: "printDelayed",
+	    value: function printDelayed() {}
+	  }]);
+	  return WarningStore;
+	}();
+
+	var eventStore = new EventStore({
+	  defaultMaxListeners: 10
+	});
+	var warningStore = new WarningStore();
+	var aliasStore = new Map();
+	var globalTarget = {
+	  GLOBAL_TARGET: 'GLOBAL_TARGET' // this key only for debugging purposes
+
+	};
+	eventStore.add(globalTarget, {
+	  maxListeners: 25
+	});
+	var isEmitterProperty = Symbol.for('BX.Event.EventEmitter.isEmitter');
+	var namespaceProperty = Symbol('namespaceProperty');
+	var targetProperty = Symbol('targetProperty');
 
 	var EventEmitter =
 	/*#__PURE__*/
 	function () {
+	  /** @private */
 	  function EventEmitter() {
+	    var _this = this;
+
 	    babelHelpers.classCallCheck(this, EventEmitter);
-	    instances.add(this);
-	    privateProps.set(this, {
-	      eventsMap: new Map(),
-	      onceMap: new Map(),
-	      maxListeners: 10
-	    });
+	    this[targetProperty] = null;
+	    this[namespaceProperty] = null;
+	    this[isEmitterProperty] = true;
+	    var target = this;
+
+	    if (Object.getPrototypeOf(this) === EventEmitter.prototype && arguments.length > 0) //new EventEmitter(obj) case
+	      {
+	        if (!Type.isObject(arguments.length <= 0 ? undefined : arguments[0])) {
+	          throw new TypeError("The \"target\" argument must be an object.");
+	        }
+
+	        target = arguments.length <= 0 ? undefined : arguments[0];
+	        this.setEventNamespace(arguments.length <= 1 ? undefined : arguments[1]);
+	      }
+
+	    this[targetProperty] = target;
+	    setTimeout(function () {
+	      if (_this.getEventNamespace() === null) {
+	        console.warn('The instance of BX.Event.EventEmitter is supposed to have an event namespace. ' + 'Use emitter.setEventNamespace() to make events more unique.');
+	      }
+	    }, 500);
 	  }
 	  /**
-	   * Subscribes listener on specified event
-	   * @param eventName
-	   * @param listener
-	   * @return {EventEmitter}
+	   * Makes a target observable
+	   * @param {object} target
+	   * @param {string} namespace
 	   */
 
 
 	  babelHelpers.createClass(EventEmitter, [{
-	    key: "subscribe",
-	    value: function subscribe$$1(eventName, listener) {
-	      subscribe(this, eventName, listener);
-
-	      return this;
+	    key: "setEventNamespace",
+	    value: function setEventNamespace(namespace) {
+	      if (Type.isStringFilled(namespace)) {
+	        this[namespaceProperty] = namespace;
+	      }
+	    }
+	  }, {
+	    key: "getEventNamespace",
+	    value: function getEventNamespace() {
+	      return this[namespaceProperty];
 	    }
 	    /**
 	     * Subscribes listener on specified global event
-	     * @param eventName
-	     * @param listener
-	     * @return {EventEmitter}
+	     * @param {object} target
+	     * @param {string} eventName
+	     * @param {Function<BaseEvent>} listener
+	     * @param {object} options
+	     */
+
+	  }, {
+	    key: "subscribe",
+
+	    /**
+	     * Subscribes a listener on a specified event
+	     * @param {string} eventName
+	     * @param {Function<BaseEvent>} listener
+	     * @return {this}
+	     */
+	    value: function subscribe(eventName, listener) {
+	      EventEmitter.subscribe(this, eventName, listener);
+	      return this;
+	    }
+	    /**
+	     *
+	     * @param {object} options
+	     * @param {object} [aliases]
+	     * @param {boolean} [compatMode=false]
+	     */
+
+	  }, {
+	    key: "subscribeFromOptions",
+	    value: function subscribeFromOptions(options, aliases, compatMode) {
+	      var _this2 = this;
+
+	      if (!Type.isPlainObject(options)) {
+	        return;
+	      }
+
+	      aliases = Type.isPlainObject(aliases) ? EventEmitter.normalizeAliases(aliases) : {};
+	      Object.keys(options).forEach(function (eventName) {
+	        var listener = options[eventName];
+
+	        if (!Type.isFunction(listener)) {
+	          throw new TypeError("The \"listener\" argument must be of type Function. Received type ".concat(babelHelpers.typeof(listener), "."));
+	        }
+
+	        eventName = EventEmitter.normalizeEventName(eventName);
+
+	        if (aliases[eventName]) {
+	          var actualName = aliases[eventName].eventName;
+	          EventEmitter.subscribe(_this2, actualName, listener, {
+	            compatMode: compatMode !== false
+	          });
+	        } else {
+	          EventEmitter.subscribe(_this2, eventName, listener, {
+	            compatMode: compatMode === true
+	          });
+	        }
+	      });
+	    }
+	    /**
+	     * Subscribes a listener that is called at
+	     * most once for a specified event.
+	     * @param {object} target
+	     * @param {string} eventName
+	     * @param {Function<BaseEvent>} listener
 	     */
 
 	  }, {
 	    key: "subscribeOnce",
 
 	    /**
-	     * Subscribes a listener that is called at
-	     * most once for a specified event.
-	     * @param eventName
-	     * @param listener
-	     * @return {EventEmitter}
+	     * Subscribes a listener that is called at most once for a specified event.
+	     * @param {string} eventName
+	     * @param {Function<BaseEvent>} listener
+	     * @return {this}
 	     */
-	    value: function subscribeOnce$$1(eventName, listener) {
-	      subscribeOnce(this, eventName, listener);
-
+	    value: function subscribeOnce(eventName, listener) {
+	      EventEmitter.subscribeOnce(this, eventName, listener);
 	      return this;
 	    }
 	    /**
-	     * Subscribes a listener that is called at
-	     * most once for a specified global event.
-	     * @param eventName
-	     * @param listener
-	     * @return {EventEmitter}
+	     * Unsubscribes an event listener
+	     * @param {object} target
+	     * @param {string} eventName
+	     * @param {Function<BaseEvent>} listener
+	     * @param options
 	     */
 
 	  }, {
 	    key: "unsubscribe",
 
 	    /**
-	     * Unsubscribes specified event listener
-	     * @param eventName
-	     * @param listener
-	     * @return {EventEmitter}
+	     * Unsubscribes an event listener
+	     * @param {string} eventName
+	     * @param {Function<BaseEvent>} listener
+	     * @return {this}
 	     */
-	    value: function unsubscribe$$1(eventName, listener) {
-	      unsubscribe(this, eventName, listener);
-
+	    value: function unsubscribe(eventName, listener) {
+	      EventEmitter.unsubscribe(this, eventName, listener);
 	      return this;
 	    }
 	    /**
-	     * Unsubscribes specified global event listener
-	     * @param eventName
-	     * @param listener
-	     * @return {EventEmitter}
+	     * Unsubscribes all event listeners
+	     * @param {object} target
+	     * @param {string} eventName
+	     * @param options
+	     */
+
+	  }, {
+	    key: "unsubscribeAll",
+
+	    /**
+	     * Unsubscribes all event listeners
+	     * @param {string} [eventName]
+	     */
+	    value: function unsubscribeAll(eventName) {
+	      EventEmitter.unsubscribeAll(this, eventName);
+	    }
+	    /**
+	     *
+	     * @param {object} target
+	     * @param {string} eventName
+	     * @param {BaseEvent | any} event
+	     * @param {object} options
+	     * @returns {Array}
 	     */
 
 	  }, {
@@ -10159,24 +11080,23 @@
 
 	    /**
 	     * Emits specified event with specified event object
-	     * @param eventName
-	     * @param event
-	     * @return {EventEmitter}
+	     * @param {string} eventName
+	     * @param {BaseEvent | any} event
+	     * @return {this}
 	     */
-	    value: function emit$$1(eventName, event) {
-	      var preparedEvent = prepareEvent(this, eventName, event, this);
-
-	      emit(this, eventName, preparedEvent);
-
-	      emit(EventEmitter, eventName, preparedEvent);
-
+	    value: function emit(eventName, event) {
+	      EventEmitter.emit(this, eventName, event);
 	      return this;
 	    }
 	    /**
-	     * Emits specified global event with specified event object
-	     * @param eventName
-	     * @param event
-	     * @return {EventEmitter}
+	     * Emits global event and returns a promise that is resolved when
+	     * all promise returned from event handlers are resolved,
+	     * or rejected when at least one of the returned promise is rejected.
+	     * Importantly. You can return any value from synchronous handlers, not just promise
+	     * @param {object} target
+	     * @param {string} eventName
+	     * @param {BaseEvent | any} event
+	     * @return {Promise<Array>}
 	     */
 
 	  }, {
@@ -10187,22 +11107,19 @@
 	     * all promise returned from event handlers are resolved,
 	     * or rejected when at least one of the returned promise is rejected.
 	     * Importantly. You can return any value from synchronous handlers, not just promise
-	     * @param eventName
-	     * @param event
+	     * @param {string} eventName
+	     * @param {BaseEvent|any} event
 	     * @return {Promise<Array>}
 	     */
 	    value: function emitAsync(eventName, event) {
-	      var preparedEvent = prepareEvent(this, eventName, event, this);
-	      return Promise.all([].concat(babelHelpers.toConsumableArray(emit(this, eventName, preparedEvent)), babelHelpers.toConsumableArray(emit(EventEmitter, eventName, preparedEvent))));
+	      return EventEmitter.emitAsync(this, eventName, event);
 	    }
 	    /**
-	     * Emits global event and returns a promise that is resolved when
-	     * all promise returned from event handlers are resolved,
-	     * or rejected when at least one of the returned promise is rejected.
-	     * Importantly. You can return any value from synchronous handlers, not just promise
-	     * @param eventName
-	     * @param event
-	     * @return {Promise<Array>}
+	     * @private
+	     * @param {object} target
+	     * @param {string} eventName
+	     * @param {BaseEvent|any} event
+	     * @returns {BaseEvent}
 	     */
 
 	  }, {
@@ -10210,32 +11127,108 @@
 
 	    /**
 	     * Sets max events listeners count
-	     * @param {number} count
-	     * @return {EventEmitter}
+	     * this.setMaxListeners(10) - sets the default value for all events
+	     * this.setMaxListeners("onClose", 10) sets the value for onClose event
+	     * @return {this}
+	     * @param args
 	     */
-	    value: function setMaxListeners(count) {
-	      setMaxListener(this, count);
+	    value: function setMaxListeners() {
+	      for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
+	        args[_key] = arguments[_key];
+	      }
+
+	      EventEmitter.setMaxListeners.apply(EventEmitter, [this].concat(args));
 	      return this;
 	    }
 	    /**
-	     * Sets max global events listeners count
-	     * @param {number} count
-	     * @return {EventEmitter}
+	     * Returns max event listeners count
+	     * @param {object} target
+	     * @param {string} [eventName]
+	     * @returns {number}
 	     */
 
 	  }, {
 	    key: "getMaxListeners",
 
 	    /**
-	     * Gets max event listeners count
-	     * @return {*}
+	     * Returns max event listeners count
+	     * @param {string} [eventName]
+	     * @returns {number}
 	     */
-	    value: function getMaxListeners$$1() {
-	      return getMaxListeners(this);
+	    value: function getMaxListeners(eventName) {
+	      return EventEmitter.getMaxListeners(this, eventName);
 	    }
 	    /**
-	     * Gets max global event listeners count
-	     * @return {*}
+	     * Adds or subtracts max listeners count
+	     * Event.EventEmitter.addMaxListeners() - adds one max listener for all events of global target
+	     * Event.EventEmitter.addMaxListeners(3) - adds three max listeners for all events of global target
+	     * Event.EventEmitter.addMaxListeners(-1) - subtracts one max listener for all events of global target
+	     * Event.EventEmitter.addMaxListeners('onClose') - adds one max listener for onClose event of global target
+	     * Event.EventEmitter.addMaxListeners('onClose', 2) - adds two max listeners for onClose event of global target
+	     * Event.EventEmitter.addMaxListeners('onClose', -1) - subtracts one max listener for onClose event of global target
+	     *
+	     * Event.EventEmitter.addMaxListeners(obj) - adds one max listener for all events of 'obj' target
+	     * Event.EventEmitter.addMaxListeners(obj, 3) - adds three max listeners for all events of 'obj' target
+	     * Event.EventEmitter.addMaxListeners(obj, -1) - subtracts one max listener for all events of 'obj' target
+	     * Event.EventEmitter.addMaxListeners(obj, 'onClose') - adds one max listener for onClose event of 'obj' target
+	     * Event.EventEmitter.addMaxListeners(obj, 'onClose', 2) - adds two max listeners for onClose event of 'obj' target
+	     * Event.EventEmitter.addMaxListeners(obj, 'onClose', -1) - subtracts one max listener for onClose event of 'obj' target
+	     * @param args
+	     * @returns {number}
+	     */
+
+	  }, {
+	    key: "incrementMaxListeners",
+
+	    /**
+	     * Increases max listeners count
+	     * this.incrementMaxListeners() - adds one max listener for all events
+	     * this.incrementMaxListeners(3) - adds three max listeners for all events
+	     * this.incrementMaxListeners('onClose') - adds one max listener for onClose event
+	     * this.incrementMaxListeners('onClose', 2) - adds two max listeners for onClose event
+	     */
+	    value: function incrementMaxListeners() {
+	      for (var _len2 = arguments.length, args = new Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
+	        args[_key2] = arguments[_key2];
+	      }
+
+	      return EventEmitter.incrementMaxListeners.apply(EventEmitter, [this].concat(args));
+	    }
+	    /**
+	     * Decreases max listeners count
+	     *
+	     * Event.EventEmitter.decrementMaxListeners() - subtracts one max listener for all events of global target
+	     * Event.EventEmitter.decrementMaxListeners(3) - subtracts three max listeners for all events of global target
+	     * Event.EventEmitter.decrementMaxListeners('onClose') - subtracts one max listener for onClose event of global target
+	     * Event.EventEmitter.decrementMaxListeners('onClose', 2) - subtracts two max listeners for onClose event of global target
+	     *
+	     * Event.EventEmitter.decrementMaxListeners(obj) - subtracts one max listener for all events of 'obj' target
+	     * Event.EventEmitter.decrementMaxListeners(obj, 3) - subtracts three max listeners for all events of 'obj' target
+	     * Event.EventEmitter.decrementMaxListeners(obj, 'onClose') - subtracts one max listener for onClose event of 'obj' target
+	     * Event.EventEmitter.decrementMaxListeners(obj, 'onClose', 2) - subtracts two max listeners for onClose event of 'obj' target
+	     */
+
+	  }, {
+	    key: "decrementMaxListeners",
+
+	    /**
+	     * Increases max listeners count
+	     * this.decrementMaxListeners() - subtracts one max listener for all events
+	     * this.decrementMaxListeners(3) - subtracts three max listeners for all events
+	     * this.decrementMaxListeners('onClose') - subtracts one max listener for onClose event
+	     * this.decrementMaxListeners('onClose', 2) - subtracts two max listeners for onClose event
+	     */
+	    value: function decrementMaxListeners() {
+	      for (var _len3 = arguments.length, args = new Array(_len3), _key3 = 0; _key3 < _len3; _key3++) {
+	        args[_key3] = arguments[_key3];
+	      }
+
+	      return EventEmitter.decrementMaxListeners.apply(EventEmitter, [this].concat(args));
+	    }
+	    /**
+	     * @private
+	     * @param {Array} args
+	     * @returns Array
 	     */
 
 	  }, {
@@ -10243,93 +11236,746 @@
 
 	    /**
 	     * Gets listeners list for specified event
-	     * @param eventName
+	     * @param {string} eventName
 	     */
-	    value: function getListeners$$1(eventName) {
-	      return getListeners(this, eventName);
+	    value: function getListeners(eventName) {
+	      return EventEmitter.getListeners(this, eventName);
 	    }
 	    /**
-	     * Gets global listeners list for specified event
-	     * @param eventName
+	     * Returns a full event name with namespace
+	     * @param {string} eventName
+	     * @returns {string}
+	     */
+
+	  }, {
+	    key: "getFullEventName",
+	    value: function getFullEventName(eventName) {
+	      if (!Type.isStringFilled(eventName)) {
+	        throw new TypeError("The \"eventName\" argument must be a string.");
+	      }
+
+	      return EventEmitter.makeFullEventName(this.getEventNamespace(), eventName);
+	    }
+	    /**
+	     * Registers aliases (old event names for BX.onCustomEvent)
+	     * @param aliases
 	     */
 
 	  }], [{
-	    key: "subscribe",
-	    value: function subscribe$$1(eventName, listener) {
-	      subscribe(EventEmitter, eventName, listener);
+	    key: "makeObservable",
+	    value: function makeObservable(target, namespace) {
+	      if (!Type.isObject(target)) {
+	        throw new TypeError('The "target" argument must be an object.');
+	      }
 
-	      return this;
+	      if (!Type.isStringFilled(namespace)) {
+	        throw new TypeError('The "namespace" must be an non-empty string.');
+	      }
+
+	      if (EventEmitter.isEventEmitter(target)) {
+	        throw new TypeError('The "target" is an event emitter already.');
+	      }
+
+	      var targetProto = Object.getPrototypeOf(target);
+	      var emitter = new EventEmitter();
+	      emitter.setEventNamespace(namespace);
+	      Object.setPrototypeOf(emitter, targetProto);
+	      Object.setPrototypeOf(target, emitter);
+	      Object.getOwnPropertyNames(EventEmitter.prototype).forEach(function (method) {
+	        if (['constructor'].includes(method)) {
+	          return;
+	        }
+
+	        emitter[method] = function () {
+	          for (var _len4 = arguments.length, args = new Array(_len4), _key4 = 0; _key4 < _len4; _key4++) {
+	            args[_key4] = arguments[_key4];
+	          }
+
+	          return EventEmitter.prototype[method].apply(target, args);
+	        };
+	      });
+	    }
+	  }, {
+	    key: "subscribe",
+	    value: function subscribe(target, eventName, listener, options) {
+	      if (Type.isString(target)) {
+	        options = listener;
+	        listener = eventName;
+	        eventName = target;
+	        target = this.GLOBAL_TARGET;
+	      }
+
+	      if (!Type.isObject(target)) {
+	        throw new TypeError("The \"target\" argument must be an object.");
+	      }
+
+	      eventName = this.normalizeEventName(eventName);
+
+	      if (!Type.isStringFilled(eventName)) {
+	        throw new TypeError("The \"eventName\" argument must be a string.");
+	      }
+
+	      if (!Type.isFunction(listener)) {
+	        throw new TypeError("The \"listener\" argument must be of type Function. Received type ".concat(babelHelpers.typeof(listener), "."));
+	      }
+
+	      options = Type.isPlainObject(options) ? options : {};
+	      var fullEventName = this.resolveEventName(eventName, target, options.useGlobalNaming === true);
+
+	      var _eventStore$getOrAdd = eventStore.getOrAdd(target),
+	          eventsMap = _eventStore$getOrAdd.eventsMap,
+	          onceMap = _eventStore$getOrAdd.onceMap;
+
+	      var onceListeners = onceMap.get(fullEventName);
+	      var listeners = eventsMap.get(fullEventName);
+
+	      if (listeners && listeners.has(listener) || onceListeners && onceListeners.has(listener)) {
+	        console.error("You cannot subscribe the same \"".concat(fullEventName, "\" event listener twice."));
+	      } else {
+	        if (listeners) {
+	          listeners.set(listener, {
+	            listener: listener,
+	            options: options,
+	            sort: this.getNextSequenceValue()
+	          });
+	        } else {
+	          listeners = new Map([[listener, {
+	            listener: listener,
+	            options: options,
+	            sort: this.getNextSequenceValue()
+	          }]]);
+	          eventsMap.set(fullEventName, listeners);
+	        }
+	      }
+
+	      var maxListeners = this.getMaxListeners(target, eventName);
+
+	      if (listeners.size > maxListeners) {
+	        warningStore.add(target, fullEventName, listeners);
+	        warningStore.printDelayed();
+	      }
 	    }
 	  }, {
 	    key: "subscribeOnce",
-	    value: function subscribeOnce$$1(eventName, listener) {
-	      subscribeOnce(EventEmitter, eventName, listener);
+	    value: function subscribeOnce(target, eventName, listener) {
+	      var _this3 = this;
 
-	      return this;
+	      if (Type.isString(target)) {
+	        listener = eventName;
+	        eventName = target;
+	        target = this.GLOBAL_TARGET;
+	      }
+
+	      if (!Type.isObject(target)) {
+	        throw new TypeError("The \"target\" argument must be an object.");
+	      }
+
+	      eventName = this.normalizeEventName(eventName);
+
+	      if (!Type.isStringFilled(eventName)) {
+	        throw new TypeError("The \"eventName\" argument must be a string.");
+	      }
+
+	      if (!Type.isFunction(listener)) {
+	        throw new TypeError("The \"listener\" argument must be of type Function. Received type ".concat(babelHelpers.typeof(listener), "."));
+	      }
+
+	      var fullEventName = this.resolveEventName(eventName, target);
+
+	      var _eventStore$getOrAdd2 = eventStore.getOrAdd(target),
+	          eventsMap = _eventStore$getOrAdd2.eventsMap,
+	          onceMap = _eventStore$getOrAdd2.onceMap;
+
+	      var listeners = eventsMap.get(fullEventName);
+	      var onceListeners = onceMap.get(fullEventName);
+
+	      if (listeners && listeners.has(listener) || onceListeners && onceListeners.has(listener)) {
+	        console.error("You cannot subscribe the same \"".concat(fullEventName, "\" event listener twice."));
+	      } else {
+	        var once = function once() {
+	          _this3.unsubscribe(target, eventName, once);
+
+	          onceListeners.delete(listener);
+	          listener.apply(void 0, arguments);
+	        };
+
+	        if (onceListeners) {
+	          onceListeners.set(listener, once);
+	        } else {
+	          onceListeners = new Map([[listener, once]]);
+	          onceMap.set(fullEventName, onceListeners);
+	        }
+
+	        this.subscribe(target, eventName, once);
+	      }
 	    }
 	  }, {
 	    key: "unsubscribe",
-	    value: function unsubscribe$$1(eventName, listener) {
-	      unsubscribe(EventEmitter, eventName, listener);
+	    value: function unsubscribe(target, eventName, listener, options) {
+	      if (Type.isString(target)) {
+	        listener = eventName;
+	        eventName = target;
+	        target = this.GLOBAL_TARGET;
+	      }
 
-	      return this;
+	      eventName = this.normalizeEventName(eventName);
+
+	      if (!Type.isStringFilled(eventName)) {
+	        throw new TypeError("The \"eventName\" argument must be a string.");
+	      }
+
+	      if (!Type.isFunction(listener)) {
+	        throw new TypeError("The \"listener\" argument must be of type Function. Received type ".concat(typeof event === "undefined" ? "undefined" : babelHelpers.typeof(event), "."));
+	      }
+
+	      options = Type.isPlainObject(options) ? options : {};
+	      var fullEventName = this.resolveEventName(eventName, target, options.useGlobalNaming === true);
+	      var targetInfo = eventStore.get(target);
+	      var listeners = targetInfo && targetInfo.eventsMap.get(fullEventName);
+	      var onceListeners = targetInfo && targetInfo.onceMap.get(fullEventName);
+
+	      if (listeners) {
+	        listeners.delete(listener);
+	      }
+
+	      if (onceListeners) {
+	        var once = onceListeners.get(listener);
+
+	        if (once) {
+	          onceListeners.delete(listener);
+	          listeners.delete(once);
+	        }
+	      }
+	    }
+	  }, {
+	    key: "unsubscribeAll",
+	    value: function unsubscribeAll(target, eventName, options) {
+	      if (Type.isString(target)) {
+	        eventName = target;
+	        target = this.GLOBAL_TARGET;
+	      }
+
+	      if (Type.isStringFilled(eventName)) {
+	        var targetInfo = eventStore.get(target);
+
+	        if (targetInfo) {
+	          options = Type.isPlainObject(options) ? options : {};
+	          var fullEventName = this.resolveEventName(eventName, target, options.useGlobalNaming === true);
+	          targetInfo.eventsMap.delete(fullEventName);
+	          targetInfo.onceMap.delete(fullEventName);
+	        }
+	      } else if (Type.isNil(eventName)) {
+	        if (target === this.GLOBAL_TARGET) {
+	          console.error('You cannot unsubscribe all global listeners.');
+	        } else {
+	          eventStore.delete(target);
+	        }
+	      }
 	    }
 	  }, {
 	    key: "emit",
-	    value: function emit$$1(eventName, event) {
-	      var preparedEvent = prepareEvent(this, eventName, event, this);
+	    value: function emit(target, eventName, event, options) {
+	      if (Type.isString(target)) {
+	        options = event;
+	        event = eventName;
+	        eventName = target;
+	        target = this.GLOBAL_TARGET;
+	      }
 
-	      emit(EventEmitter, eventName, preparedEvent);
+	      if (!Type.isObject(target)) {
+	        throw new TypeError("The \"target\" argument must be an object.");
+	      }
 
-	      instances.forEach(function (instance) {
-	        var _privateProps$get = privateProps.get(instance),
-	            eventsMap = _privateProps$get.eventsMap;
+	      eventName = this.normalizeEventName(eventName);
 
-	        if (eventsMap.has(eventName)) {
-	          emit(instance, eventName, preparedEvent);
-	        }
+	      if (!Type.isStringFilled(eventName)) {
+	        throw new TypeError("The \"eventName\" argument must be a string.");
+	      }
+
+	      options = Type.isPlainObject(options) ? options : {};
+	      var fullEventName = this.resolveEventName(eventName, target, options.useGlobalNaming === true);
+	      var globalEvents = eventStore.get(this.GLOBAL_TARGET);
+	      var globalListeners = globalEvents && globalEvents.eventsMap.get(fullEventName) || new Map();
+	      var targetListeners = new Set();
+
+	      if (target !== this.GLOBAL_TARGET) {
+	        var targetEvents = eventStore.get(target);
+	        targetListeners = targetEvents && targetEvents.eventsMap.get(fullEventName) || new Map();
+	      }
+
+	      var listeners = [].concat(babelHelpers.toConsumableArray(globalListeners.values()), babelHelpers.toConsumableArray(targetListeners.values()));
+	      listeners.sort(function (a, b) {
+	        return a.sort - b.sort;
 	      });
-	      return this;
+	      var preparedEvent = this.prepareEvent(target, fullEventName, event);
+	      var result = [];
+
+	      for (var i = 0; i < listeners.length; i++) {
+	        if (preparedEvent.isImmediatePropagationStopped()) {
+	          break;
+	        }
+
+	        var _listeners$i = listeners[i],
+	            listener = _listeners$i.listener,
+	            listenerOptions = _listeners$i.options; //A previous listener could remove a current listener.
+
+	        if (globalListeners.has(listener) || targetListeners.has(listener)) {
+	          var listenerResult = void 0;
+
+	          if (listenerOptions.compatMode) {
+	            var params = [];
+	            var compatData = preparedEvent.getCompatData();
+
+	            if (compatData !== null) {
+	              params = options.cloneData === true ? Runtime.clone(compatData) : compatData;
+	            } else {
+	              params = [preparedEvent];
+	            }
+
+	            var context = Type.isUndefined(options.thisArg) ? target : options.thisArg;
+	            listenerResult = listener.apply(context, params);
+	          } else {
+	            listenerResult = Type.isUndefined(options.thisArg) ? listener(preparedEvent) : listener.call(options.thisArg, preparedEvent);
+	          }
+
+	          result.push(listenerResult);
+	        }
+	      }
+
+	      return result;
 	    }
 	  }, {
 	    key: "emitAsync",
-	    value: function emitAsync(eventName, event) {
-	      var preparedEvent = prepareEvent(this, eventName, event, this);
-	      return Promise.all([].concat(babelHelpers.toConsumableArray(emit(EventEmitter, eventName, preparedEvent)), babelHelpers.toConsumableArray(babelHelpers.toConsumableArray(instances).reduce(function (acc, instance) {
-	        var _privateProps$get2 = privateProps.get(instance),
-	            eventsMap = _privateProps$get2.eventsMap;
+	    value: function emitAsync(target, eventName, event) {
+	      if (Type.isString(target)) {
+	        event = eventName;
+	        eventName = target;
+	        target = this.GLOBAL_TARGET;
+	      }
 
-	        if (eventsMap.has(eventName)) {
-	          return [].concat(babelHelpers.toConsumableArray(acc), babelHelpers.toConsumableArray(emit(instance, eventName, preparedEvent)));
-	        }
-
-	        return acc;
-	      }, []))));
+	      return Promise.all(this.emit(target, eventName, event));
 	    }
 	  }, {
+	    key: "prepareEvent",
+	    value: function prepareEvent(target, eventName, event) {
+	      var preparedEvent = event;
+
+	      if (!(event instanceof BaseEvent)) {
+	        preparedEvent = new BaseEvent();
+	        preparedEvent.setData(event);
+	      }
+
+	      preparedEvent.setTarget(this.isEventEmitter(target) ? target[targetProperty] : target);
+	      preparedEvent.setType(eventName);
+	      return preparedEvent;
+	    }
+	    /**
+	     * @private
+	     * @returns {number}
+	     */
+
+	  }, {
+	    key: "getNextSequenceValue",
+	    value: function getNextSequenceValue() {
+	      return this.sequenceValue++;
+	    }
+	    /**
+	     * Sets max global events listeners count
+	     * Event.EventEmitter.setMaxListeners(10) - sets the default value for all events (global target)
+	     * Event.EventEmitter.setMaxListeners("onClose", 10) - sets the value for onClose event (global target)
+	     * Event.EventEmitter.setMaxListeners(obj, 10) - sets the default value for all events (obj target)
+	     * Event.EventEmitter.setMaxListeners(obj, "onClose", 10); - sets the value for onClose event (obj target)
+	     * @return {void}
+	     * @param args
+	     */
+
+	  }, {
 	    key: "setMaxListeners",
-	    value: function setMaxListeners(count) {
-	      setMaxListener(EventEmitter, count);
-	      return this;
+	    value: function setMaxListeners() {
+	      var target = this.GLOBAL_TARGET;
+	      var eventName = null;
+	      var count = undefined;
+
+	      for (var _len5 = arguments.length, args = new Array(_len5), _key5 = 0; _key5 < _len5; _key5++) {
+	        args[_key5] = arguments[_key5];
+	      }
+
+	      if (args.length === 1) {
+	        count = args[0];
+	      } else if (args.length === 2) {
+	        if (Type.isString(args[0])) {
+	          eventName = args[0];
+	          count = args[1];
+	        } else {
+	          target = args[0];
+	          count = args[1];
+	        }
+	      } else if (args.length >= 3) {
+	        target = args[0];
+	        eventName = args[1];
+	        count = args[2];
+	      }
+
+	      if (!Type.isObject(target)) {
+	        throw new TypeError("The \"target\" argument must be an object.");
+	      }
+
+	      if (eventName !== null && !Type.isStringFilled(eventName)) {
+	        throw new TypeError("The \"eventName\" argument must be a string.");
+	      }
+
+	      if (!Type.isNumber(count) || count < 0) {
+	        throw new TypeError("The value of \"count\" is out of range. It must be a non-negative number. Received ".concat(count, "."));
+	      }
+
+	      var targetInfo = eventStore.getOrAdd(target);
+
+	      if (Type.isStringFilled(eventName)) {
+	        var fullEventName = this.resolveEventName(eventName, target);
+	        targetInfo.eventsMaxListeners.set(fullEventName, count);
+	      } else {
+	        targetInfo.maxListeners = count;
+	      }
 	    }
 	  }, {
 	    key: "getMaxListeners",
-	    value: function getMaxListeners$$1() {
-	      return getMaxListeners(EventEmitter);
+	    value: function getMaxListeners(target, eventName) {
+	      if (Type.isString(target)) {
+	        eventName = target;
+	        target = this.GLOBAL_TARGET;
+	      } else if (Type.isNil(target)) {
+	        target = this.GLOBAL_TARGET;
+	      }
+
+	      if (!Type.isObject(target)) {
+	        throw new TypeError("The \"target\" argument must be an object.");
+	      }
+
+	      var targetInfo = eventStore.get(target);
+
+	      if (targetInfo) {
+	        var maxListeners = targetInfo.maxListeners;
+
+	        if (Type.isStringFilled(eventName)) {
+	          var fullEventName = this.resolveEventName(eventName, target);
+	          maxListeners = targetInfo.eventsMaxListeners.get(fullEventName) || maxListeners;
+	        }
+
+	        return maxListeners;
+	      }
+
+	      return this.DEFAULT_MAX_LISTENERS;
 	    }
 	  }, {
+	    key: "addMaxListeners",
+	    value: function addMaxListeners() {
+	      var _this$destructMaxList = this.destructMaxListenersArgs.apply(this, arguments),
+	          _this$destructMaxList2 = babelHelpers.slicedToArray(_this$destructMaxList, 3),
+	          target = _this$destructMaxList2[0],
+	          eventName = _this$destructMaxList2[1],
+	          increment = _this$destructMaxList2[2];
+
+	      var maxListeners = Math.max(this.getMaxListeners(target, eventName) + increment, 0);
+
+	      if (Type.isStringFilled(eventName)) {
+	        EventEmitter.setMaxListeners(target, eventName, maxListeners);
+	      } else {
+	        EventEmitter.setMaxListeners(target, maxListeners);
+	      }
+
+	      return maxListeners;
+	    }
+	    /**
+	     * Increases max listeners count
+	     *
+	     * Event.EventEmitter.incrementMaxListeners() - adds one max listener for all events of global target
+	     * Event.EventEmitter.incrementMaxListeners(3) - adds three max listeners for all events of global target
+	     * Event.EventEmitter.incrementMaxListeners('onClose') - adds one max listener for onClose event of global target
+	     * Event.EventEmitter.incrementMaxListeners('onClose', 2) - adds two max listeners for onClose event of global target
+	     *
+	     * Event.EventEmitter.incrementMaxListeners(obj) - adds one max listener for all events of 'obj' target
+	     * Event.EventEmitter.incrementMaxListeners(obj, 3) - adds three max listeners for all events of 'obj' target
+	     * Event.EventEmitter.incrementMaxListeners(obj, 'onClose') - adds one max listener for onClose event of 'obj' target
+	     * Event.EventEmitter.incrementMaxListeners(obj, 'onClose', 2) - adds two max listeners for onClose event of 'obj' target
+	     */
+
+	  }, {
+	    key: "incrementMaxListeners",
+	    value: function incrementMaxListeners() {
+	      var _this$destructMaxList3 = this.destructMaxListenersArgs.apply(this, arguments),
+	          _this$destructMaxList4 = babelHelpers.slicedToArray(_this$destructMaxList3, 3),
+	          target = _this$destructMaxList4[0],
+	          eventName = _this$destructMaxList4[1],
+	          increment = _this$destructMaxList4[2];
+
+	      return this.addMaxListeners(target, eventName, Math.abs(increment));
+	    }
+	  }, {
+	    key: "decrementMaxListeners",
+	    value: function decrementMaxListeners() {
+	      var _this$destructMaxList5 = this.destructMaxListenersArgs.apply(this, arguments),
+	          _this$destructMaxList6 = babelHelpers.slicedToArray(_this$destructMaxList5, 3),
+	          target = _this$destructMaxList6[0],
+	          eventName = _this$destructMaxList6[1],
+	          increment = _this$destructMaxList6[2];
+
+	      return this.addMaxListeners(target, eventName, -Math.abs(increment));
+	    }
+	  }, {
+	    key: "destructMaxListenersArgs",
+	    value: function destructMaxListenersArgs() {
+	      var eventName = null;
+	      var increment = 1;
+	      var target = this.GLOBAL_TARGET;
+
+	      for (var _len6 = arguments.length, args = new Array(_len6), _key6 = 0; _key6 < _len6; _key6++) {
+	        args[_key6] = arguments[_key6];
+	      }
+
+	      if (args.length === 1) {
+	        if (Type.isNumber(args[0])) {
+	          increment = args[0];
+	        } else if (Type.isString(args[0])) {
+	          eventName = args[0];
+	        } else {
+	          target = args[0];
+	        }
+	      } else if (args.length === 2) {
+	        if (Type.isString(args[0])) {
+	          eventName = args[0];
+	          increment = args[1];
+	        } else if (Type.isString(args[1])) {
+	          target = args[0];
+	          eventName = args[1];
+	        } else {
+	          target = args[0];
+	          increment = args[1];
+	        }
+	      } else if (args.length >= 3) {
+	        target = args[0];
+	        eventName = args[1];
+	        increment = args[2];
+	      }
+
+	      if (!Type.isObject(target)) {
+	        throw new TypeError("The \"target\" argument must be an object.");
+	      }
+
+	      if (eventName !== null && !Type.isStringFilled(eventName)) {
+	        throw new TypeError("The \"eventName\" argument must be a string.");
+	      }
+
+	      if (!Type.isNumber(increment)) {
+	        throw new TypeError("The value of \"increment\" must be a number.");
+	      }
+
+	      return [target, eventName, increment];
+	    }
+	    /**
+	     * Gets listeners list for a specified event
+	     * @param {object} target
+	     * @param {string} eventName
+	     */
+
+	  }, {
 	    key: "getListeners",
-	    value: function getListeners$$1(eventName) {
-	      return getListeners(EventEmitter, eventName);
+	    value: function getListeners(target, eventName) {
+	      if (Type.isString(target)) {
+	        eventName = target;
+	        target = this.GLOBAL_TARGET;
+	      }
+
+	      if (!Type.isObject(target)) {
+	        throw new TypeError("The \"target\" argument must be an object.");
+	      }
+
+	      eventName = this.normalizeEventName(eventName);
+
+	      if (!Type.isStringFilled(eventName)) {
+	        throw new TypeError("The \"eventName\" argument must be a string.");
+	      }
+
+	      var targetInfo = eventStore.get(target);
+
+	      if (!targetInfo) {
+	        return new Map();
+	      }
+
+	      var fullEventName = this.resolveEventName(eventName, target);
+	      return targetInfo.eventsMap.get(fullEventName) || new Map();
+	    }
+	  }, {
+	    key: "registerAliases",
+	    value: function registerAliases(aliases) {
+	      aliases = this.normalizeAliases(aliases);
+	      Object.keys(aliases).forEach(function (alias) {
+	        aliasStore.set(alias, {
+	          eventName: aliases[alias].eventName,
+	          namespace: aliases[alias].namespace
+	        });
+	      });
+	      EventEmitter.mergeEventAliases(aliases);
+	    }
+	    /**
+	     * @private
+	     * @param aliases
+	     */
+
+	  }, {
+	    key: "normalizeAliases",
+	    value: function normalizeAliases(aliases) {
+	      if (!Type.isPlainObject(aliases)) {
+	        throw new TypeError("The \"aliases\" argument must be an object.");
+	      }
+
+	      var result = Object.create(null);
+
+	      for (var _alias in aliases) {
+	        if (!Type.isStringFilled(_alias)) {
+	          throw new TypeError("The alias must be an non-empty string.");
+	        }
+
+	        var options = aliases[_alias];
+
+	        if (!options || !Type.isStringFilled(options.eventName) || !Type.isStringFilled(options.namespace)) {
+	          throw new TypeError("The alias options must set the \"eventName\" and the \"namespace\".");
+	        }
+
+	        _alias = this.normalizeEventName(_alias);
+	        result[_alias] = {
+	          eventName: options.eventName,
+	          namespace: options.namespace
+	        };
+	      }
+
+	      return result;
+	    }
+	    /**
+	     * @private
+	     */
+
+	  }, {
+	    key: "mergeEventAliases",
+	    value: function mergeEventAliases(aliases) {
+	      var _this4 = this;
+
+	      var globalEvents = eventStore.get(this.GLOBAL_TARGET);
+
+	      if (!globalEvents) {
+	        return;
+	      }
+
+	      Object.keys(aliases).forEach(function (alias) {
+	        var options = aliases[alias];
+	        alias = _this4.normalizeEventName(alias);
+
+	        var fullEventName = _this4.makeFullEventName(options.namespace, options.eventName);
+
+	        var aliasListeners = globalEvents.eventsMap.get(alias);
+
+	        if (aliasListeners) {
+	          var listeners = globalEvents.eventsMap.get(fullEventName) || new Map();
+	          globalEvents.eventsMap.set(fullEventName, new Map([].concat(babelHelpers.toConsumableArray(listeners), babelHelpers.toConsumableArray(aliasListeners))));
+	          globalEvents.eventsMap.delete(alias);
+	        }
+
+	        var aliasOnceListeners = globalEvents.onceMap.get(alias);
+
+	        if (aliasOnceListeners) {
+	          var onceListeners = globalEvents.onceMap.get(fullEventName) || new Map();
+	          globalEvents.onceMap.set(fullEventName, new Map([].concat(babelHelpers.toConsumableArray(onceListeners), babelHelpers.toConsumableArray(aliasOnceListeners))));
+	          globalEvents.onceMap.delete(alias);
+	        }
+
+	        var aliasMaxListeners = globalEvents.eventsMaxListeners.get(alias);
+
+	        if (aliasMaxListeners) {
+	          var eventMaxListeners = globalEvents.eventsMaxListeners.get(fullEventName) || 0;
+	          globalEvents.eventsMaxListeners.set(fullEventName, Math.max(eventMaxListeners, aliasMaxListeners));
+	          globalEvents.eventsMaxListeners.delete(alias);
+	        }
+	      });
+	    }
+	    /**
+	     * Returns true if the target is an instance of Event.EventEmitter
+	     * @param {object} target
+	     * @returns {boolean}
+	     */
+
+	  }, {
+	    key: "isEventEmitter",
+	    value: function isEventEmitter(target) {
+	      return Type.isObject(target) && target[isEmitterProperty] === true;
+	    }
+	    /**
+	     * @private
+	     * @param {string} eventName
+	     * @returns {string}
+	     */
+
+	  }, {
+	    key: "normalizeEventName",
+	    value: function normalizeEventName(eventName) {
+	      if (!Type.isStringFilled(eventName)) {
+	        return '';
+	      }
+
+	      return eventName.toLowerCase();
+	    }
+	    /**
+	     * @private
+	     * @param eventName
+	     * @param target
+	     * @param useGlobalNaming
+	     * @returns {string}
+	     */
+
+	  }, {
+	    key: "resolveEventName",
+	    value: function resolveEventName(eventName, target) {
+	      var useGlobalNaming = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
+	      eventName = this.normalizeEventName(eventName);
+
+	      if (!Type.isStringFilled(eventName)) {
+	        return '';
+	      }
+
+	      if (this.isEventEmitter(target) && useGlobalNaming !== true) {
+	        if (target.getEventNamespace() !== null && eventName.includes('.')) {
+	          console.warn("Possible the wrong event name \"".concat(eventName, "\"."));
+	        }
+
+	        eventName = target.getFullEventName(eventName);
+	      } else if (aliasStore.has(eventName)) {
+	        var _aliasStore$get = aliasStore.get(eventName),
+	            namespace = _aliasStore$get.namespace,
+	            actualEventName = _aliasStore$get.eventName;
+
+	        eventName = this.makeFullEventName(namespace, actualEventName);
+	      }
+
+	      return eventName;
+	    }
+	    /**
+	     * @private
+	     * @param {string} namespace
+	     * @param {string} eventName
+	     * @returns {string}
+	     */
+
+	  }, {
+	    key: "makeFullEventName",
+	    value: function makeFullEventName(namespace, eventName) {
+	      var fullName = Type.isStringFilled(namespace) ? "".concat(namespace, ":").concat(eventName) : eventName;
+	      return Type.isStringFilled(fullName) ? fullName.toLowerCase() : '';
 	    }
 	  }]);
 	  return EventEmitter;
 	}();
-	privateProps.set(EventEmitter, {
-	  eventsMap: new Map(),
-	  onceMap: new Map(),
-	  maxListeners: 10
-	});
+
+	babelHelpers.defineProperty(EventEmitter, "GLOBAL_TARGET", globalTarget);
+	babelHelpers.defineProperty(EventEmitter, "DEFAULT_MAX_LISTENERS", eventStore.getDefaultMaxListeners());
+	babelHelpers.defineProperty(EventEmitter, "sequenceValue", 1);
 
 	var stack = [];
 	/**
@@ -10365,6 +12011,10 @@
 	  }
 	});
 
+	/**
+	 * @memberOf BX
+	 */
+
 	var Event = function Event() {
 	  babelHelpers.classCallCheck(this, Event);
 	};
@@ -10373,9 +12023,9 @@
 	babelHelpers.defineProperty(Event, "bindOnce", bindOnce);
 	babelHelpers.defineProperty(Event, "unbind", unbind);
 	babelHelpers.defineProperty(Event, "unbindAll", unbindAll);
+	babelHelpers.defineProperty(Event, "ready", ready);
 	babelHelpers.defineProperty(Event, "EventEmitter", EventEmitter);
 	babelHelpers.defineProperty(Event, "BaseEvent", BaseEvent);
-	babelHelpers.defineProperty(Event, "ready", ready);
 
 	function encodeAttributeValue(value) {
 	  if (Type.isPlainObject(value) || Type.isArray(value)) {
@@ -10423,6 +12073,10 @@
 	    scrollLeft: scrollLeft
 	  };
 	}
+
+	/**
+	 * @memberOf BX
+	 */
 
 	var Dom =
 	/*#__PURE__*/
@@ -11001,6 +12655,9 @@
 	}();
 
 	var UA = navigator.userAgent.toLowerCase();
+	/**
+	 * @memberOf BX
+	 */
 
 	var Browser =
 	/*#__PURE__*/
@@ -11476,6 +13133,10 @@
 	  return Data;
 	}();
 
+	/**
+	 * @memberOf BX
+	 */
+
 	var Http = function Http() {
 	  babelHelpers.classCallCheck(this, Http);
 	};
@@ -11483,463 +13144,15 @@
 	babelHelpers.defineProperty(Http, "Cookie", Cookie);
 	babelHelpers.defineProperty(Http, "Data", Data);
 
-	var debugState = true;
-	function enableDebug() {
-	  debugState = true;
-	}
-	function disableDebug() {
-	  debugState = false;
-	}
-	function isDebugEnabled() {
-	  return debugState;
-	}
-	function debug() {
-	  if (isDebugEnabled() && Type.isObject(window.console)) {
-	    if (Type.isFunction(window.console.log)) {
-	      for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
-	        args[_key] = arguments[_key];
-	      }
-
-	      window.console.log('BX.debug: ', args.length > 0 ? args : args[0]);
-
-	      if (args[0] instanceof Error && args[0].stack) {
-	        window.console.log('BX.debug error stack trace', args[0].stack);
-	      }
-	    }
-
-	    if (Type.isFunction(window.console.trace)) {
-	      // eslint-disable-next-line
-	      console.trace();
-	    }
-	  }
-	}
-
-	var Extension =
-	/*#__PURE__*/
-	function () {
-	  function Extension(options) {
-	    babelHelpers.classCallCheck(this, Extension);
-	    this.config = options.config || {};
-	    this.name = options.extension;
-	    this.state = 'scheduled'; // eslint-disable-next-line
-
-	    var result = BX.processHTML(options.html || '');
-	    this.inlineScripts = result.SCRIPT.reduce(inlineScripts, []);
-	    this.externalScripts = result.SCRIPT.reduce(externalScripts, []);
-	    this.externalStyles = result.STYLE.reduce(externalStyles, []);
-	  }
-
-	  babelHelpers.createClass(Extension, [{
-	    key: "load",
-	    value: function load() {
-	      var _this = this;
-
-	      if (this.state === 'error') {
-	        this.loadPromise = this.loadPromise || Promise.resolve(this);
-	        console.warn('Extension', this.name, 'not found');
-	      }
-
-	      if (!this.loadPromise && this.state) {
-	        this.state = 'load'; // eslint-disable-next-line
-
-	        this.inlineScripts.forEach(BX.evalGlobal);
-	        this.loadPromise = Promise.all([loadAll(this.externalScripts), loadAll(this.externalStyles)]).then(function () {
-	          _this.state = 'loaded';
-
-	          if (Type.isPlainObject(_this.config) && _this.config.namespace) {
-	            return Reflection.getClass(_this.config.namespace);
-	          }
-
-	          return window;
-	        });
-	      }
-
-	      return this.loadPromise;
-	    }
-	  }]);
-	  return Extension;
-	}();
-
-	var initialized = {};
-	var ajaxController = 'main.bitrix.main.controller.loadext.getextensions';
-
-	function makeIterable(value) {
-	  return Type.isArray(value) ? value : [value];
-	}
-	function isInitialized(extension) {
-	  return extension in initialized;
-	}
-	function getInitialized(extension) {
-	  return initialized[extension];
-	}
-	function isAllInitialized(extensions) {
-	  return extensions.every(isInitialized);
-	}
-	function loadExtensions(extensions) {
-	  return Promise.all(extensions.map(function (item) {
-	    return item.load();
-	  }));
-	}
-	function mergeExports(exports) {
-	  return exports.reduce(function (acc, currentExports) {
-	    if (Type.isObject(currentExports)) {
-	      return babelHelpers.objectSpread({}, currentExports);
-	    }
-
-	    return currentExports;
-	  }, {});
-	}
-	function inlineScripts(acc, item) {
-	  if (item.isInternal) {
-	    acc.push(item.JS);
-	  }
-
-	  return acc;
-	}
-	function externalScripts(acc, item) {
-	  if (!item.isInternal) {
-	    acc.push(item.JS);
-	  }
-
-	  return acc;
-	}
-	function externalStyles(acc, item) {
-	  if (Type.isString(item) && item !== '') {
-	    acc.push(item);
-	  }
-
-	  return acc;
-	}
-	function request(options) {
-	  return new Promise(function (resolve) {
-	    // eslint-disable-next-line
-	    BX.ajax.runAction(ajaxController, {
-	      data: options
-	    }).then(resolve);
-	  });
-	}
-	function prepareExtensions(response) {
-	  if (response.status !== 'success') {
-	    response.errors.map(console.warn);
-	    return [];
-	  }
-
-	  return response.data.map(function (item) {
-	    var initializedExtension = getInitialized(item.extension);
-
-	    if (initializedExtension) {
-	      return initializedExtension;
-	    }
-
-	    initialized[item.extension] = new Extension(item);
-	    return initialized[item.extension];
-	  });
-	}
-	function loadAll(items) {
-	  var itemsList = makeIterable(items);
-
-	  if (!itemsList.length) {
-	    return Promise.resolve();
-	  }
-
-	  return new Promise(function (resolve) {
-	    // eslint-disable-next-line
-	    BX.load(itemsList, resolve);
-	  });
-	}
-
-	/**
-	 * Loads extensions asynchronously
-	 * @param {string|Array<string>} extension
-	 * @return {Promise<Array<Extension>>}
-	 */
-	function loadExtension(extension) {
-	  var extensions = makeIterable(extension);
-	  var isAllInitialized$$1 = isAllInitialized(extensions);
-
-	  if (isAllInitialized$$1) {
-	    var initializedExtensions = extensions.map(getInitialized);
-	    return loadExtensions(initializedExtensions).then(mergeExports);
-	  }
-
-	  return request({
-	    extension: extensions
-	  }).then(prepareExtensions).then(loadExtensions).then(mergeExports);
-	}
-
-	var cloneableTags = ['[object Object]', '[object Array]', '[object RegExp]', '[object Arguments]', '[object Date]', '[object Error]', '[object Map]', '[object Set]', '[object ArrayBuffer]', '[object DataView]', '[object Float32Array]', '[object Float64Array]', '[object Int8Array]', '[object Int16Array]', '[object Int32Array]', '[object Uint8Array]', '[object Uint16Array]', '[object Uint32Array]', '[object Uint8ClampedArray]'];
-
-	function isCloneable(value) {
-	  var isCloneableValue = Type.isObjectLike(value) && cloneableTags.includes(getTag(value));
-	  return isCloneableValue || Type.isDomNode(value);
-	}
-
-	function internalClone(value, map) {
-	  if (map.has(value)) {
-	    return map.get(value);
-	  }
-
-	  if (isCloneable(value)) {
-	    if (Type.isArray(value)) {
-	      var cloned = Array.from(value);
-	      map.set(value, cloned);
-	      value.forEach(function (item, index) {
-	        cloned[index] = internalClone(item, map);
-	      });
-	      return map.get(value);
-	    }
-
-	    if (Type.isDomNode(value)) {
-	      return value.cloneNode(true);
-	    }
-
-	    if (Type.isMap(value)) {
-	      var _result = new Map();
-
-	      map.set(value, _result);
-	      value.forEach(function (item, key) {
-	        _result.set(internalClone(key, map), internalClone(item, map));
-	      });
-	      return _result;
-	    }
-
-	    if (Type.isSet(value)) {
-	      var _result2 = new Set();
-
-	      map.set(value, _result2);
-	      value.forEach(function (item) {
-	        _result2.add(internalClone(item, map));
-	      });
-	      return _result2;
-	    }
-
-	    if (Type.isDate(value)) {
-	      return new Date(value);
-	    }
-
-	    if (Type.isRegExp(value)) {
-	      var regExpFlags = /\w*$/;
-	      var flags = regExpFlags.exec(value);
-
-	      var _result3 = new RegExp(value.source);
-
-	      if (flags && Type.isArray(flags)) {
-	        _result3 = new RegExp(value.source, flags[0]);
-	      }
-
-	      _result3.lastIndex = value.lastIndex;
-	      return _result3;
-	    }
-
-	    var proto = Object.getPrototypeOf(value);
-	    var result = Object.assign(Object.create(proto), value);
-	    map.set(value, result);
-	    Object.keys(value).forEach(function (key) {
-	      result[key] = internalClone(value[key], map);
-	    });
-	    return result;
-	  }
-
-	  return value;
-	}
-	/**
-	 * Clones any cloneable object
-	 * @param value
-	 * @return {*}
-	 */
-
-	function clone(value) {
-	  return internalClone(value, new WeakMap());
-	}
-
-	function merge(current, target) {
-	  return Object.entries(target).reduce(function (acc, _ref) {
-	    var _ref2 = babelHelpers.slicedToArray(_ref, 2),
-	        key = _ref2[0],
-	        value = _ref2[1];
-
-	    if (!Type.isDomNode(acc[key]) && Type.isObjectLike(acc[key]) && Type.isObjectLike(value)) {
-	      acc[key] = merge(acc[key], value);
-	      return acc;
-	    }
-
-	    acc[key] = value;
-	    return acc;
-	  }, current);
-	}
-
-	function createComparator(fields) {
-	  var orders = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [];
-	  return function (a, b) {
-	    var field = fields[0];
-	    var order = orders[0] || 'asc';
-
-	    if (Type.isUndefined(field)) {
-	      return 0;
-	    }
-
-	    var valueA = a[field];
-	    var valueB = b[field];
-
-	    if (Type.isString(valueA) && Type.isString(valueB)) {
-	      valueA = valueA.toLowerCase();
-	      valueB = valueB.toLowerCase();
-	    }
-
-	    if (valueA < valueB) {
-	      return order === 'asc' ? -1 : 1;
-	    }
-
-	    if (valueA > valueB) {
-	      return order === 'asc' ? 1 : -1;
-	    }
-
-	    return createComparator(fields.slice(1), orders.slice(1))(a, b);
-	  };
-	}
-
-	var Runtime =
-	/*#__PURE__*/
-	function () {
-	  function Runtime() {
-	    babelHelpers.classCallCheck(this, Runtime);
-	  }
-
-	  babelHelpers.createClass(Runtime, null, [{
-	    key: "debounce",
-	    value: function debounce(func) {
-	      var wait = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
-	      var context = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
-	      var timeoutId;
-	      return function debounced() {
-	        var _this = this;
-
-	        for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
-	          args[_key] = arguments[_key];
-	        }
-
-	        if (Type.isNumber(timeoutId)) {
-	          clearTimeout(timeoutId);
-	        }
-
-	        timeoutId = setTimeout(function () {
-	          func.apply(context || _this, args);
-	        }, wait);
-	      };
-	    }
-	  }, {
-	    key: "throttle",
-	    value: function throttle(func) {
-	      var wait = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
-	      var context = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
-	      var timer = 0;
-	      var invoke;
-	      return function wrapper() {
-	        for (var _len2 = arguments.length, args = new Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
-	          args[_key2] = arguments[_key2];
-	        }
-
-	        invoke = true;
-
-	        if (!timer) {
-	          var q = function q() {
-	            if (invoke) {
-	              func.apply(context || this, args);
-	              invoke = false;
-	              timer = setTimeout(q, wait);
-	            } else {
-	              timer = null;
-	            }
-	          };
-
-	          q();
-	        }
-	      };
-	    }
-	  }, {
-	    key: "html",
-	    value: function html(node, _html) {
-	      var params = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
-
-	      if (Type.isNil(_html) && Type.isDomNode(node)) {
-	        return node.innerHTML;
-	      } // eslint-disable-next-line
-
-
-	      var parsedHtml = BX.processHTML(_html);
-	      var externalCss = parsedHtml.STYLE.reduce(externalStyles, []);
-	      var externalJs = parsedHtml.SCRIPT.reduce(externalScripts, []);
-	      var inlineJs = parsedHtml.SCRIPT.reduce(inlineScripts, []);
-
-	      if (Type.isDomNode(node)) {
-	        if (params.htmlFirst || !externalJs.length && !externalCss.length) {
-	          node.innerHTML = parsedHtml.HTML;
-	        }
-	      }
-
-	      return Promise.all([loadAll(externalJs), loadAll(externalCss)]).then(function () {
-	        if (Type.isDomNode(node) && (externalJs.length > 0 || externalCss.length > 0)) {
-	          node.innerHTML = parsedHtml.HTML;
-	        } // eslint-disable-next-line
-
-
-	        inlineJs.forEach(function (script) {
-	          return BX.evalGlobal(script);
-	        });
-
-	        if (Type.isFunction(params.callback)) {
-	          params.callback();
-	        }
-	      });
-	    }
-	    /**
-	     * Merges objects or arrays
-	     * @param targets
-	     * @return {any}
-	     */
-
-	  }, {
-	    key: "merge",
-	    value: function merge$$1() {
-	      for (var _len3 = arguments.length, targets = new Array(_len3), _key3 = 0; _key3 < _len3; _key3++) {
-	        targets[_key3] = arguments[_key3];
-	      }
-
-	      if (Type.isArray(targets[0])) {
-	        targets.unshift([]);
-	      } else if (Type.isObject(targets[0])) {
-	        targets.unshift({});
-	      }
-
-	      return targets.reduce(function (acc, item) {
-	        return merge(acc, item);
-	      }, targets[0]);
-	    }
-	  }, {
-	    key: "orderBy",
-	    value: function orderBy(collection) {
-	      var fields = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [];
-	      var orders = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : [];
-	      var comparator = createComparator(fields, orders);
-	      return Object.values(collection).sort(comparator);
-	    }
-	  }]);
-	  return Runtime;
-	}();
-
-	babelHelpers.defineProperty(Runtime, "debug", debug);
-	babelHelpers.defineProperty(Runtime, "loadExtension", loadExtension);
-	babelHelpers.defineProperty(Runtime, "clone", clone);
-
 	function message(value) {
 	  if (Type.isString(value)) {
 	    if (Type.isNil(message[value])) {
 	      // eslint-disable-next-line
-	      BX.onCustomEvent(window, 'onBXMessageNotFound', [value]);
+	      EventEmitter.emit('onBXMessageNotFound', new BaseEvent({
+	        compatData: [value]
+	      }));
 
 	      if (Type.isNil(message[value])) {
-	        // eslint-disable-next-line
-	        BX.onCustomEvent(window, 'onBXMessageNotFound', [value]);
 	        Runtime.debug("message undefined: ".concat(value));
 	        message[value] = '';
 	      }
@@ -11963,6 +13176,7 @@
 
 	/**
 	 * Implements interface for works with language messages
+	 * @memberOf BX
 	 */
 
 	var Loc =
@@ -12178,6 +13392,10 @@
 	    return acc;
 	  }, {});
 	}
+	/**
+	 * @memberOf BX
+	 */
+
 
 	var Tag =
 	/*#__PURE__*/
@@ -12433,6 +13651,7 @@
 	var map = new WeakMap();
 	/**
 	 * Implements interface for works with URI
+	 * @memberOf BX
 	 */
 
 	var Uri =
@@ -12712,6 +13931,9 @@
 	  return Uri;
 	}();
 
+	/**
+	 * @memberOf BX
+	 */
 	var Validation =
 	/*#__PURE__*/
 	function () {
@@ -12888,6 +14110,7 @@
 
 	        if (Type.isPlainObject(parsedStack)) {
 	          this.stack = parsedStack;
+	          return this.stack;
 	        }
 	      }
 
@@ -12980,6 +14203,10 @@
 	  return LocalStorageCache;
 	}(BaseCache);
 
+	/**
+	 * @memberOf BX
+	 */
+
 	var Cache = function Cache() {
 	  babelHelpers.classCallCheck(this, Cache);
 	};
@@ -13012,6 +14239,10 @@
 	var getClass = Reflection.getClass,
 	    namespace = Reflection.namespace;
 	var message$1 = message;
+	/**
+	 * @memberOf BX
+	 */
+
 	var replace = Dom.replace,
 	    remove = Dom.remove,
 	    clean = Dom.clean,
@@ -13207,6 +14438,99 @@
 
 	  return new DOMRect(x, y, w, h).toJSON();
 	}
+	function addCustomEvent(eventObject, eventName, eventHandler) {
+	  if (Type.isString(eventObject)) {
+	    eventHandler = eventName;
+	    eventName = eventObject;
+	    eventObject = EventEmitter.GLOBAL_TARGET;
+	  }
+
+	  if (eventObject === window) {
+	    eventObject = EventEmitter.GLOBAL_TARGET;
+	  }
+
+	  if (!Type.isObject(eventObject)) {
+	    console.error('The "eventObject" argument must be an object. Received type ' + babelHelpers.typeof(eventObject) + '.');
+	    return;
+	  }
+
+	  if (!Type.isStringFilled(eventName)) {
+	    console.error('The "eventName" argument must be a string.');
+	    return;
+	  }
+
+	  if (!Type.isFunction(eventHandler)) {
+	    console.error('The "eventHandler" argument must be a function. Received type ' + babelHelpers.typeof(eventHandler) + '.');
+	    return;
+	  }
+
+	  eventName = eventName.toLowerCase();
+	  EventEmitter.subscribe(eventObject, eventName, eventHandler, {
+	    compatMode: true,
+	    useGlobalNaming: true
+	  });
+	}
+	function onCustomEvent(eventObject, eventName, eventParams, secureParams) {
+	  if (Type.isString(eventObject)) {
+	    secureParams = eventParams;
+	    eventParams = eventName;
+	    eventName = eventObject;
+	    eventObject = EventEmitter.GLOBAL_TARGET;
+	  }
+
+	  if (!Type.isObject(eventObject) || eventObject === window) {
+	    eventObject = EventEmitter.GLOBAL_TARGET;
+	  }
+
+	  if (!eventParams) {
+	    eventParams = [];
+	  }
+
+	  eventName = eventName.toLowerCase();
+	  var event = new BaseEvent();
+	  event.setData(eventParams);
+	  event.setCompatData(eventParams);
+	  EventEmitter.emit(eventObject, eventName, event, {
+	    cloneData: secureParams === true,
+	    useGlobalNaming: true
+	  });
+	}
+	function removeCustomEvent(eventObject, eventName, eventHandler) {
+	  if (Type.isString(eventObject)) {
+	    eventHandler = eventName;
+	    eventName = eventObject;
+	    eventObject = EventEmitter.GLOBAL_TARGET;
+	  }
+
+	  if (!Type.isFunction(eventHandler)) {
+	    console.error('The "eventHandler" argument must be a function. Received type ' + babelHelpers.typeof(eventHandler) + '.');
+	    return;
+	  }
+
+	  if (eventObject === window) {
+	    eventObject = EventEmitter.GLOBAL_TARGET;
+	  }
+
+	  eventName = eventName.toLowerCase();
+	  EventEmitter.unsubscribe(eventObject, eventName, eventHandler, {
+	    useGlobalNaming: true
+	  });
+	}
+	function removeAllCustomEvents(eventObject, eventName) {
+	  if (Type.isString(eventObject)) {
+	    eventName = eventObject;
+	    eventObject = EventEmitter.GLOBAL_TARGET;
+	  }
+
+	  if (eventObject === window) {
+	    eventObject = EventEmitter.GLOBAL_TARGET;
+	  }
+
+	  eventName = eventName.toLowerCase();
+	  EventEmitter.unsubscribeAll(eventObject, eventName, {
+	    useGlobalNaming: true
+	  });
+	}
 
 	if (global && global.window && global.window.BX) {
 	  Object.assign(global.window.BX, exports);
@@ -13225,6 +14549,7 @@
 	exports.Uri = Uri;
 	exports.Validation = Validation;
 	exports.Cache = Cache;
+	exports.BaseError = BaseError;
 	exports.getClass = getClass;
 	exports.namespace = namespace;
 	exports.message = message$1;
@@ -13269,6 +14594,10 @@
 	exports.GetWindowSize = GetWindowSize;
 	exports.GetContext = GetContext;
 	exports.pos = pos;
+	exports.addCustomEvent = addCustomEvent;
+	exports.onCustomEvent = onCustomEvent;
+	exports.removeCustomEvent = removeCustomEvent;
+	exports.removeAllCustomEvents = removeAllCustomEvents;
 
 }((this.BX = this.BX || {})));
 
@@ -14364,127 +15693,6 @@
 			e.stopPropagation();
 		else
 			e.cancelBubble = true;
-	};
-
-	/* custom events */
-	/*
-		BX.addCustomEvent(eventObject, eventName, eventHandler) - set custom event handler for particular object
-		BX.addCustomEvent(eventName, eventHandler) - set custom event handler for all objects
-	*/
-
-	BX.addCustomEvent = function(eventObject, eventName, eventHandler)
-	{
-		/* shift parameters for short version */
-		if (BX.type.isString(eventObject))
-		{
-			eventHandler = eventName;
-			eventName = eventObject;
-			eventObject = window;
-		}
-
-		if (!BX.type.isFunction(eventHandler) || !BX.type.isNotEmptyString(eventName) || !BX.type.isMapKey(eventObject))
-		{
-			return;
-		}
-
-		eventName = eventName.toLowerCase();
-
-		var events = customEvents.get(eventObject) || {};
-		events[eventName] = BX.type.isArray(events[eventName]) ? events[eventName] : [];
-		eventHandler["__bxSort"] = ++customEventsCnt;
-
-		events[eventName].push(eventHandler);
-		customEvents.set(eventObject, events);
-	};
-
-	BX.removeCustomEvent = function(eventObject, eventName, eventHandler)
-	{
-		/* shift parameters for short version */
-		if (BX.type.isString(eventObject))
-		{
-			eventHandler = eventName;
-			eventName = eventObject;
-			eventObject = window;
-		}
-
-		eventName = eventName.toLowerCase();
-
-		var events = customEvents.get(eventObject);
-		if (events && BX.type.isArray(events[eventName]))
-		{
-			for (var i = events[eventName].length - 1; i >= 0; i--)
-			{
-				if (events[eventName][i] === eventHandler)
-				{
-					events[eventName].splice(i, 1);
-				}
-			}
-		}
-	};
-
-	BX.removeAllCustomEvents = function(eventObject, eventName)
-	{
-		/* shift parameters for short version */
-		if (BX.type.isString(eventObject))
-		{
-			eventName = eventObject;
-			eventObject = window;
-		}
-
-		eventName = eventName.toLowerCase();
-
-		var events = customEvents.get(eventObject);
-		if (events)
-		{
-			delete events[eventName];
-		}
-	};
-
-	// Warning! Don't use secureParams with DOM nodes in eventParams
-	BX.onCustomEvent = function(eventObject, eventName, eventParams, secureParams)
-	{
-		/* shift parameters for short version */
-		if (BX.type.isString(eventObject))
-		{
-			secureParams = eventParams;
-			eventParams = eventName;
-			eventName = eventObject;
-			eventObject = window;
-		}
-
-		if (!eventParams)
-		{
-			eventParams = [];
-		}
-
-		eventName = eventName.toLowerCase();
-
-		var globalEvents = customEvents.get(window);
-		var globalHandlers = globalEvents && BX.type.isArray(globalEvents[eventName]) ? globalEvents[eventName] : [];
-		var objectHandlers = [];
-
-		if (eventObject !== window && BX.type.isMapKey(eventObject))
-		{
-			var objectEvents = customEvents.get(eventObject);
-			if (objectEvents && BX.type.isArray(objectEvents[eventName]))
-			{
-				objectHandlers = objectEvents[eventName];
-			}
-		}
-
-		var handlers = globalHandlers.concat(objectHandlers);
-
-		handlers.sort(function(a, b) {
-			return a["__bxSort"] - b["__bxSort"];
-		});
-
-		handlers.forEach(function(handler) {
-			//A previous handler could remove a current handler.
-			if (globalHandlers.indexOf(handler) !== -1 || objectHandlers.indexOf(handler) !== -1)
-			{
-				handler.apply(eventObject, secureParams === true ? BX.clone(eventParams) : eventParams);
-			}
-		});
 	};
 
 	BX.bindDebouncedChange = function(node, fn, fnInstant, timeout, ctx)
@@ -16744,10 +17952,26 @@
 			BX.bind(this.PARENT, 'mouseover', BX.proxy(this.Show, this));
 			BX.bind(this.PARENT, 'mouseout', BX.proxy(this.Hide, this));
 		}
-
-		BX.addCustomEvent('onMenuOpen', BX.delegate(this.disable, this));
-		BX.addCustomEvent('onMenuClose', BX.delegate(this.enable, this));
 	};
+
+	BX.CHint.openHints = new Set();
+
+	BX.CHint.globalDisabled = false;
+
+	BX.CHint.handleMenuOpen = function() {
+		BX.CHint.globalDisabled = true;
+
+		BX.CHint.openHints.forEach(function(hint) {
+			hint.__hide_immediately();
+		});
+	};
+
+	BX.CHint.handleMenuClose = function() {
+		BX.CHint.globalDisabled = false;
+	};
+
+	BX.addCustomEvent('onMenuOpen', BX.CHint.handleMenuOpen);
+	BX.addCustomEvent('onMenuClose', BX.CHint.handleMenuClose);
 
 	BX.CHint.prototype.defaultSettings = {
 		show_timeout: 1000,
@@ -16823,13 +18047,15 @@
 
 	BX.CHint.prototype.__show = function()
 	{
-		if (!this.msover || this.disabled) return;
+		if (!this.msover || this.disabled || BX.CHint.globalDisabled) return;
 		if (!this.bInited) this.Init();
 
 		if (this.prepareAdjustPos())
 		{
 			this.DIV.style.display = 'block';
 			this.adjustPos();
+
+			BX.CHint.openHints.add(this);
 
 			BX.bind(window, 'scroll', BX.proxy(this.__onscroll, this));
 
@@ -16862,6 +18088,8 @@
 		if (!this.bInited) return;
 
 		BX.unbind(window, 'scroll', BX.proxy(this.Reopen, this));
+
+		BX.CHint.openHints.delete(this);
 
 		if (this.PARAMS.showOnce)
 		{
@@ -18031,9 +19259,10 @@ BX.ajax.processRequestData = function(data, config)
 	{
 		case 'JSON':
 
-			BX.addCustomEvent(config.xhr, 'onParseJSONFailure', BX.proxy(BX.ajax._onParseJSONFailure, config));
-			result = BX.parseJSON(data, config.xhr);
-			BX.removeCustomEvent(config.xhr, 'onParseJSONFailure', BX.proxy(BX.ajax._onParseJSONFailure, config));
+			var context = config.xhr || {};
+			BX.addCustomEvent(context, 'onParseJSONFailure', BX.proxy(BX.ajax._onParseJSONFailure, config));
+			result = BX.parseJSON(data, context);
+			BX.removeCustomEvent(context, 'onParseJSONFailure', BX.proxy(BX.ajax._onParseJSONFailure, config));
 
 			if(!!result && BX.type.isArray(result['bxjs']))
 			{
@@ -19562,11 +20791,12 @@ BX.addCustomEvent('onAjaxFailure', BX.debug);
 
 
 
-(function (exports) {
+(function (exports,main_core) {
 	'use strict';
 
 	var LazyLoad = {
-	  images: [],
+	  observer: null,
+	  images: {},
 	  imageStatus: {
 	    hidden: -2,
 	    error: -1,
@@ -19578,35 +20808,103 @@ BX.addCustomEvent('onAjaxFailure', BX.debug);
 	    image: 1,
 	    background: 2
 	  },
+	  initObserver: function initObserver() {
+	    this.observer = new IntersectionObserver(this.onIntersection.bind(this), {
+	      rootMargin: '20% 0% 20% 0%',
+	      threshold: 0.10
+	    });
+	  },
+	  onIntersection: function onIntersection(entries) {
+	    entries.forEach(function (entry) {
+	      if (entry.isIntersecting) {
+	        this.showImage(entry.target);
+	      }
+	    }.bind(this));
+	  },
 	  registerImage: function registerImage(id, isImageVisibleCallback, options) {
+	    if (this.observer === null) {
+	      this.initObserver();
+	    }
+
 	    options = options || {};
 
-	    if (BX.type.isNotEmptyString(id)) {
-	      this.images.push({
-	        id: id,
-	        node: null,
-	        src: null,
-	        dataSrcName: options.dataSrcName || 'src',
-	        type: null,
-	        func: BX.type.isFunction(isImageVisibleCallback) ? isImageVisibleCallback : null,
-	        status: this.imageStatus.undefined
-	      });
+	    if (!main_core.Type.isStringFilled(id)) {
+	      return;
 	    }
+
+	    if (main_core.Type.isObject(this.images[id])) {
+	      return;
+	    }
+
+	    var element = document.getElementById(id);
+
+	    if (!main_core.Type.isDomNode(element)) {
+	      return;
+	    }
+
+	    this.observer.observe(element);
+	    this.images[id] = {
+	      id: id,
+	      node: null,
+	      src: null,
+	      dataSrcName: options.dataSrcName || 'src',
+	      type: null,
+	      func: main_core.Type.isFunction(isImageVisibleCallback) ? isImageVisibleCallback : null,
+	      status: this.imageStatus.undefined
+	    };
 	  },
 	  registerImages: function registerImages(ids, isImageVisibleCallback, options) {
-	    if (BX.type.isArray(ids)) {
+	    if (main_core.Type.isArray(ids)) {
 	      for (var i = 0, length = ids.length; i < length; i++) {
 	        this.registerImage(ids[i], isImageVisibleCallback, options);
 	      }
 	    }
 	  },
+	  showImage: function showImage(imageNode) {
+	    var imageNodeId = imageNode.id;
+
+	    if (!main_core.Type.isStringFilled(imageNodeId)) {
+	      return;
+	    }
+
+	    var image = this.images[imageNodeId];
+
+	    if (!main_core.Type.isPlainObject(image)) {
+	      return;
+	    }
+
+	    if (image.status == this.imageStatus.undefined) {
+	      this.initImage(image);
+	    }
+
+	    if (image.status !== this.imageStatus.inited) {
+	      return;
+	    }
+
+	    if (!image.node || !image.node.parentNode) {
+	      image.node = null;
+	      image.status = this.imageStatus.error;
+	      return;
+	    }
+
+	    if (image.type == this.imageTypes.image) {
+	      image.node.src = image.src;
+	    } else {
+	      image.node.style.backgroundImage = "url('" + image.src + "')";
+	    }
+
+	    image.node.dataset[image.dataSrcName] = "";
+	    image.status = this.imageStatus.loaded;
+	  },
 	  showImages: function showImages(checkOwnVisibility) {
-	    var image = null;
-	    var isImageVisible = false;
 	    checkOwnVisibility = checkOwnVisibility !== false;
 
-	    for (var i = 0, length = this.images.length; i < length; i++) {
-	      image = this.images[i];
+	    for (var id in this.images) {
+	      if (!this.images.hasOwnProperty(id)) {
+	        continue;
+	      }
+
+	      var image = this.images[id];
 
 	      if (image.status == this.imageStatus.undefined) {
 	        this.initImage(image);
@@ -19622,9 +20920,9 @@ BX.addCustomEvent('onAjaxFailure', BX.debug);
 	        continue;
 	      }
 
-	      isImageVisible = true;
+	      var isImageVisible = true;
 
-	      if (checkOwnVisibility && image.func) {
+	      if (checkOwnVisibility && main_core.Type.isFunction(image.func)) {
 	        isImageVisible = image.func(image);
 	      }
 
@@ -19642,17 +20940,19 @@ BX.addCustomEvent('onAjaxFailure', BX.debug);
 	  },
 	  initImage: function initImage(image) {
 	    image.status = this.imageStatus.error;
-	    var node = BX(image.id);
+	    var node = document.getElementById(image.id);
 
-	    if (node) {
-	      var src = node.dataset[image.dataSrcName];
+	    if (!main_core.Type.isDomNode(node)) {
+	      return;
+	    }
 
-	      if (BX.type.isNotEmptyString(src)) {
-	        image.node = node;
-	        image.src = src;
-	        image.status = this.imageStatus.inited;
-	        image.type = image.node.tagName.toLowerCase() == "img" ? this.imageTypes.image : this.imageTypes.background;
-	      }
+	    var src = node.dataset[image.dataSrcName];
+
+	    if (main_core.Type.isStringFilled(src)) {
+	      image.node = node;
+	      image.src = src;
+	      image.status = this.imageStatus.inited;
+	      image.type = image.node.tagName.toLowerCase() == "img" ? this.imageTypes.image : this.imageTypes.background;
 	    }
 	  },
 	  isElementVisibleOnScreen: function isElementVisibleOnScreen(element) {
@@ -19660,21 +20960,21 @@ BX.addCustomEvent('onAjaxFailure', BX.debug);
 	    var windowTop = window.pageYOffset || document.documentElement.scrollTop;
 	    var windowBottom = windowTop + document.documentElement.clientHeight;
 	    coords.bottom = coords.top + element.offsetHeight;
-	    var topVisible = coords.top > windowTop && coords.top < windowBottom;
-	    var bottomVisible = coords.bottom < windowBottom && coords.bottom > windowTop;
-	    return topVisible || bottomVisible;
+	    return coords.top > windowTop && coords.top < windowBottom || // topVisible
+	    coords.bottom < windowBottom && coords.bottom > windowTop // bottomVisible
+	    ;
 	  },
 	  isElementVisibleOn2Screens: function isElementVisibleOn2Screens(element) {
-	    var coords = this.getElementCoords(element);
 	    var windowHeight = document.documentElement.clientHeight;
 	    var windowTop = window.pageYOffset || document.documentElement.scrollTop;
 	    var windowBottom = windowTop + windowHeight;
+	    var coords = this.getElementCoords(element);
 	    coords.bottom = coords.top + element.offsetHeight;
 	    windowTop -= windowHeight;
 	    windowBottom += windowHeight;
-	    var topVisible = coords.top > windowTop && coords.top < windowBottom;
-	    var bottomVisible = coords.bottom < windowBottom && coords.bottom > windowTop;
-	    return topVisible || bottomVisible;
+	    return coords.top > windowTop && coords.top < windowBottom || // topVisible
+	    coords.bottom < windowBottom && coords.bottom > windowTop // bottomVisible
+	    ;
 	  },
 	  getElementCoords: function getElementCoords(element) {
 	    var box = element.getBoundingClientRect();
@@ -19685,9 +20985,7 @@ BX.addCustomEvent('onAjaxFailure', BX.debug);
 	      left: box.left + window.pageXOffset
 	    };
 	  },
-	  onScroll: function onScroll() {
-	    BX.LazyLoad.showImages();
-	  },
+	  onScroll: function onScroll() {},
 	  clearImages: function clearImages() {
 	    this.images = [];
 	  }
@@ -19695,7 +20993,7 @@ BX.addCustomEvent('onAjaxFailure', BX.debug);
 
 	exports.LazyLoad = LazyLoad;
 
-}((this.BX = this.BX || {})));
+}((this.BX = this.BX || {}),BX));
 
 
 
@@ -19770,7 +21068,7 @@ BX.addCustomEvent('onAjaxFailure', BX.debug);
 		if (params.onresize)
 		{
 			this.prevWindowSize = window.innerWidth || document.documentElement.clientWidth;
-			BX.bind(window, 'resize', BX.proxy(BX.throttle(this.onResize, 350),this));
+			BX.bind(window, 'resize', BX.throttle(this.onResize, 350, this));
 		}
 
 		if (params.onAdaptiveResize)
@@ -19778,7 +21076,7 @@ BX.addCustomEvent('onAjaxFailure', BX.debug);
 			widthNode = this.objList[0].scaleBy || this.objList[0].node;
 			computedStyles = getComputedStyle(widthNode);
 			this.prevWrapperSize = parseInt(computedStyles["width"]) - parseInt(computedStyles["paddingLeft"]) - parseInt(computedStyles["paddingRight"]);
-			BX.bind(window, 'resize', BX.proxy(BX.throttle(this.onAdaptiveResize, 350),this));
+			BX.bind(window, 'resize', BX.throttle(this.onAdaptiveResize, 350, this));
 		}
 
 		this.createTestNodes();

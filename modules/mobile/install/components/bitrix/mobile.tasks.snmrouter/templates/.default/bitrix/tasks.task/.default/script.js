@@ -760,9 +760,11 @@
 			return d;
 		})();
 
-	BX.Mobile.Tasks.edit = function(opts, nf){
-
+	BX.Mobile.Tasks.edit = function(opts, nf)
+	{
 		this.parentConstruct(BX.Mobile.Tasks.edit, opts);
+
+		this.guid = opts.guid;
 
 		BX.merge(this, {
 			sys: {
@@ -784,26 +786,32 @@
 	// the following functions can be overrided with inheritance
 	BX.merge(BX.Mobile.Tasks.edit.prototype, {
 		// member of stack of initializers, must be defined even if do nothing
-		init: function() {
+		init: function()
+		{
 			var init2 = BX.delegate(function(formId, gridId, obj) {
 				if (formId == this.option('formId') && obj)
 				{
-					if (obj["restrictedMode"]===true || obj["restrictedMode"]=="Y")
+					if (obj["restrictedMode"] === true || obj["restrictedMode"] == "Y")
+					{
 						this.initRestricted(obj);
+					}
 					else
+					{
 						this.initFull(obj);
+					}
 
-					BX.addCustomEvent(obj, 'onChange', BX.proxy(this.onChange, this));
-					BX.addCustomEvent(obj, "onCancel", function() { window.app.closeModalDialog( { } ); });
-
-					BXMobileApp.addCustomEvent(obj, 'onSubmitForm', BX.proxy(this.onSubmitForm, this));
+					this.bindEvents(obj);
 				}
 			}, this);
+
+			this.formInterface = BX.Mobile.Grid.Form.getByFormId(this.option('formId'));
+
 			BX.addCustomEvent("onInitialized", init2);
-			var form = BX.Mobile.Grid.Form.getByFormId(this.option('formId'));
-			init2(this.option('formId'), 'doesNotMatter', form);
+			init2(this.option('formId'), 'doesNotMatter', this.formInterface);
 		},
-		initRestricted : function(obj) {
+
+		initRestricted: function(obj)
+		{
 			this.restricted = true;
 			new checkListViewMode(this.task["ID"], this.task["CHECKLIST"]);
 			new timetracker(this.task["ID"], this.task);
@@ -818,13 +826,52 @@
 				BX.addCustomEvent(obj.elements[ii], "onChange", f);
 			}
 		},
-		initFull :  function(obj) {
+
+		initFull: function(obj)
+		{
 			obj.elements.push(new checkListEditMode(this.task["ID"], this.task["CHECKLIST"]));
 			obj.elements.push(new parentId(this.task["ID"]));
 			obj.elements.push(new duration(this.task["ID"]));
 			obj.elements.push(new timeEstimate(this.task["ID"]));
 		},
-		onChange : function(obj, node) {
+
+		bindEvents: function(obj)
+		{
+			BX.addCustomEvent(obj, 'onChange', BX.proxy(this.onChange, this));
+			BX.addCustomEvent(obj, "onCancel", function() {
+				window.app.closeModalDialog({});
+			});
+
+			BXMobileApp.addCustomEvent(obj, 'onSubmitForm', BX.proxy(this.onSubmitForm, this));
+			BXMobileApp.addCustomEvent('tasks.view.native::onItemAction', BX.delegate(function(eventData) {
+				if (Number(eventData.taskId) !== Number(this.task['ID']) || eventData.taskGuid !== this.guid)
+				{
+					return;
+				}
+
+				var user = {};
+
+				switch (eventData.name)
+				{
+					default:
+						break;
+
+					case 'auditor':
+					case 'accomplice':
+						user = eventData.values.user;
+						user = {
+							ID: user.id,
+							NAME: user.name || user.title,
+							IMAGE: user.icon || user.imageUrl || false
+						};
+						this.getFormElement(eventData.name).callback({a_users: [user]});
+						break;
+				}
+			}, this));
+		},
+
+		onChange: function(obj, node)
+		{
 			if(node.name)
 			{
 				if(!this.changes)
@@ -850,7 +897,6 @@
 				}
 
 			}
-
 
 			var form = BX(this.option('formId')),
 				markNode = form.elements["data[MARK]"];
@@ -885,11 +931,18 @@
 				node.nextSibling.innerHTML = (node.checked ? BX.message("TASKS_FAVORITES_1") : BX.message("TASKS_FAVORITES_0"));
 			}
 		},
-		onSubmitForm : function(obj, obForm, nullObj, res) {
+
+		onSubmitForm: function(obj, obForm, nullObj, res)
+		{
 			res.submit = false;
 
 			if (!this.restricted)
+			{
 				BXMobileApp.UI.Page.LoadingScreen.show();
+			}
+
+			BX.Mobile.Tasks.CheckListInstance.getTreeStructure().appendRequestLayout();
+
 			var formData = BX.ajax.prepareForm(obForm).data,
 				data = formData.data,
 				id = this.task["ID"],
@@ -910,6 +963,10 @@
 				while ((ii = tmp.pop()) && ii)
 					data["SE_ACCOMPLICE"].push({ID : ii});
 			}
+			if (data['DEADLINE'] === '0')
+			{
+				data['DEADLINE'] = '';
+			}
 			if (obForm.elements['ADDITIONAL[]'])
 			{
 				for (ii = 0; ii < obForm.elements['ADDITIONAL[]'].length; ii++)
@@ -918,16 +975,16 @@
 					data[node.value] = (node.checked ? "Y" : "N");
 				}
 			}
+
 			if (this.restricted)
 			{
 				delete data["SE_CHECKLIST"];
 			}
 
-			var params = {id : id, userid : BX.message("USER_ID"), taskid : id, data : data, parameters : {RETURN_ENTITY : true, DONT_SAVE_CHECKLIST: true}};
+			var params = {id: id, userid: BX.message("USER_ID"), taskid: id, data: data, parameters: {RETURN_ENTITY: true}};
 
 			(new BX.Tasks.Util.Query({url: url})).add((id > 0 ? 'task.update' : 'task.add'), params, {}, {
-				onExecuted : BX.proxy(function(response)
-				{
+				onExecuted: BX.proxy(function(response) {
 					if (response && response.response && response.response.status == 'failed')
 					{
 						window.app.BasicAuth( {
@@ -968,15 +1025,40 @@
 						{
 							//
 						}
-						var args = Array.from(arguments);
-						args.push(nullObj);
 
-						setTimeout((function(){
+						var args = arguments;
+						setTimeout((function() {
 							this.actExecute.apply(this, args);
 						}).bind(this), 500);
 					}
-				}, this)}).
-				execute();
+				}, this)
+			}).execute();
+		},
+
+		getFormElement: function(type)
+		{
+			switch (type)
+			{
+				default:
+					break;
+
+				case 'auditor':
+				case 'accomplice':
+					var membersMap = {
+						auditor: 'data[SE_AUDITOR][]',
+						accomplice: 'data[SE_ACCOMPLICE][]'
+					};
+					for (var ii = 0; ii < this.formInterface.elements.length; ii++)
+					{
+						if (this.formInterface.elements[ii].select && this.formInterface.elements[ii].select.name === membersMap[type])
+						{
+							return this.formInterface.elements[ii];
+						}
+					}
+					break;
+			}
+
+			return null;
 		},
 
 		savePriority: function(id, value)
@@ -996,7 +1078,7 @@
 			});
 		},
 
-		actExecute : function(errorConnection, data, nullObj)
+		actExecute: function(errorConnection, data)
 		{
 			/*
 			@ errorConnection BX.Tasks.Util.Query.ErrorCollection
@@ -1013,16 +1095,23 @@
 			}
 			else
 			{
-				window.BXMobileApp.onCustomEvent((this.task["ID"] > 0 ? "onTaskWasUpdated" : "onTaskWasCreated"), [this.task["ID"], this.variable("id"), data["RESULT"]["DATA"], data, nullObj], true, true);
+				window.BXMobileApp.onCustomEvent(
+					(this.task["ID"] > 0 ? "onTaskWasUpdated" : "onTaskWasCreated"),
+					[this.task["ID"], this.variable("id"), data["RESULT"]["DATA"], data, this.restricted],
+					true,
+					true
+				);
 				if (!this.restricted)
 				{
-					window.app.closeModalDialog( { } );
+					window.app.closeModalDialog({});
 				}
 			}
 		},
+
 		////////// CLASS-SPECIFIC: free to modify in a child class
 		elements : [],
-		getMenu : function(){
+		getMenu: function()
+		{
 			return [];
 		}
 	});

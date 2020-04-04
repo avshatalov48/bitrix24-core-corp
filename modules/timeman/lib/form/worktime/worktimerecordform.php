@@ -1,9 +1,9 @@
 <?php
 namespace Bitrix\Timeman\Form\Worktime;
 
-use Bitrix\Main\EO_User;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Timeman\Helper\TimeHelper;
+use Bitrix\Timeman\Model\User\User;
 use Bitrix\Timeman\Model\Worktime\Record\WorktimeRecord;
 use Bitrix\Timeman\Model\Worktime\Record\WorktimeRecordTable;
 use Bitrix\Timeman\Util\Form\CompositeForm;
@@ -41,6 +41,7 @@ class WorktimeRecordForm extends CompositeForm
 
 	public $recordedStartSeconds;
 	public $recordedStopSeconds;
+	public $useEmployeesTimezone = 0;
 
 	/** @var WorktimeRecord */
 	private $record;
@@ -50,6 +51,7 @@ class WorktimeRecordForm extends CompositeForm
 	public $longitudeOpen;
 	public $tasks;
 	public $device;
+	public $isSystem;
 
 	public static function createWithEventForm($eventName = null)
 	{
@@ -67,6 +69,41 @@ class WorktimeRecordForm extends CompositeForm
 			return TimeHelper::getInstance()->convertHoursMinutesToSeconds($this->recordedStartTime);
 		}
 		return $this->recordedStartSeconds;
+	}
+
+	public function buildStartTimestampBySecondsAndDate($userIdTimezone, $oldStartTimestamp = null)
+	{
+		$startSeconds = $this->recordedStartSeconds;
+		$startFormattedDate = $this->recordedStartDateFormatted;
+
+		$startTimestamp = null;
+		if ($startSeconds < 0 || $startSeconds === null || !$userIdTimezone)
+		{
+			return null;
+		}
+		$timeHelper = TimeHelper::getInstance();
+		$timestampUtcForUserDate = $timeHelper->getUtcNowTimestamp();
+		if ($startFormattedDate)
+		{
+			$timestampUtcForUserDate = $timeHelper->getTimestampByUserDate(
+				$startFormattedDate, $userIdTimezone
+			);
+		}
+		elseif ($oldStartTimestamp > 0)
+		{
+			$timestampUtcForUserDate = $oldStartTimestamp;
+		}
+
+		if ($timestampUtcForUserDate > 0)
+		{
+			$userDateTime = $timeHelper->createUserDateTimeFromFormat('U', $timestampUtcForUserDate, $userIdTimezone);
+			if ($userDateTime)
+			{
+				$timeHelper->setTimeFromSeconds($userDateTime, $startSeconds);
+				$startTimestamp = $userDateTime->getTimestamp();
+			}
+		}
+		return $startTimestamp;
 	}
 
 	/**
@@ -170,6 +207,14 @@ class WorktimeRecordForm extends CompositeForm
 				'tasks', 'longitudeOpen', 'latitudeOpen', 'longitudeClose', 'latitudeClose', 'ipClose', 'ipOpen')
 			)
 			,
+			(new Filter\Modifier\CallbackModifier('useEmployeesTimezone'))
+				->configureCallback(function ($value) {
+					return (int)$value;
+				})
+			,
+			(new Filter\Validator\RangeValidator('useEmployeesTimezone'))
+				->configureRange([0, 1])
+			,
 			(new Filter\Validator\NumberValidator('userId', 'shiftId', 'scheduleId'))
 				->configureIntegerOnly(true)
 				->configureMin(1)
@@ -241,11 +286,11 @@ class WorktimeRecordForm extends CompositeForm
 	}
 
 	/**
-	 * @return EO_User|null
+	 * @return User|null
 	 */
 	public function getUser()
 	{
-		return $this->record ? $this->record->getUser() : null;
+		return $this->record ? $this->record->obtainUser() : null;
 	}
 
 	public function getRecord()

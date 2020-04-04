@@ -609,16 +609,12 @@
 
 		if(!isDatabaseOpened)
 		{
-			this.cacheDataBase = BX.dataBase.create({
-				name: "Database",
-				displayName: "BXCacheBase",
-				capacity: 1024 * 1024 * 4,
-				version: "1.0"
-			});
-
+			this.cacheDataBase = new BX.Dexie("composite");
 			if(this.cacheDataBase != null)
 			{
-				this.cacheDataBase.createTable(this.tableParams);
+				this.cacheDataBase.version(1).stores({
+					composite: '&ID,CONTENT,HASH,PROPS'
+				});
 				isDatabaseOpened = true;
 			}
 		}
@@ -635,71 +631,12 @@
 				props = JSON.stringify(props)
 			}
 
-			this.cacheDataBase.getRows(
-				{
-					tableName: this.tableParams.tableName,
-					filter: {id: id},
-					success: BX.proxy(
-						function(res)
-						{
-							if (res.items.length > 0)
-							{
-								this.cacheDataBase.updateRows(
-									{
-										tableName: this.tableParams.tableName,
-										updateFields: {
-											content: content,
-											hash: hash,
-											props : props
-										},
-										filter: {
-											id: id
-										},
-										fail:function(e){
-											//console.error("Update cache error: ", e);
-										}
-
-									}
-								);
-							}
-							else
-							{
-								this.cacheDataBase.addRow(
-									{
-										tableName: this.tableParams.tableName,
-										insertFields:
-										{
-											id: id,
-											content: content,
-											hash: hash,
-											props : props
-										}
-									}
-								);
-							}
-
-						}, this),
-					fail: BX.proxy(function(e)
-					{
-						this.cacheDataBase.addRow
-						(
-							{
-								tableName: this.tableParams.tableName,
-								insertFields: {
-									id: id,
-									content: content,
-									hash: hash,
-									props : props
-								},
-								fail: function(error)
-								{
-									//console.error("Add cache error: ", error);
-								}
-							}
-						);
-					}, this)
-				}
-			);
+			this.cacheDataBase.composite.put({
+				ID: id,
+				CONTENT: content,
+				HASH: hash,
+				PROPS : props
+			});
 		}
 
 
@@ -709,14 +646,11 @@
 	{
 		if(BX.frameCache.openDatabase())
 		{
-			this.cacheDataBase.getRows
-			(
-				{
-					tableName: this.tableParams.tableName,
-					filter: {id: id},
-					success: BX.proxy(callback, this)
-				}
-			);
+			this.cacheDataBase.composite
+				.where("ID").anyOf(id).toArray()
+				.then((function(items){
+					callback({items:items})
+				}).bind(this));
 		}
 		else if(typeof callback != "undefined")
 		{

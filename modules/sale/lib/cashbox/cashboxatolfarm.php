@@ -30,6 +30,10 @@ class CashboxAtolFarm extends Cashbox implements IPrintImmediately, ICheckable
 	const RESPONSE_HTTP_CODE_401 = 401;
 	const RESPONSE_HTTP_CODE_200 = 200;
 
+	const CODE_VAT_0 = 'vat0';
+	const CODE_VAT_10 = 'vat10';
+	const CODE_VAT_20 = 'vat20';
+
 	/**
 	 * @param Check $check
 	 * @return array
@@ -546,16 +550,21 @@ class CashboxAtolFarm extends Cashbox implements IPrintImmediately, ICheckable
 
 		if (Main\Loader::includeModule('catalog'))
 		{
-			$dbRes = Catalog\VatTable::getList(array('filter' => array('ACTIVE' => 'Y')));
+			$dbRes = Catalog\VatTable::getList(['filter' => ['ACTIVE' => 'Y']]);
 			$vatList = $dbRes->fetchAll();
 			if ($vatList)
 			{
-				$defaultVat = array(0 => 'vat0', 10 => 'vat10', 18 => 'vat18', 20 => 'vat20');
+				$defaultVatList = [
+					0 => self::CODE_VAT_0,
+					10 => self::CODE_VAT_10,
+					20 => self::CODE_VAT_20
+				];
+
 				foreach ($vatList as $vat)
 				{
 					$value = '';
-					if (isset($defaultVat[(int)$vat['RATE']]))
-						$value = $defaultVat[(int)$vat['RATE']];
+					if (isset($defaultVatList[(int)$vat['RATE']]))
+						$value = $defaultVatList[(int)$vat['RATE']];
 
 					$settings['VAT']['ITEMS'][(int)$vat['ID']] = array(
 						'TYPE' => 'STRING',

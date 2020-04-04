@@ -18,6 +18,7 @@ class OrderShipment extends Template
 		$result = "";
 		$index = 0;
 		Asset::getInstance()->addJs("/bitrix/js/sale/admin/order_shipment_basket.js");
+		\Bitrix\Main\UI\Extension::load('sale.admin_order');
 		$shipmentCollection = $this->order->getShipmentCollection();
 		foreach ($shipmentCollection as $shipment)
 		{

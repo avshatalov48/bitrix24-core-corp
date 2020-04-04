@@ -33,7 +33,7 @@ return array(
 		'.landing-block-node-carousel-element-img' => array(
 			'name' => Loc::getMessage('LANDING_BLOCK_5_TWO_COLS_FIX_TEXT_AND_IMAGE_SLIDER_NODES_LANDINGBLOCKNODECAROUSELELEMENTIMG'),
 			'type' => 'img',
-			'dimensions' => array('width' => 400, 'height' => 269),
+			'dimensions' => array('width' => 355),
 		),
 		'.landing-block-node-carousel-element-title' => array(
 			'name' => Loc::getMessage('LANDING_BLOCK_5_TWO_COLS_FIX_TEXT_AND_IMAGE_SLIDER_NODES_LANDINGBLOCKNODECAROUSELTITLE'),

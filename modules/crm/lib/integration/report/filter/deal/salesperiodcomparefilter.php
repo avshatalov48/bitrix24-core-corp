@@ -16,7 +16,28 @@ class SalesPeriodCompareFilter extends Report\Filter\Base
 	 */
 	public static function getFieldsList()
 	{
+		\CJSCore::Init(["crm.report.salescompareperiods"]);
+
 		$fieldsList = parent::getFieldsList();
+
+		$fieldsList['PREVIOUS_PERIOD'] = [
+			'id' => 'PREVIOUS_PERIOD',
+			'name' => Loc::getMessage("CRM_REPORT_SALES_PERIOD_COMPARE_PREVIOUS_PERIOD"),
+			'type' => 'date',
+			'default' => true,
+			'required' => true,
+			'valueRequired' => true,
+			'exclude' => [
+				DateType::NONE,
+				DateType::CURRENT_DAY,
+				DateType::YESTERDAY,
+				DateType::TOMORROW,
+				DateType::NEXT_DAYS,
+				DateType::NEXT_WEEK,
+				DateType::NEXT_MONTH,
+				DateType::EXACT,
+			]
+		];
 
 		$userPermissions = \CCrmPerms::getCurrentUserPermissions();
 		$dealFilter = Factory::createEntityFilter(
@@ -88,25 +109,26 @@ class SalesPeriodCompareFilter extends Report\Filter\Base
 	 */
 	public static function getPresetsList()
 	{
-		$presets['filter_current_month'] = [
+		$presets = [];
+
+		$presets['filter_last_month'] = [
 			'name' => Loc::getMessage('REPORT_BOARD_CURRENT_MONTH_PRESET_TITLE'),
 			'fields' => [
 				'TIME_PERIOD_datesel' => DateType::CURRENT_MONTH,
-				'FROM_DEAL_CATEGORY_ID' => "0"
-			]
-		];
-
-		$presets['filter_last_30_day'] = [
-			'name' => Loc::getMessage('CRM_REPORT_SALES_DYNAMIC_LAST_30_DAYS_FILTER_PRESET_TITLE'),
-			'fields' => [
-				'TIME_PERIOD_datesel' => DateType::LAST_30_DAYS,
-				'FROM_DEAL_CATEGORY_ID' => "0"
+				'PREVIOUS_PERIOD_datesel' => DateType::LAST_MONTH,
+				'FROM_DEAL_CATEGORY_ID' => "0",
 			],
-
 			'default' => true,
 		];
 
 		return $presets;
+	}
+
+	public function getStringList()
+	{
+		$result = parent::getStringList();
+		$result[] = "<script>BX.ready(function (){BX.Crm.Report.Dashboard.Content.SalesComparePeriods.init('".\CUtil::JSEscape($this->getFilterId())."')});</script>";
+		return $result;
 	}
 
 }

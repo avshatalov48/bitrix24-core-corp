@@ -43,6 +43,8 @@ BX.UI.ActionPanel = function(options)
 	{
 		this.buildPanelByGroup();
 	}
+
+	BX.onCustomEvent('BX.UI.ActionPanel:created', [this]);
 };
 
 BX.UI.ActionPanel.prototype =
@@ -239,6 +241,7 @@ BX.UI.ActionPanel.prototype =
 		if (this.grid)
 		{
 			this.grid.getRows().unselectAll();
+			this.grid.adjustCheckAllCheckboxes();
 		}
 		else if (this.tileGrid)
 		{
@@ -651,6 +654,8 @@ BX.UI.ActionPanel.prototype =
 
 	showPanel: function()
 	{
+		BX.onCustomEvent(this, 'BX.UI.ActionPanel:showPanel', [this]);
+
 		if (this.pinnedMode)
 		{
 			this.activatePanelItems();
@@ -680,7 +685,7 @@ BX.UI.ActionPanel.prototype =
 
 	hidePanel: function()
 	{
-		BX.onCustomEvent(this, "BX.UI.ActionPanel:hidePanel");
+		BX.onCustomEvent(this, 'BX.UI.ActionPanel:hidePanel', [this]);
 
 		if (this.pinnedMode)
 		{

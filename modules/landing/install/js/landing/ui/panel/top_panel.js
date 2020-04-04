@@ -26,7 +26,7 @@
 	{
 		BX.Landing.UI.Panel.BasePanel.apply(this, arguments);
 
-		this.layout = top.document.querySelector(".landing-ui-panel-top");
+		this.layout = document.querySelector(".landing-ui-panel-top");
 		this.siteButton = this.layout.querySelector(".landing-ui-panel-top-chain-link-site");
 		this.pageButton = this.layout.querySelector(".landing-ui-panel-top-chain-link-page");
 		this.undoButton = this.layout.querySelector(".landing-ui-panel-top-history-undo");
@@ -34,8 +34,8 @@
 		this.desktopButton = this.layout.querySelector(".landing-ui-button-desktop");
 		this.tabletButton = this.layout.querySelector(".landing-ui-button-tablet");
 		this.mobileButton = this.layout.querySelector(".landing-ui-button-mobile");
-		this.iframeWrapper = top.document.querySelector(".landing-ui-view-iframe-wrapper");
-		this.iframe = top.document.querySelector(".landing-ui-view");
+		this.iframeWrapper = document.querySelector(".landing-ui-view-iframe-wrapper");
+		this.iframe = document.querySelector(".landing-ui-view");
 
 		this.lastActive = this.desktopButton;
 		this.loader = null;
@@ -57,11 +57,11 @@
 		bind(this.iframe.contentDocument, "click", this.onIframeClick);
 		bind(this.undoButton, "click", this.onUndo);
 		bind(this.redoButton, "click", this.onRedo);
-		bind(top.document, "keydown", this.onKeyDown);
+		bind(document, "keydown", this.onKeyDown);
 
-		onCustomEvent(top.document, "iframe:keydown", this.onKeyDown);
-		onCustomEvent(top.window, "BX.Landing.History:init", this.adjustHistoryButtonsState);
-		onCustomEvent(top.window, "BX.Landing.History:update", this.adjustHistoryButtonsState);
+		onCustomEvent(document, "iframe:keydown", this.onKeyDown);
+		onCustomEvent(window, "BX.Landing.History:init", this.adjustHistoryButtonsState);
+		onCustomEvent(window, "BX.Landing.History:update", this.adjustHistoryButtonsState);
 
 		var sitesCount = parseInt(BX.Landing.Main.getInstance().options.sites_count);
 		var pagesCount = parseInt(BX.Landing.Main.getInstance().options.pages_count);
@@ -77,6 +77,13 @@
 		}
 
 		// Force history init
+		var rootWindow = BX.Landing.PageObject.getRootWindow();
+		var topHistory = rootWindow.BX.getClass('BX.Landing.History');
+		if (topHistory)
+		{
+			rootWindow.BX.Landing.History.instance = null;
+		}
+
 		BX.Landing.History.getInstance();
 	};
 
@@ -90,12 +97,14 @@
 	 */
 	BX.Landing.UI.Panel.Top.getInstance = function()
 	{
-		if (!top.BX.Landing.UI.Panel.Top.instance)
+		var rootWindow = BX.Landing.PageObject.getRootWindow();
+
+		if (!rootWindow.BX.Landing.UI.Panel.Top.instance)
 		{
-			top.BX.Landing.UI.Panel.Top.instance = new BX.Landing.UI.Panel.Top("top_panel");
+			rootWindow.BX.Landing.UI.Panel.Top.instance = new BX.Landing.UI.Panel.Top("top_panel");
 		}
 
-		return top.BX.Landing.UI.Panel.Top.instance;
+		return rootWindow.BX.Landing.UI.Panel.Top.instance;
 	};
 
 
@@ -113,7 +122,7 @@
 		{
 			var key = event.keyCode || event.which;
 
-			if (key === 90 && (top.window.navigator.userAgent.match(/win/i) ? event.ctrlKey : event.metaKey))
+			if (key === 90 && (window.navigator.userAgent.match(/win/i) ? event.ctrlKey : event.metaKey))
 			{
 				if (event.shiftKey)
 				{

@@ -31,6 +31,8 @@ $arDefaultUrlTemplates404 = array(
 	"user_groups" => "user/#user_id#/groups/",
 	"user_groups_add" => "user/#user_id#/groups/add/",
 	"group_create" => "user/#user_id#/groups/create/",
+	"group_copy" => "user/#user_id#/groups/create/copy/",
+	"group_import" => "user/#user_id#/groups/create/import/",
 	"user_profile_edit" => "user/#user_id#/edit/",
 	"user_settings_edit" => "user/#user_id#/settings/",
 	"user_features" => "user/#user_id#/features/",
@@ -153,6 +155,7 @@ $arDefaultUrlTemplates404 = array(
 	"user_passwords" => "user/#user_id#/passwords/",
 
 	"user_stresslevel" => "user/#user_id#/stresslevel/",
+	"user_social_services" => "user/#user_id#/social_services/",
 );
 
 $taskPageTitles = array(
@@ -230,6 +233,8 @@ $arDefaultUrlTemplatesN404 = array(
 	"user_groups" => "page=user_groups&user_id=#user_id#",
 	"user_groups_add" => "page=user_groups_add&user_id=#user_id#",
 	"group_create" => "page=group_create&user_id=#user_id#",
+	"group_copy" => "page=group_copy&user_id=#user_id#",
+	"group_import" => "page=group_import&user_id=#user_id#",
 	"user_profile_edit" => "page=user_profile_edit&user_id=#user_id#",
 	"user_settings_edit" => "page=user_settings_edit&user_id=#user_id#",
 	"user_features" => "page=user_features&user_id=#user_id#",
@@ -347,6 +352,7 @@ $arDefaultUrlTemplatesN404 = array(
 	"user_passwords" => "page=user_passwords&user_id=#user_id#",
 
 	"user_stresslevel" => "page=user_stresslevel&user_id=#user_id#",
+	"user_social_services" => "page=user_social_services&user_id=#user_id#",
 );
 $arDefaultVariableAliases404 = array();
 $arDefaultVariableAliases = array();

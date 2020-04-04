@@ -189,6 +189,11 @@ class CCloudStorage
 			}
 		}
 
+		if (!$arFile["SRC"])
+		{
+			$arFile["SRC"] = $obSourceBucket->GetFileSRC($arFile);
+		}
+
 		if (defined("BX_MOBILE") && constant("BX_MOBILE") === true)
 			$bImmediate = true;
 		else

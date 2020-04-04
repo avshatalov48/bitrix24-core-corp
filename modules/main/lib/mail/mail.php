@@ -335,7 +335,7 @@ class Mail
 
 		if ($htmlPart)
 		{
-			if ($this->hasImageAttachment())
+			if ($this->hasImageAttachment(true))
 			{
 				$this->multipartRelated = (new Multipart())->setContentType(Multipart::RELATED)->setEol($this->eol);
 				$this->multipartRelated->addPart($htmlPart);
@@ -383,9 +383,10 @@ class Mail
 	/**
 	 * Return true if mail has image attachment.
 	 *
+	 * @param bool $checkRelated Check image as related.
 	 * @return bool
 	 */
-	public function hasImageAttachment()
+	public function hasImageAttachment($checkRelated = false)
 	{
 		if (!$this->hasAttachment())
 		{
@@ -400,7 +401,7 @@ class Mail
 
 		foreach($files as $attachment)
 		{
-			if ($this->isAttachmentImage($attachment))
+			if ($this->isAttachmentImage($attachment, $checkRelated))
 			{
 				return true;
 			}
@@ -462,7 +463,7 @@ class Mail
 							$attachment["NAME"],
 							round($this->settingMaxFileSize / 1024 / 1024, 1),
 						],
-						'This is not the original file. The size of the original file `%name%` exceeded the limit of %limit% Mb.'
+						'This is not the original file. The size of the original file `%name%` exceeded the limit of %limit% MB.'
 					);
 				}
 
@@ -474,7 +475,7 @@ class Mail
 					->addHeader('Content-ID', "<{$attachment['ID']}>")
 					->setBody($fileContent);
 
-				if ($this->multipartRelated && $this->isAttachmentImage($attachment))
+				if ($this->multipartRelated && $this->isAttachmentImage($attachment, true))
 				{
 					$this->multipartRelated->addPart($part);
 				}
@@ -486,9 +487,14 @@ class Mail
 		}
 	}
 
-	private function isAttachmentImage(&$attachment)
+	private function isAttachmentImage(&$attachment, $checkRelated = false)
 	{
 		if (empty($attachment['CONTENT_TYPE']))
+		{
+			return false;
+		}
+
+		if ($checkRelated && empty($attachment['RELATED']))
 		{
 			return false;
 		}
@@ -861,10 +867,11 @@ class Mail
 			return $matches[0];
 		}
 
-		foreach($this->attachment as $attach)
+		foreach($this->attachment as $attachIndex => $attach)
 		{
 			if($filePath == $attach['PATH'])
 			{
+				$this->attachment[$attachIndex]['RELATED'] = true;
 				return $matches[1].$matches[2]."cid:".$attach['ID'].$matches[4].$matches[5];
 			}
 		}
@@ -897,6 +904,7 @@ class Mail
 		$uid = uniqid(md5($src));
 
 		$this->filesReplacedFromBody[$src] = array(
+			"RELATED" => true,
 			"SRC" => $src,
 			"PATH" => $filePath,
 			"CONTENT_TYPE" => $contentType,
@@ -931,10 +939,11 @@ class Mail
 			{
 				$io = \CBXVirtualIo::GetInstance();
 				$filePath = $io->GetPhysicalName(Application::getDocumentRoot().$srcTrimmed);
-				foreach($this->attachment as $attach)
+				foreach($this->attachment as $attachIndex => $attach)
 				{
 					if($filePath == $attach['PATH'])
 					{
+						$this->attachment[$attachIndex]['RELATED'] = true;
 						$src = "cid:".$attach['ID'];
 						$srcModified = true;
 						break;

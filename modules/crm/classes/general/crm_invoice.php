@@ -972,15 +972,21 @@ class CAllCrmInvoice
 		unset($arFields['DATE_BILL']);
 		if(array_key_exists('DATE_PAY_BEFORE', $arFields))
 		{
-			if (is_string($arFields['DATE_PAY_BEFORE']) && $arFields['DATE_PAY_BEFORE'] !== '')
+			$dateValue = $arFields['DATE_PAY_BEFORE'];
+			if ($dateValue instanceof Main\Type\DateTime || $dateValue instanceof Main\Type\Date)
 			{
-				$arFields['~DATE_PAY_BEFORE'] = $DB->CharToDateFunction($arFields['DATE_PAY_BEFORE'], 'SHORT', false);
+				$dateValue = (string)$dateValue;
+			}
+			if (is_string($dateValue) && $dateValue !== '')
+			{
+				$arFields['~DATE_PAY_BEFORE'] = $DB->CharToDateFunction($dateValue, 'SHORT', false);
 				unset($arFields['DATE_PAY_BEFORE']);
 			}
 			else
 			{
 				$arFields['DATE_PAY_BEFORE'] = '';
 			}
+			unset($dateValue);
 		}
 
 		$paidStateCanceled = false;

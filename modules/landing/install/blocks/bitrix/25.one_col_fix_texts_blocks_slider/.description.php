@@ -45,7 +45,7 @@ return array(
 		'nodes' => array(
 			'.landing-block-card-slider-element' => array(
 				'name' => Loc::getMessage('LANDING_BLOCK_9_ONE_COL_FIX_TEXTS_BLOCKS_SLIDER_CARDS_LANDINGBLOCKCARDSLIDERELEMENT'),
-				'type' => array(),
+				'type' => array('align-self'),
 			),
 			'.landing-block-node-element-title' => array(
 				'name' => Loc::getMessage('LANDING_BLOCK_9_ONE_COL_FIX_TEXTS_BLOCKS_SLIDER_STYLE_LANDINGBLOCKNODEELEMENTTITLE'),

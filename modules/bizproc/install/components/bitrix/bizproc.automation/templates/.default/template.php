@@ -2,7 +2,7 @@
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 \Bitrix\Main\Loader::includeModule('socialnetwork');
 CUtil::InitJSCore(
-	['tooltip', 'admin_interface', 'date', 'uploader', 'file_dialog', 'bp_user_selector', 'bp_field_type']
+	['tooltip', 'admin_interface', 'date', 'uploader', 'file_dialog', 'bp_user_selector', 'bp_field_type', 'dnd']
 );
 \Bitrix\Main\UI\Extension::load(['ui.buttons', 'ui.hint']);
 /**
@@ -41,8 +41,15 @@ $getHint = function ($messageCode) use ($messages)
 	$text = isset($messages[$messageCode]) ? $messages[$messageCode] : GetMessage($messageCode);
 	return htmlspecialcharsbx(nl2br($text));
 };
+
+$getMessage = function ($messageCode) use ($messages)
+{
+	return isset($messages[$messageCode]) ? $messages[$messageCode] : GetMessage($messageCode);
+};
+
 ?>
-<div class="automation-base" data-role="automation-base-node">
+<div class="automation-base<?=(count($arResult['TEMPLATES']) <= 1 ?'automation-base-script-mode':'')?>" data-role="automation-base-node">
+		<?php if ($arParams['HIDE_TOOLBAR'] !== 'Y'):?>
 		<div class="automation-base-node-top">
 			<div class="automation-base-node-title"
 				data-role="automation-title"
@@ -51,11 +58,12 @@ $getHint = function ($messageCode) use ($messages)
 			</div>
 			<div class="automation-base-button" data-role="automation-base-toolbar">
 				<button class="ui-btn ui-btn-light-border ui-btn-themes <?if (!$arResult['CAN_EDIT']):?> ui-btn-disabled<?endif?>" data-role="automation-btn-change-view"
-					data-label-view="<?=GetMessage('BIZPROC_AUTOMATION_CMP_VIEW')?>" data-label-edit="<?=GetMessage('BIZPROC_AUTOMATION_CMP_AUTOMATION_EDIT')?>">
-					<?=GetMessage('BIZPROC_AUTOMATION_CMP_AUTOMATION_EDIT')?>
+					data-label-view="<?=$getMessage('BIZPROC_AUTOMATION_CMP_VIEW')?>" data-label-edit="<?=$getMessage('BIZPROC_AUTOMATION_CMP_AUTOMATION_EDIT')?>">
+					<?=$getMessage('BIZPROC_AUTOMATION_CMP_AUTOMATION_EDIT')?>
 				</button>
 			</div>
 		</div>
+		<?endif;?>
 	<div class="automation-base-node">
 		<div class="bizproc-automation-status">
 			<div class="bizproc-automation-status-list">
@@ -128,11 +136,6 @@ $getHint = function ($messageCode) use ($messages)
 			]
 		]);?>
 	</div>
-	<div hidden style="display: none"><?php //init html editor
-		$htmlEditor = new CHTMLEditor;
-		$htmlEditor->show([]);
-	?>
-	</div>
 </div>
 <script>
 	BX.ready(function()
@@ -160,6 +163,8 @@ $getHint = function ($messageCode) use ($messages)
 				.init(<?=\Bitrix\Main\Web\Json::encode(array(
 					'AJAX_URL' => '/bitrix/components/bitrix/bizproc.automation/ajax.php',
 					'WORKFLOW_EDIT_URL' => $arResult['WORKFLOW_EDIT_URL'],
+					'CONSTANTS_EDIT_URL' => $arResult['CONSTANTS_EDIT_URL'],
+					'PARAMETERS_EDIT_URL' => $arResult['PARAMETERS_EDIT_URL'],
 					'CAN_EDIT' => $arResult['CAN_EDIT'],
 
 					'DOCUMENT_TYPE' => $arResult['DOCUMENT_TYPE'],
@@ -176,6 +181,7 @@ $getHint = function ($messageCode) use ($messages)
 					'TEMPLATES' => $arResult['TEMPLATES'],
 					'AVAILABLE_ROBOTS' => $arResult['AVAILABLE_ROBOTS'],
 					'AVAILABLE_TRIGGERS' => $arResult['AVAILABLE_TRIGGERS'],
+					'GLOBAL_CONSTANTS' => $arResult['GLOBAL_CONSTANTS'],
 					'LOG' => $arResult['LOG'],
 
 					'B24_TARIF_ZONE' => $arResult['B24_TARIF_ZONE'],

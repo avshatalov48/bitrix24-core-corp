@@ -1,4 +1,4 @@
-<?
+<?php
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 
 //Check if user have rights to see and login
@@ -55,8 +55,10 @@ if($this->StartResultCache())
 		"=ACTIVE" => "Y",
 		"=DISCONNECTED" => "N",
 	);
-	if(count($arParams["GROUP"]))
+	if(isset($arParams["GROUP"]) && is_array($arParams["GROUP"]) && count($arParams["GROUP"]))
+	{
 		$arFilter["=CONTROLLER_GROUP_ID"] = $arParams["GROUP"];
+	}
 
 	$rsMembers = CControllerMember::GetList(Array("ID" => "ASC"), $arFilter);
 	while($arMember = $rsMembers->GetNext())
@@ -79,5 +81,3 @@ $APPLICATION->AddHeadString('<script type="text/javascript" src="'.$js.'?'.filem
 
 $js = '/bitrix/js/main/popup_menu.js';
 $APPLICATION->AddHeadString('<script type="text/javascript" src="'.$js.'?'.filemtime($_SERVER['DOCUMENT_ROOT'].$js).'"></script>');
-
-?>

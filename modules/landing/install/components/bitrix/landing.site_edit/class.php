@@ -77,7 +77,15 @@ class LandingSiteEditComponent extends LandingBaseFormComponent
 	 */
 	protected function getLangCodes()
 	{
-		$file = \Bitrix\Landing\Manager::getDocRoot();
+		if (
+			!Manager::isB24() ||
+			!defined('SITE_TEMPLATE_PATH')
+		)
+		{
+			return [];
+		}
+
+		$file = Manager::getDocRoot();
 		$file .= SITE_TEMPLATE_PATH;
 		$file .= '/languages.php';
 
@@ -108,6 +116,17 @@ class LandingSiteEditComponent extends LandingBaseFormComponent
 	}
 
 	/**
+	 * Returns true, if this site without external domain.
+	 * @return bool
+	 */
+	protected function isIntranet()
+	{
+		return
+			isset($this->arResult['SITE']['DOMAIN_ID']['CURRENT']) &&
+			$this->arResult['SITE']['DOMAIN_ID']['CURRENT'] == '0';
+	}
+
+	/**
 	 * Base executable method.
 	 * @return void
 	 */
@@ -123,6 +142,10 @@ class LandingSiteEditComponent extends LandingBaseFormComponent
 			$this->checkParam('PAGE_URL_LANDING_VIEW', '');
 			$this->checkParam('TEMPLATE', '');
 
+			\Bitrix\Landing\Site\Type::setScope(
+				$this->arParams['TYPE']
+			);
+
 			$this->id = $this->arParams['SITE_ID'];
 			$this->successSavePage = $this->arParams['PAGE_URL_SITES'];
 			$this->template = $this->arParams['TEMPLATE'];
@@ -130,6 +153,7 @@ class LandingSiteEditComponent extends LandingBaseFormComponent
 			$this->arResult['SITE'] = $this->getRow();
 			$this->arResult['LANG_CODES'] = $this->getLangCodes();
 			$this->arResult['TEMPLATES'] = $this->getTemplates();
+			$this->arResult['IS_INTRANET'] = $this->isIntranet();
 			$this->arResult['SHOW_RIGHTS'] = Rights::isExtendedMode() && Rights::isAdmin();
 			$this->arResult['SETTINGS'] = [];
 
@@ -219,6 +243,7 @@ class LandingSiteEditComponent extends LandingBaseFormComponent
 
 			if ($this->id)
 			{
+				\Bitrix\Landing\Hook::setEditMode();
 				$this->arResult['HOOKS'] = $this->getHooks();
 				$this->arResult['TEMPLATES_REF'] = TemplateRef::getForSite($this->id);
 			}

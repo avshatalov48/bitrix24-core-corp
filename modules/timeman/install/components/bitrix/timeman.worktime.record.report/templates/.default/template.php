@@ -6,15 +6,12 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Main\Localization\Loc;
 
-\Bitrix\Main\UI\Extension::load(["ui.buttons", "ui.alerts"]);
+\Bitrix\Main\UI\Extension::load(['ui.buttons', 'ui.alerts', 'ui.hint']);
 \Bitrix\Main\Page\Asset::getInstance()->addJS('/bitrix/js/timeman/component/basecomponent.js');
+\Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/components/bitrix/timeman.worktime.grid/templates/.default/violation-style.css');
 \CJSCore::init("sidepanel");
 /** @var \Bitrix\Timeman\Form\Worktime\WorktimeRecordForm $recordForm */
 $recordForm = $arResult['recordForm'];
-/** @var \Bitrix\Timeman\Helper\DateTimeHelper $dateTimeHelper */
-$dateTimeHelper = $arResult['dateTimeHelper'];
-\Bitrix\Main\UI\Extension::load("ui.hint");
-
 /** @var \Bitrix\Timeman\Helper\UserHelper $userHelper */
 $userHelper = $arResult['userHelper'];
 
@@ -52,7 +49,9 @@ $userHelper = $arResult['userHelper'];
 
 				<div class="timeman-report-title">
 					<div class="timeman-report-title-text"><?= htmlspecialcharsbx(Loc::getMessage('JS_CORE_TMR_WORKTIME')) ?></div>
-					<span class="timeman-report-title-info-icon" data-hint="<?php echo htmlspecialcharsbx($arResult['worktimeInfoHint']); ?>"></span>
+					<? if ($arResult['worktimeInfoHint']): ?>
+						<span class="timeman-report-title-info-icon" data-hint="<?php echo htmlspecialcharsbx($arResult['worktimeInfoHint']); ?>"></span>
+					<? endif; ?>
 					<? if ($arResult['canUpdateWorktime']): ?>
 						<div class="timeman-report-title-change" data-role="edit-worktime-btn"><?= htmlspecialcharsbx(Loc::getMessage('JS_CORE_TMR_EDIT')) ?></div>
 					<? endif; ?>
@@ -94,9 +93,10 @@ $userHelper = $arResult['userHelper'];
 									<a href="<?php echo $task['URL']; ?>" class="timeman-report-activity-item"><?php
 										echo htmlspecialcharsbx($task['TITLE']);
 										?>
-									<span><?php
-										echo htmlspecialcharsbx($task['TIME_FORMATTED']);
-										?></span></a>
+										<span><?php
+											echo htmlspecialcharsbx($task['TIME_FORMATTED']);
+											?></span>
+									</a>
 								</li>
 							<? endforeach; ?>
 						</ol>
@@ -233,7 +233,9 @@ $userHelper = $arResult['userHelper'];
 				startTimeFormHiddenInputName: "<?= CUtil::JSEscape($startTimeInputName)?>",
 				endTimeFormHiddenInputName: "<?= CUtil::JSEscape($endTimeInputName)?>",
 				breakLengthTimeFormHiddenInputName: "<?= CUtil::JSEscape($breakLengthInputName)?>",
-				isSlider: <?= CUtil::PhpToJSObject($arResult['isSlider'])?>
+				isSlider: <?= CUtil::PhpToJSObject($arResult['isSlider'])?>,
+				useEmployeesTimezone: <?= CUtil::PhpToJSObject($arResult['useEmployeesTimezone'])?>,
+				isShiftplan: <?= CUtil::PhpToJSObject($arResult['isShiftplan'])?>
 			});
 		});
 

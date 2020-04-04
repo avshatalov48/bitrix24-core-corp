@@ -201,7 +201,7 @@ else
 		$arFilter = Array();
 		$nTopCount = false;
 
-		if(CModule::IncludeModule('CRM'))
+		if(\Bitrix\Sale\Exchange\ManagerExport::isCRMCompatibility())
 		{
 			$export = new ExportOneCCRM();
 		}
@@ -222,7 +222,7 @@ else
 			{
 				$bNextExport = false;
 				$arStatusToExport = [];
-				if (IsModuleInstalled('crm'))
+				if (\Bitrix\Sale\Exchange\ManagerExport::isCRMCompatibility())
 				{
 					$statusList = CCrmStatus::GetStatus('INVOICE_STATUS');
 					foreach ($statusList as $statusId => $status)
@@ -589,7 +589,7 @@ else
 			{
 				$o->registerNodeHandler("/".GetMessage("CC_BSC1_COM_INFO")."/".GetMessage("CC_BSC1_DOCUMENT"), function (CDataXML $xmlObject) use ($o, $loader)
 				{
-					if(CModule::IncludeModule('CRM'))
+					if(\Bitrix\Sale\Exchange\ManagerExport::isCRMCompatibility())
 					{
 						$loader->nodeHandlerDefaultModuleOneCCRM($xmlObject);
 					}
@@ -601,8 +601,7 @@ else
 			}
 			//endregion
 			//region schema Contragents
-			if(\Bitrix\Main\Config\Option::get("sale", "~IS_SALE_CRM_SITE_MASTER_FINISH", "N") == "Y" ||
-				\Bitrix\Main\Config\Option::get("sale", "~IS_SALE_BSM_SITE_MASTER_FINISH", "N")=="Y")
+			if(\Bitrix\Sale\Exchange\ManagerExport::isSaleB24Mode() || \Bitrix\Sale\Exchange\ManagerExport::isB24SaleMode())
             {
 				CModule::IncludeModule('CRM');
 				$o->registerNodeHandler("/".GetMessage("CC_BSC1_COM_INFO")."/".GetMessage("CC_BSC1_AGENTS")."/".GetMessage("CC_BSC1_AGENT"), function (CDataXML $xmlObject) use ($o, $loader)
@@ -633,7 +632,7 @@ else
              *     а для импорта заказов используем отдельный модуль на rest
              * */
 			//B24 -> +BUS.wizard
-            if( \Bitrix\Main\Config\Option::get("sale", "~IS_SALE_BSM_SITE_MASTER_FINISH", "N")=="Y")
+            if(\Bitrix\Sale\Exchange\ManagerExport::isB24SaleMode())
             {
 				CModule::IncludeModule('CRM');
 				$o->registerNodeHandler("/".GetMessage("CC_BSC1_COM_INFO")."/".GetMessage("CC_BSC1_CONTAINER"), function (CDataXML $xmlObject) use ($o, $loader)
@@ -644,7 +643,7 @@ else
 				});
             }
 			//BUS -> +B24.wizard
-            elseif(\Bitrix\Main\Config\Option::get("sale", "~IS_SALE_CRM_SITE_MASTER_FINISH", "N") == "Y")
+            elseif(\Bitrix\Sale\Exchange\ManagerExport::isSaleB24Mode())
 			{
 				$o->registerNodeHandler("/".GetMessage("CC_BSC1_COM_INFO")."/".GetMessage("CC_BSC1_CONTAINER"), function (CDataXML $xmlObject) use ($o, $loader)
 				{
@@ -653,7 +652,7 @@ else
 					$loader->nodeHandler($xmlObject, $o);
 				});
 			}
-			elseif(CModule::IncludeModule('CRM'))
+			elseif(\Bitrix\Sale\Exchange\ManagerExport::isB24Mode())
 			{
 				$o->registerNodeHandler("/".GetMessage("CC_BSC1_COM_INFO")."/".GetMessage("CC_BSC1_CONTAINER"), function (CDataXML $xmlObject) use ($o, $loader)
 				{
@@ -711,7 +710,7 @@ else
 		<<?=GetMessage("CC_BSC1_DI_GENERAL")?>>
 			<<?=GetMessage("CC_BSC1_DI_STATUSES")?>>
 			<?
-			if(CModule::IncludeModule('CRM'))
+			if(\Bitrix\Sale\Exchange\ManagerExport::isCRMCompatibility())
 			{
 				$dbStatus = \Bitrix\Crm\Invoice\InvoiceStatus::getList(array('order'=>array("SORT" => "ASC")));
                 while ($arStatus = $dbStatus->Fetch())
@@ -744,7 +743,7 @@ else
 			$dbPS = CSalePaySystem::GetList(array("SORT" => "ASC"), array("ACTIVE" => "Y"), false, false, array('ID', 'NAME', 'ACTIVE', 'SORT', 'DESCRIPTION', 'IS_CASH'));
 			while ($arPS = $dbPS->Fetch())
 			{
-				if(CModule::IncludeModule('CRM'))
+				if(\Bitrix\Sale\Exchange\ManagerExport::isCRMCompatibility())
 				    $typeId = \Bitrix\Sale\Exchange\Entity\PaymentInvoiceBase::resolveEntityTypeIdByCodeType($arPS["IS_CASH"]);
 				else
 			        $typeId = \Bitrix\Sale\Exchange\Entity\PaymentImport::resolveEntityTypeIdByCodeType($arPS["IS_CASH"]);

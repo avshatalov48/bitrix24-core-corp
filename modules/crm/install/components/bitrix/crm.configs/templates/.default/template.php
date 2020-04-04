@@ -56,6 +56,15 @@ if($arResult['PERM_CONFIG'])
 	$items['tab_content_where_to_begin']['MYCOMPANY']['ICON_CLASS'] = 'img-mycompany';
 	$items['tab_content_where_to_begin']['MYCOMPANY']['NAME'] = GetMessage("CRM_CONFIGS_MYCOMPANY1");
 
+	if($arResult['IS_APP_CONFIGURATION_ENABLED'])
+	{
+		$items['tab_content_where_to_begin']['APP_CONFIGURATION'] = array(
+			'URL' => \Bitrix\Rest\Marketplace\Url::getConfigurationPlacementUrl('crm_settings'),
+			'NAME' => GetMessage("CRM_CONFIGS_CONFIGURATION_APP"),
+			'ICON_CLASS' => 'img-app'
+		);
+	}
+
 	$items['tab_content_settings_forms_and_reports']['FIELDS']['URL'] = $siteDir.'/crm/configs/fields/';
 	$items['tab_content_settings_forms_and_reports']['FIELDS']['ICON_CLASS'] = 'img-fields';
 	$items['tab_content_settings_forms_and_reports']['FIELDS']['NAME'] = GetMessage("CRM_CONFIGS_FIELDS");

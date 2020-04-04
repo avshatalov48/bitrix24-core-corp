@@ -6,6 +6,7 @@
 //define("US_KERNEL_PATH", "/bitrix/clients");
 define("US_CALL_TYPE", "KERNEL");
 //define("US_SAVE_UPDATERS_DIR", "/bitrix/clients/updaters");
+//define("US_SAVE_DESCRIPTIONS_DIR", "/bitrix/clients/updaters_descr");
 define("US_BASE_MODULE", "controller");
 
 $US_LICENSE_KEY = "";
@@ -22,12 +23,14 @@ if (!defined("UPD_INTERNAL_CALL") || UPD_INTERNAL_CALL != "Y")
 	require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_before.php");
 	define("US_SHARED_KERNEL_PATH", COption::GetOptionString("controller", "shared_kernel_path", "/bitrix/clients"));
 	define("US_SAVE_UPDATERS_DIR", US_SHARED_KERNEL_PATH."/updaters");
+	define("US_SAVE_DESCRIPTIONS_DIR", US_SHARED_KERNEL_PATH."/updaters_descr");
 	require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/classes/general/update_client.php");
 }
 else
 {
 	define("US_SHARED_KERNEL_PATH", COption::GetOptionString("controller", "shared_kernel_path", "/bitrix/clients"));
 	define("US_SAVE_UPDATERS_DIR", US_SHARED_KERNEL_PATH."/updaters");
+	define("US_SAVE_DESCRIPTIONS_DIR", US_SHARED_KERNEL_PATH."/updaters_descr");
 }
 CModule::IncludeModule("controller");
 

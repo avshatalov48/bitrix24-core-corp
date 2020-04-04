@@ -261,11 +261,12 @@ class CrmLeads extends \Bitrix\Main\UI\Selector\EntityBase
 			$filter = [
 				'LOGIC' => 'OR',
 				'%FULL_NAME' => $search,
-				'%TITLE' => $search,
+				'%TITLE' => $search
 			];
 
 			$filter = array(
 				'SEARCH_CONTENT' => $search,
+				'__ENABLE_SEARCH_CONTENT_PHONE_DETECTION' => false,
 				'__INNER_FILTER_1' => $filter
 			);
 

@@ -12,14 +12,15 @@
 
 namespace Bitrix\Tasks;
 
+use Bitrix\Main\IO\Directory;
+use Bitrix\Rest\RestException;
 use Bitrix\Tasks\Dispatcher\ExecutionResult;
 use Bitrix\Tasks\Dispatcher\Operation;
 use Bitrix\Tasks\Dispatcher\PublicAction;
 use Bitrix\Tasks\Dispatcher\ToDo;
 use Bitrix\Tasks\Util\Error;
-use \Bitrix\Tasks\Util\Error\Collection;
-use \Bitrix\Tasks\Util\Error\Filter;
-use \Bitrix\Main\IO\Directory;
+use Bitrix\Tasks\Util\Error\Collection;
+use Bitrix\Tasks\Util\Error\Filter;
 use Bitrix\Tasks\Util\Result;
 
 final class Dispatcher
@@ -121,69 +122,54 @@ final class Dispatcher
 
 	/**
 	 * Gateway between REST and Dispatcher.
+	 *
+	 * @param $queryArguments
 	 * @return mixed
+	 * @throws RestException
+	 * @throws \TasksException
 	 */
-	public static function restGateway()
+	public static function restGateway($queryArguments)
 	{
 		if (static::$currentRestMehtod === null)
 		{
-			throw new \Bitrix\Rest\RestException(
-				'Method not found!',
-				'ERROR_METHOD_NOT_FOUND'
-			);
+			throw new RestException('Method not found!', 'ERROR_METHOD_NOT_FOUND');
 		}
 
 		// run Dispatcher
 		$dispatcher = new self();
 		$plan = new Dispatcher\ToDo\Plan();
-		$plan->import(array(
-			array(
+		$plan->import([
+			[
 				'OPERATION' => static::$currentRestMehtod,
-				'ARGUMENTS' => static::tryParseBatchArguments(\CRestUtil::getRequestData())
-			)
-		));
+				'ARGUMENTS' => $queryArguments,
+			],
+		]);
 		$result = $dispatcher->run($plan);
 
 		// work with result
 		if ($result->isSuccess())
 		{
-			$return = $plan->exportResult();
-			$return = array_values($return);
+			$return = array_values($plan->exportResult());
 			$errors = $result->getErrors();
 
-			if ($errors->checkHasErrors())
+			if ($errors && !$errors->isEmpty())
 			{
-				foreach ($errors as $error)
-				{
-					throw new \Bitrix\Rest\RestException(
-						$error->getMessage(),
-						$error->getCode()
-					);
-				}
+				$error = $errors->first();
+				throw new RestException($error->getMessage(), $error->getCode());
 			}
-			elseif (isset($return[0]['RESULT']))
+
+			if (isset($return[0]['RESULT']))
 			{
 				return $return[0]['RESULT'];
 			}
-			else
-			{
-				throw new \Bitrix\Rest\RestException(
-					'Unknown error',
-					'UNKNOWN_ERROR'
-				);
-			}
+
+			throw new RestException('Unknown error', 'UNKNOWN_ERROR');
 		}
-		else
-		{
-			$errors = $result->getErrors();
-			foreach ($errors as $error)
-			{
-				throw new \Bitrix\Rest\RestException(
-					$error->getMessage(),
-					'DISPATCHER_ERROR'
-				);
-			}
-		}
+
+		$errors = $result->getErrors();
+		$error = $errors->first();
+
+		throw new RestException($error->getMessage(), 'DISPATCHER_ERROR');
 	}
 
 	/**

@@ -22,13 +22,9 @@ return array(
 	),
 	'style' => array(
 		'block' => array(
-			'type' => array('display', 'bg'),
+			'type' => array('display', 'bg', 'animation'),
 		),
 		'nodes' => array(
-			'.landing-block-node-img' => array(
-				'name' => Loc::getMessage('LANDING_BLOCK_32.2.2.IMG_ONE_BIG_FULL__NODES_LANDINGBLOCKNODEIMG'),
-				'type' => 'background-attachment',
-			),
 		),
 	),
 );

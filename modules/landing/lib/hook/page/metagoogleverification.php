@@ -68,7 +68,7 @@ class MetaGoogleVerification extends \Bitrix\Landing\Hook\Page
 
 		$meta = trim($this->fields['META']);
 
-		if (preg_match('#<meta\s+name="[^"]+"\s+content="[^"]+"\s+/*>#', $meta))
+		if (preg_match('#^<meta\s+name="google-site-verification"\s+content="[a-z0-9_\-]+"\s+/*>$#i', $meta))
 		{
 			Manager::setPageView('BeforeHeadClose', $meta);
 		}

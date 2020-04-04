@@ -2588,7 +2588,13 @@ class CAllSaleOrder
 						}
 
 						$publicLink = '';
-						$order = Sale\Order::load($arOrder['ID']);
+
+						$registry = Sale\Registry::getInstance(Sale\Registry::REGISTRY_TYPE_ORDER);
+
+						/** @var Sale\Order $orderClass */
+						$orderClass = $registry->getOrderClassName();
+
+						$order = $orderClass::load($arOrder['ID']);
 						if (Sale\Helpers\Order::isAllowGuestView($order))
 						{
 							$publicLink = Sale\Helpers\Order::getPublicLink($order);
@@ -3075,8 +3081,12 @@ class CAllSaleOrder
 
 			return $result;
 		}
+		$registry = Sale\Registry::getInstance(Sale\Registry::REGISTRY_TYPE_ORDER);
 
-		$order = Sale\Order::load($id);
+		/** @var Sale\Order $orderClass */
+		$orderClass = $registry->getOrderClassName();
+
+		$order = $orderClass::load($id);
 		if (!$order)
 		{
 			$result->addError(
@@ -3224,12 +3234,17 @@ class CAllSaleOrder
 			$selectOrder[] = 'USER_ID';
 		}
 
-		$res = Sale\Order::getList(array(
-									   'filter' => array(
-										   '=ID' => $list
-									   ),
-									   'select' => $selectOrder
-								   ));
+		$registry = Sale\Registry::getInstance(Sale\Registry::REGISTRY_TYPE_ORDER);
+
+		/** @var Sale\Order $orderClass */
+		$orderClass = $registry->getOrderClassName();
+
+		$res = $orderClass::getList(array(
+		   'filter' => array(
+			   '=ID' => $list
+		   ),
+		   'select' => $selectOrder
+	   ));
 		while($orderData = $res->fetch())
 		{
 			if (!in_array($orderData['LID'], array_keys($siteList)))

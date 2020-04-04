@@ -44,7 +44,7 @@ $externalImport = !empty($arResult['EXTERNAL_IMPORT']);
 $createStore = !$externalImport &&
 			   !$arResult['DISABLE_IMPORT'] &&
 			   ($arParams['SITE_ID'] <= 0) &&
-			   ($template['TYPE'] == 'STORE');
+			   (in_array('STORE', (array) $template['TYPE']));
 
 if ($createStore)
 {

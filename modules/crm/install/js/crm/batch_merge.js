@@ -10,18 +10,14 @@ if(typeof(BX.Crm.BatchMergeManager) === "undefined")
 		this._gridId = "";
 		this._entityTypeId = BX.CrmEntityType.enumeration.undefined;
 		this._entityIds = null;
-		this._operationHash = "";
 
 		this._wrapper = null;
 		this._errors = null;
-
-		this._progress = null;
-		this._hasLayout = false;
-
 		this._isRunning = false;
 
-		this._progressChangeHandler = BX.delegate(this.onProgress, this);
 		this._documentUnloadHandler = BX.delegate(this.onDocumentUnload, this);
+		this._requestCompleteHandler = BX.delegate(this.onRequestComplete, this);
+		this._externalEventHandler = null;
 	};
 	BX.Crm.BatchMergeManager.prototype =
 	{
@@ -46,20 +42,6 @@ if(typeof(BX.Crm.BatchMergeManager) === "undefined")
 			this._wrapper = BX.create("div", {});
 			container.appendChild(this._wrapper);
 
-			//region progress
-			this._progress = BX.AutorunProcessManager.create(
-				this._id,
-				{
-					controllerActionName: "crm.api.entity.processMerge",
-					container: this._wrapper,
-					enableCancellation: true,
-					title: this.getMessage("title"),
-					timeout: 1000,
-					stateTemplate: BX.prop.getString(this._settings, "stateTemplate", "#processed# / #total#"),
-					enableLayout: false
-				}
-			);
-			//region
 			this._errors = [];
 		},
 		getId: function()
@@ -86,84 +68,9 @@ if(typeof(BX.Crm.BatchMergeManager) === "undefined")
 		{
 			this._entityIds = [];
 		},
-		enableGridFilter: function(enable)
-		{
-			var container = this._gridId !== "" ? BX(this._gridId + "_search_container") : null;
-			if(!container)
-			{
-				return;
-			}
-
-			if(enable)
-			{
-				BX.removeClass(container, "main-ui-disable");
-			}
-			else
-			{
-				BX.addClass(container, "main-ui-disable");
-			}
-		},
-		getErrorCount: function()
-		{
-			return this._errors ? this._errors.length : 0;
-		},
 		getErrors: function()
 		{
 			return this._errors ? this._errors : [];
-		},
-		scrollInToView: function()
-		{
-			if(this._progress)
-			{
-				this._progress.scrollInToView();
-				this.refreshGridHeader();
-			}
-		},
-		refreshGridHeader: function()
-		{
-			window.requestAnimationFrame(
-				function()
-				{
-					var grid = BX.Main.gridManager.getById(this._gridId);
-					if(grid && grid.instance && grid.instance.pinHeader)
-					{
-						grid.instance.pinHeader.refreshRect();
-						grid.instance.pinHeader._onScroll();
-					}
-				}.bind(this)
-			);
-		},
-		layout: function()
-		{
-			if(this._hasLayout)
-			{
-				return;
-			}
-
-			this._progress.layout();
-			this._hasLayout = true;
-		},
-		clearLayout: function()
-		{
-			if(!this._hasLayout)
-			{
-				return;
-			}
-
-			this._progress.clearLayout();
-			this._hasLayout = false;
-		},
-		getState: function()
-		{
-			return this._progress.getState();
-		},
-		getProcessedItemCount: function()
-		{
-			return this._progress.getProcessedItemCount();
-		},
-		getTotalItemCount: function()
-		{
-			return this._progress.getTotalItemCount();
 		},
 		execute: function()
 		{
@@ -187,10 +94,7 @@ if(typeof(BX.Crm.BatchMergeManager) === "undefined")
 					{
 						if(!BX.prop.getBoolean(result, "cancel", true))
 						{
-							this.layout();
-							this.run();
-
-							window.setTimeout(this.scrollInToView.bind(this), 100);
+							this.startRequest();
 						}
 					}.bind(this)
 				);
@@ -200,7 +104,7 @@ if(typeof(BX.Crm.BatchMergeManager) === "undefined")
 		{
 			return this._isRunning;
 		},
-		run: function()
+		startRequest: function()
 		{
 			if(this._isRunning)
 			{
@@ -208,12 +112,11 @@ if(typeof(BX.Crm.BatchMergeManager) === "undefined")
 			}
 			this._isRunning = true;
 
+			BX.Main.gridManager.getInstanceById(this._gridId).tableFade();
 			BX.bind(window, "beforeunload", this._documentUnloadHandler);
-			this.enableGridFilter(false);
 
 			var params =
 				{
-					gridId: this._gridId,
 					entityTypeId: this._entityTypeId,
 					extras: BX.prop.getObject(this._settings, "extras", {})
 				};
@@ -224,127 +127,131 @@ if(typeof(BX.Crm.BatchMergeManager) === "undefined")
 			}
 
 			BX.ajax.runAction(
-				"crm.api.entity.prepareMerge",
+				"crm.api.entity.mergeBatch",
 				{ data: { params:  params } }
 			).then(
-				function(response)
-				{
-					var hash = BX.prop.getString(
-						BX.prop.getObject(response, "data", {}),
-						"hash",
-						""
-					);
-
-					if(hash === "")
-					{
-						this.reset();
-						return;
-					}
-
-					this._operationHash = hash;
-					this._progress.setParams({ hash: this._operationHash });
-					this._progress.run();
-
-					BX.addCustomEvent(this._progress, "ON_AUTORUN_PROCESS_STATE_CHANGE", this._progressChangeHandler);
-
-				}.bind(this)
+				this._requestCompleteHandler
+			).catch(
+				this._requestCompleteHandler
 			);
 		},
-		stop: function()
+		onRequestComplete: function(response)
 		{
-			if(!this._isRunning)
-			{
-				return;
-			}
-			this._isRunning = false;
-
-			BX.ajax.runAction(
-				"crm.api.entity.cancelMerge",
-				{ data: { params: { hash: this._operationHash } } }
-			);
-
-			this.reset();
-		},
-		reset: function()
-		{
+			BX.Main.gridManager.getInstanceById(this._gridId).tableUnfade();
 			BX.unbind(window, "beforeunload", this._documentUnloadHandler);
-			BX.removeCustomEvent(this._progress, "ON_AUTORUN_PROCESS_STATE_CHANGE", this._progressChangeHandler);
-
 			this._isRunning = false;
-			this._operationHash = "";
 			this._errors = [];
 
-			var enableGridReload = this._progress.getProcessedItemCount() > 0;
-			this._progress.reset();
+			var status = BX.prop.getString(response, "status", "");
+			var data = BX.prop.getObject(response, "data", {});
 
-			if(this._hasLayout)
+			if(status === "error")
 			{
-				window.setTimeout(BX.delegate(this.clearLayout, this), 100);
+				if(BX.prop.getString(data, "STATUS", "") === "CONFLICT")
+				{
+					this.openMerger();
+					return;
+				}
+
+				var errorInfos = BX.prop.getArray(response, "errors", []);
+				for(var i = 0, length = errorInfos.length; i < length; i++)
+				{
+					this._errors.push(BX.prop.getString(errorInfos[i], "message"));
+				}
 			}
 
-			this.enableGridFilter(true);
-			if(enableGridReload)
+			this.displaySummary();
+			if(this._errors.length === 0)
 			{
-				BX.Main.gridManager.reload(this._gridId);
+				window.setTimeout(
+					this.complete.bind(this),
+					0
+				);
 			}
+		},
+		displaySummary: function()
+		{
+			var messages = [this.getMessage("summaryCaption")];
+			if(this._errors.length > 0)
+			{
+				messages.push(
+					this.getMessage("summaryFailed").replace(/#number#/gi, this._entityIds.length)
+				);
+				messages = messages.concat(this._errors);
+			}
+			else
+			{
+				messages.push(
+					this.getMessage("summarySucceeded").replace(/#number#/gi, this._entityIds.length)
+				);
+			}
+
+			BX.UI.Notification.Center.notify(
+				{
+					content: messages.join("<br/>"),
+					position: "top-center",
+					autoHideDelay: 5000
+				}
+			);
+		},
+		openMerger: function()
+		{
+			this._contextId = this._id + "_" + BX.util.getRandomString(6).toUpperCase();
+
+			BX.Crm.Page.open(
+				BX.util.add_url_param(
+					BX.prop.getString(this._settings, "mergerUrl", ""),
+					{
+						externalContextId: this._contextId,
+						id: this._entityIds
+					}
+				)
+			);
+
+			if(!this._externalEventHandler)
+			{
+				this._externalEventHandler = BX.delegate(this.onExternalEvent, this);
+				BX.addCustomEvent(window, "onLocalStorageSet", this._externalEventHandler);
+			}
+		},
+		complete: function ()
+		{
+			BX.onCustomEvent(
+				window,
+				"BX.Crm.BatchMergeManager:onComplete",
+				[ this ]
+			);
+
+			BX.Main.gridManager.reload(this._gridId);
 		},
 		onDocumentUnload: function(e)
 		{
 			return(e.returnValue = this.getMessage("windowCloseConfirm"));
 		},
-		onProgress: function(sender)
+		onExternalEvent: function(params)
 		{
-			var state = this._progress.getState();
-			if(state === BX.AutoRunProcessState.stopped)
+			var eventName = BX.prop.getString(params, "key", "");
+
+			if(eventName !== "onCrmEntityMergeComplete")
 			{
-				this.stop();
 				return;
 			}
 
-			var errors = this._progress.getErrors();
-			if(errors.length > 0)
+			var value = BX.prop.getObject(params, "value", {});
+
+			if(this._contextId !== BX.prop.getString(value, "context", ""))
 			{
-				if(!this._errors)
-				{
-					this._errors = errors;
-				}
-				else
-				{
-					this._errors = this._errors.concat(errors);
-				}
+				return;
 			}
 
-			if(state === BX.AutoRunProcessState.completed)
-			{
-				var failed = this.getErrorCount();
-				//One item is root item and must be ignored
-				var succeeded = this.getProcessedItemCount() - failed - 1;
+			BX.removeCustomEvent(window, "onLocalStorageSet", this._externalEventHandler);
+			this._externalEventHandler = null;
 
-				BX.addCustomEvent(window, "BX.Crm.ProcessSummaryPanel:onLayout", this._summaryLayoutHandler);
-				BX.Crm.ProcessSummaryPanel.create(
-					this._id,
-					{
-						container: this._wrapper,
-						data: { succeededCount: succeeded, failedCount: failed, errors: this.getErrors() },
-						messages: BX.prop.getObject(this._settings, "messages", null),
-						numberSubstitution: "#number#",
-						displayTimeout: 1500
-					}
-				).layout();
-				this.reset();
-
-				window.setTimeout(
-					function ()
-					{
-						BX.onCustomEvent(
-							window,
-							"BX.Crm.BatchMergeManager:onProcessComplete",
-							[ this ]
-						);
-					}.bind(this),
-					300
-				);
-			}
+			this.displaySummary();
+			window.setTimeout(
+				this.complete.bind(this),
+				0
+			);
 		}
 	};
 	if(typeof(BX.Crm.BatchMergeManager.messages) === "undefined")

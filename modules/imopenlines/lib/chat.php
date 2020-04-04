@@ -702,12 +702,13 @@ class Chat
 					'TRANSFER_LINE_ID' => $queueId
 				]);
 
-				$updateData = array(
+				$updateData = [
 					'CONFIG_ID' => $queueId,
 					'QUEUE_HISTORY' => [],
 					'SKIP_DATE_CLOSE' => true,
-					'DATE_MODIFY' => new DateTime()
-				);
+					'DATE_MODIFY' => new DateTime(),
+					'OPERATOR_FROM_CRM' => 'N'
+				];
 
 				if ($userFrom->isBot() && !$session->getData('DATE_OPERATOR'))
 				{
@@ -855,27 +856,29 @@ class Chat
 					"SYSTEM" => 'Y',
 				]);
 
+				$updateDataSession = [
+					'OPERATOR_FROM_CRM' => 'N'
+				];
+
 				if ($userFrom->isBot() && !$session->getData('DATE_OPERATOR'))
 				{
 					$currentDate = new DateTime();
-					$session->update([
-						'DATE_OPERATOR' => $currentDate,
-						'TIME_BOT' => $currentDate->getTimestamp()-$session->getData('DATE_CREATE')->getTimestamp(),
-					]);
+					$updateDataSession['DATE_OPERATOR'] = $currentDate;
+					$updateDataSession['TIME_BOT'] = $currentDate->getTimestamp()-$session->getData('DATE_CREATE')->getTimestamp();
 				}
 
 				if ($mode == self::TRANSFER_MODE_MANUAL)
 				{
 					$this->answer($transferUserId, false, true);
-					$session->update([
-						'DATE_MODIFY' => new DateTime(),
-						'SKIP_DATE_CLOSE' => true
-					]);
+					$updateDataSession['DATE_MODIFY'] = new DateTime();
+					$updateDataSession['SKIP_DATE_CLOSE'] = true;
 				}
 				else
 				{
 					$session->setOperatorId($transferUserId, true, true);
 				}
+
+				$session->update($updateDataSession);
 
 				$result = true;
 			}
@@ -896,21 +899,21 @@ class Chat
 	 * @throws Main\ObjectPropertyException
 	 * @throws Main\SystemException
 	 */
-	public function setOperators($users = array(), $skipMessage = true, $skipRecent = false)
+	public function setOperators($users = [], $skipMessage = true, $skipRecent = false): bool
 	{
 		$result = false;
 
-		if($this->isDataLoaded() /*&& !empty($users)*/ && is_array($users))
+		if($this->isDataLoaded() && is_array($users))
 		{
 			$users = array_unique($users);
 
 			$delete = [];
-			$relationList = RelationTable::getList(array(
-				"select" => array("ID", "USER_ID"),
-				"filter" => array(
+			$relationList = RelationTable::getList([
+				"select" => ["ID", "USER_ID"],
+				"filter" => [
 					"=CHAT_ID" => $this->chat['ID']
-				),
-			));
+				],
+			]);
 
 			while ($relation = $relationList->fetch())
 			{
@@ -1553,43 +1556,52 @@ class Chat
 		elseif($this->isDataLoaded())
 		{
 			$session = new Session();
-			$resultLoad = $session->load(Array(
+			$resultLoad = $session->load([
 				'USER_CODE' => $this->chat['ENTITY_ID']
-			));
+			]);
 			if ($resultLoad)
 			{
 				if($this->validationAction($session->getData('CHAT_ID')))
 				{
-					$session->pause($pause == 'Y');
-
-					$this->updateFieldData([self::FIELD_SESSION => [
-						'PAUSE' => $pause
-					]]);
-
-					if ($pause == 'Y')
+					if(empty($params['USER_ID']) || $params['USER_ID'] == $session->getData('OPERATOR_ID'))
 					{
-						$datePause = new DateTime();
-						$datePause->add('1 WEEK');
+						$queueManager = Queue::initialization($session);
 
-						$formattedDate = \FormatDate('d F', $datePause->getTimestamp());
-						Im::addMessage([
-							"TO_CHAT_ID" => $this->chat['ID'],
-							"MESSAGE" => Loc::getMessage('IMOL_CHAT_ASSIGN_ON', ['#DATE#' => '[b]'.$formattedDate.'[/b]']),
-							"SYSTEM" => 'Y',
-						]);
-					}
-					else
-					{
-						Im::addMessage([
-							"TO_CHAT_ID" => $this->chat['ID'],
-							"MESSAGE" => Loc::getMessage('IMOL_CHAT_ASSIGN_OFF'),
-							"SYSTEM" => 'Y',
-						]);
+						if($queueManager && $queueManager->startLock())
+						{
+							$session->pause($pause == 'Y');
+
+							$this->updateFieldData([self::FIELD_SESSION => [
+								'PAUSE' => $pause
+							]]);
+
+							if ($pause == 'Y')
+							{
+								$datePause = new DateTime();
+								$datePause->add('1 WEEK');
+
+								$formattedDate = \FormatDate('d F', $datePause->getTimestamp());
+								Im::addMessage([
+									"TO_CHAT_ID" => $this->chat['ID'],
+									"MESSAGE" => Loc::getMessage('IMOL_CHAT_ASSIGN_ON', ['#DATE#' => '[b]'.$formattedDate.'[/b]']),
+									"SYSTEM" => 'Y',
+								]);
+							}
+							else
+							{
+								Im::addMessage([
+									"TO_CHAT_ID" => $this->chat['ID'],
+									"MESSAGE" => Loc::getMessage('IMOL_CHAT_ASSIGN_OFF'),
+									"SYSTEM" => 'Y',
+								]);
+							}
+
+							$queueManager->stopLock();
+							$result = true;
+						}
 					}
 				}
 			}
-
-			$result = true;
 		}
 
 		return $result;
@@ -1702,6 +1714,14 @@ class Chat
 				if (isset($fieldData[7]) && $fieldData[7] > 0)
 				{
 					$data['LINE_ID'] = intval($fieldData[7]);
+				}
+				if (isset($fieldData[8]))
+				{
+					$data['BLOCK_DATE'] = (int)$fieldData[8];
+				}
+				if (isset($fieldData[9]))
+				{
+					$data['BLOCK_REASON'] = $fieldData[9];
 				}
 			}
 			else if ($field == self::FIELD_CRM)
@@ -1844,8 +1864,27 @@ class Chat
 						{
 							$data['LINE_ID'] = intval($fieldData['LINE_ID']);
 						}
+						if (isset($fieldData['BLOCK_DATE']))
+						{
+							$data['BLOCK_DATE'] = $fieldData['BLOCK_DATE'] instanceof DateTime? $fieldData['BLOCK_DATE']->getTimestamp(): (int)$fieldData['BLOCK_DATE'];
+						}
+						if (isset($fieldData['BLOCK_REASON']))
+						{
+							$data['BLOCK_REASON'] = $fieldData['BLOCK_REASON'];
+						}
 
-						$updateDate[self::getFieldName($fieldType)] = $this->chat[self::getFieldName($fieldType)] = $data['CRM'].'|'.$data['CRM_ENTITY_TYPE'].'|'.$data['CRM_ENTITY_ID'].'|'.$data['PAUSE'].'|'.$data['WAIT_ACTION'].'|'.$data['ID'].'|'.$data['DATE_CREATE'].'|'.$data['LINE_ID'];
+						$this->chat[self::getFieldName($fieldType)] = $data['CRM'].'|'
+																	.$data['CRM_ENTITY_TYPE'].'|'
+																	.$data['CRM_ENTITY_ID'].'|'
+																	.$data['PAUSE'].'|'
+																	.$data['WAIT_ACTION'].'|'
+																	.$data['ID'].'|'
+																	.$data['DATE_CREATE'].'|'
+																	.$data['LINE_ID'].'|'
+																	.$data['BLOCK_DATE'].'|'
+																	.$data['BLOCK_REASON'];
+
+						$updateDate[self::getFieldName($fieldType)] = $this->chat[self::getFieldName($fieldType)];
 					}
 					else if ($fieldType == self::FIELD_CRM)
 					{
@@ -2126,10 +2165,11 @@ class Chat
 
 	/**
 	 * @param $userList
+	 * @param bool $userCrm
 	 * @return bool|int
 	 * @throws Main\LoaderException
 	 */
-	public function sendJoinMessage($userList)
+	public function sendJoinMessage($userList, $userCrm = false)
 	{
 		$result = false;
 
@@ -2139,20 +2179,28 @@ class Chat
 			{
 				$toUserId = $userList[0];
 				$userName = ImUser::getInstance($toUserId)->getFullName(false);
-				$message = Loc::getMessage('IMOL_CHAT_ASSIGN_OPERATOR_NEW', Array('#USER#' => '[USER='.$toUserId.']'.$userName.'[/USER]'));
+
+				if($userCrm === true)
+				{
+					$message = Loc::getMessage('IMOL_CHAT_ASSIGN_OPERATOR_CRM_NEW', ['#USER#' => '[USER='.$toUserId.']'.$userName.'[/USER]']);
+				}
+				else
+				{
+					$message = Loc::getMessage('IMOL_CHAT_ASSIGN_OPERATOR_NEW', ['#USER#' => '[USER='.$toUserId.']'.$userName.'[/USER]']);
+				}
 			}
 			else
 			{
 				$message = Loc::getMessage('IMOL_CHAT_ASSIGN_OPERATOR_LIST_NEW');
 			}
 
-			$messageId = Im::addMessage(Array(
+			$messageId = Im::addMessage([
 				"TO_CHAT_ID" => $this->chat['ID'],
 				"FROM_USER_ID" => 0,
 				"MESSAGE" => $message,
 				"SYSTEM" => 'Y',
 				"IMPORTANT_CONNECTOR" => 'N'
-			));
+			]);
 
 			$result = $messageId;
 		}

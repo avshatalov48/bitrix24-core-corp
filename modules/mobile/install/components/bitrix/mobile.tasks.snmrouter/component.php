@@ -38,7 +38,7 @@ if (CModule::IncludeModule('tasks') && CModule::IncludeModule('mobileapp'))
 		'GROUP_ID' => (int)$this->request->getQuery('GROUP_ID'),
 		'NAME_TEMPLATE' => ($arParams['NAME_TEMPLATE'] ?: CSite::GetNameFormat(false)),
 		'NEW_CARD' => ($this->request->getQuery('NEW_CARD') === 'Y' ? 'Y' : 'N'),
-		'GUID' => ($this->request->getQuery('GUID') ?? 0),
+		'GUID' => ($this->request->getQuery('GUID') ?? ''),
 	];
 
 	foreach ($params as $k => $v)

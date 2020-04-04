@@ -5,11 +5,12 @@ use \Bitrix\Main\Loader,
 	\Bitrix\Main\UserTable,
 	\Bitrix\Main\Data\Cache,
 	\Bitrix\Main\Application,
+	\Bitrix\Main\Type\DateTime,
 	\Bitrix\Im\Model\ChatTable,
 	\Bitrix\Main\ORM\Query\Query,
 	\Bitrix\Main\DB\SqlExpression,
 	\Bitrix\Main\Entity\ReferenceField,
-	\Bitrix\Main\ORM\Fields\ExpressionField;;
+	\Bitrix\Main\ORM\Fields\ExpressionField;
 
 class Im
 {
@@ -53,12 +54,12 @@ class Im
 	 * @throws \Bitrix\Main\LoaderException
 	 * @throws \Bitrix\Main\SystemException
 	 */
-	public static function addMessagesNewsletter($messages)
+	public static function addMessagesNewsletter($messages): array
 	{
 		$result = array();
 		$userCodes = array();
 
-		if(is_array($messages) && Loader::includeModule('im'))
+		if (is_array($messages) && Loader::includeModule('im'))
 		{
 			foreach ($messages as $code => $message)
 			{
@@ -67,7 +68,7 @@ class Im
 			}
 
 			$rawChat = ChatTable::getList(array(
-				'select' => array('ID', 'ENTITY_ID', 'RECENT_MID' => 'RECENT.ITEM_MID'),
+				'select' => array('ID', 'ENTITY_ID', 'RECENT_MID' => 'RECENT.ITEM_MID', 'ENTITY_DATA_1'),
 				'filter' => array(
 					'=ENTITY_TYPE' => 'LINES',
 					'=ENTITY_ID' => $userCodes
@@ -87,6 +88,12 @@ class Im
 
 			while($rowChat = $rawChat->fetch())
 			{
+				$chatFieldData = explode('|', $rowChat['ENTITY_DATA_1']);
+				$blockTimestamp = (int)$chatFieldData[8];
+				if ($blockTimestamp !== 0 && $blockTimestamp < (new DateTime())->getTimestamp())
+				{
+					continue;
+				}
 				$fields = $messages[$rowChat['ENTITY_ID']];
 
 				$fields['MESSAGE_TYPE'] = IM_MESSAGE_OPEN_LINE;

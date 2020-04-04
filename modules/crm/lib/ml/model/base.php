@@ -2,9 +2,13 @@
 
 namespace Bitrix\Crm\Ml\Model;
 
+use Bitrix\Crm\Ml\Internals\ModelTrainingTable;
+use Bitrix\Crm\Ml\Scoring;
 use Bitrix\Main\Application;
 use Bitrix\Main\Loader;
 use Bitrix\Main\SystemException;
+use Bitrix\Main\Text\Encoding;
+use Bitrix\Main\Type\DateTime;
 use Bitrix\Ml\Model;
 
 abstract class Base implements \JsonSerializable
@@ -123,10 +127,11 @@ abstract class Base implements \JsonSerializable
 	 */
 	public function jsonSerialize()
 	{
-		list($recordsSuccess, $recordsFailed) = $this->getTrainingSetSize();
+		[$recordsSuccess, $recordsFailed] = $this->getTrainingSetSize();
 		return [
 			"name" => $this->getName(),
 			"state" => $this->getState(),
+			"title" => $this->getTitle(),
 			"recordsSuccess" => $recordsSuccess,
 			"recordsFailed" => $recordsFailed,
 		];
@@ -196,4 +201,65 @@ abstract class Base implements \JsonSerializable
 	 * @return array
 	 */
 	abstract public function getTrainingSet($fromId, $limit);
+
+	/**
+	 * Should return title for this model
+	 *
+	 * @return string
+	 */
+	abstract public function getTitle();
+
+	/**
+	 * Returns current training fields
+	 */
+	public function getCurrentTraining()
+	{
+		$row = ModelTrainingTable::getList([
+			"filter" => [
+				"=MODEL_NAME" => $this->getName(),
+			],
+			"order" => ["ID" => "desc"],
+			"limit" => 1
+		])->fetch();
+
+		[$successfulRecords, $failedRecords] = $this->getTrainingSetSize();
+
+		if($row["DATE_FINISH"] instanceof DateTime)
+		{
+			$now = time();
+			$daysSinceTrain = round(($now - $row["DATE_FINISH"]->getTimestamp()) / 86400 );
+			$daysToTrain = Scoring::RETRAIN_PERIOD - $daysSinceTrain;
+			if($daysToTrain < 0)
+			{
+				$daysToTrain = 0;
+			}
+		}
+		else
+		{
+			$daysToTrain = Scoring::RETRAIN_PERIOD;
+		}
+
+		if($row["DATE_START"] instanceof DateTime)
+		{
+			$nextDate = clone $row["DATE_START"];
+			$nextDate->add(Scoring::RETRAIN_PERIOD . " day");
+		}
+
+		return [
+			"ID" => (int)$row["ID"],
+			"MODEL_NAME" => $this->getName(),
+			"AREA_UNDER_CURVE" => (float)$row["AREA_UNDER_CURVE"],
+			"DATE_START" => $row["DATE_START"],
+			"DATE_FINISH" => $row["DATE_FINISH"],
+			"LAST_ID" => (int)$row["LAST_ID"],
+			"RECORDS_SUCCESS" => (int)$row["RECORDS_SUCCESS"],
+			"RECORDS_FAILED" => (int)$row["RECORDS_FAILED"],
+			"STATE" => $row["STATE"],
+
+			"RECORDS_SUCCESS_DELTA" => $successfulRecords - $row["RECORDS_SUCCESS"],
+			"RECORDS_FAILED_DELTA" => $failedRecords - $row["RECORDS_FAILED"],
+			"DAYS_TO_TRAIN" => $daysToTrain,
+			"NEXT_DATE" => $nextDate ?? null,
+		];
+	}
 }

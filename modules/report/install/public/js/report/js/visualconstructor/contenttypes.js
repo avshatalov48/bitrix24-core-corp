@@ -33,7 +33,6 @@
 				}
 			}
 		}.bind(this));
-
 	};
 
 
@@ -196,7 +195,11 @@
 	BX.Report.VisualConstructor.Widget.Content.Activity = function (options)
 	{
 		BX.Report.Dashboard.Content.apply(this, arguments);
-		BX.addCustomEvent(this.getWidget().getCell(), 'BX.Report.Dashboard.Cell:clean', this.handlerClearCell.bind(this));
+		var cell = this.getWidget().getCell();
+		if (cell)
+		{
+			BX.addCustomEvent(cell, 'BX.Report.Dashboard.Cell:clean', this.handlerClearCell.bind(this));
+		}
 		this.graph = null;
 	};
 

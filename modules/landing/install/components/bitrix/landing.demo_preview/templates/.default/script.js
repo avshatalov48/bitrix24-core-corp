@@ -473,7 +473,7 @@
 			}
 			else
 			{
-				top.location = url;
+				window.location = url;
 			}
 		},
 

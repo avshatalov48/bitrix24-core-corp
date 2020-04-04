@@ -96,6 +96,10 @@ class WelcomeStep extends \CWizardStep
 		</ul>
 
 		<div class="adm-crm-site-master-paragraph"><?=Loc::getMessage("SALE_CSM_WIZARD_WELCOMESTEP_DESCR_DESCR2")?></div>
+
+		<div class="adm-crm-site-master-paragraph">
+			<a class="adm-crm-site-popup-documentation-link" onclick="BX.Helper.show('redirect=detail&code=10412476');"><?=Loc::getMessage("SALE_CSM_WIZARD_WELCOMESTEP_DOCUMENTATION_LINK")?></a>
+		</div>
 		<?
 		$content = ob_get_contents();
 		ob_end_clean();

@@ -1,10 +1,17 @@
 <?php
 
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\Config\Option;
+use Bitrix\Main\Db\SqlQueryException;
+use Bitrix\Main\Loader;
+use Bitrix\Main\LoaderException;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\ObjectPropertyException;
+use Bitrix\Main\SystemException;
 
 class CCrmSaleHelper
 {
-	private static $listUserIdWithShopAccess = [];
+	private static $userIdsWithShopAccess = [];
 
 	public static function Calculate($productRows, $currencyID, $personTypeID, $enableSaleDiscount = false, $siteId = SITE_ID, $arOptions = array())
 	{
@@ -326,72 +333,183 @@ class CCrmSaleHelper
 	}
 
 	/**
-	 * @param string $type
-	 * @return bool|mixed
-	 * @throws \Bitrix\Main\ArgumentException
+	 * @param string $role
+	 * @return bool
+	 * @throws ArgumentException
 	 * @throws \Bitrix\Main\ArgumentNullException
 	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
-	 * @throws \Bitrix\Main\Db\SqlQueryException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
+	 * @throws SqlQueryException
+	 * @throws LoaderException
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
 	 */
-	public static function isShopAccess($type = "")
+	public static function isShopAccess($role = "")
 	{
-		$shopEnabled = \Bitrix\Main\Config\Option::get("crm", "crm_shop_enabled", "N");
+		$shopEnabled = Option::get("crm", "crm_shop_enabled", "N");
 		if ($shopEnabled == "N")
 		{
 			return false;
 		}
 
 		global $USER;
-
 		if (!is_object($USER))
 		{
 			return false;
 		}
-
-		$userId = $USER->GetID();
-
-		if (isset(self::$listUserIdWithShopAccess[$userId][$type]))
+		$userId = $USER->getID();
+		if (!$userId)
 		{
-			return (!empty(self::$listUserIdWithShopAccess[$userId][$type]));
+			return false;
 		}
 
-		if ($USER->isAdmin() || (CModule::IncludeModule("bitrix24") && CBitrix24::IsPortalAdmin($userId)))
+		if (self::isCacheAccess($userId, $role))
 		{
-			$type = "admin";
-			self::$listUserIdWithShopAccess[$userId] = [$type => true];
-			if (!self::isUserInShopGroup($userId, $type))
+			return self::getCacheAccess($userId, $role);
+		}
+
+		$isCrmAccess = self::isCrmAccess($USER, $role);
+		$isDbAccess = self::isDbAccess($userId, $role);
+
+		if (!isModuleInstalled("bitrix24"))
+		{
+			if ($USER->isAdmin())
 			{
-				self::setUserToShopGroup($userId, $type);
+				$isDbAccess = self::isDbAccess($userId, "admin");
+				if (!$isDbAccess)
+				{
+					self::addDbAccessAddingAgent($userId);
+				}
+				self::addToCacheAccess($userId, $role, true);
+				return true;
 			}
+			else
+			{
+				self::addToCacheAccess($userId, $role, $isDbAccess);
+				return $isDbAccess;
+			}
+		}
+
+		if (!$isCrmAccess)
+		{
+			self::addToCacheAccess($userId, $role, false);
+			return false;
+		}
+
+		if ($isCrmAccess && $isDbAccess)
+		{
+			self::addToCacheAccess($userId, $role, true);
 			return true;
 		}
 
-		if ($userId)
+		if ($isCrmAccess && !$isDbAccess)
 		{
-			$isAccess = self::isUserInShopGroup($userId, $type);
-			if (!$isAccess)
+			$shopRole = self::getShopRole($userId);
+			if ($shopRole)
 			{
-				// If there is no access, we need to re-verify that there is no access, based on the rights of crm.
-				$isAccess = self::setUserToShopGroup($userId, $type);
+				self::addDbAccessAddingAgent($userId);
+				self::addToCacheAccess($userId, $role, true);
+				return true;
 			}
-			self::$listUserIdWithShopAccess[$userId] = [$type => $isAccess];
-			return $isAccess;
+			else
+			{
+				self::addToCacheAccess($userId, $role, false);
+				return false;
+			}
+		}
+
+		self::addToCacheAccess($userId, $role, false);
+		return false;
+	}
+
+	private static function addToCacheAccess(int $userId, string $role, bool $access): void
+	{
+		self::$userIdsWithShopAccess[$userId] = self::$userIdsWithShopAccess[$userId] ?: [];
+		self::$userIdsWithShopAccess[$userId][$role] = $access;
+	}
+
+	private static function isCacheAccess(int $userId, string $role): bool
+	{
+		return (isset(self::$userIdsWithShopAccess[$userId][$role]));
+	}
+
+	private static function getCacheAccess(int $userId, string $role): bool
+	{
+		return self::$userIdsWithShopAccess[$userId][$role];
+	}
+
+	/**
+	 * @param CAllUser $user
+	 * @param string $role
+	 * @return bool
+	 * @throws ArgumentException
+	 * @throws ObjectPropertyException
+	 * @throws SqlQueryException
+	 * @throws SystemException
+	 * @throws LoaderException
+	 */
+	private static function isCrmAccess(CAllUser $user, $role = "")
+	{
+		$userId = $user->getID();
+		if ($user->isAdmin() || (Loader::includeModule("bitrix24") && CBitrix24::IsPortalAdmin($userId)))
+		{
+			return true;
 		}
 		else
 		{
-			self::$listUserIdWithShopAccess[$userId] = [$type => false];
-			return false;
+			if ($role == "admin")
+			{
+				return self::checkAdminAccess($userId);
+			}
+			else
+			{
+				return self::checkManagerAccess($userId);
+			}
 		}
 	}
 
-	private static function isUserInShopGroup($userId, $type)
+	/**
+	 * @param int $userId
+	 * @return bool
+	 * @throws ArgumentException
+	 * @throws SqlQueryException
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
+	 */
+	private static function checkAdminAccess(int $userId)
+	{
+		$listUserId = self::getListUserIdFromCrmRoles();
+		if (in_array($userId, $listUserId))
+		{
+			$CrmPerms = new CCrmPerms($userId);
+			if ($CrmPerms->havePerm("CONFIG", BX_CRM_PERM_CONFIG, "WRITE"))
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * @param int $userId
+	 * @return bool
+	 * @throws ArgumentException
+	 * @throws SqlQueryException
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
+	 */
+	private static function checkManagerAccess(int $userId)
+	{
+		$listUserId = self::getListUserIdFromCrmRoles();
+		return (in_array($userId, $listUserId));
+	}
+
+	private static function isDbAccess($userId, $role)
 	{
 		$shopGroupIds = [];
-		if ($type)
+		if ($role)
 		{
-			$shopGroupIds[] = self::getShopGroupIdByType($type);
+			$shopGroupIds[] = self::getShopGroupIdByType($role);
 		}
 		else
 		{
@@ -417,23 +535,13 @@ class CCrmSaleHelper
 		return false;
 	}
 
-	/**
-	 * @param $userId
-	 * @param $type
-	 * @return bool
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\Db\SqlQueryException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
-	 */
-	private static function setUserToShopGroup($userId, $type)
+	private static function getShopRole($userId)
 	{
-		$isAccess = false;
-
-		if (CModule::IncludeModule("bitrix24") && CBitrix24::IsPortalAdmin($userId))
+		$user = new CUser();
+		$groups = $user->getUserGroup($userId);
+		if (in_array(1, $groups) || (Loader::includeModule("bitrix24") && CBitrix24::isPortalAdmin($userId)))
 		{
-			self::addUserToShopGroup(array($userId));
-			$isAccess = true;
+			return "admin";
 		}
 		else
 		{
@@ -441,28 +549,35 @@ class CCrmSaleHelper
 			if (in_array($userId, $listUserId))
 			{
 				$CrmPerms = new CCrmPerms($userId);
-				if ($type == "admin" && !$CrmPerms->havePerm("CONFIG", BX_CRM_PERM_CONFIG, "WRITE"))
+				if ($CrmPerms->havePerm("CONFIG", BX_CRM_PERM_CONFIG, "WRITE"))
 				{
-					$isAccess = false;
+					return "admin";
 				}
 				else
 				{
-					self::addUserToShopGroup(array($userId));
-					$isAccess = true;
+					return "manager";
 				}
 			}
+			return "";
 		}
+	}
 
-		return $isAccess;
+	private static function addToDbAccess($userId, $shopRole)
+	{
+		$groupId = self::getShopGroupIdByType($shopRole);
+		if ($groupId)
+		{
+			CUser::appendUserGroup($userId, [$groupId]);
+		}
 	}
 
 	/**
 	 * @param array $newUserIds List new user id for add to shop groups.
 	 * @param array $currentUserIds List current user id from shop groups for delete.
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\Db\SqlQueryException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
+	 * @throws ArgumentException
+	 * @throws SqlQueryException
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
 	 */
 	public static function addUserToShopGroup($newUserIds = [], $currentUserIds = [])
 	{
@@ -476,6 +591,35 @@ class CCrmSaleHelper
 			self::deleteUserFromShopGroupByUserIds($currentUserIds);
 
 			self::addUserToShopGroupByUserIds($newUserIds);
+		}
+	}
+
+	public static function deleteAllUserFromShopGroup()
+	{
+		self::deleteUserFromShopGroupByUserIds(self::getCurrentUsersShopGroups());
+	}
+
+	public static function updateShopAccess()
+	{
+		$userIds = self::getListUserIdFromCrmRoles(true);
+
+		self::deleteUserFromShopGroupByUserIds(self::getCurrentUsersShopGroups());
+
+		foreach ($userIds as $userId)
+		{
+			self::addShopAccessByUserId($userId);
+		}
+	}
+
+	public static function addShopAccessByUserId($userId)
+	{
+		if (Loader::includeModule("crm"))
+		{
+			$shopRole = self::getShopRole($userId);
+			if ($shopRole)
+			{
+				self::addToDbAccess($userId, $shopRole);
+			}
 		}
 	}
 
@@ -541,45 +685,12 @@ class CCrmSaleHelper
 	}
 
 	/**
-	 * @throws \Bitrix\Main\Db\SqlQueryException
-	 */
-	public static function deleteUserFromShopGroup()
-	{
-		if (IsModuleInstalled("bitrix24"))
-		{
-			$listGroupId = array(self::getShopGroupIdByType("admin"), self::getShopGroupIdByType("manager"));
-			$connection = Bitrix\Main\Application::getConnection();
-			if ($connection->isTableExists("b_user_group"))
-			{
-				foreach ($listGroupId as $groupId)
-				{
-					$groupId = intval($groupId);
-					if ($groupId)
-					{
-						$listUserId = array();
-						foreach (CGroup::getGroupUser($groupId) as $userId)
-						{
-							$listUserId[] = $userId;
-						}
-						if ($listUserId)
-						{
-							$strSql = "DELETE FROM b_user_group WHERE GROUP_ID = $groupId and USER_ID IN (" .
-								implode(',', $listUserId) . ")";
-							$connection->queryExecute($strSql);
-						}
-					}
-				}
-			}
-		}
-	}
-
-	/**
 	 * @param bool $resetCash Reset cache.
 	 * @return array
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\Db\SqlQueryException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
+	 * @throws ArgumentException
+	 * @throws SqlQueryException
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
 	 */
 	public static function getListUserIdFromCrmRoles($resetCash = false)
 	{
@@ -787,6 +898,40 @@ class CCrmSaleHelper
 				$strSql = "DELETE FROM b_user_group WHERE GROUP_ID IN (".
 					implode(',', $shopGroupIds).") and USER_ID IN (" .implode(',', $currentUserIds) . ")";
 				$connection->queryExecute($strSql);
+			}
+		}
+	}
+
+	/**
+	 * @throws SqlQueryException
+	 * @deprecated
+	 */
+	public static function deleteUserFromShopGroup()
+	{
+		if (IsModuleInstalled("bitrix24"))
+		{
+			$listGroupId = array(self::getShopGroupIdByType("admin"), self::getShopGroupIdByType("manager"));
+			$connection = Bitrix\Main\Application::getConnection();
+			if ($connection->isTableExists("b_user_group"))
+			{
+				foreach ($listGroupId as $groupId)
+				{
+					$groupId = intval($groupId);
+					if ($groupId)
+					{
+						$listUserId = array();
+						foreach (CGroup::getGroupUser($groupId) as $userId)
+						{
+							$listUserId[] = $userId;
+						}
+						if ($listUserId)
+						{
+							$strSql = "DELETE FROM b_user_group WHERE GROUP_ID = $groupId and USER_ID IN (" .
+								implode(',', $listUserId) . ")";
+							$connection->queryExecute($strSql);
+						}
+					}
+				}
 			}
 		}
 	}
@@ -1029,5 +1174,27 @@ class CCrmSaleHelper
 		}
 
 		return '';
+	}
+
+	private static function addDbAccessAddingAgent(int $userId): void
+	{
+		$moduleId = "crm";
+		$agentName = "CCrmSaleHelper::addShopAccessByUserId(" . $userId . ");";
+		$agent = \CAgent::getList([], [
+			"MODULE_ID" => $moduleId,
+			"NAME" => $agentName
+		])->fetch();
+		if (!$agent)
+		{
+			CAgent::addAgent(
+				$agentName,
+				$moduleId,
+				"N",
+				60,
+				"",
+				"Y",
+				\ConvertTimeStamp(time() + \CTimeZone::GetOffset() + 3, "FULL")
+			);
+		}
 	}
 }

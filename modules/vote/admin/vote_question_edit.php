@@ -133,6 +133,7 @@ else
 		"DIAGRAM"		=> (isset($_REQUEST["DIAGRAM"])?$_REQUEST["DIAGRAM"]:'N'),
 		"REQUIRED"		=> (isset($_REQUEST["REQUIRED"])?$_REQUEST["REQUIRED"]:'N'),
 		"DIAGRAM_TYPE"	=> $_REQUEST["DIAGRAM_TYPE"],
+		"FIELD_TYPE"	=> \Bitrix\Vote\QuestionTypes::COMPATIBILITY,
 		"TEMPLATE"		=> $_REQUEST["TEMPLATE"],
 		"TEMPLATE_NEW"	=> $_REQUEST["TEMPLATE_NEW"]);
 	foreach ($_REQUEST["ANSWER"] as $pid)

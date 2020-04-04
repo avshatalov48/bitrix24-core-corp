@@ -275,17 +275,29 @@
     Object.defineProperty(this, 'offset', {
       get: function() {
 
-        var header = $('.u-header'),
+        // todo: need relative selector (only current header)
+        var header = $('.u-header, header');
+        if(header.length > 0)
+        {
+          var headerHeight = header.outerHeight(),
             headerStyles = getComputedStyle(header.get(0)),
             headerPosition = headerStyles.position,
-            offset = self.section.offset().top;
-
-
-
-        if(header.length && headerPosition == 'fixed' && parseInt(headerStyles.top) == 0) {
-          offset = offset - header.outerHeight() - parseInt(headerStyles.marginTop);
+            offset = self.section.offset().top,
+            headerTop = parseInt(headerStyles.top),
+            headerMarginTop = parseInt(headerStyles.marginTop);
+        }
+        else
+        {
+          var headerHeight = 0,
+            headerPosition = 'fixed',
+            offset = self.section.offset().top,
+            headerTop = 0,
+            headerMarginTop = 0;
         }
 
+        if(headerPosition == 'fixed' && headerTop == 0) {
+          offset = offset - headerHeight - headerMarginTop;
+        }
         if(self.config.over.length) {
           offset = offset - self.config.over.outerHeight();
         }

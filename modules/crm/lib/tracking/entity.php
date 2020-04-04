@@ -55,6 +55,8 @@ class Entity
 		])->fetchAll();
 		foreach ($traces as $index => $trace)
 		{
+			$trace['SOURCE_ID'] = $trace['SOURCE_ID'] ?: 0;
+
 			// skip traces without source, except first
 			if ($index > 0 && !$trace['SOURCE_ID'])
 			{
@@ -81,6 +83,7 @@ class Entity
 					'ICON' => $source['ICON_CLASS'],
 					'ICON_COLOR' => $source['ICON_COLOR'],
 					'IS_SOURCE' => true,
+					'SOURCE_ID' => $trace['SOURCE_ID'],
 				];
 			}
 		}

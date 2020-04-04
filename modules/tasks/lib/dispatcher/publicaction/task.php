@@ -164,7 +164,6 @@ final class Task extends \Bitrix\Tasks\Dispatcher\RestrictedAction
 					'PUBLIC_MODE' => true,
 					'ERRORS' => $this->errors,
 					'THROTTLE_MESSAGES' => $parameters[ 'THROTTLE_MESSAGES' ],
-					'DONT_SAVE_CHECKLIST' => ($parameters['DONT_SAVE_CHECKLIST'] ?: false),
 
 					// there also could be RETURN_CAN or RETURN_DATA, or both as RETURN_ENTITY
 					'RETURN_ENTITY' => $parameters[ 'RETURN_ENTITY' ],

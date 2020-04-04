@@ -1,4 +1,5 @@
 <?
-$MESS["SONET_LOG_LIST_TITLE_GRAT"] = "#USER_NAME#: Благодарности";
-$MESS["SONET_LOG_LIST_TITLE_GRAT2"] = "#USER_NAME#: Благодарности типа &laquo;#GRAT_NAME#&raquo;";
+$MESS["SONET_LOG_LIST_NAV"] = "Записи";
+$MESS["SONET_LOG_LIST_SONET_MODULE_NOT_INSTALLED"] = "Модуль социальной сети не установлен.";
+$MESS["SONET_LOG_LIST_PAGE_TITLE"] = "Живая лента";
 ?>

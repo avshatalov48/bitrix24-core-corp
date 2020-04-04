@@ -525,8 +525,13 @@ class CAllSaleUserAccount
 
 			if ($orderID > 0)
 			{
+				$registry = \Bitrix\Sale\Registry::getInstance(\Bitrix\Sale\Registry::REGISTRY_TYPE_ORDER);
+
+				/** @var \Bitrix\Sale\Order $orderClass */
+				$orderClass = $registry->getOrderClassName();
+
 				/** @var \Bitrix\Sale\Order $order */
-				if ($order = \Bitrix\Sale\Order::load($orderID))
+				if ($order = $orderClass::load($orderID))
 				{
 					/** @var \Bitrix\Sale\PaymentCollection $paymentCollection */
 					if (($paymentCollection = $order->getPaymentCollection()) && $paymentCollection->isExistsInnerPayment())

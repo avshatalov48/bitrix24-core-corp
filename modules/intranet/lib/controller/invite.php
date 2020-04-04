@@ -31,5 +31,29 @@ class Invite extends \Bitrix\Main\Engine\Controller
 			'errors' => $errorList
 		];
 	}
+
+	public function reinviteAction(array $params = [])
+	{
+		$userId = (!empty($params['userId']) ? intval($params['userId']) : 0);
+		$extranet = (!empty($params['extranet']) && $params['extranet'] == 'Y');
+
+		if ($userId <= 0)
+		{
+			$this->addError(new Error(Loc::getMessage('INTRANET_CONTROLLER_INVITE_NO_USER_ID'), 'INTRANET_CONTROLLER_INVITE_NO_USER_ID'));
+			return null;
+		}
+		if (!$extranet)
+		{
+			$result = \CIntranetInviteDialog::reinviteUser(SITE_ID, $userId);
+		}
+		else
+		{
+			$result = \CIntranetInviteDialog::reinviteExtranetUser(SITE_ID, $userId);
+		}
+
+		return [
+			'result' => $result
+		];
+	}
 }
 

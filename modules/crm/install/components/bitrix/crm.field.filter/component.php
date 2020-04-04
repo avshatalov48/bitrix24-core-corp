@@ -141,15 +141,20 @@ if(isset($arUserField['USER_TYPE']))
 		);
 
 		if(!$arParams["bVarsFromForm"] && ($arUserField["ENTITY_VALUE_ID"] <= 0))
-			$arResult["VALUE"] = array();
-
-		while($arEnum = $rsEnum->GetNext())
 		{
-			$enum[$arEnum["ID"]] = $arEnum["VALUE"];
-			if(!$arParams["bVarsFromForm"] && ($arUserField["ENTITY_VALUE_ID"] <= 0))
+			$arResult["VALUE"] = array();
+		}
+
+		if(is_object($rsEnum))
+		{
+			while($arEnum = $rsEnum->GetNext())
 			{
-				if($arEnum["DEF"] == "Y")
-					$arResult["VALUE"][] = $arEnum["ID"];
+				$enum[$arEnum["ID"]] = $arEnum["VALUE"];
+				if(!$arParams["bVarsFromForm"] && ($arUserField["ENTITY_VALUE_ID"] <= 0))
+				{
+					if($arEnum["DEF"] == "Y")
+						$arResult["VALUE"][] = $arEnum["ID"];
+				}
 			}
 		}
 		$arUserField["USER_TYPE"]["FIELDS"] = $enum;

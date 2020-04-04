@@ -157,7 +157,7 @@ $APPLICATION->IncludeComponent(
 
 	<div  class="feed-event-location">
 		<label style="display: inline-block;" for="event-location<?=$id?>"><?= GetMessage('ECLF_EVENT_LOCATION')?></label>
-		<input type="text" id="event-location<?=$id?>" value="" class="calendar-inp calendar-inp-loc" name="EVENT_LOCATION"/>
+		<input type="text" id="event-location<?=$id?>" value="" class="calendar-inp calendar-inp-loc"/>
 		<input id="event-location-new<?=$id?>" type="hidden" value=""/>
 	</div>
 </div>

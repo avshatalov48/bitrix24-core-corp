@@ -1,6 +1,10 @@
 <?php
 namespace Bitrix\Landing;
 
+use \Bitrix\Main\Config\Option;
+use \Bitrix\Main\Context;
+use \Bitrix\Main\Web\Uri;
+
 class Domain extends \Bitrix\Landing\Internals\BaseTable
 {
 	/**
@@ -10,7 +14,8 @@ class Domain extends \Bitrix\Landing\Internals\BaseTable
 		'bitrix24.site',
 		'bitrix24.shop',
 		'bitrix24site.by',
-		'bitrix24shop.by'
+		'bitrix24shop.by',
+		'bitrix24site.ua'
 	];
 
 	/**
@@ -104,5 +109,35 @@ class Domain extends \Bitrix\Landing\Internals\BaseTable
 	public static function getProtocolList()
 	{
 		return \Bitrix\Landing\Internals\DomainTable::getProtocolList();
+	}
+
+	/**
+	 * Gets current host url.
+	 * @return string
+	 */
+	public static function getHostUrl()
+	{
+		static $hostUrl = null;
+
+		if ($hostUrl !== null)
+		{
+			return $hostUrl;
+		}
+
+		$request = Context::getCurrent()->getRequest();
+		$protocol = ($request->isHttps() ? 'https://' : 'http://');
+
+		if (defined('SITE_SERVER_NAME') && SITE_SERVER_NAME)
+		{
+			$host = SITE_SERVER_NAME;
+		}
+		else
+		{
+			$host = Option::get('main', 'server_name', $request->getHttpHost());
+		}
+
+		$hostUrl = rtrim($protocol . $host, '/');
+
+		return $hostUrl;
 	}
 }

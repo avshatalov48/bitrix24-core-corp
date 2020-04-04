@@ -1149,7 +1149,7 @@ class ComponentHelper
 			$text = $parser->convertHtmlToBB($text);
 		}
 
-		preg_match_all("/\[url\s*=\s*([^\]]*)\](.+?)\[\/url\]/ies".BX_UTF_PCRE_MODIFIER, $text, $res);
+		preg_match_all("/\[url\s*=\s*([^\]]*)\](.+?)\[\/url\]/is".BX_UTF_PCRE_MODIFIER, $text, $res);
 
 		if (
 			!empty($res)
@@ -2930,7 +2930,7 @@ class ComponentHelper
 					"OK_MESSAGE" => "",
 					"RESULT" => $listCommentId,
 					"PUSH&PULL" => array(
-						"ACTION" => "REPLY",
+						"ACTION" => ($params["ACTION"] === "UPDATE" ? "EDIT" : "REPLY"),
 						"ID" => $listCommentId
 					),
 					"MODE" => "PULL_MESSAGE",
@@ -4051,7 +4051,7 @@ class ComponentHelper
 		return Option::get('socialnetwork', 'workgroups_page', $siteDir.'workgroups/', $siteId);
 	}
 
-	public static function convertBlogPostPermToDestinationList($params = array(), &$resultFields)
+	public static function convertBlogPostPermToDestinationList($params, &$resultFields)
 	{
 		global $USER;
 
@@ -4170,7 +4170,7 @@ class ComponentHelper
 		return $result;
 	}
 
-	public static function checkBlogPostDestinationList($params = array(), &$resultFields)
+	public static function checkBlogPostDestinationList($params, &$resultFields)
 	{
 		global $USER;
 
@@ -4287,17 +4287,24 @@ class ComponentHelper
 				{
 					if (
 						!$postId
-						|| (
-							!empty($postFields)
-							&& $postFields["PUBLISH_STATUS"] != BLOG_PUBLISH_STATUS_PUBLISH
-						)
-					)
+						&& $resultFields["PUBLISH_STATUS"] == BLOG_PUBLISH_STATUS_PUBLISH
+					) // new post
 					{
 						$resultFields["PUBLISH_STATUS"] = BLOG_PUBLISH_STATUS_READY;
 					}
-					else
+					elseif (
+						$postId
+						&& $resultFields["PUBLISH_STATUS"] == BLOG_PUBLISH_STATUS_PUBLISH
+					) // new post
 					{
-						$resultFields["ERROR_MESSAGE"] = Loc::getMessage("SBPE_EXISTING_POST_PREMODERATION");
+						if ($postFields["PUBLISH_STATUS"] != BLOG_PUBLISH_STATUS_PUBLISH)
+						{
+							$resultFields["PUBLISH_STATUS"] = $postFields["PUBLISH_STATUS"];
+						}
+						else
+						{
+							$resultFields["ERROR_MESSAGE"] = Loc::getMessage("SBPE_EXISTING_POST_PREMODERATION");
+						}
 					}
 				}
 				else

@@ -28,6 +28,8 @@ class BaseButton implements Contract\Renderable
 	protected $baseClass = "ui-btn";
 	/** @var string */
 	protected $link;
+	/** @var integer|string */
+	protected $counter;
 	/** @var array */
 	protected $events = [];
 	/** @var ButtonAttributes */
@@ -97,9 +99,9 @@ class BaseButton implements Contract\Renderable
 
 		$this->getAttributeCollection()->setClassList($params['classList']);
 
-		if (!empty($params['link']))
+		if (!empty($params['counter']))
 		{
-			$this->setLink($params['link']);
+			$this->setCounter($params['counter']);
 		}
 
 		if (!empty($params['id']))
@@ -112,14 +114,32 @@ class BaseButton implements Contract\Renderable
 			$this->setTag($params['tag']);
 		}
 
+		if (!empty($params['link']))
+		{
+			$this->setLink($params['link']);
+		}
+
 		if (!empty($params['click']))
 		{
 			$this->bindEvent('click', $params['click']);
 		}
 
+		if (!empty($params['onclick']))
+		{
+			$this->bindEvent('click', $params['onclick']);
+		}
+
 		if (!empty($params['events']))
 		{
 			$this->bindEvents($params['events']);
+		}
+
+		if (isset($params['dataset']) && is_array($params['dataset']))
+		{
+			foreach ($params['dataset'] as $name => $value)
+			{
+				$this->addDataAttribute($name, $value);
+			}
 		}
 	}
 
@@ -135,17 +155,15 @@ class BaseButton implements Contract\Renderable
 
 	protected function appendDefaultJsonOption(ButtonAttributes $attributes)
 	{
-		$attributes
-			->addJsonOption('jsClass', static::getJsClass())
-			->addJsonOption('text', $this->getText())
-			->addJsonOption('baseClass', $this->getBaseClass())
-			->addJsonOption('events', $this->getEvents())
-		;
+		if (count($this->getEvents()) > 0)
+		{
+			$attributes->addJsonOption('events', $this->getEvents());
+		}
 
 		return $attributes;
 	}
 
-	public function render()
+	public function render($jsInit = true)
 	{
 		Extension::load($this->listExtensions());
 
@@ -181,10 +199,13 @@ class BaseButton implements Contract\Renderable
 				break;
 		}
 
-		$js = $this->renderJavascript();
-		if ($js)
+		if ($jsInit)
 		{
-			$output .= "<script>BX.ready(function(){ {$js} });</script>";
+			$js = $this->renderJavascript();
+			if ($js)
+			{
+				$output .= "<script>BX.ready(function(){ {$js} });</script>";
+			}
 		}
 
 		return $output;
@@ -210,16 +231,18 @@ class BaseButton implements Contract\Renderable
 
 	protected function renderInner()
 	{
-		return htmlspecialcharsbx($this->getText());
+		$counter = $this->getCounter();
+		return (
+			(!empty($this->getText()) ? '<span class="ui-btn-text">'.htmlspecialcharsbx($this->getText()).'</span>' : '').
+			($counter !== null ? '<span class="ui-btn-counter">'.htmlspecialcharsbx($counter).'</span>' : '' )
+		);
 	}
 
 	protected function renderJavascript()
 	{
 		$selector = $this->getQuerySelector();
 
-		return "
-			BX.UI.ButtonManager.createFromNode(document.querySelector('{$selector}'));
-		";
+		return "BX.UI.ButtonManager.createFromNode(document.querySelector('{$selector}'));";
 	}
 
 	protected function getQuerySelector()
@@ -273,7 +296,30 @@ class BaseButton implements Contract\Renderable
 
 	public function setLink($link)
 	{
-		$this->link = $link;
+		if (is_string($link) && !empty($link))
+		{
+			$this->link = $link;
+			$this->setTag(Tag::LINK);
+		}
+
+		return $this;
+	}
+
+	public function getCounter()
+	{
+		return $this->counter;
+	}
+
+	public function setCounter($counter)
+	{
+		if (in_array($counter, [0, '0', '', null, false], true))
+		{
+			$this->counter = null;
+		}
+		else if ((is_int($counter) && $counter > 0) || (is_string($counter) && strlen($counter)))
+		{
+			$this->counter = $counter;
+		}
 
 		return $this;
 	}
@@ -295,6 +341,11 @@ class BaseButton implements Contract\Renderable
 	public function removeClass($className)
 	{
 		return $this->unsetClass($className);
+	}
+
+	public function hasClass($className)
+	{
+		return $this->getAttributeCollection()->hasClass($className);
 	}
 
 	public function getClassList()

@@ -160,6 +160,9 @@ class CCrmContactDetailsComponent extends CBitrixComponent
 			$this->arResult['ORIGIN_ID'] = '';
 		}
 
+		$this->arResult['SHOW_EMPTY_FIELDS'] = isset($this->arParams['SHOW_EMPTY_FIELDS'])
+			&& $this->arParams['SHOW_EMPTY_FIELDS'];
+
 		$this->defaultFieldValues = array();
 		$this->tryGetFieldValueFromRequest('title', $this->defaultFieldValues);
 		$this->tryGetFieldValueFromRequest('phone', $this->defaultFieldValues);
@@ -331,61 +334,7 @@ class CCrmContactDetailsComponent extends CBitrixComponent
 		//endregion
 
 		//region Config
-		$multiFieldConfigElements = array();
-		foreach(array_keys($this->multiFieldInfos) as $fieldName)
-		{
-			$multiFieldConfigElements[] = array('name' => $fieldName);
-		}
-
-		$userFieldConfigElements = array();
-		foreach(array_keys($this->userFieldInfos) as $fieldName)
-		{
-			$userFieldConfigElements[] = array('name' => $fieldName);
-		}
-
-		$this->arResult['ENTITY_CONFIG'] = array(
-			array(
-				'name' => 'main',
-				'title' => Loc::getMessage('CRM_CONTACT_SECTION_MAIN'),
-				'type' => 'section',
-				'elements' =>
-					array_merge(
-						array(
-							array('name' => 'HONORIFIC'),
-							array('name' => 'LAST_NAME'),
-							array('name' => 'NAME'),
-							array('name' => 'SECOND_NAME'),
-							array('name' => 'PHOTO'),
-							array('name' => 'BIRTHDATE'),
-							array('name' => 'POST')
-						),
-						$multiFieldConfigElements,
-						array(
-							array('name' => 'COMPANY'),
-							array('name' => 'REQUISITES'),
-						)
-					)
-			),
-			array(
-				'name' => 'additional',
-				'title' => Loc::getMessage('CRM_CONTACT_SECTION_ADDITIONAL'),
-				'type' => 'section',
-				'elements' =>
-					array_merge(
-						array(
-							array('name' => 'TYPE_ID'),
-							array('name' => 'SOURCE_ID'),
-							array('name' => 'SOURCE_DESCRIPTION'),
-							array('name' => 'OPENED'),
-							array('name' => 'EXPORT'),
-							array('name' => 'ASSIGNED_BY_ID'),
-							array('name' => 'COMMENTS'),
-							array('name' => 'UTM'),
-						),
-						$userFieldConfigElements
-					)
-			)
-		);
+		$this->prepareConfiguration();
 		//endregion
 
 		//region Validators
@@ -670,6 +619,71 @@ class CCrmContactDetailsComponent extends CBitrixComponent
 	{
 		return 'contact_details';
 	}
+	public function prepareConfiguration()
+	{
+		if(isset($this->arResult['ENTITY_CONFIG']))
+		{
+			return $this->arResult['ENTITY_CONFIG'];
+		}
+
+		$multiFieldConfigElements = array();
+		foreach(array_keys($this->multiFieldInfos) as $fieldName)
+		{
+			$multiFieldConfigElements[] = array('name' => $fieldName);
+		}
+
+		$userFieldConfigElements = array();
+		foreach(array_keys($this->prepareEntityUserFieldInfos()) as $fieldName)
+		{
+			$userFieldConfigElements[] = array('name' => $fieldName);
+		}
+
+		$this->arResult['ENTITY_CONFIG'] = array(
+			array(
+				'name' => 'main',
+				'title' => Loc::getMessage('CRM_CONTACT_SECTION_MAIN'),
+				'type' => 'section',
+				'elements' =>
+					array_merge(
+						array(
+							array('name' => 'HONORIFIC'),
+							array('name' => 'LAST_NAME'),
+							array('name' => 'NAME'),
+							array('name' => 'SECOND_NAME'),
+							array('name' => 'PHOTO'),
+							array('name' => 'BIRTHDATE'),
+							array('name' => 'POST')
+						),
+						$multiFieldConfigElements,
+						array(
+							array('name' => 'COMPANY'),
+							array('name' => 'REQUISITES'),
+						)
+					)
+			),
+			array(
+				'name' => 'additional',
+				'title' => Loc::getMessage('CRM_CONTACT_SECTION_ADDITIONAL'),
+				'type' => 'section',
+				'elements' =>
+					array_merge(
+						array(
+							array('name' => 'TYPE_ID'),
+							array('name' => 'SOURCE_ID'),
+							array('name' => 'SOURCE_DESCRIPTION'),
+							array('name' => 'OPENED'),
+							array('name' => 'EXPORT'),
+							array('name' => 'ASSIGNED_BY_ID'),
+							array('name' => 'COMMENTS'),
+							array('name' => 'UTM'),
+						),
+						$userFieldConfigElements
+					)
+			)
+		);
+
+		return $this->arResult['ENTITY_CONFIG'];
+	}
 	public function isSearchHistoryEnabled()
 	{
 		return $this->enableSearchHistory;
@@ -695,6 +709,8 @@ class CCrmContactDetailsComponent extends CBitrixComponent
 
 		$this->userFieldInfos = null;
 		$this->prepareEntityUserFieldInfos();
+
+		$this->entityData = null;
 	}
 	public function prepareEntityDataScheme()
 	{
@@ -858,6 +874,14 @@ class CCrmContactDetailsComponent extends CBitrixComponent
 				'type' => 'client_light',
 				'editable' => true,
 				'data' => array(
+					'compound' => array(
+						array(
+							'name' => 'COMPANY_IDS',
+							'type' => 'multiple_company',
+							'entityTypeName' => \CCrmOwnerType::CompanyName,
+							'tagName' => \CCrmOwnerType::CompanyName
+						)
+					),
 					'map' => array('data' => 'CLIENT_DATA'),
 					'info' => 'CLIENT_INFO',
 					'fixedLayoutType' => 'COMPANY',
@@ -1111,7 +1135,7 @@ class CCrmContactDetailsComponent extends CBitrixComponent
 
 			if(!is_array($this->entityData))
 			{
-				$this->entityData = array();
+				return ($this->arResult['ENTITY_DATA'] = $this->entityData = array());
 			}
 
 			$this->entityData['FORMATTED_NAME'] =
@@ -1211,8 +1235,17 @@ class CCrmContactDetailsComponent extends CBitrixComponent
 					'SIGNATURE' => $fieldSignature,
 					'IS_EMPTY' => false
 				);
+
+				if($fieldData['data']['fieldInfo']['USER_TYPE_ID'] === 'file')
+				{
+					$values = is_array($fieldValue) ? $fieldValue : array($fieldValue);
+					$this->entityData[$fieldName]['EXTRAS'] = array(
+						'OWNER_TOKEN' => \CCrmFileProxy::PrepareOwnerToken(array_fill_keys($values, $this->entityID))
+					);
+				}
 			}
 		}
+
 		//endregion
 		//region Responsible
 		$assignedByID = isset($this->entityData['ASSIGNED_BY_ID']) ? (int)$this->entityData['ASSIGNED_BY_ID'] : 0;
@@ -1463,6 +1496,10 @@ class CCrmContactDetailsComponent extends CBitrixComponent
 			)
 
 		);
+	}
+	public function prepareServiceUrl()
+	{
+		return '/bitrix/components/bitrix/crm.contact.details/ajax.php?'.bitrix_sessid_get();
 	}
 	protected function tryGetFieldValueFromRequest($name, array &$params)
 	{

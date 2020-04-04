@@ -223,21 +223,15 @@ class CrmInvoicePaymentClientComponent extends CBitrixComponent
 	 */
 	protected function getPaySystemTemplate($payment, $paySystemObject)
 	{
-		$this->arResult['USE_FRAME'] = 'Y';
-
-		$paySystemBufferedOutput = $paySystemObject->initiatePay($payment, null, Sale\PaySystem\BaseServiceHandler::STRING);
-		if (!$paySystemBufferedOutput->isSuccess())
-		{
-			$this->errorCollection->add($paySystemBufferedOutput->getErrors());
-			return false;
-		}
-
 		if ($paySystemObject->getField('ACTION_FILE') === 'invoicedocument'
 			&& $paySystemObject->getField('PS_MODE')
 			&& Loader::includeModule('documentgenerator')
 		)
 		{
 			$this->arResult['USE_FRAME'] = 'N';
+
+			// crutch for starting generation
+			$paySystemObject->getPdfContent($payment);
 
 			$dbRes = DocumentGenerator\Model\DocumentTable::getList([
 				'select' => ['ID'],
@@ -254,11 +248,22 @@ class CrmInvoicePaymentClientComponent extends CBitrixComponent
 			{
 				$document = DocumentGenerator\Document::loadById($data['ID']);
 				$document->enablePublicUrl();
+
 				$data = $document->getFile()->getData();
+
 				$this->arResult['FILE_PARAMS'] = array_merge($data, DocumentGenerator\Model\ExternalLinkTable::getPublicUrlsByDocumentId($document->ID));
 			}
 
 			return '';
+		}
+
+		$this->arResult['USE_FRAME'] = 'Y';
+
+		$paySystemBufferedOutput = $paySystemObject->initiatePay($payment, null, Sale\PaySystem\BaseServiceHandler::STRING);
+		if (!$paySystemBufferedOutput->isSuccess())
+		{
+			$this->errorCollection->add($paySystemBufferedOutput->getErrors());
+			return false;
 		}
 
 		return $paySystemBufferedOutput->getTemplate();

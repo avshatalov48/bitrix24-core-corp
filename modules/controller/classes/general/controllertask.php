@@ -1,11 +1,4 @@
-<?
-##############################################
-# Bitrix Site Manager                        #
-# Copyright (c) 2002-2007 Bitrix             #
-# http://www.bitrixsoft.com                  #
-# mailto:sources@bitrixsoft.com              #
-##############################################
-
+<?php
 IncludeModuleLangFile(__FILE__);
 
 class CControllerTask
@@ -26,6 +19,7 @@ class CControllerTask
 	{
 		return Array(
 			'N'=>GetMessage("CTRLR_TASK_STATUS_NEW"),
+			'L'=>GetMessage("CTRLR_TASK_STATUS_LOW"),
 			'P'=>GetMessage("CTRLR_TASK_STATUS_PART"),
 			'Y'=>GetMessage("CTRLR_TASK_STATUS_COMPL"),
 			'F'=>GetMessage("CTRLR_TASK_STATUS_FAIL"),
@@ -126,7 +120,7 @@ class CControllerTask
 			return false;
 
 		unset($arFields["TIMESTAMP_X"]);
-		unset($arFields["~TIMESTAMP_X"]);
+		$arFields["~TIMESTAMP_X"] = $DB->CurrentTimeFunction();
 
 		$ID = $DB->Add("b_controller_task", $arFields, array("INIT_EXECUTE", "INIT_EXECUTE_PARAMS"));
 
@@ -253,6 +247,12 @@ class CControllerTask
 	public static function GetByID($ID)
 	{
 		return CControllerTask::GetList(Array(), Array("ID"=>IntVal($ID)));
+	}
+
+	public static function GetArrayByID($ID)
+	{
+		$db_task = static::GetByID($ID);
+		return $db_task->Fetch();
 	}
 
 	public static function ProcessTask($ID)
@@ -409,9 +409,27 @@ class CControllerTask
 				else
 					$ar_task['INIT_EXECUTE_PARAMS'] = Array();
 
-				$res = CControllerMember::RunCommand($ar_task["CONTROLLER_MEMBER_ID"], $ar_task['INIT_EXECUTE'], $ar_task['INIT_EXECUTE_PARAMS'], $ar_task['ID']);
-				if($res!==false)
+				//Command was saved in another task record (for db size optimization)
+				if ($ar_task['INIT_EXECUTE'] === ''.intval($ar_task['INIT_EXECUTE']).'')
+				{
+					if($source_task = static::GetArrayByID($ar_task['INIT_EXECUTE']))
+					{
+						$ar_task['INIT_EXECUTE'] = $source_task['INIT_EXECUTE'];
+					}
+					else
+					{
+						$STATUS = "F";
+						$RESULT = "Task ID ".intval($ar_task['INIT_EXECUTE'])." not found.";
+						$arControllerLog['STATUS'] = 'N';
+						break;
+					}
+				}
+
+				$res = CControllerMember::RunCommand($ar_task["CONTROLLER_MEMBER_ID"], $ar_task['INIT_EXECUTE'], $ar_task['INIT_EXECUTE_PARAMS'], $ar_task['ID'], 'run_immediate');
+				if ($res !== false)
+				{
 					$RESULT = $res;
+				}
 				else
 				{
 					$STATUS = "F";
@@ -461,12 +479,27 @@ class CControllerTask
 
 	public static function ProcessAllTask()
 	{
-		$dbrTask = CControllerTask::GetList(array("ID" => "ASC"), array("=STATUS" => array('N', 'P')));
-		while ($arTask = $dbrTask->Fetch())
+		//1. Finish partial
+		//2. Execute new tasks
+		//3. Run low priority tasks
+		foreach (array('P', 'N', 'L') as $status)
 		{
-			CControllerTask::ProcessTask($arTask["ID"]);
+			$dbrTask = CControllerTask::GetList(
+				array("ID" => "ASC"),
+				array("=STATUS" => $status),
+				false,
+				array("nTopCount" => 10000)
+			);
+			while ($arTask = $dbrTask->Fetch())
+			{
+				$status = CControllerTask::ProcessTask($arTask["ID"]);
+				while ($status === "P")
+				{
+					$status = CControllerTask::ProcessTask($arTask["ID"]);
+				}
+			}
 		}
+
 		return true;
 	}
 }
-?>

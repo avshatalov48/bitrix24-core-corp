@@ -24,7 +24,7 @@ $arJsParams = array(
 );
 
 $isBizCardScanSupported = (IsModuleInstalled("bizcard") && Bitrix\MobileApp\Mobile::$apiVersion>=18);
-$hostName = BX24_HOST_NAME;
+$hostName = defined("BX24_HOST_NAME") ? BX24_HOST_NAME: "";
 ?>
 <script>
 
@@ -68,7 +68,7 @@ $hostName = BX24_HOST_NAME;
 						buttons: ["<?=GetMessageJS("M_CRM_CONTACT_BIZCARD_GO_TO_TARIFF_TABLE")?>", "<?=GetMessageJS("M_CRM_CONTACT_BIZCARD_CLOSE")?>"],
 						callback: function(buttonIndex)
 						{
-							var action = (buttonIndex == 1) ? "tariff" : "close"
+							var action = (buttonIndex == 1) ? "tariff" : "close";
 							BX.ajax.post("https://www.bitrix24.com/cnt/tf.php", {
 								popupId: "bizcard",
 								action: action,

@@ -226,7 +226,10 @@ if ((intval($_GET["del_id"]) > 0 || intval($_GET["hide_id"]) > 0) && CModule::In
 		{
 			if(CBlogPost::Update($hide_id, Array("PUBLISH_STATUS" => BLOG_PUBLISH_STATUS_READY)))
 			{
-				CBlogPost::DeleteLog($hide_id);
+				if ($postItem = \Bitrix\Blog\Item\Post::getById($hide_id))
+				{
+					$postItem->deactivateLogEntry();
+				}
 				LocalRedirect($APPLICATION->GetCurPageParam("hide_id=".$hide_id."&success=Y", Array("del_id", "hide_id", "sessid", "success")));
 			}
 			else
@@ -442,9 +445,19 @@ if (empty($arResult["NAV_RESULT"]) && CModule::IncludeModule("blog"))
 	$patt[] = "#^(.+?)\[cut[\s]*(/\]|\]).*?$#is"; $repl[] = "\\1";
 	$patt[] = "#(\[|<)(/?)(b|u|i|list|code|quote|url|img|color|font|right|left|center|justify|/*)(.*?)(\]|>)#is"; $repl[] = " ";
 	$patt[] = "#\s+#"; $repl[] = " ";
-	$allow = array("HTML" => "N", "ANCHOR" => "N", "BIU" => "N",
-		"IMG" => "N", "QUOTE" => "N", "CODE" => "N", "FONT" => "N",
-		"LIST" => "N", "SMILES" => "N", "NL2BR" => "N");
+	$allow = [
+		"HTML" => "N",
+		"ANCHOR" => "N",
+		"BIU" => "N",
+		"IMG" => "N",
+		"QUOTE" => "N",
+		"CODE" => "N",
+		"FONT" => "N",
+		"LIST" => "N",
+		"SMILES" => "N",
+		"NL2BR" => "N",
+		"TAG" => "N"
+	];
 
 	$arPostsAll = array();
 	$arIdToGet = array();

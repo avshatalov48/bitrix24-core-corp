@@ -530,7 +530,6 @@
 .main-ui-filter-search-filter::-webkit-input-placeholder { /* Chrome/Opera/Safari */
 	color: #b1b6bb;
 	-webkit-transition: color .3s;
-	-o-transition: color .3s;
 	transition: color .3s;
 }
 
@@ -541,8 +540,7 @@
 .main-ui-filter-search-filter::-moz-placeholder { /* Firefox 19+ */
 	color: #b1b6bb;
 	opacity: 1;
-	-webkit-transition: color .3s;
-	-o-transition: color .3s;
+	-moz-transition: color .3s;
 	transition: color .3s;
 }
 
@@ -552,8 +550,7 @@
 
 .main-ui-filter-search-filter:-ms-input-placeholder { /* IE 10+ */
 	color: #b1b6bb;
-	-webkit-transition: color .3s;
-	-o-transition: color .3s;
+	-ms-transition: color .3s;
 	transition: color .3s;
 }
 
@@ -564,8 +561,7 @@
 .main-ui-filter-search-filter:-moz-placeholder { /* Firefox 18- */
 	color: #b1b6bb;
 	opacity: 1;
-	-webkit-transition: color .3s;
-	-o-transition: color .3s;
+	-moz-transition: color .3s;
 	transition: color .3s;
 }
 

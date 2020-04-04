@@ -123,6 +123,11 @@ class PublicAction
 			$data = array();
 		}
 
+		if (isset($data['scope']))
+		{
+			\Bitrix\Landing\Site\Type::setScope($data['scope']);
+		}
+
 		if (!$isRest && (!defined('BX_UTF') || BX_UTF !== true))
 		{
 			$data = Manager::getApplication()->convertCharsetArray(
@@ -204,7 +209,14 @@ class PublicAction
 						$action['params_init']
 					);
 					// answer
-					if ($result->isSuccess())
+					if ($result === null)// void is accepted as success
+					{
+						return array(
+							'type' => 'success',
+							'result' => true
+						);
+					}
+					else if ($result->isSuccess())
 					{
 						return array(
 							'type' => 'success',
@@ -267,6 +279,8 @@ class PublicAction
 		$request = $context->getRequest();
 		$files = $request->getFileList();
 		$postlist = $context->getRequest()->getPostList();
+
+		\Bitrix\Landing\Site\Type::setScope($request->get('type'));
 
 		// multiple commands
 		if (
@@ -363,7 +377,7 @@ class PublicAction
 
 			$classes = array(
 				self::REST_SCOPE_DEFAULT => array(
-					'block', 'site', 'landing', 'repo', 'template', 'demos', 'role'
+					'block', 'site', 'landing', 'repo', 'template', 'demos', 'role', 'syspage'
 				),
 				self::REST_SCOPE_CLOUD => array(
 					'cloud'
@@ -480,7 +494,7 @@ class PublicAction
 
 		if ($app = AppTable::getByClientId($parameters['ID']))
 		{
-			$stat = self::getRestStat(true, false);
+			$stat = self::getRestStat(true);
 			if (isset($stat['blocks'][$app['CODE']]))
 			{
 				$eventResult = new \Bitrix\Main\EventResult(

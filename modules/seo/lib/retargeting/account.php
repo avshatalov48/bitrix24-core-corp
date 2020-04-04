@@ -79,4 +79,9 @@ abstract class Account extends BaseApiObject
 	 * @return Response
 	 */
 	abstract public function getProfile();
+
+	public function getRegionsList()
+	{
+		return [];
+	}
 }

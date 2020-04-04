@@ -24,7 +24,7 @@ BX.IntranetStructure.Init = function(arParams)
 	{
 		BX.IntranetStructure.popup = BX.PopupWindowManager.create("BXStructure", null, {
 			autoHide: false,
-			zIndex: 0,
+			zIndex: 2000,
 			offsetLeft: 0,
 			offsetTop: 0,
 			draggable: {restrict:true},
@@ -133,7 +133,6 @@ BX.IntranetStructure.Init = function(arParams)
 BX.IntranetStructure.ShowForm = function(arParams)
 {
 	BX.IntranetStructure.Init(arParams);
-	BX.IntranetStructure.popup.params.zIndex = (BX.WindowManager? BX.WindowManager.GetZIndex() : 0);
 	BX.IntranetStructure.popup.show();
 }
 

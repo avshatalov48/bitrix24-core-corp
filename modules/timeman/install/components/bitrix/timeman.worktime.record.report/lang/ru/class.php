@@ -16,7 +16,7 @@ $MESS["TIMEMAN_POPUP_WORK_TIME_TITLE"] = 'Рабочее время';
 $MESS["TIMEMAN_BTN_SAVE_TITLE"] = 'Сохранить';
 $MESS["TIMEMAN_BTN_CANCEL_TITLE"] = 'Закрыть';
 
-$MESS["JS_CORE_TMR_START_TITLE"] = "Начало";
+$MESS["JS_CORE_TMR_START_TITLE"] = 'Начало';
 $MESS["JS_CORE_TMR_PAUSE"] = "Перерыв";
 $MESS["JS_CORE_TMR_DEP"] = "Окончание";
 $MESS["JS_CORE_TMR_DURATION"] = "Длительность";
@@ -33,4 +33,5 @@ $MESS["JS_CORE_TMR_REPORT_NO"] = "Не указана";
 $MESS["JS_CORE_TMR_APPROVE"] = "Подтвердить";
 $MESS["JS_CORE_TMR_CANCEL"] = "Отменить";
 $MESS["JS_CORE_TMP_EXPIRE"] = "Не завершен";
-$MESS["TM_RECORD_REPORT_HINT_RECORD_INFO"] = "Информация отображается в вашем часовом поясе<br><br>Часовой пояс сотрудника: <b>#TIME_OFFSET#</b><br /><small>(ваш часовой пояс: #TIME_OFFSET_SELF#)</small><br><br>Рабочий день открыт с IP-адреса:<br /><b>#IP_OPEN#</b><br />Рабочий день закрыт с IP-адреса:<br /><b>#IP_CLOSE#</b>";
+$MESS["TM_RECORD_REPORT_HINT_RECORD_TIMEZONE_INFO"] = "Часовой пояс сотрудника: <b>#TIME_OFFSET#</b><br><small>(ваш часовой пояс: #TIME_OFFSET_SELF#)</small>";
+$MESS["TM_RECORD_REPORT_HINT_RECORD_IP_INFO"] = "Рабочий день открыт с IP-адреса:<br><b>#IP_OPEN#</b><br>Рабочий день закрыт с IP-адреса:<br><b>#IP_CLOSE#</b>";

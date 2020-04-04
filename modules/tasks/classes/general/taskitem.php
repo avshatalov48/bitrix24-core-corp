@@ -1471,7 +1471,7 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 
 		if ($isAdmin && $status !== CTasks::STATE_COMPLETED)
 		{
-			if ($arTaskData['TASK_CONTROL'] === 'Y' && $status == CTasks::STATE_SUPPOSEDLY_COMPLETED)
+			if ($status == CTasks::STATE_SUPPOSEDLY_COMPLETED)
 			{
 				$arAllowedActions[] = self::ACTION_APPROVE;
 				$arAllowedActions[] = self::ACTION_DISAPPROVE;

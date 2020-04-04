@@ -766,6 +766,7 @@ class TasksTaskComponent extends TasksBaseComponent
 
 		//TasksTaskFormState::reset();
 		$this->arResult['COMPONENT_DATA']['STATE'] = static::getState();
+		$this->arResult['COMPONENT_DATA']['OPEN_TIME'] = (new DateTime())->getTimestamp();
 
 		$formSubmitted = $this->formData !== false;
 
@@ -1038,7 +1039,7 @@ class TasksTaskComponent extends TasksBaseComponent
 		$this->arResult['AUX_DATA']['MAIL'] = array(
 			//'FORWARD' => \Bitrix\Tasks\Integration\Mail\Task::getReplyTo($this->userId, $this->arResult['DATA']['TASK']['ID'], 'dummy', SITE_ID)
 		);
-
+		$this->arResult['AUX_DATA']['DISK_FOLDER_ID'] = Integration\Disk::getFolderForUploadedFiles($this->userId)->getData()['FOLDER_ID'];
 	}
 
 	protected function getDataTemplates()
@@ -1667,14 +1668,42 @@ class TasksTaskComponent extends TasksBaseComponent
 	 * @param $items
 	 * @param $taskId
 	 * @param $userId
+	 * @param $params
 	 * @return array|Util\Result
 	 * @throws \Bitrix\Main\ArgumentException
 	 * @throws \Bitrix\Main\NotImplementedException
 	 * @throws \Bitrix\Main\ObjectException
 	 * @throws \Bitrix\Main\SystemException
 	 */
-	public static function saveCheckList($items, $taskId, $userId)
+	public static function saveCheckList($items, $taskId, $userId, $params)
 	{
+		$result = new Util\Result();
+
+		if (isset($params['openTime']) && $params['openTime'])
+		{
+			$openTime = $params['openTime'];
+			$lastUpdateTime = Tasks\Internals\Task\LogTable::getList([
+				'select' => ['CREATED_DATE'],
+				'filter' => [
+					'TASK_ID' => $taskId,
+					'!USER_ID' => $userId,
+					'%FIELD' => 'CHECKLIST',
+				],
+				'order' => ['CREATED_DATE' => 'DESC'],
+				'limit' => 1,
+			])->fetch();
+
+			if ($lastUpdateTime)
+			{
+				$lastUpdateTime = $lastUpdateTime['CREATED_DATE']->getTimestamp();
+				if ($lastUpdateTime > $openTime)
+				{
+					$result->setData(['PREVENT_CHECKLIST_SAVE' => 'It looks like someone has already changed checklist.']);
+					return $result;
+				}
+			}
+		}
+
 		if (!is_array($items))
 		{
 			$items = [];
@@ -1702,7 +1731,10 @@ class TasksTaskComponent extends TasksBaseComponent
 			unset($items[$id]);
 		}
 
-		return TaskCheckListFacade::merge($taskId, $userId, $items);
+		$result = TaskCheckListFacade::merge($taskId, $userId, $items, $params);
+		$result->setData(array_merge(($result->getData() ?? []), ['OPEN_TIME' => (new DateTime())->getTimestamp()]));
+
+		return $result;
 	}
 }
 

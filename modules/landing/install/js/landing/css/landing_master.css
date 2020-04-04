@@ -225,7 +225,8 @@ main .landing-footer:not(.landing-empty):not(:hover) .landing-ui-panel-create-ac
 
 
 .landing-ui-panel-content-action,
-.landing-ui-panel-block-action {
+.landing-ui-panel-block-action,
+.landing-ui-panel-sidebar-actions {
 	background-color: #ffffff;
     top: 40px;
     left: 16px;
@@ -245,6 +246,13 @@ main .landing-footer:not(.landing-empty):not(:hover) .landing-ui-panel-create-ac
 .block-wrapper:hover .landing-ui-panel-block-action,
 .block-wrapper.landing-ui-hover .landing-ui-panel-block-action {
 	opacity: 1;
+}
+
+.landing-sidebar .block-wrapper:hover .landing-ui-panel-content-action,
+.landing-sidebar .block-wrapper.landing-ui-hover .landing-ui-panel-content-action,
+.landing-sidebar .block-wrapper:hover .landing-ui-panel-block-action,
+.landing-sidebar .block-wrapper.landing-ui-hover .landing-ui-panel-block-action {
+	display: none!important;
 }
 
 body[style*="cursor: move;"] .landing-ui-panel-content-action,
@@ -835,6 +843,7 @@ main.landing-edit-mode.landing-ui-overlay::after {
 
 .landing-layout-flex {
 	overflow: visible!important;
+	min-height: 100vh;
 }
 
 .landing-ui-panel-create-action {

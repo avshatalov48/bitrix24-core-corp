@@ -1,6 +1,7 @@
 <?php
 namespace Bitrix\Timeman\Model\Worktime\Report;
 
+use Bitrix\Timeman\Helper\TimeHelper;
 use Bitrix\Timeman\Model\Worktime\Contract\WorktimeRecordIdStorable;
 
 class WorktimeReport extends EO_WorktimeReport implements WorktimeRecordIdStorable
@@ -11,7 +12,7 @@ class WorktimeReport extends EO_WorktimeReport implements WorktimeRecordIdStorab
 			->setActive(true)
 			->setUserId($userId)
 			->setReportType(WorktimeReportTable::REPORT_TYPE_ERR_OPEN)
-			->setReport('TIME_CHANGE;' . date('c') . ';Time was changed manually');
+			->setReport('TIME_CHANGE;' . TimeHelper::getInstance()->getServerIsoDate() . ';Time was changed manually');
 	}
 
 	public static function createOpenReport($userId, $report = '')
@@ -29,7 +30,7 @@ class WorktimeReport extends EO_WorktimeReport implements WorktimeRecordIdStorab
 			->setActive(true)
 			->setUserId($userId)
 			->setReportType(WorktimeReportTable::REPORT_TYPE_ERR_CLOSE)
-			->setReport('TIME_CHANGE;' . date('c') . ';Time was changed manually');
+			->setReport('TIME_CHANGE;' . TimeHelper::getInstance()->getServerIsoDate() . ';Time was changed manually');
 	}
 
 	public static function createCloseReport($userId, $report = '')
@@ -47,7 +48,7 @@ class WorktimeReport extends EO_WorktimeReport implements WorktimeRecordIdStorab
 			->setActive(true)
 			->setUserId($userId)
 			->setReportType(WorktimeReportTable::REPORT_TYPE_ERR_DURATION)
-			->setReport('TIME_CHANGE;' . date('c') . ';Time was changed manually');
+			->setReport('TIME_CHANGE;' . TimeHelper::getInstance()->getServerIsoDate() . ';Time was changed manually');
 	}
 
 	public static function createDurationReport($userId, $report = '')
@@ -71,7 +72,7 @@ class WorktimeReport extends EO_WorktimeReport implements WorktimeRecordIdStorab
 			->setEntryId($entryId)
 			->setUserId($userId)
 			->setReportType(WorktimeReportTable::REPORT_TYPE_REPORT_REOPEN)
-			->setReport('REOPEN;' . date('c') . ';Entry was reopened.');
+			->setReport('REOPEN;' . TimeHelper::getInstance()->getServerIsoDate() . ';Entry was reopened.');
 	}
 
 	public function setRecordId($recordId)

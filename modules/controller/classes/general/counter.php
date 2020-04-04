@@ -123,12 +123,28 @@ class CAllControllerCounter
 
 	public static function Update($ID, $arFields)
 	{
-		global $DB;
+		global $DB, $USER;
 		$ID = intval($ID);
 
 		if(!CControllerCounter::CheckFields($arFields, $ID))
 			return false;
 
+		if (array_key_exists("COMMAND", $arFields))
+		{
+			$rsCounter = $DB->Query("select * from b_controller_counter where ID = ".$ID);
+			$arCounter = $rsCounter->Fetch();
+			if ($arCounter and $arCounter["COMMAND"] != $arFields["COMMAND"])
+			{
+				$counterHistory = \Bitrix\Controller\CounterHistoryTable::createObject();
+				$counterHistory->setCounterId($ID);
+				$counterHistory->setTimestampX(new \Bitrix\Main\Type\DateTime());
+				$counterHistory->setUserId(is_object($USER)? $USER->GetID(): 0);
+				$counterHistory->setName(isset($arFields["NAME"])? $arFields["NAME"]: $arCounter["NAME"]);
+				$counterHistory->setCommandFrom($arCounter["COMMAND"]);
+				$counterHistory->setCommandTo($arFields["COMMAND"]);
+				$counterHistory->save();
+			}
+		}
 		unset($arFields["TIMESTAMP_X"]);
 		$arFields["~TIMESTAMP_X"] = $DB->CurrentTimeFunction();
 
@@ -355,6 +371,49 @@ class CAllControllerCounter
 		else
 			return $value;
 	}
+
+	public static function GetHistory($arFilter)
+	{
+		global $DB;
+
+		$obQueryWhere = new CSQLWhere;
+		$arFields = array(
+			"COUNTER_ID" => array(
+				"TABLE_ALIAS" => "h",
+				"FIELD_NAME" => "h.COUNTER_ID",
+				"FIELD_TYPE" => "int",
+				"JOIN" => false,
+			),
+		);
+		$obQueryWhere->SetFields($arFields);
+
+		if(!is_array($arFilter))
+			$arFilter = array();
+		$strQueryWhere = $obQueryWhere->GetQuery($arFilter);
+
+		$strSql = "
+			SELECT h.*
+				,".$DB->DateToCharFunction("h.TIMESTAMP_X", "FULL")." TIMESTAMP_X
+				,".$DB->Concat("'('", "U.LOGIN", "') '", "U.NAME", "' '", "U.LAST_NAME")." USER_ID_USER
+			FROM b_controller_counter_history h
+			LEFT JOIN b_user U ON U.ID = h.USER_ID
+		";
+
+		if($strQueryWhere)
+		{
+			$strSql .= "
+				WHERE
+				".$strQueryWhere."
+			";
+		}
+
+		$strSql .= "
+			ORDER BY h.ID DESC
+		";
+
+		return $DB->Query($strSql);
+	}
+
 }
 
 class CControllerCounterResult extends CDBResult

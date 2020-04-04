@@ -51,6 +51,7 @@ class ImOpenLinesComponentLinesEdit extends CBitrixComponent implements Controll
 			'WORKTIME_ENABLE',
 			'CATEGORY_ENABLE',
 			'VOTE_MESSAGE',
+			'VOTE_BEFORE_FINISH',
 			'VOTE_CLOSING_DELAY',
 			'WELCOME_MESSAGE',
 			'WELCOME_BOT_ENABLE',
@@ -571,6 +572,11 @@ class ImOpenLinesComponentLinesEdit extends CBitrixComponent implements Controll
 		$this->userPermissions = \Bitrix\ImOpenlines\Security\Permissions::createWithCurrentUser();
 
 		$this->arResult['PATH_TO_LIST'] = \Bitrix\ImOpenLines\Common::getPublicFolder() . 'list/';
+
+//		CModule::includeModule('crm');
+//		$contactCenterHandler = new \Bitrix\Intranet\ContactCenter();
+//		$forms = $contactCenterHandler->crmGetItems()->getData()['form']['LIST'];
+//		$this->arResult['CRM_FORMS_LIST'] = $forms;
 
 		$request = HttpApplication::getInstance()->getContext()->getRequest();
 		if($request->getQuery('action') == 'imopenlines_create_qa_list' && $request->getQuery('ID') > 0)

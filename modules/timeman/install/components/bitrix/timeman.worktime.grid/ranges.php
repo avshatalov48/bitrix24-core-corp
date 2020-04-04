@@ -67,7 +67,7 @@ class Ranges
 	}
 
 	/**
-	 * @param null $date
+	 * @param \DateTime|Main\Type\Date $date
 	 * @param null $quarter
 	 * @return \DateTime[]
 	 */
@@ -75,7 +75,7 @@ class Ranges
 	{
 		if ($quarter === null)
 		{
-			$quarter = intval(($date->format('n') + 2) / 3);
+			$quarter = intval(((int)$date->format('n') + 2) / 3);
 		}
 
 		$ranges = [
@@ -91,6 +91,10 @@ class Ranges
 		];
 	}
 
+	/**
+	 * @param Main\Type\Date $date
+	 * @return array
+	 */
 	public static function getYearRange($date)
 	{
 		return [
@@ -99,6 +103,11 @@ class Ranges
 		];
 	}
 
+	/**
+	 * @param Main\Type\Date $date
+	 * @return array
+	 * @throws \Exception
+	 */
 	public static function getTwoWeeksRange($date = null)
 	{
 		if (!$date)
@@ -107,7 +116,7 @@ class Ranges
 		}
 		$from = $date;
 		$to = clone $date;
-		$to->add('+14 days');
+		$to->add(new \DateInterval('P14D'));
 		return [
 			$from,
 			$to,

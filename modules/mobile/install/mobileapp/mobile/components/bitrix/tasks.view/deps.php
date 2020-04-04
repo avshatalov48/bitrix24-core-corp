@@ -1,7 +1,4 @@
-<?
+<?php
 return [
-	'reload/listeners',
-	'cache',
-	'task',
-	'user/list',
+	'task/taskcard',
 ];

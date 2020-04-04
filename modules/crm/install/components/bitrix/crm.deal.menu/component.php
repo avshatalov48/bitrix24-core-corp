@@ -592,6 +592,16 @@ if($arParams['TYPE'] === 'list')
 		];
 	}
 
+	if(\Bitrix\Main\Loader::includeModule('rest') && is_callable('\Bitrix\Rest\Marketplace\Url::getConfigurationPlacementUrl'))
+	{
+		$url = \Bitrix\Rest\Marketplace\Url::getConfigurationPlacementUrl('crm_deal', 'setting_list');
+		$arResult['BUTTONS'][] = [
+			'TEXT' => GetMessage('DEAL_VERTICAL_CRM'),
+			'TITLE' => GetMessage('DEAL_VERTICAL_CRM_TITLE'),
+			'ONCLICK' => 'BX.SidePanel.Instance.open(\''.$url.'\');'
+		];
+	}
+
 	if ($bConfig)
 	{
 		CCrmComponentHelper::RegisterScriptLink('/bitrix/js/crm/common.js');

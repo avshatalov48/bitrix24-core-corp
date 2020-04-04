@@ -169,7 +169,19 @@ class Entities
 						? 'Y'
 						: 'N'
 				),
-				"DATA_ADDITIONAL" => $dataAdditional
+				"DATA_ADDITIONAL" => $dataAdditional,
+				"MULTI" => (
+					(
+						isset($options["returnMultiEmail"])
+						&& $options["returnMultiEmail"] == 'Y'
+					)
+					|| (
+						isset($options["returnMultiPhone"])
+						&& $options["returnMultiPhone"] == 'Y'
+					)
+						? 'Y'
+						: 'N'
+				)
 			)
 		);
 

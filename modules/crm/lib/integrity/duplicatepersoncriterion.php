@@ -616,6 +616,15 @@ class DuplicatePersonCriterion extends DuplicateCriterion
 			false
 		);
 	}
+	public function getSummary()
+	{
+		self::includeLangFile();
+
+		return GetMessage(
+			'CRM_DUP_CRITERION_PERS_SUMMARY',
+			array('#DESCR#'=> $this->getMatchDescription())
+		);
+	}
 	public function getTextTotals($count, $limit = 0)
 	{
 		self::includeLangFile();

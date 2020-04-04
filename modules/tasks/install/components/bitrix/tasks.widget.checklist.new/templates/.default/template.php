@@ -61,8 +61,8 @@ $arParams =& $helper->getComponent()->arParams; // make $arParams the same varia
 
 		<div id="checklistArea"></div>
 		<?php if ($arResult['COMMON_ACTION']['CAN_ADD']):?>
-			<div class="checklist-list-actions">
-				<a id="addCheckList" class="checklist-item-add-btn"><?=Loc::getMessage('TASKS_CHECKLIST_TEMPLATE_ADD_CHECKLIST')?></a>
+			<div class="tasks-checklist-list-actions">
+				<a id="addCheckList" class="tasks-checklist-item-add-btn"><?=Loc::getMessage('TASKS_CHECKLIST_TEMPLATE_ADD_CHECKLIST')?></a>
 			</div>
 		<?php endif?>
 	</div>
@@ -93,9 +93,7 @@ $arParams =& $helper->getComponent()->arParams; // make $arParams the same varia
 				'converted' => $arResult['CONVERTED'],
 				'ajaxActions' => $arResult['AJAX_ACTIONS'],
 				'attachments' => $arResult['ATTACHMENTS'],
-				'options' => [
-					'showCompleted' => $arResult['SHOW_COMPLETED'],
-				],
+				'options' => $arResult['USER_OPTIONS'],
 				'commonAction' => [
 					'canAdd' => $arResult['COMMON_ACTION']['CAN_ADD'],
 					'canDrag' => $arResult['COMMON_ACTION']['CAN_REORDER'],

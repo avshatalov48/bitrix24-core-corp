@@ -78,6 +78,7 @@ else
 			'PATH_TO_COMPANY_EDIT' => $arResult['PATH_TO_COMPANY_EDIT'],
 			'PATH_TO_COMPANY_IMPORT' => $arResult['PATH_TO_COMPANY_IMPORT'],
 			'PATH_TO_COMPANY_DEDUPE' => $arResult['PATH_TO_COMPANY_DEDUPE'],
+			'PATH_TO_COMPANY_DEDUPEWIZARD' => $arResult['PATH_TO_COMPANY_DEDUPEWIZARD'],
 			'NAME_TEMPLATE' => $arParams['NAME_TEMPLATE'],
 			'ELEMENT_ID' => $arResult['VARIABLES']['company_id'],
 			'TYPE' => 'list',

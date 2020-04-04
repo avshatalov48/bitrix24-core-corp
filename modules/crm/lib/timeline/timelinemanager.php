@@ -237,7 +237,13 @@ class TimelineManager
 					}
 				}
 
-				$communications = \CCrmActivity::PrepareCommunicationInfos($activityIDs);
+				$communications = \CCrmActivity::PrepareCommunicationInfos(
+					$activityIDs,
+					array(
+						'ENABLE_PERMISSION_CHECK' => true,
+						'USER_PERMISSIONS' => $userPermissions
+					)
+				);
 				foreach($communications as $assocEntityID => $info)
 				{
 					if(isset($entityInfos[$assocEntityID]))

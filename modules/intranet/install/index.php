@@ -1,6 +1,7 @@
 <?php
 
-use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Localization\Loc,
+	Bitrix\Main\IO;
 Loc::loadMessages(__FILE__);
 
 //if (class_exists("intranet")) return;
@@ -317,6 +318,22 @@ Class intranet extends CModule
 				$_SERVER["DOCUMENT_ROOT"]."/bitrix/services",
 				true, true
 			);
+
+			foreach (["portal", "portal_clear"] as $wizard)
+			{
+				if (IO\Directory::isDirectoryExists(
+					$_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/intranet/install/wizards/bitrix/".$wizard)
+				)
+				{
+					CopyDirFiles(
+						$_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/intranet/install/wizards/bitrix/".$wizard,
+						$_SERVER["DOCUMENT_ROOT"]."/bitrix/wizards/bitrix/".$wizard,
+						true,
+						true,
+						true
+					);
+				}
+			}
 		}
 
 		\Bitrix\Main\UrlRewriter::add(

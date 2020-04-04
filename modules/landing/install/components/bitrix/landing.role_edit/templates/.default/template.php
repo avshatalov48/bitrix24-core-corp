@@ -87,7 +87,7 @@ $drawTr = function($siteId, array $selectedId = [], $title = '') use($arResult)
 				<td class="table-blue-td-select-remove">
 					' . (
 						($i == $count-1 && $siteId > 0)
-						? '<a href="javascript:void(0);" class="landing-rightsblock-remove" data-id="' . $siteId . '">
+						? '<a href="javascript:void(0);" class="landing-rightsblock-remove bitrix24-metrika" data-metrika24="role_site_delete" data-id="' . $siteId . '">
 								' . Loc::getMessage('LANDING_TPL_BUTTON_DEL_RIGHT') . '
 							</a>'
 						: ''
@@ -178,7 +178,7 @@ unset($site);
 		echo $drawTr(
 			0,
 			$arResult['RIGHTS'][0],
-			Loc::getMessage('LANDING_TPL_RIGHT_DEFAULT_TITLE')
+			$component->getMessageType('LANDING_TPL_RIGHT_DEFAULT_TITLE')
 		);
 		foreach ($arResult['RIGHTS'] as $siteId => $rights)
 		{
@@ -197,7 +197,8 @@ unset($site);
 
 	<?if ($arResult['SITES']):?>
 	<div style="padding: 20px 0 20px 0;">
-		<span class="landing-role-add" <?
+		<span class="landing-role-add bitrix24-metrika" <?
+			?>data-metrika24="role_site_add" <?
 			?>id="landing-role-add" <?
 			?>onclick="showSiteMenu(
 				this,
@@ -206,14 +207,16 @@ unset($site);
 					LANDING_ALERT_CONTENT_RELOADED: '<?= \CUtil::jsEscape(Loc::getMessage('LANDING_ALERT_CONTENT_RELOADED'));?>'
 				}
 			)">
-			<?= Loc::getMessage('LANDING_TPL_ADD_FOR_SITE');?>
+			<?= $component->getMessageType('LANDING_TPL_ADD_FOR_SITE');?>
 		</span>
 	</div>
+	<?else:?>
+		<div style="padding-top: 20px;"></div>
 	<?endif;?>
 
 	<div class="pinable-block">
 		<div class="landing-form-footer-container">
-			<button id="landing-rights-save" type="submit" class="ui-btn ui-btn-success" name="submit" value="<?= Loc::getMessage('LANDING_TPL_BUTTON_SAVE');?>">
+			<button id="landing-rights-save" type="submit" class="ui-btn ui-btn-success bitrix24-metrika" data-metrika24="role_save" name="submit" value="<?= Loc::getMessage('LANDING_TPL_BUTTON_SAVE');?>">
 				<?= Loc::getMessage('LANDING_TPL_BUTTON_SAVE');?>
 			</button>
 			<a class="ui-btn ui-btn-md ui-btn-link" href="<?= $arParams['PAGE_URL_ROLES'];?>">

@@ -1,4 +1,4 @@
-(function (exports,main_polyfill_customevent,pull_components_status,ui_vue_components_smiles,im_component_dialog,im_component_textarea,im_component_quotepanel,imopenlines_component_message,rest_client,main_md5,main_date,pull_client,im_model,im_controller,im_tools_localstorage,im_provider_rest,im_provider_pull,im_tools_logger,im_const,ui_icons,ui_forms,im_utils,ui_vue,ui_vue_vuex) {
+(function (exports,main_polyfill_customevent,pull_components_status,ui_vue_components_smiles,im_component_dialog,im_component_textarea,im_component_quotepanel,imopenlines_component_message,imopenlines_component_form,rest_client,main_md5,main_date,pull_client,im_model,im_controller,im_tools_localstorage,im_provider_rest,im_provider_pull,im_tools_logger,im_const,ui_icons,ui_forms,im_utils,ui_vue,ui_vue_vuex) {
 	'use strict';
 
 	/**
@@ -87,6 +87,19 @@
 	var RestMethodCheck = GetObjectValues(RestMethod);
 	var RestAuth = Object.freeze({
 	  guest: 'guest'
+	});
+	var SessionStatus = Object.freeze({
+	  new: 0,
+	  skip: 5,
+	  answer: 10,
+	  client: 20,
+	  clientAfterOperator: 25,
+	  operator: 40,
+	  waitClient: 50,
+	  close: 60,
+	  spam: 65,
+	  duplicate: 69,
+	  silentlyClose: 75
 	});
 
 	/**
@@ -211,6 +224,7 @@
 	          },
 	          vote: {
 	            enable: false,
+	            beforeFinish: true,
 	            messageText: this.getVariable('vote.messageText', ''),
 	            messageLike: this.getVariable('vote.messageLike', ''),
 	            messageDislike: this.getVariable('vote.messageDislike', '')
@@ -235,6 +249,7 @@
 	        dialog: {
 	          sessionId: 0,
 	          sessionClose: true,
+	          sessionStatus: 0,
 	          userVote: VoteType.none,
 	          userConsent: false,
 	          operator: {
@@ -301,6 +316,10 @@
 	          if (im_utils.Utils.types.isPlainObject(payload.vote)) {
 	            if (typeof payload.vote.enable === 'boolean') {
 	              state.common.vote.enable = payload.vote.enable;
+	            }
+
+	            if (typeof payload.vote.beforeFinish === 'boolean') {
+	              state.common.vote.beforeFinish = payload.vote.beforeFinish;
 	            }
 
 	            if (typeof payload.vote.messageText === 'string') {
@@ -392,6 +411,10 @@
 
 	          if (typeof payload.sessionClose === 'boolean') {
 	            state.dialog.sessionClose = payload.sessionClose;
+	          }
+
+	          if (typeof payload.sessionStatus === 'number') {
+	            state.dialog.sessionStatus = payload.sessionStatus;
 	          }
 
 	          if (typeof payload.userConsent === 'boolean') {
@@ -757,13 +780,7 @@
 	      this.store.commit('messages/initCollection', {
 	        chatId: data.chatId
 	      });
-	      this.store.commit('widget/dialog', {
-	        sessionId: data.sessionId,
-	        sessionClose: data.sessionClose,
-	        userVote: data.userVote,
-	        userConsent: data.userConsent,
-	        operator: data.operator
-	      });
+	      this.store.commit('widget/dialog', data);
 	      this.store.commit('application/set', {
 	        dialog: {
 	          chatId: data.chatId,
@@ -898,6 +915,7 @@
 	      this.store.commit('widget/dialog', {
 	        sessionId: params.sessionId,
 	        sessionClose: false,
+	        sessionStatus: 0,
 	        userVote: VoteType.none
 	      });
 	      this.widget.sendEvent({
@@ -921,16 +939,34 @@
 	      });
 	    }
 	  }, {
+	    key: "handleSessionStatus",
+	    value: function handleSessionStatus(params, extra, command) {
+	      this.store.commit('widget/dialog', {
+	        sessionId: params.sessionId,
+	        sessionStatus: params.sessionStatus,
+	        sessionClose: true
+	      });
+	      this.widget.sendEvent({
+	        type: SubscriptionType.sessionStatus,
+	        data: {
+	          sessionId: params.sessionId,
+	          sessionStatus: params.sessionStatus
+	        }
+	      });
+	    }
+	  }, {
 	    key: "handleSessionFinish",
 	    value: function handleSessionFinish(params, extra, command) {
 	      this.store.commit('widget/dialog', {
 	        sessionId: params.sessionId,
+	        sessionStatus: params.sessionStatus,
 	        sessionClose: true
 	      });
 	      this.widget.sendEvent({
 	        type: SubscriptionType.sessionFinish,
 	        data: {
-	          sessionId: params.sessionId
+	          sessionId: params.sessionId,
+	          sessionStatus: params.sessionStatus
 	        }
 	      });
 
@@ -3647,8 +3683,23 @@
 	    customBackgroundOnlineStyle: function customBackgroundOnlineStyle(state) {
 	      return state.widget.common.styles.backgroundColor ? 'border-color: ' + state.widget.common.styles.backgroundColor + '!important;' : '';
 	    },
-	    showName: function showName() {
-	      return this.widget.dialog.operator.firstName || this.widget.dialog.operator.lastName;
+	    showName: function showName(state) {
+	      return state.widget.dialog.operator.firstName || state.widget.dialog.operator.lastName;
+	    },
+	    voteActive: function voteActive(state) {
+	      if (!state.widget.common.vote.beforeFinish && state.widget.dialog.sessionStatus < SessionStatus.waitClient) {
+	        return false;
+	      }
+
+	      if (!state.widget.dialog.sessionClose || state.widget.dialog.sessionClose && state.widget.dialog.userVote === VoteType.none) {
+	        return true;
+	      }
+
+	      if (state.widget.dialog.sessionClose && state.widget.dialog.userVote !== VoteType.none) {
+	        return true;
+	      }
+
+	      return false;
 	    },
 	    localize: function localize() {
 	      return ui_vue.Vue.getFilteredPhrases('BX_LIVECHAT_', this.$root.$bitrixMessages);
@@ -3672,7 +3723,7 @@
 	      }
 	    }
 	  },
-	  template: "\n\t\t<div class=\"bx-livechat-head-wrap\">\n\t\t\t<template v-if=\"isWidgetDisabled\">\n\t\t\t\t<div class=\"bx-livechat-head\" :style=\"customBackgroundStyle\">\n\t\t\t\t\t<div class=\"bx-livechat-title\">{{widget.common.configName || localize.BX_LIVECHAT_TITLE}}</div>\n\t\t\t\t\t<div class=\"bx-livechat-control-box\">\n\t\t\t\t\t\t<button v-if=\"!widget.common.pageMode\" class=\"bx-livechat-control-btn bx-livechat-control-btn-close\" :title=\"localize.BX_LIVECHAT_CLOSE_BUTTON\" @click=\"close\"></button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\t\n\t\t\t</template>\n\t\t\t<template v-else-if=\"application.error.active\">\n\t\t\t\t<div class=\"bx-livechat-head\" :style=\"customBackgroundStyle\">\n\t\t\t\t\t<div class=\"bx-livechat-title\">{{widget.common.configName || localize.BX_LIVECHAT_TITLE}}</div>\n\t\t\t\t\t<div class=\"bx-livechat-control-box\">\n\t\t\t\t\t\t<button v-if=\"!widget.common.pageMode\" class=\"bx-livechat-control-btn bx-livechat-control-btn-close\" :title=\"localize.BX_LIVECHAT_CLOSE_BUTTON\" @click=\"close\"></button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</template>\n\t\t\t<template v-else-if=\"!widget.common.configId\">\n\t\t\t\t<div class=\"bx-livechat-head\" :style=\"customBackgroundStyle\">\n\t\t\t\t\t<div class=\"bx-livechat-title\">{{widget.common.configName || localize.BX_LIVECHAT_TITLE}}</div>\n\t\t\t\t\t<div class=\"bx-livechat-control-box\">\n\t\t\t\t\t\t<button v-if=\"!widget.common.pageMode\" class=\"bx-livechat-control-btn bx-livechat-control-btn-close\" :title=\"localize.BX_LIVECHAT_CLOSE_BUTTON\" @click=\"close\"></button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</template>\t\t\t\n\t\t\t<template v-else>\n\t\t\t\t<div class=\"bx-livechat-head\" :style=\"customBackgroundStyle\">\n\t\t\t\t\t<template v-if=\"!showName\">\n\t\t\t\t\t\t<div class=\"bx-livechat-title\">{{widget.common.configName || localize.BX_LIVECHAT_TITLE}}</div>\n\t\t\t\t\t</template>\n\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t<div class=\"bx-livechat-user bx-livechat-status-online\">\n\t\t\t\t\t\t\t<template v-if=\"widget.dialog.operator.avatar\">\n\t\t\t\t\t\t\t\t<div class=\"bx-livechat-user-icon\" :style=\"'background-image: url('+encodeURI(widget.dialog.operator.avatar)+')'\">\n\t\t\t\t\t\t\t\t\t<div v-if=\"widget.dialog.operator.online\" class=\"bx-livechat-user-status\" :style=\"customBackgroundOnlineStyle\"></div>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t\t\t<div class=\"bx-livechat-user-icon\">\n\t\t\t\t\t\t\t\t\t<div v-if=\"widget.dialog.operator.online\" class=\"bx-livechat-user-status\" :style=\"customBackgroundOnlineStyle\"></div>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"bx-livechat-user-info\">\n\t\t\t\t\t\t\t<div class=\"bx-livechat-user-name\">{{widget.dialog.operator.firstName? widget.dialog.operator.firstName: widget.dialog.operator.name}}</div>\n\t\t\t\t\t\t\t<div class=\"bx-livechat-user-position\">{{widget.dialog.operator.workPosition? widget.dialog.operator.workPosition: localize.BX_LIVECHAT_USER}}</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</template>\n\t\t\t\t\t<div class=\"bx-livechat-control-box\">\n\t\t\t\t\t\t<span class=\"bx-livechat-control-box-active\" v-if=\"widget.common.dialogStart && widget.dialog.sessionId\">\n\t\t\t\t\t\t\t<button v-if=\"widget.common.vote.enable && (!widget.dialog.sessionClose || widget.dialog.sessionClose && widget.dialog.userVote == VoteType.none)\" :class=\"'bx-livechat-control-btn bx-livechat-control-btn-like bx-livechat-dialog-vote-'+(widget.dialog.userVote)\" :title=\"localize.BX_LIVECHAT_VOTE_BUTTON\" @click=\"like\"></button>\n\t\t\t\t\t\t\t<button v-if=\"widget.common.vote.enable && widget.dialog.sessionClose && widget.dialog.userVote != VoteType.none\" :class=\"'bx-livechat-control-btn bx-livechat-control-btn-disabled bx-livechat-control-btn-like bx-livechat-dialog-vote-'+(widget.dialog.userVote)\"></button>\n\t\t\t\t\t\t\t<button class=\"bx-livechat-control-btn bx-livechat-control-btn-mail\" :title=\"localize.BX_LIVECHAT_MAIL_BUTTON_NEW\" @click=\"history\"></button>\n\t\t\t\t\t\t</span>\t\n\t\t\t\t\t\t<button v-if=\"!widget.common.pageMode\" class=\"bx-livechat-control-btn bx-livechat-control-btn-close\" :title=\"localize.BX_LIVECHAT_CLOSE_BUTTON\" @click=\"close\"></button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</template>\n\t\t</div>\n\t"
+	  template: "\n\t\t<div class=\"bx-livechat-head-wrap\">\n\t\t\t<template v-if=\"isWidgetDisabled\">\n\t\t\t\t<div class=\"bx-livechat-head\" :style=\"customBackgroundStyle\">\n\t\t\t\t\t<div class=\"bx-livechat-title\">{{widget.common.configName || localize.BX_LIVECHAT_TITLE}}</div>\n\t\t\t\t\t<div class=\"bx-livechat-control-box\">\n\t\t\t\t\t\t<button v-if=\"!widget.common.pageMode\" class=\"bx-livechat-control-btn bx-livechat-control-btn-close\" :title=\"localize.BX_LIVECHAT_CLOSE_BUTTON\" @click=\"close\"></button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\t\n\t\t\t</template>\n\t\t\t<template v-else-if=\"application.error.active\">\n\t\t\t\t<div class=\"bx-livechat-head\" :style=\"customBackgroundStyle\">\n\t\t\t\t\t<div class=\"bx-livechat-title\">{{widget.common.configName || localize.BX_LIVECHAT_TITLE}}</div>\n\t\t\t\t\t<div class=\"bx-livechat-control-box\">\n\t\t\t\t\t\t<button v-if=\"!widget.common.pageMode\" class=\"bx-livechat-control-btn bx-livechat-control-btn-close\" :title=\"localize.BX_LIVECHAT_CLOSE_BUTTON\" @click=\"close\"></button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</template>\n\t\t\t<template v-else-if=\"!widget.common.configId\">\n\t\t\t\t<div class=\"bx-livechat-head\" :style=\"customBackgroundStyle\">\n\t\t\t\t\t<div class=\"bx-livechat-title\">{{widget.common.configName || localize.BX_LIVECHAT_TITLE}}</div>\n\t\t\t\t\t<div class=\"bx-livechat-control-box\">\n\t\t\t\t\t\t<button v-if=\"!widget.common.pageMode\" class=\"bx-livechat-control-btn bx-livechat-control-btn-close\" :title=\"localize.BX_LIVECHAT_CLOSE_BUTTON\" @click=\"close\"></button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</template>\t\t\t\n\t\t\t<template v-else>\n\t\t\t\t<div class=\"bx-livechat-head\" :style=\"customBackgroundStyle\">\n\t\t\t\t\t<template v-if=\"!showName\">\n\t\t\t\t\t\t<div class=\"bx-livechat-title\">{{widget.common.configName || localize.BX_LIVECHAT_TITLE}}</div>\n\t\t\t\t\t</template>\n\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t<div class=\"bx-livechat-user bx-livechat-status-online\">\n\t\t\t\t\t\t\t<template v-if=\"widget.dialog.operator.avatar\">\n\t\t\t\t\t\t\t\t<div class=\"bx-livechat-user-icon\" :style=\"'background-image: url('+encodeURI(widget.dialog.operator.avatar)+')'\">\n\t\t\t\t\t\t\t\t\t<div v-if=\"widget.dialog.operator.online\" class=\"bx-livechat-user-status\" :style=\"customBackgroundOnlineStyle\"></div>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t\t\t<div class=\"bx-livechat-user-icon\">\n\t\t\t\t\t\t\t\t\t<div v-if=\"widget.dialog.operator.online\" class=\"bx-livechat-user-status\" :style=\"customBackgroundOnlineStyle\"></div>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"bx-livechat-user-info\">\n\t\t\t\t\t\t\t<div class=\"bx-livechat-user-name\">{{widget.dialog.operator.firstName? widget.dialog.operator.firstName: widget.dialog.operator.name}}</div>\n\t\t\t\t\t\t\t<div class=\"bx-livechat-user-position\">{{widget.dialog.operator.workPosition? widget.dialog.operator.workPosition: localize.BX_LIVECHAT_USER}}</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</template>\n\t\t\t\t\t<div class=\"bx-livechat-control-box\">\n\t\t\t\t\t\t<span class=\"bx-livechat-control-box-active\" v-if=\"widget.common.dialogStart && widget.dialog.sessionId\">\n\t\t\t\t\t\t\t<button v-if=\"widget.common.vote.enable && voteActive\" :class=\"'bx-livechat-control-btn bx-livechat-control-btn-like bx-livechat-dialog-vote-'+(widget.dialog.userVote)\" :title=\"localize.BX_LIVECHAT_VOTE_BUTTON\" @click=\"like\"></button>\n\t\t\t\t\t\t\t<button class=\"bx-livechat-control-btn bx-livechat-control-btn-mail\" :title=\"localize.BX_LIVECHAT_MAIL_BUTTON_NEW\" @click=\"history\"></button>\n\t\t\t\t\t\t</span>\t\n\t\t\t\t\t\t<button v-if=\"!widget.common.pageMode\" class=\"bx-livechat-control-btn bx-livechat-control-btn-close\" :title=\"localize.BX_LIVECHAT_CLOSE_BUTTON\" @click=\"close\"></button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</template>\n\t\t</div>\n\t"
 	});
 
 	/**
@@ -4197,5 +4248,5 @@
 	  detail: {}
 	}));
 
-}((this.window = this.window || {}),BX,window,window,window,window,window,window,BX,BX,BX,BX,BX.Messenger.Model,BX.Messenger.Controller,BX.Messenger,BX.Messenger.Provider.Pull,BX.Messenger.Provider.Pull,BX.Messenger,BX.Messenger.Const,BX,BX,BX.Messenger,BX,BX));
+}((this.window = this.window || {}),BX,window,window,window,window,window,window,window,BX,BX,BX,BX,BX.Messenger.Model,BX.Messenger.Controller,BX.Messenger,BX.Messenger.Provider.Pull,BX.Messenger.Provider.Pull,BX.Messenger,BX.Messenger.Const,BX,BX,BX.Messenger,BX,BX));
 //# sourceMappingURL=widget.bundle.js.map

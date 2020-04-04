@@ -17,8 +17,14 @@ class Limits
 	const OPTION_IGNORE_MAXIMUM_GROUPS = "ignore_maximum_groups";
 	const OPTION_IGNORE_MAXIMUM_GROUP_MEMBERS = "ignore_maximum_group_members";
 
-	public static function getRecordLimit()
+	public static function getRecordLimit($mode = false)
 	{
+		$sipConnectorActive = \CVoxImplantConfig::GetModeStatus(\CVoxImplantConfig::MODE_SIP);
+		if ($mode == \CVoxImplantConfig::MODE_SIP && $sipConnectorActive)
+		{
+			return 0;
+		}
+
 		if (Loader::includeModule('bitrix24'))
 		{
 			return Bitrix24\Feature::getVariable('voximplant_records_limit');
@@ -27,6 +33,44 @@ class Limits
 		{
 			return 0;
 		}
+	}
+
+	public static function getRemainingRecordsCount()
+	{
+		$recordLimit = static::getRecordLimit();
+		if(!$recordLimit)
+		{
+			return 0;
+		}
+
+		$recordMonth = Option::get("voximplant", "record_month");
+		$currentMonth = date('Ym');
+
+		if (!$recordMonth)
+		{
+			Option::set("voximplant", "record_month", $currentMonth);
+			\CGlobalCounter::Set('vi_records', 0, \CGlobalCounter::ALL_SITES, '', false);
+			return $recordLimit;
+		}
+
+		$recordCount = \CGlobalCounter::GetValue('vi_records', \CGlobalCounter::ALL_SITES);
+		if($recordCount < $recordLimit)
+		{
+			return $recordLimit - $recordCount;
+		}
+
+		if($recordMonth < $currentMonth)
+		{
+			Option::set("voximplant", "record_month", $currentMonth);
+			\CGlobalCounter::Set('vi_records', 0, \CGlobalCounter::ALL_SITES, '', false);
+			return $recordLimit;
+		}
+		return 0;
+	}
+
+	public static function registerRecord()
+	{
+		\CGlobalCounter::Increment('vi_records', \CGlobalCounter::ALL_SITES, false);
 	}
 
 	/**
@@ -43,7 +87,7 @@ class Limits
 			return false;
 		}
 
-		if($lineMode = \CVoxImplantConfig::MODE_SIP && \CVoxImplantSip::isActive())
+		if($lineMode == \CVoxImplantConfig::MODE_SIP && \CVoxImplantSip::isActive())
 		{
 			return false;
 		}

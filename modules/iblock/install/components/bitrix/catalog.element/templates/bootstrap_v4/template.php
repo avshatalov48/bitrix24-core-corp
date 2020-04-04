@@ -688,8 +688,8 @@ $themeClass = isset($arParams['TEMPLATE_THEME']) ? ' bx-'.$arParams['TEMPLATE_TH
 												?>
 												<div class="mb-3">
 													<a class="btn <?=$showButtonClassName?> product-item-detail-buy-button"
-													   id="<?=$itemIds['ADD_BASKET_LINK']?>"
-													   href="javascript:void(0);">
+														id="<?=$itemIds['ADD_BASKET_LINK']?>"
+														href="javascript:void(0);">
 														<?=$arParams['MESS_BTN_ADD_TO_BASKET']?>
 													</a>
 												</div>
@@ -701,8 +701,8 @@ $themeClass = isset($arParams['TEMPLATE_THEME']) ? ' bx-'.$arParams['TEMPLATE_TH
 												?>
 												<div class="mb-3">
 													<a class="btn <?=$buyButtonClassName?> product-item-detail-buy-button"
-													   id="<?=$itemIds['BUY_LINK']?>"
-													   href="javascript:void(0);">
+														id="<?=$itemIds['BUY_LINK']?>"
+														href="javascript:void(0);">
 														<?=$arParams['MESS_BTN_BUY']?>
 													</a>
 												</div>
@@ -1313,11 +1313,11 @@ $themeClass = isset($arParams['TEMPLATE_THEME']) ? ' bx-'.$arParams['TEMPLATE_TH
 									{
 										?>
 										<div class="product-item-selected-scu product-item-selected-scu-color selected"
-											 title="<?=$value['NAME']?>"
-											 style="background-image: url('<?=$value['PICT']['SRC']?>'); display: none;"
-											 data-sku-line="<?=$i?>"
-											 data-treevalue="<?=$propertyId?>_<?=$value['ID']?>"
-											 data-onevalue="<?=$value['ID']?>">
+											title="<?=$value['NAME']?>"
+											style="background-image: url('<?=$value['PICT']['SRC']?>'); display: none;"
+											data-sku-line="<?=$i?>"
+											data-treevalue="<?=$propertyId?>_<?=$value['ID']?>"
+											data-onevalue="<?=$value['ID']?>">
 										</div>
 										<?
 									}
@@ -1325,11 +1325,11 @@ $themeClass = isset($arParams['TEMPLATE_THEME']) ? ' bx-'.$arParams['TEMPLATE_TH
 									{
 										?>
 										<div class="product-item-selected-scu product-item-selected-scu-text selected"
-											 title="<?=$value['NAME']?>"
-											 style="display: none;"
-											 data-sku-line="<?=$i?>"
-											 data-treevalue="<?=$propertyId?>_<?=$value['ID']?>"
-											 data-onevalue="<?=$value['ID']?>">
+											title="<?=$value['NAME']?>"
+											style="display: none;"
+											data-sku-line="<?=$i?>"
+											data-treevalue="<?=$propertyId?>_<?=$value['ID']?>"
+											data-onevalue="<?=$value['ID']?>">
 											<?=$value['NAME']?>
 										</div>
 										<?
@@ -1382,8 +1382,8 @@ $themeClass = isset($arParams['TEMPLATE_THEME']) ? ' bx-'.$arParams['TEMPLATE_TH
 					style="display: <?=($actualItem['CAN_BUY'] ? '' : 'none')?>;"
 					data-entity="panel-buy-button">
 					<a class="btn <?=$buyButtonClassName?> product-item-detail-buy-button"
-					   id="<?=$itemIds['BUY_LINK']?>"
-					   href="javascript:void(0);">
+						id="<?=$itemIds['BUY_LINK']?>"
+						href="javascript:void(0);">
 						<?=$arParams['MESS_BTN_BUY']?>
 					</a>
 				</div>

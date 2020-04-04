@@ -1,8 +1,10 @@
 <?
 $MESS['TM_SCHEDULE_CREATE_TITLE'] = 'Создание рабочего графика';
 $MESS['TM_SCHEDULE_EDIT_TITLE'] = 'Редактирование рабочего графика';
+$MESS['TM_SCHEDULE_READ_TITLE'] = 'Просмотр рабочего графика';
 $MESS['TIMEMAN_SCHEDULE_EDIT_DEFAULT_TITLE'] = 'Введите название графика';
 $MESS['TIMEMAN_SCHEDULE_EDIT_SCHEDULE_TYPE_TITLE'] = 'График работы';
+$MESS['TM_SCHEDULE_EDIT_SHIFT_PLAN_BTN_TITLE'] = 'Распределить смены';
 $MESS['TIMEMAN_SCHEDULE_EDIT_NAME_TITLE'] = 'Название графика';
 $MESS['TIMEMAN_SCHEDULE_EDIT_REPORT_PERIOD_TITLE'] = 'Отчетный период';
 $MESS['TIMEMAN_SCHEDULE_EDIT_REPORT_PERIOD_START_WEEK_DAY_TITLE'] = 'Начало недели';
@@ -86,15 +88,17 @@ $MESS["TM_SCHEDULE_VIOLATION_MIN_DAY_DURATION_TITLE"] = "Мин. продолж�
 $MESS["TM_SCHEDULE_VIOLATION_CHANGE_DAY_DURATION_TITLE"] = "Допустимый промежуток изменения";
 $MESS["TM_SCHEDULE_VIOLATION_HOURS_LACK_FOR_PERIOD_BLOCK_TITLE"] = "Допустимая недоработка за отчетный период";
 $MESS["TM_SCHEDULE_VIOLATION_HOURS_COUNT_TITLE"] = "Количество рабочих часов";
-$MESS["TM_SCHEDULE_VIOLATION_SHIFT_MISSED"] = "Забыл отметить смену";
-$MESS["TM_SCHEDULE_VIOLATION_SHIFT_BLOCK_DELAY"] = "Время выхода на смену";
+$MESS["TM_SCHEDULE_VIOLATION_SHIFT_MISSED"] = "Невыход на смену";
+$MESS["TM_SCHEDULE_VIOLATION_SHIFT_BLOCK_DELAY"] = "На сколько можно опоздать на смену";
 $MESS["TM_SCHEDULE_VIOLATION_SHIFT_DELAY_ALLOWED"] = "Допустимый промежуток";
 
 $MESS["TIMEMAN_SCHEDULE_EDIT_REPORT_RESTRICTIONS_TITLE"] = "Ограничения";
+$MESS['TIMEMAN_SCHEDULE_EDIT_HINT_RESTRICTION_MAX_START_OFFSET'] = 'Например, у сотрудника смена начинается в 9:00 и можно начать смену раньше на один час. В таком случае сотрудник должен выйти на смену не ранее 8:00.';
+$MESS["TIMEMAN_SCHEDULE_EDIT_WORKTIME_RESTRICTION_MAX_START_OFFSET"] = "На сколько раньше можно начать смену";
 $MESS["TIMEMAN_SCHEDULE_EDIT_REPORT_ALLOWED_DEVICES_TITLE"] = "Разрешить открывать и закрывать рабочий день";
 $MESS["TIMEMAN_SCHEDULE_EDIT_REPORT_ALLOW_BROWSER"] = "в браузере";
 $MESS["TIMEMAN_SCHEDULE_EDIT_REPORT_ALLOW_B24_TIME"] = "через Bitrix24.Time";
-$MESS["TIMEMAN_SCHEDULE_EDIT_REPORT_ALLOW_MOBILE_DEVICES"] = "с мобильных устройств";
+$MESS["TIMEMAN_SCHEDULE_EDIT_REPORT_ALLOW_MOBILE_APP"] = "в мобильном приложении";
 $MESS["TIMEMAN_SCHEDULE_EDIT_REPORT_RECORD_LOCATION"] = "учитывать местоположение";
 $MESS["TIMEMAN_SCHEDULE_EDIT_REPORT_DO_NOT_RECORD_LOCATION"] = "не учитывать местоположение";
 $MESS["TIMEMAN_SCHEDULE_EDIT_MON"] = "Пн";

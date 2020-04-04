@@ -16,6 +16,8 @@ use Bitrix\Main\Application;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Event;
 
+use Bitrix\Sender\Entity\Campaign;
+use Bitrix\Sender\MailingTable;
 use Bitrix\Sender\PostingRecipientTable;
 use Bitrix\Sender\PostingTable;
 use Bitrix\Sender\Entity\Letter;
@@ -305,15 +307,18 @@ class Sender
 	 */
 	public static function applyRecipientToMessage(Adapter $message, array $recipient, $isTest = false)
 	{
+		$siteId = MailingTable::getMailingSiteId($recipient['CAMPAIGN_ID'] ?: Campaign::getDefaultId(SITE_ID));
 		$message->getReadTracker()
 			->setModuleId('sender')
 			->setFields(array('RECIPIENT_ID' => $recipient["ID"]))
-			->setHandlerUri(Option::get('sender', 'read_link'));
+			->setHandlerUri(Option::get('sender', 'read_link'))
+			->setSiteId($siteId);
 		$message->getClickTracker()
 			->setModuleId('sender')
 			->setFields(array('RECIPIENT_ID' => $recipient["ID"]))
 			->setUriParameters(array('bx_sender_conversion_id' => $recipient["ID"]))
-			->setHandlerUri(Option::get('sender', 'click_link'));
+			->setHandlerUri(Option::get('sender', 'click_link'))
+			->setSiteId($siteId);
 		$message->getUnsubTracker()
 			->setModuleId('sender')
 			->setFields(array(
@@ -323,7 +328,8 @@ class Sender
 				'CODE' => $message->getRecipientCode(),
 				'TEST' => $isTest ? 'Y' : 'N'
 			))
-			->setHandlerUri(Option::get('sender', 'unsub_link'));
+			->setHandlerUri(Option::get('sender', 'unsub_link'))
+			->setSiteId($siteId);
 
 		$fields = self::prepareRecipientFields($recipient);
 		$message->setFields($fields);
@@ -344,6 +350,11 @@ class Sender
 			'TRACK_CLICK' => $this->message->getClickTracker()->getArray(),
 			'MAILING_CHAIN_ID' => $this->letter->getId()
 		];
+		$linkDomain = $this->message->getReadTracker()->getLinkDomain();
+		if ($linkDomain)
+		{
+			$eventSendParams['LINK_DOMAIN'] = $linkDomain;
+		}
 		$event = new Main\Event('sender', 'OnBeforePostingSendRecipient', [$eventSendParams]);
 		$event->send();
 		foreach ($event->getResults() as $eventResult)
@@ -418,9 +429,22 @@ class Sender
 		{
 			return;
 		}
+		$onBeforeStartResult = $this->message->onBeforeStart();
+		if ($onBeforeStartResult->isSuccess())
+		{
+			$this->status = PostingTable::STATUS_PART;
+			Model\PostingTable::update($this->postingId, ['STATUS' => $this->status]);
+		}
+		else
+		{
+			static::updateActualStatus($this->postingId, true);
+		}
 
-		$this->status = PostingTable::STATUS_PART;
-		Model\PostingTable::update($this->postingId, ['STATUS' => $this->status]);
+		$errorMessage = implode(', ', $onBeforeStartResult->getErrorMessages());
+		if (strlen($errorMessage))
+		{
+			Model\LetterTable::update($this->letterId, ['ERROR_MESSAGE' => $errorMessage]);
+		}
 	}
 
 	/**
@@ -554,6 +578,20 @@ class Sender
 		// unlock posting for exclude double parallel sending
 		self::unlock($this->postingId);
 
+		if (!PostingRecipientTable::hasUnprocessed($this->postingId))
+		{
+			$onAfterEndResult = $this->message->onAfterEnd();
+			if (!$onAfterEndResult->isSuccess())
+			{
+				$this->resultCode = static::RESULT_CONTINUE;
+				return;
+			}
+			$errorMessage = implode(', ', $onAfterEndResult->getErrorMessages());
+			if (strlen($errorMessage))
+			{
+				Model\LetterTable::update($this->letterId, ['ERROR_MESSAGE' => $errorMessage]);
+			}
+		}
 		// update status of posting
 		$status = self::updateActualStatus($this->postingId, $this->isPrevented());
 

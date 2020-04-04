@@ -6,7 +6,7 @@ $MESS["IMBOT_BOT_BIRTHDAY"] = "1992-03-02";
 $MESS["IMBOT_BOT_EMAIL"] = "mia@bitrix24.com";
 $MESS["IMBOT_BOT_SITE"] = "http://bitrix24.com";
 $MESS["IMBOT_BOT_WORK_POSITION"] = "Intelligent assistant";
-$MESS["IMBOT_BOT_WELCOME_MESSAGE_2"] = "#HELLO# You can ask me questions about Bitrix24 :)";
+$MESS["IMBOT_BOT_WELCOME_MESSAGE_3"] = "#HELLO# You can ask me questions about Bitrix24 :)";
 $MESS["IMBOT_BOT_WELCOME_MESSAGE_CHAT_2"] = "Hi there! Mention me in the message or click my avatar to have me reply in the chat :)";
 $MESS["IMBOT_BOT_WELCOME_MESSAGE_LINES_2"] = "I am a virtual assistant. [br] To chat with an agent [send=0]reply with 0[/send].";
 $MESS["IMBOT_BOT_WELCOME_NEW_B24"] = "Thank you for creating Bitrix24 account!";

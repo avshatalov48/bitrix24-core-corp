@@ -1,8 +1,9 @@
 <?
 $MESS["MAIL_CLIENT_AJAX_ERROR"] = "Error processing the request.";
-$MESS["MAIL_CLIENT_CANCELATION_WARNING_2"] = "Starting May 1, 2019 two-way email sync is no longer available to free account users (new emails will not be saved to Bitrix24).
-Emails linked to their respective tasks will be retained; other emails will be deleted.
-If you'd like to continue working with your emails inside your Bitrix24 account, please <a href=\"/settings/license_all.php\" target=\"_blank\">upgrade to selected commercial plans</a>.";
+$MESS["MAIL_CLIENT_CANCELATION_WARNING_3"] = "Email synchronization is not available on your plan. New emails will not be visible in Bitrix24.
+Task related emails will remain. Other emails will be deleted.<br>
+Upgrade to <a href=\"/settings/license_all.php\" target=\"_blank\">one of the extended plans</a> to connect emails and enjoy other productivity features.
+Select a plan your business wants and needs.";
 $MESS["MAIL_CLIENT_DENIED"] = "Access denied";
 $MESS["MAIL_CLIENT_ELEMENT_DENIED"] = "Access denied";
 $MESS["MAIL_CLIENT_ELEMENT_NOT_FOUND"] = "Item was not found.";

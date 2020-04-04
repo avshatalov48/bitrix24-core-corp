@@ -76,6 +76,7 @@ else
 			'PATH_TO_LEAD_CONVERT' => $arResult['PATH_TO_LEAD_CONVERT'],
 			'PATH_TO_LEAD_IMPORT' => $arResult['PATH_TO_LEAD_IMPORT'],
 			'PATH_TO_LEAD_DEDUPE' => $arResult['PATH_TO_LEAD_DEDUPE'],
+			'PATH_TO_LEAD_DEDUPEWIZARD' => $arResult['PATH_TO_LEAD_DEDUPEWIZARD'],
 			'ELEMENT_ID' => $arResult['VARIABLES']['lead_id'],
 			'TYPE' => 'list'
 		),
@@ -113,6 +114,7 @@ else
 				'PATH_TO_LEAD_WIDGET' => $arResult['PATH_TO_LEAD_WIDGET'],
 				'PATH_TO_LEAD_KANBAN' => $arResult['PATH_TO_LEAD_KANBAN'],
 				'PATH_TO_LEAD_CALENDAR' => $arResult['PATH_TO_LEAD_CALENDAR'],
+				'PATH_TO_LEAD_MERGE' => $arResult['PATH_TO_LEAD_MERGE'],
 				'NAME_TEMPLATE' => $arParams['NAME_TEMPLATE'],
 				'NAVIGATION_CONTEXT_ID' => $arResult['NAVIGATION_CONTEXT_ID']
 			]

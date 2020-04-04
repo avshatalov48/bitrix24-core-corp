@@ -10,13 +10,14 @@
 
 namespace Bitrix\Tasks\Util\Notification;
 
-use Bitrix\Main\Localization\Loc;
+use Bitrix\Im\User;
+use Bitrix\Main\Config\Option;
 use Bitrix\Main\Entity\Query;
-
+use Bitrix\Main\Entity\ReferenceField;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Tasks\Integration\IM;
 use Bitrix\Tasks\Internals\Runtime;
 use Bitrix\Tasks\Internals\Task\MemberTable;
-use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Tasks\Internals\TaskTable;
 use Bitrix\Tasks\Util\Type\DateTime;
 
@@ -26,30 +27,25 @@ final class Task
 {
 	public static function createOverdueChats()
 	{
-		if($GLOBALS['__TASKS_DEVEL_ENV__'])
+		if (
+			$GLOBALS['__TASKS_DEVEL_ENV__']
+			|| Option::get('tasks', 'create_overdue_chats', 'N') === 'N'
+		)
 		{
 			return;
 		}
 
-		if(IM\Task::includeModule())
+		if (IM\Task::includeModule())
 		{
-			$tasks = static::getOverdueTasks();
-			foreach($tasks as $task)
+			$overdueTasks = static::getOverdueTasks();
+			foreach ($overdueTasks as $task)
 			{
-				$chatId = IM\Task::openChat($task);
-				if($chatId)
+				if ($chatId = IM\Task::openChat($task))
 				{
-					$gender = \Bitrix\Im\User::getInstance($task['RESPONSIBLE_ID'])->getGender(); // todo: move to bindings
-					if(!$gender)
-					{
-						$gender = 'N';
-					}
+					$gender = (User::getInstance($task['RESPONSIBLE_ID'])->getGender() ?: 'N');
+					$message = Loc::getMessage('TASKS_IM_MESSAGE_OVERDUE_'.$gender).' :cry:';
 
-					IM\Task::postMessage(
-						$chatId,
-						Loc::getMessage('TASKS_IM_MESSAGE_OVERDUE_'.$gender)." [ICON=/bitrix/images/emoji/1f625.svg]",
-						$task
-					);
+					IM\Task::postMessage($chatId, $message, $task);
 				}
 			}
 		}
@@ -58,27 +54,7 @@ final class Task
 	private static function getOverdueTasks()
 	{
 		$query = new Query(TaskTable::getEntity());
-
-		Runtime::apply($query, array(
-			\Bitrix\Tasks\Integration\IM\Internals\RunTime::applyChatNotExist(),
-		));
-
-		$query->registerRuntimeField('', new ReferenceField('TM', MemberTable::getEntity(), array(
-				'=ref.TASK_ID' => 'this.ID',
-			)
-		));
-
-		$query->setFilter($query->getFilter() + array(
-			'!DEADLINE' => null,
-			'>=DEADLINE' => static::getDayStartDateTime(), // day start
-			'<=DEADLINE' => new DateTime(), // current time
-			'=STATUS' => array(
-				1, // new
-				2, // pending
-				3, // in progress
-			),
-		));
-		$query->setSelect(array(
+		$query->setSelect([
 			'ID',
 			'TITLE',
 			'DESCRIPTION',
@@ -86,56 +62,59 @@ final class Task
 			'STATUS',
 			'TM_USER_ID' => 'TM.USER_ID',
 			'TM_TYPE' => 'TM.TYPE',
+		]);
+		$query->setFilter([
+			'!DEADLINE' => null,
+			'>=DEADLINE' => static::getDayStartDateTime(), // day start
+			'<=DEADLINE' => new DateTime(), // current time
+			'=STATUS' => [\CTasks::STATE_PENDING, \CTasks::STATE_IN_PROGRESS],
+		]);
+		$query->registerRuntimeField('', new ReferenceField(
+			'TM',
+			MemberTable::getEntity(),
+			['=ref.TASK_ID' => 'this.ID']
 		));
-
+		Runtime::apply($query, [IM\Internals\RunTime::applyChatNotExist()]);
 		$res = $query->exec();
-		$merged = array();
-		$uniqueMembers = array();
-		while($item = $res->fetch())
-		{
-			$userId = $item['TM_USER_ID'];
-			$type = $item['TM_TYPE'];
-			unset($item['TM_USER_ID']);
-			unset($item['TM_TYPE']);
 
-			if(!array_key_exists($item['ID'], $merged))
+		$tasks = [];
+		$uniqueMembers = [];
+
+		while ($item = $res->fetch())
+		{
+			$taskId = $item['ID'];
+			$userId = $item['TM_USER_ID'];
+			$userType = $item['TM_TYPE'];
+
+			unset($item['TM_USER_ID'], $item['TM_TYPE']);
+
+			if (!array_key_exists($taskId, $tasks))
 			{
-				$item['SE_MEMBER'] = array($userId => array(
-					'USER_ID' => $userId,
-					'TYPE' => $type,
-				));
-				$merged[$item['ID']] = $item;
+				$item['SE_MEMBER'][$userId] = ['USER_ID' => $userId, 'TYPE' => $userType];
+				$tasks[$taskId] = $item;
 			}
 			else
 			{
-				$merged[$item['ID']]['SE_MEMBER'][$userId] = array(
-					'USER_ID' => $userId,
-					'TYPE' => $type,
-				);
+				$tasks[$taskId]['SE_MEMBER'][$userId] = ['USER_ID' => $userId, 'TYPE' => $userType];
 			}
 
-			if(!array_key_exists($item['ID'], $uniqueMembers))
+			if (!array_key_exists($taskId, $uniqueMembers))
 			{
-				$uniqueMembers[$item['ID']] = array();
+				$uniqueMembers[$taskId] = [];
 			}
-			if(!array_key_exists($userId, $uniqueMembers[$item['ID']]))
+			if (!array_key_exists($userId, $uniqueMembers[$taskId]))
 			{
-				$uniqueMembers[$item['ID']][$userId] = 1;
+				$uniqueMembers[$taskId][$userId] = 1;
 			}
-			$uniqueMembers[$item['ID']][$userId]++;
 
-			if($type == 'O')
+			$roleMap = ['O' => 'CREATED_BY', 'R' => 'RESPONSIBLE_ID'];
+			if (array_key_exists($userType, $roleMap))
 			{
-				$merged[$item['ID']]['CREATED_BY'] = $userId;
-			}
-			if($type == 'R')
-			{
-				$merged[$item['ID']]['RESPONSIBLE_ID'] = $userId;
+				$tasks[$taskId][$roleMap[$userType]] = $userId;
 			}
 		}
 
-		return array_filter($merged, function($item) use($uniqueMembers) {
-			// creating chat for one person is meaningless
+		return array_filter($tasks, function($item) use($uniqueMembers) {
 			return count($uniqueMembers[$item['ID']]) > 1;
 		});
 	}

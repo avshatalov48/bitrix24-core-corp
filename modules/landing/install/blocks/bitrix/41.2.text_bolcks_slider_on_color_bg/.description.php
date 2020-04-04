@@ -41,7 +41,7 @@ return array(
 		'.landing-block-node-card-photo' => array(
 			'name' => Loc::getMessage('LANDING_BLOCK_41.4.TEXT_BLOCKS_SLIDER_ON_COLOR_BG_NODES_LANDINGBLOCKNODECARDPHOTO'),
 			'type' => 'img',
-			'dimensions' => array('width' => 700, 'height' => 700),
+			'dimensions' => array('width' => 540, 'height' => 810),
 		),
 	),
 	'style' => array(

@@ -39,7 +39,7 @@ trait ClearActivity
 	 * @param array $additionActivityFilter Filter for activity list.
 	 * @return int
 	 */
-	public function countActivity($additionActivityFilter = array())
+	public function countRelationActivity($additionActivityFilter = array())
 	{
 		$activityVolume = new Volume\Activity();
 		$activityVolume->setFilter($this->getFilter());

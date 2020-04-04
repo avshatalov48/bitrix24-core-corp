@@ -47,8 +47,7 @@
 					<img class="landing-block-node-member-photo w-100" src="https://cdn.bitrix24.site/bitrix/images/landing/business/270x450/img1.jpg"
 						 alt="Image description">
 
-					<figcaption
-							class="landing-block-card-member-container g-mt-0 g-pos-abs g-top-0 g-left-0 d-flex w-100 h-100 g-bg-primary-opacity-0_9 opacity-0 g-opacity-1--hover g-transition-0_2 g-transition--ease-in g-pointer-events-none">
+					<figcaption class="landing-block-card-member-container g-mt-0 g-pos-abs g-top-0 g-left-0 d-flex w-100 h-100 g-bg-primary-opacity-0_9 opacity-0 g-opacity-1--hover g-transition-0_2 g-transition--ease-in g-pointer-events-none">
 						<div class="align-self-center g-pa-20 g-pointer-events-all">
 							<div class="landing-block-node-member-post text-uppercase g-font-size-11 g-color-white-opacity-0_7 g-mb-15">
 								<p>Chef</p>
@@ -71,8 +70,7 @@
 					<img class="landing-block-node-member-photo w-100" src="https://cdn.bitrix24.site/bitrix/images/landing/business/270x450/img2.jpg"
 						 alt="Image description">
 
-					<figcaption
-							class="landing-block-card-member-container g-mt-0 g-pos-abs g-top-0 g-left-0 d-flex w-100 h-100 g-bg-primary-opacity-0_9 opacity-0 g-opacity-1--hover g-transition-0_2 g-transition--ease-in g-pointer-events-none">
+					<figcaption class="landing-block-card-member-container g-mt-0 g-pos-abs g-top-0 g-left-0 d-flex w-100 h-100 g-bg-primary-opacity-0_9 opacity-0 g-opacity-1--hover g-transition-0_2 g-transition--ease-in g-pointer-events-none">
 						<div class="align-self-center g-pa-20 g-pointer-events-all">
 							<div class="landing-block-node-member-post text-uppercase g-font-size-11 g-color-white-opacity-0_7 g-mb-15">
 								<p>Chef</p>
@@ -96,8 +94,7 @@
 					<img class="landing-block-node-member-photo w-100" src="https://cdn.bitrix24.site/bitrix/images/landing/business/270x450/img3.jpg"
 						 alt="Image description">
 
-					<figcaption
-							class="landing-block-card-member-container g-mt-0 g-pos-abs g-top-0 g-left-0 d-flex w-100 h-100 g-bg-primary-opacity-0_9 opacity-0 g-opacity-1--hover g-transition-0_2 g-transition--ease-in g-pointer-events-none">
+					<figcaption class="landing-block-card-member-container g-mt-0 g-pos-abs g-top-0 g-left-0 d-flex w-100 h-100 g-bg-primary-opacity-0_9 opacity-0 g-opacity-1--hover g-transition-0_2 g-transition--ease-in g-pointer-events-none">
 						<div class="align-self-center g-pa-20 g-pointer-events-all">
 							<div class="landing-block-node-member-post text-uppercase g-font-size-11 g-color-white-opacity-0_7 g-mb-15">
 								<p>Chef</p>
@@ -121,8 +118,7 @@
 					<img class="landing-block-node-member-photo w-100" src="https://cdn.bitrix24.site/bitrix/images/landing/business/270x450/img4.jpg"
 						 alt="Image description">
 
-					<figcaption
-							class="landing-block-card-member-container g-mt-0 g-pos-abs g-top-0 g-left-0 d-flex w-100 h-100 g-bg-primary-opacity-0_9 opacity-0 g-opacity-1--hover g-transition-0_2 g-transition--ease-in g-pointer-events-none">
+					<figcaption class="landing-block-card-member-container g-mt-0 g-pos-abs g-top-0 g-left-0 d-flex w-100 h-100 g-bg-primary-opacity-0_9 opacity-0 g-opacity-1--hover g-transition-0_2 g-transition--ease-in g-pointer-events-none">
 						<div class="align-self-center g-pa-20 g-pointer-events-all">
 							<div class="landing-block-node-member-post text-uppercase g-font-size-11 g-color-white-opacity-0_7 g-mb-15">
 								<p>Chef</p>
@@ -146,8 +142,7 @@
 					<img class="landing-block-node-member-photo w-100" src="https://cdn.bitrix24.site/bitrix/images/landing/business/270x450/img1.jpg"
 						 alt="Image description">
 
-					<figcaption
-							class="landing-block-card-member-container g-mt-0 g-pos-abs g-top-0 g-left-0 d-flex w-100 h-100 g-bg-primary-opacity-0_9 opacity-0 g-opacity-1--hover g-transition-0_2 g-transition--ease-in g-pointer-events-none">
+					<figcaption class="landing-block-card-member-container g-mt-0 g-pos-abs g-top-0 g-left-0 d-flex w-100 h-100 g-bg-primary-opacity-0_9 opacity-0 g-opacity-1--hover g-transition-0_2 g-transition--ease-in g-pointer-events-none">
 						<div class="align-self-center g-pa-20 g-pointer-events-all">
 							<div class="landing-block-node-member-post text-uppercase g-font-size-11 g-color-white-opacity-0_7 g-mb-15">
 								<p>Chef</p>
@@ -171,8 +166,7 @@
 					<img class="landing-block-node-member-photo w-100" src="https://cdn.bitrix24.site/bitrix/images/landing/business/270x450/img2.jpg"
 						 alt="Image description">
 
-					<figcaption
-							class="landing-block-card-member-container g-mt-0 g-pos-abs g-top-0 g-left-0 d-flex w-100 h-100 g-bg-primary-opacity-0_9 opacity-0 g-opacity-1--hover g-transition-0_2 g-transition--ease-in g-pointer-events-none">
+					<figcaption class="landing-block-card-member-container g-mt-0 g-pos-abs g-top-0 g-left-0 d-flex w-100 h-100 g-bg-primary-opacity-0_9 opacity-0 g-opacity-1--hover g-transition-0_2 g-transition--ease-in g-pointer-events-none">
 						<div class="align-self-center g-pa-20 g-pointer-events-all">
 							<div class="landing-block-node-member-post text-uppercase g-font-size-11 g-color-white-opacity-0_7 g-mb-15">
 								<p>Chef</p>
@@ -196,8 +190,7 @@
 					<img class="landing-block-node-member-photo w-100" src="https://cdn.bitrix24.site/bitrix/images/landing/business/270x450/img3.jpg"
 						 alt="Image description">
 
-					<figcaption
-							class="landing-block-card-member-container g-mt-0 g-pos-abs g-top-0 g-left-0 d-flex w-100 h-100 g-bg-primary-opacity-0_9 opacity-0 g-opacity-1--hover g-transition-0_2 g-transition--ease-in g-pointer-events-none">
+					<figcaption class="landing-block-card-member-container g-mt-0 g-pos-abs g-top-0 g-left-0 d-flex w-100 h-100 g-bg-primary-opacity-0_9 opacity-0 g-opacity-1--hover g-transition-0_2 g-transition--ease-in g-pointer-events-none">
 						<div class="align-self-center g-pa-20 g-pointer-events-all">
 							<div class="landing-block-node-member-post text-uppercase g-font-size-11 g-color-white-opacity-0_7 g-mb-15">
 								<p>Chef</p>

@@ -1326,7 +1326,7 @@ if (
 							$USER_FIELD_MANAGER->EditFormAddFields("BLOG_POST", $arFields);
 						}
 
-						preg_match_all("/\[user\s*=\s*([^\]]*)\](.+?)\[\/user\]/ies".BX_UTF_PCRE_MODIFIER, $_POST["POST_MESSAGE"], $arMention);
+						preg_match_all("/\[user\s*=\s*([^\]]*)\](.+?)\[\/user\]/is".BX_UTF_PCRE_MODIFIER, $_POST["POST_MESSAGE"], $arMention);
 						$mentionList = (!empty($arMention) ? $arMention[1] : array());
 
 						$APPLICATION->ResetException();
@@ -1532,7 +1532,7 @@ if (
 								$arFields["UF_BLOG_POST_URL_PRV"] = $urlPreviewValue;
 							}
 
-							preg_match_all("/\[user\s*=\s*([^\]]*)\](.+?)\[\/user\]/ies".BX_UTF_PCRE_MODIFIER, $arOldPost["DETAIL_TEXT"], $arMentionOld);
+							preg_match_all("/\[user\s*=\s*([^\]]*)\](.+?)\[\/user\]/is".BX_UTF_PCRE_MODIFIER, $arOldPost["DETAIL_TEXT"], $arMentionOld);
 							$mentionListOld = (!empty($arMentionOld) ? $arMentionOld[1] : array());
 
 							$socnetRightsOld = CBlogPost::GetSocnetPerms($arParams["ID"]);
@@ -1814,7 +1814,23 @@ if (
 							CBlogPost::Update($newID, $arFieldsHave, false);
 						}
 
-						if(
+						$logEntryActivated = false;
+						if (
+							is_array($arOldPost)
+							&& $arOldPost["PUBLISH_STATUS"] != BLOG_PUBLISH_STATUS_READY
+							&& $arFields["PUBLISH_STATUS"] == BLOG_PUBLISH_STATUS_PUBLISH
+						)
+						{
+							if ($postItem = \Bitrix\Blog\Item\Post::getById($newID))
+							{
+								if ($logEntryActivated = $postItem->activateLogEntry())
+								{
+									$logId = $postItem->getLogId();
+								}
+							}
+						}
+
+						if (
 							(
 								$bAdd
 								&& $newID
@@ -1827,18 +1843,21 @@ if (
 						)
 						{
 							$arFields["ID"] = $newID;
-							$arParamsNotify = Array(
-								"bSoNet" => true,
-								"UserID" => $arResult["UserID"],
-								"allowVideo" => $arResult["allowVideo"],
-								"PATH_TO_SMILE" => $arParams["PATH_TO_SMILE"],
-								"PATH_TO_POST" => $arParams["PATH_TO_POST"],
-								"SOCNET_GROUP_ID" => $arParams["SOCNET_GROUP_ID"],
-								"user_id" => $arParams["USER_ID"],
-								"NAME_TEMPLATE" => $arParams["NAME_TEMPLATE"],
-								"SHOW_LOGIN" => $arParams["SHOW_LOGIN"],
-							);
-							$logId = CBlogPost::Notify($arFields, $arBlog, $arParamsNotify);
+							if (!$logEntryActivated)
+							{
+								$arParamsNotify = Array(
+									"bSoNet" => true,
+									"UserID" => $arResult["UserID"],
+									"allowVideo" => $arResult["allowVideo"],
+									"PATH_TO_SMILE" => $arParams["PATH_TO_SMILE"],
+									"PATH_TO_POST" => $arParams["PATH_TO_POST"],
+									"SOCNET_GROUP_ID" => $arParams["SOCNET_GROUP_ID"],
+									"user_id" => $arParams["USER_ID"],
+									"NAME_TEMPLATE" => $arParams["NAME_TEMPLATE"],
+									"SHOW_LOGIN" => $arParams["SHOW_LOGIN"],
+								);
+								$logId = CBlogPost::Notify($arFields, $arBlog, $arParamsNotify);
+							}
 
 							\Bitrix\Blog\Util::sendBlogPing(array(
 								'siteId' => SITE_ID,

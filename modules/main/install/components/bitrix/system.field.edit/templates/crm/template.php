@@ -11,6 +11,8 @@ global $APPLICATION;
 CUtil::InitJSCore(array('ajax', 'popup'));
 \Bitrix\Main\UI\Extension::load(["sidepanel"]);
 
+use Bitrix\Main\Text\HtmlFilter;
+
 $APPLICATION->SetAdditionalCSS('/bitrix/js/crm/css/crm.css');
 $APPLICATION->AddHeadScript('/bitrix/js/crm/crm.js');
 
@@ -28,6 +30,13 @@ if ($arResult['PERMISSION_DENIED'])
 {
 	?><div id="crm-<?=$fieldUID?>-box">
 		<div class="crm-button-open"><?=GetMessage('CRM_SFE_PERMISSION_DENIED')?></div>
+		<?php foreach ($arResult["VALUE"] as $value):?>
+			<?php
+				$name = HtmlFilter::encode($fieldName.($arResult['MULTIPLE'] == 'Y' ? '[]' : ''));
+				$value = HtmlFilter::encode($value);
+			?>
+			<input type="hidden" name="<?=$name?>" value="<?=$value?>">
+		<?php endforeach; ?>
 	</div><?
 }
 else

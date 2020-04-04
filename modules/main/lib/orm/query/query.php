@@ -161,6 +161,12 @@ class Query
 		$having_expr_chains = array(), // from having expr "build_from"
 		$hidden_chains = array(); // all expr "build_from" elements;
 
+	/**
+	 * Fields in result that are visible for fetchObject, but invisible for array
+	 * @var string[]
+	 */
+	protected $forcedObjectPrimaryFields;
+
 	/** @var Chain[] */
 	protected $runtime_chains;
 
@@ -206,6 +212,9 @@ class Query
 
 	/** @var array Replaced table aliases */
 	protected $replaced_taliases;
+
+	/** @var int */
+	protected $uniqueAliasCounter = 0;
 
 	/** @var callable[] */
 	protected $selectFetchModifiers = array();
@@ -814,7 +823,14 @@ class Query
 
 		$this->is_executing = false;
 
-		return new Result($this, $result);
+		$queryResult = new Result($this, $result);
+
+		if (!empty($this->forcedObjectPrimaryFields))
+		{
+			$queryResult->setHiddenObjectFields($this->forcedObjectPrimaryFields);
+		}
+
+		return $queryResult;
 	}
 
 	/**
@@ -868,6 +884,57 @@ class Query
 	public function fetchCollection()
 	{
 		return $this->exec()->fetchCollection();
+	}
+
+	protected function ensurePrimarySelect()
+	{
+		// no auto primary for queries with group
+		// it may change the result
+		if ($this->hasAggregation())
+		{
+			return;
+		}
+
+		$entities = [[$this->entity, '']];
+
+		foreach ($this->join_map as $join)
+		{
+			$entities[] = [$join['entity'], $join];
+		}
+
+		// check for primaries in select
+		foreach ($entities as list($entity, $join))
+		{
+			/** @var Entity $entity */
+			foreach ($entity->getPrimaryArray() as $primary)
+			{
+				if (!empty($entity->getField($primary)->hasParameter('auto_generated')))
+				{
+					continue;
+				}
+
+				$needDefinition = !empty($join['definition']) ? $join['definition'].'.'.$primary : $primary;
+
+				$chain = $this->getRegisteredChain($needDefinition, true);
+
+				if (empty($this->select_chains[$chain->getAlias()]))
+				{
+					// set uniq alias
+					$alias = $this->getUniqueAlias();
+					$chain->setCustomAlias($alias);
+
+					$this->registerChain('select', $chain);
+
+					// remember to delete alias from array result
+					$this->forcedObjectPrimaryFields[] = $alias;
+
+					// set join alias
+					!empty($join)
+						? $chain->getLastElement()->setParameter('talias', $join['alias'])
+						: $chain->getLastElement()->setParameter('talias', $this->getInitAlias());
+				}
+			}
+		}
 	}
 
 	/**
@@ -1836,6 +1903,7 @@ class Query
 
 						$definition_this = join('.', array_slice($currentDefinition, 0, -1));
 						$definition_ref = join('.', $currentDefinition);
+						$definition_join = $definition_ref;
 					}
 					elseif (is_array($element->getValue()) || $element->getValue() instanceof OneToMany)
 					{
@@ -1859,6 +1927,7 @@ class Query
 
 						$definition_this = join('.', $currentDefinition);
 						$definition_ref = join('.', array_slice($currentDefinition, 0, -1));
+						$definition_join = $definition_this;
 					}
 					else
 					{
@@ -1894,6 +1963,8 @@ class Query
 					{
 						$join = array(
 							'type' => $joinType,
+							'entity' => $dst_entity,
+							'definition' => $definition_join,
 							'table' => $dst_entity->getDBTableName(),
 							'alias' => $table_alias.$this->table_alias_postfix,
 							'reference' => $csw_reference,
@@ -1922,7 +1993,10 @@ class Query
 			$sql[] = $chain->getSqlDefinition(true);
 		}
 
-		if (empty($sql))
+		// empty select (or select forced primary only)
+		if (empty($sql) ||
+			(!empty($this->forcedObjectPrimaryFields) && count($sql) == count($this->forcedObjectPrimaryFields))
+		)
 		{
 			$sql[] = 1;
 		}
@@ -2009,10 +2083,7 @@ class Query
 	{
 		$sql = array();
 
-		if (!empty($this->group_chains) || !empty($this->having_chains)
-			|| $this->checkChainsAggregation($this->select_chains)
-			|| $this->checkChainsAggregation($this->order_chains)
-		)
+		if ($this->hasAggregation())
 		{
 			// add non-aggr fields to group
 			foreach ($this->global_chains as $chain)
@@ -2171,11 +2242,13 @@ class Query
 	}
 
 	/**
+	 * @param bool $forceObjectPrimary Add missing primaries to select
+	 *
 	 * @return mixed|string
 	 * @throws Main\ArgumentException
 	 * @throws Main\SystemException
 	 */
-	protected function buildQuery()
+	protected function buildQuery($forceObjectPrimary = true)
 	{
 		$connection = $this->entity->getConnection();
 		$helper = $connection->getSqlHelper();
@@ -2208,6 +2281,11 @@ class Query
 			}
 
 			$this->buildJoinMap();
+
+			if ($forceObjectPrimary && empty($this->unionHandler))
+			{
+				$this->ensurePrimarySelect();
+			}
 
 			$sqlJoin = $this->buildJoin();
 
@@ -2961,6 +3039,13 @@ class Query
 		return false;
 	}
 
+	public function hasAggregation()
+	{
+		return !empty($this->group_chains) || !empty($this->having_chains)
+			|| $this->checkChainsAggregation($this->select_chains)
+			|| $this->checkChainsAggregation($this->order_chains);
+	}
+
 	/**
 	 * The most magic method. Do not edit without strong need, and for sure run tests after.
 	 *
@@ -3050,6 +3135,11 @@ class Query
 				$reg_chain = $chain;
 
 				$this->global_chains[$reg_chain->getDefinition()] = $chain;
+
+				// or should we make unique alias and register with it?
+				$alias = $this->getUniqueAlias();
+				$chain->setCustomAlias($alias);
+				$this->global_chains[$alias] = $chain;
 			}
 		}
 		else
@@ -3101,6 +3191,11 @@ class Query
 		}
 
 		return false;
+	}
+
+	protected function getUniqueAlias()
+	{
+		return 'UALIAS_'.($this->uniqueAliasCounter++);
 	}
 
 	public function booleanStrongEqualityCallback($field, $operation, $value)
@@ -3439,7 +3534,7 @@ class Query
 	 */
 	public function getQuery()
 	{
-		return $this->buildQuery();
+		return $this->buildQuery(false);
 	}
 
 	/**

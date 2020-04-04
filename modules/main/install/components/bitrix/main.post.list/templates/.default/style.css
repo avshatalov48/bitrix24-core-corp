@@ -753,7 +753,6 @@ div.feed-com-avatar-Y { background: none; }
 	top: -10px;
 	margin-top: 11px;
 	margin-bottom: 11px;
-	line-height: 37px;
 }
 
 .feed-add-post-buttons .feed-com-writers {
@@ -764,6 +763,7 @@ div.feed-com-avatar-Y { background: none; }
 	position: static;
 	display: inline-block;
 	margin-right: 4px;
+	margin-top: 7px;
 	width: 20px;
 	height: 20px;
 	vertical-align: middle;
@@ -800,8 +800,7 @@ div.feed-com-avatar-Y { background: none; }
 	background: url(images/feed-comm-pen.gif) no-repeat 0 0;
 	display: inline-block;
 	height: 12px;
-	/*margin: 14px 0 0 9px;*/
-	margin: 8px 0 0 2px;
+	margin: 14px 0 0 2px;
 	vertical-align: top;
 	width: 27px;
 }
@@ -875,3 +874,9 @@ div.feed-com-avatar-Y { background: none; }
 	padding-top: 20px;
 }
 /*=========================== end tasks patches ======================*/
+
+/*=========================== disk patches =======================*/
+div[bx-mpl-block="edit-placeholder"] .feed-add-post-files-activity {
+	display: none;
+}
+/*=========================== disk patches =======================*/

@@ -300,6 +300,7 @@
 		initialize : function() {
 			this.checkUnreadComments = this.checkUnreadComments.bind(this);
 			this.recalcMoreButtonComment = this.recalcMoreButtonComment.bind(this);
+			BX.Event.EventEmitter.incrementMaxListeners(scrSpy, "onRead");
 			BX.addCustomEvent(scrSpy, "onRead", this.checkUnreadComments);
 
 			this.initNavigationEvents();
@@ -314,6 +315,7 @@
 			{
 				if (this.privateEvents.hasOwnProperty(ii))
 				{
+					BX.Event.EventEmitter.incrementMaxListeners(this.eventNode, ii);
 					BX.addCustomEvent(this.eventNode, ii, this.privateEvents[ii]);
 				}
 			}
@@ -321,19 +323,23 @@
 			{
 				if (this.windowEvents.hasOwnProperty(ii))
 				{
+					BX.Event.EventEmitter.incrementMaxListeners(ii);
 					BX.addCustomEvent(window, ii, this.windowEvents[ii]);
 				}
 			}
 		},
 		initNavigationEvents : function() {
-			this.bindEvents.unshift([
-				this.node.navigation, "click", (function (e) {
-					BX.eventCancelBubble(e);
-					e.preventDefault();
-					this.getPagenavigation();
-					return false;
-				}).bind(this)
-			]);
+			if (BX(this.node.navigation))
+			{
+				this.bindEvents.unshift([
+					this.node.navigation, "click", (function (e) {
+						BX.eventCancelBubble(e);
+						e.preventDefault();
+						this.getPagenavigation();
+						return false;
+					}).bind(this)
+				]);
+			}
 		},
 		initPostFormActivity : function() {
 			this.privateEvents["onReply"] = this.reply.bind(this);
@@ -577,6 +583,7 @@
 			var data = BX.ajax.prepareData({
 					AJAX_POST : "Y",
 					ENTITY_XML_ID : this.ENTITY_XML_ID,
+					EXEMPLAR_ID : this.exemplarId,
 					MODE : "LIST",
 					FILTER : (this.order == "ASC" ? {">ID" : this.mid} : {"<ID" : this.mid}),
 					sessid : BX.bitrix_sessid() } ),
@@ -658,11 +665,11 @@
 			var func = function()
 			{
 				cnt++;
-				if (cnt > 10)
+				if (cnt > 100)
 				{
 					return;
 				}
-				if (this.node.history.childNodes.length <= 0)
+				if (container.childNodes.length <= 0)
 				{
 					setTimeout(func, 500);
 					return;
@@ -999,9 +1006,15 @@
 					BX.remove(containerForRemove);
 				}, 1000);
 			}
+
 			if (
 				animation !== "simple"
 				&& typeof BXMobileApp == "undefined" // non-mobile
+				&& !( // if it is not a slider over
+					window.top === window &&
+					BX.getClass('BX.SidePanel.Instance') &&
+					BX.SidePanel.Instance.isOpen()
+				)
 			)
 			{
 				var curPos = BX.pos(container),
@@ -1020,10 +1033,10 @@
 							window.scrollTo(0, scroll.scrollTop + state.height);
 						}
 					},
-
 					complete : function(){
 						container.style.cssText = "";
-					}
+						BX.onCustomEvent(this, "OnUCRecordWasShown", [this.ENTITY_XML_ID, id, container]);
+					}.bind(this)
 				})).animate();
 			}
 			else
@@ -1286,8 +1299,7 @@
 
 			var pos = BX.pos(bodyBlock);
 			var pos2 = BX.pos(textBlock);
-
-			if (pos.height > pos2.height)
+			if (pos.height >= pos2.height)
 			{
 				moreButtonBlock.style.display = "none";
 			}
@@ -2413,7 +2425,6 @@
 	BX.ready(function() {
 		//region for pull events
 		BX.addCustomEvent(window, "onPullEvent-unicomments", function(command, params) {
-			console.log('onPullEvent-unicomments:', command, params);
 			if (params["AUX"] && !BX.util.in_array(params["AUX"], ["createtask", "fileversion"]) ||
 				getActiveEntitiesByXmlId(params["ENTITY_XML_ID"]).size <= 0)
 			{

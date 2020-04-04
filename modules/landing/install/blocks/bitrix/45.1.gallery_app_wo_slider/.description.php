@@ -22,7 +22,7 @@ return array(
 		'.landing-block-node-card-img' => array(
 			'name' => Loc::getMessage('LANDING_BLOCK_45.1.GALLERY_APP_WO_SLIDER_NODES_LANDINGBLOCKNODECARDIMG'),
 			'type' => 'img',
-			'dimensions' => array('maxWidth' => 960, 'maxHeight' => 960),
+			'dimensions' => array('width' => 960, 'height' => 960),
 			'allowInlineEdit' => false,
 		),
 		'.landing-block-node-card-title' => array(
@@ -49,7 +49,7 @@ return array(
 		),
 		'.landing-block-node-card' => array(
 			'name' => Loc::getMessage('LANDING_BLOCK_45.1.GALLERY_APP_WO_SLIDER_CARDS_LANDINGBLOCKNODECARDIMG'),
-			'type' => 'animation',
+			'type' => ['align-self', 'animation'],
 		),
 	),
 	'assets' => array(

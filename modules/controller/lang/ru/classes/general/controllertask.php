@@ -5,6 +5,7 @@ $MESS["CTRLR_TASK_TYPE_COUNTERS_UPDATE"]="Обновить счетчики";
 $MESS["CTRLR_TASK_TYPE_REMOTE_COMMAND"]="Выполнить команду";
 $MESS["CTRLR_TASK_TYPE_CLOSE_MEMBER"]="Закрытие/открытие клиентов";
 $MESS["CTRLR_TASK_STATUS_NEW"]="Новая";
+$MESS["CTRLR_TASK_STATUS_LOW"]="Новая с низким приоритетом";
 $MESS["CTRLR_TASK_STATUS_PART"]="Выполнена частично";
 $MESS["CTRLR_TASK_STATUS_COMPL"]="Успешно выполнена";
 $MESS["CTRLR_TASK_STATUS_FAIL"]="Ошибка выполнения";

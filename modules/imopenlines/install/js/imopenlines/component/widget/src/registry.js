@@ -18,6 +18,7 @@ import 'im.component.dialog';
 import 'im.component.textarea';
 import 'im.component.quotepanel';
 import 'imopenlines.component.message';
+import 'imopenlines.component.form';
 
 // widget files
 import "./widget.css";

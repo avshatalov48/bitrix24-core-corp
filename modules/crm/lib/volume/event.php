@@ -14,9 +14,6 @@ class Event
 	implements Volume\IVolumeClear, Volume\IVolumeClearFile, Volume\IVolumeUrl
 {
 
-	// todo: remove it
-	//use Volume\ClearEvent;
-
 	/** @var array */
 	protected static $entityList = array(
 		Crm\EventTable::class,
@@ -165,7 +162,7 @@ class Event
 			return $this->prepareRelationQuery($indicator);
 		}
 
-		$query = Crm\EventTable::query();
+		$query = $this->prepareNonRelationQuery();
 
 		$relations = new ORM\Fields\Relations\Reference(
 			'RELATIONS',
@@ -175,6 +172,17 @@ class Event
 		);
 		$query->registerRuntimeField($relations);
 
+		return $query;
+	}
+
+	/**
+	 * Returns query.
+	 *
+	 * @return ORM\Query\Query
+	 */
+	public function prepareNonRelationQuery()
+	{
+		$query = Crm\EventTable::query();
 
 		$query->registerRuntimeField(new ORM\Fields\ExpressionField(
 			'EVENT_ID',
@@ -201,6 +209,12 @@ class Event
 	public function prepareRelationQuery($indicatorType)
 	{
 		$query = Crm\EventRelationsTable::query();
+
+		$query->registerRuntimeField(new ORM\Fields\ExpressionField(
+			'FILES',
+			'%s',
+			'EVENT_BY.FILES'
+		));
 
 		$query->registerRuntimeField(
 			(new ORM\Fields\ExpressionField(
@@ -600,8 +614,9 @@ class Event
 		}
 		else
 		{
-			$query = Crm\EventTable::query();
-			$countField = new ORM\Fields\ExpressionField('CNT', 'COUNT(%s)', 'ID');
+			//$query = Crm\EventTable::query();
+			$query = $this->prepareNonRelationQuery();
+			$countField = new ORM\Fields\ExpressionField('CNT', 'COUNT(%s)', 'EVENT_ID');
 		}
 
 		if ($this->prepareFilter($query))
@@ -638,8 +653,9 @@ class Event
 		}
 		else
 		{
-			$query = Crm\EventTable::query();
-			$countField = new ORM\Fields\ExpressionField('CNT', 'COUNT(%s)', 'ID');
+			//$query = Crm\EventTable::query();
+			$query = $this->prepareNonRelationQuery();
+			$countField = new ORM\Fields\ExpressionField('CNT', 'COUNT(%s)', 'EVENT_ID');
 		}
 
 		if ($this->prepareFilter($query))
@@ -662,6 +678,86 @@ class Event
 	}
 
 	/**
+	 * Performs dropping crm event.
+	 *
+	 * @param int $eventId Event Id.
+	 * @param int $deletedBy Who did it.
+	 *
+	 * @return boolean
+	 */
+	public static function dropEvent($eventId, $deletedBy)
+	{
+		$success = true;
+
+		$eventRes = Crm\EventTable::getByPrimary($eventId);
+		if ($event = $eventRes->fetch())
+		{
+			$relationsList = Crm\EventRelationsTable::getList(['filter' => ['EVENT_ID' => $event['ID']]]);
+			if ($relationsList->getSelectedRowsCount() > 0)
+			{
+				$entity = new \CCrmEvent();
+				while ($relation = $relationsList->fetch())
+				{
+					if ($entity->Delete($relation['ID'], array('CURRENT_USER' => $deletedBy)) === false)
+					{
+						$success = false;
+					}
+				}
+			}
+
+			if ($success)
+			{
+				$files = unserialize($event['FILES'], [false]);
+				if (is_array($files))
+				{
+					for ($i = count($files) - 1; $i >= 0; $i--)
+					{
+						\CFile::Delete((int)$files[$i]);
+						//todo: How to count fail here
+					}
+				}
+			}
+
+			if ($success)
+			{
+				$deleteResult = Crm\EventTable::delete($event['ID']);
+				$success = $deleteResult->isSuccess();
+			}
+		}
+
+		return $success;
+	}
+
+	/**
+	 * Performs dropping crm event files.
+	 *
+	 * @param int $eventId Event Id.
+	 * @param int $deletedBy Who did it.
+	 *
+	 * @return boolean
+	 */
+	public static function dropEventFiles($eventId, $deletedBy)
+	{
+		$success = true;
+
+		$eventRes = Crm\EventTable::getByPrimary($eventId);
+		if ($event = $eventRes->fetch())
+		{
+			$files = unserialize($event['FILES'], [false]);
+			if (is_array($files))
+			{
+				for ($i = count($files) - 1; $i >= 0; $i--)
+				{
+					\CFile::Delete((int)$files[$i]);
+					//todo: How to count fail here
+				}
+			}
+		}
+
+		return $success;
+	}
+
+	/**
 	 * Performs dropping entity.
 	 *
 	 * @return boolean
@@ -679,36 +775,35 @@ class Event
 		}
 		else
 		{
-			$query = Crm\EventTable::query();
+			$query = $this->prepareNonRelationQuery();
 		}
 
 		if ($this->prepareFilter($query))
 		{
 			$query
-				->addSelect('ID')
+				->addSelect('EVENT_ID')
 				->setLimit(self::MAX_ENTITY_PER_INTERACTION)
-				->setOrder(array('ID' => 'ASC'));
+				->setOrder(array('EVENT_ID' => 'ASC'));
 
 			if ($this->getProcessOffset() > 0)
 			{
-				$query->where('ID', '>', $this->getProcessOffset());
+				$query->where('EVENT_ID', '>', $this->getProcessOffset());
 			}
 
 			$res = $query->exec();
 
 			$success = true;
-			$entity = new \CCrmEvent();
 			while ($event = $res->fetch())
 			{
-				$this->setProcessOffset($event['ID']);
+				$this->setProcessOffset($event['EVENT_ID']);
 
-				if ($entity->Delete($event['ID'], array('CURRENT_USER' => $this->getOwner())) !== false)
+				if (self::dropEvent($event['EVENT_ID'], $this->getOwner()))
 				{
 					$this->incrementDroppedEntityCount();
 				}
 				else
 				{
-					$this->collectError(new Main\Error('Deletion failed with event #'.$event['ID'], self::ERROR_DELETION_FAILED));
+					$this->collectError(new Main\Error('Deletion failed with event #'.$event['EVENT_ID'], self::ERROR_DELETION_FAILED));
 					$this->incrementFailCount();
 				}
 
@@ -740,21 +835,20 @@ class Event
 		}
 		else
 		{
-			$query = Crm\EventTable::query();
+			$query = $this->prepareNonRelationQuery();
 		}
 
 		if ($this->prepareFilter($query))
 		{
 			$query
-				->addSelect('ID')
-				->addSelect('FILES')
+				->addSelect('EVENT_ID')
 				->setLimit(self::MAX_FILE_PER_INTERACTION)
-				->setOrder(array('ID' => 'ASC'))
+				->setOrder(array('EVENT_ID' => 'ASC'))
 				->whereNotNull('FILES')
 			;
 			if ($this->getProcessOffset() > 0)
 			{
-				$query->where('ID', '>', $this->getProcessOffset());
+				$query->where('EVENT_ID', '>', $this->getProcessOffset());
 			}
 
 			$result = $query->exec();
@@ -762,38 +856,7 @@ class Event
 			$success = true;
 			while ($event = $result->fetch())
 			{
-				$files = unserialize($event['FILES'], [false]);
-				if (!is_array($files))
-				{
-					$this->setProcessOffset($event['ID']);
-					continue;
-				}
-
-				for ($i = count($files) - 1; $i >= 0; $i--)
-				{
-					$fileId = $files[$i];
-
-					\CFile::Delete((int)$fileId);
-					//todo: How to count fail here
-
-					unset($files[$i]);
-
-					if ($this->hasTimeLimitReached())
-					{
-						$success = false;
-						break;
-					}
-				}
-
-				if (count($files) > 0)
-				{
-					$res = Crm\EventTable::update($event['ID'], array('FILES' => serialize($files)));
-				}
-				else
-				{
-					$res = Crm\EventTable::update($event['ID'], array('FILES' => null));
-				}
-				if ($res->isSuccess())
+				if (self::dropEventFiles($event['EVENT_ID'], $this->getOwner()))
 				{
 					$this->incrementDroppedFileCount();
 				}
@@ -808,7 +871,7 @@ class Event
 					break;
 				}
 
-				$this->setProcessOffset($event['ID']);
+				$this->setProcessOffset($event['EVENT_ID']);
 			}
 		}
 

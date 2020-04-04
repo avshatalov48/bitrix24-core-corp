@@ -36,7 +36,7 @@ class ViolationRules extends EO_ViolationRules
 			$violationRules->setMaxWorkTimeLackForPeriod($violationForm->maxWorkTimeLackForPeriod);
 			$violationRules->setMaxShiftStartDelay($violationForm->maxShiftStartDelay);
 			$violationRules->setMissedShiftStart($violationForm->missedShiftStart);
-			$violationRules->setUsersToNotifyByForm($violationForm, $violationRules);
+			$violationRules->setUsersToNotifyByForm($violationForm);
 		}
 
 		return $violationRules;
@@ -68,7 +68,7 @@ class ViolationRules extends EO_ViolationRules
 		$this->setMaxShiftStartDelay($violationForm->maxShiftStartDelay);
 		$this->setMissedShiftStart($violationForm->missedShiftStart);
 
-		$this->setUsersToNotifyByForm($violationForm, $this);
+		$this->setUsersToNotifyByForm($violationForm);
 	}
 
 	public function getNotifyUsersSymbolic($type)
@@ -110,55 +110,16 @@ class ViolationRules extends EO_ViolationRules
 		return in_array(ViolationRulesTable::USERS_TO_NOTIFY_USER_MANAGER, $this->getNotifyUsersSymbolic($groupName), true);
 	}
 
-	private function setUsersToNotifyByForm(ViolationForm $violationForm, ViolationRules $violationRules)
+	private function setUsersToNotifyByForm(ViolationForm $violationForm)
 	{
-		$newUsers = [];
-		if (!empty($violationForm->startEndNotifyUsers))
-		{
-			$newUsers = array_merge($newUsers, [
-				ViolationRulesTable::USERS_TO_NOTIFY_FIXED_START_END => $violationForm->startEndNotifyUsers,
-			]);
-		}
-		if (!empty($violationForm->hoursPerDayNotifyUsers))
-		{
-			$newUsers = array_merge($newUsers, [
-				ViolationRulesTable::USERS_TO_NOTIFY_FIXED_RECORD_TIME_PER_DAY => $violationForm->hoursPerDayNotifyUsers,
-			]);
-		}
-		if (!empty($violationForm->editWorktimeNotifyUsers))
-		{
-			$newUsers = array_merge($newUsers, [
-				ViolationRulesTable::USERS_TO_NOTIFY_FIXED_EDIT_WORKTIME => $violationForm->editWorktimeNotifyUsers,
-			]);
-		}
-		if (!empty($violationForm->hoursPerPeriodNotifyUsers))
-		{
-			$newUsers = array_merge($newUsers, [
-				ViolationRulesTable::USERS_TO_NOTIFY_FIXED_TIME_FOR_PERIOD => $violationForm->hoursPerPeriodNotifyUsers,
-			]);
-		}
-		if (!empty($violationForm->shiftTimeNotifyUsers))
-		{
-			$newUsers = array_merge($newUsers, [
-				ViolationRulesTable::USERS_TO_NOTIFY_SHIFT_DELAY => $violationForm->shiftTimeNotifyUsers,
-			]);
-		}
-		if (!empty($violationForm->shiftCheckNotifyUsers))
-		{
-			$newUsers = array_merge($newUsers, [
-				ViolationRulesTable::USERS_TO_NOTIFY_SHIFT_MISSED_START => $violationForm->shiftCheckNotifyUsers,
-			]);
-		}
-		foreach ($newUsers as $key => $newUsersIds)
-		{
-			if (array_diff($newUsersIds, (array)$violationRules->getUsersToNotify()[$key])
-				||
-				array_diff((array)$violationRules->getUsersToNotify()[$key], $newUsersIds))
-			{
-				$this->setUsersToNotify($newUsers);
-				break;
-			}
-		}
+		$this->setUsersToNotify([
+			ViolationRulesTable::USERS_TO_NOTIFY_FIXED_START_END => (array)$violationForm->startEndNotifyUsers,
+			ViolationRulesTable::USERS_TO_NOTIFY_FIXED_RECORD_TIME_PER_DAY => (array)$violationForm->hoursPerDayNotifyUsers,
+			ViolationRulesTable::USERS_TO_NOTIFY_FIXED_EDIT_WORKTIME => (array)$violationForm->editWorktimeNotifyUsers,
+			ViolationRulesTable::USERS_TO_NOTIFY_FIXED_TIME_FOR_PERIOD => (array)$violationForm->hoursPerPeriodNotifyUsers,
+			ViolationRulesTable::USERS_TO_NOTIFY_SHIFT_DELAY => (array)$violationForm->shiftTimeNotifyUsers,
+			ViolationRulesTable::USERS_TO_NOTIFY_SHIFT_MISSED_START => (array)$violationForm->shiftCheckNotifyUsers,
+		]);
 	}
 
 	public function addToNotificationUserIds($ids)
@@ -177,11 +138,11 @@ class ViolationRules extends EO_ViolationRules
 
 	public function isMissedShiftsControlEnabled()
 	{
-		return $this->getMissedShiftStart() === 1;
+		return $this->getMissedShiftStart() === ViolationRulesTable::MISSED_SHIFT_IS_TRACKED;
 	}
 
 	public function isForAllUsers()
 	{
-		return $this->getEntityCode() === ViolationRulesTable::ENTITY_CODE_ALL_SCHEDULE_USERS;
+		return $this->getEntityCode() === EntityCodesHelper::getAllUsersCode();
 	}
 }

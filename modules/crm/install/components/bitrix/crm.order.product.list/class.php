@@ -65,7 +65,7 @@ final class CCrmOrderProductListComponent extends \CBitrixComponent
 				$this->arResult['SITE_ID'] = $this->order->getSiteId();
 				if ((int)$this->arParams['FUSER_ID'] > 0)
 				{
-					$basket = \Bitrix\Sale\Basket::loadItemsForFUser((int)$this->arParams['FUSER_ID'], $this->order->getSiteId());
+					$basket = \Bitrix\Crm\Order\Basket::loadItemsForFUser((int)$this->arParams['FUSER_ID'], $this->order->getSiteId());
 					$this->order->setBasket($basket);
 				}
 			}

@@ -53,6 +53,8 @@ export class Guide extends Event.EventEmitter
 		this.finalText = options.finalText || "";
 		this.finalTitle = options.finalTitle || "";
 
+		this.simpleMode = options.simpleMode || false;
+
 		this.setAutoSave(options.autoSave);
 
 		const events = Type.isPlainObject(options.events) ? options.events : {};
@@ -61,7 +63,7 @@ export class Guide extends Event.EventEmitter
 			let cb = Type.isFunction(events[eventName]) ? events[eventName] : Reflection.getClass(events[eventName]);
 			if (cb)
 			{
-				this.subscribe(this.getFullEventName(eventName), () => {
+				this.subscribe(this.constructor.getFullEventName(eventName), () => {
 					cb();
 				});
 			}
@@ -116,7 +118,7 @@ export class Guide extends Event.EventEmitter
 	 */
 	start()
 	{
-		this.emit(this.getFullEventName("onStart"), {guide: this});
+		this.emit(this.constructor.getFullEventName("onStart"), {guide: this});
 
 		if (this.getAutoSave())
 		{
@@ -150,13 +152,13 @@ export class Guide extends Event.EventEmitter
 	 */
 	close()
 	{
-		this.emit(this.getFullEventName("onFinish"), { guide: this});
+		this.emit(this.constructor.getFullEventName("onFinish"), { guide: this});
 
 		this.getPopup().destroy();
 		Dom.remove(this.layout.overlay);
 		Dom.removeClass(document.body, "ui-tour-body-overflow");
 
-		if (this.getCurrentStep())
+		if (this.getCurrentStep() && this.getCurrentStep().getTarget())
 		{
 			this.getCurrentStep().getTarget().classList.remove("ui-tour-selector");
 		}
@@ -181,18 +183,26 @@ export class Guide extends Event.EventEmitter
 	 */
 	showStep()
 	{
-		this.getCurrentStep().emit(this.getCurrentStep().getFullEventName("onShow"), {
-			step : this.getCurrentStep(),
+		let currentStep = this.getCurrentStep();
+		currentStep.emit(currentStep.constructor.getFullEventName("onShow"), {
+			step : currentStep,
 			guide: this
 		});
 
-		if(this.getCurrentStep().getTarget())
+		if (currentStep.getTarget())
 		{
-			const targetPos = this.getCurrentStep().getTarget().getBoundingClientRect();
+			let close = this.close.bind(this);
+			Event.bind(currentStep.getTarget(), 'click', close);
 
+			this.subscribe("UI.Tour.Guide:onFinish", () => {
+				Event.unbind(currentStep.getTarget(), 'click', close);
+			});
+
+			const targetPos = currentStep.getTarget().getBoundingClientRect();
+			const targetPosWindow = Dom.getPosition(currentStep.getTarget());
 			if (!this.isTargetVisible(targetPos))
 			{
-				this.scrollToTarget(targetPos);
+				this.scrollToTarget(targetPosWindow);
 			}
 		}
 
@@ -218,14 +228,19 @@ export class Guide extends Event.EventEmitter
 	 */
 	closeStep()
 	{
-		this.getCurrentStep().emit(this.getCurrentStep().getFullEventName("onClose"), {
-			step : this.getCurrentStep(),
-			guide: this
-		});
-
-		if (this.getCurrentStep().getTarget())
+		const currentStep = this.getCurrentStep();
+		if(currentStep)
 		{
-			Dom.removeClass(this.getCurrentStep().getTarget(), "ui-tour-selector")
+			currentStep.emit(currentStep.constructor.getFullEventName("onClose"), {
+				step : currentStep,
+				guide: this
+			});
+
+			const target = currentStep.getTarget();
+			if (target)
+			{
+				Dom.removeClass(target, "ui-tour-selector")
+			}
 		}
 	}
 
@@ -488,7 +503,7 @@ export class Guide extends Event.EventEmitter
 		if (!this.layout.content)
 		{
 			this.layout.content = Tag.render`
-				<div class="ui-tour-popup">
+				<div class="ui-tour-popup ${this.simpleMode ? 'ui-tour-popup-simple' : ''}" >
 					${this.getTitle()}
 					<div class="ui-tour-popup-content">
 						${this.getText()}
@@ -650,7 +665,7 @@ export class Guide extends Event.EventEmitter
 
 			this.layout.nextBtn = Tag.render`
 				<button id="next" class="ui-tour-popup-btn-next">
-					${Loc.getMessage("JS_UI_TOUR_BUTTON")}
+					${this.simpleMode ? Loc.getMessage("JS_UI_TOUR_BUTTON_SIMPLE") : Loc.getMessage("JS_UI_TOUR_BUTTON")}
 				</button>
 			`;
 
@@ -883,17 +898,14 @@ export class Guide extends Event.EventEmitter
 	 */
 	scrollToTarget(target)
 	{
-		window.scrollTo(target.x, target.y);
+		window.scrollTo(0, target.y - this.getAreaPadding());
 	}
 
 	/**
 	 * @private
 	 */
-	getFullEventName(shortName)
+	static getFullEventName(shortName)
 	{
 		return "UI.Tour.Guide:" + shortName;
 	}
 }
-
-
-

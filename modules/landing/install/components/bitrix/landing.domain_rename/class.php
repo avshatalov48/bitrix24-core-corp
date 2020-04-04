@@ -11,6 +11,33 @@ use \Bitrix\Landing\Manager;
 class LandingDomainRenameComponent extends LandingSiteEditComponent
 {
 	/**
+	 * Returns postfix for domain.
+	 * @return string
+	 */
+	protected function getPostFix()
+	{
+		$zone = Manager::getZone();
+		$postfix = '.bitrix24.site';
+
+		if ($this->arParams['TYPE'] == 'STORE')
+		{
+			$postfix = ($zone == 'by')
+				? '.bitrix24shop.by'
+				: '.bitrix24.shop';
+		}
+		else if ($zone == 'by')
+		{
+			$postfix = '.bitrix24site.by';
+		}
+		else if ($zone == 'ua')
+		{
+			$postfix = '.bitrix24site.ua';
+		}
+
+		return $postfix;
+	}
+
+	/**
 	 * Base executable method.
 	 * @return void
 	 */
@@ -26,7 +53,7 @@ class LandingDomainRenameComponent extends LandingSiteEditComponent
 			$this->checkParam('FIELD_ID', 'domain_id');
 			$this->checkParam('DOMAIN_NAME', '');
 			$this->checkParam('DOMAIN_ID', 0);
-			$zone = Manager::getZone();
+			$this->arResult['POSTFIX'] = $this->getPostFix();
 			$puny = new \CBXPunycode;
 
 			// template data
@@ -35,18 +62,6 @@ class LandingDomainRenameComponent extends LandingSiteEditComponent
 			$this->arResult['CUSTOM_DOMAIN_AVAILABLE'] = Manager::checkFeature(
 				Manager::FEATURE_CUSTOM_DOMAIN
 			);
-			if ($this->arParams['TYPE'] == 'STORE')
-			{
-				$this->arResult['POSTFIX'] = $zone == 'by'
-					? '.bitrix24shop.by'
-					: '.bitrix24.shop';
-			}
-			else
-			{
-				$this->arResult['POSTFIX'] = $zone == 'by'
-					? '.bitrix24site.by'
-					: '.bitrix24.site';
-			}
 
 			// domain name
 			if ($this->arParams['DOMAIN_NAME'])

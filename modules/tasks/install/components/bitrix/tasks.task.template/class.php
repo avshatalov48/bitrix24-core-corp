@@ -185,38 +185,6 @@ class TasksTaskTemplateComponent extends TasksBaseComponent
 		$this->collectProjects();
 		$this->collectTasks();
 		$this->collectTemplates();
-
-		$this->getFeedbackFormParameters($id);
-	}
-
-	/**
-	 * @param $templateId
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\NotImplementedException
-	 * @throws \Bitrix\Main\SystemException
-	 */
-	private function getFeedbackFormParameters($templateId)
-	{
-		$checklistGroupCount = count(
-			TemplateCheckListFacade::getList(['ID'], ['TEMPLATE_ID' => $templateId, 'PARENT_ID' => 0])
-		);
-
-		$this->arResult['DATA']['FEEDBACK_FORM_PARAMETERS'] = [
-			'ID' => 'tasks-checklist',
-			'VIEW_TARGET' => null,
-			'FORMS' => [
-				['zones' => ['com.br'], 'id' => '112','lang' => 'br', 'sec' => 'fcujin'],
-				['zones' => ['es'], 'id' => '110','lang' => 'la', 'sec' => 'hj410g'],
-				['zones' => ['de'], 'id' => '108','lang' => 'de', 'sec' => '9fgkgr'],
-				['zones' => ['ua'], 'id' => '104','lang' => 'ua', 'sec' => 'pahi9k'],
-				['zones' => ['ru', 'kz', 'by'], 'id' => '102','lang' => 'ru', 'sec' => 'xsbhvf'],
-				['zones' => ['en'], 'id' => '106','lang' => 'en', 'sec' => 'etwdsc'],
-			],
-			'PRESETS' => [
-				'check_list' => ($checklistGroupCount > 0? 1 : 0),
-				'amount_list' => $checklistGroupCount,
-			],
-		];
 	}
 
 	protected function getAuxData()
@@ -522,7 +490,7 @@ class TasksTaskTemplateComponent extends TasksBaseComponent
 		];
 	}
 
-	public static function saveCheckList($items, $templateId, $userId)
+	public static function saveCheckList($items, $templateId, $userId, $params)
 	{
 		if (!is_array($items))
 		{
@@ -551,6 +519,6 @@ class TasksTaskTemplateComponent extends TasksBaseComponent
 			unset($items[$id]);
 		}
 
-		return TemplateCheckListFacade::merge($templateId, $userId, $items);
+		return TemplateCheckListFacade::merge($templateId, $userId, $items, $params);
 	}
 }

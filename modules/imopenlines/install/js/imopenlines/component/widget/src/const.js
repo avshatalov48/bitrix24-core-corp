@@ -95,3 +95,17 @@ export const RestMethodCheck = GetObjectValues(RestMethod);
 export const RestAuth = Object.freeze({
 	guest: 'guest',
 });
+
+export const SessionStatus = Object.freeze({
+	new: 0,
+	skip: 5,
+	answer: 10,
+	client: 20,
+	clientAfterOperator: 25,
+	operator: 40,
+	waitClient: 50,
+	close: 60,
+	spam: 65,
+	duplicate: 69,
+	silentlyClose: 75,
+});

@@ -645,27 +645,24 @@ include("InAppNotifier");
             setTimeout(fn, 1000);
         }
 
-        onNewItem(title) {
-            Log.debug('onNewItem');
-            const task = new Task(this.currentUser);
-            this.dontUpdateTask.set(task.guid);
+		onNewItem(title)
+		{
+			Log.debug('onNewItem');
 
-            task.title = title;
-            task.creator = this.currentUser;
-            task.responsible = this.currentUser;
+			const task = new Task(this.currentUser);
 
-            this.addItem(task);
-            const oldTaskId = task.id;
+			task.title = title;
+			task.creator = this.currentUser;
+			task.responsible = this.currentUser;
+			task.groupId = this.groupId;
 
-            task.save().then(
-                () => {
-                    this.updateItem(oldTaskId, {id: task.id});
-                },
-                (e) => {
-                    console.error(e)
-                }
-            );
-        }
+			this.dontUpdateTask.set(task.guid);
+
+			this.addItem(task);
+			const oldTaskId = task.id;
+
+			task.save().then(() => this.updateItem(oldTaskId, {id: task.id}), e => console.error(e));
+		}
 
         onItemAction(event) {
             const task = this.taskList.get(event.item.id);
@@ -777,30 +774,31 @@ include("InAppNotifier");
             };
         }
 
-        loadTasksFromCache() {
-            Log.debug('LoadFromCache: ' + this.filter.cacheId);
-            BX.onViewLoaded(() => {
-                const result = this.tasksCache.get();
-                const dataCache = result[this.filter.cacheId] ? result[this.filter.cacheId] : {};
-                if (!dataCache || Object.keys(dataCache).length === 0) {
-                    Log.debug('cache empty... exit!');
-                    return false;
-                }
+		loadTasksFromCache()
+		{
+			Log.debug(`LoadFromCache: ${this.filter.cacheId}`);
+			BX.onViewLoaded(() => {
+				const result = this.tasksCache.get();
+				const dataCache = result[this.filter.cacheId] ? result[this.filter.cacheId] : {};
 
-                let items = dataCache.map(
-                    row => {
-                        const task = new Task(this.currentUser);
-                        task.setData(row);
+				if (!dataCache || Object.keys(dataCache).length === 0)
+				{
+					Log.debug('cache empty... exit!');
+					return;
+				}
 
-                        this.taskList.set(task.id, task);
+				const items = dataCache.map((row) => {
+					const task = new Task(this.currentUser);
+					task.setData(row);
 
-                        return this.getItemDataFromTask(task);
-                    }
-                );
+					this.taskList.set(task.id, task);
 
-                this.list.setItems(items, null, true);
-            });
-        }
+					return this.getItemDataFromTask(task);
+				});
+
+				this.list.setItems(items, null, true);
+			});
+		}
 
         static get _selectFields()
         {

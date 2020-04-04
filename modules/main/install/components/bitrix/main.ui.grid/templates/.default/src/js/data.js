@@ -197,6 +197,11 @@
 							self.parent.messages.show();
 
 							self.parent.tableUnfade();
+
+							if (BX.type.isFunction(error))
+							{
+								BX.delegate(error, self)(xhr);
+							}
 							return;
 						}
 					}

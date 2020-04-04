@@ -29,6 +29,16 @@ if ($arParams['INDIVIDUAL_USE'] != 'Y')
 }
 
 $iconCode = \Bitrix\ImConnector\Connector::getIconByConnector($arResult["CONNECTOR"]);
+
+$helpDeskLinkStart = "<a href=\"javascript:void(0)\" onclick='top.BX.Helper.show(\"redirect=detail&code=10443976\");event.preventDefault();'>";
+$helpDeskLinkEnd = '</a>';
+
+$helpDeskLinkNoPage = str_replace(
+	['#A#', '#A_END#'],
+	[$helpDeskLinkStart, $helpDeskLinkEnd],
+	Loc::getMessage('IMCONNECTOR_COMPONENT_FACEBOOK_NO_SPECIFIC_PAGE')
+);
+
 ?>
 <form action="<?=$arResult["URL"]["DELETE"]?>" method="post" id="form_delete_<?=$arResult["CONNECTOR"]?>">
 	<input type="hidden" name="<?=$arResult["CONNECTOR"]?>_form" value="true">
@@ -360,6 +370,9 @@ else
 								}
 							}
 							?>
+							<div class="imconnector-field-box-subtitle">
+								<?=$helpDeskLinkNoPage?>
+							</div>
 						</div>
 					</div>
 				</div>
@@ -461,6 +474,9 @@ else
 										}
 									}
 									?>
+									<div class="imconnector-field-box-subtitle">
+										<?=$helpDeskLinkNoPage?>
+									</div>
 								</div>
 							</div>
 							<?

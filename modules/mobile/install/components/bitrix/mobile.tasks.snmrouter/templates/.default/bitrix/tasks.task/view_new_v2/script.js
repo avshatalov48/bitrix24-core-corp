@@ -64,6 +64,7 @@
 			this.stub = null;
 			this.platformDelta = (window.platform === 'ios' ? 60 : 0);
 			this.formInterface = BX.Mobile.Grid.Form.getByFormId(this.option('formId'));
+			this.forceHideButtons = false;
 
 			BX.hide(BX('commentsStub'));
 
@@ -120,65 +121,92 @@
 
 		bindEvents: function()
 		{
+			this.comments = new Map();
+			this.commentsList = null;
 			BX.addCustomEvent(window, 'onUCFormSubmit', BX.delegate(function() {
 				console.log('tasks: onUCFormSubmit');
 				this.hideCommentsStub();
 			}, this));
 
-			BX.addCustomEvent(window, 'OnUCAfterRecordAdd', BX.delegate(function(messageId1, messageId2, that, data, comment) {
-				console.log('tasks: OnUCAfterRecordAdd');
-				this.hideCommentsStub();
-
-				this.canReadAllComments = true;
-				this.commentsToRead.push(data.messageId);
-			}, this));
-
-			BX.addCustomEvent(window, 'OnUCCommentWasPulled', BX.delegate(function(id) {
-				console.log('tasks: OnUCCommentWasPulled');
-				this.hideCommentsStub();
-
-				this.canReadAllComments = true;
-				this.commentsToRead.push(id);
-			}, this));
-
-			BX.addCustomEvent(window, 'OnUCommentWasDeleted', BX.delegate(function(params) {
-				console.log('tasks: OnUCommentWasDeleted');
-			}, this));
-
-			window.addEventListener('scroll', BX.delegate(function() {
-				var scrollTop = this.getScrollTop();
-				var bottomBorder = document.body.scrollHeight - 2 * this.webViewHeight + 75 + this.platformDelta;
-				var topBorder = this.webViewHeight - 75;
-				var bottomReached = scrollTop >= document.body.scrollHeight - document.body.clientHeight + this.platformDelta;
-
-				if (scrollTop > topBorder)
+			BX.addCustomEvent(window, "OnUCHasBeenInitialized", function(xmlId, list) {
+				if (xmlId === "TASK_" + this.task["ID"])
 				{
-					if (!BX.hasClass(BX('up_button'), 'task-show-button'))
-					{
-						BX.addClass(BX('up_button'), 'task-show-button');
-					}
+					this.commentsList = list;
 				}
-				else
+			}.bind(this));
+
+			BX.addCustomEvent(window, "OnUCCommentWasPulled", function(id, data) {
+				if (id[0] === "TASK_" + this.task["ID"])
 				{
-					BX.removeClass(BX('up_button'), 'task-show-button');
+					var author = data.messageFields["AUTHOR"];
+					if (Number(author["ID"]) !== Number(BX.message("USER_ID")))
+						this.comments.set(id[1]);
 				}
-
-				BX('down_button').style.display = (scrollTop < bottomBorder ? 'block' : 'none');
-
-				if (bottomReached && this.canReadAllComments)
+			}.bind(this));
+			var changeCounter = function(xmlId, id) {
+				console.log('OnUCCommentWasRead:', arguments);
+/*				if (xmlId === ("TASK_" + this.task.ID) && this.comments.delete(id[1]))
 				{
-					console.log('OnUCCommentWasRead');
-
-					BX.ajax.runAction('tasks.task.view.update', {data: {taskId: this.task.ID}});
-
-					BX.onCustomEvent('OnUCCommentWasRead', this.commentsToRead);
-					BXMobileApp.Events.postToComponent('task.view.onCommentsRead', {taskId: this.task.ID}, 'tasks.view');
-					BXMobileApp.Events.postToComponent('task.view.onCommentsRead', {taskId: this.task.ID}, 'tasks.list');
-
-					this.canReadAllComments = false;
-					this.commentsToRead = [];
+					BXMobileApp.Events.postToComponent('task.view.onCommentsRead', {taskId: this.task.ID, newCommentsCount : this.comments.size}, 'tasks.view');
+					BXMobileApp.Events.postToComponent('task.view.onCommentsRead', {taskId: this.task.ID, newCommentsCount : this.comments.size}, 'tasks.list');
 				}
-			}, this));
+*/			}.bind(this);
+			BX.addCustomEvent(window, "OnUCCommentWasRead", changeCounter);
+			BX.addCustomEvent(window, "OnUCommentWasAdded", function(xmlId, id) {
+				console.log('OnUCCommentWasAdded:', arguments);
+				if (xmlId === ("TASK_" + this.task["ID"]))
+				{
+					changeCounter(xmlId, id);
+					console.log('this.commentsList.getCommentsCount():', this.commentsList.getCommentsCount());
+				}
+			}.bind(this));
+			BX.addCustomEvent(window, "OnUCommentWasDeleted", function(xmlId, id) {
+				console.log('OnUCommentWasDeleted:', arguments);
+				if (xmlId === ("TASK_" + this.task["ID"]))
+				{
+					changeCounter(xmlId, id);
+					console.log('this.commentsList.getCommentsCount():', this.commentsList.getCommentsCount());
+				}
+			}.bind(this));
+
+			window.addEventListener('scroll', this.onScrollEvent.bind(this));
+
+			BX.addCustomEvent('onKeyboardWillShow', function() {
+				var upButton = BX('up_button');
+				var downButton = BX('down_button');
+				var optionsButton = BX('options_button');
+				var hiddenClass = 'flow-button-hidden';
+
+				this.forceHideButtons = true;
+
+				if (!BX.hasClass(optionsButton, hiddenClass))
+				{
+					BX.addClass(optionsButton, hiddenClass);
+				}
+				if (!BX.hasClass(downButton, hiddenClass))
+				{
+					BX.addClass(downButton, hiddenClass);
+				}
+				BX.hide(upButton);
+			}.bind(this));
+
+			BX.addCustomEvent('onKeyboardWillHide', function() {
+				var downButton = BX('down_button');
+				var optionsButton = BX('options_button');
+				var hiddenClass = 'flow-button-hidden';
+
+				this.forceHideButtons = false;
+
+				if (BX.hasClass(optionsButton, hiddenClass))
+				{
+					BX.removeClass(optionsButton, hiddenClass);
+				}
+				if (BX.hasClass(downButton, hiddenClass))
+				{
+					BX.removeClass(downButton, hiddenClass);
+				}
+				this.onScrollEvent();
+			}.bind(this));
 
 			BX.addCustomEvent("onTextPanelShown", BX.delegate(function(obj) {
 				if (!this.webViewHeight)
@@ -230,10 +258,12 @@
 			}, this));
 
 			BXMobileApp.addCustomEvent('tasks.view.native::onItemAction', BX.delegate(function(eventData) {
-				if (eventData.taskId !== this.task.ID)
+				if (Number(eventData.taskId) !== Number(this.task.ID) || eventData.taskGuid !== this.guid)
 				{
 					return;
 				}
+
+				var user = {};
 
 				switch (eventData.name)
 				{
@@ -246,11 +276,13 @@
 						break;
 
 					case 'responsible':
-						var user = eventData.values.user;
+					case 'auditor':
+					case 'accomplice':
+						user = eventData.values.user;
 						user = {
 							ID: user.id,
-							NAME: user.name,
-							IMAGE: user.icon || false,
+							NAME: user.name || user.title,
+							IMAGE: user.icon || user.imageUrl || false
 						};
 						this.getFormElement(eventData.name).callback({a_users: [user]});
 						break;
@@ -261,7 +293,7 @@
 				this.scrollToTop();
 			}, this));
 
-			BXMobileApp.addCustomEvent("onTaskWasUpdated", BX.delegate(function(taskId, objectId, data, operationData, nullObj)
+			BXMobileApp.addCustomEvent("onTaskWasUpdated", BX.delegate(function(taskId, objectId, data, operationData, restricted)
 			{
 				if (!data)
 				{
@@ -270,7 +302,7 @@
 				}
 				if (this.task['ID'] == taskId && objectId !== this.taskEditObj.vars["id"])
 				{
-					if (!nullObj)
+					if (!restricted)
 					{
 						if (Application.getApiVersion() < 31)
 						{
@@ -323,6 +355,36 @@
 			});
 		},
 
+		onScrollEvent: function()
+		{
+			if (this.forceHideButtons)
+			{
+				return;
+			}
+
+			var scrollTop = this.getScrollTop();
+			var bottomBorder = document.body.scrollHeight - 2 * this.webViewHeight + 75 + this.platformDelta;
+			var topBorder = this.webViewHeight - 75;
+			var upButton = BX('up_button');
+			var downButton = BX('down_button');
+			var showClass = 'task-show-button';
+
+			if (scrollTop > topBorder)
+			{
+				if (!BX.hasClass(upButton, showClass))
+				{
+					BX.addClass(upButton, showClass);
+				}
+			}
+			else
+			{
+				BX.removeClass(upButton, showClass);
+			}
+			BX.show(upButton);
+
+			downButton.style.display = (scrollTop < bottomBorder ? 'block' : 'none');
+		},
+
 		getScrollTop: function()
 		{
 			return window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
@@ -372,9 +434,16 @@
 					break;
 
 				case 'responsible':
+				case 'auditor':
+				case 'accomplice':
+					var membersMap = {
+						responsible: 'data[SE_RESPONSIBLE][0][ID]',
+						auditor: 'data[SE_AUDITOR][]',
+						accomplice: 'data[SE_ACCOMPLICE][]'
+					};
 					for (ii = 0; ii < this.formInterface.elements.length; ii++)
 					{
-						if (this.formInterface.elements[ii].select && this.formInterface.elements[ii].select.name === 'data[SE_RESPONSIBLE][0][ID]')
+						if (this.formInterface.elements[ii].select && this.formInterface.elements[ii].select.name === membersMap[type])
 						{
 							return this.formInterface.elements[ii];
 						}

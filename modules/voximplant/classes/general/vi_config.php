@@ -764,6 +764,14 @@ class CVoxImplantConfig
 		if ($result['IVR'] == 'Y' && !VI\Ivr\Ivr::isEnabled())
 			$result['IVR'] = 'N';
 
+		if($result['RECORDING'] == 'Y')
+		{
+			$recordLimit = VI\Limits::getRecordLimit($result['PORTAL_MODE']);
+			$recordRemain = VI\Limits::getRemainingRecordsCount();
+
+			$result['RECORDING_ALLOWED'] = ($recordLimit == 0 || $recordRemain > 0) ? 'Y' : 'N';
+		}
+
 		if($result['TRANSCRIBE'] == 'Y' && !VI\Transcript::isEnabled())
 			$result['TRANSCRIBE'] = 'N';
 

@@ -274,13 +274,15 @@ class CrmContacts extends \Bitrix\Main\UI\Selector\EntityBase
 			{
 				$filter = [
 					'SEARCH_CONTENT' => $search,
-					'%FULL_NAME' => $search
+					'%FULL_NAME' => $search,
+					'__ENABLE_SEARCH_CONTENT_PHONE_DETECTION' => false
 				];
 			}
 			else
 			{
 				$filter = [
 					'SEARCH_CONTENT' => $search,
+					'__ENABLE_SEARCH_CONTENT_PHONE_DETECTION' => false,
 					'LOGIC' => 'AND'
 				];
 				for($i = 0; $i < 2; $i++)

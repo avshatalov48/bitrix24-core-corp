@@ -90,6 +90,8 @@ abstract class Value
 		foreach($pairs as $pair)
 		{
 			list($name, $value) = explode('=', $pair);
+			$name = trim($name);
+			$value = trim($value);
 			if($name !== null && $value !== null)
 			{
 				if(strtoupper($value )=== 'Y')

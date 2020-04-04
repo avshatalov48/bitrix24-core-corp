@@ -84,6 +84,26 @@ class AdsAudience
 		}
 	}
 
+	public static function addLookalikeAudience($type, $accountId = null, $sourceAudienceId = null, $options = [])
+	{
+		$audience = Service::getAudience($type);
+		if (!$audience)
+		{
+			return null;
+		}
+		$audience->setAccountId($accountId);
+		$addResult = $audience->createLookalike($sourceAudienceId, $options);
+		if ($addResult->isSuccess() && $addResult->getId())
+		{
+			return $addResult->getId();
+		}
+		else
+		{
+			self::$errors = $addResult->getErrorMessages();
+			return null;
+		}
+	}
+
 	/**
 	 * Get audiences.
 	 *
@@ -134,6 +154,17 @@ class AdsAudience
 		return $result;
 	}
 
+	public static function getRegions($type)
+	{
+		$account = Service::getAccount($type);
+		if (!$account)
+		{
+			return [];
+		}
+
+		return $account->getRegionsList();
+	}
+
 	/**
 	 * Get providers.
 	 *
@@ -152,6 +183,9 @@ class AdsAudience
 			//$providers[$type]['IS_ADDING_REQUIRE_CONTACTS'] =  $audience->isAddingRequireContacts();
 			$providers[$type]['IS_SUPPORT_MULTI_TYPE_CONTACTS'] =  $audience->isSupportMultiTypeContacts();
 			$providers[$type]['IS_SUPPORT_ADD_AUDIENCE'] =  $audience->isSupportAddAudience();
+			$lookalikeAudienceParams = $audience->getLookalikeAudiencesParams();
+			$providers[$type]['IS_SUPPORT_LOOKALIKE_AUDIENCE'] =  !!$lookalikeAudienceParams;
+			$providers[$type]['LOOKALIKE_AUDIENCE_PARAMS'] = $lookalikeAudienceParams;
 		}
 
 		return $providers;
@@ -196,7 +230,8 @@ class AdsAudience
 			$config->audienceId,
 			$contacts,
 			array(
-				'type' => $config->contactType
+				'type' => $config->contactType,
+				'parentId' => $config->parentId
 			)
 		);
 

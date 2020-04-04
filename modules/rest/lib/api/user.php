@@ -245,6 +245,7 @@ class User extends \IRestService
 
 		$allowedUserFields = static::getDefaultAllowedUserFields();
 		$allowedUserFields[] = 'IS_ONLINE';
+		$allowedUserFields[] = 'HAS_DEPARTAMENT';
 		$allowedUserFields[] = 'NAME_SEARCH';
 		$allowedUserFields[] = 'EXTERNAL_AUTH_ID';
 		if ($server->getMethod() == "user.search")
@@ -319,6 +320,19 @@ class User extends \IRestService
 			{
 				$filter["ID"] = (isset($filter["ID"]) ? array_intersect((is_array($filter["ID"]) ? $filter["ID"] : array($filter["ID"])), $filteredUserIDs) : $filteredUserIDs);
 			}
+		}
+
+		if(array_key_exists("HAS_DEPARTAMENT", $filter))
+		{
+			if($filter["HAS_DEPARTAMENT"] == "Y")
+			{
+				$filter[] = [
+					'LOGIC' => 'AND',
+					'!UF_DEPARTMENT' => false,
+				];
+			}
+
+			unset($filter["HAS_DEPARTAMENT"]);
 		}
 
 		$result = array();
@@ -620,7 +634,7 @@ class User extends \IRestService
 		}
 		foreach($userData as $key => $value)
 		{
-			if(in_array($key, $allowedUserFields))
+			if(in_array($key, $allowedUserFields, true))
 			{
 				$user[$key] = $value;
 			}

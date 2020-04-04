@@ -1,8 +1,7 @@
 <?php
 namespace Bitrix\Timeman\Form\Schedule;
 
-use Bitrix\Timeman\Helper\DateTimeHelper;
-use Bitrix\Timeman\Helper\TimeHelper;
+use Bitrix\Main\Type\Date;
 use Bitrix\Timeman\Model\Schedule\ShiftPlan\ShiftPlan;
 use Bitrix\Timeman\Model\Schedule\ShiftPlan\ShiftPlanTable;
 use Bitrix\Timeman\Util\Form\BaseForm;
@@ -10,6 +9,7 @@ use Bitrix\Timeman\Util\Form\Filter;
 
 class ShiftPlanForm extends BaseForm
 {
+	public $id;
 	public $shiftId;
 	public $userId;
 	public $dateAssignedFormatted;
@@ -18,25 +18,22 @@ class ShiftPlanForm extends BaseForm
 	{
 		if ($shiftPlan)
 		{
+			$this->id = $shiftPlan->getId();
 			$this->shiftId = $shiftPlan->getShiftId();
 			$this->userId = $shiftPlan->getUserId();
-			$this->dateAssignedFormatted = $shiftPlan->getDateAssigned()->format(ShiftPlanTable::DATE_FORMAT);
+			$this->dateAssignedFormatted = $shiftPlan->getDateAssignedUtc()->format(ShiftPlanTable::DATE_FORMAT);
 		}
 	}
 
 	public function configureFilterRules()
 	{
 		return [
-			(new Filter\Validator\RequiredValidator('dateAssignedFormatted', 'shiftId', 'userId'))
+			(new Filter\Validator\LoadableValidator('dateAssignedFormatted', 'shiftId', 'userId'))
 			,
 			(new Filter\Validator\RegularExpressionValidator('dateAssignedFormatted'))
-				->configurePattern(DateTimeHelper::getDateRegExp())
+				->configurePattern(ShiftPlanTable::getDateRegExp())
 			,
-			(new Filter\Validator\NumberValidator('timestamp'))
-				->configureIntegerOnly(true)
-				->configureMin(946677600) // 2000-01-01
-			,
-			(new Filter\Validator\NumberValidator('shiftId', 'userId'))
+			(new Filter\Validator\NumberValidator('shiftId', 'userId', 'id'))
 				->configureMin(1)
 				->configureIntegerOnly(true)
 			,
@@ -48,12 +45,6 @@ class ShiftPlanForm extends BaseForm
 	 */
 	public function getDateAssigned()
 	{
-		return \Bitrix\Main\Type\Date::createFromPhp(
-			\DateTime::createFromFormat(
-				ShiftPlanTable::DATE_FORMAT,
-				$this->dateAssignedFormatted,
-				TimeHelper::getInstance()->getUserTimezone($this->userId)
-			)
-		);
+		return new Date($this->dateAssignedFormatted, ShiftPlanTable::DATE_FORMAT);
 	}
 }

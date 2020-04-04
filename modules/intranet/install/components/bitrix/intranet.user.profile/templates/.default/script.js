@@ -557,27 +557,27 @@
 		{
 			var loader = this.showLoader({node: BX("intranet-user-profile-wrap"), loader: null, size: 100});
 
-			BX.ajax.post(
-				'/bitrix/tools/intranet_invite_dialog.php',
+			BX.ajax.runAction('intranet.controller.invite.reinvite', {
+				data: {
+					params: {
+						userId: this.userId,
+						extranet: (this.isExtranetUser == "Y" ? 'Y' : 'N')
+					}
+				}
+			}).then(function (response) {
+				this.hideLoader({loader: loader});
+				if (response.data.result)
 				{
-					lang: this.languageId,
-					site_id: this.siteId,
-					reinvite: "reinvite_user_id_" + (this.isExtranetUser == "Y" ? "extranet_" : "") + this.userId,
-					sessid: BX.bitrix_sessid()
-				},
-				BX.proxy(function(result)
-				{
-					this.hideLoader({loader: loader});
-
 					BX.PopupWindowManager.create('intranet-user-profile-invited-popup', null, {
 						content: '<p>'+BX.message("INTRANET_USER_PROFILE_REINVITE_SUCCESS")+'</p>',
 						offsetLeft:27,
 						offsetTop:7,
 						autoHide:true
 					}).show();
-
-				}, this)
-			);
+				}
+			}.bind(this), function (response) {
+				this.hideLoader({loader: loader});
+			}.bind(this));
 		},
 
 		moveToIntranet: function(isEmail)

@@ -38,6 +38,11 @@ class SubButton extends Buttons\BaseButton
 		return "";
 	}
 
+	protected function renderInner()
+	{
+		return $this->isMenuButton() ? '' : parent::renderInner();
+	}
+
 	/**
 	 * @return bool
 	 */

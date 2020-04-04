@@ -197,6 +197,16 @@ var BackdropMenuAnimationType = WidgetListAnimationType;
 
 			return this;
 		}
+		/**
+		 * @param {boolean} flag
+		 * @returns {BackdropMenu}
+		 */
+		setShouldResizeContent(flag = true)
+		{
+			this.shouldResizeContent = flag === true;
+
+			return this;
+		}
 
 		/**
 		 * @param {boolean} flag
@@ -530,6 +540,7 @@ var BackdropMenuAnimationType = WidgetListAnimationType;
 				'mediumPositionPercent',
 				'forceDismissOnSwipeDown',
 				'onlyMediumPosition',
+				'shouldResizeContent',
 				'mediumPositionHeight',
 				'swipeAllowed',
 				'showOnTop',
@@ -542,7 +553,7 @@ var BackdropMenuAnimationType = WidgetListAnimationType;
 					options[code] = this[code];
 				}
 			});
-
+			const isBrowser = typeof window.navigator.userAgent !== "undefined";
 			if (this.topPosition === null && this.mediumPositionHeight === null)
 			{
 				let maxHeight = 0;
@@ -555,16 +566,23 @@ var BackdropMenuAnimationType = WidgetListAnimationType;
 					maxHeight += section.height? section.height: BackdropMenuSectionHeightDefault;
 				});
 
-				let halfScreen = screen.availHeight / 2;
-
-				if (maxHeight <= halfScreen)
+				if(isBrowser)
 				{
-					options.onlyMediumPosition = true;
-					options.mediumPositionHeight = maxHeight;
+					let halfScreen = screen.availHeight / 2;
+					if (maxHeight <= halfScreen)
+					{
+						options.onlyMediumPosition = true;
+						options.mediumPositionHeight = maxHeight;
+					}
+					else
+					{
+						options.mediumPositionHeight = halfScreen;
+					}
+
 				}
 				else
 				{
-					options.mediumPositionHeight = halfScreen;
+					options.mediumPositionHeight = maxHeight;
 				}
 			}
 
@@ -580,25 +598,32 @@ var BackdropMenuAnimationType = WidgetListAnimationType;
 				componentId = this.componentId;
 			}
 
-			app.exec("openComponent", {
-				name: "JSStackComponent",
-				componentCode: this.id,
-				scriptPath: "/mobileapp/jn/backdrop.menu/"+(this.version? '?version='+this.version: ''),
-				params: {
-					"ID": this.id,
-					"COMPONENT_ID": componentId,
-					"CONFIG": config,
-				},
-				rootWidget: {
-					name: 'list',
-					settings: {
-						objectName: "List",
-						backdrop: options
+			let componentParams = {
+					name: "JSStackComponent",
+					componentCode: this.id,
+					scriptPath: "/mobileapp/jn/backdrop.menu/"+(this.version? '?version='+this.version: ''),
+					params: {
+						"ID": this.id,
+						"COMPONENT_ID": componentId,
+						"CONFIG": config,
+					},
+					rootWidget: {
+						name: 'list',
+						settings: {
+							objectName: "List",
+							backdrop: options
+						}
 					}
-				}
-			}, false);
-
-			app.exec("callVibration");
+				};
+			if(isBrowser)
+			{
+				app.exec("openComponent", componentParams, false);
+				app.exec("callVibration");
+			}
+			else
+			{
+				PageManager.openComponent("JSStackComponent", componentParams);
+			}
 		}
 
 		hide()

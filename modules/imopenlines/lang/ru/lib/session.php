@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["IMOL_SESSION_LINE_IS_CLOSED"] = "Открытая линия не активна, сообщения не будут отправлены клиенту.";
 $MESS["IMOL_SESSION_LEAD_ADD"] = "В CRM был создан лид \"#LEAD_NAME#\"";
 $MESS["IMOL_SESSION_CRM_FOUND"] = "Пользователь добавлен к CRM записи: \"#ENTITY_NAME#\"";
@@ -15,5 +15,5 @@ $MESS["IMOL_SESSION_AGREEMENT_MESSAGE_OPERATOR"] = "Если клиент не �
 $MESS["IMOL_TRACKER_BUTTON_CHANGE"] = "Сменить";
 $MESS["IMOL_TRACKER_BUTTON_CANCEL"] = "Отменить";
 $MESS["IMOL_SESSION_ERROR_NO_IMOL_CONFIGURATION"] = "Не удалось загрузить конфигурацию открытых линий";
+$MESS["IMOL_SESSION_ERROR_NO_USER_CODE"] = "Отсутствует обязательное поле USER_CODE";
 $MESS["IMOL_SESSION_ERROR_NO_CHAT"] = "Не удалось загрузить чат";
-?>

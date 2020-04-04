@@ -1,12 +1,8 @@
 <?
-/**
- * @var  CUser $USER
- * @var  CMain $APPLICATION
- */
-
 use Bitrix\Sale\Helpers\Admin\OrderEdit;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Sale\Helpers\Admin\Blocks;
+use Bitrix\Sale;
 
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/sale/prolog.php");
@@ -21,6 +17,11 @@ $saleModulePermissions = $APPLICATION->GetGroupRight("sale");
 $arUserGroups = $USER->GetUserGroupArray();
 $boolLocked = false;
 
+$registry = Sale\Registry::getInstance(Sale\Registry::REGISTRY_TYPE_ORDER);
+
+/** @var Sale\Order $orderClass */
+$orderClass = $registry->getOrderClassName();
+
 if ($saleModulePermissions == "D")
 	$APPLICATION->AuthForm(Loc::getMessage("ACCESS_DENIED"));
 
@@ -29,7 +30,7 @@ if(!isset($_REQUEST["ID"]) || intval($_REQUEST["ID"]) <= 0)
 	LocalRedirect("/bitrix/admin/sale_order.php?lang=".LANGUAGE_ID);
 
 $ID = intval($_REQUEST["ID"]);
-$boolLocked = \Bitrix\Sale\Order::isLocked($ID);
+$boolLocked = $orderClass::isLocked($ID);
 
 if($boolLocked)
 	LocalRedirect("sale_order_view.php?ID=".$ID."&lang=".LANGUAGE_ID);
@@ -37,22 +38,26 @@ if($boolLocked)
 //Unlocking if we leave this page
 if(isset($_REQUEST['unlock']) && 'Y' == $_REQUEST['unlock'])
 {
-	$lockStatusRes = \Bitrix\Sale\Order::getLockedStatus($ID);
+	$lockStatusRes = $orderClass::getLockedStatus($ID);
 
 	if($lockStatusRes->isSuccess())
 		$lockStatusData = $lockStatusRes->getData();
 
 	if(isset($lockStatusData['LOCK_STATUS'])
 			&&
-			(	$lockStatusData['LOCK_STATUS'] != \Bitrix\Sale\Order::SALE_ORDER_LOCK_STATUS_RED
+			(	$lockStatusData['LOCK_STATUS'] != $orderClass::SALE_ORDER_LOCK_STATUS_RED
 					|| !isset($_REQUEST['target'])
 			)
 	)
 	{
-		$res = \Bitrix\Sale\Order::unlock($ID);
+		$res = $orderClass::unlock($ID);
 
 		if($res->isSuccess())
-			\Bitrix\Sale\DiscountCouponsManager::clearByOrder($ID);
+		{
+			/** @var Sale\DiscountCouponsManager $discountCouponsClass */
+			$discountCouponsClass = $registry->getDiscountCouponClassName();
+			$discountCouponsClass::clearByOrder($ID);
+		}
 	}
 
 	if(isset($_REQUEST['target']) && 'list' == $_REQUEST['target'])
@@ -65,7 +70,7 @@ require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/sale/lib/helpers/admin/o
 
 //load order
 
-$boolLocked = \Bitrix\Sale\Order::isLocked($ID);
+$boolLocked = $orderClass::isLocked($ID);
 
 if ($boolLocked)
 {
@@ -76,11 +81,12 @@ if ($boolLocked)
 	);
 }
 
-$order = Bitrix\Sale\Order::load($_REQUEST["ID"]);
+$order = $orderClass::load($_REQUEST["ID"]);
 if(!$order)
 	LocalRedirect("/bitrix/admin/sale_order.php?lang=".LANGUAGE_ID);
 
-$allowedStatusesUpdate = \Bitrix\Sale\OrderStatus::getStatusesUserCanDoOperations($USER->GetID(), array('update'));
+$orderStatusClass = $registry->getOrderStatusClassName();
+$allowedStatusesUpdate = $orderStatusClass::getStatusesUserCanDoOperations($USER->GetID(), array('update'));
 
 if(!in_array($order->getField("STATUS_ID"), $allowedStatusesUpdate))
 	LocalRedirect("/bitrix/admin/sale_order_view.php?ID=".$ID."&lang=".LANGUAGE_ID);
@@ -120,7 +126,7 @@ OrderEdit::initCouponsData(
 );
 
 if(!$boolLocked)
-	\Bitrix\Sale\Order::lock($ID);
+	$orderClass::lock($ID);
 
 $customTabber = new CAdminTabEngine("OnAdminSaleOrderEdit", array("ID" => $ID));
 $customDraggableBlocks = new CAdminDraggableBlockEngine('OnAdminSaleOrderEditDraggable', array('ORDER' => $order));
@@ -180,8 +186,11 @@ if (($isSavingOperation || $isNeedFieldsRestore || $isRefreshDataAndSaveOperatio
 
 			if ($isRefreshDataAndSaveOperation)
 			{
-				\Bitrix\Sale\DiscountCouponsManager::clearApply(true);
-				\Bitrix\Sale\DiscountCouponsManager::useSavedCouponsForApply(true);
+				/** @var Sale\DiscountCouponsManager $discountCouponsClass */
+				$discountCouponsClass = $registry->getDiscountCouponClassName();
+
+				$discountCouponsClass::clearApply(true);
+				$discountCouponsClass::useSavedCouponsForApply(true);
 				$discount->setOrderRefresh(true);
 				$discount->setApplyResult(array());
 				/** @var \Bitrix\Sale\Basket $basket */
@@ -278,8 +287,8 @@ if (($isSavingOperation || $isNeedFieldsRestore || $isRefreshDataAndSaveOperatio
 
 					if(isset($_POST["save"]))
 					{
-						if (\Bitrix\Sale\Order::isLocked($ID))
-							\Bitrix\Sale\Order::unlock($ID);
+						if ($orderClass::isLocked($ID))
+							$orderClass::unlock($ID);
 
 						LocalRedirect("/bitrix/admin/sale_order_edit.php?lang=".LANGUAGE_ID."&unlock=Y&target=list&ID=".$ID);
 					}
@@ -586,6 +595,7 @@ $tabControl->BeginNextTab();
 					if($defTails)
 					{
 						\Bitrix\Main\Page\Asset::getInstance()->addJs("/bitrix/js/sale/admin/order_shipment_basket.js");
+						\Bitrix\Main\UI\Extension::load('sale.admin_order');
 						echo '<div id="sale-adm-order-shipments-content"><img src="/bitrix/images/sale/admin-loader.gif"/></div>';
 					}
 					else

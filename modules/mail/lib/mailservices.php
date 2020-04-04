@@ -206,6 +206,8 @@ class MailServicesTable extends Entity\DataManager
 			case 'imap.yandex.com':
 			case 'imap.yandex.ru':
 				return Helper\OAuth\Yandex::getInstance();
+			case 'imap.mail.ru':
+				return Helper\OAuth\Mailru::getInstance();
 		}
 	}
 

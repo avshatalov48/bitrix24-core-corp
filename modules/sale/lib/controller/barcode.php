@@ -4,6 +4,7 @@ namespace Bitrix\Sale\Controller;
 
 use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Sale;
 
 Loc::loadMessages(__FILE__);
 
@@ -44,7 +45,11 @@ class Barcode extends \Bitrix\Main\Engine\Controller
 		$basketItem = null;
 		$result = false;
 
-		$order = \Bitrix\Sale\Order::load($orderId);
+		$registry = Sale\Registry::getInstance(Sale\Registry::REGISTRY_TYPE_ORDER);
+		/** @var Sale\Order $orderClass */
+		$orderClass = $registry->getOrderClassName();
+
+		$order = $orderClass::load($orderId);
 
 		if ($order)
 		{

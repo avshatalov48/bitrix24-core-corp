@@ -411,7 +411,7 @@ use \Bitrix\Bitrix24\Feature;
 						"ID" => "livefeed_toall_rights",
 						"INPUT_NAME" => 'livefeed_toall_rights[]',
 						"LIST" => $arResult['arToAllRights'],
-						"USE_SYMBOLIC_ID" => "Y",
+						"USE_SYMBOLIC_ID" => true,
 						"API_VERSION" => 3,
 						"SELECTOR_OPTIONS" => array(
 							'contextCode' => 'U',
@@ -459,7 +459,7 @@ use \Bitrix\Bitrix24\Feature;
 						"ID" => "imchat_toall_rights",
 						"INPUT_NAME" => 'imchat_toall_rights[]',
 						"LIST" => $arResult['arChatToAllRights'],
-						"USE_SYMBOLIC_ID" => "Y",
+						"USE_SYMBOLIC_ID" => true,
 						"API_VERSION" => 3,
 						"SELECTOR_OPTIONS" => array(
 							'contextCode' => 'U',
@@ -516,7 +516,7 @@ $mpUserAllowInstall = count($arResult['MP_ALLOW_USER_INSTALL']) > 0;
 						"ID" => "mp_user_install_rights",
 						"INPUT_NAME" => 'mp_user_install_rights[]',
 						"LIST" => $arResult['MP_ALLOW_USER_INSTALL'],
-						"USE_SYMBOLIC_ID" => "Y",
+						"USE_SYMBOLIC_ID" => true,
 						"API_VERSION" => 3,
 						"SELECTOR_OPTIONS" => array(
 							'contextCode' => 'U',
@@ -567,14 +567,14 @@ $mpUserAllowInstall = count($arResult['MP_ALLOW_USER_INSTALL']) > 0;
 					if ($arResult["IS_BITRIX24"] && !$arResult['CREATOR_CONFIRMED']):
 						?>
 					<img src="<?=$this->GetFolder();?>/images/lock.png"
-						 style="position: relative;bottom: -1px; margin-left: 5px;"
-						 onmouseover="BX.hint(this, '<?=htmlspecialcharsbx(CUtil::JSEscape(GetMessage('CONFIG_NETWORK_AVAILABLE_NOT_CONFIRMED')))?>')"/>
+						style="position: relative;bottom: -1px; margin-left: 5px;"
+						onmouseover="BX.hint(this, '<?=htmlspecialcharsbx(CUtil::JSEscape(GetMessage('CONFIG_NETWORK_AVAILABLE_NOT_CONFIRMED')))?>')"/>
 					<?
 					elseif ($arResult['ALLOW_NETWORK_CHANGE'] === 'N'):
 					CBitrix24::initLicenseInfoPopupJS("network_available");
 					?>
 					<img src="<?=$this->GetFolder();?>/images/lock.png" data-role="config-lock-network-available"
-						 style="position: relative;bottom: -1px; margin-left: 5px;"/>
+						style="position: relative;bottom: -1px; margin-left: 5px;"/>
 						<script>
 							BX.ready(function () {
 								var lock3 = document.querySelector("[data-role='config-lock-network-available']");
@@ -600,17 +600,16 @@ $mpUserAllowInstall = count($arResult['MP_ALLOW_USER_INSTALL']) > 0;
 				</td>
 				<td class="content-edit-form-field-error"></td>
 			</tr>
-		<?
+			<?
 			}
-		}
-		?>
-
-		<tr>
-			<td class="content-edit-form-field-name content-edit-form-field-name-left"><label for="show_year_for_female"><?=GetMessage('CONFIG_SHOW_YEAR_FOR_FEMALE')?></label></td>
-			<td class="content-edit-form-field-input"><input type="checkbox" name="show_year_for_female" value="N" id="show_year_for_female" <?if ($arResult["SHOW_YEAR_FOR_FEMALE"] == "Y"):?>checked<?endif?> class="content-edit-form-field-input-selector"/></td>
-			<td class="content-edit-form-field-error"></td>
-		</tr>
+			?>
+			<tr>
+				<td class="content-edit-form-field-name content-edit-form-field-name-left"><label for="show_year_for_female"><?=GetMessage('CONFIG_SHOW_YEAR_FOR_FEMALE')?></label></td>
+				<td class="content-edit-form-field-input"><input type="checkbox" name="show_year_for_female" value="N" id="show_year_for_female" <?if ($arResult["SHOW_YEAR_FOR_FEMALE"] == "Y"):?>checked<?endif?> class="content-edit-form-field-input-selector"/></td>
+				<td class="content-edit-form-field-error"></td>
+			</tr>
 		<?
+		}
 
 		if (
 			!$arResult["IS_BITRIX24"]
@@ -625,7 +624,24 @@ $mpUserAllowInstall = count($arResult['MP_ALLOW_USER_INSTALL']) > 0;
 			</tr>
 			<?
 		}
+
+		if ($arResult["IS_BITRIX24"])
+		{
+			?>
+			<tr>
+				<td class="content-edit-form-field-name content-edit-form-field-name-left"><label for="buy_tariff_by_all"><?=GetMessage('CONFIG_BUY_TARIFF_BY_ALL')?></label></td>
+				<td class="content-edit-form-field-input"><input type="checkbox" name="buy_tariff_by_all" value="N" id="buy_tariff_by_all" <?if (COption::GetOptionString("bitrix24", "buy_tariff_by_all", "Y") == "Y"):?>checked<?endif?> class="content-edit-form-field-input-selector"/></td>
+				<td class="content-edit-form-field-error"></td>
+			</tr>
+			<?
+		}
 		?>
+
+		<tr>
+			<td class="content-edit-form-field-name content-edit-form-field-name-left"><label for="create_overdue_chats"><?=GetMessage('CONFIG_CREATE_OVERDUE_CHATS')?></label></td>
+			<td class="content-edit-form-field-input"><input type="checkbox" name="create_overdue_chats" id="create_overdue_chats" <?if (COption::GetOptionString("tasks", "create_overdue_chats", "N") == "Y"):?>checked<?endif?> class="content-edit-form-field-input-selector"/></td>
+			<td class="content-edit-form-field-error"></td>
+		</tr>
 
 	<!-- GDPR for Europe-->
 		<?

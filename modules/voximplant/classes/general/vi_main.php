@@ -775,6 +775,24 @@ class CVoxImplantMain
 			return "https://www.bitrix24.com/prices/self-hosted-telephony.php";
 	}
 
+	public static function getTariffsUrl()
+	{
+		$account = new CVoxImplantAccount();
+		$language = $account->GetAccountLang(false);
+
+		switch ($language)
+		{
+			case "ru":
+				return "http://www.bitrix24.ru/prices/tariffs.php";
+			case "ua":
+				return "http://www.bitrix24.ua/prices/tariffs.php";
+			case "de":
+				return "http://www.bitrix24.de/prices/calls.php";
+			default:
+				return "http://www.bitrix24.com/prices/calls.php";
+		}
+	}
+
 	public function GetError()
 	{
 		return $this->error;

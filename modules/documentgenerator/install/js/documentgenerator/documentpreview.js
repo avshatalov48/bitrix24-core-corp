@@ -23,6 +23,8 @@
 		this.pdfUrl = null;
 		this.isTransformationError = false;
 		this.transformationErrorNode = null;
+		this.transformationErrorMessage = '';
+		this.transformationErrorCode = 0;
 		this.previewNode = null;
 		this.onReady = BX.DoNothing;
 		this.applyOptions(options);
@@ -132,6 +134,22 @@
 		if(BX.type.isBoolean(options.isTransformationError))
 		{
 			this.isTransformationError = options.isTransformationError;
+		}
+		if(BX.type.isString(options.transformationErrorMessage))
+		{
+			this.transformationErrorMessage = options.transformationErrorMessage;
+		}
+		else
+		{
+			this.transformationErrorMessage = '';
+		}
+		if(BX.type.isNumber(options.transformationErrorCode))
+		{
+			this.transformationErrorCode = options.transformationErrorCode;
+		}
+		else
+		{
+			this.transformationErrorCode = 0;
 		}
 		if(BX.type.isFunction(options.onReady))
 		{
@@ -262,10 +280,9 @@
 		isProcessing: false
 	};
 
-	BX.DocumentGenerator.Document.onBeforeCreate = function(viewUrl, params, loaderPath)
+	BX.DocumentGenerator.Document.askAboutUsingPreviousDocumentNumber = function(provider, templateId, value, onsuccess, ondecline)
 	{
-		var urlParams = BX.DocumentGenerator.parseUrl(viewUrl, 'params');
-		if(!urlParams.hasOwnProperty('documentId'))
+		if(BX.type.isString(provider) && (parseInt(templateId) > 0) && BX.type.isFunction(onsuccess))
 		{
 			if(BX.DocumentGenerator.Document.isProcessing === true)
 			{
@@ -273,15 +290,15 @@
 			}
 			try
 			{
+				provider = provider.replace(/\\/g, '\\\\');
 				BX.DocumentGenerator.Document.isProcessing = true;
-				var provider = decodeURIComponent(urlParams.providerClassName).toLowerCase().replace(/\\/g, '\\\\');
 				BX.ajax.runAction('documentgenerator.api.document.list', {
 					data: {
 						select: ['id', 'number'],
 						filter: {
 							provider: provider,
-							templateId: urlParams.templateId,
-							value: urlParams.value
+							templateId: templateId,
+							value: value
 						},
 						order: {id: 'desc'}
 					},
@@ -298,40 +315,66 @@
 							new BX.PopupWindowButton({
 								text : BX.message('DOCGEN_POPUP_NEW_BUTTON'),
 								className : "ui-btn ui-btn-md ui-btn-primary",
-								events : { click : function()
+								events : {
+									click : function()
 									{
-										BX.DocumentGenerator.openUrl(viewUrl, loaderPath);
-										this.popupWindow.close();
+										onsuccess();
+										this.popupWindow.destroy();
 									}}
 							}),
 							new BX.PopupWindowButton({
 								text : BX.message('DOCGEN_POPUP_OLD_BUTTON'),
 								className : "ui-btn ui-btn-md ui-btn-primary",
-								events : { click : function()
+								events : {
+									click : function()
 									{
-										viewUrl = BX.util.add_url_param(viewUrl, {number: previousNumber});
-										BX.DocumentGenerator.openUrl(viewUrl, loaderPath);
-										this.popupWindow.close();
+										onsuccess(previousNumber);
+										this.popupWindow.destroy();
 									}}
 							})
-						], BX.message('DOCGEN_POPUP_NUMBER_TITLE'));
+						], BX.message('DOCGEN_POPUP_NUMBER_TITLE'), ondecline);
 					}
 					else
 					{
-						BX.DocumentGenerator.openUrl(viewUrl, loaderPath);
+						onsuccess();
 					}
-
 				}).catch(function()
 				{
 					BX.DocumentGenerator.Document.isProcessing = false;
-					BX.DocumentGenerator.openUrl(viewUrl, loaderPath);
+					if(BX.type.isFunction(ondecline))
+					{
+						ondecline();
+					}
 				});
 			}
 			catch (e)
 			{
 				BX.DocumentGenerator.Document.isProcessing = false;
-				BX.DocumentGenerator.openUrl(viewUrl, loaderPath);
+				if(BX.type.isFunction(ondecline))
+				{
+					ondecline();
+				}
 			}
+		}
+	};
+
+	BX.DocumentGenerator.Document.onBeforeCreate = function(viewUrl, params, loaderPath)
+	{
+		var urlParams = BX.DocumentGenerator.parseUrl(viewUrl, 'params');
+		if(!urlParams.hasOwnProperty('documentId'))
+		{
+			var provider = decodeURIComponent(urlParams.providerClassName).toLowerCase();
+			var templateId = urlParams.templateId;
+			var value = urlParams.value;
+			BX.DocumentGenerator.Document.askAboutUsingPreviousDocumentNumber(provider, templateId, value, function(previousNumber)
+			{
+				if(previousNumber)
+				{
+					viewUrl = BX.util.add_url_param(viewUrl, {number: previousNumber});
+				}
+
+				BX.DocumentGenerator.openUrl(viewUrl, loaderPath);
+			});
 		}
 		else
 		{
@@ -411,7 +454,7 @@
 		}
 	};
 
-	BX.DocumentGenerator.showMessage = function(content, buttons, title)
+	BX.DocumentGenerator.showMessage = function(content, buttons, title, onclose)
 	{
 		title = title || '';
 		if (typeof(buttons) === "undefined" || typeof(buttons) === "object" && buttons.length <= 0)
@@ -443,7 +486,18 @@
 			buttons: buttons,
 			closeIcon: true,
 			overlay : true,
-			events : { onPopupClose : function() { this.destroy() }, onPopupDestroy : BX.delegate(function() { this.popupConfirm = null }, this)},
+			events : {
+				onPopupClose : function()
+				{
+					if(BX.type.isFunction(onclose))
+					{
+						onclose();
+					}
+					this.destroy();
+				}, onPopupDestroy : BX.delegate(function()
+				{
+					this.popupConfirm = null;
+				}, this)},
 			content : BX.create('span',{
 				attrs:{className:'bx-popup-documentgenerator-popup-content-text'},
 				children : content,
@@ -625,14 +679,14 @@
 			for(i = 0; i < length; i++)
 			{
 				url = BX.util.add_url_param(this.documentUrl, {
-					templateId: parseInt(response.data.templates[i]['ID']),
+					templateId: parseInt(response.data.templates[i]['id']),
 					providerClassName: this.provider.replace(/\\/g, '\\\\'),
 					value: this.value,
 					analyticsLabel: 'generateDocument',
-					templateCode: response.data.templates[i]['CODE'],
+					templateCode: response.data.templates[i]['code'],
 				});
 				this.links.templates[i] = {
-					text: BX.util.htmlspecialchars(response.data.templates[i]['NAME']),
+					text: BX.util.htmlspecialchars(response.data.templates[i]['name']),
 					onclick: 'BX.DocumentGenerator.Document.onBeforeCreate(\'' + url + '\', {}, \'' + this.loaderPath + '\')'
 				};
 			}

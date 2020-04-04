@@ -10,7 +10,12 @@ CJSCore::Init(["voximplant.common", "ui.alerts", "ui.buttons"]);
 ?>
 <div class="tel-set-container">
     <div class="tel-set-item">
-        <div class="bx-vi-docs-body"><?=GetMessage('VI_DOCS_BODY_2');?></div>
+        <div class="bx-vi-docs-body">
+			<?=GetMessage('VI_DOCS_BODY_2');?>
+			<? if (count($arResult['DOCUMENTS']) == 0): ?>
+				<?=GetMessage('VI_DOCS_UPLOAD_WHILE_RENT');?>
+			<? endif; ?>
+		</div>
 
 		<? $previousCountry = '' ?>
         <?foreach ($arResult['DOCUMENTS'] as $key => $verification):?>

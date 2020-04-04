@@ -209,7 +209,8 @@ $socnetGroupId = $arParams["SOCNET_GROUP_ID"] ? $arParams["SOCNET_GROUP_ID"] : 0
 			socnetGroupId: '<?=$socnetGroupId?>',
 			listsUrl: '<?=CUtil::JSEscape($arResult["LISTS_URL"])?>',
 			listAction: <?=\Bitrix\Main\Web\Json::encode($listAction)?>,
-			listTemplateEditUrl: '<?=$arParams["LIST_EDIT_URL"]?>'
+			listTemplateEditUrl: '<?=$arParams["LIST_EDIT_URL"]?>',
+			listElementUrl: '<?=htmlspecialcharsbx($arParams["LIST_ELEMENT_URL"])?>'
 		});
 
 		BX.message({

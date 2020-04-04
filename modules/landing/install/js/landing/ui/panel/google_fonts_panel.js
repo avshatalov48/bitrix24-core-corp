@@ -53,7 +53,8 @@
 		addClass(this.overlay, "landing-ui-panel-google-fonts-overlay");
 		this.client = new BX.Landing.Client.GoogleFonts();
 
-		var container = top.document.body.querySelector(".landing-ui-view-container");
+		var rootWindow = BX.Landing.PageObject.getRootWindow();
+		var container = rootWindow.document.body.querySelector(".landing-ui-view-container");
 		append(this.layout, container);
 		append(this.overlay, container);
 
@@ -205,9 +206,10 @@
 					classes: false,
 					active: function()
 					{
-						if (top.document.fonts)
+						var rootWindow = BX.Landing.PageObject.getRootWindow();
+						if (rootWindow.document.fonts)
 						{
-							top.document.fonts.ready
+							rootWindow.document.fonts.ready
 								.then(function() {
 									resolve(response);
 								});

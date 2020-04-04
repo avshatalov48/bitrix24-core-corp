@@ -11,6 +11,7 @@ BX.Lists.ListsEditClass = (function ()
 		this.listsUrl = parameters.listsUrl || '';
 		this.listAction = parameters.listAction;
 		this.listTemplateEditUrl = parameters.listTemplateEditUrl;
+		this.listElementUrl = parameters.listElementUrl;
 
 		this.init();
 	};
@@ -82,7 +83,8 @@ BX.Lists.ListsEditClass = (function ()
 							data: {
 								iblock_type_id: this.iblockTypeId,
 								iblock_id: this.iblockId,
-								socnet_group_id: this.socnetGroupId
+								socnet_group_id: this.socnetGroupId,
+								list_element_url: this.listElementUrl
 							}
 						}).then(function (response) {
 							this.listTemplateEditUrl = this.listTemplateEditUrl

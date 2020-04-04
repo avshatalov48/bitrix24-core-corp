@@ -52,7 +52,7 @@ class Settings extends \Bitrix\Landing\Hook\Page
 	 * Build local allowed codes array.
 	 * @return array
 	 */
-	protected static function getCodesVsalues()
+	protected static function getCodesValues()
 	{
 		static $codes = array();
 
@@ -168,7 +168,7 @@ class Settings extends \Bitrix\Landing\Hook\Page
 					'miss_subtype' => true
 				)
 			);
-			$codes = self::getCodesVsalues();
+			$codes = self::getCodesValues();
 			foreach (array_keys($codes) as $k)
 			{
 				foreach ($codes[$k] as $code)
@@ -195,14 +195,14 @@ class Settings extends \Bitrix\Landing\Hook\Page
 
 		if ($linear)
 		{
-			foreach (self::getCodesVsalues() as $item)
+			foreach (self::getCodesValues() as $item)
 			{
 				$codes = array_merge($codes, $item);
 			}
 		}
 		else
 		{
-			$codes = self::getCodesVsalues();
+			$codes = self::getCodesValues();
 		}
 
 		return $codes;
@@ -217,7 +217,7 @@ class Settings extends \Bitrix\Landing\Hook\Page
 		$fields = array();
 
 		// set iblock_id to the map
-		if (!Manager::isB24())
+		if (!Manager::isB24() && !Manager::isExtendedSMN())
 		{
 			$catalogs = array(
 				'' => ''

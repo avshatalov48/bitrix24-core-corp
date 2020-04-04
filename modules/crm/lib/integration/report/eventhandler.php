@@ -227,8 +227,7 @@ class EventHandler
 		$salesPlan = new AnalyticBoard(SalesPlanBoard::BOARD_KEY);
 		$salesPlan->setBatchKey(self::BATCH_SALES);
 		$salesPlan->setTitle(Loc::getMessage('CRM_REPORT_SALES_TARGET_BOARD_TITLE'));
-		$salesPlan->setFilter(new Base(SalesPlanBoard::BOARD_KEY));
-		$salesPlan->setDisabled(true);
+		//$salesPlan->setDisabled(false);
 		$salesPlan->addFeedbackButton();
 		$salesPlan->setLimit(static::getLimitComponentParams(SalesPlanBoard::BOARD_KEY), Limit::isAnalyticsLimited(SalesPlanBoard::BOARD_KEY));
 		$analyticPageList[] = $salesPlan;
@@ -454,6 +453,8 @@ class EventHandler
 		$reportHandlerCollection[] = new Handler\SalesDynamics\WonLostAmount();
 		$reportHandlerCollection[] = new Handler\SalesDynamics\WonLostPrevious();
 		$reportHandlerCollection[] = new Handler\SalesDynamics\Conversion();
+		$reportHandlerCollection[] = new Handler\SalesPeriodCompare\GraphCurrent();
+		$reportHandlerCollection[] = new Handler\SalesPeriodCompare\GraphPrevious();
 
 		return $reportHandlerCollection;
 	}

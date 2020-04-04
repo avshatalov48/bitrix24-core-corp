@@ -27,6 +27,7 @@ BX.message({
 	BPC_MES_VOTE2 : "<?=GetMessageJS("BPC_MES_VOTE2")?>",
 	BPC_MES_DELETE : "<?=GetMessageJS("BPC_MES_DELETE")?>",
 	BPC_MES_CREATETASK : "<?=GetMessageJS("BPC_MES_CREATETASK")?>",
+	BPC_MES_COPYLINK : "<?=GetMessageJS("BPC_MES_COPYLINK")?>",
 	MPL_RECORD_TEMPLATE : '<?=CUtil::JSEscape($template)?>',
 	MPL_RECORD_THUMB : '<?=CUtil::JSEscape($thumb)?>',
 	MPL_RECORD_THUMB_FILE : '<?=CUtil::JSEscape($thumbFile)?>',

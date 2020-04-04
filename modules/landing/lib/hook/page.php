@@ -209,6 +209,15 @@ abstract class Page
 	}
 
 	/**
+	 * Exec or not hook in intranet mode.
+	 * @return boolean
+	 */
+	public function enabledInIntranetMode()
+	{
+		return true;
+	}
+
+	/**
 	 * Get unique hash from hook fields.
 	 * @return string
 	 */
@@ -229,15 +238,6 @@ abstract class Page
 	public function dataExist()
 	{
 		return implode('', array_values($this->fields)) != '';
-	}
-
-	/**
-	 * Active or not the hook.
-	 * @return bool
-	 */
-	public function active()
-	{
-		return true;
 	}
 
 	/**

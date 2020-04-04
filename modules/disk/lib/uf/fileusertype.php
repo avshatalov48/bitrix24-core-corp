@@ -311,6 +311,51 @@ final class FileUserType
 		}
 	}
 
+	/**
+	 * Prepares values before copying.
+	 *
+	 * @param $userField
+	 * @param int $newEntityId List old attached id.
+	 * @param array $attachedIds List new attached id.
+	 * @param object $entityObject Entity object for update entity.
+	 * @param bool $userId
+	 * @return array List new attached id to add.
+	 */
+	public static function onBeforeCopy(array $userField, int $newEntityId, $attachedIds, $entityObject, $userId = false)
+	{
+		$attachedIds = $attachedIds ?: [];
+		if (!$attachedIds)
+		{
+			return [];
+		}
+
+		$userId = (($userId === false) ? self::getActivityUserId() : $userId);
+
+		$userFieldManager = Driver::getInstance()->getUserFieldManager();
+
+		$newAttachedIds = $userFieldManager->cloneUfValuesFromAttachedObject($attachedIds, $userId);
+
+		return $newAttachedIds;
+	}
+
+	/**
+	 * Performs the necessary actions after copying. For example: updates attached id to text.
+	 *
+	 * @param $userField
+	 * @param int $entityId Id copied entity.
+	 * @param array $attachedIds List new attached id.
+	 * @param object $entityObject Entity object for update entity.
+	 * @param bool $userId
+	 */
+	public static function onAfterCopy(array $userField, int $entityId, $attachedIds, $entityObject, $userId = false)
+	{
+		$attachedIds = $attachedIds ?: [];
+		if (is_callable([$entityObject, "updateAttachedIdsInText"]))
+		{
+			$entityObject->updateAttachedIdsInText($entityId, $attachedIds, [FileUserType::class, "updateText"]);
+		}
+	}
+
 	public static function onDelete($userField, $value)
 	{
 		list($type, $realValue) = self::detectType($value);
@@ -680,5 +725,76 @@ final class FileUserType
 		}
 
 		return $itemsList;
+	}
+
+	/**
+	 * Update entity text.
+	 *
+	 * @param $text
+	 * @param string $entity String entity id.
+	 * @param string|int $entityId Entity id.
+	 * @param string $fieldName UF Field name of entity.
+	 * @param array $filesIdToUpdate List files ids.
+	 * @return string
+	 */
+	public static function updateText($text, $entity, $entityId, $fieldName, array $filesIdToUpdate)
+	{
+		$currentRelations = self::getCurrentRelationAttachedFiles($entity, $entityId, $fieldName);
+		$relationsToReplace = self::getRelationToReplaceDescription($currentRelations, $filesIdToUpdate);
+
+		$text = preg_replace_callback(
+			"/\[DISK FILE ID\s*=\s*([^\]]*)\]/is",
+			function ($matches) use ($relationsToReplace)
+			{
+				if ($matches[1])
+				{
+					if (array_key_exists($matches[1], $relationsToReplace))
+					{
+						return "[DISK FILE ID=".$relationsToReplace[$matches[1]]."]";
+					}
+					else
+					{
+						return "";
+					}
+				}
+
+				return "";
+			},
+			$text
+		);
+
+		return $text;
+	}
+
+	private static function getCurrentRelationAttachedFiles($entity, $entityId, $fieldName)
+	{
+		$currentRelations = [];
+		$userFieldManager = Driver::getInstance()->getUserFieldManager();
+		$attachedObjects = $userFieldManager->getAttachedObjectByEntity($entity, $entityId, $fieldName);
+		foreach ($attachedObjects as $attachedObject)
+		{
+			$currentRelations[$attachedObject->getObjectId()] = $attachedObject->getId();
+		}
+		return $currentRelations;
+	}
+
+	private static function getRelationToReplaceDescription(array $currentRelations, array $filesIdToUpdate)
+	{
+		$relationsToReplace = [];
+
+		$userFieldManager = Driver::getInstance()->getUserFieldManager();
+		foreach ($filesIdToUpdate as $attachedId => $newFileId)
+		{
+			list($type, $newFileId) = FileUserType::detectType($newFileId);
+			if (array_key_exists($newFileId, $currentRelations))
+			{
+				$relationsToReplace[$attachedId] = $currentRelations[$newFileId];
+				$attachedObject = $userFieldManager->getAttachedObjectById($attachedId);
+				$relationsToReplace[FileUserType::NEW_FILE_PREFIX.$attachedObject->getObjectId()] =
+					$currentRelations[$newFileId];
+			}
+		}
+
+		return $relationsToReplace;
 	}
 }

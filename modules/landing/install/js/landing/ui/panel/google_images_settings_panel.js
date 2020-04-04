@@ -76,7 +76,7 @@
 			this.resolver(key);
 			BX.Landing.Backend.getInstance()
 				.action("Utils::saveSettings", {
-					settings: {googleImages: key}
+					settings: {google_images_key: key}
 				});
 
 			BX.Landing.Client.Google.key = key;

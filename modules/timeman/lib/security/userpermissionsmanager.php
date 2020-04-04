@@ -2,6 +2,7 @@
 namespace Bitrix\Timeman\Security;
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Timeman\Helper\EntityCodesHelper;
 use CIntranetUtils;
 use CTimeMan;
 
@@ -29,6 +30,7 @@ class UserPermissionsManager
 	const ACTION_UPDATE = 'UPDATE';
 	const ENTITY_SHIFT_PLAN = 'SHIFT_PLAN';
 	const ENTITY_WORKTIME_RECORD = 'WORKTIME_RECORD';
+	private static $managers = [];
 
 	/** @var IUserOperationChecker */
 	private $userOperationChecker;
@@ -48,6 +50,19 @@ class UserPermissionsManager
 		}, ARRAY_FILTER_USE_KEY);
 	}
 
+	/**
+	 * @param \CUser $user
+	 * @return mixed
+	 */
+	public static function getInstanceByUser($user)
+	{
+		if (static::$managers[$user->getId()] === null)
+		{
+			static::$managers[$user->getId()] = new static(new UserOperationChecker($user), $user->getId());
+		}
+		return static::$managers[$user->getId()];
+	}
+
 	public function canReadSchedule($scheduleId)
 	{
 		return $this->userOperationChecker->canDoOperation(static::OP_READ_SCHEDULES_ALL);
@@ -59,6 +74,11 @@ class UserPermissionsManager
 	}
 
 	public function canUpdateShiftPlan($scheduleId)
+	{
+		return $this->userOperationChecker->canDoOperation(static::OP_UPDATE_SHIFT_PLANS_ALL);
+	}
+
+	public function canUpdateShiftPlans()
 	{
 		return $this->userOperationChecker->canDoOperation(static::OP_UPDATE_SHIFT_PLANS_ALL);
 	}
@@ -197,6 +217,7 @@ class UserPermissionsManager
 		Loc::loadLanguageFile(__FILE__);
 		$map = [
 			static::ENTITY_SCHEDULE => Loc::getMessage('TIMEMAN_USERPERMISSIONS_ENTITY_SCHEDULE'),
+			static::ENTITY_SHIFT_PLAN => Loc::getMessage('TIMEMAN_USERPERMISSIONS_ENTITY_SHIFT_PLAN'),
 			static::ENTITY_WORKTIME_RECORD => Loc::getMessage('TIMEMAN_USERPERMISSIONS_ENTITY_WORKTIME_RECORD'),
 		];
 		return isset($map[$entity]) ? $map[$entity] : '';
@@ -230,6 +251,16 @@ class UserPermissionsManager
 					static::OP_UPDATE_SCHEDULES_ALL,
 				],
 			],
+			static::ENTITY_SHIFT_PLAN => [
+				static::ACTION_READ => [
+					'',
+					static::OP_READ_SHIFT_PLANS_ALL,
+				],
+				static::ACTION_UPDATE => [
+					'',
+					static::OP_UPDATE_SHIFT_PLANS_ALL,
+				],
+			],
 			static::ENTITY_WORKTIME_RECORD => [
 				static::ACTION_READ => [
 					'',
@@ -256,6 +287,25 @@ class UserPermissionsManager
 		if (count($accessData['WRITE']) > 0)
 		{
 			return $this->filterUserIdsOnly($accessData['WRITE']);
+		}
+		return [];
+	}
+
+	public function getUserCodesAccessibleToRead()
+	{
+		$accessData = $this->getAccessUserIds();
+		if (count($accessData['READ']) > 0)
+		{
+			$result = [];
+			if (in_array('*', $accessData['READ'], true))
+			{
+				$result[] = EntityCodesHelper::getAllUsersCode();
+			}
+			$result = array_merge(
+				$result,
+				EntityCodesHelper::buildUserCodes($this->filterUserIdsOnly($accessData['READ']))
+			);
+			return array_filter($result);
 		}
 		return [];
 	}

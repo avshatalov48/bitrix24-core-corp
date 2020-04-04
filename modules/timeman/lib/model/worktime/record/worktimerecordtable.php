@@ -8,6 +8,7 @@ use Bitrix\Main\ORM\Fields;
 use Bitrix\Main\ORM\Fields\Relations\OneToMany;
 use Bitrix\Main\ORM\Query\Join;
 use Bitrix\Timeman\Helper\UserHelper;
+use Bitrix\Timeman\Model\User\UserTable;
 use Bitrix\Timeman\Model\Worktime\EventLog\WorktimeEventTable;
 use Bitrix\Timeman\Service\DependencyManager;
 
@@ -30,6 +31,11 @@ class WorktimeRecordTable extends Main\ORM\Data\DataManager
 	public static function getTableName()
 	{
 		return 'b_timeman_entries';
+	}
+
+	public static function getCollectionClass()
+	{
+		return WorktimeRecordCollection::class;
 	}
 
 	public static function getMap()
@@ -79,6 +85,9 @@ class WorktimeRecordTable extends Main\ORM\Data\DataManager
 				->configureDefaultValue(0)
 			,
 			(new Fields\IntegerField('SHIFT_ID'))
+				->configureDefaultValue(0)
+			,
+			(new Fields\IntegerField('AUTO_CLOSING_AGENT_ID'))
 				->configureDefaultValue(0)
 			,
 			(new Fields\BooleanField('APPROVED'))
@@ -148,7 +157,7 @@ class WorktimeRecordTable extends Main\ORM\Data\DataManager
 
 			(new Fields\Relations\Reference(
 				'USER',
-				Main\UserTable::class,
+				UserTable::class,
 				Join::on('this.USER_ID', 'ref.ID')
 			))
 				->configureJoinType('INNER')
@@ -254,13 +263,19 @@ class WorktimeRecordTable extends Main\ORM\Data\DataManager
 	public static function fillFieldsForCompatibility($data)
 	{
 		$data['MODIFIED_BY'] = UserHelper::getCurrentUserId();
+		$wakeUpData = [
+			'CURRENT_STATUS' => $data['CURRENT_STATUS'],
+			'APPROVED' => $data['APPROVED'],
+			'ID' => $data['ID'] ?: 1
+		];
+		$record = WorktimeRecord::wakeUpRecord($wakeUpData);
 		if (array_key_exists('CURRENT_STATUS', $data))
 		{
-			$data['PAUSED'] = WorktimeRecord::isRecordPaused($data);
+			$data['PAUSED'] = $record->isPaused();
 		}
 		if (array_key_exists('APPROVED', $data))
 		{
-			$data['ACTIVE'] = WorktimeRecord::isRecordApproved($data);
+			$data['ACTIVE'] = $record->isApproved();
 		}
 
 		return $data;

@@ -1825,6 +1825,25 @@ class CAllCrmProductRow
 		}
 		return array_values($map);
 	}
+	public static function Merge(array &$seedProductRows, array &$targProductRows)
+	{
+		$diffProductRows = self::GetDiff(array($seedProductRows), array($targProductRows));
+		if(!empty($diffProductRows))
+		{
+			$productRowMaxSort = 0;
+			$productRowCount = count($targProductRows);
+			if($productRowCount > 0 && isset($targProductRows[$productRowCount - 1]['SORT']))
+			{
+				$productRowMaxSort = (int)$targProductRows[$productRowCount - 1]['SORT'];
+			}
+
+			foreach($diffProductRows as $productRow)
+			{
+				$productRow['SORT'] = ($productRowMaxSort += 10);
+				$targProductRows[] = $productRow;
+			}
+		}
+	}
 	public static function Rebind($oldOwnerType, $oldOwnerID, $newOwnerType, $newOwnerID)
 	{
 		if(!(is_string($oldOwnerType) && $oldOwnerType !== ''))

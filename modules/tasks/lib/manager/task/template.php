@@ -685,4 +685,49 @@ final class Template extends \Bitrix\Tasks\Manager
 
 		return $item;
 	}
+
+	/**
+	 * @param $data
+	 * @return array
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	public static function getAnalyticsData(&$data)
+	{
+		$code = Checklist::getCode(true);
+		$checklistData = $data[$code];
+
+		if (!$checklistData)
+		{
+			return [];
+		}
+
+		$checklistParents = array_filter(
+			$checklistData,
+			static function($item)
+			{
+				return is_array($item) && $item['PARENT_NODE_ID'] === '0';
+			}
+		);
+
+		$analyticsData = [
+			'checklistCount' => count($checklistParents),
+		];
+
+		if ($checklistData['analyticsData'])
+		{
+			foreach (explode(',', $checklistData['analyticsData']) as $key => $value)
+			{
+				$analyticsData[$value] = 1;
+			}
+		}
+
+		if ($checklistData['fromDescription'])
+		{
+			$analyticsData['fromDescription'] = 1;
+		}
+
+		unset($data[$code]['analyticsData'], $data[$code]['fromDescription']);
+
+		return $analyticsData;
+	}
 }

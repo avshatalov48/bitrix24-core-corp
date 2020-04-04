@@ -18,7 +18,11 @@ class Multiple extends Value
 		$options = $this->getOptions($modifier);
 
 		$modifier = preg_replace('#mseparator=\d#', '', $modifier);
+		$modifier = preg_replace('#mfirst=[y,n]#', '', $modifier);
+		$modifier = preg_replace('#[,+]#', ',', $modifier);
+		$modifier = trim($modifier, ',');
 		$separator = $this->getSeparatorByCode($options['mseparator']);
+		$isFirst = $options['mfirst'];
 
 		if(is_array($this->value) || $this->value instanceof \Traversable)
 		{
@@ -37,7 +41,7 @@ class Multiple extends Value
 				{
 					$values[] = $value;
 				}
-				if($options['mfirst'] && count($values) == 1)
+				if($isFirst && count($values) == 1)
 				{
 					break;
 				}

@@ -6,6 +6,7 @@ use Bitrix\Main\Localization\Loc;
 use \Bitrix\Main\Web\Uri;
 use Bitrix\Main\Application;
 use \Bitrix\Main\Web;
+use Bitrix\Calendar\Util;
 /**
  * Class GoogleApiSync
  *
@@ -507,25 +508,8 @@ final class GoogleApiSync
 
 		if (!empty($event['start']['dateTime']) && !empty($event['end']['dateTime']))
 		{
-			try
-			{
-				$returnData['TZ_FROM'] = empty($event['start']['timeZone']) ? $this->defaultTimezone : $event['start']['timeZone'];
-				new \DateTimeZone($returnData['TZ_FROM']);
-			}
-			catch(Exception $e)
-			{
-				$returnData['TZ_FROM'] = $this->defaultTimezone;
-			}
-
-			try
-			{
-				$returnData['TZ_TO'] = empty($event['end']['timeZone']) ? $this->defaultTimezone : $event['end']['timeZone'];
-				new \DateTimeZone($returnData['TZ_TO']);
-			}
-			catch(Exception $e)
-			{
-				$returnData['TZ_TO'] = $this->defaultTimezone;
-			}
+			$returnData['TZ_FROM'] = Util::isTimezoneValid($event['start']['timeZone']) ? $event['start']['timeZone'] : $this->defaultTimezone;
+			$returnData['TZ_TO'] = Util::isTimezoneValid($event['end']['timeZone']) ? $event['end']['timeZone'] : $this->defaultTimezone;
 
 			$eventStartDateTime = new Type\DateTime($event['start']['dateTime'], \DateTime::RFC3339, new \DateTimeZone($this->defaultTimezone));
 			$returnData['DATE_FROM'] = \CCalendar::Date(\CCalendar::Timestamp($eventStartDateTime->setTimeZone(new \DateTimeZone($returnData['TZ_FROM']))->format(Type\Date::convertFormatToPhp(FORMAT_DATETIME))));
@@ -660,8 +644,9 @@ final class GoogleApiSync
 
 				if (!empty($event['originalStartTime']['dateTime']))
 				{
+					$originalTimeZone = Util::isTimezoneValid($event['originalStartTime']['timeZone']) ? $event['originalStartTime']['timeZone'] : $returnData['TZ_FROM'];
 					$eventOriginalDateFrom = new Type\DateTime($event['originalStartTime']['dateTime'], \DateTime::RFC3339, new \DateTimeZone($this->defaultTimezone));
-					$returnData['ORIGINAL_DATE_FROM'] = \CCalendar::Date(\CCalendar::Timestamp($eventOriginalDateFrom->setTimeZone(new \DateTimeZone($event['originalStartTime']['timeZone']))->format(Type\Date::convertFormatToPhp(FORMAT_DATETIME))));
+					$returnData['ORIGINAL_DATE_FROM'] = \CCalendar::Date(\CCalendar::Timestamp($eventOriginalDateFrom->setTimeZone(new \DateTimeZone($originalTimeZone))->format(Type\Date::convertFormatToPhp(FORMAT_DATETIME))));
 				}
 
 				if (!empty($event['originalStartTime']['date']))

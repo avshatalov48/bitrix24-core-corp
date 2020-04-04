@@ -27,49 +27,25 @@ $APPLICATION->SetPageProperty("title", $sTitle);
 $APPLICATION->SetTitle($sTitleShort);
 \Bitrix\Main\UI\Extension::load("ui.notification");
 
-$arGroupsIDs = array();
-
-foreach($arResult["LIST"] as $k=>$arTaskItem)
+if (is_array($arResult["LIST"]))
 {
-	$arResult["LIST"][$k]['TITLE'] = htmlspecialcharsbx($arTaskItem['TITLE']);
-	$arResult["LIST"][$k]['GROUP_NAME'] = htmlspecialcharsbx($arTaskItem['GROUP_NAME']);
-
-	$arResult["LIST"][$k]['RESPONSIBLE_NAME'] = htmlspecialcharsbx($arTaskItem['RESPONSIBLE_NAME']);
-	$arResult["LIST"][$k]['RESPONSIBLE_LAST_NAME'] = htmlspecialcharsbx($arTaskItem['RESPONSIBLE_LAST_NAME']);
-	$arResult["LIST"][$k]['RESPONSIBLE_SECOND_NAME'] = htmlspecialcharsbx($arTaskItem['RESPONSIBLE_SECOND_NAME']);
-	$arResult["LIST"][$k]['RESPONSIBLE_LOGIN'] = htmlspecialcharsbx($arTaskItem['RESPONSIBLE_LOGIN']);
-
-	$arResult["LIST"][$k]['CREATED_BY_NAME'] = htmlspecialcharsbx($arTaskItem['CREATED_BY_NAME']);
-	$arResult["LIST"][$k]['CREATED_BY_LAST_NAME'] = htmlspecialcharsbx($arTaskItem['CREATED_BY_LAST_NAME']);
-	$arResult["LIST"][$k]['CREATED_BY_SECOND_NAME'] = htmlspecialcharsbx($arTaskItem['CREATED_BY_SECOND_NAME']);
-	$arResult["LIST"][$k]['CREATED_BY_LOGIN'] = htmlspecialcharsbx($arTaskItem['CREATED_BY_LOGIN']);
-
-	$arGroupsIDs[]=$arTaskItem['GROUP_ID'];
-}
-
-$arResult["GROUPS"] = array();
-
-$groupByProject =
-	isset($arParams['VIEW_STATE']['SUBMODES']['VIEW_SUBMODE_WITH_GROUPS']['SELECTED']) &&
-	$arParams['VIEW_STATE']['SUBMODES']['VIEW_SUBMODE_WITH_GROUPS']['SELECTED'] === "Y"
-;
-
-if ($groupByProject)
-{
-	$arOpenedProjects = CUserOptions::GetOption("tasks", "opened_projects", array());
-
-	if (!empty($arGroupsIDs))
+	foreach($arResult["LIST"] as $k=>$arTaskItem)
 	{
-		$rsGroups = CSocNetGroup::GetList(array("ID" => "ASC"), array("ID" => array_unique($arGroupsIDs)));
-		while ($arGroup = $rsGroups->GetNext())
-		{
-			$arGroup["EXPANDED"] = array_key_exists($arGroup["ID"], $arOpenedProjects) && $arOpenedProjects[$arGroup["ID"]] == "false" ? false : true;
-			$arGroup["CAN_CREATE_TASKS"] = \CSocNetFeaturesPerms::CurrentUserCanPerformOperation(SONET_ENTITY_GROUP, $arGroup["ID"], "tasks", "create_tasks");
-			$arGroup["CAN_EDIT_TASKS"] = \CSocNetFeaturesPerms::CurrentUserCanPerformOperation(SONET_ENTITY_GROUP, $arGroup["ID"], "tasks", "edit_tasks");
-			$arResult["GROUPS"][$arGroup["ID"]] = $arGroup;
-		}
+		$arResult["LIST"][$k]['TITLE'] = htmlspecialcharsbx($arTaskItem['TITLE']);
+		$arResult["LIST"][$k]['GROUP_NAME'] = htmlspecialcharsbx($arTaskItem['GROUP_NAME']);
+
+		$arResult["LIST"][$k]['RESPONSIBLE_NAME'] = htmlspecialcharsbx($arTaskItem['RESPONSIBLE_NAME']);
+		$arResult["LIST"][$k]['RESPONSIBLE_LAST_NAME'] = htmlspecialcharsbx($arTaskItem['RESPONSIBLE_LAST_NAME']);
+		$arResult["LIST"][$k]['RESPONSIBLE_SECOND_NAME'] = htmlspecialcharsbx($arTaskItem['RESPONSIBLE_SECOND_NAME']);
+		$arResult["LIST"][$k]['RESPONSIBLE_LOGIN'] = htmlspecialcharsbx($arTaskItem['RESPONSIBLE_LOGIN']);
+
+		$arResult["LIST"][$k]['CREATED_BY_NAME'] = htmlspecialcharsbx($arTaskItem['CREATED_BY_NAME']);
+		$arResult["LIST"][$k]['CREATED_BY_LAST_NAME'] = htmlspecialcharsbx($arTaskItem['CREATED_BY_LAST_NAME']);
+		$arResult["LIST"][$k]['CREATED_BY_SECOND_NAME'] = htmlspecialcharsbx($arTaskItem['CREATED_BY_SECOND_NAME']);
+		$arResult["LIST"][$k]['CREATED_BY_LOGIN'] = htmlspecialcharsbx($arTaskItem['CREATED_BY_LOGIN']);
 	}
 }
+
 
 if (isset($arParams[ "SET_NAVCHAIN" ]) && $arParams[ "SET_NAVCHAIN" ] != "N")
 {

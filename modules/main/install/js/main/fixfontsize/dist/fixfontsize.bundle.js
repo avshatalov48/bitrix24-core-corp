@@ -15,7 +15,7 @@
 		if (params.onresize)
 		{
 			this.prevWindowSize = window.innerWidth || document.documentElement.clientWidth;
-			BX.bind(window, 'resize', BX.proxy(BX.throttle(this.onResize, 350),this));
+			BX.bind(window, 'resize', BX.throttle(this.onResize, 350, this));
 		}
 
 		if (params.onAdaptiveResize)
@@ -23,7 +23,7 @@
 			widthNode = this.objList[0].scaleBy || this.objList[0].node;
 			computedStyles = getComputedStyle(widthNode);
 			this.prevWrapperSize = parseInt(computedStyles["width"]) - parseInt(computedStyles["paddingLeft"]) - parseInt(computedStyles["paddingRight"]);
-			BX.bind(window, 'resize', BX.proxy(BX.throttle(this.onAdaptiveResize, 350),this));
+			BX.bind(window, 'resize', BX.throttle(this.onAdaptiveResize, 350, this));
 		}
 
 		this.createTestNodes();

@@ -30,8 +30,7 @@
 			
 			<div class="landing-block-node-card js-slide js-animation fadeIn g-px-15 col-12 col-sm-6 col-lg-6">
 				<div class="landing-block-node-video-container embed-responsive embed-responsive-16by9 mx-auto w-100">
-					<iframe
-							class="landing-block-node-card-video embed-responsive-item"
+					<iframe class="landing-block-node-card-video embed-responsive-item"
 							width="100%"
 							src="//www.youtube.com/embed/q4d8g9Dn3ww?autoplay=0&controls=1&loop=0&mute=0&rel=0"
 							data-source="https://www.youtube.com/watch?v=q4d8g9Dn3ww"
@@ -42,8 +41,7 @@
 			
 			<div class="landing-block-node-card js-slide js-animation fadeIn g-px-15 col-12 col-sm-6 col-lg-6">
 				<div class="landing-block-node-video-container embed-responsive embed-responsive-16by9 mx-auto w-100">
-					<iframe
-							class="landing-block-node-card-video embed-responsive-item"
+					<iframe class="landing-block-node-card-video embed-responsive-item"
 							width="100%"
 							src="//www.youtube.com/embed/PDCsdEdGb_c?autoplay=0&controls=1&loop=0&mute=0&rel=0"
 							data-source="https://www.youtube.com/watch?v=PDCsdEdGb_c"
@@ -54,8 +52,7 @@
 			
 			<div class="landing-block-node-card js-slide js-animation fadeIn g-px-15 col-12 col-sm-6 col-lg-6">
 				<div class="landing-block-node-video-container embed-responsive embed-responsive-16by9 mx-auto w-100">
-					<iframe
-							class="landing-block-node-card-video embed-responsive-item"
+					<iframe class="landing-block-node-card-video embed-responsive-item"
 							width="100%"
 							src="//www.youtube.com/embed/0Ll9z8pwnp4?autoplay=0&controls=1&loop=0&mute=0&rel=0"
 							data-source="https://www.youtube.com/watch?v=0Ll9z8pwnp4"
@@ -66,8 +63,7 @@
 
 			<div class="landing-block-node-card js-slide js-animation fadeIn g-px-15 col-12 col-sm-6 col-lg-6">
 				<div class="landing-block-node-video-container embed-responsive embed-responsive-16by9 mx-auto w-100">
-					<iframe
-							class="landing-block-node-card-video embed-responsive-item"
+					<iframe class="landing-block-node-card-video embed-responsive-item"
 							width="100%"
 							src="//www.youtube.com/embed/IISycTRZ-UA?autoplay=0&controls=1&loop=0&mute=0&rel=0"
 							data-source="https://www.youtube.com/watch?v=IISycTRZ-UA"

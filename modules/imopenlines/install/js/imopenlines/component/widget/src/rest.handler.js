@@ -94,13 +94,9 @@ class WidgetRestAnswerHandler extends BaseRestAnswerHandler
 	{
 		this.store.commit('messages/initCollection', {chatId: data.chatId});
 
-		this.store.commit('widget/dialog', {
-			sessionId: data.sessionId,
-			sessionClose: data.sessionClose,
-			userVote: data.userVote,
-			userConsent: data.userConsent,
-			operator: data.operator
-		});
+		this.store.commit('widget/dialog', data);
+
+
 		this.store.commit('application/set', {dialog: {
 			chatId: data.chatId,
 			dialogId: 'chat'+data.chatId,

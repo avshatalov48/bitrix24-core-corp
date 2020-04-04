@@ -35,9 +35,11 @@ class SaleAccountPay extends \CBitrixComponent
 	{
 		global $APPLICATION;
 
-		$this->checkModules();
-
 		$this->errorCollection = new Main\ErrorCollection();
+		if (!$this->checkModules())
+		{
+			return $params;
+		}
 
 		if ((!isset($params["VAR"]) || strlen($params["VAR"])<=0))
 		{
@@ -137,6 +139,13 @@ class SaleAccountPay extends \CBitrixComponent
 			$this->errorCollection->setError(new Main\Error(Loc::getMessage('SAP_MODULE_NOT_INSTALL')));
 			return false;
 		}
+
+		if (!CBXFeatures::IsFeatureEnabled('SaleAccounts'))
+		{
+			$this->errorCollection->setError(new Main\Error(Loc::getMessage('SAP_FEATURE_NOT_ALLOW')));
+			return false;
+		}
+
 		return true;
 	}
 
@@ -148,7 +157,7 @@ class SaleAccountPay extends \CBitrixComponent
 	{
 		global $APPLICATION;
 
-		$amountArray = unserialize(Main\Config\Option::get("sale", "pay_amount"));
+		$amountArray = unserialize(Main\Config\Option::get("sale", "pay_amount"), false);
 
 		if (empty($amountArray))
 		{
@@ -293,13 +302,13 @@ class SaleAccountPay extends \CBitrixComponent
 		global $APPLICATION;
 		$templateName = null;
 
-		if ($this->checkModules())
+		if ($this->errorCollection->isEmpty())
 		{
 			/** @var Main\HttpRequest $request */
 			$request = Application::getInstance()->getContext()->getRequest();
 			$request->addFilter(new \Bitrix\Main\Web\PostDecodeFilter);
 
-			if ($this->arParams["SET_TITLE"]!="N")
+			if ($this->arParams["SET_TITLE"] !== "N")
 			{
 				$APPLICATION->SetTitle(Loc::getMessage('SAP_TITLE'));
 			}
@@ -340,7 +349,7 @@ class SaleAccountPay extends \CBitrixComponent
 	 */
 	protected function setRegistry()
 	{
-		$this->registry = Sale\Registry::getInstance(Sale\Order::getRegistryType());
+		$this->registry = Sale\Registry::getInstance(Sale\Registry::REGISTRY_TYPE_ORDER);
 	}
 
 	/**

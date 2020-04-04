@@ -1019,7 +1019,8 @@ $APPLICATION->IncludeComponent(
 				'deletionDialogButtonTitle' => GetMessage('CRM_ORDER_DELETE')
 			)
 		),
-		'NAME_TEMPLATE' => $arParams['NAME_TEMPLATE']
+		'NAME_TEMPLATE' => $arParams['NAME_TEMPLATE'],
+		'LIVE_SEARCH_LIMIT_INFO' => isset($arResult['LIVE_SEARCH_LIMIT_INFO']) ? $arResult['LIVE_SEARCH_LIMIT_INFO'] : null,
 	),
 	$component
 );

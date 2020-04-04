@@ -278,16 +278,23 @@ class CheckListFields
 
 		$checkMembers = static function($value)
 		{
-			if (is_array($value))
+			$result = $value;
+
+			if (!is_array($result) && !$result)
 			{
-				foreach ($value as $id => $data)
+				$result = [];
+			}
+
+			if (is_array($result))
+			{
+				foreach ($result as $id => $data)
 				{
 					$type = static::getCorrectType($data['TYPE']);
 
 					if ($type)
 					{
 						$data['TYPE'] = $type;
-						$value[$id] = $data;
+						$result[$id] = $data;
 					}
 					else
 					{
@@ -295,7 +302,7 @@ class CheckListFields
 					}
 				}
 
-				return $value;
+				return $result;
 			}
 
 			return null;

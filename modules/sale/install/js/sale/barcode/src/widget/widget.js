@@ -1,4 +1,4 @@
-import {Tag} from 'main.core';
+import {Tag, Event} from 'main.core';
 import BarcodeItem from "./items/barcode";
 import MarkingCodeItem from "./items/markingcode";
 import './../css/widget/items/barcode.css';
@@ -11,13 +11,14 @@ export default class Widget
 	constructor(props)
 	{
 		this._headData = props.headData;
-
 		this._orderId = props.orderId;
 		this._basketId = props.basketId;
 		this._storeId = props.storeId;
 		this._isBarcodeMulti = props.isBarcodeMulti;
+		this._readonly = props.readonly;
 
 		this._items = this.createItems(props.rowData, props.rowsCount);
+		this._eventEmitter = new Event.EventEmitter();
 	}
 
 	get orderId()
@@ -67,7 +68,9 @@ export default class Widget
 
 		if(this.isMarkingCodeNeeded)
 		{
-			result[Widget.COLUMN_TYPE_MARKING_CODE] = new MarkingCodeItem({});
+			let markingCodeItem = new MarkingCodeItem({});
+			markingCodeItem.onChangeSubscribe(this.onMarkingCodeItemChange.bind(this));
+			result[Widget.COLUMN_TYPE_MARKING_CODE] = markingCodeItem;
 		}
 
 		return result;
@@ -85,10 +88,28 @@ export default class Widget
 			{
 				this.synchronizeBarcodes(barcodeItem.value, barcodeItem.isExist);
 			}
+
+			this.onChange();
+
 		})
 		.catch((data) => {
 			BX.debug(data);
 		});
+	}
+
+	onMarkingCodeItemChange()
+	{
+		this.onChange();
+	}
+
+	onChange()
+	{
+		this._eventEmitter.emit('onChange', this);
+	}
+
+	onChangeSubscribe(callback)
+	{
+		this._eventEmitter.subscribe('onChange', callback);
 	}
 
 	synchronizeBarcodes(value, isExist)
@@ -127,7 +148,8 @@ export default class Widget
 			let barcodeItem = new BarcodeItem({
 				id: rowData.id,
 				value: rowData.barcode,
-				widget: this
+				widget: this,
+				readonly: this._readonly
 			});
 
 			barcodeItem.onChangeSubscribe(this.onBarcodeItemChange.bind(this));
@@ -136,10 +158,14 @@ export default class Widget
 
 		if(this.isMarkingCodeNeeded())
 		{
-			result[Widget.COLUMN_TYPE_MARKING_CODE] = new MarkingCodeItem({
+			let markingCodeItem = new MarkingCodeItem({
 				id: rowData.id,
 				value: rowData.markingCode,
+				readonly: this._readonly
 			});
+
+			markingCodeItem.onChangeSubscribe(this.onMarkingCodeItemChange.bind(this));
+			result[Widget.COLUMN_TYPE_MARKING_CODE] = markingCodeItem;
 		}
 
 		return result;

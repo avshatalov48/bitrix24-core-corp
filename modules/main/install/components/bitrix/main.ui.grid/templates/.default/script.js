@@ -310,15 +310,15 @@
 	    },
 	    removeItemsRelativeCurrent: function removeItemsRelativeCurrent(node) {
 	      var element = node;
-	      var relative = node.id;
+	      var relative = [node.id];
 	      var result = [];
 	      var dataRelative;
 
 	      while (element) {
 	        dataRelative = BX.data(element, 'relative');
 
-	        if (dataRelative === relative || dataRelative === node.id) {
-	          relative = element.id;
+	        if (relative.includes(dataRelative)) {
+	          relative.push(element.id);
 	          result.push(element);
 	        }
 
@@ -1091,6 +1091,11 @@
 	              self.parent.arParams['MESSAGES'] = res.messages;
 	              self.parent.messages.show();
 	              self.parent.tableUnfade();
+
+	              if (BX.type.isFunction(error)) {
+	                BX.delegate(error, self)(xhr);
+	              }
+
 	              return;
 	            }
 	          }
@@ -7179,6 +7184,12 @@
 
 	          self.tableUnfade();
 	          BX.onCustomEvent(window, 'Grid::updated', [self]);
+	        }, function (res) {
+	          var editButton = self.getActionsPanel().getButtons().find(function (button) {
+	            return button.id === "grid_edit_button_control";
+	          });
+	          self.tableUnfade();
+	          BX.fireEvent(editButton, 'click');
 	        });
 	        return;
 	      }

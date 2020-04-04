@@ -11,8 +11,8 @@
 
 			<!-- Article Image -->
 			
-				<img class="landing-block-node-card-img g-valign-middle g-width-130 info-v5-2__image g-ml-minus-1 flex-shrink-0" src="https://cdn.bitrix24.site/bitrix/images/landing/business/600x600/img13.jpg"
-					 alt="">
+				<img class="landing-block-node-card-img g-valign-middle g-width-130 info-v5-2__image g-ml-minus-1 flex-shrink-0"
+					 src="https://cdn.bitrix24.site/bitrix/images/landing/business/130x130/img13.jpg" alt="">
 			<!-- End Article Image -->
 
 			<!-- Article Content -->
@@ -54,8 +54,8 @@
 
 			<!-- Article Image -->
 			
-				<img class="landing-block-node-card-img g-valign-middle g-width-130 info-v5-2__image g-ml-minus-1 flex-shrink-0" src="https://cdn.bitrix24.site/bitrix/images/landing/business/600x600/img14.jpg"
-					 alt="">
+				<img class="landing-block-node-card-img g-valign-middle g-width-130 info-v5-2__image g-ml-minus-1 flex-shrink-0"
+					 src="https://cdn.bitrix24.site/bitrix/images/landing/business/130x130/img14.jpg" alt="">
 			<!-- End Article Image -->
 
 			<!-- Article Content -->
@@ -97,8 +97,8 @@
 
 			<!-- Article Image -->
 			
-				<img class="landing-block-node-card-img g-valign-middle g-width-130 info-v5-2__image g-ml-minus-1 flex-shrink-0" src="https://cdn.bitrix24.site/bitrix/images/landing/business/600x600/img15.jpg"
-					 alt="">
+				<img class="landing-block-node-card-img g-valign-middle g-width-130 info-v5-2__image g-ml-minus-1 flex-shrink-0"
+					 src="https://cdn.bitrix24.site/bitrix/images/landing/business/130x130/img15.jpg" alt="">
 			<!-- End Article Image -->
 
 			<!-- Article Content -->
@@ -140,8 +140,8 @@
 
 			<!-- Article Image -->
 			
-				<img class="landing-block-node-card-img g-valign-middle g-width-130 info-v5-2__image g-ml-minus-1 flex-shrink-0" src="https://cdn.bitrix24.site/bitrix/images/landing/business/600x600/img16.jpg"
-					 alt="">
+				<img class="landing-block-node-card-img g-valign-middle g-width-130 info-v5-2__image g-ml-minus-1 flex-shrink-0"
+					 src="https://cdn.bitrix24.site/bitrix/images/landing/business/130x130/img16.jpg" alt="">
 			<!-- End Article Image -->
 
 			<!-- Article Content -->

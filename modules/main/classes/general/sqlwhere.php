@@ -545,11 +545,29 @@ class CAllSQLWhere
 	function addFloatFilter(&$result, $isMultiple, $FIELD_NAME, $operation, $value)
 	{
 		if (is_array($value))
-			$FIELD_VALUE = array_map("doubleval", $value);
+		{
+			$FIELD_VALUE = [];
+			foreach($value as $i => $val)
+			{
+				$FIELD_VALUE[$i] = doubleval($val);
+				if(!is_finite($FIELD_VALUE[$i]))
+				{
+					$FIELD_VALUE[$i] = 0;
+				}
+			}
+		}
 		elseif (is_object($value))
+		{
 			$FIELD_VALUE = $value;
+		}
 		else
+		{
 			$FIELD_VALUE = doubleval($value);
+			if(!is_finite($FIELD_VALUE))
+			{
+				$FIELD_VALUE = 0;
+			}
+		}
 
 		switch ($operation)
 		{

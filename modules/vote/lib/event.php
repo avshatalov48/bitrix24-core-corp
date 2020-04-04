@@ -665,7 +665,7 @@ SQL
 		return $fields;
 	}
 
-	public function add(array $eventFields, array $ballot)
+	public function add(array $eventFields, array $ballot, $setCounter = true)
 	{
 		$this->errorCollection->clear();
 		$fields = $this->check($ballot);
@@ -744,9 +744,12 @@ SQL
 
 			if (!empty($ids))
 			{
-				VoteTable::setCounter(array($this->vote->getId()), true);
-				QuestionTable::setCounter(array_keys($ids), true);
-				AnswerTable::setCounter($answerIdsForCounter, true);
+				if ($setCounter)
+				{
+					VoteTable::setCounter(array($this->vote->getId()), true);
+					QuestionTable::setCounter(array_keys($ids), true);
+					AnswerTable::setCounter($answerIdsForCounter, true);
+				}
 
 				return new EventResult(array(
 					"EVENT_ID" => $eventId,

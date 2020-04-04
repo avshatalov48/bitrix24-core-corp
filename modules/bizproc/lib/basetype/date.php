@@ -435,8 +435,11 @@ class Date extends Base
 				$obj = (static::getType() === FieldType::DATE)
 					? new Value\Date($value, $offset)
 					: new Value\DateTime($value, $offset);
-				//set value if all is ok
-				$value = $obj;
+				//set value if everything is ok
+				if ($obj->getTimestamp() > 0)
+				{
+					$value = $obj;
+				}
 			}
 			catch(Main\ObjectException $e)
 			{

@@ -891,6 +891,10 @@ class State
 			$fields['AUTO_SEND_TIME'] = $sendDate;
 		}
 
+		if ($updatedBy = $this->letter->get('UPDATED_BY'))
+		{
+			$fields['UPDATED_BY'] = $updatedBy;
+		}
 		\CTimeZone::disable();
 		$result = Model\LetterTable::update($this->letter->getId(), $fields);
 		\CTimeZone::enable();

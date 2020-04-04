@@ -18,16 +18,14 @@ class WorktimeViolationParams
 	private $record;
 	/** @var Shift */
 	private $shift;
-	/** @var ShiftPlan[]|[] */
-	private $shiftPlans;
+	/** @var ShiftPlan|null */
+	private $shiftPlan;
 	/** @var array */
 	private $absenceData;
 	/** @var callable */
 	private $createViolationCallback;
 	/** @var ViolationRules */
 	private $violationRules;
-	/** @var int */
-	private $currentUserId;
 
 	/**
 	 * @return WorktimeEvent[]
@@ -102,20 +100,20 @@ class WorktimeViolationParams
 	}
 
 	/**
-	 * @return ShiftPlan[]
+	 * @return ShiftPlan
 	 */
-	public function getShiftPlans()
+	public function getShiftPlan()
 	{
-		return $this->shiftPlans;
+		return $this->shiftPlan;
 	}
 
 	/**
-	 * @param ShiftPlan[] $shiftPlans
+	 * @param ShiftPlan $shiftPlan
 	 * @return WorktimeViolationParams
 	 */
-	public function setShiftPlans($shiftPlans)
+	public function setShiftPlan($shiftPlan)
 	{
-		$this->shiftPlans = $shiftPlans;
+		$this->shiftPlan = $shiftPlan;
 		return $this;
 	}
 
@@ -170,23 +168,6 @@ class WorktimeViolationParams
 	public function setViolationRules($violationRules)
 	{
 		$this->violationRules = $violationRules;
-		return $this;
-	}
-
-	/**
-	 * @return int
-	 */
-	public function getCurrentUserId()
-	{
-		return $this->currentUserId;
-	}
-
-	/**
-	 * @param int $currentUserId
-	 */
-	public function setCurrentUserId($currentUserId)
-	{
-		$this->currentUserId = $currentUserId;
 		return $this;
 	}
 }

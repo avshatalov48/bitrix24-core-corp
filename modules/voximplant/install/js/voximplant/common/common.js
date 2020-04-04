@@ -170,17 +170,22 @@
 
 	BX.Voximplant.openBilling = function()
 	{
-		BX.ajax.runAction("voximplant.urlmanager.getBillingUrl", {}).then(function(response)
+		return new Promise(function(resolve)
 		{
-			var data = response.data;
-			var billingUrl = data['billingUrl'];
+			BX.ajax.runAction("voximplant.urlmanager.getBillingUrl", {}).then(function(response)
+			{
+				var data = response.data;
+				var billingUrl = data['billingUrl'];
 
-			window.open(billingUrl);
-		}).catch(function(response)
-		{
-			var errors = response.errors;
-			var errorMessage = errors.map(function (err){return err.message}).join("\n");
-			BX.Voximplant.alert(BX.message('VOX_JS_COMMON_ERROR'), errorMessage);
+				window.open(billingUrl);
+				resolve();
+			}).catch(function(response)
+			{
+				var errors = response.errors;
+				var errorMessage = errors.map(function (err){return err.message}).join("\n");
+				BX.Voximplant.alert(BX.message('VOX_JS_COMMON_ERROR'), errorMessage);
+				resolve();
+			});
 		});
 	};
 

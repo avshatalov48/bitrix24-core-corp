@@ -104,18 +104,7 @@ class DocumentHandlersManager
 
 	private function shouldHideGoogle(DocumentHandler $handler)
 	{
-		//crutch for bitrix24
-		if (!ModuleManager::isModuleInstalled('bitrix24'))
-		{
-			return false;
-		}
-
-		if (!($handler instanceof GoogleHandler))
-		{
-			return false;
-		}
-
-		return !$this->isReady($handler);
+		return false;
 	}
 
 	/**

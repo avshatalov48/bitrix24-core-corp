@@ -101,10 +101,10 @@ abstract class DealEntity extends BaseEntity
 	{
 		if (!empty($params['PERIOD_DEAL']))
 		{
-			return ParameterMapper\FirstFormDeal::getInstance();
+			return new ParameterMapper\FirstFormDeal();
 		}
 
-		return ParameterMapper\SecondFormDeal::getInstance();
+		return new ParameterMapper\SecondFormDeal();
 	}
 
 	/**

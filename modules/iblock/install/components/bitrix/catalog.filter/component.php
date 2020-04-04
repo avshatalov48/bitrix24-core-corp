@@ -346,7 +346,7 @@ if ($this->StartResultCache(false, ($arParams["CACHE_GROUPS"]==="N"? false: $USE
 			{
 				$arTemp['LIST_TYPE'] = $arProp['LIST_TYPE'];
 				$arrEnum = array();
-				$rsEnum = CIBlockProperty::GetPropertyEnum($arProp["ID"]);
+				$rsEnum = CIBlockProperty::GetPropertyEnum($arProp["ID"], ['SORT' => 'ASC', 'VALUE' => 'ASC', 'ID' => 'ASC']);
 				while($arEnum = $rsEnum->Fetch())
 				{
 					$arrEnum[$arEnum["ID"]] = $arEnum["VALUE"];
@@ -378,7 +378,7 @@ if ($this->StartResultCache(false, ($arParams["CACHE_GROUPS"]==="N"? false: $USE
 					{
 						$arTemp['LIST_TYPE'] = $arProp['LIST_TYPE'];
 						$arrEnum = array();
-						$rsEnum = CIBlockProperty::GetPropertyEnum($arProp["ID"]);
+						$rsEnum = CIBlockProperty::GetPropertyEnum($arProp["ID"], ['SORT' => 'ASC', 'VALUE' => 'ASC', 'ID' => 'ASC']);
 						while($arEnum = $rsEnum->Fetch())
 						{
 							$arrEnum[$arEnum["ID"]] = $arEnum["VALUE"];

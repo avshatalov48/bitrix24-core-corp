@@ -6,7 +6,10 @@ interface Renderable
 {
 	/**
 	 * Returns content as string.
+	 *
+	 * @param bool $jsInit
+	 *
 	 * @return string
 	 */
-	public function render();
+	public function render($jsInit = true);
 }

@@ -6,9 +6,6 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
 
-\Bitrix\Main\UI\Extension::load("ui.fonts.opensans");
-
-
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 {
 	die();
@@ -35,8 +32,10 @@ else if (isset($_GET["IFRAME"]) && $_GET["IFRAME"] === "Y" && !isset($_GET["SONE
 CModule::IncludeModule("intranet");
 
 \Bitrix\Main\UI\Extension::load([
+	"ui.fonts.opensans",
 	"intranet.sidepanel.bitrix24",
 	"socialnetwork.slider",
+	"calendar.sliderloader",
 ]);
 
 Loc::loadMessages($_SERVER["DOCUMENT_ROOT"]."/bitrix/templates/".SITE_TEMPLATE_ID."/header.php");

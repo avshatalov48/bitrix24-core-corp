@@ -75,14 +75,21 @@ class CTimeMan
 			$info['ID'] = $arInfo['ID'];
 
 			$info['CAN_EDIT'] = !empty($actionsBuilder->getEditActions()) ? 'Y' : 'N';
-
+			$timeFinish = $arInfo['TIME_FINISH'];
+			if ((int)$arInfo['TIME_FINISH'] === 0)
+			{
+				if (!WorktimeRecord::isRecordPaused($arInfo) && !WorktimeRecord::isRecordClosed($arInfo))
+				{
+					$timeFinish = null;
+				}
+			}
 			$info['INFO'] = [
 				'DATE_START' => MakeTimeStamp($arInfo['DATE_START']) - CTimeZone::GetOffset(),
 				'DATE_FINISH' => $arInfo['DATE_FINISH']
 					? (MakeTimeStamp($arInfo['DATE_FINISH']) - CTimeZone::GetOffset())
 					: '',
 				'TIME_START' => $arInfo['TIME_START'],
-				'TIME_FINISH' => $arInfo['TIME_FINISH'],
+				'TIME_FINISH' => $timeFinish,
 				'DURATION' => $arInfo['RECORDED_DURATION'],
 				'TIME_LEAKS' => $arInfo['TIME_LEAKS'],
 				'ACTIVE' => ($arInfo['ACTIVE'] == 'Y'),
@@ -91,7 +98,16 @@ class CTimeMan
 			];
 			if (!empty($actionsBuilder->getStopActions()))
 			{
-				$info['INFO']['RECOMMENDED_CLOSE_TIMESTAMP'] = $record->getRecommendedStopTimestamp(reset($actionsBuilder->getStopActions())->getShift());
+				$schedule = DependencyManager::getInstance()
+					->getScheduleProvider()
+					->getScheduleWithShifts($info['SCHEDULE_ID']);
+				$shift = null;
+
+				if ($schedule && $info['SHIFT_ID'] > 0)
+				{
+					$shift = $schedule->obtainShiftByPrimary($info['SHIFT_ID']);
+				}
+				$info['INFO']['RECOMMENDED_CLOSE_TIMESTAMP'] = $record->getRecommendedStopTimestamp($schedule, $shift);
 			}
 			if ($arInfo['LAST_PAUSE'])
 			{
@@ -135,7 +151,7 @@ class CTimeMan
 
 		$info["FULL"] = $bFull;
 
-		if (!empty($actionsBuilder->getStartActions()) && !empty($actionsBuilder->getRelaunchActions()))
+		if (!empty($actionsBuilder->getStartActions()) && !empty($actionsBuilder->getReopenActions()))
 		{
 			$info["CAN_OPEN_AND_RELAUNCH"] = true;
 		}

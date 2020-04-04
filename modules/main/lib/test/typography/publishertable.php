@@ -23,9 +23,9 @@ class PublisherTable extends DataManager
 	public static function getTableName()
 	{
 		return '(
-			(SELECT 253 AS ID, "Publisher Title 253" AS TITLE)
+			(SELECT 253 AS ID, "Publisher Title 253" AS TITLE, 2 AS BOOKS_COUNT)
 			UNION
-			(SELECT 254 AS ID, "Publisher Title 254" AS TITLE)
+			(SELECT 254 AS ID, "Publisher Title 254" AS TITLE, 0 AS BOOKS_COUNT)
 		)';
 	}
 
@@ -37,6 +37,8 @@ class PublisherTable extends DataManager
 				->configureAutocomplete(),
 
 			(new StringField('TITLE')),
+
+			(new IntegerField('BOOKS_COUNT')),
 
 			(new OneToMany('BOOKS', BookTable::class, 'PUBLISHER'))
 				->configureJoinType('left')

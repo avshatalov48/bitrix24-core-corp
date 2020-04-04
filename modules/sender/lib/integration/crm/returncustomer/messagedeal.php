@@ -92,6 +92,7 @@ class MessageDeal extends MessageBase
 				'code' => 'CATEGORY_ID',
 				'name' => Loc::getMessage('SENDER_INTEGRATION_CRM_RC_MESSAGE_CONFIG_DEAL_CATEGORY_ID'),
 				'required' => false,
+				'show_in_filter' => true,
 				'items' => array_merge(
 					array_map(
 						function ($category)

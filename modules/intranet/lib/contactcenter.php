@@ -2,6 +2,7 @@
 namespace Bitrix\Intranet;
 
 
+use Bitrix\Main\Application;
 use \Bitrix\Main\Error;
 use \Bitrix\Main\Loader;
 use \Bitrix\Main\Result;
@@ -426,6 +427,13 @@ class ContactCenter
 				)
 			);
 
+			$dynamicItems = $this->getDynamicItems();
+
+			if (count($dynamicItems) > 0)
+			{
+				$itemsList = array_merge($itemsList, $dynamicItems);
+			}
+
 			$placements = \Bitrix\Rest\PlacementTable::getHandlersList(\CIntranetRestService::CONTACT_CENTER_PLACEMENT);
 			$appIdList = array();
 			$appList = array();
@@ -465,6 +473,102 @@ class ContactCenter
 		}
 
 		$result->setData($itemsList);
+
+		return $result;
+	}
+
+	/**
+	 * Return items from sale module
+	 *
+	 * @param array $filter
+	 * @return Result
+	 */
+	public function saleGetItems($filter = array())
+	{
+		$result = new Result();
+
+		$result->setData(array(
+			'sale' => array(
+				"NAME" => Loc::getMessage("CONTACT_CENTER_REST_ESHOP"),
+				"LOGO_CLASS" => "ui-icon ui-icon-service-import",
+				"SELECTED" => (\Bitrix\Rest\AppTable::getRow(['filter'=>[
+					'ACTIVE' => 'Y',
+					'CODE' => 'bitrix.eshop']]))
+			)
+		));
+
+		return $result;
+	}
+
+	private function getDynamicItems()
+	{
+		$items = [];
+		$userLang = LANGUAGE_ID ?? 'en';
+		$cache = \Bitrix\Main\Data\Cache::createInstance();
+		$cache_time = 86400;
+		$cache_id = 'ccActionsRest' . $userLang;
+		$cache_path = 'restItems';
+
+		if ($cache_time > 0 && $cache->InitCache($cache_time, $cache_id, $cache_path))
+		{
+			$res = $cache->GetVars();
+
+			if (is_array($res) && (count($res) > 0))
+			{
+				$items = $res;
+			}
+		}
+
+		if (count($items) <= 0)
+		{
+			$marketplace = new \Bitrix\Rest\Marketplace\MarketplaceActions();
+			$restItems = $marketplace->getItems('contactcenter', $userLang);
+
+			if (!empty($restItems) && count($restItems) > 0)
+			{
+				$items = $this->prepareRestItems($restItems);
+
+				if (!is_null($items))
+				{
+					$cache->StartDataCache($cache_time, $cache_id, $cache_path);
+					$cache->EndDataCache($items);
+				}
+			}
+
+		}
+
+		return $items;
+	}
+
+
+	private function prepareRestItems(array $items) :array
+	{
+		$result = [];
+
+		foreach ($items as $item)
+		{
+			if ($item['SLIDER'] == "Y")
+			{
+				$frame = "<iframe src=\'".$item['HANDLER']."\' style=\'width: 100%;height: -webkit-calc(100vh - 10px);height: calc(100vh - 10px);\'></iframe>";
+				$onclick = preg_match("/^(http|https|ftp):\/\/(([A-Z0-9][A-Z0-9_-]*)(\.[A-Z0-9][A-Z0-9_-]*)+)/i", $item['HANDLER'])
+					? "BX.SidePanel.Instance.open('voximplant', {
+						contentCallback: function () {return '".$frame."';}})"
+					: "BX.SidePanel.Instance.open('/marketplace/?category=".$item['HANDLER']."')";
+			}
+			else
+			{
+				$onclick = "window.open ('".$item['HANDLER']."', '_blank')";
+			}
+
+			$result[$item['NAME']] = [
+				"NAME" => $item['NAME'],
+				"LOGO_CLASS" => "ui-icon",
+				"SELECTED" => false,
+				"ONCLICK" => $onclick,
+				"IMAGE" => $item['IMAGE'],
+				"COLOR" => $item['COLOR'],
+			];
+		}
 
 		return $result;
 	}
@@ -959,10 +1063,10 @@ class ContactCenter
 			$this->cisCheck = false;
 			$cisDomainList = array('ru', 'kz', 'by'); //except ua domain case services rules
 
-			if (Loader::includeModule('bitrix24'))
-			{
-				$this->cisCheck = !in_array(\CBitrix24::getPortalZone(), $cisDomainList);
-			}
+			$this->cisCheck = !in_array(
+				Loader::includeModule('bitrix24') ? \CBitrix24::getPortalZone() : \CIntranetUtils::getPortalZone(),
+				$cisDomainList
+			);
 		}
 
 		return $this->cisCheck;

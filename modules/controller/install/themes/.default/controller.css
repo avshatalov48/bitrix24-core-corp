@@ -13,3 +13,13 @@
 {
 	font-weight: bold;
 }
+.command-code {
+	font-family: monospace;
+}
+.command-code-add {
+	color: green;
+}
+.command-code-del {
+	color: red;
+	text-decoration: line-through;
+}

@@ -98,7 +98,7 @@ class CControllerLog
 		}
 
 		unset($arFields["TIMESTAMP_X"]);
-		unset($arFields["~TIMESTAMP_X"]);
+		$arFields["~TIMESTAMP_X"] = $DB->CurrentTimeFunction();
 
 		$ID = $DB->Add("b_controller_log", $arFields, array("DESCRIPTION"));
 

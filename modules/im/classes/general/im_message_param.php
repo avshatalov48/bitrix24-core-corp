@@ -500,7 +500,7 @@ class CIMMessageParam
 			{
 				$arValues[$key] = intval($value);
 			}
-			else if (in_array($key, Array('CHAT_ID', 'CHAT_MESSAGE', 'IMOL_VOTE_SID', 'IMOL_VOTE_USER', 'IMOL_VOTE_HEAD', 'SENDING_TS', 'IMOL_SID')))
+			else if (in_array($key, Array('CHAT_ID', 'CHAT_MESSAGE', 'IMOL_VOTE_SID', 'IMOL_VOTE_USER', 'IMOL_VOTE_HEAD', 'SENDING_TS', 'IMOL_SID', 'CRM_FORM_ID')))
 			{
 				$arValues[$key] = intval($value[0]);
 			}
@@ -695,6 +695,7 @@ class CIMMessageParam
 			'IMOL_QUOTE_MSG' => 'N',
 			'IMOL_SID' => 0,
 			'IMOL_FORM' => '',
+			'CRM_FORM_VALUE' => '',
 		);
 
 		return $arDefault;
@@ -709,6 +710,7 @@ class CIMMessageParamAttach
 	const PROBLEM = "#df532d";
 	const TRANSPARENT = "TRANSPARENT";
 	const CHAT = "CHAT";
+	const TEXT_NODES_NAMES = ['NAME', 'LINK', 'MESSAGE', 'VALUE'];
 
 	private $result = Array();
 
@@ -1287,6 +1289,29 @@ class CIMMessageParamAttach
 	{
 		$result = \Bitrix\Main\Web\Json::encode($this->result);
 		return strlen($result) < 60000? $result: "";
+	}
+
+	/**
+	 * Recursively goes through attach nodes and gets all the text nodes for search indexing
+	 * @param $attach
+	 *
+	 * @return array
+	 */
+	public static function GetTextForIndex($attach) : array
+	{
+		if($attach instanceof \CIMMessageParamAttach)
+		{
+			$attach = $attach->GetArray();
+		}
+		$textNodes = [];
+		array_walk_recursive($attach, function($item, $key) use(&$textNodes){
+			if(in_array($key, self::TEXT_NODES_NAMES))
+			{
+				$textNodes[] = $item;
+			}
+		});
+
+		return $textNodes;
 	}
 }
 

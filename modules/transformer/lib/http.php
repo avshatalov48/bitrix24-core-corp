@@ -135,9 +135,12 @@ class Http
 
 		if(!$this->shouldWeSend())
 		{
-			return array('success' => false, 'result' => array(
-				'msg' => 'Too much connection errors', 'code' => 'FAIL_CONNECT')
-			);
+			return [
+				'success' => false,
+				'result' => [
+					'code' => Command::ERROR_CONNECTION_COUNT
+				]
+			];
 		}
 
 		if($params['file'])
@@ -179,9 +182,12 @@ class Http
 
 		if($response === false)
 		{
-			return array('success' => false, 'result' => array(
-				'msg' => self::CONNECTION_ERROR, 'code' => 'FAIL_CONNECT')
-			);
+			return [
+				'success' => false,
+				'result' => [
+					'code' => Command::ERROR_CONNECTION
+				]
+			];
 		}
 		try
 		{
@@ -189,9 +195,12 @@ class Http
 		}
 		catch(ArgumentException $e)
 		{
-			return array('success' => false, 'result' => array(
-				'msg' => 'wrong response from controller: '.$response, 'code' => 'FAIL_RESPONSE')
-			);
+			return [
+				'success' => false,
+				'result' => [
+					'code' => Command::ERROR_CONNECTION_RESPONSE,
+				]
+			];
 		}
 	}
 

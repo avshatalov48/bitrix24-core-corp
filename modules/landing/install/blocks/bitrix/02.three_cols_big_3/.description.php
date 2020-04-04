@@ -22,7 +22,7 @@ return array(
 		'.landing-block-node-left-img' => array(
 			'name' => Loc::getMessage('LANDING_BLOCK_2_THREE_COLS_3_NODES_LANDINGBLOCKNODELEFTIMG'),
 			'type' => 'img',
-			'dimensions' => ['width' => 640],
+			'dimensions' => ['width' => 580],
 		),
 		'.landing-block-node-left-title' => array(
 			'name' => Loc::getMessage('LANDING_BLOCK_2_THREE_COLS_3_NODES_LANDINGBLOCKNODELEFTTITLE'),
@@ -47,7 +47,7 @@ return array(
 		'.landing-block-node-right-img' => array(
 			'name' => Loc::getMessage('LANDING_BLOCK_2_THREE_COLS_3_NODES_LANDINGBLOCKNODERIGHTIMG'),
 			'type' => 'img',
-			'dimensions' => ['width' => 640],
+			'dimensions' => ['height' => 1080],
 		),
 	),
 	'style' => array(
@@ -85,7 +85,7 @@ return array(
 			),
 			'.landing-block-node-header' => array(
 				'name' => Loc::getMessage('LANDING_BLOCK_2_THREE_COLS_3_STYLE_LANDINGBLOCKNODEHEADER'),
-				'type' => 'border-color',
+				'type' => ['border-color', 'text-align'],
 			),
 			'.landing-block-node-right-img' => array(
 				'name' => Loc::getMessage('LANDING_BLOCK_2_THREE_COLS_3_NODES_LANDINGBLOCKNODERIGHTIMG'),

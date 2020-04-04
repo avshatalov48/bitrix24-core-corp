@@ -2,14 +2,16 @@
 
 use \Bitrix\Main;
 use \Bitrix\Main\Localization\Loc;
-use Bitrix\Main\ORM\Fields\Relations\OneToMany;
 use Bitrix\Main\ORM\Query\Query;
 use Bitrix\Timeman\Component\BaseComponent;
 use Bitrix\Timeman\Component\ScheduleList\Grid;
+use Bitrix\Timeman\Model\Schedule\Assignment\Department\ScheduleDepartment;
 use Bitrix\Timeman\Model\Schedule\Assignment\Department\ScheduleDepartmentTable;
+use Bitrix\Timeman\Model\Schedule\Assignment\User\ScheduleUserTable;
 use Bitrix\Timeman\Model\Schedule\Shift\ShiftTable;
 use Bitrix\Timeman\Repository\Schedule\ScheduleRepository;
 use Bitrix\Timeman\Service\DependencyManager;
+use Bitrix\Timeman\TimemanUrlManager;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
@@ -86,7 +88,8 @@ class ScheduleListComponent extends BaseComponent
 		$this->arResult['SHOW_SELECTED_COUNTER'] = $this->arResult['canDeleteSchedules'];
 		$this->arResult['SHOW_ACTION_PANEL'] = $this->arResult['canDeleteSchedules'];
 		$arResult['SHOW_ROW_ACTIONS_MENU'] = false;
-
+		$this->arResult['addScheduleUrl'] = DependencyManager::getInstance()->getUrlManager()
+			->getUriTo(TimemanUrlManager::URI_SCHEDULE_CREATE);
 		$this->includeComponentTemplate();
 	}
 
@@ -118,17 +121,16 @@ class ScheduleListComponent extends BaseComponent
 
 		if (!empty($schedulesIds))
 		{
-			return DependencyManager::getInstance()
+			/** @var \Bitrix\Timeman\Model\Schedule\ScheduleCollection $schedulesCollection */
+			$schedulesCollection = DependencyManager::getInstance()
 				->getScheduleRepository()
 				->getActiveSchedulesQuery()
 				->addSelect('ID')
 				->addSelect('NAME')
 				->addSelect('SCHEDULE_TYPE')
 				->addSelect('REPORT_PERIOD')
-				->addSelect('REPORT_PERIOD')
-				->addSelect('REPORT_PERIOD')
+				->addSelect('IS_FOR_ALL_USERS')
 				->addSelect('SHIFTS.ID')
-				->addSelect('DEPARTMENT_ASSIGNMENTS')
 				->whereIn('ID', $schedulesIds)
 				->where(Query::filter()->logic('or')
 					->where('SHIFTS.DELETED', ShiftTable::DELETED_NO)
@@ -137,6 +139,33 @@ class ScheduleListComponent extends BaseComponent
 				->addOrder(...$order)
 				->exec()
 				->fetchCollection();
+			if ($schedulesCollection->count() > 0)
+			{
+				/** @var \Bitrix\Timeman\Model\Schedule\Assignment\User\ScheduleUser[] $userAssignments */
+				$userAssignments = ScheduleUserTable::query()
+					->addSelect('*')
+					->whereIn('SCHEDULE_ID', $schedulesCollection->getIdList())
+					->exec()
+					->fetchCollection();
+				foreach ($userAssignments as $userAssignment)
+				{
+					$schedule = $schedulesCollection->getByPrimary($userAssignment->getScheduleId());
+					$schedule->addToUserAssignments($userAssignment);
+				}
+
+				/** @var ScheduleDepartment[] $departmentAssignments */
+				$departmentAssignments = ScheduleDepartmentTable::query()
+					->addSelect('*')
+					->whereIn('SCHEDULE_ID', $schedulesCollection->getIdList())
+					->exec()
+					->fetchCollection();
+				foreach ($departmentAssignments as $departmentAssignment)
+				{
+					$schedule = $schedulesCollection->getByPrimary($departmentAssignment->getScheduleId());
+					$schedule->addToDepartmentAssignments($departmentAssignment);
+				}
+			}
+			return $schedulesCollection;
 		}
 
 		return [];

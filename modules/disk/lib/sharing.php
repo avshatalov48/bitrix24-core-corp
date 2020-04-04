@@ -1022,6 +1022,13 @@ final class Sharing extends Internals\Model
 		}
 
 		$realObject = $this->getRealObject();
+		if (!$realObject || !$realObject->getStorage())
+		{
+			$this->errorCollection[] = new Error('Could not find real object');
+
+			return false;
+		}
+
 		$linkModel = null;
 		if($this->isToUser() || $this->isToGroup() || $this->isToDepartmentChild())
 		{

@@ -197,3 +197,12 @@
 .ui-tour-body-overflow .main-kanban-ear-right {
 	pointer-events: none !important;
 }
+
+.ui-tour-popup-simple .ui-tour-popup-index, .ui-tour-popup-simple .ui-tour-popup-btn-back {
+	display: none !important;
+}
+
+.ui-tour-popup-simple .ui-tour-popup-btn-next {
+	background-image: none;
+	padding-right: 18px;
+}

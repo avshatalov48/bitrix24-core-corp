@@ -98,7 +98,7 @@ $selectedField = false;
 
 $uri = new \Bitrix\Main\Web\Uri(\Bitrix\Main\HttpApplication::getInstance()->getContext()->getRequest()->getRequestUri());
 $uri->deleteParams(\Bitrix\Main\HttpRequest::getSystemParameters());
-$uri->addParams(['sessid' => bitrix_sessid(),'task_calendar_action'=>'LOAD_ENTRIES']);
+$uri->addParams(['sessid' => bitrix_sessid()]);
 $requestUri = $uri->getUri();
 
 $viewTaskPath = str_replace(['#user_id#', '#action#', '#group_id#'], [$arParams["USER_ID"], 'view', $arParams['GROUP_ID']], $arPaths['PATH_TO_TASKS_TASK']);
@@ -113,7 +113,7 @@ $filterSelect = 'DEADLINE';
 
 $allowWrite = true;
 
-if ($_SERVER['REQUEST_METHOD'] == 'GET' && check_bitrix_sessid())
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 {
 	$request = \Bitrix\Main\Context::getCurrent()->getRequest()->toArray();
 	if (isset($request['task_calendar_action']) && $request['task_calendar_action'] === 'LOAD_ENTRIES')
@@ -185,9 +185,27 @@ BX.ready(function(){
 	var eventCalendar = window.BXEventCalendar.Get('<?= $calendarId?>');
 	BX.addCustomEvent(eventCalendar, 'loadEntries', function(params)
 	{
+		var data = {
+			task_calendar_action: 'LOAD_ENTRIES'
+		};
+
+		if (BX.type.isDate(params.params.startDate))
+		{
+			data.deadlineFrom = BX.date.format(
+				BX.date.convertBitrixFormat(BX.message('FORMAT_DATETIME')),
+				params.params.startDate.getTime() / 1000);
+		}
+		if (BX.type.isDate(params.params.finishDate))
+		{
+			data.deadlineTo = BX.date.format(
+				BX.date.convertBitrixFormat(BX.message('FORMAT_DATETIME')),
+				params.params.finishDate.getTime() / 1000);
+		}
+
 		BX.ajax({
-			method: 'GET',
+			method: 'POST',
 			dataType: 'json',
+			data: data,
 			url: '<?= CUtil::JSEscape($requestUri)?>',
 			onsuccess: function(json)
 			{
@@ -418,11 +436,11 @@ if ($isBitrix24Template)
 		'PATH_TO_MESSAGES_CHAT' => $arParams['PATH_TO_MESSAGES_CHAT'],
 		'PATH_TO_VIDEO_CALL' => $arParams['PATH_TO_VIDEO_CALL'],
 		'PATH_TO_CONPANY_DEPARTMENT' => $arParams['PATH_TO_CONPANY_DEPARTMENT'],
-		'USE_EXPORT' => 'Y',
-		'USE_GROUP_BY_SUBTASKS' => 'Y',
-		'USE_GROUP_BY_GROUPS' => $arParams['NEED_GROUP_BY_GROUPS'] === 'Y' ? 'Y' : 'N',
-		'GROUP_BY_PROJECT' => $arResult['GROUP_BY_PROJECT'],
-		'SHOW_USER_SORT' => 'Y',
+		'USE_EXPORT' => 'N',
+		'USE_GROUP_BY_SUBTASKS' => 'N',
+		'USE_GROUP_BY_GROUPS' => 'N',
+		'GROUP_BY_PROJECT' => 'N',
+		'SHOW_USER_SORT' => 'N',
 		'SORT_FIELD'=>$arParams['SORT_FIELD'],
 		'SORT_FIELD_DIR'=>$arParams['SORT_FIELD_DIR'],
 		'USE_LIVE_SEARCH' => 'Y',

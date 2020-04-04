@@ -125,27 +125,20 @@ class TimemanSettingsPermissionsComponent extends \Bitrix\Timeman\Component\Base
 	}
 
 	/**
-	 * @param $role
+	 * @param $task
 	 * @return bool|string
 	 */
-	public function getEditRoleUrl($role = null)
+	public function getEditTaskUrl($task = null)
 	{
-		static $componentPath;
-		if ($componentPath === null)
-		{
-			$componentPath = \CComponentEngine::makeComponentPath('bitrix:timeman.settings.permissions');
-			$componentPath = getLocalPath('components' . $componentPath . '/slider.php');
-		}
-		if (!$componentPath)
-		{
-			return false;
-		}
+		$path = \Bitrix\Timeman\Service\DependencyManager::getInstance()->getUrlManager()
+			->getUriTo(\Bitrix\Timeman\TimemanUrlManager::URI_SETTINGS_PERMISSIONS);
+
 		$taskId = 0;
-		if ($role)
+		if ($task)
 		{
-			$taskId = $role['ID'];
+			$taskId = $task['ID'];
 		}
-		$uri = new \Bitrix\Main\Web\Uri($componentPath);
+		$uri = new \Bitrix\Main\Web\Uri($path);
 		$uri->addParams(['taskId' => $taskId]);
 
 		return $uri->getLocator();

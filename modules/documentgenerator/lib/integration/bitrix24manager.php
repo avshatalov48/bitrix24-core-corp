@@ -5,7 +5,6 @@ namespace Bitrix\DocumentGenerator\Integration;
 use Bitrix\Bitrix24\Feature;
 use Bitrix\DocumentGenerator\Driver;
 use Bitrix\Main\Loader;
-use Bitrix\Main\ModuleManager;
 
 class Bitrix24Manager
 {
@@ -19,7 +18,7 @@ class Bitrix24Manager
 	 */
 	public static function isEnabled()
 	{
-		return ModuleManager::isModuleInstalled('bitrix24');
+		return Loader::includeModule('bitrix24');
 	}
 
 	/**
@@ -65,7 +64,12 @@ class Bitrix24Manager
 	 */
 	public static function getDocumentsLimit()
 	{
-	    return \Bitrix\Bitrix24\Feature::getVariable('documentgenerator_create_documents');
+		if(static::isEnabled())
+		{
+			return \Bitrix\Bitrix24\Feature::getVariable('documentgenerator_create_documents');
+		}
+
+		return 0;
 	}
 
 	/**

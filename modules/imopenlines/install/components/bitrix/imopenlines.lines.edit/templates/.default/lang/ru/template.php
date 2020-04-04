@@ -218,6 +218,7 @@ $MESS["IMOL_CONFIG_FULL_CLOSE_TIME_DESC_NEW"] = "Укажите необходи
 $MESS["IMOL_CONFIG_QUICK_ANSWERS_DESC_NEW"] = "Быстрые ответы сэкономят время ваших операторов на частые вопросы клиентов. Любой ответ можно сохранить как быстрый и использовать его при общении с клиентом. <a class=\"bx-helpdesk-link\" onclick=\"top.BX.Helper.show('redirect=detail&code=6194339')\"> Подробнее</a>";
 $MESS["IMOL_CONFIG_EDIT_VOTE_MESSAGE_NEW"] = "Отправлять запрос клиенту на оценку качества обслуживания. <a class=\"bx-helpdesk-link\" onclick=\"top.BX.Helper.show('redirect=detail&code=5667405'); return false;\"> Подробнее</a>";
 $MESS["IMOL_CONFIG_EDIT_VOTE_CLOSING_DELAY_NEW"] = "Закрывать сессию сразу после оценки клиентом";
+$MESS["IMOL_CONFIG_EDIT_VOTE_BEFORE_FINISH"] = "Разрешить оценку диалога до его окончания";
 $MESS["IMOL_CONFIG_EDIT_VOTE_MESSAGE_2_TITLE_NEW"] = "2. Настройка текста для оценки качества в других каналах (Viber, Telegram, Facebook, Вконтакте и другие):";
 $MESS["IMOL_CONFIG_EDIT_LANG_NEW"] = "Настройка языковых предпочтений. <a class=\"bx-helpdesk-link\" onclick=\"top.BX.Helper.show('redirect=detail&code=5484689')\"> Подробнее</a>";
 $MESS["IMOL_CONFIG_EDIT_LANG_EMAIL_TIP_NEW"] = "Клиент может заказать историю переписки или получить уведомление о новом сообщении от оператора.  Выберите язык, на котором будет отправлено письмо. 

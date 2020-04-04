@@ -552,7 +552,7 @@ class DocumentController extends Internals\Controller
 	private function findShowSessionByCurrentUser()
 	{
 		$filter = array(
-			'OBJECT_ID' => $this->file->getId(),
+			'OBJECT_ID' => $this->file->getRealObjectId(),
 			'USER_ID' => $this->getUser()->getId(),
 			'OWNER_ID' => $this->getUser()->getId(),
 			'=SERVICE' => $this->documentHandler->getCode(),
@@ -1054,7 +1054,7 @@ class DocumentController extends Internals\Controller
 	protected function addFileEditSessionByCurrentUser(FileData $fileData)
 	{
 		$data = array(
-			'OBJECT_ID' => $this->file->getId(),
+			'OBJECT_ID' => $this->file->getRealObjectId(),
 			'USER_ID' => $this->getUser()->getId(),
 			'OWNER_ID' => $this->getUser()->getId(),
 			'SERVICE' => $this->documentHandler->getCode(),
@@ -1102,7 +1102,7 @@ class DocumentController extends Internals\Controller
 			return null;
 		}
 		return EditSession::load(array(
-			'OBJECT_ID' => $this->file->getId(),
+			'OBJECT_ID' => $this->file->getRealObjectId(),
 			'VERSION_ID' => null,
 			'IS_EXCLUSIVE' => false,
 		));

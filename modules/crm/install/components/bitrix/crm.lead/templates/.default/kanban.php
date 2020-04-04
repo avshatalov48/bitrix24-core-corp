@@ -104,6 +104,7 @@ else
 			'PATH_TO_LEAD_LIST' => $arResult['PATH_TO_LEAD_LIST'],
 			'PATH_TO_LEAD_EDIT' => $arResult['PATH_TO_LEAD_EDIT'],
 			'PATH_TO_LEAD_DEDUPE' => $arResult['PATH_TO_LEAD_DEDUPE'],
+			'PATH_TO_LEAD_DEDUPEWIZARD' => $arResult['PATH_TO_LEAD_DEDUPEWIZARD'],
 			'PATH_TO_LEAD_IMPORT' => $arResult['PATH_TO_LEAD_IMPORT'],
 			'ELEMENT_ID' => 0,
 			'TYPE' => 'list',

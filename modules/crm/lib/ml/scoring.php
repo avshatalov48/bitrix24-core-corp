@@ -487,6 +487,16 @@ class Scoring
 		}
 	}
 
+	public static function getAvailableModelNames()
+	{
+		$result = Model\DealScoring::getModelNames();
+		if(LeadSettings::isEnabled())
+		{
+			$result = array_merge(Model\LeadScoring::getModelNames(), $result);
+		}
+		return $result;
+	}
+
 	/**
 	 * @param $modelId
 	 * @return Model\Base

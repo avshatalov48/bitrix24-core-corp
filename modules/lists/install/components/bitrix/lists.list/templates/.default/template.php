@@ -7,6 +7,7 @@
 /** @var CBitrixComponentTemplate $this */
 /** @var CBitrixComponent $component */
 
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Config\Option;
 
@@ -68,16 +69,25 @@ else
 {
 	$textForActionSectionGrid = Loc::getMessage("CT_BLL_SHOW_SECTION_GRID");
 }
-if($arResult["CAN_READ"])
+if ($arResult["CAN_READ"])
 {
-	if($USER->IsAuthorized())
+	if ($USER->isAuthorized())
 	{
 		$listAction[] = array(
 			"id" => "showSectionGrid",
 			"text" => $textForActionSectionGrid,
 			"action" => "BX.Lists['".$arResult["JS_OBJECT"]."'].toogleSectionGrid();"
 		);
-
+	}
+}
+else
+{
+	CUserOptions::setOption("lists_show_section_grid", $arResult["GRID_ID"], "N");
+}
+if ($arResult["CAN_EXPORT"])
+{
+	if ($USER->isAuthorized())
+	{
 		$url = CHTTP::urlAddParams((strpos($APPLICATION->GetCurPageParam(), "?") == false) ?
 			$arResult["EXPORT_EXCEL_URL"] : $arResult["EXPORT_EXCEL_URL"].substr($APPLICATION->GetCurPageParam(),
 				strpos($APPLICATION->GetCurPageParam(), "?")), array("ncc" => "y"));
@@ -236,6 +246,30 @@ if($shouldStartRebuildSeachableContent):?>
 		});
 	</script>
 <?endif;
+
+if (Loader::includeModule("socialnetwork"))
+{
+	$helper = new Bitrix\Socialnetwork\Copy\Integration\StepperHelper();
+	$helper->setStepper('Bitrix\Iblock\Copy\Stepper\Iblock');
+	$helper->setModuleId("iblock");
+	$helper->setQueueOption("IblockGroupQueue");
+	$helper->setCheckerOption("IblockGroupChecker_");
+	$helper->setStepperOption("IblockGroupStepper_");
+	$helper->setErrorOption("IblockGroupError_");
+	$helper->setTitle(GetMessage("CT_BLL_GROUP_STEPPER_PROGRESS_TITLE"));
+	$helper->setError(GetMessage("CT_BLL_GROUP_STEPPER_PROGRESS_ERROR"));
+
+	$APPLICATION->includeComponent(
+		"bitrix:socialnetwork.copy.checker",
+		"",
+		[
+			"QUEUE_ID" => $arResult["IBLOCK_ID"],
+			"HELPER" => $helper
+		],
+		$component,
+		["HIDE_ICONS" => "Y"]
+	);
+}
 
 $APPLICATION->IncludeComponent(
 	"bitrix:main.ui.grid",

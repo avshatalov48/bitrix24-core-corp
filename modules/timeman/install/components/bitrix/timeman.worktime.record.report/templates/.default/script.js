@@ -10,6 +10,8 @@
 	{
 		BX.Timeman.Component.BaseComponent.apply(this, arguments);
 		this.isSlider = options.isSlider;
+		this.isShiftplan = options.isShiftplan;
+		this.useEmployeesTimezone = options.useEmployeesTimezone;
 		this.editWorktimeBtn = this.selectOneByRole('edit-worktime-btn');
 		this.workTimePickerContent = this.selectOneByRole('timeman-time-picker-content');
 		this.saveButton = this.selectOneByRole('tm-record-btn-save');
@@ -126,7 +128,15 @@
 			{
 				return;
 			}
+			if (this.saving === true)
+			{
+				return;
+			}
+			this.saving = true;
+			this.saveButton.classList.add('ui-btn-wait');
 			var formData = new FormData(this.recordForm);
+			formData.append('isShiftplan', this.isShiftplan);
+			formData.append('useEmployeesTimezone', this.useEmployeesTimezone);
 			BX.ajax.runAction(
 				'timeman.worktime.approveRecord',
 				{
@@ -135,6 +145,7 @@
 			).then(
 				function (response)
 				{
+					this.saving = false;
 					if (this.isSlider)
 					{
 						if (this.getSlider())
@@ -148,9 +159,15 @@
 						}
 						this.closeSlider();
 					}
+					else
+					{
+						BX.reload();
+					}
 				}.bind(this),
 				function (response)
 				{
+					this.saving = false;
+					this.saveButton.classList.remove('ui-btn-wait');
 					this.showErrors(response.errors);
 				}.bind(this));
 		},

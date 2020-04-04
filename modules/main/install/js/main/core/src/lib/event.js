@@ -6,13 +6,24 @@ import EventEmitter from './event/event-emitter';
 import BaseEvent from './event/base-event';
 import ready from './event/ready';
 
+/**
+ * @memberOf BX
+ */
 export default class Event
 {
 	static bind: bind = bind;
 	static bindOnce: bindOnce = bindOnce;
 	static unbind: unbind = unbind;
 	static unbindAll: unbindAll = unbindAll;
-	static EventEmitter: EventEmitter = EventEmitter;
-	static BaseEvent: BaseEvent = BaseEvent;
 	static ready: ready = ready;
+
+	/**
+	 * @deprecated use import { EventEmitter } from 'main.core.events'
+	 */
+	static EventEmitter: EventEmitter = EventEmitter;
+	/**
+	 * @deprecated use import { BaseEvent } from 'main.core.events'
+	 */
+	static BaseEvent: BaseEvent = BaseEvent;
+
 }

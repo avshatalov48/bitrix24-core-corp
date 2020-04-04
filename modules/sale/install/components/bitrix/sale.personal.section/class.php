@@ -15,6 +15,10 @@ class PersonalOrderSection extends CBitrixComponent
 		{
 			$params['MAIN_CHAIN_NAME'] = Loc::getMessage("SPS_CHAIN_MAIN");
 		}
+
+		$params['DISABLE_SOCSERV_AUTH'] = $params['DISABLE_SOCSERV_AUTH'] ?? 'N';
+		$params['DISABLE_SOCSERV_AUTH'] = $params['DISABLE_SOCSERV_AUTH'] === 'Y' ? 'Y' : 'N';
+
 		return $params;
 	}
 
@@ -191,7 +195,7 @@ class PersonalOrderSection extends CBitrixComponent
 		{
 			Loader::includeModule('sale');
 			$id = urldecode(urldecode($variables["ID"]));
-			$registry = Sale\Registry::getInstance(Sale\Order::getRegistryType());
+			$registry = Sale\Registry::getInstance(Sale\Registry::REGISTRY_TYPE_ORDER);
 			$orderClassName = $registry->getOrderClassName();
 
 			$order = $orderClassName::loadByAccountNumber($id);

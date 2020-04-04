@@ -745,7 +745,12 @@ if (
 
 		if (!empty($basketIdList))
 		{
-			$basketRes = Sale\Basket::getList(
+			$registry = Sale\Registry::getInstance(Sale\Registry::REGISTRY_TYPE_ORDER);
+
+			/** @var Sale\Basket $basketClass */
+			$basketClass = $registry->getBasketClassName();
+
+			$basketRes = $basketClass::getList(
 				array(
 					'filter' => array(
 						'=ID' => $basketIdList

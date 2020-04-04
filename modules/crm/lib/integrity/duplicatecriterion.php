@@ -31,6 +31,11 @@ abstract class DuplicateCriterion
 	abstract public function getIndexTypeID();
 	abstract public function getTextTotals($count, $limit = 0);
 
+	public function getSummary()
+	{
+		return '';
+	}
+
 	public function getScope()
 	{
 		return DuplicateIndexType::DEFAULT_SCOPE;
@@ -41,6 +46,75 @@ abstract class DuplicateCriterion
 		$dataSource = DedupeDataSource::create($this->getIndexTypeID(), new DedupeParams($entityTypeID, $userID, $enablePermissionCheck, $this->getScope()));
 		return $dataSource->calculateEntityCount($this, array('ROOT_ENTITY_ID' => $rootEntityID, 'LIMIT' => $limit));
 	}
+
+	public function getEntityIDs($entityTypeID, $rootEntityID, $userID, $enablePermissionCheck, array $options = null)
+	{
+		if($entityTypeID !== \CCrmOwnerType::Lead
+			&& $entityTypeID !== \CCrmOwnerType::Contact
+			&& $entityTypeID !== \CCrmOwnerType::Company)
+		{
+			throw new Main\NotSupportedException("Entity type: '".\CCrmOwnerType::ResolveName($entityTypeID)."' is not supported in current context");
+		}
+
+		if(!is_array($options))
+		{
+			$options = array();
+		}
+
+		$query = static::createQuery();
+		$query->addSelect('ENTITY_ID');
+		$query->addFilter('=ENTITY_TYPE_ID', $entityTypeID);
+		static::setQueryFilter($query, $this->getMatches());
+
+		if($enablePermissionCheck)
+		{
+			$permissions = \CCrmPerms::GetUserPermissions($userID);
+			$permissionSql = \CCrmPerms::BuildSql(
+				\CCrmOwnerType::ResolveName($entityTypeID),
+				'',
+				'READ',
+				array('RAW_QUERY' => true, 'PERMS'=> $permissions)
+			);
+
+			if($permissionSql === false)
+			{
+				//Access denied;
+				return array();
+			}
+
+			if($permissionSql !== '')
+			{
+				$query->addFilter('@ENTITY_ID', new Main\DB\SqlExpression($permissionSql));
+			}
+		}
+
+		$limit = isset($options['limit']) ? (int)$options['limit'] : 0;
+		if($limit > 0)
+		{
+			$query->setLimit($limit);
+		}
+
+		if($rootEntityID > 0)
+		{
+			$query->addFilter('!ENTITY_ID', $rootEntityID);
+			$query->addFilter(
+				'!@ENTITY_ID',
+				DuplicateIndexMismatch::prepareQueryField($this, $entityTypeID, $rootEntityID, $userID)
+			);
+		}
+
+		$entityIDs = array();
+		$dbResult = $query->exec();
+		while($fields = $dbResult->fetch())
+		{
+			if(isset($fields['ENTITY_ID']) && $fields['ENTITY_ID'] > 0)
+			{
+				$entityIDs[] = (int)$fields['ENTITY_ID'];
+			}
+		}
+		return $entityIDs;
+	}
+
 	/**
 	* @return Duplicate
 	*/
@@ -63,12 +137,7 @@ abstract class DuplicateCriterion
 
 		if($enablePermissionCheck)
 		{
-			$permissions = isset($params['PERMISSIONS']) ? $params['PERMISSIONS'] : null;
-			if($permissions === null)
-			{
-				$permissions = \CCrmPerms::GetUserPermissions($userID);
-			}
-
+			$permissions = \CCrmPerms::GetUserPermissions($userID);
 			$permissionSql = \CCrmPerms::BuildSql(
 				\CCrmOwnerType::ResolveName($entityTypeID),
 				'',

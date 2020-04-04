@@ -2,10 +2,7 @@
 namespace Bitrix\Timeman\Service\Schedule;
 
 use Bitrix\Timeman\Form\Schedule\ShiftPlanForm;
-use Bitrix\Timeman\Helper\TimeHelper;
-use Bitrix\Timeman\Model\Schedule\ScheduleTable;
 use Bitrix\Timeman\Model\Schedule\ShiftPlan\ShiftPlan;
-use Bitrix\Timeman\Model\Schedule\Violation\ViolationRulesTable;
 use Bitrix\Timeman\Repository\Schedule\ShiftPlanRepository;
 use Bitrix\Timeman\Repository\Schedule\ShiftRepository;
 use Bitrix\Timeman\Service\Agent\WorktimeAgentManager;
@@ -21,11 +18,7 @@ class ShiftPlanService extends BaseService
 	/** @var WorktimeAgentManager */
 	private $worktimeAgentManager;
 
-	public function __construct(
-		ShiftRepository $shiftRepository,
-		ShiftPlanRepository $shiftPlanRepository,
-		WorktimeAgentManager $worktimeAgentManager
-	)
+	public function __construct(ShiftRepository $shiftRepository, ShiftPlanRepository $shiftPlanRepository, WorktimeAgentManager $worktimeAgentManager)
 	{
 		$this->shiftRepository = $shiftRepository;
 		$this->shiftPlanRepository = $shiftPlanRepository;
@@ -38,38 +31,43 @@ class ShiftPlanService extends BaseService
 	 */
 	public function add(ShiftPlanForm $shiftPlanForm)
 	{
-		if (!($shift = $this->getShiftRepository()->findByIdWithSchedule($shiftPlanForm->shiftId)))
+		if (!($shift = $this->shiftRepository->findByIdWithSchedule($shiftPlanForm->shiftId))
+			|| !$shift->obtainSchedule()->isShifted())
 		{
 			return (new ShiftServiceResult())->addShiftNotFoundError();
 		}
-		$shiftPlan = ShiftPlan::create($shiftPlanForm);
-		$res = $this->getShiftPlanRepository()->save($shiftPlan);
+		$shiftPlan = $this->shiftPlanRepository->findByComplexId(
+			$shiftPlanForm->shiftId,
+			$shiftPlanForm->userId,
+			$shiftPlanForm->getDateAssigned()
+		);
+		if ($shiftPlan && $shiftPlan->isActive())
+		{
+			return new ShiftServiceResult();
+		}
+
+		if ($shiftPlan)
+		{
+			$shiftPlan->restore();
+		}
+		else
+		{
+			$shiftPlan = ShiftPlan::create($shiftPlanForm);
+		}
+
+		$res = $this->shiftPlanRepository->save($shiftPlan);
 		if (!$res->isSuccess())
 		{
 			return ShiftServiceResult::createByResult($res);
 		}
-		$now = TimeHelper::getInstance()->getUtcNowTimestamp();
-		$shiftNotEndedYet =
-			$now < TimeHelper::getInstance()->getUtcTimestampForUserTime(
-				$shiftPlanForm->userId,
-				$shift->getWorkTimeEnd(),
-				$shiftPlanForm->getDateAssigned()
-			);
 
-		$schedule = $shift->obtainSchedule();
-		if ($schedule->isShifted()
-			&& $schedule->obtainScheduleViolationRules()->isMissedShiftsControlEnabled()
-			&& !empty($schedule->obtainScheduleViolationRules()->getNotifyUsersSymbolic(ViolationRulesTable::USERS_TO_NOTIFY_SHIFT_MISSED_START))
-			&& $shiftNotEndedYet
-		)
-		{
-			$this->getWorktimeAgentManager()
-				->createMissedShiftChecking($shiftPlan, $shift);
-		}
+		// create agent on every shiftplan, always
+		$this->worktimeAgentManager->createMissedShiftChecking($shiftPlan, $shift);
 
 		return (new ShiftServiceResult())
-			->setShiftPlan($shiftPlan)
-			->setShift($shift);
+			->setShift($shift)
+			->setSchedule($shift->obtainSchedule())
+			->setShiftPlan($shiftPlan);
 	}
 
 	/**
@@ -81,41 +79,31 @@ class ShiftPlanService extends BaseService
 	 */
 	public function delete(ShiftPlanForm $shiftPlanForm)
 	{
-		$shiftPlan = $this->getShiftPlanRepository()->findByComplexId(
-			$shiftPlanForm->shiftId,
-			$shiftPlanForm->userId,
-			$shiftPlanForm->getDateAssigned()
-		);
+		$shiftPlan = $this->shiftPlanRepository->findActiveById($shiftPlanForm->id, ['*']);
 		if (!$shiftPlan)
 		{
 			return (new ShiftServiceResult())->addShiftPlanNotFoundError();
 		}
-		$res = $this->getShiftPlanRepository()->delete([
-			'SHIFT_ID' => $shiftPlanForm->shiftId,
-			'USER_ID' => $shiftPlanForm->userId,
-			'DATE_ASSIGNED' => $shiftPlanForm->getDateAssigned(),
-		]);
+		$shiftPlan->markDeleted();
+		$agentId = 0;
+		/** @var ShiftPlan $shiftPlan */
+		if ($shiftPlan->getMissedShiftAgentId() > 0)
+		{
+			$agentId = $shiftPlan->getMissedShiftAgentId();
+		}
+		$shiftPlan->setMissedShiftAgentId(0);
+		$res = $this->shiftPlanRepository->save($shiftPlan);
 		if (!$res->isSuccess())
 		{
 			return ShiftServiceResult::createByResult($res);
 		}
+		if ($agentId > 0)
+		{
+			$this->worktimeAgentManager->deleteAgentById($agentId);
+		}
 		return (new ShiftServiceResult())
-			->setShift($this->getShiftRepository()->findByIdWithSchedule($shiftPlanForm->shiftId))
+			->setShift($shift = $this->shiftRepository->findByIdWithSchedule($shiftPlanForm->shiftId))
+			->setSchedule($shift ? $shift->obtainSchedule() : null)
 			->setShiftPlan($shiftPlan);
-	}
-
-	private function getShiftRepository()
-	{
-		return $this->shiftRepository;
-	}
-
-	private function getShiftPlanRepository()
-	{
-		return $this->shiftPlanRepository;
-	}
-
-	private function getWorktimeAgentManager()
-	{
-		return $this->worktimeAgentManager;
 	}
 }

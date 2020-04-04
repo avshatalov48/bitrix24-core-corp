@@ -72,6 +72,26 @@
 		return this.BXIM.mobileVersion;
 	}
 
+	MessengerCommon.prototype.hideLinesKeyboard = function()
+	{
+		if (this.textPanelShowed)
+		{
+			this.textPanelShowed = false;
+			BXMobileApp.UI.Page.TextPanel.hide();
+		}
+	}
+
+	MessengerCommon.prototype.isSessionBlocked = function(chatId)
+	{
+		var session = BX.MessengerCommon.linesGetSession(this.BXIM.messenger.chat[chatId]);
+
+		if (session && session.blockDate !== 0 && new Date(session.blockDate * 1000) < new Date())
+		{
+			return true;
+		}
+		return false;
+	}
+
 	MessengerCommon.prototype.isMobileNative = function()
 	{
 		return false;
@@ -1275,6 +1295,11 @@
 		{
 			status = 'network';
 			statusText = BX.message('IM_STATUS_NETWORK');
+
+			if (userData.bot && this.BXIM.messenger.bot[userData.id] && this.BXIM.messenger.bot[userData.id].type == 'support24')
+			{
+				status = 'support24';
+			}
 		}
 		else if (userData.bot)
 		{
@@ -4064,7 +4089,7 @@
 						if (!this.BXIM.messenger.users[userId].bot)
 							continue;
 
-						if (!this.BXIM.messenger.bot[userId] || this.BXIM.messenger.bot[userId].type != 'network')
+						if (!this.BXIM.messenger.bot[userId] || this.BXIM.messenger.bot[userId].type != 'network' && this.BXIM.messenger.bot[userId].type != 'support24')
 							continue;
 					}
 					else if (category[i].id == 'bot')
@@ -4091,14 +4116,18 @@
 							{
 								continue;
 							}
-							else if (this.BXIM.messenger.bot[userId].type == 'network')
+							else if (this.BXIM.messenger.bot[userId].type == 'network' || this.BXIM.messenger.bot[userId].type == 'support24')
 							{
 								continue;
 							}
 						}
 						else
 						{
-							if (this.BXIM.messenger.bot[userId].type == 'network' || this.BXIM.messenger.bot[userId].type == 'openline')
+							if (
+								this.BXIM.messenger.bot[userId].type == 'network'
+								|| this.BXIM.messenger.bot[userId].type == 'support24'
+								|| this.BXIM.messenger.bot[userId].type == 'openline'
+							)
 							{
 								continue;
 							}
@@ -4794,7 +4823,7 @@
 					likeEnable = false;
 				}
 			}
-			else if (!isChat && this.BXIM.messenger.bot[message.recipientId] && this.BXIM.messenger.bot[message.recipientId].type == 'network')
+			else if (!isChat && this.BXIM.messenger.bot[message.recipientId] && (this.BXIM.messenger.bot[message.recipientId].type == 'network' || this.BXIM.messenger.bot[message.recipientId].type == 'support24'))
 			{
 				likeEnable = false;
 			}
@@ -4831,7 +4860,7 @@
 					likeEnable = false;
 				}
 			}
-			else if (!this.BXIM.messenger.openChatFlag && this.BXIM.messenger.bot[this.BXIM.messenger.currentTab] && this.BXIM.messenger.bot[this.BXIM.messenger.currentTab].type == 'network')
+			else if (!this.BXIM.messenger.openChatFlag && this.BXIM.messenger.bot[this.BXIM.messenger.currentTab] && (this.BXIM.messenger.bot[this.BXIM.messenger.currentTab].type == 'network' || this.BXIM.messenger.bot[this.BXIM.messenger.currentTab].type == 'support24'))
 			{
 				likeEnable = false;
 			}
@@ -6408,8 +6437,8 @@
 			{
 				params.user.last_activity_date = new Date(params.user.last_activity_date);
 				params.user.mobile_last_date = new Date(params.user.mobile_last_date);
-				params.users[i].idle = params.users[i].idle? new Date(params.users[i].idle): false;
-				params.users[i].absent = params.users[i].absent? new Date(params.users[i].absent): false;
+				params.user.idle = params.user.idle? new Date(params.user.idle): false;
+				params.user.absent = params.user.absent? new Date(params.user.absent): false;
 
 				this.BXIM.messenger.users[params.user.id] = params.user;
 				this.BXIM.messenger.redrawChatHeader();
@@ -6674,6 +6703,17 @@
 
 					if (command == 'messageChat' && !BX.MessengerCommon.userInChat(params.message.chatId))
 					{
+						if (this.isMobile())
+						{
+							var isLines = this.BXIM.currentTab.toString().substr(0,4) === 'chat'
+								&& this.BXIM.messenger.chat[this.BXIM.currentTab.substr(4)]
+								&& this.BXIM.messenger.chat[this.BXIM.currentTab.substr(4)].type === 'lines';
+							if (isLines)
+							{
+								BX.MessengerCommon.hideLinesKeyboard();
+							}
+						}
+
 						this.updateStateVar(data);
 
 						return ;
@@ -7810,10 +7850,29 @@
 					{
 						continue;
 					}
-					if (this.BXIM.messenger.recentListIndex.indexOf(i.toString()) >= 0)
+
+					if (!contactListRedraw && this.BXIM.messenger.recentListIndex.indexOf(i.toString()) >= 0)
 					{
-						contactListRedraw = true;
+						var user = this.BXIM.messenger.users[i];
+						var updatedUser = params.users[i];
+
+						var oldIdle = user.idle ? user.idle.getTime() : 0;
+						var newIdle = updatedUser.idle ? new Date(updatedUser.idle).getTime() : 0;
+
+						var oldMobileLastDate = user.mobile_last_date ? user.mobile_last_date.getTime() : 0;
+						var newMobileLastDate =
+								updatedUser.mobile_last_date ? new Date(updatedUser.mobile_last_date).getTime() : 0;
+
+						if (
+							user.status !== updatedUser.status ||
+							oldIdle !== newIdle ||
+							oldMobileLastDate !== newMobileLastDate
+						)
+						{
+							contactListRedraw = true;
+						}
 					}
+
 					if (this.BXIM.messenger.currentTab.toString() == i.toString())
 					{
 						dialogStatusRedraw = true;
@@ -8678,7 +8737,7 @@
 			var elements = [];
 			if (isHistoryDialog)
 			{
-				elements = BX.findChildrenByClassName(this.BXIM.messenger.popupHistoryBodyWrap, "bx-messenger-history-item-text");
+				elements = BX.findChildrenByClassName(this.BXIM.messenger.popupHistoryBodyWrap, "bx-messenger-history-item");
 			}
 			else
 			{
@@ -10016,7 +10075,14 @@
 
 					if (line && line.queue_type == 'all')
 					{
-						BX.style(this.BXIM.messenger.popupMessengerTextareaOpenLinesSkip, 'display', 'none');
+						if (!BX.MessengerCommon.isSessionBlocked(chatId))
+						{
+							BX.style(this.BXIM.messenger.popupMessengerTextareaOpenLinesSkip, 'display', 'none');
+						}
+						else
+						{
+							BX.style(this.BXIM.messenger.popupMessengerTextareaOpenLinesSkip, 'display', 'inline-block');
+						}
 					}
 					else
 					{
@@ -10701,7 +10767,7 @@
 		}
 
 		var result = false;
-		if (this.BXIM.messenger.bot[this.BXIM.messenger.currentTab] && this.BXIM.messenger.bot[this.BXIM.messenger.currentTab].type != 'network')
+		if (this.BXIM.messenger.bot[this.BXIM.messenger.currentTab] && (this.BXIM.messenger.bot[this.BXIM.messenger.currentTab].type != 'network' && this.BXIM.messenger.bot[this.BXIM.messenger.currentTab].type != 'support24'))
 		{
 			return result;
 		}
@@ -11369,7 +11435,10 @@
 						else
 						{
 							var blockType = attach.GRID[i].DISPLAY;
-							if (!attach.GRID[i].NAME || !attach.GRID[i].VALUE)
+							if (
+								(blockType == 'row' || blockType == 'column')
+								&& (!attach.GRID[i].NAME || !attach.GRID[i].VALUE)
+							)
 							{
 								blockType = 'BLOCK';
 							}
@@ -12621,6 +12690,7 @@
 			{
 				var callTitle = BX.message('IM_PHONE_CALL_TRANSFER').replace('#PHONE#', params.callerId);
 				this.BXIM.webrtc.setCallOverlayTitle(callTitle);
+				this.BXIM.webrtc.phoneCallView.setPhoneNumber(params.callerId);
 				if (params.CRM)
 				{
 					this.BXIM.webrtc.phoneCrm = params.CRM;
@@ -13730,7 +13800,10 @@
 		}
 		else if (
 			!this.BXIM.messenger.bot[this.BXIM.messenger.currentTab]
-			|| this.BXIM.messenger.bot[this.BXIM.messenger.currentTab].type != 'network'
+			|| (
+				this.BXIM.messenger.bot[this.BXIM.messenger.currentTab].type != 'network'
+				&& this.BXIM.messenger.bot[this.BXIM.messenger.currentTab].type != 'support24'
+			)
 		)
 		{
 			return null;
@@ -13854,7 +13927,10 @@
 		}
 		else if (
 			!this.BXIM.messenger.bot[dialogId]
-			|| this.BXIM.messenger.bot[dialogId].type != 'network'
+			|| (
+				this.BXIM.messenger.bot[dialogId].type != 'network'
+				&& this.BXIM.messenger.bot[dialogId].type != 'support24'
+			)
 		)
 		{
 			return null;
@@ -14129,6 +14205,8 @@
 		session.id = typeof(sessionData[5]) != 'undefined'? parseInt(sessionData[5]): Math.round(new Date()/1000)+chatData.id;
 		session.dateCreate = typeof(sessionData[6]) != 'undefined' || sessionData[6] > 0? parseInt(sessionData[6]): session.id;
 		session.lineId = typeof(sessionData[7]) != 'undefined' && sessionData[7] > 0? parseInt(sessionData[7]) : source[1];
+		session.blockDate = typeof(sessionData[8]) != 'undefined' || sessionData[8] > 0? parseInt(sessionData[8]) : 0;
+		session.blockReason = typeof(sessionData[9]) != 'undefined'? sessionData[9].toUpperCase(): 'NONE';
 
 		session.crmLinkLead = '';
 		session.crmLead = 0;

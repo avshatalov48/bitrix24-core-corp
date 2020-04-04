@@ -27,6 +27,48 @@ abstract class Disk extends \Bitrix\Tasks\Integration
 	const MODULE_NAME = 'disk';
 
 	/**
+	 * Returns user folder id for uploaded files
+	 *
+	 * @param int $userId
+	 * @return Result
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	public static function getFolderForUploadedFiles($userId = 0): Result
+	{
+		$result = new Result();
+
+		if (!$userId)
+		{
+			$userId = User::getId();
+		}
+
+		if (!static::includeModule())
+		{
+			$result->addError('MODULE_NOT_INSTALLED', 'Disk not installed');
+			return $result;
+		}
+
+		$storage = Driver::getInstance()->getStorageByUserId($userId);
+		if (!$storage)
+		{
+			$result->addError('CANT_OBTAIN_STORAGE', 'Could not obtain storage');
+			return $result;
+		}
+
+		$folder = $storage->getFolderForUploadedFiles();
+		if (!$folder)
+		{
+			$result->addError('CANT_OBTAIN_FOLDER', 'Could not obtain folder');
+			return $result;
+		}
+
+		$result->setData(['FOLDER_ID' => $folder->getId()]);
+
+		return $result;
+	}
+
+	/**
 	 * Upload a new file into a disk folder. File must be uploaded to the tmp folder
 	 * and be accessible through $_FILES
 	 *

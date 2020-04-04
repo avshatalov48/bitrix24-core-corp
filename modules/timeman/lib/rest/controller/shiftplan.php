@@ -4,6 +4,7 @@ namespace Bitrix\Timeman\Rest\Controller;
 use Bitrix\Main\Engine\Controller;
 use Bitrix\Timeman\Form\Schedule\ShiftPlanForm;
 use Bitrix\Timeman\Helper\TimeHelper;
+use Bitrix\Timeman\Model\Schedule\ShiftPlan\ShiftPlanTable;
 use Bitrix\Timeman\Service\Schedule\Result\ShiftServiceResult;
 use Bitrix\Timeman\UseCase\Schedule\ShiftPlan as ShiftPlanHandler;
 
@@ -18,7 +19,8 @@ class ShiftPlan extends Controller
 			$result = (new ShiftPlanHandler\Create\Handler())->handle($shiftPlanForm);
 			if ($result->isSuccess())
 			{
-				return ['shiftPlan' => $this->makeResult($result)];
+				$res = ['shiftPlan' => $this->makeResult($result)];
+				return $res;
 			}
 			$this->addErrors($result->getErrors());
 			return [];
@@ -35,7 +37,8 @@ class ShiftPlan extends Controller
 			$result = (new ShiftPlanHandler\Delete\Handler())->handle($shiftPlanForm);
 			if ($result->isSuccess())
 			{
-				return ['shiftPlan' => $this->makeResult($result, $shiftPlanForm)];
+				$res = ['shiftPlan' => $this->makeResult($result, $deleted = true)];
+				return $res;
 			}
 			$this->addErrors($result->getErrors());
 			return [];
@@ -48,9 +51,13 @@ class ShiftPlan extends Controller
 	 * @param null $shiftPlanForm
 	 * @return array
 	 */
-	private function makeResult($shiftPlanResult, $shiftPlanForm = null)
+	private function makeResult($shiftPlanResult, $deleted = false)
 	{
 		$shiftPlan = $shiftPlanResult->getShiftPlan();
+		if (!$shiftPlan)
+		{
+			return [];
+		}
 		$shift = $shiftPlanResult->getShift();
 		$res = [];
 		if ($shiftPlan->getUserId())
@@ -58,50 +65,45 @@ class ShiftPlan extends Controller
 			$res = [
 				'userId' => (int)$shiftPlan->getUserId(),
 				'shiftId' => (int)$shiftPlan->getShiftId(),
-				'dateAssigned' => $shiftPlan->getDateAssigned(),
+				'dateAssigned' => $shiftPlan->getDateAssignedUtc()->format(ShiftPlanTable::DATE_FORMAT),
 			];
 		}
-		elseif ($shiftPlanForm)
-		{
-			/** @var ShiftPlanForm $shiftPlanForm */
-			$res = [
-				'userId' => (int)$shiftPlanForm->userId,
-				'shiftId' => (int)$shiftPlanForm->shiftId,
-				'dateAssigned' => $shiftPlanForm->getDateAssigned()->toString(),
-			];
-		}
-		if ($shift)
-		{
-			$res['shift'] = [
-				'id' => $shift->getId(),
-				'name' => $shift->getName(),
-				'breakDuration' => $shift->getBreakDuration(),
-				'workTimeStart' => $shift->getWorkTimeStart(),
-				'workTimeEnd' => $shift->getWorkTimeEnd(),
-				'formattedWorkTimeStart' => TimeHelper::getInstance()->convertSecondsToHoursMinutes($shift->getWorkTimeStart()),
-				'formattedWorkTimeEnd' => TimeHelper::getInstance()->convertSecondsToHoursMinutes($shift->getWorkTimeEnd()),
-				'scheduleId' => $shift->getScheduleId(),
-				'workDays' => $shift->getWorkDays(),
-			];
-		}
+		$res['shift'] = [
+			'id' => $shift->getId(),
+			'name' => $shift->getName(),
+			'breakDuration' => $shift->getBreakDuration(),
+			'workTimeStart' => $shift->getWorkTimeStart(),
+			'workTimeEnd' => $shift->getWorkTimeEnd(),
+			'formattedWorkTimeStart' => TimeHelper::getInstance()->convertSecondsToHoursMinutes($shift->getWorkTimeStart()),
+			'formattedWorkTimeEnd' => TimeHelper::getInstance()->convertSecondsToHoursMinutes($shift->getWorkTimeEnd()),
+			'scheduleId' => $shift->getScheduleId(),
+			'workDays' => $shift->getWorkDays(),
+		];
 		global $APPLICATION;
 		ob_start();
+		$start = $shiftPlan->buildShiftStartDateTimeUtc($shiftPlanResult->getShift());
+		$userId = $this->getCurrentUser()->getId();
+		if ($this->getRequest()->get('useEmployeesTimezone') === 'Y')
+		{
+			$userId = $shiftPlan->getUserId();
+		}
+		$start->setTimezone(TimeHelper::getInstance()->createTimezoneByOffset(
+			TimeHelper::getInstance()->getUserUtcOffset($userId))
+		);
+
 		$APPLICATION->IncludeComponent(
 			'bitrix:timeman.worktime.grid',
 			'.default',
 			[
-				'PARTIAL' => true,
 				'PARTIAL_ITEM' => 'shiftCell',
-				'DRAWING_DATE' => $shiftPlan['DATE_ASSIGNED'],
-				'SHOW_ADD_SHIFT_PLAN_BTN' => (bool)$shiftPlanForm,
+				'IS_SHIFTPLAN' => true,
+				'DRAWING_TIMESTAMP' => $start->getTimestamp(),
 				'INCLUDE_CSS' => false,
-				'IS_SHIFTED_SCHEDULE' => true,
-				'WORK_SHIFT' => $shift->collectValues(),
-				'SHIFT_PLAN' => $shiftPlan->collectValues(),
+				'SCHEDULE_ID' => $shift->getScheduleId(),
 				'USER_ID' => $shiftPlan->getUserId(),
 			]
 		);
-		$res['shiftCellHtml'] = ob_get_clean();
+		$res['cellHtml'] = ob_get_clean();
 
 		return $res;
 	}

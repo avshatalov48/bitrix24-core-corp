@@ -51,7 +51,7 @@ final class Result extends \Bitrix\Tasks\Util\Result
 				$data = $data->find($conditions);
 			}
 
-			if(count($data))
+			if ($data && count($data))
 			{
 				Item\Task::enterBatchState();
 				/** @var Impact $impact */

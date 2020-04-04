@@ -129,10 +129,6 @@ class SaleBsmSiteMaster extends \CBitrixComponent
 	private function getRequiredModules()
 	{
 		return [
-			"bitrix.eshop" => [
-				"version" => "18.5.0",
-				"name" => Loc::getMessage("SALE_BSM_MODULE_BITRIX_ESHOP_NAME"),
-			],
 			"main" => [
 				"version" => "20.0.0",
 				"name" => Loc::getMessage("SALE_BSM_MODULE_MAIN_NAME"),

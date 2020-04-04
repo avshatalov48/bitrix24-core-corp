@@ -34,8 +34,9 @@ class Network extends Base
 
 		$agentMode = isset($params['AGENT']) && $params['AGENT'] == 'Y';
 
-		if (self::getNetworkBotId($params['CODE']))
-			return $agentMode? "": self::getNetworkBotId($params['CODE']);
+		$botId = self::getNetworkBotId($params['CODE'], true);
+		if ($botId)
+			return $agentMode? "": $botId;
 
 		$avatarData = self::uploadAvatar($params['LINE_AVATAR']);
 
@@ -58,17 +59,6 @@ class Network extends Base
 
 		if ($botId)
 		{
-			self::setNetworkBotId($params['CODE'], $botId);
-
-			$avatarId = \Bitrix\Im\User::getInstance($botId)->getAvatarId();
-			if ($avatarId > 0)
-			{
-				\Bitrix\Im\Model\ExternalAvatarTable::add(Array(
-					'LINK_MD5' => md5($params['LINE_AVATAR']),
-					'AVATAR_ID' => $avatarId
-				));
-			}
-
 			$sendParams = Array('CODE' => $params['CODE'], 'BOT_ID' => $botId);
 			if (isset($params['OPTIONS']) && !empty($params['OPTIONS']))
 			{
@@ -81,6 +71,17 @@ class Network extends Base
 			{
 				self::unRegister($params['CODE'], false);
 				return false;
+			}
+
+			self::setNetworkBotId($params['CODE'], $botId);
+
+			$avatarId = \Bitrix\Im\User::getInstance($botId)->getAvatarId();
+			if ($avatarId > 0)
+			{
+				\Bitrix\Im\Model\ExternalAvatarTable::add(Array(
+					'LINK_MD5' => md5($params['LINE_AVATAR']),
+					'AVATAR_ID' => $avatarId
+				));
 			}
 
 			\Bitrix\Im\Command::register(Array(
@@ -99,41 +100,46 @@ class Network extends Base
 	public static function unRegister($code = '', $serverRequest = true)
 	{
 		if (!\Bitrix\Main\Loader::includeModule('im'))
+		{
 			return false;
-
-		if ($code == '')
-		{
-			$orm = \Bitrix\Im\Model\BotTable::getList(Array(
-				'filter' => Array(
-					'=CLASS' => __CLASS__
-				)
-			));
-			while ($row = $orm->fetch())
-			{
-				if ($row['CODE'])
-				{
-					self::unRegister($row['CODE'], $serverRequest);
-				}
-			}
-
-			return true;
 		}
 
-		$botId = self::getNetworkBotId($code);
+		if (!$code)
+		{
+			return false;
+		}
+
+		$botId = self::getNetworkBotId($code, true);
+		if (!$botId)
+		{
+			return false;
+		}
+
 		$result = \Bitrix\Im\Bot::unRegister(Array('BOT_ID' => $botId));
-		if ($result)
+		if (!$result)
 		{
-			self::setNetworkBotId($code, 0);
-			if ($serverRequest)
-			{
-				$http = new \Bitrix\ImBot\Http(self::BOT_CODE);
-				$result = $http->query(
-					'UnRegisterBot',
-					Array('CODE' => $code, 'BOT_ID' => $botId),
-					true
-				);
-			}
+			return $result;
 		}
+
+		self::setNetworkBotId($code, 0);
+
+		if ($serverRequest)
+		{
+			$result = self::sendUnregisterRequest($code, $botId);
+		}
+
+		return $result;
+	}
+
+	public static function sendUnregisterRequest($code, $botId)
+	{
+		$http = new \Bitrix\ImBot\Http(self::BOT_CODE);
+
+		$result = $http->query(
+			'UnRegisterBot',
+			Array('CODE' => $code, 'BOT_ID' => $botId),
+			true
+		);
 
 		return $result;
 	}
@@ -235,6 +241,7 @@ class Network extends Base
 		{
 			$chat = new \CIMChat($messageFields['BOT_ID']);
 			$chat->DeleteUser($messageFields['CHAT_ID'], $messageFields['BOT_ID']);
+			return false;
 		}
 
 		if ($messageFields['TO_USER_ID'] != $messageFields['BOT_ID'])
@@ -245,26 +252,6 @@ class Network extends Base
 		$bot = \Bitrix\Im\Bot::getCache($messageFields['BOT_ID']);
 		if (substr($bot['CODE'], 0, 7) != self::BOT_CODE)
 			return false;
-
-		$orm = \Bitrix\Main\UserTable::getById($messageFields['FROM_USER_ID']);
-		$user = $orm->fetch();
-
-		$avatarUrl = '';
-		if ($user['PERSONAL_PHOTO'])
-		{
-			$fileTmp = \CFile::ResizeImageGet(
-				$user['PERSONAL_PHOTO'],
-				array('width' => 300, 'height' => 300),
-				BX_RESIZE_IMAGE_EXACT,
-				false,
-				false,
-				true
-			);
-			if ($fileTmp['src'])
-			{
-				$avatarUrl = substr($fileTmp['src'], 0, 4) == 'http'? $fileTmp['src']: \Bitrix\ImBot\Http::getServerAddress().$fileTmp['src'];
-			}
-		}
 
 		$files = Array();
 		if (isset($messageFields['FILES']) && \Bitrix\Main\Loader::includeModule('disk'))
@@ -312,44 +299,6 @@ class Network extends Base
 		$messageFields['MESSAGE'] = preg_replace("/\\[CHAT=[0-9]+\\](.*?)\\[\\/CHAT\\]/", "\\1",  $messageFields['MESSAGE']);
 		$messageFields['MESSAGE'] = preg_replace("/\\[USER=[0-9]+\\](.*?)\\[\\/USER\\]/", "\\1",  $messageFields['MESSAGE']);
 
-		$portalTariff = 'box';
-		$userLevel = 'ADMIN';
-		$portalType = 'PRODUCTION';
-		$portalTariffName = '';
-		$demoStartTime = 0;
-		if (\Bitrix\Main\Loader::includeModule('bitrix24'))
-		{
-			$portalTariff = \CBitrix24::getLicenseType();
-			$portalTariffName = \CBitrix24::getLicenseName();
-
-			if ($portalTariff == 'demo')
-			{
-				$portalTariff = \CBitrix24::getLicenseType(\CBitrix24::LICENSE_TYPE_PREVIOUS);
-				$portalTariff = $portalTariff.'+demo';
-				$portalTariffName = \CBitrix24::getLicenseName("", \CBitrix24::LICENSE_TYPE_PREVIOUS);
-
-				$demoStartTime = intval(\COption::GetOptionInt("bitrix24", "DEMO_START"));
-			}
-
-			if (\CBitrix24::isIntegrator($messageFields['FROM_USER_ID']))
-			{
-				$userLevel = 'INTEGRATOR';
-			}
-			else if (\CBitrix24::IsPortalAdmin($messageFields['FROM_USER_ID']))
-			{
-				$userLevel = 'ADMIN';
-			}
-			else
-			{
-				$userLevel = 'USER';
-			}
-
-			if (\CBitrix24::isStage())
-			{
-				$portalType = 'STAGE';
-			}
-		}
-
 		$botMessageText = '';
 		$CIMHistory = new \CIMHistory();
 		if ($result = $CIMHistory->GetRelatedMessages($messageId, 1, 0, false, false))
@@ -370,43 +319,40 @@ class Network extends Base
 
 		\CIMMessageParam::Set($messageId, Array('SENDING' => 'Y', 'SENDING_TS' => time()));
 
-		$http = new \Bitrix\ImBot\Http(self::BOT_CODE);
-		$query = $http->query(
-			'clientMessageAdd',
-			Array(
-				'BOT_ID' => $messageFields['BOT_ID'],
-				'DIALOG_ID' => $messageFields['DIALOG_ID'],
-				'MESSAGE_ID' => $messageId,
-				'MESSAGE_TYPE' => $messageFields['MESSAGE_TYPE'],
-				'MESSAGE_TEXT' => $messageFields['MESSAGE'],
-				'FILES' => $files,
-				'USER' => Array(
-					'ID' => $user['ID'],
-					'NAME' => $user['NAME'],
-					'LAST_NAME' => $user['LAST_NAME'],
-					'PERSONAL_GENDER' => $user['PERSONAL_GENDER'],
-					'WORK_POSITION' =>  $user['WORK_POSITION'],
-					'EMAIL' => $user['EMAIL'],
-					'PERSONAL_PHOTO' => $avatarUrl,
-					'TARIFF' => $portalTariff,
-					'TARIFF_NAME' => $portalTariffName,
-					'TARIFF_LEVEL' => Support24::getSupportLevel(),
-					'GEO_DATA' => self::getUserGeoData(),
-					'REGISTER' => $portalTariff != 'box'? \COption::GetOptionInt('main', '~controller_date_create', time()): '',
-					'DEMO' => $demoStartTime,
-					'USER_LEVEL' => $userLevel,
-					'PORTAL_TYPE' => $portalType,
-				),
-			)
-		);
-		if (isset($query['error']))
+		$result = self::clientMessageSend([
+			'BOT_ID' => $messageFields['BOT_ID'],
+			'USER_ID' => $messageFields['DIALOG_ID'],
+			'MESSAGE' => [
+				'ID' => $messageId,
+				'TYPE' => $messageFields['MESSAGE_TYPE'],
+				'TEXT' => $messageFields['MESSAGE'],
+			],
+			'FILES' => $files,
+		]);
+		if (isset($result['error']))
 		{
-			self::$lastError = new \Bitrix\ImBot\Error(__METHOD__, $query->error->code, $query->error->msg);
+			self::$lastError = new \Bitrix\ImBot\Error(__METHOD__, $result['error']['code'], $result['error']['msg']);
 
-			$message = Loc::getMessage('IMBOT_NETWORK_ERROR_NOT_FOUND');
-			if (self::getError()->code == 'BOT_NOT_FOUND')
+			$message = '';
+
+			if (self::getError()->code == 'LINE_DISABLED')
 			{
-				$message = Loc::getMessage('IMBOT_NETWORK_ERROR_BOT_NOT_FOUND');
+				if (class_exists('Bitrix\ImBot\Bot\Support24'))
+				{
+					$message = \Bitrix\ImBot\Bot\Support24::replacePlaceholders(
+						\Bitrix\ImBot\Bot\Support24::getMessage('LINE_DISABLED'),
+						$messageFields['FROM_USER_ID']
+					);
+				}
+
+				if (empty($message))
+				{
+					$message = Loc::getMessage('IMBOT_NETWORK_ERROR_BOT_NOT_FOUND');
+				}
+			}
+			else
+			{
+				$message = Loc::getMessage('IMBOT_NETWORK_ERROR_NOT_FOUND');
 			}
 
 			\Bitrix\Im\Bot::addMessage(Array('BOT_ID' => $messageFields['BOT_ID']), Array(
@@ -420,6 +366,103 @@ class Network extends Base
 		\CIMMessageParam::SendPull($messageId, Array('IS_DELIVERED', 'SENDING', 'SENDING_TS'));
 
 		return true;
+	}
+
+	public static function clientMessageSend(array $fields)
+	{
+		$orm = \Bitrix\Main\UserTable::getById($fields['USER_ID']);
+		$user = $orm->fetch();
+
+		$avatarUrl = '';
+		if ($user['PERSONAL_PHOTO'])
+		{
+			$fileTmp = \CFile::ResizeImageGet(
+				$user['PERSONAL_PHOTO'],
+				array('width' => 300, 'height' => 300),
+				BX_RESIZE_IMAGE_EXACT,
+				false,
+				false,
+				true
+			);
+			if ($fileTmp['src'])
+			{
+				$avatarUrl = substr($fileTmp['src'], 0, 4) == 'http'? $fileTmp['src']: \Bitrix\ImBot\Http::getServerAddress().$fileTmp['src'];
+			}
+		}
+
+		$portalTariff = 'box';
+		$userLevel = 'ADMIN';
+		$portalType = 'PRODUCTION';
+		$portalTariffName = '';
+		$demoStartTime = 0;
+		if (\Bitrix\Main\Loader::includeModule('bitrix24'))
+		{
+			$portalTariff = \CBitrix24::getLicenseType();
+			$portalTariffName = \CBitrix24::getLicenseName();
+
+			if ($portalTariff == 'demo')
+			{
+				$portalTariff = \CBitrix24::getLicenseType(\CBitrix24::LICENSE_TYPE_PREVIOUS);
+				$portalTariff = $portalTariff.'+demo';
+				$portalTariffName = \CBitrix24::getLicenseName("", \CBitrix24::LICENSE_TYPE_PREVIOUS);
+
+				$demoStartTime = intval(\COption::GetOptionInt("bitrix24", "DEMO_START"));
+			}
+
+			if (\CBitrix24::isIntegrator($fields['USER_ID']))
+			{
+				$userLevel = 'INTEGRATOR';
+			}
+			else if (\CBitrix24::IsPortalAdmin($fields['USER_ID']))
+			{
+				$userLevel = 'ADMIN';
+			}
+			else
+			{
+				$userLevel = 'USER';
+			}
+
+			if (\CBitrix24::isStage())
+			{
+				$portalType = 'STAGE';
+			}
+		}
+
+		$messageId = (int)is_array($fields['MESSAGE'])? $fields['MESSAGE']['ID']: 0;
+		$messageText = (string)(is_array($fields['MESSAGE'])? $fields['MESSAGE']['TEXT']: $fields['MESSAGE']);
+
+		$http = new \Bitrix\ImBot\Http(self::BOT_CODE);
+		$result = $http->query(
+			'clientMessageAdd',
+			Array(
+				'BOT_ID' => $fields['BOT_ID'],
+				'DIALOG_ID' => $fields['USER_ID'],
+				'MESSAGE_ID' => $messageId,
+				'MESSAGE_TYPE' => IM_MESSAGE_PRIVATE,
+				'MESSAGE_TEXT' => $messageText,
+				'FILES' => $fields['FILES'],
+				'ATTACH' => $fields['ATTACH'],
+				'USER' => Array(
+					'ID' => $user['ID'],
+					'NAME' => $user['NAME'],
+					'LAST_NAME' => $user['LAST_NAME'],
+					'PERSONAL_GENDER' => $user['PERSONAL_GENDER'],
+					'WORK_POSITION' => $user['WORK_POSITION'],
+					'EMAIL' => $user['EMAIL'],
+					'PERSONAL_PHOTO' => \CHTTP::urnEncode($avatarUrl),
+					'TARIFF' => $portalTariff,
+					'TARIFF_NAME' => $portalTariffName,
+					'TARIFF_LEVEL' => Support24::getSupportLevel(),
+					'GEO_DATA' => self::getUserGeoData(),
+					'REGISTER' => $portalTariff != 'box'? \COption::GetOptionInt('main', '~controller_date_create', time()): '',
+					'DEMO' => $demoStartTime,
+					'USER_LEVEL' => $userLevel,
+					'PORTAL_TYPE' => $portalType,
+				),
+			)
+		);
+
+		return $result;
 	}
 
 	private static function clientMessageUpdate($messageId, $messageFields)
@@ -699,7 +742,7 @@ class Network extends Base
 			}
 			if (\Bitrix\Main\Loader::includeModule('im'))
 			{
-				$userAvatar = \Bitrix\Im\User::uploadAvatar($messageFields['USER']['PERSONAL_PHOTO']);
+				$userAvatar = \Bitrix\Im\User::uploadAvatar($messageFields['USER']['PERSONAL_PHOTO'], $messageFields['BOT_ID']);
 				if ($userAvatar)
 				{
 					$params['AVATAR'] = $userAvatar;
@@ -708,11 +751,19 @@ class Network extends Base
 		}
 
 		$needUpdateBotFields = true;
+		$needUpdateBotAvatar = true;
 
 		$bot = \Bitrix\Im\Bot::getCache($messageFields['BOT_ID']);
-		if ($bot['MODULE_ID'] && \Bitrix\Main\Loader::includeModule($bot['MODULE_ID']) && class_exists($bot["CLASS"]) && method_exists($bot["CLASS"], 'isNeedUpdateBotFieldsAfterNewMessage'))
+		if ($bot['MODULE_ID'] && \Bitrix\Main\Loader::includeModule($bot['MODULE_ID']) && class_exists($bot["CLASS"]))
 		{
-			$needUpdateBotFields = call_user_func_array(array($bot["CLASS"], 'isNeedUpdateBotFieldsAfterNewMessage'), Array());
+			if (method_exists($bot["CLASS"], 'isNeedUpdateBotFieldsAfterNewMessage'))
+			{
+				$needUpdateBotFields = call_user_func_array(array($bot["CLASS"], 'isNeedUpdateBotFieldsAfterNewMessage'), Array());
+			}
+			if (method_exists($bot["CLASS"], 'isNeedUpdateBotAvatarAfterNewMessage'))
+			{
+				$needUpdateBotAvatar = call_user_func_array(array($bot["CLASS"], 'isNeedUpdateBotAvatarAfterNewMessage'), Array());
+			}
 		}
 
 		if (!empty($messageFields['LINE']))
@@ -740,23 +791,18 @@ class Network extends Base
 				}
 			}
 
-			if (!empty($messageFields['LINE']['AVATAR']))
+			if ($needUpdateBotAvatar && !empty($messageFields['LINE']['AVATAR']))
 			{
-				$userAvatar = \Bitrix\Im\User::uploadAvatar($messageFields['LINE']['AVATAR']);
+				$userAvatar = \Bitrix\Im\User::uploadAvatar($messageFields['LINE']['AVATAR'], $messageFields['BOT_ID']);
 				if ($userAvatar && $botData->getAvatarId() != $userAvatar)
 				{
-					$updateFields['NAME'] = $messageFields['LINE']['NAME'];
-					$updateFields['AVATAR'] = $userAvatar;
-
 					$connection = \Bitrix\Main\Application::getConnection();
-					$connection->query("UPDATE b_user SET PERSONAL_PHOTO = ".intval($updateFields['AVATAR'])." WHERE ID = ".intval($messageFields['BOT_ID']));
+					$connection->query("UPDATE b_user SET PERSONAL_PHOTO = ".intval($userAvatar)." WHERE ID = ".intval($messageFields['BOT_ID']));
 				}
 			}
 
 			if (!empty($updateFields))
 			{
-				unset($updateFields['AVATAR']);
-
 				global $USER;
 				$USER->Update($messageFields['BOT_ID'], $updateFields);
 			}
@@ -974,6 +1020,10 @@ class Network extends Base
 			return false;
 
 		$botData = \Bitrix\Im\Bot::getCache($messageFields['TO_USER_ID']);
+
+		if ($botData['CLASS'] != __CLASS__)
+			return false;
+
 		self::unRegister($botData['APP_ID']);
 
 		return true;
@@ -1048,7 +1098,8 @@ class Network extends Base
 			return false;
 		}
 
-		if ($result = \Bitrix\ImBot\Bot\Network::getNetworkBotId($code))
+		$result = \Bitrix\ImBot\Bot\Network::getNetworkBotId($code, true);
+		if ($result)
 		{
 			return $result;
 		}
@@ -1282,10 +1333,34 @@ class Network extends Base
 		return true;
 	}
 
-	public static function getNetworkBotId($code)
+	public static function getNetworkBotId($code, $getFromDb = false)
 	{
 		if (!$code)
+		{
 			return false;
+		}
+
+		if ($getFromDb)
+		{
+			$row = \Bitrix\Im\Model\BotTable::getList(Array(
+				'filter' => Array(
+					'=TYPE' => 'N',
+					'=APP_ID' => $code
+				)
+			))->fetch();
+			if (!$row)
+			{
+				return 0;
+			}
+
+			$botId = \Bitrix\Main\Config\Option::get(self::MODULE_ID, self::BOT_CODE.'_'.$code."_bot_id", 0);
+			if ($botId !== $row['BOT_ID'])
+			{
+				\Bitrix\Main\Config\Option::set(self::MODULE_ID, self::BOT_CODE.'_'.$code."_bot_id", $row['BOT_ID']);
+			}
+
+			return $row['BOT_ID'];
+		}
 
 		return \Bitrix\Main\Config\Option::get(self::MODULE_ID, self::BOT_CODE.'_'.$code."_bot_id", 0);
 	}

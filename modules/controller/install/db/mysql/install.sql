@@ -22,8 +22,6 @@ CREATE TABLE b_controller_group
 	PRIMARY KEY pk_b_controller_group(ID)
 );
 
-INSERT INTO b_controller_group(ID, NAME, DATE_CREATE, CREATED_BY, MODIFIED_BY) VALUES(1, '(default)', now(), 1, 1);
-
 CREATE TABLE b_controller_member
 (
 	ID int(11) NOT NULL auto_increment,
@@ -90,7 +88,7 @@ CREATE TABLE b_controller_task
 	INDEX IX_contr_task_exec(DATE_EXECUTE),
 	UNIQUE INDEX UX_contr_task(CONTROLLER_MEMBER_ID, TASK_ID, DATE_EXECUTE, INIT_CRC, INDEX_SALT)
 );
-create index ix_b_controller_task_1 on b_controller_task(STATUS, ID);
+create index ix_b_controller_task_1 on b_controller_task(STATUS);
 
 CREATE TABLE b_controller_command
 (
@@ -138,6 +136,19 @@ CREATE TABLE b_controller_counter_group
 	CONTROLLER_COUNTER_ID int(11) NOT NULL,
 	UNIQUE INDEX ux_b_controller_counter_group_1(CONTROLLER_GROUP_ID, CONTROLLER_COUNTER_ID),
 	UNIQUE INDEX ux_b_controller_counter_group_2(CONTROLLER_COUNTER_ID, CONTROLLER_GROUP_ID)
+);
+
+CREATE TABLE b_controller_counter_history
+(
+	ID int(11) NOT NULL auto_increment,
+	COUNTER_ID int(11),
+	TIMESTAMP_X timestamp NOT NULL,
+	USER_ID int(11),
+	NAME varchar(255) NOT NULL,
+	COMMAND_FROM text NOT NULL,
+	COMMAND_TO text NOT NULL,
+	INDEX ix_counter_id(COUNTER_ID),
+	PRIMARY KEY pk_b_controller_counter_history (ID)
 );
 
 CREATE TABLE b_controller_counter_value

@@ -372,6 +372,29 @@ final class DateTime extends \Bitrix\Main\Type\DateTime
 		return $time->getTimezone();
 	}
 
+	/**
+	 * Returns DateTimeZone instance by offset in seconds or false if timezone was not found
+	 *
+	 * @param $offset
+	 * @return bool|\DateTimeZone
+	 */
+	public static function getTimeZoneByOffset($offset)
+	{
+		$abbreviations = timezone_abbreviations_list();
+		foreach ($abbreviations as $abbreviation)
+		{
+			foreach ($abbreviation as $city)
+			{
+				if ($city['offset'] === $offset)
+				{
+					return new \DateTimeZone($city['timezone_id']);
+				}
+			}
+		}
+
+		return false;
+	}
+
 	private static function disableTimeZone()
 	{
 		static::$timeZoneEnabled = \CTimeZone::Enabled();

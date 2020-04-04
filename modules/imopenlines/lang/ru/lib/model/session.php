@@ -46,4 +46,7 @@ $MESS["SESSION_ENTITY_TIME_DIALOG_FIELD"] = "Время диалога";
 $MESS["SESSION_ENTITY_DATE_LAST_MESSAGE_FIELD"] = "Дата последнего сообщения";
 $MESS["SESSION_ENTITY_DATE_FIRST_ANSWER_FIELD_NEW"] = "Дата ответа оператора";
 $MESS["SESSION_ENTITY_TIME_FIRST_ANSWER_FIELD_NEW"] = "Время ответа оператора";
+$MESS["SESSION_ENTITY_OPERATOR_FROM_CRM"] = "Оператором назначен ответственный из CRM";
+$MESS["SESSION_ENTITY_BLOCK_REASON"] = "Причина блокировки";
+$MESS["SESSION_ENTITY_BLOCK_DATE"] = "Дата блокировки";
 ?>

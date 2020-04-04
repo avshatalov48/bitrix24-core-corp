@@ -9,6 +9,7 @@
 use Bitrix\Main\UI;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
+use Bitrix\Socialnetwork\Integration\Calendar\ApiVersion;
 
 $APPLICATION->SetAdditionalCSS('/bitrix/components/bitrix/socialnetwork.log.ex/templates/.default/style.css');
 $APPLICATION->SetAdditionalCSS('/bitrix/components/bitrix/socialnetwork.blog.blog/templates/.default/style.css');
@@ -171,7 +172,7 @@ else
 		$arTabs[] = array(
 			"ID" => "calendar",
 			"NAME" => GetMessage("SBPE_CALENDAR_EVENT"),
-			"ONCLICK" => "BX.onCustomEvent('onCalendarLiveFeedShown');"
+			(ApiVersion::isEventEditFormAvailable() ? "ONCLICK_SLIDER" : "ONCLICK") => ApiVersion::getAddEventInLivefeedJs()
 		);
 	}
 
@@ -243,15 +244,26 @@ else
 				?><span><?=$arTab["NAME"]?></span><?
 			?></span><?
 			?><script>
-				BX.bind(BX('feed-add-post-form-tab-<?=$arTab["ID"]?>'), 'click', function() {
-					SBPEFullForm.getInstance().get({
-						callback: function() {
-							setTimeout(function() {
-								window.SBPETabs.changePostFormTab('<?=$arTab["ID"]?>');
-								<?=(isset($arTab["ONCLICK"]) ? $arTab["ONCLICK"] : "")?>
-							}, 10);
-						}
-					});
+				BX.bind(BX('feed-add-post-form-tab-<?=$arTab["ID"]?>'), 'click', function(e) {
+					<?
+					if (isset($arTab["ONCLICK_SLIDER"]))
+					{
+						?><?=$arTab["ONCLICK_SLIDER"]?><?
+					}
+					else
+					{
+						?>
+						SBPEFullForm.getInstance().get({
+							callback: function() {
+								setTimeout(function() {
+									window.SBPETabs.changePostFormTab('<?=$arTab["ID"]?>');
+									<?=(isset($arTab["ONCLICK"]) ? $arTab["ONCLICK"] : "")?>
+								}, 10);
+							}
+						});
+						<?
+					}
+					?>
 				});
 			</script><?
 		}
@@ -738,7 +750,7 @@ HTML;
 										"LAZYLOAD" => 'Y',
 										"LIST" => (is_array($arResult['arGratCurrentUsers']) ? $arResult['arGratCurrentUsers'] : array()),
 										"INPUT_NAME" => 'GRAT_DEST_CODES[]',
-										"USE_SYMBOLIC_ID" => "Y",
+										"USE_SYMBOLIC_ID" => true,
 										"BUTTON_SELECT_CAPTION" => Loc::getMessage("BLOG_GRATMEDAL_1"),
 										"BUTTON_SELECT_CAPTION_MORE" => Loc::getMessage("BLOG_GRATMEDAL_1"),
 										"API_VERSION" => 3,

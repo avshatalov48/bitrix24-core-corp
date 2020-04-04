@@ -1,8 +1,8 @@
 <?
 namespace Bitrix\Sale\Helpers;
 
-use Bitrix\Main\Loader;
 use Bitrix\Main\Config\Option;
+use Bitrix\Main\ORM;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\Update\Stepper;
 use Bitrix\Sale;
@@ -13,12 +13,13 @@ class ReservedProductCleaner extends Stepper
 
 	public function execute(array &$result)
 	{
-		if(!Loader::includeModule("sale"))
-			return false;
-
 		$className = get_class($this);
 		$option = Option::get("sale", $className, 0);
 		$result["steps"] = $option;
+
+		$registry = Sale\Registry::getInstance(Sale\Registry::REGISTRY_TYPE_ORDER);
+		/** @var Sale\Order $orderClass */
+		$orderClass = $registry->getOrderClassName();
 
 		$limit = 100;
 		$result["steps"] = isset($result["steps"]) ? $result["steps"] : 0;
@@ -58,7 +59,7 @@ class ReservedProductCleaner extends Stepper
 			while($data = $res->fetch())
 			{
 				/** @var Sale\Order $order */
-				$order = Sale\Order::load($data['ORDER_ID']);
+				$order = $orderClass::load($data['ORDER_ID']);
 				$orderSaved = false;
 				$errors = array();
 
@@ -113,6 +114,12 @@ class ReservedProductCleaner extends Stepper
 						));
 					}
 				}
+			}
+
+			// crutch for #120087
+			if (!is_object($USER) || $USER->GetID() <= 0)
+			{
+				ORM\Entity::destroy(Sale\Internals\OrderTable::getEntity());
 			}
 		}
 

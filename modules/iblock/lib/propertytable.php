@@ -68,6 +68,11 @@ class PropertyTable extends ORM\Data\DataManager
 		return 'b_iblock_property';
 	}
 
+	public static function getObjectClass()
+	{
+		return Property::class;
+	}
+
 	/**
 	 * Returns entity map definition.
 	 *

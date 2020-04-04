@@ -17,5 +17,5 @@ Advanced Tasks + Advanced CRM + Advanced Telephony and other additional features
 $MESS["TASKS_LIST_TRIAL_EXPIRED_TITLE_V2"] = "Available only in Bitrix24's Advanced Tasks";
 $MESS["TASKS_TITLE"] = "Tasks";
 $MESS["TASKS_TITLE_GROUP_TASKS"] = "Workgroup tasks";
-$MESS["TASKS_TITLE_MY"] = "My Tasks";
+$MESS["TASKS_TITLE_MY"] = "My tasks";
 ?>

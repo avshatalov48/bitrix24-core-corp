@@ -1,5 +1,7 @@
 <?
-use Bitrix\Main\Localization\Loc,
+use Bitrix\Main,
+	Bitrix\Main\ModuleManager,
+	Bitrix\Main\Localization\Loc,
 	Bitrix\Currency;
 
 Loc::loadMessages(__FILE__);
@@ -549,7 +551,10 @@ class CAllCurrencyLang
 
 	public static function GetFormatDescription($currency)
 	{
-		$boolAdminSection = (defined('ADMIN_SECTION') && ADMIN_SECTION === true);
+		$safeFormat = (
+			Main\Context::getCurrent()->getRequest()->isAdminSection()
+			|| ModuleManager::isModuleInstalled('bitrix24')
+		);
 		$currency = (string)$currency;
 
 		if (!isset(self::$arCurrencyFormat[$currency]))
@@ -579,7 +584,8 @@ class CAllCurrencyLang
 				{
 					$arCurFormat['FORMAT_STRING'] = self::$arDefaultValues['FORMAT_STRING'];
 				}
-				elseif ($boolAdminSection)
+
+				if ($safeFormat)
 				{
 					$arCurFormat["FORMAT_STRING"] = strip_tags(preg_replace(
 						'#<script[^>]*?>.*?</script[^>]*?>#is',

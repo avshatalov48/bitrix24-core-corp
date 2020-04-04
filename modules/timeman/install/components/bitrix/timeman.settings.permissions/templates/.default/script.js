@@ -14,6 +14,23 @@
 
 		this.saveBtn = this.selectOneByRole('tm-save-task-to-access-code-map');
 		BX.Access.Init({other: {disabled: true}});
+		if (window === window.top)
+		{
+			BX.SidePanel.Instance.bindAnchors({
+				rules: [
+					{
+						condition: [
+							new RegExp("/timeman/settings/permissions/($|\\?)", "i")
+						],
+						options: {
+							cacheable: false,
+							allowChangeHistory: false,
+							width: 1200
+						}
+					}
+				]
+			});
+		}
 
 		this.addEventHandlers();
 	};
@@ -25,7 +42,6 @@
 			BX.bind(this.saveBtn, 'click', BX.delegate(this.onSaveBtnClick, this));
 			BX.bind(this.addTaskAccessBtn, 'click', BX.delegate(this.onAddTaskAccessBtnClick, this));
 			BX.bindDelegate(this.container, 'click', {className: 'tm-delete-access'}, BX.proxy(this.onDeleteAccess, this));
-			BX.bindDelegate(this.container, 'click', {className: 'tm-edit-role'}, BX.proxy(this.onEditRole, this));
 			BX.bindDelegate(this.container, 'click', {className: 'tm-delete-role'}, BX.proxy(this.onDeleteRole, this));
 
 			BX.addCustomEvent('SidePanel.Slider:onMessage', BX.proxy(function (message)
@@ -40,7 +56,7 @@
 						template = this.replaceTemplateData(template, {
 							ID: task.id,
 							NAME: BX.util.htmlspecialchars(task.name),
-							EDIT_URL: this.getEditRoleUrl(task.id)
+							EDIT_URL: this.getEditTaskUrl(task.id)
 						});
 						var newElement = BX.create('tr', {html: template});
 						newElement.dataset.taskId = task.id;
@@ -62,9 +78,9 @@
 				}
 			}, this))
 		},
-		getEditRoleUrl: function (taskId)
+		getEditTaskUrl: function (taskId)
 		{
-			var addRoleUrl = this.rolesTableBody.querySelector('.tm-edit-role a').href;
+			var addRoleUrl = this.rolesTableBody.querySelector('.tm-edit-task a').href;
 			return BX.util.add_url_param(addRoleUrl, {taskId: taskId});
 		},
 		onDeleteRole: function (e)
@@ -151,19 +167,6 @@
 				]
 			});
 			popupWindow.show();
-		},
-		onEditRole: function (e)
-		{
-			e.preventDefault();
-			e.stopPropagation();
-			if (BX.SidePanel)
-			{
-				BX.SidePanel.Instance.open(e.target.href, {width: 1200, cacheable: false});
-			}
-			else
-			{
-				location.href = e.target.href;
-			}
 		},
 		onSaveBtnClick: function ()
 		{

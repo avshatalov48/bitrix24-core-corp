@@ -2,6 +2,7 @@
 namespace Bitrix\Timeman\Component\WorktimeGrid;
 require_once __DIR__ . '/ranges.php';
 require_once __DIR__ . '/normalizer.php';
+require_once __DIR__ . '/templateparams.php';
 
 use Bitrix\Main;
 use Bitrix\Main\Grid\Options;
@@ -10,12 +11,12 @@ use Bitrix\Main\UI\Filter\DateType;
 use Bitrix\Main\UI\Filter\Quarter;
 use Bitrix\Main\UI\PageNavigation;
 use Bitrix\Timeman;
+use Bitrix\Timeman\Helper\EntityCodesHelper;
 use Bitrix\Timeman\Helper\TimeHelper;
 use Bitrix\Timeman\Model\Schedule\Schedule;
 use Bitrix\Timeman\Model\Schedule\ScheduleTable;
 use Bitrix\Timeman\Model\Worktime\Record\WorktimeRecord;
 use Bitrix\Timeman\Service\DependencyManager;
-use Bitrix\Timeman\Service\Worktime\Violation\WorktimeViolation;
 use Bitrix\Timeman\Service\Worktime\Violation\WorktimeViolationManager;
 use Bitrix\Timeman\Service\Worktime\Violation\WorktimeViolationParams;
 
@@ -27,10 +28,8 @@ Loc::loadMessages(__FILE__);
 
 class Grid
 {
-	/** @var Timeman\Model\Schedule\Shift\EO_Shift_Collection $workShifts */
+	/** @var Timeman\Model\Schedule\Shift\ShiftCollection $workShifts */
 	protected $workShifts = [];
-	/** @var Timeman\Model\Schedule\EO_Schedule_Collection */
-	protected $schedules = [];
 	protected $pageNavigation;
 	protected $pageNumber;
 	protected $countRows;
@@ -51,13 +50,13 @@ class Grid
 	private $periodType;
 	private $periodPrev;
 	private $periodNext;
-	private $periodDates;
+	private $periodDatesFormatted;
 	private $options;
 	private $urlManager;
 	private $dateTimeFrom;
 	private $dateTimeTo;
-	private $currentUserId;
-	private $period = [];
+	/** @var Main\Type\Date[] */
+	private $periodDateTimes = [];
 	private $fromToDates = [];
 	private $currentUserDate;
 	private $weekStart = 1;
@@ -66,17 +65,25 @@ class Grid
 	 */
 	private $userViolationRulesMap = [];
 	private $timemanEnabledSettings = [];
+	private $dateTimeFormat;
+	/** @var Timeman\Model\User\User */
+	private $currentUser;
 
 	protected function __construct($id, $options = [])
 	{
 		$this->id = $id;
 		$this->options = $options;
-		$this->weekStart = $options['WEEK_START'];
-		$this->currentUserId = $this->options['CURRENT_USER_ID'];
-		$this->currentUserDate = TimeHelper::getInstance()->getUserDateTimeNow($this->currentUserId);
+		$this->currentUser = $options['currentUser'];
+		$this->weekStart = $options['weekStart'];
+		$this->dateTimeFormat = $options['dateTimeFormat'];
+		$this->currentUserDate = TimeHelper::getInstance()->getUserDateTimeNow($this->currentUser->getId());
 		if (!array_key_exists('FILTER_FIELDS_SHOW_ALL', $this->options))
 		{
 			$this->options['FILTER_FIELDS_SHOW_ALL'] = true;
+		}
+		if (!array_key_exists('FILTER_FIELDS_SCHEDULES', $this->options))
+		{
+			$this->options['FILTER_FIELDS_SCHEDULES'] = true;
 		}
 		if (!array_key_exists('FILTER_FIELDS_REPORT_APPROVED', $this->options))
 		{
@@ -84,17 +91,16 @@ class Grid
 		}
 		if (!array_key_exists('SHOW_USER_ABSENCES', $this->options))
 		{
-			$this->options['SHOW_USER_ABSENCES'] = false;
+			$this->options['SHOW_USER_ABSENCES'] = true;
+		}
+		if (!array_key_exists('FILTER_FIELDS_USERS', $this->options))
+		{
+			$this->options['FILTER_FIELDS_USERS'] = true;
 		}
 		$this->timeHelper = TimeHelper::getInstance();
 		$this->violationManager = DependencyManager::getInstance()->getViolationManager();
 		$this->urlManager = DependencyManager::getInstance()->getUrlManager();
 		$this->createPeriod();
-	}
-
-	public function setSchedules($schedules)
-	{
-		$this->schedules = $schedules;
 	}
 
 	public static function getInstance($gridId, $options = [])
@@ -103,51 +109,262 @@ class Grid
 	}
 
 	/**
-	 * @param mixed $dateTimeFrom
-	 * @return Grid
+	 * @param array $recordsByUserDate
+	 * @param Timeman\Model\Schedule\ScheduleCollection $scheduleCollection
+	 * @param array $shiftPlansByUserShiftDate
+	 * @param array $violationRulesMap
+	 * @param array $options
 	 */
-	public function setDateTimeFrom($dateTimeFrom)
+	public function fillRowsDataWithTemplateParams(&$departmentToUsers, Timeman\Model\User\UserCollection $usersCollection, $recordsByUserDate, $scheduleCollection, $shiftPlansByUserShiftDate, $violationRulesMap)
 	{
-		$this->dateTimeFrom = $dateTimeFrom;
-		$this->createPeriod(true);
-		return $this;
+		$this->userViolationRulesMap = $violationRulesMap;
+		$absenceData = [];
+		if ($this->options['SHOW_USER_ABSENCES'])
+		{
+			$userIds = [];
+			foreach ($departmentToUsers as $departmentData)
+			{
+				foreach ($departmentData['USERS'] as $user)
+				{
+					$userIds[$user['ID']] = true;
+				}
+			}
+			$absenceData = $this->findAbsenceData(array_keys($userIds));
+		}
+		foreach ($departmentToUsers as $dIndex => $departmentData)
+		{
+			$users = $departmentData['USERS'];
+			foreach ($users as $uIndex => $userData)
+			{
+				if (!$user = $usersCollection->getByPrimary($userData['ID']))
+				{
+					continue;
+				}
+				foreach ($this->periodDatesFormatted as $periodDateFormatted)
+				{
+					$cellRecords = [];
+					if (isset($recordsByUserDate[$user->getId()]) &&
+						isset($recordsByUserDate[$user->getId()][$periodDateFormatted]))
+					{
+						$cellRecords = $recordsByUserDate[$user->getId()][$periodDateFormatted];
+					}
+					$sortedTemplateParamsList = $this->buildTemplateParamsForDayCell(
+						$scheduleCollection,
+						$this->getPeriodDateTimes()[$periodDateFormatted],
+						$periodDateFormatted,
+						$cellRecords,
+						$shiftPlansByUserShiftDate,
+						$user,
+						$absenceData
+					);
+					$departmentToUsers[$dIndex]['USERS_DATA_BY_DATES'][$user->getId()][$periodDateFormatted] = $sortedTemplateParamsList;
+				}
+			}
+		}
 	}
 
 	/**
-	 * @param mixed $dateTimeTo
-	 * @return Grid
+	 * @param Timeman\Model\Schedule\ScheduleCollection $scheduleCollection
+	 * @param \DateTime|Main\Type\Date $drawingDate
+	 * @param $options
+	 * @param $cellRecords
+	 * @param $shiftPlansByUserShiftDate
+	 * @param $user
+	 * @param $recordsByUserDate
+	 * @return TemplateParams[]
 	 */
-	public function setDateTimeTo($dateTimeTo)
+	public function buildTemplateParamsForDayCell($scheduleCollection, $drawingDate, $periodDateFormatted,
+												  $cellRecords, $shiftPlansByUserShiftDate, $user, $absenceData)
 	{
-		$this->dateTimeTo = $dateTimeTo;
-		$this->createPeriod(true);
-		return $this;
+		/** @var TemplateParams[] $cellTemplateParamsList */
+		$cellTemplateParamsList = [];
+		foreach ($scheduleCollection->getAll() as $schedule)
+		{
+			if (!$schedule->isShifted() ||
+				($this->options['isShiftplan'] && $schedule->getId() !== $this->options['shiftplanScheduleId'])
+			)
+			{
+				continue;
+			}
+			// first iterate through shifts
+			foreach ($schedule->obtainShifts() as $shift)
+			{
+				$skipShift = $shift->isDeleted();
+				// draw "add shiftplan" btn OR record OR shiftplan for each shift
+				foreach ($cellRecords as $cellRecord)
+				{
+					/** @var WorktimeRecord $cellRecord */
+					if ($cellRecord->getShiftId() === $shift->getId())
+					{
+						// draw record for this shift
+						$skipShift = true;
+						$plan = $shiftPlansByUserShiftDate[$cellRecord->getUserId()][$shift->getId()][$periodDateFormatted];
+						$templateParams = new TemplateParams($user, $this->currentUser, $cellRecord, $schedule, $shift, $plan, $drawingDate, $this->options['isShiftplan']);
+						$this->addViolationsToTemplateParams($templateParams, $user, $absenceData);
+
+						$cellTemplateParamsList[] = $templateParams;
+					}
+				}
+				if ($skipShift)
+				{
+					continue;
+				}
+				//
+				$plan = $shiftPlansByUserShiftDate[$user['ID']][$shift->getId()][$periodDateFormatted];
+				if ($plan)
+				{
+					// draw shiftplan
+					$templateParams = new TemplateParams($user, $this->currentUser, null, $schedule, $shift, $plan, $drawingDate, $this->options['isShiftplan']);
+					$cellTemplateParamsList[] = $templateParams;
+				}
+				elseif ($this->options['showAddShiftPlanBtn'])
+				{
+					// draw btn to add shiftplan for this shift
+					$templateParams = new TemplateParams($user, $this->currentUser, null, $schedule, $shift, null, $drawingDate, $this->options['isShiftplan']);
+					$templateParams->showAddShiftPlanBtn = true;
+
+					$cellTemplateParamsList[] = $templateParams;
+				}
+			}
+		}
+
+		$skipRecordIds = [];
+		foreach ($cellTemplateParamsList as $cellTemplateParams)
+		{
+			if ($cellTemplateParams->record)
+			{
+				$skipRecordIds[] = $cellTemplateParams->record->getId();
+			}
+		}
+		// then iterate through records
+		foreach ($cellRecords as $record)
+		{
+			/** @var WorktimeRecord $record */
+			if (in_array($record->getId(), $skipRecordIds, true))
+			{
+				continue;
+			}
+			$schedule = $scheduleCollection->getByPrimary($record->getScheduleId());
+			$plan = $shiftPlansByUserShiftDate[$record->getUserId()][$record->getShiftId()][$periodDateFormatted];
+			$shift = null;
+			if ($schedule)
+			{
+				$shift = $schedule->obtainShiftByPrimary($record->getShiftId());
+			}
+			$templateParams = new TemplateParams($user, $this->currentUser, $record, $schedule, $shift, $plan, $drawingDate, $this->options['isShiftplan']);
+			$this->addViolationsToTemplateParams($templateParams, $user, $absenceData);
+			$cellTemplateParamsList[] = $templateParams;
+		}
+
+		// then absence data
+		if ($userAbsence = $this->buildAbsenceByUserDate($user, $periodDateFormatted, $absenceData))
+		{
+			$templateParams = new TemplateParams($user, $this->currentUser, null, null, null, null, $drawingDate, $this->options['isShiftplan']);
+			$templateParams->absence = $userAbsence;
+			$cellTemplateParamsList[] = $templateParams;
+		}
+
+		return $this->sortBlocksInsideCellByDate($cellTemplateParamsList, !$this->options['isShiftplan']);
+	}
+
+	/**
+	 * @param TemplateParams[] $cellTemplateParamsList
+	 */
+	private function sortBlocksInsideCellByDate($cellTemplateParamsList, $drawAbsenceOnTopOfRecord = false)
+	{
+		/** @var TemplateParams[] $result */
+		$result = [];
+		$uniqueKeys = [];
+		$absenceKey = null;
+		$hasRecord = false;
+		foreach ($cellTemplateParamsList as $templateParams)
+		{
+			$key = 0;
+			if ($templateParams->record)
+			{
+				$hasRecord = true;
+				$key = $templateParams->record->getRecordedStartTimestamp();
+			}
+			elseif ($templateParams->shift)
+			{
+				if ($templateParams->shiftPlan)
+				{
+					$key = $templateParams->shift->buildUtcStartByShiftplan($templateParams->shiftPlan)->getTimestamp();
+				}
+				else
+				{
+					$key = $templateParams->buildUtcShiftStart()->getTimestamp();
+				}
+			}
+			elseif ($templateParams->absence)
+			{
+				$absence = $templateParams->absence;
+				$key = 0;
+				while (in_array($key, $uniqueKeys, true))
+				{
+					$key = $key + 1;
+				}
+				$absenceKey = $key;
+			}
+			while (in_array($key, $uniqueKeys, true))
+			{
+				$key = $key + 1;
+			}
+			$uniqueKeys[] = $key;
+			$result[$key] = $templateParams;
+		}
+		ksort($result);
+		if ($drawAbsenceOnTopOfRecord)
+		{
+			foreach ($result as $templateParams)
+			{
+				if ($templateParams->shiftPlan)
+				{
+					$drawAbsenceOnTopOfRecord = false;
+					break;
+				}
+			}
+		}
+		if ($drawAbsenceOnTopOfRecord && $hasRecord && !empty($absence) && $absenceKey !== null)
+		{
+			foreach ($result as $templateParamsInner)
+			{
+				if ($templateParamsInner->record && !Schedule::isScheduleShifted($templateParamsInner->schedule))
+				{
+					$templateParamsInner->absence = $absence;
+					unset($result[$absenceKey]);
+					break;
+				}
+			}
+		}
+
+		return $result;
 	}
 
 	private function createPeriod($force = false)
 	{
-		if (!empty($this->period) && !$force)
+		if (!empty($this->periodDateTimes) && !$force)
 		{
 			return;
 		}
-		$this->period = [];
+		$this->periodDateTimes = [];
 		$range = Ranges::getPeriod($this->getDateTimeFrom(), $this->getDateTimeTo());
 		foreach ($range as $date)
 		{
-			$this->period[$date->format('d.m.Y')] = Main\Type\Date::createFromPhp($date);
+			$this->periodDateTimes[$date->format($this->dateTimeFormat)] = Main\Type\Date::createFromPhp($date);
 		}
 
-		$this->periodSize = sizeof($this->period);
-		$this->periodType = $this->getPeriodType($this->period);
-		$this->periodDates = array_keys($this->period);
+		$this->periodSize = sizeof($this->periodDateTimes);
+		$this->periodType = $this->getPeriodType($this->periodDateTimes);
+		$this->periodDatesFormatted = array_keys($this->periodDateTimes);
 
 		$this->periodPrev = array_map(function ($date) {
 			return Main\Type\Date::createFromTimestamp($date->getTimestamp());
-		}, $this->periodShift($this->period, $this->periodType, true));
+		}, $this->periodShift($this->periodDateTimes, $this->periodType, true));
 
 		$this->periodNext = array_map(function ($date) {
 			return Main\Type\Date::createFromTimestamp($date->getTimestamp());
-		}, $this->periodShift($this->period, $this->periodType, false));
+		}, $this->periodShift($this->periodDateTimes, $this->periodType, false));
 	}
 
 	public function getCurrentPeriodType()
@@ -157,9 +374,9 @@ class Grid
 		return $this->periodType;
 	}
 
-	public function getPeriod()
+	public function getPeriodDateTimes()
 	{
-		return $this->period;
+		return $this->periodDateTimes;
 	}
 
 	/**
@@ -210,38 +427,34 @@ class Grid
 				'REPORT_PERIOD_from' => $from->format(Main\Type\Date::getFormat()),
 				'REPORT_PERIOD_to' => $to->format(Main\Type\Date::getFormat()),
 			];
-			if (count($this->schedules) === 1)
+			if ($this->options['scheduleReportPeriod'])
 			{
-				foreach ($this->schedules as $schedule)
+				switch ($this->options['scheduleReportPeriod'])
 				{
-					switch ($schedule->getReportPeriod())
-					{
-						case ScheduleTable::REPORT_PERIOD_WEEK:
-							list($from, $to) = $this->calcDates(DateType::CURRENT_WEEK);
-							$fields = [
-								'REPORT_PERIOD_datesel' => DateType::CURRENT_WEEK,
-								'REPORT_PERIOD_from' => $from->format(Main\Type\Date::getFormat()),
-								'REPORT_PERIOD_to' => $to->format(Main\Type\Date::getFormat()),
-							];
-							break;
-						case ScheduleTable::REPORT_PERIOD_QUARTER:
-							list($from, $to) = $this->calcDates(DateType::CURRENT_QUARTER);
-							$fields = [
-								'REPORT_PERIOD_datesel' => DateType::CURRENT_QUARTER,
-								'REPORT_PERIOD_from' => $from->format(Main\Type\Date::getFormat()),
-								'REPORT_PERIOD_to' => $to->format(Main\Type\Date::getFormat()),
-							];
-							break;
-						default:
-							break;
-					}
-					break;
+					case ScheduleTable::REPORT_PERIOD_WEEK:
+						list($from, $to) = $this->calcDates(DateType::CURRENT_WEEK);
+						$fields = [
+							'REPORT_PERIOD_datesel' => DateType::CURRENT_WEEK,
+							'REPORT_PERIOD_from' => $from->format(Main\Type\Date::getFormat()),
+							'REPORT_PERIOD_to' => $to->format(Main\Type\Date::getFormat()),
+						];
+						break;
+					case ScheduleTable::REPORT_PERIOD_QUARTER:
+						list($from, $to) = $this->calcDates(DateType::CURRENT_QUARTER);
+						$fields = [
+							'REPORT_PERIOD_datesel' => DateType::CURRENT_QUARTER,
+							'REPORT_PERIOD_from' => $from->format(Main\Type\Date::getFormat()),
+							'REPORT_PERIOD_to' => $to->format(Main\Type\Date::getFormat()),
+						];
+						break;
+					default:
+						break;
 				}
 			}
 
 			$presets = [
 				'timeman_worktime_grid_filter_period' => [
-					'name' => Loc::getMessage('TM_REPORT_FILTER_PRESET_REPORT_PERIOD'),
+					'name' => Loc::getMessage('TM_WORKTIME_GRID_FILTER_PRESET_REPORT_PERIOD'),
 					'default' => true,
 					'fields' => $fields,
 				],
@@ -251,7 +464,7 @@ class Grid
 				'FIELDS' => [
 					[
 						'id' => 'REPORT_PERIOD',
-						'name' => Loc::getMessage('TM_REPORT_FILTER_PRESET_REPORT_PERIOD'),
+						'name' => Loc::getMessage('TM_WORKTIME_GRID_FILTER_PRESET_REPORT_PERIOD'),
 						'type' => 'date',
 						'required' => true,
 						'default' => true,
@@ -268,68 +481,93 @@ class Grid
 							DateType::NEXT_MONTH,
 						],
 					],
-					[
-						'id' => 'USERS',
-						'name' => Loc::getMessage('TM_GRID_HEADER_USERS_LABEL'),
+				],
+				'PRESETS' => $presets,
+			];
+			if ($this->options['hasAccessToOtherWorktime'])
+			{
+				if ($this->options['FILTER_FIELDS_USERS'])
+				{
+					$this->filter['FIELDS'][] = [
+						'id' => 'USERS_DEPARTMENTS',
+						'name' => Loc::getMessage('TM_GRID_HEADER_USERS_DEPARTMENTS_LABEL'),
 						'type' => 'dest_selector',
 						'default' => true,
 						'params' => [
 							'apiVersion' => '3',
-							'context' => $this->id . '_USERS',
+							'context' => $this->id . '_USERS_DEPARTMENTS',
 							'multiple' => 'Y',
-							'contextCode' => 'U',
-							'enableAll' => 'N',
-							'enableSonetgroups' => 'N',
-							'allowEmailInvitation' => 'N',
-							'departmentSelectDisable' => 'Y',
-						],
-					],
-					[
-						'id' => 'DEPARTMENTS',
-						'name' => Loc::getMessage('TM_GRID_FILTER_DEPARTMENTS_LABEL'),
-						'type' => 'dest_selector',
-						'default' => true,
-						'params' => [
-							'apiVersion' => '3',
-							'context' => $this->id . '_DEPARTMENTS',
-							'multiple' => 'N',
 							'contextCode' => 'U',
 							'enableAll' => 'N',
 							'departmentSelectDisable' => 'N',
 							'enableSonetgroups' => 'N',
-							'enableUsers' => 'N',
+							'enableUsers' => 'Y',
 							'allowEmailInvitation' => 'N',
 						],
-					],
-				],
-				'PRESETS' => $presets,
-			];
-			if ($this->options['FILTER_FIELDS_SHOW_ALL'])
-			{
-				$this->filter['FIELDS'][] = [
-					'id' => 'SHOW_ALL',
-					'name' => Loc::getMessage('TM_REPORT_FILTER_SHOW_ALL_LABEL'),
-					'type' => 'list',
-					'items' => [
-						'N' => Loc::getMessage('TM_REPORT_FILTER_SHOW_ALL_N'),
-						'Y' => Loc::getMessage('TM_REPORT_FILTER_SHOW_ALL_Y'),
-					],
-					'default' => true,
-				];
+					];
+				}
+				if ($this->options['FILTER_FIELDS_SHOW_ALL'])
+				{
+					$this->filter['FIELDS'][] = [
+						'id' => 'SHOW_ALL',
+						'name' => Loc::getMessage('TM_REPORT_FILTER_SHOW_ALL_LABEL'),
+						'type' => 'list',
+						'items' => [
+							'N' => Loc::getMessage('TM_REPORT_FILTER_SHOW_ALL_N'),
+							'Y' => Loc::getMessage('TM_REPORT_FILTER_SHOW_ALL_Y'),
+						],
+						'default' => true,
+					];
+				}
+				if ($this->options['FILTER_FIELDS_REPORT_APPROVED'])
+				{
+					$this->filter['FIELDS'][] = [
+						'id' => 'IS_REPORT_APPROVED',
+						'name' => Loc::getMessage('TM_REPORT_FILTER_IS_REPORT_APPROVED_LABEL'),
+						'type' => 'list',
+						'items' => [
+							'Y' => Loc::getMessage('TM_REPORT_FILTER_IS_REPORT_APPROVED_YES'),
+							'N' => Loc::getMessage('TM_REPORT_FILTER_IS_REPORT_APPROVED_NO'),
+						],
+						'default' => true,
+					];
+				}
+				if ($this->options['FILTER_FIELDS_SHIFTS_EXISTENCE'])
+				{
+					$this->filter['FIELDS'][] = [
+						'id' => 'SHIFTS_EXISTENCE',
+						'name' => Loc::getMessage('TM_REPORT_FILTER_SHOW_ALL_LABEL'),
+						'type' => 'list',
+						'items' => [
+							'N' => Loc::getMessage('TM_REPORT_FILTER_SHOW_ALL_Y'),
+							'Y' => Loc::getMessage('TM_REPORT_FILTER_SHIFTS_EXISTENCE_HAS_SHIFTS'),
+						],
+						'default' => true,
+					];
+				}
+				if ($this->options['FILTER_FIELDS_SCHEDULES'])
+				{
+					$schedules = DependencyManager::getInstance()
+						->getScheduleRepository()
+						->getActiveSchedulesQuery()
+						->addSelect('ID')
+						->addSelect('NAME')
+						->exec()
+						->fetchAll();
+					if (!empty($schedules))
+					{
+						$this->filter['FIELDS'][] = [
+							'id' => 'SCHEDULES',
+							'name' => Loc::getMessage('TM_REPORT_FILTER_SCHEDULES_LABEL'),
+							'params' => ['multiple' => 'Y'],
+							'type' => 'list',
+							'items' => array_combine(array_column($schedules, 'ID'), array_column($schedules, 'NAME')),
+							'default' => true,
+						];
+					}
+				}
 			}
-			if ($this->options['FILTER_FIELDS_REPORT_APPROVED'])
-			{
-				$this->filter['FIELDS'][] = [
-					'id' => 'IS_REPORT_APPROVED',
-					'name' => Loc::getMessage('TM_REPORT_FILTER_IS_REPORT_APPROVED_LABEL'),
-					'type' => 'list',
-					'items' => [
-						'Y' => Loc::getMessage('TM_REPORT_FILTER_IS_REPORT_APPROVED_YES'),
-						'N' => Loc::getMessage('TM_REPORT_FILTER_IS_REPORT_APPROVED_NO'),
-					],
-					'default' => true,
-				];
-			}
+
 			$options = new Main\UI\Filter\Options(
 				$this->filter['ID'],
 				$this->filter['PRESETS']
@@ -384,9 +622,9 @@ class Grid
 	public function getPeriodDates()
 	{
 		$res = [];
-		foreach ($this->periodDates as $date)
+		foreach ($this->periodDatesFormatted as $date)
 		{
-			$res[$date] = $this->getPeriod()[$date];
+			$res[$date] = $this->getPeriodDateTimes()[$date];
 		}
 		return $res;
 	}
@@ -405,7 +643,7 @@ class Grid
 				'class' => 'js-tm-fixed-columns',
 				'width' => 250,
 			];
-			if ($this->options['ENABLE_STATS_COLUMNS'] && $this->options['SHOW_STATS_COLUMNS'])
+			if ($this->options['SHOW_STATS_COLUMNS'])
 			{
 				$this->headers[] = [
 					'id' => 'WORKED_DAYS',
@@ -441,7 +679,6 @@ class Grid
 				$this->getGridOptions()->setStickedColumns($expectedStickedColumns);
 				$this->getGridOptions()->save();
 			}
-			$helper = new \Bitrix\Timeman\Helper\DateTimeHelper();
 			$headerDateFormat = Loc::getMessage('TIMEMAN_WORKTIME_GRID_COLUMNS_DATE_FORMAT_DAY_WEEK_DAY');
 			if (empty($headerDateFormat))
 			{
@@ -458,16 +695,17 @@ class Grid
 					}
 				}
 			}
-			$userNow = TimeHelper::getInstance()->getUserDateTimeNow($this->currentUserId);
-			$userNow = $userNow ? $userNow->format('Y-m-d') : '';
-			foreach ($this->periodDates as $date)
+			$userNow = TimeHelper::getInstance()->getUserDateTimeNow($this->currentUser->getId());
+			$userNow = $userNow ? $userNow->format($this->dateTimeFormat) : '';
+			foreach ($this->periodDatesFormatted as $date)
 			{
 				$item = [
 					'id' => $date,
-					'name' => $helper->formatDate($headerDateFormat, $this->getPeriod()[$date]),
+					'name' => $this->timeHelper->formatDateTime($this->getPeriodDateTimes()[$date], $headerDateFormat),
+					'date' => $this->getPeriodDateTimes()[$date],
 					'default' => true,
 				];
-				if ($this->getPeriod()[$date]->format('Y-m-d') == $userNow)
+				if ($this->getPeriodDateTimes()[$date]->format($this->dateTimeFormat) == $userNow)
 				{
 					$item['class'] .= ' js-tm-header-today timeman-grid-column-header-today';
 				}
@@ -478,62 +716,54 @@ class Grid
 		return $this->headers;
 	}
 
-	public function getWorktimeStatistics(&$gridData)
+	public function getWorktimeStatistics($departmentUsersData)
 	{
 		$statsResult = [];
-		foreach ($gridData as $userId => $rowData)
+		foreach ($departmentUsersData as $departmentData)
 		{
-			$statsResult[$userId]['TOTAL_NOT_APPROVED_WORKDAYS'] = 0;
-			$statsResult[$userId]['TOTAL_VIOLATIONS'] = [
-				'PERSONAL' => 0,
-				'COMMON' => 0,
-			];
-			$statsResult[$userId]['TOTAL_WORKDAYS'] = 0;
-
-			foreach ($rowData as $key => $cellData)
+			foreach ((array)$departmentData['USERS_DATA_BY_DATES'] as $userId => $rowData)
 			{
-				foreach ($cellData as $recordData)
+				$statsResult[$userId] = [
+					'TOTAL_WORKED_SECONDS' => 0,
+					'TOTAL_WORKDAYS' => 0,
+					'TOTAL_NOT_APPROVED_WORKDAYS' => 0,
+					'TOTAL_VIOLATIONS' => [
+						'PERSONAL' => 0,
+						'COMMON' => 0,
+					],
+				];
+				foreach ($rowData as $templateParamsList)
 				{
-					if (empty($recordData['WORKTIME_RECORD']))
+					foreach ((array)$templateParamsList as $templateParams)
 					{
-						continue;
-					}
-					$record = $recordData['WORKTIME_RECORD'];
-
-					$dayIsEnded = $record['RECORDED_STOP_TIMESTAMP'] > 0;
-					$dayIsApproved = $record['IS_APPROVED'];
-
-					if (!$dayIsApproved || (isset($record['EXPIRED']) && $record['EXPIRED'] === true))
-					{
-						$statsResult[$userId]['TOTAL_NOT_APPROVED_WORKDAYS']++;
-					}
-					else
-					{
-						$statsResult[$userId]['TOTAL_WORKDAYS']++;
-						$statsResult[$userId]['TOTAL_WORKED_SECONDS'] += $record['CALCULATED_DURATION'];
-					}
-					if ($dayIsEnded && $dayIsApproved)
-					{
-						$countedPersonalViolations = false;
-						$countedCommonViolations = false;
-						if (!empty($record['WARNINGS']) && $dayIsApproved)
+						/** @var TemplateParams $templateParams */
+						if (!$templateParams->record)
 						{
-							foreach ($record['WARNINGS'] as $warning)
+							continue;
+						}
+						$record = $templateParams->record;
+
+						$dayIsEnded = $record->getRecordedStopTimestamp() > 0;
+						$dayIsApproved = $record->isApproved();
+						$expired = $record->isExpired($templateParams->schedule, $templateParams->shift);
+						if (!$dayIsApproved || $expired)
+						{
+							$statsResult[$userId]['TOTAL_NOT_APPROVED_WORKDAYS']++;
+						}
+						else
+						{
+							$statsResult[$userId]['TOTAL_WORKDAYS']++;
+							$statsResult[$userId]['TOTAL_WORKED_SECONDS'] += $record->calculateCurrentDuration();
+						}
+						if ($dayIsEnded && $dayIsApproved)
+						{
+							if (!empty($templateParams->noticesIndividual))
 							{
-								if ($warning['type'] === 'personal' && !$countedPersonalViolations)
-								{
-									$countedPersonalViolations = true;
-									$statsResult[$userId]['TOTAL_VIOLATIONS']['PERSONAL']++;
-								}
-								if ($warning['type'] === 'common' && !$countedCommonViolations)
-								{
-									$countedCommonViolations = true;
-									$statsResult[$userId]['TOTAL_VIOLATIONS']['COMMON']++;
-								}
-								if ($countedPersonalViolations && $countedCommonViolations)
-								{
-									break;
-								}
+								$statsResult[$userId]['TOTAL_VIOLATIONS']['PERSONAL'] += 1;
+							}
+							if (!empty($templateParams->noticesCommon))
+							{
+								$statsResult[$userId]['TOTAL_VIOLATIONS']['COMMON'] += 1;
 							}
 						}
 					}
@@ -543,240 +773,67 @@ class Grid
 		return $statsResult;
 	}
 
-	/**
-	 * @return array
-	 */
-	public function getRowsData(&$users, &$gridData, $userViolationRulesMap, $options = [])
+	public function getDepartmentCodes()
 	{
-		$this->userViolationRulesMap = $userViolationRulesMap;
 		$result = [];
-		$drawnAbsences = [];
-		$midnight = TimeHelper::getInstance()->getUserDateTimeNow($this->currentUserId)->getTimestamp() - 1;
-		$absenceData = [];
-		if ($this->options['SHOW_USER_ABSENCES'])
+		if ($this->getFilter()['DATA'] && $this->getFilter()['DATA']['USERS_DEPARTMENTS']
+			&& !empty($this->getFilter()['DATA']['USERS_DEPARTMENTS']))
 		{
-			$absenceData = $this->prepareAbsenceData(array_keys($users));
-		}
-		foreach ($users as $user)
-		{
-			foreach ($this->periodDates as $periodDate)
+			foreach ($this->getFilter()['DATA']['USERS_DEPARTMENTS'] as $departmentCode)
 			{
-				$result[$user['ID']][$periodDate] = [];
-				$userCellAbsence = [];
-				if ($absenceData[$user['ID']])
+				if (EntityCodesHelper::isDepartment($departmentCode))
 				{
-					foreach ($absenceData[$user['ID']] as $absIndex => $absenceItem)
-					{
-						$absItem = [];
-						if ($absenceItem['tm_absStartFormatted'] == $periodDate && $absenceItem['tm_absEndFormatted'] == $periodDate)
-						{
-							$absItem['ABSENCE_PART'] = 'full';
-						}
-						elseif ($absenceItem['tm_absStartFormatted'] == $periodDate)
-						{
-							$absItem['ABSENCE_PART'] = 'start';
-						}
-						elseif ($absenceItem['tm_absEndFormatted'] == $periodDate)
-						{
-							$absItem['ABSENCE_PART'] = 'end';
-						}
-						else
-						{
-							if ($absenceItem['tm_absStartDateTime'] && $absenceItem['tm_absEndDateTime']
-								&& $absenceItem['tm_absStartDateTime']->getTimestamp() < $this->getPeriod()[$periodDate]->getTimestamp()
-								&& $absenceItem['tm_absEndDateTime']->getTimestamp() > $this->getPeriod()[$periodDate]->getTimestamp())
-							{
-								$absItem['ABSENCE_PART'] = 'middle';
-							}
-						}
-						if (!empty($absItem['ABSENCE_PART']))
-						{
-							$absItem['ABSENCE_HINT'] = $absenceItem['NAME'] . ' (' . $absenceItem['DATE_ACTIVE_FROM'] . ' - ' . $absenceItem['DATE_ACTIVE_TO'] . ')';
-							if (!isset($drawnAbsences[$absenceItem['ID']]))
-							{
-								$absItem['ABSENCE_TITLE'] = $absItem['ABSENCE_HINT'];
-							}
-							$absItem['ABSENCE'] = true;
-							$userCellAbsence = $absItem;
-							$drawnAbsences[$absenceItem['ID']] = true;
-						}
-					}
-				}
-
-				$drawnShiftIds = [];
-				# there are worked time records or shift plans
-				if (!empty($gridData[$user['ID']][$periodDate]))
-				{
-					foreach ($gridData[$user['ID']][$periodDate] as $recordPlanData)
-					{
-						$shift = null;
-						$schedule = null;
-						$record = $recordPlanData['record'];
-						$plan = $recordPlanData['plan'];
-						if ($plan)
-						{
-							$drawnShiftIds[] = (int)$plan['SHIFT_ID'];
-						}
-						if ($record)
-						{
-							if (!array_key_exists('CALCULATED_DURATION', $record))
-							{
-								$record['CALCULATED_DURATION'] = WorktimeRecord::wakeUp($record)->calculateCurrentDuration();
-							}
-							$shift = $this->getShiftById($record['SHIFT_ID']);
-							$schedule = $this->getScheduleById($record['SCHEDULE_ID']);
-							if (WorktimeRecord::isRecordExpired($record, $schedule, $shift))
-							{
-								$record['EXPIRED'] = true;
-							}
-							if ($schedule)
-							{
-								$violations = $this->buildViolations($record, $absenceData);
-								foreach ($violations as $violation)
-								{
-									$key = 'WARNINGS';
-									if (in_array($violation->type, [
-										WorktimeViolation::TYPE_EDITED_BREAK_LENGTH,
-										WorktimeViolation::TYPE_EDITED_START,
-										WorktimeViolation::TYPE_EDITED_ENDING,
-									], true))
-									{
-										$key = 'VIOLATIONS';
-									}
-									$postfix = $violation->violationRules->isForAllUsers() ? 'common' : 'personal';
-									$record[$key][$violation->type . $postfix] = ['text' => $this->buildViolationText($violation, $user['PERSONAL_GENDER']), 'type' => $postfix];
-								}
-							}
-
-							$record['RECORD_LINK'] = $this->urlManager->getUriTo('recordReport', ['RECORD_ID' => $record['ID']]);
-						}
-						if (!$shift)
-						{
-							$shift = $this->getShiftById($plan['SHIFT_ID']);
-						}
-						if (!$schedule)
-						{
-							$schedule = $this->getScheduleByShiftId($plan['SHIFT_ID']);
-						}
-						$record['IS_APPROVED'] = WorktimeRecord::isRecordApproved($record);
-						$resultCellData = [
-							'IS_SHIFTED_SCHEDULE' => Schedule::isScheduleShifted($schedule),
-							'WORKTIME_RECORD' => $record,
-							'SHIFT_PLAN' => $plan,
-							'WORK_SHIFT' => !empty($shift) ? $shift->collectValues() : [],
-							'USER_ID' => $user['ID'],
-							'DRAWING_DATE' => $this->getPeriod()[$periodDate],
-						];
-						if (!empty($userCellAbsence))
-						{
-							$resultCellData = array_merge($resultCellData, $userCellAbsence);
-							$userCellAbsence = [];
-						}
-						$result[$user['ID']][$periodDate][] = $resultCellData;
-					}
-				}
-				if (!empty($userCellAbsence))
-				{
-					$result[$user['ID']][$periodDate][] = $userCellAbsence;
-				}
-				if (!$user['SCHEDULE_ID'])
-				{
-					continue;
-				}
-				# no worked time records or shift plans
-				if ($options['SHOW_ADD_SHIFT_PLAN_BTN'] &&
-					Schedule::isScheduleShifted($this->getScheduleById($user['SCHEDULE_ID']))
-					&& $this->getPeriod()[$periodDate]->format('U') > $midnight)
-				{
-					foreach ($this->getScheduleById($user['SCHEDULE_ID'])->obtainShifts() as $shift)
-					{
-						if (in_array((int)$shift['ID'], $drawnShiftIds, true))
-						{
-							continue;
-						}
-						$result[$user['ID']][$periodDate][] = [
-							'IS_SHIFTED_SCHEDULE' => Schedule::isScheduleShifted($this->getScheduleById($user['SCHEDULE_ID'])),
-							'SHOW_ADD_SHIFT_PLAN_BTN' => true,
-							'WORK_SHIFT' => $shift->collectValues(),
-							'USER_ID' => $user['ID'],
-							'DRAWING_DATE' => $this->getPeriod()[$periodDate],
-						];
-					}
+					$result[] = $departmentCode;
 				}
 			}
 		}
-		$this->userViolationRulesMap = [];
 		return $result;
 	}
 
-	private function getScheduleByShiftId($shiftId = null)
+	public function showWithShiftPlansOnly()
 	{
-		foreach ($this->schedules as $schedule)
-		{
-			if ($shift = $schedule->obtainShiftByPrimary($shiftId))
-			{
-				return $schedule;
-			}
-		}
-		return null;
-	}
-
-	private function getScheduleById($id = null)
-	{
-		foreach ($this->schedules as $schedule)
-		{
-			if ((int)$schedule->getId() === (int)$id)
-			{
-				return $schedule;
-			}
-		}
-		return null;
-	}
-
-	public function getDepartmentId()
-	{
-		if ($this->getFilter()['DATA'] && $this->getFilter()['DATA']['DEPARTMENTS'])
-		{
-			if (preg_match('#DR[0-9]+#', $this->getFilter()['DATA']['DEPARTMENTS']) === 1)
-			{
-				return (int)substr($this->getFilter()['DATA']['DEPARTMENTS'], 2);
-			}
-		}
-		return null;
-	}
-
-	public function isDepartmentFilterApplied()
-	{
-		return $this->getFilter()['DATA'] && $this->getFilter()['DATA']['DEPARTMENTS'];
+		return $this->getFilter() && $this->getFilter()['DATA']
+			   && $this->getFilter()['DATA']['SHIFTS_EXISTENCE'] === 'Y';
 	}
 
 	public function isUserFilterApplied()
 	{
-		return $this->getFilter()['DATA'] && $this->getFilter()['DATA']['USERS'];
+		return !empty($this->getUserCodes());
 	}
 
-	public function getUserIds()
+	public function isDepartmentFilterApplied()
 	{
-		if ($this->getFilter()['DATA'] && $this->getFilter()['DATA']['USERS'])
+		return !empty($this->getDepartmentCodes());
+	}
+
+	public function getFilteredSchedulesIds()
+	{
+		if ($this->getFilter()['DATA'] && !empty($this->getFilter()['DATA']['SCHEDULES']))
 		{
-			$userIds = [];
-			if (!is_array($this->getFilter()['DATA']['USERS']))
-			{
-				if (preg_match('#U[0-9]+#', $this->getFilter()['DATA']['USERS']) === 1)
-				{
-					return [substr($this->getFilter()['DATA']['USERS'], 1)];
-				}
-			}
-			foreach ($this->getFilter()['DATA']['USERS'] as $userId)
-			{
-				if (preg_match('#U[0-9]+#', $userId) === 1)
-				{
-					$userIds[] = substr($userId, 1);
-				}
-			}
-			return array_map('intval', $userIds);
+			return array_map('intval', $this->getFilter()['DATA']['SCHEDULES']);
 		}
 		return [];
+	}
+
+	public function isSchedulesFilterApplied()
+	{
+		return !empty($this->getFilteredSchedulesIds());
+	}
+
+	public function getUserCodes()
+	{
+		$userCodes = [];
+		if ($this->getFilter()['DATA'] && $this->getFilter()['DATA']['USERS_DEPARTMENTS'])
+		{
+			foreach ($this->getFilter()['DATA']['USERS_DEPARTMENTS'] as $userCode)
+			{
+				if (EntityCodesHelper::isUser($userCode))
+				{
+					$userCodes[] = $userCode;
+				}
+			}
+		}
+		return $userCodes;
 	}
 
 	public function isShowUsersWithRecordsOnly()
@@ -819,100 +876,31 @@ class Grid
 	}
 
 	/**
-	 * @param Timeman\Service\Worktime\Violation\WorktimeViolation $violation
-	 * @return string
+	 * @param WorktimeRecord $record
+	 * @param Schedule $schedule
+	 * @param Timeman\Model\Schedule\Shift\Shift $shift
+	 * @param array $absenceData
+	 * @return array
 	 */
-	public function buildViolationText($violation, $userGender)
+	private function buildViolations($record, $schedule, $shift, $absenceData, $plan)
 	{
-		$text = '';
-		$formattedTime = $this->timeHelper->convertSecondsToHoursMinutesLocal($violation->violatedSeconds, false);
-		if (strncmp('-', $formattedTime, 1) === 0)
-		{
-			$formattedTime = substr($formattedTime, 1);
-		}
-		$editedText = Loc::getMessage('TM_WORKTIME_STATS_EDITED_MALE', ['#TIME#' => $formattedTime]);
-		if ($userGender === 'F')
-		{
-			$editedText = Loc::getMessage('TM_WORKTIME_STATS_EDITED_FEMALE', ['#TIME#' => $formattedTime]);
-		}
-		switch ($violation->type)
-		{
-			case WorktimeViolation::TYPE_EDITED_BREAK_LENGTH:
-				$text = Loc::getMessage('TM_WORKTIME_STATS_BREAK_TITLE');
-				$formattedTime = $editedText;
-				break;
-			case WorktimeViolation::TYPE_LATE_START:
-			case WorktimeViolation::TYPE_SHIFT_LATE_START:
-				$text = Loc::getMessage('TM_WORKTIME_STATS_START_TITLE');
-				$extraText = Loc::getMessage('TM_WORKTIME_STATS_START_LATE_MALE', ['#TIME#' => $formattedTime]);
-				if ($userGender === 'F')
-				{
-					$extraText = Loc::getMessage('TM_WORKTIME_STATS_START_LATE_FEMALE', ['#TIME#' => $formattedTime]);
-				}
-				$formattedTime = $extraText;
-				break;
-			case WorktimeViolation::TYPE_EDITED_START:
-				$text = Loc::getMessage('TM_WORKTIME_STATS_START_TITLE');
-				$formattedTime = $editedText;
-				break;
-			case WorktimeViolation::TYPE_EARLY_START:
-				$text = Loc::getMessage('TM_WORKTIME_STATS_START_TITLE');
-				$formattedTime = Loc::getMessage('TM_WORKTIME_STATS_EARLY', ['#TIME#' => $formattedTime]);
-				break;
-			case WorktimeViolation::TYPE_MIN_DAY_DURATION:
-				$text = Loc::getMessage('TM_WORKTIME_STATS_DURATION_VIOLATION');
-				$extraText = Loc::getMessage('TM_WORKTIME_STATS_DURATION_MALE', ['#TIME#' => $formattedTime]);
-				if ($userGender === 'F')
-				{
-					$extraText = Loc::getMessage('TM_WORKTIME_STATS_DURATION_FEMALE', ['#TIME#' => $formattedTime]);
-				}
-				$formattedTime = $extraText;
-				break;
-			case WorktimeViolation::TYPE_EARLY_ENDING:
-				$text = Loc::getMessage('TM_WORKTIME_STATS_STOP_TITLE');
-				$formattedTime = Loc::getMessage('TM_WORKTIME_STATS_EARLY', ['#TIME#' => $formattedTime]);
-				break;
-			case WorktimeViolation::TYPE_LATE_ENDING:
-				$text = Loc::getMessage('TM_WORKTIME_STATS_STOP_TITLE');
-				$formattedTime = Loc::getMessage('TM_WORKTIME_STATS_LATE', ['#TIME#' => $formattedTime]);
-				break;
-			case WorktimeViolation::TYPE_EDITED_ENDING:
-				$text = Loc::getMessage('TM_WORKTIME_STATS_STOP_TITLE');
-				$formattedTime = $editedText;
-				break;
-			default:
-				break;
-		}
-
-		return $text . ': '
-			   . $this->timeHelper->convertSecondsToHoursMinutesLocal($violation->recordedSeconds)
-			   . "<span class=\"tm-grid-worktime-popup-violation\">&nbsp;("
-			   . $formattedTime
-			   . ')</span>';
-	}
-
-	/**
-	 * @param array $record
-	 */
-	private function buildViolations(&$record, &$absenceData)
-	{
-		if (!$this->isTimemanEnabled($record['USER_ID']))
+		if (!$record || !$schedule || !$this->isTimemanEnabled($record->getUserId()))
 		{
 			return [];
 		}
 		$personal = $this->violationManager
 			->buildViolations((new WorktimeViolationParams())
-				->setCurrentUserId($this->currentUserId)
-				->setShift($this->getShiftById($record['SHIFT_ID']))
-				->setSchedule($schedule = $this->getScheduleById($record['SCHEDULE_ID']))
-				->setViolationRules($this->getViolationRulesByUser($record, $schedule))
+				->setShift($shift)
+				->setShiftPlan($plan)
+				->setSchedule($schedule)
+				->setViolationRules($this->getViolationRulesByUser($record))
 				->setRecord($record)
 				->setAbsenceData($absenceData));
 		$common = $this->violationManager
 			->buildViolations((new WorktimeViolationParams())
-				->setCurrentUserId($this->currentUserId)
-				->setShift($this->getShiftById($record['SHIFT_ID']))
-				->setSchedule($schedule = $this->getScheduleById($record['SCHEDULE_ID']))
+				->setShift($shift)
+				->setShiftPlan($plan)
+				->setSchedule($schedule)
 				->setViolationRules($schedule->obtainScheduleViolationRules())
 				->setRecord($record)
 				->setAbsenceData($absenceData));
@@ -924,7 +912,7 @@ class Grid
 	 * @param Schedule $schedule
 	 * @return array|Timeman\Model\Schedule\Violation\ViolationRules|null
 	 */
-	private function getViolationRulesByUser($record, $schedule)
+	private function getViolationRulesByUser($record)
 	{
 		if (!empty($this->userViolationRulesMap[$record['USER_ID']]))
 		{
@@ -972,18 +960,6 @@ class Grid
 				->initFromUri();
 		}
 		return $this->navigation;
-	}
-
-	private function getShiftById($shiftId)
-	{
-		foreach ($this->schedules as $schedule)
-		{
-			if ($shift = $schedule->obtainShiftByPrimary($shiftId))
-			{
-				return $shift;
-			}
-		}
-		return null;
 	}
 
 	/**
@@ -1168,7 +1144,7 @@ class Grid
 				$dateTimeFrom = TimeHelper::getInstance()->createUserDateTimeFromFormat(
 					'Y-m-d H:i:s',
 					$year . '-' . $month . '-1 00:00:00',
-					$this->currentUserId
+					$this->currentUser->getId()
 				);
 				$resultFromDate = $dateTimeFrom;
 				$dateTo = clone $dateTimeFrom;
@@ -1221,17 +1197,17 @@ class Grid
 					'U',
 					TimeHelper::getInstance()->getTimestampByUserDate(
 						$startSourceDate,
-						$this->currentUserId
+						$this->currentUser->getId()
 					),
-					$this->currentUserId
+					$this->currentUser->getId()
 				);
 				$resultToDate = TimeHelper::getInstance()->createUserDateTimeFromFormat(
 					'U',
 					TimeHelper::getInstance()->getTimestampByUserDate(
 						$endSourceDate,
-						$this->currentUserId
+						$this->currentUser->getId()
 					),
-					$this->currentUserId
+					$this->currentUser->getId()
 				);
 				break;
 			default:
@@ -1296,14 +1272,17 @@ class Grid
 		}
 	}
 
-	private function prepareAbsenceData($userIds)
+	public function findAbsenceData($userIds)
 	{
+		if (empty($userIds))
+		{
+			return [];
+		}
 		return DependencyManager::getInstance()
 			->getAbsenceRepository()
 			->findAbsences(
-				convertTimeStamp($this->getPeriod()[reset($this->periodDates)]->format('U'), 'FULL'),
-				convertTimeStamp($this->getPeriod()[end($this->periodDates)]->format('U'), 'FULL'),
-				$this->currentUserId,
+				convertTimeStamp($this->getPeriodDateTimes()[reset($this->periodDatesFormatted)]->format('U'), 'FULL'),
+				convertTimeStamp($this->getPeriodDateTimes()[end($this->periodDatesFormatted)]->format('U'), 'FULL'),
 				$userIds
 			);
 	}
@@ -1327,5 +1306,95 @@ class Grid
 		}
 
 		return $this->timemanEnabledSettings[$userId];
+	}
+
+	private function buildAbsenceByUserDate($user, $periodDateFormatted, &$absenceData)
+	{
+		static $drawnAbsences = [];
+		if ($drawnAbsences[$user['ID']] === null)
+		{
+			$drawnAbsences[$user['ID']] = [];
+		}
+		foreach ((array)$absenceData[$user['ID']] as $absIndex => $absenceItem)
+		{
+			$absItem = [];
+			/*-*/
+			if ($absenceItem['tm_absStartDateTime'] instanceof \DateTime && $absenceItem['tm_absStartFormatted'] === null)
+			{
+				$absenceData[$user['ID']][$absIndex]['tm_absStartFormatted'] = '';
+				$startDateTime = clone $absenceItem['tm_absStartDateTime'];
+				$startDateTime = TemplateParams::buildDateInShowingTimezone($startDateTime->getTimestamp(), $user['ID'], $this->currentUser->getId());
+				if ($startDateTime)
+				{
+					$absenceItem['tm_absStartFormatted'] = $startDateTime->format($this->dateTimeFormat);
+					$absenceData[$user['ID']][$absIndex]['tm_absStartFormatted'] = $absenceItem['tm_absStartFormatted'];
+				}
+			}
+			if ($absenceItem['tm_absEndDateTime'] instanceof \DateTime && $absenceItem['tm_absEndFormatted'] === null)
+			{
+				$absenceData[$user['ID']][$absIndex]['tm_absEndFormatted'] = '';
+				$endDateTime = clone $absenceItem['tm_absEndDateTime'];
+				$endDateTime = TemplateParams::buildDateInShowingTimezone($endDateTime->getTimestamp(), $user['ID'], $this->currentUser->getId());
+				if ($endDateTime)
+				{
+					$absenceItem['tm_absEndFormatted'] = $endDateTime->format($this->dateTimeFormat);
+					$absenceData[$user['ID']][$absIndex]['tm_absEndFormatted'] = $absenceItem['tm_absEndFormatted'];
+				}
+			}
+			if ($absenceItem['tm_absStartFormatted'] === $periodDateFormatted && $absenceItem['tm_absEndFormatted'] === $periodDateFormatted)
+			{
+				$absItem['ABSENCE_PART'] = 'full';
+			}
+			elseif ($absenceItem['tm_absStartFormatted'] === $periodDateFormatted)
+			{
+				$absItem['ABSENCE_PART'] = 'start';
+			}
+			elseif ($absenceItem['tm_absEndFormatted'] === $periodDateFormatted)
+			{
+				$absItem['ABSENCE_PART'] = 'end';
+			}
+			else
+			{
+				$periodDateTime = $this->getPeriodDateTimes()[$periodDateFormatted];
+				if ($absenceItem['tm_absStartDateTime'] && $absenceItem['tm_absEndDateTime'] && $periodDateTime
+					&& $absenceItem['tm_absStartDateTime']->getTimestamp() < $periodDateTime->getTimestamp()
+					&& $absenceItem['tm_absEndDateTime']->getTimestamp() > $periodDateTime->getTimestamp())
+				{
+					$absItem['ABSENCE_PART'] = 'middle';
+				}
+			}
+			if (!empty($absItem['ABSENCE_PART']))
+			{
+				$absItem['ABSENCE_HINT'] = $absenceItem['NAME'] . ' (' . $absenceItem['DATE_ACTIVE_FROM'] . ' - ' . $absenceItem['DATE_ACTIVE_TO'] . ')';
+				if (!isset($drawnAbsences[$user['ID']][$absenceItem['ID']]) && $this->options['drawAbsenceTitle'])
+				{
+					$absItem['ABSENCE_TITLE'] = $absItem['ABSENCE_HINT'];
+				}
+				$drawnAbsences[$user['ID']][$absenceItem['ID']] = true;
+
+				return $absItem;
+			}
+		}
+
+		return null;
+	}
+
+	/**
+	 * @param TemplateParams $templateParams
+	 * @param $recordUser
+	 * @param $absenceData
+	 */
+	public function addViolationsToTemplateParams($templateParams, $recordUser, &$absenceData)
+	{
+		if (!$templateParams->record)
+		{
+			return;
+		}
+		if ($absenceData === null)
+		{
+			$absenceData = $this->findAbsenceData([$recordUser['ID']]);
+		}
+		$violations = $this->buildViolations($templateParams->record, $templateParams->schedule, $templateParams->shift, $absenceData, $templateParams->shiftPlan);
+		$templateParams->setViolations($violations, $recordUser['PERSONAL_GENDER']);
 	}
 }

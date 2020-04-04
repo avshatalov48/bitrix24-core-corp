@@ -8,7 +8,7 @@
 							<p>1At vero eos et accusamus et iusto odio dignissimos ducimus qui blanditiis.</p>
 						</div>
 						<div class="landing-block-node-button-container">
-							<a class="landing-block-node-button js-animation animation-none btn btn-lg u-btn-inset mx-2" href="#">
+							<a class="landing-block-node-button js-animation animation-none btn btn-lg u-btn-inset mx-2 g-color-white" href="#">
 								Read more
 							</a>
 						</div>

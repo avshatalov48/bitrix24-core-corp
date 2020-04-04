@@ -86,6 +86,10 @@ class MessageMail implements Message\iBase, Message\iMailable
 		return array(Transport\Adapter::CODE_MAIL);
 	}
 
+	/**
+	 * Set configuration options
+	 * @return void
+	 */
 	protected function setConfigurationOptions()
 	{
 		if ($this->configuration->hasOptions())
@@ -100,6 +104,7 @@ class MessageMail implements Message\iBase, Message\iMailable
 				'name' => Loc::getMessage('SENDER_INTEGRATION_MAIL_MESSAGE_CONFIG_SUBJECT'),
 				'required' => true,
 				'value' => '',
+				'show_in_list' => true,
 				'hint' => array(
 					'menu' => array_map(
 						function ($item)
@@ -115,6 +120,19 @@ class MessageMail implements Message\iBase, Message\iMailable
 				),
 			),
 			array(
+				'type' => 'email',
+				'code' => 'EMAIL_FROM',
+				'name' => Loc::getMessage('SENDER_INTEGRATION_MAIL_MESSAGE_CONFIG_EMAIL_FROM'),
+				'required' => true,
+				'value' => '',
+				'show_in_list' => true,
+				'readonly_view' => function($value)
+				{
+					return (new Mail\Address())->set($value)->get();
+				},
+				//'group' => Message\ConfigurationOption::GROUP_ADDITIONAL,
+			),
+			array(
 				'type' => 'mail-editor',
 				'code' => 'MESSAGE',
 				'name' => Loc::getMessage('SENDER_INTEGRATION_MAIL_MESSAGE_CONFIG_MESSAGE'),
@@ -124,20 +142,13 @@ class MessageMail implements Message\iBase, Message\iMailable
 				'items' => array(),
 			),
 			array(
-				'type' => 'email',
-				'code' => 'EMAIL_FROM',
-				'name' => Loc::getMessage('SENDER_INTEGRATION_MAIL_MESSAGE_CONFIG_EMAIL_FROM'),
-				'required' => true,
-				'value' => '',
-				'group' => Message\ConfigurationOption::GROUP_ADDITIONAL,
-			),
-			array(
 				'type' => 'list',
 				'code' => 'PRIORITY',
 				'name' => Loc::getMessage('SENDER_INTEGRATION_MAIL_MESSAGE_CONFIG_PRIORITY'),
 				'required' => false,
 				'group' => Message\ConfigurationOption::GROUP_ADDITIONAL,
 				'value' => '',
+				'show_in_list' => true,
 				'items' => array(
 					array('code' => '', 'value' => '(' . Loc::getMessage('SENDER_INTEGRATION_MAIL_MESSAGE_NO') . ')'),
 					array('code' => '1 (Highest)', 'value' => Loc::getMessage('SENDER_INTEGRATION_MAIL_MESSAGE_CONFIG_PRIORITY_HIGHEST')),
@@ -153,6 +164,7 @@ class MessageMail implements Message\iBase, Message\iMailable
 				'required' => false,
 				'group' => Message\ConfigurationOption::GROUP_ADDITIONAL,
 				'value' => '',
+				'show_in_list' => true,
 				'items' => array(),
 			),
 			array(
@@ -337,6 +349,11 @@ class MessageMail implements Message\iBase, Message\iMailable
 			->copyConfiguration($id);
 	}
 
+	/**
+	 * Remove php code from html
+	 * @param string $html Input html.
+	 * @return string
+	 */
 	protected function removePhp($html)
 	{
 		static $isCloud = null;
@@ -422,6 +439,10 @@ class MessageMail implements Message\iBase, Message\iMailable
 		return $msg;
 	}
 
+	/**
+	 * Get template
+	 * @return array|null
+	 */
 	protected function getTemplate()
 	{
 		if (!$this->configuration->get('TEMPLATE_TYPE') || !$this->configuration->get('TEMPLATE_ID'))
@@ -436,6 +457,11 @@ class MessageMail implements Message\iBase, Message\iMailable
 			->get();
 	}
 
+	/**
+	 * Add option headers to headers
+	 * @param array $headers Headers.
+	 * @return array
+	 */
 	protected static function fillHeadersByOptionHeaders(array $headers = array())
 	{
 		static $headerList = null;

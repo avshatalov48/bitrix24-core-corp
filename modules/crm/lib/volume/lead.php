@@ -263,103 +263,103 @@ class Lead
 
 			$connection->queryExecute($sqlIns. $query->getQuery());
 
-			$entityList = self::getEntityList();
-			foreach ($entityList as $entityClass)
+			if ($this->collectEntityRowSize)
 			{
-				if ($entityClass == Crm\LeadTable::class)
+				$entityList = self::getEntityList();
+				foreach ($entityList as $entityClass)
 				{
-					continue;
-				}
-				/**
-				 * @var \Bitrix\Main\ORM\Data\DataManager $entityClass
-				 */
-				$entityEntity = $entityClass::getEntity();
-
-				if ($entityEntity->hasField('LEAD_ID'))
-				{
-					$fieldName = 'LEAD_ID';
-				}
-				elseif ($entityEntity->hasField('OWNER_ID'))
-				{
-					$fieldName = 'OWNER_ID';
-				}
-				else
-				{
-					continue;
-				}
-
-				$query = $this->prepareQuery();
-
-				if ($this->prepareFilter($query))
-				{
-					$reference = new ORM\Fields\Relations\Reference(
-						'RefEntity',
-						$entityClass,
-						array('this.ID' => 'ref.'.$fieldName),
-						array('join_type' => 'INNER')
-					);
-					$query->registerRuntimeField($reference);
-
-					$primary = $entityEntity->getPrimary();
-					if (is_array($primary) && !empty($primary))
+					if ($entityClass == Crm\LeadTable::class)
 					{
-						array_walk($primary, function (&$item)
+						continue;
+					}
+					/**
+					 * @var \Bitrix\Main\ORM\Data\DataManager $entityClass
+					 */
+					$entityEntity = $entityClass::getEntity();
+
+					if ($entityEntity->hasField('LEAD_ID'))
+					{
+						$fieldName = 'LEAD_ID';
+					}
+					elseif ($entityEntity->hasField('OWNER_ID'))
+					{
+						$fieldName = 'OWNER_ID';
+					}
+					else
+					{
+						continue;
+					}
+
+					$query = $this->prepareQuery();
+
+					if ($this->prepareFilter($query))
+					{
+						$reference = new ORM\Fields\Relations\Reference(
+							'RefEntity',
+							$entityClass,
+							array('this.ID' => 'ref.'.$fieldName),
+							array('join_type' => 'INNER')
+						);
+						$query->registerRuntimeField($reference);
+
+						$primary = $entityEntity->getPrimary();
+						if (is_array($primary) && !empty($primary))
 						{
-							$item = 'RefEntity.'.$item;
-						});
+							array_walk($primary, function (&$item) {
+								$item = 'RefEntity.'.$item;
+							});
+						}
+						elseif (!empty($primary))
+						{
+							$primary = array('RefEntity.'.$primary);
+						}
+
+						$query
+							//primary
+							//->setSelect($primary)
+							->registerRuntimeField(new ORM\Fields\ExpressionField('COUNT_REF', 'COUNT(*)'))
+							->addSelect('COUNT_REF')
+							->setGroup($primary)
+
+							//date
+							->addSelect('DATE_CREATE_SHORT')
+							->addGroup('DATE_CREATE_SHORT')
+
+							// STAGE_SEMANTIC_ID
+							->addSelect('STATUS_SEMANTIC_ID', 'STAGE_SEMANTIC_ID')
+							->addGroup('STAGE_SEMANTIC_ID');
+
+						$avgTableRowLength = (double)self::$tablesInformation[$entityClass::getTableName()]['AVG_SIZE'];
+
+						$query1 = new ORM\Query\Query($query);
+						$query1
+							->registerRuntimeField(new ORM\Fields\ExpressionField('INDICATOR_TYPE', '\''.static::getIndicatorId().'\''))
+							->addSelect('INDICATOR_TYPE')
+							->registerRuntimeField(new ORM\Fields\ExpressionField('OWNER_ID', '\''.$this->getOwner().'\''))
+							->addSelect('OWNER_ID')
+
+							//date
+							->addSelect('DATE_CREATE_SHORT')
+							->addGroup('DATE_CREATE_SHORT')
+
+							// STAGE_SEMANTIC_ID
+							->addSelect('STAGE_SEMANTIC_ID')
+							->addGroup('STAGE_SEMANTIC_ID')
+							->registerRuntimeField(new ORM\Fields\ExpressionField('REF_SIZE', 'SUM(COUNT_REF) * '.$avgTableRowLength))
+							->addSelect('REF_SIZE');
+
+
+						Crm\VolumeTmpTable::updateFromSelect(
+							$query1,
+							array('ENTITY_SIZE' => 'destination.ENTITY_SIZE + source.REF_SIZE'),
+							array(
+								'INDICATOR_TYPE' => 'INDICATOR_TYPE',
+								'OWNER_ID' => 'OWNER_ID',
+								'DATE_CREATE' => 'DATE_CREATE_SHORT',
+								'STAGE_SEMANTIC_ID' => 'STAGE_SEMANTIC_ID',
+							)
+						);
 					}
-					elseif (!empty($primary))
-					{
-						$primary = array('RefEntity.'.$primary);
-					}
-
-					$query
-						//primary
-						//->setSelect($primary)
-						->registerRuntimeField(new ORM\Fields\ExpressionField('COUNT_REF', 'COUNT(*)'))
-						->addSelect('COUNT_REF')
-						->setGroup($primary)
-
-						//date
-						->addSelect('DATE_CREATE_SHORT')
-						->addGroup('DATE_CREATE_SHORT')
-
-						// STAGE_SEMANTIC_ID
-						->addSelect('STATUS_SEMANTIC_ID', 'STAGE_SEMANTIC_ID')
-						->addGroup('STAGE_SEMANTIC_ID');
-
-					$avgTableRowLength = (double)self::$tablesInformation[$entityClass::getTableName()]['AVG_SIZE'];
-
-					$query1 = new ORM\Query\Query($query);
-					$query1
-						->registerRuntimeField(new ORM\Fields\ExpressionField('INDICATOR_TYPE', '\''.static::getIndicatorId().'\''))
-						->addSelect('INDICATOR_TYPE')
-
-						->registerRuntimeField(new ORM\Fields\ExpressionField('OWNER_ID', '\''.$this->getOwner().'\''))
-						->addSelect('OWNER_ID')
-
-						//date
-						->addSelect('DATE_CREATE_SHORT')
-						->addGroup('DATE_CREATE_SHORT')
-
-						// STAGE_SEMANTIC_ID
-						->addSelect('STAGE_SEMANTIC_ID')
-						->addGroup('STAGE_SEMANTIC_ID')
-
-						->registerRuntimeField(new ORM\Fields\ExpressionField('REF_SIZE', 'SUM(COUNT_REF) * '. $avgTableRowLength))
-						->addSelect('REF_SIZE');
-
-
-					Crm\VolumeTmpTable::updateFromSelect(
-						$query1,
-						array('ENTITY_SIZE' => 'destination.ENTITY_SIZE + source.REF_SIZE'),
-						array(
-							'INDICATOR_TYPE' => 'INDICATOR_TYPE',
-							'OWNER_ID' => 'OWNER_ID',
-							'DATE_CREATE' => 'DATE_CREATE_SHORT',
-							'STAGE_SEMANTIC_ID' => 'STAGE_SEMANTIC_ID',
-						)
-					);
 				}
 			}
 
@@ -678,7 +678,7 @@ class Lead
 	public function countActivity($additionActivityFilter = array())
 	{
 		$additionActivityFilter['=BINDINGS.OWNER_TYPE_ID'] = \CCrmOwnerType::Lead;
-		return parent::countActivity($additionActivityFilter);
+		return $this->countRelationActivity($additionActivityFilter);
 	}
 
 	/**
@@ -797,12 +797,11 @@ class Lead
 
 			$res = $query->exec();
 
-			$entity = new \CCrmEvent();
 			while ($event = $res->fetch())
 			{
 				$this->setProcessOffset($event['EVENT_ID']);
 
-				if ($entity->Delete($event['EVENT_ID'], array('CURRENT_USER' => $this->getOwner())) !== false)
+				if (Volume\Event::dropEvent($event['EVENT_ID'], $this->getOwner()))
 				{
 					$this->incrementDroppedEventCount();
 				}

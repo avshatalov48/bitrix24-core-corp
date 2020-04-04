@@ -337,3 +337,12 @@
 .adm-crm-site-sitestep-fields {
 	width: 60%;
 }
+
+.adm-crm-site-popup-documentation-link:hover,
+.adm-crm-site-popup-documentation-link {
+	display: inline-block;
+	text-decoration: none;
+	border-bottom: 1px dotted #1b70c7;
+	color: #1b70c7;
+	cursor: pointer;
+}

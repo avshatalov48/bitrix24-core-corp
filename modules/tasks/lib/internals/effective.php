@@ -111,6 +111,25 @@ class Effective
 	}
 
 	/**
+	 * Returns time of first added efficiency record or false if it doesn't exist.
+	 *
+	 * @return bool|\Bitrix\Main\Type\DateTime
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	public static function getFirstRecordTime()
+	{
+		$result = EffectiveTable::getList([
+			'select' => ['DATETIME'],
+			'order' => ['ID' => 'ASC'],
+			'limit' => 1,
+		]);
+
+		return (($date = $result->fetch()) ? $date['DATETIME'] : false);
+	}
+
+	/**
 	 * Returns dates of current month borders (current month is used as default for now)
 	 *
 	 * @return array
@@ -210,9 +229,7 @@ class Effective
 			->where('IS_VIOLATION', 'Y')
 			->where('DATETIME_REPAIR', null);
 
-		$result = $query->exec()->fetchAll();
-
-		return $result;
+		return $query->exec()->fetchAll();
 	}
 
 	/**
@@ -226,14 +243,17 @@ class Effective
 	 * @return bool
 	 * @throws \Exception
 	 */
-	public static function modify($userId, $userType, Task $task, $groupId = 0, $isViolation = null)
+	public static function modify($userId, $userType, Task $task, $groupId = 0, $isViolation = null): bool
 	{
+		$userId = (int)$userId;
+		$groupId = (int)$groupId;
+
 		$title = $task['TITLE'];
 		$deadline = $task['DEADLINE'];
-		$createdBy = $task['CREATED_BY'];
-		$responsibleId = $task['RESPONSIBLE_ID'];
+		$createdBy = (int)$task['CREATED_BY'];
+		$responsibleId = (int)$task['RESPONSIBLE_ID'];
 
-		if (!$userId || !$responsibleId || !$createdBy || ($userType == 'R' && $responsibleId == $createdBy))
+		if (!$userId || !$responsibleId || !$createdBy || ($userType === 'R' && $responsibleId === $createdBy))
 		{
 			return false;
 		}
@@ -247,7 +267,7 @@ class Effective
 			'DATETIME' => new DateTime(),
 			'USER_ID' => $userId,
 			'USER_TYPE' => $userType,
-			'GROUP_ID' => (int)$groupId,
+			'GROUP_ID' => $groupId,
 			'EFFECTIVE' => static::getEfficiencyForNow($userId, $groupId),
 			'TASK_ID' => $task->getId(),
 			'TASK_TITLE' => $title,

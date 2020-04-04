@@ -28,11 +28,6 @@ if ($section === 'TEMPLATES')
 }
 elseif ($section === 'EDIT_TASK')
 {
-	$APPLICATION->IncludeComponent(
-		'bitrix:ui.feedback.form',
-		'',
-		$arResult['DATA']['FEEDBACK_FORM_PARAMETERS']
-	);
 	?>
 	<button id="taskEditPopupMenuOptions" class="ui-btn ui-btn-light-border ui-btn-themes ui-btn-icon-setting"></button>
 	<?php
@@ -59,33 +54,27 @@ elseif ($section === 'EDIT_TASK')
 }
 elseif ($section === 'VIEW_TASK')
 {
-	$button = $arParams['ADD_BUTTON'];
-
-	$APPLICATION->IncludeComponent(
-		'bitrix:ui.feedback.form',
-		'',
-		$arResult['DATA']['FEEDBACK_FORM_PARAMETERS']
-	);
-	?>
-
-	<?php
 	// получить список встроенных приложений
-	if(\Bitrix\Main\Loader::includeModule('rest'))
+	if (\Bitrix\Main\Loader::includeModule('rest'))
 	{
-		?><div class="task-top-panel-restapp"><?php
-		$restPlacementHandlerList = \Bitrix\Rest\PlacementTable::getHandlersList(\CTaskRestService::PLACEMENT_TASK_VIEW_TOP_PANEL);
+		?>
+		<div class="task-top-panel-restapp">
+			<?php
+			$restPlacementHandlerList = \Bitrix\Rest\PlacementTable::getHandlersList(\CTaskRestService::PLACEMENT_TASK_VIEW_TOP_PANEL);
+			\CJSCore::Init('applayout');
 
-		\CJSCore::Init('applayout');
-		foreach($restPlacementHandlerList as $app):?>
-			<div class="task-top-panel-restapp-<?=$app['APP_ID']?>">
-				<a href="javascript:;" onclick="BX.rest.AppLayout.openApplication(<?=$app['APP_ID']?>, {},{PLACEMENT: '<?=\CTaskRestService::PLACEMENT_TASK_VIEW_TOP_PANEL?>',PLACEMENT_ID:  '<?=$app['ID']?>'});">
-					<?=trim($app['TITLE']) ? $app['TITLE'] : $app['APP_NAME']?>
-				</a>
-			</div>
-		<?php endforeach;
-		?></div><?php
+			foreach ($restPlacementHandlerList as $app):?>
+				<div class="task-top-panel-restapp-<?=$app['APP_ID']?>">
+					<a href="#" onclick="BX.rest.AppLayout.openApplication(<?=$app['APP_ID']?>, {}, {PLACEMENT: '<?=\CTaskRestService::PLACEMENT_TASK_VIEW_TOP_PANEL?>', PLACEMENT_ID: '<?=$app['ID']?>'});">
+						<?=(trim($app['TITLE']) ? $app['TITLE'] : $app['APP_NAME'])?>
+					</a>
+				</div>
+			<?php endforeach?>
+		</div>
+		<?php
 	}
 
+	$button = $arParams['ADD_BUTTON'];
 	?>
 	<button id="taskViewPopupMenuOptions" class="ui-btn ui-btn-light-border ui-btn-themes ui-btn-icon-setting"></button>
 	<span class="ui-btn-double ui-btn-primary">
@@ -100,8 +89,7 @@ elseif ($section === 'VIEW_TASK')
 <?php $this->EndViewTarget(); ?>
 
 <script type="text/javascript">
-	BX.ready(function()
-	{
+	BX.ready(function() {
 		BX.message({
 			"POPUP_MENU_CHECKLIST_SECTION": '<?=GetMessageJs('TASKS_INTERFACE_FILTER_BUTTONS_POPUP_MENU_CHECKLIST_SECTION')?>',
 			"POPUP_MENU_SHOW_COMPLETED": '<?=GetMessageJS('TASKS_INTERFACE_FILTER_BUTTONS_POPUP_MENU_SHOW_COMPLETED')?>',
@@ -109,8 +97,8 @@ elseif ($section === 'VIEW_TASK')
 		});
 
 		new BX.Tasks.InterfaceFilterButtons(<?=Json::encode([
-			'section' => $arParams['SECTION'],
-			'checklistShowCompleted' => $arResult['CHECKLIST_OPTION_SHOW_COMPLETED'],
+			'section' => $section,
+			'checklistShowCompleted' => $arResult['DATA']['CHECKLIST_OPTION_SHOW_COMPLETED'],
 		])?>);
 	});
 </script>

@@ -160,12 +160,13 @@
 
 				if (BX.type.isNotEmptyString(data.html))
 				{
-					this.wrapperNode.appendChild(BX.create('DIV', {
+					var contNode = BX.create('DIV', {
 						props: {
 							className: 'intranet-user-profile-about'
-						},
-						html: data.html
-					}));
+						}
+					});
+					this.wrapperNode.appendChild(contNode);
+					BX.html(contNode, data.html);
 				}
 
 				if (BX.type.isNotEmptyObject(postData.UF_RENDERED))

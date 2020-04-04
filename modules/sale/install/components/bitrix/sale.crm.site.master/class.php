@@ -70,12 +70,6 @@ class SaleCrmSiteMaster extends \CBitrixComponent
 	 */
 	public function onPrepareComponentParams($arParams)
 	{
-		$this->defaultStep = $this->getDefaultSteps();
-		$this->requiredStep = $this->getRequiredSteps();
-
-		$this->moduleChecker = new Tools\ModuleChecker();
-		$this->moduleChecker->setRequiredModules($this->getRequiredModules());
-
 		$this->arResult = [
 			"CONTENT" => "",
 			"WIZARD_STEPS" => [],
@@ -86,13 +80,19 @@ class SaleCrmSiteMaster extends \CBitrixComponent
 			],
 		];
 
+		$this->defaultStep = $this->getDefaultSteps();
+		$this->requiredStep = $this->getRequiredSteps();
+
+		$this->moduleChecker = new Tools\ModuleChecker();
+		$this->moduleChecker->setRequiredModules($this->getRequiredModules());
+
 		return $arParams;
 	}
 
 	/**
 	 * @return array
 	 */
-	private function getDefaultSteps()
+	private function getDefaultSteps(): array
 	{
 		$defaultStep = [
 			"Bitrix\Sale\CrmSiteMaster\Steps\WelcomeStep" => [
@@ -111,12 +111,31 @@ class SaleCrmSiteMaster extends \CBitrixComponent
 
 		if (Bitrix\Main\ModuleManager::isModuleInstalled("intranet"))
 		{
-			$defaultStep["Bitrix\Sale\CrmSiteMaster\Steps\DataInstallStep"]["SORT"] = 600;
+			if ($this->isIntranetWizard())
+			{
+				$defaultStep["Bitrix\Sale\CrmSiteMaster\Steps\DataInstallStep"]["SORT"] = 600;
+			}
+			else
+			{
+				$this->addError(Loc::getMessage("SALE_CSM_INTRANET_PORTAL_WIZARD_ERROR"), self::ERROR_TYPE_COMPONENT);
+			}
+
 			$defaultStep["Bitrix\Sale\CrmSiteMaster\Steps\CrmGroupStep"]["SORT"] = 700;
 			$defaultStep["Bitrix\Sale\CrmSiteMaster\Steps\FinishStep"]["SORT"] = 800;
 		}
 
 		return $defaultStep;
+	}
+
+	/**
+	 * @return bool
+	 */
+	private function isIntranetWizard(): bool
+	{
+		return (
+			Main\IO\File::isFileExists($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/intranet/install/wizards/bitrix/portal/wizard.php")
+			|| Main\IO\File::isFileExists($_SERVER["DOCUMENT_ROOT"]."/bitrix/wizards/bitrix/portal/wizard.php")
+		);
 	}
 
 	/**
@@ -167,6 +186,10 @@ class SaleCrmSiteMaster extends \CBitrixComponent
 				"name" => Loc::getMessage("SALE_CSM_MODULE_INTRANET_NAME"),
 				"version" => "19.0.600"
 			],
+			"calendar" => [
+				"name" => Loc::getMessage("SALE_CSM_MODULE_CALENDAR_NAME"),
+				"version" => ""
+			],
 			"crm" => [
 				"name" => Loc::getMessage("SALE_CSM_MODULE_CRM_NAME"),
 				"version" => "19.0.300"
@@ -179,17 +202,9 @@ class SaleCrmSiteMaster extends \CBitrixComponent
 				"name" => Loc::getMessage("SALE_CSM_MODULE_DISK_NAME"),
 				"version" => ""
 			],
-			"calendar" => [
-				"name" => Loc::getMessage("SALE_CSM_MODULE_CALENDAR_NAME"),
-				"version" => ""
-			],
 			"im" => [
 				"name" => Loc::getMessage("SALE_CSM_MODULE_IM_NAME"),
 				"version" => "16.5.0"
-			],
-			"webdav" => [
-				"name" => Loc::getMessage("SALE_CSM_MODULE_WEBDAV_NAME"),
-				"version" => ""
 			],
 			"dav" => [
 				"name" => Loc::getMessage("SALE_CSM_MODULE_DAV_NAME"),
@@ -225,6 +240,14 @@ class SaleCrmSiteMaster extends \CBitrixComponent
 			],
 			"landing" => [
 				"name" => Loc::getMessage("SALE_CSM_MODULE_LANDING_NAME"),
+				"version" => ""
+			],
+			"bizproc" => [
+				"name" => Loc::getMessage("SALE_CSM_MODULE_BIZPROC_NAME"),
+				"version" => ""
+			],
+			"bizprocdesigner" => [
+				"name" => Loc::getMessage("SALE_CSM_MODULE_BIZPROCDESIGNER_NAME"),
 				"version" => ""
 			],
 		];
@@ -622,7 +645,7 @@ class SaleCrmSiteMaster extends \CBitrixComponent
 	 * @throws Main\ArgumentNullException
 	 * @throws Main\ArgumentOutOfRangeException
 	 */
-	public static function isSaleCrmSiteMasterFinish()
+	public function isSaleCrmSiteMasterFinish()
 	{
 		return (Option::get("sale", self::IS_SALE_CRM_SITE_MASTER_FINISH, "N") === "Y");
 	}
@@ -837,13 +860,19 @@ class SaleCrmSiteMaster extends \CBitrixComponent
 
 		$this->setMasterOpenOption();
 
+		if ($this->request->get("update-order"))
+		{
+			CrmEntityCreatorStepper::registerOrderUpdateEventHandler();
+			LocalRedirect($APPLICATION->GetCurPageParam("", ["update-order"]));
+		}
+
 		if ($errors = $this->getErrors(self::ERROR_TYPE_COMPONENT))
 		{
 			ShowError(implode("<br>", $errors));
 			return;
 		}
 
-		if (self::isSaleCrmSiteMasterFinish()
+		if ($this->isSaleCrmSiteMasterFinish()
 			|| CrmEntityCreatorStepper::isAgent()
 			|| CrmEntityCreatorStepper::isFinished()
 		)
@@ -859,7 +888,7 @@ class SaleCrmSiteMaster extends \CBitrixComponent
 			}
 		}
 
-		if (!self::isSaleCrmSiteMasterFinish())
+		if (!$this->isSaleCrmSiteMasterFinish())
 		{
 			$this->initSteps();
 		}

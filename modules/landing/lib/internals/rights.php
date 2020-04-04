@@ -49,6 +49,11 @@ class RightsTable extends Entity\DataManager
 				'title' => Loc::getMessage('LANDING_TABLE_FIELD_BY_ROLE_ID'),
 				'default_value' => 0
 			)),
+			'ROLE' => new Entity\ReferenceField(
+				'ROLE',
+				'\Bitrix\Landing\Internals\RoleTable',
+				array('=this.ROLE_ID' => 'ref.ID')
+			),
 			'USER_ACCESS' => new Entity\ReferenceField(
 				'USER_ACCESS',
 				'\Bitrix\Main\UserAccessTable',

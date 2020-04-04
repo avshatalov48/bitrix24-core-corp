@@ -11,7 +11,7 @@ use Bitrix\Main\Web\Json;
 
 ?>
 
-<?php $this->SetViewTarget('left-panel') ?>
+<?php $this->SetViewTarget($arResult['VIEW_TARGET']) ?>
 
 <div <?if($arResult['ID']):?>id="<?=$arResult['ID']?>"<?endif;?> class="ui-sidepanel-sidebar">
 	<?if(!empty($arResult['TITLE'])):?>

@@ -23,6 +23,11 @@ class ShiftTable extends Main\ORM\Data\DataManager
 		return Shift::class;
 	}
 
+	public static function getCollectionClass()
+	{
+		return ShiftCollection::class;
+	}
+
 	/**
 	 * Returns DB table name for entity.
 	 *
@@ -55,7 +60,6 @@ class ShiftTable extends Main\ORM\Data\DataManager
 				->configureAutocomplete(true)
 			,
 			(new Fields\StringField('NAME'))
-				->configureRequired(false)
 				->configureDefaultValue(function () {
 					return '';
 				})
@@ -81,18 +85,23 @@ class ShiftTable extends Main\ORM\Data\DataManager
 				})
 			,
 			(new Fields\IntegerField('SCHEDULE_ID'))
-				->configureRequired(true)
 			,
-			(new Fields\IntegerField('DELETED'))
-				->configureDefaultValue(function () {
-					return 0;
-				})
+			(new Fields\BooleanField('DELETED'))
+				->configureValues(static::DELETED_NO, static::DELETED_YES)
+				->configureDefaultValue(false)
 			,
 			# relations
 			(new Fields\Relations\Reference(
 				'SCHEDULE',
 				ScheduleTable::class,
 				Join::on('this.SCHEDULE_ID', 'ref.ID')->where('this.DELETED', static::DELETED_NO)
+			))
+				->configureJoinType('INNER')
+			,
+			(new Fields\Relations\Reference(
+				'SCHEDULE_WITH_ALL_SHIFTS',
+				ScheduleTable::class,
+				Join::on('this.SCHEDULE_ID', 'ref.ID')
 			))
 				->configureJoinType('INNER')
 			,

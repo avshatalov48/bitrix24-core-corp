@@ -382,7 +382,12 @@ class CAllCrmActivity
 			return false; // is not exists
 		}
 
-		if(!self::CheckFields('UPDATE', $arFields, $ID, array('PREVIOUS_FIELDS' => $arPrevEntity)))
+		$checkFieldParams = array('PREVIOUS_FIELDS' => $arPrevEntity);
+		if(isset($options['CURRENT_USER']))
+		{
+			$checkFieldParams['CURRENT_USER'] = $options['CURRENT_USER'];
+		}
+		if(!self::CheckFields('UPDATE', $arFields, $ID, $checkFieldParams))
 		{
 			return false;
 		}
@@ -1553,6 +1558,9 @@ class CAllCrmActivity
 			$prevFields = isset($params['PREVIOUS_FIELDS']) && is_array($params['PREVIOUS_FIELDS'])
 				? $params['PREVIOUS_FIELDS'] : null;
 
+			$currentUserID = isset($params['CURRENT_USER'])
+				? (int)$params['CURRENT_USER'] : CCrmPerms::GetCurrentUserID();
+
 			if(!is_array($prevFields) && !self::Exists($ID, false))
 			{
 				self::RegisterError(array('text' => "Could not find CrmActivity(ID = $ID)"));
@@ -1611,7 +1619,7 @@ class CAllCrmActivity
 				$userID = isset($fields['AUTHOR_ID']) ? $fields['AUTHOR_ID'] : 0;
 				if($userID <= 0)
 				{
-					$userID = CCrmPerms::GetCurrentUserID();
+					$userID = $currentUserID;
 				}
 				$fields['EDITOR_ID'] = $userID > 0 ? $userID : $fields['RESPONSIBLE_ID'];
 			}
@@ -2084,11 +2092,17 @@ class CAllCrmActivity
 					)
 				)
 			);
+			$options = [];
+			if (isset($arFilter['__ENABLE_SEARCH_CONTENT_PHONE_DETECTION']))
+			{
+				$options['ENABLE_PHONE_DETECTION'] = $arFilter['__ENABLE_SEARCH_CONTENT_PHONE_DETECTION'];
+				unset($arFilter['__ENABLE_SEARCH_CONTENT_PHONE_DETECTION']);
+			}
 			$query = $queryWhere->GetQuery(
 				Crm\Search\SearchEnvironment::prepareEntityFilter(
 					CCrmOwnerType::Activity,
 					array(
-						'SEARCH_CONTENT' => Crm\Search\SearchEnvironment::prepareSearchContent($arFilter['SEARCH_CONTENT'])
+						'SEARCH_CONTENT' => Crm\Search\SearchEnvironment::prepareSearchContent($arFilter['SEARCH_CONTENT'], $options)
 					)
 				)
 			);
@@ -2861,13 +2875,16 @@ class CAllCrmActivity
 		return $result;
 	}
 
-	public static function PrepareCommunicationInfos(array $activityIDs)
+	public static function PrepareCommunicationInfos(array $activityIDs, array $options = array())
 	{
 		$activityIDs = array_filter($activityIDs);
 		if(empty($activityIDs))
 		{
 			return array();
 		}
+
+		$enableSettings = isset($options['ENABLE_PERMISSION_CHECK']) && $options['ENABLE_PERMISSION_CHECK'];
+		$userPermissions = isset($options['USER_PERMISSIONS']) ? $options['USER_PERMISSIONS'] : CCrmPerms::GetCurrentUserPermissions();
 
 		$nameTemplate = \Bitrix\Crm\Format\PersonNameFormatter::getFormat();
 		$condition = implode(',', $activityIDs);
@@ -2890,6 +2907,19 @@ class CAllCrmActivity
 				$entityTypeID = isset($comm['OWNER_TYPE_ID']) ? (int)$comm['OWNER_TYPE_ID'] : 0;
 			}
 
+			if($enableSettings
+				&& !Bitrix\Crm\Security\EntityAuthorization::checkReadPermission($entityTypeID, $entityID, $userPermissions)
+			)
+			{
+				$results[$ID] = array(
+					'ENTITY_ID' => $entityID,
+					'ENTITY_TYPE_ID' => $entityTypeID,
+					'TYPE' => isset($comm['TYPE']) ? $comm['TYPE'] : '',
+					'IS_HIDDEN' => true,
+					'TITLE' => GetMessage('CRM_ACTIVITY_HIDDEN_CLIENT')
+				);
+				continue;
+			}
 
 			if(isset($comm['ENTITY_SETTINGS']))
 			{

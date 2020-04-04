@@ -244,12 +244,30 @@
 		var isFilter = connectorData.IS_FILTER;
 		var html = connectorData.FORM;
 
-		var randomId = Math.floor(Math.random() * (10000 - 100 + 1)) + 100;
+		var matches;
+		var randomId;
+		var filterId = connectorData.FILTER_ID;
+		if (matches = html.match(/--filter--([^-]+)--/))
+		{
+			randomId = matches[1];
+			if (this.getItemByFilterId(connectorData.ID + '_' + randomId))
+			{
+				randomId = randomId + Math.floor(Math.random() * (10000 - 100 + 1)) + 100;
+			}
+			randomId = '--filter--' + randomId + '--';
+			html = html.replace(/--filter--([^-]+)--/g, randomId);
+			filterId = filterId.replace(/--filter--([^-]+)--/g, "%CONNECTOR_NUM%");
+		}
+		else
+		{
+			randomId = Math.floor(Math.random() * (10000 - 100 + 1)) + 100;
+		}
 		html = html.replace(new RegExp("%CONNECTOR_NUM%",'g'), randomId);
+
 
 		html = this.getConnectorForm(
 			{
-				'%CONNECTOR_FILTER_ID%': connectorData.FILTER_ID,
+				'%CONNECTOR_FILTER_ID%': filterId,
 				'%CONNECTOR_NUM%': randomId,
 				'%CONNECTOR_CODE%': connectorData.CODE,
 				'%CONNECTOR_MODULE_ID%': connectorData.MODULE_ID,
@@ -538,6 +556,7 @@
 	};
 	FilterListener.prototype.onApplyFilter = function (id, data, ctx, promise, params)
 	{
+		//this.clearEmptyFilterFields(ctx);
 		// disable promise auto resolving
 		params.autoResolve = false;
 		this.manager.updateFilterData(id, this.onFilterData.bind(this, id, promise));
@@ -556,7 +575,6 @@
 	};
 	FilterListener.prototype.onFilterShow = function (filter)
 	{
-		this.clearEmptyFilterFields(filter);
 		if (this.getShowedFilterFields(filter).length === 0)
 		{
 			filter.restoreDefaultFields();
@@ -564,7 +582,6 @@
 	};
 	FilterListener.prototype.onFilterBlur = function (filter)
 	{
-		this.clearEmptyFilterFields(filter);
 	};
 	FilterListener.prototype.clearEmptyFilterFields = function (filter)
 	{
@@ -598,7 +615,8 @@
 					}).length === 0;
 
 				default:
-					return (typeof (values[name]) === "undefined" || values[name] === "");
+					return (typeof (values[name]) === "undefined" || values[name] === ""  ||
+						(typeof values[name] === "object" && values[name].hasOwnProperty('length') && !values[name].length));
 			}
 		});
 

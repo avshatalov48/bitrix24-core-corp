@@ -337,6 +337,19 @@ class CAllIMContactList
 						$arUser['PERSONAL_BIRTHDAY'] = $arUser['PERSONAL_BIRTHDAY'] instanceof \Bitrix\Main\Type\Date? $arUser['PERSONAL_BIRTHDAY']->format('d-m'): false;
 						$arUser['LAST_ACTIVITY_DATE'] = $arUser['LAST_ACTIVITY_DATE'] instanceof \Bitrix\Main\Type\DateTime? $arUser['LAST_ACTIVITY_DATE']: false;
 
+						$userExternalAuthId = $arUser['EXTERNAL_AUTH_ID']? $arUser['EXTERNAL_AUTH_ID']: 'default';
+						if (
+							$userExternalAuthId == \Bitrix\Im\Bot::EXTERNAL_AUTH_ID
+							&& $bots[$arUser["ID"]]['TYPE'] == \Bitrix\Im\Bot::TYPE_NETWORK
+							&& (
+								$bots[$arUser["ITEM_ID"]]['CLASS'] == 'Bitrix\ImBot\Bot\Support24'
+								|| $bots[$arUser["ITEM_ID"]]['CLASS'] == 'Bitrix\ImBot\Bot\Partner24'
+							)
+						)
+						{
+							$userExternalAuthId = 'support24';
+						}
+
 						$arUsers[$arUser["ID"]] = Array(
 							'id' => $arUser["ID"],
 							'name' => \Bitrix\Im\User::formatFullNameFromDatabase($arUser),
@@ -354,7 +367,7 @@ class CAllIMContactList
 							'network' => $arUser['EXTERNAL_AUTH_ID'] == self::NETWORK_AUTH_ID || $arUser['EXTERNAL_AUTH_ID'] == \Bitrix\Im\Bot::EXTERNAL_AUTH_ID && $bots[$arUser["ID"]]['TYPE'] == \Bitrix\Im\Bot::TYPE_NETWORK,
 							'bot' => $arUser['EXTERNAL_AUTH_ID'] == \Bitrix\Im\Bot::EXTERNAL_AUTH_ID,
 							'profile' => CIMContactList::GetUserPath($arUser["ID"]),
-							'external_auth_id' => $arUser['EXTERNAL_AUTH_ID']? $arUser['EXTERNAL_AUTH_ID']: 'default',
+							'external_auth_id' => $userExternalAuthId,
 							'status' => $arUser['STATUS'],
 							'idle' => $arUser['IDLE'],
 							'last_activity_date' => $arUser['LAST_ACTIVITY_DATE'],
@@ -592,6 +605,19 @@ class CAllIMContactList
 
 			$arUser = CIMStatus::prepareLastDate($arUser);
 
+			$userExternalAuthId = $arUser['EXTERNAL_AUTH_ID']? $arUser['EXTERNAL_AUTH_ID']: 'default';
+			if (
+				$userExternalAuthId == \Bitrix\Im\Bot::EXTERNAL_AUTH_ID
+				&& $bots[$arUser["ID"]]['TYPE'] == \Bitrix\Im\Bot::TYPE_NETWORK
+				&& (
+					$bots[$arUser["ITEM_ID"]]['CLASS'] == 'Bitrix\ImBot\Bot\Support24'
+					|| $bots[$arUser["ITEM_ID"]]['CLASS'] == 'Bitrix\ImBot\Bot\Partner24'
+				)
+			)
+			{
+				$userExternalAuthId = 'support24';
+			}
+
 			$arUsers[$arUser["ID"]] = Array(
 				'id' => $arUser["ID"],
 				'name' => \Bitrix\Im\User::formatFullNameFromDatabase($arUser),
@@ -610,7 +636,7 @@ class CAllIMContactList
 				'tz_offset' => intval($arUser['TIME_ZONE_OFFSET']),
 				'profile' => CIMContactList::GetUserPath($arUser["ID"]),
 				'search_mark' => $searchText,
-				'external_auth_id' => $arUser['EXTERNAL_AUTH_ID']? $arUser['EXTERNAL_AUTH_ID']: 'default',
+				'external_auth_id' => $userExternalAuthId,
 				'status' => $arUser['STATUS'],
 				'idle' => $arUser['IDLE'],
 				'last_activity_date' => $arUser['LAST_ACTIVITY_DATE'],
@@ -914,7 +940,7 @@ class CAllIMContactList
 				$cache_ttl = defined("BX_COMP_MANAGED_CACHE") ? 18144000 : 1800;
 
 			$uid = (is_object($USER)? $USER->GetID(): 'AGENT');
-            $cache_id = 'user_data_v32_'.$uid.'_'.implode('|', $arFilter['=ID']).'_'.$nameTemplate.'_'.$nameTemplateSite.'_'.$extraFields.'_'.$getPhones.'_'.$getDepartment.'_'.$bIntranetEnable.'_'.$bVoximplantEnable.'_'.LANGUAGE_ID.'_'.$bColorEnabled;
+            $cache_id = 'user_data_v33_'.$uid.'_'.implode('|', $arFilter['=ID']).'_'.$nameTemplate.'_'.$nameTemplateSite.'_'.$extraFields.'_'.$getPhones.'_'.$getDepartment.'_'.$bIntranetEnable.'_'.$bVoximplantEnable.'_'.LANGUAGE_ID.'_'.$bColorEnabled;
 
      		$userHash = md5($uid);
             $cache_dir = '/bx/imc/userdata/'.substr($userHash, 0, 2).'/'.substr($userHash, 2, 2);
@@ -1033,6 +1059,19 @@ class CAllIMContactList
 			$arUser['PERSONAL_BIRTHDAY'] = $arUser['PERSONAL_BIRTHDAY'] instanceof \Bitrix\Main\Type\Date? $arUser['PERSONAL_BIRTHDAY']->format('d-m'): false;
 			$arUser['LAST_ACTIVITY_DATE'] = $arUser['LAST_ACTIVITY_DATE'] instanceof \Bitrix\Main\Type\DateTime? $arUser['LAST_ACTIVITY_DATE']: false;
 
+			$userExternalAuthId = $arUser['EXTERNAL_AUTH_ID']? $arUser['EXTERNAL_AUTH_ID']: 'default';
+			if (
+				$userExternalAuthId == \Bitrix\Im\Bot::EXTERNAL_AUTH_ID
+				&& $bots[$arUser["ID"]]['TYPE'] == \Bitrix\Im\Bot::TYPE_NETWORK
+				&& (
+					$bots[$arUser["ITEM_ID"]]['CLASS'] == 'Bitrix\ImBot\Bot\Support24'
+					|| $bots[$arUser["ITEM_ID"]]['CLASS'] == 'Bitrix\ImBot\Bot\Partner24'
+				)
+			)
+			{
+				$userExternalAuthId = 'support24';
+			}
+
 			$arUsers[$arUser["ID"]] = Array(
 				'id' => $arUser["ID"],
 				'name' => \Bitrix\Im\User::formatFullNameFromDatabase($arUser),
@@ -1053,7 +1092,7 @@ class CAllIMContactList
 				'bot' => $arUser['EXTERNAL_AUTH_ID'] == \Bitrix\Im\Bot::EXTERNAL_AUTH_ID,
 				'connector' => $arUser['EXTERNAL_AUTH_ID'] == "imconnector",
 				'profile' => CIMContactList::GetUserPath($arUser["ID"]),
-				'external_auth_id' => $arUser['EXTERNAL_AUTH_ID']? $arUser['EXTERNAL_AUTH_ID']: 'default',
+				'external_auth_id' => $userExternalAuthId,
 				'status' => $arUser['STATUS'],
 				'idle' => $arUser['IDLE'],
 				'last_activity_date' => $arUser['LAST_ACTIVITY_DATE'],
@@ -1605,6 +1644,19 @@ class CAllIMContactList
 					$arRes['LAST_ACTIVITY_DATE'] = $arRes['LAST_ACTIVITY_DATE']? \Bitrix\Main\Type\DateTime::createFromTimestamp($arRes['LAST_ACTIVITY_DATE']): false;
 					$arRes = CIMStatus::prepareLastDate($arRes);
 
+					$userExternalAuthId = $arRes['EXTERNAL_AUTH_ID']? $arRes['EXTERNAL_AUTH_ID']: 'default';
+					if (
+						$userExternalAuthId == \Bitrix\Im\Bot::EXTERNAL_AUTH_ID
+						&& $bots[$arRes["ITEM_ID"]]['TYPE'] == \Bitrix\Im\Bot::TYPE_NETWORK
+						&& (
+							$bots[$arRes["ITEM_ID"]]['CLASS'] == 'Bitrix\ImBot\Bot\Support24'
+							|| $bots[$arRes["ITEM_ID"]]['CLASS'] == 'Bitrix\ImBot\Bot\Partner24'
+						)
+					)
+					{
+						$userExternalAuthId = 'support24';
+					}
+
 					$item['USER'] = Array(
 						'id' => $arRes['ITEM_ID'],
 						'name' => \Bitrix\Im\User::formatFullNameFromDatabase($arRes),
@@ -1622,7 +1674,7 @@ class CAllIMContactList
 						'tz_offset' => intval($arRes['TIME_ZONE_OFFSET']),
 						'phone_device' => false,
 						'profile' => CIMContactList::GetUserPath($arRes["ITEM_ID"]),
-						'external_auth_id' => $arRes['EXTERNAL_AUTH_ID']? $arRes['EXTERNAL_AUTH_ID']: 'default',
+						'external_auth_id' => $userExternalAuthId,
 						'status' => $arRes['STATUS'],
 						'idle' => $arRes['IDLE'],
 						'last_activity_date' => $arRes['LAST_ACTIVITY_DATE'],

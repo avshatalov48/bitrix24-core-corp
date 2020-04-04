@@ -7,6 +7,7 @@
 ##############################################
 
 use Bitrix\Main;
+use Bitrix\Sale;
 
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_before.php");
 
@@ -244,7 +245,12 @@ if (isset($_REQUEST['action']))
 				$url = $selfFolderUrl."sale_order_create.php?lang=".LANG."&SITE_ID=".$siteID."&USER_ID=".$userID."&FUSER_ID=".$fuserID."&ABANDONED=Y";
 			}
 
-			$basketData = \Bitrix\Sale\Basket::getList([
+			$registry = Sale\Registry::getInstance(Sale\Registry::REGISTRY_TYPE_ORDER);
+
+			/** @var Sale\Basket $basketClass */
+			$basketClass = $registry->getBasketClassName();
+
+			$basketData = $basketClass::getList([
 				'filter' => [
 					"=FUSER_ID" => $fuserID,
 					"=LID" => $siteID,

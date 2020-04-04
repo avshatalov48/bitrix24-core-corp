@@ -1,14 +1,25 @@
-<?
-use \Bitrix\Main\Localization\Loc;
+<?php
+use Bitrix\Main\Loader,
+	Bitrix\Main\Localization\Loc,
+	Bitrix\Sale\PaySystem;
 
 Loc::loadMessages(__FILE__);
 
-$isAvailable = \Bitrix\Sale\PaySystem\Manager::HANDLER_AVAILABLE_TRUE;
+$isAvailable = PaySystem\Manager::HANDLER_AVAILABLE_TRUE;
 
-$licensePrefix = \Bitrix\Main\Loader::includeModule("bitrix24") ? \CBitrix24::getLicensePrefix() : "";
-if (IsModuleInstalled("bitrix24") && !in_array($licensePrefix, ["ua"]))
+$licensePrefix = Loader::includeModule('bitrix24') ? \CBitrix24::getLicensePrefix() : "";
+$portalZone = Loader::includeModule('intranet') ? CIntranetUtils::getPortalZone() : "";
+
+if (Loader::includeModule("bitrix24"))
 {
-	$isAvailable = \Bitrix\Sale\PaySystem\Manager::HANDLER_AVAILABLE_FALSE;
+	if ($licensePrefix !== 'ua')
+	{
+		$isAvailable = PaySystem\Manager::HANDLER_AVAILABLE_FALSE;
+	}
+}
+elseif (Loader::includeModule('intranet') && $portalZone !== 'ua')
+{
+	$isAvailable = PaySystem\Manager::HANDLER_AVAILABLE_FALSE;
 }
 
 $data = array(

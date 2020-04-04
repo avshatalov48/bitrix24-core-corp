@@ -30,6 +30,7 @@ use Bitrix\Main\ORM\Fields\FieldTypeMask;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Text\StringHelper;
+use Bitrix\Main\Type\Dictionary;
 
 /**
  * Entity object
@@ -37,6 +38,7 @@ use Bitrix\Main\Text\StringHelper;
  * @property-read \Bitrix\Main\ORM\Entity $entity
  * @property-read array $primary
  * @property-read int $state @see State
+ * @property-read Dictionary $customData
  * @property Context $authContext For UF values validation
  *
  * @package    bitrix
@@ -76,6 +78,11 @@ abstract class EntityObject implements ArrayAccess
 	 * @var mixed[]
 	 */
 	protected $_runtimeValues = [];
+
+	/**
+	 * @var Dictionary
+	 */
+	protected $_customData = null;
 
 	/** @var callable[] */
 	protected $_onPrimarySetListeners = [];
@@ -741,6 +748,15 @@ abstract class EntityObject implements ArrayAccess
 				return $this->sysGetState();
 			case 'dataClass':
 				throw new SystemException('Property `dataClass` should be received as static.');
+			case 'customData':
+
+				if ($this->_customData === null)
+				{
+					$this->_customData = new Dictionary;
+				}
+
+				return $this->_customData;
+
 			case 'authContext':
 				return $this->_authContext;
 		}
@@ -767,6 +783,7 @@ abstract class EntityObject implements ArrayAccess
 			case 'entity':
 			case 'primary':
 			case 'dataClass':
+			case 'customData':
 			case 'state':
 				throw new SystemException(sprintf(
 					'Property `%s` for object `%s` is read-only', $name, get_called_class()
@@ -1463,10 +1480,19 @@ abstract class EntityObject implements ArrayAccess
 
 				foreach ($elementals as $localFieldName => $remoteFieldName)
 				{
-					// skip local primary in non-raw state
-					if ($this->state !== State::RAW && $this->entity->getField($localFieldName)->isPrimary())
+					if ($this->entity->getField($localFieldName)->isPrimary())
 					{
-						continue;
+						// skip local primary in non-raw state
+						if ($this->state !== State::RAW)
+						{
+							continue;
+						}
+
+						// skip autocomplete
+						if ($this->state === State::RAW && $this->entity->getField($localFieldName)->isAutocomplete())
+						{
+							continue;
+						}
 					}
 
 					$elementalValue = empty($value) ? null : $value->sysGetValue($remoteFieldName);
@@ -1495,7 +1521,10 @@ abstract class EntityObject implements ArrayAccess
 		}
 
 		// on primary gain event
-		$this->sysOnPrimarySet();
+		if ($field instanceof ScalarField && $field->isPrimary() && $this->sysHasPrimary())
+		{
+			$this->sysOnPrimarySet();
+		}
 
 		return $this;
 	}
@@ -1752,7 +1781,7 @@ abstract class EntityObject implements ArrayAccess
 
 			if ($field instanceof Reference)
 			{
-				if ($saveCascade)
+				if ($saveCascade && !empty($value))
 				{
 					$value->save();
 				}

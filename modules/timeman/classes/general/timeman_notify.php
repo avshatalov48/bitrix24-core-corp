@@ -413,7 +413,7 @@ class CTimeManNotify
 				$href = \Bitrix\Timeman\Service\DependencyManager::getInstance()
 					->getUrlManager()
 					->getUriTo(\Bitrix\Timeman\TimemanUrlManager::URI_RECORD_REPORT, [
-						'RECORD_ID' => $arFields["SOURCE_ID"]
+						'RECORD_ID' => $arFields['SOURCE_ID']
 					]);
 				$arResult = array(
 					'EVENT' => $arFields,

@@ -240,6 +240,11 @@ abstract class Manager
 		$i = 0;
 		foreach($set as $item)
 		{
+			if (!is_array($item))
+			{
+				continue;
+			}
+
 			$pIndex = static::extractPrimaryIndex($item);
 			if((string) $pIndex == '' || $pIndex == '0')
 			{

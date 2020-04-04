@@ -1,67 +1,17 @@
 <?php
 namespace Bitrix\Timeman\Repository\Schedule;
 
-use Bitrix\Main\Application;
-use Bitrix\Main\Error;
-use Bitrix\Main\ORM\Fields\Relations\Reference;
-use Bitrix\Main\ORM\Query\Join;
-use Bitrix\Main\Result;
+use Bitrix\Main\ORM\Fields\ExpressionField;
+use Bitrix\Main\ORM\Query\Filter\ConditionTree;
+use Bitrix\Main\ORM\Query\Query;
 use Bitrix\Main\Type\Date;
-use Bitrix\Timeman\Model\Schedule\Shift\ShiftTable;
+use Bitrix\Timeman\Model\Schedule\ShiftPlan\EO_ShiftPlan_Query;
 use Bitrix\Timeman\Model\Schedule\ShiftPlan\ShiftPlan;
+use Bitrix\Timeman\Model\Schedule\ShiftPlan\ShiftPlanCollection;
 use Bitrix\Timeman\Model\Schedule\ShiftPlan\ShiftPlanTable;
-use Bitrix\Timeman\Service\DependencyManager;
 
 class ShiftPlanRepository
 {
-	public function findScheduleById($scheduleId)
-	{
-		return DependencyManager::getInstance()->getScheduleRepository()->findById($scheduleId);
-	}
-
-	public function findByScheduleId($scheduleId)
-	{
-		return ShiftPlanTable::query()
-			->addSelect('*')
-			->addSelect('SHIFT.*')
-			->registerRuntimeField('SHIFT', (new Reference('SHIFT', ShiftTable::class, Join::on('this.SHIFT_ID', 'ref.ID')))->configureJoinType('INNER'))
-			->where('SHIFT.SCHEDULE_ID', $scheduleId)
-			->exec()
-			->fetchAll();
-	}
-
-	public function findByScheduleShiftsUsersDates($scheduleId, $shiftIds, $userIds, $dates, $dateTo = null)
-	{
-		$userIds = is_array($userIds) ? $userIds : [$userIds];
-		$shiftIds = is_array($shiftIds) ? $shiftIds : [$shiftIds];
-
-		$res = ShiftPlanTable::query()
-			->addSelect('*')
-			->addSelect('SHIFT.*', 'SH_')
-			->registerRuntimeField('SHIFT', (new Reference('SHIFT', ShiftTable::class, Join::on('this.SHIFT_ID', 'ref.ID')))->configureJoinType('INNER'))
-			->whereIn('SHIFT.ID', array_merge([-1], $shiftIds))
-			->whereIn('USER_ID', array_merge([-1], $userIds))
-			->where('SHIFT.SCHEDULE_ID', $scheduleId);
-		if ($dateTo === null)
-		{
-			if (is_array($dates))
-			{
-				$res->whereIn('DATE_ASSIGNED', $dates);
-			}
-			elseif ($dates instanceof \DateTime)
-			{
-				$res->where('DATE_ASSIGNED', Date::createFromPhp($dates));
-			}
-		}
-		else
-		{
-			$res->whereBetween('DATE_ASSIGNED', Date::createFromPhp($dates), Date::createFromPhp($dateTo));
-		}
-
-		return $res->exec()
-			->fetchAll();
-	}
-
 	/**
 	 * @param $shiftPlan
 	 * @return \Bitrix\Main\ORM\Data\AddResult|\Bitrix\Main\ORM\Data\Result|\Bitrix\Main\ORM\Data\UpdateResult
@@ -72,15 +22,37 @@ class ShiftPlanRepository
 		return $shiftPlan->save();
 	}
 
-	public function deleteByComplexId($shiftId, $userId, $dateAssigned)
+	/**
+	 * @param $shiftId
+	 * @param $userId
+	 * @param Date $dateAssigned
+	 * @return ShiftPlan|null
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	public function findActiveByComplexId($shiftId, $userId, $dateAssigned)
 	{
-		return ShiftPlanTable::delete([
-			'SHIFT_ID' => $shiftId,
-			'USER_ID' => $userId,
-			'DATE_ASSIGNED' => $dateAssigned,
-		]);
+		if (!$dateAssigned || !($dateAssigned instanceof Date))
+		{
+			return null;
+		}
+		return $this->getActivePlansQuery()
+			->addSelect('*')
+			->where('SHIFT_ID', $shiftId)
+			->where('USER_ID', $userId)
+			->where('DATE_ASSIGNED', $dateAssigned)
+			->exec()
+			->fetchObject();
 	}
 
+	/**
+	 * @param $shiftId
+	 * @param $userId
+	 * @param $dateAssigned
+	 * @return ShiftPlan|null
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\SystemException
+	 */
 	public function findByComplexId($shiftId, $userId, $dateAssigned)
 	{
 		if (!$dateAssigned || !($dateAssigned instanceof Date))
@@ -97,50 +69,115 @@ class ShiftPlanRepository
 	}
 
 	/**
-	 * @param $shiftPlan
-	 * @return \Bitrix\Main\Result
+	 * @return EO_ShiftPlan_Query
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\SystemException
 	 */
-	public function delete($shiftPlan)
+	public function getActivePlansQuery()
 	{
-		if ($shiftPlan instanceof ShiftPlan)
-		{
-			return $shiftPlan->delete();
-		}
-		if (is_array($shiftPlan)
-			&& isset($shiftPlan['DATE_ASSIGNED']) && $shiftPlan['DATE_ASSIGNED'] instanceof Date
-			&& isset($shiftPlan['USER_ID']) && (int)$shiftPlan['USER_ID'] > 0
-			&& isset($shiftPlan['SHIFT_ID']) && (int)$shiftPlan['SHIFT_ID'] > 0
-		)
-		{
-			return ShiftPlanTable::delete([
-				'SHIFT_ID' => (int)$shiftPlan['SHIFT_ID'],
-				'USER_ID' => (int)$shiftPlan['USER_ID'],
-				'DATE_ASSIGNED' => $shiftPlan['DATE_ASSIGNED'],
-			]);
-		}
-		return (new Result())->addError(new Error('Internal error deleting shift plans'));
+		$query = ShiftPlanTable::query();
+		$query->where('DELETED', ShiftPlanTable::DELETED_NO);
+		return $query;
 	}
 
-	public function deleteByShiftIds($shiftIds)
+	/**
+	 * @param \Bitrix\Timeman\Model\Worktime\Record\WorktimeRecord $record
+	 * @return ShiftPlan|null
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ObjectException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	public function findActiveByRecord($record)
 	{
-		$shiftIds = array_map('intval', array_filter($shiftIds));
+		if ($record->getShiftId() <= 0)
+		{
+			return null;
+		}
+		$start = $record->buildRecordedStartDateTime();
+		$start->setTimezone(new \DateTimeZone('UTC'));
+		return $this->findActiveByComplexId(
+			$record->getShiftId(),
+			$record->getUserId(),
+			new Date($start->format(ShiftPlanTable::DATE_FORMAT), ShiftPlanTable::DATE_FORMAT)
+		);
+	}
+
+	/**
+	 * @param $id
+	 * @return ShiftPlan|null
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	public function findActiveById($id, $select = [], $filter = null)
+	{
+		if (empty($select))
+		{
+			$select = ['ID'];
+		}
+		return $this->buildAllActiveQuery($select, $filter)
+			->where('ID', $id)
+			->exec()
+			->fetchObject();
+	}
+
+	/**
+	 * @param $select
+	 * @param $filter
+	 * @return EO_ShiftPlan_Query
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	private function buildAllActiveQuery($select, $filter)
+	{
+		$query = $this->getActivePlansQuery();
+
+		foreach ($select as $field)
+		{
+			$query->addSelect($field);
+		}
+		if ($filter instanceof ConditionTree)
+		{
+			$query->where($filter);
+		}
+		return $query;
+	}
+
+	/**
+	 * @param $id
+	 * @return ShiftPlanCollection
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	public function findAllActive($select = [], $filter = null)
+	{
+		return $this->buildAllActiveQuery($select, $filter)
+			->exec()
+			->fetchCollection();
+	}
+
+	public function updateAll($idList, $params)
+	{
+		return ShiftPlanTable::updateMulti($idList, $params);
+	}
+
+	public function findUserIdsByShiftIds($shiftIds)
+	{
 		if (empty($shiftIds))
 		{
-			return;
+			return [];
 		}
-		Application::getConnection()->query("DELETE FROM b_timeman_work_shift_plan WHERE SHIFT_ID IN (" . implode(',', $shiftIds) . ")");
-	}
-
-	public function deleteByShiftAndNotUsersIds(array $shiftIds, array $activeUserIds)
-	{
-		$activeUserIds = array_map('intval', array_filter($activeUserIds));
-		$shiftIds = array_map('intval', array_filter($shiftIds));
-		if (empty($shiftIds) || empty($activeUserIds))
+		$result = $this->buildAllActiveQuery(
+			['D_USER_ID'],
+			Query::filter()
+				->whereIn('SHIFT_ID', $shiftIds)
+		)
+			->registerRuntimeField(new ExpressionField('D_USER_ID', 'DISTINCT USER_ID'))
+			->exec()
+			->fetchAll();
+		if (empty($result))
 		{
-			return;
+			return [];
 		}
-		Application::getConnection()->query("DELETE FROM b_timeman_work_shift_plan
-					WHERE USER_ID NOT IN (" . implode(',', $activeUserIds) . ")
-					AND SHIFT_ID IN (" . implode(',', $shiftIds) . ")");
+		return array_map('intval', array_column($result, 'D_USER_ID'));
 	}
 }

@@ -1757,7 +1757,7 @@ class CIntranetUtils
 	{
 		$params = 'c='.self::getHostName();
 
-		if (isModuleInstalled('bitrix24'))
+		if (\Bitrix\Main\Loader::includeModule('bitrix24'))
 		{
 			$pid = (int) COption::getOptionInt('bitrix24', 'partner_id', 0);
 			$isNfr = \CBitrix24::IsNfrLicense();
@@ -1890,6 +1890,22 @@ class CIntranetUtils
 		{
 			$GLOBALS["CACHE_MANAGER"]->CleanDir("menu");
 			CBitrixComponent::clearComponentCache("bitrix:menu");
+		}
+	}
+
+	public static function getPortalZone()
+	{
+		$portalZone = COption::GetOptionString("main", "vendor", "1c_bitrix_portal");
+
+		switch ($portalZone)
+		{
+			case "ua_bitrix_portal":
+				return "ua";
+			case "bitrix_portal":
+				return "en";
+			case "1c_bitrix_portal":
+			default:
+				return "ru";
 		}
 	}
 }

@@ -5,7 +5,7 @@ if (defined('BX_IM_FULLSCREEN'))
 {
 	return;
 }
-
+\Bitrix\Main\UI\Extension::load('ui.tutor');
 $this->SetViewTarget("im-fullscreen");
 ?>
 <div class="bx-desktop bx-im-fullscreen-popup" id="im-workarea-popup">
@@ -42,7 +42,7 @@ $this->SetViewTarget("im-fullscreen");
 		<tr>
 			<td class="bx-im-fullscreen-popup-td bx-im-fullscreen-popup-td3">
 				<span class="bx-im-fullscreen-apps">
-					<span class="bx-im-fullscreen-apps-title"><?=GetMessage('IM_FULLSCREEN_APPS')?>:</span> 
+					<span class="bx-im-fullscreen-apps-title"><?=GetMessage('IM_FULLSCREEN_APPS')?>:</span>
 					<span class="bx-im-fullscreen-apps-buttons" id="im-workarea-apps">
 						<span class="bx-im-fullscreen-apps-buttons-group">
 							<a href="http://dl.bitrix24.com/b24/bitrix24_desktop.exe" class="bx-im-fullscreen-app-icon bx-im-fullscreen-app-windows" target="_blank"></a>
@@ -118,8 +118,30 @@ $this->SetViewTarget("im", 100);
 			<div class="bx-im-btn"></div>
 		</div>
 		<?endif;?>
-	</div>
+		<div id="ui-tutor-btn-wrap" class="ui-tutor-btn-wrap"></div>
+		<div id="tutorial_feedback" style="display: none;">
+			<?
+			$feedbackFormIdTutorial = 'tutorial_feedback';
+			$APPLICATION->IncludeComponent(
+				'bitrix:ui.feedback.form',
+				'',
+				[
+					'ID' => $feedbackFormIdTutorial,
+					'FORMS' => [
+						['zones' => ['com.br'], 'id' => '140','lang' => 'br', 'sec' => 'y3ri4i'],
+						['zones' => ['es'], 'id' => '142','lang' => 'la', 'sec' => 'gt3i4o'],
+						['zones' => ['de'], 'id' => '144','lang' => 'de', 'sec' => 'tuuz7v'],
+						['zones' => ['ua'], 'id' => '148','lang' => 'ua', 'sec' => 'mbt3n2'],
+						['zones' => ['ru', 'by', 'kz'], 'id' => '138','lang' => 'ru', 'sec' => 'ike989'],
+						['zones' => ['en'], 'id' => '146','lang' => 'en', 'sec' => '7fjsmc'],
+					],
+					'PRESETS' => [],
+					'VIEW_TARGET' => null
+				]
+			);?>
 
+		</div>
+	</div>
 	<svg width="0" height="0" style="display: block">
 		<defs>
 			<clipPath id="clip-avatar">
@@ -137,10 +159,39 @@ $this->SetViewTarget("im", 100);
 <?$frame = $this->createFrame("im")->begin("");
 	$arResult['EXTERNAL_RECENT_LIST'] = "bx-im-external-recent-list";
 ?>
+<?
+$tutorialDataJson = '';
+try
+{
+	$externalData = \CUserOptions::GetOption('external', 'notification', []);
+	$tutorialDataJson = \Bitrix\Main\Web\Json::encode([
+		'tutorialData' => \Bitrix\Main\Web\Json::decode($externalData['tutorials']),
+		'eventService' => \Bitrix\Main\Web\Json::decode($externalData['eventService']),
+		'lastCheckTime' => $externalData['lastCheckTime'],
+	]);
+}
+catch(\Bitrix\Main\ArgumentException $exception)
+{
+	$tutorialDataJson = '{}';
+}
 
+$helpdeskUrl = "";
+if (\Bitrix\Main\Loader::includeModule("ui"))
+{
+	$helpdeskUrl = \Bitrix\UI\Util::getHelpdeskUrl(true);
+}
+?>
 <script>
 	BX.ready(function() {
 		BX.Intranet.Bitrix24.ImBar.init();
+		if(BX.UI && BX.UI.Tutor && BX.UI.Tutor.Manager)
+		{
+			BX.UI.Tutor.Manager.init(
+				<?=$tutorialDataJson;?>,
+				"<?=$helpdeskUrl?>",
+				"<?=CUtil::JSEscape($feedbackFormIdTutorial)?>"
+			);
+		}
 	});
 	<?=CIMMessenger::GetTemplateJS([], $arResult)?>
 </script>

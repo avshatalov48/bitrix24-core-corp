@@ -185,7 +185,7 @@ class Util
 	{
 		$list = array();
 		$langFromTemplate = array();
-		
+
 		if (\Bitrix\Main\ModuleManager::isModuleInstalled("intranet"))
 		{
 			global $b24Languages;
@@ -199,7 +199,7 @@ class Util
 				$langFromTemplate = \Bitrix\Main\Text\Encoding::convertEncoding($b24Languages, 'UTF-8', SITE_CHARSET);
 			}
 		}
-		
+
 		$langDir = \Bitrix\Main\Application::getDocumentRoot() . '/bitrix/modules/intranet/lang/';
 		$dir = new \Bitrix\Main\IO\Directory($langDir);
 		if ($dir->isExists())
@@ -281,6 +281,83 @@ class Util
 		}
 
 		return $logo;
+	}
+
+	public static function isIntranetUser(int $userId = null): bool
+	{
+		if (is_null($userId))
+		{
+			global $USER;
+			$userId = $USER->GetID();
+			if ($userId <= 0)
+			{
+				return false;
+			}
+
+			$accessManager = new \CAccess;
+			$accessManager->UpdateCodes();
+
+			$codes = $USER->GetAccessCodes();
+		}
+		else
+		{
+			if ($userId <= 0)
+			{
+				return false;
+			}
+
+			$accessManager = new \CAccess;
+			$accessManager->UpdateCodes(['USER_ID' => $userId]);
+
+			$codes = \CAccess::GetUserCodesArray($userId);
+		}
+
+		foreach ($codes as $code)
+		{
+			if (preg_match('/^D[0-9]+$/', $code))
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	public static function isExtranetUser(int $userId = null): bool
+	{
+		if (!\Bitrix\Main\Loader::includeModule('extranet'))
+		{
+			return false;
+		}
+
+		$extranetGroupId = (int)\Bitrix\Main\Config\Option::get('extranet', 'extranet_group', 0);
+		if (!$extranetGroupId)
+		{
+			return false;
+		}
+
+		if (is_null($userId))
+		{
+			global $USER;
+			$userId = $USER->GetID();
+			if ($userId <= 0)
+			{
+				return false;
+			}
+
+			$userGroups = array_map('intval', $USER->GetUserGroupArray());
+		}
+		else
+		{
+			if ($userId <= 0)
+			{
+				return false;
+			}
+
+			$userGroups = \Bitrix\Main\UserTable::getUserGroupIds($userId);
+		}
+
+		return in_array($extranetGroupId, $userGroups, true);
 	}
 
 }

@@ -72,8 +72,17 @@ class CCrmEntityEditorComponent extends CBitrixComponent
 		$this->arResult['ENABLE_PAGE_TITLE_CONTROLS'] = !isset($this->arParams['~ENABLE_PAGE_TITLE_CONTROLS'])
 			|| $this->arParams['~ENABLE_PAGE_TITLE_CONTROLS'];
 
+		$this->arResult['ENABLE_COMMUNICATION_CONTROLS'] = !isset($this->arParams['~ENABLE_COMMUNICATION_CONTROLS'])
+			|| $this->arParams['~ENABLE_COMMUNICATION_CONTROLS'];
+
 		$this->arResult['ENABLE_REQUIRED_FIELDS_INJECTION'] = !isset($this->arParams['~ENABLE_REQUIRED_FIELDS_INJECTION'])
 			|| $this->arParams['~ENABLE_REQUIRED_FIELDS_INJECTION'];
+
+		$this->arResult['ENABLE_AVAILABLE_FIELDS_INJECTION'] = isset($this->arParams['~ENABLE_AVAILABLE_FIELDS_INJECTION'])
+			&& $this->arParams['~ENABLE_AVAILABLE_FIELDS_INJECTION'];
+
+		$this->arResult['ENABLE_EXTERNAL_LAYOUT_RESOLVERS'] = isset($this->arParams['~ENABLE_EXTERNAL_LAYOUT_RESOLVERS'])
+			&& $this->arParams['~ENABLE_EXTERNAL_LAYOUT_RESOLVERS'];
 
 		$this->arResult['SHOW_EMPTY_FIELDS'] = isset($this->arParams['~SHOW_EMPTY_FIELDS'])
 			&& $this->arParams['~SHOW_EMPTY_FIELDS'];
@@ -97,18 +106,25 @@ class CCrmEntityEditorComponent extends CBitrixComponent
 
 		$this->arResult['DETAIL_MANAGER_ID'] = isset($this->arParams['~DETAIL_MANAGER_ID']) ? $this->arParams['~DETAIL_MANAGER_ID'] : '';
 
-		$scopePrefix = isset($this->arParams['~SCOPE_PREFIX']) ? $this->arParams['~SCOPE_PREFIX'] : '';
-		if($scopePrefix === '')
-		{
-			$scopePrefix = strtolower($this->configID);
-		}
-
 		$config = null;
-		$configScope = CUserOptions::GetOption(
-			'crm.entity.editor',
-			"{$scopePrefix}_scope",
-			EntityEditorConfigScope::UNDEFINED
-		);
+		if(isset($this->arParams['~SCOPE']) && EntityEditorConfigScope::isDefined($this->arParams['~SCOPE']))
+		{
+			$configScope = $this->arParams['~SCOPE'];
+		}
+		else
+		{
+			$scopePrefix = isset($this->arParams['~SCOPE_PREFIX']) ? $this->arParams['~SCOPE_PREFIX'] : '';
+			if($scopePrefix === '')
+			{
+				$scopePrefix = strtolower($this->configID);
+			}
+
+			$configScope = CUserOptions::GetOption(
+				'crm.entity.editor',
+				"{$scopePrefix}_scope",
+				EntityEditorConfigScope::UNDEFINED
+			);
+		}
 
 		$config = null;
 		if(!(isset($this->arParams['~FORCE_DEFAULT_CONFIG']) && $this->arParams['~FORCE_DEFAULT_CONFIG']))
@@ -179,7 +195,6 @@ class CCrmEntityEditorComponent extends CBitrixComponent
 				? $this->arParams['~ENTITY_CONTROLLERS'] : array();
 
 		$availableFields = array();
-
 		$requiredFields = array();
 		$hasEmptyRequiredFields = false;
 		$htmlFieldNames = array();
@@ -232,6 +247,7 @@ class CCrmEntityEditorComponent extends CBitrixComponent
 
 		$primarySectionIndex = 0;
 		$serviceSectionIndex = -1;
+		$additionalSectionIndex = -1;
 		$scheme = array();
 		for($i = 0, $configQty = count($config); $i < $configQty; $i++)
 		{
@@ -250,6 +266,10 @@ class CCrmEntityEditorComponent extends CBitrixComponent
 			elseif($sectionName === 'required')
 			{
 				$serviceSectionIndex = $i;
+			}
+			elseif($sectionName === 'additional')
+			{
+				$additionalSectionIndex = $i;
 			}
 
 			if (is_array($defaultConfig[$sectionName]) && !empty($defaultConfig[$sectionName]['data']))
@@ -360,6 +380,59 @@ class CCrmEntityEditorComponent extends CBitrixComponent
 
 				$scheme[$serviceSectionIndex]['elements'] = $schemeElements;
 			}
+		}
+
+		if(!empty($availableFields) && $this->arResult['ENABLE_AVAILABLE_FIELDS_INJECTION'])
+		{
+			$schemeElements = array();
+			if($additionalSectionIndex >= 0)
+			{
+				$configItem = $config[$additionalSectionIndex];
+				if(isset($scheme[$additionalSectionIndex]['elements'])
+					&& is_array($scheme[$additionalSectionIndex]['elements'])
+				)
+				{
+					$schemeElements = $scheme[$additionalSectionIndex]['elements'];
+				}
+			}
+			else
+			{
+				$configItem = array(
+					'name' => 'additional',
+					'title' => Loc::getMessage('CRM_ENTITY_ED_ADDITIONAL_FIELD_SECTION'),
+					'type' => 'section',
+					'elements' => array()
+				);
+
+				$additionalSectionIndex = ($serviceSectionIndex >= 0 ? $serviceSectionIndex : $primarySectionIndex) + 1;
+				array_splice(
+					$config,
+					$additionalSectionIndex,
+					0,
+					array($configItem)
+				);
+
+				array_splice(
+					$scheme,
+					$additionalSectionIndex,
+					0,
+					array(array_merge($configItem, array('elements' => array())))
+				);
+			}
+
+			foreach($availableFields as $fieldName => $fieldInfo)
+			{
+				if($fieldName === 'ID')
+				{
+					continue;
+				}
+
+				$configItem['elements'][] = array('name' => $fieldName);
+				$schemeElements[] = $fieldInfo;
+				unset($availableFields[$fieldName]);
+			}
+
+			$scheme[$additionalSectionIndex]['elements'] = $schemeElements;
 		}
 
 		$this->arResult['ENABLE_CONFIG_SCOPE_TOGGLE'] = !isset($this->arParams['~ENABLE_CONFIG_SCOPE_TOGGLE'])

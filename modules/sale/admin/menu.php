@@ -4,6 +4,7 @@
  * @global CMain $APPLICATION
  * @global CAdminMenu $adminMenu */
 
+use Bitrix\Main\Application;
 use Bitrix\Sale\Location;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Config\Option;
@@ -175,8 +176,16 @@ if ($APPLICATION->GetGroupRight("sale")!="D")
 	/* CASHBOX Begin*/
 	if ($APPLICATION->GetGroupRight("sale") == "W")
 	{
-		$licensePrefix = CModule::IncludeModule("bitrix24") ? \CBitrix24::getLicensePrefix() : "";
-		if (!IsModuleInstalled("bitrix24") || in_array($licensePrefix, array("ru")))
+		$portalZone = Loader::includeModule('intranet') ? CIntranetUtils::getPortalZone() : "";
+		$licensePrefix = Loader::includeModule("bitrix24") ? \CBitrix24::getLicensePrefix() : "";
+
+		if (
+			Loader::includeModule("bitrix24") && $licensePrefix === 'ru'
+			||
+			Loader::includeModule('intranet') && $portalZone === 'ru'
+			||
+			!Loader::includeModule("bitrix24") && !Loader::includeModule('intranet')
+		)
 		{
 			$arMenu = array(
 				"parent_menu" => "global_menu_store",
@@ -1042,9 +1051,8 @@ if ($APPLICATION->GetGroupRight("sale") != "D" && $USER->CanDoOperation('install
 	);
 }
 
-$eventManager = EventManager::getInstance();
-$eventManager->addEventHandler("main", "OnBuildGlobalMenu", function (&$arGlobalMenu, &$arModuleMenu) {
-	if (LANGUAGE_ID === "ru"
+EventManager::getInstance()->addEventHandler("main", "OnBuildGlobalMenu", function (&$arGlobalMenu, &$arModuleMenu) {
+	if (in_array(Application::getInstance()->getContext()->getLanguage(), ["ru", "ua"])
 		&&
 		(
 			!ModuleManager::isModuleInstalled("intranet")
@@ -1072,6 +1080,5 @@ $eventManager->addEventHandler("main", "OnBuildGlobalMenu", function (&$arGlobal
 		];
 	}
 });
-unset($eventManager);
 
 return (!empty($aMenu) ? $aMenu : false);

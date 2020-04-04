@@ -226,7 +226,20 @@ switch ($action)
 		$updatedTemplates = array();
 		foreach ($templates as $templateData)
 		{
-			$template = new \Bitrix\Bizproc\Automation\Engine\Template($documentType, $templateData['DOCUMENT_STATUS']);
+			$template = null;
+			if ($templateData['ID'])
+			{
+				$tpl = Bitrix\Bizproc\Workflow\Template\Entity\WorkflowTemplateTable::getById($templateData['ID'])->fetchObject();
+				if ($tpl)
+				{
+					$template = \Bitrix\Bizproc\Automation\Engine\Template::createByTpl($tpl);
+				}
+			}
+
+			if (!$template)
+			{
+				$template = new \Bitrix\Bizproc\Automation\Engine\Template($documentType, $templateData['DOCUMENT_STATUS']);
+			}
 
 			if (empty($templateData['IS_EXTERNAL_MODIFIED']))
 			{

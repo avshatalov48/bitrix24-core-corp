@@ -1,15 +1,14 @@
 <?
 namespace Bitrix\Lists\Controller;
 
-use Bitrix\Lists\Copy\Container;
-use Bitrix\Lists\Copy\Field as FieldCopier;
-use Bitrix\Lists\Copy\Iblock as IblockCopier;
-use Bitrix\Lists\Copy\Section as SectionCopier;
+use Bitrix\Iblock\Copy\Manager;
+use Bitrix\Lists\Copy\Implement\Children\Field;
+use Bitrix\Lists\Copy\Implement\Iblock as IblockImplementer;
 use Bitrix\Lists\Security\IblockRight;
 use Bitrix\Lists\Security\Right;
 use Bitrix\Lists\Security\RightParam;
 use Bitrix\Lists\Service\Param;
-use Bitrix\Main\Copy\ContainerManager;
+use Bitrix\Main\Type\Dictionary;
 
 class Iblock extends Entity
 {
@@ -24,20 +23,34 @@ class Iblock extends Entity
 			return null;
 		}
 
-		$iblockCopier = $this->getCopier();
-		$iblockIdToCopy = $params["IBLOCK_ID"];
+		$manager = new Manager($params["IBLOCK_TYPE_ID"], [$params["IBLOCK_ID"]], $params["SOCNET_GROUP_ID"]);
 
-		$containerManager = $this->getContainerManager($iblockIdToCopy);
+		$manager->setIblockImplementer(new IblockImplementer());
+		$manager->setFieldImplementer(new Field());
 
-		$result = $iblockCopier->copy($containerManager);
+		$dictionary = new Dictionary([
+			"LIST_ELEMENT_URL" => ($params["LIST_ELEMENT_URL"] ? $params["LIST_ELEMENT_URL"] : "")
+		]);
+		$manager->setDictionary($dictionary);
+
+		$result = $manager->startCopy();
+
 		if ($result->getErrors())
 		{
 			$this->addErrors($result->getErrors());
 			return null;
 		}
 
-		$listCopiedIds = $result->getData();
-		return $listCopiedIds[$iblockIdToCopy];
+		$mapIdsCopiedIblock = $manager->getMapIdsCopiedEntity();
+
+		if (array_key_exists($params["IBLOCK_ID"], $mapIdsCopiedIblock))
+		{
+			return $mapIdsCopiedIblock[$params["IBLOCK_ID"]];
+		}
+		else
+		{
+			return null;
+		}
 	}
 
 	private function checkPermission(Param $param, $permission)
@@ -52,23 +65,5 @@ class Iblock extends Entity
 		{
 			$this->addErrors($right->getErrors());
 		}
-	}
-
-	private function getCopier()
-	{
-		$iblock = new IblockCopier();
-		$iblock->addEntityToCopy(new FieldCopier());
-		$iblock->addEntityToCopy(new SectionCopier());
-
-		return $iblock;
-	}
-
-	private function getContainerManager($entityId)
-	{
-		$containerManager = new ContainerManager();
-		$container = new Container($entityId);
-		$containerManager->addContainer($container);
-
-		return $containerManager;
 	}
 }

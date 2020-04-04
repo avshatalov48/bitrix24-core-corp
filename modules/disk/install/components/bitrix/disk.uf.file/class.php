@@ -6,6 +6,7 @@ use Bitrix\Disk\Driver;
 use Bitrix\Disk\File;
 use Bitrix\Disk\Internals\BaseComponent;
 use Bitrix\Disk\Document\DocumentHandler;
+use Bitrix\Disk\TypeFile;
 use Bitrix\Disk\Uf\FileUserType;
 use Bitrix\Disk\Ui\FileAttributes;
 use Bitrix\Main\ArgumentException;
@@ -323,10 +324,9 @@ class CDiskUfFileComponent extends BaseComponent
 				}
 			}
 
-			$typeFile = $fileModel->getView()->getEditorTypeFile();
-			if(!empty($typeFile))
+			if(TypeFile::isVideo($fileModel) && $fileModel->getView()->getEditorTypeFile())
 			{
-				$data['TYPE_FILE'] = $typeFile;
+				$data['TYPE_FILE'] = $fileModel->getView()->getEditorTypeFile();
 			}
 
 			if ($data['IS_MARK_DELETED'] && $data['CAN_RESTORE'])

@@ -5,6 +5,7 @@ use Bitrix\Main\Error;
 use Bitrix\Sale\BasketItemBase;
 use Bitrix\Sale\Fuser;
 use Bitrix\Sale\Order;
+use Bitrix\Sale;
 use Bitrix\Main\Loader;
 use Bitrix\Sale\Basket;
 use Bitrix\Sale\OrderBase;
@@ -13,7 +14,6 @@ use Bitrix\Sale\Provider;
 use Bitrix\Main\UserTable;
 use Bitrix\Sale\BasketItem;
 use Bitrix\Main\Page\Asset;
-use Bitrix\Iblock\IblockTable;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Sale\Services\Company;
@@ -423,8 +423,12 @@ class OrderEdit
 		if(!isset($formData["SITE_ID"]) || strlen($formData["SITE_ID"]) <= 0)
 			throw new ArgumentNullException('formData["SITE_ID"]');
 
+		$registry = Sale\Registry::getInstance(Sale\Registry::REGISTRY_TYPE_ORDER);
+		/** @var Sale\Order $orderClass */
+		$orderClass = $registry->getOrderClassName();
+
 		global $APPLICATION, $USER;
-		$order = Order::create($formData["SITE_ID"]);
+		$order = $orderClass::create($formData["SITE_ID"]);
 		$saleModulePermissions = $APPLICATION->GetGroupRight("sale");
 		$userCompanyId = null;
 
@@ -471,8 +475,10 @@ class OrderEdit
 		if(isset($formData["PRODUCT"]) && is_array($formData["PRODUCT"]) && !empty($formData["PRODUCT"]))
 		{
 			$isStartField = $order->isStartField();
+
+			$basketClass = $registry->getBasketClassName();
 			/** @var Basket $basket */
-			$basket = \Bitrix\Sale\Basket::create($formData["SITE_ID"]);
+			$basket = $basketClass::create($formData["SITE_ID"]);
 
 			$res = $order->setBasket($basket);
 
@@ -1694,22 +1700,32 @@ class OrderEdit
 		return DiscountCouponsManager::get(true, array(), true, false);
 	}
 
+	/**
+	 * @param Order $order
+	 * @param bool $needRecalculate
+	 * @return array
+	 * @throws ArgumentNullException
+	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
+	 * @throws \Bitrix\Main\NotSupportedException
+	 */
 	public static function getDiscountsApplyResult(Order $order, $needRecalculate = false)
 	{
 		static $calcResults = null;
 
-		if ($order instanceof \Bitrix\Sale\Archive\Order)
+		if ($order instanceof Sale\Archive\Order)
 		{
-			/** @var \Bitrix\Sale\Archive\Order $order*/
+			/** @var Sale\Archive\Order $order */
 			return $order->getDiscountData();
 		}
 
-		if($calcResults === null || $needRecalculate)
+		if ($calcResults === null || $needRecalculate)
 		{
-			if($needRecalculate)
+			$discounts = $order->getDiscount();
+
+			if ($needRecalculate)
 			{
-				/** @var \Bitrix\Sale\Result $r */
-				$r = $order->getDiscount()->calculate();
+				/** @var Sale\Result $r */
+				$r = $discounts->calculate();
 
 				if ($r->isSuccess())
 				{
@@ -1718,7 +1734,8 @@ class OrderEdit
 				}
 			}
 
-			$calcResults = $order->getDiscount()->getApplyResult(true);
+			$calcResults = $discounts->getApplyResult(true);
+			unset($discounts);
 		}
 
 		return $calcResults === null ? array() : $calcResults;
@@ -1740,7 +1757,7 @@ class OrderEdit
 		$result = array();
 		$discounts = array();
 
-		if ($order instanceof \Bitrix\Sale\Archive\Order)
+		if ($order instanceof Sale\Archive\Order)
 		{
 			$discounts = $order->getDiscountData();
 			return $discounts['COUPON_LIST'];
@@ -1906,7 +1923,12 @@ class OrderEdit
 	{
 		$intLockUserID = 0;
 		$strLockTime = '';
-		$r = \Bitrix\Sale\Order::getLockedStatus($orderId);
+
+		$registry = Sale\Registry::getInstance(Sale\Registry::REGISTRY_TYPE_ORDER);
+		/** @var Sale\Order $orderClass */
+		$orderClass = $registry->getOrderClassName();
+
+		$r = $orderClass::getLockedStatus($orderId);
 
 		if ($r->isSuccess())
 		{

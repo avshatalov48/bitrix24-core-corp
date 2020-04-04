@@ -1,7 +1,10 @@
 this.BX = this.BX || {};
-(function (exports,main_core) {
+(function (exports, main_core, landing_env) {
 	'use strict';
 
+	/**
+	 * @memberOf BX.Landing
+	 */
 	var Backend =
 	/*#__PURE__*/
 	function () {
@@ -13,9 +16,14 @@ this.BX = this.BX || {};
 	  babelHelpers.createClass(Backend, [{
 	    key: "getControllerUrl",
 	    value: function getControllerUrl() {
+	      var _this = this;
+
 	      return this.cache.remember('controllerUrl', function () {
 	        var uri = new main_core.Uri('/bitrix/tools/landing/ajax.php');
-	        uri.setQueryParam('site', main_core.Loc.getMessage('SITE_ID') || undefined);
+	        uri.setQueryParams({
+	          site: main_core.Loc.getMessage('SITE_ID') || undefined,
+	          type: _this.getSitesType()
+	        });
 	        return uri.toString();
 	      });
 	    }
@@ -53,17 +61,7 @@ this.BX = this.BX || {};
 	    key: "getSitesType",
 	    value: function getSitesType() {
 	      return this.cache.remember('siteType', function () {
-	        var landing = main_core.Reflection.getClass('BX.Landing.Main');
-
-	        if (landing) {
-	          var instance = landing.getInstance();
-
-	          if (main_core.Type.isPlainObject(instance.options) && main_core.Type.isPlainObject(instance.options.params) && main_core.Type.isString(instance.options.params.type)) {
-	            return instance.options.params.type;
-	          }
-	        }
-
-	        return 'PAGE';
+	        return landing_env.Env.getInstance().getType();
 	      });
 	    }
 	  }, {
@@ -197,20 +195,20 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "getSites",
 	    value: function getSites() {
-	      var _this = this;
+	      var _this2 = this;
 
 	      var _ref = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
 	          _ref$filter = _ref.filter,
 	          filter = _ref$filter === void 0 ? {} : _ref$filter;
 
 	      return this.cache.remember("sites+".concat(JSON.stringify(filter)), function () {
-	        return _this.action('Site::getList', {
+	        return _this2.action('Site::getList', {
 	          params: {
 	            order: {
 	              ID: 'DESC'
 	            },
 	            filter: babelHelpers.objectSpread({
-	              TYPE: _this.getSitesType()
+	              TYPE: _this2.getSitesType()
 	            }, filter)
 	          }
 	        }).then(function (response) {
@@ -221,7 +219,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "getLandings",
 	    value: function getLandings() {
-	      var _this2 = this;
+	      var _this3 = this;
 
 	      var _ref2 = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
 	          _ref2$siteId = _ref2.siteId,
@@ -257,16 +255,16 @@ this.BX = this.BX || {};
 	        if (ids.filter(function (id) {
 	          return !main_core.Type.isNil(id);
 	        }).length === 0) {
-	          return _this2.getSites().then(function (sites) {
+	          return _this3.getSites().then(function (sites) {
 	            var data = sites.map(function (site) {
 	              return getBathItem(site.ID);
 	            });
-	            return _this2.batch('Landing::getList', data);
+	            return _this3.batch('Landing::getList', data);
 	          }).then(function (response) {
 	            return prepareResponse(response);
 	          }).then(function (response) {
 	            response.forEach(function (landing) {
-	              _this2.cache.set("landing+".concat(landing.ID), Promise.resolve(landing));
+	              _this3.cache.set("landing+".concat(landing.ID), Promise.resolve(landing));
 	            });
 	          });
 	        }
@@ -274,11 +272,11 @@ this.BX = this.BX || {};
 	        var data = ids.map(function (id) {
 	          return getBathItem(id);
 	        });
-	        return _this2.batch('Landing::getList', data).then(function (response) {
+	        return _this3.batch('Landing::getList', data).then(function (response) {
 	          return prepareResponse(response);
 	        }).then(function (response) {
 	          response.forEach(function (landing) {
-	            _this2.cache.set("landing+".concat(landing.ID), Promise.resolve(landing));
+	            _this3.cache.set("landing+".concat(landing.ID), Promise.resolve(landing));
 	          });
 	          return response;
 	        });
@@ -287,11 +285,11 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "getLanding",
 	    value: function getLanding(_ref3) {
-	      var _this3 = this;
+	      var _this4 = this;
 
 	      var landingId = _ref3.landingId;
 	      return this.cache.remember("landing+".concat(landingId), function () {
-	        return _this3.action('Landing::getList', {
+	        return _this4.action('Landing::getList', {
 	          params: {
 	            filter: {
 	              ID: landingId
@@ -310,11 +308,11 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "getBlocks",
 	    value: function getBlocks(_ref4) {
-	      var _this4 = this;
+	      var _this5 = this;
 
 	      var landingId = _ref4.landingId;
 	      return this.cache.remember("blocks+".concat(landingId), function () {
-	        return _this4.action('Block::getList', {
+	        return _this5.action('Block::getList', {
 	          lid: landingId,
 	          params: {
 	            get_content: true,
@@ -322,7 +320,7 @@ this.BX = this.BX || {};
 	          }
 	        }).then(function (blocks) {
 	          blocks.forEach(function (block) {
-	            _this4.cache.set("block+".concat(block.id), Promise.resolve(block));
+	            _this5.cache.set("block+".concat(block.id), Promise.resolve(block));
 	          });
 	          return blocks;
 	        });
@@ -331,11 +329,11 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "getBlock",
 	    value: function getBlock(_ref5) {
-	      var _this5 = this;
+	      var _this6 = this;
 
 	      var blockId = _ref5.blockId;
 	      return this.cache.remember("blockId+".concat(blockId), function () {
-	        return _this5.action('Block::getById', {
+	        return _this6.action('Block::getById', {
 	          block: blockId,
 	          params: {
 	            edit_mode: true
@@ -346,7 +344,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "getTemplates",
 	    value: function getTemplates() {
-	      var _this6 = this;
+	      var _this7 = this;
 
 	      var _ref6 = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
 	          _ref6$type = _ref6.type,
@@ -355,7 +353,7 @@ this.BX = this.BX || {};
 	          filter = _ref6$filter === void 0 ? {} : _ref6$filter;
 
 	      return this.cache.remember("templates+".concat(JSON.stringify(filter)), function () {
-	        return _this6.action('Demos::getPageList', {
+	        return _this7.action('Demos::getPageList', {
 	          type: type,
 	          filter: filter
 	        }).then(function (response) {
@@ -366,14 +364,46 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "getDynamicTemplates",
 	    value: function getDynamicTemplates() {
-	      var _this7 = this;
+	      var _this8 = this;
 
-	      return this.cache.remember('dynamicTemplates', function () {
-	        return _this7.getTemplates({
+	      var sourceId = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '';
+	      return this.cache.remember("dynamicTemplates:".concat(sourceId), function () {
+	        return _this8.getTemplates({
 	          filter: {
-	            section: 'dynamic'
+	            section: "dynamic".concat(sourceId ? ":".concat(sourceId) : '')
 	          }
 	        });
+	      });
+	    }
+	  }, {
+	    key: "createPage",
+	    value: function createPage() {
+	      var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+	      var title = options.title,
+	          _options$siteId = options.siteId,
+	          siteId = _options$siteId === void 0 ? landing_env.Env.getInstance().getOptions().site_id : _options$siteId,
+	          _options$code = options.code,
+	          code = _options$code === void 0 ? main_core.Text.getRandom(16) : _options$code,
+	          blockId = options.blockId,
+	          menuCode = options.menuCode,
+	          folderId = options.folderId;
+	      var fields = {
+	        TITLE: title,
+	        SITE_ID: siteId,
+	        CODE: code
+	      };
+
+	      if (main_core.Type.isNumber(blockId) && main_core.Type.isString(menuCode)) {
+	        fields.BLOCK_ID = blockId;
+	        fields.MENU_CODE = menuCode;
+	      }
+
+	      if (main_core.Type.isNumber(folderId)) {
+	        fields.FOLDER_ID = folderId;
+	      }
+
+	      return this.action('Landing::add', {
+	        fields: fields
 	      });
 	    }
 	  }], [{
@@ -418,5 +448,5 @@ this.BX = this.BX || {};
 
 	exports.Backend = Backend;
 
-}((this.BX.Landing = this.BX.Landing || {}),BX));
+}(this.BX.Landing = this.BX.Landing || {}, BX, BX.Landing));
 //# sourceMappingURL=backend.bundle.js.map

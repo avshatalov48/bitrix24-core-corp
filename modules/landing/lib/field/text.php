@@ -27,6 +27,7 @@ class Text extends \Bitrix\Landing\Field
 		$this->id = isset($params['id']) ? $params['id'] : '';
 		$this->title = isset($params['title']) ? $params['title'] : '';
 		$this->help = isset($params['help']) ? $params['help'] : '';
+		$this->searchable = isset($params['searchable']) && $params['searchable'] === true;
 		$this->placeholder = isset($params['placeholder']) ? $params['placeholder'] : '';
 		$this->maxlength = isset($params['maxlength']) ? (int)$params['maxlength'] : 0;
 	}

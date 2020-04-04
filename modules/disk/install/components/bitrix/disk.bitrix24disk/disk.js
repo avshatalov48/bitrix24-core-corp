@@ -9,6 +9,7 @@ BX.ready(function(){
 			return;
 
 		ReloadWindow();
+		updateDiskUsage()
 
 		BXIM.desktop.addCustomEvent("BXProtocolUrl", function(command, params) {
 
@@ -365,6 +366,19 @@ BX.ready(function(){
 		});
 	}
 });
+
+function updateDiskUsage()
+{
+	if (BXDesktopSystem && BXDesktopSystem.GetAccountData)
+	{
+		var size = BXDesktopSystem.GetAccountData(BXDesktopWindow.GetBDiskServer(), BXDesktopWindow.GetLogin(), "bxd_st_size");
+		BX.ajax.post('/desktop_app/storage.php?action=updateDiskUsage', {
+			size: size,
+			sessid: BX.bitrix_sessid()
+		});
+
+	}
+}
 
 function addToLinkParam(link, name, value)
 {

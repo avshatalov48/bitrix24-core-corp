@@ -4,11 +4,12 @@ namespace Bitrix\Seo\LeadAds;
 
 use Bitrix\Main\Context;
 use Bitrix\Seo\Retargeting\BaseApiObject;
+use Bitrix\Seo\Retargeting\IRequestDirectly;
 use Bitrix\Seo\Retargeting\Response;
 use Bitrix\Seo\WebHook;
 use Bitrix\Seo\Retargeting;
 
-abstract class Form extends BaseApiObject
+abstract class Form extends BaseApiObject implements IRequestDirectly
 {
 	const URL_FORM_LIST = '';
 	const USE_GROUP_AUTH = false;

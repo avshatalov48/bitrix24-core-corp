@@ -15,6 +15,8 @@ class LayoutSettings
 	private $enableUserNameSorting = null;
 	/** @var IntegerSetting */
 	private $clientLayoutType = null;
+	/** @var BooleanSetting */
+	private $enableDedupeWizard = null;
 
 	function __construct()
 	{
@@ -25,6 +27,7 @@ class LayoutSettings
 			'client_layout_type',
 			Crm\Layout\ClientLayoutType::CONTACT_COMPANY
 		);
+		$this->enableDedupeWizard = new BooleanSetting('enable_dedupe_wizard', true);
 	}
 	/**
 	 * Get current instance
@@ -54,6 +57,25 @@ class LayoutSettings
 	public function enableSlider($enabled)
 	{
 		$this->enableSlider->set($enabled);
+	}
+
+
+	/**
+	 * Check if dedupe wizard enabled for duplicate control
+	 * @return bool
+	 */
+	public function isDedupeWizardEnabled()
+	{
+		return $this->enableDedupeWizard->get();
+	}
+	/**
+	 * Enable dedupe wizard for duplicate control
+	 * @param bool $enabled Enabled Flag.
+	 * @return void
+	 */
+	public function enableDedupeWizard($enabled)
+	{
+		$this->enableDedupeWizard->set($enabled);
 	}
 	/**
 	 * Check if simple time format enabled for display system fields (CREATED, LAST_MODIFIED and etc)

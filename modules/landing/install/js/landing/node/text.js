@@ -161,24 +161,12 @@
 			if (event.clipboardData && event.clipboardData.getData)
 			{
 				text = event.clipboardData.getData("text/plain");
-
-				if (!this.manifest.textOnly)
-				{
-					text = text.replace(new RegExp('\n', 'g'), '<br>');
-				}
-
 				document.execCommand("insertHTML", false, BX.Landing.Utils.escapeHtml(text));
 			}
 			else
 			{
 				// ie11
 				text = window.clipboardData.getData("text");
-
-				if (!this.manifest.textOnly)
-				{
-					text = text.replace(new RegExp('\n', 'g'), '<br>');
-				}
-
 				document.execCommand("paste", true, BX.Landing.Utils.escapeHtml(text));
 			}
 
@@ -300,7 +288,6 @@
 
 				this.lastValue = this.getValue();
 				this.node.contentEditable = true;
-				this.node.focus();
 
 				this.node.setAttribute("title", "");
 			}

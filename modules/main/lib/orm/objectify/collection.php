@@ -258,6 +258,7 @@ abstract class Collection implements \ArrayAccess, \Iterator, \Countable
 	 *
 	 * @param int|string[] $fields Names of fields to fill
 	 *
+	 * @return array|Collection
 	 * @throws ArgumentException
 	 * @throws SystemException
 	 */
@@ -753,7 +754,7 @@ abstract class Collection implements \ArrayAccess, \Iterator, \Countable
 	/**
 	 * @param $fieldName
 	 *
-	 * @return array|null
+	 * @return Collection
 	 * @throws ArgumentException
 	 * @throws SystemException
 	 */
@@ -762,6 +763,7 @@ abstract class Collection implements \ArrayAccess, \Iterator, \Countable
 		/** @var Relation $field */
 		$field = $this->_entity->getField($fieldName);
 
+		/** @var Collection $values */
 		$values = $field->getRefEntity()->createCollection();
 
 		// collect field values
@@ -956,6 +958,11 @@ abstract class Collection implements \ArrayAccess, \Iterator, \Countable
 	 */
 	public function current()
 	{
+		if ($this->_iterableObjects === null)
+		{
+			$this->_iterableObjects = $this->_objects;
+		}
+
 		return current($this->_iterableObjects);
 	}
 

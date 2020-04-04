@@ -4189,6 +4189,13 @@ if(typeof BX.UI.EntityEditorText === "undefined")
 			this._wrapper.appendChild(this.createTitleNode(title));
 
 			var lineCount = this.getLineCount();
+
+			this._inputContainer = BX.create("div",
+				{
+					attrs: { className: "ui-ctl ui-ctl-textbox ui-ctl-w100" }
+				}
+			);
+
 			if(lineCount > 1)
 			{
 				this._input = BX.create("textarea",
@@ -4205,12 +4212,6 @@ if(typeof BX.UI.EntityEditorText === "undefined")
 			}
 			else
 			{
-				this._inputContainer = BX.create("div",
-					{
-						attrs: { className: "ui-ctl ui-ctl-textbox ui-ctl-w100" }
-					}
-				);
-
 				this._input = BX.create("input",
 					{
 						attrs:
@@ -4223,9 +4224,9 @@ if(typeof BX.UI.EntityEditorText === "undefined")
 							}
 					}
 				);
-
-				this._inputContainer.appendChild(this._input);
 			}
+
+			this._inputContainer.appendChild(this._input);
 
 			if(this.isNewEntity())
 			{

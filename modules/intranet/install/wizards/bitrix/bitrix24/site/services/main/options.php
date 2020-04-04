@@ -21,6 +21,19 @@ $obSite->Update(WIZARD_SITE_ID, Array("NAME" => COption::GetOptionString("main",
 CGroup::SetSubordinateGroups(WIZARD_PERSONNEL_DEPARTMENT_GROUP, Array(WIZARD_EMPLOYEES_GROUP));
 CGroup::SetSubordinateGroups(WIZARD_PORTAL_ADMINISTRATION_GROUP, Array(WIZARD_EMPLOYEES_GROUP));
 
+if(LANGUAGE_ID == "ru")
+{
+	$vendor = "1c_bitrix_portal";
+}
+elseif(LANGUAGE_ID == "ua")
+{
+	$vendor = "ua_bitrix_portal";
+}
+else
+{
+	$vendor = "bitrix_portal";
+}
+
 COption::SetOptionString("main", "templates_visual_editor", "Y");
 COption::SetOptionString("main", "upload_dir", "upload");
 COption::SetOptionString("main", "component_cache_on","Y");
@@ -29,7 +42,7 @@ COption::SetOptionString("main", "captcha_registration", "N");
 COption::SetOptionString("main", "use_secure_password_cookies", "Y");
 COption::SetOptionString("main", "new_user_email_uniq_check", "Y");
 COption::SetOptionString("main", "auth_comp2", "Y");
-COption::SetOptionString("main", "vendor", (LANGUAGE_ID == "ru"? "1c_bitrix_portal":"bitrix_portal"));
+COption::SetOptionString("main", "vendor", $vendor);
 COption::SetOptionString("main", "PARAM_MAX_USERS", "12");
 COption::SetOptionString("main", "update_autocheck", "7");
 COption::SetOptionString("main", "use_digest_auth", "Y");
@@ -175,7 +188,7 @@ if (IsModuleInstalled("bitrix24"))
 	COption::SetOptionString("bizproc", "limit_simultaneous_processes", 2);
 	COption::SetOptionString("bitrix24", "admin_limits_enabled", "Y");
 	COption::SetOptionString("bitrix24", "absence_limits_enabled", "Y");
-	COption::SetOptionString("bitrix24", "business_tools_available", "N");
+	//COption::SetOptionString("bitrix24", "business_tools_available", "N");
 	COption::SetOptionString("bitrix24", "allow_invite_users", "Y");
 }
 Bitrix\Main\Config\Option::set("main", "move_js_to_body", "Y");

@@ -23,7 +23,7 @@ class Evenly extends Queue
 	 */
 	public function getOperatorsQueue($currentOperator = 0)
 	{
-		$queueTime = $this->config['QUEUE_TIME'];
+		$queueTime = $this->getQueueTime();
 
 		$result = [
 			'RESULT' => false,
@@ -66,12 +66,6 @@ class Evenly extends Queue
 			$operatorId = reset($operators)['USER_ID'];
 
 			$queueHistory[$operatorId] = true;
-
-			if($this->config['QUEUE_TIME'] > 0)
-			{
-				$queueTime = $this->config['QUEUE_TIME'];
-			}
-
 
 			if ($operators[$operatorId] > 0)
 			{

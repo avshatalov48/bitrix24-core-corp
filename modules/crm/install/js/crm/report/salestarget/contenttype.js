@@ -12,7 +12,6 @@
 	{
 		BX.Report.Dashboard.Content.Html.apply(this, arguments);
 
-		console.log(options);
 		this.layout.settingsButtonInHeader = null;
 	};
 
@@ -48,9 +47,8 @@
 		},
 		handleTargetConfigureClick: function()
 		{
-			console.log(this);
+			BX.onCustomEvent(window, 'BX.Crm.Report.Dashboard.Content.SalesTarget:onSettingsButtonClick');
 		}
-
 	};
 
 })();

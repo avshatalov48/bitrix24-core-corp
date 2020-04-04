@@ -186,9 +186,9 @@ class VoximplantLinesAjaxController extends \Bitrix\Main\Engine\Controller
 
 		$configFields["PORTAL_MODE"] = CVoxImplantConfig::MODE_RENT;
 		$newConfigResult = \Bitrix\Voximplant\ConfigTable::add($configFields);
-		if(!$newConfigResult)
+		if(!$newConfigResult->isSuccess())
 		{
-			$this->errorCollection[] = new \Bitrix\Main\Error("Database error");
+			$this->addErrors($newConfigResult->getErrors());
 			return null;
 		}
 

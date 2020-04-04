@@ -46,7 +46,7 @@ return array(
 		'nodes' => array(
 			'.landing-block-node-container' => array(
 				'name' => Loc::getMessage('LANDING_BLOCK_01.BIG_WITH_TEXT_BLOCKS_STYLE_LANDINGBLOCKNODECARD_CONTAINER'),
-				'type' => 'animation',
+				'type' => ['animation', 'align-self']
 			),
 			'.landing-block-node-card-title' => array(
 				'name' => Loc::getMessage('LANDING_BLOCK_01.BIG_WITH_TEXT_BLOCKS_STYLE_LANDINGBLOCKNODECARDTITLE'),

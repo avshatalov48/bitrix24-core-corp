@@ -48,6 +48,7 @@ class CrmMlComponent extends CBitrixComponent
 
 		$arDefaultUrlTemplates404 = array(
 			"detail" => "#entity_type#/#id#/detail",
+			"list" => "model/list/",
 		);
 
 		if ($this->arParams['SEF_MODE'] == 'Y')

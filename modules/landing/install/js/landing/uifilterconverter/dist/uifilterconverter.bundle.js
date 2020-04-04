@@ -1,5 +1,5 @@
 this.BX = this.BX || {};
-(function (exports,main_core) {
+(function (exports, main_core) {
 	'use strict';
 
 	var UiFilterConverter =
@@ -131,5 +131,5 @@ this.BX = this.BX || {};
 
 	exports.UiFilterConverter = UiFilterConverter;
 
-}((this.BX.Landing = this.BX.Landing || {}),BX));
+}(this.BX.Landing = this.BX.Landing || {}, BX));
 //# sourceMappingURL=uifilterconverter.bundle.js.map

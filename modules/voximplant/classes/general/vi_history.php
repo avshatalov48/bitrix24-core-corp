@@ -1,6 +1,7 @@
 <?
 IncludeModuleLangFile(__FILE__);
 
+use Bitrix\Main\Result;
 use Bitrix\Voximplant as VI;
 use Bitrix\Main\Application;
 use Bitrix\Main\IO;
@@ -226,65 +227,10 @@ class CVoxImplantHistory
 				self::SendMessageToChat($arFields["PORTAL_USER_ID"], $arFields["PHONE_NUMBER"], $arFields["INCOMING"], $chatMessage);
 		}
 
-		if (strlen($params['URL']) > 0)
+		if ($params['URL'] != '')
 		{
 			$attachToCrm = $call->isCrmEnabled();
-
-			$startDownloadAgent = false;
-
-			$recordLimit = VI\Limits::getRecordLimit();
-			if ($recordLimit > 0)
-			{
-				$sipConnectorActive = CVoxImplantConfig::GetModeStatus(CVoxImplantConfig::MODE_SIP);
-				if ($params['PORTAL_TYPE'] == CVoxImplantConfig::MODE_SIP && $sipConnectorActive)
-				{
-					$startDownloadAgent = true;
-				}
-				else
-				{
-					$recordMonth = COption::GetOptionInt("voximplant", "record_month");
-					if (!$recordMonth)
-					{
-						$recordMonth = date('Ym');
-						COption::SetOptionInt("voximplant", "record_month", $recordMonth);
-					}
-					$recordCount = CGlobalCounter::GetValue('vi_records', CGlobalCounter::ALL_SITES);
-					if ($recordCount < $recordLimit)
-					{
-						CGlobalCounter::Increment('vi_records', CGlobalCounter::ALL_SITES, false);
-						$startDownloadAgent = true;
-					}
-					else
-					{
-						if ($recordMonth < date('Ym'))
-						{
-							COption::SetOptionInt("voximplant", "record_month", date('Ym'));
-							CGlobalCounter::Set('vi_records', 1, CGlobalCounter::ALL_SITES, '', false);
-							CGlobalCounter::Set('vi_records_skipped', 0, CGlobalCounter::ALL_SITES, '', false);
-							$startDownloadAgent = true;
-						}
-						else
-						{
-							CGlobalCounter::Increment('vi_records_skipped', CGlobalCounter::ALL_SITES, false);
-						}
-					}
-					CVoxImplantHistory::WriteToLog(Array(
-						'limit' => $recordLimit,
-						'saved' => CGlobalCounter::GetValue('vi_records', CGlobalCounter::ALL_SITES),
-						'skipped' => CGlobalCounter::GetValue('vi_records_skipped', CGlobalCounter::ALL_SITES),
-						'save to portal' => $startDownloadAgent? 'Y':'N',
-					), 'STATUS OF RECORD LIMIT');
-				}
-			}
-			else
-			{
-				$startDownloadAgent = true;
-			}
-
-			if ($startDownloadAgent)
-			{
-				self::DownloadAgent($insertResult->getId(), $params['URL'], $attachToCrm);
-			}
+			self::DownloadAgent($insertResult->getId(), $params['URL'], $attachToCrm);
 		}
 
 		if (strlen($params["ACCOUNT_PAYED"]) > 0 && in_array($params["ACCOUNT_PAYED"], Array('Y', 'N')))
@@ -429,31 +375,15 @@ class CVoxImplantHistory
 
 			$fileType = $http->getHeaders()->getContentType() ?: CFile::GetContentType($tempPath);
 			$recordFile = CFile::MakeFileArray($tempPath, $fileType);
+
 			if (is_array($recordFile) && $recordFile['size'] && $recordFile['size'] > 0)
 			{
 				if(strpos($recordFile['name'], '.') === false)
-					$recordFile['name'] = $recordFile['name'] . '.mp3';
-
-				$recordFile['MODULE_ID'] = 'voximplant';
-				$fileID = CFile::SaveFile($recordFile, 'voximplant', true);
-				if(is_int($fileID) && $fileID > 0)
 				{
-					$elementID = CVoxImplantDiskHelper::SaveFile(
-						$arHistory,
-						CFile::GetFileArray($fileID),
-						CSite::GetDefSite()
-					);
-					$elementID = intval($elementID);
-					if($attachToCrm/* && $elementID> 0*/)
-					{
-						CVoxImplantCrmHelper::AttachRecordToCall(Array(
-							'CALL_ID' => $arHistory['CALL_ID'],
-							'CALL_RECORD_ID' => $fileID,
-							'CALL_WEBDAV_ID' => $elementID,
-						));
-					}
-					VI\StatisticTable::update($historyID, Array('CALL_RECORD_ID' => $fileID, 'CALL_WEBDAV_ID' => $elementID));
+					$recordFile['name'] = $recordFile['name'] . '.mp3';
 				}
+
+				static::AttachRecord($arHistory['CALL_ID'], $recordFile);
 			}
 		}
 		catch (Exception $ex)
@@ -462,6 +392,51 @@ class CVoxImplantHistory
 		}
 
 		return false;
+	}
+
+	public static function AttachRecord($callId, array $recordFileFields)
+	{
+		$result = new Result();
+		$arHistory = VI\StatisticTable::getRow([
+			'select' => ['*'],
+			'filter' => ['=CALL_ID' => $callId]
+		]);
+
+		if(!$arHistory)
+		{
+			return $result->addError(new \Bitrix\Main\Error("Call is not found", "NOT_FOUND"));
+		}
+
+		$historyID = $arHistory["ID"];
+		$recordFileFields['MODULE_ID'] = 'voximplant';
+		$fileId = CFile::SaveFile($recordFileFields, 'voximplant', true);
+
+		if(!$fileId)
+		{
+			return $result->addError(new \Bitrix\Main\Error("Could not save file", "SAVE_FILE_ERROR"));
+		}
+
+		VI\StatisticTable::update($historyID, ['CALL_RECORD_ID' => $fileId]);
+		$elementId = CVoxImplantDiskHelper::SaveFile(
+			$arHistory,
+			CFile::GetFileArray($fileId),
+			CSite::GetDefSite()
+		);
+		$elementId = (int)$elementId;
+		VI\StatisticTable::update($historyID, ['CALL_WEBDAV_ID' => $elementId]);
+
+		if (VI\Limits::getRecordLimit() > 0)
+		{
+			VI\Limits::registerRecord();
+		}
+
+		CVoxImplantCrmHelper::AttachRecordToCall([
+			'CALL_ID' => $callId,
+			'CALL_RECORD_ID' => $fileId,
+			'CALL_WEBDAV_ID' => $elementId,
+		]);
+
+		return $result;
 	}
 
 	public static function GetForPopup($id)

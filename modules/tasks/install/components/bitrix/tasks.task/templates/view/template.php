@@ -65,7 +65,6 @@ if ($arParams["ENABLE_MENU_TOOLBAR"])
 		'bitrix:tasks.interface.filter.buttons',
 		'.default',
 		array(
-			'TASK_ID' => $arParams['ID'],
 			'SECTION' => 'VIEW_TASK',
 			'ADD_BUTTON' => array(
 				'NAME' => Loc::getMessage("TASKS_ADD_TASK_SHORT"),
@@ -764,7 +763,8 @@ $this->EndViewTarget();
 		eventTaskUgly: eventTaskUgly,
 		componentData: {
 			EVENT_TYPE: "<?=CUtil::JSEscape($arResult["COMPONENT_DATA"]["EVENT_TYPE"])?>",
-			EVENT_OPTIONS: <?=CUtil::PhpToJsObject($arResult["COMPONENT_DATA"]["EVENT_OPTIONS"])?>
+			EVENT_OPTIONS: <?=CUtil::PhpToJsObject($arResult["COMPONENT_DATA"]["EVENT_OPTIONS"])?>,
+			OPEN_TIME: <?=CUtil::PhpToJsObject($arResult["COMPONENT_DATA"]["OPEN_TIME"])?>
 		},
 		can: {TASK: <?=CUtil::PhpToJsObject($arResult['CAN']['TASK'])?>},
 		paramsToLazyLoadTabs: <?=\Bitrix\Main\Web\Json::encode($arResult['PARAMS_TO_LAZY_LOAD_TABS'])?>

@@ -326,7 +326,7 @@ class CIntranetInviteDialog
 			{
 				$arEmailOriginal = preg_split("/[\n\r\t\\,;\\ ]+/", trim($arFields["EMAIL"]));
 			}
-;
+
 			$arEmail = $errorEmails = array();
 			$emailCnt = 0;
 

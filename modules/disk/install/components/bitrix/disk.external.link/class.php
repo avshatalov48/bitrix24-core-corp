@@ -338,7 +338,7 @@ class CDiskExternalLinkComponent extends DiskComponent
 				$uri = new Uri($this->request->getRequestUri());
 				$uri->deleteParams(array_merge(
 					\Bitrix\Main\HttpRequest::getSystemParameters(),
-					array('path')
+					array('path', 'pageNumber')
 				));
 				$uri->addParams(array(
 					'path' => $relativePath . '/' . $name . '/',
@@ -389,7 +389,7 @@ class CDiskExternalLinkComponent extends DiskComponent
 			}
 			else
 			{
-				$attr = Ui\ExternalLinkAttributes::buildByFileId($object->getFileId(), new Uri($exportData['OPEN_URL']))
+				$attr = Ui\ExternalLinkAttributes::tryBuildByFileId($object->getFileId(), new Uri($exportData['OPEN_URL']))
 					->setTitle($object->getName())
 					->setGroupBy($this->componentId)
 				;

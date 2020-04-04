@@ -75,14 +75,15 @@ class ImConnectorConnectorSettings extends \CBitrixComponent
 		}
 
 		$configManager = new \Bitrix\ImOpenLines\Config();
-		$result = $configManager->getList(Array(
-			'select' => Array(
+		$result = $configManager->getList([
+			'select' => [
 				'ID',
 				'NAME' => 'LINE_NAME',
 				'IS_LINE_ACTIVE' => 'ACTIVE'
-			),
-			'filter' => Array('=TEMPORARY' => 'N')
-		));
+			],
+			'filter' => ['=TEMPORARY' => 'N'],
+			'order' => ['LINE_NAME']
+		]);
 		foreach ($result as $id => $config)
 		{
 			if (!is_null($limit))
@@ -231,8 +232,25 @@ class ImConnectorConnectorSettings extends \CBitrixComponent
 				{
 					$this->userPermissions = Permissions::createWithCurrentUser();
 
-					if(!empty($this->request['LINE']))
-						$this->arResult['LINE'] = $this->request['LINE'];
+					if (!empty($this->request['LINE']))
+					{
+						$configManager = new Config();
+						if ($configManager->get($this->request['LINE']))
+						{
+							$this->arResult['LINE'] = $this->request['LINE'];
+						}
+						else
+						{
+							foreach ($this->showList() as $line)
+							{
+								if (!empty($line['ID']))
+								{
+									$this->arResult['LINE'] = $line['ID'];
+									break;
+								}
+							}
+						}
+					}
 					$listComponentConnector = Connector::getListComponentConnector();
 					$this->arResult['COMPONENT'] = $listComponentConnector[$this->arResult['ID']];
 					$this->arResult['NAME'] = Connector::getNameConnectorReal($this->arResult['ID'], false);

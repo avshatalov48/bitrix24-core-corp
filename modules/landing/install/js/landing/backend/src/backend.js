@@ -1,6 +1,10 @@
-import {Uri, Cache, Loc, Reflection, Type, Http, ajax} from 'main.core';
-import type {Block, Landing, Site, Template} from './types';
+import {Uri, Cache, Loc, Reflection, Type, Http, ajax, Text} from 'main.core';
+import {Env} from 'landing.env';
+import type {Block, Landing, Site, Template, CreatePageOptions} from './types';
 
+/**
+ * @memberOf BX.Landing
+ */
 export class Backend
 {
 	static getInstance()
@@ -49,7 +53,10 @@ export class Backend
 	{
 		return this.cache.remember('controllerUrl', () => {
 			const uri = new Uri('/bitrix/tools/landing/ajax.php');
-			uri.setQueryParam('site', Loc.getMessage('SITE_ID') || undefined);
+			uri.setQueryParams({
+				site: Loc.getMessage('SITE_ID') || undefined,
+				type: this.getSitesType(),
+			});
 			return uri.toString();
 		});
 	}
@@ -94,23 +101,7 @@ export class Backend
 	getSitesType(): 'PAGE' | 'STORE'
 	{
 		return this.cache.remember('siteType', () => {
-			const landing = Reflection.getClass('BX.Landing.Main');
-
-			if (landing)
-			{
-				const instance = landing.getInstance();
-
-				if (
-					Type.isPlainObject(instance.options)
-					&& Type.isPlainObject(instance.options.params)
-					&& Type.isString(instance.options.params.type)
-				)
-				{
-					return instance.options.params.type;
-				}
-			}
-
-			return 'PAGE';
+			return Env.getInstance().getType();
 		});
 	}
 
@@ -250,7 +241,7 @@ export class Backend
 				url: uri.toString(),
 				data: formData,
 			})
-			.then(response => response.result)
+			.then((response) => response.result)
 			.catch((err) => {
 				const error = Type.isString(err) ? {type: 'error'} : err;
 				error.action = 'Block::uploadFile';
@@ -270,14 +261,14 @@ export class Backend
 						filter: {TYPE: this.getSitesType(), ...filter},
 					},
 				})
-				.then(response => response);
+				.then((response) => response);
 		});
 	}
 
 	getLandings({siteId = []}: {siteId?: number | Array<number>} = {}): Promise<Array<Landing>>
 	{
 		const ids = Type.isArray(siteId) ? siteId : [siteId];
-		const getBathItem = id => ({
+		const getBathItem = (id) => ({
 			action: 'Landing::getList',
 			data: {
 				params: {
@@ -295,14 +286,14 @@ export class Backend
 		};
 
 		return this.cache.remember(`landings+${JSON.stringify(ids)}`, () => {
-			if (ids.filter(id => !Type.isNil(id)).length === 0)
+			if (ids.filter((id) => !Type.isNil(id)).length === 0)
 			{
 				return this.getSites()
 					.then((sites) => {
-						const data = sites.map(site => getBathItem(site.ID));
+						const data = sites.map((site) => getBathItem(site.ID));
 						return this.batch('Landing::getList', data);
 					})
-					.then(response => prepareResponse(response))
+					.then((response) => prepareResponse(response))
 					.then((response) => {
 						response.forEach((landing) => {
 							this.cache.set(`landing+${landing.ID}`, Promise.resolve(landing));
@@ -310,9 +301,9 @@ export class Backend
 					});
 			}
 
-			const data = ids.map(id => getBathItem(id));
+			const data = ids.map((id) => getBathItem(id));
 			return this.batch('Landing::getList', data)
-				.then(response => prepareResponse(response))
+				.then((response) => prepareResponse(response))
 				.then((response) => {
 					response.forEach((landing) => {
 						this.cache.set(`landing+${landing.ID}`, Promise.resolve(landing));
@@ -381,14 +372,45 @@ export class Backend
 		return this.cache.remember(`templates+${JSON.stringify(filter)}`, () => {
 			return this
 				.action('Demos::getPageList', {type, filter})
-				.then(response => Object.values(response));
+				.then((response) => Object.values(response));
 		});
 	}
 
-	getDynamicTemplates(): Promise<Array<Template>>
+	getDynamicTemplates(sourceId: string = ''): Promise<Array<Template>>
 	{
-		return this.cache.remember('dynamicTemplates', () => {
-			return this.getTemplates({filter: {section: 'dynamic'}});
+		return this.cache.remember(`dynamicTemplates:${sourceId}`, () => {
+			return this.getTemplates({filter: {section: `dynamic${sourceId ? `:${sourceId}` : ''}`}});
 		});
+	}
+
+	createPage(options: CreatePageOptions = {})
+	{
+		const {
+			title,
+			siteId = Env.getInstance().getOptions().site_id,
+			code = Text.getRandom(16),
+			blockId,
+			menuCode,
+			folderId,
+		} = options;
+
+		const fields = {
+			TITLE: title,
+			SITE_ID: siteId,
+			CODE: code,
+		};
+
+		if (Type.isNumber(blockId) && Type.isString(menuCode))
+		{
+			fields.BLOCK_ID = blockId;
+			fields.MENU_CODE = menuCode;
+		}
+
+		if (Type.isNumber(folderId))
+		{
+			fields.FOLDER_ID = folderId;
+		}
+
+		return this.action('Landing::add', {fields});
 	}
 }

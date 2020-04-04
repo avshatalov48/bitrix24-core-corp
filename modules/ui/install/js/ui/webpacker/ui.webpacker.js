@@ -462,7 +462,7 @@
 					});
 				}
 			}
-			else if (window.ga)
+			else if (typeof window.ga === 'function' && window.ga.getAll)
 			{
 				var isGaExists = window.ga.getAll().filter(function(tracker){
 					return tracker.get('trackingId') == item.gaId

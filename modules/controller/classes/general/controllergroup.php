@@ -56,7 +56,7 @@ class CControllerGroup
 			return false;
 
 		unset($arFields["TIMESTAMP_X"]);
-		unset($arFields["~TIMESTAMP_X"]);
+		$arFields["~TIMESTAMP_X"] = $DB->CurrentTimeFunction();
 
 		$ID = $DB->Add("b_controller_group", $arFields, array("DESCRIPTION", "INSTALL_INFO", "UNINSTALL_INFO", "INSTALL_PHP", "UNINSTALL_PHP"));
 
@@ -146,9 +146,8 @@ class CControllerGroup
 			$GLOBALS["APPLICATION"]->ThrowException($e);
 			return false;
 		}
-		$dbres = $DB->Query("SELECT COUNT('x') as C FROM b_controller_member WHERE CONTROLLER_GROUP_ID=".$ID);
-		$arres = $dbres->Fetch();
-		if ($arres["C"] > 0)
+		$dbres = $DB->Query("SELECT 1 FROM b_controller_member WHERE CONTROLLER_GROUP_ID=".$ID." limit 1");
+		if ($dbres->Fetch())
 		{
 			$e = new CApplicationException(GetMessage("CTRLR_GRP_DEL_ERR"));
 			$GLOBALS["APPLICATION"]->ThrowException($e);

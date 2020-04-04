@@ -13,12 +13,12 @@ use Bitrix\Sale\PaySystem;
 use Bitrix\Sale\Services\Company;
 use Bitrix\Sale\Services\PaySystem\Restrictions;
 use Bitrix\Sale\Internals\CompanyTable;
-use Bitrix\Sale\Order;
 use Bitrix\Main\Page\Asset;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Type\Date;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Sale\Result;
+use Bitrix\Sale;
 use Bitrix\Main;
 use Bitrix\Sale\UserMessageException;
 
@@ -37,6 +37,10 @@ class OrderPayment
 		global $USER, $APPLICATION;
 		static $users = array();
 		static $userCompanyList = array();
+
+		$registry = Sale\Registry::getInstance(Sale\Registry::REGISTRY_TYPE_ORDER);
+		/** @var Sale\Order $orderClass */
+		$orderClass = $registry->getOrderClassName();
 
 		if (is_null(self::$order))
 			self::$order = $item->getCollection()->getOrder();
@@ -63,7 +67,7 @@ class OrderPayment
 		$fields['PERSON_TYPE_ID'] = self::$order->getPersonTypeId();
 		$fields['SITE_ID'] = self::$order->getSiteId();
 		$fields['STATUS_ID'] = self::$order->getField('STATUS_ID');
-		$fields['ORDER_LOCKED'] = Order::isLocked($fields['ORDER_ID']);
+		$fields['ORDER_LOCKED'] = $orderClass::isLocked($fields['ORDER_ID']);
 
 		$saleModulePermissions = $APPLICATION->GetGroupRight("sale");
 
@@ -985,6 +989,8 @@ class OrderPayment
 		$lang = Main\Application::getInstance()->getContext()->getLanguage();
 		$paidString = ($data['PAID'] == 'Y') ? 'YES' : 'NO';
 
+		$registry = Sale\Registry::getInstance(Sale\Registry::REGISTRY_TYPE_ORDER);
+
 		$isUserResponsible = null;
 		$isAllowCompany = null;
 
@@ -998,10 +1004,13 @@ class OrderPayment
 			$isAllowCompany = $data['IS_ALLOW_COMPANY'];
 		}
 
-		$allowedOrderStatusesPayment = OrderStatus::getStatusesUserCanDoOperations($USER->GetID(), array('payment'));
+		/** @var Sale\OrderStatus $orderStatusClass */
+		$orderStatusClass = $registry->getOrderStatusClassName();
+
+		$allowedOrderStatusesPayment = $orderStatusClass::getStatusesUserCanDoOperations($USER->GetID(), array('payment'));
 		$isAllowPayment = in_array($data["STATUS_ID"], $allowedOrderStatusesPayment);
 
-		$isActive = ($form != 'edit' && $form != 'archive') && !Order::isLocked($data['ORDER_ID']) && $isAllowPayment;
+		$isActive = ($form != 'edit' && $form != 'archive') && !$data['ORDER_LOCKED'] && $isAllowPayment;
 		$triangle = ($isActive) ? '<span class="triangle"> &#9662;</span>' : '';
 
 		if ($data['PAID'] == 'Y')
@@ -1180,7 +1189,7 @@ class OrderPayment
 	}
 
 	/**
-	 * @param Order $order
+	 * @param Sale\Order $order
 	 * @param $payments
 	 * @param bool $canSetPaid
 	 * @return Result
@@ -1188,7 +1197,7 @@ class OrderPayment
 	 * @throws Main\ObjectNotFoundException
 	 * @throws UserMessageException
 	 */
-	public static function updateData(Order &$order, $payments, $canSetPaid = false)
+	public static function updateData(Sale\Order &$order, $payments, $canSetPaid = false)
 	{
 		global $USER, $APPLICATION;
 

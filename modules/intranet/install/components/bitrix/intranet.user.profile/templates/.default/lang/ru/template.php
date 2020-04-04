@@ -12,6 +12,7 @@ $MESS["INTRANET_USER_PROFILE_BLOG_GRAT_TITLE"] = "Благодарности";
 $MESS["INTRANET_USER_PROFILE_BLOG_GRAT_ADD"] = "Поблагодарить";
 $MESS["INTRANET_USER_PROFILE_MORE"] = "Показать еще #NUM#";
 $MESS["INTRANET_USER_PROFILE_extranet"] = "Экстранет";
+$MESS["INTRANET_USER_PROFILE_visitor"] = "Посетитель";
 $MESS["INTRANET_USER_PROFILE_fired"] = "Уволен";
 $MESS["INTRANET_USER_PROFILE_invited"] = "Приглашен";
 $MESS["INTRANET_USER_PROFILE_integrator"] = "Интегратор";
@@ -105,4 +106,6 @@ $MESS["INTRANET_USER_PROFILE_STRESSLEVEL_NORESULT_INDICATOR_TEXT"] = "стрес
 $MESS["INTRANET_USER_PROFILE_STRESSLEVEL_RESULT_HINT_VISIBLE"] = "Показатель уровня вашего стресса доступен для просмотра другими пользователями.";
 $MESS["INTRANET_USER_PROFILE_STRESSLEVEL_RESULT_HINT_INVISIBLE"] = "Показатель уровня вашего стресса не доступен для просмотра другими пользователями.";
 $MESS["INTRANET_USER_PROFILE_STRESSLEVEL_RESULT_SHARE_LINK"] = "копировать в буфер";
+$MESS["INTRANET_USER_PROFILE_DISK_SPACE"] = "объем - #VALUE#";
+$MESS["INTRANET_USER_PROFILE_DISK_INSTALLED"] = "Установлен Битрикс24.Диск";
 ?>

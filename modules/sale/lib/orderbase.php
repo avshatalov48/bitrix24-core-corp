@@ -1637,7 +1637,7 @@ abstract class OrderBase extends Internals\Entity
 			{
 				$this->setField('DATE_MARKED', new Type\DateTime());
 
-				if ($USER->isAuthorized())
+				if (is_object($USER) && $USER->isAuthorized())
 				{
 					$this->setField('EMP_MARKED_ID', $USER->getID());
 				}

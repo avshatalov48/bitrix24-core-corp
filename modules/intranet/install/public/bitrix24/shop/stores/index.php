@@ -21,6 +21,7 @@ $APPLICATION->IncludeComponent(
 		"SEF_MODE" => "Y",
 		"COMPONENT_TEMPLATE" => ".default",
 		"TYPE" => "STORE",
+		"EDIT_FULL_PUBLICATION" => "Y",
 		"SEF_URL_TEMPLATES" => array(
 			"sites" => "",
 			"site_show" => "site/#site_show#/",

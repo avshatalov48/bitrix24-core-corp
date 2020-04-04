@@ -23,6 +23,14 @@ class Filter
 	}
 
 	/**
+	 * @return string
+	 */
+	public function getFilterId(): string
+	{
+		return $this->filterId;
+	}
+
+	/**
 	 * @return array
 	 */
 	public function getFilterParameters()
@@ -73,5 +81,10 @@ class Filter
 				'default' => true,
 			),
 		);
+	}
+
+	public function getStringList()
+	{
+		return [];
 	}
 }

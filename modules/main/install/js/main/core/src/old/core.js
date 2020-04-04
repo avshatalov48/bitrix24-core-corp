@@ -1090,127 +1090,6 @@
 			e.cancelBubble = true;
 	};
 
-	/* custom events */
-	/*
-		BX.addCustomEvent(eventObject, eventName, eventHandler) - set custom event handler for particular object
-		BX.addCustomEvent(eventName, eventHandler) - set custom event handler for all objects
-	*/
-
-	BX.addCustomEvent = function(eventObject, eventName, eventHandler)
-	{
-		/* shift parameters for short version */
-		if (BX.type.isString(eventObject))
-		{
-			eventHandler = eventName;
-			eventName = eventObject;
-			eventObject = window;
-		}
-
-		if (!BX.type.isFunction(eventHandler) || !BX.type.isNotEmptyString(eventName) || !BX.type.isMapKey(eventObject))
-		{
-			return;
-		}
-
-		eventName = eventName.toLowerCase();
-
-		var events = customEvents.get(eventObject) || {};
-		events[eventName] = BX.type.isArray(events[eventName]) ? events[eventName] : [];
-		eventHandler["__bxSort"] = ++customEventsCnt;
-
-		events[eventName].push(eventHandler);
-		customEvents.set(eventObject, events);
-	};
-
-	BX.removeCustomEvent = function(eventObject, eventName, eventHandler)
-	{
-		/* shift parameters for short version */
-		if (BX.type.isString(eventObject))
-		{
-			eventHandler = eventName;
-			eventName = eventObject;
-			eventObject = window;
-		}
-
-		eventName = eventName.toLowerCase();
-
-		var events = customEvents.get(eventObject);
-		if (events && BX.type.isArray(events[eventName]))
-		{
-			for (var i = events[eventName].length - 1; i >= 0; i--)
-			{
-				if (events[eventName][i] === eventHandler)
-				{
-					events[eventName].splice(i, 1);
-				}
-			}
-		}
-	};
-
-	BX.removeAllCustomEvents = function(eventObject, eventName)
-	{
-		/* shift parameters for short version */
-		if (BX.type.isString(eventObject))
-		{
-			eventName = eventObject;
-			eventObject = window;
-		}
-
-		eventName = eventName.toLowerCase();
-
-		var events = customEvents.get(eventObject);
-		if (events)
-		{
-			delete events[eventName];
-		}
-	};
-
-	// Warning! Don't use secureParams with DOM nodes in eventParams
-	BX.onCustomEvent = function(eventObject, eventName, eventParams, secureParams)
-	{
-		/* shift parameters for short version */
-		if (BX.type.isString(eventObject))
-		{
-			secureParams = eventParams;
-			eventParams = eventName;
-			eventName = eventObject;
-			eventObject = window;
-		}
-
-		if (!eventParams)
-		{
-			eventParams = [];
-		}
-
-		eventName = eventName.toLowerCase();
-
-		var globalEvents = customEvents.get(window);
-		var globalHandlers = globalEvents && BX.type.isArray(globalEvents[eventName]) ? globalEvents[eventName] : [];
-		var objectHandlers = [];
-
-		if (eventObject !== window && BX.type.isMapKey(eventObject))
-		{
-			var objectEvents = customEvents.get(eventObject);
-			if (objectEvents && BX.type.isArray(objectEvents[eventName]))
-			{
-				objectHandlers = objectEvents[eventName];
-			}
-		}
-
-		var handlers = globalHandlers.concat(objectHandlers);
-
-		handlers.sort(function(a, b) {
-			return a["__bxSort"] - b["__bxSort"];
-		});
-
-		handlers.forEach(function(handler) {
-			//A previous handler could remove a current handler.
-			if (globalHandlers.indexOf(handler) !== -1 || objectHandlers.indexOf(handler) !== -1)
-			{
-				handler.apply(eventObject, secureParams === true ? BX.clone(eventParams) : eventParams);
-			}
-		});
-	};
-
 	BX.bindDebouncedChange = function(node, fn, fnInstant, timeout, ctx)
 	{
 		ctx = ctx || window;
@@ -3468,10 +3347,26 @@
 			BX.bind(this.PARENT, 'mouseover', BX.proxy(this.Show, this));
 			BX.bind(this.PARENT, 'mouseout', BX.proxy(this.Hide, this));
 		}
-
-		BX.addCustomEvent('onMenuOpen', BX.delegate(this.disable, this));
-		BX.addCustomEvent('onMenuClose', BX.delegate(this.enable, this));
 	};
+
+	BX.CHint.openHints = new Set();
+
+	BX.CHint.globalDisabled = false;
+
+	BX.CHint.handleMenuOpen = function() {
+		BX.CHint.globalDisabled = true;
+
+		BX.CHint.openHints.forEach(function(hint) {
+			hint.__hide_immediately();
+		});
+	};
+
+	BX.CHint.handleMenuClose = function() {
+		BX.CHint.globalDisabled = false;
+	};
+
+	BX.addCustomEvent('onMenuOpen', BX.CHint.handleMenuOpen);
+	BX.addCustomEvent('onMenuClose', BX.CHint.handleMenuClose);
 
 	BX.CHint.prototype.defaultSettings = {
 		show_timeout: 1000,
@@ -3547,13 +3442,15 @@
 
 	BX.CHint.prototype.__show = function()
 	{
-		if (!this.msover || this.disabled) return;
+		if (!this.msover || this.disabled || BX.CHint.globalDisabled) return;
 		if (!this.bInited) this.Init();
 
 		if (this.prepareAdjustPos())
 		{
 			this.DIV.style.display = 'block';
 			this.adjustPos();
+
+			BX.CHint.openHints.add(this);
 
 			BX.bind(window, 'scroll', BX.proxy(this.__onscroll, this));
 
@@ -3586,6 +3483,8 @@
 		if (!this.bInited) return;
 
 		BX.unbind(window, 'scroll', BX.proxy(this.Reopen, this));
+
+		BX.CHint.openHints.delete(this);
 
 		if (this.PARAMS.showOnce)
 		{

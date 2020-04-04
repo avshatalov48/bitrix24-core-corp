@@ -2,10 +2,11 @@
 
 namespace Bitrix\Crm\Integration\Report\View;
 
+use Bitrix\Crm\Integration\Report\Handler\SalesDynamics\BaseGraph;
+use Bitrix\Main\Type\Date;
+use Bitrix\Report\VisualConstructor\Views\JsComponent\AmChart\Serial;
 
-use Bitrix\Report\VisualConstructor\Views\JsComponent\AmChart\LinearGraph;
-
-class ComparePeriods extends LinearGraph
+class ComparePeriods extends Serial
 {
 	const VIEW_KEY = 'crm_analytics_compare_periods';
 	const USE_IN_VISUAL_CONSTRUCTOR = false;
@@ -19,46 +20,146 @@ class ComparePeriods extends LinearGraph
 
 	public function handlerFinallyBeforePassToView($dataFromReport)
 	{
-		$result = parent::handlerFinallyBeforePassToView($dataFromReport);
+		//return parent::handlerFinallyBeforePassToView($dataFromReport);
+		$baseCurrency = \CCrmCurrency::GetAccountCurrencyID();
+		$totalAmountCurrent = 0;
+		$totalAmountPrev = 0;
 
-		if (!empty($dataFromReport[0]['config']['dataDateFormat']))
+		$result = [
+			'type' => $this->getAmChartType(),
+			'theme' => 'none',
+			'language' => 'ru',
+			'pathToImages' => self::AM_CHART_LIB_PATH.'/images/',
+			'zoomOutText' => 'AM_CHART_SHOW_ALL_BUTTON_TEXT',
+			'dataProvider' => [],
+			'dataDateFormat' => 'YYYY-MM-DD',
+			'valueAxes' => [
+				[
+					'integersOnly' => true,
+					'reversed' => false,
+					'axisAlpha' => 0,
+					'position' => 'left'
+				]
+			],
+			'startDuration' => 0.5,
+			'graphs' => [],
+			'categoryField' => 'groupingField',
+			'categoryAxis' => [
+				'axisAlpha' => 0,
+				'fillAlpha' => 0.05,
+				'gridAlpha' => 0,
+				'position' => 'bottom',
+				'dashLength' => 1,
+				'minorGridEnabled' => true
+			],
+			'export' => [
+				'enabled' => true,
+				'position' => 'bottom-right'
+			],
+			'legend' => [
+				'useGraphSettings' => true,
+				'equalWidths' => false,
+				'position' => "bottom",
+				'valueText' => '',
+			],
+			'chartCursor' => [
+				'enabled' => true,
+				'oneBalloonOnly' => true,
+				'categoryBalloonEnabled' => true,
+				'categoryBalloonColor' => "#000000",
+				'cursorAlpha' => 1,
+				'zoomable' => true,
+			],
+		];
+
+		$currentPeriod = $dataFromReport[0];
+		$previousPeriod = $dataFromReport[1];
+
+		$maxPoints = max(count($currentPeriod['items']), count($previousPeriod['items']));
+
+		if ($maxPoints == 0)
 		{
-			$result['dataDateFormat'] = $dataFromReport[0]['config']['dataDateFormat'];
+			return $result;
+		}
 
-			if ($dataFromReport[0]['config']['dataDateFormat'] === 'DD')
+		$dateFormatForLabel = $currentPeriod['config']['dateFormatForLabel'];
+
+		for ($i = 0; $i < $maxPoints; $i++)
+		{
+			$dateCurrent = $currentPeriod['items'][$i] ? new Date($currentPeriod['items'][$i]['groupBy'], BaseGraph::DATE_INDEX_FORMAT) : null;
+			$datePrev = $previousPeriod['items'][$i] ? new Date($previousPeriod['items'][$i]['groupBy'], BaseGraph::DATE_INDEX_FORMAT) : null;
+
+			$formattedDateCurrent = $dateCurrent ? FormatDate($dateFormatForLabel, $dateCurrent) : "-";
+			$formattedDatePrev = $datePrev ? FormatDate($dateFormatForLabel, $datePrev) : "-";
+			$result['dataProvider'][$i] = [
+				'groupingField' => $formattedDateCurrent.'<br>'.$formattedDatePrev,
+				'balloon' => [
+					'dateCurrent' => $formattedDateCurrent,
+					'datePrev' => $formattedDatePrev,
+				]
+			];
+			if (isset($currentPeriod['items'][$i]))
 			{
-				$result['categoryAxis']['dateFormats'] = [
-					['period' => 'DD', 'format' => 'DD'],
-					['period' => 'MM', 'format' => ''],
-				];
+				$result['dataProvider'][$i]['value_1'] = $currentPeriod['items'][$i]['value'];
+				$result['dataProvider'][$i]['targetUrl_1'] = $currentPeriod['items'][$i]['targetUrl'];
+				$result['dataProvider'][$i]['balloon']['amountCurrent'] = $currentPeriod['items'][$i]['value'];
+				$result['dataProvider'][$i]['balloon']['amountCurrentFormatted'] = \CCrmCurrency::MoneyToString($currentPeriod['items'][$i]['value'], $baseCurrency);
+
+				$totalAmountCurrent += $currentPeriod['items'][$i]['value'];
 			}
-			elseif ($dataFromReport[0]['config']['dataDateFormat'] === 'MM')
+			if (isset($previousPeriod['items'][$i]))
 			{
-				$result['categoryAxis']['minPeriod'] = 'MM';
-				$result['categoryAxis']['dateFormats'] = [
-					['period' => 'MM', 'format' => 'MMM'],
-					['period' => 'YYYY', 'format' => ''],
-				];
+				$result['dataProvider'][$i]['value_2'] = $previousPeriod['items'][$i]['value'];
+				$result['dataProvider'][$i]['targetUrl_2'] = $previousPeriod['items'][$i]['targetUrl'];
+				$result['dataProvider'][$i]['balloon']['amountPrev'] = $previousPeriod['items'][$i]['value'];
+				$result['dataProvider'][$i]['balloon']['amountPrevFormatted'] = \CCrmCurrency::MoneyToString($previousPeriod['items'][$i]['value'], $baseCurrency);
+
+				$totalAmountPrev += $previousPeriod['items'][$i]['value'];
 			}
-
 		}
 
+		$totalAmountCurrentFormatted = \CCrmCurrency::MoneyToString($totalAmountCurrent, $baseCurrency);
+		$totalAmountCurrentFormatted = str_replace("&nbsp;", " ", $totalAmountCurrentFormatted);
+		$totalAmountPrevFormatted = \CCrmCurrency::MoneyToString($totalAmountPrev, $baseCurrency);
+		$totalAmountPrevFormatted = str_replace("&nbsp;", " ", $totalAmountPrevFormatted);
 
-		if (!empty($dataFromReport[0]['config']['chartCursor']['categoryBalloonDateFormat']))
-		{
-			$result['chartCursor']['categoryBalloonDateFormat'] = $dataFromReport[0]['config']['chartCursor']['categoryBalloonDateFormat'];
-		}
 
+		$graph = [
+			"bullet" => "round",
+			//"labelText" => "[[value]]",
+			"title" => $currentPeriod['config']['reportTitle']." (".$totalAmountCurrentFormatted.")",
+			"fillColors" => $currentPeriod['config']['reportColor'],
+			"lineColor" => $currentPeriod['config']['reportColor'],
+			"valueField" => 'value_1',
+			"descriptionField" => 'label_1',
+			"fillAlphas" => 0,
+			"type" => "line",
+			"balloonFunction" => "BX.Crm.Report.Dashboard.Content.SalesComparePeriods.renderBalloon",
+			"balloon" => [
+				"borderThickness" => 0,
+			],
+		];
+		$result['graphs'][] = $graph;
 
-		if (!empty($dataFromReport[0]['config']['categoryAxis']['labelFrequency']))
-		{
-			$result['categoryAxis']['labelFrequency'] = $dataFromReport[0]['config']['categoryAxis']['labelFrequency'];
-		}
+		$graph = [
+			"bullet" => "round",
+			//"labelText" => "[[value]]",
+			"title" => $previousPeriod['config']['reportTitle']." (".$totalAmountPrevFormatted.")",
+			"fillColors" => $previousPeriod['config']['reportColor'],
+			"lineColor" => $previousPeriod['config']['reportColor'],
+			"valueField" => 'value_2',
+			"descriptionField" => 'label_2',
+			"fillAlphas" => 0,
+			"balloonFunction" => "BX.Crm.Report.Dashboard.Content.SalesComparePeriods.renderBalloon",
+			"balloon" => [
+				"borderThickness" => 0,
+			],
+		];
+		$result['graphs'][] = $graph;
 
-		foreach ($result['graphs'] as $i => &$graph)
-		{
-			$graph['balloonText'] .=  ' ([[description]])';
-		}
+		$result['categoryAxis']['autoGridCount'] = true;
+		$result['categoryAxis']['minHorizontalGap'] = 0;
+		$result['categoryAxis']['labelFrequency'] = ceil(count($result['dataProvider']) / 10);
 
 		return $result;
 	}

@@ -397,16 +397,16 @@
 		removeItemsRelativeCurrent: function(node)
 		{
 			var element = node;
-			var relative = node.id;
+			var relative = [node.id];
 			var result = [];
 			var dataRelative;
 
 			while (element) {
 				dataRelative = BX.data(element, 'relative');
 
-				if (dataRelative === relative || dataRelative === node.id)
+				if (relative.includes(dataRelative))
 				{
-					relative = element.id;
+					relative.push(element.id);
 					result.push(element);
 				}
 

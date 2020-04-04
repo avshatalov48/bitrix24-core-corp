@@ -2,23 +2,22 @@
 namespace Bitrix\Timeman\Form\Schedule;
 
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Timeman\Helper\TimeHelper;
 use Bitrix\Timeman\Model\Schedule\Schedule;
 
 use Bitrix\Timeman\Helper\Form\Schedule\ScheduleFormHelper;
 use Bitrix\Timeman\Model\Schedule\ScheduleTable;
 use Bitrix\Timeman\Util\Form\CompositeForm;
 use Bitrix\Timeman\Util\Form\Filter;
-use Bitrix\Timeman\Util\Form\FormError;
+
+Loc::loadMessages(__FILE__);
 
 /**
  * @property ShiftForm[] $shiftForms
  * @property CalendarForm calendarForm
  * @property ViolationForm violationForm
+ * @property WorktimeRestrictionsForm restrictionsForm
  * @method getShiftForm
  */
-Loc::loadMessages(__FILE__);
-
 class ScheduleForm extends CompositeForm
 {
 	public $id;
@@ -28,7 +27,6 @@ class ScheduleForm extends CompositeForm
 	public $reportPeriod;
 	public $reportPeriodStartWeekDay;
 	public $controlledActions;
-	public $worktimeRestrictions;
 
 	public $allowedDevices = [];
 
@@ -56,19 +54,18 @@ class ScheduleForm extends CompositeForm
 			'shiftForms' => ShiftForm::class,
 			'calendarForm' => CalendarForm::class,
 			'violationForm' => ViolationForm::class,
+			'restrictionsForm' => WorktimeRestrictionsForm::class,
 		];
 	}
 
 	public function __construct($schedule = null)
 	{
-		$this->violationForm = new ViolationForm((new ViolationFormParams)
-			->setScheduleForm($this)
-			->setSchedule($schedule));
-
 		if (!($schedule instanceof Schedule))
 		{
 			$this->shiftForms = [new ShiftForm()];
 			$this->calendarForm = new CalendarForm();
+			$this->restrictionsForm = new WorktimeRestrictionsForm();
+			$this->violationForm = new ViolationForm();
 			return;
 		}
 		$this->schedule = $schedule;
@@ -124,7 +121,9 @@ class ScheduleForm extends CompositeForm
 			$this->shiftForms = $shiftForms;
 		}
 
+		$this->restrictionsForm = new WorktimeRestrictionsForm($schedule);
 		$this->calendarForm = new CalendarForm($schedule->getCalendar());
+		$this->violationForm = new ViolationForm($schedule->obtainScheduleViolationRules());
 	}
 
 	public function deleteDuplicatedAssignments()
@@ -335,31 +334,7 @@ class ScheduleForm extends CompositeForm
 				->configureRange(ScheduleFormHelper::getScheduleTypesValues())
 				->configureStrict(true)
 			,
-			(new Filter\Validator\EachValidator('assignments', 'assignmentsExcluded', 'worktimeRestrictions'))
-			,
-			(new Filter\Validator\CallbackValidator('worktimeRestrictions'))
-				->configureCallback(function ($values) {
-					return array_filter($values, function ($value, $key) {
-						return in_array($key, ScheduleTable::getWorktimeRestrictionsKeys(), true);
-					}, ARRAY_FILTER_USE_BOTH);
-				})
-			,
-			(new Filter\Modifier\CallbackModifier('worktimeRestrictions'))
-				->configureCallback(function ($values) {
-					foreach ($values as $key => $value)
-					{
-						if (in_array($key, [
-							ScheduleTable::WORKTIME_RESTRICTION_ALLOWED_TO_REOPEN_RECORD,
-							ScheduleTable::WORKTIME_RESTRICTION_ALLOWED_TO_EDIT_RECORD,
-						], true))
-						{
-							$values[$key] = $value === 'on' || $value === true ? true : false;
-						}
-					}
-					return $values;
-				})
-				->configureSkipOnError(true)
-				->configureSkipOnArray(false)
+			(new Filter\Validator\EachValidator('assignments', 'assignmentsExcluded'))
 			,
 			(new Filter\Validator\EachValidator('allowedDevices'))
 				->configureValidator(

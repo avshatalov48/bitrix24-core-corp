@@ -60,6 +60,24 @@ class CBPPropertyVariableCondition
 		return sizeof($result) > 0 ? true : false;
 	}
 
+	public function collectUsages(CBPActivity $ownerActivity)
+	{
+		$usages = [];
+		$rootActivity = $ownerActivity->GetRootActivity();
+		foreach ($this->condition as $cond)
+		{
+			if ($rootActivity->IsPropertyExists($cond[0]))
+			{
+				$usages[] = [\Bitrix\Bizproc\Workflow\Template\SourceType::Parameter, $cond[0]];
+			}
+			elseif ($rootActivity->IsVariableExists($cond[0]))
+			{
+				$usages[] = [\Bitrix\Bizproc\Workflow\Template\SourceType::Variable, $cond[0]];
+			}
+		}
+		return $usages;
+	}
+
 	/**
 	 * @param $field
 	 * @param $operation

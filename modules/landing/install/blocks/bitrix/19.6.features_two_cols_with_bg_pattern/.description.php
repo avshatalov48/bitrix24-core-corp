@@ -37,7 +37,7 @@ return array(
 		'.landing-block-node-card-img' => array(
 			'name' => Loc::getMessage('LANDING_BLOCK_19.6.FEATURES_TWO_COLS_WITH_BG_PATTERN_NODES_LANDINGBLOCKNODECARDIMG2'),
 			'type' => 'img',
-			'dimensions' => array('width' => 169, 'height' => 169),
+			'dimensions' => array('width' => 175),
 		),
 	),
 	'style' => array(

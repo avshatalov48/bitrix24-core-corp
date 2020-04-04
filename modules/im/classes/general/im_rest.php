@@ -44,6 +44,7 @@ class CIMRestService extends IRestService
 				'im.chat.mute' => array(__CLASS__, 'chatMute'),
 				'im.chat.parent.join' => array(__CLASS__, 'chatParentJoin'),
 
+				'im.dialog.get' => array(__CLASS__, 'dialogGet'),
 				'im.dialog.messages.get' => array(__CLASS__, 'dialogMessagesGet'),
 				'im.dialog.users.get' => array(__CLASS__, 'dialogUsersGet'),
 				'im.dialog.read' => array(__CLASS__, 'dialogRead'),
@@ -88,6 +89,8 @@ class CIMRestService extends IRestService
 				'imbot.register' => array(__CLASS__, 'botRegister'),
 				'imbot.unregister' => array(__CLASS__, 'botUnRegister'),
 				'imbot.update' => array(__CLASS__, 'botUpdate'),
+
+				'imbot.dialog.get' => array(__CLASS__, 'dialogGet'),
 
 				'imbot.chat.add' => array(__CLASS__, 'chatCreate'),
 				'imbot.chat.get' => array(__CLASS__, 'chatGet'),
@@ -355,6 +358,33 @@ class CIMRestService extends IRestService
 	}
 
 	/* Dialog api */
+
+	public static function dialogGet($arParams, $offset, CRestServer $server)
+	{
+		$arParams = array_change_key_case($arParams, CASE_UPPER);
+
+		if (!\Bitrix\Im\Common::isDialogId($arParams['DIALOG_ID']))
+		{
+			throw new Bitrix\Rest\RestException("Dialog ID can't be empty", "DIALOG_ID_EMPTY", CRestServer::STATUS_WRONG_REQUEST);
+		}
+
+		if (!\Bitrix\Im\Dialog::hasAccess($arParams['DIALOG_ID']))
+		{
+			throw new Bitrix\Rest\RestException("You do not have access to the specified dialog", "ACCESS_ERROR", CRestServer::STATUS_FORBIDDEN);
+		}
+
+		$chatId = \Bitrix\Im\Dialog::getChatId($arParams['DIALOG_ID']);
+		if (!$chatId)
+		{
+			throw new Bitrix\Rest\RestException("You don't have access to this chat", "ACCESS_ERROR", CRestServer::STATUS_WRONG_REQUEST);
+		}
+
+		$result = \Bitrix\Im\Chat::getById($chatId, ['LOAD_READED' => true, 'JSON' => true]);
+		$result['dialog_id'] = $arParams['DIALOG_ID'];
+
+		return $result;
+
+	}
 
 	public static function dialogMessagesGet($arParams, $offset, CRestServer $server)
 	{

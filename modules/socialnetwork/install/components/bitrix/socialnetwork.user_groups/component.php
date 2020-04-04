@@ -858,14 +858,6 @@ if (StrLen($arResult["FatalError"]) <= 0)
 						$arUserGroupFilter["!=GROUP_SITE_ID"] = CExtranet::GetExtranetSiteID();
 					}
 				}
-
-				if (
-					!$arResult["CurrentUserPerms"]["IsCurrentUser"] 
-					&& !CSocNetUser::IsCurrentUserModuleAdmin()
-				)
-				{
-					$arGroupFilter["=VISIBLE"] = "Y";
-				}
 			}
 
 			if (
@@ -1176,6 +1168,7 @@ if (StrLen($arResult["FatalError"]) <= 0)
 						),
 						"NUMBER_OF_MEMBERS" => $arGroup["NUMBER_OF_MEMBERS"],
 					);
+					$CACHE_MANAGER->registerTag("sonet_user2group_G".$arGroup["ID"]);
 
 					$arGroupID[] = $arGroup["ID"];
 				}

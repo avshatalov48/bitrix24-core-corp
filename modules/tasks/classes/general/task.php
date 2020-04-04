@@ -1608,7 +1608,6 @@ class CTasks
 
 						if (isset($arFields["TAGS"]) && isset($arChanges["TAGS"]))
 						{
-							CTaskTags::DeleteByTaskID($ID);
 							CTasks::AddTags($ID, $arTask["CREATED_BY"], $arFields["TAGS"], $userID);
 						}
 
@@ -1760,7 +1759,7 @@ class CTasks
 							);
 						}
 
-						if ($arTask['FORUM_TOPIC_ID'] && $arTask['TITLE'] !== $arFields['TITLE'])
+						if ($arTask['FORUM_TOPIC_ID'] && array_key_exists('TITLE', $arFields) && $arTask['TITLE'] !== $arFields['TITLE'])
 						{
 							Integration\Forum\Task\Topic::updateTopicTitle($arTask['FORUM_TOPIC_ID'], $arFields['TITLE']);
 						}
@@ -3416,39 +3415,36 @@ class CTasks
 		return ($arSqlSearch);
 	}
 
-	public static function GetFilteredKeys($arFilter)
+	public static function GetFilteredKeys($filter)
 	{
-		$result = array();
+		$filteredKeys = [];
 
-		if (is_array($arFilter))
+		if (is_array($filter))
 		{
-			foreach ($arFilter as $key => $v)
+			foreach ($filter as $key => $value)
 			{
-				// Skip meta-key
-				if ($key === '::LOGIC')
-					continue;
-
-				// Skip markers
-				if ($key === '::MARKERS')
-					continue;
-
-				// Subfilter?
-				if (static::isSubFilterKey($key))
+				if ($key === '::LOGIC' || $key === '::MARKERS')
 				{
-					$result = array_merge($result, self::GetFilteredKeys($v));
 					continue;
 				}
 
-				$res = CTasks::MkOperationFilter($key);
-
-				if ((string)$res['FIELD'] != '')
+				if (static::isSubFilterKey($key))
 				{
-					$result[] = $res['FIELD'];
+					$filteredKeys = array_merge($filteredKeys, self::GetFilteredKeys($value));
+					continue;
+				}
+
+				$operationFilter = CTasks::MkOperationFilter($key);
+				$operationField = $operationFilter['FIELD'];
+
+				if ($operationField !== '')
+				{
+					$filteredKeys[] = strtoupper($operationField);
 				}
 			}
 		}
 
-		return array_unique($result);
+		return array_unique($filteredKeys);
 	}
 
 	public static function isSubFilterKey($key)
@@ -5633,7 +5629,7 @@ class CTasks
 	{
 		$runtimeOptions = [
 			'FIELDS' => [],
-			'FILTERS' => []
+			'FILTERS' => [],
 		];
 
 		$fields = [
@@ -5653,10 +5649,6 @@ class CTasks
 			'TAG' => true,
 			'MARK' => true,
 			'ALLOW_TIME_TRACKING' => true,
-
-			// RELATED FIELDS
-			'FULL_SEARCH_INDEX' => true,
-			'COMMENT_SEARCH_INDEX' => true,
 
 			// DATES
 			'DEADLINE' => true,
@@ -5746,36 +5738,6 @@ class CTasks
 				}
 				break;
 
-			case 'FULL_SEARCH_INDEX':
-			case 'COMMENT_SEARCH_INDEX':
-				$map = [
-					'FULL_SEARCH_INDEX' => [],
-					'COMMENT_SEARCH_INDEX' => Query::filter()->where('ref.MESSAGE_ID', '!=', 0)
-				];
-
-				$runtimeOptions['FIELDS'][$key] = new Entity\ReferenceField(
-					'TSI' . $key[0],
-					SearchIndexTable::class,
-					Join::on('ref.TASK_ID', 'this.ID')
-						->where($map[$key]),
-					['join_type' => 'inner']
-				);
-
-				$column = "TSI{$key[0]}.SEARCH_INDEX";
-				$value = current($value);
-
-				if (SearchIndexTable::isFullTextIndexEnabled())
-				{
-					$filter = Query::filter()->whereMatch($column, $value);
-				}
-				else
-				{
-					$filter = Query::filter()->whereLike(Query::expr()->upper($column), '%' . ToUpper($value) . '%');
-				}
-
-				$runtimeOptions['FILTERS'][$key] = $filter;
-				break;
-
 			case 'CREATED_BY':
 			case 'RESPONSIBLE_ID':
 			case 'GROUP_ID':
@@ -5801,7 +5763,7 @@ class CTasks
 
 			case 'ROLEID':
 			case 'PROBLEM':
-				if ($key == 'ROLEID')
+				if ($key === 'ROLEID')
 				{
 					$filterOptions = static::getFilterOptionsFromRoleField($value);
 				}
@@ -7141,51 +7103,61 @@ class CTasks
 
 	/**
 	 * Detect tags in data array.
+	 *
 	 * @param array $fields Data array.
 	 * @return array
 	 */
-	private function detectTags(array &$fields)
+	private static function detectTags(array $fields): array
 	{
-		$newTags = array();
-		$searchFields = array('TITLE', 'DESCRIPTION');
+		$tags = [];
+		$searchFields = ['TITLE', 'DESCRIPTION'];
 
 		foreach ($searchFields as $code)
 		{
-			if (
-				isset($fields[$code]) &&
-				preg_match_all('/\s#([^\s,\[\]<>]+)/is', ' ' . $fields[$code], $tags)
-			)
+			$field = $fields[$code];
+			if (isset($field) && preg_match_all('/\s#([^\s,\[\]<>]+)/is', ' '.$field, $matches))
 			{
-				$newTags = array_merge($newTags, $tags[1]);
+				$tags[] = $matches[1];
 			}
 		}
+		$tags = array_merge([], ...$tags);
 
-		return $newTags;
+		return $tags;
 	}
 
-	function AddTags($ID, $USER_ID, $arTags = array(), $effectiveUserId = null)
+	/**
+	 * @param $taskId
+	 * @param $userId
+	 * @param array $sourceTags
+	 * @param null $effectiveUserId
+	 */
+	public function AddTags($taskId, $userId, $sourceTags = [], $effectiveUserId = null): void
 	{
-		// delete previous
-		$oTag = new CTaskTags();
-		$oTag->DeleteByTaskID($ID);
+		$tagHandler = new CTaskTags();
+		$tagHandler::DeleteByTaskID($taskId);
 
-		if ($arTags)
+		if ($sourceTags)
 		{
-			if (!is_array($arTags))
-			{
-				$arTags = explode(",", $arTags);
-			}
-			$arTags = array_unique(array_map("trim", $arTags));
+			$tags = (is_array($sourceTags) ? $sourceTags : explode(',', (string)$sourceTags));
+			$tags = array_unique(array_map('trim', $tags));
+			$addedTags = [];
 
-			foreach ($arTags as $tag)
+			foreach ($tags as $tag)
 			{
-				$arTag = array(
-					"TASK_ID" => $ID,
-					"USER_ID" => $USER_ID,
-					"NAME" => $tag
-				);
-				$oTag = new CTaskTags();
-				$oTag->Add($arTag, $effectiveUserId);
+				if (in_array(strtolower($tag), $addedTags, true))
+				{
+					continue;
+				}
+
+				$tagFields = [
+					'TASK_ID' => $taskId,
+					'USER_ID' => $userId,
+					'NAME' => $tag,
+				];
+				$tagHandler = new CTaskTags();
+				$tagHandler->Add($tagFields, $effectiveUserId);
+
+				$addedTags[] = strtolower($tag);
 			}
 		}
 	}

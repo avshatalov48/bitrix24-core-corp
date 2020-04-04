@@ -1154,6 +1154,7 @@ $APPLICATION->IncludeComponent(
 					entityTypeId: <?=CCrmOwnerType::Deal?>,
 					container: "batchActionWrapper",
 					stateTemplate: "<?=GetMessageJS('CRM_DEAL_STEPWISE_STATE_TEMPLATE')?>",
+					mergerUrl: "<?=htmlspecialcharsbx($arParams['PATH_TO_DEAL_MERGE'])?>",
 					messages:
 						{
 							title: "<?=GetMessageJS('CRM_DEAL_LIST_MERGE_PROC_DLG_TITLE')?>",

@@ -46,21 +46,21 @@
 		{
 			console.log('openTaskListComponentByGroupId');
 
-			const siteDir = env.siteDir;
+			const {siteDir, siteId, languageId} = env;
+			const componentData = data || {};
 
-			data = data || {};
-			data.params = {
+			componentData.params = {
 				COMPONENT_CODE: 'tasks.list',
 				GROUP_ID: groupId,
-				SITE_ID: env.siteId,
-				LANGUAGE_ID: env.languageId,
+				SITE_ID: siteId,
+				LANGUAGE_ID: languageId,
 				SITE_DIR: siteDir,
 				PATH_TO_TASK_ADD: `${siteDir}mobile/tasks/snmrouter/?routePage=#action#&TASK_ID=#taskId#`,
 			};
-			data.path = availableComponents["tasks.list"]["publicUrl"];
-			data.canOpenInDefault = true;
+			componentData.path = availableComponents['tasks.list']['publicUrl'];
+			componentData.canOpenInDefault = true;
 
-			TaskView.open(data);
+			TaskView.open(componentData);
 		}
 
 		static openTaskComponentByTaskId(taskId, data, params)
@@ -68,33 +68,37 @@
 			const guid = TaskBackgroundAction.getGuid();
 			const taskData = data || {};
 			const componentCode = 'tasks.view';
-			const {title, taskInfo} = taskData;
+			const defaultTitle = BX.message('MOBILE_TASKS_TASK_CARD_TOP_BAR_DEFAULT_TITLE');
+			const {taskInfo, publicUrl} = taskData;
 			const {userId, getTaskInfo} = params;
+			const {siteDir, languageId} = env;
 			const param = {
 				name: 'JSStackComponent',
 				componentCode,
 				canOpenInDefault: true,
-				scriptPath: taskData.publicUrl || availableComponents['tasks.view'].publicUrl,
+				scriptPath: publicUrl || availableComponents['tasks.view'].publicUrl,
 				rootWidget: {
 					name: 'taskcard',
 					settings: {
 						objectName: 'taskcard',
-						title,
+						title: defaultTitle,
 						taskInfo,
 						page: {
-							url: `${env.siteDir}mobile/tasks/snmrouter/?routePage=view&TASK_ID=${taskId}&NEW_CARD=Y&GUID=${guid}`,
-							titleParams: {text: BX.message('MOBILE_TASKS_TASK_CARD_TOP_BAR_DEFAULT_TITLE')},
+							url: `${siteDir}mobile/tasks/snmrouter/?routePage=view&TASK_ID=${taskId}&NEW_CARD=Y&GUID=${guid}`,
+							titleParams: {text: defaultTitle},
 							autoHideLoading: false,
 						},
 					},
 				},
 				params: {
+					MODE: 'view',
 					COMPONENT_CODE: componentCode,
 					USER_ID: userId || 0,
 					TASK_ID: taskId,
 					FORM_ID: 'MOBILE_TASK_VIEW',
-					GET_TASK_INFO: getTaskInfo || false,
+					LANGUAGE_ID: languageId,
 					GUID: guid,
+					GET_TASK_INFO: getTaskInfo || false,
 				},
 			};
 

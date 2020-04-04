@@ -3,13 +3,13 @@
 namespace Bitrix\Seo\LeadAds;
 
 use Bitrix\Seo\Retargeting;
-
+use Bitrix\Seo\Retargeting\IRequestDirectly;
 /**
  * Class Account
  *
  * @package Bitrix\Seo\LeadAds
  */
-abstract class Account extends Retargeting\Account
+abstract class Account extends Retargeting\Account implements IRequestDirectly
 {
 	const URL_ACCOUNT_LIST = '';
 	const URL_INFO = '';

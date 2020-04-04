@@ -536,11 +536,30 @@
 	  },
 	  methods: {
 	    getComponentForBlock: function getComponentForBlock(block) {
-	      for (var _i = 0, _AttachTypes = AttachTypes; _i < _AttachTypes.length; _i++) {
-	        var attachType = _AttachTypes[_i];
+	      var _iteratorNormalCompletion = true;
+	      var _didIteratorError = false;
+	      var _iteratorError = undefined;
 
-	        if (typeof block[attachType.property] !== 'undefined') {
-	          return attachType.name;
+	      try {
+	        for (var _iterator = AttachTypes[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+	          var attachType = _step.value;
+
+	          if (typeof block[attachType.property] !== 'undefined') {
+	            return attachType.name;
+	          }
+	        }
+	      } catch (err) {
+	        _didIteratorError = true;
+	        _iteratorError = err;
+	      } finally {
+	        try {
+	          if (!_iteratorNormalCompletion && _iterator.return != null) {
+	            _iterator.return();
+	          }
+	        } finally {
+	          if (_didIteratorError) {
+	            throw _iteratorError;
+	          }
 	        }
 	      }
 

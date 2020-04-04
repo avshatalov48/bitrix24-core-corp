@@ -23,7 +23,8 @@ class AccountFacebook extends Account implements IRequestDirectly
 			'endpoint' => 'me/adaccounts',
 			'fields' => array(
 				'fields' => 'account_id,id,name'
-			)
+			),
+			'has_pagination' => true
 		));
 	}
 

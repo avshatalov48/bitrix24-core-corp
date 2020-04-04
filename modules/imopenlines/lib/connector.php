@@ -3,6 +3,8 @@ namespace Bitrix\ImOpenLines;
 
 use \Bitrix\Main,
 	\Bitrix\ImConnector\Output,
+	\Bitrix\Main\Type\DateTime,
+	\Bitrix\ImConnector\Library,
 	\Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__FILE__);
@@ -124,7 +126,7 @@ class Connector
 			}
 			else
 			{
-				$keyboard = Array();
+				$keyboard = [];
 				if (!isset($params['message']['keyboard']['BUTTONS']))
 				{
 					$keyboard['BUTTONS'] = $params['message']['keyboard'];
@@ -171,12 +173,12 @@ class Connector
 		}
 
 		$session = new Session();
-		$result = $session->load(Array(
+		$result = $session->load([
 			'USER_CODE' => self::getUserCode($params['connector']),
 			'CONNECTOR' => $params,
 			'DEFERRED_JOIN' => 'Y',
 			'VOTE_SESSION' => $voteSession? 'Y': 'N'
-		));
+		]);
 		if (!$result)
 		{
 			return false;
@@ -246,16 +248,16 @@ class Connector
 
 			if ($customDataMessage)
 			{
-				Im::addMessage(Array(
+				Im::addMessage([
 					"TO_CHAT_ID" => $session->getData('CHAT_ID'),
 					'MESSAGE' => $customDataMessage,
 					'ATTACH' => $customDataAttach,
 					'SYSTEM' => 'Y',
 					'SKIP_COMMAND' => 'Y',
-					"PARAMS" => Array(
+					"PARAMS" => [
 						"CLASS" => "bx-messenger-content-item-system"
-					),
-				));
+					],
+				]);
 			}
 		}
 
@@ -302,6 +304,10 @@ class Connector
 
 				\Bitrix\ImOpenLines\Chat::sendRatingNotify(\Bitrix\ImOpenLines\Chat::RATING_TYPE_CLIENT, $session->getData('ID'), $voteValue, $session->getData('OPERATOR_ID'), $session->getData('USER_ID'));
 			}
+		}
+		else
+		{
+			$voteSession = false;
 		}
 
 		$event = new Main\Event('imopenlines', self::EVENT_IMOPENLINE_MESSAGE_RECEIVE, $addMessage);
@@ -369,16 +375,16 @@ class Connector
 
 		if ($addVoteResult)
 		{
-			Im::addMessage(Array(
+			Im::addMessage([
 				"TO_CHAT_ID" => $session->getData('CHAT_ID'),
 				"MESSAGE" => $addVoteResult,
 				"SYSTEM" => 'Y',
 				"IMPORTANT_CONNECTOR" => 'Y',
-				"PARAMS" => Array(
+				"PARAMS" => [
 					"CLASS" => "bx-messenger-content-item-ol-output"
-				),
+				],
 				"RECENT_ADD" => $userViewChat? 'Y': 'N'
-			));
+			]);
 		}
 
 		if(!$session->isNowCreated() && $finishSession !== true && $voteSession !== true)
@@ -386,10 +392,17 @@ class Connector
 			$session->checkOperatorWorkTime();
 		}
 
-		$session->execAutoAction(Array(
-			'MESSAGE_ID' => $messageId
-		));
+						$limit = self::getReplyLimit($params['connector']['connector_id']);
+						$chat = $session->getChat();
+						if (!empty($limit['BLOCK_DATE']) && !empty($limit['BLOCK_REASON']) && $chat)
+						{
+							$limit['BLOCK_DATE'] = (new DateTime())->add($limit['BLOCK_DATE'].' SECONDS');
+							Session::setReplyBlock($session->getData('ID'), $chat, $limit);
+						}
 
+		$session->execAutoAction([
+			'MESSAGE_ID' => $messageId
+		]);
 
 		$updateSession['MESSAGE_COUNT'] = true;
 		$updateSession['DATE_LAST_MESSAGE'] = new \Bitrix\Main\Type\DateTime();
@@ -415,13 +428,13 @@ class Connector
 			$session->getUser('USER_CODE') && $session->getUser('AGREES') == 'N'
 		)
 		{
-			\Bitrix\ImOpenLines\Common::setUserAgrees(Array(
+			\Bitrix\ImOpenLines\Common::setUserAgrees([
 				'AGREEMENT_ID' => $session->getConfig('AGREEMENT_ID'),
 				'CRM_ACTIVITY_ID' => $session->getData('CRM_ACTIVITY_ID'),
 				'SESSION_ID' => $session->getData('SESSION_ID'),
 				'CONFIG_ID' => $session->getData('CONFIG_ID'),
 				'USER_CODE' => $session->getUser('USER_CODE'),
-			));
+			]);
 		}
 
 		if (!$session->isNowCreated())
@@ -430,7 +443,7 @@ class Connector
 			{
 				$session->finish(true);
 			}
-			else
+			elseif($voteSession !== true)
 			{
 				$queueManager = Queue::initialization($session);
 				if($queueManager)
@@ -610,6 +623,11 @@ class Connector
 				'OPERATOR_ID' => $params['message']['user_id']
 			));
 			if (!$result)
+			{
+				return false;
+			}
+
+			if ($session->isReplyBlocked())
 			{
 				return false;
 			}
@@ -1013,7 +1031,7 @@ class Connector
 			}
 
 			$params = Array();
-			$allowedFields = array('CLASS', 'TYPE', 'COMPONENT_ID', 'url', 'fromSalescenterApplication', 'richUrlPreview');
+			$allowedFields = array('CLASS', 'TYPE', 'COMPONENT_ID', 'CRM_FORM_ID', 'url', 'fromSalescenterApplication', 'richUrlPreview');
 
 			foreach ($messageFields['PARAMS'] as $key => $value)
 			{
@@ -1795,6 +1813,31 @@ class Connector
 				),
 			));
 		}
+	}
+
+	/**
+	 * Get reply limit for connector, if the limit exists.
+	 *
+	 * @param string $connectorId Connector ID.
+	 * @return array|null
+	 * @throws Main\LoaderException
+	 * @throws Main\ObjectException
+	 */
+	public static function getReplyLimit(string $connectorId): ?array
+	{
+		$result = null;
+
+		if (Main\Loader::includeModule('imconnector'))
+		{
+			if (isset(Library::TIME_LIMIT_RESTRICTIONS[$connectorId])
+				&& Library::TIME_LIMIT_RESTRICTIONS[$connectorId]['LIMIT_START_DATE'] < (new DateTime())->getTimestamp()
+			)
+			{
+				$result = Library::TIME_LIMIT_RESTRICTIONS[$connectorId];
+			}
+		}
+
+		return $result;
 	}
 
 	public function getError()

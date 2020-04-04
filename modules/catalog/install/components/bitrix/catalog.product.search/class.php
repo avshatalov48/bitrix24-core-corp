@@ -270,7 +270,7 @@ class ProductSearchComponent extends \CBitrixComponent
 		$elementInherentFilter = self::getElementInherentFilter($arFilter);
 
 		$notFound = false;
-		if (self::checkLoadSections($elementInherentFilter))
+		if (self::checkLoadSections($elementInherentFilter) && !isset($arFilter['USE_BARCODE']))
 		{
 			if (isset($arFilter["S_ID"]) && is_array($arFilter["S_ID"]) && count($arFilter["S_ID"]) == 1)
 			{
@@ -1434,7 +1434,7 @@ class ProductSearchComponent extends \CBitrixComponent
 		);
 		//TODO: remove this hack for store docs after refactoring
 		if ($this->getCaller() == 'storeDocs')
-			$arFilter['!CATALOG_TYPE'] = Catalog\ProductTable::TYPE_SET;
+			$arFilter['!TYPE'] = Catalog\ProductTable::TYPE_SET;
 
 		if ($arFilter['ACTIVE'] == '*')
 			unset($arFilter['ACTIVE']);
@@ -1540,6 +1540,7 @@ class ProductSearchComponent extends \CBitrixComponent
 					{
 						$res2 = \CCatalogSku::GetProductInfo($res["PRODUCT_ID"]);
 						$arSearchedIds[] = $res2 ? $res2['ID'] : $res['PRODUCT_ID'];
+						$arFilter['USE_BARCODE'] = true;
 					}
 				}
 			}

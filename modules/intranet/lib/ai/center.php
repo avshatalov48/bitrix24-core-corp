@@ -2,6 +2,7 @@
 namespace Bitrix\Intranet\AI;
 
 use Bitrix\Bitrix24\Integration\AssistantApp;
+use Bitrix\Crm\Ml\Scoring;
 use Bitrix\FaceId\FaceId;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Loader;
@@ -79,14 +80,34 @@ class Center
 			return [];
 		}
 
+		$scoringExists = false;
+		$mlInstalled = false;
+		if(Loader::includeModule("ml") && false)
+		{
+			$mlInstalled = true;
+			$modelNames = Scoring::getAvailableModelNames();
+			foreach ($modelNames as $modelName)
+			{
+				$model = Scoring::getModelByName($modelName);
+				if($model && $model->isReady())
+				{
+					$scoringExists = true;
+					break;
+				}
+			}
+		}
+
 		return [
 			[
 				"id" => "crm-scoring",
 				"name" => Loc::getMessage("INTRANET_AI_CRM_SCORING"),
 				"iconClass" => "intranet-ai-center-icon intranet-ai-center-icon-crm",
 				"iconColor" => "#12bff5",
-				"comingSoon" => true,
-				"data" => []
+				"comingSoon" => !$mlInstalled,
+				"selected" => $scoringExists,
+				"data" => [
+					"url" => "/crm/ml/model/list/"
+				]
 			]
 		];
 	}

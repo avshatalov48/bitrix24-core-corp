@@ -85,6 +85,11 @@ class ConfigTable extends Main\Entity\DataManager
 				'title' => Loc::getMessage('CONFIG_ENTITY_QUEUE_TIME_FIELD_NEW'),
 				'default_value' => '60',
 			),
+//			'CRM_FORM_TO_USE' => [
+//				'data_type' => 'integer',
+//				'title' => 'Which CRM-form to use',
+//				'default_value' => '0',
+//			],
 			'NO_ANSWER_TIME' => [
 				'data_type' => 'integer',
 				'title' => Loc::getMessage('CONFIG_ENTITY_NO_ANSWER_TIME_FIELD'),
@@ -115,6 +120,11 @@ class ConfigTable extends Main\Entity\DataManager
 				'title' => Loc::getMessage('CONFIG_ENTITY_WELCOME_MESSAGE_TEXT_FIELD_NEW'),
 			),
 			new BooleanField('VOTE_MESSAGE', [
+				'values' => ['N', 'Y'],
+				'title' => Loc::getMessage('CONFIG_ENTITY_VOTE_MESSAGE_FIELD'),
+				'default_value' => 'Y',
+			]),
+			new BooleanField('VOTE_BEFORE_FINISH', [
 				'values' => ['N', 'Y'],
 				'title' => Loc::getMessage('CONFIG_ENTITY_VOTE_MESSAGE_FIELD'),
 				'default_value' => 'Y',

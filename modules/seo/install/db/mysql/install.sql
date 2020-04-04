@@ -227,6 +227,7 @@ CREATE TABLE if not exists b_seo_service_rtg_queue (
 	CLIENT_ID varchar(50) DEFAULT NULL,
 	ACCOUNT_ID varchar(50) DEFAULT NULL,
 	AUDIENCE_ID varchar(50) NOT NULL,
+	PARENT_ID varchar(100) DEFAULT NULL,
 	CONTACT_TYPE varchar(15) NOT NULL,
 	VALUE varchar(255) NOT NULL,
 	ACTION char(3) NOT NULL,

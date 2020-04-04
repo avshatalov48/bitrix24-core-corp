@@ -134,14 +134,11 @@ if (
 	$arResult['tabs'][] = 'grat';
 
 	if (
-		!$arResult['bVarsFromForm']
-		&& (
-			!empty($arResult["PostToShow"]["GRAT_CURRENT"]["ID"])
-			|| !empty($arResult["PostToShow"]["GRAT_CURRENT"]["USERS"])
-			|| (
-				isset($arParams["PAGE_ID"])
-				&& in_array($arParams["PAGE_ID"], [ 'user_blog_post_edit_grat', 'user_grat' ])
-			)
+		!empty($arResult["PostToShow"]["GRAT_CURRENT"]["ID"])
+		|| !empty($arResult["PostToShow"]["GRAT_CURRENT"]["USERS"])
+		|| (
+			isset($arParams["PAGE_ID"])
+			&& in_array($arParams["PAGE_ID"], [ 'user_blog_post_edit_grat', 'user_grat' ])
 		)
 	)
 	{

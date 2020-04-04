@@ -2042,7 +2042,6 @@ class OrderBasket
 						{
 							\Bitrix\Sale\Helpers\Admin\OrderEdit::setProviderTrustData($item, $this->order, $providerData[$basketCode]);
 							$params["PROVIDER_DATA"] = serialize($providerData[$basketCode]);
-							$params["IS_ENABLED"] = $providerData[$basketCode]['CAN_BUY'] === 'N' ? 'N' : 'Y';
 						}
 					}
 				}
@@ -2053,7 +2052,6 @@ class OrderBasket
 					if(is_array($providerData) && !empty($providerData))
 					{
 						$params["PROVIDER_DATA"] = serialize($providerData);
-						$params["IS_ENABLED"] = $providerData[$basketCode]['CAN_BUY'] === 'N' ? 'N' : 'Y';
 					}
 				}
 
@@ -2115,6 +2113,8 @@ class OrderBasket
 						$params["IS_SET_PARENT"] = "Y";
 					}
 				}
+
+				$params["IS_ENABLED"] = ($params['CAN_BUY'] === 'N') ? 'N' : 'Y';
 
 				$result["ITEMS"][$basketCode] = $params;
 			}

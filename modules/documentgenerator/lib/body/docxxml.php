@@ -717,7 +717,6 @@ final class DocxXml extends Xml
 						$context['rowProperties'] = $this->getRowPropertyNodeValue($params['currentNode']);
 					}
 					$value = $this->htmlToXml($value, $context);
-//					$value = $this->htmlToXml($value);
 				}
 				else
 				{
@@ -807,6 +806,7 @@ final class DocxXml extends Xml
 	{
 		$result = '';
 
+		$this->deleteLastBreakLineInBlockTag($node);
 		$displayProperties = $this->getDisplayProperties($node);
 
 		if($displayProperties->isHidden())
@@ -890,7 +890,7 @@ final class DocxXml extends Xml
 				}
 				$result .= $this->addRowPropertiesTag($context);
 				$result .= '<w:t xml:space="preserve">';
-				$result .= $this->prepareTextValue($childNode->getNodeValue());
+				$result .= $this->prepareTextValue($nodeValue);
 				$result .= '</w:t>';
 				$result .= '</w:r>';
 			}
@@ -913,6 +913,50 @@ final class DocxXml extends Xml
 		$context['font'] = array_diff_assoc($context['font'], $displayProperties->getProperties()['font']);
 
 		return $result;
+	}
+
+	/**
+	 * Delete last break line tag in blocks - to avoid excess break lines
+	 *
+	 * @param DOM\Node $node
+	 * @throws DOM\DomException
+	 */
+	protected function deleteLastBreakLineInBlockTag(DOM\Node $node)
+	{
+		$displayProperties = $this->getDisplayProperties($node);
+		if($displayProperties->isDisplayBlock())
+		{
+			$hasSomeContent = (strlen(trim(strip_tags($node->getInnerHTML()))) > 0);
+			if(!$hasSomeContent)
+			{
+				return;
+			}
+			$previousNode = null;
+			$childNodes = $node->getChildNodesArray();
+			/** @var DOM\Node $childNode */
+			foreach($childNodes as $index => $childNode)
+			{
+				if(!$previousNode)
+				{
+					$previousNode = $childNode;
+					continue;
+				}
+				else
+				{
+					$previousNodeName = strtolower($previousNode->getNodeName());
+					if(
+						$previousNodeName === 'br' &&
+						$childNode instanceof DOM\Text && empty($childNode->getNodeValue()) &&
+						!isset($childNodes[$index + 1])
+					)
+					{
+						$node->removeChild($previousNode);
+						$node->removeChild($childNode);
+					}
+					$previousNode = $childNode;
+				}
+			}
+		}
 	}
 
 	/**

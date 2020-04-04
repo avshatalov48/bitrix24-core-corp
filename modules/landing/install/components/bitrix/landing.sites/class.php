@@ -9,14 +9,12 @@ use \Bitrix\Landing\Site;
 use \Bitrix\Landing\Landing;
 use \Bitrix\Landing\Rights;
 use \Bitrix\Landing\Manager;
-use \Bitrix\Landing\Zip;
 use \Bitrix\Main\Engine\UrlManager;
 use \Bitrix\Main\ModuleManager;
 use \Bitrix\Main\Loader;
 use \Bitrix\Main\Config\Option;
 
 \CBitrixComponent::includeComponentClass('bitrix:landing.base');
-\CBitrixComponent::includeComponentClass('bitrix:landing.filter');
 
 class LandingSitesComponent extends LandingBaseComponent
 {
@@ -24,6 +22,12 @@ class LandingSitesComponent extends LandingBaseComponent
 	 * Count items per page.
 	 */
 	const COUNT_PER_PAGE = 11;
+
+	/**
+	 * Rights array of sites.
+	 * @var array
+	 */
+	protected $rights = [];
 
 	/**
 	 * Returns sites of main module.
@@ -49,7 +53,8 @@ class LandingSitesComponent extends LandingBaseComponent
 			SITE_ID
 		];
 		$search = LandingFilterComponent::getFilterRaw(
-			LandingFilterComponent::TYPE_SITE
+			LandingFilterComponent::TYPE_SITE,
+			$this->arParams['TYPE']
 		);
 		if ($search['DELETED'] == 'Y')
 		{
@@ -115,11 +120,20 @@ class LandingSitesComponent extends LandingBaseComponent
 			$b24 = Manager::isB24();
 			$puny = new \CBXPunycode;
 			$deletedLTdays = Manager::getDeletedLT();
+			$landingNull = Landing::createInstance(0);
+			$pictureFromCloud = $this->previewFromCloud();
 			$this->checkParam('TYPE', '');
+			$this->checkParam('OVER_TITLE', '');
+			$this->checkParam('TILE_MODE', 'list');
 			$this->checkParam('PAGE_URL_SITE', '');
 			$this->checkParam('PAGE_URL_SITE_EDIT', '');
 			$this->checkParam('PAGE_URL_LANDING_EDIT', '');
+			$this->checkParam('DRAFT_MODE', 'N');
 			$this->checkParam('~AGREEMENT', []);
+
+			\Bitrix\Landing\Site\Type::setScope(
+				$this->arParams['TYPE']
+			);
 
 			// check agreements for Bitrix24
 			if (Manager::isB24())
@@ -131,10 +145,16 @@ class LandingSitesComponent extends LandingBaseComponent
 				$this->arResult['AGREEMENT'] = [];
 			}
 
+			\CBitrixComponent::includeComponentClass(
+				'bitrix:landing.filter'
+			);
+
 			// template data
 			$filter = LandingFilterComponent::getFilter(
-				LandingFilterComponent::TYPE_SITE
+				LandingFilterComponent::TYPE_SITE,
+				$this->arParams['TYPE']
 			);
+			$filter['=SPECIAL'] = 'N';
 			if (
 				Manager::isExtendedSMN() &&
 				$this->arParams['TYPE'] == 'STORE')
@@ -149,7 +169,6 @@ class LandingSitesComponent extends LandingBaseComponent
 				$filter['=TYPE'] = $this->arParams['TYPE'];
 			}
 			$this->arResult['SMN_SITES'] = $this->getSmnSites();
-			$this->arResult['EXPORT_ENABLED'] = Zip\Config::serviceEnabled() ? 'Y' : 'N';
 			$this->arResult['IS_DELETED'] = LandingFilterComponent::isDeleted();
 			$this->arResult['SITES'] = $this->getSites([
 				'select' => [
@@ -176,15 +195,24 @@ class LandingSitesComponent extends LandingBaseComponent
 				)
 			);
 			$this->arResult['ACCESS_SITE_NEW'] = (
-				Rights::hasAdditionalRight(
-					Rights::ADDITIONAL_RIGHTS['create']
-				)
+				Rights::hasAdditionalRight(Rights::ADDITIONAL_RIGHTS['create'])
 				&&
 				in_array(Rights::ACCESS_TYPES['edit'], $rights[0])
-			)? 'Y' : 'N';
+			) ? 'Y' : 'N';
 			$ids = [];
+			$unActiveIndexes = [];
 			foreach ($this->arResult['SITES'] as &$item)
 			{
+				// collect un active sites with index pages
+				if (
+					$item['LANDING_ID_INDEX'] &&
+					$item['ACTIVE'] != 'Y' &&
+					$item['DELETED'] != 'Y'
+				)
+				{
+					$unActiveIndexes[$item['ID']] = $item['LANDING_ID_INDEX'];
+				}
+
 				$ids[] = $item['ID'];
 				$item['ACCESS_EDIT'] = 'Y';
 				$item['ACCESS_SETTINGS'] = 'Y';
@@ -227,18 +255,6 @@ class LandingSitesComponent extends LandingBaseComponent
 						$item['LANDING_ID_INDEX'] = $landing['ID'];
 					}
 				}
-				if (!$b24 && $item['LANDING_ID_INDEX'])
-				{
-					$landing = Landing::createInstance($item['LANDING_ID_INDEX']);
-					if ($landing->exist())
-					{
-						$item['PREVIEW'] = $landing->getPreview();
-					}
-				}
-				else
-				{
-					$item['PREVIEW'] = '';
-				}
 				if ($item['DELETED'] == 'Y')
 				{
 					$item['DATE_DELETED_DAYS'] = $deletedLTdays - intval((time() - $item['DATE_MODIFY']->getTimeStamp()) / 86400);
@@ -246,9 +262,7 @@ class LandingSitesComponent extends LandingBaseComponent
 				}
 				$item['DOMAIN_NAME'] = $puny->decode($item['DOMAIN_NAME']);
 				$item['DOMAIN_B24_NAME'] = Domain::getBitrix24Subdomain($item['DOMAIN_NAME']);
-				$item['EXPORT_URI'] = UrlManager::getInstance()->create('landing.site.download', [
-					'id' => $item['ID']
-				]);
+				$item['EXPORT_URI'] = '#export';
 			}
 			unset($item);
 			if ($ids)
@@ -256,10 +270,22 @@ class LandingSitesComponent extends LandingBaseComponent
 				$siteUrls = Site::getPublicUrl($ids);
 				foreach ($this->arResult['SITES'] as &$item)
 				{
+					$item['PUBLIC_URL'] = '';
+					$item['PREVIEW'] = '';
 					if (isset($siteUrls[$item['ID']]))
 					{
 						$item['PUBLIC_URL'] = $this->getTimestampUrl($siteUrls[$item['ID']]);
-						$item['PREVIEW'] = $siteUrls[$item['ID']] . '/preview.jpg';
+					}
+					if ($item['PUBLIC_URL'])
+					{
+						if ($item['DOMAIN_ID'] > 0 && $pictureFromCloud && $item['TYPE'] != 'SMN')
+						{
+							$item['PREVIEW'] = $item['PUBLIC_URL'] . '/preview.jpg';
+						}
+						else if ($item['LANDING_ID_INDEX'])
+						{
+							$item['PREVIEW'] = $landingNull->getPreview($item['LANDING_ID_INDEX'], true);
+						}
 					}
 				}
 				unset($siteUrls, $item, $ids);

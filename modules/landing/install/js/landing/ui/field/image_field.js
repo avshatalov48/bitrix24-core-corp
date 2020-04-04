@@ -776,7 +776,12 @@
 
 			this.onValueChangeHandler(this);
 			BX.fireEvent(this.layout, "input");
-			fireCustomEvent(this, "BX.Landing.UI.Field:change", [this.getValue()]);
+
+			var event = new BX.Event.BaseEvent({
+				data: {value: this.getValue()},
+				compatData: [this.getValue()],
+			});
+			this.emit('change', event);
 		},
 
 

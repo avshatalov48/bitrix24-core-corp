@@ -42,6 +42,9 @@ $arDefaultUrlTemplates404 = array(
 	'show' => 'show/#lead_id#/',
 	'convert' => 'convert/#lead_id#/',
 	'dedupe' => 'dedupe/',
+	'dedupelist' => 'dedupelist/',
+	'dedupewizard' => 'dedupewizard/',
+	'merge' => 'merge/',
 	'details' => 'details/#lead_id#/',
 	'calendar' => 'calendar/',
 	'automation' => 'automation/#category_id#/',
@@ -97,6 +100,8 @@ else
 		$componentPage = 'import';
 	elseif (isset($_REQUEST['show']))
 		$componentPage = 'show';
+	else if (isset($_REQUEST['merge']))
+		$componentPage = 'merge';
 	else if (isset($_REQUEST['details']))
 		$componentPage = 'details';
 	else if (isset($_REQUEST['automation']))
@@ -105,8 +110,12 @@ else
 		$componentPage = 'analytics/list';
 	elseif (isset($_REQUEST['dedupe']))
 		$componentPage = 'dedupe';
+	elseif (isset($_REQUEST['dedupelist']))
+		$componentPage = 'dedupelist';
+	elseif (isset($_REQUEST['dedupewizard']))
+		$componentPage = 'dedupewizard';
 
-	$arResult['PATH_TO_LEAD_LIST'] = $arResult['PATH_TO_LEAD_DEDUPE'] = $APPLICATION->GetCurPage();
+	$arResult['PATH_TO_LEAD_LIST'] = $arResult['PATH_TO_LEAD_DEDUPE'] = $arResult['PATH_TO_LEAD_DEDUPEWIZARD'] =$APPLICATION->GetCurPage();
 	$arResult['PATH_TO_LEAD_SHOW'] = $APPLICATION->GetCurPage()."?{$arVariableAliases['lead_id']}=#lead_id#&show";
 	$arResult['PATH_TO_LEAD_DETAILS'] = $APPLICATION->GetCurPage()."?{$arVariableAliases['lead_id']}=#lead_id#&details";
 	$arResult['PATH_TO_LEAD_EDIT'] = $APPLICATION->GetCurPage()."?{$arVariableAliases['lead_id']}=#lead_id#&edit";
@@ -158,6 +167,20 @@ $arResult['NAVIGATION_CONTEXT_ID'] = 'LEAD';
 if($componentPage === 'index')
 {
 	$componentPage = 'list';
+}
+
+if(isset($_GET['id']))
+{
+	$entityIDs = null;
+	if(is_array($_GET['id']))
+	{
+		$entityIDs = $_GET['id'];
+	}
+	else
+	{
+		$entityIDs = explode(',', $_GET['id']);
+	}
+	$arResult['VARIABLES']['lead_ids'] = array_map('intval', $entityIDs);
 }
 
 if(\Bitrix\Crm\Settings\LayoutSettings::getCurrent()->isSliderEnabled()

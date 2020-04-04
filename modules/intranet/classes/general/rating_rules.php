@@ -99,7 +99,7 @@ class CRatingRulesIntranet
 				) U2U
 				LEFT JOIN b_rating_user RU on RU.RATING_ID = ".intval($ratingId)." and RU.ENTITY_ID = U2U.SUBORDINATE_ID
 				LEFT JOIN b_rating_user RUS on RUS.RATING_ID = ".intval($ratingId)." and RUS.ENTITY_ID = U2U.USER_ID
-				GROUP BY RATING_ID, ENTITY_ID";
+				GROUP BY RATING_ID, ENTITY_ID, U2U.ID, RUS.BONUS";
 			$DB->Query($squery, false, $err_mess.__LINE__);
 		}
 

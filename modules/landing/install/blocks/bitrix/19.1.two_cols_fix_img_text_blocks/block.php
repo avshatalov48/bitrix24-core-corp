@@ -3,9 +3,10 @@
 		<div class="row">
 
 			<div class="col-md-5 order-2 order-md-1 g-mb-15 g-mb-0--md">
-				<img class="landing-block-node-img img-fluid g-mb-30"
-					 src="https://cdn.bitrix24.site/bitrix/images/landing/business/1000x562/img1.jpg" alt="">
-
+				<div class="landing-block-node-img-container text-left g-mb-30">
+					<img class="landing-block-node-img img-fluid"
+						 src="https://cdn.bitrix24.site/bitrix/images/landing/business/1000x562/img1.jpg" alt="">
+				</div>
 				<h3 class="landing-block-node-title text-uppercase g-font-weight-700 g-font-size-18 g-color-black g-mb-20">
 					Building since 1943</h3>
 				<div class="landing-block-node-text">

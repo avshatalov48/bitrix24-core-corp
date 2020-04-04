@@ -33,6 +33,11 @@ class WorktimeEventTable extends Main\ORM\Data\DataManager
 		return 'b_timeman_work_time_event_log';
 	}
 
+	public static function getCollectionClass()
+	{
+		return WorktimeEventCollection::class;
+	}
+
 	public static function getMap()
 	{
 		return [

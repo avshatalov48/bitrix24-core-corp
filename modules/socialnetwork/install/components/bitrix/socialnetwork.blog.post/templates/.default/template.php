@@ -56,6 +56,7 @@ $APPLICATION->SetPageProperty("BodyClass", $bodyClass);
 		BLOG_MES_DELETE_POST_CONFIRM: '<?=GetMessageJS("BLOG_MES_DELETE_POST_CONFIRM")?>',
 		BLOG_POST_CREATE_TASK: '<?=GetMessageJS("BLOG_POST_CREATE_TASK")?>',
 		BLOG_POST_VOTE_EXPORT: '<?=GetMessageJS("BLOG_POST_VOTE_EXPORT")?>',
+		BLOG_POST_MOD_PUB: '<?=GetMessageJS("BLOG_POST_MOD_PUB")?>',
 		BLOG_MES_HIDE: '<?=GetMessageJS("BLOG_MES_HIDE")?>',
 		BLOG_MES_HIDE_POST_CONFIRM: '<?=GetMessageJS("BLOG_MES_HIDE_POST_CONFIRM")?>'
 		<?
@@ -660,7 +661,7 @@ else
 						}
 						else
 						{
-							?><div class="feed-post-item"><a class="feed-post-title" href="<?=$arResult["Post"]["urlToPost"]?>"><?=$arResult["Post"]["TITLE"]?></a></div><?
+							?><div class="feed-post-item"><a class="feed-post-title" href="<?=$arResult["Post"]["urlToPost"]?>" target="_top"><?=$arResult["Post"]["TITLE"]?></a></div><?
 						}
 					}
 
@@ -730,7 +731,14 @@ else
 										BX('blog-post-readers-count-<?=$arResult["Post"]["ID"]?>'),
 										<?=$arResult["Post"]["ID"]?>, { 'pathToUser' : '<?=CUtil::JSEscape($arParams["~PATH_TO_USER"])?>', 'nameTemplate' : '<?=CUtil::JSEscape($arParams["NAME_TEMPLATE"])?>' }
 									);
-									BX.addCustomEvent(BX('blog-post-readers-btn-<?=$arResult["Post"]["ID"]?>'), "onInit", BX.proxy(sbpimp<?=$arResult["Post"]["ID"]?>.click, sbpimp<?=$arResult["Post"]["ID"]?>));
+									<?
+									if ($arResult["Post"]["IMPORTANT"]["IS_READ"] != "Y")
+									{
+										?>
+										BX.addCustomEvent(BX('blog-post-readers-btn-<?=$arResult["Post"]["ID"]?>'), "onInit", BX.proxy(sbpimp<?=$arResult["Post"]["ID"]?>.click, sbpimp<?=$arResult["Post"]["ID"]?>));
+										<?
+									}
+									?>
 									BX.message({'BLOG_ALREADY_READ' : '<?=GetMessageJS('BLOG_ALREADY_READ')?>'});
 								});
 							</script><?
@@ -1009,6 +1017,7 @@ else
 									urlToEdit: '<?=(strlen($arResult["urlToEdit"]) > 0 ? CUtil::JSEscape($arResult["urlToEdit"]) : '')?>',
 									urlToHide: '<?=(strlen($arResult["urlToHide"]) > 0 ? CUtil::JSEscape($arResult["urlToHide"]) : '')?>',
 									urlToDelete: '<?=(!$arResult["bFromList"] && strlen($arResult["urlToDelete"]) > 0 ? CUtil::JSEscape($arResult["urlToDelete"]) : '')?>',
+									urlToPub: '<?=(strlen($arResult["urlToPostPub"]) > 0 ? CUtil::JSEscape($arResult["urlToPostPub"]) : '')?>',
 									voteId: <?=(intval($voteId) > 0 ? intval($voteId) : 'false')?>,
 									postType: '<?=CUtil::JSEscape($arParams["TYPE"])?>',
 									group_readonly: <?=($arResult["ReadOnly"] ? 'true' : 'false')?>,
@@ -1023,17 +1032,19 @@ else
 							if (
 								!$arResult["bPublicPage"]
 								&& isset($arResult["CONTENT_ID"])
+								&& !in_array($arParams["TYPE"], array("DRAFT", "MODERATION"))
 							)
 							{
 								$APPLICATION->IncludeComponent(
 									"bitrix:socialnetwork.contentview.count", "",
-									Array(
+									[
 										"CONTENT_ID" => $arResult["CONTENT_ID"],
 										"CONTENT_VIEW_CNT" => (isset($arResult["CONTENT_VIEW_CNT"]) ? $arResult["CONTENT_VIEW_CNT"] : 0),
-										"PATH_TO_USER_PROFILE" => $arParams["PATH_TO_USER"]
-									),
+										"PATH_TO_USER_PROFILE" => $arParams["PATH_TO_USER"],
+										'IS_SET' => ($arResult['contentViewIsSet'] ? 'Y' : 'N')
+									],
 									$component,
-									array("HIDE_ICONS" => "Y")
+									[ "HIDE_ICONS" => "Y" ]
 								);
 							}
 							?></span><?

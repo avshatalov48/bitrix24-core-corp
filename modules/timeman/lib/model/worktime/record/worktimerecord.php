@@ -1,24 +1,29 @@
 <?php
 namespace Bitrix\Timeman\Model\Worktime\Record;
 
-use Bitrix\Main\EO_User_Entity;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Timeman\Form\Worktime\WorktimeRecordForm;
+use Bitrix\Timeman\Helper\TimeDictionary;
 use Bitrix\Timeman\Helper\TimeHelper;
 use Bitrix\Timeman\Model\Schedule\Schedule;
 use Bitrix\Timeman\Model\Schedule\Shift\Shift;
-use Bitrix\Timeman\Model\Worktime\EventLog\EO_WorktimeEvent_Collection;
 use Bitrix\Timeman\Model\Worktime\EventLog\WorktimeEvent;
+use Bitrix\Timeman\Model\Worktime\EventLog\WorktimeEventCollection;
 use Bitrix\Timeman\Model\Worktime\EventLog\WorktimeEventTable;
+use Bitrix\Timeman\Model\Worktime\Report\EO_WorktimeReport_Collection;
 use Bitrix\Timeman\Model\Worktime\Report\WorktimeReportTable;
-use Bitrix\Timeman\Service\DependencyManager;
 
 class WorktimeRecord extends EO_WorktimeRecord
 {
 	/** @var TimeHelper */
 	private $timeHelper;
-	private $shift;
+	/** @var Schedule */
 	private $schedule;
+	/** @var Shift */
+	private $shift;
+	/*** @var EO_WorktimeReport_Collection */
+	private $reports;
+	private $worktimeEvents;
 
 	/**
 	 * @param WorktimeRecordForm $recordForm
@@ -39,7 +44,9 @@ class WorktimeRecord extends EO_WorktimeRecord
 		$record->setRecordedStartTimestamp($recordStartUtcTimestamp);
 		if ($recordStartUtcTimestamp === null)
 		{
-			$recordStartFromForm = $record->buildStartTimestampBySecondsAndDate($recordForm->recordedStartSeconds, $recordForm->recordedStartDateFormatted, $recordForm->editedBy);
+			$recordStartFromForm = $recordForm->buildStartTimestampBySecondsAndDate(
+				$recordForm->useEmployeesTimezone ? $record->getUserId() : $recordForm->editedBy
+			);
 			if ($recordStartFromForm)
 			{
 				$record->setRecordedStartTimestamp($recordStartFromForm);
@@ -67,27 +74,37 @@ class WorktimeRecord extends EO_WorktimeRecord
 		return $record;
 	}
 
-	public function stopWork($workRecordForm, $recordStopUtcTimestamp, $stopOffset = null)
+	/**
+	 * @param WorktimeRecordForm $workRecordForm
+	 * @param $recordStopUtcTimestamp
+	 * @param null $stopOffset
+	 */
+	public function stopWork($workRecordForm, $recordStopUtcTimestamp)
 	{
 		$this->setLatClose($workRecordForm->latitudeClose);
 		$this->setLonClose($workRecordForm->longitudeClose);
 		$this->setIpClose($workRecordForm->ipClose);
 		$recordStopUtcTimestamp = $recordStopUtcTimestamp ?: $this->getTimeHelper()->getUtcNowTimestamp();
 		$this->setRecordedStopTimestamp($recordStopUtcTimestamp);
+
 		if ($this->isOpened() || $this->isClosed())
 		{
 			$this->setRecordedDuration($this->calculateDurationSince($this->getRecordedStopTimestamp()));
 		}
-		if ($this->isPaused())
+		elseif ($this->isPaused())
 		{
-			$newRecordedBreak = $this->calculateBreakLength($this->getRecordedStopTimestamp());
-			$this->setBreaksLength($newRecordedBreak);
+			$newBreak = $this->calculateDurationSince($this->getRecordedStopTimestamp()) - $this->getRecordedDuration();
+			$this->increaseBreaks($newBreak);
 		}
-		if ($stopOffset === null)
+
+		if ($workRecordForm->stopOffset === null)
 		{
-			$stopOffset = $this->getTimeHelper()->getUserUtcOffset($this->getUserId());
+			$workRecordForm->stopOffset = $this->getTimeHelper()->getUserUtcOffset($this->getUserId());
 		}
-		$this->setStopOffset($stopOffset);
+		if ($workRecordForm->editedBy === null || (int)$workRecordForm->editedBy === $this->getUserId())
+		{
+			$this->setStopOffset($workRecordForm->stopOffset);
+		}
 		if ((int)$this->getActualStopTimestamp() === 0 || $this->getActualStopTimestamp() === null)
 		{
 			$this->setActualStopTimestamp($this->getTimeHelper()->getUtcNowTimestamp());
@@ -114,50 +131,102 @@ class WorktimeRecord extends EO_WorktimeRecord
 		$this->setTimeFinish(($this->getTimeHelper()->getSecondsFromDateTime($this->getDateFinish())) % 86400);
 	}
 
+	public function continueWork()
+	{
+		$continueUtcTimestamp = $this->getTimeHelper()->getUtcNowTimestamp();
+
+		$this->setDateFinish(null);
+		$this->setTimeFinish(null);
+		$this->setDuration(0);
+
+		if ($continueUtcTimestamp < $this->getRecordedStopTimestamp())
+		{
+			$this->setRecordedDuration($this->calculateDurationSince($continueUtcTimestamp));
+		}
+
+		$newBreak = $continueUtcTimestamp - $this->getRecordedStartTimestamp() - $this->getRecordedDuration() - $this->getRecordedBreakLength();
+		$this->increaseBreaks($newBreak);
+
+		$this->setStopOffset(0);
+		$this->setRecordedStopTimestamp(0);
+		$this->setActualStopTimestamp(0);
+		$this->setCurrentStatus(WorktimeRecordTable::STATUS_OPENED);
+	}
+
+	/**
+	 * @param WorktimeRecordForm $workRecordForm
+	 * @return $this
+	 */
+	public function updateByForm($workRecordForm)
+	{
+		$recordedStartTimestamp = $workRecordForm->buildStartTimestampBySecondsAndDate(
+			$workRecordForm->useEmployeesTimezone ? $this->getUserId() : $workRecordForm->editedBy,
+			$this->getRecordedStartTimestamp()
+		);
+		if ($this->isTimeNeedToBeSaved($recordedStartTimestamp, $this->getRecordedStartTimestamp()))
+		{
+			$this->editStartByForm($recordedStartTimestamp);
+		}
+
+		$recordedStopTimestamp = $this->buildStopTimestampBySecondsAndDate(
+			$workRecordForm->recordedStopSeconds,
+			$workRecordForm->recordedStopDateFormatted,
+			$workRecordForm->useEmployeesTimezone ? $this->getUserId() : $workRecordForm->editedBy
+		);
+		if ($this->isTimeNeedToBeSaved($recordedStopTimestamp, $this->getRecordedStopTimestamp()))
+		{
+			$this->editStopByForm($workRecordForm, $recordedStopTimestamp);
+		}
+
+		if ($this->isTimeNeedToBeSaved($workRecordForm->recordedBreakLength, $this->getRecordedBreakLength()))
+		{
+			$this->setRecordedBreakLength($workRecordForm->recordedBreakLength);
+			$this->updateDuration($this->getRecordedStopTimestamp() > 0 ? $this->getRecordedStopTimestamp() : $this->getTimeHelper()->getUtcNowTimestamp());
+		}
+		return $this;
+	}
+
 	private function editStartByForm($recordedStartTimestamp = null)
 	{
 		$this->defineStartTime($recordedStartTimestamp);
 		$this->updateDuration();
 	}
 
-	private function buildStartTimestampBySecondsAndDate($startSeconds, $startFormattedDate, $editedBy)
+	/**
+	 * @param WorktimeRecord $record
+	 * @param Schedule $schedule
+	 * @param Shift $shift
+	 */
+	public function buildStopTimestampForAutoClose($schedule, $shift)
 	{
-		$startTimestamp = null;
-		if (!$startSeconds || !$editedBy)
+		if (!($schedule instanceof Schedule))
 		{
 			return null;
 		}
-		$timestampUtcForUserDate = $this->getTimeHelper()->getUtcNowTimestamp();
-		if ($startFormattedDate)
+		if ($shift)
 		{
-			$timestampUtcForUserDate = $this->getTimeHelper()->getTimestampByUserDate(
-				$startFormattedDate, $editedBy
-			);
+			return $this->getRecommendedStopTimestamp($schedule, $shift);
 		}
-		elseif ($this->getRecordedStartTimestamp() > 0)
+		if ($schedule && $schedule->isShifted())
 		{
-			$timestampUtcForUserDate = $this->getRecordedStartTimestamp();
-		}
-
-		if ($timestampUtcForUserDate > 0)
-		{
-			$userDateTime = $this->getTimeHelper()->createUserDateTimeFromFormat('U', $timestampUtcForUserDate, $editedBy);
-			if ($userDateTime)
+			/** @var Shift $firstRandomShift */
+			$firstRandomShift = reset($schedule->obtainShifts());
+			if (!$firstRandomShift)
 			{
-				$this->getTimeHelper()->setTimeFromSeconds($userDateTime, $startSeconds);
-				$startTimestamp = $userDateTime->getTimestamp();
+				return null;
 			}
+			return $this->getRecordedStartTimestamp() + $firstRandomShift->getDuration();
 		}
-		return $startTimestamp;
+		return null;
 	}
 
 	/**
 	 * @return mixed|null
 	 */
-	public function buildStopTimestampBySecondsAndDate($stopSeconds, $stopFormattedDate, $editedBy)
+	public function buildStopTimestampBySecondsAndDate($stopSeconds, $stopFormattedDate, $userIdTimezone)
 	{
 		$recordedStopTimestamp = null;
-		if (!$stopSeconds || !$editedBy)
+		if ($stopSeconds === null || $stopSeconds < 0 || !$userIdTimezone)
 		{
 			return $recordedStopTimestamp;
 		}
@@ -165,12 +234,12 @@ class WorktimeRecord extends EO_WorktimeRecord
 		if ($stopFormattedDate)
 		{
 			$timestampUtcForUserDate = $this->getTimeHelper()->getTimestampByUserDate(
-				$stopFormattedDate, $editedBy
+				$stopFormattedDate, $userIdTimezone
 			);
 
 			if ($timestampUtcForUserDate > 0)
 			{
-				$userDateTime = $this->getTimeHelper()->createUserDateTimeFromFormat('U', $timestampUtcForUserDate, $editedBy);
+				$userDateTime = $this->getTimeHelper()->createUserDateTimeFromFormat('U', $timestampUtcForUserDate, $userIdTimezone);
 				if ($userDateTime)
 				{
 					$this->getTimeHelper()->setTimeFromSeconds($userDateTime, $stopSeconds);
@@ -180,7 +249,7 @@ class WorktimeRecord extends EO_WorktimeRecord
 		}
 		else
 		{
-			$editorDateStart = $this->getTimeHelper()->createDateTimeFromFormat('U', $this->getRecordedStartTimestamp(), $this->getTimeHelper()->getUserUtcOffset($editedBy));
+			$editorDateStart = $this->getTimeHelper()->createDateTimeFromFormat('U', $this->getRecordedStartTimestamp(), $this->getTimeHelper()->getUserUtcOffset($userIdTimezone));
 			if ($editorDateStart)
 			{
 				$startSeconds = $this->getTimeHelper()->getSecondsFromDateTime($editorDateStart);
@@ -214,85 +283,17 @@ class WorktimeRecord extends EO_WorktimeRecord
 		$this->stopWork($workRecordForm, $recordedStopTimestamp);
 	}
 
-	/**
-	 * @param WorktimeRecordForm $workRecordForm
-	 * @return $this
-	 */
-	public function updateByForm($workRecordForm)
-	{
-		$recordedStartTimestamp = $this->buildStartTimestampBySecondsAndDate(
-			$workRecordForm->recordedStartSeconds,
-			$workRecordForm->recordedStartDateFormatted,
-			$workRecordForm->editedBy
-		);
-		if ($this->isTimeNeedToBeSaved($recordedStartTimestamp, $this->getRecordedStartTimestamp()))
-		{
-			$this->editStartByForm($recordedStartTimestamp);
-		}
-
-		$recordedStopTimestamp = $this->buildStopTimestampBySecondsAndDate(
-			$workRecordForm->recordedStopSeconds,
-			$workRecordForm->recordedStopDateFormatted,
-			$workRecordForm->editedBy
-		);
-		if ($this->isTimeNeedToBeSaved($recordedStopTimestamp, $this->getRecordedStopTimestamp()))
-		{
-			$this->editStopByForm($workRecordForm, $recordedStopTimestamp);
-		}
-
-
-		if ($this->isTimeNeedToBeSaved($workRecordForm->recordedBreakLength, $this->getRecordedBreakLength()))
-		{
-			$this->setRecordedBreakLength($workRecordForm->recordedBreakLength);
-			$this->updateDuration();
-		}
-		return $this;
-	}
-
-	public function continueWork($continueUtcTimestamp = null)
-	{
-		if ($continueUtcTimestamp === null)
-		{
-			$continueUtcTimestamp = $this->getTimeHelper()->getUtcNowTimestamp();
-		}
-		$this->setDateFinish(null);
-		$this->setTimeFinish(null);
-		$this->setDuration(0);
-
-		if ($continueUtcTimestamp < $this->getRecordedStopTimestamp())
-		{
-			$this->setRecordedDuration($this->calculateDurationSince($continueUtcTimestamp));
-		}
-		$this->setBreaksLength($this->calculateBreakLength($continueUtcTimestamp));
-		$this->setStopOffset(0);
-		$this->setRecordedStopTimestamp(0);
-		$this->setActualStopTimestamp(0);
-		$this->setCurrentStatus(WorktimeRecordTable::STATUS_OPENED);
-	}
-
 	private function updateDuration($endTimestamp = null)
 	{
 		if ($endTimestamp === null)
 		{
 			$endTimestamp = $this->getRecordedStopTimestamp();
 		}
-		if ($endTimestamp !== null && (int)$endTimestamp !== 0)
+		if ($endTimestamp > 0)
 		{
 			$this->setRecordedDuration($this->calculateDurationSince($endTimestamp));
 		}
 		$this->setDuration($this->getTimeFinish() - $this->getTimeStart() - $this->getRecordedBreakLength());
-	}
-
-	private function setBreaksLength($newRecordedBreak)
-	{
-		if ((int)$this->getActualBreakLength() === 0 || $this->getActualBreakLength() === null)
-		{
-			$this->setActualBreakLength($this->getActualBreakLength() + ($newRecordedBreak - $this->getRecordedBreakLength()));
-		}
-		if ($newRecordedBreak - $this->getRecordedBreakLength() > BX_TIMEMAN_ALLOWED_TIME_DELTA)
-		{
-			$this->setRecordedBreakLength($newRecordedBreak);
-		}
 	}
 
 	private function getTimeHelper()
@@ -304,34 +305,6 @@ class WorktimeRecord extends EO_WorktimeRecord
 		return $this->timeHelper;
 	}
 
-	public static function isRecordEdited(&$record)
-	{
-		return static::isRecordStartEdited($record) || static::isRecordStopEdited($record);
-	}
-
-	public static function isRecordStartEdited(&$record)
-	{
-		if ($record['ACTUAL_START_TIMESTAMP'] == 0 || $record['RECORDED_START_TIMESTAMP'] == 0)
-		{
-			return false;
-		}
-		return (int)$record['ACTUAL_START_TIMESTAMP'] !== (int)$record['RECORDED_START_TIMESTAMP'];
-	}
-
-	public static function isRecordStopEdited(&$record)
-	{
-		if ($record['ACTUAL_STOP_TIMESTAMP'] == 0 || $record['RECORDED_STOP_TIMESTAMP'] == 0)
-		{
-			return false;
-		}
-		return (int)$record['ACTUAL_STOP_TIMESTAMP'] !== (int)$record['RECORDED_STOP_TIMESTAMP'];
-	}
-
-	public static function isRecordApproved($record)
-	{
-		return $record && $record['APPROVED'] !== null && $record['APPROVED'] == WorktimeRecordTable::APPROVED_YES;
-	}
-
 	public function isActive()
 	{
 		return $this->isOpened() || $this->isPaused();
@@ -339,27 +312,54 @@ class WorktimeRecord extends EO_WorktimeRecord
 
 	public function isOpened()
 	{
-		return static::isRecordOpened($this);
+		return $this->getCurrentStatus() === WorktimeRecordTable::STATUS_OPENED;
+	}
+
+	public static function isRecordClosed($record)
+	{
+		$recordObject = $record;
+		if (!($recordObject instanceof WorktimeRecord))
+		{
+			if (!is_array($record))
+			{
+				return false;
+			}
+			$recordObject = static::wakeUpRecord($record);
+		}
+		return $recordObject->isClosed();
 	}
 
 	public static function isRecordPaused($record)
 	{
-		return isset($record['CURRENT_STATUS']) ? $record['CURRENT_STATUS'] === WorktimeRecordTable::STATUS_PAUSED : false;
+		$recordObject = $record;
+		if (!($recordObject instanceof WorktimeRecord))
+		{
+			if (!is_array($record))
+			{
+				return false;
+			}
+			$recordObject = static::wakeUpRecord($record);
+		}
+		return $recordObject->isPaused();
 	}
 
 	public static function isRecordOpened($record)
 	{
-		return isset($record['CURRENT_STATUS']) ? $record['CURRENT_STATUS'] === WorktimeRecordTable::STATUS_OPENED : false;
+		if (!is_array($record))
+		{
+			return false;
+		}
+		$recordObject = $record;
+		if (!($recordObject instanceof WorktimeRecord))
+		{
+			$recordObject = static::wakeUpRecord($record);
+		}
+		return $recordObject->isOpened();
 	}
 
 	public function isClosed()
 	{
-		return static::isRecordClosed($this);
-	}
-
-	public static function isRecordClosed(&$fields)
-	{
-		return !empty($fields['CURRENT_STATUS']) ? $fields['CURRENT_STATUS'] === WorktimeRecordTable::STATUS_CLOSED : false;
+		return $this->getCurrentStatus() === WorktimeRecordTable::STATUS_CLOSED;
 	}
 
 	public function isPaused()
@@ -370,31 +370,6 @@ class WorktimeRecord extends EO_WorktimeRecord
 	public function isApproved()
 	{
 		return $this->getApproved() === true;
-	}
-
-	private function calculateBreakLength($timestamp)
-	{
-		return $timestamp - ($this->getRecordedStartTimestamp() + $this->getRecordedDuration());
-	}
-
-	public function getLastPauseTimestamp()
-	{
-		return $this->getRecordedStartTimestamp() + $this->getRecordedDuration();
-	}
-
-	/**
-	 * @return EO_User_Entity|null
-	 */
-	public function obtainUser()
-	{
-		try
-		{
-			return $this->get('USER');
-		}
-		catch (\Exception $exc)
-		{
-			return null;
-		}
 	}
 
 	/**
@@ -455,18 +430,27 @@ class WorktimeRecord extends EO_WorktimeRecord
 		return null;
 	}
 
+	public function defineWorktimeEvents($worktimeEvents)
+	{
+		$this->worktimeEvents = $worktimeEvents;
+	}
+
 	/**
-	 * @return EO_WorktimeEvent_Collection|null
+	 * @return WorktimeEventCollection
 	 */
 	public function obtainWorktimeEvents()
 	{
+		if ($this->worktimeEvents instanceof WorktimeEventCollection)
+		{
+			return $this->worktimeEvents;
+		}
 		try
 		{
 			return $this->get('WORKTIME_EVENTS');
 		}
 		catch (\Exception $exc)
 		{
-			return null;
+			return new WorktimeEventCollection();
 		}
 	}
 
@@ -481,17 +465,26 @@ class WorktimeRecord extends EO_WorktimeRecord
 		$this->setActive($this->getApproved());
 	}
 
-	public function isEligibleToEdit($schedule = null, $shift = null)
+	/**
+	 * @param Schedule $schedule
+	 * @param $shift
+	 * @return bool
+	 */
+	public function isEligibleToEdit($schedule, $shift)
 	{
-		if (!$schedule)
-		{
-			$schedule = $this->obtainSchedule(['SHIFTS']);
-		}
 		if ($schedule && !$schedule->isAllowedToEditRecord())
 		{
 			return false;
 		}
-		return !$this->isNextShiftStarted($schedule) || $this->isExpired($schedule, $shift);
+		if ($this->isExpired($schedule, $shift))
+		{
+			return true;
+		}
+		if ($schedule instanceof Schedule && $schedule->isFixed())
+		{
+			return !$this->halfIntervalTillNextShiftPassed($schedule, $shift);
+		}
+		return !$this->isNextShiftStarted($schedule, $shift);
 	}
 
 	public function getDayOfWeek()
@@ -499,21 +492,76 @@ class WorktimeRecord extends EO_WorktimeRecord
 		return $this->getTimeHelper()->getDayOfWeek($this->buildRecordedStartDateTime());
 	}
 
-	public function isEligibleToReopen($schedule = null, $shift = null)
+	/**
+	 * @param Schedule $schedule
+	 * @param null $shift
+	 * @return bool
+	 */
+	public function isEligibleToReopen($schedule, $shift)
 	{
 		if ((int)$this->getRecordedStopTimestamp() === 0)
 		{
 			return false;
 		}
-		if (!$schedule)
-		{
-			$schedule = $this->obtainSchedule(['SHIFTS']);
-		}
 		if ($schedule && !$schedule->isAllowedToReopenRecord())
 		{
 			return false;
 		}
-		return !$this->isNextShiftStarted($schedule);
+
+		if ($schedule instanceof Schedule && $schedule->isFixed())
+		{
+			return !$this->halfIntervalTillNextShiftPassed($schedule, $shift);
+		}
+		return !$this->isNextShiftStarted($schedule, $shift);
+	}
+
+	/**
+	 * @param $schedule
+	 * @param $shift
+	 * @return bool
+	 * @throws \Exception
+	 */
+	private function halfIntervalTillNextShiftPassed($schedule, $shift)
+	{
+		if ($schedule instanceof Schedule && $schedule->isFixed())
+		{
+			if (!empty($schedule->obtainActiveShifts()))
+			{
+				$nextShift = $schedule->getNextShift(null, $this->getTimeHelper()->getUserDateTimeNow($this->getUserId()));
+				$nextShiftStart = $this->getNextShiftStart($schedule);
+				if ($nextShift && $nextShiftStart instanceof \DateTime)
+				{
+					$recommendedStopTimestamp = $this->getRecommendedStopTimestamp($schedule, $shift);
+					if ($recommendedStopTimestamp > 0)
+					{
+						$periodForExpiration = ($nextShiftStart->getTimestamp() - $recommendedStopTimestamp) / 2;
+						return $this->getTimeHelper()->getUtcNowTimestamp() > ($recommendedStopTimestamp + $periodForExpiration);
+					}
+				}
+			}
+			else
+			{
+				return $this->getTimeHelper()->getUtcNowTimestamp() >= $this->buildStartPlusTwoDays()->getTimestamp();
+			}
+		}
+		return false;
+	}
+
+	public function isEligibleToStartNext($schedule, $shift)
+	{
+		if ($this->getRecordedStopTimestamp() === 0)
+		{
+			return false;
+		}
+		return $this->isNextShiftStarted($schedule, $shift);
+	}
+
+	private function buildStartPlusTwoDays()
+	{
+		$startDate = $this->buildRecordedStartDateTime();
+		$startDate->add(new \DateInterval('P2D'));
+		$startDate->setTime(0, 0, 0);
+		return $startDate;
 	}
 
 	/**
@@ -525,24 +573,21 @@ class WorktimeRecord extends EO_WorktimeRecord
 	{
 		if (!$schedule
 			|| Schedule::isScheduleFlexible($schedule)
-			|| ($schedule && empty($schedule->obtainShifts()))
+			|| ($schedule && empty($schedule->obtainActiveShifts()))
 		)
 		{
-			$startDate = $this->buildRecordedStartDateTime();
-			$startDate->add(new \DateInterval('P2D'));
-			$startDate->setTime(0, 0, 0);
-			return $startDate;
+			return $this->buildStartPlusTwoDays();
 		}
 		/** @var Schedule $schedule */
 		$recordWeekDay = $this->getDayOfWeek();
 		for ($day = 1; $day <= 7; $day++)
 		{
 			$searchShiftForWeekDay = ($recordWeekDay + $day) % 7;
-			$nextClosestShift = $schedule->getShiftForWeekDay($searchShiftForWeekDay);
+			$nextClosestShift = $schedule->getShiftByWeekDay($searchShiftForWeekDay);
 			if ($nextClosestShift)
 			{
 				$nextShiftStart = clone $this->buildRecordedStartDateTime();
-				$nextShiftStart->modify("+$day days");
+				$nextShiftStart->add(new \DateInterval('P' . $day . 'D'));
 				$this->getTimeHelper()->setTimeFromSeconds($nextShiftStart, $nextClosestShift->getWorkTimeStart());
 				return $nextShiftStart;
 			}
@@ -550,15 +595,39 @@ class WorktimeRecord extends EO_WorktimeRecord
 		return null;
 	}
 
-	private function isNextShiftStarted($schedule)
+	private function isNextShiftStarted($schedule, $shift = null)
 	{
-		if (!$schedule)
+		$now = $this->getTimeHelper()->getUtcNowTimestamp();
+
+		if (Schedule::isScheduleShifted($schedule) && $schedule instanceof Schedule)
 		{
-			$schedule = $this->obtainSchedule(['SHIFTS']);
-		}
-		if (Schedule::isScheduleShifted($schedule))
-		{
-			return false; // todo shifted schedule logic
+			$userNowDateTime = TimeHelper::getInstance()->getUserDateTimeNow($this->getUserId());
+			if (empty($schedule->obtainActiveShifts()))
+			{
+				// never be next shift, expire in 2 days
+				return $now >= $this->buildStartPlusTwoDays()->getTimestamp();
+			}
+			$startShifts = $schedule->getAllShiftsByTime($userNowDateTime);
+			if (!empty($startShifts))
+			{
+				return $now >= $this->getRecommendedStopTimestamp($schedule, $shift);
+			}
+			// nothing to start at the moment
+			// check if next shift after this record started
+			$nextShift = $schedule->getNextShift($shift, $userNowDateTime);
+			if ($nextShift && $nextShift instanceof Shift)
+			{
+				$start = $this->buildRecordedStartDateTime();
+				$start->setTimezone(new \DateTimeZone('UTC'));
+				$nextStart = $nextShift->buildUtcDateTimeBySecondsUserDate($nextShift->getWorkTimeStart(), $this->getUserId(), $start);
+				if ($nextStart->getTimestamp() <= $this->getRecordedStartTimestamp())
+				{
+					$start->add(new \DateInterval('P1D'));
+					$nextStart = $nextShift->buildUtcDateTimeBySecondsUserDate($nextShift->getWorkTimeStart(), $this->getUserId(), $start);
+				}
+				return $now >= $nextStart->getTimestamp();
+			}
+			return false;
 		}
 		$nextShiftStart = $this->getNextShiftStart($schedule);
 		if ($nextShiftStart === null)
@@ -566,23 +635,57 @@ class WorktimeRecord extends EO_WorktimeRecord
 			return false;
 		}
 
-		$now = $this->getTimeHelper()->getUtcNowTimestamp();
 		return $now >= $nextShiftStart->getTimestamp();
 	}
 
-	public static function getRecommendedWorktimeStopTimestamp($record, $shift = null)
+	/**
+	 * @param Schedule $schedule
+	 * @param Shift $shift
+	 * @return float|int|null
+	 * @throws \Exception
+	 */
+	public function getRecommendedStopTimestamp($schedule, $shift)
 	{
-		$shift = $shift ?: static::obtainShiftForRecord($record);
-		if (!$shift)
+		$shift = $shift ?: $this->obtainShift();
+		$stop = null;
+		if ($shift)
 		{
-			return null;
+			$arrivalDateTime = $this->buildRecordedStartDateTime();
+
+			$startByShift = $shift->buildStartDateTimeByArrivalDateTime($arrivalDateTime, $schedule);
+			if ($startByShift instanceof \DateTime)
+			{
+				$stop = $startByShift->getTimestamp() + $shift->getDuration();
+			}
 		}
-		$idealStart = TimeHelper::getInstance()->getTimestampByUserSecondsFromTimestamp(
-			$shift['WORK_TIME_START'],
-			$record['RECORDED_START_TIMESTAMP'],
-			$record['START_OFFSET']
-		);
-		return $idealStart + Shift::getShiftDuration($shift);
+		if ($stop === null && $schedule instanceof Schedule && $schedule->isFixed())
+		{
+			$nextShift = $schedule->getNextShift($shift, $this->getTimeHelper()->getUserDateTimeNow($this->getUserId()));
+			if ($nextShift)
+			{
+				$stop = $this->buildRecordedStartDateTime()->getTimestamp() + $nextShift->getDuration();
+			}
+		}
+		return $stop;
+	}
+
+	/**
+	 * @param WorktimeRecord $record
+	 * @param null $shift
+	 * @return \DateTime|float|int|mixed|null
+	 * @throws \Exception
+	 */
+	public static function getRecommendedWorktimeStopTimestamp($record, $schedule, $shift)
+	{
+		if (!($record instanceof WorktimeRecord))
+		{
+			if (!is_array($record))
+			{
+				return null;
+			}
+			$record = WorktimeRecord::wakeUpRecord($record);
+		}
+		return $record->getRecommendedStopTimestamp($schedule, $shift);
 	}
 
 	public static function wakeUpRecord($record)
@@ -607,54 +710,51 @@ class WorktimeRecord extends EO_WorktimeRecord
 		return WorktimeRecordTable::wakeUpObject($result);
 	}
 
-	public static function isRecordExpired($record, $schedule = null, $shift = null)
+	public static function isRecordExpired($record, $schedule, $shift)
 	{
-		if (!$record)
+		if (!is_array($record))
 		{
 			return false;
 		}
-
 		return static::wakeUpRecord($record)->isExpired($schedule, $shift);
 	}
 
-	public function isExpired($schedule = null, $shift = null)
+	public function isExpired($schedule, $shift)
 	{
 		if ($this->getRecordedStopTimestamp() > 0)
 		{
 			return false;
 		}
-
-		return $this->isNextShiftStarted($schedule);
-	}
-
-	public function getRecommendedStopTimestamp($shift = null)
-	{
-		return static::getRecommendedWorktimeStopTimestamp($this, $shift ?: $this->obtainShift());
-	}
-
-	/**
-	 * @return Schedule|null
-	 */
-	public static function obtainScheduleForRecord($record, $withEntities = [])
-	{
-		if ($record['SCHEDULE_ID'] > 0)
+		if (Schedule::isScheduleShifted($schedule))
 		{
-			return DependencyManager::getInstance()->getScheduleRepository()->findByIdWith($record['SCHEDULE_ID'], $withEntities);
+			$nextShiftStarted = $this->isNextShiftStarted($schedule, $shift);
+			$recommendStop = $this->getRecommendedStopTimestamp($schedule, $shift);
+			if ($recommendStop !== null)
+			{
+				// expires if next shift started or in one hour after current shift end
+				return $nextShiftStarted ||
+					   $this->getTimeHelper()->getUtcNowTimestamp() >= $recommendStop + TimeDictionary::SECONDS_PER_HOUR;
+			}
+			return $nextShiftStarted;
 		}
-		return null;
+		if ($schedule instanceof Schedule && $schedule->isFixed())
+		{
+			return $this->halfIntervalTillNextShiftPassed($schedule, $shift);
+		}
+		return $this->isNextShiftStarted($schedule, $shift);
 	}
 
-	private static function obtainShiftForRecord($record)
+	public function defineReports($reports)
 	{
-		if ($record['SHIFT_ID'] > 0)
-		{
-			return DependencyManager::getInstance()->getShiftRepository()->findById($record['SHIFT_ID']);
-		}
-		return null;
+		$this->reports = $reports;
 	}
 
 	public function obtainReports()
 	{
+		if ($this->reports instanceof EO_WorktimeReport_Collection)
+		{
+			return $this->reports;
+		}
 		try
 		{
 			return $this->get('REPORTS');
@@ -670,18 +770,13 @@ class WorktimeRecord extends EO_WorktimeRecord
 	 */
 	public function obtainShift()
 	{
+		if ($this->shift instanceof Shift)
+		{
+			return $this->shift;
+		}
 		try
 		{
-			if (!$this->get('SHIFT') && $this->shift === null)
-			{
-				$this->shift = false;
-				if ($shift = static::obtainShiftForRecord($this))
-				{
-					$this->shift = $shift;
-					$this->set('SHIFT', $shift);
-				}
-			}
-			return $this->get('SHIFT');
+			return $this->get('SHIFT') ? $this->get('SHIFT') : null;
 		}
 		catch (\Exception $exc)
 		{
@@ -692,32 +787,19 @@ class WorktimeRecord extends EO_WorktimeRecord
 	/**
 	 * @return Schedule|null
 	 */
-	public function obtainSchedule($withEntities = [])
+	public function obtainSchedule()
 	{
+		if ($this->schedule instanceof Schedule)
+		{
+			return $this->schedule;
+		}
 		try
 		{
-			if (!$this->get('SCHEDULE') && $this->schedule === null)
-			{
-				$this->schedule = false;
-				if ($schedule = static::obtainScheduleForRecord($this, $withEntities))
-				{
-					$this->schedule = $schedule;
-					$this->set('SCHEDULE', $schedule);
-				}
-			}
-			return $this->get('SCHEDULE');
+			return $this->get('SCHEDULE') ? $this->get('SCHEDULE') : null;
 		}
 		catch (\Exception $exc)
 		{
-			if ($this->schedule === null)
-			{
-				$this->schedule = false;
-				if ($schedule = static::obtainScheduleForRecord($this, $withEntities))
-				{
-					$this->schedule = $schedule;
-				}
-			}
-			return $this->schedule === false ? null : $this->schedule;
+			return null;
 		}
 	}
 
@@ -728,7 +810,16 @@ class WorktimeRecord extends EO_WorktimeRecord
 
 	public function buildRecordedStartDateTime()
 	{
-		return $this->getTimeHelper()->createDateTimeFromFormat('U', $this->getRecordedStartTimestamp(), $this->getStartOffset());
+		if ($this->getRecordedStartTimestamp() > 0)
+		{
+			return $this->getTimeHelper()->createDateTimeFromFormat('U', $this->getRecordedStartTimestamp(), $this->getStartOffset());
+		}
+		$date = $this->getDateStart()->setTimeZone(TimeHelper::getInstance()->getUserTimezone($this->getUserId()));
+		if ($date)
+		{
+			return \DateTime::createFromFormat('Y-m-d H:i:s T', $date->format('Y-m-d H:i:s T'));
+		}
+		return \DateTime::createFromFormat('Y-m-d H:i:s T', $this->getDateStart()->format('Y-m-d H:i:s T'));
 	}
 
 	private function defineStartTime($recordedStartTimestamp)
@@ -743,7 +834,7 @@ class WorktimeRecord extends EO_WorktimeRecord
 		$endTime = $this->getRecordedStopTimestamp();
 		if (!$endTime)
 		{
-			$endTime = time();
+			$endTime = TimeHelper::getInstance()->getUtcNowTimestamp();
 		}
 		return $endTime - $this->calculateCurrentBreakLength() - $this->getRecordedStartTimestamp();
 	}
@@ -753,7 +844,7 @@ class WorktimeRecord extends EO_WorktimeRecord
 		$break = $this->getRecordedBreakLength();
 		if ($this->isPaused())
 		{
-			$break = time() - $this->getRecordedDuration() - $this->getRecordedStartTimestamp();
+			$break = TimeHelper::getInstance()->getUtcNowTimestamp() - $this->getRecordedDuration() - $this->getRecordedStartTimestamp();
 		}
 		return $break;
 	}
@@ -772,5 +863,39 @@ class WorktimeRecord extends EO_WorktimeRecord
 	{
 		$this->setTimeLeaks($length);
 		return $this;
+	}
+
+	public function defineSchedule(Schedule $schedule)
+	{
+		$this->schedule = $schedule;
+	}
+
+	public function defineShift(Shift $shift)
+	{
+		$this->shift = $shift;
+	}
+
+	private function increaseBreaks($newBreak)
+	{
+		if ($newBreak > BX_TIMEMAN_ALLOWED_TIME_DELTA)
+		{
+			$this->setRecordedBreakLength($this->getRecordedBreakLength() + $newBreak);
+			$this->setActualBreakLength($this->getActualBreakLength() + $newBreak);
+		}
+	}
+
+	/**
+	 * @return \Bitrix\Timeman\Model\User\User|null
+	 */
+	public function obtainUser()
+	{
+		try
+		{
+			return $this->getUser();
+		}
+		catch (\Exception $exc)
+		{
+		}
+		return null;
 	}
 }

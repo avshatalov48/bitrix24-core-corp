@@ -4,6 +4,7 @@
 	if (window.BXMainMailConfirm)
 		return;
 
+	var options = {};
 	var mailboxes = [];
 
 	var listParams = {};
@@ -12,6 +13,9 @@
 		init: function (params)
 		{
 			mailboxes = params.mailboxes;
+			delete params.mailboxes;
+
+			options = params;
 		},
 		getMailboxes: function ()
 		{
@@ -172,6 +176,7 @@
 
 								var smtpServerField = BX.findChild(emailBlock, {attr: {'data-name': 'smtp-server'}}, true);
 								var smtpPortField   = BX.findChild(emailBlock, {attr: {'data-name': 'smtp-port'}}, true);
+								var smtpSslField    = BX.findChild(emailBlock, {attr: {'data-name': 'smtp-ssl'}}, true);
 								var smtpLoginField  = BX.findChild(emailBlock, {attr: {'data-name': 'smtp-login'}}, true);
 								var smtpPassField   = BX.findChild(emailBlock, {attr: {'data-name': 'smtp-password'}}, true);
 
@@ -249,6 +254,7 @@
 									data.smtp = {
 										server: smtpServerField.value,
 										port: smtpPortField.value,
+										ssl: smtpSslField.checked ? smtpSslField.value : '',
 										login: smtpLoginField.value,
 										password: smtpPassField.value
 									};
@@ -287,7 +293,7 @@
 										{
 											dlg.showNotify(data.error);
 										}
-										else if ('email' == step || 'smtp' == step)
+										else if (('email' == step || 'smtp' == step) && !data.confirmed)
 										{
 											dlg.switchBlock('code');
 										}
@@ -376,7 +382,11 @@
 					hideBlock = codeBlock;
 					showBlock = emailBlock;
 
-					dlg.buttons[0].setName(BX.message('MAIN_MAIL_CONFIRM_GET_CODE'));
+					dlg.buttons[0].setName(BX.message(
+						'smtp' == block && options.canCheckSmtp
+							? 'MAIN_MAIL_CONFIRM_SAVE'
+							: 'MAIN_MAIL_CONFIRM_GET_CODE'
+					));
 					dlg.buttons[1].setName(BX.message('MAIN_MAIL_CONFIRM_CANCEL'));
 				}
 
@@ -429,12 +439,16 @@
 							step = 'email';
 
 							BX.hide(smtpBlock, 'table-row-group');
+							dlg.buttons[0].setName(BX.message('MAIN_MAIL_CONFIRM_GET_CODE'));
 						}
 						else
 						{
 							step = 'smtp';
 
 							BX.show(smtpBlock, 'table-row-group');
+							dlg.buttons[0].setName(BX.message(
+								options.canCheckSmtp ? 'MAIN_MAIL_CONFIRM_SAVE' : 'MAIN_MAIL_CONFIRM_GET_CODE'
+							));
 						}
 
 						event.preventDefault();

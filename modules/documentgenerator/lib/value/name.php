@@ -56,7 +56,7 @@ class Name extends Value implements Nameable
 		{
 			$options['format'] = $this->getDefaultOptions()['format'];
 		}
-		return \CUser::FormatName(
+		$result = \CUser::FormatName(
 			$options['format'],
 			array(
 				'LOGIN' => '',
@@ -68,6 +68,26 @@ class Name extends Value implements Nameable
 			false,
 			false
 		);
+
+		$emptyName = \CUser::FormatName(
+			$options['format'],
+			array(
+				'LOGIN' => '',
+				'TITLE' => '',
+				'NAME' => '',
+				'SECOND_NAME' => '',
+				'LAST_NAME' => '',
+			),
+			false,
+			false
+		);
+
+		if($result === $emptyName)
+		{
+			$result = '';
+		}
+
+		return $result;
 	}
 
 	/**
@@ -267,7 +287,6 @@ class Name extends Value implements Nameable
 	 */
 	public static function getLangName()
 	{
-		Loc::loadLanguageFile(__FILE__);
 		return Loc::getMessage('DOCGEN_VALUE_NAME_TITLE');
 	}
 }

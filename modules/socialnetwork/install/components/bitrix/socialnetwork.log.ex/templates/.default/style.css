@@ -1488,7 +1488,6 @@ a.feed-post-title:hover {
 
 .feed-post-more-text {
 	border-bottom: 1px solid transparent;
-	font-size: 12px;
 	-webkit-transition: border-bottom-color 0.2s linear;
 	transition: border-bottom-color 0.2s linear;
 }
@@ -1817,6 +1816,7 @@ span.feed-add-post-destination-new:hover {
 .feed-post-informers .feed-inform-ilike,
 .feed-post-informers .feed-inform-follow,
 .feed-post-informers .feed-post-more-link,
+.feed-post-informers .feed-post-more-text,
 .feed-post-informers .feed-content-view-cnt {
 	font-size: 13px;
 	line-height: 13px;
@@ -2427,36 +2427,39 @@ a.feed-post-more-link:hover {
 }
 
 .feed-task-info-block {
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	-webkit-box-align: stretch;
+	-ms-flex-align: stretch;
+	align-items: stretch;
 }
 
 .feed-task-info-label {
-	-moz-border-bottom-colors: none;
-	-moz-border-left-colors: none;
-	-moz-border-right-colors: none;
-	-moz-border-top-colors: none;
 	background: none repeat 0 0 #ecf2f3;
-	border-color: #cfd7d9 #dee5e6 #e7eeef;
-	border-image: none;
 	border-radius: 2px;
-	border-style: solid;
-	border-width: 1px;
-	box-shadow: 0 1px 1px #d7ddde inset;
 	color: #5c6470;
-	float: left;
 	font-size: 13px;
 	font-weight: bold;
-	margin-top: 4px;
-	padding: 4px 10px 5px 28px;
+	padding: 5px 10px;
 	position: relative;
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	-webkit-box-align: center;
+	-ms-flex-align: center;
+	align-items: center;
+	-webkit-box-orient: horizontal;
+	-webkit-box-direction: reverse;
+	-ms-flex-direction: row-reverse;
+	flex-direction: row-reverse;
 }
 
 .feed-task-info-label-icon {
-	background: url("images/log/live_feed_sprite_6.png?3") no-repeat -142px -447px;
+	background: no-repeat center url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2214%22%20height%3D%2214%22%20viewBox%3D%220%200%2014%2014%22%3E%3Cpath%20fill%3D%22%23A6ACB2%22%20fill-rule%3D%22evenodd%22%20d%3D%22M9.61.514A6.992%206.992%200%200%201%2013.993%207a6.855%206.855%200%200%201-6.714%206.987A6.992%206.992%200%201%201%209.611.514zM3.245%203.392a5.208%205.208%200%200%200%203.963%208.812%205.106%205.106%200%200%200%205-5.204%205.208%205.208%200%200%200-8.963-3.608zm2.871%204.475V3.48H7.87v2.632h2.633v1.755H6.115z%22/%3E%3C/svg%3E');
 	height: 14px;
-	left: 8px;
-	position: absolute;
-	top: 7px;
 	width: 14px;
+	margin-right: 9px;
 }
 
 .feed-task-info-text {
@@ -4693,6 +4696,7 @@ td.transparent {background: none;}
 	margin: auto;
 	height: 29px;
 	width: 29px;
+	overflow: hidden;
 }
 
 .feed-new-message-inf-loader-first-loader {

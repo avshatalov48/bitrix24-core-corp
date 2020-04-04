@@ -7,12 +7,11 @@ class RegularExpressionValidator extends BaseFormFilter
 {
 	private $pattern;
 	private $notPattern;
-	protected $defaultMessage = '';
 
-	public function configurePattern($pattern, $errorCode = '')
+	public function configurePattern($pattern, $errorCode = null)
 	{
 		$this->pattern = $pattern;
-		$this->defaultMessage = $errorCode ?: $this->defaultMessage;
+		$this->defaultErrorMessage = $errorCode ?: $this->defaultErrorMessage;
 		return $this;
 	}
 
@@ -29,10 +28,10 @@ class RegularExpressionValidator extends BaseFormFilter
 		if ($this->pattern)
 		{
 			$valid = !is_array($value) &&
-				(!$this->notPattern && preg_match($this->pattern, $value)
-				|| $this->notPattern && !preg_match($this->pattern, $value));
+					 (!$this->notPattern && preg_match($this->pattern, $value)
+					  || $this->notPattern && !preg_match($this->pattern, $value));
 		}
 
-		return $valid ? null : [$this->defaultMessage, []];
+		return $valid ? null : [$this->defaultErrorMessage, []];
 	}
 }

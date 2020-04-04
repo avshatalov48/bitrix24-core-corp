@@ -71,7 +71,11 @@ class rest extends CModule
 		$eventManager->registerEventHandler("im", "OnAfterConfirmNotify", "rest", "\\Bitrix\\Rest\\NotifyIm", "receive");
 		$eventManager->registerEventHandler("rest", "\\Bitrix\\Rest\\APAuth\\Password::OnDelete", "rest", "\\Bitrix\\Rest\\APAuth\\PermissionTable", "onPasswordDelete");
 		$eventManager->registerEventHandler("perfmon", "OnGetTableSchema", "rest", "rest", "OnGetTableSchema");
-
+		$eventManager->registerEventHandler('rest', 'OnRestApplicationConfigurationImport', 'rest', '\Bitrix\Rest\Configuration\AppConfiguration', 'onEventImportController');
+		$eventManager->registerEventHandler('rest', 'OnRestApplicationConfigurationExport', 'rest', '\Bitrix\Rest\Configuration\AppConfiguration', 'onEventExportController');
+		$eventManager->registerEventHandler('rest', 'OnRestApplicationConfigurationClear', 'rest', '\Bitrix\Rest\Configuration\AppConfiguration', 'onEventClearController');
+		$eventManager->registerEventHandler('rest', 'OnRestApplicationConfigurationEntity', 'rest', '\Bitrix\Rest\Configuration\AppConfiguration', 'getEntityList');
+		$eventManager->registerEventHandler('rest', 'OnRestApplicationConfigurationGetManifest', 'rest', '\Bitrix\Rest\Configuration\AppConfiguration', 'getManifestList');
 		if(CModule::IncludeModule('iblock'))
 		{
 			COption::SetOptionString("rest", "entity_iblock_type", "rest_entity");
@@ -108,7 +112,7 @@ class rest extends CModule
 
 		\CAgent::AddAgent("Bitrix\\Rest\\Marketplace\\Client::getNumUpdates();", "rest", "N", 86400);
 		\CAgent::AddAgent("Bitrix\\Rest\\EventOfflineTable::cleanProcessAgent();", "rest", "N", 86400);
-		\CAgent::AddAgent("\\Bitrix\\Rest\\StatTable::cleanUpAgent();", "rest", "N", 86400);
+		\CAgent::AddAgent("Bitrix\\Rest\\UsageStatTable::cleanUpAgent();", "rest", "N", 86400);
 
 
 		return true;
@@ -149,6 +153,12 @@ class rest extends CModule
 		$eventManager->unRegisterEventHandler("rest", "\\Bitrix\\Rest\\APAuth\\Password::OnDelete", "rest", "\\Bitrix\\Rest\\APAuth\\PermissionTable", "onPasswordDelete");
 		$eventManager->unRegisterEventHandler("rest", "OnRestServiceBuildDescription", "rest", "\\Bitrix\\Rest\\Engine\\RestManager", "OnRestServiceBuildDescription");
 		$eventManager->unRegisterEventHandler("perfmon", "OnGetTableSchema", "rest", "rest", "OnGetTableSchema");
+		$eventManager->unRegisterEventHandler('rest', 'OnRestApplicationConfigurationImport', 'rest', '\Bitrix\Rest\Configuration\AppConfiguration', 'onEventImportController');
+		$eventManager->unRegisterEventHandler('rest', 'OnRestApplicationConfigurationExport', 'rest', '\Bitrix\Rest\Configuration\AppConfiguration', 'onEventExportController');
+		$eventManager->unRegisterEventHandler('rest', 'OnRestApplicationConfigurationClear', 'rest', '\Bitrix\Rest\Configuration\AppConfiguration', 'onEventClearController');
+		$eventManager->unRegisterEventHandler('rest', 'OnRestApplicationConfigurationEntity', 'rest', '\Bitrix\Rest\Configuration\AppConfiguration', 'getEntityList');
+		$eventManager->unRegisterEventHandler('rest', 'OnRestApplicationConfigurationGetManifest', 'rest', '\Bitrix\Rest\Configuration\AppConfiguration', 'getManifestList');
+
 
 		CAgent::RemoveModuleAgents("rest");
 
@@ -173,6 +183,7 @@ class rest extends CModule
 		CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/rest/install/js", $_SERVER["DOCUMENT_ROOT"]."/bitrix/js", true, true);
 		CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/rest/install/tools", $_SERVER["DOCUMENT_ROOT"]."/bitrix/tools", true, true);
 		CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/rest/install/services", $_SERVER["DOCUMENT_ROOT"]."/bitrix/services", true, true);
+		CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/rest/install/images",  $_SERVER["DOCUMENT_ROOT"]."/bitrix/images/rest", true, true);
 
 		// delete old urlrewrite rule
 		CUrlRewriter::Delete(array(
@@ -218,6 +229,13 @@ class rest extends CModule
 				"RULE" => "",
 				"ID" => "bitrix:rest.hook",
 				"PATH" => "/marketplace/hook/index.php",
+			));
+
+			\Bitrix\Main\UrlRewriter::add($siteId, array(
+				"CONDITION" => "#^/marketplace/configuration/#",
+				"RULE" => "",
+				"ID" => "bitrix:rest.configuration",
+				"PATH" => "/marketplace/configuration/index.php",
 			));
 		}
 
@@ -301,7 +319,11 @@ class rest extends CModule
 						"b_rest_placement" => "APP_ID",
 						"b_rest_event_offline" => "APP_ID",
 						"b_rest_stat" => "APP_ID",
+						"b_rest_stat_app" => "APP_ID",
 						"b_rest_app_log" => "APP_ID",
+					),
+					"CODE" => array(
+						"b_rest_stat_app" => "APP_CODE",
 					)
 				),
 				"b_rest_ap" => array(

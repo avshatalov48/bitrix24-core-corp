@@ -10,6 +10,7 @@ $cache = new CPHPCache();
 $cache_time = 3600 * 24 * 365;
 $detailurl = $_REQUEST["detail_url"];
 $action = $_REQUEST["action"];
+$feature = (isset($_REQUEST["feature"]) ? $_REQUEST["feature"] : '');
 $onlyBusiness = $_REQUEST["only_business"] == 'Y' ? 'Y' : 'N';
 $businessUsers = array();
 if ($onlyBusiness == 'Y' && CModule::IncludeModule('bitrix24') && !\CBitrix24BusinessTools::isLicenseUnlimited())
@@ -242,7 +243,7 @@ if (in_array($action, array("get_user_list", "get_usergroup_list")))
 
 if (in_array($action, array("get_group_list", "get_usergroup_list")))
 {
-	$cache_id = "mobileAction|get_groups|" . $USER->GetID() . "|" . $detailurl;
+	$cache_id = "mobileAction|get_groups|" . $USER->GetID() . "|" . $detailurl . "|" . $feature;
 	if ($cache->InitCache($cache_time, $cache_id, $cache_path))
 	{
 		$cachedData = $cache->GetVars();
@@ -261,12 +262,28 @@ if (in_array($action, array("get_group_list", "get_usergroup_list")))
 
 			$arSonetGroups = CSocNetLogDestination::GetSocnetGroup(
 				array(
-					"features" => array("blog", array("premoderate_post", "moderate_post", "write_post", "full_post")),
-					"THUMBNAIL_SIZE_WIDTH" => 100,
-					"THUMBNAIL_SIZE_HEIGHT" => 100
+						"features" => array("blog", array("premoderate_post", "moderate_post", "write_post", "full_post")),
+						"THUMBNAIL_SIZE_WIDTH" => 100,
+						"THUMBNAIL_SIZE_HEIGHT" => 100
 				)
 			);
+/*
+			$params = array(
+				"THUMBNAIL_SIZE_WIDTH" => 100,
+				"THUMBNAIL_SIZE_HEIGHT" => 100
+			);
 
+			if (strlen(trim($feature)) > 0)
+			{
+				$operations = \Bitrix\Socialnetwork\Integration\Main\UISelector\SonetGroups::getFeatureOperations($feature);
+				if (!empty($operations))
+				{
+					$params['features'] = [ $feature, $operations ];
+				}
+			}
+
+			$arSonetGroups = CSocNetLogDestination::GetSocnetGroup($params);
+*/
 			foreach ($arSonetGroups as $arSocnetGroup)
 			{
 				$tmpData = Array(

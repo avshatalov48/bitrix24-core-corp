@@ -17,6 +17,10 @@ class Toolbar
 	/**
 	 * @param Button[] $buttons
 	 */
+	private $afterTitleButtons = [];
+	/**
+	 * @param Button[] $buttons
+	 */
 	private $buttons = [];
 	private $filterButtons = [];
 	private $options;
@@ -68,6 +72,10 @@ class Toolbar
 		if ($location === ButtonLocation::AFTER_FILTER)
 		{
 			$this->filterButtons[] = $button;
+		}
+		elseif($location === ButtonLocation::AFTER_TITLE)
+		{
+			$this->afterTitleButtons[] = $button;
 		}
 		else
 		{
@@ -163,7 +171,14 @@ class Toolbar
 	 */
 	public function getButtons()
 	{
-		return array_merge($this->buttons, $this->filterButtons);
+		return array_merge($this->afterTitleButtons, $this->filterButtons, $this->buttons);
+	}
+
+	public function renderAfterTitleButtons()
+	{
+		return implode(array_map(function(Button $button) {
+			return self::processButtonRender($button);
+		}, $this->afterTitleButtons));
 	}
 
 	public function renderRightButtons()
@@ -202,7 +217,7 @@ class Toolbar
 			$button->addClass('ui-btn-themes');
 		}
 
-		return $button->render();
+		return $button->render(false);
 	}
 
 	public function setTitleMinWidth($width)

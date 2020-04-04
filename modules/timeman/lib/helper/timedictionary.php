@@ -7,4 +7,5 @@ class TimeDictionary
 	const SECONDS_PER_MINUTE = 60;
 	const MINUTES_PER_HOUR = 60;
 	const SECONDS_PER_HOUR = 3600;
+	const SECONDS_PER_DAY = 86400;
 }

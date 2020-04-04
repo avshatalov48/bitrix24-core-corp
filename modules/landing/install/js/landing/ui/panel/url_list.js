@@ -136,7 +136,6 @@
 			}.bind(this));
 		},
 
-
 		/**
 		 * Shows sites list
 		 * @param {object} options
@@ -148,6 +147,21 @@
 			void style(this.layout, {
 				width: null
 			});
+
+			if (!BX.Type.isPlainObject(options.filter))
+			{
+				options.filter = {};
+			}
+
+			if (BX.Type.isNil(options.filter.ID))
+			{
+				options.filter.ID =	BX.Landing.Env.getInstance().getSiteId();
+			}
+
+			if (options.filter.ID === -1)
+			{
+				delete options.filter.ID;
+			}
 
 			void BX.Landing.Backend.getInstance()
 				.getSites(options).then(function(sites) {
@@ -161,20 +175,28 @@
 						// noinspection EqualityComparisonWithCoercionJS
 						if (parseInt(site.ID) == currentSiteId)
 						{
-							this.appendSidebarButton(
-								new SidebarButton(site.ID, {
-									text: site.TITLE,
-									onClick: this.onSiteClick.bind(this, site.ID, options.enableAreas),
-									child: true,
-									active: true
-								})
-							);
+							this.currentSiteButton = new SidebarButton(site.ID, {
+								text: site.TITLE,
+								onClick: this.onSiteClick.bind(this, site.ID, options.enableAreas),
+								child: true,
+								active: true
+							});
+
+							this.appendSidebarButton(this.currentSiteButton);
 						}
 					}, this);
 
 					BX.Landing.Backend.getInstance()
 						.getLandings({siteId: currentSiteId})
 						.then(function(landings) {
+							var fakeEvent = {currentTarget: this.currentSiteButton.layout};
+							var siteClick = this.onSiteClick.bind(this, currentSiteId, options.enableAreas, fakeEvent);
+							this.appendCard(
+								new BX.Landing.UI.Card.AddPageCard({
+									siteId: currentSiteId,
+									onSave: this.addPageSave.bind(this, siteClick, currentSiteId)
+								})
+							);
 							landings.forEach(function(landing) {
 								if (!landing.IS_AREA || (landing.IS_AREA && options.enableAreas))
 								{
@@ -516,15 +538,22 @@
 		onSiteClick: function(siteId, enableAreas, event)
 		{
 			this.sidebarButtons.forEach(function(button) {
-				if (button.layout === event.currentTarget)
+				if (
+					button.layout === event.currentTarget
+					|| (
+						!!event.target
+						&& button.layout === event.target.closest('.landing-ui-button')
+					)
+				)
 				{
+					this.currentSiteButton = button;
 					button.activate();
 				}
 				else
 				{
 					button.deactivate();
 				}
-			});
+			}, this);
 
 			this.content.innerHTML = "";
 			this.showLoader();
@@ -532,6 +561,13 @@
 			BX.Landing.Backend.getInstance()
 				.getLandings({siteId: siteId})
 				.then(function(landings) {
+					var siteClick = this.onSiteClick.bind(this, siteId, enableAreas, event);
+					this.appendCard(
+						new BX.Landing.UI.Card.AddPageCard({
+							siteId: siteId,
+							onSave: this.addPageSave.bind(this, siteClick, siteId)
+						})
+					);
 					landings.forEach(function(landing) {
 						if (!landing.IS_AREA || (landing.IS_AREA && enableAreas))
 						{
@@ -542,6 +578,15 @@
 				}.bind(this));
 		},
 
+		addPageSave: function(reloadFn, siteId)
+		{
+			this.cache = new BX.Cache.MemoryCache();
+			var backend = BX.Landing.Backend.getInstance();
+			backend.cache.delete('landings+['+siteId+']');
+			backend.cache.delete('landings+["'+siteId+'"]');
+			backend.cache.delete('landing+'+siteId);
+			reloadFn();
+		},
 
 		/**
 		 * Creates landing preview

@@ -36,12 +36,12 @@ class UserProfile extends \CBitrixComponent implements \Bitrix\Main\Engine\Contr
 			'ID', 'PATH_TO_USER', 'PATH_TO_POST', 'GRAT_POST_LIST_PAGE_SIZE', 'PATH_TO_USER_STRESSLEVEL'
 		];
 
-		if (\Bitrix\Main\Config\Option::get("intranet", "user_profile_view_fields", false, SITE_ID) === false)
+		if (Option::get("intranet", "user_profile_view_fields", false, SITE_ID) === false)
 		{
 			$result = array_merge($result, [ 'USER_FIELDS_MAIN', 'USER_PROPERTY_MAIN', 'USER_FIELDS_CONTACT', 'USER_PROPERTY_CONTACT', 'USER_FIELDS_PERSONAL', 'USER_PROPERTY_PERSONAL' ]);
 		}
 
-		if (\Bitrix\Main\Config\Option::get("intranet", "user_profile_edit_fields", false, SITE_ID) === false)
+		if (Option::get("intranet", "user_profile_edit_fields", false, SITE_ID) === false)
 		{
 			$result = array_merge($result, [ 'EDITABLE_FIELDS' ]);
 		}
@@ -220,13 +220,15 @@ class UserProfile extends \CBitrixComponent implements \Bitrix\Main\Engine\Contr
 		);
 
 		$params = array(
-			"FIELDS" => array('ID', 'ACTIVE', 'CONFIRM_CODE', 'EXTERNAL_AUTH_ID', 'LAST_ACTIVITY_DATE',
+			"FIELDS" => array('ID', 'ACTIVE', 'CONFIRM_CODE', 'EXTERNAL_AUTH_ID', 'LAST_ACTIVITY_DATE', 'DATE_REGISTER',
 				'LOGIN', 'EMAIL', 'NAME', 'SECOND_NAME', 'LAST_NAME', 'WORK_POSITION',
 				'PERSONAL_PHOTO', 'PERSONAL_BIRTHDAY', 'PERSONAL_GENDER',
 				'PERSONAL_WWW', 'PERSONAL_MOBILE', 'WORK_PHONE', 'PERSONAL_CITY',
 				'TIME_ZONE', 'AUTO_TIME_ZONE', 'TIME_ZONE_OFFSET',
 				'PERSONAL_COUNTRY', 'PERSONAL_FAX', 'PERSONAL_MAILBOX',
-				'PERSONAL_PHONE', 'PERSONAL_STATE', 'PERSONAL_STREET', 'PERSONAL_ZIP'
+				'PERSONAL_PHONE', 'PERSONAL_STATE', 'PERSONAL_STREET', 'PERSONAL_ZIP',
+				'WORK_CITY', 'WORK_COUNTRY', 'WORK_COMPANY', 'WORK_DEPARTMENT',
+				'PERSONAL_PROFESSION', 'WORK_NOTES'
 			),
 			"SELECT" => array("UF_DEPARTMENT", "UF_PHONE_INNER", "UF_SKYPE")
 		);
@@ -270,6 +272,7 @@ class UserProfile extends \CBitrixComponent implements \Bitrix\Main\Engine\Contr
 		}
 
 		$this->setUserStatus($user);
+		$this->checkVoximplantPhone($user);
 		$this->prepareSubordination($user);
 		$this->checkAppsInstallation($user);
 
@@ -320,7 +323,9 @@ class UserProfile extends \CBitrixComponent implements \Bitrix\Main\Engine\Contr
 			'EMAIL', 'PERSONAL_MOBILE', 'PERSONAL_WWW',  'PERSONAL_COUNTRY', 'PERSONAL_CITY', 'PERSONAL_STATE',
 			'WORK_PHONE', 'WORK_POSITION', 'AUTO_TIME_ZONE', 'TIME_ZONE',
 			'LOGIN', 'PASSWORD', 'CONFIRM_PASSWORD',
-			'PERSONAL_FAX',  'PERSONAL_MAILBOX', 'PERSONAL_PHONE', 'PERSONAL_STATE', 'PERSONAL_STREET', 'PERSONAL_ZIP'
+			'PERSONAL_FAX',  'PERSONAL_MAILBOX', 'PERSONAL_PHONE', 'PERSONAL_STATE', 'PERSONAL_STREET', 'PERSONAL_ZIP',
+			'WORK_CITY', 'WORK_COUNTRY', 'WORK_COMPANY', 'WORK_DEPARTMENT',
+			'PERSONAL_PROFESSION', 'WORK_NOTES'
 		);
 
 		$newFields = array();
@@ -365,6 +370,37 @@ class UserProfile extends \CBitrixComponent implements \Bitrix\Main\Engine\Contr
 		}
 	}
 
+	private function checkVoximplantPhone(&$user)
+	{
+		$user["VOXIMPLANT_ENABLE_PHONES"] = [
+			"PERSONAL_MOBILE" => "N",
+			"WORK_PHONE" => "N"
+		];
+
+		if (Loader::includeModule('voximplant'))
+		{
+			$userPermissions = \Bitrix\Voximplant\Security\Permissions::createWithCurrentUser();
+			if (
+				$userPermissions->canPerform(
+					\Bitrix\Voximplant\Security\Permissions::ENTITY_CALL,
+					\Bitrix\Voximplant\Security\Permissions::ACTION_PERFORM,
+					\Bitrix\Voximplant\Security\Permissions::PERMISSION_CALL_USERS
+				)
+			)
+			{
+				if (!empty($user["PERSONAL_MOBILE"]) && \CVoxImplantMain::Enable($user["PERSONAL_MOBILE"]))
+				{
+					$user["VOXIMPLANT_ENABLE_PHONES"]["PERSONAL_MOBILE"] = "Y";
+				}
+
+				if (!empty($user["WORK_PHONE"]) && \CVoxImplantMain::Enable($user["WORK_PHONE"]))
+				{
+					$user["VOXIMPLANT_ENABLE_PHONES"]["WORK_PHONE"] = "Y";
+				}
+			}
+		}
+	}
+
 	public static function getUserPhoto($photoId, $size = 100)
 	{
 		if ($photoId > 0)
@@ -391,6 +427,12 @@ class UserProfile extends \CBitrixComponent implements \Bitrix\Main\Engine\Contr
 		$obUser = new \CUser();
 		$arGroups = $obUser->getUserGroup($user["ID"]);
 
+		$extranetGroupId = (
+			Loader::includeModule('extranet')
+				? intval(\CExtranet::getExtranetUserGroupId())
+				: 0
+		);
+
 		$user["IS_EXTRANET"] = false;
 
 		if(in_array(1, $arGroups))
@@ -406,10 +448,17 @@ class UserProfile extends \CBitrixComponent implements \Bitrix\Main\Engine\Contr
 				|| empty($user['UF_DEPARTMENT'][0])
 			)
 			{
-				$user["STATUS"] = "extranet";
-				if ($user["EXTERNAL_AUTH_ID"] !== "email")
+				if (
+					$extranetGroupId
+					&& in_array($extranetGroupId, $arGroups)
+				)
 				{
+					$user["STATUS"] = "extranet";
 					$user["IS_EXTRANET"] = true;
+				}
+				else
+				{
+					$user["STATUS"] = "visitor";
 				}
 			}
 		}
@@ -822,5 +871,54 @@ class UserProfile extends \CBitrixComponent implements \Bitrix\Main\Engine\Contr
 	public function fieldsSettingsAction()
 	{
 		return new \Bitrix\Main\Engine\Response\Component($this->getName(), 'settings', $this->arParams);
+	}
+
+	protected function processShowYear()
+	{
+		$existingValue = Option::get("intranet", "user_profile_show_year", "Y");
+		$actualValue = 'Y';
+		if (ModuleManager::isModuleInstalled('bitrix24'))
+		{
+			if (Option::get("intranet", "show_year_for_female", "N") === "N")
+			{
+				$actualValue = 'M';
+			}
+		}
+		elseif (
+			isset($this->arParams['SHOW_YEAR'])
+			&& in_array($this->arParams['SHOW_YEAR'], ['Y', 'M', 'N'])
+		)
+		{
+			$actualValue = $this->arParams['SHOW_YEAR'];
+		}
+		if ($actualValue != $existingValue)
+		{
+			Option::set("intranet", "user_profile_show_year", $actualValue);
+		}
+	}
+
+	protected function getDiskInfo()
+	{
+		if (!Loader::includeModule("disk"))
+		{
+			return;
+		}
+
+		$diskObj = new \Bitrix\Disk\Bitrix24Disk\Information($this->arParams["ID"]);
+		$installationDate = $diskObj->getInstallationDatetime();
+		$space = $diskObj->getDiskSpaceUsage();
+
+		$diskInfo = array();
+		if (!empty($installationDate))
+		{
+			$diskInfo["INSTALLATION_DATE"] = $installationDate->toString(new \Bitrix\Main\Context\Culture(array("FORMAT_DATETIME" => FORMAT_DATE)));
+		}
+
+		if (!empty($space))
+		{
+			$diskInfo["SPACE"] = \CFile::FormatSize($space);
+		}
+
+		return $diskInfo;
 	}
 }

@@ -5,6 +5,7 @@ use Bitrix\Main\Application;
 use Bitrix\Main\Error;
 use Bitrix\Main\Result;
 use Bitrix\Timeman\Model\Schedule\ScheduleTable;
+use Bitrix\Timeman\Model\Schedule\Shift\ShiftCollection;
 use Bitrix\Timeman\Model\Schedule\Shift\Shift;
 use Bitrix\Timeman\Model\Schedule\Shift\ShiftTable;
 use Bitrix\Timeman\Model\Schedule\ShiftPlan\ShiftPlanTable;
@@ -21,6 +22,10 @@ class ShiftRepository
 	 */
 	public function findById($id)
 	{
+		if (!($id > 0))
+		{
+			return null;
+		}
 		return $this->getActiveShiftsQuery()->addSelect('*')->where('ID', $id)->exec()->fetchObject();
 	}
 
@@ -69,16 +74,6 @@ class ShiftRepository
 		return DependencyManager::getInstance()->getScheduleRepository()->findById($scheduleId);
 	}
 
-	public function findShiftIdsBySchedule($scheduleId)
-	{
-		return $this->getActiveShiftsQuery()
-			->addSelect('ID')
-			->where('SCHEDULE_ID', $scheduleId)
-			->exec()
-			->fetchCollection()
-			->getIdList();
-	}
-
 	public function delete($id)
 	{
 		$res = $this->deleteShiftPlans([$id]);
@@ -117,9 +112,14 @@ class ShiftRepository
 
 	public function markShiftDeleted($shiftId)
 	{
-		return ShiftTable::update($shiftId, ['DELETED' => ShiftTable::DELETED_YES]);
+		return $this->save(Shift::wakeUp(['ID' => $shiftId])->setDeleted(true));
 	}
 
+	/**
+	 * @return \Bitrix\Timeman\Model\Schedule\Shift\EO_Shift_Query
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\SystemException
+	 */
 	public function getActiveShiftsQuery()
 	{
 		return ShiftTable::query()->where('DELETED', ShiftTable::DELETED_NO);
@@ -133,5 +133,18 @@ class ShiftRepository
 			return null;
 		}
 		return $result['SCHEDULE_ID'];
+	}
+
+	/**
+	 * @param $scheduleId
+	 * @return ShiftCollection
+	 */
+	public function findShiftsBySchedule($scheduleId)
+	{
+		return $this->getActiveShiftsQuery()
+			->addSelect('*')
+			->where('SCHEDULE_ID', $scheduleId)
+			->exec()
+			->fetchCollection();
 	}
 }

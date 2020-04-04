@@ -448,7 +448,7 @@ BX.namespace('Tasks.Component');
 			{
 				if(!this.option('restriction').MANAGE && B24)
 				{
-					B24.licenseInfoPopup.show(this.code(), BX.message('TASKS_TUFP_LICENSE_TITLE'), '<span>'+BX.message('TASKS_TUFP_LICENSE_BODY')+'</span>');
+					B24.licenseInfoPopup.show(this.code(), BX.message('TASKS_TUFP_LICENSE_TITLE'), '<span>'+BX.message('TASKS_TUFP_LICENSE_BODY_V2')+'</span>');
 					return false;
 				}
 

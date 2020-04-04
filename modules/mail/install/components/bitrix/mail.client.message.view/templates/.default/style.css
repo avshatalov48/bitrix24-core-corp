@@ -480,6 +480,7 @@
 }
 
 .mail-msg-view-body {
+	position: relative;
 	padding: 10px 20px 33px 20px;
 	color: #535c69;
 	overflow-x: auto;

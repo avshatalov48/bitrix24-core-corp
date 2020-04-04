@@ -13,35 +13,35 @@
 					<!-- Navigation -->
 					<div class="align-items-center flex-sm-row w-100">
 						<ul class="landing-block-node-menu-list js-scroll-nav navbar-nav g-flex-right--xs text-uppercase w-100 g-font-weight-700 g-font-size-11 g-pt-20 g-pt-0--lg">
-							<li class="landing-block-node-menu-list-item nav-item g-mx-15--lg g-mb-7 g-max-width-120 g-mb-0--lg">
+							<li class="landing-block-node-menu-list-item nav-item g-mx-15--lg g-mb-7 g-mb-0--lg">
 								<a href="#home"
 								   class="landing-block-node-menu-list-item-link nav-link p-0">Home</a>
 							</li>
-							<li class="landing-block-node-menu-list-item nav-item g-mx-15--lg g-mb-7 g-max-width-120 g-mb-0--lg">
+							<li class="landing-block-node-menu-list-item nav-item g-mx-15--lg g-mb-7 g-mb-0--lg">
 								<a href="#about" class="landing-block-node-menu-list-item-link nav-link p-0">About</a>
 							</li>
-							<li class="landing-block-node-menu-list-item nav-item g-mx-15--lg g-mb-7 g-max-width-120 g-mb-0--lg">
+							<li class="landing-block-node-menu-list-item nav-item g-mx-15--lg g-mb-7 g-mb-0--lg">
 								<a href="#benefits"
 								   class="landing-block-node-menu-list-item-link nav-link p-0">Benefits</a>
 							</li>
-							<li class="landing-block-node-menu-list-item nav-item g-mx-15--lg g-mb-7 g-max-width-120 g-mb-0--lg">
+							<li class="landing-block-node-menu-list-item nav-item g-mx-15--lg g-mb-7 g-mb-0--lg">
 								<a href="#whyWe" class="landing-block-node-menu-list-item-link nav-link p-0">Why we</a>
 							</li>
-							<li class="landing-block-node-menu-list-item nav-item g-mx-15--lg g-mb-7 g-max-width-120 g-mb-0--lg">
+							<li class="landing-block-node-menu-list-item nav-item g-mx-15--lg g-mb-7 g-mb-0--lg">
 								<a href="#features"
 								   class="landing-block-node-menu-list-item-link nav-link p-0">Features</a>
 							</li>
-							<li class="landing-block-node-menu-list-item nav-item g-mx-15--lg g-mb-7 g-max-width-120 g-mb-0--lg">
+							<li class="landing-block-node-menu-list-item nav-item g-mx-15--lg g-mb-7 g-mb-0--lg">
 								<a href="#howItWorks" class="landing-block-node-menu-list-item-link nav-link p-0">How it
 									works</a>
 							</li>
-							<li class="landing-block-node-menu-list-item nav-item g-mx-15--lg g-mb-7 g-max-width-120 g-mb-0--lg">
+							<li class="landing-block-node-menu-list-item nav-item g-mx-15--lg g-mb-7 g-mb-0--lg">
 								<a href="#subscribe" class="landing-block-node-menu-list-item-link nav-link p-0">Subscribe</a>
 							</li>
-							<li class="landing-block-node-menu-list-item nav-item g-mx-15--lg g-mb-7 g-max-width-120 g-mb-0--lg">
+							<li class="landing-block-node-menu-list-item nav-item g-mx-15--lg g-mb-7 g-mb-0--lg">
 								<a href="#FAQ" class="landing-block-node-menu-list-item-link nav-link p-0">FAQ</a>
 							</li>
-							<li class="landing-block-node-menu-list-item nav-item g-mx-15--lg g-mb-7 g-max-width-120 g-mb-0--lg">
+							<li class="landing-block-node-menu-list-item nav-item g-mx-15--lg g-mb-7 g-mb-0--lg">
 								<a href="#contact"
 								   class="landing-block-node-menu-list-item-link nav-link p-0">Contact</a>
 							</li>

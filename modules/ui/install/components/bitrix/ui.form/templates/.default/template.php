@@ -111,7 +111,8 @@ $configIconID = "{$prefix}_config_icon";
 						contextId: "<?=CUtil::JSEscape($arResult['CONTEXT_ID'])?>",
 						context: <?=CUtil::PhpToJSObject($arResult['CONTEXT'])?>,
 						options: <?=CUtil::PhpToJSObject($arResult['EDITOR_OPTIONS'])?>,
-						ajaxData: <?=CUtil::PhpToJSObject($arResult['COMPONENT_AJAX_DATA'])?>
+						ajaxData: <?=CUtil::PhpToJSObject($arResult['COMPONENT_AJAX_DATA'])?>,
+						isEmbedded: <?=$arResult['IS_EMBEDDED'] ? 'true' : 'false'?>,
 					}
 				)
 			);

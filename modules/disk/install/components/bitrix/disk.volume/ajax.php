@@ -938,8 +938,6 @@ class DiskVolumeController extends \Bitrix\Disk\Internals\Controller
 			}
 			elseif ($indicator instanceof Volume\Module\Im)
 			{
-				$messageType = 'CHAT';
-
 				if (!in_array($fragment->getStorage()->getEntityType(), \Bitrix\Disk\Volume\Module\Im::getEntityType()))
 				{
 					continue;
@@ -955,7 +953,6 @@ class DiskVolumeController extends \Bitrix\Disk\Internals\Controller
 
 			if ($userIdTo > 0 && $fileSize > 0)
 			{
-				$url = $indicator::getUrl($fragment);
 				$urlClear = $this->getActionUrl(array(
 					'action' => \CDiskVolumeComponent::ACTION_STORAGE,
 					'storageId' => $storageId,
@@ -967,16 +964,10 @@ class DiskVolumeController extends \Bitrix\Disk\Internals\Controller
 				$messageTags[] = $userIdTo;
 				$messageTags[] = $storageId;
 
-				if($messageType === '' || Loc::getMessage('DISK_VOLUME_NOTIFY_'.$messageType) === '')
-				{
-					$messageType = 'STORAGE_STORAGE';
-				}
-
 				$message = Loc::getMessage(
-					"DISK_VOLUME_NOTIFY_{$messageType}",
+					"DISK_VOLUME_NOTIFY_CHAT",
 					array(
 						'#TITLE#' => $indicator::getTitle($fragment),
-						'#URL#' => $url,
 						'#URL_CLEAR#' => $urlClear,
 						'#URL_TRASHCAN#' => $urlTrashcan,
 						'#FILE_SIZE#' => \CFile::FormatSize($fileSize),
@@ -985,7 +976,6 @@ class DiskVolumeController extends \Bitrix\Disk\Internals\Controller
 				$message .= ' '. Loc::getMessage(
 					'DISK_VOLUME_NOTIFY_RECOMMENDATION',
 					array(
-						'#URL#' => $url,
 						'#URL_CLEAR#' => $urlClear,
 						'#URL_TRASHCAN#' => $urlTrashcan,
 					));

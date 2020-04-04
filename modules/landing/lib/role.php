@@ -15,6 +15,12 @@ Loc::loadMessages(__FILE__);
 class Role extends \Bitrix\Landing\Internals\BaseTable
 {
 	/**
+	 * Expected type for role.
+	 * @var string
+	 */
+	protected static $expectedType = null;
+
+	/**
 	 * Internal class.
 	 * @var string
 	 */
@@ -28,6 +34,8 @@ class Role extends \Bitrix\Landing\Internals\BaseTable
 	{
 		static $roles = null;
 
+		$type = Site\Type::getCurrentScopeId();
+
 		if ($roles !== null)
 		{
 			return $roles;
@@ -39,6 +47,9 @@ class Role extends \Bitrix\Landing\Internals\BaseTable
 
 		// gets from db
 		$res = self::getList([
+			'filter' => [
+				'=TYPE' => $type
+			],
 			'order' => [
 				'ID' => 'asc'
 			]
@@ -83,14 +94,19 @@ class Role extends \Bitrix\Landing\Internals\BaseTable
 		}
 
 		// install demo data if need
+		$keyDemoInstalled = 'role_demo_installed';
+		if ($type)
+		{
+			$keyDemoInstalled .= '_' . strtolower($type);
+		}
 		if (
 			empty($roles) &&
-			Manager::getOption('role_demo_installed', 'N') == 'N'
+			Manager::getOption($keyDemoInstalled, 'N') == 'N'
 		)
 		{
 			$roles = null;
-			self::installDemo();
-			Manager::setOption('role_demo_installed', 'Y');
+			self::installDemo($type);
+			Manager::setOption($keyDemoInstalled, 'Y');
 			return self::fetchAll();
 		}
 
@@ -99,9 +115,10 @@ class Role extends \Bitrix\Landing\Internals\BaseTable
 
 	/**
 	 * Install demo data.
+	 * @param string $type Type of roles.
 	 * @return void
 	 */
-	public static function installDemo()
+	public static function installDemo($type = null)
 	{
 		Manager::enableFeatureTmp(
 			Manager::FEATURE_PERMISSIONS_AVAILABLE
@@ -126,6 +143,24 @@ class Role extends \Bitrix\Landing\Internals\BaseTable
 			unset($row, $res);
 		}
 
+		$addRights = [];
+		foreach (Rights::ADDITIONAL_RIGHTS as $accessCode)
+		{
+			if (strpos($accessCode, '_') > 0)
+			{
+				list($prefix, ) = explode('_', $accessCode);
+				$prefix = strtoupper($prefix);
+				if ($prefix == $type)
+				{
+					$addRights[] = $accessCode;
+				}
+			}
+			else if ($type === null)
+			{
+				$addRights[] = $accessCode;
+			}
+		}
+
 		$demoData = [
 			'admin' => [
 				'rights' => [
@@ -135,9 +170,7 @@ class Role extends \Bitrix\Landing\Internals\BaseTable
 					'public',
 					'delete'
 				],
-				'additional_rights' => array_keys(
-					Rights::ADDITIONAL_RIGHTS
-				),
+				'additional_rights' => $addRights,
 				'access' => [
 					$defGroup
 				]
@@ -148,23 +181,24 @@ class Role extends \Bitrix\Landing\Internals\BaseTable
 					'edit',
 					'public'
 				],
-				'additional_rights' => array_keys(
-					Rights::ADDITIONAL_RIGHTS
-				),
+				'additional_rights' => $addRights,
 				'access' => []
 			]
 		];
+		$type = (string)$type;
 		foreach ($demoData as $code => $rights)
 		{
 			$code = strtoupper($code);
-			$check = self::getList([
+			$check = false;
+			/*$check = self::getList([
 				'filter' => [
 					'=XML_ID' => $code
 				]
-   			])->fetch();
+   			])->fetch();*/
 			if (!$check)
 			{
 				$res = self::add([
+					'TYPE' => $type,
 					'XML_ID' => $code,
 					'ADDITIONAL_RIGHTS' => $rights['additional_rights']
 				]);
@@ -229,6 +263,7 @@ class Role extends \Bitrix\Landing\Internals\BaseTable
 	{
 		$tasks = Rights::getAccessTasksReferences();
 		$tasks = array_flip($tasks);
+		$roleId = intval($roleId);
 		$return = [];
 
 		$res = RightsTable::getlist([
@@ -396,5 +431,55 @@ class Role extends \Bitrix\Landing\Internals\BaseTable
 		}
 
 		$setAdditionalRights();
+	}
+
+	/**
+	 * Sets new expected type for role.
+	 * @param string|null $type New expected type;
+	 * @return void
+	 */
+	public static function setExpectedType($type)
+	{
+		if (is_string($type) || $type === null)
+		{
+			self::$expectedType = $type;
+		}
+	}
+
+	/**
+	 * Gets expected role type.
+	 * @return string
+	 */
+	public static function getExpectedType()
+	{
+		return self::$expectedType;
+	}
+
+	/**
+	 * Gets expected roles id.
+	 * @return array
+	 */
+	public static function getExpectedRoleIds()
+	{
+		static $ids = [];
+
+		if (!$ids)
+		{
+			$ids[] = -1;
+			$res = self::getList([
+				'select' => [
+					'ID'
+				],
+				'filter' => [
+					'=TYPE' => self::$expectedType
+				]
+			]);
+			while ($row = $res->fetch())
+			{
+				$ids[] = $row['ID'];
+			}
+		}
+
+		return $ids;
 	}
 }

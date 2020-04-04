@@ -36,4 +36,12 @@ $MESS["STRESS_MENU_SHOW_IN_PROFILE"] = "Показывать в профиле";
 $MESS["DESC_LOADING"] =  "Загрузка описания...";
 $MESS["STRESS_HINT_ACCESS"] =  "Вы можете скрыть свой уровень стресса от других";
 
+$MESS["STRESS_SHARING_RESULT"] = "Делимся результатом...";
+$MESS["STRESS_SHARING_FAILED"] = "К сожалению, что-то пошло не так.\nПоделиться не удалось!";
+
+$MESS["STRESS_SHARE_POST_TITLE"] = "Мой уровень стресса!";
+$MESS["STRESS_SHARE_POST_MESSAGE"] = "Делюсь своим уровнем стресса\n";
+$MESS["STRESS_SHARE_LIVE_STREAM"] = "Живая лента";
+$MESS["STRESS_SHARE_CANCEL"] = "Отменить";
+
 

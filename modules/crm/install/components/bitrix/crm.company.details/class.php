@@ -318,7 +318,7 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 			: ($this->isMyCompany() ? "my_company_{$this->entityID}_details" : "company_{$this->entityID}_details");
 
 		$this->arResult['EDITOR_CONFIG_ID'] = isset($this->arParams['EDITOR_CONFIG_ID'])
-			? $this->arParams['EDITOR_CONFIG_ID'] : 'company_details';
+			? $this->arParams['EDITOR_CONFIG_ID'] : $this->getDefaultConfigID();
 		//endregion
 
 		//region Entity Info
@@ -351,57 +351,7 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 		//endregion
 
 		//region Config
-		$multiFieldConfigElements = array();
-		foreach(array_keys($this->multiFieldInfos) as $fieldName)
-		{
-			$multiFieldConfigElements[] = array('name' => $fieldName);
-		}
-
-		$userFieldConfigElements = array();
-		foreach(array_keys($this->userFieldInfos) as $fieldName)
-		{
-			$userFieldConfigElements[] = array('name' => $fieldName);
-		}
-
-		$this->arResult['ENTITY_CONFIG'] = array(
-			array(
-				'name' => 'main',
-				'title' => Loc::getMessage('CRM_COMPANY_SECTION_MAIN'),
-				'type' => 'section',
-				'elements' =>
-					array_merge(
-						array(
-							array('name' => 'TITLE'),
-							array('name' => 'LOGO'),
-							array('name' => 'COMPANY_TYPE'),
-							array('name' => 'INDUSTRY'),
-							array('name' => 'REVENUE_WITH_CURRENCY'),
-							//array('name' => 'IS_MY_COMPANY')
-						),
-						$multiFieldConfigElements,
-						array(
-							array('name' => 'CONTACT'),
-							array('name' => 'REQUISITES')
-						)
-					)
-			),
-			array(
-				'name' => 'additional',
-				'title' => Loc::getMessage('CRM_COMPANY_SECTION_ADDITIONAL'),
-				'type' => 'section',
-				'elements' =>
-					array_merge(
-						array(
-							array('name' => 'EMPLOYEES'),
-							array('name' => 'OPENED'),
-							array('name' => 'ASSIGNED_BY_ID'),
-							array('name' => 'COMMENTS'),
-							array('name' => 'UTM'),
-						),
-						$userFieldConfigElements
-					)
-			)
-		);
+		$this->prepareConfiguration();
 		//endregion
 
 		//region TABS
@@ -709,6 +659,71 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 
 		$this->includeComponentTemplate();
 	}
+	public function getDefaultConfigID()
+	{
+		return 'company_details';
+	}
+	public function prepareConfiguration()
+	{
+		if(isset($this->arResult['ENTITY_CONFIG']))
+		{
+			return $this->arResult['ENTITY_CONFIG'];
+		}
+
+		$multiFieldConfigElements = array();
+		foreach(array_keys($this->multiFieldInfos) as $fieldName)
+		{
+			$multiFieldConfigElements[] = array('name' => $fieldName);
+		}
+
+		$userFieldConfigElements = array();
+		foreach(array_keys($this->userFieldInfos) as $fieldName)
+		{
+			$userFieldConfigElements[] = array('name' => $fieldName);
+		}
+
+		$this->arResult['ENTITY_CONFIG'] = array(
+			array(
+				'name' => 'main',
+				'title' => Loc::getMessage('CRM_COMPANY_SECTION_MAIN'),
+				'type' => 'section',
+				'elements' =>
+					array_merge(
+						array(
+							array('name' => 'TITLE'),
+							array('name' => 'LOGO'),
+							array('name' => 'COMPANY_TYPE'),
+							array('name' => 'INDUSTRY'),
+							array('name' => 'REVENUE_WITH_CURRENCY'),
+							//array('name' => 'IS_MY_COMPANY')
+						),
+						$multiFieldConfigElements,
+						array(
+							array('name' => 'CONTACT'),
+							array('name' => 'REQUISITES')
+						)
+					)
+			),
+			array(
+				'name' => 'additional',
+				'title' => Loc::getMessage('CRM_COMPANY_SECTION_ADDITIONAL'),
+				'type' => 'section',
+				'elements' =>
+					array_merge(
+						array(
+							array('name' => 'EMPLOYEES'),
+							array('name' => 'OPENED'),
+							array('name' => 'ASSIGNED_BY_ID'),
+							array('name' => 'COMMENTS'),
+							array('name' => 'UTM'),
+						),
+						$userFieldConfigElements
+					)
+			)
+		);
+
+		return $this->arResult['ENTITY_CONFIG'];
+	}
 	public function isSearchHistoryEnabled()
 	{
 		return $this->enableSearchHistory;
@@ -858,6 +873,14 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 				'type' => 'client_light',
 				'editable' => true,
 				'data' => array(
+					'compound' => array(
+						array(
+							'name' => 'CONTACT_ID',
+							'type' => 'multiple_contact',
+							'entityTypeName' => \CCrmOwnerType::ContactName,
+							'tagName' => \CCrmOwnerType::ContactName
+						)
+					),
 					'map' => array('data' => 'CLIENT_DATA'),
 					'info' => 'CLIENT_INFO',
 					'fixedLayoutType' => 'CONTACT',
@@ -1221,6 +1244,14 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 					'SIGNATURE' => $fieldSignature,
 					'IS_EMPTY' => false
 				);
+
+				if($fieldData['data']['fieldInfo']['USER_TYPE_ID'] === 'file')
+				{
+					$values = is_array($fieldValue) ? $fieldValue : array($fieldValue);
+					$this->entityData[$fieldName]['EXTRAS'] = array(
+						'OWNER_TOKEN' => \CCrmFileProxy::PrepareOwnerToken(array_fill_keys($values, $this->entityID))
+					);
+				}
 			}
 		}
 		//endregion

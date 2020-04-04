@@ -42,6 +42,16 @@ use \Bitrix\Imopenlines\Limit;
 			<label class="imopenlines-control-checkbox-label">
 				<input type="checkbox"
 					   class="imopenlines-control-checkbox"
+					   name="CONFIG[VOTE_BEFORE_FINISH]"
+					   value="Y"
+					   <? if ($arResult['CONFIG']['VOTE_BEFORE_FINISH'] == "Y") { ?>checked<? } ?>>
+				<?=Loc::getMessage("IMOL_CONFIG_EDIT_VOTE_BEFORE_FINISH")?>
+			</label>
+		</div>
+		<div class="imopenlines-control-checkbox-container">
+			<label class="imopenlines-control-checkbox-label">
+				<input type="checkbox"
+					   class="imopenlines-control-checkbox"
 					   <?/*id="imol_vote_message"*/?>
 					   name="CONFIG[VOTE_CLOSING_DELAY]"
 					   value="Y"

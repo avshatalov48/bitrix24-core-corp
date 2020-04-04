@@ -34,7 +34,7 @@ return array(
 		'.landing-block-node-card-img' => array(
 			'name' => Loc::getMessage('LANDING_BLOCK_40.2.TWO_COLS_CAROUSEL_NODES_LANDINGBLOCKNODECARDIMG'),
 			'type' => 'img',
-			'dimensions' => array('width' => 960, 'height' => 806),
+			'dimensions' => array('width' => 910),
 		),
 	),
 	'style' => array(
@@ -53,6 +53,10 @@ return array(
 		'.landing-block-node-card-date' => array(
 			'name' => Loc::getMessage('LANDING_BLOCK_40.2.TWO_COLS_CAROUSEL_STYLE_LANDINGBLOCKNODECARDDATE'),
 			'type' => 'typo',
+		),
+		'.landing-block-node-card' => array(
+			'name' => Loc::getMessage('LANDING_BLOCK_40.2.TWO_COLS_CAROUSEL_CARDS_LANDINGBLOCKNODECARD'),
+			'type' => 'align-self',
 		),
 	),
 	'assets' => array(

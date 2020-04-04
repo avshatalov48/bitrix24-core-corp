@@ -50,7 +50,25 @@
 			textOnly: true,
 			onValueChange: function() {
 				this.onValueChangeHandler(this);
-				fireCustomEvent(this, "BX.Landing.UI.Field:change", [this.getValue()]);
+
+				var hrefInputValue = this.hrefInput.getValue();
+				if (hrefInputValue === '#landing0')
+				{
+					var value = this.input.getValue();
+					var placeholder = this.hrefInput.input.firstElementChild;
+
+					if (placeholder)
+					{
+						var textNode = placeholder.querySelector('.landing-ui-field-url-placeholder-text');
+						textNode.innerText = BX.Text.decode(value.replace(/&nbsp;/g, ' '));
+					}
+				}
+
+				var event = new BX.Event.BaseEvent({
+					data: {value: this.getValue()},
+					compatData: [this.getValue()],
+				});
+				this.emit('change', event);
 			}.bind(this)
 		});
 
@@ -76,8 +94,23 @@
 			sourceField: data.sourceField,
 			onValueChange: function() {
 				this.onValueChangeHandler(this);
-				this.noHrefValueChange();
-				fireCustomEvent(this, "BX.Landing.UI.Field:change", [this.getValue()]);
+				this.onHrefValueChange();
+				var event = new BX.Event.BaseEvent({
+					data: {value: this.getValue()},
+					compatData: [this.getValue()],
+				});
+				this.emit('change', event);
+			}.bind(this),
+			onNewPage: function()
+			{
+				var value = this.input.getValue();
+				var placeholder = this.hrefInput.input.firstElementChild;
+
+				if (placeholder)
+				{
+					var textNode = placeholder.querySelector('.landing-ui-field-url-placeholder-text');
+					textNode.innerHTML = value.replace(/&nbsp;/g, ' ');
+				}
 			}.bind(this)
 		});
 
@@ -93,7 +126,11 @@
 			},
 			onValueChange: function() {
 				this.onValueChangeHandler(this);
-				fireCustomEvent(this, "BX.Landing.UI.Field:change", [this.getValue()]);
+				var event = new BX.Event.BaseEvent({
+					data: {value: this.getValue()},
+					compatData: [this.getValue()],
+				});
+				this.emit('change', event);
 			}.bind(this)
 		});
 
@@ -150,6 +187,7 @@
 		}
 
 		this.adjustEditLink();
+		this.adjustTarget();
 	};
 
 
@@ -202,7 +240,7 @@
 		__proto__: BX.Landing.UI.Field.BaseField.prototype,
 		superClass: BX.Landing.UI.Field.BaseField,
 
-		noHrefValueChange: function()
+		onHrefValueChange: function()
 		{
 			// if (this.hrefInput.containsPlaceholder())
 			// {
@@ -233,11 +271,9 @@
 		adjustEditLink: function()
 		{
 			var type = this.hrefInput.getPlaceholderType();
+			var pageType = BX.Landing.Env.getInstance().getType();
 
-			[].slice.call(this.layout.querySelectorAll('.landing-ui-field-edit-link'))
-				.forEach(BX.remove);
-
-			if (type === "landing")
+			if (type === "PAGE" && pageType !== "KNOWLEDGE" && pageType !== "GROUP")
 			{
 				var value = this.hrefInput.getValue();
 
@@ -252,6 +288,9 @@
 							var href = urlMask
 								.replace("#site_show#", result.siteId)
 								.replace("#landing_edit#", result.id);
+
+							[].slice.call(this.layout.querySelectorAll('.landing-ui-field-edit-link'))
+								.forEach(BX.remove);
 
 							this.editLink = this.createEditLink(
 								BX.Landing.Loc.getMessage("LANDING_LINK_FILED__EDIT_PAGE_LINK_LABEL"),
@@ -317,8 +356,9 @@
 		 */
 		getValue: function()
 		{
+			var preparedValue = this.input.getValue().replace(/&nbsp;/g, ' ');
 			var value = {
-				text: decodeDataValue(trim(this.input.getValue())),
+				text: decodeDataValue(trim(preparedValue)),
 				href: trim(this.hrefInput.getValue()),
 				target: trim(this.targetInput.getValue())
 			};
@@ -364,8 +404,34 @@
 			}
 
 			this.adjustEditLink();
+			this.adjustTarget();
 		},
 
+		adjustTarget: function()
+		{
+			if (!this.isAvailableMedia())
+			{
+				var type = BX.Landing.Env.getInstance().getType();
+				var value = this.getValue();
+
+				if (type === 'KNOWLEDGE' || type === 'GROUP')
+				{
+					this.targetInput.disable();
+
+					if (
+						// #landing123 || #block123 || #myAnchor
+						/^#(\w+)([0-9])$/.test(value.href)
+					)
+					{
+						this.targetInput.setValue('_self');
+					}
+					else
+					{
+						this.targetInput.setValue('_blank');
+					}
+				}
+			}
+		},
 
 		reset: function()
 		{
@@ -543,27 +609,31 @@
 
 		adjustVideo: function()
 		{
-			var embedURL = "attrs" in this.content && "data-url" in this.content.attrs ? this.content.attrs["data-url"] : "";
-			var ServiceFactory = new BX.Landing.MediaService.Factory();
-			this.mediaService = ServiceFactory.create(
-				this.hrefInput.getValue(),
-				BX.Landing.Utils.getQueryParams(embedURL)
-			);
-
-			if (this.mediaService)
+			var pageType = BX.Landing.Env.getInstance().getType();
+			if (pageType !== 'KNOWLEDGE' && pageType !== 'GROUP')
 			{
-				this.mediaService.url = this.hrefInput.getValue();
+				var embedURL = "attrs" in this.content && "data-url" in this.content.attrs ? this.content.attrs["data-url"] : "";
+				var ServiceFactory = new BX.Landing.MediaService.Factory();
+				this.mediaService = ServiceFactory.create(
+					this.hrefInput.getValue(),
+					BX.Landing.Utils.getQueryParams(embedURL)
+				);
 
-				this.disableMedia();
-
-				if (this.isAvailableMedia())
+				if (this.mediaService)
 				{
-					this.enableMedia();
+					this.mediaService.url = this.hrefInput.getValue();
+
+					this.disableMedia();
+
+					if (this.isAvailableMedia())
+					{
+						this.enableMedia();
+					}
 				}
-			}
-			else
-			{
-				this.disableMedia();
+				else
+				{
+					this.disableMedia();
+				}
 			}
 		},
 
@@ -574,6 +644,7 @@
 				this.adjustVideo();
 			}
 			this.adjustEditLink();
+			this.adjustTarget();
 		}
 	}
 })();

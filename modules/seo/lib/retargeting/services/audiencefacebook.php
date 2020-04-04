@@ -61,7 +61,7 @@ class AudienceFacebook extends Audience
 			for ($i = 0; $i < $contactsCount; $i++)
 			{
 				$contact = $contacts[$contactType][$i];
-				//$contact = hash('sha256', $contacts[$i]);
+				$contact = hash('sha256', $contact);
 
 				switch ($contactType)
 				{
@@ -129,5 +129,35 @@ class AudienceFacebook extends Audience
 	public static function isSupportAddAudience()
 	{
 		return true;
+	}
+
+	public function getLookalikeAudiencesParams()
+	{
+		$sizes = [];
+		for ($i=1; $i<10;$i++)
+		{
+			$sizes[$i] = $i;
+		}
+		return [
+			'FIELDS' => ['AUDIENCE_SIZE', 'AUDIENCE_REGION'],
+			'SIZES' => $sizes,
+		];
+	}
+
+	public function createLookalike($sourceAudienceId, array $options)
+	{
+		$result = $this->getRequest()->send(array(
+			'methodName' => 'retargeting.audience.lookalike.add',
+			'parameters' => array(
+				'accountId' => $this->accountId,
+				'audienceId' => $sourceAudienceId,
+				'options' => $options
+			)
+		));
+		if ($result->isSuccess())
+		{
+			$result->setId($result->getData()['id']);
+		}
+		return $result;
 	}
 }

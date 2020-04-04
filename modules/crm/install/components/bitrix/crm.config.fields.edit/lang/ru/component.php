@@ -14,4 +14,5 @@ $MESS["CRM_FIELDS_ENTITY_LIST"] = "Список типов";
 $MESS["CRM_FIELDS_EDIT_NAME_DEFAULT"] = "Новое поле";
 $MESS["CC_BLFE_BAD_FIELD_NAME_LANG"] = "Пожалуйста, установите название поля на языке #LANG_NAME#.";
 $MESS["CC_BLFE_BAD_FIELD_NAME"] = "Пожалуйста, установите название поля.";
+$MESS["CC_BLFE_ERR_IBLOCK_ELEMENT_BAD_IBLOCK_ID"] = "Пожалуйста, выберите инфоблок для привязки.";
 ?>

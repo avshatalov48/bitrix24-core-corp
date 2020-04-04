@@ -115,6 +115,7 @@ $MESS["VI_CONFIG_EDIT_TIMEMAN_SUPPORT_B24"] = "You cannot enable option because 
 $MESS["VI_CONFIG_EDIT_TIMEMAN_SUPPORT_CP"] = "You cannot engage this option because the Time Management module is not installed or activated. ";
 $MESS["VI_CONFIG_EDIT_TRANSCRIBE"] = "Transcribe call recording";
 $MESS["VI_CONFIG_EDIT_TRANSCRIBE_LANGUAGE"] = "Transcription language";
+$MESS["VI_CONFIG_EDIT_TRANSCRIBE_PROVIDER"] = "Transcription service";
 $MESS["VI_CONFIG_EDIT_TUNES"] = "Greetings and recordings";
 $MESS["VI_CONFIG_EDIT_TUNES_LANGUAGE"] = "<strong>Language</strong>&nbsp; &mdash; &nbsp;";
 $MESS["VI_CONFIG_EDIT_TUNES_LANGUAGE2"] = "Hold music language";

@@ -4,20 +4,18 @@ use Bitrix\Crm\Integration\StorageType;
 
 class CCrmFileProxy
 {
+	public static function PrepareOwnerToken(array $ownerParams)
+	{
+		return base64_encode(serialize($ownerParams));
+	}
 	public static function WriteFileToResponse($ownerTypeID, $ownerID, $fieldName, $fileID, &$errors, $options = array())
 	{
 		$ownerTypeID = intval($ownerTypeID);
-		$ownerTypeName = CCrmOwnerType::ResolveName($ownerTypeID);
+		//$ownerTypeName = CCrmOwnerType::ResolveName($ownerTypeID);
 		$ownerID = intval($ownerID);
 		$fieldName = strval($fieldName);
 		$fileID = intval($fileID);
 		$options = is_array($options) ? $options : array();
-
-		if(!CCrmOwnerType::IsDefined($ownerTypeID) || $ownerID <= 0 || $fieldName === '' || $fileID <= 0)
-		{
-			$errors[] = 'File not found';
-			return false;
-		}
 
 		$authToken = isset($options['oauth_token']) ? strval($options['oauth_token']) : '';
 		if($authToken !== '')
@@ -30,6 +28,23 @@ class CCrmFileProxy
 				$errors[] = 'Access denied.';
 				return false;
 			}
+		}
+
+		//Override owner if owner_token is specified
+		$ownerToken = isset($options['owner_token']) ? $options['owner_token'] : '';
+		if($ownerToken !== '')
+		{
+			$ownerMap = unserialize(base64_decode($ownerToken), array('allowed_classes' => false));
+			if(is_array($ownerMap) && isset($ownerMap[$fileID]) && $ownerMap[$fileID] > 0)
+			{
+				$ownerID = (int)$ownerMap[$fileID];
+			}
+		}
+
+		if(!CCrmOwnerType::IsDefined($ownerTypeID) || $ownerID <= 0 || $fieldName === '' || $fileID <= 0)
+		{
+			$errors[] = 'File not found';
+			return false;
 		}
 
 		if(!CCrmPerms::IsAdmin())
@@ -64,7 +79,7 @@ class CCrmFileProxy
 					: array($field['VALUE']))
 				: array();
 
-			//The 'strict' flag must be 'false'. In MULTIPLE mode value is an array of integers. In SIGLE mode value is a string.
+			//The 'strict' flag must be 'false'. In MULTIPLE mode value is an array of integers. In SINGLE mode value is a string.
 			if(!in_array($fileID, $fileIDs, false))
 			{
 				$errors[] = 'File not found';

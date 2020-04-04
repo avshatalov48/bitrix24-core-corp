@@ -3,8 +3,20 @@ if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
 use Bitrix\Main\Localization\Loc;
 
-\Bitrix\Main\UI\Extension::load(["ui.tilegrid", "ui.buttons", "ui.forms", "ui.alerts", "ui.hint", "voximplant.callerid", "voximplant.numberrent"]);
-CJSCore::Init(["voximplant.common", "sidepanel", "applayout"]);
+\Bitrix\Main\UI\Extension::load([
+	"popup",
+	"sidepanel",
+	"applayout",
+	"ui.tilegrid",
+	"ui.buttons",
+	"ui.forms",
+	"ui.alerts",
+	"ui.hint",
+	"voximplant.callerid",
+	"voximplant.numberrent",
+	"voximplant.common",
+	"currency"
+]);
 
 $bodyClass = $APPLICATION->getPageProperty("BodyClass");
 $APPLICATION->setPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "")."no-all-paddings no-background no-hidden");
@@ -25,9 +37,10 @@ $APPLICATION->setPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "")."n
 					</select>
 					<? if($arResult['HAS_BALANCE'] && $arResult["SHOW_PAY_BUTTON"]): ?>
 						<div style="display:none" data-for-balance-type="balance">
-							<span id="balance-top-up" class="ui-btn ui-btn-sm ui-btn-primary">
-								<?= Loc::getMessage("VOX_START_TOP_UP") ?>
-							</span>
+							<div class="ui-btn-split ui-btn-primary ui-btn-sm">
+								<button id="balance-top-up" class="ui-btn-main  "><?= Loc::getMessage("VOX_START_TOP_UP") ?></button>
+								<button id="balance-menu" class="ui-btn-menu"></button>
+							</div>
 						</div>
 					<? endif ?>
 					<? if(isset($arResult['SIP'])): ?>
@@ -73,7 +86,7 @@ $APPLICATION->setPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "")."n
 							<div class="voximplant-start-head-box-info-sum">
 								<? if($arResult['HAS_BALANCE']): ?>
 									<div class="voximplant-start-head-subtitle"><?= Loc::getMessage("VOX_START_CURRENT_BALANCE") ?></div>
-									<div class="voximplant-start-head-box-amount currency-<?=$arResult["BALANCE_CURRENCY"]?>" title="<?=$arResult['ACCOUNT_BALANCE_FORMATTED']?>">
+									<div id="voximplant-balance" class="voximplant-start-head-box-amount currency-<?=$arResult["BALANCE_CURRENCY"]?>" title="<?=$arResult['ACCOUNT_BALANCE_FORMATTED']?>">
 										<?= $arResult['ACCOUNT_BALANCE_FORMATTED']?>
 									</div>
 								<? else: ?>
@@ -83,57 +96,21 @@ $APPLICATION->setPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "")."n
 						</div>
 					</div>
 				</div>
+				<? if($arResult['RECORD_LIMIT']['ENABLE']): ?>
+					<div class="voximplant-start-record-limit-info">
+						<?= Loc::getMessage("VOX_START_RECORD_LIMIT", [
+							"#STRONG_START#" => "<strong>",
+							"#STRONG_END#" => "</strong>",
+							"#RECORDS_REMAINING#" => $arResult['RECORD_LIMIT']['USED'],
+							"#RECORDS_TOTAL#" => $arResult['RECORD_LIMIT']['LIMIT'],
+						])?>
+
+					</div>
+				<? endif; ?>
 			</div>
 
 			<? if($arResult["SHOW_LINES"]): ?>
-				<div class="voximplant-start-head-box voximplant-start-head-payment-box">
-					<div class="voximplant-start-head-box-title">
-						<div class="voximplant-title-dark"><?= Loc::getMessage("VOX_START_MY_NUMBERS") . (count($arResult["NUMBERS_LIST"]) > 0 ? " (" . count($arResult["NUMBERS_LIST"]) . ")" : "")  ?></div>
-						<? if (count($arResult["NUMBERS_LIST"]) > 0): ?>
-							<div id="my-numbers" class="ui-btn ui-btn-sm ui-btn-light-border"><?= Loc::getMessage("VOX_START_SET_UP") ?></div>
-						<? endif ?>
-					</div>
-					<div class="voximplant-start-head-box-content">
-						<? if (count($arResult["NUMBERS_LIST"]) > 0): ?>
-							<?
-							$hasRentedNumbers = false;
-							$arResult["NUMBERS_LIST"] = array_slice($arResult["NUMBERS_LIST"], 0, 3);
-							foreach ($arResult["NUMBERS_LIST"] as $item): ?>
-								<?
-								switch ($item["TYPE"])
-								{
-									case CVoxImplantConfig::MODE_RENT:
-										$class = "voximplant-start-payment voximplant-start-payment-rented-number";
-										$hasRentedNumbers = true;
-										break;
-									case CVoxImplantConfig::MODE_LINK:
-										$class = "voximplant-start-payment voximplant-start-payment-anchored-number";
-										break;
-									case CVoxImplantConfig::MODE_SIP:
-										$class = "voximplant-start-payment voximplant-start-payment-sip-connector";
-										break;
-									default:
-										$class = "voximplant-start-payment";
-								}
-								?>
-								<div class="<?=$class?>">
-									<div class="voximplant-start-payment-icon"></div>
-									<div class="voximplant-start-text-dark-bold"><?= htmlspecialcharsbx($item["NAME"])?></div>
-									<div class="voximplant-start-division"></div>
-									<div class="voximplant-start-text-darkgrey"><?= htmlspecialcharsbx($item["DESCRIPTION"])?></div>
-								</div>
-							<? endforeach; ?>
-
-							<? if($hasRentedNumbers): ?>
-							<div class="voximplant-start-payment-btn-box">
-								<div class="voximplant-start-text-darkgrey"><?= Loc::getMessage("VOX_START_AUTO_PROLONG") ?></div>
-							</div>
-							<? endif ?>
-						<? else: ?>
-							<div class="voximplant-start-head-box-info"><?= Loc::getMessage("VOX_START_RENT_OR_LINK_NUMBER") ?></div>
-						<? endif ?>
-					</div>
-				</div>
+				<div id="my-numbers-list" class="voximplant-start-head-box voximplant-start-head-payment-box"></div>
 			<? endif ?>
 		</div>
 
@@ -170,12 +147,19 @@ $APPLICATION->setPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "")."n
 			"VOX_START_CONFIGURE_GROUPS": '<?=GetMessageJS("VOX_START_CONFIGURE_GROUPS")?>',
 			"VOX_START_CONFIGURE_IVR": '<?=GetMessageJS("VOX_START_CONFIGURE_IVR")?>',
 			"VOX_START_CONFIGURE_BLACK_LIST": '<?=GetMessageJS("VOX_START_CONFIGURE_BLACK_LIST")?>',
+			"VOX_START_TARIFFS": '<?=GetMessageJS("VOX_START_TARIFFS")?>',
+			"VOX_START_MY_NUMBERS": '<?=GetMessageJS("VOX_START_MY_NUMBERS")?>',
+			"VOX_START_RENT_OR_LINK_NUMBER": '<?=GetMessageJS("VOX_START_RENT_OR_LINK_NUMBER")?>',
+			"VOX_START_SET_UP": '<?=GetMessageJS("VOX_START_SET_UP")?>',
+			"VOX_START_AUTO_PROLONG": '<?=GetMessageJS("VOX_START_AUTO_PROLONG")?>',
 		});
 		BX.Voximplant.Start.init({
+			lines: <?= CUtil::PhpToJSObject($arResult['NUMBERS_LIST'])?>,
 			mainMenuItems: <?= CUtil::PhpToJSObject($arResult['MENU']['MAIN'])?>,
 			settingsMenuItems: <?= CUtil::PhpToJSObject($arResult['MENU']['SETTINGS'])?>,
 			partnersMenuItems: <?= CUtil::PhpToJSObject($arResult['MENU']['PARTNERS'])?>,
 			applicationUrlTemplate: '<?= CUtil::JSEscape($arResult['MARKETPLACE_DETAIL_URL_TPL']) ?>',
+			tariffsUrl: '<?= CUtil::JSEscape($arResult['LINK_TO_TARIFFS']) ?>',
 			isRestOnly: '<?= $arResult['IS_REST_ONLY'] ? 'Y' : 'N' ?>'
 		});
 	</script>

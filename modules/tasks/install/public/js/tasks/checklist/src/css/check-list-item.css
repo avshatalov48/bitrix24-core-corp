@@ -1,29 +1,29 @@
-.checklist-notification-balloon-message-container {
+.tasks-checklist-notification-balloon-message-container {
 	margin: -9px -20px;
 }
 
-.checklist-notification-balloon-message {
+.tasks-checklist-notification-balloon-message {
 	vertical-align: middle;
 	margin-left: 7px;
 }
 
-.checklist-notification-balloon-avatar {
+.tasks-checklist-notification-balloon-avatar {
 	display: inline-block;
 	vertical-align: middle;
 	width: 30px;
 	height: 30px;
 	border-radius: 50%;
-	background: url(/bitrix/js/main/core/images/finder_sprite.min.svg?10) no-repeat center 2px #535c6a;
+	background: url(/bitrix/js/main/core/images/finder_sprite.min.svg?10) no-repeat center #535c6a;
 }
 
-.checklist-notification-balloon-avatar-img {
+.tasks-checklist-notification-balloon-avatar-img {
 	width: 30px;
 	height: 30px;
 	border-radius: 50%;
 	background-color: #000;
 }
 
-.checklist-loader-files {
+.tasks-checklist-loader-files {
 	display: none!important;
 }
 

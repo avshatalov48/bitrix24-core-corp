@@ -66,14 +66,25 @@ class Hook
 	 */
 	public static function getData($id, $type, $asIs = false)
 	{
-		$data = array();
+		$data = [];
+		$id = intval($id);
+
+		if (!is_string($type))
+		{
+			return $data;
+		}
+
 		$res = HookData::getList(array(
 			'select' => array(
 				'ID', 'HOOK', 'CODE', 'VALUE'
 			),
 			'filter' => array(
 				'ENTITY_ID' => $id,
-				'=ENTITY_TYPE' => $type
+				'=ENTITY_TYPE' => $type,
+				'=PUBLIC' => self::$editMode ? 'N' : 'Y'
+			),
+			'order' => array(
+				'ID' => 'asc'
 			)
 		));
 		while ($row = $res->fetch())
@@ -104,10 +115,15 @@ class Hook
 		$hooks = array();
 		$classDir = self::HOOKS_PAGE_DIR;
 		$classNamespace = self::HOOKS_NAMESPACE;
+		$excludedHooks = \Bitrix\Landing\Site\Type::getExcludedHooks();
 
 		// first read all hooks in base dir
 		foreach (self::getClassesFromDir($classDir) as $class)
 		{
+			if (in_array($class, $excludedHooks))
+			{
+				continue;
+			}
 			$classFull = __NAMESPACE__  . $classNamespace . $class;
 			if (class_exists($classFull))
 			{
@@ -115,10 +131,6 @@ class Hook
 					self::$editMode,
 					!($type == self::ENTITY_TYPE_SITE)
 				);
-				if (!$hooks[$class]->active())
-				{
-					unset($hooks[$class]);
-				}
 			}
 		}
 
@@ -233,26 +245,76 @@ class Hook
 	}
 
 	/**
+	 * Get row hooks for landing.
+	 * @param int $id Landing id.
+	 * @return array
+	 */
+	public static function getForLandingRow($id)
+	{
+		return self::getData($id, self::ENTITY_TYPE_LANDING);
+	}
+
+	/**
 	 * Copy data for entity.
 	 * @param int $from From entity id.
 	 * @param int $to To entity id.
 	 * @param string $type Entity type.
+	 * @param bool $publication It's not copy, but publication.
 	 * @return void
 	 */
-	protected static function copy($from, $to, $type)
+	protected static function copy($from, $to, $type, $publication = false)
 	{
+		$from = intval($from);
+		$to = intval($to);
 		$data = self::getData($from, $type);
+		$existData = [];
+
+		// collect exist data
+		if ($data)
+		{
+			$res = HookData::getList([
+				'select' => [
+					'ID', 'HOOK', 'CODE'
+				],
+				'filter' => [
+					'ENTITY_ID' => $to,
+					'=ENTITY_TYPE' => $type,
+					'=PUBLIC' => $publication ? 'Y' : 'N'
+				]
+			]);
+			while ($row = $res->fetch())
+			{
+				$existData[$row['HOOK'] . '_' . $row['CODE']] = $row['ID'];
+			}
+		}
+
+		// update existing keys or add new
 		foreach ($data as $hookCode => $items)
 		{
 			foreach ($items as $code => $value)
 			{
-				HookData::add(array(
-					'ENTITY_ID' => $to,
-					'ENTITY_TYPE' => $type,
-					'HOOK' => $hookCode,
-					'CODE' => $code,
-					'VALUE' => $value
-				));
+				$existKey = $hookCode . '_' . $code;
+				if (is_array($value))
+				{
+					$value = 'serialized#' . serialize($value);
+				}
+				if (array_key_exists($existKey, $existData))
+				{
+					HookData::update($existData[$existKey], [
+						'VALUE' => $value
+					]);
+				}
+				else
+				{
+					HookData::add([
+						'ENTITY_ID' => $to,
+						'ENTITY_TYPE' => $type,
+						'HOOK' => $hookCode,
+						'CODE' => $code,
+						'VALUE' => $value,
+						'PUBLIC' => $publication ? 'Y' : 'N'
+					]);
+				}
 			}
 		}
 	}
@@ -277,6 +339,26 @@ class Hook
 	public static function copyLanding($from, $to)
 	{
 		self::copy($from, $to, self::ENTITY_TYPE_LANDING);
+	}
+
+	/**
+	 * Publication data for site.
+	 * @param int $siteId Site id.
+	 * @return void
+	 */
+	public static function publicationSite($siteId)
+	{
+		self::copy($siteId, $siteId, self::ENTITY_TYPE_SITE, true);
+	}
+
+	/**
+	 * Publication data for landing.
+	 * @param int $lid Landing id.
+	 * @return void
+	 */
+	public static function publicationLanding($lid)
+	{
+		self::copy($lid, $lid, self::ENTITY_TYPE_LANDING, true);
 	}
 
 	/**
@@ -399,6 +481,69 @@ class Hook
 	}
 
 	/**
+	 * Index hook's content for entities.
+	 * @param int $id Entity id.
+	 * @param string $type Entity type.
+	 * @return void
+	 */
+	protected static function indexContent($id, $type)
+	{
+		$id = intval($id);
+
+		if ($type == self::ENTITY_TYPE_LANDING)
+		{
+			$class = '\Bitrix\Landing\Landing';
+		}
+
+		if (!isset($class))
+		{
+			return;
+		}
+
+		// base fields
+		$searchContent = $class::getList([
+			'select' => [
+				'TITLE', 'DESCRIPTION'
+			],
+			'filter' => [
+				'ID' => $id,
+				'=DELETED' => ['Y', 'N'],
+				'=SITE.DELETED' => ['Y', 'N']
+			]
+		])->fetch();
+		if (!$searchContent)
+		{
+			return;
+		}
+
+		$searchContent = array_values($searchContent);
+
+		// hook fields
+		foreach (self::getList($id, $type) as $hook)
+		{
+			foreach ($hook->getFields() as $field)
+			{
+				if ($field->isSearchable())
+				{
+					$searchContent[] = $field->getValue();
+				}
+			}
+		}
+
+		$searchContent = array_unique($searchContent);
+		$searchContent = $searchContent ? implode(' ', $searchContent) : '';
+		$searchContent = trim($searchContent);
+
+		if ($searchContent)
+		{
+			$res = $class::update($id, [
+				'SEARCH_CONTENT' => $searchContent
+			]);
+			$res->isSuccess();
+		}
+	}
+
+	/**
 	 * Set data hooks for site.
 	 * @param int $id Site id.
 	 * @param array $data Data array.
@@ -406,6 +551,7 @@ class Hook
 	 */
 	public static function saveForSite($id, array $data)
 	{
+		$id = intval($id);
 		$check = Site::getList([
 			'select' => [
 				'ID'
@@ -428,6 +574,7 @@ class Hook
 	 */
 	public static function saveForLanding($id, array $data)
 	{
+		$id = intval($id);
 		$check = Landing::getList([
 			'select' => [
 				'ID'
@@ -439,7 +586,18 @@ class Hook
 		if ($check)
 		{
 			self::saveData($id, self::ENTITY_TYPE_LANDING, $data);
+			self::indexContent($id, self::ENTITY_TYPE_LANDING);
 		}
+	}
+
+	/**
+	 * Index hook's content for landing.
+	 * @param int $id Landing id.
+	 * @return void
+	 */
+	public static function indexLanding($id)
+	{
+		self::indexContent($id, self::ENTITY_TYPE_LANDING);
 	}
 
 	/**
@@ -450,6 +608,8 @@ class Hook
 	 */
 	protected static function deleteData($id, $type)
 	{
+		$id = intval($id);
+
 		foreach (self::getData($id, $type, true) as $row)
 		{
 			$res = HookData::getList(array(

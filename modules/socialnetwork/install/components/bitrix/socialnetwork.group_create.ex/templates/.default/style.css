@@ -547,6 +547,7 @@ a.sonet-invitation-dash-link:hover{ color: #696969; border-color: #696969; text-
 
 .social-group-create-options-item-column-right {
 	flex: 5 1 0;
+	overflow: hidden;
 }
 
 .social-group-create-field-container {
@@ -868,16 +869,23 @@ a.sonet-invitation-dash-link:hover{ color: #696969; border-color: #696969; text-
 	margin: 0 120px 0 0;
 }
 
-.social-group-create-form-control-block .main-user-selector-wrap
-{
+.social-group-create-form-control-block .main-user-selector-wrap {
 	flex: 1 1 auto;
 	margin: 0 220px 0 0;
 }
 
+.sonet-slider-frame-popup .sonet-group-create-popup .social-group-create-form-control-block {
+	min-width: auto;
+}
+
+.sonet-slider-frame-popup .social-group-create-form-control-block .main-user-selector-wrap {
+	margin-right: auto;
+}
+
 .social-group-create-form-control-block .social-group-create-text {
-	align-self: center;
-	position: absolute;
-	right: 15px;
+	display: block;
+	line-height: 35px;
+	padding-left: 15px;
 	max-width: 225px;
 	overflow: hidden;
 	white-space: nowrap;

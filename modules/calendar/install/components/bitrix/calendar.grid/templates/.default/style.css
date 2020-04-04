@@ -956,7 +956,7 @@
 .calendar-grid-off-hours,
 .calendar-grid-off-hours-collapse {
 	position: absolute;
-	right: 19px;
+	right: 6px;
 	left: -36px;
 	z-index: 8;
 	box-sizing: border-box;

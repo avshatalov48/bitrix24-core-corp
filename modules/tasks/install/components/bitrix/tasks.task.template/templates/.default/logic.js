@@ -26,6 +26,8 @@ BX.namespace('Tasks.Component');
 				this.vars.parentType = ((!parseInt(this.option('template').BASE_TEMPLATE_ID) && parseInt(this.option('template').PARENT_ID))? 'task' : 'template');
 				this.vars.currentLock = false;
 
+				this.analyticsData = {};
+
 				//this.processEditorInit(); // todo: deal with IT!
 
 				// all flag togglers (checkboxes), like MATCH_WORK_TIME, REPLICATE, etc...
@@ -35,7 +37,7 @@ BX.namespace('Tasks.Component');
 				this.bindDelegateControl('pin-footer', 'click', BX.delegate(this.onPinFooterClick, this));
 
 				// form events
-				this.bindControl('form', 'submit', BX.delegate(this.onForumSubmit, this));
+				this.bindControl('form', 'submit', BX.delegate(this.onSubmitClick, this));
 
 				this.bindControl('to-checklist', 'click', BX.delegate(this.onToCheckListClick, this));
 				BX.bind(BX('templateEditPopupMenuOptions'), 'click', this.createTemplateMenu.bind(this));
@@ -49,6 +51,18 @@ BX.namespace('Tasks.Component');
 				{
 					BX.Tasks.alert(errors);
 				});
+
+				BX.Event.EventEmitter.subscribe('BX.Tasks.CheckListItem:CheckListChanged', function(eventData) {
+					var action = eventData.data.action;
+					var allowedActions = ['addAccomplice', 'fileUpload', 'tabIn'];
+
+					if (BX.util.in_array(action, allowedActions))
+					{
+						this.analyticsData[action] = 'Y';
+					}
+
+					BX('checklistAnalyticsData').value = Object.keys(this.analyticsData).join(',');
+				}.bind(this));
 			},
 
 			toggleReplicationLock: function(way)
@@ -433,7 +447,7 @@ BX.namespace('Tasks.Component');
 				this.control('end-date-input').value = start + duration;
 			},
 
-			onForumSubmit: function(e)
+			onSubmitClick: function(e)
 			{
 				e = e || window.event;
 
@@ -546,6 +560,8 @@ BX.namespace('Tasks.Component');
 									newCheckList.addCheckListItem(item);
 								});
 								newCheckList.handleTaskOptions();
+
+								BX('checklistFromDescription').value = 'fromDescription';
 							});
 
 							var checkListContainer = self.scope().querySelector('.task-checklist-container');
@@ -569,8 +585,9 @@ BX.namespace('Tasks.Component');
 							items.forEach(function(item) {
 								descendant.addCheckListItem(item);
 							});
-
 							items[0].handleTaskOptions();
+
+							BX('checklistFromDescription').value = 'fromDescription';
 
 							var checkListContainer = self.scope().querySelector('.task-checklist-container');
 							if (BX.hasClass(checkListContainer, 'invisible'))

@@ -79,6 +79,7 @@ if ($isExtranetUser)
 $imageDir = $this->getPath() . "/images/";
 $canInviteUsers = (IsModuleInstalled("bitrix24") && $USER->CanDoOperation('bitrix24_invite')) ? "1" : "0";
 $diskComponentVersion = \Bitrix\MobileApp\Janative\Manager::getComponentVersion("user.disk");
+$calendarComponentVersion = \Bitrix\MobileApp\Janative\Manager::getComponentVersion("calendar.events");
 
 $taskParams = json_encode([
 	"COMPONENT_CODE" => "tasks.list",
@@ -128,6 +129,19 @@ $favorite = [
 JS
 
 				, "onclick" => <<<JS
+
+//							ComponentHelper.openList({
+//								name:"calendar.events",
+//								object:"list",
+//								version:"{$calendarComponentVersion}",
+//								componentParams:{userId: env.userId},
+//								widgetParams:{
+//									title:this.title, 
+//									useSearch: false,
+//									doNotHideSearchResult: false
+//								}
+//							});
+						
 						PageManager.openList(
 						{
 							url:"/mobile/?mobile_action=calendar&user_id="+$userId,
@@ -532,6 +546,7 @@ if (CModule::IncludeModule("socialnetwork"))
 {
 	$strGroupSubjectLinkTemplate = $siteDir . "mobile/log/?group_id=#group_id#";
 	$extGroupID = [];
+	$arExtSGGroupTmp = [];
 	$arGroupFilterMy = [
 		"USER_ID" => $USER->GetID(),
 		"<=ROLE" => SONET_ROLES_USER,
@@ -550,7 +565,7 @@ if (CModule::IncludeModule("socialnetwork"))
 			false,
 			['ID', 'GROUP_ID', 'GROUP_NAME', 'GROUP_SITE_ID', 'GROUP_IMAGE_ID']
 		);
-		$arExtSGGroupTmp = [];
+
 		while ($arGroups = $dbGroups->GetNext())
 		{
 
@@ -684,11 +699,15 @@ if (!empty($groups) || !empty($extranetGroups))
 
 
 }
-
+$timemanEnabledForUser = false;
+if (\Bitrix\Main\Loader::includeModule('timeman'))
+{
+	$timemanEnabledForUser = CTimeMan::CanUse();
+}
 $menuStructure[] = [
 	"title" => GetMessage("MENU_WORK_DAY"),
 	"sort" => 2,
-	"hidden" => ($isExtranetUser || !IsModuleInstalled("timeman")),
+	"hidden" => ($isExtranetUser || !IsModuleInstalled("timeman") || !$timemanEnabledForUser),
 	"items" => [
 		[
 			"title" => Loc::getMessage("MENU_WORK_DAY_MANAGE"),

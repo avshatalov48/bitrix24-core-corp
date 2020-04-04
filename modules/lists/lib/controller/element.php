@@ -1,12 +1,15 @@
 <?
 namespace Bitrix\Lists\Controller;
 
-use Bitrix\Lists\Entity\Element as ElementEntity;
+use Bitrix\Iblock\Copy\Implement\Element as ElementImplementer;
 use Bitrix\Lists\Entity\Utils;
 use Bitrix\Lists\Security\ElementRight;
 use Bitrix\Lists\Security\Right;
 use Bitrix\Lists\Security\RightParam;
 use Bitrix\Lists\Service\Param;
+use Bitrix\Main\Copy\Container;
+use Bitrix\Main\Copy\ContainerCollection;
+use Bitrix\Main\Copy\EntityCopier;
 
 class Element extends Entity
 {
@@ -21,18 +24,23 @@ class Element extends Entity
 			return null;
 		}
 
-		$element = new ElementEntity($param);
-		if ($id = $element->copyById($params["IBLOCK_ID"], $params["ELEMENT_ID"]))
+		$containerCollection = new ContainerCollection();
+		$containerCollection[] = new Container($params["ELEMENT_ID"]);
+
+		$elementImplementer = new ElementImplementer();
+		$elementCopier = new EntityCopier($elementImplementer);
+		$result = $elementCopier->copy($containerCollection);
+
+		if ($result->getErrors())
 		{
-			return $id;
+			$this->addErrors($result->getErrors());
+			return null;
+
 		}
 		else
 		{
-			if ($element->getErrors())
-			{
-				$this->addErrors($element->getErrors());
-			}
-			return null;
+			$resultData = $result->getData();
+			return $resultData[$params["ELEMENT_ID"]];
 		}
 	}
 

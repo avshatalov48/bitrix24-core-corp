@@ -94,6 +94,9 @@ foreach($arBlogPosts as $arBlogPostFields)
 {
 	$postID = CBlogPost::Add($arBlogPostFields);
 
+	foreach($categoryID as $v)
+		CBlogPostCategory::Add(Array("BLOG_ID" => $blogID, "POST_ID" => $postID, "CATEGORY_ID"=>$v));
+
 	$arAddVote = array(
 		'ENTITY_TYPE_ID'  =>  'BLOG_POST',
 		'ENTITY_ID'       =>  $postID,
@@ -140,10 +143,6 @@ foreach($arBlogPosts as $arBlogPostFields)
 			CSocNetLogRights::Add($logID, array("G2", "U1"));
 		}
 	}
-
-	foreach($categoryID as $v)
-		CBlogPostCategory::Add(Array("BLOG_ID" => $blogID, "POST_ID" => $postID, "CATEGORY_ID"=>$v));
-
 }
 
 //comments

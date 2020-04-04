@@ -190,7 +190,7 @@ diskController.prototype = {
 						{
 							diskController.dndCatcher[id].dropZone = new BX.DD.dropFiles(manager.eventNode);
 
-							BX.addCustomEvent(manager.eventNode, "OnImageDataUriHandle", BX.delegate(function(editor, imageBase64)
+							BX.addCustomEvent(manager.eventNode, "OnImageDataUriHandle", function(editor, imageBase64)
 							{
 								if (BX["UploaderUtils"])
 								{
@@ -207,7 +207,7 @@ diskController.prototype = {
 										BX.onCustomEvent(editor, "OnImageDataUriCaught", [imageBase64]);
 									}
 								}
-							}, this));
+							}.bind(this));
 
 							BX.addCustomEvent(diskController.dndCatcher[id].dropZone, "dropFiles", diskController.dndCatcher[id]["drop"]);
 							BX.addCustomEvent(diskController.dndCatcher[id].dropZone, "dragEnter", diskController.dndCatcher[id]["dragover"]);
@@ -994,7 +994,11 @@ var LHEPostForm = function(formID, params)
 	);
 
 	this.inited = true;
-	BX.addCustomEvent(BX(this.formID), 'onAutoSavePrepare', function(ob) { ob.FORM.setAttribute("bx-lhe-autosave-prepared", "Y"); });
+
+	if (BX(this.formID))
+	{
+		BX.addCustomEvent(BX(this.formID), 'onAutoSavePrepare', function(ob) { ob.FORM.setAttribute("bx-lhe-autosave-prepared", "Y"); });
+	}
 
 	BX.onCustomEvent(this, "onInitialized", [this, formID, params, this.parsers]);
 	BX.onCustomEvent(this.eventNode, "onInitialized", [this, formID, params, this.parsers]);
@@ -1923,7 +1927,7 @@ LHEPostForm.prototype = {
 		BX.addCustomEvent(editor, "OnIframeDrop", BX.proxy(function(){BX.onCustomEvent(this.eventNode, "OnIframeDrop", arguments);}, this));
 		BX.addCustomEvent(editor, "OnIframeDragOver", BX.proxy(function(){BX.onCustomEvent(this.eventNode, "OnIframeDragOver", arguments);}, this));
 		BX.addCustomEvent(editor, "OnIframeDragLeave", BX.proxy(function(){BX.onCustomEvent(this.eventNode, "OnIframeDragLeave", arguments);}, this));
-		BX.addCustomEvent(editor, "OnImageDataUriHandle", BX.proxy(function(){BX.onCustomEvent(this.eventNode, "OnImageDataUriHandle", arguments);}, this));
+		BX.addCustomEvent(editor, "OnImageDataUriHandle", function() { BX.onCustomEvent(this.eventNode, "OnImageDataUriHandle", Array.prototype.slice.call(arguments)); }.bind(this));
 
 		BX.addCustomEvent(editor, "OnAfterUrlConvert", this.OnAfterUrlConvert.bind(this));
 		BX.addCustomEvent(editor, "OnAfterLinkInserted", this.OnAfterUrlConvert.bind(this));
@@ -1962,46 +1966,49 @@ LHEPostForm.prototype = {
 			editor.toolbar.controls.FontSelector.SetWidth(45);
 		}
 
-		BX.addCustomEvent(BX(this.formID), 'onAutoSavePrepare', function (ob) {
-			var _ob=ob;
-			setTimeout(function() {
-				BX.addCustomEvent(editor, 'OnContentChanged', BX.proxy(function(text) {
-					this["mpfTextContent"] = text;
-					this.Init();
-				}, _ob));
-			},1500);
-		});
-		BX.addCustomEvent(BX(this.formID), 'onAutoSave', BX.proxy(function(ob, form_data)
+		if (BX(this.formID))
 		{
-			if (BX.type.isNotEmptyString(ob['mpfTextContent']))
-				form_data['text' + this.formID] = ob['mpfTextContent'];
-		}, this));
-		BX.addCustomEvent(BX(this.formID), 'onAutoSaveRestore', BX.proxy(function(ob, form_data)
-		{
-			if (repo.handler[editor.id])
+			BX.addCustomEvent(BX(this.formID), 'onAutoSavePrepare', function (ob) {
+				var _ob=ob;
+				setTimeout(function() {
+					BX.addCustomEvent(editor, 'OnContentChanged', BX.proxy(function(text) {
+						this["mpfTextContent"] = text;
+						this.Init();
+					}, _ob));
+				},1500);
+			});
+			BX.addCustomEvent(BX(this.formID), 'onAutoSave', BX.proxy(function(ob, form_data)
 			{
-				for (var ii in repo.handler[editor.id].controllers)
+				if (BX.type.isNotEmptyString(ob['mpfTextContent']))
+					form_data['text' + this.formID] = ob['mpfTextContent'];
+			}, this));
+			BX.addCustomEvent(BX(this.formID), 'onAutoSaveRestore', BX.proxy(function(ob, form_data)
+			{
+				if (repo.handler[editor.id])
 				{
-					if (repo.handler[editor.id].controllers.hasOwnProperty(ii) &&
-						repo.handler[editor.id].controllers[ii].handler &&
-						repo.handler[editor.id].controllers[ii].handler.params &&
-						repo.handler[editor.id].controllers[ii].handler.params.controlName &&
-						repo.handler[editor.id].controllers[ii].handler.params.controlName)
+					for (var ii in repo.handler[editor.id].controllers)
 					{
-						delete form_data[repo.handler[editor.id].controllers[ii].handler.params.controlName];
+						if (repo.handler[editor.id].controllers.hasOwnProperty(ii) &&
+							repo.handler[editor.id].controllers[ii].handler &&
+							repo.handler[editor.id].controllers[ii].handler.params &&
+							repo.handler[editor.id].controllers[ii].handler.params.controlName &&
+							repo.handler[editor.id].controllers[ii].handler.params.controlName)
+						{
+							delete form_data[repo.handler[editor.id].controllers[ii].handler.params.controlName];
+						}
 					}
 				}
-			}
-			if (form_data['text' + this.formID] && /[^\s]+/gi.test(form_data['text' + this.formID]))
-			{
-				editor.CheckAndReInit(form_data['text' + this.formID]);
-			}
-		}, this));
+				if (form_data['text' + this.formID] && /[^\s]+/gi.test(form_data['text' + this.formID]))
+				{
+					editor.CheckAndReInit(form_data['text' + this.formID]);
+				}
+			}, this));
 
-		if (BX(this.formID) && BX(this.formID).hasAttribute("bx-lhe-autosave-prepared") && BX(this.formID).BXAUTOSAVE)
-		{
-			BX(this.formID).removeAttribute("bx-lhe-autosave-prepared");
-			setTimeout(BX.proxy(function(){ BX(this.formID).BXAUTOSAVE.Prepare(); }, this), 100);
+			if (BX(this.formID).hasAttribute("bx-lhe-autosave-prepared") && BX(this.formID).BXAUTOSAVE)
+			{
+				BX(this.formID).removeAttribute("bx-lhe-autosave-prepared");
+				setTimeout(BX.proxy(function(){ BX(this.formID).BXAUTOSAVE.Prepare(); }, this), 100);
+			}
 		}
 		var
 			formID = this.formID,
@@ -3123,7 +3130,7 @@ window.MPFMentionInit = function(formId, params)
 
 			BX.bind(
 				ment,
-				"mousedown",
+				"click",
 				function(e)
 				{
 					if(MPFMention.listen !== true)

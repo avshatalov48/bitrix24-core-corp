@@ -1,26 +1,26 @@
 <?php
 namespace Bitrix\Timeman\Component\SchedulePlan;
 
-use Bitrix\Intranet\Internals\UserToDepartmentTable;
 use \Bitrix\Main;
+use Bitrix\Main\Application;
 use \Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ORM\Fields\ExpressionField;
-use Bitrix\Main\ORM\Fields\Relations\OneToMany;
-use Bitrix\Main\ORM\Fields\Relations\Reference;
-use Bitrix\Main\ORM\Query\Join;
-use Bitrix\Main\UserTable;
+use Bitrix\Main\Type\Date;
 use \Bitrix\Timeman;
 use Bitrix\Timeman\Component\WorktimeGrid\Grid;
+use Bitrix\Timeman\Component\WorktimeGrid\TemplateParams;
+use Bitrix\Timeman\Helper\EntityCodesHelper;
 use Bitrix\Timeman\Helper\TimeHelper;
-use Bitrix\Timeman\Model\Schedule\Assignment\Department\ScheduleDepartmentTable;
+use Bitrix\Timeman\Model\Schedule\Assignment\Department\ScheduleDepartment;
+use Bitrix\Timeman\Model\Schedule\Shift\ShiftTable;
+use Bitrix\Timeman\Model\Schedule\ShiftPlan\ShiftPlanTable;
 use Bitrix\Timeman\Model\Worktime\Record\WorktimeRecordTable;
 use Bitrix\Timeman\Service\DependencyManager;
 use Bitrix\Timeman\Component\WorktimeGrid\Ranges;
-use CIntranetUtils;
-use COption;
-use CTimeManAdminReport;
+use Bitrix\Timeman\TimemanUrlManager;
 
 require_once __DIR__ . '/grid.php';
+require_once __DIR__ . '/templateparams.php';
 require_once __DIR__ . '/ranges.php';
 require_once __DIR__ . '/normalizer.php';
 
@@ -46,17 +46,30 @@ class TimemanWorktimeGridComponent extends Timeman\Component\BaseComponent
 	private $gridId = 'TM_WORKTIME_GRID';
 	/** @var Timeman\Security\UserPermissionsManager */
 	private $userPermissionsManager;
-	/**
-	 * @var array
-	 */
-	private $accessibleToReadUsers = [];
-	private $canReadAllWorktime = false;
-	private $dateTimeFormat = 'd.m.Y';
+	private $dateTimeFormat;
+	/** @var Timeman\Model\Schedule\ScheduleCollection */
+	private $scheduleCollection = null;
+	/** @var array */
+	private $shiftPlansByUserShiftDate;
+	/** @var array */
+	private $recordsByUsersDates = [];
+	private $dependencyManager;
+	private $departmentRepository;
+	private $dateTimeTo;
+	private $dateTimeFrom;
+	/** @var Timeman\Model\User\UserCollection */
+	private $usersCollection;
+	/** @var Timeman\Model\User\User */
+	private $currentUser;
 
 	public function __construct($component = null)
 	{
 		global $USER;
-		$this->userPermissionsManager = DependencyManager::getInstance()->getUserPermissionsManager($USER);
+		$this->dateTimeFormat = ShiftPlanTable::DATE_FORMAT;
+		$this->dependencyManager = DependencyManager::getInstance();
+		$this->departmentRepository = $this->dependencyManager->getDepartmentRepository();
+		$this->userPermissionsManager = $this->dependencyManager->getUserPermissionsManager($USER);
+		$this->usersCollection = new Timeman\Model\User\UserCollection();
 
 		parent::__construct($component);
 	}
@@ -71,140 +84,75 @@ class TimemanWorktimeGridComponent extends Timeman\Component\BaseComponent
 
 	public function executeComponent()
 	{
-		$this->initTemplateParams();
-		$this->arResult['weekStart'] = 1;
-		$this->arResult['canReadSchedules'] = $this->userPermissionsManager->canReadSchedules();
-		if (\Bitrix\Main\Application::getInstance()->getContext()->getCulture())
+		$this->initViewResult();
+		if (!$this->currentUser)
 		{
-			$this->arResult['weekStart'] = \Bitrix\Main\Application::getInstance()->getContext()->getCulture()->getWeekStart();
+			showError(empty(Loc::getMessage('TM_WORKTIME_STATS_ACCESS_DENIED')) ?
+				Loc::getMessage('TM_WORKTIME_STATS_SCHEDULE_NOT_FOUND') :
+				Loc::getMessage('TM_WORKTIME_STATS_ACCESS_DENIED'));
+			return;
 		}
-		$this->arResult['currentUserId'] = Main\Engine\CurrentUser::get()->getId();
-		$currentUserId = (int)$this->arResult['currentUserId'];
-		$this->arResult['showFilter'] = $this->userPermissionsManager->canReadWorktimeAll() ||
-										!empty(array_filter($this->userPermissionsManager->getUserIdsAccessibleToRead(),
-											function ($item) use ($currentUserId) {
-												return $currentUserId !== $item;
-											})
-										);
-		$this->arResult['recordShowUtcOffset'] = TimeHelper::getInstance()->getUserUtcOffset($this->arResult['currentUserId']);
-		$this->arResult['canManageSettings'] = count($this->userPermissionsManager->getUserIdsAccessibleToRead()) > 1 || $this->userPermissionsManager->canReadWorktimeAll();
-		$this->arResult['canReadSettings'] = $this->userPermissionsManager->canManageWorktime();
-		$this->arResult['departmentFilterUserIds'] = [];
-
 		if ($this->arResult['PARTIAL_ITEM'] === 'shiftCell')
 		{
 			Loc::loadMessages($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/js_core.php');
-			$this->initFromParams('SCHEDULE_ID', null);
-			$this->initFromParams('DRAWING_DATE', null);
-			$this->initFromParams('SHIFT_PLAN', [], 'array');
-			$this->initFromParams('USER_ID', 0, 'int');
-			$this->initFromParams('IS_SHIFTED_SCHEDULE', true);
-			$this->initFromParams('WORKTIME_RECORD', [], 'array');
-			$this->initFromParams('DATA_ATTRS', [], 'array');
-			$this->initFromParams('GRID_OPTIONS', ['SHOW_USER_ABSENCES' => true], 'array');
-
-			$users = $this->prepareUsersData([$this->arResult['USER_ID']], $addManagers = false);
-			$gridDataRecord = [
-				$this->arResult['USER_ID'] =>
-					[
-						$this->arResult['DRAWING_DATE']->format($this->dateTimeFormat) =>
-							[
-								$this->arResult['WORKTIME_RECORD']['ID'] =>
-									[
-										'record' => $this->arResult['WORKTIME_RECORD'],
-										'plan' => [],
-									],
-							],
-					],
-			];
-			$this->arResult['SCHEDULES'] = $this->fetchSchedules([$this->arResult['SCHEDULE_ID']]);
-			$this->getGrid()->setSchedules($this->arResult['SCHEDULES']);
-			$this->getGrid()->setDateTimeFrom($this->arResult['DRAWING_DATE']);
-			$this->getGrid()->setDateTimeTo($this->arResult['DRAWING_DATE']);
-			$this->arResult['USER_GRID_DATA'] = &$this->getGrid()->getRowsData(
-				$users,
-				$gridDataRecord,
-				$this->findViolationRules([$this->arResult['USER_ID']]),
-				[
-					'SHOW_ADD_SHIFT_PLAN_BTN' => $this->arResult['SHOW_ADD_SHIFT_PLAN_BTN'],
-				]
-			);
-			$this->arResult['WORKTIME_RECORD'] = reset(reset(reset($this->arResult['USER_GRID_DATA'])))['WORKTIME_RECORD'];
-			$this->includeComponentTemplate('fixed-flex-cell');
+			$this->arResult['templateParamsList'] = $this->buildParamsForPartialView();
+			$this->includeComponentTemplate('day-cell');
 			return;
 		}
 
 
-		$this->arResult['DEPARTMENTS_USERS_DATA'] = [
-			'USERS' => [],
-			'DEPARTMENTS' => [],
-		];
-		$this->canReadAllWorktime = $this->userPermissionsManager->canReadWorktimeAll();
-		$this->accessibleToReadUsers = $this->userPermissionsManager->getUserIdsAccessibleToRead();
-
-		$userIds = $this->buildUserIdsToShow();
-		$users = [];
-
-		# users
-		if (!empty($userIds))
+		if ($this->arResult['SCHEDULE_ID'] > 0)
 		{
-			$users = $this->prepareUsersData(
-				$userIds,
-				!$this->getGrid()->isUserFilterApplied()
-				&& !$this->getGrid()->isFilterByApprovedApplied()
-				&& !$this->getGrid()->isShowUsersWithRecordsOnly()
-				&& $this->getGrid()->getFilterFindText() === null
-			);
+			$this->scheduleCollection = $this->fetchSchedules([$this->arResult['SCHEDULE_ID']]);
+			if ($this->scheduleCollection->count() == 0 ||
+				($this->arResult['IS_SHIFTPLAN'] && !$this->scheduleCollection->getFirst()->isShifted()))
+			{
+				showError(Loc::getMessage('TM_WORKTIME_STATS_SCHEDULE_NOT_FOUND'));
+				return;
+			}
 		}
 
-		$recordsDataToShow = $this->fillWithRecordsPlans();
+		$departmentsToUsersMap = $this->buildDepartmentsToUsersMap();
+		$this->applyAccessControlToUserIds($departmentsToUsersMap);
+		$this->applyFiltersToUserIds($departmentsToUsersMap);
+		$departmentsToUsersMap = $this->sortUserIds($departmentsToUsersMap);
+		$this->setTotalCount($departmentsToUsersMap);
+		$this->setLimitOffset($departmentsToUsersMap);
+		$this->arResult['DEPARTMENT_USERS_DATA'] = $this->fillDepartmentUsersData($departmentsToUsersMap);
+		$this->setTimezoneToggleAvailable($departmentsToUsersMap);
+		$this->fillScheduleRecordsPlans($this->extractUserIds($departmentsToUsersMap));
 
 		$grid = $this->getGrid();
 		$this->arResult['NAV_OBJECT'] = $grid->getNavigation();
 		$grid->getNavigation()->setRecordCount($this->arResult['TOTAL_USERS_COUNT']);
 		$this->arResult['FILTER'] = $grid->getFilter();
-		$grid->setSchedules($this->arResult['SCHEDULES']);
 		$this->arResult['HEADERS'] = $grid->getHeaders();
 		$this->arResult['DATES'] = $grid->getPeriodDates();
-		$this->arResult['nowTime'] = time();
-		$userIdsFromDepartmentsData = [];
-		foreach ($this->arResult['DEPARTMENTS_USERS_DATA']['DEPARTMENTS'] as $depId => $depData)
-		{
-			foreach ((array)$depData['USERS'] as $user)
-			{
-				$userIdsFromDepartmentsData[$user['ID']] = true;
-			}
-		}
-		$this->arResult['USER_GRID_DATA'] = &$grid->getRowsData(
-			$users,
-			$recordsDataToShow,
-			$this->findViolationRules(array_keys($userIdsFromDepartmentsData)),
-			['SHOW_ADD_SHIFT_PLAN_BTN' => $this->arResult['SHOW_ADD_SHIFT_PLAN_BTN'],]
+
+		$this->getGrid()->fillRowsDataWithTemplateParams(
+			$this->arResult['DEPARTMENT_USERS_DATA'],
+			$this->usersCollection,
+			$this->recordsByUsersDates,
+			$this->scheduleCollection,
+			$this->shiftPlansByUserShiftDate,
+			$this->findViolationRules($departmentsToUsersMap)
 		);
+
 		if ($this->arResult['GRID_OPTIONS']['SHOW_STATS_COLUMNS'])
 		{
-			$this->arResult['WORKTIME_STATISTICS'] = &$grid->getWorktimeStatistics($this->arResult['USER_GRID_DATA']);
+			$this->arResult['WORKTIME_STATISTICS'] = $grid->getWorktimeStatistics($this->arResult['DEPARTMENT_USERS_DATA']);
 		}
 
 		$this->makeUrls();
-		$this->arResult['usersIds'] = [];
-		$this->arResult['departmentsIds'] = array_keys($this->arResult['DEPARTMENTS_USERS_DATA']['DEPARTMENTS']);
-		foreach ($this->arResult['DEPARTMENTS_USERS_DATA']['DEPARTMENTS'] as $departmentDataWithUsers)
-		{
-			$this->arResult['usersIds'] = array_merge($this->arResult['usersIds'], array_keys($departmentDataWithUsers['USERS']));
-		}
-		$this->arResult['DEPARTMENTS'] = [];
-		if (!empty($this->arResult['departmentsIds']))
-		{
-			$this->arResult['DEPARTMENTS'] = $this->getDepartmentsData($this->arResult['departmentsIds']);
-		}
-
+		$this->initGridOptions();
+		$this->arResult['usersCollection'] = $this->usersCollection;
 		$this->includeComponentTemplate();
 	}
 
-	private function findViolationRules($userIds)
+	private function findViolationRules($departmentsToUsersMap)
 	{
-		if (empty($this->arResult['SCHEDULES']))
+		$userIds = $this->extractUserIds($departmentsToUsersMap);
+		if ($this->scheduleCollection->count() == 0 || empty($userIds))
 		{
 			return [];
 		}
@@ -212,33 +160,29 @@ class TimemanWorktimeGridComponent extends Timeman\Component\BaseComponent
 		$entitiesCodes = [];
 		foreach ($userIds as $userId)
 		{
-			$depChain[$userId] = DependencyManager::getInstance()
-				->getDepartmentRepository()
-				->buildUserDepartmentsPriorityTree($userId);
+			$depChain[$userId] = $this->departmentRepository->buildUserDepartmentsPriorityTree($userId);
 			foreach ($depChain[$userId] as $treeData)
 			{
 				$entitiesCodes = array_merge($entitiesCodes, $treeData);
 			}
 		}
 		$entitiesCodes = array_unique($entitiesCodes);
-		$sIds = [];
-		foreach ($this->arResult['SCHEDULES'] as $schedule)
-		{
-			$sIds[] = $schedule->getId();
-		}
-		if (empty($entitiesCodes) || empty($sIds))
+		$schedulesIds = $this->scheduleCollection->getIdList();
+
+		if (empty($entitiesCodes))
 		{
 			return [];
 		}
 		$violationRulesCollection = Timeman\Model\Schedule\Violation\ViolationRulesTable::query()
 			->addSelect('*')
 			->whereIn('ENTITY_CODE', $entitiesCodes)
-			->whereIn('SCHEDULE_ID', $sIds)
+			->whereIn('SCHEDULE_ID', $schedulesIds)
 			->exec()
 			->fetchCollection();
 		$violationRulesList = [];
 		foreach ($violationRulesCollection as $violationRules)
 		{
+			/** @var Timeman\Model\Schedule\Violation\ViolationRules $violationRules */
 			$violationRulesList[$violationRules->getEntityCode()][] = $violationRules;
 		}
 		$userViolationsMap = [];
@@ -259,20 +203,6 @@ class TimemanWorktimeGridComponent extends Timeman\Component\BaseComponent
 		return $userViolationsMap;
 	}
 
-	private function getDepartmentsData($ids)
-	{
-		$obReport = new CTimeManAdminReport([
-			'show_all' => !$this->getGrid()->isShowUsersWithRecordsOnly(),
-			'ts' => null,
-			'page' => $this->getGrid()->getNavigation()->getCurrentPage(),
-			'amount' => $this->getGrid()->getNavigation()->getLimit(),
-			'department' => $this->getGrid()->getDepartmentId(),
-			'path_user' => COption::GetOptionString('intranet', 'path_user', '/company/personal/user/#USER_ID#/'),
-			'nav_handler' => '',
-		]);
-		return $obReport->getDepartmentsData($ids);
-	}
-
 	private function showError($errorMessage)
 	{
 		$this->addError($errorMessage);
@@ -284,104 +214,177 @@ class TimemanWorktimeGridComponent extends Timeman\Component\BaseComponent
 		$this->arResult['errorMessages'][] = $errorMessage;
 	}
 
+	/**
+	 * @param $ids
+	 * @return Timeman\Model\Schedule\ScheduleCollection
+	 */
 	protected function fetchSchedules($ids)
 	{
-		return DependencyManager::getInstance()
-			->getScheduleRepository()
-			->getActiveSchedulesQuery()
+		$res = Timeman\Model\Schedule\ScheduleTable::query()
 			->addSelect('*')
 			->addSelect('SCHEDULE_VIOLATION_RULES')
-			->addSelect('DEPARTMENTS')
-			->registerRuntimeField('DEPARTMENTS', (new OneToMany('DEPARTMENTS', ScheduleDepartmentTable::class, 'SCHEDULE'))->configureJoinType('LEFT'))
-			->addSelect('DEPARTMENTS.DEPARTMENT_ID', 'DEPARTMENT_ID')
-			->addSelect('SHIFTS.ID', 'SH_ID')
-			->addSelect('SHIFTS.NAME', 'SH_NAME')
-			->addSelect('SHIFTS.WORK_DAYS', 'SH_WORK_DAYS')
-			->addSelect('SHIFTS.WORK_TIME_START', 'SH_WORK_TIME_START')
-			->addSelect('SHIFTS.WORK_TIME_END', 'SH_WORK_TIME_END')
-			->whereIn('ID', $ids)
-			->addOrder('SHIFTS.WORK_TIME_START')
+			->addSelect('DEPARTMENT_ASSIGNMENTS')
+			->addSelect('USER_ASSIGNMENTS')
+			->addSelect('ALL_SHIFTS.*');
+
+		return $res->whereIn('ID', $ids)
 			->exec()
 			->fetchCollection();
 	}
 
 	private function getDateTimeTo()
 	{
-		return $this->getGrid()->getDateTimeTo();
+		return $this->dateTimeTo ? $this->dateTimeTo : $this->getGrid()->getDateTimeTo();
 	}
 
 	private function getDateTimeFrom()
 	{
-		return $this->getGrid()->getDateTimeFrom();
+		return $this->dateTimeFrom ? $this->dateTimeFrom : $this->getGrid()->getDateTimeFrom();
 	}
 
-	private function fetchUsersOfSchedule($schedule, $allUserIdsByFilter = [])
+	private function fillScheduleRecordsPlans($userIds)
 	{
-		$options = [];
+		$this->recordsByUsersDates = [];
+		$this->shiftPlansByUserShiftDate = [];
 
-		if (!empty($allUserIdsByFilter))
+		if (empty($userIds))
 		{
-			$options['USER_IDS'] = $this->arResult['FILTERED_USER_IDS'];
+			return;
 		}
-		$req = DependencyManager::getInstance()
-			->getScheduleRepository()
-			->buildActiveScheduleUsersQuery(
-				$schedule['ID'],
-				$schedule['DEPARTMENTS'],
-				$options
-			);
-		if ($this->getGrid()->isShowUsersWithRecordsOnly())
+		$recordsRaw = WorktimeRecordTable::query()
+			->addSelect('ID')
+			->addSelect('USER_ID')
+			->addSelect('DURATION')
+			->addSelect('TIME_LEAKS')
+			->addSelect('RECORDED_START_TIMESTAMP')
+			->addSelect('ACTUAL_START_TIMESTAMP')
+			->addSelect('START_OFFSET')
+			->addSelect('RECORDED_STOP_TIMESTAMP')
+			->addSelect('ACTUAL_STOP_TIMESTAMP')
+			->addSelect('STOP_OFFSET')
+			->addSelect('CURRENT_STATUS')
+			->addSelect('ACTUAL_BREAK_LENGTH')
+			->addSelect('SCHEDULE_ID')
+			->addSelect('SHIFT_ID')
+			->addSelect('RECORDED_DURATION')
+			->addSelect('APPROVED')
+			->whereIn('USER_ID', $userIds);
+		$this->addFilterRecordsByDates($recordsRaw);
+		if ($this->getGrid()->isFilterByApprovedApplied())
 		{
-			$req->registerRuntimeField(
-				(new Reference(
-					'RECORD',
-					WorktimeRecordTable::class,
-					Join::on('this.ID', 'ref.USER_ID')
-				))->configureJoinType('inner'));
-			$this->addFilterRecordsByDates($req, 'RECORD.RECORDED_START_TIMESTAMP');
+			$recordsRaw->where('APPROVED', $this->getGrid()->getFilterByApproved() !== 'Y');
 		}
-		$res = [];
-		foreach ($req->exec()->fetchAll() as $user)
+		if ($this->arResult['SCHEDULE_ID'] > 0)
 		{
-			$user['SCHEDULE_ID'] = $schedule['ID'];
-			$res[$user['ID']] = $user;
+			$recordsRaw->where('SCHEDULE_ID', $this->arResult['SCHEDULE_ID']);
 		}
-		return $res;
-	}
-
-	private function fillWithRecordsPlans()
-	{
-		$usersIds = [];
-		$results = [];
-		$scheduleIds = [];
-
-		foreach ($this->arResult['DEPARTMENTS_USERS_DATA']['DEPARTMENTS'] as $department)
+		if ($this->getGrid()->isSchedulesFilterApplied())
 		{
-			$usersIds = array_merge($usersIds, array_keys($department['USERS']));
-			foreach ($department['USERS'] as $userData)
+			$recordsRaw->whereIn('SCHEDULE_ID', $this->getGrid()->getFilteredSchedulesIds());
+		}
+		/** @var Timeman\Model\Worktime\Record\WorktimeRecordCollection $recordsCollection */
+		$recordsCollection = $recordsRaw->exec()->fetchCollection();
+		foreach ($recordsCollection as $record)
+		{
+			$startDate = TemplateParams::buildDateInShowingTimezone($record->getRecordedStartTimestamp(), $record->getUserId(), $this->currentUser->getId());
+			if ($startDate)
 			{
-				foreach ((array)$userData['RECORDS'] as $entryData)
+				$this->recordsByUsersDates[$record->getUserId()][$startDate->format($this->dateTimeFormat)][$record->getId()] = $record;
+			}
+		}
+
+		$scheduleIds = $recordsCollection->getScheduleIdList();
+		$schedulesMap = $this->dependencyManager->getScheduleRepository()
+			->findSchedulesByEntityCodes(EntityCodesHelper::buildUserCodes($userIds));
+		foreach ($schedulesMap as $userCode => $schedules)
+		{
+			foreach ($schedules as $schedule)
+			{
+				$scheduleIds[] = $schedule->getId();
+			}
+		}
+		$scheduleIds = array_unique($scheduleIds);
+		if ($this->arResult['SCHEDULE_ID'] > 0 && $this->scheduleCollection->getByPrimary($this->arResult['SCHEDULE_ID']))
+		{
+			$sId = (int)$this->arResult['SCHEDULE_ID'];
+			$scheduleIds = array_filter($scheduleIds, function ($id) use ($sId) {
+				return $sId !== (int)$id;
+			});
+		}
+
+		$scheduleIdsFromShiftPlansQuery = $this->dependencyManager->getShiftPlanRepository()
+			->getActivePlansQuery()
+			->registerRuntimeField(new ExpressionField('UNIQUE_SCHEDULE_IDS', 'DISTINCT SCHEDULE_ID'))
+			->registerRuntimeField(
+				(new \Bitrix\Main\ORM\Fields\Relations\Reference('SHIFT_OF_PLANS', ShiftTable::class, ['this.SHIFT_ID' => 'ref.ID']))
+					->configureJoinType('INNER')
+			)
+			->addSelect('UNIQUE_SCHEDULE_IDS');
+		$this->addFilterPlansByDates($scheduleIdsFromShiftPlansQuery);
+		$scheduleIdsFromShiftPlansQuery->whereIn('USER_ID', $userIds);
+		$scheduleIdsFromShiftPlans = $scheduleIdsFromShiftPlansQuery->exec()->fetchAll();
+		if (count($scheduleIdsFromShiftPlans) > 0)
+		{
+			$scheduleIds = array_merge($scheduleIds, array_map('intval', array_column($scheduleIdsFromShiftPlans, 'UNIQUE_SCHEDULE_IDS')));
+			$scheduleIds = array_unique($scheduleIds);
+		}
+		if (!empty($scheduleIds))
+		{
+			$schedulesCollection = $this->fetchSchedules($scheduleIds);
+			if ($this->scheduleCollection->count() === 0)
+			{
+				$this->scheduleCollection = $schedulesCollection;
+			}
+			else
+			{
+				foreach ($schedulesCollection as $schedule)
 				{
-					$startDate = TimeHelper::getInstance()->createDateTimeFromFormat(
-						'U',
-						$entryData['RECORDED_START_TIMESTAMP'],
-						$this->arResult['recordShowUtcOffset']
-					);
-					$results[$userData['ID']][$startDate->format($this->dateTimeFormat)][$entryData['ID']] = [
-						'record' => $entryData,
-						'plan' => [],
-					];
-					$scheduleIds[$entryData['SCHEDULE_ID']] = true;
+					if (!$this->scheduleCollection->getByPrimary($schedule->getId()))
+					{
+						$this->scheduleCollection->add($schedule);
+					}
 				}
 			}
 		}
-		$scheduleIds = array_keys($scheduleIds);
-		if ($this->arResult['SCHEDULES'] === null && !empty($scheduleIds))
-		{
-			$this->arResult['SCHEDULES'] = $this->fetchSchedules($scheduleIds);
-		}
 
-		return $results;
+		if ($this->getDateTimeFrom() && $this->getDateTimeTo() && $this->scheduleCollection->hasShifted())
+		{
+			$shiftedScheduleIds = [];
+			foreach ($this->scheduleCollection as $schedule)
+			{
+				if ($schedule->isShifted())
+				{
+					$shiftedScheduleIds[] = $schedule->getId();
+				}
+			}
+			$resPlans = $this->dependencyManager
+				->getShiftPlanRepository()
+				->getActivePlansQuery()
+				->addSelect('ID')
+				->addSelect('SHIFT_ID')
+				->addSelect('DATE_ASSIGNED')
+				->addSelect('USER_ID')
+				->addSelect('DELETED')
+				->addSelect('SHIFT.ID', 'SH_ID')
+				->addSelect('SHIFT.WORK_TIME_START')
+				->addSelect('SHIFT.SCHEDULE_WITH_ALL_SHIFTS')
+				->whereIn('SHIFT.SCHEDULE_WITH_ALL_SHIFTS.ID', $shiftedScheduleIds)
+				->whereIn('USER_ID', $userIds);
+			$this->addFilterPlansByDates($resPlans);
+			$resPlans = $resPlans
+				->exec()
+				->fetchCollection();
+			foreach ($resPlans as $shiftPlan)
+			{
+				/** @var Timeman\Model\Schedule\ShiftPlan\ShiftPlan $shiftPlan */
+				$utcStartDateTime = $shiftPlan->buildShiftStartDateTimeUtc();
+				$dateTimeStart = TemplateParams::buildDateInShowingTimezone($utcStartDateTime, $shiftPlan->getUserId(), $this->currentUser->getId());
+				if ($dateTimeStart)
+				{
+					$this->shiftPlansByUserShiftDate[$shiftPlan->getUserId()][$shiftPlan->getShiftId()][$dateTimeStart->format($this->dateTimeFormat)] = $shiftPlan;
+				}
+			}
+		}
 	}
 
 	/**
@@ -391,11 +394,23 @@ class TimemanWorktimeGridComponent extends Timeman\Component\BaseComponent
 	{
 		if ($this->grid === null)
 		{
+			$scheduleReportPeriod = null;
+			if ($this->scheduleCollection->count() === 1)
+			{
+				$scheduleReportPeriod = $this->scheduleCollection->getFirst()->getReportPeriod();
+			}
 			$this->grid = Grid::getInstance(
 				$this->arResult['GRID_ID'],
 				array_merge($this->arResult['GRID_OPTIONS'], [
-					'CURRENT_USER_ID' => $this->arResult['currentUserId'],
-					'WEEK_START' => $this->arResult['weekStart'],
+					'currentUser' => $this->currentUser,
+					'weekStart' => $this->arResult['weekStart'],
+					'dateTimeFormat' => $this->dateTimeFormat,
+					'isShiftplan' => $this->arResult['IS_SHIFTPLAN'],
+					'shiftplanScheduleId' => (int)$this->arResult['SCHEDULE_ID'],
+					'hasAccessToOtherWorktime' => $this->arResult['hasAccessToOtherWorktime'],
+					'scheduleReportPeriod' => $scheduleReportPeriod,
+					'showAddShiftPlanBtn' => $this->arResult['SHOW_ADD_SHIFT_PLAN_BTN'],
+					'drawAbsenceTitle' => $this->arResult['DRAW_ABSENCE_TITLE'] === null ? true : $this->arResult['DRAW_ABSENCE_TITLE'],
 				])
 			);
 		}
@@ -403,43 +418,17 @@ class TimemanWorktimeGridComponent extends Timeman\Component\BaseComponent
 		return $this->grid;
 	}
 
-	public function getNormalDate($datetime, $format = null, $clone = false)
-	{
-		if (!($datetime instanceof \DateTime))
-		{
-			if (!($datetime instanceof Main\Type\Date))
-			{
-				$datetime = new Main\Type\DateTime($datetime, $format);
-			}
-
-			$datetime = (new \DateTime())->setTimestamp($datetime->getTimestamp());
-		}
-		elseif ($clone)
-		{
-			$datetime = clone $datetime;
-		}
-
-		return $datetime;
-	}
-
 	private function makeUrls()
 	{
+		$urlManager = $this->dependencyManager->getUrlManager();
 		if ($this->arResult['SHOW_ADD_SCHEDULE_BTN'])
 		{
-			$this->arResult['ADD_SCHEDULE_LINK'] = DependencyManager::getInstance()->getUrlManager()
+			$this->arResult['ADD_SCHEDULE_LINK'] = $urlManager
 				->getUriTo(Timeman\TimemanUrlManager::URI_SCHEDULE_CREATE);
 		}
-		$this->arResult['URLS']['SCHEDULE_EDIT'] = DependencyManager::getInstance()->getUrlManager()->getUriTo('scheduleUpdate', ['SCHEDULE_ID' => $this->arResult['SCHEDULE_ID']]);
-		$this->arResult['URLS']['SHIFT_CREATE'] = DependencyManager::getInstance()->getUrlManager()->getUriTo('scheduleCreate');
+		$this->arResult['URLS']['SCHEDULE_EDIT'] = $urlManager->getUriTo('scheduleUpdate', ['SCHEDULE_ID' => $this->arResult['SCHEDULE_ID']]);
+		$this->arResult['URLS']['SHIFT_CREATE'] = $urlManager->getUriTo('scheduleCreate');
 		$baseUri = (new Main\Web\Uri($this->getRequest()->getRequestedPage()))->addParams(['apply_filter' => 'Y']);
-		if ($this->arResult['GRID_OPTIONS']['SHOW_START_FINISH'] !== null)
-		{
-			$baseUri->addParams(['SHOW_START_FINISH' => $this->arResult['GRID_OPTIONS']['SHOW_START_FINISH'] ? 'Y' : 'N']);
-		}
-		if ($this->arResult['GRID_OPTIONS']['SHOW_STATS_COLUMNS'] !== null)
-		{
-			$baseUri->addParams(['SHOW_STATS_COLUMNS' => $this->arResult['GRID_OPTIONS']['SHOW_STATS_COLUMNS'] ? 'Y' : 'N']);
-		}
 		if ($this->getRequest()->get('IFRAME') === 'Y')
 		{
 			$baseUri->addParams(['IFRAME' => $this->getRequest()->get('IFRAME')]);
@@ -496,320 +485,194 @@ class TimemanWorktimeGridComponent extends Timeman\Component\BaseComponent
 		];
 	}
 
-	private function filterUserIdsAccessibleToRead($userIds)
+	private function initViewResult()
 	{
-		$accessibleToReadUserIds = [];
-		foreach ($userIds as $userId)
+		$this->arResult['currentUserId'] = Main\Engine\CurrentUser::get()->getId();
+		$this->currentUser = $this->buildUsersQuery()
+			->where('ID', $this->arResult['currentUserId'])
+			->exec()
+			->fetchObject();
+		$this->initFromParams('ADD_SHIFT_LINK', '');
+		$this->initFromParams('IS_SHIFTPLAN', false);
+		$this->arResult['SHOW_ADD_SHIFT_PLAN_BTN'] = false;
+		$this->arResult['SHOW_DELETE_SHIFT_PLAN_BTN'] = false;
+		if ($this->arResult['IS_SHIFTPLAN'])
 		{
-			if ($this->canReadAllWorktime || in_array((int)$userId, $this->accessibleToReadUsers, true))
-			{
-				$accessibleToReadUserIds[] = $userId;
-			}
+			$this->arResult['SHOW_ADD_SHIFT_PLAN_BTN'] = true && $this->userPermissionsManager->canUpdateShiftPlans();
+			$this->arResult['SHOW_DELETE_SHIFT_PLAN_BTN'] = true && $this->userPermissionsManager->canUpdateShiftPlans();
 		}
-		return $accessibleToReadUserIds;
-	}
 
-	private function getUserDepartmentMapQuery($userIds, $departmentIds = [])
-	{
-		$userMapQuery = UserToDepartmentTable::query();
-		if (empty($departmentIds) && !empty($userIds))
-		{
-			$userMapQuery->whereIn('USER_ID', $userIds);
-		}
-		elseif (empty($userIds) && !empty($departmentIds))
-		{
-			$userMapQuery->whereIn('DEPARTMENT_ID', $departmentIds);
-		}
-		elseif (!empty($userIds) && !empty($departmentIds))
-		{
-			$userMapQuery->where(
-				Main\Entity\Query::filter()->logic('or')
-					->whereIn('USER_ID', $userIds)
-					->whereIn('DEPARTMENT_ID', $departmentIds)
-			);
-		}
-		if ($this->arResult['SCHEDULE_ID'] && !empty($this->arResult['SCHEDULES']))
-		{
-			$schedule = $this->arResult['SCHEDULES']->getByPrimary($this->arResult['SCHEDULE_ID']);
-			if ($schedule)
-			{
-				$userMapQuery->whereIn('USER_ID', array_merge(
-					[-1],
-					array_keys($this->fetchUsersOfSchedule($schedule))
-				));
-			}
-		}
-		return $userMapQuery;
-	}
-
-	private function initTemplateParams()
-	{
-		$this->initFromParams('SHOW_GRID_SETTINGS_BTN', false);
-		$this->initFromParams('SHOW_DELETE_SHIFT_PLAN_BTN', true);
-		$this->initFromParams('SHOW_SCHEDULES_LIST_BTN', false);
-		$this->initFromParams('SHOW_GRID_SETTINGS_BTN', true);
 		$this->initFromParams('GRID_ID', $this->gridId . ($this->arResult['isSlider'] ? '_slider' : ''));
 		$this->initFromParams('GRID_OPTIONS', []);
 		$this->initFromParams('DRAW_DEPARTMENT_SEPARATOR', true);
-		$this->initFromParams('WRAP_CELL_IN_RECORD_LINK', false);
 		$this->initFromParams('PARTIAL', false);
+		$this->initFromParams('TODAY_POSITIONED_LEFT', false);
 		$this->initFromParams('PARTIAL_ITEM', null);
 		$this->initFromParams('IS_SLIDER', false);
-		$this->initFromParams('SHOW_PRINT_BTN', false);
-		$this->initFromParams('SHOW_EDIT_SCHEDULE_BTN', false);
-		$this->initFromParams('SHOW_CREATE_SHIFT_BTN', false);
-		$this->initFromParams('SHOW_DELETE_USER_BTN', false);
-		$this->initFromParams('SHOW_SHIFTPLAN_LIST_BTN', false);
-		$this->initFromParams('SHOW_ADD_SCHEDULE_BTN', false);
-		if (!array_key_exists('SHOW_STATS_COLUMNS', $this->arResult['GRID_OPTIONS']))
-		{
-			$this->arResult['GRID_OPTIONS']['SHOW_STATS_COLUMNS'] = $this->getRequest()->get('SHOW_STATS_COLUMNS') === 'Y';
-		}
 		$this->initFromParams('SHIFT_PLAN_FORM_NAME', 'ShiftPlanForm');
-		$this->initFromParams('SHOW_ADD_SHIFT_PLAN_BTN', false);
+		$this->initFromParams('SHOW_PRINT_BTN', false);
+		$this->initFromParams('SHOW_ADD_SHIFT_BTN', false);
+		$this->initFromParams('SHOW_DELETE_USER_BTN', false);
+		$this->initFromParams('SHOW_ADD_SCHEDULE_BTN', false);
+		$this->arResult['DRAW_ABSENCE_TITLE'] = true;
+		if ($this->getRequest()->get('drawAbsenceTitle') !== null)
+		{
+			$this->arResult['DRAW_ABSENCE_TITLE'] = $this->getRequest()->get('drawAbsenceTitle') !== 'N';
+		}
+		$useEmployeesTimezone = Application::getInstance()->getContext()->getRequest()->getCookieRaw('useEmployeesTimezone');
+		if ($useEmployeesTimezone === null)
+		{
+			$useEmployeesTimezone = $this->getRequest()->get('useEmployeesTimezone'); // rest ajax request, lost cookies
+			if ($useEmployeesTimezone === 'true' || $useEmployeesTimezone === '1')
+			{
+				$useEmployeesTimezone = 'Y';
+			}
+		}
+		$this->arResult['showDatesInCurrentUserTimezone'] = $useEmployeesTimezone !== 'Y';
+		TemplateParams::setShowDatesInCurrentUserTimezone($this->arResult['showDatesInCurrentUserTimezone']);
+
+		TemplateParams::initCurrentUserPermissionsManager($this->userPermissionsManager);
+		$currentUserId = (int)$this->arResult['currentUserId'];
+		$this->arResult['hasAccessToOtherWorktime'] = $this->userPermissionsManager->canReadWorktimeAll() ||
+													  !empty(array_filter($this->userPermissionsManager->getUserIdsAccessibleToRead(),
+														  function ($item) use ($currentUserId) {
+															  return $currentUserId !== $item;
+														  })
+													  );
+		$this->arResult['recordShowUtcOffset'] = TimeHelper::getInstance()->getUserUtcOffset($this->arResult['currentUserId']);
 		$this->arResult['TIMEMAN_WORKTIME_GRID_COLUMNS_DATE_FORMAT_DAY_FULL_MONTH'] = Loc::getMessage('TIMEMAN_WORKTIME_GRID_COLUMNS_DATE_FORMAT_DAY_FULL_MONTH');
 		if (empty($this->arResult['TIMEMAN_WORKTIME_GRID_COLUMNS_DATE_FORMAT_DAY_FULL_MONTH']))
 		{
 			$this->arResult['TIMEMAN_WORKTIME_GRID_COLUMNS_DATE_FORMAT_DAY_FULL_MONTH'] = 'j F';
 		}
-		$this->arResult['nowDate'] = TimeHelper::getInstance()->getUserDateTimeNow(Main\Engine\CurrentUser::get()->getId())->format($this->dateTimeFormat);
+		$this->arResult['nowDate'] = TimeHelper::getInstance()->getUserDateTimeNow($this->arResult['currentUserId'])->format($this->dateTimeFormat);
+		$this->arResult['weekStart'] = 1;
+		$this->arResult['addScheduleLink'] = $this->dependencyManager->getUrlManager()->getUriTo(TimemanUrlManager::URI_SCHEDULE_CREATE);
+		if ($this->arResult['IS_SHIFTPLAN'] && $this->arResult['ADD_SHIFT_LINK'])
+		{
+			$this->arResult['addShiftLink'] = $this->arResult['ADD_SHIFT_LINK'];
+		}
+		$this->arResult['canManageWorktimeAll'] = $this->userPermissionsManager->canManageWorktimeAll();
+		$this->arResult['canReadSchedules'] = $this->userPermissionsManager->canReadSchedules();
+		$this->arResult['canDeleteSchedules'] = $this->userPermissionsManager->canDeleteSchedules();
+		$this->arResult['canUpdateSchedules'] = $this->userPermissionsManager->canUpdateSchedules();
+		$this->arResult['canUpdateAllShiftplans'] = $this->userPermissionsManager->canUpdateShiftPlans();
+		$this->arResult['canUpdateShiftplan'] = false;
+		if ($this->arResult['SCHEDULE_ID'] > 0)
+		{
+			$this->arResult['canUpdateShiftplan'] = $this->userPermissionsManager->canUpdateShiftPlan($this->arResult['SCHEDULE_ID']);
+		}
+		$this->arResult['showUserWorktimeSettings'] = !$this->arResult['IS_SHIFTPLAN'];
+		if (\Bitrix\Main\Application::getInstance()->getContext()->getCulture())
+		{
+			$this->arResult['weekStart'] = \Bitrix\Main\Application::getInstance()->getContext()->getCulture()->getWeekStart();
+		}
+		$this->arResult['canManageSettings'] = count($this->userPermissionsManager->getUserIdsAccessibleToRead()) > 1 || $this->userPermissionsManager->canReadWorktimeAll();
+		$this->arResult['canReadSettings'] = $this->userPermissionsManager->canManageWorktime();
+		$this->arResult['departmentFilterUserIds'] = [];
+		$this->arResult['baseDepartmentId'] = $this->departmentRepository->getBaseDepartmentId();
+		$this->arResult['nowTime'] = time();
+		$this->scheduleCollection = new Timeman\Model\Schedule\ScheduleCollection();
+		$this->initCookieOptions();
 	}
 
-	private function prepareUsersToShowOldWay($accessToReadUserIdsParam)
+
+	private function addFilterPlansByDates($query)
 	{
-		$userIdsToShow = [];
-		$this->arResult['TOTAL_USERS_COUNT'] = CIntranetUtils::GetEmployeesCountForSorting(
-			(int)$this->getGrid()->getDepartmentId(),
-			0,
-			$this->canReadAllWorktime ? false : $accessToReadUserIdsParam
-		);
-		$departmentFilterUserIds = \CIntranetUtils::GetEmployeesForSorting(
-			$this->getGrid()->getNavigation()->getCurrentPage(),
-			$this->getGrid()->getNavigation()->getLimit(),
-			(int)$this->getGrid()->getDepartmentId(),
-			$this->canReadAllWorktime ? false : $accessToReadUserIdsParam
-		);
-		$this->arResult['departmentFilterUserIds'] = $departmentFilterUserIds;
-		foreach ($departmentFilterUserIds as $depId => $depUserIds)
+		$utcFrom = TimeHelper::getInstance()->createDateTimeFromFormat('U', $this->getDateTimeFrom()->getTimestamp() - Timeman\Helper\TimeDictionary::SECONDS_PER_DAY, 0);
+		$utcTo = TimeHelper::getInstance()->createDateTimeFromFormat('U', $this->getDateTimeTo()->getTimestamp() + Timeman\Helper\TimeDictionary::SECONDS_PER_DAY, 0);
+		$query->where('DATE_ASSIGNED', '>=', new Date($utcFrom->format(ShiftPlanTable::DATE_FORMAT), ShiftPlanTable::DATE_FORMAT));
+		$query->where('DATE_ASSIGNED', '<=', new Date($utcTo->format(ShiftPlanTable::DATE_FORMAT), ShiftPlanTable::DATE_FORMAT));
+	}
+
+	private function addFilterRecordsByDates($query)
+	{
+		/** @var Main\ORM\Query\Query $query */
+		$query->where('RECORDED_START_TIMESTAMP', '>=', $this->getDateTimeFrom() ? $this->getDateTimeFrom()->format('U') : -1);
+		$query->where('RECORDED_START_TIMESTAMP', '<=', $this->getDateTimeTo() ? $this->getDateTimeTo()->format('U') : -1);
+	}
+
+	private function buildUserToDepartmentsMap()
+	{
+		$baseDepId = $this->departmentRepository->getBaseDepartmentId();
+		if ($this->arResult['SCHEDULE_ID'] > 0)
 		{
-			foreach ($depUserIds as $depUserId)
+			$schedule = $this->scheduleCollection->getByPrimary($this->arResult['SCHEDULE_ID']);
+			if ($schedule->getIsForAllUsers())
 			{
-				$userIdsToShow[] = (int)$depUserId;
+				$schedule->obtainDepartmentAssignments()->add(ScheduleDepartment::create($schedule->getId(), $baseDepId));
 			}
-		}
-		return $userIdsToShow;
-	}
-
-	private function prepareUsersToShow($accessibleFilteredUserIds)
-	{
-		$userIdsToShow = [];
-		$this->arResult['TOTAL_USERS_COUNT'] = (int)$this->arResult['TOTAL_USERS_COUNT'] + count($accessibleFilteredUserIds);
-
-		$userOffset = $this->getGrid()->getNavigation()->getOffset() - (int)$this->arResult['TOTAL_USERS_COUNT'];
-		if (!empty($accessibleFilteredUserIds))
-		{
-			$filteredUsers = DependencyManager::getInstance()
-				->getScheduleRepository()
-				->getUsersBaseQuery($idsOnly = true)
-				->whereIn('ID', $accessibleFilteredUserIds)
-				->where('USER_TYPE_IS_EMPLOYEE', true)
-				->addOrder('ID', 'ASC')
-				->setLimit($this->getGrid()->getNavigation()->getLimit() - count($userIdsToShow))
-				->setOffset($userOffset > 0 ? $userOffset : 0)
-				->exec()
-				->fetchAll();
-			$filteredUsersIdsToShow = array_map('intval', array_column($filteredUsers, 'ID'));
-			$userIdsToShow = array_merge($filteredUsersIdsToShow, array_combine($userIdsToShow, $userIdsToShow));
-		}
-		return $userIdsToShow;
-	}
-
-	private function addToAccessUserIds($userIds)
-	{
-		if (!$this->userPermissionsManager->canReadWorktimeAll())
-		{
-			$this->accessibleToReadUsers = array_intersect($this->accessibleToReadUsers, $userIds);
+			$userToDepartmentsMap = DependencyManager::getInstance()
+				->getScheduleProvider()
+				->buildUserToDepartmentsMapByAssignments($schedule->obtainUserAssignments(), $schedule->obtainDepartmentAssignments());
 		}
 		else
 		{
-			if (!empty($this->accessibleToReadUsers))
-			{
-				$this->accessibleToReadUsers = array_intersect($this->accessibleToReadUsers, $userIds);
-			}
-			else
-			{
-				$this->accessibleToReadUsers = $userIds;
-			}
+			$userToDepartmentsMap = DependencyManager::getInstance()
+				->getScheduleProvider()
+				->buildUserToDepartmentsMapByAssignments(
+					[],
+					[
+						ScheduleDepartment::create(0, $baseDepId),
+					]
+				);
 		}
+		return $userToDepartmentsMap;
 	}
 
-	private function prepareUsersData($userIdsToShow, $addManagers = true)
+	private function buildDepartmentsToUsersMap()
 	{
-		$usersDepartmentsMap = $this->getUserDepartmentMapQuery($userIdsToShow)
-			->addSelect('USER_ID')
-			->addSelect('DEPARTMENT_ID')
-			->exec()
-			->fetchAll();
+		$userToDepartmentsMap = $this->buildUserToDepartmentsMap();
 
-		$userIdsWithoutDepartments = array_diff($userIdsToShow, array_map('intval', array_unique(array_column($usersDepartmentsMap, 'USER_ID'))));
-		if (!empty($userIdsWithoutDepartments))
+		$departmentToUsersMap = [];
+		foreach ($userToDepartmentsMap as $userCode => $departmentsCodes)
 		{
-			$res = UserTable::getList([
-				'select' => ['ID', 'UF_DEPARTMENT'],
-				'filter' => ['=ACTIVE' => 'Y', '=ID' => array_values($userIdsWithoutDepartments)],
-			]);
-			while ($item = $res->fetch())
+			foreach ($departmentsCodes as $departmentCode)
 			{
-				if (is_array($item['UF_DEPARTMENT']) && count($item['UF_DEPARTMENT']) > 0)
+				if (!array_key_exists($departmentCode, $departmentToUsersMap))
 				{
-					foreach ($item['UF_DEPARTMENT'] as $depId)
-					{
-						$usersDepartmentsMap[] = [
-							'USER_ID' => $item['ID'],
-							'DEPARTMENT_ID' => $depId,
-						];
-					}
+					$departmentToUsersMap[$departmentCode] = [];
 				}
+				$departmentToUsersMap[$departmentCode][] = $userCode;
 			}
 		}
-		$allUniqueDepartmentIds = array_unique(array_merge(
-			array_keys($this->arResult['departmentFilterUserIds']),
-			array_map('intval', array_unique(array_column($usersDepartmentsMap, 'DEPARTMENT_ID')))
-		));
-		$depManagerMap = [];
-		if ($addManagers)
-		{
-			foreach ($allUniqueDepartmentIds as $depId)
-			{
-				$managerId = (int)CIntranetUtils::GetDepartmentManagerID($depId);
-				if (!($managerId > 0 && $this->userPermissionsManager->canReadWorktime($managerId)))
-				{
-					continue;
-				}
-				$userExist = false;
-				$userIdsToShow[] = $managerId;
-				$depManagerMap[(int)$depId][] = $managerId;
-				foreach ($usersDepartmentsMap as $usersDepartmentsData)
-				{
-					if ((int)$usersDepartmentsData['USER_ID'] === $managerId
-						&& (int)$usersDepartmentsData['DEPARTMENT_ID'] === (int)$depId)
-					{
-						$userExist = true;
-						break;
-					}
-				}
-				if (!$userExist)
-				{
-					$usersDepartmentsMap[] = [
-						'USER_ID' => $managerId,
-						'DEPARTMENT_ID' => $depId,
-					];
-				}
-			}
-		}
-		$usersQuery = DependencyManager::getInstance()
-			->getScheduleRepository()
-			->getUsersBaseQuery()
-			->addSelect('PERSONAL_GENDER')
-			->whereIn('ID', array_unique($userIdsToShow))
-			->where('USER_TYPE_IS_EMPLOYEE', true);
-
-		$users = $usersQuery->exec()->fetchAll();
-		$users = array_combine(array_column($users, 'ID'), $users);
-
-		if (!empty($users))
-		{
-			$records = [];
-			$recordsRaw = WorktimeRecordTable::query()
-				->addSelect('*')
-				->whereIn('USER_ID', array_column($users, 'ID'));
-			$this->addFilterRecordsByDates($recordsRaw);
-			if ($this->getGrid()->isFilterByApprovedApplied())
-			{
-				$recordsRaw->where('APPROVED', $this->getGrid()->getFilterByApproved() !== 'Y');
-			}
-			$recordsRaw = $recordsRaw->exec()->fetchAll();
-			foreach ($recordsRaw as $index => $record)
-			{
-				$records[$record['USER_ID']][$record['ID']] = $record;
-			}
-			foreach ($users as $index => $user)
-			{
-				$users[$index]['NAME'] = Timeman\Helper\UserHelper::getInstance()->getFormattedName($user);
-				$users[$index]['RECORDS'] = [];
-				$users[$index]['SCHEDULE_ID'] = $this->arResult['SCHEDULE_ID'];
-				if (isset($records[$user['ID']]))
-				{
-					$users[$index]['RECORDS'] = $records[$user['ID']];
-				}
-			}
-
-			if (!empty($usersDepartmentsMap))
-			{
-				$sectionUrl = "/company/structure.php?set_filter_structure=Y&structure_UF_DEPARTMENT=#ID#";
-				$departmentsDataRaw = CIntranetUtils::GetDepartmentsData($allUniqueDepartmentIds);
-				$departmentsData = [];
-				foreach ($departmentsDataRaw as $depId => $departmentsDatum)
-				{
-					$departmentsData[$depId]['ID'] = $depId;
-					$departmentsData[$depId]['CHAIN'] = [];
-					$departmentsData[$depId]['NAME'] = $departmentsDatum;
-					$departmentsData[$depId]['URL'] = str_replace('#ID#', $depId, $sectionUrl);
-				}
-				foreach ($departmentsData as $depId => $departmentDatum)
-				{
-					$departmentDatum['USERS'] = [];
-					foreach ($usersDepartmentsMap as $usersDepartmentData)
-					{
-						if ($usersDepartmentData['DEPARTMENT_ID'] == $depId)
-						{
-							$userId = $usersDepartmentData['USER_ID'];
-							if (!empty($users[$userId]))
-							{
-								$departmentDatum['USERS'][$userId] = $users[$userId];
-							}
-						}
-					}
-					$currentManagerIds = (empty($depManagerMap[$depId]) ? [] : $depManagerMap[$depId]);
-					uksort($departmentDatum['USERS'], function ($a, $b) use ($currentManagerIds) {
-						if (in_array($a, $currentManagerIds, true))
-						{
-							return -1;
-						}
-						if (in_array($b, $currentManagerIds, true))
-						{
-							return 1;
-						}
-						return 0;
-					});
-					$this->arResult['DEPARTMENTS_USERS_DATA']['DEPARTMENTS'][$depId] = $departmentDatum;
-				}
-			}
-		}
-		return $users;
+		return $departmentToUsersMap;
 	}
 
-	private function buildUserIdsToShow()
+	private function applyFiltersToUserIds(&$departmentsToUsersMap)
 	{
-		$userIdsToShow = [];
-		if ($this->getGrid()->getFilterFindText() !== null)
+		if ($this->getRequest()->get('USERS') && EntityCodesHelper::isUser($this->getRequest()->get('USERS')))
 		{
-			$nameLikeUserIds = array_column(
-				Main\UserTable::query()
-					->addSelect('ID')
-					->where(
-						Main\ORM\Query\Query::filter()->logic('or')
-							->whereLike('NAME', '%' . $this->getGrid()->getFilterFindText() . '%')
-							->whereLike('LAST_NAME', '%' . $this->getGrid()->getFilterFindText() . '%')
-					)
-					->exec()
-					->fetchAll(),
-				'ID'
-			);
-			$nameLikeUserIds = array_map('intval', $nameLikeUserIds);
-			$this->addToAccessUserIds($nameLikeUserIds);
-			$this->canReadAllWorktime = false;
+			$this->filterUsersByCodes($departmentsToUsersMap, [$this->getRequest()->get('USERS')]);
 		}
+
+		if ($this->getGrid()->isUserFilterApplied())
+		{
+			$this->filterUsersByCodes($departmentsToUsersMap, $this->getGrid()->getUserCodes());
+		}
+
+		if ($this->getGrid()->isDepartmentFilterApplied())
+		{
+			$departmentCodesToShow = $this->getGrid()->getDepartmentCodes();
+			foreach ($departmentsToUsersMap as $departmentCode => $userCodes)
+			{
+				foreach ($userCodes as $userCodeIndex => $userCode)
+				{
+					$id = EntityCodesHelper::getUserId($userCode);
+					$allUserDepartmentsCodes = EntityCodesHelper::buildDepartmentCodes(
+						$this->departmentRepository->getAllUserDepartmentIds($id)
+					);
+					$subDepCodes = EntityCodesHelper::buildDepartmentCodes(\CIntranetUtils::getSubordinateDepartments($id));
+					$allUserDepartmentsCodes = array_merge($allUserDepartmentsCodes, $subDepCodes);
+					if (empty(array_intersect($departmentCodesToShow, $allUserDepartmentsCodes)))
+					{
+						unset($departmentsToUsersMap[$departmentCode][$userCodeIndex]);
+					}
+				}
+			}
+			$departmentsToUsersMap = array_filter($departmentsToUsersMap);
+		}
+
 		if ($this->getGrid()->isShowUsersWithRecordsOnly() || $this->getGrid()->isFilterByApprovedApplied())
 		{
 			$query = WorktimeRecordTable::query()
@@ -820,63 +683,557 @@ class TimemanWorktimeGridComponent extends Timeman\Component\BaseComponent
 			{
 				$query->where('APPROVED', $this->getGrid()->getFilterByApproved() !== 'Y');
 			}
-			if (!empty($this->accessibleToReadUsers))
-			{
-				$query->whereIn('USER_ID', $this->accessibleToReadUsers);
-			}
-			$activeUserIds = array_column($query->exec()->fetchAll(), 'D_USER_ID');
-			$activeUserIds = array_map('intval', $activeUserIds);
-			$this->addToAccessUserIds($activeUserIds);
-			$this->canReadAllWorktime = false;
+			$userIdsWithRecords = array_column($query->exec()->fetchAll(), 'D_USER_ID');
+			$this->filterUsersByCodes($departmentsToUsersMap, EntityCodesHelper::buildUserCodes($userIdsWithRecords));
 		}
 
-		$filteredUserIds = $this->getGrid()->getUserIds();
-
-
-		if ($this->getGrid()->getDepartmentId() !== null || empty($filteredUserIds))
+		if (!empty($this->getGrid()->getFilterFindText()))
 		{
-			$useOldSearch = true;
+			$filterUser = \Bitrix\Main\UserUtils::getUserSearchFilter([
+				'FIND' => $this->getGrid()->getFilterFindText(),
+			]);
 
-			if ($this->getGrid()->getDepartmentId() > 0 && !empty($filteredUserIds))
+			$userIds = Timeman\Model\User\UserTable::query()
+				->addSelect('ID')
+				->setFilter($filterUser)
+				->exec()
+				->fetchAll();
+			$this->filterUsersByCodes($departmentsToUsersMap, EntityCodesHelper::buildUserCodes(array_column($userIds, 'ID')));
+		}
+		if ($this->getGrid()->showWithShiftPlansOnly())
+		{
+			$plansQuery = $this->dependencyManager
+				->getShiftPlanRepository()
+				->getActivePlansQuery()
+				->registerRuntimeField(new ExpressionField('D_USER_ID', 'DISTINCT USER_ID'))
+				->addSelect('D_USER_ID');
+			$this->addFilterPlansByDates($plansQuery);
+			if ($this->arResult['IS_SHIFTPLAN'])
 			{
-				$this->addToAccessUserIds($filteredUserIds);
-				$this->canReadAllWorktime = false;
-				$repo = DependencyManager::getInstance()->getDepartmentRepository();
-				foreach ($this->accessibleToReadUsers as $index => $accessToReadUserId)
+				$plansQuery->whereIn('SHIFT.SCHEDULE.ID', $this->arResult['SCHEDULE_ID']);
+			}
+			$userIdsWithPlans = array_column($plansQuery->exec()->fetchAll(), 'D_USER_ID');
+
+			$this->filterUsersByCodes($departmentsToUsersMap, EntityCodesHelper::buildUserCodes($userIdsWithPlans));
+		}
+
+		if ($this->getGrid()->isSchedulesFilterApplied())
+		{
+			$userAssignments = Timeman\Model\Schedule\Assignment\User\ScheduleUserTable::query()
+				->addSelect('*')
+				->whereIn('SCHEDULE_ID', $this->getGrid()->getFilteredSchedulesIds())
+				->exec()
+				->fetchCollection();
+			$userAssignmentsByScheduleId = [];
+			foreach ($userAssignments as $userAssignment)
+			{
+				/** @var Timeman\Model\Schedule\Assignment\User\ScheduleUser $userAssignment */
+				$userAssignmentsByScheduleId[$userAssignment->getScheduleId()][] = $userAssignment;
+			}
+			/** @var Timeman\Model\Schedule\ScheduleCollection $schedulesForAllUsersCollection */
+			$schedulesForAllUsersCollection = $this->dependencyManager->getScheduleRepository()->getActiveSchedulesQuery()
+				->addSelect('ID')
+				->where('IS_FOR_ALL_USERS', true)
+				->whereIn('ID', $this->getGrid()->getFilteredSchedulesIds())
+				->exec()
+				->fetchCollection();
+			$departmentAssignments = Timeman\Model\Schedule\Assignment\Department\ScheduleDepartmentTable::query()
+				->addSelect('*')
+				->whereIn('SCHEDULE_ID', $this->getGrid()->getFilteredSchedulesIds())
+				->exec()
+				->fetchCollection();
+			$departmentAssignmentsByScheduleId = [];
+			foreach ($departmentAssignments as $departmentAssignment)
+			{
+				/** @var ScheduleDepartment $departmentAssignment */
+				$departmentAssignmentsByScheduleId[$departmentAssignment->getScheduleId()][] = $departmentAssignment;
+			}
+			foreach ($this->getGrid()->getFilteredSchedulesIds() as $scheduleId)
+			{
+				if ($schedulesForAllUsersCollection->getByPrimary($scheduleId))
 				{
-					$filteredUserDepartments = $repo->getAllUserDepartmentIds($accessToReadUserId);
-					if (!in_array($this->getGrid()->getDepartmentId(), $filteredUserDepartments, true))
-					{
-						$useOldSearch = false;
-						unset($this->accessibleToReadUsers[$index]);
-					}
+					$departmentAssignmentsByScheduleId[$scheduleId][] = (new ScheduleDepartment(false))
+						->setDepartmentId(DependencyManager::getInstance()->getDepartmentRepository()->getBaseDepartmentId())
+						->setScheduleId($scheduleId)
+						->setIsIncluded();
 				}
 			}
-			if ($useOldSearch)
+			$activeUsers = [];
+			foreach ($this->getGrid()->getFilteredSchedulesIds() as $scheduleId)
 			{
-				$userIdsToShow = $this->prepareUsersToShowOldWay($this->accessibleToReadUsers);
+				$map = DependencyManager::getInstance()
+					->getScheduleProvider()
+					->buildUserToDepartmentsMapByAssignments(
+						(array)$userAssignmentsByScheduleId[$scheduleId],
+						(array)$departmentAssignmentsByScheduleId[$scheduleId]
+					);
+				$activeUsers = array_merge(
+					$activeUsers,
+					EntityCodesHelper::extractUserIdsFromEntityCodes(array_keys($map))
+				);
+			}
+
+			$this->filterUsersByCodes($departmentsToUsersMap, EntityCodesHelper::buildUserCodes($activeUsers));
+		}
+	}
+
+	private function applyAccessControlToUserIds(&$departmentsToUsersMap)
+	{
+		if ($this->arResult['IS_SHIFTPLAN'])
+		{
+			$scheduleId = $this->arResult['SCHEDULE_ID'];
+			if ($scheduleId > 0 && $this->scheduleCollection->getByPrimary($scheduleId)
+				&& $this->userPermissionsManager->canReadShiftPlan($scheduleId))
+			{
+				return;
+			}
+		}
+		$userCodesAccessibleToRead = $this->userPermissionsManager->getUserCodesAccessibleToRead();
+		if (in_array(EntityCodesHelper::getAllUsersCode(), $userCodesAccessibleToRead, true))
+		{
+			return;
+		}
+		$userCodesAccessibleToRead[] = EntityCodesHelper::buildUserCode($this->arResult['currentUserId']);
+		foreach ($departmentsToUsersMap as $departmentCode => $userCodes)
+		{
+			foreach ($userCodes as $userCodeIndex => $userCode)
+			{
+				if (!in_array($userCode, $userCodesAccessibleToRead, true))
+				{
+					unset($departmentsToUsersMap[$departmentCode][$userCodeIndex]);
+				}
+			}
+		}
+
+		$departmentsToUsersMap = array_filter($departmentsToUsersMap);
+	}
+
+	private function setTotalCount($departmentsToUsersMap)
+	{
+		$this->arResult['TOTAL_USERS_COUNT'] = 0;
+		foreach ($departmentsToUsersMap as $userCodes)
+		{
+			$this->arResult['TOTAL_USERS_COUNT'] = $this->arResult['TOTAL_USERS_COUNT'] + count($userCodes);
+		}
+	}
+
+	private function setLimitOffset(&$departmentsToUsersMap)
+	{
+		$limit = $this->getGrid()->getNavigation()->getLimit();
+		$currentPage = $this->getGrid()->getNavigation()->getCurrentPage();
+		$expectedSkipCount = $currentPage > 0 ? $limit * ($currentPage - 1) : 0;
+		$actualSkipCount = 0;
+		$cnt = 0;
+		foreach ($departmentsToUsersMap as $depCode => $userCodes)
+		{
+			foreach ($userCodes as $userCodeIndex => $userCode)
+			{
+				if ($actualSkipCount < $expectedSkipCount)
+				{
+					$actualSkipCount++;
+					unset($departmentsToUsersMap[$depCode][$userCodeIndex]);
+					continue;
+				}
+				$cnt++;
+				if ($cnt > $limit)
+				{
+					unset($departmentsToUsersMap[$depCode][$userCodeIndex]);
+				}
+			}
+		}
+		$departmentsToUsersMap = array_filter($departmentsToUsersMap);
+	}
+
+	private function fillDepartmentUsersData($departmentsToUsersMap)
+	{
+		$sectionUrl = '/company/structure.php?set_filter_structure=Y&structure_UF_DEPARTMENT=#ID#';
+		$depIds = EntityCodesHelper::extractDepartmentIdsFromEntityCodes(array_keys($departmentsToUsersMap));
+		$result = [];
+		$heads = [];
+		$obReport = new \CTimeManAdminReport([]);
+		$departmentsDataRaw = $obReport->getDepartmentsData($depIds);
+		foreach ($departmentsToUsersMap as $depCode => $departmentsToUsersMapItem)
+		{
+			$depId = EntityCodesHelper::getDepartmentId($depCode);
+			if (isset($departmentsDataRaw[$depId]))
+			{
+				$heads[$depId] = $departmentsDataRaw[$depId]['UF_HEAD'];
+				$result[$depId]['ID'] = $depId;
+				$result[$depId]['CHAIN'] = $departmentsDataRaw[$depId]['CHAIN'];
+				$result[$depId]['TOP_SECTION'] = $departmentsDataRaw[$depId]['TOP_SECTION'];
+				$result[$depId]['NAME'] = $departmentsDataRaw[$depId]['NAME'];
+				$result[$depId]['URL'] = str_replace('#ID#', $depId, $sectionUrl);
+				$result[$depId]['USERS'] = [];
+			}
+		}
+
+		$userIds = $this->extractUserIds($departmentsToUsersMap);
+
+		if (!empty($userIds))
+		{
+			$users = $this->buildUsersQuery()
+				->whereIn('ID', array_unique($userIds))
+				->where('USER_TYPE_IS_EMPLOYEE', true)
+				->exec()
+				->fetchCollection();
+			foreach ($result as $departmentDataIndex => $departmentData)
+			{
+				foreach ($departmentsToUsersMap as $departmentMapCode => $userCodes)
+				{
+					if ($departmentMapCode === EntityCodesHelper::buildDepartmentCode($departmentData['ID']))
+					{
+						foreach ($userCodes as $userCode)
+						{
+							if ($user = $users->getByPrimary(EntityCodesHelper::getUserId($userCode)))
+							{
+								$user->defineIsHeadOfDepartment((int)$user->getId() === (int)$heads[$departmentData['ID']]);
+								$result[$departmentDataIndex]['USERS'][] = [
+									'ID' => $user->getId(),
+									'HEAD' => $user->obtainIsHeadOfDepartment(),
+									'NAME' => $user->buildFormattedName(),
+								];
+								$this->usersCollection->add($user);
+							}
+						}
+					}
+				}
+				if (count($result[$departmentDataIndex]['USERS']) > 1)
+				{
+					\Bitrix\Main\Type\Collection::sortByColumn(
+						$result[$departmentDataIndex]['USERS'],
+						['HEAD' => SORT_DESC, 'NAME' => SORT_ASC]
+					);
+				}
+			}
+		}
+		return $result;
+	}
+
+	private function extractUserIds($departmentsToUsersMap)
+	{
+		$userIds = [];
+		foreach ($departmentsToUsersMap as $userCodes)
+		{
+			foreach ($userCodes as $userCode)
+			{
+				$userIds[EntityCodesHelper::getUserId($userCode)] = true;
+			}
+		}
+		return array_keys($userIds);
+	}
+
+	private function sortUserIds($departmentsToUsersMap)
+	{
+		$result = [];
+		$departmentsData = $this->departmentRepository->getAllData();
+		$departmentsIdsToShow = EntityCodesHelper::extractDepartmentIdsFromEntityCodes(array_keys($departmentsToUsersMap));
+		if (!empty($departmentsIdsToShow) && !empty($departmentsData))
+		{
+			foreach ($departmentsData as $departmentItem)
+			{
+				$code = EntityCodesHelper::buildDepartmentCode($departmentItem['ID']);
+				if (isset($departmentsToUsersMap[$code]))
+				{
+					$result[$code] = $departmentsToUsersMap[$code];
+				}
+			}
+		}
+		return $result;
+	}
+
+	private function filterUsersByCodes(&$departmentsToUsersMap, $userKeepCodes)
+	{
+		foreach ($departmentsToUsersMap as $departmentCode => $userCodes)
+		{
+			foreach ($userCodes as $userCodeIndex => $userCode)
+			{
+				if (!in_array($userCode, $userKeepCodes, true))
+				{
+					unset($departmentsToUsersMap[$departmentCode][$userCodeIndex]);
+				}
+			}
+		}
+		$departmentsToUsersMap = array_filter($departmentsToUsersMap);
+	}
+
+	private function buildParamsForPartialView()
+	{
+		if (!($this->arParams['USER_ID'] > 0) || !($this->arParams['DRAWING_TIMESTAMP'] > 0))
+		{
+			return [];
+		}
+		$drawingDate = TemplateParams::buildDateInShowingTimezone($this->arParams['DRAWING_TIMESTAMP'], $this->arParams['USER_ID'], $this->currentUser->getId());
+		$drawingDate->setTime(0, 0, 0);
+		$drawingDate = Main\Type\DateTime::createFromPhp($drawingDate);
+		$this->arResult['drawingDate'] = $drawingDate;
+		$this->dateTimeFrom = $drawingDate;
+		$this->dateTimeTo = clone $drawingDate;
+		$this->dateTimeTo->setTime(23, 59, 59);
+
+		$this->fillScheduleRecordsPlans([$this->arParams['USER_ID']]);
+
+		$user = $this->dependencyManager->getScheduleRepository()
+			->getUsersBaseQuery(true)
+			->addSelect('PERSONAL_GENDER')
+			->where('ID', $this->arParams['USER_ID'])
+			->exec()
+			->fetchObject();
+		$records = [];
+		if (!empty($this->recordsByUsersDates))
+		{
+			$records = reset($this->recordsByUsersDates);
+		}
+		$sortedTemplateParamsList = $this->getGrid()->buildTemplateParamsForDayCell(
+			$this->scheduleCollection,
+			$drawingDate,
+			$drawingDate->format($this->dateTimeFormat),
+			!empty($records) ? $records[$drawingDate->format($this->dateTimeFormat)] : [],
+			$this->shiftPlansByUserShiftDate,
+			$user,
+			$this->getGrid()->findAbsenceData([$this->arParams['USER_ID']])
+		);
+		$this->arResult['USER_ID'] = $this->arParams['USER_ID'];
+		return $sortedTemplateParamsList;
+	}
+
+	public static function getUserOffset($userData)
+	{
+		// this is copy of \CTimeZone::GetOffset
+		// but without select on every call
+		// delete this method when \CTimeZone::GetOffset will be able to work with userIds list
+
+		if (!\CTimeZone::optionEnabled())
+		{
+			return 0;
+		}
+
+		try
+		{
+			$localTime = new \DateTime();
+			$localOffset = $localTime->getOffset();
+			$userOffset = $localOffset;
+
+			$autoTimeZone = $userZone = '';
+			$factOffset = 0;
+			if (!empty($userData))
+			{
+				$autoTimeZone = trim($userData["AUTO_TIME_ZONE"]);
+				$userZone = $userData["TIME_ZONE"];
+				$factOffset = intval($userData["TIME_ZONE_OFFSET"]);
+			}
+
+			if ($autoTimeZone == "N")
+			{
+				$userTime = ($userZone <> "" ? new \DateTime(null, new \DateTimeZone($userZone)) : $localTime);
+				$userOffset = $userTime->getOffset();
 			}
 			else
 			{
-				$userIdsToShow = $this->prepareUsersToShow($this->accessibleToReadUsers);
+				if (\CTimeZone::isAutoTimeZone($autoTimeZone))
+				{
+					return $factOffset;
+				}
+				else
+				{
+					$serverZone = \COption::GetOptionString("main", "default_time_zone", "");
+					$serverTime = ($serverZone <> "" ? new \DateTime(null, new \DateTimeZone($serverZone)) : $localTime);
+					$userOffset = $serverTime->getOffset();
+				}
 			}
 		}
-		elseif (!empty($filteredUserIds))
+		catch (\Exception $e)
 		{
-			$userIdsToShow = $this->prepareUsersToShow($this->filterUserIdsAccessibleToRead($filteredUserIds));
+			return 0;
 		}
-		return $userIdsToShow;
+		return $userOffset - $localOffset;
+	}
+
+	private function setTimezoneToggleAvailable(&$departmentsToUsersMap)
+	{
+		$this->arResult['showTimezoneToggle'] = false;
+		$userIds = $this->extractUserIds($departmentsToUsersMap);
+		if (empty($userIds))
+		{
+			return;
+		}
+
+		$offsets = [];
+		$userOffsets = [];
+		foreach ($userIds as $userId)
+		{
+			if (!$this->usersCollection->getByPrimary($userId))
+			{
+				continue;
+			}
+			$userOffsets[$userId] = $this->getUserOffset($this->usersCollection->getByPrimary($userId));
+			$offsets[(string)$userOffsets[$userId]] = true;
+		}
+		TimeHelper::getInstance()->setTimezoneOffsets($userOffsets);
+		if (count($offsets) > 1)
+		{
+			$this->arResult['showTimezoneToggle'] = true;
+		}
+		if ($this->arResult['showTimezoneToggle'] === false)
+		{
+			TemplateParams::setShowDatesInCurrentUserTimezone(true);
+		}
+	}
+
+	private function setCookie($name, $value)
+	{
+		if ($this->getCookie($name) === $value)
+		{
+			return;
+		}
+		$cookie = new \Bitrix\Main\Web\Cookie($name, $value, null, false);
+		$cookie->setHttpOnly(false);
+		$cookie->setPath('/timeman/');
+		Main\Context::getCurrent()->getResponse()->addCookie($cookie);
+	}
+
+	private function getCookie($name)
+	{
+		return Application::getInstance()->getContext()->getRequest()->getCookieRaw($name);
+	}
+
+	private function initCookieOptions()
+	{
+		$this->arResult['GRID_OPTIONS']['SHOW_VIOLATIONS_INDIVIDUAL'] = $this->getCookie('useIndividualViolationRules') === 'Y';
+		$this->arResult['GRID_OPTIONS']['SHOW_START_END'] = $this->getCookie('showStartEndTime') === 'Y';
+		if ($this->arResult['IS_SHIFTPLAN'])
+		{
+			$this->arResult['GRID_OPTIONS']['SHOW_START_END'] = true;
+		}
+		$this->arResult['GRID_OPTIONS']['SHOW_STATS_COLUMNS'] = $this->getCookie('showStatsColumns') === 'Y';
+		if ($this->arResult['IS_SHIFTPLAN'])
+		{
+			$this->arResult['GRID_OPTIONS']['SHOW_STATS_COLUMNS'] = false;
+		}
+	}
+
+	private function initGridOptions()
+	{
+		$this->arResult['IS_SHIFTPLAN_LIST_BTN_ENABLED'] = !$this->arResult['IS_SHIFTPLAN'];
+		$this->arResult['HIDE_SHIFTPLAN_LIST_BTN'] = true;
+		$this->arResult['gridConfigOptions'] = [];
+		$this->arResult['gridConfigOptions']['showViolationsItem'] = false;
+		$hasCommonViolations = false;
+		$hasIndividualViolations = false;
+		foreach ($this->arResult['DEPARTMENT_USERS_DATA'] as $departmentData)
+		{
+			foreach ((array)$departmentData['USERS_DATA_BY_DATES'] as $usersData)
+			{
+				foreach ($usersData as $dayParams)
+				{
+					foreach ($dayParams as $templateParams)
+					{
+						/** @var TemplateParams $templateParams */
+						if (!empty($templateParams->violationsIndividual)
+							|| !empty($templateParams->noticesIndividual))
+						{
+							$hasIndividualViolations = true;
+						}
+						if (!empty($templateParams->violationsCommon)
+							|| !empty($templateParams->noticesCommon))
+						{
+							$hasCommonViolations = true;
+						}
+					}
+				}
+			}
+		}
+		if ($hasCommonViolations && $hasIndividualViolations)
+		{
+			$this->arResult['gridConfigOptions']['showViolationsItem'] = true;
+		}
+		elseif ($hasCommonViolations !== $hasIndividualViolations)
+		{
+			// we have only one type of violations - show this type and no toggle
+			$this->arResult['GRID_OPTIONS']['SHOW_VIOLATIONS_INDIVIDUAL'] = $hasIndividualViolations;
+		}
+		$this->arResult['gridConfigOptions']['showStartEndItem'] = !$this->arResult['IS_SHIFTPLAN'];
+		$this->arResult['gridConfigOptions']['showStatsItem'] = !$this->arResult['IS_SHIFTPLAN'];
+		$this->arResult['gridConfigOptions']['showSchedulesItem'] = $this->userPermissionsManager->canReadSchedules();
+		$this->arResult['gridConfigOptions']['schedules'] = [];
+
+		if ($this->userPermissionsManager->canReadSchedules())
+		{
+			if ($this->arResult['IS_SHIFTPLAN'])
+			{
+				if ($this->userPermissionsManager->canUpdateSchedules())
+				{
+					// update current schedule
+					$this->arResult['gridConfigOptions']['schedules'][] = $this->buildGridConfigScheduleItem($this->scheduleCollection->getByPrimary($this->arResult['SCHEDULE_ID']));
+				}
+			}
+			else
+			{
+				$schedules = $this->dependencyManager->getScheduleRepository()->getActiveSchedulesQuery()
+					->addSelect('ID')
+					->addSelect('NAME')
+					->addSelect('SCHEDULE_TYPE')
+					->setOrder('NAME')
+					->setLimit(80)
+					->exec()
+					->fetchCollection();
+				if ($schedules->count() > 0)
+				{
+					foreach ($schedules as $schedule)
+					{
+						$this->arResult['gridConfigOptions']['schedules'][] = $this->buildGridConfigScheduleItem($schedule);
+						if ($schedule->isShifted() && $this->userPermissionsManager->canReadShiftPlan($schedule->getId()))
+						{
+							$this->arResult['HIDE_SHIFTPLAN_LIST_BTN'] = false;
+						}
+					}
+				}
+			}
+		}
+		else
+		{
+			$userSchedules = $this->dependencyManager->getScheduleProvider()
+				->findSchedulesByUserId($this->arResult['currentUserId']);
+			foreach ($userSchedules as $userSchedule)
+			{
+				if ($userSchedule->isShifted() && $this->userPermissionsManager->canReadShiftPlan($userSchedule->getId()))
+				{
+					$this->arResult['HIDE_SHIFTPLAN_LIST_BTN'] = false;
+					$this->arResult['gridConfigOptions']['schedules'][] = $this->buildGridConfigScheduleItem($userSchedule);
+				}
+			}
+		}
+	}
+
+	private function buildGridConfigScheduleItem(Timeman\Model\Schedule\Schedule $schedule)
+	{
+		$item = [
+			'id' => $schedule->getId(),
+			'name' => $schedule->getName(),
+			'scheduleType' => $schedule->getScheduleType(),
+			'link' => $this->dependencyManager->getUrlManager()
+				->getUriTo(TimemanUrlManager::URI_SCHEDULE_UPDATE, ['SCHEDULE_ID' => $schedule->getId()]),
+			'canReadShiftPlan' => false,
+		];
+		if ($schedule->isShifted())
+		{
+			$item['canReadShiftPlan'] = $this->userPermissionsManager->canReadShiftPlan($schedule->getId());
+			$item['shiftplanLink'] = $this->dependencyManager->getUrlManager()
+				->getUriTo(TimemanUrlManager::URI_SCHEDULE_SHIFTPLAN, ['SCHEDULE_ID' => $schedule->getId()]);
+		}
+		return $item;
 	}
 
 	/**
-	 * @param Main\ORM\Query\Query $query
-	 * @param null $recordedStartColumnName
+	 * @return Timeman\Model\User\EO_User_Query
 	 */
-	public function addFilterRecordsByDates($query, $recordedStartColumnName = null)
+	private function buildUsersQuery()
 	{
-		$recordedStartColumnName = $recordedStartColumnName === null ? 'RECORDED_START_TIMESTAMP' : $recordedStartColumnName;
-		$query
-			->where($recordedStartColumnName, '>=', $this->getDateTimeFrom() ? $this->getDateTimeFrom()->format('U') : -1)
-			->where($recordedStartColumnName, '<=', $this->getDateTimeTo() ? $this->getDateTimeTo()->format('U') : -1);
+		return $this->dependencyManager
+			->getScheduleRepository()
+			->getUsersBaseQuery()
+			->addSelect('PERSONAL_GENDER')
+			->addSelect('AUTO_TIME_ZONE')
+			->addSelect('TIME_ZONE')
+			->addSelect('TIME_ZONE_OFFSET');
 	}
 }

@@ -1372,6 +1372,7 @@ class CBitrixPersonalOrderDetailComponent extends CBitrixComponent
 				$currency = $this->order->getCurrency();
 			}
 			$shipmentFields["PRICE_DELIVERY_FORMATTED"] = SaleFormatCurrency($shipmentFields['PRICE_DELIVERY'], $currency);
+			$this->formatDate($shipmentFields);
 			$shipmentOrder[] = $shipmentFields;
 		}
 
@@ -1395,6 +1396,7 @@ class CBitrixPersonalOrderDetailComponent extends CBitrixComponent
 			{
 				$paymentFields['DATE_BILL_FORMATTED'] = $paymentFields['DATE_BILL']->format($dateFormat);
 			}
+			$this->formatDate($paymentFields);
 			$paymentOrder[$paymentFields['ID']] = $paymentFields;
 		}
 		
@@ -2082,7 +2084,7 @@ class CBitrixPersonalOrderDetailComponent extends CBitrixComponent
 	 */
 	protected function setRegistry()
 	{
-		$this->registry = Sale\Registry::getInstance(Sale\Order::getRegistryType());
+		$this->registry = Sale\Registry::getInstance(Sale\Registry::REGISTRY_TYPE_ORDER);
 	}
 
 	/**

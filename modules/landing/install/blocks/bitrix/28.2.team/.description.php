@@ -21,7 +21,7 @@ return array(
 		'.landing-block-node-bgimg' => array(
 			'name' => Loc::getMessage('LANDING_BLOCK_TEAM002._NODES_LANDINGBLOCKNODE-BGIMG'),
 			'type' => 'img',
-			'dimensions' => array('width' => 1400, 'height' => 585),
+			'dimensions' => array('width' => 1920, 'height' => 1080),
 		),
 		'.landing-block-node-subtitle' => array(
 			'name' => Loc::getMessage('LANDING_BLOCK_TEAM002._NODES_LANDINGBLOCKNODESUBTITLE'),
@@ -38,7 +38,7 @@ return array(
 		'.landing-block-node-employee-photo' => array(
 			'name' => Loc::getMessage('LANDING_BLOCK_TEAM002._NODES_LANDINGBLOCKNODEEMPLOYEEPHOTO'),
 			'type' => 'img',
-			'dimensions' => array('width' => 270, 'height' => 450),
+			'dimensions' => array('width' => 540),
 		),
 		'.landing-block-node-employee-quote' => array(
 			'name' => Loc::getMessage('LANDING_BLOCK_TEAM002._NODES_LANDINGBLOCKNODEEMPLOYEEQUOTE'),

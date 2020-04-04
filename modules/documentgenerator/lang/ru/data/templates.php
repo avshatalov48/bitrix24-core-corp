@@ -28,6 +28,7 @@ $MESS['DOCGEN_TEMPLATE_NAKL_KZ_NAME'] = 'Накладная (Казахстан)
 $MESS['DOCGEN_TEMPLATE_QUOTE_KZ_NAME'] = 'Коммерческое предложение (Казахстан)';
 $MESS['DOCGEN_TEMPLATE_ACT_UA_NAME'] = 'Акт (Украина)';
 $MESS['DOCGEN_TEMPLATE_BILL_UA_NAME'] = 'Счет (Украина)';
+$MESS['DOCGEN_TEMPLATE_BILL_UA_NAME_OLD'] = 'Счет (Украина) (устарел)';
 $MESS['DOCGEN_TEMPLATE_DOVER_UA_NAME'] = 'Доверенность (Украина)';
 $MESS['DOCGEN_TEMPLATE_DOG_PODRYAD_UA_NAME'] = 'Договор подряда (Украина)';
 $MESS["DOCGEN_TEMPLATE_DOG_POSTAVKA_UA_NAME"] = 'Договор поставки (Украина)';

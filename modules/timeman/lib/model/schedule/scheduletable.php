@@ -10,6 +10,7 @@ use Bitrix\Main\ORM\Fields\Relations\OneToMany;
 use Bitrix\Main\ORM\Fields\Relations\Reference;
 use Bitrix\Main\ORM\Query\Join;
 use Bitrix\Main\Web\Json;
+use Bitrix\Timeman\Helper\EntityCodesHelper;
 use Bitrix\Timeman\Model\Schedule\Assignment\Department\ScheduleDepartmentTable;
 use Bitrix\Timeman\Model\Schedule\Assignment\User\ScheduleUserTable;
 use Bitrix\Timeman\Model\Schedule\Calendar\CalendarTable;
@@ -56,7 +57,7 @@ class ScheduleTable extends Main\ORM\Data\DataManager
 	const WORKTIME_RESTRICTION_ALLOWED_TO_EDIT_RECORD = 'ALLOWED_TO_EDIT_RECORD';
 	const WORKTIME_RESTRICTION_ALLOWED_TO_REOPEN_RECORD = 'ALLOWED_TO_REOPEN_RECORD';
 
-	const WORKTIME_RESTRICTION_MAX_START_END_OFFSET = 'MAX_START_END_OFFSET';
+	const WORKTIME_RESTRICTION_MAX_SHIFT_START_OFFSET = 'MAX_SHIFT_START_OFFSET';
 
 	public static function getWorktimeRestrictionsKeys()
 	{
@@ -70,6 +71,11 @@ class ScheduleTable extends Main\ORM\Data\DataManager
 	public static function getObjectClass()
 	{
 		return Schedule::class;
+	}
+
+	public static function getCollectionClass()
+	{
+		return ScheduleCollection::class;
 	}
 
 	public static function onBeforeUpdate(Event $event)
@@ -193,7 +199,7 @@ class ScheduleTable extends Main\ORM\Data\DataManager
 				->configureValues(0, 1)
 			,
 			(new Fields\ArrayField('WORKTIME_RESTRICTIONS'))
-				->configureDefaultValue(Json::encode([]))
+				->configureDefaultValue([])
 				->configureSerializeCallback(function ($value) {
 					try
 					{
@@ -236,13 +242,16 @@ class ScheduleTable extends Main\ORM\Data\DataManager
 			,
 
 			# relations
-			(new OneToMany('SHIFTS', ShiftTable::class, 'SCHEDULE'))
+			(new OneToMany('SHIFTS', ShiftTable::class, 'SCHEDULE')) // active, not deleted
+				->configureJoinType('left')
+			,
+			(new OneToMany('ALL_SHIFTS', ShiftTable::class, 'SCHEDULE_WITH_ALL_SHIFTS')) // deleted too
 				->configureJoinType('left')
 			,
 			(new Reference(
 				'SCHEDULE_VIOLATION_RULES',
 				ViolationRulesTable::class,
-				Join::on('this.ID', 'ref.SCHEDULE_ID')->where('ref.ENTITY_CODE', ViolationRulesTable::ENTITY_CODE_ALL_SCHEDULE_USERS)
+				Join::on('this.ID', 'ref.SCHEDULE_ID')->where('ref.ENTITY_CODE', EntityCodesHelper::getAllUsersCode())
 			))
 				->configureJoinType('LEFT')
 			,

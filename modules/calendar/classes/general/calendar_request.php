@@ -1201,7 +1201,15 @@ class CCalendarRequest
 
 		$jsId = preg_replace('/[^\d|\w\_]/', '', $_REQUEST['unique_id']);
 		$eventId = intval($_REQUEST['entry_id']);
-		$fromTs = CCalendar::Timestamp($_REQUEST['date_from']) - $_REQUEST['date_from_offset'];
+
+		if (!empty($_REQUEST['date_from_offset']))
+		{
+			$fromTs = CCalendar::Timestamp($_REQUEST['date_from']) - $_REQUEST['date_from_offset'];
+		}
+		else
+		{
+			$fromTs = CCalendar::Timestamp($_REQUEST['date_from']);
+		}
 
 		$event = CCalendarEvent::GetList(
 			array(

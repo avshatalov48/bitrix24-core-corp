@@ -12,8 +12,7 @@
 		<div class="row landing-block-inner">
 			<div class="landing-block-node-card col-md-6 col-lg-4 g-mb-30 g-mb-0--md">
 				<!-- Article -->
-				<article
-						class="landing-block-node-card-container js-animation fadeInRight text-center text-uppercase g-theme-photography-bg-gray-dark-v2 g-color-white-opacity-0_5">
+				<article class="landing-block-node-card-container js-animation fadeInRight text-center text-uppercase g-theme-photography-bg-gray-dark-v2 g-color-white-opacity-0_5">
 					<!-- Article Image -->
 					<img class="landing-block-node-card-img w-100" src="https://cdn.bitrix24.site/bitrix/images/landing/business/370x200/img1.jpg"
 						 alt="">
@@ -60,8 +59,7 @@
 
 			<div class="landing-block-node-card col-md-6 col-lg-4 g-mb-30 g-mb-0--md">
 				<!-- Article -->
-				<article
-						class="landing-block-node-card-container js-animation fadeInRight text-center text-uppercase g-theme-photography-bg-gray-dark-v2 g-color-white-opacity-0_5">
+				<article class="landing-block-node-card-container js-animation fadeInRight text-center text-uppercase g-theme-photography-bg-gray-dark-v2 g-color-white-opacity-0_5">
 					<!-- Article Image -->
 					<img class="landing-block-node-card-img w-100" src="https://cdn.bitrix24.site/bitrix/images/landing/business/370x200/img2.jpg"
 						 alt="">
@@ -107,8 +105,7 @@
 
 			<div class="landing-block-node-card col-md-6 col-lg-4 g-mb-30 g-mb-0--md">
 				<!-- Article -->
-				<article
-						class="landing-block-node-card-container js-animation fadeInRight text-center text-uppercase g-theme-photography-bg-gray-dark-v2 g-color-white-opacity-0_5">
+				<article class="landing-block-node-card-container js-animation fadeInRight text-center text-uppercase g-theme-photography-bg-gray-dark-v2 g-color-white-opacity-0_5">
 					<!-- Article Image -->
 					<img class="landing-block-node-card-img w-100" src="https://cdn.bitrix24.site/bitrix/images/landing/business/370x200/img3.jpg"
 						 alt="">

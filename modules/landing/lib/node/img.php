@@ -18,12 +18,12 @@ class Img extends \Bitrix\Landing\Node
 
 	/**
 	 * Save data for this node.
-	 * @param \Bitrix\Landing\Block &$block Block instance.
+	 * @param \Bitrix\Landing\Block $block Block instance.
 	 * @param string $selector Selector.
 	 * @param array $data Data array.
 	 * @return void
 	 */
-	public static function saveNode(\Bitrix\Landing\Block &$block, $selector, array $data)
+	public static function saveNode(\Bitrix\Landing\Block $block, $selector, array $data)
 	{
 		$doc = $block->getDom();
 		$resultList = $doc->querySelectorAll($selector);
@@ -32,9 +32,9 @@ class Img extends \Bitrix\Landing\Node
 		{
 			// 2x - this for retina support
 
-			$src = isset($value['src']) ? trim($value['src']) : '';
-			$src2x = isset($value['src2x']) ? trim($value['src2x']) : '';
-			$alt = isset($value['alt']) ? trim($value['alt']) : '';
+			$src = (isset($value['src']) && is_string($value['src'])) ? trim($value['src']) : '';
+			$src2x = (isset($value['src2x']) && is_string($value['src2x'])) ? trim($value['src2x']) : '';
+			$alt = (isset($value['alt']) && is_string($value['alt'])) ? trim($value['alt']) : '';
 			$id = isset($value['id']) ? intval($value['id']) : 0;
 			$id2x = isset($value['id2x']) ? intval($value['id2x']) : 0;
 
@@ -130,6 +130,10 @@ class Img extends \Bitrix\Landing\Node
 					{
 						$resultList[$pos]->setAttribute('srcset', "{$src2x} 2x");
 					}
+					else
+					{
+						$resultList[$pos]->setAttribute('srcset', '');
+					}
 				}
 				if ($id)
 				{
@@ -149,11 +153,11 @@ class Img extends \Bitrix\Landing\Node
 
 	/**
 	 * Get data for this node.
-	 * @param \Bitrix\Landing\Block &$block Block instance.
+	 * @param \Bitrix\Landing\Block $block Block instance.
 	 * @param string $selector Selector.
 	 * @return array
 	 */
-	public static function getNode(\Bitrix\Landing\Block &$block, $selector)
+	public static function getNode(\Bitrix\Landing\Block $block, $selector)
 	{
 		$data = array();
 		$doc = $block->getDom();
@@ -231,5 +235,32 @@ class Img extends \Bitrix\Landing\Node
 		}
 
 		return $data;
+	}
+
+	/**
+	 * This node may participate in searching.
+	 * @param \Bitrix\Landing\Block &$block Block instance.
+	 * @param string $selector Selector.
+	 * @return array
+	 */
+	public static function getSearchableNode($block, $selector)
+	{
+		$searchContent = [];
+
+		$nodes = self::getNode($block, $selector);
+		foreach ($nodes as $node)
+		{
+			if (!isset($node['alt']))
+			{
+				continue;
+			}
+			$node['alt'] = self::prepareSearchContent($node['alt']);
+			if ($node['alt'] && !in_array($node['alt'], $searchContent))
+			{
+				$searchContent[] = $node['alt'];
+			}
+		}
+
+		return $searchContent;
 	}
 }

@@ -3,11 +3,13 @@
 	BX.namespace('BX.Timeman.Component.Schedule.List');
 	BX.Timeman.Component.Schedule.List = function (options)
 	{
+		BX.Timeman.Component.BaseComponent.apply(this, arguments);
 		this.gridId = options.gridId;
-		this.scheduleCreateBtn = document.querySelector('[data-role="timeman-add-schedule-btn"]');
 		this.addEventHandlers();
 	};
 	BX.Timeman.Component.Schedule.List.prototype = {
+		__proto__: BX.Timeman.Component.BaseComponent.prototype,
+		constructor: BX.Timeman.Component.Schedule.List,
 		addEventHandlers: function ()
 		{
 			// todo delete this hack
@@ -16,7 +18,6 @@
 			{
 			});
 
-			BX.bind(this.scheduleCreateBtn, 'click', BX.delegate(this.onScheduleCreateBtnClick, this));
 			BX.addCustomEvent('SidePanel.Slider:onMessage', BX.delegate(function (event)
 			{
 				if (event.getEventId() === 'BX.Timeman.Schedule.Add::Success')
@@ -35,30 +36,11 @@
 
 			var gridTable = document.querySelector('[id^=' + this.gridId + ']');
 			gridTable.classList.add('timeman-schedule-list');
-			BX.bind(gridTable, 'click', BX.delegate(this.onGridTableClick, this));
-		},
-		onGridTableClick: function (e)
-		{
-			var target = e.target;
-			if (target.dataset && target.dataset.role && target.dataset.role === 'name')
-			{
-				this.onScheduleNameClick(e)
-			}
 		},
 		getRowCell: function (id, name)
 		{
 			return document.querySelector('.main-grid-row[data-id="' + id + '"]' +
 				' [data-role="' + name + '"]');
-		},
-		onShowShiftPlanClick: function (event, id)
-		{
-			event.stopPropagation();
-			event.preventDefault();
-			if (id)
-			{
-				var urlSchEdit = BX.util.add_url_param("/bitrix/components/bitrix/timeman.schedule.shiftplan/slider.php", {SCHEDULE_ID: id});
-				BX.SidePanel.Instance.open(urlSchEdit, {width: 1400});
-			}
 		},
 		onDeleteSchedulesListClick: function ()
 		{
@@ -83,27 +65,6 @@
 				{
 					this.deleteButtonDisabled = false;
 				}.bind(this));
-		},
-		onScheduleNameClick: function (event)
-		{
-			event.stopPropagation();
-			event.preventDefault();
-			var cell = BX.findParent(event.target, {className: 'main-grid-row'});
-			var id = cell ? cell.dataset.id : null;
-			if (id)
-			{
-				var urlSchEdit = BX.util.add_url_param("/bitrix/components/bitrix/timeman.schedule.edit/slider.php", {SCHEDULE_ID: id});
-				BX.SidePanel.Instance.open(urlSchEdit, {width: 1200, cacheable: false});
-			}
-		},
-		onScheduleCreateBtnClick: function (event)
-		{
-			event.stopPropagation();
-			event.preventDefault();
-			BX.SidePanel.Instance.open('/bitrix/components/bitrix/timeman.schedule.edit/slider.php', {
-				width: 1200,
-				cacheable: false
-			});
 		},
 		getGridInstance: function ()
 		{
@@ -161,7 +122,7 @@
 			});
 			this.deleteSchedulePopup[id].show();
 		},
-		processDelete: function(id)
+		processDelete: function (id)
 		{
 			BX.ajax.runAction(
 				'timeman.schedule.delete',
@@ -190,16 +151,6 @@
 		reloadGrid: function ()
 		{
 			BX.Main.gridManager.reload(this.gridId);
-		},
-		onEditScheduleClick: function (event, id)
-		{
-			event.stopPropagation();
-			event.preventDefault();
-			if (id)
-			{
-				var urlSchEdit = BX.util.add_url_param("/bitrix/components/bitrix/timeman.schedule.edit/slider.php", {SCHEDULE_ID: id});
-				BX.SidePanel.Instance.open(urlSchEdit, {width: 1200});
-			}
 		}
 	};
 })();

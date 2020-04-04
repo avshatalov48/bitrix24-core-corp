@@ -25,7 +25,6 @@ use Bitrix\Crm\Integration\Channel\WebFormTracker;
 use Bitrix\Main\UserConsent\Consent;
 use Bitrix\Crm\Settings\LayoutSettings;
 use Bitrix\Crm\Tracking;
-use Bitrix\Crm\UtmTable;
 
 Loc::loadMessages(__FILE__);
 
@@ -849,6 +848,17 @@ class ResultEntity
 		{
 			$string = isset($this->commonData['TRACE']) ? $this->commonData['TRACE'] : null;
 			$trace = Tracking\Trace::create($string);
+			if (!$trace->getUrl() && !empty($this->placeholders['from_url']))
+			{
+				$trace->setUrl($this->placeholders['from_url']);
+			}
+			if (empty($trace->getUtm()) && !empty($this->commonFields))
+			{
+				foreach ($this->commonFields as $commonFieldKey => $commonFieldVal)
+				{
+					$trace->addUtm($commonFieldKey, $commonFieldVal);
+				}
+			}
 			if ($this->isCallback)
 			{
 				$trace->addChannel(new Tracking\Channel\Callback($this->formId));

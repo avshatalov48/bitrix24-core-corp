@@ -3,7 +3,7 @@ This file is temporal. Its content will be lately relocated to "main" module.
 */
 
 BX.namespace('BX.Mobile.Tasks');
-
+window.Application = window.Application || window.BXMobileAppContext;
 //////////////////////////////
 // base widget
 //////////////////////////////

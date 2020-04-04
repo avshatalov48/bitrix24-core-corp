@@ -6,8 +6,8 @@ use Bitrix\Main\ORM\Query\Query;
 use Bitrix\Timeman\Helper\EntityCodesHelper;
 use Bitrix\Timeman\Helper\UserHelper;
 use Bitrix\Timeman\Model\Schedule\Assignment\Department\ScheduleDepartment;
-use Bitrix\Timeman\Model\Schedule\Assignment\User\ScheduleUser;
 use Bitrix\Timeman\Model\Schedule\Schedule;
+use Bitrix\Timeman\Model\Schedule\ScheduleCollection;
 use Bitrix\Timeman\Model\Schedule\ScheduleTable;
 use Bitrix\Timeman\Repository\DepartmentRepository;
 use Bitrix\Timeman\Repository\Schedule\ScheduleRepository;
@@ -41,6 +41,7 @@ class ScheduleFormHelper
 		return [
 			ScheduleTable::SCHEDULE_TYPE_FIXED => Loc::getMessage('TIMEMAN_SCHEDULE_SHIFT_EDIT_SELECT_TYPE_FIXED'),
 			ScheduleTable::SCHEDULE_TYPE_FLEXTIME => Loc::getMessage('TIMEMAN_SCHEDULE_SHIFT_EDIT_SELECT_TYPE_FLEXTIME'),
+			ScheduleTable::SCHEDULE_TYPE_SHIFT => Loc::getMessage('TIMEMAN_SCHEDULE_SHIFT_EDIT_SELECT_TYPE_SHIFT'),
 		];
 	}
 
@@ -90,76 +91,239 @@ class ScheduleFormHelper
 		return array_keys(static::getReportPeriods());
 	}
 
-	public function calculateScheduleAssignmentsMap($entitiesCodes, $showingSchedule = null)
+	public function calculateSchedulesMapBySchedule($schedule, $checkNestedEntities = true)
 	{
-		$entitiesCodes = $this->prepareEntitiesCodes($entitiesCodes);
-		$resultSchedulesMap = $this->fillSchedulesForAllUsers($entitiesCodes);
-		$schedulesForAllUsers = array_map('intval', array_column((array)$resultSchedulesMap[EntityCodesHelper::getAllUsersCode()], 'ID'));
-		$allCodes = [];
-		foreach ($entitiesCodes as $entityCode)
-		{
-			if (EntityCodesHelper::isUser($entityCode))
-			{
-				$allCodes[] = $entityCode;
-			}
-			elseif (EntityCodesHelper::isDepartment($entityCode))
-			{
-				$allDepartments = array_merge(
-					[EntityCodesHelper::getDepartmentId($entityCode)],
-					$this->getDepartmentRepository()->getAllChildDepartmentsIds(EntityCodesHelper::getDepartmentId($entityCode))
-				);
-				$allCodes = array_merge($allCodes, EntityCodesHelper::buildDepartmentCodes($allDepartments));
-
-				foreach ($allDepartments as $depId)
-				{
-					$userIds = $this->getDepartmentRepository()->getUsersOfDepartment($depId);
-					$allCodes = array_merge($allCodes, EntityCodesHelper::buildUserCodes($userIds));
-				}
-			}
-		}
-		$schedulesMap = $this->scheduleRepository
-			->findSchedulesByEntityCodes($allCodes, ['select' => ['ID', 'NAME', 'IS_FOR_ALL_USERS']]);
-
-
-		$entitiesCodes = $this->sortCodes($allCodes);
-		foreach ($entitiesCodes as $entityCode)
-		{
-			if (EntityCodesHelper::isUser($entityCode))
-			{
-				$userSchedules = $this->fillUserSchedulesMap($entityCode, $schedulesMap, $resultSchedulesMap);
-				if (!empty($userSchedules))
-				{
-					$resultSchedulesMap[$entityCode] = $userSchedules;
-				}
-			}
-			elseif (EntityCodesHelper::isDepartment($entityCode))
-			{
-				$this->buildScheduleAssignmentsUniqueMap(EntityCodesHelper::getDepartmentId($entityCode), $schedulesMap, $resultSchedulesMap);
-			}
-		}
-		$resultSchedulesMap = $this->fillUserNames($resultSchedulesMap, $schedulesForAllUsers);
-		$resultSchedulesMap = array_filter($this->filterByCurrentScheduleId($resultSchedulesMap, $showingSchedule));
-
-		foreach ($resultSchedulesMap as $entCode => $assignSchedules)
-		{
-			foreach ($assignSchedules as $index => $assignSchedule)
-			{
-				if (!empty($assignSchedule['entityCode'])
-					&& EntityCodesHelper::getDepartmentId($assignSchedule['entityCode']) === $this->getDepartmentRepository()->getBaseDepartmentId())
-				{
-					$resultSchedulesMap[EntityCodesHelper::getAllUsersCode()] = $resultSchedulesMap[$entCode];
-					break;
-				}
-			}
-		}
-
-		return $resultSchedulesMap;
+		$result = $this->calculateScheduleAssignmentsMap($schedule, $checkNestedEntities);
+		return $this->fillExtraInfoToSchedulesMap($result);
 	}
 
-	private function fillUserNames($resultSchedulesMap, $schedulesForAllUsers = [])
+	public function calculateSchedulesMapByCodes($codesToCheck, $checkNestedEntities = false)
+	{
+		$schedule = (new Schedule(false))->setId(0);
+		foreach ($codesToCheck as $code)
+		{
+			$schedule->assignEntity($code);
+		}
+		$result = $this->calculateScheduleAssignmentsMap($schedule, $checkNestedEntities);
+		return $this->fillExtraInfoToSchedulesMap($result);
+
+	}
+
+	/**
+	 * @param $codesToCheck
+	 * @param Schedule|null $checkingSchedule
+	 * @param bool|null $checkNestedEntities
+	 * @return array
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	private function calculateScheduleAssignmentsMap($checkingSchedule, $checkNestedEntities = false)
+	{
+		$codesToCheck = [];
+		foreach ($checkingSchedule->obtainUserAssignments()->getAll() as $assignment)
+		{
+			if ($assignment->isIncluded())
+			{
+				$codesToCheck[] = $assignment->getEntityCode();
+			}
+		}
+		foreach ($checkingSchedule->obtainDepartmentAssignments()->getAll() as $scheduleDepartment)
+		{
+			if ($scheduleDepartment->isIncluded())
+			{
+				$codesToCheck[] = $scheduleDepartment->getEntityCode();
+			}
+		}
+		if ($checkingSchedule->getIsForAllUsers())
+		{
+			$codesToCheck[] = EntityCodesHelper::getAllUsersCode();
+		}
+		$codesToCheck = $this->prepareEntitiesCodes($codesToCheck);
+		if ($checkNestedEntities)
+		{
+			$codesToCheck = $this->extendWithNestedEntitiesCodes($codesToCheck);
+		}
+
+		$result = [];
+
+		$schedulesWithAssignments = $this->findSchedulesByAssignmentsCodes($codesToCheck, $checkingSchedule);
+		if ($schedulesWithAssignments->count() === 0)
+		{
+			return $result;
+		}
+
+
+		$checkingCodesMap = $this->buildSignMapBySchedule($checkingSchedule);
+		$signMaps = [];
+		$baseDepartment = $this->departmentRepository->getBaseDepartmentId();
+		foreach ($schedulesWithAssignments->getAll() as $schedule)
+		{
+			$signMap = $this->buildSignMapBySchedule($schedule);
+			foreach ($checkingCodesMap as $codeToCheck => $codeIncluded)
+			{
+				if (substr($signMap[$codeToCheck], 0, 8) === 'included' && substr($codeIncluded, 0, 8) === 'included')
+				{
+					$result[$codeToCheck][$schedule->getId()] = $schedule;
+				}
+			}
+			$signMaps[$schedule->getId()] = $signMap;
+		}
+
+		$resultToShow = [];
+		foreach ($result as $code => $schedules)
+		{
+			foreach ($schedules as $schedule)
+			{
+				$directParentCodes = [];
+				if (EntityCodesHelper::isUser($code))
+				{
+					$directParentCodes = EntityCodesHelper::buildDepartmentCodes(
+						$this->departmentRepository->getDirectParentIdsByUserId(EntityCodesHelper::getUserId($code))
+					);
+				}
+				elseif (EntityCodesHelper::isDepartment($code))
+				{
+					$directParentCodes = EntityCodesHelper::buildDepartmentCodes(
+						$this->departmentRepository->getDirectParentIdsByDepartmentId(EntityCodesHelper::getDepartmentId($code))
+					);
+				}
+				$includedPersonal = false;
+				if (!empty($result[$code]))
+				{
+					foreach ($result[$code] as $codeSchedule)
+					{
+						if ($signMaps[$codeSchedule->getId()][$code] === 'includedPersonal')
+						{
+							$includedPersonal = true;
+						}
+					}
+				}
+				$includedByParent = false;
+				foreach ($directParentCodes as $directParentCode)
+				{
+					if (!empty($result[$directParentCode]) && in_array($schedule->getId(), array_keys($result[$directParentCode])))
+					{
+						$includedByParent = true;
+					}
+				}
+				if (!$includedByParent || $includedPersonal)
+				{
+					if (EntityCodesHelper::getDepartmentId($code) === $baseDepartment)
+					{
+						$resultToShow[EntityCodesHelper::getAllUsersCode()][$schedule->getId()] = $schedule;
+					}
+					else
+					{
+						$resultToShow[$code][$schedule->getId()] = $schedule;
+					}
+				}
+			}
+		}
+
+		return $resultToShow;
+	}
+
+	private function getSign($parentSign, $code, $signMap)
+	{
+		if ($signMap[$code] === 'excludedByParent' && (
+				$parentSign == 'includedPersonal' || $parentSign == 'includedByParent'
+			))
+		{
+			return $this->buildSign($parentSign);
+		}
+		if (!array_key_exists($code, $signMap))
+		{
+			return $this->buildSign($parentSign);
+		}
+		return $signMap[$code];
+	}
+
+	private function fillScheduleSignMap($parentSign, $selfCode, &$signMap)
+	{
+		$signMap[$selfCode] = $this->getSign($parentSign, $selfCode, $signMap);
+
+		static $directChildrenUsersMap = [];
+		if (EntityCodesHelper::isDepartment($selfCode) && $directChildrenUsersMap[$selfCode] === null)
+		{
+			$directChildrenUsersMap[$selfCode] = EntityCodesHelper::buildUserCodes(
+				$this->departmentRepository->getUsersOfDepartment(EntityCodesHelper::getDepartmentId($selfCode))
+			);
+		}
+		static $directChildrenMap = null;
+		if ($directChildrenMap === null)
+		{
+			$directChildrenMap = $this->departmentRepository->getDepartmentsTree();
+			foreach ($directChildrenMap as $index => $data)
+			{
+				$directChildrenMap[EntityCodesHelper::buildDepartmentCode($index)] = EntityCodesHelper::buildDepartmentCodes($data);
+				unset($directChildrenMap[$index]);
+			}
+			$directChildrenMap = array_filter($directChildrenMap);
+		}
+		if (array_key_exists($selfCode, $directChildrenMap))
+		{
+			foreach ($directChildrenMap[$selfCode] as $childCode)
+			{
+				$this->fillScheduleSignMap($signMap[$selfCode], $childCode, $signMap);
+			}
+		}
+		if (array_key_exists($selfCode, $directChildrenUsersMap))
+		{
+			foreach ($directChildrenUsersMap[$selfCode] as $userCode)
+			{
+				$signMap[$userCode] = $this->getSign($signMap[$selfCode], $userCode, $signMap);
+
+				$this->fillScheduleSignMap($signMap[$userCode], $userCode, $signMap);
+			}
+		}
+	}
+
+	private function buildSignMapBySchedule(Schedule $schedule)
+	{
+		$baseDepartment = $this->departmentRepository->getBaseDepartmentId();
+		$signMap = [];
+		foreach ($schedule->obtainDepartmentAssignments() as $depAssign)
+		{
+			$signMap[EntityCodesHelper::buildDepartmentCode($depAssign->getDepartmentId())] = $depAssign->isIncluded() ? 'includedPersonal' : 'excludedPersonal';
+		}
+		if ($schedule->getIsForAllUsers() && $baseDepartment > 0)
+		{
+			$signMap[EntityCodesHelper::buildDepartmentCode($baseDepartment)] = 'includedPersonal';
+		}
+		foreach ($schedule->obtainUserAssignments() as $userAssign)
+		{
+			$signMap[EntityCodesHelper::buildUserCode($userAssign->getUserId())] = $userAssign->isIncluded() ? 'includedPersonal' : 'excludedPersonal';
+		}
+
+		$this->fillScheduleSignMap($schedule->getIsForAllUsers() ? 'includedPersonal' : 'excludedByParent', EntityCodesHelper::buildDepartmentCode($baseDepartment), $signMap);
+		return $signMap;
+	}
+
+	private function buildSign($parentSign)
+	{
+		if ($parentSign === 'excludedPersonal')
+		{
+			return 'excludedByParent';
+		}
+		if ($parentSign === 'includedPersonal')
+		{
+			return 'includedByParent';
+		}
+		return $parentSign;
+	}
+
+	public function fillExtraInfoToSchedulesMap($resultSchedulesMap)
+	{
+		$schedulesForAllUsers = array_map('intval', array_column((array)$resultSchedulesMap[EntityCodesHelper::getAllUsersCode()], 'ID'));
+		$result = $this->prepareResult($resultSchedulesMap, $schedulesForAllUsers);
+		return $result;
+	}
+
+	private function prepareResult($resultSchedulesMap, $schedulesForAllUsers = [])
 	{
 		$userIdsForName = [];
-		foreach ($resultSchedulesMap as $index => $resultData)
+		foreach ($resultSchedulesMap as $index => $schedules)
 		{
 			if (EntityCodesHelper::isUser($index))
 			{
@@ -169,45 +333,69 @@ class ScheduleFormHelper
 		if (!empty($userIdsForName))
 		{
 			$names = $this->findUserNames($userIdsForName);
-			if (!empty($names))
-			{
-				foreach ($resultSchedulesMap as $index => $resultData)
-				{
-					if (EntityCodesHelper::isUser($index) && !empty($names[EntityCodesHelper::getUserId($index)]))
-					{
-						foreach ($resultSchedulesMap[$index] as $scheduleIndex => $item)
-						{
-							$resultSchedulesMap[$index][$scheduleIndex]['entityName'] = $this->userHelper->getFormattedName(
-								$names[EntityCodesHelper::getUserId($index)]
-							);
-							$resultSchedulesMap[$index][$scheduleIndex]['entityGender'] = $names[EntityCodesHelper::getUserId($index)]['PERSONAL_GENDER'];
-						}
-					}
-				}
-			}
 		}
-		foreach ($resultSchedulesMap as $index => $resultData)
+		$result = [];
+		foreach ($resultSchedulesMap as $index => $schedules)
 		{
-			foreach ($resultSchedulesMap[$index] as $scheduleIndex => $item)
+			$result[$index] = [];
+			foreach ($schedules as $scheduleIndex => $schedule)
 			{
-				if (in_array((int)$item['ID'], $schedulesForAllUsers, true))
+				$result[$index][$scheduleIndex] = $schedule->collectRawValues();
+			}
+		}
+		foreach ($resultSchedulesMap as $index => $schedules)
+		{
+			foreach ($schedules as $scheduleIndex => $schedule)
+			{
+				$result[$index][$scheduleIndex] = array_merge(
+					$result[$index][$scheduleIndex],
+					[
+						'LINKS' => [
+							'DETAIL' => DependencyManager::getInstance()->getUrlManager()
+								->getUriTo(TimemanUrlManager::URI_SCHEDULE_UPDATE, ['SCHEDULE_ID' => $schedule->getId()]),
+						],
+					]
+				);
+				if (EntityCodesHelper::isUser($index) && !empty($names[EntityCodesHelper::getUserId($index)]))
 				{
-					$resultSchedulesMap[$index][$scheduleIndex]['entityCode'] = EntityCodesHelper::getAllUsersCode();
+					$result[$index][$scheduleIndex]['entityName'] = $this->userHelper->getFormattedName(
+						$names[EntityCodesHelper::getUserId($index)]
+					);
+					$result[$index][$scheduleIndex]['entityGender'] = $names[EntityCodesHelper::getUserId($index)]['PERSONAL_GENDER'];
+				}
+				else
+				{
+					$result[$index][$scheduleIndex]['entityName'] = $this->getDepartmentName(EntityCodesHelper::getDepartmentId($index));
 				}
 			}
 		}
-		return $resultSchedulesMap;
+
+		foreach ($resultSchedulesMap as $index => $schedules)
+		{
+			foreach ($schedules as $scheduleIndex => $schedule)
+			{
+				if (in_array((int)$schedule->getId(), $schedulesForAllUsers, true))
+				{
+					$result[$index][$scheduleIndex]['entityCode'] = EntityCodesHelper::getAllUsersCode();
+				}
+			}
+		}
+		return $result;
 	}
 
+	/**
+	 * @param $entitiesCodes
+	 * @return array
+	 */
 	private function prepareEntitiesCodes($entitiesCodes)
 	{
 		if (!is_array($entitiesCodes))
 		{
 			$entitiesCodes = [$entitiesCodes];
 		}
-		foreach ($entitiesCodes as $entitiesCode)
+		foreach ($entitiesCodes as $entityCode)
 		{
-			if ($entitiesCode === EntityCodesHelper::getAllUsersCode())
+			if ($entityCode === EntityCodesHelper::getAllUsersCode())
 			{
 				if ($this->getDepartmentRepository()->getBaseDepartmentId() > 0)
 				{
@@ -215,271 +403,13 @@ class ScheduleFormHelper
 					break;
 				}
 			}
-
 		}
-		return array_unique($entitiesCodes);
+		return array_unique(array_filter($entitiesCodes));
 	}
 
 	private function getDepartmentRepository()
 	{
 		return $this->departmentRepository;
-	}
-
-	/**
-	 * @param \Bitrix\Timeman\Model\Schedule\Schedule $schedule
-	 * @return array
-	 */
-	private function makeScheduleResult($schedule, $entityCode)
-	{
-		return array_merge(
-			$schedule->collectValues(),
-			[
-				'LINKS' => [
-					'DETAIL' => DependencyManager::getInstance()->getUrlManager()
-						->getUriTo(TimemanUrlManager::URI_SCHEDULE_UPDATE, ['SCHEDULE_ID' => $schedule->getId()]),
-				],
-				'entityCode' => $entityCode,
-			]
-		);
-	}
-
-	private function buildScheduleAssignmentsUniqueMap($departmentId, $schedulesMap, &$resultSchedulesMap, $shownParentDepartmentIds = [])
-	{
-		$departmentCode = EntityCodesHelper::buildDepartmentCode($departmentId);
-
-		foreach ((array)$schedulesMap[$departmentCode] as $entitySchedule)
-		{
-			if ($this->noParentsHaveSchedule($entitySchedule->getId(), $resultSchedulesMap, $departmentCode))
-			{
-				$result = $this->makeScheduleResult($entitySchedule, $departmentCode);
-				if ($this->getDepartmentName($departmentId))
-				{
-					$result['entityName'] = $this->getDepartmentName($departmentId);
-				}
-				$resultSchedulesMap[$departmentCode][$entitySchedule->getId()] = $result;
-			}
-		}
-
-		$shownParentDepartmentIds[$departmentId] = $departmentId;
-
-		$userIds = $this->getDepartmentRepository()->getUsersOfDepartment($departmentId);
-		foreach ($userIds as $userId)
-		{
-			$code = EntityCodesHelper::buildUserCode($userId);
-			$userSchedules = $this->fillUserSchedulesMap($code, $schedulesMap, $resultSchedulesMap);
-			if (!empty($userSchedules))
-			{
-				$resultSchedulesMap[$code] = $userSchedules;
-			}
-		}
-
-		$subDepartmentsIds = $this->getDepartmentRepository()->getSubDepartmentsIds($departmentId);
-		foreach ($subDepartmentsIds as $subDepartmentId)
-		{
-			$this->buildScheduleAssignmentsUniqueMap($subDepartmentId, $schedulesMap, $resultSchedulesMap, $shownParentDepartmentIds);
-		}
-	}
-
-	private function noParentsHaveSchedule($scheduleId, $resultSchedulesMap, $code)
-	{
-		if (EntityCodesHelper::isDepartment($code))
-		{
-			$parentDepartmentIds = $this->getDepartmentRepository()->getAllParentDepartmentsIds(EntityCodesHelper::getDepartmentId($code));
-		}
-		else
-		{
-			$userDepartmentIds = $this->getDepartmentRepository()->getUserDepartmentsIds(EntityCodesHelper::getUserId($code));
-			$parentDepartmentIds = $userDepartmentIds;
-			foreach ($userDepartmentIds as $userDepartmentId)
-			{
-				$parentDepartmentIds = array_merge($parentDepartmentIds, $this->getDepartmentRepository()->getAllParentDepartmentsIds($userDepartmentId));
-			}
-			$parentDepartmentIds = array_unique($parentDepartmentIds);
-		}
-		foreach ($parentDepartmentIds as $parentDepartmentId)
-		{
-			if (empty($resultSchedulesMap[EntityCodesHelper::buildDepartmentCode($parentDepartmentId)]))
-			{
-				continue;
-			}
-			foreach ((array)$resultSchedulesMap[EntityCodesHelper::buildDepartmentCode($parentDepartmentId)] as $parentSchedule)
-			{
-				if ($parentSchedule['ID'] === $scheduleId)
-				{
-					return false;
-				}
-			}
-		}
-		return true;
-	}
-
-	private function fillSchedulesForAllUsers($entitiesCodes)
-	{
-		$resultSchedulesMap = [];
-		foreach ($entitiesCodes as $entityCode)
-		{
-			if ($entityCode === 'UA')
-			{
-				$commonSchedules = $this->scheduleRepository
-					->findAllBy(
-						['ID', 'IS_FOR_ALL_USERS', 'NAME'],
-						Query::filter()->where('IS_FOR_ALL_USERS', true),
-						5
-					);
-				foreach ($commonSchedules as $commonSchedule)
-				{
-					$resultSchedulesMap[$entityCode][$commonSchedule['ID']] = $this->makeScheduleResult($commonSchedule, $entityCode);
-				}
-				break;
-			}
-		}
-		return $resultSchedulesMap;
-	}
-
-	private function fillUserSchedulesMap($code, $schedulesMap, $resultSchedulesMap)
-	{
-		$result = [];
-		foreach ((array)$schedulesMap[$code] as $entitySchedule)
-		{
-			if ($this->noParentsHaveSchedule($entitySchedule->getId(), $resultSchedulesMap, $code))
-			{
-				$result[$entitySchedule->getId()] = $this->makeScheduleResult($entitySchedule, $code);
-			}
-		}
-		return $result;
-	}
-
-	private function sortCodes($entitiesCodes)
-	{
-		$userIds = EntityCodesHelper::extractUserIdsFromEntityCodes($entitiesCodes);
-		$depIds = EntityCodesHelper::extractDepartmentIdsFromEntityCodes($entitiesCodes);
-		if (!empty($depIds))
-		{
-			$result = [];
-			$structureTree = \CIntranetUtils::GetStructure()['DATA'];
-			foreach ($depIds as $depId)
-			{
-				$result[] = [
-					'ID' => $depId,
-					'DEPTH_LEVEL' => $structureTree[$depId]['DEPTH_LEVEL'],
-				];
-			}
-			\Bitrix\Main\Type\Collection::sortByColumn(
-				$result,
-				['DEPTH_LEVEL' => SORT_ASC]
-			);
-			$depIds = EntityCodesHelper::buildDepartmentCodes(array_column($result, 'ID'));
-		}
-
-		return array_merge(
-			$depIds,
-			EntityCodesHelper::buildUserCodes($userIds)
-		);
-	}
-
-	/**
-	 * @param $resultSchedulesMap
-	 * @param Schedule $showingSchedule
-	 * @return mixed
-	 */
-	private function filterByCurrentScheduleId($resultSchedulesMap, $showingSchedule)
-	{
-		if (!$showingSchedule)
-		{
-			return $resultSchedulesMap;
-		}
-		foreach ($resultSchedulesMap as $entityCode => $entitySchedules)
-		{
-			if (!empty($resultSchedulesMap[$entityCode]))
-			{
-				foreach ($entitySchedules as $entityScheduleIndex => $entitySchedule)
-				{
-					if ($entitySchedule['ID'] == $showingSchedule['ID'] || $this->isEntityExcluded($entityCode, $showingSchedule))
-					{
-						unset($resultSchedulesMap[$entityCode][$entityScheduleIndex]);
-					}
-				}
-			}
-		}
-
-		return $resultSchedulesMap;
-	}
-
-	/**
-	 * @param $entityCode
-	 * @param Schedule $showingSchedule
-	 */
-	private function isEntityExcluded($entityCode, $showingSchedule)
-	{
-		if (EntityCodesHelper::isUser($entityCode))
-		{
-			foreach ($showingSchedule->obtainUserAssignments() as $userAssignment)
-			{
-				if ($entityCode === EntityCodesHelper::buildUserCode($userAssignment['USER_ID'])
-					&& ScheduleUser::isUserExcluded($userAssignment))
-				{
-					return true;
-				}
-			}
-			$userDepartmentsTree = $this->getDepartmentRepository()
-				->buildUserDepartmentsPriorityTree(EntityCodesHelper::getUserId($entityCode));
-			foreach ($userDepartmentsTree as $userDepartmentsTreeData)
-			{
-				foreach ($userDepartmentsTreeData as $treeEntityCode)
-				{
-					if (EntityCodesHelper::isDepartment($treeEntityCode))
-					{
-						foreach ($showingSchedule->obtainDepartmentAssignments() as $departmentAssignment)
-						{
-							if ($treeEntityCode === EntityCodesHelper::buildDepartmentCode($departmentAssignment['DEPARTMENT_ID'])
-								&& ScheduleDepartment::isDepartmentExcluded($departmentAssignment))
-							{
-								if ($showingSchedule->obtainUserAssignmentsById(EntityCodesHelper::getUserId($entityCode))
-									&& !ScheduleUser::isUserIncluded($showingSchedule->obtainUserAssignmentsById(EntityCodesHelper::getUserId($entityCode))))
-								{
-									return true;
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-		elseif (EntityCodesHelper::isDepartment($entityCode))
-		{
-			foreach ($showingSchedule->obtainDepartmentAssignments() as $departmentAssignment)
-			{
-				if ($entityCode === EntityCodesHelper::buildDepartmentCode($departmentAssignment['DEPARTMENT_ID'])
-					&& ScheduleDepartment::isDepartmentExcluded($departmentAssignment))
-				{
-					return true;
-				}
-			}
-			$parents = $this->getDepartmentRepository()
-				->getAllParentDepartmentsIds(EntityCodesHelper::getDepartmentId($entityCode));
-			$excludedByParent = false;
-			$includedIndividually = false;
-
-			foreach ($showingSchedule->obtainDepartmentAssignments() as $departmentAssignment)
-			{
-				if ($entityCode === EntityCodesHelper::buildDepartmentCode($departmentAssignment['DEPARTMENT_ID'])
-					&& ScheduleDepartment::isDepartmentIncluded($departmentAssignment))
-				{
-					$includedIndividually = true;
-				}
-				foreach ($parents as $parentDepId)
-				{
-					if (EntityCodesHelper::buildDepartmentCode($parentDepId) === EntityCodesHelper::buildDepartmentCode($departmentAssignment['DEPARTMENT_ID'])
-						&& ScheduleDepartment::isDepartmentExcluded($departmentAssignment)
-					)
-					{
-						$excludedByParent = true;
-					}
-				}
-			}
-			return $excludedByParent && !$includedIndividually;
-		}
-		return false;
 	}
 
 	protected function findUserNames($userIdsForName)
@@ -498,6 +428,171 @@ class ScheduleFormHelper
 
 	protected function getDepartmentName($departmentId)
 	{
-		return !empty(\CIntranetUtils::getStructure()['DATA'][$departmentId]['NAME']) ? \CIntranetUtils::getStructure()['DATA'][$departmentId]['NAME'] : null;
+		$data = $this->getDepartmentRepository()->getAllData();
+		return !empty($data[$departmentId]['NAME']) ? $data[$departmentId]['NAME'] : null;
+	}
+
+	public function getFormattedType($type)
+	{
+		return isset(static::getScheduleTypes()[$type])
+			? static::getScheduleTypes()[$type]
+			: '';
+	}
+
+	public function getFormattedPeriod($period)
+	{
+		return isset(static::getReportPeriods()[$period])
+			? static::getReportPeriods()[$period]
+			: '';
+	}
+
+	private function extendWithParentDepartmentCodes(array $entitiesCodes)
+	{
+		$allCodes = [];
+		foreach ($entitiesCodes as $entityCode)
+		{
+			if (EntityCodesHelper::isUser($entityCode))
+			{
+				$allCodes[$entityCode] = $entityCode;
+				foreach ($this->departmentRepository->getAllUserDepartmentIds(EntityCodesHelper::getUserId($entityCode)) as $item)
+				{
+					$allCodes[EntityCodesHelper::buildDepartmentCode($item)] = $item;
+				}
+			}
+			elseif (EntityCodesHelper::isDepartment($entityCode))
+			{
+				$allCodes[$entityCode] = $entityCode;
+				foreach ($this->departmentRepository->getAllParentDepartmentsIds(EntityCodesHelper::getDepartmentId($entityCode)) as $item)
+				{
+					$allCodes[EntityCodesHelper::buildDepartmentCode($item)] = $item;
+				}
+			}
+		}
+		return array_unique(array_keys($allCodes));
+	}
+
+	private function extendWithNestedEntitiesCodes(array $entitiesCodes)
+	{
+		$allCodes = [];
+		foreach ($entitiesCodes as $entityCode)
+		{
+			if (EntityCodesHelper::isUser($entityCode))
+			{
+				$allCodes[$entityCode] = $entityCode;
+			}
+			elseif (EntityCodesHelper::isDepartment($entityCode))
+			{
+				$departmentId = EntityCodesHelper::getDepartmentId($entityCode);
+				$allDepartments = array_merge(
+					[$departmentId],
+					$this->getDepartmentRepository()->getAllChildDepartmentsIds($departmentId)
+				);
+				foreach (EntityCodesHelper::buildDepartmentCodes($allDepartments) as $item)
+				{
+					$allCodes[$item] = $item;
+				}
+
+				foreach ($allDepartments as $depId)
+				{
+					$userIds = $this->getDepartmentRepository()->getUsersOfDepartment($depId);
+					foreach (EntityCodesHelper::buildUserCodes($userIds) as $item)
+					{
+						$allCodes[$item] = $item;
+					}
+				}
+			}
+		}
+		return array_keys($allCodes);
+	}
+
+	/**
+	 * @param array $codesToCheck
+	 * @param Schedule|null $showingSchedule
+	 * @return ScheduleCollection
+	 */
+	private function findSchedulesByAssignmentsCodes(array $codesToCheck, $showingSchedule)
+	{
+		$schedulesCollection = new ScheduleCollection();
+		if (empty($codesToCheck))
+		{
+			return $schedulesCollection;
+		}
+		$allPossibleCodes = $this->extendWithParentDepartmentCodes($codesToCheck);
+
+		/** @var \Bitrix\Timeman\Model\Schedule\Assignment\User\ScheduleUser[] $userAssignments */
+		$userAssignments = $this->scheduleRepository->findUserAssignmentsByIds(
+			EntityCodesHelper::extractUserIdsFromEntityCodes($allPossibleCodes),
+			$showingSchedule ? $showingSchedule->getId() : null
+		);
+
+		foreach ($userAssignments as $userAssignment)
+		{
+			$schedule = $schedulesCollection->getByPrimary($userAssignment->getScheduleId());
+			if (!$schedule)
+			{
+				$schedule = new Schedule(false);
+				$schedule->setId($userAssignment->getScheduleId());
+				$schedulesCollection->add($schedule);
+			}
+			$schedule->addToUserAssignments($userAssignment);
+		}
+
+		/** @var ScheduleDepartment[] $departmentAssignments */
+		$departmentAssignments = $this->scheduleRepository->findDepartmentAssignmentsByIds(
+			EntityCodesHelper::extractDepartmentIdsFromEntityCodes($allPossibleCodes),
+			$showingSchedule ? $showingSchedule->getId() : null
+		);
+		foreach ($departmentAssignments as $departmentAssignment)
+		{
+			$schedule = $schedulesCollection->getByPrimary($departmentAssignment->getScheduleId());
+			if (!$schedule)
+			{
+				$schedule = new Schedule(false);
+				$schedule->setId($departmentAssignment->getScheduleId());
+				$schedulesCollection->add($schedule);
+			}
+			$schedule->addToDepartmentAssignments($departmentAssignment);
+		}
+
+		$filter = Query::filter()->where('IS_FOR_ALL_USERS', true);
+		if ($showingSchedule)
+		{
+			$filter->whereNot('ID', $showingSchedule->getId());
+		}
+		$forAllUsers = $this->scheduleRepository->findAllBy(
+			['ID', 'NAME', 'IS_FOR_ALL_USERS', 'DEPARTMENT_ASSIGNMENTS', 'USER_ASSIGNMENTS',],
+			$filter
+		);
+		foreach ($forAllUsers->getAll() as $scheduleForAllUsers)
+		{
+			$schedule = $schedulesCollection->getByPrimary($scheduleForAllUsers->getId());
+			if (!$schedule)
+			{
+				$schedulesCollection->add($scheduleForAllUsers);
+			}
+			else
+			{
+				$schedule->setIsForAllUsers(true);
+				$schedule->setName($scheduleForAllUsers->getName());
+			}
+		}
+
+		$needExtraIds = array_diff($schedulesCollection->getIdList(), $forAllUsers->getIdList());
+		if (count($needExtraIds) > 0)
+		{
+			$schedulesWithExtraData = $this->scheduleRepository->findAllBy(
+				['ID', 'NAME', 'IS_FOR_ALL_USERS'],
+				Query::filter()
+					->whereIn('ID', $needExtraIds)
+			);
+			foreach ($schedulesWithExtraData->getAll() as $item)
+			{
+				$schedulesCollection->getByPrimary($item->getId())
+					->setIsForAllUsers($item->getIsForAllUsers());
+				$schedulesCollection->getByPrimary($item->getId())
+					->setName($item->getName());
+			}
+		}
+		return $schedulesCollection;
 	}
 }

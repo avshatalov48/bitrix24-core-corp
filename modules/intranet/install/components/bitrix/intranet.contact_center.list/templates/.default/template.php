@@ -23,6 +23,11 @@ if(!empty($arResult["ADDITIONAL_STYLES"]))
 	BX.ready(function() {
 		new BX.ContactCenter.Init(params);
 	})
+
+	var restparams = <?=CUtil::PhpToJSObject($arResult["JS_REST_PARAMS"])?>;
+	BX.ready(function() {
+		new BX.ContactCenter.Init(restparams);
+	})
 </script>
 <div class="intranet-contact-block">
 	<div class="intranet-contact-wrap" id="intranet-contact-wrap">
@@ -50,6 +55,36 @@ if(!empty($arResult["ADDITIONAL_STYLES"]))
 						</div>
 					</div>
 				<?
+				}
+			}
+			?>
+		</div>
+		<div class="intranet-contact-center-title"><?=Loc::getMessage("CONTACT_CENTER_PARTNER_SOLUTIONS");?></div>
+		<div class="intranet-contact-list" id="intranet-contact-rest-list">
+			<?
+			foreach ($arResult["REST_ITEMS"] as $moduleId => $module)
+			{
+				foreach($module as $code => $item)
+				{
+					?>
+					<div class="intranet-contact-center-item-block">
+						<div class="intranet-contact-item<?=($item["SELECTED"]
+							? " intranet-contact-item-selected "  . $item["COLOR_CLASS"] : "")?>"
+						     title="<?=\Bitrix\Main\Text\HtmlFilter::encode($item["NAME"])?>"
+						     data-module="<?=$moduleId?>"
+						     data-item="<?=$code?>"
+							<? if (!empty($item["LIST"])): ?> id="feed-add-post-form-link-text-<?=$code?>" <? endif ?>
+							 <? if (!empty($item["ONCLICK"])): ?>onclick="<?=$item["ONCLICK"]?>" <? endif ?>
+						>
+							<div class="intranet-contact-logo-container">
+								<span class="intranet-contact-logo <?=$item["LOGO_CLASS"]?>"><i <?=$item['IMAGE'] ? "style=\"background-image: url(".$item['IMAGE']."); background-color: ". $item['COLOR'] . "\"" : '';?>></i></span>
+							</div>
+							<div class="intranet-contact-name">
+								<span class="intranet-contact-name-text"><?=$item["NAME"]?></span>
+							</div>
+						</div>
+					</div>
+					<?
 				}
 			}
 			?>

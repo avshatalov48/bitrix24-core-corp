@@ -21,7 +21,7 @@ return array(
 		'.landing-block-node-card-photo' => array(
 			'name' => Loc::getMessage('LANDING_BLOCK_44.6.TWO_COLUMNS_WITH_PEOPLES_NODES_LANDINGBLOCKNODECARDPHOTO'),
 			'type' => 'img',
-			'dimensions' => array('width' => 300, 'height' => 300),
+			'dimensions' => array('width' => 200, 'height' => 200),
 		),
 		'.landing-block-node-card-name' => array(
 			'name' => Loc::getMessage('LANDING_BLOCK_44.6.TWO_COLUMNS_WITH_PEOPLES_NODES_LANDINGBLOCKNODECARDNAME'),

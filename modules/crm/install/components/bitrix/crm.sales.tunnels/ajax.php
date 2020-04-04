@@ -261,13 +261,23 @@ class CCrmSalesTunnelsController extends \Bitrix\Main\Engine\Controller
 
 		if ($stage)
 		{
-			$id = $status->Update(
-				$data['stageId'],
-				[
-					'NAME' => $data['name'],
-					'SORT' => $data['sort'],
-				]
-			);
+			$fields = [];
+
+			if (isset($data['name']) && is_string($data['name']))
+			{
+				$fields['NAME'] = $data['name'];
+			}
+
+			if (isset($data['sort']) && (int)$data['sort'] > 0)
+			{
+				$fields['SORT'] = (int)$data['sort'];
+			}
+			else
+			{
+				$fields['SORT'] = (int)$stage['SORT'];
+			}
+
+			$id = $status->Update($data['stageId'], $fields);
 
 			if (!$id)
 			{

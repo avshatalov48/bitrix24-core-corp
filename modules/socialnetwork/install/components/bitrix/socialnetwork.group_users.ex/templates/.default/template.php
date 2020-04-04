@@ -189,8 +189,7 @@ else
 								'allowAddSocNetGroup' => 'N',
 								'allowSearchEmailUsers' => 'N',
 								'allowSearchCrmEmailUsers' => 'N',
-								'allowSearchNetworkUsers' => 'N',
-								'allowSonetGroupsAjaxSearchFeatures' => 'N'
+								'allowSearchNetworkUsers' => 'N'
 							)
 						),
 						false,
@@ -309,8 +308,7 @@ else
 								'allowAddSocNetGroup' => 'N',
 								'allowSearchEmailUsers' => 'N',
 								'allowSearchCrmEmailUsers' => 'N',
-								'allowSearchNetworkUsers' => 'N',
-								'allowSonetGroupsAjaxSearchFeatures' => 'N'
+								'allowSearchNetworkUsers' => 'N'
 							)
 						),
 						false,

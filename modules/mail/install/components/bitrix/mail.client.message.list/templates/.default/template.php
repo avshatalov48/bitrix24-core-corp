@@ -269,7 +269,7 @@ if ($arResult['MAILBOX']['SYNC_LOCK'] > 0)
 <? if (!\Bitrix\Mail\Helper\LicenseManager::isSyncAvailable()): ?>
 	<div style="background: #eef2f4; padding-bottom: 1px; margin-bottom: -1px; ">
 		<div class="ui-alert ui-alert-warning ui-alert-icon-warning">
-			<span class="ui-alert-message"><?=Loc::getMessage('MAIL_CLIENT_CANCELATION_WARNING_2') ?></span>
+			<span class="ui-alert-message"><?=Loc::getMessage('MAIL_CLIENT_CANCELATION_WARNING_3') ?></span>
 		</div>
 	</div>
 <? endif ?>

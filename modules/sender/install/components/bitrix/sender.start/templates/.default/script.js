@@ -19,9 +19,13 @@
 	{
 		this.context = BX(options.containerId);
 
-		BX.UI.TileList.Manager.getById('sender-start-mailings').getTiles().forEach(this.initTile, this);
-		BX.UI.TileList.Manager.getById('sender-start-ad').getTiles().forEach(this.initTile, this);
-		BX.UI.TileList.Manager.getById('sender-start-rc').getTiles().forEach(this.initTile, this);
+		var tiles = ['sender-start-mailings', 'sender-start-ad', 'sender-start-rc'];
+		for (var i = 0; i < tiles.length; i++)
+		{
+			var tileList = BX.UI.TileList.Manager.getById(tiles[i]);
+			if (tileList)
+				tileList.getTiles().forEach(this.initTile, this);
+		}
 	};
 	Manager.prototype.initTile = function (tile)
 	{

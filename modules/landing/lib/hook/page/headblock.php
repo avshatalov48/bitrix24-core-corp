@@ -11,6 +11,12 @@ Loc::loadMessages(__FILE__);
 class HeadBlock extends \Bitrix\Landing\Hook\Page
 {
 	/**
+	 * Last inserted code to the site or to the page.
+	 * @var string
+	 */
+	protected static $lastInsertedCode = null;
+
+	/**
 	 * Map of the field.
 	 * @return array
 	 */
@@ -29,6 +35,15 @@ class HeadBlock extends \Bitrix\Landing\Hook\Page
 </script>'
 			))
 		);
+	}
+
+	/**
+	 * Gets last inserted code.
+	 * @return string
+	 */
+	public static function getLastInsertedCode()
+	{
+		return self::$lastInsertedCode;
 	}
 
 	/**
@@ -158,6 +173,7 @@ class HeadBlock extends \Bitrix\Landing\Hook\Page
 
 		if ($code != '')
 		{
+			self::$lastInsertedCode = $code;
 			$code = str_replace(
 				'<script',
 				'<script data-skip-moving="true"', $code

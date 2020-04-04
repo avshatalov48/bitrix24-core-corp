@@ -4,10 +4,11 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
-use Bitrix\Main\Config;
+use Bitrix\Main\Config\Option;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Filter;
 use Bitrix\Tasks\Internals\Effective;
+use Bitrix\Tasks\Util\Error\Collection;
 use Bitrix\Tasks\Util\Type\DateTime;
 use Bitrix\Tasks\Util\User;
 
@@ -15,13 +16,15 @@ Loc::loadMessages(__FILE__);
 
 CBitrixComponent::includeComponentClass("bitrix:tasks.base");
 
+/**
+ * Class TasksReportEffectiveComponent
+ */
 class TasksReportEffectiveComponent extends TasksBaseComponent
 {
 	protected $userId;
 	protected $groupId;
 
-	protected static function checkPermissions(array &$arParams, array &$arResult,
-											   \Bitrix\Tasks\Util\Error\Collection $errors, array $auxParams = array())
+	protected static function checkPermissions(array &$arParams, array &$arResult, Collection $errors, array $auxParams = [])
 	{
 		$currentUser = User::getId();
 		$viewedUser = $arParams['USER_ID'];
@@ -31,10 +34,9 @@ class TasksReportEffectiveComponent extends TasksBaseComponent
 			$viewedUser = $_REQUEST['ACTION'][0]['ARGUMENTS']['userId']; //TODO 18.0.0 IN NEW REST
 		}
 
-		$isAccessible =
-			$currentUser == $viewedUser ||
-			User::isSuper($currentUser) ||
-			User::isBossRecursively($currentUser, $viewedUser);
+		$isAccessible = $currentUser === (int)$viewedUser
+			|| User::isSuper($currentUser)
+			|| User::isBossRecursively($currentUser, $viewedUser);
 
 		if (!$isAccessible)
 		{
@@ -46,15 +48,16 @@ class TasksReportEffectiveComponent extends TasksBaseComponent
 
 	public static function getAllowedMethods()
 	{
-		return array(
-			'getEfficiencyData'
-		);
+		return [
+			'getEfficiencyData',
+		];
 	}
 
 	protected function checkParameters()
 	{
 		// todo
 		$arParams = &$this->arParams;
+
 		static::tryParseStringParameter($arParams['FILTER_ID'], 'GRID_EFFECTIVE');
 		static::tryParseStringParameter($arParams['PATH_TO_USER_PROFILE'], '/company/personal/user/#user_id#/');
 		static::tryParseStringParameter($arParams['PATH_TO_EFFECTIVE_DETAIL'], '/company/personal/user/#user_id#/tasks/effective/show/');
@@ -63,8 +66,8 @@ class TasksReportEffectiveComponent extends TasksBaseComponent
 		static::tryParseStringParameter($arParams['DEFAULT_PAGE_SIZE'], $this->defaultPageSize);
 		static::tryParseArrayParameter($arParams['PAGE_SIZES'], $this->pageSizes);
 
-		$this->userId = $this->arParams['USER_ID'] ? $this->arParams['USER_ID'] : User::getId();
-		$this->groupId = $this->arParams['GROUP_ID'] ? $this->arParams['GROUP_ID'] : 0;
+		$this->userId = ($this->arParams['USER_ID'] ?: User::getId());
+		$this->groupId = ($this->arParams['GROUP_ID'] ?: 0);
 
 		return $this->errors->checkNoFatals();
 	}
@@ -74,76 +77,115 @@ class TasksReportEffectiveComponent extends TasksBaseComponent
 		$this->arResult['FILTERS'] = static::getFilterList();
 		$this->arResult['PRESETS'] = static::getPresetList();
 
-		$this->arResult['EFFECTIVE_DATE_START'] = $this->getEffectiveDate();
+		$this->arResult['EFFECTIVE_DATE_START'] = $this->getEfficiencyDate();
 
-		$this->arResult['JS_DATA']['userId'] = $this->arParams['USER_ID'];
-		$this->arResult['JS_DATA']['efficiencyData'] = static::getEfficiencyData($this->arParams['USER_ID']);
+		$this->arResult['JS_DATA']['userId'] = $this->userId;
+		$this->arResult['JS_DATA']['efficiencyData'] = static::getEfficiencyData($this->userId);
 	}
 
-	private function getEffectiveDate()
+	/**
+	 * @return string
+	 */
+	public static function getFilterId(): string
 	{
-		$defaultDate = new Datetime();
-		$format='Y-m-d H:i:s';
-		$dateFromDb = Config\Option::get('tasks', 'effective_date_start', $defaultDate->format($format));
+		return Effective::getFilterId();
+	}
+
+	/**
+	 * @return array
+	 */
+	public static function getPresetList(): array
+	{
+		return Effective::getPresetList();
+	}
+
+	/**
+	 * @return string
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ArgumentNullException
+	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
+	 * @throws \Bitrix\Main\ObjectException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	private function getEfficiencyDate(): string
+	{
+		$format = 'Y-m-d H:i:s';
+		$dateFromDb = Option::get('tasks', 'effective_date_start');
+
+		if ($dateFromDb === '')
+		{
+			$currentDate = (new Datetime())->format($format);
+			$firstRecordTime = Effective::getFirstRecordTime();
+			$dateToSet = ($firstRecordTime ? $firstRecordTime->format($format) : $currentDate);
+
+			Option::set('tasks', 'effective_date_start', $dateToSet);
+			$dateFromDb = $dateToSet;
+		}
+
 		$date = new DateTime($dateFromDb, $format);
 
-		$dateFormatted = GetMessage('TASKS_EFFECTIVE_DATE_FORMAT', array(
-			'#DAY#'          =>$date->format('d'),
-			'#MONTH_NAME#'   => GetMessage('TASKS_MONTH_'.(int)$date->format('m')),
-			'#YEAR_IF_DIFF#' =>$date->format('Y') != date('Y') ? $date->format('Y') : ''
-		));
-
-		return $dateFormatted;
+		return Loc::getMessage('TASKS_EFFECTIVE_DATE_FORMAT', [
+			'#DAY#' => $date->format('d'),
+			'#MONTH_NAME#' => Loc::getMessage('TASKS_MONTH_'.(int)$date->format('m')),
+			'#YEAR_IF_DIFF#' => ((int)$date->format('Y') !== (int)date('Y') ? $date->format('Y') : ''),
+		]);
 	}
 
-	public static function getFilterList()
+	/**
+	 * @return array
+	 */
+	public static function getFilterList(): array
 	{
-		return array(
-			'GROUP_ID' => array(
+		return [
+			'GROUP_ID' => [
 				'id' => 'GROUP_ID',
 				'name' => Loc::getMessage('TASKS_FILTER_COLUMN_GROUP_ID'),
-				//				'params' => array('multiple' => 'Y'),
 				'type' => 'custom_entity',
 				'default' => true,
-				'selector' => array(
+				'selector' => [
 					'TYPE' => 'group',
-					'DATA' => array(
+					'DATA' => [
 						'ID' => 'group',
 						'FIELD_ID' => 'GROUP_ID'
-					)
-				)
-			),
-			'DATETIME' => array(
+					],
+				],
+			],
+			'DATETIME' => [
 				'id' => 'DATETIME',
 				'name' => Loc::getMessage('TASKS_FILTER_COLUMN_DATE'),
 				'type' => 'date',
-				"exclude" => array(
+				'default' => true,
+				'exclude' => [
 					Filter\DateType::NONE,
 					Filter\DateType::TOMORROW,
 					Filter\DateType::PREV_DAYS,
 					Filter\DateType::NEXT_DAYS,
 					Filter\DateType::NEXT_WEEK,
 					Filter\DateType::NEXT_MONTH
-				),
-				'default' => true,
-			),
-		);
+				],
+			],
+		];
 	}
 
-	public static function getPresetList()
-	{
-		return Effective::getPresetList();
-	}
-
-	public static function getEfficiencyData($userId)
+	/**
+	 * @param $userId
+	 * @return array
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ObjectException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	public static function getEfficiencyData($userId): array
 	{
 		$filter = static::processFilter();
+
 		$datesRange = Effective::getDatesRange();
+		$dateFrom = $datesRange['FROM'];
+		$dateTo = $datesRange['TO'];
 
 		$groupId = 0;
 		$groupByHour = false;
-		$dateFrom = $datesRange['FROM'];
-		$dateTo = $datesRange['TO'];
 
 		if (array_key_exists('>=DATETIME', $filter))
 		{
@@ -157,13 +199,14 @@ class TasksReportEffectiveComponent extends TasksBaseComponent
 		{
 			$groupId = $filter['GROUP_ID'];
 		}
-		if (isset($filter['::']) && $filter['::'] == 'BY_DAY')
+		if (isset($filter['::']) && $filter['::'] === 'BY_DAY')
 		{
 			unset($filter['::']);
 			$groupByHour = true;
 		}
 
 		$tasksCounters = Effective::getCountersByRange($dateFrom, $dateTo, $userId, $groupId);
+		$graphData = static::getGraphData($dateFrom, $dateTo, $userId, $groupId, $groupByHour);
 
 		$efficiency = 100;
 		$violations = $tasksCounters['VIOLATIONS'];
@@ -183,34 +226,35 @@ class TasksReportEffectiveComponent extends TasksBaseComponent
 			$efficiency = 0;
 		}
 
-		$graphData = static::getGraphData($dateFrom, $dateTo, $userId, $groupId, $groupByHour);
-
-		return array(
+		return [
 			'EFFICIENCY' => $efficiency,
 			'COMPLETED' => $tasksCounters['COMPLETED'],
 			'VIOLATIONS' => $tasksCounters['VIOLATIONS'],
 			'IN_PROGRESS' => $tasksCounters['IN_PROGRESS'],
 			'GRAPH_DATA' => $graphData,
-			'GRAPH_MIN_PERIOD' => ($groupByHour? 'hh' : 'DD')
-		);
+			'GRAPH_MIN_PERIOD' => ($groupByHour? 'hh' : 'DD'),
+		];
 	}
 
-	private static function getGraphData($dateFrom, $dateTo, $userId, $groupId, $groupByHour)
+	/**
+	 * @param $dateFrom
+	 * @param $dateTo
+	 * @param $userId
+	 * @param $groupId
+	 * @param $groupByHour
+	 * @return array
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	private static function getGraphData($dateFrom, $dateTo, $userId, $groupId, $groupByHour): array
 	{
 		$graphData = [];
 		$graphDataRes = Effective::getEfficiencyForGraph($dateFrom, $dateTo, $userId, $groupId, ($groupByHour? 'HOUR' : ''));
 
 		foreach ($graphDataRes as $row)
 		{
-			if ($groupByHour)
-			{
-				$row['DATE'] = $row['HOUR'];
-			}
-			else
-			{
-				$row['DATE'] = $row['DATE']->format('Y-m-d');
-			}
-
+			$row['DATE'] = ($groupByHour ? $row['HOUR'] : $row['DATE']->format('Y-m-d'));
 			$row['EFFECTIVE'] = round($row['EFFECTIVE']);
 
 			$graphData[] = $row;
@@ -219,7 +263,11 @@ class TasksReportEffectiveComponent extends TasksBaseComponent
 		return $graphData;
 	}
 
-	private static function processFilter()
+	/**
+	 * @return array
+	 * @throws \Bitrix\Main\ObjectException
+	 */
+	private static function processFilter(): array
 	{
 		static $filter = [];
 
@@ -245,15 +293,17 @@ class TasksReportEffectiveComponent extends TasksBaseComponent
 						break;
 
 					case 'date':
-						if (array_key_exists($item['id'] . '_from', $rawFilter) && !empty($rawFilter[$item['id'] . '_from']))
-						{
-							$filter['>=' . $item['id']] = $rawFilter[$item['id'] . '_from'];
-						}
-						if (array_key_exists($item['id'] . '_to', $rawFilter) && !empty($rawFilter[$item['id'] . '_to']))
-						{
-							$filter['<=' . $item['id']] = $rawFilter[$item['id'] . '_to'];
-						}
+						$fromKey = $item['id'].'_from';
+						$toKey = $item['id'].'_to';
 
+						if (array_key_exists($fromKey, $rawFilter) && !empty($rawFilter[$fromKey]))
+						{
+							$filter['>='.$item['id']] = $rawFilter[$fromKey];
+						}
+						if (array_key_exists($toKey, $rawFilter) && !empty($rawFilter[$toKey]))
+						{
+							$filter['<='.$item['id']] = $rawFilter[$toKey];
+						}
 						if (static::checkByDayFiltering($rawFilter, $item, $filter))
 						{
 							$filter['::'] = 'BY_DAY';
@@ -266,36 +316,34 @@ class TasksReportEffectiveComponent extends TasksBaseComponent
 		return $filter;
 	}
 
-	private static function checkByDayFiltering($rawFilter, $item, $filter)
+	/**
+	 * @param $rawFilter
+	 * @param $item
+	 * @param $filter
+	 * @return bool
+	 * @throws \Bitrix\Main\ObjectException
+	 */
+	private static function checkByDayFiltering($rawFilter, $item, $filter): bool
 	{
 		$dateTypesForDayFiltering = [
 			Filter\DateType::YESTERDAY,
 			Filter\DateType::CURRENT_DAY,
-			Filter\DateType::EXACT
+			Filter\DateType::EXACT,
 		];
 		$rangeType = Filter\DateType::RANGE;
 
-		$dateSel = $rawFilter[$item['id'] . '_datesel'];
-		$dateFrom = new DateTime($filter['>=' . $item['id']]);
-		$dateTo = new DateTime($filter['<=' . $item['id']]);
+		$dateSel = $rawFilter[$item['id'].'_datesel'];
+		$dateFrom = new DateTime($filter['>='.$item['id']]);
+		$dateTo = new DateTime($filter['<='.$item['id']]);
 
-		if (
-			in_array($dateSel, $dateTypesForDayFiltering) ||
-			($dateSel == $rangeType && $dateFrom->format('Y-m-d') == $dateTo->format('Y-m-d'))
-		)
-		{
-			return true;
-		}
-
-		return false;
-	}
-	
-	public static function getFilterId()
-	{
-		return Effective::getFilterId();
+		return in_array($dateSel, $dateTypesForDayFiltering, true)
+			|| ($dateSel === $rangeType && $dateFrom->format('Y-m-d') === $dateTo->format('Y-m-d'));
 	}
 
-	private static function getFilterOptions()
+	/**
+	 * @return Filter\Options
+	 */
+	private static function getFilterOptions(): Filter\Options
 	{
 		static $instance = null;
 

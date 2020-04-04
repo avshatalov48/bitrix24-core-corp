@@ -49,9 +49,10 @@ abstract class Base extends BaseReport
 		{
 			//@TODO it is HACK here cant be filter class by no means
 			//maybe add some construction to collect all filters for reports in one container
-			$options = new Options($filterId, $filter::getPresetsList());
-			$rawParameters = $options->getFilter($filter::getFieldsList());
-			$filterParameters[$filterId] = $this->mutateFilterParameter($rawParameters);
+			$options = new Options($filterId, $filter->getPresetsList());
+			$fieldList = $filter->getFieldsList();
+			$rawParameters = $options->getFilter($fieldList);
+			$filterParameters[$filterId] = $this->mutateFilterParameter($rawParameters, $fieldList);
 		}
 
 		return $filterParameters[$filterId];
@@ -79,17 +80,14 @@ abstract class Base extends BaseReport
 		return $filter;
 	}
 
-	protected function mutateFilterParameter($filterParameters)
+	protected function mutateFilterParameter($filterParameters, array $fieldList)
 	{
 		$mutatedFilterParameters = [];
-
-		$filter = $this->getFilter();
-		$fieldList = $filter::getFieldsList();
-
 		$preparedFieldList = [];
+
 		foreach ($fieldList as $field)
 		{
-			if ($field['id'] === 'TIME_PERIOD')
+			if ($field['id'] === 'TIME_PERIOD' || $field['id'] === 'PREVIOUS_PERIOD')
 			{
 				$preparedFieldList[$field['id']] = [
 					'type' => isset($field['type']) ? $field['type'] : 'none',
@@ -112,6 +110,11 @@ abstract class Base extends BaseReport
 		foreach ($filterParameters as $key => $value)
 		{
 			if (strpos($key, 'TIME_PERIOD') === 0)
+			{
+				$mutatedFilterParameters[$key] = $value;
+				continue;
+			}
+			if (strpos($key, 'PREVIOUS_PERIOD') === 0)
 			{
 				$mutatedFilterParameters[$key] = $value;
 				continue;

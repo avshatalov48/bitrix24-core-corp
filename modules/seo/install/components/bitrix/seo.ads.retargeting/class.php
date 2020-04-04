@@ -29,6 +29,7 @@ class SeoAdsRetargetingComponent extends CBitrixComponent implements Controllera
 	{
 		$this->arParams['INPUT_NAME_PREFIX'] = isset($this->arParams['INPUT_NAME_PREFIX']) ? $this->arParams['INPUT_NAME_PREFIX'] : '';
 		$this->arParams['HAS_ACCESS'] = isset($this->arParams['HAS_ACCESS']) ? (bool) $this->arParams['HAS_ACCESS'] : false;
+		$this->arParams['AUDIENCE_LOOKALIKE_MODE'] = !!$this->arParams['AUDIENCE_LOOKALIKE_MODE'];
 
 		return $this->arParams;
 	}
@@ -195,6 +196,25 @@ class SeoAdsRetargetingComponent extends CBitrixComponent implements Controllera
 			{
 				$data['error'] = implode(', ', AdsAudience::getErrors());
 			}
+		}
+
+		return $this->prepareAjaxAnswer($data);
+	}
+
+	public function getRegionsAction($type, $clientId = null)
+	{
+		$data = [];
+		if ($this->checkAccess())
+		{
+			$service = AdsAudience::getService();
+			$service->setClientId($clientId);
+			$data = AdsAudience::getRegions($type);
+			$langId = strtolower(LANGUAGE_ID);
+			$langId = ($langId == 'en' ? 'us' : $langId);
+			array_walk($data, function (&$region) use ($langId)
+			{
+				$region['isDefault'] = (strtolower($region['id']) == $langId);
+			});
 		}
 
 		return $this->prepareAjaxAnswer($data);

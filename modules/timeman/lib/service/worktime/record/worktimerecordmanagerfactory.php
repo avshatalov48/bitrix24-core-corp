@@ -3,17 +3,20 @@ namespace Bitrix\Timeman\Service\Worktime\Record;
 
 use Bitrix\Timeman\Form\Worktime\WorktimeRecordForm;
 use Bitrix\Timeman\Model\Worktime\EventLog\WorktimeEventTable;
+use Bitrix\Timeman\Repository\Schedule\ShiftPlanRepository;
 use Bitrix\Timeman\Repository\Worktime\WorktimeRepository;
 
 class WorktimeRecordManagerFactory
 {
 	private $violationManager;
 	private $worktimeRepository;
+	private $shiftPlanRepository;
 
-	public function __construct($violationManager, WorktimeRepository $worktimeRepository)
+	public function __construct($violationManager, WorktimeRepository $worktimeRepository, ShiftPlanRepository $shiftPlanRepository)
 	{
 		$this->violationManager = $violationManager;
 		$this->worktimeRepository = $worktimeRepository;
+		$this->shiftPlanRepository = $shiftPlanRepository;
 	}
 
 	/**
@@ -23,7 +26,7 @@ class WorktimeRecordManagerFactory
 	 */
 	public function buildRecordManager($recordForm)
 	{
-		$params = [$this->violationManager, $recordForm, $this->worktimeRepository];
+		$params = [$this->violationManager, $recordForm, $this->worktimeRepository, $this->shiftPlanRepository];
 		switch ($recordForm->getFirstEventForm()->eventName)
 		{
 			case WorktimeEventTable::EVENT_TYPE_EDIT_WORKTIME:

@@ -7,6 +7,7 @@ use Bitrix\Main\Grid\Panel\Actions;
 use Bitrix\Main\Grid\Panel\Types;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Timeman\Service\DependencyManager;
+\Bitrix\Main\Page\Asset::getInstance()->addJS('/bitrix/js/timeman/component/basecomponent.js');
 
 $urlManager = DependencyManager::getInstance()->getUrlManager();
 if (defined('SITE_TEMPLATE_ID') && SITE_TEMPLATE_ID == 'bitrix24')
@@ -14,8 +15,7 @@ if (defined('SITE_TEMPLATE_ID') && SITE_TEMPLATE_ID == 'bitrix24')
 	if ($arResult['SHOW_ADD_SCHEDULE_BUTTON'])
 	{
 		$this->SetViewTarget('pagetitle'); ?>
-		<a href="<?= $arParams['FORM_URI'] ?>" class="ui-btn ui-btn-md ui-btn-primary"
-				data-role="timeman-add-schedule-btn">
+		<a href="<?= $arResult['addScheduleUrl'] ?>" class="ui-btn ui-btn-md ui-btn-primary">
 			<?= htmlspecialcharsbx(Loc::getMessage('TM_SCHEDULE_LIST_ADD')) ?>
 		</a>
 		<? $this->EndViewTarget();
@@ -32,7 +32,6 @@ foreach ($arResult['ITEMS'] as $item)
 			$gridActions[] = [
 				'TITLE' => Loc::getMessage('TM_SCHEDULE_LIST_ACTION_PLAN'),
 				'TEXT' => htmlspecialcharsbx(Loc::getMessage('TM_SCHEDULE_LIST_ACTION_PLAN')),
-				'ONCLICK' => 'BX.Timeman.Component.Schedule.List' . CUtil::JSEscape($component->getComponentId()) . '.onShowShiftPlanClick(event, ' . intval($item['ID']) . ')',
 				'HREF' => $urlManager->getUriTo('scheduleShiftplan', ['SCHEDULE_ID' => $item['ID']]),
 			];
 		}
@@ -176,7 +175,8 @@ $APPLICATION->IncludeComponent('bitrix:main.ui.grid', '', [
 		});
 
 		BX.Timeman.Component.Schedule.List<?=CUtil::JSEscape($component->getComponentId())?> = new BX.Timeman.Component.Schedule.List({
-			gridId: '<?= CUtil::JSEscape($arResult['GRID_ID'])?>'
+			gridId: '<?= CUtil::JSEscape($arResult['GRID_ID'])?>',
+			scheduleCreateSliderWidth: 1400
 		});
 	});
 </script>

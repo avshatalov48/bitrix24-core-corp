@@ -16,7 +16,7 @@ class StartCustomTimeWorktimeManager extends StartWorktimeManager
 	protected function verifyBeforeProcessUpdatingRecord()
 	{
 		$baseResult = parent::verifyBeforeProcessUpdatingRecord();
-		if (!$baseResult->isSuccess())
+		if (!$baseResult->isSuccess() || $this->worktimeRecordForm->isSystem === true)
 		{
 			return $baseResult;
 		}
@@ -49,7 +49,7 @@ class StartCustomTimeWorktimeManager extends StartWorktimeManager
 		{
 			return $result;
 		}
-		if ($record && $this->worktimeRecordForm->recordedStartSeconds)
+		if ($record && $this->worktimeRecordForm->recordedStartSeconds !== null)
 		{
 			$startTimestamp = $record->getRecordedStartTimestamp();
 			if ($startTimestamp > TimeHelper::getInstance()->getUtcNowTimestamp())

@@ -125,6 +125,11 @@ class SessionTable extends DataManager
 				'title' => Loc::getMessage('SESSION_ENTITY_OPERATOR_ID_FIELD'),
 				'default_value' => '0',
 			]),
+			new BooleanField('OPERATOR_FROM_CRM', [
+				'values' => ['N', 'Y'],
+				'title' => Loc::getMessage('SESSION_ENTITY_OPERATOR_FROM_CRM'),
+				'default_value' => 'N',
+			]),
 			new Reference(
 				'OPERATOR',
 				UserTable::class,
@@ -289,6 +294,12 @@ class SessionTable extends DataManager
 				'title' => Loc::getMessage('SESSION_ENTITY_QUEUE_HISTORY_FIELD'),
 				'default_value' => [],
 				'serialized' => true
+			]),
+			new TextField('BLOCK_REASON', [
+				'title' => Loc::getMessage('SESSION_ENTITY_BLOCK_REASON'),
+			]),
+			new DatetimeField('BLOCK_DATE', [
+				'title' => Loc::getMessage('SESSION_ENTITY_BLOCK_DATE'),
 			]),
 			new IntegerField('VOTE', [
 				'required' => true,

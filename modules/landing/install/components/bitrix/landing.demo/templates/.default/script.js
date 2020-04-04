@@ -137,9 +137,22 @@ BX.ready(function()
 					return;
 				}
 
-				BX.SidePanel.Instance.open(event.currentTarget.dataset.href, {
+				var sliderHref = event.currentTarget.dataset.href;
+
+				BX.SidePanel.Instance.open(sliderHref, {
 					allowChangeHistory: false,
-					width: BX.data(item, 'slider-width') ? parseInt(BX.data(item, 'slider-width')) : null
+					width: BX.data(item, 'slider-width') ? parseInt(BX.data(item, 'slider-width')) : null,
+					events: {
+						onClose: function(eventClosed)
+						{
+							var openerSliderPath = sliderHref.split('?')[0];
+							var currentSliderPath = eventClosed.slider.iframeSrc.split('?')[0];
+							if (openerSliderPath !== currentSliderPath)
+							{
+								top.location.reload();
+							}
+						}
+					}
 				});
 			});
 		}

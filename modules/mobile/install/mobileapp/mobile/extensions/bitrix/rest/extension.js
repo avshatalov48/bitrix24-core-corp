@@ -1,11 +1,15 @@
 (() =>
 {
+	/**
+	 * @class RequestExecutor
+	 * @alias RestExecutor
+	 */
 	class RequestExecutor
 	{
 		constructor(method, options)
 		{
 			this.method = method;
-			this.options = options;
+			this.options = options || {};
 			this.currentAnswer = null;
 			this.handler = null;
 			/**
@@ -189,68 +193,51 @@
 			this.cacheId = id;
 			return this;
 		}
-	}
 
-	/**
-	 *  @interface DelayedRestRequestDelegate
-	 * */
-	/** Result method.
-	 * @name  DelayedRestRequestDelegate#onDelayedRequestResult
-	 * @param {{success:boolean}} result
-	 * @type {Function}
-	 * @return {void}
-	 */
-	/** Method gets params.
-	 * @name  DelayedRestRequestDelegate#getParams
-	 * @type {Function}
-	 * @return {object}
-	 */
+		setOptions(options = {})
+		{
+			this.options = options;
+			return this;
+		}
+	}
 
 	/**
 	 * Class for delayed rest request
 	 * @class DelayedRestRequest
 	 */
-	class DelayedRestRequest
+	class DelayedRestRequest extends RequestExecutor
 	{
 		/**
-		 *
 		 * @param method
-		 * @param {DelayedRestRequestDelegate, null} delegate
+		 * @param options
 		 */
-		constructor(method, delegate = null)
+		constructor(method, options = {})
 		{
-			if(delegate == null || typeof delegate !== "function")
-				new Error("Argument (2) must be defined");
-
-			this.method = method;
+			super(method, options);
 			this.timeoutId = 0;
 			this.delay = 500;
-			this._delegate = delegate;
+		}
+		setDelay(delay)
+		{
+			if(typeof delay !== "undefined")
+				this.delay = Number(delay);
+
+			return this;
 		}
 
-		get delegate()
+		abortCurrentRequest()
 		{
-			return this._delegate;
+			clearTimeout(this.timeoutId);
+			super.abortCurrentRequest();
 		}
 
-		send()
+		call()
 		{
-			if (this.timeoutId)
-			{
-				clearTimeout(this.timeoutId);
-			}
+			this.abortCurrentRequest();
+			return new Promise((resolve, reject)=>{
+				this.timeoutId = setTimeout(()=> super.call().then().catch(reject), this.delay);
+			})
 
-			this.timeoutId = setTimeout(
-				()=>{
-					BX.rest.callMethod(this.method, this.delegate.getParams())
-						.then(() => this.delegate.onDelayedRequestResult({success: true}))
-						.catch(() =>
-						{
-							return this.delegate.onDelayedRequestResult({success: false});
-						})
-				},
-				this.delay
-			);
 		}
 	}
 
@@ -330,6 +317,9 @@
 		return getParameters;
 	};
 
+	/**s
+	 * @class RunActionExecutor
+	 */
 	class RunActionExecutor
 	{
 		constructor(action, options)
@@ -446,6 +436,9 @@
 		}
 	}
 
+	/**
+	 * @class RunActionDelayedExecutor
+	 */
 	class RunActionDelayedExecutor extends RunActionExecutor
 	{
 		constructor(action, options)
@@ -455,6 +448,12 @@
 			this.timeout = 300;
 		}
 
+		abortCurrentRequest()
+		{
+			clearTimeout(this.timeoutId);
+			super.abortCurrentRequest();
+		}
+
 		call()
 		{
 			clearTimeout(this.timeoutId);
@@ -462,11 +461,12 @@
 		}
 	}
 
-	window.RunActionDelayedExecutor = RunActionDelayedExecutor;
-	window.RequestExecutor = RequestExecutor;
-	window.RestExecutor = RequestExecutor;
-	window.RunActionExecutor = RunActionExecutor;
-	window.DelayedRestRequest = DelayedRestRequest;
-
+	jnexport(
+		RunActionDelayedExecutor,
+		RequestExecutor,
+		RunActionExecutor,
+		DelayedRestRequest,
+		[RequestExecutor, "RestExecutor"]
+	)
 
 })();

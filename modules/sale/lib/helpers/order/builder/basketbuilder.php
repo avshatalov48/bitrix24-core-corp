@@ -84,7 +84,7 @@ abstract class BasketBuilder
 	{
 		$result = true;
 
-		if((int)$productData['QUANTITY'] <= 0)
+		if((float)$productData['QUANTITY'] <= 0)
 		{
 			$this->getErrorsContainer()->addError(
 				new Error(

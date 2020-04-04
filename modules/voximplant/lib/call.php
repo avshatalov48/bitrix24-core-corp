@@ -143,7 +143,7 @@ class Call
 	 * @param array $fields
 	 * @return Call
 	 */
-	public static function create(array $fields)
+	public static function create(array $fields): Call
 	{
 		static::checkFields($fields);
 

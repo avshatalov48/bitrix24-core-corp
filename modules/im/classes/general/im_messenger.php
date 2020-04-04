@@ -2,6 +2,7 @@
 IncludeModuleLangFile(__FILE__);
 
 use Bitrix\Im as IM;
+use Bitrix\Im\MessageTable;
 
 class CIMMessenger
 {
@@ -583,6 +584,8 @@ class CIMMessenger
 					}
 				}
 
+				MessageTable::indexRecord($messageID);
+
 				return $messageID;
 			}
 			else
@@ -1043,6 +1046,8 @@ class CIMMessenger
 					\Bitrix\Im\Bot::onMessageAdd(intval($messageID), $arFields);
 				}
 
+				MessageTable::indexRecord($messageID);
+
 				return $messageID;
 			}
 			else
@@ -1190,6 +1195,14 @@ class CIMMessenger
 				}
 
 				$counter = \CIMNotify::GetCounter($chatId);
+				if ($counter > 100)
+				{
+					$counter += 1;
+				}
+				else
+				{
+					$counter = \CIMNotify::GetRealCounter($chatId);
+				}
 
 				$DB->Query("
 					UPDATE b_im_relation 
@@ -1252,6 +1265,7 @@ class CIMMessenger
 					}
 				}
 
+				MessageTable::indexRecord($messageID);
 
 				return $messageID;
 			}
@@ -1580,6 +1594,8 @@ class CIMMessenger
 			ExecuteModuleEventEx($arEvent, array(intval($id), $arFields, $updateFlags));
 
 		\Bitrix\Im\Bot::onMessageUpdate(intval($id), $arFields);
+
+		MessageTable::indexRecord($id);
 
 		return true;
 	}
@@ -2930,6 +2946,8 @@ class CIMMessenger
 		$phoneEnabled = false;
 		$chatExtendShowHistory = \COption::GetOptionInt('im', 'chat_extend_show_history');
 		$contactListLoad = \COption::GetOptionInt('im', 'contact_list_load');
+		$isFullTextEnabled = \Bitrix\Im\Model\MessageIndexTable::getEntity()->fullTextIndexEnabled("SEARCH_CONTENT");
+		$fullTextMinSizeToken = \Bitrix\Main\ORM\Query\Filter\Helper::getMinTokenSize();
 		$phoneCanInterceptCall = self::CanInterceptCall();
 
 		if(!$phoneCanInterceptCall && \Bitrix\Main\Loader::includeModule('voximplant'))
@@ -3045,7 +3063,7 @@ class CIMMessenger
 					'showMessage' : ".(empty($arTemplate['MESSAGE']['usersMessage'])? '{}': \Bitrix\Im\Common::objectEncode($arTemplate['MESSAGE']['usersMessage'])).",
 					'unreadMessage' : ".(empty($arTemplate['MESSAGE']['unreadMessage'])? '{}': \Bitrix\Im\Common::objectEncode($arTemplate['MESSAGE']['unreadMessage'])).",
 					'flashMessage' : ".(empty($arTemplate['MESSAGE']['flashMessage'])? '{}': \Bitrix\Im\Common::objectEncode($arTemplate['MESSAGE']['flashMessage'])).",
-					'history' : {},
+					'history' : ".\Bitrix\Im\Common::objectEncode(['fullTextEnabled' => $isFullTextEnabled, 'ftMinSizeToken' => $fullTextMinSizeToken]).",
 					'openMessenger' : ".(isset($_REQUEST['IM_DIALOG'])? "'".CUtil::JSEscape(htmlspecialcharsbx($_REQUEST['IM_DIALOG']))."'": 'false').",
 					'openHistory' : ".(isset($_REQUEST['IM_HISTORY'])? "'".CUtil::JSEscape(htmlspecialcharsbx($_REQUEST['IM_HISTORY']))."'": 'false').",
 					'openNotify' : ".(isset($_GET['IM_NOTIFY']) && $_GET['IM_NOTIFY'] == 'Y'? 'true': 'false').",
@@ -3816,7 +3834,7 @@ class CIMMessenger
 
 		$result = Array();
 		$result['module_id'] = 'im';
-		$result['push']['type'] = $chatType;
+		$result['push']['type'] = ($chatType === 'open'? 'openChat': $chatType);
 		$result['push']['tag'] = 'IM_CHAT_'.intval($params['params']['chatId']);
 		$result['push']['sub_tag'] = 'IM_MESS';
 		$result['push']['app_id'] = 'Bitrix24';
@@ -4162,9 +4180,9 @@ class CIMMessenger
 					'type' => (string)$value['type'],
 					'image' => $value['image'],
 					'size' => $value['size'],
-					'urlDownload' => $value['urlDownload'],
-					'urlPreview' => $value['urlPreview'],
-					'urlShow' => $value['urlShow'],
+					'urlDownload' => (new \Bitrix\Main\Web\Uri($value['urlDownload']))->deleteParams(['fileName'])->getUri(),
+					'urlPreview' => (new \Bitrix\Main\Web\Uri($value['urlPreview']))->deleteParams(['fileName'])->getUri(),
+					'urlShow' => (new \Bitrix\Main\Web\Uri($value['urlShow']))->deleteParams(['fileName'])->getUri(),
 				];
 				if ($value['image'])
 				{

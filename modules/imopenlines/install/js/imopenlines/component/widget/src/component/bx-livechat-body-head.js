@@ -9,7 +9,7 @@
 
 import {Vue} from "ui.vue";
 import {Vuex} from "ui.vue.vuex";
-import {VoteType} from "../const";
+import { SessionStatus, VoteType } from "../const";
 import {EventType} from "im.const";
 
 Vue.component('bx-livechat-head',
@@ -50,9 +50,31 @@ Vue.component('bx-livechat-head',
 		{
 			return state.widget.common.styles.backgroundColor? 'border-color: '+state.widget.common.styles.backgroundColor+'!important;': '';
 		},
-		showName()
+		showName(state)
 		{
-			return this.widget.dialog.operator.firstName || this.widget.dialog.operator.lastName;
+			return state.widget.dialog.operator.firstName || state.widget.dialog.operator.lastName;
+		},
+		voteActive(state)
+		{
+			if (
+				!state.widget.common.vote.beforeFinish
+				&& state.widget.dialog.sessionStatus < SessionStatus.waitClient
+			)
+			{
+				return false;
+			}
+
+			if (!state.widget.dialog.sessionClose || state.widget.dialog.sessionClose && state.widget.dialog.userVote === VoteType.none)
+			{
+				return true;
+			}
+
+			if (state.widget.dialog.sessionClose && state.widget.dialog.userVote !== VoteType.none)
+			{
+				return true;
+			}
+
+			return false;
 		},
 		localize()
 		{
@@ -126,8 +148,7 @@ Vue.component('bx-livechat-head',
 					</template>
 					<div class="bx-livechat-control-box">
 						<span class="bx-livechat-control-box-active" v-if="widget.common.dialogStart && widget.dialog.sessionId">
-							<button v-if="widget.common.vote.enable && (!widget.dialog.sessionClose || widget.dialog.sessionClose && widget.dialog.userVote == VoteType.none)" :class="'bx-livechat-control-btn bx-livechat-control-btn-like bx-livechat-dialog-vote-'+(widget.dialog.userVote)" :title="localize.BX_LIVECHAT_VOTE_BUTTON" @click="like"></button>
-							<button v-if="widget.common.vote.enable && widget.dialog.sessionClose && widget.dialog.userVote != VoteType.none" :class="'bx-livechat-control-btn bx-livechat-control-btn-disabled bx-livechat-control-btn-like bx-livechat-dialog-vote-'+(widget.dialog.userVote)"></button>
+							<button v-if="widget.common.vote.enable && voteActive" :class="'bx-livechat-control-btn bx-livechat-control-btn-like bx-livechat-dialog-vote-'+(widget.dialog.userVote)" :title="localize.BX_LIVECHAT_VOTE_BUTTON" @click="like"></button>
 							<button class="bx-livechat-control-btn bx-livechat-control-btn-mail" :title="localize.BX_LIVECHAT_MAIL_BUTTON_NEW" @click="history"></button>
 						</span>	
 						<button v-if="!widget.common.pageMode" class="bx-livechat-control-btn bx-livechat-control-btn-close" :title="localize.BX_LIVECHAT_CLOSE_BUTTON" @click="close"></button>

@@ -1332,7 +1332,7 @@ if (
 		}
 
 		$arNavStartParams = array(
-			"nPageSize" => (intval($_REQUEST["pagesize"]) > 0 ? intval($_REQUEST["pagesize"]) : $arParams["PAGE_SIZE"]),
+			"nPageSize" => $arParams["PAGE_SIZE"],
 			"bShowAll" => false,
 			"iNavAddRecords" => 1,
 			"bSkipPageReset" => true,
@@ -1662,10 +1662,7 @@ if (
 		$arSelectFields[] = "FAVORITES_USER_ID";
 	}
 
-	if ($DB->type == "MYSQL")
-	{
-		$arSelectFields[] = "LOG_DATE_TS";
-	}
+	$arSelectFields[] = "LOG_DATE_TS";
 
 	$arTmpEventsNew = array();
 	$arResult["arLogTmpID"] = array();
@@ -1785,26 +1782,6 @@ if (
 		}
 	}
 
-	if ($bFirstPage)
-	{
-		$last_date = $arTmpEventsNew[count($arTmpEventsNew)-1][($arParams["USE_FOLLOW"] == "Y" ? "DATE_FOLLOW" : "LOG_UPDATE")];
-	}
-	elseif (
-		$dbEventsID
-		&& $dbEventsID->navContinue()
-		&& $arEvents = $dbEventsID->getNext()
-	)
-	{
-		$next_page_date = ($arParams["USE_FOLLOW"] == "Y" ? $arEvents["DATE_FOLLOW"] : $arEvents["LOG_UPDATE"]);
-		if (
-			$USER->IsAuthorized()
-			&& ($arResult["LAST_LOG_TS"] < MakeTimeStamp($next_page_date))
-		)
-		{
-			$next_page_date = $arResult["LAST_LOG_TS"];
-		}
-	}
-
 	if (
 		$cnt == 0
 		&& isset($dateLastPageStart)
@@ -1898,23 +1875,36 @@ if (
 		: array()
 	);
 
-	if ($arTmpEvent["DATE_FOLLOW"])
-	{
-		$arResult["dateLastPageTS"] = MakeTimeStamp($arTmpEvent["DATE_FOLLOW"], CSite::GetDateFormat("FULL"));
-	}
-	elseif ($arParams["USE_FOLLOW"] == "N")
+	$arResult["LAST_ENTRY_DATE_TS"] = 0;
+	if ($arParams["USE_FOLLOW"] == "N")
 	{
 		if (
 			!empty($arOrder["LOG_DATE"])
 			&& $arTmpEvent["LOG_DATE"]
 		)
 		{
-			$arResult["dateLastPageTS"] = MakeTimeStamp($arTmpEvent["LOG_DATE"], CSite::GetDateFormat("FULL"));
+			$arResult["LAST_ENTRY_DATE_TS"] = MakeTimeStamp($arTmpEvent["LOG_DATE"], CSite::GetDateFormat("FULL"));
 		}
 		elseif ($arTmpEvent["LOG_UPDATE"])
 		{
-			$arResult["dateLastPageTS"] = MakeTimeStamp($arTmpEvent["LOG_UPDATE"], CSite::GetDateFormat("FULL"));
+			$arResult["LAST_ENTRY_DATE_TS"] = MakeTimeStamp($arTmpEvent["LOG_UPDATE"], CSite::GetDateFormat("FULL"));
 		}
+	}
+
+	if (
+		empty($arResult["LAST_ENTRY_DATE_TS"])
+		&& $arTmpEvent["DATE_FOLLOW"]
+	)
+	{
+		$arResult["LAST_ENTRY_DATE_TS"] = MakeTimeStamp($arTmpEvent["DATE_FOLLOW"], CSite::GetDateFormat("FULL"));
+	}
+
+	if (
+		isset($arParams["SET_LOG_PAGE_CACHE"])
+		&& $arParams["SET_LOG_PAGE_CACHE"] != 'N'
+	)
+	{
+		$arResult["dateLastPageTS"] = $arResult["LAST_ENTRY_DATE_TS"];
 	}
 
 	if (!empty($arResult["dateLastPageTS"]))

@@ -5,6 +5,7 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\SalesCenter\Driver;
 use Bitrix\Sale;
+use Bitrix\Salescenter;
 use Bitrix\SalesCenter\Integration\CrmManager;
 use Bitrix\SalesCenter\Integration\PullManager;
 use Bitrix\SalesCenter\Integration\SaleManager;
@@ -785,14 +786,27 @@ class SalesCenterControlPanelComponent extends CBitrixComponent implements Contr
 
 		$paySystemHandlerList = $this->getPaySystemHandlers();
 
-		$paySystemPanel = [
-			'cash',
-			'yandexcheckout' => [
-				'sberbank',
-				'sberbank_sms',
-			],
-			'uapay'
-		];
+		if (
+			SalesCenter\Integration\Bitrix24Manager::getInstance()->isCurrentZone('ua')
+			|| SalesCenter\Integration\IntranetManager::getInstance()->isCurrentZone('ua')
+		)
+		{
+			$paySystemPanel = [
+				'cash',
+				'uapay'
+			];
+		}
+		else
+		{
+			$paySystemPanel = [
+				'cash',
+				'yandexcheckout' => [
+					'sberbank',
+					'sberbank_sms',
+				],
+				'uapay'
+			];
+		}
 
 		$paySystemColorList = [
 			'cash' => '#8EB927',
@@ -994,6 +1008,11 @@ class SalesCenterControlPanelComponent extends CBitrixComponent implements Contr
 				{
 					foreach ($paySystem['ITEMS'] as $psMode => $paySystemItem)
 					{
+						if (!isset($paySystemPanel[$handler]))
+						{
+							continue;
+						}
+
 						$type = $psMode;
 						$isActive = $paySystemActions[$handler]['ACTIVE'][$psMode];
 						if (!$isActive && (!in_array($psMode, $paySystemPanel[$handler])))

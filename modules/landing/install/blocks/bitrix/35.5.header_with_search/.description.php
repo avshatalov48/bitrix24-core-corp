@@ -104,12 +104,4 @@ return array(
 			'type' => 'color',
 		),
 	),
-	'assets' => array(
-		'js' => array(
-			'/bitrix/components/bitrix/search.title/script.js',
-		),
-		'css' => array(
-			'/bitrix/components/bitrix/search.title/templates/bootstrap_v4/style.css',
-		),
-	),
 );

@@ -4,7 +4,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
 use Bitrix\Main\Loader,
 	Bitrix\Main\Localization\Loc,
-	Bitrix\Sale;
+	Bitrix\Sale,
+	Bitrix\Salescenter;
 
 /**
  * Class SalesCenterPaySystemPanel
@@ -73,12 +74,18 @@ class SalesCenterPaySystemPanel extends CBitrixComponent
 			'liqpay' => [],
 		];
 
-		if(!\Bitrix\SalesCenter\Integration\Bitrix24Manager::getInstance()->isEnabled())
+		if(
+			!SalesCenter\Integration\Bitrix24Manager::getInstance()->isEnabled()
+			&& !SalesCenter\Integration\IntranetManager::getInstance()->isEnabled()
+		)
 		{
 			return $fullList;
 		}
 
-		if (\Bitrix\SalesCenter\Integration\Bitrix24Manager::getInstance()->isCurrentZone('ru'))
+		if (
+			SalesCenter\Integration\Bitrix24Manager::getInstance()->isCurrentZone('ru')
+			|| SalesCenter\Integration\IntranetManager::getInstance()->isCurrentZone('ru')
+		)
 		{
 			return [
 				'sberbankonline' => [],
@@ -94,7 +101,10 @@ class SalesCenterPaySystemPanel extends CBitrixComponent
 				'paypal' => [],
 			];
 		}
-		elseif (\Bitrix\SalesCenter\Integration\Bitrix24Manager::getInstance()->isCurrentZone('ua'))
+		elseif (
+			SalesCenter\Integration\Bitrix24Manager::getInstance()->isCurrentZone('ua')
+			|| SalesCenter\Integration\IntranetManager::getInstance()->isCurrentZone('ua')
+		)
 		{
 			return [
 				'liqpay' => [],

@@ -5,26 +5,13 @@
 
 BX.addCustomEvent("onRegisterProvider", (addProviderHandler) =>
 {
-	let paramsType = {
-		preset: {
-			type: FormItemType.SELECTOR,
-			name: BX.message("SE_SYS_LOW_PUSH_ACTIVITY"),
-		}
-	};
-	let forms = {};
-	let cache = {};
-
-	/**
-	 * @class
-	 * @implements DelayedRestRequestDelegate
-	 */
 	class TabSettingsProvider extends SettingsProvider
 	{
 		constructor(id, title, subtitle = "")
 		{
 			super(id, title, subtitle);
 			this.params = {};
-			this.request = new DelayedRestRequest("mobile.tabs.setpreset", this);
+			this.request = new DelayedRestRequest("mobile.tabs.setpreset");
 		}
 
 		onButtonTap(data)
@@ -45,39 +32,16 @@ BX.addCustomEvent("onRegisterProvider", (addProviderHandler) =>
 
 		onValueChanged(item)
 		{
-			console.log(item);
-
-			(new RequestExecutor("mobile.tabs.setpreset", {name: item.value}))
-				.setHandler(result => Application.relogin())
-				.call(false);
-			this.params[item.id] = item.value;
-			this.request.send();
+			(new RequestExecutor("mobile.tabs.setpreset"))
+				.setOptions({name: item.value})
+				.setHandler(_ => Application.relogin())
+				.call();
 			super.onValueChanged();
 		}
 
 		onStateChanged(event, formId)
 		{
 			super.onStateChanged();
-		}
-
-		onDelayedRequestResult(result)
-		{
-			if (result["success"] == true)
-			{
-				for (let key in this.params)
-				{
-					cache[key] = this.params[key];
-				}
-
-				Application.storage.setObject(`settings.others.${env.userId}`, cache);
-			}
-
-			this.params = {};
-		}
-
-		getParams()
-		{
-			return this.params;
 		}
 	}
 

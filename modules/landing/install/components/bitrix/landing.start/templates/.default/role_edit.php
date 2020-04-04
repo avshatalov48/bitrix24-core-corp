@@ -13,7 +13,8 @@ Loc::loadMessages(__FILE__);
 	'.default',
 	array(
 		'ROLE_EDIT' => $arResult['VARS']['role_edit'],
-		'PAGE_URL_ROLES' => $arParams['PAGE_URL_ROLES']
+		'PAGE_URL_ROLES' => $arParams['PAGE_URL_ROLES'],
+		'TYPE' => $arParams['TYPE']
 	),
 	$component
 );?>

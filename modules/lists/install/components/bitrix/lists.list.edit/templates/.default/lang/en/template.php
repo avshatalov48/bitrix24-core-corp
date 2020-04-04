@@ -17,6 +17,7 @@ $MESS["CT_BLLE_FIELD_ELEMENT_ADD"] = "Add Element";
 $MESS["CT_BLLE_FIELD_ELEMENT_DELETE"] = "Delete Element";
 $MESS["CT_BLLE_FIELD_ELEMENT_EDIT"] = "Edit Element";
 $MESS["CT_BLLE_FIELD_ELEMENT_NAME"] = "Element";
+$MESS["CT_BLLE_FIELD_LOCK"] = "Auto lock item when editing";
 $MESS["CT_BLLE_FIELD_NAME"] = "List name";
 $MESS["CT_BLLE_FIELD_NAME_PROCESS"] = "Workflow name";
 $MESS["CT_BLLE_FIELD_PICTURE"] = "Image";

@@ -105,6 +105,7 @@ class Config
 			],
 			'VOTE' => [
 				'ENABLE' => $config['VOTE_MESSAGE'] === 'Y',
+				'BEFORE_FINISH' => $config['VOTE_BEFORE_FINISH'] === 'Y',
 				'MESSAGE_TEXT' => (string)$config['VOTE_MESSAGE_1_TEXT'],
 				'MESSAGE_LIKE' => (string)$config['VOTE_MESSAGE_1_LIKE'],
 				'MESSAGE_DISLIKE' => (string)$config['VOTE_MESSAGE_1_DISLIKE'],

@@ -25,6 +25,13 @@ class LandingSiteDemoPreviewComponent extends LandingSiteDemoComponent
 			$this->checkParam('CODE', '');
 			$this->checkParam('TYPE', '');
 			$this->checkParam('SITE_WORK_MODE', 'N');
+			$this->checkParam('DONT_LEAVE_FRAME', 'N');
+			$this->checkParam('BINDING_TYPE', '');
+			$this->checkParam('BINDING_ID', '');
+
+			\Bitrix\Landing\Site\Type::setScope(
+				$this->arParams['TYPE']
+			);
 
 			$code = $this->arParams['CODE'];
 			$demo = $this->getDemoPage($code);

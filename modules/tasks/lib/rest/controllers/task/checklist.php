@@ -375,17 +375,6 @@ class Checklist extends Base
 			return parent::buildErrorFromException($exception);
 		}
 
-		/** @noinspection PhpDeprecationInspection */
-		if ($exception instanceof TasksException)
-		{
-			/** @var CAdminException $orig */
-			$orig = $exception->getMessageOrigin();
-			foreach ($orig->GetMessages() as $message)
-			{
-				return new Error($message['text'], $message['id']);
-			}
-		}
-
-		return new Error($exception->getMessage(), $exception->getCode());
+		return new Error($exception->getMessageOrigin(), $exception->getCode());
 	}
 }

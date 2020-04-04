@@ -68,6 +68,12 @@ CREATE TABLE b_im_message(
 	KEY IX_IM_MESS_8 (NOTIFY_TYPE, DATE_CREATE)
 );
 
+CREATE TABLE b_im_message_index(
+	MESSAGE_ID int(11) NOT NULL,
+	SEARCH_CONTENT mediumtext null,
+	PRIMARY KEY (MESSAGE_ID)
+);
+
 CREATE TABLE b_im_message_param
 (
 	ID int(18) not null auto_increment,

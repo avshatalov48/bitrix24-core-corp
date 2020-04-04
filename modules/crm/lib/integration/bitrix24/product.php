@@ -33,6 +33,16 @@ class Product
 	 */
 	public static function isRegionRussian()
 	{
-		return !self::isCloud() || in_array(\CBitrix24::getPortalZone(), ['ru', 'kz', 'by']);
+		$ruRegion = ['ru', 'kz', 'by'];
+		if (self::isCloud())
+		{
+			return in_array(\CBitrix24::getPortalZone(), $ruRegion);
+		}
+		elseif (Loader::includeModule('intranet'))
+		{
+			return in_array(\CIntranetUtils::getPortalZone(), $ruRegion);
+		}
+
+		return true;
 	}
 }

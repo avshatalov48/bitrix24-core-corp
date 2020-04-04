@@ -1,8 +1,8 @@
 <?php
 namespace Bitrix\Timeman\Form\Worktime;
 
-use Bitrix\Timeman\Helper\DateTimeHelper;
 use Bitrix\Timeman\Helper\TimeHelper;
+use Bitrix\Timeman\Model\Schedule\ShiftPlan\ShiftPlanTable;
 use Bitrix\Timeman\Model\Worktime\EventLog\WorktimeEvent;
 use Bitrix\Timeman\Model\WorkTime\EventLog\WorktimeEventTable;
 use Bitrix\Timeman\Util\Form\Filter;
@@ -73,7 +73,7 @@ class WorktimeEventForm extends \Bitrix\Timeman\Util\Form\BaseForm
 				->configurePattern(TimeHelper::getInstance()->getTimeRegExp())
 			,
 			(new Filter\Validator\RegularExpressionValidator('recordedDate'))
-				->configurePattern(DateTimeHelper::getDateRegExp())
+				->configurePattern(ShiftPlanTable::getDateRegExp())
 			,
 			(new Filter\Validator\NumberValidator('recordedTimestamp'))
 				->configureIntegerOnly(true)

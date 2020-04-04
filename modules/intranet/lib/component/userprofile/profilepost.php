@@ -346,18 +346,12 @@ class ProfilePost
 			'JS' => [],
 		];
 
-		$APPLICATION->sPath2css = [];
-		$APPLICATION->arHeadScripts = [];
-
-		$found = false;
-
 		ob_start();
 
 		foreach ($ufList as $uf)
 		{
 			if(!empty($uf["VALUE"]))
 			{
-				$found = true;
 				$APPLICATION->includeComponent(
 					"bitrix:system.field.view",
 					$uf["USER_TYPE"]["USER_TYPE_ID"],
@@ -374,65 +368,11 @@ class ProfilePost
 
 		$result['CONTENT'] .= ob_get_clean();
 
-		if ($found)
-		{
-			$headScriptsList = $APPLICATION->arHeadScripts;
-			$headCSSList = $APPLICATION->sPath2css;
-
-			if(!$APPLICATION->oAsset->optimizeJs())
-			{
-				$headScriptsList = array_merge(\CJSCore::getScriptsList(), $headScriptsList);
-			}
-			$headScriptsList = array_unique($headScriptsList);
-
-			foreach($headScriptsList as $script)
-			{
-				$result["JS"][] = \CUtil::getAdditionalFileURL($script);
-			}
-
-			$CSSList = [];
-
-			foreach ($headCSSList as $i => $cssPath)
-			{
-				if(
-					strtolower(substr($cssPath, 0, 7)) != 'http://'
-					&& strtolower(substr($cssPath, 0, 8)) != 'https://'
-				)
-				{
-					$cssFile = (
-					($p = strpos($cssPath, "?")) > 0
-						? substr($cssPath, 0, $p)
-						: $cssPath
-					);
-
-					if(file_exists($_SERVER["DOCUMENT_ROOT"].$cssFile))
-					{
-						$CSSList[] = $cssPath;
-					}
-				}
-				else
-				{
-					$CSSList[] = $cssPath;
-				}
-			}
-
-			$CSSList = array_unique($CSSList);
-
-			foreach($CSSList as $style)
-			{
-				$result["CSS"][] = \CUtil::getAdditionalFileURL($style);
-			}
-
-			$result['CONTENT'] .= \Bitrix\Main\Page\Asset::getInstance()->getJs();
-		}
-
 		return $result;
 	}
 
 	public function getPostData($postId = 0)
 	{
-		global $USER;
-
 		$result = [];
 
 		$postId = intval($postId);

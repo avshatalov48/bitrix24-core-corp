@@ -950,7 +950,7 @@ class Entity
 		// generate class content
 		$eval = 'class '.$entity_name.'Table extends '.DataManager::class.' {'.PHP_EOL;
 		$eval .= 'public static function getMap() {'.PHP_EOL;
-		$eval .= 'return '.var_export(array('TMP_ID' => array('data_type' => 'integer', 'primary' => true)), true).';'.PHP_EOL;
+		$eval .= 'return '.var_export(['TMP_ID' => ['data_type' => 'integer', 'primary' => true, 'auto_generated' => true]], true).';'.PHP_EOL;
 		$eval .= '}';
 		$eval .= 'public static function getTableName() {'.PHP_EOL;
 		$eval .= 'return '.var_export($query_string, true).';'.PHP_EOL;
@@ -1005,7 +1005,7 @@ class Entity
 		{
 			$namespace = $parameters['namespace'];
 
-			if (!preg_match('/^[a-z0-9\\\\]+$/i', $namespace))
+			if (!preg_match('/^[a-z0-9_\\\\]+$/i', $namespace))
 			{
 				throw new Main\ArgumentException(sprintf(
 					'Invalid namespace name `%s`', $namespace

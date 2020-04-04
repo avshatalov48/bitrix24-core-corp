@@ -139,13 +139,10 @@ BX.UI.Selector.Search.prototype.searchHandler = function(params)
 			event.preventDefault();
 			return true;
 		}
-		else if (keyboardNavigation == 'move')
-		{
-			event.stopPropagation();
-			event.preventDefault();
-			return false;
-		}
-		else if (keyboardNavigation == 'enter')
+		else if (
+			keyboardNavigation == 'move'
+			|| keyboardNavigation == 'enter'
+		)
 		{
 			event.stopPropagation();
 			event.preventDefault();
@@ -516,7 +513,7 @@ BX.UI.Selector.Search.prototype.runSearch = function(params)
 							if (partsItem.hasOwnProperty(k))
 							{
 								partsItem[k] = BX.util.htmlspecialcharsback(partsItem[k]);
-								tmpString = partsItem[k].replace(/(["\(\)\xAB\xBB])/g, ''); // strip quotes and brackets
+								tmpString = partsItem[k].replace(/(["\(\)\xAB\xBB\u201C\u201D])/g, ''); // strip quotes and brackets
 
 								if (tmpString.length != partsItem[k].length)
 								{
@@ -836,6 +833,7 @@ BX.UI.Selector.Search.prototype.runSearch = function(params)
 				{
 					if (this.selectorInstance.getOption('allowSearchNetwork', 'USERS') != 'Y')
 					{
+						this.selectorInstance.closeByEmptySearchResult = true;
 						this.selectorInstance.popups.search.destroy();
 					}
 				}
@@ -1012,6 +1010,36 @@ BX.UI.Selector.Search.prototype.searchRequestCallbackSuccess = function(response
 
 			if (BX.type.isNotEmptyObject(responseData.ENTITIES))
 			{
+				for (var entityType in responseData.ENTITIES)
+				{
+					if (!responseData.ENTITIES.hasOwnProperty(entityType))
+					{
+						continue;
+					}
+
+					if (
+						BX.type.isNotEmptyObject(responseData.ENTITIES[entityType])
+						&& BX.type.isNotEmptyObject(responseData.ENTITIES[entityType].ITEMS)
+					)
+					{
+						for (itemCode in responseData.ENTITIES[entityType].ITEMS)
+						{
+							if (!responseData.ENTITIES[entityType].ITEMS.hasOwnProperty(itemCode))
+							{
+								continue;
+							}
+
+							found = true;
+							break;
+						}
+					}
+
+					if (found)
+					{
+						break;
+					}
+				}
+
 				if (
 					BX.type.isNotEmptyObject(responseData.ENTITIES.USERS)
 					&& BX.type.isNotEmptyObject(responseData.ENTITIES.USERS.ITEMS)
@@ -1024,7 +1052,6 @@ BX.UI.Selector.Search.prototype.searchRequestCallbackSuccess = function(response
 							continue;
 						}
 
-						found = true;
 						this.selectorInstance.ajaxSearchResult.users[searchStringAjax.toLowerCase()].push(itemCode);
 						if (
 							typeof responseData.ENTITIES.USERS.ITEMS[itemCode].isNetwork != 'undefined'
@@ -1074,8 +1101,6 @@ BX.UI.Selector.Search.prototype.searchRequestCallbackSuccess = function(response
 							continue;
 						}
 
-						found = true;
-
 						this.selectorInstance.entities.CRMEMAILUSERS.items[itemCode] = responseData.ENTITIES.CRMEMAILUSERS.ITEMS[itemCode];
 						this.selectorInstance.tmpSearchResult.ajax.push(itemCode);
 					}
@@ -1092,8 +1117,6 @@ BX.UI.Selector.Search.prototype.searchRequestCallbackSuccess = function(response
 						{
 							continue;
 						}
-
-						found = true;
 
 						if (!this.selectorInstance.entities.SONETGROUPS.items.hasOwnProperty(itemCode))
 						{
@@ -1235,7 +1258,6 @@ BX.UI.Selector.Search.prototype.searchRequestCallbackSuccess = function(response
 
 BX.UI.Selector.Search.prototype.searchRequestCallbackFailure = function(data)
 {
-//console.log('failure');
 	this.hideSearchWaiter();
 };
 

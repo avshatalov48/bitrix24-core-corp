@@ -172,11 +172,6 @@ if ($postRight >= 'R'):
 		);
 	}
 	$allOptions[] = array(
-		'enable_mod_zip',
-		Loc::getMessage('LANDING_OPT_ENABLE_MOD_ZIP') . ':',
-		array('checkbox')
-	);
-	$allOptions[] = array(
 		'source_iblocks',
 		Loc::getMessage('LANDING_OPT_SOURCE_IBLOCKS') . ':',
 		array(

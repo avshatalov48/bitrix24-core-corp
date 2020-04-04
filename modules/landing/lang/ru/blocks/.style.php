@@ -5,6 +5,7 @@ $MESS["LANDING_BLOCK_STYLE_TEXT_COLOR"] = "Цвет текста";
 $MESS["LANDING_BLOCK_STYLE_BACKGROUND_COLOR"] = "Цвет фона";
 $MESS["LANDING_BLOCK_STYLE_BACKGROUND_GRADIENT"] = "Цвет фона (градиент)";
 $MESS["LANDING_BLOCK_STYLE_BORDER_COLOR"] = "Цвет рамки";
+$MESS["LANDING_BLOCK_STYLE_BORDER_TOP_COLOR"] = "Цвет верхней рамки";
 $MESS["LANDING_BLOCK_STYLE_FONT_SIZE"] = "Размер шрифта";
 $MESS["LANDING_BLOCK_STYLE_FONT_FAMILY"] = "Шрифт";
 $MESS["LANDING_BLOCK_STYLE_TEXT_WEIGHT"] = "Начертание";
@@ -66,6 +67,8 @@ $MESS["LANDING_BLOCK_STYLE_NAVBAR_COLOR_HOVER"] = "Цвет активных с�
 $MESS["LANDING_BLOCK_STYLE_NAVBAR_COLOR_FIX_MOMENT"] = "Цвет ссылок (при прокрутке)";
 $MESS["LANDING_BLOCK_STYLE_NAVBAR_COLOR_FIX_MOMENT_HOVER"] = "Цвет активных ссылок (при прокрутке)";
 $MESS["LANDING_BLOCK_STYLE_NAVBAR_ALIGN"] = "Выравнивание ссылок";
+$MESS["LANDING_BLOCK_STYLE_NAVBAR_BG"] = "Фон ссылок";
+$MESS["LANDING_BLOCK_STYLE_NAVBAR_BG_HOVER"] = "Фон активных ссылок";
 
 $MESS["LANDING_STYLE_WEIGHT_BOLD"] = "Полужирный";
 //$MESS["LANDING_STYLE_WEIGHT_LIGHT"] = "Тонкий";

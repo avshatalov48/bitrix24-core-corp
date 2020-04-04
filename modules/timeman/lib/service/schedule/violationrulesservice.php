@@ -1,10 +1,10 @@
 <?php
 namespace Bitrix\Timeman\Service\Schedule;
 
+use Bitrix\Main\ORM\Query\Query;
 use Bitrix\Timeman\Form\Schedule\ViolationForm;
 use Bitrix\Timeman\Model\Schedule\Schedule;
 use Bitrix\Timeman\Model\Schedule\Violation\ViolationRules;
-use Bitrix\Timeman\Model\Schedule\Violation\ViolationRulesTable;
 use Bitrix\Timeman\Repository\Schedule\ViolationRulesRepository;
 use Bitrix\Timeman\Service\Agent\WorktimeAgentManager;
 use Bitrix\Timeman\Service\BaseService;
@@ -35,7 +35,7 @@ class ViolationRulesService extends BaseService
 			return (new ViolationRulesServiceResult())->addScheduleNotFoundError();
 		}
 		$violationForm = clone $violationForm;
-		$this->adjustViolationFormFields($violationForm);
+		$this->adjustViolationFormFields($violationForm, $schedule);
 		$violationRules = ViolationRules::create($schedule->getId(), $violationForm, $violationForm->entityCode);
 		$res = $this->violationRulesRepository->save($violationRules);
 		if (!$res->isSuccess())
@@ -77,7 +77,7 @@ class ViolationRulesService extends BaseService
 			return (new ViolationRulesServiceResult())->addScheduleNotFoundError();
 		}
 		$violationForm = clone $violationForm;
-		$this->adjustViolationFormFields($violationForm);
+		$this->adjustViolationFormFields($violationForm, $schedule);
 		$violationRules->edit($violationForm);
 		$res = $this->violationRulesRepository->save($violationRules);
 		if (!$res->isSuccess())
@@ -93,13 +93,35 @@ class ViolationRulesService extends BaseService
 
 	/**
 	 * @param ViolationForm $violationForm
+	 * @param Schedule $schedule
 	 */
-	private function adjustViolationFormFields($violationForm)
+	private function adjustViolationFormFields($violationForm, $schedule)
 	{
 		if (!$violationForm->saveAllViolationFormFields)
 		{
-			$violationForm->resetExtraFields();
+			$violationForm->resetExtraFields($schedule->isShifted(), $schedule->isControlledActionsStartOnly());
 		}
 		$violationForm->adjustViolationSeconds();
+	}
+
+	public function deletePeriodTimeLackAgents($scheduleId)
+	{
+		$rulesList = $this->violationRulesRepository->findAllByScheduleId(
+			$scheduleId,
+			['ID', 'PERIOD_TIME_LACK_AGENT_ID'],
+			Query::filter()
+				->where('PERIOD_TIME_LACK_AGENT_ID', '>', 0)
+		);
+		if ($rulesList->count() === 0)
+		{
+			return new ViolationRulesServiceResult();
+		}
+		$this->worktimeAgentManager->deleteAgentsByIds($rulesList->getPeriodTimeLackAgentIdList());
+		foreach ($rulesList->getAll() as $violationRules)
+		{
+			$violationRules->setPeriodTimeLackAgentId(0);
+		}
+
+		return $this->violationRulesRepository->saveAll($rulesList, ['PERIOD_TIME_LACK_AGENT_ID' => 0]);
 	}
 }

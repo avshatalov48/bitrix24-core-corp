@@ -77,6 +77,13 @@ class StorageController extends Controller
 				'method' => array('POST'),
 				'check_csrf_token' => false,
 			),
+			'disconnect' => array(
+				'method' => array('POST', 'GET'),
+				'check_csrf_token' => false,
+			),
+			'updateDiskUsage' => array(
+				'method' => array('POST'),
+			),
 			'snapshot' => array(
 				'method' => array('POST', 'GET'),
 				'check_csrf_token' => true,
@@ -850,8 +857,36 @@ class StorageController extends Controller
 		return false;
 	}
 
+	/**
+	 * Fake action to track BDisk disconnection.
+	 */
+	protected function processActionDisconnect()
+	{
+		$information = new Bitrix24Disk\Information($this->getUser());
+		$information
+			->setUninstallationDatetime(time())
+			->setDiskSpaceUsage(0)
+		;
+	}
+
+	protected function processActionUpdateDiskUsage()
+	{
+		$information = new Bitrix24Disk\Information($this->getUser());
+		$information->setDiskSpaceUsage((int)$this->request->getPost('size'));
+		if (!$information->hasInstallationDatetime())
+		{
+			$information->setInstallationDatetime(time());
+		}
+	}
+
 	protected function processActionInitialize()
 	{
+		$information = new Bitrix24Disk\Information($this->getUser());
+		if (!$information->hasInstallationDatetime())
+		{
+			$information->setInstallationDatetime(time());
+		}
+
 		$this->enableIgnoreQuotaError();
 		$userStorageId = $this->getUserStorageId();
 		$storage = $this->getStorageObject();

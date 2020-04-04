@@ -55,7 +55,7 @@ class ScheduleUserTable extends Main\ORM\Data\DataManager
 				Join::on('this.USER_ID', 'ref.ID')))
 				->configureJoinType('inner')
 			,
-			(new Fields\IntegerField('STATUS'))
+			(new Fields\IntegerField('STATUS')) // rename it back to excluded/included
 			,
 		];
 	}

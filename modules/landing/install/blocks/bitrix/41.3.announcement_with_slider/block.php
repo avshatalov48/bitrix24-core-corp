@@ -15,8 +15,8 @@
 							</div>
 
 							<div class="media-body text-uppercase">
-								<div class="landing-block-node-date-title g-mb-5 g-font-size-14 g-color-white-opacity-0_5"><span
-											style="font-weight: bold;">When</span></div>
+								<div class="landing-block-node-date-title g-mb-5 g-font-size-14 g-color-white-opacity-0_5">
+									<span style="font-weight: bold;">When</span></div>
 								<h3 class="landing-block-node-date-text h3 text-uppercase g-font-size-15 g-color-white mb-0">
 									18:30, 12 Jul, 2018</h3>
 							</div>

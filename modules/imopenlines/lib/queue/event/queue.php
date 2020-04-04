@@ -165,6 +165,7 @@ abstract class Queue
 							'CONFIG_ID' => $this->configLine['ID'],
 							'<STATUS' => Session::STATUS_ANSWER,
 							'!=OPERATOR_ID' => $userId,
+							'!=OPERATOR_FROM_CRM' => 'Y'
 						]
 					]
 				);
@@ -288,7 +289,8 @@ abstract class Queue
 							],
 							'filter' => [
 								'SESSION.CONFIG_ID' => $this->configLine['ID'],
-								'<SESSION.STATUS' => Session::STATUS_ANSWER
+								'<SESSION.STATUS' => Session::STATUS_ANSWER,
+								'!=SESSION.OPERATOR_FROM_CRM' => 'Y'
 							]
 						]
 					);

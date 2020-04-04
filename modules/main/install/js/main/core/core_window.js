@@ -1814,10 +1814,14 @@ BX.CDialog.prototype.Show = function(bNotRegister)
 
 		this.__adjustSize();
 
+		BX.removeCustomEvent(this, 'onWindowResize', BX.proxy(this.__adjustSize, this));
 		BX.addCustomEvent(this, 'onWindowResize', BX.proxy(this.__adjustSize, this));
 
 		if (this.PARAMS.resizable && (this.PARAMS.content_url || this.PARAMS.resize_id))
-			BX.addCustomEvent(this, 'onWindowResizeFinished', BX.delegate(this.__onResizeFinished, this));
+		{
+			BX.removeCustomEvent(this, 'onWindowResizeFinished', BX.proxy(this.__onResizeFinished, this));
+			BX.addCustomEvent(this, 'onWindowResizeFinished', BX.proxy(this.__onResizeFinished, this));
+		}
 	}
 };
 

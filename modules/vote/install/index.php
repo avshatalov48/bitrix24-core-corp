@@ -190,6 +190,11 @@ Class vote extends CModule
 			DeleteDirFilesEx("/bitrix/images/vote/");//images
 			DeleteDirFilesEx("/bitrix/js/vote/");//js
 			DeleteDirFilesEx("/bitrix/tools/vote");
+			$children = (new \Bitrix\Main\IO\Directory($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/vote/install/components/bitrix/"))->getChildren();
+			foreach ($children as $componentDir)
+			{
+				DeleteDirFilesEx("/bitrix/component/bitrix/".$componentDir->getName());
+			}
 		}
 		return true;
 	}

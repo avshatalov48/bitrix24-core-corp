@@ -3,12 +3,12 @@
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 
-Loc::loadMessages(__FILE__);
-
 if(class_exists('translate'))
 {
 	return;
 }
+
+Loc::loadMessages(__FILE__);
 
 class translate extends \CModule
 {
@@ -38,54 +38,132 @@ class translate extends \CModule
 		$this->MODULE_DESCRIPTION = Loc::getMessage('TRANS_MODULE_DESCRIPTION');
 	}
 
+	/**
+	 * @return bool
+	 */
 	public function InstallDB()
 	{
+		global $APPLICATION, $DB;
+
+		if (!$DB->query("SELECT 'x' FROM b_translate_phrase WHERE 1=0", true))
+		{
+			$errors = $DB->runSqlBatch(sprintf(
+				'%s/bitrix/modules/%s/install/db/%s/install.sql',
+				$_SERVER['DOCUMENT_ROOT'],
+				strtolower($this->MODULE_ID),
+				strtolower($DB->type)
+			));
+			if($errors !== false)
+			{
+				$APPLICATION->ThrowException(implode("", $errors));
+
+				return false;
+			}
+
+			$errors = $DB->runSqlBatch(sprintf(
+				'%s/bitrix/modules/%s/install/db/%s/install_ft.sql',
+				$_SERVER['DOCUMENT_ROOT'],
+				strtolower($this->MODULE_ID),
+				strtolower($DB->type)
+			));
+			if($errors !== false)
+			{
+				$APPLICATION->ThrowException(implode("<br>", $errors));
+
+				return false;
+			}
+		}
+
 		Main\ModuleManager::registerModule($this->MODULE_ID);
 
-		$eventManager = Main\EventManager::getInstance();
-		$eventManager->registerEventHandlerCompatible('main', 'OnPanelCreate', $this->MODULE_ID, 'CTranslateEventHandlers', 'TranslatOnPanelCreate');
+		$this->InstallEvents();
 
 		return true;
 	}
 
-	public function UnInstallDB()
+	/**
+	 * @return bool
+	 */
+	public function InstallEvents()
 	{
+		$eventManager = Main\EventManager::getInstance();
+		$eventManager->registerEventHandlerCompatible('main', 'OnPanelCreate', $this->MODULE_ID, '\\Bitrix\\Translate\\Ui\\Panel', 'onPanelCreate');
+		$eventManager->registerEventHandlerCompatible('perfmon', 'OnGetTableSchema', $this->MODULE_ID, 'translate', 'onGetTableSchema');
+
+		return true;
+	}
+
+	/**
+	 * @param array $params
+	 * @return bool
+	 */
+	public function UnInstallDB($params = array())
+	{
+		global $APPLICATION, $DB;
+
+		if (!isset($params['savedata']) || $params['savedata'] !== true)
+		{
+			$errors = $DB->runSqlBatch(sprintf(
+				'%s/bitrix/modules/%s/install/db/%s/uninstall.sql',
+				$_SERVER['DOCUMENT_ROOT'],
+				strtolower($this->MODULE_ID),
+				strtolower($DB->type)
+			));
+			if ($errors !== false)
+			{
+				$APPLICATION->ThrowException(implode("<br>", $errors));
+
+				return false;
+			}
+		}
+
 		\COption::RemoveOption($this->MODULE_ID);
 
-		$eventManager = Main\EventManager::getInstance();
-		$eventManager->unRegisterEventHandler('main', 'OnPanelCreate', $this->MODULE_ID, 'CTranslateEventHandlers', 'TranslatOnPanelCreate');
+		$this->UnInstallEvents();
 
 		Main\ModuleManager::unRegisterModule($this->MODULE_ID);
 
 		return true;
 	}
 
-	public function InstallEvents()
-	{
-		return true;
-	}
-
+	/**
+	 * @return bool
+	 */
 	public function UnInstallEvents()
 	{
+		$eventManager = Main\EventManager::getInstance();
+		$eventManager->unRegisterEventHandler('main', 'OnPanelCreate', $this->MODULE_ID, '\\Bitrix\\Translate\\Ui\\Panel', 'onPanelCreate');
+		$eventManager->unRegisterEventHandler('perfmon', 'OnGetTableSchema', $this->MODULE_ID, 'translate', 'getTableSchema');
+
 		return true;
 	}
 
+	/**
+	 * @return bool
+	 */
 	public function InstallFiles()
 	{
 		if ($_ENV['COMPUTERNAME'] != 'BX')
 		{
 			\CopyDirFiles($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/translate/install/admin', $_SERVER['DOCUMENT_ROOT'].'/bitrix/admin', true, true);
+			\CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/translate/install/components", $_SERVER["DOCUMENT_ROOT"]."/bitrix/components", true, true);
 			\CopyDirFiles($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/translate/install/images', $_SERVER['DOCUMENT_ROOT'].'/bitrix/images/translate', true, true);
+			\CopyDirFiles($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/translate/install/js', $_SERVER['DOCUMENT_ROOT'].'/bitrix/js', true, true);
 			\CopyDirFiles($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/translate/install/themes', $_SERVER['DOCUMENT_ROOT'].'/bitrix/themes', true, true);
 		}
 
 		return true;
 	}
 
+	/**
+	 * @return bool
+	 */
 	public function UnInstallFiles()
 	{
 		\DeleteDirFiles($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/translate/install/admin', $_SERVER['DOCUMENT_ROOT'].'/bitrix/admin');
+		\DeleteDirFiles($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/translate/install/components', $_SERVER["DOCUMENT_ROOT"].'/bitrix/components/bitrix');
 		\DeleteDirFilesEx('/bitrix/images/translate/');
+		\DeleteDirFilesEx('/bitrix/js/translate/');
 		\DeleteDirFiles($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/translate/install/themes/.default/', $_SERVER["DOCUMENT_ROOT"].'/bitrix/themes/.default');//css
 		\DeleteDirFilesEx('/bitrix/themes/.default/start_menu/translate/');//start_menu
 		\DeleteDirFilesEx('/bitrix/themes/.default/icons/translate/');//icons
@@ -93,6 +171,9 @@ class translate extends \CModule
 		return true;
 	}
 
+	/**
+	 * @return void
+	 */
 	public function DoInstall()
 	{
 		global $APPLICATION;
@@ -101,11 +182,66 @@ class translate extends \CModule
 		$APPLICATION->IncludeAdminFile(Loc::getMessage('TRANSLATE_INSTALL_TITLE'), $_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/translate/install/step.php');
 	}
 
+	/**
+	 * @return void
+	 */
 	public function DoUninstall()
 	{
 		global $APPLICATION;
-		$this->UnInstallFiles();
-		$this->UnInstallDB();
-		$APPLICATION->IncludeAdminFile(Loc::getMessage('TRANSLATE_UNINSTALL_TITLE'), $_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/translate/install/unstep.php');
+
+		$step = (int)$_REQUEST['step'];
+
+		if ($step < 2)
+		{
+			$APPLICATION->IncludeAdminFile(Loc::getMessage('TRANSLATE_UNINSTALL_TITLE'), $_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/translate/install/unstep1.php');
+		}
+		elseif ($step == 2)
+		{
+			$this->UnInstallFiles();
+
+			$this->UnInstallDB(array(
+				'savedata' => ($_REQUEST['savedata'] === 'Y'),
+			));
+
+			$APPLICATION->IncludeAdminFile(Loc::getMessage('TRANSLATE_UNINSTALL_TITLE'), $_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/translate/install/unstep2.php');
+		}
+	}
+
+	/**
+	 * Event handler 'perfmon::OnGetTableSchema'.
+	 * @see \CPerfomanceSchema::Init
+	 * @return array
+	 */
+	function OnGetTableSchema()
+	{
+		return array(
+			'translate' => array(
+				'b_translate_path' => array(
+					'ID' => array(
+						'b_translate_file' => 'PATH_ID',
+						'b_translate_phrase' => 'PATH_ID',
+						'b_translate_diff' => 'PATH_ID',
+						'b_translate_path' => 'PARENT_ID',
+					),
+				),
+				'b_translate_file' => array(
+					'ID' => array(
+						'b_translate_phrase' => 'FILE_ID',
+						'b_translate_diff' => 'FILE_ID',
+					),
+					'LANG_ID' => array(
+						'b_language' => 'LID',
+					),
+				),
+			),
+			'main' => array(
+				'b_language' => array(
+					'LID' => array(
+						'b_translate_phrase' => 'LANG_ID',
+						'b_translate_file' => 'LANG_ID',
+					)
+				),
+			),
+		);
 	}
 }

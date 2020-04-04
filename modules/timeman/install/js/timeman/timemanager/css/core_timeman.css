@@ -355,7 +355,7 @@ a.tm-report-popup-user-name-log:hover{text-decoration: underline;}
 .tm-report-popup-desc-templates-arrow { display: inline-block; vertical-align: middle; width: 12px; height: 3px; background: url(../images/timeman-sprite.2.1.png) no-repeat -76px -4px; }
 .tm-report-popup-desc-templates:hover .tm-report-popup-desc-templates-label { border-color: #808080; }
 .tm-report-popup-desc-text { }
-.tm-report-popup-desc-textarea { width: 645px; height: 105px; resize: none; padding: 0; background: #fff;  border: 1px solid #c2c2c2; color: #000;}
+.tm-report-popup-desc-textarea { width: 100%; height: 105px; resize: none; padding: 0; background: #fff;  border: 1px solid #c2c2c2; color: #000;}
 
 .tm-report-popup-inlude-tasks { margin:  10px 0 0 5px; position: relative;}
 .tm-popup-tasks-empty .tm-report-popup-inlude-tasks { display: none; }

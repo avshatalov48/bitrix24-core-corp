@@ -21,7 +21,7 @@ return array(
 		'.landing-block-node-card-bgimg' => array(
 			'name' => Loc::getMessage('LANDING_BLOCK_37.3.TWO_COLS_BLOCKS_CAROUSEL_NODES_LANDINGBLOCKNODECARDBGIMG'),
 			'type' => 'img',
-			'dimensions' => array('width' => 800, 'height' => 496),
+			'dimensions' => array('height' => 1080),
 		),
 		'.landing-block-node-card-title' => array(
 			'name' => Loc::getMessage('LANDING_BLOCK_37.3.TWO_COLS_BLOCKS_CAROUSEL_NODES_LANDINGBLOCKNODECARD_TITLE'),

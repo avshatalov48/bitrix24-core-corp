@@ -747,6 +747,7 @@ BX.SocialnetworkUISelector = {
 
 		selectorInstance.entityTypes.GROUPS = {
 			options: {
+				context: (BX.type.isNotEmptyString(selectorInstance.getOption('context')) ? selectorInstance.getOption('context') : false),
 				enableAll: (selectorInstance.getOption('enableAll') == 'Y' ? 'Y' : 'N'),
 				enableEmpty: (selectorInstance.getOption('enableEmpty') == 'Y' ? 'Y' : 'N'),
 				enableUserManager: (selectorInstance.getOption('enableUserManager') == 'Y' ? 'Y' : 'N')
@@ -766,8 +767,16 @@ BX.SocialnetworkUISelector = {
 					allowSearchSelf: (selectorInstance.getOption('allowSearchSelf') == 'N' ? 'N' : 'Y'), // obAllowSearchSelf,
 					allowSearchCrmEmailUsers: (selectorInstance.getOption('allowSearchCrmEmailUsers') == 'Y' ? 'Y' : 'N'), // allowSearchCrmEmailUsers
 					showVacations: (selectorInstance.getOption('showVacations') == 'Y' ? 'Y' : 'N'), // showVacations
+					onlyWithEmail: (selectorInstance.getOption('onlyWithEmail') == 'Y' ? 'Y' : 'N')
 				}
 			};
+		}
+
+		if (
+			selectorInstance.getOption('enableUsers') != 'N'
+			|| selectorInstance.getOption('enableEmailUsers') != 'N'
+		)
+		{
 			selectorInstance.entityTypes.EMAILUSERS = {
 				options: {
 					allowAdd: (
@@ -781,15 +790,19 @@ BX.SocialnetworkUISelector = {
 					addTab: (selectorInstance.getOption('allowSearchEmailUsers') == 'Y' ? 'Y' : 'N'), // allowSearchEmailUsers / add tab
 				}
 			};
-			if (selectorInstance.getOption('allowSearchCrmEmailUsers') == 'Y')
-			{
-				selectorInstance.entityTypes.CRMEMAILUSERS = {
-					options: {
-						addTab: 'Y',
-						allowSearchCrmEmailUsers: (selectorInstance.getOption('allowSearchCrmEmailUsers') == 'Y' ? 'Y' : 'N'), // allowSearchCrmEmailUsers
-					}
-				};
-			}
+		}
+
+		if (
+			selectorInstance.getOption('enableUsers') != 'N'
+			&& selectorInstance.getOption('allowSearchCrmEmailUsers') == 'Y'
+		)
+		{
+			selectorInstance.entityTypes.CRMEMAILUSERS = {
+				options: {
+					addTab: 'Y',
+					allowSearchCrmEmailUsers: (selectorInstance.getOption('allowSearchCrmEmailUsers') == 'Y' ? 'Y' : 'N'), // allowSearchCrmEmailUsers
+				}
+			};
 		}
 
 		if (selectorInstance.getOption('enableSonetgroups') == 'Y')
@@ -798,9 +811,9 @@ BX.SocialnetworkUISelector = {
 				options: {
 					allowAdd: (selectorInstance.getOption('allowAddSocNetGroup') == 'Y' ? 'Y' : 'N'), // allowAddSocNetGroup
 					enableProjects: (selectorInstance.getOption('enableProjects') == 'Y' ? 'Y' : 'N'), // enableProjects
-					searchFeatures: selectorInstance.getOption('allowSonetGroupsAjaxSearchFeatures'), // allowSonetGroupsAjaxSearchFeatures
 					siteId: selectorInstance.getOption('socNetGroupsSiteId'),
-					landing: (selectorInstance.getOption('landing') == 'Y' ? 'Y' : 'N')
+					landing: (selectorInstance.getOption('landing') == 'Y' ? 'Y' : 'N'),
+					feature: selectorInstance.getOption('sonetGroupsFeature')
 				}
 			};
 		}

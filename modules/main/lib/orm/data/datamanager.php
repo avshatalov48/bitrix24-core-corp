@@ -558,20 +558,15 @@ abstract class DataManager
 	 */
 	protected static function replaceFieldName($data = array())
 	{
+		$newData = [];
 		$entity = static::getEntity();
+
 		foreach ($data as $fieldName => $value)
 		{
-			/** @var ScalarField $field */
-			$field = $entity->getField($fieldName);
-			$columnName = $field->getColumnName();
-			if($columnName != $fieldName)
-			{
-				$data[$columnName] = $data[$fieldName];
-				unset($data[$fieldName]);
-			}
+			$newData[$entity->getField($fieldName)->getColumnName()] = $value;
 		}
 
-		return $data;
+		return $newData;
 	}
 
 	/**
@@ -1217,7 +1212,7 @@ abstract class DataManager
 
 		// check primary
 		static::normalizePrimary(
-			$primary, isset($fields["fields"]) && is_array($data["fields"]) ? $data["fields"] : $data
+			$primary, isset($data["fields"]) && is_array($data["fields"]) ? $data["fields"] : $data
 		);
 		static::validatePrimary($primary);
 

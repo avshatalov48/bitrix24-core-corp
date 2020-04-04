@@ -244,3 +244,41 @@ $MESS["MAIN_DEFAULT_LANGUAGE_AM_VALUE"] = "am";
 $MESS["MAIN_DEFAULT_LANGUAGE_PM_VALUE"] = "pm";
 $MESS["MAIN_DEFAULT_LANGUAGE_NUMBER_THOUSANDS_SEPARATOR"] = " ";
 $MESS["MAIN_DEFAULT_LANGUAGE_NUMBER_DECIMAL_SEPARATOR"] = ",";
+$MESS["MAIN_INSTALL_EVENT_TYPE_NOTIFICATION"] = "Оповещение журнала событий";
+$MESS["MAIN_INSTALL_EVENT_TYPE_NOTIFICATION_DESC"] = "#EMAIL# - Email получателя
+#ADDITIONAL_TEXT# - Дополнительный текст действия
+#NAME# - Название оповещения
+#AUDIT_TYPE_ID# - Тип события
+#ITEM_ID# - Объект
+#USER_ID# - Пользователь
+#REMOTE_ADDR# - IP-адрес
+#USER_AGENT# - Браузер
+#REQUEST_URI# - Страница
+#EVENT_COUNT# - Количество записей";
+$MESS["MAIN_INSTALL_EVENT_TYPE_NOTIFICATION_DESC_SMS"] = "#PHONE_NUMBER# - Номер телефона получателя
+#ADDITIONAL_TEXT# - Дополнительный текст действия
+#NAME# - Название оповещения
+#AUDIT_TYPE_ID# - Тип события
+#ITEM_ID# - Объект
+#USER_ID# - Пользователь
+#REMOTE_ADDR# - IP-адрес
+#USER_AGENT# - Браузер
+#REQUEST_URI# - Страница
+#EVENT_COUNT# - Количество записей";
+$MESS["MAIN_EVENT_MESS_NOTIFICATION"] = "Оповещение журнала событий: #NAME#";
+$MESS["MAIN_EVENT_MESS_NOTIFICATION_TEXT"] = "Зафиксированы события в журнале, соответствующие параметрам оповещения:
+
+Тип события: #AUDIT_TYPE_ID#
+Объект: #ITEM_ID#
+Пользователь: #USER_ID# 
+IP-адрес: #REMOTE_ADDR#
+Браузер: #USER_AGENT#
+Страница: #REQUEST_URI# 
+
+Количество записей: #EVENT_COUNT# 
+
+#ADDITIONAL_TEXT#
+
+Перейти в журнал событий:
+http://#SERVER_NAME#/bitrix/admin/event_log.php?set_filter=Y&find_audit_type_id=#AUDIT_TYPE_ID#";
+$MESS["main_install_sms_template_notification_mess"] = "#NAME#: #ADDITIONAL_TEXT# (событий: #EVENT_COUNT#)";

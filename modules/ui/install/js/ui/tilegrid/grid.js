@@ -560,7 +560,7 @@ BX.TileGrid.Grid.prototype =
 
 		this.items.forEach(function(item)
 		{
-			item.removeNode();
+			item.removeNode(false);
 		}, this);
 
 		this.items = [];

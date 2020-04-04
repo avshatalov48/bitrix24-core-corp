@@ -19,7 +19,10 @@ class GoogleApiBatch
 	private $userId = 0,
 		$gApiCalendarId = '';
 
-
+	/**
+	 * GoogleApiBatch constructor.
+	 * @param $sectionId
+	 */
 	public function __construct($sectionId)
 	{
 		$this->sectionId = $sectionId;
@@ -62,6 +65,10 @@ class GoogleApiBatch
 		return $res;
 	}
 
+	/**
+	 * @param $events
+	 * @return bool
+	 */
 	private function syncEvents($events)
 	{
 		$params['method'] = 'POST';
@@ -96,6 +103,10 @@ class GoogleApiBatch
 		return self::NEXT;
 	}
 
+	/**
+	 * @return bool
+	 * @throws \Bitrix\Main\ObjectException
+	 */
 	private function syncInstances()
 	{
 		$batch = [];
@@ -169,12 +180,19 @@ class GoogleApiBatch
 		return $res;
 	}
 
+	/**
+	 * @return int
+	 * @throws \Bitrix\Main\ObjectException
+	 */
 	private function getDateSync()
 	{
 		$now = new Type\Date();
 		return $now->add('-2 months')->getTimestamp();
 	}
 
+	/**
+	 * @return array
+	 */
 	public function getEvents()
 	{
 		$parameters = [
@@ -196,6 +214,9 @@ class GoogleApiBatch
 		return $this->getDbEvents($parameters);
 	}
 
+	/**
+	 * @return array
+	 */
 	private function getInstances()
 	{
 		$parameters = [
@@ -217,6 +238,13 @@ class GoogleApiBatch
 		return $this->getDbEvents($parameters);
 	}
 
+	/**
+	 * @param $parameters
+	 * @return array
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
 	private function getDbEvents($parameters)
 	{
 		$result = [];
@@ -248,6 +276,13 @@ class GoogleApiBatch
 		return true;
 	}
 
+	/**
+	 * @param $eventIds
+	 * @return array
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
 	public function getEventsById($eventIds)
 	{
 		$parameters = [
@@ -259,16 +294,31 @@ class GoogleApiBatch
 		return $this->getDbEvents($parameters);
 	}
 
+	/**
+	 * @param bool $timeZone
+	 * @return \DateTimeZone
+	 */
 	private function prepareTimezone ($timeZone = false)
 	{
 		return !empty($timeZone) && $timeZone !== false ? new \DateTimeZone($timeZone) : new \DateTimeZone("UTC");
 	}
 
+	/**
+	 * @param $sectionId
+	 * @return array|false
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
 	private function getSectionById($sectionId)
 	{
 		return Internals\SectionTable::getById($sectionId)->fetch();
 	}
 
+	/**
+	 * @param $event
+	 * @return string
+	 */
 	private function getExDate($event)
 	{
 		$excludeDates = [];
@@ -285,6 +335,13 @@ class GoogleApiBatch
 		return implode(';', $result);
 	}
 
+	/**
+	 * @param $eventId
+	 * @return array
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
 	private function getInstanceByRecurrenceId($eventId)
 	{
 		$instances =[];
@@ -305,11 +362,19 @@ class GoogleApiBatch
 		return $instances;
 	}
 
+	/**
+	 * @param $event
+	 */
 	private function prepareEvent(&$event)
 	{
 		$event['RRULE'] = CCalendarEvent::ParseRRULE($event['RRULE']);
 	}
 
+	/**
+	 * @param $event
+	 * @return mixed
+	 * @throws \Bitrix\Main\ObjectException
+	 */
 	private function updateEventFields($event)
 	{
 		\CTimeZone::Disable();

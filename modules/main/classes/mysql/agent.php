@@ -181,12 +181,21 @@ class CAgent extends CAllAgent
 			{
 				continue;
 			}
-			elseif(strlen($eval_result)<=0)
+			elseif($eval_result == '')
 			{
 				$strSql = "DELETE FROM b_agent WHERE ID=".$arAgent["ID"];
 			}
 			else
 			{
+				if ($logFunction && function_exists('token_get_all'))
+				{
+					if(count(token_get_all("<?php ".$eval_result)) < 3)
+					{
+						//probably there is an error in the result
+						$logFunction($arAgent, "not_callable", $eval_result, $e);
+					}
+				}
+
 				$strSql = "
 					UPDATE b_agent SET
 						NAME='".$DB->ForSQL($eval_result)."',

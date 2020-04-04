@@ -7,6 +7,8 @@
 /** @global CUser $USER */
 /** @global CMain $APPLICATION */
 
+$targetHtml = '';
+
 if (strlen($arResult["FatalError"]) > 0)
 {
 	?><span class='errortext'><?=$arResult["FatalError"]?></span><br /><br /><?
@@ -485,6 +487,13 @@ else
 
 				$post_item_style = (!$arParams["IS_LIST"] && $_REQUEST["show_full"] == "Y" ? "post-item-post-block-full" : "post-item-post-block post-item-contentview");
 
+				$postMoreBlockStyle = (
+					isset($arParams['TARGET'])
+					&& $arParams['TARGET'] == 'postContent'
+						? 'style="display: none;"'
+						: ''
+				);
+
 				if (in_array($arEvent["EVENT"]["EVENT_ID"], array("photo", "photo_photo")))
 				{
 					include($_SERVER["DOCUMENT_ROOT"]."/bitrix/components/bitrix/mobile.socialnetwork.log.entry/templates/.default/photo.php");
@@ -507,6 +516,16 @@ else
 						);
 
 						?><div class="<?=$news_item_style?>"<?=$strOnClick?> id="post_block_check_cont_<?=$arEvent["EVENT"]["ID"]?>" bx-content-view-xml-id="<?=(!empty($arResult["CONTENT_ID"]) ? htmlspecialcharsBx($arResult["CONTENT_ID"]) : "")?>"><?
+
+							if (
+								isset($arParams['TARGET'])
+								&& $arParams['TARGET'] == 'postContent'
+							)
+							{
+								$targetHtml = '';
+								ob_start();
+							}
+
 							?><div class="post-item-full-content post-item-copytext lenta-info-block <?=(in_array($arEvent["EVENT"]["EVENT_ID"], array("intranet_new_user", "bitrix24_new_user")) ? "lenta-block-new-employee" : "info-block-important")?>"><?
 								if (in_array($arEvent["EVENT"]["EVENT_ID"], array("intranet_new_user", "bitrix24_new_user")))
 								{
@@ -531,7 +550,16 @@ else
 								}
 							?></div><?
 
-							?><div class="post-more-block" id="post_more_block_<?=$arEvent["EVENT"]["ID"]?>"></div><?
+							?><div class="post-more-block" id="post_more_block_<?=$arEvent["EVENT"]["ID"]?>"<?=$postMoreBlockStyle?>></div><?
+
+							if (
+								isset($arParams['TARGET'])
+								&& $arParams['TARGET'] == 'postContent'
+							)
+							{
+								$targetHtml = ob_get_contents();;
+							}
+
 						?></div><?
 					}
 					elseif (in_array($arEvent["EVENT"]["EVENT_ID"], array("files", "commondocs")))
@@ -545,12 +573,34 @@ else
 					elseif (in_array($arEvent["EVENT"]["EVENT_ID"], array("tasks", "timeman_entry", "report", "calendar", "crm_activity_add")))
 					{
 						?><div id="post_block_check_cont_<?=intval($arEvent["EVENT"]["ID"])?>" class="lenta-info-block-wrapp-full post-item-block-inner post-item-contentview" bx-content-view-xml-id="<?=(!empty($arResult["CONTENT_ID"]) ? htmlspecialcharsBx($arResult["CONTENT_ID"]) : "")?>"<?=$strOnClick?>><?
-							?><?=$arEvent["EVENT_FORMATTED"]["MESSAGE"]?><?
+
+							if (
+								isset($arParams['TARGET'])
+								&& $arParams['TARGET'] == 'postContent'
+							)
+							{
+								$targetHtml = $arEvent["EVENT_FORMATTED"]["MESSAGE"];
+							}
+							else
+							{
+								?><?=$arEvent["EVENT_FORMATTED"]["MESSAGE"]?><?
+							}
+
 						?></div><?
 					}
 					elseif (strlen($arEvent["EVENT_FORMATTED"]["MESSAGE"]) > 0) // all other events
 					{
 						?><div class="<?=$post_item_style?>"<?=$strOnClick?> id="post_block_check_cont_<?=$arEvent["EVENT"]["ID"]?>" bx-content-view-xml-id="<?=(!empty($arResult["CONTENT_ID"]) ? htmlspecialcharsBx($arResult["CONTENT_ID"]) : "")?>"><?
+
+							if (
+								isset($arParams['TARGET'])
+								&& $arParams['TARGET'] == 'postContent'
+							)
+							{
+								$targetHtml = '';
+								ob_start();
+							}
+
 							if (
 								array_key_exists("TITLE_24_2", $arEvent["EVENT_FORMATTED"])
 								&& strlen($arEvent["EVENT_FORMATTED"]["TITLE_24_2"]) > 0
@@ -558,6 +608,7 @@ else
 							{
 								?><div class="post-text-title" id="post_text_title_<?=$arEvent["EVENT"]["ID"]?>"><?=$arEvent["EVENT_FORMATTED"]["TITLE_24_2"]?></div><?
 							}
+
 							?><div class="post-item-text post-item-copytext" id="post_block_check_<?=$arEvent["EVENT"]["ID"]?>"><?=$arEvent["EVENT_FORMATTED"]["MESSAGE"]?></div><?
 
 							if (
@@ -597,7 +648,16 @@ else
 								?></div><?
 							}
 
-							?><div class="post-more-block" id="post_more_block_<?=$arEvent["EVENT"]["ID"]?>"></div><?
+							?><div class="post-more-block" id="post_more_block_<?=$arEvent["EVENT"]["ID"]?>"<?=$postMoreBlockStyle?>></div><?
+
+							if (
+								isset($arParams['TARGET'])
+								&& $arParams['TARGET'] == 'postContent'
+							)
+							{
+								$targetHtml = ob_get_contents();;
+							}
+
 						?></div><?
 					}
 				}
@@ -611,6 +671,10 @@ else
 
 				if (
 					$arParams["SHOW_RATING"] == "Y"
+					&& (
+						!isset($arParams['TARGET'])
+						|| !in_array($arParams["TARGET"], [ 'postContent' ])
+					)
 					&& !empty($voteId)
 				)
 				{
@@ -685,7 +749,13 @@ else
 				}
 			?></script><?
 
-			if (!$arParams["IS_LIST"])
+			if (
+				!$arParams["IS_LIST"]
+				&& (
+					!isset($arParams['TARGET'])
+					|| !in_array($arParams["TARGET"], [ 'postContent' ])
+				)
+			)
 			{
 				$records = $arResult["RECORDS"];
 
@@ -886,5 +956,11 @@ else
 
 		?></div><? // post-wrap / lenta-item
 	}
+}
+
+if (strlen($targetHtml) > 0)
+{
+	$APPLICATION->RestartBuffer();
+	echo $targetHtml;
 }
 ?>

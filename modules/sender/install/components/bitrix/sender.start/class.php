@@ -56,11 +56,14 @@ class SenderStartComponent extends CBitrixComponent
 			Message\iBase::CODE_SMS => 'ui-icon-service-sms',
 			Message\iBase::CODE_IM => 'ui-icon-service-messenger',
 			Message\iBase::CODE_CALL => 'ui-icon-service-infocall',
+			Message\iBase::CODE_AUDIO_CALL => 'ui-icon-service-audio-infocall',
 			Message\iBase::CODE_WEB_HOOK => '',
 			Integration\Seo\Ads\MessageBase::CODE_ADS_FB => 'ui-icon-service-fb',
 			Integration\Seo\Ads\MessageBase::CODE_ADS_YA => 'ui-icon-service-ya-direct',
 			Integration\Seo\Ads\MessageBase::CODE_ADS_GA => 'ui-icon-service-google-ads',
 			Integration\Seo\Ads\MessageBase::CODE_ADS_VK => 'ui-icon-service-vk',
+			Integration\Seo\Ads\MessageBase::CODE_ADS_LOOKALIKE_FB => 'ui-icon-service-fb',
+			Integration\Seo\Ads\MessageBase::CODE_ADS_LOOKALIKE_VK => 'ui-icon-service-vk',
 			Integration\Crm\ReturnCustomer\MessageBase::CODE_RC_DEAL => 'ui-icon-service-deal',
 			Integration\Crm\ReturnCustomer\MessageBase::CODE_RC_LEAD => 'ui-icon-service-lead',
 		];
@@ -125,6 +128,7 @@ class SenderStartComponent extends CBitrixComponent
 			Message\iBase::CODE_SMS,
 			Message\iBase::CODE_IM,
 			Message\iBase::CODE_CALL,
+			Message\iBase::CODE_AUDIO_CALL,
 			Message\iBase::CODE_WEB_HOOK
 		);
 
@@ -226,8 +230,6 @@ class SenderStartComponent extends CBitrixComponent
 
 			$this->arResult['MESSAGES'][$section] = $data;
 		}
-
-		Security\Agreement::requestFromCurrentUser();
 		Integration\Bitrix24\Service::initLicensePopup();
 
 		return true;

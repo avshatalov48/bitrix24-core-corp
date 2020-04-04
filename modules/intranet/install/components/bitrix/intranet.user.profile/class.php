@@ -100,7 +100,7 @@ class CIntranetUserProfileComponent extends UserProfile
 			}
 		}
 
-		$this->arResult["FormConfig"] = $this->getFormInstance()->getConfig($this->arParams["EDITABLE_FIELDS"]);
+		$this->arResult["FormConfig"] = $this->getFormInstance()->getConfig($this->arResult["SettingsFieldsForConfig"]);
 		$this->arResult["FormData"] = $this->getFormInstance()->getData($this->arResult);
 
 		$this->arResult["Gratitudes"] = $this->getGratsInstance()->getStub();
@@ -128,6 +128,10 @@ class CIntranetUserProfileComponent extends UserProfile
 		{
 			$this->arResult["IS_CURRENT_USER_INTEGRATOR"] = \Bitrix\Bitrix24\Integrator::isIntegrator($USER->GetID());
 		}
+
+		$this->processShowYear();
+
+		$this->arResult["DISK_INFO"] = $this->getDiskInfo();
 
 		$title = \CUser::FormatName(\CSite::GetNameFormat(), $this->arResult["User"], true);
 		$APPLICATION->SetTitle($title);

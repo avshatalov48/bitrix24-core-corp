@@ -2,9 +2,11 @@
 
 namespace Bitrix\Mobile\Rest;
 
+use Bitrix\Disk\AttachedObject;
 use Bitrix\Disk\Driver;
 use Bitrix\Disk\Folder;
 use Bitrix\Disk\Internals\FolderTable;
+use Bitrix\Disk\TypeFile;
 use Bitrix\Main\Loader;
 
 class Disk extends \IRestService
@@ -13,6 +15,7 @@ class Disk extends \IRestService
 	{
 		return [
 			'mobile.disk.folder.getchildren' => ['callback' => [__CLASS__, 'get'], 'options' => ['private' => false]],
+			'mobile.disk.getattachmentsdata' => ['callback' => [__CLASS__, 'getAttachmentsData'], 'options' => ['private' => false]],
 		];
 	}
 
@@ -132,5 +135,44 @@ class Disk extends \IRestService
 		return $result;
 	}
 
+	/**
+	 * @param array $params
+	 * @return array
+	 * @throws \Bitrix\Main\NotImplementedException
+	 */
+	public static function getAttachmentsData($params)
+	{
+		$result = [];
+		$attachmentsIds = (is_array($params['attachmentsIds']) ? $params['attachmentsIds'] : []);
 
+		$driver = Driver::getInstance();
+		$urlManager = $driver->getUrlManager();
+
+		foreach ($attachmentsIds as $id)
+		{
+			$attachedObject = AttachedObject::loadById($id, ['OBJECT']);
+			if(!$attachedObject || $file = !$attachedObject->getFile())
+			{
+				continue;
+			}
+
+			$file = $attachedObject->getFile();
+			$extension = $file->getExtension();
+
+			$result[] = [
+				'ID' => $id,
+				'OBJECT_ID' => $file->getId(),
+				'NAME' => $file->getName(),
+				'SIZE' => \CFile::formatSize($file->getSize()),
+				'EXTENSION' => $extension,
+				'TYPE' => TypeFile::getByExtension($extension),
+				'URL' => $urlManager::getUrlUfController('show', ['attachedId' => $id]),
+				'IS_IMAGE' => TypeFile::isImage($file),
+				'CREATE_TIME' => \CRestUtil::ConvertDateTime($file->getCreateTime()),
+				'UPDATE_TIME' => \CRestUtil::ConvertDateTime($file->getUpdateTime()),
+			];
+		}
+
+		return $result;
+	}
 }

@@ -110,6 +110,8 @@ class UISidepanelMenuComponent extends \CBitrixComponent
 			$this->arResult['ITEMS'][] = $this->prepareItem($item);
 		}
 
+		$this->arResult['VIEW_TARGET'] = $this->arParams['VIEW_TARGET'] ?? 'left-panel';
+
 		return $this->arResult;
 	}
 

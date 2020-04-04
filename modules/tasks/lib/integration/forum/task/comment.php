@@ -102,7 +102,7 @@ final class Comment extends \Bitrix\Tasks\Integration\Forum\Comment
 	 * @param $id
 	 * @param array $data
 	 * @param bool $taskId
-	 * @return array|bool
+	 * @return Result|bool
 	 *
 	 * @access private
 	 */
@@ -157,7 +157,7 @@ final class Comment extends \Bitrix\Tasks\Integration\Forum\Comment
 	 *
 	 * @param $id
 	 * @param bool $taskId
-	 * @return array|bool
+	 * @return Result|bool
 	 *
 	 * @access private
 	 */

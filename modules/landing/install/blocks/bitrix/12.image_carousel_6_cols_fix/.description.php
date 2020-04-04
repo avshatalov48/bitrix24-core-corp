@@ -38,7 +38,7 @@ return array(
 		'nodes' => array(
 			'.landing-block-card-carousel-item' => array(
 				'name' => Loc::getMessage('LANDING_BLOCK_6_IMAGE_CAROUSEL_6_COLS_FIX_CARDS_LANDINGBLOCKCARDCAROUSELITEM'),
-				'type' => 'align-items',
+				'type' => ['align-items']
 			),
 		),
 	),

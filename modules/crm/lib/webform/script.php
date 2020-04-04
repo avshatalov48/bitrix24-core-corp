@@ -171,17 +171,22 @@ class Script
 	public static function getDomain()
 	{
 		$result = null;
+		$previous = $result = Option::get("crm", "portal_protocol_url", '');
+
 		$isHttps = Context::getCurrent()->getRequest()->isHttps();
 		$httpHost = Context::getCurrent()->getServer()->getHttpHost();
 		if ($httpHost)
 		{
 			$result = ($isHttps ? 'https' : 'http') . '://' . $httpHost;
-			Option::set("crm", "portal_protocol_url", $result);
+			if ($result !== $previous)
+			{
+				Option::set("crm", "portal_protocol_url", $result);
+			}
 		}
 
 		if (!$result)
 		{
-			$result = Option::get("crm", "portal_protocol_url", '');
+			$result = $previous;
 		}
 
 		if (!$result && Loader::includeModule('intranet'))

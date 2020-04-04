@@ -116,7 +116,7 @@ class CCrmFieldMulti
 		return $entityTypeID !== 'IM' ? 'WORK' : 'OTHER';
 	}
 
-	public function Add($arFields)
+	public function Add($arFields, array $options = null)
 	{
 		$err_mess = (self::err_mess()).'<br />Function: Add<br>Line: ';
 
@@ -138,14 +138,26 @@ class CCrmFieldMulti
 		);
 		$ID = $this->cdb->Add('b_crm_field_multi', $arFields_i);
 
+		if(is_array($options) && (!isset($options['ENABLE_NOTIFICATION']) || $options['ENABLE_NOTIFICATION']))
+		{
+			\Bitrix\Crm\Integrity\DuplicateCommunicationCriterion::processMultifieldsChange(
+				\CCrmOwnerType::ResolveID($arFields_i['ENTITY_ID']),
+				$arFields_i['ELEMENT_ID']
+			);
+		}
+
 		return $ID;
 	}
 
-	public function Update($ID, $arFields)
+	public function Update($ID, $arFields, array $options = null)
 	{
 		$err_mess = (self::err_mess()).'<br />Function: Update<br>Line: ';
 
-		$ID = IntVal($ID);
+		$ID = (int)$ID;
+		if($ID <= 0)
+		{
+			return false;
+		}
 
 		if(isset($arFields['VALUE']))
 		{
@@ -165,18 +177,46 @@ class CCrmFieldMulti
 		if (!$this->cdb->Query("UPDATE b_crm_field_multi SET $strUpdate WHERE ID=$ID", false, $err_mess.__LINE__))
 			return false;
 
+		if(is_array($options) && (!isset($options['ENABLE_NOTIFICATION']) || $options['ENABLE_NOTIFICATION']))
+		{
+			$info = $this->GetOwerInfo($ID);
+			if(is_array($info) && isset($info['ENTITY_ID']) && isset($info['ELEMENT_ID']))
+			{
+				\Bitrix\Crm\Integrity\DuplicateCommunicationCriterion::processMultifieldsChange(
+					\CCrmOwnerType::ResolveID($info['ENTITY_ID']),
+					$info['ELEMENT_ID']
+				);
+			}
+		}
+
 		return $ID;
 	}
 
-	public function Delete($ID)
+	public function Delete($ID, array $options = null)
 	{
 		$err_mess = (self::err_mess()).'<br />Function: Delete<br>Line: ';
 
-		$ID = IntVal($ID);
+		$ID = (int)$ID;
+		if($ID <= 0)
+		{
+			return false;
+		}
 
-		$res = $this->cdb->Query("DELETE FROM b_crm_field_multi WHERE ID=$ID", false, $err_mess.__LINE__);
+		$info = null;
+		if(is_array($options) && (!isset($options['ENABLE_NOTIFICATION']) || $options['ENABLE_NOTIFICATION']))
+		{
+			$info = $this->GetOwerInfo($ID);
+		}
 
-		return $res;
+		$result = $this->cdb->Query("DELETE FROM b_crm_field_multi WHERE ID={$ID}", false, $err_mess.__LINE__);
+		if(is_array($info) && isset($info['ENTITY_ID']) && isset($info['ELEMENT_ID']))
+		{
+			\Bitrix\Crm\Integrity\DuplicateCommunicationCriterion::processMultifieldsChange(
+				\CCrmOwnerType::ResolveID($info['ENTITY_ID']),
+				$info['ELEMENT_ID']
+			);
+		}
+		return $result;
 	}
 
 	public function DeleteByElement($entityId, $elementId)
@@ -190,7 +230,33 @@ class CCrmFieldMulti
 
 		$res = $this->cdb->Query("DELETE FROM b_crm_field_multi WHERE ENTITY_ID = '".$this->cdb->ForSql($entityId)."' AND ELEMENT_ID = '".$elementId."'", false, $err_mess.__LINE__);
 
+		\Bitrix\Crm\Integrity\DuplicateCommunicationCriterion::processMultifieldsChange(
+			\CCrmOwnerType::ResolveID($entityId),
+			$elementId
+		);
+
 		return $res;
+	}
+
+	protected function GetOwerInfo($ID)
+	{
+		$result = null;
+		$dbResult = $this->cdb->Query("SELECT ENTITY_ID, ELEMENT_ID FROM b_crm_field_multi WHERE ID={$ID}", false, $err_mess.__LINE__);
+		$fields = is_object($dbResult) ? $dbResult->Fetch() : null;
+		if(is_array($fields))
+		{
+			$result = array();
+			if(isset($fields['ENTITY_ID']))
+			{
+				$result['ENTITY_ID'] = $fields['ENTITY_ID'];
+			}
+
+			if(isset($fields['ELEMENT_ID']))
+			{
+				$result['ELEMENT_ID'] = (int)$fields['ELEMENT_ID'];
+			}
+		}
+		return $result;
 	}
 
 	public static function GetTotals($entityId, $elementId)
@@ -305,28 +371,40 @@ class CCrmFieldMulti
 			}
 		}
 
+		$isChanged = false;
 		if(!empty($addItems))
 		{
 			foreach($addItems as $item)
 			{
-				$this->Add($item);
+				$this->Add($item, array('ENABLE_NOTIFICATION' => false));
 			}
+			$isChanged = true;
 		}
 
 		if(!empty($removeItems))
 		{
 			foreach(array_keys($removeItems) as $id)
 			{
-				$this->Delete($id);
+				$this->Delete($id, array('ENABLE_NOTIFICATION' => false));
 			}
+			$isChanged = true;
 		}
 
 		if(!empty($updateItems))
 		{
 			foreach($updateItems as $id => $item)
 			{
-				$this->Update($id, $item);
+				$this->Update($id, $item, array('ENABLE_NOTIFICATION' => false));
 			}
+			$isChanged = true;
+		}
+
+		if($isChanged)
+		{
+			\Bitrix\Crm\Integrity\DuplicateCommunicationCriterion::processMultifieldsChange(
+				\CCrmOwnerType::ResolveID($entityId),
+				$elementId
+			);
 		}
 
 		return true;
@@ -1280,6 +1358,16 @@ class CCrmFieldMulti
 			UPDATE b_crm_field_multi SET ENTITY_ID = '{$dstEntityID}', ELEMENT_ID = {$dstElementID}
 				WHERE ENTITY_ID = '{$srcEntityID}' AND ELEMENT_ID = {$srcElementID}
 		");
+
+		\Bitrix\Crm\Integrity\DuplicateCommunicationCriterion::processMultifieldsChange(
+			\CCrmOwnerType::ResolveID($srcEntityID),
+			$srcElementID
+		);
+
+		\Bitrix\Crm\Integrity\DuplicateCommunicationCriterion::processMultifieldsChange(
+			\CCrmOwnerType::ResolveID($dstEntityID),
+			$dstElementID
+		);
 	}
 
 	private static function err_mess()

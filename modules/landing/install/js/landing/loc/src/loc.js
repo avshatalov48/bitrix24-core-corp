@@ -1,11 +1,21 @@
 import {Type, Loc as MainLoc} from 'main.core';
 import {Env} from 'landing.env';
 
+const pageTypeAlias = {
+	GROUP: 'KNOWLEDGE',
+};
+
+/**
+ * @memberOf BX.Landing
+ */
 export class Loc extends MainLoc
 {
 	static getMessage(key: string): string
 	{
-		const pageType = Env.getInstance().getType();
+		const pageType = (() => {
+			const type = Env.getInstance().getType();
+			return pageTypeAlias[type] || type;
+		})();
 
 		if (pageType)
 		{

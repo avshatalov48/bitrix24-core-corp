@@ -2,7 +2,6 @@
 $MESS["TIMEMAN_MODULE_NOT_INSTALLED"] = "The \"Working Time Management\" module is not installed.";
 $MESS["TMR_ADDITONAL"] = "Clock-ins and clock-outs";
 $MESS["TMR_STATS"] = "Statistics";
-$MESS["TM_REPORT_FILTER_PRESET_REPORT_PERIOD"] = "Reporting period";
 $MESS["TM_SCHEDULE_DELETE_CONFIRM"] = "Do you really want to delete \"#SCHEDULE_NAME#\"?";
 $MESS["TM_SCHEDULE_DELETE_CONFIRM_NO"] = "Cancel";
 $MESS["TM_SCHEDULE_DELETE_CONFIRM_TITLE"] = "Confirm action";

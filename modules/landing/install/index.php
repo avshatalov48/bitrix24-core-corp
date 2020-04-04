@@ -1,6 +1,8 @@
 <?php
 use \Bitrix\Landing\Template;
 use \Bitrix\Landing\Landing as LandingCore;
+use \Bitrix\Landing\Internals\BlockTable;
+use \Bitrix\Landing\Internals\LandingTable;
 use \Bitrix\Landing\Site;
 use \Bitrix\Main\Localization\Loc;
 use \Bitrix\Main\ModuleManager;
@@ -31,9 +33,6 @@ class Landing extends \CModule
 		'blocks' => 'bitrix',
 		'components' => 'bitrix',
 		'templates' => 'landing24'
-	);
-	public $installPubDirs = array(
-		'sites' => 'sites'
 	);
 
 	/**
@@ -132,6 +131,20 @@ class Landing extends \CModule
 		// module
 		registerModule($this->MODULE_ID);
 
+		// full text
+		$errors = $DB->runSQLBatch(
+			$this->docRoot . '/bitrix/modules/landing/install/db/' .
+			strtolower($DB->type) . '/install_ft.sql'
+		);
+		if ($errors === false)
+		{
+			if (\Bitrix\Main\Loader::includeModule('landing'))
+			{
+				BlockTable::getEntity()->enableFullTextIndex('SEARCH_CONTENT');
+				LandingTable::getEntity()->enableFullTextIndex('SEARCH_CONTENT');
+			}
+		}
+
 		// events
 		$eventManager = Bitrix\Main\EventManager::getInstance();
 		$eventManager->registerEventHandler(
@@ -182,6 +195,48 @@ class Landing extends \CModule
 			$this->MODULE_ID,
 			'\Bitrix\Landing\Update\Block\NodeAttributes',
 			'updateFormDomainByConnector'
+		);
+		$eventManager->registerEventHandler(
+			$this->MODULE_ID,
+			'OnBuildSourceList',
+			$this->MODULE_ID,
+			'\Bitrix\Landing\Connector\Landing',
+			'onSourceBuildHandler'
+		);
+		$eventManager->registerEventHandler(
+			'mobile',
+			'onMobileMenuStructureBuilt',
+			$this->MODULE_ID,
+			'\Bitrix\Landing\Connector\Mobile',
+			'onMobileMenuStructureBuilt'
+		);
+		$eventManager->registerEventHandler(
+			'intranet',
+			'onBuildBindingMenu',
+			$this->MODULE_ID,
+			'\Bitrix\Landing\Connector\Intranet',
+			'onBuildBindingMenu'
+		);
+		$eventManager->registerEventHandler(
+			'socialnetwork',
+			'onFillSocNetFeaturesList',
+			$this->MODULE_ID,
+			'\Bitrix\Landing\Connector\SocialNetwork',
+			'onFillSocNetFeaturesList'
+		);
+		$eventManager->registerEventHandler(
+			'socialnetwork',
+			'onFillSocNetMenu',
+			$this->MODULE_ID,
+			'\Bitrix\Landing\Connector\SocialNetwork',
+			'onFillSocNetMenu'
+		);
+		$eventManager->registerEventHandler(
+			'socialnetwork',
+			'onSocNetGroupDelete',
+			$this->MODULE_ID,
+			'\Bitrix\Landing\Connector\SocialNetwork',
+			'onSocNetGroupDelete'
 		);
 
 		// agents
@@ -317,6 +372,56 @@ class Landing extends \CModule
 	}
 
 	/**
+	 * Set router handlers for post preview.
+	 * @return void
+	 */
+	private function setRouteHandlers()
+	{
+		\Bitrix\Main\UrlPreview\Router::setRouteHandler(
+			'/knowledge/#siteCode#/',
+			'landing',
+			'\Bitrix\Landing\Landing\UrlPreview',
+			[
+				'siteCode' => '$siteCode',
+				'scope' => 'knowledge'
+			]
+		);
+		\Bitrix\Main\UrlPreview\Router::setRouteHandler(
+			'/knowledge/#siteCode#/#pageCode#/',
+			'landing',
+			'\Bitrix\Landing\Landing\UrlPreview',
+			[
+				'siteCode' => '$siteCode',
+				'pageCode' => '$pageCode',
+				'scope' => 'knowledge'
+			]
+		);
+		\Bitrix\Main\UrlPreview\Router::setRouteHandler(
+			'/knowledge/#siteCode#/#folderCode#/#pageCode#/',
+			'landing',
+			'\Bitrix\Landing\Landing\UrlPreview',
+			[
+				'siteCode' => '$siteCode',
+				'folderCode' => '$folderCode',
+				'pageCode' => '$pageCode',
+				'scope' => 'knowledge'
+			]
+		);
+		\Bitrix\Main\UrlPreview\Router::setRouteHandler(
+			'/knowledge/#siteCode#/#folderCode#/#pageCode#/#additionalCode#/',
+			'landing',
+			'\Bitrix\Landing\Landing\UrlPreview',
+			[
+				'siteCode' => '$siteCode',
+				'folderCode' => '$folderCode',
+				'pageCode' => '$pageCode',
+				'additionalCode' => '$additionalCode',
+				'scope' => 'group'
+			]
+		);
+	}
+
+	/**
 	 * Settings required options.
 	 * @return void
 	 */
@@ -339,15 +444,15 @@ class Landing extends \CModule
 			),
 			'sidebar_left' => array(
 				'content' => '<div class="landing-layout-flex">
-								<div class="g-width-25x--lg g-max-width-100x g-overflow-hidden landing-sidebar">#AREA_1#</div> 
-								<div class="g-width-75x--lg g-max-width-100x landing-main">#CONTENT#</div> 
+								<div class="landing-sidebar g-max-width-100x g-overflow-hidden">#AREA_1#</div>
+								<div class="landing-main g-max-width-100x">#CONTENT#</div>
 							</div>',
 				'area_count' => 1
 			),
 			'sidebar_right' => array(
 				'content' => '<div class="landing-layout-flex sidebar-right">
-								<div class="g-width-25x--lg g-max-width-100x landing-sidebar">#AREA_1#</div> 
-								<div class="g-width-75x--lg  g-max-width-100x landing-main">#CONTENT#</div> 
+								<div class="landing-sidebar g-max-width-100x">#AREA_1#</div>
+								<div class="landing-main g-max-width-100x">#CONTENT#</div>
 							</div>',
 				'area_count' => 1
 			),
@@ -358,19 +463,19 @@ class Landing extends \CModule
 				'area_count' => 2
 			),
 			'without_left' => array(
-				'content' => '<div class="landing-header">#AREA_1#</div> 
+				'content' => '<div class="landing-header">#AREA_1#</div>
 								<div class="landing-layout-flex without-left">
-									<div class="g-width-25x--lg g-max-width-100x landing-sidebar">#AREA_2#</div>
-									<div class="g-width-75x--lg g-max-width-100x landing-main">#CONTENT#</div> 
-								</div> 
+									<div class="landing-sidebar g-max-width-100x">#AREA_2#</div>
+									<div class="landing-main g-max-width-100x">#CONTENT#</div>
+								</div>
 							<div class="landing-footer">#AREA_3#</div>',
 				'area_count' => 3
 			),
 			'without_right' => array(
 				'content' => '<div class="landing-header">#AREA_1#</div>
 								<div class="landing-layout-flex">
-									<div class="g-width-25x--lg g-max-width-100x landing-sidebar">#AREA_2#</div>
-									<div class="g-width-75x--lg g-max-width-100x landing-main">#CONTENT#</div>
+									<div class="landing-sidebar g-max-width-100x">#AREA_2#</div>
+									<div class="landing-main g-max-width-100x">#CONTENT#</div>
 								</div>
 							<div class="landing-footer">#AREA_3#</div>',
 				'area_count' => 3
@@ -425,32 +530,6 @@ class Landing extends \CModule
 				$this->docRoot . '/bitrix/' . $dir,
 				true, true
 			);
-		}
-
-		if ($this->isB24())
-		{
-			foreach ($this->installPubDirs as $dir => $subdir)
-			{
-				if (!file_exists($this->docRoot . '/' . $dir))
-				{
-					copyDirFiles(
-						$this->docRoot . '/bitrix/modules/landing/install/' . $dir,
-						$this->docRoot . '/' . $dir,
-						true, true
-					);
-				}
-			}
-			\Bitrix\Main\UrlRewriter::add(
-				's1',//@todo
-				array(
-					'ID' => 'bitrix:landing.start',
-					'PATH' => '/sites/index.php',
-					'CONDITION' => '#^/sites/#'
-				)
-			);
-
-			$GLOBALS['CACHE_MANAGER']->CleanDir('menu');
-			\CBitrixComponent::clearComponentCache('bitrix:menu');
 		}
 
 		$GLOBALS['CACHE_MANAGER']->clearByTag('landing_blocks');
@@ -534,10 +613,10 @@ class Landing extends \CModule
 		// unregister events
 		$eventManager = Bitrix\Main\EventManager::getInstance();
 		$eventManager->unregisterEventHandler(
-			'rest', 
-			'OnRestServiceBuildDescription', 
-			$this->MODULE_ID, 
-			'\Bitrix\Landing\Publicaction', 
+			'rest',
+			'OnRestServiceBuildDescription',
+			$this->MODULE_ID,
+			'\Bitrix\Landing\Publicaction',
 			'restBase'
 		);
 		$eventManager->unregisterEventHandler(
@@ -548,10 +627,10 @@ class Landing extends \CModule
 			'beforeRestApplicationDelete'
 		);
 		$eventManager->unregisterEventHandler(
-			'rest', 
-			'OnRestAppDelete', 
-			$this->MODULE_ID, 
-			'\Bitrix\Landing\Publicaction', 
+			'rest',
+			'OnRestAppDelete',
+			$this->MODULE_ID,
+			'\Bitrix\Landing\Publicaction',
 			'restApplicationDelete'
 		);
 		$eventManager->unregisterEventHandler(
@@ -582,12 +661,57 @@ class Landing extends \CModule
 			'\Bitrix\Landing\Update\Block\NodeAttributes',
 			'updateFormDomainByConnector'
 		);
+		$eventManager->unregisterEventHandler(
+			$this->MODULE_ID,
+			'OnBuildSourceList',
+			$this->MODULE_ID,
+			'\Bitrix\Landing\Connector\Landing',
+			'onSourceBuildHandler'
+		);
+		$eventManager->unregisterEventHandler(
+			'mobile',
+			'onMobileMenuStructureBuilt',
+			$this->MODULE_ID,
+			'\Bitrix\Landing\Connector\Mobile',
+			'onMobileMenuStructureBuilt'
+		);
+		$eventManager->unregisterEventHandler(
+			'intranet',
+			'onBuildBindingMenu',
+			$this->MODULE_ID,
+			'\Bitrix\Landing\Connector\Intranet',
+			'onBuildBindingMenu'
+		);
+		$eventManager->unregisterEventHandler(
+			'socialnetwork',
+			'onFillSocNetFeaturesList',
+			$this->MODULE_ID,
+			'\Bitrix\Landing\Connector\SocialNetwork',
+			'onFillSocNetFeaturesList'
+		);
+		$eventManager->unregisterEventHandler(
+			'socialnetwork',
+			'onFillSocNetMenu',
+			$this->MODULE_ID,
+			'\Bitrix\Landing\Connector\SocialNetwork',
+			'onFillSocNetMenu'
+		);
+		$eventManager->unregisterEventHandler(
+			'socialnetwork',
+			'onSocNetGroupDelete',
+			$this->MODULE_ID,
+			'\Bitrix\Landing\Connector\SocialNetwork',
+			'onSocNetGroupDelete'
+		);
 
 		// module
 		unregisterModule($this->MODULE_ID);
 
 		// templates
 		$this->setSiteTemplates(false);
+
+		// route handlers
+		$this->setRouteHandlers();
 
 		// delete files finaly
 		if (isset($arParams['savedata']) && !$arParams['savedata'])
@@ -706,7 +830,6 @@ class Landing extends \CModule
 		$keyForDelete = [
 			'shops_limit_count',
 			'site_limit_count',
-			'pages_limit_count',
 			'shops_limit_count_publication',
 			'site_limit_count_publication',
 			'pages_limit_count_publication',

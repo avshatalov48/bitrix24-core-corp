@@ -12,6 +12,10 @@ class GoogleApiSection
 	private $userId,
 			$connection;
 
+	/**
+	 * GoogleApiSection constructor.
+	 * @param $userId
+	 */
 	public function __construct($userId)
 	{
 		if (!$userId)
@@ -22,6 +26,9 @@ class GoogleApiSection
 		$this->userId = $userId;
 	}
 
+	/**
+	 * @return array|bool
+	 */
 	public function sendSections()
 	{
 		$sectionIds = [];
@@ -92,6 +99,12 @@ class GoogleApiSection
 		return $sectionId ?: false;
 	}
 
+	/**
+	 * @return array
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
 	private function getLocalSections()
 	{
 		$sections =[];
@@ -118,6 +131,10 @@ class GoogleApiSection
 		return $sections;
 	}
 
+	/**
+	 * @return bool|mixed
+	 * @throws \Bitrix\Main\LoaderException
+	 */
 	private function getGoogleConnection()
 	{
 		if (Loader::includeModule('dav'))
@@ -140,6 +157,13 @@ class GoogleApiSection
 		return false;
 	}
 
+	/**
+	 * @param $sectionId
+	 * @return array|false
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
 	public function getSectionById($sectionId)
 	{
 		return Internals\SectionTable::getById($sectionId)->fetch();

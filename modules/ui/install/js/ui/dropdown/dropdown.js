@@ -35,6 +35,9 @@
 		this.enableCreation = BX.prop.getBoolean(options, "enableCreation", false);
 		this.enableCreationOnBlur = BX.prop.getBoolean(options, "enableCreationOnBlur", true);
 
+		this.isEmbedded = BX.prop.getBoolean(BX.prop.getObject(options, "context", {}), "isEmbedded", false);
+		this.quickForm = document.querySelectorAll('.crm-kanban-quick-form');
+
 		this.documentClickHandler = BX.delegate(this.onDocumentClick, this);
 
 		this.emptyValueEventHandle = 0;
@@ -50,29 +53,33 @@
 			this.init();
 		}
 	};
-
 	BX.UI.Dropdown.prototype =
 		{
 			init: function ()
 			{
-				BX.bind(this.targetElement, "input", function()
-				{
-                    if (this.isDisabled)
-                    {
-                        return;
-                    }
-
-					if (this.targetElement.value.length === 0)
+				setTimeout(function() {
+					BX.bind(this.targetElement, "input", function()
 					{
-						this.enableTargetElement();
-						return;
-					}
+						if (this.isDisabled)
+						{
+							return;
+						}
 
-					this.getPopupWindow().show();
+						if (this.targetElement.value.length === 0)
+						{
+							this.enableTargetElement();
+							return;
+						}
 
-				}.bind(this));
+						this.getPopupWindow().show();
+
+					}.bind(this));
+				}.bind(this), 100);
+
 				this.targetElement.addEventListener("click", function(e)
 				{
+					this.destroyPopupWindow();
+
                     if (this.isDisabled)
                     {
                         return;
@@ -92,31 +99,31 @@
 					{
 						BX.PreventDefault(e);
 					}
-
 					this.getPopupWindow().show();
 				}.bind(this), true);
 
-				this.targetElement.addEventListener("focus", function()
-				{
-                    if (this.isDisabled)
-                    {
-                        return;
-                    }
-
-					this.getPopupWindow().show();
-
-					if(!this.popupAlertContainer)
+				setTimeout(function() {
+					this.targetElement.addEventListener("focus", function()
 					{
-						return;
-					}
-				}.bind(this), true);
+						if (this.isDisabled)
+						{
+							return;
+						}
+
+						this.getPopupWindow().show();
+
+						if(!this.popupAlertContainer)
+						{
+							return;
+						}
+					}.bind(this), true);
+				}.bind(this), 100);
 
 				BX.bind(
 					this.targetElement,
 					"keyup",
 					BX.throttle(
 						function(e) {
-
                             if (this.isDisabled)
                             {
                                 return;
@@ -398,6 +405,13 @@
 							}.bind(this)
 						}
 					});
+
+					if(this.isEmbedded && this.quickForm)
+					{
+						this.popupWindow.setOffset({
+							offsetLeft: this.getQuickFormOffsetWidth(),
+						});
+					}
 				}
 
 				this.setWidthPopup();
@@ -405,11 +419,23 @@
 
 				return this.popupWindow;
 			},
+			getQuickFormOffsetWidth: function()
+			{
+				var currentElement = BX.findParent(this.getPopupWindow().bindElement, {className: 'crm-kanban-quick-form'});
+
+				this.popupWindow.popupContainer.style.width = currentElement.offsetWidth + "px";
+				var equalWidth = - (this.targetElement.getBoundingClientRect().left - currentElement.getBoundingClientRect().left);
+
+				return equalWidth;
+			},
 			setWidthPopup: function()
 			{
-				if(this.popupWindow && this.targetElement)
+				if(!this.isEmbedded && this.quickForm)
 				{
-					this.popupWindow.popupContainer.style.width = this.targetElement.offsetWidth + "px"
+					if(this.popupWindow && this.targetElement)
+					{
+						this.popupWindow.popupContainer.style.width = this.targetElement.offsetWidth + "px"
+					}
 				}
 			},
 			onEmptyValueEvent: function()
@@ -468,7 +494,6 @@
 			},
 			getPopupAlertContainer: function()
 			{
-
 				if(!this.popupAlertContainer)
 				{
 					this.popupAlertContainer = BX.create("div", {
@@ -776,7 +801,8 @@
 				if(deltaBottom < 0)
 				{
 					parent.scrollTop = parent.scrollTop + Math.abs(deltaBottom)
-				} else if(deltaTop > 0)
+				}
+				else if(deltaTop > 0)
 				{
 					parent.scrollTop = parent.scrollTop - deltaTop
 				}
@@ -810,7 +836,6 @@
 				}
 				return result;
 			},
-
 			getItemIndex: function(item)
 			{
 				var items = this.getItems();
@@ -877,6 +902,7 @@
 
 				this.targetElement.addEventListener("keyup", function(e)
 				{
+					console.log("this.targetElement", this.targetElement);
 					var key = e.charCode || e.keyCode;
 
 					if(this.targetElement === document.activeElement)

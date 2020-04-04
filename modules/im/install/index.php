@@ -108,7 +108,7 @@ class im extends CModule
 		$errors = $DB->RunSQLBatch($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/im/install/db/mysql/install_ft.sql");
 		if ($errors === false)
 		{
-			\Bitrix\Im\Model\MessageTable::getEntity()->enableFullTextIndex("MESSAGE");
+			\Bitrix\Im\Model\MessageIndexTable::getEntity()->enableFullTextIndex("SEARCH_CONTENT");
 			\Bitrix\Im\Model\ChatIndexTable::getEntity()->enableFullTextIndex("SEARCH_CONTENT");
 		}
 

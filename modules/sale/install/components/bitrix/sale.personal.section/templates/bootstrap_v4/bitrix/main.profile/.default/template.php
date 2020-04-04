@@ -125,19 +125,31 @@ use Bitrix\Main\Localization\Loc;
 		</div>
 
 	</form>
-	<div class="col-sm-12 main-profile-social-block">
-		<?
-		if ($arResult["SOCSERV_ENABLED"])
-		{
-			$APPLICATION->IncludeComponent("bitrix:socserv.auth.split", ".default", array(
-				"SHOW_PROFILES" => "Y",
-				"ALLOW_DELETE" => "Y"
-			),
-				false
-			);
-		}
+	<?
+	$disabledSocServices = isset($arParams['DISABLE_SOCSERV_AUTH']) && $arParams['DISABLE_SOCSERV_AUTH'] === 'Y';
+
+	if (!$disabledSocServices)
+	{
 		?>
-	</div>
+		<div class="col-sm-12 main-profile-social-block">
+			<?
+			if ($arResult["SOCSERV_ENABLED"])
+			{
+				$APPLICATION->IncludeComponent(
+					"bitrix:socserv.auth.split",
+					".default",
+					[
+						"SHOW_PROFILES" => "Y",
+						"ALLOW_DELETE" => "Y",
+					],
+					false
+				);
+			}
+			?>
+		</div>
+		<?
+	}
+	?>
 	<div class="clearfix"></div>
 	<script>
 		BX.Sale.PrivateProfileComponent.init();

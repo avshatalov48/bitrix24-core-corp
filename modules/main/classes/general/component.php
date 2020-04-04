@@ -54,6 +54,7 @@ class CBitrixComponent
 
 	private $__editButtons = array();
 	private static $__classes_map = array();
+	private static $classes = array();
 	private $classOfComponent = "";
 	private $randomSequence = null;
 	private $frameMode = null;
@@ -413,14 +414,24 @@ class CBitrixComponent
 				include_once($fname);
 				$afterClasses = get_declared_classes();
 				$afterClassesCount = count($afterClasses);
+
 				for ($i = $beforeClassesCount; $i < $afterClassesCount; $i++)
 				{
-					if (is_subclass_of($afterClasses[$i], "cbitrixcomponent"))
-						self::$__classes_map[$componentPath] = $afterClasses[$i];
+					if (!isset(self::$classes[$afterClasses[$i]]) && is_subclass_of($afterClasses[$i], "cbitrixcomponent"))
+					{
+						if (!isset(self::$__classes_map[$componentPath]) || is_subclass_of($afterClasses[$i], self::$__classes_map[$componentPath]))
+						{
+							self::$__classes_map[$componentPath] = $afterClasses[$i];
+
+							//recursion control
+							self::$classes[$afterClasses[$i]] = true;
+						}
+					}
 				}
 			}
 			else
 			{
+				//no need to try for several times
 				self::$__classes_map[$componentPath] = "";
 			}
 		}

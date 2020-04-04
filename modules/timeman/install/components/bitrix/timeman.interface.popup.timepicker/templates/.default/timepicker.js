@@ -53,13 +53,13 @@
 		onDateLinkClick: function (event)
 		{
 			var defaultDate = new Date();
-			if (event.currentTarget.dataset.type === 'start' && this.startDateDefault > 0)
+			if (event.currentTarget.dataset.type === 'start' && this.startDateDefault !== undefined)
 			{
-				defaultDate = new Date(this.startDateDefault * 1000)
+				defaultDate = new Date(this.startDateDefault);
 			}
-			else if (event.currentTarget.dataset.type === 'end' && this.endDateDefault > 0)
+			else if (event.currentTarget.dataset.type === 'end' && this.endDateDefault !== undefined)
 			{
-				defaultDate = new Date(this.endDateDefault * 1000)
+				defaultDate = new Date(this.endDateDefault);
 			}
 			var defaultDateValue = BX.date.format(
 				BX.date.convertBitrixFormat(BX.message("FORMAT_DATE")),

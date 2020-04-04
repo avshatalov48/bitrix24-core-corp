@@ -8,6 +8,7 @@ use Bitrix\Tasks\Internals\Counter;
 use Bitrix\Tasks\Internals\Effective;
 use Bitrix\Tasks\Item\Task;
 use Bitrix\Tasks\Util\Type\DateTime;
+use Bitrix\Tasks\Util\User;
 
 class Agent
 {
@@ -16,7 +17,9 @@ class Agent
 
 	public static function add($taskId, DateTime $deadline, $forceExpired = false)
 	{
-		$task = Task::getInstance($taskId, 1);
+		$adminId = User::getAdminId();
+		$task = Task::getInstance($taskId, ($adminId ?: 1));
+
 		if (!$task || in_array($task->status, array(\CTasks::STATE_COMPLETED, \CTasks::STATE_SUPPOSEDLY_COMPLETED)))
 		{
 			return false;
@@ -51,20 +54,19 @@ class Agent
 		}
 
 		\CAgent::AddAgent($agentName, 'tasks', 'Y', 0, '', 'Y', $agentStart);
+
+		return true;
 	}
 
 	private static function recountSoon($taskId)
 	{
-		$task = Task::getInstance($taskId, 1);
+		$adminId = User::getAdminId();
+		$task = Task::getInstance($taskId, ($adminId ?: 1));
+
 		if (!$task || in_array($task->status, array(\CTasks::STATE_COMPLETED, \CTasks::STATE_SUPPOSEDLY_COMPLETED)))
 		{
 			return false;
 		}
-
-		$controllerDefault = $task->getAccessController();
-		$controller = $controllerDefault->spawn();
-		$controller->disable();
-		$task->setAccessController($controller);
 
 		$responsible = Counter::getInstance($task->responsibleId, $task->groupId);
 		$responsible->recount(Counter\Name::MY_EXPIRED);
@@ -79,6 +81,7 @@ class Agent
 				$responsible->recount(Counter\Name::ACCOMPLICES_EXPIRED_SOON);
 			}
 		}
+
 		return true;
 	}
 
@@ -95,22 +98,24 @@ class Agent
 
 	public static function expired($taskId)
 	{
-		$task = Task::getInstance($taskId, 1);
+		$adminId = User::getAdminId();
+		$task = Task::getInstance($taskId, ($adminId ?: 1));
 
-		$groupId = $task['GROUP_ID'];
-		$responsibleId = $task['RESPONSIBLE_ID'];
+		if (!$task)
+		{
+			return '';
+		}
+
+		$status = (int)$task['STATUS'];
+		$groupId = (int)$task['GROUP_ID'];
+		$responsibleId = (int)$task['RESPONSIBLE_ID'];
 
 		$statesCompleted = [\CTasks::STATE_DEFERRED, \CTasks::STATE_COMPLETED, \CTasks::STATE_SUPPOSEDLY_COMPLETED];
 
-		if (!$responsibleId || in_array($task['STATUS'], $statesCompleted))
+		if (!$responsibleId || in_array($status, $statesCompleted, true))
 		{
 			return false;
 		}
-
-		$controllerDefault = $task->getAccessController();
-		$controller = $controllerDefault->spawn();
-		$controller->disable();
-		$task->setAccessController($controller);
 
 		$responsible = Counter::getInstance($responsibleId, $groupId);
 		$responsible->recount(Counter\Name::MY_EXPIRED_SOON);
@@ -126,19 +131,23 @@ class Agent
 
 		foreach ($task['AUDITORS'] as $userId)
 		{
-			$auditor = Counter::getInstance($userId, $groupId);
-			$auditor->recount(Counter\Name::AUDITOR_EXPIRED);
+			if ($userId)
+			{
+				$auditor = Counter::getInstance($userId, $groupId);
+				$auditor->recount(Counter\Name::AUDITOR_EXPIRED);
+			}
 		}
 
 		foreach ($task['ACCOMPLICES'] as $userId)
 		{
+			$userId = (int)$userId;
 			if ($userId)
 			{
 				$accomplice = Counter::getInstance($userId, $groupId);
 				$accomplice->recount(Counter\Name::ACCOMPLICES_EXPIRED);
 				$accomplice->recount(Counter\Name::ACCOMPLICES_EXPIRED_SOON);
 
-				if ($userId != $responsibleId && !Effective::checkActiveViolations($taskId, $userId, $groupId))
+				if ($userId !== $responsibleId && !Effective::checkActiveViolations($taskId, $userId, $groupId))
 				{
 					Effective::modify($userId, 'A', $task, $groupId, true);
 				}
@@ -158,31 +167,35 @@ class Agent
 
 	public static function expiredSoon($taskId)
 	{
-		if(!self::recountSoon($taskId))
+		if (!self::recountSoon($taskId))
 		{
 			return '';
 		}
 
-		$task = Task::getInstance($taskId, 1);
-		if (!$task || in_array($task->status, array(\CTasks::STATE_COMPLETED, \CTasks::STATE_SUPPOSEDLY_COMPLETED)))
+		$adminId = User::getAdminId();
+		$task = Task::getInstance($taskId, ($adminId ?: 1));
+
+		if (!$task || in_array($task->status, [\CTasks::STATE_COMPLETED, \CTasks::STATE_SUPPOSEDLY_COMPLETED]))
 		{
 			return false;
 		}
 
-		$event = new Event(
-			"tasks", self::EVENT_TASK_EXPIRED_SOON, array('TASK_ID' => $task->getId(), 'TASK' => $task->getData())
-		);
+		$taskId = $task->getId();
+		$taskData = $task->getData();
+
+		$event = new Event("tasks", self::EVENT_TASK_EXPIRED_SOON, ['TASK_ID' => $taskId, 'TASK' => $taskData]);
 		$event->send();
 
-		if ($taskData = $task->getData())
+		if ($taskData)
 		{
-			Bizproc\Listener::onTaskExpiredSoon($task->getId(), $taskData);
+			Bizproc\Listener::onTaskExpiredSoon($taskId, $taskData);
 		}
 
 		if ($task->deadline)
 		{
-			self::add($task->getId(), $task->deadline, true);
+			self::add($taskId, $task->deadline, true);
 		}
+
 		return '';
 	}
 

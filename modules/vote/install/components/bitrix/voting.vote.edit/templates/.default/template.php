@@ -86,12 +86,12 @@ $sAnswer = preg_replace(array("/\<\!\-\-A\_ID\-\-\>/", "/\<\!\-\-\/A\_ID\-\-\>/"
 			array("#Q_C_SORT#", "#Q_VALUE#", "#Q_MULTY#", "#ANSWERS#", "#Q#"),
 			array("10", "", "",
 				str_replace(
-					array("#A#", "#A_VALUE#", "#A_PH#", "#A_FIELD_TYPE#"),
-					array(0, "", 1, "0"),
+					array("#A#", "#A_VALUE#", "#A_PH#", "#A_FIELD_TYPE#", "#A_C_SORT#"),
+					array(0, "", 1, "0", 10),
 					$sAnswerEmpty).
 				str_replace(
-					array("#A#", "#A_VALUE#", "#A_PH#", "#A_FIELD_TYPE#"),
-					array(1, "", 2, "0"),
+					array("#A#", "#A_VALUE#", "#A_PH#", "#A_FIELD_TYPE#", "#A_C_SORT#"),
+					array(1, "", 2, "0", 20),
 					$sAnswerEmpty),
 				0),
 			$sQuestionEmpty);?><?

@@ -40,9 +40,10 @@ class CVoxImplantDocuments
 	 * @param string $address_type Type of the address (i.e. LOCAL), returned by CVox
 	 * @param string $phone_category
 	 * @param string $phone_region_code
+	 * @param string $phone_region_id
 	 * @return string
 	 */
-	public function  GetUploadUrl($country_code = 'RU', $address_type = null, $phone_category = null, $phone_region_code = null)
+	public function  GetUploadUrl($country_code = 'RU', $address_type = null, $phone_category = null, $phone_region_code = null, $phone_region_id = null)
 	{
 		if($country_code == 'RU')
 		{
@@ -67,6 +68,9 @@ class CVoxImplantDocuments
 
 			if($phone_region_code)
 				$params['phone_region_code'] = $phone_region_code;
+
+			if($phone_region_id)
+				$params['phone_region_id'] = $phone_region_id;
 
 			$language = Bitrix\Main\Context::getCurrent()->getLanguage();
 			if(in_array($language, array('ru', 'de', 'en')))
@@ -126,7 +130,7 @@ class CVoxImplantDocuments
 						'UPLOADED' => $data->toString(),
 						'DOCUMENT_ID' => $document->DOCUMENT_ID,
 						'DOCUMENT_STATUS' => $document->DOCUMENT_STATUS,
-						'DOCUMENT_STATUS_NAME' => GetMessage('VI_DOCS_DOCUMENT_STATUS_'.$document->DOCUMENT_STATUS),
+						'DOCUMENT_STATUS_NAME' => GetMessage('VI_DOCS_DOCUMENT_STATUS_'.$document->DOCUMENT_STATUS) ?: $document->DOCUMENT_STATUS,
 						'IS_INDIVIDUAL' => $document->IS_INDIVIDUAL,
 						'IS_INDIVIDUAL_NAME' => GetMessage('VI_DOCS_IS_INDIVIDUAL_'.$document->IS_INDIVIDUAL),
 						'REVIEWER_COMMENT' => $document->REVIEWER_COMMENT,
@@ -233,7 +237,7 @@ class CVoxImplantDocuments
 
 	public static function GetStatusName($status)
 	{
-		return GetMessage('VI_DOCS_STATUS_'.$status);
+		return GetMessage('VI_DOCS_STATUS_'.$status) ?: $status;
 	}
 
 	public function GetError()

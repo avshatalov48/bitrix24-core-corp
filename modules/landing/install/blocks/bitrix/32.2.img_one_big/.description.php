@@ -9,7 +9,7 @@ use \Bitrix\Main\Localization\Loc;
 return array(
 	'block' => array(
 		'name' => Loc::getMessage('LANDING_BLOCK_32.2.IMG_ONE_BIG_NAME2'),
-		'section' => array('image', 'cover'),
+		'section' => array('image', 'cover', 'recommended'),
 		'dynamic' => false,
 	),
 	'cards' => array(),

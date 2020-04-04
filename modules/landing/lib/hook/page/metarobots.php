@@ -40,6 +40,15 @@ class MetaRobots extends \Bitrix\Landing\Hook\Page
 	}
 
 	/**
+	 * Exec or not hook in edit mode.
+	 * @return boolean
+	 */
+	public function enabledInEditMode()
+	{
+		return false;
+	}
+
+	/**
 	 * Exec hook.
 	 * @return void
 	 */

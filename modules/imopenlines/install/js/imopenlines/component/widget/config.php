@@ -20,6 +20,7 @@ return [
 		'im.component.textarea',
 		'im.component.quotepanel',
 		'imopenlines.component.message',
+		'imopenlines.component.form',
 		'rest.client',
 		'main.md5',
 		'main.date',

@@ -45,38 +45,10 @@ class SberbankOnlineHandler
 	 */
 	public function initiatePay(Payment $payment, Request $request = null)
 	{
-		if ($request === null)
-		{
-			$request = Main\Context::getCurrent()->getRequest();
-		}
-
-		$result = $this->initiatePayInternal($payment, $request);
-		if (!$result->isSuccess())
-		{
-			$error = 'Sberbank: initiatePay: '.join('\n', $result->getErrorMessages());
-			PaySystem\Logger::addError($error);
-		}
-
-		return $result;
-	}
-
-	/**
-	 * @param Payment $payment
-	 * @param Request $request
-	 * @return ServiceResult
-	 * @throws Main\ArgumentException
-	 * @throws Main\ArgumentNullException
-	 * @throws Main\ArgumentOutOfRangeException
-	 * @throws Main\ArgumentTypeException
-	 * @throws Main\NotImplementedException
-	 * @throws Main\ObjectException
-	 */
-	private function initiatePayInternal(Payment $payment, Request $request)
-	{
 		$result = new PaySystem\ServiceResult();
 		$params = [];
-
 		$checkOrderData = [];
+
 		if ($payment->getField('PS_INVOICE_ID'))
 		{
 			$checkOrderResult = $this->checkOrder($payment);
@@ -150,7 +122,9 @@ class SberbankOnlineHandler
 			if (isset($orderStatusData['paymentAmountInfo']['paymentState']))
 			{
 				$paymentState = $orderStatusData['paymentAmountInfo']['paymentState'];
-				if ($paymentState === self::PAYMENT_STATE_CREATED)
+				if (($paymentState === self::PAYMENT_STATE_CREATED)
+					&& ((int)$payment->getSum() === (int)($orderStatusData["amount"] / 100))
+				)
 				{
 					$formUrl = $this->getUrl($payment, 'formUrl');
 					$params['URL'] = $formUrl.$payment->getField('PS_INVOICE_ID');
@@ -226,10 +200,10 @@ class SberbankOnlineHandler
 		if ($secretKey && !$this->isCheckSumCorrect($request, $secretKey))
 		{
 			$result->addError(new Main\Error(Localization\Loc::getMessage('SALE_HPS_SBERBANK_ERROR_CHECK_SUM')));
+			return $result;
 		}
 
-		if ($result->isSuccess()
-			&& $request->get('operation') == static::PAYMENT_OPERATION_DEPOSITED
+		if ($request->get('operation') == static::PAYMENT_OPERATION_DEPOSITED
 			&& $request->get('status') == static::PAYMENT_STATUS_SUCCESS
 		)
 		{
@@ -284,12 +258,6 @@ class SberbankOnlineHandler
 				'#STATUS#' => $request->get('status')
 			]);
 			$result->addError(new Main\Error($error));
-		}
-
-		if (!$result->isSuccess())
-		{
-			$error = 'Sberbank: processRequest: '.join('\n', $result->getErrorMessages());
-			PaySystem\Logger::addError($error);
 		}
 
 		return $result;

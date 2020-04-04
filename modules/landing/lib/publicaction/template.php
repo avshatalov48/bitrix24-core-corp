@@ -20,6 +20,7 @@ class Template
 	public static function getList(array $params = array())
 	{
 		$result = new PublicActionResult();
+		$params = $result->sanitizeKeys($params);
 
 		$data = array();
 		$res = TemplateCore::getList($params);

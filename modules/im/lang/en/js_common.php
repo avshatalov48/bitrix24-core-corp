@@ -2,6 +2,7 @@
 $MESS["CALL_RECORD_ERROR"] = "You can listen to the recording in your web browser.";
 $MESS["IM_AN_ACCESS"] = "You cannot post new messages to this chat.";
 $MESS["IM_APPS_LIST"] = "Show available apps";
+$MESS["IM_APPS_SALESCENTER"] = "Chat enabled sales";
 $MESS["IM_AV_NEXT_VERSION"] = "This option will be available in the future versions.";
 $MESS["IM_BB_PUT"] = "Click to insert message in the text field";
 $MESS["IM_BB_SEND"] = "Click to perform action";
@@ -268,6 +269,7 @@ $MESS["IM_M_WRITING_BOX"] = "is typing a message...";
 $MESS["IM_N_REPLY"] = "Reply";
 $MESS["IM_N_REPLY_TEXT"] = "Your reply has been sent.";
 $MESS["IM_OL_ANSWERS_SOON"] = "Canned replies will be available in one of the upcoming Bitrix24 updates.";
+$MESS["IM_OL_CHAT_BLOCK_DEFAULT"] = "Response has timed out. You can end the conversation or wait for new messages from the customer.";
 $MESS["IM_OL_CHAT_STEALTH_OFF"] = "<b>Whisper mode off.</b><br>The client will see your messages.";
 $MESS["IM_OL_CHAT_STEALTH_ON"] = "<b>Whisper mode on.</b><br>The client will NOT see your messages.";
 $MESS["IM_OL_CLIENT_NAME"] = "Client";

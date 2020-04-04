@@ -143,7 +143,7 @@ class CTaskLog
 					break;
 
 				case "FIELD":
-					$arSqlSearch[] = CTasks::FilterCreate("TL." . $key, $val, "string_equal", $bFullJoin, $cOperationType);
+					$arSqlSearch[] = CTasks::FilterCreate("TL." . $key, $val, "string", $bFullJoin, $cOperationType);
 					break;
 			}
 		}

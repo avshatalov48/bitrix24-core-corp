@@ -672,20 +672,20 @@ if (!function_exists('prepareCRMField'))
 
 		foreach ($row['UF_CRM_TASK'] as $value)
 		{
-			$crmElement = explode('_', $value);
-			$type = $crmElement[0];
-			if ($type != $fieldId)
+			[$type, $id] = explode('_', $value);
+
+			if ($type !== $fieldId)
 			{
 				continue;
 			}
 
 			$typeId = CCrmOwnerType::ResolveID(CCrmOwnerTypeAbbr::ResolveName($type));
-			$title = CCrmOwnerType::GetCaption($typeId, $crmElement[1]);
-			$url = CCrmOwnerType::GetShowUrl($typeId, $crmElement[1]);
+			$title = CCrmOwnerType::GetCaption($typeId, $id);
+			$url = CCrmOwnerType::GetEntityShowPath($typeId, $id);
 
 			if (!isset($collection[$type]))
 			{
-				$collection[$type] = array();
+				$collection[$type] = [];
 			}
 
 			if ($title)
@@ -724,19 +724,18 @@ if (!function_exists('prepareCRM'))
 			return GetMessage('TASKS_NOT_PRESENT');
 		}
 
-		$collection = array();
+		$collection = [];
 		sort($row['UF_CRM_TASK']);
 		foreach ($row['UF_CRM_TASK'] as $value)
 		{
-			$crmElement = explode('_', $value);
-			$type = $crmElement[0];
+			[$type, $id] = explode('_', $value);
 			$typeId = CCrmOwnerType::ResolveID(CCrmOwnerTypeAbbr::ResolveName($type));
-			$title = CCrmOwnerType::GetCaption($typeId, $crmElement[1]);
-			$url = CCrmOwnerType::GetShowUrl($typeId, $crmElement[1]);
+			$title = CCrmOwnerType::GetCaption($typeId, $id);
+			$url = CCrmOwnerType::GetEntityShowPath($typeId, $id);
 
 			if (!isset($collection[$type]))
 			{
-				$collection[$type] = array();
+				$collection[$type] = [];
 			}
 
 			if ($title)

@@ -147,7 +147,7 @@ class CDiskTrashCanComponent extends DiskComponent
 		}
 		$gridId = $this->gridOptions->getGridId();
 
-		$this->application->setTitle($this->storage->getProxyType()->getTitleForCurrentUser());
+		$this->application->setTitle(htmlspecialcharsbx($this->storage->getProxyType()->getTitleForCurrentUser()));
 
 		$this->processGridActions($gridId);
 		$this->arResult = array(

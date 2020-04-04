@@ -3,15 +3,18 @@
 		return ;
 	var repoLog = {}, mid = {},
 		f = function(ENTITY_XML_ID, id) {
+
+			var logId = oMSL.getLogId();
+
 			if (mid[id.join('-')] !== "hidden")
 			{
 				mid[id.join('-')] = "hidden";
-				if (repoLog[oMSL.logId])
+				if (repoLog[logId])
 				{
-					repoLog[oMSL.logId]["POST_NUM_COMMENTS"]--;
+					repoLog[logId]["POST_NUM_COMMENTS"]--;
 					BXMobileApp.onCustomEvent('onLogEntryCommentsNumRefresh', {
-						log_id: oMSL.logId,
-						num : repoLog[oMSL.logId]["POST_NUM_COMMENTS"]
+						log_id: logId,
+						num : repoLog[logId]["POST_NUM_COMMENTS"]
 					}, true);
 				}
 			}
@@ -19,18 +22,19 @@
 	BX.addCustomEvent(window, "OnUCommentWasDeleted", f);
 	BX.addCustomEvent(window, "OnUCommentWasHidden", f);
 	BX.addCustomEvent(window, "OnUCRecordHasDrawn", function(ENTITY_XML_ID, id) {
+		var logId = oMSL.getLogId();
 		mid[ENTITY_XML_ID] = (mid[ENTITY_XML_ID] || {});
 		if (mid[id.join('-')] !== "drawn")
 		{
 			mid[id.join('-')] = "drawn";
 			var node;
-			if (repoLog[oMSL.logId] && (node = BX('record-' + id.join('-') + '-cover')) &&
+			if (repoLog[logId] && (node = BX('record-' + id.join('-') + '-cover')) &&
 				node && node.parentNode == BX('record-' + ENTITY_XML_ID + '-new'))
 			{
-				repoLog[oMSL.logId]["POST_NUM_COMMENTS"]++;
+				repoLog[logId]["POST_NUM_COMMENTS"]++;
 				BXMobileApp.onCustomEvent('onLogEntryCommentsNumRefresh', {
-					log_id: oMSL.logId,
-					num : repoLog[oMSL.logId]["POST_NUM_COMMENTS"]
+					log_id: logId,
+					num : repoLog[logId]["POST_NUM_COMMENTS"]
 				},true);
 			}
 		}
@@ -214,49 +218,24 @@ function __MSLOnFeedPreInit(params) // only for the list
 	});
 
 	BX.addCustomEvent("onPullDownDisable", function() {
-		if (
-			window.platform != "ios"
-			|| app.enableInVersion(27)
-		) // there's a bug in versions before 27/iOS
-		{
-			BXMobileApp.UI.Page.Refresh.setEnabled(false);
-		}
+		BXMobileApp.UI.Page.Refresh.setEnabled(false);
 	});
 
 	BX.addCustomEvent("onPullDownEnable", function() {
-		if (
-			window.platform != "ios"
-			|| app.enableInVersion(27)
-		) // there's a bug in versions before 27/iOS
-		{
-			BXMobileApp.UI.Page.Refresh.setEnabled(true);
-		}
+		BXMobileApp.UI.Page.Refresh.setEnabled(true);
 	});
 
-	if (
-		window.platform != "ios"
-		|| app.enableInVersion(27)
-	) // there's a bug in versions before 27/iOS
-	{
-		BXMobileApp.UI.Page.Refresh.setParams({
-			callback: function()
+	BXMobileApp.UI.Page.Refresh.setParams({
+		callback: function()
+		{
+			if (!window.isPullDownLocked)
 			{
-				if (!window.isPullDownLocked)
-				{
-					__MSLRefresh(true);
-				}
-			},
-			backgroundColor: '#E7E9EB'
-		});
-		BXMobileApp.UI.Page.Refresh.setEnabled(true);
-	}
-	else
-	{
-		app.pullDown({
-			enable: true,
-			backgroundColor: '#E7E9EB'
-		});
-	}
+				__MSLRefresh(true);
+			}
+		},
+		backgroundColor: '#E7E9EB'
+	});
+	BXMobileApp.UI.Page.Refresh.setEnabled(true);
 }
 
 function __MSLOnFeedInit(params)
@@ -398,6 +377,21 @@ function __MSLOnFeedInit(params)
 					icon: "file"
 				});
 
+				if (BX.message('MSLPathToKnowledgeGroup'))
+				{
+					oMSL.listPageMenuItems.push({
+						name: BX.message('MSLTitleKnowledgeGroup'),
+						image:"/bitrix/templates/mobile_app/images/lenta/menu/knowledge_base.png",
+						action: function(){
+							window.BXMobileApp.PageManager.loadPageUnique({
+								url: BX.message('MSLPathToKnowledgeGroup'),
+								bx24ModernStyle: true,
+								cache: false
+							});
+						}
+					});
+				}
+
 				oMSL.showPageMenu('list');
 			});
 		}
@@ -503,7 +497,7 @@ function __MSLOnFeedInit(params)
 						{
 							oMSL.listPageMenuItems.push({
 								name: (
-									oMSL.bFollowDefault
+									oMSL.getFollowDefaultValue()
 										? BX.message('MSLMenuItemFollowDefaultY')
 										: BX.message('MSLMenuItemFollowDefaultN')
 								),
@@ -512,7 +506,7 @@ function __MSLOnFeedInit(params)
 								feature: 'follow',
 								action: function() {
 									oMSL.setFollowDefault({
-										value: !oMSL.bFollowDefault
+										value: !oMSL.getFollowDefaultValue()
 									});
 								}
 							});
@@ -539,46 +533,15 @@ function __MSLOnFeedInit(params)
 
 						oMSL.showPageMenu('list');
 
-						if(app.enableInVersion(20))
-						{
-							app.addButtons({
-								addPostButton:{
-									type: "edit",
-									style:"custom",
-									callback:function(){
-										app.exec('showPostForm', oMSL.showNewPostForm());
-									}
+						app.addButtons({
+							addPostButton:{
+								type: "edit",
+								style:"custom",
+								callback:function(){
+									app.exec('showPostForm', oMSL.showNewPostForm());
 								}
-							});
-						}
-						else if(app.enableInVersion(13))
-						{
-							BXMobileApp.UI.Page.SlidingPanel.show({
-								hidden_sliding_panel: true,
-								scroll_backlash: 20.0,
-								buttons:
-								{
-									addButton: {
-										name: BX.message('MSLSliderAddPost'),
-										image: "/bitrix/templates/mobile_app/images/lenta/slider/addpost.png?1",
-										callback: function () {
-											app.exec('showPostForm', oMSL.showNewPostForm());
-										}
-									},
-									favoritesButton: {
-										name: BX.message('MSLSliderFavorites'),
-										image: "/bitrix/templates/mobile_app/images/lenta/slider/favorites.png?2",
-										callback: function () {
-											app.loadPageBlank({
-												url: (BX.message('MobileSiteDir') ? BX.message('MobileSiteDir') : '/') + "mobile/index.php?favorites=Y",
-												cache: false,
-												bx24ModernStyle: true
-											});
-										}
-									}
-								}
-							});
-						}
+							}
+						});
 					}
 					else
 					{
@@ -802,15 +765,7 @@ function __MSLOnFeedInit(params)
 	{
 		window.isDetailPullDownEnabled = false;
 
-		oMSL.arBlockToCheck = {
-			0: {
-				lenta_item_id: 'lenta_item',
-				text_block_id: 'post_block_check_cont',
-				title_block_id: 'post_block_check_title',
-				more_overlay_id: 'post_more_block',
-				more_button_id: 'post_more_limiter'
-			}
-		};
+		oMSL.registerEmptyBlockToCheck();
 
 		BX.ready(function()
 		{
@@ -985,9 +940,10 @@ function __MSLOnFeedInit(params)
 												{
 													if (parseInt(data.log_id) > 0)
 													{
-														oMSL.logId = parseInt(data.log_id);
+														oMSL.setLogId(parseInt(data.log_id))
 													}
 
+													// get comments on an empty page after become active (wake-up)
 													oMSL.getComments({
 														ts: oMSL.iDetailTs,
 														bPullDown: false,
@@ -1554,15 +1510,7 @@ function __MSLRefresh(bScroll)
 						serverTimeUnix: data.COUNTER_SERVER_TIME_UNIX
 					};
 
-
-					if (window.app.enableInVersion(25))
-					{
-						BXMobileApp.Events.postToComponent("onClearLiveFeedCounter", eventParams, "communication");
-					}
-					else
-					{
-						BXMobileApp.onCustomEvent('onClearLiveFeedCounter', eventParams, true);
-					}
+					BXMobileApp.Events.postToComponent("onClearLiveFeedCounter", eventParams, "communication");
 				}
 
 				oMSL.processAjaxBlock(data.PROPS, {
@@ -1678,59 +1626,25 @@ function __MSLPullDownInit(enable, bRefresh)
 			&& bRefresh
 		)
 		{
-			if (
-				window.platform != "ios"
-				|| app.enableInVersion(27)
-			) // there's a bug in versions before 27/iOS
-			{
-				BXMobileApp.UI.Page.Refresh.setParams({
-					pulltext: BX.message('MSLPullDownText1'),
-					backgroundColor: '#E7E9EB',
-					downtext: BX.message('MSLPullDownText2'),
-					loadtext: BX.message('MSLPullDownText3'),
-					callback: function() {
-						if (!window.isPullDownLocked)
-						{
-							__MSLRefresh(true);
-						}
+			BXMobileApp.UI.Page.Refresh.setParams({
+				pulltext: BX.message('MSLPullDownText1'),
+				backgroundColor: '#E7E9EB',
+				downtext: BX.message('MSLPullDownText2'),
+				loadtext: BX.message('MSLPullDownText3'),
+				callback: function() {
+					if (!window.isPullDownLocked)
+					{
+						__MSLRefresh(true);
 					}
-				});
-				BXMobileApp.UI.Page.Refresh.setEnabled(true);
-			}
-			else
-			{
-				app.pullDown({
-					enable: true,
-					backgroundColor: '#E7E9EB',
-					pulltext: BX.message('MSLPullDownText1'),
-					downtext: BX.message('MSLPullDownText2'),
-					loadtext: BX.message('MSLPullDownText3'),
-					callback: function() {
-						if (!window.isPullDownLocked)
-						{
-							__MSLRefresh(true);
-						}
-					}
-				});
-			}
+				}
+			});
+			BXMobileApp.UI.Page.Refresh.setEnabled(true);
 		}
 		isPullDownEnabled = true;
 	}
 	else
 	{
-		if (
-			window.platform != "ios"
-			|| app.enableInVersion(27)
-		) // there's a bug in versions before 27/iOS
-		{
-			BXMobileApp.UI.Page.Refresh.setEnabled(false);
-		}
-		else
-		{
-			app.pullDown({
-				enable: false
-			});
-		}
+		BXMobileApp.UI.Page.Refresh.setEnabled(false);
 
 		isPullDownEnabled = false;
 	}
@@ -1787,6 +1701,7 @@ function __MSLDetailPullDownInit(enable)
 							BX.cleanNode(iconFailed, true);
 						}
 
+						// get comments when pulldown
 						oMSL.getComments({
 							ts: ts,
 							bPullDown: true,
@@ -1794,53 +1709,26 @@ function __MSLDetailPullDownInit(enable)
 								form: false
 							}
 						});
+
+						oMSL.refreshPostDetail();
 					}
 				}
 			};
 
-			if (
-				window.platform != "ios"
-				|| app.enableInVersion(27)
-			) // there's a bug in versions before 27/iOS
-			{
-				BXMobileApp.UI.Page.Refresh.setParams({
-					pulltext: BX.message('MSLDetailPullDownText1'),
-					backgroundColor: '#E7E9EB',
-					downtext: BX.message('MSLDetailPullDownText2'),
-					loadtext: BX.message('MSLDetailPullDownText3'),
-					callback: callbackFunction
-				});
-				BXMobileApp.UI.Page.Refresh.setEnabled(true);
-			}
-			else
-			{
-				app.pullDown({
-					enable: true,
-					backgroundColor: '#E7E9EB',
-					pulltext: BX.message('MSLDetailPullDownText1'),
-					downtext: BX.message('MSLDetailPullDownText2'),
-					loadtext: BX.message('MSLDetailPullDownText3'),
-					callback: callbackFunction
-				});
-			}
+			BXMobileApp.UI.Page.Refresh.setParams({
+				pulltext: BX.message('MSLDetailPullDownText1'),
+				backgroundColor: '#E7E9EB',
+				downtext: BX.message('MSLDetailPullDownText2'),
+				loadtext: BX.message('MSLDetailPullDownText3'),
+				callback: callbackFunction
+			});
+			BXMobileApp.UI.Page.Refresh.setEnabled(true);
 		}
 		isDetailPullDownEnabled = true;
 	}
 	else
 	{
-		if (
-			window.platform != "ios"
-			|| app.enableInVersion(27)
-		) // there's a bug in versions before 27/iOS
-		{
-			BXMobileApp.UI.Page.Refresh.setEnabled(false);
-		}
-		else
-		{
-			app.pullDown({
-				enable: false
-			});
-		}
+		BXMobileApp.UI.Page.Refresh.setEnabled(false);
 		isDetailPullDownEnabled = false;
 	}
 }
@@ -1903,31 +1791,19 @@ function __MSLSetFavorites(log_id)
 
 	favoritesBlock.setAttribute("data-favorites", strFavoritesNew);
 
-	var request_data = {
-		sessid: BX.bitrix_sessid(),
-		site: BX.message('SITE_ID'),
-		lang: BX.message('MSLLangId'),
-		log_id: parseInt(log_id),
-		favorites: strFavoritesNew,
-		action: 'change_favorites',
-		mobile_action: 'change_favorites'
-	};
-
-	var actionUrl = BX.message('MSLSiteDir') + 'mobile/ajax.php';
-	actionUrl = BX.util.add_url_param(actionUrl, {
-		b24statAction: (strFavoritesNew == 'Y' ? 'addFavorites' : 'removeFavorites'),
-		b24statContext: 'mobile'
-	});
-
 	var BMAjaxWrapper = new MobileAjaxWrapper;
-	BMAjaxWrapper.Wrap({
-		type: 'json',
-		method: 'POST',
-		url: actionUrl,
-		data: request_data,
-		callback: function(response_data)
-		{
-			if (response_data["SUCCESS"] == "Y")
+	BMAjaxWrapper.runAction('socialnetwork.api.livefeed.changeFavorites', {
+		data: {
+			logId: log_id,
+			value: strFavoritesNew
+		},
+		analyticsLabel: {
+			b24statAction: (strFavoritesNew == 'Y' ? 'addFavorites' : 'removeFavorites'),
+			b24statContext: 'mobile'
+		}
+	}, {
+		success: function(response) {
+			if (response.data.success)
 			{
 				if (strFavoritesNew == "Y")
 				{
@@ -1945,8 +1821,10 @@ function __MSLSetFavorites(log_id)
 				}, true);
 			}
 		},
-		callback_failure: function() {}
+		failure: function(response) {
+		}
 	});
+
 	return false;
 }
 
@@ -2109,7 +1987,7 @@ function blogCommentsNativeInputCallback(params)
 					oMSL.parseAndExecCode(response);
 					__MSLDetailMoveBottom();
 					oMSL.setFollow({
-						logId: oMSL.log_id,
+						logId: oMSL.getLogId(),
 						bOnlyOn: true
 					});
 				}
@@ -2331,25 +2209,17 @@ function commentsNativeInputCallback(params)
 
 __MSLSendError = function(message, url, linenumber)
 {
-	var error_data =  {
-		'sessid': BX.bitrix_sessid(),
-		'site': BX.message('SITE_ID'),
-		'lang': BX.message('MSLLangId'),
-		'message': message,
-		'url': url,
-		'linenumber': linenumber,
-		'action': 'log_error',
-		'mobile_action': 'log_error'
-	};
-
 	var BMAjaxWrapper = new MobileAjaxWrapper;
-	BMAjaxWrapper.Wrap({
-		'type': 'json',
-		'method': 'POST',
-		'url': BX.message('MSLSiteDir') + 'mobile/ajax.php',
-		'data': error_data,
-		'callback': function(data) {},
-		'callback_failure': function(data) {}
+
+	BMAjaxWrapper.runAction('socialnetwork.api.livefeed.mobileLogError', {
+		data: {
+			message: message,
+			url: url,
+			lineNumber: linenumber,
+		}
+	}, {
+		success: function(response) {},
+		failure: function(response) {}
 	});
 };
 
@@ -2417,6 +2287,40 @@ BitrixMSL = function ()
 	this.detailPageFocus = null;
 
 	this.emptyCommentsXhr = null;
+
+	this.classes = {
+		postItemBlockFull: 'post-item-post-block-full'
+	};
+};
+
+BitrixMSL.prototype.setLogId = function(logId)
+{
+	this.logId = parseInt(data.log_id);
+};
+
+BitrixMSL.prototype.getLogId = function()
+{
+	return parseInt(this.logId);
+};
+
+BitrixMSL.prototype.setFollowValue = function(value)
+{
+	this.bFollow = !!value;
+};
+
+BitrixMSL.prototype.getFollowValue = function()
+{
+	return this.bFollow;
+};
+
+BitrixMSL.prototype.setFollowDefaultValue = function(value)
+{
+	this.bFollowDefault = !!value;
+};
+
+BitrixMSL.prototype.getFollowDefaultValue = function()
+{
+	return this.bFollowDefault;
 };
 
 BitrixMSL.prototype.registerScripts = function(path)
@@ -2980,7 +2884,7 @@ BitrixMSL.prototype.drawDetailPage = function(data)
 	// draw follow
 	if (
 		BX('post_item_top_wrap')
-		&& !this.bFollowDefault
+		&& !this.getFollowDefaultValue()
 	)
 	{
 		if (
@@ -3047,7 +2951,7 @@ BitrixMSL.prototype.drawDetailPage = function(data)
 
 		if (data.bShowFull === "YES")
 		{
-			BX('post_block_check_cont').className = "post-item-post-block-full";
+			BX('post_block_check_cont').className = oMSL.classes.postItemBlockFull;
 			if (BX('post_more_block_' + data.log_id))
 			{
 				BX('post_more_block_' + data.log_id).style.display = "none";
@@ -3119,6 +3023,7 @@ BitrixMSL.prototype.drawDetailPage = function(data)
 		)
 	)
 	{
+		// get comments when draw detail page/empty
 		oMSL.getComments({
 			ts: data.TS,
 			bPullDown: false,
@@ -3419,13 +3324,13 @@ BitrixMSL.prototype.deleteComment = function(params)
 	else
 	{
 		var post_data = {
-			'sessid': BX.bitrix_sessid(),
-			'site': commentVarSiteID,
-			'lang': commentVarLanguageID,
-			'log_id': parseInt(oMSL.logId),
-			'delete_id': params.commentId,
-			'action': 'delete_comment',
-			'mobile_action': 'delete_comment'
+			sessid: BX.bitrix_sessid(),
+			site: commentVarSiteID,
+			lang: commentVarLanguageID,
+			log_id: oMSL.getLogId(),
+			delete_id: params.commentId,
+			action: 'delete_comment',
+			mobile_action: 'delete_comment'
 		};
 
 		BMAjaxWrapper = new MobileAjaxWrapper;
@@ -4314,7 +4219,7 @@ BitrixMSL.prototype.showNewComment = function(params)
 
 	if (bIncrementCounters)
 	{
-		oMSL.incrementCounters(oMSL.logId);
+		oMSL.incrementCounters(oMSL.getLogId());
 	}
 
 	if (typeof arComment['UF_FORMATTED'] != 'undefined')
@@ -4656,7 +4561,7 @@ BitrixMSL.prototype.setFollow = function(params)
 			}
 
 			if (
-				!this.bFollowDefault
+				!this.getFollowDefaultValue()
 				&& followWrap
 			)
 			{
@@ -4672,7 +4577,7 @@ BitrixMSL.prototype.setFollow = function(params)
 
 			if (BX.type.isNotEmptyString(this.detailPageId))
 			{
-				this.bFollow = (strFollowNew == "Y");
+				this.setFollowValue(strFollowNew == "Y");
 				this.setFollowMenuItemName();
 			}
 		}
@@ -4680,31 +4585,18 @@ BitrixMSL.prototype.setFollow = function(params)
 
 	if (bAjax)
 	{
-		var post_data = {
-			sessid: BX.bitrix_sessid(),
-			site: BX.message('SITE_ID'),
-			lang: BX.message('MSLLangId'),
-			log_id: logId,
-			follow: strFollowNew,
-			action: 'change_follow',
-			mobile_action: 'change_follow'
-		};
-
-		var actionUrl = BX.message('MSLSiteDir') + 'mobile/ajax.php';
-		actionUrl = BX.util.add_url_param(actionUrl, {
-			b24statAction: (strFollowNew == 'Y' ? 'setFollow' : 'setUnfollow'),
-			b24statContext: 'mobile'
-		});
-
 		var BMAjaxWrapper = new MobileAjaxWrapper;
-		BMAjaxWrapper.Wrap({
-			type: 'json',
-			method: 'POST',
-			url: actionUrl,
-			data: post_data,
-			callback: BX.proxy(function(get_response_data)
-			{
-				if (get_response_data["SUCCESS"] != "Y")
+		BMAjaxWrapper.runAction('socialnetwork.api.livefeed.changeFollow', {
+			data: {
+				logId: logId,
+				value: strFollowNew
+			},
+			analyticsLabel: {
+				b24statAction: (strFollowNew == 'Y' ? 'setFollow' : 'setUnfollow')
+			}
+		}, {
+			success: function(response) {
+				if (!response.data.success)
 				{
 					if (followBlock)
 					{
@@ -4713,14 +4605,14 @@ BitrixMSL.prototype.setFollow = function(params)
 						followBlock.setAttribute("data-follow", strFollowOld);
 					}
 
-					if (BX.type.isNotEmptyString(oMSL.detailPageId))
+					if (BX.type.isNotEmptyString(this.detailPageId))
 					{
-						oMSL.bFollow = (strFollowOld == "Y");
+						this.setFollowValue(strFollowOld == "Y");
 						this.setFollowMenuItemName();
 					}
 
 					if (
-						!this.bFollowDefault
+						!this.getFollowDefaultValue()
 						&& followWrap
 					)
 					{
@@ -4734,17 +4626,17 @@ BitrixMSL.prototype.setFollow = function(params)
 						}
 					}
 
-					if (parseInt(oMSL.logId) > 0)
+					if (this.getLogId() > 0)
 					{
 						BXMobileApp.onCustomEvent('onLogEntryFollow', {
 							logId: logId,
-							pageId: (BX.type.isNotEmptyString(oMSL.detailPageId) ? oMSL.detailPageId : ''),
+							pageId: (BX.type.isNotEmptyString(this.detailPageId) ? this.detailPageId : ''),
 							bOnlyOn: (bOnlyOn ? 'Y' : 'N')
 						}, true);
 					}
 				}
-			}, this),
-			callback_failure: BX.proxy(function() {
+			}.bind(this),
+			failure: function(response) {
 				if (followBlock)
 				{
 					BX.removeClass(followBlock, (strFollowOld == "Y" ? 'post-item-follow' : 'post-item-follow-active'));
@@ -4753,7 +4645,7 @@ BitrixMSL.prototype.setFollow = function(params)
 				}
 
 				if (
-					!this.bFollowDefault
+					!this.getFollowDefaultValue()
 					&& followWrap
 				)
 				{
@@ -4767,12 +4659,12 @@ BitrixMSL.prototype.setFollow = function(params)
 					}
 				}
 
-				if (BX.type.isNotEmptyString(oMSL.detailPageId))
+				if (BX.type.isNotEmptyString(this.detailPageId))
 				{
-					oMSL.bFollow = (strFollowOld == "Y");
+					this.setFollowValue(strFollowOld == "Y");
 					this.setFollowMenuItemName();
 				}
-			}, this)
+			}.bind(this)
 		});
 	}
 
@@ -4790,7 +4682,7 @@ BitrixMSL.prototype.setFollowDefault = function(params)
 
 	if (!BX.type.isNotEmptyString(oMSL.detailPageId))
 	{
-		oMSL.bFollowDefault = newValue;
+		this.setFollowDefaultValue(newValue);
 		this.setDefaultFollowMenuItemName();
 	}
 
@@ -4809,7 +4701,7 @@ BitrixMSL.prototype.setFollowDefault = function(params)
 			oMSL.pullDownAndRefresh();
 		},
 		function(post_data) {
-			oMSL.bFollowDefault = !(post_data.value == 'Y');
+			oMSL.setFollowDefaultValue(post_data.value != 'Y');
 			oMSL.setDefaultFollowMenuItemName();
 		}
 	);
@@ -4855,32 +4747,41 @@ BitrixMSL.prototype.changeListMode = function(post_data, successCallbackFunc, fa
 {
 	app.showPopupLoader({text: ""});
 
-	var actionUrl = BX.message('MSLSiteDir') + 'mobile/ajax.php';
+	var
+		action = false,
+		statAction = '';
+
 	if (post_data.action == 'change_follow_default')
 	{
-		actionUrl = BX.util.add_url_param(actionUrl, {
-			b24statAction: (post_data.value == 'Y' ? 'setFollowType' : 'unsetFollowType'),
-			b24statContext: 'mobile'
-		});
+		action = 'socialnetwork.api.livefeed.changeFollowDefault';
+		statAction = (post_data.value == 'Y' ? 'setFollowType' : 'unsetFollowType');
 	}
 	else if (post_data.action == 'change_expert_mode')
 	{
-		actionUrl = BX.util.add_url_param(actionUrl, {
-			b24statAction: (post_data.value == 'Y' ? 'setExpertMode' : 'unsetExpertMode'),
-			b24statContext: 'mobile'
-		});
+		action = 'socialnetwork.api.livefeed.changeExpertMode';
+		statAction = (post_data.value == 'Y' ? 'setExpertMode' : 'unsetExpertMode');
+	}
+
+	if (!action)
+	{
+		return;
 	}
 
 	var BMAjaxWrapper = new MobileAjaxWrapper;
-	BMAjaxWrapper.Wrap({
-		type: 'json',
-		method: 'POST',
-		url: actionUrl,
-		data: post_data,
-		callback: function(get_response_data)
+	BMAjaxWrapper.runAction(action, {
+		data: {
+			value: post_data.value
+		},
+		analyticsLabel: {
+			b24statAction: statAction,
+			b24statContext: 'mobile'
+		}
+
+	},
 		{
+		success: function(response) {
 			app.hidePopupLoader();
-			if (get_response_data["SUCCESS"] == "Y")
+			if (response.data.success)
 			{
 				successCallbackFunc(post_data);
 			}
@@ -4891,10 +4792,8 @@ BitrixMSL.prototype.changeListMode = function(post_data, successCallbackFunc, fa
 					failCallbackFunc(post_data);
 				}
 			}
-
-		},
-		callback_failure: function()
-		{
+		}.bind(this),
+		failure: function(response) {
 			app.hidePopupLoader();
 			if (!BX.type.isNotEmptyString(oMSL.detailPageId))
 			{
@@ -4985,7 +4884,7 @@ BitrixMSL.prototype.getComment = function(params)
 					__MSLDetailMoveBottom();
 
 					oMSL.setFollow({
-						logId: oMSL.log_id,
+						logId: oMSL.getLogId(),
 						bOnlyOn: true
 					});
 				}
@@ -5066,7 +4965,7 @@ BitrixMSL.prototype.uploadCommentFile = function(fileURI)
 				__MSLDetailMoveBottom();
 
 				oMSL.setFollow({
-					logId: oMSL.logId,
+					logId: oMSL.getLogId(),
 					bOnlyOn: true
 				});
 			}
@@ -5137,7 +5036,7 @@ BitrixMSL.prototype.uploadCommentFile = function(fileURI)
 	}
 	else
 	{
-		options.params.log_id = oMSL.logId;
+		options.params.log_id = oMSL.getLogId();
 	}
 
 	options.chunkedMode = false;
@@ -5300,7 +5199,7 @@ BitrixMSL.prototype.buildDetailPageMenu = function(data)
 						callback: function() {
 							oMSL.shareBlogPost();
 						},
-						url: BX.message('MSLSiteDir') + 'mobile/index.php?mobile_action=' + (BX.message('MSLIsExtranetSite') == 'Y' ? 'get_group_list' : 'get_usergroup_list'),
+						url: BX.message('MSLSiteDir') + 'mobile/index.php?mobile_action=' + (BX.message('MSLIsExtranetSite') == 'Y' ? 'get_group_list' : 'get_usergroup_list') + '&feature=blog',
 						markmode: true,
 						multiple: true,
 						return_full_mode: true,
@@ -5359,12 +5258,12 @@ BitrixMSL.prototype.buildDetailPageMenu = function(data)
 	)
 	{
 		menuItems.push({
-			name: (oMSL.bFollow ? BX.message('MSLFollowY') : BX.message('MSLFollowN')),
+			name: (oMSL.getFollowValue() ? BX.message('MSLFollowY') : BX.message('MSLFollowN')),
 			image: "/bitrix/templates/mobile_app/images/lenta/menu/eye.png",
 			action: function()
 			{
 				oMSL.setFollow({
-					logId: oMSL.logId,
+					logId: oMSL.getLogId(),
 					pageId: oMSL.pageId,
 					bOnlyOn: false,
 					bAjax: true,
@@ -5382,6 +5281,7 @@ BitrixMSL.prototype.buildDetailPageMenu = function(data)
 		action: function() {
 			if (oMSL.bDetailEmptyPage)
 			{
+				// get comments on refresh from detail page menu
 				oMSL.getComments({
 					ts: oMSL.iDetailTs,
 					bPullDown: true,
@@ -5463,7 +5363,7 @@ BitrixMSL.prototype.setFollowMenuItemName = function()
 			&& menuItem.feature == 'follow'
 		)
 		{
-			menuItem.name = (oMSL.bFollow ? BX.message('MSLFollowY') : BX.message('MSLFollowN'));
+			menuItem.name = (oMSL.getFollowValue() ? BX.message('MSLFollowY') : BX.message('MSLFollowN'));
 			this.detailPageMenuItems[i] = menuItem;
 			this.showPageMenu('detail');
 			break;
@@ -5482,7 +5382,7 @@ BitrixMSL.prototype.setDefaultFollowMenuItemName = function()
 			&& menuItem.feature == 'follow'
 		)
 		{
-			menuItem.name = (oMSL.bFollowDefault ? BX.message('MSLMenuItemFollowDefaultY') : BX.message('MSLMenuItemFollowDefaultN'));
+			menuItem.name = (oMSL.getFollowDefaultValue() ? BX.message('MSLMenuItemFollowDefaultY') : BX.message('MSLMenuItemFollowDefaultN'));
 			this.listPageMenuItems[i] = menuItem;
 			this.showPageMenu('list');
 			break;
@@ -5658,7 +5558,7 @@ BitrixMSL.prototype.expandText = function(id)
 	{
 		if (BX.hasClass(checkBlock, "post-item-post-block"))
 		{
-			BX.addClass(checkBlock, 'post-item-post-block-full');
+			BX.addClass(checkBlock, this.classes.postItemBlockFull);
 			BX.removeClass(checkBlock, 'post-item-post-block');
 		}
 		else if (BX.hasClass(checkBlock, "lenta-info-block-wrapp"))
@@ -5667,13 +5567,10 @@ BitrixMSL.prototype.expandText = function(id)
 			BX.removeClass(checkBlock, 'lenta-info-block-wrapp');
 		}
 
-		if (BX('post_more_block_' + id))
+		var nodeMoreOverlay = checkBlock.querySelector('.post-more-block');
+		if (nodeMoreOverlay)
 		{
-			BX('post_more_block_' + id).style.display = "none";
-		}
-		else if (BX('post_more_block'))
-		{
-			BX('post_more_block').style.display = "none";
+			nodeMoreOverlay.style.display = "none";
 		}
 
 		if (BX('post_more_limiter_' + id))
@@ -5686,7 +5583,6 @@ BitrixMSL.prototype.expandText = function(id)
 		}
 
 		var arImages = BX.findChildren(checkBlock, { tagName: "img" }, true);
-		var src = null;
 
 		if (BX.type.isArray(arImages))
 		{
@@ -5777,6 +5673,8 @@ BitrixMSL.prototype.showEmptyCommentsBlockFailed = function(el, ts, bPullDown, b
 				events: {
 					click: function() {
 						BX.cleanNode(this.parentNode, true);
+
+						// repeat get comments request (after error shown)
 						oMSL.getComments({
 							ts: ts,
 							bPullDown: bPullDown,
@@ -6379,7 +6277,7 @@ BitrixMSL.prototype.isPostFull = function()
 	);
 
 	return (
-		BX.hasClass(checkBlock, "post-item-post-block-full")
+		BX.hasClass(checkBlock, this.classes.postItemBlockFull)
 		|| BX.hasClass(checkBlock, "lenta-info-block-wrapp-full")
 	);
 };
@@ -6418,13 +6316,22 @@ BitrixMSL.prototype.isUserCurrent = function(userId)
 
 BitrixMSL.prototype.checkNodesHeight = function()
 {
-	var blockHeight = false;
+	var
+		blockHeight = false,
+		nodeToCheckId = null,
+		nodeMoreOverlay = null;
 
 	for (var logId in this.arBlockToCheck)
 	{
 		nodeToCheckId = this.arBlockToCheck[logId];
+		nodeMoreOverlay = (
+			BX(nodeToCheckId.lenta_item_id)
+				? BX(nodeToCheckId.lenta_item_id).querySelector('.post-more-block')
+				: false
+		);
+
 		if (
-			BX(nodeToCheckId.more_overlay_id)
+			nodeMoreOverlay
 			&& BX(nodeToCheckId.text_block_id)
 		)
 		{
@@ -6438,9 +6345,12 @@ BitrixMSL.prototype.checkNodesHeight = function()
 				blockHeight += BX(nodeToCheckId.files_block_id).offsetHeight
 			}
 
-			if (blockHeight >= 320)
+			if (
+				blockHeight >= 320
+				&& !BX.hasClass(nodeToCheckId.text_block_id, this.classes.postItemBlockFull)
+			)
 			{
-				BX(nodeToCheckId.more_overlay_id).style.display = "block";
+				nodeMoreOverlay.style.display = "block";
 				if (BX(nodeToCheckId.lenta_item_id))
 				{
 					BX.removeClass(BX(nodeToCheckId.lenta_item_id), "post-without-informers");
@@ -6453,9 +6363,9 @@ BitrixMSL.prototype.checkNodesHeight = function()
 			}
 			else
 			{
-				if (BX(nodeToCheckId.more_overlay_id))
+				if (nodeMoreOverlay)
 				{
-					BX(nodeToCheckId.more_overlay_id).style.display = "none";
+					nodeMoreOverlay.style.display = "none";
 				}
 
 				if (BX(nodeToCheckId.more_button_id))
@@ -6647,6 +6557,7 @@ BitrixMSL.prototype.getComments = function(params)
 	oMSL.showEmptyCommentsBlockWaiter(BX('post-comments-wrap'), true);
 
 	var BMAjaxWrapper = new MobileAjaxWrapper;
+
 	oMSL.emptyCommentsXhr = BMAjaxWrapper.Wrap({
 		type: 'json',
 		method: 'GET',
@@ -6792,6 +6703,37 @@ BitrixMSL.prototype.getComments = function(params)
 		}
 	});
 };
+
+BitrixMSL.prototype.refreshPostDetail = function()
+{
+	var BMAjaxWrapper = new MobileAjaxWrapper;
+
+	var xhr = BMAjaxWrapper.runAction('socialnetwork.api.livefeed.mobileGetDetail', {
+		data: {
+			logId: this.getLogId()
+		}
+	}, {
+		success: function(response) {
+			if (
+				BX.type.isPlainObject(response.data)
+				&& BX.type.isNotEmptyString(response.data.html)
+				&& BX('post_block_check_cont')
+			)
+			{
+				BX.html(BX('post_block_check_cont'), response.data.html);
+				this.registerEmptyBlockToCheck();
+				setTimeout(function() {
+					this.checkNodesHeight();
+					BitrixMobile.LazyLoad.showImages(); // when refresh
+				}.bind(this), 500);
+			}
+		}.bind(this),
+		failure: function(response) {
+
+		}
+	});
+};
+
 
 BitrixMSL.prototype.formatTaskDescription = function(taskDescription, livefeedUrl, entityType, suffix)
 {
@@ -7311,7 +7253,7 @@ BitrixMSL.prototype.getPostFormRecipientsDataSource = function()
 		alphabet_index: "YES",
 		showtitle: "YES",
 		user_all: "YES",
-		url: BX.message('MSLSiteDir') + 'mobile/index.php?mobile_action=' + (BX.message('MSLIsExtranetSite') == 'Y' ? 'get_group_list' : 'get_usergroup_list')
+		url: BX.message('MSLSiteDir') + 'mobile/index.php?mobile_action=' + (BX.message('MSLIsExtranetSite') == 'Y' ? 'get_group_list' : 'get_usergroup_list') + '&feature=blog'
 	};
 };
 
@@ -7974,7 +7916,6 @@ BitrixMSL.prototype.registerBlocksToCheck = function()
 							text_block_id: 'post_block_check_' + lentaItemId,
 							title_block_id: 'post_block_check_title_' + lentaItemId,
 							files_block_id: 'post_block_check_files_' + lentaItemId,
-							more_overlay_id: 'post_more_block_' + lentaItemId,
 							more_button_id: 'post_more_limiter_' + lentaItemId
 						};
 						this.blocksToCheckRegisteredList.push(lentaItemId);
@@ -7984,6 +7925,19 @@ BitrixMSL.prototype.registerBlocksToCheck = function()
 		}
 	}
 };
+
+BitrixMSL.prototype.registerEmptyBlockToCheck = function()
+{
+	oMSL.arBlockToCheck = {
+		0: {
+			lenta_item_id: 'lenta_item',
+			text_block_id: 'post_block_check_cont',
+			title_block_id: 'post_block_check_title',
+			more_button_id: 'post_more_limiter'
+		}
+	};
+};
+
 
 BitrixMSL.prototype.onMobilePlayerError = function(player, src)
 {

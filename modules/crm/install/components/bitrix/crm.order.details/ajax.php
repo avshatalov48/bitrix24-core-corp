@@ -775,7 +775,7 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 		$allowConfig = $this->userPermissions->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE');
 		if (!$allowConfig)
 		{
-			$this->addError('PERMISSION DENIED!');
+			$this->addError(Loc::getMessage('CRM_ORDER_ACCESS_DENIED'));
 			return;
 		}
 
@@ -829,7 +829,7 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 		$allowConfig = $userPermissions->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE');
 		if (!$allowConfig)
 		{
-			$this->addError('PERMISSION DENIED');
+			$this->addError(Loc::getMessage('CRM_ORDER_ACCESS_DENIED'));
 			return;
 		}
 
@@ -1040,7 +1040,7 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 		$allowConfig = $userPermissions->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE');
 		if (!$allowConfig)
 		{
-			$this->addError('PERMISSION DENIED');
+			$this->addError(Loc::getMessage('CRM_ORDER_ACCESS_DENIED'));
 			return;
 		}
 
@@ -1061,6 +1061,11 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 		);
 		$component->setEntityID($orderId);
 		$order = $component->obtainOrder();
+		if (!$order)
+		{
+			$this->addError(Loc::getMessage('CRM_ORDER_NOT_FOUND'));
+			return;
+		}
 		$properties = $component->prepareProperties($order);
 		$this->addData([
 			'PROPERTIES' => $properties,
@@ -1073,7 +1078,7 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 		$allowConfig = $userPermissions->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE');
 		if (!$allowConfig)
 		{
-			$this->addError('PERMISSION DENIED');
+			$this->addError(Loc::getMessage('CRM_ORDER_ACCESS_DENIED'));
 			return;
 		}
 

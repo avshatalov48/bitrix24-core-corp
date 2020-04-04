@@ -107,6 +107,7 @@ if ($isBitrix24Template)
 		<?if ($arParams['FOLDER_SITE_ID']):?>
 		<a class="ui-btn ui-btn-light-border ui-btn-icon-add-folder ui-btn-themes landing-filter-buttons-add-folder" <?
 			?>id="landing-create-folder" <?
+			?>data-type="<?= $arParams['TYPE'];?>" <?
 			?>data-action="<?= \CUtil::jsEscape(Loc::getMessage('LANDING_TPL_CREATE_FOLDER_ACTION'));?>" <?
 			?>data-siteId="<?= $arParams['FOLDER_SITE_ID'];?>" <?
 			?>href="javascript:void(0);" <?

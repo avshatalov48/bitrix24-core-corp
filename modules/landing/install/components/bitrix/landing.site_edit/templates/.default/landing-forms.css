@@ -359,6 +359,10 @@
 	height: 154px;
 }
 
+.ui-form-right-cell-metrika .ui-checkbox-hidden-input:first-child .ui-checkbox:checked + .ui-checkbox-hidden-input-inner-gacounter {
+	height: 203px;
+}
+
 .ui-form-right-cell-metrika .ui-checkbox-hidden-input-inner .ui-checkbox {
 	position: static;
 	margin-right: 6px;
@@ -981,4 +985,16 @@
 
 .landing-form-help-link {
 	margin: 10px 0 0 27px;
+}
+
+#field-gacounter_click_type-use {
+	height: 0;
+	opacity: 0;
+	transition: all .2s linear;
+}
+
+#field-gacounter_click_type-use.ui-select-gacounter-show {
+	height: 39px;
+	margin-top: 7px;
+	opacity: 1;
 }

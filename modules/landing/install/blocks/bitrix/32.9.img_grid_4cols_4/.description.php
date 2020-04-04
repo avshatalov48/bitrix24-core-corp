@@ -17,13 +17,13 @@ return array(
 		'.landing-block-node-img-small' => array(
 			'name' => Loc::getMessage('LANDING_BLOCK_32.9.IMG_GRID_4_COLS_4_NODES_LANDINGBLOCKNODEIMG2'),
 			'type' => 'img',
-			'dimensions' => array('width' => 960, 'height' => 960),
+			'dimensions' => array('width' => 1080),
 			'allowInlineEdit' => false,
 		),
 		'.landing-block-node-img-big' => array(
 			'name' => Loc::getMessage('LANDING_BLOCK_32.9.IMG_GRID_4_COLS_4_NODES_LANDINGBLOCKNODEIMG1'),
 			'type' => 'img',
-			'dimensions' => array('width' => 1440, 'height' => 960),
+			'dimensions' => array('width' => 1080),
 			'allowInlineEdit' => false,
 		),
 		'.landing-block-node-img-title' => array(

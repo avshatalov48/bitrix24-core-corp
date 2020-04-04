@@ -21,7 +21,7 @@ return array(
 		'.landing-block-node-employee-photo' => array(
 			'name' => Loc::getMessage('LANDING_BLOCK_TEAM002._NODES_LANDINGBLOCKNODEEMPLOYEEPHOTO'),
 			'type' => 'img',
-			'dimensions' => array('width' => 270, 'height' => 450),
+			'dimensions' => array('width' => 540),
 		),
 		'.landing-block-node-employee-quote' => array(
 			'name' => Loc::getMessage('LANDING_BLOCK_TEAM002._NODES_LANDINGBLOCKNODEEMPLOYEEQUOTE'),

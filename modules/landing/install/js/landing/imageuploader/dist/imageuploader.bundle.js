@@ -1,11 +1,15 @@
 this.BX = this.BX || {};
-(function (exports,main_core,landing_imagecompressor,landing_backend) {
+(function (exports, main_core, landing_imagecompressor, landing_backend) {
 	'use strict';
 
 	function renameX(filename, x) {
 	  var name = filename.replace(/@[1-9]x/, '');
 	  return name ? name.replace(/\.[^.]+$/, "@".concat(x, "x.").concat(BX.util.getExtension(name))) : name;
 	}
+
+	/**
+	 * @memberOf BX.Landing
+	 */
 
 	var ImageUploader =
 	/*#__PURE__*/
@@ -68,5 +72,5 @@ this.BX = this.BX || {};
 
 	exports.ImageUploader = ImageUploader;
 
-}((this.BX.Landing = this.BX.Landing || {}),BX,BX.Landing,BX.Landing));
+}(this.BX.Landing = this.BX.Landing || {}, BX, BX.Landing, BX.Landing));
 //# sourceMappingURL=imageuploader.bundle.js.map

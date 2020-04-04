@@ -9,14 +9,21 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
  * @global CMain $APPLICATION
  */
 
+use Bitrix\Main\Context;
+use Bitrix\Main\Engine\Contract\Controllerable;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\SystemException;
 
-class CCrmAdminPageController extends \CBitrixComponent
+class CCrmAdminPageController extends \CBitrixComponent implements Controllerable
 {
 	private $pageList = array();
 	private $listMenuItems = array();
+
+	public function configureActions()
+	{
+		return [];
+	}
 
 	public function onIncludeComponentLang()
 	{
@@ -85,6 +92,98 @@ class CCrmAdminPageController extends \CBitrixComponent
 		return $this->getUrlsFromMenu($finalMenu);
 	}
 
+	public function getCatalogSectionsAction()
+	{
+		$request = Context::getCurrent()->getRequest();
+		$post = $request->getPostList()->toArray();
+
+		if (!$this->checkRequiredCatalogParams($post))
+		{
+			return [];
+		}
+
+		$items = [];
+
+		if (Loader::includeModule("iblock"))
+		{
+			$iblockId = (int) $post["iblock_id"];
+			$queryObject = CIBlockSection::getList(
+				["LEFT_MARGIN" => "ASC"],
+				[
+					"IBLOCK_ID" => $post["iblock_id"],
+					"SECTION_ID" => $post["section_id"],
+				],
+				false,
+				["ID", "NAME", "LEFT_MARGIN", "RIGHT_MARGIN"]
+			);
+			while ($section = $queryObject->fetch())
+			{
+				$item = [
+					"text" => htmlspecialcharsEx($section["NAME"]),
+					"title" => htmlspecialcharsEx($section["NAME"]),
+					"href" => $this->getSectionUrl($iblockId, $section["ID"], $post["selfFolder"]),
+				];
+				if ($this->hasSectionChild($iblockId, $section["ID"]))
+				{
+					$item["ajaxOptions"] = $this->getAjaxOptions([
+						"module_id" => "catalog",
+						"params" => [
+							"iblock_id" => $iblockId,
+							"section_id" => $section["ID"],
+							"selfFolder" => $post["selfFolder"]
+						]
+					]);
+				}
+				$items[] = $item;
+			}
+		}
+
+		return $items;
+	}
+
+	private function checkRequiredCatalogParams(array $post)
+	{
+		if (!intval($post["iblock_id"]))
+		{
+			return false;
+		}
+		if (!isset($post["section_id"]))
+		{
+			return false;
+		}
+
+		return true;
+	}
+
+	private function hasSectionChild($iblockId, $sectionId)
+	{
+		$queryObject = CIBlockSection::getList(
+			[],
+			[
+				"IBLOCK_ID" => $iblockId,
+				"SECTION_ID" => $sectionId,
+			],
+			false,
+			["ID"]
+		);
+		return ($queryObject->fetch());
+	}
+
+	private function getSectionUrl($iblockId, $sectionId, $selfFolder)
+	{
+		$url = $selfFolder."menu_catalog_category_".$iblockId."/".$sectionId."/";
+
+		$baseUrl = CIBlock::getAdminSectionListLink($iblockId, ["catalog" => null, "skip_public" => true]);
+		$baseUrl = $baseUrl."&find_section_section=".$sectionId."&SECTION_ID=".$sectionId."&apply_filter=Y";
+		$baseUrl = explode("?", $baseUrl);
+		if (count($baseUrl) == 2)
+		{
+			$url .= "?".$baseUrl[1];
+		}
+
+		return $url;
+	}
+
 	private function prepareMenuToRender()
 	{
 		$menu = $this->getMenu();
@@ -129,7 +228,7 @@ class CCrmAdminPageController extends \CBitrixComponent
 	}
 
 	/**
-	 * @throws SystemException
+	 * @return array
 	 */
 	protected function getMenu()
 	{
@@ -269,6 +368,12 @@ class CCrmAdminPageController extends \CBitrixComponent
 					"IS_DISABLED" => false,
 					"SORT" => $item["sort"] ? $item["sort"] : 0
 				);
+
+				if (!empty($item["ajax_options"]))
+				{
+					$menuItem["AJAX_OPTIONS"] = $this->getAjaxOptions($item["ajax_options"]);
+				}
+
 				if (isset($item["additional"]))
 				{
 					if (!$parentPageId && $item["parent_menu"] && $item["parent_menu"] != "global_menu_store")
@@ -340,7 +445,7 @@ class CCrmAdminPageController extends \CBitrixComponent
 		if (!empty($this->arParams["INTERNAL_PAGE_LIST"][$pageId]))
 		{
 			$pageParams = "";
-			$requestUrl = Bitrix\Main\Context::getCurrent()->getRequest()->getRequestUri();
+			$requestUrl = Context::getCurrent()->getRequest()->getRequestUri();
 			$explode = explode("?", $requestUrl);
 			if (count($explode) == 2)
 			{
@@ -351,8 +456,22 @@ class CCrmAdminPageController extends \CBitrixComponent
 		}
 		else
 		{
-			$this->arParams["CONNECT_PAGE"] = "N";
-			return array();
+			if ($this->getPagePathForAjaxPages($pageId))
+			{
+				$request = Context::getCurrent()->getRequest();
+				$explode = explode("?", $request->getRequestUri());
+				$pageParams = "";
+				if (count($explode) == 2)
+				{
+					$pageParams = $explode[1];
+				}
+				return array($pageId, $this->getPagePathForAjaxPages($pageId), $pageParams);
+			}
+			else
+			{
+				$this->arParams["CONNECT_PAGE"] = "N";
+				return array();
+			}
 		}
 	}
 
@@ -467,5 +586,50 @@ class CCrmAdminPageController extends \CBitrixComponent
 		if (!is_array($array) || empty($array))
 			return false;
 		return array_keys($array) !== range(0, count($array) - 1);
+	}
+
+	private function getAjaxOptions(array $inputOptions)
+	{
+		$ajaxOptions = [];
+
+		$actionsMap = [
+			"catalog" => [
+				"mode" => "component",
+				"componentMode" => "class",
+				"action" => "getCatalogSections",
+				"component" => "bitrix:crm.admin.page.controller"
+			]
+		];
+
+		if (array_key_exists($inputOptions["module_id"], $actionsMap))
+		{
+			$moduleOptions = $actionsMap[$inputOptions["module_id"]];
+			$ajaxOptions = [
+				"mode" => $moduleOptions["mode"],
+				"action" => $moduleOptions["action"],
+				"component" => $moduleOptions["component"],
+			];
+			if (!empty($moduleOptions["componentMode"]))
+			{
+				$ajaxOptions["componentMode"] = $moduleOptions["componentMode"];
+			}
+			if (!empty($inputOptions["params"]))
+			{
+				$ajaxOptions["data"] = $inputOptions["params"];
+				$ajaxOptions["data"]["selfFolder"] = $this->getSignedParameters() ?
+					$this->arParams["SEF_FOLDER"] : $inputOptions["params"]["selfFolder"];
+			}
+		}
+
+		return $ajaxOptions;
+	}
+
+	private function getPagePathForAjaxPages($pageId)
+	{
+		if (strpos($pageId, "menu_catalog_category") !== false)
+		{
+			return $this->arParams["SEF_FOLDER"]."cat_section_admin.php";
+		}
+		return "";
 	}
 }

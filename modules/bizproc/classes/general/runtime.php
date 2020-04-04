@@ -20,6 +20,7 @@ class CBPRuntime
 {
 	const EXCEPTION_CODE_INSTANCE_NOT_FOUND = 404;
 	const EXCEPTION_CODE_INSTANCE_LOCKED = 423;
+	const EXCEPTION_CODE_INSTANCE_TERMINATED = 499;
 
 	const REST_ACTIVITY_PREFIX = 'rest_';
 
@@ -609,8 +610,10 @@ class CBPRuntime
 			$arProcessedDirs = array_merge($arProcessedDirs, $this->getRestRobots(false, $documentType));
 		}
 
-		if ($type != 'condition')
-			\Bitrix\Main\Type\Collection::sortByColumn($arProcessedDirs, 'NAME');
+		if ($type !== 'condition')
+		{
+			\Bitrix\Main\Type\Collection::sortByColumn($arProcessedDirs, ['SORT' => SORT_ASC, 'NAME' => SORT_ASC]);
+		}
 
 		return $arProcessedDirs;
 	}

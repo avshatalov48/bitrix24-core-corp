@@ -38,7 +38,11 @@ class OrderImport extends EntityImport
 
     protected function createEntity(array $fileds)
 	{
-		return Sale\Order::create($this->settings->getSiteId(), $fileds['USER_ID'], $this->settings->getCurrency());
+		$registry = Sale\Registry::getInstance(Sale\Registry::REGISTRY_TYPE_ORDER);
+		/** @var Sale\Order $orderClass */
+		$orderClass = $registry->getOrderClassName();
+
+		return $orderClass::create($this->settings->getSiteId(), $fileds['USER_ID'], $this->settings->getCurrency());
 	}
     /**
      * @param Internals\Entity $entity

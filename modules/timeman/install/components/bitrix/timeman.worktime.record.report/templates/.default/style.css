@@ -1,5 +1,6 @@
 .timeman-report-wrap {
 	background: #fff;
+	max-width: 1000px;
 }
 
 .timeman-report-pagetitle {
@@ -80,6 +81,11 @@
 
 .timeman-report-nav {
 	margin-left: 20px;
+}
+
+.page-header .timeman-report-nav {
+	margin-bottom: 10px;
+	margin-left: 0;
 }
 
 .timeman-report-nav-arrow {
@@ -175,28 +181,11 @@
 
 .timeman-report-time-item-edited {
 	margin: 6px 0 5px;
-	padding: 0 0 10px 20px;
 	position: relative;
 }
 
-.timeman-report-time-item-edited:before {
-	content: '';
-	position: absolute;
-	left: 0;
-	top: 2px;
-	width: 13px;
-	height: 11px;
-	background-repeat: no-repeat;
-	background-position: center;
-}
-
-.timeman-report-time-item-edited-warning:before {
-	background-image: url(data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2213%22%20height%3D%2211%22%3E%3Cpath%20fill%3D%22%23FF5752%22%20d%3D%22M12.173%209.07L7.024.493a1.005%201.005%200%200%200-1.73%200L.145%209.069a1.01%201.01%200%200%200%20.87%201.528h10.297c.777%200%201.266-.853.861-1.528zM5.421%203.481a.68.68%200%200%201%20.683-.684h.093a.68.68%200%200%201%20.684.684v2.557a.68.68%200%200%201-.684.684h-.093a.68.68%200%200%201-.683-.684V3.482zm1.595%204.963c0%20.472-.388.86-.86.86a.865.865%200%200%201-.862-.86c0-.473.388-.861.861-.861s.861.388.861.86z%22/%3E%3C/svg%3E);
-}
-
-.timeman-report-time-item-edited-confirmed:before {
-	top: 3px;
-	background-image: url(data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2213%22%20height%3D%2210%22%20viewBox%3D%220%200%2013%2010%22%20fill%3D%22none%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%0A%3Cpath%20fill-rule%3D%22evenodd%22%20clip-rule%3D%22evenodd%22%20d%3D%22M0.262446%206.46059L0.262532%206.52749L11.287%206.5274L11.287%204.58843L1.93902%204.5886L1.93898%204.31584e-05L0%200L-4.31584e-05%206.46068L0.262446%206.46059Z%22%20transform%3D%22translate%280%204.98126%29%20rotate%28-45%29%22%20fill%3D%22%232FC6F6%22/%3E%0A%3C/svg%3E%0A);
+.timeman-report-time-item-edited .timeman-record-violation-icon {
+	margin-bottom: -1px;
 }
 
 .timeman-report-time-item-reason-title:after {
@@ -276,9 +265,7 @@
 	z-index: 9;
 	box-shadow: 0 -2px 4px 0 #f2f2f2;
 }
-.timeman-report-slider {
-	padding: 0 20px 20px;
-}
+
 .timeman-report-buttons .timeman-report-btn-cancel {
 	color: #535c69;
 }

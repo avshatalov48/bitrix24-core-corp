@@ -343,15 +343,6 @@ if (array_key_exists("GROUP", $arResult["DATA"]) && is_array($arResult["DATA"]["
 $checklistItems = (is_array($task['SE_CHECKLIST']) ? $task['SE_CHECKLIST'] : []);
 $task['SE_CHECKLIST'] = $checklistItems;
 
-if (!empty($checklistItems))
-{
-	$arrayTreeStructure = TaskCheckListFacade::getArrayStructuredRoots($checklistItems);
-	if (function_exists('getSortedChecklistItems'))
-	{
-		$task['SE_CHECKLIST'] = getSortedChecklistItems($arrayTreeStructure);
-	}
-}
-
 // sonet log
 $arResult["TEMPLATE_DATA"]["LOG_ID"] = false;
 
@@ -429,28 +420,3 @@ elseif (!empty($arResult["TEMPLATE_DATA"]["LOG_ID"]))
 }
 
 $arResult["RATING"] = \CRatings::getRatingVoteResult("TASK", $taskData["ID"]);
-
-function getSortedChecklistItems($checklistItems)
-{
-	$sortedItems = [];
-
-	foreach ($checklistItems as $item)
-	{
-		if (!$item['PARENT_ID'])
-		{
-			$item['TITLE'] = '---';
-			foreach ($item['ACTION'] as $id => $action)
-			{
-				$item['ACTION'][$id] = false;
-			}
-		}
-		$sortedItems[] = $item;
-
-		if ($item['SUB_TREE'])
-		{
-			$sortedItems = array_merge($sortedItems, getSortedChecklistItems($item['SUB_TREE']));
-		}
-	}
-
-	return $sortedItems;
-}

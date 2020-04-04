@@ -106,6 +106,10 @@ class BaseTable
 		{
 			$fields['MODIFIED_BY_ID'] = $uid;
 		}
+		else if (!$fields['MODIFIED_BY_ID'])
+		{
+			unset($fields['MODIFIED_BY_ID']);
+		}
 		if (!isset($fields['DATE_MODIFY']))
 		{
 			$fields['DATE_MODIFY'] = $date;

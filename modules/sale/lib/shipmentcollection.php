@@ -996,8 +996,7 @@ class ShipmentCollection
 				$r = $this->getSystemShipment()->onBasketModify($action, $basketItem, $name, $oldValue, $value);
 				if (!$r->isSuccess())
 				{
-					$result->addErrors($r->getErrors());
-					return $result;
+					return $result->addErrors($r->getErrors());
 				}
 			}
 		}

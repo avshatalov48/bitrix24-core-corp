@@ -79,8 +79,59 @@ class CompositeTreeItem extends TreeItem
 		return false;
 	}
 
+	isFirstDescendant()
+	{
+		return (this === this.getParent().getFirstDescendant());
+	}
+
+	isLastDescendants()
+	{
+		return (this === this.getParent().getLastDescendant());
+	}
+
+	getLeftSibling()
+	{
+		if (this.isFirstDescendant())
+		{
+			return null;
+		}
+
+		const parentDescendants = this.getParent().getDescendants();
+		const index = parentDescendants.findIndex(descendant => descendant === this);
+
+		if (index !== -1)
+		{
+			return parentDescendants[index - 1];
+		}
+
+		return null;
+	}
+
+	getRightSibling()
+	{
+		if (this.isLastDescendants())
+		{
+			return null;
+		}
+
+		const parentDescendants = this.getParent().getDescendants();
+		const index = parentDescendants.findIndex(descendant => descendant === this);
+
+		if (index !== -1)
+		{
+			return parentDescendants[index + 1];
+		}
+
+		return null;
+	}
+
 	findChild(nodeId)
 	{
+		if (!nodeId)
+		{
+			return null;
+		}
+
 		if (this.getNodeId().toString() === nodeId.toString())
 		{
 			return this;

@@ -26,7 +26,11 @@ class Groups extends \Bitrix\Main\UI\Selector\EntityBase
 			&& !Handler::isExtranetUser()
 		)
 		{
-			$allowToAllDestination = \Bitrix\Socialnetwork\ComponentHelper::getAllowToAllDestination();
+			$allowToAllDestination = (
+				!isset($options['context'])
+				|| !in_array($options['context'], [ 'BLOG_POST', 'FEED_FILTER_TO' ])
+				|| \Bitrix\Socialnetwork\ComponentHelper::getAllowToAllDestination()
+			);
 			if ($allowToAllDestination)
 			{
 				$result['ITEMS_LAST'][] = 'UA';

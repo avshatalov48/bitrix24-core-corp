@@ -2,9 +2,9 @@
 namespace Bitrix\Tasks\Copy;
 
 use Bitrix\Main\Copy\Copyable;
-use Bitrix\Main\Copy\ContainerManager;
+use Bitrix\Main\Copy\ContainerCollection;
 use Bitrix\Main\Result;
-use Bitrix\Tasks\Copy\Entity\TemplateCheckList as TemplateCheckListEntity;
+use Bitrix\Tasks\Copy\Implement\TemplateCheckList as TemplateCheckListEntity;
 
 class TemplateChecklist implements Copyable
 {
@@ -27,15 +27,12 @@ class TemplateChecklist implements Copyable
 	/**
 	 * Copies template checklists.
 	 *
-	 * @param ContainerManager $containerManager The object with data to copy.
+	 * @param ContainerCollection $containerCollection The object with data to copy.
 	 * @return Result
 	 */
-	public function copy(ContainerManager $containerManager)
+	public function copy(ContainerCollection $containerCollection)
 	{
-		$containers = $containerManager->getContainers();
-
-		/** @var Container[] $containers */
-		foreach ($containers as $container)
+		foreach ($containerCollection as $container)
 		{
 			$checkListItems = $this->checkList->getCheckListItemsByEntityId($container->getEntityId());
 

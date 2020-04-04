@@ -2,11 +2,13 @@
 namespace Bitrix\Timeman\Service\Agent;
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\ORM\Query\Query;
 use Bitrix\Timeman\Helper\EntityCodesHelper;
 use Bitrix\Timeman\Helper\TimeDictionary;
 use Bitrix\Timeman\Helper\UserHelper;
 use Bitrix\Timeman\Model\Schedule\Schedule;
 use Bitrix\Timeman\Model\Schedule\ScheduleTable;
+use Bitrix\Timeman\Model\Schedule\Shift\ShiftTable;
 use Bitrix\Timeman\Model\Schedule\Violation\ViolationRulesTable;
 use Bitrix\Timeman\Service\DependencyManager;
 use Bitrix\Timeman\Service\Notification\NotificationParameters;
@@ -23,17 +25,22 @@ class ViolationNotifierAgent
 		{
 			$entityCode = EntityCodesHelper::getAllUsersCode();
 		}
-		$schedule = DependencyManager::getInstance()
-			->getScheduleRepository()
-			->findByIdWith($scheduleId, ['SHIFTS', 'DEPARTMENT_ASSIGNMENTS',]);
-		if (!$schedule || !$schedule->isFixed())
-		{
-			return '';
-		}
 		$violationRules = DependencyManager::getInstance()
 			->getViolationRulesRepository()
 			->findByScheduleIdEntityCode($scheduleId, $entityCode);
 		if (!$violationRules)
+		{
+			return '';
+		}
+		$violationRules->setPeriodTimeLackAgentId(0);
+		DependencyManager::getInstance()
+			->getViolationRulesRepository()
+			->save($violationRules);
+
+		$schedule = DependencyManager::getInstance()
+			->getScheduleRepository()
+			->findByIdWith($scheduleId, ['SHIFTS', 'DEPARTMENT_ASSIGNMENTS', 'USER_ASSIGNMENTS']);
+		if (!$schedule || !$schedule->isFixed())
 		{
 			return '';
 		}
@@ -103,22 +110,96 @@ class ViolationNotifierAgent
 		return '';
 	}
 
-	public static function notifyIfShiftMissed($shiftId, $userId, $formattedDate, $shiftEndSeconds = null)
+	public static function notifyIfShiftMissed($shiftPlanId)
 	{
-		$violationResult = DependencyManager::getInstance()
-			->getViolationManager()
-			->buildMissedShiftViolation($shiftId, $userId, $formattedDate);
-		if (!$violationResult->isSuccess())
+		$shiftPlan = DependencyManager::getInstance()->getShiftPlanRepository()->findActiveById(
+			$shiftPlanId,
+			['*', 'SHIFT'],
+			Query::filter()->where('SHIFT.DELETED', ShiftTable::DELETED_NO)
+		);
+		if (!$shiftPlan)
 		{
 			return '';
 		}
-		if ((int)$violationResult->getShift()->getWorkTimeEnd() !== (int)$shiftEndSeconds)
+		$shiftPlan->setMissedShiftAgentId(0);
+		DependencyManager::getInstance()->getShiftPlanRepository()->save($shiftPlan);
+
+		$schedule = DependencyManager::getInstance()->getScheduleRepository()
+			->findActiveByShiftId($shiftPlan->getShiftId(), ['*']);
+		if (!$schedule || !$schedule->isShifted())
 		{
 			return '';
 		}
-		$plan = $violationResult->getShiftPlan();
-		$toUserIds = $violationResult->getFirstViolation()
-			->getNotifyUserIds(ViolationRulesTable::USERS_TO_NOTIFY_SHIFT_MISSED_START, $userId);
+
+		$utcStart = $shiftPlan->obtainShift()->buildUtcStartByShiftplan($shiftPlan);
+		$minStart = clone $utcStart;
+		if ($schedule->getAllowedMaxShiftStartOffset() > 0)
+		{
+			$minStart->sub(new \DateInterval('PT' . $schedule->getAllowedMaxShiftStartOffset() . 'S'));
+		}
+		$maxStart = clone $utcStart;
+		$maxStart->add(new \DateInterval('PT' . $shiftPlan->obtainShift()->getDuration() . 'S'));
+
+		$record = DependencyManager::getInstance()->getWorktimeRepository()->findByUserShiftSchedule(
+			$shiftPlan->getUserId(),
+			$shiftPlan->obtainShift()->getId(),
+			$schedule->getId(),
+			['ID', 'RECORDED_START_TIMESTAMP'],
+			Query::filter()
+				->where('RECORDED_START_TIMESTAMP', '>=', $minStart->getTimestamp())
+				->where('RECORDED_START_TIMESTAMP', '<=', $maxStart->getTimestamp())
+		);
+		if ($record)
+		{
+			return '';
+		}
+
+		$userCodes = EntityCodesHelper::buildDepartmentCodes(
+			DependencyManager::getInstance()->getDepartmentRepository()->getAllUserDepartmentIds($shiftPlan->getUserId())
+		);
+		$userCodes[] = EntityCodesHelper::getAllUsersCode();
+		$userCodes[] = EntityCodesHelper::buildUserCode($shiftPlan->getUserId());
+
+		$violationRulesList = DependencyManager::getInstance()->getViolationRulesRepository()
+			->findAllByScheduleId(
+				$schedule->getId(),
+				[
+					'ID',
+					'ENTITY_CODE',
+					'MISSED_SHIFT_START',
+					'USERS_TO_NOTIFY',
+				],
+				Query::filter()
+					->where('MISSED_SHIFT_START', ViolationRulesTable::MISSED_SHIFT_IS_TRACKED)
+					->whereIn('ENTITY_CODE', $userCodes)
+			);
+		if ($violationRulesList->count() === 0)
+		{
+			return '';
+		}
+		$params = (new WorktimeViolationParams())
+			->setShift($shiftPlan->obtainShift())
+			->setSchedule($schedule)
+			->setRecord($record)
+			->setShiftPlan($shiftPlan);
+		$toUserIds = [];
+		$manager = DependencyManager::getInstance()
+			->getViolationManager();
+		foreach ($violationRulesList as $violationRules)
+		{
+			$params->setViolationRules($violationRules);
+			$violationResult = $manager->buildMissedShiftViolation($params);
+			if (empty($violationResult->getViolations()))
+			{
+				continue;
+			}
+			$toUserIds = array_merge(
+				$toUserIds,
+				$violationRules->getNotifyUserIds(ViolationRulesTable::USERS_TO_NOTIFY_SHIFT_MISSED_START, $shiftPlan->getUserId())
+			);
+		}
+
+		$toUserIds = array_unique($toUserIds);
 		if (empty($toUserIds))
 		{
 			return '';
@@ -127,7 +208,7 @@ class ViolationNotifierAgent
 			->getScheduleRepository()
 			->getUsersBaseQuery()
 			->addSelect('PERSONAL_GENDER')
-			->where('ID', $plan->getUserId())
+			->where('ID', $shiftPlan->getUserId())
 			->exec()
 			->fetch();
 		if (!$fromUser)
@@ -143,7 +224,7 @@ class ViolationNotifierAgent
 		foreach ($toUserIds as $toUserId)
 		{
 			$notificationParams = new NotificationParameters();
-			$notificationParams->messageType = "S";
+			$notificationParams->messageType = 'S';
 			$notificationParams->fromUserId = $fromUser['ID'];
 			$notificationParams->toUserId = $toUserId;
 			$notificationParams->notifyType = 2;
@@ -151,7 +232,7 @@ class ViolationNotifierAgent
 			$notificationParams->notifyEvent = 'shift_missed';
 			$notificationParams->notifyMessage = $notifyText;
 			DependencyManager::getInstance()
-				->getNotifier($violationResult->getSchedule())
+				->getNotifier($schedule)
 				->sendMessage($notificationParams);
 		}
 

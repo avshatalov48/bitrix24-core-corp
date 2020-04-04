@@ -57,16 +57,13 @@ $toList = str_replace("#user_id#", $arParams["USER_ID"], $arParams["PATH_TO_USER
 	<?$this->SetViewTarget("pagetitle", 100);?>
 	<div class="task-list-toolbar">
 		<div class="task-list-toolbar-actions">
-            <?php if (!$_REQUEST['IFRAME'])
+            <?php
+			if (!$_REQUEST['IFRAME'])
             {
-            	?><a href="<?=htmlspecialcharsbx($toList)?>" class="task-list-back"><?=Loc::getMessage('TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_TO_LIST')?></a><?php
+            	?><a href="<?=htmlspecialcharsbx($toList)?>" class="task-list-back">
+					<?=Loc::getMessage('TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_TO_LIST')?>
+				</a><?php
             }
-
-			$APPLICATION->IncludeComponent(
-				'bitrix:ui.feedback.form',
-				'',
-				$arResult['DATA']['FEEDBACK_FORM_PARAMETERS']
-			);
             ?>
 			<button class="ui-btn ui-btn-light-border ui-btn-themes ui-btn-icon-setting webform-cogwheel" id="templateViewPopupMenuOptions"></button>
 			<?if(!$helper->checkHasFatals()):?>

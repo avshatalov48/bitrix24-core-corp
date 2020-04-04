@@ -23,6 +23,7 @@ class Order extends Sale\Order
 	protected $dealBinding = null;
 
 	private $requisiteList = [];
+	const TOTAL_COUNT_CACHE_ID =  'crm_order_total_count';
 
 	/**
 	 * @param $siteId
@@ -779,5 +780,27 @@ class Order extends Sale\Order
 
 		$dealBindingClassName = $registry->get(ENTITY_CRM_ORDER_DEAL_BINDING);
 		return new $dealBindingClassName($this);
+	}
+
+	/**
+	 * @return int
+	 */
+	public static function countTotal()
+	{
+		if(defined('BX_COMP_MANAGED_CACHE') && $GLOBALS['CACHE_MANAGER']->Read(600, self::TOTAL_COUNT_CACHE_ID, 'b_sale_order'))
+		{
+			return $GLOBALS['CACHE_MANAGER']->Get(self::TOTAL_COUNT_CACHE_ID);
+		}
+
+		$orderQuery = self::getList([
+			'count_total' => true
+		]);
+		$result = $orderQuery->getCount();
+
+		if(defined('BX_COMP_MANAGED_CACHE'))
+		{
+			$GLOBALS['CACHE_MANAGER']->Set(self::TOTAL_COUNT_CACHE_ID, $result);
+		}
+		return $result;
 	}
 }

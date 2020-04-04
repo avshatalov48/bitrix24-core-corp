@@ -29,6 +29,11 @@ class CashboxOrangeData extends Cashbox implements IPrintImmediately, ICheckable
 	private $pathToSslCertificate = '';
 	private $pathToSslCertificateKey = '';
 
+	const CODE_VAT_0 = 5;
+	const CODE_VAT_10 = 2;
+	const CODE_VAT_20 = 1;
+	const CODE_CALC_VAT_10 = 3;
+	const CODE_CALC_VAT_20 = 4;
 	/**
 	 * @return string
 	 */
@@ -113,7 +118,7 @@ class CashboxOrangeData extends Cashbox implements IPrintImmediately, ICheckable
 				'text' => $item['name'],
 				'quantity' => $item['quantity'],
 				'price' => $item['price'],
-				'tax' => $vat,
+				'tax' => $this->mapVatValue($check::getType(), $vat),
 				'paymentMethodType' => $checkType[$check::getType()],
 				'paymentSubjectType' => $paymentObjectMap[$item['payment_object']]
 			);
@@ -136,6 +141,35 @@ class CashboxOrangeData extends Cashbox implements IPrintImmediately, ICheckable
 		}
 
 		return $result;
+	}
+
+	/**
+	 * @param $checkType
+	 * @param $vat
+	 * @return mixed
+	 */
+	private function mapVatValue($checkType, $vat)
+	{
+		$map = [
+			self::CODE_VAT_10 => [
+				PrepaymentCheck::getType() => self::CODE_CALC_VAT_10,
+				PrepaymentReturnCheck::getType() => self::CODE_CALC_VAT_10,
+				PrepaymentReturnCashCheck::getType() => self::CODE_CALC_VAT_10,
+				FullPrepaymentCheck::getType() => self::CODE_CALC_VAT_10,
+				FullPrepaymentReturnCheck::getType() => self::CODE_CALC_VAT_10,
+				FullPrepaymentReturnCashCheck::getType() => self::CODE_CALC_VAT_10,
+			],
+			self::CODE_VAT_20 => [
+				PrepaymentCheck::getType() => self::CODE_CALC_VAT_20,
+				PrepaymentReturnCheck::getType() => self::CODE_CALC_VAT_20,
+				PrepaymentReturnCashCheck::getType() => self::CODE_CALC_VAT_20,
+				FullPrepaymentCheck::getType() => self::CODE_CALC_VAT_20,
+				FullPrepaymentReturnCheck::getType() => self::CODE_CALC_VAT_20,
+				FullPrepaymentReturnCashCheck::getType() => self::CODE_CALC_VAT_20,
+			],
+		];
+
+		return $map[$vat][$checkType] ?? $vat;
 	}
 
 	/**
@@ -666,12 +700,16 @@ class CashboxOrangeData extends Cashbox implements IPrintImmediately, ICheckable
 			$vatList = $dbRes->fetchAll();
 			if ($vatList)
 			{
-				$defaultVat = array(0 => 5, 10 => 2, 18 => 1, 20 => 1);
+				$defaultVatList = [
+					0 => self::CODE_VAT_0,
+					10 => self::CODE_VAT_10,
+					20 => self::CODE_VAT_20
+				];
 				foreach ($vatList as $vat)
 				{
 					$value = '';
-					if (isset($defaultVat[(int)$vat['RATE']]))
-						$value = $defaultVat[(int)$vat['RATE']];
+					if (isset($defaultVatList[(int)$vat['RATE']]))
+						$value = $defaultVatList[(int)$vat['RATE']];
 
 					$settings['VAT']['ITEMS'][(int)$vat['ID']] = array(
 						'TYPE' => 'STRING',

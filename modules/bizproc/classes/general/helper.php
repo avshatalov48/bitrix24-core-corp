@@ -2017,9 +2017,7 @@ class CBPHelper
 		}
 
 		$l = strlen("user_");
-
-		$runtime = CBPRuntime::GetRuntime();
-		$documentService = $runtime->GetService("DocumentService");
+		$documentService = CBPRuntime::GetRuntime(true)->getDocumentService();
 
 		foreach ($arUsersDraft as $user)
 		{
@@ -2038,6 +2036,32 @@ class CBPHelper
 						return $user;
 					}
 					$result[] = $user;
+				}
+			}
+			elseif (\CBPActivity::isExpression($user))
+			{
+				$parsed = \CBPActivity::parseExpression($user);
+				if ($parsed && $parsed['object'] === 'Document')
+				{
+					$document = $documentService->GetDocument($documentId);
+					if ($document && $document[$parsed['field']])
+					{
+						foreach ((array) $document[$parsed['field']] as $docUser)
+						{
+							if (substr($docUser, 0, $l) === "user_")
+							{
+								$user = intval(substr($docUser, $l));
+								if (($user > 0) && !in_array($user, $result))
+								{
+									if ($bFirst)
+									{
+										return $user;
+									}
+									$result[] = $user;
+								}
+							}
+						}
+					}
 				}
 			}
 			else

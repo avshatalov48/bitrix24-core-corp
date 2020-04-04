@@ -10,3 +10,5 @@ $MESS["SALE_CSM_WIZARD_MODULEINSTALLSTEP_INSTALL_WAIT1"] = "Пожалуйста
 $MESS["SALE_CSM_WIZARD_MODULEINSTALLSTEP_INSTALL_WAIT2"] = "Операция может занять продолжительное время";
 $MESS["SALE_CSM_WIZARD_MODULEINSTALLSTEP_INSTALL_WAIT3"] = "Автоматическое перенаправление через #COUNT_TIME# сек...";
 $MESS["SALE_CSM_WIZARD_MODULEINSTALLSTEP_INSTALL_ERROR"] = "Ошибка при установке модуля #MODULE_NAME#";
+$MESS["SALE_CSM_WIZARD_MODULEINSTALLSTEP_DB_FILE_ERROR"] = "Не удалось получить доступ к файлу #FILE#";
+$MESS["SALE_CSM_WIZARD_MODULEINSTALLSTEP_DB_TABLE_ERROR"] = "Не удалось создать таблицу #TABLE#";

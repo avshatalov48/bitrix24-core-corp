@@ -657,4 +657,146 @@ elseif($action === 'RENDER_IMAGE_INPUT')
 	__CrmContactDetailsEndHtmlResonse();
 
 }
+elseif($action === 'PREPARE_EDITOR_HTML')
+{
+	$ID = isset($_POST['ACTION_ENTITY_ID']) ? max((int)$_POST['ACTION_ENTITY_ID'], 0) : 0;
+	$guid = isset($_POST['GUID']) ? $_POST['GUID'] : "contact_{$ID}_custom_editor";
+	$configID = isset($_POST['CONFIG_ID']) ? $_POST['CONFIG_ID'] : '';
+	$forceDefaultConfig = !isset($_POST['FORCE_DEFAULT_CONFIG']) || strtoupper($_POST['FORCE_DEFAULT_CONFIG']) === 'Y';
+	$params = isset($_POST['PARAMS']) && is_array($_POST['PARAMS']) ? $_POST['PARAMS'] : array();
+	$context = isset($_POST['CONTEXT']) && is_array($_POST['CONTEXT']) ? $_POST['CONTEXT'] : array();
+	$fieldNames = isset($_POST['FIELDS']) && is_array($_POST['FIELDS']) ? $_POST['FIELDS'] : array();
+	$title = isset($_POST['TITLE']) ? $_POST['TITLE'] : '';
+
+	$enableConfigScopeToggle = !isset($_POST['ENABLE_CONFIG_SCOPE_TOGGLE'])
+		|| strtoupper($_POST['ENABLE_CONFIG_SCOPE_TOGGLE']) === 'Y';
+	$enableConfigurationUpdate = !isset($_POST['ENABLE_CONFIGURATION_UPDATE'])
+		|| strtoupper($_POST['ENABLE_CONFIGURATION_UPDATE']) === 'Y';
+	$enableFieldsContextMenu = !isset($_POST['ENABLE_FIELDS_CONTEXT_MENU'])
+		|| strtoupper($_POST['ENABLE_FIELDS_CONTEXT_MENU']) === 'Y';
+	$isEmbedded = isset($_POST['IS_EMBEDDED']) && strtoupper($_POST['IS_EMBEDDED']) === 'Y';
+	$enableRequiredUserFieldCheck = !isset($_POST['ENABLE_REQUIRED_USER_FIELD_CHECK'])
+		|| strtoupper($_POST['ENABLE_REQUIRED_USER_FIELD_CHECK']) === 'Y';
+	$enableSearchHistory = !isset($_POST['ENABLE_SEARCH_HISTORY'])
+		|| strtoupper($_POST['ENABLE_SEARCH_HISTORY']) === 'Y';
+
+	$enableAvailableFieldsInjection = isset($_POST['ENABLE_AVAILABLE_FIELDS_INJECTION'])
+		&& strtoupper($_POST['ENABLE_AVAILABLE_FIELDS_INJECTION']) === 'Y';
+	$enableExternalLayoutResolvers = isset($_POST['ENABLE_EXTERNAL_LAYOUT_RESOLVERS'])
+		&& strtoupper($_POST['ENABLE_EXTERNAL_LAYOUT_RESOLVERS']) === 'Y';
+
+	$isReadOnly = isset($_POST['READ_ONLY']) && strtoupper($_POST['READ_ONLY']) === 'Y';
+	$showEmptyFields = isset($_POST['SHOW_EMPTY_FIELDS']) && strtoupper($_POST['SHOW_EMPTY_FIELDS']) === 'Y';
+	$initialMode = isset($_POST['INITIAL_MODE']) ? $_POST['INITIAL_MODE'] : '';
+
+	CBitrixComponent::includeComponentClass('bitrix:crm.contact.details');
+	$component = new CCrmContactDetailsComponent();
+
+	if(!isset($params['NAME_TEMPLATE']))
+	{
+		$params['NAME_TEMPLATE'] = CSite::GetNameFormat(false);
+	}
+	$component->initializeParams($params);
+	$component->setEntityID($ID);
+	$component->enableSearchHistory($enableSearchHistory);
+
+	if(empty($fieldNames))
+	{
+		$entityConfig = $component->prepareConfiguration();
+	}
+	else
+	{
+		$fieldMap = array_fill_keys($fieldNames, true);
+		$fieldInfos = $component->prepareFieldInfos();
+		$entityConfigElements = array();
+		foreach ($fieldInfos as $fieldInfo)
+		{
+			if(isset($fieldMap[$fieldInfo['name']]))
+			{
+				$entityConfigElements[] = array('name' => $fieldInfo['name']);
+			}
+		}
+
+		$sectionConfig = array(
+			'name' => 'main',
+			'type' => 'section',
+			'elements' => $entityConfigElements,
+			'data' => array('isChangeable' => true, 'isRemovable' => false),
+		);
+
+		if($title !== '')
+		{
+			$sectionConfig['title'] = $title;
+		}
+		else
+		{
+			$sectionConfig['data']['enableTitle'] = false;
+		}
+
+		$entityConfig = array($sectionConfig);
+	}
+
+	$scopePrefix = '';
+	if(isset($_POST['FORCE_DEFAULT_SCOPE']) && strtoupper($_POST['FORCE_DEFAULT_SCOPE']) === 'Y')
+	{
+		$scopePrefix = $component->getDefaultConfigID();
+	}
+
+	$optionPrefix = '';
+	if(isset($_POST['FORCE_DEFAULT_OPTIONS']) && strtoupper($_POST['FORCE_DEFAULT_OPTIONS']) === 'Y')
+	{
+		$optionPrefix = $component->getDefaultConfigID();
+	}
+
+	$GLOBALS['APPLICATION']->RestartBuffer();
+	Header('Content-Type: text/html; charset='.LANG_CHARSET);
+	$APPLICATION->ShowAjaxHead();
+	$APPLICATION->IncludeComponent(
+		'bitrix:crm.entity.editor',
+		'',
+		array(
+			'GUID' => $guid,
+			'CONFIG_ID' => $configID !== '' ? $configID : $component->getDefaultConfigID(),
+			'SCOPE' => Crm\Entity\EntityEditorConfigScope::COMMON,
+			'SCOPE_PREFIX' => $scopePrefix,
+			'OPTION_PREFIX' => $optionPrefix,
+			'FORCE_DEFAULT_CONFIG' => $forceDefaultConfig,
+			'ENTITY_CONFIG' => $entityConfig,
+			'ENTITY_FIELDS' => $component->prepareFieldInfos(),
+			'ENTITY_DATA' => $component->prepareEntityData(),
+			'ENABLE_CONFIG_SCOPE_TOGGLE' => $enableConfigScopeToggle,
+			'ENABLE_CONFIGURATION_UPDATE' => $enableConfigurationUpdate,
+			'ENABLE_REQUIRED_FIELDS_INJECTION' => false,
+			'ENABLE_AVAILABLE_FIELDS_INJECTION' => $enableAvailableFieldsInjection,
+			'ENABLE_EXTERNAL_LAYOUT_RESOLVERS' => $enableExternalLayoutResolvers,
+			'ENABLE_SECTION_EDIT' => false,
+			'ENABLE_SECTION_CREATION' => false,
+			'ENABLE_USER_FIELD_CREATION' => false,
+			'ENABLE_MODE_TOGGLE' => false,
+			'ENABLE_VISIBILITY_POLICY' => false,
+			'ENABLE_TOOL_PANEL' => false,
+			'ENABLE_BOTTOM_PANEL' => false,
+			'ENABLE_PAGE_TITLE_CONTROLS' => false,
+			'ENABLE_FIELDS_CONTEXT_MENU' => $enableFieldsContextMenu,
+			'ENABLE_REQUIRED_USER_FIELD_CHECK' => $enableRequiredUserFieldCheck,
+			'USER_FIELD_ENTITY_ID' => \CCrmContact::GetUserFieldEntityID(),
+			'SERVICE_URL' => '/bitrix/components/bitrix/crm.contact.details/ajax.php?'.bitrix_sessid_get(),
+			'CONTEXT_ID' => \CCrmOwnerType::ContactName.'_'.$ID,
+			'ENTITY_TYPE_ID' => \CCrmOwnerType::Contact,
+			'ENTITY_ID' => $ID,
+			'READ_ONLY' => $isReadOnly,
+			'INITIAL_MODE' => $initialMode !== '' ? $initialMode : 'edit',
+			'SHOW_EMPTY_FIELDS' => $showEmptyFields,
+			'IS_EMBEDDED' =>$isEmbedded,
+			'CONTEXT' => $context
+		)
+	);
+
+	if(!defined('PUBLIC_AJAX_MODE'))
+	{
+		define('PUBLIC_AJAX_MODE', true);
+	}
+	require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/epilog_after.php');
+	die();
+}
 

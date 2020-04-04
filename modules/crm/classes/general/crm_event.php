@@ -27,7 +27,7 @@ class CCrmEvent
 		$this->cdb = $DB;
 
 		global $USER;
-		$currentUser = (isset($USER) && ((get_class($USER) === 'CUser') || ($USER instanceof CUser))) ? $USER : (new CUser());
+		$currentUser = (is_object($USER) && ((get_class($USER) === 'CUser') || ($USER instanceof CUser))) ? $USER : (new CUser());
 		$this->currentUserID = $currentUser->GetId();
 	}
 	public function Add($arFields, $bPermCheck = true)

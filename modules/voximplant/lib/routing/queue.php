@@ -183,8 +183,7 @@ class Queue extends Node
 		{
 			if (strlen($queue->getForwardNumber()) > 0)
 			{
-				$forwardNumber = \CVoxImplantPhone::Normalize($queue->getForwardNumber(), 1);
-				$this->insertAfter(new Pstn(\CVoxImplantPhone::Normalize($forwardNumber, 1),'voicemail'));
+				$this->insertAfter(new Pstn($queue->getForwardNumber(),'voicemail'));
 				return false;
 			}
 		}
@@ -192,9 +191,10 @@ class Queue extends Node
 		if ($queue->getNoAnswerRule() == \CVoxImplantIncoming::RULE_PSTN && $userId > 0)
 		{
 			$userPhone = \CVoxImplantPhone::GetUserPhone($userId);
+			$userPhone = \CVoxImplantPhone::stripLetters($userPhone);
 			if ($userPhone)
 			{
-				$this->insertAfter(new Pstn(\CVoxImplantPhone::Normalize($userPhone, 1),'voicemail', $userId));
+				$this->insertAfter(new Pstn($userPhone,'voicemail', $userId));
 				return false;
 			}
 		}

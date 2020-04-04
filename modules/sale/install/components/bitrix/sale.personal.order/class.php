@@ -92,7 +92,7 @@ class PersonalOrder extends CBitrixComponent
 		{
 			$id = urldecode(urldecode($variables["ID"]));
 			Loader::includeModule('sale');
-			$registry = Sale\Registry::getInstance(Sale\Order::getRegistryType());
+			$registry = Sale\Registry::getInstance(Sale\Registry::REGISTRY_TYPE_ORDER);
 			$orderClassName = $registry->getOrderClassName();
 
 			$order = $orderClassName::loadByAccountNumber($id);

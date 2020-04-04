@@ -31,7 +31,7 @@ export class Step extends Event.EventEmitter
 			const callback = Type.isFunction(events[eventName]) ? events[eventName] : Reflection.getClass(events[eventName]);
 			if (callback)
 			{
-				this.subscribe(this.getFullEventName(eventName), () => {
+				this.subscribe(this.constructor.getFullEventName(eventName), () => {
 					callback();
 				});
 			}
@@ -93,7 +93,7 @@ export class Step extends Event.EventEmitter
 		return this.article;
 	}
 
-	getFullEventName(shortName)
+	static getFullEventName(shortName)
 	{
 		return "Step:" + shortName;
 	}

@@ -24,6 +24,7 @@
 		this.activeClass = 'main-dropdown-active';
 		this.selectedClass = 'main-dropdown-item-selected';
 		this.notSelectedClass = 'main-dropdown-item-not-selected';
+		this.lockedClass = 'main-dropdown-item-locked';
 		this.menuItemClass = 'menu-popup-item';
 		this.init(dropdown);
 	};
@@ -188,6 +189,11 @@
 			});
 
 			BX.addClass(node, this.selectedClass);
+		},
+
+		lockedItem: function(node) {
+
+			BX.addClass(node, this.lockedClass);
 		},
 
 		getDataItemIndexByValue: function(items, value)

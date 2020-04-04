@@ -96,8 +96,8 @@ function _ShowStringPropertyField($name, $property_fields, $values, $bInitDef = 
 
 	if ($property_fields["MULTIPLE"] == "Y")
 	{
-		echo '<tr><td><input type="button" value="'.GetMessage("IBLOCK_AT_PROP_ADD").'" onClick="addNewRow(\'tb'.md5($name).'\')"></td></tr>';
-		echo "<script type=\"text/javascript\">BX.addCustomEvent('onAutoSaveRestore', function(ob, data) {for (var i in data){if (i.substring(0,".(strlen($name)+1).")=='".CUtil::JSEscape($name)."['){addNewRow('tb".md5($name)."')}}})</script>";
+		echo '<tr><td><input type="button" value="'.GetMessage("IBLOCK_AT_PROP_ADD").'" onClick="BX.IBlock.Tools.addNewRow(\'tb'.md5($name).'\')"></td></tr>';
+		echo "<script type=\"text/javascript\">BX.addCustomEvent('onAutoSaveRestore', function(ob, data) {for (var i in data){if (i.substring(0,".(strlen($name)+1).")=='".CUtil::JSEscape($name)."['){BX.IBlock.Tools.addNewRow('tb".md5($name)."')}}})</script>";
 	}
 
 	echo "</table>";
@@ -341,7 +341,21 @@ function _ShowFilePropertyField($name, $property_fields, $values, $max_file_size
 			{
 				$prop = $prop[$number];
 				if (!empty($prop) && is_array($prop))
-					$values = $prop;
+				{
+					$clearProp = array();
+					foreach ($prop as $valueRowId => $valueRow)
+					{
+						$correct = true;
+						if (preg_match('/^n\d+$/', $valueRowId) && is_string($valueRow))
+						{
+							if (!preg_match('/^\d+$/', $valueRow))
+								$correct = false;
+						}
+						if ($correct)
+							$clearProp[$valueRowId] = $valueRow;
+					}
+					$values = $clearProp;
+				}
 			}
 
 			$inputName = array();
@@ -584,7 +598,7 @@ function _ShowUserPropertyField($name, $property_fields, $values, $bInitDef = fa
 		&& !$bMultiple
 	)
 	{
-		$html .= '<tr><td><input type="button" value="'.GetMessage("IBLOCK_AT_PROP_ADD").'" onClick="addNewRow(\'tb'.md5($name).'\')"></td></tr>';
+		$html .= '<tr><td><input type="button" value="'.GetMessage("IBLOCK_AT_PROP_ADD").'" onClick="BX.IBlock.Tools.addNewRow(\'tb'.md5($name).'\')"></td></tr>';
 	}
 	$html .= '</table>';
 	echo $html;

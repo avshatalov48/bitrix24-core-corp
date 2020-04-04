@@ -290,9 +290,11 @@ class VoteTable extends Entity\DataManager
 				$fields["IMAGE_ID"]["MODULE_ID"] = "vote";
 				if ($id = $event->getParameter("id"))
 				{
-					$vote = Vote::loadFromId($id);
-					if ($vote["IMAGE_ID"] > 0)
+					$id = is_integer($id) ? $id : $id["ID"];
+					if ($id > 0 && ($vote = VoteTable::getById($id)->fetch()) && ($vote["IMAGE_ID"] > 0))
+					{
 						$fields["IMAGE_ID"]["old_file"] = $vote["IMAGE_ID"];
+					}
 				}
 				\CFile::SaveForDB($fields, "IMAGE_ID", "");
 			}
@@ -1126,9 +1128,6 @@ class Vote extends BaseObject implements \ArrayAccess
 
 		$APPLICATION->restartBuffer();
 		while(ob_get_clean());
-		header("Content-Type: application/force-download");
-		header("Content-Type: application/octet-stream");
-		header("Content-Type: application/download");
 		header("Content-Transfer-Encoding: binary");
 
 		$statistic = $this->getStatistic();
@@ -1196,7 +1195,7 @@ class Vote extends BaseObject implements \ArrayAccess
 
 		if ($type === "csv")
 		{
-			Header(MimeType::getByFileExtension("csv"));
+			Header("Content-Type: ". MimeType::getByFileExtension("csv"));
 			header("Content-Disposition: attachment;filename=vote".$this->id.".csv");
 
 			$f = fopen("php://output", "w");
@@ -1295,7 +1294,7 @@ XML;
 </p>
 HTML;
 			}
-			header(MimeType::getByFileExtension("xls"));
+			header("Content-Type: ". MimeType::getByFileExtension("xls"));
 			header("Content-Disposition: attachment;filename=vote".$this->id.".xls");
 			echo $res;
 		}
@@ -1781,15 +1780,24 @@ HTML;
 	public function canReadResult($user)
 	{
 		$result = new \Bitrix\Main\Result();
-		if ($this["OPTIONS"] & Vote\Option::HIDE_RESULT)
+
+		if (!($user instanceof \Bitrix\Vote\User))
 		{
-			$result->addError(new Error("Access denied.", "Hidden results"));
+			$user = \Bitrix\Vote\User::loadFromId($user);
 		}
-		else if ($this["LAMP"] == "green")
+
+		if ($this["AUTHOR_ID"] != $user->getId())
 		{
-			$canVoteResult = $this->canVote($user);
-			if ($canVoteResult->isSuccess())
+			if ($this["OPTIONS"] & Vote\Option::HIDE_RESULT)
+			{
 				$result->addError(new Error("Access denied.", "Hidden results"));
+			}
+			else if ($this["LAMP"] == "green")
+			{
+				$canVoteResult = $this->canVote($user);
+				if ($canVoteResult->isSuccess())
+					$result->addError(new Error("Access denied.", "Hidden results"));
+			}
 		}
 		return $result;
 	}

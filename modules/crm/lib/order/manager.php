@@ -181,7 +181,7 @@ final class Manager
 			)
 		);
 
-		$basket = \Bitrix\Sale\Basket::create($site);
+		$basket = \Bitrix\Crm\Order\Basket::create($site);
 		$order->setBasket($basket);
 
 		$shipments = $order->getShipmentCollection();
@@ -434,7 +434,7 @@ final class Manager
 		$propCollection->setValuesFromPost($properties, $files);
 		$originalBasket = $originalOrder->getBasket();
 		$originalBasketItems = $originalBasket->getBasketItems();
-		$basket = \Bitrix\Sale\Basket::create($originalOrder->getSiteId());
+		$basket = \Bitrix\Crm\Order\Basket::create($originalOrder->getSiteId());
 		$basket->setFUserId($originalBasket->getFUserId());
 
 		/** @var \Bitrix\Sale\BasketItem $originalBasketItem */

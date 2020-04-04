@@ -47,6 +47,11 @@ class Repo
 		$result = new PublicActionResult();
 		$error = new \Bitrix\Landing\Error;
 
+		if (!is_string($code))
+		{
+			return $result;
+		}
+
 		// unset not allowed keys
 		$notAllowed = array('callbacks');
 		foreach ($notAllowed as $key)
@@ -198,6 +203,11 @@ class Repo
 
 		$result->setResult(false);
 
+		if (!is_string($code))
+		{
+			return $result;
+		}
+
 		// search and delete
 		if ($code)
 		{
@@ -272,6 +282,11 @@ class Repo
 		$result = new PublicActionResult();
 		$error = new \Bitrix\Landing\Error;
 		$app = array();
+
+		if (!is_string($code))
+		{
+			return $result;
+		}
 
 		if ($appLocal = RepoCore::getAppByCode($code))
 		{
@@ -410,6 +425,12 @@ class Repo
 	{
 		$result = new PublicActionResult();
 		$error = new \Bitrix\Landing\Error;
+
+		if (!is_string($code))
+		{
+			return $result;
+		}
+
 		$code = trim($code);
 		$wasDeleted = false;
 
@@ -485,6 +506,7 @@ class Repo
 	public static function getList(array $params = array())
 	{
 		$result = new PublicActionResult();
+		$params = $result->sanitizeKeys($params);
 
 		if (!is_array($params))
 		{

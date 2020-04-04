@@ -40,7 +40,6 @@
 				shiftId.value = '';
 			}
 		}
-
 		this.workdaysToggle = this.selectOneByRole('timeman-schedule-workdays-toggle');
 		this.workdaysInput = this.selectOneByRole('timeman-schedule-shift-workdays-input');
 		this.workDaysSelector = this.selectOneByRole('timeman-schedule-shift-workdays-selector');
@@ -54,21 +53,28 @@
 		if (this.uniqueIndex !== undefined && this.uniqueIndex > 0)
 		{
 			this.showElement(this.deleteSelfBtn);
-			this.nameInput.value = this.nameSpan.textContent = BX.message('TIMEMAN_SHIFT_EDIT_DEFAULT_NAME') + ' ' + this.uniqueIndex;
+			this.nameInput.value = options.defaultName;
+			this.nameSpan.textContent = this.nameInput.value;
 			if (options.prevShiftEnd)
 			{
 				this.workTimeStartLink.textContent = options.prevShiftEnd;
+				this.workTimeStartInput.value = this.workTimeStartLink.textContent;
 			}
 			if (options.prevShiftStart)
 			{
 				var prevDuration = this.calculateDurationSeconds(options.prevShiftEnd, options.prevShiftStart);
 				this.workTimeEndLink.textContent = this.beautifyTime((this.convertFormattedTimeToSecs(options.prevShiftEnd) + prevDuration) % 86400);
+				this.workTimeEndInput.value = this.workTimeEndLink.textContent;
 			}
 			for (var i = 0; i < this.workdaysBlocks.length; i++)
 			{
 				var id = this.workdaysBlocks[i].querySelector('input').id.replace(/-[0-9]-/, '-' + this.uniqueIndex + '-');
 				this.workdaysBlocks[i].querySelector('input').id = id;
 				this.workdaysBlocks[i].querySelector('label').htmlFor = id;
+			}
+			if (options.isScheduleShifted)
+			{
+				this.breakTimeLink.value = this.beautifyTime(0);
 			}
 		}
 		this.initDurationWithoutBreak();
@@ -114,9 +120,17 @@
 			if (this.isScheduleFixed)
 			{
 				this.showWorkdaysBySelectedValue(this.workdaysToggle.textContent);
+				if (this.convertFormattedTimeToSecs(this.breakTimeLink.value) === 0)
+				{
+					this.breakTimeLink.value = this.beautifyTime(3600);
+				}
 			}
 			if (selectedValue === this.shiftedScheduleTypeName)
 			{
+				if (this.convertFormattedTimeToSecs(this.breakTimeLink.value) === 3600)
+				{
+					this.breakTimeLink.value = this.beautifyTime(0);
+				}
 				this.showElement(this.nameBlock);
 				this.endNameEdit();
 				this.hideElement(this.workDaysBlock);
@@ -190,7 +204,7 @@
 				this.workdaysToggle,
 				menuItems,
 				{
-					autoHide: true,
+					autoHide: true
 				}
 			);
 		},

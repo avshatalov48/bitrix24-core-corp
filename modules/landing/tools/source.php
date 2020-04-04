@@ -25,6 +25,10 @@ if (isset($_REQUEST['template']) && is_string($_REQUEST['template']))
 		define('SITE_TEMPLATE_ID', $template);
 	}
 }
+if (isset($_REQUEST['admin_section']) && $_REQUEST['admin_section'] === 'Y')
+{
+	define('ADMIN_SECTION', true);
+}
 
 require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/prolog_before.php');
 

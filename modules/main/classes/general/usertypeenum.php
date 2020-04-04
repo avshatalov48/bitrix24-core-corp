@@ -278,7 +278,7 @@ EOT;
 				$size = '';
 			}
 
-			$result = '<select name="'.$arHtmlControl["NAME"].'"'.$size.($arUserField["EDIT_IN_LIST"]!="Y"? ' disabled="disabled" ': '').'>';
+			$result = '<select name="'.$arHtmlControl["NAME"].'"'.$size.($arUserField["EDIT_IN_LIST"]!="Y"? ' disabled="disabled" ': '').' style="max-width: 300px;">';
 			if($arUserField["MANDATORY"]!="Y")
 			{
 				$result .= '<option value=""'.(!$bWasSelect? ' selected': '').'>'.htmlspecialcharsbx(self::getEmptyCaption($arUserField)).'</option>';
@@ -461,7 +461,7 @@ EOT;
 		}
 		else
 		{
-			$result = '<select multiple name="'.$arHtmlControl["NAME"].'" size="'.$arUserField["SETTINGS"]["LIST_HEIGHT"].'"'.($arUserField["EDIT_IN_LIST"]!="Y"? ' disabled="disabled" ': ''). '>';
+			$result = '<select multiple name="'.$arHtmlControl["NAME"].'" size="'.$arUserField["SETTINGS"]["LIST_HEIGHT"].'"'.($arUserField["EDIT_IN_LIST"]!="Y"? ' disabled="disabled" ': ''). ' style="max-width: 300px;">';
 
 			if($arUserField["MANDATORY"] <> "Y")
 			{
@@ -986,24 +986,27 @@ EOT;
 
 			$tag = '<select '.static::buildTagAttributes($attrList).'>';
 
-			foreach($arUserField["USER_TYPE"]["FIELDS"] as $key => $val)
+			if(isset($arUserField["USER_TYPE"]["FIELDS"]) && is_array($arUserField["USER_TYPE"]["FIELDS"]))
 			{
-				$bSelected = in_array($key, $value) && (
-						(!$bWasSelect) ||
-						($arUserField["MULTIPLE"] == "Y")
-					);
-				$bWasSelect = $bWasSelect || $bSelected;
-
-				$attrList = array(
-					'value' => $key,
-				);
-
-				if($bSelected)
+				foreach($arUserField["USER_TYPE"]["FIELDS"] as $key => $val)
 				{
-					$attrList['selected'] = 'selected';
-				}
+					$bSelected = in_array($key, $value) && (
+							(!$bWasSelect) ||
+							($arUserField["MULTIPLE"] == "Y")
+						);
+					$bWasSelect = $bWasSelect || $bSelected;
 
-				$tag .= '<option '.static::buildTagAttributes($attrList).'>'.htmlspecialcharsbx($val).'</option>';
+					$attrList = array(
+						'value' => $key,
+					);
+
+					if($bSelected)
+					{
+						$attrList['selected'] = 'selected';
+					}
+
+					$tag .= '<option '.static::buildTagAttributes($attrList).'>'.htmlspecialcharsbx($val).'</option>';
+				}
 			}
 			$tag .= '</select>';
 

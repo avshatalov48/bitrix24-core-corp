@@ -8,16 +8,16 @@ use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Engine\Response;
 use Bitrix\Main\Error;
 use Bitrix\Main\UI\PageNavigation;
+use Bitrix\Tasks\AnalyticLogger;
 use Bitrix\Tasks\Exception;
+use Bitrix\Tasks\Integration\SocialNetwork;
 use Bitrix\Tasks\Internals\SearchIndex;
-use Bitrix\Tasks\Internals\Task\LogTable;
 use Bitrix\Tasks\Internals\Task\SearchIndexTable;
 use Bitrix\Tasks\Manager;
 use Bitrix\Tasks\Ui\Avatar;
 use Bitrix\Tasks\Util;
 use Bitrix\Tasks\Util\Type\DateTime;
 use TasksException;
-use Bitrix\Tasks\Integration\SocialNetwork;
 
 final class Task extends Base
 {
@@ -63,18 +63,18 @@ final class Task extends Base
 	 * @throws \CTaskAssertException
 	 * @throws \Exception
 	 */
-	public function addAction(array $fields, array $params = array())
+	public function addAction(array $fields, array $params = []): array
 	{
-        if( $fields['DEADLINE'] )
-        {
-            $fields['DEADLINE'] = date('d.m.Y H:i:s', strtotime($fields['DEADLINE']));
-        }
-
+		$fields = $this->formatDateFieldsForInput($fields);
 		$task = \CTaskItem::add($fields, $this->getCurrentUser()->getId(), $params);
+
+        if ($params['PLATFORM'] === 'mobile')
+		{
+			AnalyticLogger::logToFile('addTask');
+		}
 
 		return $this->getAction($task);
 	}
-
 
 	private function formatUserInfo(&$row)
 	{
@@ -145,7 +145,7 @@ final class Task extends Base
 
 		$this->formatGroupInfo($row);
 		$this->formatUserInfo($row);
-		$this->formatDateFields($row);
+		$this->formatDateFieldsForOutput($row);
 
 		$action = $this->getAccessAction($task);
 		$row['action'] = $action['allowedActions'][$this->getCurrentUser()->getId()];
@@ -166,37 +166,83 @@ final class Task extends Base
 		return $select;
 	}
 
-	private function formatDateFields(&$row)
+	/**
+	 * Returns fields of type datetime for task entity
+	 *
+	 * @return array
+	 */
+	private function getDateFields():array
+	{
+		return array_filter(
+			\CTasks::getFieldsInfo(),
+			static function ($item)
+			{
+				if ($item['type'] === 'datetime')
+				{
+					return $item;
+				}
+
+				return null;
+			}
+		);
+	}
+
+	/**
+	 * Prepares date fields of ISO-8601 format for base suitable format
+	 *
+	 * @param $fields
+	 * @return array
+	 */
+	private function formatDateFieldsForInput(array $fields): array
+	{
+		foreach ($this->getDateFields() as $fieldName => $fieldData)
+		{
+			$date = $fields[$fieldName];
+			if ($date)
+			{
+				$timestamp = strtotime($date);
+				if ($timestamp !== false)
+				{
+					$timestamp += \CTimeZone::GetOffset();
+					$fields[$fieldName] = ConvertTimeStamp($timestamp, 'FULL');
+				}
+			}
+		}
+
+		return $fields;
+	}
+
+	/**
+	 * Prepares date fields for output in ISO-8610 format
+	 *
+	 * @param $row
+	 * @throws \Exception
+	 */
+	private function formatDateFieldsForOutput(&$row): void
 	{
 		static $dateFields;
+		static $timeZone;
 
 		if (!$dateFields)
 		{
-			$dateFields = array_filter(
-				\CTasks::getFieldsInfo(),
-				static function ($item)
-				{
-					if ($item['type'] == 'datetime')
-					{
-						return $item;
-					}
+			$dateFields = $this->getDateFields();
+		}
+		if (!$timeZone)
+		{
+			$localOffset = (new \DateTime())->getOffset();
+			$userOffset =  \CTimeZone::GetOffset(null, true);
 
-					return null;
-				}
-			);
+			$timeZone = DateTime::getTimeZoneByOffset($localOffset + $userOffset);
 		}
 
 		foreach ($dateFields as $fieldName => $fieldData)
 		{
-			if (array_key_exists($fieldName, $row))
+			if ($row[$fieldName])
 			{
-				if ($row[$fieldName])
+				$date = new DateTime($row[$fieldName], null, $timeZone);
+				if ($date)
 				{
-				    $date = new \Bitrix\Main\Type\DateTime($row[$fieldName]);
-				    if($date)
-                    {
-                        $row[$fieldName] = $date->format('c');
-                    }
+					$row[$fieldName] = $date->format('c');
 				}
 			}
 		}
@@ -280,33 +326,7 @@ final class Task extends Base
 	 */
 	public function updateAction(\CTaskItem $task, array $fields, array $params = array())
 	{
-		global $DB;
-
-		$dateFields = array_filter(
-			\CTasks::getFieldsInfo(),
-			function ($item) {
-				if ($item['type'] == 'datetime')
-				{
-					return $item;
-				}
-
-				return null;
-			}
-		);
-
-		foreach ($dateFields as $fieldName => $fieldData)
-		{
-			if (array_key_exists($fieldName, $fields))
-			{
-				if ($fields[$fieldName])
-				{
-					$fields[$fieldName] = date(
-						$DB->DateFormatToPhp(\CSite::GetDateFormat('FULL')),
-						strtotime($fields[$fieldName])
-					);
-				}
-			}
-		}
+		$fields = $this->formatDateFieldsForInput($fields);
 
 		$task->update($fields, $params);
 		\Bitrix\Pull\MobileCounter::send($this->getCurrentUser()->getId());
@@ -416,7 +436,7 @@ final class Task extends Base
 
 			$this->formatGroupInfo($row);
 			$this->formatUserInfo($row);
-			$this->formatDateFields($row);
+			$this->formatDateFieldsForOutput($row);
 
 			$row = $this->convertKeysToCamelCase($row);
 
@@ -619,6 +639,11 @@ final class Task extends Base
 	public function delegateAction(\CTaskItem $task, $userId, array $params = array())
 	{
 		$task->delegate($userId, $params);
+
+		if ($params['PLATFORM'] === 'mobile')
+		{
+			AnalyticLogger::logToFile('delegateTask');
+		}
 
 		return $this->getAction($task);
 	}
@@ -834,6 +859,44 @@ final class Task extends Base
 	public function disapproveAction(\CTaskItem $task, array $params = array())
 	{
 		$task->disapprove($params);
+
+		return $this->getAction($task);
+	}
+
+	/**
+	 * @param \CTaskItem $task
+	 * @param array $auditorsIds
+	 * @return array
+	 */
+	public function addAuditorsAction(\CTaskItem $task, array $auditorsIds = [])
+	{
+		if (empty($auditorsIds))
+		{
+			return $this->getAction($task);
+		}
+
+		$taskData = $task->getData(false);
+		$auditors = array_merge($taskData['AUDITORS'], $auditorsIds);
+		$task->update(['AUDITORS' => $auditors]);
+
+		return $this->getAction($task);
+	}
+
+	/**
+	 * @param \CTaskItem $task
+	 * @param array $accomplicesIds
+	 * @return array
+	 */
+	public function addAccomplicesAction(\CTaskItem $task, array $accomplicesIds = [])
+	{
+		if (empty($accomplicesIds))
+		{
+			return $this->getAction($task);
+		}
+
+		$taskData = $task->getData(false);
+		$accomplices = array_merge($taskData['ACCOMPLICES'], $accomplicesIds);
+		$task->update(['ACCOMPLICES' => $accomplices]);
 
 		return $this->getAction($task);
 	}

@@ -224,7 +224,7 @@ return array(
 				'CONTENT' => '<section class="landing-block g-theme-photography-bg-gray-dark-v4">
 	<div>
 		<div class="row mx-0">
-			<div class="landing-block-node-img col-md-6 g-min-height-300 g-bg-img-hero g-px-0 g-bg-size-contain--xs g-bg-size-cover--sm" style="background-image: url(\'https://cdn.bitrix24.site/bitrix/images/landing/business/1000x667/img6.jpg\');" data-fileid="-1"></div>
+			<div class="landing-block-node-img col-md-6 g-min-height-300 g-bg-img-hero g-px-0 g-bg-size-cover" style="background-image: url(\'https://cdn.bitrix24.site/bitrix/images/landing/business/1000x667/img6.jpg\');" data-fileid="-1"></div>
 			
 			<div class="col-md-6 text-center text-md-left g-py-50 g-py-100--md g-px-15 g-px-50--md">
 				<h3 class="landing-block-node-title g-font-weight-700 g-font-size-default g-color-white g-mb-25 g-font-cormorant-infant g-text-transform-none g-font-size-46 js-animation fadeInUp"><span style="font-weight: normal;font-style: italic;">Only in our store!</span></h3>

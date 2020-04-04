@@ -4,6 +4,7 @@ namespace Bitrix\Sale\Internals;
 
 use Bitrix\Main;
 
+Main\Localization\Loc::loadMessages(__FILE__);
 
 /**
  * Class CustomFieldsController
@@ -41,6 +42,13 @@ final class CustomFieldsController
 	 */
 	public function save(Entity $entity)
 	{
+		if ($entity->getId() <= 0)
+		{
+			throw new Main\SystemException(
+				Main\Localization\Loc::getMessage('CUSTOM_FIELDS_CONTROLLER_ERROR_INCORRECT_ENTITY_ID')
+			);
+		}
+
 		$dbRes = CustomFieldsTable::getList([
 			'select' => ['ID', 'FIELD'],
 			'filter' => [
@@ -91,6 +99,11 @@ final class CustomFieldsController
 	 */
 	public function initialize(Entity $entity)
 	{
+		if ($entity->getId() <= 0)
+		{
+			return  $entity;
+		}
+
 		$dbRes = CustomFieldsTable::getList([
 			'select' => ['ID', 'FIELD'],
 			'filter' => [

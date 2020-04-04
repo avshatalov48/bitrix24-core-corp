@@ -4,6 +4,7 @@ namespace Bitrix\Tasks\CheckList\Template;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\SystemException;
+use Bitrix\Tasks\AnalyticLogger;
 use Bitrix\Tasks\CheckList\CheckListFacade;
 use Bitrix\Tasks\CheckList\Internals\CheckList;
 use Bitrix\Tasks\Internals\Task\Template\CheckList\MemberTable;
@@ -48,7 +49,6 @@ class TemplateCheckListFacade extends CheckListFacade
 		'IS_COMPLETE',
 		'IS_IMPORTANT',
 	];
-	protected static $checkListPool;
 
 	public static $entityIdName = 'TEMPLATE_ID';
 	public static $userFieldsEntityIdName = 'TASKS_TASK_TEMPLATE_CHECKLIST';
@@ -121,6 +121,18 @@ class TemplateCheckListFacade extends CheckListFacade
 	}
 
 	/**
+	 * Does some actions after merging checklists.
+	 *
+	 * @param int $templateId
+	 * @param int $userId
+	 * @param array $data
+	 */
+	public static function doMergePostActions($templateId, $userId, $data = [])
+	{
+		static::logToAnalyticsFile($data['PARAMETERS']);
+	}
+
+	/**
 	 * Returns array of fields suitable for table data adding or updating.
 	 *
 	 * @param array $fields
@@ -174,5 +186,32 @@ class TemplateCheckListFacade extends CheckListFacade
 	{
 		CTaskAssert::logError($message);
 		Util::log($message);
+	}
+
+	/**
+	 * Logs checklist changes to analytics file.
+	 *
+	 * @param array $parameters
+	 */
+	private static function logToAnalyticsFile($parameters)
+	{
+		$analyticsData = $parameters['analyticsData'];
+
+		if (is_array($analyticsData) && !empty($analyticsData))
+		{
+			foreach ($analyticsData as $action => $value)
+			{
+				$tag = '';
+				$label = '';
+
+				if ($action === 'checklistCount')
+				{
+					$action = 'saveChecklist';
+					$label = $value;
+				}
+
+				AnalyticLogger::logToFile($action, $tag, $label);
+			}
+		}
 	}
 }

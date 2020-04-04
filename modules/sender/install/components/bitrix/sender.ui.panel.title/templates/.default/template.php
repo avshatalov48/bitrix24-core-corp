@@ -92,11 +92,7 @@ foreach ($arParams['LIST'] as $item):
 									window.location = s;
 									popup.close();
 								}
-							}],
-							{
-								autoHide: false,
-								autoClose: true
-							}
+							}]
 						);
 						BX.bind(button, 'click', popup.show.bind(popup));
 					});

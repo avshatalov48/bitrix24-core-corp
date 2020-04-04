@@ -421,8 +421,9 @@ class CCalendar
 
 			$JSConfig['syncInfo'] = array(
 				'google' => array(
-					//'active' => ($bCalDAV || $bGoogleApi) && ($JSConfig['googleCalDavStatus']['connection_id'] > 0 || $JSConfig['googleCalDavStatus']['authLink']),
-					'active' => self::IsBitrix24() ? false : (($bCalDAV || $bGoogleApi) && ($JSConfig['googleCalDavStatus']['connection_id'] > 0 || $JSConfig['googleCalDavStatus']['authLink'])),
+					'active' => ($bCalDAV || $bGoogleApi) && ($JSConfig['googleCalDavStatus']['connection_id'] > 0 || $JSConfig['googleCalDavStatus']['authLink']),
+					//'active' => self::IsBitrix24() ? false : (($bCalDAV || $bGoogleApi) &&
+					// ($JSConfig['googleCalDavStatus']['connection_id'] > 0 || $JSConfig['googleCalDavStatus']['authLink'])),
 					'connected' => $JSConfig['googleCalDavStatus']['connection_id'] > 0,
 					'syncDate' => $JSConfig['googleCalDavStatus']['sync_date']
 				),
@@ -1869,8 +1870,10 @@ class CCalendar
 			if ($curEvent)
 				$curEvent = $curEvent[0];
 
+			$canChangeDateRecurrenceEvent = ($params['recursionEditMode'] === 'all' || $params['recursionEditMode'] === '')
+				&& ($arFields['DATE_FROM'] !== $curEvent['DATE_FROM']) && $arFields['RRULE']['FREQ'] != 'NONE';
 
-			if ($params['recursionEditMode'] === 'all' && $arFields['DATE_FROM'] !== $curEvent['DATE_FROM'])
+			if ($canChangeDateRecurrenceEvent)
 			{
 				$arFields['DATE_FROM'] = self::GetOriginalDate($arFields['DATE_FROM'], $curEvent['DATE_FROM'], $arFields['TZ_FROM']);
 				$arFields['DATE_TO'] = self::GetOriginalDate($arFields['DATE_TO'], $curEvent['DATE_TO'], $arFields['TZ_TO']);
@@ -1964,24 +1967,26 @@ class CCalendar
 			if (($params['bSilentAccessMeeting'] || $params['fromWebservice'] === true)
 				&& $curEvent['IS_MEETING'] && $curEvent['PARENT_ID'] != $curEvent['ID'])
 			{
-				$params['recursionEditMode'] = 'skip';
-				$params['sendInvitations'] = false;
-				$params['sendEditNotification'] = false;
-				$params['significantChanges'] = false;
-				$params['arFields'] = array(
-					"ID" => $arFields["ID"],
-					"PARENT_ID" => $arFields["PARENT_ID"],
-					"OWNER_ID" => $arFields["OWNER_ID"],
-					"DAV_XML_ID" => $arFields['DAV_XML_ID'],
-					"CAL_DAV_LABEL" => $arFields['CAL_DAV_LABEL'],
-					"DAV_EXCH_LABEL" => $arFields['DAV_EXCH_LABEL'],
-					"RRULE" => $arFields['RRULE'],
-					"EXDATE" => $arFields['EXDATE']
-				);
-				$params['userId'] = $userId;
-				$params['sync'] = $sync;
-
-				CCalendarEvent::Edit($params);
+				// TODO: It called when changes caused in google/webservise side but can't be implemented because user is only attendee, not the owner of the event
+				//Todo: we have to update such events back to revert changes from google
+//				$params['recursionEditMode'] = 'skip';
+//				$params['sendInvitations'] = false;
+//				$params['sendEditNotification'] = false;
+//				$params['significantChanges'] = false;
+//
+//				$params['arFields'] = array(
+//					"ID" => $arFields["ID"],
+//					"PARENT_ID" => $arFields["PARENT_ID"],
+//					"OWNER_ID" => $arFields["OWNER_ID"],
+//					"DAV_XML_ID" => $arFields['DAV_XML_ID'],
+//					"CAL_DAV_LABEL" => $arFields['CAL_DAV_LABEL'],
+//					"DAV_EXCH_LABEL" => $arFields['DAV_EXCH_LABEL'],
+//					"RRULE" => $arFields['RRULE'],
+//					"EXDATE" => $arFields['EXDATE']
+//				);
+//				$params['userId'] = $userId;
+//				$params['sync'] = $sync;
+//				CCalendarEvent::Edit($params);
 				return true; // CalDav will return 204
 			}
 

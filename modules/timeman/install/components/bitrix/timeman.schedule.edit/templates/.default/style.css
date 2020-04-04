@@ -15,6 +15,10 @@
 	cursor: pointer;
 }
 
+.timeman-schedule-form-limit + .timeman-schedule-form-limit {
+	margin-top: 22px;
+}
+
 .timeman-schedule-form-slider .timeman-schedule-form-buttons {
 	background: #fff;
 	padding: 14px 20px 13px;
@@ -394,7 +398,6 @@
 
 .timeman-schedule-form-violation-block:last-child {
 	margin-bottom: 0;
-	padding-bottom: 0;
 	border-bottom: none;
 }
 

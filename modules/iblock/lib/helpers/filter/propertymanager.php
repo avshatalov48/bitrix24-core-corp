@@ -1,7 +1,8 @@
 <?
 namespace Bitrix\Iblock\Helpers\Filter;
 
-use Bitrix\Main\Localization\Loc,
+use Bitrix\Main\Loader,
+	Bitrix\Main\Localization\Loc,
 	Bitrix\Iblock;
 
 Loc::loadMessages(__FILE__);
@@ -11,12 +12,24 @@ class PropertyManager
 	private $iblockId = 0;
 	private $listProperty = null;
 	private $filterFields = null;
+	private $catalogIncluded = null;
+	private $catalog = null;
 
 	public function __construct($iblockId)
 	{
 		$this->iblockId = (int)$iblockId;
 		$this->listProperty = null;
 		$this->filterFields = null;
+		$this->catalogIncluded = Loader::includeModule('catalog');
+		if ($this->catalogIncluded)
+		{
+			$catalog = \CCatalogSku::GetInfoByIBlock($this->iblockId);
+			if (!empty($catalog))
+			{
+				$this->catalog = $catalog;
+			}
+			unset($catalog);
+		}
 	}
 
 	/**
@@ -26,12 +39,17 @@ class PropertyManager
 	{
 		if ($this->filterFields === null)
 		{
+			$offers = (!empty($this->catalog['CATALOG_TYPE']) && $this->catalog['CATALOG_TYPE'] == \CCatalogSku::TYPE_OFFERS);
+
 			$this->filterFields = [];
 			$listProperty = $this->getListProperty();
 			foreach ($listProperty as $property)
 			{
 				$fieldId = $property['FIELD_ID'];
-				$fieldName = $property['NAME'];
+				$fieldName = ($offers
+					? Loc::getMessage('IBLOCK_PROPERTY_FILTER_MANAGER_MESS_OFFER_TITLE', ['#NAME#' => $property['NAME']])
+					: $property['NAME']
+				);
 
 				if (!empty($property['USER_TYPE']))
 				{
@@ -39,16 +57,6 @@ class PropertyManager
 					$userType = $property["USER_TYPE"];
 					switch ($userType)
 					{
-						case "employee": //TODO: remove this row after intranet 18.3.100 will be stabled
-						case "UserID": //TODO: remove this row after main 18.5.200 will be stabled
-							$field = array(
-								"id" => $fieldId,
-								"name" => $fieldName,
-								"type" => "custom_entity",
-								"filterable" => "",
-								"selector" => array("type" => "user"),
-							);
-							break;
 						case "ECrm": //TODO: remove this row after crm 18.7.200 will be stabled
 							$field = array(
 								"id" => $fieldId,
@@ -196,6 +204,7 @@ class PropertyManager
 				}
 			}
 			unset($property, $listProperty);
+			unset($offers);
 		}
 
 		return $this->filterFields;

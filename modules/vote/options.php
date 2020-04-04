@@ -129,7 +129,7 @@ $tabControl->BeginNextTab();
 $tabControl->BeginNextTab();?>
 <?require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/admin/group_rights.php");?>
 <?$tabControl->Buttons();?>
-<input <?if ($rights<"W") echo "disabled" ?> type="submit" name="update" value="<?=GetMessage("VOTE_SAVE")?>">
+<input <?if ($rights<"W") echo "disabled" ?> type="submit" name="Update" value="<?=GetMessage("VOTE_SAVE")?>">
 <input type="reset" name="reset" value="<?=GetMessage("VOTE_RESET")?>">
 <input <?if ($rights<"W") echo "disabled" ?> type="submit" name="restore" title="<?echo GetMessage("MAIN_HINT_RESTORE_DEFAULTS")?>" value="<?echo GetMessage("MAIN_RESTORE_DEFAULTS")?>">
 <?$tabControl->End();?>

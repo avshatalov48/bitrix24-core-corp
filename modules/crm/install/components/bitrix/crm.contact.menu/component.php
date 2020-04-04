@@ -368,10 +368,14 @@ if($arParams['TYPE'] === 'list')
 		$restriction = \Bitrix\Crm\Restriction\RestrictionManager::getDuplicateControlRestriction();
 		if($restriction->hasPermission())
 		{
+			$dedupePath = \Bitrix\Crm\Settings\LayoutSettings::getCurrent()->isDedupeWizardEnabled()
+				? $arParams['PATH_TO_CONTACT_DEDUPEWIZARD']
+				: $arParams['PATH_TO_CONTACT_DEDUPE'];
+
 			$arResult['BUTTONS'][] = array(
 				'TEXT' => GetMessage('CONTACT_DEDUPE'),
 				'TITLE' => GetMessage('CONTACT_DEDUPE_TITLE'),
-				'LINK' => CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_CONTACT_DEDUPE'], array())
+				'LINK' => CComponentEngine::MakePathFromTemplate($dedupePath, array())
 			);
 		}
 		else
@@ -383,6 +387,16 @@ if($arParams['TYPE'] === 'list')
 				'MENU_ICON' => 'grid-lock'
 			);
 		}
+	}
+
+	if(\Bitrix\Main\Loader::includeModule('rest') && is_callable('\Bitrix\Rest\Marketplace\Url::getConfigurationPlacementUrl'))
+	{
+		$url = \Bitrix\Rest\Marketplace\Url::getConfigurationPlacementUrl('crm_contact', 'setting_list');
+		$arResult['BUTTONS'][] = [
+			'TEXT' => GetMessage('CRM_CONTACT_VERTICAL_CRM'),
+			'TITLE' => GetMessage('CRM_CONTACT_VERTICAL_CRM_TITLE'),
+			'ONCLICK' => 'BX.SidePanel.Instance.open(\''.$url.'\');'
+		];
 	}
 
 	if(count($arResult['BUTTONS']) > 1)

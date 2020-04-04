@@ -7,33 +7,33 @@ use Bitrix\Main,
 
 Loc::loadMessages(__FILE__);
 
-class CProductQueryBuilder
+final class CProductQueryBuilder
 {
-	const ENTITY_PRODUCT = 'PRODUCT';
-	const ENTITY_PRICE = 'PRICE';
-	const ENTITY_WARENHOUSE = 'WARENHOUSE';
-	const ENTITY_FLAT_PRICE = 'FLAT_PRICES';
-	const ENTITY_FLAT_WAREHNOUSE = 'FLAT_WARENHOUSES';
-	const ENTITY_OLD_PRODUCT = 'OLD_PRODUCT';
-	const ENTITY_OLD_PRICE = 'OLD_PRICE';
-	const ENTITY_OLD_STORE = 'OLD_STORE';
-	const ENTITY_CATALOG_IBLOCK = 'CATALOG_IBLOCK';
-	const ENTITY_VAT = 'VAT';
+	private const ENTITY_PRODUCT = 'PRODUCT';
+	private const ENTITY_PRICE = 'PRICE';
+	private const ENTITY_WARENHOUSE = 'WARENHOUSE';
+	private const ENTITY_FLAT_PRICE = 'FLAT_PRICES';
+	private const ENTITY_FLAT_WAREHNOUSE = 'FLAT_WARENHOUSES';
+	private const ENTITY_OLD_PRODUCT = 'OLD_PRODUCT';
+	private const ENTITY_OLD_PRICE = 'OLD_PRICE';
+	private const ENTITY_OLD_STORE = 'OLD_STORE';
+	private const ENTITY_CATALOG_IBLOCK = 'CATALOG_IBLOCK';
+	private const ENTITY_VAT = 'VAT';
 
-	const FIELD_ALLOWED_SELECT = 0x0001;
-	const FIELD_ALLOWED_FILTER = 0x0002;
-	const FIELD_ALLOWED_ORDER = 0x0004;
-	const FIELD_ALLOWED_ALL = self::FIELD_ALLOWED_SELECT|self::FIELD_ALLOWED_FILTER|self::FIELD_ALLOWED_ORDER;
+	private const FIELD_ALLOWED_SELECT = 0x0001;
+	private const FIELD_ALLOWED_FILTER = 0x0002;
+	private const FIELD_ALLOWED_ORDER = 0x0004;
+	private const FIELD_ALLOWED_ALL = self::FIELD_ALLOWED_SELECT|self::FIELD_ALLOWED_FILTER|self::FIELD_ALLOWED_ORDER;
 
-	const FIELD_PATTERN_OLD_STORE = '/^CATALOG_STORE_AMOUNT_([0-9]+)$/';
-	const FIELD_PATTERN_OLD_PRICE_ROW = '/^CATALOG_GROUP_([0-9]+)$/';
-	const FIELD_PATTERN_OLD_PRICE = '/^CATALOG_([A-Z][A-Z_]+)+_([0-9]+)$/';
-	const FIELD_PATTERN_OLD_PRODUCT = '/^CATALOG_([A-Z][A-Z_]+)$/';
-	const FIELD_PATTERN_FLAT_ENTITY = '/^([A-Z][A-Z_]+)$/';
-	const FIELD_PATTERN_SEPARATE_ENTITY = '/^([A-Z][A-Z_]+)_([1-9][0-9]*)$/';
+	private const FIELD_PATTERN_OLD_STORE = '/^CATALOG_STORE_AMOUNT_([0-9]+)$/';
+	private const FIELD_PATTERN_OLD_PRICE_ROW = '/^CATALOG_GROUP_([0-9]+)$/';
+	private const FIELD_PATTERN_OLD_PRICE = '/^CATALOG_([A-Z][A-Z_]+)+_([0-9]+)$/';
+	private const FIELD_PATTERN_OLD_PRODUCT = '/^CATALOG_([A-Z][A-Z_]+)$/';
+	private const FIELD_PATTERN_FLAT_ENTITY = '/^([A-Z][A-Z_]+)$/';
+	private const FIELD_PATTERN_SEPARATE_ENTITY = '/^([A-Z][A-Z_]+)_([1-9][0-9]*)$/';
 
-	const ENTITY_TYPE_FLAT = 0x0001;
-	const ENTITY_TYPE_SEPARATE = 0x0002;
+	private const ENTITY_TYPE_FLAT = 0x0001;
+	private const ENTITY_TYPE_SEPARATE = 0x0002;
 
 	private static $entityDescription = [];
 
@@ -249,27 +249,6 @@ class CProductQueryBuilder
 					}
 					break;
 				case self::ENTITY_PRICE:
-					if (
-						$prepareField['FIELD'] == 'PRICE'
-						|| $prepareField['FIELD'] == 'SCALED_PRICE'
-						|| $prepareField['FIELD'] == 'CURRENCY'
-					)
-					{
-						$filterFieldDescription = [
-							'ENTITY' => $prepareField['ENTITY'],
-							'FIELD' => 'QUANTITY_RANGE_FILTER',
-							'ENTITY_ID' => $prepareField['ENTITY_ID'],
-						];
-						$filterField = self::getField($filterFieldDescription, []);
-						if (!empty($filterField))
-						{
-							$filterField = $filterField['ALIAS'];
-							if (!isset($result[$filterField]))
-								$result[$filterField] = $options['QUANTITY'];
-						}
-						unset($filterField, $filterFieldDescription);
-					}
-					break;
 				case self::ENTITY_FLAT_PRICE:
 					if (
 						$prepareField['FIELD'] == 'PRICE'
@@ -1748,17 +1727,17 @@ class CProductQueryBuilder
 		if (!isset($options['USER']))
 			$options['USER'] = [];
 		if (!isset($options['USER']['ID']))
-			$options['USER']['ID'] = (\CCatalog::IsUserExists() ? (int)$USER->GetID() : 0);
-		$options['USER']['GROUPS'] = Main\UserTable::getUserGroupIds($options['USER']['ID']);
+			$options['USER']['ID'] = (\CCatalog::IsUserExists() ? $USER->GetID() : 0);
+		$options['USER']['ID'] = (int)$options['USER']['ID'];
 
 		self::$options = $options;
 	}
 
 	/**
-	 * @param $index
+	 * @param string $index
 	 * @return mixed|null
 	 */
-	private static function getOption($index)
+	private static function getOption(string $index)
 	{
 		if (!isset(self::$options[$index]))
 			return null;
@@ -2065,7 +2044,7 @@ class CProductQueryBuilder
 				? $fullPriceTypeList[$id]['NAME_LANG']
 				: $fullPriceTypeList[$id]['NAME']
 			);
-			$connection = \Bitrix\Main\Application::getInstance()->getConnection();
+			$connection = Main\Application::getInstance()->getConnection();
 			$sqlHelper = $connection->getSqlHelper();
 			$result = $sqlHelper->forSql($result);
 			unset($sqlHelper, $connection);
@@ -2112,6 +2091,8 @@ class CProductQueryBuilder
 		$user = self::getOption('USER');
 		if (!empty($user))
 		{
+			if (empty($user['GROUPS']) || !is_array($user['GROUPS']))
+				$user['GROUPS'] = self::getUserGroups($user['ID']);
 			$iterator = GroupAccessTable::getList([
 				'select' => ['ID'],
 				'filter' => [
@@ -2283,5 +2264,14 @@ class CProductQueryBuilder
 			}
 		}
 		unset($index);
+	}
+
+	/**
+	 * @param int $userId
+	 * @return array
+	 */
+	private static function getUserGroups(int $userId)
+	{
+		return Main\UserTable::getUserGroupIds($userId);
 	}
 }

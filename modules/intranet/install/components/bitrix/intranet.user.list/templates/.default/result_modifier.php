@@ -12,6 +12,8 @@ global $USER_FIELD_MANAGER;
 \Bitrix\Main\Localization\Loc::loadMessages(__FILE__);
 
 use Bitrix\Intranet\Component\UserList;
+use Bitrix\Main\Config\Option;
+use Bitrix\Main\Context;
 use Bitrix\Main\Engine\UrlManager;
 use Bitrix\Main\Localization\Loc;
 
@@ -30,7 +32,7 @@ while ($userGroupFields = $res->fetch())
 $integratorsUserIdList = [];
 if (\Bitrix\Main\Loader::includeModule('bitrix24'))
 {
-	$integratorsUserIdList[] = \Bitrix\Bitrix24\Integrator::getIntegratorsId();
+	$integratorsUserIdList = \Bitrix\Bitrix24\Integrator::getIntegratorsId();
 }
 
 $gridColumns = $arResult['GRID_COLUMNS'];
@@ -41,10 +43,77 @@ $exportMode = (
 	&& $arParams['EXPORT_MODE'] == 'Y'
 );
 
+$personalBirthdayFormat = Context::getCurrent()->getCulture()->getLongDateFormat();
+$personalBirthdayFormatWithoutYear = Context::getCurrent()->getCulture()->getDayMonthFormat();
+$showYearValue = Option::get("intranet", "user_profile_show_year", "Y");
+
+$extranetGroupId = (
+	isset($arResult['PROCESS_EXTRANET'])
+	&& $arResult['PROCESS_EXTRANET'] == 'Y'
+	&& \Bitrix\Main\Loader::includeModule('extranet')
+		? intval(\CExtranet::GetExtranetUserGroupID())
+		: 0
+);
+
+$userIdList = [];
+foreach($arResult['ROWS'] as $key => $row)
+{
+	if (isset($row['data']['USER_FIELDS']['ID']))
+	{
+		$userIdList[] = intval($row['data']['USER_FIELDS']['ID']);
+	}
+}
+
+if (
+	$extranetGroupId
+	&& !empty($userIdList)
+)
+{
+	$realExtranetUserIdList = [];
+	$res = \Bitrix\Main\UserTable::getList([
+		'filter' => [
+			'@ID' => $userIdList,
+			'=GROUPS.GROUP_ID' => $extranetGroupId
+		],
+		'select' => [ 'ID' ]
+	]);
+	while($userFields = $res->fetch())
+	{
+		$realExtranetUserIdList[] = $userFields['ID'];
+	}
+
+	foreach($arResult['ROWS'] as $key => $row)
+	{
+		if (
+			!empty($row['columnClasses'])
+			&& !empty($row['columnClasses']['FULL_NAME'])
+			&& $row['columnClasses']['FULL_NAME'] == 'intranet-user-list-full-name-extranet'
+			&& !in_array($row['id'], $realExtranetUserIdList)
+		)
+		{
+			$arResult['ROWS'][$key]['columnClasses']['FULL_NAME'] .= ' intranet-user-list-full-name-visitor';
+			if (is_array($row['actions']))
+			{
+				array_walk($row['actions'], function(&$item) {
+					switch ($item) {
+						case 'deactivate':
+							$item = 'delete';
+							break;
+						default:
+					}
+				});
+				$row['actions'] = array_filter($row['actions'], function(&$item) {
+					return !in_array($item, [ 'add_task', 'message', 'message_history', 'videocall' ]);
+				});
+				$arResult['ROWS'][$key]['actions'] = $row['actions'];
+			}
+		}
+	}
+}
+
 foreach($arResult['ROWS'] as $key => $row)
 {
 	$userFields = $row['data']['USER_FIELDS'];
-
 	foreach($gridColumns as $column)
 	{
 		switch($column)
@@ -63,7 +132,18 @@ foreach($arResult['ROWS'] as $key => $row)
 				$arResult['ROWS'][$key]['data'][$column] = $userFields['DATE_REGISTER'];
 				break;
 			case 'BIRTHDAY':
-				$arResult['ROWS'][$key]['data'][$column] = $userFields['PERSONAL_BIRTHDAY'];
+				$birthdayFormat = $personalBirthdayFormat;
+				if (
+					$showYearValue == 'N'
+					|| (
+						$userFields['PERSONAL_GENDER'] == 'F'
+						&& $showYearValue == 'M'
+					)
+				)
+				{
+					$birthdayFormat = $personalBirthdayFormatWithoutYear;
+				}
+				$arResult['ROWS'][$key]['data'][$column] = ($userFields['PERSONAL_BIRTHDAY'] ? FormatDate($birthdayFormat, $userFields['PERSONAL_BIRTHDAY']->getTimestamp()) : '');
 				break;
 			case 'EMAIL':
 				$arResult['ROWS'][$key]['data'][$column] = (
@@ -126,21 +206,24 @@ foreach($arResult['ROWS'] as $key => $row)
 				$arResult['ROWS'][$key]['data'][$column] = ($exportMode ? $userFields['WORK_COMPANY'] : htmlspecialcharsEx($userFields['WORK_COMPANY']));
 				break;
 			case 'TAGS':
-				$arResult['ROWS'][$key]['data'][$column] = implode(', ', array_map(function($val) use($arParams) {
+				$arResult['ROWS'][$key]['data'][$column] = implode(', ', array_map(
+					function ($val) use ($arParams)
+					{
+						$uri = new \Bitrix\Main\Web\Uri($arParams['LIST_URL']);
 
-					$uri = new \Bitrix\Main\Web\Uri($arParams['LIST_URL']);
+						$uri->addParams([
+							'apply_filter' => 'Y',
+							'TAGS' => $val
+						]);
 
-					$uri->addParams([
-						'apply_filter' => 'Y',
-						'TAGS' => $val
-					]);
-
-					return
-						$arParams['EXPORT_MODE'] == 'Y'
-							? $val
-							: '<a href="'.$uri->getUri().'" rel="nofollow" bx-tag-value="'.htmlspecialcharsBx($val).'">'.htmlspecialcharsEx($val).'</a>'
-						;
-				}, $userFields['TAGS']->getNameList()));
+						return
+							$arParams['EXPORT_MODE'] == 'Y'
+								? $val
+								: '<a href="'.$uri->getUri().'" rel="nofollow" bx-tag-value="'.htmlspecialcharsBx($val).'">'.htmlspecialcharsEx($val).'</a>'
+							;
+					},
+					$userFields['TAGS']->getNameList()
+				));
 				break;
 			default:
 				if (in_array($column, $ufCodesList))

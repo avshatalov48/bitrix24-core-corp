@@ -154,7 +154,6 @@ if(typeof BX.UI.EditorAuxiliaryDialog === "undefined")
 				{
 					autoHide: false,
 					draggable: false,
-					closeByEsc: true,
 					offsetLeft: 0,
 					offsetTop: 0,
 					zIndex: BX.prop.getInteger(this._settings, "zIndex", 0),
@@ -171,6 +170,11 @@ if(typeof BX.UI.EditorAuxiliaryDialog === "undefined")
 				}
 			);
 			this._popup.show();
+
+			window.setTimeout(function()
+			{
+				this._popup.setClosingByEsc(true);
+			}.bind(this), 150);
 		},
 		close: function()
 		{

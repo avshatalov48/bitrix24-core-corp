@@ -25,7 +25,7 @@ return array(
 		'.landing-block-node-card-img' => array(
 			'name' => Loc::getMessage('LANDING_BLOCK_36.1.SHEDULE_NODES_LANDINGBLOCKNODECARDIMG'),
 			'type' => 'img',
-			'dimensions' => array('width' => 200, 'height' => 200),
+			'dimensions' => array('width' => 170, 'height' => 170),
 			'resize_type' => BX_RESIZE_IMAGE_EXACT,
 		),
 		'.landing-block-node-card-subtitle' => array(

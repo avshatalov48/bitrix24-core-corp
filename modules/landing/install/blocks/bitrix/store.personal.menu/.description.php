@@ -21,6 +21,7 @@ return array(
 	'cards' => array(
 		'.landing-node-item' => array(
 			'name' => Loc::getMessage('LANDING_BLOCK_PERSONAL_MENU_ITEM'),
+			'label' => ['.landing-node-item-link'],
 		),
 	),
 	'nodes' => array(

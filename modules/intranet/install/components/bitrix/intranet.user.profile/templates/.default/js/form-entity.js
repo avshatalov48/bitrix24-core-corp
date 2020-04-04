@@ -21,9 +21,11 @@ namespace.EntityEditor.prototype =
 		this.isCloud = params.isCloud === "Y";
 		this.isCurrentUserAdmin = params.isCurrentUserAdmin === "Y";
 		this.gridId = params.gridId || null;
+		this.voximplantEnablePhones = params.voximplantEnablePhones;
 
 		BX.addCustomEvent("BX.UI.EntityEditorControlFactory:onInitialize", BX.proxy(function (params, eventArgs) {
-			eventArgs.methods["timezone"] = this.userProfileEntity;
+			eventArgs.methods["timezone"] = this.userProfileEntity.bind(this);
+			eventArgs.methods["phone"] = this.userProfileEntity.bind(this);
 		}, this));
 
 		BX.addCustomEvent("BX.UI.EntityEditorAjax:onSubmit", BX.proxy(function (fields) {
@@ -47,6 +49,31 @@ namespace.EntityEditor.prototype =
 					);
 				}.bind(this)
 			);
+
+			BX.addCustomEvent(
+				window,
+				"BX.UI.EntityEditor:onUserFieldAdd",
+				function(sender, userField)
+				{
+					if (typeof userField !== "object" || !userField)
+					{
+						return;
+					}
+
+					BX.ajax.runComponentAction(this.componentName, "onUserFieldAdd", {
+						signedParameters: this.signedParameters,
+						mode: 'ajax',
+						data: {
+							fieldName: userField["FIELD"]
+						}
+					}).then(function (response) {
+
+					}, function (response) {
+
+					});
+
+				}.bind(this)
+			);
 		}
 	},
 
@@ -55,6 +82,13 @@ namespace.EntityEditor.prototype =
 		if (type === "timezone")
 		{
 			return BX.Intranet.UserProfile.EntityEditorTimezone.create(controlId, settings);
+		}
+
+		if (type === "phone")
+		{
+			settings.model._settings["SHOW_PHONE_ICON"] = this.voximplantEnablePhones[controlId] == "Y" ? "Y" : "N";
+
+			return BX.Intranet.UserProfile.EntityEditorPhone.create(controlId, settings);
 		}
 
 		return null;
@@ -236,7 +270,7 @@ BX.load(['/bitrix/js/ui/entity-editor/js/editor.js'], function ()
 			var self = new BX.Intranet.UserProfile.EntityEditorTimezone();
 			self.initialize(id, settings);
 			return self;
-		}
+		};
 
 		BX.extend(BX.Intranet.UserProfile.EntityEditorTimezone, BX.UI.EntityEditorField);
 		BX.Intranet.UserProfile.EntityEditorTimezone.prototype.layout = function (options) {
@@ -664,6 +698,189 @@ BX.load(['/bitrix/js/ui/entity-editor/js/editor.js'], function ()
 					? this._selectedValue : ""
 			);
 		};
+	}
+
+
+	if(typeof BX.Intranet.UserProfile.EntityEditorPhone === "undefined")
+	{
+		BX.Intranet.UserProfile.EntityEditorPhone = function ()
+		{
+			BX.Intranet.UserProfile.EntityEditorPhone.superclass.constructor.apply(this);
+			this._input = null;
+			this._innerWrapper = null;
+		};
+		BX.Intranet.UserProfile.EntityEditorPhone.create = function (id, settings)
+		{
+			var self = new BX.Intranet.UserProfile.EntityEditorPhone();
+			self.initialize(id, settings);
+			return self;
+		};
+
+		BX.extend(BX.Intranet.UserProfile.EntityEditorPhone, BX.UI.EntityEditorField);
+
+		BX.Intranet.UserProfile.EntityEditorPhone.prototype.getModeSwitchType = function(mode)
+		{
+			var result = BX.UI.EntityEditorModeSwitchType.common;
+			if(mode === BX.UI.EntityEditorMode.edit)
+			{
+				result |= BX.UI.EntityEditorModeSwitchType.button|BX.UI.EntityEditorModeSwitchType.content;
+			}
+			return result;
+		};
+		BX.Intranet.UserProfile.EntityEditorPhone.prototype.getContentWrapper = function()
+		{
+			return this._innerWrapper;
+		};
+		BX.Intranet.UserProfile.EntityEditorPhone.prototype.focus = function()
+		{
+			if(!this._input)
+			{
+				return;
+			}
+
+			BX.focus(this._input);
+			BX.UI.EditorTextHelper.getCurrent().setPositionAtEnd(this._input);
+		};
+		BX.Intranet.UserProfile.EntityEditorPhone.prototype.layout = function (options)
+		{
+			if(this._hasLayout)
+			{
+				return;
+			}
+
+			this.ensureWrapperCreated({ classNames: [ "ui-entity-card-content-block-field-phone" ] });
+			this.adjustWrapper();
+
+			if(!this.isNeedToDisplay())
+			{
+				this.registerLayout(options);
+				this._hasLayout = true;
+				return;
+			}
+
+			var name = this.getName();
+			var title = this.getTitle();
+			var value = this.getValue();
+
+			var showPhoneIcon = this.checkPhoneIcon();
+
+			this._input = null;
+			this._inputContainer = null;
+			this._innerWrapper = null;
+
+			if(this.isDragEnabled())
+			{
+				this._wrapper.appendChild(this.createDragButton());
+			}
+
+			if(this._mode === BX.UI.EntityEditorMode.edit)
+			{
+				this._wrapper.appendChild(this.createTitleNode(title));
+
+				this._inputContainer = BX.create("div",
+					{
+						attrs: { className: "ui-ctl ui-ctl-textbox ui-ctl-w100" }
+					}
+				);
+
+				this._input = BX.create("input",
+					{
+						attrs:
+							{
+								name: name,
+								className: "ui-ctl-element",
+								type: "text",
+								value: value,
+								id: this._id.toLowerCase() + "_text"
+							}
+					}
+				);
+
+				this._inputContainer.appendChild(this._input);
+
+
+				if(this.isNewEntity())
+				{
+					var placeholder = this.getCreationPlaceholder();
+					if(placeholder !== "")
+					{
+						this._input.setAttribute("placeholder", placeholder);
+					}
+				}
+
+				BX.bind(this._input, "input", this._changeHandler);
+
+				this._innerWrapper = BX.create("div",
+					{
+						props: { className: "ui-entity-editor-content-block" },
+						children: [ this._inputContainer ]
+					});
+			}
+			else// if(this._mode === BX.UI.EntityEditorMode.view)
+			{
+				this._wrapper.appendChild(this.createTitleNode(title));
+
+				if(this.hasContentToDisplay())
+				{
+					this._innerWrapper = BX.create("div",
+						{
+							props: { className: "ui-entity-editor-content-block" },
+							children:
+								[
+									BX.create("div",
+										{
+											props: { className: "ui-entity-editor-content-block-text" },
+											//text: value,
+											children: [
+												BX.create("span", {text :value}),
+												showPhoneIcon ?
+													BX.create("div", {
+														props: { className: "intranet-user-profile-phone-icon" },
+														events: {
+															mouseup: function (event) {
+																event.preventDefault();
+																event.stopPropagation();
+
+																top.BXIM.phoneTo(value);
+															}
+														}
+													}) : ""
+											]
+
+										})
+								]
+						});
+				}
+				else
+				{
+					this._innerWrapper = BX.create("div",
+						{
+							props: { className: "ui-entity-editor-content-block" },
+							text: BX.message("UI_ENTITY_EDITOR_FIELD_EMPTY")
+						});
+				}
+			}
+
+			this._wrapper.appendChild(this._innerWrapper);
+
+			if(this.isContextMenuEnabled())
+			{
+				this._wrapper.appendChild(this.createContextMenuButton());
+			}
+
+			if(this.isDragEnabled())
+			{
+				this.initializeDragDropAbilities();
+			}
+
+			this.registerLayout(options);
+			this._hasLayout = true;
+		};
+
+		BX.Intranet.UserProfile.EntityEditorPhone.prototype.checkPhoneIcon = function (options)
+		{
+			return this._model._settings["SHOW_PHONE_ICON"] == "Y";
+		}
 	}
 });
 

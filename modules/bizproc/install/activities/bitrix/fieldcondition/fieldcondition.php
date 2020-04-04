@@ -74,6 +74,16 @@ class CBPFieldCondition
 		return sizeof($result) > 0 ? true : false;
 	}
 
+	public function collectUsages(CBPActivity $ownerActivity)
+	{
+		$usages = [];
+		foreach ($this->condition as $cond)
+		{
+			$usages[] = [\Bitrix\Bizproc\Workflow\Template\SourceType::DocumentField, $cond[0]];
+		}
+		return $usages;
+	}
+
 	/**
 	 * @param $fieldName
 	 * @param $field

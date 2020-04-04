@@ -10,6 +10,9 @@ use Bitrix\Catalog;
 
 require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/prolog_admin_before.php');
 
+/** @global CAdminPage $adminPage */
+global $adminPage;
+
 Loader::includeModule('catalog');
 Loc::loadMessages(__FILE__);
 

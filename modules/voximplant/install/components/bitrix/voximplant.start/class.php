@@ -1,6 +1,7 @@
 <?
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Voximplant\Security\Permissions;
 
@@ -24,17 +25,21 @@ class VoximplantStartComponent extends \CBitrixComponent
 		$this->permissions = Permissions::createWithCurrentUser();
 	}
 
-	public function executeComponent()
+	public function prepareResult()
 	{
-		$this->arResult['SHOW_LINES'] = $this->permissions->canPerform(\Bitrix\Voximplant\Security\Permissions::ENTITY_LINE, \Bitrix\Voximplant\Security\Permissions::ACTION_MODIFY);
-		$this->arResult['SHOW_STATISTICS'] = $this->permissions->canPerform(\Bitrix\Voximplant\Security\Permissions::ENTITY_CALL_DETAIL, \Bitrix\Voximplant\Security\Permissions::ACTION_VIEW);
-		$this->arResult['SHOW_PAY_BUTTON'] = \Bitrix\Voximplant\Security\Helper::isAdmin() && !\Bitrix\Voximplant\Limits::isRestOnly();
-		$this->arResult['LINK_TO_BUY_SIP'] = CVoxImplantSip::getBuyLink();
-		$this->arResult['IS_REST_ONLY'] = \Bitrix\Voximplant\Limits::isRestOnly();
-		$this->arResult["MARKETPLACE_DETAIL_URL_TPL"] = $this->arParams["MARKETPLACE_DETAIL_URL_TPL"] ?: SITE_DIR . "marketplace/detail/#app#/";
-		$this->arResult['NUMBERS_LIST'] = [];
+		$result = [];
+
+		$result['SHOW_LINES'] = $this->permissions->canPerform(\Bitrix\Voximplant\Security\Permissions::ENTITY_LINE, \Bitrix\Voximplant\Security\Permissions::ACTION_MODIFY);
+		$result['SHOW_STATISTICS'] = $this->permissions->canPerform(\Bitrix\Voximplant\Security\Permissions::ENTITY_CALL_DETAIL, \Bitrix\Voximplant\Security\Permissions::ACTION_VIEW);
+		$result['SHOW_PAY_BUTTON'] = \Bitrix\Voximplant\Security\Helper::isAdmin() && !\Bitrix\Voximplant\Limits::isRestOnly();
+		$result['LINK_TO_BUY_SIP'] = CVoxImplantSip::getBuyLink();
+		$result['LINK_TO_TARIFFS'] = CVoxImplantMain::getTariffsUrl();
+		$result['IS_REST_ONLY'] = \Bitrix\Voximplant\Limits::isRestOnly();
+		$result["MARKETPLACE_DETAIL_URL_TPL"] = $this->arParams["MARKETPLACE_DETAIL_URL_TPL"] ?: SITE_DIR . "marketplace/detail/#app#/";
+		$result['NUMBERS_LIST'] = [];
 		$userOptions = CUserOptions::GetOption("voximplant", "start", []);
-		$this->arResult['BALANCE_TYPE'] = $userOptions["balance_type"] === "sip" ? "sip" : "balance";
+		$result['BALANCE_TYPE'] = $userOptions["balance_type"] === "sip" ? "sip" : "balance";
+		$result['RECORD_LIMIT'] = \CVoxImplantAccount::GetRecordLimit();
 
 		if(!$this->isRestOnly())
 		{
@@ -46,9 +51,8 @@ class VoximplantStartComponent extends \CBitrixComponent
 
 			if(!$accountInfo)
 			{
-				$this->arResult['ERROR_MESSAGE'] = $apiClient->GetError()->msg;
-				$this->includeComponentTemplate();
-				return false;
+				$result['ERROR_MESSAGE'] = $apiClient->GetError()->msg;
+				return $result;
 			}
 
 			$this->account->UpdateAccountInfo($accountInfo);
@@ -68,7 +72,7 @@ class VoximplantStartComponent extends \CBitrixComponent
 
 			foreach ($rentedNumbers as $rentedNumber)
 			{
-				$this->arResult['NUMBERS_LIST'][] = [
+				$result['NUMBERS_LIST'][] = [
 					'NUMBER' => $rentedNumber['NUMBER'],
 					'TYPE' => CVoxImplantConfig::MODE_RENT,
 					'NAME' => $rentedNumber['FORMATTED_NUMBER'],
@@ -83,7 +87,7 @@ class VoximplantStartComponent extends \CBitrixComponent
 
 			foreach ($callerIds as $callerId)
 			{
-				$this->arResult['NUMBERS_LIST'][] = [
+				$result['NUMBERS_LIST'][] = [
 					'NUMBER' => $callerId['NUMBER'],
 					'TYPE' => CVoxImplantConfig::MODE_LINK,
 					'NAME' => $callerId['FORMATTED_NUMBER'],
@@ -107,7 +111,7 @@ class VoximplantStartComponent extends \CBitrixComponent
 
 			foreach ($sipConnections as $sipConnection)
 			{
-				$this->arResult['NUMBERS_LIST'][] = [
+				$result['NUMBERS_LIST'][] = [
 					'NUMBER' => $sipConnection['SEARCH_ID'],
 					'TYPE' => CVoxImplantConfig::MODE_SIP,
 					'NAME' => $sipConnection['PHONE_NAME'] ?: CVoxImplantConfig::GetDefaultPhoneName($sipConnection),
@@ -115,45 +119,55 @@ class VoximplantStartComponent extends \CBitrixComponent
 				];
 			}
 
-			$this->arResult['LANG'] = $this->account->GetAccountLang();
-			$this->arResult['CURRENCY'] = $this->account->GetAccountCurrency();
+			$result['LANG'] = $this->account->GetAccountLang();
+			$result['CURRENCY'] = $this->account->GetAccountCurrency();
 
-			$this->arResult['SIP'] = [
+			$result['SIP'] = [
 				'PAID' => $accountInfo->sip_paid == 'Y',
 				'PAID_UNTIL' => $accountInfo->sip_paid_until ? (new \Bitrix\Main\Type\Date($accountInfo->sip_paid_until, 'Y-m-d'))->toString() : '',
 				'FREE_MINUTES' => $accountInfo->sip_free_seconds ? (int)($accountInfo->sip_free_seconds / 60) : 0
 			];
 		}
 
-		if (in_array($this->arResult['LANG'], Array('ua', 'kz')) || $this->isRestOnly())
+		if (in_array($result['LANG'], Array('ua', 'kz')) || $this->isRestOnly())
 		{
-			$this->arResult['HAS_BALANCE'] = false;
-			$this->arResult['ACCOUNT_BALANCE'] = 0;
-			$this->arResult['BALANCE_CURRENCY'] = "";
+			$result['HAS_BALANCE'] = false;
+			$result['ACCOUNT_BALANCE'] = 0;
+			$result['BALANCE_CURRENCY'] = "";
 		}
 		else
 		{
-			$this->arResult['HAS_BALANCE'] = true;
-			$this->arResult['ACCOUNT_BALANCE'] = $this->account->GetAccountBalance();
-			$this->arResult['BALANCE_CURRENCY'] = $this->account->GetAccountCurrency();
+			$result['HAS_BALANCE'] = true;
+			$result['ACCOUNT_BALANCE'] = $this->account->GetAccountBalance();
+			$result['BALANCE_CURRENCY'] = $this->account->GetAccountCurrency();
 		}
-
 
 		if(\Bitrix\Main\Loader::includeModule('currency'))
 		{
-			$this->arResult['ACCOUNT_BALANCE_FORMATTED'] = \CCurrencyLang::CurrencyFormat($this->arResult['ACCOUNT_BALANCE'], $this->arResult['CURRENCY'], false);
+			$result['ACCOUNT_BALANCE_FORMATTED'] = \CCurrencyLang::CurrencyFormat($result['ACCOUNT_BALANCE'], $result['CURRENCY'], false);
 		}
 		else
 		{
-			$this->arResult['ACCOUNT_BALANCE_FORMATTED'] = number_format($this->arResult['ACCOUNT_BALANCE'], 2);
+			$result['ACCOUNT_BALANCE_FORMATTED'] = number_format($result['ACCOUNT_BALANCE'], 2);
 		}
 
-		$this->arResult['MENU'] = [
+		$result['MENU'] = [
 			'MAIN' => $this->getMenuItems(),
-			'SETTINGS' => $this->getSettingsItems(),
+			'SETTINGS' => $this->getSettingsItems(count($result['NUMBERS_LIST']) > 0),
 			'PARTNERS' => $this->getPartnerItems()
 		];
 
+		return $result;
+	}
+
+	public function executeComponent()
+	{
+		$this->arResult = $this->prepareResult();
+
+		if(Loader::includeModule("pull"))
+		{
+			\CPullWatch::Add($this->permissions->getUserId(), \Bitrix\Voximplant\Integration\Pull::BALANCE_PUSH_TAG);
+		}
 		$this->includeComponentTemplate();
 	}
 
@@ -266,7 +280,7 @@ class VoximplantStartComponent extends \CBitrixComponent
 			];
 		}
 
-		if($this->areContractorDocumentsAvailable())
+		/*if($this->areContractorDocumentsAvailable())
 		{
 			$result[] = [
 				'id' => 7,
@@ -274,7 +288,7 @@ class VoximplantStartComponent extends \CBitrixComponent
 				'className' => 'voximplat-start-logo-contractor-documents',
 				'onclick' => 'BX.Voximplant.Start.onShowInvoicesButtonClick();'
 			];
-		}
+		}*/
 
 		$marketplaceItems = $this->getInstalledApps();
 		$i = 0;
@@ -295,7 +309,7 @@ class VoximplantStartComponent extends \CBitrixComponent
 		return $result;
 	}
 
-	public function getSettingsItems()
+	public function getSettingsItems($hasNumbers)
 	{
 		$result = [];
 
@@ -309,7 +323,7 @@ class VoximplantStartComponent extends \CBitrixComponent
 			];
 		}
 
-		if(!$this->isRestOnly() && $this->permissions->canModifyLines() && count($this->arResult['NUMBERS_LIST']) > 0)
+		if(!$this->isRestOnly() && $this->permissions->canModifyLines() && $hasNumbers)
 		{
 			$result[] = [
 				'id' => 'numberSettings',
@@ -464,6 +478,11 @@ class VoximplantStartComponent extends \CBitrixComponent
 
 	public function getTelephonyAppsCount()
 	{
+		if(!\Bitrix\Main\Loader::includeModule('rest'))
+		{
+			return 0;
+		}
+
 		$cacheTTL = 43200; // 12 hours
 		$cacheId = 'voximplant_start_rest_app_count';
 		$cachePath = '/voximplant/start/rest_partners/';
@@ -531,7 +550,75 @@ class VoximplantStartComponent extends \CBitrixComponent
 			'onclick' => "window.open('" . $integrationsUrl . "')"
 		];
 
+		$items = [];
+		$userLang = LANGUAGE_ID ?? 'en';
+		$cache = \Bitrix\Main\Data\Cache::createInstance();
+		$cache_time = 86400;
+		$cache_id = 'tpActionsRest' . $userLang;
+		$cache_path = 'restItems';
+
+		if ($cache_time > 0 && $cache->InitCache($cache_time, $cache_id, $cache_path))
+		{
+			$res = $cache->GetVars();
+
+			if (is_array($res) && (count($res) > 0))
+			{
+				$items = $res;
+			}
+		}
+
+		if (count($items) <= 0)
+		{
+			$marketplace = new \Bitrix\Rest\Marketplace\MarketplaceActions();
+			$restItems = $marketplace->getItems('telephony', $userLang);
+
+			if ($restItems)
+			{
+				$items = $this->prepareRestItems($restItems);
+
+				if (!is_null($items))
+				{
+					$cache->startDataCache($cache_time, $cache_id, $cache_path);
+					$cache->endDataCache($items);
+				}
+			}
+		}
+
+		$result = array_merge($result, $items);
+
 		return $result;
 	}
 
+	private function prepareRestItems(array $items)
+	{
+		$result = [];
+
+		foreach ($items as $key => $item)
+		{
+			if ($item['SLIDER'] == "Y")
+			{
+				$frame = '<iframe src=\"'.$item['HANDLER'].'\" style=\"width: 100%;height: -webkit-calc(100vh - 10px);height: calc(100vh - 10px);\"></iframe>';
+				$onclick = preg_match("/^(http|https|ftp):\/\/(([A-Z0-9][A-Z0-9_-]*)(\.[A-Z0-9][A-Z0-9_-]*)+)/i", $item['HANDLER'])
+					? "BX.SidePanel.Instance.open('voximplant', {
+						contentCallback: function () {return \"".$frame."\";}})"
+					: "BX.SidePanel.Instance.open('/marketplace/?category=".$item['HANDLER']."')";
+			}
+			else
+			{
+				$onclick = "window.open ('".$item['HANDLER']."', '_blank')";
+			}
+
+
+			$result[] = [
+				'id' => $key,
+				'description' => $item['NAME'],
+				'image' => $item['IMAGE'] ?: '',
+				'color' => $item['COLOR'],
+				'onclick' => $onclick,
+				'restItem' => true,
+			];
+		}
+
+		return $result;
+	}
 }

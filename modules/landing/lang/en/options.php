@@ -1,6 +1,5 @@
 <?
 $MESS["LANDING_OPT_DELETED_LIFETIME_DAYS"] = "Days to keep deleted items";
-$MESS["LANDING_OPT_ENABLE_MOD_ZIP"] = "The module <a href=\"https://www.nginx.com/resources/wiki/modules/zip/\" target=\"_blank\">mod_zip</a> is enabled and configured (required for export)";
 $MESS["LANDING_OPT_GOOGLE_IMAGES_KEY"] = "Google Images API key";
 $MESS["LANDING_OPT_OTHER"] = "Other settings";
 $MESS["LANDING_OPT_PORTAL_URL"] = "Bitrix24 Public URL";

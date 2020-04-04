@@ -230,7 +230,6 @@ if (typeof(BX.FilterEntitySelector) === "undefined")
 				catch (e)
 				{
 					console.log(e);
-					alert('Something wrong!');
 					document.location.href = document.location.href;
 				}
 			},

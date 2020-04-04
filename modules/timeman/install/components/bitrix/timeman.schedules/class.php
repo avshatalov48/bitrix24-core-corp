@@ -156,16 +156,33 @@ class Component extends BaseComponent
 
 	private function includeShift()
 	{
-		$this->getApplication()->IncludeComponent('bitrix:timeman.schedule.shift.edit', '', [
-			'SCHEDULE_ID' => isset($this->arResult['VARIABLES']['SCHEDULE_ID']) ? $this->arResult['VARIABLES']['SCHEDULE_ID'] : '',
-			'SHIFT_ID' => isset($this->arResult['VARIABLES']['SHIFT_ID']) ? $this->arResult['VARIABLES']['SHIFT_ID'] : '',
-		]);
+		$this->getApplication()->IncludeComponent(
+			'bitrix:ui.sidepanel.wrapper',
+			'',
+			[
+				'POPUP_COMPONENT_NAME' => 'bitrix:timeman.schedule.shift.edit',
+				'POPUP_COMPONENT_TEMPLATE_NAME' => '',
+				'POPUP_COMPONENT_PARAMS' => [
+					'SCHEDULE_ID' => isset($this->arResult['VARIABLES']['SCHEDULE_ID']) ? $this->arResult['VARIABLES']['SCHEDULE_ID'] : '',
+					'SHIFT_ID' => isset($this->arResult['VARIABLES']['SHIFT_ID']) ? $this->arResult['VARIABLES']['SHIFT_ID'] : '',
+				],
+			]
+		);
 	}
 
 	private function includeSchedulesShiftPlan()
 	{
-		$this->getApplication()->IncludeComponent('bitrix:timeman.schedule.shiftplan', '', [
-			'SCHEDULE_ID' => isset($this->arResult['VARIABLES']['SCHEDULE_ID']) ? $this->arResult['VARIABLES']['SCHEDULE_ID'] : '',
-		]);
+		$this->getApplication()->IncludeComponent(
+			'bitrix:ui.sidepanel.wrapper',
+			'',
+			[
+				'POPUP_COMPONENT_NAME' => 'bitrix:timeman.schedule.shiftplan',
+				'POPUP_COMPONENT_TEMPLATE_NAME' => '',
+				'POPUP_COMPONENT_PARAMS' => [
+					'SCHEDULE_ID' => isset($this->arResult['VARIABLES']['SCHEDULE_ID']) ? $this->arResult['VARIABLES']['SCHEDULE_ID'] : '',
+				],
+				'USE_UI_TOOLBAR' => 'Y',
+			]
+		);
 	}
 }

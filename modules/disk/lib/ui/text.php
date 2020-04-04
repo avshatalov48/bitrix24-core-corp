@@ -4,6 +4,7 @@ namespace Bitrix\Disk\Ui;
 
 use Bitrix\Disk\BaseObject;
 use Bitrix\Main\IO\Path;
+use Bitrix\Main\Text\Emoji;
 
 final class Text
 {
@@ -130,11 +131,17 @@ final class Text
 	protected static function correctObjectName($objectName)
 	{
 		$objectName = trim($objectName);
-		if(BaseObject::isValidValueForField('NAME', $objectName))
+		$objectName = Emoji::replace($objectName, function(){
+			return '_';
+		});
+
+		if (BaseObject::isValidValueForField('NAME', $objectName))
 		{
 			return $objectName;
 		}
 
-		return preg_replace("#([\x01-\x1F".preg_quote(Path::INVALID_FILENAME_CHARS, "#")."])#", '_', $objectName);
+		return \Bitrix\Main\IO\Path::replaceInvalidFilename($objectName, function(){
+			return '_';
+		});
 	}
 }

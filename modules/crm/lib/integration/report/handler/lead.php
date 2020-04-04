@@ -101,9 +101,9 @@ class Lead extends Base implements IReportSingleData, IReportMultipleData, IRepo
 		];
 	}
 
-	public function mutateFilterParameter($filterParameters)
+	public function mutateFilterParameter($filterParameters, array $fieldList)
 	{
-		$filterParameters =  parent::mutateFilterParameter($filterParameters);
+		$filterParameters =  parent::mutateFilterParameter($filterParameters, $fieldList);
 
 		$fieldsToOrmMap =  $this->getLeadFieldsToOrmMap();
 

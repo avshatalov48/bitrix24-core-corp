@@ -55,7 +55,7 @@ class CacheProvider extends StaticCacheProvider
 			Asset::getInstance()->addString(
 				"<script>(window.BX||top.BX).message({ 'USER_ID': '".$USER->GetID()."'});</script>",
 				$unique = false,
-				AssetLocation::AFTER_JS,
+				AssetLocation::AFTER_CSS,
 				AssetMode::ALL
 			);
 		}

@@ -1,5 +1,5 @@
 this.BX = this.BX || {};
-(function (exports,main_core) {
+(function (exports, main_core) {
 	'use strict';
 
 	var defaultOptions = {
@@ -9,6 +9,10 @@ this.BX = this.BX || {};
 	};
 
 	var optionsKey = Symbol('options');
+	/**
+	 * @memberOf BX.Landing
+	 */
+
 	var Env =
 	/*#__PURE__*/
 	function () {
@@ -22,7 +26,12 @@ this.BX = this.BX || {};
 	    value: function createInstance() {
 	      var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 	      Env.instance = new Env(options);
-	      window.top.BX.Landing.Env.instance = Env.instance;
+	      var parentEnv = main_core.Reflection.getClass('parent.BX.Landing.Env');
+
+	      if (parentEnv) {
+	        parentEnv.instance = Env.instance;
+	      }
+
 	      return Env.instance;
 	    }
 	  }]);
@@ -39,9 +48,28 @@ this.BX = this.BX || {};
 	      return babelHelpers.objectSpread({}, this[optionsKey]);
 	    }
 	  }, {
+	    key: "setOptions",
+	    value: function setOptions(options) {
+	      this[optionsKey] = main_core.Runtime.merge(this[optionsKey], options);
+	    }
+	  }, {
 	    key: "getType",
 	    value: function getType() {
 	      return this.getOptions().params.type;
+	    }
+	  }, {
+	    key: "getSiteId",
+	    value: function getSiteId() {
+	      return this.getOptions().site_id || -1;
+	    }
+	  }, {
+	    key: "getLandingEditorUrl",
+	    value: function getLandingEditorUrl() {
+	      var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+	      var envOptions = this.getOptions();
+	      var urlMask = envOptions.params.sef_url.landing_view;
+	      var siteId = options.site ? options.site : envOptions.site_id;
+	      return urlMask.replace('#site_show#', siteId).replace('#landing_edit#', options.landing);
 	    }
 	  }]);
 	  return Env;
@@ -50,5 +78,5 @@ this.BX = this.BX || {};
 
 	exports.Env = Env;
 
-}((this.BX.Landing = this.BX.Landing || {}),BX));
+}(this.BX.Landing = this.BX.Landing || {}, BX));
 //# sourceMappingURL=env.bundle.js.map

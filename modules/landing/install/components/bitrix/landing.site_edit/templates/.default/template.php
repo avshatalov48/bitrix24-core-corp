@@ -9,6 +9,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 /** @var array $arResult */
 /** @var array $arParams */
 /** @var \CMain $APPLICATION */
+/** @var LandingSiteEditComponent $component */
 
 use \Bitrix\Main\Page\Asset;
 use \Bitrix\Landing\Manager;
@@ -35,6 +36,7 @@ if ($arResult['FATAL'])
 $row = $arResult['SITE'];
 $hooks = $arResult['HOOKS'];
 $tplRefs = $arResult['TEMPLATES_REF'];
+$isIntranet = $arResult['IS_INTRANET'];
 $context = \Bitrix\Main\Application::getInstance()->getContext();
 $request = $context->getRequest();
 $isSMN = $row['TYPE']['CURRENT'] == 'SMN';
@@ -42,11 +44,11 @@ $isSMN = $row['TYPE']['CURRENT'] == 'SMN';
 // title
 if ($arParams['SITE_ID'])
 {
-	Manager::setPageTitle(Loc::getMessage('LANDING_TPL_TITLE_EDIT'));
+	Manager::setPageTitle($component->getMessageType('LANDING_TPL_TITLE_EDIT'));
 }
 else
 {
-	Manager::setPageTitle(Loc::getMessage('LANDING_TPL_TITLE_ADD'));
+	Manager::setPageTitle($component->getMessageType('LANDING_TPL_TITLE_ADD'));
 }
 
 // assets
@@ -89,10 +91,13 @@ if ($arResult['SHOW_RIGHTS'])
 		top.window['landingSettingsSaved'] = false;
 		<?if ($arParams['SUCCESS_SAVE']):?>
 		top.window['landingSettingsSaved'] = true;
-		top.BX.onCustomEvent('BX.Main.Filter:apply');
+		top.BX.onCustomEvent('BX.Landing.Filter:apply');
 		editComponent.actionClose();
 		top.BX.Landing.UI.Tool.ActionDialog.getInstance().close();
 		<?endif;?>
+		BX.Landing.Env.createInstance({
+			params: {type: '<?= $arParams['TYPE'];?>'}
+		});
 	});
 </script>
 
@@ -117,8 +122,8 @@ if ($arParams['SUCCESS_SAVE'])
 
 	<div class="ui-form-title-block">
 		<span class="ui-editable-field" id="ui-editable-title">
-			<label class="ui-editable-field-label ui-editable-field-label-js"><?= $row['TITLE']['CURRENT']?></label>
-			<input type="text" name="fields[TITLE]" class="ui-input ui-editable-field-input ui-editable-field-input-js" value="<?= $row['TITLE']['CURRENT']?>" placeholder="<?= $row['TITLE']['TITLE']?>" />
+			<label class="ui-editable-field-label ui-editable-field-label-js"><?= $row['TITLE']['CURRENT'];?></label>
+			<input type="text" name="fields[TITLE]" class="ui-input ui-editable-field-input ui-editable-field-input-js" value="<?= $row['TITLE']['CURRENT'];?>" placeholder="<?= $row['TITLE']['TITLE'];?>" />
 			<span class="ui-title-input-btn ui-title-input-btn-js ui-editing-pen"></span>
 		</span>
 	</div>
@@ -126,6 +131,20 @@ if ($arParams['SUCCESS_SAVE'])
 	<div class="landing-form-inner-js landing-form-inner">
 		<div class="landing-form-table-wrap landing-form-table-wrap-js ui-form-inner">
 			<table class="ui-form-table landing-form-table">
+				<?if ($isIntranet):?>
+				<tr class="landing-form-site-name-fieldset">
+					<td class="ui-form-label ui-form-label-align-top">
+						<?= $component->getMessageType('LANDING_TPL_TITLE_ADDRESS_SITE');?>
+					</td>
+					<td class="ui-form-right-cell">
+						<span class="landing-form-site-name-label">
+							<?= \Bitrix\Landing\Domain::getHostUrl();?><?= Manager::getPublicationPath();?>
+						</span>
+						<input type="text" name="fields[CODE]" class="ui-input" value="<?= trim($row['CODE']['CURRENT'], '/');?>" placeholder="<?= $row['TITLE']['TITLE'];?>" />
+						<span class="landing-form-site-name-label">/</span>
+					</td>
+				</tr>
+				<?else:?>
 				<tr class="landing-form-site-name-fieldset">
 					<td class="ui-form-label ui-form-label-align-top"><?= $row['CODE']['TITLE']?></td>
 					<td class="ui-form-right-cell">
@@ -142,6 +161,7 @@ if ($arParams['SUCCESS_SAVE'])
 						);?>
 					</td>
 				</tr>
+				<?endif;?>
 			<?if (isset($hooks['B24BUTTON'])):
 				$pageFields = $hooks['B24BUTTON']->getPageFields();
 				if (isset($pageFields['B24BUTTON_CODE'])):
@@ -270,30 +290,54 @@ if ($arParams['SUCCESS_SAVE'])
 						<div class="ui-form-collapse-block landing-form-collapse-block-js">
 							<span class="ui-form-collapse-label"><?= Loc::getMessage('LANDING_TPL_ADDITIONAL');?></span>
 							<span class="landing-additional-alt-promo-wrap" id="landing-additional">
-								<span class="landing-additional-alt-promo-text" data-landing-additional-option="favicon">Favicon</span>
-								<span class="landing-additional-alt-promo-text" data-landing-additional-option="background"><?= Loc::getMessage('LANDING_TPL_ADDITIONAL_BG');?></span>
-								<span class="landing-additional-alt-promo-text" data-landing-additional-option="verification"><?= Loc::getMessage('LANDING_TPL_ADDITIONAL_VERIFICATION');?></span>
-								<span class="landing-additional-alt-promo-text" data-landing-additional-option="metrika"><?= Loc::getMessage('LANDING_TPL_ADDITIONAL_METRIKA');?></span>
-								<span class="landing-additional-alt-promo-text" data-landing-additional-option="pixel"><?= Loc::getMessage('LANDING_TPL_HOOK_PIXEL');?></span>
-								<span class="landing-additional-alt-promo-text" data-landing-additional-option="map_required_key"><?= Loc::getMessage('LANDING_TPL_HOOK_GMAP');?></span>
-								<span class="landing-additional-alt-promo-text" data-landing-additional-option="view"><?= Loc::getMessage('LANDING_TPL_ADDITIONAL_VIEW');?></span>
-								<span class="landing-additional-alt-promo-text" data-landing-additional-option="layout"><?= Loc::getMessage('LANDING_TPL_ADDITIONAL_LAYOUT');?></span>
-								<?if (!empty($arResult['LANG_CODES']) && Manager::isB24() && $row['LANG']):?>
-								<span class="landing-additional-alt-promo-text" data-landing-additional-option="lang"><?= Loc::getMessage('LANDING_TPL_ADDITIONAL_LANG');?></span>
+								<?if (isset($hooks['FAVICON'])):?>
+									<span class="landing-additional-alt-promo-text" data-landing-additional-option="favicon">Favicon</span>
 								<?endif;?>
-								<span class="landing-additional-alt-promo-text" data-landing-additional-option="404"><?= Loc::getMessage('LANDING_TPL_ADDITIONAL_404');?></span>
+								<?if (isset($hooks['BACKGROUND'])):?>
+									<span class="landing-additional-alt-promo-text" data-landing-additional-option="background"><?= Loc::getMessage('LANDING_TPL_ADDITIONAL_BG');?></span>
+								<?endif;?>
+								<?if (isset($hooks['METAGOOGLEVERIFICATION']) || isset($hooks['METAYANDEXVERIFICATION'])):?>
+									<span class="landing-additional-alt-promo-text" data-landing-additional-option="verification"><?= Loc::getMessage('LANDING_TPL_ADDITIONAL_VERIFICATION');?></span>
+								<?endif;?>
+								<?if (isset($hooks['YACOUNTER']) || isset($hooks['GACOUNTER']) || isset($hooks['GTM'])):?>
+									<span class="landing-additional-alt-promo-text" data-landing-additional-option="metrika"><?= Loc::getMessage('LANDING_TPL_ADDITIONAL_METRIKA');?></span>
+								<?endif;?>
+								<?if (isset($hooks['PIXELFB']) || isset($hooks['PIXELVK'])):?>
+									<span class="landing-additional-alt-promo-text" data-landing-additional-option="pixel"><?= Loc::getMessage('LANDING_TPL_HOOK_PIXEL');?></span>
+								<?endif;?>
+								<?if (isset($hooks['GMAP'])):?>
+									<span class="landing-additional-alt-promo-text" data-landing-additional-option="map_required_key"><?= Loc::getMessage('LANDING_TPL_HOOK_GMAP');?></span>
+								<?endif;?>
+								<?if (isset($hooks['VIEW'])):?>
+									<span class="landing-additional-alt-promo-text" data-landing-additional-option="view"><?= Loc::getMessage('LANDING_TPL_ADDITIONAL_VIEW');?></span>
+								<?endif;?>
+								<?if ($arResult['TEMPLATES']):?>
+									<span class="landing-additional-alt-promo-text" data-landing-additional-option="layout"><?= Loc::getMessage('LANDING_TPL_ADDITIONAL_LAYOUT');?></span>
+								<?endif;?>
+								<?if (!$isIntranet && !empty($arResult['LANG_CODES']) && $row['LANG']):?>
+									<span class="landing-additional-alt-promo-text" data-landing-additional-option="lang"><?= Loc::getMessage('LANDING_TPL_ADDITIONAL_LANG');?></span>
+								<?endif;?>
+									<span class="landing-additional-alt-promo-text" data-landing-additional-option="404"><?= Loc::getMessage('LANDING_TPL_ADDITIONAL_404');?></span>
 								<?if (isset($hooks['ROBOTS']) && !$isSMN):?>
-								<span class="landing-additional-alt-promo-text" data-landing-additional-option="robots"><?= Loc::getMessage('LANDING_TPL_ADDITIONAL_ROBOTS');?></span>
+									<span class="landing-additional-alt-promo-text" data-landing-additional-option="robots"><?= Loc::getMessage('LANDING_TPL_ADDITIONAL_ROBOTS');?></span>
 								<?endif;?>
 								<?if (isset($hooks['SPEED'])):?>
 								<span class="landing-additional-alt-promo-text" data-landing-additional-option="speed"><?= Loc::getMessage('LANDING_TPL_ADDITIONAL_SPEED');?></span>
 								<?endif;?>
-								<span class="landing-additional-alt-promo-text" data-landing-additional-option="public_html_disallowed">HTML</span>
-								<span class="landing-additional-alt-promo-text" data-landing-additional-option="css">CSS</span>
-								<span class="landing-additional-alt-promo-text" data-landing-additional-option="off"><?= Loc::getMessage('LANDING_TPL_ADDITIONAL_OFF');?></span>
-								<span class="landing-additional-alt-promo-text" data-landing-additional-option="sign"><?= Loc::getMessage('LANDING_TPL_ADDITIONAL_SIGN');?></span>
+								<?if (isset($hooks['HEADBLOCK'])):?>
+									<span class="landing-additional-alt-promo-text" data-landing-additional-option="public_html_disallowed">HTML</span>
+								<?endif;?>
+								<?if (isset($hooks['CSSBLOCK'])):?>
+									<span class="landing-additional-alt-promo-text" data-landing-additional-option="css">CSS</span>
+								<?endif;?>
+								<?if (!$isIntranet):?>
+									<span class="landing-additional-alt-promo-text" data-landing-additional-option="off"><?= Loc::getMessage('LANDING_TPL_ADDITIONAL_OFF');?></span>
+								<?endif;?>
+								<?if (isset($hooks['COPYRIGHT'])):?>
+									<span class="landing-additional-alt-promo-text" data-landing-additional-option="sign"><?= Loc::getMessage('LANDING_TPL_ADDITIONAL_SIGN');?></span>
+								<?endif;?>
 								<?if ($arResult['SHOW_RIGHTS']):?>
-								<span class="landing-additional-alt-promo-text" data-landing-additional-option="access"><?= Loc::getMessage('LANDING_TPL_HOOK_RIGHTS_LABEL');?></span>
+									<span class="landing-additional-alt-promo-text" data-landing-additional-option="access"><?= Loc::getMessage('LANDING_TPL_HOOK_RIGHTS_LABEL');?></span>
 								<?endif;?>
 							</span>
 						</div>
@@ -430,9 +474,17 @@ if ($arParams['SUCCESS_SAVE'])
 				<tr class="landing-form-hidden-row" data-landing-additional-detail="metrika">
 					<td class="ui-form-label ui-form-label-align-top"><?= Loc::getMessage('LANDING_TPL_HOOK_METRIKA');?></td>
 					<td class="ui-form-right-cell ui-form-right-cell-metrika">
-						<?$template->showSimple('GACOUNTER');?>
-						<?$template->showSimple('GTM');?>
 						<?
+						if (isset($hooks['GACOUNTER']))
+						{
+							$pageFields = $hooks['GACOUNTER']->getPageFields();
+							if (!$pageFields['GACOUNTER_CLICK_TYPE']->getValue())
+							{
+								$pageFields['GACOUNTER_CLICK_TYPE']->setValue('text');
+							}
+						}
+						$template->showSimple('GACOUNTER');
+						$template->showSimple('GTM');
 						if (Manager::availableOnlyForZone('ru'))
 						{
 							$template->showSimple('YACOUNTER');
@@ -545,7 +597,6 @@ if ($arParams['SUCCESS_SAVE'])
 											?>id="layout-radio-<?= $i + 1;?>"<?
 											?><?if ($tpl['ID'] == $row['TPL_ID']['CURRENT']){?> checked="checked"<?}?>>
 										<?endforeach;?>
-										<input class="layout-switcher" data-layout="without_right" name="fields[TPL_ID]" id="layout-radio-6" type="radio">
 										<div class="landing-form-list">
 											<div class="landing-form-list-container">
 												<div class="landing-form-list-inner">
@@ -581,7 +632,7 @@ if ($arParams['SUCCESS_SAVE'])
 					</td>
 				</tr>
 				<?endif;?>
-				<?if (!empty($arResult['LANG_CODES']) && Manager::isB24() && $row['LANG']):?>
+				<?if (!$isIntranet && !empty($arResult['LANG_CODES']) && $row['LANG']):?>
 					<tr class="landing-form-hidden-row" data-landing-additional-detail="lang">
 						<td class="ui-form-label"><?= $row['LANG']['TITLE'];?></td>
 						<td class="ui-form-right-cell">
@@ -822,6 +873,7 @@ if ($arParams['SUCCESS_SAVE'])
 						</td>
 					</tr>
 				<?endif;?>
+				<?if (!$isIntranet):?>
 					<tr class="landing-form-hidden-row" data-landing-additional-detail="off">
 						<td class="ui-form-label ui-form-label-align-top"><?= Loc::getMessage('LANDING_TPL_PAGE_503')?></td>
 						<td class="ui-form-right-cell">
@@ -849,6 +901,7 @@ if ($arParams['SUCCESS_SAVE'])
 							</div>
 						</td>
 					</tr>
+				<?endif;?>
 				<?if (isset($hooks['COPYRIGHT'])):
 				$pageFields = $hooks['COPYRIGHT']->getPageFields();
 				if (isset($pageFields['COPYRIGHT_SHOW'])):

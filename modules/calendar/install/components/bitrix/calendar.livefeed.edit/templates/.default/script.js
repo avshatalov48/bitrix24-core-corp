@@ -19,6 +19,7 @@
 		this.bFullDay = false;
 		this.bReminder = false;
 		this.bAdditional = false;
+		this.locationName = 'EVENT_LOCATION';
 
 		var _this = this;
 
@@ -363,6 +364,7 @@
 			BX(this.id + '_time_from_real').value = BX.date.format(this.TIME_FORMAT, fromDate.getTime() / 1000);
 			BX(this.id + '_time_to_real').value = BX.date.format(this.TIME_FORMAT, toDate.getTime() / 1000);
 
+			this.pLocation.name = this.locationName;
 			// Check Meeting and Video Meeting rooms accessibility
 			if (this.Loc && this.Loc.NEW && this.Loc.NEW.substr(0, 5) == 'ECMR_' && !this.bLocationChecked && window.setBlogPostFormSubmitted)
 			{
@@ -395,7 +397,7 @@
 							}
 
 							_this.bLocationChecked = true;
-							BX('event-location-new' + _this.id).name = _this.pLocation.name;
+							BX('event-location-new' + _this.id).name = _this.locationName;
 							BX('event-location-new' + _this.id).value = _this.Loc.NEW;
 							_this.pLocation.name = '';
 							setBlogPostFormSubmitted(false);

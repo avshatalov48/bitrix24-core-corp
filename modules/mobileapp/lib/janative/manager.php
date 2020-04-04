@@ -151,7 +151,7 @@ class Manager
 		{
 			$extension = new Extension($extName);
 			$result['messages'] = array_merge($result['messages'], $extension->getLangMessages());
-			$result['js'][] = $extension->getRelativePath();
+			$result['js'][] = $extension->getRelativePathToFile();
 		}
 
 		return $result;
@@ -194,9 +194,47 @@ class Manager
 		return self::fetchComponents();
 	}
 
-	public function extractNamespace($entityPath)
+	/**
+	 * @param $name
+	 * @return Component|null
+	 * @throws \Bitrix\Main\IO\FileNotFoundException
+	 */
+	public static function getComponentByName($name)
 	{
+		$workspaces = self::getWorkspaces();
+		foreach ($workspaces as $path)
+		{
+			$componentDir = new Directory(Application::getDocumentRoot() . $path . "/components/");
+			if(!$componentDir->isExists())
+				continue;
 
+			$namespaces = $componentDir->getChildren();
+			foreach ($namespaces as $NSDir)
+			{
+				if (!$NSDir->isDirectory())
+					continue;
+
+				$namespaceItems = $NSDir->getChildren();
+				$namespace = $NSDir->getName();
+				foreach ($namespaceItems as $item)
+				{
+					try
+					{
+						if($name === $item->getName() || $namespace . ':' . $name === $item->getName())
+						{
+							return new Component($item->getPath());
+						}
+					}
+					catch (\Exception $e)
+					{
+						$a = $e;
+					}
+				}
+			}
+		}
+
+		return null;
 	}
+
 
 }

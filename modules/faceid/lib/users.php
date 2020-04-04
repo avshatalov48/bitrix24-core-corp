@@ -207,7 +207,7 @@ class UsersTable extends Main\Entity\DataManager
 		if (\Bitrix\Main\Loader::includeModule('timeman'))
 		{
 			$tmUser = new \CTimeManUser($userId);
-			$settings = $tmUser->GetSettings();
+			$settings = $tmUser->GetSettings(['UF_TIMEMAN']);
 			return (bool)$settings['UF_TIMEMAN'];
 		}
 

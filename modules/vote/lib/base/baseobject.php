@@ -61,8 +61,15 @@ class BaseObject
 	 */
 	public function canRead($userId)
 	{
-		$groups = self::loadUserGroups($userId);
-		$right = \CMain::getUserRight("vote", $groups);
+		if ($userId == $this->getUser()->getId())
+		{
+			$right = \CMain::getUserRight("vote");
+		}
+		else
+		{
+			$groups = self::loadUserGroups($userId);
+			$right = \CMain::getUserRight("vote", $groups);
+		}
 		return ($right >= "R");
 	}
 
@@ -72,8 +79,15 @@ class BaseObject
 	 */
 	public function canEdit($userId)
 	{
-		$groups = self::loadUserGroups($userId);
-		$right = \CMain::getUserRight("vote", $groups);
+		if ($userId == $this->getUser()->getId())
+		{
+			$right = \CMain::getUserRight("vote");
+		}
+		else
+		{
+			$groups = self::loadUserGroups($userId);
+			$right = \CMain::getUserRight("vote", $groups);
+		}
 		return ($right >= "W");
 	}
 

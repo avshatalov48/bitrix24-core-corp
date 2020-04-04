@@ -35,6 +35,7 @@ if (isset($templateData["ERROR"]))
 <?=CJSCore::Init(array('tasks_util_query'), true)?>
 <?php
 $APPLICATION->SetPageProperty('BodyClass', 'task-card-page');
+\Bitrix\Main\UI\Extension::load("ui.progressround");
 
 Asset::getInstance()->addJs(SITE_TEMPLATE_PATH.'/log_mobile.js');
 Asset::getInstance()->addJs($templateFolder.'/../.default/script.js');
@@ -48,11 +49,11 @@ $can["CHECKLIST_ADD_ITEMS"] = false;
 
 $taskId = $task['ID'];
 $statuses = CTaskItem::getStatusMap();
-$status = Loc::getMessage("TASKS_STATUS_".$arResult["STATUSES"][$task["REAL_STATUS"]]);
+$status = Loc::getMessage("TASKS_STATUS_".$statuses[$task["REAL_STATUS"]]);
 
-$task["PRIORITY"] = ((int)$task["PRIORITY"] === CTasks::PRIORITY_HIGH ? CTasks::PRIORITY_HIGH : CTasks::PRIORITY_LOW);
 $task["~STATUS"] = $task["STATUS"];
 $task["STATUS"] = (empty($status) ? Loc::getMessage("TASKS_STATUS_STATE_UNKNOWN") : $status);
+$task["PRIORITY"] = ((int)$task["PRIORITY"] === CTasks::PRIORITY_HIGH ? CTasks::PRIORITY_HIGH : CTasks::PRIORITY_LOW);
 
 $timerTask = ($task["ALLOW_TIME_TRACKING"] === "Y" ? CTaskTimerManager::getInstance($USER->getId())->getRunningTask(false) : []);
 $timerTask = is_array($timerTask) ? $timerTask : [];
@@ -60,6 +61,25 @@ if ($timerTask['TASK_ID'] === $taskId)
 {
 	$task["TIME_SPENT_IN_LOGS"] += $timerTask['RUN_TIME'];
 }
+
+ob_start();
+$APPLICATION->IncludeComponent(
+	'bitrix:tasks.widget.checklist.new',
+	'mobile',
+	[
+		'ENTITY_ID' => $taskId,
+		'ENTITY_TYPE' => 'TASK',
+		'DATA' => $task['SE_CHECKLIST'],
+		'PATH_TO_USER_PROFILE' => $arParams['PATH_TO_USER_PROFILE'],
+		'CONVERTED' => $arResult['DATA']['CHECKLIST_CONVERTED'],
+		'CAN_ADD_ACCOMPLICE' => $can['EDIT'],
+		'TASK_GUID' => $arParams['GUID'],
+		'DISK_FOLDER_ID' => $arResult['AUX_DATA']['DISK_FOLDER_ID'],
+	],
+	null,
+	['HIDE_ICONS' => 'Y', 'ACTIVE_COMPONENT' => 'Y']
+);
+$checklistHtml = ob_get_clean();
 
 $subTasksHtml = null;
 if ($templateData["SUBTASKS_EXIST"] && $component->getParent())
@@ -99,7 +119,11 @@ $url = CComponentEngine::MakePathFromTemplate($arParams["~PATH_TO_USER_TASKS_EDI
 	<input type="hidden" name="_JS_STEPPER_SUPPORTED" value="Y">
 	<input type="hidden" name="DESCRIPTION_IN_BBCODE" value="<?=$task['DESCRIPTION_IN_BBCODE']; ?>" />
 	<input type="hidden" name="back_url" value="<?=$url."&".http_build_query(array("save" => "Y", "sessid" => bitrix_sessid())) ?>" />
-	<?if ($can["EDIT"]) : ?><input type="hidden" name="data[SE_AUDITOR][]" value="" /><input type="hidden" name="data[PRIORITY]" value="<?=$task["PRIORITY"]?>" /><? endif; ?>
+	<?if($can["EDIT"]):?>
+		<input type="hidden" name="data[SE_AUDITOR][]" value=""/>
+		<input type="hidden" name="data[SE_ACCOMPLICE][]" value=""/>
+		<input type="hidden" name="data[PRIORITY]" value="<?=$task["PRIORITY"]?>"/>
+	<?endif?>
 	<div style="display: none;"><input type="text" name="AJAX_POST" value="Y" /></div><?//hack to not submit form?>
 
 	<?php
@@ -139,47 +163,12 @@ $url = CComponentEngine::MakePathFromTemplate($arParams["~PATH_TO_USER_TASKS_EDI
 								"id" => "data[DESCRIPTION]",
 								"value" => $task["DESCRIPTION"]
 							)) : null),
-						(($can["CHECKLIST_ADD_ITEMS"] || !empty($task["SE_CHECKLIST"])) ? array(
-							"type" => "custom",
-							"id" => "tasks-check-list",
-							"class" => "mobile-grid-field-tasks-checklist",
-							"name" => GetMessage("MB_TASKS_TASK_SETTINGS_CHECKLIST"),
-							"value" => "<div id=\"checkList".$taskId."Container\" class=\"mobile-grid-field-tasks-checklist-container\">".(($checkList = function($list, &$ids)
-								{
-									$result = "";
-									$ids = array();
-									foreach($list as $item)
-									{
-										$item["ACTION"]["MODIFY"] = false;
-										$item["ACTION"]["REMOVE"] = false;
-
-										$separator = \Bitrix\Tasks\UI\Task\CheckList::checkIsSeparatorValue($item["TITLE"]);
-										$ids[] = $item["ID"];
-										$item["TITLE"] = htmlspecialcharsbx($item["TITLE"]);
-										$result .=
-											"<label id=\"checkListItem".$item["ID"]."Label\" for=\"checkListItem".$item["ID"]."\" class=\"task-view-checklist".(
-												($item["ACTION"]["TOGGLE"] ? " task-view-checklist-toggle" : "").
-												($item["ACTION"]["MODIFY"] ? " task-view-checklist-modify" : "").
-												($item["ACTION"]["REMOVE"] ? " task-view-checklist-remove" : "")
-											)."\">".
-											"<span class=\"".($separator ? "mobile-grid-field-divider" : "mobile-grid-field-tasks-checklist-item")."\">".
-											"<input type=\"hidden\" name=\"data[SE_CHECKLIST][".$item["ID"]."][ID]\" value=\"".$item["ID"]."\" />".
-											"<input type=\"checkbox\" name=\"data[SE_CHECKLIST][".$item["ID"]."][IS_COMPLETE]\" id=\"checkListItem".$item["ID"]."\"".($item["IS_COMPLETE"] == "Y" ? " checked " : "")." value=\"Y\" />".
-											($separator ? "" : "<span class=\"mobile-grid-field-tasks-checklist-item-text\">".$item["TITLE"]."</span>").
-											"<i class=\"mobile-grid-menu\" id=\"checkListItem".$item["ID"]."Menu\"></i>".
-											"<input type=\"hidden\" name=\"data[SE_CHECKLIST][".$item["ID"]."][TITLE]\" value=\"".$item["TITLE"]."\" />".
-											"<input type=\"hidden\" name=\"data[SE_CHECKLIST][".$item["ID"]."][SORT_INDEX]\" value=\"".$item["SORT_INDEX"]."\" />".
-											"</span>".
-											"</label>";
-									}
-									return $result;
-								}) ? $checkList($task["SE_CHECKLIST"], $task["CHECKLIST"]) : "")."</div>".
-								($can["CHECKLIST_ADD_ITEMS"] ?
-									"<div class='mobile-grid-button'>".
-									"<a id=\"checkList".$taskId."Add\" href=\"#\">".GetMessage("MB_TASKS_TASK_ADD")."</a>".
-									"<a id=\"checkList".$taskId."Separator\" href=\"#\">".GetMessage("MB_TASKS_TASK_ADD_SEPARATOR")."</a>".
-									"</div>" : "")
-						) : null),
+						[
+							"type" => 'custom',
+							"id" => 'checklist',
+							"class" => '',
+							"value" => $checklistHtml,
+						],
 						array(
 							"type" => "label",
 							"id" => "data[STATUS]",
@@ -207,8 +196,7 @@ $url = CComponentEngine::MakePathFromTemplate($arParams["~PATH_TO_USER_TASKS_EDI
 							"id" => "data[DEADLINE]",
 							"name" => GetMessage("MB_TASKS_TASK_SETTINGS_DEADLINE"),
 							"placeholder" => GetMessage("MB_TASKS_TASK_SETTINGS_DEADLINE_PLACEHOLDER"),
-//							"value" => ($can["EDIT.PLAN"] && !$can["EDIT"] && empty($task["DEADLINE"]) ? "0" : $task["DEADLINE"])
-							"value" => (empty($task['DEADLINE']) ? '0' : $task['DEADLINE']),
+							"value" => ($can['EDIT.PLAN'] && empty($task['DEADLINE']) ? '0' : $task['DEADLINE']),
 						),
 						($task["ALLOW_TIME_TRACKING"] == "Y" ?
 							array(
@@ -266,21 +254,24 @@ $url = CComponentEngine::MakePathFromTemplate($arParams["~PATH_TO_USER_TASKS_EDI
 							"value" => $task["CREATED_BY"],
 							"canDrop" => false
 						),
-						(!empty($task["SE_AUDITOR"]) || $can["EDIT"] ?
-							array(
+						(
+							(!empty($task["SE_AUDITOR"]) || $can["EDIT"]) ? [
 								"type" => ($can["EDIT"] ? "select-users" : "users"),
 								"id" => "data[SE_AUDITOR][]",
 								"name" => GetMessage("MB_TASKS_TASK_SETTINGS_AUDITORS"),
 								"items" => $task["SE_AUDITOR"],
-								"value" => $task["AUDITORS"]
-							) : null),
-						(!empty($task["SE_ACCOMPLICE"]) ? array(
-							"type" => "users",
-							"id" => "data[SE_ACCOMPLICE][]",
-							"name" => GetMessage("MB_TASKS_TASK_SETTINGS_ACCOMPLICES"),
-							"items" => $task["SE_ACCOMPLICE"],
-							"value" => $task["ACCOMPLICES"]
-						) : null),
+								"value" => (!empty($task["SE_AUDITOR"]) ? $task["AUDITORS"] : '0'),
+							] : null
+						),
+						(
+							(!empty($task["SE_ACCOMPLICE"]) || $can["EDIT"]) ? [
+								"type" => ($can["EDIT"] ? "select-users" : "users"),
+								"id" => "data[SE_ACCOMPLICE][]",
+								"name" => GetMessage("MB_TASKS_TASK_SETTINGS_ACCOMPLICES"),
+								"items" => $task["SE_ACCOMPLICE"],
+								"value" => (!empty($task["SE_ACCOMPLICE"]) ? $task["ACCOMPLICES"] : '0'),
+							] : null
+						),
 						(is_array($arResult["AUX_DATA"]) && is_array($arResult["AUX_DATA"]["USER_FIELDS"]) &&
 						array_key_exists("UF_TASK_WEBDAV_FILES", $arResult["AUX_DATA"]["USER_FIELDS"]) &&
 						($can["EDIT"] || !empty($arResult["AUX_DATA"]["USER_FIELDS"]["UF_TASK_WEBDAV_FILES"]["VALUE"])) ?
@@ -331,20 +322,19 @@ $url = CComponentEngine::MakePathFromTemplate($arParams["~PATH_TO_USER_TASKS_EDI
 								"name" => GetMessage("MB_TASKS_TASK_SETTINGS_PARENT_ID"),
 								"class" => "mobile-grid-field-parent-id",
 								"value" =>
-									"<span onclick=\"BXMobileApp.PageManager.loadPageBlank({url: '".CUtil::JSEscape(CComponentEngine::MakePathFromTemplate(
-										$arParams["~PATH_TO_USER_TASKS_TASK"],
-										array(
-											"USER_ID" => $arParams["USER_ID"],
-											"TASK_ID" => $task["SE_PARENTTASK"]["ID"])))."',bx24ModernStyle : true});\">".htmlspecialcharsbx($task["SE_PARENTTASK"]["TITLE"]).
-									"</span>"
+									'<span onclick="'.CMobileHelper::getTaskLink($task['SE_PARENTTASK']['ID']).'">'
+										.htmlspecialcharsbx($task["SE_PARENTTASK"]["TITLE"])
+									.'</span>'
 							) : null),
-						($subTasksHtml !== null ? array(
-							"type" => "custom",
-							"id" => "SUBTASKS",
-							"name" => GetMessage("MB_TASKS_TASK_SETTINGS_SUBTASKS"),
-							"class" => "mobile-grid-field-subtasks",
-							"value" => $subTasksHtml
-						) : null)
+						(
+							$subTasksHtml !== null ? [
+								"type" => "custom",
+								"id" => "SUBTASKS",
+								"name" => GetMessage("MB_TASKS_TASK_SETTINGS_SUBTASKS"),
+								"class" => "mobile-grid-field-subtasks",
+								"value" => $subTasksHtml,
+							] : null
+						)
 					)
 				)
 			),
@@ -421,6 +411,7 @@ $component->arResult["HTML"] = [
 		*/?>
 	</div>
 </div>
+
 <div class="post-item-inform-wrap-tree" id="rating-footer-wrap">
 	<div class="feed-post-emoji-top-panel-outer">
 		<div class="feed-post-emoji-top-panel-box <?=($totalPositiveVotes > 0 ? 'feed-post-emoji-top-panel-container-active' : '')?>"

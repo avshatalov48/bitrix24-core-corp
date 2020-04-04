@@ -27,6 +27,7 @@ class Ad
 	protected $authAdapter;
 	protected $seoCode;
 	protected $code;
+	protected $clientId;
 	protected $accountId;
 
 	/**
@@ -148,6 +149,7 @@ class Ad
 	public function __construct(array $source)
 	{
 		$this->code = $source['CODE'];
+		$this->clientId = $source['AD_CLIENT_ID'];
 		$this->accountId = $source['AD_ACCOUNT_ID'];
 		$this->seoCode = self::isSupported($this->code)
 			? self::getSeoCodeByCode($this->code)
@@ -155,7 +157,7 @@ class Ad
 
 		if ($this->seoCode)
 		{
-			$service = Seo\Analytics\Service::getInstance()->setClientId($source['CLIENT_ID']);
+			$service = Seo\Analytics\Service::getInstance()->setClientId($this->clientId);
 			$this->authAdapter = $service->getAuthAdapter($this->seoCode);
 			$this->account = $service->getAccount($this->seoCode);
 		}
@@ -282,7 +284,9 @@ class Ad
 
 		$cacheDir = '/crm/tracking/ad/expenses/';
 		$cacheTtl = (int) Main\Config\Option::get('crm', 'crm_tracking_expenses_cache_ttl') ?: self::CacheTtl;
-		$cacheId = $this->code . '|' . $this->accountId . '|' . $dateFrom->getTimestamp() . '|' . $dateTo->getTimestamp();
+		$cacheId = $this->code
+			. '|' . $this->clientId . '|' . $this->accountId
+			. '|' . $dateFrom->getTimestamp() . '|' . $dateTo->getTimestamp();
 		$cache = Main\Data\Cache::createInstance();
 		if ($cache->initCache($cacheTtl, $cacheId, $cacheDir))
 		{

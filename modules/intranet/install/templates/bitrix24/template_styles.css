@@ -1329,6 +1329,7 @@ td.bx-layout-inner-inner-cont {
 
 .no-background #workarea-content {
 	background: none;
+	opacity: unset;
 }
 
 .no-hidden #workarea,
@@ -3325,6 +3326,10 @@ a.td1:hover {
 	width: 13px;
 }
 
+.sonet-groups-group-title.sonet-groups-group-title-extranet:before {
+	top: 5px;
+}
+
 .sonet-groups-group-title-extranet .sonet-groups-group-link,
 .sonet-members-member-title-extranet .sonet-members-membet-link {
 	color: #d9930a !important;
@@ -3441,6 +3446,15 @@ a.td1:hover {
 .ja .bx-lang-btn-icon,
 .ja .menu-popup-item-icon {
 	background-position: -34px -56px;
+}
+
+.bx-lang-popup-item {
+	cursor: pointer;
+	padding: 10px 12px;
+}
+
+.bx-lang-popup-item:hover {
+	background-color: #f6f8f9;
 }
 
 #bitrix24-logo {
@@ -3632,7 +3646,7 @@ a.td1:hover {
 	transition: all .4s linear;
 	overflow: hidden;
 	opacity: 0;
-	padding-right: 115px;
+	padding: 0 115px;
 }
 
 .bx24-connection-status-hide {
@@ -3723,14 +3737,6 @@ a.td1:hover {
 
 .bx24-connection-status-online .bx24-connection-status-text-reload {
 	display: none;
-}
-
-.bx-ie .bx24-connection-status {
-	position: absolute;
-}
-
-.bx-ie .bx24-connection-status-wrap {
-	min-width: 533px;
 }
 
 @-webkit-keyframes b24EditAnimationOpen {

@@ -16,5 +16,6 @@ $MESS["VI_DOCS_UNTIL_DATE_NOTICE"] = "After the indicated date, the reserved num
 $MESS["VI_DOCS_UPDATE_BTN"] = "Upload new documents";
 $MESS["VI_DOCS_UPLOAD_BTN"] = "Upload documents";
 $MESS["VI_DOCS_UPLOAD_NOTICE"] = "Please note that the paperwork you are about to submit will be uploaded directly to Fastcom LLC, and will be treated according to the legislation of the corresponding country. Bitrix Inc. will not collect, store, or process any data associated with these documents.";
+$MESS["VI_DOCS_UPLOAD_WHILE_RENT"] = "If your documentation needs to be verified to rent a phone number, the number rent user interface will show the documentation upload form";
 $MESS["VI_DOCS_WAIT"] = "Uploading... Please wait";
 ?>

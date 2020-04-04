@@ -5,7 +5,7 @@ use Bitrix\Main,
 
 Loc::loadMessages(__FILE__);
 
-class CCatalogProductSetAll
+abstract class CCatalogProductSetAll
 {
 	const TYPE_SET = 1;
 	const TYPE_GROUP = 2;
@@ -86,7 +86,7 @@ class CCatalogProductSetAll
 		$boolCheck = ('UPDATE' != $strAction ? self::checkFieldsToAdd($arFields, 'TEST' == $strAction) : self::checkFieldsToUpdate($intID, $arFields));
 		if (!$boolCheck || !empty(self::$arErrors))
 		{
-			if (self::$disableShowErrors >= 0)
+			if (static::isEnabledShowErrors())
 			{
 				global $APPLICATION;
 				$obError = new CAdminException(self::$arErrors);
@@ -774,14 +774,11 @@ class CCatalogProductSetAll
 
 	protected static function fillSetItemsParams(&$items)
 	{
-		$productIterator = CCatalogProduct::GetList(
-			array(),
-			array('=ID' => array_keys($items)),
-			false,
-			false,
-			array('ID', 'QUANTITY', 'QUANTITY_TRACE', 'CAN_BUY_ZERO', 'WEIGHT')
-		);
-		while ($product = $productIterator->Fetch())
+		$productIterator = Catalog\ProductTable::getList([
+			'select' => ['ID', 'QUANTITY', 'QUANTITY_TRACE', 'CAN_BUY_ZERO', 'WEIGHT'],
+			'filter' => ['@ID' => array_keys($items)]
+		]);
+		while ($product = $productIterator->fetch())
 		{
 			$product['ID'] = (int)$product['ID'];
 			if (isset($items[$product['ID']]))

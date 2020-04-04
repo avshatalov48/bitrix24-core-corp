@@ -11,7 +11,8 @@ return array(
 		'name' => Loc::getMessage('LANDING_BLOCK_51_4_COUNTDOWN_MUSIC--NAME'),
 		'section' => array('countdowns', 'cover'),
 		'dynamic' => false,
-		'version' => '18.5.0',
+		'version' => '18.5.0', // old param for backward compatibility. Can used for old versions of module via repo. Do not delete!
+		'type' => ['page', 'store', 'smn'],
 	),
 	'cards' => array(
 		'.landing-block-node-card' => array(
@@ -35,7 +36,7 @@ return array(
 		'.landing-block-node-img' => array(
 			'name' => Loc::getMessage('LANDING_BLOCK_51_4_COUNTDOWN_MUSIC--IMG'),
 			'type' => 'img',
-			'dimensions' => array('width' => 1920, 'height' => 588),
+			'dimensions' => array('width' => 1920, 'height' => 1080),
 		),
 		'.landing-block-node-title' => array(
 			'name' => Loc::getMessage('LANDING_BLOCK_51_4_COUNTDOWN_MUSIC--TITLE'),
@@ -98,11 +99,7 @@ return array(
 			),
 			'.landing-block-node-number' => array(
 				'name' => Loc::getMessage('LANDING_BLOCK_51_4_COUNTDOWN_MUSIC--NUMBER_NUMBER'),
-				'type' => array('border-color'),
-			),
-			'.landing-block-node-img' => array(
-				'name' => Loc::getMessage('LANDING_BLOCK_51_4_COUNTDOWN_MUSIC--IMG'),
-				'type' => array('background-attachment'),
+				'type' => array('bg', 'border-color'),
 			),
 		),
 	),

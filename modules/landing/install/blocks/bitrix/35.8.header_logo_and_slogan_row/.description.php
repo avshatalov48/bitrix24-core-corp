@@ -30,7 +30,7 @@ return array(
 		),
 		'.landing-block-node-text' => array(
 			'name' => Loc::getMessage('LANDING_BLOCK_35_8_HEADER--SLOGAN'),
-			'type' => ['typo'],
+			'type' => ['typo-link'],
 		),
 	),
 );

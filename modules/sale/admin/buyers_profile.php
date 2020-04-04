@@ -22,15 +22,20 @@ if ($saleModulePermissions == "D")
 
 if(!CBXFeatures::IsFeatureEnabled('SaleAccounts'))
 {
-	require($DOCUMENT_ROOT."/bitrix/modules/main/include/prolog_admin_after.php");
+	require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_after.php");
 
 	ShowError(GetMessage("SALE_FEATURE_NOT_ALLOW"));
 
 	require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/epilog_admin.php");
-	die();
+	return;
 }
 
 $ID = IntVal($_GET["USER_ID"]);
+
+$registry = \Bitrix\Sale\Registry::getInstance(\Bitrix\Sale\Registry::REGISTRY_TYPE_ORDER);
+
+/** @var Sale\Order $orderClass */
+$orderClass = $registry->getOrderClassName();
 
 $catalogSubscribeEnabled = false;
 if(Bitrix\Main\Loader::includeModule("catalog"))
@@ -623,7 +628,7 @@ if(!empty($arUser))
 	);
 	$lAdmin_tab3->InitFilter($arFilterFields);
 
-	if (!isset($_REQUEST["by"]) || !in_array($by, Sale\Order::getAvailableFields()))
+	if (!isset($_REQUEST["by"]) || !in_array($by, $orderClass::getAvailableFields()))
 		$arOrderSort = array("DATE_INSERT" => "DESC");
 	else
 		$arOrderSort[$by] = $order;
@@ -2272,7 +2277,7 @@ if(!empty($arUser))
 					$paidStatistic[$archiveCount["LID"]][$archiveCount["CURRENCY"]] = $archiveCount;
 				}
 				$statSummary = "";
-				$orderCountPaidRaw = Sale\Order::getList([
+				$orderCountPaidRaw = $orderClass::getList([
 					'filter' => $filter,
 					'select' => [
 						'LID', 'CURRENCY',

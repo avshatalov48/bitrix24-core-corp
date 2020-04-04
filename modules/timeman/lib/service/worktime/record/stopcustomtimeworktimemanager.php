@@ -24,7 +24,7 @@ class StopCustomTimeWorktimeManager extends StopWorktimeManager
 	protected function verifyBeforeProcessUpdatingRecord()
 	{
 		$baseResult = parent::verifyBeforeProcessUpdatingRecord();
-		if (!$baseResult->isSuccess())
+		if (!$baseResult->isSuccess() || $this->worktimeRecordForm->isSystem === true)
 		{
 			return $baseResult;
 		}
@@ -120,7 +120,11 @@ class StopCustomTimeWorktimeManager extends StopWorktimeManager
 	{
 		if ($record)
 		{
-			return $record->buildStopTimestampBySecondsAndDate($this->worktimeRecordForm->recordedStopSeconds, $this->worktimeRecordForm->recordedStopDateFormatted, $this->worktimeRecordForm->editedBy);
+			return $record->buildStopTimestampBySecondsAndDate(
+				$this->worktimeRecordForm->recordedStopSeconds,
+				$this->worktimeRecordForm->recordedStopDateFormatted,
+				$this->worktimeRecordForm->editedBy
+			);
 		}
 		return parent::getRecordedStopTimestamp($record);
 	}

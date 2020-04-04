@@ -4669,6 +4669,7 @@ BX.SocNetLogDestination.BXfpCloseDialogCallback = function()
 {
 	if (
 		!BX.SocNetLogDestination.isOpenSearch()
+		&& BX(this.inputName)
 		&& BX(this.inputName).value.length <= 0
 	)
 	{

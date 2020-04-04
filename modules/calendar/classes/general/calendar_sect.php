@@ -1,4 +1,6 @@
 <?
+use Bitrix\Main\Loader;
+
 class CCalendarSect
 {
 	private static
@@ -268,7 +270,7 @@ class CCalendarSect
 					$userId = CCalendar::GetUserId();
 				}
 
-				$isManager = \Bitrix\Main\Loader::includeModule('intranet') && $sect['CAL_TYPE'] == 'user' && $settings['dep_manager_sub'] && Bitrix\Calendar\Util::isManagerForUser($userId, $sect['OWNER_ID']);
+				$isManager = Loader::includeModule('intranet') && $sect['CAL_TYPE'] == 'user' && $settings['dep_manager_sub'] && Bitrix\Calendar\Util::isManagerForUser($userId, $sect['OWNER_ID']);
 
 				if($bOwner || $isManager || self::CanDo('calendar_view_time', $sectId, $userId))
 				{
@@ -833,6 +835,9 @@ class CCalendarSect
 			return true;
 
 		if ((CCalendar::GetType() == 'group' || CCalendar::GetType() == 'user' || CCalendar::IsBitrix24()) && CCalendar::IsSocNet() && CCalendar::IsSocnetAdmin())
+			return true;
+
+		if (CCalendar::IsBitrix24() && Loader::includeModule('bitrix24') && \CBitrix24::isPortalAdmin($userId))
 			return true;
 
 		$res = in_array($operation, self::GetOperations($sectId, $userId));

@@ -29,6 +29,12 @@ $ajaxActions = [
 		"needBitrixSessid" => true,
 		"file" => $pathToComponents."mobile.data/actions/save_device_token.php"
 	],
+	"removeToken" => [
+		"json" => true,
+		"needBitrixSessid" => false,
+		"no_check_auth" => true,
+		"file" => $pathToComponents."mobile.data/actions/save_device_token.php"
+	],
 	"get_user_list" => [
 		"json" => true,
 		"file" => $pathToComponents."mobile.data/actions/users_groups.php"

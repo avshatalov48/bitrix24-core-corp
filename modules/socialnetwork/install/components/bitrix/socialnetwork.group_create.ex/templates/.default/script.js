@@ -525,22 +525,24 @@ BX.BXGCE.init = function(params) {
 		}
 	});
 
-	BX.bind(BX("sonet_group_create_popup_form_button_step_2_cancel"), "click", function(e) {
+	if (BX("sonet_group_create_popup_form_button_step_2_cancel"))
+	{
+		BX.bind(BX("sonet_group_create_popup_form_button_step_2_cancel"), "click", function(e) {
+			var currentSlider = BX.SidePanel.Instance.getSliderByWindow(window);
+			if (currentSlider)
+			{
+				window.top.BX.onCustomEvent(
+					"SidePanel.Slider:onClose",
+					[ currentSlider.getEvent('onClose') ]
+				);
+			}
 
-		var currentSlider = BX.SidePanel.Instance.getSliderByWindow(window);
-		if (currentSlider)
-		{
-			window.top.BX.onCustomEvent(
-				"SidePanel.Slider:onClose",
-				[ currentSlider.getEvent('onClose') ]
-			);
-		}
+			window.top.BX.onCustomEvent("BX.Bitrix24.PageSlider:close", [false]);
+			window.top.BX.onCustomEvent('onSonetIframeCancelClick');
 
-		window.top.BX.onCustomEvent("BX.Bitrix24.PageSlider:close", [false]);
-		window.top.BX.onCustomEvent('onSonetIframeCancelClick');
-
-		return e.preventDefault();
-	});
+			return e.preventDefault();
+		});
+	}
 
 	if (BX.SidePanel.Instance.getTopSlider())
 	{

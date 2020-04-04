@@ -79,6 +79,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  imChatLeave: 'im.chat.leave',
 	  imChatMute: 'im.chat.mute',
 	  imChatParentJoin: 'im.chat.parent.join',
+	  imDialogGet: 'im.dialog.get',
 	  imDialogMessagesGet: 'im.dialog.messages.get',
 	  imDialogRead: 'im.dialog.read',
 	  imDialogUnread: 'im.dialog.unread',

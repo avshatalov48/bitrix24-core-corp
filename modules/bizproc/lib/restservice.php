@@ -1,6 +1,7 @@
-<?
+<?php
 namespace Bitrix\Bizproc;
 
+use Bitrix\Bizproc\Workflow\Entity\WorkflowInstanceTable;
 use \Bitrix\Main\Loader;
 use \Bitrix\Rest\AppLangTable;
 use \Bitrix\Rest\AppTable;
@@ -643,7 +644,6 @@ class RestService extends \IRestService
 	 */
 	public static function startWorkflow($params, $n, $server)
 	{
-		self::checkAdminPermissions();
 		$params = array_change_key_case($params, CASE_UPPER);
 
 		if (empty($params['TEMPLATE_ID']))
@@ -652,8 +652,9 @@ class RestService extends \IRestService
 		}
 
 		$documentId = self::validateDocumentId($params['DOCUMENT_ID']);
-
 		$templateId = (int)$params['TEMPLATE_ID'];
+		self::checkStartWorkflowPermissions($documentId, $templateId);
+
 		$workflowParameters = isset($params['PARAMETERS']) && is_array($params['PARAMETERS']) ? $params['PARAMETERS'] : [];
 
 		$workflowParameters[\CBPDocument::PARAM_TAGRET_USER] = self::getCurrentUserId();
@@ -667,6 +668,28 @@ class RestService extends \IRestService
 		}
 
 		return $workflowId;
+	}
+
+	private static function checkStartWorkflowPermissions(array $documentId, $templateId)
+	{
+		if (static::isAdmin())
+		{
+			return true;
+		}
+
+		if (
+			\CBPDocument::CanUserOperateDocument(
+				\CBPCanUserOperateOperation::StartWorkflow,
+				static::getCurrentUserId(),
+				$documentId,
+				['WorkflowTemplateId' => $templateId]
+			)
+		)
+		{
+			return true;
+		}
+
+		throw new AccessException();
 	}
 
 	/**
@@ -704,7 +727,7 @@ class RestService extends \IRestService
 
 		$select = static::getSelect($params['SELECT'], $fields, array('ID'));
 		$filter = static::getFilter($params['FILTER'], $fields, array('MODIFIED'));
-		$filter['!AUTO_EXECUTE'] = \CBPDocumentEventType::Automation;
+		$filter['<AUTO_EXECUTE'] = \CBPDocumentEventType::Automation;
 
 		$order = static::getOrder($params['ORDER'], $fields, array('ID' => 'ASC'));
 

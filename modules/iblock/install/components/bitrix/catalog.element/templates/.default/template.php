@@ -1262,7 +1262,7 @@ if (!empty($arParams['LABEL_PROP_POSITION']))
 			<table>
 				<tr>
 					<td rowspan="2" class="product-item-detail-short-card-image">
-						<img src="" style="height: 65px;" data-entity="panel-picture">
+						<img src="" data-entity="panel-picture">
 					</td>
 					<td class="product-item-detail-short-title-container" data-entity="panel-title">
 						<span class="product-item-detail-short-title-text"><?=$name?></span>

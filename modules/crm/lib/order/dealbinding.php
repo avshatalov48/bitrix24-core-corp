@@ -237,10 +237,6 @@ class DealBinding
 				$result->addErrors($addResult->getErrors());
 			}
 		}
-		elseif(DealSettings::getCurrent()->isCreateDealOnOrderEnabled())
-		{
-			$result->addError(new Error('Could not create deal'));
-		}
 
 		return $result;
 	}

@@ -162,6 +162,10 @@ function CheckFilter()
 ********************************************************************/
 if (intval($request->getQuery("reset_id")) > 0 && $VOTE_RIGHT >= "W" && check_bitrix_sessid()):
 	CVote::Reset($request->getQuery("reset_id"));
+	$url = (new \Bitrix\Main\Web\Uri($request->getRequestUri()))
+		->deleteParams(array("reset_id", "sessid"))
+		->getLocator();
+	LocalRedirect($url);
 endif;
 
 if (CheckFilter() && $request->getQuery("del_filter") != "Y")

@@ -2,6 +2,7 @@
 
 use Bitrix\Sale\BusinessValue;
 use Bitrix\Sale\BusinessValueConsumer1C;
+use Bitrix\Sale;
 
 IncludeModuleLangFile(__FILE__);
 
@@ -168,7 +169,12 @@ class CSaleExport
 
 	static protected function load($id)
 	{
-		return \Bitrix\Sale\Order::load($id);
+		$registry = Sale\Registry::getInstance(Sale\Registry::REGISTRY_TYPE_ORDER);
+
+		/** @var Sale\Order $orderClass */
+		$orderClass = $registry->getOrderClassName();
+
+		return $orderClass::load($id);
 	}
 
 	static public function getParentEntityTable()

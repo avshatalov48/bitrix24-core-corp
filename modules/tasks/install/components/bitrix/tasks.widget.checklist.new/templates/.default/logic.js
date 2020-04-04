@@ -128,13 +128,13 @@ BX.Tasks.CheckList = (function()
 	{
 		this.loader.show();
 
-		BX.addClass(this.renderTo.parentElement, 'checklist-zone-disabled');
+		BX.addClass(this.renderTo.parentElement, 'tasks-checklist-zone-disabled');
 		BX.bind(window, 'keydown', BX.proxy(this.disableTabbing, this));
 	};
 
 	CheckList.prototype.deactivateLoading = function()
 	{
-		BX.removeClass(this.renderTo.parentElement, 'checklist-zone-disabled');
+		BX.removeClass(this.renderTo.parentElement, 'tasks-checklist-zone-disabled');
 		BX.unbind(window, 'keydown', BX.proxy(this.disableTabbing, this));
 
 		this.loader.hide();
@@ -252,7 +252,7 @@ BX.Tasks.CheckList = (function()
 		}
 
 		var p = new BX.Promise();
-		var title = BX.message('TASKS_CHECKLIST_COMPONENT_JS_NEW_CHECKLIST_TITLE') + ' ' + (this.treeStructure.getDescendantsCount() + 1);
+		var title = BX.message('TASKS_CHECKLIST_COMPONENT_JS_NEW_CHECKLIST_TITLE_2').replace('#ITEM_NUMBER#', this.treeStructure.getDescendantsCount() + 1);
 		var newCheckList = new BX.Tasks.CheckListItem({TITLE: title, DISPLAY_TITLE: title});
 
 		this.treeStructure.addCheckListItem(newCheckList).then(function(resolve) {
@@ -281,10 +281,10 @@ BX.Tasks.CheckList = (function()
 
 		var validAreaDetected = false;
 		var validAreas = [
-			e.target.closest('.checklist-item-content-block'),
-			e.target.closest('.checklist-item-editor-panel-container'),
-			e.target.closest('.checklist-item-attachment-file'),
-			e.target.closest('.checklist-header-name'),
+			e.target.closest('.tasks-checklist-item-content-block'),
+			e.target.closest('.tasks-checklist-item-editor-panel-container'),
+			e.target.closest('.tasks-checklist-item-attachment-file'),
+			e.target.closest('.tasks-checklist-header-name'),
 			e.target.closest('#files_chooser'),
 			e.target.closest('#DiskFileDialog'),
 			e.target.closest('#menu-popup-to-another-checklist'),
@@ -327,7 +327,8 @@ BX.Tasks.CheckList.OptionManager = (function()
 		this.attachments = options.attachments;
 		this.diskUrls = options.diskUrls;
 
-		this.showCompleted = options.options.showCompleted;
+		this.showCompleted = options.options.SHOW_COMPLETED;
+		this.defaultMemberSelectorType = options.options.DEFAULT_MEMBER_SELECTOR_TYPE;
 		this.showOnlyMine = false;
 
 		this.stableTreeStructure = null;
@@ -387,6 +388,17 @@ BX.Tasks.CheckList.OptionManager = (function()
 		this.showOnlyMine = showOnlyMine;
 	};
 
+	OptionManager.prototype.getDefaultMemberSelectorType = function()
+	{
+		return this.defaultMemberSelectorType;
+	};
+
+	OptionManager.prototype.setDefaultMemberSelectorType = function(defaultMemberSelectorType)
+	{
+		this.defaultMemberSelectorType = defaultMemberSelectorType;
+		this.updateTaskOption('default_member_selector_type', defaultMemberSelectorType);
+	};
+
 	OptionManager.prototype.getStableTreeStructure = function()
 	{
 		return this.stableTreeStructure;
@@ -422,19 +434,19 @@ BX.Tasks.CheckList.DragManager = (function()
 
 		this.itemDropPlace = BX.create('div', {
 			props: {
-				className: 'checklist-item checklist-item-drop-place droppable'
+				className: 'tasks-checklist-item tasks-checklist-item-drop-place droppable'
 			},
 			children: [
 				BX.create('div', {
 					props: {
-						className: 'checklist-item-inner'
+						className: 'tasks-checklist-item-inner'
 					}
 				})
 			]
 		});
 		this.checkListDropPlace = BX.create('div', {
 			props: {
-				className: 'checklist-wrapper-drop-place droppable'
+				className: 'tasks-checklist-wrapper-drop-place droppable'
 			}
 		});
 
@@ -452,7 +464,7 @@ BX.Tasks.CheckList.DragManager = (function()
 			return;
 		}
 
-		var dragButton = e.target.closest('.checklist-item-dragndrop') || e.target.closest('.checklist-wrapper-dragndrop');
+		var dragButton = e.target.closest('.tasks-checklist-item-dragndrop') || e.target.closest('.tasks-checklist-wrapper-dragndrop');
 		if (!dragButton)
 		{
 			return;
@@ -487,22 +499,22 @@ BX.Tasks.CheckList.DragManager = (function()
 
 	DragManager.prototype.getDropObjectType = function(targetDrop)
 	{
-		if (BX.hasClass(targetDrop, 'checklist-item-drop-place') || BX.hasClass(targetDrop, 'checklist-wrapper-drop-place'))
+		if (BX.hasClass(targetDrop, 'tasks-checklist-item-drop-place') || BX.hasClass(targetDrop, 'tasks-checklist-wrapper-drop-place'))
 		{
 			return 'dropPlace';
 		}
 
-		if (BX.hasClass(targetDrop, 'checklist-item-inner'))
+		if (BX.hasClass(targetDrop, 'tasks-checklist-item-inner'))
 		{
 			return 'node';
 		}
 
-		if (BX.hasClass(targetDrop, 'checklist-items-list-actions'))
+		if (BX.hasClass(targetDrop, 'tasks-checklist-items-list-actions'))
 		{
 			return 'addButton';
 		}
 
-		if (BX.hasClass(targetDrop, 'checklist-header-wrapper'))
+		if (BX.hasClass(targetDrop, 'tasks-checklist-header-wrapper'))
 		{
 			return 'checklist';
 		}
@@ -658,22 +670,22 @@ BX.Tasks.CheckList.DragManager = (function()
 
 		if (this.dragObject.node.isCheckList())
 		{
-			BX.addClass(avatar, 'checklist-wrapper-draggable');
+			BX.addClass(avatar, 'tasks-checklist-wrapper-draggable');
 
-			if (!BX.hasClass(avatar, 'checklist-collapse'))
+			if (!BX.hasClass(avatar, 'tasks-checklist-collapse'))
 			{
-				BX.addClass(avatar, 'checklist-collapse');
+				BX.addClass(avatar, 'tasks-checklist-collapse');
 			}
 
-			avatar.querySelector('.checklist-items-wrapper').style.height = 0;
+			avatar.querySelector('.tasks-checklist-items-wrapper').style.height = 0;
 		}
 		else
 		{
-			BX.addClass(avatar, 'checklist-item-draggable');
+			BX.addClass(avatar, 'tasks-checklist-item-draggable');
 
 			if (this.dragObject.node.getDescendantsCount() > 0)
 			{
-				BX.append(BX.create('div' , {props: {className: 'checklist-group-draggable'}}), avatar);
+				BX.append(BX.create('div' , {props: {className: 'tasks-checklist-group-draggable'}}), avatar);
 			}
 		}
 		BX.removeClass(avatar.querySelector('.droppable'), 'droppable');
@@ -811,12 +823,12 @@ BX.Tasks.CheckList.DragManager = (function()
 
 	DragManager.prototype.enableSelection = function()
 	{
-		BX.removeClass(document.body, 'checklist-zone-noselect');
+		BX.removeClass(document.body, 'tasks-checklist-zone-noselect');
 	};
 
 	DragManager.prototype.disableSelection = function()
 	{
-		BX.addClass(document.body, 'checklist-zone-noselect');
+		BX.addClass(document.body, 'tasks-checklist-zone-noselect');
 	};
 
 	return DragManager;

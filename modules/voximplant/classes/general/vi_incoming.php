@@ -670,7 +670,7 @@ class CVoxImplantIncoming
 		$destination = '';
 		$diversion = '';
 
-		$sipUserPattern = '/(?>sip|tel):(\+?\d+)@/';
+		$sipUserPattern = '/(?>sip|tel):(\+?\d+)[@>]/';
 
 		if(isset($sipHeaders['To']) && preg_match($sipUserPattern, $sipHeaders['To'], $matches))
 		{

@@ -1,10 +1,9 @@
 <?php
 return [
-	'*' =>
-		[
-			'languages' =>
-				[
-					'ru',
-				],
+	'*' => [
+		'languages' => [
+			'ru',
+			'ua',
 		],
+	],
 ];

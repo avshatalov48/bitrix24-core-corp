@@ -321,19 +321,47 @@ private $isExternal = false;
 
 	public function getDisplayComponentName()
 	{
-		return 'bitrix:report.visualconstructor.board.base';
+		if ($this->isDisabled())
+		{
+			return 'bitrix:report.analytics.empty';
+		}
+		elseif ($this->isLimited())
+		{
+			return $this->getLimitComponentName();
+		}
+		else
+		{
+			return 'bitrix:report.visualconstructor.board.base';
+		}
+	}
+
+	public function getDisplayComponentTemplate()
+	{
+		return ($this->isLimited() ? $this->getLimitComponentTemplateName() : "");
 	}
 
 	public function getDisplayComponentParams()
 	{
-		return [
-			'BOARD_ID' => $this->getBoardKey(),
-			'IS_DEFAULT_MODE_DEMO' => false,
-			'IS_BOARD_DEFAULT' => true,
-			'FILTER' => $this->getFilter(),
-			'IS_ENABLED_STEPPER' => $this->isStepperEnabled(),
-			'STEPPER_IDS' => $this->getStepperIds()
-		];
+		if ($this->isDisabled())
+		{
+			return [];
+		}
+		elseif ($this->isLimited())
+		{
+			return $this->getLimitComponentParams();
+		}
+		else
+		{
+			return [
+				'BOARD_ID' => $this->getBoardKey(),
+				'IS_DEFAULT_MODE_DEMO' => false,
+				'IS_BOARD_DEFAULT' => true,
+				'FILTER' => $this->getFilter(),
+				'BOARD_BUTTONS' => $this->getButtons(),
+				'IS_ENABLED_STEPPER' => $this->isStepperEnabled(),
+				'STEPPER_IDS' => $this->getStepperIds()
+			];
+		}
 	}
 
 	/**

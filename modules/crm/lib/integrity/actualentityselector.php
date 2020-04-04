@@ -891,9 +891,9 @@ class ActualEntitySelector
 			$this->searchLead();
 		}
 
-		if ($this->getContactDeals())
+		if ($this->getCompanyDeals())
 		{
-			$this->setDeals($this->getContactDeals());
+			$this->setDeals($this->getCompanyDeals());
 		}
 		else if ($this->getContactDeals())
 		{

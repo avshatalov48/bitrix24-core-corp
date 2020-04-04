@@ -43,12 +43,14 @@
 	 */
 	BX.Landing.ErrorManager.getInstance = function()
 	{
-		if (!top.BX.Landing.ErrorManager.instance)
+		var rootWindow = BX.Landing.PageObject.getRootWindow();
+
+		if (!rootWindow.BX.Landing.ErrorManager.instance)
 		{
-			top.BX.Landing.ErrorManager.instance = new BX.Landing.ErrorManager();
+			rootWindow.BX.Landing.ErrorManager.instance = new BX.Landing.ErrorManager();
 		}
 
-		return top.BX.Landing.ErrorManager.instance;
+		return rootWindow.BX.Landing.ErrorManager.instance;
 	};
 
 

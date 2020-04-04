@@ -139,6 +139,8 @@ use \Bitrix\Main\Localization\Loc;?>
 						<?=Loc::getMessage("IMOL_CONFIG_EDIT_WORKTIME_HOLIDAYS_EXAMPLE")?>
 					</div>
 				</div>
+			</div>
+			<div id="imol_worktime_answer_block" <?php if ($arResult['CONFIG']['CHECK_AVAILABLE'] != 'Y' && $arResult['CONFIG']['WORKTIME_ENABLE'] != 'Y') { ?>class="invisible" <?php } ?>>
 				<div class="imopenlines-control-container imopenlines-control-select">
 					<div class="imopenlines-control-subtitle">
 						<?=Loc::getMessage("IMOL_CONFIG_EDIT_WORKTIME_DAYOFF_RULE_NEW")?>

@@ -12,7 +12,8 @@ Loc::loadMessages(__FILE__);
 	'bitrix:landing.roles',
 	'.default',
 	array(
-		'PAGE_URL_ROLE_EDIT' => $arParams['PAGE_URL_ROLE_EDIT']
+		'PAGE_URL_ROLE_EDIT' => $arParams['PAGE_URL_ROLE_EDIT'],
+		'TYPE' => $arParams['TYPE']
 	),
 	$component
 );?>

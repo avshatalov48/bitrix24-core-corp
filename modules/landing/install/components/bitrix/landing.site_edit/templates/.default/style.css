@@ -505,7 +505,7 @@ textarea.landing-options-input {
 
 .landing-form-type-page {
 	display: inline-block;
-	margin-left: 77px;
+	margin-left: 25px;
 	padding-left: 27px;
 	position: relative;
 	vertical-align: top;
@@ -575,9 +575,6 @@ textarea.landing-options-input {
 }
 .ui-checkbox-hidden-input.landing-form-page-background .ui-checkbox:checked  + .ui-checkbox-hidden-input-inner {
 	height: 504px;
-}
-.landing-page-set-form .ui-checkbox-hidden-input.landing-form-page-background .ui-checkbox:checked  + .ui-checkbox-hidden-input-inner {
-	height: 485px;
 }
 
 .ui-checkbox-hidden-input.landing-form-meta-block .ui-checkbox:checked  + .ui-checkbox-hidden-input-inner {

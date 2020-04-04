@@ -9,6 +9,8 @@ class CIntranetNotify
 {
 	public static function NewUserMessage($USER_ID)
 	{
+		static $uniqueIdCache = [];
+
 		global $DB;
 
 		if (!CModule::IncludeModule('socialnetwork'))
@@ -52,6 +54,11 @@ class CIntranetNotify
 				);
 
 				$uniqueId = round((microtime(true) - mktime(0,0,0,1,1,2017))*10);
+				while (in_array($uniqueId, $uniqueIdCache))
+				{
+					$uniqueId += 10000000;
+				}
+				$uniqueIdCache[] = $uniqueId;
 
 				$arSoFields = array(
 					"ENTITY_TYPE" => SONET_INTRANET_NEW_USER_ENTITY,

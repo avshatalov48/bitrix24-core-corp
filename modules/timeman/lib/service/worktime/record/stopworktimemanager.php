@@ -18,6 +18,10 @@ class StopWorktimeManager extends WorktimeManager
 		{
 			return $result;
 		}
+		if ($this->worktimeRecordForm->isSystem)
+		{
+			return $result;
+		}
 		if ($this->getRecord()->isExpired($this->getSchedule(), $this->getShift())
 			&& !Schedule::isScheduleFlexible($this->getSchedule()))
 		{
@@ -80,7 +84,7 @@ class StopWorktimeManager extends WorktimeManager
 
 	private function isEmptyTimeEnd()
 	{
-		return empty($this->worktimeRecordForm->recordedStopSeconds)
-			   && empty($this->worktimeRecordForm->recordedStopTime);
+		return $this->worktimeRecordForm->recordedStopSeconds === null
+			   && $this->worktimeRecordForm->recordedStopTime === null;
 	}
 }

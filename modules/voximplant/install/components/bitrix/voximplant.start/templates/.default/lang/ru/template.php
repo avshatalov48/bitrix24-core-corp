@@ -21,5 +21,7 @@ $MESS["VOX_START_NUMBERS"] = "Номера";
 $MESS["VOX_START_CALLER_IDS"] = "Привязанные номера";
 $MESS["VOX_START_SIP_BUY"] = "Подключить";
 $MESS["VOX_START_SIP_PROLONG"] = "Продлить";
+$MESS["VOX_START_TARIFFS"] = "Тарифы";
+$MESS["VOX_START_RECORD_LIMIT"] = "Записи звонков:#STRONG_START# #RECORDS_REMAINING# из #RECORDS_TOTAL# в месяц#STRONG_END#";
 
 

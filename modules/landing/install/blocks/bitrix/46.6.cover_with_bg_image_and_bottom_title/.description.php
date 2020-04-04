@@ -66,7 +66,7 @@ return array(
 			),
 			'.landing-block-node-card' => array(
 				'name' => Loc::getMessage('LANDING_BLOCK_46.6.COVER_WITH_SLIDER_BGIMG_CARDS_LANDINGBLOCKNODECARD'),
-				'type' => array('height-vh','background-overlay'),
+				'type' => array('align-items', 'height-vh','background-overlay'),
 			),
 		),
 	),

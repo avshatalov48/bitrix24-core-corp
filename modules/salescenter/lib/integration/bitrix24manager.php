@@ -30,7 +30,7 @@ class Bitrix24Manager extends Base
 	 */
 	public function isSalescenterFeatureEnabled()
 	{
-		if($this->isEnabled)
+		if($this->isEnabled())
 		{
 			return Feature::isFeatureEnabled(static::FEATURE_NAME);
 		}
@@ -40,7 +40,7 @@ class Bitrix24Manager extends Base
 
 	public function showTariffRestrictionButtons(string $featureName)
 	{
-		if($this->isEnabled)
+		if($this->isEnabled())
 		{
 			\CBitrix24::showTariffRestrictionButtons($featureName);
 		}
@@ -117,7 +117,7 @@ class Bitrix24Manager extends Base
 	 */
 	public function getPortalZone()
 	{
-		if($this->isEnabled)
+		if($this->isEnabled())
 		{
 			return \CBitrix24::getPortalZone();
 		}
@@ -130,7 +130,7 @@ class Bitrix24Manager extends Base
 	 */
 	public function getLicenseType()
 	{
-		if($this->isEnabled)
+		if($this->isEnabled())
 		{
 			return \CBitrix24::getLicenseType();
 		}
@@ -144,7 +144,7 @@ class Bitrix24Manager extends Base
 	 */
 	public function IsPortalAdmin($userId)
 	{
-		if($this->isEnabled)
+		if($this->isEnabled())
 		{
 			return \CBitrix24::IsPortalAdmin($userId);
 		}
@@ -158,7 +158,7 @@ class Bitrix24Manager extends Base
 	 */
 	public function isCurrentZone($zone)
 	{
-		if($this->isEnabled)
+		if ($this->isEnabled())
 		{
 			if(is_array($zone))
 			{

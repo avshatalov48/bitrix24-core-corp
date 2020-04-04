@@ -453,7 +453,7 @@ $displayedCount = count(
 						<? endforeach ?><?
 						if (!empty($arResult['AGGREGATE'])): ?><?
 						?><tr class="main-grid-row-foot main-grid-aggr-row" id="datarow_<?=$arParams["GRID_ID"]?>_bxaggr"><?
-							if ($arResult['ALLOW_GROUP_ACTIONS']): ?><td class="main-grid-cell-foot"></td><? endif ?><?
+							if ($arParams['ALLOW_GROUP_ACTIONS']): ?><td class="main-grid-cell-foot"></td><? endif ?><?
 								if ($arParams['ALLOW_ROW_ACTIONS']): ?><td class="main-grid-cell-foot"></td><? endif ?><?
 									foreach ($arResult['COLUMNS'] as $id => $header): ?><?
 										$isHidden = !array_key_exists($id, $arResult['COLUMNS']);
@@ -621,7 +621,7 @@ $displayedCount = count(
 										?><span class="main-grid-panel-content-text"><?
 											?><span class="main-grid-counter-selected">0</span><?
 											?>&nbsp;/&nbsp;<?
-											?><span class="main-grid-counter-displayed"><?=count($arResult["ROWS"])?></span><?
+											?><span class="main-grid-counter-displayed"><?=$displayedCount?></span><?
 										?></span><?
 									?></div><?
 									?><div class="main-grid-panel-content main-grid-panel-counter-for-all"><?

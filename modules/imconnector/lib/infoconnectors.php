@@ -117,16 +117,24 @@ class InfoConnectors
 	 * @throws \Bitrix\Main\LoaderException
 	 * @throws \Bitrix\Main\SystemException
 	 */
-	public static function infoConnectorsLineUpdateAgent($lineId)
+	public static function infoConnectorsLineUpdateAgent($lineId): string
 	{
 		$lineId = intval($lineId);
 		if ($lineId > 0)
 		{
-			self::updateInfoConnectors($lineId);
+			$result = self::updateInfoConnectors($lineId);
 
-			if (Loader::includeModule('crm'))
+			if ($result && Loader::includeModule('crm'))
 			{
-				\Bitrix\Crm\SiteButton\Manager::updateScriptCache();
+				\CAgent::AddAgent(
+					'\\Bitrix\\Crm\\SiteButton\\Manager::updateScriptCacheAgent();',
+					'crm',
+					'N',
+					60,
+					'',
+					'Y',
+					\ConvertTimeStamp(time()+\CTimeZone::GetOffset()+1800, 'FULL')
+				);
 			}
 		}
 
@@ -403,19 +411,22 @@ class InfoConnectors
 
 			$data = Connector::getOutputInfoConnectorsLine($lineId);
 			$dataEncoded = Json::encode($data);
+			$hashDataEncoded = md5($dataEncoded);
 
 			$result = InfoConnectorsTable::add(
-				array(
+				[
 					'LINE_ID' => $lineId,
 					'DATA' => $dataEncoded,
 					'EXPIRES' => $timeExpires,
-				)
+					'HASH' => $hashDataEncoded,
+				]
 			);
 
-			$cacheData = array(
+			$cacheData = [
 				'DATA' => $dataEncoded,
 				'EXPIRES' => $timeExpires,
-			);
+				'HASH' => $hashDataEncoded,
+			];
 
 			self::rewriteInfoConnectorsLineCache($lineId, $cacheData);
 		}
@@ -441,28 +452,38 @@ class InfoConnectors
 		$connectorsInfoCount = self::getInfoConnectorsById($lineId)->getSelectedRowsCount();
 		$result = false;
 
-		if ($connectorsInfoCount == 1)
+		if ($connectorsInfoCount === 1)
 		{
-			$cacheTime = intval(Library::CACHE_TIME_INFO_CONNECTORS_LINE);
+			$cacheTime = (int)Library::CACHE_TIME_INFO_CONNECTORS_LINE;
 			$timeExpires = \Bitrix\Main\Type\DateTime::createFromTimestamp(time() + $cacheTime);
 
 			$data = Connector::getOutputInfoConnectorsLine($lineId);
 			$dataEncoded = Json::encode($data);
+			$hashDataEncoded = md5($dataEncoded);
+
+			$connectorData = InfoConnectorsTable::getByPrimary(['LINE_ID' => $lineId])->fetch();
 
 			$result = InfoConnectorsTable::update(
 				$lineId,
-				array(
+				[
 					'DATA' => $dataEncoded,
 					'EXPIRES' => $timeExpires,
-				)
+					'HASH' => $hashDataEncoded,
+				]
 			);
 
-			$cacheData = array(
+			$cacheData = [
 				'DATA' => $dataEncoded,
 				'EXPIRES' => $timeExpires,
-			);
+				'HASH' => $hashDataEncoded,
+			];
 
 			self::rewriteInfoConnectorsLineCache($lineId, $cacheData);
+
+			if ($connectorData['HASH'] === $hashDataEncoded)
+			{
+				$result = false;
+			}
 		}
 
 		return $result;

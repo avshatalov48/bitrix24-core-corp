@@ -3,6 +3,7 @@
 namespace Bitrix\Mail\Helper;
 
 use Bitrix\Main;
+use Bitrix\Bitrix24;
 
 /**
  * Class LicenseManager
@@ -22,7 +23,7 @@ class LicenseManager
 			return true;
 		}
 
-		return \CBitrix24::isLicensePaid() || \CBitrix24::isNfrLicense() || \CBitrix24::isDemoLicense();
+		return (bool) Bitrix24\Feature::isFeatureEnabled('mail_mailbox_sync');
 	}
 
 	public static function getSharedMailboxesLimit()
@@ -32,7 +33,7 @@ class LicenseManager
 			return -1;
 		}
 
-		return (int) Main\Config\Option::get('mail', 'shared_mailboxes_limit', -1);
+		return (int) Bitrix24\Feature::getVariable('mail_shared_mailboxes_limit');
 	}
 
 	/**
@@ -52,7 +53,7 @@ class LicenseManager
 			return 0;
 		}
 
-		return (int) Main\Config\Option::get('mail', 'user_mailboxes_limit', -1);
+		return (int) Bitrix24\Feature::getVariable('mail_user_mailboxes_limit');
 	}
 
 	/**
@@ -62,7 +63,12 @@ class LicenseManager
 	 */
 	public static function getSyncOldLimit()
 	{
-		return (int) Main\Config\Option::get('mail', 'sync_old_limit2', -1);
+		if (!Main\Loader::includeModule('bitrix24'))
+		{
+			return (int) Main\Config\Option::get('mail', 'sync_old_limit2', -1);
+		}
+
+		return (int) Bitrix24\Feature::getVariable('mail_sync_old_limit');
 	}
 
 	/**

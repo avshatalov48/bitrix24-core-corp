@@ -14,7 +14,7 @@ class DepartmentRepository
 		};
 
 		$parents = [];
-		$sectionChain = CIBlockSection::getNavChain(ConfigurationHelper::getIblockStructureId(), $depId);
+		$sectionChain = CIBlockSection::getNavChain(ConfigurationHelper::getInstance()->getIblockStructureId(), $depId);
 		while ($parent = $sectionChain->fetch())
 		{
 			$parents[] = [
@@ -30,7 +30,7 @@ class DepartmentRepository
 		return array_values($parents);
 	}
 
-	public function getUserDepartmentsIds($userId)
+	public function getDirectParentIdsByUserId($userId)
 	{
 		$userDepIds = [];
 		$userId = (int)$userId;
@@ -60,13 +60,38 @@ class DepartmentRepository
 		return array_map('intval', $departments);
 	}
 
-	public function getAllParentDepartmentsIds($depId)
+	public function getDirectParentIdsByDepartmentId($departmentId)
+	{
+		$depTreeFlat = $this->getDepartmentTreeFlat();
+
+		$res = [];
+		foreach ($depTreeFlat as $parentDepId => $depIds)
+		{
+			foreach ($depIds as $nestedDepId)
+			{
+				if ((int)$nestedDepId === (int)$departmentId)
+				{
+					$res[] = (int)$parentDepId;
+				}
+			}
+		}
+		return array_unique($res);
+	}
+
+	private function getDepartmentTreeFlat()
 	{
 		static $depTreeFlat;
 		if (!$depTreeFlat)
 		{
 			$depTreeFlat = \CIntranetUtils::getDeparmentsTree(null, false);
 		}
+		return $depTreeFlat;
+	}
+
+	public function getAllParentDepartmentsIds($depId)
+	{
+		$depTreeFlat = $this->getDepartmentTreeFlat();
+
 		$res = [];
 		foreach ($depTreeFlat as $parentDepId => $depIds)
 		{
@@ -83,12 +108,17 @@ class DepartmentRepository
 
 	public function getAllUserDepartmentIds($userId)
 	{
-		$userDepartmentsIds = $this->getUserDepartmentsIds($userId);
+		$userDepartmentsIds = $this->getDirectParentIdsByUserId($userId);
 		foreach ($userDepartmentsIds as $userDep)
 		{
 			$userDepartmentsIds = array_merge($this->getAllParentDepartmentsIds($userDep), $userDepartmentsIds);
 		}
 		return array_unique($userDepartmentsIds);
+	}
+
+	public function getDepartmentManagerId($depId)
+	{
+		return (int)\CIntranetUtils::getDepartmentManagerId($depId);
 	}
 
 	public function getUsersOfDepartment($depId)
@@ -114,7 +144,7 @@ class DepartmentRepository
 	public function buildUserDepartmentsPriorityTree($userId)
 	{
 		$result = [];
-		$userDepartmentsIds = $this->getUserDepartmentsIds($userId); // might be more than one
+		$userDepartmentsIds = $this->getDirectParentIdsByUserId($userId); // might be more than one
 		foreach ($userDepartmentsIds as $departmentId)
 		{
 			$parentDepartmentsIds = $this->getAllParentDepartmentsIds($departmentId);
@@ -128,5 +158,27 @@ class DepartmentRepository
 			);
 		}
 		return $result;
+	}
+
+	public function buildDepartmentsPriorityTree($depId)
+	{
+		$allParentDepartmentIds = $this->getAllParentDepartmentsIds($depId);
+
+		return array_merge(
+			['DR' . $depId],
+			array_map(function ($id) {
+				return 'DR' . $id;
+			}, array_reverse($allParentDepartmentIds))
+		);
+	}
+
+	public function getDepartmentsTree()
+	{
+		return (array)\CIntranetUtils::getStructure()['TREE'];
+	}
+
+	public function getAllData()
+	{
+		return (array)\CIntranetUtils::getStructure()['DATA'];
 	}
 }

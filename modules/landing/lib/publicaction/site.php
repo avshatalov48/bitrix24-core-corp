@@ -20,7 +20,7 @@ class Site
 	 */
 	protected static function clearDisallowFields(array $fields)
 	{
-		$disallow = array('ACTIVE');
+		$disallow = ['ACTIVE', 'SPECIAL'];
 
 		if (is_array($fields))
 		{
@@ -82,36 +82,110 @@ class Site
 	/**
 	 * Get available sites.
 	 * @param array $params Params ORM array.
+	 * @param string $initiator Initiator code.
 	 * @return \Bitrix\Landing\PublicActionResult
 	 */
-	public static function getList(array $params = array())
+	public static function getList(array $params = [], $initiator = null)
 	{
 		$result = new PublicActionResult();
+		$params = $result->sanitizeKeys($params);
+		$getPublicUrl = false;
+		$getPreviewPicture = false;
 
-		if (!is_array($params))
+		if ($initiator == 'mobile')
 		{
-			$params = array();
+			\Bitrix\Landing\Connector\Mobile::forceMobile();
 		}
 
-		// more usable for domain mame
+		// necessary params for us
 		if (
-			isset($params['select']) &&
-			is_array($params['select']) &&
-			in_array('DOMAIN_NAME', $params['select'])
+			!isset($params['select']) ||
+			!is_array($params['select'])
 		)
 		{
-			foreach ($params['select'] as $k => $code)
-			{
-				if ($code == 'DOMAIN_NAME')
-				{
-					unset($params['select'][$k]);
-					break;
-				}
-			}
-			$params['select']['DOMAIN_NAME'] = 'DOMAIN.DOMAIN';
+			$params['select'] = ['*'];
+		}
+		if (
+			!isset($params['filter']) ||
+			!is_array($params['filter'])
+		)
+		{
+			$params['filter'] = [];
 		}
 
-		$data = array();
+		// fix for smn sites
+		if (
+			isset($params['filter']['=TYPE']) &&
+			$params['filter']['=TYPE'] == 'STORE'
+		)
+		{
+			$params['filter']['=TYPE'] = [
+				$params['filter']['=TYPE'],
+				'SMN'
+			];
+		}
+		if (
+			isset($params['filter']['TYPE']) &&
+			$params['filter']['TYPE'] == 'STORE'
+		)
+		{
+			$params['filter']['TYPE'] = [
+				$params['filter']['TYPE'],
+				'SMN'
+			];
+		}
+
+		if (isset($params['filter']['CHECK_PERMISSIONS']))
+		{
+			unset($params['filter']['CHECK_PERMISSIONS']);
+		}
+
+		// extend select's param
+		if (is_array($params['select']))
+		{
+			if (in_array('DOMAIN_NAME', $params['select']))
+			{
+				$params['select']['DOMAIN_NAME'] = 'DOMAIN.DOMAIN';
+			}
+			if (in_array('PUBLIC_URL', $params['select']))
+			{
+				$getPublicUrl = true;
+			}
+			if (in_array('PREVIEW_PICTURE', $params['select']))
+			{
+				$getPreviewPicture = true;
+			}
+			// delete this keys for ORM
+			$deleted = ['DOMAIN_NAME', 'PUBLIC_URL', 'PREVIEW_PICTURE'];
+			foreach ($params['select'] as $k => $code)
+			{
+				if (in_array($code, $deleted))
+				{
+					unset($params['select'][$k]);
+				}
+			}
+		}
+
+		// set additional select fields
+		if (
+			$getPreviewPicture &&
+			!in_array('LANDING_ID_INDEX', $params['select'])
+		)
+		{
+			$params['select'][] = 'LANDING_ID_INDEX';
+		}
+		if (!in_array('ID', $params['select']))
+		{
+			$params['select'][] = 'ID';
+		}
+		if (!in_array('TYPE', $params['select']))
+		{
+			$params['select'][] = 'TYPE';
+		}
+
+		// get ORM data
+		$data = [];
+		$landingIndexes = [];
 		$res = SiteCore::getList($params);
 		while ($row = $res->fetch())
 		{
@@ -123,9 +197,45 @@ class Site
 			{
 				$row['DATE_MODIFY'] = (string) $row['DATE_MODIFY'];
 			}
-			$data[] = $row;
+			if ($row['LANDING_ID_INDEX'] && $getPreviewPicture)
+			{
+				$landingIndexes[$row['ID']] = $row['LANDING_ID_INDEX'];
+			}
+			if ($getPublicUrl)
+			{
+				$row['PUBLIC_URL'] = '';
+			}
+			if ($getPreviewPicture)
+			{
+				$row['PREVIEW_PICTURE'] = '';
+			}
+			$data[$row['ID']] = $row;
 		}
-		$result->setResult($data);
+
+		// gets public url for sites
+		if ($getPublicUrl)
+		{
+			$urls = SiteCore::getPublicUrl(array_keys($data));
+			foreach ($urls as $siteId => $url)
+			{
+				$data[$siteId]['PUBLIC_URL'] = $url;
+			}
+		}
+
+		// get preview pictures
+		if ($landingIndexes)
+		{
+			$landing = Landing::createInstance(0);
+			foreach ($landingIndexes as $siteId => $landingId)
+			{
+				$data[$siteId]['PREVIEW_PICTURE'] = $landing->getPreview($landingId);
+			}
+		}
+
+		// set and return result
+		$result->setResult(
+			array_values($data)
+		);
 
 		return $result;
 	}
@@ -278,7 +388,9 @@ class Site
 		));
 		while ($row = $res->fetch())
 		{
-			$landing = Landing::createInstance($row['ID']);
+			$landing = Landing::createInstance($row['ID'], [
+				'skip_blocks' => true
+			]);
 			if ($mark)
 			{
 				$landing->publication();
@@ -473,5 +585,17 @@ class Site
 
 
 		return $result;
+	}
+
+	/**
+	 * Sets scope for work with module.
+	 * @param string $type
+	 * @return \Bitrix\Landing\PublicActionResult
+	 */
+	public static function setScope($type)
+	{
+		\Bitrix\Landing\Site\Type::setScope($type);
+
+		return new PublicActionResult();
 	}
 }

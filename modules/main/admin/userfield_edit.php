@@ -385,7 +385,7 @@ $tabControl->BeginNextTab();
 			<?if($ID>0):?>
 				<?=$FIELD_NAME?>
 			<?else:?>
-				<input type="text" name="FIELD_NAME" value="<?=$FIELD_NAME?>" maxlength="20">
+				<input type="text" name="FIELD_NAME" value="<?=$FIELD_NAME?>" maxlength="50">
 			<?endif?>
 		</td>
 	</tr>

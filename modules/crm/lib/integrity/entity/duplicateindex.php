@@ -1,10 +1,12 @@
 <?php
 namespace Bitrix\Crm\Integrity\Entity;
 
-use Bitrix\Crm\Integrity\DuplicateIndexType;
 use Bitrix\Main;
 use Bitrix\Main\Entity;
 use Bitrix\Main\Localization\Loc;
+
+use Bitrix\Crm\Integrity\DuplicateIndexType;
+use Bitrix\Crm\Integrity\DuplicateStatus;
 
 Loc::loadMessages(__FILE__);
 
@@ -161,6 +163,10 @@ class DuplicateIndexTable extends Entity\DataManager
 			'IS_JUNK' => array(
 				'data_type' => 'string',
 				'required' => false
+			),
+			'STATUS_ID' => array(
+				'data_type' => 'integer',
+				'required' => false
 			)
 		);
 	}
@@ -193,6 +199,7 @@ class DuplicateIndexTable extends Entity\DataManager
 
 		$matches = isset($data['MATCHES']) ? $sqlHelper->forSql($data['MATCHES']) : '';
 		$qty = isset($data['QUANTITY']) ? intval($data['QUANTITY']) : 0;
+		$statusID = isset($data['STATUS_ID']) ? intval($data['STATUS_ID']) : DuplicateStatus::UNDEFINED;
 
 		$rootEntityID = isset($data['ROOT_ENTITY_ID']) ? intval($data['ROOT_ENTITY_ID']) : 0;
 		$rootEntityName = isset($data['ROOT_ENTITY_NAME']) ? $sqlHelper->forSql($data['ROOT_ENTITY_NAME'], 256) : '';
@@ -233,7 +240,8 @@ class DuplicateIndexTable extends Entity\DataManager
 					"ROOT_ENTITY_RQ_OGRNIP_FLAG, ROOT_ENTITY_RQ_OGRNIP, ROOT_ENTITY_RQ_BIN_FLAG, ROOT_ENTITY_RQ_BIN, ".
 					"ROOT_ENTITY_RQ_EDRPOU_FLAG, ROOT_ENTITY_RQ_EDRPOU, ROOT_ENTITY_RQ_VAT_ID_FLAG, ROOT_ENTITY_RQ_VAT_ID, ".
 					"ROOT_ENTITY_RQ_ACC_NUM_FLAG, ROOT_ENTITY_RQ_ACC_NUM, ROOT_ENTITY_RQ_IBAN_FLAG, ROOT_ENTITY_RQ_IBAN, ".
-					"ROOT_ENTITY_RQ_IIK_FLAG, ROOT_ENTITY_RQ_IIK)
+					"ROOT_ENTITY_RQ_IIK_FLAG, ROOT_ENTITY_RQ_IIK, ".
+					"STATUS_ID)
 				VALUES({$userID}, {$entityTypeID}, {$typeID}, '{$scope}', '{$matchHash}', '{$matches}', {$qty}, {$rootEntityID}, ".
 					"'{$rootEntityNameFlg}', '{$rootEntityName}', '{$rootEntityTitleFlg}', '{$rootEntityTitle}', ".
 					"'{$rootEntityPhoneFlg}', '{$rootEntityPhone}', '{$rootEntityEmailFlg}', '{$rootEntityEmail}', ".
@@ -241,7 +249,8 @@ class DuplicateIndexTable extends Entity\DataManager
 					"'{$rootEntityRqOgrnipFlg}', '{$rootEntityRqOgrnip}', '{$rootEntityRqBinFlg}', '{$rootEntityRqBin}', ".
 					"'{$rootEntityRqEdrpouFlg}', '{$rootEntityRqEdrpou}', '{$rootEntityRqVatIdFlg}', '{$rootEntityRqVatId}', ".
 					"'{$rootEntityRqAccNumFlg}', '{$rootEntityRqAccNum}', '{$rootEntityRqIbanFlg}', '{$rootEntityRqIban}', ".
-					"'{$rootEntityRqIikFlg}', '{$rootEntityRqIik}')
+					"'{$rootEntityRqIikFlg}', '{$rootEntityRqIik}', ".
+					"{$statusID})
 				ON DUPLICATE KEY UPDATE QUANTITY = {$qty}, ROOT_ENTITY_ID = {$rootEntityID}, ".
 					"ROOT_ENTITY_NAME_FLAG = '{$rootEntityNameFlg}', ROOT_ENTITY_NAME = '{$rootEntityName}', ".
 					"ROOT_ENTITY_TITLE_FLAG = '{$rootEntityTitleFlg}', ROOT_ENTITY_TITLE = '{$rootEntityTitle}', ".
@@ -255,7 +264,8 @@ class DuplicateIndexTable extends Entity\DataManager
 					"ROOT_ENTITY_RQ_VAT_ID_FLAG = '{$rootEntityRqVatIdFlg}', ROOT_ENTITY_RQ_VAT_ID = '{$rootEntityRqVatId}', ".
 					"ROOT_ENTITY_RQ_ACC_NUM_FLAG = '{$rootEntityRqAccNumFlg}', ROOT_ENTITY_RQ_ACC_NUM = '{$rootEntityRqAccNum}', ".
 					"ROOT_ENTITY_RQ_IBAN_FLAG = '{$rootEntityRqIbanFlg}', ROOT_ENTITY_RQ_IBAN = '{$rootEntityRqIban}', ".
-					"ROOT_ENTITY_RQ_IIK_FLAG = '{$rootEntityRqIikFlg}', ROOT_ENTITY_RQ_IIK = '{$rootEntityRqIik}'"
+					"ROOT_ENTITY_RQ_IIK_FLAG = '{$rootEntityRqIikFlg}', ROOT_ENTITY_RQ_IIK = '{$rootEntityRqIik}'".
+					($statusID !== DuplicateStatus::UNDEFINED ? ", STATUS_ID = {$statusID}" : "")
 			);
 		}
 		elseif($connection instanceof Main\DB\MssqlConnection)
@@ -412,6 +422,48 @@ class DuplicateIndexTable extends Entity\DataManager
 	{
 		Main\Application::getConnection()->queryExecute(
 			"UPDATE b_crm_dp_index SET IS_JUNK = 'Y' WHERE ENTITY_TYPE_ID = {$entityTypeID} AND ROOT_ENTITY_ID = {$entityID}"
+		);
+	}
+
+	public static function setStatusID($userID, $entityTypeID, $typeID, $matchHash, $scope, $statusID)
+	{
+		$connection = Main\Application::getConnection();
+		$sqlHelper = $connection->getSqlHelper();
+
+		if(!is_int($userID))
+		{
+			$userID = (int)$userID;
+		}
+
+		if(!is_int($entityTypeID))
+		{
+			$entityTypeID = (int)$entityTypeID;
+		}
+
+		if(!is_int($typeID))
+		{
+			$typeID = (int)$typeID;
+		}
+
+		if(!is_string($matchHash))
+		{
+			$matchHash = (string)$matchHash;
+		}
+		$matchHash = $sqlHelper->forSql($matchHash);
+
+		if(!is_string($scope))
+		{
+			$scope = (string)$scope;
+		}
+		$scope = $sqlHelper->forSql($scope);
+
+		if(!is_int($statusID))
+		{
+			$statusID = (int)$statusID;
+		}
+
+		Main\Application::getConnection()->queryExecute(
+			"UPDATE b_crm_dp_index SET STATUS_ID = {$statusID} WHERE USER_ID = {$userID} AND ENTITY_TYPE_ID = {$entityTypeID} AND TYPE_ID = {$typeID} AND MATCH_HASH = '{$matchHash}' AND SCOPE = '{$scope}'"
 		);
 	}
 }

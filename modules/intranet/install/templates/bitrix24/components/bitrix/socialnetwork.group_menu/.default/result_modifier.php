@@ -190,6 +190,7 @@ $arResult["Urls"]["UserRequestGroup"] = CComponentEngine::MakePathFromTemplate($
 $arResult["Urls"]["UserLeaveGroup"] = CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_USER_LEAVE_GROUP"], array("group_id" => $arResult["Group"]["ID"]));
 $arResult["Urls"]["Subscribe"] = CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_GROUP_SUBSCRIBE"], array("group_id" => $arResult["Group"]["ID"]));
 $arResult["Urls"]["GroupsList"] = \Bitrix\Socialnetwork\ComponentHelper::getWorkgroupSEFUrl();
+$arResult["Urls"]["Copy"] = CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_GROUP_COPY"], array("group_id" => $arResult["Group"]["ID"]));
 
 $arResult["CanView"]["chat"] = (
 	array_key_exists("chat", $arResult["ActiveFeatures"])
@@ -216,10 +217,13 @@ uksort($arResult["CanView"], function($a, $b) use ($sampleKeysList) {
 	return 0;
 });
 
-\Bitrix\Socialnetwork\WorkgroupViewTable::set(array(
-	'USER_ID' => $USER->getId(),
-	'GROUP_ID' => $arResult["Group"]["ID"]
-));
+if ($USER->isAuthorized())
+{
+	\Bitrix\Socialnetwork\WorkgroupViewTable::set(array(
+		'USER_ID' => $USER->getId(),
+		'GROUP_ID' => $arResult["Group"]["ID"]
+	));
+}
 
 if (
 	$arResult["CurrentUserPerms"]["UserRole"] == UserToGroupTable::ROLE_REQUEST

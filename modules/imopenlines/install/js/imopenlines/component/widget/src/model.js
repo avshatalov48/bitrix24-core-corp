@@ -41,6 +41,7 @@ export class WidgetModel extends VuexBuilderModel
 				},
 				vote: {
 					enable: false,
+					beforeFinish: true,
 					messageText: this.getVariable('vote.messageText', ''),
 					messageLike: this.getVariable('vote.messageLike', ''),
 					messageDislike: this.getVariable('vote.messageDislike', '')
@@ -66,6 +67,7 @@ export class WidgetModel extends VuexBuilderModel
 			{
 				sessionId: 0,
 				sessionClose: true,
+				sessionStatus: 0,
 				userVote: VoteType.none,
 				userConsent: false,
 				operator: {
@@ -135,6 +137,10 @@ export class WidgetModel extends VuexBuilderModel
 					if (typeof payload.vote.enable === 'boolean')
 					{
 						state.common.vote.enable = payload.vote.enable;
+					}
+					if (typeof payload.vote.beforeFinish === 'boolean')
+					{
+						state.common.vote.beforeFinish = payload.vote.beforeFinish;
 					}
 					if (typeof payload.vote.messageText === 'string')
 					{
@@ -228,6 +234,10 @@ export class WidgetModel extends VuexBuilderModel
 				if (typeof payload.sessionClose === 'boolean')
 				{
 					state.dialog.sessionClose = payload.sessionClose;
+				}
+				if (typeof payload.sessionStatus === 'number')
+				{
+					state.dialog.sessionStatus = payload.sessionStatus;
 				}
 				if (typeof payload.userConsent === 'boolean')
 				{

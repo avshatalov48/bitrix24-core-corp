@@ -17,6 +17,7 @@
 		this.setItems(options.items || []);
 
 		this.zIndex = options.zIndex || 999999;
+		this.isBodyPaddingAdded = null;
 		this.cycleMode = options.hasOwnProperty('cycleMode')? options.cycleMode : true;
 		this.preload = options.hasOwnProperty('preload')? options.preload : 3;
 		this.cachedData = {};
@@ -1095,20 +1096,35 @@
 
 		addBodyPadding: function()
 		{
-			if (BX.getClass('BXIM.messenger.popupMessenger'))
+			var padding = window.innerWidth - document.documentElement.clientWidth;
+
+			if (BX.getClass('BXIM.messenger.popupMessenger') ||
+				padding === 0)
 			{
 				return;
 			}
 
-			var padding = window.innerWidth - document.documentElement.clientWidth + 'px';
-
-			document.body.style.paddingRight = padding;
+			document.body.style.paddingRight = padding + 'px';
 
 			var imBar = document.getElementById('bx-im-bar');
-			if( imBar)
+			if(imBar)
 			{
-				imBar.style.borderRight = padding + ' solid rgb(238, 242, 244)';
+				var borderColor = 'rgb(238, 242, 244)';
+
+				if(document.body.classList.contains('bitrix24-light-theme'))
+				{
+					borderColor = 'rgba(255, 255, 255, .1)';
+				}
+
+				if(document.body.classList.contains('bitrix24-dark-theme'))
+				{
+					borderColor = 'rgba(82, 92, 105, .1)';
+				}
+
+				imBar.style.borderRight = padding + 'px solid ' + borderColor;
 			}
+
+			this.isBodyPaddingAdded = true;
 		},
 
 		removeBodyPadding: function()
@@ -1120,14 +1136,15 @@
 			{
 				imBar.style.removeProperty('border-right');
 			}
+
+			this.isBodyPaddingAdded = false;
 		},
 
 		open: function(index)
 		{
 			this.adjustViewport();
-			this.addBodyPadding();
 			this.adjustZindex();
-
+			this.addBodyPadding();
 			this.baseContainer.appendChild(this.getViewerContainer());
 			BX.focus(this.getViewerContainer());
 
@@ -1314,8 +1331,11 @@
 				this.actionPanel.hidePanel();
 				this.unLockScroll();
 				this.unbindEvents();
-				this.removeBodyPadding();
 				this.disableReadingMode();
+				if(this.isBodyPaddingAdded)
+				{
+					this.removeBodyPadding();
+				}
 			}.bind(this));
 
 			// this.items = null;

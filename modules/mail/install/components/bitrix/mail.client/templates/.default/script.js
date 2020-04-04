@@ -1169,9 +1169,16 @@
 		var ignore = imapOptions.ignore || [];
 		var disabled = imapOptions.disabled || [];
 
-		var outcome = BX.type.isArray(imapOptions.outcome) && imapOptions.outcome[0] ? imapOptions.outcome[0] : '';
-		var trash = BX.type.isArray(imapOptions.trash) && imapOptions.trash[0] ? imapOptions.trash[0] : '';
-		var spam = BX.type.isArray(imapOptions.spam) && imapOptions.spam[0] ? imapOptions.spam[0] : trash;
+		var dirsTypes = {
+			'outcome': BX.type.isArray(imapOptions.outcome) && imapOptions.outcome[0] ? imapOptions.outcome[0] : '',
+			'trash': BX.type.isArray(imapOptions.trash) && imapOptions.trash[0] ? imapOptions.trash[0] : '',
+			'spam': BX.type.isArray(imapOptions.spam) && imapOptions.spam[0] ? imapOptions.spam[0] : ''
+		};
+
+		if (dirsTypes.spam == '')
+		{
+			dirsTypes.spam = dirsTypes.trash;
+		}
 
 		if (dirs)
 		{
@@ -1234,107 +1241,42 @@
 						html += BX.message('MAIL_CLIENT_CONFIG_IMAP_DIRS_FOR');
 						html += '</div></div>';
 
-						subhtml = '';
-						checkedSingle = '';
-						placeholder = '<input id="mail_connect_setup_dirs_outcome_placeholder" type="radio" name="imap_dirs[outcome]" value="" checked>';
-						placeholder += '<label for="mail_connect_setup_dirs_outcome_placeholder">' + BX.message('MAIL_CLIENT_CONFIG_IMAP_DIRS_EMPTY_DEFAULT') + '</label>';
-						for (i = 0; i < count; i++)
+						for (var type in dirsTypes)
 						{
-							if (dirsTree[i].disabled)
+							subhtml = '';
+							checkedSingle = '';
+							placeholder = '<input id="mail_connect_setup_dirs_' + type + '_placeholder" type="radio" name="imap_dirs[' + type + ']" value="" checked>';
+							placeholder += '<label for="mail_connect_setup_dirs_' + type + '_placeholder">' + BX.message('MAIL_CLIENT_CONFIG_IMAP_DIRS_EMPTY_DEFAULT') + '</label>';
+							for (i = 0; i < count; i++)
 							{
-								continue;
+								if (dirsTree[i].disabled)
+								{
+									continue;
+								}
+
+								flag = '';
+								if (dirsTree[i].path == dirsTypes[type])
+								{
+									flag = 'checked';
+									placeholder = '';
+									checkedSingle = 'mail_connect_setup_dirs_' + type + '_' + (i + 1);
+								}
+
+								subhtml += '<input type="radio" name="imap_dirs[' + type + ']" value="' + BX.util.htmlspecialchars(dirsTree[i].path) + '" id="mail_connect_setup_dirs_' + type + '_' + (i + 1) + '" ' + flag + '>';
+								subhtml += '<label for="mail_connect_setup_dirs_' + type + '_' + (i + 1) + '">' + BX.util.htmlspecialchars(dirsTree[i].item.join(' / ')) + '</label>';
 							}
 
-							flag = '';
-							if (dirsTree[i].path == outcome)
-							{
-								flag = 'checked';
-								placeholder = '';
-								checkedSingle = 'mail_connect_setup_dirs_outcome_' + (i + 1);
-							}
-
-							subhtml += '<input type="radio" name="imap_dirs[outcome]" value="' + BX.util.htmlspecialchars(dirsTree[i].path) + '" id="mail_connect_setup_dirs_outcome_' + (i + 1) + '" ' + flag + '>';
-							subhtml += '<label for="mail_connect_setup_dirs_outcome_' + (i + 1) + '">' + BX.util.htmlspecialchars(dirsTree[i].item.join(' / ')) + '</label>';
-						}
-
-						html += '<div class="mail-connect-option-email mail-connect-form-check-hidden">'
-							+ BX.message('MAIL_CLIENT_CONFIG_IMAP_DIRS_OUTCOME') +
-							'<label class="mail-set-singleselect mail-set-singleselect-line" data-checked="' + checkedSingle + '">\
-								<input id="mail_connect_setup_dirs_outcome_0" type="radio" name="imap_dirs[outcome]" value="0">\
-								<div class="mail-set-singleselect-wrapper">'
+							html += '<div class="mail-connect-option-email mail-connect-form-check-hidden">'
+								+ BX.message('MAIL_CLIENT_CONFIG_IMAP_DIRS_' + type.toUpperCase()) +
+								'<label class="mail-set-singleselect mail-set-singleselect-line" data-checked="' + checkedSingle + '">\
+									<input id="mail_connect_setup_dirs_' + type + '_0" type="radio" name="imap_dirs[' + type + ']" value="0">\
+									<div class="mail-set-singleselect-wrapper">'
 									+ subhtml +
-								'</div>'
-								+ placeholder +
-							'</label>\
-						</div>';
-
-						subhtml = '';
-						checkedSingle = '';
-						placeholder = '<input id="mail_connect_setup_dirs_trash_placeholder" type="radio" name="imap_dirs[trash]" value="" checked>';
-						placeholder += '<label for="mail_connect_setup_dirs_trash_placeholder">' + BX.message('MAIL_CLIENT_CONFIG_IMAP_DIRS_EMPTY_DEFAULT') + '</label>';
-						for (i = 0; i < count; i++)
-						{
-							if (dirsTree[i].disabled)
-							{
-								continue;
-							}
-
-							flag = '';
-							if (dirsTree[i].path == trash)
-							{
-								flag = 'checked';
-								placeholder = '';
-								checkedSingle = 'mail_connect_setup_dirs_trash_' + (i + 1);
-							}
-
-							subhtml += '<input type="radio" name="imap_dirs[trash]" value="' + BX.util.htmlspecialchars(dirsTree[i].path) + '" id="mail_connect_setup_dirs_trash_' + (i + 1) + '" ' + flag + '>';
-							subhtml += '<label for="mail_connect_setup_dirs_trash_' + (i + 1) + '">' + BX.util.htmlspecialchars(dirsTree[i].item.join(' / ')) + '</label>';
+									'</div>'
+									+ placeholder +
+								'</label>\
+							</div>';
 						}
-
-						html += '<div class="mail-connect-option-email mail-connect-form-check-hidden">'
-							+ BX.message('MAIL_CLIENT_CONFIG_IMAP_DIRS_TRASH') +
-							'<label class="mail-set-singleselect mail-set-singleselect-line" data-checked="' + checkedSingle + '">\
-								<input id="mail_connect_setup_dirs_trash_0" type="radio" name="imap_dirs[trash]" value="0">\
-								<div class="mail-set-singleselect-wrapper">'
-									+ subhtml +
-								'</div>'
-								+ placeholder +
-							'</label>\
-						</div>';
-
-						subhtml = '';
-						checkedSingle = '';
-						placeholder = '<input id="mail_connect_setup_dirs_spam_placeholder" type="radio" name="imap_dirs[spam]" value="" checked>';
-						placeholder += '<label for="mail_connect_setup_dirs_spam_placeholder">' + BX.message('MAIL_CLIENT_CONFIG_IMAP_DIRS_EMPTY_DEFAULT') + '</label>';
-						for (i = 0; i < count; i++)
-						{
-							if (dirsTree[i].disabled)
-							{
-								continue;
-							}
-
-							flag = '';
-							if (dirsTree[i].path == spam)
-							{
-								flag = 'checked';
-								placeholder = '';
-								checkedSingle = 'mail_connect_setup_dirs_spam_' + (i + 1);
-							}
-
-							subhtml += '<input type="radio" name="imap_dirs[spam]" value="' + BX.util.htmlspecialchars(dirsTree[i].path) + '" id="mail_connect_setup_dirs_spam_' + (i + 1) + '" ' + flag + '>';
-							subhtml += '<label for="mail_connect_setup_dirs_spam_' + (i + 1) + '">' + BX.util.htmlspecialchars(dirsTree[i].item.join(' / ')) + '</label>';
-						}
-
-						html += '<div class="mail-connect-option-email mail-connect-form-check-hidden">'
-							+ BX.message('MAIL_CLIENT_CONFIG_IMAP_DIRS_SPAM') +
-							'<label class="mail-set-singleselect mail-set-singleselect-line" data-checked="' + checkedSingle + '">\
-								<input id="mail_connect_setup_dirs_spam_0" type="radio" name="imap_dirs[spam]" value="0">\
-								<div class="mail-set-singleselect-wrapper">'
-									+ subhtml +
-								'</div>'
-								+ placeholder +
-							'</label>\
-						</div>';
 
 						html += '</div>';
 

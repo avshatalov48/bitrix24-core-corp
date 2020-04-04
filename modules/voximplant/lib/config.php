@@ -270,6 +270,7 @@ class ConfigTable extends Data\DataManager
 				'default_value' => 'N'
 			)),
 			'TRANSCRIBE_LANG' => new Entity\StringField('TRANSCRIBE_LANG'),
+			'TRANSCRIBE_PROVIDER' => new Entity\StringField('TRANSCRIBE_PROVIDER'),
 			'CALLBACK_REDIAL' => new Entity\StringField('CALLBACK_REDIAL'),
 			'CALLBACK_REDIAL_ATTEMPTS' => new Entity\IntegerField('CALLBACK_REDIAL_ATTEMPTS'),
 			'CALLBACK_REDIAL_PERIOD' => new Entity\IntegerField('CALLBACK_REDIAL_PERIOD'),

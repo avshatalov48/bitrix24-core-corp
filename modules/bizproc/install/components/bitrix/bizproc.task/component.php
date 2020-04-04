@@ -86,11 +86,22 @@ if ($arParams["TASK_ID"] > 0)
 	$arResult["TASK"] = $dbTask->GetNext();
 }
 
-if (!$arResult["TASK"] && strlen($arParams["WORKFLOW_ID"]) > 0)
+if (empty($arResult["TASK"]) && empty($arParams["WORKFLOW_ID"]) && !empty($arParams["DOCUMENT_ID"]))
 {
+	$arParams["WORKFLOW_ID"] = \Bitrix\Bizproc\WorkflowInstanceTable::getIdsByDocument($arParams["DOCUMENT_ID"]);
+}
+
+if (!$arResult["TASK"] && !empty($arParams["WORKFLOW_ID"]))
+{
+	$workflowTasksFilter = [
+		"WORKFLOW_ID" => $arParams["WORKFLOW_ID"],
+		"USER_ID" => $arParams["USER_ID"],
+		'USER_STATUS' => CBPTaskUserStatus::Waiting
+	];
+
 	$dbTask = CBPTaskService::GetList(
 		array(),
-		array("WORKFLOW_ID" => $arParams["WORKFLOW_ID"], "USER_ID" => $arParams["USER_ID"], 'USER_STATUS' => CBPTaskUserStatus::Waiting),
+		$workflowTasksFilter,
 		false,
 		false,
 		array("ID", "WORKFLOW_ID", "ACTIVITY", "ACTIVITY_NAME", "MODIFIED", "OVERDUE_DATE", "NAME", "DESCRIPTION", "PARAMETERS", 'IS_INLINE', 'STATUS', 'USER_STATUS', 'DOCUMENT_NAME', 'DELEGATION_TYPE')

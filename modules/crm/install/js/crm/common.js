@@ -9485,7 +9485,7 @@ if(typeof(BX.CrmEntityConverter) === "undefined")
 					0
 				);
 			}
-			else if(this._enablePageRefresh)
+			else if(this._enablePageRefresh && !(isRedirected && window.top === window))
 			{
 				window.setTimeout(
 					function(){ window.location.reload(); },
@@ -12736,10 +12736,17 @@ BX.Crm.Page =
 	sliders:
 	{
 		lead: { condition: new RegExp("/crm/lead/details/[0-9]+/", "i") },
+		leadMerge: { condition: new RegExp("/crm/lead/merge/", "i"), options: { customLeftBoundary: 0 } },
+		leadDedupeList: { condition: new RegExp("/crm/lead/dedupelist/", "i"), stopParameters: ["page", "IFRAME"] },
 		leadAutomation: { condition: new RegExp("/crm/lead/automation/[0-9]+/", "i") },
 		contact: { condition: new RegExp("/crm/contact/details/[0-9]+/", "i") },
+		contactMerge: { condition: new RegExp("/crm/contact/merge/", "i"), options: { customLeftBoundary: 0 } },
+		contactDedupeList: { condition: new RegExp("/crm/contact/dedupelist/", "i"), stopParameters: ["page", "IFRAME"] },
 		company: { condition: new RegExp("/crm/company/details/[0-9]+/", "i") },
+		companyMerge: { condition: new RegExp("/crm/company/merge/", "i"), options: { customLeftBoundary: 0 } },
+		companyDedupeList: { condition: new RegExp("/crm/company/dedupelist/", "i"), stopParameters: ["page", "IFRAME"] },
 		deal: { condition: new RegExp("/crm/deal/details/[0-9]+/", "i") },
+		dealMerge: { condition: new RegExp("/crm/deal/merge/", "i"), options: { customLeftBoundary: 0 } },
 		dealAutomation: { condition: new RegExp("/crm/deal/automation/[0-9]+/", "i") },
 		quote: { condition: new RegExp("/crm/quote/details/[0-9]+/", "i") },
 		order: { condition: new RegExp("/shop/orders/details/[0-9]+/", "i") },
@@ -12773,11 +12780,17 @@ BX.Crm.Page =
 				}
 
 				var slider = this.sliders[key];
+				var options = BX.prop.getObject(slider, "options", {});
+				if(!options.hasOwnProperty("cacheable"))
+				{
+					options["cacheable"] = false;
+				}
 				rules.push(
 					{
 						condition: [ slider.condition ],
+						stopParameters: BX.prop.getArray(slider, "stopParameters", []),
 						loader: "crm-entity-details-loader",
-						options: { cacheable: false }
+						options: options
 					}
 				);
 			}
@@ -12892,7 +12905,8 @@ BX.Crm.Page =
 
 		if(!BX.type.isPlainObject(params))
 		{
-			params = {};
+			//Force apply default slider params.
+			params = undefined;
 		}
 
 		window.top.BX.SidePanel.Instance.open (
@@ -12942,16 +12956,22 @@ BX.Crm.Page =
 			isFound = current.getUrl() === url;
 		}
 
-		if(!isFound)
+		if(isFound)
 		{
-			return;
+			current.close(true);
+			if(!keepalive)
+			{
+				window.top.BX.SidePanel.Instance.destroy(current.getUrl());
+			}
 		}
-
-		current.close(true);
-		if(!keepalive)
+		else if(!keepalive)
 		{
-			window.top.BX.SidePanel.Instance.destroy(current.getUrl());
+			window.top.BX.SidePanel.Instance.destroy(url);
 		}
+	},
+	removeSlider: function(url)
+	{
+		window.top.BX.SidePanel.Instance.destroy(url);
 	},
 	getQueryParam: function(url, param)
 	{

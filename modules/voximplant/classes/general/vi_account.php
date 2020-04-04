@@ -1,4 +1,7 @@
 <?
+
+use Bitrix\Voximplant\Limits;
+
 class CVoxImplantAccount
 {
 	const ACCOUNT_PAYED = "account_payed";
@@ -48,8 +51,9 @@ class CVoxImplantAccount
 		if($accountInfo->account_payed !== self::GetPayedFlag())
 			$this->SetPayedFlag($accountInfo->account_payed);
 
-		if($accountInfo->sip_paid !== CVoxImplantConfig::GetModeStatus(CVoxImplantConfig::MODE_SIP))
-			CVoxImplantConfig::SetModeStatus(CVoxImplantConfig::MODE_SIP, ($accountInfo->sip_paid === 'Y'));
+		$sipPaid = $accountInfo->sip_paid === 'Y';
+		if($sipPaid !== CVoxImplantConfig::GetModeStatus(CVoxImplantConfig::MODE_SIP))
+			CVoxImplantConfig::SetModeStatus(CVoxImplantConfig::MODE_SIP, $sipPaid);
 
 		return true;
 	}
@@ -98,9 +102,15 @@ class CVoxImplantAccount
 
 	public function SetAccountBalance($balance)
 	{
+		if ($this->account_balance == $balance)
+		{
+			return true;
+		}
 		$this->account_balance = floatval($balance);
 
 		COption::SetOptionString("voximplant", self::ACCOUNT_BALANCE, $this->account_balance);
+
+		\Bitrix\Voximplant\Integration\Pull::sendBalanceUpdate($this->account_balance, $this->GetAccountCurrency(false));
 
 		return true;
 	}
@@ -174,12 +184,12 @@ class CVoxImplantAccount
 		return true;
 	}
 
-	public function GetAccountCurrency()
+	public function GetAccountCurrency($allowUpdate = true)
 	{
 		if (strlen($this->account_currency)<=0)
 		{
 			$this->account_currency = COption::GetOptionString("voximplant", self::ACCOUNT_CURRENCY);
-			if (strlen($this->account_currency)<=0)
+			if (strlen($this->account_currency)<=0 && $allowUpdate)
 			{
 				if (!$this->UpdateAccountInfo())
 				{
@@ -282,37 +292,23 @@ class CVoxImplantAccount
 
 	public static function GetRecordLimit($mode = false)
 	{
-		$sipConnectorActive = CVoxImplantConfig::GetModeStatus(CVoxImplantConfig::MODE_SIP);
-
-		$recordLimit = COption::GetOptionInt("voximplant", "record_limit");
-		if ($recordLimit > 0 && !CVoxImplantAccount::IsPro())
+		$recordLimit = Limits::getRecordLimit($mode);
+		if ($recordLimit > 0)
 		{
-			if ($mode == CVoxImplantConfig::MODE_SIP && $sipConnectorActive)
-			{
-				$recordLimitEnable = false;
-			}
-			else
-			{
-				$recordLimitEnable = true;
-				$recordLimitRemaining = $recordLimit-CGlobalCounter::GetValue('vi_records', CGlobalCounter::ALL_SITES);
+			$recordLimitRemaining = Limits::getRemainingRecordsCount();
 
-				$result = Array(
-					'ENABLE' => $recordLimitEnable,
-					'LIMIT' => $recordLimit,
-					'REMAINING' => $recordLimitRemaining
-				);
-			}
+			$result = Array(
+				'ENABLE' => true,
+				'LIMIT' => $recordLimit,
+				'REMAINING' => $recordLimitRemaining,
+				'USED' => $recordLimit - $recordLimitRemaining,
+			);
 		}
 		else
 		{
-			$recordLimitEnable = false;
-		}
-
-		if (!$recordLimitEnable)
-		{
 			$result =  Array(
-				'ENABLE' => $recordLimitEnable,
-				'DEMO' => CVoxImplantAccount::IsDemo() && !$sipConnectorActive
+				'ENABLE' => false,
+				'DEMO' => CVoxImplantAccount::IsDemo()
 			);
 		}
 

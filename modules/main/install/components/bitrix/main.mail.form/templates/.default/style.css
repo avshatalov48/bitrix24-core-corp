@@ -463,3 +463,26 @@
 	height: 100%;
 	width: 32px;
 }
+
+/* version = 1 patch begin */
+.feed-add-post-destination.feed-add-post-destination-mailcontacts {
+	background-color: #ffec91;
+	color: #a26b00;
+	padding-left: 32px;
+}
+.feed-add-post-destination.feed-add-post-destination-mailcontacts:before {
+	background: url("/bitrix/components/bitrix/main.post.form/templates/.default/images/sprite_mpf_5.png?1") no-repeat 0 -92px;
+	content: "";
+	height: 13px;
+	position: absolute;
+	width: 13px;
+	left: 9px;
+	top: 8px
+}
+.feed-add-post-destination.feed-add-post-destination-mailcontacts::before {
+	background-position: -33px -92px
+}
+.feed-add-post-destination.feed-add-post-destination-mailcontacts .feed-add-post-del-but {
+	background-position: -113px -61px;
+}
+/* version = 1 patch end */

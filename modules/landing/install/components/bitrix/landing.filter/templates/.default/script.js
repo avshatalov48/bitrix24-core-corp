@@ -37,7 +37,7 @@ BX.ready(function()
 	);
 
 	// apply filter
-	BX.addCustomEvent('BX.Main.Filter:apply', function()
+	var landingFilterCallback = function()
 	{
 		if (landingAjaxSend)
 		{
@@ -52,7 +52,7 @@ BX.ready(function()
 		});
 		document.body.appendChild(loaderContainer);
 
-		var loader = new BX.Loader({size: 130, color: "#bfc3c8"});
+		var loader = new BX.Loader({size: 130, color: '#bfc3c8'});
 		loader.show(loaderContainer);
 
 		BX.ajax({
@@ -67,88 +67,96 @@ BX.ready(function()
 				workArea.innerHTML = data;
 			}
 		});
-	});
+	};
+
+	BX.addCustomEvent('BX.Main.Filter:apply', BX.delegate(landingFilterCallback));
+	BX.addCustomEvent('BX.Landing.Filter:apply', BX.delegate(landingFilterCallback));
 
 	// create folder
-	BX.bind(
-		createFolderEl,
-		'click',
-		function()
-		{
-			if (BX.hasClass(createFolderEl, 'ui-btn-disabled'))
+	if (createFolderEl)
+	{
+		BX.bind(
+			createFolderEl,
+			'click',
+			function()
 			{
-				return;
-			}
-			var createFolderText = BX.create('input', {
-				props: {
-					type: 'text',
-					className: 'landing-filter-folder-input'
+				if (BX.hasClass(createFolderEl, 'ui-btn-disabled'))
+				{
+					return;
 				}
-			});
-			BX.focus(createFolderText);
-			BX.Landing.UI.Tool.ActionDialog.getInstance()
-				.show({
-					title: createFolderEl.getAttribute('title'),
-					content: createFolderText,
-					confirm: BX.data(createFolderEl, 'action')
-				})
-				.then(
-					function() {
-						BX.ajax({
-							url: '/bitrix/tools/landing/ajax.php?action=Landing::add&folder=Y',
-							method: 'POST',
-							data: {
+				var createFolderText = BX.create('input', {
+					props: {
+						type: 'text',
+						className: 'landing-filter-folder-input'
+					}
+				});
+				BX.focus(createFolderText);
+				BX.Landing.UI.Tool.ActionDialog.getInstance()
+					.show({
+						title: createFolderEl.getAttribute('title'),
+						content: createFolderText,
+						confirm: BX.data(createFolderEl, 'action')
+					})
+					.then(
+						function() {
+							BX.ajax({
+								url: '/bitrix/tools/landing/ajax.php?' + '' +
+									'action=Landing::add&folder=Y&' +
+									'type=' + BX.data(createFolderEl, 'type'),
+								method: 'POST',
 								data: {
-									fields: {
-										TITLE: createFolderText.value,
-										FOLDER: 'Y',
-										SITE_ID: BX.data(createFolderEl, 'siteId')
-									}
+									data: {
+										fields: {
+											TITLE: createFolderText.value,
+											FOLDER: 'Y',
+											SITE_ID: BX.data(createFolderEl, 'siteId')
+										}
+									},
+									sessid: BX.message('bitrix_sessid')
 								},
-								sessid: BX.message('bitrix_sessid')
-							},
-							dataType: 'json',
-							onsuccess: function(data)
-							{
-								if (
-									typeof data.type !== 'undefined' &&
-									typeof data.result !== 'undefined'
-								)
+								dataType: 'json',
+								onsuccess: function(data)
 								{
-									if (data.type === 'error')
+									if (
+										typeof data.type !== 'undefined' &&
+										typeof data.result !== 'undefined'
+									)
 									{
-										var msg = BX.Landing.UI.Tool.ActionDialog.getInstance();
-										msg.show({
-											content: data.result[0].error_description,
-											confirm: 'OK',
-											type: 'alert'
-										}).then(
-											function()
-											{
-												BX.fireEvent(createFolderEl, 'click');
-											}
-										);
-									}
-									else
-									{
-										var url = BX.util.add_url_param(
-											window.location.href,
-											{
-												folderId: data.result
-											}
-										);
-										window.location.href = url;
+										if (data.type === 'error')
+										{
+											var msg = BX.Landing.UI.Tool.ActionDialog.getInstance();
+											msg.show({
+												content: data.result[0].error_description,
+												confirm: 'OK',
+												type: 'alert'
+											}).then(
+												function()
+												{
+													BX.fireEvent(createFolderEl, 'click');
+												}
+											);
+										}
+										else
+										{
+											var url = BX.util.add_url_param(
+												window.location.href,
+												{
+													folderId: data.result
+												}
+											);
+											window.location.href = url;
+										}
 									}
 								}
-							}
-						});
-					},
-					function(error) {
-						//
-					}
-				);
-		}
-	);
+							});
+						},
+						function(error) {
+							//
+						}
+					);
+			}
+		);
+	}
 
 	// settings button
 	var onSettingsClick = function(event) {

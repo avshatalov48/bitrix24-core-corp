@@ -26,6 +26,7 @@ $APPLICATION->IncludeComponent(
 		"SET_TITLE" => "N",
 		"NAME_TEMPLATE" => $arParams["NAME_TEMPLATE"],
 		"DATE_TIME_FORMAT" => $arParams["DATE_TIME_FORMAT"],
+		"GUID" => $arParams["GUID"],
 
 		"SHOW_RATING" => "Y",
 		"RATING_TYPE" => "like",

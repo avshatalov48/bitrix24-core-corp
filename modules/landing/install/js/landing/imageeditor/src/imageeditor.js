@@ -1,9 +1,11 @@
-import {Event} from 'main.core';
 import 'main.imageeditor';
 import buildOptions from './internal/build.options';
 import getFilename from './internal/get.filename';
 
-export class ImageEditor extends Event.EventEmitter
+/**
+ * @memberOf BX.Landing
+ */
+export class ImageEditor
 {
 	static edit(options: {image: string, dimensions: {width: number, height: number}})
 	{

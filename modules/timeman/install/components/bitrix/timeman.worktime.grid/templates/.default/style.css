@@ -12,15 +12,23 @@
 }
 
 .timeman-grid-worktime-shift {
-	padding: 0 4px;
-	margin: 0 4px;
+	padding: 0 8px 0 6px !important;
+	margin: 0 4px 6px;
 	border-radius: 2px;
 	border-left-width: 3px !important;
+	position: relative;
+}
+
+.timeman-grid-worktime-inner {
+	display: flex;
+}
+
+.timeman-grid-worktime-inner-clickable {
+	cursor: pointer;
 }
 
 .timeman-grid-worktime-shift .timeman-grid-worktime-inner {
 	color: #535c69;
-	cursor: pointer;
 }
 
 .timeman-grid-worktime-shift .timeman-grid-worktime-container {
@@ -63,24 +71,12 @@
 	border: 1px solid #cad999;
 }
 
-.timeman-grid-worktime-shift-past-day .timeman-grid-worktime-inner {
-	border-left: 2px solid #d8ec99;
-}
-
 .timeman-grid-worktime-shift-past-night {
 	border: 1px solid #97e3fb;
 }
 
-.timeman-grid-worktime-shift-past-night .timeman-grid-worktime-inner {
-	border-left: 2px solid #c1eefc;
-}
-
 .timeman-grid-worktime-shift-past-evening {
 	border: 1px solid #ecdcff;
-}
-
-.timeman-grid-worktime-shift-past-evening .timeman-grid-worktime-inner {
-	border-left: 2px solid #ecdcff;
 }
 
 .timeman-grid-worktime-shift-future-day {
@@ -97,7 +93,6 @@
 
 .timeman-grid-worktime-duration {
 	display: flex;
-	margin-bottom: 3px;
 	align-items: center;
 	justify-content: space-between;
 }
@@ -116,14 +111,11 @@
 	line-height: 11px;
 }
 
-.timeman-grid-worktime-expired-text {
-	color: red;
-}
-
 .timeman-grid-worktime-interval {
 	color: rgba(141, 151, 167, 0.7);
 	line-height: 12px;
 	font-size: 0;
+	margin-top: 3px;
 }
 
 .timeman-grid-worktime-interval span {
@@ -142,34 +134,9 @@
 
 .timeman-grid-worktime-icon-container {
 	margin-left: auto;
-	padding-left: 10px;
 	display: flex;
 	flex-direction: column;
-}
-
-.timeman-grid-worktime-icon {
-	display: inline-block;
-	width: 15px;
-	height: 12px;
-	background-repeat: no-repeat;
-	background-position: center;
-	flex-shrink: 0;
-}
-
-.timeman-grid-worktime-icon:not(.timeman-hide) ~ .timeman-grid-worktime-icon:not(.timeman-hide) {
-	margin-top: 2px;
-}
-
-.timeman-grid-worktime-icon-confirmed {
-	background-image: url(data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2213%22%20height%3D%2210%22%20viewBox%3D%220%200%2013%2010%22%20fill%3D%22none%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%0A%3Cpath%20fill-rule%3D%22evenodd%22%20clip-rule%3D%22evenodd%22%20d%3D%22M0.262446%206.46059L0.262532%206.52749L11.287%206.5274L11.287%204.58843L1.93902%204.5886L1.93898%204.31584e-05L0%200L-4.31584e-05%206.46068L0.262446%206.46059Z%22%20transform%3D%22translate%280%204.98126%29%20rotate%28-45%29%22%20fill%3D%22%232FC6F6%22/%3E%0A%3C/svg%3E%0A);
-}
-
-.timeman-grid-worktime-icon-notice {
-	background-image: url(data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2212%22%20height%3D%2212%22%3E%3Cpath%20fill%3D%22%23A8ADB4%22%20d%3D%22M6.097%2011.8a5.492%205.492%200%201%200%200-10.985%205.492%205.492%200%200%200%200%2010.984zm-.7-7.902c0-.393.314-.708.708-.708H6.2c.393%200%20.708.315.708.708v2.65a.705.705%200%200%201-.708.708h-.096a.705.705%200%200%201-.708-.709V3.898zM7.049%209.04c0%20.49-.402.892-.892.892a.896.896%200%200%201-.892-.892c0-.49.403-.892.892-.892.49%200%20.892.403.892.892z%22%20opacity%3D%22.496%22/%3E%3C/svg%3E);
-}
-
-.timeman-grid-worktime-icon-warning {
-	background-image: url(data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2213%22%20height%3D%2211%22%20viewBox%3D%220%200%2013%2011%22%20fill%3D%22none%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%0A%3Cpath%20fill-rule%3D%22evenodd%22%20clip-rule%3D%22evenodd%22%20d%3D%22M12.8462%209.41417L7.41313%200.512558C6.99419%20-0.170853%205.99663%20-0.170853%205.58696%200.512558L0.153369%209.41417C-0.273878%2010.1151%200.242724%2011%201.07085%2011H11.938C12.7574%2011%2013.274%2010.1151%2012.8462%209.41417ZM5.72075%203.61406C5.72075%203.21983%206.04155%202.9044%206.44243%202.9044H6.54009C6.94097%202.9044%207.26177%203.21983%207.26177%203.61406V6.26878C7.26177%206.66307%206.94097%206.9785%206.54009%206.9785H6.44243C6.04155%206.9785%205.72075%206.66307%205.72075%206.26878V3.61406ZM6.49565%209.65953C6.99419%209.65953%207.40386%209.25652%207.40386%208.76585C7.40386%208.27519%206.99419%207.87218%206.49565%207.87218C5.99663%207.87218%205.58696%208.27519%205.58696%208.76585C5.58696%209.25652%205.99663%209.65953%206.49565%209.65953Z%22%20fill%3D%22%23FF5752%22/%3E%0A%3C/svg%3E%0A);
+	justify-content: center;
 }
 
 .timeman-report-container-view-interval .timeman-grid-worktime-interval {
@@ -185,7 +152,7 @@
 	padding: 3px 5px 2px;
 }
 
-.timeman-grid-user-delete, .timeman-grid-shift-plan-delete {
+.timeman-grid-user-delete {
 	display: inline-block;
 	vertical-align: top;
 	width: 25px;
@@ -198,17 +165,51 @@
 	transition: all .2s linear;
 }
 
-.timeman-grid-shift-plan-delete {
-	position: absolute;
-	right: 0;
+.timeman-grid-user-delete:hover {
+	opacity: 0.6;
 }
 
-.timeman-grid-user-delete:hover, .timeman-grid-shift-plan-delete:hover {
-	opacity: 0.6;
+.timeman-grid-shift-plan-menu {
+	position: absolute;
+	right: 2px;
+	top: -5px;
+	width: 24px;
+	height: 13px;
+	background: #fff;
+	border-radius: 7px;
+	box-shadow: 0 2px 4px 0 rgba(0, 0, 0, .15);
+	opacity: 0;
+	transition: opacity .2s linear;
+}
+
+.timeman-grid-shift-plan-menu:before {
+	content: '';
+	width: 16px;
+	height: 4px;
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	opacity: .4;
+	display: block;
+	transition: opacity .2s linear;
+	transform: translate(-50%, -50%);
+	background: url(data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2216%22%20height%3D%224%22%3E%3Cpath%20fill%3D%22%23525C69%22%20fill-rule%3D%22evenodd%22%20d%3D%22M2%200a2%202%200%20110%204%202%202%200%20010-4zm6%200a2%202%200%20110%204%202%202%200%20010-4zm6%200a2%202%200%20110%204%202%202%200%20010-4z%22/%3E%3C/svg%3E);
+}
+
+.timeman-grid-worktime-shift:hover .timeman-grid-shift-plan-menu {
+	opacity: 1;
+}
+
+.timeman-grid-worktime-shift:hover .timeman-grid-shift-plan-menu:hover:before {
+	opacity: .8;
 }
 
 .timeman-grid-worktime-add:hover, .timeman-grid-cell-user:hover .timeman-grid-user-delete:hover {
 	opacity: 1;
+}
+
+.timeman-grid-worktime-record-cell {
+	cursor: pointer;
 }
 
 .timeman-grid-worktime-link {
@@ -225,8 +226,9 @@
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	margin: 0 8px;
+	margin: 0 8px 7px;
 	cursor: pointer;
+	padding: 0 5px 0 !important;
 }
 
 .timeman-grid-worktime-add:hover .timeman-grid-add-btn {
@@ -368,7 +370,6 @@
 
 .timeman-report-container .main-grid-cell-head .main-grid-head-title {
 	color: #525c69;
-	text-transform: lowercase;
 	font-size: 15px;
 	font-family: 'OpenSans-Light', "Helvetica Neue", Arial, Helvetica, sans-serif;
 	letter-spacing: 0;
@@ -462,8 +463,9 @@
 .timeman-grid-user {
 	display: flex;
 	align-items: center;
+	box-sizing: border-box;
 	width: 100%;
-	padding: 3px 0 3px 10px;
+	padding: 3px 0 3px 18px;
 }
 
 .timeman-grid-user-info {
@@ -1015,4 +1017,8 @@ div + .timeman-entity-config-block {
 
 .timeman-grid-column-header-today .main-grid-head-title {
 	font-weight: 700;
+}
+
+.timeman-grid-worktime-expired-text {
+	color: red!important;
 }

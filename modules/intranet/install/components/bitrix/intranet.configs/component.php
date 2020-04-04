@@ -519,20 +519,40 @@ if ($_SERVER["REQUEST_METHOD"] == "POST"  && (isset($_POST["save_settings"]) )&&
 
 	COption::SetOptionString("socialnetwork", "livefeed_toall_rights", $val);
 
-	if (strlen($_POST["allow_new_user_lf"])>0)
-		COption::SetOptionString("intranet", "BLOCK_NEW_USER_LF_SITE", "N", false, SITE_ID);
-	else
-		COption::SetOptionString("intranet", "BLOCK_NEW_USER_LF_SITE", "Y", false, SITE_ID);
+	if ($arResult["IS_BITRIX24"])
+	{
+		if (strlen($_POST["allow_new_user_lf"])>0)
+			COption::SetOptionString("intranet", "BLOCK_NEW_USER_LF_SITE", "N", false, SITE_ID);
+		else
+			COption::SetOptionString("intranet", "BLOCK_NEW_USER_LF_SITE", "Y", false, SITE_ID);
 
-	if (strlen($_POST["show_year_for_female"])>0)
-		COption::SetOptionString("intranet", "show_year_for_female", "Y", false);
-	else
-		COption::SetOptionString("intranet", "show_year_for_female", "N", false);
+		if (strlen($_POST["show_year_for_female"])>0)
+			COption::SetOptionString("intranet", "show_year_for_female", "Y", false);
+		else
+			COption::SetOptionString("intranet", "show_year_for_female", "N", false);
 
-	if (strlen($_POST["stresslevel_available"])>0)
-		COption::SetOptionString("intranet", "stresslevel_available", "Y", false);
+		if (strlen($_POST["buy_tariff_by_all"])>0)
+			COption::SetOptionString("bitrix24", "buy_tariff_by_all", "Y", false);
+		else
+			COption::SetOptionString("bitrix24", "buy_tariff_by_all", "N", false);
+	}
+
+	if (
+		!$arResult["IS_BITRIX24"]
+		|| \Bitrix\Bitrix24\Release::isAvailable('stresslevel')
+	)
+	{
+		if (strlen($_POST["stresslevel_available"])>0)
+			COption::SetOptionString("intranet", "stresslevel_available", "Y", false);
+		else
+			COption::SetOptionString("intranet", "stresslevel_available", "N", false);
+	}
+
+	// tasks
+	if (strlen($_POST["create_overdue_chats"]) > 0)
+		COption::SetOptionString("tasks", "create_overdue_chats", "Y", false);
 	else
-		COption::SetOptionString("intranet", "stresslevel_available", "N", false);
+		COption::SetOptionString("tasks", "create_overdue_chats", "N", false);
 
 //im chat
 	if (CModule::IncludeModule('im'))

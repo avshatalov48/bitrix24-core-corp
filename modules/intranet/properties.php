@@ -205,9 +205,14 @@ class CUserTypeEmployee extends CIEmployeeProperty
 		$res = '';
 
 		if(is_array($arUserField["VALUE"]))
+		{
 			$val = $arUserField["VALUE"];
+		}
 		else
+		{
 			$val = array($arUserField["VALUE"]);
+		}
+		$isSearchModuleIncluded = \Bitrix\Main\Loader::includeModule('search');
 
 		$val = array_filter($val, "intval");
 		if(count($val))
@@ -216,7 +221,16 @@ class CUserTypeEmployee extends CIEmployeeProperty
 			{
 				$rs = CUser::GetList($by="", $order="", array( "ID" => $v));
 				while($ar = $rs->Fetch())
-					$res .= CSearch::KillTags(CUser::FormatName(CSite::GetNameFormat(), $ar))."\r\n";
+				{
+					if($isSearchModuleIncluded)
+					{
+						$res .= CSearch::KillTags(CUser::FormatName(CSite::GetNameFormat(), $ar))."\r\n";
+					}
+					else
+					{
+						$res .= strip_tags(CUser::FormatName(CSite::GetNameFormat(), $ar))."\r\n";
+					}
+				}
 			}
 		}
 
@@ -427,8 +441,7 @@ class CUserTypeEmployeeDisplay extends \Bitrix\Main\UserField\TypeBase
 					'allowAddSocNetGroup' => 'N',
 					'allowSearchEmailUsers' => 'N',
 					'allowSearchCrmEmailUsers' => 'N',
-					'allowSearchNetworkUsers' => 'N',
-					'allowSonetGroupsAjaxSearchFeatures' => 'N',
+					'allowSearchNetworkUsers' => 'N'
 				)
 			),
 			false,

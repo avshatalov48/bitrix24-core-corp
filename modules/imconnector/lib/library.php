@@ -108,6 +108,19 @@ class Library
 
 	const EVENT_DELETE_LINE = 'OnDeleteLine';
 
+	public const TIME_LIMIT_RESTRICTIONS = [
+		'facebook' => [
+			'LIMIT_START_DATE' => 1583280001, //04 Mar 2020 00:00:01
+			'BLOCK_DATE' => 86400,
+			'BLOCK_REASON' => 'DEFAULT'
+		],
+		'whatsappbytwilio' => [
+			'LIMIT_START_DATE' => 1575158401,
+			'BLOCK_DATE' => 86400,
+			'BLOCK_REASON' => 'DEFAULT'
+		],
+	];
+
 	/** @var array A list of connectors, which works without servers */
 	public static $noServerConnectors = array(
 		'livechat',

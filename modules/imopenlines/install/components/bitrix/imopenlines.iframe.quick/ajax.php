@@ -48,7 +48,17 @@ class ImopenlinesIframeQuickAjaxController
 			$offset = 0;
 		}
 		$search = $APPLICATION->convertCharset($search, 'UTF-8', LANG_CHARSET);
-		$filter = array('TEXT' => '%'.$search.'%');
+		$filter = [
+			[
+				'LOGIC' => 'OR',
+				[
+					'DETAIL_TEXT' => '%'.$search.'%',
+				],
+				[
+					'NAME' => '%'.$search.'%',
+				],
+			],
+		];
 		$sectionId = intval($this->requestData['SECTION_ID']);
 		if($sectionId > 0)
 		{

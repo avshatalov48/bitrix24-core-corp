@@ -2184,7 +2184,12 @@ class CAllSaleBasket
 
 		if ($isOrderConverted != 'N' && $found)
 		{
-			if ($order = Sale\Order::load($orderID))
+			$registry = Sale\Registry::getInstance(Sale\Registry::REGISTRY_TYPE_ORDER);
+
+			/** @var Sale\Order $orderClass */
+			$orderClass = $registry->getOrderClassName();
+
+			if ($order = $orderClass::load($orderID))
 			{
 				if (\Bitrix\Sale\Compatible\DiscountCompatibility::isInited())
 					\Bitrix\Sale\Compatible\DiscountCompatibility::setRepeatSave(false);
@@ -3218,8 +3223,13 @@ class CAllSaleBasket
 			$dbTmp = CSaleUser::GetList(array("ID" => $TO_FUSER_ID));
 			if (!empty($dbTmp))
 			{
-				$basketToFUser = Sale\Basket::loadItemsForFUser($TO_FUSER_ID, SITE_ID);
-				$basketFromFUser = Sale\Basket::loadItemsForFUser($FROM_FUSER_ID, SITE_ID);
+				$registry = Sale\Registry::getInstance(Sale\Registry::REGISTRY_TYPE_ORDER);
+
+				/** @var Sale\Basket $basketClass */
+				$basketClass = $registry->getBasketClassName();
+
+				$basketToFUser = $basketClass::loadItemsForFUser($TO_FUSER_ID, SITE_ID);
+				$basketFromFUser = $basketClass::loadItemsForFUser($FROM_FUSER_ID, SITE_ID);
 
 				if ($basketFromFUser->count() > 0)
 				{
@@ -3390,8 +3400,13 @@ class CAllSaleBasket
 	{
 		$result = new Sale\Result();
 
+		$registry = Sale\Registry::getInstance(Sale\Registry::REGISTRY_TYPE_ORDER);
+
+		/** @var Sale\Basket $basketClass */
+		$basketClass = $registry->getBasketClassName();
+
 		/** @var Sale\Basket $basket */
-		$basket = Sale\Basket::loadItemsForFUser($fuserID, $siteID);
+		$basket = $basketClass::loadItemsForFUser($fuserID, $siteID);
 		if ($basket->count() > 0)
 		{
 			if (!Sale\Compatible\DiscountCompatibility::isInited())
@@ -4100,7 +4115,12 @@ class CAllSaleUser
 
 	function DeleteOldAgent($nDays, $speed = 0)
 	{
-		return Sale\Basket::deleteOldAgent($nDays, $speed);
+		$registry = Sale\Registry::getInstance(Sale\Registry::REGISTRY_TYPE_ORDER);
+
+		/** @var Sale\Basket $basketClass */
+		$basketClass = $registry->getBasketClassName();
+
+		return $basketClass::deleteOldAgent($nDays, $speed);
 	}
 
 	function OnUserDelete($userID)

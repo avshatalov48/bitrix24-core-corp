@@ -2,33 +2,69 @@
 namespace Bitrix\Timeman\Model\Schedule\ShiftPlan;
 
 use Bitrix\Timeman\Form\Schedule\ShiftPlanForm;
-use Bitrix\Timeman\Model\Schedule\Schedule;
+use Bitrix\Timeman\Helper\TimeHelper;
 use Bitrix\Timeman\Model\Schedule\Shift\Shift;
 
 class ShiftPlan extends EO_ShiftPlan
 {
 	public static function create(ShiftPlanForm $shiftPlanForm)
 	{
-		$entity = new static($default = false);
-		$entity->setUserId($shiftPlanForm->userId);
-		$entity->setShiftId($shiftPlanForm->shiftId);
-		$entity->setDateAssigned($shiftPlanForm->getDateAssigned());
-		return $entity;
+		$shiftPlan = new static($default = false);
+		$shiftPlan->setUserId($shiftPlanForm->userId);
+		$shiftPlan->setShiftId($shiftPlanForm->shiftId);
+		$shiftPlan->setDateAssigned($shiftPlanForm->getDateAssigned());
+		$shiftPlan->setDeleted(ShiftPlanTable::DELETED_NO);
+		$shiftPlan->setCreatedAt(TimeHelper::getInstance()->getUtcNowTimestamp());
+		return $shiftPlan;
 	}
 
-	/**
-	 * @return Schedule|null
-	 */
-	public function obtainSchedule()
+	public function markDeleted()
 	{
-		try
+		$this->setDeleted(ShiftPlanTable::DELETED_YES);
+		$this->setDeletedAt(TimeHelper::getInstance()->getUtcNowTimestamp());
+	}
+
+	public function restore()
+	{
+		$this->setDeleted(ShiftPlanTable::DELETED_NO);
+		$this->setDeletedAt(0);
+	}
+
+	public function isActive()
+	{
+		return !$this->isDeleted();
+	}
+
+	public function isDeleted()
+	{
+		return $this->getDeleted();
+	}
+
+	public function getDateAssignedUtcFormatted()
+	{
+		if (!$this->getDateAssignedUtc())
 		{
-			return $this->get('SCHEDULE');
+			return '';
 		}
-		catch (\Exception $exc)
+		return $this->getDateAssignedUtc()->format(ShiftPlanTable::DATE_FORMAT);
+	}
+
+	public function getDateAssignedTimestamp()
+	{
+		if (!$this->getDateAssignedUtc())
 		{
 			return null;
 		}
+		return $this->getDateAssignedUtc()->getTimestamp();
+	}
+
+	public function getDateAssignedUtc()
+	{
+		if (!$this->getDateAssigned())
+		{
+			return null;
+		}
+		return \DateTime::createFromFormat('Y-m-d H i s', $this->getDateAssigned()->format('Y-m-d') . ' 00 00 00', new \DateTimeZone('UTC'));
 	}
 
 	/**
@@ -38,11 +74,17 @@ class ShiftPlan extends EO_ShiftPlan
 	{
 		try
 		{
-			return $this->get('SHIFT');
+			return $this->get('SHIFT') ? $this->get('SHIFT') : null;
 		}
 		catch (\Exception $exc)
 		{
 			return null;
 		}
+	}
+
+	public function buildShiftStartDateTimeUtc($shift = null)
+	{
+		$shift = $this->obtainShift() ? $this->obtainShift() : $shift;
+		return $shift->buildUtcStartByShiftplan($this);
 	}
 }

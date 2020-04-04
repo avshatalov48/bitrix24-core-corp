@@ -69,7 +69,14 @@ if (
 		<div class="landing-livefeed-selector-content-control">
 			<a class="ui-btn ui-btn-md ui-btn-primary ui-btn-icon-add" id="slls_group_create"><?=Loc::getMessage("SLLS_TEMPLATE_CREATE_GROUP")?></a>
 		</div>
-	</div><?
+	</div>
+	<script>
+		BX.ready(function () {
+			BX.addCustomEvent("BX.Livefeed.Filter:apply", function(filterValues, filterPromise, filterParams) {
+				BX.SidePanel.Instance.getSliderByWindow(window).reload();
+			});
+		});
+	</script><?
 }
 else
 {
@@ -137,6 +144,6 @@ $APPLICATION->IncludeComponent('bitrix:ui.button.panel', '', [
 	'BUTTONS' => [
 		['TYPE' => 'save'],
 		['TYPE' => 'cancel']
-    ]
+	]
 ]);
 

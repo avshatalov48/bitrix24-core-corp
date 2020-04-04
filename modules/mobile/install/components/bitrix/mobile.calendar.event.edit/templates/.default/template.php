@@ -611,6 +611,8 @@ else: /*$arResult('GET_FROM_TO_MODE') == 'Y')*/?>
 				{
 					event_id: data.event_id
 				}, true);
+
+				BXMobileApp.Events.postToComponent("onCalendarEventChanged", [data]);
 				app.hidePopupLoader();
 
 				BXMPage.params.get({

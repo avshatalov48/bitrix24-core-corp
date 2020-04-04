@@ -55,7 +55,7 @@ this.BX.Sale = this.BX.Sale || {};
 	}
 
 	function _templateObject() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<input type=\"text\" value=\"", "\" onchange=\"", "\">"]);
+	  var data = babelHelpers.taggedTemplateLiteral(["<input type=\"text\" onchange=\"", "\"", ">"]);
 
 	  _templateObject = function _templateObject() {
 	    return data;
@@ -71,6 +71,7 @@ this.BX.Sale = this.BX.Sale || {};
 	    babelHelpers.classCallCheck(this, Barcode);
 	    this._id = props.id || 0;
 	    this._value = props.value || '';
+	    this._readonly = props.readonly;
 	    this._node = null;
 	    this._inputNode = null;
 	    this._isExist = null;
@@ -80,7 +81,9 @@ this.BX.Sale = this.BX.Sale || {};
 	  babelHelpers.createClass(Barcode, [{
 	    key: "render",
 	    value: function render() {
-	      this._inputNode = main_core.Tag.render(_templateObject(), this._value, this.onChange.bind(this));
+	      var readonly = this._readonly ? ' readonly="readonly"' : '';
+	      this._inputNode = main_core.Tag.render(_templateObject(), this.onChange.bind(this), readonly);
+	      this._inputNode.value = this._value;
 	      this._node = main_core.Tag.render(_templateObject2(), this._inputNode);
 	      return this._node;
 	    }
@@ -141,7 +144,7 @@ this.BX.Sale = this.BX.Sale || {};
 	}();
 
 	function _templateObject$1() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<input type=\"text\" value=\"", "\" onchange=\"", "\">"]);
+	  var data = babelHelpers.taggedTemplateLiteral(["<input type=\"text\" onchange=\"", "\"", ">"]);
 
 	  _templateObject$1 = function _templateObject() {
 	    return data;
@@ -157,17 +160,29 @@ this.BX.Sale = this.BX.Sale || {};
 	    babelHelpers.classCallCheck(this, Markingcode);
 	    this._id = props.id || 0;
 	    this._value = props.value || '';
+	    this._readonly = props.readonly;
+	    this._eventEmitter = new main_core.Event.EventEmitter();
 	  }
 
 	  babelHelpers.createClass(Markingcode, [{
 	    key: "render",
 	    value: function render() {
-	      return main_core.Tag.render(_templateObject$1(), this._value, this.onChange.bind(this));
+	      var readonly = this._readonly ? ' readonly="readonly"' : '',
+	          input = main_core.Tag.render(_templateObject$1(), this.onChange.bind(this), readonly);
+	      input.value = this._value;
+	      return input;
 	    }
 	  }, {
 	    key: "onChange",
 	    value: function onChange(e) {
 	      this._value = e.target.value;
+
+	      this._eventEmitter.emit('onChange', this);
+	    }
+	  }, {
+	    key: "onChangeSubscribe",
+	    value: function onChangeSubscribe(callback) {
+	      this._eventEmitter.subscribe('onChange', callback);
 	    }
 	  }, {
 	    key: "id",
@@ -203,7 +218,9 @@ this.BX.Sale = this.BX.Sale || {};
 	    this._basketId = props.basketId;
 	    this._storeId = props.storeId;
 	    this._isBarcodeMulti = props.isBarcodeMulti;
+	    this._readonly = props.readonly;
 	    this._items = this.createItems(props.rowData, props.rowsCount);
+	    this._eventEmitter = new main_core.Event.EventEmitter();
 	  }
 
 	  babelHelpers.createClass(Widget, [{
@@ -238,7 +255,9 @@ this.BX.Sale = this.BX.Sale || {};
 	      }
 
 	      if (this.isMarkingCodeNeeded) {
-	        result[Widget.COLUMN_TYPE_MARKING_CODE] = new Markingcode({});
+	        var markingCodeItem = new Markingcode({});
+	        markingCodeItem.onChangeSubscribe(this.onMarkingCodeItemChange.bind(this));
+	        result[Widget.COLUMN_TYPE_MARKING_CODE] = markingCodeItem;
 	      }
 
 	      return result;
@@ -255,9 +274,26 @@ this.BX.Sale = this.BX.Sale || {};
 	        if (!_this2._isBarcodeMulti) {
 	          _this2.synchronizeBarcodes(barcodeItem.value, barcodeItem.isExist);
 	        }
+
+	        _this2.onChange();
 	      }).catch(function (data) {
 	        BX.debug(data);
 	      });
+	    }
+	  }, {
+	    key: "onMarkingCodeItemChange",
+	    value: function onMarkingCodeItemChange() {
+	      this.onChange();
+	    }
+	  }, {
+	    key: "onChange",
+	    value: function onChange() {
+	      this._eventEmitter.emit('onChange', this);
+	    }
+	  }, {
+	    key: "onChangeSubscribe",
+	    value: function onChangeSubscribe(callback) {
+	      this._eventEmitter.subscribe('onChange', callback);
 	    }
 	  }, {
 	    key: "synchronizeBarcodes",
@@ -292,17 +328,21 @@ this.BX.Sale = this.BX.Sale || {};
 	        var barcodeItem = new Barcode({
 	          id: rowData.id,
 	          value: rowData.barcode,
-	          widget: this
+	          widget: this,
+	          readonly: this._readonly
 	        });
 	        barcodeItem.onChangeSubscribe(this.onBarcodeItemChange.bind(this));
 	        result[Widget.COLUMN_TYPE_BARCODE] = barcodeItem;
 	      }
 
 	      if (this.isMarkingCodeNeeded()) {
-	        result[Widget.COLUMN_TYPE_MARKING_CODE] = new Markingcode({
+	        var markingCodeItem = new Markingcode({
 	          id: rowData.id,
-	          value: rowData.markingCode
+	          value: rowData.markingCode,
+	          readonly: this._readonly
 	        });
+	        markingCodeItem.onChangeSubscribe(this.onMarkingCodeItemChange.bind(this));
+	        result[Widget.COLUMN_TYPE_MARKING_CODE] = markingCodeItem;
 	      }
 
 	      return result;

@@ -5,6 +5,7 @@ use Bitrix\Main\ErrorCollection;
 use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Context;
+use Bitrix\Main\Mail\Address;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\Web\Uri;
 
@@ -142,6 +143,21 @@ class SenderLetterEditComponent extends CBitrixComponent
 					);
 					$value = implode(',', $value);
 					break;
+				case Message\ConfigurationOption::TYPE_AUDIO:
+					$value = $message->getAudioValue($option->getCode(), $value);
+					break;
+				case Message\ConfigurationOption::TYPE_EMAIL:
+					if (\Bitrix\Sender\Integration\Sender\AllowedSender::isAllowed($value))
+					{
+						$address = new Address();
+						$address->set($value);
+						$value = $address->get();
+					}
+					else
+					{
+						$value = "";
+					}
+					break;
 			}
 			$option->setValue($value);
 		}
@@ -248,12 +264,6 @@ class SenderLetterEditComponent extends CBitrixComponent
 
 	protected function preparePost()
 	{
-		// agreement accept check
-		if(!Security\User::current()->isAgreementAccepted())
-		{
-			$this->errors->setError(new Error(Security\Agreement::getErrorText()));
-		}
-
 		// prepare letter
 		$data = array(
 			'TITLE' => $this->request->get('TITLE'),
@@ -262,10 +272,11 @@ class SenderLetterEditComponent extends CBitrixComponent
 			'TEMPLATE_TYPE' => $this->request->get('TEMPLATE_TYPE'),
 			'TEMPLATE_ID' => $this->request->get('TEMPLATE_ID'),
 			'IS_TRIGGER' => $this->arParams['IS_TRIGGER'] ? 'Y' : 'N',
+			'UPDATED_BY' => Security\User::current()->getId()
 		);
 		if (!$this->letter->getId())
 		{
-			$data['CAMPAIGN_ID'] = $this->arParams['CAMPAIGN_ID'] ?: Entity\Campaign::getDefaultId();
+			$data['CAMPAIGN_ID'] = $this->arParams['CAMPAIGN_ID'] ?: Entity\Campaign::getDefaultId(SITE_ID);
 			$data['CREATED_BY'] = Security\User::current()->getId();
 		}
 		$this->letter->mergeData($data);
@@ -296,8 +307,22 @@ class SenderLetterEditComponent extends CBitrixComponent
 		// redirect
 		if ($this->errors->isEmpty())
 		{
-			$url = $this->arParams['GOTO_URI_AFTER_SAVE'] ?: $this->arParams['PATH_TO_EDIT'];
-			$url = str_replace('#id#', $this->letter->getId(), $url);
+			if ($this->request->get('apply'))
+			{
+				if ($this->arParams['ID'])
+				{
+					$url = $this->request->getRequestUri();
+				}
+				else
+				{
+					$url = str_replace('#id#', $this->letter->getId(), $this->arParams['PATH_TO_EDIT']);
+				}
+			}
+			else
+			{
+				$url = $this->arParams['GOTO_URI_AFTER_SAVE'] ?: $this->arParams['PATH_TO_EDIT'];
+				$url = str_replace('#id#', $this->letter->getId(), $url);
+			}
 			$uri = new Uri($url);
 			if ($this->arParams['IFRAME'] == 'Y')
 			{
@@ -379,7 +404,7 @@ class SenderLetterEditComponent extends CBitrixComponent
 		}
 
 		// get campaign
-		$this->arResult['CAMPAIGN_ID'] = $this->arParams['CAMPAIGN_ID'] ?: $this->letter->getCampaignId() ?: Entity\Campaign::getDefaultId();
+		$this->arResult['CAMPAIGN_ID'] = $this->arParams['CAMPAIGN_ID'] ?: $this->letter->getCampaignId() ?: Entity\Campaign::getDefaultId(SITE_ID);
 
 		// get campaigns
 		$this->arResult['CAMPAIGNS'] = array();

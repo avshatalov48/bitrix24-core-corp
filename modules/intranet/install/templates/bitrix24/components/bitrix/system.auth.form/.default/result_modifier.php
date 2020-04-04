@@ -1,4 +1,7 @@
-<?if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+<?
+use Bitrix\Main\Loader;
+
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
 $arParams["PATH_TO_SONET_PROFILE"] = (isset($arParams["PATH_TO_SONET_PROFILE"]) ? $arParams["PATH_TO_SONET_PROFILE"] : SITE_DIR."company/personal/user/#user_id#/");
 $arParams["PATH_TO_SONET_PROFILE_EDIT"] = (isset($arParams["PATH_TO_SONET_PROFILE_EDIT"]) ? $arParams["PATH_TO_SONET_PROFILE_EDIT"] : SITE_DIR."company/personal/user/#user_id#/edit/");
@@ -144,4 +147,10 @@ if (CModule::IncludeModule('bitrix24') && in_array(CBitrix24::getLicenseType(), 
 		$arResult["LICENSE_BUTTON_COUNTER_URL"] = CBitrix24::PATH_COUNTER;
 		$arResult["HOST_NAME"] = BX24_HOST_NAME;
 	}
+}
+
+$arResult["HELPDESK_URL"] = "";
+if (Loader::includeModule("ui"))
+{
+	$arResult["HELPDESK_URL"] = \Bitrix\UI\Util::getHelpdeskUrl(true);
 }

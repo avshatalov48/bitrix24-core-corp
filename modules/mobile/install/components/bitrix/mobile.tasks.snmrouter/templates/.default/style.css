@@ -928,6 +928,12 @@ input.mobile-grid-field-subtasks-more-input[type=checkbox]:checked ~ .mobile-gri
 	bottom: 11px;
 	width: 46px;
 	height: 46px;
+	opacity: 1;
+}
+
+.task-detail-left-bottom-options-button.flow-button-hidden {
+	opacity: 0;
+	transition: 270ms linear opacity;
 }
 
 .task-detail-right-bottom-down-button {
@@ -940,6 +946,12 @@ input.mobile-grid-field-subtasks-more-input[type=checkbox]:checked ~ .mobile-gri
 	width: 60px;
 	height: 60px;
 	z-index: 5;
+	opacity: 1;
+}
+
+.task-detail-right-bottom-down-button.flow-button-hidden {
+	opacity: 0;
+	transition: 270ms linear opacity;
 }
 
 .task-detail-top-button-up-button {

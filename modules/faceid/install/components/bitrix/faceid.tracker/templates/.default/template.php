@@ -228,7 +228,7 @@ foreach ($jsMessagesCodes as $code)
 		<div class="faceid-tracker-profile-search-found-more">
 			<div class="faceid-tracker-profile-search-found-more-header">
 				<div class="faceid-tracker-profile-search-found-more-item"><?=Loc::getMessage('FACEID_TRACKER_CMP_VK_FOUND_COUNT')?></div>
-				<div class="faceid-tracker-profile-search-found-more-count"><?=count($vks)?></div>
+				<div class="faceid-tracker-profile-search-found-more-count"></div>
 			</div>
 			<div class="faceid-tracker-profile-search-found-container">
 

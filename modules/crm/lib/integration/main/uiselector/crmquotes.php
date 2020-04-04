@@ -216,6 +216,7 @@ class CrmQuotes extends \Bitrix\Main\UI\Selector\EntityBase
 
 			$filter = array(
 				'SEARCH_CONTENT' => $search,
+				'__ENABLE_SEARCH_CONTENT_PHONE_DETECTION' => false,
 				'__INNER_FILTER_1' => $filter
 			);
 

@@ -4,6 +4,7 @@ use Bitrix\Timeman\Form\Worktime\WorktimeRecordForm;
 use Bitrix\Timeman\Helper\TimeHelper;
 use Bitrix\Timeman\Model\Worktime\Record\WorktimeRecord;
 use Bitrix\Timeman\Model\Worktime\Record\WorktimeRecordTable;
+use Bitrix\Timeman\Service\DependencyManager;
 use Bitrix\Timeman\UseCase\Worktime\Manage;
 use Bitrix\Timeman\Service\Worktime\Result\WorktimeServiceResult;
 
@@ -449,7 +450,16 @@ class CTimeManUser
 
 		if ($lastEntry = $this->_GetLastData())
 		{
-			$recommendedTimestamp = WorktimeRecord::getRecommendedWorktimeStopTimestamp($lastEntry);
+			$schedule = DependencyManager::getInstance()
+				->getScheduleProvider()
+				->getScheduleWithShifts($lastEntry['SCHEDULE_ID']);
+			$shift = null;
+
+			if ($schedule && $lastEntry['SHIFT_ID'] > 0)
+			{
+				$shift = $schedule->obtainShiftByPrimary($lastEntry['SHIFT_ID']);
+			}
+			$recommendedTimestamp = WorktimeRecord::getRecommendedWorktimeStopTimestamp($lastEntry, $schedule, $shift);
 			if ($recommendedTimestamp > 0)
 			{
 				return TimeHelper::getInstance()->convertUtcTimestampToDaySeconds(
@@ -507,24 +517,41 @@ class CTimeManUser
 	// check if user forgot to close wd
 	public function isDayExpired()
 	{
-		return WorktimeRecord::isRecordExpired($this->_GetLastData(true));
+		$recordData = $this->_GetLastData(true);
+		if (!$recordData)
+		{
+			return false;
+		}
+		$schedule = DependencyManager::getInstance()
+			->getScheduleProvider()
+			->getScheduleWithShifts($recordData['SCHEDULE_ID']);
+		$shift = null;
+
+		if ($schedule && $recordData['SHIFT_ID'] > 0)
+		{
+			$shift = $schedule->obtainShiftByPrimary($recordData['SHIFT_ID']);
+		}
+		return WorktimeRecord::isRecordExpired($recordData, $schedule, $shift);
 	}
 
+	/**
+	 * @deprecated
+	 */
 	public function OpenAction($bSkipCheck = false)
 	{
 		$list = \Bitrix\Timeman\Service\DependencyManager::getInstance()
 			->getWorktimeActionList();
 		$actionList = $list->buildPossibleActionsListForUser($this->USER_ID);
 
-		if (empty($actionList->getStartActions()) && empty($actionList->getRelaunchActions()) && empty($actionList->getContinueActions()))
+		if (empty($actionList->getStartActions()) && empty($actionList->getReopenActions()) && empty($actionList->getContinueActions()))
 		{
 			return false;
 		}
-		if (!empty($actionList->getRelaunchActions()) && !empty($actionList->getStartActions()))
+		if (!empty($actionList->getReopenActions()) && !empty($actionList->getStartActions()))
 		{
 			return 'OPEN'; // as main action
 		}
-		if (!empty($actionList->getRelaunchActions()) || !empty($actionList->getContinueActions()))
+		if (!empty($actionList->getReopenActions()) || !empty($actionList->getContinueActions()))
 		{
 			return 'REOPEN';
 		}

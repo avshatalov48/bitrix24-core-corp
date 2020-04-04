@@ -569,7 +569,7 @@
 }
 
 .ui-action-panel-wrapper .ui-btn[class*="ui-btn-icon-"],
-.ui-action-panel-wrapper .ui-btn-double[class*="ui-btn-icon-"] .ui-btn-main {
+.ui-action-panel-wrapper .ui-btn-split[class*="ui-btn-icon-"] .ui-btn-main {
 	transition: .1s;
 	padding-left: 37px;
 }

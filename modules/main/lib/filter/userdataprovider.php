@@ -78,10 +78,8 @@ class UserDataProvider extends EntityDataProvider
 				$USER->canDoOperation('edit_all_users')
 				&& (
 					!ModuleManager::isModuleInstalled('extranet')
-					|| (
-						strlen(Option::get("extranet", "extranet_site")) > 0
-						&& !self::extranetSite()
-					)
+					|| strlen(Option::get("extranet", "extranet_site")) <= 0 // master hasn't been run
+					|| !self::extranetSite()
 				)
 			);
 		}
@@ -354,6 +352,9 @@ class UserDataProvider extends EntityDataProvider
 			],
 			'COMPANY' => [
 				'whiteList' => 'WORK_COMPANY'
+			],
+			'WORK_DEPARTMENT' => [
+				'whiteList' => 'WORK_DEPARTMENT'
 			],
 		];
 

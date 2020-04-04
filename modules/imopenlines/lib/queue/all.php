@@ -53,6 +53,18 @@ class All extends Queue
 	}
 
 	/**
+	 * Returns the default queue time
+	 *
+	 * @return int
+	 */
+	public function getQueueTime()
+	{
+		$queueTime = ImOpenLines\Queue::UNDISTRIBUTED_QUEUE_TIME;
+
+		return $queueTime;
+	}
+
+	/**
 	 * @param int $currentOperator
 	 *
 	 * @return array
@@ -63,11 +75,13 @@ class All extends Queue
 	 */
 	public function getOperatorsQueue($currentOperator = 0)
 	{
+		$queueTime = $this->getQueueTime();
+
 		$result = [
 			'RESULT' => false,
 			'OPERATOR_ID' => 0,
 			'OPERATOR_LIST' => [],
-			'DATE_QUEUE' => (new DateTime())->add(ImOpenLines\Queue::UNDISTRIBUTED_QUEUE_TIME . ' SECONDS'),
+			'DATE_QUEUE' => (new DateTime())->add($queueTime . ' SECONDS'),
 			'QUEUE_HISTORY' => [],
 		];
 
@@ -99,7 +113,7 @@ class All extends Queue
 				'RESULT' => true,
 				'OPERATOR_ID' => 0,
 				'OPERATOR_LIST' => $operatorList,
-				'DATE_QUEUE' => (new DateTime())->add(ImOpenLines\Queue::UNDISTRIBUTED_QUEUE_TIME . ' SECONDS'),
+				'DATE_QUEUE' => (new DateTime())->add($queueTime . ' SECONDS'),
 				'QUEUE_HISTORY' => $queueHistory,
 			];
 		}
@@ -161,7 +175,13 @@ class All extends Queue
 
 				$updateSession = [
 					'OPERATOR_ID' => $resultOperatorQueue['OPERATOR_ID'],
-					'QUEUE_HISTORY' => $resultOperatorQueue['QUEUE_HISTORY']
+					'QUEUE_HISTORY' => $resultOperatorQueue['QUEUE_HISTORY'],
+
+					//TODO: Fix. You need to rework the status bar. Not optimal. Called in several other places.
+					'OPERATOR_FROM_CRM' => 'N',
+
+					//TODO: Fix. Hard-wired status. Potentially bad decision.
+					'STATUS' => Session::STATUS_SKIP
 				];
 
 				$this->sessionManager->update($updateSession);

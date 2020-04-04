@@ -24,6 +24,16 @@ if (!$arResult["Permissions"]['view'])
 	return;
 }
 
+$this->SetViewTarget('inside_pagetitle');
+$APPLICATION->includeComponent(
+	'bitrix:intranet.binding.menu',
+	'',
+	array(
+		'SECTION_CODE' => 'user_detail',
+		'MENU_CODE' => 'top_menu'
+	)
+);
+$this->EndViewTarget();
 
 if (
 	isset($arResult["Urls"]["CommonSecurity"])
@@ -279,6 +289,36 @@ if (
 		<?
 		}
 
+		if (!empty($arResult["DISK_INFO"]))
+		{
+		?>
+		<div class="intranet-user-profile-column-block">
+			<div class="intranet-user-profile-apps">
+				<div class="intranet-user-profile-desktop-block">
+					<?=Loc::getMessage("INTRANET_USER_PROFILE_DISK_INSTALLED")?>
+					<?
+					if (
+						isset($arResult["DISK_INFO"]["INSTALLATION_DATE"])
+						&& !empty(($arResult["DISK_INFO"]["INSTALLATION_DATE"]))
+					)
+					{
+						echo $arResult["DISK_INFO"]["INSTALLATION_DATE"];
+					}
+
+					if (
+						isset($arResult["DISK_INFO"]["SPACE"])
+						&& !empty(($arResult["DISK_INFO"]["SPACE"]))
+					)
+					{
+						echo ", ".Loc::getMessage("INTRANET_USER_PROFILE_DISK_SPACE", array("#VALUE#" => $arResult["DISK_INFO"]["SPACE"]));
+					}
+					?>
+				</div>
+			</div>
+		</div>
+		<?
+		}
+
 		if (
 			!empty($arResult["Gratitudes"])
 			&& !in_array($arResult["User"]["STATUS"], ['email', 'extranet'])
@@ -352,6 +392,7 @@ if (
 				"ENABLE_SECTION_EDIT" => false,
 				"ENABLE_SECTION_CREATION" => false,
 				"ENABLE_SECTION_DRAG_DROP" => true,
+				"FORCE_DEFAULT_SECTION_NAME" => true,
 				"ENABLE_PERSONAL_CONFIGURATION_UPDATE" => $arResult["EnablePersonalConfigurationUpdate"],
 				"ENABLE_COMMON_CONFIGURATION_UPDATE" => $arResult["EnableCommonConfigurationUpdate"],
 				"ENABLE_SETTINGS_FOR_ALL" => $arResult["EnableSettingsForAll"],
@@ -627,8 +668,6 @@ if ($arResult["adminRightsRestricted"])
 	</div>
 <?
 }
-
-//include($_SERVER["DOCUMENT_ROOT"].$this->GetFolder()."/settings.php");
 ?>
 
 <script>
@@ -714,7 +753,8 @@ if ($arResult["adminRightsRestricted"])
 		initialFields: <?=CUtil::PhpToJSObject($arResult["User"])?>,
 		isCloud: '<?=$arResult["isCloud"] ? "Y" : "N"?>',
 		gridId: '<?='INTRANET_USER_GRID_'.SITE_ID?>',
-		isCurrentUserAdmin: '<?=$arResult["IS_CURRENT_USER_ADMIN"] ? "Y" : "N"?>'
+		isCurrentUserAdmin: '<?=$arResult["IS_CURRENT_USER_ADMIN"] ? "Y" : "N"?>',
+		voximplantEnablePhones: <?=CUtil::PhpToJSObject($arResult["User"]["VOXIMPLANT_ENABLE_PHONES"])?>
 	});
 </script>
 

@@ -106,7 +106,8 @@ if (!$arResult["AJAX_CALL"])
 				'ENABLE_CALENDAR_EVENT_ADD' => true,
 				'ENABLE_EMAIL_ADD' => true,
 				'ENABLE_TOOLBAR' => false,
-				'EDITOR_ITEMS' => array()
+				'EDITOR_ITEMS' => array(),
+				'SKIP_VISUAL_COMPONENTS' => 'Y'
 			),
 			null,
 			array('HIDE_ICONS' => 'Y')
@@ -512,7 +513,10 @@ if (!$arResult["AJAX_CALL"])
 		?>
 		BX.ready(function(){
 			<?
-			if ($arParams["SET_LOG_COUNTER"] != "N")
+			if (
+				$arParams["SET_LOG_COUNTER"] != "N"
+				&& !(isset($arResult["EXPERT_MODE_SET"]) && $arResult["EXPERT_MODE_SET"])
+			)
 			{
 				?>
 				BX.onCustomEvent(window, 'onSonetLogCounterClear', [BX.message('sonetLCounterType')]);
@@ -684,7 +688,7 @@ if (
 		$event_date_log_ts = (isset($arEvent["LOG_DATE_TS"]) ? $arEvent["LOG_DATE_TS"] : (MakeTimeStamp($arEvent["LOG_DATE"]) - intval($arResult["TZ_OFFSET"])));
 
 		$is_unread = (
-			$arParams["SHOW_UNREAD"] == "Y"
+			$arResult["SHOW_UNREAD"] == "Y"
 			&& ($arResult["COUNTER_TYPE"] == "**" || $arResult["COUNTER_TYPE"] == "CRM_**" || $arResult["COUNTER_TYPE"] == "blog_post")
 			&& $arEvent["USER_ID"] != $arResult["currentUserId"]
 			&& intval($arResult["LAST_LOG_TS"]) > 0
@@ -761,7 +765,7 @@ if (
 				"MARK_NEW_COMMENTS" => (
 					$USER->isAuthorized()
 					&& $arResult["COUNTER_TYPE"] == "**"
-					&& $arParams["SHOW_UNREAD"] == "Y"
+					&& $arResult["SHOW_UNREAD"] == "Y"
 				)
 					? "Y"
 					: "N",
@@ -835,7 +839,12 @@ if (
 		{
 			$arComponentParams = array_merge($arParams, array(
 				"LOG_ID" => $arEvent["ID"],
-				"LAST_LOG_TS" => ($arParams["SET_LOG_COUNTER"] == "Y" ? $arResult["LAST_LOG_TS"] : 0),
+				"LAST_LOG_TS" => (
+					$arParams["SET_LOG_COUNTER"] == "Y"
+					&& !(isset($arResult["EXPERT_MODE_SET"]) && $arResult["EXPERT_MODE_SET"])
+						? $arResult["LAST_LOG_TS"] :
+						0
+				),
 				"COUNTER_TYPE" => $arResult["COUNTER_TYPE"],
 				"AJAX_CALL" => $arResult["AJAX_CALL"],
 				"bReload" => $arResult["bReload"],
@@ -1081,7 +1090,7 @@ else
 			"JS" => $arAdditionalData["SCRIPTS"],
 			"CSS" => $arAdditionalData["CSS"]
 		),
-		"LAST_TS" => ($arResult["dateLastPageTS"] ? intval($arResult["dateLastPageTS"]) : 0),
+		"LAST_TS" => ($arResult["LAST_ENTRY_DATE_TS"] ? intval($arResult["LAST_ENTRY_DATE_TS"]) : 0),
 		"LAST_ID" => ($arResult["dateLastPageId"] ? intval($arResult["dateLastPageId"]) : 0)
 	));
 	CMain::FinalActions($strText);

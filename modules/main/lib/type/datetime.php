@@ -204,9 +204,13 @@ class DateTime extends Date
 	 *
 	 * @return string
 	 */
-	protected static function getCultureFormat(Context\Culture $culture)
+	protected static function getCultureFormat(Context\Culture $culture = null)
 	{
-		return $culture->getDateTimeFormat();
+		if($culture)
+		{
+			return $culture->getDateTimeFormat();
+		}
+		return "DD.MM.YYYY HH:MI:SS";
 	}
 
 	/**

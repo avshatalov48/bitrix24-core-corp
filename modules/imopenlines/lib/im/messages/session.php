@@ -84,4 +84,32 @@ class Session
 
 		return $result;
 	}
+
+	/**
+	 * @param $chatId
+	 * @param $blockReason
+	 * @return bool|int|null
+	 * @throws \Bitrix\Main\LoaderException
+	 */
+	public static function sendMessageTimeLimit(int $chatId, string $blockReason)
+	{
+		if (\Bitrix\Main\Loader::includeModule('ui'))
+		{
+			$messageFields = [
+				'SYSTEM' => 'Y',
+				'FROM_USER_ID' => 0,
+				'TO_CHAT_ID' => $chatId,
+				'MESSAGE' => Loc::getMessage('IMOL_MESSAGE_SESSION_REPLY_TIME_LIMIT_'.$blockReason, [
+					'#A_START#' => '[URL=' . \Bitrix\UI\Util::getArticleUrlByCode('10632966') . ']',
+					'#A_END#' => '[/URL]',
+				]),
+			];
+
+			$result = Im::addMessage($messageFields);
+
+			return $result;
+		}
+
+		return null;
+	}
 }

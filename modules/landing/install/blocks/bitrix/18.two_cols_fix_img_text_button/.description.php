@@ -16,7 +16,7 @@ return array(
 		'.landing-block-node-img' => array(
 			'name' => Loc::getMessage('LANDING_BLOCK_7_TWO_COLS_FIX_IMG_TEXT_BUTTON_NODES_LANDINGBLOCKIMG'),
 			'type' => 'img',
-			'dimensions' => array('width' => 874, 'height' => 600),
+			'dimensions' => array('width' => 255),
 		),
 		'.landing-block-node-title' => array(
 			'name' => Loc::getMessage('LANDING_BLOCK_7_TWO_COLS_FIX_IMG_TEXT_BUTTON_NODES_LANDINGBLOCKTITLE'),

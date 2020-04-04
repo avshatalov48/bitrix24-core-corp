@@ -352,9 +352,9 @@ $this->addExternalJs($this->getFolder() . '/config_popup.js');
 </script>
 
 <script>
+	BX.message(<?=\Bitrix\Main\Web\Json::encode($messages)?>);
 	BX.ready(function()
 	{
-		BX.message(<?=\Bitrix\Main\Web\Json::encode($messages)?>);
 		var userSelector = BX.getClass('BX.Crm.Widget.Custom.SaleTarget.UserSelector');
 		if (userSelector)
 		{

@@ -782,7 +782,7 @@ class CBPTask2Activity
 				"BaseType" => "bool"
 			),
 			"ADD_IN_REPORT" => array(
-				"Name" => GetMessage("BPTA1A_ADD_TO_REPORT"),
+				"Name" => GetMessage("BPTA1A_ADD_TO_REPORT_2"),
 				"Type" => "B",
 				"Editable" => true,
 				"Required" => false,

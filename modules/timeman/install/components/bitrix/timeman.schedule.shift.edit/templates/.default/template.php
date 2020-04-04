@@ -45,33 +45,43 @@ $shiftFormName = htmlspecialcharsbx($shiftForm->getFormName());
 		</div>
 		<div class="timeman-schedule-form-worktime-inner">
 			<div class="timeman-schedule-form-worktime-item">
-				<div class="timeman-schedule-form-worktime-title"><?= htmlspecialcharsbx(Loc::getMessage('TIMEMAN_SHIFT_EDIT_SHIFT_DURATION_TITLE')); ?></div>
+				<div class="timeman-schedule-form-worktime-title"><?=
+					htmlspecialcharsbx(Loc::getMessage('TIMEMAN_SHIFT_EDIT_SHIFT_WORK_TIME_TITLE')); ?></div>
 				<div class="timeman-schedule-form-worktime-value">
-				<span class="timeman-schedule-form-worktime-value-text"
-						data-role="timeman-shift-work-time-toggle">
-					<input name="<?= $shiftFormName; ?>[startTimeFormatted]"
-							data-role="timeman-shift-link-start-time"
-							class=" timeman-schedule-form-worktime-input-value-text"
-							type="text"
-							value="<?= htmlspecialcharsbx($shiftForm->getFormattedStartTime()); ?>">
-					-
-					<input name="<?= $shiftFormName; ?>[endTimeFormatted]"
-							class=" timeman-schedule-form-worktime-input-value-text"
-							type="text" data-role="timeman-shift-link-end-time"
-							value="<?= htmlspecialcharsbx($shiftForm->getFormattedEndTime()); ?>">
-				</span>
+					<span class="timeman-schedule-form-worktime-value-text"
+							data-role="timeman-shift-work-time-toggle">
+						<span class="timeman-schedule-form-worktime-input-value-text"
+								data-role="timeman-shift-link-start-time"><?=
+							htmlspecialcharsbx($shiftForm->getFormattedStartTime())
+							?></span>
+						<input name="<?= $shiftFormName . "[startTimeFormatted]" ?>"
+								autocomplete="off"
+								data-role="start-seconds-input"
+								type="hidden"
+								value="<?= htmlspecialcharsbx($shiftForm->getFormattedStartTime()) ?>">
+						-
+						<span class="timeman-schedule-form-worktime-input-value-text"
+								data-role="timeman-shift-link-end-time"><?=
+							htmlspecialcharsbx($shiftForm->getFormattedEndTime())
+							?></span>
+						<input name="<?= $shiftFormName . "[endTimeFormatted]" ?>"
+								data-role="end-seconds-input"
+								autocomplete="off"
+								type="hidden"
+								value="<?= htmlspecialcharsbx($shiftForm->getFormattedEndTime()) ?>">
+					</span>
 				</div>
 			</div>
 			<div class="timeman-schedule-form-worktime-item">
 				<div class="timeman-schedule-form-worktime-title"><?= htmlspecialcharsbx(Loc::getMessage('TIMEMAN_SHIFT_EDIT_BREAK_DURATION_TITLE')); ?></div>
 				<div class="timeman-schedule-form-worktime-value">
-				<span class="timeman-schedule-form-worktime-value-text"
-						data-role="timeman-shift-break-toggle">
+					<span class="timeman-schedule-form-worktime-value-text"
+							data-role="timeman-shift-break-toggle"><?php echo
+						htmlspecialcharsbx($shiftForm->getFormattedBreakDuration()); ?></span>
 					<input name="<?= $shiftFormName; ?>[breakDurationFormatted]"
+							type="hidden"
 							data-role="timeman-shift-link-break-time"
-							class="timeman-schedule-form-worktime-input-value-text"
 							value="<?= htmlspecialcharsbx($shiftForm->getFormattedBreakDuration()); ?>">
-				</span>
 					<div class="timeman-schedule-form-worktime-duration">
 						<?= htmlspecialcharsbx(Loc::getMessage('TIMEMAN_SHIFT_EDIT_BREAK_DURATION_TOTAL_TITLE')); ?>
 						<span data-role="duration-without-break"></span>

@@ -1,0 +1,5 @@
+.bx-ius-layout .bx-ius-structure-link {font-size: 12px; text-decoration: none; padding-left: 20px; background-image: url(/bitrix/components/bitrix/intranet.user.selector/templates/.default/images/plus.gif); background-position: 3px center; background-repeat: no-repeat; line-height: 25px;}
+
+.mli-search-results {background-color: white; border: solid 1px #333333; margin: 0px; padding: 2px; font-size: 12px;}
+.mli-search-result {cursor: pointer; padding: 2px; margin: 1px;}
+.mli-search-current {background-color: #EEEEEE;}

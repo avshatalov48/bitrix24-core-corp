@@ -62,8 +62,16 @@ class Mail
 	 */
 	public function getFolderList($storage)
 	{
-		if ($storage instanceof \Bitrix\Disk\Storage && count($this->folderList[$storage->getId()]) == 0)
+		if (
+			$storage instanceof \Bitrix\Disk\Storage &&
+			$storage->getId() > 0 &&
+			(
+				!isset($this->folderList[$storage->getId()]) ||
+				empty($this->folderList[$storage->getId()])
+			)
+		)
 		{
+			$this->folderList[$storage->getId()] = array();
 			if ($this->isMeasureAvailable())
 			{
 				$this->folderList[$storage->getId()][] = $storage->getRootObject();

@@ -24,7 +24,7 @@ ob_start();
 ?>
 <!--RCRD_#FULL_ID#-->
 <a id="com#ID#" name="com#ID#" bx-mpl-full-id="#FULL_ID#"></a>
-<div id="record-#FULL_ID#" class="post-comment-block post-comment-block-#NEW# post-comment-block-#APPROVED# #RATING_NONEMPTY_CLASS#" <?=($arResult["ajax_comment"] == $comment["ID"] ? ' data-send="Y"' : '')?> <?
+<div id="record-#FULL_ID#" class="post-comment-block post-comment-block-#NEW# post-comment-block-#APPROVED# #RATING_NONEMPTY_CLASS# mobile-longtap-menu" <?=($arResult["ajax_comment"] == $comment["ID"] ? ' data-send="Y"' : '')?> <?
 	?>bx-mpl-id="#FULL_ID#" <?
 	?>bx-mpl-reply-show="#SHOW_POST_FORM#" <?
 	?>bx-mpl-view-url="#VIEW_URL###ID#" bx-mpl-view-show="#VIEW_SHOW#" <?
@@ -35,7 +35,10 @@ ob_start();
 	?>bx-mpl-post-entity-type="#POST_ENTITY_TYPE#" <?
 	?>bx-mpl-comment-entity-type="#COMMENT_ENTITY_TYPE#" <?
 	?>bx-mpl-vote-id="#VOTE_ID#" <?
-	?>onclick="return mobileShowActions('#ENTITY_XML_ID#', '#ID#', arguments[0])" <?
+	?>bx-longtap-menu-eventname="BX.MPL:onGetMenuItems" <?
+	?>bx-mpl-entity-xml-id="#ENTITY_XML_ID#" <?
+	?>bx-mpl-comment-id="#ID#" <?
+	?>onclick="mobileShowActions('#ENTITY_XML_ID#', '#ID#', arguments[0])" <?
 ?>>
 	#BEFORE_RECORD#
 	<script>

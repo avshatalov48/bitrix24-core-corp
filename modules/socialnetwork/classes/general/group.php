@@ -2,6 +2,7 @@
 IncludeModuleLangFile(__FILE__);
 
 use Bitrix\Main\ModuleManager;
+use Bitrix\Socialnetwork\UserToGroupTable;
 
 class CAllSocNetGroup
 {
@@ -199,7 +200,17 @@ class CAllSocNetGroup
 
 		if ($bSuccess)
 		{
-			$bSuccess = $DB->Query("DELETE FROM b_sonet_user2group WHERE GROUP_ID = ".$ID."", true);
+			$res = UserToGroupTable::getList([
+				'filter' => [
+					'=GROUP_ID' => $ID
+				],
+				'select' => [ 'USER_ID' ]
+			]);
+			while($relationFields = $res->fetch())
+			{
+				\CSocNetSearch::onUserRelationsChange($relationFields['USER_ID']);
+			}
+			$bSuccess = $DB->Query("DELETE FROM b_sonet_user2group WHERE GROUP_ID = ".$ID, true);
 		}
 
 		if ($bSuccess)
@@ -276,7 +287,15 @@ class CAllSocNetGroup
 		}
 		if ($bSuccess)
 		{
-			$bSuccess = $DB->Query("DELETE FROM b_sonet_log_right WHERE GROUP_CODE LIKE 'SG".$ID."\_%' OR GROUP_CODE = 'SG".$ID."'", true);
+			$bSuccess = $DB->Query("DELETE FROM b_sonet_log_right WHERE GROUP_CODE LIKE 'OSG".$ID."\_%'", true);
+		}
+		if ($bSuccess)
+		{
+			$bSuccess = $DB->Query("DELETE FROM b_sonet_log_right WHERE GROUP_CODE LIKE 'SG".$ID."\_%'", true);
+		}
+		if ($bSuccess)
+		{
+			$bSuccess = $DB->Query("DELETE FROM b_sonet_log_right WHERE GROUP_CODE = 'SG".$ID."'", true);
 		}
 		if ($bSuccess)
 		{

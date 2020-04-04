@@ -190,7 +190,7 @@
 }
 
 .bx-im-users-wrap {
-	bottom: 54px;
+	bottom: 60px;
 	right: 0;
 	position: absolute;
 	top: 164px;
@@ -246,6 +246,11 @@
 	line-height: 46px;
 	text-align: center;
 	display: block;
+}
+
+.bx-im-btn-wrap {
+	height: 60px;
+	line-height: 60px;
 }
 
 .bx-im-btn-wrap-no-action, .bx-im-btn-wrap-no-action:hover {
@@ -354,11 +359,8 @@
 	background: url(images/im-bar-sprite.png) no-repeat -1px -175px #41c6f1;
 }
 
-
 .bx-im-bottom-block {
 	bottom: 0;
-	height: 48px;
-	padding-top: 5px;
 	position: absolute;
 	right: 0;
 	width: 100%;
@@ -379,7 +381,7 @@
 
 .bx-im-btn {
 	display: inline-block;
-	margin-top: 6px;
+	margin-top: 12px;
 	height: 34px;
 	width: 34px;
 	border-radius: 50%;

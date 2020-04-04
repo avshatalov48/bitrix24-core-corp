@@ -88,10 +88,11 @@ class Instagram
 			}
 			elseif (!empty($value['extra']['last_message_id'])) //check that it is a new version
 			{
-				$chatData = explode('.', $value['chat']['id']);
-				if (!empty($chatData[1]))
+				$nickNameStartPosition = strpos($value['chat']['id'], '.');
+				$nickName = substr($value['chat']['id'], $nickNameStartPosition + 1);
+				if ($nickNameStartPosition > 0)
 				{
-					$value['message']['text'] = '@' . $chatData[1] . ' ' . $value['message']['text'];
+					$value['message']['text'] = '@' . $nickName . ' ' . $value['message']['text'];
 				}
 			}
 		}

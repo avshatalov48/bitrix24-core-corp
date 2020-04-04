@@ -1,7 +1,8 @@
 <?php
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
-use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Localization\Loc,
+	Bitrix\Main\UI\Extension;
 
 /** @noinspection PhpUndefinedClassInspection */
 /**
@@ -18,34 +19,35 @@ $messages = Loc::loadLanguageFile(__FILE__);
 
 if ($arResult["ERROR"]["ORDER"])
 {
-	Bitrix\Main\UI\Extension::load(array("ui.buttons", "ui.forms", "ui.progressbar", "ui.fonts.opensans", "ui.alerts"));
+	Extension::load(array("ui.buttons", "ui.forms", "ui.progressbar", "ui.fonts.opensans", "ui.alerts"));
 	?>
 	<div class="adm-crm-site-master-grid">
 		<div class="adm-crm-site-master-title"><?=Loc::getMessage("SALE_CSM_TEMPLATE_ORDER_CONVERTER_ERROR_TITLE")?></div>
 		<div class="adm-crm-site-master-content">
-
 			<div class="adm-crm-site-master-warning">
 				<img class="adm-crm-site-master-warning-image" src="<?=$component->getPath()?>/wizard/images/warning.svg" alt="">
+			</div>
+			<div class="ui-alert ui-alert-warning ui-alert-text-center ui-alert-inline ui-alert-icon-warning">
+				<span class="ui-alert-message"><?=Loc::getMessage("SALE_CSM_TEMPLATE_ORDER_CONVERTER_ERROR_INFO")?></span>
 			</div>
 			<div class="ui-alert ui-alert-danger ui-alert-text-center ui-alert-inline ui-alert-icon-danger">
 				<span class="ui-alert-message"><?=Loc::getMessage("SALE_CSM_TEMPLATE_ORDER_CONVERTER_ERROR_DESCR")?></span>
 			</div>
-
 			<div class="adm-crm-site-master-grid-content">
-				<?
+				<?php
 				$APPLICATION->IncludeComponent('bitrix:main.ui.grid', '', [
 					'GRID_ID' => 'order_error_list',
 					'COLUMNS' => [
 						[
 							'id' => 'ORDER_ID',
-							'name' => Loc::getMessage("SALE_CSM_TEMPLATE_ORDER_CONVERTER_SORT_ID"),
+							'name' => Loc::getMessage("SALE_CSM_TEMPLATE_GRID_COLUMN_ID"),
 							'sort' => 'ORDER_ID',
 							'default' => true,
 							'resizeable' => false,
 						],
 						[
 							'id' => 'ERROR',
-							'name' => Loc::getMessage("SALE_CSM_TEMPLATE_ORDER_CONVERTER_SORT_ERROR"),
+							'name' => Loc::getMessage("SALE_CSM_TEMPLATE_GRID_COLUMN_ERROR"),
 							'sort' => 'ERROR',
 							'default' => true,
 							'resizeable' => false,
@@ -84,14 +86,20 @@ if ($arResult["ERROR"]["ORDER"])
 				]);
 				?>
 			</div>
+			<div class="ui-btn-container ui-btn-container-center">
+				<form name="update-order" method="get">
+					<button type="submit" class="ui-btn ui-btn-primary" name="update-order" value="y">
+						<?=Loc::getMessage("SALE_CSM_TEMPLATE_BUTTON_UPDATE_ORDER")?>
+					</button>
+				</form>
+			</div>
 		</div>
 	</div>
-	<?
+	<?php
 }
 else
 {
 	echo $arResult["CONTENT"];
-
 	?>
 	<script>
 		BX.message(<?=CUtil::PhpToJSObject($messages)?>);
@@ -114,6 +122,5 @@ else
 			finishButtonId: '<?=htmlspecialcharsbx($component->getWizard()->GetFinishButtonID())?>'
 		});
 	</script>
-	<?
+	<?php
 }
-?>

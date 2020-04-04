@@ -2,7 +2,6 @@
 
 namespace Bitrix\Crm\Ml\Model;
 
-use Bitrix\Main\Loader;
 use Bitrix\Crm\LeadTable;
 use Bitrix\Crm\FieldMultiTable;
 use Bitrix\Crm\PhaseSemantics;
@@ -12,25 +11,34 @@ use Bitrix\Main\Type\Date;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Crm\Ml\FeatureBuilder;
 use Bitrix\Crm\Ml\DataProvider;
+use Bitrix\Main\Localization\Loc;
 
 class LeadScoring extends Base
 {
 	const MODEL_NAME ='CRM_LEAD_SCORING';
 
+	/**
+	 * Returns available model names for the deal scoring.
+	 * @return string[]
+	 */
 	public static function getModelNames()
 	{
 		return [static::MODEL_NAME];
 	}
 
 	/**
+	 * Returns title for lead scoring model.
+	 * @return string
+	 */
+	public function getTitle()
+	{
+		return Loc::getMessage("CRM_LEAD_SCORING_TITLE");
+	}
+	/**
 	 * @return array
 	 */
 	public function getPossibleFields()
 	{
-		//$isTelephonyInstalled = Loader::includeModule("voximplant");
-		$isOpenLinesInstalled = Loader::includeModule("im") && Loader::includeModule("imopenlines") && Loader::includeModule("imconnector");
-		$isMailInstalled = Loader::includeModule("mail");
-
 		$result = [];
 
 		// Common features
@@ -46,6 +54,7 @@ class LeadScoring extends Base
 		$result["DATE_CREATE_MONTH"] = ["dataType" => "string"];
 		$result["DATE_CREATE_DAY_OF_WEEK"] = ["dataType" => "string"];
 		$result["DATE_CREATE_TIME"] = ["dataType" => "string"]; // category: morning, day, evening, night
+		$result["ASSIGNED_BY_ID"] = ["dataType" => "string"];
 
 		// UF features
 
@@ -71,9 +80,6 @@ class LeadScoring extends Base
 				$result += $featureMap;
 			}
 		}
-
-		// Form features
-		//$result["HAS_FILLED_FORMS"] = ["dataType" => "bool"];
 
 		return $result;
 	}
@@ -126,7 +132,7 @@ class LeadScoring extends Base
 			"runtime" => [
 				new ExpressionField(
 				"HAS_ACT",
-				"CASE WHEN EXISTS(SELECT 'x' FROM b_crm_act WHERE OWNER_TYPE_ID = 1 and OWNER_ID = %s) THEN 1 ELSE 0 END",
+				"CASE WHEN EXISTS(SELECT 'x' FROM b_crm_act WHERE OWNER_TYPE_ID = " . \CCrmOwnerType::Lead . " and OWNER_ID = %s) THEN 1 ELSE 0 END",
 				["ID"]
 				),
 			],
@@ -208,6 +214,7 @@ class LeadScoring extends Base
 			"select" => [
 				"LEAD_ID" => "ID",
 				"DATE_CREATE",
+				"ASSIGNED_BY_ID",
 				"STATUS_SEMANTIC_ID",
 				"SOURCE_ID" => "SOURCE_ID",
 				"SOURCE_DESCRIPTION" => "SOURCE_DESCRIPTION",

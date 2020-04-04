@@ -246,12 +246,12 @@
 }
 .sidebar-imp-mess {
 	background-color: #fff3a7;
-	height: 183px;
+	min-height: 183px;
 	position: relative;
 }
 .sidebar-imp-mess-wrap {
 	display: none;
-	height: 135px;
+	min-height: 135px;
 	overflow: hidden;
 	padding: 0 12px 45px 75px;
 }

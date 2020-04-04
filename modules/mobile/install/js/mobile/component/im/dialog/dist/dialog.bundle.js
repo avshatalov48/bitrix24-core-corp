@@ -1135,6 +1135,13 @@ this.BX.Messenger = this.BX.Messenger || {};
 	            counter: data.payload.fields.counter
 	          }, true], 'im.recent');
 	        }
+	      } else if (data.type === 'dialogues/set') {
+	        data.payload.forEach(function (dialog) {
+	          BXMobileApp.Events.postToComponent("chatdialog::counter::change", [{
+	            dialogId: dialog.dialogId,
+	            counter: dialog.counter
+	          }, true], 'im.recent');
+	        });
 	      }
 	    }
 	  }, {

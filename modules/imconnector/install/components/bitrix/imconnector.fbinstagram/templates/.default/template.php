@@ -28,6 +28,16 @@ if ($arParams['INDIVIDUAL_USE'] != 'Y')
 	\Bitrix\ImConnector\Connector::initIconCss();
 }
 
+
+$helpDeskLinkStart = "<a href=\"javascript:void(0)\" onclick='top.BX.Helper.show(\"redirect=detail&code=10443976\");event.preventDefault();'>";
+$helpDeskLinkEnd = '</a>';
+
+$helpDeskLinkNoPage = str_replace(
+	['#A#', '#A_END#'],
+	[$helpDeskLinkStart, $helpDeskLinkEnd],
+	Loc::getMessage('IMCONNECTOR_COMPONENT_FBINSTAGRAM_NO_SPECIFIC_PAGE')
+);
+
 $iconCode = \Bitrix\ImConnector\Connector::getIconByConnector($arResult["CONNECTOR"]);
 ?>
 	<form action="<?=$arResult["URL"]["DELETE"]?>" method="post" id="form_delete_<?=$arResult["CONNECTOR"]?>">
@@ -337,7 +347,7 @@ else
 			{
 				?>
 				<div class="imconnector-field-container">
-					<div class="imconnector-field-section imconnector-field-section-social-list">
+					<div class="imconnector-field-section imconnector-field-section-social-list imconnector-field-section-social-list-fbinstagram">
 						<div class="imconnector-field-main-title">
 							<?= Loc::getMessage('IMCONNECTOR_COMPONENT_FBINSTAGRAM_SELECT_THE_PAGE') ?>
 						</div>
@@ -352,53 +362,87 @@ else
 										<div class="imconnector-field-social-list-inner">
 											<div class="imconnector-field-social-icon imconnector-field-social-list-icon"<?if(!empty($page["INFO"]["INSTAGRAM"]["PROFILE_PICTURE_URL"])):?> style='background: url("<?=$page["INFO"]["INSTAGRAM"]["PROFILE_PICTURE_URL"]?>"); background-size: cover'<?endif;?>></div>
 											<div class="imconnector-field-social-list-info">
-											<?if(empty($page["INFO"]["INSTAGRAM"]["URL"])):?>
-											<span class="imconnector-field-social-name">
-											<?else:?>
-											<a href="<?= $page["INFO"]["INSTAGRAM"]["URL"] ?>"
-												target="_blank"
-												class="imconnector-field-social-name">
-											<?endif;?>
-												<?= $page["INFO"]["INSTAGRAM"]["NAME"] ?> <?if(!empty($page["INFO"]["INSTAGRAM"]["MEDIA_COUNT"])):?> (<?=$page["INFO"]["INSTAGRAM"]["MEDIA_COUNT"];?> <?= Loc::getMessage('IMCONNECTOR_COMPONENT_FBINSTAGRAM_MEDIA') ?>)<?endif;?>
-											<?if(empty($page["INFO"]["INSTAGRAM"]["URL"])):?>
-												</span>
-											<?else:?>
-												</a>
-											<?endif;?>
+												<div class="imconnector-field-social-list-info-inner">
+													<?if(empty($page["INFO"]["INSTAGRAM"]["URL"])):?>
+													<span class="imconnector-field-social-name">
+													<?else:?>
+													<a href="<?= $page["INFO"]["INSTAGRAM"]["URL"] ?>"
+														target="_blank"
+														class="imconnector-field-social-name">
+													<?endif;?>
+														<?= $page["INFO"]["INSTAGRAM"]["NAME"] ?> <?if(!empty($page["INFO"]["INSTAGRAM"]["MEDIA_COUNT"])):?> (<?=$page["INFO"]["INSTAGRAM"]["MEDIA_COUNT"];?> <?= Loc::getMessage('IMCONNECTOR_COMPONENT_FBINSTAGRAM_MEDIA') ?>)<?endif;?>
+													<?if(empty($page["INFO"]["INSTAGRAM"]["URL"])):?>
+														</span>
+													<?else:?>
+														</a>
+													<?endif;?>
 
-											<span class="imconnector-field-social-name imconnector-field-social-name-text"><?= Loc::getMessage('IMCONNECTOR_COMPONENT_FBINSTAGRAM_PREFIX_NAMING_PAGE') ?></span>
+													<span class="imconnector-field-social-name imconnector-field-social-name-text"><?= Loc::getMessage('IMCONNECTOR_COMPONENT_FBINSTAGRAM_PREFIX_NAMING_PAGE') ?></span>
 
-											<?if(empty($page["INFO"]["URL"])):?>
-												<span class="imconnector-field-social-name">
-											<?else:?>
-												<a href="<?= $page["INFO"]["URL"] ?>"
-													target="_blank"
-													class="imconnector-field-social-name">
-											<?endif;?>
-											<?= $page["INFO"]["NAME"] ?>
-											<?if(empty($page["INFO"]["URL"])):?>
+													<?if(empty($page["INFO"]["URL"])):?>
+														<span class="imconnector-field-social-name">
+													<?else:?>
+														<div class="imconnector-field-social-name-icon ui-icon ui-icon-service-instagram"><i></i></div>
+														<a href="<?= $page["INFO"]["URL"] ?>"
+															target="_blank"
+															class="imconnector-field-social-name imconnector-field-social-name-url">
+													<?endif;?>
+													<?= $page["INFO"]["NAME"] ?>
+													<?if(empty($page["INFO"]["URL"])):?>
+														</span>
+													<?else:?>
+														</a>
+													<?endif;?>
+												</div>
+												<?php
+												if ($page['INFO']['INSTAGRAM']['BUSINESS'] !== 'N')
+												{?>
+													<span class="imconnector-field-social-account imconnector-field-social-account-business">
+													<?=Loc::getMessage('IMCONNECTOR_COMPONENT_FBINSTAGRAM_BUSINESS_ACCOUNT')?>
 												</span>
-											<?else:?>
-												</a>
-											<?endif;?>
+													<?php
+												}
+												else
+												{?>
+													<span class="imconnector-field-social-account">
+													<?=Loc::getMessage('IMCONNECTOR_COMPONENT_FBINSTAGRAM_PERSONAL_ACCOUNT')?>
+												</span>
+													<?php
+												}
+												?>
 											</div>
 										</div>
-										<form action="<?= $arResult["URL"]["SIMPLE_FORM"] ?>" method="post">
-											<input type="hidden" name="<?= $arResult["CONNECTOR"] ?>_form" value="true">
-											<input type="hidden" name="page_id" value="<?= $page["INFO"]["ID"] ?>">
-											<?= bitrix_sessid_post(); ?>
-											<button type="submit"
-													name="<?= $arResult["CONNECTOR"] ?>_authorization_page"
-													class="ui-btn ui-btn-sm ui-btn-light-border"
-													value="<?= Loc::getMessage('IMCONNECTOR_COMPONENT_SETTINGS_TO_CONNECT') ?>">
-												<?= Loc::getMessage('IMCONNECTOR_COMPONENT_SETTINGS_TO_CONNECT') ?>
-											</button>
-										</form>
+										<?php
+										if ($page['INFO']['INSTAGRAM']['BUSINESS'] !== 'N')
+										{
+											?>
+											<form action="<?= $arResult["URL"]["SIMPLE_FORM"] ?>" method="post">
+												<input type="hidden" name="<?= $arResult["CONNECTOR"] ?>_form" value="true">
+												<input type="hidden" name="page_id" value="<?= $page["INFO"]["ID"] ?>">
+												<?= bitrix_sessid_post(); ?>
+												<button type="submit"
+														name="<?= $arResult["CONNECTOR"] ?>_authorization_page"
+														class="ui-btn ui-btn-sm ui-btn-light-border"
+														value="<?= Loc::getMessage('IMCONNECTOR_COMPONENT_SETTINGS_TO_CONNECT') ?>">
+													<?= Loc::getMessage('IMCONNECTOR_COMPONENT_SETTINGS_TO_CONNECT') ?>
+												</button>
+											</form>
+											<?php
+										}
+										else
+										{?>
+											<a class="imconnector-field-social-list-item-link" href="javascript:void(0)" onclick='top.BX.Helper.show("redirect=detail&code=10443962");event.preventDefault();'>
+												<?=Loc::getMessage('IMCONNECTOR_COMPONENT_FBINSTAGRAM_CONVERT_TO_BUSINESS_HELP')?>
+											</a>
+										<?}?>
 									</div>
-									<?
+									<?php
 								}
 							}
 							?>
+							<div class="imconnector-field-box-subtitle">
+								<?=$helpDeskLinkNoPage?>
+							</div>
 						</div>
 					</div>
 				</div>
@@ -413,7 +457,7 @@ else
 			{
 				?>
 				<div class="imconnector-field-container">
-					<div class="imconnector-field-section">
+					<div class="imconnector-field-section imconnector-field-section-social-list-fbinstagram">
 						<div class="imconnector-field-main-title imconnector-field-main-title-no-border">
 							<?= Loc::getMessage('IMCONNECTOR_COMPONENT_FBINSTAGRAM_CONNECTED_PAGE') ?>
 						</div>
@@ -423,35 +467,41 @@ else
 								<div<?if(!empty($arResult['FORM']['PAGE']["INSTAGRAM"]["PROFILE_PICTURE_URL"])):?> class="imconnector-field-social-icon imconnector-field-social-list-icon" style='background: url("<?=$arResult['FORM']['PAGE']["INSTAGRAM"]["PROFILE_PICTURE_URL"]?>"); background-size: cover'<?else:?> class="connector-icon ui-icon ui-icon-service-<?=$iconCode?> imconnector-field-social-icon"<?endif;?>><i></i></div>
 
 								<div class="imconnector-field-social-list-info">
-									<?if(empty($arResult['FORM']['PAGE']["INSTAGRAM"]["URL"])):?>
-									<span class="imconnector-field-social-name">
-									<?else:?>
-									<a href="<?= $arResult['FORM']['PAGE']["INSTAGRAM"]["URL"] ?>"
-										target="_blank"
-										class="imconnector-field-social-name">
-									<?endif;?>
-									<?= $arResult['FORM']['PAGE']["INSTAGRAM"]["NAME"] ?> <?if(!empty($arResult['FORM']['PAGE']["INSTAGRAM"]["MEDIA_COUNT"])):?> (<?=$arResult['FORM']['PAGE']["INSTAGRAM"]["MEDIA_COUNT"];?> <?= Loc::getMessage('IMCONNECTOR_COMPONENT_FBINSTAGRAM_MEDIA') ?>)<?endif;?>
-									<?if(empty($arResult['FORM']['PAGE']["INSTAGRAM"]["URL"])):?>
-									</span>
-									<?else:?>
-									</a>
-									<?endif;?>
+									<div class="imconnector-field-social-list-info-inner">
+										<?if(empty($arResult['FORM']['PAGE']["INSTAGRAM"]["URL"])):?>
+										<span class="imconnector-field-social-name">
+										<?else:?>
+										<a href="<?= $arResult['FORM']['PAGE']["INSTAGRAM"]["URL"] ?>"
+											target="_blank"
+											class="imconnector-field-social-name">
+										<?endif;?>
+										<?= $arResult['FORM']['PAGE']["INSTAGRAM"]["NAME"] ?> <?if(!empty($arResult['FORM']['PAGE']["INSTAGRAM"]["MEDIA_COUNT"])):?> (<?=$arResult['FORM']['PAGE']["INSTAGRAM"]["MEDIA_COUNT"];?> <?= Loc::getMessage('IMCONNECTOR_COMPONENT_FBINSTAGRAM_MEDIA') ?>)<?endif;?>
+										<?if(empty($arResult['FORM']['PAGE']["INSTAGRAM"]["URL"])):?>
+										</span>
+										<?else:?>
+										</a>
+										<?endif;?>
 
-									<span class="imconnector-field-social-name imconnector-field-social-name-text"><?= Loc::getMessage('IMCONNECTOR_COMPONENT_FBINSTAGRAM_PREFIX_NAMING_PAGE') ?></span>
+										<span class="imconnector-field-social-name imconnector-field-social-name-text"><?= Loc::getMessage('IMCONNECTOR_COMPONENT_FBINSTAGRAM_PREFIX_NAMING_PAGE') ?></span>
 
-									<?if(empty($arResult['FORM']['PAGE']['URL'])):?>
-									<span class="imconnector-field-social-name">
-									<?else:?>
-									<a href="<?= $arResult['FORM']['PAGE']['URL'] ?>"
-										target="_blank"
-										class="imconnector-field-social-name">
-									<?endif;?>
-									<?= $arResult['FORM']['PAGE']['NAME'] ?>
-									<?if(empty($arResult['FORM']['PAGE']['URL'])):?>
-									</span>
-									<?else:?>
-									</a>
-									<?endif;?>
+										<?if(empty($arResult['FORM']['PAGE']['URL'])):?>
+										<span class="imconnector-field-social-name">
+										<?else:?>
+										<div class="imconnector-field-social-name-icon ui-icon ui-icon-service-instagram"><i></i></div>
+										<a href="<?= $arResult['FORM']['PAGE']['URL'] ?>"
+											target="_blank"
+											class="imconnector-field-social-name">
+										<?endif;?>
+										<?= $arResult['FORM']['PAGE']['NAME'] ?>
+										<?if(empty($arResult['FORM']['PAGE']['URL'])):?>
+										</span>
+										<?else:?>
+										</a>
+										<?endif;?>
+									</div>
+									<span class="imconnector-field-social-account imconnector-field-social-account-business">
+									<?=Loc::getMessage('IMCONNECTOR_COMPONENT_FBINSTAGRAM_BUSINESS_ACCOUNT')?>
+								</span>
 								</div>
 
 							</div>
@@ -493,56 +543,89 @@ else
 													<div class="imconnector-field-social-icon imconnector-field-social-list-icon"<?if(!empty($page["INFO"]["INSTAGRAM"]["PROFILE_PICTURE_URL"])):?> style='background: url("<?=$page["INFO"]["INSTAGRAM"]["PROFILE_PICTURE_URL"]?>"); background-size: cover'<?endif;?>></div>
 
 													<div class="imconnector-field-social-list-info">
-														<?if(empty($page["INFO"]["INSTAGRAM"]["URL"])):?>
-														<span class="imconnector-field-social-name">
-														<?else:?>
-														<a href="<?= $page["INFO"]["INSTAGRAM"]["URL"] ?>"
-															target="_blank"
-															class="imconnector-field-social-name">
-														<?endif;?>
-														<?= $page["INFO"]["INSTAGRAM"]["NAME"] ?> <?if(!empty($page["INFO"]["INSTAGRAM"]["MEDIA_COUNT"])):?> (<?=$page["INFO"]["INSTAGRAM"]["MEDIA_COUNT"];?> <?= Loc::getMessage('IMCONNECTOR_COMPONENT_FBINSTAGRAM_MEDIA') ?>)<?endif;?>
-														<?if(empty($page["INFO"]["INSTAGRAM"]["URL"])):?>
-														</span>
-														<?else:?>
-														</a>
-														<?endif;?>
+														<div class="imconnector-field-social-list-info-inner">
+															<?if(empty($page["INFO"]["INSTAGRAM"]["URL"])):?>
+															<span class="imconnector-field-social-name">
+															<?else:?>
+															<a href="<?= $page["INFO"]["INSTAGRAM"]["URL"] ?>"
+																target="_blank"
+																class="imconnector-field-social-name">
+															<?endif;?>
+															<?= $page["INFO"]["INSTAGRAM"]["NAME"] ?> <?if(!empty($page["INFO"]["INSTAGRAM"]["MEDIA_COUNT"])):?> (<?=$page["INFO"]["INSTAGRAM"]["MEDIA_COUNT"];?> <?= Loc::getMessage('IMCONNECTOR_COMPONENT_FBINSTAGRAM_MEDIA') ?>)<?endif;?>
+															<?if(empty($page["INFO"]["INSTAGRAM"]["URL"])):?>
+															</span>
+															<?else:?>
+															</a>
+															<?endif;?>
 
-														<span class="imconnector-field-social-name imconnector-field-social-name-text"><?= Loc::getMessage('IMCONNECTOR_COMPONENT_FBINSTAGRAM_PREFIX_NAMING_PAGE') ?></span>
+															<span class="imconnector-field-social-name imconnector-field-social-name-text"><?= Loc::getMessage('IMCONNECTOR_COMPONENT_FBINSTAGRAM_PREFIX_NAMING_PAGE') ?></span>
 
-														<?if(empty($page["INFO"]["URL"])):?>
-														<span class="imconnector-field-social-name">
-														<?else:?>
-														<a href="<?= $page["INFO"]["URL"] ?>"
-															target="_blank"
-															class="imconnector-field-social-name">
-														<?endif;?>
-														<?= $page["INFO"]["NAME"] ?>
-														<?if(empty($page["INFO"]["URL"])):?>
-														</span>
-														<?else:?>
-														</a>
-														<?endif;?>
+															<?if(empty($page["INFO"]["URL"])):?>
+															<span class="imconnector-field-social-name">
+															<?else:?>
+															<div class="imconnector-field-social-name-icon ui-icon ui-icon-service-instagram"><i></i></div>
+															<a href="<?= $page["INFO"]["URL"] ?>"
+																target="_blank"
+																class="imconnector-field-social-name">
+															<?endif;?>
+															<?= $page["INFO"]["NAME"] ?>
+															<?if(empty($page["INFO"]["URL"])):?>
+															</span>
+															<?else:?>
+															</a>
+															<?endif;?>
+														</div>
+														<?php
+														if ($page['INFO']['INSTAGRAM']['BUSINESS'] !== 'N')
+														{?>
+															<span class="imconnector-field-social-account imconnector-field-social-account-business">
+																<?=Loc::getMessage('IMCONNECTOR_COMPONENT_FBINSTAGRAM_BUSINESS_ACCOUNT')?>
+															</span>
+															<?php
+														}
+														else
+														{?>
+															<span class="imconnector-field-social-account">
+																<?=Loc::getMessage('IMCONNECTOR_COMPONENT_FBINSTAGRAM_PERSONAL_ACCOUNT')?>
+															</span>
+															<?php
+														}
+														?>
 													</div>
 
 												</div>
-												<form action="<?= $arResult["URL"]["SIMPLE_FORM_EDIT"] ?>" method="post">
-													<input type="hidden" name="<?= $arResult["CONNECTOR"] ?>_form"
-														   value="true">
-													<input type="hidden" name="page_id"
-														   value="<?= $page["INFO"]["ID"] ?>">
-													<?= bitrix_sessid_post(); ?>
-													<button type="submit"
-															name="<?= $arResult["CONNECTOR"] ?>_authorization_page"
-															class="ui-btn ui-btn-sm ui-btn-light-border"
-															value="<?= Loc::getMessage('IMCONNECTOR_COMPONENT_FBINSTAGRAM_CHANGE_PAGE') ?>">
-														<?= Loc::getMessage('IMCONNECTOR_COMPONENT_FBINSTAGRAM_CHANGE_PAGE') ?>
-													</button>
-												</form>
+												<?php
+												if ($page['INFO']['INSTAGRAM']['BUSINESS'] !== 'N')
+												{?>
+													<form action="<?= $arResult["URL"]["SIMPLE_FORM_EDIT"] ?>" method="post">
+														<input type="hidden" name="<?= $arResult["CONNECTOR"] ?>_form"
+															   value="true">
+														<input type="hidden" name="page_id"
+															   value="<?= $page["INFO"]["ID"] ?>">
+														<?= bitrix_sessid_post(); ?>
+														<button type="submit"
+																name="<?= $arResult["CONNECTOR"] ?>_authorization_page"
+																class="ui-btn ui-btn-sm ui-btn-light-border"
+																value="<?= Loc::getMessage('IMCONNECTOR_COMPONENT_FBINSTAGRAM_CHANGE_PAGE') ?>">
+															<?= Loc::getMessage('IMCONNECTOR_COMPONENT_FBINSTAGRAM_CHANGE_PAGE') ?>
+														</button>
+													</form>
+												<?php
+												}
+												else
+												{?>
+													<a class="imconnector-field-social-list-item-link" href="javascript:void(0)" onclick='top.BX.Helper.show("redirect=detail&code=10443962");'>
+														<?=Loc::getMessage('IMCONNECTOR_COMPONENT_FBINSTAGRAM_CONVERT_TO_BUSINESS_HELP')?>
+													</a>
+												<?}?>
 											</div>
-											<?
+											<?php
 										}
 									}
 									?>
+									<div class="imconnector-field-box-subtitle">
+										<?=$helpDeskLinkNoPage?>
+									</div>
 								</div>
 							</div>
 							<?

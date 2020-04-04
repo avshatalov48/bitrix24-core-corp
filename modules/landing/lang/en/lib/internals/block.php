@@ -13,6 +13,7 @@ $MESS["LANDING_TABLE_FIELD_LID"] = "Landing ID";
 $MESS["LANDING_TABLE_FIELD_MODIFIED_BY_ID"] = "Modified by user ID";
 $MESS["LANDING_TABLE_FIELD_PARENT_ID"] = "Parent block";
 $MESS["LANDING_TABLE_FIELD_PUBLIC"] = "Public";
+$MESS["LANDING_TABLE_FIELD_SEARCH_CONTENT"] = "Contents of the block for search";
 $MESS["LANDING_TABLE_FIELD_SORT"] = "Sort";
 $MESS["LANDING_TABLE_FIELD_SOURCE_PARAMS"] = "Dynamic source parameters";
 ?>

@@ -222,10 +222,10 @@ else
 
 	$arResult['Types'] = (
 		$arResult["USE_PRESETS"] == 'Y'
-			? \Bitrix\Socialnetwork\Item\Workgroup::getTypes([
-				'currentExtranetSite' => $arResult["bExtranet"]
-			])
-			: []
+			? \Bitrix\Socialnetwork\Item\Workgroup::getTypes(array(
+			'currentExtranetSite' => $arResult["bExtranet"]
+		))
+			: array()
 	);
 
 	$arResult["Urls"]["User"] = CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_USER"], array("user_id" => $arResult["currentUserId"]));
@@ -237,7 +237,7 @@ else
 		{
 			if (
 				!CSocNetUser::IsCurrentUserModuleAdmin()
-				&& $APPLICATION->GetGroupRight("socialnetwork", false, "Y", "Y", array(SITE_ID, false)) < "K"
+				&& $APPLICATION->GetGroupRight("socialnetwork", false, "Y", "Y", array($this->getSiteId(), false)) < "K"
 			)
 			{
 				$arResult["FatalError"] = GetMessage("SONET_GCE_ERR_CANT_CREATE").". ";
@@ -625,7 +625,9 @@ else
 					|| !CExtranet::IsExtranetSite()
 				)
 				{
-					$arFields["SITE_ID"] = array(SITE_ID);
+					$arFields["SITE_ID"] = [
+						$this->getSiteId()
+					];
 					if (
 						CModule::IncludeModule("extranet")
 						&& !CExtranet::IsExtranetSite()
@@ -644,7 +646,10 @@ else
 				{
 					if ($arParams["GROUP_ID"] <= 0)
 					{
-						$arFields["SITE_ID"] = array(SITE_ID, CSite::GetDefSite());
+						$arFields["SITE_ID"] = [
+							$this->getSiteId(),
+							CSite::GetDefSite()
+						];
 					}
 					else
 					{
@@ -659,7 +664,7 @@ else
 						{
 							$siteIdList[] = $workGroupSiteFields['SITE_ID'];
 						}
-						$siteIdList[] = SITE_ID;
+						$siteIdList[] = $this->getSiteId();
 
 						$siteIdList = array_unique($siteIdList);
 						if (!empty($siteIdList))
@@ -940,7 +945,7 @@ else
 							if (!empty($arEmail))
 							{
 								$userData = array(
-									"GROUP_ID" => CIntranetInviteDialog::getUserGroups(SITE_ID, true)
+									"GROUP_ID" => CIntranetInviteDialog::getUserGroups($this->getSiteId(), true)
 								);
 
 								foreach($arEmail as $email)
@@ -981,7 +986,7 @@ else
 										if ($arUser["EXTERNAL_AUTH_ID"] == 'email')
 										{
 											$ID_TRANSFERRED = CIntranetInviteDialog::TransferEmailUser($arUser["ID"], array(
-												"SITE_ID" => SITE_ID,
+												"SITE_ID" => $this->getSiteId(),
 												"GROUP_ID" => $userData["GROUP_ID"]
 											));
 
@@ -1007,7 +1012,7 @@ else
 										{
 											if (!empty($arUser["CONFIRM_CODE"]))
 											{
-												\CIntranetInviteDialog::reinviteExtranetUser(SITE_ID, $arUser["ID"]);
+												\CIntranetInviteDialog::reinviteExtranetUser($this->getSiteId(), $arUser["ID"]);
 											}
 
 											$arUserIDs[] = $userID = $arUser["ID"];
@@ -1032,7 +1037,7 @@ else
 										$userData["NAME"] = $name;
 										$userData["LAST_NAME"] = $last_name;
 
-										$ID = CIntranetInviteDialog::RegisterUser($userData, SITE_ID);
+										$ID = CIntranetInviteDialog::RegisterUser($userData, $this->getSiteId());
 
 										if(is_array($ID))
 										{
@@ -1091,7 +1096,7 @@ else
 							{
 								$ID_ADDED = 0;
 								$ID_TRANSFERRED = CIntranetInviteDialog::TransferEmailUser($arUser["ID"], array(
-									"SITE_ID" => SITE_ID,
+									"SITE_ID" => $this->getSiteId(),
 									"NAME" => $userData["ADD_NAME"],
 									"LAST_NAME" => $userData["ADD_LAST_NAME"]
 								));
@@ -1106,7 +1111,7 @@ else
 							}
 							else
 							{
-								$ID_ADDED = CIntranetInviteDialog::AddNewUser(SITE_ID, $userData, $strError);
+								$ID_ADDED = CIntranetInviteDialog::AddNewUser($this->getSiteId(), $userData, $strError);
 							}
 
 							if ($ID_ADDED <= 0)
@@ -1226,23 +1231,28 @@ else
 								&& $user2groupRelation
 							)
 							{
-								$rsUser = CUser::GetByID($user_id);
-								if ($arRes = $rsUser->Fetch())
+								$rsUser = \CUser::getByID($user_id);
+								if ($arRes = $rsUser->fetch())
 								{
-									$email = $arRes["EMAIL"];
-								}
+									$nameFormatted = \CUser::formatName(\CSite::getNameFormat(), $arRes, true);
 
-								switch ($user2groupRelation)
-								{
-									case SONET_ROLES_BAN:
-										$warningMessage[] = str_replace("#EMAIL#", $email, GetMessage("SONET_GCE_USER_BANNED_IN_GROUP"));
-										break;
-									case SONET_ROLES_REQUEST:
-										$warningMessage[] = str_replace("#EMAIL#", $email, GetMessage("SONET_GCE_USER_REQUEST_SENT"));
-										break;
-									default:
-										$warningMessage[] = str_replace("#EMAIL#", $email, GetMessage(empty($_POST["GROUP_PROJECT"]) && $_POST["GROUP_PROJECT"] == 'Y' ? "SONET_GCE_USER_IN_GROUP_PROJECT" : "SONET_GCE_USER_IN_GROUP"));
-										break;
+									switch ($user2groupRelation)
+									{
+										case SONET_ROLES_BAN:
+											$warningMessage[] = str_replace("#NAME#", $nameFormatted, GetMessage("SONET_GCE_USERNAME_BANNED_IN_GROUP"));
+											break;
+										case SONET_ROLES_REQUEST:
+											$warningMessage[] = str_replace("#NAME#", $nameFormatted, GetMessage("SONET_GCE_USERNAME_REQUEST_SENT"));
+											break;
+										default:
+											$warningMessage[] = str_replace("#NAME#", $nameFormatted, GetMessage(
+												!empty($_POST["GROUP_PROJECT"])
+												&& $_POST["GROUP_PROJECT"] == 'Y'
+													? "SONET_GCE_USERNAME_IN_GROUP_PROJECT"
+													: "SONET_GCE_USERNAME_IN_GROUP"
+											));
+											break;
+									}
 								}
 							}
 						}
@@ -1489,7 +1499,7 @@ else
 				$arResult["Subjects"] = array();
 				$dbSubjects = CSocNetGroupSubject::GetList(
 					array("SORT"=>"ASC", "NAME" => "ASC"),
-					array("SITE_ID" => SITE_ID),
+					array("SITE_ID" => $this->getSiteId()),
 					false,
 					false,
 					array("ID", "NAME")
@@ -1531,7 +1541,7 @@ else
 				$arResult["DEST_USERS_LAST"] = $arResult["DEST_USERS_LAST"]['USERS'];
 			}
 
-			$arResult["siteDepartmentID"] = COption::GetOptionString("main", "wizard_departament", false, SITE_ID, true);
+			$arResult["siteDepartmentID"] = COption::GetOptionString("main", "wizard_departament", false, $this->getSiteId(), true);
 
 			if (
 				is_array($arResult["DEST_USERS_LAST"])

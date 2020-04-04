@@ -1586,7 +1586,7 @@ class CForumSimpleHTMLParser
 
 class CForumCacheManager
 {
-	public function CForumCacheManager()
+	public function __construct()
 	{
 		if(defined("BX_COMP_MANAGED_CACHE"))
 		{

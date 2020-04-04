@@ -25,9 +25,11 @@ $MESS["TOP_MENU_ABOUT"] = "Компания";
 $MESS["TOP_MENU_SERVICES"] = "Сервисы";
 $MESS["TOP_MENU_MARKETING"] = "CRM-маркетинг";
 $MESS["TOP_MENU_SITES"] = "Сайты";
+$MESS["TOP_MENU_KNOWLEDGE"] = "База знаний";
 $MESS["TOP_MENU_CONTACT_CENTER"] = "Контакт-центр";
 $MESS["TOP_MENU_CRM_ANALYTICS"] = "CRM-Аналитика";
 $MESS["TOP_MENU_CRM_TRACKING"] = "Сквозная аналитика";
 $MESS["TOP_MENU_AI"] = "Лаборатория AI";
 $MESS["MENU_SALESCENTER_SECTION"] = "Центр продаж";
+$MESS["MENU_RPA_SECTION"] = "Роботизация бизнеса (RPA)";
 ?>

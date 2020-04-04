@@ -58,7 +58,7 @@ return [
 		'nodes' => [
 			'.landing-block-card-container' => [
 				'name' => Loc::getMessage('LANDING_BLOCK_01_BIG_WITH_TEXT_BLOCKS_2-CARD_CONTAINER'),
-				'type' => ['row-align'],
+				'type' => ['row-align', 'align-self'],
 			],
 			'.landing-block-node-card-title' => [
 				'name' => Loc::getMessage('LANDING_BLOCK_01.BIG_WITH_TEXT_BLOCKS_2_STYLE_LANDINGBLOCKNODECARDTITLE'),

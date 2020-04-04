@@ -7,6 +7,9 @@ class DuplicateList
 	protected $typeID = DuplicateIndexType::UNDEFINED;
 	protected $scope = DuplicateIndexType::DEFAULT_SCOPE;
 	protected $entityTypeID = \CCrmOwnerType::Undefined;
+	protected $matchHash = '';
+	protected $statusIDs = array();
+
 	protected $userID = 0;
 	protected $enablePermissionCheck = false;
 	protected $enableRanking = false;
@@ -64,6 +67,17 @@ class DuplicateList
 
 		$this->scope = $scope;
 	}
+
+
+	public function getStatusIDs()
+	{
+		return $this->statusIDs;
+	}
+	public function setStatusIDs(array $statusIDs)
+	{
+		$this->statusIDs = $statusIDs;
+	}
+
 	public function getEntityTypeID()
 	{
 		return $this->entityTypeID;
@@ -89,6 +103,16 @@ class DuplicateList
 
 		$this->entityTypeID = $entityTypeID;
 	}
+
+	public function getMatchHash()
+	{
+		return $this->matchHash;
+	}
+	public function setMatchHash($matchHash)
+	{
+		$this->matchHash = $matchHash;
+	}
+
 	public function getUserID()
 	{
 		return $this->userID;
@@ -225,8 +249,17 @@ class DuplicateList
 		$query->addFilter('=USER_ID', $this->userID);
 		$query->addFilter('=ENTITY_TYPE_ID', $this->entityTypeID);
 		$query->addFilter('@TYPE_ID', $typeIDs);
+		if($this->matchHash != '')
+		{
+			$query->addFilter('=MATCH_HASH', $this->matchHash);
+		}
 
 		$query->addFilter('=SCOPE', $this->scope);
+
+		if(!empty($this->statusIDs))
+		{
+			$query->addFilter('@STATUS_ID', $this->statusIDs);
+		}
 
 		if($this->enablePermissionCheck && $permissionSql !== '')
 		{
@@ -247,6 +280,12 @@ class DuplicateList
 		if($enableSorting)
 		{
 			$order = $this->sortOrder === SORT_DESC ? 'DESC' : 'ASC';
+
+			if(!empty($this->statusIDs))
+			{
+				$query->addOrder('STATUS_ID', $order);
+			}
+
 			if($this->sortTypeID === DuplicateIndexType::COMMUNICATION_EMAIL)
 			{
 				$query->addOrder('ROOT_ENTITY_EMAIL_FLAG', $order);
@@ -407,5 +446,96 @@ class DuplicateList
 				$result[] = $typeID;
 		}
 		return $result;
+	}
+	public function getRootItemCount()
+	{
+		$typeIDs = $this->getTypeIDs();
+		if(empty($typeIDs))
+		{
+			throw new Main\NotSupportedException("Criterion types are required.");
+		}
+
+		$query = new Main\Entity\Query(Entity\DuplicateIndexTable::getEntity());
+		$query->registerRuntimeField('', new Main\Entity\ExpressionField('CNT', 'COUNT(*)'));
+		$query->addSelect('CNT');
+
+		$permissionSql = '';
+		if($this->enablePermissionCheck)
+		{
+			$permissions = \CCrmPerms::GetUserPermissions($this->userID);
+			$permissionSql = \CCrmPerms::BuildSql(
+				\CCrmOwnerType::ResolveName($this->entityTypeID),
+				'',
+				'READ',
+				array('RAW_QUERY' => true, 'PERMS'=> $permissions)
+			);
+
+			if($permissionSql === false)
+			{
+				//Access denied;
+				return null;
+			}
+		}
+
+		$query->addFilter('=USER_ID', $this->userID);
+		$query->addFilter('=ENTITY_TYPE_ID', $this->entityTypeID);
+		$query->addFilter('@TYPE_ID', $typeIDs);
+		if($this->matchHash != '')
+		{
+			$query->addFilter('=MATCH_HASH', $this->matchHash);
+		}
+
+		$query->addFilter('=SCOPE', $this->scope);
+
+		if(!empty($this->statusIDs))
+		{
+			$query->addFilter('@STATUS_ID', $this->statusIDs);
+		}
+
+		if($this->enablePermissionCheck && $permissionSql !== '')
+		{
+			$query->addFilter('@ROOT_ENTITY_ID', new Main\DB\SqlExpression($permissionSql));
+		}
+
+		$dbResult = $query->exec();
+		$fields = $dbResult->fetch();
+		return is_array($fields) && isset($fields['CNT']) ? (int)$fields['CNT'] : 0;
+	}
+
+	public static function getTotalEntityCount($userID, $entityTypeID, array $typeIDs, $scope)
+	{
+		$subQuery = new Main\Entity\Query(Entity\DuplicateEntityMatchHashTable::getEntity());
+		$indexJoinConditions = array(
+			'=this.MATCH_HASH' => 'ref.MATCH_HASH',
+			'=this.ENTITY_TYPE_ID' => 'ref.ENTITY_TYPE_ID',
+			'=this.TYPE_ID' => 'ref.TYPE_ID',
+			'=ref.USER_ID' => new Main\DB\SqlExpression('?i', $userID),
+			'=ref.ENTITY_TYPE_ID' => new Main\DB\SqlExpression('?i', $entityTypeID),
+			'=ref.SCOPE' => new Main\DB\SqlExpression('?s', $scope),
+		);
+		if(!empty($typeIDs))
+		{
+			$indexJoinConditions['@ref.TYPE_ID'] = new Main\DB\SqlExpression(implode(', ', $typeIDs));
+		}
+
+		$subQuery
+			->addSelect('ENTITY_ID')
+			->registerRuntimeField('',
+				new Main\Entity\ReferenceField('I',
+					Entity\DuplicateIndexTable::getEntity(),
+					$indexJoinConditions,
+					array('join_type' => 'INNER')
+				)
+			)
+			->addGroup('ENTITY_ID');
+		$query = new Main\Entity\Query($subQuery);
+		$query
+			->registerRuntimeField('', new Main\Entity\ExpressionField('CNT', 'COUNT(*)'))
+			->addSelect('CNT');
+
+		$dbResult = $query->exec();
+		$fields = $dbResult->fetch();
+
+		return is_array($fields) && isset($fields['CNT']) ? (int)$fields['CNT'] : 0;
 	}
 }

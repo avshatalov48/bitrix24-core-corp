@@ -146,6 +146,7 @@ $arParams['PATH_TO_LEAD_DETAILS'] = CrmCheckPath('PATH_TO_LEAD_DETAILS', $arPara
 $arParams['PATH_TO_LEAD_SHOW'] = CrmCheckPath('PATH_TO_LEAD_SHOW', $arParams['PATH_TO_LEAD_SHOW'], $currentPage.'?lead_id=#lead_id#&show');
 $arParams['PATH_TO_LEAD_EDIT'] = CrmCheckPath('PATH_TO_LEAD_EDIT', $arParams['PATH_TO_LEAD_EDIT'], $currentPage.'?lead_id=#lead_id#&edit');
 $arParams['PATH_TO_LEAD_CONVERT'] = CrmCheckPath('PATH_TO_LEAD_CONVERT', $arParams['PATH_TO_LEAD_CONVERT'], $currentPage.'?lead_id=#lead_id#&convert');
+$arParams['PATH_TO_LEAD_MERGE'] = CrmCheckPath('PATH_TO_LEAD_MERGE', $arParams['PATH_TO_LEAD_MERGE'], '/lead/merge/');
 $arParams['PATH_TO_QUOTE_EDIT'] = CrmCheckPath('PATH_TO_QUOTE_EDIT', $arParams['PATH_TO_QUOTE_EDIT'], $currentPage.'?quote_id=#quote_id#&edit');
 $arParams['PATH_TO_LEAD_WIDGET'] = CrmCheckPath('PATH_TO_LEAD_WIDGET', $arParams['PATH_TO_LEAD_WIDGET'], $currentPage);
 $arParams['PATH_TO_LEAD_KANBAN'] = CrmCheckPath('PATH_TO_LEAD_KANBAN', $arParams['PATH_TO_LEAD_KANBAN'], $currentPage);

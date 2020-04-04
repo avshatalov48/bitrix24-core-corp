@@ -104,9 +104,11 @@
 			);
 		},
 
-		checkAuthStatusAction: function()
+		checkAuthStatusAction: function(eventData)
 		{
+			eventData.reload = false;
 			this.checkedAuthStatus = true;
+
 			BX.ajax.runComponentAction(
 				'bitrix:salescenter.paysystem',
 				'getProfileStatus',
@@ -116,31 +118,7 @@
 			).then(
 				function(response)
 				{
-					if (response.data.hasAuth)
-					{
-						this.registerWebhooksAction();
-						this.toggleAuthBlock(response.data.profile);
-					}
-				}.bind(this),
-				function (response)
-				{
-					this.showErrorPopup(response.errors);
-				}.bind(this)
-			);
-		},
-
-		registerWebhooksAction: function()
-		{
-			BX.ajax.runComponentAction(
-				'bitrix:salescenter.paysystem',
-				'registerWebhooks',
-				{
-					mode: 'ajax'
-				}
-			).then(
-				function (response)
-				{
-
+					this.toggleAuthBlock(response.data.profile);
 				}.bind(this),
 				function (response)
 				{
@@ -627,7 +605,7 @@
 				}
 			);
 
-			(new BX.PopupWindow(
+			var popup = new BX.PopupWindow(
 				"paysystem_error_popup_" + BX.util.getRandomString(),
 				null,
 				{
@@ -643,19 +621,27 @@
 					titleBar: BX.message('SALESCENTER_SP_ERROR_POPUP_TITLE'),
 					content: contentNode,
 					buttons: [
-						new BX.PopupWindowButtonLink(
-							{
-								text : BX.message('SALESCENTER_SP_BUTTON_CLOSE'),
-								className : "popup-window-button-link-cancel",
-								events: { click: function () {
-										this.popupWindow.close();
-									}
+						new BX.PopupWindowButton({
+							'id': 'close',
+							'text': BX.message('SALESCENTER_SP_BUTTON_CLOSE'),
+							'events': {
+								'click': function(){
+									popup.close();
 								}
 							}
-						)
-					]
+						})
+					],
+					events: {
+						onPopupClose: function() {
+							this.destroy();
+						},
+						onPopupDestroy: function() {
+							popup = null;
+						}
+					}
 				}
-			)).show();
+			);
+			popup.show();
 		},
 
 		showError: function(errors)

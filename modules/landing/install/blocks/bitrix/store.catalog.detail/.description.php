@@ -24,17 +24,6 @@ $return = array(
 		),
 		'namespace' => 'bitrix',
 	),
-	'assets' => array(
-		'css' => array(
-			'/bitrix/components/bitrix/catalog.element/templates/bootstrap_v4/style.css',
-		),
-		'js' => array(
-			'/bitrix/components/bitrix/catalog.element/templates/bootstrap_v4/script.js',
-		),
-	// 	'ext' => array(
-	// 		'currency', 'popup'
-	// 	),
-	),
 	'nodes' => array(
 		'bitrix:catalog.element' => array(
 			'type' => 'component',
@@ -53,6 +42,7 @@ $return = array(
 							'element',
 						),
 					),
+					'ALLOW_SEO_DATA' => array(),
 					'HIDE_NOT_AVAILABLE' => array(),
 					'HIDE_NOT_AVAILABLE_OFFERS' => array(),
 					// price

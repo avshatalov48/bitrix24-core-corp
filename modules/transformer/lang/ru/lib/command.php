@@ -1,5 +1,7 @@
 <?php
 $MESS["TRANSFORMER_COMMAND_ERROR_CONNECTION"] = "Не удалось соединиться с сервером";
+$MESS["TRANSFORMER_COMMAND_ERROR_CONNECTION_COUNT"] = "Превышено количество попыток соединения с сервером";
+$MESS["TRANSFORMER_COMMAND_ERROR_CONNECTION_RESPONSE"] = "Неверный ответ от сервера";
 $MESS["TRANSFORMER_COMMAND_ERROR_DOWNLOAD_STATUS"] = "Ошибка на сервере - неверный http-статус при скачивании файла";
 $MESS["TRANSFORMER_COMMAND_ERROR_DOWNLOAD_TYPE"] = "Ошибка на сервере - неверный mime-type при скачивании файла";
 $MESS["TRANSFORMER_COMMAND_ERROR_DOWNLOAD_SIZE"] = "Ошибка на сервере - превышен размер файла";

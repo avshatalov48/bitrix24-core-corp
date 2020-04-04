@@ -297,27 +297,6 @@ class CheckList extends \Bitrix\Tasks\Manager
 
 	public static function mergeData($primary = array(), $secondary = array())
 	{
-		if(is_array($secondary) && is_array($primary))
-		{
-			$primary = static::indexItemSets($primary);
-			$secondary = static::indexItemSets($secondary);
-
-			foreach($primary as $k => $v)
-			{
-				// actually, only define rights...
-				if(array_key_exists($k, $secondary) && isset($secondary[$k][static::ACT_KEY]))
-				{
-					$can = $secondary[$k][static::ACT_KEY];
-				}
-				else
-				{
-					$can = static::getFullRights();
-				}
-
-				$primary[$k][static::ACT_KEY] = $can;
-			}
-		}
-
 		return $primary;
 	}
 

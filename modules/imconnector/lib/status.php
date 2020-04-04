@@ -13,7 +13,7 @@ use \Bitrix\ImConnector\Model\StatusConnectorsTable;
 class Status
 {
 	/** @var array(\Bitrix\ImConnector\Status) */
-	private static $instance = array();
+	private static $instance = [];
 	private static $flagEvent = false;
 	private static $flagGenerationUpdateEvent = false;
 	private static $rowsCacheTable = array();
@@ -30,20 +30,23 @@ class Status
 	 * Receiving a state object of a specific connector all lines.
 	 *
 	 * @param $connector
-	 * @return array \Bitrix\ImConnector\Status
+	 * @return array|mixed
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function getInstanceAllLine($connector)
 	{
 		$connector = Connector::getConnectorRealId($connector);
 
-		$raw = StatusConnectorsTable::getList(array(
-			'select' => array(
+		$raw = StatusConnectorsTable::getList([
+			'select' => [
 				'LINE'
-			),
-			'filter' => array(
+			],
+			'filter' => [
 				'=CONNECTOR' => $connector
-			)
-		));
+			]
+		]);
 
 		while($row = $raw->fetch())
 		{
@@ -62,15 +65,18 @@ class Status
 	/**
 	 * Receiving the status of all connectors and lines.
 	 *
-	 * @return array \Bitrix\ImConnector\Status
+	 * @return array
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function getInstanceAll()
 	{
-		$raw = StatusConnectorsTable::getList(array(
-			'select' => array(
+		$raw = StatusConnectorsTable::getList([
+			'select' => [
 				'LINE', 'CONNECTOR'
-			)
-		));
+			]
+		]);
 
 		while($row = $raw->fetch())
 		{
@@ -81,25 +87,28 @@ class Status
 		}
 
 		if(empty(self::$instance))
-			return array();
+			return [];
 		else
 			return self::$instance;
 	}
 
 	/**
-	 * Receiving a state object of a specific connector lines
+	 * Receiving a state object of a specific connector lines.
 	 *
 	 * @param $connector
 	 * @param string $line
-	 * @return \Bitrix\ImConnector\Status
+	 * @return mixed
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function getInstance($connector, $line = '#empty#')
 	{
 		$connector = Connector::getConnectorRealId($connector);
 
-		if (empty(self::$instance[$connector][$line]) )
+		if (empty(self::$instance[$connector][$line]) || !(self::$instance[$connector][$line] instanceof \Bitrix\ImConnector\Status))
 		{
-			self::$instance[$connector][$line]= new self($connector,$line);
+			self::$instance[$connector][$line] = new self($connector,$line);
 		}
 
 		return self::$instance[$connector][$line];
@@ -120,20 +129,20 @@ class Status
 				unset(self::$instance[$connector][$line]);
 		}
 
-		$raw = StatusConnectorsTable::getList(array(
-			'select' => array('ID', 'CONNECTOR'),
-			'filter' => array(
+		$raw = StatusConnectorsTable::getList([
+			'select' => ['ID', 'CONNECTOR'],
+			'filter' => [
 				'=LINE' => $line,
-			)
-		));
+			]
+		]);
 
 		while($row = $raw->fetch())
 		{
 			//Event
-			$dataEvent = array(
+			$dataEvent = [
 				"connector" => $row['CONNECTOR'],
 				"line" => $line,
-			);
+			];
 			$event = new Event(Library::MODULE_ID, Library::EVENT_STATUS_DELETE, $dataEvent);
 			$event->send();
 
@@ -162,13 +171,13 @@ class Status
 			unset(self::$instance[$connector][$line]);
 		}
 
-		$raw = StatusConnectorsTable::getList(array(
-			'select' => array('ID'),
-			'filter' => array(
+		$raw = StatusConnectorsTable::getList([
+			'select' => ['ID'],
+			'filter' => [
 				'=LINE' => $line,
 				'=CONNECTOR' => $connector
-			)
-		));
+			]
+		]);
 		while($row = $raw->fetch())
 		{
 			$delete = StatusConnectorsTable::delete($row['ID']);
@@ -176,10 +185,10 @@ class Status
 		}
 
 		//Event
-		$dataEvent = array(
+		$dataEvent = [
 			"connector" => $connector,
 			"line" => $line,
-		);
+		];
 		$event = new Event(Library::MODULE_ID, Library::EVENT_STATUS_DELETE, $dataEvent);
 		$event->send();
 
@@ -217,6 +226,10 @@ class Status
 
 	/**
 	 * A cache reset to all connector.
+	 *
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function cleanCacheAll()
 	{
@@ -302,20 +315,26 @@ class Status
 					$fields["DATA"] = $connector->data;
 
 				//Event
-				$dataEvent = array(
+				$dataEvent = [
 					"connector" => $currentConnector,
 					"line" => $line,
 					"fields" => $fields
-				);
+				];
 				$event = new Event(Library::MODULE_ID, Library::EVENT_STATUS_UPDATE, $dataEvent);
 				$event->send();
 			}
 		}
 	}
 
+	/**
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\LoaderException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
 	public static function cleanupDuplicates()
 	{
-		$statuses = array();
+		$statuses = [];
 
 		$rows = StatusConnectorsTable::getList()->fetchAll();
 
@@ -392,8 +411,11 @@ class Status
 	/**
 	 * Status constructor.
 	 *
-	 * @param string $connector ID connector.
-	 * @param string $line ID line.
+	 * @param $connector
+	 * @param string $line
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
 	 */
 	private function __construct($connector, $line = '#empty#')
 	{
@@ -434,10 +456,10 @@ class Status
 		}
 		else
 		{
-			$add = StatusConnectorsTable::add(array(
+			$add = StatusConnectorsTable::add([
 				'LINE' => $line,
 				'CONNECTOR' => $connector,
-			));
+			]);
 
 			if ($add->isSuccess())
 			{
@@ -445,10 +467,10 @@ class Status
 			}
 
 			//Event
-			$dataEvent = array(
+			$dataEvent = [
 				"connector" => $connector,
 				"line" => $line
-			);
+			];
 			$event = new Event(Library::MODULE_ID, Library::EVENT_STATUS_ADD, $dataEvent);
 			$event->send();
 		}

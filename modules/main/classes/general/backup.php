@@ -91,9 +91,6 @@ class CBackup
 		{
 			if (is_link($path))
 			{
-				if (IntOption("skip_symlinks"))
-					return true;
-
 				if (strpos(realpath($path), self::$REAL_DOCUMENT_ROOT_SITE) !== false) // если симлинк ведет на папку внутри структуры сайта
 					return true;
 			}

@@ -22,3 +22,5 @@ $MESS["SALE_HPS_YANDEX_CHECKOUT_REFERRER"] = "<a href=\"https://money.yandex.ru/
 $MESS["SALE_HPS_YANDEX_CHECKOUT_PAYMENT_DESCRIPTION"] = "Описание транзакции";
 $MESS["SALE_HPS_YANDEX_CHECKOUT_PAYMENT_DESCRIPTION_DESC"] = "Описание транзакции (не более 128 символов), которое вы увидите в личном кабинете Яндекс.Кассы. Текст может содержать метки: #PAYMENT_ID# - ID оплаты, #ORDER_ID# - ID заказа, #PAYMENT_NUMBER# - номер оплаты, #ORDER_NUMBER# - номер заказа, #USER_EMAIL# - Email покупателя";
 $MESS["SALE_HPS_YANDEX_CHECKOUT_PAYMENT_DESCRIPTION_TEMPLATE"] = "Оплата №#PAYMENT_NUMBER# заказа №#ORDER_NUMBER# для #USER_EMAIL#";
+$MESS["SALE_HPS_YANDEX_CHECKOUT_RECURRING"] = "Автоплатеж";
+$MESS["SALE_HPS_YANDEX_CHECKOUT_RECURRING_DESC"] = "Автоплатежи работают только в CRM-формах";

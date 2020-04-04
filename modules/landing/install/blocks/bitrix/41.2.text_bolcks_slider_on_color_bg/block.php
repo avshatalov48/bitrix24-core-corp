@@ -2,7 +2,7 @@
 	<div class="container">
 		<section class="js-carousel"
 				 data-pagi-classes="u-carousel-indicators-v1--white-inverse g-absolute-centered--x g-bottom-15 g-bottom-30--md">
-			<div class="landing-block-node-card js-slide">
+			<div class="landing-block-node-card js-slide align-self-center">
 				<!-- Article -->
 				<article class="row flex-items-middle text-center landing-block-node-card-container align-items-center g-mb-30 g-mb-50--lg">
 					<div class="col-md-6 g-mb-30 g-mb-0--md">
@@ -36,7 +36,7 @@
 				<!-- End Article -->
 			</div>
 
-			<div class="landing-block-node-card js-slide">
+			<div class="landing-block-node-card js-slide align-self-center">
 				<!-- Article -->
 				<article class="row flex-items-middle text-center landing-block-node-card-container align-items-center g-mb-30 g-mb-50--lg">
 					<div class="col-md-6 g-mb-30 g-mb-0--md">
@@ -70,7 +70,7 @@
 				<!-- End Article -->
 			</div>
 
-			<div class="landing-block-node-card js-slide">
+			<div class="landing-block-node-card js-slide align-self-center">
 				<!-- Article -->
 				<article class="row flex-items-middle text-center landing-block-node-card-container align-items-center g-mb-30 g-mb-50--lg">
 					<div class="col-md-6 g-mb-30 g-mb-0--md">
@@ -104,7 +104,7 @@
 				<!-- End Article -->
 			</div>
 
-			<div class="landing-block-node-card js-slide">
+			<div class="landing-block-node-card js-slide align-self-center">
 				<!-- Article -->
 				<article class="row flex-items-middle text-center landing-block-node-card-container align-items-center g-mb-30 g-mb-50--lg">
 					<div class="col-md-6 g-mb-30 g-mb-0--md">
@@ -138,7 +138,7 @@
 				<!-- End Article -->
 			</div>
 
-			<div class="landing-block-node-card js-slide">
+			<div class="landing-block-node-card js-slide align-self-center">
 				<!-- Article -->
 				<article class="row flex-items-middle text-center landing-block-node-card-container align-items-center g-mb-30 g-mb-50--lg">
 					<div class="col-md-6 g-mb-30 g-mb-0--md">

@@ -1,4 +1,5 @@
 <?
-$MESS["SONET_LOG_LIST_TITLE_GRAT"] = "Appreciations";
-$MESS["SONET_LOG_LIST_TITLE_GRAT2"] = "#USER_NAME#: Appreciations of &laquo;#GRAT_NAME#&raquo;";
+$MESS["SONET_LOG_LIST_NAV"] = "Records";
+$MESS["SONET_LOG_LIST_SONET_MODULE_NOT_INSTALLED"] = "The Social Network module is not installed.";
+$MESS["SONET_LOG_LIST_PAGE_TITLE"] = "Activity Stream";
 ?>

@@ -8,6 +8,7 @@ class blogTextParser extends CTextParser
 	public $pathToUserEntityId = false;
 	public $pathToUserEntityType = false;
 	public $smilesGallery = 0;
+	public $maxStringLen = 100;
 	
 	private $arImages = array();
 	

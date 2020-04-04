@@ -1,16 +1,8 @@
 <?php
 namespace Bitrix\Timeman\Service\Worktime\Violation;
 
-use Bitrix\Main\Error;
 use Bitrix\Main\ObjectException;
-use Bitrix\Timeman\Form\Schedule\ShiftPlanForm;
 use Bitrix\Timeman\Model\Schedule\Schedule;
-use Bitrix\Timeman\Repository\AbsenceRepository;
-use Bitrix\Timeman\Repository\Schedule\CalendarRepository;
-use Bitrix\Timeman\Repository\Schedule\ScheduleRepository;
-use Bitrix\Timeman\Repository\Schedule\ShiftPlanRepository;
-use Bitrix\Timeman\Repository\Schedule\ShiftRepository;
-use Bitrix\Timeman\Repository\Worktime\WorktimeRepository;
 
 class WorktimeViolationManager
 {
@@ -21,30 +13,11 @@ class WorktimeViolationManager
 	/** @var WorktimeViolationBuilder */
 	private $flextimeViolationBuilder;
 
-	/** @var ShiftRepository */
-	private $shiftRepository;
-	/** @var ShiftPlanRepository */
-	private $shiftPlanRepository;
-	/** @var WorktimeRepository */
-	private $worktimeRepository;
-	private $calendarRepository;
-	private $scheduleRepository;
-	private $absenceRepository;
+	private $violationBuilderFactory;
 
-	public function __construct(
-		ShiftRepository $shiftRepository,
-		ShiftPlanRepository $shiftPlanRepository,
-		WorktimeRepository $worktimeRepository,
-		CalendarRepository $calendarRepository,
-		ScheduleRepository $scheduleRepository,
-		AbsenceRepository $absenceRepository)
+	public function __construct(WorktimeViolationBuilderFactory $violationBuilderFactory)
 	{
-		$this->shiftRepository = $shiftRepository;
-		$this->shiftPlanRepository = $shiftPlanRepository;
-		$this->worktimeRepository = $worktimeRepository;
-		$this->calendarRepository = $calendarRepository;
-		$this->scheduleRepository = $scheduleRepository;
-		$this->absenceRepository = $absenceRepository;
+		$this->violationBuilderFactory = $violationBuilderFactory;
 	}
 
 	/**
@@ -68,12 +41,6 @@ class WorktimeViolationManager
 			->buildPeriodTimeLackViolation($params, $fromDateTime, $toDateTime);
 	}
 
-	public function buildEditedWorktimeWarnings(WorktimeViolationParams $params, $checkAllowedDelta = true)
-	{
-		return $this->getViolationBuilder($params)
-			->buildEditedWorktimeWarnings($checkAllowedDelta);
-	}
-
 	/**
 	 * @param $shiftId
 	 * @param $userId
@@ -83,31 +50,9 @@ class WorktimeViolationManager
 	 * @throws \Bitrix\Main\ObjectPropertyException
 	 * @throws \Bitrix\Main\SystemException
 	 */
-	public function buildMissedShiftViolation($shiftId, $userId, $dateFormatted)
+	public function buildMissedShiftViolation(WorktimeViolationParams $params)
 	{
-		$result = new WorktimeViolationResult();
-		$shiftPlanForm = new ShiftPlanForm();
-		$shiftPlanForm->userId = $userId;
-		$shiftPlanForm->shiftId = $shiftId;
-		$shiftPlanForm->dateAssignedFormatted = $dateFormatted;
-		if (!$shiftPlanForm->validate())
-		{
-			return $result->addError(new Error('', WorktimeViolationResult::ERROR_CODE_WRONG_PARAMETERS));
-		}
-
-		$shift = $this->shiftRepository->findByIdWithSchedule($shiftId);
-		if (!$shift)
-		{
-			return $result->addError(new Error('', WorktimeViolationResult::ERROR_CODE_SHIFT_NOT_FOUND));
-		}
-
-		return $this->getViolationBuilder(
-			(new WorktimeViolationParams())
-				->setSchedule($shift->obtainSchedule())
-				->setViolationRules($shift->obtainSchedule() ? $shift->obtainSchedule()->obtainScheduleViolationRules() : null)
-				->setShift($shift)
-		)
-			->buildMissedShiftViolation($shift, $userId, $dateFormatted);
+		return $this->getViolationBuilder($params)->buildMissedShiftViolation();
 	}
 
 	/**
@@ -125,15 +70,7 @@ class WorktimeViolationManager
 		{
 			if (!$this->fixedViolationBuilder)
 			{
-				$this->fixedViolationBuilder = new FixedScheduleViolationBuilder(
-					$violationParams,
-					$this->shiftRepository,
-					$this->shiftPlanRepository,
-					$this->worktimeRepository,
-					$this->calendarRepository,
-					$this->scheduleRepository,
-					$this->absenceRepository
-				);
+				$this->fixedViolationBuilder = $this->violationBuilderFactory->createFixedScheduleViolationBuilder($violationParams);
 			}
 			else
 			{
@@ -145,15 +82,7 @@ class WorktimeViolationManager
 		{
 			if (!$this->shiftedViolationBuilder)
 			{
-				$this->shiftedViolationBuilder = new ShiftedScheduleViolationBuilder(
-					$violationParams,
-					$this->shiftRepository,
-					$this->shiftPlanRepository,
-					$this->worktimeRepository,
-					$this->calendarRepository,
-					$this->scheduleRepository,
-					$this->absenceRepository
-				);
+				$this->shiftedViolationBuilder = $this->violationBuilderFactory->createShiftedScheduleViolationBuilder($violationParams);
 			}
 			else
 			{
@@ -165,15 +94,7 @@ class WorktimeViolationManager
 		{
 			if (!$this->flextimeViolationBuilder)
 			{
-				$this->flextimeViolationBuilder = new FlexTimeScheduleViolationBuilder(
-					$violationParams,
-					$this->shiftRepository,
-					$this->shiftPlanRepository,
-					$this->worktimeRepository,
-					$this->calendarRepository,
-					$this->scheduleRepository,
-					$this->absenceRepository
-				);
+				$this->flextimeViolationBuilder = $this->violationBuilderFactory->createFlextimeScheduleViolationBuilder($violationParams);
 			}
 			else
 			{
@@ -181,30 +102,5 @@ class WorktimeViolationManager
 			}
 			return $this->flextimeViolationBuilder;
 		}
-	}
-
-	public function getWorktimeRepository()
-	{
-		return $this->worktimeRepository;
-	}
-
-	public function getShiftPlanRepository()
-	{
-		return $this->shiftPlanRepository;
-	}
-
-	public function getCalendarRepository()
-	{
-		return $this->calendarRepository;
-	}
-
-	public function getScheduleRepository()
-	{
-		return $this->scheduleRepository;
-	}
-
-	public function getAbsenceRepository()
-	{
-		return $this->absenceRepository;
 	}
 }

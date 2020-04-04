@@ -19,4 +19,6 @@ $MESS["SALE_HPS_YANDEX_CHECKOUT_RETURN"] = "Chargebacks are not supported";
 $MESS["SALE_HPS_YANDEX_CHECKOUT_RESTRICTION"] = "Payment amount restriction is a matter of payment method selected by customer";
 $MESS["SALE_HPS_YANDEX_CHECKOUT_COMMISSION"] = "No commission";
 $MESS["SALE_HPS_YANDEX_CHECKOUT_REFERRER"] = "<a href=\"https://money.yandex.ru/joinups/?source=bitrix24\" target=\"_blank\">Quick registration</a>";
+$MESS["SALE_HPS_YANDEX_CHECKOUT_RECURRING"] = "Recurring payment";
+$MESS["SALE_HPS_YANDEX_CHECKOUT_RECURRING_DESC"] = "Recurring payments are available only in CRM forms";
 ?>

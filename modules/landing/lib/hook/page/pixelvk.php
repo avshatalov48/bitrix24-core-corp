@@ -25,11 +25,20 @@ class PixelVk extends \Bitrix\Landing\Hook\Page
 				'placeholder' => Loc::getMessage('LANDING_HOOK_PIXEL_VK_PLACEHOLDER2'),
 				'help' => $helpUrl
 					? '<a href="' . $helpUrl . '" target="_blank">' .
-				  			Loc::getMessage('LANDING_HOOK_PIXEL_FB_HELP') .
+				  			Loc::getMessage('LANDING_HOOK_PIXEL_VK_HELP') .
 				  		'</a>'
 					: ''
 			))
 		);
+	}
+
+	/**
+	 * Exec or not hook in edit mode.
+	 * @return bool
+	 */
+	public function enabledInEditMode()
+	{
+		return false;
 	}
 
 	/**

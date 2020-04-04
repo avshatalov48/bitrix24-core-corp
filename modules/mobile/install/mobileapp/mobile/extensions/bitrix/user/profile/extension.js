@@ -3,6 +3,17 @@
 */
 
 (()=>{
+
+	BX.rest.callBatch({
+		data: ['mobile.intranet.stresslevel.sharedata.get'],
+		blogpost: ['log.blogpost.add', {
+			POST_MESSAGE:'$result[data][message]',
+			POST_TITLE:'$result[data][title]',
+			DEST:'$result[data][recipients]',
+			FILES:'$result[data][files]'
+		}
+		],
+	});
 	class Profile
 	{
 		constructor(userId = 0, form, items = [], sections = [])

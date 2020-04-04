@@ -88,7 +88,7 @@ if($_SERVER["REQUEST_METHOD"]=="POST" && strlen($_POST["action"])>0 && check_bit
 				$fields = array("STATUS_ID" => $statusId);
 
 				$obj = new CCrmQuote();
-				$res = $obj->Update($entityID, $fields);
+				$res = $obj->Update($entityID, $fields, true, true, array('DISABLE_USER_FIELD_CHECK' => true));
 
 				if ($res)
 					__CrmShowEndJsonResonse(array('SUCCESS' => "Y"));

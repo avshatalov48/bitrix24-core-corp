@@ -10,7 +10,6 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ObjectException;
 use Bitrix\Main\Text\Encoding;
 use Bitrix\Main\Type\Date;
-use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\Web;
 use Bitrix\Sale;
 use Bitrix\Sale\Result;
@@ -22,7 +21,6 @@ use Bitrix\Sale\UserMessageException;
 use Bitrix\Main\ArgumentNullException;
 use Bitrix\Sale\Services\Company;
 use Bitrix\Sale\Cashbox;
-use Bitrix\Sale\Cashbox\Internals\CashboxCheckTable;
 use Bitrix\Currency\CurrencyManager;
 
 define("NO_KEEP_STATISTIC", true);
@@ -102,20 +100,20 @@ if($result instanceof Result)
 			$arResult["WARNINGS"][] = $warning;
 		}
 	}
-}
 
-$needConfirm = ($result->get('NEED_CONFIRM') === true);
+	$needConfirm = ($result->get('NEED_CONFIRM') === true);
 
-if ($needConfirm)
-{
-	if ($result->get('CONFIRM_TITLE') != '')
+	if ($needConfirm)
 	{
-		$arResult["CONFIRM_TITLE"] = $result->get('CONFIRM_TITLE');
-	}
+		if ($result->get('CONFIRM_TITLE') != '')
+		{
+			$arResult["CONFIRM_TITLE"] = $result->get('CONFIRM_TITLE');
+		}
 
-	if ($result->get('CONFIRM_MESSAGE') != '')
-	{
-		$arResult["CONFIRM_MESSAGE"] = $result->get('CONFIRM_MESSAGE');
+		if ($result->get('CONFIRM_MESSAGE') != '')
+		{
+			$arResult["CONFIRM_MESSAGE"] = $result->get('CONFIRM_MESSAGE');
+		}
 	}
 }
 
@@ -151,11 +149,14 @@ class AjaxProcessor
 	protected $order = null;
 	protected $formDataChanged = false;
 
+	protected $registry = null;
+
 	public function __construct($userId, array $request)
 	{
 		$this->userId = $userId;
 		$this->result = new Result();
 		$this->request = $request;
+		$this->registry = Sale\Registry::getInstance(Sale\Registry::REGISTRY_TYPE_ORDER);
 	}
 
 	/**
@@ -259,7 +260,11 @@ class AjaxProcessor
 			$isUserResponsible = false;
 			$isAllowCompany = false;
 
-			$resOrder = Sale\Internals\OrderTable::getList(array(
+
+			/** @var Sale\Order $orderClass */
+			$orderClass = $this->registry->getOrderClassName();
+
+			$resOrder = $orderClass::getList(array(
 				'filter' => array(
 					'=ID' => $orderId,
 				),
@@ -270,7 +275,10 @@ class AjaxProcessor
 			
 			if ($orderData = $resOrder->fetch())
 			{
-				$allowedStatusesView = Sale\OrderStatus::getStatusesUserCanDoOperations($USER->GetID(), array('view'));
+				/** @var Sale\OrderStatus $orderClass */
+				$orderStatusClass = $this->registry->getOrderStatusClassName();
+
+				$allowedStatusesView = $orderStatusClass::getStatusesUserCanDoOperations($USER->GetID(), array('view'));
 				$userCompanyList = Company\Manager::getUserCompanyList($USER->GetID());
 
 				if ($orderData['RESPONSIBLE_ID'] == $USER->GetID())
@@ -378,22 +386,28 @@ class AjaxProcessor
 		$orderId = isset($this->request['orderId']) ? intval($this->request['orderId']) : 0;
 		$canceled = isset($this->request['canceled']) ? $this->request['canceled'] : "N";
 		$comment = isset($this->request['comment']) ? trim($this->request['comment']) : "";
+		/** @var Sale\Order $orderClass */
+		$orderClass = $this->registry->getOrderClassName();
+
 		$errors = array();
 
 		if(!\CSaleOrder::CanUserCancelOrder($orderId, $USER->GetUserGroupArray(), $this->userId))
 			throw new UserMessageException(Loc::getMessage('SALE_OA_ERROR_CANCEL_ORDER'));
 
 		/** @var Sale\Order $saleOrder*/
-		if(!$saleOrder = Sale\Order::load($orderId))
+		if(!$saleOrder = $orderClass::load($orderId))
 			throw new UserMessageException(Loc::getMessage('SALE_OA_ERROR_LOAD_ORDER').": ".$orderId);
 
 		$saleModulePermissions = $APPLICATION->GetGroupRight("sale");
 
 		if ($saleModulePermissions == 'P')
 		{
+			/** @var Sale\OrderStatus $orderStatusClass */
+			$orderStatusClass = $this->registry->getOrderStatusClassName();
+
 			$isUserResponsible = false;
 			$isAllowCompany = false;
-			$allowedStatusesUpdate = Sale\OrderStatus::getStatusesUserCanDoOperations($USER->GetID(), array('update'));
+			$allowedStatusesUpdate = $orderStatusClass::getStatusesUserCanDoOperations($USER->GetID(), array('update'));
 			$userCompanyList = Company\Manager::getUserCompanyList($USER->GetID());
 
 			if ($saleOrder->getField('RESPONSIBLE_ID') == $USER->GetID())
@@ -472,23 +486,24 @@ class AjaxProcessor
 
 		$saleModulePermissions = $APPLICATION->GetGroupRight("sale");
 
+		/** @var Sale\Order $orderClass */
+		$orderClass = $this->registry->getOrderClassName();
+
 		if ($saleModulePermissions == 'P')
 		{
 			$isUserResponsible = false;
 			$isAllowCompany = false;
 			$isAllowUpdate = false;
 
-			$resOrder = Sale\Internals\OrderTable::getList(array(
-																'filter' => array(
-																	'=ID' => intval($this->request["orderId"]),
-																),
-																'select' => array(
-																	'RESPONSIBLE_ID', 'COMPANY_ID', 'STATUS_ID'
-																)
-															));
+			$resOrder = $orderClass::getList([
+				'select' => ['RESPONSIBLE_ID', 'COMPANY_ID', 'STATUS_ID'],
+				'filter' => ['=ID' => intval($this->request["orderId"])],
+			]);
 			if ($orderData = $resOrder->fetch())
 			{
-				$allowedStatusesUpdate = Sale\OrderStatus::getStatusesUserCanDoOperations($USER->GetID(), array('update'));
+				/** @var Sale\OrderStatus $orderStatusClass */
+				$orderStatusClass = $this->registry->getOrderStatusClassName();
+				$allowedStatusesUpdate = $orderStatusClass::getStatusesUserCanDoOperations($USER->GetID(), array('update'));
 				$userCompanyList = Company\Manager::getUserCompanyList($USER->GetID());
 
 				if ($orderData['RESPONSIBLE_ID'] == $USER->GetID())
@@ -510,7 +525,7 @@ class AjaxProcessor
 			}
 		}
 
-		$order = Sale\Order::load((int)$this->request['orderId']);
+		$order = $orderClass::load((int)$this->request['orderId']);
 		if (!$order)
 		{
 			throw new SystemException("Wrong order id!");
@@ -535,9 +550,14 @@ class AjaxProcessor
 		if(!isset($this->request['statusId']) || strlen($this->request['statusId']) <= 0)
 			throw new SystemException("Wrong status id!");
 
+		/** @var Sale\Order $orderClass */
+		$orderClass = $this->registry->getOrderClassName();
+
+		/** @var Sale\OrderStatus $orderStatusClass */
+		$orderStatusClass = $this->registry->getOrderStatusClassName();
 
 		/** @var Sale\Order $order */
-		$order = Sale\Order::load($this->request['orderId']);
+		$order = $orderClass::load($this->request['orderId']);
 
 		if (!$order)
 			throw new UserMessageException(Loc::getMessage('SALE_OA_ERROR_LOAD_ORDER').": \"".$this->request['orderId']."\"");
@@ -546,10 +566,11 @@ class AjaxProcessor
 
 		if ($saleModulePermissions == 'P')
 		{
+
 			$isUserResponsible = false;
 			$isAllowCompany = false;
 
-			$allowedStatusesUpdate = Sale\OrderStatus::getStatusesUserCanDoOperations($USER->GetID(), array('update'));
+			$allowedStatusesUpdate = $orderStatusClass::getStatusesUserCanDoOperations($USER->GetID(), array('update'));
 
 			$userCompanyList = Company\Manager::getUserCompanyList($USER->GetID());
 
@@ -571,7 +592,7 @@ class AjaxProcessor
 			}
 		}
 
-		$statusesList = \Bitrix\Sale\OrderStatus::getAllowedUserStatuses(
+		$statusesList = $orderStatusClass::getAllowedUserStatuses(
 			$this->userId,
 			$order->getField('STATUS_ID')
 		);
@@ -616,6 +637,12 @@ class AjaxProcessor
 		$formData = isset($this->request["formData"]) ? $this->request["formData"] : array();
 		$additional = isset($this->request["additional"]) ? $this->request["additional"] : array();
 
+		/** @var Sale\Order $orderClass */
+		$orderClass = $this->registry->getOrderClassName();
+
+		/** @var Sale\OrderStatus $orderStatusClass */
+		$orderStatusClass = $this->registry->getOrderStatusClassName();
+
 		//delete product from basket
 		if(!empty($additional["operation"]) && $additional["operation"] == "PRODUCT_DELETE" && !empty($additional["basketCode"]))
 		{
@@ -645,7 +672,7 @@ class AjaxProcessor
 				$isUserResponsible = false;
 				$isAllowCompany = false;
 
-				$allowedStatusesUpdate = Sale\OrderStatus::getStatusesUserCanDoOperations($USER->GetID(), array('update'));
+				$allowedStatusesUpdate = $orderStatusClass::getStatusesUserCanDoOperations($USER->GetID(), array('update'));
 
 				$userCompanyList = Company\Manager::getUserCompanyList($USER->GetID());
 
@@ -963,6 +990,12 @@ class AjaxProcessor
 	{
 		global $APPLICATION, $USER;
 
+		/** @var Sale\Order $orderClass */
+		$orderClass = $this->registry->getOrderClassName();
+
+		/** @var Sale\OrderStatus $orderStatusClass */
+		$orderStatusClass = $this->registry->getOrderStatusClassName();
+
 		if(!isset($this->request['orderId']) || intval($this->request['orderId']) <= 0)
 			throw new ArgumentNullException("orderId");
 
@@ -974,7 +1007,7 @@ class AjaxProcessor
 		$fields = array();
 		$orderStatusId = '';
 		/** @var \Bitrix\Sale\Order $order */
-		$order = Sale\Order::load($this->request['orderId']);
+		$order = $orderClass::load($this->request['orderId']);
 
 		/** @var \Bitrix\Sale\Payment $payment */
 		$payment = $order->getPaymentCollection()->getItemById($this->request['paymentId']);
@@ -986,7 +1019,7 @@ class AjaxProcessor
 		{
 			$isUserResponsible = false;
 			$isAllowCompany = false;
-			$allowedStatusesUpdate = Sale\OrderStatus::getStatusesUserCanDoOperations($USER->GetID(), array('update'));
+			$allowedStatusesUpdate = $orderStatusClass::getStatusesUserCanDoOperations($USER->GetID(), array('update'));
 
 			$userCompanyList = Company\Manager::getUserCompanyList($USER->GetID());
 
@@ -1136,9 +1169,9 @@ class AjaxProcessor
 				if (!empty($orderStatusId))
 				{
 					if ($USER && $USER->isAuthorized())
-						$statusesList = Sale\OrderStatus::getAllowedUserStatuses($USER->getID(), $order->getField('STATUS_ID'));
+						$statusesList = $orderStatusClass::getAllowedUserStatuses($USER->getID(), $order->getField('STATUS_ID'));
 					else
-						$statusesList = Sale\OrderStatus::getAllStatuses();
+						$statusesList = $orderStatusClass::getAllStatuses();
 
 					if ($order->getField('STATUS_ID') != $orderStatusId && array_key_exists($orderStatusId, $statusesList))
 					{
@@ -1204,7 +1237,7 @@ class AjaxProcessor
 						$preparedData
 					);
 
-					$markerListHtml = Admin\Blocks\OrderMarker::getView($order->getId(), $payment->getId());
+					$markerListHtml = Admin\Blocks\OrderMarker::getView($order->getId());
 
 					if (!empty($markerListHtml))
 					{
@@ -1253,11 +1286,17 @@ class AjaxProcessor
 		$orderId = $this->request['orderId'];
 		$paymentId = $this->request['paymentId'];
 
+		/** @var Sale\Order $orderClass */
+		$orderClass = $this->registry->getOrderClassName();
+
+		/** @var Sale\OrderStatus $orderStatusClass */
+		$orderStatusClass = $this->registry->getOrderStatusClassName();
+
 		if ($orderId <= 0 || $paymentId <=0)
 			throw new ArgumentNullException("paymentId or orderId");
 
 		/** @var Sale\Order $order */
-		$order = Sale\Order::load($orderId);
+		$order = $orderClass::load($orderId);
 
 		if (!$order)
 			throw new UserMessageException(Loc::getMessage('SALE_OA_ERROR_LOAD_ORDER').": ".$orderId);
@@ -1268,7 +1307,7 @@ class AjaxProcessor
 		if (!$payment)
 			throw new UserMessageException(Loc::getMessage('SALE_OA_ERROR_LOAD_PAYMENT').": ".$paymentId);
 
-		$allowedStatusesUpdate = Sale\OrderStatus::getStatusesUserCanDoOperations($USER->GetID(), array('update'));
+		$allowedStatusesUpdate = $orderStatusClass::getStatusesUserCanDoOperations($USER->GetID(), array('update'));
 		if(!in_array($order->getField("STATUS_ID"), $allowedStatusesUpdate))
 		{
 			throw new UserMessageException(Loc::getMessage('SALE_OA_ERROR_DELETE_PAYMENT_PERMISSION').': '.$paymentId);
@@ -1278,7 +1317,7 @@ class AjaxProcessor
 
 		if ($saleModulePermissions == 'P')
 		{
-			$allowedStatusesUpdate = Sale\OrderStatus::getStatusesUserCanDoOperations($USER->GetID(), array('update'));
+			$allowedStatusesUpdate = $orderStatusClass::getStatusesUserCanDoOperations($USER->GetID(), array('update'));
 			$isUserResponsible = false;
 			$isAllowCompany = false;
 
@@ -1334,8 +1373,14 @@ class AjaxProcessor
 		if ($orderId <= 0 || $shipmentId <= 0)
 			throw new UserMessageException('Error');
 
+		/** @var Sale\Order $orderClass */
+		$orderClass = $this->registry->getOrderClassName();
+
+		/** @var Sale\OrderStatus $orderStatusClass */
+		$orderStatusClass = $this->registry->getOrderStatusClassName();
+
 		/** @var Sale\Order $order */
-		$order = Sale\Order::load($orderId);
+		$order = $orderClass::load($orderId);
 
 		if (!$order)
 			throw new UserMessageException(Loc::getMessage('SALE_OA_ERROR_LOAD_ORDER').": ".$orderId);
@@ -1350,7 +1395,7 @@ class AjaxProcessor
 
 		if ($saleModulePermissions == 'P')
 		{
-			$allowedStatusesUpdate = Sale\OrderStatus::getStatusesUserCanDoOperations($USER->GetID(), array('update'));
+			$allowedStatusesUpdate = $orderStatusClass::getStatusesUserCanDoOperations($USER->GetID(), array('update'));
 			$isUserResponsible = false;
 			$isAllowCompany = false;
 
@@ -1375,8 +1420,11 @@ class AjaxProcessor
 				throw new UserMessageException(Loc::getMessage('SALE_OA_PERMISSION_SHIPMENT_DELETE'));
 			}
 		}
-		
-		$allowedStatusesDelete = Sale\DeliveryStatus::getStatusesUserCanDoOperations($USER->GetID(), array('delete'));
+
+		/** @var Sale\DeliveryStatus $deliveryStatusClass */
+		$deliveryStatusClass = $this->registry->getDeliveryStatusClassName();
+
+		$allowedStatusesDelete = $deliveryStatusClass::getStatusesUserCanDoOperations($USER->GetID(), array('delete'));
 		if(!in_array($shipmentItem->getField("STATUS_ID"), $allowedStatusesDelete))
 		{
 			throw new UserMessageException(Loc::getMessage('SALE_OA_ERROR_DELETE_SHIPMENT_PERMISSION').': '.$shipmentId);
@@ -1435,8 +1483,14 @@ class AjaxProcessor
 		$newStatus = $this->request['status'];
 		$strict = (isset($this->request['strict']) && $this->request['strict'] == true);
 
+		/** @var Sale\Order $orderClass */
+		$orderClass = $this->registry->getOrderClassName();
+
+		/** @var Sale\DeliveryStatus $deliveryStatusClass */
+		$deliveryStatusClass = $this->registry->getDeliveryStatusClassName();
+
 		/** @var \Bitrix\Sale\Order $order */
-		$order = \Bitrix\Sale\Order::load($orderId);
+		$order = $orderClass::load($orderId);
 
 		/** @var \Bitrix\Sale\Shipment $shipment */
 		$shipment = $order->getShipmentCollection()->getItemById($shipmentId);
@@ -1457,7 +1511,7 @@ class AjaxProcessor
 			{
 				$operation = 'update';
 			}
-			$allowedStatusesUpdate = Sale\DeliveryStatus::getStatusesUserCanDoOperations($USER->GetID(), [$operation]);
+			$allowedStatusesUpdate = $deliveryStatusClass::getStatusesUserCanDoOperations($USER->GetID(), [$operation]);
 			$isUserResponsible = false;
 			$isAllowCompany = false;
 
@@ -1623,13 +1677,16 @@ class AjaxProcessor
 		$formData = $this->request['formData'];
 		$index = $this->request['index'];
 
+		/** @var Sale\OrderStatus $orderStatusClass */
+		$orderStatusClass = $this->registry->getOrderStatusClassName();
+
 		$order = $this->getOrder($formData);
 
 		$saleModulePermissions = $APPLICATION->GetGroupRight("sale");
 
 		if ($saleModulePermissions == 'P')
 		{
-			$allowedStatusesUpdate = Sale\OrderStatus::getStatusesUserCanDoOperations($USER->GetID(), array('update'));
+			$allowedStatusesUpdate = $orderStatusClass::getStatusesUserCanDoOperations($USER->GetID(), array('update'));
 			$isUserResponsible = false;
 			$isAllowCompany = false;
 
@@ -1723,7 +1780,10 @@ class AjaxProcessor
 
 		if ($saleModulePermissions == 'P' && (isset($this->request["orderId"]) && intval($this->request["orderId"]) > 0))
 		{
-			$allowedStatusesUpdate = Sale\OrderStatus::getStatusesUserCanDoOperations($USER->GetID(), array('update'));
+			/** @var Sale\OrderStatus $orderStatusClass */
+			$orderStatusClass = $this->registry->getOrderStatusClassName();
+
+			$allowedStatusesUpdate = $orderStatusClass::getStatusesUserCanDoOperations($USER->GetID(), array('update'));
 			$isUserResponsible = false;
 			$isAllowCompany = false;
 
@@ -1739,15 +1799,15 @@ class AjaxProcessor
 				$isAllowCompany = true;
 			}
 
-			$resShipment = Sale\Internals\ShipmentTable::getList(array(
-																	 'filter' => array(
-																		 '=ORDER_ID' => intval($this->request["orderId"]),
-																		 '=ID' => $shipmentId,
-																	 ),
-																	 'select' => array(
-																		 'RESPONSIBLE_ID', 'COMPANY_ID', 'STATUS_ID'
-																	 )
-																 ));
+			/** @var Sale\Shipment $shipmentClass */
+			$shipmentClass = $this->registry->getShipmentClassName();
+			$resShipment = $shipmentClass::getList([
+				 'select' => ['RESPONSIBLE_ID', 'COMPANY_ID', 'STATUS_ID'],
+				 'filter' => [
+					 '=ORDER_ID' => intval($this->request["orderId"]),
+					 '=ID' => $shipmentId,
+				 ]
+			]);
 			if ($shipmentData = $resShipment->fetch())
 			{
 				if ($shipmentData['RESPONSIBLE_ID'] == $USER->GetID())
@@ -1866,6 +1926,9 @@ class AjaxProcessor
 		$formData = isset($this->request["formData"]) ? $this->request["formData"] : array();
 		$formData['ID'] = $formData['order_id'];
 
+		/** @var Sale\OrderStatus $orderStatusClass */
+		$orderStatusClass = $this->registry->getOrderStatusClassName();
+
 		$order = $this->getOrder($formData);
 
 		$saleModulePermissions = $APPLICATION->GetGroupRight("sale");
@@ -1875,7 +1938,7 @@ class AjaxProcessor
 			$isUserResponsible = false;
 			$isAllowCompany = false;
 
-			$allowedStatusesView = Sale\OrderStatus::getStatusesUserCanDoOperations($USER->GetID(), array('view'));
+			$allowedStatusesView = $orderStatusClass::getStatusesUserCanDoOperations($USER->GetID(), array('view'));
 			$userCompanyList = Company\Manager::getUserCompanyList($USER->GetID());
 
 			if ($order->getField('RESPONSIBLE_ID') == $USER->GetID())
@@ -1916,13 +1979,16 @@ class AjaxProcessor
 		$basketItem = null;
 		$result = false;
 
+		/** @var Sale\Order $orderClass */
+		$orderClass = $this->registry->getOrderClassName();
+
 		$barcode = $this->request['barcode'];
 		$basketId = $this->request['basketId'];
 		$orderId = $this->request['orderId'];
 		$storeId = $this->request['storeId'];
 
 		/** @var \Bitrix\Sale\Order $order */
-		$order = Sale\Order::load($orderId);
+		$order = $orderClass::load($orderId);
 		if ($order)
 		{
 			$basket = $order->getBasket();
@@ -1952,6 +2018,12 @@ class AjaxProcessor
 		if(!isset($this->request["coupon"])) throw new ArgumentNullException("coupon");
 		if(!isset($this->request["orderId"])) throw new ArgumentNullException("orderId");
 
+		/** @var Sale\Order $orderClass */
+		$orderClass = $this->registry->getOrderClassName();
+
+		/** @var Sale\OrderStatus $orderStatusClass */
+		$orderStatusClass = $this->registry->getOrderStatusClassName();
+
 		Admin\OrderEdit::$needUpdateNewProductPrice = true;
 		Admin\OrderEdit::$isTrustProductFormData = false;
 
@@ -1963,17 +2035,13 @@ class AjaxProcessor
 			$isAllowCompany = false;
 			$isAllowUpdate = false;
 
-			$resOrder = Sale\Internals\OrderTable::getList(array(
-				'filter' => array(
-					'=ID' => intval($this->request["orderId"]),
-				),
-				'select' => array(
-					'RESPONSIBLE_ID', 'COMPANY_ID', 'STATUS_ID'
-				)
-			));
+			$resOrder = $orderClass::getList([
+				'filter' => ['=ID' => intval($this->request["orderId"])],
+				'select' => ['RESPONSIBLE_ID', 'COMPANY_ID', 'STATUS_ID']
+			]);
 			if ($orderData = $resOrder->fetch())
 			{
-				$allowedStatusesUpdate = Sale\OrderStatus::getStatusesUserCanDoOperations($USER->GetID(), array('update'));
+				$allowedStatusesUpdate = $orderStatusClass::getStatusesUserCanDoOperations($USER->GetID(), array('update'));
 				$userCompanyList = Company\Manager::getUserCompanyList($USER->GetID());
 
 				if ($orderData['RESPONSIBLE_ID'] == $USER->GetID())
@@ -1997,7 +2065,9 @@ class AjaxProcessor
 
 		Admin\OrderEdit::initCouponsData($this->request["userId"], $this->request["orderId"]);
 
-		if(Sale\DiscountCouponsManager::delete($this->request["coupon"]))
+		/** @var Sale\DiscountCouponsManager $discountCouponsClass */
+		$discountCouponsClass = $this->registry->getDiscountCouponClassName();
+		if($discountCouponsClass::delete($this->request["coupon"]))
 			$this->addResultData('RESULT', 'OK');
 		else
 			$this->addResultError('ERROR');
@@ -2013,6 +2083,12 @@ class AjaxProcessor
 		Admin\OrderEdit::$needUpdateNewProductPrice = true;
 		Admin\OrderEdit::$isTrustProductFormData = false;
 
+		/** @var Sale\Order $orderClass */
+		$orderClass = $this->registry->getOrderClassName();
+
+		/** @var Sale\OrderStatus $orderStatusClass */
+		$orderStatusClass = $this->registry->getOrderStatusClassName();
+
 		$saleModulePermissions = $APPLICATION->GetGroupRight("sale");
 
 		if ($saleModulePermissions == 'P')
@@ -2021,17 +2097,13 @@ class AjaxProcessor
 			$isAllowCompany = false;
 			$isAllowUpdate = false;
 
-			$resOrder = Sale\Internals\OrderTable::getList(array(
-																'filter' => array(
-																	'=ID' => intval($this->request["orderId"]),
-																),
-																'select' => array(
-																	'RESPONSIBLE_ID', 'COMPANY_ID', 'STATUS_ID'
-																)
-															));
+			$resOrder = $orderClass::getList([
+				'select' => ['RESPONSIBLE_ID', 'COMPANY_ID', 'STATUS_ID'],
+				'filter' => ['=ID' => intval($this->request["orderId"])]
+			]);
 			if ($orderData = $resOrder->fetch())
 			{
-				$allowedStatusesUpdate = Sale\OrderStatus::getStatusesUserCanDoOperations($USER->GetID(), array('update'));
+				$allowedStatusesUpdate = $orderStatusClass::getStatusesUserCanDoOperations($USER->GetID(), array('update'));
 				$userCompanyList = Company\Manager::getUserCompanyList($USER->GetID());
 
 				if ($orderData['RESPONSIBLE_ID'] == $USER->GetID())
@@ -2060,9 +2132,17 @@ class AjaxProcessor
 			$coupons = explode(",", $this->request["coupon"]);
 
 			if(is_array($coupons) && count($coupons) > 0)
-				foreach($coupons as $coupon)
-					if(strlen($coupon) > 0)
-						Sale\DiscountCouponsManager::add($coupon);
+			{
+				foreach ($coupons as $coupon)
+				{
+					if (strlen($coupon) > 0)
+					{
+						/** @var Sale\DiscountCouponsManager $discountCouponsClass */
+						$discountCouponsClass = $this->registry->getDiscountCouponClassName();
+						$discountCouponsClass::add($coupon);
+					}
+				}
+			}
 		}
 
 		$this->addResultData('RESULT', 'OK');
@@ -2100,6 +2180,12 @@ class AjaxProcessor
 		$orderId = isset($incomingFields["ID"]) ? intval($incomingFields["ID"]) : 0;
 		$buyerIdChanged = isset($incomingFields["BUYER_ID_CHANGED"]) && $incomingFields["BUYER_ID_CHANGED"] == 'Y' ? true : false;
 
+		/** @var Sale\Order $orderClass */
+		$orderClass = $this->registry->getOrderClassName();
+
+		/** @var Sale\OrderStatus $orderStatusClass */
+		$orderStatusClass = $this->registry->getOrderStatusClassName();
+
 		if($buyerIdChanged)
 		{
 			Admin\OrderEdit::$needUpdateNewProductPrice = true;
@@ -2108,7 +2194,7 @@ class AjaxProcessor
 		}
 
 		if($order === null && intval($orderId) > 0)
-			$order = \Bitrix\Sale\Order::load($orderId);
+			$order = $orderClass::load($orderId);
 
 		foreach($demandedFields as $demandedField)
 		{
@@ -2129,12 +2215,15 @@ class AjaxProcessor
 					}
 					else
 					{
-						$porder = Sale\Order::create($siteId);
+						$porder = $orderClass::create($siteId);
 						$porder->setPersonTypeId($personTypeId);
 						$result["PROPERTIES"] = array();
 
+						/** @var Sale\PropertyValue $propertyValueClass */
+						$propertyValueClass = $this->registry->getPropertyValueClassName();
+
 						/** @val \Bitrix\Sale\PropertyValue $prop */
-						foreach(\Bitrix\Sale\PropertyValue::loadForOrder($porder) as $prop)
+						foreach($propertyValueClass::loadForOrder($porder) as $prop)
 						{
 							$p = $prop->getProperty();
 							$result["PROPERTIES"][$prop->getPropertyId()] = !empty($p["DEFAULT_VALUE"]) ? $p["DEFAULT_VALUE"] : "";
@@ -2237,6 +2326,9 @@ class AjaxProcessor
 	 */
 	protected function getOrder(array $formData, Result &$result = null)
 	{
+		/** @var Sale\Order $orderClass */
+		$orderClass = $this->registry->getOrderClassName();
+
 		$formData["ID"] = (!isset($formData["ID"]) ? 0 : (int)$formData["ID"]);
 
 		if($this->order !== null  && !$this->formDataChanged && $this->order->getId() == $formData["ID"])
@@ -2268,7 +2360,7 @@ class AjaxProcessor
 
 		if($formData["ID"] > 0)
 		{
-			$this->order = Sale\Order::load($formData["ID"]);
+			$this->order = $orderClass::load($formData["ID"]);
 
 			if(!$this->order)
 				throw new UserMessageException(Loc::getMessage('SALE_OA_ERROR_LOAD_ORDER').": ".$formData["ID"]);
@@ -2327,6 +2419,12 @@ class AjaxProcessor
 	{
 		global $APPLICATION, $USER;
 
+		/** @var Sale\Order $orderClass */
+		$orderClass = $this->registry->getOrderClassName();
+
+		/** @var Sale\OrderStatus $orderStatusClass */
+		$orderStatusClass = $this->registry->getOrderStatusClassName();
+
 		if ($this->request["orderId"])
 			$orderId = $this->request["orderId"];
 		else
@@ -2338,7 +2436,7 @@ class AjaxProcessor
 			throw new UserMessageException(Loc::getMessage('SALE_OA_ERROR_PAYMENT_ID_WRONG'));
 
 		/** @var \Bitrix\Sale\Order $order */
-		$order = Sale\Order::load($orderId);
+		$order = $orderClass::load($orderId);
 		if ($order)
 		{
 			/** @var \Bitrix\Sale\PaymentCollection $paymentCollection */
@@ -2355,7 +2453,7 @@ class AjaxProcessor
 				{
 					$isUserResponsible = false;
 					$isAllowCompany = false;
-					$allowedStatusesUpdate = Sale\OrderStatus::getStatusesUserCanDoOperations($USER->GetID(), array('update'));
+					$allowedStatusesUpdate = $orderStatusClass::getStatusesUserCanDoOperations($USER->GetID(), array('update'));
 					$userCompanyList = Company\Manager::getUserCompanyList($USER->GetID());
 
 					if ($order->getField('RESPONSIBLE_ID') == $USER->GetID()
@@ -2391,6 +2489,12 @@ class AjaxProcessor
 
 	protected function saveTrackingNumberAction()
 	{
+		/** @var Sale\Order $orderClass */
+		$orderClass = $this->registry->getOrderClassName();
+
+		/** @var Sale\OrderStatus $orderStatusClass */
+		$orderStatusClass = $this->registry->getOrderStatusClassName();
+
 		global $APPLICATION, $USER;
 		$trackingNumber = '';
 
@@ -2408,7 +2512,7 @@ class AjaxProcessor
 			$trackingNumber = $this->request['trackingNumber'];
 
 		/** @var \Bitrix\Sale\Order $order */
-		$order = Sale\Order::load($orderId);
+		$order = $orderClass::load($orderId);
 		if ($order)
 		{
 			/** @var \Bitrix\Sale\ShipmentCollection $shipmentCollection */
@@ -2426,7 +2530,7 @@ class AjaxProcessor
 					$isUserResponsible = false;
 					$isAllowCompany = false;
 
-					$allowedStatusesUpdate = Sale\OrderStatus::getStatusesUserCanDoOperations($USER->GetID(), array('update'));
+					$allowedStatusesUpdate = $orderStatusClass::getStatusesUserCanDoOperations($USER->GetID(), array('update'));
 					$userCompanyList = Company\Manager::getUserCompanyList($USER->GetID());
 
 					if ($order->getField('RESPONSIBLE_ID') == $USER->GetID())
@@ -2482,6 +2586,12 @@ class AjaxProcessor
 		if(strlen($trackingNumber) <= 0)
 			return;
 
+		/** @var Sale\Order $orderClass */
+		$orderClass = $this->registry->getOrderClassName();
+
+		/** @var Sale\OrderStatus $orderStatusClass */
+		$orderStatusClass = $this->registry->getOrderStatusClassName();
+
 		$saleModulePermissions = $APPLICATION->GetGroupRight("sale");
 
 		if ($saleModulePermissions == 'P')
@@ -2490,17 +2600,13 @@ class AjaxProcessor
 			$isAllowCompany = false;
 			$isAllowUpdate = false;
 
-			$resOrder = Sale\Internals\OrderTable::getList(array(
-																'filter' => array(
-																	'=ID' => intval($this->request["orderId"]),
-																),
-																'select' => array(
-																	'RESPONSIBLE_ID', 'COMPANY_ID', 'STATUS_ID'
-																)
-															));
+			$resOrder = $orderClass::getList([
+				'filter' => ['=ID' => intval($this->request["orderId"])],
+				'select' => ['RESPONSIBLE_ID', 'COMPANY_ID', 'STATUS_ID']
+			]);
 			if ($orderData = $resOrder->fetch())
 			{
-				$allowedStatusesUpdate = Sale\OrderStatus::getStatusesUserCanDoOperations($USER->GetID(), array('update'));
+				$allowedStatusesUpdate = $orderStatusClass::getStatusesUserCanDoOperations($USER->GetID(), array('update'));
 				$userCompanyList = Company\Manager::getUserCompanyList($USER->GetID());
 
 				if ($orderData['RESPONSIBLE_ID'] == $USER->GetID())
@@ -2513,15 +2619,16 @@ class AjaxProcessor
 					$isAllowCompany = true;
 				}
 
-				$resShipment = Sale\Internals\ShipmentTable::getList(array(
-																		 'filter' => array(
-																			 '=ORDER_ID' => intval($this->request["orderId"]),
-																			 '=ID' => intval($this->request["shipmentId"]),
-																		 ),
-																		 'select' => array(
-																			 'RESPONSIBLE_ID', 'COMPANY_ID'
-																		 )
-																	 ));
+				/** @var Sale\Shipment $shipmentClass */
+				$shipmentClass = $this->registry->getShipmentClassName();
+
+				$resShipment = $shipmentClass::getList([
+					 'filter' => [
+						 '=ORDER_ID' => intval($this->request["orderId"]),
+						 '=ID' => intval($this->request["shipmentId"]),
+					 ],
+					 'select' => ['RESPONSIBLE_ID', 'COMPANY_ID']
+				]);
 				if ($shipmentData = $resShipment->fetch())
 				{
 					if ($shipmentData['RESPONSIBLE_ID'] == $USER->GetID())
@@ -2578,11 +2685,17 @@ class AjaxProcessor
 		global $APPLICATION, $USER;
 		$orderId = isset($this->request['orderId']) ? intval($this->request['orderId']) : 0;
 
+		/** @var Sale\Order $orderClass */
+		$orderClass = $this->registry->getOrderClassName();
+
+		/** @var Sale\OrderStatus $orderStatusClass */
+		$orderStatusClass = $this->registry->getOrderStatusClassName();
+
 		if(!\CSaleOrder::CanUserMarkOrder($orderId, $USER->GetUserGroupArray(), $this->userId))
 			throw new UserMessageException(Loc::getMessage('SALE_OA_ERROR_UNMARK_RIGHTS'));
 
 		/** @var  Sale\Order $saleOrder*/
-		if(!$saleOrder = Sale\Order::load($orderId))
+		if(!$saleOrder = $orderClass::load($orderId))
 			throw new UserMessageException(Loc::getMessage('SALE_OA_ERROR_LOAD_ORDER').": ".$orderId);
 
 		$saleModulePermissions = $APPLICATION->GetGroupRight("sale");
@@ -2591,7 +2704,7 @@ class AjaxProcessor
 		{
 			$isUserResponsible = false;
 			$isAllowCompany = false;
-			$allowedStatusesUpdate = Sale\OrderStatus::getStatusesUserCanDoOperations($USER->GetID(), array('update'));
+			$allowedStatusesUpdate = $orderStatusClass::getStatusesUserCanDoOperations($USER->GetID(), array('update'));
 			$userCompanyList = Company\Manager::getUserCompanyList($USER->GetID());
 
 			if ($saleOrder->getField('RESPONSIBLE_ID') == $USER->GetID())
@@ -2668,10 +2781,17 @@ class AjaxProcessor
 			else
 				throw new ArgumentNullException('paymentId');
 
+
+			/** @var Sale\Order $orderClass */
+			$orderClass = $this->registry->getOrderClassName();
+
+			/** @var Sale\OrderStatus $orderStatusClass */
+			$orderStatusClass = $this->registry->getOrderStatusClassName();
+
 			if ($orderId > 0)
 			{
 				/** @var \Bitrix\Sale\Order $order */
-				$order = Sale\Order::load($orderId);
+				$order = $orderClass::load($orderId);
 				if ($order)
 				{
 					/** @var \Bitrix\Sale\PaymentCollection $paymentCollection */
@@ -2691,7 +2811,7 @@ class AjaxProcessor
 									$isUserResponsible = false;
 									$isAllowCompany = false;
 
-									$allowedStatusesUpdate = Sale\OrderStatus::getStatusesUserCanDoOperations($USER->GetID(), array('update'));
+									$allowedStatusesUpdate = $orderStatusClass::getStatusesUserCanDoOperations($USER->GetID(), array('update'));
 
 									$userCompanyList = Company\Manager::getUserCompanyList($USER->GetID());
 
@@ -2748,16 +2868,22 @@ class AjaxProcessor
 		$formType = isset($this->request["formType"]) && $this->request["formType"] == "edit" ? "edit" : "view";
 		$idPrefix = isset($this->request["idPrefix"]) ? trim($this->request["idPrefix"]) : "";
 
+		/** @var Sale\Order $orderClass */
+		$orderClass = $this->registry->getOrderClassName();
+
+		/** @var Sale\OrderStatus $orderStatusClass */
+		$orderStatusClass = $this->registry->getOrderStatusClassName();
+
 		$result = array();
 		/** @var \Bitrix\Sale\Order $order */
-		$order = Sale\Order::load($orderId);
+		$order = $orderClass::load($orderId);
 
 		$saleModulePermissions = $APPLICATION->GetGroupRight("sale");
 
 		if ($saleModulePermissions == 'P')
 		{
-			$allowedStatusesView = Sale\OrderStatus::getStatusesUserCanDoOperations($USER->GetID(), array('view'));
-			$allowedStatusesUpdate = Sale\OrderStatus::getStatusesUserCanDoOperations($USER->GetID(), array('update'));
+			$allowedStatusesView = $orderStatusClass::getStatusesUserCanDoOperations($USER->GetID(), array('view'));
+			$allowedStatusesUpdate = $orderStatusClass::getStatusesUserCanDoOperations($USER->GetID(), array('update'));
 
 			$isAllowView = in_array($order->getField('STATUS_ID'), $allowedStatusesView) || in_array($order->getField('STATUS_ID'), $allowedStatusesUpdate);
 			$isUserResponsible = false;
@@ -2830,10 +2956,16 @@ class AjaxProcessor
 		$entityId = isset($this->request['entityId']) ? intval($this->request['entityId']) : 0;
 		$forEntity = isset($this->request['forEntity']) && $this->request['forEntity'] == 'Y' ? true : false;
 
-		$allowedStatusesMark = Sale\OrderStatus::getStatusesUserCanDoOperations($USER->GetID(), array('mark'));
+		/** @var Sale\Order $orderClass */
+		$orderClass = $this->registry->getOrderClassName();
+
+		/** @var Sale\OrderStatus $orderStatusClass */
+		$orderStatusClass = $this->registry->getOrderStatusClassName();
+
+		$allowedStatusesMark = $orderStatusClass::getStatusesUserCanDoOperations($USER->GetID(), array('mark'));
 
 		/** @var  \Bitrix\Sale\Order $order*/
-		if(!$order = Sale\Order::load($orderId))
+		if(!$order = $orderClass::load($orderId))
 			throw new UserMessageException(Loc::getMessage('SALE_OA_ERROR_LOAD_ORDER').": ".$orderId);
 
 		$saleModulePermissions = $APPLICATION->GetGroupRight("sale");
@@ -2868,7 +3000,10 @@ class AjaxProcessor
 		$errors = array();
 		$warnings = array();
 
-		$r = Sale\EntityMarker::tryFixErrorsByOrder($order, $markerId);
+		/** @var Sale\EntityMarker $entityMarkerClass */
+		$entityMarkerClass = $this->registry->getEntityMarkerClassName();
+
+		$r = $entityMarkerClass::tryFixErrorsByOrder($order, $markerId);
 		if(!$r->isSuccess())
 		{
 			$errors = $r->getErrorMessages();
@@ -2947,10 +3082,16 @@ class AjaxProcessor
 		$entityId = isset($this->request['entityId']) ? intval($this->request['entityId']) : 0;
 		$forEntity = isset($this->request['forEntity']) && $this->request['forEntity'] == 'Y' ? true : false;
 
-		$allowedStatusesMark = Sale\OrderStatus::getStatusesUserCanDoOperations($USER->GetID(), array('mark'));
+		/** @var Sale\Order $orderClass */
+		$orderClass = $this->registry->getOrderClassName();
+
+		/** @var Sale\OrderStatus $orderStatusClass */
+		$orderStatusClass = $this->registry->getOrderStatusClassName();
+
+		$allowedStatusesMark = $orderStatusClass::getStatusesUserCanDoOperations($USER->GetID(), array('mark'));
 
 		/** @var  \Bitrix\Sale\Order $saleOrder*/
-		if (!$order = Sale\Order::load($orderId))
+		if (!$order = $orderClass::load($orderId))
 		{
 			throw new UserMessageException(Loc::getMessage('SALE_OA_ERROR_LOAD_ORDER').": ".$orderId);
 		}
@@ -2984,7 +3125,10 @@ class AjaxProcessor
 			throw new UserMessageException(Loc::getMessage('SALE_OA_ERROR_UNMARK_RIGHTS'));
 		}
 
-		$r = Sale\EntityMarker::delete($markerId);
+		/** @var Sale\EntityMarker $entityMarkerClass */
+		$entityMarkerClass = $this->registry->getEntityMarkerClassName();
+
+		$r = $entityMarkerClass::delete($markerId);
 		if(!$r->isSuccess())
 		{
 			$errors = $r->getErrorMessages();
@@ -3207,7 +3351,10 @@ class AjaxProcessor
 			}
 		}
 
-		$dbRes = Sale\Shipment::getList(array(
+		/** @var Sale\Shipment $shipmentClass */
+		$shipmentClass = $this->registry->getShipmentClassName();
+
+		$dbRes = $shipmentClass::getList(array(
 			'select' => array('PRICE_DELIVERY'),
 			'filter' => array('=ID' => $shipmentId)
 		));
@@ -3215,7 +3362,10 @@ class AjaxProcessor
 
 		$totalSum = $shipmentInfo['PRICE_DELIVERY'];
 
-		$dbRes = Sale\ShipmentItemCollection::getList(array(
+		/** @var Sale\ShipmentItemCollection $shipmentItemCollectionClass */
+		$shipmentItemCollectionClass = $this->registry->getShipmentItemCollectionClassName();
+
+		$dbRes = $shipmentItemCollectionClass::getList(array(
 			'select' => array(
 				'PRICE' => 'BASKET.PRICE',
 				'QUANTITY',
@@ -3291,7 +3441,10 @@ class AjaxProcessor
 
 		if ($paymentId > 0)
 		{
-			$dbRes = Sale\Payment::getList(
+			/** @var Sale\Payment $paymentClass */
+			$paymentClass = $this->registry->getPaymentClassName();
+
+			$dbRes = $paymentClass::getList(
 				array(
 					"filter" => array("ID" => (int)$paymentId)
 				)
@@ -3304,7 +3457,10 @@ class AjaxProcessor
 		elseif ($shipmentId > 0)
 		{
 
-			$dbRes = Sale\Shipment::getList(
+			/** @var Sale\Shipment $shipmentClass */
+			$shipmentClass = $this->registry->getShipmentClassName();
+
+			$dbRes = $shipmentClass::getList(
 				array(
 					"filter" => array("ID" => (int)$shipmentId)
 				)
@@ -3319,7 +3475,10 @@ class AjaxProcessor
 			return;
 		}
 
-		$order = Sale\Order::load($orderId);
+		/** @var Sale\Order $orderClass */
+		$orderClass = $this->registry->getOrderClassName();
+
+		$order = $orderClass::load($orderId);
 
 		$saleModulePermissions = $APPLICATION->GetGroupRight("sale");
 		
@@ -3622,7 +3781,7 @@ class AjaxProcessor
 		$errorsListForConfirm = $this->getListErrorsForConfirmation();
 		foreach ($result->getErrors() as $error)
 		{
-			if (in_array($error->getCode(), $errorsListForConfirm))
+			if (in_array($error->getCode(), $errorsListForConfirm, true))
 			{
 				$warningExists = false;
 				$resultData['NEED_CONFIRM'] = true;

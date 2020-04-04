@@ -29,7 +29,7 @@ return array(
 		'.landing-block-node-card-img' => array(
 			'name' => Loc::getMessage('LANDING_BLOCK_36.2.CONCERTES_DATES_WITH_BUTTON_NODES_LANDINGBLOCKNODECARDIMG'),
 			'type' => 'img',
-			'dimensions' => array('width' => 600, 'height' => 600),
+			'dimensions' => array('width' => 130),
 		),
 		'.landing-block-node-card-title' => array(
 			'name' => Loc::getMessage('LANDING_BLOCK_36.2.CONCERTES_DATES_WITH_BUTTON_NODES_LANDINGBLOCKNODECARDTITLE'),

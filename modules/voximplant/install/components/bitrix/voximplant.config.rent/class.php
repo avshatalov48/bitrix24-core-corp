@@ -24,22 +24,7 @@ class CVoxImplantComponentConfigRent extends \CBitrixComponent
 
 	protected function prepareData()
 	{
-		$this->arResult['LIST_RENT_NUMBERS'] = array();
-		$res = Bitrix\Voximplant\ConfigTable::getList(array(
-			'filter' => Array('=PORTAL_MODE' => CVoxImplantConfig::MODE_RENT)
-		));
-		while ($row = $res->fetch())
-		{
-			$this->arResult['LIST_RENT_NUMBERS'][$row['ID']] = array(
-				'PHONE_NAME' => htmlspecialcharsbx($row['PHONE_NAME']),
-				'PHONE_NAME_FORMATTED' => htmlspecialcharsbx(\Bitrix\Main\PhoneNumber\Parser::getInstance()->parse($row['PHONE_NAME'])->format()),
-				'PHONE_VERIFIED' => $row['PHONE_VERIFIED'] == 'Y',
-				'PHONE_COUNTRY_CODE' => $row['PHONE_COUNTRY_CODE'],
-				'TO_DELETE' => $row['TO_DELETE'] == 'Y',
-			);
-		}
 		$this->arResult['CAN_RENT_NUMBER'] = Limits::canRentNumber();
-
 		$this->arResult['RENT_PACKET_SIZE'] = (int)$_REQUEST['PACKET_SIZE'] ?: 1;
 
 		$account = new CVoxImplantAccount();

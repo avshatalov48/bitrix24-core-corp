@@ -1,5 +1,10 @@
 <?
+$MESS["LANDING_CMP_PAR_DRAFT_MODE"] = "Always use Draft mode";
+$MESS["LANDING_CMP_PAR_EDIT_DONT_LEAVE_FRAME"] = "Don't leave frame";
+$MESS["LANDING_CMP_PAR_EDIT_FULL_PUBLICATION"] = "By default, publish all site pages in the editor";
+$MESS["LANDING_CMP_PAR_EDIT_PANEL_LIGHT_MODE"] = "Use simple pane mode in the editor";
 $MESS["LANDING_CMP_PAR_LANDING_TYPE"] = "Site type";
+$MESS["LANDING_CMP_PAR_REOPEN_LOCATION_IN_SLIDER"] = "Reopen current location in slider";
 $MESS["LANDING_CMP_PAR_SHOW_MENU"] = "Show Menu";
 $MESS["LANDING_CMP_PAR_SM_DOMAINS"] = "Domains";
 $MESS["LANDING_CMP_PAR_SM_DOMAIN_EDIT"] = "Domain edit page";
@@ -10,6 +15,14 @@ $MESS["LANDING_CMP_PAR_SM_ROLE_EDIT"] = "Role edit page";
 $MESS["LANDING_CMP_PAR_SM_SITE"] = "Site page (list of landings)";
 $MESS["LANDING_CMP_PAR_SM_SITES"] = "Sites";
 $MESS["LANDING_CMP_PAR_SM_SITE_EDIT"] = "Site edit page";
+$MESS["LANDING_CMP_PAR_STRICT_TYPE"] = "Strict match";
+$MESS["LANDING_CMP_PAR_TILE_LANDING_MODE"] = "On page tile click";
+$MESS["LANDING_CMP_PAR_TILE_LANDING_MODE_EDIT"] = "Edit page";
+$MESS["LANDING_CMP_PAR_TILE_LANDING_MODE_VIEW"] = "View page";
+$MESS["LANDING_CMP_PAR_TILE_SITE_MODE"] = "On site tile click";
+$MESS["LANDING_CMP_PAR_TILE_SITE_MODE_LIST"] = "View site pages list";
+$MESS["LANDING_CMP_PAR_TILE_SITE_MODE_VIEW"] = "View site";
+$MESS["LANDING_CMP_PAR_TYPE"] = "Site type";
 $MESS["LANDING_CMP_PAR_VAR_DOMAIN"] = "URL parameter for domains page";
 $MESS["LANDING_CMP_PAR_VAR_DOMAIN_EDIT"] = "URL parameter for domain ID (edit)";
 $MESS["LANDING_CMP_PAR_VAR_LANDING_EDIT"] = "URL parameter for landing ID (edit)";

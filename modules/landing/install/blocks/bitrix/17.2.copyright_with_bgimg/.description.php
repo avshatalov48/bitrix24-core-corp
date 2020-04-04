@@ -65,7 +65,7 @@ return array(
 			),
 			'.landing-block-node-phone-link' => array(
 				'name' => Loc::getMessage('LANDING_BLOCK_17.2.COPYRIGHT_WITH_BGIMG_STYLE_LANDINGBLOCKNODEPHONELINK'),
-				'type' => array('typo', 'animation'),
+				'type' => array('typo-link', 'animation'),
 			),
 			'.landing-block-card-social-icon-link' => array(
 				'name' => Loc::getMessage('LANDING_BLOCK_17.2.COPYRIGHT_WITH_SOCIAL_NODES_LANDINGBLOCKNODESOCIALLINK'),

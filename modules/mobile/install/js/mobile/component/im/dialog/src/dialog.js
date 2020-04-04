@@ -1198,8 +1198,6 @@ export class Dialog
 
 /* region 02. Push & Pull */
 
-
-
 	eventStoreInteraction(data)
 	{
 		if (data.type === 'dialogues/update' && data.payload && data.payload.fields)
@@ -1214,6 +1212,15 @@ export class Dialog
 			 		counter: data.payload.fields.counter,
 				}, true], 'im.recent');
 			 }
+		}
+		else if (data.type === 'dialogues/set')
+		{
+			data.payload.forEach((dialog) => {
+				BXMobileApp.Events.postToComponent("chatdialog::counter::change", [{
+			 		dialogId: dialog.dialogId,
+			 		counter: dialog.counter,
+				}, true], 'im.recent');
+			});
 		}
 	}
 

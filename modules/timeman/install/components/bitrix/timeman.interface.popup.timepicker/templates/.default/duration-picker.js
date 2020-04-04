@@ -113,6 +113,11 @@
 			}
 			this.durationInput.value = this.durationInput.value.replace(search, newVal);
 			this.durationInput.value = this.durationInput.value.replace(/--/, '00');
+			if (this.durationPopupToggle && this.durationPopupToggle.textContent)
+			{
+				this.durationPopupToggle.textContent = this.durationInput.value;
+			}
+
 			var event = new Event('updateValue');
 			this.durationInput.dispatchEvent(event);
 		},

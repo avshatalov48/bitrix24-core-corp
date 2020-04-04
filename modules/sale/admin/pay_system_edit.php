@@ -1,4 +1,5 @@
-<?
+<?php
+use Bitrix\Sale;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Application;
 use Bitrix\Sale\Internals\PaySystemActionTable;
@@ -208,9 +209,8 @@ if ($server->getRequestMethod() == "POST"
 		$path = PaySystem\Manager::getPathToHandlerFolder($actionFile);
 		if (\Bitrix\Main\IO\File::isFileExists($documentRoot.$path.'/handler.php'))
 		{
-			require_once $documentRoot.$path.'/handler.php';
+			list($className) = PaySystem\Manager::includeHandler($actionFile);
 
-			$className = PaySystem\Manager::getClassNameFromPath($path);
 			$fields['HAVE_PAYMENT'] = 'Y';
 
 			if (is_subclass_of($className, '\Bitrix\Sale\PaySystem\IPrePayable'))
@@ -245,9 +245,7 @@ if ($server->getRequestMethod() == "POST"
 			{
 				if (\Bitrix\Main\IO\File::isFileExists($documentRoot.$path.'/handler.php'))
 				{
-					require_once $documentRoot.$path.'/handler.php';
-
-					$className = PaySystem\Manager::getClassNameFromPath($actionFile);
+					list($className) = PaySystem\Manager::includeHandler($actionFile);
 					$fields["TARIF"] = $className::prepareToField($request->get('TARIF'));
 				}
 			}
@@ -258,6 +256,11 @@ if ($server->getRequestMethod() == "POST"
 		}
 
 		$isConsumerChange = $request->get('ACTION_FILE') != $request->get('PRIOR_ACTION_FILE');
+		if (!$isConsumerChange)
+		{
+			$isConsumerChange = $request->get('PS_MODE') != $request->get('PRIOR_PS_MODE');
+		}
+
 		$file = $request->getFile('LOGOTIP');
 
 		if ($file !== null && $file["error"] == 0)
@@ -308,7 +311,7 @@ if ($server->getRequestMethod() == "POST"
 			}
 		}
 
-		$data = PaySystem\Manager::getHandlerDescription($request->get('ACTION_FILE'));
+		$data = PaySystem\Manager::getHandlerDescription($request->get('ACTION_FILE'), $request->get('PS_MODE'));
 
 		if ($id > 0)
 		{
@@ -607,6 +610,7 @@ $tabControl->BeginNextTab();
 								|| (
 									IsModuleInstalled('documentgenerator')
 									&& strpos($handler, 'bill') === 0
+									&& ToLower($handlerName) !== ToLower($handler)
 								)
 							)
 							{
@@ -620,6 +624,7 @@ $tabControl->BeginNextTab();
 				</optgroup>
 			</select>
 			<input type="hidden" value="<?=htmlspecialcharsbx($paySystem['ACTION_FILE'])?>" name="PRIOR_ACTION_FILE">
+			<input type="hidden" value="<?=htmlspecialcharsbx($paySystem['PS_MODE'])?>" name="PRIOR_PS_MODE">
 		</td>
 	</tr>
 	<tbody id="pay_system_ps_mode">
@@ -627,14 +632,7 @@ $tabControl->BeginNextTab();
 		$psMode = ($request->get('PS_MODE') !== null) ? $request->get('PS_MODE') : $paySystem['PS_MODE'];
 
 		/** @var PaySystem\BaseServiceHandler $className */
-		$className = PaySystem\Manager::getClassNameFromPath($handlerName);
-		if (!class_exists($className))
-		{
-			$path = PaySystem\Manager::getPathToHandlerFolder($handler);
-			$fullPath = $documentRoot.$path.'/handler.php';
-			if ($path && \Bitrix\Main\IO\File::isFileExists($fullPath))
-				require_once $fullPath;
-		}
+		list($className) = PaySystem\Manager::includeHandler($handlerName);
 
 		$handlerModeList = array();
 		if (class_exists($className))

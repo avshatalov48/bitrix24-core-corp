@@ -8,6 +8,9 @@ $MESS["TASKS_TUFP_LICENSE_BODY"] = "
 Custom fields are available in <a href=\"/settings/license_all.php\" target=\"_blank\">selected commercial plans</a>.<br />
 <br />
 Power your tasks with more fields (e.g. \"Project budget\" or \"Prepaid amount\"). They will be available to all the users.";
+$MESS["TASKS_TUFP_LICENSE_BODY_V2"] = "Add your custom fields to tasks. They will be available to all the users.<br />
+<br />
+Custom fields are available in <a href=\"/settings/license_all.php\" target=\"_blank\">selected commercial plans</a>.";
 $MESS["TASKS_TUFP_LICENSE_TITLE"] = "Add your fields to Tasks";
 $MESS["TASKS_TUFP_NEW_FIELD_BOOLEAN"] = "New boolean field";
 $MESS["TASKS_TUFP_NEW_FIELD_DATETIME"] = "New date field";

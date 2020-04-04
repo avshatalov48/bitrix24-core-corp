@@ -139,6 +139,7 @@ while (($row = $arResult["ANSWERS"]->fetch()) && $row)
 			"data-item" => array(
 				"active" => $row["ACTIVE"],
 				"c_sort" => $row["C_SORT"],
+				"IMAGE_ID" => $row["IMAGE_ID"],
 				"message" => $row["MESSAGE"],
 				"message_type" => $row["MESSAGE_TYPE"],
 				"field_type" => $row["FIELD_TYPE"],
@@ -163,9 +164,10 @@ while (($row = $arResult["ANSWERS"]->fetch()) && $row)
 			$gridRow["columnClasses"][$fieldId][] = "main-grid-cell-deleted";
 		}
 		$gridRow["columnClasses"][$fieldId] = implode(" ", $gridRow["columnClasses"][$fieldId]);
-		$gridRow["columns"][$fieldId] = htmlspecialcharsbx($field);
+		$gridRow["columns"][$fieldId] = is_string($field) ? htmlspecialcharsbx($field) : $field;
 		$gridRow["data"][$fieldId] = $field;
 	}
+
 	$field = htmlspecialcharsbx($gridRow["columns"]["COLOR"]);
 	$gridRow["columns"]["COLOR"] = strlen($field) > 0 ? "<span class=\"vote-edit-color\" style='border-color:$field;'>$field</span>" : "";
 	$gridRow["data"]["COLOR"] = "<input name=\"COLOR\" class=\"main-grid-editor main-grid-editor-text\" id=\"COLOR_control\" value=\"$field\" onclick=\"BX.Vote.showColorPicker(this)\">";
@@ -173,7 +175,38 @@ while (($row = $arResult["ANSWERS"]->fetch()) && $row)
 	$gridRow["columns"]["ACTIVE"] = ($gridRow["data"]["ACTIVE"] == "Y" ? GetMessage("admin_lib_list_yes") : GetMessage("admin_lib_list_no"));
 	$gridRow["columns"]["FIELD_TYPE"] = \Bitrix\Vote\AnswerTypes::getTitleById($gridRow["columns"]["FIELD_TYPE"]);
 
-
+	if (empty($row["IMAGE_ID"]))
+	{
+		$gridRow["columns"]["IMAGE_ID"] = "";
+	}
+	else
+	{
+		if (!is_array($row["IMAGE_ID"]))
+		{
+			$gridRow["columns"]["IMAGE_ID"] = \CFileInput::Show(
+				"fileInput_".$row["ID"],
+				$row["IMAGE_ID"], array(
+				"IMAGE" => "Y",
+				"PATH" => "Y",
+				"FILE_SIZE" => "Y",
+				"DIMENSIONS" => "Y",
+				"IMAGE_POPUP" => "Y"
+			));
+			$gridRow["data"]["IMAGE_ID"] = CFile::GetFileSRC(CFile::GetFileArray($row["IMAGE_ID"]));
+		}
+		else if (array_key_exists("relative_tmp_name", $row["IMAGE_ID"]))
+		{
+			$p = htmlspecialcharsbx($row["IMAGE_ID"]["relative_tmp_name"]);
+			$gridRow["columns"]["IMAGE_ID"] = "<img src=\"{$p}\" style=\"max-width: 150px;max-height:150px;\">";
+			$gridRow["data"]["IMAGE_ID"] = $row["IMAGE_ID"]["relative_tmp_name"];
+		}
+		else
+		{
+			$p = htmlspecialcharsbx($row["IMAGE_ID"]["tmp_name"]);
+			$gridRow["columns"]["IMAGE_ID"] = "<img src=\"{$p}\" style=\"max-width: 150px;max-height:150px;\">";
+			$gridRow["data"]["IMAGE_ID"] = $row["IMAGE_ID"]["tmp_name"];
+		}
+	}
 	$rows[] = $gridRow;
 }
 $aMenu = array(
@@ -231,9 +264,9 @@ $arQuestion = $arResult["QUESTION"];
 						"QUESTION_TYPE",
 						$arQuestion["QUESTION_TYPE"],
 						array(
-							'height' => '100',
-							'width' => '100%',
-							'placeholder' => 'Question text inside'));
+							"height" => "100",
+							"width" => "100%",
+							"placeholder" => "Question text inside"));
 					?></td>
 			</tr>
 		<?else:?>
@@ -315,6 +348,13 @@ $arQuestion = $arResult["QUESTION"];
 							"sort" => "ID",
 							"default" => false),
 						array(
+							"id" => "IMAGE_ID",
+							"name" => GetMessage("VOTE_IMAGE_ID"),
+							"default" => true,
+							"editable" => array(
+								"TYPE" => \Bitrix\Main\Grid\Editor\Types::IMAGE
+							)),
+						array(
 							"id" => "MESSAGE",
 							"name" => Loc::getMessage("VOTE_ANSWER_MESSAGE"),
 							"sticked_default" => true,
@@ -327,7 +367,7 @@ $arQuestion = $arResult["QUESTION"];
 						array(
 							"id" => "MESSAGE_TYPE",
 							"name" => Loc::getMessage("VOTE_ANSWER_MESSAGE_TYPE"),
-							"default" => true,
+							"default" => false,
 							"editable" => array(
 								"TYPE" => \Bitrix\Main\Grid\Editor\Types::DROPDOWN,
 								"items" => array(
@@ -396,7 +436,7 @@ $arQuestion = $arResult["QUESTION"];
 							"id" => "COLOR",
 							"name" => Loc::getMessage("VOTE_COLOR"),
 							"sort" => "COLOR",
-							"default" => false,
+							"default" => true,
 							"editable" => array(
 								"TYPE" => \Bitrix\Main\Grid\Editor\Types::CUSTOM
 							)

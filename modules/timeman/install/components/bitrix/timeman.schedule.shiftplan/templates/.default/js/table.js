@@ -3,18 +3,41 @@
 	BX.namespace('BX.Timeman.Component.Schedule.ShiftPlan');
 	BX.Timeman.Component.Schedule.ShiftPlan.Table = function (options)
 	{
+		BX.Timeman.Component.BaseComponent.apply(this, [{containerSelector: '[data-role="shift-records-container"]'}]);
 		this.isSlider = options.isSlider;
 		this.scheduleId = options.scheduleId;
 		this.gridId = options.gridId;
-		this.container = options.container.querySelector('[data-role="shift-plans-container"]');
+		this.useEmployeesTimezoneName = 'useEmployeesTimezone';
 
 		this.addEventHandlers();
 	};
 	BX.Timeman.Component.Schedule.ShiftPlan.Table.prototype = {
+		__proto__: BX.Timeman.Component.BaseComponent.prototype,
+		constructor: BX.Timeman.Component.Schedule.ShiftPlan.Table,
 		addEventHandlers: function ()
 		{
 			this.addEventHandlersInsideGrid();
 			BX.addCustomEvent('Grid::updated', this.addEventHandlersInsideGrid.bind(this));
+			document.querySelector('[data-role="shift-records-container"]').addEventListener('TimemanWorktimeGridCellHtmlUpdated', function (e)
+			{
+				if (!e.detail.dayCellNodes)
+				{
+					return;
+				}
+				for (var i = 0; i < e.detail.dayCellNodes.length; i++)
+				{
+					var timeCells = e.detail.dayCellNodes[i].querySelectorAll('[data-shift-block="true"]');
+					if (timeCells.length === 0)
+					{
+						continue;
+					}
+					for (var timeIndex = 0; timeIndex < timeCells.length; timeIndex++)
+					{
+						BX.bind(this.selectOneByRole('shiftplan-menu-toggle', timeCells[timeIndex]), 'click', BX.delegate(this.onShiftplanMenuToggleClick, this));
+						BX.bind(this.selectOneByRole('add-shiftplan-btn', timeCells[timeIndex]), 'click', BX.delegate(this.onAddShiftPlanClick, this));
+					}
+				}
+			}.bind(this), false);
 		},
 		addEventHandlersInsideGrid: function ()
 		{
@@ -24,10 +47,10 @@
 				BX.bind(addShiftplanBtns[i], 'click', BX.delegate(this.onAddShiftPlanClick, this));
 			}
 
-			var deleteShiftplanBtns = this.selectAllByRole('delete-shiftplan-btn');
-			for (var i = 0; i < deleteShiftplanBtns.length; i++)
+			var shiftplanMenuToggles = this.selectAllByRole('shiftplan-menu-toggle');
+			for (var i = 0; i < shiftplanMenuToggles.length; i++)
 			{
-				BX.bind(deleteShiftplanBtns[i], 'click', BX.delegate(this.onDeleteShiftPlanClick, this));
+				BX.bind(shiftplanMenuToggles[i], 'click', BX.delegate(this.onShiftplanMenuToggleClick, this));
 			}
 
 			var deleteUserBtns = this.selectAllByRole('delete-user-btn');
@@ -35,6 +58,10 @@
 			{
 				BX.bind(deleteUserBtns[i], 'click', BX.delegate(this.onDeleteUserClick, this));
 			}
+		},
+		useEmployeesTimezone: function ()
+		{
+			return this.getCookie(this.useEmployeesTimezoneName) === 'Y';
 		},
 		onDeleteUserClick: function (event)
 		{
@@ -54,9 +81,9 @@
 				titleBar: BX.message('TM_SCHEDULE_PLAN_DELETE_USER_CONFIRM_TITLE'),
 				content: BX.message('TM_SCHEDULE_PLAN_DELETE_USER_CONFIRM').replace('#USER_NAME#', event.currentTarget.dataset.userName),
 				buttons: [
-					new BX.PopupWindowButtonLink({
+					new BX.PopupWindowButton({
 						text: BX.message('TM_SCHEDULE_PLAN_DELETE_USER_CONFIRM_NO'),
-						className: 'popup-window-button-link-cancel',
+						className: 'ui-btn ui-btn-danger',
 						events: {
 							click: function ()
 							{
@@ -66,7 +93,7 @@
 					}),
 					new BX.PopupWindowButton({
 						text: BX.message('TM_SCHEDULE_PLAN_DELETE_USER_CONFIRM_YES'),
-						className: 'popup-window-button-accept',
+						className: 'ui-btn ui-btn-success',
 						events: {
 							click: function (userId)
 							{
@@ -97,41 +124,81 @@
 		{
 			BX.Main.gridManager.reload(this.gridId);
 		},
-		onDeleteShiftPlanClick: function (event)
+		onShiftplanMenuToggleClick: function (event)
 		{
 			event.stopPropagation();
 			event.preventDefault();
-			var form = event.currentTarget;
-			BX.ajax.runAction(
-				'timeman.shiftplan.delete',
-				{
-					data: this.createFormDataForShiftPlan(form)
-				}
-			).then(
-				function (response)
-				{
-					this.onSuccessShiftPlanDeleted.bind(this)(response.data.shiftPlan, form);
-				}.bind(this),
-				function (response)
-				{
-				}.bind(this));
-		},
-		onSuccessShiftPlanDeleted: function (shiftPlan, form)
-		{
-			if (!shiftPlan.shift)
+			this.planMenuPopup = this.buildPlanMenuPopup(event);
+			if (this.planMenuPopup)
 			{
-				return;
+				this.planMenuPopup.show();
 			}
-			var addBtn = document.createElement('div');
-			addBtn.innerHTML = shiftPlan.shiftCellHtml.trim();
-			addBtn = addBtn.firstChild;
+		},
+		buildPlanMenuPopup: function (event)
+		{
+			var items = this.buildPlanMenuItems(event);
 
-			BX.bind(addBtn, 'click', BX.delegate(this.onAddShiftPlanClick, this));
+			if (items.length > 0)
+			{
+				var id = 'tmShiftPlanMenu';
+				for (var i = 0; i < items.length; i++)
+				{
+					id = id + items[i].id;
+				}
+				return BX.PopupMenu.create({
+					items: items,
+					maxHeight: 450,
+					id: id,
+					bindElement: event.currentTarget,
+					angle: true,
+					closeByEsc: true,
+					autoHide: true
+				});
+			}
+			return null;
+		},
+		buildPlanMenuItems: function (event)
+		{
+			var dataset = event.currentTarget.dataset;
+			var items = [];
+			if (dataset.itemDelete === '1')
+			{
+				items.push({
+					id: 'deletePlan' + BX.util.getRandomString(20),
+					text: BX.util.htmlspecialchars(BX.message('TM_SHIFT_PLAN_MENU_DELETE_SHIFT_TITLE')),
+					onclick: function (form)
+					{
+						this.planMenuPopup.close();
+						BX.ajax.runAction(
+							'timeman.shiftplan.delete',
+							{
+								data: this.createFormDataForShiftPlan(form)
+							}
+						).then(
+							function (form, response)
+							{
+								this.onSuccessShiftPlanDeleted(response.data.shiftPlan);
+							}.bind(this, form),
+							function (response)
+							{
+							}.bind(this));
+					}.bind(this, event.currentTarget)
+				});
+			}
+			if (dataset.itemAdd === '1')
+			{
+				items.push({
+					id: 'addPlan' + BX.util.getRandomString(20),
+					text: BX.util.htmlspecialchars(BX.message('TM_SHIFT_PLAN_MENU_ADD_SHIFT_TITLE')),
+					onclick: function (btn)
+					{
+						this.planMenuPopup.close();
+						this.onAddShiftPlanClick(btn);
+					}.bind(this, event.currentTarget)
+				});
+			}
 
-			var formParent = BX.findParent(form, {'attr': 'data-shift-block'});
-			formParent.parentNode.replaceChild(addBtn, formParent);
-			formParent.remove();
-			this.showElement(addBtn);
+			return items;
 		},
 		createFormDataForShiftPlan: function (formWrapper)
 		{
@@ -141,72 +208,72 @@
 			{
 				formData.append(inputs[i].name, inputs[i].value);
 			}
+			formData.append('useEmployeesTimezone', this.useEmployeesTimezone() ? 'Y' : 'N');
+			var absenceBlock = this.selectOneByRole('absence', BX.findParent(formWrapper, {'tag': 'td'}));
+			if (absenceBlock && absenceBlock.dataset)
+			{
+				formData.append('drawAbsenceTitle', absenceBlock.dataset.title);
+			}
 			return formData;
 		},
 		onAddShiftPlanClick: function (event)
 		{
-			event.stopPropagation();
-			event.preventDefault();
-			var formWrapper = event.currentTarget;
+			var formWrapper = event;
+			if (event.stopPropagation)
+			{
+				event.stopPropagation();
+				event.preventDefault();
+				formWrapper = event.currentTarget;
+			}
 			if (formWrapper.isDisabled)
 			{
 				return;
 			}
 			formWrapper.isDisabled = true;
 			formWrapper.style.opacity = 0;
+			var formData = this.createFormDataForShiftPlan(formWrapper);
 			BX.ajax.runAction(
 				'timeman.shiftplan.add',
 				{
-					data: this.createFormDataForShiftPlan(formWrapper)
+					data: formData
 				}
 			).then(
 				function (response)
 				{
 					formWrapper.style.opacity = 1;
-					event.target.isDisabled = false;
-					this.onSuccessShiftPlanAdded.bind(this)(response.data.shiftPlan, formWrapper);
+					formWrapper.isDisabled = false;
+					this.onSuccessShiftPlanAdded(response.data.shiftPlan);
 				}.bind(this),
 				function (response)
 				{
-					event.target.isDisabled = false;
+					formWrapper.isDisabled = false;
 					formWrapper.style.opacity = 1;
 				}.bind(this));
 		},
-		onSuccessShiftPlanAdded: function (shiftPlan, formParent)
+		onSuccessShiftPlanDeleted: function (shiftPlan)
 		{
-			var shiftBlock = document.createElement('div');
-			shiftBlock.innerHTML = shiftPlan.shiftCellHtml;
-			shiftBlock = shiftBlock.firstChild;
-
-			BX.bind(this.selectOneByRole('delete-shiftplan-btn', shiftBlock), 'click', BX.delegate(this.onDeleteShiftPlanClick, this));
-
-			formParent.parentNode.replaceChild(shiftBlock, formParent);
-			formParent.remove();
+			this.dispatchCellHtmlRedraw(shiftPlan);
 		},
-		selectOneByRole: function (role, container)
+		onSuccessShiftPlanAdded: function (shiftPlan)
 		{
-			return container ?
-				container.querySelector('[data-role="' + role + '"')
-				: this.container.querySelector('[data-role="' + role + '"');
+			this.dispatchCellHtmlRedraw(shiftPlan);
 		},
-		selectAllByRole: function (role)
+		dispatchCellHtmlRedraw: function (shiftPlan)
 		{
-			return this.container.querySelectorAll('[data-role="' + role + '"');
-		},
-		showElement: function (element)
-		{
-			if (element)
+			if (!this.getEventContainer())
 			{
-				element.classList.remove('timeman-hide');
+				return;
 			}
+			var event = new CustomEvent('TimemanWorktimeGridCellHtmlRedraw', {
+				detail: {
+					html: [shiftPlan.cellHtml]
+				}
+			});
+			this.getEventContainer().dispatchEvent(event);
 		},
-		hideElement: function (element)
+		getEventContainer: function ()
 		{
-			if (element)
-			{
-				element.classList.add('timeman-hide');
-			}
-		},
+			return document.querySelector('[data-role="shift-records-container"]');
+		}
 	};
-
 })();

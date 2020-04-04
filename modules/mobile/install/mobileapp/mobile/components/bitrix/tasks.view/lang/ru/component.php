@@ -12,7 +12,6 @@ $MESS["TASKS_TASK_DETAIL_BTN_APPROVE_TASK"] = "Принять работу";
 $MESS["TASKS_TASK_DETAIL_BTN_REDO_TASK"] = "Доделать";
 $MESS["TASKS_TASK_DETAIL_BTN_DELEGATE_TASK"] = "Делегировать";
 
-
 $MESS["TASKS_TASK_DETAIL_TASK_ADD"] = "Добавить задачу";
 $MESS["TASKS_TASK_DETAIL_TASK_ADD_SUBTASK"] = "Добавить подзадачу";
 $MESS["TASKS_TASK_DETAIL_BTN_ADD_FAVORITE_TASK"] = "Добавить в избранное";
@@ -26,3 +25,11 @@ $MESS["TASKS_TASK_DETAIL_TASK_WAS_REMOVED"] = "Задача была удале�
 $MESS["TASKS_TASK_DETAIL_TASK_WAS_REMOVED_IN_ANOTHER_PLACE"] = "Задача была удалена в другом месте";
 
 $MESS["TASKS_TASK_DETAIL_DEADLINE_DATE_PICKER"] = "Крайний срок";
+$MESS["TASKS_TASK_DETAIL_TITLE_RESPONSIBLE"] = "Ответственный";
+$MESS["TASKS_TASK_DETAIL_IMAGE_PICKER_BITRIX24_DISK"] = "Битрикс24.Диск";
+$MESS["TASKS_TASK_DETAIL_IMAGE_PICKER_GALLERY"] = "Галерея";
+
+$MESS["TASKS_TASK_DETAIL_TASK_EDIT_CANCEL"] = "Отменить";
+$MESS["TASKS_TASK_DETAIL_TASK_EDIT_TITLE"] = "Редактирование";
+$MESS["TASKS_TASK_DETAIL_TASK_NEW_TASK_TITLE"] = "Новая задача";
+$MESS["TASKS_TASK_DETAIL_TASK_NEW_SUBTASK_TITLE"] = "Новая подзадача";

@@ -311,7 +311,7 @@ class Router
 			$userPhone = \CVoxImplantPhone::GetUserPhone($userId);
 			if($userPhone)
 			{
-				$lastNode = new Pstn(\CVoxImplantPhone::Normalize($userPhone, 1), \CVoxImplantIncoming::RULE_VOICEMAIL, $userId);
+				$lastNode = new Pstn(\CVoxImplantPhone::stripLetters($userPhone), \CVoxImplantIncoming::RULE_VOICEMAIL, $userId);
 			}
 			else
 			{
@@ -416,7 +416,7 @@ class Router
 		else if ($action['ACTION'] === \Bitrix\Voximplant\Ivr\Action::ACTION_PHONE)
 		{
 			$phoneNumber = $action['PARAMETERS']['PHONE_NUMBER'];
-			$pstnNode = new Pstn(\CVoxImplantPhone::Normalize($phoneNumber, 1), 'voicemail');
+			$pstnNode = new Pstn(\CVoxImplantPhone::stripLetters($phoneNumber), 'voicemail');
 			$lastNode->setNext($pstnNode);
 		}
 		else if ($action['ACTION'] === \Bitrix\Voximplant\Ivr\Action::ACTION_DIRECT_CODE)

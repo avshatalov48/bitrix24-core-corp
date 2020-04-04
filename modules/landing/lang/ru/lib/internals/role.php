@@ -1,6 +1,7 @@
 <?php
 $MESS['LANDING_TABLE_FIELD_ROLE_TITLE'] = 'Название роли';
 $MESS['LANDING_TABLE_FIELD_ROLE_XML_ID'] = 'Символьный код роли';
+$MESS['LANDING_TABLE_FIELD_ROLE_TYPE'] = 'Тип раздела прав';
 $MESS['LANDING_TABLE_FIELD_ROLE_ACCESS_CODES'] = 'Доступные права';
 $MESS['LANDING_TABLE_FIELD_ROLE_ADDITIONAL_RIGHTS'] = 'Дополнительные права';
 $MESS['LANDING_TABLE_FIELD_CREATED_BY_ID'] = 'Идентификатор создавшего пользователя';

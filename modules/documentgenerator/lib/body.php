@@ -399,9 +399,10 @@ abstract class Body
 	protected function printArrayValueByIndex(ArrayDataProvider $arrayDataProvider, $placeholder, $name, $index = 0, $modifier = '')
 	{
 		$innerProvider = $arrayDataProvider->getValue($index);
+		$modifier = preg_replace('#index=[\d]+#', '', $modifier);
 		if($innerProvider instanceof DataProvider)
 		{
-			$value = $this->printValue($innerProvider->getValue($name), $placeholder, $modifier);
+			$value = self::printValue($innerProvider->getValue($name), $placeholder, $modifier);
 		}
 		else
 		{
@@ -421,15 +422,16 @@ abstract class Body
 	protected function printAllArrayValues(ArrayDataProvider $arrayDataProvider, $placeholder, $name, $modifier = '')
 	{
 		$value = [];
-		list($outerModifier, $innerModifier) = explode('all', $modifier, 2);
+		[$outerModifier, $innerModifier] = explode('all', $modifier, 2);
+		$innerModifier = preg_replace('#^=[y,n]#', '', $innerModifier);
 		/** @var DataProvider $innerProvider */
 		foreach($arrayDataProvider as $innerProvider)
 		{
-			$value[] = $this->printValue($innerProvider->getValue($name), $placeholder, $innerModifier);
+			$value[] = self::printValue($innerProvider->getValue($name), $placeholder, $innerModifier);
 		}
 
 		$value = new Multiple($value);
-		return $this->printValue($value, $placeholder, $outerModifier);
+		return self::printValue($value, $placeholder, $outerModifier);
 	}
 
 	/**

@@ -190,7 +190,10 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 				$order = $this->createOrder();
 			}
 
-			$this->setOrder($order);
+			if ($order)
+			{
+				$this->setOrder($order);
+			}
 		}
 
 		return $this->order;
@@ -345,7 +348,7 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 		$fuserId = (int)$this->request->get('FUSER_ID');
 		if ($order && $fuserId > 0)
 		{
-			$basket = Sale\Basket::loadItemsForFUser($fuserId, $order->getSiteId());
+			$basket = Order\Basket::loadItemsForFUser($fuserId, $order->getSiteId());
 			$order->setBasket($basket);
 			$shipmentCollection = $order->getShipmentCollection();
 			$shipmentCollection->createItem();

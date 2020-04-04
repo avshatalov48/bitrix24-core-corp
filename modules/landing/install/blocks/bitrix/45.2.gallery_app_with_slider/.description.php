@@ -15,7 +15,7 @@ return array(
 	'cards' => array(
 		'.landing-block-node-card' => array(
 			'name' => Loc::getMessage('LANDING_BLOCK_45.2.GALLERY_APP_WO_SLIDER_CARDS_LANDINGBLOCKNODECARDIMG'),
-			'label' => array('.landing-block-node-card-img'),
+			'label' => array('.landing-block-node-card-img', '.landing-block-node-card-title'),
 		),
 	),
 	'nodes' => array(
@@ -49,7 +49,7 @@ return array(
 		),
 		'.landing-block-node-card' => array(
 			'name' => Loc::getMessage('LANDING_BLOCK_45.2.GALLERY_APP_WO_SLIDER_CARDS_LANDINGBLOCKNODECARDIMG'),
-			'type' => ['height-vh', 'animation'],
+			'type' => ['align-self', 'animation'],
 		),
 	),
 	'assets' => array(

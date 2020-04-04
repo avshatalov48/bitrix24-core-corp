@@ -538,6 +538,8 @@ class UrlPreview
 	protected static function getRemoteUrlMetadata(Uri $uri)
 	{
 		$httpClient = new HttpClient();
+		//prevents proxy to LAN
+		$httpClient->setPrivateIp(false);
 		$httpClient->setTimeout(5);
 		$httpClient->setStreamTimeout(5);
 		$httpClient->setHeader('User-Agent', self::USER_AGENT, true);

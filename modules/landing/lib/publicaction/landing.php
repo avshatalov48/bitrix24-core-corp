@@ -23,7 +23,7 @@ class Landing
 	 */
 	protected static function clearDisallowFields(array $fields)
 	{
-		$disallow = ['RULE', 'TPL_CODE', 'ACTIVE', 'INITIATOR_APP_CODE'];
+		$disallow = ['RULE', 'TPL_CODE', 'ACTIVE', 'INITIATOR_APP_CODE', 'VIEWS'];
 
 		if (is_array($fields))
 		{
@@ -47,7 +47,9 @@ class Landing
 	public static function getPreview($lid)
 	{
 		$result = new PublicActionResult();
-		$landing = LandingCore::createInstance($lid);
+		$landing = LandingCore::createInstance($lid, [
+			'skip_blocks' => true
+		]);
 
 		if ($landing->exist())
 		{
@@ -66,7 +68,9 @@ class Landing
 	public static function getPublicUrl($lid)
 	{
 		$result = new PublicActionResult();
-		$landing = LandingCore::createInstance($lid);
+		$landing = LandingCore::createInstance($lid, [
+			'skip_blocks' => true
+		]);
 
 		if ($landing->exist())
 		{
@@ -87,7 +91,9 @@ class Landing
 	public static function getAdditionalFields($lid)
 	{
 		$result = new PublicActionResult();
-		$landing = LandingCore::createInstance($lid);
+		$landing = LandingCore::createInstance($lid, [
+			'skip_blocks' => true
+		]);
 
 		if ($landing->exist())
 		{
@@ -117,7 +123,9 @@ class Landing
 	public static function publication($lid)
 	{
 		$result = new PublicActionResult();
-		$landing = LandingCore::createInstance($lid);
+		$landing = LandingCore::createInstance($lid, [
+			'skip_blocks' => true
+		]);
 
 		if ($landing->exist())
 		{
@@ -140,7 +148,9 @@ class Landing
 	public static function unpublic($lid)
 	{
 		$result = new PublicActionResult();
-		$landing = LandingCore::createInstance($lid);
+		$landing = LandingCore::createInstance($lid, [
+			'skip_blocks' => true
+		]);
 
 		if ($landing->exist())
 		{
@@ -168,10 +178,8 @@ class Landing
 		$landing = LandingCore::createInstance($lid);
 		if ($landing->exist())
 		{
-			$restApp = PublicAction::restApplication();
 			$data = array(
 				'PUBLIC' => 'N',
-				'INITIATOR_APP_CODE' => $restApp['CODE']
 			);
 			if (isset($fields['ACTIVE']))
 			{
@@ -506,6 +514,7 @@ class Landing
 	public static function getList(array $params = array())
 	{
 		$result = new PublicActionResult();
+		$params = $result->sanitizeKeys($params);
 		$preview = false;
 		$checkArea = false;
 
@@ -519,6 +528,11 @@ class Landing
 		{
 			$checkArea = !!$params['check_area'];
 			unset($params['check_area']);
+		}
+
+		if (isset($params['filter']['CHECK_PERMISSIONS']))
+		{
+			unset($params['filter']['CHECK_PERMISSIONS']);
 		}
 
 		$data = array();
@@ -535,8 +549,13 @@ class Landing
 			}
 			if ($preview && isset($row['ID']))
 			{
-				$landing = LandingCore::createInstance($row['ID']);
-				$row['PREVIEW'] = $landing->getPreview();
+				$landing = LandingCore::createInstance($row['ID'], [
+					'skip_blocks' => true
+				]);
+				$row['PREVIEW'] = $landing->getPreview(
+					null,
+					$landing->getDomainId() == 0
+				);
 			}
 			if ($checkArea && isset($row['ID']))
 			{
@@ -567,6 +586,66 @@ class Landing
 	}
 
 	/**
+	 * Checks that page also adding in some menu.
+	 * @param array $fields Landing data array.
+	 * @return array
+	 */
+	protected static function checkAddingInMenu(array $fields)
+	{
+		$blockId = null;
+		$menuCode = null;
+
+		if (isset($fields['BLOCK_ID']))
+		{
+			$blockId = (int)$fields['BLOCK_ID'];
+			unset($fields['BLOCK_ID']);
+		}
+		if (isset($fields['MENU_CODE']))
+		{
+			$menuCode = $fields['MENU_CODE'];
+			unset($fields['MENU_CODE']);
+		}
+
+		if (!$blockId || !$menuCode || !is_string($menuCode))
+		{
+			return $fields;
+		}
+
+		LandingCore::callback('OnAfterAdd',
+			function(\Bitrix\Main\Event $event) use ($blockId, $menuCode)
+			{
+				$primary = $event->getParameter('primary');
+				$fields = $event->getParameter('fields');
+
+				if ($primary)
+				{
+					$landingId = BlockCore::getLandingIdByBlockId($blockId);
+					if ($landingId)
+					{
+						$updateData = [
+							$menuCode => [
+								[
+									'text' => $fields['TITLE'],
+									'href' => '#landing' . $primary['ID']
+								]
+							]
+						];
+						Block::updateNodes(
+							$landingId,
+							$blockId,
+							$updateData,
+							['appendMenu' => true]
+						);
+					}
+				}
+			}
+		);
+
+
+		return $fields;
+	}
+
+	/**
 	 * Create new landing.
 	 * @param array $fields Landing data.
 	 * @return \Bitrix\Landing\PublicActionResult
@@ -576,10 +655,10 @@ class Landing
 		$result = new PublicActionResult();
 		$error = new \Bitrix\Landing\Error;
 
-		$restApp = PublicAction::restApplication();
 		$fields = self::clearDisallowFields($fields);
-		$fields['INITIATOR_APP_CODE'] = $restApp['CODE'];
 		$fields['ACTIVE'] = 'N';
+
+		$fields = self::checkAddingInMenu($fields);
 
 		$res = LandingCore::add($fields);
 
@@ -640,19 +719,9 @@ class Landing
 			'DISABLE_REDIRECT' => 'Y'
 		];
 
-		// for catching new landing id
-		LandingCore::callback('OnAfterAdd',
-			function(\Bitrix\Main\Event $event) use($result)
-			{
-				$primary = $event->getParameter('primary');
-				$result->setResult(
-					$primary['ID']
-				);
-			}
-		);
-
 		// ... and create the page by component's method
-		$demoCmp->actionSelect($code);
+		$landingId = $demoCmp->createPage($siteId, $code);
+		$result->setResult($landingId);
 
 		// if error occurred
 		foreach ($demoCmp->getErrors() as $code => $title)
@@ -726,82 +795,14 @@ class Landing
 	 */
 	public static function copy($lid, $toSiteId = null, $toFolderId = null)
 	{
-		$lid = (int)$lid;
 		$result = new PublicActionResult();
-		$error = new \Bitrix\Landing\Error;
 
 		LandingCore::disableCheckDeleted();
 
-		$landingRow = LandingCore::getList(array(
-			'filter' => array(
-				'ID' => $lid
-			)
-		))->fetch();
-
 		$landing = LandingCore::createInstance($lid);
-
-		if ($landing->exist())
-		{
-			$folderId = null;
-			if (!$toSiteId)
-			{
-				$toSiteId = $landing->getSiteId();
-			}
-			if ($toFolderId)
-			{
-				$folderId = $toFolderId;
-			}
-			else if ($toSiteId == $landing->getSiteId())
-			{
-				$folderId = $landingRow['FOLDER_ID'];
-			}
-			$res = LandingCore::add(array(
-				'CODE' => $landingRow['CODE'],
-				'ACTIVE' => 'N',
-				'PUBLIC' => 'N',
-				'TITLE' => $landingRow['TITLE'],
-				'XML_ID' => $landingRow['XML_ID'],
-				'TPL_CODE' => $landingRow['TPL_CODE'],
-				'INITIATOR_APP_CODE' => $landingRow['INITIATOR_APP_CODE'],
-				'DESCRIPTION' => $landingRow['DESCRIPTION'],
-				'TPL_ID' => $landingRow['TPL_ID'],
-				'SITE_ID' => $toSiteId,
-				'SITEMAP' => $landingRow['SITEMAP'],
-				'FOLDER' => $folderId ? 'N' : $landingRow['FOLDER'],
-				'FOLDER_ID' => $folderId,
-				'RULE' => ''
-			));
-			// landing allready create, just copy the blocks
-			if ($res->isSuccess())
-			{
-				LandingCore::setEditMode();
-				$landingNew = LandingCore::createInstance($res->getId());
-				if ($landingNew->exist())
-				{
-					$landingNew->copyAllBlocks($landing->getId());
-					// copy hook data
-					\Bitrix\Landing\Hook::copyLanding(
-						$landingRow['ID'],
-						$landingNew->getId()
-					);
-					// copy template refs
-					if (($refs = TemplateRef::getForLanding($lid)))
-					{
-						TemplateRef::setForLanding($res->getId(), $refs);
-					}
-					$result->setResult($landingNew->getId());
-				}
-				$result->setError(
-					$landingNew->getError()
-				);
-			}
-			else
-			{
-				$error->addFromResult($res);
-				$result->setError($error);
-			}
-		}
-
+		$result->setResult(
+			$landing->copy($toSiteId, $toFolderId)
+		);
 		$result->setError($landing->getError());
 
 		LandingCore::enableCheckDeleted();
@@ -866,8 +867,11 @@ class Landing
 
 		$result = new PublicActionResult();
 		$error = new \Bitrix\Landing\Error;
+		$lid = intval($lid);
 
-		$landing = LandingCore::createInstance($lid);
+		$landing = LandingCore::createInstance($lid, [
+			'skip_blocks' => true
+		]);
 
 		if ($landing->exist())
 		{
@@ -898,15 +902,18 @@ class Landing
 	/**
 	 * Set some content to the Head section.
 	 * @param int $lid Landing id.
-	 * @param $content Some content.
+	 * @param string $content Some content.
 	 * @return \Bitrix\Landing\PublicActionResult
 	 */
 	public static function updateHead($lid, $content)
 	{
 		static $internal = true;
 
+		$lid = intval($lid);
 		$result = new PublicActionResult();
-		$landing = LandingCore::createInstance($lid);
+		$landing = LandingCore::createInstance($lid, [
+			'skip_blocks' => true
+		]);
 		$result->setResult(false);
 
 		if ($landing->exist())

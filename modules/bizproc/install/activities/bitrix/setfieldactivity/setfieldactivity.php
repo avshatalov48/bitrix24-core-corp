@@ -311,4 +311,17 @@ class CBPSetFieldActivity
 
 		return true;
 	}
+
+	public function collectUsages()
+	{
+		$usages = parent::collectUsages();
+		if (is_array($this->arProperties["FieldValue"]))
+		{
+			foreach (array_keys($this->arProperties["FieldValue"]) as $v)
+			{
+				$usages[] = $this->getObjectSourceType('Document', $v);
+			}
+		}
+		return $usages;
+	}
 }

@@ -1,6 +1,7 @@
 <? if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Voximplant\Asr\Language;
 
 if (isset($_REQUEST['AJAX_CALL']) && $_REQUEST['AJAX_CALL'] == 'Y')
 	return;
@@ -25,7 +26,7 @@ if (!$permissions->canPerform(\Bitrix\Voximplant\Security\Permissions::ENTITY_LI
  * Input params
  ********************************************************************/
 /***************** BASE ********************************************/
-$arParams["ID"] = intval($arParams["ID"] > 0 ? $arParams["ID"] : $_REQUEST["ID"]);
+$arParams["ID"] = (int)$arParams["ID"] ?: (int)$_REQUEST["ID"];
 /********************************************************************
  * /Input params
  ********************************************************************/
@@ -34,6 +35,7 @@ $arResult = array(
 	"QUEUES" => \Bitrix\Voximplant\Model\QueueTable::getList(array('select' => array('ID', 'NAME')))->fetchAll(),
 	"IVR_MENUS" => \Bitrix\Voximplant\Model\IvrTable::getList(array('select' => array('ID', 'NAME')))->fetchAll(),
 	"TRANSCRIBE_LANGUAGES" => \Bitrix\Voximplant\Asr\Language::getList(),
+	"TRANSCRIBE_PROVIDERS" => \Bitrix\Voximplant\Asr\Provider::getList(),
 	"SIP_CONFIG" => array(),
 	"NUMBER" => array(),
 	"CALLER_ID" => array(),
@@ -100,6 +102,10 @@ if ($arResult["ITEM"])
 	if ($arResult['ITEM']['TRANSCRIBE_LANG'] == '')
 	{
 		$arResult['ITEM']['TRANSCRIBE_LANG'] = \Bitrix\Voximplant\Asr\Language::getDefault(\Bitrix\Main\Context::getCurrent()->getLanguage());
+	}
+	if ($arResult['ITEM']['TRANSCRIBE_PROVIDER'] == '')
+	{
+		$arResult['ITEM']['TRANSCRIBE_PROVIDER'] = \Bitrix\Voximplant\Asr\Provider::getDefault($arResult['ITEM']['TRANSCRIBE_LANG']);
 	}
 
 	if ($arResult["ITEM"]["CAN_BE_SELECTED"] == "Y" && !\Bitrix\Voximplant\Limits::canSelectLine())
@@ -247,7 +253,19 @@ if ($request->isPost() && check_bitrix_sessid())
 	if (!\Bitrix\Voximplant\Transcript::isEnabled())
 	{
 		$post['TRANSCRIBE'] = 'N';
+	}
+
+	if ($post['TRANSCRIBE'] === 'N')
+	{
 		$post['TRANSCRIBE_LANG'] = null;
+		$post['TRANSCRIBE_PROVIDER'] = null;
+	}
+	else
+	{
+		if ($post['TRANSCRIBE_LANG'] !== Language::RUSSIAN_RU)
+		{
+			$post['TRANSCRIBE_PROVIDER'] = null;
+		}
 	}
 
 	if (!\Bitrix\Voximplant\Limits::canSelectLine())
@@ -325,6 +343,7 @@ if ($request->isPost() && check_bitrix_sessid())
 		"USE_SIP_TO" => $post["USE_SIP_TO"] == "Y" ? "Y" : "N",
 		"TRANSCRIBE" => $post["TRANSCRIBE"] == "Y" ? "Y" : "N",
 		"TRANSCRIBE_LANG" => $post["TRANSCRIBE_LANG"],
+		"TRANSCRIBE_PROVIDER" => $post["TRANSCRIBE_PROVIDER"],
 		"CALLBACK_REDIAL" => $post["CALLBACK_REDIAL"] == "Y" ? "Y" : "N",
 		"CALLBACK_REDIAL_ATTEMPTS" => $post["CALLBACK_REDIAL"] == "Y" ? $post["CALLBACK_REDIAL_ATTEMPTS"] : null,
 		"CALLBACK_REDIAL_PERIOD" => $post["CALLBACK_REDIAL"] == "Y" ? $post["CALLBACK_REDIAL_PERIOD"] : null,

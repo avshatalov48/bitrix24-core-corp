@@ -11,7 +11,7 @@ return array(
 		'name' => Loc::getMessage('LANDING_BLOCK_54_COVER_SLIDER_BGVIDEO--NAME'),
 		'section' => array('video', 'cover'),
 		'dynamic' => false,
-		'version' => '18.5.0',
+		'version' => '18.5.0', // old param for backward compatibility. Can used for old versions of module via repo. Do not delete!
 	),
 	'cards' => array(
 		'.landing-block-node-card' => array(
@@ -42,8 +42,8 @@ return array(
 		),
 		'nodes' => array(
 			'.landing-block-node-card' => array(
-				'name' => Loc::getMessage('LANDING_BLOCK_49_4_TWO_COLS_VIDEO_CAROUSEL--LANDINGBLOCKNODECARDVIDEO'),
-				'type' => 'animation',
+				'name' => Loc::getMessage('LANDING_BLOCK_54_COVER_SLIDER_BGVIDEO--LANDINGBLOCKNODE--CARD'),
+				'type' => ['animation', 'align-self'],
 			),
 			'.landing-block-node-title' => array(
 				'name' => Loc::getMessage('LANDING_BLOCK_54_COVER_SLIDER_BGVIDEO--LANDINGBLOCKNODECARD--TITLE'),

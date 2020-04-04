@@ -135,55 +135,14 @@ class CCrmMlEntityDetailComponent extends CBitrixComponent
 
 	public function getCurrentTraining(\Bitrix\Crm\Ml\Model\Base $model)
 	{
-		$row = \Bitrix\Crm\Ml\Internals\ModelTrainingTable::getList([
-			'filter' => [
-				'=MODEL_NAME' => $model->getName(),
-			],
-			'order' => ['ID' => 'desc'],
-			'limit' => 1
-		])->fetch();
+		$dateFormat = \Bitrix\Main\Type\Date::convertFormatToPhp(\Bitrix\Main\Context::getCurrent()->getCulture()->getDateFormat());
 
-		list($successfulRecords, $failedRecords) = $model->getTrainingSetSize();
+		$result = $model->getCurrentTraining();
+		$result["DATE_START"] = $result["DATE_START"] instanceof \Bitrix\Main\Type\DateTime ? $result["DATE_START"]->format(DATE_ATOM) : null;
+		$result["DATE_FINISH"] = $result["DATE_FINISH"] instanceof \Bitrix\Main\Type\DateTime ? $result["DATE_FINISH"]->format(DATE_ATOM) : null;
+		$result["NEXT_DATE"] = $result["NEXT_DATE"] instanceof \Bitrix\Main\Type\DateTime ? $result["NEXT_DATE"]->format($dateFormat) : "";
 
-		if($row["DATE_FINISH"] instanceof \Bitrix\Main\Type\DateTime)
-		{
-			$now = time();
-			$daysSinceTrain = round(($now - $row["DATE_FINISH"]->getTimestamp()) / 86400 );
-			$daysToTrain = \Bitrix\Crm\Ml\Scoring::RETRAIN_PERIOD - $daysSinceTrain;
-			if($daysToTrain < 0)
-			{
-				$daysToTrain = 0;
-			}
-		}
-		else
-		{
-			$daysToTrain = \Bitrix\Crm\Ml\Scoring::RETRAIN_PERIOD;
-		}
-
-		if($row["DATE_START"] instanceof \Bitrix\Main\Type\DateTime)
-		{
-			$nextDate = clone $row["DATE_START"];
-			$nextDate->add(\Bitrix\Crm\Ml\Scoring::RETRAIN_PERIOD . " day");
-			$dateFormat = \Bitrix\Main\Type\Date::convertFormatToPhp(\Bitrix\Main\Context::getCurrent()->getCulture()->getDateFormat());
-			$nextDateFormatted = $nextDate->format($dateFormat);
-		}
-
-		return [
-			"ID" => (int)$row["ID"],
-			"MODEL_NAME" => $row["MODEL_NAME"],
-			"AREA_UNDER_CURVE" => (float)$row["AREA_UNDER_CURVE"],
-			"DATE_START" => $row["DATE_START"] instanceof \Bitrix\Main\Type\DateTime ? $row["DATE_START"]->format(DATE_ATOM) : null,
-			"DATE_FINISH" => $row["DATE_FINISH"] instanceof \Bitrix\Main\Type\DateTime ? $row["DATE_FINISH"]->format(DATE_ATOM) : null,
-			"LAST_ID" => (int)$row["LAST_ID"],
-			"RECORDS_FAILED" => (int)$row["RECORDS_FAILED"],
-			"RECORDS_SUCCESS" => (int)$row["RECORDS_SUCCESS"],
-			"STATE" => $row["STATE"],
-
-			"RECORDS_SUCCESS_DELTA" => $successfulRecords - $row["RECORDS_SUCCESS"],
-			"RECORDS_FAILED_DELTA" => $failedRecords - $row["RECORDS_FAILED"],
-			"DAYS_TO_TRAIN" => $daysToTrain,
-			"NEXT_DATE" => $nextDateFormatted ?: "",
-		];
+		return $result;
 	}
 
 	public function getEntityProperties()

@@ -50,8 +50,8 @@ if ($isCompositeMode && !$isIndexPage)
 											<?for ($i=1; $i<=$numRowItems; $i++): ?>
 											<tr>
 												<?for ($j=1; $j<=3; $j++): ?>
-													<td style="cursor: pointer; padding: 10px 12px; 5px 5px">
-														<span onclick="B24.changeLanguage('<?=key($b24Languages)?>');">
+													<td class="bx-lang-popup-item" onclick="B24.changeLanguage('<?=key($b24Languages)?>');">
+														<span>
 															<?
 															$lang = array_shift($b24Languages);
 															echo $lang["NAME"].($lang["IS_BETA"] ? ", beta" : "");
@@ -92,10 +92,7 @@ if ($isCompositeMode && !$isIndexPage)
 										<?
 									}
 								}
-								elseif (
-									CModule::IncludeModule("bitrix24")
-									&& ($licensePrefix == "ru" || in_array($licenseType, array("project", "demo")))
-								)
+								elseif (CModule::IncludeModule("bitrix24"))
 								{
 									$orderParams = \CBitrix24::getPartnerOrderFormParams();
 								?>

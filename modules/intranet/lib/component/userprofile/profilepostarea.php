@@ -6,6 +6,7 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Config\Option;
+use Bitrix\Main\UI\Extension;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
@@ -25,7 +26,7 @@ class ProfilePostArea implements \Bitrix\Main\Engine\Response\ContentArea\Conten
 	 */
 	public function getHtml()
 	{
-		$result = '';
+		Extension::load('viewer');
 
 		// TODO: Implement getHtml() method.
 		$pathToSmile = Option::get("socialnetwork", "smile_page", false, SITE_ID);

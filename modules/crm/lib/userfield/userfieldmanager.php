@@ -1,6 +1,7 @@
 <?php
 namespace Bitrix\Crm\UserField;
 
+use Bitrix\Main;
 use Bitrix\Crm;
 
 class UserFieldManager
@@ -87,5 +88,34 @@ class UserFieldManager
 		}
 
 		return (self::$userFieldEntities[$userFieldEntityID] = new \CCrmFields($USER_FIELD_MANAGER, $userFieldEntityID));
+	}
+	public static function prepareUserFieldSignature(array $fieldInfo, $value = null)
+	{
+		$signatureParams = array();
+
+		if(isset($fieldInfo['ENTITY_ID']))
+		{
+			$signatureParams['ENTITY_ID'] = $fieldInfo['ENTITY_ID'];
+		}
+
+		if(isset($fieldInfo['FIELD']))
+		{
+			$signatureParams['FIELD'] = $fieldInfo['FIELD'];
+		}
+		elseif(isset($fieldInfo['FIELD_NAME']))
+		{
+			$signatureParams['FIELD'] = $fieldInfo['FIELD_NAME'];
+		}
+
+		if($value !== null)
+		{
+			$signatureParams['VALUE'] = $value;
+		}
+		elseif(isset($fieldInfo['VALUE']))
+		{
+			$signatureParams['VALUE'] = $fieldInfo['VALUE'];
+		}
+		
+		return Main\UserField\Dispatcher::instance()->getSignature($signatureParams);
 	}
 }

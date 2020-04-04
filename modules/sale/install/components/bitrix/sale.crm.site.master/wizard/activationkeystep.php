@@ -120,12 +120,19 @@ class ActivationKeyStep extends \CWizardStep
 						</g>
 					</svg>
 				</div>
+				<?php
+				$priceLink = "https://www.bitrix24.ru/prices/self-hosted.php";
+				if ($this->component->getLanguageId() === "ua")
+				{
+					$priceLink = "https://www.bitrix24.ua/prices/self-hosted.php";
+				}
+				?>
 				<div class="adm-crm-site-master-buy-key-link">
-					<a href="https://www.bitrix24.ru/prices/self-hosted.php" target="_blank"><?=Loc::getMessage("SALE_CSM_WIZARD_ACTIVATIONKEYSTEP_BUY_LINK")?></a>
+					<a href="<?=$priceLink?>" target="_blank"><?=Loc::getMessage("SALE_CSM_WIZARD_ACTIVATIONKEYSTEP_BUY_LINK")?></a>
 				</div>
 			</div>
 		</div>
-		<?
+		<?php
 		$content = ob_get_contents();
 		ob_end_clean();
 
@@ -145,7 +152,7 @@ class ActivationKeyStep extends \CWizardStep
 			?>
 			<input type="hidden" name="<?=$this->GetWizard()->nextStepHiddenID?>" value="<?=$this->GetNextStepID()?>">
 			<input type="hidden" name="<?=$this->GetWizard()->nextButtonID?>" value="<?=$this->GetNextCaption()?>">
-			<?
+			<?php
 		}
 		$content = ob_get_contents();
 		ob_end_clean();

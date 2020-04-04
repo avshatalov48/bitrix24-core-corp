@@ -7,6 +7,7 @@ use Bitrix\Main\Db\SqlQueryException;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\SystemException;
+use Bitrix\Tasks\AnalyticLogger;
 use Bitrix\Tasks\CheckList\CheckListFacade;
 use Bitrix\Tasks\CheckList\Internals\CheckList;
 use Bitrix\Tasks\Internals\SearchIndex;
@@ -61,7 +62,6 @@ class TaskCheckListFacade extends CheckListFacade
 		'TOGGLED_BY',
 		'TOGGLED_DATE',
 	];
-	protected static $checkListPool;
 
 	public static $entityIdName = 'TASK_ID';
 	public static $userFieldsEntityIdName = 'TASKS_TASK_CHECKLIST';
@@ -232,13 +232,18 @@ class TaskCheckListFacade extends CheckListFacade
 	 */
 	public static function doMergePostActions($taskId, $userId, $data = [])
 	{
-		static::$collectedData = array_merge(...static::$collectedData);
+		if (static::$collectedData)
+		{
+			static::$collectedData = array_merge(...static::$collectedData);
+		}
 
 		if (!empty(static::$collectedData) && static::getDeferredActionsMode())
 		{
 			$checkListLog = new TaskCheckListLog($taskId, $userId);
 			$checkListLog->logItemsChanges(static::$collectedData);
 		}
+
+		static::logToAnalyticsFile($data['PARAMETERS']);
 	}
 
 	/**
@@ -324,5 +329,32 @@ class TaskCheckListFacade extends CheckListFacade
 	{
 		CTaskAssert::log($message, CTaskAssert::ELL_ERROR);
 		Util::log($message);
+	}
+
+	/**
+	 * Logs checklist changes to analytics file.
+	 *
+	 * @param array $parameters
+	 */
+	private static function logToAnalyticsFile($parameters)
+	{
+		$analyticsData = $parameters['analyticsData'];
+
+		if (is_array($analyticsData) && !empty($analyticsData))
+		{
+			foreach ($analyticsData as $action => $value)
+			{
+				$tag = '';
+				$label = '';
+
+				if ($action === 'checklistCount')
+				{
+					$action = 'saveChecklist';
+					$label = $value;
+				}
+
+				AnalyticLogger::logToFile($action, $tag, $label);
+			}
+		}
 	}
 }

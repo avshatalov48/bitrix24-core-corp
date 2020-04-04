@@ -14,6 +14,7 @@ $MESS["IMOL_CHAT_SKIP_M"] = "#USER# отказался от диалога";
 $MESS["IMOL_CHAT_SKIP_F"] = "#USER# отказалась от диалога";
 $MESS["IMOL_CHAT_RETURNED_TO_QUEUE_NEW"] = "Обращение возвращено в очередь.";
 $MESS["IMOL_CHAT_ASSIGN_OPERATOR_NEW"] = "Обращение направлено на #USER#";
+$MESS["IMOL_CHAT_ASSIGN_OPERATOR_CRM_NEW"] = "Обращение направлено на #USER# (ответственного в CRM)";
 $MESS["IMOL_CHAT_ASSIGN_OPERATOR_LIST_NEW"] = "Обращение направлено на всех участников очереди";
 $MESS["IMOL_CHAT_NEXT_IN_QUEUE_NEW"] = "Обращение перенаправлено на #USER_TO# по правилам очереди";
 $MESS["IMOL_CHAT_NO_OPERATOR_AVAILABLE_IN_QUEUE_NEW"] = "Обращение возвращено в очередь. Нет доступных операторов";

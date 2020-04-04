@@ -100,7 +100,7 @@ class Iblock extends Volume\Module\Module
 			$entityUserFieldSource = " UNION {$entityUserFieldSource} ";
 		}
 
-
+		// language=SQL
 		$querySql = "
 			SELECT 
 				'{$indicatorType}' as INDICATOR_TYPE,
@@ -114,8 +114,11 @@ class Iblock extends Volume\Module\Module
 				/*-- iblock --*/
 				(
 					SELECT
-						COUNT(f.ID) as FILE_COUNT, 
+						COUNT(f.ID) as FILE_COUNT,
 						SUM(f.FILE_SIZE) as FILE_SIZE,
+						0 as DISK_SIZE,
+						0 as DISK_COUNT,
+						0 as VERSION_COUNT,
 						iblock.ID as IBLOCK_ID
 					FROM 
 						b_file f
@@ -133,6 +136,9 @@ class Iblock extends Volume\Module\Module
 					SELECT
 						COUNT(f.ID) as FILE_COUNT, 
 						SUM(f.FILE_SIZE) as FILE_SIZE,
+						0 as DISK_SIZE,
+						0 as DISK_COUNT,
+						0 as VERSION_COUNT,
 						section.IBLOCK_ID
 					FROM
 						b_file f
@@ -148,8 +154,11 @@ class Iblock extends Volume\Module\Module
 				UNION
 				(
 					SELECT
-						COUNT(f.ID) as FILE_COUNT, 
+						COUNT(f.ID) as FILE_COUNT,
 						SUM(f.FILE_SIZE) as FILE_SIZE,
+						0 as DISK_SIZE,
+						0 as DISK_COUNT,
+						0 as VERSION_COUNT,
 						section.IBLOCK_ID
 					FROM
 						b_file f
@@ -166,8 +175,11 @@ class Iblock extends Volume\Module\Module
 				UNION
 				(
 					SELECT
-						COUNT(f.ID) as FILE_COUNT, 
-						SUM(f.FILE_SIZE) as FILE_SIZE,
+						COUNT(f.ID) as FILE_COUNT,
+						SUM(f.FILE_SIZE) as FILE_SIZE, 
+						0 as DISK_SIZE,
+						0 as DISK_COUNT,
+						0 as VERSION_COUNT,
 						element.IBLOCK_ID
 					FROM
 						b_file f
@@ -183,8 +195,11 @@ class Iblock extends Volume\Module\Module
 				UNION
 				(
 					SELECT
-						COUNT(f.ID) as FILE_COUNT, 
+						COUNT(f.ID) as FILE_COUNT,
 						SUM(f.FILE_SIZE) as FILE_SIZE,
+						0 as DISK_SIZE,
+						0 as DISK_COUNT,
+						0 as VERSION_COUNT,
 						element.IBLOCK_ID
 					FROM
 						b_file f
@@ -203,6 +218,9 @@ class Iblock extends Volume\Module\Module
 					SELECT
 						COUNT(f.ID) as FILE_COUNT, 
 						SUM(f.FILE_SIZE) as FILE_SIZE,
+						0 as DISK_SIZE,
+						0 as DISK_COUNT,
+						0 as VERSION_COUNT,
 						element.IBLOCK_ID
 					FROM 
 						b_iblock_element element

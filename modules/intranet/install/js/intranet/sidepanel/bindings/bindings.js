@@ -15,6 +15,23 @@
 		rules: [
 			{
 				condition: [
+					/^(http|https):\/\/([^\/]+)\/knowledge/i
+				],
+				handler: function(event, link) {
+
+					var sliderMode = link.anchor.href.indexOf('IFRAME=') !== -1 ||
+									link.anchor.href.indexOf('IFRAME%3D') !== -1;
+
+					if (!sliderMode)
+					{
+						event.preventDefault();
+						BX.SidePanel.Instance.open(link.url);
+					}
+				},
+				customLeftBoundary: 240
+			},
+			{
+				condition: [
 					'/company/personal/user/(\\d+)/tasks/effective/show/',
 					'/company/personal/user/(\\d+)/tasks/effective/inprogress/'
 				],
@@ -24,12 +41,7 @@
 				condition: ['/company/personal/user/(\\d+)/tasks/import/'],
 				loader: 'default-loader',
 				options: {
-					cacheable: false,
-					events: {
-						onClose: function() {
-							BX.Tasks.GridActions.reloadGrid();
-						}
-					}
+					cacheable: false
 				}
 			},
 			{
@@ -100,6 +112,62 @@
 			},
 			{
 				condition: [
+					new RegExp("^/marketplace\/hook/"),
+				],
+				options: {
+					customLeftBoundary: 0,
+					loader: "rest:marketplace"
+				}
+			},
+			{
+				condition: [
+					new RegExp("/marketplace\/configuration/"),
+				],
+				options: {
+					width: 940,
+					cacheable: false
+				}
+			},
+			{
+				condition: [
+					new RegExp("^/marketplace\/installed/"),
+				],
+				options: {
+					customLeftBoundary: 0,
+					loader: "rest:marketplace2"
+				}
+			},
+			{
+				condition: [
+					new RegExp("^\\/marketplace\\/.*?((\\?|\\&)(tag|placement))"),
+				],
+				options: {
+					cacheable: false,
+					allowChangeHistory: false,
+					customLeftBoundary: 0,
+					loader: "rest:marketplace1"
+				}
+			},
+			{
+				condition: [
+					new RegExp("^/marketplace\/($|\\?)"),
+				],
+				options: {
+					cacheable: false,
+					customLeftBoundary: 0,
+					loader: "rest:marketplace1"
+				}
+			},
+			{
+				condition: [
+					new RegExp("^/marketplace\/"),
+				],
+				options: {
+					customLeftBoundary: 0,
+				}
+			},
+			{
+				condition: [
 					/\/online\/\?(IM_DIALOG|IM_HISTORY)=(.+)/i
 				],
 				handler: function(event, link)
@@ -110,7 +178,7 @@
 					}
 
 					var type = link.matches[1];
-					var id = link.matches[2];
+					var id = decodeURI(link.matches[2]);
 
 					if (type === "IM_HISTORY")
 					{
@@ -137,13 +205,27 @@
 					}
 
 					var articleId = link.matches[3];
-					BX.Helper.show("redirect=detail&HD_ID="+articleId);
+					if (articleId.substr(0,5).toLowerCase() === 'code_' )
+					{
+						var articleCode = articleId.slice(5);
+						BX.Helper.show("redirect=detail&code="+articleCode);
+					}
+					else
+					{
+						BX.Helper.show("redirect=detail&HD_ID=" + articleId);
+					}
 					event.preventDefault();
 				}
 			},
 			{
-				condition: [ new RegExp("/crm/order/details/[0-9]+/", "i") ],
-				loader: "crm-entity-details-loader"
+				condition: [ new RegExp("/shop/orders/details/[0-9]+/", "i") ],
+				loader: "crm-entity-details-loader",
+				options: {
+					cacheable: false,
+					label: {
+						text: BX.message("INTRANET_BINDINGS_ORDER"),
+					}
+				}
 			},
 			{
 				condition: [ new RegExp("/crm/lead/details/[0-9]+/", "i") ],
@@ -273,7 +355,27 @@
 				options: {
 					cacheable: false
 				}
-			}
+			},
+			{
+				condition: ['/company/personal/user/(\\d+)/social_services/$'],
+				options: {
+					width: 1100
+				}
+			},
+			{
+				condition: [
+					new RegExp(siteDir + "company/personal/user/[0-9]+/calendar/\\?EVENT_ID=([a-zA-Z0-9_|]+)", "i")
+				],
+				handler: function(event, link)
+				{
+					if (BX.Calendar && BX.Calendar.SliderLoader)
+					{
+						var slider = new BX.Calendar.SliderLoader(link.matches[1]);
+						slider.show();
+						event.preventDefault();
+					}
+				}
+			},
 		]
 	});
 

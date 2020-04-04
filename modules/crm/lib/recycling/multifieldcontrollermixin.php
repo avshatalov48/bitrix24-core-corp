@@ -46,7 +46,8 @@ trait MultiFieldControllerMixin
 
 		$entityMultifields = Crm\Integrity\DuplicateCommunicationCriterion::prepareEntityMultifieldValues(
 			$this->getEntityTypeID(),
-			$newEntityID
+			$newEntityID,
+			array('invalidateCache' => true)
 		);
 
 		if(!empty($entityMultifields))

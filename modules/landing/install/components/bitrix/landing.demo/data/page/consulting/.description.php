@@ -249,7 +249,7 @@ return array(
 				</div>
 			</div>
 
-			<div class="landing-block-node-img col-md-6 g-min-height-300 g-bg-img-hero g-px-0 g-bg-size-contain--xs g-bg-size-cover--sm" style="background-image: url(\'https://cdn.bitrix24.site/bitrix/images/landing/business/900x535/img1.png\');"></div>
+			<div class="landing-block-node-img col-md-6 g-min-height-300 g-bg-img-hero g-px-0 g-bg-size-contain-no-repeat" style="background-image: url(\'https://cdn.bitrix24.site/bitrix/images/landing/business/900x535/img1.png\');"></div>
 		</div>
 	</div>
 </section>',

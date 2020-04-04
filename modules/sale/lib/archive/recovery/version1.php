@@ -27,7 +27,13 @@ class Version1 extends Base
 	{
 		$this->order = Archive\Order::create($archivedOrder['ORDER']['LID'], $archivedOrder['ORDER']['USER_ID'], $archivedOrder['ORDER']['CURRENCY']);
 		$this->order->setPersonTypeId($archivedOrder['ORDER']['PERSON_TYPE_ID']);
-		$basket = Sale\Basket::create($archivedOrder['ORDER']['LID']);
+
+		$registry = Sale\Registry::getInstance(Sale\Registry::REGISTRY_TYPE_ORDER);
+
+		/** @var Sale\Basket $basketClassName */
+		$basketClassName = $registry->getBasketClassName();
+
+		$basket = $basketClassName::create($archivedOrder['ORDER']['LID']);
 		$this->order->setBasket($basket);
 		$basketItemsMap = $this->riseBasket($archivedOrder);
 		$this->risePayment($archivedOrder);

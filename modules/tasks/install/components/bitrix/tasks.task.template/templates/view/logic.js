@@ -26,6 +26,7 @@ BX.namespace('Tasks.Component');
 
 				this.checkListChanged = false;
 				this.showCloseConfirmation = false;
+				this.analyticsData = {};
 			},
 
 			bindEvents: function()
@@ -106,10 +107,17 @@ BX.namespace('Tasks.Component');
 					}
 				});
 
-				BX.Event.EventEmitter.subscribe(
-					'BX.Tasks.CheckListItem:CheckListChanged',
-					this.toggleFooterWrap.bind(this, true)
-				);
+				BX.Event.EventEmitter.subscribe('BX.Tasks.CheckListItem:CheckListChanged', function(eventData) {
+					var action = eventData.data.action;
+					var allowedActions = ['addAccomplice', 'fileUpload', 'tabIn'];
+
+					if (BX.util.in_array(action, allowedActions))
+					{
+						this.analyticsData[action] = 'Y';
+					}
+
+					this.toggleFooterWrap(true);
+				}.bind(this));
 			},
 
 			onImportantButtonClick: function(node)
@@ -198,10 +206,16 @@ BX.namespace('Tasks.Component');
 			saveCheckList: function()
 			{
 				var self = this;
+				var treeStructure = BX.Tasks.CheckListInstance.getTreeStructure();
 				var args = {
-					items: BX.Tasks.CheckListInstance.getTreeStructure().getRequestData(),
+					items: treeStructure.getRequestData(),
 					templateId: this.option('data').ID,
-					userId: this.option('data').USER_ID
+					userId: this.option('data').USER_ID,
+					params: {
+						analyticsData: Object.assign(this.analyticsData, {
+							checklistCount: treeStructure.getDescendantsCount()
+						})
+					}
 				};
 
 				this.query.run('TasksTaskTemplateComponent.saveCheckList', args).then(function(result) {
@@ -223,6 +237,8 @@ BX.namespace('Tasks.Component');
 
 						BX.Tasks.CheckListInstance.saveStableTreeStructure();
 						BX.Tasks.CheckListInstance.deactivateLoading();
+
+						this.analyticsData = {};
 
 						self.toggleFooterWrap(false);
 					}

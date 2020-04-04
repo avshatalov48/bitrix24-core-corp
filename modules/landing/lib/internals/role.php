@@ -34,6 +34,9 @@ class RoleTable extends Entity\DataManager
 			'XML_ID' => new Entity\StringField('XML_ID', array(
 				'title' => Loc::getMessage('LANDING_TABLE_FIELD_ROLE_XML_ID')
 			)),
+			'TYPE' => new Entity\StringField('TYPE', array(
+				'title' => Loc::getMessage('LANDING_TABLE_FIELD_ROLE_TYPE')
+			)),
 			'ACCESS_CODES' => new Entity\StringField('ACCESS_CODES', array(
 				'title' => Loc::getMessage('LANDING_TABLE_FIELD_ROLE_ACCESS_CODES'),
 				'serialized' => true
@@ -132,6 +135,10 @@ class RoleTable extends Entity\DataManager
 				)
 			));
 		}
+
+		$result->modifyFields([
+			'TYPE' => \Bitrix\Landing\Site\Type::getFilterType(true)
+	  	]);
 
 		return $result;
 	}

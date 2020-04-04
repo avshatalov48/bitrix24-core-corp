@@ -2,7 +2,8 @@
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
 use Bitrix\Main,
-	Bitrix\Main\Localization\Loc;
+	Bitrix\Main\Localization\Loc,
+	Bitrix\Main\Config\Option;
 
 Loc::loadMessages(__FILE__);
 
@@ -13,9 +14,6 @@ class SaleAdminPageStub extends \CBitrixComponent
 {
 	/** @var string */
 	const CRM_WIZARD_SITE_ID = "~CRM_WIZARD_SITE_ID";
-
-	/** @var string */
-	const IS_SALE_BSM_SITE_MASTER_FINISH = "~IS_SALE_BSM_SITE_MASTER_FINISH";
 
 	/**
 	 * @return array
@@ -188,7 +186,7 @@ class SaleAdminPageStub extends \CBitrixComponent
 		$crmSiteId = Main\Config\Option::get("sale", self::CRM_WIZARD_SITE_ID, null);
 		if ($crmSiteId)
 		{
-			$site = \Bitrix\Main\SiteTable::getList([
+			$site = Main\SiteTable::getList([
 				"select" => ["SERVER_NAME"],
 				"filter" => ["LID" => $crmSiteId]
 			])->fetch();
@@ -198,9 +196,9 @@ class SaleAdminPageStub extends \CBitrixComponent
 				return $site["SERVER_NAME"];
 			}
 		}
-		elseif ((Main\Config\Option::get("sale", self::IS_SALE_BSM_SITE_MASTER_FINISH, "N") === "Y"))
+		else
 		{
-			$site = \Bitrix\Main\SiteTable::getList([
+			$site = Main\SiteTable::getList([
 				"select" => ["SERVER_NAME"],
 				"filter" => ["=DEF" => "Y"]
 			])->fetch();
@@ -209,9 +207,9 @@ class SaleAdminPageStub extends \CBitrixComponent
 			{
 				return $site["SERVER_NAME"];
 			}
-			elseif (\Bitrix\Main\Config\Option::get("main", "server_name"))
+			elseif (Main\Config\Option::get("main", "server_name"))
 			{
-				return \Bitrix\Main\Config\Option::get("main", "server_name");
+				return Main\Config\Option::get("main", "server_name");
 			}
 		}
 
@@ -229,8 +227,18 @@ class SaleAdminPageStub extends \CBitrixComponent
 	 */
 	public function executeComponent()
 	{
+		global $APPLICATION, $USER;
+
 		$this->initCurrentPageMap();
 		$this->arResult["crm_link"] = self::getLink($this->arResult["crm"]["page"]);
+		$this->arResult["current_page"] = $APPLICATION->GetCurPage().'?lang='.LANGUAGE_ID.'&admin_panel=Y';
+
+		$request = Main\Context::getCurrent()->getRequest();
+		if ($request->get('admin_panel') === 'Y')
+		{
+			Option::set('sale', \Bitrix\Sale\Update\CrmEntityCreatorStepper::PREFIX_OPTION_ADMIN_PANEL_IS_ENABLED.$USER->GetID(), 'Y');
+			LocalRedirect($APPLICATION->GetCurPage().'?lang='.LANGUAGE_ID);
+		}
 
 		$this->includeComponentTemplate();
 	}

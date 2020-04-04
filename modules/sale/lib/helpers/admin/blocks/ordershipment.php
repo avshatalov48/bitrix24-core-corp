@@ -21,7 +21,7 @@ use Bitrix\Main\Entity\EntityError;
 use Bitrix\Main;
 use Bitrix\Sale\Services\Company;
 use Bitrix\Sale\Shipment;
-use Bitrix\Sale\ShipmentCollection;
+use Bitrix\Sale;
 use Bitrix\Sale\Services\Base;
 use Bitrix\Sale\Delivery\Requests;
 
@@ -1106,7 +1106,7 @@ class OrderShipment
 		$allowedStatusesDelivery = DeliveryStatus::getStatusesUserCanDoOperations($USER->GetID(), array('delivery'));
 		$isAllowDelivery = in_array($data["STATUS_ID"], $allowedStatusesDelivery) && $formType != 'archive' && $formType != 'edit';
 
-		$isActive = ($formType != 'edit' && $formType != 'archive') && !Order::isLocked($data['ORDER_ID']);
+		$isActive = ($formType != 'edit' && $formType != 'archive') && !$data['ORDER_LOCKED'];
 
 		$triangle = ($isActive && $isAllowDelivery) ? '<span class="triangle"> &#9662;</span>' : '';
 
@@ -1525,7 +1525,7 @@ class OrderShipment
 		$allowedStatusesDelivery = DeliveryStatus::getStatusesUserCanDoOperations($USER->GetID(), array('delivery'));
 		$isAllowDelivery = in_array($data["STATUS_ID"], $allowedStatusesDelivery) && $formType != 'archive' && $formType != 'edit';
 
-		$isActive = ($formType != 'edit' && $formType != 'archive') && !Order::isLocked($data['ORDER_ID']);
+		$isActive = ($formType != 'edit' && $formType != 'archive') && !$data['ORDER_LOCKED'];
 		$triangle = ($isActive && $isAllowDelivery) ? '<span class="triangle"> &#9662;</span>' : '';
 
 		if ($data['ALLOW_DELIVERY'] == 'Y')
@@ -1790,7 +1790,12 @@ class OrderShipment
 		$dbRes = CashboxTable::getList(array('filter' => array('=ACTIVE' => 'Y', '=ENABLED' => 'Y')));
 		$fields['HAS_ENABLED_CASHBOX'] = ($dbRes->fetch()) ? 'Y' : 'N';
 
-		$fields['ORDER_LOCKED'] = Order::isLocked($fields['ORDER_ID']);
+
+		$registry = Sale\Registry::getInstance(Sale\Registry::REGISTRY_TYPE_ORDER);
+		/** @var Sale\Order $orderClass */
+		$orderClass = $registry->getOrderClassName();
+
+		$fields['ORDER_LOCKED'] = $orderClass::isLocked($fields['ORDER_ID']);
 		$fields['SITE_ID'] = $order->getSiteId();
 		$fields['CUSTOM_WEIGHT_DELIVERY'] = self::$shipment->isMarkedFieldCustom('WEIGHT') ? 'Y' : 'N';
 

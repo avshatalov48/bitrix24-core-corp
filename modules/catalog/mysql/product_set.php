@@ -472,7 +472,7 @@ class CCatalogProductSet extends CCatalogProductSetAll
 	{
 		global $DB;
 
-		if (self::$recalculateSet < 0)
+		if (!static::isEnabledRecalculateSet())
 			return;
 
 		$setsList = array();
@@ -599,7 +599,7 @@ class CCatalogProductSet extends CCatalogProductSetAll
 		$weight = 0;
 
 		$allItems = true;
-		$tracedItems = array_filter($items, 'CCatalogProductSet::isTracedItem');
+		$tracedItems = array_filter($items, [__CLASS__, 'isTracedItem']);
 		if (empty($tracedItems))
 		{
 			$tracedItems = $items;
@@ -637,9 +637,12 @@ class CCatalogProductSet extends CCatalogProductSetAll
 			'MEASURE' => $measure['ID'],
 			'TYPE' => Catalog\ProductTable::TYPE_SET
 		);
-		$fields['AVAILABLE'] = (CCatalogProduct::isAvailable($fields) ? 'Y' : 'N');
+		$fields['AVAILABLE'] = (CCatalogProduct::isAvailable($fields)
+			? Catalog\ProductTable::STATUS_YES
+			: Catalog\ProductTable::STATUS_NO
+		);
 
-		if($productData = Catalog\ProductTable::getRowById($productID))
+		if ($productData = Catalog\ProductTable::getRowById($productID))
 		{
 			$fields['SUBSCRIBE'] = $productData['SUBSCRIBE'];
 			if(Catalog\SubscribeTable::checkPermissionSubscribe($productData['SUBSCRIBE']))
@@ -648,7 +651,7 @@ class CCatalogProductSet extends CCatalogProductSetAll
 
 		foreach(GetModuleEvents('catalog', 'OnBeforeProductSetAvailableUpdate', true) as $arEvent)
 			ExecuteModuleEventEx($arEvent, array($productID, &$fields));
-
+		//TODO: change to Catalog\Product\Model after blocked call recurrence
 		$update = $DB->PrepareUpdate('b_catalog_product', $fields);
 
 		$query = "update b_catalog_product set ".$update." where ID = ".$productID;

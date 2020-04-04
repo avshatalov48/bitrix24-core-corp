@@ -340,6 +340,9 @@ JS;
 					$fileUrl = parse_url($cssFilePath);
 					$file = new  \Bitrix\Main\IO\File(Application::getDocumentRoot() . $fileUrl['path']);
 
+					if($file->getExtension() !== "css")
+						continue;
+
 					if ($file->isExists() && $file->isReadable())
 					{
 						$fileContent = $file->getContents();

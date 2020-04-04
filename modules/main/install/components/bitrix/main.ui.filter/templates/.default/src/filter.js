@@ -62,6 +62,15 @@
 		this.isAddPresetModeState = false;
 		this.firstInit = true;
 		this.emitter = new BX.Event.EventEmitter();
+		this.emitter.setEventNamespace('BX.Filter.Field');
+		this.emitter.subscribe = function(eventName, listener) {
+			BX.Event.EventEmitter.subscribe(
+				this.emitter,
+				eventName.replace('BX.Filter.Field:', ''),
+				listener
+			);
+		}.bind(this);
+
 		this.init();
 	};
 

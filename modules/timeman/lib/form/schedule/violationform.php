@@ -5,7 +5,7 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Timeman\Helper\EntityCodesHelper;
 use Bitrix\Timeman\Helper\TimeDictionary;
 use Bitrix\Timeman\Helper\TimeHelper;
-use Bitrix\Timeman\Model\Schedule\ScheduleTable;
+use Bitrix\Timeman\Model\Schedule\Violation\ViolationRules;
 use Bitrix\Timeman\Model\Schedule\Violation\ViolationRulesTable;
 use Bitrix\Timeman\Util\Form\BaseForm;
 use Bitrix\Timeman\Util\Form\Filter;
@@ -72,63 +72,43 @@ class ViolationForm extends BaseForm
 	public $saveHoursForPeriodViolations;
 	public $saveShiftDelayViolations;
 
-	private $schedule;
-	/** @var ScheduleForm */
-	private $scheduleForm;
 	/** @var TimeHelper */
 	private $timeHelper;
 
-	public function __construct(ViolationFormParams $params = null)
+	/**
+	 * @param ViolationRules|null $violationRules
+	 */
+	public function __construct($violationRules = null)
 	{
 		$this->timeHelper = TimeHelper::getInstance();
-		if (is_null($params))
+		if (is_null($violationRules))
 		{
 			return;
 		}
-		$this->schedule = $params->getSchedule();
-		$this->scheduleForm = $params->getScheduleForm();
-		if (!$this->schedule)
-		{
-			return;
-		}
-		$this->scheduleId = $this->schedule->getId();
-		$violationRules = $params->getViolationRules() ? $params->getViolationRules() : $this->schedule->obtainScheduleViolationRules();
-		if ($violationRules)
-		{
-			$this->id = $violationRules->getId();
-			$this->scheduleId = $violationRules->getScheduleId();
-			$this->entityCode = $violationRules->getEntityCode();
-			$this->minExactEnd = $violationRules->getMinExactEnd();
-			$this->maxExactStart = $violationRules->getMaxExactStart();
-			$this->minOffsetEnd = $violationRules->getMinOffsetEnd();
-			$this->maxOffsetStart = $violationRules->getMaxOffsetStart();
-			$this->relativeStartFrom = $violationRules->getRelativeStartFrom();
-			$this->relativeStartTo = $violationRules->getRelativeStartTo();
-			$this->relativeEndFrom = $violationRules->getRelativeEndFrom();
-			$this->relativeEndTo = $violationRules->getRelativeEndTo();
-			$this->minDayDuration = $violationRules->getMinDayDuration();
-			$this->maxAllowedToEditWorkTime = $violationRules->getMaxAllowedToEditWorkTime();
-			$this->maxWorkTimeLackForPeriod = $violationRules->getMaxWorkTimeLackForPeriod();
-			$this->maxShiftStartDelay = $violationRules->getMaxShiftStartDelay();
-			$this->missedShiftStart = $violationRules->getMissedShiftStart();
+		$this->id = $violationRules->getId();
+		$this->scheduleId = $violationRules->getScheduleId();
+		$this->scheduleId = $violationRules->getScheduleId();
+		$this->entityCode = $violationRules->getEntityCode();
+		$this->minExactEnd = $violationRules->getMinExactEnd();
+		$this->maxExactStart = $violationRules->getMaxExactStart();
+		$this->minOffsetEnd = $violationRules->getMinOffsetEnd();
+		$this->maxOffsetStart = $violationRules->getMaxOffsetStart();
+		$this->relativeStartFrom = $violationRules->getRelativeStartFrom();
+		$this->relativeStartTo = $violationRules->getRelativeStartTo();
+		$this->relativeEndFrom = $violationRules->getRelativeEndFrom();
+		$this->relativeEndTo = $violationRules->getRelativeEndTo();
+		$this->minDayDuration = $violationRules->getMinDayDuration();
+		$this->maxAllowedToEditWorkTime = $violationRules->getMaxAllowedToEditWorkTime();
+		$this->maxWorkTimeLackForPeriod = $violationRules->getMaxWorkTimeLackForPeriod();
+		$this->maxShiftStartDelay = $violationRules->getMaxShiftStartDelay();
+		$this->missedShiftStart = $violationRules->getMissedShiftStart();
 
-			$this->startEndNotifyUsers = $violationRules->getNotifyUsersSymbolic(ViolationRulesTable::USERS_TO_NOTIFY_FIXED_START_END);
-			$this->hoursPerDayNotifyUsers = $violationRules->getNotifyUsersSymbolic(ViolationRulesTable::USERS_TO_NOTIFY_FIXED_RECORD_TIME_PER_DAY);
-			$this->editWorktimeNotifyUsers = $violationRules->getNotifyUsersSymbolic(ViolationRulesTable::USERS_TO_NOTIFY_FIXED_EDIT_WORKTIME);
-			$this->hoursPerPeriodNotifyUsers = $violationRules->getNotifyUsersSymbolic(ViolationRulesTable::USERS_TO_NOTIFY_FIXED_TIME_FOR_PERIOD);
-			$this->shiftTimeNotifyUsers = $violationRules->getNotifyUsersSymbolic(ViolationRulesTable::USERS_TO_NOTIFY_SHIFT_DELAY);
-			$this->shiftCheckNotifyUsers = $violationRules->getNotifyUsersSymbolic(ViolationRulesTable::USERS_TO_NOTIFY_SHIFT_MISSED_START);
-		}
-	}
-
-	public function getSchedule()
-	{
-		return $this->schedule;
-	}
-
-	public function setSchedule($schedule)
-	{
-		$this->schedule = $schedule;
+		$this->startEndNotifyUsers = $violationRules->getNotifyUsersSymbolic(ViolationRulesTable::USERS_TO_NOTIFY_FIXED_START_END);
+		$this->hoursPerDayNotifyUsers = $violationRules->getNotifyUsersSymbolic(ViolationRulesTable::USERS_TO_NOTIFY_FIXED_RECORD_TIME_PER_DAY);
+		$this->editWorktimeNotifyUsers = $violationRules->getNotifyUsersSymbolic(ViolationRulesTable::USERS_TO_NOTIFY_FIXED_EDIT_WORKTIME);
+		$this->hoursPerPeriodNotifyUsers = $violationRules->getNotifyUsersSymbolic(ViolationRulesTable::USERS_TO_NOTIFY_FIXED_TIME_FOR_PERIOD);
+		$this->shiftTimeNotifyUsers = $violationRules->getNotifyUsersSymbolic(ViolationRulesTable::USERS_TO_NOTIFY_SHIFT_DELAY);
+		$this->shiftCheckNotifyUsers = $violationRules->getNotifyUsersSymbolic(ViolationRulesTable::USERS_TO_NOTIFY_SHIFT_MISSED_START);
 	}
 
 	protected function runAfterValidate()
@@ -201,14 +181,14 @@ class ViolationForm extends BaseForm
 			,
 			(new Filter\Modifier\CallbackModifier('missedShiftStart'))
 				->configureCallback(function ($value) {
-					return $value === 'on' || $value === 1 ? 1 : 0;
+					return $value === 'on' || $value === 1 ? ViolationRulesTable::MISSED_SHIFT_IS_TRACKED : ViolationRulesTable::MISSED_SHIFT_IS_NOT_TRACKED;
 				})
 				->configureSkipOnError(true)
 			,
 			(new Filter\Validator\NumberValidator('maxWorkTimeLackForPeriod'))
 				->configureDefaultErrorMessage('TM_VIOLATION_FORM_ERROR_PERIOD_TIME_LACK_ERROR')
 				->configureIntegerOnly(true)
-				->configureMin(0)
+				->configureMin(-1)
 			,
 			(new Filter\Modifier\CallbackModifier('maxWorkTimeLackForPeriod'))
 				->configureSkipOnError(true)
@@ -363,24 +343,29 @@ class ViolationForm extends BaseForm
 			$this->isValueSet($this->relativeEndTo);
 	}
 
-	public function showViolationContainer()
+	public function showViolationContainer($isShifted)
 	{
-		return $this->showFixedViolations() || $this->showShiftViolations();
+		return $this->showFixedViolations($isShifted) || $this->showShiftViolations($isShifted);
 	}
 
-	public function showFixedViolations()
+	public function showFixedViolations($isShifted)
 	{
+		if ($isShifted)
+		{
+			return false;
+		}
 		return $this->showStartEndViolations()
 			   || $this->showHoursPerDayViolations()
 			   || $this->showEditWorktimeViolations()
 			   || $this->showHoursForPeriodViolations();
 	}
 
-	public function showShiftViolations()
+	public function showShiftViolations($isShifted)
 	{
-		return $this->isForShiftSchedule()
+		return $isShifted
 			   && (
 				   $this->isValueSet($this->maxShiftStartDelay)
+				   || $this->showEditWorktimeViolations()
 				   || $this->missedShiftStart > 0
 				   || !empty($this->shiftCheckNotifyUsers)
 			   );
@@ -426,19 +411,10 @@ class ViolationForm extends BaseForm
 		return $this->isValueSet($this->maxWorkTimeLackForPeriod);
 	}
 
-	public function isForShiftSchedule()
-	{
-		if ($this->schedule)
-		{
-			return $this->schedule->isShifted();
-		}
-		return $this->scheduleForm ? $this->scheduleForm->isShifted() : false;
-	}
-
 	private function getTimeOrDefault($value, $withPostfix = false)
 	{
 		return $this->isValueSet($value) ?
-			($withPostfix ? $this->timeHelper->convertSecondsToHoursMinutesPostfix($value) : $this->timeHelper->convertSecondsToHoursMinutes($value))
+			($withPostfix ? $this->timeHelper->convertSecondsToHoursMinutesAmPm($value) : $this->timeHelper->convertSecondsToHoursMinutes($value))
 			: '--:--';
 	}
 
@@ -449,12 +425,12 @@ class ViolationForm extends BaseForm
 
 	public function getFormattedMaxOffsetStart()
 	{
-		return $this->getTimeOrDefault($this->maxOffsetStart, true);
+		return $this->getTimeOrDefault($this->maxOffsetStart, false);
 	}
 
 	public function getFormattedMinOffsetEnd()
 	{
-		return $this->getTimeOrDefault($this->minOffsetEnd, true);
+		return $this->getTimeOrDefault($this->minOffsetEnd, false);
 	}
 
 	public function getFormattedMinExactEnd()
@@ -499,7 +475,7 @@ class ViolationForm extends BaseForm
 
 	public function getFormattedMaxShiftStartDelay()
 	{
-		return $this->getTimeOrDefault($this->maxShiftStartDelay, true);
+		return $this->getTimeOrDefault($this->maxShiftStartDelay, false);
 	}
 
 	public function showShiftDelayViolations()
@@ -515,24 +491,24 @@ class ViolationForm extends BaseForm
 	/**
 	 * Reset fields of form by selected UI checkboxes
 	 */
-	public function resetExtraFields()
+	public function resetExtraFields($isShifted, $controlStartOnly)
 	{
-		if (!$this->isForShiftSchedule())
-		{
-			$this->resetShiftScheduleViolations();
-		}
-		else
+		if ($isShifted)
 		{
 			$this->resetFixedScheduleViolations();
 		}
+		else
+		{
+			$this->resetShiftScheduleViolations();
+		}
 		$this->resetUncheckedShiftViolations();
 		$this->resetUncheckedFixedViolations();
-		$this->resetEndTimeViolations();
+		$this->resetEndTimeViolations($controlStartOnly);
 	}
 
-	private function resetEndTimeViolations()
+	private function resetEndTimeViolations($controlStartOnly)
 	{
-		if ((int)$this->scheduleForm->controlledActions === ScheduleTable::CONTROLLED_ACTION_START)
+		if ($controlStartOnly)
 		{
 			$this->relativeEndFrom = -1;
 			$this->relativeEndTo = -1;
@@ -587,7 +563,11 @@ class ViolationForm extends BaseForm
 			$this->maxShiftStartDelay = -1;
 			$this->shiftTimeNotifyUsers = [];
 		}
-
+		if (!$this->isSaveEditWorktimeViolations())
+		{
+			$this->maxAllowedToEditWorkTime = -1;
+			$this->editWorktimeNotifyUsers = [];
+		}
 		if (!$this->missedShiftStart)
 		{
 			$this->shiftCheckNotifyUsers = [];
@@ -634,7 +614,6 @@ class ViolationForm extends BaseForm
 	{
 		$this->resetFixedStartEndViolations();
 		$this->minDayDuration = -1;
-		$this->maxAllowedToEditWorkTime = -1;
 		$this->maxWorkTimeLackForPeriod = -1;
 
 		$this->hoursPerDayNotifyUsers = [];

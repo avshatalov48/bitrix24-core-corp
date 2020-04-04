@@ -119,13 +119,14 @@ use Bitrix\Main\Localization\Loc;
 					<div class="timeman-schedule-form-worktime-title"><?= htmlspecialcharsbx(Loc::getMessage('TIMEMAN_SCHEDULE_EDIT_BREAK_DURATION_TITLE')); ?></div>
 					<div class="timeman-schedule-form-worktime-value">
 						<span class="timeman-schedule-form-worktime-value-text"
-								data-role="timeman-shift-break-toggle">
-							<input name="<?= $shiftFormName . "[$shiftIndex][breakDurationFormatted]" ?>"
-									data-role="timeman-shift-link-break-time"
-									autocomplete="off"
-									class="timeman-schedule-form-worktime-input-value-text"
-									value="<?= htmlspecialcharsbx($shiftForm->getFormattedBreakDuration()) ?>">
-						</span>
+								data-role="timeman-shift-break-toggle"
+						><?= htmlspecialcharsbx(htmlspecialcharsbx($shiftForm->getFormattedBreakDuration()))
+							?></span>
+						<input name="<?= $shiftFormName . "[$shiftIndex][breakDurationFormatted]" ?>"
+								data-role="timeman-shift-link-break-time"
+								type="hidden"
+								class="timeman-schedule-form-worktime-input-value-text"
+								value="<?= htmlspecialcharsbx($shiftForm->getFormattedBreakDuration()) ?>">
 					</div>
 				</div>
 				<div class="timeman-schedule-form-worktime-item">
@@ -145,24 +146,24 @@ use Bitrix\Main\Localization\Loc;
 				$hideDaysSelector = $workdaysText !== $arResult['customWorkdaysText'] || !$isFixedSchedule; ?>
 				<div class="timeman-schedule-form-worktime-days <? if ($hideDaysSelector): ?>timeman-hide<? endif; ?>"
 						data-role="timeman-schedule-shift-workdays-selector">
-						<span class="timeman-schedule-form-worktime-days-inner">
+					<span class="timeman-schedule-form-worktime-days-inner">
 
 						<? $shiftFormWorkDays = array_map('intval', str_split($shiftForm->workDays)); ?>
-							<? foreach ($arResult['weekDays'] as $dayNumber => $text) : ?>
-								<span class="timeman-schedule-form-worktime-day"
-										data-role="timeman-schedule-shift-work-days">
-									<input class="timeman-schedule-form-worktime-day-check" type="checkbox"
-											data-role="timeman-schedule-shift-work-day-item"
-											id="<?= htmlspecialcharsbx('day-' . $shiftIndex . '-' . $dayNumber) ?>"
-										<? if (in_array($dayNumber, $shiftFormWorkDays, true)): ?>checked<? endif; ?>
-											value="<?= htmlspecialcharsbx($dayNumber); ?>"
-									>
+						<? foreach ($arResult['weekDays'] as $dayNumber => $text) : ?>
+							<span class="timeman-schedule-form-worktime-day"
+									data-role="timeman-schedule-shift-work-days">
+								<input class="timeman-schedule-form-worktime-day-check" type="checkbox"
+										data-role="timeman-schedule-shift-work-day-item"
+										id="<?= htmlspecialcharsbx('day-' . $shiftIndex . '-' . $dayNumber) ?>"
+									<? if (in_array($dayNumber, $shiftFormWorkDays, true)): ?>checked<? endif; ?>
+										value="<?= htmlspecialcharsbx($dayNumber); ?>"
+								>
 								<label class="timeman-schedule-form-worktime-day-label"
 										for="<?= htmlspecialcharsbx('day-' . $shiftIndex . '-' . $dayNumber) ?>"><?=
 									htmlspecialcharsbx($text);
 									?></label>
 							</span>
-							<? endforeach; ?>
+						<? endforeach; ?>
 				</div>
 			</div>
 		<? endforeach; ?>

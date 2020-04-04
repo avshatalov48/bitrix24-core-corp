@@ -293,7 +293,7 @@ class Network
 		{
 			Im::addMessage(Array(
 				"TO_CHAT_ID" => $row['CHAT_ID'],
-				'MESSAGE' => Loc::getMessage('IMOL_NETWORK_TARIFF_DIALOG_CLOSE'),
+				'MESSAGE' => $params['MESSAGE']?: Loc::getMessage('IMOL_NETWORK_TARIFF_DIALOG_CLOSE'),
 				'SYSTEM' => 'Y',
 				'SKIP_COMMAND' => 'Y',
 				'RECENT_ADD' => 'N',
@@ -355,7 +355,7 @@ class Network
 		{
 			Im::addMessage(Array(
 				"TO_CHAT_ID" => $row['CHAT_ID'],
-				'MESSAGE' => Loc::getMessage('IMOL_NETWORK_UNREGISTER_DIALOG_CLOSE'),
+				'MESSAGE' => $params['MESSAGE']?: Loc::getMessage('IMOL_NETWORK_UNREGISTER_DIALOG_CLOSE'),
 				'SYSTEM' => 'Y',
 				'SKIP_COMMAND' => 'Y',
 				'RECENT_ADD' => 'N',

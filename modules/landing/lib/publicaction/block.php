@@ -7,7 +7,6 @@ use \Bitrix\Landing\Landing;
 use \Bitrix\Landing\Block as BlockCore;
 use \Bitrix\Main\Localization\Loc;
 use \Bitrix\Landing\PublicActionResult;
-use \Bitrix\Landing\PublicAction\Utils;
 
 Loc::loadMessages(__FILE__);
 
@@ -26,10 +25,13 @@ class Block
 	{
 		$error = new \Bitrix\Landing\Error;
 		$result = new PublicActionResult();
-		$landing = Landing::createInstance($lid);
+		$landing = Landing::createInstance($lid, [
+			'blocks_id' => $block
+		]);
 		// try find the block in landing instance
 		if ($landing->exist())
 		{
+			$block = intval($block);
 			$blocks = $landing->getBlocks();
 			if (isset($blocks[$block]))
 			{
@@ -144,9 +146,12 @@ class Block
 
 		Landing::setEditMode();
 
-		$landing = Landing::createInstance($lid);
+		$landing = Landing::createInstance($lid, [
+			'blocks_id' => $block
+		]);
 		if ($landing->exist())
 		{
+			$block = intval($block);
 			$blocks = $landing->getBlocks();
 			if (isset($blocks[$block]))
 			{
@@ -208,10 +213,13 @@ class Block
 
 		if (!empty($content))
 		{
-			$landing = Landing::createInstance($lid);
+			$landing = Landing::createInstance($lid, [
+				'blocks_id' => $block
+			]);
 			// try find the block in landing instance
 			if ($landing->exist())
 			{
+				$block = intval($block);
 				$blocks = $landing->getBlocks();
 				if (isset($blocks[$block]))
 				{
@@ -258,10 +266,13 @@ class Block
 
 		Landing::setEditMode();
 
-		$landing = Landing::createInstance($lid);
+		$landing = Landing::createInstance($lid, [
+			'blocks_id' => $block
+		]);
 
 		if ($landing->exist())
 		{
+			$block = intval($block);
 			$blocks = $landing->getBlocks();
 			if (isset($blocks[$block]))
 			{
@@ -304,6 +315,7 @@ class Block
 		$content = array();
 		$data = (array) $data;
 		$dynamicParamsExists = false;
+		$block = intval($block);
 
 		Landing::setEditMode();
 
@@ -311,7 +323,9 @@ class Block
 		if (isset($data['dynamicState']) || isset($data['dynamicBlock']))//@tmp refactor
 		{
 			$dynamicParamsExists = true;
-			$landing = Landing::createInstance($lid);
+			$landing = Landing::createInstance($lid, [
+				'blocks_id' => $block
+			]);
 			if ($landing->exist())
 			{
 				if ($blockCurrent = $landing->getBlockById($block))
@@ -401,7 +415,9 @@ class Block
 		{
 			if (!isset($landing))
 			{
-				$landing = Landing::createInstance($lid);
+				$landing = Landing::createInstance($lid, [
+					'blocks_id' => $block
+				]);
 			}
 			// try find the block in landing instance
 			if ($landing->exist())
@@ -497,9 +513,12 @@ class Block
 		Landing::setEditMode();
 
 		// try find the block in landing instance
-		$landing = Landing::createInstance($lid);
+		$landing = Landing::createInstance($lid, [
+			'blocks_id' => $block
+		]);
 		if ($landing->exist())
 		{
+			$block = intval($block);
 			$blocks = $landing->getBlocks();
 			if (isset($blocks[$block]))
 			{
@@ -591,10 +610,13 @@ class Block
 			Landing::setEditMode();
 		}
 
-		$landing = Landing::createInstance($lid);
+		$landing = Landing::createInstance($lid, [
+			'blocks_id' => $block
+		]);
 		// try find the block in landing instance
 		if ($landing->exist())
 		{
+			$block = intval($block);
 			$blocks = $landing->getBlocks();
 			if (isset($blocks[$block]))
 			{
@@ -638,10 +660,13 @@ class Block
 
 		Landing::setEditMode();
 
-		$landing = Landing::createInstance($lid);
+		$landing = Landing::createInstance($lid, [
+			'blocks_id' => $block
+		]);
 		// try find the block in landing instance
 		if ($landing->exist())
 		{
+			$block = intval($block);
 			$blocks = $landing->getBlocks();
 			if (isset($blocks[$block]))
 			{
@@ -692,6 +717,7 @@ class Block
 		$data = array();
 		foreach ($lids as $lid)
 		{
+			$lid = intval($lid);
 			$landing = Landing::createInstance($lid, array(
 				'deleted' => isset($params['deleted']) && $params['deleted']
 			));
@@ -724,7 +750,7 @@ class Block
 						)
 						{
 							ob_start();
-							$block->view();
+							$block->view(false, $landing);
 							$data[$i]['content'] = ob_get_contents();
 							$data[$i]['css'] = $block->getCSS();
 							$data[$i]['js'] = $block->getJS();
@@ -798,10 +824,13 @@ class Block
 			Landing::setEditMode();
 		}
 
-		$landing = Landing::createInstance($lid);
+		$landing = Landing::createInstance($lid, [
+			'blocks_id' => $block
+		]);
 
 		if ($landing->exist())
 		{
+			$block = intval($block);
 			$blocks = $landing->getBlocks();
 			if (isset($blocks[$block]))
 			{
@@ -879,7 +908,7 @@ class Block
 		else
 		{
 			$result->setResult(
-				isset($repo[$section]) ? $repo[$section] : false
+				(is_string($section) && isset($repo[$section])) ? $repo[$section] : false
 			);
 		}
 
@@ -900,9 +929,11 @@ class Block
 
 		$result = new PublicActionResult();
 		$error = new \Bitrix\Landing\Error;
+		$block = intval($block);
 
 		$landing = Landing::createInstance(
-			BlockCore::getLandingIdByBlockId($block)
+			BlockCore::getLandingIdByBlockId($block),
+			['skip_blocks' => true]
 		);
 
 		if ($landing->exist())

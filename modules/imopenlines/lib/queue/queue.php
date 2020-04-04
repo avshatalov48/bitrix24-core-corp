@@ -167,6 +167,23 @@ abstract class Queue
 	abstract public function getOperatorsQueue($currentOperator = 0);
 
 	/**
+	 * Returns the default queue time
+	 *
+	 * @return int
+	 */
+	public function getQueueTime()
+	{
+		$queueTime = ImOpenLines\Queue::UNDISTRIBUTED_QUEUE_TIME;
+
+		if($this->config['QUEUE_TIME'] > 0)
+		{
+			$queueTime = $this->config['QUEUE_TIME'];
+		}
+
+		return $queueTime;
+	}
+
+	/**
 	 * @param int $operatorId
 	 * @param \Bitrix\ImOpenLines\Crm $crmManager
 	 * @param bool $isGroupByChat
@@ -178,6 +195,8 @@ abstract class Queue
 	 */
 	public function createSession($operatorId = 0, $crmManager = null, $isGroupByChat = false)
 	{
+		$defaultQueueTime = $this->getQueueTime();
+
 		$result = [
 			'OPERATOR_ID' => 0,
 			'QUEUE_HISTORY' => [],
@@ -187,6 +206,8 @@ abstract class Queue
 			'DATE_NO_ANSWER' => null,
 			'JOIN_BOT' => false,
 			'UNDISTRIBUTED' => false,
+
+			'OPERATOR_CRM' => false,
 		];
 
 		if(empty($operatorId))
@@ -218,7 +239,7 @@ abstract class Queue
 			//Operator
 			else
 			{
-				$result['DATE_QUEUE']->add($this->config['QUEUE_TIME'] . ' SECONDS');
+				$result['DATE_QUEUE']->add($defaultQueueTime . ' SECONDS');
 
 				if($this->sessionManager->checkWorkTime())
 				{
@@ -237,6 +258,9 @@ abstract class Queue
 						if($this->isActiveCrmUser($crmOperatorId))
 						{
 							$operatorId = $crmOperatorId;
+
+							$result['DATE_QUEUE'] = null;
+							$result['OPERATOR_CRM'] = true;
 						}
 					}
 				}
@@ -410,6 +434,8 @@ abstract class Queue
 			if(!$this->isOperatorActive($this->session['OPERATOR_ID']))
 			{
 				ImOpenLines\Queue::returnSessionToQueue($this->session['ID'], $reasonReturn);
+
+				ImOpenLines\Queue::transferToNextSession(false, ImOpenLines\Queue\Event::COUNT_SESSIONS_REALTIME, $this->config['ID']);
 			}
 		}
 	}

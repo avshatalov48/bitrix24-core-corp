@@ -6,6 +6,7 @@ use \Bitrix\Main\Localization\Loc;
 use \Bitrix\Timeman;
 use Bitrix\Timeman\Repository\Schedule\ScheduleRepository;
 use Bitrix\Timeman\Service\DependencyManager;
+use Bitrix\Timeman\TimemanUrlManager;
 
 require_once __DIR__ . '/../timeman.worktime.grid/grid.php';
 
@@ -55,25 +56,30 @@ class TimemanShiftPlanComponent extends Timeman\Component\BaseComponent
 			showError(Loc::getMessage('TM_SCHEDULE_SHIFT_PLAN_ACCESS_DENIED'));
 			return;
 		}
-		$this->arResult['SCHEDULE'] = Timeman\Service\DependencyManager::getInstance()->getScheduleRepository()
+		$schedule = Timeman\Service\DependencyManager::getInstance()->getScheduleRepository()
 			->getActiveSchedulesQuery()
 			->addSelect('ID')
 			->addSelect('NAME')
+			->addSelect('SCHEDULE_TYPE')
 			->where('ID', $this->arResult['SCHEDULE_ID'])
 			->exec()
 			->fetchObject();
-		if (!$this->arResult['SCHEDULE'])
+		if (!$schedule || !$schedule->isShifted())
 		{
 			showError(Loc::getMessage('TM_SCHEDULE_SHIFT_PLAN_SCHEDULE_NOT_FOUND'));
 			return;
 		}
+		$this->arResult['SCHEDULE'] = $schedule;
 		$this->arResult['SCHEDULE_NAME'] = $this->arResult['SCHEDULE']['NAME'];
 		$this->arResult['GRID_ID'] = $this->arResult['SCHEDULE_ID'] ? $this->gridId . '_' . $this->arResult['SCHEDULE_ID'] : $this->gridId;
-		$this->arResult['SHOW_DELETE_SHIFT_PLAN_BTN'] = $this->userPermissionManager->canUpdateShiftPlan($this->arResult['SCHEDULE_ID']);
-		$this->arResult['SHOW_ADD_SHIFT_PLAN_BTN'] = $this->userPermissionManager->canUpdateShiftPlan($this->arResult['SCHEDULE_ID']);
-		$this->arResult['SHOW_EDIT_SCHEDULE_BTN'] = $this->userPermissionManager->canUpdateSchedule($this->arResult['SCHEDULE_ID']);
+		$this->arResult['canUpdateSchedule'] = $this->userPermissionManager->canUpdateSchedule($this->arResult['SCHEDULE_ID']);
 		$this->arResult['SHOW_DELETE_USER_BTN'] = $this->userPermissionManager->canUpdateSchedule($this->arResult['SCHEDULE_ID']);
-		$this->arResult['SHOW_CREATE_SHIFT_BTN'] = $this->userPermissionManager->canUpdateSchedule($this->arResult['SCHEDULE_ID']);
+		$this->arResult['SHOW_ADD_SHIFT_BTN'] = $this->userPermissionManager->canUpdateSchedule($this->arResult['SCHEDULE_ID']);
+		if ($this->arResult['canUpdateSchedule'])
+		{
+			$this->arResult['ADD_SHIFT_LINK'] = DependencyManager::getInstance()->getUrlManager()->getUriTo(TimemanUrlManager::URI_SHIFT_CREATE, ['SCHEDULE_ID' => $this->arResult['SCHEDULE_ID']]);
+			$this->arResult['scheduleUpdateLink'] = DependencyManager::getInstance()->getUrlManager()->getUriTo(TimemanUrlManager::URI_SCHEDULE_UPDATE, ['SCHEDULE_ID' => $this->arResult['SCHEDULE_ID']]) . '?hideShiftPlanBtn=Y';
+		}
 		$this->arResult['SHOW_ADD_USER_BUTTON'] = $this->userPermissionManager->canUpdateSchedule($this->arResult['SCHEDULE_ID']);
 		$this->includeComponentTemplate();
 	}

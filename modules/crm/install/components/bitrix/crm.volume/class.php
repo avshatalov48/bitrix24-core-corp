@@ -1157,9 +1157,9 @@ class CrmVolumeComponent extends \CBitrixComponent
 				}
 				if (!empty($dateCreate["{$alias}_to"]))
 				{
+					$dt = new Main\Type\DateTime($dateCreate["{$alias}_to"], $format);
 					$filter["<={$alias}"] = $dt;
 
-					$dt = new Main\Type\DateTime($dateCreate["{$alias}_to"], $format);
 					if ($isRange[$alias])
 					{
 						$dt->add('+1 seconds');

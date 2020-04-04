@@ -531,7 +531,11 @@ class Crm
 	{
 		if (
 			$storage instanceof \Bitrix\Disk\Storage &&
-			(!isset($this->folderList[$storage->getId()]) || empty($this->folderList[$storage->getId()]))
+			$storage->getId() > 0 &&
+			(
+				!isset($this->folderList[$storage->getId()]) ||
+				empty($this->folderList[$storage->getId()])
+			)
 		)
 		{
 			$this->folderList[$storage->getId()] = array();

@@ -492,11 +492,11 @@ return [
 	[
 		'REGION' => 'ua',
 		'NAME' => \Bitrix\Main\Localization\Loc::getMessage('DOCGEN_TEMPLATE_BILL_UA_NAME'),
-		'CODE' => 'BILL_UA',
+		'CODE' => 'BILL_IBAN_UA',
 		'SORT' => 200,
 		'MODULE_ID' => 'crm',
 		'BODY_TYPE' => \Bitrix\DocumentGenerator\Body\Docx::class,
-		'FILE' => '/bitrix/modules/documentgenerator/data/templates/bill_ua.docx',
+		'FILE' => '/bitrix/modules/documentgenerator/data/templates/bill_iban_ua.docx',
 		'PROVIDERS' => [
 			'Bitrix\Crm\Integration\DocumentGenerator\DataProvider\Deal',
 			'Bitrix\Crm\Integration\DocumentGenerator\DataProvider\Invoice',
@@ -605,6 +605,24 @@ return [
 		'MODULE_ID' => 'crm',
 		'BODY_TYPE' => \Bitrix\DocumentGenerator\Body\Docx::class,
 		'FILE' => '/bitrix/modules/documentgenerator/data/templates/quote_ua.docx',
+		'PROVIDERS' => [
+			'Bitrix\Crm\Integration\DocumentGenerator\DataProvider\Deal',
+			'Bitrix\Crm\Integration\DocumentGenerator\DataProvider\Invoice',
+			'Bitrix\Crm\Integration\DocumentGenerator\DataProvider\Quote',
+			'Bitrix\Crm\Integration\DocumentGenerator\DataProvider\Lead',
+			'Bitrix\Crm\Integration\DocumentGenerator\DataProvider\Company',
+			'Bitrix\Crm\Integration\DocumentGenerator\DataProvider\Contact',
+			'Bitrix\Crm\Integration\DocumentGenerator\DataProvider\Order',
+		],
+	],
+	[
+		'REGION' => 'ua',
+		'NAME' => \Bitrix\Main\Localization\Loc::getMessage('DOCGEN_TEMPLATE_BILL_UA_NAME_OLD'),
+		'CODE' => 'BILL_UA',
+		'SORT' => 10000,
+		'MODULE_ID' => 'crm',
+		'BODY_TYPE' => \Bitrix\DocumentGenerator\Body\Docx::class,
+		'FILE' => '/bitrix/modules/documentgenerator/data/templates/bill_ua.docx',
 		'PROVIDERS' => [
 			'Bitrix\Crm\Integration\DocumentGenerator\DataProvider\Deal',
 			'Bitrix\Crm\Integration\DocumentGenerator\DataProvider\Invoice',

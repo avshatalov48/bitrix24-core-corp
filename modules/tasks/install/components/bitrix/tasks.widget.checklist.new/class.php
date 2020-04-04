@@ -45,6 +45,7 @@ class TasksWidgetCheckListNewComponent extends TasksBaseComponent
 			],
 		],
 	];
+	private static $optionsMap = [];
 
 	/**
 	 * @return bool
@@ -54,6 +55,8 @@ class TasksWidgetCheckListNewComponent extends TasksBaseComponent
 		$this->arResult['DATA'] = static::tryParseArrayParameter($this->arParams['DATA']);
 		$this->arResult['CONVERTED'] = static::tryParseBooleanParameter($this->arParams['CONVERTED']);
 		$this->arResult['INPUT_PREFIX'] = static::tryParseStringParameter($this->arParams['INPUT_PREFIX']);
+		$this->arResult['TASK_GUID'] = static::tryParseStringParameter($this->arParams['TASK_GUID']);
+		$this->arResult['DISK_FOLDER_ID'] = static::tryParseIntegerParameter($this->arParams['DISK_FOLDER_ID']);
 		$this->arResult['CAN_ADD_ACCOMPLICE'] = static::tryParseBooleanParameter(
 			$this->arParams['CAN_ADD_ACCOMPLICE'],
 			true
@@ -63,11 +66,10 @@ class TasksWidgetCheckListNewComponent extends TasksBaseComponent
 			'/company/personal/user/#user_id#/'
 		);
 
+		$mode = strtolower(static::tryParseStringParameter($this->arParams['MODE'], 'view'));
 		$userId = static::tryParseIntegerParameter($this->arParams['USER_ID']);
 		$entityId = static::tryParseIntegerParameter($this->arParams['ENTITY_ID']);
 		$entityType = static::tryParseStringParameter($this->arParams['ENTITY_TYPE']);
-
-		$showCompletedOptionName = static::$map[$entityType]['OPTIONS']['PREFIX'].'show_completed';
 
 		/** @var CheckListFacade $facade */
 		$facade = static::$map[$entityType]['FACADE'];
@@ -76,9 +78,10 @@ class TasksWidgetCheckListNewComponent extends TasksBaseComponent
 		$this->arResult['USER_ID'] = $userId;
 		$this->arResult['ENTITY_ID'] = $entityId;
 		$this->arResult['ENTITY_TYPE'] = $entityType;
+		$this->arResult['MODE'] = (in_array(strtolower($mode), ['view', 'edit'], true) ? $mode : 'view');
 
-		$this->arResult['SHOW_COMPLETED'] = User::getOption($showCompletedOptionName, $userId, true);
 		$this->arResult['AJAX_ACTIONS'] = static::$map[$entityType]['ACTIONS'];
+		$this->arResult['USER_OPTIONS'] = $this->getUserOptions($entityType, $userId);
 
 		return $this->errors->checkNoFatals();
 	}
@@ -112,13 +115,12 @@ class TasksWidgetCheckListNewComponent extends TasksBaseComponent
 
 		foreach ($checkListItems as $id => $item)
 		{
-			if (!$entityId)
+			if (!is_array($item))
 			{
-				$checkListItems[$id]['ACTION']['MODIFY'] = true;
-				$checkListItems[$id]['ACTION']['REMOVE'] = true;
-				$checkListItems[$id]['ACTION']['TOGGLE'] = true;
+				unset($checkListItems[$id]);
+				continue;
 			}
-			$checkListItems[$id]['ACTION']['DRAG'] = $item['ACTION']['MODIFY'];
+			$checkListItems[$id] = $this->prepareItemActions($item);
 			$this->arResult['UF_CHECKLIST_FILES'][$id] = ($item['UF_CHECKLIST_FILES'] ?: []);
 		}
 
@@ -147,11 +149,46 @@ class TasksWidgetCheckListNewComponent extends TasksBaseComponent
 	}
 
 	/**
+	 * @param $item
+	 * @return array
+	 */
+	private function prepareItemActions($item): array
+	{
+		if (!$this->arResult['ENTITY_ID'])
+		{
+			$item['ACTION']['MODIFY'] = true;
+			$item['ACTION']['REMOVE'] = true;
+			$item['ACTION']['TOGGLE'] = true;
+
+			return $item;
+		}
+
+		if (array_key_exists('ACTION', $item))
+		{
+			$item['ACTION']['MODIFY'] = $this->isTrue($item['ACTION']['MODIFY']);
+			$item['ACTION']['REMOVE'] = $this->isTrue($item['ACTION']['REMOVE']);
+			$item['ACTION']['TOGGLE'] = $this->isTrue($item['ACTION']['TOGGLE']);
+		}
+		$item['ACTION']['DRAG'] = $item['ACTION']['MODIFY'];
+
+		return $item;
+	}
+
+	/**
+	 * @param $value
+	 * @return bool
+	 */
+	private function isTrue($value): bool
+	{
+		return ($value === true || $value === 'true' || $value === 'Y');
+	}
+
+	/**
 	 * @param $checkListItems
 	 * @return CheckList
 	 * @throws NotImplementedException
 	 */
-	private function buildTreeStructure($checkListItems)
+	private function buildTreeStructure($checkListItems): CheckList
 	{
 		$result = new CheckList(static::$nodeId, $this->userId, static::$facade);
 
@@ -174,7 +211,7 @@ class TasksWidgetCheckListNewComponent extends TasksBaseComponent
 	 * @param $items
 	 * @return string
 	 */
-	private static function getKeyToSort($items)
+	private static function getKeyToSort($items): string
 	{
 		$keyToSort = 'PARENT_ID';
 
@@ -197,7 +234,7 @@ class TasksWidgetCheckListNewComponent extends TasksBaseComponent
 	 * @return CheckList
 	 * @throws NotImplementedException
 	 */
-	private function makeTree($root, $sortIndex, $displaySortIndex)
+	private function makeTree($root, $sortIndex, $displaySortIndex): CheckList
 	{
 		static::$nodeId++;
 
@@ -222,7 +259,7 @@ class TasksWidgetCheckListNewComponent extends TasksBaseComponent
 	 * @param CheckList $tree
 	 * @return CheckList
 	 */
-	private function fillInfo(CheckList $tree)
+	private function fillInfo(CheckList $tree): CheckList
 	{
 		$completedCount = 0;
 
@@ -244,6 +281,56 @@ class TasksWidgetCheckListNewComponent extends TasksBaseComponent
 		return $tree;
 	}
 
+	private static function createOptionsMap(): void
+	{
+		static::$optionsMap = [
+			'SHOW_COMPLETED' => [
+				'DEFAULT_VALUE' => true,
+				'TYPE_CALLBACK' => static function($value)
+				{
+					return (bool)$value;
+				},
+			],
+			'DEFAULT_MEMBER_SELECTOR_TYPE' => [
+				'DEFAULT_VALUE' => 'auditor',
+				'TYPE_CALLBACK' => static function($value)
+				{
+					return (string)$value;
+				},
+			],
+		];
+	}
+
+	/**
+	 * @param string $entityType
+	 * @param int $userId
+	 * @return array
+	 */
+	private function getUserOptions($entityType, $userId): array
+	{
+		$userOptions = [];
+
+		if (empty(static::$optionsMap))
+		{
+			self::createOptionsMap();
+		}
+
+		foreach (static::$optionsMap as $key => $value)
+		{
+			$defaultValue = $value['DEFAULT_VALUE'];
+			$typeCallback = $value['TYPE_CALLBACK'];
+
+			$optionName = static::$map[$entityType]['OPTIONS']['PREFIX'].strtolower($key);
+			$userOptions[$key] = (
+				is_callable($typeCallback)
+				? $typeCallback(User::getOption($optionName, $userId, $defaultValue))
+				: User::getOption($optionName, $userId, $defaultValue)
+			);
+		}
+
+		return $userOptions;
+	}
+
 	/**
 	 * @return array
 	 */
@@ -260,10 +347,17 @@ class TasksWidgetCheckListNewComponent extends TasksBaseComponent
 	 * @param $userId
 	 * @param $entityType
 	 */
-	public static function updateTaskOption($option, $value, $userId, $entityType)
+	public static function updateTaskOption($option, $value, $userId, $entityType): void
 	{
+		if (empty(static::$optionsMap))
+		{
+			static::createOptionsMap();
+		}
+
+		$typeCallback = static::$optionsMap[strtoupper($option)]['TYPE_CALLBACK'];
+
 		$optionName = static::$map[$entityType]['OPTIONS']['PREFIX'].$option;
-		$optionValue = (bool)$value;
+		$optionValue = (is_callable($typeCallback) ? $typeCallback($value) : $value);
 
 		User::setOption($optionName, $optionValue, $userId);
 	}

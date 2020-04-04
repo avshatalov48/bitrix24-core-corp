@@ -307,6 +307,8 @@ class Grats
 			return $result;
 		}
 
+		$postsData = [];
+
 		$filter = array(
 			'EVENT_ID' => 'blog_post_grat',
 			'@SOURCE_ID' => $gratitudesData['POSTS_ID'],

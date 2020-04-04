@@ -63,13 +63,14 @@ class All extends Queue
 	public function returnUserToQueue(array $userIds)
 	{
 		$sessionList = SessionCheckTable::getList(
-			array(
-				'select' => array('SESSION_ID'),
-				'filter' => array(
+			[
+				'select' => ['SESSION_ID'],
+				'filter' => [
 					'SESSION.CONFIG_ID' => $this->configLine['ID'],
-					'<SESSION.STATUS' => Session::STATUS_ANSWER
-				)
-			)
+					'<SESSION.STATUS' => Session::STATUS_ANSWER,
+					'!=SESSION.OPERATOR_FROM_CRM' => 'Y'
+				]
+			]
 		)->fetchAll();
 
 		foreach ($sessionList as $session)
@@ -110,7 +111,8 @@ class All extends Queue
 					[
 						//Rebuilding the list of missed conversations for operators.
 						'CONFIG_ID' => $this->configLine['ID'],
-						'<STATUS' => Session::STATUS_ANSWER
+						'<STATUS' => Session::STATUS_ANSWER,
+						'!=OPERATOR_FROM_CRM' => 'Y'
 					]
 				]
 			]
@@ -193,7 +195,8 @@ class All extends Queue
 						],
 						[
 							'SESSION.CONFIG_ID' => $this->configLine['ID'],
-							'<SESSION.STATUS' => Session::STATUS_ANSWER
+							'<SESSION.STATUS' => Session::STATUS_ANSWER,
+							'!=SESSION.OPERATOR_FROM_CRM' => 'Y'
 						]
 					]
 				]

@@ -681,4 +681,9 @@ class PostingRecipientTable extends Entity\DataManager
 			self::SEND_RESULT_DENY => Loc::getMessage('SENDER_POSTING_RECIPIENT_STATUS_D')
 		);
 	}
+
+	public static function hasUnprocessed($postingId)
+	{
+		return (static::getCount(['=POSTING_ID' => $postingId, '=STATUS' => self::SEND_RESULT_NONE]) > 0);
+	}
 }

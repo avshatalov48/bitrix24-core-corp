@@ -6,6 +6,7 @@ Main\Localization\Loc::loadMessages(__FILE__);
 
 class EntityMergerException extends Main\SystemException
 {
+	const NONE                                      = 0;
 	const GENERAL                                   = 10;
 	const READ_DENIED                               = 20;
 	const UPDATE_DENIED                             = 30;
@@ -15,6 +16,8 @@ class EntityMergerException extends Main\SystemException
 	const DELETE_FAILED                             = 70;
 	const CONFLICT_RESOLUTION_NOT_SUPPORTED         = 300;
 	const CONFLICT_OCCURRED                         = 310;
+	//RESERVED BY DealMergerException: 600, 610
+	//RESERVED BY LeadMergerException: 700
 
 	protected $entityTypeID = \CCrmOwnerType::Undefined;
 	protected $entityID = 0;
@@ -34,6 +37,16 @@ class EntityMergerException extends Main\SystemException
 		$this->conflictResolutionMode = isset($params['conflictResolutionMode'])
 			? (int)$params['conflictResolutionMode'] : ConflictResolutionMode::UNDEFINED;
 
+		$message = $this->getMessageByCode($code);
+		if($previous)
+		{
+			$message .= ' Caused by: '.$previous->getMessage();
+		}
+
+		parent::__construct($message, $code, $file, $line, $previous);
+	}
+	protected function getMessageByCode($code)
+	{
 		if($code === self::CONFLICT_RESOLUTION_NOT_SUPPORTED)
 		{
 			$conflictResolutionModeName = ConflictResolutionMode::getName($this->conflictResolutionMode);
@@ -46,6 +59,7 @@ class EntityMergerException extends Main\SystemException
 		else
 		{
 			$name = 'Entity';
+			$entityID = $this->entityID;
 			if($this->roleID === EntityMerger::ROLE_SEED)
 			{
 				$name = 'Seed entity';
@@ -84,13 +98,7 @@ class EntityMergerException extends Main\SystemException
 				$message = 'General error.';
 			}
 		}
-
-		if($previous)
-		{
-			$message .= ' Caused by: '.$previous->getMessage();
-		}
-
-		parent::__construct($message, $code, $file, $line, $previous);
+		return $message;
 	}
 	public function getEntityTypeID()
 	{

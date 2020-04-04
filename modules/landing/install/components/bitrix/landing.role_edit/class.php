@@ -67,6 +67,11 @@ class LandingRoleEditComponent extends LandingBaseFormComponent
 		{
 			$this->checkParam('ROLE_EDIT', 0);
 			$this->checkParam('PAGE_URL_ROLES', '');
+			$this->checkParam('TYPE', '');
+
+			\Bitrix\Landing\Site\Type::setScope(
+				$this->arParams['TYPE']
+			);
 
 			$this->id = $this->arParams['ROLE_EDIT'];
 			$this->redirectAfterSave = true;
@@ -82,7 +87,8 @@ class LandingRoleEditComponent extends LandingBaseFormComponent
 					!$currentRole['TITLE']['CURRENT']
 				)
 				{
-					foreach (Role::fetchAll() as $role)
+					$rolesOriginal = Role::fetchAll();
+					foreach ($rolesOriginal as $role)
 					{
 						if (
 							$role['XML_ID']  != '' &&

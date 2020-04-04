@@ -15,6 +15,11 @@ else
 
 $arComponentParameters = Array(
 	'PARAMETERS' => array(
+		'TYPE' => array(
+			'NAME' => getMessage('LANDING_CMP_PAR_TYPE'),
+			'TYPE' => 'LIST',
+			'VALUES' => $types
+		),
 		'ROLE_EDIT' => array(
 			'NAME' => getMessage('LANDING_CMP_PAR_ROLE_EDIT'),
 			'TYPE' => 'STRING'

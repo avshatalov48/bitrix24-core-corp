@@ -269,7 +269,7 @@ if (check_bitrix_sessid() && $USER->IsAuthorized())
 				Header('Content-Type: text/html; charset=' . LANG_CHARSET);
 				?>
 				<script type="text/javascript">
-					window.parent.window.<?echo $_POST["form_id"]?>.RefreshUpload(<?php echo CUtil::PhpToJsObject($arResult);?>, <?php echo intval($_POST["uniqueID"])?>);
+					window.parent.window.<?echo (int)$_POST["form_id"]?>.RefreshUpload(<?php echo CUtil::PhpToJsObject($arResult);?>, <?php echo intval($_POST["uniqueID"])?>);
 				</script>
 				<?
 			}
@@ -2046,7 +2046,7 @@ if (check_bitrix_sessid() && $USER->IsAuthorized())
 								];
 							}
 
-							foreach ($_REQUEST['USERS'] as $user)
+							foreach ((array)$_REQUEST['USERS'] as $user)
 							{
 								$TMUSER = new CTimeManUser($user);
 								$res['USERS'][] = [

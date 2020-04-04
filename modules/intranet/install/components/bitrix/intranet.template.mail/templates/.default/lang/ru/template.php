@@ -9,6 +9,7 @@ $MESS['INTRANET_INVITE_TEXT'] = "#NAME# приглашает вас в #BLOCK_ST
 $MESS['INTRANET_INVITE_FOOTER'] = "Это автоматическое сообщение. Вы его получили, потому что ваш коллега пригласил вас в Битрикс24. Когда вы примите приглашение, то сможете управлять настройками всех уведомлений.";
 $MESS['INTRANET_MAIL_TITLE_IM_NEW_NOTIFY'] = "Новое уведомление от #NAME#";
 $MESS['INTRANET_MAIL_TITLE_IM_NEW_MESSAGE'] = "Новое сообщение от #NAME#";
+$MESS['INTRANET_MAIL_TITLE_IM_NEW_MESSAGE_GROUP'] = "Новые сообщения от #NAME#";
 $MESS['INTRANET_BITRIX24'] = "Битрикс24";
 $MESS['INTRANET_CHANGE_NOTIFY_SETTINGS'] = "Изменить настройки уведомлений";
 $MESS['INTRANET_OPEN'] = "Посмотреть";

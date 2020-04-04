@@ -43,6 +43,8 @@
 		this.entityTypes = {};
 		this.auxObject = null;
 		this.selectorInstance = null;
+
+		this.eventOpenBinded = false;
 	};
 
 	BX.Main.SelectorV2.controls = {};
@@ -128,6 +130,7 @@
 					userNameTemplate: this.getOption('userNameTemplate'),
 					siteDepartmentId: this.getOption('siteDepartmentId'), // siteDepartmentID
 					showCloseIcon: 'Y',
+					popupAutoHide: (this.getOption('popupAutoHide') == 'N' ? 'N' : 'Y'),
 					last: {
 						disable: (this.getOption('disableLast') == 'Y' ? 'Y' : 'N'), // lastTabDisable
 					},
@@ -197,14 +200,15 @@
 
 								for (i=0; i < fullList.length; i++)
 								{
-									if (
-										BX.type.isNotEmptyObject(selectorInstance.entities[fullList[i]])
-										&& BX.type.isNotEmptyObject(selectorInstance.entities[fullList[i]].items)
-										&& BX.type.isNotEmptyObject(selectorInstance.entities[fullList[i]].items[itemId])
-									)
+									if (BX.type.isNotEmptyObject(selectorInstance.entities[fullList[i]]))
 									{
 										selectorInstance.unselectItem({
-											itemNode: selectorInstance.entities[fullList[i]].items[itemId],
+											itemNode: (
+												BX.type.isNotEmptyObject(selectorInstance.entities[fullList[i]].items)
+												&& BX.type.isNotEmptyObject(selectorInstance.entities[fullList[i]].items[itemId])
+													? selectorInstance.entities[fullList[i]].items[itemId]
+													: false
+											),
 											itemId: itemId,
 											entityType: fullList[i],
 											mode: 'reinit'
@@ -414,8 +418,12 @@
 								id: this.id
 							} ]);
 
-							if (typeof this.options.eventOpen != 'undefined')
+							if (
+								typeof this.options.eventOpen != 'undefined'
+								&& !this.eventOpenBinded
+							)
 							{
+								this.eventOpenBinded = true;
 								BX.addCustomEvent(window, this.options.eventOpen, function(params) {
 
 									if (

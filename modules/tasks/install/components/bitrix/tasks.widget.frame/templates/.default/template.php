@@ -221,55 +221,18 @@ $inputPrefix = $arParams['INPUT_PREFIX'];
 			</div>
 
 		<?endif?>
-
-		<?if($arParams['FOOTER']['IS_ENABLED']):?>
-
-        <?php /*
-			<div class="js-id-wfr-edit-form-footer webform-buttons pinable-block <?=($state['FLAGS']['FORM_FOOTER_PIN'] ? 'pinned' : '')?>">
-
-				<div class="tasks-form-footer-container">
-
-					<?if($arParams['FOOTER']['IS_PINABLE']):?>
-						<span class="js-id-wfr-edit-form-pin-footer task-option-fixedbtn" title="<?=Loc::getMessage('TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_PINNER_HINT')?>"></span>
-					<?endif?>
-
-					<?foreach($arParams['FOOTER']['BUTTONS'] as $button):?>
-
-						<?if($button['TYPE'] == 'LINK'):?>
-							<a href="<?=htmlspecialcharsbx($button['URL'])?>" class="js-id-wfr-edit-form-cancel-button webform-button-link"><?=htmlspecialcharsbx($button['TEXT'])?></a>
-						<?else:?>
-							<button class="js-id-wfr-edit-form-submit webform-small-button webform-small-button-accept">
-		                        <span class="webform-small-button-text">
-			                        <?=htmlspecialcharsbx($button['TEXT'])?>
-		                        </span>
-							</button>
-						<?endif?>
-
-					<?endforeach?>
-
-				</div>
-			</div>
-        */?>
-
-            <?$APPLICATION->IncludeComponent('bitrix:ui.button.panel', '', [
-                'BUTTONS' => $arParams['FOOTER']['BUTTONS']
-            ]);?>
-		<?endif?>
-
-		<?/*
-		<div class="js-id-wfr-edit-form-state">
-			<input class="js-id-id-wfr-edit-form-operation" type="hidden" name="<?=htmlspecialcharsbx($inputPrefix)?>[OPERATION]" value="runtime:templateActionSetState" disabled="disabled" />
-			<div class="js-id-id-wfr-edit-form-inputs">
-				<script data-bx-id="id-wfr-edit-form-block" type="text/html">
-					<input type="hidden" name="<?=htmlspecialcharsbx($inputPrefix)?>[ARGUMENTS][state][BLOCKS][{{NAME}}][PINNED]" value="{{VALUE}}" />
-				</script>
-				<script data-bx-id="id-wfr-edit-form-flag" type="text/html">
-					<input type="hidden" name="<?=htmlspecialcharsbx($inputPrefix)?>[ARGUMENTS][state][FLAGS][{{NAME}}]" value="{{VALUE}}" />
-				</script>
-			</div>
-		</div>
-		*/?>
-
+		<?php
+		if($arParams['FOOTER']['IS_ENABLED'])
+		{
+			$APPLICATION->IncludeComponent(
+				'bitrix:ui.button.panel',
+				'',
+				[
+					'BUTTONS' => $arParams['FOOTER']['BUTTONS'],
+				]
+			);
+		}
+		?>
 	</div>
 	<?$helper->initializeExtension();?>
 

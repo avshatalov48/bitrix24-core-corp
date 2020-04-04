@@ -9,6 +9,7 @@
 namespace Bitrix\Imopenlines\Widget;
 
 use Bitrix\ImOpenLines\BasicError;
+use Bitrix\ImOpenLines\Session;
 use Bitrix\Main\Localization\Loc;
 
 class Dialog
@@ -159,6 +160,7 @@ class Dialog
 		$diskFolderId = $chat['DISK_FOLDER_ID'];
 		$sessionId = 0;
 		$sessionClosed = true;
+		$sessionStatus = Session::ACTION_NONE;
 		$userVote = self::VOTE_NONE;
 
 		$operator = [
@@ -178,6 +180,7 @@ class Dialog
 				'ID',
 				'CLOSED',
 				'VOTE',
+				'STATUS',
 				'CHAT_OPERATOR_ID' => 'CHAT.AUTHOR_ID',
 				'OPERATOR_AVATAR' => 'CHAT.AUTHOR.PERSONAL_PHOTO',
 				'OPERATOR_ONLINE' => 'CHAT.AUTHOR.IS_ONLINE'
@@ -191,6 +194,8 @@ class Dialog
 		if ($sessionData)
 		{
 			$sessionId = $sessionData['ID'];
+			$sessionStatus = (int)$sessionData['STATUS'];
+
 			$sessionData['VOTE'] = (int)$sessionData['VOTE'];
 
 			if ($sessionData['VOTE'] === \Bitrix\Imopenlines\Session::VOTE_LIKE)
@@ -222,6 +227,7 @@ class Dialog
 			'DISK_FOLDER_ID' => (int)$diskFolderId,
 			'SESSION_ID' => (int)$sessionId,
 			'SESSION_CLOSE' => $sessionClosed,
+			'SESSION_STATUS' => $sessionStatus,
 			'USER_VOTE' => $userVote,
 			'USER_CONSENT' => (bool)$userConsent,
 			'OPERATOR' => $operator,

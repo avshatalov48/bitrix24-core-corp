@@ -66,4 +66,28 @@ class VoximplantStartAjaxController extends \Bitrix\Main\Engine\Controller
 			return null;
 		}
 	}
+
+	public function getComponentResultAction()
+	{
+		CBitrixComponent::includeComponentClass("bitrix:voximplant.start");
+		$component = new VoximplantStartComponent();
+
+		$arResult = $component->prepareResult();
+
+		if($arResult['ERROR_MESSAGE'])
+		{
+			$this->addError(new \Bitrix\Main\Error($arResult['ERROR_MESSAGE']));
+			return null;
+		}
+
+		return [
+			"lines" => $arResult['NUMBERS_LIST'],
+			"mainMenuItems" => $arResult['MENU']['MAIN'],
+			"settingsMenuItems" => $arResult['MENU']['SETTINGS'],
+			"partnersMenuItems" => $arResult['MENU']['PARTNERS'],
+			"applicationUrlTemplate" => $arResult['MARKETPLACE_DETAIL_URL_TPL'],
+			"tariffsUrl" => $arResult['LINK_TO_TARIFFS'],
+			"isRestOnly" => $arResult['IS_REST_ONLY'] ? 'Y' : 'N'
+		];
+	}
 }

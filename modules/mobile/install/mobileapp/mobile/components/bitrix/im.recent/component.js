@@ -110,6 +110,12 @@ RecentList.init = function()
 	});
 
 	/* start */
+	/**
+	 * Push object must be initiated before View will be loaded
+	 * to avoid race-condition bug in method "actionExecute" (see code below)
+	 */
+	this.push.init();
+
 	BX.onViewLoaded(() =>
 	{
 		this.dialogOptionInit();
@@ -129,12 +135,6 @@ RecentList.init = function()
 
 		this.refresh({start: true});
 	});
-
-	/**
-	 * Push object must be initiated before view will be loaded
-	 * to avoid race-condition bug in method "actionExecute" (see code below)
-	 */
-	this.push.init();
 
 	BX.addCustomEvent("onImDetailShowed", (data) =>
 	{
@@ -173,17 +173,18 @@ RecentList.init = function()
 
 	BX.addCustomEvent("onAppActiveBefore", () =>
 	{
-		BX.onViewLoaded(() =>
-		{
-			this.refresh();
+		BX.onViewLoaded(() => {
+			if (this.cache.inited)
+			{
+				this.push.updateList();
+				this.refresh();
+			}
 		});
 	});
-	BX.addCustomEvent("onAppActive", () =>
-	{
+
+	BX.addCustomEvent("onAppActive", () => {
 		this.push.actionExecute();
 	});
-
-	this.push.actionExecute();
 
 	return true;
 };
@@ -195,6 +196,7 @@ RecentList.isDialogOpen = function()
 
 RecentList.openDialog = function(dialogId, dialogTitleParams, waitHistory)
 {
+	/*
 	clearTimeout(this.openDialogTimeout);
 	if (waitHistory === true)
 	{
@@ -208,6 +210,7 @@ RecentList.openDialog = function(dialogId, dialogTitleParams, waitHistory)
 			return true;
 		}
 	}
+	*/
 
 	let titleParams = {};
 
@@ -875,34 +878,39 @@ RecentList.refresh = function(params)
 					this.loadingFlag = true;
 					dialogList.setTitle({text: BX.message('IM_REFRESH_TITLE'), useProgress:true});
 
-					let errorNoticeText = BX.message('IM_REFRESH_ERROR');
-					if (errorNoticeText && !this.errorNoticeFlag && this.isRecent())
-					{
-						this.errorNoticeFlag = true;
-
-						InAppNotifier.showNotification({
-							message: errorNoticeText,
-							backgroundColor: '#E6000000',
-							time: this.listRequestAfterErrorInterval/1000-2
-						});
-					}
-
 					console.error("RecentList.refresh: we have some problems with request, we will be check again soon", error.ex);
 
 					clearTimeout(this.refreshTimeout);
-					this.refreshTimeout = setTimeout(() => {
+					this.refreshTimeout = setTimeout(() =>
+					{
+						if (!this.errorNoticeFlag && this.isRecent())
+						{
+							ChatTimer.start('recent', 'error', 2000, () => {
+
+								this.errorNoticeFlag = true;
+
+								InAppNotifier.showNotification({
+									message: BX.message('IM_REFRESH_ERROR'),
+									backgroundColor: '#E6000000',
+									time: this.listRequestAfterErrorInterval/1000-2
+								});
+							});
+						}
 						this.refresh();
+
 					}, this.listRequestAfterErrorInterval);
 				}
 			}
 			else
 			{
 				this.errorNoticeFlag = false;
+				ChatTimer.stop('recent', 'error', true);
 			}
 		}
 		else
 		{
 			this.errorNoticeFlag = false;
+			ChatTimer.stop('recent', 'error', true);
 		}
 
 		dialogList.stopRefreshing();
@@ -1232,6 +1240,7 @@ RecentList.cache = {
 	updateTimeout: '',
 	updateInterval: 2000,
 	database: {},
+	inited: false,
 };
 
 RecentList.cache.init = function ()
@@ -1244,18 +1253,34 @@ RecentList.cache.init = function ()
 		{
 			table.get().then(items =>
 			{
+				this.inited = true;
+
 				if (items.length > 0)
 				{
 					let cacheData = JSON.parse(items[0].VALUE);
 
+					if (this.base.list.length > 0)
+					{
+						console.info("RecentList.cache.init: cache file \"recent\" has been ignored because it was loaded a very late");
+						this.push.updateList();
+						this.push.actionExecute();
+						this.base.redraw();
+
+						return false
+					}
+
 					if (typeof(cacheData.list) == 'undefined')
 					{
 						console.info("RecentList.cache.init: cache file \"recent\" has been ignored because it's old");
+						this.push.updateList();
+						this.push.actionExecute();
+						this.base.redraw();
 						return false;
 					}
 
 					this.base.list = ChatDataConverter.getListFormat(cacheData.list);
-					this.push.updateList(false);
+					this.push.updateList();
+					this.push.actionExecute();
 					this.base.redraw();
 
 					console.info("RecentList.cache.init: list items load from cache \"recent\" ("+(new Date() - executeTimeRecent)+'ms)', "count: "+this.base.list.length);
@@ -1264,6 +1289,12 @@ RecentList.cache.init = function ()
 					{
 						this.base.userData = cacheData.userData;
 					}
+				}
+				else
+				{
+					this.push.updateList();
+					this.push.actionExecute();
+					this.base.redraw();
 				}
 			})
 		});
@@ -1437,18 +1468,21 @@ RecentList.push.init = function()
 	}
 
 	this.manager.setOnChangeListener(() => {
-		BX.onViewLoaded(() =>
-		{
-			this.updateList();
+		BX.onViewLoaded(() => {
+			if (this.cache.inited)
+			{
+				this.push.updateList();
+			}
 		});
 	});
 };
 
-RecentList.push.updateList = function(draw)
+RecentList.push.updateList = function()
 {
 	let list = this.manager.get();
 	if (!list || !list['IM_MESS'] || list['IM_MESS'].length <= 0)
 	{
+		console.info('RecentList.push.updateList: list is empty');
 		return true;
 	}
 
@@ -1463,52 +1497,66 @@ RecentList.push.updateList = function(draw)
 			return false;
 		}
 
-		if (
-			(push.data.cmd === 'message' || push.data.cmd === 'messageChat')
-			&& typeof push.senderMessage !== 'undefined'
-		)
+		if (!(push.data.cmd === 'message' || push.data.cmd === 'messageChat'))
 		{
-			push.senderMessage = push.senderMessage.toString();
+			return false;
+		}
 
-			let event = {
-				module_id: 'im',
-				command: push.data.cmd,
-				params: ChatDataConverter.preparePushFormat(push.data)
-			};
+		let senderMessage = '';
+		if (typeof push.senderMessage !== 'undefined')
+		{
+			senderMessage = push.senderMessage;
+		}
+		else if (typeof push.aps !== 'undefined' && push.aps.alert.body)
+		{
+			senderMessage = push.aps.alert.body;
+		}
 
-			event.params.userInChat[event.params.chatId] = [this.base.userId];
+		if (!senderMessage)
+		{
+			return false;
+		}
 
-			if (push.senderCut)
-			{
-				event.params.message.text = push.senderMessage.substr(push.senderCut)
-			}
-			else
-			{
-				event.params.message.text = push.senderMessage;
-			}
+		let event = {
+			module_id : 'im',
+			command : push.data.cmd,
+			params : ChatDataConverter.preparePushFormat(push.data)
+		};
 
-			if (!event.params.message.textOriginal)
-			{
-				event.params.message.textOriginal = event.params.message.text;
-			}
+		event.params.userInChat[event.params.chatId] = [this.base.userId];
 
-			let storedEvent = ChatUtils.objectClone(event.params);
-			if (storedEvent.message.params.FILE_ID && storedEvent.message.params.FILE_ID.length > 0)
-			{
-				storedEvent.message.text = '';
-				storedEvent.message.textOriginal = '';
-			}
+		event.params.message.text = senderMessage.toString();
 
-			if (isDialogOpen)
-			{
-				BX.postWebEvent("chatrecent::push::get", storedEvent)
-			}
-			else
-			{
-				this.pull.storedEvents = this.pull.storedEvents.filter(element => element.message.id !== storedEvent.message.id);
-				this.pull.storedEvents.push(storedEvent);
-			}
+		if (push.senderCut)
+		{
+			event.params.message.text = event.params.message.text.substr(push.senderCut)
+		}
 
+		if (!event.params.message.textOriginal)
+		{
+			event.params.message.textOriginal = event.params.message.text;
+		}
+
+		let storedEvent = ChatUtils.objectClone(event.params);
+		if (storedEvent.message.params.FILE_ID && storedEvent.message.params.FILE_ID.length > 0)
+		{
+			storedEvent.message.text = '';
+			storedEvent.message.textOriginal = '';
+		}
+
+		if (isDialogOpen)
+		{
+			BX.postWebEvent("chatrecent::push::get", storedEvent)
+		}
+		else
+		{
+			this.pull.storedEvents = this.pull.storedEvents.filter(element => element.message.id !== storedEvent.message.id);
+			this.pull.storedEvents.push(storedEvent);
+		}
+
+		let element = this.base.list.find((element) => element && element.id.toString() === event.params.dialogId.toString());
+		if (!element || element.message.id < event.params.message.id)
+		{
 			this.pull.eventExecute(event);
 		}
 	});
@@ -2978,6 +3026,7 @@ RecentList.event.onDialogIsOpen = function(event)
 
 RecentList.event.onDialogCounterChange = function(event)
 {
+	console.info('RecentList.event.onDialogCounterChange: ', event);
 	this.base.updateElement(event.dialogId, {counter: event.counter});
 };
 

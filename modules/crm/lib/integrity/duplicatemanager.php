@@ -11,6 +11,11 @@ class DuplicateManager
 	*/
 	public static function createCriterion($typeID, array $matches)
 	{
+		if(!is_int($typeID))
+		{
+			$typeID = (int)$typeID;
+		}
+
 		if($typeID === DuplicateIndexType::PERSON)
 		{
 			return DuplicatePersonCriterion::createFromMatches($matches);

@@ -12,7 +12,8 @@ use \Bitrix\Rest\AppTable,
 	\Bitrix\Rest\AuthTypeException;
 
 use \Bitrix\ImConnector\Library,
-	\Bitrix\ImConnector\CustomConnectors as CC;
+	\Bitrix\ImConnector\CustomConnectors as CC,
+	\Bitrix\ImConnector\Model\CustomConnectorsTable;
 
 Loc::loadMessages(__FILE__);
 Library::loadMessages();
@@ -784,6 +785,26 @@ if(Loader::includeModule('rest'))
 			$result['DATA'] = $resultSend->getData();
 
 			return $result;
+		}
+
+		public static function OnRestAppDelete($arParams): void
+		{
+			if (!empty($arParams['APP_ID']))
+			{
+				$raw = CustomConnectorsTable::getList([
+					'select' => ['ID', 'REST_APP_ID', 'ID_CONNECTOR'],
+					'filter' => [
+						'=REST_APP_ID' => $arParams['APP_ID']
+					]
+				]);
+				while ($row = $raw->fetch())
+				{
+					Helper::unRegisterApp([
+						'ID' => $row['ID_CONNECTOR'],
+						'REST_APP_ID' => $row['REST_APP_ID'],
+					]);
+				}
+			}
 		}
 	}
 }

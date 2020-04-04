@@ -4,6 +4,9 @@ import {Backend} from 'landing.backend';
 import type ImageUploaderOptions from './types/imageuploader.options';
 import renameX from './internal/renamex';
 
+/**
+ * @memberOf BX.Landing
+ */
 export class ImageUploader
 {
 	constructor(options: ImageUploaderOptions)

@@ -337,7 +337,7 @@ else
 			else
 			{
 				$arActions[] = array(
-					"TEXT" => GetMessage("SPS_SELECT"),
+					"TEXT" => GetMessage("BX_CATALOG_CPS_TPL_MESS_APPEND_SECTION"),
 					"DEFAULT" => "Y",
 					"ACTION" => $tableId.'_helper.onSectionClick('.$arItems["ID"].');'
 				);

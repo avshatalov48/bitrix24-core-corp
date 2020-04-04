@@ -217,11 +217,21 @@ BX.Sale.Admin.OrderShipment.prototype.initUpdateTrackingNumber = function ()
 BX.Sale.Admin.OrderShipment.prototype.updateDeliveryList = function(services)
 {
 	var serviceControl = BX('DELIVERY_'+this.index);
-	if (!serviceControl)
-		return;
 
-	var selectedItem = serviceControl.options[serviceControl.selectedIndex].value;
+	if (!serviceControl)
+	{
+		return;
+	}
+
+	var selectedItem = 0;
+
+	if(serviceControl.options[serviceControl.selectedIndex])
+	{
+		selectedItem = serviceControl.options[serviceControl.selectedIndex].value;
+	}
+
 	serviceControl.innerHTML = services;
+
 	for (var i in serviceControl.options)
 	{
 		if (serviceControl.options[i].value == selectedItem)
@@ -765,7 +775,7 @@ BX.Sale.Admin.OrderShipment.prototype.setCalculatedPriceDelivery = function(deli
 				children : [
 					BX.create('span',
 					{
-						text : BX.Sale.Admin.OrderEditPage.currencyFormat(deliveryPrice)
+						html : BX.Sale.Admin.OrderEditPage.currencyFormat(deliveryPrice)
 					}),
 					BX.create('span', {
 						text : BX.message('SALE_ORDER_SHIPMENT_APPLY'),

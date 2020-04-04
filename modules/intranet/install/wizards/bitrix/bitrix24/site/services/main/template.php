@@ -42,7 +42,6 @@ if ($arSite = $obSite->Fetch())
 	$found = false;
 	$foundEmpty = false;
 	$foundPub = false;
-	$foundLanding = false;
 	$obTemplate = CSite::GetTemplateList($arSite["LID"]);
 	while($arTemplate = $obTemplate->Fetch())
 	{
@@ -61,11 +60,6 @@ if ($arSite = $obSite->Fetch())
 			$foundPub = true;
 		}
 
-		if (!$foundLanding && trim($arTemplate["CONDITION"]) == "preg_match('#/sites/site/[\\d]+/view/[\\d]+/#', \$GLOBALS['APPLICATION']->GetCurPage(0))")
-		{
-			$foundLanding = true;
-		}
-
 		$arTemplates[]= $arTemplate;
 	}
 
@@ -80,9 +74,6 @@ if ($arSite = $obSite->Fetch())
 
 	if (!$foundPub)
 		$arTemplates[]= Array("CONDITION" => "CSite::InDir('/pub/')", "SORT" => 1, "TEMPLATE" => "pub");
-
-	if (!$foundLanding)
-		$arTemplates[]= Array("CONDITION" => "preg_match('#/sites/site/[\\d]+/view/[\\d]+/#', \$GLOBALS['APPLICATION']->GetCurPage(0)) && \$GLOBALS['USER']->IsAuthorized()", "SORT" => 300, "TEMPLATE" => "landing24");
 
 	$arFields = Array(
 		"TEMPLATE" => $arTemplates

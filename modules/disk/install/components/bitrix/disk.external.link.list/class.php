@@ -87,7 +87,7 @@ class CDiskExternalLinkListComponent extends DiskComponent
 	{
 		$gridId = $this->componentId;
 
-		$this->application->setTitle($this->storage->getProxyType()->getTitleForCurrentUser());
+		$this->application->setTitle(htmlspecialcharsbx($this->storage->getProxyType()->getTitleForCurrentUser()));
 
 		$this->processGridActions($gridId);
 

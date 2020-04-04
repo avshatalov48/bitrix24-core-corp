@@ -13,6 +13,7 @@ import Tag from './lib/tag';
 import Uri from './lib/uri';
 import Validation from './lib/validation';
 import Cache from './lib/cache';
+import BaseError from './lib/base-error';
 
 export {
 	Type,
@@ -28,6 +29,7 @@ export {
 	Uri,
 	Validation,
 	Cache,
+	BaseError,
 };
 
 export * from './core-compatibility';

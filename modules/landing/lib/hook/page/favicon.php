@@ -50,6 +50,15 @@ class Favicon extends \Bitrix\Landing\Hook\Page
 	}
 
 	/**
+	 * Exec or not hook in edit mode.
+	 * @return boolean
+	 */
+	public function enabledInEditMode()
+	{
+		return false;
+	}
+
+	/**
 	 * Enable or not the hook.
 	 * @return boolean
 	 */

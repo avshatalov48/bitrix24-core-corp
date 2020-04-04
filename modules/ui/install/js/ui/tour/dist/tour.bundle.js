@@ -33,7 +33,7 @@ this.BX.UI = this.BX.UI || {};
 	      var callback = main_core.Type.isFunction(events[eventName]) ? events[eventName] : main_core.Reflection.getClass(events[eventName]);
 
 	      if (callback) {
-	        _this.subscribe(_this.getFullEventName(eventName), function () {
+	        _this.subscribe(_this.constructor.getFullEventName(eventName), function () {
 	          callback();
 	        });
 	      }
@@ -100,14 +100,14 @@ this.BX.UI = this.BX.UI || {};
 	      return this.article;
 	    }
 	  }, {
-	    key: "getFullEventName",
-	    value: function getFullEventName(shortName) {
-	      return "Step:" + shortName;
-	    }
-	  }, {
 	    key: "setTarget",
 	    value: function setTarget(target) {
 	      this.target = target;
+	    }
+	  }], [{
+	    key: "getFullEventName",
+	    value: function getFullEventName(shortName) {
+	      return "Step:" + shortName;
 	    }
 	  }]);
 	  return Step;
@@ -234,7 +234,7 @@ this.BX.UI = this.BX.UI || {};
 	}
 
 	function _templateObject2() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"ui-tour-popup\">\n\t\t\t\t\t", "\n\t\t\t\t\t<div class=\"ui-tour-popup-content\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"ui-tour-popup-footer\">\n\t\t\t\t\t\t<div class=\"ui-tour-popup-index\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t"]);
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"ui-tour-popup ", "\" >\n\t\t\t\t\t", "\n\t\t\t\t\t<div class=\"ui-tour-popup-content\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"ui-tour-popup-footer\">\n\t\t\t\t\t\t<div class=\"ui-tour-popup-index\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t"]);
 
 	  _templateObject2 = function _templateObject2() {
 	    return data;
@@ -306,6 +306,7 @@ this.BX.UI = this.BX.UI || {};
 	    _this.finalStep = options.finalStep || false;
 	    _this.finalText = options.finalText || "";
 	    _this.finalTitle = options.finalTitle || "";
+	    _this.simpleMode = options.simpleMode || false;
 
 	    _this.setAutoSave(options.autoSave);
 
@@ -315,7 +316,7 @@ this.BX.UI = this.BX.UI || {};
 	      var cb = main_core.Type.isFunction(events[eventName]) ? events[eventName] : main_core.Reflection.getClass(events[eventName]);
 
 	      if (cb) {
-	        _this.subscribe(_this.getFullEventName(eventName), function () {
+	        _this.subscribe(_this.constructor.getFullEventName(eventName), function () {
 	          cb();
 	        });
 	      }
@@ -377,7 +378,7 @@ this.BX.UI = this.BX.UI || {};
 	  }, {
 	    key: "start",
 	    value: function start() {
-	      this.emit(this.getFullEventName("onStart"), {
+	      this.emit(this.constructor.getFullEventName("onStart"), {
 	        guide: this
 	      });
 
@@ -407,14 +408,14 @@ this.BX.UI = this.BX.UI || {};
 	  }, {
 	    key: "close",
 	    value: function close() {
-	      this.emit(this.getFullEventName("onFinish"), {
+	      this.emit(this.constructor.getFullEventName("onFinish"), {
 	        guide: this
 	      });
 	      this.getPopup().destroy();
 	      main_core.Dom.remove(this.layout.overlay);
 	      main_core.Dom.removeClass(document.body, "ui-tour-body-overflow");
 
-	      if (this.getCurrentStep()) {
+	      if (this.getCurrentStep() && this.getCurrentStep().getTarget()) {
 	        this.getCurrentStep().getTarget().classList.remove("ui-tour-selector");
 	      }
 
@@ -439,16 +440,23 @@ this.BX.UI = this.BX.UI || {};
 	  }, {
 	    key: "showStep",
 	    value: function showStep() {
-	      this.getCurrentStep().emit(this.getCurrentStep().getFullEventName("onShow"), {
-	        step: this.getCurrentStep(),
+	      var currentStep = this.getCurrentStep();
+	      currentStep.emit(currentStep.constructor.getFullEventName("onShow"), {
+	        step: currentStep,
 	        guide: this
 	      });
 
-	      if (this.getCurrentStep().getTarget()) {
-	        var targetPos = this.getCurrentStep().getTarget().getBoundingClientRect();
+	      if (currentStep.getTarget()) {
+	        var close = this.close.bind(this);
+	        main_core.Event.bind(currentStep.getTarget(), 'click', close);
+	        this.subscribe("UI.Tour.Guide:onFinish", function () {
+	          main_core.Event.unbind(currentStep.getTarget(), 'click', close);
+	        });
+	        var targetPos = currentStep.getTarget().getBoundingClientRect();
+	        var targetPosWindow = main_core.Dom.getPosition(currentStep.getTarget());
 
 	        if (!this.isTargetVisible(targetPos)) {
-	          this.scrollToTarget(targetPos);
+	          this.scrollToTarget(targetPosWindow);
 	        }
 	      }
 
@@ -472,13 +480,18 @@ this.BX.UI = this.BX.UI || {};
 	  }, {
 	    key: "closeStep",
 	    value: function closeStep() {
-	      this.getCurrentStep().emit(this.getCurrentStep().getFullEventName("onClose"), {
-	        step: this.getCurrentStep(),
-	        guide: this
-	      });
+	      var currentStep = this.getCurrentStep();
 
-	      if (this.getCurrentStep().getTarget()) {
-	        main_core.Dom.removeClass(this.getCurrentStep().getTarget(), "ui-tour-selector");
+	      if (currentStep) {
+	        currentStep.emit(currentStep.constructor.getFullEventName("onClose"), {
+	          step: currentStep,
+	          guide: this
+	        });
+	        var target = currentStep.getTarget();
+
+	        if (target) {
+	          main_core.Dom.removeClass(target, "ui-tour-selector");
+	        }
 	      }
 	    }
 	  }, {
@@ -710,7 +723,7 @@ this.BX.UI = this.BX.UI || {};
 	    key: "getContent",
 	    value: function getContent() {
 	      if (!this.layout.content) {
-	        this.layout.content = main_core.Tag.render(_templateObject2(), this.getTitle(), this.getText(), this.getLink(), this.getCounterItems(), this.getCurrentCounter(), this.getBtnContainer());
+	        this.layout.content = main_core.Tag.render(_templateObject2(), this.simpleMode ? 'ui-tour-popup-simple' : '', this.getTitle(), this.getText(), this.getLink(), this.getCounterItems(), this.getCurrentCounter(), this.getBtnContainer());
 	      }
 
 	      return this.layout.content;
@@ -828,7 +841,7 @@ this.BX.UI = this.BX.UI || {};
 	    value: function getBtnContainer() {
 	      if (this.layout.btnContainer === null) {
 	        this.layout.btnContainer = main_core.Tag.render(_templateObject7());
-	        this.layout.nextBtn = main_core.Tag.render(_templateObject8(), main_core.Loc.getMessage("JS_UI_TOUR_BUTTON"));
+	        this.layout.nextBtn = main_core.Tag.render(_templateObject8(), this.simpleMode ? main_core.Loc.getMessage("JS_UI_TOUR_BUTTON_SIMPLE") : main_core.Loc.getMessage("JS_UI_TOUR_BUTTON"));
 	        this.layout.backBtn = main_core.Tag.render(_templateObject9());
 	        main_core.Dom.append(this.layout.backBtn, this.layout.btnContainer);
 	        main_core.Dom.append(this.layout.nextBtn, this.layout.btnContainer);
@@ -999,13 +1012,13 @@ this.BX.UI = this.BX.UI || {};
 	  }, {
 	    key: "scrollToTarget",
 	    value: function scrollToTarget(target) {
-	      window.scrollTo(target.x, target.y);
+	      window.scrollTo(0, target.y - this.getAreaPadding());
 	    }
 	    /**
 	     * @private
 	     */
 
-	  }, {
+	  }], [{
 	    key: "getFullEventName",
 	    value: function getFullEventName(shortName) {
 	      return "UI.Tour.Guide:" + shortName;

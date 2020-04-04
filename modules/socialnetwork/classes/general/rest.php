@@ -4,6 +4,7 @@ use Bitrix\Main\Config\Option;
 use Bitrix\Main\Loader;
 use Bitrix\Rest\RestException;
 use Bitrix\Main\ModuleManager;
+use Bitrix\Socialnetwork\UserToGroupTable;
 
 if(!CModule::IncludeModule('rest'))
 	return;
@@ -47,6 +48,9 @@ class CSocNetLogRestService extends IRestService
 				"sonet_group.user.get" => array("CSocNetLogRestService", "getGroupUsers"),
 				"sonet_group.user.invite" => array("CSocNetLogRestService", "inviteGroupUsers"),
 				"sonet_group.user.request" => array("CSocNetLogRestService", "requestGroupUser"),
+				"sonet_group.user.add" => array("CSocNetLogRestService", "addGroupUsers"),
+				"sonet_group.user.update" => array("CSocNetLogRestService", "updateGroupUsers"),
+				"sonet_group.user.delete" => array("CSocNetLogRestService", "deleteGroupUsers"),
 				"sonet_group.user.groups" => array("CSocNetLogRestService", "getUserGroups"),
 				"sonet_group.feature.access" => array("CSocNetLogRestService", "getGroupFeatureAccess"),
 				"sonet_group_subject.get" => array("CSocNetLogRestService", "getGroupSubject"),
@@ -834,7 +838,7 @@ class CSocNetLogRestService extends IRestService
 				'SITE_ID' => $siteId
 			)));
 
-			preg_match_all("/\[user\s*=\s*([^\]]*)\](.+?)\[\/user\]/ies".BX_UTF_PCRE_MODIFIER, $postFields["DETAIL_TEXT"], $matches);
+			preg_match_all("/\[user\s*=\s*([^\]]*)\](.+?)\[\/user\]/is".BX_UTF_PCRE_MODIFIER, $postFields["DETAIL_TEXT"], $matches);
 			$mentionList = (!empty($matches) ? $matches[1] : array());
 
 			ComponentHelper::notifyBlogPostCreated(array(
@@ -2420,7 +2424,15 @@ class CSocNetLogRestService extends IRestService
 			$arFields['PROJECT_DATE_FINISH'] = \CRestUtil::unConvertDate($arFields['PROJECT_DATE_FINISH']);
 		}
 
-		$groupID = CSocNetGroup::createGroup($USER->GetID(), $arFields, false);
+		$ownerId = (
+			!empty($arFields['OWNER_ID'])
+			&& intval($arFields['OWNER_ID']) > 0
+			&& CSocNetUser::IsCurrentUserModuleAdmin(SITE_ID, false)
+				? intval($arFields['OWNER_ID'])
+				: $USER->getId()
+		);
+
+		$groupID = CSocNetGroup::createGroup($ownerId, $arFields, false);
 
 		if($groupID <= 0)
 		{
@@ -2804,6 +2816,263 @@ class CSocNetLogRestService extends IRestService
 		}
 	}
 
+	public static function addGroupUsers($arFields)
+	{
+		global $DB;
+
+		$groupId = $arFields['GROUP_ID'];
+		$userIdList = $arFields['USER_ID'];
+
+		if(intval($groupId) <= 0)
+		{
+			throw new Exception('Wrong group ID');
+		}
+
+		if (!CSocNetUser::isCurrentUserModuleAdmin(SITE_ID, false))
+		{
+			throw new Exception('No permissions to add users');
+		}
+
+		if(
+			(is_array($userIdList) && count($userIdList) <= 0)
+			|| (!is_array($userIdList) && intval($userIdList) <= 0)
+		)
+		{
+			throw new Exception('Wrong user IDs');
+		}
+
+		if (!is_array($userIdList))
+		{
+			$userIdList = [ $userIdList ];
+		}
+
+		$res = \CSocNetGroup::getList(array(), array(
+			"ID" => $groupId
+		));
+		$groupFields = $res->fetch();
+		if(!is_array($groupFields))
+		{
+			throw new Exception('Socialnetwork group not found');
+		}
+
+		if (
+			!empty($userIdList)
+			&& Loader::includeModule('intranet')
+		)
+		{
+			$extranetSiteId = false;
+			if (ModuleManager::isModuleInstalled('extranet'))
+			{
+				$extranetSiteId = Option::get('extranet', 'extranet_site');
+			}
+
+			$res = \Bitrix\Intranet\UserTable::getList([
+				'filter' => [
+					'@ID' => $userIdList
+				],
+				'select' => [ 'ID', 'USER_TYPE' ]
+			]);
+			$userIdList = [];
+			while($userFields = $res->fetch())
+			{
+				if (!in_array($userFields['USER_TYPE'], ['employee', 'extranet']))
+				{
+					continue;
+				}
+				$userIdList[] = $userFields['ID'];
+
+				if (
+					$userFields['USER_TYPE'] == 'extranet'
+					&& $extranetSiteId
+				)
+				{
+					$groupSiteList = [];
+					$resSite = \Bitrix\Socialnetwork\WorkgroupSiteTable::getList([
+						'filter' => [
+							'=GROUP_ID' => $groupId
+						],
+						'select' => [ 'SITE_ID' ]
+					]);
+					while ($groupSite = $resSite->fetch())
+					{
+						$groupSiteList[] = $groupSite['SITE_ID'];
+					}
+					if (!in_array($extranetSiteId, $groupSiteList))
+					{
+						$groupSiteList[] = $extranetSiteId;
+						CSocNetGroup::update($groupId, [
+							'SITE_ID' => $groupSiteList
+						]);
+					}
+				}
+			}
+		}
+
+		$successUserId = [];
+
+		foreach($userIdList as $userId)
+		{
+			$user2groupRelation = \CSocNetUserToGroup::getUserRole($userId, $groupId);
+			if ($user2groupRelation)
+			{
+				continue;
+			}
+
+			if (\CSocNetUserToGroup::add([
+				"USER_ID" => $userId,
+				"GROUP_ID" => $groupId,
+				"ROLE" => UserToGroupTable::ROLE_USER,
+				"=DATE_CREATE" => $DB->currentTimeFunction(),
+				"=DATE_UPDATE" => $DB->currentTimeFunction(),
+				"MESSAGE" => '',
+				"INITIATED_BY_TYPE" => UserToGroupTable::INITIATED_BY_GROUP,
+				"INITIATED_BY_USER_ID" => $groupFields['OWNER_ID']
+			]))
+			{
+				$successUserId[] = $userId;
+			}
+		}
+
+		return $successUserId;
+	}
+
+	public static function updateGroupUsers($arFields)
+	{
+		global $DB;
+
+		$groupId = $arFields['GROUP_ID'];
+		$userIdList = $arFields['USER_ID'];
+		$role = $arFields['ROLE'];
+
+		if(intval($groupId) <= 0)
+		{
+			throw new Exception('Wrong group ID');
+		}
+
+		if (!CSocNetUser::isCurrentUserModuleAdmin(SITE_ID, false))
+		{
+			throw new Exception('No permissions to update users role');
+		}
+
+		if (!in_array($role, [ UserToGroupTable::ROLE_MODERATOR, UserToGroupTable::ROLE_USER ]))
+		{
+			throw new Exception('Incorrect role code');
+		}
+
+		if(
+			(is_array($userIdList) && count($userIdList) <= 0)
+			|| (!is_array($userIdList) && intval($userIdList) <= 0)
+		)
+		{
+			throw new Exception('Wrong user IDs');
+		}
+
+		if (!is_array($userIdList))
+		{
+			$userIdList = [ $userIdList ];
+		}
+
+		$res = \CSocNetGroup::getList(array(), array(
+			"ID" => $groupId
+		));
+		$groupFields = $res->fetch();
+		if(!is_array($groupFields))
+		{
+			throw new Exception('Socialnetwork group not found');
+		}
+
+		$successUserId = [];
+
+		$resRelation = UserToGroupTable::getList(array(
+			'filter' => array(
+				'GROUP_ID' => $groupId,
+				'@USER_ID' => $userIdList
+			),
+			'select' => array('ID', 'USER_ID', 'ROLE')
+		));
+		while($relation = $resRelation->fetch())
+		{
+			if (
+				$relation['ROLE'] == $role
+				|| $relation['ROLE'] == UserToGroupTable::ROLE_OWNER
+			)
+			{
+				continue;
+			}
+
+			if (\CSocNetUserToGroup::update($relation['ID'], [
+				"ROLE" => $role,
+				"=DATE_UPDATE" => $DB->currentTimeFunction(),
+			]))
+			{
+				$successUserId[] = $relation['USER_ID'];
+			}
+		}
+
+		return $successUserId;
+	}
+
+	public static function deleteGroupUsers($arFields)
+	{
+		$groupId = $arFields['GROUP_ID'];
+		$userIdList = $arFields['USER_ID'];
+
+		if(intval($groupId) <= 0)
+		{
+			throw new Exception('Wrong group ID');
+		}
+
+		if (!CSocNetUser::isCurrentUserModuleAdmin(SITE_ID, false))
+		{
+			throw new Exception('No permissions to update users role');
+		}
+
+		if(
+			(is_array($userIdList) && count($userIdList) <= 0)
+			|| (!is_array($userIdList) && intval($userIdList) <= 0)
+		)
+		{
+			throw new Exception('Wrong user IDs');
+		}
+
+		if (!is_array($userIdList))
+		{
+			$userIdList = [ $userIdList ];
+		}
+
+		$res = \CSocNetGroup::getList(array(), array(
+			"ID" => $groupId
+		));
+		$groupFields = $res->fetch();
+		if(!is_array($groupFields))
+		{
+			throw new Exception('Socialnetwork group not found');
+		}
+
+		$successUserId = [];
+
+		$resRelation = UserToGroupTable::getList(array(
+			'filter' => array(
+				'GROUP_ID' => $groupId,
+				'@USER_ID' => $userIdList
+			),
+			'select' => array('ID', 'USER_ID', 'ROLE')
+		));
+		while($relation = $resRelation->fetch())
+		{
+			if ($relation['ROLE'] == UserToGroupTable::ROLE_OWNER)
+			{
+				continue;
+			}
+
+			if (\CSocNetUserToGroup::delete($relation['ID']))
+			{
+				$successUserId[] = $relation['USER_ID'];
+			}
+		}
+
+		return $successUserId;
+	}
 
 	public static function getUserGroups($arFields, $n, $server)
 	{

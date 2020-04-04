@@ -1,6 +1,7 @@
 <?
 use Bitrix\Main\Loader,
-	Bitrix\Main;
+	Bitrix\Main,
+	Bitrix\Iblock;
 
 IncludeModuleLangFile(__FILE__);
 
@@ -4049,5 +4050,57 @@ REQ
 		if ($jpgQuality <= 0 || $jpgQuality > 100)
 			$jpgQuality = 95;
 		return $jpgQuality;
+	}
+
+	public static function checkActivityDatesAgent($iblockId, $previousTime)
+	{
+		$iblockId = (int)$iblockId;
+		if ($iblockId <= 0)
+		{
+			return '';
+		}
+		$currentTime = time();
+		$result = '\CIBlock::checkActivityDatesAgent('.$iblockId.', '.$currentTime.');';
+		$previousTime = (int)$previousTime;
+		if ($previousTime <= 0)
+		{
+			return $result;
+		}
+
+		$start = Main\Type\DateTime::createFromTimestamp($previousTime);
+		$finish = Main\Type\DateTime::createFromTimestamp($currentTime);
+
+		$iterator = Iblock\ElementTable::getList(array(
+			'select' => array('ID'),
+			'filter' => array(
+				'=IBLOCK_ID' => $iblockId,
+				'=ACTIVE' => 'Y',
+				'=WF_STATUS_ID' => 1,
+				'=WF_PARENT_ELEMENT_ID' => null,
+				array(
+					'LOGIC' => 'OR',
+					array(
+						'>ACTIVE_FROM' => $start,
+						'<=ACTIVE_FROM' => $finish
+					),
+					array(
+						'>ACTIVE_TO' => $start,
+						'<=ACTIVE_TO' => $finish
+					)
+				)
+			),
+			'limit' => 1
+		));
+		unset($finish);
+		unset($start);
+		$row = $iterator->fetch();
+		unset($iterator);
+		if (!empty($row))
+		{
+			static::clearIblockTagCache($iblockId);
+		}
+		unset($row);
+
+		return $result;
 	}
 }

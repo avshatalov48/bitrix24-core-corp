@@ -228,6 +228,13 @@ class main extends CModule
 
 		$eventManager->registerEventHandler('main', 'OnBuildFilterFactoryMethods', 'main', '\Bitrix\Main\Filter\FactoryMain', 'onBuildFilterFactoryMethods');
 
+		RegisterModuleDependences("main", "OnBeforeUserTypeAdd", "main", '\Bitrix\Main\UserField\Internal\UserFieldHelper', "OnBeforeUserTypeAdd");
+		RegisterModuleDependences("main", "OnAfterUserTypeAdd", "main", '\Bitrix\Main\UserField\Internal\UserFieldHelper', "onAfterUserTypeAdd");
+		RegisterModuleDependences("main", "OnBeforeUserTypeDelete", "main", '\Bitrix\Main\UserField\Internal\UserFieldHelper', "OnBeforeUserTypeDelete");
+		$eventManager->registerEventHandler('main', 'onGetUserFieldValues', 'main', '\Bitrix\Main\UserField\Internal\UserFieldHelper', 'onGetUserFieldValues');
+		$eventManager->registerEventHandler('main', 'onUpdateUserFieldValues', 'main', '\Bitrix\Main\UserField\Internal\UserFieldHelper', 'onUpdateUserFieldValues');
+		$eventManager->registerEventHandler('main', 'onDeleteUserFieldValues', 'main', '\Bitrix\Main\UserField\Internal\UserFieldHelper', 'onDeleteUserFieldValues');
+
 
 		self::InstallDesktop();
 
@@ -347,7 +354,7 @@ class main extends CModule
 			)
 		);
 
-		if (LANGUAGE_ID <> "en")
+		if (LANGUAGE_ID <> "en" && file_exists($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/lang/en/install/index.php'))
 		{
 			$addResult = CultureTable::add(array(
 				"NAME" => "en",
@@ -1511,6 +1518,13 @@ class main extends CModule
 				'DESCRIPTION' => getMessage('MAIN_MAIL_CONFIRM_EVENT_TYPE_DESC'),
 				'SORT'        => 8,
 			);
+			$arEventTypes[] = array(
+				'LID'         => $lid,
+				'EVENT_NAME'  => 'EVENT_LOG_NOTIFICATION',
+				'NAME'        => getMessage('MAIN_INSTALL_EVENT_TYPE_NOTIFICATION'),
+				'DESCRIPTION' => getMessage('MAIN_INSTALL_EVENT_TYPE_NOTIFICATION_DESC'),
+				'SORT'        => 9,
+			);
 
 			//sms types
 			$arEventTypes[] = array(
@@ -1526,6 +1540,13 @@ class main extends CModule
 				'EVENT_TYPE'  => \Bitrix\Main\Mail\Internal\EventTypeTable::TYPE_SMS,
 				'NAME'        => GetMessage("main_install_sms_event_restore_name"),
 				'DESCRIPTION' => GetMessage("main_install_sms_event_restore_descr"),
+			);
+			$arEventTypes[] = array(
+				'LID'         => $lid,
+				'EVENT_NAME'  => 'SMS_EVENT_LOG_NOTIFICATION',
+				'EVENT_TYPE'  => \Bitrix\Main\Mail\Internal\EventTypeTable::TYPE_SMS,
+				'NAME'        => getMessage('MAIN_INSTALL_EVENT_TYPE_NOTIFICATION'),
+				'DESCRIPTION' => getMessage('MAIN_INSTALL_EVENT_TYPE_NOTIFICATION_DESC_SMS'),
 			);
 		}
 
@@ -1609,6 +1630,15 @@ class main extends CModule
 			'BODY_TYPE'        => 'html',
 			'SITE_TEMPLATE_ID' => 'mail_join',
 		);
+		$arMessages[] = array(
+			"EVENT_NAME" => "EVENT_LOG_NOTIFICATION",
+			"LID" => "s1",
+			"LANGUAGE_ID" => LANGUAGE_ID,
+			"EMAIL_FROM" => "#DEFAULT_EMAIL_FROM#",
+			"EMAIL_TO" => "#EMAIL#",
+			"SUBJECT" => GetMessage("MAIN_EVENT_MESS_NOTIFICATION"),
+			"MESSAGE" => GetMessage("MAIN_EVENT_MESS_NOTIFICATION_TEXT"),
+		);
 
 		$message = new CEventMessage;
 		foreach ($arMessages as $arMessage)
@@ -1629,6 +1659,13 @@ class main extends CModule
 				"SENDER" => "#DEFAULT_SENDER#",
 				"RECEIVER" => "#USER_PHONE#",
 				"MESSAGE" => GetMessage("main_install_sms_template_restore_mess"),
+			],
+			[
+				"EVENT_NAME" => "SMS_EVENT_LOG_NOTIFICATION",
+				"ACTIVE" => true,
+				"SENDER" => "#DEFAULT_SENDER#",
+				"RECEIVER" => "#PHONE_NUMBER#",
+				"MESSAGE" => GetMessage("main_install_sms_template_notification_mess"),
 			],
 		];
 

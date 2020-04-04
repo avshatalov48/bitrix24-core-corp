@@ -144,13 +144,13 @@ if (isset($arResult['ACCESS_CODES']))
 							<input type="hidden" name="rights[ACCESS_CODE][<?= $i;?>]" value="<?= $code['CODE']?>">
 						</td>
 						<td class="table-blue-td-action">
-							<span class="table-blue-delete table-blue-delete-landing-role" data-id="<?= $code['CODE'];?>" onclick="deleteAccessRow(this);" title="<?= Loc::getMessage('LANDING_TPL_ACTION_DEL');?>"></span>
+							<span class="table-blue-delete table-blue-delete-landing-role bitrix24-metrika" data-metrika24="permission_delete" data-id="<?= $code['CODE'];?>" onclick="deleteAccessRow(this);" title="<?= Loc::getMessage('LANDING_TPL_ACTION_DEL');?>"></span>
 						</td>
 					</tr>
 					<?endforeach;?>
 					<tr>
 						<td colspan="4" class="table-blue-td-link">
-							<a class="table-blue-link" href="javascript:void(0);" id="landing-rights-form">
+							<a class="table-blue-link bitrix24-metrika" data-metrika24="permission_add" href="javascript:void(0);" id="landing-rights-form">
 								<?= Loc::getMessage('LANDING_TPL_ACTION_RIGHT');?>
 							</a>
 						</td>
@@ -179,14 +179,14 @@ if (isset($arResult['ACCESS_CODES']))
 					</td>
 					<td class="table-blue-td-action">
 						<input type="hidden" name="roles[]" value="<?= $item['ID'];?>" />
-						<a class="table-blue-edit" title="<?= Loc::getMessage('LANDING_TPL_ACTION_EDIT');?>" href="<?= $urlEdit;?>"></a>
-						<span class="table-blue-delete landing-role-delete" title="<?= Loc::getMessage('LANDING_TPL_ACTION_DEL');?>"></span>
+						<a class="table-blue-edit bitrix24-metrika" data-metrika24="role_edit" title="<?= Loc::getMessage('LANDING_TPL_ACTION_EDIT');?>" href="<?= $urlEdit;?>"></a>
+						<span class="table-blue-delete landing-role-delete bitrix24-metrika" data-metrika24="role_delete" title="<?= Loc::getMessage('LANDING_TPL_ACTION_DEL');?>"></span>
 					</td>
 				</tr>
 				<?endforeach;?>
 				<tr>
 					<td colspan="2" class="table-blue-td-link">
-						<a href="<?= str_replace('#role_edit#', 0, $arParams['PAGE_URL_ROLE_EDIT']);?>" class="table-blue-link">
+						<a href="<?= str_replace('#role_edit#', 0, $arParams['PAGE_URL_ROLE_EDIT']);?>" class="table-blue-link bitrix24-metrika" data-metrika24="role_add">
 							<?= Loc::getMessage('LANDING_TPL_ACTION_ADD');?>
 						</a>
 					</td>
@@ -197,7 +197,7 @@ if (isset($arResult['ACCESS_CODES']))
 	</tr>
 	</tbody>
 </table>
-<button type="submit" class="ui-btn ui-btn-success" id="landing-rights-save" name="submit" value="<?= Loc::getMessage('LANDING_TPL_ACTION_SAVE');?>">
+<button type="submit" class="ui-btn ui-btn-success bitrix24-metrika" data-metrika24="rights_edit" id="landing-rights-save" name="submit" value="<?= Loc::getMessage('LANDING_TPL_ACTION_SAVE');?>">
 	<?= Loc::getMessage('LANDING_TPL_ACTION_SAVE');?>
 </button>
 </form>

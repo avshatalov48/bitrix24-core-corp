@@ -10,8 +10,6 @@ Loc::loadMessages(__FILE__);
 
 class ViolationRulesTable extends Main\ORM\Data\DataManager
 {
-	const ENTITY_CODE_ALL_SCHEDULE_USERS = 'UA';
-
 	const USERS_TO_NOTIFY_USER_MANAGER = 'USER_MANAGER';
 
 	const USERS_TO_NOTIFY_FIXED_START_END = 'FIXED_START_END';
@@ -21,9 +19,17 @@ class ViolationRulesTable extends Main\ORM\Data\DataManager
 	const USERS_TO_NOTIFY_SHIFT_DELAY = 'SHIFT_DELAY';
 	const USERS_TO_NOTIFY_SHIFT_MISSED_START = 'SHIFT_MISSED_START';
 
+	const MISSED_SHIFT_IS_TRACKED = 1;
+	const MISSED_SHIFT_IS_NOT_TRACKED = 0;
+
 	public static function getObjectClass()
 	{
 		return ViolationRules::class;
+	}
+
+	public static function getCollectionClass()
+	{
+		return ViolationRulesCollection::class;
 	}
 
 	public static function getTableName()

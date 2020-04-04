@@ -67,16 +67,23 @@ class EntityCodesHelper
 
 	public static function getUserId($entityCode)
 	{
-		return reset(static::extractUserIdsFromEntityCodes([$entityCode]));
+		$ids = static::extractUserIdsFromEntityCodes([$entityCode]);
+		return reset($ids);
 	}
 
 	public static function getDepartmentId($entityCode)
 	{
-		return reset(static::extractDepartmentIdsFromEntityCodes([$entityCode]));
+		$ids = static::extractDepartmentIdsFromEntityCodes([$entityCode]);
+		return reset($ids);
 	}
 
 	public static function getAllUsersCode()
 	{
 		return 'UA';
+	}
+
+	public static function isAllUsers($entityCode)
+	{
+		return $entityCode === static::getAllUsersCode();
 	}
 }

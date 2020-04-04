@@ -66,6 +66,9 @@ class CCrmLeadDetailsComponent extends CBitrixComponent
 	private $defaultFieldValues = null;
 	/** @var bool */
 	private $enableSearchHistory = true;
+	//Enable or disable editor config change depends on entity state general or return customer lead)
+	/** @var bool */
+	private $enableConfigVariability = true;
 
 	public function __construct($component = null)
 	{
@@ -650,6 +653,18 @@ class CCrmLeadDetailsComponent extends CBitrixComponent
 		}
 		$this->enableSearchHistory = $enable;
 	}
+	public function isConfigVariabilityEnabled()
+	{
+		return $this->enableConfigVariability;
+	}
+	public function enableConfigVariability($enable)
+	{
+		if(!is_bool($enable))
+		{
+			$enable = (bool)$enable;
+		}
+		$this->enableConfigVariability = $enable;
+	}
 	public function initializeParams(array $params)
 	{
 		foreach($params as $k => $v)
@@ -707,8 +722,11 @@ class CCrmLeadDetailsComponent extends CBitrixComponent
 	public function setEntityID($entityID)
 	{
 		$this->entityID = $entityID;
-		$this->customerType = $this->entityID > 0
-			? \CCrmLead::GetCustomerType($this->entityID) : CustomerType::GENERAL;
+		if($this->enableConfigVariability)
+		{
+			$this->customerType = $this->entityID > 0
+				? \CCrmLead::GetCustomerType($this->entityID) : CustomerType::GENERAL;
+		}
 
 		$this->guidPrefix = null;
 
@@ -761,7 +779,8 @@ class CCrmLeadDetailsComponent extends CBitrixComponent
 				'title' => Loc::getMessage('CRM_LEAD_FIELD_ID'),
 				'type' => 'text',
 				'editable' => false,
-				'enableAttributes' => false
+				'enableAttributes' => false,
+				'mergeable' => false,
 			),
 			array(
 				'name' => 'DATE_CREATE',
@@ -792,6 +811,7 @@ class CCrmLeadDetailsComponent extends CBitrixComponent
 				'type' => 'list',
 				'editable' => true,
 				'enableAttributes' => false,
+				'mergeable' => false,
 				'data' => array(
 					'items'=> \CCrmInstantEditorHelper::PrepareListOptions(
 						$allStatuses,
@@ -804,13 +824,15 @@ class CCrmLeadDetailsComponent extends CBitrixComponent
 				'title' => Loc::getMessage('CRM_LEAD_FIELD_STATUS_DESCRIPTION'),
 				'type' => 'text',
 				'data' => array('lineCount' => 6),
-				'editable' => true
+				'editable' => true,
+				'mergeable' => false,
 			),
 			array(
 				'name' => 'OPPORTUNITY_WITH_CURRENCY',
 				'title' => Loc::getMessage('CRM_LEAD_FIELD_OPPORTUNITY_WITH_CURRENCY'),
 				'type' => 'money',
 				'editable' => true,
+				'mergeable' => false,
 				'data' => array(
 					'affectedFields' => array('CURRENCY_ID', 'OPPORTUNITY'),
 					'currency' => array(
@@ -882,7 +904,8 @@ class CCrmLeadDetailsComponent extends CBitrixComponent
 				'type' => 'product_row_summary',
 				'editable' => false,
 				'enableAttributes' => false,
-				'transferable' => false
+				'transferable' => false,
+				'mergeable' => false
 			)
 		);
 
@@ -1008,6 +1031,20 @@ class CCrmLeadDetailsComponent extends CBitrixComponent
 			'editable' => true,
 			'enableAttributes' => false,
 			'data' => array(
+				'compound' => array(
+					array(
+						'name' => 'COMPANY_ID',
+						'type' => 'company',
+						'entityTypeName' => \CCrmOwnerType::CompanyName,
+						'tagName' => \CCrmOwnerType::CompanyName
+					),
+					array(
+						'name' => 'CONTACT_IDS',
+						'type' => 'multiple_contact',
+						'entityTypeName' => \CCrmOwnerType::ContactName,
+						'tagName' => \CCrmOwnerType::ContactName
+					)
+				),
 				'map' => array('data' => 'CLIENT_DATA'),
 				'info' => 'CLIENT_INFO',
 				'lastCompanyInfos' => 'LAST_COMPANY_INFOS',
@@ -1537,6 +1574,14 @@ class CCrmLeadDetailsComponent extends CBitrixComponent
 					'SIGNATURE' => $fieldSignature,
 					'IS_EMPTY' => false
 				);
+
+				if($fieldData['data']['fieldInfo']['USER_TYPE_ID'] === 'file')
+				{
+					$values = is_array($fieldValue) ? $fieldValue : array($fieldValue);
+					$this->entityData[$fieldName]['EXTRAS'] = array(
+						'OWNER_TOKEN' => \CCrmFileProxy::PrepareOwnerToken(array_fill_keys($values, $this->entityID))
+					);
+				}
 			}
 		}
 		//endregion

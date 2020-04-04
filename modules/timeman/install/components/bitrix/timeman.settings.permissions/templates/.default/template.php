@@ -52,8 +52,8 @@ CJSCore::Init(['access']);
 										</select>
 									</td>
 									<td class="table-blue-td-action">
-											<span class="tm-delete-access table-blue-delete"
-													data-access-code="<?= htmlspecialcharsbx($taskAccessCode['ACCESS_CODE']) ?>"></span>
+										<span class="tm-delete-access table-blue-delete"
+												data-access-code="<?= htmlspecialcharsbx($taskAccessCode['ACCESS_CODE']) ?>"></span>
 									</td>
 								</tr>
 								<?
@@ -80,9 +80,9 @@ CJSCore::Init(['access']);
 										<?= htmlspecialcharsbx($task['NAME']) ?>
 									</td>
 									<td class="table-blue-td-action">
-										<a class="tm-edit-role table-blue-edit"
+										<a class="tm-edit-task table-blue-edit"
 												title="<?= htmlspecialcharsbx(Loc::getMessage('TIMEMAN_SETTINGS_PERMS_EDIT')) ?>"
-												href="<?= $this->__component->getEditRoleUrl($task) ?>"></a>
+												href="<?= $this->__component->getEditTaskUrl($task) ?>"></a>
 										<? if ($task['CAN_BE_DELETED']): ?>
 											<span class="table-blue-delete tm-delete-role"
 													title="<?= htmlspecialcharsbx(Loc::getMessage('TIMEMAN_SETTINGS_PERMS_DELETE')) ?>"
@@ -92,8 +92,8 @@ CJSCore::Init(['access']);
 								</tr>
 							<? endforeach; ?>
 							<tr class="tm-roles-table-last-row">
-								<td colspan="2" class="tm-edit-role table-blue-td-link">
-									<a href="<?= $this->__component->getEditRoleUrl() ?>" class="table-blue-link"><?=
+								<td colspan="2" class="tm-edit-task table-blue-td-link">
+									<a href="<?= $this->__component->getEditTaskUrl() ?>" class="table-blue-link"><?=
 										htmlspecialcharsbx(Loc::getMessage('TIMEMAN_SETTINGS_PERMS_ADD')) ?></a>
 								</td>
 							</tr>
@@ -146,7 +146,7 @@ CJSCore::Init(['access']);
 		#NAME#
 	</td>
 	<td class="table-blue-td-action">
-		<a class="tm-edit-role table-blue-edit" title="<?= htmlspecialcharsbx(Loc::getMessage('TIMEMAN_SETTINGS_PERMS_EDIT')) ?>" href="#EDIT_URL#"></a>
+		<a class="tm-edit-task table-blue-edit" title="<?= htmlspecialcharsbx(Loc::getMessage('TIMEMAN_SETTINGS_PERMS_EDIT')) ?>" href="#EDIT_URL#"></a>
 		<span class="table-blue-delete tm-delete-role" title="<?= htmlspecialcharsbx(Loc::getMessage('TIMEMAN_SETTINGS_PERMS_DELETE')) ?>" data-task-id="#ID#"></span>
 	</td>
 </script>

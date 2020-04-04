@@ -12,7 +12,7 @@ $violationForm = $scheduleForm->violationForm;
 $violationFormName = $scheduleForm->getFormName() . '[' . $violationForm->getFormName() . ']';
 $violationFormName = htmlspecialcharsbx($violationFormName);
 
-$showContainer = $violationForm->showViolationContainer();
+$showContainer = $violationForm->showViolationContainer($scheduleForm->isShifted());
 ?>
 <div class="timeman-schedule-form-block timeman-schedule-form-block-control <?= $showContainer ? 'timeman-schedule-form-wrap-open' : ''; ?>"
 		data-role="violations-container">

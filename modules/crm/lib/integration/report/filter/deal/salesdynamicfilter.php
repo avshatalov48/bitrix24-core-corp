@@ -18,17 +18,6 @@ class SalesDynamicFilter extends BaseFilter
 	{
 		$fieldsList = parent::getFieldsList();
 
-		$fieldsList['TIME_PERIOD']['exclude'] = [
-			DateType::NONE,
-			DateType::CURRENT_DAY,
-			DateType::YESTERDAY,
-			DateType::TOMORROW,
-			DateType::NEXT_DAYS,
-			DateType::NEXT_WEEK,
-			DateType::NEXT_MONTH,
-			DateType::EXACT,
-		];
-
 		$userPermissions = \CCrmPerms::getCurrentUserPermissions();
 		$dealFilter = Factory::createEntityFilter(
 			new DealSettings(

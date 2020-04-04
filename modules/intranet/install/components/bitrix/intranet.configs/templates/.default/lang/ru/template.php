@@ -170,6 +170,8 @@ $MESS["CONFIG_STRESSLEVEL_AVAILABLE"] = "Разрешить замер и пок
 $MESS["CONFIG_DISK_ALLOW_USE_EXTENDED_FULLTEXT"] = "Искать по содержимому документов Диска";
 $MESS["CONFIG_DISK_LOCK_EXTENDED_FULLTEXT_POPUP_TEXT"] = "Доступно только при повышении тарифа";
 $MESS["CONFIG_DISK_EXTENDED_FULLTEXT_INFO"] = "По техническим причинам поиск временно ограничен. Для включения поиска обратитесь в техническую поддержку.";
+$MESS["CONFIG_BUY_TARIFF_BY_ALL"] = "Разрешить всем оплачивать тариф";
+$MESS["CONFIG_CREATE_OVERDUE_CHATS"] = "Создавать чат о просроченной задаче на всех ее участников";
 $MESS["CONFIG_NETWORK_AVAILABLE_TEXT_NEW"] = "Общение в сети Битрикс24.Нетворк для всех пользователей вашего Битрикс24 доступно только на коммерческих тарифах.<br/><br/>
 Какие выгоды от подключения Битрикс24.Нетворк:<br/>
 <ul>

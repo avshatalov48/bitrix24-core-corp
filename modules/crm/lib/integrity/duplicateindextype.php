@@ -219,7 +219,7 @@ class DuplicateIndexType
 			return $typeID;
 		}
 
-		if(strpos($typeName, '|') >= 0)
+		if(strpos($typeName, '|') !== false)
 		{
 			$typeNames = explode('|', $typeName);
 			foreach($typeNames as $name)

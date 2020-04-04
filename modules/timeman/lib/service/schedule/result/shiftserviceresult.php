@@ -3,6 +3,7 @@ namespace Bitrix\Timeman\Service\Schedule\Result;
 
 use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Timeman\Model\Schedule\Schedule;
 use Bitrix\Timeman\Model\Schedule\Shift\Shift;
 use Bitrix\Timeman\Model\Schedule\ShiftPlan\ShiftPlan;
 use Bitrix\Timeman\Service\BaseServiceResult;
@@ -15,6 +16,8 @@ class ShiftServiceResult extends BaseServiceResult
 	private $shifts;
 	/** @var ShiftPlan $shiftPlan */
 	private $shiftPlan;
+	/** @var Schedule */
+	private $schedule;
 
 	/**
 	 * @return ShiftPlan
@@ -85,6 +88,20 @@ class ShiftServiceResult extends BaseServiceResult
 	public function addScheduleNotFoundError()
 	{
 		$this->addError(new Error(Loc::getMessage('TM_BASE_SERVICE_RESULT_ERROR_SCHEDULE_NOT_FOUND')));
+		return $this;
+	}
+
+	public function getSchedule()
+	{
+		return $this->schedule;
+	}
+
+	/**
+	 * @param Schedule $schedule
+	 */
+	public function setSchedule($schedule)
+	{
+		$this->schedule = $schedule;
 		return $this;
 	}
 }

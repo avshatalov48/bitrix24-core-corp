@@ -5,13 +5,10 @@ use Bitrix\Main\Error;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Timeman\Helper\TimeHelper;
 use Bitrix\Timeman\Model\Schedule\Calendar\Calendar;
-use Bitrix\Timeman\Model\Schedule\Shift\Shift;
+use Bitrix\Timeman\Model\Schedule\Violation\ViolationRules;
+use Bitrix\Timeman\Provider\Schedule\ScheduleProvider;
 use Bitrix\Timeman\Repository\AbsenceRepository;
 use Bitrix\Timeman\Repository\Schedule\CalendarRepository;
-use Bitrix\Timeman\Repository\Schedule\ScheduleRepository;
-use Bitrix\Timeman\Repository\Schedule\ShiftPlanRepository;
-use Bitrix\Timeman\Repository\Schedule\ShiftRepository;
-use Bitrix\Timeman\Repository\Worktime\WorktimeRepository;
 
 class WorktimeViolationBuilder
 {
@@ -21,36 +18,27 @@ class WorktimeViolationBuilder
 	/** @var WorktimeViolationParams */
 	private $violationParams;
 
-	protected $shiftRepository;
-	protected $shiftPlanRepository;
-	protected $worktimeRepository;
 	protected $calendarRepository;
-	protected $scheduleRepository;
+	protected $scheduleProvider;
 	protected $absenceRepository;
 	private $absenceData;
 
 	public function __construct(
 		WorktimeViolationParams $params,
-		ShiftRepository $shiftRepository,
-		ShiftPlanRepository $shiftPlanRepository,
-		WorktimeRepository $worktimeRepository,
 		CalendarRepository $calendarRepository,
-		ScheduleRepository $scheduleRepository,
+		ScheduleProvider $scheduleProvider,
 		AbsenceRepository $absenceRepository)
 	{
 		$this->violationParams = $params;
-		$this->shiftRepository = $shiftRepository;
-		$this->shiftPlanRepository = $shiftPlanRepository;
-		$this->worktimeRepository = $worktimeRepository;
 		$this->calendarRepository = $calendarRepository;
-		$this->scheduleRepository = $scheduleRepository;
+		$this->scheduleProvider = $scheduleProvider;
 		$this->absenceRepository = $absenceRepository;
 	}
 
 	public function buildViolations($types = [])
 	{
 		$record = $this->getRecord();
-		if (!$record || !$this->getSchedule())
+		if (!$record || !$this->getSchedule() || !$this->getViolationRules())
 		{
 			return [];
 		}
@@ -58,10 +46,27 @@ class WorktimeViolationBuilder
 		if (!$this->skipViolationsCheck())
 		{
 			$violations = array_merge($violations, $this->buildStartViolations());
-			if ($this->issetProperty($record['RECORDED_STOP_TIMESTAMP']))
+			if ($record->getRecordedStopTimestamp() > 0)
 			{
+				$violationsConfig = $this->getViolationRules();
+				$minExactEnd = $violationsConfig->getMinExactEnd();
+				$skipEndViolations = false;
+				if (ViolationRules::isViolationConfigured($minExactEnd) && $this->getShift())
+				{
+					$userStartDate = TimeHelper::getInstance()->createDateTimeFromFormat('U', $record->getRecordedStartTimestamp(), $record->getStartOffset());
+					$userEndDate = TimeHelper::getInstance()->createDateTimeFromFormat('U', $record->getRecordedStopTimestamp(), $record->getStopOffset());
+					if ($this->getShift()->getWorkTimeEnd() > $this->getShift()->getWorkTimeStart() &&
+						(int)$userEndDate->format('d') > (int)$userStartDate->format('d')
+					)
+					{
+						$skipEndViolations = true;
+					}
+				}
 				$violations = array_merge($violations, $this->buildDurationViolations());
-				$violations = array_merge($violations, $this->buildEndViolations());
+				if (!$skipEndViolations)
+				{
+					$violations = array_merge($violations, $this->buildEndViolations());
+				}
 			}
 		}
 
@@ -89,8 +94,101 @@ class WorktimeViolationBuilder
 		return [];
 	}
 
-	protected function buildEditViolations()
+	protected function buildEditViolations($checkAllowedDelta = true)
 	{
+		if ($checkAllowedDelta && !ViolationRules::isViolationConfigured($this->getViolationRules()->getMaxAllowedToEditWorkTime()))
+		{
+			return [];
+		}
+		$violations = [];
+		if (!$this->getSchedule()->isAutoStarting())
+		{
+			$violations = array_merge($violations, $this->buildEditStartViolations($checkAllowedDelta));
+		}
+		if (!$this->getSchedule()->isAutoClosing())
+		{
+			$violations = array_merge($violations, $this->buildEditStopViolations($checkAllowedDelta));
+		}
+		return array_merge(
+			$violations,
+			$this->buildEditBreakLengthViolations($checkAllowedDelta)
+		);
+	}
+
+	private function buildEditStartViolations($checkAllowedDelta = true)
+	{
+		$record = $this->getRecord();
+
+		if (!($this->issetProperty($record->getRecordedStartTimestamp()) &&
+			  $this->issetProperty($record->getActualStartTimestamp()))
+		)
+		{
+			return [];
+		}
+		$allowedDiff = 0;
+		if ($checkAllowedDelta)
+		{
+			$allowedDiff = $this->getViolationRules()->getMaxAllowedToEditWorkTime();
+		}
+		if (abs($record->getActualStartTimestamp() - $record->getRecordedStartTimestamp()) > $allowedDiff)
+		{
+			return [
+				$this->createViolation(
+					WorktimeViolation::TYPE_EDITED_START,
+					$record->getRecordedStartTimestamp(),
+					$record->getRecordedStartTimestamp() - $record->getActualStartTimestamp()
+				),
+			];
+		}
+		return [];
+	}
+
+	private function buildEditBreakLengthViolations($checkAllowedDelta = true)
+	{
+		$record = $this->getRecord();
+		$allowedDiff = 0;
+		if ($checkAllowedDelta)
+		{
+			$allowedDiff = $this->getViolationRules()->getMaxAllowedToEditWorkTime();
+		}
+		if (abs($record->getActualBreakLength() - $record->getTimeLeaks()) > $allowedDiff)
+		{
+			return [
+				$this->createViolation(
+					WorktimeViolation::TYPE_EDITED_BREAK_LENGTH,
+					$record->getTimeLeaks(),
+					$record->getTimeLeaks() - $record->getActualBreakLength()
+				),
+			];
+		}
+		return [];
+	}
+
+	private function buildEditStopViolations($checkAllowedDelta = true)
+	{
+		$record = $this->getRecord();
+
+		if (!($this->issetProperty($record->getRecordedStopTimestamp()) &&
+			  $this->issetProperty($record->getActualStopTimestamp()))
+		)
+		{
+			return [];
+		}
+		$allowedDiff = 0;
+		if ($checkAllowedDelta)
+		{
+			$allowedDiff = $this->getViolationRules()->getMaxAllowedToEditWorkTime();
+		}
+		if (abs($record->getRecordedStopTimestamp() - $record->getActualStopTimestamp()) > $allowedDiff)
+		{
+			return [
+				$this->createViolation(
+					WorktimeViolation::TYPE_EDITED_ENDING,
+					$record->getRecordedStopTimestamp(),
+					$record->getActualStopTimestamp() - $record->getRecordedStopTimestamp()
+				),
+			];
+		}
 		return [];
 	}
 
@@ -104,18 +202,13 @@ class WorktimeViolationBuilder
 		return [];
 	}
 
-	public function buildEditedWorktimeWarnings($checkAllowedDelta)
-	{
-		return [];
-	}
-
 	/**
 	 * @param $shift
 	 * @param $userId
 	 * @param $dateFormatted
 	 * @return WorktimeViolationResult
 	 */
-	public function buildMissedShiftViolation($shift, $userId, $dateFormatted)
+	public function buildMissedShiftViolation()
 	{
 		return (new WorktimeViolationResult())->addError(new Error('', WorktimeViolationResult::ERROR_CODE_NOT_IMPLEMENTED_YET));
 	}
@@ -138,22 +231,22 @@ class WorktimeViolationBuilder
 
 	/**
 	 * @param $type
-	 * @param $recordedSeconds
+	 * @param $recordedTimeValue
 	 * @param $violatedSeconds
 	 * @param null $violationRank
 	 * @return WorktimeViolation|mixed
 	 */
-	protected function createViolation($type, $recordedSeconds = null, $violatedSeconds = null, $userId = null)
+	protected function createViolation($type, $recordedTimeValue = null, $violatedSeconds = null, $userId = null)
 	{
 		$violation = new WorktimeViolation();
 		$violation->violationRules = $this->getViolationRules();
 		$violation->userId = $userId;
 		if (!$violation->userId && $this->getRecord())
 		{
-			$violation->userId = $this->getRecord()['USER_ID'];
+			$violation->userId = $this->getRecord()->getUserId();
 		}
 		$violation->type = $type;
-		$violation->recordedSeconds = $recordedSeconds;
+		$violation->recordedTimeValue = $recordedTimeValue;
 		$violation->violatedSeconds = $violatedSeconds;
 		if ($this->getCreateViolationCallback())
 		{
@@ -162,26 +255,9 @@ class WorktimeViolationBuilder
 		return $violation;
 	}
 
-	protected function getRecordStartDateTime()
+	protected function buildRecordStartDateTime()
 	{
-		return $this->getTimeHelper()
-			->createDateTimeFromFormat('U', $this->getRecord()['RECORDED_START_TIMESTAMP'], $this->getRecord()['START_OFFSET']);
-	}
-
-	protected function isDateTimeHoliday(\DateTime $dateTime)
-	{
-		$calendar = $this->getCalendar($this->getSchedule()['CALENDAR_ID'], $dateTime->format('Y'));
-		if ($calendar && !empty($calendar->obtainFinalExclusions()[$dateTime->format('Y')]))
-		{
-			return isset($calendar->obtainFinalExclusions()[$dateTime->format('Y')][$dateTime->format('n')][$dateTime->format('j')]);
-		}
-		return false;
-	}
-
-	private function isRecordStartedOnHoliday()
-	{
-		$startDateTime = $this->getRecordStartDateTime();
-		return $this->isDateTimeHoliday($startDateTime);
+		return $this->getRecord()->buildRecordedStartDateTime();
 	}
 
 	/**
@@ -224,11 +300,6 @@ class WorktimeViolationBuilder
 		return $this->violationParams->getShift();
 	}
 
-	protected function getCurrentUserId()
-	{
-		return $this->violationParams->getCurrentUserId();
-	}
-
 	protected function getRecord()
 	{
 		return $this->violationParams->getRecord();
@@ -263,13 +334,12 @@ class WorktimeViolationBuilder
 	 */
 	private function findAbsenceData($userId, $dateTime)
 	{
-		$shiftDuration = $this->getShift() ? Shift::getShiftDuration($this->getShift()) : 0;
+		$shiftDuration = $this->getShift() ? $this->getShift()->getDuration() : 0;
 
 		return $this->absenceRepository
 			->findAbsences(
 				convertTimeStamp($dateTime->getTimestamp(), 'FULL'),
 				convertTimeStamp($dateTime->getTimestamp() + $shiftDuration, 'FULL'),
-				$this->getCurrentUserId(),
 				$userId
 			);
 	}
@@ -281,11 +351,11 @@ class WorktimeViolationBuilder
 	 */
 	protected function isUserWasAbsent($userId, $recordDateTime)
 	{
-		if ($this->getAbsenceData() === null)
+		if ($this->getAbsenceData() === null || !array_key_exists($userId, $this->getAbsenceData()))
 		{
 			$absenceData = $this->findAbsenceData($userId, $recordDateTime);
-			$data = [];
-			$data[$userId] = $absenceData;
+			$data = $this->getAbsenceData();
+			$data[$userId] = empty($absenceData) ? [] : (array)$absenceData[$userId];
 			$this->setAbsenceData($data);
 		}
 		if (empty($this->getAbsenceData()[$userId]))
@@ -294,10 +364,17 @@ class WorktimeViolationBuilder
 		}
 		foreach ($this->getAbsenceData()[$userId] as $absenceFields)
 		{
+			if (empty($absenceFields['tm_absStartDateTime']) ||
+				empty($absenceFields['tm_absEndDateTime']))
+			{
+				continue;
+			}
 			/** @var \DateTime $dateFrom */
-			$dateFrom = $absenceFields['tm_absStartDateTime'];
+			$dateFrom = clone $absenceFields['tm_absStartDateTime'];
+			$dateFrom->setTimezone($recordDateTime->getTimezone());
 			/** @var \DateTime $dateTo */
-			$dateTo = $absenceFields['tm_absEndDateTime'];
+			$dateTo = clone $absenceFields['tm_absEndDateTime'];
+			$dateTo->setTimezone($recordDateTime->getTimezone());
 			if (!($dateFrom && $dateTo))
 			{
 				return false;
@@ -321,15 +398,12 @@ class WorktimeViolationBuilder
 
 	protected function skipViolationsCheck()
 	{
-		$userWasAbsent = $this->isUserWasAbsent($this->getRecord()['USER_ID'], $this->getRecordStartDateTime());
-
-		return $this->isRecordStartedOnHoliday()
-			   || $userWasAbsent;
+		return $this->isUserWasAbsent($this->getRecord()->getUserId(), $this->buildRecordStartDateTime());
 	}
 
-	protected function getShiftPlans()
+	protected function getShiftPlan()
 	{
-		return $this->violationParams->getShiftPlans();
+		return $this->violationParams->getShiftPlan();
 	}
 
 	private function getCreateViolationCallback()

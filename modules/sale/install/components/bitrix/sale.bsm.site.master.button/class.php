@@ -1,7 +1,8 @@
 <?php
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
-use \Bitrix\Main\ModuleManager,
+use \Bitrix\Main\Application,
+	\Bitrix\Main\ModuleManager,
 	\Bitrix\Main\Config\Option;
 
 /**
@@ -9,6 +10,8 @@ use \Bitrix\Main\ModuleManager,
  */
 class SaleBsmSiteMasterButton extends \CBitrixComponent
 {
+	private const IS_SALE_CRM_SITE_MASTER_FINISH = "~IS_SALE_CRM_SITE_MASTER_FINISH";
+
 	/**
 	 * @return mixed|void
 	 * @throws \Bitrix\Main\ArgumentNullException
@@ -16,17 +19,14 @@ class SaleBsmSiteMasterButton extends \CBitrixComponent
 	 */
 	public function executeComponent()
 	{
-		if (ModuleManager::isModuleInstalled('extranet')
-			&& !ModuleManager::isModuleInstalled('bitrix24')
-			&& LANGUAGE_ID === "ru"
-		)
+		if ($this->isShowButton())
 		{
 			$this->prepareResult();
 			$this->includeComponentTemplate();
 		}
 	}
 
-	private function prepareResult()
+	private function prepareResult(): void
 	{
 		$this->arResult["MASTER_PATH"] = $this->getMasterPath();
 	}
@@ -40,5 +40,41 @@ class SaleBsmSiteMasterButton extends \CBitrixComponent
 		$bsmSiteMasterPath = getLocalPath('components'.$bsmSiteMasterPath.'/slider.php');
 
 		return $bsmSiteMasterPath;
+	}
+
+	/**
+	 * @return bool
+	 * @throws \Bitrix\Main\ArgumentNullException
+	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
+	 */
+	private function isShowButton(): bool
+	{
+		return ($this->isSaleCrmSiteMasterFinish()
+			||
+			(
+				ModuleManager::isModuleInstalled('extranet')
+				&& !ModuleManager::isModuleInstalled('bitrix24')
+				&& $this->isAvailableZone(Application::getInstance()->getContext()->getLanguage())
+			)
+		);
+	}
+
+	/**
+	 * @return bool
+	 * @throws \Bitrix\Main\ArgumentNullException
+	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
+	 */
+	private function isSaleCrmSiteMasterFinish(): bool
+	{
+		return (Option::get("sale", self::IS_SALE_CRM_SITE_MASTER_FINISH, "N") === "Y");
+	}
+
+	/**
+	 * @param $zone
+	 * @return bool
+	 */
+	private function isAvailableZone($zone): bool
+	{
+		return in_array($zone, ["ru", "ua"]);
 	}
 }

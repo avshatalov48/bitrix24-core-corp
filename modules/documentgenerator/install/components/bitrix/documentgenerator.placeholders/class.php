@@ -287,6 +287,14 @@ class DocumentsPlaceholderComponent extends CBitrixComponent
 		{
 			foreach($placeholders as $placeholder => $field)
 			{
+				if(!empty($field['TITLE']))
+				{
+					$title = $field['TITLE'];
+				}
+				else
+				{
+					$title = $placeholder;
+				}
 				if(!empty($placeholderChain) && strpos($field['VALUE'], $placeholderChain) !== 0)
 				{
 					unset($placeholders[$placeholder]);
@@ -297,13 +305,13 @@ class DocumentsPlaceholderComponent extends CBitrixComponent
 					unset($placeholders[$placeholder]);
 					continue;
 				}
-				if(isset($requestFilter['title']) && isset($field['TITLE']) && $functionName($field['TITLE'], $requestFilter['title']) === false || !isset($field['TITLE']))
+				if(!empty($requestFilter['title']) && (!empty($title) && $functionName($title, $requestFilter['title']) === false || empty($title)))
 				{
 					unset($placeholders[$placeholder]);
 					continue;
 				}
 				if(isset($requestFilter['FIND']) && !empty($requestFilter['FIND']) && (
-					(isset($field['TITLE']) && $functionName($field['TITLE'], $requestFilter['FIND']) === false || !isset($field['TITLE'])) &&
+					(!empty($title) && $functionName($title, $requestFilter['FIND']) === false || empty($title)) &&
 					$functionName($placeholder, $requestFilter['FIND']) === false
 					)
 				)

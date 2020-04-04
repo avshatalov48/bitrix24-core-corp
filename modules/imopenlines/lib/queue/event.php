@@ -87,7 +87,8 @@ class Event
 					'select' => array('SESSION_ID'),
 					'filter' => array(
 						'SESSION.CONFIG_ID' => $eventData['line'],
-						'<SESSION.STATUS' => Session::STATUS_ANSWER
+						'<SESSION.STATUS' => Session::STATUS_ANSWER,
+						'!=SESSION.OPERATOR_FROM_CRM' => 'Y'
 					)
 				]
 			)->fetchAll();

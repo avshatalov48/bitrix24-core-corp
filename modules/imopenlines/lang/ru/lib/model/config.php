@@ -50,6 +50,7 @@ $MESS["CONFIG_ENTITY_CATEGORY_ID_FIELD"] = "ID категории по умол�
 $MESS["CONFIG_ENTITY_WELCOME_MESSAGE_FIELD"] = "Отправить автоответ на первое сообщение";
 $MESS["CONFIG_ENTITY_WELCOME_MESSAGE_TEXT_FIELD_NEW"] = "Текст автоответа на первое сообщение";
 $MESS["CONFIG_ENTITY_VOTE_MESSAGE_FIELD"] = "Отправлять запрос оценки качества обслуживания";
+$MESS["CONFIG_ENTITY_VOTE_BEFORE_FINISH_FIELD"] = "Разрешить оценку диалога до его окончания";
 $MESS["CONFIG_ENTITY_VOTE_CLOSING_DELAY_FIELD_NEW"] = "Закрывать сессию сразу после оценки";
 $MESS["CONFIG_ENTITY_VOTE_MESSAGE_1_TEXT_FIELD"] = "Текст запроса оценки качества обслуживания (категория 1)";
 $MESS["CONFIG_ENTITY_VOTE_MESSAGE_1_LIKE_FIELD"] = "Текст положительной оценки (категория 1)";

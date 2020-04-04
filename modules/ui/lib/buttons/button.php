@@ -9,7 +9,6 @@ class Button extends BaseButton
 
 	protected function init(array $params = [])
 	{
-		$this->setTag(Tag::LINK);
 		$this->setColor(Color::SUCCESS);
 
 		if (isset($params['baseClassName']))
@@ -355,6 +354,14 @@ class Button extends BaseButton
 	}
 
 	/**
+	 * @return bool
+	 */
+	public function isNoCaps()
+	{
+		return $this->hasClass(Style::NO_CAPS);
+	}
+
+	/**
 	 * @param bool $flag
 	 * @return static
 	 */
@@ -373,6 +380,14 @@ class Button extends BaseButton
 	}
 
 	/**
+	 * @return bool
+	 */
+	public function isRound()
+	{
+		return $this->hasClass(Style::ROUND);
+	}
+
+	/**
 	 * @param bool $flag
 	 * @return static
 	 */
@@ -388,6 +403,40 @@ class Button extends BaseButton
 		}
 
 		return $this;
+	}
+
+	/**
+	 * @return bool
+	 */
+	public function isDropdown()
+	{
+		return $this->hasClass(Style::DROPDOWN);
+	}
+
+	/**
+	 * @param bool $flag
+	 * @return static
+	 */
+	public function setCollapsed($flag = true)
+	{
+		if ($flag === false)
+		{
+			$this->removeClass(Style::COLLAPSED);
+		}
+		else
+		{
+			$this->addClass(Style::COLLAPSED);
+		}
+
+		return $this;
+	}
+
+	/**
+	 * @return bool
+	 */
+	public function isCollapsed()
+	{
+		return $this->hasClass(Style::COLLAPSED);
 	}
 
 	/**

@@ -1143,7 +1143,8 @@ class CCrmDealDetailsComponent extends CBitrixComponent
 				'title' => Loc::getMessage('CRM_DEAL_FIELD_ID'),
 				'type' => 'text',
 				'editable' => false,
-				'enableAttributes' => false
+				'enableAttributes' => false,
+				'mergeable' => false,
 			),
 			array(
 				'name' => 'DATE_CREATE',
@@ -1203,6 +1204,7 @@ class CCrmDealDetailsComponent extends CBitrixComponent
 				'type' => 'list',
 				'editable' => ($this->entityData['IS_RECURRING'] !== "Y"),
 				'enableAttributes' => false,
+				'mergeable' => false,
 				'data' => array(
 					'items' => \CCrmInstantEditorHelper::PrepareListOptions(
 						$allStages,
@@ -1215,6 +1217,7 @@ class CCrmDealDetailsComponent extends CBitrixComponent
 				'title' => Loc::getMessage('CRM_DEAL_FIELD_OPPORTUNITY_WITH_CURRENCY'),
 				'type' => 'money',
 				'editable' => true,
+				'mergeable' => false,
 				'data' => array(
 					'affectedFields' => array('CURRENCY_ID', 'OPPORTUNITY'),
 					'currency' => array(
@@ -1264,6 +1267,20 @@ class CCrmDealDetailsComponent extends CBitrixComponent
 				'type' => 'client_light',
 				'editable' => true,
 				'data' => array(
+					'compound' => array(
+						array(
+							'name' => 'COMPANY_ID',
+							'type' => 'company',
+							'entityTypeName' => \CCrmOwnerType::CompanyName,
+							'tagName' => \CCrmOwnerType::CompanyName
+						),
+						array(
+							'name' => 'CONTACT_IDS',
+							'type' => 'multiple_contact',
+							'entityTypeName' => \CCrmOwnerType::ContactName,
+							'tagName' => \CCrmOwnerType::ContactName
+						)
+					),
 					'map' => array('data' => 'CLIENT_DATA'),
 					'info' => 'CLIENT_INFO',
 					'lastCompanyInfos' => 'LAST_COMPANY_INFOS',
@@ -1322,7 +1339,8 @@ class CCrmDealDetailsComponent extends CBitrixComponent
 				"type" => "product_row_summary",
 				"editable" => false,
 				'enableAttributes' => false,
-				"transferable" => false
+				'transferable' => false,
+				'mergeable' => false
 			),
 			array(
 				"name" => "RECURRING",
@@ -1811,6 +1829,14 @@ class CCrmDealDetailsComponent extends CBitrixComponent
 					'SIGNATURE' => $fieldSignature,
 					'IS_EMPTY' => false
 				);
+
+				if($fieldData['data']['fieldInfo']['USER_TYPE_ID'] === 'file')
+				{
+					$values = is_array($fieldValue) ? $fieldValue : array($fieldValue);
+					$this->entityData[$fieldName]['EXTRAS'] = array(
+						'OWNER_TOKEN' => \CCrmFileProxy::PrepareOwnerToken(array_fill_keys($values, $this->entityID))
+					);
+				}
 			}
 		}
 		//endregion

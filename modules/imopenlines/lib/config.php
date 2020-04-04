@@ -153,6 +153,15 @@ class Config
 			$fields['QUEUE_TIME'] = 60;
 		}
 
+//		if (isset($params['CRM_FORM_TO_USE']))
+//		{
+//			$fields['CRM_FORM_TO_USE'] = intval($params['CRM_FORM_TO_USE']);
+//		}
+//		else if ($mode == self::MODE_ADD)
+//		{
+//			$fields['CRM_FORM_TO_USE'] = 0;
+//		}
+
 		if (isset($params['NO_ANSWER_TIME']))
 		{
 			$fields['NO_ANSWER_TIME'] = intval($params['NO_ANSWER_TIME']);
@@ -540,6 +549,15 @@ class Config
 		else if ($mode == self::MODE_ADD)
 		{
 			$fields["VOTE_CLOSING_DELAY"] = 'N';
+		}
+
+		if (isset($params['VOTE_BEFORE_FINISH']))
+		{
+			$fields['VOTE_BEFORE_FINISH'] = $params['VOTE_BEFORE_FINISH'] == 'Y'? 'Y': 'N';
+		}
+		else if ($mode == self::MODE_ADD)
+		{
+			$fields["VOTE_BEFORE_FINISH"] = 'Y';
 		}
 
 		if (isset($params['VOTE_MESSAGE_1_TEXT']))

@@ -599,10 +599,13 @@
 						attrs: {'data-bx-calendar-show-all-events': day.dayCode},
 						style: {
 							top: (parseInt(this.fullDayEventsCont.style.height) - 20) + 'px',
-							left: 'calc((100% / ' + this.dayCount + ') * (' + (day.dayOffset + 1) + ' - 1) + 2px)',
+							left: this.dayCount === 1
+								? '0' /*for day view */
+								: 'calc((100% / ' + this.dayCount + ') * (' + (day.dayOffset + 1) + ' - 1) + 2px)',
 							width: 'calc(100% / ' + this.dayCount + ' - 3px)'
 						}
 					}));
+
 					day.hiddenStorageText = day.hiddenStorage.appendChild(BX.create('span', {props: {className: 'calendar-event-more-btn'}}));
 					day.hiddenStorage.style.display = 'block';
 					day.hiddenStorageText.innerHTML = BX.message('EC_SHOW_ALL') + ' ' + day.entries.topList.length;
@@ -2395,12 +2398,12 @@
 		}, this);
 
 
-		popup = BX.PopupWindowManager.create(this.calendar.id + "-all-events-popup", params.day.hiddenStorage,
+		popup = BX.PopupWindowManager.create(this.calendar.id + "-all-events-popup", params.day.hiddenStorageText,
 			{
 				autoHide: true,
 				closeByEsc: true,
 				offsetTop: -2,
-				offsetLeft: this.getDayWidth() / 2 + 4,
+				offsetLeft: -50,
 				lightShadow: true,
 				content: innerCont
 			});

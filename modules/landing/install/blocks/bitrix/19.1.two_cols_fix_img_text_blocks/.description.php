@@ -77,5 +77,9 @@ return array(
 			'name' => Loc::getMessage('LANDING_BLOCK_7_TWO_COLS_FIX_IMG_TEXT_ACCORDEON_STYLE_LANDINGBLOCKNODEACCORDEONELEMENTTEXT'),
 			'type' => 'typo',
 		),
+		'.landing-block-node-img-container' => array(
+			'name' => Loc::getMessage('LANDING_BLOCK_7_TWO_COLS_FIX_IMG_TEXT_ACCORDEON_NODES_LANDINGBLOCKNODEIMG'),
+			'type' => array('text-align', 'margin-bottom')
+		),
 	),
 );

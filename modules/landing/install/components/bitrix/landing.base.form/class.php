@@ -154,17 +154,20 @@ class LandingBaseFormComponent extends LandingBaseComponent
 		$additionalFields = $this->request('ADDITIONAL_FIELDS');
 
 		// bugfix for security waf
-		$context = \Bitrix\Main\Application::getInstance()->getContext();
-		$request = $context->getRequest();
-		$postList = $request->getPostList()->getRaw($this->postCode);
-		if (isset($postList['ADDITIONAL_FIELDS']))
+		if (is_array($additionalFields))
 		{
-			$postList = $postList['ADDITIONAL_FIELDS'];
-			foreach ($this->getAdditionalFieldsRaw() as $code)
+			$context = \Bitrix\Main\Application::getInstance()->getContext();
+			$request = $context->getRequest();
+			$postList = $request->getPostList()->getRaw($this->postCode);
+			if (isset($postList['ADDITIONAL_FIELDS']))
 			{
-				if (isset($postList[$code]))
+				$postList = $postList['ADDITIONAL_FIELDS'];
+				foreach ($this->getAdditionalFieldsRaw() as $code)
 				{
-					$additionalFields[$code] = $postList[$code];
+					if (isset($postList[$code]))
+					{
+						$additionalFields[$code] = $postList[$code];
+					}
 				}
 			}
 		}

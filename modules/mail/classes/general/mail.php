@@ -180,7 +180,7 @@ class CMailError
 }
 
 
-class _CMailBoxDBRes  extends CDBResult
+class _CMailBoxDBRes extends CDBResult
 {
 	function _CMailBoxDBRes($res)
 	{
@@ -191,8 +191,20 @@ class _CMailBoxDBRes  extends CDBResult
 	{
 		if($res = parent::Fetch())
 		{
-			$res["PASSWORD"] = CMailUtil::Decrypt($res["PASSWORD"]);
-			$res['OPTIONS']  = unserialize($res['OPTIONS']);
+			$entity = \Bitrix\Mail\MailboxTable::getEntity();
+
+			foreach ($res as $alias => $value)
+			{
+				if (!$entity->hasField($alias))
+				{
+					continue;
+				}
+
+				foreach ($entity->getField($alias)->getFetchDataModifiers() as $modifier)
+				{
+					$res[$alias] = call_user_func_array($modifier, array($res[$alias], $this, $res, $alias));
+				}
+			}
 		}
 		return $res;
 	}
@@ -516,6 +528,8 @@ class CAllMailBox
 		global $DB;
 		CMailError::ResetErrors();
 
+		$arFields = array_filter($arFields, 'is_set');
+
 		if($arFields["ACTIVE"] != "Y")
 			$arFields["ACTIVE"] = "N";
 
@@ -534,15 +548,7 @@ class CAllMailBox
 		if (!CMailBox::CheckFields($arFields))
 			return false;
 
-		if (is_set($arFields, "PASSWORD"))
-			$arFields["PASSWORD"] = CMailUtil::Crypt($arFields["PASSWORD"]);
-
-		if (is_set($arFields, 'OPTIONS'))
-		{
-			$arFields['OPTIONS'] = serialize($arFields['OPTIONS']);
-		}
-
-		$ID = $DB->Add("b_mail_mailbox", $arFields);
+		$ID = \Bitrix\Mail\MailboxTable::add($arFields)->getId();
 		if ($arFields['ACTIVE'] == 'Y' && $arFields['USER_ID'] != 0)
 		{
 			CUserCounter::Clear($arFields['USER_ID'], 'mail_unseen', $arFields['LID']);
@@ -554,7 +560,7 @@ class CAllMailBox
 			\CAgent::addAgent(sprintf('Bitrix\Mail\Helper::syncMailboxAgent(%u);', $ID), 'mail', 'N', (int) $arFields['PERIOD_CHECK'] * 60);
 			\CAgent::addAgent(sprintf('Bitrix\Mail\Helper::cleanupMailboxAgent(%u);', $ID), 'mail', 'N', 3600 * 24);
 		}
-		
+
 		if ($arFields['SERVER_TYPE'] == 'pop3' && (int) $arFields['PERIOD_CHECK'] > 0)
 			CAgent::addAgent(sprintf('CMailbox::CheckMailAgent(%u);', $ID), 'mail', 'N', (int) $arFields['PERIOD_CHECK']*60);
 
@@ -564,11 +570,11 @@ class CAllMailBox
 
 	function Update($ID, $arFields)
 	{
-		global $DB;
-
 		$ID = IntVal($ID);
 
 		CMailError::ResetErrors();
+
+		$arFields = array_filter($arFields, 'is_set');
 
 		if(is_set($arFields, "ACTIVE") && $arFields["ACTIVE"]!="Y")
 			$arFields["ACTIVE"]="N";
@@ -588,18 +594,10 @@ class CAllMailBox
 		if(!CMailBox::CheckFields($arFields, $ID))
 			return false;
 
-		if(is_set($arFields, "PASSWORD"))
-			$arFields["PASSWORD"]=CMailUtil::Crypt($arFields["PASSWORD"]);
+		$mbox = \Bitrix\Mail\MailboxTable::getRowById($ID);
 
-		$mbox = CMailbox::getList(array(), array('ID' => $ID))->fetch();
-
-		$userId      = is_set($arFields, 'USER_ID') ? $arFields['USER_ID'] : $mbox['USER_ID'];
 		$serverType  = is_set($arFields, 'SERVER_TYPE') ? $arFields['SERVER_TYPE'] : $mbox['SERVER_TYPE'];
 		$periodCheck = is_set($arFields, 'PERIOD_CHECK') ? $arFields['PERIOD_CHECK'] : $mbox['PERIOD_CHECK'];
-		$options     = is_set($arFields, 'OPTIONS') ? $arFields['OPTIONS'] : $mbox['OPTIONS'];
-
-		if (is_set($arFields, 'OPTIONS'))
-			$arFields['OPTIONS'] = serialize($arFields['OPTIONS']);
 
 		if (!empty($mbox))
 		{
@@ -650,18 +648,14 @@ class CAllMailBox
 		\CAgent::removeAgent(sprintf('Bitrix\Mail\Helper::syncMailboxAgent(%u);', $ID), 'mail');
 		\CAgent::removeAgent(sprintf('Bitrix\Mail\Helper::cleanupMailboxAgent(%u);', $ID), 'mail');
 
-		$strSql = sprintf(
-			'UPDATE b_mail_mailbox SET %s WHERE ID = %u',
-			$DB->prepareUpdate('b_mail_mailbox', $arFields), $ID
-		);
-		$DB->query($strSql, false, 'File: '.__FILE__.'<br>Line: '.__LINE__);
+		\Bitrix\Mail\MailboxTable::update($ID, $arFields);
 
 		if (in_array($serverType, array('imap', 'controller', 'domain', 'crdomain')))
 		{
 			\CAgent::addAgent(sprintf('Bitrix\Mail\Helper::syncMailboxAgent(%u);', $ID), 'mail', 'N', (int) $periodCheck*60);
 			\CAgent::addAgent(sprintf('Bitrix\Mail\Helper::cleanupMailboxAgent(%u);', $ID), 'mail', 'N', 3600 * 24);
 		}
-		
+
 		if ($serverType == 'pop3' && (int) $periodCheck > 0)
 			CAgent::addAgent(sprintf('CMailbox::CheckMailAgent(%u);', $ID), 'mail', 'N', (int) $periodCheck*60);
 
@@ -1479,14 +1473,14 @@ class CAllMailMessage
 	}
 
 
-	function ParseHeader($message_header, $charset)
+	public static function parseHeader($header, $charset)
 	{
 		$h = new CMailHeader();
-		$h->Parse($message_header, $charset);
+		$h->parse($header, $charset);
 		return $h;
 	}
 
-	private static function decodeMessageBody($header, $body, $charset)
+	public static function decodeMessageBody($header, $body, $charset)
 	{
 		$encoding = strtolower($header->GetHeader('CONTENT-TRANSFER-ENCODING'));
 
@@ -1514,7 +1508,7 @@ class CAllMailMessage
 		);
 	}
 
-	private static function parseMessage($message, $charset)
+	public static function parseMessage($message, $charset)
 	{
 		$headerP = \CUtil::binStrpos($message, "\r\n\r\n");
 
@@ -1645,11 +1639,22 @@ class CAllMailMessage
 		return array($header, $htmlBody, $textBody, $parts);
 	}
 
-	function AddMessage($mailbox_id, $message, $charset, $params = array())
+	public static function addMessage($mailboxId, $message, $charset, $params = array())
+	{
+		list($header, $html, $text, $attachments) = CMailMessage::parseMessage($message, $charset);
+
+		return static::saveMessage($mailboxId, $message, $header, $html, $text, $attachments, $params);
+	}
+
+	public static function saveMessage($mailboxId, &$message, &$header, &$bodyHtml, &$bodyText, &$attachments, $params = array())
 	{
 		global $DB;
 
-		list($obHeader, $message_body_html, $message_body, $arMessageParts) = CMailMessage::parseMessage($message, $charset);
+		$mailbox_id = $mailboxId;
+		$obHeader = &$header;
+		$message_body_html = &$bodyHtml;
+		$message_body = &$bodyText;
+		$arMessageParts = &$attachments;
 
 		$arFields = array(
 			"MAILBOX_ID" => $mailbox_id,
@@ -1664,7 +1669,7 @@ class CAllMailMessage
 			"MSG_ID" => trim($obHeader->GetHeader("MESSAGE-ID"), " <>"),
 			"IN_REPLY_TO" => trim($obHeader->GetHeader("IN-REPLY-TO"), " <>"),
 			"FIELD_PRIORITY" => IntVal($obHeader->GetHeader("X-PRIORITY")),
-			"MESSAGE_SIZE" => strlen($message),
+			"MESSAGE_SIZE" => $params['size'] ?: strlen($message),
 			"SUBJECT" => $obHeader->GetHeader("SUBJECT"),
 			"BODY" => rtrim($message_body),
 			'OPTIONS' => array(
@@ -1672,15 +1677,17 @@ class CAllMailMessage
 			),
 		);
 
+		$datetime = preg_replace('/(?<=[\s\d])UT$/i', '+0000', $arFields['FIELD_DATE_ORIGINAL']);
 		if (!($params['replaces'] > 0) || strtotime($datetime) || $params['timestamp'])
 		{
-			$datetime = preg_replace('/(?<=[\s\d])UT$/i', '+0000', $arFields['FIELD_DATE_ORIGINAL']);
 			$timestamp = strtotime($datetime) ?: $params['timestamp'] ?: time();
 			$arFields['FIELD_DATE'] = convertTimeStamp($timestamp + \CTimeZone::getOffset(), 'FULL');
 		}
 
-		if(COption::GetOptionString("mail", "save_src", B_MAIL_SAVE_SRC)=="Y")
-			$arFields["FULL_TEXT"] = $message;
+		if (!empty($message) && \Bitrix\Main\Config\Option::get('mail', 'save_src', B_MAIL_SAVE_SRC) == 'Y')
+		{
+			$arFields['FULL_TEXT'] = $message;
+		}
 
 		$forSpamTest = sprintf('%s %s', $arFields['HEADER'], $message_body_html ?: $message_body);
 
@@ -1768,7 +1775,7 @@ class CAllMailMessage
 				}
 
 				$mailbox = Bitrix\Mail\MailboxTable::getList(array(
-					'select' => array('ID', 'USER_ID'),
+					'select' => array('ID', 'USER_ID', 'OPTIONS'),
 					'filter' => array('=ID' => $mailbox_id, '=ACTIVE' => 'Y'),
 				))->fetch();
 
@@ -1818,7 +1825,7 @@ class CAllMailMessage
 				);
 				foreach ($arMessageParts as $part)
 				{
-					if (!($part['ATTACHMENT-ID'] > 0))
+					if (!(is_array($part) && $part['ATTACHMENT-ID'] > 0))
 					{
 						continue;
 					}
@@ -1847,7 +1854,7 @@ class CAllMailMessage
 
 				foreach ($arMessageParts as $part)
 				{
-					if (!($part['ATTACHMENT-ID'] > 0))
+					if (!(is_array($part) && $part['ATTACHMENT-ID'] > 0))
 					{
 						continue;
 					}
@@ -1865,6 +1872,7 @@ class CAllMailMessage
 			if (!($params['replaces'] > 0))
 			{
 				$arFields['IS_OUTCOME'] = !empty($params['outcome']);
+				$arFields['IS_DRAFT'] = !empty($params['draft']);
 				$arFields['IS_TRASH'] = !empty($params['trash']);
 				$arFields['IS_SPAM'] = !empty($params['spam']);
 				$arFields['IS_SEEN'] = !empty($params['seen']);
@@ -1875,7 +1883,32 @@ class CAllMailMessage
 					$arFields = $arFields + $params['excerpt'];
 				}
 
+				$messageBindings = array();
+
+				$eventKey = \Bitrix\Main\EventManager::getInstance()->addEventHandler(
+					'mail',
+					'onBeforeUserFieldSave',
+					function (\Bitrix\Main\Event $event) use (&$messageBindings)
+					{
+						$params = $event->getParameters();
+						$messageBindings[] = $params['entity_type'];
+					}
+				);
+
 				\CMailFilter::filter($arFields, 'R');
+
+				\Bitrix\Main\EventManager::getInstance()->removeEventHandler('mail', 'onBeforeUserFieldSave', $eventKey);
+
+				addEventToStatFile(
+					'mail',
+					sprintf(
+						'add_%s_%s',
+						(empty($arFields['IN_REPLY_TO']) ? 'message' : 'reply'),
+						(empty($params['outcome']) ? 'incoming' : 'outgoing')
+					),
+					join(',', array_unique(array_filter($messageBindings))),
+					$arFields['MSG_ID']
+				);
 			}
 		}
 
@@ -2532,7 +2565,7 @@ class CAllMailUtil
 		return $strResult;
 	}
 
-	function ByteXOR($a,$b,$l)
+	public static function ByteXOR($a,$b,$l)
 	{
 		$c="";
 		for($i=0; $i<$l; $i++)
@@ -2540,7 +2573,7 @@ class CAllMailUtil
 		return($c);
 	}
 
-	function BinMD5($val)
+	public static function BinMD5($val)
 	{
 		return(pack("H*",md5($val)));
 	}
@@ -2579,7 +2612,7 @@ class CAllMailUtil
 		return(base64_encode($res));
 	}
 
-	function ExtractAllMailAddresses($emails)
+	public static function extractAllMailAddresses($emails)
 	{
 		$result = array();
 		$arEMails = explode(",", $emails);

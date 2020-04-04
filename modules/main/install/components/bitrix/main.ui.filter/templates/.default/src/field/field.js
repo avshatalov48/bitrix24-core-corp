@@ -9,6 +9,8 @@ export class Field extends Event.EventEmitter
 	constructor(options)
 	{
 		super(options);
+		this.setEventNamespace('BX.Filter.Field');
+
 		this.id = options.options.NAME;
 		this.parent = options.parent;
 		this.node = options.node;
@@ -40,15 +42,27 @@ export class Field extends Event.EventEmitter
 		];
 
 		selects.forEach((select) => {
-			MO.observe(select, {attributeFilter: ['data-value']});
+			MO.observe(select, {
+				attributes: true,
+				attributeFilter: ['data-value'],
+			});
 		});
 
 		Field.instances.set(this.node, this);
 	}
 
+	subscribe(eventName, listener)
+	{
+		Event.EventEmitter.subscribe(
+			this,
+			eventName.replace('BX.Filter.Field:', ''),
+			listener,
+		);
+	}
+
 	[onValueChange]()
 	{
-		this.emit('BX.Filter.Field:change', {
+		this.emit('change', {
 			field: this,
 			value: this.getValue(),
 		});
@@ -276,9 +290,14 @@ export class Field extends Event.EventEmitter
 										nameNode.innerText = item.NAME;
 									}
 
-									fieldNode.click();
+									let result = BX.Main.ui.Factory.get(fieldNode);
 
-									const result = BX.Main.ui.Factory.get(fieldNode);
+									if (!result)
+									{
+										result = {node: fieldNode, instance: new BX.Main.ui.select(fieldNode)};
+										BX.Main.ui.Factory.data.push(result);
+									}
+
 									if (Type.isPlainObject(result))
 									{
 										BX.onCustomEvent(window, 'UI::Select::Change', [result.instance, item]);

@@ -111,16 +111,39 @@ class DateTime extends Value implements Nameable
 		{
 			$data = ['format' => $modifier];
 		}
-		elseif(!isset($data['format']))
+		else
 		{
 			$format = '';
+			if(isset($data['format']))
+			{
+				$format = $data['format'];
+			}
 			$parts = explode(',', $modifier);
 			foreach($parts as $part)
 			{
+				if(empty(trim($part)))
+				{
+					continue;
+				}
 				if(strpos($part, '=') === false)
 				{
-					$format = $part;
-					break;
+					if(!empty($format))
+					{
+						$format .= ',';
+					}
+					$format .= $part;
+				}
+				else
+				{
+					[$name, $value] = explode('=', $part);
+					if(!$name || !$value)
+					{
+						if(!empty($format))
+						{
+							$format .= ',';
+						}
+						$format .= $part;
+					}
 				}
 			}
 			$data['format'] = $format;

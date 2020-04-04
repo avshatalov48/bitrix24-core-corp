@@ -3,7 +3,48 @@
 
 	BX.namespace('BX.UI');
 
-	BX.UI.Toolbar = function(options, target)
+	BX.UI.ToolbarManager =
+	{
+		toolbars: {},
+
+		/**
+		 *
+		 * @return {BX.UI.Toolbar}
+		 */
+		create: function(options)
+		{
+			var toolbar = new BX.UI.Toolbar(options);
+
+			if (this.get(toolbar.getId()))
+			{
+				throw new Error("The toolbar instance with the same 'id' already exists.");
+			}
+
+			this.toolbars[toolbar.getId()] = toolbar;
+
+			return toolbar;
+		},
+
+		/**
+		 *
+		 * @return {BX.UI.Toolbar|null}
+		 */
+		getDefaultToolbar: function()
+		{
+			return this.get('default-toolbar');
+		},
+
+		/**
+		 *
+		 * @return {BX.UI.Toolbar|null}
+		 */
+		get: function(id)
+		{
+			return id in this.toolbars ? this.toolbars[id] : null
+		}
+	};
+
+	BX.UI.Toolbar = function(options)
 	{
 		options = BX.type.isPlainObject(options) ? options : {};
 
@@ -13,11 +54,19 @@
 		this.filterMinWidth = BX.type.isNumber(options.filterMinWidth) ? options.filterMinWidth : 300;
 		this.filterMaxWidth = BX.type.isNumber(options.filterMaxWidth) ? options.filterMaxWidth : 748;
 
-		this.toolbarContainer = target;
-		// this.toolbarContainer = document.getElementById('uiToolbarContainer');
+		this.id = BX.Type.isStringFilled(options.id) ? options.id : BX.Text.getRandom();
+		this.toolbarContainer = options.target;
+
+		if (!BX.Type.isDomNode(this.toolbarContainer))
+		{
+			throw new Error('BX.UI.Toolbar: "target" parameter is required.');
+		}
+
 		this.titleContainer = this.toolbarContainer.querySelector('.ui-toolbar-title-box');
 		this.filterContainer = this.toolbarContainer.querySelector('.ui-toolbar-filter-box');
-		this.buttonContainer = this.toolbarContainer.querySelector('.ui-toolbar-btn-box');
+		this.filterButtons = this.toolbarContainer.querySelector('.ui-toolbar-filter-buttons');
+		this.rightButtons = this.toolbarContainer.querySelector('.ui-toolbar-right-buttons');
+		this.afterTitleButtons = this.toolbarContainer.querySelector('.ui-toolbar-after-title-buttons');
 
 		if (!this.filterContainer)
 		{
@@ -25,17 +74,47 @@
 			this.filterMaxWidth = 0;
 		}
 
-		if(!this.buttonContainer)
+		this.buttons = Object.create(null);
+		this.buttonIds = BX.Type.isArray(options.buttonIds) ? options.buttonIds : [];
+
+		if (!this.buttonIds.length)
 		{
 			return;
 		}
 
-		this.items = this.toolbarContainer.querySelectorAll('.ui-btn, .ui-btn-split');
-		this.buttonIds = options.buttonIds || [];
+		this.buttonIds.forEach(function(buttonId) {
+			var button = BX.UI.ButtonManager.createByUniqId(buttonId);
+			if (button)
+			{
+				button.getContainer().originalWidth = button.getContainer().offsetWidth;
+
+				if (!button.getIcon() && !BX.Type.isStringFilled(button.getDataSet()['toolbarCollapsedIcon']))
+				{
+					if (button.getColor() === BX.UI.ButtonColor.PRIMARY)
+					{
+						button.setDataSet({
+							'toolbarCollapsedIcon': BX.UI.ButtonIcon.ADD
+						});
+					}
+					else
+					{
+						console.warn(
+							'BX.UI.Toolbar: the button "' + button.getText() + '" ' +
+							'doesn\'t have an icon for collapsed mode. ' +
+							'Use the "data-toolbar-collapsed-icon" attribute.'
+						);
+					}
+				}
+
+				this.buttons[buttonId] = button;
+			}
+			else
+			{
+				console.warn('BX.UI.Toolbar: the button "' + buttonId + '" wasn\'t initialized.');
+			}
+		}, this);
 
 		this.windowWidth = document.body.offsetWidth;
-
-		this.setItemsOriginalWidth();
 		this.reduceItemsWidth();
 
 		window.addEventListener('resize', function() {
@@ -53,11 +132,23 @@
 
 	BX.UI.Toolbar.prototype =
 	{
+		/**
+		 *
+		 * @return {Map<string, BX.UI.Button>}
+		 */
 		getButtons: function()
 		{
-			return this.buttonIds.map(function(id){
-				return BX.UI.ButtonManager.getByUniqid(id);
-			})
+			return this.buttons;
+		},
+
+		getButton: function(id)
+		{
+			return id in this.buttons ? this.buttons[id] : null;
+		},
+
+		getId: function()
+		{
+			return this.id;
 		},
 
 		isWindowIncreased: function()
@@ -76,143 +167,76 @@
 
 		getInnerTotalWidth: function()
 		{
-			return (
-				(this.titleContainer ? this.titleContainer.offsetWidth : 0)+
-				(this.filterContainer ? this.filterContainer.offsetWidth : 0) +
-				this.buttonContainer.offsetWidth
-			);
-		},
-
-		setItemsOriginalWidth: function()
-		{
-			for (var i = 0; i < this.items.length; i++)
-			{
-				this.items[i].originalWidth = this.items[i].offsetWidth;
-			}
+			return this.toolbarContainer.scrollWidth;
 		},
 
 		reduceItemsWidth: function()
 		{
-			var userAgent = navigator.userAgent.toLowerCase();
-
-			if (userAgent.indexOf('safari') !== -1 || userAgent.indexOf('firefox') !== -1 || userAgent.indexOf('MSIE') !== -1)
+			if (this.getInnerTotalWidth() <= this.getContainerSize())
 			{
-				if (userAgent.indexOf('chrome') > -1)
-				{
-					if (this.getInnerTotalWidth() <= this.getContainerSize())
-					{
-						return;
-					}
-				}
-				else
-				{
-					if (this.getInnerTotalWidth() <= this.getContainerSize() + 1)
-					{
-						return;
-					}
-				}
+				return;
 			}
 
-			for (var i = this.items.length - 1; i >= 0; i--)
+			var buttons = Object.values(this.getButtons());
+			for (var i = buttons.length - 1; i >= 0; i--)
 			{
-				var item = this.items[i];
-
-				if (userAgent.indexOf('safari') !== -1)
+				var button = buttons[i];
+				if (!button.getIcon() && !BX.Type.isStringFilled(button.getDataSet()['toolbarCollapsedIcon']))
 				{
-					if (userAgent.indexOf('chrome') > -1)
-					{
-						if (this.getInnerTotalWidth() <= this.getContainerSize())
-						{
-							break;
-						}
-					}
-					else
-					{
-						if (this.getInnerTotalWidth() <= this.getContainerSize() + 1)
-						{
-							break;
-						}
-					}
+					continue;
 				}
 
-				if (!item.classList.contains('ui-toolbar-btn-minimize'))
+				if (button.isCollapsed())
 				{
-					item.classList.add('ui-toolbar-btn-minimize', 'ui-btn-empty');
+					continue;
+				}
 
-					if (item.classList.contains('ui-btn-primary') && !item.classList.contains('ui-btn-dropdown'))
-					{
-						item.classList.add('ui-btn-icon-add');
-					}
+				button.setCollapsed(true);
 
-					if (item.classList.contains('ui-toolbar-btn-count'))
-					{
-						item.classList.add('ui-btn-icon-list');
-					}
+				if (!button.getIcon())
+				{
+					button.setIcon(button.getDataSet()['toolbarCollapsedIcon']);
+				}
 
-					if (item.classList.contains('ui-toolbar-btn-dropdown'))
-					{
-						item.classList.add('ui-btn-icon-page');
-					}
+				if (this.getInnerTotalWidth() <= this.getContainerSize())
+				{
+					return;
 				}
 			}
 		},
 
 		increaseItemsWidth: function()
 		{
-			for (var i = 0; i < this.items.length; i++)
+			var buttons = Object.values(this.getButtons());
+			for (var i = 0; i < buttons.length; i++)
 			{
-				var item = this.items[i];
-				var itemsWidth = this.calculateItemsWidth();
-
-				if (!item.classList.contains('ui-toolbar-btn-minimize'))
+				var button = buttons[i];
+				var item = button.getContainer();
+				if (!button.isCollapsed())
 				{
 					continue;
 				}
 
 				var newInnerWidth = (
-					this.titleMinWidth + this.filterMinWidth + itemsWidth + (item.originalWidth - item.offsetWidth)
+					this.titleMinWidth +
+					this.filterMinWidth +
+					(this.afterTitleButtons ? this.afterTitleButtons.offsetWidth : 0) +
+					(this.filterButtons ? this.filterButtons.offsetWidth : 0) +
+					(this.rightButtons ? this.rightButtons.offsetWidth : 0) +
+					(item.originalWidth - item.offsetWidth)
 				);
 
-				var containerWidth = this.getContainerSize();
-
-				if (newInnerWidth > containerWidth)
+				if (newInnerWidth > this.getContainerSize())
 				{
 					break;
 				}
 
-				item.classList.remove('ui-toolbar-btn-minimize', 'ui-btn-empty');
-
-				if (item.classList.contains('ui-btn-primary') && !item.classList.contains('ui-btn-dropdown'))
+				button.setCollapsed(false);
+				if (button.getIcon() === button.getDataSet()['toolbarCollapsedIcon'])
 				{
-					item.classList.remove('ui-btn-icon-add');
-				}
-
-				if (item.classList.contains('ui-toolbar-btn-count'))
-				{
-					item.classList.remove('ui-btn-icon-list', 'ui-btn-empty');
-				}
-
-				if (item.classList.contains('ui-toolbar-btn-dropdown'))
-				{
-					item.classList.remove('ui-btn-icon-page', 'ui-btn-empty');
+					button.setIcon(null);
 				}
 			}
-		},
-
-		calculateItemsWidth: function()
-		{
-			var itemTotalWidth = 0;
-
-			for (var i = this.items.length - 1; i >= 0; i--)
-			{
-				var itemStyle = window.getComputedStyle(this.items[i]);
-				var itemWidth = this.items[i].offsetWidth;
-				var itemMarginLeft = parseInt(itemStyle.marginLeft, 10);
-
-				itemTotalWidth += itemWidth + itemMarginLeft;
-			}
-
-			return itemTotalWidth;
 		}
 	};
 })();

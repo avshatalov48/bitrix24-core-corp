@@ -3,11 +3,13 @@ namespace Bitrix\Timeman;
 
 class TimemanUrlManager
 {
+	const URI_SHIFT_CREATE = 'shiftCreate';
 	const URI_SCHEDULE_CREATE = 'scheduleCreate';
 	const URI_RECORD_REPORT = 'recordReport';
 	const URI_SCHEDULE_UPDATE = 'scheduleUpdate';
 	const URI_WORKTIME_STATS = 'worktimeStats';
 	const URI_SCHEDULE_SHIFTPLAN = 'scheduleShiftplan';
+	const URI_SETTINGS_PERMISSIONS = 'settingsPermissions';
 
 	private function getRoutes()
 	{
@@ -15,6 +17,15 @@ class TimemanUrlManager
 			static::URI_SCHEDULE_CREATE => [
 				'name' => static::URI_SCHEDULE_CREATE,
 				'uri' => '/timeman/schedules/add/',
+			],
+			static::URI_SETTINGS_PERMISSIONS => [
+				'name' => static::URI_SETTINGS_PERMISSIONS,
+				'uri' => '/timeman/settings/permissions/',
+			],
+			static::URI_SHIFT_CREATE => [
+				'name' => static::URI_SHIFT_CREATE,
+				'uri' => '/timeman/schedules/#SCHEDULE_ID#/shifts/add/',
+				'requiredParams' => ['SCHEDULE_ID',],
 			],
 			static::URI_RECORD_REPORT => [
 				'name' => static::URI_RECORD_REPORT,

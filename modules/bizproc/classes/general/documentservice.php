@@ -1177,16 +1177,16 @@ EOS;
 		return array();
 	}
 
-	public function GetAllowableUserGroups($parameterDocumentId, $withExtended = false)
+	public function GetAllowableUserGroups($parameterDocumentType, $withExtended = false)
 	{
-		list($moduleId, $entity, $documentId) = CBPHelper::ParseDocumentId($parameterDocumentId);
+		list($moduleId, $entity, $documentType) = CBPHelper::ParseDocumentId($parameterDocumentType);
 
 		if (strlen($moduleId) > 0)
 			CModule::IncludeModule($moduleId);
 
 		if (class_exists($entity))
 		{
-			$result = call_user_func_array(array($entity, "GetAllowableUserGroups"), array($documentId, $withExtended));
+			$result = call_user_func_array(array($entity, "GetAllowableUserGroups"), array($documentType, $withExtended));
 			$result1 = array();
 			foreach ($result as $key => $value)
 				$result1[strtolower($key)] = $value;

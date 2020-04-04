@@ -1,8 +1,9 @@
 <?php
 namespace Bitrix\ImConnector\Rest;
 
-use \Bitrix\ImConnector\Model\CustomConnectorsTable;
-use \Bitrix\Rest\PlacementTable;
+use \Bitrix\Rest\PlacementTable,
+	\Bitrix\ImConnector\Model\CustomConnectorsTable,
+	\Bitrix\ImConnector\Model\StatusConnectorsTable;
 
 /**
  * Class Helper
@@ -119,7 +120,7 @@ class Helper
 	 * @throws \Bitrix\Main\ObjectPropertyException
 	 * @throws \Bitrix\Main\SystemException
 	 */
-	public static function unRegisterApp($params)
+	public static function unRegisterApp($params): bool
 	{
 		$result = true;
 
@@ -130,6 +131,17 @@ class Helper
 			if(!empty($params['ID']))
 			{
 				$filter['ID_CONNECTOR'] = strtolower($params['ID']);
+			}
+
+			$raw = StatusConnectorsTable::getList([
+				'select' => ['ID', 'LINE', 'CONNECTOR'],
+				'filter' => [
+					'=CONNECTOR' => $filter['ID_CONNECTOR']
+				]
+			]);
+			while ($row = $raw->fetch())
+			{
+				\Bitrix\ImConnector\Status::delete($row['CONNECTOR'], $row['LINE']);
 			}
 
 			$raw = CustomConnectorsTable::getList(array(

@@ -57,7 +57,7 @@ class SecondFormDeal extends DealMap
 			$this->unitType = (int)$params[self::FIELD_SINGLE_TYPE_NAME];
 			$this->interval = (int)$params[self::FIELD_SINGLE_INTERVAL_NAME];
 		}
-		else
+		elseif ($this->mode === Manager::MULTIPLY_EXECUTION)
 		{
 			$this->unitType = (int)$params[self::FIELD_MULTIPLE_TYPE_NAME];
 			$this->interval = 1;

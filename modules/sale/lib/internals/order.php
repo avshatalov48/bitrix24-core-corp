@@ -40,20 +40,6 @@ class OrderTable extends Main\Entity\DataManager
 		$connection = Main\Application::getConnection();
 		$helper = $connection->getSqlHelper();
 
-		$lockStatusExpression = '';
-		if ($DB->type == 'MYSQL')
-		{
-			$lockStatusExpression = "if(DATE_LOCK is null, 'green', if(DATE_ADD(DATE_LOCK, interval ".$maxLock." MINUTE)<now(), 'green', if(LOCKED_BY=".$userID.", 'yellow', 'red')))";
-		}
-		elseif ($DB->type == 'MSSQL')
-		{
-			$lockStatusExpression = "case when DATE_LOCK is null then 'green' else case when dateadd(minute, ".$maxLock.", DATE_LOCK)<getdate() then 'green' else case when LOCKED_BY=".$userID." then 'yellow' else 'red' end end end";
-		}
-		elseif ($DB->type == 'ORACLE')
-		{
-			$lockStatusExpression = "DECODE(DATE_LOCK, NULL, 'green', DECODE(SIGN(1440*(SYSDATE-DATE_LOCK)-".$maxLock."), 1, 'green', decode(LOCKED_BY,".$userID.",'yellow','red')))";
-		}
-
 		return array(
 			new Main\Entity\IntegerField('ID',
 				array(
@@ -345,7 +331,7 @@ class OrderTable extends Main\Entity\DataManager
 
 			new Main\Entity\ExpressionField(
 				'LOCK_STATUS',
-				$lockStatusExpression
+				"if(DATE_LOCK is null, 'green', if(DATE_ADD(DATE_LOCK, interval ".$maxLock." MINUTE)<now(), 'green', if(LOCKED_BY=".$userID.", 'yellow', 'red')))"
 			),
 
 			new Main\Entity\ReferenceField(

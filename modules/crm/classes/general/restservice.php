@@ -6606,7 +6606,7 @@ class CCrmDealRecurringRestProxy extends CCrmRestProxyBase
 	}
 	protected function prepareParams(array $fields)
 	{
-		$restParamsMapper = \Bitrix\Crm\Recurring\Entity\ParameterMapper\RestDeal::getInstance();
+		$restParamsMapper = new \Bitrix\Crm\Recurring\Entity\ParameterMapper\RestDeal();
 		$restParamsMapper->fillMap($fields['PARAMS']);
 		$formParamsMapper = \Bitrix\Crm\Recurring\Entity\Deal::getParameterMapper();
 		$formParamsMapper->convert($restParamsMapper);
@@ -7062,7 +7062,7 @@ class CCrmInvoiceRecurringRestProxy extends CCrmRestProxyBase
 	}
 	protected function prepareParams(array $fields)
 	{
-		$restParamsMapper = \Bitrix\Crm\Recurring\Entity\ParameterMapper\RestInvoice::getInstance();
+		$restParamsMapper = new \Bitrix\Crm\Recurring\Entity\ParameterMapper\RestInvoice();
 		$restParamsMapper->fillMap($fields['PARAMS']);
 		$formParamsMapper = \Bitrix\Crm\Recurring\Entity\Invoice::getParameterMapper();
 		$formParamsMapper->convert($restParamsMapper);
@@ -12027,6 +12027,8 @@ class CCrmRequisiteRestProxy extends CCrmRestProxyBase
 			if(EntityRequisite::checkReadPermissionOwnerEntity())
 			{
 				$permissionOwner = true;
+				//Required for prevent selection of the suspended entities (SuspendedContact, SuspendedCompany)
+				$filter['@ENTITY_TYPE_ID'] = [CCrmOwnerType::Company, CCrmOwnerType::Contact];
 			}
 			else
 			{

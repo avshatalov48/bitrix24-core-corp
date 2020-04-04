@@ -112,9 +112,15 @@ class CAllSaleOrderUserProps
 		);
 		while ($arOrderProperty = $dbOrderProperties->Fetch())
 		{
-			$curVal = $orderProps[$arOrderProperty["ID"]];
+			if (isset($orderProps[$arOrderProperty["ID"]]))
+			{
+				$curVal = $orderProps[$arOrderProperty["ID"]];
+			}
+
 			if (($arOrderProperty["TYPE"] == "MULTISELECT") && is_array($curVal))
+			{
 				$curVal = implode(",", $curVal);
+			}
 
 			if (($arOrderProperty["TYPE"] == "FILE") && is_array($curVal))
 			{
@@ -136,7 +142,7 @@ class CAllSaleOrderUserProps
 				$curVal = serialize($curVal);
 			}
 
-			if (strlen($curVal) > 0)
+			if (isset($curVal))
 			{
 				if ($profileId <= 0)
 				{
@@ -171,6 +177,7 @@ class CAllSaleOrderUserProps
 					CSaleOrderUserPropsValue::Add($arFields);
 				}
 			}
+			unset($curVal);
 		}
 
 		return $profileId;

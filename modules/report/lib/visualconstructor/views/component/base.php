@@ -178,6 +178,15 @@ abstract class Base extends View
 		$result['html'] = $componentContent;
 		$result['js'] = $APPLICATION->arHeadScripts;
 		$result['css'] = $APPLICATION->sPath2css;
+
+		foreach ($result['js'] as $key => $value)
+		{
+			$result['js'][$key] = \CUtil::GetAdditionalFileURL($value);
+		}
+		foreach ($result['css'] as $key => $value)
+		{
+			$result['css'][$key] = \CUtil::GetAdditionalFileURL($value);
+		}
 		return $result;
 	}
 

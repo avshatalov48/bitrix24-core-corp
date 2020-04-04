@@ -30,7 +30,8 @@
 		this.popup = null;
 		this.input.addEventListener("click", this.onInputClick.bind(this));
 		document.addEventListener("click", this.onDocumentClick.bind(this));
-		top.document.addEventListener("click", this.onDocumentClick.bind(this));
+		var rootWindow = BX.Landing.PageObject.getRootWindow();
+		rootWindow.document.addEventListener("click", this.onDocumentClick.bind(this));
 
 		if (BX.type.isPlainObject(this.items))
 		{

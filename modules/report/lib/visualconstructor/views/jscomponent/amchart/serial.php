@@ -87,9 +87,9 @@ abstract class Serial extends Base
 				{
 					if (!isset($result['dataProvider'][$res['groupBy']]))
 					{
-						$result['dataProvider'][$res['groupBy']] = array(
-							'groupingField' => !empty($data['config']['groupsLabelMap'][$res['groupBy']]) ? $data['config']['groupsLabelMap'][$res['groupBy']] : '-',
-						);
+						$result['dataProvider'][$res['groupBy']] = [
+							'groupingField' => $data['config']['groupsLabelMap'][$res['groupBy']] ?? '-',
+						];
 					}
 					//$result['dataProvider'][$res['groupBy']]['bullet'] = "https://www.amcharts.com/lib/images/faces/A04.png";
 					$result['dataProvider'][$res['groupBy']]['value_' . $reportCount] = $res['value'];

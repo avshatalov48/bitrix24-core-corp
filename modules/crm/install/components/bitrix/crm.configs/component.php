@@ -34,7 +34,7 @@ if (Bitrix\Main\Config\Option::get("crm", "crm_shop_enabled", "N") === 'Y')
 }
 
 $arResult['IS_AUTOMATION_INVOICE_ENABLED'] = \Bitrix\Crm\Automation\Factory::isAutomationAvailable(\CCrmOwnerType::Invoice);
-
+$arResult['IS_APP_CONFIGURATION_ENABLED'] = \Bitrix\Main\Loader::includeModule('rest') && is_callable('\Bitrix\Rest\Marketplace\Url::getConfigurationPlacementUrl');
 $arResult['SMS_SENDERS'] = array();
 $smsSenders = \Bitrix\Crm\Integration\SmsManager::getSenderInfoList();
 foreach ($smsSenders as $sender)

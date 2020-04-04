@@ -32,6 +32,11 @@ $publicMode = $adminPage->publicMode;
 $arUserGroups = $USER->GetUserGroupArray();
 $intUserID = (int)$USER->GetID();
 
+$registry = Sale\Registry::getInstance(Sale\Registry::REGISTRY_TYPE_ORDER);
+
+/** @var Sale\Order $orderClass */
+$orderClass = $registry->getOrderClassName();
+
 $isUserResponsible = false;
 
 $arAccessibleSites = array();
@@ -647,7 +652,7 @@ if($lAdmin->EditAction() && $saleModulePermissions >= "U")
 			continue;
 
 		/** @var \Bitrix\Sale\Order $editOrder */
-		$editOrder = \Bitrix\Sale\Order::load($ID);
+		$editOrder = $orderClass::load($ID);
 
 		if($editOrder)
 		{
@@ -867,7 +872,7 @@ if(($arID = $lAdmin->GroupAction()) && $saleModulePermissions >= "P")
 		if($_REQUEST['action'] != "unlock" && substr($_REQUEST['action'], 0, strlen("status_")) != "status_")
 		{
 			/** @var \Bitrix\Sale\Order $saleOrder */
-			if(!($saleOrder = \Bitrix\Sale\Order::load($ID)))
+			if(!($saleOrder = $orderClass::load($ID)))
 			{
 				$lAdmin->AddGroupError(Loc::getMessage("SO_NO_ORDER", array("#ID#" => $ID)));
 				continue;
@@ -893,11 +898,11 @@ if(($arID = $lAdmin->GroupAction()) && $saleModulePermissions >= "P")
 
 					try
 					{
-						$res = \Bitrix\Sale\Order::delete($ID);
+						$res = $orderClass::delete($ID);
 					}
 					catch (Exception $e)
 					{
-						$res = \Bitrix\Sale\Order::deleteNoDemand($ID);
+						$res = $orderClass::deleteNoDemand($ID);
 					}
 
 					if (!$res->isSuccess())
@@ -1303,7 +1308,7 @@ if(($arID = $lAdmin->GroupAction()) && $saleModulePermissions >= "P")
 								{
 									if($arAffectedOrders[$ID]["STATUS_ID"] != $statusID)
 									{
-										$saleOrder = \Bitrix\Sale\Order::load($ID);
+										$saleOrder = $orderClass::load($ID);
 										$res = $saleOrder->setField("STATUS_ID", $statusID);
 
 										if(!$res->isSuccess())
@@ -2582,7 +2587,7 @@ if (!empty($orderList) && is_array($orderList))
 		if($bNeedProps)
 		{
 			/** @var \Bitrix\Sale\Order $propOrder */
-			$propOrder = \Bitrix\Sale\Order::load($arOrder["ID"]);
+			$propOrder = $orderClass::load($arOrder["ID"]);
 
 			/** @var Bitrix\Sale\PropertyValue  $property */
 			foreach($propOrder->getPropertyCollection() as $property)

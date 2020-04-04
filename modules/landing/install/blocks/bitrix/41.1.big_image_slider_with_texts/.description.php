@@ -90,7 +90,7 @@ return array(
 			),
 			'.landing-block-node-card-container' => array(
 				'name' => Loc::getMessage('LANDING_BLOCK_41.BIG_IMAGE_SLIDER_WITH_TEXTS_NODES_LANDINGBLOCKNODE_CONTAINER'),
-				'type' => 'animation',
+				'type' => ['animation', 'align-self']
 			),
 		),
 	),

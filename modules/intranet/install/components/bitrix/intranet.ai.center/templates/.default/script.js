@@ -40,6 +40,10 @@ BX.Intranet.AI.Center.prototype =
 		{
 			this.openFaceCard(tile);
 		}
+		else if (tile.id === "crm-scoring")
+		{
+			this.openScoring(tile);
+		}
 	},
 
 	openAssistantApp: function(tile)
@@ -57,6 +61,11 @@ BX.Intranet.AI.Center.prototype =
 	openFaceCard: function(tile)
 	{
 		BX.SidePanel.Instance.open(tile.data.url);
+	},
+
+	openScoring: function(tile)
+	{
+		BX.SidePanel.Instance.open(tile.data.url, {cacheable: false, width: 840});
 	},
 
 	handleApplicationInstall: function(installed, eventResult)

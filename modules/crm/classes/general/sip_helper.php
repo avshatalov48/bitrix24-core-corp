@@ -368,12 +368,15 @@ class CCrmSipHelper
 			}
 
 			$activities = array();
+
+			// We can skip permissions check, because user should be able to read activities,
+			// bound to the entity, that he is able to read (see $fields['CAN_READ'])
 			$dbActivity = CCrmActivity::GetList(
 				array('DEADLINE' => 'ASC'),
 				array(
 					'COMPLETED' => 'N',
 					'BINDINGS' => array(array('OWNER_TYPE_ID' => $entityTypeID, 'OWNER_ID' => $entityID)),
-					'CHECK_PERMISSIONS' => $isAdmin ? 'N' : 'Y'
+					'CHECK_PERMISSIONS' => 'N'
 				),
 				false,
 				array('nTopCount' => 4),

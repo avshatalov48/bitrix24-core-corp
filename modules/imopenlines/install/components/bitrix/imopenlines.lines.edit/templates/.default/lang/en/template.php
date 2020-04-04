@@ -180,6 +180,7 @@ $MESS["IMOL_CONFIG_EDIT_TYPE_MAX_CHAT_TIP_NEW"] = "<b>Answered</b>: excludes enq
 <b>Closed</b>: excludes closed and pending rating enquiries.";
 $MESS["IMOL_CONFIG_EDIT_TYPE_MAX_CHAT_TITLE"] = "Exclude chats:";
 $MESS["IMOL_CONFIG_EDIT_TYPE_MAX_CHAT_TITLE_NEW"] = "Ignore enquiries in this status when calculating distribution";
+$MESS["IMOL_CONFIG_EDIT_VOTE_BEFORE_FINISH"] = "Allow user to rate ongoing conversation";
 $MESS["IMOL_CONFIG_EDIT_VOTE_CLOSING_DELAY"] = "Close session when customer rating is received";
 $MESS["IMOL_CONFIG_EDIT_VOTE_CLOSING_DELAY_NEW"] = "Close session when client rating is received";
 $MESS["IMOL_CONFIG_EDIT_VOTE_MESSAGE"] = "Send customer rating request";

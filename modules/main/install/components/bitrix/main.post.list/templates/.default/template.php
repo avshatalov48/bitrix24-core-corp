@@ -113,7 +113,7 @@ ob_start();
 		#AFTER_RECORD#<?
 		?><script>BX.ready(function() { BX.onCustomEvent(BX('<?=$eventNodeIdTemplate?>'), 'OnUCCommentIsInDOM', ['#ID#', BX('<?=$eventNodeIdTemplate?>')]);});</script><?
 	?></div>
-	<div id="record-#FULL_ID#-placeholder" class="blog-comment-edit feed-com-add-block blog-post-edit feed-com-add-box" style="display:none;"></div>
+	<div id="record-#FULL_ID#-placeholder" bx-mpl-block="edit-placeholder" class="blog-comment-edit feed-com-add-block blog-post-edit feed-com-add-box" style="display:none;"></div>
 	<!--RCRD_END_#FULL_ID#-->
 <?
 $template = preg_replace("/[\t\n]/", "", ob_get_clean());

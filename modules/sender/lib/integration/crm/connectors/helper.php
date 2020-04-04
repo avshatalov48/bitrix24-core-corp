@@ -11,6 +11,7 @@ namespace Bitrix\Sender\Integration\Crm\Connectors;
 use Bitrix\Main\Application;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\DB\SqlExpression;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Entity;
 use Bitrix\Main\Orm;
@@ -102,7 +103,7 @@ class Helper
 		$logicFilter = array();
 		$crmUserType->prepareListFilterFields($list, $logicFilter);
 		$originalList = $crmUserType->getFields();
-		$restrictedTypes = ['address', 'file', 'crm'];
+		$restrictedTypes = ['address', 'file', 'crm', 'resourcebooking'];
 
 		$list = array_filter(
 			$list,
@@ -133,6 +134,10 @@ class Helper
 				{
 					$list[$index]['allow_years_switcher'] = true;
 				}
+			}
+			if ($originalList[$field['id']]['MULTIPLE'] == 'Y')
+			{
+				$list[$index]['multiple_uf'] = true;
 			}
 		}
 
@@ -348,6 +353,10 @@ class Helper
 					{
 						$filterKey = "=$filterKey";
 					}
+					if ($field['multiple_uf'])
+					{
+						$filterKey .= "_SINGLE";
+					}
 
 					$field['sender_segment_filter'] = $filterKey;
 					if (!isset($result[$entityTypeName]))
@@ -434,9 +443,13 @@ class Helper
 			$value = $isMultiple && !is_array($value) ? array($value) : $value;
 			$field['value'] = $value;
 
-			if (strpos($field['id'], 'COMMUNICATION_TYPE') !== false)
+			if ($field['filter_callback'])
 			{
-				self::getCommunicationTypeFilter($value, $filter);
+				$extraCallbackParams = [
+					'FIELD' => $field,
+					'ENTITY_TYPE_NAME' => $entityTypeName
+				];
+				call_user_func_array($field['filter_callback'], [$value, &$filter, $extraCallbackParams]);
 				continue;
 			}
 
@@ -489,7 +502,8 @@ class Helper
 	{
 		$types = array(
 			UiFilterType::DATE,
-			UiFilterType::NUMBER
+			UiFilterType::NUMBER,
+			UiFilterType::DEST_SELECTOR
 		);
 		return in_array(strtoupper($type), $types);
 	}
@@ -505,10 +519,13 @@ class Helper
 			case UiFilterType::NUMBER:
 				Connector\Filter\NumberField::create($fieldData)->applyFilter($filter);
 				break;
+			case UiFilterType::DEST_SELECTOR:
+				Connector\Filter\DestSelectorField::create($fieldData)->applyFilter($filter);
+				break;
 		}
 	}
 
-	protected static function getCommunicationTypeFilter(array $commTypes, &$filter)
+	protected static function getCommunicationTypeFilter(array $commTypes, &$filter, $extraCallbackParams = [])
 	{
 		if (in_array(\CCrmFieldMulti::PHONE, $commTypes))
 		{
@@ -521,6 +538,33 @@ class Helper
 		if (in_array(\CCrmFieldMulti::IM, $commTypes))
 		{
 			$filter['=HAS_IMOL'] = 'Y';
+		}
+	}
+
+	protected static function getNoPurchasesFilter($value, &$filter, $extraCallbackParams = [])
+	{
+		$entityTypeName = $extraCallbackParams['ENTITY_TYPE_NAME'];
+		$field = $extraCallbackParams['FIELD'];
+		if (!$entityTypeName)
+			return;
+
+		if ($value[$field['id'] . '_datesel'] != 'NONE')
+		{
+			$filter['NO_PURCHASES'] = [];
+			self::setFieldTypeFilter('%PURCHASE_DATE%', $field, $filter['NO_PURCHASES']);
+			self::processRuntimeFilter($filter['NO_PURCHASES'], $entityTypeName);
+		}
+	}
+
+	protected static function productSourceFilter($value, &$filter, $extraCallbackParams = [])
+	{
+		if ($filter['NO_PURCHASES'] || $filter['=COMPANY.PRODUCT_ID'] || $filter['=CONTACT.PRODUCT_ID'])
+		{
+			if (!is_array($value) || in_array("", $value)) // if PRODUCT_SOURCE wasn't set or has "everywhere" value
+			{
+				$value = [];
+			}
+			$filter['PRODUCT_SOURCE'] = $value;
 		}
 	}
 
@@ -637,5 +681,10 @@ class Helper
 		}
 
 		return $url;
+	}
+
+	public static function isCrmSaleEnabled()
+	{
+		return Loader::includeModule("sale") && (Option::get("crm", "crm_shop_enabled", "N") != 'N');
 	}
 }

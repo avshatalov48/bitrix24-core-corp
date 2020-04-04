@@ -32,6 +32,7 @@ create table if not exists b_timeman_entries
 	SCHEDULE_ID int(10) unsigned not null default 0,
 	SHIFT_ID int(10) unsigned not null default 0,
 	APPROVED tinyint(3) unsigned not null default 1,
+	AUTO_CLOSING_AGENT_ID int unsigned not null default 0,
 	PRIMARY KEY pk_b_timeman_entries (ID),
 	INDEX ix_b_timeman_entries_1 (USER_ID, DATE_START),
 	INDEX ix_b_timeman_entries_2 (LAT_OPEN, LON_OPEN),
@@ -70,7 +71,7 @@ create table if not exists b_timeman_report_daily
 	INDEX ix_b_timeman_report_daily_3 (USER_ID, REPORT_DATE)
 );
 
-CREATE TABLE b_timeman_report_full (
+CREATE TABLE IF NOT EXISTS b_timeman_report_full (
 	ID int(11) NOT NULL AUTO_INCREMENT,
 	TIMESTAMP_X timestamp NULL DEFAULT CURRENT_TIMESTAMP,
 	ACTIVE char(1) DEFAULT 'Y',
@@ -94,7 +95,7 @@ CREATE TABLE b_timeman_report_full (
 );
 
 
-CREATE TABLE b_timeman_absence (
+CREATE TABLE IF NOT EXISTS b_timeman_absence (
 	ID int(11) NOT NULL AUTO_INCREMENT,
 	USER_ID int(11) NOT NULL,
 	ENTRY_ID int(11) NULL default 0,
@@ -179,10 +180,16 @@ CREATE TABLE IF NOT EXISTS b_timeman_work_shift (
 );
 
 CREATE TABLE IF NOT EXISTS b_timeman_work_shift_plan (
+	ID INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
 	SHIFT_ID INT(11) NOT NULL DEFAULT '0',
 	DATE_ASSIGNED DATE NOT NULL,
 	USER_ID INT(11) NOT NULL DEFAULT '0',
-	PRIMARY KEY (SHIFT_ID, USER_ID, DATE_ASSIGNED)
+	DELETED TINYINT(3) UNSIGNED NOT NULL DEFAULT '0',
+	CREATED_AT INT(10) UNSIGNED NOT NULL DEFAULT '0',
+	DELETED_AT INT(10) UNSIGNED NOT NULL DEFAULT '0',
+	MISSED_SHIFT_AGENT_ID INT(10) UNSIGNED NOT NULL DEFAULT '0',
+	PRIMARY KEY (ID),
+	UNIQUE INDEX SHIFT_ID_USER_ID_DATE_ASSIGNED (SHIFT_ID, USER_ID, DATE_ASSIGNED)
 );
 
 CREATE TABLE IF NOT EXISTS b_timeman_work_time_event_log (

@@ -57,6 +57,11 @@ final class Driver
 		return self::$instance;
 	}
 
+	public function isEnabled(): bool
+	{
+		return (class_exists('\DOMDocument', true) && class_exists('\ZipArchive', true));
+	}
+
 	/**
 	 * @return Storage
 	 */
@@ -336,7 +341,7 @@ final class Driver
 	public static function installDefaultTemplatesForCurrentRegion($rewrite = false)
 	{
 		global $DB;
-		if(!$DB->TableExists(TemplateTable::getTableName()))
+		if(!$DB->TableExists(TemplateTable::getTableName()) || !$DB->TableExists(FileTable::getTableName()))
 		{
 			return '\\Bitrix\\DocumentGenerator\\Driver::installDefaultTemplatesForCurrentRegion();';
 		}

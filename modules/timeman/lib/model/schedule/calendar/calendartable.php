@@ -58,7 +58,6 @@ class CalendarTable extends Main\ORM\Data\DataManager
 				->configureAutocomplete(true)
 			,
 			(new Fields\StringField('NAME'))
-				->configureRequired(false)
 				->configureDefaultValue(function () {
 					return '';
 				})

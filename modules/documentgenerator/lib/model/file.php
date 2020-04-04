@@ -188,7 +188,7 @@ class FileTable extends Main\Entity\DataManager
 		if($data)
 		{
 			$storage = new $data['STORAGE_TYPE'];
-			if($storage instanceof Storage\Disk)
+			if($storage instanceof Storage\Disk && Main\Loader::includeModule('disk'))
 			{
 				$file = File::loadById($data['STORAGE_WHERE']);
 				if($file)

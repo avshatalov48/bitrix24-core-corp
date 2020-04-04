@@ -3,7 +3,7 @@ namespace Bitrix\Bizproc\Automation;
 
 use Bitrix\Bizproc\WorkflowTemplateTable;
 use Bitrix\Bizproc\Automation\Target\BaseTarget;
-use Bitrix\Bizproc\WorkflowStateTable;
+use Bitrix\Bizproc\Workflow\Entity\WorkflowStateTable;
 
 class Tracker
 {
@@ -177,7 +177,7 @@ class Tracker
 				'=MODULE_ID' => $documentType[0],
 				'=ENTITY' => $documentType[1],
 				'=DOCUMENT_TYPE' => $documentType[2],
-				'=AUTO_EXECUTE' => \CBPDocumentEventType::Automation,
+				//'=AUTO_EXECUTE' => \CBPDocumentEventType::Automation,
 				'@DOCUMENT_STATUS' => $statuses
 			)
 		));

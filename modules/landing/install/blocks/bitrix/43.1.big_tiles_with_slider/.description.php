@@ -23,7 +23,7 @@ return array(
 		'.landing-block-node-img1' => array(
 			'name' => Loc::getMessage('LANDING_BLOCK_43.1.BIG_TILES_WITH_SLIDER_NODES_LANDINGBLOCKNODEIMG1'),
 			'type' => 'img',
-			'dimensions' => array('width' => 960, 'height' => 625),
+			'dimensions' => array('width' => 960),
 		),
 		'.landing-block-node-subtitle' => array(
 			'name' => Loc::getMessage('LANDING_BLOCK_43.1.BIG_TILES_WITH_SLIDER_NODES_LANDINGBLOCKNODESUBTITLE'),
@@ -44,30 +44,22 @@ return array(
 		'.landing-block-node-img2' => array(
 			'name' => Loc::getMessage('LANDING_BLOCK_43.1.BIG_TILES_WITH_SLIDER_NODES_LANDINGBLOCKNODEIMG2'),
 			'type' => 'img',
-			'dimensions' => array('width' => 960, 'height' => 625),
+			'dimensions' => array('width' => 960),
 		),
 		'.landing-block-node-card-img' => array(
 			'name' => Loc::getMessage('LANDING_BLOCK_43.1.BIG_TILES_WITH_SLIDER_NODES_LANDINGBLOCKNODECARDIMG'),
 			'type' => 'img',
-			'dimensions' => array('width' => 960, 'height' => 625),
+			'dimensions' => array('width' => 960),
 		),
 	),
 	'style' => array(
-		'.landing-block-node-block' => array(
-			'name' => Loc::getMessage('LANDING_BLOCK_43.1.BIG_TILES_WITH_SLIDER_NODES_LANDINGBLOCKNODE_BLOCK'),
-			'type' => 'animation',
-		),
-		'.landing-block-node-block-bottom' => array(
-			'name' => Loc::getMessage('LANDING_BLOCK_43.1.BIG_TILES_WITH_SLIDER_NODES_LANDINGBLOCKNODE_BLOCK'),
-			'type' => 'animation',
-		),
 		'.landing-block-node-block-top' => array(
 			'name' => Loc::getMessage('LANDING_BLOCK_43.1.BIG_TILES_WITH_SLIDER_NODES_LANDINGBLOCKNODE_BLOCK'),
 			'type' => 'animation',
 		),
 		'.landing-block-node-img1' => array(
 			'name' => Loc::getMessage('LANDING_BLOCK_43.1.BIG_TILES_WITH_SLIDER_NODES_LANDINGBLOCKNODEIMG1'),
-			'type' => 'animation',
+			'type' => ['background-size', 'animation'],
 		),
 		'.landing-block-node-title' => array(
 			'name' => Loc::getMessage('LANDING_BLOCK_43.1.BIG_TILES_WITH_SLIDER_NODES_LANDINGBLOCKNODETITLE'),
@@ -88,6 +80,14 @@ return array(
 		'.landing-block-node-button-container' => array(
 			'name' => Loc::getMessage('LANDING_BLOCK_43.1.BIG_TILES_WITH_SLIDER_NODES_LANDINGBLOCKNODEBUTTON'),
 			'type' => 'text-align',
+		),
+		'.landing-block-node-img2' => array(
+			'name' => Loc::getMessage('LANDING_BLOCK_43.1.BIG_TILES_WITH_SLIDER_NODES_LANDINGBLOCKNODEIMG2'),
+			'type' => ['background-size', 'animation']
+		),
+		'.landing-block-node-card-img' => array(
+			'name' => Loc::getMessage('LANDING_BLOCK_43.1.BIG_TILES_WITH_SLIDER_NODES_LANDINGBLOCKNODECARDIMG'),
+			'type' => ['background-size', 'animation']
 		),
 	),
 	'assets' => array(

@@ -16,7 +16,10 @@ $APPLICATION->AddHeadScript("/bitrix/components/bitrix/mobile.socialnetwork.log.
 $APPLICATION->AddHeadScript("/bitrix/components/bitrix/rating.vote/templates/mobile_comment_like/script_attached.js");
 $APPLICATION->AddHeadScript("/bitrix/js/main/rating_like.js");
 $APPLICATION->AddHeadScript(SITE_TEMPLATE_PATH."/components/bitrix/voting.current/.userfield/script.js");
-if (CModule::IncludeModule("vote") && class_exists("\\Bitrix\\Vote\\UF\\Manager"))
+if (
+	CModule::IncludeModule("vote")
+	&& class_exists("\\Bitrix\\Vote\\UF\\Manager")
+)
 {
 	$APPLICATION->AddHeadScript("/bitrix/components/bitrix/voting.uf/templates/.default/script.js");
 	\Bitrix\Main\Page\Asset::getInstance()->addString('<link href="'.CUtil::GetAdditionalFileURL('/bitrix/components/bitrix/voting.uf/templates/.default/style.css').'" type="text/css" rel="stylesheet" />');
@@ -305,6 +308,8 @@ else
 				MSLPathToCrmDeal: '<?=CUtil::JSEscape($arParams["PATH_TO_CRMDEAL"])?>',
 				MSLPathToCrmContact: '<?=CUtil::JSEscape($arParams["PATH_TO_CRMCONTACT"])?>',
 				MSLPathToCrmCompany: '<?=CUtil::JSEscape($arParams["PATH_TO_CRMCOMPANY"])?>',
+				MSLPathToKnowledgeGroup: '<?=CUtil::JSEscape($arResult["KNOWLEDGE_PATH"])?>',
+				MSLTitleKnowledgeGroup: '<?=GetMessageJS("MOBILE_LOG_MENU_KNOWLEDGE")?>',
 				MSLMenuItemFavorites: '<?=GetMessageJS("MOBILE_LOG_MENU_FAVORITES")?>',
 				MSLMenuItemMy: '<?=GetMessageJS("MOBILE_LOG_MENU_MY")?>',
 				MSLMenuItemImportant: '<?=GetMessageJS("MOBILE_LOG_MENU_IMPORTANT")?>',
@@ -734,7 +739,9 @@ else
 						"USE_FOLLOW" => $arParams["USE_FOLLOW"],
 						"USE_FAVORITES" => (isset($arResult["GROUP_READ_ONLY"]) && $arResult["GROUP_READ_ONLY"] == "Y" ? "N" : "Y"),
 						"GROUP_READ_ONLY" => (isset($arResult["GROUP_READ_ONLY"]) && $arResult["GROUP_READ_ONLY"] == "Y" ? "Y" : "N"),
-						"TOP_RATING_DATA" => (!empty($arResult['TOP_RATING_DATA'][$arEvent["ID"]]) ? $arResult['TOP_RATING_DATA'][$arEvent["ID"]] : false)
+						"TOP_RATING_DATA" => (!empty($arResult['TOP_RATING_DATA'][$arEvent["ID"]]) ? $arResult['TOP_RATING_DATA'][$arEvent["ID"]] : false),
+						"TARGET" => (isset($arParams["TARGET"]) && strlen($arParams["TARGET"]) > 0 ? $arParams["TARGET"] : false),
+						"SITE_TEMPLATE_ID" => (isset($arParams["SITE_TEMPLATE_ID"]) && strlen($arParams["SITE_TEMPLATE_ID"]) > 0 ? $arParams["SITE_TEMPLATE_ID"] : "")
 					);
 
 					if ($arParams["USE_FOLLOW"] == "Y")
@@ -793,7 +800,8 @@ else
 							"LOG_DATE" => $arEvent["LOG_DATE"],
 							"COMMENTS_COUNT" => $arEvent["COMMENTS_COUNT"],
 						),
-						"TOP_RATING_DATA" => (!empty($arResult['TOP_RATING_DATA'][$arEvent["ID"]]) ? $arResult['TOP_RATING_DATA'][$arEvent["ID"]] : false)
+						"TOP_RATING_DATA" => (!empty($arResult['TOP_RATING_DATA'][$arEvent["ID"]]) ? $arResult['TOP_RATING_DATA'][$arEvent["ID"]] : false),
+						"TARGET" => (isset($arParams["TARGET"]) && strlen($arParams["TARGET"]) > 0 ? $arParams["TARGET"] : false)
 					)
 				);
 
@@ -1009,7 +1017,13 @@ else
 		}
 	}
 
-	if ($arParams["NEW_LOG_ID"] <= 0)
+	if (
+		$arParams["NEW_LOG_ID"] <= 0
+		&& (
+			!isset($arParams["TARGET"])
+			|| strlen($arParams["TARGET"]) <= 0
+		)
+	)
 	{
 		if (
 			$arParams["LOG_ID"] <= 0

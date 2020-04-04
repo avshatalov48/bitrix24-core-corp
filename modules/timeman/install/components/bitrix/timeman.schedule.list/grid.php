@@ -3,9 +3,11 @@ namespace Bitrix\Timeman\Component\ScheduleList;
 
 use Bitrix\Main\Grid\Options;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Timeman\Helper\Form\Schedule\ScheduleFormHelper;
 use Bitrix\Timeman\Model\Schedule;
 use Bitrix\Timeman\Repository\Schedule\ScheduleRepository;
 use Bitrix\Timeman\Security\UserPermissionsManager;
+use Bitrix\Timeman\Service\DependencyManager;
 
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 {
@@ -101,6 +103,7 @@ class Grid
 	public function getRows($schedules)
 	{
 		$items = [];
+		$scheduleFormHelper = new ScheduleFormHelper();
 		foreach ($schedules as $schedule)
 		{
 			/** @var Schedule\Schedule $schedule */
@@ -110,14 +113,14 @@ class Grid
 			$fields['~NAME'] = $schedule->getName();
 			$fields['NAME'] = htmlspecialcharsbx($fields['~NAME']);
 
-			$userCount = $this->scheduleRepository->getUsersCount($schedule->getId(), $schedule->obtainDepartmentAssignments());
+			$userCount = DependencyManager::getInstance()->getScheduleProvider()->getUsersCount($schedule);
 			$fields['~USER_COUNT'] = $userCount >= 0 ? $userCount : '';
 			$fields['USER_COUNT'] = $fields['~USER_COUNT'];
 
-			$fields['~SCHEDULE_TYPE'] = $schedule->getFormattedType();
+			$fields['~SCHEDULE_TYPE'] = $scheduleFormHelper->getFormattedType($schedule->getScheduleType());
 			$fields['SCHEDULE_TYPE'] = htmlspecialcharsbx($fields['~SCHEDULE_TYPE']);
 
-			$fields['~REPORT_PERIOD'] = $schedule->getFormattedPeriod();
+			$fields['~REPORT_PERIOD'] = $scheduleFormHelper->getFormattedPeriod($schedule->getReportPeriod());
 			$fields['REPORT_PERIOD'] = htmlspecialcharsbx($fields['~REPORT_PERIOD']);
 
 			$fields['CAN_EDIT'] = $this->userPermissionManager->canUpdateSchedule($schedule->getId());

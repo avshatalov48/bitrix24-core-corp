@@ -2832,14 +2832,7 @@ BX.CTimeManEditPopup.prototype.CreateContent = function(data)
 	if (!!this.PAUSE_TIMER)
 		BX.timer.stop(this.PAUSE_TIMER);
 
-	if (this.params.entry.STATE == 'PAUSED')
-	{
-		var q = this.INPUT_TIME_LEAKS.parentNode.appendChild(BX.create('SPAN', {props: {className: 'bx-tm-field'}, html: '+'}));
-		this.PAUSE_TIMER = BX.timer(q.appendChild(BX.create('SPAN')), {
-			from: this.params.entry.INFO.DATE_FINISH * 1000,
-			accuracy: 1
-		});
-	}
+
 
 	this.content.insertBefore(_createHR(), this.CLOCKS_CONTAINER.nextSibling);
 
@@ -7135,8 +7128,7 @@ BX.TimeManSlider = function(user,start,type)
 BX.TimeManSlider.prototype.Load = function(ID)
 {
 	BX.timeman.closeWait();
-	var url = BX.util.add_url_param('/bitrix/components/bitrix/timeman.worktime.record.report/slider.php', {RECORD_ID: ID});
-	BX.SidePanel.Instance.open(url, {width: 800, cacheable: false});
+	BX.SidePanel.Instance.open('/timeman/worktime/records/' + ID + '/report/', {width: 800, cacheable: false});
 }
 
 BX.TimeManSlider.prototype.Show = function(data)

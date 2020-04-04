@@ -1098,6 +1098,7 @@ $APPLICATION->IncludeComponent(
 					entityTypeId: <?=CCrmOwnerType::Lead?>,
 					container: "batchActionWrapper",
 					stateTemplate: "<?=GetMessageJS('CRM_LEAD_STEPWISE_STATE_TEMPLATE')?>",
+					mergerUrl: "<?=htmlspecialcharsbx($arParams['PATH_TO_LEAD_MERGE'])?>",
 					messages:
 						{
 							title: "<?=GetMessageJS('CRM_LEAD_LIST_MERGE_PROC_DLG_TITLE')?>",

@@ -1,4 +1,6 @@
 <?
+$MESS["SESSION_ENTITY_BLOCK_DATE"] = "Blocked on";
+$MESS["SESSION_ENTITY_BLOCK_REASON"] = "Block reason";
 $MESS["SESSION_ENTITY_CATEGORY_ID_FIELD"] = "Category";
 $MESS["SESSION_ENTITY_CHAT_ID_FIELD"] = "Chat ID";
 $MESS["SESSION_ENTITY_CLOSED_FIELD"] = "Conversation closed";
@@ -25,6 +27,7 @@ $MESS["SESSION_ENTITY_ID_FIELD"] = "ID";
 $MESS["SESSION_ENTITY_LIKE_COUNT_FIELD"] = "Number of likes";
 $MESS["SESSION_ENTITY_MESSAGE_FIELD_NEW_NEW"] = "Message count";
 $MESS["SESSION_ENTITY_MODE_FIELD"] = "Conversation transfer";
+$MESS["SESSION_ENTITY_OPERATOR_FROM_CRM"] = "CRM's responsible person assigned as an agent";
 $MESS["SESSION_ENTITY_OPERATOR_ID_FIELD"] = "Responsible person ID";
 $MESS["SESSION_ENTITY_PAUSE_FIELD"] = "Queue suspended";
 $MESS["SESSION_ENTITY_QUEUE_HISTORY_FIELD"] = "Queue log";

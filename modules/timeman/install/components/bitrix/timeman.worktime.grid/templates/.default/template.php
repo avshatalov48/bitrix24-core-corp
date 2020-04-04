@@ -5,58 +5,28 @@
 
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
-use Bitrix\Timeman\Helper\DateTimeHelper;
+use Bitrix\Timeman\Helper\TimeHelper;
 use Bitrix\UI\Buttons\Color;
 
-if ($arResult['PARTIAL_ITEM'] === 'shiftCell')
-{
-	return;
-}
+Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/components/bitrix/timeman.worktime.grid/templates/.default/violation-style.css');
 \Bitrix\Main\Loader::includeModule('ui');
-$dateHelper = new DateTimeHelper();
+$timeHelper = TimeHelper::getInstance();
 Extension::load(['ui.buttons', 'ui.buttons.icons', 'ui.hint', 'loader']);
 CJSCore::Init(['timeman', 'sidepanel', 'date']);
 \Bitrix\Main\Page\Asset::getInstance()->addJS('/bitrix/js/timeman/component/basecomponent.js');
 
-$filterId = $arResult['FILTER_ID'];
-if ($arResult['showFilter'])
-{
-	\Bitrix\UI\Toolbar\Facade\Toolbar::addFilter([
-		'FILTER_ID' => $arResult['FILTER']['ID'],
-		'GRID_ID' => $arResult['GRID_ID'],
-		'FILTER' => $arResult['FILTER']['FIELDS'],
-		'FILTER_ROWS' => $arResult['FILTER']['ROWS'],
-		'FILTER_PRESETS' => $arResult['FILTER']['PRESETS'],
-		'ENABLE_LIVE_SEARCH' => false,
-		'ENABLE_LABEL' => true,
-		'RESET_TO_DEFAULT_MODE' => true,
-		'VALUE_REQUIRED' => true,
-	]);
-}
+\Bitrix\UI\Toolbar\Facade\Toolbar::addFilter([
+	'FILTER_ID' => $arResult['FILTER']['ID'],
+	'GRID_ID' => $arResult['GRID_ID'],
+	'FILTER' => $arResult['FILTER']['FIELDS'],
+	'FILTER_ROWS' => $arResult['FILTER']['ROWS'],
+	'FILTER_PRESETS' => $arResult['FILTER']['PRESETS'],
+	'ENABLE_LIVE_SEARCH' => false,
+	'ENABLE_LABEL' => true,
+	'RESET_TO_DEFAULT_MODE' => true,
+	'VALUE_REQUIRED' => true,
+]);
 ?>
-<? if ($arResult['SHOW_SCHEDULES_LIST_BTN']):
-	\Bitrix\UI\Toolbar\Facade\Toolbar::addButton(
-		(new \Bitrix\UI\Buttons\SettingsButton([]))
-			->setDataRole('worktime-grid-config-btn')
-	);
-endif; ?>
-<? if ($arResult['SHOW_SHIFTPLAN_LIST_BTN']):
-	\Bitrix\UI\Toolbar\Facade\Toolbar::addButton(
-		(new \Bitrix\UI\Buttons\Button([]))
-			->setText(htmlspecialcharsbx(Loc::getMessage('TM_WORKTIME_STATS_SHIFTPLANS')))
-			->setDataRole('shift-plans-btn')
-			->setColor(Bitrix\UI\Buttons\Color::LIGHT_BORDER)
-			->setDropdown(true)
-	);
-endif; ?>
-<? if ($arResult['SHOW_ADD_SCHEDULE_BTN']):
-	\Bitrix\UI\Toolbar\Facade\Toolbar::addButton(
-		(new \Bitrix\UI\Buttons\Button([]))
-			->setText(htmlspecialcharsbx(Loc::getMessage('TM_SCHEDULE_LIST_ADD')))
-			->setDataRole('timeman-add-schedule-btn')
-			->setColor(Bitrix\UI\Buttons\Color::PRIMARY)
-	);
-endif; ?>
 <? if ($arResult['SHOW_PRINT_BTN']):
 	\Bitrix\UI\Toolbar\Facade\Toolbar::addButton(
 		(new \Bitrix\UI\Buttons\Button([]))
@@ -64,28 +34,63 @@ endif; ?>
 			->setColor(Bitrix\UI\Buttons\Color::LIGHT_BORDER)
 			->setIcon(Bitrix\UI\Buttons\Icon::PRINTER)
 	);
-endif; ?>
-<? if ($arResult['SHOW_EDIT_SCHEDULE_BTN']):
-	\Bitrix\UI\Toolbar\Facade\Toolbar::addButton(
-		(new \Bitrix\UI\Buttons\SettingsButton([]))
-			->setDataRole('edit-schedule-btn')
-			->setLink($arResult['URLS']['SCHEDULE_EDIT'])
-	);
-endif; ?>
-<? if ($arResult['SHOW_CREATE_SHIFT_BTN']):
+endif;
+
+\Bitrix\UI\Toolbar\Facade\Toolbar::addButton(
+	(new \Bitrix\UI\Buttons\SettingsButton([]))
+		->setDataRole('worktime-grid-config-btn')
+);
+if ($arResult['IS_SHIFTPLAN_LIST_BTN_ENABLED'])
+{
+	$title = Loc::getMessage('TM_WORKTIME_STATS_SHIFTPLANS_READ_TITLE');
+	if ($arResult['canUpdateAllShiftplans'])
+	{
+		$title = Loc::getMessage('TM_WORKTIME_STATS_SHIFTPLANS');
+	}
 	\Bitrix\UI\Toolbar\Facade\Toolbar::addButton(
 		(new \Bitrix\UI\Buttons\Button([]))
-			->setDataRole('add-shift-btn')
+			->setText(htmlspecialcharsbx($title))
+			->addClass($arResult['HIDE_SHIFTPLAN_LIST_BTN'] ? 'timeman-hide' : '')
+			->setDataRole('shift-plans-btn')
+			->setColor(Bitrix\UI\Buttons\Color::LIGHT_BORDER)
+			->setDropdown(true)
+	);
+}
+if ($arResult['SHOW_ADD_SCHEDULE_BTN']):
+	\Bitrix\UI\Toolbar\Facade\Toolbar::addButton(
+		(new \Bitrix\UI\Buttons\Button([]))
+			->setText(htmlspecialcharsbx(Loc::getMessage('TM_SCHEDULE_LIST_ADD')))
+			->setLink($arResult['addScheduleLink'])
+			->setColor(Bitrix\UI\Buttons\Color::PRIMARY)
+	);
+endif; ?>
+<? if ($arResult['SHOW_ADD_SHIFT_BTN']):
+	\Bitrix\UI\Toolbar\Facade\Toolbar::addButton(
+		(new \Bitrix\UI\Buttons\Button([]))
 			->setColor(Color::PRIMARY)
-			->setText(htmlspecialcharsbx(Loc::getMessage('TM_SCHEDULE_PLAN_WORKSHIFT_ADD')))
+			->setText(htmlspecialcharsbx(Loc::getMessage('TM_SCHEDULE_PLAN_ADD_BTN_TITLE')))
+			->setMenu([
+				'items' => [
+					[
+						'text' => htmlspecialcharsbx(Loc::getMessage('TM_SCHEDULE_PLAN_WORKSHIFT_ADD')),
+						'href' => $arResult['addShiftLink'],
+					],
+				],
+			])
 	);
 endif; ?>
 
-<div class="timeman-report-container timeman-report-container-plan" data-role="shift-records-container">
+<div class="timeman-report-container timeman-report-container-plan " data-role="shift-records-container">
 	<div class="timeman-top-block">
 		<div class="timeman-top-title-container" id="timeman-grid-navigation-container">
+			<? // this html block will be replaced after every grid reload (for updating hrefs to next and prev period etc.) ?>
 			<? $this->setViewTarget('timeman-grid-navigation-container'); ?>
-			<? // this html block will be replaced after every grid reload (for updating hrefs to next and prev period) ?>
+			<input type="hidden"
+					data-role="timezone-toggle-enabled"
+					value="<?php echo $arResult['showTimezoneToggle'] ? 'Y' : 'N'; ?>">
+			<input type="hidden"
+					data-role="violations-toggle-enabled"
+					value="<?php echo $arResult['gridConfigOptions']['showViolationsItem'] ? 'Y' : 'N'; ?>">
 			<div class="timeman-top-title-month" data-role="tm-grid-navigation-arrows">
 				<a href="<?= $arResult['URLS']['PERIOD_PREV'] ?>" class="timeman-navigation-previous"
 						data-start-datesel="<?= $arResult['URLS']['PERIOD_PREV_PARTS']['REPORT_PERIOD_datesel'] ?>"
@@ -96,9 +101,9 @@ endif; ?>
 				<span class="timeman-navigation-current">
 					<h2 class="timeman-top-title" data-role="dates-calendar-toggle">
 						<input type="hidden" value="<?php echo reset($arResult['DATES'])->toString(); ?>" data-role="month-navigation">
-						<?php echo $dateHelper->formatDate($arResult['TIMEMAN_WORKTIME_GRID_COLUMNS_DATE_FORMAT_DAY_FULL_MONTH'], reset($arResult['DATES'])); ?>
+						<?php echo $timeHelper->formatDateTime(reset($arResult['DATES']), $arResult['TIMEMAN_WORKTIME_GRID_COLUMNS_DATE_FORMAT_DAY_FULL_MONTH']); ?>
 						-
-						<?php echo $dateHelper->formatDate($arResult['TIMEMAN_WORKTIME_GRID_COLUMNS_DATE_FORMAT_DAY_FULL_MONTH'], end($arResult['DATES'])); ?>
+						<?php echo $timeHelper->formatDateTime(end($arResult['DATES']), $arResult['TIMEMAN_WORKTIME_GRID_COLUMNS_DATE_FORMAT_DAY_FULL_MONTH']); ?>
 					</h2>
 				</span>
 
@@ -113,7 +118,7 @@ endif; ?>
 		</div>
 
 		<div class="timeman-top-title-right">
-			<div class="timeman-top-title-today <?php if ($arResult['SHOW_GRID_SETTINGS_BTN']): ?>timeman-top-title-today-separator-right<? endif; ?>">
+			<div class="timeman-top-title-today">
 				<a href="<?= $arResult['URLS']['PERIOD_TODAY'] ?>" class="timeman-top-title-today-text"
 						data-role="tm-navigation-today"
 						data-start-datesel="<?= $arResult['URLS']['PERIOD_TODAY_PARTS']['REPORT_PERIOD_datesel'] ?>"
@@ -121,11 +126,6 @@ endif; ?>
 						data-start-from="<?= $arResult['URLS']['PERIOD_TODAY_PARTS']['REPORT_PERIOD_from'] ?>"><?=
 					htmlspecialcharsbx(Loc::getMessage('TM_WORKTIME_GRID_TODAY')); ?></a>
 			</div>
-			<?php if ($arResult['SHOW_GRID_SETTINGS_BTN']): ?>
-				<div class="timeman-top-title-settings" data-role="grid-options">
-					<span class="timeman-top-title-settings-icon"></span>
-				</div>
-			<? endif; ?>
 		</div>
 	</div>
 	<?
@@ -179,6 +179,7 @@ endif; ?>
 		'SHOW_PAGESIZE' => true,
 		'SHOW_ACTION_PANEL' => true,
 		'ALLOW_STICKED_COLUMNS' => true,
+		'DISABLE_HEADERS_TRANSFORM' => true,
 
 
 		'AJAX_MODE' => 'Y',
@@ -204,7 +205,7 @@ endif; ?>
 <script type="text/template" id="tm-settings-popup-menu">
 	<div class="tm-settings-popup-wrapper">
 		<form>
-			<div class="timeman-entity-config-block" data-role="tm-settings">
+			<div class="timeman-entity-config-block">
 				<label class="period-setting-label"><?php echo htmlspecialcharsbx(Loc::getMessage('JS_CORE_TM')); ?></label>
 				<select name="UF_TIMEMAN" class="timeman-grid-settings-select"
 					<? if (!$arResult['canManageSettings']): ?> disabled="disabled"<? endif; ?>>
@@ -213,7 +214,7 @@ endif; ?>
 					<option value="N"><?php echo htmlspecialcharsbx(Loc::getMessage('JS_CORE_TMR_OFF')); ?></option>
 				</select>
 			</div>
-			<div class="timeman-entity-config-block" data-role="tm-settings">
+			<div class="timeman-entity-config-block" data-role="tm-settings-day-report">
 				<label class="period-setting-label"><?php echo htmlspecialcharsbx(Loc::getMessage('TM_WORKTIME_GRID_CONFIG_HINT_REPORT_REQ')); ?></label>
 				<select name="UF_TM_REPORT_REQ" class="timeman-grid-settings-select"
 					<? if (!$arResult['canManageSettings']): ?> disabled="disabled"<? endif; ?>>
@@ -236,21 +237,41 @@ endif; ?>
 	BX.ready(function ()
 	{
 		BX.message({
-			TIMEMAN_GRID_MENU_SCHEDULE_PERSONAL_VIOLATIONS_PREFIX: '<?= CUtil::JSEscape(Loc::getMessage('TIMEMAN_GRID_MENU_SCHEDULE_PERSONAL_VIOLATIONS_PREFIX')) ?>'
+			TIMEMAN_GRID_MENU_SCHEDULE_PERSONAL_VIOLATIONS_PREFIX: '<?= CUtil::JSEscape(Loc::getMessage('TIMEMAN_GRID_MENU_SCHEDULE_PERSONAL_VIOLATIONS_PREFIX')) ?>',
+			TM_WORKTIME_GRID_TIMEZONE_TOGGLE_TITLE: '<?= CUtil::JSEscape(Loc::getMessage('TM_WORKTIME_GRID_TIMEZONE_TOGGLE_TITLE')) ?>',
+			TM_WORKTIME_GRID_TIMEZONE_EMPLOYEES: '<?= CUtil::JSEscape(Loc::getMessage('TM_WORKTIME_GRID_TIMEZONE_EMPLOYEES')) ?>',
+			TM_WORKTIME_GRID_TIMEZONE_MINE: '<?= CUtil::JSEscape(Loc::getMessage('TM_WORKTIME_GRID_TIMEZONE_MINE')) ?>',
+			TM_WORKTIME_GRID_SCHEDULE_DELETE_CONFIRM: '<?= CUtil::JSEscape(Loc::getMessage('TM_WORKTIME_GRID_SCHEDULE_DELETE_CONFIRM')) ?>',
+			TM_WORKTIME_GRID_SCHEDULE_DELETE_CONFIRM_YES: '<?= CUtil::JSEscape(Loc::getMessage('TM_WORKTIME_GRID_SCHEDULE_DELETE_CONFIRM_YES')) ?>',
+			TM_WORKTIME_GRID_SCHEDULE_DELETE_CONFIRM_NO: '<?= CUtil::JSEscape(Loc::getMessage('TM_WORKTIME_GRID_SCHEDULE_DELETE_CONFIRM_NO')) ?>',
+			TM_WORKTIME_GRID_SCHEDULE_DELETE_CONFIRM_TITLE: '<?= CUtil::JSEscape(Loc::getMessage('TM_WORKTIME_GRID_SCHEDULE_DELETE_CONFIRM_TITLE')) ?>',
+			TM_WORKTIME_GRID_CONFIG_MENU_ACTION_DELETE: '<?= CUtil::JSEscape(Loc::getMessage('TM_WORKTIME_GRID_CONFIG_MENU_ACTION_DELETE')) ?>',
+			TM_WORKTIME_GRID_CONFIG_MENU_ACTION_EDIT: '<?= CUtil::JSEscape(Loc::getMessage('TM_WORKTIME_GRID_CONFIG_MENU_ACTION_EDIT')) ?>',
+			TM_WORKTIME_GRID_CONFIG_MENU_ACTION_READ: '<?= CUtil::JSEscape(Loc::getMessage('TM_WORKTIME_GRID_CONFIG_MENU_ACTION_READ')) ?>',
+			TM_WORKTIME_GRID_CONFIG_MENU_TITLE_SCHEDULES: '<?= CUtil::JSEscape(Loc::getMessage('TM_WORKTIME_GRID_CONFIG_MENU_TITLE_SCHEDULES')) ?>',
+			TM_WORKTIME_GRID_CONFIG_MENU_TITLE_SCHEDULE_EDIT: '<?= CUtil::JSEscape(Loc::getMessage('TM_WORKTIME_GRID_CONFIG_MENU_TITLE_SCHEDULE_EDIT')) ?>',
+			TM_WORKTIME_GRID_CONFIG_MENU_TITLE_STATS: '<?= CUtil::JSEscape(Loc::getMessage('TM_WORKTIME_GRID_CONFIG_MENU_TITLE_STATS')) ?>',
+			TM_WORKTIME_GRID_CONFIG_MENU_TITLE_START_END: '<?= CUtil::JSEscape(Loc::getMessage('TM_WORKTIME_GRID_CONFIG_MENU_TITLE_START_END')) ?>',
+			TM_WORKTIME_GRID_CONFIG_VIOLATIONS_MENU_TITLE_COMMON: '<?= CUtil::JSEscape(Loc::getMessage('TM_WORKTIME_GRID_CONFIG_VIOLATIONS_MENU_TITLE_COMMON')) ?>',
+			TM_WORKTIME_GRID_CONFIG_VIOLATIONS_MENU_TITLE_PERSONAL: '<?= CUtil::JSEscape(Loc::getMessage('TM_WORKTIME_GRID_CONFIG_VIOLATIONS_MENU_TITLE_PERSONAL')) ?>',
+			TM_WORKTIME_GRID_CONFIG_VIOLATIONS_MENU_TITLE: '<?= CUtil::JSEscape(Loc::getMessage('TM_WORKTIME_GRID_CONFIG_VIOLATIONS_MENU_TITLE')) ?>'
 		});
 		BX.Timeman.Component.Worktime.Grid<?= CUtil::JSEscape($arResult['GRID_ID'])?> = new BX.Timeman.Component.Worktime.Grid({
 			flexibleScheduleTypeName: <?= CUtil::PhpToJSObject(\Bitrix\Timeman\Model\Schedule\Schedule::getFlextimeScheduleTypeName())?>,
 			gridId: <?= CUtil::PhpToJSObject($arResult['GRID_ID'])?>,
-			<? if($arResult['showFilter']) :?>
+			gridConfigOptions: <?= CUtil::PhpToJSObject($arResult['gridConfigOptions'])?>,
 			filterId: <?= CUtil::PhpToJSObject($arResult['FILTER']['ID'])?>,
-			<? endif;?>
 			todayWord: <?= CUtil::PhpToJSObject(Loc::getMessage('TM_WORKTIME_GRID_TODAY'))?>,
 			isSlider: <?= CUtil::PhpToJSObject($arResult['isSlider']);?>,
+			isShiftplan: <?= CUtil::PhpToJSObject($arResult['IS_SHIFTPLAN']);?>,
+			shiftedScheduleType: <?= CUtil::PhpToJSObject(\Bitrix\Timeman\Model\Schedule\ScheduleTable::SCHEDULE_TYPE_SHIFT);?>,
 			canReadSchedules: <?= CUtil::PhpToJSObject($arResult['canReadSchedules']);?>,
-			usersIds: <?= CUtil::PhpToJSObject($arResult['usersIds']);?>,
-			departmentsIds: <?= CUtil::PhpToJSObject($arResult['departmentsIds']);?>,
+			canUpdateSchedules: <?= CUtil::PhpToJSObject($arResult['canUpdateSchedules']);?>,
+			canDeleteSchedules: <?= CUtil::PhpToJSObject($arResult['canDeleteSchedules']);?>,
 			canManageSettings: <?= CUtil::PhpToJSObject($arResult['canManageSettings']);?>,
-			departmentsData: <?= CUtil::PhpToJSObject($arResult['DEPARTMENTS']);?>
+			defaultViolationShowIndividual: <?= CUtil::PhpToJSObject($arResult['GRID_OPTIONS']['SHOW_VIOLATIONS_INDIVIDUAL']);?>,
+			todayPositionedLeft: <?= $arResult['TODAY_POSITIONED_LEFT'] === true ? 'true' : 'false';?>,
+			baseDepartmentId: <?= CUtil::PhpToJSObject($arResult['baseDepartmentId']);?>
 		});
 	});
 </script>

@@ -77,7 +77,7 @@ class Helper
 	public static function registerExternalCall(array $fields)
 	{
 		$result = new Result();
-		$callId = 'externalCall.'.md5(uniqid($fields['REST_APP_ID'].$fields['USER_ID'].$fields['PHONE_NUMBER'])).'.'.time();
+		$callId = 'externalCall.'.md5(uniqid($fields['REST_APP_ID'].$fields['USER_ID'].$fields['PHONE_NUMBER'], true)).'.'.time();
 
 		$phoneNumber = \CVoxImplantPhone::stripLetters($fields['PHONE_NUMBER']);
 		if(!$phoneNumber)
@@ -251,13 +251,22 @@ class Helper
 				]
 			]);
 
-			if(is_array($fields['CRM_BINDINGS']))
+			if (is_array($fields['CRM_BINDINGS']))
 			{
-				$callFields['CRM_BINDINGS'] = \CVoxImplantCrmHelper::createActivityBindings([
+				$activityBindings = \CVoxImplantCrmHelper::createActivityBindings([
 					'CRM_ENTITY_TYPE' => $fields['CRM_ENTITY_TYPE'],
 					'CRM_ENTITY_ID' => $fields['CRM_ENTITY_ID'],
 					'CRM_BINDINGS' => $fields['CRM_BINDINGS']
 				]);
+			}
+			else
+			{
+				$activityBindings = \CVoxImplantCrmHelper::getActivityBindings($call);
+			}
+
+			if(is_array($activityBindings))
+			{
+				$call->updateCrmBindings($activityBindings);
 			}
 		}
 		else

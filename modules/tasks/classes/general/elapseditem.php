@@ -6,8 +6,8 @@
  * @copyright 2001-2013 Bitrix
  */
 
-use \Bitrix\Tasks\ElapsedTimeTable;
-use \Bitrix\Tasks\TaskTable;
+use Bitrix\Tasks\Integration\Rest\ElapsedTimeTable;
+use Bitrix\Tasks\Util\User;
 
 final class CTaskElapsedItem extends CTaskSubItemAbstract
 {
@@ -190,32 +190,15 @@ final class CTaskElapsedItem extends CTaskSubItemAbstract
 	 * @param $params
 	 *
 	 * @return array
+	 * @throws \Bitrix\Main\ObjectPropertyException
 	 */
-	public static function getList($order = array(), $filter = array(), $select = array(), $params = array())
+	public static function getList($order = [], $filter = [], $select = [], $params = []): array
 	{
-		$parameters = array();
-
-		if(is_array($order) && !empty($order))
-		{
-			$parameters['order'] = $order;
-		}
-		if(is_array($filter) && !empty($filter))
-		{
-			$parameters['filter'] = $filter;
-		}
-		if(is_array($select) && !empty($select))
-		{
-			$parameters['select'] = $select;
-		}
-
-		if (!is_array($parameters['order']) || empty($parameters['order']))
-		{
-			$parameters['order'] = array('ID' => 'ASC');
-		}
-		if (count($parameters['select']) == 1 && $parameters['select'][0] == '')
-		{
-			$parameters['select'] = array('*');
-		}
+		$parameters = [
+			'order' => (is_array($order) && !empty($order) ? $order : ['ID' => 'ASC']),
+			'filter' => (is_array($filter) ? $filter : []),
+			'select' => (is_array($select) && !empty($select) ? $select : ['*']),
+		];
 
 		if (is_array($params))
 		{
@@ -230,31 +213,23 @@ final class CTaskElapsedItem extends CTaskSubItemAbstract
 					$parameters['offset'] = (int)$params['NAV_PARAMS']['iNumPage'];
 				}
 			}
-
-			if (isset($params['count_total']))
-			{
-				$parameters['count_total'] = (bool)$params['count_total'];
-			}
-			else
-			{
-				$parameters['count_total'] = true;
-			}
+			$parameters['count_total'] = (isset($params['count_total']) ? (bool)$params['count_total'] : true);
 		}
 
-		$dbResult = \Bitrix\Tasks\Integration\Rest\ElapsedTimeTable::getList($parameters, array(
-			'USER_ID' => \Bitrix\Tasks\Util\User::getId(),
-			'ROW_LIMIT' => $parameters['limit']
-		));
+		$dbResult = ElapsedTimeTable::getList($parameters, [
+			'USER_ID' => User::getId(),
+			'ROW_LIMIT' => $parameters['limit'],
+		]);
 
 		$result = $dbResult->fetchAll();
 		$count = $dbResult->getCount();
 
-		$navData = array(
+		$navData = [
 			'offset' => $parameters['offset'],
-			'count' => $count
-		);
+			'count' => $count,
+		];
 
-		return array($result, $navData);
+		return [$result, $navData];
 	}
 
 	private static function __resetSystemWideTasksCacheByTag($arData)
@@ -318,9 +293,9 @@ final class CTaskElapsedItem extends CTaskSubItemAbstract
 			elseif ($methodName === 'getlist')
 			{
 				$taskId = $argsParsed[0];
-				$order = ($argsParsed[1] == null? array() : $argsParsed[1]);
-				$filter = ($argsParsed[2] == null? array() : $argsParsed[2]);
-				$select = ($argsParsed[3] == null? array() : $argsParsed[3]);
+				$order = ($argsParsed[1] ?? []);
+				$filter = ($argsParsed[2] ?? []);
+				$select = ($argsParsed[3] ?? []);
 				$navParams = $argsParsed[4]['NAV_PARAMS'];
 
 				$byTaskId = false;
@@ -369,7 +344,7 @@ final class CTaskElapsedItem extends CTaskSubItemAbstract
 					'NAV_PARAMS' => $navParams,
 					'count_total' => true
 				);
-				list($elapsedItems, $navData) = self::getList($order, $filter, $select, $params);
+				[$elapsedItems, $navData] = self::getList($order, $filter, $select, $params);
 
 				$returnValue = $elapsedItems;
 			}

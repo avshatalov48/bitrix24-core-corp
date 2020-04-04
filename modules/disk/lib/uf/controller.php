@@ -567,6 +567,7 @@ class Controller extends Internals\Controller
 			),
 			$userStorage->getId() => array(
 				'id' => $userStorage->getId(),
+				'rootObjectId' => $userStorage->getRootObjectId(),
 				'name' => $userStorage->getProxyType()->getTitleForCurrentUser(),
 				'type' => 'user',
 				'link' => $urlUfController,
@@ -583,6 +584,7 @@ class Controller extends Internals\Controller
 			$storage = $group['STORAGE'];
 			$list[$storage->getId()] = array(
 				'id' => $storage->getId(),
+				'rootObjectId' => $storage->getRootObjectId(),
 				'name' => $group['NAME'],
 				'type' => 'group',
 				'link' => $urlUfController,
@@ -594,6 +596,7 @@ class Controller extends Internals\Controller
 		{
 			$list[$common->getId()] = array(
 				'id' => $common->getId(),
+				'rootObjectId' => $common->getRootObjectId(),
 				'name' => $common->getName(),
 				'type' => 'common',
 				'link' => $urlUfController,

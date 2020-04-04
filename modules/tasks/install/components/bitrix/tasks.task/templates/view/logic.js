@@ -20,12 +20,13 @@ BX.namespace('Tasks.Component');
 			switcherTabs: [],
 			elapsedTime: BX("task-switcher-elapsed-time"),
 			effective: BX("task-switcher-effective"),
-
 			createButton: BX("task-detail-create-button"),
 			importantButton: BX("task-detail-important-button"),
 			saveButton: BX("saveButton"),
 			cancelButton: BX("cancelButton")
 		};
+		this.openTime = this.parameters.componentData.OPEN_TIME;
+		this.analyticsData = {};
 
 		this.paramsToLazyLoadTabs = parameters.paramsToLazyLoadTabs || {};
 		this.listTabIdUploadedContent = {};
@@ -40,7 +41,6 @@ BX.namespace('Tasks.Component');
 		this.createButtonMenu = [];
 
 		this.query = new BX.Tasks.Util.Query({url: "/bitrix/components/bitrix/tasks.task/ajax.php"});
-		this.query.bindEvent("executed", BX.proxy(this.onQueryExecuted, this));
 
 		var self = this;
 		this.checkListChanged = false;
@@ -100,10 +100,17 @@ BX.namespace('Tasks.Component');
 			}
 		});
 
-		BX.Event.EventEmitter.subscribe(
-			'BX.Tasks.CheckListItem:CheckListChanged',
-			this.toggleFooterWrap.bind(this, true)
-		);
+		BX.Event.EventEmitter.subscribe('BX.Tasks.CheckListItem:CheckListChanged', function(eventData) {
+			var action = eventData.data.action;
+			var allowedActions = ['addAccomplice', 'fileUpload', 'tabIn'];
+
+			if (BX.util.in_array(action, allowedActions))
+			{
+				this.analyticsData[action] = 'Y';
+			}
+
+			this.toggleFooterWrap(true);
+		}.bind(this));
 
 		this.initFavorite();
 		this.initCreateButton();
@@ -310,33 +317,82 @@ BX.namespace('Tasks.Component');
 	BX.Tasks.Component.TaskView.prototype.saveCheckList = function()
 	{
 		var self = this;
+		var treeStructure = BX.Tasks.CheckListInstance.getTreeStructure();
 		var args = {
-			items: BX.Tasks.CheckListInstance.getTreeStructure().getRequestData(),
+			items: treeStructure.getRequestData(),
 			taskId: this.taskId,
-			userId: this.userId
+			userId: this.userId,
+			params: {
+				// openTime: this.openTime,
+				analyticsData: Object.assign(this.analyticsData, {
+					checklistCount: treeStructure.getDescendantsCount()
+				})
+			}
 		};
 
 		this.query.run('TasksTaskComponent.saveCheckList', args).then(function(result) {
 			if (result.isSuccess())
 			{
-				var treeStructure = BX.Tasks.CheckListInstance.getTreeStructure();
-				var traversedItems = result.getData().TRAVERSED_ITEMS;
+				var data = result.getData();
+				var preventCheckListSave = data.PREVENT_CHECKLIST_SAVE;
 
-				if (traversedItems)
+				if (preventCheckListSave)
 				{
-					Object.keys(traversedItems).forEach(function(nodeId) {
-						var item = treeStructure.findChild(nodeId);
-						if (item !== 'undefined' && item.fields.getId() === null)
-						{
-							item.fields.setId(traversedItems[nodeId].ID);
+					var popup = new BX.PopupWindow({
+						titleBar: 'Warning',
+						content: preventCheckListSave,
+						closeIcon: false,
+						buttons: [
+							new BX.PopupWindowButton({
+								className: 'popup-window-button',
+								text: 'Œ ',
+								events: {
+									click: function() {
+										popup.close();
+										BX.Tasks.CheckListInstance.deactivateLoading();
+										BX.removeClass(BX('saveButton'), 'ui-btn-wait');
+									}
+								}
+							})
+						],
+						events: {
+							onPopupClose: function()
+							{
+								this.destroy();
+							}
 						}
 					});
+					popup.show();
 				}
+				else
+				{
+					var openTime = data.OPEN_TIME;
+					var traversedItems = data.TRAVERSED_ITEMS;
 
-				BX.Tasks.CheckListInstance.saveStableTreeStructure();
-				BX.Tasks.CheckListInstance.deactivateLoading();
+					if (traversedItems)
+					{
+						var treeStructure = BX.Tasks.CheckListInstance.getTreeStructure();
 
-				self.toggleFooterWrap(false);
+						Object.keys(traversedItems).forEach(function(nodeId) {
+							var item = treeStructure.findChild(nodeId);
+							if (item !== 'undefined' && item.fields.getId() === null)
+							{
+								item.fields.setId(traversedItems[nodeId].ID);
+							}
+						});
+					}
+
+					if (openTime)
+					{
+						this.openTime = openTime;
+					}
+					this.analyticsData = {};
+
+					BX.Tasks.CheckListInstance.saveStableTreeStructure();
+					BX.Tasks.CheckListInstance.deactivateLoading();
+
+					self.toggleFooterWrap(false);
+				}
 			}
 
 			this.isSaving = false;
@@ -625,23 +681,18 @@ BX.namespace('Tasks.Component');
 
 	BX.Tasks.Component.TaskView.prototype.initViewer = function()
 	{
-		var fileAreas = ["task-detail-description", "task-detail-files", "task-comments-block", "task-files-block"];
-
-		for (var i = 0; i < fileAreas.length; i++)
-		{
-			var area = BX(fileAreas[i]);
+		var fileAreas = ['task-detail-description', 'task-detail-files', 'task-comments-block', 'task-files-block'];
+		fileAreas.forEach(function(areaName) {
+			var area = BX(areaName);
 			if (area)
 			{
-				top.BX.viewElementBind(
-					area,
-					{},
-					function(node){
-						return BX.type.isElementNode(node) &&
-							(node.getAttribute("data-bx-viewer") || node.getAttribute("data-bx-image"));
-					}
-				);
+				var currentTop = (typeof top.BX.viewElementBind === 'function' ? top.BX : BX);
+				currentTop.viewElementBind(area, {}, function(node) {
+					return BX.type.isElementNode(node)
+						&& (node.getAttribute('data-bx-viewer') || node.getAttribute('data-bx-image'));
+				});
 			}
-		}
+		});
 	};
 
 	BX.Tasks.Component.TaskView.prototype.initAjaxErrorHandler = function()

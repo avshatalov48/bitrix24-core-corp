@@ -40,7 +40,8 @@ class AccountFacebook extends Account
 			'endpoint' => 'me/accounts',
 			'fields' => array(
 				'fields' => 'id,name,category,access_token,tasks'
-			)
+			),
+			'has_pagination' => true
 		));
 
 		if (!$result->isSuccess())

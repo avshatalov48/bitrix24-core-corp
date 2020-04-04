@@ -22,21 +22,20 @@
 	    if (id > 0) {
 	      this.params.isNew = false;
 	      this.id = id;
+	    } else if (id !== 0) {
+	      this.id = id;
 	    }
 
 	    this.data = {
 	      MESSAGE: "",
-	      MESSAGE_TYPE: "text",
-	      FIELD_TYPE: 0,
-	      FIELD_WIDTH: 0,
-	      //out of date
-	      FIELD_HEIGHT: 0,
-	      //out of date
-	      FIELD_PARAM: "",
-	      //out of date
-	      ACTIVE: "Y",
-	      C_SORT: 0,
-	      COLOR: "" //out of date
+	      MESSAGE_TYPE: "text" //		IMAGE_ID : "",
+	      //		FIELD_TYPE : 0,
+	      //		FIELD_WIDTH : 0, //out of date
+	      //		FIELD_HEIGHT : 0, //out of date
+	      //		FIELD_PARAM : "", //out of date
+	      //		ACTIVE : "Y",
+	      //		C_SORT : 0,
+	      //		COLOR : "" //out of date
 
 	    };
 	    this.adjust(data);
@@ -88,7 +87,7 @@
 	answer.getItem = function (id, data) {
 	  var item = new answer(id, BX.type.isPlainObject(data) ? data : {});
 
-	  if (id > 0 && answer.repo[id]) {
+	  if (id !== 0 && answer.repo[id]) {
 	    answer.repo[id] = null;
 	    delete answer.repo[id];
 	    answer.repo[id] = item;
@@ -451,10 +450,45 @@
 	});
 
 	var bindForm = function bindForm(formId, gridId, gridInstanceId) {
-	  BX.bind(BX(formId, true), "submit", function () {
-	    prepareForm(BX(formId), gridId, gridInstanceId);
-	    return false;
-	  });
+	  var form = BX(formId, true);
+	  var controlName = "save";
+
+	  var func = function func(event) {
+	    BX.unbind(form, "submit", func);
+	    var grid = BX.Main.gridManager.getInstanceById(gridId);
+
+	    if (!grid.getRows().hasEditable()) {
+	      prepareForm(form, gridId, gridInstanceId);
+	      return true;
+	    }
+
+	    var func1 = function func1(someGrid) {
+	      if (someGrid === grid) {
+	        BX.removeCustomEvent(window, "Grid::updated", func1);
+	        form.appendChild(BX.create("INPUT", {
+	          "props": {
+	            "type": "hidden",
+	            "name": controlName,
+	            "value": "Y"
+	          }
+	        }));
+	        prepareForm(form, gridId, gridInstanceId);
+	        form.submit();
+	      }
+	    };
+
+	    BX.addCustomEvent(window, "Grid::updated", func1);
+	    grid.editSelectedSave();
+	    return BX.PreventDefault(event);
+	  };
+
+	  BX.bind(form, "submit", func);
+
+	  if (form.elements["apply"]) {
+	    BX.bind(form.elements["apply"], "mousedown", function () {
+	      controlName = "apply";
+	    });
+	  }
 
 	  var f = function f(e) {
 	    var el = e.target;
@@ -497,7 +531,7 @@
 
 	  if (grid) {
 	    var rows = grid.getRows().getRows();
-	    var attrs, j, id;
+	    var attrs, id;
 	    rows.forEach(function (current) {
 	      if (current.getIndex() < 1) return;
 	      id = current.getId();
@@ -510,18 +544,30 @@
 	      }));
 	      attrs = BX.parseJSON(BX.data(current.getNode(), "item"), current);
 
-	      if (BX.type.isPlainObject(attrs)) {
-	        for (j in attrs) {
-	          if (attrs.hasOwnProperty(j)) {
-	            form.appendChild(BX.create('INPUT', {
-	              props: {
-	                type: "hidden",
-	                name: "ANSWER[" + id + "][" + String(j).toUpperCase() + "]",
-	                value: attrs[j]
-	              }
-	            }));
+	      var func = function func(prefix, params, depth) {
+	        var key;
+
+	        for (var j in params) {
+	          if (params.hasOwnProperty(j)) {
+	            key = "[" + (depth > 0 ? j : String(j).toUpperCase()) + "]";
+
+	            if (BX.type.isPlainObject(params[j])) {
+	              func(prefix + key, params[j], depth + 1);
+	            } else {
+	              form.appendChild(BX.create('INPUT', {
+	                props: {
+	                  type: "hidden",
+	                  name: prefix + key,
+	                  value: params[j]
+	                }
+	              }));
+	            }
 	          }
 	        }
+	      };
+
+	      if (BX.type.isPlainObject(attrs)) {
+	        func("ANSWER[" + id + "]", attrs, 0);
 	      }
 	    });
 	  }

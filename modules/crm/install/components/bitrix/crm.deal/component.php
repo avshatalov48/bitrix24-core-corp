@@ -51,6 +51,7 @@ $arDefaultUrlTemplates404 = array(
 	'calendarcategory' => 'calendar/category/#category_id#/',
 	'edit' => 'edit/#deal_id#/',
 	'show' => 'show/#deal_id#/',
+	'merge' => 'merge/',
 	'details' => 'details/#deal_id#/',
 	'calendar' => 'calendar/',
 	'automation' => 'automation/#category_id#/',
@@ -127,6 +128,8 @@ else
 		$componentPage = 'card';
 	else if (isset($_REQUEST['show']))
 		$componentPage = 'show';
+	else if (isset($_REQUEST['merge']))
+		$componentPage = 'merge';
 	else if (isset($_REQUEST['details']))
 		$componentPage = 'details';
 	else if (isset($_REQUEST['import']))
@@ -265,6 +268,20 @@ elseif($componentPage === 'kanbancategory')
 elseif($componentPage === 'calendarcategory')
 {
 	$componentPage = 'calendar';
+}
+
+if(isset($_GET['id']))
+{
+	$entityIDs = null;
+	if(is_array($_GET['id']))
+	{
+		$entityIDs = $_GET['id'];
+	}
+	else
+	{
+		$entityIDs = explode(',', $_GET['id']);
+	}
+	$arResult['VARIABLES']['deal_ids'] = array_map('intval', $entityIDs);
 }
 
 if(\Bitrix\Crm\Settings\LayoutSettings::getCurrent()->isSliderEnabled()

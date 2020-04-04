@@ -176,6 +176,7 @@ include 'editors.php';
 							schemeInline: schemeInline,
 							userFieldManagerInline: userFieldManagerInline,
 							contactCenterShow: <?= $arParams['HIDE_CC'] ? 'false' : 'true';?>,
+							restDemoBlockShow: <?= $arParams['HIDE_REST'] ? 'false' : 'true';?>,
 							reckonActivitylessItems: <?= \CCrmUserCounterSettings::getValue(\CCrmUserCounterSettings::ReckonActivitylessItems, true) ? 'true' : 'false';?>,
 							ajaxHandlerPath: ajaxHandlerPath,
 							entityType: "<?= \CUtil::JSEscape($arParams['ENTITY_TYPE_CHR'])?>",
@@ -221,6 +222,12 @@ include 'editors.php';
 								},
 								contact_center: {
 									url: "<?= $isBitrix24 ? '/contact_center/?from=kanban' : '/services/contact_center/?from=kanban';?>"
+								},
+								rest_demo: {
+									url: "<?= $arParams['REST_DEMO_URL'];?>",
+									params: {
+										width: 940
+									}
 								}
 							},
 							categories: <?= \CUtil::phpToJsObject(array_values($arResult['CATEGORIES']));?>

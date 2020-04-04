@@ -412,7 +412,7 @@ class CDiskFileViewComponent extends DiskComponent implements Controllerable, Si
 
 	protected function processActionShowBp()
 	{
-		$this->application->setTitle($this->storage->getProxyType()->getTitleForCurrentUser());
+		$this->application->setTitle(htmlspecialcharsbx($this->storage->getProxyType()->getTitleForCurrentUser()));
 
 		$viewFile = CComponentEngine::makePathFromTemplate($this->arParams['PATH_TO_FILE_VIEW'], array(
 			'FILE_ID' => $this->file->getId(),

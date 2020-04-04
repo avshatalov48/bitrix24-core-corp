@@ -237,17 +237,6 @@ class CMailClientConfigComponent extends CBitrixComponent implements Main\Engine
 			unset($this->arParams['SERVICE']['oauth_user']);
 		}
 
-		if (Main\ModuleManager::isModuleInstalled('bitrix24'))
-		{
-			if (empty($this->arParams['SERVICE']['oauth_user']) && !empty($this->arParams['SERVICE']['oauth']))
-			{
-				if ($this->arParams['SERVICE']['oauth']->getServiceName() == 'google')
-				{
-					unset($this->arParams['SERVICE']['oauth']);
-				}
-			}
-		}
-
 		$ownerId = $new ? $USER->getId() : $mailbox['USER_ID'];
 		$access = array(
 			'users' => array(
@@ -707,7 +696,7 @@ class CMailClientConfigComponent extends CBitrixComponent implements Main\Engine
 			return $this->error($errors instanceof Main\ErrorCollection ? $errors : $error);
 		}
 
-		if (!empty($mailboxData['EMAIL']) && $this->arParams['IS_SMTP_AVAILABLE'])
+		if ($this->arParams['IS_SMTP_AVAILABLE'] && !(empty($fields['use_smtp']) && empty($mailbox)))
 		{
 			$senderFields = array(
 				'NAME' => $mailboxData['USERNAME'],
@@ -890,9 +879,14 @@ class CMailClientConfigComponent extends CBitrixComponent implements Main\Engine
 					}
 
 					$mailboxData['OPTIONS']['crm_lead_resp'] = array();
-					if (!empty($fields['crm_queue']['U']))
+					$queueUsers = [];
+					if (!empty($fields['crm_queue']))
 					{
-						foreach ((array) $fields['crm_queue']['U'] as $item)
+						$queueUsers = (!empty($fields['crm_queue']['U']) ? $fields['crm_queue']['U'] : $fields['crm_queue']);
+					}
+					if (!empty($queueUsers))
+					{
+						foreach ((array) $queueUsers as $item)
 						{
 							if (preg_match('/^U(\d+)$/i', trim($item), $matches))
 								$mailboxData['OPTIONS']['crm_lead_resp'][] = (int) $matches[1];
@@ -930,6 +924,8 @@ class CMailClientConfigComponent extends CBitrixComponent implements Main\Engine
 			), $mailboxData);
 
 			$result = $mailboxId = \CMailbox::add($mailboxData);
+
+			addEventToStatFile('mail', 'add_mailbox', $service['NAME'], ($result > 0 ? 'success' : 'failed'));
 		}
 		else
 		{
@@ -955,7 +951,21 @@ class CMailClientConfigComponent extends CBitrixComponent implements Main\Engine
 
 		$ownerAccessCode = 'U' . (empty($mailbox) ? $USER->getId() : $mailbox['USER_ID']);
 		$access = array($ownerAccessCode);
-		if (!empty($fields['access']) && is_array($fields['access']))
+
+		if (!empty($fields['access_dest']) && is_array($fields['access_dest']))
+		{
+			$access = array_merge(
+				$access,
+				array_filter(
+					$fields['access_dest'],
+					function ($item)
+					{
+						return preg_match('/^(DR|U)\d+$/i', trim($item));
+					}
+				)
+			);
+		}
+		elseif (!empty($fields['access']) && is_array($fields['access'])) // old
 		{
 			foreach ($fields['access'] as $code => $list)
 			{

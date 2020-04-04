@@ -81,7 +81,7 @@ if (($ids = $lAdmin->GroupAction()) && $saleModulePermissions >= "W")
 				if ($id == \Bitrix\Sale\Cashbox\Cashbox1C::getId())
 				{
 					$lAdmin->AddGroupError(GetMessage("SPSAN_ERROR_DELETE_1C"), $id);
-					continue;
+					continue 2;
 				}
 
 				$result = Cashbox\Manager::delete($id);
@@ -123,12 +123,6 @@ if (($ids = $lAdmin->GroupAction()) && $saleModulePermissions >= "W")
 		$adminSidePanelHelper->sendSuccessResponse();
 	}
 }
-
-if ($publicMode)
-{
-	$filter['!ID'] = Cashbox\Cashbox1C::getId();
-}
-
 $params = array(
 	'select' => array('*'),
 	'filter' => $filter

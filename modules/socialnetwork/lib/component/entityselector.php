@@ -201,7 +201,7 @@ abstract class EntitySelector extends \CBitrixComponent implements Main\Engine\C
 	{
 		$result = [];
 
-		if (\CSocNetUser::IsCurrentUserModuleAdmin($this->arParams['SITE_ID']))
+		if (\CSocNetUser::isCurrentUserModuleAdmin($this->arParams['SITE_ID']))
 		{
 			$filter = [
 				'=LANDING' => 'Y',
@@ -283,7 +283,7 @@ abstract class EntitySelector extends \CBitrixComponent implements Main\Engine\C
 		$this->getData();
 
 		$intranetInstalled = Main\Loader::includeModule('intranet');
-		$dateTimeformat = $DB->DateFormatToPHP(FORMAT_DATETIME);
+		$dateTimeformat = $DB->dateFormatToPHP(FORMAT_DATETIME);
 
 		$this->arResult = [
 			'FILTER_ID' => $this->getFilterId(),

@@ -34,6 +34,7 @@ $MESS["MAIN_USER_FILTER_WORK_COUNTRY"] = "Страна компании";
 $MESS["MAIN_USER_FILTER_WORK_PHONE"] = "Рабочий телефон";
 $MESS["MAIN_USER_FILTER_POSITION"] = "Должность";
 $MESS["MAIN_USER_FILTER_COMPANY"] = "Компания";
+$MESS["MAIN_USER_FILTER_WORK_DEPARTMENT"] = "Департамент / Отдел";
 $MESS["MAIN_USER_FILTER_DEPARTMENT"] = "Подразделение";
 $MESS["MAIN_USER_FILTER_TAGS"] = "Интересы";
 $MESS["MAIN_USER_FILTER_Y"] = "Да";

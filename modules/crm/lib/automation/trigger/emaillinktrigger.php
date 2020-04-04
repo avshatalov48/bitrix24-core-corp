@@ -29,7 +29,10 @@ class EmailLinkTrigger extends BaseTrigger
 			&& !empty($trigger['APPLY_RULES']['url'])
 		)
 		{
-			return (string)$trigger['APPLY_RULES']['url'] === (string)$this->getInputData('URL');
+			$inputUrl = (string) $this->getInputData('URL');
+			$triggerUrl = (string) $trigger['APPLY_RULES']['url'];
+
+			return (strpos($inputUrl, $triggerUrl) === 0);
 		}
 		return true;
 	}

@@ -1,0 +1,35 @@
+<?
+$MESS["IBLOCK_FIELD_ID"] = "Element ID";
+$MESS["IBLOCK_FIELD_TIMESTAMP_X"] = "Element Last Modified On";
+$MESS["IBD_FIELD_MODYFIED"] = "Modified by";
+$MESS["IBLOCK_FIELD_DATE_CREATE"] = "Element Created On";
+$MESS["IBLOCK_FIELD_IBLOCK_ID"] = "Information Block ID";
+$MESS["IBLOCK_FIELD_ACTIVE"] = "Element Is Active";
+$MESS["IBLOCK_FIELD_DATE_ACTIVE_FROM"] = "Element Active From";
+$MESS["IBLOCK_FIELD_DATE_ACTIVE_TO"] = "Element Active Until";
+$MESS["IBLOCK_FIELD_SORT"] = "Element Sort Weight";
+$MESS["IBLOCK_FIELD_NAME"] = "Element Title";
+$MESS["IBLOCK_FIELD_PREVIEW_PICTURE"] = "Preview Image";
+$MESS["IBLOCK_FIELD_PREVIEW_TEXT"] = "Preview Text";
+$MESS["IBLOCK_FIELD_PREVIEW_TEXT_TYPE"] = "Preview Text Type";
+$MESS["IBLOCK_DESC_TYPE_TEXT"] = "Text";
+$MESS["IBLOCK_FIELD_DETAIL_PICTURE"] = "Full Image";
+$MESS["IBLOCK_FIELD_DETAIL_TEXT"] = "Full Text";
+$MESS["IBLOCK_FIELD_DETAIL_TEXT_TYPE"] = "Full Text Type";
+$MESS["IBLOCK_FIELD_CODE"] = "Mnemonic Code";
+$MESS["IBLOCK_FIELD_XML_ID"] = "External ID";
+$MESS["IBD_FIELD_CREATED"] = "Created by";
+$MESS["IBD_OPERATION_READ"] = "Read";
+$MESS["IBD_OPERATION_WRITE"] = "Write";
+$MESS["IBD_DOCUMENT_AUTHOR"] = "Author";
+$MESS["IBLOCK_FIELD_FILE_NAME"] = "Name";
+$MESS["IBLOCK_FIELD_FILE_DESCRIPTION"] = "Description";
+$MESS["IBLOCK_FIELD_FILE_SIZE"] = "File Size";
+$MESS["IBLOCK_FIELD_FILE_PATH"] = "Path to a real file";
+$MESS["IBD_FIELD_IDENTIFICATOR"] = " (ID)";
+$MESS["IBD_FIELD_NAME_LASTNAME"] = " (Name Surname)";
+$MESS["IBD_TEXT_001"] = "The document [#PARENT_ID#] #PARENT_NAME# has been replaced with version [#ID#] #NAME#";
+$MESS["IBD_TEXT_002"] = "A new version of [#ID#] #NAME# has been created for [#PARENT_ID#] #PARENT_NAME#";
+$MESS["BPVDX_YES"] = "Yes";
+$MESS["BPVDX_NO"] = "No";
+?>

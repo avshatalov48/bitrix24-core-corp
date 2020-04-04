@@ -330,7 +330,7 @@ class Utils
 		static $settings = array();
 
 		$elementId = (int)$elementId;
-		$key = $urlType . '_' . $elementId;
+		$key = (string)$urlType . '_' . $elementId;
 
 		if (isset($urls[$key]))
 		{
@@ -414,10 +414,14 @@ class Utils
 
 		$result = new PublicActionResult();
 		$result->setResult(true);
+		$allowedKeys = ['google_images_key'];
 
 		foreach ($settings as $key => $value)
 		{
-			\Bitrix\Main\Config\Option::set('landing', $key, $value);
+			if (in_array($key, $allowedKeys))
+			{
+				\Bitrix\Main\Config\Option::set('landing', $key, $value);
+			}
 		}
 
 		return $result;

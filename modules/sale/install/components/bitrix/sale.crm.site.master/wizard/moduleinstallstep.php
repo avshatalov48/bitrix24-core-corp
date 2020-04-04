@@ -363,6 +363,8 @@ class ModuleInstallStep extends \CWizardStep
 
 		if (!Main\ModuleManager::isModuleInstalled($moduleId))
 		{
+			@set_time_limit(3600);
+
 			$module = \CModule::CreateModuleObject($moduleId);
 			if (!is_object($module))
 			{
@@ -392,6 +394,15 @@ class ModuleInstallStep extends \CWizardStep
 				return false;
 			}
 
+			$DB->RunSQLBatch(
+				$_SERVER["DOCUMENT_ROOT"].'/bitrix/modules/'.$moduleId.'/install/db/'.strtolower($DB->type).'/install.sql'
+			);
+
+			if ($this->checkModuleTables($moduleId) === false)
+			{
+				return false;
+			}
+
 			$module->InstallEvents();
 
 			/** @noinspection PhpVoidFunctionResultUsedInspection */
@@ -403,6 +414,54 @@ class ModuleInstallStep extends \CWizardStep
 				}
 
 				return false;
+			}
+		}
+
+		return true;
+	}
+
+	/**
+	 * @param $module
+	 * @return bool
+	 */
+	private function checkModuleTables($module)
+	{
+		/** @noinspection PhpVariableNamingConventionInspection */
+		global $DB;
+
+		$fileDb = $_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/'.$module.'/install/db/mysql/install.sql';
+		if (!file_exists($fileDb))
+			$fileDb = $_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/'.$module.'/install/mysql/install.sql';
+
+		if (file_exists($fileDb))
+		{
+			$query = file_get_contents($fileDb);
+			if ($query === false)
+			{
+				$this->SetError(Loc::getMessage("SALE_CSM_WIZARD_MODULEINSTALLSTEP_DB_FILE_ERROR", [
+					"#FILE#" => $fileDb
+				]));
+				return false;
+			}
+			$queryList = $DB->ParseSQLBatch(str_replace("\r", "", $query));
+			foreach($queryList as $queryItem)
+			{
+				if (preg_match('#^(CREATE TABLE )(IF NOT EXISTS)? *`?([a-z0-9_]+)`?(.*);?$#mis', $queryItem, $regs))
+				{
+					$table = $regs[3];
+					$bTableExists = $DB->Query('SHOW TABLES LIKE "'.$table.'"')->Fetch();
+					if (!$bTableExists)
+					{
+						if (!$DB->Query($queryItem, true))
+						{
+							$this->SetError(Loc::getMessage("SALE_CSM_WIZARD_MODULEINSTALLSTEP_DB_TABLE_ERROR", [
+								"#TABLE#" => $table
+							]));
+
+							return false;
+						}
+					}
+				}
 			}
 		}
 

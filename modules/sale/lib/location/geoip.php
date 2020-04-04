@@ -277,21 +277,21 @@ class GeoIp
 		$result = true;
 		$checked = false;
 
-		if(strlen($country) > 0)
+		if($country !== '')
 		{
 			$result = $country === $name;
 			$checked = true;
 		}
 
-		if((!$checked || !$result) && strlen($region) > 0)
+		if((!$checked || !$result) && $region !== '')
 		{
-			$result = $region === $region;
+			$result = $region === $name;
 			$checked = true;
 		}
 
-		if((!$checked || !$result) && strlen($subregion) > 0)
+		if((!$checked || !$result) && $subregion !== '')
 		{
-			$result = $subregion === $subregion;
+			$result = $subregion === $name;
 		}
 
 		return $result;

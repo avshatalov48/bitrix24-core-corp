@@ -3,8 +3,7 @@
 		<div class="row landing-block-inner">
 			<div class="landing-block-node-card js-animation fadeInLeft col-md-6 col-lg-4 g-mb-30">
 				<!-- Article -->
-				<article
-						class="h-100 text-center u-block-hover u-block-hover__additional--jump g-brd-around g-bg-gray-light-v5 g-brd-gray-light-v4 d-flex flex-column">
+				<article class="h-100 text-center u-block-hover u-block-hover__additional--jump g-brd-around g-bg-gray-light-v5 g-brd-gray-light-v4 d-flex flex-column">
 					<!-- Article Header -->
 					<header class="landing-block-node-card-container-top g-bg-primary g-pa-20">
 						<h4 class="landing-block-node-card-title g-font-size-30 g-font-cormorant-infant font-italic g-font-weight-700 g-color-white mb-0">
@@ -49,8 +48,7 @@
 
 			<div class="landing-block-node-card js-animation fadeInLeft col-md-6 col-lg-4 g-mb-30">
 				<!-- Article -->
-				<article
-						class="h-100 text-center u-block-hover u-block-hover__additional--jump g-brd-around g-bg-gray-light-v5 g-brd-gray-light-v4 d-flex flex-column">
+				<article class="h-100 text-center u-block-hover u-block-hover__additional--jump g-brd-around g-bg-gray-light-v5 g-brd-gray-light-v4 d-flex flex-column">
 					<!-- Article Header -->
 					<header class="landing-block-node-card-container-top g-bg-primary g-pa-20">
 						<h4 class="landing-block-node-card-title g-font-size-30 g-font-cormorant-infant font-italic g-font-weight-700 g-color-white mb-0">
@@ -95,8 +93,7 @@
 
 			<div class="landing-block-node-card js-animation fadeInLeft col-md-6 col-lg-4 g-mb-30">
 				<!-- Article -->
-				<article
-						class="h-100 text-center u-block-hover u-block-hover__additional--jump g-brd-around g-bg-gray-light-v5 g-brd-gray-light-v4 d-flex flex-column">
+				<article class="h-100 text-center u-block-hover u-block-hover__additional--jump g-brd-around g-bg-gray-light-v5 g-brd-gray-light-v4 d-flex flex-column">
 					<!-- Article Header -->
 					<header class="landing-block-node-card-container-top g-bg-primary g-pa-20">
 						<h4 class="landing-block-node-card-title g-font-size-30 g-font-cormorant-infant font-italic g-font-weight-700 g-color-white mb-0">

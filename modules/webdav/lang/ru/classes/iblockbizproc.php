@@ -1,0 +1,35 @@
+<?
+$MESS["IBLOCK_FIELD_ID"] = "ID элемента";
+$MESS["IBLOCK_FIELD_TIMESTAMP_X"] = "Дата изменения элемента";
+$MESS["IBD_FIELD_MODYFIED"] = "Кем изменен";
+$MESS["IBLOCK_FIELD_DATE_CREATE"] = "Дата создания элемента";
+$MESS["IBLOCK_FIELD_IBLOCK_ID"] = "ID информационного блока";
+$MESS["IBLOCK_FIELD_ACTIVE"] = "Активность элемента";
+$MESS["IBLOCK_FIELD_DATE_ACTIVE_FROM"] = "Дата начала активности элемента";
+$MESS["IBLOCK_FIELD_DATE_ACTIVE_TO"] = "Дата окончания активности элемента";
+$MESS["IBLOCK_FIELD_SORT"] = "Индекс сортировки элемента";
+$MESS["IBLOCK_FIELD_NAME"] = "Название элемента";
+$MESS["IBLOCK_FIELD_PREVIEW_PICTURE"] = "Изображение для предпросмотра";
+$MESS["IBLOCK_FIELD_PREVIEW_TEXT"] = "Текст для предпросмотра";
+$MESS["IBLOCK_FIELD_PREVIEW_TEXT_TYPE"] = "Тип текста для предпросмотра";
+$MESS["IBLOCK_DESC_TYPE_TEXT"] = "Текст";
+$MESS["IBLOCK_FIELD_DETAIL_PICTURE"] = "Изображение для просмотра";
+$MESS["IBLOCK_FIELD_DETAIL_TEXT"] = "Текст для просмотра";
+$MESS["IBLOCK_FIELD_DETAIL_TEXT_TYPE"] = "Тип текста для просмотра";
+$MESS["IBLOCK_FIELD_CODE"] = "Мнемонический код";
+$MESS["IBLOCK_FIELD_XML_ID"] = "Внешний ключ";
+$MESS["IBD_FIELD_CREATED"] = "Кем создан";
+$MESS["IBD_OPERATION_READ"] = "Чтение";
+$MESS["IBD_OPERATION_WRITE"] = "Запись";
+$MESS["IBD_DOCUMENT_AUTHOR"] = "Автор";
+$MESS["IBLOCK_FIELD_FILE_NAME"] = "Имя файла";
+$MESS["IBLOCK_FIELD_FILE_DESCRIPTION"] = "Описание файла";
+$MESS["IBLOCK_FIELD_FILE_SIZE"] = "Размер файла";
+$MESS["IBLOCK_FIELD_FILE_PATH"] = "Путь к реальному файлу";
+$MESS["IBD_FIELD_IDENTIFICATOR"] = " (идентификатор)";
+$MESS["IBD_FIELD_NAME_LASTNAME"] = " (Имя Фамилия)";
+$MESS["IBD_TEXT_001"] = "Документ [#PARENT_ID#] #PARENT_NAME# заменен версией [#ID#] #NAME#";
+$MESS["IBD_TEXT_002"] = "Создана версия [#ID#] #NAME# для документа [#PARENT_ID#] #PARENT_NAME#";
+$MESS["BPVDX_YES"] = "Да";
+$MESS["BPVDX_NO"] = "Нет";
+?>

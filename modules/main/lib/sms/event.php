@@ -169,14 +169,18 @@ class Event
 				$filter->where(Query::filter()
 					->logic('or')
 					->where('LANGUAGE_ID', $this->languageId)
+					->where('LANGUAGE_ID', '')
 					->whereNull('LANGUAGE_ID')
 				);
 			}
 		}
 
-		return TemplateTable::getList([
+		$res = TemplateTable::getList([
 			'select' => ['*', 'SITES.SITE_NAME', 'SITES.SERVER_NAME', 'SITES.LID'],
 			'filter' => $filter,
-		])->fetchCollection();
+		]);
+
+		return $res->fetchCollection();
+
 	}
 }

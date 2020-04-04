@@ -13,4 +13,5 @@ class DealAnalyticBoard extends Base
 		$additionalWidgetGuid = 'deal_category_widget';
 		$this->resetWidgetRows($additionalWidgetGuid);
 	}
+
 }

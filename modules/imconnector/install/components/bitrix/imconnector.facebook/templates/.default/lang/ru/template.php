@@ -27,3 +27,4 @@ $MESS["IMCONNECTOR_COMPONENT_FACEBOOK_USER"] = "Аккаунт";
 $MESS["IMCONNECTOR_COMPONENT_FACEBOOK_INFO"] = "Информация";
 $MESS["IMCONNECTOR_COMPONENT_FACEBOOK_CHANGE_ANY_TIME"] = "Вы можете в любое время изменить или отключить";
 $MESS["IMCONNECTOR_COMPONENT_FACEBOOK_CONNECTED_PAGE"] = "Подключенная страница";
+$MESS["IMCONNECTOR_COMPONENT_FACEBOOK_NO_SPECIFIC_PAGE"] = "Нет нужной страницы? Возможные причины описаны #A#в статье.#A_END#";

@@ -270,17 +270,35 @@ class BitrixVue
 			phrases = BX.message;
 		}
 
-		for (let message in phrases)
+		if (Array.isArray(phrasePrefix))
 		{
-			if (!phrases.hasOwnProperty(message))
+			for (let message in phrases)
 			{
-				continue
+				if (!phrases.hasOwnProperty(message))
+				{
+					continue
+				}
+				if (!phrasePrefix.find((element) => message.toString().startsWith(element)))
+				{
+					continue;
+				}
+				result[message] = phrases[message];
 			}
-			if (!message.startsWith(phrasePrefix))
+		}
+		else
+		{
+			for (let message in phrases)
 			{
-				continue;
+				if (!phrases.hasOwnProperty(message))
+				{
+					continue
+				}
+				if (!message.startsWith(phrasePrefix))
+				{
+					continue;
+				}
+				result[message] = phrases[message];
 			}
-			result[message] = phrases[message];
 		}
 
 		return Object.freeze(result);

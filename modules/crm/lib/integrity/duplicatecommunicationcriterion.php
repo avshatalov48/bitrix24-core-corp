@@ -115,8 +115,32 @@ class DuplicateCommunicationCriterion extends DuplicateCriterion
 		}
 		return $result;
 	}
-	public static function prepareEntityMultifieldValues($entityTypeID, $entityID)
+
+	protected static function invalidateCache($entityTypeID, $entityID)
 	{
+		if(isset(self::$entityMultiFields[$entityTypeID]))
+		{
+			unset(self::$entityMultiFields[$entityTypeID][$entityID]);
+		}
+	}
+
+	public static function processMultifieldsChange($entityTypeID, $entityID)
+	{
+		self::invalidateCache($entityTypeID, $entityID);
+	}
+
+	public static function prepareEntityMultifieldValues($entityTypeID, $entityID, array $options = null)
+	{
+		if(!is_array($options))
+		{
+			$options = array();
+		}
+
+		if(isset($options['invalidateCache']) && $options['invalidateCache'])
+		{
+			self::invalidateCache($entityTypeID, $entityID);
+		}
+
 		if(isset(self::$entityMultiFields[$entityTypeID])
 			&& is_array(self::$entityMultiFields[$entityTypeID])
 			&& isset(self::$entityMultiFields[$entityTypeID][$entityID])
@@ -1017,6 +1041,20 @@ class DuplicateCommunicationCriterion extends DuplicateCriterion
 			$results[$type][] = $value;
 		}
 		return $results;
+	}
+	public function getSummary()
+	{
+		self::includeLangFile();
+
+		/*
+		 * CRM_DUP_CRITERION_COMM_PHONE_SUMMARY
+		 * CRM_DUP_CRITERION_COMM_EMAIL_SUMMARY
+		 */
+
+		return GetMessage(
+			"CRM_DUP_CRITERION_COMM_{$this->communicationType}_SUMMARY",
+			array('#DESCR#'=> $this->getMatchDescription())
+		);
 	}
 	public function getTextTotals($count, $limit = 0)
 	{

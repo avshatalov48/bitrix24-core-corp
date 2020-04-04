@@ -34,7 +34,15 @@ class CSocServYandexAuth extends CSocServAuth
 		return array(
 			array("yandex_appid", GetMessage("socserv_yandex_client_id"), "", array("text", 40)),
 			array("yandex_appsecret", GetMessage("socserv_yandex_client_secret"), "", array("text", 40)),
-			array("note"=>GetMessage("socserv_yandex_note", array('#URL#'=>CYandexOAuthInterface::GetRedirectURI()))),
+			array(
+				'note' => getMessage(
+					'socserv_yandex_note_2',
+					array(
+						'#URL#' => \CYandexOAuthInterface::getRedirectUri(),
+						'#MAIL_URL#' => \CHttp::urn2uri('/bitrix/tools/mail_oauth.php'),
+					)
+				),
+			),
 		);
 	}
 
@@ -88,8 +96,11 @@ class CSocServYandexAuth extends CSocServAuth
 		$userId = intval($this->userId);
 		if($userId > 0)
 		{
-			$dbSocservUser = CSocServAuthDB::GetList(array(), array('USER_ID' => $userId, "EXTERNAL_AUTH_ID" => static::ID), false, false, array("OATOKEN", "REFRESH_TOKEN", "OATOKEN_EXPIRES"));
-			if($arOauth = $dbSocservUser->Fetch())
+			$dbSocservUser = \Bitrix\Socialservices\UserTable::getList([
+				'filter' => ['=USER_ID' => $userId, "=EXTERNAL_AUTH_ID" => static::ID],
+				'select' => ["OATOKEN", "REFRESH_TOKEN", "OATOKEN_EXPIRES"]
+			]);
+			if($arOauth = $dbSocservUser->fetch())
 			{
 				$accessToken = $arOauth["OATOKEN"];
 			}

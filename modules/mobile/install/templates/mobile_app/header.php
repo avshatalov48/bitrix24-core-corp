@@ -45,9 +45,7 @@ $APPLICATION->IncludeComponent("bitrix:mobile.data", "", Array(
 	<meta http-equiv="Content-Type" content="text/html;charset=<?= SITE_CHARSET ?>"/>
 	<meta name="format-detection" content="telephone=no">
 	<?
-	//commented for the Project Quality Control test
-	//$APPLICATION->ShowHead();
-
+	$APPLICATION->ShowHead();
 	if (!defined("BX_DONT_INCLUDE_MOBILE_TEMPLATE_CSS"))
 	{
 		$APPLICATION->SetAdditionalCSS(SITE_TEMPLATE_PATH . (defined('MOBILE_TEMPLATE_CSS') ? MOBILE_TEMPLATE_CSS : "/common_styles.css"));
@@ -63,10 +61,6 @@ $APPLICATION->IncludeComponent("bitrix:mobile.data", "", Array(
 		);
 	}
 
-	$APPLICATION->AddBufferContent(array(&$APPLICATION, "GetHeadStrings"), 'BEFORE_CSS');
-	$APPLICATION->ShowHeadStrings();
-	$APPLICATION->ShowHeadScripts();
-	$APPLICATION->AddBufferContent(array(&$APPLICATION, "GetCSS"), true, true, AssetShowTargetType::TEMPLATE_PAGE);
 	CJSCore::Init(array('ajax', 'mobile_tools'));
 	?>
 	<title><?$APPLICATION->ShowTitle()?></title>

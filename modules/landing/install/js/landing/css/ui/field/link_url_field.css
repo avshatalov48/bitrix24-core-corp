@@ -172,3 +172,18 @@
 		box-shadow: 0 0 0 0 rgba(102, 175, 233, 0);
 	}
 }
+
+.landing-ui-field-link-new-label {
+	font-family: OpenSans-Bold, Helvetca, Arial, sans-sarif, serif;
+	font-size: 8px;
+	color: #ffffff;
+	background: #2FC6F6;
+	position: absolute;
+	top: -7px;
+	right: 10px;
+	height: 14px;
+	line-height: 14px;
+	padding-left: 4px;
+	padding-right: 4px;
+	border-radius: 12px;
+}

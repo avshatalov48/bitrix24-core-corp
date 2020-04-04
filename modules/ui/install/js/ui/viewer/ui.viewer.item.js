@@ -559,7 +559,7 @@
 				text: this.content
 			});
 
-			contentNode.style.fontSize = '18px';
+			contentNode.style.fontSize = '14px';
 			contentNode.style.color = 'white';
 
 			return contentNode;
@@ -787,7 +787,7 @@
 									className: hljs.getLanguage(ext)? ext : 'plaintext'
 								},
 								style: {
-									fontSize: '18px',
+									fontSize: '14px',
 									textAlign: 'left'
 								},
 								text: this.content

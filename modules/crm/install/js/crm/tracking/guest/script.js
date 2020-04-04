@@ -221,9 +221,16 @@
 				return;
 			}
 
+			var current = this.current({previous: false});
+			if (!current.pages.list)
+			{
+				return;
+			}
+
 			var data = this.previous();
 			data = data || {};
 			data.list = data.list || [];
+
 			data.list.push(this.current({previous: false}));
 			if (data.list.length > this.maxCount)
 			{
@@ -261,7 +268,10 @@
 					return id;
 				}
 
-				id = ga.getAll()[0].get('clientId');
+				if (ga.getAll)
+				{
+					id = ga.getAll()[0].get('clientId');
+				}
 			}
 
 			if (id)
@@ -323,14 +333,26 @@
 		lifespan: 28,
 		lsPageKey: 'b24_crm_guest_utm',
 		tags: ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term'],
+		sameTagLifeSpan: 3600,
 		list: function ()
 		{
 			return this.getData().list || {};
 		},
 		isSourceDetected: function ()
 		{
-			var tag = webPacker.url.parameter.get(this.tags[0]);
-			return tag !== null && tag;
+			var key = this.tags[0];
+			var tag = webPacker.url.parameter.get(key);
+			if (tag === null || !tag)
+			{
+				return false;
+			}
+
+			if (this.list()[key] !== tag)
+			{
+				return true;
+			}
+
+			return (this.getTimestamp(true) - this.getTimestamp()) > this.sameTagLifeSpan;
 		},
 		getGCLid: function ()
 		{

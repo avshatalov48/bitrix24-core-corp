@@ -34,6 +34,8 @@ foreach ($arParams['SEF_URL_TEMPLATES'] as $code => $url)
 		'ACTION_FOLDER' => $arParams['ACTION_FOLDER'],
 		'PAGE_URL_LANDING_EDIT' => $arParams['PAGE_URL_LANDING_EDIT'],
 		'PAGE_URL_LANDING_VIEW' => $arParams['PAGE_URL_LANDING_VIEW'],
+		'TILE_MODE' => $arParams['TILE_LANDING_MODE'],
+		'DRAFT_MODE' => $arParams['DRAFT_MODE'],
 		'SEF' => $sef,
 		'AGREEMENT' => $arResult['AGREEMENT']
 	),

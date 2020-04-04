@@ -6,6 +6,7 @@ export default class Barcode
 	{
 		this._id = props.id || 0;
 		this._value = props.value || '';
+		this._readonly = props.readonly;
 
 		this._node = null;
 		this._inputNode = null;
@@ -15,7 +16,9 @@ export default class Barcode
 
 	render()
 	{
-		this._inputNode = Tag.render`<input type="text" value="${this._value}" onchange="${this.onChange.bind(this)}">`;
+		let readonly = this._readonly ? ' readonly="readonly"' : '';
+		this._inputNode = Tag.render`<input type="text" onchange="${this.onChange.bind(this)}"${readonly}>`;
+		this._inputNode.value = this._value;
 		this._node = Tag.render`<div class="sale-order-shipment-barcode">${this._inputNode}</div>`;
 		return this._node;
 	}

@@ -14,6 +14,12 @@ Localization\Loc::loadMessages(__FILE__);
  */
 class CashboxBitrixV2 extends CashboxBitrix
 {
+	const CODE_VAT_0 = 'vat0';
+	const CODE_VAT_10 = 'vat10';
+	const CODE_VAT_20 = 'vat20';
+	const CODE_CALC_VAT_10 = 'vat110';
+	const CODE_CALC_VAT_20 = 'vat120';
+
 	/**
 	 * @param Check $check
 	 * @return array
@@ -93,7 +99,7 @@ class CashboxBitrixV2 extends CashboxBitrix
 				'paymentMethod' => $checkTypeMap[$check::getType()],
 				'paymentObject' => $paymentObjectMap[$item['payment_object']],
 				'tax' => [
-					'type' => $vat
+					'type' => $this->mapVatValue($check::getType(), $vat)
 				],
 			];
 
@@ -106,6 +112,35 @@ class CashboxBitrixV2 extends CashboxBitrix
 		}
 
 		return $result;
+	}
+
+	/**
+	 * @param $checkType
+	 * @param $vat
+	 * @return mixed
+	 */
+	private function mapVatValue($checkType, $vat)
+	{
+		$map = [
+			self::CODE_VAT_10 => [
+				PrepaymentCheck::getType() => self::CODE_CALC_VAT_10,
+				PrepaymentReturnCheck::getType() => self::CODE_CALC_VAT_10,
+				PrepaymentReturnCashCheck::getType() => self::CODE_CALC_VAT_10,
+				FullPrepaymentCheck::getType() => self::CODE_CALC_VAT_10,
+				FullPrepaymentReturnCheck::getType() => self::CODE_CALC_VAT_10,
+				FullPrepaymentReturnCashCheck::getType() => self::CODE_CALC_VAT_10,
+			],
+			self::CODE_VAT_20 => [
+				PrepaymentCheck::getType() => self::CODE_CALC_VAT_20,
+				PrepaymentReturnCheck::getType() => self::CODE_CALC_VAT_20,
+				PrepaymentReturnCashCheck::getType() => self::CODE_CALC_VAT_20,
+				FullPrepaymentCheck::getType() => self::CODE_CALC_VAT_20,
+				FullPrepaymentReturnCheck::getType() => self::CODE_CALC_VAT_20,
+				FullPrepaymentReturnCashCheck::getType() => self::CODE_CALC_VAT_20,
+			],
+		];
+
+		return $map[$vat][$checkType] ?? $vat;
 	}
 
 	/**
@@ -225,10 +260,9 @@ class CashboxBitrixV2 extends CashboxBitrix
 				'SETTINGS' => [
 					'VAT' => [
 						'NOT_VAT' => 'none',
-						0 => 'vat0',
-						10 => 'vat10',
-						18 => 'vat18',
-						20 => 'vat20'
+						0 => self::CODE_VAT_0,
+						10 => self::CODE_VAT_10,
+						20 => self::CODE_VAT_20
 					],
 					'PAYMENT_TYPE' => [
 						Check::PAYMENT_TYPE_CASH => 'cash',

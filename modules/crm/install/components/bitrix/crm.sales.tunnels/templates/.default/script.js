@@ -3639,13 +3639,16 @@ this.BX.Crm = this.BX.Crm || {};
 	        });
 	      }).subscribe('Column:sort', function (event) {
 	        var sortData = event.data.columns.map(function (column, index) {
-	          return {
+	          var newSorting = (index + 1) * 100;
+	          var columnData = {
 	            statusId: column.getId(),
 	            stageId: column.data.stageId,
 	            entityId: column.data.entityId,
 	            name: column.getName(),
-	            sort: (index + 1) * 100
+	            sort: newSorting
 	          };
+	          column.data.stage.SORT = newSorting;
+	          return columnData;
 	        });
 	        Backend.updateStages(sortData).then(function (_ref7) {
 	          var data = _ref7.data;

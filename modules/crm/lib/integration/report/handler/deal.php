@@ -12,14 +12,13 @@ use Bitrix\Crm\Integration\Report\View\FunnelGrid;
 use Bitrix\Crm\Security\EntityAuthorization;
 use Bitrix\Crm\UtmTable;
 use Bitrix\Main\Application;
+use Bitrix\Main\DB\SqlExpression;
 use Bitrix\Main\ORM\Fields\ExpressionField;
 use Bitrix\Main\ORM\Query\Query;
-use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Type\Date;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\UI\Filter\DateType;
-use Bitrix\Main\UserTable;
 use Bitrix\Main\Web\Uri;
 use Bitrix\Report\VisualConstructor\Fields\Valuable\DropDown;
 use Bitrix\Report\VisualConstructor\Fields\Valuable\Hidden;
@@ -46,7 +45,6 @@ class Deal extends Base implements IReportSingleData, IReportMultipleData, IRepo
 	const WHAT_WILL_CALCULATE_DEAL_DATA_FOR_FUNNEL = 'DEAL_DATA_FOR_FUNNEL';
 	const WHAT_WILL_CALCULATE_SUCCESS_DEAL_DATA_FOR_FUNNEL = 'SUCCESS_DEAL_DATA_FOR_FUNNEL';
 
-	const WHAT_WILL_CALCULATE_FIRST_DEAL_WON_SUM = 'FIRST_DEAL_WON_SUM';
 	const WHAT_WILL_CALCULATE_RETURN_DEAL_WON_SUM = 'RETURN_DEAL_WON_SUM';
 
 	const WHAT_WILL_CALCULATE_DEAL_CONVERSION = 'DEAL_CONVERSION';
@@ -124,15 +122,15 @@ class Deal extends Base implements IReportSingleData, IReportMultipleData, IRepo
 	 *
 	 * @return array
 	 */
-	public function mutateFilterParameter($filterParameters)
+	public function mutateFilterParameter($filterParameters, array $fieldList)
 	{
-		$filterParameters = parent::mutateFilterParameter($filterParameters);
+		$filterParameters = parent::mutateFilterParameter($filterParameters, $fieldList);
 
 		$fieldsToOrmMap = $this->getDealFieldsToOrmMap();
 
 		foreach ($filterParameters as $key => $value)
 		{
-			if (in_array($key, ['TIME_PERIOD', 'FIND']) || (strpos($key, 'UF_') === 0))
+			if (in_array($key, ['TIME_PERIOD', 'FIND', 'PREVIOUS_PERIOD']) || (strpos($key, 'UF_') === 0))
 			{
 				continue;
 			}
@@ -213,7 +211,6 @@ class Deal extends Base implements IReportSingleData, IReportMultipleData, IRepo
 					$calculateValue,
 					[
 						self::WHAT_WILL_CALCULATE_DEAL_WON_SUM,
-						self::WHAT_WILL_CALCULATE_FIRST_DEAL_WON_SUM,
 						self::WHAT_WILL_CALCULATE_RETURN_DEAL_WON_SUM
 					]
 				))
@@ -235,9 +232,7 @@ class Deal extends Base implements IReportSingleData, IReportMultipleData, IRepo
 					$calculateValue,
 					[
 						self::WHAT_WILL_CALCULATE_DEAL_SUM,
-						self::WHAT_WILL_CALCULATE_DEAL_WON_SUM,
 						self::WHAT_WILL_CALCULATE_DEAL_LOSES_SUM,
-						self::WHAT_WILL_CALCULATE_FIRST_DEAL_WON_SUM,
 						self::WHAT_WILL_CALCULATE_RETURN_DEAL_WON_SUM,
 					]
 				))
@@ -283,7 +278,6 @@ class Deal extends Base implements IReportSingleData, IReportMultipleData, IRepo
 						self::WHAT_WILL_CALCULATE_DEAL_SUM,
 						self::WHAT_WILL_CALCULATE_DEAL_WON_SUM,
 						self::WHAT_WILL_CALCULATE_DEAL_LOSES_SUM,
-						self::WHAT_WILL_CALCULATE_FIRST_DEAL_WON_SUM,
 						self::WHAT_WILL_CALCULATE_RETURN_DEAL_WON_SUM,
 					]
 				))
@@ -310,7 +304,6 @@ class Deal extends Base implements IReportSingleData, IReportMultipleData, IRepo
 						self::WHAT_WILL_CALCULATE_DEAL_SUM,
 						self::WHAT_WILL_CALCULATE_DEAL_WON_SUM,
 						self::WHAT_WILL_CALCULATE_DEAL_LOSES_SUM,
-						self::WHAT_WILL_CALCULATE_FIRST_DEAL_WON_SUM,
 						self::WHAT_WILL_CALCULATE_RETURN_DEAL_WON_SUM,
 					]
 				))
@@ -348,7 +341,6 @@ class Deal extends Base implements IReportSingleData, IReportMultipleData, IRepo
 			case self::WHAT_WILL_CALCULATE_DEAL_SUM:
 			case self::WHAT_WILL_CALCULATE_DEAL_WON_SUM:
 			case self::WHAT_WILL_CALCULATE_DEAL_LOSES_SUM:
-			case self::WHAT_WILL_CALCULATE_FIRST_DEAL_WON_SUM:
 			case self::WHAT_WILL_CALCULATE_RETURN_DEAL_WON_SUM:
 				$query->addSelect('OPPORTUNITY_ACCOUNT');
 				$query->addSelect('ACCOUNT_CURRENCY_ID');
@@ -357,9 +349,6 @@ class Deal extends Base implements IReportSingleData, IReportMultipleData, IRepo
 
 		switch ($calculateValue)
 		{
-			case self::WHAT_WILL_CALCULATE_FIRST_DEAL_WON_SUM:
-				$query->where('IS_RETURN_CUSTOMER', 'N');
-				break;
 			case self::WHAT_WILL_CALCULATE_RETURN_DEAL_WON_SUM:
 				$query->where('IS_RETURN_CUSTOMER', 'Y');
 				break;
@@ -369,7 +358,6 @@ class Deal extends Base implements IReportSingleData, IReportMultipleData, IRepo
 		{
 			case self::WHAT_WILL_CALCULATE_DEAL_WON_SUM:
 			case self::WHAT_WILL_CALCULATE_DEAL_WON_COUNT:
-			case self::WHAT_WILL_CALCULATE_FIRST_DEAL_WON_SUM:
 			case self::WHAT_WILL_CALCULATE_RETURN_DEAL_WON_SUM:
 				$query->where('FULL_HISTORY.STAGE_SEMANTIC_ID', 'S');
 				break;
@@ -396,7 +384,6 @@ class Deal extends Base implements IReportSingleData, IReportMultipleData, IRepo
 			case self::WHAT_WILL_CALCULATE_DEAL_SUM:
 			case self::WHAT_WILL_CALCULATE_DEAL_WON_SUM:
 			case self::WHAT_WILL_CALCULATE_DEAL_LOSES_SUM:
-			case self::WHAT_WILL_CALCULATE_FIRST_DEAL_WON_SUM:
 			case self::WHAT_WILL_CALCULATE_RETURN_DEAL_WON_SUM:
 				$querySql = "SELECT res.{$groupingSqlFieldName}, SUM(res.OPPORTUNITY_ACCOUNT) as VALUE, res.ACCOUNT_CURRENCY_ID FROM(";
 				$querySql .= $query->getQuery();
@@ -808,7 +795,7 @@ class Deal extends Base implements IReportSingleData, IReportMultipleData, IRepo
 
 		foreach ($filterParameters as $key => $value)
 		{
-			if ($key === 'TIME_PERIOD')
+			if ($key === 'TIME_PERIOD' || $key === 'PREVIOUS_PERIOD')
 			{
 				continue;
 			}
@@ -1029,7 +1016,6 @@ class Deal extends Base implements IReportSingleData, IReportMultipleData, IRepo
 
 	protected function addPermissionsCheck(Query $query, $userId = 0)
 	{
-		static $permissionEntity;
 		if ($userId <= 0)
 		{
 			$userId = EntityAuthorization::getCurrentUserID();
@@ -1049,24 +1035,8 @@ class Deal extends Base implements IReportSingleData, IReportMultipleData, IRepo
 
 		if ($permissionSql)
 		{
-			if (!$permissionEntity)
-			{
-				$permissionEntity = \Bitrix\Main\Entity\Base::compileEntity(
-					'deal_user_perms',
-					['ENTITY_ID' => ['data_type' => 'integer']],
-					['table_name' => "({$permissionSql})"]
-				);
-			}
-
-			$query->registerRuntimeField(
-				'',
-				new ReferenceField(
-					'PERMS', $permissionEntity, ['=this.ID' => 'ref.ENTITY_ID'], ['join_type' => 'INNER']
-				)
-			);
-
+			$query->whereIn('ID', new SqlExpression($permissionSql));
 		}
-
 	}
 
 	private function buildPermissionSql(array $params)
@@ -1150,9 +1120,6 @@ class Deal extends Base implements IReportSingleData, IReportMultipleData, IRepo
 
 		switch ($calculateValue)
 		{
-			case self::WHAT_WILL_CALCULATE_FIRST_DEAL_WON_SUM:
-				$params['IS_RETURN_CUSTOMER'] = 'N';
-				break;
 			case self::WHAT_WILL_CALCULATE_RETURN_DEAL_WON_SUM:
 				$params['IS_RETURN_CUSTOMER'] = 'Y';
 				break;
@@ -1166,7 +1133,6 @@ class Deal extends Base implements IReportSingleData, IReportMultipleData, IRepo
 		{
 			case self::WHAT_WILL_CALCULATE_RETURN_DEAL_WON_SUM:
 			case self::WHAT_WILL_CALCULATE_SUCCESS_DEAL_DATA_FOR_FUNNEL:
-			case self::WHAT_WILL_CALCULATE_FIRST_DEAL_WON_SUM:
 			case self::WHAT_WILL_CALCULATE_DEAL_WON_SUM:
 			case self::WHAT_WILL_CALCULATE_DEAL_WON_COUNT:
 				$params['STAGE_SEMANTIC_ID_FROM_HISTORY'] = 'S';
@@ -1187,7 +1153,6 @@ class Deal extends Base implements IReportSingleData, IReportMultipleData, IRepo
 				break;
 			case self::WHAT_WILL_CALCULATE_RETURN_DEAL_WON_SUM:
 			case self::WHAT_WILL_CALCULATE_SUCCESS_DEAL_DATA_FOR_FUNNEL:
-			case self::WHAT_WILL_CALCULATE_FIRST_DEAL_WON_SUM:
 			case self::WHAT_WILL_CALCULATE_DEAL_WON_SUM:
 			case self::WHAT_WILL_CALCULATE_DEAL_WON_COUNT:
 				$uri = new Uri($result);
@@ -1369,7 +1334,6 @@ class Deal extends Base implements IReportSingleData, IReportMultipleData, IRepo
 		{
 			case self::WHAT_WILL_CALCULATE_DEAL_SUM:
 			case self::WHAT_WILL_CALCULATE_DEAL_WON_SUM:
-			case self::WHAT_WILL_CALCULATE_FIRST_DEAL_WON_SUM:
 			case self::WHAT_WILL_CALCULATE_RETURN_DEAL_WON_SUM:
 				$resultItem['value'] = \CCrmCurrency::MoneyToString(
 					$calculatedData['withoutGrouping'],
@@ -1673,7 +1637,6 @@ class Deal extends Base implements IReportSingleData, IReportMultipleData, IRepo
 				break;
 			case self::WHAT_WILL_CALCULATE_DEAL_SUM:
 			case self::WHAT_WILL_CALCULATE_DEAL_WON_SUM:
-			case self::WHAT_WILL_CALCULATE_FIRST_DEAL_WON_SUM:
 			case self::WHAT_WILL_CALCULATE_RETURN_DEAL_WON_SUM:
 			case self::WHAT_WILL_CALCULATE_DEAL_LOSES_SUM:
 				$amount['value'] = \CCrmCurrency::MoneyToString(
@@ -1820,7 +1783,6 @@ class Deal extends Base implements IReportSingleData, IReportMultipleData, IRepo
 					break;
 				case self::WHAT_WILL_CALCULATE_DEAL_SUM:
 				case self::WHAT_WILL_CALCULATE_DEAL_WON_SUM:
-				case self::WHAT_WILL_CALCULATE_FIRST_DEAL_WON_SUM:
 				case self::WHAT_WILL_CALCULATE_RETURN_DEAL_WON_SUM:
 				case self::WHAT_WILL_CALCULATE_DEAL_LOSES_SUM:
 

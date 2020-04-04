@@ -1,21 +1,37 @@
 <?php
 namespace Bitrix\Timeman\Service\Schedule;
 
+use Bitrix\Main\ORM\Query\Query;
 use Bitrix\Timeman\Form\Schedule\ShiftForm;
+use Bitrix\Timeman\Helper\TimeHelper;
 use Bitrix\Timeman\Model\Schedule\Schedule;
+use Bitrix\Timeman\Model\Schedule\Shift\ShiftCollection;
 use Bitrix\Timeman\Model\Schedule\Shift\Shift;
+use Bitrix\Timeman\Model\Schedule\ShiftPlan\ShiftPlan;
+use Bitrix\Timeman\Model\Schedule\ShiftPlan\ShiftPlanTable;
+use Bitrix\Timeman\Repository\Schedule\ShiftPlanRepository;
 use Bitrix\Timeman\Repository\Schedule\ShiftRepository;
+use Bitrix\Timeman\Service\Agent\WorktimeAgentManager;
 use Bitrix\Timeman\Service\BaseService;
+use Bitrix\Timeman\Service\Schedule\Result\ScheduleServiceResult;
 use Bitrix\Timeman\Service\Schedule\Result\ShiftServiceResult;
 
 class ShiftService extends BaseService
 {
 	/** @var ShiftRepository */
 	private $shiftRepository;
+	private $shiftPlanRepository;
+	private $worktimeAgentManager;
 
-	public function __construct(ShiftRepository $shiftRepository)
+	public function __construct(
+		ShiftRepository $shiftRepository,
+		ShiftPlanRepository $shiftPlanRepository,
+		WorktimeAgentManager $worktimeAgentManager
+	)
 	{
+		$this->worktimeAgentManager = $worktimeAgentManager;
 		$this->shiftRepository = $shiftRepository;
+		$this->shiftPlanRepository = $shiftPlanRepository;
 	}
 
 	/**
@@ -34,7 +50,7 @@ class ShiftService extends BaseService
 		}
 		$shift = Shift::create(
 			$schedule->getId(),
-			$shiftForm->name,
+			$schedule->isShifted() ? $shiftForm->name : '',
 			$shiftForm->startTime,
 			$shiftForm->endTime,
 			$shiftForm->breakDuration,
@@ -84,8 +100,112 @@ class ShiftService extends BaseService
 		return ShiftServiceResult::createByResult($res);
 	}
 
-	public function deleteShiftById($removedShiftId)
+	/**
+	 * @param Schedule $schedule
+	 * @param $activeUserIds
+	 * @param Shift|ShiftCollection|null $shiftParam
+	 * @return ScheduleServiceResult
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ObjectException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	public function deleteFutureShiftPlans($schedule, $shiftParam = null, $activeUserIds = [])
 	{
-		return $this->shiftRepository->markShiftDeleted($removedShiftId);
+		$result = (new ScheduleServiceResult())->setSchedule($schedule);
+		$shifts = ShiftCollection::buildShiftCollection($shiftParam);
+		if ($shiftParam === null)
+		{
+			$shifts = $this->shiftRepository->findShiftsBySchedule($schedule->getId());
+		}
+		if (empty($activeUserIds))
+		{
+			$activeUserIds = $this->shiftPlanRepository->findUserIdsByShiftIds($shifts->getIdList());
+		}
+		if ($shifts->count() === 0 || empty($activeUserIds))
+		{
+			return $result;
+		}
+
+		$deleteShifts = [];
+		$utcNow = TimeHelper::getInstance()->getUtcNowTimestamp();
+
+		foreach ($activeUserIds as $activeUserId)
+		{
+			$userToday = TimeHelper::getInstance()->getUserDateTimeNow($activeUserId);
+			$userToday->setTimezone(new \DateTimeZone('UTC'));
+			$shiftPlan = (new ShiftPlan($default = false))
+				->setDateAssigned(new \Bitrix\Main\Type\Date($userToday->format(ShiftPlanTable::DATE_FORMAT), ShiftPlanTable::DATE_FORMAT))
+				->setUserId($activeUserId);
+			foreach ($shifts->getAll() as $shift)
+			{
+				$utcUserStart = $shift->buildUtcStartByShiftplan($shiftPlan);
+				if (!$utcUserStart)
+				{
+					continue;
+				}
+				if ($utcUserStart->getTimestamp() + $shift->getDuration() < $utcNow)
+				{
+					$utcUserStart->add(new \DateInterval('P1D'));
+				}
+				$deleteShifts[$utcUserStart->format(ShiftPlanTable::DATE_FORMAT)][$shift->getId()][] = $activeUserId;
+			}
+		}
+		if (empty($deleteShifts))
+		{
+			return $result;
+		}
+		foreach ($deleteShifts as $dateFormatted => $items)
+		{
+			$userIds = [];
+			foreach ($items as $shiftId => $userIdsForShift)
+			{
+				$userIds = array_merge($userIds, $userIdsForShift);
+			}
+			$userIds = array_unique($userIds);
+			$filter = Query::filter()
+				->whereIn('USER_ID', $userIds)
+				->whereIn('SHIFT_ID', array_keys($items))
+				->where('DATE_ASSIGNED', '>=', new \Bitrix\Main\Type\Date($dateFormatted, ShiftPlanTable::DATE_FORMAT));
+			$shiftPlans = $this->shiftPlanRepository->findAllActive(['ID', 'MISSED_SHIFT_AGENT_ID'], $filter);
+			if (!empty($shiftPlans->getMissedShiftAgentIdList()))
+			{
+				$agentIds = $shiftPlans->getMissedShiftAgentIdList();
+				foreach ($agentIds as $index => $agentId)
+				{
+					if ($agentId <= 0)
+					{
+						unset($agentIds[$index]);
+					}
+				}
+				$this->worktimeAgentManager->deleteAgentsByIds(array_filter($agentIds));
+			}
+			if (!empty($shiftPlans->getIdList()))
+			{
+				$this->shiftPlanRepository->updateAll(
+					$shiftPlans->getIdList(),
+					[
+						'DELETED' => ShiftPlanTable::DELETED_YES,
+						'DELETED_AT' => TimeHelper::getInstance()->getUtcNowTimestamp(),
+						'MISSED_SHIFT_AGENT_ID' => 0,
+					]
+				);
+			}
+		}
+
+		return (new ScheduleServiceResult())->setSchedule($schedule);
+	}
+
+	public function deleteShiftById(Shift $shift, Schedule $schedule, $activeUserIds = [])
+	{
+		$result = $this->shiftRepository->markShiftDeleted($shift->getId());
+		if (!$result->isSuccess())
+		{
+			return $result;
+		}
+		return $this->deleteFutureShiftPlans(
+			$schedule,
+			$shift,
+			$activeUserIds
+		);
 	}
 }

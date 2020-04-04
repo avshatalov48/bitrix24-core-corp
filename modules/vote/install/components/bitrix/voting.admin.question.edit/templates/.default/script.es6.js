@@ -20,17 +20,22 @@ class answer {
 			this.params.isNew = false;
 			this.id = id;
 		}
+		else if (id !== 0)
+		{
+			this.id = id;
+		}
 
 		this.data =  {
 			MESSAGE : "",
 			MESSAGE_TYPE : "text",
-			FIELD_TYPE : 0,
-			FIELD_WIDTH : 0, //out of date
-			FIELD_HEIGHT : 0, //out of date
-			FIELD_PARAM : "", //out of date
-			ACTIVE : "Y",
-			C_SORT : 0,
-			COLOR : "" //out of date
+	//		IMAGE_ID : "",
+	//		FIELD_TYPE : 0,
+	//		FIELD_WIDTH : 0, //out of date
+	//		FIELD_HEIGHT : 0, //out of date
+	//		FIELD_PARAM : "", //out of date
+	//		ACTIVE : "Y",
+	//		C_SORT : 0,
+	//		COLOR : "" //out of date
 		};
 
 		this.adjust(data);
@@ -73,7 +78,7 @@ class answer {
 answer.repo = {};
 answer.getItem = function(id, data) {
 	const item = new answer(id, BX.type.isPlainObject(data) ? data : {});
-	if (id > 0 && answer.repo[id])
+	if (id !== 0 && answer.repo[id])
 	{
 		answer.repo[id] = null;
 		delete answer.repo[id];
@@ -451,10 +456,33 @@ BX.addCustomEvent(
 		}
 	});
 const bindForm = function(formId, gridId, gridInstanceId) {
-	BX.bind(BX(formId, true), "submit", function() {
-		prepareForm(BX(formId), gridId, gridInstanceId);
-		return false;
+	let form = BX(formId, true);
+	let controlName = "save";
+	let func = (function(event) {
+		BX.unbind(form, "submit", func);
+		let grid = BX.Main.gridManager.getInstanceById(gridId);
+		if (!grid.getRows().hasEditable())
+		{
+			prepareForm(form, gridId, gridInstanceId);
+			return true;
+		}
+		let func1 = (function(someGrid) { if (someGrid === grid) {
+			BX.removeCustomEvent(window, "Grid::updated", func1);
+			form.appendChild(BX.create("INPUT", { "props": { "type": "hidden", "name": controlName, "value":  "Y" } } ));
+			prepareForm(form, gridId, gridInstanceId);
+			form.submit();
+		} });
+		BX.addCustomEvent(window, "Grid::updated", func1);
+		grid.editSelectedSave();
+		return BX.PreventDefault(event);
 	});
+
+	BX.bind(form, "submit", func);
+	if (form.elements["apply"])
+	{
+		BX.bind(form.elements["apply"], "mousedown", function () { controlName = "apply"; });
+	}
+
 	const f = function(e) {
 		const el = e.target;
 		const rows = BX.Main.gridManager.getInstanceById(gridId).getRows();
@@ -494,7 +522,7 @@ const prepareForm = function(form, gridId/*, gridInstanceId*/) {
 	if (grid)
 	{
 		const rows = grid.getRows().getRows();
-		let attrs, j, id;
+		let attrs, id;
 		rows.forEach(function(current) {
 			if (current.getIndex() < 1)
 				return;
@@ -508,22 +536,35 @@ const prepareForm = function(form, gridId/*, gridInstanceId*/) {
 				}
 			));
 			attrs = BX.parseJSON(BX.data(current.getNode(), "item"), current);
-			if (BX.type.isPlainObject(attrs))
+			var func = function(prefix, params, depth)
 			{
-				for (j in attrs)
+				var key;
+				for (var j in params)
 				{
-					if (attrs.hasOwnProperty(j))
+					if (params.hasOwnProperty(j))
 					{
-						form.appendChild(BX.create('INPUT', {
-								props : {
-									type : "hidden",
-									name : "ANSWER[" + id + "][" + String(j).toUpperCase() + "]",
-									value : attrs[j]
+						key = "[" + (depth > 0 ? j : String(j).toUpperCase()) + "]";
+						if (BX.type.isPlainObject(params[j]))
+						{
+							func(prefix + key, params[j], depth + 1);
+						}
+						else
+						{
+							form.appendChild(BX.create('INPUT', {
+									props : {
+										type : "hidden",
+										name : prefix + key,
+										value : params[j]
+									}
 								}
-							}
-						));
+							));
+						}
 					}
 				}
+			};
+			if (BX.type.isPlainObject(attrs))
+			{
+				func("ANSWER[" + id + "]", attrs, 0);
 			}
 		});
 	}

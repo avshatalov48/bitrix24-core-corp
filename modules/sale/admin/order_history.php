@@ -10,7 +10,10 @@ require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/sale/general/admin_tool.
 
 $moduleId = "sale";
 Bitrix\Main\Loader::includeModule('sale');
+
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Sale;
+
 Loc::loadMessages(__FILE__);
 
 $ID = intval($_GET["ID"]);
@@ -18,7 +21,14 @@ $ID = intval($_GET["ID"]);
 /** @var \Bitrix\Sale\Order $saleOrder */
 
 if (!isset($saleOrder) || !($saleOrder instanceof \Bitrix\Sale\Order))
-	$saleOrder = \Bitrix\Sale\Order::load($ID);
+{
+	$registry = Sale\Registry::getInstance(Sale\Registry::REGISTRY_TYPE_ORDER);
+
+	/** @var Sale\Order $orderClass */
+	$orderClass = $registry->getOrderClassName();
+
+	$saleOrder = $orderClass::load($ID);
+}
 
 $shipmentCollection = $saleOrder->getShipmentCollection();
 $paymentCollection = $saleOrder->getPaymentCollection();

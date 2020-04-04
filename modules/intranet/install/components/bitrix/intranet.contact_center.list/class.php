@@ -16,7 +16,8 @@ class CIntranetContactCenterListComponent extends \CBitrixComponent implements C
 		'voximplant',
 		'crm',
 		'imopenlines',
-		'rest'
+		'sale',
+//		'rest'
 	);
 	private $jsCoreList = array(
 		'sidepanel',
@@ -82,6 +83,20 @@ class CIntranetContactCenterListComponent extends \CBitrixComponent implements C
 	}
 
 	//methods called in getItems for getting connectors from current modules from $moduleList
+
+	/**
+	 * Return list of blocks for Sale module
+	 *
+	 * @return array
+	 */
+	private function saleGetItems()
+	{
+		$itemsList = $this->getContactCenterHandler()->saleGetItems()->getData();
+
+		$itemsList["sale"]["ONCLICK"] = "BX.SidePanel.Instance.open('/marketplace/detail/bitrix.eshop/')";
+
+		return $itemsList;
+	}
 
 	/**
 	 * Return list of blocks for Mail module
@@ -264,7 +279,7 @@ class CIntranetContactCenterListComponent extends \CBitrixComponent implements C
 
 		foreach ($itemsList as $itemCode => &$item)
 		{
-			if (in_array($itemCode, $systemItems))
+			if (in_array($itemCode, $systemItems) || isset($item['ONCLICK']))
 			{
 				if (!$canInstallApplication)
 				{
@@ -395,6 +410,21 @@ class CIntranetContactCenterListComponent extends \CBitrixComponent implements C
 	{
 		$this->jsParams["signedParameters"] = $this->getSignedParameters();
 		$this->jsParams["componentName"] = $this->getName();
+		$this->jsParams["parentSelector"] = 'intranet-contact-list';
+
+		return $this->jsParams;
+	}
+
+	/**
+	 * Return JS-params for initialization contact-center view
+	 *
+	 * @return mixed
+	 */
+	private function getJsRestParams()
+	{
+		$this->jsParams["signedParameters"] = $this->getSignedParameters();
+		$this->jsParams["componentName"] = $this->getName();
+		$this->jsParams["parentSelector"] = 'intranet-contact-rest-list';
 
 		return $this->jsParams;
 	}
@@ -468,6 +498,18 @@ class CIntranetContactCenterListComponent extends \CBitrixComponent implements C
 		return $itemsList;
 	}
 
+	private function getRestItems()
+	{
+		$itemsList = array();
+
+		if (Loader::includeModule('rest'))
+		{
+			$itemsList[] = $this->restGetItems();
+		}
+
+		return $itemsList;
+	}
+
 	/**
 	 * @return mixed|void
 	 * @throws \Bitrix\Main\LoaderException
@@ -479,7 +521,9 @@ class CIntranetContactCenterListComponent extends \CBitrixComponent implements C
 		if ($this->startResultCache())
 		{
 			$this->arResult["ITEMS"] = $this->getItems();
+			$this->arResult['REST_ITEMS'] = $this->getRestItems();
 			$this->arResult["JS_PARAMS"] = $this->getJsParams();
+			$this->arResult["JS_REST_PARAMS"] = $this->getJsRestParams();
 			$this->arResult["ADDITIONAL_STYLES"] = $this->additionalStyles;
 
 			$this->includeComponentTemplate();

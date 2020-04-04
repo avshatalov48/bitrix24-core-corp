@@ -1002,12 +1002,26 @@ $arSelect = array_unique($arSelect, SORT_STRING);
 $pageNum = 0;
 if ($isInExportMode && $isStExport)
 {
-	$pageSize = !empty($arParams['STEXPORT_PAGE_SIZE']) ? $arParams['STEXPORT_PAGE_SIZE'] : $arParams['INVOICE_COUNT'];
+	if (!empty($arParams['STEXPORT_PAGE_SIZE']))
+	{
+		$pageSize = (int)$arParams['STEXPORT_PAGE_SIZE'];
+	}
+	else
+	{
+		$pageSize = (int)$arParams['INVOICE_COUNT'];
+	}
+	$arNavParams['nPageSize'] = $pageSize;
 }
-else
+elseif (!$isInExportMode)
 {
-	$pageSize = !$isInExportMode
-		? (int)(isset($arNavParams['nPageSize']) ? $arNavParams['nPageSize'] : $arParams['INVOICE_COUNT']) : 0;
+	if (isset($arNavParams['nPageSize']))
+	{
+		$pageSize = (int)$arNavParams['nPageSize'];
+	}
+	else
+	{
+		$pageSize = (int)$arParams['INVOICE_COUNT'];
+	}
 }
 
 $enableNextPage = false;
@@ -1096,7 +1110,7 @@ if ($arParams['IS_RECURRING'] !== 'Y')
 		$arSort,
 		$arFilter,
 		false,
-		($arResult['GADGET'] != 'Y' && !$isInExportMode) ? $arNavParams : false,
+		(($arResult['GADGET'] == 'Y' || ($isInExportMode && !$isStExport)) ? false : $arNavParams),
 		$arSelect,
 		$arOptions
 	);

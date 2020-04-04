@@ -509,13 +509,20 @@ class Task implements \IBPWorkflowDocument
 			return false;
 		}
 
-		$task = new \CTasks();
+		$prevOccurAsUserId = \Bitrix\Tasks\Util\User::getOccurAsId();
+		if ($modifiedById > 0)
+		{
+			\Bitrix\Tasks\Util\User::setOccurAsId($modifiedById);
+		}
 
+		$task = new \CTasks();
 		$result =  $task->update($documentId, $fields, [
 			'CHECK_RIGHTS_ON_FILES' => 'N',
 			'AUTHOR_ID' => $modifiedById ?: 1,
 			'USER_ID' => $modifiedById ?: 1,
 		]);
+
+		\Bitrix\Tasks\Util\User::setOccurAsId($prevOccurAsUserId);
 
 		$newUsers = [];
 		foreach (array('CREATED_BY', 'RESPONSIBLE_ID', 'AUDITORS', 'ACCOMPLICES') as $code)

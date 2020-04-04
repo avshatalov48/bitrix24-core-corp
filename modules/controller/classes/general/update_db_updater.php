@@ -3,6 +3,7 @@ $US_HOST_PROCESS_MAIN = ($US_HOST_PROCESS_MAIN ? True : False);
 
 define("US_CALL_TYPE", "DB");
 define("US_SAVE_UPDATERS_DIR", "/bitrix/updaters");
+define("US_SAVE_DESCRIPTIONS_DIR", "/bitrix/updaters_descr");
 define("US_DB_VERSIONS_FILE", $_SERVER["DOCUMENT_ROOT"].BX_PERSONAL_ROOT."/php_interface/versions.php");
 
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/classes/general/update_client.php");

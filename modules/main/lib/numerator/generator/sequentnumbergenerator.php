@@ -215,16 +215,9 @@ class SequentNumberGenerator extends NumberGenerator implements Sequenceable, Us
 				break;
 			}
 		}
-		$resultNumber = $this->currentNumber;
-		if ($this->length > 0)
-		{
-			$resultNumber = str_pad($resultNumber, $this->length, $this->padString, STR_PAD_LEFT);
-		}
-		$template = str_replace(static::getPatternFor(static::TEMPLATE_WORD_NUMBER), $resultNumber, $template);
 
-		return $template;
+		return $this->replaceNumberInPattern($template);
 	}
-
 
 	protected function saveNumeratorSequenceSettings($numeratorId, $numberHash, $fields, $whereNextNumber = null)
 	{
@@ -243,7 +236,17 @@ class SequentNumberGenerator extends NumberGenerator implements Sequenceable, Us
 		$nextNumberSettings = $this->getSettings($this->numeratorId, false);
 		$this->lastInvocationTime = isset($nextNumberSettings['LAST_INVOCATION_TIME']) ? $nextNumberSettings['LAST_INVOCATION_TIME'] : $this->nowTime;
 		$this->calculateNextAndCurrentNumber(isset($nextNumberSettings['NEXT_NUMBER']) ? $nextNumberSettings['NEXT_NUMBER'] : $this->start);
-		return str_replace(static::getPatternFor(static::TEMPLATE_WORD_NUMBER), $this->currentNumber, $template);
+		return $this->replaceNumberInPattern($template);
+	}
+
+	private function replaceNumberInPattern($template)
+	{
+		$resultNumber = $this->currentNumber;
+		if ($this->length > 0)
+		{
+			$resultNumber = str_pad($resultNumber, $this->length, $this->padString, STR_PAD_LEFT);
+		}
+		return str_replace(static::getPatternFor(static::TEMPLATE_WORD_NUMBER), $resultNumber, $template);
 	}
 
 	/** @inheritdoc */

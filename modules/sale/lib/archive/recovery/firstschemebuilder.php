@@ -66,7 +66,12 @@ class FirstSchemeBuilder extends Builder
 		$this->order = Archive\Order::create($orderFields['LID'], $orderFields['USER_ID'], $orderFields['CURRENCY']);
 		$this->order->setPersonTypeId($orderFields['PERSON_TYPE_ID']);
 
-		$basket = Sale\Basket::create($orderFields['LID']);
+		$registry = Sale\Registry::getInstance(Sale\Registry::REGISTRY_TYPE_ORDER);
+
+		/** @var Sale\Basket $basketClassName */
+		$basketClassName = $registry->getBasketClassName();
+
+		$basket = $basketClassName::create($orderFields['LID']);
 		$this->order->setBasket($basket);
 		$basketItemsFields = $this->entitiesFields['BASKET'];
 		if (!empty($this->packedBasketItems))

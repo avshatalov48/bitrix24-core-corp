@@ -281,6 +281,17 @@
 		{
 			BX.animationHandler.fadeSlideToggleByClass(BX('imol_worktime_block'))
 		},
+		toggleWorktimeAnswerBlock: function()
+		{
+			if (BX('imol_check_available').checked || BX('imol_worktime_checkbox').checked)
+			{
+				BX('imol_worktime_answer_block').classList.remove("invisible");
+			}
+			else
+			{
+				BX('imol_worktime_answer_block').classList.add("invisible");
+			}
+		},
 		toggleNoAnswerRule: function()
 		{
 			BX.OpenLinesConfigEdit.toggleSelectFormText(
@@ -502,6 +513,16 @@
 				BX('imol_worktime_checkbox'),
 				'change',
 				BX.OpenLinesConfigEdit.toggleWorktimeBlock
+			);
+			BX.bind(
+				BX('imol_worktime_checkbox'),
+				'change',
+				BX.OpenLinesConfigEdit.toggleWorktimeAnswerBlock
+			);
+			BX.bind(
+				BX('imol_check_available'),
+				'change',
+				BX.OpenLinesConfigEdit.toggleWorktimeAnswerBlock
 			);
 			BX.bind(
 				BX('imol_action_close'),

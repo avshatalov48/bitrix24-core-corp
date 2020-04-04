@@ -4,6 +4,9 @@
 
 (() =>
 {
+	/**
+	 * @class StressMeasure
+	 */
 	class StressMeasure
 	{
 		/**
@@ -15,16 +18,17 @@
 			this.currentState = params["currentData"];
 			this.disclaimerAccepted = false;
 			let setCurrentData = (params["setCurrentData"] !== false);
-			BX.addCustomEvent("onDisclaimerAccepted", ()=>{
+			BX.addCustomEvent("onDisclaimerAccepted", () =>
+			{
 				new RestExecutor("socialnetwork.api.user.stresslevel.setdisclaimer",
-					{data:{}})
+					{data: {}})
 					.setStartRequestHandler(cache => Notify.showIndicatorLoading())
 					.call()
 					.then(data =>
 					{
 						Notify.hideCurrentIndicator();
 						let result = data.result;
-						if (result &&  typeof result["DATE_SIGNED"] != "undefined")
+						if (result && typeof result["DATE_SIGNED"] != "undefined")
 						{
 							this.disclaimerAccepted = true;
 							this.measure();
@@ -74,7 +78,8 @@
 							fields: {userId: env.userId}
 						}]
 					},
-					res => {
+					res =>
+					{
 						let result = (res.stress) ? res.stress.answer.result : false;
 						if (typeof result === "object" && typeof result.value !== "undefined")
 						{
@@ -136,7 +141,7 @@
 
 		measure()
 		{
-			if(!this.disclaimerAccepted)
+			if (!this.disclaimerAccepted)
 			{
 				PageManager.openPage({
 					url: "/mobile/stresslevel/disclaimer.php", backdrop: {
@@ -212,7 +217,8 @@
 						}
 					}]
 				},
-				result => {
+				result =>
+				{
 					Notify.showIndicatorSuccess({hideAfter: 1000});
 					BX.postComponentEvent("onStressMeasureChanged", [params]);
 					this.currentState = params;
@@ -238,11 +244,95 @@
 
 		share()
 		{
-			Notify.alert(
-				BX.message("STRESS_SHARE_COMING_SOON"),
-				BX.message("STRESS_SHARE_ALERT_TITLE"),
-				BX.message("STRESS_SHARE_ALERT_GOTIT")
-			)
+			if (Application.getApiVersion() >= 32)
+			{
+				let style = WidgetListStyle.create()
+					.setFont(WidgetListItemFont.create()
+						.setColor("#333333").setSize(20));
+				let cancelStyle = WidgetListStyle.create()
+					.setFont(WidgetListItemFont.create()
+						.setColor("#fb0000").setSize(20));
+				BackdropMenu.create("stress_share")
+					.setEventListener((name, params, message, backdrop) => {
+
+						if (name === 'selected')
+						{
+							if(params.id === "stream")
+							{
+								this.shareActivityStream();
+							}
+
+						}
+					}, "stress")
+					.setOnlyMediumPosition(true)
+					.setShouldResizeContent(false)
+					.setItems(
+						[
+							BackdropMenuItem.create("stream")
+								.setType("button")
+								.setTitle(BX.message("STRESS_SHARE_LIVE_STREAM"))
+								.setStyles({label:style, title:style})
+							,
+							BackdropMenuItem.create("cancel")
+								.setType("button")
+								.setTitle(BX.message("STRESS_SHARE_CANCEL"))
+								.setStyles({label:cancelStyle, title:cancelStyle}),
+							BackdropMenuItem.create("space").setHeight(30),
+						]
+					).show();
+			}
+			else
+			{
+				Notify.alert(
+					BX.message("STRESS_SHARE_COMING_SOON"),
+					BX.message("STRESS_SHARE_ALERT_TITLE"),
+					BX.message("STRESS_SHARE_ALERT_GOTIT")
+				)
+			}
+		}
+
+		shareActivityStream()
+		{
+			(new RecipientList(["users", "groups", "departments"], {users:{showAll:true}}))
+				.open({returnShortFormat: true})
+				.then(recipients =>
+				{
+					Notify.showIndicatorLoading();
+					BX.rest.callBatch(
+						{
+							data: ['mobile.intranet.stresslevel.sharedata.get', {
+								"title": BX.message("STRESS_SHARE_POST_TITLE"),
+								"message": BX.message("STRESS_SHARE_POST_MESSAGE"),
+								recipients
+							}],
+							add: ['log.blogpost.add', {
+								POST_MESSAGE: '$result[data][message]',
+								POST_TITLE: '$result[data][title]',
+								DEST: '$result[data][recipients]',
+								FILES: '$result[data][files]'
+							}],
+							get: ["log.blogpost.get", {POST_ID: '$result[add]'}],
+							update: ["log.blogpost.update", {
+								POST_ID: '$result[add]',
+								POST_MESSAGE: '[DISK FILE ID=' + '$result[get][0][FILES][0]' + ' ]'
+							}],
+						},
+						(response) =>
+						{
+							for(let result of Object.values(response))
+							{
+								if(result.answer.error)
+								{
+									Notify.showIndicatorError({hideAfter: 3000, onTap:()=>Notify.hideCurrentIndicator(), text: BX.message("STRESS_SHARING_FAILED")});
+									return;
+								}
+							}
+
+							Notify.showIndicatorSuccess({hideAfter: 2000});
+							PageManager.openPage({url:`/mobile/log/?ACTION=CONVERT&ENTITY_TYPE_ID=BLOG_POST&ENTITY_ID=${response["add"].answer.result}`, cache:false})
+						},
+						true, false, "stressLevelShare")
+				})
 		}
 
 		createMenuWithAccess(access = false)
@@ -303,6 +393,7 @@
 			PageManager.openComponent("JSStackComponent",
 				{
 					scriptPath: availableComponents["stress"].publicUrl,
+					componentCode: "stress",
 					params: {
 						params: {
 							setCurrentData: false,
@@ -322,6 +413,5 @@
 		}
 	}
 
-	this.StressMeasure = StressMeasure;
-	this.stressIndication = stressIndication;
+	jnexport(StressMeasure, [stressIndication, "stressIndication"]);
 })();

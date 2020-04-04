@@ -92,7 +92,12 @@ class OrderArchiveItem
 		if ($result->isSuccess())
 		{
 			$this->tryUnreserveShipments();
-			Sale\Order::deleteNoDemand($this->getId());
+
+			$registry = Sale\Registry::getInstance(Sale\Registry::REGISTRY_TYPE_ORDER);
+			/** @var Sale\Order $orderClass */
+			$orderClass = $registry->getOrderClassName();
+
+			$orderClass::deleteNoDemand($this->getId());
 		}
 		else
 		{

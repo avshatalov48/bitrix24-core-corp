@@ -250,6 +250,7 @@ CREATE TABLE IF NOT EXISTS b_voximplant_config
 	USE_SIP_TO char(1) null default 'N',
 	TRANSCRIBE char(1) null default 'N',
 	TRANSCRIBE_LANG char(15) null,
+	TRANSCRIBE_PROVIDER varchar(25) null,
 	CALLBACK_REDIAL char(1) null default 'N',
 	CALLBACK_REDIAL_ATTEMPTS int(11) null,
 	CALLBACK_REDIAL_PERIOD int(11) null,

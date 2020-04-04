@@ -664,7 +664,7 @@ class RestService extends \IRestService
 			}
 			else
 			{
-				$message = "Unknown error";
+				$message = $message ?: "Unknown error";
 			}
 			throw new RestException($message, $error->getCode());
 		}

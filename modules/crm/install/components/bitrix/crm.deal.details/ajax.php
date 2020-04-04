@@ -1456,7 +1456,6 @@ elseif($action === 'PREPARE_EDITOR_HTML')
 		|| strtoupper($_POST['ENABLE_CONFIG_SCOPE_TOGGLE']) === 'Y';
 	$enableConfigurationUpdate = !isset($_POST['ENABLE_CONFIGURATION_UPDATE'])
 		|| strtoupper($_POST['ENABLE_CONFIGURATION_UPDATE']) === 'Y';
-
 	$enableFieldsContextMenu = !isset($_POST['ENABLE_FIELDS_CONTEXT_MENU'])
 		|| strtoupper($_POST['ENABLE_FIELDS_CONTEXT_MENU']) === 'Y';
 	$isEmbedded = isset($_POST['IS_EMBEDDED']) && strtoupper($_POST['IS_EMBEDDED']) === 'Y';
@@ -1464,6 +1463,17 @@ elseif($action === 'PREPARE_EDITOR_HTML')
 		|| strtoupper($_POST['ENABLE_REQUIRED_USER_FIELD_CHECK']) === 'Y';
 	$enableSearchHistory = !isset($_POST['ENABLE_SEARCH_HISTORY'])
 		|| strtoupper($_POST['ENABLE_SEARCH_HISTORY']) === 'Y';
+	$enableCommunicationControls = !isset($_POST['ENABLE_COMMUNICATION_CONTROLS'])
+		|| strtoupper($_POST['ENABLE_COMMUNICATION_CONTROLS']) === 'Y';
+
+	$enableAvailableFieldsInjection = isset($_POST['ENABLE_AVAILABLE_FIELDS_INJECTION'])
+		&& strtoupper($_POST['ENABLE_AVAILABLE_FIELDS_INJECTION']) === 'Y';
+	$enableExternalLayoutResolvers = isset($_POST['ENABLE_EXTERNAL_LAYOUT_RESOLVERS'])
+		&& strtoupper($_POST['ENABLE_EXTERNAL_LAYOUT_RESOLVERS']) === 'Y';
+
+	$isReadOnly = isset($_POST['READ_ONLY']) && strtoupper($_POST['READ_ONLY']) === 'Y';
+	$showEmptyFields = isset($_POST['SHOW_EMPTY_FIELDS']) && strtoupper($_POST['SHOW_EMPTY_FIELDS']) === 'Y';
+	$initialMode = isset($_POST['INITIAL_MODE']) ? $_POST['INITIAL_MODE'] : '';
 
 	CBitrixComponent::includeComponentClass('bitrix:crm.deal.details');
 	$component = new CCrmDealDetailsComponent();
@@ -1474,6 +1484,7 @@ elseif($action === 'PREPARE_EDITOR_HTML')
 	}
 	$component->initializeParams($params);
 	$component->setEntityID($ID);
+
 	if($ID > 0)
 	{
 		$component->setCategoryID(\CCrmDeal::GetCategoryID($ID));
@@ -1486,31 +1497,47 @@ elseif($action === 'PREPARE_EDITOR_HTML')
 
 	$context['SKIP_PRODUCT_DATA'] = 'Y';
 
-	$fieldMap = array_fill_keys($fieldNames, true);
-	$fieldInfos = $component->prepareFieldInfos();
-	$entityConfigElements = array();
-	foreach ($fieldInfos as $fieldInfo)
+	if(empty($fieldNames))
 	{
-		if(isset($fieldMap[$fieldInfo['name']]))
-		{
-			$entityConfigElements[] = array('name' => $fieldInfo['name']);
-		}
-	}
-
-	$sectionConfig = array(
-		'name' => 'main',
-		'type' => 'section',
-		'elements' => $entityConfigElements,
-		'data' => array('isChangeable' => true, 'isRemovable' => false),
-	);
-
-	if($title !== '')
-	{
-		$sectionConfig['title'] = $title;
+		$component->prepareFieldInfos();
+		$entityConfig = $component->prepareConfiguration();
 	}
 	else
 	{
-		$sectionConfig['data']['enableTitle'] = false;
+		$fieldMap = array_fill_keys($fieldNames, true);
+		$fieldInfos = $component->prepareFieldInfos();
+		$entityConfigElements = array();
+		foreach ($fieldInfos as $fieldInfo)
+		{
+			if(isset($fieldMap[$fieldInfo['name']]))
+			{
+				$entityConfigElements[] = array('name' => $fieldInfo['name']);
+			}
+		}
+
+		$sectionConfig = array(
+			'name' => 'main',
+			'type' => 'section',
+			'elements' => $entityConfigElements,
+			'data' => array('isChangeable' => true, 'isRemovable' => false),
+		);
+
+		if($title !== '')
+		{
+			$sectionConfig['title'] = $title;
+		}
+		else
+		{
+			$sectionConfig['data']['enableTitle'] = false;
+		}
+
+		$entityConfig = array($sectionConfig);
+	}
+
+	$scope = \Bitrix\Crm\Entity\EntityEditorConfigScope::UNDEFINED;
+	if(isset($_POST['SCOPE']) && \Bitrix\Crm\Entity\EntityEditorConfigScope::isDefined($_POST['SCOPE']))
+	{
+		$scope = $_POST['SCOPE'];
 	}
 
 	$scopePrefix = '';
@@ -1537,12 +1564,15 @@ elseif($action === 'PREPARE_EDITOR_HTML')
 			'SCOPE_PREFIX' => $scopePrefix,
 			'OPTION_PREFIX' => $optionPrefix,
 			'FORCE_DEFAULT_CONFIG' => $forceDefaultConfig,
-			'ENTITY_CONFIG' => array($sectionConfig),
+			'ENTITY_CONFIG' => $entityConfig,
 			'ENTITY_FIELDS' => $component->prepareFieldInfos(),
 			'ENTITY_DATA' => $component->prepareEntityData(),
 			'ENABLE_CONFIG_SCOPE_TOGGLE' => $enableConfigScopeToggle,
 			'ENABLE_CONFIGURATION_UPDATE' => $enableConfigurationUpdate,
 			'ENABLE_REQUIRED_FIELDS_INJECTION' => false,
+			'ENABLE_AVAILABLE_FIELDS_INJECTION' => $enableAvailableFieldsInjection,
+			'ENABLE_EXTERNAL_LAYOUT_RESOLVERS' => $enableExternalLayoutResolvers,
+			'ENABLE_COMMUNICATION_CONTROLS' => $enableCommunicationControls,
 			'ENABLE_SECTION_EDIT' => false,
 			'ENABLE_SECTION_CREATION' => false,
 			'ENABLE_USER_FIELD_CREATION' => false,
@@ -1558,9 +1588,10 @@ elseif($action === 'PREPARE_EDITOR_HTML')
 			'CONTEXT_ID' => \CCrmOwnerType::DealName.'_'.$ID,
 			'ENTITY_TYPE_ID' => \CCrmOwnerType::Deal,
 			'ENTITY_ID' => $ID,
-			'READ_ONLY' => false,
-			'INITIAL_MODE' => 'edit',
-			'IS_EMBEDDED' => $isEmbedded,
+			'READ_ONLY' => $isReadOnly,
+			'INITIAL_MODE' => $initialMode !== '' ? $initialMode : 'edit',
+			'SHOW_EMPTY_FIELDS' => $showEmptyFields,
+			'IS_EMBEDDED' =>$isEmbedded,
 			'CONTEXT' => $context
 		)
 	);

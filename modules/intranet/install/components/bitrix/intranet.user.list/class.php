@@ -20,9 +20,12 @@ class CIntranetUserListComponent extends UserList
 	protected $filterId = 'INTRANET_USER_LIST_'.SITE_ID;
 	protected $explicitFieldsList = [
 		'ID',
+		'FULL_NAME',
+		'PERSONAL_PHOTO',
 		'UF_DEPARTMENT',
 		'UF_DEPARTMENT_FLAT'
 	];
+	protected $availableEntityFields = [];
 
 	private function extranetSite()
 	{
@@ -122,7 +125,7 @@ class CIntranetUserListComponent extends UserList
 					'id' => 'BIRTHDAY',
 					'fieldId' => 'PERSONAL_BIRTHDAY',
 					'name' => Loc::getMessage('INTRANET_USER_LIST_COLUMN_BIRTHDAY'),
-					'sort' => 'BIRTHDAY',
+//					'sort' => 'BIRTHDAY',
 					'default' => false,
 					'editable' => false
 				],
@@ -262,6 +265,14 @@ class CIntranetUserListComponent extends UserList
 					'fieldId' => 'WORK_COMPANY',
 					'name' => Loc::getMessage('INTRANET_USER_LIST_COLUMN_COMPANY'),
 					'sort' => 'COMPANY',
+					'default' => false,
+					'editable' => false
+				],
+				[
+					'id' => 'WORK_DEPARTMENT',
+					'fieldId' => 'WORK_DEPARTMENT',
+					'name' => Loc::getMessage('INTRANET_USER_LIST_COLUMN_WORK_DEPARTMENT'),
+					'sort' => 'WORK_DEPARTMENT',
 					'default' => false,
 					'editable' => false
 				],
@@ -501,12 +512,35 @@ class CIntranetUserListComponent extends UserList
 		return $result;
 	}
 
+	private function initAvailableEntityFields()
+	{
+		$entityFields = \Bitrix\Intranet\UserTable::getEntity()->getFields();
+		foreach($entityFields as $entityField)
+		{
+			$this->availableEntityFields[] = $entityField->getName();
+		}
+	}
+
+	private function checkQueryFieldName($fieldName = '')
+	{
+		$fieldName = trim($fieldName, '!=<>%*');
+		return (
+			in_array($fieldName, $this->availableEntityFields)
+			|| strpos($fieldName, '.') !== false
+		);
+	}
+
+
 	private function addQueryOrder(\Bitrix\Main\Entity\Query &$query, \Bitrix\Main\Grid\Options $gridOptions)
 	{
 		$orderFields = $this->getOrder($gridOptions);
-		foreach($orderFields as $key => $value)
+		foreach($orderFields as $fieldName => $value)
 		{
-			$query->addOrder($key, $value);
+			if (!$this->checkQueryFieldName($fieldName))
+			{
+				continue;
+			}
+			$query->addOrder($fieldName, $value);
 		}
 	}
 
@@ -517,22 +551,28 @@ class CIntranetUserListComponent extends UserList
 		$filter = $this->getFilter($gridFilter);
 
 		$departmentId = $flatDepartmentId = false;
-		foreach($filter as $key => $value)
+
+		foreach($filter as $fieldName => $value)
 		{
-			if ($key == '=UF_DEPARTMENT')
+			if ($fieldName == '=UF_DEPARTMENT')
 			{
-				$departmentId = intval($filter[$key]);
-				unset($filter[$key]);
+				$departmentId = intval($filter[$fieldName]);
+				unset($filter[$fieldName]);
 				continue;
 			}
-			elseif ($key == '=UF_DEPARTMENT_FLAT')
+			elseif ($fieldName == '=UF_DEPARTMENT_FLAT')
 			{
 				$query->addFilter('=UF_DEPARTMENT', $value);
-				unset($filter[$key]);
+				unset($filter[$fieldName]);
 				continue;
 			}
 
-			$query->addFilter($key, $value);
+			if (!$this->checkQueryFieldName($fieldName))
+			{
+				continue;
+			}
+
+			$query->addFilter($fieldName, $value);
 		}
 
 		if (
@@ -664,9 +704,13 @@ class CIntranetUserListComponent extends UserList
 	private function addQuerySelect(\Bitrix\Main\Entity\Query &$query, \Bitrix\Main\Grid\Options $gridOptions)
 	{
 		$selectFields = $this->getSelect($gridOptions);
-		foreach($selectFields as $value)
+		foreach($selectFields as $fieldName)
 		{
-			$query->addSelect($value);
+			if (!$this->checkQueryFieldName($fieldName))
+			{
+				continue;
+			}
+			$query->addSelect($fieldName);
 		}
 	}
 
@@ -785,6 +829,13 @@ class CIntranetUserListComponent extends UserList
 		)
 		{
 			$result['UF_DEPARTMENT'] = false;
+			if (
+				Loader::includeModule('extranet')
+				&& ($extranetGroupId = \CExtranet::getExtranetUserGroupId())
+			)
+			{
+				$result['=GROUPS.GROUP_ID'] = $extranetGroupId;
+			}
 		}
 		elseif (in_array($gridFilter['PRESET_ID'], ['company', 'employees']))
 		{
@@ -1036,6 +1087,12 @@ class CIntranetUserListComponent extends UserList
 				'OPERATION' => '%',
 				'VALUE' => $gridFilter['COMPANY']
 			],
+			[
+				'FILTER_FIELD_NAME' => 'WORK_DEPARTMENT',
+				'FIELD_NAME' => 'WORK_DEPARTMENT',
+				'OPERATION' => '%',
+				'VALUE' => $gridFilter['WORK_DEPARTMENT']
+			],
 		];
 
 		$dateFieldsList = [
@@ -1213,6 +1270,7 @@ class CIntranetUserListComponent extends UserList
 					break;
 				case 'BIRTHDAY':
 					$result[] = 'PERSONAL_BIRTHDAY';
+					$result[] = 'PERSONAL_GENDER';
 					break;
 				case 'GENDER':
 					$result[] = 'PERSONAL_GENDER';
@@ -1302,6 +1360,8 @@ class CIntranetUserListComponent extends UserList
 	{
 		$result = [];
 
+		$this->initAvailableEntityFields();
+
 		$entityFilter = Filter\Factory::createEntityFilter(
 			\Bitrix\Main\UserTable::getUfId(),
 			[
@@ -1321,7 +1381,10 @@ class CIntranetUserListComponent extends UserList
 		$usedFields = $filterOptions->getUsedFields();
 		$usedFields = array_filter(
 			$usedFields,
-			function($value) { return !empty($value); }
+			function ($value)
+			{
+				return !empty($value);
+			}
 		);
 
 		if(empty($usedFields))
@@ -1351,6 +1414,17 @@ class CIntranetUserListComponent extends UserList
 		$result['ROWS'] = [];
 
 		$gridFilter = $filterOptions->getFilter($result['FILTER']);
+
+		$result['PROCESS_EXTRANET'] = (
+			(
+				isset($gridFilter['EXTRANET'])
+				&& in_array($gridFilter['EXTRANET'], ['Y', 'N'])
+			)
+			|| !empty($gridFilter['DEPARTMENT'])
+			|| in_array($gridFilter['PRESET_ID'], ['company', 'employees'])
+				? 'N'
+				: 'Y'
+		);
 
 		$query = new \Bitrix\Main\Entity\Query(\Bitrix\Intranet\UserTable::getEntity());
 		$this->addQueryOrder($query, $gridOptions);

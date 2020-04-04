@@ -303,10 +303,14 @@ if($arParams['TYPE'] === 'list')
 		$restriction = \Bitrix\Crm\Restriction\RestrictionManager::getDuplicateControlRestriction();
 		if($restriction->hasPermission())
 		{
+			$dedupePath = \Bitrix\Crm\Settings\LayoutSettings::getCurrent()->isDedupeWizardEnabled()
+				? $arParams['PATH_TO_COMPANY_DEDUPEWIZARD']
+				: $arParams['PATH_TO_COMPANY_DEDUPE'];
+
 			$arResult['BUTTONS'][] = array(
 				'TEXT' => GetMessage('COMPANY_DEDUPE'),
 				'TITLE' => GetMessage('COMPANY_DEDUPE_TITLE'),
-				'LINK' => CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_COMPANY_DEDUPE'], array())
+				'LINK' => CComponentEngine::MakePathFromTemplate($dedupePath, array())
 			);
 		}
 		else
@@ -317,6 +321,16 @@ if($arParams['TYPE'] === 'list')
 				'ONCLICK' => $restriction->preparePopupScript(),
 				'MENU_ICON' => 'grid-lock'
 			);
+		}
+
+		if(\Bitrix\Main\Loader::includeModule('rest') && is_callable('\Bitrix\Rest\Marketplace\Url::getConfigurationPlacementUrl'))
+		{
+			$url = \Bitrix\Rest\Marketplace\Url::getConfigurationPlacementUrl('crm_company', 'setting_list');
+			$arResult['BUTTONS'][] = [
+				'TEXT' => GetMessage('COMPANY_VERTICAL_CRM'),
+				'TITLE' => GetMessage('COMPANY_VERTICAL_CRM_TITLE'),
+				'ONCLICK' => 'BX.SidePanel.Instance.open(\''.$url.'\');'
+			];
 		}
 	}
 

@@ -74,6 +74,10 @@ return array(
 			'name' => Loc::getMessage('LANDING_BLOCK_40.1.THREE_COLS_CAROUSEL_STYLE_LANDINGBLOCKNODECARDBUTTON'),
 			'type' => 'text-align',
 		),
+		'.landing-block-node-card' => array(
+			'name' => Loc::getMessage('LANDING_BLOCK_40.1.THREE_COLS_CAROUSEL_CARDS_LANDINGBLOCKNODECARD'),
+			'type' => 'align-self',
+		),
 	),
 	'assets' => array(
 		'ext' => array('landing_carousel'),

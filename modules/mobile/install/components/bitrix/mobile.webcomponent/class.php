@@ -133,7 +133,7 @@ class MobileWebComponent extends \CBitrixComponent
 		}
 	}
 
-	public function 	generateArchive()
+	public function generateArchive()
 	{
 		require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/classes/general/tar_gz.php");
 
@@ -142,8 +142,9 @@ class MobileWebComponent extends \CBitrixComponent
 		$rndGenerator = new \Bitrix\Main\Type\RandomSequence($this->componentName.LANGUAGE_ID);
 		$randomTmpDir = new Directory($this->systemTemporaryDirectory . self::$archiveTempDirectory . $rndGenerator->randString(20));
 		$randomTmpDir->create();
-		$archivePath = $randomTmpDir->getPath() . "/".$this->version.".tar.gz";
-		$tmpBundlePath = $randomTmpDir->getPath() . "/bundle/";
+		$randomTmpPath = $randomTmpDir->getPath() . "/".md5($this->componentName)."/";
+		$archivePath =  $randomTmpPath.$this->version.".tar.gz";
+		$tmpBundlePath = $randomTmpPath. "/bundle/";
 		$config = include(Application::getDocumentRoot() . $this->componentPath . "/config.php");
 
 		//Copy base bundle to temporary directory
@@ -220,7 +221,7 @@ class MobileWebComponent extends \CBitrixComponent
 
 			//Try to extract files in temporary directory to check if the archive is corrupted
 			//FIXME to find better solution in future
-			$arc->extractFiles($randomTmpDir->getPath() . "/extractTest/");
+			$arc->extractFiles($randomTmpPath . "/extractTest/");
 
 			//Remove bundle in temporary directory
 			$dirEntry = new Directory($tmpBundlePath);

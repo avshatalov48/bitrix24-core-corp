@@ -116,6 +116,7 @@ if ($USER->CanDoOperation("controller_counters_view"))
 		"module_id" => "controller",
 		"more_url" => array(
 			"controller_counter_edit.php?lang=".LANG,
+			"controller_counter_history.php?lang=".LANG,
 		),
 		"items_id" => "menu_controller_counter",
 		"title" => GetMessage("CTRLR_MENU_COUNTERS_TITLE"),

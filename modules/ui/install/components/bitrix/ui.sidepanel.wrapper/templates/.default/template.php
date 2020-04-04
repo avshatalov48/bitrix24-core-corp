@@ -9,6 +9,7 @@ use Bitrix\Intranet\Integration\Templates\Bitrix24\ThemePicker;
 /** @var array $arResult*/
 /** @var array $arParams*/
 
+CJSCore::Init();
 $this->addExternalCss($this->GetFolder() . '/template.css');
 $this->addExternalJs($this->GetFolder() . '/template.js');
 \Bitrix\Main\UI\Extension::load("sidepanel");
@@ -81,6 +82,7 @@ if ($arResult["SHOW_BITRIX24_THEME"] == "Y")
 					<span id="pagetitle" class="pagetitle-item"><? $APPLICATION->ShowTitle(); ?></span>
 					<span id="pagetitle_edit" class="pagetitle-edit-button" style="display: none;"></span>
 					<input id="pagetitle_input" type="text" class="pagetitle-item" style="display: none;">
+					<? $APPLICATION->ShowViewContent("inside_pagetitle_below"); ?>
 				</div>
 
 				<? $APPLICATION->ShowViewContent("inside_pagetitle"); ?>

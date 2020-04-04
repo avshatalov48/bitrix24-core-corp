@@ -308,7 +308,7 @@ class AuthGrantTable extends Main\Entity\DataManager
 			{
 				if ($a['ID'] != $currentUserId)
 				{
-					$users[$a['ID']] = '('.$a['LOGIN'].') '.$a['NAME'].' '.$a['LAST_NAME'];
+					$users[$a['ID']] = $a['LAST_NAME'].' '.$a['NAME'].' ('.$a['LOGIN'].')';
 				}
 			}
 		}

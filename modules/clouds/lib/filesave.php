@@ -175,6 +175,7 @@ class FileSaveTable extends Main\ORM\Data\DataManager
 		{
 			$fileSave = self::$files[$key];
 			$fileSave->delete();
+			unset(self::$files[$key]);
 		}
 	}
 }

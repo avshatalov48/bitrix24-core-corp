@@ -17,7 +17,7 @@ return array(
 			'count' => 5,
 			'source' => 'catalog',
 		),
-		'version' => '18.4.0',
+		'version' => '18.4.0',	// old param for backward compatibility. Can used for old versions of module via repo. Do not delete!
 	),
 	'cards' => array(
 		'.landing-block-node-menu-list-item' => array(

@@ -240,4 +240,117 @@ describe('core/text', () => {
 			assert.ok(Text.toBoolean('no', ['on']) === false);
 		});
 	});
+
+	describe('toCamelCase', () => {
+
+		it('Should be a function', () => {
+			assert.ok(typeof Text.toCamelCase === 'function');
+		});
+
+		it('Should convert standard string identifiers', () => {
+			assert.equal(Text.toCamelCase('one-two-three'), 'oneTwoThree');
+			assert.equal(Text.toCamelCase('-one-two-three'), 'oneTwoThree');
+			assert.equal(Text.toCamelCase('one--two--three'), 'oneTwoThree');
+			assert.equal(Text.toCamelCase('one_two_three'), 'oneTwoThree');
+			assert.equal(Text.toCamelCase('one-two'), 'oneTwo');
+			assert.equal(Text.toCamelCase('one_two'), 'oneTwo');
+			assert.equal(Text.toCamelCase('one'), 'one');
+			assert.equal(Text.toCamelCase('___one___'), 'one');
+			assert.equal(Text.toCamelCase('oneTwo'), 'oneTwo');
+			assert.equal(Text.toCamelCase('ABC'), 'abc');
+			assert.equal(Text.toCamelCase('Ab'), 'ab');
+			assert.equal(Text.toCamelCase('aB'), 'aB');
+			assert.equal(Text.toCamelCase('ab'), 'ab');
+			assert.equal(Text.toCamelCase('A_B'), 'aB');
+			assert.equal(Text.toCamelCase('---A_B---'), 'aB');
+			assert.equal(Text.toCamelCase('A_b'), 'aB');
+			assert.equal(Text.toCamelCase('A___b'), 'aB');
+			assert.equal(Text.toCamelCase('____A___b___'), 'aB');
+			assert.equal(Text.toCamelCase('a_B'), 'aB');
+			assert.equal(Text.toCamelCase('a_b'), 'aB');
+			assert.equal(Text.toCamelCase('aBc'), 'aBc');
+			assert.equal(Text.toCamelCase('aBc def'), 'abcDef');
+			assert.equal(Text.toCamelCase('aBc def_ghi'), 'abcDefGhi');
+			assert.equal(Text.toCamelCase('aBc def_ghi 123'), 'abcDefGhi123');
+		});
+
+		it('Should return the same value for a wrong argument', () => {
+			const obj = {};
+			assert.equal(Text.toCamelCase(''), '');
+			assert.equal(Text.toCamelCase(null), null);
+			assert.equal(Text.toCamelCase(undefined), undefined);
+			assert.equal(Text.toCamelCase(obj), obj);
+		});
+
+	});
+
+	describe('toPascalCase', () => {
+
+		it('Should be a function', () => {
+			assert.ok(typeof Text.toPascalCase === 'function');
+		});
+
+		it('Should convert standard string identifiers', () => {
+			assert.equal(Text.toPascalCase('one-two-three'), 'OneTwoThree');
+			assert.equal(Text.toPascalCase('-one-two-three'), 'OneTwoThree');
+			assert.equal(Text.toPascalCase('one--two--three'), 'OneTwoThree');
+			assert.equal(Text.toPascalCase('one_two_three'), 'OneTwoThree');
+			assert.equal(Text.toPascalCase('one-two'), 'OneTwo');
+			assert.equal(Text.toPascalCase('one_two'), 'OneTwo');
+			assert.equal(Text.toPascalCase('one'), 'One');
+			assert.equal(Text.toPascalCase('___one___'), 'One');
+			assert.equal(Text.toPascalCase('oneTwo'), 'OneTwo');
+			assert.equal(Text.toPascalCase('ABC'), 'Abc');
+			assert.equal(Text.toPascalCase('Ab'), 'Ab');
+			assert.equal(Text.toPascalCase('aB'), 'AB');
+			assert.equal(Text.toPascalCase('ab'), 'Ab');
+			assert.equal(Text.toPascalCase('A_B'), 'AB');
+			assert.equal(Text.toPascalCase('---A_B---'), 'AB');
+			assert.equal(Text.toPascalCase('A_b'), 'AB');
+			assert.equal(Text.toPascalCase('A___b'), 'AB');
+			assert.equal(Text.toPascalCase('____A___b___'), 'AB');
+			assert.equal(Text.toPascalCase('a_B'), 'AB');
+			assert.equal(Text.toPascalCase('a_b'), 'AB');
+			assert.equal(Text.toPascalCase('aBc'), 'ABc');
+			assert.equal(Text.toPascalCase('aBc def'), 'AbcDef');
+			assert.equal(Text.toPascalCase('aBc def_ghi'), 'AbcDefGhi');
+			assert.equal(Text.toPascalCase('aBc def_ghi 123'), 'AbcDefGhi123');
+		});
+
+		it('Should return the same value for a wrong argument', () => {
+			const obj = {};
+			assert.equal(Text.toPascalCase(''), '');
+			assert.equal(Text.toPascalCase(null), null);
+			assert.equal(Text.toPascalCase(undefined), undefined);
+			assert.equal(Text.toPascalCase(obj), obj);
+		});
+
+	});
+
+	describe('toKebabCase', () => {
+
+		it('Should be a function', () => {
+			assert.ok(typeof Text.toKebabCase === 'function');
+		});
+
+		it('Should convert standard string identifiers', () => {
+			assert.equal(Text.toKebabCase('oneTwoThree'), 'one-two-three');
+			assert.equal(Text.toKebabCase('marginTop'), 'margin-top');
+			assert.equal(Text.toKebabCase('margin'), 'margin');
+			assert.equal(Text.toKebabCase('-margin'), 'margin');
+			assert.equal(Text.toKebabCase('---margin___top'), 'margin-top');
+			assert.equal(Text.toKebabCase('-webkit-margin-top'), 'webkit-margin-top');
+			assert.equal(Text.toKebabCase('ABC'), 'abc');
+			assert.equal(Text.toKebabCase('Top'), 'top');
+			assert.equal(Text.toKebabCase('ThisIsATest'), 'this-is-a-test');
+		});
+
+		it('Should return the same value for a wrong argument', () => {
+			const obj = {};
+			assert.equal(Text.toKebabCase(''), '');
+			assert.equal(Text.toKebabCase(null), null);
+			assert.equal(Text.toKebabCase(undefined), undefined);
+			assert.equal(Text.toKebabCase(obj), obj);
+		});
+	});
 });

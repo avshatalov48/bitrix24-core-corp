@@ -128,6 +128,8 @@ if ($historyId > 0 && $bBizproc)
 else
 	$historyId = 0;
 
+Main\Page\Asset::getInstance()->addJs('/bitrix/js/iblock/iblock_edit.js');
+
 $error = false;
 
 $WF = ($WF=="Y") ? "Y" : "N";	//workflow mode

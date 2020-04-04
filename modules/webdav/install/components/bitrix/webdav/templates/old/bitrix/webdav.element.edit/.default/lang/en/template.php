@@ -1,0 +1,37 @@
+<?
+$MESS ['WD_ACTIVE'] = "Record active";
+$MESS ['WD_NAME'] = "Name";
+$MESS ['WD_TAGS'] = "Tags";
+$MESS ['WD_FILE'] = "File";
+$MESS ['WD_FILE_REPLACE'] = "Replace File";
+$MESS ['WD_SAVE'] = "Save";
+$MESS ['WD_APPLY'] = "Apply";
+$MESS ['WD_CANCEL'] = "Cancel";
+$MESS ['WD_DESCRIPTION'] = "Description";
+$MESS ['WD_FILE_CREATED'] = "Created";
+$MESS ['WD_FILE_MODIFIED'] = "Modified";
+$MESS ['WD_FILE_ACTIVITY'] = "Active";
+$MESS ['WD_FILE_SIZE'] = "Size";
+$MESS ['WD_FILE_STATUS'] = "Status";
+$MESS ['WD_FILE_COMMENTS'] = "Comments";
+$MESS ['WD_OPEN_FILE'] = "Open File";
+$MESS ['WD_VIEW_FILE'] = "View";
+$MESS ['WD_VIEW_FILE_TITLE'] = "View file properties";
+$MESS ['WD_DOWNLOAD_FILE'] = "Download";
+$MESS ['WD_WF_CURRENT_VERSION'] = "current version:";
+$MESS ['WD_WF_ORIGINAL'] = "original:";
+$MESS ['WD_MAIN_PARAMS'] = "General Parameters";
+$MESS ['WD_WF_PARAMS'] = "Workflow Parameters";
+$MESS ['WD_PARENT_SECTION'] = "Parent level";
+$MESS ['WD_CONTENT'] = "Upper level";
+$MESS ['IBEL_E_TAB_BIZPROC'] = "Business Processes";
+$MESS ['IBEL_BIZPROC_STOP'] = "Stop";
+$MESS ['IBEL_BIZPROC_STATE'] = "Current Status:";
+$MESS ['IBEL_BIZPROC_RUN_CMD'] = "Run Action:";
+$MESS ['IBEL_BIZPROC_RUN_CMD_NO'] = "None";
+$MESS ['IBEL_BIZPROC_TASKS'] = "Business Process Tasks:";
+$MESS ['IBEL_E_PUBLISHED'] = "Document Published";
+$MESS ['WD_Y'] = "Y";
+$MESS ['WD_N'] = "No";
+$MESS ['WD_HISTORY'] = "History";
+?>

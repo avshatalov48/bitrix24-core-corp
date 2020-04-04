@@ -17,11 +17,7 @@ $MESS['AUTH_PROFILE_B24NET'] = "My Bitrix24.Network page";
 $MESS['AUTH_SAVE_BUTTON'] = "Save";
 $MESS['AUTH_THEME_DIALOG'] = "Themes";
 $MESS['AUTH_THEME_DIALOG_HINT'] = "Personalize your Bitrix24!<br>Select a background image or video.";
-$MESS['B24_HELPDESK_URL'] = "https://helpdesk.bitrix24.com";
 $MESS['B24_HELP_LOADER'] = "Loading...";
-$MESS['B24_HELP_NOTIFY_URL'] = "https://helpdesk.bitrix24.com/widget/notify.php";
-$MESS['B24_HELP_RELOAD_URL'] = "//helpdesk.bitrix24.com/widget/?start=Y";
 $MESS['B24_HELP_TITLE_NEW'] = "Support";
-$MESS['B24_HELP_URL'] = "//helpdesk.bitrix24.com/widget/";
 $MESS['B24_UPGRADE_LICENSE'] = "Upgrade your plan";
 ?>

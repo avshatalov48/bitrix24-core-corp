@@ -1044,6 +1044,18 @@ class DuplicateRequisiteCriterion extends DuplicateCriterion
 
 		return $title;
 	}
+	public function getSummary()
+	{
+		self::includeLangFile();
+
+		return GetMessage(
+			"CRM_DUP_CRITERION_RQ_SUMMARY",
+			array(
+				'#TITLE#'=> $this->getMatchTitle(),
+				'#DESCR#'=> $this->getMatchDescription()
+			)
+		);
+	}
 	public function getTextTotals($count, $limit = 0)
 	{
 		self::includeLangFile();

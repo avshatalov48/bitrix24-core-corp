@@ -50,10 +50,6 @@ class File extends Base
 		{
 			throw new SystemException('File name is empty.');
 		}
-		if (!$this->dir)
-		{
-			throw new SystemException('File directory is empty.');
-		}
 
 		$content = $builder->stringify();
 		$id = $this->saveFile($content);
@@ -234,7 +230,7 @@ class File extends Base
 			$this->moduleId,
 			false,
 			false,
-			$this->dir
+			$this->dir ?: ''
 		);
 
 		return $this->id;

@@ -12,8 +12,10 @@ class Entity extends Main\Engine\Controller
 				'class' => Crm\Controller\Action\Entity\SearchAction::class,
 				'+prefilters' => [new Main\Engine\ActionFilter\CloseSession()]
 			),
+			'mergeBatch' => array('class' => Crm\Controller\Action\Entity\MergeBatchAction::class),
 			'prepareMerge' => array('class' => Crm\Controller\Action\Entity\PrepareMergeAction::class),
 			'processMerge' => array('class' => Crm\Controller\Action\Entity\ProcessMergeAction::class),
+			'processMergeByMap' => array('class' => Crm\Controller\Action\Entity\ProcessMergeByMapAction::class),
 			'prepareDeletion' => array('class' => Crm\Controller\Action\Entity\PrepareDeletionAction::class),
 			'cancelDeletion' => array('class' => Crm\Controller\Action\Entity\CancelDeletionAction::class),
 			'processDeletion' => array('class' => Crm\Controller\Action\Entity\ProcessDeletionAction::class)

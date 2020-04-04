@@ -1,7 +1,6 @@
 <?
 //<title>Yandex</title>
 /** @global CUser $USER */
-/** @global CMain $APPLICATION */
 /** @var int $IBLOCK_ID */
 /** @var string $SETUP_SERVER_NAME */
 /** @var string $SETUP_FILE_NAME */
@@ -51,10 +50,10 @@ if (!isset($firstStep))
 $pageSize = 100;
 $navParams = array('nTopCount' => $pageSize);
 
-$SETUP_VARS_LIST = 'IBLOCK_ID,SITE_ID,V,XML_DATA,SETUP_SERVER_NAME,COMPANY_NAME,SETUP_FILE_NAME,USE_HTTPS,FILTER_AVAILABLE,DISABLE_REFERERS,MAX_EXECUTION_TIME,CHECK_PERMISSIONS';
+$SETUP_VARS_LIST = 'IBLOCK_ID,SITE_ID,V,XML_DATA,SETUP_SERVER_NAME,COMPANY_NAME,SETUP_FILE_NAME,USE_HTTPS,FILTER_AVAILABLE,DISABLE_REFERERS,EXPORT_CHARSET,MAX_EXECUTION_TIME,CHECK_PERMISSIONS';
 $INTERNAL_VARS_LIST = 'intMaxSectionID,boolNeedRootSection,arSectionIDs,arAvailGroups';
 
-global $USER, $APPLICATION;
+global $USER;
 $bTmpUserCreated = false;
 if (!CCatalog::IsUserExists())
 {
@@ -118,32 +117,28 @@ if (!function_exists("yandex_replace_special"))
 
 if (!function_exists("yandex_text2xml"))
 {
-	function yandex_text2xml($text, $bHSC = false, $bDblQuote = false)
+	function yandex_text2xml(string $text, array $options)
 	{
-		global $APPLICATION;
+		$text = htmlspecialcharsbx($text, ENT_QUOTES|ENT_XML1);
 
-		$bHSC = (true == $bHSC ? true : false);
-		$bDblQuote = (true == $bDblQuote ? true: false);
-
-		if ($bHSC)
-		{
-			$text = htmlspecialcharsbx($text);
-			if ($bDblQuote)
-				$text = str_replace('&quot;', '"', $text);
-		}
 		$text = preg_replace("/[\x1-\x8\xB-\xC\xE-\x1F]/", "", $text);
-		$text = str_replace("'", "&apos;", $text);
-		$text = $APPLICATION->ConvertCharset($text, LANG_CHARSET, 'windows-1251');
-		return $text;
+
+		$error = '';
+		return Main\Text\Encoding::convertEncoding($text, LANG_CHARSET, $options['CHARSET'], $error);
 	}
 }
 
 if (!function_exists('yandex_get_value'))
 {
-function yandex_get_value($arOffer, $param, $PROPERTY, $arProperties, $arUserTypeFormat, $usedProtocol)
+function yandex_get_value(
+	array $arOffer,
+	string $param,
+	$PROPERTY,
+	array $arProperties,
+	array $arUserTypeFormat,
+	array $options
+)
 {
-	global $iblockServerName;
-
 	$strProperty = '';
 	$bParam = (strncmp($param, 'PARAM_', 6) == 0);
 	if (isset($arProperties[$PROPERTY]) && !empty($arProperties[$PROPERTY]))
@@ -310,7 +305,7 @@ function yandex_get_value($arOffer, $param, $PROPERTY, $arProperties, $arUserTyp
 								if ($ar_file = CFile::GetFileArray($intValue))
 								{
 									if(substr($ar_file["SRC"], 0, 1) == "/")
-										$strFile = $usedProtocol.$iblockServerName.CHTTP::urnEncode($ar_file['SRC'], 'utf-8');
+										$strFile = $options['PROTOCOL'].$options['SITE_NAME'].CHTTP::urnEncode($ar_file['SRC'], 'utf-8');
 									else
 										$strFile = $ar_file["SRC"];
 									$value .= ($value ? ', ' : '').$strFile;
@@ -327,7 +322,7 @@ function yandex_get_value($arOffer, $param, $PROPERTY, $arProperties, $arUserTyp
 							if ($ar_file = CFile::GetFileArray($arProperty['VALUE']))
 							{
 								if(substr($ar_file["SRC"], 0, 1) == "/")
-									$strFile = $usedProtocol.$iblockServerName.CHTTP::urnEncode($ar_file['SRC'], 'utf-8');
+									$strFile = $options['PROTOCOL'].$options['SITE_NAME'].CHTTP::urnEncode($ar_file['SRC'], 'utf-8');
 								else
 									$strFile = $ar_file["SRC"];
 								$value = $strFile;
@@ -361,8 +356,8 @@ function yandex_get_value($arOffer, $param, $PROPERTY, $arProperties, $arUserTyp
 						if ($val != '')
 						{
 							$strProperty .= $strProperty ? "\n" : "";
-							$strProperty .= '<param name="'.yandex_text2xml($description[$key], true).'">'.
-								yandex_text2xml($val, true).'</param>';
+							$strProperty .= '<param name="'.yandex_text2xml($description[$key], $options).'">'.
+								yandex_text2xml($val, $options).'</param>';
 						}
 					}
 				}
@@ -371,15 +366,15 @@ function yandex_get_value($arOffer, $param, $PROPERTY, $arProperties, $arUserTyp
 			{
 				if ($value != '')
 				{
-					$strProperty .= '<param name="'.yandex_text2xml($iblockProperty['NAME'], true).'">'.
-						yandex_text2xml($value, true).'</param>';
+					$strProperty .= '<param name="'.yandex_text2xml($iblockProperty['NAME'], $options).'">'.
+						yandex_text2xml($value, $options).'</param>';
 				}
 			}
 		}
 		else
 		{
-			$param_h = yandex_text2xml($param, true);
-			$strProperty .= '<'.$param_h.'>'.yandex_text2xml($value, true).'</'.$param_h.'>';
+			$param_h = yandex_text2xml($param, $options);
+			$strProperty .= '<'.$param_h.'>'.yandex_text2xml($value, $options).'</'.$param_h.'>';
 		}
 
 		unset($iblockProperty);
@@ -478,7 +473,7 @@ if (!function_exists('yandexPrepareItems'))
 						: preg_replace_callback("'&[^;]*;'", 'yandex_replace_special', $row[$descrField]),
 						$options['MAX_DESCRIPTION_LENGTH']
 					),
-					true
+					$options
 				);
 			}
 
@@ -646,9 +641,6 @@ else
 		$arRunErrors[] = GetMessage('BX_CATALOG_EXPORT_YANDEX_ERR_BAD_SERVER_NAME');
 	}
 }
-
-global $iblockServerName;
-$iblockServerName = $site['SERVER_NAME'];
 
 $arProperties = array();
 if (isset($ar_iblock['PROPERTY']))
@@ -908,6 +900,9 @@ if (empty($arRunErrors))
 $usedProtocol = (isset($USE_HTTPS) && $USE_HTTPS == 'Y' ? 'https://' : 'http://');
 $filterAvailable = (isset($FILTER_AVAILABLE) && $FILTER_AVAILABLE == 'Y');
 $disableReferers = (isset($DISABLE_REFERERS) && $DISABLE_REFERERS == 'Y');
+$exportCharset = (isset($EXPORT_CHARSET) && is_string($EXPORT_CHARSET) ? $EXPORT_CHARSET : '');
+if ($exportCharset != 'UTF-8')
+	$exportCharset = 'windows-1251';
 
 $vatExportSettings = array(
 	'ENABLE' => 'N',
@@ -957,6 +952,7 @@ if ($vatExport)
 
 $itemOptions = array(
 	'PROTOCOL' => $usedProtocol,
+	'CHARSET' => $exportCharset,
 	'SITE_NAME' => $site['SERVER_NAME'],
 	'SITE_DIR' => $site['DIR'],
 	'DESCRIPTION' => $descrField,
@@ -1024,15 +1020,30 @@ if ($firstStep)
 	if (empty($arRunErrors))
 	{
 		/** @noinspection PhpUndefinedVariableInspection */
-		fwrite($fp, 'header("Content-Type: text/xml; charset=windows-1251");'."\n");
-		fwrite($fp, 'echo "<"."?xml version=\"1.0\" encoding=\"windows-1251\"?".">"?>');
+		fwrite($fp, 'header("Content-Type: text/xml; charset='.$itemOptions['CHARSET'].'");'."\n");
+		fwrite($fp, 'echo "<"."?xml version=\"1.0\" encoding=\"'.$itemOptions['CHARSET'].'\"?".">"?>');
 		fwrite($fp, "\n".'<!DOCTYPE yml_catalog SYSTEM "shops.dtd">'."\n");
 		fwrite($fp, '<yml_catalog date="'.date("Y-m-d H:i").'">'."\n");
 		fwrite($fp, '<shop>'."\n");
 
-		fwrite($fp, '<name>'.$APPLICATION->ConvertCharset(htmlspecialcharsbx($site['SITE_NAME']), LANG_CHARSET, 'windows-1251')."</name>\n");
+		$charsetError = '';
 
-		fwrite($fp, '<company>'.$APPLICATION->ConvertCharset(htmlspecialcharsbx($site['COMPANY_NAME']), LANG_CHARSET, 'windows-1251')."</company>\n");
+		fwrite($fp,
+			'<name>'.Main\Text\Encoding::convertEncoding(
+				htmlspecialcharsbx($site['SITE_NAME'], ENT_QUOTES|ENT_XML1),
+				LANG_CHARSET,
+				$itemOptions['CHARSET'],
+				$charsetError).
+			"</name>\n"
+		);
+		fwrite($fp,
+			'<company>'.Main\Text\Encoding::convertEncoding(
+				htmlspecialcharsbx($site['COMPANY_NAME'], ENT_QUOTES|ENT_XML1),
+				LANG_CHARSET,
+				$itemOptions['CHARSET'],
+				$charsetError).
+			"</company>\n"
+		);
 		fwrite($fp, '<url>'.$usedProtocol.htmlspecialcharsbx($site['SERVER_NAME'])."</url>\n");
 		fwrite($fp, '<platform>1C-Bitrix</platform>'."\n");
 
@@ -1165,7 +1176,7 @@ if ($firstStep)
 		}
 
 		foreach ($arAvailGroups as $value)
-			$strTmpCat .= '<category id="'.$value['ID'].'"'.($value['IBLOCK_SECTION_ID'] > 0 ? ' parentId="'.$value['IBLOCK_SECTION_ID'].'"' : '').'>'.yandex_text2xml($value['NAME'], true).'</category>'."\n";
+			$strTmpCat .= '<category id="'.$value['ID'].'"'.($value['IBLOCK_SECTION_ID'] > 0 ? ' parentId="'.$value['IBLOCK_SECTION_ID'].'"' : '').'>'.yandex_text2xml($value['NAME'], $itemOptions).'</category>'."\n";
 		unset($value);
 
 		$intMaxSectionID += 100000000;
@@ -1728,7 +1739,7 @@ if (empty($arRunErrors))
 									if ($yandexFormat == 'vendor.model' || $yandexFormat == 'artist.title')
 										continue;
 
-									$itemsContent .= "<name>".yandex_text2xml($offer['NAME'], true)."</name>\n";
+									$itemsContent .= "<name>".yandex_text2xml($offer['NAME'], $itemOptions)."</name>\n";
 									break;
 								case 'description':
 									$itemsContent .= "<description>".
@@ -1746,7 +1757,7 @@ if (empty($arRunErrors))
 												$prop_id,
 												$arProperties,
 												$arUserTypeFormat,
-												$usedProtocol
+												$itemOptions
 											);
 											if ($value == '')
 											{
@@ -1756,7 +1767,7 @@ if (empty($arRunErrors))
 													$prop_id,
 													$arProperties,
 													$arUserTypeFormat,
-													$usedProtocol
+													$itemOptions
 												);
 											}
 											if ($value != '')
@@ -1775,7 +1786,7 @@ if (empty($arRunErrors))
 											||
 											$key == 'title' && $yandexFormat == 'artist.title'
 										)
-											$itemsContent .= "<".$key.">".yandex_text2xml($offer['NAME'], true)."</".$key.">\n";
+											$itemsContent .= "<".$key.">".yandex_text2xml($offer['NAME'], $itemOptions)."</".$key.">\n";
 									}
 									else
 									{
@@ -1785,7 +1796,7 @@ if (empty($arRunErrors))
 											$fields[$key],
 											$arProperties,
 											$arUserTypeFormat,
-											$usedProtocol
+											$itemOptions
 										);
 										if ($value == '')
 										{
@@ -1795,7 +1806,7 @@ if (empty($arRunErrors))
 												$fields[$key],
 												$arProperties,
 												$arUserTypeFormat,
-												$usedProtocol
+												$itemOptions
 											);
 										}
 										if ($value != '')
@@ -1827,7 +1838,7 @@ if (empty($arRunErrors))
 											$fields[$key],
 											$arProperties,
 											$arUserTypeFormat,
-											$usedProtocol
+											$itemOptions
 										);
 										if ($value == '')
 										{
@@ -1837,7 +1848,7 @@ if (empty($arRunErrors))
 												$fields[$key],
 												$arProperties,
 												$arUserTypeFormat,
-												$usedProtocol
+												$itemOptions
 											);
 										}
 										if ($value != '')
@@ -1914,7 +1925,7 @@ if (empty($arRunErrors))
 								if ($yandexFormat == 'vendor.model' || $yandexFormat == 'artist.title')
 									continue;
 
-								$itemsContent .= "<name>".yandex_text2xml($row['NAME'], true)."</name>\n";
+								$itemsContent .= "<name>".yandex_text2xml($row['NAME'], $itemOptions)."</name>\n";
 								break;
 							case 'description':
 								$itemsContent .= "<description>".$row['DESCRIPTION']."</description>\n";
@@ -1930,7 +1941,7 @@ if (empty($arRunErrors))
 											$prop_id,
 											$arProperties,
 											$arUserTypeFormat,
-											$usedProtocol
+											$itemOptions
 										);
 										if ($value != '')
 											$itemsContent .= $value."\n";
@@ -1948,7 +1959,7 @@ if (empty($arRunErrors))
 										||
 										$key == 'title' && $yandexFormat == 'artist.title'
 									)
-										$itemsContent .= "<".$key.">".yandex_text2xml($row['NAME'], true)."</".$key.">\n";
+										$itemsContent .= "<".$key.">".yandex_text2xml($row['NAME'], $itemOptions)."</".$key.">\n";
 								}
 								else
 								{
@@ -1958,7 +1969,7 @@ if (empty($arRunErrors))
 										$fields[$key],
 										$arProperties,
 										$arUserTypeFormat,
-										$usedProtocol
+										$itemOptions
 									);
 									if ($value != '')
 										$itemsContent .= $value."\n";
@@ -1989,7 +2000,7 @@ if (empty($arRunErrors))
 										$fields[$key],
 										$arProperties,
 										$arUserTypeFormat,
-										$usedProtocol
+										$itemOptions
 									);
 									if ($value != '')
 										$itemsContent .= $value."\n";
@@ -2014,6 +2025,7 @@ if (empty($arRunErrors))
 				'SECTION_CHAINS' => true,
 				'PROPERTIES' => true
 			));
+			/** @noinspection PhpDeprecationInspection */
 			\CCatalogProduct::ClearCache();
 		}
 
@@ -2043,7 +2055,7 @@ if (empty($arRunErrors))
 		$process = true;
 		$content = '';
 		if ($boolNeedRootSection)
-			$content .= '<category id="'.$intMaxSectionID.'">'.yandex_text2xml(GetMessage('YANDEX_ROOT_DIRECTORY'), true).'</category>'."\n";
+			$content .= '<category id="'.$intMaxSectionID.'">'.yandex_text2xml(GetMessage('YANDEX_ROOT_DIRECTORY'), $itemOptions).'</category>'."\n";
 		$content .= "</categories>\n";
 		$content .= "<offers>\n";
 

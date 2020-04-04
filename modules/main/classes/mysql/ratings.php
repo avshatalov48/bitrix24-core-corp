@@ -691,7 +691,7 @@ class CRatings extends CAllRatings
 				U.PERSONAL_PHOTO,
 				RV.VALUE AS VOTE_VALUE,
 				RV.USER_ID,
-				SUM(case when RV0.ID is not null then 1 else 0 end) RANK
+				SUM(case when RV0.ID is not null then 1 else 0 end) `RANK`
 			FROM
 				b_rating_vote RV LEFT JOIN b_rating_vote RV0 ON RV0.USER_ID = ".intval($USER->GetId())." and RV0.OWNER_ID = RV.USER_ID,
 				b_user U
@@ -703,7 +703,7 @@ class CRatings extends CAllRatings
 //				($bplus? " and RV.VALUE > 0 ": " and RV.VALUE < 0 "). // ticket 103248
 				self::getReactionFilterSQL($arParam, $bplus)."
 			GROUP BY RV.USER_ID
-			ORDER BY ".($bIntranetInstalled? "RV.VALUE DESC, RANK DESC, RV.ID DESC": "RANK DESC, RV.VALUE DESC, RV.ID DESC");
+			ORDER BY ".($bIntranetInstalled? "RV.VALUE DESC, `RANK` DESC, RV.ID DESC": "RANK DESC, RV.VALUE DESC, RV.ID DESC");
 	}
 
 	public static function GetRatingVoteListSQLExtended($arParam, $bplus, $bIntranetInstalled)
@@ -717,7 +717,7 @@ class CRatings extends CAllRatings
 				U.ID,
 				RV.VALUE AS VOTE_VALUE,
 				RV.USER_ID,
-				SUM(case when RV0.ID is not null then 1 else 0 end) RANK
+				SUM(case when RV0.ID is not null then 1 else 0 end) `RANK`
 			FROM
 				b_rating_vote RV LEFT JOIN b_rating_vote RV0 ON RV0.USER_ID = ".intval($USER->GetId())." and RV0.OWNER_ID = RV.USER_ID,
 				b_user U
@@ -729,7 +729,7 @@ class CRatings extends CAllRatings
 //				($bplus? " and RV.VALUE > 0 ": " and RV.VALUE < 0 "). // ticket 103248
 				self::getReactionFilterSQL($arParam, $bplus)."
 			GROUP BY RV.USER_ID
-			ORDER BY ".($bIntranetInstalled? "RV.VALUE DESC, RANK DESC, RV.ID DESC": "RANK DESC, RV.VALUE DESC, RV.ID DESC");
+			ORDER BY ".($bIntranetInstalled? "RV.VALUE DESC, `RANK` DESC, RV.ID DESC": "RANK DESC, RV.VALUE DESC, RV.ID DESC");
 	}
 
 	private static function getReactionFilterSQL($arParam, $bplus)

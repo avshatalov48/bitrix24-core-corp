@@ -4,15 +4,18 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
-use Bitrix\Landing\Config;
-use Bitrix\Landing\Hook;
+use \Bitrix\Landing\Config;
+use \Bitrix\Landing\Hook;
 use \Bitrix\Landing\Manager;
 use \Bitrix\Main\Localization\Loc;
 use \Bitrix\Landing\Assets;
+use \Bitrix\Main\UI\Extension;
 
 Loc::loadMessages(__FILE__);
 
 $this->setFrameMode(true);
+$landing = $arResult['LANDING'];
+/** @var \Bitrix\Landing\Landing $landing */
 
 Manager::setPageTitle(
 	Loc::getMessage('LANDING_TPL_TITLE')
@@ -24,10 +27,75 @@ if ($arResult['ERRORS'])
 	return;
 }
 
-$arResult['LANDING']->view([
+if ($arParams['DRAFT_MODE'] == 'Y')
+{
+	Extension::load([
+		'landing.wiki.public',
+		'sidepanel'
+	]);
+}
+else
+{
+	Extension::load([
+		'sidepanel'
+	]);
+}
+
+// edit menu
+if (
+	$arParams['SHOW_EDIT_PANEL'] == 'Y' &&
+	$arResult['CAN_EDIT'] == 'Y'
+)
+{
+	Extension::load([
+		'ui.buttons',
+		'ui.buttons.icons'
+	]);
+	ob_start(function($content)
+	{
+		Manager::setPageView('AfterBodyOpen',$content);
+	});
+	?>
+	<div class="landing-pub-top-panel-wrapper">
+		<div class="landing-pub-top-panel">
+			<div class="landing-pub-top-panel-left">
+				<div class="landing-pub-top-panel-actions">
+					<a href="<?= $arParams['PAGE_URL_LANDING_VIEW'];?>" class="ui-btn ui-btn-primary ui-btn-icon-edit landing-pub-top-panel-edit-button">
+						<?= $component->getMessageType('LANDING_TPL_EDIT_PAGE');?>
+					</a>
+				</div>
+				<div class="landing-pub-top-panel-chain">
+					<?$title = $component->getMessageType('LANDING_TPL_SITES');?>
+					<span class="ui-btn ui-btn-xs ui-btn-light ui-btn-round landing-pub-top-panel-chain-link" style="pointer-events: none" title="<?= $title;?>">
+						<?= $title;?>
+					</span>
+					<strong class="landing-pub-top-panel-chain-separator"><span></span></strong>
+					<?$title = \htmlspecialcharsbx($landing->getTitle());?>
+					<span class="ui-btn ui-btn-xs ui-btn-light ui-btn-round landing-pub-top-panel-chain-link" style="pointer-events: none" title="<?= $title;?>">
+						<?= $title;?>
+					</span>
+				</div>
+			</div>
+			<?/*<div class="landing-pub-top-panel-right">
+				<span class="ui-btn ui-btn-light-border ui-btn-icon-setting landing-ui-panel-top-menu-link landing-ui-panel-top-menu-link-settings" title="<?= Loc::getMessage('LANDING_TPL_SETTINGS_BUTTON_TITLE');?>"></span>
+			</div>*/?>
+		</div>
+		<script>
+			BX.ready(function() {
+				void new BX.Landing.Pub.TopPanel();
+			});
+		</script>
+	</div>
+	<?
+	ob_end_flush();
+}
+
+// landing view
+$landing->view([
 	'check_permissions' => false
 ]);
 
+// hook for copyrights
 $enableHook = Manager::checkFeature(
 	Manager::FEATURE_ENABLE_ALL_HOOKS,
 	['hook' => 'copyright']
@@ -37,15 +105,7 @@ if ($enableHook)
 	$hooksSite = Hook::getForSite($arResult['LANDING']->getSiteId());
 }
 
-// set meta og:image
-$metaOG = Manager::getPageView('MetaOG');
-if (strpos($metaOG, '"og:image"') === false)
-{
-	Manager::setPageView('MetaOG',
-		'<meta property="og:image" content="' . $arResult['LANDING']->getPreview() . '" />'
-	);
-}
-
+// assets
 $assets = Assets\Manager::getInstance();
 $assets->addAsset(
 		'landing_public',

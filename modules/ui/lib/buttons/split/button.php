@@ -31,13 +31,13 @@ class Button extends Buttons\Button
 	{
 		$mainOptions = $menuOptions = [];
 
-		if (!empty($params['mainOptions']))
+		if (!empty($params['mainButton']))
 		{
-			$mainOptions = $params['mainOptions'];
+			$mainOptions = $params['mainButton'];
 		}
-		if (!empty($params['menuOptions']))
+		if (!empty($params['menuButton']))
 		{
-			$menuOptions = $params['menuOptions'];
+			$menuOptions = $params['menuButton'];
 		}
 		unset($params['tag']);
 
@@ -58,10 +58,12 @@ class Button extends Buttons\Button
 	}
 
 	/**
+	 * @param bool $jsInit
+	 *
 	 * @return string
 	 * @throws \Bitrix\Main\LoaderException
 	 */
-	public function render()
+	public function render($jsInit = true)
 	{
 		Extension::load($this->listExtensions());
 
@@ -70,10 +72,13 @@ class Button extends Buttons\Button
 
 		$output = "<div {$attributes}>{$this->renderInner()}</div>";
 
-		$js = $this->renderJavascript();
-		if ($js)
+		if ($jsInit)
 		{
-			$output .= "<script>BX.ready(function(){ {$js} });</script>";
+			$js = $this->renderJavascript();
+			if ($js)
+			{
+				$output .= "<script>BX.ready(function(){ {$js} });</script>";
+			}
 		}
 
 		return $output;
@@ -84,7 +89,7 @@ class Button extends Buttons\Button
 		$mainButtonOutput = $this->getMainButton()->render();
 		$menuButtonOutput = $this->getMenuButton()->render();
 
-		return "{$mainButtonOutput} {$menuButtonOutput}";
+		return "{$mainButtonOutput}{$menuButtonOutput}";
 	}
 
 	protected function getQuerySelector()
@@ -109,18 +114,15 @@ class Button extends Buttons\Button
 		$menuButtonAttributes = clone $menuButton->getAttributeCollection();
 		$menuButton->appendDefaultJsonOption($menuButtonAttributes);
 
-		$mainButtonQuerySelector = $mainButton->getQuerySelector();
-		$menuButtonQuerySelector = $menuButton->getQuerySelector();
+		if ($mainButtonAttributes->getJsonOptions())
+		{
+			$attributes->addJsonOption('mainButton', $mainButtonAttributes->getJsonOptions());
+		}
 
-		$attributes
-			->addJsonOption('mainButton', $mainButtonAttributes->getJsonOptions())
-			->addJsonOption('menuButton', $menuButtonAttributes->getJsonOptions())
-			->addJsonOption('querySelectors', [
-				'mainButton' => $mainButtonQuerySelector,
-				'menuButton' => $menuButtonQuerySelector,
-			])
-		;
-
+		if ($menuButtonAttributes->getJsonOptions())
+		{
+			$attributes->addJsonOption('menuButton', $menuButtonAttributes->getJsonOptions());
+		}
 	}
 
 	/**
@@ -148,6 +150,14 @@ class Button extends Buttons\Button
 	}
 
 	/**
+	 * @return string
+	 */
+	public function getText()
+	{
+		return $this->getMainButton()->getText();
+	}
+
+	/**
 	 * @param string $text
 	 *
 	 * @return $this
@@ -155,6 +165,26 @@ class Button extends Buttons\Button
 	public function setText($text)
 	{
 		$this->getMainButton()->setText($text);
+
+		return $this;
+	}
+
+	/**
+	 * @return int|string
+	 */
+	public function getCounter()
+	{
+		return $this->getMainButton()->getCounter();
+	}
+
+	/**
+	 * @param string|integer $counter
+	 *
+	 * @return $this
+	 */
+	public function setCounter($counter)
+	{
+		$this->getMainButton()->setCounter($counter);
 
 		return $this;
 	}

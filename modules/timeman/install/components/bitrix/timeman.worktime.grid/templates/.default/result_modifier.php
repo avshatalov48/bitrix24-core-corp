@@ -3,23 +3,28 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
 }
+if ($arResult['PARTIAL_ITEM'] === 'shiftCell')
+{
+	return;
+}
+/** @var \Bitrix\Timeman\Model\User\UserCollection $usersCollection */
+$usersCollection = $arResult['usersCollection'];
 
+use Bitrix\Timeman\Component\WorktimeGrid\TemplateParams;
 use Bitrix\Timeman\Helper\TimeHelper;
 use Bitrix\Timeman\Helper\UserHelper;
 
-foreach ($arResult['DEPARTMENTS_USERS_DATA']['DEPARTMENTS'] as $departmentId => $departmentData)
+foreach ($arResult['DEPARTMENT_USERS_DATA'] as $departmentData)
 {
-	$draw = false;
-	foreach ($departmentData['USERS'] as $user)
+	$departmentId = $departmentData['ID'];
+	$drawnDepartmentSeparator = false;
+	foreach ($departmentData['USERS'] as $userData)
 	{
-		$columns = [];
-		if ($arResult['DRAW_DEPARTMENT_SEPARATOR'] && !$draw)
+		$user = $usersCollection->getByPrimary($userData['ID']);
+		/** @var \Bitrix\Timeman\Model\User\User $user */
+		if (!$drawnDepartmentSeparator && $arResult['DRAW_DEPARTMENT_SEPARATOR'])
 		{
 			$hintChain = '';
-			if (empty($departmentData['CHAIN']) && !empty($arResult['DEPARTMENTS'][$departmentId]['CHAIN']))
-			{
-				$departmentData['CHAIN'] = &$arResult['DEPARTMENTS'][$departmentId]['CHAIN'];
-			}
 			foreach ($departmentData['CHAIN'] as $chainIndex => $chainDepartment)
 			{
 				if ($chainIndex > 0)
@@ -35,86 +40,57 @@ foreach ($arResult['DEPARTMENTS_USERS_DATA']['DEPARTMENTS'] as $departmentId => 
 					   . htmlspecialcharsbx($departmentData['NAME'])
 					   . '</a>';
 
-			$depNameHtml = '<span class="tm-department-name">' . $depName . '</span>';
-			if ($arResult['canReadSettings'])
+			$departmentSeparatorHtml = '<span class="tm-department-name">' . $depName . '</span>';
+			if ($arResult['canReadSettings'] && $arResult['showUserWorktimeSettings'])
 			{
-				$depNameHtml .= '<span class="timeman-grid-settings-icon timeman-grid-settings-icon-time"
+				$departmentSeparatorHtml .= '<span class="timeman-grid-settings-icon timeman-grid-settings-icon-time"
+					data-entity-code="' . \Bitrix\Timeman\Helper\EntityCodesHelper::buildDepartmentCode($departmentData['ID']) . '"
 					data-role="timeman-settings-toggle"
 					data-id="' . htmlspecialcharsbx($departmentData['ID']) . '"
 					data-type="department"></span>';
 			}
+
 			$arResult['ROWS'][] = [
 				'columns' => [
-					'USER_NAME' => $depNameHtml,
+					'USER_NAME' => $departmentSeparatorHtml,
 				],
 			];
-			$draw = true;
+			$drawnDepartmentSeparator = true;
 		}
 
-		$datesCellData = $arResult['USER_GRID_DATA'][$user['ID']];
-		if (empty($datesCellData))
-		{
-			continue;
-		}
-		$columnClasses = [];
 		$data = [
-			'FORMATTED_NAME' => $user['NAME'],
-			'WORK_POSITION' => $user['WORK_POSITION'],
+			'FORMATTED_NAME' => $user->buildFormattedName(),
+			'WORK_POSITION' => $user->getWorkPosition(),
 			'SHOW_DELETE_USER_BTN' => $arResult['SHOW_DELETE_USER_BTN'],
-			'USER_ID' => $user['ID'],
+			'USER_ID' => $user->getId(),
 			'PHOTO_SRC' => UserHelper::getInstance()->getPhotoPath($user['PERSONAL_PHOTO']) ?: '',
-			'USER_PROFILE_PATH' => UserHelper::getInstance()->getProfilePath($user['ID']),
+			'USER_PROFILE_PATH' => UserHelper::getInstance()->getProfilePath($user->getId()),
 		];
-		foreach ($datesCellData as $dateFormatted => $worktimeCellData)
+		$columns = [];
+		$columnClasses = [];
+
+		foreach ($arResult['HEADERS'] as $worktimeCellDataIndex => $worktimeCellData)
 		{
-			ob_start();
-			require __DIR__ . '/parts/column-name.php';
-			$usernameCell = ob_get_clean();
+			if ($worktimeCellData['id'] === 'USER_NAME')
+			{
+				ob_start();
+				require __DIR__ . '/_column-name.php';
+				$columns['USER_NAME'] = ob_get_clean();
+				continue;
+			}
 
 			##############
-			$cellHtml = '';
-			foreach ($worktimeCellData as $recordShiftplanData)
-			{
-				if (!empty($recordShiftplanData['ABSENCE']))
-				{
-					$columnClasses[$dateFormatted] = 'timeman-grid-cell-absence';
-				}
-				$itemHtml = '';
-				if ($recordShiftplanData['ABSENCE'])
-				{
-					ob_start(); ?>
-				<div class="timeman-grid-worktime timeman-grid-worktime-absence-block timeman-grid-cell-absence-<?= htmlspecialcharsbx($recordShiftplanData['ABSENCE_PART']) ?>">
-					<?
-					if (empty($recordShiftplanData['WORKTIME_RECORD'])):?>
-						<div class="timeman-grid-worktime-inner" <? if ($recordShiftplanData['ABSENCE_HINT']): ?>
-							data-hint-no-icon data-hint="<?php echo htmlspecialcharsbx($recordShiftplanData['ABSENCE_HINT']) ?>"
-						<? endif; ?>
-						>
-								<span class="timeman-grid-worktime-absence-desc"><?=
-									htmlspecialcharsbx(isset($recordShiftplanData['ABSENCE_TITLE']) ? $recordShiftplanData['ABSENCE_TITLE'] : '')
-									?></span>
-						</div>
-						</div><? // end of absence-block
-						?>
-					<? endif;
-					$itemHtml .= ob_get_clean();
-				}
-
-				ob_start();
-				require __DIR__ . '/fixed-flex-cell.php';
-				$itemHtml .= ob_get_clean();
-				if ($recordShiftplanData['WORKTIME_RECORD'] && $recordShiftplanData['ABSENCE'])
-				{
-					$itemHtml .= '</div>'; // end of absence-block
-				}
-
-				$cellHtml .= $itemHtml;
-			}
-			$columns[$dateFormatted] = $cellHtml;
+			$templateParamsList = (array)$departmentData['USERS_DATA_BY_DATES'][$user->getId()][$worktimeCellData['id']];
+			ob_start();
+			require __DIR__ . '/day-cell.php';
+			$cellHtml = ob_get_clean();
+			$date = array_key_exists('date', $worktimeCellData) ? $worktimeCellData['date'] : $worktimeCellData['id'];
+			$columnClasses[$worktimeCellData['id']] = 'js-' . TemplateParams::getDayCellIdByData($user->getId(), $date);
+			$columns[$worktimeCellData['id']] = $cellHtml;
 		}
 		if ($arResult['GRID_OPTIONS']['SHOW_STATS_COLUMNS'])
 		{
-			$userStats = $arResult['WORKTIME_STATISTICS'][$user['ID']];
+			$userStats = $arResult['WORKTIME_STATISTICS'][$user->getId()];
 			$workedDays = $userStats['TOTAL_WORKDAYS'];
 			$workedDaysHtml = '';
 			if ($userStats['TOTAL_NOT_APPROVED_WORKDAYS'] > 0)
@@ -135,28 +111,16 @@ foreach ($arResult['DEPARTMENTS_USERS_DATA']['DEPARTMENTS'] as $departmentId => 
 					TimeHelper::getInstance()->convertSecondsToHoursMinutesLocal($userStats['TOTAL_WORKED_SECONDS']))
 				: '0';
 			$totalViolationPercent = '<span>'
-									 . '<span data-role="violation-percentage-stat" data-type="personal">' . ($percentagePersonal . '<span>%</span></span>')
+									 . '<span data-role="violation-percentage-stat" data-type="individual">' . ($percentagePersonal . '<span>%</span></span>')
 									 . '<span data-role="violation-percentage-stat" data-type="common">' . ($percentageCommon . '<span>%</span></span>')
 									 . '</span>';
-			$columns = array_merge(
-				[
-					'WORKED_DAYS' => '<span class="timeman-grid-stat">' . $workedDaysValue . '</span>',
-					'WORKED_HOURS' => '<span class="timeman-grid-stat">' . $workedHoursValue . '</span>',
-					'PERCENTAGE_OF_VIOLATIONS' => '<span class="timeman-grid-stat">' . $totalViolationPercent . '</span>',
-				],
-				$columns
-			);
+			$columns['WORKED_DAYS'] = '<span class="timeman-grid-stat">' . $workedDaysValue . '</span>';
+			$columns['WORKED_HOURS'] = '<span class="timeman-grid-stat">' . $workedHoursValue . '</span>';
+			$columns['PERCENTAGE_OF_VIOLATIONS'] = '<span class="timeman-grid-stat">' . $totalViolationPercent . '</span>';
 		}
-
 		$row = [
-			'actions' => [],
 			'data' => [],
-			'columns' => array_merge(
-				[
-					'USER_NAME' => $usernameCell,
-				],
-				$columns
-			),
+			'columns' => $columns,
 			'columnClasses' => $columnClasses,
 		];
 

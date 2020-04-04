@@ -290,16 +290,38 @@
 	        phrases = BX.message;
 	      }
 
-	      for (var message in phrases) {
-	        if (!phrases.hasOwnProperty(message)) {
-	          continue;
-	        }
+	      if (Array.isArray(phrasePrefix)) {
+	        var _loop = function _loop(message) {
+	          if (!phrases.hasOwnProperty(message)) {
+	            return "continue";
+	          }
 
-	        if (!message.startsWith(phrasePrefix)) {
-	          continue;
-	        }
+	          if (!phrasePrefix.find(function (element) {
+	            return message.toString().startsWith(element);
+	          })) {
+	            return "continue";
+	          }
 
-	        result[message] = phrases[message];
+	          result[message] = phrases[message];
+	        };
+
+	        for (var message in phrases) {
+	          var _ret = _loop(message);
+
+	          if (_ret === "continue") continue;
+	        }
+	      } else {
+	        for (var _message in phrases) {
+	          if (!phrases.hasOwnProperty(_message)) {
+	            continue;
+	          }
+
+	          if (!_message.startsWith(phrasePrefix)) {
+	            continue;
+	          }
+
+	          result[_message] = phrases[_message];
+	        }
 	      }
 
 	      return Object.freeze(result);

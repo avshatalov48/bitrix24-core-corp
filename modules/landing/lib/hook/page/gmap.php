@@ -3,7 +3,7 @@ namespace Bitrix\Landing\Hook\Page;
 
 use \Bitrix\Landing\Field;
 use \Bitrix\Main\Localization\Loc;
-use Bitrix\Main\Page\Asset;
+use \Bitrix\Main\Page\Asset;
 
 Loc::loadMessages(__FILE__);
 

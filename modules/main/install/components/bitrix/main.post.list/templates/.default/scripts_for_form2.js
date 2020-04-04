@@ -430,7 +430,30 @@
 			this.busy = false;
 			BX.onCustomEvent(window, "OnUCFormResponse", [ENTITY_XML_ID, data["messageId"], this, data]);
 		},
-		onSubmitFailed : function(){this.closeWait();
+		onSubmitFailed : function(data){
+			this.closeWait();
+			if (BX.type.isPlainObject(data))
+			{
+				var message = "Unknown error.";
+				if (
+					BX.type.isPlainObject(data["data"]) &&
+					BX.type.isPlainObject(data["data"]["ajaxRejectData"]) &&
+					BX.type.isNotEmptyString(data["data"]["ajaxRejectData"]["message"])
+				)
+				{
+					message = data["data"]["ajaxRejectData"]["message"];
+				}
+				else if (BX.type.isArray(data["errors"]))
+				{
+					message = "";
+					for (var ii = 0; ii < data["errors"].length; ii++)
+					{
+						message += data["errors"][ii]["message"];
+					}
+				}
+				this.showError(message);
+			}
+
 			this.busy = false;
 			BX.onCustomEvent(window, "OnUCFormResponse", [this.id[0], this.id[1], this, []]);
 		},

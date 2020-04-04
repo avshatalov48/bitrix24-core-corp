@@ -384,11 +384,17 @@ class CAllCrmLead
 					)
 				)
 			);
+			$options = [];
+			if (isset($arFilter['__ENABLE_SEARCH_CONTENT_PHONE_DETECTION']))
+			{
+				$options['ENABLE_PHONE_DETECTION'] = $arFilter['__ENABLE_SEARCH_CONTENT_PHONE_DETECTION'];
+				unset($arFilter['__ENABLE_SEARCH_CONTENT_PHONE_DETECTION']);
+			}
 			$query = $queryWhere->GetQuery(
 				Crm\Search\SearchEnvironment::prepareEntityFilter(
 					CCrmOwnerType::Lead,
 					array(
-						'SEARCH_CONTENT' => Crm\Search\SearchEnvironment::prepareSearchContent($arFilter['SEARCH_CONTENT'])
+						'SEARCH_CONTENT' => Crm\Search\SearchEnvironment::prepareSearchContent($arFilter['SEARCH_CONTENT'], $options)
 					)
 				)
 			);
@@ -1427,8 +1433,13 @@ class CAllCrmLead
 
 			EntityBinding::markFirstAsPrimary($contactBindings);
 		}
-		elseif(is_array($contactBindings) && !is_array($contactIDs))
+		elseif(is_array($contactBindings))
 		{
+			if(EntityBinding::findPrimaryBinding($contactBindings) === null)
+			{
+				EntityBinding::markFirstAsPrimary($contactBindings);
+			}
+
 			$contactIDs = EntityBinding::prepareEntityIDs(
 				CCrmOwnerType::Contact,
 				$contactBindings
@@ -2019,8 +2030,13 @@ class CAllCrmLead
 
 				EntityBinding::markFirstAsPrimary($contactBindings);
 			}
-			elseif(is_array($contactBindings) && !is_array($contactIDs))
+			elseif(is_array($contactBindings))
 			{
+				if(EntityBinding::findPrimaryBinding($contactBindings) === null)
+				{
+					EntityBinding::markFirstAsPrimary($contactBindings);
+				}
+
 				$contactIDs = EntityBinding::prepareEntityIDs(
 					CCrmOwnerType::Contact,
 					$contactBindings
@@ -2448,11 +2464,16 @@ class CAllCrmLead
 				$providerQty = count($providerIDs);
 				if($providerQty > 0)
 				{
+					$activityUserID = $iUserId;
+					if($activityUserID <= 0 && isset($arFields['MODIFY_BY_ID']))
+					{
+						$activityUserID = $arFields['MODIFY_BY_ID'];
+					}
 					\CCrmActivity::SetAutoCompletedByOwner(
 						CCrmOwnerType::Lead,
 						$ID,
 						$providerQty < count($completionConfig) ? $providerIDs : array(),
-						array('CURRENT_USER' => $iUserId)
+						array('CURRENT_USER' => $activityUserID)
 					);
 				}
 			}

@@ -204,8 +204,28 @@ class Cleaner implements IErrorable, Volume\IVolumeTimeLimit
 			$cleaner->instanceTask()->setLastFileId(0);
 			$cleaner->instanceTask()->fixState();
 
-			// check final result repeat measure
-			\Bitrix\Disk\Volume\Cleaner::repeatMeasure($indicator);
+			$retry = 1;
+			while ($retry <= 2)
+			{
+				try
+				{
+					// check final result repeat measure
+					\Bitrix\Disk\Volume\Cleaner::repeatMeasure($indicator);
+				}
+				catch (Main\DB\SqlQueryException $exception)
+				{
+					if (stripos($exception->getMessage(), 'deadlock found when trying to get lock; try restarting transaction') !== false)
+					{
+						// retrying in a few microseconds
+						usleep(100);
+						$retry ++;
+						continue;
+					}
+
+					throw $exception;
+				}
+				break;
+			}
 
 			// reload task
 			$cleaner->instanceTask()->loadTaskById($indicator->getFilterId(), $cleaner->instanceTask()->getOwnerId());

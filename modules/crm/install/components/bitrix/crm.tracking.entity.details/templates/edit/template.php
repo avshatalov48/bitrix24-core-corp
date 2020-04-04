@@ -17,6 +17,8 @@ use Bitrix\Main\Web\Json;
 Loc::loadMessages(__FILE__);
 
 $containerId = 'crm-tracking-entity-details-edit';
+$trace = current($arResult['TRACES']);
+$traceSourceId = $trace ? $trace['SOURCE']['ID'] : null;
 ?>
 <div id="<?=htmlspecialcharsbx($containerId)?>">
 	<select name="<?=$arParams['SOURCE_INPUT_NAME']?>"
@@ -24,7 +26,7 @@ $containerId = 'crm-tracking-entity-details-edit';
 	>
 		<?foreach ($arResult['SOURCES'] as $source):?>
 			<option value="<?=htmlspecialcharsbx($source['ID'])?>"
-				<?=($source['ID'] == $arResult['SOURCE']['ID'] ? 'selected' : '')?>
+				<?=($source['ID'] == $traceSourceId ? 'selected' : '')?>
 			>
 				<?=htmlspecialcharsbx($source['NAME'])?>
 			</option>

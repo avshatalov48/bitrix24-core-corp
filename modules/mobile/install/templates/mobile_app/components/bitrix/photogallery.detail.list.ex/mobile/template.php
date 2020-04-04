@@ -40,8 +40,6 @@ if ($arParams["LIVEFEED_EVENT_ID"] == "photo")
 		?></div><?
 	}
 	?><script>
-	if (app.enableInVersion(6))
-	{
 		BX.bindDelegate(BX("album_wrap_<?=$albumToken?>"), "click", { 'tag': 'IMG' }, function(e)
 		{
 			var
@@ -91,7 +89,6 @@ if ($arParams["LIVEFEED_EVENT_ID"] == "photo")
 
 			return BX.PreventDefault(e);
 		});
-	}
 	</script><?
 	?></div><script>BitrixMobile.LazyLoad.registerImages([<?=$jsIds?>]);</script><?
 }
@@ -119,8 +116,6 @@ else
 	};
 	?></div><?
 	?><script>
-	if (app.enableInVersion(6))
-	{
 		BX.bindDelegate(BX("gallery_wrap"), "click", { 'tag': 'IMG' }, function(e)
 		{
 			var
@@ -172,7 +167,6 @@ else
 
 			return BX.PreventDefault(e);
 		});
-	}
 	</script><?
 
 	?><script>BitrixMobile.LazyLoad.registerImages([<?=$jsIds?>]);</script><?

@@ -98,13 +98,13 @@
 			})
 		}
 
-		$.HSCore.components.HSCarousel.init(selector, {accessibility: false});
-
+		var config = {accessibility: false};
 		// in editor mode infinity scroll will be create cloned slides - we not need them
 		if (BX.Landing.getMode() == 'edit')
 		{
-			$(selector).slick('slickSetOption', 'infinite', false, true);
+			config.infinite = false;
 		}
+		$.HSCore.components.HSCarousel.init(selector, config);
 	};
 
 

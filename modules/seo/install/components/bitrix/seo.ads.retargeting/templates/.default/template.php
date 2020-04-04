@@ -40,14 +40,12 @@ $multiClients = array_key_exists('CLIENTS', $arParams['PROVIDER']);
 
 	<div data-bx-ads-block="login" style="display: none;" class="crm-ads-rtg-popup-settings">
 		<div class="crm-ads-rtg-popup-social crm-ads-rtg-popup-social-<?=$type?>">
-			<a
+			<span
 				id="seo-ads-login-btn"
-				target="_blank"
-				href="javascript: void(0);"
 				onclick="BX.util.popup('<?=htmlspecialcharsbx($provider['AUTH_URL'])?>', 800, 600);"
 				class="webform-small-button webform-small-button-transparent">
 				<?=Loc::getMessage('CRM_ADS_RTG_LOGIN')?>
-			</a>
+			</span>
 		</div>
 	</div>
 
@@ -113,102 +111,144 @@ $multiClients = array_key_exists('CLIENTS', $arParams['PROVIDER']);
 				</table>
 			</div>
 
-			<?if($provider['IS_SUPPORT_MULTI_TYPE_CONTACTS']):?>
-			<div class="crm-ads-rtg-popup-settings">
-				<div class="crm-ads-rtg-popup-settings-title-full">
-					<?=Loc::getMessage('CRM_ADS_RTG_SELECT_AUDIENCE')?>:
-					<span data-hint="<?=htmlspecialcharsbx(
-						Loc::getMessage('CRM_ADS_RTG_AUDIENCE_TYPE_HINT_' . $typeUpped)
-						. ' ' . Loc::getMessage('CRM_ADS_RTG_AUDIENCE_ADD_HINT_' . $typeUpped, ['#BR#' => '<br>'])
-					)?>"></span>
-				</div>
+			<?if ($arParams['AUDIENCE_LOOKALIKE_MODE']):?>
+				<?if (in_Array('AUDIENCE_SIZE', $provider['LOOKALIKE_AUDIENCE_PARAMS']['FIELDS'])):?>
+				<div class="crm-ads-rtg-popup-settings">
+					<label for="crm_ads_checker_email" class="crm-ads-rtg-popup-chk-label">
+						<?=Loc::getMessage('CRM_ADS_RTG_CREATE_LOOKALIKE_SIZE')?>:
+						<span data-hint="<?=htmlspecialcharsbx(Loc::getMessage('CRM_ADS_RTG_CREATE_LOOKALIKE_SIZE_HINT'))?>"></span>
+					</label>
+					<br>
 
-				<table class="crm-ads-rtg-table">
-					<tr>
-						<td>
-							<select disabled name="<?=$namePrefix?>AUDIENCE_ID" data-bx-ads-audience="" class="crm-ads-rtg-popup-settings-dropdown<?
-								if ($provider['IS_SUPPORT_ADD_AUDIENCE']):?> crm-ads-rtg-popup-settings-dropdown-narrow<?endif?>">
-							</select>
-						</td>
-						<td>
-							<div data-bx-ads-audience-loader="" class="crm-ads-rtg-loader-sm" style="display: none;">
-								<svg class="crm-ads-rtg-circular" viewBox="25 25 50 50">
-									<circle class="crm-ads-rtg-path" cx="50" cy="50" r="20" fill="none" stroke-width="1" stroke-miterlimit="10"/>
-								</svg>
-							</div>
-							<?if ($provider['IS_SUPPORT_ADD_AUDIENCE']):?>
-							<div>
-								<span  style="display: none;" class="ui-btn ui-btn-link ui-btn-xs" data-bx-ads-audience-add=""><?= Loc::getMessage("CRM_ADS_RTG_AUDIENCE_ADD") ?></span>
-							</div>
-							<?endif?>
-						</td>
-						<?if(false && !$provider['IS_ADDING_REQUIRE_CONTACTS']):?>
-						<td>
-							<a data-role="audience-add" class="crm-ads-rtg-popup-link" style="display: none;">
-								<?=Loc::getMessage('CRM_ADS_RTG_ADD_AUDIENCE')?>
-							</a>
-						</td>
-						<?endif;?>
-					</tr>
-				</table>
-			</div>
+					<select name="<?=$namePrefix?>AUDIENCE_SIZE" class="crm-ads-rtg-popup-settings-dropdown">
+						<? foreach ($provider['LOOKALIKE_AUDIENCE_PARAMS']['SIZES'] as $sizeId=>$sizeName):?>
+							<option value="<?=$sizeId?>" <?if ($sizeId == $arParams['AUDIENCE_SIZE']):?> selected<?endif?>><?=htmlspecialcharsbx($sizeName)?></option>
+						<?endforeach;?>
+					</select>
+				</div>
+				<?endif?>
+
+				<?if (in_Array('AUDIENCE_REGION', $provider['LOOKALIKE_AUDIENCE_PARAMS']['FIELDS'])):?>
+				<div class="crm-ads-rtg-popup-settings">
+					<label for="crm_ads_checker_email" class="crm-ads-rtg-popup-chk-label">
+						<?=Loc::getMessage('CRM_ADS_RTG_CREATE_LOOKALIKE_REGION')?>:
+					</label>
+					<br>
+
+					<table class="crm-ads-rtg-table">
+						<tr>
+							<td>
+								<select disabled name="<?=$namePrefix?>AUDIENCE_REGION" data-bx-ads-region="" class="crm-ads-rtg-popup-settings-dropdown">
+								</select>
+							</td>
+							<td>
+								<div data-bx-ads-region-loader="" class="crm-ads-rtg-loader-sm" style="display: none;">
+									<svg class="crm-ads-rtg-circular" viewBox="25 25 50 50">
+										<circle class="crm-ads-rtg-path" cx="50" cy="50" r="20" fill="none" stroke-width="1" stroke-miterlimit="10"/>
+									</svg>
+								</div>
+							</td>
+						</tr>
+					</table>
+				</div>
+				<?endif?>
 			<?else:?>
-			<div class="crm-ads-rtg-popup-settings">
-				<div class="crm-ads-rtg-popup-settings-title-full">
-					<?=Loc::getMessage('CRM_ADS_RTG_SELECT_CONTACT_DATA')?>:
-					<span data-hint="<?=htmlspecialcharsbx(
-						Loc::getMessage('CRM_ADS_RTG_AUDIENCE_TYPE_HINT_' . $typeUpped)
-						. ' ' . Loc::getMessage('CRM_ADS_RTG_AUDIENCE_ADD_HINT_' . $typeUpped, ['#BR#' => '<br>'])
-					)?>"></span>
-				</div>
-				<table class="crm-ads-rtg-table">
-					<tr>
-						<td>
-							<div class="crm-ads-rtg-popup-chk">
-								<input id="crm_ads_checker_email" data-bx-ads-audience-checker="email" type="checkbox" class="crm-ads-rtg-popup-chk">
-								<label for="crm_ads_checker_email" class="crm-ads-rtg-popup-chk-label">
-									<?=Loc::getMessage('CRM_ADS_RTG_SELECT_CONTACT_DATA_EMAIL')?>
-								</label>
-							</div>
-						</td>
-						<td>
-							<select name="<?=$namePrefix?>AUDIENCE_EMAIL_ID" data-bx-ads-audience="email" class="crm-ads-rtg-popup-settings-dropdown">
-							</select>
-						</td>
-						<td>
-							<div data-bx-ads-audience-loader="email" class="crm-ads-rtg-loader-sm">
-								<svg class="crm-ads-rtg-circular" viewBox="25 25 50 50">
-									<circle class="crm-ads-rtg-path" cx="50" cy="50" r="20" fill="none" stroke-width="1" stroke-miterlimit="10"/>
-								</svg>
-							</div>
-						</td>
-					</tr>
-					<tr>
-						<td>
-							<div class="crm-ads-rtg-popup-chk">
-								<input id="crm_ads_checker_phone" data-bx-ads-audience-checker="phone" type="checkbox" class="crm-ads-rtg-popup-chk">
-								<label for="crm_ads_checker_phone" class="crm-ads-rtg-popup-chk-label">
-									<?=Loc::getMessage('CRM_ADS_RTG_SELECT_CONTACT_DATA_PHONE')?>
-								</label>
-							</div>
-						</td>
-						<td>
-							<select name="<?=$namePrefix?>AUDIENCE_PHONE_ID" data-bx-ads-audience="phone" class="crm-ads-rtg-popup-settings-dropdown">
-							</select>
-						</td>
-						<td>
-							<div data-bx-ads-audience-loader="phone" class="crm-ads-rtg-loader-sm">
-								<svg class="crm-ads-rtg-circular" viewBox="25 25 50 50">
-									<circle class="crm-ads-rtg-path" cx="50" cy="50" r="20" fill="none" stroke-width="1" stroke-miterlimit="10"/>
-								</svg>
-							</div>
-						</td>
-					</tr>
-				</table>
-			</div>
-			<?endif?>
+				<?if($provider['IS_SUPPORT_MULTI_TYPE_CONTACTS']):?>
+				<div class="crm-ads-rtg-popup-settings">
+					<div class="crm-ads-rtg-popup-settings-title-full">
+						<?=Loc::getMessage('CRM_ADS_RTG_SELECT_AUDIENCE')?>:
+						<span data-hint="<?=htmlspecialcharsbx(
+							Loc::getMessage('CRM_ADS_RTG_AUDIENCE_TYPE_HINT_' . $typeUpped)
+							. ' ' . Loc::getMessage('CRM_ADS_RTG_AUDIENCE_ADD_HINT_' . $typeUpped, ['#BR#' => '<br>'])
+						)?>"></span>
+					</div>
 
-			<?if($provider['IS_SUPPORT_REMOVE_CONTACTS']):?>
+					<table class="crm-ads-rtg-table">
+						<tr>
+							<td>
+								<select disabled name="<?=$namePrefix?>AUDIENCE_ID" data-bx-ads-audience="" class="crm-ads-rtg-popup-settings-dropdown<?
+									if ($provider['IS_SUPPORT_ADD_AUDIENCE']):?> crm-ads-rtg-popup-settings-dropdown-narrow<?endif?>">
+								</select>
+							</td>
+							<td>
+								<div data-bx-ads-audience-loader="" class="crm-ads-rtg-loader-sm" style="display: none;">
+									<svg class="crm-ads-rtg-circular" viewBox="25 25 50 50">
+										<circle class="crm-ads-rtg-path" cx="50" cy="50" r="20" fill="none" stroke-width="1" stroke-miterlimit="10"/>
+									</svg>
+								</div>
+								<?if ($provider['IS_SUPPORT_ADD_AUDIENCE']):?>
+								<div>
+									<span  style="display: none;" class="ui-btn ui-btn-link ui-btn-xs" data-bx-ads-audience-add=""><?= Loc::getMessage("CRM_ADS_RTG_AUDIENCE_ADD") ?></span>
+								</div>
+								<?endif?>
+							</td>
+							<?if(false && !$provider['IS_ADDING_REQUIRE_CONTACTS']):?>
+							<td>
+								<a data-role="audience-add" class="crm-ads-rtg-popup-link" style="display: none;">
+									<?=Loc::getMessage('CRM_ADS_RTG_ADD_AUDIENCE')?>
+								</a>
+							</td>
+							<?endif;?>
+						</tr>
+					</table>
+				</div>
+				<?else:?>
+				<div class="crm-ads-rtg-popup-settings">
+					<div class="crm-ads-rtg-popup-settings-title-full">
+						<?=Loc::getMessage('CRM_ADS_RTG_SELECT_CONTACT_DATA')?>:
+						<span data-hint="<?=htmlspecialcharsbx(
+							Loc::getMessage('CRM_ADS_RTG_AUDIENCE_TYPE_HINT_' . $typeUpped)
+							. ' ' . Loc::getMessage('CRM_ADS_RTG_AUDIENCE_ADD_HINT_' . $typeUpped, ['#BR#' => '<br>'])
+						)?>"></span>
+					</div>
+					<table class="crm-ads-rtg-table">
+						<tr>
+							<td>
+								<div class="crm-ads-rtg-popup-chk">
+									<input id="crm_ads_checker_email" data-bx-ads-audience-checker="email" type="checkbox" class="crm-ads-rtg-popup-chk">
+									<label for="crm_ads_checker_email" class="crm-ads-rtg-popup-chk-label">
+										<?=Loc::getMessage('CRM_ADS_RTG_SELECT_CONTACT_DATA_EMAIL')?>
+									</label>
+								</div>
+							</td>
+							<td>
+								<select name="<?=$namePrefix?>AUDIENCE_EMAIL_ID" data-bx-ads-audience="email" class="crm-ads-rtg-popup-settings-dropdown">
+								</select>
+							</td>
+							<td>
+								<div data-bx-ads-audience-loader="email" class="crm-ads-rtg-loader-sm">
+									<svg class="crm-ads-rtg-circular" viewBox="25 25 50 50">
+										<circle class="crm-ads-rtg-path" cx="50" cy="50" r="20" fill="none" stroke-width="1" stroke-miterlimit="10"/>
+									</svg>
+								</div>
+							</td>
+						</tr>
+						<tr>
+							<td>
+								<div class="crm-ads-rtg-popup-chk">
+									<input id="crm_ads_checker_phone" data-bx-ads-audience-checker="phone" type="checkbox" class="crm-ads-rtg-popup-chk">
+									<label for="crm_ads_checker_phone" class="crm-ads-rtg-popup-chk-label">
+										<?=Loc::getMessage('CRM_ADS_RTG_SELECT_CONTACT_DATA_PHONE')?>
+									</label>
+								</div>
+							</td>
+							<td>
+								<select name="<?=$namePrefix?>AUDIENCE_PHONE_ID" data-bx-ads-audience="phone" class="crm-ads-rtg-popup-settings-dropdown">
+								</select>
+							</td>
+							<td>
+								<div data-bx-ads-audience-loader="phone" class="crm-ads-rtg-loader-sm">
+									<svg class="crm-ads-rtg-circular" viewBox="25 25 50 50">
+										<circle class="crm-ads-rtg-path" cx="50" cy="50" r="20" fill="none" stroke-width="1" stroke-miterlimit="10"/>
+									</svg>
+								</div>
+							</td>
+						</tr>
+					</table>
+				</div>
+				<?endif?>
+
+				<?if($provider['IS_SUPPORT_REMOVE_CONTACTS']):?>
 				<?
 				$isSelectedOnce = false;
 				$sDayValues = '';
@@ -232,39 +272,41 @@ $multiClients = array_key_exists('CLIENTS', $arParams['PROVIDER']);
 					}
 				}
 				?>
-			<div data-bx-ads-audience-auto-remove="" class="crm-ads-rtg-popup-settings">
-				<div class="crm-ads-rtg-popup-chk">
-					<input data-bx-ads-audience-auto-remove-checker="" <?=($isSelectedOnce ? 'checked' : '')?> type="checkbox" class="crm-ads-rtg-popup-chk" id="crm_ads_checker_autorem">
-					<label for="crm_ads_checker_autorem" class="crm-ads-rtg-popup-chk-label">
-							<?if ($type == 'yandex'):?>
-								<?=Loc::getMessage('CRM_ADS_RTG_AUTO_REMOVE_TITLE_' . $typeUpped)?>
-							<?else:?>
-								<?=Loc::getMessage('CRM_ADS_RTG_AUTO_REMOVE_TITLE')?>
-							<?endif;?>
-					</label>
+				<div data-bx-ads-audience-auto-remove="" class="crm-ads-rtg-popup-settings">
+					<div class="crm-ads-rtg-popup-chk">
+						<input data-bx-ads-audience-auto-remove-checker="" <?=($isSelectedOnce ? 'checked' : '')?> type="checkbox" class="crm-ads-rtg-popup-chk" id="crm_ads_checker_autorem">
+						<label for="crm_ads_checker_autorem" class="crm-ads-rtg-popup-chk-label">
+								<?if ($type == 'yandex'):?>
+									<?=Loc::getMessage('CRM_ADS_RTG_AUTO_REMOVE_TITLE_' . $typeUpped)?>
+								<?else:?>
+									<?=Loc::getMessage('CRM_ADS_RTG_AUTO_REMOVE_TITLE')?>
+								<?endif;?>
+						</label>
+					</div>
+					<div class="crm-ads-rtg-popup-chk-label">
+							<select data-bx-ads-audience-auto-remove-select="" name="<?=$namePrefix?>AUTO_REMOVE_DAY_NUMBER" <?=($isSelectedOnce ? '' : 'disabled')?> data-bx-ads-audience-auto-remove-select="" class="crm-ads-rtg-popup-settings-dropdown crm-ads-rtg-popup-settings-dropdown-sm">
+								<?=$sDayValues?>
+							</select>
+						<?=Loc::getMessage('CRM_ADS_RTG_AUTO_REMOVE_DAYS')?>
+					</div>
 				</div>
-				<div class="crm-ads-rtg-popup-chk-label">
-						<select data-bx-ads-audience-auto-remove-select="" name="<?=$namePrefix?>AUTO_REMOVE_DAY_NUMBER" <?=($isSelectedOnce ? '' : 'disabled')?> data-bx-ads-audience-auto-remove-select="" class="crm-ads-rtg-popup-settings-dropdown crm-ads-rtg-popup-settings-dropdown-sm">
-							<?=$sDayValues?>
-						</select>
-					<?=Loc::getMessage('CRM_ADS_RTG_AUTO_REMOVE_DAYS')?>
-				</div>
-			</div>
-			<?endif?>
+				<?endif?>
 
-			<div data-bx-ads-audience-not-found="" class="crm-ads-rtg-popup-settings" style="display: none;">
-				<div class="crm-ads-rtg-popup-settings-alert">
-					<?=Loc::getMessage(
-						'CRM_ADS_RTG_ERROR_NO_AUDIENCES',
-						array(
-							'%name%' => '<a data-bx-ads-audience-create-link="" href="' . htmlspecialcharsbx($provider['URL_AUDIENCE_LIST']) . '" '
-							. 'target="_blank">'
-							. Loc::getMessage('CRM_ADS_RTG_CABINET_' . $typeUpped)
-							.'</a>'
-						)
-					)?>
+
+				<div data-bx-ads-audience-not-found="" class="crm-ads-rtg-popup-settings" style="display: none;">
+					<div class="crm-ads-rtg-popup-settings-alert">
+						<?=Loc::getMessage(
+							'CRM_ADS_RTG_ERROR_NO_AUDIENCES',
+							array(
+								'%name%' => '<a data-bx-ads-audience-create-link="" href="' . htmlspecialcharsbx($provider['URL_AUDIENCE_LIST']) . '" '
+								. 'target="_blank">'
+								. Loc::getMessage('CRM_ADS_RTG_CABINET_' . $typeUpped)
+								.'</a>'
+							)
+						)?>
+					</div>
 				</div>
-			</div>
+			<?endif;?>
 		</div>
 
 		<div class="crm-ads-rtg-popup-settings">
@@ -294,6 +336,8 @@ $multiClients = array_key_exists('CLIENTS', $arParams['PROVIDER']);
 				'clientId' => $clientId,
 				'accountId' => $accountId,
 				'audienceId' => $audienceId,
+				'audienceRegion' => $arParams['AUDIENCE_LOOKALIKE_MODE'] ? $arParams['AUDIENCE_REGION'] : null,
+				'audienceLookalikeMode' => $arParams['AUDIENCE_LOOKALIKE_MODE'],
 				'containerId' => $containerNodeId,
 				'destroyEventName' => $destroyEventName,
 				'signedParameters' => $this->getComponent()->getSignedParameters(),

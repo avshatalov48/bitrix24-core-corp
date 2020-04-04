@@ -5,6 +5,8 @@ use Bitrix\Main\Web\Json;
 use Bitrix\Main\UI\Extension;
 use Bitrix\Main\Localization\Loc;
 
+$this->setFrameMode(true);
+
 Extension::load(['sidepanel', 'ui.buttons', 'ui.feedback.form']);
 $buttonId = $arParams['ID'] . '-button';
 

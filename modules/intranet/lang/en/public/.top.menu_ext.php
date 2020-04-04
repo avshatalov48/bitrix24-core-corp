@@ -1,4 +1,5 @@
 <?
+$MESS["MENU_RPA_SECTION"] = "Robotic Process Automation (RPA)";
 $MESS["MENU_SALESCENTER_SECTION"] = "Sales Center";
 $MESS["TOP_MENU_ABOUT"] = "Company";
 $MESS["TOP_MENU_AI"] = "AI Labs";
@@ -17,6 +18,7 @@ $MESS["TOP_MENU_FAVORITE"] = "My Workspace";
 $MESS["TOP_MENU_GROUPS"] = "Workgroups";
 $MESS["TOP_MENU_GROUPS_EXTRANET"] = "Extranet Workgroups";
 $MESS["TOP_MENU_IM_MESSENGER"] = "Chat and Calls";
+$MESS["TOP_MENU_KNOWLEDGE"] = "Knowledge base";
 $MESS["TOP_MENU_LIVE_FEED"] = "Activity Stream";
 $MESS["TOP_MENU_MAIL"] = "Mail";
 $MESS["TOP_MENU_MARKETING"] = "CRM Marketing";

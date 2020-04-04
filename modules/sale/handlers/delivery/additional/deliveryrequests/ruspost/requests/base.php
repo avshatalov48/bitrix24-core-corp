@@ -103,7 +103,9 @@ abstract class Base
 		$httpRes = false;
 
 		if(@$this->httpClient->query($this->type, $this->getUrl(), $jsonData))
+		{
 			$httpRes = $this->httpClient->getResult();
+		}
 
 		$errors = $this->httpClient->getError();
 

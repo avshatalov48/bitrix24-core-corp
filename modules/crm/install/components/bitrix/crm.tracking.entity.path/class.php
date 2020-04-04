@@ -75,7 +75,7 @@ class CCrmTrackingEntityPathComponent extends CBitrixComponent
 					$path,
 					function ($item)
 					{
-						return $item['IS_SOURCE'];
+						return $item['IS_SOURCE'] && $item['SOURCE_ID'];
 					}
 				);
 				if (empty($path))

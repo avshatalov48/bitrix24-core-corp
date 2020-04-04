@@ -164,14 +164,8 @@ $itemNum = 0;
 /** @var Bitrix\Crm\Integrity\Duplicate $item **/
 foreach($arResult['ITEMS'] as $item)
 {
-	$criterion = $item->getCriterion();
-	$criterionTypeID = $criterion->getIndexTypeID();
-	$criterionMatches = $criterion->getMatches();
-}
-foreach($arResult['ITEMS'] as $item)
-{
 	//$className = ((++$itemNum) % 2) > 0 ? "bx-odd" : "bx-even bx-over";
-	$itemID = uniqid();
+	$itemID = uniqid('dupId', true);
 	?><tr class="bx-dupe-item" data-dupe-id="<?=htmlspecialcharsbx($itemID)?>">
 		<td class="bx-left"><span class="bx-scroller-control plus"></span></td>
 		<td class="bx-checkbox-col bx-left">

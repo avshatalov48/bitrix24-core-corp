@@ -15,7 +15,7 @@ use Bitrix\Timeman\Model\Schedule\ScheduleTable;
 \Bitrix\Main\Page\Asset::getInstance()->addJS('/bitrix/components/bitrix/timeman.schedule.shift.edit/templates/.default/shift.js');
 \Bitrix\Main\Page\Asset::getInstance()->addJS('/bitrix/components/bitrix/timeman.schedule.edit/templates/.default/js/shift-multiple.js');
 \Bitrix\Main\Page\Asset::getInstance()->addJS('/bitrix/components/bitrix/timeman.interface.popup.timepicker/templates/.default/duration-picker.js');
-\Bitrix\Main\UI\Extension::load(["ui.buttons", "ui.alerts"]);
+\Bitrix\Main\UI\Extension::load(['ui.buttons', 'ui.alerts', 'loader']);
 
 global $APPLICATION;
 
@@ -23,12 +23,24 @@ global $APPLICATION;
 $scheduleForm = $arResult['scheduleForm'];
 $scheduleFormName = htmlspecialcharsbx($scheduleForm->getFormName());
 $scheduleIdFormName = $scheduleFormName . '[id]';
+$existedScheduleTitle = Loc::getMessage('TM_SCHEDULE_READ_TITLE');
+if ($arResult['canUpdateSchedule'])
+{
+	$existedScheduleTitle = Loc::getMessage('TM_SCHEDULE_EDIT_TITLE');
+}
 $APPLICATION->setTitle(htmlspecialcharsbx(
 		$arResult['isNewSchedule'] ?
 			Loc::getMessage('TM_SCHEDULE_CREATE_TITLE')
-			: Loc::getMessage('TM_SCHEDULE_EDIT_TITLE')
+			: $existedScheduleTitle
 	)
 );
+if ($arResult['showShiftPlanBtn'])
+{
+	$this->SetViewTarget('pagetitle') ?>
+	<a href="<?php echo $arResult['shiftPlanLink']; ?>" class="ui-btn ui-btn-themes ui-btn-light-border"><?php echo htmlspecialcharsbx(Loc::getMessage('TM_SCHEDULE_EDIT_SHIFT_PLAN_BTN_TITLE')); ?></a>
+	<?
+	$this->EndViewTarget();
+}
 if (\Bitrix\Main\Loader::includeModule('ui'))
 {
 	$APPLICATION->IncludeComponent(
@@ -38,7 +50,7 @@ if (\Bitrix\Main\Loader::includeModule('ui'))
 	);
 }
 ?>
-<div class="timeman-schedule-form-wrap <? if ($arResult['isSlider']): ?>timeman-schedule-form-slider<? endif; ?>">
+<div class="timeman-schedule-form-wrap <? if ($arResult['isSlider']): ?>timeman-schedule-form-slider<? endif; ?>" data-role="schedule-container">
 	<div class="timeman-schedule-form-inner">
 		<form action="" class="timeman-schedule-form-form-js" method="post"
 				data-role="timeman-schedule-form"><?
@@ -51,7 +63,7 @@ if (\Bitrix\Main\Loader::includeModule('ui'))
 				<div class="ui-alert-message" data-role="timeman-schedule-error-msg"></div>
 			</div>
 
-			<input type="hidden" name="<?= htmlspecialcharsbx($scheduleIdFormName) ?>" value="<?= $arResult['SCHEDULE_ID']; ?>">
+			<input type="hidden" name="<?= htmlspecialcharsbx($scheduleIdFormName) ?>" value="<?= $arResult['SCHEDULE_ID'] > 0 ? (int)$arResult['SCHEDULE_ID'] : ''; ?>">
 			<div class="timeman-schedule-form-block <? if ($arResult['isSlider']): ?>timeman-schedule-form-block-title-slider<? endif; ?>">
 				<div class="timeman-schedule-form-settings">
 					<div class="timeman-schedule-form-settings-inner">
@@ -133,10 +145,33 @@ if (\Bitrix\Main\Loader::includeModule('ui'))
 			require_once '_violations.php';
 			?>
 
-			<div class="timeman-schedule-form-block">
+			<div class="timeman-schedule-form-block" data-role="worktime-restrictions">
 				<div class="timeman-schedule-form-title">
 					<div class="timeman-schedule-form-title-inner">
 						<span class="timeman-schedule-form-title-text"><?= htmlspecialcharsbx(Loc::getMessage('TIMEMAN_SCHEDULE_EDIT_REPORT_RESTRICTIONS_TITLE')); ?></span>
+					</div>
+				</div>
+				<div class="timeman-schedule-form-limit <?php echo $scheduleForm->isShifted() ? '' : 'timeman-hide'; ?>" data-role="max-shift-start-offset-block">
+					<div class="timeman-schedule-form-limit-title">
+						<span class="timeman-schedule-form-limit-title-text"><?php echo Loc::getMessage('TIMEMAN_SCHEDULE_EDIT_WORKTIME_RESTRICTION_MAX_START_OFFSET'); ?></span>
+						<span class="timeman-schedule-form-violation-help" data-hint="<?php echo htmlspecialcharsbx($arResult['hintWorktimeRestrictionMaxStartOffset']); ?>"></span>
+					</div>
+					<div class="timeman-schedule-form-limit-inner">
+						<div class="timeman-schedule-form-limit-item">
+							<span class="timeman-schedule-form-violation-detail-text">
+								<span class="timeman-schedule-form-worktime-input-value-text"
+										data-role="max-shift-start-offset-link"
+										data-input-selector-role="max-shift-start-offset-input"
+								><?=
+									htmlspecialcharsbx($scheduleForm->restrictionsForm->getFormattedMaxShiftStartOffset())
+									?></span>
+								<input name="<?= $scheduleFormName . "[" . $scheduleForm->restrictionsForm->getFormName() . "][maxShiftStartOffsetFormatted]" ?>"
+										data-role="max-shift-start-offset-input"
+										class="timeman-schedule-form-worktime-input-value-text"
+										type="hidden"
+										value="<?= htmlspecialcharsbx($scheduleForm->restrictionsForm->getFormattedMaxShiftStartOffset()) ?>">
+							</span>
+						</div>
 					</div>
 				</div>
 				<div class="timeman-schedule-form-limit">
@@ -171,7 +206,7 @@ if (\Bitrix\Main\Loader::includeModule('ui'))
 								<?= $scheduleForm->isMobileDeviceAllowed() || $arResult['isNewSchedule'] ? 'checked' : ''; ?>
 									name="<?= $scheduleFormName . '[allowedDevices][mobile]'; ?>"
 							>
-							<label class="timeman-schedule-form-violation-hidden-label" for="mobile"><?= htmlspecialcharsbx(Loc::getMessage('TIMEMAN_SCHEDULE_EDIT_REPORT_ALLOW_MOBILE_DEVICES')); ?></label>
+							<label class="timeman-schedule-form-violation-hidden-label" for="mobile"><?= htmlspecialcharsbx(Loc::getMessage('TIMEMAN_SCHEDULE_EDIT_REPORT_ALLOW_MOBILE_APP')); ?></label>
 						</div>
 					</div>
 				</div>
@@ -234,6 +269,7 @@ foreach ($arResult['shiftWorkdaysOptions'] as $index => $title)
 			TIMEMAN_SHIFT_EDIT_POPUP_FORMAT_MINUTE: '<?= CUtil::JSEscape(Loc::getMessage('TIMEMAN_SHIFT_EDIT_POPUP_FORMAT_MINUTE')) ?>'
 		});
 		new BX.Timeman.Component.Schedule.Edit({
+			containerSelector: '[data-role="schedule-container"]',
 			isSlider: "<?= CUtil::JSEscape($arResult['isSlider'])?>",
 			scheduleId: "<?= CUtil::JSEscape($arResult['SCHEDULE_ID'])?>",
 			isScheduleFixed: <?= CUtil::PhpToJSObject($scheduleForm->isFixed() === null ? true : $scheduleForm->isFixed())?>,
@@ -243,6 +279,8 @@ foreach ($arResult['shiftWorkdaysOptions'] as $index => $title)
 			shiftWorkdaysOptions: <?= CUtil::PhpToJSObject($shiftWorkdaysOptions);?>,
 			calendarExclusionsFormName: "<?= CUtil::JSEscape($calendarFormName . '[datesJson]')?>",
 			controlledStart: <?= CUtil::PhpToJSObject(ScheduleTable::CONTROLLED_ACTION_START);?>,
+			selectedAssignmentCodes: <?= CUtil::PhpToJSObject($arResult['selectedAssignmentCodes']);?>,
+			selectedAssignmentCodesExcluded: <?= CUtil::PhpToJSObject($arResult['selectedAssignmentCodesExcluded']);?>,
 			assignmentsMap: <?= CUtil::PhpToJSObject($arResult['assignmentsMap']);?>,
 			controlledStartEnd: <?= CUtil::PhpToJSObject(ScheduleTable::CONTROLLED_ACTION_START_AND_END);?>,
 			scheduleIdFormName: "<?= CUtil::JSEscape($scheduleIdFormName)?>",

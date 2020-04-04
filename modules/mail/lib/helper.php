@@ -271,6 +271,7 @@ class DummyMail extends Main\Mail\Mail
 		$this->settingMailFillToEmail = false;
 		$this->settingMailConvertMailHeader = true;
 		$this->settingConvertNewLineUnixToWindows = true;
+		$this->useBlacklist = false;
 	}
 
 	public static function getMailEol()

@@ -75,6 +75,19 @@ if ($isBitrix24Template)
 	<div class="tasks-counter" id="counter_panel_container">
 		<div class="tasks-counter-title" id="<?=$arResult['HELPER']->getScopeId()?>"></div>
 	</div>
+		<?php
+		if ($arParams['GROUP_ID'] <= 0 && \Bitrix\Main\Loader::includeModule('intranet'))
+		{
+			$APPLICATION->includeComponent(
+				'bitrix:intranet.binding.menu',
+				'',
+				array(
+					'SECTION_CODE' => 'tasks_switcher',
+					'MENU_CODE' => 'user'
+				)
+			);
+		}
+		?>
 	<?php if ($isMyTasks && $arResult['COUNTERS_SHOW'] && Factory::canUseAutomation()):?>
 		<?php if ($showViewMode):?>
 			<div class="tasks-counter-btn-container">

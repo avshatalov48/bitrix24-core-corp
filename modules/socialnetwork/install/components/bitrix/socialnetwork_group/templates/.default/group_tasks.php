@@ -1,11 +1,31 @@
-<?if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();?>
-<?
+<?php
+
+use Bitrix\Main\Loader;
+
+if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
+	die();
+
 $pageId = "group_tasks";
 include("util_group_menu.php");
 include("util_group_profile.php");
 
 if (CSocNetFeatures::IsActiveFeature(SONET_ENTITY_GROUP, $arResult["VARIABLES"]["group_id"], "tasks"))
 {
+
+	if (Loader::includeModule("tasks"))
+	{
+		$APPLICATION->includeComponent(
+			"bitrix:socialnetwork.copy.checker",
+			"",
+			[
+				"QUEUE_ID" => $arResult["VARIABLES"]["group_id"],
+				"HELPER" => new \Bitrix\Tasks\Copy\Integration\Group()
+			],
+			$component,
+			["HIDE_ICONS" => "Y"]
+		);
+	}
+
 	if(class_exists('Bitrix\Tasks\Ui\Filter\Task'))
 	{
 		\Bitrix\Tasks\Ui\Filter\Task::setGroupId($arResult[ "VARIABLES" ][ "group_id" ]);

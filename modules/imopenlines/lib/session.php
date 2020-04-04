@@ -296,6 +296,25 @@ class Session
 		}
 		/* END CRM BLOCK */
 
+		if ($fields['MODE'] === self::MODE_OUTPUT)
+		{
+			$previousSession = new Session();
+			$resultPreviousSession = $previousSession->getLast($fields);
+
+			if ($resultPreviousSession->isSuccess())
+			{
+				$previousSessionData = $previousSession->getData();
+
+				if (!empty($previousSessionData['BLOCK_DATE']) && !empty($previousSessionData['BLOCK_REASON']))
+				{
+					$limit = [
+						'BLOCK_DATE' => $previousSessionData['BLOCK_DATE'],
+						'BLOCK_REASON' => $previousSessionData['BLOCK_REASON'],
+					];
+				}
+			}
+		}
+
 		$fields['CHAT_ID'] = $this->chat->getData('ID');
 
 		if ($this->chat->isNowCreated())
@@ -330,6 +349,7 @@ class Session
 
 			if($resultAddSessionCheck->isSuccess())
 			{
+				$this->session = $fields;
 				$this->session['ID'] = $this->session['SESSION_ID'] = $fields['SESSION_ID'];
 
 				$dateNoAnswer = null;
@@ -346,6 +366,7 @@ class Session
 				$undistributed = $resultQueue['UNDISTRIBUTED'] == true? 'Y' : 'N';
 				$dateQueue = $resultQueue['DATE_QUEUE'];
 				$this->joinUserList = $resultQueue['OPERATOR_LIST'];
+				$fields['OPERATOR_FROM_CRM'] = $resultQueue['OPERATOR_CRM'] == true? 'Y' : 'N';
 
 				//Send message
 				if ($fields['PARENT_ID'] > 0)
@@ -430,7 +451,7 @@ class Session
 					$params['DEFERRED_JOIN'] == 'N'
 				)
 				{
-					$this->chat->sendJoinMessage($this->joinUserList);
+					$this->chat->sendJoinMessage($this->joinUserList, $fields['OPERATOR_FROM_CRM']);
 					$this->chat->join($this->joinUserList);
 					$this->joinUserList = [];
 				}
@@ -459,6 +480,23 @@ class Session
 
 				$this->session['CHECK_DATE_CLOSE'] = $dateClose;
 				$this->session['CHECK_DATE_QUEUE'] = $dateQueue;
+
+				if (!empty($limit['BLOCK_DATE']) && !empty($limit['BLOCK_REASON']))
+				{
+					self::setReplyBlock($fields['SESSION_ID'], $this->chat, $limit);
+				}
+				else
+				{
+					$limit = Connector::getReplyLimit($fields['SOURCE']);
+					if ($limit)
+					{
+						$limit['BLOCK_DATE'] = (new DateTime())->add($limit['BLOCK_DATE'].' SECONDS');
+
+						self::setReplyBlock($fields['SESSION_ID'], $this->chat, $limit);
+						Messages\Session::sendMessageTimeLimit($fields['CHAT_ID'], $limit['BLOCK_REASON']);
+					}
+				}
+
 
 				/* BLOCK STATISTIC*/
 				ConfigStatistic::getInstance($fields['CONFIG_ID'])->addInWork()->addSession();
@@ -528,6 +566,45 @@ class Session
 		}
 
 		Debug::addSession($this, 'end ' . __METHOD__, ['SUCCESS' => $result->isSuccess(), 'ERRORS' => $result->getErrorMessages()]);
+
+		return $result;
+	}
+
+
+	/**
+	 * @param array $params
+	 * @return Result
+	 * @throws Main\ArgumentException
+	 * @throws Main\LoaderException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
+	private function getLast(array $params): Result
+	{
+		$result = new Result();
+
+		if (empty($params['USER_CODE']))
+		{
+			$result->addError(new Error(Loc::getMessage('IMOL_SESSION_ERROR_NO_USER_CODE'), 'NO IMOL CONFIGURATION', __METHOD__));
+		}
+
+		$select = Model\SessionTable::getSelectFieldsPerformance();
+
+		$orm = Model\SessionTable::getList([
+			'select' => $select,
+			'filter' => [
+				'=USER_CODE' => $params['USER_CODE'],
+			],
+			'order' => ['ID' => 'DESC'],
+			'limit' => 1
+		]);
+		$loadSession = $orm->fetch();
+
+		if (!empty($loadSession))
+		{
+			$loadSession['SESSION_ID'] = $loadSession['ID'];
+			$this->session = $loadSession;
+		}
 
 		return $result;
 	}
@@ -803,9 +880,9 @@ class Session
 	 */
 	public function pause($active = true)
 	{
-		$update = Array(
+		$update = [
 			'PAUSE' => $active? 'Y': 'N',
-		);
+		];
 		if ($active == 'Y')
 		{
 			$update['WAIT_ACTION'] = 'N';
@@ -1395,6 +1472,7 @@ class Session
 	 * Session update.
 	 *
 	 * TODO: the DATE_MODIFY field serves as a trigger for automatic actions!
+	 * TODO: Required express refactor the method and change the approach.
 	 *
 	 * @param $fields
 	 * @return bool
@@ -1406,9 +1484,9 @@ class Session
 	 */
 	public function update($fields)
 	{
-		$updateCheckTable = Array();
-		$updateChatSession = Array();
-		$updateDateCrmClose = Array();
+		$updateCheckTable = [];
+		$updateChatSession = [];
+		$updateDateCrmClose = [];
 		if (isset($fields['CONFIG_ID']))
 		{
 			$configManager = new Config();
@@ -1592,7 +1670,7 @@ class Session
 			$fields['PAUSE'] = 'N';
 			$updateChatSession['PAUSE'] = 'N';
 
-			$updateCheckTable = Array();
+			$updateCheckTable = [];
 
 			ConfigStatistic::getInstance($this->session['CONFIG_ID'])->addClosed()->deleteInWork();
 
@@ -1623,6 +1701,7 @@ class Session
 					'params' => Array(
 						'chatId' => (int)$parsedUserCode['EXTERNAL_CHAT_ID'],
 						'sessionId' => (int)$this->session['ID'],
+						'sessionStatus' => (int)$fields['STATUS'],
 						'spam' => $this->session['SPAM'] == 'Y',
 					)
 				));
@@ -1638,6 +1717,7 @@ class Session
 				$datePause->add('1 WEEK');
 
 				$updateCheckTable['DATE_CLOSE'] = $datePause;
+				$updateCheckTable['DATE_QUEUE'] = null;
 			}
 		}
 		else if (isset($fields['WAIT_ANSWER']))
@@ -1649,6 +1729,7 @@ class Session
 				$updateChatSession['PAUSE'] = 'N';
 
 				$dateQueue = new DateTime();
+				//TODO: A bad place! Potential problem. Can change the distribution time logic by ignoring rules from the queue.
 				$dateQueue->add($this->config['QUEUE_TIME'].' SECONDS');
 				$updateCheckTable['DATE_QUEUE'] = $dateQueue;
 			}
@@ -1728,6 +1809,16 @@ class Session
 		if (isset($fields['STATUS']) && $this->session['STATUS'] != $fields['STATUS'])
 		{
 			$this->chat->updateSessionStatus($fields['STATUS']);
+
+			\Bitrix\Pull\Event::add($this->session['USER_ID'], Array(
+				'module_id' => 'imopenlines',
+				'command' => 'sessionStatus',
+				'params' => Array(
+					'chatId' => (int)$parsedUserCode['EXTERNAL_CHAT_ID'],
+					'sessionId' => (int)$this->session['ID'],
+					'sessionStatus' => (int)$fields['STATUS'],
+				)
+			));
 		}
 
 		foreach ($fields as $key => $value)
@@ -1864,6 +1955,21 @@ class Session
 					]
 				]);
 			}
+//			if ($this->session['SOURCE'] === 'livechat')
+//			{
+//				Im::addMessage(
+//					[
+//						"TO_CHAT_ID" => $this->session['CHAT_ID'],
+//						"MESSAGE" => 'CRM-form was sent',
+//						"SYSTEM" => 'Y',
+//						"IMPORTANT_CONNECTOR" => 'Y',
+//						"PARAMS" => [
+//							"COMPONENT_ID" => "bx-test-form",
+//							"CRM_FORM_ID" => $this->config['CRM_FORM_TO_USE'],
+//						]
+//					]
+//				);
+//			}
 		}
 
 		if ($this->action == self::ACTION_CLOSED && $this->config['ACTIVE'] == 'N')
@@ -2113,6 +2219,7 @@ class Session
 
 	/**
 	 * @return bool
+	 * @throws Main\LoaderException
 	 */
 	public function joinUser()
 	{
@@ -2120,7 +2227,12 @@ class Session
 
 		if (!empty($this->joinUserList))
 		{
-			$this->chat->sendJoinMessage($this->joinUserList);
+			$operatorFromCrm = false;
+			if($this->isNowCreated())
+			{
+				$operatorFromCrm = $this->session['OPERATOR_FROM_CRM'] == 'Y'? true : false;
+			}
+			$this->chat->sendJoinMessage($this->joinUserList, $operatorFromCrm);
 			$this->chat->join($this->joinUserList);
 		}
 
@@ -2736,6 +2848,38 @@ class Session
 		return true;
 	}
 
+	public static function setReplyBlock(int $sessionId, Chat $chat , array $limit): void
+	{
+		if (!empty($limit['BLOCK_DATE']) && !empty($limit['BLOCK_REASON']))
+		{
+			Model\SessionTable::update($sessionId, Array(
+				'BLOCK_DATE' => $limit['BLOCK_DATE'],
+				'BLOCK_REASON' => $limit['BLOCK_REASON'],
+			));
+
+			$chat->updateFieldData([Chat::FIELD_SESSION => [
+				'ID' => $sessionId,
+				'BLOCK_DATE' => $limit['BLOCK_DATE'],
+				'BLOCK_REASON' => $limit['BLOCK_REASON'],
+			]]);
+		}
+
+	}
+
+	public function isReplyBlocked(): bool
+	{
+		$sessionData = $this->getData();
+
+		if (!empty($sessionData['BLOCK_DATE']))
+		{
+			if ($sessionData['BLOCK_DATE'] < new Main\Type\DateTime())
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
 
 	/**
 	 * @deprecated

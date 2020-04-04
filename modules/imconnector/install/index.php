@@ -86,6 +86,9 @@ Class ImConnector extends CModule
 			"facebookcomments",
 			"fbinstagram",
 			"botframework",
+			"avito",
+			"whatsappbytwilio",
+			"wechat",
 		);
 		Option::set($this->MODULE_ID, 'list_connector', implode(",", $listConnector));
 
@@ -98,6 +101,7 @@ Class ImConnector extends CModule
 		$eventManager->registerEventHandler('imconnector', 'OnDeleteStatusConnector', 'imconnector', '\Bitrix\ImConnector\InfoConnectors', 'onChangeStatusConnector');
 		$eventManager->registerEventHandler('imopenlines', 'OnImopenlineCreate', 'imconnector', '\Bitrix\ImConnector\InfoConnectors', 'onImopenlineCreate');
 		$eventManager->registerEventHandler('imopenlines', 'OnImopenlineDelete', 'imconnector', '\Bitrix\ImConnector\InfoConnectors', 'onImopenlineDelete');
+		$eventManager->registerEventHandler('rest', 'OnRestAppDelete', 'imconnector', '\Bitrix\ImConnector\Rest\CustomConnectors', 'OnRestAppDelete');
 
 		CAgent::AddAgent("\Bitrix\ImConnector\Connectors\Instagram::initializeReceiveMessages();", "imconnector", "N", 900);
 		CAgent::AddAgent("\Bitrix\ImConnector\InfoConnectors::infoConnectorsUpdateAgent();", "imconnector", "Y", 21600, "", "Y", ConvertTimeStamp((time() + 21600), 'FULL'));
@@ -143,6 +147,7 @@ Class ImConnector extends CModule
 		$eventManager->unRegisterEventHandler('rest', 'OnRestServiceBuildDescription', 'imconnector', '\Bitrix\ImConnector\Rest\Status', 'onRestServiceBuildDescription');
 		$eventManager->unRegisterEventHandler('imconnector', 'OnUpdateStatusConnector', 'imconnector', '\Bitrix\ImConnector\InfoConnectors', 'onUpdateStatusConnector');
 		$eventManager->unRegisterEventHandler('imconnector', 'OnDeleteStatusConnector', 'imconnector', '\Bitrix\ImConnector\InfoConnectors', 'onChangeStatusConnector');
+		$eventManager->unRegisterEventHandler('rest', 'OnRestAppDelete', 'imconnector', '\Bitrix\ImConnector\Rest\CustomConnectors', 'OnRestAppDelete');
 
 		ModuleManager::unRegisterModule($this->MODULE_ID);
 

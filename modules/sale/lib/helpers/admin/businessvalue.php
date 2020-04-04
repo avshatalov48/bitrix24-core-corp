@@ -543,7 +543,14 @@ final class BusinessValueControl
 										}
 									}
 
-									$hideCode = self::renderMapping($mappings, $inputNamePrefix, $providerInput, $providerValueInput, $commonProviderInput, $commonProviderValueInput);
+									try
+									{
+										$hideCode = self::renderMapping($mappings, $inputNamePrefix, $providerInput, $providerValueInput, $commonProviderInput, $commonProviderValueInput);
+									}
+									catch (SystemException $exception)
+									{
+										$hideCode = '';
+									}
 
 									?>
 								</td>
@@ -700,7 +707,7 @@ final class BusinessValueControl
 
 			Input\Manager::getEditHtml($inputNamePrefix.'[PROVIDER_VALUE]', $valueInput, $providerValue)
 
-		?> </span><label<?=$mappings['COMMON'] ? '' : ' style="display:none"'?>>
+		?> </span><label <?=$mappings['COMMON'] ? '' : ' style="display:none"'?>>
 			<?=Loc::getMessage('BIZVAL_PAGE_DELETE_MAPPING')?>
 			<input
 				type="checkbox"

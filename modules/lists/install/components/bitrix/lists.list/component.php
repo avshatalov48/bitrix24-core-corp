@@ -327,11 +327,11 @@ if(
 	}
 	else
 	{
-		$arFilter["=ID"] = $_POST["ID"];
+		$arFilter["=ID"] = (is_array($_POST["ID"]) ? $_POST["ID"] : []);
 	}
 
 	/*Take action*/
-	if($_POST["action_button_".$arResult["GRID_ID"]] == "delete" && isset($_POST["ID"]) && is_array($_POST["ID"]))
+	if ($_POST["action_button_".$arResult["GRID_ID"]] == "delete" && !empty($arFilter["=ID"]))
 	{
 		$rsElements = CIBlockElement::GetList(array(), $arFilter, false, false, array("ID"));
 		while($arElement = $rsElements->Fetch())
@@ -747,11 +747,10 @@ else
 	$arDocumentStatesForBP = array();
 }
 
-$check = false;
 $listValues = array();
 while($obElement = $rsElements->GetNextElement())
 {
-	$check = true;
+	$arResult["CAN_EXPORT"] = true;
 	$columns = array();
 	$data = $obElement->GetFields();
 	if(!is_array($data))
@@ -1155,9 +1154,6 @@ while($obElement = $rsElements->GetNextElement())
 		"columns" => $columns,
 	);
 }
-
-if(!$arResult["CAN_READ"] && $check)
-	$arResult["CAN_READ"] = true;
 
 if (!$arResult["IS_SOCNET_GROUP_CLOSED"] && ($lists_perm >= CListPermissions::CAN_WRITE
 	|| CIBlockRights::UserHasRightTo($IBLOCK_ID, $IBLOCK_ID, "element_delete")))

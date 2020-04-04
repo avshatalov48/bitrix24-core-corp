@@ -25,7 +25,7 @@ BX.Crm.MeasureClass = (function ()
 		this.stepper = BX('bx-crm-volume-stepper');
 		this.suppressStepperAlert = param.suppressStepperAlert || false;
 		this.stepperAlert = BX('bx-crm-volume-message-alert');
-		BX.addCustomEvent(window, "onStepperHasBeenFinished", BX.proxy(this.stepperFinished,this));
+		BX.Event.EventEmitter.subscribe("onStepperHasBeenFinished", BX.proxy(this.stepperFinished,this));
 		setTimeout(BX.proxy(this.initStepperHints, this), 100);
 		setTimeout(BX.proxy(this.stepperAddCancelButton, this), 110);
 		setTimeout(BX.proxy(this.initLocalLinks, this), 120);
@@ -733,7 +733,7 @@ BX.Crm.MeasureClass = (function ()
 			setTimeout(BX.proxy(this.stepperAddCancelButton, this), 100);
 
 			BX.show(this.stepper);
-			BX.addCustomEvent(window, "onStepperHasBeenFinished", BX.proxy(this.stepperFinished,this));
+			//BX.Event.EventEmitter.subscribe("onStepperHasBeenFinished", BX.proxy(this.stepperFinished,this));
 
 			BX.hide(BX('bx-crm-volume-reload-warning'));
 		}

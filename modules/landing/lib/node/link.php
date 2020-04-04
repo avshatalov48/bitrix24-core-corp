@@ -33,21 +33,21 @@ class Link extends \Bitrix\Landing\Node
 
 	/**
 	 * Save data for this node.
-	 * @param \Bitrix\Landing\Block &$block Block instance.
+	 * @param \Bitrix\Landing\Block $block Block instance.
 	 * @param string $selector Selector.
 	 * @param array $data Data array.
 	 * @return void
 	 */
-	public static function saveNode(\Bitrix\Landing\Block &$block, $selector, array $data)
+	public static function saveNode(\Bitrix\Landing\Block $block, $selector, array $data)
 	{
 		$doc = $block->getDom();
 		$resultList = $doc->querySelectorAll($selector);
 
 		foreach ($data as $pos => $value)
 		{
-			$text = isset($value['text']) ? trim($value['text']) : '';
-			$href = isset($value['href']) ? trim($value['href']) : '';
-			$target = isset($value['target']) ? trim(strtolower($value['target'])) : '';
+			$text = (isset($value['text']) && is_string($value['text'])) ? trim($value['text']) : '';
+			$href = (isset($value['href']) && is_string($value['href'])) ? trim($value['href']) : '';
+			$target = (isset($value['target']) && is_string($value['target'])) ? trim(strtolower($value['target'])) : '';
 			$attrs = isset($value['attrs']) ? (array)$value['attrs'] : array();
 			$skipContent = isset($value['skipContent']) ? (boolean)$value['skipContent'] : false;
 
@@ -100,11 +100,11 @@ class Link extends \Bitrix\Landing\Node
 
 	/**
 	 * Get data for this node.
-	 * @param \Bitrix\Landing\Block &$block Block instance.
+	 * @param \Bitrix\Landing\Block $block Block instance.
 	 * @param string $selector Selector.
 	 * @return array
 	 */
-	public static function getNode(\Bitrix\Landing\Block &$block, $selector)
+	public static function getNode(\Bitrix\Landing\Block $block, $selector)
 	{
 		$data = array();
 		$doc = $block->getDom();
@@ -133,6 +133,33 @@ class Link extends \Bitrix\Landing\Node
 		}
 
 		return $data;
+	}
+
+	/**
+	 * This node may participate in searching.
+	 * @param \Bitrix\Landing\Block &$block Block instance.
+	 * @param string $selector Selector.
+	 * @return array
+	 */
+	public static function getSearchableNode($block, $selector)
+	{
+		$searchContent = [];
+
+		$nodes = self::getNode($block, $selector);
+		foreach ($nodes as $node)
+		{
+			if (!isset($node['text']))
+			{
+				continue;
+			}
+			$node['text'] = self::prepareSearchContent($node['text']);
+			if ($node['text'] && !in_array($node['text'], $searchContent))
+			{
+				$searchContent[] = $node['text'];
+			}
+		}
+
+		return $searchContent;
 	}
 
 	/**

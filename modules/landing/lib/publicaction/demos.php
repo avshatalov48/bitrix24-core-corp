@@ -48,6 +48,11 @@ class Demos
 	{
 		$result = new PublicActionResult();
 
+		if (!is_string($type))
+		{
+			return $result;
+		}
+
 		$componentName = 'bitrix:landing.demo';
 		$className = \CBitrixComponent::includeComponentClass($componentName);
 		$demoCmp = new $className;
@@ -130,6 +135,11 @@ class Demos
 	public static function getUrlPreview($code, $type)
 	{
 		$result = new PublicActionResult();
+
+		if (!is_string($code) || !is_string($type))
+		{
+			return $result;
+		}
 
 		$componentName = 'bitrix:landing.demo';
 		$className = \CBitrixComponent::includeComponentClass($componentName);
@@ -280,6 +290,10 @@ class Demos
 			{
 				$fields['LANG']['lang_original'] = $params['lang_original'];
 			}
+			if (isset($item['items']) && !is_array($item['items']))
+			{
+				$item['items'] = [];
+			}
 			foreach ($fieldCode as $code)
 			{
 				$codel = strtolower($code);
@@ -295,6 +309,10 @@ class Demos
 			if ($fields['LANG'])
 			{
 				$fields['LANG'] = serialize($fields['LANG']);
+			}
+			else
+			{
+				unset($fields['LANG']);
 			}
 			if (isset($item['fields']['ADDITIONAL_FIELDS']))
 			{
@@ -352,7 +370,7 @@ class Demos
 			}
 			if ($res->isSuccess())
 			{
-				$return[] = $res->getId();
+				$return[] = (int)$res->getId();
 			}
 			else
 			{
@@ -379,6 +397,11 @@ class Demos
 		$error = new \Bitrix\Landing\Error;
 
 		$result->setResult(false);
+
+		if (!is_string($code))
+		{
+			return $result;
+		}
 
 		// search and delete
 		if ($code)
@@ -428,6 +451,7 @@ class Demos
 	public static function getList(array $params = array())
 	{
 		$result = new PublicActionResult();
+		$params = $result->sanitizeKeys($params);
 
 		if (!is_array($params))
 		{

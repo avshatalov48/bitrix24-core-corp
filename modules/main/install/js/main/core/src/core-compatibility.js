@@ -13,11 +13,16 @@ import * as debugNs from './lib/runtime/debug';
 import {isReady} from './lib/event/ready';
 import getElement from './internal/get-element';
 import getWindow from './internal/get-window';
+import EventEmitter from './lib/event/event-emitter';
+import BaseEvent from './lib/event/base-event';
 
 // BX.*
 export const {getClass, namespace} = Reflection;
 export const message = messageFunction;
 
+/**
+ * @memberOf BX
+ */
 export const {
 	replace,
 	remove,
@@ -251,4 +256,113 @@ export function pos(element, relative = false)
 	}
 
 	return (new DOMRect(x, y, w, h)).toJSON();
+}
+
+export function addCustomEvent(eventObject, eventName, eventHandler)
+{
+	if (Type.isString(eventObject))
+	{
+		eventHandler = eventName;
+		eventName = eventObject;
+		eventObject = EventEmitter.GLOBAL_TARGET;
+	}
+
+	if (eventObject === window)
+	{
+		eventObject = EventEmitter.GLOBAL_TARGET;
+	}
+
+	if (!Type.isObject(eventObject))
+	{
+		console.error('The "eventObject" argument must be an object. Received type '+ typeof(eventObject) + '.');
+		return;
+	}
+
+	if (!Type.isStringFilled(eventName))
+	{
+		console.error('The "eventName" argument must be a string.');
+		return;
+	}
+
+	if (!Type.isFunction(eventHandler))
+	{
+		console.error('The "eventHandler" argument must be a function. Received type '+ typeof(eventHandler) + '.');
+		return;
+	}
+
+	eventName = eventName.toLowerCase();
+
+	EventEmitter.subscribe(eventObject, eventName, eventHandler, { compatMode: true, useGlobalNaming: true });
+}
+
+export function onCustomEvent(eventObject, eventName, eventParams, secureParams)
+{
+	if (Type.isString(eventObject))
+	{
+		secureParams = eventParams;
+		eventParams = eventName;
+		eventName = eventObject;
+		eventObject = EventEmitter.GLOBAL_TARGET;
+	}
+
+	if (!Type.isObject(eventObject) || eventObject === window)
+	{
+		eventObject = EventEmitter.GLOBAL_TARGET;
+	}
+
+	if (!eventParams)
+	{
+		eventParams = [];
+	}
+
+	eventName = eventName.toLowerCase();
+
+	const event = new BaseEvent();
+	event.setData(eventParams);
+	event.setCompatData(eventParams);
+
+	EventEmitter.emit(eventObject, eventName, event, { cloneData: secureParams === true, useGlobalNaming: true });
+}
+
+export function removeCustomEvent(eventObject, eventName, eventHandler)
+{
+	if (Type.isString(eventObject))
+	{
+		eventHandler = eventName;
+		eventName = eventObject;
+		eventObject = EventEmitter.GLOBAL_TARGET;
+	}
+
+	if (!Type.isFunction(eventHandler))
+	{
+		console.error('The "eventHandler" argument must be a function. Received type '+ typeof(eventHandler) + '.');
+		return;
+	}
+
+	if (eventObject === window)
+	{
+		eventObject = EventEmitter.GLOBAL_TARGET;
+	}
+
+	eventName = eventName.toLowerCase();
+
+	EventEmitter.unsubscribe(eventObject, eventName, eventHandler, { useGlobalNaming: true });
+}
+
+export function removeAllCustomEvents(eventObject, eventName)
+{
+	if (Type.isString(eventObject))
+	{
+		eventName = eventObject;
+		eventObject = EventEmitter.GLOBAL_TARGET;
+	}
+
+	if (eventObject === window)
+	{
+		eventObject = EventEmitter.GLOBAL_TARGET;
+	}
+
+	eventName = eventName.toLowerCase();
+
+	EventEmitter.unsubscribeAll(eventObject, eventName, { useGlobalNaming: true });
 }

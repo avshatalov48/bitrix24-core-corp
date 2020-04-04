@@ -13,6 +13,7 @@ use Bitrix\Timeman\Model\Schedule\Violation\ViolationRules;
 use Bitrix\Timeman\Model\Worktime\EventLog\WorktimeEvent;
 use Bitrix\Timeman\Model\Worktime\EventLog\WorktimeEventTable;
 use Bitrix\Timeman\Model\Worktime\Record\WorktimeRecord;
+use Bitrix\Timeman\Repository\Schedule\ShiftPlanRepository;
 use Bitrix\Timeman\Repository\Worktime\WorktimeRepository;
 use Bitrix\Timeman\Service\Worktime\Result\WorktimeServiceResult;
 use Bitrix\Timeman\Service\Worktime\Violation\WorktimeViolationManager;
@@ -36,8 +37,12 @@ abstract class WorktimeManager
 	/** @var WorktimeViolationManager */
 	private $violationManager;
 	private $personalViolationRules;
+	private $shiftPlanRepository;
 
-	public function __construct(WorktimeViolationManager $violationManager, $worktimeRecordForm, WorktimeRepository $worktimeRepository)
+	public function __construct(WorktimeViolationManager $violationManager,
+								WorktimeRecordForm $worktimeRecordForm,
+								WorktimeRepository $worktimeRepository,
+								ShiftPlanRepository $shiftPlanRepository)
 	{
 		$builder = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2);
 		$allowedConsumerClasses = [
@@ -52,6 +57,7 @@ abstract class WorktimeManager
 		$this->worktimeRecordForm = clone $worktimeRecordForm;
 		$this->violationManager = $violationManager;
 		$this->worktimeRepository = $worktimeRepository;
+		$this->shiftPlanRepository = $shiftPlanRepository;
 	}
 
 	public function notifyOfAction($record, $schedule)
@@ -71,6 +77,11 @@ abstract class WorktimeManager
 			$violationRulesList = [$schedule->obtainScheduleViolationRules()];
 		}
 		$result = [];
+		$plan = null;
+		if (Schedule::isScheduleShifted($schedule))
+		{
+			$plan = $this->shiftPlanRepository->findActiveByRecord($record);
+		}
 		foreach ($violationRulesList as $violationRules)
 		{
 			$result = array_merge(
@@ -80,6 +91,7 @@ abstract class WorktimeManager
 						->setShift($schedule ? $schedule->obtainShiftByPrimary($record->getShiftId()) : null)
 						->setSchedule($schedule)
 						->setViolationRules($violationRules)
+						->setShiftPlan($plan)
 						->setRecord($record),
 					$types
 				)
@@ -137,6 +149,10 @@ abstract class WorktimeManager
 	 */
 	protected function verifyBeforeProcessUpdatingRecord()
 	{
+		if ($this->worktimeRecordForm->isSystem)
+		{
+			return new WorktimeServiceResult();
+		}
 		if (!Schedule::isDeviceAllowed($this->worktimeRecordForm->device, $this->getSchedule()))
 		{
 			return WorktimeServiceResult::createWithErrorText(
@@ -269,7 +285,6 @@ abstract class WorktimeManager
 		}
 
 		$record = $this->updateRecordFields($record);
-		$this->postBuildRecord($record);
 		if ($record)
 		{
 			$this->setApproved($record);
@@ -285,45 +300,14 @@ abstract class WorktimeManager
 	{
 	}
 
-	/**
-	 * @param WorktimeRecord $record
-	 */
-	private function postBuildRecord($record)
-	{
-		if (!$this->getSchedule())
-		{
-			return;
-		}
-		if (!$this->getSchedule()->isAutoClosing() && (int)$record->getActualStopTimestamp() === 0)
-		{
-			return;
-		}
-		$shift = $this->getShift();
-		if (!$shift)
-		{
-			return;
-		}
-		$eventType = $this->worktimeRecordForm->getFirstEventName();
-		switch ($eventType)
-		{
-			case WorktimeEventTable::EVENT_TYPE_START:
-			case WorktimeEventTable::EVENT_TYPE_EDIT_START:
-			case WorktimeEventTable::EVENT_TYPE_START_WITH_ANOTHER_TIME:
-				$record->stopWork(
-					$this->worktimeRecordForm,
-					TimeHelper::getInstance()->getTimestampByUserSeconds(
-						$record->getUserId(),
-						$shift->getWorkTimeEnd())
-				);
-				break;
-			default:
-				break;
-		}
-	}
-
 	protected function isEmptyEventReason()
 	{
-		return $this->worktimeRecordForm && empty(trim($this->worktimeRecordForm->getFirstEventForm()->reason));
+		if (!$this->worktimeRecordForm)
+		{
+			return true;
+		}
+		return !is_string($this->worktimeRecordForm->getFirstEventForm()->reason)
+			   || strlen(trim($this->worktimeRecordForm->getFirstEventForm()->reason)) <= 0;
 	}
 
 	protected function getDeviceNotAllowedErrorText($device)

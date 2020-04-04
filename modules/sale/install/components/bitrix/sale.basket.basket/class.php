@@ -1119,7 +1119,12 @@ class CBitrixBasketComponent extends CBitrixComponent
 		if (!$basket->getOrder())
 		{
 			$userId = $this->getUserId() ?: CSaleUser::GetAnonymousUserID();
-			$order = Sale\Order::create($this->getSiteId(), $userId);
+
+			$registry = Sale\Registry::getInstance(Sale\Registry::REGISTRY_TYPE_ORDER);
+			/** @var Sale\Order $orderClass */
+			$orderClass = $registry->getOrderClassName();
+
+			$order = $orderClass::create($this->getSiteId(), $userId);
 
 			$result = $order->appendBasket($basket);
 			if (!$result->isSuccess())
@@ -1307,7 +1312,12 @@ class CBitrixBasketComponent extends CBitrixComponent
 		$refreshGap = (int)Main\Config\Option::get('sale', 'basket_refresh_gap', 0);
 		if ($refreshGap > 0)
 		{
-			$basketItem = Basket::getList([
+			$registry = Sale\Registry::getInstance(Sale\Registry::REGISTRY_TYPE_ORDER);
+
+			/** @var Sale\Basket $basketClass */
+			$basketClass = $registry->getBasketClassName();
+
+			$basketItem = $basketClass::getList([
 				'filter' => [
 					'FUSER_ID' => $this->getFuserId(),
 					'=LID' => $this->getSiteId(),
@@ -1417,7 +1427,12 @@ class CBitrixBasketComponent extends CBitrixComponent
 		$notAvailableItemsCount = 0;
 		$delayedItemsCount = 0;
 
-		$basketItemsResult = Basket::getList([
+		$registry = Sale\Registry::getInstance(Sale\Registry::REGISTRY_TYPE_ORDER);
+
+		/** @var Sale\Basket $basketClass */
+		$basketClass = $registry->getBasketClassName();
+
+		$basketItemsResult = $basketClass::getList([
 			'filter' => [
 				'FUSER_ID' => $this->getFuserId(),
 				'=LID' => $this->getSiteId(),

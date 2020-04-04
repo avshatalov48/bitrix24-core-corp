@@ -7,7 +7,6 @@ use Bitrix\Main\Config\Option;
 use Bitrix\Main\Db\SqlQueryException;
 use Bitrix\Main\Loader;
 use Bitrix\Main\LoaderException;
-
 use Bitrix\Tasks\Integration\SocialNetwork\Group;
 use Bitrix\Tasks\Internals\DataBase\Helper\Common;
 use Bitrix\Tasks\Internals\Task\SearchIndexTable;
@@ -36,7 +35,7 @@ class SearchIndex
 		'ACCOMPLICES',
 		'GROUP_ID',
 		'SE_CHECKLIST',
-		'UF_CRM_TASK'
+		'UF_CRM_TASK',
 	];
 
 	/**
@@ -86,16 +85,16 @@ class SearchIndex
 	 * Return task's search index
 	 *
 	 * @param $taskId
-	 * @return string|null
+	 * @return string
 	 * @throws LoaderException
 	 */
 	public static function getTaskSearchIndex($taskId)
 	{
 		$searchIndex = '';
 
-		if (intval($taskId) > 0)
+		if ((int)$taskId > 0)
 		{
-			$task = new \CTaskItem($taskId, 1);
+			$task = \CTaskItem::getInstanceFromPool($taskId, 1);
 			$searchIndex = static::buildTaskSearchIndex($task);
 		}
 
@@ -107,7 +106,7 @@ class SearchIndex
 	 *
 	 * @param array|\CTaskItem|Task $task
 	 * @param array $fields
-	 * @return string|null
+	 * @return string
 	 * @throws LoaderException
 	 */
 	public static function buildTaskSearchIndex($task, array $fields = [])
@@ -146,9 +145,9 @@ class SearchIndex
 
 		if (!empty($fieldValues))
 		{
-			$searchIndex = join(' ', $fieldValues);
+			$searchIndex = implode(' ', $fieldValues);
 			$searchIndex = array_unique(explode(' ', $searchIndex));
-			$searchIndex = join(' ', $searchIndex);
+			$searchIndex = implode(' ', $searchIndex);
 
 			$searchIndex = static::prepareSearchIndex($searchIndex);
 		}
@@ -164,7 +163,7 @@ class SearchIndex
 	 */
 	public static function runFullTasksIndexing()
 	{
-		if (Option::get("tasks", "needFullTasksIndexing", "") == 'N')
+		if (Option::get("tasks", "needFullTasksIndexing") === 'N')
 		{
 			Option::set("tasks", "needFullTasksIndexing", "Y");
 		}
@@ -283,13 +282,13 @@ class SearchIndex
 
 				if ($tags)
 				{
-					$fieldValue[] = join(' ', $tags);
+					$fieldValue[] = implode(' ', $tags);
 				}
 				break;
 
 			case 'CREATED_BY':
 			case 'RESPONSIBLE_ID':
-				$fieldValue[] = join(' ', User::getUserName([$taskData[$field]]));
+				$fieldValue[] = implode(' ', User::getUserName([$taskData[$field]]));
 				break;
 
 			case 'AUDITORS':
@@ -301,7 +300,7 @@ class SearchIndex
 
 					if ($auditors)
 					{
-						$fieldValue[] = join(' ', User::getUserName(array_unique($auditors)));
+						$fieldValue[] = implode(' ', User::getUserName(array_unique($auditors)));
 					}
 				}
 				break;
@@ -315,7 +314,7 @@ class SearchIndex
 
 					if ($accomplices)
 					{
-						$fieldValue[] = join(' ', User::getUserName(array_unique($accomplices)));
+						$fieldValue[] = implode(' ', User::getUserName(array_unique($accomplices)));
 					}
 				}
 				break;
@@ -377,7 +376,7 @@ class SearchIndex
 
 	/**
 	 * @param $searchIndex
-	 * @return string|null
+	 * @return string
 	 * @throws LoaderException
 	 */
 	private static function prepareSearchIndex($searchIndex)

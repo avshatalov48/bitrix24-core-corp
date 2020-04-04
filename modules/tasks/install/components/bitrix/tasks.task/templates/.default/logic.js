@@ -31,6 +31,8 @@ BX.namespace('Tasks.Component');
 				this.instances.query = false;
 				this.instances.helpWindow = false;
 
+				this.analyticsData = {};
+
 				this.fireTaskEvent();
 
 				if(this.option('doInit'))
@@ -320,6 +322,18 @@ BX.namespace('Tasks.Component');
 
 				this.bindNestedControls();
 				this.bindSliderEvents();
+
+				BX.Event.EventEmitter.subscribe('BX.Tasks.CheckListItem:CheckListChanged', function(eventData) {
+					var action = eventData.data.action;
+					var allowedActions = ['addAccomplice', 'fileUpload', 'tabIn'];
+
+					if (BX.util.in_array(action, allowedActions))
+					{
+						this.analyticsData[action] = 'Y';
+					}
+
+					BX('checklistAnalyticsData').value = Object.keys(this.analyticsData).join(',');
+				}.bind(this));
 
 				BX.Tasks.Util.hintManager.bindHelp(this.control('options'));
 			},
@@ -949,6 +963,8 @@ BX.namespace('Tasks.Component');
 									newCheckList.addCheckListItem(item);
 								});
 								newCheckList.handleTaskOptions();
+
+								BX('checklistFromDescription').value = 'fromDescription';
 							});
 
 							if (BX.hasClass(this.control('checklist'), 'invisible'))
@@ -1006,6 +1022,8 @@ BX.namespace('Tasks.Component');
 									newCheckList.addCheckListItem(item);
 								});
 								newCheckList.handleTaskOptions();
+
+								BX('checklistFromDescription').value = 'fromDescription';
 							});
 
 							if (BX.hasClass(self.control('checklist'), 'invisible'))
@@ -1029,8 +1047,9 @@ BX.namespace('Tasks.Component');
 							items.forEach(function(item) {
 								descendant.addCheckListItem(item);
 							});
-
 							items[0].handleTaskOptions();
+
+							BX('checklistFromDescription').value = 'fromDescription';
 
 							if (BX.hasClass(self.control('checklist'), 'invisible'))
 							{

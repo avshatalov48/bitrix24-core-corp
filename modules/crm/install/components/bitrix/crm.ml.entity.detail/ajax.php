@@ -2,6 +2,7 @@
 
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
+use Bitrix\Crm\Ml\TrainingState;
 use Bitrix\Main\Result;
 use Bitrix\Main\Engine\ActionFilter\CloseSession;
 
@@ -49,7 +50,7 @@ class CrmMlEntityDetailAjaxController extends \Bitrix\Main\Engine\Controller
 			return null;
 		}
 
-		if($lastTraining["STATE"] == \Bitrix\Crm\Ml\TrainingState::GATHERING)
+		if($lastTraining["STATE"] == \Bitrix\Crm\Ml\TrainingState::GATHERING || $lastTraining["STATE"] === TrainingState::PENDING_CREATION)
 		{
 			\Bitrix\Crm\Ml\Agent\ModelTrainer::run((int)$lastTraining["ID"]);
 		}
@@ -148,6 +149,9 @@ class CrmMlEntityDetailAjaxController extends \Bitrix\Main\Engine\Controller
 			return null;
 		}
 
-		return [];
+		return [
+			'model' => $model,
+			'currentTraining' => $model->getCurrentTraining()
+		];
 	}
 }

@@ -13,6 +13,54 @@ abstract class MatchHashDedupeDataSource extends DedupeDataSource
 	*/
 	abstract protected function createCriterionFromMatches(array $matches);
 	abstract protected function prepareResult(array &$map, DedupeDataSourceResult $result);
+
+	public function getTotalCount()
+	{
+		$subQuery = new Main\Entity\Query(Entity\DuplicateEntityMatchHashTable::getEntity());
+
+		$subQuery->addGroup('MATCH_HASH');
+		$subQuery->registerRuntimeField('', new Main\Entity\ExpressionField('QTY', 'COUNT(*)'));
+		$subQuery->addFilter('>QTY', 1);
+
+		$typeID = $this->typeID;
+		$entityTypeID = $this->getEntityTypeID();
+		$scope = $this->getScope();
+		$enablePermissionCheck = $this->isPermissionCheckEnabled();
+
+		$subQuery->addFilter('=ENTITY_TYPE_ID', $entityTypeID);
+		$subQuery->addFilter('=TYPE_ID', $typeID);
+
+		if ($scope === DuplicateIndexType::DEFAULT_SCOPE)
+		{
+			$subQuery->addFilter('=SCOPE', DuplicateIndexType::DEFAULT_SCOPE);
+		}
+		else
+		{
+			$subQuery->addFilter('@SCOPE', array(DuplicateIndexType::DEFAULT_SCOPE, $scope));
+		}
+
+		if($enablePermissionCheck)
+		{
+			$permissionSql = $this->preparePermissionSql();
+			if($permissionSql === false)
+			{
+				//Access denied;
+				return 0;
+			}
+			if($permissionSql !== '')
+			{
+				$subQuery->addFilter('@ENTITY_ID', new Main\DB\SqlExpression($permissionSql));
+			}
+		}
+
+		$query = new Main\Entity\Query($subQuery);
+		$query->registerRuntimeField('', new Main\Entity\ExpressionField('QTY', 'COUNT(*)'));
+		$query->addSelect('QTY');
+
+		$fields = $query->exec()->fetch();
+		return  is_array($fields) && isset($fields['QTY']) ? (int)$fields['QTY'] : 0;
+	}
+
 	/**
 	* @return DedupeDataSourceResult
 	*/

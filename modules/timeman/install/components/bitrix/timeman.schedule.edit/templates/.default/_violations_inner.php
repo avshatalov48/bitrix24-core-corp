@@ -21,7 +21,7 @@ else
 }
 $violationFormName = htmlspecialcharsbx($violationFormName);
 
-$showContainer = $violationForm->showViolationContainer();
+$showContainer = $violationForm->showViolationContainer($scheduleForm->isShifted());
 ?>
 <div class="timeman-schedule-form-violation-container">
 	<div class=" timeman-schedule-form-violation-block"
@@ -48,37 +48,37 @@ $showContainer = $violationForm->showViolationContainer();
 						</div>
 						<div class="timeman-schedule-form-violation-detail timeman-schedule-form-violation-detail-start-end">
 							<div class="timeman-schedule-form-violation-detail-inner" data-role="start-control">
-										<span class="timeman-schedule-form-violation-detail-title"><?=
-											htmlspecialcharsbx(Loc::getMessage('TM_SCHEDULE_VIOLATION_MAX_EXACT_START_TITLE'));
-											?></span>
+								<span class="timeman-schedule-form-violation-detail-title"><?=
+									htmlspecialcharsbx(Loc::getMessage('TM_SCHEDULE_VIOLATION_MAX_EXACT_START_TITLE'));
+									?></span>
 								<span class="timeman-schedule-form-violation-detail-text">
-											<span class="timeman-schedule-form-worktime-input-value-text"
-													data-role="max-exact-start-link"
-													data-input-selector-role="max-exact-start-input"
-											><?=
-												htmlspecialcharsbx($violationForm->getFormattedMaxExactStart()) ?>
-											</span>
-												<input name="<?= $violationFormName . "[maxExactStartFormatted]" ?>"
-														data-role="max-exact-start-input"
-														type="hidden"
-														value="<?= htmlspecialcharsbx($violationForm->getFormattedMaxExactStart()) ?>">
+									<span class="timeman-schedule-form-worktime-input-value-text"
+											data-role="max-exact-start-link"
+											data-input-selector-role="max-exact-start-input"
+									><?=
+										htmlspecialcharsbx($violationForm->getFormattedMaxExactStart()) ?>
 									</span>
+									<input name="<?= $violationFormName . "[maxExactStartFormatted]" ?>"
+											data-role="max-exact-start-input"
+											type="hidden"
+											value="<?= htmlspecialcharsbx($violationForm->getFormattedMaxExactStart()) ?>">
+								</span>
 							</div>
 							<div class="timeman-schedule-form-violation-detail-inner" data-role="end-control">
 								<span class="timeman-schedule-form-violation-detail-title"><?= htmlspecialcharsbx(Loc::getMessage('TM_SCHEDULE_VIOLATION_MIN_END_START_TITLE')); ?></span>
 								<span class="timeman-schedule-form-violation-detail-text">
-											<span class="timeman-schedule-form-worktime-input-value-text"
-													data-role="min-exact-end-link"
-													data-input-selector-role="min-exact-end-input"
-											><?=
-												htmlspecialcharsbx($violationForm->getFormattedMinExactEnd())
-												?></span>
-										<input name="<?= $violationFormName . "[minExactEndFormatted]" ?>"
-												data-role="min-exact-end-input"
-												class="timeman-schedule-form-worktime-input-value-text"
-												type="hidden"
-												value="<?= htmlspecialcharsbx($violationForm->getFormattedMinExactEnd()) ?>">
-									</span>
+									<span class="timeman-schedule-form-worktime-input-value-text"
+											data-role="min-exact-end-link"
+											data-input-selector-role="min-exact-end-input"
+									><?=
+										htmlspecialcharsbx($violationForm->getFormattedMinExactEnd())
+										?></span>
+									<input name="<?= $violationFormName . "[minExactEndFormatted]" ?>"
+											data-role="min-exact-end-input"
+											class="timeman-schedule-form-worktime-input-value-text"
+											type="hidden"
+											value="<?= htmlspecialcharsbx($violationForm->getFormattedMinExactEnd()) ?>">
+								</span>
 							</div>
 						</div>
 					</div>
@@ -103,7 +103,8 @@ $showContainer = $violationForm->showViolationContainer();
 									?></span>
 								<span>
 									<span class="timeman-schedule-form-violation-detail-text"><?
-										?><span class="timeman-schedule-form-worktime-input-value-text"
+										?>
+										<span class="timeman-schedule-form-worktime-input-value-text"
 												data-role="relative-start-from-link"
 												data-input-selector-role="relative-start-from-input"
 										><?= htmlspecialcharsbx($violationForm->getFormattedRelativeStartFrom()) ?></span>
@@ -112,48 +113,52 @@ $showContainer = $violationForm->showViolationContainer();
 												type="hidden"
 												value="<?= htmlspecialcharsbx($violationForm->getFormattedRelativeStartFrom()) ?>"><?
 										?></span>
-										<span class="timeman-schedule-form-violation-detail-text-separator">-</span>
-										<span class="timeman-schedule-form-violation-detail-text"><?
-											?><span class="timeman-schedule-form-worktime-input-value-text"
-													data-role="relative-start-to-link"
-													data-input-selector-role="relative-start-to-input"
-											><?= htmlspecialcharsbx($violationForm->getFormattedRelativeStartTo()) ?>
-											</span>
-											<input name="<?= $violationFormName . "[relativeStartToFormatted]" ?>"
-													data-role="relative-start-to-input"
-													type="hidden"
-													value="<?= htmlspecialcharsbx($violationForm->getFormattedRelativeStartTo()) ?>"><?
-											?></span>
-									</span>
+									<span class="timeman-schedule-form-violation-detail-text-separator">-</span>
+									<span class="timeman-schedule-form-violation-detail-text"><?
+										?>
+										<span class="timeman-schedule-form-worktime-input-value-text"
+												data-role="relative-start-to-link"
+												data-input-selector-role="relative-start-to-input"
+										><?= htmlspecialcharsbx($violationForm->getFormattedRelativeStartTo()) ?>
+										</span>
+										<input name="<?= $violationFormName . "[relativeStartToFormatted]" ?>"
+												data-role="relative-start-to-input"
+												type="hidden"
+												value="<?= htmlspecialcharsbx($violationForm->getFormattedRelativeStartTo()) ?>"><?
+										?></span>
+								</span>
 							</div>
 							<div class="timeman-schedule-form-violation-detail-inner" data-role="end-control">
 								<span class="timeman-schedule-form-violation-detail-title"><?=
 									htmlspecialcharsbx(Loc::getMessage('TM_SCHEDULE_VIOLATION_END_TIME_TITLE'))
 									?></span>
 								<span><?
-									?><span class="timeman-schedule-form-violation-detail-text"><?
-										?><span class="timeman-schedule-form-worktime-input-value-text"
+									?>
+									<span class="timeman-schedule-form-violation-detail-text"><?
+										?>
+										<span class="timeman-schedule-form-worktime-input-value-text"
 												data-role="relative-end-from-link"
 												data-input-selector-role="relative-end-from-input"
 										><?= htmlspecialcharsbx($violationForm->getFormattedRelativeEndFrom()) ?>
-									</span>
+										</span>
 										<input name="<?= $violationFormName . "[relativeEndFromFormatted]" ?>"
 												data-role="relative-end-from-input"
 												type="hidden"
 												value="<?= htmlspecialcharsbx($violationForm->getFormattedRelativeEndFrom()) ?>"><?
 										?></span>
 									<span class="timeman-schedule-form-violation-detail-text-separator">-</span>
-										<span class="timeman-schedule-form-violation-detail-text"><?
-											?><span class="timeman-schedule-form-worktime-input-value-text"
-													data-role="relative-end-to-link"
-													data-input-selector-role="relative-end-to-input"
-											><?= htmlspecialcharsbx($violationForm->getFormattedRelativeEndTo()) ?></span>
-											<input name="<?= $violationFormName . "[relativeEndToFormatted]" ?>"
-													data-role="relative-end-to-input"
-													type="hidden"
-													value="<?= htmlspecialcharsbx($violationForm->getFormattedRelativeEndTo()) ?>"><?
-											?></span>
-									</span>
+									<span class="timeman-schedule-form-violation-detail-text"><?
+										?>
+										<span class="timeman-schedule-form-worktime-input-value-text"
+												data-role="relative-end-to-link"
+												data-input-selector-role="relative-end-to-input"
+										><?= htmlspecialcharsbx($violationForm->getFormattedRelativeEndTo()) ?></span>
+										<input name="<?= $violationFormName . "[relativeEndToFormatted]" ?>"
+												data-role="relative-end-to-input"
+												type="hidden"
+												value="<?= htmlspecialcharsbx($violationForm->getFormattedRelativeEndTo()) ?>"><?
+										?></span>
+								</span>
 							</div>
 						</div>
 					</div>
@@ -176,22 +181,30 @@ $showContainer = $violationForm->showViolationContainer();
 									htmlspecialcharsbx(Loc::getMessage('TM_SCHEDULE_VIOLATION_MAX_OFFSET_START_LINK_TITLE'));
 									?></span>
 								<span class="timeman-schedule-form-violation-detail-text">
+									<span class="timeman-schedule-form-worktime-input-value-text"
+											data-role="max-offset-start-link"
+											data-input-selector-role="max-offset-start-input"><?=
+										htmlspecialcharsbx($violationForm->getFormattedMaxOffsetStart())
+										?></span>
 									<input name="<?= $violationFormName . "[maxOffsetStartFormatted]" ?>"
-											class="timeman-schedule-form-worktime-input-value-text"
 											data-role="max-offset-start-input"
-											type="text"
+											type="hidden"
 											value="<?= htmlspecialcharsbx($violationForm->getFormattedMaxOffsetStart()) ?>">
 								</span>
 							</div>
 							<div class="timeman-schedule-form-violation-detail-inner" data-role="end-control">
 								<span class="timeman-schedule-form-violation-detail-title"><?= htmlspecialcharsbx(Loc::getMessage('TM_SCHEDULE_VIOLATION_MIN_OFFSET_END_LINK_TITLE')); ?></span>
 								<span class="timeman-schedule-form-violation-detail-text">
+									<span class="timeman-schedule-form-worktime-input-value-text"
+											data-role="min-offset-end-link"
+											data-input-selector-role="min-offset-end-input"><?=
+										htmlspecialcharsbx($violationForm->getFormattedMinOffsetEnd()) ?>
+									</span>
 									<input name="<?= $violationFormName . "[minOffsetEndFormatted]" ?>"
 											data-role="min-offset-end-input"
-											class="timeman-schedule-form-worktime-input-value-text"
-											type="text"
+											type="hidden"
 											value="<?= htmlspecialcharsbx($violationForm->getFormattedMinOffsetEnd()) ?>">
-									</span>
+								</span>
 							</div>
 						</div>
 					</div>
@@ -233,13 +246,17 @@ $showContainer = $violationForm->showViolationContainer();
 						<div class="timeman-schedule-form-violation-detail-inner">
 							<span class="timeman-schedule-form-violation-detail-title"><?= htmlspecialcharsbx(Loc::getMessage('TM_SCHEDULE_VIOLATION_MIN_DAY_DURATION_TITLE')); ?></span>
 							<span class="timeman-schedule-form-violation-detail-text">
-										<input name="<?= $violationFormName . "[minDayDurationFormatted]" ?>"
-												data-role="min-day-duration-link"
-												autocomplete="off"
-												class="timeman-schedule-form-worktime-input-value-text"
-												type="text"
-												value="<?= htmlspecialcharsbx($violationForm->getFormattedMinDayDuration()) ?>">
-									</span>
+								<span class="timeman-schedule-form-worktime-input-value-text"
+										data-role="min-day-duration-link"
+										data-input-selector-role="min-day-duration-input"><?=
+									htmlspecialcharsbx($violationForm->getFormattedMinDayDuration())
+									?></span>
+								<input name="<?= $violationFormName . "[minDayDurationFormatted]" ?>"
+										data-role="min-day-duration-input"
+										autocomplete="off"
+										type="hidden"
+										value="<?= htmlspecialcharsbx($violationForm->getFormattedMinDayDuration()) ?>">
+							</span>
 
 						</div>
 					</div>
@@ -268,7 +285,7 @@ $showContainer = $violationForm->showViolationContainer();
 		</div>
 	</div>
 	<div class="timeman-schedule-form-violation-block"
-			data-role="violation-fix-schedule">
+			data-role="violation-any-schedule">
 		<input type="checkbox" class="timeman-schedule-form-checkbox" id="violation-edit"
 			<?= $violationForm->showEditWorktimeViolations() ? 'checked' : ''; ?>
 				name="<?= $violationFormName . "[saveEditWorktimeViolations]"; ?>">
@@ -281,17 +298,21 @@ $showContainer = $violationForm->showViolationContainer();
 				<div class="timeman-schedule-form-violation-options">
 					<div class="timeman-schedule-form-violation-detail">
 						<div class="timeman-schedule-form-violation-detail-inner">
-									<span class="timeman-schedule-form-violation-detail-title"><?=
-										htmlspecialcharsbx(Loc::getMessage('TM_SCHEDULE_VIOLATION_CHANGE_DAY_DURATION_TITLE'))
-										?></span>
+							<span class="timeman-schedule-form-violation-detail-title"><?=
+								htmlspecialcharsbx(Loc::getMessage('TM_SCHEDULE_VIOLATION_CHANGE_DAY_DURATION_TITLE'))
+								?></span>
 							<span class="timeman-schedule-form-violation-detail-text">
-										<input name="<?= $violationFormName . "[maxAllowedToEditWorkTimeFormatted]" ?>"
-												data-role="allow-manual-change-time-link"
-												autocomplete="off"
-												class="timeman-schedule-form-worktime-input-value-text"
-												type="text"
-												value="<?= htmlspecialcharsbx($violationForm->getFormattedMaxAllowedToEditWorkTime()) ?>">
-									</span>
+								<span class="timeman-schedule-form-worktime-input-value-text"
+										data-role="allow-manual-change-time-link"
+										data-input-selector-role="allow-manual-change-time-input"><?=
+									htmlspecialcharsbx($violationForm->getFormattedMaxAllowedToEditWorkTime())
+									?></span>
+								<input name="<?= $violationFormName . "[maxAllowedToEditWorkTimeFormatted]" ?>"
+										data-role="allow-manual-change-time-input"
+										autocomplete="off"
+										type="hidden"
+										value="<?= htmlspecialcharsbx($violationForm->getFormattedMaxAllowedToEditWorkTime()) ?>">
+							</span>
 						</div>
 					</div>
 				</div>
@@ -342,9 +363,9 @@ $showContainer = $violationForm->showViolationContainer();
 				</div>
 				<div class="timeman-schedule-form-settings">
 					<div class="timeman-schedule-form-settings-name-block">
-								<span class="timeman-schedule-form-settings-name"><?=
-									htmlspecialcharsbx(Loc::getMessage('TM_SCHEDULE_VIOLATION_NOTIFICATION_TO_TITLE'))
-									?></span>
+						<span class="timeman-schedule-form-settings-name"><?=
+							htmlspecialcharsbx(Loc::getMessage('TM_SCHEDULE_VIOLATION_NOTIFICATION_TO_TITLE'))
+							?></span>
 					</div>
 					<?
 					$APPLICATION->IncludeComponent(
@@ -379,17 +400,22 @@ $showContainer = $violationForm->showViolationContainer();
 				<div class="timeman-schedule-form-violation-options">
 					<div class="timeman-schedule-form-violation-detail">
 						<div class="timeman-schedule-form-violation-detail-inner">
-									<span class="timeman-schedule-form-violation-detail-title"><?=
-										htmlspecialcharsbx(Loc::getMessage('TM_SCHEDULE_VIOLATION_SHIFT_DELAY_ALLOWED'))
-										?></span>
+							<span class="timeman-schedule-form-violation-detail-title"><?=
+								htmlspecialcharsbx(Loc::getMessage('TM_SCHEDULE_VIOLATION_SHIFT_DELAY_ALLOWED'))
+								?></span>
 							<span class="timeman-schedule-form-violation-detail-text">
-										<input name="<?= $violationFormName . "[maxShiftStartDelayFormatted]" ?>"
-												data-role="allow-shift-start-delay-link"
-												autocomplete="off"
-												class="timeman-schedule-form-worktime-input-value-text"
-												type="text"
-												value="<?= htmlspecialcharsbx($violationForm->getFormattedMaxShiftStartDelay()) ?>">
-									</span>
+								<span class="timeman-schedule-form-worktime-input-value-text"
+										data-role="allow-shift-start-delay-link"
+										data-input-selector-role="allow-shift-start-delay-input"
+								><?=
+									htmlspecialcharsbx($violationForm->getFormattedMaxShiftStartDelay())
+									?></span>
+								<input name="<?= $violationFormName . "[maxShiftStartDelayFormatted]" ?>"
+										data-role="allow-shift-start-delay-input"
+										autocomplete="off"
+										type="hidden"
+										value="<?= htmlspecialcharsbx($violationForm->getFormattedMaxShiftStartDelay()) ?>">
+							</span>
 						</div>
 					</div>
 				</div>
@@ -429,9 +455,9 @@ $showContainer = $violationForm->showViolationContainer();
 			<div class="timeman-schedule-form-violation-hidden">
 				<div class="timeman-schedule-form-settings">
 					<div class="timeman-schedule-form-settings-name-block">
-								<span class="timeman-schedule-form-settings-name"><?=
-									htmlspecialcharsbx(Loc::getMessage('TM_SCHEDULE_VIOLATION_NOTIFICATION_TO_TITLE'))
-									?></span>
+						<span class="timeman-schedule-form-settings-name"><?=
+							htmlspecialcharsbx(Loc::getMessage('TM_SCHEDULE_VIOLATION_NOTIFICATION_TO_TITLE'))
+							?></span>
 					</div>
 					<?
 					$APPLICATION->IncludeComponent(

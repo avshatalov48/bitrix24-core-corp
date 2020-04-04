@@ -53,7 +53,7 @@ $arAllOptions = array(
 	array("export_default_path", Loc::getMessage("CAT_EXPORT_DEFAULT_PATH"), "/bitrix/catalog_export/", array("text", 30)),
 	array("default_catalog_1c", Loc::getMessage("CAT_DEF_IBLOCK"), "", array("text", 30)),
 	array("deactivate_1c_no_price", Loc::getMessage("CAT_DEACT_NOPRICE"), "N", array("checkbox")),
-	array("yandex_xml_period", Loc::getMessage("CAT_YANDEX_XML_PERIOD"), "24", array("text", 5)),
+	array("yandex_xml_period", Loc::getMessage("CAT_YANDEX_MARKET_XML_PERIOD"), "24", array("text", 5)),
 );
 
 $strWarning = "";
@@ -126,7 +126,7 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && !empty($_POST['Update']) && !$bReadO
 		$strYandexAgent = Rel2Abs('/', $strYandexAgent);
 		if (preg_match(BX_CATALOG_FILENAME_REG, $strYandexAgent) || (!file_exists($_SERVER['DOCUMENT_ROOT'].$strYandexAgent) || !is_file($_SERVER['DOCUMENT_ROOT'].$strYandexAgent)))
 		{
-			$strWarning .= Loc::getMessage('CAT_PATH_ERR_YANDEX_AGENT').'<br />';
+			$strWarning .= Loc::getMessage('CAT_YANDEX_CUSTOM_AGENT_FILE_NOT_FOUND').'<br />';
 			$strYandexAgent = '';
 		}
 	}
@@ -1175,11 +1175,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && !empty($_POST['agent_start']) && !$b
 	if ($intCount > 0)
 	{
 		CAgent::AddAgent('CCatalog::PreGenerateXML("yandex");', 'catalog', 'N', (int)Option::get('catalog', 'yandex_xml_period') * 3600);
-		$strOK .= Loc::getMessage('CAT_AGENT_ADD_SUCCESS').'. ';
+		$strOK .= Loc::getMessage('CAT_YANDEX_AGENT_ADD_SUCCESS').'. ';
 	}
 	else
 	{
-		$strWarning .= Loc::getMessage('CAT_AGENT_ADD_NO_EXPORT').'. ';
+		$strWarning .= Loc::getMessage('CAT_YANDEX_AGENT_ADD_NO_EXPORT').'. ';
 	}
 }
 
@@ -1607,7 +1607,7 @@ for ($i = 0, $intCount = count($arAllOptions); $i < $intCount; $i++)
 		)
 	);
 	?>
-	<?echo Loc::getMessage("CAT_AGENT_FILE")?></td>
+	<?echo Loc::getMessage("CAT_YANDEX_CUSTOM_AGENT_FILE")?></td>
 	<td width="60%"><input type="text" name="yandex_agent_file" size="50" maxlength="255" value="<?echo $yandex_agent_file?>">&nbsp;<input type="button" name="browse" value="..." onClick="BtnClick()"></td>
 </tr>
 <tr class="heading">
@@ -1910,7 +1910,7 @@ function change_offers_ibtype(obj,ID)
 		{
 			?><td><?=Loc::getMessage("CO_SALE_CONTENT") ?></td><?
 		}
-		?><td><?=Loc::getMessage("CAT_IBLOCK_SELECT_YAND")?></td>
+		?><td><?=Loc::getMessage("CAT_IBLOCK_SELECT_YANDEX_EXPORT")?></td>
 		<td><?=Loc::getMessage("CAT_IBLOCK_SELECT_VAT")?></td>
 	</tr>
 	<?
@@ -2055,9 +2055,9 @@ unset($catalogData);
 $aTabs = [];
 $aTabs[] = [
 	"DIV" => "fedit2",
-	"TAB" => Loc::getMessage("COP_TAB2_AGENT"),
+	"TAB" => Loc::getMessage("COP_TAB2_YANDEX_AGENT"),
 	"ICON" => "catalog_settings",
-	"TITLE" => Loc::getMessage("COP_TAB2_AGENT_TITLE")
+	"TITLE" => Loc::getMessage("COP_TAB2_YANDEX_AGENT_TITLE")
 ];
 if (!$useSaleDiscountOnly || $catalogCount > 0)
 {

@@ -231,7 +231,7 @@ if (!class_exists("CDavExchangeCalendar"))
 			return $arResultItemsList;
 		}
 
-		public function Update($id, $arFields)
+		public function Update($id, $arFields, $params = null)
 		{
 			$this->ClearErrors();
 
@@ -239,6 +239,12 @@ if (!class_exists("CDavExchangeCalendar"))
 			$request->AddHeader("Content-Type", "text/xml; charset=utf-8");
 			$request->AddHeader("SOAPAction", "http://schemas.microsoft.com/exchange/services/2006/messages/UpdateItem");
 			$request->AddHeader("Connection", "Keep-Alive");
+
+//			if ($params['editInstance'])
+//			{
+//				$id['XML_ID'] = $params['instanceExchangeId'];
+//				$id['MODIFICATION_LABEL'] = $params['changeKey'];
+//			}
 
 			$arFieldsNew = $this->FormatFieldsArray($arFields);
 			$request->CreateUpdateItemBody($id, $arFieldsNew);
@@ -284,6 +290,90 @@ if (!class_exists("CDavExchangeCalendar"))
 			}
 
 			return $arResultItemsList;
+		}
+
+		public function FindInstance($params)
+		{
+			$this->ClearErrors();
+
+			$request = $this->CreateSOAPRequest("POST", $this->GetPath());
+			$request->AddHeader("Content-Type", "text/xml; charset=utf-8");
+			$request->AddHeader("SOAPAction", "http://schemas.microsoft.com/exchange/services/2006/messages/UpdateItem");
+			$request->AddHeader("Connection", "Keep-Alive");
+
+
+			$arParentFolderId = [
+				'id' => 'calendar',
+				'changekey' => $params['changekey']
+			];
+
+			$startDate = CCalendar::GetOriginalDate($params['parentDateFrom'], $params['dateFrom'], $params['parentTz'], true);
+			$endDate = CCalendar::GetOriginalDate($params['parentDateTo'], $params['dateTo'], $params['parentTz'], true);
+			$utcTz = new \DateTimeZone("UTC");
+
+			$arItem = array(
+				"type" => "CalendarView",
+				"properties" => array(
+					"StartDate" => $startDate->setTimeZone($utcTz)->format('Y-m-d\TH:i:s\Z'),
+					"EndDate" => $endDate->setTimeZone($utcTz)->format('Y-m-d\TH:i:s\Z'),
+					"MaxEntriesReturned" => 1
+				)
+			);
+
+			$request->CreateFindItemBody($arParentFolderId, $arItem);
+
+			$this->Connect();
+			$response = $this->Send($request);
+
+			$this->Disconnect();
+
+			if (is_null($response))
+				return null;
+
+			if ($this->ParseError($response))
+				return null;
+
+			$arResultItemsList = array();
+			$xmlDoc = $response->GetBodyXml();
+
+			$arResponseMessage = $xmlDoc->GetPath("/Envelope/Body/FindItemResponse/ResponseMessages/FindItemResponseMessage");
+			foreach ($arResponseMessage as $responseMessage)
+			{
+				$arResponseCode = $responseMessage->GetPath("FindItemResponseMessage/ResponseCode");
+				$responseCode = null;
+				if (count($arResponseCode) > 0)
+					$responseCode = $arResponseCode[0]->GetContent();
+
+				$responseClass = $responseMessage->GetAttribute("ResponseClass");
+
+				if ((!is_null($responseClass) && ($responseClass != "Success")) || (!is_null($responseCode) && ($responseCode != "NoError")))
+				{
+					$arMessageText = $responseMessage->GetPath("FindItemResponseMessage/MessageText");
+					$messageText = "Error";
+					if (count($arMessageText) > 0)
+						$messageText = $arMessageText[0]->GetContent();
+
+					$this->AddError(!is_null($responseCode) ? $this->Encode($responseCode) : $this->Encode($responseClass), $this->Encode($messageText));
+					continue;
+				}
+
+				$rootFolder = $responseMessage->GetPath("FindItemResponseMessage/RootFolder");
+
+				if ($rootFolder[0]->GetAttribute("TotalItemsInView") == 1)
+				{
+					$itemId = $rootFolder[0]->GetPath("Items/CalendarItem/ItemId");
+					$id = $itemId[0]->GetAttribute("Id");
+					$changekey = $itemId[0]->GetAttribute("ChangeKey");
+					$arCalendarItem = $responseMessage->GetPath("FindItemResponseMessage/RootFolder/Items/CalendarItem");
+
+					foreach ($arCalendarItem as $calendarItem)
+					{
+						$arResultItemsList = $this->ConvertCalendarToArray($calendarItem);
+					}
+				}
+			}
+
+			return [$id, $changekey];
 		}
 
 		public function Delete($id)
@@ -690,14 +780,14 @@ if (!class_exists("CDavExchangeCalendar"))
 						$arFields["RECURRING_DAYSOFWEEK"] = implode(" ", $ar1);
 					}
 
-					$arFields["RECURRING_STARTDATE"] = ConvertTimeStamp($arFields["DATE_FROM_TS_UTC"], SHORT);
+					$arFields["RECURRING_STARTDATE"] = ConvertTimeStamp($arFields["DATE_FROM_TS_UTC"], "SHORT");
 					if ($rrule["COUNT"])
 					{
 						$arFields["RECURRING_NUMBEROFOCCURRENCES"] = $rrule["COUNT"];
 					}
 					else
 					{
-						$arFields["RECURRING_ENDDATE"] = ConvertTimeStamp($arFields["DATE_TO_TS_UTC"], SHORT);
+						$arFields["RECURRING_ENDDATE"] = ConvertTimeStamp($arFields["DATE_TO_TS_UTC"], "SHORT");
 					}
 				}
 				else
@@ -727,8 +817,8 @@ if (!class_exists("CDavExchangeCalendar"))
 						$arFields["RECURRING_DAYSOFWEEK"] = implode(" ", $ar1);
 					}
 
-					$arFields["RECURRING_STARTDATE"] = ConvertTimeStamp(MakeTimeStamp($arFields["ACTIVE_FROM"]), SHORT);
-					$arFields["RECURRING_ENDDATE"] = ConvertTimeStamp(MakeTimeStamp($arFields["ACTIVE_TO"]), SHORT);
+					$arFields["RECURRING_STARTDATE"] = ConvertTimeStamp(MakeTimeStamp($arFields["ACTIVE_FROM"]), "SHORT");
+					$arFields["RECURRING_ENDDATE"] = ConvertTimeStamp(MakeTimeStamp($arFields["ACTIVE_TO"]), "SHORT");
 				}
 				else
 				{
@@ -1266,7 +1356,7 @@ if (!class_exists("CDavExchangeCalendar"))
 				if (DAV_EXCH_DEBUG)
 					CDav::WriteToLog("Processing user [".$arUser["ID"]."] ".$arUser["LOGIN"], "SYNCE");
 
-				$GLOBALS["USER_FIELD_MANAGER"]->Update("USER", $arUser["ID"], array("UF_BXDAVEX_CALSYNC" => ConvertTimeStamp(time(), FULL)));
+				$GLOBALS["USER_FIELD_MANAGER"]->Update("USER", $arUser["ID"], array("UF_BXDAVEX_CALSYNC" => ConvertTimeStamp(time(), "FULL")));
 
 				$mailbox = (($exchangeUseLogin == "Y") ? $arUser["LOGIN"].$exchangeMailbox : trim($arUser["UF_BXDAVEX_MAILBOX"]));
 				if (empty($mailbox))
@@ -1527,7 +1617,7 @@ if (!class_exists("CDavExchangeCalendar"))
 				// sync for these users as soon as possible
 				foreach($usersToSync as $userId)
 				{
-					$GLOBALS["USER_FIELD_MANAGER"]->Update("USER", $userId, array("UF_BXDAVEX_CALSYNC" => ConvertTimeStamp(time() - 86400, FULL)));
+					$GLOBALS["USER_FIELD_MANAGER"]->Update("USER", $userId, array("UF_BXDAVEX_CALSYNC" => ConvertTimeStamp(time() - 86400, "FULL")));
 				}
 			}
 
@@ -1595,7 +1685,7 @@ if (!class_exists("CDavExchangeCalendar"))
 			return $exchange->GetErrors();
 		}
 
-		public static function DoUpdateItem($userId, $itemXmlId, $itemModificationLabel, $arFields)
+		public static function DoUpdateItem($userId, $itemXmlId, $itemModificationLabel, $arFields, $params)
 		{
 			if (DAV_EXCH_DEBUG)
 				CDav::WriteToLog("EXCHANGE DoUpdateItem called for user ".$userId, "MDFE");
@@ -1631,9 +1721,27 @@ if (!class_exists("CDavExchangeCalendar"))
 				$mailbox = (($exchangeUseLogin == "Y") ? $arUser["LOGIN"].$exchangeMailbox : $arUser["UF_BXDAVEX_MAILBOX"]);
 				if (!empty($mailbox))
 				{
+					if ($params['editInstance'])
+					{
+						list($itemXmlId, $itemModificationLabel) = $exchange->FindInstance([
+							'parentExchangeId' => $params['originalDavXmlId'],
+							'changekey' => $arFields['DAV_EXCH_LABEL'],
+							'parentDateFrom' => $params['parentDateFrom'],
+							'parentDateTo' => $params['parentDateTo'],
+							'dateFrom' => $arFields['DATE_FROM'],
+							'dateTo' => $arFields['DATE_TO'],
+							'parentTz' => $params['instanceTz']
+						]);
+					}
+
 					$arResult = $exchange->Update(
 						array("XML_ID" => $itemXmlId, "MODIFICATION_LABEL" => $itemModificationLabel),
-						$arFields
+						$arFields,
+						[
+							'editInstance' => $params['editInstance'],
+//							'instanceExchangeId' => $itemId['id'],
+//							'changeKey' => $itemId['changekey'],
+						]
 					);
 
 					if (is_array($arResult) && (count($arResult) > 0))

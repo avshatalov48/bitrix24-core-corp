@@ -204,7 +204,12 @@
 			value = this.textOnly ? escapeHtml(value) : value;
 			this.input.innerHTML = value.toString().trim();
 			this.onValueChangeHandler(this);
-			fireCustomEvent(this, "BX.Landing.UI.Field:change", [this.getValue()]);
+
+			var event = new BX.Event.BaseEvent({
+				data: {value: this.getValue()},
+				compatData: [this.getValue()],
+			});
+			this.emit('change', event);
 		},
 
 		enable: function()

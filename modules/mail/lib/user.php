@@ -291,7 +291,12 @@ class User
 			return false;
 		}
 
-		$attachments = array_filter(array_column((array) $message['files'], 'tmp_name'));
+		$attachments = array_filter(
+			array_combine(
+				array_keys((array) $message['files']),
+				array_column((array) $message['files'], 'tmp_name')
+			)
+		);
 
 		$addResult = User\MessageTable::add(array(
 			'TYPE' => $type,

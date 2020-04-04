@@ -28,7 +28,14 @@ class Syspage
 	 */
 	public static function set($id, $type, $lid = false)
 	{
+		if (!is_string($type))
+		{
+			return;
+		}
+
+		$id = intval($id);
 		$type = trim($type);
+
 		if (!in_array($type, self::$allowedTypes))
 		{
 			return;
@@ -57,7 +64,7 @@ class Syspage
 			else
 			{
 				SyspageTable::update($row['ID'], array(
-					'LANDING_ID' => $lid
+					'LANDING_ID' => (int)$lid
 				));
 			}
 		}
@@ -76,7 +83,7 @@ class Syspage
 				SyspageTable::add(array(
 					'SITE_ID' => $id,
 					'TYPE' => $type,
-					'LANDING_ID' => $lid
+					'LANDING_ID' => (int)$lid
 				));
 			}
 		}
@@ -84,13 +91,14 @@ class Syspage
 
 	/**
 	 * Get pages for site.
-	 * @param integer $id Site id.
+	 * @param int $id Site id.
 	 * @param bool $active Only active items.
 	 * @return array
 	 */
 	public static function get($id, $active = false)
 	{
 		static $types = array();
+		$id = intval($id);
 
 		// check items for un active elements
 		$removeHidden = function(array $items) use($active)
@@ -148,11 +156,12 @@ class Syspage
 
 	/**
 	 * Delete all sys pages by site id.
-	 * @param integer $id Site id.
+	 * @param int $id Site id.
 	 * @return void
 	 */
 	public static function deleteForSite($id)
 	{
+		$id = intval($id);
 		$res = SyspageTable::getList(array(
 			'filter' => array(
 				'SITE_ID' => $id
@@ -166,11 +175,12 @@ class Syspage
 
 	/**
 	 * Delete all sys pages by id.
-	 * @param integer $id Landing id.
+	 * @param int $id Landing id.
 	 * @return void
 	 */
 	public static function deleteForLanding($id)
 	{
+		$id = intval($id);
 		$res = SyspageTable::getList(array(
 			'filter' => array(
 				'LANDING_ID' => $id
@@ -194,6 +204,11 @@ class Syspage
 	{
 		$url = '';
 		$siteId = (int)$siteId;
+
+		if (!is_string($type))
+		{
+			return $url;
+		}
 
 		$res = SyspageTable::getList([
 			'select' => [

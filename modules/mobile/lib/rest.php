@@ -17,7 +17,8 @@ class Rest extends \IRestService
 			"Bitrix\Mobile\Rest\Config",
 			"Bitrix\Mobile\Rest\Forms",
 			"Bitrix\Mobile\Rest\Disk",
-			"Bitrix\Mobile\Rest\Settings"
+			"Bitrix\Mobile\Rest\Settings",
+			"Bitrix\Mobile\Rest\Intranet"
 		];
 
 		array_walk($restClasses, function ($restClass) use (&$methods) {

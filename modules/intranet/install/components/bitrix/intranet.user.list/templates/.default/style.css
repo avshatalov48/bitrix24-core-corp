@@ -42,3 +42,7 @@
 .intranet-user-list-full-name-extranet .main-grid-cell-content a {
 	color: #d9930a!important;
 }
+
+.intranet-user-list-full-name-extranet.intranet-user-list-full-name-visitor .main-grid-cell-content a {
+	color: rgba(150,150,150,1)!important;
+}

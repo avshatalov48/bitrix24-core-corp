@@ -613,13 +613,18 @@ export default class Manager
 			})
 			.subscribe('Column:sort', (event) => {
 				const sortData = event.data.columns.map((column, index) => {
-					return {
+					const newSorting = (index + 1) * 100;
+					const columnData = {
 						statusId: column.getId(),
 						stageId: column.data.stageId,
 						entityId: column.data.entityId,
 						name: column.getName(),
-						sort: (index + 1) * 100,
+						sort: newSorting,
 					};
+
+					column.data.stage.SORT = newSorting;
+
+					return columnData;
 				});
 
 				Backend

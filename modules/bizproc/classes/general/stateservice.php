@@ -1,7 +1,7 @@
 <?
 include_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/bizproc/classes/general/runtimeservice.php");
 
-use Bitrix\Bizproc\WorkflowStateTable;
+use Bitrix\Bizproc\Workflow\Entity\WorkflowStateTable;
 use Bitrix\Main;
 
 class CBPAllStateService

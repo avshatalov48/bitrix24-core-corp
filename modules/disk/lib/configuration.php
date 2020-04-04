@@ -155,11 +155,10 @@ final class Configuration
 	 */
 	public static function getMaxFileSizeForIndex()
 	{
-		return Option::get(
-			Driver::INTERNAL_MODULE_ID,
-			'disk_max_file_size_for_index',
-			1024
-		) * 1024 * 1024;
+		$maxIntranetFileSize = (int)Option::get("search", "max_file_size", 0);
+		$maxDiskFileSize = (int)Option::get(Driver::INTERNAL_MODULE_ID, 'disk_max_file_size_for_index', 1024);
+
+		return min($maxIntranetFileSize * 1024, $maxDiskFileSize * 1024 * 1024);
 	}
 
 	/**

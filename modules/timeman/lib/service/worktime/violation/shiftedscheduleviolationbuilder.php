@@ -2,14 +2,39 @@
 namespace Bitrix\Timeman\Service\Worktime\Violation;
 
 
-use Bitrix\Main\Error;
 use Bitrix\Timeman\Model\Schedule\Shift\Shift;
-use Bitrix\Timeman\Model\Schedule\ShiftPlan\ShiftPlanTable;
 use Bitrix\Timeman\Model\Schedule\Violation\ViolationRules;
+use Bitrix\Timeman\Provider\Schedule\ScheduleProvider;
+use Bitrix\Timeman\Repository\AbsenceRepository;
+use Bitrix\Timeman\Repository\Schedule\CalendarRepository;
+use Bitrix\Timeman\Repository\Schedule\ShiftPlanRepository;
+use Bitrix\Timeman\Repository\Schedule\ShiftRepository;
+use Bitrix\Timeman\Repository\Worktime\WorktimeRepository;
 
 class ShiftedScheduleViolationBuilder extends WorktimeViolationBuilder
 {
-	private $plans;
+	/** @var ShiftPlanRepository */
+	private $shiftPlanRepository;
+	/** @var WorktimeRepository */
+	private $worktimeRepository;
+	/** @var ShiftRepository */
+	private $shiftRepository;
+
+	public function __construct(
+		WorktimeViolationParams $params,
+		CalendarRepository $calendarRepository,
+		ScheduleProvider $scheduleProvider,
+		AbsenceRepository $absenceRepository,
+		WorktimeRepository $worktimeRepository,
+		ShiftPlanRepository $shiftPlanRepository,
+		ShiftRepository $shiftRepository
+	)
+	{
+		parent::__construct($params, $calendarRepository, $scheduleProvider, $absenceRepository);
+		$this->worktimeRepository = $worktimeRepository;
+		$this->shiftPlanRepository = $shiftPlanRepository;
+		$this->shiftRepository = $shiftRepository;
+	}
 
 	/**
 	 * @param Shift $shift
@@ -17,44 +42,32 @@ class ShiftedScheduleViolationBuilder extends WorktimeViolationBuilder
 	 * @param $dateFormatted
 	 * @return WorktimeViolationBuilder|mixed
 	 */
-	public function buildMissedShiftViolation($shift, $userId, $dateFormatted)
+	public function buildMissedShiftViolation()
 	{
 		$result = new WorktimeViolationResult();
-		if (!$shift->obtainSchedule())
+
+		$schedule = $this->getSchedule();
+		$shiftPlan = $this->getShiftPlan();
+		$shift = $this->getShift();
+		if (!$shiftPlan || !$shift || !$schedule || $this->getRecord())
 		{
 			return $result;
 		}
-		if (!$shift->obtainSchedule()->obtainScheduleViolationRules()->isMissedShiftsControlEnabled())
+		$userWasAbsent = $this->isUserWasAbsent($shiftPlan->getUserId(), $shift->buildUtcStartByShiftplan($shiftPlan));
+		if ($userWasAbsent)
 		{
-			return $result->addError(new Error('', WorktimeViolationResult::ERROR_CODE_VIOLATION_NOT_UNDER_CONTROL));
+			return $result;
+		}
+		if ($this->getViolationRules()->isMissedShiftsControlEnabled())
+		{
+			$violation = $this->createViolation(WorktimeViolation::TYPE_MISSED_SHIFT);
+			$result->addViolation($violation);
 		}
 
-		$shiftPlan = $this->shiftPlanRepository
-			->findByComplexId(
-				$shift->getId(),
-				$userId,
-				\Bitrix\Main\Type\Date::createFromPhp(\DateTime::createFromFormat(ShiftPlanTable::DATE_FORMAT, $dateFormatted))
-			);
-		if (!$shiftPlan)
-		{
-			return $result->addError(new Error('', WorktimeViolationResult::ERROR_CODE_SHIFT_PLAN_NOT_FOUND));
-		}
-
-		$userWasAbsent = $this->isUserWasAbsent($userId, \DateTime::createFromFormat(ShiftPlanTable::DATE_FORMAT, $dateFormatted));
-
-		$workedRecord = $this->worktimeRepository
-			->findRecordByUserShiftDate($userId, $shift->getId(), $dateFormatted);
-		if ($workedRecord || $userWasAbsent)
-		{
-			return $result->addError(new Error('', WorktimeViolationResult::ERROR_CODE_NO_VIOLATION));
-		}
-
-		$violation = $this->createViolation(WorktimeViolation::TYPE_MISSED_SHIFT);
 		return $result
 			->setShift($shift)
 			->setShiftPlan($shiftPlan)
-			->setSchedule($shift->obtainSchedule())
-			->addViolation($violation);
+			->setSchedule($shift->obtainSchedule());
 	}
 
 	protected function buildStartViolations()
@@ -65,56 +78,26 @@ class ShiftedScheduleViolationBuilder extends WorktimeViolationBuilder
 			return [];
 		}
 		$record = $this->getRecord();
-		$recordedStartSeconds = $this->getTimeHelper()->convertUtcTimestampToDaySeconds(
-			$record['RECORDED_START_TIMESTAMP'],
-			$record['START_OFFSET']
-		);
+		$recordedStartSeconds = $this->getTimeHelper()->getSecondsFromDateTime($record->buildRecordedStartDateTime());
 		$violations = [];
-		if (ViolationRules::isViolationConfigured($this->getViolationRules()['MAX_SHIFT_START_DELAY']))
+		$offset = $this->getViolationRules()['MAX_SHIFT_START_DELAY'];
+		if (ViolationRules::isViolationConfigured($offset))
 		{
-			if (($recordedStartSeconds - $shift['WORK_TIME_START']) > $this->getViolationRules()['MAX_SHIFT_START_DELAY'])
+			if (($recordedStartSeconds - $shift->getWorkTimeStart()) > $offset)
 			{
 				$violations[] = $this->createViolation(
 					WorktimeViolation::TYPE_SHIFT_LATE_START,
-					$recordedStartSeconds,
-					$recordedStartSeconds - $shift['WORK_TIME_START']
+					$record->getRecordedStartTimestamp(),
+					$recordedStartSeconds - $shift->getWorkTimeStart() - $offset
 				);
 			}
 		}
 		return $violations;
 	}
 
-	protected function getShiftPlans()
-	{
-		if (!$this->getShift())
-		{
-			return [];
-		}
-		if ($this->plans === null)
-		{
-			$this->plans = parent::getShiftPlans();
-			if ($this->plans === null)
-			{
-				$this->plans = $this->shiftPlanRepository
-					->findByScheduleShiftsUsersDates(
-						$this->getSchedule()['ID'],
-						[$this->getShift()['ID']],
-						$this->getRecord()['USER_ID'],
-						$this->getRecordStartDateTime()
-					);
-			}
-		}
-
-		return $this->plans;
-	}
-
 	protected function isWorkingByShiftPlan()
 	{
-		return isset($this->getShiftPlans()
-			[$this->getRecordStartDateTime()->format('Y-m-d')]
-			[$this->getRecord()['USER_ID']]
-			[$this->getRecord()['SHIFT_ID']]
-		);
+		return $this->getShiftPlan() !== null;
 	}
 
 	protected function skipViolationsCheck()

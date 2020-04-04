@@ -4,6 +4,7 @@ namespace Bitrix\Landing\Update\Landing;
 use \Bitrix\Landing\Internals\LandingTable;
 use \Bitrix\Landing\Internals\BlockTable;
 use \Bitrix\Landing\Demos;
+use \Bitrix\Landing\Repo;
 use \Bitrix\Main\Update\Stepper;
 use \Bitrix\Main\Config\Option;
 
@@ -24,6 +25,8 @@ class InitApp extends Stepper
 	public function execute(array &$result)
 	{
 		$lastId = Option::get('landing', 'update_landing_app', 0);
+		$blocksRepo = Repo::getRepository();
+		\Bitrix\Landing\Rights::setGlobalOff();
 
 		$finished = true;
 		if (!isset($result['steps']))
@@ -49,9 +52,6 @@ class InitApp extends Stepper
 			'select' => [
 				'CNT'
 			],
-			'filter' => [
-				'=TPL_CODE' => array_keys($demos)
-			],
 			'runtime' => [
 				new \Bitrix\Main\Entity\ExpressionField('CNT', 'COUNT(*)')
 			]
@@ -69,8 +69,7 @@ class InitApp extends Stepper
 				'ID', 'TPL_CODE'
 			),
 			'filter' => array(
-				'>ID' => $lastId,
-				'=TPL_CODE' => array_keys($demos)
+				'>ID' => $lastId
 			),
 			'order' => array(
 				'ID' => 'ASC'
@@ -81,12 +80,14 @@ class InitApp extends Stepper
 		{
 			$lastId = $row['ID'];
 			$result['steps']++;
-			$appCode = $row['TPL_CODE'];
+			$appCode = isset($demos[$row['TPL_CODE']]['APP_CODE'])
+						? $demos[$row['TPL_CODE']]['APP_CODE']
+						: null;
 
 			// mark with this app all available blocks in current page
 			$resBlock = BlockTable::getList([
 				'select' => [
-					'ID'
+					'ID', 'CODE'
 				],
 				'filter' => [
 					'LID' => $row['ID'],
@@ -95,8 +96,15 @@ class InitApp extends Stepper
 			]);
 			while ($rowBlock = $resBlock->fetch())
 			{
+				$appCodeBlock = isset($blocksRepo[$rowBlock['CODE']])
+								? $blocksRepo[$rowBlock['CODE']]['app_code']
+								: null;
+				if ($appCodeBlock != $appCode)
+				{
+					$appCodeBlock = null;
+				}
 				$resTmp = BlockTable::update($rowBlock['ID'], [
-					'INITIATOR_APP_CODE' =>  $appCode
+					'INITIATOR_APP_CODE' =>  $appCodeBlock
 				]);
 				$resTmp->isSuccess();
 			}
@@ -111,6 +119,8 @@ class InitApp extends Stepper
 			$finished = false;
 		}
 		unset($res, $row);
+
+		\Bitrix\Landing\Rights::setGlobalOn();
 
 		// set next step or finish work
 		if (!$finished)

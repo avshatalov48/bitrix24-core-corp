@@ -894,7 +894,7 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 	{
 		/** @var \Bitrix\Disk\File|\Bitrix\Disk\Folder $object */
 		$object = BaseObject::loadById((int)$objectId, array('STORAGE'));
-		if(!$object)
+		if(!$object || !$object->getRealObject())
 		{
 			$this->errorCollection[] = new Error(Loc::getMessage('DISK_FOLDER_LIST_ERROR_COULD_NOT_FIND_OBJECT'), self::ERROR_COULD_NOT_FIND_OBJECT);
 			$this->sendJsonErrorResponse();

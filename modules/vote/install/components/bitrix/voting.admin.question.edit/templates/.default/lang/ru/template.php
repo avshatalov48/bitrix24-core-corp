@@ -47,4 +47,5 @@ $MESS["VOTE_GRID_BUTTON_ADD_TEXT"] = "+ \"Другое...\"";
 $MESS["VOTE_ANSWER_PLACEHOLDER"] = "Текст ответа";
 $MESS["VOTE_ANSWER_PLACEHOLDER1"] = "Подпись к ответу";
 $MESS["VOTE_ANSWER_TEXT_OTHER"] = "Другое...";
+$MESS["VOTE_IMAGE_ID"] = "Картинка";
 ?>

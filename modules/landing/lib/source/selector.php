@@ -25,6 +25,7 @@ class Selector
 
 	/* selector type */
 	const SOURCE_TYPE_COMPONENT = 'C'; // component selector
+	const SOURCE_TYPE_PRESET = 'P'; // without selector - fixed preset
 
 	/* transfer type source filter after selecting items to display */
 	const ACTION_TYPE_EVENT = 'event';	// use javascript event directly
@@ -117,6 +118,17 @@ class Selector
 			}
 			unset($source, $row, $list, $module);
 			unset($eventResult, $resultList);
+
+			if (!empty($this->sourceList))
+			{
+				Main\Type\Collection::sortByColumn(
+					$this->sourceList,
+					['TYPE' => SORT_ASC, 'TITLE' => SORT_ASC],
+					'',
+					null,
+					true
+				);
+			}
 		}
 		unset($event);
 	}
@@ -151,18 +163,29 @@ class Selector
 		$uri = new Main\Web\Uri($this->config['SOURCE_PATH']);
 		foreach ($this->sourceList as $source)
 		{
+			$systemSettings = [
+				'detailPage' => $source['SYSTEM_SETTINGS']['DETAIL_PAGE']
+			];
+
 			$uri->addParams($this->getBaseUrlParams($source['INDEX']));
 			$row = [
 				'id' => $source['INDEX'],
 				'name' => $source['TITLE'],
-				'url' => [
-					'filter' => $uri->getUri(),
-					'create' => ''
-				],
 				'sort' => $source['DATA_SETTINGS']['ORDER'],
-				'references' => $source['DATA_SETTINGS']['FIELDS']
+				'references' => $source['DATA_SETTINGS']['FIELDS'],
+				'settings' => $systemSettings
 			];
-
+			switch ($source['TYPE'])
+			{
+				case self::SOURCE_TYPE_COMPONENT:
+					$row['url'] = [
+						'filter' => $uri->getUri()
+					];
+					break;
+				case self::SOURCE_TYPE_PRESET:
+					$row['filter'] = $source['SETTINGS']['FILTER'];
+					break;
+			}
 			$result[$source['INDEX']] = $row;
 		}
 		unset($row, $source);
@@ -564,7 +587,7 @@ class Selector
 
 		$index = self::getSourceIndex($module, $parameters['SOURCE_ID']);
 		$prepared = [];
-		if (!preg_match('/^[a-z][a-z\.]+:[A-Za-z][A-Za-z0-9]*$/', $index, $prepared))
+		if (!preg_match('/^[a-z][a-z.]+:[A-Za-z][A-Za-z0-9]*$/', $index, $prepared))
 		{
 			return null;
 		}
@@ -581,7 +604,10 @@ class Selector
 			$parameters['TYPE'] = self::SOURCE_TYPE_COMPONENT;
 		}
 		$parameters['TYPE'] = (string)$parameters['TYPE'];
-		if ($parameters['TYPE'] !== self::SOURCE_TYPE_COMPONENT)
+		if (
+			$parameters['TYPE'] !== self::SOURCE_TYPE_COMPONENT
+			&& $parameters['TYPE'] !== self::SOURCE_TYPE_PRESET
+		)
 		{
 			return null;
 		}
@@ -592,6 +618,9 @@ class Selector
 		{
 			return null;
 		}
+
+		$result['SYSTEM_SETTINGS'] = $this->checkSystemSettings($parameters['SETTINGS']);
+
 		$result['SETTINGS'] = [];
 
 		$settings = null;
@@ -599,6 +628,9 @@ class Selector
 		{
 			case self::SOURCE_TYPE_COMPONENT:
 				$settings = $this->checkComponentSettings($parameters['SETTINGS']);
+				break;
+			case self::SOURCE_TYPE_PRESET:
+				$settings = $this->checkPresetSettings($parameters['SETTINGS']);
 				break;
 		}
 		if ($settings === null)
@@ -641,6 +673,26 @@ class Selector
 	}
 
 	/**
+	 * Check common settings.
+	 *
+	 * @param array $settings
+	 * @return array
+	 */
+	protected function checkSystemSettings(array $settings)
+	{
+		$result = [
+			'DETAIL_PAGE' => true
+		];
+
+		if (isset($settings['DETAIL_PAGE']) && is_bool($settings['DETAIL_PAGE']))
+		{
+			$result['DETAIL_PAGE'] = $settings['DETAIL_PAGE'];
+		}
+
+		return $result;
+	}
+
+	/**
 	 * Check settings for component filter.
 	 *
 	 * @param array $settings
@@ -648,10 +700,6 @@ class Selector
 	 */
 	protected function checkComponentSettings(array $settings)
 	{
-		if (empty($settings))
-		{
-			return null;
-		}
 		if (!isset($settings['COMPONENT_NAME']))
 		{
 			return null;
@@ -684,6 +732,30 @@ class Selector
 				'WRAPPER' => true
 			]
 		);
+	}
+
+	/**
+	 * Check fixed block filter.
+	 *
+	 * @param array $settings
+	 * @return array|null
+	 */
+	protected function checkPresetSettings(array $settings)
+	{
+		if (empty($settings['FILTER']) || !is_array($settings['FILTER']))
+		{
+			return null;
+		}
+
+		$preset = array_filter($settings['FILTER'], ['\Bitrix\Landing\Source\BlockFilter', 'checkPreparedRow']);
+		if (empty($preset))
+		{
+			return null;
+		}
+
+		return [
+			'FILTER' => $preset
+		];
 	}
 
 	/**
@@ -841,6 +913,12 @@ class Selector
 		{
 			$result['template'] = SITE_TEMPLATE_ID;
 		}
+		$request = Main\Context::getCurrent()->getRequest();
+		if ($request->isAdminSection())
+		{
+			$request['admin_section'] = 'Y';
+		}
+		unset($request);
 		return $result;
 	}
 

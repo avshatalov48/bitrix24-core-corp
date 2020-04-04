@@ -1,12 +1,12 @@
-<section class="g-pt-90 g-pb-0">
+<section class="g-pt-90 g-pb-30">
 	<div class="container">
 		<div class="row">
-			<div class="col-lg-5 text-center g-overflow-hidden align-self-end">
+			<div class="landing-block-node-img-container col-lg-5 text-center g-overflow-hidden align-self-end">
 				<img class="landing-block-node-img js-animation slideInUp img-fluid" src="https://cdn.bitrix24.site/bitrix/images/landing/business/mockups/mockup3.png"
 					 alt="">
 			</div>
 
-			<div class="landing-block-node-text-container col-lg-7 g-mb-30 d-flex">
+			<div class="col-lg-7 d-flex">
 				<div>
 					<div class="text-uppercase g-line-height-1_3 g-mb-20">
 						<h4 class="landing-block-node-subtitle g-font-weight-700 g-font-size-11 g-mb-15">
@@ -110,8 +110,6 @@
 					</div>
 				</div>
 			</div>
-
-
 		</div>
 	</div>
 </section>

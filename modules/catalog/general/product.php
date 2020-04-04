@@ -2546,6 +2546,8 @@ class CAllCatalogProduct
 	{
 		$possibleSalePrice = null;
 
+		$registry = Sale\Registry::getInstance(Sale\Registry::REGISTRY_TYPE_ORDER);
+
 		if (empty($priceData))
 			return $possibleSalePrice;
 
@@ -2572,7 +2574,10 @@ class CAllCatalogProduct
 		}
 		if ($basket === null)
 		{
-			$basket = Sale\Basket::create($siteID);
+			/** @var Sale\Basket $basketClassName */
+			$basketClassName = $registry->getBasketClassName();
+
+			$basket = $basketClassName::create($siteID);
 			$basketItem = $basket->createItem('catalog', $intProductID);
 		}
 

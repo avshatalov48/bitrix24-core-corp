@@ -6,6 +6,7 @@ use Bitrix\Disk;
 use Bitrix\Disk\Driver;
 use Bitrix\Disk\Internals\Engine;
 use Bitrix\Disk\Internals\Error\Error;
+use Bitrix\Disk\Security\ParameterSigner;
 use Bitrix\Disk\TypeFile;
 use Bitrix\Main;
 use Bitrix\Main\Application;
@@ -84,6 +85,16 @@ class File extends BaseObject
 		if ($file->getPreviewId())
 		{
 			$data['file']['extra']['previewUri'] = $this->getActionUri('showPreview', ['fileId' => $file->getId(),]);
+		}
+
+		if (TypeFile::isImage($file))
+		{
+			$data['file']['extra']['imagePreviewUri'] = $this->getActionUri('showImage', [
+				'fileId' => $file->getId(),
+				'signature' => ParameterSigner::getImageSignature($file->getId(), 400, 400),
+				'width' => 400,
+				'height' => 400,
+			]);
 		}
 
 		return $data;

@@ -4,8 +4,12 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use \Bitrix\Landing\Rights;
+
 IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/intranet/public_bitrix24/.superleft.menu_ext.php");
 CModule::IncludeModule("intranet");
+
+$bLandingIncluded = \Bitrix\Main\Loader::includeModule("landing");
 
 if (!function_exists("getLeftMenuItemLink"))
 {
@@ -62,26 +66,35 @@ $arMenu = array(
 	)
 );
 
-if (
-	\Bitrix\Main\Loader::includeModule("landing") &&
-	(
-		!is_callable(["\Bitrix\Landing\Rights", "hasAdditionalRight"]) ||
-		\Bitrix\Landing\Rights::hasAdditionalRight(
-			\Bitrix\Landing\Rights::ADDITIONAL_RIGHTS["menu24"]
-		)
-	)
-)
+if ($bLandingIncluded)
 {
-	$arMenu[] = array(
-		GetMessage("MENU_SITES"),
-		"/sites/",
-		array(),
-		array(
-			"menu_item_id" => "menu_sites",
-			"my_tools_section" => true
-		),
-		""
-	);
+	if (Rights::hasAdditionalRight(Rights::ADDITIONAL_RIGHTS["menu24"]))
+	{
+		$arMenu[] = array(
+			GetMessage("MENU_SITES"),
+			"/sites/",
+			array(),
+			array(
+				"menu_item_id" => "menu_sites",
+				"my_tools_section" => true
+			),
+			""
+		);
+	}
+	if (Rights::hasAdditionalRight(Rights::ADDITIONAL_RIGHTS["menu24"], "knowledge"))
+	{
+		$arMenu[] = array(
+			GetMessage("MENU_KNOWLEDGE"),
+			"/kb/",
+			array(),
+			array(
+				"menu_item_id" => "menu_knowledge",
+				"my_tools_section" => true,
+				"is_beta" => true,
+			),
+			""
+		);
+	}
 }
 
 $arMenu[] = array(
@@ -96,6 +109,7 @@ $arMenu[] = array(
 			"/company/personal/user/".$userId."/calendar/"
 		),
 		"menu_item_id" => "menu_calendar",
+		"sub_link" => SITE_DIR."company/personal/user/".$userId."/calendar/?EVENT_ID=NEW",
 		"counter_id" => "calendar",
 		"top_menu_id" => "top_menu_id_calendar",
 		"my_tools_section" => true,
@@ -286,6 +300,26 @@ $arMenu[] = array(
 	),
 	""
 );
+
+if(\Bitrix\Main\Loader::includeModule('rpa') && \Bitrix\Rpa\Driver::getInstance()->isEnabled())
+{
+	$arMenu[] = [
+		\Bitrix\Main\Localization\Loc::getMessage("MENU_RPA_SECTION"),
+		"/rpa/",
+		[],
+		[
+			"real_link" => getLeftMenuItemLink(
+				"top_menu_id_rpa",
+				"/rpa/"
+			),
+			"counter_id" => "rpa_tasks",
+			"menu_item_id" => "menu_rpa",
+			"top_menu_id" => "top_menu_id_rpa",
+			"is_beta" => true,
+		],
+		""
+	];
+}
 
 if (CModule::IncludeModule("bizproc") && CBPRuntime::isFeatureEnabled())
 {

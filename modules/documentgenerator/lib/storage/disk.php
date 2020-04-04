@@ -244,6 +244,10 @@ final class Disk extends BFile
 		{
 			$folder = static::getDiskStorage()->getRootObject();
 		}
+		if(!$folder)
+		{
+			return $result->addError(new Error('Could not find folder to save file.'));
+		}
 		$file = $folder->addFile($fileDescription, [], true);
 		if($file && $file->getId() > 0)
 		{

@@ -85,12 +85,14 @@ class CIntranetUserProfileSecurityComponent extends \CBitrixComponent
 				"ACTIVE" => isset($_GET["page"]) && $_GET["page"] === "socnet_email" ? true : false
 			);
 
-			if (!ModuleManager::isModuleInstalled("bitrix24") && ModuleManager::isModuleInstalled("socialservices") && false)
+			if (!ModuleManager::isModuleInstalled("bitrix24") && ModuleManager::isModuleInstalled("socialservices"))
 			{
+				$socservPageUrl = CComponentEngine::MakePathFromTemplate($this->arParams["PATH_TO_USER_SOCIAL_SERVICES"], array("user_id" => $this->arParams["USER_ID"]));
 				$menuItems["socserv"] = array(
 					"NAME"       => Loc::getMessage("INTRANET_USER_PROFILE_SOCSERV_TITLE"),
 					"ATTRIBUTES" => Array(
 						"data-role" => "socserv",
+						"data-url" => $socservPageUrl
 					),
 					"ACTIVE"     => isset($_GET["page"]) && $_GET["page"] === "socserv" ? true : false
 				);

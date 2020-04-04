@@ -25,7 +25,7 @@ class WorktimeViolation
 	const TYPE_SHIFT_LATE_START = 'SHIFT_LATE_START';
 
 	public $type;
-	public $recordedSeconds;
+	public $recordedTimeValue;
 	public $violatedSeconds;
 	public $userId;
 	/** @var ViolationRules */

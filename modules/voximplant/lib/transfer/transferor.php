@@ -26,13 +26,16 @@ class Transferor
 	{
 		$result = new Result();
 		$parentCall = Call::load($parentCallId);
-
 		if(!$parentCall)
 		{
 			return $result->addError(new Error('Parent call is not found'));
 		}
-
 		$parentConfig = $parentCall->getConfig();
+		if(!isset($parentConfig['ID']))
+		{
+			return $result->addError(new Error('Parent call has empty config'));
+		}
+		
 		if(is_array($parentConfig['FORWARD_LINE']))
 		{
 			$forwardConfig = $parentConfig['FORWARD_LINE'];

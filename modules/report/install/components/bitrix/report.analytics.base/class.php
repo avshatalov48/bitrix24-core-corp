@@ -1,4 +1,5 @@
 <?php
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
 class ReportAnalyticsBase extends CBitrixComponent
 {
@@ -17,16 +18,16 @@ class ReportAnalyticsBase extends CBitrixComponent
 		$currentAnalyticBoardKey = $this->getCurrentAnalyticBoardKey();
 		$this->arResult['ANALYTIC_BOARD_KEY'] = $currentAnalyticBoardKey;
 		$currentAnalyticBoard = $this->getAnalyticBoardByKey($currentAnalyticBoardKey);
+		if(!$currentAnalyticBoard)
+		{
+			$this->showError("Report board is not found");
+			return;
+		}
+
 		$this->arResult['ANALYTIC_BOARD_TITLE'] = $currentAnalyticBoard ? $currentAnalyticBoard->getTitle() : '';
-		$this->arResult['BOARD_BUTTONS'] = $currentAnalyticBoard ? $currentAnalyticBoard->getButtons() : [];
-		$this->arResult['IS_DISABLED_BOARD'] = $currentAnalyticBoard ? $currentAnalyticBoard->isDisabled() : false;
-		$this->arResult['IS_ENABLED_STEPPER'] = $currentAnalyticBoard ? $currentAnalyticBoard->isStepperEnabled() : false;
-		$this->arResult['IS_LIMITED'] = $currentAnalyticBoard ? $currentAnalyticBoard->isLimited() : false;
-		$this->arResult['ANALYTIC_BOARD_LIMIT_COMPONENT_NAME'] = $this->arResult['IS_LIMITED'] ? $currentAnalyticBoard->getLimitComponentName() : '';
-		$this->arResult['ANALYTIC_BOARD_LIMIT_COMPONENT_TEMPLATE_NAME'] = $this->arResult['IS_LIMITED'] ? $currentAnalyticBoard->getLimitComponentTemplateName() : '';
-		$this->arResult['ANALYTIC_BOARD_LIMIT_COMPONENT_PARAMS'] = $this->arResult['IS_LIMITED'] ? $currentAnalyticBoard->getLimitComponentParams() : [];
-		$this->arResult['STEPPER_IDS'] = $currentAnalyticBoard ? $currentAnalyticBoard->getStepperIds() : [];
-		$this->arResult['ANALYTIC_BOARD_FILTER'] = $currentAnalyticBoard ? $currentAnalyticBoard->getFilter() : new \Bitrix\Report\VisualConstructor\Helper\Filter($currentAnalyticBoardKey);
+		$this->arResult['ANALYTIC_BOARD_COMPONENT_NAME'] = $currentAnalyticBoard ? $currentAnalyticBoard->getDisplayComponentName() : '';
+		$this->arResult['ANALYTIC_BOARD_COMPONENT_TEMPLATE_NAME'] = $currentAnalyticBoard ? $currentAnalyticBoard->getDisplayComponentTemplate() : '';
+		$this->arResult['ANALYTIC_BOARD_COMPONENT_PARAMS'] = $currentAnalyticBoard ? $currentAnalyticBoard->getDisplayComponentParams() : [];
 		$this->includeComponentTemplate();
 	}
 
@@ -35,7 +36,7 @@ class ReportAnalyticsBase extends CBitrixComponent
 		echo <<<HTML
             <div class="ui-alert ui-alert-danger ui-alert-icon-danger">
                 <span class="ui-alert-message">{$message}</span>
-            </div>	
+            </div>
 HTML;
 		return;
 	}

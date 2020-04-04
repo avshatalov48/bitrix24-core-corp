@@ -87,6 +87,9 @@ Class transformer extends CModule
 
 		COption::SetOptionString("transformer", "portal_url", $params['PUBLIC_URL']);
 
+		$nextDay = time() + 86400;
+		CAgent::AddAgent('\\Bitrix\\Transformer\\Entity\\CommandTable::deleteOldAgent();', 'transformer', "N", 86400, "", "Y", ConvertTimeStamp(strtotime(date('Y-m-d 03:30:00', $nextDay)), 'FULL'));
+
 		return true;
 	}
 
@@ -135,6 +138,7 @@ Class transformer extends CModule
 			return false;
 		}
 
+		CAgent::RemoveModuleAgents('transformer');
 		UnRegisterModule("transformer");
 		return true;
 	}

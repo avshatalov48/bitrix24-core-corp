@@ -144,122 +144,93 @@ class LeadMerger extends EntityMerger
 	protected static function canMergeEntityField($fieldID)
 	{
 		//Field ContactID is obsolete. It is replaced by ContactIDs
-		if($fieldID === 'CONTACT_ID')
+		//Field StatusID is progress field
+		//Field StatusDescription depend on StatusID
+		if($fieldID === 'CONTACT_ID' || $fieldID === 'STATUS_ID' || $fieldID === 'STATUS_DESCRIPTION')
 		{
 			return false;
 		}
 		return parent::canMergeEntityField($fieldID);
 	}
 
-	/**
-	 * @param array $seed
-	 * @param array $targ
-	 * @param bool $skipEmpty
-	 * @param array $options
-	 * @throws Main\ArgumentException
-	 * @throws Main\ArgumentOutOfRangeException
-	 * @throws Main\NotSupportedException
-	 */
-	protected function innerMergeBoundEntities(array &$seed, array &$targ, $skipEmpty = false, array $options = array())
+	protected function mergeBoundEntitiesBatch(array &$seeds, array &$targ, $skipEmpty = false, array $options = array())
 	{
-		$seedID = isset($seed['ID']) ? (int)$seed['ID'] : 0;
-		$targID = isset($targ['ID']) ? (int)$targ['ID'] : 0;
+		$contactMerger = new LeadContactBindingMerger();
+		$contactMerger->merge($seeds, $targ, $skipEmpty, $options);
 
+		$resultSeedObserverIDs = array();
+		$resultSeedProductRows = array();
+
+		foreach($seeds as $seed)
+		{
+			$seedID = isset($seed['ID']) ? (int)$seed['ID'] : 0;
+
+			//region Observers
+			$seedObserverIDs = null;
+			if(isset($seed['OBSERVER_IDS']) && is_array($seed['OBSERVER_IDS']))
+			{
+				$seedObserverIDs = $seed['OBSERVER_IDS'];
+			}
+			elseif($seedID > 0)
+			{
+				$seedObserverIDs = Crm\Observer\ObserverManager::getEntityObserverIDs(\CCrmOwnerType::Lead, $seedID);
+			}
+
+			if($seedObserverIDs !== null)
+			{
+				$addedObserverIDs = array_diff($seedObserverIDs, $resultSeedObserverIDs);
+				if(!empty($addedObserverIDs))
+				{
+					$resultSeedObserverIDs = array_merge($resultSeedObserverIDs, $addedObserverIDs);
+				}
+			}
+			//endregion
+
+			//region Product Rows
+			$seedProductRows = null;
+			if(isset($seed['PRODUCT_ROWS']) && is_array($seed['PRODUCT_ROWS']))
+			{
+				$seedProductRows = $seed['PRODUCT_ROWS'];
+			}
+			elseif($seedID > 0)
+			{
+				$seedProductRows = \CCrmLead::LoadProductRows($seedID);
+			}
+
+			if($seedProductRows !== null)
+			{
+				\CCrmProductRow::Merge($seedProductRows, $resultSeedProductRows);
+			}
+			//endregion
+		}
+
+		//TODO: Rename SKIP_MULTIPLE_USER_FIELDS -> ENABLE_MULTIPLE_FIELDS_ENRICHMENT
 		$skipMultipleFields = isset($options['SKIP_MULTIPLE_USER_FIELDS']) && $options['SKIP_MULTIPLE_USER_FIELDS'];
 
-		//region Contacts
-		$seedContactBindings = null;
-		if($seedID > 0)
-		{
-			$seedContactBindings = Binding\LeadContactTable::getLeadBindings($seedID);
-		}
-		elseif(isset($seed['CONTACT_BINDINGS']) && is_array($seed['CONTACT_BINDINGS']))
-		{
-			$seedContactBindings = $seed['CONTACT_BINDINGS'];
-		}
-		elseif(isset($seed['CONTACT_ID']) || (isset($seed['CONTACT_IDS']) && is_array($seed['CONTACT_IDS'])))
-		{
-			$seedContactBindings = Binding\EntityBinding::prepareEntityBindings(
-				\CCrmOwnerType::Contact,
-				isset($seed['CONTACT_IDS']) && is_array($seed['CONTACT_IDS'])
-					? $seed['CONTACT_IDS']
-					: array($seed['CONTACT_ID'])
-			);
-		}
+		$targID = isset($targ['ID']) ? (int)$targ['ID'] : 0;
 
-		$targContactBindings = null;
-		if($targID > 0)
+		//region Merge Observers bindings
+		if(!empty($resultSeedObserverIDs))
 		{
-			$targContactBindings = Binding\LeadContactTable::getLeadBindings($targID);
-		}
-		elseif(isset($targ['CONTACT_BINDINGS']) && is_array($targ['CONTACT_BINDINGS']))
-		{
-			$targContactBindings = $targ['CONTACT_BINDINGS'];
-		}
-		elseif(isset($targ['CONTACT_ID']) || (isset($targ['CONTACT_IDS']) && is_array($targ['CONTACT_IDS'])))
-		{
-			$targContactBindings = Binding\EntityBinding::prepareEntityBindings(
-				\CCrmOwnerType::Contact,
-				isset($targ['CONTACT_IDS']) && is_array($targ['CONTACT_IDS'])
-					? $targ['CONTACT_IDS']
-					: array($targ['CONTACT_ID'])
-			);
-		}
-
-		if($seedContactBindings !== null && count($seedContactBindings) > 0)
-		{
-			if(!$skipMultipleFields)
+			$targObserverIDs = null;
+			if(isset($targ['OBSERVER_IDS']) && is_array($targ['OBSERVER_IDS']))
 			{
-				if($targContactBindings === null || count($targContactBindings) === 0)
-				{
-					$targContactBindings = $seedContactBindings;
-				}
-				else
-				{
-					self::mergeEntityBindings(\CCrmOwnerType::Contact, $seedContactBindings, $targContactBindings);
-				}
-
-				$targ['CONTACT_BINDINGS'] = $targContactBindings;
+				$targObserverIDs = $targ['OBSERVER_IDS'];
 			}
-			elseif($targContactBindings === null || (count($targContactBindings) === 0 && !$skipEmpty))
+			elseif($targID > 0)
 			{
-				$targ['CONTACT_BINDINGS'] = $seedContactBindings;
+				$targObserverIDs = Crm\Observer\ObserverManager::getEntityObserverIDs(\CCrmOwnerType::Lead, $targID);
 			}
-		}
-		//endregion
 
-		//region Observers
-		$seedObserverIDs = null;
-		if(isset($seed['OBSERVER_IDS']) && is_array($seed['OBSERVER_IDS']))
-		{
-			$seedObserverIDs = $seed['OBSERVER_IDS'];
-		}
-		elseif($seedID > 0)
-		{
-			$seedObserverIDs = Crm\Observer\ObserverManager::getEntityObserverIDs(\CCrmOwnerType::Lead, $seedID);
-		}
-
-		$targObserverIDs = null;
-		if(isset($targ['OBSERVER_IDS']) && is_array($targ['OBSERVER_IDS']))
-		{
-			$targObserverIDs = $targ['OBSERVER_IDS'];
-		}
-		elseif($targID > 0)
-		{
-			$targObserverIDs = Crm\Observer\ObserverManager::getEntityObserverIDs(\CCrmOwnerType::Lead, $targID);
-		}
-
-		if($seedObserverIDs !== null && count($seedObserverIDs) > 0)
-		{
 			if(!$skipMultipleFields)
 			{
 				if($targObserverIDs === null || count($targObserverIDs) === 0)
 				{
-					$targObserverIDs = $seedObserverIDs;
+					$targObserverIDs = $resultSeedObserverIDs;
 				}
 				else
 				{
-					$addedObserverIDs = array_diff($seedObserverIDs, $targObserverIDs);
+					$addedObserverIDs = array_diff($resultSeedObserverIDs, $targObserverIDs);
 					if(!empty($addedObserverIDs))
 					{
 						$targObserverIDs = array_merge($targObserverIDs, $addedObserverIDs);
@@ -270,22 +241,12 @@ class LeadMerger extends EntityMerger
 			}
 			elseif($targObserverIDs === null || (count($targObserverIDs) === 0 && !$skipEmpty))
 			{
-				$targ['OBSERVER_IDS'] = $seedObserverIDs;
+				$targ['OBSERVER_IDS'] = $resultSeedObserverIDs;
 			}
 		}
 		//endregion
 
-		//region Product Rows
-		$seedProductRows = null;
-		if(isset($seed['PRODUCT_ROWS']) && is_array($seed['PRODUCT_ROWS']))
-		{
-			$seedProductRows = $seed['PRODUCT_ROWS'];
-		}
-		elseif($seedID > 0)
-		{
-			$seedProductRows = \CCrmLead::LoadProductRows($seedID);
-		}
-
+		//region Merge Product Rows
 		$targProductRows = null;
 		if(isset($targ['PRODUCT_ROWS']) && is_array($targ['PRODUCT_ROWS']))
 		{
@@ -296,43 +257,85 @@ class LeadMerger extends EntityMerger
 			$targProductRows = \CCrmLead::LoadProductRows($targID);
 		}
 
-		if($seedProductRows !== null && count($seedProductRows) > 0)
+		if(!empty($resultSeedProductRows))
 		{
 			if(!$skipMultipleFields)
 			{
 				if($targProductRows === null || count($targProductRows) === 0)
 				{
-					$targ['PRODUCT_ROWS'] = $seedProductRows;
+					$targ['PRODUCT_ROWS'] = $resultSeedProductRows;
 				}
 				else
 				{
-					$diffProductRows = \CCrmProductRow::GetDiff(array($seedProductRows), array($targProductRows));
-					if(!empty($diffProductRows))
-					{
-						$productRowMaxSort = 0;
-						$productRowCount = count($targProductRows);
-						if($productRowCount > 0 && isset($targProductRows[$productRowCount - 1]['SORT']))
-						{
-							$productRowMaxSort = (int)$targProductRows[$productRowCount - 1]['SORT'];
-						}
-
-						foreach($diffProductRows as $productRow)
-						{
-							$productRow['SORT'] = ($productRowMaxSort += 10);
-							$targProductRows[] = $productRow;
-						}
-
-						$targ['PRODUCT_ROWS'] = $targProductRows;
-					}
+					\CCrmProductRow::Merge($resultSeedProductRows, $targProductRows);
+					$targ['PRODUCT_ROWS'] = $targProductRows;
 				}
 			}
 			elseif($targProductRows === null || (count($targProductRows) === 0 && !$skipEmpty))
 			{
-				$targ['PRODUCT_ROWS'] = $seedProductRows;
+				$targ['PRODUCT_ROWS'] = $resultSeedProductRows;
 			}
 		}
 		//endregion
-		parent::innerMergeBoundEntities($seed, $targ, $skipEmpty, $options);
+
+		parent::mergeBoundEntitiesBatch($seeds, $targ, $skipEmpty, $options);
+	}
+
+	protected function innerPrepareEntityFieldMergeData($fieldID, array $fieldParams,  array $seeds, array $targ, array $options = null)
+	{
+		if($fieldID === 'CONTACT_IDS')
+		{
+			$enabledIdsMap = null;
+			if(isset($options['enabledIds']) && is_array($options['enabledIds']))
+			{
+				$enabledIdsMap = array_fill_keys($options['enabledIds'], true);
+			}
+
+			$sourceEntityIDs = array();
+			$resultContactBindings = array();
+			foreach($seeds as $seed)
+			{
+				$seedID = (int)$seed['ID'];
+				if(is_null($enabledIdsMap) || isset($enabledIdsMap[$seedID]))
+				{
+					$seedContactBindings = Binding\LeadContactTable::getLeadBindings($seedID);
+					if(!empty($seedContactBindings))
+					{
+						$sourceEntityIDs[] = $seedID;
+						self::mergeEntityBindings(
+							\CCrmOwnerType::Contact,
+							$seedContactBindings,
+							$resultContactBindings
+						);
+					}
+				}
+			}
+
+			$targID = (int)$targ['ID'];
+			if(is_null($enabledIdsMap) || isset($enabledIdsMap[$targID]))
+			{
+				$targContactBindings = Binding\LeadContactTable::getLeadBindings($targID);
+				if(!empty($targContactBindings))
+				{
+					$sourceEntityIDs[] = $targID;
+					self::mergeEntityBindings(
+						\CCrmOwnerType::Contact,
+						$targContactBindings,
+						$resultContactBindings
+					);
+				}
+			}
+
+			return array(
+				'FIELD_ID' => 'CONTACT_IDS',
+				'TYPE' => 'crm_contact',
+				'IS_MERGED' => true,
+				'IS_MULTIPLE' => true,
+				'SOURCE_ENTITY_IDS' => array_unique($sourceEntityIDs, SORT_NUMERIC),
+				'VALUE' => Binding\EntityBinding::prepareEntityIDs(\CCrmOwnerType::Contact, $resultContactBindings),
+			);
+		}
+		return parent::innerPrepareEntityFieldMergeData($fieldID, $fieldParams, $seeds, $targ, $options);
 	}
 
 	/**

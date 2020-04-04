@@ -246,8 +246,14 @@ if($arID = $lAdmin->GroupAction())
 	foreach ($shipments as $orderId => $ids)
 	{
 		$isOperationSuccess = false;
+
+		$registry = \Bitrix\Sale\Registry::getInstance(\Bitrix\Sale\Registry::REGISTRY_TYPE_ORDER);
+
+		/** @var \Bitrix\Sale\Order $orderClass */
+		$orderClass = $registry->getOrderClassName();
+
 		/** @var \Bitrix\Sale\Order $currentOrder */
-		$currentOrder = \Bitrix\Sale\Order::load($orderId);
+		$currentOrder = $orderClass::load($orderId);
 		if (!$currentOrder)
 			continue;
 

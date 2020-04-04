@@ -3,6 +3,7 @@
 namespace Bitrix\Transformer\Entity;
 
 use Bitrix\Main;
+use Bitrix\Main\Type\Date;
 
 /**
  * Class CommandTable
@@ -67,4 +68,52 @@ class CommandTable extends Main\Entity\DataManager
 			)),
 		);
 	}
+
+	/**
+	 * Deletes old records from b_transformer_command table
+	 *
+	 * @param int $days Records older then $days will be cleaned
+	 * @param int $portion Number of records to clean at once
+	 * @return int
+	 */
+	public static function deleteOld(int $days = 22, $portion = 100): int
+	{
+		$cleanTime = new Date();
+		$cleanTime->add("-{$days} day");
+
+		$query = static::query();
+		$filter = $query::filter()
+			->logic('or')
+			->whereNull('UPDATE_TIME')
+			->where('UPDATE_TIME', '<', $cleanTime)
+		;
+
+		$records = static::getList([
+			'select' => ['ID'],
+			'order' => ['ID' => 'ASC'],
+			'filter' => $filter,
+			'limit' => $portion,
+		]);
+
+		$deleted = 0;
+
+		while($record = $records->fetch())
+		{
+			$result = static::delete($record['ID']);
+			if($result->isSuccess())
+			{
+				$deleted++;
+			}
+		}
+
+		return $deleted;
+	}
+
+	public static function deleteOldAgent($days = 22, $portion = 100)
+	{
+		static::deleteOld($days, $portion);
+
+		return "\\Bitrix\\Transformer\\Entity\\CommandTable::deleteOldAgent({$days}, {$portion});";
+	}
+
 }

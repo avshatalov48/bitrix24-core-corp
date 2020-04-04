@@ -477,9 +477,9 @@ if($this->startResultCache(false, array($elementID, ($arParams["CACHE_GROUPS"]==
 		: $defaultMeasure
 	);
 	$arResult['ELEMENT']['BASKET_QUANTITY'] = $arResult['ELEMENT']['MEASURE_RATIO'];
-	$arResult['SET_ITEMS']['PRICE'] = $currentSet['ITEM_DATA']['PRICE_DISCOUNT_VALUE'];
-	$arResult['SET_ITEMS']['OLD_PRICE'] = $currentSet['ITEM_DATA']['PRICE_VALUE'];
-	$arResult['SET_ITEMS']['PRICE_DISCOUNT_DIFFERENCE'] = $currentSet['ITEM_DATA']['PRICE_DISCOUNT_DIFFERENCE_VALUE'];
+	$arResult['SET_ITEMS']['PRICE'] = $currentSet['ITEM_DATA']['PRICE_DISCOUNT_VALUE'] * $arResult['ELEMENT']['MEASURE_RATIO'];
+	$arResult['SET_ITEMS']['OLD_PRICE'] = $currentSet['ITEM_DATA']['PRICE_VALUE'] * $arResult['ELEMENT']['MEASURE_RATIO'];
+	$arResult['SET_ITEMS']['PRICE_DISCOUNT_DIFFERENCE'] = $currentSet['ITEM_DATA']['PRICE_DISCOUNT_DIFFERENCE_VALUE'] * $arResult['ELEMENT']['MEASURE_RATIO'];
 	$arResult['BASKET_QUANTITY'] = array(
 		$arResult['ELEMENT']['ID'] => $arResult['ELEMENT']['BASKET_QUANTITY']
 	);

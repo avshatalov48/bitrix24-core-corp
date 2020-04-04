@@ -5,9 +5,12 @@
 /** @global CDatabase $DB */
 /** @global CUser $USER */
 /** @global CMain $APPLICATION */
+
 $component = $this->getComponent();
 
-include_once($_SERVER["DOCUMENT_ROOT"].SITE_TEMPLATE_PATH."/components/bitrix/socialnetwork.blog.post/mobile/functions.php");
+include_once($_SERVER["DOCUMENT_ROOT"].getLocalPath('templates/'.$component->getSiteTemplateId(), BX_PERSONAL_ROOT)."/components/bitrix/socialnetwork.blog.post/mobile/functions.php");
+
+$targetHtml = '';
 
 if(!empty($arResult["Post"]))
 {
@@ -406,7 +409,17 @@ if(!empty($arResult["Post"]))
 					$post_item_style .= " info-block-important";
 				}
 
+
 				?><div class="<?=$post_item_style?>"<?=$strOnClick?> id="post_block_check_cont_<?=$arParams["LOG_ID"]?>" bx-content-view-xml-id="BLOG_POST-<?=intval($arResult["Post"]["ID"])?>"><?
+
+					if (
+						isset($arParams['TARGET'])
+						&& $arParams['TARGET'] == 'postContent'
+					)
+					{
+						$targetHtml = '';
+						ob_start();
+					}
 
 					if($arResult["Post"]["MICRO"] != "Y")
 					{
@@ -432,7 +445,7 @@ if(!empty($arResult["Post"]))
 								$jsIds .= $jsIds !== "" ? ', "'.$id.'"' : '"'.$id.'"';
 								?><div class="post-item-attached-img-block"><img class="post-item-attached-img" id="<?=$id?>" src="<?=CMobileLazyLoad::getBase64Stub()?>" data-src="<?=$val["small"]?>" data-bx-image="<?=$val["full"]?>" alt="" border="0"></div><?
 							}
-						?></div><script>BitrixMobile.LazyLoad.registerImages([<?=$jsIds?>], oMSL.checkVisibility);</script><?
+						?></div><script>BitrixMobile.LazyLoad.registerImages([<?=$jsIds?>], oMSL.checkVisibility);console.log('111');</script><?
 					}
 
 					if(
@@ -507,14 +520,28 @@ if(!empty($arResult["Post"]))
 
 							if(strlen($jsIds) > 0)
 							{
-								?><script>BitrixMobile.LazyLoad.registerImages([<?=$jsIds?>]);</script><?
+								?><script>BitrixMobile.LazyLoad.registerImages([<?=$jsIds?>]);console.log('222');</script><?
 							}
 						}
 
 						?></div><?
 					}
 
-					?><div class="post-more-block" id="post_more_block_<?=$arParams["LOG_ID"]?>"></div><?
+					$postMoreBlockStyle = (
+						isset($arParams['TARGET'])
+						&& $arParams['TARGET'] == 'postContent'
+							? 'style="display: none;"'
+							: ''
+					);
+					?><div class="post-more-block" id="post_more_block_<?=$arParams["LOG_ID"]?>"<?=$postMoreBlockStyle?>></div><?
+
+					if (
+						isset($arParams['TARGET'])
+						&& $arParams['TARGET'] == 'postContent'
+					)
+					{
+						$targetHtml = ob_get_contents();;
+					}
 
 				?></div><? // post-item-post-block, post_block_check_cont_..
 
@@ -523,7 +550,13 @@ if(!empty($arResult["Post"]))
 					ob_start();
 				}
 
-				if ($arParams["SHOW_RATING"] == "Y")
+				if (
+					$arParams["SHOW_RATING"] == "Y"
+					&& (
+						!isset($arParams['TARGET'])
+						|| !in_array($arParams["TARGET"], [ 'postContent' ])
+					)
+				)
 				{
 					$voteId = "BLOG_POST".'_'.$arResult["Post"]["ID"].'-'.(time()+rand(0, 1000));
 					$emotion = (!empty($arResult["RATING"][$arResult["Post"]["ID"]]["USER_REACTION"]) ? strtoupper($arResult["RATING"][$arResult["Post"]["ID"]]["USER_REACTION"]) : 'LIKE');
@@ -535,7 +568,13 @@ if(!empty($arResult["Post"]))
 					?></span><?
 				}
 
-				if ($arResult["Post"]["ENABLE_COMMENTS"] == "Y")
+				if (
+					$arResult["Post"]["ENABLE_COMMENTS"] == "Y"
+					&& (
+						!isset($arParams['TARGET'])
+						|| !in_array($arParams["TARGET"], [ 'postContent' ])
+					)
+				)
 				{
 					$bHasComments = true;
 
@@ -705,7 +744,13 @@ if(!empty($arResult["Post"]))
 					?></div><?
 				}
 
-				if ($arParams["SHOW_RATING"] == "Y")
+				if (
+					$arParams["SHOW_RATING"] == "Y"
+					&& (
+						!isset($arParams['TARGET'])
+						|| !in_array($arParams['TARGET'], [ 'postContent' ])
+					)
+				)
 				{
 					?><div class="post-item-inform-wrap-tree" id="<?=(!$arParams["IS_LIST"] ? 'rating-footer-wrap' : 'rating-footer-wrap_'.intval($arParams["LOG_ID"]))?>"><?
 						?><div class="feed-post-emoji-top-panel-outer"><?
@@ -776,5 +821,11 @@ if(!empty($arResult["Post"]))
 elseif(!$arResult["bFromList"])
 {
 	echo GetMessage("BLOG_BLOG_BLOG_NO_AVAIBLE_MES");
+}
+
+if (strlen($targetHtml) > 0)
+{
+	$APPLICATION->RestartBuffer();
+	echo $targetHtml;
 }
 ?>

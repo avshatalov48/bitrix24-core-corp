@@ -663,7 +663,7 @@ class CAllIBlockSection
 						//Look up GLOBAL_ACTIVE of the parent
 						//if none then take our own
 						if($arParent)//We must inherit active from the parent
-							$arUpdate["GLOBAL_ACTIVE"] = $arParent["ACTIVE"] == "Y"? "Y": "N";
+							$arUpdate["GLOBAL_ACTIVE"] = $arParent["GLOBAL_ACTIVE"] == "Y"? "Y": "N";
 						else //No parent was found take our own
 							$arUpdate["GLOBAL_ACTIVE"] = "Y";
 					}

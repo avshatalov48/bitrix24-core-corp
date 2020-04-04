@@ -161,7 +161,12 @@ class LandingRolesComponent extends LandingBaseComponent
 
 		if ($init)
 		{
+			$this->checkParam('TYPE', '');
 			$this->checkParam('PAGE_URL_ROLE_EDIT', '');
+
+			\Bitrix\Landing\Site\Type::setScope(
+				$this->arParams['TYPE']
+			);
 
 			$this->arResult['EXTENDED'] = Rights::isExtendedMode();
 

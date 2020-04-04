@@ -286,7 +286,7 @@ if($arResult['ENABLE_SALESCENTER'])
 					</div>
 					<?php
 					}
-					else
+					elseif($arResult['SHOW_FILES_FEATURE'])
 					{
 					?>
 					<div class="crm-entity-stream-content-sms-file-external-link-popup" data-role="sms-file-external-link-disabled">
@@ -302,7 +302,7 @@ if($arResult['ENABLE_SALESCENTER'])
 								</div>
 								<div class="crm-entity-stream-content-sms-file-external-link-popup-limit-buttons">
 									<?php
-									\CBitrix24::showTariffRestrictionButtons('disk_external_link');
+									\CBitrix24::showTariffRestrictionButtons('disk_manual_external_link');
 									?>
 								</div>
 							</div>

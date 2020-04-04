@@ -1,5 +1,6 @@
 <?
 use Bitrix\Intranet\Integration\Templates\Bitrix24\ThemePicker;
+use \Bitrix\Intranet\Binding;
 
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 {
@@ -15,6 +16,8 @@ if (!$USER->IsAuthorized())
 }
 
 \CJSCore::init("sidepanel");
+
+$bitrix24Included = \Bitrix\Main\Loader::includeModule('bitrix24');
 
 $videoSteps = array(
 	array(
@@ -153,7 +156,7 @@ else
 			<?if (IsModuleInstalled("im")):?>
 				{ text : "<?=GetMessageJS("AUTH_CHANGE_NOTIFY")?>", className : "menu-popup-no-icon", onclick : "BXIM.openSettings({'onlyPanel':'notify'})"},
 			<?endif?>
-			<?if (!IsModuleInstalled('bitrix24') && $USER->isAdmin()):?>
+			<?if (!$bitrix24Included && $USER->isAdmin()):?>
 				{ text : "<?=GetMessageJS("AUTH_ADMIN_SECTION")?>", className : "menu-popup-no-icon", href : "/bitrix/admin/"},
 			<?endif?>
 			<?if ($arResult["SHOW_LICENSE_BUTTON"]):
@@ -165,6 +168,17 @@ else
 			?>
 				{ text : "<?=GetMessageJS("B24_UPGRADE_LICENSE")?>", className : "menu-popup-no-icon", onclick : "if (BX.getClass('B24.upgradeButtonRedirect')) B24.upgradeButtonRedirect(<?=CUtil::PhpToJSObject($arJsParams)?>)"},
 			<?endif?>
+			<?if (1) foreach (Binding\Menu::getMenuItems('top_panel', 'user_menu') as $bindingMenu):?>
+				{
+					text: "<?= \CUtil::jsEscape($bindingMenu['text']);?>",
+					href: "<?= \CUtil::jsEscape($bindingMenu['href']);?>",
+					//666
+					<?if (isset($bindingMenu['onclick'])):?>
+					onclick: function(){<?= $bindingMenu['onclick'];?>; BX.PreventDefault();},
+					<?endif;?>
+					items: <?= \CUtil::phpToJSObject(isset($bindingMenu['items']) ? $bindingMenu['items'] : []);?>
+				},
+			<?endforeach;?>
 				{ text : "<?=GetMessageJS("AUTH_LOGOUT")?>", className : "menu-popup-no-icon", href : "/auth/?logout=yes&backurl=" + encodeURIComponent(B24.getBackUrl()) }
 			],
 			{
@@ -231,14 +245,17 @@ $frame = $this->createFrame("b24_helper")->begin("");
 		}
 	}
 
+	$isAdmin = ($bitrix24Included && CBitrix24::IsPortalAdmin($USER->GetID()) || !$bitrix24Included && $USER->IsAdmin()) ? 1 : 0;
+
 	CJSCore::Init(array('helper'));
-	$helpUrl = GetMessage("B24_HELPDESK_URL")."/widget2/";
+
+	$helpUrl = $arResult["HELPDESK_URL"]."/widget2/";
 	$helpUrl = CHTTP::urlAddParams($helpUrl, array(
 			"url" => urlencode("https://".$_SERVER["HTTP_HOST"].$APPLICATION->GetCurPageParam()),
-			"is_admin" => IsModuleInstalled("bitrix24") && CBitrix24::IsPortalAdmin($USER->GetID()) || !IsModuleInstalled("bitrix24") && $USER->IsAdmin() ? 1 : 0,
+			"is_admin" => $isAdmin,
 			"user_id" => $USER->GetID(),
 			"tariff" => COption::GetOptionString("main", "~controller_group_name", ""),
-			"is_cloud" => IsModuleInstalled("bitrix24") ? "1" : "0",
+			"is_cloud" => $bitrix24Included ? "1" : "0",
 			"support_bot" => $support_bot,
 		)
 	);
@@ -252,18 +269,18 @@ $frame = $this->createFrame("b24_helper")->begin("");
 		)
 	);
 
-	$host = IsModuleInstalled("bitrix24") && defined("BX24_HOST_NAME") ? BX24_HOST_NAME : CIntranetUtils::getHostName();
+	$host = $bitrix24Included && defined("BX24_HOST_NAME") ? BX24_HOST_NAME : CIntranetUtils::getHostName();
 	$notifyData = array(
 		"support_bot" => $support_bot,
-		"is_admin" => IsModuleInstalled("bitrix24") && CBitrix24::IsPortalAdmin($USER->GetID()) || !IsModuleInstalled("bitrix24") && $USER->IsAdmin() ? 1 : 0,
+		"is_admin" => $isAdmin,
 		"user_id" => $USER->GetID(),
 		"user_email" => urlencode($USER->GetEmail()),
 		"tariff" => COption::GetOptionString("main", "~controller_group_name", ""),
 		"host" => $host,
-		"key" => IsModuleInstalled("bitrix24") ? CBitrix24::RequestSign($host.$USER->GetID()) : md5($host.$USER->GetID().'BX_USER_CHECK'),
-		"is_cloud" => IsModuleInstalled("bitrix24") ? "1" : "0",
+		"key" => $bitrix24Included ? CBitrix24::RequestSign($host.$USER->GetID()) : md5($host.$USER->GetID().'BX_USER_CHECK'),
+		"is_cloud" => $bitrix24Included ? "1" : "0",
 		"user_date_register" => $arResult["USER_DATE_REGISTER"],
-		"portal_date_register" => IsModuleInstalled("bitrix24") ? COption::GetOptionString("main", "~controller_date_create", "") : "",
+		"portal_date_register" => $bitrix24Included ? COption::GetOptionString("main", "~controller_date_create", "") : "",
 		"partner_link" => COption::GetOptionString("bitrix24", "partner_id", 0) ? 'Y' : 'N',
 		"counter_update_date" => $arResult["COUNTER_UPDATE_DATE"]
 	);
@@ -283,8 +300,8 @@ $frame = $this->createFrame("b24_helper")->begin("");
 			needCheckNotify: '<?=($arResult["NEED_CHECK_HELP_NOTIFICATION"] == "Y" ? "Y" : "N")?>',
 			notifyNum: '<?=CUtil::JSEscape($arResult["HELP_NOTIFY_NUM"])?>',
 			notifyData: <?=CUtil::PhpToJSObject($notifyData)?>,
-			notifyUrl: '<?=GetMessageJS("B24_HELPDESK_URL")."/widget2/notify.php"?>',
-			helpUrl: '<?=GetMessageJS("B24_HELPDESK_URL")?>',
+			notifyUrl: '<?=$arResult["HELPDESK_URL"]."/widget2/notify.php"?>',
+			helpUrl: '<?=$arResult["HELPDESK_URL"]?>',
 			runtimeUrl: '//helpdesk.bitrix24.ru/widget/hero/runtime.js'
 		});
 		<?
@@ -297,7 +314,7 @@ if ($arResult["CAN_HAVE_HELP_NOTIFICATIONS"] === 'Y')
 {
 	//if something getting wrong in JS - this parameter can actualize script
 	$scriptCacheTime = 259200; //script lifetime 60 * 60 * 24 * 3 = 72h
-	$managerScriptUrl = GetMessageJS("B24_HELPDESK_URL").
+	$managerScriptUrl = $arResult["HELPDESK_URL"].
 						'/bitrix/js/update_actual/help/notification/manager.js?'.
 						(floor(time() / $scriptCacheTime));
 

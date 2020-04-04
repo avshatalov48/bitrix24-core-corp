@@ -3,22 +3,34 @@ namespace Bitrix\Timeman\Service\Agent;
 
 use Bitrix\Main\Application;
 use Bitrix\Main\Error;
+use Bitrix\Main\ORM\Fields;
 use Bitrix\Main\ORM\Query\Query;
 use Bitrix\Main\Result;
-use Bitrix\Main\Type\Date;
-use Bitrix\Main\Type\DateTime;
 use Bitrix\Timeman\Helper\TimeDictionary;
 use Bitrix\Timeman\Helper\TimeHelper;
 use Bitrix\Timeman\Model\Schedule\Schedule;
 use Bitrix\Timeman\Model\Schedule\ScheduleTable;
 use Bitrix\Timeman\Model\Schedule\Shift\Shift;
-use Bitrix\Timeman\Model\Schedule\ShiftPlan\ShiftPlanTable;
+use Bitrix\Timeman\Model\Schedule\ShiftPlan\ShiftPlan;
+use Bitrix\Timeman\Model\Schedule\Violation\ViolationRulesCollection;
 use Bitrix\Timeman\Model\Schedule\Violation\ViolationRules;
 use Bitrix\Timeman\Model\Schedule\Violation\ViolationRulesTable;
-use Bitrix\Timeman\Service\DependencyManager;
+use Bitrix\Timeman\Model\Worktime\Record\WorktimeRecord;
+use Bitrix\Timeman\Repository\Schedule\ShiftPlanRepository;
+use Bitrix\Timeman\Repository\Schedule\ViolationRulesRepository;
 
 class WorktimeAgentManager
 {
+	/** @var ViolationRulesRepository */
+	private $violationRulesRepository;
+	private $shiftPlanRepository;
+
+	public function __construct(ViolationRulesRepository $violationRulesRepository, ShiftPlanRepository $shiftPlanRepository)
+	{
+		$this->violationRulesRepository = $violationRulesRepository;
+		$this->shiftPlanRepository = $shiftPlanRepository;
+	}
+
 	/**
 	 * @param Schedule $schedule
 	 * @param null $fromDateTime
@@ -39,9 +51,17 @@ class WorktimeAgentManager
 				return $recountResult;
 			}
 		}
-		if ($violationRules->getPeriodTimeLackAgentId() > 0
-			|| !$this->needNewPeriodTimeLackAgent($schedule, $violationRules)
-		)
+		if (!$this->isPeriodTimeLackControlEnabled($schedule, $violationRules))
+		{
+			if ($violationRules->getPeriodTimeLackAgentId() > 0)
+			{
+				$this->deleteAgentById($violationRules->getPeriodTimeLackAgentId());
+				$violationRules->setPeriodTimeLackAgentId(0);
+				$this->violationRulesRepository->save($violationRules);
+			}
+			return new Result();
+		}
+		if ($violationRules->getPeriodTimeLackAgentId() > 0)
 		{
 			return new Result();
 		}
@@ -51,47 +71,54 @@ class WorktimeAgentManager
 		if ($id > 0)
 		{
 			$violationRules->setPeriodTimeLackAgentId($id);
-			return DependencyManager::getInstance()
-				->getViolationRulesRepository()
-				->save($violationRules);
+			return $this->violationRulesRepository->save($violationRules);
 		}
 
 		return (new Result())->addError(new Error('Failed to create Period Time Lack Checking Agent', 'createTimeLackForPeriodCheckingError'));
 	}
 
+	/** Creates agent that will be executed at the end of shift (by user time)
+	 * if schedule controls missed shifts - then agent sends notification on missed shift
+	 * otherwise agent just deletes itself
+	 * @param ShiftPlan $shiftPlan
+	 * @param Shift $shift
+	 * @param Schedule $schedule
+	 */
 	public function createMissedShiftChecking($shiftPlan, $shift)
 	{
-		$userId = (int)$shiftPlan['USER_ID'];
-		if (!(
-			(int)$shiftPlan['SHIFT_ID'] > 0
-			&& $userId > 0
-			&& $shiftPlan['DATE_ASSIGNED'] instanceof Date
-			&& !empty($shift['WORK_TIME_START'])
-		))
+		if ($shift->buildUtcEndByShiftplan($shiftPlan)->getTimestamp() < TimeHelper::getInstance()->getUtcNowTimestamp())
 		{
 			return;
 		}
-		/** @var Date $execServerTime */
-		$execServerTime = clone $shiftPlan['DATE_ASSIGNED'];
-		$shiftDuration = Shift::getShiftDuration($shift);
-		$execServerTime->add(((int)$shift['WORK_TIME_START'] + $shiftDuration) . ' seconds');
-		$execServerTime->add('-' . TimeHelper::getInstance()->getUserToServerOffset($userId) . ' seconds');
-		if ($execServerTime === false)
+		$agentId = $this->addAgent(
+			$this->prepareMissedShiftAgentFields($shiftPlan, $shift)
+		);
+		if ($agentId > 0)
 		{
-			return;
+			$shiftPlan->setMissedShiftAgentId($agentId);
+			$this->shiftPlanRepository->save($shiftPlan);
 		}
+	}
 
-		$params = (int)$shiftPlan['SHIFT_ID'] . ', ' . (int)$shiftPlan['USER_ID'] . ', ' . "'"
-				  . $shiftPlan['DATE_ASSIGNED']->format(ShiftPlanTable::DATE_FORMAT) . "'"
-				  . ', ' . (int)$shift['WORK_TIME_END'];
-		$this->addAgent([
-			'NAME' => 'Bitrix\\Timeman\\Service\\Agent\\ViolationNotifierAgent::notifyIfShiftMissed(' . $params . ');',
+	/**
+	 * @param ShiftPlan $shiftPlan
+	 * @param Shift $shift
+	 * @return array
+	 * @throws \Exception
+	 */
+	private function prepareMissedShiftAgentFields($shiftPlan, $shift)
+	{
+		return [
+			'PARAMS' => [
+				'shiftPlanId' => $shiftPlan->getId(),
+			],
+			'NAME' => 'Bitrix\\Timeman\\Service\\Agent\\ViolationNotifierAgent::notifyIfShiftMissed',
 			'MODULE_ID' => 'timeman',
 			'ACTIVE' => 'Y',
 			'IS_PERIOD' => 'N',
-			'NEXT_EXEC' => $execServerTime->format('d.m.Y H:i:s'),
+			'NEXT_EXEC' => $shift->buildUtcEndByShiftplan($shiftPlan),
 			'USER_ID' => false,
-		]);
+		];
 	}
 
 	protected function addAgent($params)
@@ -105,8 +132,12 @@ class WorktimeAgentManager
 			$params['NAME'] .= '(\'' . implode("','", $params['PARAMS']) . '\');';
 			unset($params['PARAMS']);
 		}
-		$res = \CAgent::add($params);
-		return $res === false ? 0 : $res;
+		if (isset($params['NEXT_EXEC']) && $params['NEXT_EXEC'] instanceof \DateTime)
+		{
+			$params['NEXT_EXEC'] = \Bitrix\Main\Type\DateTime::createFromPhp($params['NEXT_EXEC'])->toString();
+		}
+		$resId = \CAgent::add($params);
+		return $resId === false ? 0 : $resId;
 	}
 
 	/**
@@ -229,8 +260,7 @@ class WorktimeAgentManager
 	 */
 	private function recountPeriodTimeLackAgents($schedule)
 	{
-		$violationRulesList = DependencyManager::getInstance()
-			->getViolationRulesRepository()
+		$violationRulesList = $this->violationRulesRepository
 			->findAllByScheduleId(
 				$schedule->getId(),
 				[
@@ -248,26 +278,26 @@ class WorktimeAgentManager
 			return new Result();
 		};
 
-		$agentIdsChunks = array_chunk($violationRulesList->getPeriodTimeLackAgentIdList(), 50);
-		foreach ($agentIdsChunks as $agentIds)
-		{
-			Application::getConnection()->query('DELETE FROM b_agent WHERE ID IN (' . implode(',', $agentIds) . ');');
-		}
-
+		$this->deleteAgentsByIds($violationRulesList->getPeriodTimeLackAgentIdList());
+		$listToUpdate = new ViolationRulesCollection();
 		foreach ($violationRulesList as $violationRules)
 		{
+			$this->deleteAgentById($violationRules->getPeriodTimeLackAgentId());
 			$violationRules->setPeriodTimeLackAgentId(0);
-			if ($this->needNewPeriodTimeLackAgent($schedule, $violationRules))
+			if ($this->isPeriodTimeLackControlEnabled($schedule, $violationRules))
 			{
 				$agentId = $this->addAgent(
 					$this->preparePeriodTimeLackAgentFields($schedule, $violationRules)
 				);
 				$violationRules->setPeriodTimeLackAgentId($agentId);
+				$this->violationRulesRepository->save($violationRules);
+			}
+			if ($violationRules->getPeriodTimeLackAgentId() === 0)
+			{
+				$listToUpdate->add($violationRules);
 			}
 		}
-		return DependencyManager::getInstance()
-			->getViolationRulesRepository()
-			->saveAll($violationRulesList);
+		return $this->violationRulesRepository->saveAll($listToUpdate, ['PERIOD_TIME_LACK_AGENT_ID' => 0]);
 	}
 
 	/**
@@ -300,7 +330,7 @@ class WorktimeAgentManager
 			'MODULE_ID' => 'timeman',
 			'ACTIVE' => 'Y',
 			'IS_PERIOD' => 'N',
-			'NEXT_EXEC' => DateTime::createFromPhp($execTime)->toString(),
+			'NEXT_EXEC' => $execTime,
 			'USER_ID' => false,
 		];
 	}
@@ -310,10 +340,108 @@ class WorktimeAgentManager
 	 * @param ViolationRules $violationRules
 	 * @return bool
 	 */
-	private function needNewPeriodTimeLackAgent($schedule, $violationRules)
+	private function isPeriodTimeLackControlEnabled($schedule, $violationRules)
 	{
 		return $schedule->isFixed()
 			   && $violationRules->isPeriodWorkTimeLackControlEnabled()
 			   && !empty($violationRules->getNotifyUsersSymbolic(ViolationRulesTable::USERS_TO_NOTIFY_FIXED_TIME_FOR_PERIOD));
+	}
+
+	public function deleteAgentById($agentId)
+	{
+		$dataClass = $this->getAgentDataClass();
+		$agent = $dataClass::query()
+			->addSelect('ID')
+			->where('MODULE_ID', 'timeman')
+			->where('ID', $agentId)
+			->exec()
+			->fetch();
+		if ($agent)
+		{
+			return \CAgent::delete($agentId);
+		}
+		return true;
+	}
+
+	private function getAgentDataClass()
+	{
+		static $dataClass = null;
+		if ($dataClass === null)
+		{
+			$entity = \Bitrix\Main\ORM\Entity::compileEntity(
+				'TimemanCompiledAgentTable',
+				[
+					(new Fields\IntegerField('ID'))
+						->configurePrimary(true)
+						->configureAutocomplete(true)
+					,
+					(new Fields\StringField('MODULE_ID'))
+					,
+					(new Fields\StringField('NAME'))
+					,
+				],
+				['table_name' => 'b_agent']
+			);
+			$dataClass = $entity->getDataClass();
+		}
+		return $dataClass;
+	}
+
+	public function deleteAgentsByIds($ids)
+	{
+		if (empty($ids))
+		{
+			return;
+		}
+		$ids = array_map('intval', $ids);
+		$agentIdsChunks = array_chunk($ids, 50);
+		foreach ($agentIdsChunks as $agentIds)
+		{
+			Application::getConnection()->query('DELETE FROM b_agent WHERE ID IN (' . implode(',', $agentIds) . ');');
+		}
+	}
+
+	/**
+	 * @param WorktimeRecord $record
+	 * @param Schedule|null $schedule
+	 * @param Shift|null $shift
+	 */
+	public function createAutoClosingAgent($record, $schedule, $shift)
+	{
+		if (!$schedule || !$schedule->isAutoClosing()
+			|| $record->getRecordedStopTimestamp() > 0
+			|| $record->getAutoClosingAgentId() > 0)
+		{
+			return;
+		}
+		$recordStopUtcTimestamp = $record->buildStopTimestampForAutoClose($schedule, $shift);
+		if ($recordStopUtcTimestamp === null)
+		{
+			return;
+		}
+
+		$agentId = $this->addAgent([
+			'PARAMS' => [
+				'recordId' => $record->getId(),
+			],
+			'NAME' => 'Bitrix\\Timeman\\Service\\Agent\\AutoCloseWorktimeAgent::runCloseRecord',
+			'MODULE_ID' => 'timeman',
+			'ACTIVE' => 'Y',
+			'IS_PERIOD' => 'N',
+			'NEXT_EXEC' => TimeHelper::getInstance()->createUserDateTimeFromFormat('U', $recordStopUtcTimestamp, $record->getUserId()),
+			'USER_ID' => false,
+		]);
+		if ($agentId > 0)
+		{
+			$record->setAutoClosingAgentId($agentId);
+		}
+	}
+
+	public function createAutoClosingAgentForRecords(\Bitrix\Timeman\Model\Worktime\Record\WorktimeRecordCollection $records)
+	{
+		foreach ($records as $record)
+		{
+			$this->createAutoClosingAgent($record, $record->obtainSchedule(), $record->obtainShift());
+		}
 	}
 }

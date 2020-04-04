@@ -233,6 +233,7 @@ $presets = array(
 			"menu_files",
 			"menu_calendar",
 			"menu_timeman_sect",
+			"menu_rpa",
 			"menu_crm_favorite",
 			"menu_sites",
 			"menu_company",
@@ -264,6 +265,7 @@ $presets = array(
 			"menu_crm_tracking",
 			"menu_tasks",
 			"menu_external_mail",
+			"menu_rpa",
 			"menu-sale-center",
 			"menu_shop",
 			"menu_sites",
@@ -296,6 +298,7 @@ $presets = array(
 			"menu_im_messenger",
 			"menu_external_mail",
 			"menu_crm_favorite",
+			"menu_rpa",
 			"menu_company",
 		),
 		"hide" => array(
@@ -332,6 +335,7 @@ $presets = array(
 			"menu_analytics",
 			"menu_crm_tracking",
 			"menu_tasks",
+			"menu_rpa",
 		),
 		"hide" => array(
 			"menu_live_feed",
@@ -362,6 +366,7 @@ $presets = array(
 			"menu_external_mail",
 			"menu_sites",
 			"menu_tasks",
+			"menu_rpa",
 		),
 		"hide" => array(
 			"menu_live_feed",
@@ -408,6 +413,7 @@ if (!in_array($presetId, array("social", "tasks", "crm", "sites", "custom")))
 {
 	$presetId = COption::GetOptionString("intranet", "left_menu_preset", "");
 }
+
 if ($presetId == "custom")
 {
 	$customItems = COption::GetOptionString("intranet", "left_menu_custom_preset_items", "");
@@ -416,17 +422,20 @@ if ($presetId == "custom")
 		$customItems= unserialize($customItems);
 		foreach ($customItems as $item)
 		{
-			$newItems[$item["ID"]] = array(
-				"TEXT" => htmlspecialcharsbx($item["TEXT"]),
-				"LINK" => htmlspecialcharsbx($item["LINK"]),
-				"PERMISSION" => "X",
-				"PARAMS" => array(
-					"menu_item_id" => htmlspecialcharsbx($item["ID"])
-				),
-				"ITEM_TYPE" => "custom",
-				"DELETE_PERM" => "A",
-				"OPEN_IN_NEW_PAGE" => isset($item["NEW_PAGE"]) && $item["NEW_PAGE"] == "Y" ? true : false
-			);
+			if (!isset($newItems[$item["ID"]]))
+			{
+				$newItems[$item["ID"]] = array(
+					"TEXT" => htmlspecialcharsbx($item["TEXT"]),
+					"LINK" => htmlspecialcharsbx($item["LINK"]),
+					"PERMISSION" => "X",
+					"PARAMS" => array(
+						"menu_item_id" => htmlspecialcharsbx($item["ID"])
+					),
+					"ITEM_TYPE" => "custom",
+					"DELETE_PERM" => "A",
+					"OPEN_IN_NEW_PAGE" => isset($item["NEW_PAGE"]) && $item["NEW_PAGE"] == "Y" ? true : false
+				);
+			}
 		}
 	}
 }

@@ -24,6 +24,8 @@ class AdsAudienceConfig
 
 	public $autoRemoveDayNumber = null;
 
+	public $parentId = null;
+
 	/**
 	 * AdsAudienceConfig constructor.
 	 *
@@ -58,6 +60,10 @@ class AdsAudienceConfig
 		if ($config->autoRemoveDayNumber)
 		{
 			$this->autoRemoveDayNumber = $config->autoRemoveDayNumber;
+		}
+		if ($config->parentId)
+		{
+			$this->parentId = $config->parentId;
 		}
 	}
 }

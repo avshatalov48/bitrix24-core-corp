@@ -357,7 +357,7 @@ function inviteDialogDrawTabContentHeader($params)
 					"ID" => $selectorName,
 					"LAZYLOAD" => 'Y',
 					"INPUT_NAME" => 'SONET_GROUPS[]',
-					"USE_SYMBOLIC_ID" => "Y",
+					"USE_SYMBOLIC_ID" => true,
 					"BUTTON_SELECT_CAPTION" => GetMessage('BX24_INVITE_DIALOG_DEST_LINK_1'),
 					"BUTTON_SELECT_CAPTION_MORE" => GetMessage('BX24_INVITE_DIALOG_DEST_LINK_2'),
 					'API_VERSION' => '3',
@@ -478,9 +478,11 @@ $APPLICATION->IncludeComponent(
 			<span class="popup-window-tab<?=(($strAction == "add") ? " popup-window-tab-selected" : "")?>" id="intranet-dialog-tab-add" data-action="add">
 				<?=GetMessage('BX24_INVITE_DIALOG_TAB_ADD_TITLE_NEW')?>
 			</span>
+			<?if (IsModuleInstalled("bitrix24")):?>
 			<span class="popup-window-tab<?=(($strAction == "integrator")  ? " popup-window-tab-selected" : "")?>" id="intranet-dialog-tab-integrator" data-action="integrator">
 				<?=GetMessage('BX24_INVITE_DIALOG_TAB_INTEGRATOR_TITLE')?>
 			</span>
+			<?endif?>
 		</div>
 		<div class="popup-window-tabs-content popup-window-tabs-content-invite">
 			<?//fast registration

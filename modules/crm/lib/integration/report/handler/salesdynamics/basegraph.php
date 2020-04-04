@@ -103,8 +103,6 @@ class BaseGraph extends Handler\Deal implements IReportMultipleGroupedData
 		$calculatedData = $this->getCalculatedData();
 		$normalizedData = [];
 		$totalAmount = 0;
-		$minDate = new Date($calculatedData[0]["CLOSED"], static::DATE_INDEX_FORMAT);
-		$maxDate = new Date($calculatedData[0]["CLOSED"], static::DATE_INDEX_FORMAT);
 
 		foreach ($calculatedData as $value)
 		{
@@ -132,14 +130,6 @@ class BaseGraph extends Handler\Deal implements IReportMultipleGroupedData
 				];
 			}
 
-			if($closedDate->getTimestamp() > $maxDate->getTimestamp())
-			{
-				$maxDate = clone($closedDate);
-			}
-			if($closedDate->getTimestamp() < $minDate->getTimestamp())
-			{
-				$minDate = clone($closedDate);
-			}
 		}
 
 /*		$filterParameters = $this->getFilterParameters();
@@ -149,9 +139,10 @@ class BaseGraph extends Handler\Deal implements IReportMultipleGroupedData
 			$maxDate = DateTime::createFromUserTime($filterParameters['TIME_PERIOD']['to']);
 		}*/
 
+
 		if(count($normalizedData) > 0)
 		{
-			$normalizedData = $this->fillDateGaps($normalizedData, $minDate, $maxDate);
+			$this->padNormalizedData($normalizedData);
 		}
 
 		foreach ($normalizedData as $date => $value)
@@ -171,7 +162,7 @@ class BaseGraph extends Handler\Deal implements IReportMultipleGroupedData
 			$item = [
 				"groupBy" => $date,
 				"value" => (float)$value["SUM"],
-				"label" => "",
+				"label" => $this->formatDateForLabel($closedDate),
 				"balloon" => [
 					"title" => $this->formatDateForTitle($closedDate),
 				],
@@ -193,6 +184,8 @@ class BaseGraph extends Handler\Deal implements IReportMultipleGroupedData
 				"amount" => [
 					"value" => \CCrmCurrency::MoneyToString($totalAmount, $baseCurrency),
 				],
+				"dateFormatForLabel" => $this->getDateFormatForLabel(),
+				"dateGrouping" => $this->getDateGrouping()
 			]
 		];
 	}
@@ -253,24 +246,25 @@ class BaseGraph extends Handler\Deal implements IReportMultipleGroupedData
 		}
 	}
 
-	protected function formatDateForLabel(Date $date)
+	protected function getDateFormatForLabel()
 	{
 		switch ($this->getDateGrouping())
 		{
 			case static::GROUP_DAY:
-				$format = Context::getCurrent()->getCulture()->getDayMonthFormat();
-				break;
+				return Context::getCurrent()->getCulture()->getDayMonthFormat();
 			case static::GROUP_WEEK_DAY:
-				$format = "l";
-				break;
+				return "l";
 			case static::GROUP_MONTH:
-				$format = "f";
+				return "f";
 				break;
 			default:
-				$format = Context::getCurrent()->getCulture()->getLongDateFormat();
+				return Context::getCurrent()->getCulture()->getLongDateFormat();
 		}
+	}
 
-		return FormatDate($format, $date);
+	protected function formatDateForLabel(Date $date)
+	{
+		return FormatDate($this->getDateFormatForLabel(), $date);
 	}
 
 	protected function formatDateForTitle(Date $date)
@@ -293,28 +287,47 @@ class BaseGraph extends Handler\Deal implements IReportMultipleGroupedData
 		return true;
 	}
 
-	public function fillDateGaps($normalizedData, Date $dateFrom, Date $dateTo)
+	public function padNormalizedData(&$normalizedData)
 	{
-		$result = [];
+		reset($normalizedData);
+		$firstKey = key($normalizedData);
+		/** @var Date $minDate */
+		$minDate = $normalizedData[$firstKey]['CLOSED'];
+		/** @var Date $maxDate */
+		$maxDate = $normalizedData[$firstKey]['CLOSED'];
+
+		foreach ($normalizedData as $key => $value)
+		{
+			/** @var Date $closedDate */
+			$closedDate = $value['CLOSED'];
+			if($closedDate->getTimestamp() > $maxDate->getTimestamp())
+			{
+				$maxDate = clone($closedDate);
+			}
+			if($closedDate->getTimestamp() < $minDate->getTimestamp())
+			{
+				$minDate = clone($closedDate);
+			}
+		}
+
+		$this->fillDateGaps($normalizedData, $minDate, $maxDate);
+	}
+
+	public function fillDateGaps(&$normalizedData, Date $dateFrom, Date $dateTo)
+	{
 		$step = ($this->getDateGrouping() == static::GROUP_MONTH) ? static::STEP_MONTH : static::STEP_DAY;
 		foreach (static::getDatesRange($dateFrom, $dateTo, $step) as $date)
 		{
 			$dateIndex = $date->format('Y-m-d');
 
-			if(isset($normalizedData[$dateIndex]))
+			if(!isset($normalizedData[$dateIndex]))
 			{
-				$result[$dateIndex] = $normalizedData[$dateIndex];
-			}
-			else
-			{
-				$result[$dateIndex] = [
+				$normalizedData[$dateIndex] = [
 					"CLOSED" => $date,
-					"SUM" => null
+					"SUM" => 0
 				];
 			}
 		}
-
-		return $result;
 	}
 
 	/**

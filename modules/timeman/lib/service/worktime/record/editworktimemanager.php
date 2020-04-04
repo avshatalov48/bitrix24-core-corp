@@ -14,6 +14,8 @@ use Bitrix\Timeman\Service\Worktime\Violation\WorktimeViolation;
 
 class EditWorktimeManager extends WorktimeManager
 {
+	private $possibleViolationTypes = [];
+
 	/**
 	 * @param WorktimeRecord $record
 	 * @param $schedule
@@ -22,6 +24,18 @@ class EditWorktimeManager extends WorktimeManager
 	protected function updateRecordFields($record)
 	{
 		$record->updateByForm($this->worktimeRecordForm);
+		if ($record->isRecordedStartTimestampChanged())
+		{
+			$this->possibleViolationTypes[] = WorktimeViolation::TYPE_EDITED_START;
+		}
+		if ($record->isRecordedStopTimestampChanged())
+		{
+			$this->possibleViolationTypes[] = WorktimeViolation::TYPE_EDITED_ENDING;
+		}
+		if ($record->isRecordedBreakLengthChanged())
+		{
+			$this->possibleViolationTypes[] = WorktimeViolation::TYPE_EDITED_BREAK_LENGTH;
+		}
 		return $record;
 	}
 
@@ -43,11 +57,11 @@ class EditWorktimeManager extends WorktimeManager
 		{
 			return [];
 		}
-		return $this->buildWorktimeViolations($record, $schedule, [
-			WorktimeViolation::TYPE_EDITED_START,
-			WorktimeViolation::TYPE_EDITED_BREAK_LENGTH,
-			WorktimeViolation::TYPE_EDITED_ENDING,
-		], $violationRulesList);
+		if (empty($this->possibleViolationTypes))
+		{
+			return [];
+		}
+		return $this->buildWorktimeViolations($record, $schedule, $this->possibleViolationTypes, $violationRulesList);
 	}
 
 	/**
@@ -77,7 +91,7 @@ class EditWorktimeManager extends WorktimeManager
 	protected function verifyBeforeProcessUpdatingRecord()
 	{
 		$baseResult = parent::verifyBeforeProcessUpdatingRecord();
-		if (!$baseResult->isSuccess())
+		if (!$baseResult->isSuccess() || $this->worktimeRecordForm->isSystem === true)
 		{
 			return $baseResult;
 		}
@@ -186,7 +200,7 @@ class EditWorktimeManager extends WorktimeManager
 		{
 			return $result;
 		}
-		if ($record && $this->worktimeRecordForm->recordedStartSeconds)
+		if ($record && $this->worktimeRecordForm->recordedStartSeconds !== null)
 		{
 			$startTimestamp = $record->getRecordedStartTimestamp();
 			if ($startTimestamp > TimeHelper::getInstance()->getUtcNowTimestamp())

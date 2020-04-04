@@ -156,6 +156,7 @@
 		BX.bind(this.getNode('show-ivr-config'), 'click', this.onShowIvrClick.bind(this));
 		BX.bind(this.getNode('select-group'), 'change', this._onGroupIdChanged.bind(this));
 		BX.bind(this.getNode('select-ivr'), 'change', this._onIvrIdChanged.bind(this));
+		BX.bind(this.getNode('transcribe-language-select'), 'change', this._onTranscribeLanguageChanged.bind(this));
 		BX.bind(this.getNode('input-line-prefix'), 'input', this._onInputLinePrefixInput.bind(this));
 		BX.bind(this.getNode('more-tunes'), 'click', this._onMoreTunesClick.bind(this));
 		BX.bind(this.getNode('delete-caller-id'), 'click', this._onDeleteCallerIdClick.bind(this));
@@ -621,6 +622,20 @@
 		this.previousIvrId = this.currentIvrId;
 		this.currentIvrId = ivrId;
 		BX.PreventDefault(e);
+	};
+
+	BX.Voximplant.ConfigEditor.prototype._onTranscribeLanguageChanged = function (e)
+	{
+		var languageId = e.target.value;
+		var engineWrap = this.getNode("transcribe-provider-wrap");
+		if (languageId == "RUSSIAN_RU") // @see \Bitrix\Voximplant\Asr\Language::RUSSIAN_RU
+		{
+			engineWrap.style.maxHeight = engineWrap.dataset.height;
+		}
+		else
+		{
+			engineWrap.style.maxHeight = 0;
+		}
 	};
 
 	BX.Voximplant.ConfigEditor.prototype._onSliderClosed = function(event)

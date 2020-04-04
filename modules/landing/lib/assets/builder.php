@@ -9,13 +9,11 @@ use Bitrix\Main;
 
 abstract class Builder
 {
-	const TYPE_STANDART = 'STANDART';
-	const TYPE_WEBPACK = 'WEBPACK';
-	
-	const MODULE_ID = 'landing';
-	const FOLDER_NAME = 'assets';
-	const PACKAGE_NAME = 'landing_assets';
-	
+	protected const TYPE_STANDART = 'STANDART';
+	protected const TYPE_WEBPACK = 'WEBPACK';
+
+	public const PACKAGE_NAME = 'landing_assets';
+
 	/**
 	 * @var ResourceCollection
 	 */
@@ -24,8 +22,18 @@ abstract class Builder
 	 * @var array
 	 */
 	protected $normalizedResources = [];
-	
-	public function __construct($resources)
+	/**
+	 * Asset pack may be attached to landing
+	 * @var int
+	 */
+	protected $landingId = 0;
+
+	/**
+	 * Builder constructor.
+	 * @param ResourceCollection $resources
+	 * @throws ArgumentTypeException
+	 */
+	public function __construct(ResourceCollection $resources)
 	{
 		if ($resources instanceof ResourceCollection)
 		{
@@ -36,14 +44,15 @@ abstract class Builder
 			throw new ArgumentTypeException($resources, 'ResourceCollection');
 		}
 	}
-	
+
 	/**
-	 * @param ResourceCollection
-	 * @param string $type
-	 * @return StandartBuilder|WebpackBuilder
+	 * @param ResourceCollection $resources	Resources object
+	 * @param string $type Builder type
+	 * @return Builder
 	 * @throws ArgumentException
+	 * @throws ArgumentTypeException
 	 */
-	public static function createByType($resources, $type)
+	public static function createByType(ResourceCollection $resources, string $type): ?Builder
 	{
 		switch ($type)
 		{
@@ -55,32 +64,48 @@ abstract class Builder
 				throw new ArgumentException("Unknown landing asset builder type `$type`.");
 		}
 	}
-	
-	abstract public function setOutput();
-	
-	abstract protected function normalizeResources();
-	
-	protected function initResourcesAsJsExtension($resources, $extName = null)
+
+	/**
+	 * Assets pack must be attached only to once landing. Set ID
+	 * @param int $lid - landing ID
+	 */
+	public function attachToLanding(int $lid): void
 	{
-		if(!$extName)
+		$this->landingId = (int)$lid;
+	}
+
+	/**
+	 * Add assets to page
+	 * @return mixed
+	 */
+	abstract public function setOutput();
+
+	abstract protected function normalizeResources();
+
+	protected function initResourcesAsJsExtension(array $resources, $extName = null): void
+	{
+		if (!$extName)
 		{
 			$extName = self::PACKAGE_NAME;
 		}
 		$extFullName = $extName . '_' . md5(serialize($resources));
-		
+
 		$resources = array_merge($resources, [
 			'bundle_js' => $extFullName,
 			'bundle_css' => $extFullName,
 		]);
+		/** @noinspection PhpMethodOrClassCallIsNotCaseSensitiveInspection */
 		\CJSCore::registerExt($extName, $resources);
 		\CJSCore::Init($extName);
 	}
-	
-	protected function setStrings()
+
+	/**
+	 * Add assets strings to page
+	 */
+	protected function setStrings(): void
 	{
-		foreach($this->resources->getStrings() as $string)
+		foreach ($this->resources->getStrings() as $string)
 		{
-			// Main\Page\Asset::getInstance()->addString($string);
 			Main\Page\Asset::getInstance()->addString($string, false, Main\Page\AssetLocation::AFTER_JS);
 		}
 	}

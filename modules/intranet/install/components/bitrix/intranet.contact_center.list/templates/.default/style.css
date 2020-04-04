@@ -141,6 +141,10 @@
 	background-color: #02aff0;
 }
 
+.intranet-contact-item-lightGrayBlue {
+	background-color: #6A89B0;
+}
+
 .intranet-contact-item-darkgreen {
 	background-color: #00b4ac;
 }
@@ -267,4 +271,11 @@
 	z-index: 3000;
 	transform: translateZ(0);
 	overflow: hidden;
+}
+
+.intranet-contact-center-title {
+	color: #000;
+	font: 18px/24px 'OpenSans-Regular', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	margin-bottom: 19px;
+	margin-top: 35px;
 }

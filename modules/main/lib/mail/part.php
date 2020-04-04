@@ -186,10 +186,8 @@ class Part
 		}
 		else
 		{
-			$modifier = (@preg_match('//u', $body) ? 'u' : '');
-
 			return preg_replace(
-				'/(.{1,990})(?:\s|$)|(.{990})/S' . $modifier,
+				'/(.{1,990})(?:\s|$)|(.{990})/S',
 				'$1$2' . $this->eol,
 				$body
 			);

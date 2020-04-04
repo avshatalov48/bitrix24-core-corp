@@ -6,6 +6,8 @@ use Bitrix\Main\ModuleManager;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Component\ParameterSigner;
 use Bitrix\Bitrix24\Integrator;
+use Bitrix\Main\Engine\CurrentUser;
+use Bitrix\Main\Config\Option;
 
 class CIntranetUserProfileComponentAjaxController extends \Bitrix\Main\Engine\Controller
 {
@@ -122,8 +124,8 @@ class CIntranetUserProfileComponentAjaxController extends \Bitrix\Main\Engine\Co
 	{
 		if (
 			!(
-				Loader::includeModule("bitrix24") && \CBitrix24::IsPortalAdmin(\Bitrix\Main\Engine\CurrentUser::get()->getId())
-				|| \Bitrix\Main\Engine\CurrentUser::get()->isAdmin()
+				Loader::includeModule("bitrix24") && \CBitrix24::IsPortalAdmin(CurrentUser::get()->getId())
+				|| CurrentUser::get()->isAdmin()
 			)
 		)
 		{
@@ -288,14 +290,41 @@ class CIntranetUserProfileComponentAjaxController extends \Bitrix\Main\Engine\Co
 		}
 	}
 
+	protected function getGroupsId(&$employeesGroupId, &$portalAdminGroupId)
+	{
+		$employeesGroupId = "";
+		$portalAdminGroupId = "";
+
+		if (ModuleManager::isModuleInstalled("bitrix24"))
+		{
+			$employeesGroupId = "11";
+			$portalAdminGroupId = "12";
+		}
+		else
+		{
+			$dbGroup = \CGroup::GetList($by, $order, ["STRING_ID" => implode("|", ["EMPLOYEES_".SITE_ID, "PORTAL_ADMINISTRATION_".SITE_ID])]);
+			while ($group = $dbGroup->Fetch())
+			{
+				if ($group["STRING_ID"] === "EMPLOYEES_".SITE_ID)
+				{
+					$employeesGroupId = $group["ID"];
+				}
+				elseif ($group["STRING_ID"] === "PORTAL_ADMINISTRATION_".SITE_ID)
+				{
+					$portalAdminGroupId = $group["ID"];
+				}
+			}
+		}
+	}
+
 	public function setAdminRightsAction()
 	{
 		global $USER;
 
 		if (
 			!(
-				Loader::includeModule("bitrix24") && \CBitrix24::IsPortalAdmin(\Bitrix\Main\Engine\CurrentUser::get()->getId())
-				|| \Bitrix\Main\Engine\CurrentUser::get()->isAdmin()
+				Loader::includeModule("bitrix24") && \CBitrix24::IsPortalAdmin(CurrentUser::get()->getId())
+				|| CurrentUser::get()->isAdmin()
 			)
 		)
 		{
@@ -326,31 +355,33 @@ class CIntranetUserProfileComponentAjaxController extends \Bitrix\Main\Engine\Co
 			$removeRightsFromCurrentAdmin = true;
 		}
 
+		$this->getGroupsId($employeesGroupId, $portalAdminGroupId);
+
 		$currentUserGroups = CUser::GetUserGroup($this->userId);
 		foreach ($currentUserGroups as $groupKey => $group)
 		{
-			if ($group == 11)
+			if ($group == $employeesGroupId)
 			{
 				unset($currentUserGroups[$groupKey]);
 			}
 		}
 		$currentUserGroups[] = "1";
-		$currentUserGroups[] = "12";
+		$currentUserGroups[] = $portalAdminGroupId;
 		$user = new \CUser();
 		$user->Update($this->userId, ['GROUP_ID' => $currentUserGroups]);
 
 		//remove rights from current admin because of limit
 		if ($removeRightsFromCurrentAdmin)
 		{
-			$currentAdminGroups = CUser::GetUserGroup($USER->GetID());
+			$currentAdminGroups = \CUser::GetUserGroup($USER->GetID());
 			foreach ($currentAdminGroups as $groupKey => $group)
 			{
-				if ($group == 1 || $group == 12)
+				if ($group == 1 || $group == $portalAdminGroupId)
 				{
 					unset($currentAdminGroups[$groupKey]);
 				}
 			}
-			$currentAdminGroups[] = "11";
+			$currentAdminGroups[] = $employeesGroupId;
 
 			$user->Update($USER->GetID(), ['GROUP_ID' => $currentAdminGroups]);
 		}
@@ -364,8 +395,8 @@ class CIntranetUserProfileComponentAjaxController extends \Bitrix\Main\Engine\Co
 
 		if (
 			!(
-				Loader::includeModule("bitrix24") && \CBitrix24::IsPortalAdmin(\Bitrix\Main\Engine\CurrentUser::get()->getId())
-				|| \Bitrix\Main\Engine\CurrentUser::get()->isAdmin()
+				Loader::includeModule("bitrix24") && \CBitrix24::IsPortalAdmin(CurrentUser::get()->getId())
+				|| CurrentUser::get()->isAdmin()
 			)
 		)
 		{
@@ -387,15 +418,17 @@ class CIntranetUserProfileComponentAjaxController extends \Bitrix\Main\Engine\Co
 			return false;
 		}
 
-		$currentUserGroups = CUser::GetUserGroup($this->userId);
+		$this->getGroupsId($employeesGroupId, $portalAdminGroupId);
+
+		$currentUserGroups = \CUser::GetUserGroup($this->userId);
 		foreach ($currentUserGroups as $groupKey => $group)
 		{
-			if ($group == 1 || $group == 12)
+			if ($group == 1 || $group == $portalAdminGroupId)
 			{
 				unset($currentUserGroups[$groupKey]);
 			}
 		}
-		$currentUserGroups[] = "11";
+		$currentUserGroups[] = $employeesGroupId;
 		$user = new \CUser();
 		$user->Update($this->userId, ['GROUP_ID' => $currentUserGroups]);
 
@@ -426,7 +459,7 @@ class CIntranetUserProfileComponentAjaxController extends \Bitrix\Main\Engine\Co
 	{
 		global $USER;
 
-		if (!(Loader::includeModule("bitrix24") && \CBitrix24::IsPortalAdmin(\Bitrix\Main\Engine\CurrentUser::get()->getId())))
+		if (!(Loader::includeModule("bitrix24") && \CBitrix24::IsPortalAdmin(CurrentUser::get()->getId())))
 		{
 			return false;
 		}
@@ -512,8 +545,8 @@ class CIntranetUserProfileComponentAjaxController extends \Bitrix\Main\Engine\Co
 		if (
 			!(
 				Loader::includeModule("bitrix24")
-				&& \CBitrix24::IsPortalAdmin(\Bitrix\Main\Engine\CurrentUser::get()->getId())
-				|| \Bitrix\Main\Engine\CurrentUser::get()->isAdmin()
+				&& \CBitrix24::IsPortalAdmin(CurrentUser::get()->getId())
+				|| CurrentUser::get()->isAdmin()
 			)
 		)
 		{
@@ -529,7 +562,7 @@ class CIntranetUserProfileComponentAjaxController extends \Bitrix\Main\Engine\Co
 				$newFieldsView[] = $field["VALUE"];
 			}
 		}
-		\Bitrix\Main\Config\Option::set("intranet", "user_profile_view_fields", implode(",", $newFieldsView), SITE_ID);
+		Option::set("intranet", "user_profile_view_fields", implode(",", $newFieldsView), SITE_ID);
 
 		$newFieldsEdit = array();
 
@@ -540,7 +573,38 @@ class CIntranetUserProfileComponentAjaxController extends \Bitrix\Main\Engine\Co
 				$newFieldsEdit[] = $field["VALUE"];
 			}
 		}
-		\Bitrix\Main\Config\Option::set("intranet", "user_profile_edit_fields", implode(",", $newFieldsEdit), SITE_ID);
+		Option::set("intranet", "user_profile_edit_fields", implode(",", $newFieldsEdit), SITE_ID);
+
+		return true;
+	}
+
+	public function onUserFieldAddAction($fieldName = "")
+	{
+		if (!CurrentUser::get()->isAdmin())
+		{
+			return false;
+		}
+
+		if (empty($fieldName))
+		{
+			return false;
+		}
+
+		$viewFieldsSettings = Option::get("intranet", "user_profile_view_fields", false);
+		if ($viewFieldsSettings !== false)
+		{
+			$viewFieldsSettings = explode(",", $viewFieldsSettings);
+			$viewFieldsSettings[] = $fieldName;
+			Option::set("intranet", "user_profile_view_fields", implode(",", $viewFieldsSettings), SITE_ID);
+		}
+
+		$editFieldsSettings = Option::get("intranet", "user_profile_edit_fields", false);
+		if ($editFieldsSettings !== false)
+		{
+			$editFieldsSettings = explode(",", $editFieldsSettings);
+			$editFieldsSettings[] = $fieldName;
+			Option::set("intranet", "user_profile_edit_fields", implode(",", $editFieldsSettings), SITE_ID);
+		}
 
 		return true;
 	}

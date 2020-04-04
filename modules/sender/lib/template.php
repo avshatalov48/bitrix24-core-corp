@@ -125,7 +125,9 @@ class TemplateTable extends ORM\Data\DataManager
 			'CONTENT' => array(
 				'data_type' => 'string',
 				'required' => true,
-				'title' => Loc::getMessage('SENDER_ENTITY_TEMPLATE_FIELD_TITLE_CONTENT')
+				'title' => Loc::getMessage('SENDER_ENTITY_TEMPLATE_FIELD_TITLE_CONTENT'),
+				'save_data_modification' => array('\Bitrix\Main\Text\Emoji', 'getSaveModificator'),
+				'fetch_data_modification' => array('\Bitrix\Main\Text\Emoji', 'getFetchModificator'),
 			),
 			'USE_COUNT' => array(
 				'data_type' => 'integer',

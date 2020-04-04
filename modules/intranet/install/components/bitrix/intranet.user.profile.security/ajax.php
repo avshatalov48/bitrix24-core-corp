@@ -148,20 +148,4 @@ class CIntranetUserProfileSecurityComponentAjaxController extends \Bitrix\Main\E
 			return new \Bitrix\Main\Engine\Response\Component($componentName, '', $params, $additionalParams);
 		}
 	}
-
-	public function showSocservAction($userId)
-	{
-		$additionalParams = [
-			'pageTitle' => Loc::getMessage("INTRANET_USER_PROFILE_SOCSERV_TITLE"),
-		];
-		$componentName = 'bitrix:socserv.auth.split';
-
-		$params = [
-			"USER_ID" => $userId,
-			"SHOW_PROFILES" => "Y",
-			"CAN_DELETE" => "Y",
-		];
-
-		return new \Bitrix\Main\Engine\Response\Component($componentName, 'twitpost', $params, $additionalParams);
-	}
 }

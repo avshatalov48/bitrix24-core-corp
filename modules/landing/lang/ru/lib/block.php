@@ -16,5 +16,5 @@ $MESS['LANDING_BLOCK_SUBSCRIBE_EXP_MESSAGE'] = '<p>Блок добавлен и�
 $MESS['LANDING_BLOCK_SUBSCRIBE_EXP_BUTTON'] = 'Активировать подписку';
 $MESS['LANDING_BLOCK_MESSAGE_ERROR_DYNAMIC_LIMIT_TITLE'] = 'Тарифное ограничение';
 $MESS['LANDING_BLOCK_MESSAGE_ERROR_DYNAMIC_LIMIT_TEXT'] = 'На вашем тарифе можно опубликовать два динамических блока. Удалите предыдущие блоки или получите больше возможностей, перейдя на другой тарифный план.';
-$MESS['LANDING_BLOCK_MESSAGE_ERROR_LIMIT_BUTTON'] = 'Перейтина расширенный тариф';
+$MESS['LANDING_BLOCK_MESSAGE_ERROR_LIMIT_BUTTON'] = 'Перейти на расширенный тариф';
 $MESS['LD_BLOCK_SECTION_LAST'] = 'Последние';

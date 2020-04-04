@@ -19,7 +19,6 @@ use Bitrix\Sale\Payment;
 use Bitrix\Sale\PriceMaths;
 use Bitrix\Sale\Registry;
 use Bitrix\Sale\Result;
-use Bitrix\Main\IO;
 use Bitrix\Sale\ResultError;
 
 Loc::loadMessages(__FILE__);
@@ -31,9 +30,11 @@ Loc::loadMessages(__FILE__);
 class Service
 {
 	const EVENT_ON_BEFORE_PAYMENT_PAID = 'OnSalePsServiceProcessRequestBeforePaid';
+	const EVENT_INITIATE_PAY_SUCCESS = 'onSalePsInitiatePaySuccess';
+	const EVENT_INITIATE_PAY_ERROR = 'onSalePsInitiatePayError';
 	const PAY_SYSTEM_PREFIX = 'PAYSYSTEM_';
 
-	/** @var ServiceHandler|IHold|IPartialHold|IRefund|IPrePayable|ICheckable|IPayable|IRequested|IPdf|IDocumentGeneratePdf $handler */
+	/** @var ServiceHandler|IHold|IPartialHold|IRefund|IPrePayable|ICheckable|IPayable|IRequested|IPdf|IDocumentGeneratePdf|IRecurring $handler */
 	private $handler = null;
 
 	/** @var array */
@@ -45,47 +46,12 @@ class Service
 	/**
 	 * Service constructor.
 	 * @param $fields
+	 * @throws \Bitrix\Main\ArgumentNullException
+	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
 	 */
 	public function __construct($fields)
 	{
-		$handlerType = '';
-		$className = '';
-
-		$name = Manager::getFolderFromClassName($fields['ACTION_FILE']);
-
-		foreach (Manager::getHandlerDirectories() as $type => $path)
-		{
-			if (IO\File::isFileExists($_SERVER['DOCUMENT_ROOT'].$path.$name.'/handler.php'))
-			{
-				$className = Manager::getClassNameFromPath($fields['ACTION_FILE']);
-				if (!class_exists($className))
-					require_once($_SERVER['DOCUMENT_ROOT'].$path.$name.'/handler.php');
-
-				if (class_exists($className))
-				{
-					$handlerType = $type;
-					break;
-				}
-
-				$className = '';
-			}
-		}
-
-		if ($className === '')
-		{
-			if (Manager::isRestHandler($fields['ACTION_FILE']))
-			{
-				$className = '\Bitrix\Sale\PaySystem\RestHandler';
-				if (!class_exists($fields['ACTION_FILE']))
-				{
-					class_alias($className, $fields['ACTION_FILE']);
-				}
-			}
-			else
-			{
-				$className = '\Bitrix\Sale\PaySystem\CompatibilityHandler';
-			}
-		}
+		[$className, $handlerType] = Manager::includeHandler($fields["ACTION_FILE"]);
 
 		$this->fields = $fields;
 		$this->handler = new $className($handlerType, $this);
@@ -133,10 +99,23 @@ class Service
 			}
 		}
 
-		if (!$initResult->isSuccess())
+		if ($initResult->isSuccess())
+		{
+			$event = new Event('sale', self::EVENT_INITIATE_PAY_SUCCESS, ['payment' => $payment]);
+			$event->send();
+		}
+		else
 		{
 			$error = implode("\n", $initResult->getErrorMessages());
 			Logger::addError(get_class($this->handler).". InitiatePay: ".$error);
+
+			$event = new Event('sale', self::EVENT_INITIATE_PAY_ERROR,
+				[
+					'payment' => $payment,
+					'errors' => $initResult->getErrorMessages(),
+				]
+			);
+			$event->send();
 		}
 
 		return $initResult;
@@ -226,7 +205,7 @@ class Service
 			return $processResult;
 		}
 
-		list($orderId, $paymentId) = Manager::getIdsByPayment($paymentId, $this->getField('ENTITY_REGISTRY_TYPE'));
+		[$orderId, $paymentId] = Manager::getIdsByPayment($paymentId, $this->getField('ENTITY_REGISTRY_TYPE'));
 
 		if (!$orderId)
 		{
@@ -953,7 +932,7 @@ class Service
 				{
 					foreach ($entityIds as $entityId)
 					{
-						list($orderId, $paymentId) = $entityId;
+						[$orderId, $paymentId] = $entityId;
 						if ($orderId > 0)
 						{
 							$hash = md5($orderId);
@@ -1120,5 +1099,49 @@ class Service
 	public function setTemplateMode($mode)
 	{
 		$this->handler->setInitiateMode($mode);
+	}
+
+	/**
+	 * @param Payment $payment
+	 * @return bool
+	 */
+	public function isRecurring(Payment $payment): bool
+	{
+		return $this->handler instanceof IRecurring
+			&& $this->handler->isRecurring($payment);
+	}
+
+	/**
+	 * @param Payment $payment
+	 * @param Request|null $request
+	 * @return ServiceResult
+	 */
+	public function repeatRecurrent(Payment $payment, Request $request = null): ServiceResult
+	{
+		$result = new ServiceResult();
+
+		if ($this->isRecurring($payment))
+		{
+			return $this->handler->repeatRecurrent($payment, $request);
+		}
+
+		return $result;
+	}
+
+	/**
+	 * @param Payment $payment
+	 * @param Request|null $request
+	 * @return ServiceResult
+	 */
+	public function cancelRecurrent(Payment $payment, Request $request = null): ServiceResult
+	{
+		$result = new ServiceResult();
+
+		if ($this->isRecurring($payment))
+		{
+			return $this->handler->cancelRecurrent($payment, $request);
+		}
+
+		return $result;
 	}
 }

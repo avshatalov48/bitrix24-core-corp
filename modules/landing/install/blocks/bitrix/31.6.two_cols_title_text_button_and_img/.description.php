@@ -8,8 +8,8 @@ use \Bitrix\Main\Localization\Loc;
 
 return [
 	'block' => [
-		// 'name' => Loc::getMessage('LANDING_BLOCK_31_6-NAME'),
-		// 'section' => array('text_image'),
+		'name' => Loc::getMessage('LANDING_BLOCK_31_6-NAME'),
+		'section' => array('tiles', 'news'),
 	],
 	'cards' => [
 		'.landing-block-card' => [
@@ -43,7 +43,15 @@ return [
 	'style' => [
 		'.landing-block-card' => [
 			'name' => Loc::getMessage('LANDING_BLOCK_31_6-CARD'),
-			'type' => ['align-items', 'animation'],
+			'type' => ['bg', 'align-items', 'margin-bottom'],
+		],
+		'.landing-block-node-img' => [
+			'name' => Loc::getMessage('LANDING_BLOCK_31_6-COLUMN'),
+			'type' => 'animation',
+		],
+		'.landing-block-node-col-text' => [
+			'name' => Loc::getMessage('LANDING_BLOCK_31_6-COLUMN'),
+			'type' => 'animation',
 		],
 		'.landing-block-node-subtitle' => [
 			'name' => Loc::getMessage('LANDING_BLOCK_31_6-SUBTITLE'),

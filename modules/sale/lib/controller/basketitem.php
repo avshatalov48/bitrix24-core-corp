@@ -9,6 +9,7 @@ use Bitrix\Main\Engine\Response\DataType\Page;
 use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Result;
+use Bitrix\Sale;
 use Bitrix\Main\UI\PageNavigation;
 use Bitrix\Sale\Helpers\Order\Builder\SettingsContainer;
 
@@ -17,21 +18,30 @@ class BasketItem extends Controller
 	public function getPrimaryAutoWiredParameter()
 	{
 		return new ExactParameter(
-			\Bitrix\Sale\BasketItem::class,
+			Sale\BasketItem::class,
 			'basketItem',
 			function($className, $id) {
+				$registry = Sale\Registry::getInstance(Sale\Registry::REGISTRY_TYPE_ORDER);
 
-				$r = \Bitrix\Sale\Basket::getList([
+				/** @var Sale\Basket $basketClass */
+				$basketClass = $registry->getBasketClassName();
+
+				$r = $basketClass::getList([
 					'select'=>['ORDER_ID'],
 					'filter'=>['ID'=>$id]
 				]);
 
 				if($row = $r->fetch())
 				{
-					$order = \Bitrix\Sale\Order::load($row['ORDER_ID']);
+					/** @var Sale\Order $orderClass */
+					$orderClass = $registry->getOrderClassName();
+
+					$order = $orderClass::load($row['ORDER_ID']);
 					$basket = $order->getBasket()->getItemByBasketCode($id);
-					if($basket instanceof \Bitrix\Sale\BasketItem)
+					if ($basket instanceof \Bitrix\Sale\BasketItem)
+					{
 						return $basket;
+					}
 				}
 				else
 				{
@@ -213,7 +223,12 @@ class BasketItem extends Controller
 		$select = empty($select)? ['*']:$select;
 		$order = empty($order)? ['ID'=>'ASC']:$order;
 
-		$items = \Bitrix\Sale\Basket::getList(
+		$registry = Sale\Registry::getInstance(Sale\Registry::REGISTRY_TYPE_ORDER);
+
+		/** @var Sale\Basket $basketClass */
+		$basketClass = $registry->getBasketClassName();
+
+		$items = $basketClass::getList(
 			[
 				'select'=>$select,
 				'filter'=>$filter,
@@ -225,8 +240,13 @@ class BasketItem extends Controller
 
 		return new Page('BASKET_ITEMS', $items, function() use ($filter)
 		{
+			$registry = Sale\Registry::getInstance(Sale\Registry::REGISTRY_TYPE_ORDER);
+
+			/** @var Sale\Basket $basketClass */
+			$basketClass = $registry->getBasketClassName();
+
 			return count(
-				\Bitrix\Sale\Basket::getList(['filter'=>$filter])->fetchAll()
+				$basketClass::getList(['filter'=>$filter])->fetchAll()
 			);
 		});
 	}
@@ -459,7 +479,11 @@ class BasketItem extends Controller
 		}
 		else
 		{
-			$order = \Bitrix\Sale\Order::load($fields['ORDER_ID']);
+			$registry = Sale\Registry::getInstance(Sale\Registry::REGISTRY_TYPE_ORDER);
+			/** @var Sale\Order $orderClass */
+			$orderClass = $registry->getOrderClassName();
+
+			$order = $orderClass::load($fields['ORDER_ID']);
 			if($order->getCurrency() <> $fields['CURRENCY'])
 			{
 				$result->addError(new Error('Currency must be the currency of the order'));

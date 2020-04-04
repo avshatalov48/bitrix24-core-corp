@@ -11,7 +11,7 @@ use Bitrix\Voximplant\Security\Helper;
 
 Loc::loadMessages(__FILE__);
 
-class CVoximplantStatisticDetailComponent extends \CBitrixComponent
+class CVoximplantStatisticDetailComponent extends \CBitrixComponent implements \Bitrix\Main\Engine\Contract\Controllerable
 {
 	const LOCK_OPTION = 'export_statistic_detail_lock';
 	const MODULE = 'voximplant';
@@ -34,6 +34,7 @@ class CVoximplantStatisticDetailComponent extends \CBitrixComponent
 
 	protected function init()
 	{
+		Loader::includeModule("voximplant");
 		$this->enableExport = CVoxImplantAccount::IsPro();
 		$this->gridOptions = new \Bitrix\Main\Grid\Options($this->gridId);
 
@@ -390,107 +391,120 @@ class CVoximplantStatisticDetailComponent extends \CBitrixComponent
 			->setPageSize($pageSize)
 			->initFromUri();
 
-		$cursor = Voximplant\StatisticTable::getList(array(
+		$idRows = Voximplant\StatisticTable::getList([
+			"select" => ["ID"],
 			"runtime" => $this->getRuntimeFields($this->arResult['FILTER']),
 			"filter" => $this->getFilter($this->arResult['FILTER']),
 			"order" => $sorting["sort"],
-			"select" => array(
-				'*',
-				'TRANSCRIPT_COST' => 'TRANSCRIPT.COST'
-			),
-			"count_total" => true,
 			"offset" => ($this->excelMode ? 0 : $nav->getOffset()),
-			"limit" => ($this->excelMode ? 0 : $nav->getLimit())
-		));
+			"limit" => ($this->excelMode ? 0 : $nav->getLimit() + 1)
+		])->fetchAll();
+		$idList = array_column($idRows, "ID");
 
 		$rows = array();
 		$portalNumbers = CVoxImplantConfig::GetPortalNumbers(true, true);
 		$crmEntities = array();
-		while ($row = $cursor->fetch())
+		$rowCount = 0;
+
+		if(count($idList) > 0)
 		{
-			if ($row["PORTAL_USER_ID"] > 0 && !in_array($row["PORTAL_USER_ID"], $this->userIds))
+			$cursor = Voximplant\StatisticTable::getList(array(
+				"select" => array(
+					'*',
+					'TRANSCRIPT_COST' => 'TRANSCRIPT.COST'
+				),
+				"filter" => [
+					"@ID" => $idList
+				],
+				"order" => $sorting["sort"],
+			));
+			while ($row = $cursor->fetch())
 			{
-				$this->userIds[] = $row["PORTAL_USER_ID"];
-			}
-
-			$row = CVoxImplantHistory::PrepereData($row);
-			if (!$this->showCallCost)
-			{
-				$row['COST_TEXT'] = '-';
-			}
-
-			if (in_array($row["CALL_FAILED_CODE"], Array(1, 2, 3, 409)))
-			{
-				$row["CALL_FAILED_REASON"] = Loc::getMessage("TELEPHONY_STATUS_".$row["CALL_FAILED_CODE"]);
-			}
-
-			if (isset($portalNumbers[$row["PORTAL_NUMBER"]]))
-			{
-				$row["PORTAL_NUMBER"] = $portalNumbers[$row["PORTAL_NUMBER"]];
-			}
-			else
-			{
-				if (substr($row["PORTAL_NUMBER"], 0, 3) == 'sip')
+				$rowCount++;
+				if(!$this->excelMode && $rowCount > $nav->getLimit())
 				{
-					$row["PORTAL_NUMBER"] = Loc::getMessage("TELEPHONY_PORTAL_PHONE_SIP_OFFICE", Array('#ID#' => substr($row["PORTAL_NUMBER"], 3)));
+					break;
+				}
+				if ($row["PORTAL_USER_ID"] > 0 && !in_array($row["PORTAL_USER_ID"], $this->userIds))
+				{
+					$this->userIds[] = $row["PORTAL_USER_ID"];
+				}
+
+				$row = CVoxImplantHistory::PrepereData($row);
+				if (!$this->showCallCost)
+				{
+					$row['COST_TEXT'] = '-';
+				}
+
+				if (in_array($row["CALL_FAILED_CODE"], Array(1, 2, 3, 409)))
+				{
+					$row["CALL_FAILED_REASON"] = Loc::getMessage("TELEPHONY_STATUS_".$row["CALL_FAILED_CODE"]);
+				}
+
+				if (isset($portalNumbers[$row["PORTAL_NUMBER"]]))
+				{
+					$row["PORTAL_NUMBER"] = $portalNumbers[$row["PORTAL_NUMBER"]];
 				}
 				else
 				{
-					if (substr($row["PORTAL_NUMBER"], 0, 3) == 'reg')
+					if (substr($row["PORTAL_NUMBER"], 0, 3) === 'sip')
 					{
-						$row["PORTAL_NUMBER"] = Loc::getMessage("TELEPHONY_PORTAL_PHONE_SIP_CLOUD", Array('#ID#' => substr($row["PORTAL_NUMBER"], 3)));
+						$row["PORTAL_NUMBER"] = Loc::getMessage("TELEPHONY_PORTAL_PHONE_SIP_OFFICE", Array('#ID#' => substr($row["PORTAL_NUMBER"], 3)));
 					}
 					else
 					{
-						if (strlen($row["PORTAL_NUMBER"]) <= 0)
+						if (substr($row["PORTAL_NUMBER"], 0, 3) === 'reg')
 						{
-							$row["PORTAL_NUMBER"] = Loc::getMessage("TELEPHONY_PORTAL_PHONE_EMPTY");
+							$row["PORTAL_NUMBER"] = Loc::getMessage("TELEPHONY_PORTAL_PHONE_SIP_CLOUD", Array('#ID#' => substr($row["PORTAL_NUMBER"], 3)));
+						}
+						else
+						{
+							if (strlen($row["PORTAL_NUMBER"]) <= 0)
+							{
+								$row["PORTAL_NUMBER"] = Loc::getMessage("TELEPHONY_PORTAL_PHONE_EMPTY");
+							}
 						}
 					}
 				}
-			}
 
-			if ($row["PORTAL_USER_ID"] == 0 && strlen($row["PHONE_NUMBER"]) <= 0)
-			{
-				$row["CALL_DURATION_TEXT"] = '';
-				$row["INCOMING_TEXT"] = '';
-			}
+				if ($row["PORTAL_USER_ID"] == 0 && strlen($row["PHONE_NUMBER"]) <= 0)
+				{
+					$row["CALL_DURATION_TEXT"] = '';
+					$row["INCOMING_TEXT"] = '';
+				}
 
-			if (intval($row["CALL_VOTE"]) == 0)
-			{
-				$row["CALL_VOTE"] = '-';
-			}
+				if (intval($row["CALL_VOTE"]) == 0)
+				{
+					$row["CALL_VOTE"] = '-';
+				}
 
-			$row['PHONE_NUMBER'] = static::formatPhoneNumber($row['PHONE_NUMBER']);
-			$row['CALL_START_DATE'] = $this->formatDate($row['CALL_START_DATE']);
+				$row['PHONE_NUMBER'] = static::formatPhoneNumber($row['PHONE_NUMBER']);
+				$row['CALL_START_DATE'] = $this->formatDate($row['CALL_START_DATE']);
 
-			$t_row = array(
-				"data" => $row,
-				"columns" => array(),
-				"editable" => false,
-				"actions" => $this->getActions($row),
-			);
-			$rows[] = $t_row;
-			if(isset($row['CRM_ENTITY_TYPE']) && isset($row['CRM_ENTITY_ID']))
-			{
-				$crmEntities[] = array(
-					'TYPE' => $row['CRM_ENTITY_TYPE'],
-					'ID' => $row['CRM_ENTITY_ID']
+				$t_row = array(
+					"data" => $row,
+					"columns" => array(),
+					"editable" => false,
+					"actions" => $this->getActions($row),
 				);
+				$rows[] = $t_row;
+				if(isset($row['CRM_ENTITY_TYPE']) && isset($row['CRM_ENTITY_ID']))
+				{
+					$crmEntities[] = array(
+						'TYPE' => $row['CRM_ENTITY_TYPE'],
+						'ID' => $row['CRM_ENTITY_ID']
+					);
+				}
 			}
 		}
 
+		$nav->setRecordCount($nav->getOffset() + $rowCount);
 		$crmFields = CVoxImplantCrmHelper::resolveEntitiesFields($crmEntities);
 		$this->userData = $this->getUserData($this->userIds);
 		$this->arResult["ROWS"] = $this->addCustomColumns($rows, $crmFields);
-
-		$this->arResult["ROWS_COUNT"] = $cursor->getCount();
-		$nav->setRecordCount($cursor->getCount());
-
 		$this->arResult["SORT"] = $sorting["sort"];
 		$this->arResult["SORT_VARS"] = $sorting["vars"];
 		$this->arResult["NAV_OBJECT"] = $nav;
-
 		$this->arResult["HEADERS"] = array(
 			array("id" => "USER_NAME", "name" => GetMessage("TELEPHONY_HEADER_USER"), "default" => true, "editable" => false),
 			array("id" => "PORTAL_NUMBER", "name" => GetMessage("TELEPHONY_HEADER_PORTAL_PHONE"), "default" => false, "editable" => false),
@@ -828,5 +842,30 @@ class CVoximplantStatisticDetailComponent extends \CBitrixComponent
 			$this->includeComponentTemplate();
 			return $this->arResult;
 		}
+	}
+
+	public function configureActions()
+	{
+		return [];
+	}
+
+	public function getRowsCountAction()
+	{
+		$this->init();
+
+		$filterDefinition = $this->getFilterDefinition();
+		$cursor = Voximplant\StatisticTable::getList([
+			"select" => [
+				"CNT" => Query::expr()->count("ID")
+			],
+			"runtime" => $this->getRuntimeFields($filterDefinition),
+			"filter" => $this->getFilter($filterDefinition),
+		]);
+		$row = $cursor->fetch();
+
+		return [
+			"rowsCount" => $row['CNT'],
+			"sql" => Query::getLastQuery()
+		];
 	}
 }

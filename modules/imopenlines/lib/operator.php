@@ -53,35 +53,35 @@ class Operator
 	{
 		if (!$this->moduleLoad)
 		{
-			return Array(
+			return [
 				'RESULT' => false
-			);
+			];
 		}
 
 		if ($this->chatId <= 0)
 		{
 			$this->error = new BasicError(__METHOD__, 'CHAT_ID', Loc::getMessage('IMOL_OPERATOR_ERROR_CHAT_ID'));
 
-			return Array(
+			return [
 				'RESULT' => false
-			);
+			];
 		}
 		if ($this->userId <= 0)
 		{
 			$this->error = new BasicError(__METHOD__, 'USER_ID', Loc::getMessage('IMOL_OPERATOR_ERROR_USER_ID'));
 
-			return Array(
+			return [
 				'RESULT' => false
-			);
+			];
 		}
 
-		$orm = \Bitrix\Im\Model\RelationTable::getList(array(
-			"select" => array("ID", "ENTITY_TYPE" => "CHAT.ENTITY_TYPE"),
-			"filter" => array(
+		$orm = \Bitrix\Im\Model\RelationTable::getList([
+			"select" => ["ID", "ENTITY_TYPE" => "CHAT.ENTITY_TYPE"],
+			"filter" => [
 				"=CHAT_ID" => $this->chatId,
 				"=USER_ID" => $this->userId,
-			),
-		));
+			],
+		]);
 
 		if ($relation = $orm->fetch())
 		{
@@ -232,20 +232,32 @@ class Operator
 		return true;
 	}
 
+	/**
+	 * @param bool $active
+	 * @return bool
+	 * @throws Main\ArgumentException
+	 * @throws Main\LoaderException
+	 * @throws Main\ObjectException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
 	public function setPinMode($active = true)
 	{
+		$result = false;
+
 		$access = $this->checkAccess();
-		if (!$access['RESULT'])
+		if ($access['RESULT'])
 		{
-			return false;
+			$chat = new Chat($this->chatId);
+			$chat->setPauseFlag([
+				'ACTIVE' => $active,
+				'USER_ID' => $this->userId
+			]);
+
+			$result = true;
 		}
 
-		$chat = new Chat($this->chatId);
-		$chat->setPauseFlag(Array(
-			'ACTIVE' => $active
-		));
-
-		return true;
+		return $result;
 	}
 
 	public function closeDialog()

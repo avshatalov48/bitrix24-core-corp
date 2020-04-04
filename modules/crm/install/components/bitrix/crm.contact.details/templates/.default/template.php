@@ -90,6 +90,7 @@ $APPLICATION->IncludeComponent(
 			'USER_FIELD_ENTITY_ID' => $arResult['USER_FIELD_ENTITY_ID'],
 			'USER_FIELD_CREATE_PAGE_URL' => $arResult['USER_FIELD_CREATE_PAGE_URL'],
 			'USER_FIELD_CREATE_SIGNATURE' => $arResult['USER_FIELD_CREATE_SIGNATURE'],
+			'SHOW_EMPTY_FIELDS' => $arResult['SHOW_EMPTY_FIELDS'],
 			'SERVICE_URL' => '/bitrix/components/bitrix/crm.contact.details/ajax.php?'.bitrix_sessid_get(),
 			'EXTERNAL_CONTEXT_ID' => $arResult['EXTERNAL_CONTEXT_ID'],
 			'CONTEXT_ID' => $arResult['CONTEXT_ID'],

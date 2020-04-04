@@ -23,6 +23,7 @@ use \Bitrix\Crm\Search\SearchEnvironment;
 use \Bitrix\Crm\Tracking\Internals\TraceChannelTable;
 use \Bitrix\Crm\Tracking\Channel;
 use \Bitrix\Sale;
+use \Bitrix\Rest\Marketplace;
 
 class CrmKanbanComponent extends \CBitrixComponent
 {
@@ -82,7 +83,7 @@ class CrmKanbanComponent extends \CBitrixComponent
 	);
 	protected $selectPresets = array(
 		'lead' => array('ID', 'STATUS_ID', 'TITLE', 'DATE_CREATE', 'OPPORTUNITY', 'OPPORTUNITY_ACCOUNT', 'CURRENCY_ID', 'ACCOUNT_CURRENCY_ID', 'CONTACT_ID', 'COMPANY_ID', 'MODIFY_BY_ID', 'IS_RETURN_CUSTOMER', 'ASSIGNED_BY'),
-		'deal' => array('ID', 'STAGE_ID', 'TITLE', 'DATE_CREATE', 'BEGINDATE', 'OPPORTUNITY', 'OPPORTUNITY_ACCOUNT', 'CURRENCY_ID', 'ACCOUNT_CURRENCY_ID', 'IS_REPEATED_APPROACH', 'IS_RETURN_CUSTOMER', 'CONTACT_ID', 'COMPANY_ID', 'MODIFY_BY_ID', 'ASSIGNED_BY'),
+		'deal' => array('ID', 'STAGE_ID', 'TITLE', 'DATE_CREATE', 'BEGINDATE', 'OPPORTUNITY', 'OPPORTUNITY_ACCOUNT', 'EXCH_RATE', 'CURRENCY_ID', 'ACCOUNT_CURRENCY_ID', 'IS_REPEATED_APPROACH', 'IS_RETURN_CUSTOMER', 'CONTACT_ID', 'COMPANY_ID', 'MODIFY_BY_ID', 'ASSIGNED_BY'),
 		'quote' => array('ID', 'STATUS_ID', 'TITLE', 'DATE_CREATE', 'BEGINDATE', 'OPPORTUNITY', 'OPPORTUNITY_ACCOUNT', 'CURRENCY_ID', 'ACCOUNT_CURRENCY_ID', 'CONTACT_ID', 'COMPANY_ID', 'MODIFY_BY_ID', 'ASSIGNED_BY'),
 		'invoice' => array('ID', 'STATUS_ID', 'DATE_INSERT', 'DATE_INSERT_FORMAT', 'PAY_VOUCHER_DATE', 'DATE_BILL', 'ORDER_TOPIC', 'PRICE', 'CURRENCY', 'UF_CONTACT_ID', 'UF_COMPANY_ID', 'RESPONSIBLE_ID'),
 		'order' => array('ID', 'ACCOUNT_NUMBER', 'STATUS_ID', 'DATE_INSERT', 'PAY_VOUCHER_DATE', 'DATE_PAYED', 'ORDER_TOPIC', 'PRICE', 'CURRENCY', 'RESPONSIBLE_ID')
@@ -166,6 +167,30 @@ class CrmKanbanComponent extends \CBitrixComponent
 			'kanban_cc_hide',
 			false
 		);
+		if (
+			(
+				$this->type == $this->types['lead'] ||
+				$this->type == $this->types['deal']
+			) &&
+			Loader::includeModule('rest') &&
+			is_callable('\Bitrix\Rest\Marketplace\Url::getConfigurationPlacementUrl')
+		)
+		{
+			$this->arParams['HIDE_REST'] = \CUserOptions::getOption(
+				'crm',
+				'kanban_rest_hide',
+				false
+			);
+			$this->arParams['REST_DEMO_URL'] = Marketplace\Url::getConfigurationPlacementUrl(
+				'crm_' . strtolower($this->type),
+				'crm_kanban'
+			);
+		}
+		else
+		{
+			$this->arParams['HIDE_REST'] = true;
+			$this->arParams['REST_DEMO_URL'] = '';
+		}
 		//additional select-edit fields
 		if (
 			$this->type == $this->types['lead'] ||
@@ -336,7 +361,7 @@ class CrmKanbanComponent extends \CBitrixComponent
 		}
 		else
 		{
-			$this->currency = $this->arParams['CURRENCY'] = \CCrmCurrency::GetBaseCurrencyID();
+			$this->currency = $this->arParams['CURRENCY'] = \CCrmCurrency::GetAccountCurrencyID();
 		}
 
 		$this->application = $GLOBALS['APPLICATION'];
@@ -1520,7 +1545,7 @@ class CrmKanbanComponent extends \CBitrixComponent
 
 			//get sums and counts
 
-			$fieldSum = $this->fieldSum ? $this->fieldSum : 'OPPORTUNITY';
+			$fieldSum = $this->fieldSum ? $this->fieldSum : 'OPPORTUNITY_ACCOUNT';
 
 			if ($this->type == $types['invoice'])
 			{
@@ -2321,7 +2346,7 @@ class CrmKanbanComponent extends \CBitrixComponent
 								$row[$code] = (array) $row[$code];
 								foreach ($row[$code] as &$rowDate)
 								{
-									if ($rowDate instanceof \Bitrix\Main\Type\Date)
+									if ($rowDate instanceof \Bitrix\Main\Type\Date || $rowDate instanceof \DateTime)
 									{
 										$timestamp = $rowDate->getTimestamp();
 									}
@@ -3741,24 +3766,37 @@ class CrmKanbanComponent extends \CBitrixComponent
 				>=
 				$this->arResult['ITEMS']['columns'][0]['count']
 			)
-			&&
-			(
+		)
+		{
+			if (
 				$type == $types['lead'] ||
 				$type == $types['deal']
 			)
-		)
-		{
+			{
+				$this->arResult['ITEMS']['items'] = array_merge(
+					$this->arResult['ITEMS']['items'],
+					[[
+						 'id' => -1,
+						 'name' => null,
+						 'countable' => false,
+						 'droppable' => true,
+						 'draggable' => true,
+						 'columnId' => $this->arResult['ITEMS']['columns'][0]['id'],
+						 'special_type' => 'import'
+					 ]]
+				);
+			}
 			$this->arResult['ITEMS']['items'] = array_merge(
 				$this->arResult['ITEMS']['items'],
 				[[
-					'id' => -1,
-					'name' => null,
-					'countable' => false,
-					'droppable' => true,
-					'draggable' => true,
-					'columnId' => $this->arResult['ITEMS']['columns'][0]['id'],
-					'special_type' => 'import'
-				]]
+					 'id' => -2,
+					 'name' => null,
+					 'countable' => false,
+					 'droppable' => true,
+					 'draggable' => true,
+					 'columnId' => $this->arResult['ITEMS']['columns'][0]['id'],
+					 'special_type' => 'rest'
+				 ]]
 			);
 		}
 
@@ -4573,12 +4611,12 @@ class CrmKanbanComponent extends \CBitrixComponent
 		if ($this->type == $this->types['order'])
 		{
 			$order = Order\Order::load($id);
-			$row = $order->getFieldValues();
 			if (!$order)
 			{
 				$result->addError(new Error(Loc::getMessage('CRM_KANBAN_ERROR_ACCESS_DENIED')));
 				return $result;
 			}
+			$row = $order->getFieldValues();
 		}
 		else
 		{
@@ -5081,6 +5119,25 @@ class CrmKanbanComponent extends \CBitrixComponent
 		\CUserOptions::setOption(
 			'crm',
 			'kanban_cc_hide',
+			!$hidden
+		);
+		return [];
+	}
+
+	/**
+	 * Show or hide REST demo block in option.
+	 * @return array
+	 */
+	protected function actionToggleRest()
+	{
+		$hidden = \CUserOptions::getOption(
+			'crm',
+			'kanban_rest_hide',
+			false
+		);
+		\CUserOptions::setOption(
+			'crm',
+			'kanban_rest_hide',
 			!$hidden
 		);
 		return [];

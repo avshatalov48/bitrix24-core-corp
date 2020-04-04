@@ -8,6 +8,8 @@ use Bitrix\Timeman\Model\Schedule\Shift\ShiftTable;
 use Bitrix\Timeman\Util\Form\BaseForm;
 use Bitrix\Timeman\Util\Form\Filter;
 
+Loc::loadMessages(__FILE__);
+
 class ShiftForm extends BaseForm
 {
 	public $shiftId;
@@ -62,14 +64,17 @@ class ShiftForm extends BaseForm
 
 		return [
 			(new Filter\Validator\RegularExpressionValidator('breakDurationFormatted', 'startTimeFormatted', 'endTimeFormatted'))
+				->configureDefaultErrorMessage('TM_SHIFT_FORM_TIME_FORMATTED_ERROR')
 				->configurePattern($this->timeHelper->getTimeRegExp())
 			,
 			(new Filter\Modifier\StringModifier('name', 'workDays'))
 				->configureTrim(true)
 			,
 			(new Filter\Validator\StringValidator('name', 'workDays'))
+				->configureDefaultErrorMessage('TM_SHIFT_FORM_NAME_ERROR')
 			,
-			(new Filter\Validator\NumberValidator('shiftId', 'scheduleId'))
+			(new Filter\Validator\NumberValidator('shiftId', 'scheduleId', 'breakDuration', 'startTime', 'endTime'))
+				->configureDefaultErrorMessage('TM_SHIFT_FORM_NUMBER_INTEGER_ONLY_ERROR')
 				->configureMin(0, $minError)
 				->configureIntegerOnly(true, $intError)
 			,
@@ -84,6 +89,11 @@ class ShiftForm extends BaseForm
 	public function getFieldLabels()
 	{
 		return [
+			'breakDurationFormatted' => Loc::getMessage('TM_SHIFT_FORM_BREAK_DURATION_TITLE'),
+			'startTimeFormatted' => Loc::getMessage('TM_SHIFT_FORM_START_TIME_TITLE'),
+			'endTimeFormatted' => Loc::getMessage('TM_SHIFT_FORM_END_TIME_TITLE'),
+			'shiftId' => Loc::getMessage('TM_SHIFT_FORM_SHIFT_ID_TITLE'),
+			'scheduleId' => Loc::getMessage('TM_SHIFT_FORM_SCHEDULE_ID_TITLE'),
 			'name' => Loc::getMessage('TM_SHIFT_FORM_NAME_TITLE'),
 			'breakDuration' => Loc::getMessage('TM_SHIFT_FORM_BREAK_DURATION_TITLE'),
 			'startTime' => Loc::getMessage('TM_SHIFT_FORM_START_TIME_TITLE'),
@@ -103,12 +113,12 @@ class ShiftForm extends BaseForm
 
 	public function getFormattedStartTime($defaultStartTime = 9 * 60 * 60)
 	{
-		return $this->timeHelper->convertSecondsToHoursMinutesPostfix(isset($this->startTime) ? $this->startTime : $defaultStartTime);
+		return $this->timeHelper->convertSecondsToHoursMinutesAmPm(isset($this->startTime) ? $this->startTime : $defaultStartTime);
 	}
 
 	public function getFormattedEndTime($defaultEndTime = 18 * 60 * 60)
 	{
-		return $this->timeHelper->convertSecondsToHoursMinutesPostfix(isset($this->endTime) ? $this->endTime : $defaultEndTime);
+		return $this->timeHelper->convertSecondsToHoursMinutesAmPm(isset($this->endTime) ? $this->endTime : $defaultEndTime);
 	}
 
 	public function getFormattedBreakDuration($defaultBreakDuration = 1 * 60 * 60)

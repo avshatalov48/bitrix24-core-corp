@@ -44,6 +44,9 @@ class FinishStep extends \CWizardStep
 			$this->component->setSaleBsmSiteMasterStub();
 
 			SitePatcher::unsetG2GroupFromHidePanel();
+
+			// enable composite
+			SitePatcher::enableComposite();
 		}
 
 		ob_start();

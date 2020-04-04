@@ -1052,6 +1052,8 @@ class CAllCatalogDiscount
 		if (empty($priceRow))
 			return array();
 
+		$registry = Sale\Registry::getInstance(Sale\Registry::REGISTRY_TYPE_ORDER);
+
 		$freezeCoupons = (empty($coupons) && is_array($coupons));
 
 		if ($freezeCoupons)
@@ -1081,7 +1083,10 @@ class CAllCatalogDiscount
 		}
 		if ($basket === null)
 		{
-			$basket = Sale\Basket::create($siteId);
+			/** @var Sale\Basket $basketClass */
+			$basketClass = $registry->getBasketClassName();
+
+			$basket = $basketClass::create($siteId);
 			$basketItem = $basket->createItem($product['MODULE'], $product['ID']);
 		}
 
@@ -1114,8 +1119,11 @@ class CAllCatalogDiscount
 
 		if($isRenewal)
 		{
+			/** @var Sale\Order $orderClass */
+			$orderClass = $registry->getOrderClassName();
+
 			/** @var \Bitrix\Sale\Order $order */
-			$order = Sale\Order::create($siteId);
+			$order = $orderClass::create($siteId);
 			$order->setField('RECURRING_ID', 1);
 			$order->setBasket($basket);
 
@@ -2299,8 +2307,12 @@ class CAllCatalogDiscount
 					),
 					'select' => array('ID', 'PRODUCT_PRICE_ID',),
 				);
+				$registry = Sale\Registry::getInstance(Sale\Registry::REGISTRY_TYPE_ORDER);
 
-				$res = \Bitrix\Sale\Basket::getList($basketFilter);
+				/** @var Sale\Basket $basketClass */
+				$basketClass = $registry->getBasketClassName();
+
+				$res = $basketClass::getList($basketFilter);
 				while($basketItem = $res->fetch())
 				{
 					$productPriceIds[] = $basketItem['PRODUCT_PRICE_ID'];

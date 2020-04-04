@@ -91,6 +91,22 @@ final class TransformerManager implements InterfaceCallback
 		$isTransformationError = $status === Command::STATUS_ERROR;
 		$data = $document->getFile(false)->getData();
 		$data['isTransformationError'] = $isTransformationError;
+		if($isTransformationError)
+		{
+			if(isset($result['command']))
+			{
+				$command = $result['command'];
+				if($command instanceof Command)
+				{
+					$error = $command->getError();
+					if($error)
+					{
+						$data['transformationErrorMessage'] = $error->getMessage();
+						$data['transformationErrorCode'] = $error->getCode();
+					}
+				}
+			}
+		}
 		static::addToStack($data);
 		$pdfId = null;
 		if(isset($updateData['PDF_ID']) && $updateData['PDF_ID'] > 0)

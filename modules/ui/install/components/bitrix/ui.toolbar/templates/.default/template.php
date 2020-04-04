@@ -10,6 +10,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 $this->setFrameMode(true);
 
 $filter = Toolbar::getFilter();
+$afterTitleButtons = Toolbar::renderAfterTitleButtons();
 $rightButtons = Toolbar::renderRightButtons();
 $filterButtons = Toolbar::renderAfterFilterButtons();
 $favoriteStar = Toolbar::hasFavoriteStar()? '<span class="ui-toolbar-star" id="uiToolbarStar"></span>' : '';
@@ -29,29 +30,40 @@ $titleStyles = !empty($titleProps) ? ' style="'.$titleProps.'"' : "";
 
 ?>
 
-<div id="uiToolbarContainer" class="ui-toolbar">
-	<div id="pagetitleContainer" class="ui-toolbar-title-box"<?=$titleStyles?>><?
+<div id="uiToolbarContainer" class="ui-toolbar"><?
+	?><div id="pagetitleContainer" class="ui-toolbar-title-box"<?=$titleStyles?>><?
 		?><span id="pagetitle" class="ui-toolbar-title-item"><?=$APPLICATION->getTitle(false)?></span><?
-		?><?= $favoriteStar ?>
-	</div><?
+		?><?= $favoriteStar ?><?
+	?></div><?
+
+	if (strlen($afterTitleButtons)):
+		?><div class="ui-toolbar-after-title-buttons"><?=$afterTitleButtons?></div><?
+	endif;
 
 	if (strlen($filter)):
-		?><div class="ui-toolbar-filter-box"><?=$filter?><?=$filterButtons?></div><?
+		?><div class="ui-toolbar-filter-box"><?=$filter?><?
+			if (strlen($filterButtons)): ?><?
+				?><div class="ui-toolbar-filter-buttons"><?=$filterButtons?></div><?
+			endif
+		?></div><?
 	endif;
 
 	if (strlen($rightButtons)):
-		?><div class="ui-toolbar-btn-box"><?=$rightButtons?></div><?
+		?><div class="ui-toolbar-right-buttons"><?=$rightButtons?></div><?
 	endif;
 ?></div>
 
 <script>
-    new BX.UI.Toolbar(<?=\Bitrix\Main\Web\Json::encode([
+    BX.UI.ToolbarManager.create(Object.assign(<?=\Bitrix\Main\Web\Json::encode([
+    	"id" => Toolbar::getId(),
         "titleMinWidth" => Toolbar::getTitleMinWidth(),
 		"titleMaxWidth" => Toolbar::getTitleMaxWidth(),
 		"buttonIds" => array_map(function(\Bitrix\UI\Buttons\BaseButton $button){
 			return $button->getUniqId();
 		}, Toolbar::getButtons()),
     ])?>,
-		targetContainer = document.getElementById('uiToolbarContainer')
-	);
+		{
+			target: document.getElementById('uiToolbarContainer')
+		}
+	));
 </script>

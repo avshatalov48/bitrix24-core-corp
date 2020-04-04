@@ -71,9 +71,7 @@
 
 		reinvite: function(userId, isExtranetUser, bindNode)
 		{
-			BX.ajax.runComponentAction(this.componentName, 'reinviteUser', {
-				mode: 'class',
-				signedParameters: this.signedParameters,
+			BX.ajax.runAction('intranet.controller.invite.reinvite', {
 				data: {
 					params: {
 						userId: userId,
@@ -81,15 +79,17 @@
 					}
 				}
 			}).then(function (response) {
+				if (response.data.result)
+				{
+					var InviteAccessPopup = BX.PopupWindowManager.create('invite_access' + Math.floor(Math.random() * 1000), bindNode, {
+						content: '<p>' + BX.message('INTRANET_USER_LIST_ACTION_REINVITE_SUCCESS') + '</p>',
+						offsetLeft: -10,
+						offsetTop: 7,
+						autoHide: true
+					});
 
-				var InviteAccessPopup = BX.PopupWindowManager.create('invite_access' + Math.floor(Math.random() * 1000), bindNode, {
-					content: '<p>' + BX.message('INTRANET_USER_LIST_ACTION_REINVITE_SUCCESS') + '</p>',
-					offsetLeft: -10,
-					offsetTop: 7,
-					autoHide: true
-				});
-
-				InviteAccessPopup.show();
+					InviteAccessPopup.show();
+				}
 			}.bind(this), function (response) {
 
 			}.bind(this));

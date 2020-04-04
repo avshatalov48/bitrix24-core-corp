@@ -9,20 +9,13 @@ use Bitrix\Sale\BasketItemCollection;
 use Bitrix\Sale\Cashbox\Errors\Error;
 use Bitrix\Sale\Delivery\Services\EmptyDeliveryService;
 use Bitrix\Sale\Internals\Input\File;
-use Bitrix\Sale\Order;
-use Bitrix\Sale\Payment;
+use Bitrix\Sale;
 use Bitrix\Sale\PaySystem\Manager;
-use Bitrix\Sale\PropertyValue;
 use Bitrix\Sale\PropertyValueBase;
-use Bitrix\Sale\PropertyValueCollection;
-use Bitrix\Sale\Rest\Attributes;
-use Bitrix\Sale\Rest\Synchronization\LoggerDiag;
 use Bitrix\Sale\Result;
 use Bitrix\Sale\Shipment;
 use Bitrix\Sale\ShipmentItem;
 use Bitrix\Sale\ShipmentItemCollection;
-use Bitrix\Sale\TradeBindingEntity;
-use Bitrix\Sale\TradingPlatformTable;
 
 /**
  * Class OrderBuilderRestSale
@@ -171,7 +164,7 @@ class OrderBuilderRest extends OrderBuilder
 		$basketItem = $shipmentItem->getBasketItem();
 		/** @var BasketItemCollection $basket */
 		$basket = $basketItem->getCollection();
-		/** @var Order $order */
+		/** @var Sale\Order $order */
 		$order = $basket->getOrder();
 
 		$allAllowedQuantity = $this->getQuantityBasketItemFromShipmentCollection($basketItem);
@@ -216,7 +209,7 @@ class OrderBuilderRest extends OrderBuilder
 	{
 		/** @var BasketItemCollection $basket */
 		$basket = $basketItem->getCollection();
-		/** @var Order $order */
+		/** @var Sale\Order $order */
 		$order = $basket->getOrder();
 
 		$allQuantity = 0;
@@ -369,7 +362,10 @@ class OrderBuilderRest extends OrderBuilder
 
 	protected function getSettableOrderFields()
 	{
-		return Order::getAvailableFields();
+		/** @var Sale\Order $orderClass */
+		$orderClass = $this->getRegistry()->getOrderClassName();
+
+		return $orderClass::getAvailableFields();
 	}
 
 	protected function checkDeliveryRestricted($shipment, $deliveryService, $shipmentFields)

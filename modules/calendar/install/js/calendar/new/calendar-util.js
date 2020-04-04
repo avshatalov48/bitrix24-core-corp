@@ -37,6 +37,7 @@
 			this.TIME_FORMAT_BX = BX.isAmPmMode() ? 'H:MI:SS T' : 'HH:MI:SS';
 			this.TIME_FORMAT = BX.date.convertBitrixFormat(BX.isAmPmMode() ? 'H:MI:SS T' : 'HH:MI:SS');
 		}
+
 		this.TIME_FORMAT_SHORT_BX = this.TIME_FORMAT_BX.replace(':SS', '');
 		this.TIME_FORMAT_SHORT = this.TIME_FORMAT.replace(':s', '');
 
@@ -1196,7 +1197,16 @@
 					message[key] = window.BX.message[key];
 					top.BX.message(message);
 				});
+
 				window.__BX = window.BX;
+				if (window.BX.Access && !top.BX.Access)
+				{
+					top.BX.Access = window.BX.Access;
+				}
+				if (window.BX.SocNetLogDestination && !top.BX.SocNetLogDestination)
+				{
+					top.BX.SocNetLogDestination = window.BX.SocNetLogDestination;
+				}
 				window.BX = top.BX;
 			}
 		},

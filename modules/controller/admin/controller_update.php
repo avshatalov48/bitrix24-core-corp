@@ -18,6 +18,7 @@ require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admi
 
 define("US_SHARED_KERNEL_PATH", COption::GetOptionString("controller", "shared_kernel_path", "/bitrix/clients"));
 define("US_SAVE_UPDATERS_DIR", US_SHARED_KERNEL_PATH."/updaters");
+define("US_SAVE_DESCRIPTIONS_DIR", US_SHARED_KERNEL_PATH."/updaters_descr");
 
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/classes/general/update_client.php");
 

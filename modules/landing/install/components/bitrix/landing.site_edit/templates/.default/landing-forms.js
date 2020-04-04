@@ -380,6 +380,10 @@ function deleteAccessRow(link)
 	BX.Landing.Custom503 = function()
 	{
 		var select = BX('landing-form-503-select');
+		if (!select)
+		{
+			return;
+		}
 		BX.bind(select, 'change', function ()
 		{
 			if(this.value === '')
@@ -475,6 +479,8 @@ function deleteAccessRow(link)
 		var layouts = document.querySelectorAll('.landing-form-layout-item');
 		var detailLayoutContainer = document.querySelector('.landing-form-layout-detail');
 		var layoutForm = document.querySelector('.landing-form-page-layout');
+		var gaSendClickCheckbox = document.getElementById('field-gacounter_send_click-use');
+		var gaSendClickSelect = document.getElementById('field-gacounter_click_type-use');
 		layouts = Array.prototype.slice.call(layouts, 0);
 		params.messages = params.messages || {};
 
@@ -626,19 +632,43 @@ function deleteAccessRow(link)
 
 		var arrowContainer = document.querySelector('.landing-form-select-buttons');
 		var layoutContainer = document.querySelector('.landing-form-list-inner');
-		var layoutWithoutRight = BX('layout-radio-6');
-		arrowContainer.addEventListener('click', handleArrowClick.bind(this));
+		arrowContainer.addEventListener('click', handlerOnArrowClick.bind(this));
 
-		function handleArrowClick(event) {
-			if(event.target.classList.contains('landing-form-select-next')) {
+		function handlerOnArrowClick(event) {
+			if (event.target.classList.contains('landing-form-select-next'))
+			{
 				layoutContainer.classList.add('landing-form-list-inner-prev');
-			} else {
+			}
+			else
+			{
 				layoutContainer.classList.remove('landing-form-list-inner-prev');
 			}
 		}
 
-		if(layoutWithoutRight.checked) {
-			layoutContainer.classList.add('landing-form-list-inner-prev');
+		function checkGaSendClickCheckbox() {
+
+			var parentNode = gaSendClickCheckbox.closest('.ui-checkbox-hidden-input-inner');
+
+			if (gaSendClickCheckbox.checked)
+			{
+				gaSendClickSelect.classList.add('ui-select-gacounter-show');
+				parentNode.classList.add('ui-checkbox-hidden-input-inner-gacounter');
+			}
+			else
+			{
+				gaSendClickSelect.classList.remove('ui-select-gacounter-show');
+				parentNode.classList.remove('ui-checkbox-hidden-input-inner-gacounter');
+			}
+		}
+
+		if (gaSendClickCheckbox)
+		{
+			gaSendClickCheckbox.addEventListener('click', function()
+			{
+				checkGaSendClickCheckbox();
+			}.bind(this));
+
+			checkGaSendClickCheckbox();
 		}
 	};
 
@@ -648,11 +678,17 @@ function deleteAccessRow(link)
 
 	BX.Landing.Metrika = function()
 	{
+		if (!BX('field-gacounter_counter-use'))
+		{
+			return;
+		}
+
 		var inputGa = BX('field-gacounter_counter-use');
 		var inputGaClick = BX('field-gacounter_send_click-use');
 		var inputGaShow = BX('field-gacounter_send_show-use');
 
-		if(inputGa.value === '') {
+		if (inputGa.value === '')
+		{
 			inputGaClick.disabled = true;
 			inputGaShow.disabled = true;
 		}
@@ -660,13 +696,16 @@ function deleteAccessRow(link)
 		inputGa.addEventListener('input', onInput.bind(this));
 
 		function onInput() {
-			if(inputGa.value === '') {
+			if (inputGa.value === '')
+			{
 				inputGaClick.disabled = true;
 				inputGaClick.checked = false;
 
 				inputGaShow.disabled = true;
 				inputGaShow.checked = false;
-			} else {
+			}
+			else
+			{
 				inputGaClick.disabled = false;
 				inputGaShow.disabled = false;
 			}
@@ -701,9 +740,12 @@ function deleteAccessRow(link)
 	BX.Landing.IblockSelect.prototype = {
 
 		init: function(section) {
-			if(!BX("settings_iblock_id").value) {
+			if (!BX("settings_iblock_id").value)
+			{
 				section.classList.add("landing-form-field-section-hidden");
-			} else {
+			}
+			else
+			{
 				section.classList.remove("landing-form-field-section-hidden");
 			}
 		}

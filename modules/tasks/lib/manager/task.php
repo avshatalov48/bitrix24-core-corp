@@ -58,10 +58,12 @@ final class Task extends \Bitrix\Tasks\Manager
 		$task = null;
 		$can = array();
 
-		if ($parameters[ 'PUBLIC_MODE' ])
+		if ($parameters['PUBLIC_MODE'])
 		{
 			$data = static::filterData($data, static::getFieldMap(), $errors);
 		}
+		$parameters['ANALYTICS_DATA'] = static::getAnalyticsData($data);
+
 		if ($errors->checkNoFatals())
 		{
 			$cacheAFWasDisabled = \CTasks::disableCacheAutoClear();
@@ -165,7 +167,12 @@ final class Task extends \Bitrix\Tasks\Manager
 
 			if (array_key_exists(Checklist::getCode(true), $data))
 			{
-				TaskCheckListFacade::merge($taskId, $userId, $data[CheckList::getCode(true)]);
+				TaskCheckListFacade::merge(
+					$taskId,
+					$userId,
+					$data[CheckList::getCode(true)],
+					['analyticsData' => $parameters['ANALYTICS_DATA']]
+				);
 			}
 
 			if (array_key_exists('SE_PARAMETER', $data))
@@ -319,9 +326,9 @@ final class Task extends \Bitrix\Tasks\Manager
 				'TASK_ACTION_UPDATE_PARAMETERS' => array(
 					'THROTTLE_MESSAGES' => $parameters[ 'THROTTLE_MESSAGES' ]
 				),
-				'DONT_SAVE_CHECKLIST' => $parameters['DONT_SAVE_CHECKLIST'],
 				'PUBLIC_MODE' => $parameters[ 'PUBLIC_MODE' ],
-				'ERRORS' => $errors
+				'ERRORS' => $errors,
+				'ANALYTICS_DATA' => static::getAnalyticsData($data),
 			);
 
 			$task = static::doUpdate($userId, $taskId, $data, $updateParams);
@@ -422,9 +429,14 @@ final class Task extends \Bitrix\Tasks\Manager
 			ProjectDependence::manageSet($continueAs, $taskId, $data[ ProjectDependence::getCode(true) ], $subEntityParams);
 		}
 
-		if (!$parameters['DONT_SAVE_CHECKLIST'] && array_key_exists(Checklist::getCode(true), $data))
+		if (array_key_exists(Checklist::getCode(true), $data))
 		{
-			TaskCheckListFacade::merge($taskId, $continueAs, $data[Checklist::getCode(true)]);
+			TaskCheckListFacade::merge(
+				$taskId,
+				$continueAs,
+				$data[Checklist::getCode(true)],
+				['analyticsData' => $parameters['ANALYTICS_DATA']]
+			);
 		}
 
 		if (array_key_exists('SE_PARAMETER', $data))
@@ -1136,5 +1148,50 @@ final class Task extends \Bitrix\Tasks\Manager
 		}
 
 		return $legal;
+	}
+
+	/**
+	 * @param $data
+	 * @return array
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	protected static function getAnalyticsData(&$data)
+	{
+		$code = Checklist::getCode(true);
+		$checklistData = $data[$code];
+
+		if (!$checklistData)
+		{
+			return [];
+		}
+
+		$checklistParents = array_filter(
+			$checklistData,
+			static function($item)
+			{
+				return is_array($item) && $item['PARENT_NODE_ID'] === '0';
+			}
+		);
+
+		$analyticsData = [
+			'checklistCount' => count($checklistParents),
+		];
+
+		if ($checklistData['analyticsData'])
+		{
+			foreach (explode(',', $checklistData['analyticsData']) as $key => $value)
+			{
+				$analyticsData[$value] = 1;
+			}
+		}
+
+		if ($checklistData['fromDescription'])
+		{
+			$analyticsData['fromDescription'] = 1;
+		}
+
+		unset($data[$code]['analyticsData'], $data[$code]['fromDescription']);
+
+		return $analyticsData;
 	}
 }

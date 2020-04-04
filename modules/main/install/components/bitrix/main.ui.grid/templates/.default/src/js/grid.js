@@ -505,19 +505,77 @@
 				var self = this;
 				this.tableFade();
 
-				this.getData().request('', "POST", data, '', function(res) {
-					try
-					{
-						res = JSON.parse(res);
-					} catch(err) {
-						res = {messages: []};
-					}
+				this.getData().request(
+					'',
+					"POST",
+					data,
+					'',
+					function(res) {
+						try
+						{
+							res = JSON.parse(res);
+						} catch(err) {
+							res = {messages: []};
+						}
 
-					if (res.messages.length)
-					{
-						self.arParams['MESSAGES'] = res.messages;
-						self.messages.show();
+						if (res.messages.length)
+						{
+							self.arParams['MESSAGES'] = res.messages;
+							self.messages.show();
 
+							var editButton = self.getActionsPanel().getButtons()
+								.find(function(button) {
+									return button.id === "grid_edit_button_control";
+								});
+
+							self.tableUnfade();
+							BX.fireEvent(editButton, 'click');
+
+							return;
+						}
+
+						self.getRows().reset();
+						var bodyRows = this.getBodyRows();
+						self.getUpdater().updateHeadRows(this.getHeadRows());
+						self.getUpdater().updateBodyRows(bodyRows);
+						self.getUpdater().updateFootRows(this.getFootRows());
+						self.getUpdater().updatePagination(this.getPagination());
+						self.getUpdater().updateMoreButton(this.getMoreButton());
+						self.getUpdater().updateCounterTotal(this.getCounterTotal());
+
+						self.adjustEmptyTable(bodyRows);
+
+						self.bindOnRowEvents();
+
+						self.bindOnMoreButtonEvents();
+						self.bindOnClickPaginationLinks();
+						self.bindOnClickHeader();
+						self.bindOnCheckAll();
+						self.updateCounterDisplayed();
+						self.updateCounterSelected();
+						self.disableActionsPanel();
+						self.disableForAllCounter();
+
+						if (self.getParam('SHOW_ACTION_PANEL'))
+						{
+							self.getUpdater().updateGroupActions(this.getActionPanel());
+						}
+
+						if (self.getParam('ALLOW_COLUMNS_SORT'))
+						{
+							self.colsSortable.reinit();
+						}
+
+						if (self.getParam('ALLOW_ROWS_SORT'))
+						{
+							self.rowsSortable.reinit();
+						}
+
+						self.tableUnfade();
+
+						BX.onCustomEvent(window, 'Grid::updated', [self]);
+					},
+					function(res) {
 						var editButton = self.getActionsPanel().getButtons()
 							.find(function(button) {
 								return button.id === "grid_edit_button_control";
@@ -525,51 +583,8 @@
 
 						self.tableUnfade();
 						BX.fireEvent(editButton, 'click');
-
-						return;
-					}
-
-					self.getRows().reset();
-					var bodyRows = this.getBodyRows();
-					self.getUpdater().updateHeadRows(this.getHeadRows());
-					self.getUpdater().updateBodyRows(bodyRows);
-					self.getUpdater().updateFootRows(this.getFootRows());
-					self.getUpdater().updatePagination(this.getPagination());
-					self.getUpdater().updateMoreButton(this.getMoreButton());
-					self.getUpdater().updateCounterTotal(this.getCounterTotal());
-
-					self.adjustEmptyTable(bodyRows);
-
-					self.bindOnRowEvents();
-
-					self.bindOnMoreButtonEvents();
-					self.bindOnClickPaginationLinks();
-					self.bindOnClickHeader();
-					self.bindOnCheckAll();
-					self.updateCounterDisplayed();
-					self.updateCounterSelected();
-					self.disableActionsPanel();
-					self.disableForAllCounter();
-
-					if (self.getParam('SHOW_ACTION_PANEL'))
-					{
-						self.getUpdater().updateGroupActions(this.getActionPanel());
-					}
-
-					if (self.getParam('ALLOW_COLUMNS_SORT'))
-					{
-						self.colsSortable.reinit();
-					}
-
-					if (self.getParam('ALLOW_ROWS_SORT'))
-					{
-						self.rowsSortable.reinit();
-					}
-
-					self.tableUnfade();
-
-					BX.onCustomEvent(window, 'Grid::updated', [self]);
-				});
+					},
+				);
 
 				return;
 			}

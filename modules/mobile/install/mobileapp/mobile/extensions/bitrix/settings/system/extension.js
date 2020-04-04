@@ -14,17 +14,13 @@ BX.addCustomEvent("onRegisterProvider", (addProviderHandler) =>
 	let forms = {};
 	let cache = {};
 
-	/**
-	 * @class
-	 * @implements DelayedRestRequestDelegate
-	 */
 	class OtherSettingsProvider extends SettingsProvider
 	{
 		constructor(id, title, subtitle = "")
 		{
 			super(id, title, subtitle);
 			this.params = {};
-			this.request = new DelayedRestRequest("mobile.settings.energy.set", this);
+			this.request = new DelayedRestRequest("mobile.settings.energy.set");
 		}
 
 		onButtonTap(data)
@@ -47,12 +43,11 @@ BX.addCustomEvent("onRegisterProvider", (addProviderHandler) =>
 				{
 					BX.rest.callMethod("mobile.settings.energy.get").then((result) =>
 					{
-						console.log(env.userId);
+						console.error(result.answer.result);
 						let params = result.answer.result;
 						if (params)
 						{
 							let list = [];
-
 							Application.storage.setObject(`settings.others.${env.userId}`, params);
 							for (let key in params)
 							{
@@ -75,33 +70,24 @@ BX.addCustomEvent("onRegisterProvider", (addProviderHandler) =>
 		onValueChanged(item)
 		{
 			this.params[item.id] = item.value;
-			this.request.send();
+			this.request
+				.setOptions(this.params)
+				.setDelay(500)
+				.call()
+				.then(()=>{
+					cache = Object.assign(cache, this.params);
+					console.log(cache);
+					Application.storage.setObject(`settings.others.${env.userId}`, cache);
+					this.params = {};
+				})
+				.catch(() => this.params = {});
+
 			super.onValueChanged();
 		}
 
 		onStateChanged(event, formId)
 		{
 			super.onStateChanged();
-		}
-
-		onDelayedRequestResult(result)
-		{
-			if (result["success"] == true)
-			{
-				for (let key in this.params)
-				{
-					cache[key] = this.params[key];
-				}
-
-				Application.storage.setObject(`settings.others.${env.userId}`, cache);
-			}
-
-			this.params = {};
-		}
-
-		getParams()
-		{
-			return this.params;
 		}
 	}
 

@@ -1,7 +1,6 @@
-<?
+<?php
 
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Sale\Delivery\Services;
 use Bitrix\Main\Application;
 use Bitrix\Sale\Services\PaySystem\Restrictions\Manager;
 use Bitrix\Sale\BusinessValue;
@@ -147,8 +146,58 @@ if(strlen($arResult["ERROR"]) <= 0 && $saleModulePermissions >= "W" && check_bit
 
 			$handler = $request->get('handler');
 			$paySystemId = (int)$request->get('paySystemId');
+			$psMode = $request->get('PS_MODE');
 
-			$data = \Bitrix\Sale\PaySystem\Manager::getHandlerDescription($handler);
+			$map = CSalePaySystemAction::getOldToNewHandlersMap();
+			if (isset($map[$handler]))
+				$handler = $map[$handler];
+
+			$className = \Bitrix\Sale\PaySystem\Manager::getClassNameFromPath($handler);
+
+			$path = \Bitrix\Sale\PaySystem\Manager::getPathToHandlerFolder($handler);
+			list($className) = \Bitrix\Sale\PaySystem\Manager::includeHandler($handler);
+
+			if (class_exists($className))
+			{
+				$modeList = $className::getHandlerModeList();
+				$isOrderHandler = strpos($handler, 'orderdocument') === 0;
+				if ($modeList || $isOrderHandler)
+				{
+					if ($modeList)
+					{
+						$psMode = $psMode ?? array_shift(array_keys($modeList));
+						$arResult["PAYMENT_MODE"] = Bitrix\Sale\Internals\Input\Enum::getEditHtml(
+							'PS_MODE',
+							array(
+								'OPTIONS' => $modeList,
+								'ID' => 'PS_MODE',
+								'ONCHANGE' => "BX.Sale.PaySystem.getHandlerOptions(BX('ACTION_FILE'))",
+							),
+							$psMode
+						);
+					}
+
+					if ($isOrderHandler)
+					{
+						$arResult["PAYMENT_MODE_TITLE"] = Loc::getMessage('SALE_PS_PS_MODE_DOCUMENT_TITLE');
+
+						$componentPath = \CComponentEngine::makeComponentPath('bitrix:documentgenerator.templates');
+						$componentPath = getLocalPath('components'.$componentPath.'/slider.php');
+						$uri = new \Bitrix\Main\Web\Uri($componentPath);
+						$params = [
+							'PROVIDER' => \Bitrix\Crm\Integration\DocumentGenerator\DataProvider\Order::class,
+							'MODULE' => 'crm'
+						];
+						$arResult['ORDER_DOC_ADD_LINK'] = $uri->addParams($params)->getLocator();
+					}
+					else
+					{
+						$arResult["PAYMENT_MODE_TITLE"] = Loc::getMessage('SALE_PS_PS_MODE_TITLE');
+					}
+				}
+			}
+
+			$data = \Bitrix\Sale\PaySystem\Manager::getHandlerDescription($handler, $psMode);
 
 			if ($paySystemId <= 0)
 			{
@@ -206,57 +255,6 @@ if(strlen($arResult["ERROR"]) <= 0 && $saleModulePermissions >= "W" && check_bit
 
 			$arResult["TARIF"] = $tariffBlock;
 
-			$map = CSalePaySystemAction::getOldToNewHandlersMap();
-			if (isset($map[$handler]))
-				$handler = $map[$handler];
-
-			$className = \Bitrix\Sale\PaySystem\Manager::getClassNameFromPath($handler);
-
-			$path = \Bitrix\Sale\PaySystem\Manager::getPathToHandlerFolder($handler);
-
-			if (!class_exists($className) && IO\File::isFileExists($_SERVER['DOCUMENT_ROOT'].$path.'/handler.php'))
-				require_once $_SERVER['DOCUMENT_ROOT'].$path.'/handler.php';
-
-			if (class_exists($className))
-			{
-				$isOrderHandler = strpos($handler, 'orderdocument') === 0;
-				$modeList = $className::getHandlerModeList();
-				if ($modeList || $isOrderHandler)
-				{
-					if ($modeList)
-					{
-						$psMode = ($request->get('PS_MODE') !== null) ? $request->get('PS_MODE') : $paySystem['PS_MODE'];
-						$arResult["PAYMENT_MODE"] = Bitrix\Sale\Internals\Input\Enum::getEditHtml(
-							'PS_MODE',
-							array(
-								'OPTIONS' => $modeList,
-								'ID' => 'PS_MODE',
-								'ONCHANGE' => "BX.Sale.PaySystem.getHandlerOptions(BX('ACTION_FILE'))",
-							),
-							$psMode
-						);
-					}
-
-					if ($isOrderHandler)
-					{
-						$arResult["PAYMENT_MODE_TITLE"] = Loc::getMessage('SALE_PS_PS_MODE_DOCUMENT_TITLE');
-
-						$componentPath = \CComponentEngine::makeComponentPath('bitrix:documentgenerator.templates');
-						$componentPath = getLocalPath('components'.$componentPath.'/slider.php');
-						$uri = new \Bitrix\Main\Web\Uri($componentPath);
-						$params = [
-							'PROVIDER' => \Bitrix\Crm\Integration\DocumentGenerator\DataProvider\Order::class,
-							'MODULE' => 'crm'
-						];
-						$arResult['ORDER_DOC_ADD_LINK'] = $uri->addParams($params)->getLocator();
-					}
-					else
-					{
-						$arResult["PAYMENT_MODE_TITLE"] = Loc::getMessage('SALE_PS_PS_MODE_TITLE');
-					}
-				}
-			}
-
 			if (IO\File::isFileExists($_SERVER['DOCUMENT_ROOT'].$path.'/.description.php'))
 			{
 				require $_SERVER['DOCUMENT_ROOT'].$path.'/.description.php';
@@ -282,7 +280,6 @@ if(strlen($arResult["ERROR"]) <= 0 && $saleModulePermissions >= "W" && check_bit
 
 					$arResult['SORT'] = 100;
 
-					$psMode = $request->get('PS_MODE') ? $request->get('PS_MODE') : $paySystem['PS_MODE'];
 					if ($psMode)
 					{
 						$fullPath = $handler.'/'.$psMode;

@@ -9,6 +9,11 @@ class TimeHelper
 {
 	protected static $instance;
 	private $dateFormat = false;
+	private $timezoneOffsets = [];
+	/** @var array */
+	private $formattedOffsets = [];
+	/** @var array */
+	private $usersUtcOffsets = [];
 
 	/**
 	 * @return static
@@ -27,10 +32,10 @@ class TimeHelper
 		return date('Z');
 	}
 
-	public function getTimeRegExp()
+	public function getTimeRegExp($ignoreAmPmMode = false)
 	{
 		$exp = '#^([0-9]|0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]';
-		if ($this->isAmPmMode())
+		if (!$ignoreAmPmMode && $this->isAmPmMode())
 		{
 			$exp .= '[ apm]{0,3}';
 		}
@@ -39,14 +44,18 @@ class TimeHelper
 
 	public function convertSecondsToHoursMinutes($seconds, $leadingHourZero = true)
 	{
+		if ($seconds === null)
+		{
+			return null;
+		}
 		return ($leadingHourZero ? str_pad($this->getHours($seconds), 2, 0, STR_PAD_LEFT) : $this->getHours($seconds))
 			   . ':' . str_pad($this->getMinutes($seconds), 2, 0, STR_PAD_LEFT);
 	}
 
-	public function convertSecondsToHoursMinutesPostfix($seconds)
+	public function convertSecondsToHoursMinutesAmPm($seconds)
 	{
-		$ts = $this->buildTimestampByFormattedDateForServer(ConvertTimeStamp()) + $seconds % 86400;
-		return FormatDate($this->isAmPmMode() ? 'h:i a' : 'H:i', $ts);
+		$ts = $this->buildTimestampByFormattedDateForServer(convertTimeStamp()) + $seconds % 86400;
+		return formatDate($this->isAmPmMode() ? 'h:i a' : 'H:i', $ts);
 	}
 
 	public function convertHoursMinutesToSeconds($value)
@@ -161,12 +170,12 @@ class TimeHelper
 		{
 			$tz = $this->createTimezoneByOffset($offset);
 		}
-		return $this->buildDateTimeAndSetTimezone('U', $timestamp, $tz);
+		return $this->buildDateTimeFromFormat('U', $timestamp, $tz);
 	}
 
-	public function convertUtcTimestampToHoursMinutesPostfix($timestamp, $offset = 0)
+	public function convertUtcTimestampToHoursMinutesAmPm($timestamp, $offset = 0)
 	{
-		return $this->convertSecondsToHoursMinutesPostfix(
+		return $this->convertSecondsToHoursMinutesAmPm(
 			$this->convertUtcTimestampToDaySeconds($timestamp, $offset)
 		);
 	}
@@ -192,25 +201,39 @@ class TimeHelper
 
 	public function getFormattedOffset($offsetSeconds, $leadingHourZero = true)
 	{
-		static $formattedOffsets = [];
-		if (!isset($formattedOffsets[$offsetSeconds]))
+		if (!isset($this->formattedOffsets[$offsetSeconds]))
 		{
 			$gmtOffset = $offsetSeconds > 0 ? '+' : '-';
 			$res = $gmtOffset . $this->convertSecondsToHoursMinutes(abs($offsetSeconds), $leadingHourZero);
-			$formattedOffsets[$offsetSeconds] = $res;
+			$this->formattedOffsets[$offsetSeconds] = $res;
 		}
-		return $formattedOffsets[$offsetSeconds];
+		return $this->formattedOffsets[$offsetSeconds];
 	}
 
 	public function getUserUtcOffset($userId)
 	{
-		$dateTimeServer = new \DateTime('now', $this->createTimezoneByOffset($this->getServerUtcOffset()));
-		return $dateTimeServer->getOffset() + $this->getUserToServerOffset($userId);
+		$userId = (int)$userId;
+		if ($this->usersUtcOffsets[$userId] === null)
+		{
+			$dateTimeServer = new \DateTime('now', $this->createTimezoneByOffset($this->getServerUtcOffset()));
+			$this->usersUtcOffsets[$userId] = $dateTimeServer->getOffset() + $this->getUserToServerOffset($userId);
+		}
+		return $this->usersUtcOffsets[$userId];
 	}
 
 	public function getUserToServerOffset($userId = null)
 	{
-		return \CTimeZone::GetOffset($userId, true);
+		$key = $userId === null ? -1 : (int)$userId;
+		if ($this->timezoneOffsets[$key] === null)
+		{
+			$this->timezoneOffsets[$key] = (int)\CTimeZone::getOffset($userId, true);
+		}
+		return $this->timezoneOffsets[$key];
+	}
+
+	public function setTimezoneOffsets($offsetsByUserId)
+	{
+		$this->timezoneOffsets = $offsetsByUserId;
 	}
 
 	public function getUserDateTimeNow($userId)
@@ -226,21 +249,6 @@ class TimeHelper
 		return $this->createTimezoneByOffset($userOffset);
 	}
 
-	public function createDateTimeFromFormat($format, $dateString, $offset = 0)
-	{
-		return $this->buildDateTimeAndSetTimezone($format, $dateString, $this->createTimezoneByOffset($offset));
-	}
-
-	private function buildDateTimeAndSetTimezone($format, $dateString, $timezone)
-	{
-		$dateTime = \DateTime::createFromFormat(
-			$format,
-			$dateString
-		);
-		$dateTime->setTimezone($timezone);
-		return $dateTime;
-	}
-
 	/**
 	 * @param string $format
 	 * @param string $dateString
@@ -249,28 +257,45 @@ class TimeHelper
 	 */
 	public function createUserDateTimeFromFormat($format, $dateString, $userId)
 	{
+		return $this->buildDateTimeFromFormat($format, $dateString, $this->getUserTimezone($userId));
+	}
+
+	public function createDateTimeFromFormat($format, $dateString, $offset = 0)
+	{
+		return $this->buildDateTimeFromFormat($format, $dateString, $this->createTimezoneByOffset($offset));
+	}
+
+	private function buildDateTimeFromFormat($format, $formattedDate, $timezone)
+	{
+		$dateTime = false;
 		if ($format === 'U')
 		{
-			return $dateString > 0 ? $this->buildDateTimeAndSetTimezone($format, $dateString, $this->getUserTimezone($userId)) : null;
+			if ((int)$formattedDate > 0)
+			{
+				$dateTime = \DateTime::createFromFormat(
+					$format,
+					$formattedDate
+				);
+				$dateTime->setTimezone($timezone);
+			}
 		}
 		else
 		{
 			$dateTime = \DateTime::createFromFormat(
 				$format,
-				$dateString,
-				$this->getUserTimezone($userId)
+				$formattedDate,
+				$timezone
 			);
 		}
-
 		return $dateTime === false ? null : $dateTime;
 	}
 
 	public function getCurrentServerDateFormatted()
 	{
-		$date = $this->buildDateTimeAndSetTimezone(
+		$date = $this->buildDateTimeFromFormat(
 			'U',
 			$this->getUtcNowTimestamp(),
-			new \DateTimeZone(date_default_timezone_get())
+			new \DateTimeZone($this->getDefaultServerTimezoneName())
 		);
 		return $date->format('Y-m-d');
 	}
@@ -333,9 +358,15 @@ class TimeHelper
 		$dateTime->setTime($this->getHours($seconds), $this->getMinutes($seconds), $this->getSeconds($seconds));
 	}
 
-	private function createTimezoneByOffset($offset)
+	public function createTimezoneByOffset($offsetSeconds)
 	{
-		return new \DateTimeZone($this->getFormattedOffset($offset));
+		$offsetSeconds = (int)$offsetSeconds;
+		static $timezonesByOffset = [];
+		if ($timezonesByOffset[$offsetSeconds] === null)
+		{
+			$timezonesByOffset[$offsetSeconds] = new \DateTimeZone($this->getFormattedOffset($offsetSeconds));
+		}
+		return $timezonesByOffset[$offsetSeconds];
 	}
 
 	public function getDayOfWeek(\DateTime $dateTime)
@@ -354,6 +385,63 @@ class TimeHelper
 
 	protected function isAmPmMode()
 	{
-		return IsAmPmMode();
+		return isAmPmMode();
+	}
+
+	public function normalizeSeconds($seconds)
+	{
+		$m = TimeDictionary::SECONDS_PER_DAY;
+		return ($seconds % $m + $m) % $m;
+	}
+
+	public function getPreviousDayOfWeek(\DateTime $userDateTime)
+	{
+		$today = $this->getDayOfWeek($userDateTime);
+		$today = $today - 1;
+		if ($today < 1)
+		{
+			$today = 7;
+		}
+		return $today;
+	}
+
+	public function getNextDayOfWeek(\DateTime $userDateTime)
+	{
+		$today = $this->getDayOfWeek($userDateTime);
+		$today = $today + 1;
+		if ($today > 7)
+		{
+			$today = 1;
+		}
+		return $today;
+	}
+
+	public function getServerIsoDate()
+	{
+		return date('c');
+	}
+
+	public function getDefaultServerTimezoneName()
+	{
+		return date_default_timezone_get();
+	}
+
+	/**
+	 * @param \DateTime|int $dateTime
+	 * @param $format
+	 * @return string
+	 */
+	public function formatDateTime($dateTime, $format)
+	{
+		if ($dateTime instanceof \DateTime || $dateTime instanceof Type\Date)
+		{
+			$timestamp = Type\DateTime::createFromPhp(\DateTime::createFromFormat('Y-m-d H:i:s', $dateTime->format('Y-m-d H:i:s')));
+		}
+		else
+		{
+			$timestamp = $dateTime;
+		}
+
+		return \formatDate($format, $timestamp);
 	}
 }

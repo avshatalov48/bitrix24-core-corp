@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm\Integration\Report\Dashboard\MyReports;
 
+use Bitrix\Crm\Category\DealCategory;
 use Bitrix\Crm\Integration\Report\View\MyReports\DealReport;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Report\VisualConstructor\Entity\Dashboard;
@@ -21,7 +22,7 @@ class DealBoard
 
 	public static function getPanelGuid()
 	{
-		return static::getCurrentCategory() > 0 ? 'deal_category_widget' : 'deal_widget';
+		return static::getCurrentCategory() >= 0 ? 'deal_category_widget' : 'deal_widget';
 	}
 
 	/**
@@ -32,6 +33,12 @@ class DealBoard
 	public static function getCurrentCategory()
 	{
 		return (int)\CUserOptions::GetOption("crm", static::CATEGORY_OPTION, 0);
+	}
+
+	public static function getCurrentCategoryName()
+	{
+		$currentCategory = static::getCurrentCategory();
+		return $currentCategory >= 0 ? DealCategory::getName(static::getCurrentCategory()) : Loc::getMessage("CRM_REPORT_MY_REPORTS_DEAL_ALL_DEALS");
 	}
 
 	/**

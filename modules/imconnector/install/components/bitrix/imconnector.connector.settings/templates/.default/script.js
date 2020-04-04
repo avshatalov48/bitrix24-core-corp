@@ -198,7 +198,7 @@
 							'className' : "imconnector-field-user-icon",
 						},
 						attrs : {
-							style : item.avatar ? "background-image:url(" + item.avatar + ")" : ""
+							style : item.avatar ? "background-image:url('" + item.avatar + "')" : ""
 						}
 					}),
 					BX.create("div", {

@@ -252,16 +252,10 @@ Class tasks extends CModule
 			'CTaskPlannerMaintance', 'OnPlannerInit');
 		UnRegisterModuleDependences('intranet', 'OnPlannerAction', 'tasks',
 			'CTaskPlannerMaintance', 'OnPlannerAction');
-
-
 		UnRegisterModuleDependences('rest', 'OnRestServiceBuildDescription', 'tasks',
 			'CTaskRestService', 'OnRestServiceBuildDescription');
 		UnRegisterModuleDependences('rest', 'onFindMethodDescription', 'tasks',
 			'\\Bitrix\\Tasks\\Dispatcher', 'restRegister');
-
-//		RegisterModuleDependences("rest", "onRestGetModule", "tasks", "\\Bitrix\\Tasks\\Rest\\RestManager", "onRestGetModule");
-		RegisterModuleDependences("rest", "OnRestServiceBuildDescription", "tasks", "\\Bitrix\\Tasks\\Rest\\RestManager", "OnRestServiceBuildDescription");
-
 
 		UnRegisterModuleDependences('forum', 'OnCommentTopicAdd', 'tasks',
 			'\\Bitrix\\Tasks\\Integration\\Forum\\Task\\Topic', 'onBeforeAdd');

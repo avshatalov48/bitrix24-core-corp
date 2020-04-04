@@ -155,6 +155,15 @@ BX.CRM.Kanban.Item.prototype = {
 			this.grid.ccItem = this;
 			return layout;
 		}
+		else if (data.special_type === "rest")
+		{
+			layout = this.getIndustrySolutionsLayout();
+			BX.onCustomEvent("Crm.Kanban.Grid:onSpecialItemDraw", [
+				this, layout
+			]);
+			this.grid.restItem = this;
+			return layout;
+		}
 
 		if (!this.container)
 		{
@@ -409,7 +418,27 @@ BX.CRM.Kanban.Item.prototype = {
 	},
 
 	/**
-	 * Get item default from contacts.
+	 * Gets REST block close button.
+	 * @return {Element}
+	 */
+	getCloseRestLayout: function()
+	{
+		return BX.create("div", {
+			props: {
+				className: "crm-kanban-item-industry-close"
+			},
+			events: {
+				click: function(e)
+				{
+					this.grid.toggleRest();
+					e.stopPropagation(e);
+				}.bind(this)
+			}
+		})
+	},
+
+	/**
+	 * Gets demo block for contact center.
 	 * @returns {Element}
 	 */
 	getStartLayout: function()
@@ -567,6 +596,88 @@ BX.CRM.Kanban.Item.prototype = {
 				: null
 			]
 		});
+	},
+
+	/**
+	 * Gets REST block.
+	 * @returns {Element}
+	 */
+	getIndustrySolutionsLayout: function()
+	{
+		var importList = [
+			{
+				text: BX.message("CRM_KANBAN_REST_DEMO_FILE_IMPORT")
+			},
+			{
+				text: BX.message("CRM_KANBAN_REST_DEMO_FILE_EXPORT")
+			},
+			{
+				text: BX.message("CRM_KANBAN_REST_DEMO_CRM_MIGRATION")
+			},
+			{
+				text: BX.message("CRM_KANBAN_REST_DEMO_MARKET")
+			},
+			{
+				text: BX.message("CRM_KANBAN_REST_DEMO_PUBLICATION")
+			}
+		];
+
+		var importListNode = document.createDocumentFragment();
+		importList.map(function(data, index) {
+			importListNode.appendChild(
+				BX.create("div", {
+					props: {
+						className: "crm-kanban-item-industry-list-item crm-kanban-item-industry-list-item-" + (index + 1)
+					},
+					children: [
+						BX.create("div", {
+							props: {
+								className: "crm-kanban-item-industry-list-item-img"
+							}
+						}),
+						BX.create("div", {
+							props: {
+								className: "crm-kanban-item-industry-list-item-text"
+							},
+							text: data.text
+						}),
+					]
+				})
+			)
+		});
+
+		return BX.create("div", {
+			props: {
+				className: 'crm-kanban-item-industry'
+			},
+			children: [
+				BX.create("div", {
+					props: {
+						className: "crm-kanban-item-industry-title"
+					},
+					text: BX.message("CRM_KANBAN_REST_DEMO_MARKET_SECTOR")
+				}),
+				BX.create("div", {
+					props: {
+						className: "crm-kanban-item-industry-list"
+					},
+					children: [
+						importListNode
+					]
+				}),
+				BX.create("a", {
+					props: {
+						className: "ui-btn ui-btn-sm ui-btn-primary ui-btn-round crm-kanban-sidepanel"
+					},
+					dataset: {
+						url: "rest_demo"
+					},
+					text: BX.message("CRM_KANBAN_REST_DEMO_SETUP")
+				}),
+				this.getCloseRestLayout()
+			]
+		})
+
 	},
 
 	/**

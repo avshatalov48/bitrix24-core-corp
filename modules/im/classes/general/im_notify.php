@@ -540,7 +540,7 @@ class CIMNotify
 				'params' => Array(
 					'chatId' => $chatId,
 					'list' => array_keys($messages),
-					'counter' => (int)self::GetCounter($chatId)
+					'counter' => (int)self::GetRealCounter($chatId)
 				),
 				'extra' => \Bitrix\Im\Common::getPullExtra()
 			));
@@ -719,7 +719,7 @@ class CIMNotify
 				'params' => Array(
 					'chatId' => $chatId,
 					'list' => array_keys($messages),
-					'counter' => (int)self::GetCounter($chatId)
+					'counter' => (int)self::GetRealCounter($chatId)
 				),
 				'extra' => \Bitrix\Im\Common::getPullExtra()
 			));
@@ -745,7 +745,7 @@ class CIMNotify
 			$ssqlLastId = "LAST_ID = (case when LAST_ID < ".intval($lastId)." then ".intval($lastId)." else LAST_ID end),";
 		}
 
-		$counter = \CIMNotify::GetCounter($chatId);
+		$counter = \CIMNotify::GetRealCounter($chatId);
 
 		$status = "STATUS = ".IM_STATUS_READ.", ";
 		if ($counter > 0)
@@ -857,7 +857,7 @@ class CIMNotify
 					'id' => $id,
 					'chatId' => intval($arRes['CHAT_ID']),
 					'confirmMessages' => $resultMessages,
-					'counter' => (int)self::GetCounter($arRes['CHAT_ID']),
+					'counter' => self::GetRealCounter($arRes['CHAT_ID']),
 				),
 				'extra' => \Bitrix\Im\Common::getPullExtra()
 			));
@@ -945,7 +945,7 @@ class CIMNotify
 		CIMMessageParam::DeleteAll($ID, true);
 		\Bitrix\Im\Model\MessageTable::delete($ID);
 
-		$counter = \CIMNotify::GetCounter($arRes['CHAT_ID']);
+		$counter = \CIMNotify::GetRealCounter($arRes['CHAT_ID']);
 		$DB->Query("UPDATE b_im_relation SET COUNTER = {$counter} WHERE CHAT_ID = ".intval($arRes['CHAT_ID']));
 
 		\Bitrix\Im\Counter::clearCache($arRes['RELATION_USER_ID']);
@@ -1069,10 +1069,13 @@ class CIMNotify
 			FROM b_im_relation R, b_im_message M 
 			WHERE M.CHAT_ID = R.CHAT_ID AND M.NOTIFY_SUB_TAG = '".$DB->ForSQL($notifySubTag)."'", false, "File: ".__FILE__."<br>Line: ".__LINE__);
 		$arUsers = Array();
+		$arChatId = Array();
 		$messages = Array();
 		while ($row = $dbRes->Fetch())
 		{
 			$messages[$row['ID']] = $row;
+			$arUsers[$row['USER_ID']] = $row['USER_ID'];
+			$arChatId[$row['CHAT_ID']] = $row['CHAT_ID'];
 		}
 
 		$pullActive = false;
@@ -1093,7 +1096,7 @@ class CIMNotify
 			}
 		}
 
-		$counters = self::GetCounters(array_keys($arUsers));
+		$counters = self::GetCounters(array_keys($arChatId));
 
 		if (count($messages) > 0)
 		{
@@ -1102,14 +1105,14 @@ class CIMNotify
 				self::Delete($messageId);
 				if ($pullActive)
 				{
-					\Bitrix\Pull\Event::add($messages[$messageId]['USER_ID'], Array(
+					\Bitrix\Pull\Event::add($message['USER_ID'], Array(
 						'module_id' => 'im',
 						'command' => 'confirmNotify',
 						'params' => Array(
 							'id' => $messageId,
-							'chatId' => $messages[$messageId]['CHAT_ID'],
+							'chatId' => $message['CHAT_ID'],
 							'confirmMessages' => $resultMessages,
-							'counter' => (int)$counters[$messages[$messageId]['USER_ID']],
+							'counter' => $counters[$message['CHAT_ID']],
 						),
 						'extra' => \Bitrix\Im\Common::getPullExtra()
 					));
@@ -1226,14 +1229,19 @@ class CIMNotify
 		return intval($count);
 	}
 
+	public static function GetRealCounter($chatId)
+	{
+		return \Bitrix\Im\Notify::getRealCounter($chatId);
+	}
+
 	public static function GetCounter($chatId)
 	{
-		return \Bitrix\Im\Notify::getCounterByChatId($chatId);
+		return \Bitrix\Im\Notify::getCounter($chatId);
 	}
 
 	public static function GetCounters($chatIds)
 	{
-		return \Bitrix\Im\Notify::getCountersByChatId($chatIds);
+		return \Bitrix\Im\Notify::getCounters($chatIds);
 	}
 }
 ?>

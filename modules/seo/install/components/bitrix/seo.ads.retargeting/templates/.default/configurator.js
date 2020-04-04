@@ -22,7 +22,9 @@ if (typeof(CrmAdsRetargeting) === "undefined")
 		this.clientId = params.clientId;
 		this.accountId = params.accountId;
 		this.audienceId = params.audienceId;
+		this.audienceRegion = params.audienceRegion;
 		this.autoRemoveDayNumber = params.autoRemoveDayNumber;
+		this.audienceLookalikeMode = params.audienceLookalikeMode;
 
 		this.hasAudiences = false;
 		this.loaded = [];
@@ -99,6 +101,8 @@ if (typeof(CrmAdsRetargeting) === "undefined")
 				},
 				'addClientBtn': this.containerNode.querySelector('[data-bx-ads-client-add-btn]'),
 				'addAudienceBtn': this.containerNode.querySelector('[data-bx-ads-audience-add]'),
+				'regionInput':  this.containerNode.querySelector('[data-bx-ads-region]'),
+				'regionLoader':  this.containerNode.querySelector('[data-bx-ads-region-loader]')
 			};
 
 			var attrAudience = 'data-bx-ads-audience';
@@ -526,12 +530,16 @@ if (typeof(CrmAdsRetargeting) === "undefined")
 				{
 					this.caller.uiNodes.autoRemover.node.style.display = isShow ? 'none' : '';
 				}
-			}
+			},
+			forRegion: function (isShow) {
+				this.change(this.caller.uiNodes.regionLoader, this.caller.uiNodes.regionInput, isShow);
+			},
 		},
 		loadSettings: function()
 		{
 			var type = this.provider.TYPE;
 			var isSupportAccount = this.provider.IS_SUPPORT_ACCOUNT;
+			var isSupportLookalikeAudience = this.audienceLookalikeMode && this.provider.IS_SUPPORT_LOOKALIKE_AUDIENCE;
 
 			if (!this.provider.PROFILE) {
 				return;
@@ -539,6 +547,11 @@ if (typeof(CrmAdsRetargeting) === "undefined")
 			var typeLoaded = BX.util.in_array(type, this.loaded);
 			if(!typeLoaded) {
 				this.loaded.push(type);
+			}
+
+			if (isSupportLookalikeAudience && this.uiNodes.regionInput)
+			{
+				this.loadRegionsList();
 			}
 
 			if (this.uiNodes.account && isSupportAccount)
@@ -602,6 +615,10 @@ if (typeof(CrmAdsRetargeting) === "undefined")
 		},
 		loadSettingsAudiences: function(accountId)
 		{
+			var isSupportLookalikeAudience = this.audienceLookalikeMode && this.provider.IS_SUPPORT_LOOKALIKE_AUDIENCE;
+			if (isSupportLookalikeAudience)
+				return;
+
 			this.hideAddAudienceButton();
 			var requestData = {
 				'accountId': accountId || null
@@ -693,9 +710,35 @@ if (typeof(CrmAdsRetargeting) === "undefined")
 
 			}, this));
 		},
+		loadRegionsList: function()
+		{
+			this.loader.forRegion(true);
+			this.fillDropDownControl(this.uiNodes.regionInput, []);
+			if (this.clientSelector) {
+				this.clientSelector.disable();
+			}
+			this.request('getRegions', {}, BX.delegate(function(data){
+				if (this.clientSelector) {
+					this.clientSelector.enable();
+				}
+				var dropDownData = data.map(function (regionData) {
+					return {
+						caption: regionData.name,
+						value: regionData.id,
+						selected: this.audienceRegion ? (regionData.id == this.audienceRegion) : regionData.isDefault
+					};
+				}, this);
+
+				this.fillDropDownControl(this.uiNodes.regionInput, dropDownData);
+				this.loader.forRegion(false);
+			}, this));
+		},
 		ShowErrorEmptyAudiences: function()
 		{
-			this.uiNodes.errorNotFound.style.display = this.hasAudiences ? 'none' : '';
+			if (this.uiNodes.errorNotFound)
+			{
+				this.uiNodes.errorNotFound.style.display = this.hasAudiences ? 'none' : '';
+			}
 		},
 		hideAddAudienceButton: function()
 		{

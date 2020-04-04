@@ -106,7 +106,8 @@
 						requests: BX.message('SGMPathToRequests'),
 						requestsOut: BX.message('SGMPathToRequestsOut'),
 						userRequestGroup: BX.message('SGMPathToUserRequestGroup'),
-						userLeaveGroup: BX.message('SGMPathToUserLeaveGroup')
+						userLeaveGroup: BX.message('SGMPathToUserLeaveGroup'),
+						copy: BX.message('SGMPathToCopy')
 					}
 				});
 

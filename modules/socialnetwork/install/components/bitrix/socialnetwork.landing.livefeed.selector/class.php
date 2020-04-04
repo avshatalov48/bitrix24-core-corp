@@ -66,10 +66,13 @@ class LivefeedSelector extends Component\EntitySelector
 				continue;
 			}
 
-			if ($fieldName == 'GROUP_ID')
+			if (
+				$fieldName == 'GROUP_ID'
+				&& ($workGroupData = $this->getWorkgroupDataByCode($code))
+			)
 			{
 				$defaultFilter['GROUP_ID'] = $code;
-				$defaultFilter['GROUP_ID_label'] = $name;
+				$defaultFilter['GROUP_ID_label'] = $workGroupData['NAME'];
 			}
 			elseif ($fieldName == 'AUTHOR_ID')
 			{
@@ -111,8 +114,7 @@ class LivefeedSelector extends Component\EntitySelector
 
 		parent::prepareResult();
 
-		$sliderFilter = [];
-
+		$filterFromRequest = false;
 		if (
 			!empty($this->requestData['filter'])
 			&& is_array($this->requestData['filter'])
@@ -123,11 +125,14 @@ class LivefeedSelector extends Component\EntitySelector
 			{
 				if (!empty($filterField['key']))
 				{
-					if ($filterField['key'] == 'GROUP_ID')
+					if (
+						$filterField['key'] == 'GROUP_ID'
+						&& ($workGroupData = $this->getWorkgroupDataByCode($filterField['value']))
+					)
 					{
 						$groupFilterField = [
 							'code' => $filterField['value'],
-							'name' => $filterField['name']
+							'name' => $workGroupData['NAME']
 						];
 					}
 					elseif ($filterField['key'] == 'AUTHOR_ID')
@@ -140,98 +145,95 @@ class LivefeedSelector extends Component\EntitySelector
 				}
 			}
 
-			$this->setFilter([
-				'GROUP_ID' => $groupFilterField,
-				'AUTHOR_ID' => $authorFilterField
-			]);
-		}
-		elseif ($this->requestData['useBXMainFilter'] != 'Y')
-		{
-			$workgroupsList = $this->getWorkgroups();
-			if (count($workgroupsList) == 0)
+			if (
+				!empty($groupFilterField)
+				|| !empty($authorFilterField)
+			)
 			{
-				$this->arResult['EMPTY_NOWORKGROUPS'] = 'Y';
-			}
-			elseif (count($workgroupsList) == 1)
-			{
-				$defaultWorkgroup = array_pop($workgroupsList);
+				$filterFromRequest = true;
 				$this->setFilter([
-					'GROUP_ID' => [
-						'code' => $defaultWorkgroup['CODE'],
-						'name' => $defaultWorkgroup['NAME']
-					]
+					'GROUP_ID' => $groupFilterField,
+					'AUTHOR_ID' => $authorFilterField
 				]);
+			}
+		}
+
+		if (!$filterFromRequest)
+		{
+			if ($this->requestData['useBXMainFilter'] != 'Y')
+			{
+				$workgroupsList = $this->getWorkgroups();
+				if (count($workgroupsList) == 0)
+				{
+					$this->arResult['EMPTY_NOWORKGROUPS'] = 'Y';
+				}
+				elseif (count($workgroupsList) == 1)
+				{
+					$defaultWorkgroup = array_pop($workgroupsList);
+					$this->setFilter([
+						'GROUP_ID' => [
+							'code' => $defaultWorkgroup['CODE'],
+							'name' => $defaultWorkgroup['NAME']
+						]
+					]);
+				}
+				else
+				{
+					$res = Main\FinderDestTable::getList([
+						'order' => [
+							'LAST_USE_DATE' => 'DESC'
+						],
+						'filter' => [
+							'=USER_ID' => $this->arResult["CURRENT_USER_ID"],
+							'=CONTEXT' => 'SONET_LANDING_ENTITY_SELECTOR_GROUP'
+						],
+						'select' => [ 'CODE' ],
+						'limit' => 1
+					]);
+
+					if (
+						($destData = $res->fetch())
+						&& !empty($destData['CODE'])
+						&& ($workGroupData = $this->getWorkgroupDataByCode($filterField['value']))
+					)
+					{
+						$this->setFilter([
+							'GROUP_ID' => [
+								'code' => $destData['CODE'],
+								'name' => $workGroupData['NAME']
+							]
+						]);
+					}
+
+					if (empty($this->arResult['FILTER_VALUE']))
+					{
+						$this->arResult['EMPTY_EXPLICIT'] = 'Y';
+					}
+				}
 			}
 			else
 			{
-				$res = Main\FinderDestTable::getList([
-					'order' => [
-						'LAST_USE_DATE' => 'DESC'
-					],
-					'filter' => [
-						'=USER_ID' => $this->arResult["CURRENT_USER_ID"],
-						'=CONTEXT' => 'SONET_LANDING_ENTITY_SELECTOR_GROUP'
-					],
-					'select' => [ 'CODE' ],
-					'limit' => 1
-				]);
+				$filterOption = new \Bitrix\Main\UI\Filter\Options($this->getFilterId());
+				$filterData = $filterOption->getFilter();
 
 				if (
-					($destData = $res->fetch())
-					&& !empty($destData['CODE'])
+					empty($filterData)
+					|| empty($filterData['GROUP_ID'])
 				)
-				{
-					if (preg_match('/^SG(\d+)$/', $destData['CODE'], $matches))
-					{
-						$groupId = intval($matches[1]);
-						if (
-							$groupId > 0
-							&& ($res = \Bitrix\Socialnetwork\WorkgroupTable::getList([
-								'filter' => [
-									'=ID' => $groupId,
-									'=LANDING' => 'Y'
-								],
-								'select' => [ 'ID', 'NAME']
-							]))
-							&& ($workGroupData = $res->fetch())
-						)
-						{
-							$this->setFilter([
-								'GROUP_ID' => [
-									'code' => $destData['CODE'],
-									'name' => $workGroupData['NAME']
-								]
-							]);
-						}
-					}
-				}
-
-				if (empty($this->arResult['FILTER_VALUE']))
 				{
 					$this->arResult['EMPTY_EXPLICIT'] = 'Y';
 				}
-			}
-		}
-		else
-		{
-			$filterOption = new \Bitrix\Main\UI\Filter\Options($this->getFilterId());
-			$filterData = $filterOption->getFilter();
-
-			if (
-				empty($filterData)
-				|| empty($filterData['GROUP_ID'])
-			)
-			{
-				$this->arResult['EMPTY_EXPLICIT'] = 'Y';
-			}
-			else
-			{
-				$this->arResult['FILTER_VALUE'] = [ $filterData['GROUP_ID'] ];
-				$this->arResult['FILTER_AUTHOR_VALUE'] = (!empty($filterData['AUTHOR_ID']) ? $filterData['AUTHOR_ID'] : false);
+				else
+				{
+					$this->arResult['FILTER_VALUE'] = [ $filterData['GROUP_ID'] ];
+					$this->arResult['FILTER_AUTHOR_VALUE'] = (!empty($filterData['AUTHOR_ID']) ? $filterData['AUTHOR_ID'] : false);
+				}
 			}
 		}
 
-		$userPage = \Bitrix\Main\Config\Option::get('socialnetwork', 'user_page', '', $this->arParams["SITE_ID"]);
+		$createPageSiteId = (\Bitrix\Main\Application::getInstance()->getContext()->getRequest()->isAdminSection() ? \CSite::getDefSite() : $this->arParams["SITE_ID"]);
+
+		$userPage = \Bitrix\Main\Config\Option::get('socialnetwork', 'user_page', '', $createPageSiteId);
 		if (empty($userPage))
 		{
 			$siteDir = '/';
@@ -243,6 +245,7 @@ class LivefeedSelector extends Component\EntitySelector
 			$userPage = $siteDir.'company/personal/';
 		}
 
+
 		$uri = new Main\Web\Uri(\CComponentEngine::makePathFromTemplate(
 			$userPage.'user/#user_id#/groups/create/',
 			[
@@ -251,8 +254,35 @@ class LivefeedSelector extends Component\EntitySelector
 		));
 		$uri->addParams([
 			'preset' => 'group-landing',
-			'refresh' => 'N'
+			'refresh' => 'N',
+			'lid' => $this->arParams["SITE_ID"]
 		]);
 		$this->arResult["URL_GROUP_CREATE"] = $uri->getUri();
+	}
+
+	protected function getWorkgroupDataByCode($code = '')
+	{
+		$result = false;
+
+		if (preg_match('/^SG(\d+)$/', $code, $matches))
+		{
+			$groupId = intval($matches[1]);
+			if (
+				$groupId > 0
+				&& ($res = \Bitrix\Socialnetwork\WorkgroupTable::getList([
+					'filter' => [
+						'=ID' => $groupId,
+						'=LANDING' => 'Y'
+					],
+					'select' => [ 'ID', 'NAME']
+				]))
+				&& ($workGroupData = $res->fetch())
+			)
+			{
+				$result = $workGroupData;
+			}
+		}
+
+		return $result;
 	}
 }

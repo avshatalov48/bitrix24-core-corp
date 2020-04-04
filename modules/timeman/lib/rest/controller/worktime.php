@@ -5,6 +5,8 @@ use Bitrix\Main\Text\StringHelper;
 use Bitrix\Timeman\Form\Worktime\WorktimeRecordForm;
 use Bitrix\Timeman\Helper\TimeHelper;
 use Bitrix\Timeman\Model\Worktime\EventLog\WorktimeEventTable;
+use Bitrix\Timeman\Model\Worktime\Record\WorktimeRecord;
+use Bitrix\Timeman\Model\Worktime\Record\WorktimeRecordTable;
 use Bitrix\Timeman\UseCase\Worktime\Manage;
 use Bitrix\Timeman\Service\Worktime\Result\WorktimeServiceResult;
 use Bitrix\Main\Engine\Controller;
@@ -19,10 +21,16 @@ class Worktime extends Controller
 
 		if ($worktimeForm->validate())
 		{
+			$oldStart = WorktimeRecordTable::query()
+				->addSelect('ID')
+				->addSelect('RECORDED_START_TIMESTAMP')
+				->where('ID', $worktimeForm->id)
+				->exec()
+				->fetchObject();
 			$result = (new Manage\Approve\Handler())->handle($worktimeForm);
 			if (WorktimeServiceResult::isSuccessResult($result))
 			{
-				return $this->makeResult($result);
+				return $this->makeResult($result, $worktimeForm, $oldStart);
 			}
 			$this->addErrors($result->getErrors());
 			return [];
@@ -33,9 +41,11 @@ class Worktime extends Controller
 
 	/**
 	 * @param WorktimeServiceResult $serviceResult
+	 * @param WorktimeRecordForm $worktimeForm
+	 * @param WorktimeRecord $oldRecord
 	 * @return array
 	 */
-	private function makeResult($serviceResult)
+	private function makeResult($serviceResult, $worktimeForm, $oldRecord)
 	{
 		$baseValues = $serviceResult->getWorktimeRecord()->collectValues();
 		$result = [];
@@ -43,25 +53,42 @@ class Worktime extends Controller
 		{
 			$result[lcfirst(StringHelper::snake2camel($snakeCaseName))] = $baseValue;
 		}
+
+		$updatedRecord = $serviceResult->getWorktimeRecord();
+		$startTimestampBefore = $oldRecord ? $oldRecord->getRecordedStartTimestamp() : $updatedRecord->getRecordedStartTimestamp();
+		$startTimestampAfter = $updatedRecord->getRecordedStartTimestamp();
+		if ($worktimeForm->useEmployeesTimezone)
+		{
+			$offset = $updatedRecord->getStartOffset();
+		}
+		else
+		{
+			$offset = TimeHelper::getInstance()->getUserUtcOffset($this->getCurrentUser()->getId());
+		}
+		$dateBefore = TimeHelper::getInstance()->createDateTimeFromFormat('U', $startTimestampBefore, $offset);
+		$dateAfter = TimeHelper::getInstance()->createDateTimeFromFormat('U', $startTimestampAfter, $offset);
+		$dates = [];
+		$dates[$dateBefore->format('d.m.Y')] = $dateBefore;
+		$dates[$dateAfter->format('d.m.Y')] = $dateAfter;
 		global $APPLICATION;
-		ob_start();
-		$APPLICATION->IncludeComponent(
-			'bitrix:timeman.worktime.grid',
-			'.default',
-			[
-				'PARTIAL' => true,
-				'PARTIAL_ITEM' => 'shiftCell',
-				'DRAWING_DATE' => TimeHelper::getInstance()->createUserDateTimeFromFormat('U', $serviceResult->getWorktimeRecord()->getRecordedStartTimestamp(), $this->getCurrentUser()->getId()),
-				'SHOW_ADD_SHIFT_PLAN_BTN' => false,
-				'INCLUDE_CSS' => false,
-				'IS_SHIFTED_SCHEDULE' => \Bitrix\Timeman\Model\Schedule\Schedule::isScheduleShifted($serviceResult->getWorktimeRecord()->obtainSchedule()),
-				'SCHEDULE_ID' => $serviceResult->getWorktimeRecord()->getScheduleId(),
-				'SHIFT_PLAN' => [],
-				'WORKTIME_RECORD' => $serviceResult->getWorktimeRecord()->collectValues(),
-				'USER_ID' => $serviceResult->getWorktimeRecord()->getUserId(),
-			]
-		);
-		$result['recordCellHtml'] = ob_get_clean();
+		$result['dayCellsHtml'] = [];
+		foreach ($dates as $date)
+		{
+			ob_start();
+			$APPLICATION->includeComponent(
+				'bitrix:timeman.worktime.grid',
+				'.default',
+				[
+					'PARTIAL_ITEM' => 'shiftCell',
+					'DRAWING_TIMESTAMP' => $date->getTimestamp(),
+					'INCLUDE_CSS' => false,
+					'IS_SHIFTPLAN' => $this->getRequest()->get('isShiftplan') === 'true',
+					'USER_ID' => $serviceResult->getWorktimeRecord()->getUserId(),
+				]
+			);
+			$result['dayCellsHtml'][] = ob_get_clean();
+		}
+
 		return ['record' => $result];
 	}
 }

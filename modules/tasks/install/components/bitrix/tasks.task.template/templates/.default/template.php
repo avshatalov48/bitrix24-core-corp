@@ -101,13 +101,6 @@ $APPLICATION->RestartBuffer();
 <?$this->SetViewTarget(($isIFrame? 'inside_pagetitle' : 'pagetitle'), 100);?>
 	<div class="task-list-toolbar">
 		<div class="task-list-toolbar-actions">
-			<?php
-			$APPLICATION->IncludeComponent(
-				'bitrix:ui.feedback.form',
-				'',
-				$arResult['DATA']['FEEDBACK_FORM_PARAMETERS']
-			);
-			?>
 			<button class="ui-btn ui-btn-light-border ui-btn-themes ui-btn-icon-setting webform-cogwheel" id="templateEditPopupMenuOptions"></button>
 		</div>
 	</div>
@@ -155,6 +148,9 @@ $APPLICATION->RestartBuffer();
 		<?else:?>
 			<div>
 		<?endif?>
+
+		<input type="hidden" id="checklistAnalyticsData" name="ACTION[0][ARGUMENTS][data][SE_CHECKLIST][analyticsData]" value=""/>
+		<input type="hidden" id="checklistFromDescription" name="ACTION[0][ARGUMENTS][data][SE_CHECKLIST][fromDescription]" value=""/>
 
 		<input type="hidden" name="SITE_ID" value="<?=SITE_ID?>" />
 
@@ -843,7 +839,7 @@ $APPLICATION->RestartBuffer();
 		$APPLICATION->IncludeComponent(
 			'bitrix:tasks.widget.frame',
 			'',
-			array(
+			[
 				'TEMPLATE_CONTROLLER_ID' => $helper->getId().'-frame',
 				'INPUT_PREFIX' => 'ACTION[1]',
 				'BLOCKS' => $blocks,
@@ -851,25 +847,11 @@ $APPLICATION->RestartBuffer();
 				'FOOTER' => [
 					'IS_ENABLED' => $arParams['ENABLE_FOOTER'],
 					'IS_PINABLE' => $arParams['ENABLE_FOOTER_UNPIN'],
-					'BUTTONS' => [
-					        'save',
-                            ['TYPE'=>'cancel', 'LINK'=>Util::secureBackUrl($arResult['TEMPLATE_DATA']['CANCELURL'])]
-//						[
-//							'CODE' => 'APPLY',
-//							'TYPE' => 'BUTTON',
-//							'TEXT' => Loc::getMessage('TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_'.($template->getId() ? 'SAVE_TASK' : 'ADD_TASK_TEMPLATE')),
-//                        ],
-//						[
-//							'CODE' => 'CANCEL',
-//							'TYPE' => 'LINK',
-//							'TEXT' => Loc::getMessage('TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_CANCEL'),
-//							'URL' => Util::secureBackUrl($arResult['TEMPLATE_DATA']['CANCELURL']),
-//                        ],
-                    ],
+					'BUTTONS' => ['save', 'cancel'],
                 ],
-			),
+			],
 			null, //$helper->getComponent(),
-			array("HIDE_ICONS" => "Y", "ACTIVE_COMPONENT" => "Y")
+			["HIDE_ICONS" => "Y", "ACTIVE_COMPONENT" => "Y"]
 		);?>
 
 		<?if($arParams["ENABLE_FORM"]):?>

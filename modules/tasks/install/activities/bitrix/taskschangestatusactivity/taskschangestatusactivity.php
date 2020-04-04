@@ -84,6 +84,7 @@ class CBPTasksChangeStatusActivity extends CBPActivity
 				'Options' => [
 					\CTasks::STATE_PENDING => GetMessage('TASKS_CHANGE_STATUS_PENDING'),
 					\CTasks::STATE_IN_PROGRESS => GetMessage('TASKS_CHANGE_STATUS_IN_PROGRESS'),
+					\CTasks::STATE_SUPPOSEDLY_COMPLETED => getMessage('TASKS_CHANGE_STATE_SUPPOSEDLY_COMPLETED'),
 					\CTasks::STATE_COMPLETED => GetMessage('TASKS_CHANGE_STATUS_COMPLETED'),
 					\CTasks::STATE_DEFERRED => GetMessage('TASKS_CHANGE_STATUS_DEFERRED'),
 				]
@@ -164,8 +165,9 @@ class CBPTasksChangeStatusActivity extends CBPActivity
 							break;
 						case \CTasks::STATE_COMPLETED:
 							$canChange = ($allowedActions['ACTION_COMPLETE'] === true);
+							$canApprove = ($allowedActions['ACTION_APPROVE'] === true);
 
-							if ($canChange && $taskFields['TASK_CONTROL'] === 'Y')
+							if ($taskFields['TASK_CONTROL'] === 'Y' && ($canChange || $canApprove))
 							{
 								$isAdmin = Tasks\Util\User::isSuper($ownerId);
 								$isCreator = ((int) $taskFields['CREATED_BY'] === $ownerId);
@@ -183,6 +185,9 @@ class CBPTasksChangeStatusActivity extends CBPActivity
 								}
 							}
 
+							break;
+						case \CTasks::STATE_SUPPOSEDLY_COMPLETED:
+							$canChange = ($allowedActions['ACTION_COMPLETE'] === true || $allowedActions['ACTION_APPROVE'] === true);
 							break;
 						case \CTasks::STATE_DEFERRED:
 							$canChange = ($allowedActions['ACTION_DEFER'] === true);

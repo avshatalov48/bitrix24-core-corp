@@ -59,7 +59,7 @@ class ElementRight implements RightEntity, Errorable
 				!$this->rightParam->getEntityId() &&
 				$this->listsPermission < \CListPermissions::CAN_READ &&
 				!\CIBlockSectionRights::userHasRightTo(
-					$this->rightParam->getIblockId(), $this->rightParam->getEntityId(), "section_element_bind")
+					$this->rightParam->getIblockId(), $this->rightParam->getEntityId(), "element_read")
 			)
 		)
 		{

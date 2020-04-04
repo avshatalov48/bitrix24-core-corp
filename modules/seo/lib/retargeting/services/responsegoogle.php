@@ -38,7 +38,8 @@ class ResponseGoogle extends Response
 				$data['error'] = $data['error']['message'];
 			}
 			$errorMessage = $data['error'];
-			if (strpos($errorMessage, 'AuthenticationError.CUSTOMER_NOT_FOUND') !== false) // google user hasn't google ads accounts
+			if (strpos($errorMessage, 'AuthenticationError.CUSTOMER_NOT_FOUND') !== false
+				|| strpos($errorMessage, 'AuthenticationError.NOT_ADS_USER') !== false) // google user hasn't google ads accounts
 			{
 				$this->setData([]);
 				return;

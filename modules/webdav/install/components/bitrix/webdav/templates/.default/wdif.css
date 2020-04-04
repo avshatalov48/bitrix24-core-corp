@@ -1,0 +1,99 @@
+.wdif-block {
+	/*padding-left:100px;*/
+	position: relative;
+	overflow: hidden;
+    font-size: 90%;
+    font-weight: bold;
+	padding-top: 15px;
+}
+.wdif-file {
+    cursor: pointer;
+    display: inline-block;
+    font-size: 12px;
+    line-height: 14px;
+    margin: 2px 12px 12px 0;
+    vertical-align: middle;
+	position: relative;
+    /*padding: 2px 0 10px;*/
+}
+.wdif-file-name {
+	padding-left:25px;
+}
+
+.wdif-file-icon {
+	background-image: url(/bitrix/js/webdav/images/image-sprite.png);
+	background-repeat: no-repeat;
+	background-color:transparent;
+	background-position: -9px -32px;
+    position:absolute;
+    left:0px;
+    top:0px;
+	height:16px;
+	width:16px;
+	margin:0;
+}
+.wdif-file-icon-folder { background-position: -9px -74px}
+.wdif-file-icon-file { background-position: -9px -41px}
+.wdif-file-icon-archive { background-position: -9px -105px}
+.wdif-file-icon-image { background-position: -9px -137px}
+.wdif-file-icon-video { background-position: -9px -169px}
+.wdif-file-icon-txt { background-position: -9px -200px}
+.wdif-file-icon-word { background-position: -9px -296px}
+.wdif-file-icon-excel { background-position: -9px -233px}
+.wdif-file-icon-ppt { background-position: -9px -264px}
+
+.wdif-file-size {
+	font-weight: normal;
+	color:#777777;
+}
+.wdif-title {
+	display: block;
+	float:left;
+	color: #777777;
+    min-width: 50px;
+    text-align: right;
+}
+.wdif-subblock {
+	overflow: hidden;
+    padding: 1px 0 1px 10px;
+}
+
+/* rating */
+.wdif-file-rating {font-weight: normal;}
+.wdif-file-rating div.rating_vote_text { display: inline!important; line-height: 20px;  margin-left:8px; width: 14px;}
+.wdif-file-rating .ilike-light{ display: inline-block; width: 23px; height: 15px;}
+.wdif-file-rating .ilike-light .bx-ilike-right { padding: 3px 1px 0 11px; background-position:0 -39px; }
+.wdif-file-rating .ilike-light .bx-you-like .bx-ilike-right { background-position:0 -19px; }
+.wdif-file-rating .ilike-light .bx-ilike-text {	padding: 0; color: #929292 }
+.wdif-file-rating  .ilike-light .bx-ilike-button  { z-index: 50; position: absolute; white-space: nowrap; margin-top: -1px;  padding-top: 1px; padding-bottom: 2px; padding-left: 1px; padding-left:5px; padding-right: 15px;}
+
+/*.wdif-file-rating .element-name-wrapper { white-space: nowrap }*/
+.wdif-file-rating .bx-over .bx-ilike-button { background-color:#fffcb1; }
+.wdif-file-rating-theme-lightgrey .bx-over .bx-ilike-button { background-color:#fffbd3; }
+.wdif-file-rating .ilike-light .bx-ilike-button .bx-ilike-left-wrap { display: none; }
+.wdif-file-rating .ilike-light .bx-ilike-button-hover .bx-ilike-left-wrap { display: inline-block; }
+
+.wdif-file-rating .bx-rating  { padding-left: 9px; height: 15px; background:url("images/rating_star.png") no-repeat 0 -39px; padding-left: 9px;}
+.wdif-file-rating .bx-rating-active  { background-position: 0 -19px; }
+.wdif-file-rating .bx-rating .bx-rating-absolute { z-index: 50; position: absolute; padding-right: 15px; padding-top: 5px; padding-bottom: 5px; margin-top: -5px; }
+.wdif-file-rating-theme-lightgrey .bx-rating .bx-rating-absolute { }
+.wdif-file-rating .bx-rating .bx-rating-question { display: none; color:#929292 }
+.wdif-file-rating .bx-rating .bx-rating-separator { color:#929292 }
+.wdif-file-rating .bx-rating .bx-rating-yes-count  { color:#929292 }
+.wdif-file-rating .bx-rating .bx-rating-yes-text  { display: none; color:#929292 }
+.wdif-file-rating .bx-rating .bx-rating-no-count  { padding-left: 0px; color:#929292}
+.wdif-file-rating .bx-rating .bx-rating-no-text  { display: none; color:#929292}
+
+.wdif-file-rating .bx-rating:hover  .bx-rating-absolute { background-color:#fffcb1; }
+.wdif-file-rating-theme-lightgrey .bx-rating:hover  .bx-rating-absolute { background-color:#fffbd3; }
+.wdif-file-rating .bx-rating:hover  .bx-rating-question { display: inline-block; padding-left: 5px;}
+.wdif-file-rating .bx-rating:hover  .bx-rating-yes-text  { display: inline-block; }
+.wdif-file-rating .bx-rating:hover  .bx-rating-no-count  { padding-left: 3px; }
+.wdif-file-rating .bx-rating:hover  .bx-rating-no-text  { display: inline-block; }
+
+.feed-com-img-wrap {
+	display: inline-block;
+}
+.feed-com-img-load img {
+	display: none;
+}

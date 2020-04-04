@@ -6,7 +6,7 @@ $MESS["IMBOT_BOT_BIRTHDAY"] = "1992-03-02";
 $MESS["IMBOT_BOT_EMAIL"] = "support@bitrix24.ru";
 $MESS["IMBOT_BOT_SITE"] = "http://bitrix24.ru";
 $MESS["IMBOT_BOT_WORK_POSITION"] = "Ваш личный помощник";
-$MESS["IMBOT_BOT_WELCOME_MESSAGE_2"] = "#HELLO# Спросите меня о Битрикс24 и я постараюсь найти ответ :) [br] Пишите, я всегда здесь :)";
+$MESS["IMBOT_BOT_WELCOME_MESSAGE_3"] = "Привет! Я - просто бот, который сможет прислать тебе ответы, которые найду в наших статьях поддержки :)";
 $MESS["IMBOT_BOT_WELCOME_MESSAGE_CHAT_2"] = "Привет! [br] Чтобы я ответила в чате, упомяните меня в сообщении или кликните на мой аватар :)";
 $MESS["IMBOT_BOT_WELCOME_MESSAGE_LINES_2"] = "Чем я могу вам помочь? :) [br] Для соединения с оператором [send=0]отправьте цифру 0[/send].";
 $MESS["IMBOT_BOT_WELCOME_NEW_B24"] = "Спасибо, что создали свой Битрикс24!";

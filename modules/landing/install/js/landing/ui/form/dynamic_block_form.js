@@ -120,11 +120,11 @@
 				{
 					acc.references[field.selector] = '@hide';
 
-					if (field instanceof BX.Landing.UI.Field.Dropdown)
+					if (BX.hasClass(field.layout, 'landing-ui-field-dynamic-dropdown'))
 					{
 						acc.stubs[field.selector] = '';
 					}
-					else if (field instanceof BX.Landing.UI.Field.DynamicImage)
+					else if (BX.hasClass(field.layout, 'landing-ui-field-dynamic-image'))
 					{
 						acc.stubs[field.selector] = {
 							id: -1,

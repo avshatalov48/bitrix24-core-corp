@@ -2,8 +2,10 @@
 
 namespace Bitrix\ImOpenLines;
 
-use Bitrix\Main,
-	Bitrix\Main\Localization\Loc;
+use \Bitrix\Main,
+	\Bitrix\Main\Localization\Loc;
+
+use \Bitrix\Disk\File;
 
 Loc::loadMessages(__FILE__);
 
@@ -199,6 +201,12 @@ class LiveChat
 		return $this->chat;
 	}
 
+	/**
+	 * @param $messageId
+	 * @param $messageFields
+	 * @return bool
+	 * @throws Main\NotImplementedException
+	 */
 	public static function onMessageSend($messageId, $messageFields)
 	{
 		if ($messageFields['CHAT_ENTITY_TYPE'] != 'LIVECHAT')
@@ -228,28 +236,41 @@ class LiveChat
 
 		$chatId = $messageFields['TO_CHAT_ID'];
 
-		if (strlen(trim($messageFields['MESSAGE'])) == 0 && empty($messageFields["ATTACH"]))
+		if (
+			strlen(trim($messageFields['MESSAGE'])) == 0 &&
+			empty($messageFields["ATTACH"]) &&
+			empty($messageFields["FILES"])
+		)
 		{
 			return false;
 		}
 
-		$message = Array(
+		$files = [];
+		if(!empty($messageFields["FILES"]))
+		{
+			foreach ($messageFields["FILES"] as $field)
+			{
+				$files[] = File::getById($field['id'])->getFileId();
+			}
+		}
+
+		$message = [
 			'id' => $messageId,
 			'date' => "",
 			'text' => $messageFields['MESSAGE'],
-			'files' => "",
+			'files' => $files,
 			'attach' => $messageFields['ATTACH'],
 			'system' => $messageFields['SYSTEM'],
-		);
+		];
 
-		$event = new \Bitrix\Main\Event('imconnector', 'OnReceivedMessage', Array(
+		$event = new \Bitrix\Main\Event('imconnector', 'OnReceivedMessage', [
 			'user' => $messageFields['CHAT_AUTHOR_ID'],
 			'connector' => 'livechat',
 			'line' => $lineId,
-			'chat' => Array('id' => $chatId),
+			'chat' => ['id' => $chatId],
 			'message' => $message,
 			'extra' => $extraFields
-		));
+		]);
 		$event->send();
 
 		return true;

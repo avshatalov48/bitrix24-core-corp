@@ -3,6 +3,8 @@
 namespace Bitrix\Vote\Uf;
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Type\DateTime;
+use Bitrix\Vote\AttachTable;
 
 Loc::loadMessages(__FILE__);
 
@@ -605,12 +607,16 @@ final class VoteUserType
 			$userId = ($userId ?: (is_object($USER) ? $USER->getId() : $userId));
 			global ${$userField["FIELD_NAME"] . "_" . $value . "_DATA"};
 			$data = ${$userField["FIELD_NAME"] . "_" . $value . "_DATA"} ?: false;
-			if (!is_array($data) || empty($data))
-				return "";
 
 			$userFieldManager = Manager::getInstance($userField);
-
 			list($type, $realValue) = self::detectType($value);
+			if ($type == self::TYPE_SAVED_ATTACH && (!is_array($data) || empty($data)))
+			{
+				return $value;
+			}
+
+			if (!is_array($data) || empty($data))
+				return "";
 
 			/*@var \Bitrix\Vote\Attach $attach*/
 			$attach = ($type == self::TYPE_SAVED_ATTACH ? $userFieldManager->loadFromAttachId($realValue) :
@@ -640,6 +646,51 @@ final class VoteUserType
 		{
 			throw $e;
 		}
+	}
+
+	/**
+	 * @param array $userField
+	 * @param int $newEntityId
+	 * @param $attachedId
+	 * @param object $implementer
+	 * @param bool $userId
+	 * @return array|int|string
+	 * @throws \Bitrix\Main\ObjectException
+	 */
+	public static function onBeforeCopy(array $userField, int $newEntityId, $attachedId, $implementer, $userId = false)
+	{
+		if (empty($userField) || empty($attachedId))
+		{
+			return "";
+		}
+
+		global $USER;
+		$userId = ($userId ?: (is_object($USER) ? $USER->getId() : $userId));
+
+		$userFieldManager = Manager::getInstance($userField);
+
+		$attachedObject = $userFieldManager->loadFromAttachId($attachedId);
+
+		$voteId = 0;
+		if (is_callable([$implementer, "copyVote"]))
+		{
+			$voteId = $implementer->copyVote($attachedObject->getVoteId());
+		}
+
+		$attachedId = "";
+		if ($voteId > 0)
+		{
+			$attachedId = AttachTable::add([
+				"MODULE_ID" => $attachedObject->getModuleId(),
+				"OBJECT_ID" => $voteId,
+				"ENTITY_ID" => $newEntityId,
+				"ENTITY_TYPE" => $attachedObject->getEntityType(),
+				"CREATED_BY" => $userId,
+				"CREATE_TIME" => new DateTime()
+			])->getId();
+		}
+
+		return $attachedId;
 	}
 
 	/**

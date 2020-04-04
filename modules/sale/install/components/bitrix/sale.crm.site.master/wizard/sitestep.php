@@ -260,21 +260,25 @@ class SiteStep extends \CWizardStep
 
 			if (!empty($site["DIR"]) && $site["DIR"] !== "/")
 			{
-				$error = Loc::getMessage("SALE_CSM_WIZARD_SITESTEP_SITE_DIR_ERROR", [
-					"#SITE_NAME#" => $site["NAME"]
-				]);
+				$error = Loc::getMessage("SALE_CSM_WIZARD_SITESTEP_SITE_DIR_ERROR");
 				throw new Main\SystemException($error);
 			}
 
-			$documentRoot = $site["DOC_ROOT"].$site["DIR"];
+			$documentRoot = trim($site["DOC_ROOT"].$site["DIR"]);
 		}
 		else
 		{
-			$documentRoot = $this->request->get("DOC_ROOT")."/";
+			$documentRoot = trim($this->request->get("DOC_ROOT"));
 		}
 
 		$documentRoot = Rel2Abs($_SERVER["DOCUMENT_ROOT"], $documentRoot);
+		if (rtrim($documentRoot, "/") === $_SERVER["DOCUMENT_ROOT"])
+		{
+			$error = Loc::getMessage("SALE_CSM_WIZARD_SITESTEP_DOC_ROOT_ERROR");
+			throw new Main\SystemException($error);
+		}
 
+		$documentRoot = $documentRoot."/";
 		if (!$this->isDocumentRootExists($documentRoot))
 		{
 			$error = Loc::getMessage("SALE_CSM_WIZARD_SITESTEP_DOC_ROOT_NOT_EXISTS");
@@ -331,21 +335,21 @@ class SiteStep extends \CWizardStep
 	private function setFields()
 	{
 		$defaultParam = $this->getDefaultParam();
-		$serverName = $this->prepareServerName($this->request->get("SERVER_NAME"));
+		$serverName = $this->prepareServerName(trim($this->request->get("SERVER_NAME")));
 
 		/** @var array $arFields */
 		$this->fields = array(
-			"LID" => $this->request->get("LID"),
+			"LID" => trim($this->request->get("LID")),
 			"ACTIVE" => "Y",
 			"DEF" => "N",
 			"SORT" => $this->getSort(),
-			"NAME" => $this->request->get("NAME"),
+			"NAME" => trim($this->request->get("NAME")),
 			"DIR" => "/",
-			"SITE_NAME" => $this->request->get("NAME"),
+			"SITE_NAME" => trim($this->request->get("NAME")),
 			"SERVER_NAME" => $serverName,
 			"EMAIL" => $defaultParam["EMAIL"],
 			"LANGUAGE_ID" => $defaultParam["LANGUAGE_ID"],
-			"DOC_ROOT" => $this->request->get("DOC_ROOT"),
+			"DOC_ROOT" => trim($this->request->get("DOC_ROOT")),
 			"DOMAINS" => $serverName,
 			"CULTURE_ID" => $defaultParam["CULTURE_ID"],
 			"WIZARD_REWRITE" => $this->request->get("WIZARD_REWRITE"),
@@ -521,16 +525,8 @@ class SiteStep extends \CWizardStep
 	 */
 	private function prepareSite($lid)
 	{
-		if ($this->copyWizard(self::WIZARD_NAME) === false)
-		{
-			$this->SetError(Loc::getMessage("SALE_CSM_WIZARD_SITESTEP_WIZARD_COPY_ERROR",
-				[
-					"#WIZARD_NAME#" => self::WIZARD_NAME
-				]
-			));
-		}
-
 		$this->setAuthComponentsTemplate($lid);
+		$this->setLandingOption($lid);
 	}
 
 	/**
@@ -562,29 +558,31 @@ class SiteStep extends \CWizardStep
 	}
 
 	/**
-	 * Copy wizard files
-	 *
-	 * @param $wizardName
-	 * @return bool
-	 */
-	private function copyWizard($wizardName)
-	{
-		return CopyDirFiles(
-			$_SERVER["DOCUMENT_ROOT"].'/bitrix/modules/'.self::WIZARD_PATH.$wizardName,
-			$_SERVER["DOCUMENT_ROOT"]."/bitrix/wizards/bitrix/".$wizardName,
-			true,
-			true,
-			false
-		);
-	}
-
-	/**
 	 * @param $siteId
 	 * @throws Main\ArgumentOutOfRangeException
 	 */
 	private function setAuthComponentsTemplate($siteId)
 	{
 		Option::set("main", "auth_components_template", "", $siteId);
+	}
+
+	/**
+	 * @param $siteId
+	 * @throws Main\ArgumentException
+	 * @throws Main\ArgumentOutOfRangeException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
+	private function setLandingOption($siteId)
+	{
+		$crmSite = \Bitrix\Main\SiteTable::getList([
+			"select" => ["SERVER_NAME"],
+			"filter" => ["=LID" => $siteId],
+		])->fetch();
+		if ($crmSite && !empty($crmSite["SERVER_NAME"]))
+		{
+			Option::set("landing", "portal_url", $crmSite["SERVER_NAME"]);
+		}
 	}
 
 	/**
@@ -597,7 +595,11 @@ class SiteStep extends \CWizardStep
 	{
 		return Main\SiteTable::getList([
 			"select" => ["*"],
-			"filter" => ["ACTIVE" => "Y"]
+			"filter" => [
+				"ACTIVE" => "Y",
+				"!DEF" => "Y",
+				"!DOC_ROOT" => $_SERVER["DOCUMENT_ROOT"],
+			]
 		])->fetchAll();
 	}
 
@@ -755,14 +757,24 @@ class SiteStep extends \CWizardStep
 	 */
 	private function getSort()
 	{
-		$arSort = [];
-		$siteList = $this->getSiteList();
+		$sortList = [];
+
+		$siteList = Main\SiteTable::getList([
+			"select" => ["SORT"],
+			"filter" => [
+				"ACTIVE" => "Y",
+			]
+		])->fetchAll();
 		foreach ($siteList as $site)
 		{
-			$arSort[] = $site["SORT"];
+			$sortList[] = $site["SORT"];
 		}
 
-		$sort = max($arSort);
+		$sort = null;
+		if ($sortList)
+		{
+			$sort = max($sortList);
+		}
 
 		return $sort ? (int)$sort + 100 : 100;
 	}
@@ -781,17 +793,20 @@ class SiteStep extends \CWizardStep
 			"CULTURE_ID" => "",
 		];
 
-		$siteList = $this->getSiteList();
-		foreach ($siteList as $site)
+		$site = Main\SiteTable::getList([
+			"select" => ["*"],
+			"filter" => [
+				"ACTIVE" => "Y",
+				"DEF" => "Y",
+			]
+		])->fetch();
+		if ($site["DEF"] === "Y")
 		{
-			if ($site["DEF"] === "Y")
-			{
-				$param = [
-					"EMAIL" => $site["EMAIL"],
-					"LANGUAGE_ID" => $site["LANGUAGE_ID"],
-					"CULTURE_ID" => $site["CULTURE_ID"],
-				];
-			}
+			$param = [
+				"EMAIL" => $site["EMAIL"],
+				"LANGUAGE_ID" => $site["LANGUAGE_ID"],
+				"CULTURE_ID" => $site["CULTURE_ID"],
+			];
 		}
 
 		if (!$param["EMAIL"])

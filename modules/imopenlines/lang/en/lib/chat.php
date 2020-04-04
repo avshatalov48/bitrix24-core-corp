@@ -5,6 +5,7 @@ $MESS["IMOL_CHAT_APP_ICON_QUICK_DESCRIPTION"] = "Open canned responses database"
 $MESS["IMOL_CHAT_APP_ICON_QUICK_TITLE"] = "Canned responses";
 $MESS["IMOL_CHAT_ASSIGN_OFF"] = "The conversation is unassigned from agent, auto close date set according to the queue rules.";
 $MESS["IMOL_CHAT_ASSIGN_ON"] = "The conversation is assigned to agent, auto close date moved to #DATE#";
+$MESS["IMOL_CHAT_ASSIGN_OPERATOR_CRM_NEW"] = "Enquiry redirected to #USER# (CRM's responsible person)";
 $MESS["IMOL_CHAT_ASSIGN_OPERATOR_LIST_NEW"] = "Enquiry assigned to all agents in the queue";
 $MESS["IMOL_CHAT_ASSIGN_OPERATOR_NEW"] = "Enquiry assigned to #USER#";
 $MESS["IMOL_CHAT_CHAT_NAME"] = "#USER_NAME# - #LINE_NAME#";

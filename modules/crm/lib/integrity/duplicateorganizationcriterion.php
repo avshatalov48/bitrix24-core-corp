@@ -531,6 +531,15 @@ class DuplicateOrganizationCriterion extends DuplicateCriterion
 	{
 		return ucfirst($this->title);
 	}
+	public function getSummary()
+	{
+		self::includeLangFile();
+
+		return GetMessage(
+			'CRM_DUP_CRITERION_ORG_SUMMARY',
+			array('#DESCR#'=> $this->getMatchDescription())
+		);
+	}
 	public function getTextTotals($count, $limit = 0)
 	{
 		self::includeLangFile();

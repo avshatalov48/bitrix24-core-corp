@@ -50,9 +50,12 @@ $arDefaultUrlTemplates404 = array(
 	'edit' => 'edit/#company_id#/',
 	'show' => 'show/#company_id#/',
 	'dedupe' => 'dedupe/',
+	'dedupelist' => 'dedupelist/',
+	'dedupewizard' => 'dedupewizard/',
 	'widget' => 'widget/',
 	'portrait' => 'portrait/#company_id#/',
 	'details' => 'details/#company_id#/',
+	'merge' => 'merge/',
 	'requisiteselect' => 'requisite/select/#company_id#/'
 );
 
@@ -102,18 +105,24 @@ else
 		$componentPage = 'show';
 	else if (isset($_REQUEST['details']))
 		$componentPage = 'details';
+	else if (isset($_REQUEST['merge']))
+		$componentPage = 'merge';
 	else if (isset($_REQUEST['requisiteselect']))
 		$componentPage = 'requisiteselect';
 	else if (isset($_REQUEST['import']))
 		$componentPage = 'import';
 	elseif (isset($_REQUEST['dedupe']))
 		$componentPage = 'dedupe';
+	elseif (isset($_REQUEST['dedupelist']))
+		$componentPage = 'dedupelist';
+	elseif (isset($_REQUEST['dedupewizard']))
+		$componentPage = 'dedupewizard';
 	elseif (isset($_REQUEST['widget']))
 		$componentPage = 'widget';
 	elseif (isset($_REQUEST['portrait']))
 		$componentPage = 'portrait';
 
-	$arResult['PATH_TO_COMPANY_LIST'] = $arResult['PATH_TO_COMPANY_DEDUPE'] = $APPLICATION->GetCurPage();
+	$arResult['PATH_TO_COMPANY_LIST'] = $arResult['PATH_TO_COMPANY_DEDUPE'] = $arResult['PATH_TO_COMPANY_DEDUPEWIZARD'] = $APPLICATION->GetCurPage();
 	$arResult['PATH_TO_COMPANY_DETAILS'] = $APPLICATION->GetCurPage()."?$arVariableAliases[company_id]=#company_id#&details";
 	$arResult['PATH_TO_COMPANY_REQUISITE_SELECT'] = $APPLICATION->GetCurPage()."?$arVariableAliases[company_id]=#company_id#&requisiteselect";
 	$arResult['PATH_TO_COMPANY_SHOW'] = $APPLICATION->GetCurPage()."?$arVariableAliases[company_id]=#company_id#&show";
@@ -168,6 +177,11 @@ $arResult['NAVIGATION_CONTEXT_ID'] = 'COMPANY';
 if($componentPage === 'index')
 {
 	$componentPage = 'list';
+}
+
+if(isset($_GET['id']))
+{
+	$arResult['VARIABLES']['contact_ids'] = is_array($_GET['id']) ? $_GET['id'] : array($_GET['id']);
 }
 
 if(\Bitrix\Crm\Settings\LayoutSettings::getCurrent()->isSliderEnabled()

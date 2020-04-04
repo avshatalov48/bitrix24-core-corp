@@ -14,7 +14,7 @@
 								15:30 - 17:30
 							</div>
 						</div>
-						<div class="landing-block-node-card-img-container d-md-flex order-1 order-lg-2 u-bg-overlay px-0 g-mb-20 g-mb-0--md g-width-120 g-width-170--md g-height-120 g-height-170--md g-bg-black-opacity-0_3--after g-bg-white-opacity-0--after--parent-hover g-overflow-hidden g-rounded-50x g-mr-30--lg mx-auto g-transition-0_2 g-transition--ease-in col-auto">
+						<div class="landing-block-node-card-img-container col-auto d-md-flex order-1 order-lg-2 u-bg-overlay g-bg-black-opacity-0_3--after g-bg-white-opacity-0--after--parent-hover g-overflow-hidden g-rounded-50x px-0 g-mb-20 g-mb-0--md g-mr-30--lg mx-auto g-width-120 g-width-170--md g-height-120 g-height-170--md g-transition-0_2 g-transition--ease-in">
 							<img class="landing-block-node-card-img img-fluid g-rounded-50x"
 								 src="https://cdn.bitrix24.site/bitrix/images/landing/business/200x200/img1.jpg"
 								 alt="">
@@ -57,7 +57,7 @@
 								17:45 - 18:45
 							</div>
 						</div>
-						<div class="landing-block-node-card-img-container d-md-flex order-1 order-lg-2 u-bg-overlay px-0 g-mb-20 g-mb-0--md g-width-120 g-width-170--md g-height-120 g-height-170--md g-bg-black-opacity-0_3--after g-bg-white-opacity-0--after--parent-hover g-overflow-hidden g-rounded-50x g-mr-30--lg mx-auto g-transition-0_2 g-transition--ease-in col-auto">
+						<div class="landing-block-node-card-img-container col-auto d-md-flex order-1 order-lg-2 u-bg-overlay g-bg-black-opacity-0_3--after g-bg-white-opacity-0--after--parent-hover g-overflow-hidden g-rounded-50x px-0 g-mb-20 g-mb-0--md g-mr-30--lg mx-auto g-width-120 g-width-170--md g-height-120 g-height-170--md g-transition-0_2 g-transition--ease-in">
 							<img class="landing-block-node-card-img img-fluid g-rounded-50x"
 								 src="https://cdn.bitrix24.site/bitrix/images/landing/business/200x200/img2.jpg"
 								 alt="">
@@ -100,7 +100,7 @@
 								19:00 - 21:00
 							</div>
 						</div>
-						<div class="landing-block-node-card-img-container d-md-flex order-1 order-lg-2 u-bg-overlay px-0 g-mb-20 g-mb-0--md g-width-120 g-width-170--md g-height-120 g-height-170--md g-bg-black-opacity-0_3--after g-bg-white-opacity-0--after--parent-hover g-overflow-hidden g-rounded-50x g-mr-30--lg mx-auto g-transition-0_2 g-transition--ease-in col-auto">
+						<div class="landing-block-node-card-img-container col-auto d-md-flex order-1 order-lg-2 u-bg-overlay g-bg-black-opacity-0_3--after g-bg-white-opacity-0--after--parent-hover g-overflow-hidden g-rounded-50x px-0 g-mb-20 g-mb-0--md g-mr-30--lg mx-auto g-width-120 g-width-170--md g-height-120 g-height-170--md g-transition-0_2 g-transition--ease-in">
 							<img class="landing-block-node-card-img img-fluid g-rounded-50x"
 								 src="https://cdn.bitrix24.site/bitrix/images/landing/business/200x200/img3.jpg"
 								 alt="">
@@ -143,7 +143,7 @@
 								21:15 - 22:00
 							</div>
 						</div>
-						<div class="landing-block-node-card-img-container d-md-flex order-1 order-lg-2 u-bg-overlay px-0 g-mb-20 g-mb-0--md g-width-120 g-width-170--md g-height-120 g-height-170--md g-bg-black-opacity-0_3--after g-bg-white-opacity-0--after--parent-hover g-overflow-hidden g-rounded-50x g-mr-30--lg mx-auto g-transition-0_2 g-transition--ease-in col-auto">
+						<div class="landing-block-node-card-img-container col-auto d-md-flex order-1 order-lg-2 u-bg-overlay g-bg-black-opacity-0_3--after g-bg-white-opacity-0--after--parent-hover g-overflow-hidden g-rounded-50x px-0 g-mb-20 g-mb-0--md g-mr-30--lg mx-auto g-width-120 g-width-170--md g-height-120 g-height-170--md g-transition-0_2 g-transition--ease-in">
 							<img class="landing-block-node-card-img img-fluid g-rounded-50x"
 								 src="https://cdn.bitrix24.site/bitrix/images/landing/business/200x200/img4.jpg"
 								 alt="">

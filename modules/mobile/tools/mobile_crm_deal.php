@@ -101,7 +101,7 @@ if($_SERVER["REQUEST_METHOD"]=="POST" && strlen($_POST["action"])>0 && check_bit
 				$fields = array("STAGE_ID" => $stageId);
 
 				$obj = new CCrmDeal();
-				$res = $obj->Update($entityID, $fields);
+				$res = $obj->Update($entityID, $fields, true, true, array('DISABLE_USER_FIELD_CHECK' => true));
 
 				if ($res)
 				{

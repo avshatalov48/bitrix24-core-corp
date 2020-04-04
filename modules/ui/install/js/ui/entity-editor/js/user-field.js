@@ -281,12 +281,30 @@ if(typeof BX.UI.EntityUserFieldManager === "undefined")
 			{
 				BX.Main.UF.EditManager.add({ "FIELDS": [fieldData] }, onSuccess);
 			}
+
+			BX.onCustomEvent(window, "BX.UI.EntityEditor:onUserFieldAdd", [ this, fieldData ]);
+
 			return promise;
 		},
 		updateField: function(fieldData, mode)
 		{
 			fieldData["ENTITY_ID"] = this._fieldEntityId;
 			fieldData["SIGNATURE"] = this._creationSignature;
+
+			if(BX.type.isNotEmptyString(fieldData["EDIT_FORM_LABEL"]))
+			{
+				this.addFieldLabel("EDIT_FORM_LABEL", fieldData["EDIT_FORM_LABEL"], fieldData);
+			}
+
+			if(BX.type.isNotEmptyString(fieldData["LIST_COLUMN_LABEL"]))
+			{
+				this.addFieldLabel("LIST_COLUMN_LABEL", fieldData["LIST_COLUMN_LABEL"], fieldData);
+			}
+
+			if(BX.type.isNotEmptyString(fieldData["LIST_FILTER_LABEL"]))
+			{
+				this.addFieldLabel("LIST_FILTER_LABEL", fieldData["LIST_FILTER_LABEL"], fieldData);
+			}
 
 			var promise = new BX.Promise();
 			var onSuccess = function(result)

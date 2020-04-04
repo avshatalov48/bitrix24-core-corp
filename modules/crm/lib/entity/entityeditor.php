@@ -24,6 +24,7 @@ class EntityEditor
 		'crm_contact' => true,
 		'crm_quote' => true
 	);
+	protected static $multiFields = null;
 
 	protected static function getUserPermissions()
 	{
@@ -53,7 +54,6 @@ class EntityEditor
 			}
 		}
 	}
-
 	/**
 	 * Prepare Entity Fields received from editor for copy.
 	 * @param array $entityFields Entity Fields.
@@ -110,7 +110,6 @@ class EntityEditor
 			}
 		}
 	}
-
 	/**
 	 * @param \Bitrix\Crm\Conversion\EntityConversionWizard $wizard
 	 * @param int $entityTypeID
@@ -136,7 +135,6 @@ class EntityEditor
 			}
 		}
 	}
-
 	/**
 	 * Get User Selector Context
 	 * Can be used in CSocNetLogDestination::GetDestinationSort
@@ -146,7 +144,6 @@ class EntityEditor
 	{
 		return 'CRM_ENTITY_EDITOR';
 	}
-
 	/**
 	 * Save selected User in Finder API
 	 * @param int $userID User ID.
@@ -169,7 +166,6 @@ class EntityEditor
 			);
 		}
 	}
-
 	protected static function setDataField($typeName, $name, $value, array &$entityData,  array &$userFields)
 	{
 		if(!isset(self::$allowedTypesMap[$typeName]))
@@ -228,7 +224,6 @@ class EntityEditor
 		}
 		return false;
 	}
-
 	public static function mapData(array $fieldInfos, array &$entityData,  array &$userFields, array $data)
 	{
 		foreach($data as $k => $v)
@@ -290,4 +285,70 @@ class EntityEditor
 
 		return $results;
 	}
+	public static function prepareMultiFieldDataModel($entityTypeID, $entityID, $typeID, array &$entityMultiFields, array $params = null)
+	{
+		$entityTypeName = \CCrmOwnerType::ResolveName($entityTypeID);
+		$multiFieldEntityTypes = \CCrmFieldMulti::GetEntityTypes();
+		$multiFieldViewClassNames = array(
+			'PHONE' => 'crm-entity-phone-number',
+			'EMAIL' => 'crm-entity-email',
+			'IM' => 'crm-entity-phone-number'
+		);
+
+		for($i = 0, $length = count($entityMultiFields); $i < $length; $i++)
+		{
+			$value = $entityMultiFields[$i]['VALUE'];
+			$valueTypeID = $entityMultiFields[$i]['VALUE_TYPE'];
+			$multiFieldEntityType = $multiFieldEntityTypes[$typeID];
+
+			$entityMultiFields[$i] =
+				array_merge(
+					$entityMultiFields[$i],
+					array(
+						'VIEW_DATA' => \CCrmViewHelper::PrepareMultiFieldValueItemData(
+							$typeID,
+							array(
+								'VALUE' => $value,
+								'VALUE_TYPE_ID' => $valueTypeID,
+								'VALUE_TYPE' => isset($multiFieldEntityType[$valueTypeID]) ? $multiFieldEntityType[$valueTypeID] : null,
+								'CLASS_NAME' => isset($multiFieldViewClassNames[$typeID]) ? $multiFieldViewClassNames[$typeID] : ''
+							),
+							array(
+								'ENABLE_SIP' => false,
+								'SIP_PARAMS' => array(
+									'ENTITY_TYPE_NAME' => $entityTypeName,
+									'ENTITY_ID' => $entityID,
+									'AUTO_FOLD' => true
+								)
+							)
+						)
+					)
+				);
+		}
+	}
+	public static function prepareEntityInfo($entityTypeID, $entityID, array $params = null)
+	{
+		if($params === null)
+		{
+			$params = array();
+		}
+
+		$userPermissions = isset($params['USER_PERMISSIONS'])
+			? $params['USER_PERMISSIONS'] : \CCrmPerms::GetCurrentUserPermissions();
+
+		return \CCrmEntitySelectorHelper::PrepareEntityInfo(
+			\CCrmOwnerType::ResolveName($entityTypeID),
+			$entityID,
+			array(
+				'ENTITY_EDITOR_FORMAT' => true,
+				'IS_HIDDEN' => !Crm\Security\EntityAuthorization::checkReadPermission($entityTypeID, $entityID, $userPermissions),
+				'USER_PERMISSIONS' => $userPermissions,
+				'REQUIRE_REQUISITE_DATA' => true,
+				'REQUIRE_MULTIFIELDS' => true,
+				'NORMALIZE_MULTIFIELDS' => true,
+				'NAME_TEMPLATE' => \Bitrix\Crm\Format\PersonNameFormatter::getFormat(),
+			)
+		);
+	}
+
 }

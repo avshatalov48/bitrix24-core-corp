@@ -26,6 +26,13 @@ class GaCounter extends \Bitrix\Landing\Hook\Page
 			'SEND_CLICK' => new Field\Checkbox('SEND_CLICK', array(
 				'title' => Loc::getMessage('LANDING_HOOK_GACOUNTER_SEND_CLICK')
 			)),
+			'CLICK_TYPE' => new Field\Select('CLICK_TYPE', array(
+				'title' => Loc::getMessage('LANDING_HOOK_GACOUNTER_CLICK_TYPE'),
+				'options' => [
+					'href' => Loc::getMessage('LANDING_HOOK_GACOUNTER_CLICK_TYPE_HREF'),
+					'text' => Loc::getMessage('LANDING_HOOK_GACOUNTER_CLICK_TYPE_TEXT'),
+				]
+			)),
 			'SEND_SHOW' => new Field\Checkbox('SEND_SHOW', array(
 				'title' => Loc::getMessage('LANDING_HOOK_GACOUNTER_SEND_SHOW'),
 				'help' => $helpUrl
@@ -121,6 +128,19 @@ class GaCounter extends \Bitrix\Landing\Hook\Page
 				'BodyTag',
 				' data-event-tracker=\'' . json_encode($sendData) . '\''
 			);
+			$clickType = $this->fields['CLICK_TYPE']->getValue();
+			if (!$clickType)
+			{
+				$clickType = 'text';
+			}
+			if ($clickType)
+			{
+				\Bitrix\Landing\Manager::setPageView(
+					'BodyTag',
+					' data-event-tracker-label-from="' . \htmlspecialcharsbx($clickType) . '"'
+				);
+			}
 		}
+
 	}
 }

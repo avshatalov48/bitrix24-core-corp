@@ -1,6 +1,8 @@
 <?php
 namespace Bitrix\Landing\Source;
 
+use Bitrix\Main;
+
 abstract class DataLoader
 {
 	protected $config = [
@@ -62,13 +64,51 @@ abstract class DataLoader
 	 * @param mixed $filter
 	 * @return array
 	 */
-	abstract public function normalizeFilter($filter);
+	public function normalizeFilter($filter)
+	{
+		if (!is_array($filter))
+		{
+			return [];
+		}
+		if (empty($filter))
+		{
+			return $filter;
+		}
+
+		$result = [];
+		foreach ($filter as $row)
+		{
+			if (empty($row) || !is_array($row))
+			{
+				continue;
+			}
+			if (empty($row['key']) || empty($row['value']) || !is_array($row['value']))
+			{
+				continue;
+			}
+			$result[] = $row;
+		}
+		unset($row);
+
+		if (!empty($result))
+		{
+			Main\Type\Collection::sortByColumn($result, ['key' => SORT_ASC]);
+		}
+		return $result;
+	}
 
 	/**
 	 * @param mixed $filter
 	 * @return string
 	 */
-	abstract public function calculateFilterHash($filter);
+	public function calculateFilterHash($filter)
+	{
+		if (!is_array($filter))
+		{
+			$filter = [];
+		}
+		return md5(serialize($filter));
+	}
 
 	/**
 	 * @param mixed $filter
@@ -87,6 +127,30 @@ abstract class DataLoader
 	protected function getSelectFields()
 	{
 		return $this->getSettingsValue('select');
+	}
+
+	/**
+	 * Returns showed fields prepared list.
+	 *
+	 * @return array
+	 */
+	protected function getPreparedSelectFields()
+	{
+		$result = [];
+		$fields = $this->getSelectFields();
+		if (!empty($fields) && is_array($fields))
+		{
+			foreach ($fields as $row)
+			{
+				if (empty($row) || !is_array($row) || empty($row['id']))
+				{
+					continue;
+				}
+				$result[] = $row['id'];
+			}
+			unset($row);
+		}
+		return $result;
 	}
 
 	/**

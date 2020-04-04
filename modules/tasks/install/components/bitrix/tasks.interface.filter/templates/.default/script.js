@@ -207,10 +207,12 @@ if (typeof(BX.TasksGroupsSelectorInit) === "undefined")
 					menuItems.push({
 						id: "new",
 						text: messages.TASKS_BTN_GROUP_SELECT,
-						onclick: function ()
+						onclick: function (event, item)
 						{
+							menu.getPopupWindow().setAutoHide(false);
+
 							var selector = new BX.Tasks.Integration.Socialnetwork.NetworkSelector({
-								scope: BX.proxy_context,
+								scope: item.getContainer(),
 								id: "group-selector",
 								mode: "group",
 								query: false,
@@ -229,6 +231,9 @@ if (typeof(BX.TasksGroupsSelectorInit) === "undefined")
 										: data.nameFormatted
 								});
 								selector.close();
+							});
+							selector.bindEvent("close", function (data) {
+								menu.getPopupWindow().setAutoHide(true);
 							});
 							selector.open();
 						}

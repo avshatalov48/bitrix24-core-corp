@@ -1377,7 +1377,10 @@
 							children: [
 								BX.create("div", {
 									props: {className: "ui-btn ui-btn-sm ui-btn-light-border"},
-									text: BX.message("VI_CONFIG_RENT_UPLOAD_DOCUMENTS")
+									text: BX.message("VI_CONFIG_RENT_UPLOAD_DOCUMENTS"),
+									events: {
+										click: this._onUploadDocumentsButtonClick.bind(this)
+									}
 								})
 							]
 						})
@@ -1513,6 +1516,7 @@
 			'UPLOAD_ADDRESS_TYPE': this.currentRegion.REGULATION_ADDRESS_TYPE,
 			'UPLOAD_PHONE_CATEGORY': this._categoryId,
 			'UPLOAD_REGION_CODE': this.currentRegion.REGION_CODE,
+			'UPLOAD_REGION_ID': this.currentRegion.REGION_ID,
 			'IFRAME': this.iframe === true ? 'Y' : 'N'
 		};
 

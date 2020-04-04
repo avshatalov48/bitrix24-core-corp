@@ -120,6 +120,16 @@ final class ButtonAttributes implements \ArrayAccess, \IteratorAggregate, \Count
 		return $this;
 	}
 
+	/**
+	 * @param string $className
+	 *
+	 * @return bool
+	 */
+	public function hasClass($className)
+	{
+		return isset($this['class']) && in_array($className, $this['class'], true);
+	}
+
 	public function setClassList(array $classList)
 	{
 		$this['class'] = $classList;

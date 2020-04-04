@@ -735,6 +735,18 @@ abstract class UserFieldProxy
 		switch ($userTypeID)
 		{
 			case 'string':
+			{
+				if(isset($settings['DEFAULT_VALUE']))
+				{
+					$effectiveSettings['DEFAULT_VALUE'] = $settings['DEFAULT_VALUE'];
+				}
+
+				if(isset($settings['ROWS']))
+				{
+					$effectiveSettings['ROWS'] = min(max($settings['ROWS'], 1), 50);
+				}
+				break;
+			}
 			case 'integer':
 			{
 				if(isset($settings['DEFAULT_VALUE']))

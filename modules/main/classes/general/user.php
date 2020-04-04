@@ -463,7 +463,7 @@ abstract class CAllUser extends CDBResult
 
 		if ($user_id)
 		{
-			$hash = md5(uniqid(rand(), true));
+			$hash = Main\Security\Random::getString(32);
 			$arFields = array(
 				'USER_ID' => $user_id,
 				'URL' => $DB->ForSqlLike(trim($url), 500),
@@ -3583,8 +3583,6 @@ abstract class CAllUser extends CDBResult
 
 		if($userId == $USER->GetId())
 		{
-			$_SESSION['SESS_AUTH']['PREV_LAST_ACTIVITY'] = $_SESSION['SESS_AUTH']['SET_LAST_ACTIVITY'];
-
 			if ($cache)
 			{
 				if (
@@ -3595,6 +3593,8 @@ abstract class CAllUser extends CDBResult
 					return false;
 				}
 			}
+
+			$_SESSION['SESS_AUTH']['PREV_LAST_ACTIVITY'] = $_SESSION['SESS_AUTH']['SET_LAST_ACTIVITY'];
 			$_SESSION['SESS_AUTH']['SET_LAST_ACTIVITY'] = time();
 		}
 

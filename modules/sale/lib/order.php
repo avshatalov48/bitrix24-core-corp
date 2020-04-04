@@ -1399,8 +1399,7 @@ class Order extends OrderBase implements \IShipmentOrder, \IPaymentOrder, IBusin
 				}
 				else
 				{
-					$result->addErrors($r->getErrors());
-					return $result;
+					return $result->addErrors($r->getErrors());
 				}
 			}
 		}
@@ -1411,8 +1410,7 @@ class Order extends OrderBase implements \IShipmentOrder, \IPaymentOrder, IBusin
 			$r = $this->syncOrderPaid();
 			if (!$r->isSuccess())
 			{
-				$result->addErrors($r->getErrors());
-				return $result;
+				return $result->addErrors($r->getErrors());
 			}
 
 			$paidResult = $r->getData();
@@ -1432,9 +1430,28 @@ class Order extends OrderBase implements \IShipmentOrder, \IPaymentOrder, IBusin
 
 		$this->setFieldNoDemand('PAYED', $paid ? "Y" : "N");
 
+		if ($this->getFields()->isChanged('PAYED'))
+		{
+			Internals\EventsPool::addEvent(
+				$this->getInternalId(),
+				EventActions::EVENT_ON_ORDER_PAID,
+				[
+					'ENTITY' => $this,
+				]
+			);
+
+			Internals\EventsPool::addEvent(
+				$this->getInternalId(),
+				EventActions::EVENT_ON_ORDER_PAID_SEND_MAIL,
+				[
+					'ENTITY' => $this,
+				]
+			);
+		}
+
 		if ($finalSumPaid > 0 && $finalSumPaid > $this->getPrice())
 		{
-			if (($payment && $payment->isPaid()) || !$payment)
+			if (!$payment || $payment->isPaid())
 			{
 				Internals\UserBudgetPool::addPoolItem($this, $finalSumPaid - $this->getPrice(), Internals\UserBudgetPool::BUDGET_TYPE_EXCESS_SUM_PAID, $payment);
 			}
@@ -1591,17 +1608,6 @@ class Order extends OrderBase implements \IShipmentOrder, \IPaymentOrder, IBusin
 		if (!$shipmentCollection = $this->getShipmentCollection())
 		{
 			throw new Main\ObjectNotFoundException('Entity "ShipmentCollection" not found');
-		}
-
-		if ($this->getFields()->isChanged('PAYED') && $this->isPaid())
-		{
-			Internals\EventsPool::addEvent($this->getInternalId(), EventActions::EVENT_ON_ORDER_PAID, array(
-				'ENTITY' => $this,
-			));
-
-			Internals\EventsPool::addEvent($this->getInternalId(), EventActions::EVENT_ON_ORDER_PAID_SEND_MAIL, array(
-				'ENTITY' => $this,
-			));
 		}
 
 		$orderStatus = null;

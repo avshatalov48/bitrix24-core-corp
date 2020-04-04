@@ -258,20 +258,24 @@
 		showSocservComponent: function()
 		{
 			this.clearHtml();
-			this.loader = this.showLoader({node: this.container, loader: null, size: 100});
-
-			BX.ajax.runComponentAction(this.componentName, "showSocserv", {
-				signedParameters: this.signedParameters,
-				mode: 'ajax',
-				data: {
-					userId: this.userId
+			var socServNode = document.querySelector("[data-role='socserv']");
+			if (BX.type.isDomNode(socServNode))
+			{
+				var url = BX.data(socServNode, 'url');
+				if (top.BX.SidePanel.Instance.open(url, {
+					'cacheable': false,
+					'width': 840
+				}))
+				{
+					top.BX.addCustomEvent(top.BX.SidePanel.Instance.getSlider(url), "SidePanel.Slider:onClose", BX.proxy(function () {
+						var authNode = document.querySelector("[data-role='auth']");
+						if (BX.type.isDomNode(authNode))
+						{
+							authNode.click();
+						}
+					}, this));
 				}
-			}).then(function (result) {
-				this.showComponentData(result, "socserv");
-			}.bind(this), function (result) {
-				this.showErrorPopup(result["errors"][0].message);
-				this.hideLoader({loader: this.loader});
-			}.bind(this));
+			}
 		},
 
 		showComponentData: function(result, pageName)

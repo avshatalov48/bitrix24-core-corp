@@ -656,7 +656,7 @@ abstract class OrderBuilder
 				$tmp = array(
 					'BASKET_CODE' => $basketCode,
 					'AMOUNT' => $items['AMOUNT'],
-					'ORDER_DELIVERY_BASKET_ID' => isset($items['ORDER_DELIVERY_BASKET_ID']) ? $items['ORDER_DELIVERY_BASKET_ID']:0,
+					'ORDER_DELIVERY_BASKET_ID' => isset($items['ORDER_DELIVERY_BASKET_ID']) ? $items['ORDER_DELIVERY_BASKET_ID'] : 0,
 					'XML_ID' => $items['XML_ID'],
 					'IS_SUPPORTED_MARKING_CODE' => $items['IS_SUPPORTED_MARKING_CODE']
 				);
@@ -725,7 +725,6 @@ abstract class OrderBuilder
 					$shippingItems[] = $tmp;
 				}
 			}
-
 		}
 
 		// DELETE FROM COLLECTION

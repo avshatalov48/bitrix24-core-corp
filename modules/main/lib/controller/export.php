@@ -16,7 +16,7 @@ class Export extends Main\Engine\Controller
 	const EXPORT_PATH = '/export/';
 
 	/** How many day keep files in the cloud. */
-	const EXPIRE_DAYS = 5;
+	const EXPIRE_DAYS = 24;
 
 	const ACTION_EXPORT = 'export';
 	const ACTION_UPLOAD = 'upload';

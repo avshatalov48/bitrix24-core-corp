@@ -69,98 +69,6 @@
 
 	class Task
 	{
-		constructor(currentUser)
-		{
-			this._id = 'tmp-id-' + (new Date).getTime();
-			this.isNewRecord = true;
-			this._guid = '';
-
-			this.currentUser = currentUser;
-
-			this.taskUrlTemplate = BX.componentParameters.get('PATH_TO_TASK_ADD',
-				env.siteDir + "mobile/tasks/snmrouter/?routePage=#action#&TASK_ID=#taskId#");
-			this.error = false;
-
-			this._accomplices = [];
-			this._auditors = [];
-
-			this.deadline = null;
-			this.timeTracking = false;
-
-			this.status = 2;
-			this.subStatus = this.status;
-			this.notViewed = false;
-
-			this.messageCount = 0;
-			this.commentsCount = 0;
-			this._newCommentsCount = 0;
-
-			this.params = {};
-			this.params.allowChangeDeadline = true;
-
-			this.rawAccess = {};
-		}
-
-		setData(row)
-		{
-			this.id = row.id;
-			this.title = row.title;
-			this.groupId = row.groupId;
-			this.group = (this.groupId > 0 && row.group) ? row.group : {name:'', id:0};
-
-			this.status = row.status;
-			this.subStatus = row['subStatus'] ? row.subStatus : this.status;
-
-			this.creator = row.creator;
-			this.responsible = row.responsible;
-
-			this.timeTracking = row.allowTimeTracking === 'Y';
-
-			this.commentsCount = row.commentsCount;
-			this.newCommentsCount = row.newCommentsCount;
-
-			this.notViewed = row.notViewed === 'Y';
-
-			this.accomplices = row.accomplices || {};
-			this.auditors = row.auditors || {};
-
-			this.rawAccess = row.action;
-
-			const deadline = Date.parse(row.deadline);
-			if (deadline > 0)
-			{
-				this.deadline = deadline;
-			}
-			else
-			{
-				this.deadline = null;
-			}
-
-			if (Number(this.currentUser.id) === Number(row.creator.id)
-				&& this.currentUser.icon !== row.creator.icon)
-			{
-				this.currentUser.icon = row.creator.icon;
-			}
-
-			if (Number(this.currentUser.id) === Number(row.responsible.id)
-				&& this.currentUser.icon !== row.responsible.icon)
-			{
-				this.currentUser.icon = row.responsible.icon;
-			}
-		}
-
-		cloneData(data)
-		{
-			for (let key in data)
-			{
-				if (this.hasOwnProperty(key))
-				{
-					this[key] = data[key];
-				}
-			}
-
-		}
-
 		static get statesList()
 		{
 			const statePrefix = 'MOBILE_TASKS_TASK_CARD_STATE';
@@ -170,28 +78,28 @@
 			return {
 				isExpired: {
 					message: BX.message(`${statePrefix}_EXPIRED`),
-					fontColor, // : '#ff5752',
-					backgroundColor, // : '#33ff5752',
+					fontColor,
+					backgroundColor,
 				},
 				isExpiredSoon: {
 					message: BX.message(`${statePrefix}_EXPIRED_SOON`),
-					fontColor, // : '#df9300',
-					backgroundColor, // : '#33ffa900',
+					fontColor,
+					backgroundColor,
 				},
 				isNew: {
 					message: BX.message(`${statePrefix}_NEW`),
-					fontColor, // : '#1bb5e6',
-					backgroundColor, // : '#332fc6f6',
+					fontColor,
+					backgroundColor,
 				},
 				isWaitCtrl: {
 					message: BX.message(`${statePrefix}_SUPPOSEDLY_COMPLETED`),
-					fontColor, // : '#30c8dc',
-					backgroundColor, // : '#3355d0e0',
+					fontColor,
+					backgroundColor,
 				},
 				isWoDeadline: {
 					message: BX.message(`${statePrefix}_WITHOUT_DEADLINE`),
-					fontColor, // : '#828b95',
-					backgroundColor, // : '#26525c69',
+					fontColor,
+					backgroundColor,
 				},
 			};
 		}
@@ -209,21 +117,97 @@
 
 		static get counterColors()
 		{
+			const red = '#ff5752';
 			return {
-				isNew: "#FF5752",//"#2FC6F6",
-				expired: "#FF5752",
-				waitCtrl: "#FF5752",//"#FFA900"
+				isNew: red,
+				expired: red,
+				waitCtrl: red,
 			};
 		}
 
-		isMember(userId)
+		constructor(currentUser)
 		{
-			userId = Number(userId);
+			this.id = `tmp-id-${(new Date()).getTime()}`;
+			this.guid = '';
+			this.isNewRecord = true;
 
-			return userId === this.responsible.id ||
-				userId === this.creator.id ||
-				this.accomplices.indexOf(userId) >= 0 ||
-				this.auditors.indexOf(userId) >= 0
+			this.currentUser = currentUser;
+
+			const defaultTaskUrl = `${env.siteDir}mobile/tasks/snmrouter/?routePage=#action#&TASK_ID=#taskId#`;
+			this.taskUrlTemplate = BX.componentParameters.get('PATH_TO_TASK_ADD', defaultTaskUrl);
+			this.error = false;
+
+			this.deadline = null;
+			this.timeTracking = false;
+			this.status = Task.statusList.pending;
+			this.subStatus = Task.statusList.pending;
+			this.notViewed = false;
+			this.messageCount = 0;
+			this.commentsCount = 0;
+			this.newCommentsCount = 0;
+			this.accomplices = [];
+			this.auditors = [];
+
+			this.params = {};
+			this.params.allowChangeDeadline = true;
+
+			this.rawAccess = {};
+		}
+
+		setData(row)
+		{
+			this.id = row.id;
+			this.title = row.title;
+			this.groupId = row.groupId;
+			this.group = (this.groupId > 0 && row.group ? row.group : {id: 0, name: ''});
+
+			this.status = row.status;
+			this.subStatus = row.subStatus || this.status;
+
+			this.creator = row.creator;
+			this.responsible = row.responsible;
+
+			this.timeTracking = (row.allowTimeTracking === 'Y');
+
+			this.commentsCount = row.commentsCount;
+			this.newCommentsCount = row.newCommentsCount;
+
+			this.notViewed = row.notViewed === 'Y';
+
+			this.accomplices = row.accomplices || [];
+			this.auditors = row.auditors || [];
+
+			this.rawAccess = row.action;
+
+			const deadline = Date.parse(row.deadline);
+			this.deadline = (deadline > 0 ? deadline : null);
+
+			if (
+				Number(this.currentUser.id) === Number(row.creator.id)
+				&& this.currentUser.icon !== row.creator.icon
+			)
+			{
+				this.currentUser.icon = row.creator.icon;
+			}
+
+			if (
+				Number(this.currentUser.id) === Number(row.responsible.id)
+				&& this.currentUser.icon !== row.responsible.icon
+			)
+			{
+				this.currentUser.icon = row.responsible.icon;
+			}
+		}
+
+		cloneData(data)
+		{
+			for (let key in data)
+			{
+				if (this.hasOwnProperty(key))
+				{
+					this[key] = data[key];
+				}
+			}
 		}
 
 		get id()
@@ -237,6 +221,26 @@
 			this.isNewRecord = false;
 		}
 
+		get guid()
+		{
+			function s4()
+			{
+				return Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
+			}
+
+			if (!this._guid)
+			{
+				this._guid = `${s4()}${s4()}-${s4()}-${s4()}-${s4()}-${s4()}${s4()}${s4()}`;
+			}
+
+			return this._guid;
+		}
+
+		set guid(value)
+		{
+			this._guid = value;
+		}
+
 		get status()
 		{
 			return this._status;
@@ -245,6 +249,16 @@
 		set status(status)
 		{
 			this._status = Number(status);
+		}
+
+		get subStatus()
+		{
+			return this._subStatus;
+		}
+
+		set subStatus(subStatus)
+		{
+			this._subStatus = Number(subStatus);
 		}
 
 		get newCommentsCount()
@@ -272,6 +286,132 @@
 			{
 				this._newCommentsCount = value;
 			}
+		}
+
+		get accomplices()
+		{
+			return this._accomplices;
+		}
+
+		set accomplices(values)
+		{
+			this._accomplices = [];
+
+			if (values.length > 0)
+			{
+				values.forEach(item => this._accomplices.push(Number(item)));
+			}
+		}
+
+		get auditors()
+		{
+			return this._auditors;
+		}
+
+		set auditors(values)
+		{
+			this._auditors = [];
+
+			if (values.length > 0)
+			{
+				values.forEach(item => this._auditors.push(Number(item)));
+			}
+		}
+
+		isCreator(userId = null)
+		{
+			return Number(userId || this.currentUser.id) === Number(this.creator.id);
+		}
+
+		isResponsible(userId = null)
+		{
+			return Number(userId || this.currentUser.id) === Number(this.responsible.id);
+		}
+
+		isAccomplice(userId = null)
+		{
+			return this.accomplices.includes(Number(userId || this.currentUser.id));
+		}
+
+		isAuditor(userId = null)
+		{
+			return this.auditors.includes(Number(userId || this.currentUser.id));
+		}
+
+		isMember(userId = null)
+		{
+			return this.isCreator(userId)
+				|| this.isResponsible(userId)
+				|| this.isAccomplice(userId)
+				|| this.isAuditor(userId);
+		}
+
+		isDoer(userId = null)
+		{
+			return this.isResponsible(userId) || this.isAccomplice(userId);
+		}
+
+		get isNew()
+		{
+			return this.notViewed || [-2, 1].includes(this.subStatus);
+		}
+
+		get isWaitCtrl()
+		{
+			return this.status === Task.statusList.waitCtrl;
+		}
+
+		get isExpired()
+		{
+			const date = new Date();
+			return this.deadline
+				&& this.deadline <= date.getTime()
+				&& !this.isWaitCtrl;
+		}
+
+		get isExpiredSoon()
+		{
+			const date = new Date();
+			date.setDate(date.getDate() + 1);
+
+			return this.deadline
+				&& this.deadline <= date.getTime()
+				&& !this.isWaitCtrl
+				&& !this.isExpired
+				&& this.isDoer();
+		}
+
+		get isWoDeadline()
+		{
+			const onePersonTask = this.isCreator() && this.isResponsible();
+			return !this.deadline && ((this.isCreator() || this.isResponsible()) && !onePersonTask);
+		}
+
+		get isCompleted()
+		{
+			return this.status === Task.statusList.completed
+				|| (this.status === Task.statusList.waitCtrl && this.isDoer() && !this.isCreator());
+		}
+
+		get can()
+		{
+			return {
+				changeDeadline: this.rawAccess && this.rawAccess.changeDeadline,
+				changeResponsible: (this.rawAccess && this.rawAccess.edit) || this.currentUser.isAdmin || this.isCreator(),
+				start: this.rawAccess && this.rawAccess.start,
+				pause: this.rawAccess && this.rawAccess.pause,
+				complete: this.rawAccess && this.rawAccess.complete,
+				renew: this.rawAccess && this.rawAccess.renew,
+				update: this.rawAccess && this.rawAccess.edit,
+				remove: this.rawAccess && this.rawAccess.remove,
+				defer: this.rawAccess && this.rawAccess.defer,
+				disapprove: this.rawAccess && this.rawAccess.disapprove,
+				approve: this.rawAccess && this.rawAccess.approve,
+				delegate: this.rawAccess && this.rawAccess.delegate,
+				decline: this.rawAccess && this.rawAccess.decline,
+				'favorite.add': this.rawAccess && this.rawAccess['favorite.add'],
+				'favorite.remove': this.rawAccess && this.rawAccess['favorite.delete'],
+			};
 		}
 
 		getMessageCount()
@@ -303,11 +443,7 @@
 				count += 1;
 			}
 
-			const isCreator = this.creator.id === this.currentUser.id;
-			const isResponsible = this.responsible.id === this.currentUser.id;
-			const isAccomplice = this.accomplices.indexOf(Number(this.currentUser.id)) >= 0;
-
-			if (this.isNew && !isCreator && (isResponsible || isAccomplice))
+			if (this.isNew && this.isDoer() && !this.isCreator())
 			{
 				count += 1;
 			}
@@ -315,212 +451,14 @@
 			return count;
 		}
 
-		get isNew()
-		{
-			return Number(this.subStatus) === -2 || Number(this.subStatus) === 1 || this.notViewed;
-		}
-
-		get isWaitCtrl()
-		{
-			return this.status === Task.statusList.waitCtrl;
-		}
-
-		get isExpired()
-		{
-			const date = new Date();
-			return this.deadline
-				&& this.deadline <= date.getTime()
-				&& !this.isWaitCtrl;
-		}
-
-		get isExpiredSoon()
-		{
-			const date = new Date();
-			date.setDate(date.getDate() + 1);
-
-			const isCreator = this.creator.id === this.currentUser.id;
-			const onePersonTask = isCreator && this.responsible.id === this.currentUser.id;
-
-			return this.deadline
-				&& this.deadline <= date.getTime()
-				&& !this.isWaitCtrl
-				&& !this.isExpired
-				&& (!isCreator || onePersonTask);
-		}
-
-		get isWoDeadline()
-		{
-			const isCreator = this.creator.id === this.currentUser.id;
-			const isResponsible = this.responsible.id === this.currentUser.id;
-
-			return !this.deadline && ((isCreator && !isResponsible) || (isResponsible && !isCreator));
-		}
-
-		get isCompleted()
-		{
-			if ((Number(this.status) === Task.statusList.waitCtrl && Number(this.currentUser.id) === Number(
-				this.creator.id)))
-			{
-				return false;
-			}
-
-			return Number(this.status) === Task.statusList.completed ||
-				(
-					(
-						Number(this.currentUser.id) === Number(this.responsible.id)
-						||
-						this.accomplices.indexOf(this.currentUser.id)
-					) &&
-					Number(this.status) === Task.statusList.waitCtrl
-				);
-		}
-
-		get can()
-		{
-			return {
-				changeDeadline:
-					(this.rawAccess && this.rawAccess.changeDeadline)
-				// || this.currentUser.isAdmin
-				// || (this.currentUser.id === this.responsible.id && this.params.allowChangeDeadline)
-				// || this.currentUser.id === this.creator.id
-				// || (this.accomplices.indexOf(Number(this.currentUser.id)) >= 0 && this.params.allowChangeDeadline)
-				,
-
-				changeResponsible:
-					(this.rawAccess && this.rawAccess.edit)
-					|| this.currentUser.isAdmin
-					// || this.currentUser.id === this.responsible.id
-					|| this.currentUser.id === this.creator.id,
-
-				start:
-					(this.rawAccess && this.rawAccess.start),
-				// || this.status === Task.statusList.pending &&
-				// (
-				// 	this.currentUser.id === this.responsible.id
-				// 	// || this.currentUser.id === this.creator.id
-				// 	|| this.accomplices.indexOf(Number(this.currentUser.id)) >= 0
-				// ),
-
-				pause:
-					(this.rawAccess && this.rawAccess.pause),
-				// || this.status === Task.statusList.inprogress &&
-				// (
-				// 	this.currentUser.id === this.responsible.id
-				// 	// || this.currentUser.id === this.creator.id
-				// 	|| this.accomplices.indexOf(Number(this.currentUser.id)) >= 0
-				// ),
-
-				complete:
-					(this.rawAccess && this.rawAccess.complete),
-				// || this.currentUser.isAdmin
-				// || (
-				// 	(this.status === Task.statusList.pending || this.status === Task.statusList.inprogress)
-				// 	&& (
-				// 		this.currentUser.id === this.responsible.id
-				// 		|| this.currentUser.id === this.creator.id
-				// 		|| this.accomplices.indexOf(Number(this.currentUser.id)) >= 0
-				// 	)
-				// ),
-
-				renew:
-					(this.rawAccess && this.rawAccess.renew),
-				// || this.currentUser.isAdmin
-				// || (
-				// 	(this.status === Task.statusList.completed || this.status === Task.statusList.waitCtrl)
-				// 	&& (
-				// 		this.currentUser.id === this.responsible.id
-				// 		|| this.currentUser.id === this.creator.id
-				// 		|| this.accomplices.indexOf(Number(this.currentUser.id)) >= 0
-				// 	)
-				// ),
-
-				update:
-					(this.rawAccess && this.rawAccess.edit),
-				// || this.currentUser.isAdmin
-				// || this.currentUser.id === this.creator.id,
-
-				remove:
-					(this.rawAccess && this.rawAccess.remove),
-				// || this.currentUser.isAdmin
-				// || this.currentUser.id === this.creator.id,
-
-				defer: (this.rawAccess && this.rawAccess.defer),
-				disapprove: (this.rawAccess && this.rawAccess.disapprove),
-				approve: (this.rawAccess && this.rawAccess.approve),
-				delegate: (this.rawAccess && this.rawAccess.delegate),
-				decline: (this.rawAccess && this.rawAccess.decline),
-				'favorite.add': (this.rawAccess && this.rawAccess['favorite.add']),
-				'favorite.remove': (this.rawAccess && this.rawAccess['favorite.delete']),
-			};
-		}
-
-		set accomplices(values)
-		{
-			this._accomplices = [];
-
-			if (values.length)
-			{
-				values.forEach(item =>
-				{
-					this._accomplices.push(Number(item));
-				});
-			}
-		}
-
-		get accomplices()
-		{
-			return this._accomplices;
-		}
-
-		set auditors(values)
-		{
-			this._auditors = [];
-
-			if (values.length)
-			{
-				values.forEach(item =>
-				{
-					this._auditors.push(Number(item));
-				});
-			}
-		}
-
-		get auditors()
-		{
-			return this._auditors;
-		}
-
-		get guid()
-		{
-			function s4()
-			{
-				return Math.floor((1 + Math.random()) * 0x10000)
-					.toString(16)
-					.substring(1);
-			}
-
-			if (!this._guid)
-			{
-				this._guid = s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4();
-			}
-
-			return this._guid;
-		}
-
-		static set guid(value)
-		{
-			this._guid = value;
-		}
-
 		save()
 		{
-			return new Promise((resolve, reject) =>
-			{
-				const request = new Request;
-
+			return new Promise((resolve, reject) => {
+				const request = new Request();
 				if (this.isNewRecord)
 				{
 					console.log('Create task');
+
 					request
 						.call('add', {
 							fields: {
@@ -531,12 +469,16 @@
 								DEADLINE: this.deadline,
 								GUID: this.guid,
 								ALLOW_CHANGE_DEADLINE: 'Y',
-								TASK_CONTROL: 'Y'
-							}
+								TASK_CONTROL: 'Y',
+								GROUP_ID: this.groupId || 0,
+							},
+							params: {
+								PLATFORM: 'mobile',
+							},
 						})
 						.then(
-							response =>
-							{
+							(response) => {
+								console.log(response.result.task);
 								this.id = response.result.task.id;
 								this.isNewRecord = false;
 								this.error = false;
@@ -544,9 +486,8 @@
 
 								resolve();
 							},
-							response =>
-							{
-								Log.error(response.ex.error_description);
+							(response) => {
+								console.log(response.ex.error_description);
 								this.error = true;
 								this.rawAccess = response.result.task.action;
 
@@ -566,18 +507,17 @@
 								RESPONSIBLE_ID: this.responsible.id,
 								STATUS: this.status,
 								DEADLINE: this.deadline ? (new Date(this.deadline)).toISOString() : null,
-							}
+							},
 						})
 						.then(
-							response =>
-							{
-								this.error = false;
+							(response) => {
 								console.log(response);
+								this.error = false;
+
 								resolve(response);
 							},
-							response =>
-							{
-								Log.error(response);
+							(response) => {
+								console.log(response);
 								this.error = true;
 
 								reject(response);
@@ -589,27 +529,23 @@
 
 		saveDeadline()
 		{
-			return new Promise((resolve, reject) =>
-			{
-				const request = new Request;
-
-				request
+			return new Promise((resolve, reject) => {
+				(new Request())
 					.call('update', {
 						taskId: this.id,
 						fields: {
 							DEADLINE: this.deadline ? (new Date(this.deadline)).toISOString() : null,
-						}
+						},
 					})
 					.then(
-						response =>
-						{
-							this.error = false;
+						(response) => {
 							console.log(response);
+							this.error = false;
+
 							resolve(response);
 						},
-						response =>
-						{
-							Log.error(response);
+						(response) => {
+							console.log(response);
 							this.error = true;
 
 							reject(response);
@@ -622,24 +558,22 @@
 		{
 			this.status = Task.statusList.completed;
 
-			return new Promise((resolve, reject) =>
-			{
-				const request = new Request;
-				request
+			return new Promise((resolve, reject) => {
+				(new Request())
 					.call('complete', {
 						taskId: this.id,
-						params: {HIDE: false}
+						params: {HIDE: false},
 					})
 					.then(
-						response =>
-						{
+						(response) => {
+							console.log(response.result.task);
 							this.error = false;
 							this.rawAccess = response.result.task.action;
+
 							resolve();
 						},
-						response =>
-						{
-							Log.error(response);
+						(response) => {
+							console.log(response);
 							this.error = true;
 
 							reject();
@@ -652,24 +586,22 @@
 		{
 			this.status = Task.statusList.pending;
 
-			return new Promise((resolve, reject) =>
-			{
-				const request = new Request;
-				request
+			return new Promise((resolve, reject) => {
+				(new Request())
 					.call('renew', {
 						taskId: this.id,
-						params: {HIDE: false}
+						params: {HIDE: false},
 					})
 					.then(
-						response =>
-						{
+						(response) => {
+							console.log(response.result.task);
 							this.error = false;
 							this.rawAccess = response.result.task.action;
+
 							resolve();
 						},
-						response =>
-						{
-							Log.error(response);
+						(response) => {
+							console.log(response);
 							this.error = true;
 
 							reject();
@@ -682,25 +614,23 @@
 		{
 			this.status = Task.statusList.inprogress;
 
-			return new Promise((resolve, reject) =>
-			{
-				const request = new Request;
-				request
+			return new Promise((resolve, reject) => {
+				(new Request())
 					.call('start', {
 						taskId: this.id,
 					})
 					.then(
-						response =>
-						{
+						(response) => {
 							console.log(response.result.task);
 							this.error = false;
 							this.rawAccess = response.result.task.action;
+
 							resolve();
 						},
-						response =>
-						{
-							Log.error(response);
+						(response) => {
+							console.log(response);
 							this.error = true;
+
 							reject();
 						}
 					);
@@ -711,25 +641,22 @@
 		{
 			this.status = Task.statusList.pending;
 
-			return new Promise((resolve, reject) =>
-			{
-				const request = new Request;
-				request
+			return new Promise((resolve, reject) => {
+				(new Request())
 					.call('pause', {
 						taskId: this.id,
 					})
 					.then(
-						response =>
-						{
+						(response) => {
 
 							console.log(response.result.task);
 							this.error = false;
 							this.rawAccess = response.result.task.action;
+
 							resolve();
 						},
-						response =>
-						{
-							Log.error(response);
+						(response) => {
+							console.log(response);
 							this.error = true;
 
 							reject();
@@ -742,23 +669,21 @@
 		{
 			this.status = Task.statusList.complete;
 
-			return new Promise((resolve, reject) =>
-			{
-				const request = new Request;
-				request
+			return new Promise((resolve, reject) => {
+				(new Request())
 					.call('approve', {
 						taskId: this.id,
 					})
 					.then(
-						response =>
-						{
+						(response) => {
+							console.log(response.result.task);
 							this.error = false;
 							this.rawAccess = response.result.task.action;
+
 							resolve();
 						},
-						response =>
-						{
-							Log.error(response);
+						(response) => {
+							console.log(response);
 							this.error = true;
 
 							reject();
@@ -773,21 +698,20 @@
 
 			return new Promise((resolve, reject) =>
 			{
-				const request = new Request;
-				request
+				(new Request())
 					.call('disapprove', {
 						taskId: this.id,
 					})
 					.then(
-						response =>
-						{
+						(response) => {
+							console.log(response.result.task);
 							this.error = false;
 							this.rawAccess = response.result.task.action;
+
 							resolve();
 						},
-						response =>
-						{
-							Log.error(response);
+						(response) => {
+							console.log(response);
 							this.error = true;
 
 							reject();
@@ -799,19 +723,27 @@
 		delegate()
 		{
 			return new Promise((resolve, reject) => {
-				const request = new Request();
-				request
-					.call('delegate', {taskId: this.id, userId: this.responsible.id})
+				(new Request())
+					.call('delegate', {
+						taskId: this.id,
+						userId: this.responsible.id,
+						params: {
+							PLATFORM: 'mobile',
+						},
+					})
 					.then(
 						(response) => {
+							console.log(response.result.task);
 							this.error = false;
 							this.rawAccess = response.result.task.action;
 							this.auditors = response.result.task.auditors;
+
 							resolve();
 						},
 						(response) => {
+							console.log(response);
 							this.error = true;
-							Log.error(response);
+
 							reject();
 						}
 					);
@@ -821,26 +753,23 @@
 		favorite()
 		{
 			return {
-				add: () =>
-				{
-
-					return new Promise((resolve, reject) =>
-					{
-						(new Request)
+				add: () => {
+					return new Promise((resolve, reject) => {
+						(new Request())
 							.call('favorite.add', {
-								taskId: this.id
+								taskId: this.id,
 							})
 							.then(
-								response =>
-								{
+								(response) => {
+									console.log(response);
 									this.error = false;
 									this.rawAccess['favorite.add'] = false;
 									this.rawAccess['favorite.delete'] = true;
+
 									resolve();
 								},
-								response =>
-								{
-									Log.error(response);
+								(response) => {
+									console.log(response);
 									this.error = true;
 
 									reject();
@@ -848,56 +777,50 @@
 							);
 					});
 				},
-				remove: () =>
-				{
-					return new Promise((resolve, reject) =>
-					{
-						const request = new Request;
-						request
+				remove: () => {
+					return new Promise((resolve, reject) => {
+						(new Request())
 							.call('favorite.remove', {
-								taskId: this.id
+								taskId: this.id,
 							})
 							.then(
-								response =>
-								{
+								(response) =>  {
+									console.log(response);
 									this.error = false;
 									this.rawAccess['favorite.add'] = true;
 									this.rawAccess['favorite.delete'] = false;
+
 									resolve();
 								},
-								response =>
-								{
-									Log.error(response);
+								(response) => {
+									console.log(response);
 									this.error = true;
 
 									reject();
 								}
 							);
 					});
-				}
-
+				},
 			};
 		}
 
 		stopWatch()
 		{
-			return new Promise((resolve, reject) =>
-			{
-				const request = new Request;
-				request
+			return new Promise((resolve, reject) => {
+				(new Request())
 					.call('stopWatch', {
 						taskId: this.id,
 					})
 					.then(
-						response =>
-						{
+						(response) => {
+							console.log(response.result.task);
 							this.error = false;
 							this.rawAccess = response.result.task.action;
+
 							resolve(response);
 						},
-						response =>
-						{
-							Log.error(response);
+						(response) => {
+							console.log(response);
 							this.error = true;
 
 							reject(response);
@@ -918,7 +841,7 @@
 					url: this.makeUrl(this.id),
 					cache: false,
 					modal: false,
-					title: this.title ? this.title : null,
+					title: this.title || null,
 				});
 			}
 			else
@@ -1056,7 +979,7 @@
 			if (
 				currentActions.length < 4
 				&& !currentActions.includes(actions.unfollow)
-				&& this.auditors.indexOf(Number(this.currentUser.id)) >= 0
+				&& this.isAuditor(this.currentUser.id)
 			)
 			{
 				currentActions.push(actions.unfollow);

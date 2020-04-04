@@ -7,10 +7,11 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Filter;
+use Bitrix\Socialnetwork\Item\Workgroup;
 use Bitrix\Socialnetwork\UserToGroupTable;
 use Bitrix\Tasks\Internals\Effective;
 use Bitrix\Tasks\Util\Error\Collection;
-use Bitrix\Tasks\Util\Type\DateTime;
+use Bitrix\Tasks\Util\User;
 
 Loc::loadMessages(__FILE__);
 
@@ -19,8 +20,7 @@ CBitrixComponent::includeComponentClass("bitrix:tasks.base");
 class TasksProjectsOverviewComponent extends TasksBaseComponent
 {
 
-	protected static function checkRequiredModules(array &$arParams, array &$arResult, Collection $errors,
-												   array $auxParams = array())
+	protected static function checkRequiredModules(array &$arParams, array &$arResult, Collection $errors, array $auxParams = [])
 	{
 		if (!Loader::includeModule('socialnetwork'))
 		{
@@ -33,16 +33,25 @@ class TasksProjectsOverviewComponent extends TasksBaseComponent
 		return $errors->checkNoFatals();
 	}
 
-	protected static function checkBasicParameters(array &$arParams, array &$arResult, Collection $errors,
-												   array $auxParams = array())
+	protected static function checkBasicParameters(array &$arParams, array &$arResult, Collection $errors, array $auxParams = [])
 	{
 		return $errors->checkNoFatals();
 	}
 
-	protected static function checkPermissions(array &$arParams, array &$arResult, Collection $errors,
-											   array $auxParams = array())
+	protected static function checkPermissions(array &$arParams, array &$arResult, Collection $errors, array $auxParams = [])
 	{
 		parent::checkPermissions($arParams, $arResult, $errors, $auxParams);
+
+		$currentUserId = (int)$arResult['USER_ID'];
+		$viewedUserId = (int)$arParams['USER_ID'];
+
+		if ($currentUserId !== $viewedUserId && !User::isSuper($currentUserId))
+		{
+			$errors->add(
+				'ACCESS_DENIED',
+				Loc::getMessage('TASKS_PROJECT_OVERVIEW_COMPONENT_ACCESS_DENIED')
+			);
+		}
 
 		return $errors->checkNoFatals();
 	}
@@ -50,20 +59,19 @@ class TasksProjectsOverviewComponent extends TasksBaseComponent
 	protected function checkParameters()
 	{
 		$this->arParams['GRID_ID'] = 'TASKS_GRID_PROJECTS_OVERVIEW';
-
 		$this->arParams['PATH_TO_GROUP_ADD'] = \CComponentEngine::makePathFromTemplate(
 			'/company/personal/user/#user_id#/groups/#action#/?firstRow=project',
-			array(
-				'user_id'=>\Bitrix\Tasks\Util\User::getId(),
-				'action'=>'create'
-			)
+			[
+				'user_id' => $this->arParams['USER_ID'],
+				'action' => 'create',
+			]
 		);
 		$this->arParams['PATH_TO_USER_TASKS_TASK'] = \CComponentEngine::makePathFromTemplate(
 			'/company/personal/user/#user_id#/tasks/task/#action#/0/',
-			array(
-				'user_id'=>\Bitrix\Tasks\Util\User::getId(),
-				'action'=>'edit'
-			)
+			[
+				'user_id' => $this->arParams['USER_ID'],
+				'action' => 'edit',
+			]
 		);
 
 		return $this->errors->checkNoFatals();
@@ -262,132 +270,169 @@ class TasksProjectsOverviewComponent extends TasksBaseComponent
 		return $groups;
 	}
 
-	private function getGridFilter()
+	/**
+	 * @return array
+	 */
+	private function getGridFilter(): array
 	{
-		$filter = array();
+		$filter = [];
 
-		$filterData = $this->getFilterOptions()->getFilter($this->getFilterFields());
-		if (!array_key_exists('FILTER_APPLIED', $filterData) || $filterData['FILTER_APPLIED'] != true)
+		$filterFields = $this->getFilterFields();
+		$filterOptions = $this->getFilterOptions();
+		$filterData = ($filterOptions ? $filterOptions->getFilter($filterFields) : []);
+
+		if (!array_key_exists('FILTER_APPLIED', $filterData) || $filterData['FILTER_APPLIED'] !== true)
 		{
-			return array();
+			return $filter;
 		}
 
-		if (array_key_exists('FIND', $filterData) && !empty($filterData['FIND']))
+		if (array_key_exists('FIND', $filterData) && $filterData['FIND'] !== '')
 		{
 			$filter['*%GROUP.SEARCH_INDEX'] = trim(str_rot13($filterData['FIND']));
 		}
 
-		foreach ($this->getFilterFields() as $filterRow)
+		foreach ($filterFields as $filterRow)
 		{
-			if ($filterRow['id'] == 'OWNER_ID' &&
-				array_key_exists($filterRow['id'], $filterData) &&
-				!empty($filterData[$filterRow['id']]))
-			{
-				$filter['GROUP.OWNER_ID'] = $filterData[$filterRow['id']];
-				continue;
-			}
+			$id = $filterRow['id'];
+			$type = $filterRow['type'];
 
-			switch ($filterRow['type'])
+			switch ($type)
 			{
-				default:
-					if (array_key_exists($filterRow['id'], $filterData) && !empty($filterData[$filterRow['id']]))
-					{
-						if (is_numeric($filterData[$filterRow['id']]) &&
-							!($filterRow['id'] == 'TITLE' && !empty($filterData[$filterRow['id']])))
-						{
-							$filter[$filterRow['id']] = $filterData[$filterRow['id']];
-						}
-						else
-						{
-							$filter['%GROUP.'.$filterRow['id']] = $filterData[$filterRow['id']];
-						}
-					}
-					break;
 				case 'number':
-					if (array_key_exists($filterRow['id'].'_from', $filterData) &&
-						!empty($filterData[$filterRow['id'].'_from']))
-					{
-						$filter['>='.$filterRow['id']] = $filterData[$filterRow['id'].'_from'];
-					}
-					if (array_key_exists($filterRow['id'].'_to', $filterData) &&
-						!empty($filterData[$filterRow['id'].'_to']))
-					{
-						$filter['<='.$filterRow['id']] = $filterData[$filterRow['id'].'_to'];
-					}
+					$filter = $this->handleNumberFilterRow($id, $filterData, $filter);
+					break;
 
-					if (array_key_exists('>='.$filterRow['id'], $filter) &&
-						array_key_exists('<='.$filterRow['id'], $filter) &&
-						$filter['>='.$filterRow['id']] == $filter['<='.$filterRow['id']])
+				case 'string':
+					if (array_key_exists($id, $filterData) && $filterData[$id] !== '')
 					{
-						$filter[$filterRow['id']] = $filter['>='.$filterRow['id']];
-						unset($filter['>='.$filterRow['id']], $filter['<='.$filterRow['id']]);
+						$filter['%GROUP.'.$id] = $filterData[$id];
 					}
 					break;
-				case 'list':
-					if ($filterRow['id'] == 'CLOSED' &&
-						array_key_exists($filterRow['id'], $filterData) &&
-						!empty($filterData[$filterRow['id']]))
-					{
-						$filter['GROUP.CLOSED'] = $filterData[$filterRow['id']];
-					}
-					if ($filterRow['id'] == 'TYPE' &&
-						array_key_exists($filterRow['id'], $filterData) &&
-						!empty($filterData[$filterRow['id']]))
-					{
-						$type = $filterData[$filterRow['id']];
-						$types = $this->getProjectTypes();
-						$item = $types[$type];
 
-						if ($item)
-						{
-							$filter['GROUP.VISIBLE'] = $item['VISIBLE'];
-							$filter['GROUP.OPENED'] = $item['OPENED'];
-							$filter['GROUP.PROJECT'] = $item['PROJECT'];
-
-							if ($item['EXTERNAL'] != 'N')
-							{
-								$filter['GROUP.SITE_ID'] = \CExtranet::GetExtranetSiteID();
-							}
-						}
-					}
-//					dd($filterData);
-					break;
 				case 'date':
-					if ($filterRow['id'] == 'PROJECT_DATE')
+					$filter = $this->handleDateFilterRow($id, $filterData, $filter);
+					break;
+
+				case 'list':
+					$filter = $this->handleListFilterRow($id, $filterData, $filter);
+					break;
+
+				case 'custom_entity':
+					if (array_key_exists($id, $filterData) && !empty($filterData[$id]))
 					{
-						if (array_key_exists($filterRow['id'].'_from', $filterData) &&
-							!empty($filterData[$filterRow['id'].'_from']))
-						{
-							$filter['>=GROUP.'.$filterRow['id'].'_START'] = $filterData[$filterRow['id'].'_from'];
-						}
-						if (array_key_exists($filterRow['id'].'_to', $filterData) &&
-							!empty($filterData[$filterRow['id'].'_to']))
-						{
-							$filter['<=GROUP.'.$filterRow['id'].'_FINISH'] = $filterData[$filterRow['id'].'_to'];
-						}
+						$filter['GROUP.OWNER_ID'] = $filterData[$id];
 					}
-					else
-					{
-						if (array_key_exists($filterRow['id'].'_from', $filterData) &&
-							!empty($filterData[$filterRow['id'].'_from']))
-						{
-							$filter['>=GROUP.'.$filterRow['id']] = $filterData[$filterRow['id'].'_from'];
-						}
-						if (array_key_exists($filterRow['id'].'_to', $filterData) &&
-							!empty($filterData[$filterRow['id'].'_to']))
-						{
-							$filter['<=GROUP.'.$filterRow['id']] = $filterData[$filterRow['id'].'_to'];
-						}
-					}
+					break;
+
+				default:
 					break;
 			}
 		}
 
+		return $filter;
+	}
+
+	/**
+	 * @param $id
+	 * @param $filterData
+	 * @param $filter
+	 * @return array
+	 */
+	private function handleNumberFilterRow($id, $filterData, $filter): array
+	{
+		$from = $id.'_from';
+		$to = $id.'_to';
+		$less = '<='.$id;
+		$more = '>='.$id;
+
+		if (array_key_exists($from, $filterData) && !empty($filterData[$from]))
+		{
+			$filter[$more] = $filterData[$from];
+		}
+		if (array_key_exists($to, $filterData) && !empty($filterData[$to]))
+		{
+			$filter[$less] = $filterData[$to];
+		}
+
+		if (
+			array_key_exists($more, $filter)
+			&& array_key_exists($less, $filter)
+			&& $filter[$more] === $filter[$less]
+		)
+		{
+			$filter[$id] = $filter[$more];
+			unset($filter[$more], $filter[$less]);
+		}
 
 		return $filter;
 	}
 
-	private function getFilterOptions()
+	/**
+	 * @param $id
+	 * @param $filterData
+	 * @param $filter
+	 * @return array
+	 */
+	private function handleDateFilterRow($id, $filterData, $filter): array
+	{
+		$from = $id.'_from';
+		$to = $id.'_to';
+
+		if (array_key_exists($from, $filterData) && !empty($filterData[$from]))
+		{
+			$filter['>=GROUP.'.$id.'_START'] = $filterData[$from];
+		}
+		if (array_key_exists($to, $filterData) && !empty($filterData[$to]))
+		{
+			$filter['<=GROUP.'.$id.'_FINISH'] = $filterData[$to];
+		}
+
+		return $filter;
+	}
+
+	/**
+	 * @param $id
+	 * @param $filterData
+	 * @param $filter
+	 * @return array
+	 */
+	private function handleListFilterRow($id, $filterData, $filter): array
+	{
+		if (!array_key_exists($id, $filterData) || empty($filterData[$id]))
+		{
+			return $filter;
+		}
+
+		if ($id === 'CLOSED')
+		{
+			$filter['GROUP.CLOSED'] = $filterData[$id];
+		}
+		else if ($id === 'TYPE')
+		{
+			$typeName = $filterData[$id];
+			$types = $this->getProjectTypes();
+			$type = $types[$typeName];
+
+			if ($type)
+			{
+				$filter['GROUP.VISIBLE'] = $type['VISIBLE'];
+				$filter['GROUP.OPENED'] = $type['OPENED'];
+				$filter['GROUP.PROJECT'] = $type['PROJECT'];
+
+				if ($type['EXTERNAL'] !== 'N')
+				{
+					$filter['GROUP.SITE_ID'] = CExtranet::GetExtranetSiteID();
+				}
+			}
+		}
+
+		return $filter;
+	}
+
+	/**
+	 * @return Filter\Options|null
+	 */
+	private function getFilterOptions(): ?Filter\Options
 	{
 		static $filterOptions = null;
 
@@ -399,119 +444,114 @@ class TasksProjectsOverviewComponent extends TasksBaseComponent
 		return $filterOptions;
 	}
 
-	private function getPresetFields()
+	/**
+	 * @return array
+	 */
+	private function getPresetFields(): array
 	{
-		return array(
-			'active_project' => array(
+		return [
+			'active_project' => [
 				'name' => Loc::getMessage('TASKS_PRESET_ACTIVE_PROJECT'),
 				'default' => true,
-				'fields' => array(
-					'CLOSED' => 'N'
-				)
-			),
-			'inactive_project' => array(
+				'fields' => [
+					'CLOSED' => 'N',
+				],
+			],
+			'inactive_project' => [
 				'name' => Loc::getMessage('TASKS_PRESET_INACTIVE_PROJECT'),
 				'default' => false,
-				'fields' => array(
-					'CLOSED' => 'Y'
-				)
-			),
-		);
+				'fields' => [
+					'CLOSED' => 'Y',
+				],
+			],
+		];
 	}
 
-	private function getFilterFields()
+	/**
+	 * @return array
+	 */
+	private function getFilterFields(): array
 	{
-		return array(
-			'NAME' => array(
+		return [
+			'NAME' => [
 				'id' => 'NAME',
 				'name' => Loc::getMessage('TASKS_FILTER_COLUMN_NAME'),
 				'type' => 'string',
-				'default' => true
-			),
-			'OWNER_ID' => array(
+				'default' => true,
+			],
+			'OWNER_ID' => [
 				'id' => 'OWNER_ID',
 				'name' => Loc::getMessage('TASKS_FILTER_COLUMN_MEMBERS'),
-				'params' => array('multiple' => 'Y'),
 				'type' => 'custom_entity',
-				'selector' => array(
+				'params' => ['multiple' => 'Y'],
+				'selector' => [
 					'type' => 'user',
-					'data' => array(
+					'data' => [
 						'id' => 'user',
-						'fieldId' => 'OWNER_ID'
-					)
-				),
-				'default' => true
-			),
-			'PROJECT_DATE' => array(
+						'fieldId' => 'OWNER_ID',
+					],
+				],
+				'default' => true,
+			],
+			'PROJECT_DATE' => [
 				'id' => 'PROJECT_DATE',
 				'name' => Loc::getMessage('TASKS_FILTER_COLUMN_PROJECT_DATE'),
-				'type' => 'date'
-			),
-			'TYPE' => array(
+				'type' => 'date',
+			],
+			'TYPE' => [
 				'id' => 'TYPE',
 				'name' => Loc::getMessage('TASKS_FILTER_COLUMN_TYPE'),
 				'type' => 'list',
-				'items' => $this->getProjectTypes()
-			),
-//			'ACTIVE' => array(
-//				'id' => 'ACTIVE',
-//				'name' => Loc::getMessage('TASKS_FILTER_COLUMN_ACTIVE'),
-//				'type' => 'list',
-//				'items' => array(
-//					'Y' => Loc::getMessage('TASKS_FILTER_COLUMN_ACTIVE_Y'),
-//					'N' => Loc::getMessage('TASKS_FILTER_COLUMN_ACTIVE_N')
-//				)
-//			),
-			'CLOSED' => array(
+				'items' => $this->getProjectTypes(),
+			],
+			'CLOSED' => [
 				'id' => 'CLOSED',
 				'name' => Loc::getMessage('TASKS_FILTER_COLUMN_CLOSED'),
 				'type' => 'list',
-				'items' => array(
+				'items' => [
 					'Y' => Loc::getMessage('TASKS_FILTER_COLUMN_CLOSED_Y'),
-					'N' => Loc::getMessage('TASKS_FILTER_COLUMN_CLOSED_N')
-				)
-			),
-			//			'EFFECTIVE' => array(
-			//				'id' => 'EFFECTIVE',
-			//				'name' => Loc::getMessage('TASKS_FILTER_COLUMN_EFFECTIVE'),
-			//				'type' => 'number',
-			//				'default' => false
-			//			),
-			'ID' => array(
+					'N' => Loc::getMessage('TASKS_FILTER_COLUMN_CLOSED_N'),
+				],
+			],
+			'ID' => [
 				'id' => 'ID',
 				'name' => Loc::getMessage('TASKS_FILTER_COLUMN_ID'),
 				'type' => 'number',
-				'default' => false
-			),
-			'KEYWORDS' => array(
+				'default' => false,
+			],
+			'KEYWORDS' => [
 				'id' => 'KEYWORDS',
 				'name' => Loc::getMessage('TASKS_FILTER_COLUMN_TAG'),
 				'type' => 'string',
-				'default' => false
-			),
-		);
+				'default' => false,
+			],
+		];
 	}
 
-	private function getProjectTypes()
+	/**
+	 * @return array
+	 */
+	private function getProjectTypes(): array
 	{
-		static $types = array();
+		static $types = [];
 
 		if (empty($types))
 		{
-			$types = \Bitrix\Socialnetwork\Item\Workgroup::getTypes(
-				array(
-					'currentExtranetSite' => $this->isExtranetSite(),
-					'category' => array('projects', 'groups')
-				)
-			);
+			$types = Workgroup::getTypes([
+				'currentExtranetSite' => $this->isExtranetSite(),
+				'category' => ['projects', 'groups'],
+			]);
 		}
 
 		return $types;
 	}
 
-	private function isExtranetSite()
+	/**
+	 * @return bool
+	 */
+	private function isExtranetSite(): bool
 	{
-		return CModule::IncludeModule("extranet") && CExtranet::IsExtranetSite();
+		return (CModule::IncludeModule("extranet") && CExtranet::IsExtranetSite());
 	}
 
 	private function getFormattedUserName($id/*, $name, $secondName, $lastName, $login*/)
