@@ -1,0 +1,32 @@
+<?
+$MESS["ME_ADD"] = "New meeting";
+$MESS["ME_DETAIL"] = "View meeting";
+$MESS["ME_DETAIL_EX"] = "View and edit meeting";
+$MESS["ME_EDIT"] = "Edit meeting";
+$MESS["ME_EDIT_EX"] = "View and edit meeting";
+$MESS["ME_COPY"] = "Create next meeting";
+$MESS["ME_COPY_EX"] = "Create a new meeting based on results of the current one";
+$MESS["ME_DELETE"] = "Delete meeting";
+$MESS["ME_DELETE_EX"] = "Delete meeting";
+$MESS["ME_ERR_NO_MEETINGS"] = "No meetings planned";
+$MESS["ME_TITLE"] = "Topic";
+$MESS["ME_DATE_START"] = "Date";
+$MESS["ME_CURRENT_STATE"] = "Stage";
+$MESS["ME_OWNER"] = "Owner";
+$MESS["ME_PLACE"] = "Location";
+$MESS["ME_STATE_P"] = "Not started";
+$MESS["ME_STATE_C"] = "Finished";
+$MESS["ME_STATE_A"] = "In progress";
+$MESS["ME_DELETE_CONFIRM"] = "Are you sure you want to delete this meeting?";
+$MESS["ME_FILTER"] = "Filter";
+$MESS["ME_FILTER_TITLE"] = "Name";
+$MESS["ME_FILTER_CURRENT_STATE"] = "Stage";
+$MESS["ME_FILTER_CURRENT_STATE_ALL"] = "(all)";
+$MESS["ME_FILTER_OWNER"] = "Owner";
+$MESS["ME_FILTER_OWNER_CHOOSE"] = "Select";
+$MESS["ME_FILTER_MEMBER"] = "Attendee";
+$MESS["ME_FILTER_HEAD"] = "Only my meetings";
+$MESS["ME_FILTER_SUBMIT"] = "Search";
+$MESS["ME_FILTER_CANCEL"] = "Cancel";
+$MESS["ME_FILTER_GROUP"] = "Project";
+?>

@@ -1,0 +1,327 @@
+/* STATEMENTS */
+.crm-card-show-title-warning .crm-card-show-detail-info-title-item {
+	margin: 0;
+	color: rgba(255, 58, 82, .70);
+}
+
+.crm-card-show-detail-info-title.crm-card-show-title-warning { margin: 0; }
+
+.crm-card-show-detail-info-title.crm-card-show-title-main { margin: 17px 0 4px; }
+
+.crm-card-show-title-main .crm-card-show-detail-info-title-item > a { color: rgba(47, 199, 247, .70); }
+
+.crm-card-show-bar-formalization .crm-card-show-detail-info-progress-bar-line-inner {
+	width: 60px;
+	background: #d19a3f;
+}
+
+.crm-card-show-bar-in-work .crm-card-show-detail-info-progress-bar-line-inner {
+	width: 80px;
+	background: #66a91d;
+}
+
+.crm-card-show-bar-confirm .crm-card-show-detail-info-progress-bar-line-inner {
+	width: 50px;
+	background: #3bc8f5;
+}
+
+/* END OF STATEMENTS */
+
+/* MAIN */
+.crm-card-show-main {
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	-ms-flex-direction: column;
+	flex-direction: column;
+	box-sizing: border-box;
+	padding: 10px 10px 0;
+	height: 100%;
+	background: #37404b;
+	-webkit-box-orient: vertical;
+	-webkit-box-direction: normal;
+	align-content: center;
+	justify-content: center;
+	align-items: center;
+}
+
+.crm-card-show-user {
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	margin-bottom: 22px;
+	width: 272px;
+	height: 272px;
+	border: 1px solid rgba(59, 200, 245, .5);
+	border-radius: 100%;
+}
+
+.crm-card-show-user-item {
+	display: inline-block;
+	margin: auto;
+	width: 213px;
+	height: 213px;
+	border-radius: 100%;
+	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22214%22%20height%3D%22214%22%20viewBox%3D%220%200%20214%20214%22%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Cpath%20fill%3D%22%23525C68%22%20d%3D%22M106.787%20213.574c58.977%200%20106.787-47.81%20106.787-106.787C213.574%2047.81%20165.764%200%20106.787%200%2047.81%200%200%2047.81%200%20106.787c0%2058.977%2047.81%20106.787%20106.787%20106.787z%22/%3E%3Cpath%20fill%3D%22%23FFF%22%20d%3D%22M164.802%20172.942c0-8.03-9.01-42-9.01-42%200-4.965-6.49-10.636-19.272-13.94-4.33-1.21-8.446-3.082-12.2-5.553-.822-.47-.697-4.806-.697-4.806l-4.117-.627c0-.352-.352-5.55-.352-5.55%204.925-1.656%204.42-11.42%204.42-11.42%203.126%201.736%205.163-5.99%205.163-5.99%203.7-10.733-1.842-10.084-1.842-10.084.97-6.553.97-13.212%200-19.765-2.464-21.736-39.557-15.835-35.16-8.736-10.84-1.997-8.366%2022.67-8.366%2022.67l2.35%206.388c-4.617%202.995-1.407%206.617-1.247%2010.786.227%206.155%203.993%204.88%203.993%204.88.233%2010.16%205.242%2011.482%205.242%2011.482.942%206.38.355%205.294.355%205.294l-4.458.54c.06%201.45-.058%202.903-.352%204.326-5.242%202.336-6.37%203.706-11.58%205.99-10.065%204.41-21.003%2010.147-22.947%2017.87C52.78%20142.422%2047%20172.942%2047%20172.942H164.802z%22/%3E%3Ctext%20fill%3D%22%23525C68%22%20opacity%3D%22.6%22%20font-family%3D%22HelveticaNeue-Bold%2C%20Helvetica%20Neue%22%20font-size%3D%2239%22%20font-weight%3D%22bold%22%3E%3Ctspan%20x%3D%22118.158%22%20y%3D%22157%22%3E%3F%3C/tspan%3E%3C/text%3E%3C/g%3E%3C/svg%3E');
+	background-position: center;
+	background-size: cover;
+	background-repeat: no-repeat;
+}
+
+.crm-card-show-user-name {
+	min-height: 60px;
+	max-height: 110px;
+	color: #fff;
+	text-align: center;
+}
+
+.crm-card-show-user-name-item,
+.crm-card-show-user-name-desc {
+	overflow: hidden;
+	margin: 0 auto;
+	width: 530px;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font: 29px/34px "Helvetica Neue", Arial, Helvetica, sans-serif;
+}
+
+.crm-card-show-user-name-link { color: #fff; }
+
+.crm-card-show-user-name-desc { font: 15px/24px "Helvetica Neue", Arial, Helvetica, sans-serif; }
+
+/* USER SETTINGS */
+.crm-card-show-user-settings-container {
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	-ms-flex-pack: center;
+	margin: 0 0 27px;
+	-webkit-box-pack: center;
+	justify-content: center;
+}
+
+.crm-card-show-user-settings {
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+}
+
+.crm-card-show-user-settings-title {
+	margin: 0 5px 0 0;
+	color: rgba(255, 255, 255, .63);
+	font: 14px/16px "Helvetica Neue", Arial, Helvetica, sans-serif;
+}
+
+.crm-card-show-user-settings:first-child { margin: 0 44px 0 0; }
+
+.crm-card-show-user-settings-item {
+	margin: 0 10px 0 0;
+	border-bottom: 1px solid #3bc8f5;
+	color: #3bc8f5;
+	font: bold 14px/17px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	cursor: pointer;
+	transition: border-bottom .3s;
+}
+
+.crm-card-show-user-settings-item:hover { border-bottom: 1px solid transparent; }
+
+.crm-card-show-user-settings-item:last-child { margin: 0; }
+
+/* END OF USER SETTINGS */
+
+/* END OF MAIN */
+
+/* DETAIL */
+.crm-card-show-detail {
+	box-sizing: border-box;
+	padding: 15px 16px;
+	height: 100%;
+}
+
+.crm-card-show-detail-header {
+	margin: 0 0 15px;
+	height: 60px;
+	color: rgba(255, 255, 255, .6);
+	font: 12px/18px "Helvetica Neue", Arial, Helvetica, sans-serif;
+}
+
+.crm-card-show-detail-header-user {
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+}
+
+.crm-card-show-detail-header-user-image { margin: 0 10px 0 0; }
+
+.crm-card-show-detail-header-user-image-item {
+	width: 54px;
+	height: 54px;
+	border-radius: 100%;
+	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22214%22%20height%3D%22214%22%20viewBox%3D%220%200%20214%20214%22%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Cpath%20fill%3D%22%23525C68%22%20d%3D%22M106.787%20213.574c58.977%200%20106.787-47.81%20106.787-106.787C213.574%2047.81%20165.764%200%20106.787%200%2047.81%200%200%2047.81%200%20106.787c0%2058.977%2047.81%20106.787%20106.787%20106.787z%22/%3E%3Cpath%20fill%3D%22%23FFF%22%20d%3D%22M164.802%20172.942c0-8.03-9.01-42-9.01-42%200-4.965-6.49-10.636-19.272-13.94-4.33-1.21-8.446-3.082-12.2-5.553-.822-.47-.697-4.806-.697-4.806l-4.117-.627c0-.352-.352-5.55-.352-5.55%204.925-1.656%204.42-11.42%204.42-11.42%203.126%201.736%205.163-5.99%205.163-5.99%203.7-10.733-1.842-10.084-1.842-10.084.97-6.553.97-13.212%200-19.765-2.464-21.736-39.557-15.835-35.16-8.736-10.84-1.997-8.366%2022.67-8.366%2022.67l2.35%206.388c-4.617%202.995-1.407%206.617-1.247%2010.786.227%206.155%203.993%204.88%203.993%204.88.233%2010.16%205.242%2011.482%205.242%2011.482.942%206.38.355%205.294.355%205.294l-4.458.54c.06%201.45-.058%202.903-.352%204.326-5.242%202.336-6.37%203.706-11.58%205.99-10.065%204.41-21.003%2010.147-22.947%2017.87C52.78%20142.422%2047%20172.942%2047%20172.942H164.802z%22/%3E%3Ctext%20fill%3D%22%23525C68%22%20opacity%3D%22.6%22%20font-family%3D%22HelveticaNeue-Bold%2C%20Helvetica%20Neue%22%20font-size%3D%2239%22%20font-weight%3D%22bold%22%3E%3Ctspan%20x%3D%22118.158%22%20y%3D%22157%22%3E%3F%3C/tspan%3E%3C/text%3E%3C/g%3E%3C/svg%3E');
+	background-position: center;
+	background-size: cover;
+	background-repeat: no-repeat;
+}
+
+.crm-card-show-detail-header-user-name {
+	color: #fff;
+	font: 18px/24px "OpenSans-Regular", "Helvetica Neue", Arial, Helvetica, sans-serif;
+}
+
+.crm-card-show-detail-header-user-status { margin: auto 0; }
+
+.crm-card-show-detail-info {
+	overflow-y: auto;
+	box-sizing: border-box;
+	padding: 18px 0;
+	height: calc(100% - 60px);
+	border-top: 1px solid rgba(216, 216, 216, .20);
+	border-bottom: 1px solid rgba(216, 216, 216, .20);
+}
+
+.crm-card-show-detail-info-inner {
+	height: 100%;
+	background: rgba(0, 0, 0, .15);
+}
+
+.crm-card-show-detail-info-content {
+	overflow-y: auto;
+	box-sizing: border-box;
+	padding: 10px 12px;
+	height: 100%;
+	color: #fff;
+	font: 14px/16px "Helvetica Neue", Arial, Helvetica, sans-serif;
+}
+
+.crm-card-custom-scroll div::-webkit-scrollbar {
+	margin: 0 0 0 13px;
+	width: 18px;
+	background: rgba(250, 250, 250, .2);
+}
+
+.crm-card-custom-scroll div::-webkit-scrollbar-thumb {
+	border-radius: 1px;
+	background: rgba(207, 207, 207, .2);
+}
+
+.crm-card-custom-scroll div::-webkit-scrollbar-thumb:hover { background: rgba(207, 207, 207, .5); }
+
+.crm-card-show-detail-info-block { margin: 4px 0 0; }
+
+.crm-card-show-detail-info-title-item { font: bold 13px/18px "Helvetica Neue", Arial, Helvetica, sans-serif; }
+
+.crm-card-show-detail-info-name-item > a { color: #fff; }
+
+.crm-card-show-detail-info-desc-item,
+.crm-card-show-detail-info-progress-bar {
+	color: rgba(255, 255, 255, .6);
+	font: 11px/16px "Helvetica Neue", Arial, Helvetica, sans-serif;
+}
+
+.crm-card-show-detail-info-main-inner {
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	-ms-flex-pack: justify;
+	-webkit-box-pack: justify;
+	justify-content: space-between;
+}
+
+.crm-card-show-detail-info-main-inner:last-child { margin: 0; }
+
+.crm-card-show-detail-info-main-content { max-width: 287px; }
+
+.crm-card-show-detail-info-title { margin: 10px 0 4px; }
+
+.crm-card-show-detail-info-title:first-child { margin: 0 0 4px; }
+
+.crm-card-show-detail-info-main-status { margin: auto 0; }
+
+.crm-card-show-detail-info-main-status .crm-list-stage-bar {
+	overflow: hidden;
+	height: 5px;
+	border: none;
+	background: rgba(255, 255, 255, .2);
+}
+
+.crm-card-show-detail-info-main-status table.crm-list-stage-bar-table td.crm-list-stage-passed { padding: 0; }
+
+.crm-card-show-detail-info-progress-bar-line {
+	position: relative;
+	width: 124px;
+	height: 5px;
+	border-radius: 2px;
+	background: rgba(255, 255, 255, .2);
+}
+
+.crm-card-show-detail-info-progress-bar-line-inner {
+	position: absolute;
+	top: 0;
+	left: 0;
+	height: 5px;
+	border-radius: 2px;
+}
+
+/* END OF DETAIL */
+
+/* RESPONSIBLE */
+.crm-card-show-user-responsible {
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	-ms-flex-pack: center;
+	-ms-flex-align: center;
+	margin: 0 0 12px;
+	-webkit-box-pack: center;
+	justify-content: center;
+	-webkit-box-align: center;
+	align-items: center;
+}
+
+.crm-card-show-user-responsible-title {
+	margin: 0 10px 0;
+	color: rgba(255, 255, 255, .7);
+	font: 11px/12px "Helvetica Neue", Arial, Helvetica, sans-serif;
+}
+
+.crm-card-show-user-responsible-user {
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	-ms-flex-align: center;
+	-webkit-box-align: center;
+	align-items: center;
+}
+
+.crm-card-show-user-responsible-user-icon {
+	margin: 0 10px 0 0;
+	width: 26px;
+	height: 26px;
+	border-radius: 100%;
+	background-image: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0Ny4xODgiIGhlaWdodD0iNTQuMDYzIiB2aWV3Qm94PSIwIDAgNDcuMTg4IDU0LjA2MyI+PGRlZnM+PHN0eWxlPi5jbHMtMSB7IGZpbGw6ICNmZmY7IGZpbGwtcnVsZTogZXZlbm9kZDsgfTwvc3R5bGU+PC9kZWZzPjxwYXRoIGlkPSJTaGFwZV8yX2NvcHlfNCIgZGF0YS1uYW1lPSJTaGFwZSAyIGNvcHkgNCIgY2xhc3M9ImNscy0xIiBkPSJNNDcuMTggNTQuMDYyYzAtMy4yMTctMy42MS0xNi44MjYtMy42MS0xNi44MjYgMC0xLjk5LTIuNi00LjI2LTcuNzItNS41ODVhMTcuMzk0IDE3LjM5NCAwIDAgMS00Ljg4Ny0yLjIyM2MtLjMzLS4xODgtLjI4LTEuOTI1LS4yOC0xLjkyNWwtMS42NDgtLjI1YzAtLjE0Mi0uMTQtMi4yMjUtLjE0LTIuMjI1IDEuOTcyLS42NjMgMS43Ny00LjU3NCAxLjc3LTQuNTc0IDEuMjUyLjY5NSAyLjA2OC0yLjQgMi4wNjgtMi40IDEuNDgyLTQuMy0uNzM4LTQuMDQtLjczOC00LjA0YTI3LjA1IDI3LjA1IDAgMCAwIDAtNy45MThjLS45ODctOC43MDgtMTUuODQ3LTYuMzQ0LTE0LjA4NS0zLjUtNC4zNDMtLjgtMy4zNTIgOS4wODItMy4zNTIgOS4wODJsLjk0MiAyLjU2Yy0xLjg1IDEuMi0uNTY0IDIuNjUtLjUgNC4zMi4wOSAyLjQ2NiAxLjYgMS45NTUgMS42IDEuOTU1LjA5MyA0LjA3IDIuMSA0LjYgMi4xIDQuNi4zNzcgMi41NTYuMTQyIDIuMTIuMTQyIDIuMTJsLTEuNzg2LjIxN2E3LjEgNy4xIDAgMCAxLS4xNCAxLjczMmMtMi4xLjkzNi0yLjU1MyAxLjQ4NS00LjY0IDIuNC00LjAzMiAxLjc2Ny04LjQxNCA0LjA2NS05LjE5MyA3LjE2Uy0uMDEyIDU0LjA2LS4wMTIgNTQuMDZoNDcuMTl6Ii8+PC9zdmc+);
+	background-size: cover;
+	background-repeat: no-repeat;
+}
+
+.crm-card-show-user-responsible-user-name {
+	margin: 0 0 2px;
+	color: #fff;
+	font: 14px/16px "Helvetica Neue", Arial, Helvetica, sans-serif;
+}
+
+.crm-card-show-user-responsible-detail-info { display: block; }
+
+.crm-card-show-user-responsible-detail-info .crm-card-show-user-responsible-title {
+	margin: 0 0 5px;
+	font: bold 13px/16px "Helvetica Neue", Arial, Helvetica, sans-serif;
+}
+
+.crm-card-show-detail-info-wrap { margin: 0 0 20px; }
+
+.crm-card-show-user-responsible-user-info-position {
+	display: block;
+	color: rgba(255, 255, 255, .5);
+	font: 11px/12px "Helvetica Neue", Arial, Helvetica, sans-serif;
+}
+
+/* END OF RESPONSIBLE */

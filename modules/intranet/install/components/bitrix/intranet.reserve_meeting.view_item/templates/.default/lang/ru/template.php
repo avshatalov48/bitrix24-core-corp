@@ -1,0 +1,34 @@
+<?
+$MESS ['INTASK_C29T_FLOOR'] = "Этаж";
+$MESS ['INTASK_C29T_PLACE'] = "Мест";
+$MESS ['INTASK_C29T_PHONE'] = "Телефон";
+$MESS ['INTASK_C29T_DATE_FROM'] = "Дата начала";
+$MESS ['INTASK_C29T_DATE_TO'] = "Дата окончания";
+$MESS ['INTASK_C29T_AUTHOR'] = "Заявитель";
+$MESS ['INTASK_C29T_FROM_TIME'] = "Время начала";
+$MESS ['INTASK_C29T_DURATION'] = "Длительность";
+$MESS ['INTASK_C29T_HOURS'] = "часов";
+$MESS ['INTASK_C29T_TO_TIME'] = "Время окончания";
+$MESS ['INTASK_C29T_NAME'] = "Название";
+$MESS ['INTASK_C29T_PERSONS'] = "Количество участников";
+$MESS ['INTASK_C29T_TYPE'] = "Тип встречи";
+$MESS ['INTASK_C29T_DESCR'] = "Описание";
+$MESS ['INTASK_C29T_PREP'] = "Подготовка комнаты";
+$MESS ['INTASK_C29T_SAVE'] = "Зарезервировать";
+$MESS ['INTASK_C29T_YES'] = "Да";
+$MESS ['INTASK_C29T_NO'] = "Нет";
+$MESS ['INTASK_C29T_REGULAR'] = "Повтор";
+$MESS ['INTASK_C29T_REGULARITY_NONE'] = "Не повторяется";
+$MESS ['INTASK_C29T_REGULARITY_UNTIL'] = "повторяется до";
+$MESS ['INTASK_C29T_RWD_1'] = "Понедельник";
+$MESS ['INTASK_C29T_RWD_2'] = "Вторник";
+$MESS ['INTASK_C29T_RWD_3'] = "Среда";
+$MESS ['INTASK_C29T_RWD_4'] = "Четверг";
+$MESS ['INTASK_C29T_RWD_5'] = "Пятница";
+$MESS ['INTASK_C29T_RWD_6'] = "Суббота";
+$MESS ['INTASK_C29T_RWD_7'] = "Воскресенье";
+$MESS ['INTASK_C29T_TRANSS_DAILY'] = "Каждый #VAL# день";
+$MESS ['INTASK_C29T_TRANSS_WEEKLY'] = "Каждую #VAL# неделю";
+$MESS ['INTASK_C29T_TRANSS_MONTHLY'] = "Каждый #VAL# месяц";
+$MESS ['INTASK_C29T_TRANSS_YEARLY'] = "Каждый #VAL# год";
+?>

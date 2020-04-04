@@ -1,0 +1,33 @@
+<?
+$MESS["ME_LIST_TITLE"] = "Вернуться к списку собраний";
+$MESS["ME_FILES"] = "Файлы";
+$MESS["MI_BLOCK_TITLE"] = "Описание вопроса";
+$MESS["MI_EDIT"] = "Редактировать";
+$MESS["MI_EDIT_FINISH"] = "Завершить редактирование";
+$MESS["MI_SAVE"] = "Сохранить";
+$MESS["MI_SAVING"] = "Идет сохранение...";
+$MESS["MI_SAVED"] = "Отчет сохранен в #TIME#";
+$MESS["MI_CANCEL"] = "Отменить";
+$MESS["MI_REPORTS"] = "Отчеты";
+$MESS["MI_REPORT"] = "Отчет";
+$MESS["MI_REPORT_MEETING"] = "Вопрос из собрания";
+$MESS["MI_REPORT_DATE_START"] = "Дата";
+$MESS["MI_REPORT_STATE"] = "Статус";
+$MESS["MI_REPORT_RESPONSIBLES"] = "Ответственные";
+$MESS["MI_REPORT_RESPONSIBLE"] = "Ответственный";
+$MESS["MI_REPORT_NO_RESPONSIBLE"] = "нет";
+$MESS["MI_REPORT_NO_REPORT"] = "нет";
+$MESS["MI_REPORT_DEADLINE"] = "Срок";
+$MESS["MI_HISTORY_SHOW"] = "Показать историю вопроса (#CNT#)";
+$MESS["MI_HISTORY_HIDE"] = "Скрыть историю вопроса";
+$MESS["MI_TASKS"] = "Задачи";
+$MESS["MI_TASK_ADD"] = "Добавить новую задачу";
+$MESS["MI_TASK_ATTACH"] = "Привязать к существующей задаче";
+$MESS["MI_COMMENTS"] = "Комментарии";
+$MESS["MI_TASK_DETACH"] = "Отвязать задачу";
+$MESS["MI_TASK_DETACH_TITLE"] = "Отвязать задачу от вопроса";
+$MESS["MI_EDIT_TITLE"] = "Тема";
+$MESS["MI_EDIT_DESCRIPTION"] = "Описание";
+$MESS["MI_MEETING_TITLE"] = "№#ID# #TITLE#";
+$MESS["ME_BACK"] = "Вернуться к собранию";
+?>

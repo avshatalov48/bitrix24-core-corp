@@ -1,0 +1,334 @@
+@font-face{
+	font-family: 'OpenSans-Regular';
+	src: url('/bitrix/fonts/opensans-regular.eot');
+	src: local('Open Sans'),
+	url('/bitrix/fonts/opensans-regular.woff') format('woff'),
+	url('/bitrix/fonts/opensans-regular.ttf') format('truetype');
+	font-weight: normal;
+	font-style: normal;
+}
+
+@font-face{
+	font-family: 'OpenSans-Semibold';
+	src: url('/bitrix/fonts/opensans-semibold.eot');
+	src: local('Open Sans Semibold'),
+	url('/bitrix/fonts/opensans-semibold.woff') format('woff'),
+	url('/bitrix/fonts/opensans-semibold.ttf') format('truetype');
+	font-weight: normal;
+	font-style: normal;
+}
+
+@font-face {
+	font-family: 'OpenSans-Bold';
+	src: url('/bitrix/fonts/opensans-bold.eot');
+	src: local('Open Sans Bold'),
+	url('/bitrix/fonts/opensans-bold.woff') format('woff'),
+	url('/bitrix/fonts/opensans-bold.ttf') format('truetype');
+	font-weight: normal;
+	font-style: normal;
+}
+
+.mobile-timeman {
+	font-family: "OpenSans-Regular", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	color: #293139;
+	font-size: 22px;
+	display: flex;
+	position: absolute;
+	left: 0;
+	right: 0;
+	top: 0;
+	bottom: 40px;
+	flex-direction: row;
+	justify-content: center;
+	align-items: stretch;
+	min-height: 400px;
+}
+
+.mobile-timeman-timing {
+	display: flex;
+	align-items: center;
+	flex-direction: column;
+	flex: 1;
+	justify-content: center;
+	padding: 0 35px;
+	background-image: url(data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz48c3ZnIHdpZHRoPSIzNjFweCIgaGVpZ2h0PSI1NTdweCIgdmlld0JveD0iMCAwIDM2MSA1NTciIHZlcnNpb249IjEuMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayI+ICAgICAgICA8dGl0bGU+RmlsbCAxIENvcHkgMzwvdGl0bGU+ICAgIDxkZXNjPkNyZWF0ZWQgd2l0aCBTa2V0Y2guPC9kZXNjPiAgICA8ZGVmcz48L2RlZnM+ICAgIDxnIGlkPSJQYWdlLTEiIHN0cm9rZT0ibm9uZSIgc3Ryb2tlLXdpZHRoPSIxIiBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiIG9wYWNpdHk9IjAuMSI+ICAgICAgICA8ZyBpZD0iMDItY29weSIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMC4wMDAwMDAsIC0zMjguMDAwMDAwKSIgZmlsbD0iI0FEQjNCQiI+ICAgICAgICAgICAgPHBhdGggZD0iTTIwMS40NzQwNTcsNTg3LjUyMTQ4IEwxMDAuMzc0NDI3LDU4Ny41MjE0OCBMMTAwLjM3NDQyNyw0NzUuOTI5MTk4IEMxMDAuMzc0NDI3LDQ3NS4xNjk1OTggOTkuNzU5MzE3MSw0NzQuNTUzMTEyIDk4Ljk5ODM0MTgsNDc0LjU1MzExMiBMNDQuNDI4MjkyOCw0NzQuNTUzMTEyIEM0My42Njg2OTM2LDQ3NC41NTMxMTIgNDMuMDUyMjA3Myw0NzUuMTY5NTk4IDQzLjA1MjIwNzMsNDc1LjkyOTE5OCBMNDMuMDUyMjA3Myw2MzQuNTIzMDU4IEM0My4wNTIyMDczLDYzNC44MzgxODIgNDMuMTc2MDU1LDYzNS4xMTMzOTkgNDMuMzUzNTcsNjM1LjM0NDU4MSBMNDMuMzUzNTcsNjM5Ljk0MjA4MyBDNDMuMzUzNTcsNjQwLjcwMTY4MiA0My45Njg2ODAyLDY0MS4zMTgxNjkgNDQuNzI5NjU1Niw2NDEuMzE4MTY5IEwyMDEuNDc0MDU3LDY0MS4zMTgxNjkgQzIwMi4yMzM2NTYsNjQxLjMxODE2OSAyMDIuODUwMTQzLDY0MC43MDE2ODIgMjAyLjg1MDE0Myw2MzkuOTQyMDgzIEwyMDIuODUwMTQzLDU4OC44OTc1NjYgQzIwMi44NTAxNDMsNTg4LjEzNzk2NiAyMDIuMjMzNjU2LDU4Ny41MjE0OCAyMDEuNDc0MDU3LDU4Ny41MjE0OCBMMjAxLjQ3NDA1Nyw1ODcuNTIxNDggWiBNODIuODI5MzM2NCw4MjYuMzc2OTA3IEMtMzkuMzAyMzg1Miw4MjYuMzc2OTA3IC0xMzguMzA4OTg5LDcyNy4zNzAzMDMgLTEzOC4zMDg5ODksNjA1LjIzODU4MiBDLTEzOC4zMDg5ODksNDgzLjEwNjg2IC0zOS4zMDIzODUyLDM4NC4xMDAyNTYgODIuODI5MzM2NCwzODQuMTAwMjU2IEMyMDQuOTYxMDU4LDM4NC4xMDAyNTYgMzAzLjk2NzY2Miw0ODMuMTA2ODYgMzAzLjk2NzY2Miw2MDUuMjM4NTgyIEMzMDMuOTY3NjYyLDcyNy4zNzAzMDMgMjA0Ljk2MTA1OCw4MjYuMzc2OTA3IDgyLjgyOTMzNjQsODI2LjM3NjkwNyBMODIuODI5MzM2NCw4MjYuMzc2OTA3IFogTTgyLjIwNTk2OTcsMzI4IEMtNzEuNDQyMjM5NSwzMjggLTE5Niw0NTIuNTU3NzYgLTE5Niw2MDYuMjA1OTcgQy0xOTYsNjk1LjQ4MDg5NiAtMTUzLjk0MjY5Nyw3NzQuOTI1MDY4IC04OC41Njc2MjQzLDgyNS44MzA2MDEgTC03OS41MDkzNDI4LDgzNy40MDg3MzYgQy03OS44OTA1MTg1LDgzOC4wNjc4ODEgLTY0LjAyNjkzMzMsODQ1LjA5OTY3OSAtNjMuMzY3Nzg4Myw4NDUuNDc5NDc5IEMtNjIuNzEwMDE5NCw4NDUuODU5Mjc5IC00Ni4xOTkzMjYsODUzLjA1MjMyNiAtNDYuMTk5MzI2LDg1My4wNTIzMjYgQy03Ljc4MzE0NTQ3LDg3My4wNzcxMjMgMzUuODg1NTUzNyw4ODQuNDExOTM5IDgyLjIwNTk2OTcsODg0LjQxMTkzOSBDMTI4LjE3NTQ4NCw4ODQuNDExOTM5IDE3MS41MzU5NCw4NzMuMjUzMjYyIDIwOS43NDE1NzksODUzLjUxMTkzOCBDMjEwLjEyMTM4MSw4NTQuMTY5NzIyIDIzNC41OTMwNTksODM3Ljc4ODUzNiAyMzUuMjUwODI4LDgzNy40MDg3MzYgQzIzNS45MDk5NzMsODM3LjAyODkzNyAyNTIuNTcyMjUsODI3LjA5Mzg0MSAyNTIuMTkyNDUxLDgyNi40MzQ2OTYgQzMxOC4wMTQ3NDMsNzc1LjU1MzkzOSAzNjAuNDExOTM5LDY5NS44MzczMDMgMzYwLjQxMTkzOSw2MDYuMjA1OTcgQzM2MC40MTE5MzksNDUyLjU1Nzc2IDIzNS44NTU1NTUsMzI4IDgyLjIwNTk2OTcsMzI4IFoiIGlkPSJGaWxsLTEtQ29weS0zIj48L3BhdGg+ICAgICAgICA8L2c+ICAgIDwvZz48L3N2Zz4=);
+	background-size: auto 300px;
+	background-position: left center;
+	background-repeat: no-repeat;
+}
+
+.mobile-timeman-timing-title {
+	font-family: "OpenSans-Bold", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-size: 18px;
+	text-align: center;
+	text-transform: uppercase;
+	font-weight: bold;
+}
+
+.mobile-timeman-time {
+	font-size: 64px;
+	line-height: 64px;
+	text-align: center;
+	padding: 80px 0;
+}
+
+.mobile-timeman-control {
+	display: block;
+	margin: 0 auto -15px auto;
+	text-align: center;
+	width: 100%;
+	max-width: 300px;
+}
+
+.mobile-timeman-completion {
+	display: flex;
+	flex: 1;
+	padding: 0 35px;
+	color: #535c69;
+	flex-direction: column;
+	align-items: stretch;
+}
+
+.mobile-timeman-start-block,
+.mobile-timeman-expired-block,
+.mobile-timeman-stop-block,
+.mobile-timeman-regular-block {}
+
+.mobile-timeman-completion-title {
+	font-size: 22px;
+	text-align: center;
+	margin: 0 0 18px 0;
+}
+
+.mobile-timeman-completion-textarea {
+	flex: 1;
+	display: block;
+	width: 100%;
+	margin: 0 -35px 18px -35px;
+	padding: 10px 35px;
+	border: 1px solid #293139;
+	border-left: none;
+	border-right: none;
+	font-size: 18px;
+	font-family: "OpenSans-Regular", Helvetica, Arial, sans-serif;
+	color: #535c69;
+	resize: none;
+	-webkit-appearance: none;
+	-webkit-border-radius: 0;
+	-moz-border-radius: 0;
+	border-radius: 0;
+}
+
+.mobile-timeman-control-info {
+	font-size: 16px;
+	color: #acb4bf;
+	text-align: center;
+	margin: 0 0 18px 0;
+}
+
+.mobile-timeman-control-timing {
+	display: flex;
+	display: block;
+	overflow: hidden;
+	width: 100%;
+	max-width: 300px;
+	font-size: 16px;
+	color: #293139;
+	margin: 0 auto 18px auto;
+}
+
+.mobile-timeman-control-timing:first-child {
+	margin: 18px auto;
+}
+
+.mobile-timeman-control-timing-title {
+	display: flex;
+	float: left;
+	height: 37px;
+	line-height: 16px;
+	align-items: center;
+}
+
+.mobile-timeman-control-timing-time {
+	float: right;
+	height: 37px;
+	line-height: 37px;
+	font-size: 32px;
+}
+
+.mobile-button {
+	clear: both;
+	width: 100%;
+	height: 47px;
+	line-height: 47px;
+	max-width: 300px;
+	background: #ecedef;
+	-webkit-border-radius: 2px;
+	-moz-border-radius: 2px;
+	border-radius: 2px;
+	border: none;
+	cursor: pointer;
+	color: #293139;
+	display: block;
+	margin: 0 auto 15px auto;
+	font-family: "OpenSans-Bold", Helvetica, Arial, sans-serif;
+	font-size: 14px;
+	font-weight: bold;
+	outline: none;
+	vertical-align: middle;
+	text-decoration: none;
+	text-transform: uppercase;
+	text-shadow: none;
+	white-space: nowrap;
+	border: none;
+	-webkit-appearance: none;
+	-webkit-font-smoothing: antialiased;
+	-webkit-transition: background-color .1s linear, color .1s linear;
+	transition: background-color .1s linear, color .1s linear;
+}
+
+.mobile-button:active {
+	background: #868d95;
+	-webkit-box-shadow: none;
+	box-shadow: none;
+	color: #fff;
+}
+
+.mobile-button-decline {
+	background: #f1361b;
+	-webkit-box-shadow: none;
+	box-shadow: none;
+	color: #fff;
+}
+
+.mobile-button-decline:active {
+	background: #d24430;
+	color: #fff;
+}
+
+.mobile-button-create {
+	background: #bbed21;
+	color: #293139;
+}
+
+.mobile-button-create:active {
+	background: #b2e233;
+	color: #535c69;
+}
+
+.mobile-button:disabled {
+	opacity: .4;
+}
+
+.mobile-timeman-control-timing-head {
+	clear: both;
+	display: block;
+	font-size: 28px;
+	text-align: center;
+	color: #293139;
+	padding: 0 0 37px 0;
+}
+
+@media (max-width: 370px) {
+	.mobile-timeman-wrapper {
+		background-size: auto 90%;
+	}
+
+	.mobile-timeman-timing-title {
+		font-size: 14px;
+		white-space: nowrap;
+	}
+
+	.mobile-timeman-time {
+		padding: 50px 0;
+	}
+
+	.mobile-timeman-timing {
+		background-size: auto 300px;
+		background-position: left center;
+		background-repeat: no-repeat;
+	}
+
+	.mobile-timeman-completion-title {
+		font-size: 19px;
+	}
+
+	.mobile-timeman-completion-textarea {
+		font-size: 16px;
+		font-family: "OpenSans-Regular", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	}
+
+	.mobile-timeman-control-info {
+		font-size: 14px;
+	}
+
+	.mobile-timeman-control-timing {
+		font-size: 14px;
+		height: 34px;
+	}
+
+	.mobile-timeman-control-timing-time {
+		font-size: 26px;
+		height: 34px;
+		line-height: 34px;
+	}
+
+	.mobile-button {
+		font-size: 12px;
+	}
+}
+
+@media (min-width: 760px) {
+	.mobile-timeman-wrapper {
+		background-size: auto 100%;
+		padding: 50px 35px;
+	}
+
+	.mobile-timeman-completion-textarea {
+		text-align: center;
+	}
+}
+.bx-touch .mobile-timeman-report .mobile-timeman-control{
+	display : none;
+}
+.bx-touch .mobile-timeman-report .mobile-timeman-completion-textarea{
+	border: none;
+}
+.mobile-timeman a:focus, .mobile-timeman textarea:focus, .mobile-timeman input:focus {
+	outline: none;
+	-webkit-tap-highlight-color: rgba(255,255,255,0);
+}
+.mobile-timeman div {
+	-webkit-tap-highlight-color: transparent;
+}
+
+.mobile-timeman-completion-textarea.error {
+	border-color: red;
+}
+
+.mobile-timeman-view .mobile-timeman .mobile-timeman-control input,
+.mobile-timeman-view .mobile-timeman-completion {display: none;}
+.mobile-timeman-view .mobile-timeman[data-bx-timeman-status="start"] .mobile-timeman-control input[data-bx-timeman="start-button"],
+.mobile-timeman-view .mobile-timeman[data-bx-timeman-status="opened"] .mobile-timeman-control input[data-bx-timeman="pause-button"],
+.mobile-timeman-view .mobile-timeman[data-bx-timeman-status="opened"] .mobile-timeman-control input[data-bx-timeman="stop-button"],
+.mobile-timeman-view .mobile-timeman[data-bx-timeman-status="paused"] .mobile-timeman-control input[data-bx-timeman="resume-button"],
+.mobile-timeman-view .mobile-timeman[data-bx-timeman-status="paused"] .mobile-timeman-control input[data-bx-timeman="stop-button"],
+.mobile-timeman-view .mobile-timeman[data-bx-timeman-status="completed"] .mobile-timeman-control input[data-bx-timeman="resume-button"],
+.mobile-timeman-view .mobile-timeman[data-bx-timeman-status="expired"] .mobile-timeman-control input[data-bx-timeman="stop-button"] {display:block;}
+.mobile-timeman-view .mobile-timeman[data-bx-timeman-pause="0"] div[data-bx-timeman="pause-block"] {display:none;}
+
+.mobile-timeman-view .mobile-timeman div[data-bx-timeman="start-block"] {display:none;}
+.mobile-timeman-view .mobile-timeman div[data-bx-timeman="stop-block"] {display:none;}
+.mobile-timeman-view .mobile-timeman div[data-bx-timeman="expired-block"] {display: none;}
+
+.mobile-timeman-view .mobile-timeman[data-bx-timeman-status="expired"] div[data-bx-timeman="regular-block"] {display:none;}
+.mobile-timeman-view .mobile-timeman[data-bx-timeman-status="expired"] div[data-bx-timeman="expired-block"] {display:block;}
+.mobile-timeman-view .mobile-timeman[data-bx-timeman-status="expired"] div[data-bx-timeman="stop-block"] {display:block;}
+
+.mobile-timeman-view .mobile-timeman[data-bx-timeman-status="start"][data-bx-timeman-start-state="extended"] div[data-bx-timeman="start-block"] {display:block;}
+
+.mobile-timeman-view .mobile-timeman[data-bx-timeman-status="opened"][data-bx-timeman-stop-state="extended"] div[data-bx-timeman="stop-block"] {display:block;}
+.mobile-timeman-view .mobile-timeman[data-bx-timeman-status="paused"][data-bx-timeman-stop-state="extended"] div[data-bx-timeman="stop-block"] {display:block;}
+
+.mobile-timeman-view .mobile-timeman[data-bx-timeman-status="opened"][data-bx-timeman-stop-state="extended"] .mobile-timeman-control input[data-bx-timeman="pause-button"] {display:none;}
+.mobile-timeman-view .mobile-timeman[data-bx-timeman-status="paused"][data-bx-timeman-stop-state="extended"] .mobile-timeman-control input[data-bx-timeman="resume-button"] {display:none;}

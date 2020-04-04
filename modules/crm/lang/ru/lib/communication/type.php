@@ -1,0 +1,4 @@
+<?php
+$MESS["CRM_COMMUNICATION_TYPE_EMAIL"] = "Email";
+$MESS["CRM_COMMUNICATION_TYPE_PHONE"] = "Телефон";
+?>

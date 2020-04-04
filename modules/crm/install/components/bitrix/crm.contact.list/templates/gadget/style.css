@@ -1,0 +1,6 @@
+.crm-contact-element { margin-bottom: 10px; padding-left: 25px; background: url(images/icon-contact.gif) no-repeat 0px 19px; }
+.crm-contact-element-date { color: #7f7f7f; font-size: 11px; margin-bottom: 3px; }
+.crm-contact-element-title { color: #7f7f7f; margin-bottom: 5px; }
+.crm-contact-element-title a { font-size: 13px }
+.crm-contact-element-status { color: #7f7f7f; font-size: 12px;  border-bottom: 1px solid #f2f2f2; padding-bottom: 10px; }
+.crm-contact-element-status span { color: #000; }

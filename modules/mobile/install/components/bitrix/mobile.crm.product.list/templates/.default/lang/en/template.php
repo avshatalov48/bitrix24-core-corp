@@ -1,0 +1,15 @@
+<?
+$MESS["M_CRM_PRODUCT_LIST_PULL_TEXT"] = "Pull down to refresh...";
+$MESS["M_CRM_PRODUCT_LIST_DOWN_TEXT"] = "Release to refresh...";
+$MESS["M_CRM_PRODUCT_LIST_LOAD_TEXT"] = "Updating...";
+$MESS["M_CRM_PRODUCT_LIST_SEARCH_PLACEHOLDER"] = "Search by name";
+$MESS["M_CRM_PRODUCT_LIST_SEARCH_BUTTON"] = "Search";
+$MESS["M_CRM_PRODUCT_LIST_TAB_PRODUCT"] = "Products";
+$MESS["M_CRM_PRODUCT_LIST_TAB_SECTION"] = "Categories";
+$MESS["M_CRM_PRODUCT_LIST_SELECTOR_LEGEND"] = "Select Product";
+$MESS["M_CRM_PRODUCT_LIST_ROOT_SECTION_LEGEND"] = "Root category";
+$MESS["M_CRM_PRODUCT_LIST_SHOW_SECTION"] = "All products in category";
+$MESS["M_CRM_PRODUCT_LIST_BUTTON_UP"] = "Up";
+$MESS["M_CRM_PRODUCT_LIST_TITLE"] = "All products";
+$MESS["M_CRM_PRODUCT_ADD"] = "Create product";
+?>

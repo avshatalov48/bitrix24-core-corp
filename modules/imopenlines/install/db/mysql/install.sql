@@ -1,0 +1,364 @@
+CREATE TABLE b_imopenlines_session
+(
+	ID int(11) NOT NULL auto_increment,
+	MODE varchar(255) NULL default 'input',
+	STATUS tinyint(3) NULL default '0',
+	SOURCE varchar(255) NULL,
+	CONFIG_ID int(11) NULL,
+	OPERATOR_ID int(11) NULL,
+	USER_CODE varchar(255) NULL,
+	PARENT_ID int(11) null DEFAULT 0,
+	USER_ID int(11) NOT NULL,
+	CHAT_ID int(11) NOT NULL,
+	MESSAGE_COUNT int(11) NOT NULL,
+	LIKE_COUNT int(11) NULL,
+	START_ID int(11) NOT NULL,
+	END_ID int(11) NOT NULL,
+	CRM char(1) not null default 'N',
+	CRM_CREATE char(1) not null default 'N',
+	CRM_CREATE_LEAD char(1) not null default 'N',
+	CRM_CREATE_COMPANY char(1) not null default 'N',
+	CRM_CREATE_CONTACT char(1) not null default 'N',
+	CRM_CREATE_DEAL char(1) not null default 'N',
+	CRM_ACTIVITY_ID int(11) NULL,
+	CRM_TRACE_DATA text NULL,
+	DATE_CREATE datetime,
+	DATE_OPERATOR datetime,
+	DATE_MODIFY datetime,
+	DATE_OPERATOR_ANSWER datetime,
+	DATE_OPERATOR_CLOSE datetime,
+	DATE_FIRST_ANSWER datetime,
+	DATE_LAST_MESSAGE datetime,
+	DATE_CLOSE datetime,
+	TIME_FIRST_ANSWER int(11) null,
+	TIME_ANSWER int(11) null,
+	TIME_CLOSE int(11) null,
+	TIME_BOT int(11) null,
+	TIME_DIALOG int(11) null,
+	CATEGORY_ID int(11) null DEFAULT 0,
+	WAIT_ACTION char(1) not null default 'N',
+	WAIT_ANSWER char(1) not null default 'Y',
+	WAIT_VOTE char(1) not null default 'N',
+	SEND_FORM varchar(255) NULL default 'none',
+	SEND_HISTORY char(1) not null default 'N',
+	CLOSED char(1) not null default 'N',
+	PAUSE char(1) not null default 'N',
+	SPAM char(1) not null default 'N',
+	WORKTIME char(1) not null default 'Y',
+	SEND_NO_ANSWER_TEXT char(1) not null default 'N',
+	QUEUE_HISTORY text null,
+	VOTE int(11) NULL,
+	VOTE_HEAD int(11) NULL,
+	COMMENT_HEAD text NULL,
+	EXTRA_REGISTER int(11) NULL,
+	EXTRA_TARIFF varchar(255) NULL,
+	EXTRA_USER_LEVEL varchar(255) NULL,
+	EXTRA_PORTAL_TYPE varchar(255) NULL,
+	EXTRA_URL varchar(255) NULL,
+	IS_FIRST char(1) not null,
+	PRIMARY KEY (ID),
+	KEY IX_IMOL_S_1 (USER_CODE, CLOSED),
+	KEY IX_IMOL_S_2 (USER_ID, CLOSED),
+	KEY IX_IMOL_S_3 (CHAT_ID, CLOSED),
+	KEY IX_IMOL_S_4 (OPERATOR_ID, CLOSED, DATE_CREATE),
+	KEY IX_IMOL_S_5 (OPERATOR_ID, CLOSED, DATE_MODIFY),
+	KEY IX_IMOL_S_6 (EXTRA_URL, DATE_CREATE),
+	KEY IX_IMOL_S_7 (EXTRA_TARIFF, DATE_CREATE),
+	KEY IX_IMOL_S_8 (VOTE, VOTE_HEAD, DATE_CREATE),
+	KEY IX_IMOL_S_9 (SPAM, DATE_CREATE),
+	KEY IX_IMOL_S_10 (STATUS, DATE_CREATE)
+);
+
+CREATE TABLE b_imopenlines_session_index
+(
+	SESSION_ID int(11) not null,
+	SEARCH_CONTENT mediumtext null,
+	PRIMARY KEY (SESSION_ID)
+);
+
+CREATE TABLE b_imopenlines_user_relation
+(
+	USER_CODE varchar(255) NOT NULL,
+	USER_ID int(11) NULL DEFAULT 0,
+	CHAT_ID int(11) NULL DEFAULT 0,
+	AGREES char(1) not null default 'N',
+	PRIMARY KEY (USER_CODE)
+);
+
+CREATE TABLE b_imopenlines_session_check
+(
+	SESSION_ID int(11) NOT NULL,
+	DATE_CLOSE datetime NULL,
+	DATE_QUEUE datetime NULL,
+	DATE_MAIL datetime NULL,
+	PRIMARY KEY (SESSION_ID),
+	KEY IX_IMOL_SCH_1 (DATE_CLOSE),
+	KEY IX_IMOL_SCH_2 (DATE_QUEUE),
+	KEY IX_IMOL_SCH_3 (DATE_MAIL)
+);
+
+CREATE TABLE b_imopenlines_livechat
+(
+	CONFIG_ID int(11) NOT NULL,
+	URL_CODE varchar(255) NULL,
+	URL_CODE_ID int(11) NULL,
+	URL_CODE_PUBLIC varchar(255) NULL,
+	URL_CODE_PUBLIC_ID int(11) NULL,
+	TEMPLATE_ID varchar(255) DEFAULT NULL,
+	BACKGROUND_IMAGE int(18) DEFAULT NULL,
+	CSS_ACTIVE char(1) NOT NULL DEFAULT 'N',
+ 	CSS_PATH varchar(255) DEFAULT NULL,
+ 	CSS_TEXT longtext,
+	COPYRIGHT_REMOVED char(1) NOT NULL DEFAULT 'N',
+	CACHE_WIDGET_ID int(11) NULL,
+	CACHE_BUTTON_ID int(11) NULL,
+	PHONE_CODE varchar(255) NULL,
+	TEXT_PHRASES text NULL,
+	PRIMARY KEY (CONFIG_ID)
+);
+
+CREATE TABLE b_imopenlines_config
+(
+	ID int(11) NOT NULL auto_increment,
+	XML_ID varchar(255) NULL,
+	ACTIVE char(1) not null default 'N',
+	LINE_NAME varchar(255) NULL,
+	CRM char(1) not null default 'Y',
+	CRM_CREATE varchar(50) default 'none',
+	CRM_FORWARD char(1) not null default 'Y',
+	CRM_SOURCE varchar(50) default 'create',
+	CRM_TRANSFER_CHANGE char(1) not null default 'Y',
+	QUEUE_TIME int(11) DEFAULT 60,
+	QUEUE_TYPE varchar(50) DEFAULT 'evenly',
+	TIMEMAN char(1) not null default 'N',
+	CHECK_ONLINE char(1) not null default 'Y',
+	CHECKING_OFFLINE char(1) not null default 'N',
+	WELCOME_MESSAGE char(1) not null default 'Y',
+	WELCOME_MESSAGE_TEXT text null,
+	WELCOME_BOT_ENABLE char(1) null default 'N',
+	WELCOME_BOT_JOIN varchar(50) DEFAULT 'first',
+	WELCOME_BOT_ID int(11) DEFAULT 0,
+	WELCOME_BOT_TIME int(11) DEFAULT 60,
+	WELCOME_BOT_LEFT varchar(50) DEFAULT 'queue',
+	AGREEMENT_MESSAGE char(1) not null default 'N',
+	AGREEMENT_ID int(11) DEFAULT 0,
+	NO_ANSWER_RULE varchar(50) DEFAULT 'form',
+	NO_ANSWER_FORM_ID int(11),
+	NO_ANSWER_BOT_ID int(11),
+	NO_ANSWER_TEXT text null,
+	WORKTIME_ENABLE char(1) null default 'N',
+	WORKTIME_FROM varchar(5) null,
+	WORKTIME_TO varchar(5) null,
+	WORKTIME_TIMEZONE varchar(50) null,
+	WORKTIME_HOLIDAYS varchar(2000) null,
+	WORKTIME_DAYOFF varchar(20) null,
+	WORKTIME_DAYOFF_RULE varchar(50) default 'form',
+	WORKTIME_DAYOFF_FORM_ID int(11),
+	WORKTIME_DAYOFF_BOT_ID int(11),
+	WORKTIME_DAYOFF_TEXT text null,
+	CATEGORY_ENABLE char(1) null default 'N',
+	CATEGORY_ID int(11) null DEFAULT 0,
+	CLOSE_RULE varchar(50) DEFAULT 'form',
+	CLOSE_FORM_ID int(11),
+	CLOSE_BOT_ID int(11),
+	CLOSE_TEXT text null,
+	FULL_CLOSE_TIME int(11) null DEFAULT 10,
+	AUTO_CLOSE_RULE varchar(50) DEFAULT 'none',
+	AUTO_CLOSE_FORM_ID int(11),
+	AUTO_CLOSE_BOT_ID int(11),
+	AUTO_CLOSE_TIME int(11) DEFAULT 0,
+	AUTO_CLOSE_TEXT text null,
+	AUTO_EXPIRE_TIME int(11) DEFAULT 0,
+	VOTE_MESSAGE char(1) not null default 'Y',
+	VOTE_CLOSING_DELAY char(1) not null default 'N',
+	VOTE_MESSAGE_1_TEXT text null,
+	VOTE_MESSAGE_1_LIKE text null,
+	VOTE_MESSAGE_1_DISLIKE text null,
+	VOTE_MESSAGE_2_TEXT text null,
+	VOTE_MESSAGE_2_LIKE text null,
+	VOTE_MESSAGE_2_DISLIKE text null,
+	DATE_CREATE datetime,
+	DATE_MODIFY datetime,
+	MODIFY_USER_ID int(11),
+	TEMPORARY char(1) not null default 'Y',
+	QUICK_ANSWERS_IBLOCK_ID int(11) null DEFAULT 0,
+	SESSION_PRIORITY int(11) null DEFAULT 0,
+	LANGUAGE_ID char(2) null,
+	TYPE_MAX_CHAT varchar(255) NULL,
+	MAX_CHAT int(11) NULL,
+	OPERATOR_DATA varchar(50) not null default 'profile',
+	DEFAULT_OPERATOR_DATA text NULL,
+	PRIMARY KEY PK_B_IMOPENLINES_CONFIG (ID)
+);
+
+CREATE TABLE b_imopenlines_config_statistic
+(
+	CONFIG_ID int(11) NOT NULL,
+	SESSION int(11) NULL,
+	MESSAGE int(11) NULL,
+	CLOSED int(11) NULL,
+	IN_WORK int(11) NULL,
+	LEAD int(11) NULL,
+	PRIMARY KEY PK_BB_IMOPENLINES_CONFIG_STATISTIC (CONFIG_ID)
+);
+
+CREATE TABLE b_imopenlines_config_category
+(
+	ID int(11) NOT NULL auto_increment,
+	CONFIG_ID int(11) NOT NULL,
+	CODE varchar(50) NULL,
+	VALUE varchar(255) NULL,
+	SORT int(11) NOT NULL,
+	PRIMARY KEY PK_B_IMOPENLINES_CONFIG_CATEGORY (ID),
+	KEY IX_IMOL_CC_1 (CODE),
+	KEY IX_IMOL_CC_2 (CONFIG_ID, SORT DESC)
+);
+
+CREATE TABLE b_imopenlines_queue
+(
+	ID int(11) NOT NULL auto_increment,
+	CONFIG_ID int(11) NOT NULL,
+	USER_ID int(11) NOT NULL,
+	LAST_ACTIVITY_DATE datetime,
+	LAST_ACTIVITY_DATE_EXACT bigint NULL,
+	USER_NAME varchar(255) NULL,
+	USER_WORK_POSITION varchar(255) NULL,
+	USER_AVATAR varchar(255) NULL,
+	USER_AVATAR_ID int(11) NULL,
+	PRIMARY KEY PK_B_IMOPENLINES_QUEUE (ID),
+	KEY IX_IMOL_Q_2 (CONFIG_ID, LAST_ACTIVITY_DATE),
+	KEY IX_IMOL_Q_3 (USER_ID)
+);
+
+CREATE TABLE b_imopenlines_operator_transfer
+(
+	ID int(11) NOT NULL auto_increment,
+	CONFIG_ID int(11) NOT NULL,
+	SESSION_ID int(11) NOT NULL,
+	USER_ID int(11) NOT NULL,
+	TRANSFER_MODE varchar(50) default 'MANUAL',
+	TRANSFER_TYPE varchar(50) default 'USER',
+	TRANSFER_USER_ID int(11) NULL,
+	TRANSFER_LINE_ID int(11) NULL,
+	DATE_CREATE datetime,
+	PRIMARY KEY PK_B_IMOPENLINES_OPERATOR_TRANSFER (ID),
+	KEY IX_IMOL_OT_1 (CONFIG_ID),
+	KEY IX_IMOL_OT_2 (SESSION_ID),
+	KEY IX_IMOL_OT_3 (DATE_CREATE),
+	KEY IX_IMOL_OT_4 (USER_ID, CONFIG_ID)
+);
+
+CREATE TABLE b_imopenlines_tracker
+(
+	ID int(11) NOT NULL auto_increment,
+	SESSION_ID int(11) NULL,
+	CHAT_ID int(11) NULL,
+	MESSAGE_ID int(11) NULL,
+	MESSAGE_ORIGIN_ID int(11) NULL,
+	USER_ID int(11) NULL,
+	ACTION varchar(50) NULL,
+	CRM_ENTITY_TYPE varchar(50) NULL,
+	CRM_ENTITY_ID int(11) NULL,
+	FIELD_ID varchar(255) default 'FM' null,
+	FIELD_TYPE varchar(255) NULL,
+	FIELD_VALUE varchar(255) NULL,
+	DATE_CREATE datetime,
+	PRIMARY KEY PK_B_IMOPENLINES_TRACKER (ID),
+	KEY IX_IMOL_TR_1 (MESSAGE_ID)
+);
+
+CREATE TABLE b_imopenlines_role
+(
+	ID int(11) NOT NULL auto_increment,
+	NAME varchar(255) NOT NULL,
+	XML_ID varchar(255) NULL,
+	PRIMARY KEY PK_B_IMOPENLINES_ROLE (ID),
+	KEY IX_IMOL_PERM_XML_ID (XML_ID)
+);
+
+
+CREATE TABLE b_imopenlines_role_permission
+(
+	ID int(11) NOT NULL auto_increment,
+	ROLE_ID int(11) NOT NULL,
+	ENTITY varchar(50) NOT NULL,
+	ACTION varchar(50) NOT NULL,
+	PERMISSION char(1) NULL,
+	PRIMARY KEY PK_B_IMOPENLINES_ROLE_PERMISSION (ID),
+	KEY IX_IMOL_PERM_ROLE_ID (ROLE_ID)
+);
+
+CREATE TABLE b_imopenlines_role_access
+(
+	ID int(11) NOT NULL auto_increment,
+	ROLE_ID int(11) NOT NULL,
+	ACCESS_CODE varchar(100) NOT NULL,
+	PRIMARY KEY PK_B_IMOPENLINES_ROLE_ACCESS (ID),
+	KEY IX_IMOL_ACCESS_ROLE_ID (ROLE_ID)
+);
+
+CREATE TABLE b_imopenlines_rest_network_limit
+(
+	ID int(11) NOT NULL auto_increment,
+	BOT_ID int(11) NOT NULL,
+	USER_ID int(11) NOT NULL,
+	DATE_CREATE datetime,
+	PRIMARY KEY PK_B_IMOPENLINES_NETWORK_LIMIT (ID),
+	KEY IX_IMOL_RNL_1 (BOT_ID, DATE_CREATE)
+);
+
+CREATE TABLE b_imopenlines_dialog_stat (
+	ID INT AUTO_INCREMENT NOT NULL,
+	DATE datetime NOT NULL,
+	OPEN_LINE_ID int NOT NULL,
+	SOURCE_ID VARCHAR(255) NOT NULL,
+	OPERATOR_ID int NOT NULL,
+	FIRST_TREATMENT_QTY int NOT NULL DEFAULT 0,
+	REPEATED_TREATMENT_QTY int NOT NULL DEFAULT 0,
+	POSITIVE_QTY int NOT NULL DEFAULT 0,
+	NEGATIVE_QTY int NOT NULL DEFAULT 0,
+	WITHOUT_MARK_QTY int NOT NULL DEFAULT 0,
+	ANSWERED_QTY int NOT NULL DEFAULT 0,
+	SKIP_QTY int NOT NULL DEFAULT 0,
+	APPOINTED_QTY int NOT NULL DEFAULT 0,
+	AVERAGE_SECS_TO_ANSWER int NOT NULL DEFAULT 0,
+	PRIMARY KEY PK_B_IMOPENLINES_DIALOG_STAT (ID),
+	UNIQUE KEY IX_IMOL_STATISTIC_OWNER_KEY (DATE, OPEN_LINE_ID, SOURCE_ID, OPERATOR_ID)
+);
+
+CREATE TABLE b_imopenlines_statistic_queue (
+	ID INT AUTO_INCREMENT NOT NULL,
+	SESSION_ID    INT          NOT NULL,
+	STATISTIC_KEY VARCHAR(255) NOT NULL,
+	DATE_QUEUE    DATETIME     NOT NULL,
+	PARAMS TEXT NOT NULL,
+	PRIMARY KEY PK_B_IMOPENLINES_STATISTIC_QUEUE (ID)
+);
+
+CREATE TABLE b_imopenlines_treatment_by_hour_stat (
+	ID INT AUTO_INCREMENT NOT NULL,
+	DATE datetime NOT NULL,
+	OPEN_LINE_ID int NOT NULL,
+	SOURCE_ID VARCHAR(255) NOT NULL,
+	OPERATOR_ID int NOT NULL,
+	QTY int NOT NULL DEFAULT 0,
+	PRIMARY KEY PK_IMOPENLINES_TREATMENT_BY_HOUR_STAT (ID),
+	UNIQUE KEY IX_IMOL_STATISTIC_OWNER_KEY (DATE, OPEN_LINE_ID, SOURCE_ID, OPERATOR_ID)
+);
+
+CREATE TABLE b_imopenlines_log(
+    ID INT PRIMARY KEY AUTO_INCREMENT,
+    DATA_TIME DATETIME,
+    LINE_ID VARCHAR(255),
+    CONNECTOR_ID VARCHAR(255),
+    SESSION_ID INT,
+    TYPE VARCHAR(255),
+    DATA TEXT
+);
+
+CREATE TABLE b_imopenlines_exec_log (
+  ID INT(11) PRIMARY KEY AUTO_INCREMENT,
+  EXEC_FUNCTION VARCHAR(255) NOT NULL,
+  LAST_EXEC_TIME DATETIME NOT NULL,
+  IS_SUCCESS CHAR(1) NOT NULL DEFAULT 'Y'
+);

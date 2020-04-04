@@ -1,0 +1,292 @@
+.bx-calendar-layout {position: relative;}
+
+ul.bx-calendar-view-switcher {
+	display: block;
+	list-style-image: none;
+	list-style-position: outside;
+	list-style-type: none;
+	padding: 0px;
+	margin: 0px;
+	margin-right: 30px !important;
+	height: 32px;
+}
+
+
+ul.bx-calendar-view-switcher li {
+	line-height: 15px;
+	display: block;
+	float: right;
+	margin: 0px 5px 0px 0px;
+}
+
+ul.bx-calendar-view-switcher li.bx-absence-current-view {
+	font-weight: bold;
+}
+
+
+ul.bx-calendar-view-switcher li a {
+	text-decoration: none; display: block;
+}
+
+ul.bx-calendar-view-switcher li a span{
+	float: left;
+	display: block;
+	height: 32px;
+	cursor: pointer;
+}
+ul.bx-calendar-view-switcher li a span.bx-l {
+	background: transparent url(images/tabs/tabs_back.gif);
+	background-position: -10px 0px;
+	width: 4px;
+}
+
+ul.bx-calendar-view-switcher li a span.bx-r {
+	background: transparent url(images/tabs/tabs_back.gif);
+	background-position: -15px 0px;
+	width: 4px;
+}
+
+ul.bx-calendar-view-switcher li a span.bx-c {
+	background: transparent url(images/tabs/tabs_d_bg.gif);
+	padding: 0px 50px;
+	position: relative;
+	line-height: 32px;
+	font-size: 13px;
+	font-family: Verdana;
+	text-align: center;
+	color: #71716F;
+}
+
+ul.bx-calendar-view-switcher li.bx-absence-current-view a span.bx-l {
+	background: transparent url(images/tabs/tabs_back.gif);
+	background-position: 0px 0px;
+	width: 4px;
+}
+
+ul.bx-calendar-view-switcher li.bx-absence-current-view a span.bx-r {
+	background: transparent url(images/tabs/tabs_back.gif);
+	background-position: -5px 0px;
+	width: 4px;
+}
+
+ul.bx-calendar-view-switcher li.bx-absence-current-view a span.bx-c {
+	background: transparent url(images/tabs/tabs_a_bg.gif);
+	color: #000000;
+}
+
+.bx-calendar-layout-table {clear: both; border: solid 1px #C9C9C9; width: 100%; border-spacing: 0px;}
+.bx-calendar-layout-table thead td {background-color:#F2F8D6; color:#3C3C3C; font-size:14px; height:25px; text-align:center;}
+.bx-calendar-layout-table td.bx-table-main {padding: 0px !important; border-collapse: collapse;}
+
+.bx-calendar-layout .bx-absence-calendar {clear: both; border-collapse: collapse; padding: 0px 5px 5px 5px;}
+.bx-calendar-layout .bx-absence-calendar table {width: 100%;}
+
+.bx-table-datecontrol {text-align: center;}
+
+div.bx-calendar-color-default {background-image: url(/bitrix/components/bitrix/intranet.absence.calendar/templates/.default/images/calendar_grad_green.gif) !important;}
+div.bx-calendar-color-LEAVESICK {background-image: url(/bitrix/components/bitrix/intranet.absence.calendar/templates/.default/images/calendar_grad_orange.gif) !important;}
+div.bx-calendar-color-LEAVEMATERINITY {background-image: url(/bitrix/components/bitrix/intranet.absence.calendar/templates/.default/images/calendar_grad_blue.gif) !important;}
+div.bx-calendar-color-LEAVEUNPAYED {background-image: url(/bitrix/components/bitrix/intranet.absence.calendar/templates/.default/images/calendar_grad_gray.gif) !important;}
+div.bx-calendar-color-OTHER {background-image: url(/bitrix/components/bitrix/intranet.absence.calendar/templates/.default/images/calendar_grad_cyan.gif) !important;}
+div.bx-calendar-color-UNKNOWN {background-image: url(/bitrix/components/bitrix/intranet.absence.calendar/templates/.default/images/calendar_grad_red.gif) !important;}
+div.bx-calendar-color-VACATION {background-image: url(/bitrix/components/bitrix/intranet.absence.calendar/templates/.default/images/calendar_grad_green.gif) !important;}
+div.bx-calendar-color-ASSIGNMENT {background-image: url(/bitrix/components/bitrix/intranet.absence.calendar/templates/.default/images/calendar_grad_margenta.gif) !important;}
+div.bx-calendar-color-PERSONAL {background-image: url(/bitrix/components/bitrix/intranet.absence.calendar/templates/.default/images/calendar_grad_gray4.gif) !important;}
+
+.bx-calendar-layout table.bx-calendar-toolbar {margin: 0px 0px 20px 0px; width: 100%; border-collapse:separate; border: solid 1px #C9C9C9; background-color:#F2F8D6; color:#3C3C3C;}
+.bx-calendar-layout table.bx-calendar-toolbar td {padding: 6px; white-space: nowrap !important; color: black;}
+.bx-calendar-layout table.bx-calendar-toolbar td label, .bx-calendar-layout table.bx-calendar-toolbar td .bx-label {cursor: pointer;}
+.bx-calendar-layout table.bx-calendar-toolbar td select {width: 250px;}
+.bx-calendar-layout table.bx-calendar-toolbar td.bx-calendar-toolbar-last {width: 100%; text-align: right;}
+.bx-calendar-layout table.bx-calendar-toolbar td.bx-calendar-toolbar-delimiter {width: 1px; padding: 0 1px 0 0 !important; background-color: #C9C9C9; border-top: solid 3px #F2F8D6;border-bottom: solid 3px #F2F8D6;}
+
+.bx-calendar-layout table.bx-calendar-toolbar .bx-indicator{height: 12px; width: 12px; background-repeat: no-repeat; line-height: 12px; cursor: pointer;}
+.bx-calendar-layout table.bx-calendar-toolbar .bx-indicator-on {background-image: url(/bitrix/components/bitrix/intranet.absence.calendar/templates/.default/images/on.gif);}
+.bx-calendar-layout table.bx-calendar-toolbar .bx-indicator-off {background-image: url(/bitrix/components/bitrix/intranet.absence.calendar/templates/.default/images/off.gif);}
+
+
+div.bx-calendar-filter {width: 250px; border: solid 1px #A9A9A9; background-color: white; position: absolute; z-index: 200; display: none;}
+div.bx-calendar-filter div {margin: 1px; height: 17px;  background-repeat: repeat-x; background-position: left top; overflow: hidden; cursor: pointer; -moz-box-sizing: border-box; box-sizing: border-box; text-align: left;}
+div.bx-calendar-filter div label{cursor: pointer; display: block; margin-left: 20px;}
+div.bx-calendar-filter div input{float: left;}
+
+div.bx-calendar-color-all {height: 20px;}
+
+div.bx-calendar-info {
+	background-color: white; position: absolute; border: solid 1px #A4ADB1; text-align: left !important;
+}
+
+div.bx-calendar-info .bx-calendar-info-header {
+	height: 25px; background-color: #D8E3E8;
+}
+
+div.bx-calendar-info .bx-calendar-info-header .bx-calendar-info-close {
+	height: 25px; width: 25px; float: right;
+	background-image: url(images/close2.gif);
+	background-position: center center;
+	background-repeat: no-repeat;
+	display: block;
+	cursor: pointer;
+}
+
+div.bx-calendar-info .bx-calendar-info-data{
+	height: 230px;
+	padding: 10px;
+	overflow: auto;
+}
+
+div.bx-calendar-info .bx-calendar-info-data .bx-calendar-info-data-info {
+	font-size: 0.85em;
+}
+div.bx-calendar-info .bx-calendar-info-data .bx-info-entry {
+	height: 17px;
+	margin-top: 15px;
+	padding-left: 2px;
+}
+
+div.bx-calendar-info .bx-calendar-info-data .bx-calendar-info-data-photo{
+	float: left;
+	margin-right: 2px;
+	padding-top: 2px;
+	height: 102px;
+	width: 104px;
+	border: 1px solid #C4C4C4;
+	text-align: center;
+}
+
+div.bx-calendar-info .bx-calendar-info-data .no-photo{
+	background-image: url(/bitrix/components/bitrix/intranet.absence.calendar/templates/.default/images/nopic_user_100_noborder.gif);
+	background-position: center center;
+	background-repeat: no-repeat;
+}
+
+div.bx-calendar-info .bx-calendar-info-data  .bx-calendar-info-data-cont{
+	height: 200px; margin: 5px 9px 0px 119px; overflow: hidden;
+}
+
+div.bx-calendar-info .bx-calendar-info-data .bx-calendar-info-data-name {
+	padding-bottom: 10px;
+}
+
+div.bx-calendar-info .bx-calendar-info-data  .bx-calendar-info-data-name a {
+	font-size: 1.2em; font-weight: bold;
+}
+
+div.bx-calendar-info .bx-calendar-info-data .bx-calendar-info-data-date{
+/*	border-top: solid 1px #98B7C5;*/
+	padding-top: 15px;
+	font-weight: bold;
+}
+
+div.bx-calendar-info .bx-calendar-info-admin {clear: both; text-align: center;}
+div.bx-calendar-info .bx-calendar-info-admin a {padding-left: 20px; height: 18px; line-height: 18px; background-image: url(images/calendar_btns.gif); background-repeat: no-repeat; display: block; float: right; padding-right: 10px; margin-top: 2px;}
+
+div.bx-calendar-info .bx-calendar-info-admin a.bx-calendar-delete {background-position: left top !important;}
+div.bx-calendar-info .bx-calendar-info-admin a.bx-calendar-edit {background-position: 0px -18px !important;}
+div.bx-calendar-info .bx-calendar-info-admin a.bx-calendar-personal {background-position: left bottom !important;}
+
+
+div.bx-calendar-info .bx-calendar-info-footer {
+	height: 24px;
+	background-color: #D8E3E8;
+	text-align: center;
+	padding: 8px;
+}
+
+div.bx-calendar-info .bx-calendar-info-footer input {height: 24px; padding-bottom: 3px;}
+
+div.bx-filter-title table {border-collapse: collapse !important; margin: 0 !important; padding: 0 !important; border: none !important;}
+div.bx-filter-title td {padding:1px !important; font-size:11px !important; border: none !important;}
+div.bx-filter-title {font-size:medium !important; background-color:#23468A; background-image:url(images/title_bg.gif); background-repeat:repeat-x; background-position:left top; border-bottom:1px solid #A9A9A9; margin: 0 !important; height: auto !important;}
+div.bx-filter-title td.bx-filter-title-text{width:100% !important; font-size:11px !important; font-weight:bold !important; color:#EEF1F7 !important; padding:3px !important; vertical-align:top !important;}
+a.bx-filter-close {display:block; width:13px; height:13px; background-image:url(images/close1.gif); overflow:hidden; margin-right:3px; background-repeat:no-repeat; background-position:center;}
+
+
+/* ================================ absence ================================  */
+body .bx-calendar-layout-table{border:0;}
+body .bx-calendar-layout-table .bx-table-datecontrol{border-left:1px solid #c2c2c2;border-right:1px solid #c2c2c2;}
+body .bx-calendar-layout table.bx-calendar-toolbar{
+	border-color:#b6bdbe #c9d1d2 #d6dfe0;
+	border-collapse:collapse;
+	border-spacing:0;
+	-webkit-box-shadow:0 1px 2px #C7D0D2 inset;
+	-moz-box-shadow:0 1px 2px #C7D0D2 inset;
+	box-shadow:0 1px 2px #C7D0D2 inset;
+	background-color:#eaeff0;
+}
+body .bx-calendar-layout table.bx-calendar-toolbar td,
+body .bx-calendar-layout table.bx-calendar-toolbar td.bx-calendar-toolbar-delimiter,
+body .bx-calendar-layout table.bx-calendar-toolbar td.bx-calendar-toolbar-last{
+	border:0;
+	padding:10px;
+	vertical-align:middle;
+	font:14px/18px "Helvetica Neue",Helvetica,Arial,sans-serif;
+	color:#555;
+	background-color:transparent;
+}
+body .bx-calendar-layout table.bx-calendar-toolbar td.bx-calendar-toolbar-delimiter{background:url(images/bx-calendar-toolbar-td-border.png) no-repeat left center;}
+body .bx-calendar-layout table.bx-calendar-toolbar td.bx-calendar-toolbar-last{background:transparent;}
+body .bx-calendar-layout table.bx-calendar-toolbar .bx-indicator-off{display:inline-block;background-position:center center;}
+body .bx-calendar-layout table.bx-calendar-toolbar select{font:14px/18px "Helvetica Neue",Helvetica,Arial,sans-serif;color:#555;}
+
+body .bx-calendar-layout ul.bx-calendar-view-switcher{top:0 !important;height:27px;}
+body .bx-calendar-layout ul.bx-calendar-view-switcher li{height:25px;padding-top:2px;}
+body .bx-calendar-layout ul.bx-calendar-view-switcher li a span{
+	height:24px;
+	font:14px/22px "Helvetica Neue",Helvetica,Arial,sans-serif;
+	background:transparent;
+}
+body .bx-calendar-layout ul.bx-calendar-view-switcher span.bx-l,
+body .bx-calendar-layout ul.bx-calendar-view-switcher span.bx-r{display:none;}
+body .bx-calendar-layout ul.bx-calendar-view-switcher span.bx-c{
+	border:1px solid #c2c2c2;
+	border-bottom:0;
+	-moz-border-radius:3px 3px 0 0;-webkit-border-radius:3px 3px 0 0;-khtml-border-radius:3px 3px 0 0;border-radius:3px 3px 0 0;
+	color:#555;
+	text-shadow:0 1px 1px #fff;
+	background:#fff;
+}
+body .bx-calendar-layout ul.bx-calendar-view-switcher  li.bx-absence-current-view{padding-top:0;}
+body .bx-calendar-layout ul.bx-calendar-view-switcher  li.bx-absence-current-view a span.bx-c{
+	position:relative;
+	z-index:111;
+	height:27px;
+	font:bold 14px/24px "Helvetica Neue",Helvetica,Arial,sans-serif;
+	color:#555;
+	background:#bce4f2 url(images/bx-current-c.png) repeat-x left top;
+}
+body .bx-calendar-layout tbody td.bx-table-main{
+	border-collapse:separate;
+	border:1px solid #c2c2c2;
+	border-top:0;
+	-moz-border-radius:0 0 3px 3px;-webkit-border-radius:0 0 3px 3px;-khtml-border-radius:0 0 3px 3px;border-radius:0 0 3px 3px;
+}
+body .bx-calendar-layout-table thead td.bx-table-head{
+	height:7px;
+	border:1px solid #c2c2c2;
+	border-bottom:0;
+	-moz-border-radius:3px 3px 0 0;-webkit-border-radius:3px 3px 0 0;-khtml-border-radius:3px 3px 0 0;border-radius:3px 3px 0 0;
+	font-size:1px;
+	line-height:1px;
+	color:#bce4f2;
+	background:#bce4f2;
+}
+body .bx-calendar-day-main-table td.bx-calendar-day-now,
+body .bx-calendar-week-main-table td.bx-calendar-week-today,
+body .bx-calendar-month-main-table td.bx-calendar-month-today{background:#e7eef1;}
+body .bx-calendar-week-main-table td.bx-calendar-week-holiday,
+body .bx-calendar-month-main-table td.bx-calendar-month-holiday{background:#f7f7f7;}
+
+body .bx-calendar-layout table.bx-calendar-month-control-table .bx-calendar-month-change1,
+body .bx-calendar-layout table.bx-calendar-month-control-table .bx-calendar-month-change2{display:none;}
+
+body .bx-calendar-layout .bx-absence-calendar{padding:0 7px 7px;}
+body .bx-calendar-layout .bx-absence-calendar > br{display:none;}
+body .bx-calendar-layout .bx-absence-calendar .bx-month-note{
+	display:block;
+	border:0;
+	margin:0;
+	padding:10px 10px 3px;
+	color:#a52929;
+	background:transparent;
+}

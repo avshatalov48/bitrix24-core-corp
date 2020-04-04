@@ -1,0 +1,4 @@
+<?php
+$MESS["VOX_DOCUMENT_STATUS_VERIFIED"] = "Подтверждено";
+$MESS["VOX_DOCUMENT_STATUS_IN_PROGRESS"] = "На проверке";
+$MESS["VOX_DOCUMENT_STATUS_DECLINED"] = "Отклонено";

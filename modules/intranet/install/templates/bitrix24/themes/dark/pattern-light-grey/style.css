@@ -1,0 +1,13 @@
+body {
+	background: #eef2f4 url(pattern-light-grey.svg) 0 0 repeat;
+}
+
+.bx-im-bar,
+.help-block {
+	background-color: rgba(255,255,255,.28);
+	border-left: 1px solid rgba(255,255,255,.46);
+}
+
+.bx-im-border-b {
+	border-bottom: 1px solid rgba(255,255,255,.46);
+}

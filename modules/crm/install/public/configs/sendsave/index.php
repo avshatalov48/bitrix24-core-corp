@@ -1,0 +1,10 @@
+<?
+require($_SERVER["DOCUMENT_ROOT"]."/bitrix/header.php");
+$APPLICATION->SetTitle(GetMessage("CRM_PAGE_TITLE"));
+?><?$APPLICATION->IncludeComponent(
+	"bitrix:crm.config.sendsave",
+	"",
+	Array(
+	),
+false
+);?><?require($_SERVER["DOCUMENT_ROOT"]."/bitrix/footer.php");?>

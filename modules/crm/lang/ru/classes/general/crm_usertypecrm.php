@@ -1,0 +1,9 @@
+<?
+$MESS["USER_TYPE_CRM_DESCRIPTION"] = "Привязка к элементам CRM";
+$MESS["USER_TYPE_CRM_ENTITY_TYPE"] = "Доступная сущность";
+$MESS["USER_TYPE_CRM_ENTITY_TYPE_LEAD"] = "Лид";
+$MESS["USER_TYPE_CRM_ENTITY_TYPE_CONTACT"] = "Контакт";
+$MESS["USER_TYPE_CRM_ENTITY_TYPE_COMPANY"] = "Компания";
+$MESS["USER_TYPE_CRM_ENTITY_TYPE_DEAL"] = "Сделка";
+$MESS["USER_TYPE_CRM_ENTITY_TYPE_ORDER"] = "Заказ";
+?>

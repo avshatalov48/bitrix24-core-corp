@@ -1,0 +1,2 @@
+<?php
+$MESS['DOCUMENTGENERATOR_MODEL_TEMPLATE_CLASS_VALIDATION'] = 'Класс #CLASSNAME# не является наследником #PARENT#';

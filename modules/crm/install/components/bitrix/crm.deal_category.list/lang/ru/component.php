@@ -1,0 +1,9 @@
+<?
+$MESS["CRM_MODULE_NOT_INSTALLED"] = "Модуль CRM не установлен.";
+$MESS['CRM_PERMISSION_DENIED'] = 'Доступ запрещен';
+$MESS["CRM_COLUMN_DEAL_CATEGORY_ID"] = "ID";
+$MESS["CRM_COLUMN_DEAL_CATEGORY_NAME"] = "Название";
+$MESS["CRM_COLUMN_DEAL_CATEGORY_SORT"] = "Сорт.";
+$MESS["CRM_COLUMN_DEAL_CATEGORY_CREATED_DATE"] = "Создано";
+$MESS["CRM_DEAL_CATEGORY_DEFAULT_NAME"] = "Новое направление";
+?>

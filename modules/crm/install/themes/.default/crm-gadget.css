@@ -1,0 +1,216 @@
+.crm-gadg-block {
+	background-color:#fff;
+	border:1px solid #bcd0d5;
+	border-color:#bcd0d5 #b9cdd3 #b2c6cc;
+	border-radius:2px;
+	webkit-box-shadow:0 1px 3px 0 rgba(88,112,118,0.2);
+	box-shadow:0 1px 3px 0 rgba(88,112,118,0.2);
+	margin-bottom:20px;
+	padding:17px 20px 29px;
+	position: relative;
+}
+
+.crm-gadg-red {
+	background-color:#faeded;
+	border-color:#e7b6b7;
+	webkit-box-shadow:inset 0 1px 0 #fcf5f5, 0 1px 3px 0 rgba(88,112,118,0.2);
+	box-shadow:inset 0 1px 0 #fcf5f5, 0 1px 3px 0 rgba(88,112,118,0.2);
+}
+
+.crm-gadg-to-do-important {
+	background-color: #fff8d3;
+}
+
+.crm-gadg-to-do-important-icon {
+	display: inline-block;
+	width: 16px;
+	height: 17px;
+	background: url("./images/crm/activity-sprite2.png") no-repeat -28px -233px;
+	vertical-align: bottom;
+}
+
+.crm-gadg-to-do {
+	padding-left: 30px;
+}
+
+.crm-gadg-to-do .crm-to-do-type {
+	background-image: url("./images/crm/activity-sprite2.png");
+	background-repeat: no-repeat;
+	position: absolute;
+	top: 19px;
+	left: 8px;
+	display: block;
+	min-height: 19px;
+	min-width: 19px;
+}
+
+.crm-gadg-meeting .crm-to-do-type {
+	background-position: -30px -23px;
+}
+
+.crm-gadg-call-outgoing .crm-to-do-type {
+	background-position: -28px -60px;
+}
+
+.crm-gadg-email-outgoing .crm-to-do-type {
+	background-position: -28px -153px;
+}
+
+.crm-gadg-email-incoming .crm-to-do-type {
+	background-position: -28px -193px;
+}
+
+.crm-gadg-task .crm-to-do-type {
+	background-position: -28px -272px;
+}
+
+.crm-gadg-title {
+	padding-bottom:15px;
+	vertical-align: bottom;
+}
+
+.crm-gadg-to-do .crm-gadg-title {
+	border-bottom:1px solid #edeeef;
+}
+
+.crm-gadg-red .crm-gadg-title {
+	border-color:#e9dedf;
+	text-shadow:0 1px #fef9f9;
+}
+
+.crm-gadg-send .crm-gadg-title {
+	background-position:0 4px;
+	padding-left:30px;
+}
+
+.cold-call .crm-gadg-title {
+	background-position:1px -30px;
+	padding-left:30px;
+}
+.hot-call .crm-gadg-title {
+	background-position:1px -67px;
+	padding-left:30px;
+}
+
+.crm-gadg-checkbox .crm-gadg-title-checkbox {
+	margin:5px 17px 0 0;
+	padding:0;
+	vertical-align:top;
+}
+
+.crm-gadg-link {
+	color:#1f67b0!important;
+	box-shadow:0 1px #fef9f9;
+	display:inline-block;
+	font-size:14px;
+	font-weight:bold;
+	text-decoration:underline;
+}
+
+.crm-gadg-link:hover { color:#6089bf!important; }
+
+.crm-gadg-to-do .crm-gadg-link {
+	font-size:16px;
+	margin-right: 8px;
+}
+
+.crm-gadg-to-do .crm-gadg-link {
+	font-size:16px;
+}
+
+.crm-gadg-title-deadline {
+	color:#6d747e;
+	font-size:13px;
+	font-weight:bold;
+	vertical-align: bottom;
+	white-space: nowrap;
+	display: inline-block;
+	padding-left: 3px;
+}
+
+.crm-gadg-red .crm-gadg-title-deadline {
+	color:#ba0000;
+}
+
+.crm-gadg-title-status {
+	color:#000;
+	font-size:12px;
+	font-weight:bold;
+}
+
+.crm-gadg-to-do .crm-gadg-title-status {
+	color: #6D747E;
+	vertical-align: bottom;
+}
+
+.crm-gadg-red .crm-gadg-title-status {
+	color:#ba0000;
+}
+
+.crm-gadg-text {
+	color:#515a65;
+	font-size:13px;
+	padding:14px 0 8px;
+}
+
+.crm-gadg-footer {margin-top:8px}
+
+.crm-gadg-footer-row{padding-bottom:2px}
+
+.crm-gadg-footer .crm-gadg-link {font-size:13px;}
+
+.crm-gadg-footer-left {
+	display:inline-block;
+	color:#5b646f;
+	font-size:13px;
+	font-weight:bold;
+}
+
+.crm-gadg-footer-right {
+	display:inline-block;
+	color:#000;
+	font-size:13px;
+	font-weight:bold;
+	margin-left:22px;
+	overflow: hidden;
+	max-width: 400px;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	vertical-align: bottom;
+}
+
+.crm-gadg-stage {
+
+}
+
+.crm-gadg-stage-left{
+	display:inline-block;
+	color:#6d747e;
+	font-size:13px;
+}
+
+.crm-gadg-stage-right {
+	color:#343434;
+	/*border-bottom:1px dashed #343434;*/
+	display:inline-block;
+	font-size:13px;
+	font-weight:bold;
+	margin-left:14px;
+}
+
+.crm-gadg-description {
+	color:#000;
+	font-size:14px;
+}
+
+.crm-gadg-description-grey{color:#5c5c5c;}
+
+.crm-gadg-lead {
+	padding:12px 20px 23px;
+}
+
+.crm-gadg-lead .crm-gadg-title {
+	padding-bottom:11px;
+}
+
+.crm-gadg-description {padding-top:12px;}

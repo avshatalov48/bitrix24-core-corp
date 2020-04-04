@@ -1,0 +1,32 @@
+<?
+$MESS ['INTL_VARIABLE_ALIASES'] = "Псевдонимы переменных";
+$MESS ['INTL_IBLOCK_TYPE'] = "Тип информационного блока";
+$MESS ['INTL_IBLOCK'] = "Информационый блок";
+$MESS ['INTL_TASKS_FIELDS_SHOW'] = "Свойства задачи";
+$MESS ['INTL_TASK_TYPE'] = "Тип задач";
+$MESS ['INTL_OWNER_ID'] = "Код владельца";
+$MESS ['INTL_TASK_VAR'] = "Имя переменной для кода задачи";
+$MESS ['INTL_USER_VAR'] = "Имя переменной для кода пользователя";
+$MESS ['INTL_GROUP_VAR'] = "Имя переменной для кода группы";
+$MESS ['INTL_VIEW_VAR'] = "Имя переменной для кода представления";
+$MESS ['INTL_ACTION_VAR'] = "Имя переменной для кода действия";
+$MESS ['INTL_PAGE_VAR'] = "Имя переменной для кода страницы";
+$MESS ['INTL_PATH_TO_GROUP_TASKS'] = "Путь к списку задач";
+$MESS ['INTL_PATH_TO_GROUP_TASKS_TASK'] = "Путь к задаче";
+$MESS ['INTL_PATH_TO_GROUP_TASKS_VIEW'] = "Путь к представлению";
+$MESS ['INTL_SET_NAVCHAIN'] = "Включить цепочку навигации";
+$MESS ['INTL_ITEM_COUNT'] = "Количество записей на странице";
+$MESS ['INTL_TF_ID'] = "Код";
+$MESS ['INTL_TF_NAME'] = "Название";
+$MESS ['INTL_TF_CODE'] = "Мнемонический код";
+$MESS ['INTL_TF_XML_ID'] = "Внешний код";
+$MESS ['INTL_TF_MODIFIED_BY'] = "Изменил задачу";
+$MESS ['INTL_TF_DATE_CREATE'] = "Создано";
+$MESS ['INTL_TF_CREATED_BY'] = "Автор";
+$MESS ['INTL_TF_DATE_ACTIVE_FROM'] = "Начало";
+$MESS ['INTL_TF_DATE_ACTIVE_TO'] = "Окончание";
+$MESS ['INTL_TF_IBLOCK_SECTION'] = "Папка";
+$MESS ['INTL_TF_DETAIL_TEXT'] = "Описание задачи";
+$MESS ['INTL_TASK_TYPE_GROUP'] = "Для группы";
+$MESS ['INTL_TASK_TYPE_USER'] = "Для пользователя";
+?>

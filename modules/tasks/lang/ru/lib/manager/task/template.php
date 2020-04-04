@@ -1,0 +1,3 @@
+<?php
+$MESS['TASKS_MANAGER_TASK_TEMPLATE_CONVERSION_ERROR'] = 'Ошибка конвертации задачи';
+$MESS['TASKS_MANAGER_TASK_TEMPLATE_UNKNOWN_ERROR'] = 'Неизвестная ошибка';

@@ -1,0 +1,15 @@
+.but {
+ 
+  border:1px solid grey;
+  cursor:pointer;
+  background-color:#FAF0E6;
+  font-size:12px;
+  padding:0px 0px 2px 0px;
+  width:120px;
+  height:20px;
+  left:20px;
+  position:relative;
+  
+  margin:5px;
+}
+

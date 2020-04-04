@@ -1,0 +1,19 @@
+.mli-search-results {background-color: white; border: solid 1px #333333; margin: 0px; padding: 2px; font-size: 12px;}
+.mli-search-result {cursor: pointer; padding: 2px; margin: 1px;}
+.mli-search-current {background-color: #EEEEEE;}
+body table.bx-edit-table td.bx-field-value > div.mli-layout {width: 262px;}
+body table.bx-edit-table td.bx-field-value > div.mli-layout > input[type=text] {
+	width: 257px;
+	height: 16px;
+	padding: 2px;
+	border: 1px solid #b9bcbe;
+	-moz-border-radius: 2px;
+	-webkit-border-radius: 2px;
+	-khtml-border-radius: 2px;
+	border-radius: 2px;
+	-webkit-box-shadow: 0 1px 2px rgba(0, 0, 0, 0.14) inset;
+	-moz-box-shadow: 0 1px 2px rgba(0, 0, 0, 0.14) inset;
+	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.14) inset;
+	font: 12px/15px "Helvetica Neue", Helvetica, Arial, sans-serif !important;
+	color: #555 !important;
+}

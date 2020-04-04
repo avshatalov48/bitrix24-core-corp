@@ -1,0 +1,69 @@
+@icon-set: url(/bitrix/js/tasks/css/images/media.png);
+
+// mixins
+.bg-image (@y: 0, @x: 0) {
+	background: @icon-set no-repeat @x @y;
+}
+.set-task-form-field-item-colors(@bgColor, @textColor) {
+	background: @bgColor;
+	.task-form-field-item-text {
+		color: @textColor;
+	}
+	&.hover-delete {
+		background-color: darken(@bgColor, 10%)
+	}
+}
+.set-task-form-field-item-icon(@y)
+{
+	.task-form-field-item-text {
+		&:before {
+			display: inline-block;
+			.bg-image(@y);
+		}
+	}
+}
+
+.task-form-field
+{
+	&.readonly {
+		.task-form-field-item {
+			.set-task-form-field-item-colors(#B8BCBF, #F8F9FA);
+		}
+		.task-form-field-link {
+			display: none;
+		}
+	}
+
+	.task-form-field-item {
+
+		// type: group
+		&[data-bx-type~="group"] {
+			.set-task-form-field-item-colors(#ffd5d5, #b54827);
+		}
+
+		// type: extranet & mail
+		&[data-bx-type~="extranet"], &[data-bx-type~="mail"] {
+			.set-task-form-field-item-colors(#ffed8b, #bf7700);
+		}
+		&[data-bx-type~="extranet"] {
+			.set-task-form-field-item-icon(-351px);
+		}
+		&[data-bx-type~="mail"] {
+			.set-task-form-field-item-icon(-366px);
+		}
+
+		// type: department
+		&[data-bx-type~="department"] {
+			.set-task-form-field-item-colors(#e2e3e5, #535c69);
+		}
+	}
+
+	.tasks-h-invisible
+	{
+		.invisible {
+			width: 0;
+			opacity: 0;
+			overflow: hidden;
+		}
+	}
+}

@@ -1,0 +1,26 @@
+<dict>
+    <key>CardDAVAccountDescription</key>
+    <string>#host# CardDAV Account</string>
+    <key>CardDAVHostName</key>
+    <string>#host#</string>
+    <key>CardDAVPassword</key>
+    <string>#password#</string>
+    <key>CardDAVPort</key>
+    <integer>#port#</integer>
+    <key>CardDAVUseSSL</key>
+    <#isSSL#/>
+    <key>CardDAVUsername</key>
+    <string>#username#</string>
+    <key>PayloadDescription</key>
+    <string>Configures a CardDAV account</string>
+    <key>PayloadDisplayName</key>
+    <string>CardDAV</string>
+    <key>PayloadIdentifier</key>
+    <string>#payloadIdentifier#carddavi</string>
+    <key>PayloadType</key>
+    <string>com.apple.carddav.account</string>
+    <key>PayloadUUID</key>
+    <string>#payloadUUID#carddavuid</string>
+    <key>PayloadVersion</key>
+    <integer>1</integer>
+</dict>

@@ -1,0 +1,16 @@
+<?
+$MESS["CTRL_MEMB_HIST_TITLE"] = "Website history";
+$MESS["CTRL_MEMB_HIST_BACK"] = "Website";
+$MESS["CTRL_MEMB_HIST_BACK_TITLE"] = "Back to website editor";
+$MESS["CTRL_MEMB_HIST_CONTROLLER_MEMBER_ID"] = "Website ID";
+$MESS["CTRL_MEMB_HIST_FIELD"] = "Changed field";
+$MESS["CTRL_MEMB_HIST_CREATED_DATE"] = "Time";
+$MESS["CTRL_MEMB_HIST_USER_ID"] = "User";
+$MESS["CTRL_MEMB_HIST_FROM_VALUE"] = "Initial value";
+$MESS["CTRL_MEMB_HIST_TO_VALUE"] = "New value";
+$MESS["CTRL_MEMB_HIST_NOTES"] = "Notes";
+$MESS["CTRL_MEMB_HIST_NAVSTRING"] = "Record";
+$MESS["CTRL_MEMB_HIST_CONTROLLER_GROUP_ID"] = "Website group";
+$MESS["CTRL_MEMB_HIST_SITE_ACTIVE"] = "Active";
+$MESS["CTRL_MEMB_HIST_ANY"] = "(any)";
+?>

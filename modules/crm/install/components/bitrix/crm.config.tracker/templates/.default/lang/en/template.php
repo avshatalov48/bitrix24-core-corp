@@ -1,0 +1,10 @@
+<?
+$MESS["CRM_CONFIGS_LINK_TEXT"] = "View CRM settings";
+$MESS["CRM_CONFIGS_LINK_TITLE"] = "Opens CRM settings form";
+$MESS["CRM_TRACKER_SECTION_TITLE"] = "Presets";
+$MESS["CRM_TRACKER_SECTION_NAME"] = "Configure tracker";
+$MESS["CRM_BUTTON_SAVE_TITLE"] = "Save";
+$MESS["CRM_BUTTON_CANCEL_TITLE"] = "Cancel";
+$MESS["CRM_TRACKER_SETTINGS_COMPANY"] = "For company";
+$MESS["CRM_TRACKER_SETTINGS_CONTACT"] = "For contact";
+?>

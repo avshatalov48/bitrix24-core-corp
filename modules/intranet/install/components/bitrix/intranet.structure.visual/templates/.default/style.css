@@ -1,0 +1,472 @@
+/****************************** company-structure.css *********************************/
+
+.structure-wrap {
+    padding: 10px 20px 0 10px;
+}
+
+.structure-dept-block {
+    border: 1px solid;
+    border-radius: 1px;
+    display: inline-block;
+    height: 135px;
+    position: relative;
+    vertical-align: top;
+    width: 205px;
+}
+.structure-dept-first {
+    background-color: #f5f9fc;
+    border-color: #C8D7E4;
+}
+.structure-dept-second {
+    background-color: #f8efe8;
+    border-color: #E8CEBD;
+
+}
+.structure-dept-third {
+    background-color:#f1f5de;
+    border-color: #D5E1A6;
+    width: 182px;
+
+}
+
+.structure-dept-first .structure-dept-title {border-color:#b5d5e3;}
+.structure-dept-second .structure-dept-title {border-color:#efc2a1;}
+.structure-dept-third .structure-dept-title {border-color:#c4da86;}
+
+.structure-dept-title {
+    position: relative;
+    border-bottom: 1px solid;
+    font-size: 13px;
+    font-weight: bold;
+    color: #2067b0;
+}
+
+.structure-dept-title-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding: 8px 0 7px 10px;
+    max-width: 186px;
+    white-space: nowrap;
+}
+.structure-dept-third .structure-dept-title-text {width:163px;}
+.structure-dept-first .structure-icon-box {
+    width: 35px;
+    background-color: #f5f9fc;
+}
+.structure-dept-second .structure-icon-box {
+    background-color: #f8efe8;
+}
+.structure-dept-third .structure-icon-box {
+    background-color: #f1f5de;
+}
+.structure-icon-box {
+    display: none;
+    position: absolute;
+    top: 9px;
+    right: 0;
+    width: 50px;
+    height: 14px;
+}
+.structure-edit-icon,
+.structure-delete-icon,
+.structure-add-icon {
+    position: absolute;
+    height: 13px;
+    width: 13px;
+    background-repeat: no-repeat;
+    transition: opacity .3s;
+    opacity: 1;
+    cursor: pointer;
+}
+
+.structure-dept-first .structure-edit-icon,
+.structure-dept-first .structure-delete-icon,
+.structure-dept-first .structure-add-icon {background-color:#f8fbfd}
+
+.structure-dept-second .structure-edit-icon,
+.structure-dept-second .structure-delete-icon,
+.structure-dept-second .structure-add-icon {background-color:#faf3ed}
+
+.structure-dept-third .structure-edit-icon,
+.structure-dept-third .structure-delete-icon,
+.structure-dept-third .structure-add-icon {background-color:#f4f8e5}
+
+.structure-edit-icon {
+    right: 34px;
+    background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2013%2013%22%3E%3Cpath%20fill%3D%22%23525C69%22%20d%3D%22M9.811.236l2.348%202.348L3.737%2011%201.389%208.652%209.811.236zM.005%2012.073a.261.261%200%200%200%20.066.249c.065.066.16.091.249.066l2.784-.75L.755%209.29l-.75%202.783z%22%20opacity%3D%22.7%22/%3E%3C/svg%3E');
+}
+.structure-delete-icon {
+    right: 2px;
+    background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2013%2012%22%3E%3Cpath%20fill%3D%22%23525C69%22%20d%3D%22M6.438%2012a6%206%200%201%201%200-12%206%206%200%200%201%200%2012zm1.086-6.128L9.826%203.57%208.675%202.417%206.371%204.721%204.069%202.417%202.917%203.568%205.22%205.872%202.917%208.175l1.152%201.152%202.303-2.303%202.302%202.303%201.152-1.152-2.303-2.303z%22%20opacity%3D%22.7%22/%3E%3C/svg%3E');
+}
+.structure-add-icon {
+    right: 18px;
+    background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2013%2012%22%3E%3Cpath%20fill%3D%22%23525C69%22%20d%3D%22M7.438%205V3h-2v2h-2v2h2v2h2V7h2V5h-2zm-1%207a6%206%200%201%201%200-12%206%206%200%200%201%200%2012z%22%20opacity%3D%22.7%22/%3E%3C/svg%3E');
+}
+.structure-dept-editable:hover .structure-icon-box,
+.structure-dept-editable:hover .structure-delete-icon,
+.structure-dept-editable:hover .structure-add-icon,
+.structure-dept-editable:hover .structure-edit-icon {display:block}
+
+.structure-move-dept:hover .structure-delete-icon,
+.structure-move-dept:hover .structure-add-icon,
+.structure-move-dept:hover .structure-edit-icon {display:none}
+.structure-add-dept:hover .structure-delete-icon,
+.structure-add-dept:hover .structure-add-icon,
+.structure-add-dept:hover .structure-edit-icon {display:none}
+.structure-add-employee:hover .structure-delete-icon,
+.structure-add-employee:hover .structure-add-icon,
+.structure-add-employee:hover .structure-edit-icon {display:none}
+.structure-designate-boss:hover .structure-delete-icon,
+.structure-designate-boss:hover .structure-add-icon,
+.structure-designate-boss:hover .structure-edit-icon {display:none}
+
+.structure-edit-icon:hover,
+.structure-delete-icon:hover,
+.structure-add-icon:hover {
+    opacity: .5;
+}
+
+.structure-boss-block {height:30px; margin:8px 8px 0 9px; padding:0 0 0 34px; position:relative;}
+.structure-dept-third .structure-boss-block {margin-left:11px;}
+.structure-avatar {
+    position: absolute;
+    left: 0;
+    top: 2px;
+    padding: 1px;
+    height: 21px;
+    width: 21px;
+    border-radius: 100%;
+    background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20viewBox%3D%220%200%2089%2089%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Ctitle%3Euserpic%3C/title%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Ccircle%20fill%3D%22%23535C69%22%20cx%3D%2244.5%22%20cy%3D%2244.5%22%20r%3D%2244.5%22/%3E%3Cpath%20d%3D%22M68.18%2071.062c0-3.217-3.61-16.826-3.61-16.826%200-1.99-2.6-4.26-7.72-5.585-1.734-.483-3.383-1.233-4.887-2.223-.33-.188-.28-1.925-.28-1.925l-1.648-.25c0-.142-.14-2.225-.14-2.225%201.972-.663%201.77-4.574%201.77-4.574%201.252.695%202.068-2.4%202.068-2.4%201.482-4.3-.738-4.04-.738-4.04.388-2.625.388-5.293%200-7.918-.987-8.708-15.847-6.344-14.085-3.5-4.343-.8-3.352%209.082-3.352%209.082l.942%202.56c-1.85%201.2-.564%202.65-.5%204.32.09%202.466%201.6%201.955%201.6%201.955.093%204.07%202.1%204.6%202.1%204.6.377%202.556.142%202.12.142%202.12l-1.786.217c.024.58-.023%201.162-.14%201.732-2.1.936-2.553%201.485-4.64%202.4-4.032%201.767-8.414%204.065-9.193%207.16-.78%203.093-3.095%2015.32-3.095%2015.32H68.18z%22%20fill%3D%22%23FFF%22/%3E%3C/g%3E%3C/svg%3E');
+    background-repeat: no-repeat;
+    overflow: hidden;
+    /*border: 1px solid #f6f7f7;*/
+    /*box-shadow: 0 0 3px rgba(172,172,172,0.6);*/
+}
+.structure-boss-name {color:#000; display:block; font-size:11px; overflow:hidden; text-decoration:none; text-overflow:ellipsis; padding-top:1px; width:152px; white-space:nowrap;}
+.structure-boss-name:hover,
+.structure-boss-name:link,
+.structure-boss-name:active,
+.structure-boss-name:visited {color:#000;}
+.structure-dept-third .structure-boss-name {width:130px;}
+.structure-manager { color:#000; display:inline-block; font-size:9px; line-height:9px; overflow:hidden; opacity:0.6; text-overflow:ellipsis; padding:1px 0; width:152px; white-space:nowrap;}
+.structure-dept-third .structure-manager {width:130px;}
+
+.structure-employee-block {height:55px; margin:5px 8px 1px 8px; position:relative;}
+.structure-dept-third .structure-employee-block {margin:5px 10px 1px;}
+.structure-employee-title {color:#d4650b; font-size:8px; height:11px; padding:0 0 1px 3px;}
+.structure-employee-list {margin:0 -3px; overflow: hidden; height:31px; padding:0 3px;}
+.structure-employee-block .structure-avatar {display:inline-block; margin:3px 1px; position:static; vertical-align:middle;}
+
+.structure-more-employee,
+.structure-more-employee:link,
+.structure-more-employee:active {color:#2067B0; display:block; font-size:9px; text-align:center; text-decoration:underline;}
+
+.structure-designate-boss .structure-boss-block .structure-avatar,
+.structure-designate-boss .structure-boss-name,
+.structure-designate-boss .structure-manager {display:none;}
+/*.structure-designate-boss .structure-boss-block {background-color:#fff; border:1px dashed; height:28px;}*/
+.structure-designate-text {background:#fff; border:1px dashed; color:#6c6c6c; display:none; font-size:11px; font-weight:bold; height:22px; left:-2px; right:-2px; top:-1px; overflow:hidden; text-overflow:ellipsis; padding:7px 0 0 28px; position:absolute; white-space:nowrap;}
+.structure-designate-text i {background:url("images/structure_company_sprite.png") no-repeat 0 -152px; height:17px; display:block; position:absolute; width:17px;}
+.structure-designate-boss .structure-add-boss-text {display:block;}
+.structure-designate-boss.structure-dept-third .structure-designate-text {border-color:#a4ca25;}
+.structure-designate-boss.structure-dept-first .structure-designate-text {border-color:#79afc5;}
+.structure-designate-boss.structure-dept-second .structure-designate-text {border-color:#c2793c;}
+
+.structure-nesting-block {display:none; margin:0 -3px; overflow:hidden; text-align:center;  height:30px; position:relative;}
+.structure-dept-nesting .structure-nesting-block {display:block;}
+.structure-nesting-bottom1,
+.structure-nesting-bottom2,
+.structure-nesting-bottom3 {
+    background-color: #f1f5de;
+    border: 1px solid #D5E1A6;
+    border-radius: 1px;
+    height: 20px;
+    left: 2px;
+    right: 2px;
+    position: absolute;
+}
+.structure-dept-first .structure-nesting-bottom1,
+.structure-dept-first .structure-nesting-bottom2,
+.structure-dept-first .structure-nesting-bottom3 {
+    background-color: #f1f5de;;
+    border-color:#83B9D1;
+}
+
+.structure-nesting-bottom1 {
+    top:0;
+}
+/*.structure-dept-first .structure-nesting-bottom1 {*/
+    /*-moz-box-shadow:0 1px 2px #A1B7C7;*/
+    /*-webkit-box-shadow:0 1px 2px #A1B7C7;*/
+    /*box-shadow:0 1px 2px #A1B7C7;*/
+/*}*/
+.structure-nesting-bottom2 {top:-7px;}
+.structure-nesting-bottom3 {top:-15px;}
+.structure-nesting-text {
+    background: #7ea510;
+    border-radius: 1px;
+    /*box-shadow:0 1px 2px rgba(0,0,0,0.2);*/
+    color: #fff;
+    cursor: pointer;
+    display: inline-block;
+    margin-top: 6px;
+    font-size: 9px;
+    line-height: 12px;
+    padding: 1px 6px 2px;
+    position: relative;
+}
+.structure-nesting-text:hover {background-color:#98b740;}
+.structure-dept-first .structure-nesting-text {background-color:#367dbf;}
+.structure-dept-first .structure-nesting-text:hover {background-color:#5e97cc;}
+
+.structure-add-employee {}
+.structure-add-employee .structure-add-empl-text {display:block; top:12px;}
+/*.structure-add-employee .structure-employee-title,*/
+.structure-add-employee .structure-employee-list .structure-avatar{display:none;}
+
+/*.structure-add-employee .structure-employee-list {background:#fff; border:1px dashed; margin:2px 0 2px; padding:0;}*/
+.structure-add-employee.structure-dept-third .structure-designate-text,
+.structure-dept-third .structure-add-dept-text{border-color: #A4CA25;}
+.structure-add-employee.structure-dept-second .structure-designate-text,
+.structure-dept-second .structure-add-dept-text {border-color: #C2793C;}
+.structure-add-employee.structure-dept-first .structure-designate-text,
+.structure-dept-first .structure-add-dept-text {border-color:#79AFC5;}
+
+.structure-add-dept .structure-add-dept-text {display:block;}
+.structure-add-dept-text {height:65px; left:-1px; right:-1px; padding:40px 0 0 45px; top:29px; }
+.structure-add-dept .structure-designate-text i {left:22px; top:40px;}
+.structure-designate-boss .structure-designate-text i,
+.structure-add-employee .structure-designate-text i {left:5px; top:7px;}
+
+.structure-move-dept {
+    background:#fff;
+    border-style:dashed;
+}
+.structure-dept-second.structure-move-dept .structure-dept-title {border-bottom:1px dashed #E59F6A;}
+.structure-dept-third.structure-move-dept .structure-dept-title {border-bottom:1px dashed #C4DA86;}
+
+.structure-move-dept.structure-dept-nesting .structure-nesting-bottom3 {background-color:#fff;}
+
+.structure-dept-nesting.structure-move-dept .structure-nesting-bottom1,
+.structure-dept-nesting.structure-move-dept .structure-nesting-bottom2,
+.structure-dept-nesting.structure-move-dept .structure-nesting-bottom3 {background-color:#fff; border-style:dashed;}
+.structure-dept-nesting.structure-move-dept .structure-nesting-text {background:#fff; border:1px #B6D06C dashed; color:#6C6C6C;}
+.structure-move-dept .structure-dept-title-text,
+.structure-move-dept .structure-employee-block,
+.structure-move-dept .structure-nesting-text,
+.structure-move-dept .structure-boss-block {opacity:0.5;}
+
+.structure-move-employee {
+    background:#fff;
+    border:1px dashed #b5b5b5;
+    -moz-box-shadow:0 1px 2px -1px rgba(0,0,0,0.9);
+    -webkit-box-shadow:0 1px 2px -1px rgba(0,0,0,0.9);
+    box-shadow:0 1px 2px -1px rgba(0,0,0,0.9);
+    height:29px;
+    padding:0 0 0 33px;
+    position:absolute;
+    width:162px;
+}
+
+.structure-employee-name {color:#000; font-size:11px; line-height:12px; margin-top:3px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; width:100%;}
+.structure-move-employee .structure-avatar {left:2px;}
+.structure-employee-post {color:#5d5d5d; font-size:10px; line-height:11px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+
+
+/***************************** \company-structure.css *********************************/
+
+.structure-dept-block, .structure-move-employee, .structure-dept-emp-popup {font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;}
+
+.structure-dept-emp-popup a,.structure-dept-block a {text-decoration: none; color: #2067B0;}
+.structure-dept-emp-popup a:hover, .structure-dept-block a:hover {text-decoration: underline; color: #2067B0;}
+.structure-dept-editable .structure-avatar {cursor: move;}
+
+.structure-dept-top .structure-icon-box .structure-delete-icon {
+    display: none;
+}
+.structure-dept-top .structure-add-icon {right: 2px;}
+.structure-dept-top .structure-edit-icon {right: 18px;}
+
+.structure-dept-block {z-index: 2; text-align: left;}
+
+.structure-dept-second .structure-manager, .structure-dept-first .structure-manager {max-width: 144px;}
+.structure-dept-second .structure-dept-title-text, .structure-dept-first .structure-dept-title-text {max-width: 190px;}
+
+.structure-employee-post {
+    display:inline-block; max-width:127px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+
+
+.structure-sorter {
+    position: absolute;
+    display: block;
+    overflow: hidden;
+}
+
+.bx-str-l2 .structure-sorter {
+    height: 150px;
+    width: 18px;
+    margin-left: -19px;
+    margin-top: -5px;
+}
+
+.bx-str-l2 .structure-sorter.structure-sorter-last {
+    margin-left: 208px;
+}
+
+.bx-str-l2 .structure-sorter .structure-sorter-inner {
+    width: 1px; height: 200px; margin-left: 9px;
+}
+
+.bx-str-l2 .structure-sorter-visible .structure-sorter-inner {
+    border-left: dashed 1px #E49C65;
+}
+
+.bx-str-l3 .structure-sorter .structure-sorter-inner {
+    height: 1px; width: 300px; margin-top: 20px;
+}
+
+.bx-str-l3 .structure-sorter-visible .structure-sorter-inner {
+    border-top: dashed 1px #9AC228;
+}
+
+
+.bx-str-l3 .structure-sorter {
+    height: 33px;
+    width: 190px;
+    margin-left: -5px;
+    margin-top: -34px;
+    z-index: 1;
+}
+
+.bx-str-l3 .structure-sorter.structure-sorter-last {
+    margin-top: 138px;
+}
+
+.structure-undo {
+    background-color: white;
+    border: solid 1px #CBDADE;
+    box-shadow: 0 1px 2px #A1B7C7;
+    border-radius: 4px;
+    font-size: 12px;
+    position: absolute;
+    z-index: 149;
+    padding: 10px 25px;
+}
+
+.structure-undo-inner {
+    width: 230px;
+    display: inline-block;
+}
+
+.structure-undo.structure-undo-scroll {
+    position: fixed; top: 10px;
+}
+
+.structure-undo-link:link, .structure-undo-link:hover, .structure-undo-link:active, .structure-undo-link:visited {color: red; text-decoration: underline;}
+
+.structure-undo-close {
+    background: url("/bitrix/js/main/core/images/controls-sprite.png") no-repeat scroll 0 -283px transparent;
+    cursor: pointer;
+    height: 13px;
+    outline: medium none;
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 13px;
+}
+
+.structure-undo-close:hover {
+    background: url("/bitrix/js/main/core/images/controls-sprite.png") no-repeat scroll -20px 3px transparent;
+}
+
+.bx-current {
+    position: absolute;
+    background-color:#f5f9fc;
+    background-image:linear-gradient(top, #f8fbfd, #f2f7fb);
+    background-image:-o-linear-gradient(top,  #f8fbfd,  #f2f7fb);
+    background-image:-moz-linear-gradient(top, #f8fbfd, #f2f7fb);
+    background-image:-webkit-gradient(linear, left top, left bottom, from(#f8fbfd), to(#f2f7fb));
+    background:-ms-linear-gradient(top,#f8fbfd, #f2f7fb);
+    border-color:#83b9d1;
+    box-shadow: 0 1px 2px #a1b7c7;
+}
+
+.bx-current .structure-dept-title {border-color:#b5d5e3;}
+.bx-current .structure-edit-icon,
+.bx-current .structure-delete-icon,
+.bx-current .structure-add-icon {background-color:#f8fbfd}
+
+.structure-designate-boss.bx-current .structure-designate-text, .structure-add-employee.bx-current .structure-designate-text {border-color:#79afc5;}
+
+.structure-dept-emp-popup
+{
+    position: relative;
+    max-height: 250px;
+    width: 230px;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+#bx_str_level2_table td {vertical-align: top;}
+
+td.bx-str-top {vertical-align: top; background-image: url('images/line_blue.png'); background-repeat: repeat-y; background-position: center center; padding: 0px 10px 20px 10px; background-position: center 60px;}
+
+tr.bx-str-l2 td {
+    background-image: url('images/crossings_blue.png');
+    background-repeat: no-repeat;
+    background-position: center top;
+    padding-top: 20px;
+    padding: 20px 10px 0 10px;
+}
+
+tr.bx-str-l2 td.bx-str-first {
+    background-image: url('images/crossings_blue_left.png');
+    padding: 20px 10px 0 0;
+}
+tr.bx-str-l2 td.bx-str-last {
+    background-image: url('images/crossings_blue_right.png');
+    padding: 20px 0 0 10px;
+}
+
+tr.bx-str-l3 td {
+    padding: 30px 0 5px 0;
+}
+
+tr.bx-str-l3 td.bx-str-l3-connector {
+    background-image: url('images/crossings1_blue.png');
+    background-repeat: no-repeat;
+    background-position: 10px center;
+    width: 31px;
+    padding: 0;
+}
+
+tr.bx-str-l3 td.bx-str-last {background-position: -49px center;}
+tr.bx-str-l3 td.bx-str-l3-connector.bx-str-first {width: 21px; background-position: left center}
+tr.bx-str-l3 td.bx-str-last.bx-str-first {background-position: -59px center}
+
+.bx-str-l2 td.bx-str-single {padding-top: 0px !important; background-image: none !important;}
+.bx-str-result tr.bx-str-l2 td {background-image: url('images/crossings_white.png');}
+.bx-str-result .bx-str-l2 td.bx-str-first {background-image: url('images/crossings_white_left.png');}
+.bx-str-result .bx-str-l2 td.bx-str-last {background-image: url('images/crossings_white_right.png');}
+
+
+.bx-str-stick {position: absolute; height: 13px; width: 2px; background-image: url('images/line_white.png');}
+.bx-str-result .bx-str-l3 td.bx-str-l3-connector {background-image: url('images/crossings1_white.png');}
+.bx-str-top, .bx-str-middle, .bx-str-l1-connector td {background-image: url('images/crossings1.gif'); background-repeat: no-repeat;}
+
+.bx-str-middle {width: 24px; background-position: center center;}
+.bx-str-last .bx-str-middle {background-position: center -70px;}
+
+.bx-str-l1-connector td {padding-bottom: 10px; background-position: center -20px;}
+
+.bx-str-left {text-align: right;}
+.bx-str-right {text-align: left;}
+
+.bx-dark {position: absolute; top: 0px; left: 0px; right: 80px; bottom: 0px; border-radius: 5px; background-color: black; opacity: 0.5; filter:progid:DXImageTransform.Microsoft.Alpha(opacity=50);}
+.bx-dark-close {position: absolute; background-image: url('images/cross.png'); height: 14px; width: 14px; cursor: pointer; top: 5px; right: 5px;}
+.bx-str-result table {position: relative; z-index: 50;}
+
+.bx-popup-head {border-bottom: solid 1px #DADADA;}
+

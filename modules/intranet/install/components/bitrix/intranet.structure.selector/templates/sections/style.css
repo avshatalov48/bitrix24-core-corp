@@ -1,0 +1,29 @@
+ul.bx-users-sections {text-decoration: none; padding-left: 0px;}
+ul.bx-users-sections a, div.bx-user-section-alltop a {text-decoration: none;}
+ul.bx-users-sections a:hover, div.bx-user-section-alltop a:hover {text-decoration: underline;}
+
+div.bx-user-section-delimiter {clear: both; height: 0px; padding: 0px; margin: 0px;}
+
+div.bx-user-section-alltop {font-weight: bold; font-size: 1.3em;}
+
+ul.bx-users-sections {display: block; float: left; padding-right: 20px; margin-left: 0px;}
+ul.bx-users-sections a.bx-users-section-top {font-weight: bold; font-size: 1.2em;}
+
+ul.bx-users-sections li.bx-users-section-top {
+	margin-top: 5px;
+	margin-bottom: 15px;
+	list-style-image: none;
+	list-style-position: outside;
+	list-style-type: none;
+}
+
+ul.bx-users-sections li.bx-users-section-top li {list-style-type: disc; list-style-position: outside; margin-left: -20px;}
+ul.bx-users-sections a.bx-users-section-current {color: #C30808;}
+
+div.bx-user-section-info {padding: 15px; margin: 10px 0px; background-color:#F0F5F7; border:1px solid #AAC3CF;}
+div.bx-user-section-info div.bx-user-section-picture {float: left; margin: 0px 15px 5px 0px}
+div.bx-user-section-info div.bx-user-section-text {/*float: left;  padding-left: 15px;*/}
+
+div.bx-user-sections-chain {margin: 10px 0px; /*font-size: 0.8em;*/}
+div.bx-user-sections-chain a {text-decoration: none;}
+div.bx-user-sections-chain a:hover {text-decoration: underline;}

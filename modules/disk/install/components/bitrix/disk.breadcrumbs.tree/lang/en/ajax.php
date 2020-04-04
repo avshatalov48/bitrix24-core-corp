@@ -1,0 +1,5 @@
+<?
+$MESS["DISK_BREADCRUMBS_TREE_ERROR_COULD_NOT_FIND_FOLDER"] = "Folder could not be found.";
+$MESS["DISK_BREADCRUMBS_TREE_ERROR_COULD_NOT_FIND_OBJECT"] = "Object could not be found.";
+$MESS["DISK_BREADCRUMBS_TREE_ERROR_COULD_NOT_MOVE_OBJECT"] = "Object could not be moved.";
+?>

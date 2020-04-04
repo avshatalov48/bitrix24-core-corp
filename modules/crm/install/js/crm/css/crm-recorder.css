@@ -1,0 +1,16 @@
+.crm-recorder-analyser-container {
+	height: 43px;
+	width: 100%;
+}
+
+.crm-recorder-analyser-canvas {
+	display: block;
+	margin: 0 auto;
+	background-color: #37404b;
+	image-rendering: optimizeSpeed;             /* Older versions of FF          */
+	image-rendering: -moz-crisp-edges;          /* FF 6.0+                       */
+	image-rendering: -webkit-optimize-contrast; /* Safari                        */
+	image-rendering: -o-crisp-edges;            /* OS X & Windows Opera (12.02+) */
+	image-rendering: pixelated;                 /* Awesome future-browsers       */
+	-ms-interpolation-mode: nearest-neighbor;   /* IE                            */
+}

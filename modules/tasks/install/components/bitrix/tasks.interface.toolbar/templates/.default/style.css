@@ -1,0 +1,306 @@
+.tasks-pagetitle-view .pagetitle-below {
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	-ms-flex-align: center;
+	box-sizing: border-box;
+	padding: 0 5px 0 13px;
+	border-top: 1px solid #dce2e6;
+	-webkit-box-align: center;
+	align-items: center;
+}
+
+.tasks-counter {
+	position: relative;
+	float: left;
+	overflow: hidden;
+	box-sizing: border-box;
+	padding: 0 30px 0 0;
+	height: 53px;
+	color: #535c69;
+	font: 13px 'OpenSans-Regular', "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+.tasks-counter-title {
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	-ms-flex-align: center;
+	padding: 17px 1px;
+	-webkit-box-align: center;
+	align-items: center;
+}
+
+.tasks-counter-container {
+	position: relative;
+	display: inline-block;
+	overflow: hidden;
+	margin: 0 10px 0 0;
+	height: 20px;
+	text-decoration: none;
+	-webkit-box-flex: 1;
+	-ms-flex: 1;
+	flex: 1;
+	-ms-flex-preferred-size: inherit;
+	flex-basis: inherit;
+}
+
+.tasks-counter-inner {
+	position: relative;
+	display: block;
+	margin: 0 10px 0 0;
+	max-width: 100%;
+	white-space: nowrap;
+	-moz-transition: .3s;
+	transition: .3s;
+}
+
+.tasks-counter-container:last-child .tasks-counter-number:after {
+	margin: 0;
+	content: '';
+}
+
+.tasks-counter-inner:after {
+	position: absolute;
+	top: 2px;
+	right: 0;
+	bottom: 0;
+	left: 0;
+	display: inline-block;
+	padding: 0 3px;
+	width: 0;
+	height: 16px;
+	border: 1px solid transparent;
+	border-radius: 30px;
+	content: '';
+	transition: .2s;
+}
+
+.tasks-counter-container:hover .tasks-counter-inner:after {
+	width: 100%;
+	border: 1px solid rgba(168, 173, 180, .52);
+}
+
+.tasks-counter-container:hover .tasks-counter-number { border: 1px solid transparent; }
+
+.tasks-page-name {
+	padding: 0 4px 0 0;
+	white-space: nowrap;
+}
+
+.tasks-counter-text {
+	position: relative;
+	display: inline-block;
+	overflow: hidden;
+	margin: -1px 0 0;
+	max-width: calc(100% - 7px);
+	outline: none;
+	border: 1px solid transparent;
+	color: #535c69;
+	vertical-align: middle;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	transition: .2s;
+}
+
+.tasks-counter-page-name { margin: 0 5px 0 0; }
+
+.tasks-counter-page-name .tasks-counter-text { max-width: 100%; }
+
+.tasks-counter-number {
+	display: inline-block;
+	padding: 0 7px;
+	height: 16px;
+	border: 1px solid rgba(168, 173, 180, .52);
+	border-radius: 30px;
+	vertical-align: middle;
+	font: bold 11px/16px 'OpenSans-Regular', "Helvetica Neue", Helvetica, Arial, sans-serif;
+	transition: .2s;
+}
+
+.tasks-counter-link .tasks-counter-inner:hover {
+	color: #525c68;
+	text-decoration: none;
+}
+
+.tasks-counter-link.tasks-counter-container:after {
+	position: absolute;
+	top: 2px;
+	right: 4px;
+	color: #535c69;
+	content: '-';
+}
+
+.tasks-counter-link .tasks-counter-inner { min-width: calc(100% - 10px); }
+
+.tasks-counter-link .tasks-counter-text { min-width: 100%; }
+
+.tasks-counter-total {
+	display: inline-block;
+	margin: 0 3px 0 0;
+	padding: 0 7px;
+	height: 16px;
+	border: 1px solid rgba(168, 173, 180, .52);
+	border-radius: 30px;
+	color: #535c69;
+	text-decoration: none;
+	font: bold 11px/16px 'OpenSans-Regular', "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+.tasks-counter-total:hover {
+	color: #535c69;
+	text-decoration: none;
+}
+
+.tasks-counter-container:hover .tasks-counter-text { }
+
+.tasks-counter-overdue .tasks-counter-number { color: #c63734; }
+
+.tasks-counter-container:hover.task-status-text-color-overdue .tasks-counter-text { color: #c63734; }
+
+.tasks-counter-overdue .tasks-counter-text { }
+
+.tasks-counter-pending .tasks-counter-number { color: #ad9050; }
+
+.tasks-counter-container:hover.task-status-text-color-pending .tasks-counter-text { color: #ad9050; }
+
+.tasks-counter-pending .tasks-counter-text { }
+
+.tasks-counter-nodate .tasks-counter-number { color: #31ac4e; }
+
+.tasks-counter-container:hover.task-status-text-color-nodate .tasks-counter-text { color: #31ac4e; }
+
+.tasks-counter-nodate .tasks-counter-text { }
+
+.tasks-page-nocounter {
+	color: #545c6a;
+	font: 14px/20px 'OpenSans-Regular', "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+/* VIEW SWITCHER */
+.tasks-view-switcher {
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	-ms-flex-align: center;
+	height: 53px;
+	color: #545c6a;
+	font: 13px 'OpenSans-Regular', "Helvetica Neue", Helvetica, Arial, sans-serif;
+	-webkit-box-align: center;
+	align-items: center;
+}
+
+.tasks-view-switcher-list {
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+}
+
+.tasks-view-switcher-name { margin: 0 18px 0 0; }
+
+.tasks-view-switcher-list-item,
+.tasks-view-switcher-list-item:link,
+.tasks-view-switcher-list-item:visited {
+	margin: 0 18px 0 0;
+	color: #545c6a;
+	text-decoration: none;
+	white-space: nowrap;
+	font: 14px/30px 'OpenSans-Regular', "Helvetica Neue", Helvetica, Arial, sans-serif;
+	cursor: pointer;
+	transition: color .3s;
+}
+
+.tasks-view-switcher-list-item:hover { color: #1f2127; }
+
+.tasks-view-switcher-list .tasks-view-switcher-list-item-active {
+	border-bottom: 2px solid #b1b8bf;
+	font: 14px/30px 'OpenSans-Regular', "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+.task-status-text-color-accepted,
+.task-status-text-color-accepted:hover,
+.task-status-text-color-in-progress,
+.task-status-text-color-in-progress:hover { color: #525c69 !important; }
+
+.task-status-text-color-overdue,
+.task-status-text-color-overdue:hover { color: #d2000d !important; }
+
+.task-status-text-color-new,
+.task-status-text-color-new:hover { color: #558d09 !important; }
+
+.task-status-text-color-completed,
+.task-status-text-color-completed:hover {
+	color: #ccc !important;
+	text-decoration: line-through !important;
+}
+
+.task-status-text-color-delayed,
+.task-status-text-color-delayed:hover { color: #ccc !important; }
+
+.task-status-text-color-waiting,
+.task-status-text-color-waiting:hover { color: #9b7f35 !important; }
+
+.tasks-status-text-green { color: #558d09 }
+
+.tasks-status-text-yellow { color: #9b7f35 }
+
+.tasks-status-text-red { color: #d2000d }
+
+.task-status-hot:after {
+	display: inline-block;
+	margin: 0 0 6px;
+	width: 8px;
+	height: 12px;
+	background: url(data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%228%22%20height%3D%2211%22%20viewBox%3D%220%200%208%2011%22%3E%0A%20%20%3Cpath%20fill%3D%22%23F16C0A%22%20fill-rule%3D%22evenodd%22%20d%3D%22M200.069979%2C24%20L200.14%2C24%20C200.14%2C24%20203%2C23.0560625%20203%2C20.390625%20C203%2C16.6348125%20199.346667%2C15.8813125%20199.666667%2C13%20C197.993333%2C13.8339375%20195%2C16.75375%20195%2C19.875%20C195.039359%2C21.7259245%20196.174362%2C23.3629491%20197.86%2C24%20L197.86%2C24%20L198.123417%2C24%20C197.460595%2C23.3218266%20197.059336%2C22.4251727%20197%2C21.4707569%20C197.092476%2C20.0452868%20197.868205%2C18.7524059%20199.082454%2C18%20C200.109798%2C20.1851885%20201.164908%2C19.9436239%20201.164908%2C21.4707569%20C201.162991%2C22.4339232%20200.76293%2C23.3471724%20200.069979%2C24%20Z%22%20transform%3D%22translate%28-195%20-13%29%22/%3E%0A%3C/svg%3E%0A) top center no-repeat;
+	content: '';
+	vertical-align: middle;
+}
+
+/* Styles are intended for not Bitrix24 templates */
+.tasks-interface-toolbar-container {
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	-ms-flex-align: center;
+	-webkit-box-align: center;
+	align-items: center;
+}
+
+.tasks-interface-toolbar-container .tasks-view-switcher { flex: 1; }
+
+.tasks-interface-toolbar-container .tasks-view-switcher-list {
+	display: block;
+	text-align: right;
+	flex: 1;
+}
+
+.ui-btn.ui-btn-light-border.tasks-counter-btn {
+	padding: 0 12px;
+	height: 27px;
+	background: rgba(255, 255, 255, .15);
+	font-weight: 700;
+	font-size: 13px;
+	line-height: 25px;
+}
+
+.bitrix24-dark-theme .ui-btn.ui-btn-light-border.tasks-counter-btn {
+	border: 1px solid rgba(0, 0, 0, .06);
+	background: rgba(0, 0, 0, .07);
+}
+
+.bx-ie .ui-btn.ui-btn-light-border.tasks-counter-btn { background: rgba(255, 255, 255, .15); }
+
+.tasks-counter-btn.ui-btn-light-border.ui-btn:not(.ui-btn-disabled):hover {
+	border-color: #55d0e0;
+	background: #55d0e0;
+	color: #fff;
+}
+
+.tasks-counter-btn-container {
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	margin-right: 19px;
+	margin-left: auto;
+	align-items: center;
+}

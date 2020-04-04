@@ -1,0 +1,11 @@
+<?
+$MESS["SERVICES_MENU_TELEPHONY_BALANCE"] = "Баланс и статистика";
+$MESS["SERVICES_MENU_TELEPHONY_LINES"] = "Управление номерами";
+$MESS["SERVICES_MENU_TELEPHONY_CONNECT"] = "Подключение";
+$MESS["SERVICES_MENU_TELEPHONY_USERS"] = "Пользователи";
+$MESS["SERVICES_MENU_TELEPHONY_GROUPS"] = "Группы";
+$MESS["SERVICES_MENU_TELEPHONY_PHONES"] = "Телефонные аппараты";
+$MESS["SERVICES_MENU_TELEPHONY"] = "Настройки телефонии";
+$MESS["SERVICES_MENU_TELEPHONY_PERMISSIONS"] = "Права доступа";
+$MESS["SERVICES_MENU_TELEPHONY_IVR"] = "Настройка IVR";
+?>

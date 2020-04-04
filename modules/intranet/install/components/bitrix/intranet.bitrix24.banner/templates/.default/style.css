@@ -1,0 +1,75 @@
+.b24-app-block{
+	box-sizing:border-box;
+	font-family:"OpenSans-Bold", 'Open Sans', sans-serif;
+	padding:0;
+	margin:3px 0 20px;
+}
+.b24-app-block-header{
+	font-size:12px;
+	color:#fff;
+	line-height:19px;
+	font-weight:bold;
+	text-transform:uppercase;
+	padding:7px 20px 6px;
+}
+.b24-app-desktop .b24-app-block-header{background:#47E4C2;}
+.b24-app-mobile  .b24-app-block-header{background:#48c2f9;}
+
+.b24-app-block-content{padding:13px 8px;}
+.b24-app-desktop .b24-app-block-content{background:#FFF;}
+.b24-app-mobile  .b24-app-block-content{background:#FFF;}
+
+.b24-app-block-content-apps{
+	float:left;
+	box-sizing:border-box;
+	text-align:center;
+	display:block;
+	text-decoration:none;
+	/*opacity:.85;*/
+	-webkit-transition: opacity 250ms ease;
+	-moz-transition: opacity 250ms ease;
+	-ms-transition: opacity 250ms ease;
+	-o-transition: opacity 250ms ease;
+	transition: opacity 250ms ease;
+}
+/*.b24-app-desktop .b24-app-block-content-apps{ width:33.3%;}*/
+.b24-app-block-content-apps:hover{
+	opacity:1;
+}
+.b24-app-block-content-apps span{
+	color:#868d96;
+	text-transform:uppercase;
+	font-size:11px;
+	font-weight:bold;
+	line-height:30px;
+	vertical-align:middle;
+}
+.b24-app-block-content-apps span:hover{
+	color:#535c69;
+}
+.b24-app-icon{
+	display:inline-block;
+	width:30px;
+	height:30px;
+	line-height:30px;
+	vertical-align:middle;
+	margin-right:2px;
+	background:url(images/sprite.png?1) no-repeat;
+	background-size:30px auto;
+}
+.b24-app-desktop .b24-app-icon{
+	width:24px;
+	height:24px;
+	margin:3px 0;
+	background-size:24px auto;
+}
+.b24-app-desktop .b24-app-icon.b24-app-icon.b24-app-icon-macos	{width:20px;background-position:center -72px;}
+.b24-app-desktop .b24-app-icon.b24-app-icon.b24-app-icon-windows{width:16px;background-position:center -24px;}
+.b24-app-desktop .b24-app-icon.b24-app-icon.b24-app-icon-linux	{width:17px;background-position:center -96px;}
+
+.b24-app-mobile  .b24-app-icon.b24-app-icon.b24-app-icon-android{width:26px;background-position:center -60px;}
+.b24-app-mobile  .b24-app-icon.b24-app-icon.b24-app-icon-ios	{width:30px;background-position:center 0;}
+.b24-app-block-separate{
+	border-left:1px solid rgba(255,255,255,.4);
+}
+.b24-app-icon{}

@@ -1,0 +1,35 @@
+<?
+$MESS["CRM_LEAD_ENTITY_ID"] = "ID";
+$MESS["CRM_LEAD_ENTITY_TITLE"] = "Название";
+$MESS["CRM_LEAD_ENTITY_NAME"] = "Имя";
+$MESS["CRM_LEAD_ENTITY_LAST_NAME"] = "Фамилия";
+$MESS["CRM_LEAD_ENTITY_SECOND_NAME"] = "Отчество";
+$MESS["CRM_LEAD_ENTITY_PHONE"] = "Телефон";
+$MESS["CRM_LEAD_ENTITY_EMAIL"] = "E-mail";
+$MESS["CRM_LEAD_ENTITY_WEB"] = "Сайт";
+$MESS["CRM_LEAD_ENTITY_MESSENGER"] = "Мессенджер";
+$MESS["CRM_LEAD_ENTITY_POST"] = "Должность";
+$MESS["CRM_LEAD_ENTITY_ADDRESS"] = "Адрес";
+$MESS["CRM_LEAD_ENTITY_SOURCE_BY"] = "Источник";
+$MESS["CRM_LEAD_ENTITY_COMPANY_TITLE"] = "Название компании";
+$MESS["CRM_LEAD_ENTITY_SOURCE_DESCRIPTION"] = "Дополнительно об источнике";
+$MESS["CRM_LEAD_ENTITY_STATUS_BY"] = "Статус";
+$MESS["CRM_LEAD_ENTITY_STATUS_DESCRIPTION"] = "Дополнительно о статусе";
+$MESS["CRM_LEAD_ENTITY_PRODUCT_ID"] = "Продукт";
+$MESS["CRM_LEAD_ENTITY_PRODUCT_BY"] = "Продукт";
+$MESS["CRM_LEAD_ENTITY_COMMENTS"] = "Комментарий";
+$MESS["CRM_LEAD_ENTITY_OPPORTUNITY"] = "Сумма";
+$MESS["CRM_LEAD_ENTITY_COMPANY_ID"] = "Компания";
+$MESS["CRM_LEAD_ENTITY_CONTACT_ID"] = "Контакт";
+$MESS["CRM_LEAD_ENTITY_CURRENCY_ID"] = "Валюта";
+$MESS["CRM_LEAD_ENTITY_CURRENCY_BY"] = "Валюта";
+$MESS["CRM_LEAD_ENTITY_ASSIGNED_BY_ID"] = "Ответственный";
+$MESS["CRM_LEAD_ENTITY_ASSIGNED_BY"] = "Ответственный";
+$MESS["CRM_LEAD_ENTITY_CREATED_BY"] = "Создал";
+$MESS["CRM_LEAD_ENTITY_CREATED_BY_ID"] = "Создал";
+$MESS["CRM_LEAD_ENTITY_MODIFY_BY"] = "Изменил";
+$MESS["CRM_LEAD_ENTITY_MODIFY_BY_ID"] = "Изменил";
+$MESS["CRM_LEAD_ENTITY_DATE_CREATE"] = "Дата создания";
+$MESS["CRM_LEAD_ENTITY_DATE_MODIFY"] = "Дата изменения";
+$MESS["CRM_LEAD_ENTITY_EVENT_RELATION"] = "События";
+?>

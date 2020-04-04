@@ -1,0 +1,37 @@
+<?
+$MESS["EC_INTRANET_MODULE_NOT_INSTALLED"] = "The Intranet module is not installed.";
+$MESS["EC_IBLOCK_MODULE_NOT_INSTALLED"] = "The Information Blocks module is not installed.";
+$MESS["INTASK_C29_NO_RPERMS_MODIFY"] = "You do not have permissions to edit this booking";
+$MESS["INTASK_C36_PAGE_TITLE"] = "Meeting Room Booking";
+$MESS["INTASK_C36_PAGE_TITLE1"] = "Meeting Room Booking";
+$MESS["INAF_F_ID"] = "ID";
+$MESS["INAF_F_NAME"] = "Name";
+$MESS["INAF_F_DESCRIPTION"] = "Description";
+$MESS["INAF_F_FLOOR"] = "Floor";
+$MESS["INAF_F_PLACE"] = "Capacity";
+$MESS["INAF_F_PHONE"] = "Phone";
+$MESS["INAF_MEETING_NOT_FOUND"] = "The meeting room was not found.";
+$MESS["INAF_ITEM_NOT_FOUND"] = "Booking is not found";
+$MESS["INTASK_C29_UF_PERSONS"] = "Persons";
+$MESS["INTASK_C29_UF_RES_TYPE"] = "Type of Meeting";
+$MESS["INTASK_C29_UF_RES_TYPEA"] = "Consultation";
+$MESS["INTASK_C29_UF_RES_TYPEB"] = "Presentation";
+$MESS["INTASK_C29_UF_RES_TYPEC"] = "Negotiation";
+$MESS["INTASK_C29_UF_RES_TYPED"] = "Other";
+$MESS["INTASK_C29_UF_PREPARE_ROOM"] = "Meeting Room Preparation";
+$MESS["INTASK_C29_NEED_AUTH"] = "You have to authorize before you book the meeting room.";
+$MESS["INTASK_C29_NO_RPERMS"] = "You do not have permission to book a meeting room.";
+$MESS["INTASK_C29_EMPTY_DATE"] = "The reservation date is not specified.";
+$MESS["INTASK_C29_WRONG_DATE"] = "The reservation date is incorrect. Please follow the date format: #FORMAT#";
+$MESS["INTASK_C29_EMPTY_TIME"] = "The reservation time is not specified.";
+$MESS["INTASK_C29_HM"] = "hours:minutes am/pm";
+$MESS["INTASK_C29_WRONG_TIME"] = "The reservation time is incorrect. Please follow the time format: #FORMAT#";
+$MESS["INTASK_C29_EMPTY_DURATION"] = "The meeting duration is not specified.";
+$MESS["INTASK_C29_WRONG_DURATION"] = "The meeting duration is incorrect.";
+$MESS["INTASK_C29_EMPTY_NAME"] = "The meeting title is not specified.";
+$MESS["INTASK_C29_CONFLICT"] = "The meeting room is reserved from #TIME1# until #TIME2#: #RES#";
+$MESS["INTASK_C29_PERIOD_TYPE"] = "Period type";
+$MESS["INTASK_C29_WRONG_REG_DATE"] = "The recurring event end date is incorrect. Please follow the format: #FORMAT#";
+$MESS["INTR_IRMR_NAME_TEMPLATE_DEFAULT"] = "#NOBR##NAME# #LAST_NAME##/NOBR#";
+$MESS["INTS_NO_IBLOCK_PERMS"] = "You don't have permission to view the meeting room information block.";
+?>

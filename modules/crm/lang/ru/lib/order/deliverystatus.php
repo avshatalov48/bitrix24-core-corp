@@ -1,0 +1,4 @@
+<?
+$MESS["CRM_ORDER_SHIPMENT_STATUS_DN"] = "Ожидает обработки";
+$MESS["CRM_ORDER_SHIPMENT_STATUS_DF"] = "Отгружен";
+$MESS["CRM_ORDER_SHIPMENT_STATUS_DD"] = "Отменен";

@@ -1,0 +1,16 @@
+<?php
+$MESS["IMOL_SECURITY_ENTITY_LINES"]="Список открытых линий";
+$MESS["IMOL_SECURITY_ENTITY_CONNECTORS"]="Подключение каналов коммуникаций";
+$MESS["IMOL_SECURITY_ENTITY_SESSION"]="Статистика разговоров";
+$MESS["IMOL_SECURITY_ENTITY_HISTORY"]="История разговора";
+$MESS["IMOL_SECURITY_ENTITY_SETTINGS"]="Общие настройки";
+$MESS["IMOL_SECURITY_ENTITY_JOIN"]="Подключение к разговору";
+$MESS["IMOL_SECURITY_ENTITY_VOTE_HEAD"]="Оценка разговора руководителем";
+$MESS["IMOL_SECURITY_ACTION_VIEW"]="Просмотр";
+$MESS["IMOL_SECURITY_ACTION_MODIFY"]="Изменение";
+$MESS["IMOL_SECURITY_ACTION_PERFORM"]="Выполнение";
+$MESS["IMOL_SECURITY_PERMISSION_NONE"]="Нет доступа";
+$MESS["IMOL_SECURITY_PERMISSION_SELF"]="Свои";
+$MESS["IMOL_SECURITY_PERMISSION_DEPARTMENT"]="Свои + своего отдела";
+$MESS["IMOL_SECURITY_PERMISSION_ANY"]="Любые";
+$MESS["IMOL_SECURITY_PERMISSION_ALLOW"]="Есть доступ";

@@ -1,0 +1,237 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CommerceInformation SchemaVersion="2.021" CreationDate="2018-12-30T23:59:59">
+	<Metadata>
+		<Id>10</Id>
+		<Title>Absence Chart</Title>
+		<Properties>
+			<Property>
+				<Id>CML2_CODE</Id>
+				<Title>Code</Title>
+				<Multiple>false</Multiple>
+			</Property>
+			<Property>
+				<Id>CML2_SORT</Id>
+				<Title>Sort</Title>
+				<Multiple>false</Multiple>
+			</Property>
+			<Property>
+				<Id>CML2_ACTIVE_FROM</Id>
+				<Title>Start time</Title>
+				<Multiple>false</Multiple>
+			</Property>
+			<Property>
+				<Id>CML2_ACTIVE_TO</Id>
+				<Title>End time</Title>
+				<Multiple>false</Multiple>
+			</Property>
+			<Property>
+				<Id>CML2_PREVIEW_TEXT</Id>
+				<Title>Anons</Title>
+				<Multiple>false</Multiple>
+			</Property>
+			<Property>
+				<Id>CML2_PREVIEW_PICTURE</Id>
+				<Title>Preview picture</Title>
+				<Multiple>false</Multiple>
+			</Property>
+			<Property>
+				<Id>1</Id>
+				<Title>User</Title>
+				<Multiple>false</Multiple>
+				<BitrixSort>500</BitrixSort>
+				<BitrixCode>USER</BitrixCode>
+				<BitrixDefaultValue></BitrixDefaultValue>
+				<BitrixPropertyType>S</BitrixPropertyType>
+				<BitrixRows>1</BitrixRows>
+				<BitrixColumns>30</BitrixColumns>
+				<BitrixListType>L</BitrixListType>
+				<BitrixFileType></BitrixFileType>
+				<BitrixNumberOfInputs>0</BitrixNumberOfInputs>
+				<BitrixLinkedInformationBlock></BitrixLinkedInformationBlock>
+				<BitrixWithDescription>false</BitrixWithDescription>
+				<BitrixUsedInSearch>false</BitrixUsedInSearch>
+				<BitrixFilterAllowed>false</BitrixFilterAllowed>
+				<BitrixUserType>employee</BitrixUserType>
+				<BitrixRequired>true</BitrixRequired>
+			</Property>
+			<Property>
+				<Id>2</Id>
+				<Title>State after completion</Title>
+				<Multiple>false</Multiple>
+				<BitrixSort>500</BitrixSort>
+				<BitrixCode>FINISH_STATE</BitrixCode>
+				<BitrixDefaultValue></BitrixDefaultValue>
+				<BitrixPropertyType>S</BitrixPropertyType>
+				<BitrixRows>1</BitrixRows>
+				<BitrixColumns>30</BitrixColumns>
+				<BitrixListType>L</BitrixListType>
+				<BitrixFileType></BitrixFileType>
+				<BitrixNumberOfInputs>0</BitrixNumberOfInputs>
+				<BitrixLinkedInformationBlock></BitrixLinkedInformationBlock>
+				<BitrixWithDescription>false</BitrixWithDescription>
+				<BitrixUsedInSearch>false</BitrixUsedInSearch>
+				<BitrixFilterAllowed>false</BitrixFilterAllowed>
+				<BitrixUserType></BitrixUserType>
+				<BitrixRequired>false</BitrixRequired>
+			</Property>
+			<Property>
+				<Id>11</Id>
+				<Title>State</Title>
+				<Multiple>false</Multiple>
+				<BitrixSort>500</BitrixSort>
+				<BitrixCode>STATE</BitrixCode>
+				<BitrixDefaultValue></BitrixDefaultValue>
+				<BitrixPropertyType>S</BitrixPropertyType>
+				<BitrixRows>1</BitrixRows>
+				<BitrixColumns>30</BitrixColumns>
+				<BitrixListType>L</BitrixListType>
+				<BitrixFileType></BitrixFileType>
+				<BitrixNumberOfInputs>0</BitrixNumberOfInputs>
+				<BitrixLinkedInformationBlock></BitrixLinkedInformationBlock>
+				<BitrixWithDescription>false</BitrixWithDescription>
+				<BitrixUsedInSearch>false</BitrixUsedInSearch>
+				<BitrixFilterAllowed>false</BitrixFilterAllowed>
+				<BitrixUserType></BitrixUserType>
+				<BitrixRequired>false</BitrixRequired>
+			</Property>
+			<Property>
+				<Id>78</Id>
+				<Title>Type of absence</Title>
+				<Multiple>false</Multiple>
+				<ChoiceValue>
+					<Value>Voyage d’affaires</Value>
+					<Choice>
+						<Id>ASSIGNMENT</Id>
+						<Value>Voyage d’affaires</Value>
+						<ByDefault>false</ByDefault>
+						<Sort>500</Sort>
+					</Choice>
+					<Value>Congé de maternité</Value>
+					<Choice>
+						<Id>LEAVEMATERINITY</Id>
+						<Value>Congé de maternité</Value>
+						<ByDefault>false</ByDefault>
+						<Sort>500</Sort>
+					</Choice>
+					<Value>Congé maladie</Value>
+					<Choice>
+						<Id>LEAVESICK</Id>
+						<Value>Congé maladie</Value>
+						<ByDefault>false</ByDefault>
+						<Sort>500</Sort>
+					</Choice>
+					<Value>Congé sans solde</Value>
+					<Choice>
+						<Id>LEAVEUNPAYED</Id>
+						<Value>Congé sans solde</Value>
+						<ByDefault>false</ByDefault>
+						<Sort>500</Sort>
+					</Choice>
+					<Value>Autre</Value>
+					<Choice>
+						<Id>OTHER</Id>
+						<Value>Autre</Value>
+						<ByDefault>false</ByDefault>
+						<Sort>500</Sort>
+					</Choice>
+					<Value>Absence sans raison</Value>
+					<Choice>
+						<Id>UNKNOWN</Id>
+						<Value>Absence sans raison</Value>
+						<ByDefault>false</ByDefault>
+						<Sort>500</Sort>
+					</Choice>
+					<Value>Congé annuel</Value>
+					<Choice>
+						<Id>VACATION</Id>
+						<Value>Congé annuel</Value>
+						<ByDefault>false</ByDefault>
+						<Sort>500</Sort>
+					</Choice>
+					<Value>Calendriers personnels</Value>
+					<Choice>
+						<Id>PERSONAL</Id>
+						<Value>Calendriers personnels</Value>
+						<ByDefault>false</ByDefault>
+						<Sort>600</Sort>
+					</Choice>
+				</ChoiceValue>
+				<BitrixSort>500</BitrixSort>
+				<BitrixCode>ABSENCE_TYPE</BitrixCode>
+				<BitrixDefaultValue></BitrixDefaultValue>
+				<BitrixPropertyType>L</BitrixPropertyType>
+				<BitrixRows>1</BitrixRows>
+				<BitrixColumns>30</BitrixColumns>
+				<BitrixListType>L</BitrixListType>
+				<BitrixFileType></BitrixFileType>
+				<BitrixNumberOfInputs>5</BitrixNumberOfInputs>
+				<BitrixLinkedInformationBlock></BitrixLinkedInformationBlock>
+				<BitrixWithDescription>false</BitrixWithDescription>
+				<BitrixUsedInSearch>false</BitrixUsedInSearch>
+				<BitrixFilterAllowed>false</BitrixFilterAllowed>
+				<BitrixUserType></BitrixUserType>
+				<BitrixRequired>false</BitrixRequired>
+			</Property>
+		</Properties>
+		<Sections>
+		</Sections>
+	</Metadata>
+	<Catalog>
+		<Id>10</Id>
+		<MetadataId>10</MetadataId>
+		<Title>Absence Chart</Title>
+		<BitrixCode>absence</BitrixCode>
+		<BitrixSort>500</BitrixSort>
+		<BitrixListURL></BitrixListURL>
+		<BitrixDetailURL></BitrixDetailURL>
+		<BitrixSectionURL></BitrixSectionURL>
+		<BitrixPicture></BitrixPicture>
+		<BitrixIndexElements>false</BitrixIndexElements>
+		<BitrixIndexSections>false</BitrixIndexSections>
+		<BitrixWorkflow>false</BitrixWorkflow>
+		<BitrixLabels>
+			<BitrixLabel>
+				<Id>ELEMENT_NAME</Id>
+				<Value>Absence</Value>
+			</BitrixLabel>
+			<BitrixLabel>
+				<Id>ELEMENTS_NAME</Id>
+				<Value>Absences</Value>
+			</BitrixLabel>
+			<BitrixLabel>
+				<Id>ELEMENT_ADD</Id>
+				<Value>Add Absence</Value>
+			</BitrixLabel>
+			<BitrixLabel>
+				<Id>ELEMENT_EDIT</Id>
+				<Value>Edit Absence</Value>
+			</BitrixLabel>
+			<BitrixLabel>
+				<Id>ELEMENT_DELETE</Id>
+				<Value>Delete Absence</Value>
+			</BitrixLabel>
+			<BitrixLabel>
+				<Id>SECTION_NAME</Id>
+				<Value>Category</Value>
+			</BitrixLabel>
+			<BitrixLabel>
+				<Id>SECTIONS_NAME</Id>
+				<Value>Categories</Value>
+			</BitrixLabel>
+			<BitrixLabel>
+				<Id>SECTION_ADD</Id>
+				<Value>Add Category</Value>
+			</BitrixLabel>
+			<BitrixLabel>
+				<Id>SECTION_EDIT</Id>
+				<Value>Edit Category</Value>
+			</BitrixLabel>
+			<BitrixLabel>
+				<Id>SECTION_DELETE</Id>
+				<Value>Delete Category</Value>
+			</BitrixLabel>
+		</BitrixLabels>
+		<Elements>
+		</Elements>
+	</Catalog>
+</CommerceInformation>

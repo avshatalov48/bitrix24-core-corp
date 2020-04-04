@@ -1,0 +1,3 @@
+<?
+$MESS["DOCUMENTGENERATOR_MODEL_TEMPLATE_CLASS_VALIDATION"] = "Class #CLASSNAME# does not inherit from #PARENT#";
+?>

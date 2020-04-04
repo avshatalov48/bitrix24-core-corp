@@ -1,0 +1,22 @@
+<?php
+$MESS["CRM_INVOICE_COMPAT_HELPER_NO_INVOICE_ID"] = "Не задан идентификатор счёта";
+$MESS["CRM_INVOICE_COMPAT_HELPER_NO_INVOICE"] = "Счёт с идентификатором #ID# не найден";
+$MESS["CRM_INVOICE_COMPAT_HELPER_DUB_PAY"] = "Счёт с идентификатором #ID# уже оплачен";
+$MESS["CRM_INVOICE_COMPAT_HELPER_DUB_CANCEL"] = "Оплата счёта с идентификатором #ID# уже отменена";
+$MESS["CRM_INVOICE_COMPAT_HELPER_DUB_STATUS"] = "Счёт с идентификатором #ID# уже имеет требуемый статус";
+$MESS["CRM_INVOICE_COMPAT_HELPER_DELETE_ERROR"] = "Ошибка удаления счёта. #MESSAGE#";
+$MESS["CRM_INVOICE_COMPAT_HELPER_PAY_ERROR"] = "Ошибка оплаты счёта. #MESSAGE#";
+$MESS["CRM_INVOICE_COMPAT_HELPER_CANCEL_ERROR"] = "Ошибка отмены оплаты счёта. #MESSAGE#";
+$MESS["CRM_INVOICE_COMPAT_HELPER_EMPTY_SITE"] = "Не указан сайт счёта";
+$MESS["CRM_INVOICE_COMPAT_HELPER_EMPTY_PERS_TYPE"] = "Не указан тип плательщика";
+$MESS["CRM_INVOICE_COMPAT_HELPER_EMPTY_USER_ID"] = "Не указан идентификатор покупателя";
+$MESS["CRM_INVOICE_COMPAT_HELPER_EMPTY_CURRENCY"] = "Не указана валюта";
+$MESS["CRM_INVOICE_COMPAT_HELPER_WRONG_CURRENCY"] = "Валюта с идентификатором #ID# не найдена";
+$MESS["CRM_INVOICE_COMPAT_HELPER_WRONG_SITE"] = "Сайт с идентификатором #ID# не найден";
+$MESS["CRM_INVOICE_COMPAT_HELPER_WRONG_USER"] = "Пользователь с идентификатором #ID# не найден";
+$MESS["CRM_INVOICE_COMPAT_HELPER_WRONG_PERSON_TYPE"] = "Тип плательщика с идентификатором #ID# не найден";
+$MESS["CRM_INVOICE_COMPAT_HELPER_WRONG_PS"] = "Платежная система с идентификатором #ID# не найдена";
+$MESS["CRM_INVOICE_COMPAT_HELPER_WRONG_DELIVERY"] = "Служба доставки с идентификатором #ID# не найдена";
+$MESS["CRM_INVOICE_COMPAT_HELPER_WRONG_STATUS"] = "Статус с идентификатором #ID# не найден";
+$MESS["CRM_INVOICE_COMPAT_HELPER_EMPTY_ACCOUNT_NUMBER"] = "Номер счёта не может быть пустым";
+$MESS["CRM_INVOICE_COMPAT_HELPER_EXISTING_ACCOUNT_NUMBER"] = "Указанный номер счёта уже используется";

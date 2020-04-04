@@ -1,0 +1,17 @@
+.tasks-replication-view-disable {
+  display: none;
+}
+.tasks-replication-view.enabled .tasks-replication-view-enable {
+  display: none;
+}
+.tasks-replication-view.enabled .tasks-replication-view-disable {
+  display: inline;
+}
+.tasks-replication-detail.invisible {
+  opacity: 0;
+  height: 0;
+  overflow: hidden;
+}
+.tasks-replication-detail-inner {
+  margin-bottom: 10px;
+}

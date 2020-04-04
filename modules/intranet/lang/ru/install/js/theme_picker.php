@@ -1,0 +1,22 @@
+<?
+$MESS["BITRIX24_THEME_DIALOG_TITLE"] = "Темы оформления";
+$MESS["BITRIX24_THEME_DIALOG_SAVE_BUTTON"] = "Сохранить";
+$MESS["BITRIX24_THEME_DIALOG_CANCEL_BUTTON"] = "Отменить";
+$MESS["BITRIX24_THEME_DIALOG_CREATE_BUTTON"] = "Создать";
+$MESS["BITRIX24_THEME_DIALOG_NEW_THEME"] = "Своя тема";
+$MESS["BITRIX24_THEME_CREATE_YOUR_OWN_THEME"] = "Создание новой темы";
+$MESS["BITRIX24_THEME_THEME_BG_COLOR"] = "Цвет фона";
+$MESS["BITRIX24_THEME_THEME_BG_IMAGE"] = "Картинка фона";
+$MESS["BITRIX24_THEME_THEME_TEXT_COLOR"] = "Цвет текста";
+$MESS["BITRIX24_THEME_THEME_LIGHT_COLOR"] = "Светлый";
+$MESS["BITRIX24_THEME_THEME_DARK_COLOR"] = "Темный";
+$MESS["BITRIX24_THEME_UPLOAD_BG_IMAGE"] = "Загрузите картинку фона";
+$MESS["BITRIX24_THEME_DRAG_BG_IMAGE"] = "Или перетащите файл с помощью Drag&Drop";
+$MESS["BITRIX24_THEME_WRONG_FILE_TYPE"] = "Загружаемый файл не является картинкой.";
+$MESS["BITRIX24_THEME_FILE_SIZE_EXCEEDED"] = "Превышен максимальный размер файла (#LIMIT#).";
+$MESS["BITRIX24_THEME_WRONG_BG_COLOR"] = "Цвет фона указан неправильно.";
+$MESS["BITRIX24_THEME_EMPTY_FORM_DATA"] = "Укажите картинку фона или цвет фона.";
+$MESS["BITRIX24_THEME_UNKNOWN_ERROR"] = "Невозможно выполнить данную операцию. Повторите попытку.";
+$MESS["BITRIX24_THEME_SET_AS_DEFAULT"] = "Назначить по умолчанию";
+$MESS["BITRIX24_THEME_DEFAULT_THEME"] = "По умолчанию";
+$MESS["BITRIX24_THEME_REMOVE_THEME"] = "Удалить тему";

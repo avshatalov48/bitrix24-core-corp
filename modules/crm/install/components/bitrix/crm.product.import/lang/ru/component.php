@@ -1,0 +1,53 @@
+<?
+$MESS["CRM_MODULE_NOT_INSTALLED"] = "Модуль CRM не установлен.";
+$MESS["CRM_PERMISSION_DENIED"] = "Доступ запрещен";
+$MESS['CRM_PRODUCT_IMP_COL_XML_ID'] = 'Внешний код';
+$MESS["CRM_PRODUCT_IMP_COL_NAME"] = "Название";
+$MESS["CRM_PRODUCT_IMP_COL_DESCRIPTION"] = "Описание";
+$MESS["CRM_PRODUCT_IMP_COL_DESCRIPTION_TYPE"] = "Формат описания";
+$MESS["CRM_PRODUCT_IMP_COL_ACTIVE"] = "Активен";
+$MESS["CRM_PRODUCT_IMP_COL_CURRENCY_ID"] = "Валюта";
+$MESS["CRM_PRODUCT_IMP_COL_PRICE"] = "Цена";
+$MESS["CRM_PRODUCT_IMP_COL_VAT_ID"] = "Ставка НДС";
+$MESS["CRM_PRODUCT_IMP_COL_VAT_INCLUDED"] = "НДС включён в цену";
+$MESS["CRM_PRODUCT_IMP_COL_MEASURE"] = "Единица измерения";
+$MESS["CRM_PRODUCT_IMP_COL_SECTION_ID"] = "Раздел";
+$MESS["CRM_PRODUCT_IMP_COL_SORT"] = "Сорт.";
+$MESS["CRM_PRODUCT_IMP_COL_PREVIEW_PICTURE"] = "Картинка для анонса";
+$MESS["CRM_PRODUCT_IMP_COL_DETAIL_PICTURE"] = "Детальная картинка";
+$MESS["CRM_COLUMN_HEADER"] = "Колонка";
+$MESS["CRM_PRODUCT_NAV_TITLE_LIST"] = "Импорт товаров";
+$MESS["CRM_PRODUCT_IMP_CSV_NF_ERROR"] = "Необходимо выбрать файл.";
+$MESS["CRM_CSV_SEPARATOR_ERROR"] = "В файле данных используется разделитель отличный от выбранного.";
+$MESS["CRM_PRODUCT_IMP_FIELD_FILE"] = "Файл данных (формат CSV)";
+$MESS["CRM_PRODUCT_IMP_FIELD_FILE_EXAMPLE"] = "Шаблон импортируемого файла";
+$MESS["CRM_SECTION_IMPORT_FILE_FORMAT"] = "Формат файла";
+$MESS["CRM_PRODUCT_IMP_FIELD_FILE_FIRST_HEADER"] = "Первая строка содержит заголовки";
+$MESS["CRM_PRODUCT_IMP_FIELD_FILE_SKIP_EMPTY"] = "Пропускать пустые колонки";
+$MESS["CRM_PRODUCT_IMP_FIELD_FILE_SEPARATOR"] = "Разделитель колонок";
+$MESS["CRM_PRODUCT_IMP_FIELD_FILE_SEPARATOR_SEMICOLON"] = "Точка с запятой";
+$MESS["CRM_PRODUCT_IMP_FIELD_FILE_SEPARATOR_COMMA"] = "Запятая";
+$MESS["CRM_PRODUCT_IMP_FIELD_FILE_SEPARATOR_TAB"] = "Табуляция";
+$MESS["CRM_PRODUCT_IMP_FIELD_FILE_SEPARATOR_SPACE"] = "Пробел";
+$MESS["CRM_PRODUCT_IMP_FIELD_FILE_SECTION_LEVELS"] = "Количество уровней разделов";
+$MESS["CRM_PRODUCT_IMP_SECTION_HEADER"] = "Раздел (уровень #LEVEL_NUM#)";
+$MESS["CRM_IMPORT_FINISH"] = "Успешно импортировано товаров";
+$MESS["CRM_IMPORT_ERROR"] = "Не импортировано товаров";
+$MESS["CRM_SECTION_IMPORT_ASSOC_EXAMPLE"] = "Пример импортируемых данных";
+$MESS["CRM_REQUIRE_FIELDS"] = "Для успешного импорта необходимо выбрать следующие обязательные поля";
+$MESS["CRM_DOWNLOAD"] = "Скачать";
+$MESS["CRM_PRODUCT_IMP_SAMPLE_NAME"] = "Импортированный товар";
+$MESS["CRM_PRODUCT_IMP_SAMPLE_DESCRIPTION"] = "Товар для демонстрации импорта";
+$MESS["CRM_PRODUCT_IMP_SAMPLE_SECTION_ID"] = "Импортированные товары";
+$MESS["CRM_PRODUCT_IMP_SAMPLE_STRING_VALUE"] = "Демонстрационное значение";
+$MESS["CRM_PRODUCT_IMP_FIELD_FILE_ENCODING"] = "Кодировка файла данных";
+$MESS["CRM_PRODUCT_IMP_FIELD_DEFAULT_FILE_ENCODING"] = "по умолчанию";
+$MESS["CRM_PRODUCT_IMP_FIELD_AUTO_DETECT_ENCODING"] = "Определить автоматически";
+$MESS["CRM_PRODUCT_ADD_UNKNOWN_ERROR"] = "Во время создания товара произошла ошибка.";
+$MESS["CRM_PRODUCT_UPDATE_UNKNOWN_ERROR"] = "Во время обновления товара произошла ошибка.";
+$MESS['CRM_MEASURE_NOT_SELECTED'] = '[не выбрана]';
+$MESS['CRM_PRODUCT_IMPORT_HINT_XML_ID_01'] = "Для обновления уже имеющихся товаров необходимо выбрать поле: ".
+	"#XML_ID_TITLE#.";
+$MESS['CRM_PRODUCT_IMPORT_HINT_XML_ID_02'] = "Если товары с импортируемыми значениями уже существуют, то они будут ".
+	"обновлены данными из файла импорта, иначе будут создаваться новые товары.";
+?>

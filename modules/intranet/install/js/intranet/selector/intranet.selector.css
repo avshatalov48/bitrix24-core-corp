@@ -1,0 +1,61 @@
+.bx-lm-box-tab-content-departments {
+	margin-top: 8px;
+	margin-left: 10px;
+}
+
+.bx-lm-box-tab-content-departments .bx-finder-company-department-employee {
+	border: none;
+	width: auto !important;
+	height: 36px;
+	padding: 3px 0;
+	text-decoration: none;
+	-webkit-transition: background-color 0.2s linear;
+			transition: background-color 0.2s linear;
+}
+
+.bx-lm-box-tab-content-departments .bx-finder-company-department-employee:hover {
+	background: #eef2f4;
+}
+
+.bx-lm-box-tab-content-departments .bx-finder-company-department-employee-selected,
+.bx-lm-box-tab-content-departments .bx-finder-company-department-employee-selected:hover {
+	background: #d6f1fb;
+	border-radius: 1px;
+}
+
+.bx-lm-box-tab-content-departments .bx-finder-company-department-employee-info {
+	margin-left: 41px;
+	padding-right: 5px;
+	width: auto;
+}
+
+.bx-lm-box-tab-content-departments .bx-finder-company-department-employee-name {
+	height: 15px;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	width: auto;
+	overflow: hidden;
+	color: #0b66c3;
+}
+
+.bx-lm-box-tab-content-departments .bx-finder-company-department-employee-position {
+	color: #555555;
+	font-size: 11px;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	width: auto;
+	overflow: hidden;
+}
+
+.bx-lm-box-tab-content-departments .bx-finder-company-department-employee-avatar {
+	background: url(images/template_sprite.png) no-repeat -177px -1211px #535c6a;
+	border-radius: 50%;
+	height: 30px;
+	left: 2px;
+	top: 3px;
+	width: 30px;
+}
+
+.bx-finder-popup.bx-finder-v2 .bx-lm-element-departments .bx-finder-box-item-t7-avatar {
+	background-position: center -28px
+}

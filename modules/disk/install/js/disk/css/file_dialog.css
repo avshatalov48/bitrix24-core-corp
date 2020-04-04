@@ -1,0 +1,162 @@
+#DiskFileDialog { -webkit-animation: diskScaleTo .4s 1; animation: diskScaleTo .4s 1; }
+@-webkit-keyframes diskScaleTo { from {  opacity: .5; -webkit-transform: scale(.5);  } to { opacity: 1; -webkit-transform: scale(1);} }
+@keyframes diskScaleTo { from { opacity: 0; transform: scale(.5); } to { opacity: 1; transform: scale(1); } }
+
+.bx-file-dialog-title { color: #010101; display: block; font: 13px/22px Arial,Helvetica,sans-serif; height: 22px; margin-left: 6px; vertical-align: top; }
+.bx-file-dialog-container { height: 290px; margin-left: 3px; margin-right: 0px; margin-top: 10px; white-space: nowrap; }
+
+.bx-file-dialog-tab {
+	width: 192px;
+	height: 288px;
+	background-color: #F5F5F5;
+	border: 1px solid #E9E9E9;
+	border-radius: 3px;
+	margin-right: 5px;
+	display: inline-block;
+	vertical-align: top;
+	float: left;
+}
+.bx-file-dialog-tab-wrap { width: 187px; height: 276px; overflow: auto; margin-left: 5px; margin-top: 6px; margin-bottom: 6px}
+
+.bx-file-dialog-tab-group-title { font: 13px/22px Arial,Helvetica,sans-serif; font-weight: bold; color: #555555; margin-top: 4px;  padding-left: 5px}
+.bx-file-dialog-tab-group { margin-top: 10px; padding-top: 5px; border-top: 1px solid #e4e4e4; margin-left: 4px; margin-right: 4px;}
+.bx-file-dialog-tab-group:first-child { margin-top: -2px; border-top: 0px; padding-top: 0px}
+
+.bx-file-dialog-tab-item { margin-top: 5px; }
+.bx-file-dialog-tab-item-link { display: inline-block; font: 13px Arial,Helvetica,sans-serif; color: #666666!important; line-height: 22px;  vertical-align: top; height: 21px; text-decoration: none; vertical-align:top; outline: none}
+.bx-file-dialog-tab-item-active, .bx-file-dialog-tab-item-link:hover { }
+.bx-file-dialog-tab-item-active .bx-file-dialog-tab-item-link-text, .bx-file-dialog-tab-item-link:hover .bx-file-dialog-tab-item-link-text { background-color:#e2e2e2; color: #000000!important; border: 1px solid #d7d7d7; border-right: 0px; border-radius: 3px;  }
+.bx-file-dialog-tab-item-link-text { padding-left: 4px; display:inline-block; height: 23px; width: 156px; border: 1px solid #F5F5F5; border-right: 0px;  overflow: hidden; white-space:nowrap; text-overflow: ellipsis;   vertical-align:top}
+.bx-file-dialog-tab-item-link-arrow { height: 23px; width: 6px; display:inline-block; margin-left: -1px }
+.bx-file-dialog-tab-item-active .bx-file-dialog-tab-item-link-arrow, .bx-file-dialog-tab-item-link:hover .bx-file-dialog-tab-item-link-arrow { background: url(./../images/image-sprite.png) -14px -421px no-repeat;}
+
+.bx-file-dialog-header { margin-left: 5px; border-bottom: 1px solid #f0f0f0; height: 24px; margin-top: 6px }
+.bx-file-dialog-column-header { display: inline-block; font: 11px Arial,Helvetica,sans-serif; color: #999999; line-height: 19px; vertical-align: top; overflow: hidden; white-space:nowrap; text-overflow: ellipsis; margin-left: 4px;}
+.bx-file-dialog-sort-link { display: block; height: 24px; font: 11px Arial,Helvetica,sans-serif; color: #999999!important; text-decoration: none; line-height: 19px;}
+.bx-file-dialog-sort-link:hover, .bx-file-dialog-sort-active { color: #666666!important}
+.bx-file-dialog-sort-icon { display: inline-block; height: 10px; width: 10px;}
+.bx-file-dialog-sort-link:hover .bx-file-dialog-sort-asc, .bx-file-dialog-sort-active .bx-file-dialog-sort-asc { background: url(./../images/image-sprite.png) -10px -361px no-repeat}
+.bx-file-dialog-sort-link:hover .bx-file-dialog-sort-desc, .bx-file-dialog-sort-active .bx-file-dialog-sort-desc { background: url(./../images/image-sprite.png) -10px -330px no-repeat}
+.bx-file-dialog-sort-active:hover { color: #2f2f2f!important }
+
+.bx-file-dialog-content {
+	margin-left: 199px;
+	width: 639px;
+	height: 254px;
+	background-color: #FFF;
+	border: 1px solid #BBCFD5;
+	border-radius: 3px;
+}
+
+.bx-file-dialog-content-root .bx-file-dialog-content-wrap { height: 223px; }
+.bx-file-dialog-content-wrap { width: 635px; height: 230px; border-bottom: 1px solid #f0f0f0; overflow: auto; margin-left: 5px; margin-bottom: 6px; background: url(./../images/background.png);}
+
+.bx-file-dialog-content-root .bx-file-dialog-content-path { display: none }
+.bx-file-dialog-content-path { height: 19px; border-bottom: 1px solid #f0f0f0; margin-left: 5px; vertical-align:top }
+.bx-file-dialog-content-path-up { display: inline-block; height: 19px; font: 11px Arial,Helvetica,sans-serif;  text-decoration: none; line-height: 19px; width: 20px; vertical-align:top}
+.bx-file-dialog-content-path-up:hover { background-color: #f1f2f2}
+.bx-file-dialog-content-path-seporator { display: inline-block; height: 19px; font: 11px Arial,Helvetica,sans-serif; text-decoration: none; line-height: 19px; width: 9px; text-align: center; vertical-align:top}
+.bx-file-dialog-content-path-link { display: inline-block; padding: 0px 4px;height: 19px; font: 11px Arial,Helvetica,sans-serif; color: #999999!important; text-decoration: none; line-height: 19px; vertical-align:top}
+.bx-file-dialog-content-path-link:hover { background-color: #f1f2f2; color: #666666!important} 
+.bx-file-dialog-content-path-link-active:hover { color: #2f2f2f!important}
+.bx-file-dialog-content-path-link-active { color: #666666!important }
+.bx-file-dialog-content-path-items { display: inline-block; height: 19px; width: 615px; vertical-align:top; white-space:nowrap; overflow: hidden;  position: relative; }
+.bx-file-dialog-content-path-items-wrap { display: block; height: 19px; line-height: 19px; position: absolute;}
+
+
+.bx-file-dialog-row {border-top: 0px solid #f0f0f0; height: 32px; padding-top: 1px; background-color: #fff}
+.bx-file-dialog-row:first-child {border-top: 0px solid #f0f0f0; height: 32px; padding-top: 1px}
+.bx-file-dialog-row:nth-child(odd){ background-color: #fff}
+.bx-file-dialog-row:nth-child(even){ background-color: #fbfbfb}
+.bx-file-dialog-row-normal:hover { background-color: #f1f2f2 }
+
+.bx-file-dialog-column-row { display: inline-block; font: 13px Arial,Helvetica,sans-serif; color: #666666; line-height: 32px; vertical-align: top;  overflow: hidden; white-space:nowrap; text-overflow: ellipsis; height: 32px; margin-left: 4px;}
+
+.bx-file-dialog-row-disabled .bx-file-dialog-column-row { opacity: 0.4}
+.bx-file-dialog-column-row-1.bx-file-dialog-row-disabled:hover { background-color: #fff}
+.bx-file-dialog-column-row-2.bx-file-dialog-row-disabled:hover { background-color: #fbfbfb}
+
+.bx-file-dialog-row-selected { background-color: #dbdddf!important}
+.bx-file-dialog-row-selected:hover { background-color: #d5d5d5!important}
+
+.bx-file-dialog-content-link {display: block; height: 32px; font: 13px Arial,Helvetica,sans-serif; color: #333333!important; text-decoration: none; line-height: 32px; padding-left: 22px}
+
+.bx-file-dialog-extra-shared { background: url(./../images/image-sprite.png) -9px -375px no-repeat; }
+.bx-file-dialog-icon { background-image: url(./../images/image-sprite.png); background-repeat: no-repeat; background-position: -9px -32px}
+.bx-file-dialog-icon-up { background-position: 0 -6px}
+.bx-file-dialog-icon-up:hover { background-position: -20px -6px}
+.bx-file-dialog-icon-folder { background-position: -9px -65px}
+.bx-file-dialog-icon-file { background-position: -9px -32px}
+.bx-file-dialog-icon-archive { background-position: -9px -96px}
+.bx-file-dialog-icon-image { background-position: -9px -128px}
+.bx-file-dialog-icon-video { background-position: -9px -160px}
+.bx-file-dialog-icon-txt { background-position: -9px -191px}
+.bx-file-dialog-icon-word { background-position: -9px -287px}
+.bx-file-dialog-icon-excel { background-position: -9px -224px}
+.bx-file-dialog-icon-ppt { background-position: -9px -255px}
+.bx-file-dialog-icon-seporator { background-position: -12px -467px}
+
+.bx-file-dialog-wait { background: url("/bitrix/js/main/core/images/wait-big.gif") no-repeat scroll 0 0 transparent; height: 31px; width: 31px; margin-bottom: 1px;  margin-top: 1px; position: relative; }
+.bx-file-dialog-notice { width: 845px; display:none }
+.bx-file-dialog-notice-wrap { margin-left: 19px; margin-right: 21px; padding-top: 9px; font: 12px/16px Arial,Helvetica,sans-serif; color: #f50000; text-align: justify}
+
+.bx-file-dialog-content-wrap-title {
+	font-weight: bold;
+	font-size: 17px;
+	padding: 20px 25px;
+}
+
+.bx-file-dialog-content-wrap-text {
+	padding: 0 25px;
+	font-size: 14px;
+	white-space: normal;
+}
+
+.bx-file-dialog-content-wrap-text p {
+	margin: 0 0 20px;
+}
+
+.bx-file-dialog-content-wrap-inner a {
+	color: #03a1dc;
+	border-bottom: 1px solid
+}
+
+.bx-file-dialog-content-wrap-inner a:hover {
+	border-bottom: 1px solid transparent;
+	color: #03a1dc;
+}
+
+.bx-file-list-dialog-search {
+	margin-left: 199px;
+}
+
+.bx-file-list-dialog-search-icon {
+	display: inline-block;
+	vertical-align: top;
+	width: 15px;
+	height: 15px;
+	position: relative;
+	left: -8px;
+	top: 7px;
+	cursor: pointer;
+	/*background: url(/bitrix/templates/bitrix24/images/template_sprite_21.png?5) -53px -918px no-repeat;*/
+}
+
+.bx-file-list-dialog-search-input {
+	width: 610px;
+	height: 25px;
+	padding: 0 25px 0 4px;
+	border: 1px solid;
+	border-color: #B9BCBE #BDC1C3 #C1C5C8 #BABEC0;
+	-moz-box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.14);
+	-webkit-box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.14);
+	box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.14);
+	-webkit-border-radius: 2px;
+	border-radius: 2px;
+	outline: 0;
+	font-size: 13px;
+	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	position: relative;
+	left: 22px;
+	margin: 1px 8px 6px -22px;
+}

@@ -1,0 +1,72 @@
+
+table.bx-interface-toolbar a.btn-view,
+div.bx-interface-toolbar .btn-view {
+	background-image:url("images/buttons/view.gif");
+}
+
+table.bx-interface-toolbar a.btn-edit,
+div.bx-interface-toolbar .btn-edit {
+	background-image:url("images/buttons/edit.gif");
+}
+
+table.bx-interface-toolbar a.btn-export,
+div.bx-interface-toolbar .btn-export {
+	background-image:url("images/buttons/export.gif");
+}
+
+table.bx-interface-toolbar a.btn-import,
+div.bx-interface-toolbar .btn-import {
+	background-image:url("images/buttons/import.gif");
+}
+
+table.bx-interface-toolbar a.btn-add-event,
+div.bx-interface-toolbar .btn-add-event {
+	background-image:url("images/buttons/event.gif");
+}
+
+table.bx-interface-toolbar a.btn-add-deal,
+div.bx-interface-toolbar .btn-add-deal {
+	background-image:url("images/buttons/deal.gif");
+}
+
+table.bx-interface-toolbar a.btn-add-contact,
+div.bx-interface-toolbar .btn-add-contact {
+	background-image:url("images/buttons/contact.gif");
+}
+
+table.bx-interface-toolbar a.btn-add-task,
+div.bx-interface-toolbar .btn-add-task {
+	background-image:url("images/buttons/task.gif");
+}
+
+table.bx-interface-toolbar a.btn-add-calendar,
+div.bx-interface-toolbar .btn-add-calendar {
+	background-image:url("images/buttons/calendar.gif");
+}
+
+table.bx-interface-toolbar a.btn-add,
+div.bx-interface-toolbar .btn-add {
+	background-image:url("images/buttons/add.gif");
+}
+
+/*Popup menu*/
+div.bx-popup-menu td.popupmenu div.popupitem td.gutter div.btn-add-event
+{
+	background: url("images/buttons/event.gif") no-repeat left top !important;
+}
+div.bx-popup-menu td.popupmenu div.popupitem td.gutter div.btn-add-task
+{
+	background: url("images/buttons/task.gif") no-repeat left top !important;
+}
+div.bx-popup-menu td.popupmenu div.popupitem td.gutter div.btn-add-calendar
+{
+	background: url("images/buttons/calendar.gif") no-repeat left top !important;
+}
+div.bx-popup-menu td.popupmenu div.popupitem td.gutter div.btn-add-deal
+{
+	background: url("images/buttons/deal.gif") no-repeat left top !important;
+}
+div.bx-popup-menu td.popupmenu div.popupitem td.gutter div.btn-add-contact
+{
+	background: url("images/buttons/contact.gif") no-repeat left top !important;
+}

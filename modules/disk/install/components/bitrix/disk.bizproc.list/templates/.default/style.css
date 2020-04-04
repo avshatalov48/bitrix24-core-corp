@@ -1,0 +1,4 @@
+td.popupmenu div.popupitem div.edit {background-image:url(/bitrix/themes/.default/images/popup/edit.gif);}
+td.popupmenu div.popupitem div.delete {background-image:url(/bitrix/themes/.default/images/popup/delete.gif);}
+form.bp-form{padding:0;margin:0;}
+.bx-disk-prompt-old-template {float:left;background-color:rgb(214,241,251);border: 1px solid rgb(193, 234, 249);font-size: 0.95em;padding: 0pt 15px;margin-top:10px;}

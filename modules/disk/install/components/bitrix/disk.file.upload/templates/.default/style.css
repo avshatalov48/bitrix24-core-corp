@@ -1,0 +1,41 @@
+#bx-dfu-upload-FolderList { -webkit-animation: diskUploadPopup .4s 1; animation: diskUploadPopup .4s 1; }
+@-webkit-keyframes diskUploadPopup { from {  opacity: .5; -webkit-transform: scale(.5);  } to { opacity: 1; -webkit-transform: scale(1);} }
+@keyframes diskUploadPopup { from { opacity: 0; transform: scale(.5); } to { opacity: 1; transform: scale(1); } }
+
+.bx-disk-popup-upload-file-progress-event { -webkit-animation: diskUploadNode .3s 1; animation: diskUploadNode .3s 1; }
+@-webkit-keyframes diskUploadNode { from {  opacity: .5; } to { opacity: 1; } }
+@keyframes diskUploadNode { from { opacity: 0; } to { opacity: 1; } }
+
+.bx-disk-popup-upload-file-delete-event { -webkit-animation: diskUploadDelete .4s 1; animation: diskUploadDelete .4s 1; }
+@-webkit-keyframes diskUploadDelete { from { opacity: 1; -webkit-transform: scaleY(1);} to { opacity: .5; -webkit-transform: scaleY(.5);  } }
+@keyframes diskUploadDelete { from { opacity: 1; transform: scaleY(1); } to { opacity: 0; transform: scaleY(.5); } }
+
+.bx-disk-popup-upload-file-progress-line
+{
+	width: 0;
+	-webkit-transition: width 0.5s ease-in;
+	-moz-transition: width 0.5s ease-in;
+	-ms-transition: width 0.5s ease-in;
+	-o-transition: width 0.5s ease-in;
+	transition: width 0.5s ease-in;
+}
+
+.menu-popup-item-upload-file {
+	position: relative;
+}
+#inputContainerLabelFolderList,
+.menu-popup-item-upload-file label {
+	position: absolute;
+	top: 0;
+	left: 0;
+	bottom: 0;
+	right: 0;
+	height: 100%;
+	width: 100%;
+	overflow: hidden;
+}
+.menu-popup-item-upload-file input {
+	position: absolute;
+	top: -100px;
+	height: 100px;
+}

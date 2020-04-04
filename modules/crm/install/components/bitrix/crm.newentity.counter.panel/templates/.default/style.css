@@ -1,0 +1,89 @@
+.crm-alert {
+	width: 100%;
+	background: #FCFBE4;
+	border-bottom: 4px solid #eef2f4;
+	text-align: center;
+	overflow: hidden;
+	opacity: 0;
+	max-height: 0;
+	padding: 0 15px;
+}
+
+.crm-alert.crm-alert-entity-counter-animate-hide {
+	animation: parrentCounterHide 500ms ease;
+	opacity: 0;
+	max-height: 0;
+	padding: 0 15px;
+}
+
+.crm-alert.crm-alert-entity-counter-animate-show {
+	animation: parrentCounterShow 500ms ease;
+	padding: 14px 0;
+	opacity: 1;
+	max-height: 100px;
+}
+
+@keyframes parrentCounterHide {
+	0% { opacity: 1; max-height: 100px; padding: 14px 15px;}
+	100% { opacity: 0; max-height: 0; padding: 0 15px;}
+}
+
+@keyframes parrentCounterShow {
+	0% { opacity: 0; max-height: 0; padding: 0 15px;}
+	100% { opacity: 1; max-height:100px; padding: 14px 15px;}
+}
+
+.crm-alert-inner {
+	position: relative;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+}
+
+.crm-alert-inner-text {
+	font: 500 14px/17px "OpenSans-Semibold", "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	vertical-align: middle;
+	color: #525C69;
+	margin-right: 7px;
+}
+
+.crm-alert-entity-counter {
+	overflow: hidden;
+	height: 17px;
+	position: relative;
+	display: inline-flex;
+	justify-content: center;
+	align-items: center;
+	width: 28px;
+	box-sizing: border-box;
+	border-radius: 30px;
+	background: transparent;
+	font: 11px/14px "OpenSans-Regular", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	vertical-align: middle;
+	color: #333;
+	border: 1px solid rgba(82, 92, 105, 0.31);
+}
+
+.crm-alert-entity-counter-animate-wrap > span { display: block; }
+
+.crm-alert-entity-counter-animate-wrap {
+	transform: translateX(-50%) translateY(-50%);
+	position: absolute;
+	top: 50%;
+	left: 50%;
+}
+
+.crm-alert-entity-counter-animate-wrap.crm-alert-entity-counter-animate-plus { animation: counterChangePlus 500ms ease; }
+
+.crm-alert-entity-counter-animate-wrap.crm-alert-entity-counter-animate-minus { animation: counterChangeMinus 500ms ease; }
+
+@keyframes counterChangePlus {
+	0% { margin-top: 0; }
+	100% { margin-top: 14px; }
+}
+
+@keyframes counterChangeMinus {
+	0% { margin-top: 0; }
+	100% { margin-top: -14px; }
+}

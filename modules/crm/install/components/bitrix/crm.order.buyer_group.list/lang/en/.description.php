@@ -1,0 +1,5 @@
+<?
+$MESS["CRM_ORDER_BUYER_GROUP_LIST_NAME"] = "Customer groups";
+$MESS["CRM_ORDER_BUYER_GROUP_LIST_DESCRIPTION"] = "Customer groups";
+$MESS["CRM_NAME"] = "CRM";
+?>

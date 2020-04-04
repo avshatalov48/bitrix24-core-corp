@@ -1,0 +1,11 @@
+.pinned .task-option-fixedbtn,
+.pinable-block:hover .task-option-fixedbtn {
+  visibility: visible;
+}
+.task-openable-block {
+  overflow: hidden;
+}
+.task-openable-block.invisible {
+  height: 0;
+  opacity: 0;
+}

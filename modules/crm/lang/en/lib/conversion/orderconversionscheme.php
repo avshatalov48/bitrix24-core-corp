@@ -1,0 +1,4 @@
+<?
+$MESS['CRM_ORDER_CONV_DEAL'] = "Dea";
+$MESS['CRM_ORDER_CONV_INVOICE'] = "Invoice";
+?>

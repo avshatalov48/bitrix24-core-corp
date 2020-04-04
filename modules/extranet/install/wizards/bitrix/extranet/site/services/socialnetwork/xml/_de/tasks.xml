@@ -1,0 +1,396 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<CommerceInformation SchemaVersion="2.021" CreationDate="2008-12-30T17:00:55">
+	<Metadata>
+		<Id>extranet_tasks</Id>
+		<Title>Aufgaben - Extranet</Title>
+		<Properties>
+			<Property>
+				<Id>CML2_CODE</Id>
+				<Title>Code</Title>
+				<Multiple>false</Multiple>
+			</Property>
+			<Property>
+				<Id>CML2_SORT</Id>
+				<Title>Sortieren</Title>
+				<Multiple>false</Multiple>
+			</Property>
+			<Property>
+				<Id>CML2_ACTIVE_FROM</Id>
+				<Title>Startzeit</Title>
+				<Multiple>false</Multiple>
+			</Property>
+			<Property>
+				<Id>CML2_ACTIVE_TO</Id>
+				<Title>Endzeit</Title>
+				<Multiple>false</Multiple>
+			</Property>
+			<Property>
+				<Id>CML2_PREVIEW_TEXT</Id>
+				<Title>Anons</Title>
+				<Multiple>false</Multiple>
+			</Property>
+			<Property>
+				<Id>CML2_PREVIEW_PICTURE</Id>
+				<Title>Vorschaubild</Title>
+				<Multiple>false</Multiple>
+			</Property>
+			<Property>
+				<Id>68</Id>
+				<Title>Priorität</Title>
+				<Multiple>false</Multiple>
+				<ChoiceValue>
+					<Value>   Hoch</Value>
+					<Choice>
+						<Id>1</Id>
+						<Value>   Hoch</Value>
+						<ByDefault>false</ByDefault>
+						<Sort>100</Sort>
+					</Choice>
+					<Value>  Normal</Value>
+					<Choice>
+						<Id>2</Id>
+						<Value>  Normal</Value>
+						<ByDefault>true</ByDefault>
+						<Sort>200</Sort>
+					</Choice>
+					<Value> Niedrig</Value>
+					<Choice>
+						<Id>3</Id>
+						<Value> Niedrig</Value>
+						<ByDefault>false</ByDefault>
+						<Sort>300</Sort>
+					</Choice>
+				</ChoiceValue>
+				<BitrixSort>100</BitrixSort>
+				<BitrixCode>TaskPriority</BitrixCode>
+				<BitrixDefaultValue></BitrixDefaultValue>
+				<BitrixPropertyType>L</BitrixPropertyType>
+				<BitrixRows>1</BitrixRows>
+				<BitrixColumns>30</BitrixColumns>
+				<BitrixListType>L</BitrixListType>
+				<BitrixFileType>jpg, gif, bmp, png, jpeg</BitrixFileType>
+				<BitrixNumberOfInputs>5</BitrixNumberOfInputs>
+				<BitrixLinkedInformationBlock></BitrixLinkedInformationBlock>
+				<BitrixWithDescription>false</BitrixWithDescription>
+				<BitrixUsedInSearch>true</BitrixUsedInSearch>
+				<BitrixFilterAllowed>true</BitrixFilterAllowed>
+				<BitrixUserType></BitrixUserType>
+				<BitrixRequired>true</BitrixRequired>
+			</Property>
+			<Property>
+				<Id>69</Id>
+				<Title>Status</Title>
+				<Multiple>false</Multiple>
+				<ChoiceValue>
+					<Value>Nicht akzeptiert</Value>
+					<Choice>
+						<Id>NotAccepted</Id>
+						<Value>Nicht akzeptiert</Value>
+						<ByDefault>true</ByDefault>
+						<Sort>100</Sort>
+					</Choice>
+					<Value>Nicht akzeptiert</Value>
+					<Choice>
+						<Id>NotStarted</Id>
+						<Value>Nicht akzeptiert</Value>
+						<ByDefault>false</ByDefault>
+						<Sort>200</Sort>
+					</Choice>
+					<Value>In Bearbeitung</Value>
+					<Choice>
+						<Id>InProgress</Id>
+						<Value>In Bearbeitung</Value>
+						<ByDefault>false</ByDefault>
+						<Sort>300</Sort>
+					</Choice>
+					<Value>Abgeschlossen</Value>
+					<Choice>
+						<Id>Completed</Id>
+						<Value>Abgeschlossen</Value>
+						<ByDefault>false</ByDefault>
+						<Sort>400</Sort>
+					</Choice>
+					<Value>Warten</Value>
+					<Choice>
+						<Id>Waiting</Id>
+						<Value>Warten</Value>
+						<ByDefault>false</ByDefault>
+						<Sort>500</Sort>
+					</Choice>
+					<Value>Zurückgestellt</Value>
+					<Choice>
+						<Id>Deferred</Id>
+						<Value>Zurückgestellt</Value>
+						<ByDefault>false</ByDefault>
+						<Sort>600</Sort>
+					</Choice>
+				</ChoiceValue>
+				<BitrixSort>200</BitrixSort>
+				<BitrixCode>TaskStatus</BitrixCode>
+				<BitrixDefaultValue></BitrixDefaultValue>
+				<BitrixPropertyType>L</BitrixPropertyType>
+				<BitrixRows>1</BitrixRows>
+				<BitrixColumns>30</BitrixColumns>
+				<BitrixListType>L</BitrixListType>
+				<BitrixFileType>jpg, gif, bmp, png, jpeg</BitrixFileType>
+				<BitrixNumberOfInputs>5</BitrixNumberOfInputs>
+				<BitrixLinkedInformationBlock></BitrixLinkedInformationBlock>
+				<BitrixWithDescription>false</BitrixWithDescription>
+				<BitrixUsedInSearch>true</BitrixUsedInSearch>
+				<BitrixFilterAllowed>true</BitrixFilterAllowed>
+				<BitrixUserType></BitrixUserType>
+				<BitrixRequired>true</BitrixRequired>
+			</Property>
+			<Property>
+				<Id>70</Id>
+				<Title>Abgeschlossen (%)</Title>
+				<Multiple>false</Multiple>
+				<BitrixSort>300</BitrixSort>
+				<BitrixCode>TaskComplete</BitrixCode>
+				<BitrixDefaultValue></BitrixDefaultValue>
+				<BitrixPropertyType>N</BitrixPropertyType>
+				<BitrixRows>1</BitrixRows>
+				<BitrixColumns>5</BitrixColumns>
+				<BitrixListType>L</BitrixListType>
+				<BitrixFileType>jpg, gif, bmp, png, jpeg</BitrixFileType>
+				<BitrixNumberOfInputs>5</BitrixNumberOfInputs>
+				<BitrixLinkedInformationBlock></BitrixLinkedInformationBlock>
+				<BitrixWithDescription>false</BitrixWithDescription>
+				<BitrixUsedInSearch>true</BitrixUsedInSearch>
+				<BitrixFilterAllowed>true</BitrixFilterAllowed>
+				<BitrixUserType></BitrixUserType>
+				<BitrixRequired>false</BitrixRequired>
+			</Property>
+			<Property>
+				<Id>71</Id>
+				<Title>Zuständig</Title>
+				<Multiple>false</Multiple>
+				<BitrixSort>400</BitrixSort>
+				<BitrixCode>TaskAssignedTo</BitrixCode>
+				<BitrixDefaultValue></BitrixDefaultValue>
+				<BitrixPropertyType>S</BitrixPropertyType>
+				<BitrixRows>1</BitrixRows>
+				<BitrixColumns>30</BitrixColumns>
+				<BitrixListType>L</BitrixListType>
+				<BitrixFileType>jpg, gif, bmp, png, jpeg</BitrixFileType>
+				<BitrixNumberOfInputs>5</BitrixNumberOfInputs>
+				<BitrixLinkedInformationBlock></BitrixLinkedInformationBlock>
+				<BitrixWithDescription>false</BitrixWithDescription>
+				<BitrixUsedInSearch>true</BitrixUsedInSearch>
+				<BitrixFilterAllowed>true</BitrixFilterAllowed>
+				<BitrixUserType>UserID</BitrixUserType>
+				<BitrixRequired>true</BitrixRequired>
+			</Property>
+			<Property>
+				<Id>72</Id>
+				<Title>Über Änderungen benachrichtigen</Title>
+				<Multiple>false</Multiple>
+				<BitrixSort>500</BitrixSort>
+				<BitrixCode>TaskAlert</BitrixCode>
+				<BitrixDefaultValue>Y</BitrixDefaultValue>
+				<BitrixPropertyType>S</BitrixPropertyType>
+				<BitrixRows>1</BitrixRows>
+				<BitrixColumns>30</BitrixColumns>
+				<BitrixListType>L</BitrixListType>
+				<BitrixFileType>jpg, gif, bmp, png, jpeg</BitrixFileType>
+				<BitrixNumberOfInputs>5</BitrixNumberOfInputs>
+				<BitrixLinkedInformationBlock></BitrixLinkedInformationBlock>
+				<BitrixWithDescription>false</BitrixWithDescription>
+				<BitrixUsedInSearch>true</BitrixUsedInSearch>
+				<BitrixFilterAllowed>true</BitrixFilterAllowed>
+				<BitrixUserType></BitrixUserType>
+				<BitrixRequired>false</BitrixRequired>
+			</Property>
+			<Property>
+				<Id>73</Id>
+				<Title>Arbeitszeit (Stunden)</Title>
+				<Multiple>false</Multiple>
+				<BitrixSort>600</BitrixSort>
+				<BitrixCode>TaskSize</BitrixCode>
+				<BitrixDefaultValue></BitrixDefaultValue>
+				<BitrixPropertyType>N</BitrixPropertyType>
+				<BitrixRows>1</BitrixRows>
+				<BitrixColumns>5</BitrixColumns>
+				<BitrixListType>L</BitrixListType>
+				<BitrixFileType>jpg, gif, bmp, png, jpeg</BitrixFileType>
+				<BitrixNumberOfInputs>5</BitrixNumberOfInputs>
+				<BitrixLinkedInformationBlock></BitrixLinkedInformationBlock>
+				<BitrixWithDescription>false</BitrixWithDescription>
+				<BitrixUsedInSearch>true</BitrixUsedInSearch>
+				<BitrixFilterAllowed>true</BitrixFilterAllowed>
+				<BitrixUserType></BitrixUserType>
+				<BitrixRequired>false</BitrixRequired>
+			</Property>
+			<Property>
+				<Id>78</Id>
+				<Title>An Ablaufzeit erinnern (in Tagen)</Title>
+				<Multiple>false</Multiple>
+				<BitrixSort>600</BitrixSort>
+				<BitrixCode>TaskRemind</BitrixCode>
+				<BitrixDefaultValue></BitrixDefaultValue>
+				<BitrixPropertyType>S</BitrixPropertyType>
+				<BitrixRows>1</BitrixRows>
+				<BitrixColumns>30</BitrixColumns>
+				<BitrixListType>L</BitrixListType>
+				<BitrixFileType>jpg, gif, bmp, png, jpeg</BitrixFileType>
+				<BitrixNumberOfInputs>5</BitrixNumberOfInputs>
+				<BitrixLinkedInformationBlock></BitrixLinkedInformationBlock>
+				<BitrixWithDescription>false</BitrixWithDescription>
+				<BitrixUsedInSearch>true</BitrixUsedInSearch>
+				<BitrixFilterAllowed>true</BitrixFilterAllowed>
+				<BitrixUserType>DateTime</BitrixUserType>
+				<BitrixRequired>false</BitrixRequired>
+			</Property>
+			<Property>
+				<Id>74</Id>
+				<Title>Verbracht (Stunden)</Title>
+				<Multiple>false</Multiple>
+				<BitrixSort>700</BitrixSort>
+				<BitrixCode>TaskSizeReal</BitrixCode>
+				<BitrixDefaultValue></BitrixDefaultValue>
+				<BitrixPropertyType>N</BitrixPropertyType>
+				<BitrixRows>1</BitrixRows>
+				<BitrixColumns>5</BitrixColumns>
+				<BitrixListType>L</BitrixListType>
+				<BitrixFileType>jpg, gif, bmp, png, jpeg</BitrixFileType>
+				<BitrixNumberOfInputs>5</BitrixNumberOfInputs>
+				<BitrixLinkedInformationBlock></BitrixLinkedInformationBlock>
+				<BitrixWithDescription>false</BitrixWithDescription>
+				<BitrixUsedInSearch>true</BitrixUsedInSearch>
+				<BitrixFilterAllowed>true</BitrixFilterAllowed>
+				<BitrixUserType></BitrixUserType>
+				<BitrixRequired>false</BitrixRequired>
+			</Property>
+			<Property>
+				<Id>75</Id>
+				<Title>Aktuelles Datum der Fertigstellung</Title>
+				<Multiple>false</Multiple>
+				<BitrixSort>800</BitrixSort>
+				<BitrixCode>TaskFinish</BitrixCode>
+				<BitrixDefaultValue></BitrixDefaultValue>
+				<BitrixPropertyType>S</BitrixPropertyType>
+				<BitrixRows>1</BitrixRows>
+				<BitrixColumns>30</BitrixColumns>
+				<BitrixListType>L</BitrixListType>
+				<BitrixFileType>jpg, gif, bmp, png, jpeg</BitrixFileType>
+				<BitrixNumberOfInputs>5</BitrixNumberOfInputs>
+				<BitrixLinkedInformationBlock></BitrixLinkedInformationBlock>
+				<BitrixWithDescription>false</BitrixWithDescription>
+				<BitrixUsedInSearch>true</BitrixUsedInSearch>
+				<BitrixFilterAllowed>true</BitrixFilterAllowed>
+				<BitrixUserType>DateTime</BitrixUserType>
+				<BitrixRequired>false</BitrixRequired>
+			</Property>
+			<Property>
+				<Id>76</Id>
+				<Title>Anlage</Title>
+				<Multiple>true</Multiple>
+				<BitrixSort>900</BitrixSort>
+				<BitrixCode>TaskFiles</BitrixCode>
+				<BitrixDefaultValue></BitrixDefaultValue>
+				<BitrixPropertyType>F</BitrixPropertyType>
+				<BitrixRows>10</BitrixRows>
+				<BitrixColumns>60</BitrixColumns>
+				<BitrixListType>L</BitrixListType>
+				<BitrixFileType>jpg, gif, bmp, png, jpeg</BitrixFileType>
+				<BitrixNumberOfInputs>5</BitrixNumberOfInputs>
+				<BitrixLinkedInformationBlock></BitrixLinkedInformationBlock>
+				<BitrixWithDescription>false</BitrixWithDescription>
+				<BitrixUsedInSearch>true</BitrixUsedInSearch>
+				<BitrixFilterAllowed>true</BitrixFilterAllowed>
+				<BitrixUserType></BitrixUserType>
+				<BitrixRequired>false</BitrixRequired>
+			</Property>
+			<Property>
+				<Id>77</Id>
+				<Title>Arbeitsstatusbericht</Title>
+				<Multiple>false</Multiple>
+				<BitrixSort>1000</BitrixSort>
+				<BitrixCode>TaskReport</BitrixCode>
+				<BitrixDefaultValue></BitrixDefaultValue>
+				<BitrixPropertyType>S</BitrixPropertyType>
+				<BitrixRows>10</BitrixRows>
+				<BitrixColumns>60</BitrixColumns>
+				<BitrixListType>L</BitrixListType>
+				<BitrixFileType>jpg, gif, bmp, png, jpeg</BitrixFileType>
+				<BitrixNumberOfInputs>5</BitrixNumberOfInputs>
+				<BitrixLinkedInformationBlock></BitrixLinkedInformationBlock>
+				<BitrixWithDescription>false</BitrixWithDescription>
+				<BitrixUsedInSearch>true</BitrixUsedInSearch>
+				<BitrixFilterAllowed>true</BitrixFilterAllowed>
+				<BitrixUserType></BitrixUserType>
+				<BitrixRequired>false</BitrixRequired>
+			</Property>
+		</Properties>
+		<Sections>
+			<Section>
+				<Id>users_tasks</Id>
+				<Title>Anwenderaufgaben</Title>
+				<BitrixSort>500</BitrixSort>
+				<BitrixCode></BitrixCode>
+				<BitrixPicture></BitrixPicture>
+				<BitrixDetailPicture></BitrixDetailPicture>
+				<Sections>
+				</Sections>
+			</Section>
+		</Sections>
+	</Metadata>
+	<Catalog>
+		<Id>extranet_tasks</Id>
+		<MetadataId>extranet_tasks</MetadataId>
+		<Title>Aufgaben - Extranet</Title>
+		<BitrixCode>extranet_tasks</BitrixCode>
+		<BitrixSort>500</BitrixSort>
+		<BitrixListURL></BitrixListURL>
+		<BitrixDetailURL></BitrixDetailURL>
+		<BitrixSectionURL></BitrixSectionURL>
+		<BitrixPicture></BitrixPicture>
+		<BitrixIndexElements>false</BitrixIndexElements>
+		<BitrixIndexSections>false</BitrixIndexSections>
+		<BitrixWorkflow>false</BitrixWorkflow>
+		<BitrixLabels>
+			<BitrixLabel>
+				<Id>ELEMENT_NAME</Id>
+				<Value>Aufgabe</Value>
+			</BitrixLabel>
+			<BitrixLabel>
+				<Id>ELEMENTS_NAME</Id>
+				<Value>Aufgabe</Value>
+			</BitrixLabel>
+			<BitrixLabel>
+				<Id>ELEMENT_ADD</Id>
+				<Value>Neue Aufgabe</Value>
+			</BitrixLabel>
+			<BitrixLabel>
+				<Id>ELEMENT_EDIT</Id>
+				<Value>Aufgabe bearbeiten</Value>
+			</BitrixLabel>
+			<BitrixLabel>
+				<Id>ELEMENT_DELETE</Id>
+				<Value>Aufgabe löschen</Value>
+			</BitrixLabel>
+			<BitrixLabel>
+				<Id>SECTION_NAME</Id>
+				<Value>Kategorie</Value>
+			</BitrixLabel>
+			<BitrixLabel>
+				<Id>SECTIONS_NAME</Id>
+				<Value>Kategorien</Value>
+			</BitrixLabel>
+			<BitrixLabel>
+				<Id>SECTION_ADD</Id>
+				<Value>Neue Kategorie</Value>
+			</BitrixLabel>
+			<BitrixLabel>
+				<Id>SECTION_EDIT</Id>
+				<Value>Kategorie bearbeiten</Value>
+			</BitrixLabel>
+			<BitrixLabel>
+				<Id>SECTION_DELETE</Id>
+				<Value>Kategorie löschen</Value>
+			</BitrixLabel>
+		</BitrixLabels>
+		<Elements>
+		</Elements>
+	</Catalog>
+</CommerceInformation>

@@ -1,0 +1,3 @@
+<?
+$MESS["CRM_AUTOMATION_TRIGGER_RESOURCE_BOOKING_NAME"] = "Resource booked";
+?>

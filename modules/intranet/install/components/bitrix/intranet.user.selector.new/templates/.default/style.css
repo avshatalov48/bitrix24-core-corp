@@ -1,0 +1,11 @@
+input.intranet-hidden-input {display: none;}
+.intrantet-user-selector-tooltip {z-index: 4500 !important;}
+
+.finder-box .finder-box-item-icon,
+.finder-box .company-department-employee-icon {
+	display: none;
+}
+.finder-box.finder-box-multiple .finder-box-item-icon,
+.finder-box.finder-box-multiple .company-department-employee-icon {
+	display: block;
+}

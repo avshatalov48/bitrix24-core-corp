@@ -1,0 +1,34 @@
+<?
+$MESS["CRM_TRACKING_SOURCE_EDIT_TITLE"] = "Подключите %name% к сквозной аналитике";
+$MESS["CRM_TRACKING_SOURCE_EDIT_TEXT"] = "Получите отчет, который покажет сколько продаж приносят затраты на рекламу в %name% и насколько эффективно менеджеры обрабатывают входящие заявки.";
+$MESS["CRM_TRACKING_SOURCE_EDIT_AUTH"] = "Авторизируйтесь в %name%";
+$MESS["CRM_TRACKING_SOURCE_EDIT_AUTH_DESC"] = "Используйте для авторизации аккаунт %name%";
+$MESS["CRM_TRACKING_SOURCE_EDIT_UNAVAILABLE"] = "Настройка рекламного кабинета и получение расходов будет доступно в ближайшее время.";
+$MESS["CRM_TRACKING_SOURCE_EDIT_CONNECTED"] = "%name% подключен";
+$MESS["CRM_TRACKING_SOURCE_EDIT_CONNECT"] = "Подключить";
+$MESS["CRM_TRACKING_SOURCE_EDIT_DISCONNECT"] = "Отключить";
+$MESS["CRM_TRACKING_SOURCE_EDIT_CONNECTED"] = "Источник \"%name%\" подключен";
+$MESS["CRM_TRACKING_SOURCE_EDIT_AUTO_CONFIGURED"] = "Работает в автоматическом режиме и не требует настройки.";
+$MESS["CRM_TRACKING_SOURCE_EDIT_DESC_ORGANIC1"] = "Прочий трафик - это все клиенты, которые не были отнесены к настроенным источникам. Работает в автоматическом режиме и не требует настройки. Статистику можно увидеть в отчете.";
+$MESS["CRM_TRACKING_SOURCE_EDIT_UTM_NAME"] = "Название источника";
+$MESS["CRM_TRACKING_SOURCE_EDIT_UTM_NAME_DESC"] = "Будет отображаться в отчетах. Пример: Рассылки, Радио, Пост Instagram";
+$MESS["CRM_TRACKING_SOURCE_EDIT_UTM_TAGS"] = "UTM-метки";
+$MESS["CRM_TRACKING_SOURCE_EDIT_UTM_SOURCE_DESC"] = "Источник перехода. Например: email, newsletter, banner, instagram";
+$MESS["CRM_TRACKING_SOURCE_EDIT_ICON_COLOR"] = "Выбор цвета";
+$MESS["CRM_TRACKING_SOURCE_EDIT_ICON_COLOR_CHOOSE"] = "Выбрать другой";
+$MESS["CRM_TRACKING_SOURCE_EDIT_ARCHIVE"] = "В архив";
+$MESS["CRM_TRACKING_SOURCE_EDIT_REPLACE_TITLE"] = "Телефон и почта";
+$MESS["CRM_TRACKING_SOURCE_EDIT_REPLACE_EXISTED"] = "На настоящий момент у вас указаны следующие контактные данные:";
+$MESS["CRM_TRACKING_SOURCE_EDIT_REPLACE_PHONE"] = "Телефоны";
+$MESS["CRM_TRACKING_SOURCE_EDIT_REPLACE_EMAIL"] = "Почта";
+$MESS["CRM_TRACKING_SOURCE_EDIT_REPLACE_NEW"] = "Текущие контактные данные будут подменены на:";
+$MESS["CRM_TRACKING_SOURCE_EDIT_REPLACE_NOT_SETUP"] = "не настроено";
+$MESS["CRM_TRACKING_SOURCE_EDIT_REPLACE_SETUP"] = "Настроить";
+$MESS["CRM_TRACKING_SOURCE_EDIT_REPLACE_BUTTON"] = "Подменить мои контактные данные";
+$MESS["CRM_TRACKING_SOURCE_EDIT_LOADING"] = "Загрузка";
+$MESS["CRM_TRACKING_SOURCE_EDIT_AD_ACCOUNT"] = "Рекламный кабинет";
+$MESS["CRM_TRACKING_SOURCE_EDIT_REF_DOMAIN_NAME"] = "Реферальные домены";
+$MESS["CRM_TRACKING_SOURCE_EDIT_REF_DOMAIN_ADD"] = "добавить домен";
+$MESS["CRM_TRACKING_SOURCE_EDIT_REF_DOMAIN_HINT"] = "Лиды и сделки, созданные после перехода с этих доменов, будут учитываться для этого источника.";
+$MESS["CRM_TRACKING_SOURCE_EDIT_EXPENSES"] = "Расходы";
+?>

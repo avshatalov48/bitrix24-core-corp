@@ -1,0 +1,12 @@
+.crm-exch1c-section-container {border: 1px solid black; padding: 4px 4px 4px 4px; margin-top: 10px; font-size: 12px;}
+.crm-exch1c-section-title {font-size: 14px; font-weight: bold; padding-bottom: 20px;}
+.crm-exch1c-section-conn-container {white-space: nowrap;}
+.crm-exch1c-section-conn-block {display: inline-block; white-space: normal; vertical-align: middle;}
+/*.crm-exch1c-block-left {width: 100px; text-align: center;}*/
+.crm-exch1c-block-right {width: 630px;}
+/*.crm-exch1c-nophoto {font-size: 16px; color: #808080;}*/
+/*.crm-exch1c-section-container table th div {width: 160px; height: 26px;text-align: left; margin-left: 2px;}*/
+/*.crm-exch1c-section-container table td div {width: 160px; text-align: left; margin-left: 2px;}*/
+.crm-exch1c-before-table-margin {margin: 0 0 10px 10px;}
+/*.crm-exch1c-submit-container {text-align: right;}*/
+.crm-exch1c-settings div {text-align: left; margin: 0 0 10px 10px;}

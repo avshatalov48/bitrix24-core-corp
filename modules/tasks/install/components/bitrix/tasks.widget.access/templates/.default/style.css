@@ -1,0 +1,18 @@
+.tasks-rights-footer {
+  margin: 10px 0 0 7px;
+}
+.tasks-rights-user-link {
+  display: inline-block;
+  max-width: 250px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tasks-rights-table {
+  width: 550px;
+}
+.tasks-rights-table-gap-col {
+  width: 5%;
+}
+.tasks-rights-table-al-col {
+  width: 42%;
+}

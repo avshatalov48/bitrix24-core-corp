@@ -1,0 +1,16 @@
+.pagetitle-below {
+	display: -webkit-box!important;
+	display: -ms-flexbox!important;
+	display: flex!important;
+	-webkit-box-align: center;
+	-ms-flex-align: center;
+	align-items: center;
+	padding: 0 5px 0 13px;
+	min-width: 891px;
+	border-top: 1px solid #dce2e6;
+	box-sizing: border-box;
+}
+.crm-activity-todo-items {
+    max-height: 300px;
+    overflow: auto;
+}

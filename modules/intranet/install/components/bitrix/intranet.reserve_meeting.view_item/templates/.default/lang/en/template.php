@@ -1,0 +1,34 @@
+<?
+$MESS ['INTASK_C29T_FLOOR'] = "Floor";
+$MESS ['INTASK_C29T_PLACE'] = "Capacity";
+$MESS ['INTASK_C29T_PHONE'] = "Phone";
+$MESS ['INTASK_C29T_DATE_FROM'] = "Start date";
+$MESS ['INTASK_C29T_DATE_TO'] = "End date";
+$MESS ['INTASK_C29T_AUTHOR'] = "Booking user";
+$MESS ['INTASK_C29T_FROM_TIME'] = "Start time";
+$MESS ['INTASK_C29T_DURATION'] = "Duration";
+$MESS ['INTASK_C29T_HOURS'] = "hours";
+$MESS ['INTASK_C29T_TO_TIME'] = "End time";
+$MESS ['INTASK_C29T_NAME'] = "Name";
+$MESS ['INTASK_C29T_PERSONS'] = "Persons";
+$MESS ['INTASK_C29T_TYPE'] = "Type of Meeting";
+$MESS ['INTASK_C29T_DESCR'] = "Description";
+$MESS ['INTASK_C29T_PREP'] = "Meeting Room Preparation";
+$MESS ['INTASK_C29T_SAVE'] = "Book";
+$MESS ['INTASK_C29T_YES'] = "Yes";
+$MESS ['INTASK_C29T_NO'] = "No";
+$MESS ['INTASK_C29T_REGULAR'] = "Repeat";
+$MESS ['INTASK_C29T_REGULARITY_NONE'] = "Never";
+$MESS ['INTASK_C29T_REGULARITY_UNTIL'] = "repeat until";
+$MESS ['INTASK_C29T_RWD_1'] = "Monday";
+$MESS ['INTASK_C29T_RWD_2'] = "Tuesday";
+$MESS ['INTASK_C29T_RWD_3'] = "Wednesday";
+$MESS ['INTASK_C29T_RWD_4'] = "Thursday";
+$MESS ['INTASK_C29T_RWD_5'] = "Friday";
+$MESS ['INTASK_C29T_RWD_6'] = "Saturday";
+$MESS ['INTASK_C29T_RWD_7'] = "Sunday";
+$MESS ['INTASK_C29T_TRANSS_DAILY'] = "every #VAL# day";
+$MESS ['INTASK_C29T_TRANSS_WEEKLY'] = "every #VAL# week";
+$MESS ['INTASK_C29T_TRANSS_MONTHLY'] = "every #VAL# month";
+$MESS ['INTASK_C29T_TRANSS_YEARLY'] = "every #VAL# year";
+?>

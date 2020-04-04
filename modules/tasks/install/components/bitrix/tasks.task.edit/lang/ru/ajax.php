@@ -1,0 +1,3 @@
+<?php
+$MESS['TASKS_WARNING_RESPONSIBLE_NOT_IN_TASK_GROUP'] = '#FORMATTED_USER_NAME# (ответственный) не является членом группы "#GROUP_NAME#".';
+$MESS['TASKS_WARNING_RESPONSIBLE_IS_ABSENCE'] = '#FORMATTED_USER_NAME# (ответственный) отсутствует с #DATE_FROM# по #DATE_TO# (#ABSCENCE_REASON#).';

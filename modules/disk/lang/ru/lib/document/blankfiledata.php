@@ -1,0 +1,8 @@
+<?
+$MESS["DISK_BLANK_FILE_DATA_TYPE_DOCX"] = "Документ";
+$MESS["DISK_BLANK_FILE_DATA_TYPE_XLSX"] = "Таблица";
+$MESS["DISK_BLANK_FILE_DATA_TYPE_PPTX"] = "Презентация";
+$MESS["DISK_BLANK_FILE_DATA_NEW_FILE_DOCX"] = "Новый документ";
+$MESS["DISK_BLANK_FILE_DATA_NEW_FILE_XLSX"] = "Новая таблица";
+$MESS["DISK_BLANK_FILE_DATA_NEW_FILE_PPTX"] = "Новая презентация";
+?>

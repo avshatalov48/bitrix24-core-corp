@@ -1,0 +1,724 @@
+.crm-recur-info-panel-title input {
+	width: 100%;
+	line-height: 32px;
+	height: 32px;
+	border: none;
+	outline: none;
+	font-size: 19px;
+	/*!*color: rgba(0,0,0,0.64);*!*/
+	font-family: 'OpenSans-Regular', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+
+.crm-recur-options-repeat{
+	opacity: 1;
+	-webkit-transition: opacity 0.3s linear;
+	transition: opacity .3s linear;
+	display: block;
+}
+
+.crm-recur-invisible {
+	display: none !important;
+	opacity: 0;
+	height: 0;
+}
+.crm-recur-info-panel-important label {
+	position: relative;
+	display: inline-block;
+	vertical-align: middle;
+	font-size: 13px;
+	color: rgba(0,0,0,0.5);
+	padding-right: 20px;
+}
+
+.crm-recur-replication-params.nodisplay {
+	display: none;
+}
+
+.crm-recur-info-panel-important input {
+	vertical-align: middle;
+	display: inline-block;
+}
+
+.crm-recur-info-panel-important label:after {
+	content: '';
+	position: absolute;
+	right: 0;
+	top: 0;
+	bottom: 0;
+	margin: auto;
+	-webkit-box-shadow: 0 1px 0 #ffffff;
+	background: url(/bitrix/js/tasks/css/images/media.png) no-repeat 0 -103px;
+	width: 12px;
+	height: 16px;
+}
+
+.crm-recur-info-panel-important input[type=checkbox]:checked + label:after {
+	background-position: 0 -85px;
+}
+
+.crm-recur-options-subtitle span {
+	cursor: pointer;
+}
+
+.crm-recur-options-resolved .crm-recur-options-subtitle span:before {
+	content: '';
+	height: 0;
+	border: 3px solid transparent;
+	border-left: 3px solid #c6cacf;
+	border-right: none;
+	display: inline-block;
+	vertical-align: middle;
+	margin: -2px 0 0 2px;
+	width: 4px;
+}
+
+.crm-recur-options-resolved-open .crm-recur-options-subtitle span:before {
+	content: '';
+	width: 0;
+	height: 0;
+	border: 3px solid transparent;
+	border-top: 3px solid #c6cacf;
+	border-bottom: none;
+	display: inline-block;
+	vertical-align: middle;
+	margin: -3px 3px 0 0;
+}
+
+.crm-recur-options-resolved .crm-recur-options-field {
+	display: none;
+}
+
+.crm-recur-options-resolved-open .crm-recur-options-field {
+	display: block;
+}
+
+.crm-recur-options-field {
+	position: relative;
+	margin-bottom: 1px;
+	overflow: hidden;
+}
+
+.crm-recur-options-checkbox {
+	margin: 3px 0 1px 8px;
+}
+
+.mode-unit-selected-days [data-unit="days"],
+.mode-unit-selected-hours [data-unit="hours"],
+.mode-unit-selected-mins [data-unit="mins"] {
+	color: #535c69;
+	font-weight: bold;
+	border-bottom: 1px dashed transparent;
+	cursor: default;
+}
+
+.crm-recur-options-destination .crm-recur-option-inp-del:after {
+	width: 6px;
+	height: 6px;
+	background: url(/bitrix/js/tasks/css/images/media.png) no-repeat -2px -17px;
+}
+
+.crm-recur-options-destination-wrap .crm-recur-options-date {
+	width: 100%;
+	height: 38px;
+	border: none;
+	position: absolute;
+	margin: -4px -5px 0;
+}
+
+.crm-recur-options-destination-wrap .crm-recur-options-inp {
+	height: 30px;
+	line-height: 30px;
+}
+
+.crm-recur-options-item-destination .crm-recur-options-item-open-inner {
+	display: block;
+	overflow: hidden;
+}
+
+.crm-recur-option-inp-del {
+	width: 30px;
+	height: 30px;
+	margin: auto;
+	z-index: 1;
+	cursor: pointer;
+	display: inline-block;
+	vertical-align: middle;
+	position: relative;
+	margin-right: -13px;
+}
+
+.crm-recur-option-inp-del:after {
+	content: '';
+	background: url(/bitrix/js/tasks/css/images/media.png) no-repeat 0 -15px;
+	width: 10px;
+	height: 10px;
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	margin: auto;
+	opacity: 0.2;
+}
+
+.crm-recur-option-inp-del:hover:after {
+	opacity: 0.4;
+}
+
+.crm-recur-options-crm-recur-other thead td {
+	padding: 10px 5px;
+	font-size: 13px;
+	color: #535c69;
+}
+
+.crm-recur-options-crm-recur-other td:first-child {
+	position: relative;
+	white-space: normal;
+}
+
+.crm-recur-options-crm-recur-other td {
+	border-bottom: 1px solid #e6e9ec;
+	padding: 7px 1px;
+	white-space: nowrap;
+}
+
+.crm-recur-options-crm-recur-other td:nth-of-type(5) .crm-recur-option-fn {
+	max-width: 245px;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.crm-recur-options-crm-recur-other tbody td:last-child .crm-recur-option-fn {
+	padding-left: 10px;
+	border-left: 1px solid #dfe4e6;
+	line-height: 48px;
+}
+
+.crm-recur-options-crm-recur-other .crm-recur-options-inp-container {
+	width: 135px;
+}
+
+.crm-recur-options-crm-recur-other .crm-recur-options-inp-container.crm-recur-options-inp-int {
+	width: 58px;
+}
+
+.crm-recur-options-crm-recur-other .crm-recur-option-fn {
+	margin-left: 5px;
+}
+
+.crm-recur-options-connect td {
+	position: relative;
+}
+
+.crm-recur-options-connect td:first-child {
+	vertical-align: top;
+}
+
+.crm-recur-options-connect .crm-recur-field-label {
+	padding-top: 10px;
+}
+
+.crm-recur-options-item-timeman .crm-recur-field-label {
+	margin: 12px 5px 12px 0;
+}
+
+.crm-recur-options-inp-container {
+	position: relative;
+	width: 200px;
+	height: 36px;
+	line-height: 36px;
+	background: #fff;
+	border: 1px solid #c6cdd3;
+	font-size: 15px;
+	display: inline-block;
+	vertical-align: middle;
+	border-radius: 2px;
+	margin-right:5px;
+}
+
+.crm-recur-options-inp-container.disabled {
+	opacity: 0.35;
+}
+
+.crm-recur-options-inp-container-period {
+	width: 130px;
+}
+
+.crm-recur-info-head-panel-priority span {
+	border-bottom: 1px dashed;
+	position: relative;
+	margin-left: 18px;
+	cursor: pointer;
+}
+
+.crm-recur-info-head-panel-priority span:hover {
+	border-bottom: 1px dashed transparent;
+}
+
+.crm-recur-info-head-panel-priority span:before {
+	content: '';
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	background: #a2b1ba;
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	left: -13px;
+	margin: auto;
+}
+
+.crm-recur-options-field-duration .crm-recur-options-inp-container {
+	width: 133px;
+}
+
+.crm-recur-options-radio {
+	display: inline-block;
+	vertical-align: middle;
+}
+
+.crm-recur-field-label {
+	display: inline-block;
+	font-size: 14px;
+	color: #535c69;
+	vertical-align: middle;
+	line-height: 18px;
+	margin-right: 5px;
+}
+
+.crm-recur-options-settings-block a {
+	margin: 2px 0 0 6px;
+	vertical-align: middle;
+	display: inline-block;
+	border-bottom: 1px solid transparent;
+}
+
+.crm-recur-options-settings-block a:hover {
+	border-bottom: 1px solid;
+}
+
+.crm-recur-options-checkbox + .crm-recur-field-label {
+	overflow: hidden;
+	display: block;
+}
+
+.crm-recur-options-checkbox:checked + .crm-recur-field-label {
+	text-decoration: line-through;
+}
+
+.crm-recur-options-param .crm-recur-field-label {
+	display: inline-block;
+	line-height: 38px;
+	vertical-align: middle;
+}
+
+.crm-recur-options-param .crm-recur-options-checkbox {
+	margin: 13px 8px 12px 0;
+}
+
+.crm-recur-options-param .crm-recur-options-inp-container {
+	margin: 0;
+}
+
+.crm-recur-options-param .crm-recur-options-field {
+	margin: -6px 0;
+}
+
+.crm-recur-options-param .crm-recur-options-inp-container {
+	width: 72px;
+}
+
+.crm-recur-field-label-br {
+	display: block;
+	margin: 5px 0 5px;
+}
+
+.crm-recur-options-field-ready .crm-recur-field-label {
+	text-decoration: line-through;
+}
+
+.crm-recur-options-day-container {
+	line-height: 38px;
+	background: #eeeff1;
+	display: inline-block;
+	border-radius: 2px;
+}
+
+.crm-recur-options-day {
+	display: inline-block;
+	padding: 0 17px;
+}
+
+.crm-recur-options-day input {
+	margin: 0;
+	vertical-align: middle;
+}
+
+.crm-recur-options-date .crm-recur-options-inp {
+	padding-right: 32px;
+}
+
+.crm-recur-options-date:after {
+	content: '';
+	position: absolute;
+	width: 18px;
+	height: 15px;
+	background: url(/bitrix/js/tasks/css/images/media.png) no-repeat 0 -269px;
+	right: 6px;
+	top: 0;
+	bottom: 0;
+	margin: auto;
+	z-index: 2;
+	opacity: 0.7;
+}
+
+.crm-recur-options-inp {
+	position: absolute;
+	line-height: 36px;
+	font-size: 15px;
+	border: none;
+	top: 0;
+	bottom: 0;
+	width: 100%;
+	box-sizing: border-box;
+	margin: auto;
+	padding: 0 8px;
+	background: transparent;
+	z-index: 2;
+	outline: none;
+	color: #535c69;
+	height: 36px;
+}
+
+select.crm-recur-options-inp {
+	padding: 0 4px;
+}
+
+.crm-recur-options-date .crm-recur-option-inp-del {
+	position: absolute;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	margin: auto;
+	z-index: 2;
+	background: #fff;
+}
+
+.crm-recur-options-inp-container-time .crm-recur-options-inp-container {
+	width: 51px;
+	margin: 0 5px;
+}
+
+.crm-recur-option-fn {
+	display: inline-block;
+	vertical-align: middle;
+	font-size: 14px;
+	color: #535c69;
+	margin-right: 5px;
+	line-height: 38px;
+}
+
+.crm-recur-options-inp-int {
+	width: 50px;
+}
+
+.crm-recur-options-item-open-inner {
+	display: inline-block;
+	vertical-align: middle;
+}
+
+.crm-recur-options-item-open .crm-recur-options-item-open-inner {
+	vertical-align: top;
+}
+
+.crm-recur-field-label-repeat {
+	padding: 0 0 12px 0;
+}
+
+.crm-recur-options-field-fn{
+	font-size: 14px;
+	color: #5e6675;
+	background: #ebf5b5;
+	line-height: 17px;
+	padding: 11px 15px;
+	position: relative;
+	max-width: 585px;
+}
+
+.crm-recur-options-field-fn {
+	margin-top: 13px;
+}
+.crm-recur-options-field-fn span {
+	display: inline-block;
+	overflow: hidden;
+}
+.crm-recur-options-hint-wrapper {
+	margin-left:25px;
+}
+.crm-recur-options-field-ok {
+	background: #d5f9af;
+}
+
+.crm-recur-options-field-norm{
+	background: #ffeca8;
+}
+
+.crm-recur-options-field-ok:before {
+	content: '';
+	width: 15px;
+	height: 14px;
+	background: url(/bitrix/js/tasks/css/images/media.png) no-repeat 0 -251px;
+	float: left;
+	margin-right: 10px;
+	margin-top: 2px;
+}
+
+.crm-recur-options-field-left.crm-recur-options-field-nol {
+	margin-top: 21px;
+	margin-right: 0;
+}
+
+.crm-recur-options-field-nol {
+	margin: 24px 0 15px 0;
+}
+
+.crm-recur-options-repeat .crm-recur-options-field-nol .crm-recur-options-field {
+	display: block;
+	padding: 7px 12px 7px 7px;
+	background: #edf1f2;
+	margin: 0 1px 3px 0;
+}
+
+.crm-recur-options-field-nol .crm-recur-options-field .crm-recur-field-label {
+	line-height: 38px;
+	margin-right: 0;
+}
+
+@media only screen and (max-width: 1200px) and (min-width: 0) {
+	.webform-small-button-text span {
+		display: none;
+	}
+	.crm-recur-options-crm-recur-other td:first-child {
+		white-space: normal;
+		max-width: 170px;
+	}
+}
+
+@media only screen and (min-width: 1300px) {
+	.crm-recur-options-crm-recur-other td {
+		padding: 7px 7px;
+	}
+	.crm-recur-options-crm-recur-other .crm-recur-options-inp-container {
+		width: 150px;
+	}
+}
+
+.mode-replication-off .crm-recur-options-repeat {
+	display: none;
+}
+
+.crm-recur-repeat-warning {
+	display: none;
+}
+
+.mode-replication-off .crm-recur-repeat-warning {
+	display: block;
+}
+
+.crm-recur-options-date.t-empty .crm-recur-option-inp-del {
+	display: none;
+}
+
+.crm-recur-options-destination-wrap.readonly .crm-recur-options-destination a {
+	color: #F8F9FA;
+}
+
+.crm-recur-option-tab-container {
+	background: #eeeff1;
+	border-radius: 2px;
+	font-size: 0;
+	display: inline-block;
+}
+
+.crm-recur-option-tab {
+	display: inline-block;
+	line-height: 35px;
+	background: #eeeff1;
+	padding: 0 17px;
+	border-radius: 2px;
+	font-size: 14px;
+	color: #535c69;
+	cursor: pointer;
+
+	-webkit-transition: background 0.3s linear;
+	transition: background 0.3s linear;
+}
+.crm-recur-option-tab.active-recur
+{
+	background: #bceefc;
+}
+.crm-recur-replication-panel {
+	-webkit-transition: height 0.2s linear;
+	transition: height 0.2s linear;
+	overflow: hidden;
+}
+
+.crm-recur-options-sheduling-block .crm-recur-options-field-left {
+	display: inline-block;
+	vertical-align: top;
+	margin: 0 30px 5px 0;
+}
+
+.crm-recur-options-repeat .crm-recur-options-field {
+	margin: 0 0 10px 0;
+}
+
+.crm-recur-options-repeat .crm-recur-options-field.crm-recur-options-field-nol {
+	display: table;
+}
+
+.crm-recur-options-repeat .crm-recur-replication-panel .crm-recur-options-field {
+	padding: 0 0 10px 0;
+	margin: 0;
+}
+
+.crm-recur-options-repeat .crm-recur-options-field-left {
+	display: inline-block;
+	vertical-align: top;
+	margin: 0 15px 2px 0;
+}
+
+.crm-recur-main-clock-monkeyfix
+{
+	visibility: hidden;
+	height: 0;
+	width: 0;
+	overflow: hidden;
+	display: inline-block;
+	margin-top: -3px;
+	margin-left: -7px;
+}
+
+.crm-recur-options-inp-container-timer:after {
+	content: '';
+	position: absolute;
+	width: 18px;
+	height: 15px;
+	background: url(/bitrix/js/tasks/css/images/media.png) no-repeat 0 -315px;
+	right: 6px;
+	top: 0;
+	bottom: 0;
+	margin: auto;
+	z-index: 1;
+	opacity: 0.7;
+}
+
+.crm-recur-options-timezone-indicator {
+	background: url(/bitrix/js/tasks/css/images/media.png) no-repeat 0 -330px;
+	display: inline-block;
+	vertical-align: middle;
+	margin-left: 5px;
+	margin-top: 0;
+	width: 18px;
+	height: 19px;
+	font-size: 0;
+	cursor: help;
+}
+.crm-recur-options-client-email-list{
+	display: inline-block;
+	font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
+	font-size:13px;
+	color:#0b66c3;
+	line-height:14px;
+	text-align:left;
+	vertical-align: middle;
+	border-bottom:dashed 1px;
+	cursor: pointer;
+}
+
+.crm-recur-email-block, .crm-recur-email-change{
+	position: relative;
+}
+.crm-recur-options-client-email-list.selected{
+	color:#0b66c3;
+	font-weight: bold;
+}
+.crm-recur-template-field
+{
+	margin: 10px 0 10px 33px;
+}
+.crm-recur-custom-radio
+{
+	background: #fff;
+	border: 1px solid rgba(178, 179, 181, 0.73);
+	display: inline-block;
+	width: 13px;
+	height: 13px;
+	border-radius: 50%;
+	vertical-align: middle;
+	margin: 0 6px 0 11px;
+	position: relative;
+	cursor: pointer;
+}
+.crm-recur-options-radio:checked + .crm-recur-custom-radio
+{
+	background: #3b99fc;
+	border: none;
+	margin: 0 7px 0 12px;
+}
+.crm-recur-options-radio:checked + .crm-recur-custom-radio:after
+{
+	position: absolute;
+	content: "";
+	width: 3px;
+	height: 3px;
+	border-radius: 50%;
+	background: #ffffff;
+	left: 37.5%;
+	top: 37.5%;
+}
+.crm-recur-custom-checkbox
+{
+	background: #fff;
+	border: 1px solid rgba(178, 179, 181, 0.73);
+	display: inline-block;
+	width: 12px;
+	height: 12px;
+	border-radius: 20%;
+	vertical-align: middle;
+	margin: -2px 4px 0 10px;
+	position: relative;
+	cursor: pointer;
+	-ms-user-select: none;
+	-moz-user-select: none;
+	-webkit-user-select: none;
+}
+.crm-recur-options-checkbox:checked  + .crm-recur-custom-checkbox
+{
+	background: #3b99fc;
+	border: none;
+	margin: -2px 5px 0 11px;
+}
+.crm-recur-options-checkbox:checked + .crm-recur-custom-checkbox:after
+{
+	position: absolute;
+	content: "";
+	width: 6px;
+	height: 6px;
+	left: 24%;
+	top: 24%;
+	background-image: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA3MCA3MCI+PHBhdGggZD0iTTI2LjQ3NCA3MGE2Ljk3MiA2Ljk3MiAwIDAgMS01LjU1Ny0yLjc2NEwzLjA1IDQzLjY0YTYuOTcgNi45NyAwIDAgMSAxMS4xMTYtOC40MTRsMTEuNzUgMTUuNTE3TDU1LjQ3NSAzLjI4NWE2Ljk3NyA2Ljk3NyAwIDAgMSA5LjYwNC0yLjIzMiA2Ljk3IDYuOTcgMCAwIDEgMi4yMyA5LjYwMmwtMzQuOTE2IDU2LjA2QTYuOTY3IDYuOTY3IDAgMCAxIDI2LjQ3NCA3MHoiIGZpbGw9IiNmZmZmZmYiLz48L3N2Zz4=);
+}
+.crm-recur-checkbox-blocked{
+	opacity: 0.25;
+}
+.crm-recur-checkbox-blocked-image{
+	cursor: pointer;
+	position: relative;
+	bottom: -1px;
+}
+#crm-recurring-empty-owner-email.errortext{
+	color:red;
+	margin: 10px;
+}

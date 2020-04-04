@@ -1,0 +1,31 @@
+<?
+$MESS["SP_LIST_FIELD_NAME"] = "Name";
+$MESS["SP_LIST_FIELD_SORT"] = "Sorting";
+$MESS["SP_LIST_FIELD_ACTIVE_FROM"] = "Active From";
+$MESS["SP_LIST_FIELD_ACTIVE_TO"] = "Active Until";
+$MESS["SP_LIST_FIELD_PREVIEW_PICTURE"] = "Preview Image";
+$MESS["SP_LIST_FIELD_PREVIEW_TEXT"] = "Preview Text";
+$MESS["SP_LIST_FIELD_DETAIL_PICTURE"] = "Detailed Picture";
+$MESS["SP_LIST_FIELD_DETAIL_TEXT"] = "Detailed Text";
+$MESS["SP_LIST_FIELD_DATE_CREATE"] = "Created On";
+$MESS["SP_LIST_FIELD_CREATED_BY"] = "Created By";
+$MESS["SP_LIST_FIELD_TIMESTAMP_X"] = "Modified On";
+$MESS["SP_LIST_FIELD_MODIFIED_BY"] = "Modified By";
+$MESS["SP_LIST_FIELD_CREATE_NONE"] = "(select a field type)";
+$MESS["SP_LIST_FIELD_S"] = "String";
+$MESS["SP_LIST_FIELD_N"] = "Number";
+$MESS["SP_LIST_FIELD_L"] = "List";
+$MESS["SP_LIST_FIELD_F"] = "File";
+$MESS["SP_LIST_FIELD_G"] = "Bind To Sections";
+$MESS["SP_LIST_FIELD_E"] = "Bind To Elements";
+$MESS["SP_IGNORE"] = "(not specified)";
+$MESS["SP_ERROR_WRONG_IBLOCK_ID"] = "Invalid information block.";
+$MESS["SP_ERROR_WRONG_SP_LIST_ID"] = "Invalid list ID.";
+$MESS["SP_ERROR_IBLOCK_EXISTS"] = "The information block is already linked to a SharePoint list.";
+$MESS["SP_ERROR_LIST_EXISTS"] = "The SharePoint list is already linked to an information block.";
+$MESS["SP_ERROR_WRONG_URL"] = "Invalid SharePoint server URL.";
+$MESS["SP_ERROR_MODULE_NOT_INSTALLED"] = "The module is not installed.";
+$MESS["SP_ERROR_CLASS_NOT_EXISTS"] = "The handler class does not exist.";
+$MESS["SP_ERROR_MAX_ERRORS"] = "Exceeded maximum possible service errors.";
+$MESS["SP_ERROR_METHOD_NOT_EXISTS"] = "The client #CLASS# does not support the method #METHOD#.";
+?>

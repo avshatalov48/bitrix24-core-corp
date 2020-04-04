@@ -1,0 +1,8 @@
+<?
+$MESS['LA_CURRENCY_RUB'] = 'Rublo';
+$MESS['LA_CURRENCY_EUR'] = 'Euro';
+$MESS['LA_CURRENCY_USD'] = 'US Dolar ';
+$MESS['LA_CURRENCY_UAH'] = 'Grivna';
+$MESS['LA_CURRENCY_RUB_FORMAT'] = '# rub';
+$MESS['LA_CURRENCY_UAH_FORMAT'] = '# uah';
+?>

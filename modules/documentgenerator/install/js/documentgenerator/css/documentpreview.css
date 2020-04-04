@@ -1,0 +1,14 @@
+.popup-window-button.ui-btn {
+	box-shadow: none;
+}
+
+.bx-popup-documentgenerator-popup .popup-window-content {
+	color: #333;
+	padding-bottom: 0;
+}
+
+.bx-popup-documentgenerator-popup-content-text {
+	padding-bottom: 20px;
+	display: block;
+	border-bottom: 1px solid #eff1f3;
+}

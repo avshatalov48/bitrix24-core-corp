@@ -1,0 +1,48 @@
+.task-quick-info { font-size:12px; font-family:Arial, Helvetica,sans-serif; color:#000;  padding:3px 6px 0 4px;  }
+.task-quick-info-box { border-top:1px solid #e8e8e8; overflow:hidden; padding:0 5px 7px; zoom:1; }
+.task-quick-info-box-title { padding-left: 0; width:385px; border: 0 none;}
+.task-quick-info-title-label { color:#6B6B6B; font-size:12px; vertical-align:bottom; float: left; }
+.task-quick-info-title { font-size:13px; padding-left:4px; overflow: hidden; }
+.task-quick-info-box-files { overflow: hidden; display: none; padding-top: 7px; padding-bottom: 4px; }
+.task-quick-info-files-label { float: left; color:#6b6b6b; margin-right: 5px; }
+.task-quick-info-files-items { overflow: hidden; width: 300px;  white-space: normal;}
+.task-quick-info-files-item { white-space: nowrap; display: inline-block; margin-right: 10px; margin-bottom: 3px; }
+.task-quick-info-files-item .task-quick-info-files-name { color:#333; text-decoration:underline; outline: none; }
+.task-quick-info-files-size { color:#777; font-size: 11px; vertical-align: bottom;}
+
+.task-quick-info-layout { width: 100%; }
+.task-quick-info-left-column {padding:0 20px 0 0;  line-height: 18px; vertical-align: top; white-space: nowrap;}
+.task-quick-info-right-column { padding: 0; text-align:right; white-space: nowrap; line-height: 18px; vertical-align: top; }
+
+.task-quick-info-fields, .task-quick-info-values {display:inline-block; margin-top:6px; text-align:left; vertical-align:top; overflow:hidden;}
+
+.task-quick-info-field-name {  display:block; padding-right:5px; white-space:nowrap; color:#6b6b6b;}
+.task-quick-info-field-value {  display:block; padding-right:5px; white-space:nowrap;}
+.task-quick-info-values .task-quick-info-field-name, .task-quick-info-values .task-quick-info-field-value { padding-right:0 }
+
+.task-quick-info-field-value .task-quick-info-user-link {
+	display:block;
+	max-width:200px;
+	overflow:hidden;
+	text-overflow:ellipsis;
+	color:#333;
+	text-decoration:underline;
+	overflow:hidden;
+}
+
+.task-quick-info-date-year {color:#777; }
+.task-quick-info-box-bottom {text-align:right; padding:6px 0 6px; border-top: 1px solid #E8E8E8; }
+.task-quick-info-box-bottom .task-quick-info-detail-link {color:#294faf; font-size:11px; text-decoration:underline; cursor: pointer; }
+
+.task-quick-info-priority-0, .task-quick-info-priority-low { color: #4d4d4d; }
+.task-quick-info-priority-1, .task-quick-info-priority-middle { color: #25990a;}
+.task-quick-info-priority-2, .task-quick-info-priority-high { color: #ea1e1e; }
+
+.task-quick-info-status-in-progress { color: #000000; }
+.task-quick-info-status-accepted { color: #000000; }
+.task-quick-info-status-completed { color: #888888; }
+.task-quick-info-status-delayed { color: #888888; }
+.task-quick-info-status-new { color: #398C1B; }
+.task-quick-info-status-overdue, .task-quick-info-status-overdue .task-quick-info-date-year { color: #CC2020; }
+.task-quick-info-status-waiting { color: #DD7D00; }
+.task-quick-info-status-declined { color: #DD7D00; }

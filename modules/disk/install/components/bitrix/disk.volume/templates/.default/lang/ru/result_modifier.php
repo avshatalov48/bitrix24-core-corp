@@ -1,0 +1,23 @@
+<?
+$MESS["DISK_VOLUME_PAGE_TITLE"] = "Очистка места на диске";
+$MESS["DISK_VOLUME_MORE"] = "Подробнее";
+$MESS["DISK_VOLUME_OPEN"] = "Открыть";
+$MESS["DISK_VOLUME_USING_COUNT_NONE"] = "Нет связей";
+$MESS["DISK_VOLUME_USING_COUNT_END1"] = "связь";
+$MESS["DISK_VOLUME_USING_COUNT_END2"] = "связи";
+$MESS["DISK_VOLUME_USING_COUNT_END3"] = "связей";
+$MESS["DISK_VOLUME_EXTERNAL_LINK_COUNT"] = "Внешних ссылок";
+$MESS["DISK_VOLUME_SHARING_COUNT"] = "Общий файл";
+$MESS["DISK_VOLUME_PARENT_FOLDER"] = "Родительская папка";
+$MESS["DISK_VOLUME_IM_AUTHOR"] = "Автор";
+$MESS["DISK_VOLUME_IM_CHAT_OWNER"] = "Чат создал";
+$MESS["DISK_VOLUME_IM_PRIVATE"] = "Чат один на один";
+$MESS["DISK_VOLUME_IM_CALL"] = "Телефонный звонок";
+$MESS["DISK_VOLUME_IM_LINES"] = "Открытая линия";
+$MESS["DISK_VOLUME_IM_LIVECHAT"] = "Открытая линия";
+$MESS["DISK_VOLUME_IM_OPEN"] = "Открытый чат";
+$MESS["DISK_VOLUME_IM_CHAT"] = "Групповой чат";
+$MESS["DISK_VOLUME_IM_CHAT_2"] = "Закрытый чат";
+$MESS["DISK_VOLUME_USING_CHAT"] = "Сообщение в чате";
+$MESS["DISK_VOLUME_ROOT_FILES"] = "Файлы в корне";
+$MESS["DISK_VOLUME_CRM_COUNT"] = "CRM дела";

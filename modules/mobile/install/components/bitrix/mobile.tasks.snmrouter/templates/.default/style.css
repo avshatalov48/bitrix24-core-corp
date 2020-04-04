@@ -1,0 +1,875 @@
+/* Checklist */
+.mobile-grid-field-tasks-checklist {}
+.mobile-grid-field-tasks-checklist label {
+	display: block;
+}
+.mobile-grid-field-tasks-checklist-item {
+	line-height: 20px;
+	margin-left: 16px;
+	padding: 12px 45px 12px 32px;
+	color: #000;
+	display: block;
+	position: relative;
+	border-bottom: 1px solid #dee0e3;
+	overflow: hidden;
+}
+.mobile-grid-field-tasks-checklist label:last-child .mobile-grid-field-tasks-checklist-item  {
+	border-bottom: none;
+}
+
+@media only screen and (-webkit-min-device-pixel-ratio: 2), only screen and (min-device-pixel-ratio: 2){
+	.mobile-grid-field-tasks-checklist-item {border-bottom-width: .5px}
+}
+
+.mobile-grid-field-tasks-checklist input[type=checkbox] {
+	position: absolute;
+	opacity: 0;
+	left: -100px;
+}
+
+.mobile-grid-field-tasks-checklist input[type=text] {
+	display: none;
+}
+
+.mobile-grid-field-tasks-checklist i.mobile-grid-menu {
+	height: 46px;
+	bottom: auto;
+}
+
+.mobile-grid-field-tasks-checklist-item-text {
+	position: relative;
+	display: inline-block;
+	vertical-align: middle;
+	line-height: 23px;
+}
+
+.mobile-grid-field-tasks-checklist label span.mobile-grid-field-tasks-checklist-item-text:before {
+	content: '';
+	width: 15px;
+	height: 15px;
+	background: #fff;
+	border: 1px solid #d1d5d9;
+	position: absolute;
+	left: -32px;
+	top: 4px;
+	margin: auto;
+}
+.mobile-grid-field-tasks-checklist label span.mobile-grid-field-tasks-checklist-item-text:after {
+	content: '';
+	width: 17px;
+	height:14px;
+	position: absolute;
+	left: -30px;
+	top: 3px;
+	bottom: auto;
+	margin: auto;
+	background: transparent;
+}
+.mobile-grid-field-tasks-checklist label input[type=checkbox]:checked + span.mobile-grid-field-tasks-checklist-item-text {
+	text-decoration: line-through;
+}
+
+.mobile-grid-field-tasks-checklist label input[type=checkbox]:checked + span.mobile-grid-field-tasks-checklist-item-text:after {
+	background: url(images/task-sprite.png) no-repeat 0 -19px;
+	background-size: 18px;
+}
+
+.mobile-grid-field-tasks-checklist label.edit input[type=text] {
+	display: inline-block;
+	width: 100%;
+	border: none;
+	line-height: 21px;
+	font-size: 17px;
+	box-sizing: border-box;
+	outline: none;
+	vertical-align: middle;
+	margin-left: -5px;
+}
+
+.mobile-grid-field-tasks-checklist label.edit span:before {
+	opacity: 0.5;
+}
+
+/* tasks roles */
+.tasks-list-controls {
+	background: #f0f3f5;
+}
+.tasks-list-controls .mobile-grid-field-counter-total,
+.tasks-list-controls .mobile-grid-field-counter.hidden,
+.tasks-list-controls .mobile-grid-field-sub-field.hidden {
+	display : none;
+}
+.tasks-list-controls .mobile-task-list {
+	position: relative;
+	font-family: "Helvetica Neue", Helvetica, sans-serif;
+	background: #f0f3f5;
+	height: 100%;
+	margin-bottom: 47px;
+}
+.tasks-list-controls .mobile-task-list-title {
+	position: relative;
+	font-size: 10px;
+	color: #566573;
+	text-align: center;
+	line-height: 32px;
+	font-weight: bold;
+}
+.tasks-list-controls .mobile-grid-field {
+	position: relative;
+	margin-bottom:5px;
+	background: #fff;
+	border: 1px solid;
+	-webkit-border-image: url(images/borderg.png) 2 0 2 repeat;
+	   -moz-border-image: url(images/borderg.png) 2 0 2 repeat;
+		 -o-border-image: url(images/borderg.png) 2 0 2 repeat;
+			border-image: url(images/borderg.png) 2 0 2 repeat;
+}
+.tasks-list-controls .mobile-grid-field-inner {
+	position: relative;
+	border: 1px solid;
+	-webkit-border-image: url(images/borderg.png) 2 0 0 repeat;
+	   -moz-border-image: url(images/borderg.png) 2 0 0 repeat;
+		 -o-border-image: url(images/borderg.png) 2 0 0 repeat;
+			border-image: url(images/borderg.png) 2 0 0 repeat;
+}
+.tasks-list-controls .mobile-grid-field-item {
+	position: relative;
+	width: 100%;
+	display: block;
+	font-size: 17px;
+	color: #000;
+	line-height: 20px;
+	outline: none;
+	box-sizing: border-box;
+	text-decoration: none;
+	padding: 13px 70px 13px 45px;
+}
+.tasks-list-controls .mobile-grid-field-item:after{
+	position: absolute;
+	top: 50%;
+	content: '';
+	z-index: 1;
+	border-top:  2px solid #8b919d;
+	border-right:2px solid #8b919d;
+	-webkit-transform: rotate(45deg);
+	   -moz-transform: rotate(45deg);
+		-ms-transform: rotate(45deg);
+		 -o-transform: rotate(45deg);
+			transform: rotate(45deg);
+}
+.tasks-list-controls .mobile-grid-field-item:after{
+	right: 20px;
+	width: 8px;
+	height:8px;
+	margin-top:-5px;
+}
+
+.tasks-list-controls .mobile-grid-field-item-icon {
+	position: absolute;
+	left: 13px;
+	top: 13px;
+	bottom: 0;
+	margin: 0;
+	width: 20px;
+	height: 20px;
+	z-index: 2;
+	background: url(images/task-list-sprite.png) no-repeat 0 0;
+	background-size: 25px;
+}
+.tasks-list-controls .mobile-grid-field-item-icon-view_role_responsible {
+	background-position: center 2px;
+}
+.tasks-list-controls .mobile-grid-field-item-icon-view_role_accomplice {
+	background-position: center -49px;
+}
+.tasks-list-controls .mobile-grid-field-item-icon-view_role_originator {
+	background-position: center -105px;
+}
+.tasks-list-controls .mobile-grid-field-item-icon-view_role_auditor {
+	background-position: center -158px;
+}
+.tasks-list-controls .mobile-grid-field-item-icon-all {
+	background-position: center -78px;
+}
+.tasks-list-controls .mobile-grid-field-item-icon-favorite {
+	background-position: center -132px;
+}
+.tasks-list-controls .mobile-grid-field-item-icon-projects {
+	background-position: center -25px;
+}
+.tasks-list-controls .mobile-grid-field-item-icon-reports {
+	background-position: center -185px;
+}
+.tasks-list-controls .mobile-grid-field-item-icon-apps {
+	background-position: center -238px;
+}
+.tasks-list-controls .mobile-grid-field-item-icon-more {
+	background-position: center -212px;
+}
+.tasks-list-controls .mobile-grid-field-item-icon-lead {
+	background-position: center -266px;
+}
+.tasks-list-controls .mobile-grid-field-item-icon-folder {
+	width: 24px;
+	height: 24px;
+	background-position: center -293px;
+	overflow: hidden;
+	margin-left: -2px;
+}
+.tasks-list-controls .mobile-grid-field-item-icon-group {
+	width: 24px;
+	height: 24px;
+	background: none;
+	overflow: hidden;
+	margin-left: -2px;
+}
+.tasks-list-controls .mobile-grid-field-item-icon-group img {
+	width: 24px;
+	display: block;
+}
+
+.tasks-list-controls .mobile-grid-field-counter {
+	min-width: 12px;
+	padding: 0 4px;
+	font-size: 11px;
+	height: 20px;
+	border-radius: 10px;
+	background: #f73100;
+	color: #fff;
+	text-align: center;
+	line-height: 20px;
+	position: absolute;
+	z-index: 1;
+	margin: 0;
+	right: 38px;
+	top: 13px;
+	bottom: 0;
+}
+/*SUB*/
+.tasks-list-controls .mobile-grid-field-sub-field {
+	position: relative;
+	padding-left:45px;
+}
+.tasks-list-controls .mobile-grid-field-item.hover,
+.tasks-list-controls .mobile-grid-field-sub-field.hover {
+	background-color:#eef1f0;
+}
+.tasks-list-controls .mobile-grid-field-sub-container{
+	position:relative;
+}
+
+.tasks-list-controls .mobile-grid-field-sub-item{
+	position: relative;
+	width: 100%;
+	display: block;
+	font-size: 15px;
+	color: #566573;
+	line-height: 20px;
+	outline: none;
+	box-sizing: border-box;
+	text-decoration: none;
+	padding: 11px 70px 11px 0;
+	border-top:.5px solid #eeeff1;
+}
+.tasks-list-controls .mobile-grid-field-sub-item:after{
+	position: absolute;
+	top: 50%;
+	content: '';
+	z-index: 1;
+	border-top:  2px solid #8b919d;
+	border-right:2px solid #8b919d;
+	-webkit-transform: rotate(45deg);
+	   -moz-transform: rotate(45deg);
+		-ms-transform: rotate(45deg);
+		 -o-transform: rotate(45deg);
+			transform: rotate(45deg);
+}
+.tasks-list-controls .mobile-grid-field-sub-item:after{
+	right: 20px;
+	width: 8px;
+	height:8px;
+	margin-top:-5px;
+}
+
+.tasks-list-controls .mobile-grid-field-sub-counter {
+	min-width: 12px;
+	padding: 0 4px;
+	font-size: 11px;
+	height: 20px;
+	margin-top:-10px;
+	border-radius: 10px;
+	background: #f73100;
+	color: #fff;
+	text-align: center;
+	line-height: 20px;
+	position: absolute;
+	z-index: 1;
+	right: 38px;
+	top: 50%;
+	bottom: 0;
+}
+.tasks-list-controls .mobile-grid-field-counter-wait-ctrl,
+.tasks-list-controls .mobile-grid-field-counter-wo-deadline {background:#dd7d00;}
+.tasks-list-controls .mobile-grid-field-counter-new{background:#398c1b}
+.tasks-list-controls .mobile-grid-field-counter-expired-candidates,
+.tasks-list-controls .mobile-grid-field-counter-expired {background: #cc2020;}
+.tasks-list-controls .mobile-grid-field-counter-blue{background: #37a9e5;}
+
+
+
+
+/*Tasks list */
+#bx-task {
+	position: relative;
+	height: 100%;
+}
+
+.task-list {
+	height: 100%;
+	background: #dfe2e4;
+}
+
+.mobile-grid .mobile-grid-field-expired {
+	margin: -10px -2px 0;
+}
+.mobile-grid-stub {
+	position: relative;
+	background: #fff;
+	min-height: 100%;
+	text-align: center;
+	border: 60px 11px 11px 11px solid #dfe2e4;
+	box-sizing: border-box;
+}
+
+.mobile-grid-stub-text {
+	text-align: center;
+	font-size: 23px;
+	line-height: 38px;
+	color: #a5a9af;
+	padding-top: 70px;
+	margin: 70px auto;
+	background: url(images/mob-task-ok.png) no-repeat center 0;
+	background-size: 45px;
+}
+.mobile-grid-stub-text2 {
+	text-align: center;
+	font-size: 23px;
+	line-height: 38px;
+	padding-top: 70px;
+	margin: 70px auto;
+}
+
+.webform-small-button {
+	border-radius: 2px;
+	cursor: pointer;
+	display: inline-block;
+	height: 47px;
+	line-height: 47px;
+	font-weight: bold;
+	font-size: 15px;
+	outline: none;
+	padding: 0 18px;
+	vertical-align: middle;
+	text-decoration: none;
+	white-space: nowrap;
+	-webkit-font-smoothing: antialiased;
+	-webkit-transition: background-color 0.2s linear, color 0.2s linear;
+	transition: background-color 0.2s linear, color 0.2s linear;
+	margin-bottom: 70px;
+}
+.webform-small-button:hover {
+	background: #3fddff;
+}
+.mobile-grid-sent .webform-small-button, .mobile-grid-sent .webform-small-button:hover {
+	background: inherit;
+	color: black;
+	cursor: text;
+}
+
+.mobile-grid-load .webform-small-button,
+.mobile-grid-load .webform-small-button:hover{
+	color: transparent!important;
+	position: relative;
+}
+.mobile-grid-load .webform-small-button:before {
+	border: 1px solid #fff;
+	border-radius: 50%;
+	color: #fff;
+	content: '_';
+	font-size: 10px;
+	font-family: "OpenSans-Regular", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	line-height: 9px;
+	height: 19px;
+	top: 14px;
+	left: 50%;
+	margin-left: -10px;
+	padding-right: 5px;
+	position: absolute;
+	text-align: right;
+	width: 14px;
+}
+.mobile-grid-load .webform-small-button:after {
+	background-color: #fff;
+	content: '';
+	height: 7px;
+	position: absolute;
+	top: 18px;
+	left: 50%;
+	width: 1px;
+	-webkit-transform-origin: 0 100%;
+	transform-origin: 0 100%;
+
+	-webkit-animation: clock 1s infinite linear;
+	animation: clock 1s infinite linear;
+}
+
+@-webkit-keyframes clock {
+	0%   { -webkit-transform: rotate(0deg) }
+	100% {  -webkit-transform: rotate(360deg) }
+
+	0%   { transform: rotate(0deg) }
+	100% { transform: rotate(360deg) }
+}
+
+@keyframes clock {
+	0%   { transform: rotate(0deg) }
+	100% { transform: rotate(360deg) }
+}
+
+.mobile-grid-fields-task-icon {
+	position: absolute;
+	width: 33px;
+	height: 33px;
+	border-radius: 50%;
+	top: 0;
+	bottom: 0;
+	left: 17px;
+	margin: auto;
+	text-align: center;
+	line-height: 33px;
+	background-color: #88939d;
+	overflow: hidden;
+	font-size: 0;
+
+}
+.mobile-grid-fields-task-icon:before {
+	content: '';
+	display: block;
+	position: absolute;
+	width: 33px;
+	height: 33px;
+	background: url(images/icon.png) no-repeat 50% 50%;
+	background-size: 15px;
+}
+.mobile-grid-fields-task-icon.metastate_virgin_new {
+	background-color: #398c1b;
+}
+.mobile-grid-fields-task-icon.metastate_expired {
+	background-color: #cc2020;
+}
+.mobile-grid-fields-task-icon.state_new {
+	background-color: #37a9e5;
+}
+.mobile-grid-fields-task-icon.state_pending {
+	background-color: #37a9e5;
+}
+.mobile-grid-fields-task-icon.state_in_progress {
+	background-color: #000;
+}
+.mobile-grid-fields-task-icon.state_supposedly_completed {
+	background-color: #ba7f67;
+}
+.mobile-grid-fields-task-icon.state_completed {
+	background-color: #888;
+}
+.mobile-grid-fields-task-icon.state_deferred {
+	background-color: #888;
+}
+.mobile-grid-fields-task-icon.state_declined {
+	background-color: #dd7d00;
+}
+/* Priority and Favorites */
+
+.mobile-grid-field-priority > *,
+.mobile-grid-field-favorites > * { pointer-events: none; }
+.mobile-grid-field-priority span,
+.mobile-grid-field-favorites span {
+	position: relative;
+	display: block;
+}
+
+.mobile-grid-field-priority input,
+.mobile-grid-field-favorites input {
+	position: absolute;
+	opacity: 0;
+	left: -1000px;
+}
+.mobile-grid-field-priority .mobile-grid-data-label-container {
+	padding-right: 0!important;
+}
+.mobile-grid-data-checkbox-container label input[type=checkbox].mobile-grid-field-priority + span:before,
+.mobile-grid-data-checkbox-container label input[type=checkbox].mobile-grid-field-favorites + span:before {
+	display: none;
+}
+.mobile-grid-data-checkbox-container label input[type=checkbox].mobile-grid-field-priority + span:after,
+.mobile-grid-data-checkbox-container label input[type=checkbox].mobile-grid-field-priority:checked + span:after,
+.mobile-grid-data-checkbox-container label input[type=checkbox].mobile-grid-field-favorites + span:after,
+.mobile-grid-data-checkbox-container label input[type=checkbox].mobile-grid-field-favorites:checked + span:after,
+label.mobile-grid-field-priority span:after,
+.mobile-grid-field-favorites span:after,
+label.mobile-grid-field-priority-0 span:after,
+label.mobile-grid-field-priority-2 span:after {
+	content: '';
+	border-radius: 0;
+	border: none;
+	width: 19px;
+	height: 25px;
+	background: url(images/mob-task-sprite.png) no-repeat 0 0;
+	display: inline-block;
+	position: absolute;
+	z-index: 2;
+	right: 0;
+	top: 50%;
+	bottom: 0;
+	margin-top: -15px;
+	background-size: 39px;
+}
+.mobile-grid-entity .mobile-grid-data-checkbox-container label input[type=checkbox].mobile-grid-field-priority + span:after,
+.mobile-grid-entity .mobile-grid-data-checkbox-container label input[type=checkbox].mobile-grid-field-priority:checked + span:after,
+.mobile-grid-entity .mobile-grid-data-checkbox-container label input[type=checkbox].mobile-grid-field-favorites + span:after,
+.mobile-grid-entity .mobile-grid-data-checkbox-container label input[type=checkbox].mobile-grid-field-favorites:checked + span:after,
+.mobile-grid-entity label.mobile-grid-field-priority span:after,
+.mobile-grid-entity label.mobile-grid-field-priority-0 span:after,
+.mobile-grid-entity label.mobile-grid-field-priority-2 span:after {
+	right: 16px;
+}
+
+.mobile-grid-data-checkbox-container label input[type=checkbox].mobile-grid-field-priority:checked + span:after,
+.mobile-grid-field-data label.mobile-grid-field-priority span:last-child:after,
+label.mobile-grid-field-priority-2 span:after {
+	background-position: -19px 0;
+}
+label.mobile-grid-field-priority input[type=checkbox] ~ span:last-child,
+label.mobile-grid-field-priority input[type=checkbox]:checked ~ span:nth-last-child(2),
+label.mobile-grid-field-favorites input[type=checkbox] ~ span:last-child,
+label.mobile-grid-field-favorites input[type=checkbox]:checked ~ span:nth-last-child(2) {
+	display: none;
+}
+label.mobile-grid-field-priority input[type=checkbox]:checked ~ span:last-child,
+label.mobile-grid-field-favorites input[type=checkbox]:checked ~ span:last-child {
+	display: block;
+}
+
+.mobile-grid-entity .mobile-grid-data-checkbox-container label input[type=checkbox].mobile-grid-field-favorites + span:after,
+label.mobile-grid-field-favorites span:nth-last-child(2):after {
+	background-position: 0 -25px;
+}
+.mobile-grid-entity .mobile-grid-data-checkbox-container label input[type=checkbox].mobile-grid-field-favorites:checked + span:after,
+label.mobile-grid-field-favorites  span:last-child:after {
+	background-position: -20px -25px;
+}
+
+/* Timetracking */
+div.mobile-grid-field-timetracking .mobile-grid-field-label {
+	position: relative;
+	overflow-x: hidden;
+}
+.mobile-grid-field-timetracking > * {
+	pointer-events: none; }
+label.mobile-grid-field-timetracking {
+	width: 100%;
+	display: block;}
+label.mobile-grid-field-timetracking input[type=checkbox] {
+	position: absolute;
+	left: -999px;
+}
+label.mobile-grid-field-timetracking span.start,
+label.mobile-grid-field-timetracking span.pause {
+	margin-right: 10px;
+}
+label.mobile-grid-field-timetracking span.start:before,
+label.mobile-grid-field-timetracking span.pause:before {
+	position: absolute;
+	width: 28px;
+	height: 28px;
+	border-radius: 50%;
+	border: 1px solid #3585df;
+	right: -5px;
+	top: 50%;
+	margin-top: -16px;
+	content: "";
+	display: block;
+}
+label.mobile-grid-field-timetracking span.start:after {
+	content: "";
+	display: block;
+	position: absolute;
+	border-top: 7px solid transparent;
+	border-bottom: 7px solid transparent;
+	border-right: 7px solid transparent;
+	border-left: 9px solid #3585df;
+	border-right: none;
+	width: 0;
+	height: 0;
+	top: 50%;
+	margin-top: -8px;
+	right: 4px;
+}
+label.mobile-grid-field-timetracking span.pause:after {
+	content: "";
+	display: block;
+	position: absolute;
+	width: 2px;
+	height: 12px;
+	background: #fff;
+	border-left: 3px solid #3585df;
+	border-right: 3px solid #3585df;
+	top: 50%;
+	margin-top: -7px;
+	right: 6px;
+}
+label.mobile-grid-field-timetracking input[type=checkbox][value="0"] ~ .timetracking,
+label.mobile-grid-field-timetracking input[type=checkbox]:checked ~ span.start,
+label.mobile-grid-field-timetracking input[type=checkbox] ~ span.pause {
+	display : none;
+}
+label.mobile-grid-field-timetracking input[type=checkbox]:checked ~ span.pause,
+label.mobile-grid-field-timetracking input[type=checkbox][disabled] ~ .timetracking,
+label.mobile-grid-field-timetracking input[type=checkbox][value="0"]:checked ~ .timetracking {
+	display: inline-block;
+}
+.mobile-grid-entity label.mobile-grid-field-timetracking span.start:before,
+.mobile-grid-entity label.mobile-grid-field-timetracking span.pause:before {
+	right: 11px;
+}
+.mobile-grid-entity label.mobile-grid-field-timetracking span.start:after {
+	right: 20px;
+}
+.mobile-grid-entity label.mobile-grid-field-timetracking span.pause:after {
+	right: 22px;
+}
+
+label.mobile-grid-field-timetracking input[type=checkbox]:disabled ~ span.start,
+label.mobile-grid-field-timetracking input[type=checkbox]:disabled ~ span.pause {
+	display: none;
+}
+.mobile-grid-field-timetracking-edit .nonactive .mobile-grid-data-checkbox-container,
+.mobile-grid-field-timetracking-edit .mobile-grid-field-timetracking-estimate {
+	border-bottom: 0;
+}
+
+.mobile-grid-field-timetracking-edit .nonactive .mobile-grid-field-timetracking-estimate {
+	display: none;
+}
+.mobile-grid-field-timetracking-edit input[type="number"] {
+	padding: 0;
+	border: none;
+	width: 50px;
+	font-size: 17px;
+	color: #000;
+	line-height: 20px;
+	font-family: "Helvetica Neue", Helvetica, sans-serif;
+	outline: none;
+	transition: width 0.25s;
+}
+.mobile-grid-field-timetracking-edit input[type="number"]::-webkit-inner-spin-button,
+.mobile-grid-field-timetracking-edit input[type="number"]::-webkit-outer-spin-button {
+	-webkit-appearance: none;
+	margin: 0;
+}
+.mobile-grid-field-timetracking-edit input[type="number"].time-estimate-length-0,
+.mobile-grid-field-timetracking-edit input[type="number"].time-estimate-length-1 {
+	width: 15px;
+}
+.mobile-grid-field-timetracking-edit input[type="number"].time-estimate-length-2 {
+	width: 20px;
+}
+.mobile-grid-field-timetracking-edit input[type="number"].time-estimate-length-3 {
+	width: 30px;
+}
+.mobile-grid-field-timetracking-edit input[type="number"].time-estimate-length-4 {
+	width: 40px;
+}
+.mobile-grid-field-timetracking-edit label {
+	padding-left: 5px;
+	padding-right: 15px;
+}
+/* Task */
+/* Title */
+.bx-tasks-title label {
+	font-weight: bold;
+}
+.bx-tasks-title .favorites {
+	background: #f2f4f4 url(images/mob-task-sprite.png) no-repeat 5px -44px;
+	background-size: 39px;
+	display: inline-block;
+	height: 22px;
+	width: 22px;
+	border-radius: 50%;
+	vertical-align: top;
+}
+.bx-tasks-title .favorites {
+	float: right;
+}
+.bx-tasks-title .favorites.active {
+	background-color: #e79412;
+	background-position:  -14px -44px;
+}
+/* Expired block */
+.mobile-grid-field-expired {
+	padding: 0 8px;
+	background: #fbecea;
+	color: #e06451;
+	font-size: 17px;
+	line-height: 35px;
+	display: block;
+}
+.bx-tasks-title .mobile-grid-field-expired {
+	margin-top: 10px;
+}
+/* Timeplanning */
+.mobile-grid-section-child.bx-tasks-duration .mobile-grid-block{
+	padding-left: 16px;
+}
+.bx-tasks-duration-type {
+	float: right;
+	margin-right: 26px;
+}
+.bx-tasks-duration span.bx-tasks-duration-type:before,
+.bx-tasks-duration span.bx-tasks-duration-type:after{
+	position: absolute;
+	top: 50%;
+	right: 16px;
+	content: '';
+	z-index: 2;
+	width: 2px;
+	height: 10px;
+	background: #8b919d;
+	-moz-transform: rotate(315deg);
+	-ms-transform: rotate(315deg);
+	-webkit-transform: rotate(315deg);
+	-o-transform: rotate(315deg);
+	transform: rotate(315deg);
+	margin-top:-8px;
+}
+.bx-tasks-duration span.bx-tasks-duration-type:after {
+	-moz-transform: rotate(45deg);
+	-ms-transform: rotate(45deg);
+	-webkit-transform: rotate(45deg);
+	-o-transform: rotate(45deg);
+	transform: rotate(45deg);
+	margin-top: -2px;
+}
+
+.bx-tasks-duration input[type="number"] {
+	padding: 0;
+	border: none;
+	width: auto;
+	display: block;
+	font-size: 17px;
+	color: #000;
+	line-height: 20px;
+	font-family: "Helvetica Neue", Helvetica, sans-serif;
+	outline: none;
+}
+
+/* Mark */
+.bx-tasks-task-mark-P .mobile-grid-data-select-container a,
+.bx-tasks-task-mark-P {
+	color : #15c945;
+}
+.bx-tasks-task-mark-N .mobile-grid-data-select-container a,
+.bx-tasks-task-mark-N
+{
+	color : #ff4200;
+}
+/* Subtasks */
+.mobile-grid-field-subtasks-item span {
+	white-space: nowrap;
+	display: block;
+	text-overflow: ellipsis;
+	overflow: hidden;
+	line-height: 45px;
+	font-size: 17px;
+}
+.mobile-grid-field-subtasks-more {
+	z-index: 3;
+	height: 45px;
+	box-sizing: border-box;
+	display: block;
+	background-color: white;
+	border-top:  1px solid #dee0e3;
+	padding-top: 11px;
+	text-align: center;
+	color: grey;
+	font-size: 15px;
+}
+@media only screen and (-webkit-min-device-pixel-ratio: 2), only screen and (min-device-pixel-ratio: 2){
+	.mobile-grid-field-subtasks-more {border-top-width: .5px;}
+}
+input.mobile-grid-field-subtasks-more-input[type=checkbox],
+input.mobile-grid-field-subtasks-more-input[type=checkbox]:checked ~ .mobile-grid-field-subtasks-more .unchecked,
+input.mobile-grid-field-subtasks-more-input[type=checkbox] ~ .mobile-grid-field-subtasks-more .checked{
+	display: none;
+}
+input.mobile-grid-field-subtasks-more-input[type=checkbox]:checked ~ .mobile-grid-field-subtasks-more .checked{
+	display: inherit;
+}
+input.mobile-grid-field-subtasks-more-input[type=checkbox] ~ .mobile-grid-field-subtasks-container {
+	max-height: 135px;
+	overflow-y: hidden;
+}
+
+input.mobile-grid-field-subtasks-more-input[type=checkbox]:checked ~ .mobile-grid-field-subtasks-container {
+	max-height: 10000px;
+	transition: height 2s ease;
+}
+.mobile-grid-field-subtasks-item.task-status-in-progress { color: #000;  }
+.mobile-grid-field-subtasks-item.task-status-accepted { color: #000; }
+.mobile-grid-field-subtasks-item.task-status-completed { color: #888;  text-decoration: line-through;}
+.mobile-grid-field-subtasks-item.task-status-delayed { color: #888; }
+.mobile-grid-field-subtasks-item.task-status-new { color: #398c1b; }
+.mobile-grid-field-subtasks-item.task-status-overdue { color: #cc2020; }
+.mobile-grid-field-subtasks-item.task-status-waiting { color: #dd7d00; }
+.mobile-grid-field-subtasks-item.task-status-declined { color: #dd7d00; text-decoration: line-through;}
+
+/* Parent task */
+.mobile-grid-field-parent-id input[name="data[PARENT_ID]"] ~ a.select-parent span:nth-last-child(2),
+.mobile-grid-field-parent-id input[name="data[PARENT_ID]"][value="0"] ~ a.select-parent span:nth-last-child(1) { display: none; }
+.mobile-grid-field-parent-id input[name="data[PARENT_ID]"][value="0"] ~ a.select-parent span:nth-last-child(2) { display: inline-block; }
+.mobile-grid-field-parent-id input[name="data[PARENT_ID]"][value="0"] ~ .mobile-grid-field-custom-item { display: none; }
+
+
+
+/* Error */
+
+.task-detail-error{
+	height:100vh;
+	width:100%;
+	box-sizing: border-box;
+	position: relative;
+}
+.task-detail-error-box{
+	position: absolute;
+	top:50%;
+	left:50%;
+	width:80%;
+	margin:0 auto;
+	text-align: center;
+	-webkit-transform: translateX(-50%) translateY(-50%);
+			transform: translateX(-50%) translateY(-50%);
+}
+.task-detail-error-icon{
+	display: inline-block;
+	width:95px;
+	height:95px;
+	background: url(images/no_task.svg) no-repeat center;
+	background-size:contain;
+	margin-bottom:40px;
+}
+.task-detail-error-text{
+	font-family: "SanFranciscoText", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-weight: Bold;
+	font-size:18px;
+	color: #556574;
+}

@@ -1,0 +1,6 @@
+<?php
+$MESS ['CRM_DEAL_ACT_STAT_PRESET_CALL_OVERALL_COUNT'] = 'Количество звонков';
+$MESS ['CRM_DEAL_ACT_STAT_PRESET_MEETING_OVERALL_COUNT'] = 'Количество встреч';
+$MESS ['CRM_DEAL_ACT_STAT_PRESET_EMAIL_OVERALL_COUNT'] = 'Количество писем';
+$MESS ['CRM_DEAL_ACT_STAT_PRESET_OVERALL_COUNT'] = 'Количество дел';
+?>

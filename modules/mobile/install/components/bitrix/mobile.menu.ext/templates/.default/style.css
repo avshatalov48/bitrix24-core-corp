@@ -1,0 +1,325 @@
+html {
+	-webkit-text-size-adjust: none;
+}
+
+body {
+	background-color: #293139;
+}
+
+.menu-page {
+	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	margin: 0;
+	padding: 0;
+}
+
+.menu-user {
+	height: 230px;
+	background: #404f5d url(images/sprite.png?1) center bottom no-repeat;
+	background-size: 185px 780px;
+	position: relative;
+	color: #fff;
+}
+
+.menu-user-info {
+	position: absolute;
+	left: 0;
+	bottom: 49px;
+	height: 65px;
+	width: 100%;
+	background: rgba(0,0,0, 0.5);
+
+}
+
+.menu-user-name {
+	font-size: 22px;
+	line-height: 22px;
+	padding: 5px 12px 0;
+}
+
+.menu-user-name, .menu-user-portal, .menu-user-login {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.menu-user-portal, .menu-user-login {
+	font-size: 11px;
+	line-height: 11px;
+	padding: 2px 12px 0;
+}
+
+.menu-user-actions {
+	position: absolute;
+	left: 0;
+	bottom: 0;
+	height: 49px;
+	width: 100%;
+	overflow: hidden;
+	display: flex;
+}
+
+.menu-user-action {
+	float: left;
+	width: 33.3%;
+	height: 49px;
+	text-align: center;
+	font-size: 9px;
+	position: relative;
+	line-height: 72px;
+	background: rgba(0,0,0, 0.7);
+}
+
+.menu-user-action-selected { background: rgba(0,0,0, 0.85); }
+
+.menu-user-action {
+	flex: 1;
+}
+
+.menu-user-action span { opacity: 0.7; }
+.menu-user-action:before {
+	display: block;
+	opacity: 1;
+	content: "";
+	width: 20px;
+	height: 20px;
+	position: absolute;
+	top: 10px;
+	left: 50%;
+	margin-left: -9px;
+	background-image: url(images/sprite.png?1);
+	background-repeat: no-repeat;
+	background-size: 185px 780px;
+}
+
+.menu-user-action.menu-user-accounts:before {background-position: -20px -105px}
+.menu-user-action.menu-user-help:before {background-position: -20px -62px}
+.menu-user-action.menu-user-logout:before {background-position: -24px -22px}
+.menu-user-action.menu-user-timeman-status-start:before {background-position: -147px -22px} 	/* начало дня */
+.menu-user-action.menu-user-timeman-status-completed:before {background-position: -147px -44px}	/* завершения дня */
+.menu-user-action.menu-user-timeman-status-paused:before {background-position: -147px -65px}		/* перерыв */
+.menu-user-action.menu-user-timeman-status-opened:before {background-position: -147px -86px}	/* в работе */
+.menu-user-action.menu-user-timeman-status-expired:before {background-position: -147px -106px}	/* не закрыт день */
+.menu-user-action.menu-user-timeman span {display: none;}
+.menu-user-action.menu-user-timeman.menu-user-timeman-status-start span.menu-user-timeman-status-title-start,
+.menu-user-action.menu-user-timeman.menu-user-timeman-status-completed span.menu-user-timeman-status-title-completed,
+.menu-user-action.menu-user-timeman.menu-user-timeman-status-paused span.menu-user-timeman-status-title-paused,
+.menu-user-action.menu-user-timeman.menu-user-timeman-status-opened span.menu-user-timeman-status-title-opened,
+.menu-user-action.menu-user-timeman.menu-user-timeman-status-expired span.menu-user-timeman-status-title-expired {display:inline-block;}
+
+.menu-user-action:after {
+	display: block;
+	content: "";
+	width: 1px;
+	height: 32px;
+	position: absolute;
+	top: 9px;
+	right: 0;
+	background: #636566;
+	opacity: 0.6;
+}
+
+.menu-user-action:last-child:after {
+	display: none;
+}
+
+.menu-items {
+	-webkit-tap-highlight-color: transparent;
+}
+
+.menu-separator {
+	background-color: #20262c;
+	height: 21px;
+	line-height: 21px;
+	color: #81878e;
+	font-size: 9px;
+	font-weight: bold;
+	padding-left: 12px;
+}
+
+.menu-separator:after {
+	display: block;
+	height: 1px;
+	width: 100%;
+	position: absolute;
+	content: '';
+	left: 0;
+	z-index: 1;
+	background-color: #1a1e23;
+}
+
+.menu-separator:before {
+	display: block;
+	height: 1px;
+	width: 100%;
+	position: absolute;
+	content: '';
+	left: 0;
+	z-index: 1;
+	background-color: #1a1e23;
+}
+
+.menu-items {
+	margin-bottom: 22px;
+}
+
+.menu-item {
+	height: 45px;
+	padding: 0 50px 0 45px;
+	-webkit-tap-highlight-color: transparent;
+	overflow: hidden;
+	position: relative;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.menu-item-selected {
+	background-color: #20262c;
+}
+
+.menu-item-counter {
+	display: none;
+	position: absolute;
+	right: 15px;
+	top: 10px;
+	width: 24px;
+	height: 24px;
+	background: #f00;
+	color: #fff;
+	border-radius: 12px;
+	font-size: 12px;
+	text-align: center;
+	line-height: 22px;
+	font-weight: bold;
+}
+
+.menu-item-counter-value {
+	vertical-align: middle;
+}
+
+.menu-item-counter-plus {
+	vertical-align: top;
+	font-size: 9px;
+	display: none;
+}
+
+.menu-item-counter-plus:before {
+	content: "+"
+}
+
+.menu-item-counter-show-value {
+	display: block;
+}
+
+.menu-item-counter-show-plus .menu-item-counter-plus{
+	display: inline;
+}
+
+.menu-section-groups .menu-item {
+	padding-left: 12px;
+}
+
+.menu-item:after {
+	display: block;
+	height: 1px;
+	background-color: #3f464d;
+	width: 100%;
+	position: absolute;
+	content: '';
+	left: 0;
+	bottom: 0;
+}
+
+.menu-item:last-child:after {
+	background: none;
+}
+
+.menu-section:last-child .menu-item:last-child:after {
+	background-color: #3f464d;
+}
+
+.menu-item-inner {
+	height: 45px;
+	line-height: 45px;
+	font-size: 18px;
+	color: #fff;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	-webkit-font-smoothing: antialiased;
+}
+
+.menu-item-inner:before {
+	content: '';
+	position: absolute;
+	left: 12px;
+	top: 12px;
+	height: 22px;
+	width: 22px;
+	background-image: url(images/sprite.png?2);
+	background-repeat: no-repeat;
+	background-size: 185px 780px;
+}
+
+.menu-icon-lenta:before {
+	background-position: -18px -203px;
+}
+
+.menu-icon-calendar:before {
+	background-position: -18px -385px;
+}
+
+.menu-icon-tasks:before {
+	background-position: -18px -250px;
+}
+
+.menu-icon-msg:before {
+	background-position: -15px -292px;
+}
+
+.menu-icon-employees:before {
+	background-position: -17px -472px;
+}
+
+.menu-icon-files:before {
+	background-position: -18px -520px;
+}
+
+.menu-icon-disk:before {
+	background-position: -18px -431px;
+}
+
+.menu-icon-mybusiness:before {
+	background-position: -87px -30px;
+}
+
+.menu-icon-contacts:before {
+	background-position: -87px -74px;
+}
+
+.menu-icon-company:before {
+	background-position: -87px -125px;
+}
+
+.menu-icon-deals:before {
+	background-position: -87px -168px;
+}
+
+.menu-icon-invoice:before {
+	background-position: -87px -217px;
+}
+
+.menu-icon-leads:before {
+	background-position: -87px -265px;
+}
+
+.menu-icon-products:before {
+	background-position: -87px -311px;
+}
+
+.menu-icon-bizproc:before {
+	background-position: -87px -350px;
+}
+
+.menu-icon-quote:before {
+	background-position: -87px -388px;
+}

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="275" height="1080" viewBox="0 0 275 1080">
+  <g fill="none" fill-rule="evenodd">
+    <rect width="278" height="1024" x="9" y="68" fill="#FFFFFF" transform="matrix(-1 0 0 1 296 0)"/>
+    <circle cx="148.5" cy="193.5" r="27.5" fill="#D4F1FD"/>
+    <circle cx="52.5" cy="320.5" r="13.5" fill="#D4F1FD"/>
+    <circle cx="164.5" cy="320.5" r="13" stroke="#979797" opacity=".458"/>
+    <rect width="277" height="1079" x=".5" y=".5" stroke="#FFFFFF" stroke-opacity="0"/>
+  </g>
+</svg>

@@ -1,0 +1,3 @@
+.view-report-wrapper .view-report-wrapper-inner {display: none;}
+.view-report-wrapper .active {display: block;}
+.crm-configs-error-container{color:red; padding-left: 10px;}

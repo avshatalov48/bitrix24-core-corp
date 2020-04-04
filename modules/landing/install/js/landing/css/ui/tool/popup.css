@@ -1,0 +1,12 @@
+.landing-ui-popup.landing-ui-show {
+	animation: showPopupAnimation 200ms ease both;
+}
+
+.landing-ui-popup.landing-ui-hide {
+	visibility: visible;
+	animation: hidePopupAnimation 200ms ease both;
+}
+
+.landing-ui-popup .popup-window-angly {
+	pointer-events: none;
+}

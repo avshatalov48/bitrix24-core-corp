@@ -1,0 +1,5 @@
+<?
+$MESS["DISK_JS_FILE_DIALOG_OAUTH_NOTICE"] = "To load a file from an external disk, <br/> please log in to your <a id=\"bx-js-disk-run-oauth-modal\" href=\"#\">#SERVICE#</a> account.";
+$MESS["DISK_JS_FILE_DIALOG_OAUTH_NOTICE_DETAIL"] = "<p>The file will be saved to Bitrix24.Drive's Uploaded folder. The external file will not be watched for any further updates.</p> <p>Once your external account is added to Bitrix24, it will be accessible by any function that may use it.</p>";
+$MESS["DISK_JS_FILE_DIALOG_OAUTH_NOTICE_DETAIL_B24"] = "<p>The file will be saved to Bitrix24.Drive's Uploaded folder. The external file will not be watched for any further updates.</p> <p>Once your external account is added to Bitrix24, it will be accessible by any function that may use it.</p><p>Use your Bitrix.Passport page to disconnect external services.</p>";
+?>

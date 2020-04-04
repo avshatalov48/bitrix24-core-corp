@@ -1,0 +1,12 @@
+/*#tasks_panel_menu_view_role_auditor .main-buttons-item-counter,*/
+/*#tasks_panel_menu_view_role_originator .main-buttons-item-counter,*/
+/*#tasks_panel_menu_view_role_responsible .main-buttons-item-counter,*/
+/*#tasks_panel_menu_view_role_accomplice .main-buttons-item-counter*/
+/*{background: #ccc}*/
+
+#tasks_panel_menu_view_effective  .main-buttons-item-counter{
+	background: #4fc3f7;
+}
+#tasks_panel_menu_view_effective  .main-buttons-item-counter::after{
+	content: '%';
+}

@@ -1,0 +1,30 @@
+<?
+$MESS["IM_SCOPE_CHATS"] = "Chats";
+$MESS["IM_REFRESH_TITLE"] = "Updating...";
+$MESS["IM_LIST_EMPTY"] = "No current conversations";
+$MESS["IM_EMPTY_TEXT_1"] = "Start Conversation Now!";
+$MESS["IM_EMPTY_TEXT_2"] = "Tap the pencil in the top right corner to create a conversation.";
+$MESS["IM_EMPTY_TEXT_2_2"] = "Tap the pencil in the top right corner to select an employee.";
+$MESS["IM_EMPTY_BUTTON"] = "Start Conversation";
+$MESS["IM_EMPTY_OL_TEXT_1"] = "Looking for conversations with your clients? They're all here.";
+$MESS["IM_EMPTY_OL_TEXT_2"] = "You'll be notified as soon as a client posts a message to an Open Channel.";
+$MESS["OL_SECTION_WORK"] = "Unanswered";
+$MESS["OL_SECTION_PIN"] = "Pinned";
+$MESS["OL_SECTION_ANSWERED"] = "Answered";
+$MESS["OL_LIST_EMPTY"] = "No conversations";
+$MESS["SEARCH_RECENT"] = "RECENT SEARCH";
+$MESS["U_STATUS_ONLINE"] = "Online";
+$MESS["U_STATUS_OFFLINE"] = "Offline";
+$MESS["WIDGET_CHAT_CREATE_TITLE"] = "New Chat";
+$MESS["IM_DIALOG_UNNAMED"] = "Loading...";
+$MESS["IM_EMPTY_TEXT_APPLE"] = "Click the plus icon in the top right corner to create a chat, or select an employee.";
+$MESS["IM_EMPTY_TEXT_ANDROID"] = "Click the plus icon in the bottom right corner to create a chat, or select an employee.";
+$MESS["IM_SCOPE_USERS"] = "Employees";
+$MESS["IM_SCOPE_DEPARTMENTS"] = "Departments";
+$MESS["IM_B24DISK"] = "Bitrix24.Drive";
+$MESS["IM_CHOOSE_PHOTO"] = "Select from gallery";
+$MESS["IM_CAMERA_ROLL"] = "Take a photo";
+$MESS["IM_CHOOSE_FILE_TITLE"] = "Files";
+$MESS["IM_M_TEXTAREA"] = "Compose message...";
+$MESS["IM_M_MESSAGE_SEND"] = "Send";
+?>

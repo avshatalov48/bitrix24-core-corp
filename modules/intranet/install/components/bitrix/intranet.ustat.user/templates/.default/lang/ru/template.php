@@ -1,0 +1,19 @@
+<?php
+$MESS['INTRANET_USTAT_USER_GRAPH_DEPT'] = 'В среднем по отделу %DEPT%';
+$MESS['INTRANET_USTAT_USER_GRAPH_COMPANY'] = 'В среднем по компании';
+$MESS['INTRANET_USTAT_USER_GRAPH_ME'] = 'Я';
+$MESS['INTRANET_USTAT_USER_GRAPH_TITLE'] = 'Пульс активности';
+$MESS['INTRANET_USTAT_USER_RATING_TITLE'] = 'Мой <br> рейтинг';
+$MESS['INTRANET_USTAT_USER_RATING_TITLE_OTHER'] = 'Рейтинг';
+$MESS['INTRANET_USTAT_USER_ACTIVITY_TITLE'] = 'Мой индекс <br> активности';
+$MESS['INTRANET_USTAT_USER_ACTIVITY_TITLE_OTHER'] = 'Индекс <br> активности';
+$MESS['INTRANET_USTAT_USER_ACTIVITY_DEPT_TITLE'] = 'Средний <br> по отделу';
+$MESS['INTRANET_USTAT_USER_ACTIVITY_COMPANY_TITLE'] = 'Средний <br> по компании';
+$MESS['INTRANET_USTAT_USER_SECTION_ACTIVITY'] = 'Активность';
+$MESS['INTRANET_USTAT_USER_SECTION_MAX_ACTIVITY'] = 'Макс.';
+$MESS['INTRANET_USTAT_USER_SECTION_TELL_ABOUT'] = 'Рассказать';
+$MESS['INTRANET_USTAT_USER_HELP_GENERAL'] = '<b>Пульс активности</b> - общие показатели вашей активности в "Битрикс24" за выбранный период времени.';
+$MESS['INTRANET_USTAT_USER_HELP_RATING'] = 'Ваша позиция в <b>рейтинге активности</b> всех сотрудников компании, которые как минимум один раз пользовались инструментами "Битрикс24" в выбранный период времени.';
+$MESS['INTRANET_USTAT_USER_HELP_ACTIVITY'] = 'Сумма различных действий, которые вы совершили на портале, используя один из семи инструментов, за выбранный период времени.';
+$MESS['INTRANET_USTAT_USER_HELP_ACTIVITY_DEPT'] = 'Средняя сумма действий, которые сотрудники вашего отдела совершили на портале, используя один из семи инструментов, за выбранный период времени. <br><br> <b>Средний индекс по отделу позволяет</b> сравнить свою активность с активностью всего отдела.';
+$MESS['INTRANET_USTAT_USER_HELP_ACTIVITY_COMPANY'] = 'Средняя сумма действий, которые сотрудники всей компании совершили на портале, используя один из семи инструментов, за выбранный период времени.<br><br> <b>Средний индекс по компании</b> позволяет сравнить свою активность и своего отдела с активностью всей компании в целом.';

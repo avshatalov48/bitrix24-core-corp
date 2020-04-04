@@ -1,0 +1,57 @@
+<?
+$MESS["IMOL_CHAT_ERROR_IM_LOAD"] = "Ошибка загрузки модуля Веб-мессенджер";
+$MESS["IMOL_CHAT_ERROR_PULL_LOAD"] = "Ошибка загрузки модуля Push & Pull";
+$MESS["IMOL_CHAT_ERROR_CONNECTOR_LOAD"] = "Ошибка загрузки модуля Коннектора для внешних мессенджеров";
+$MESS["IMOL_CHAT_ERROR_CONNECTOR_SEND"] = "Ошибка отправки сообщения";
+$MESS["IMOL_CHAT_CHAT_NAME_COLOR_GUEST"] = "#COLOR# гость №#NUMBER#";
+$MESS["IMOL_CHAT_CHAT_NAME_GUEST"] = "Гость №#NUMBER#";
+$MESS["IMOL_CHAT_CHAT_NAME"] = "#USER_NAME# - #LINE_NAME#";
+$MESS["IMOL_CHAT_ANSWER_M"] = "#USER# начал работу с диалогом";
+$MESS["IMOL_CHAT_ANSWER_F"] = "#USER# начала работу с диалогом";
+$MESS["IMOL_CHAT_INTERCEPT_M"] = "#USER_1# забрал диалог у #USER_2#";
+$MESS["IMOL_CHAT_INTERCEPT_F"] = "#USER_1# забрала диалог у #USER_2#";
+$MESS["IMOL_CHAT_SKIP_M"] = "#USER# отказался от диалога";
+$MESS["IMOL_CHAT_SKIP_F"] = "#USER# отказалась от диалога";
+$MESS["IMOL_CHAT_RETURNED_TO_QUEUE_NEW"] = "Обращение возвращено в очередь.";
+$MESS["IMOL_CHAT_ASSIGN_OPERATOR_NEW"] = "Обращение направлено на #USER#";
+$MESS["IMOL_CHAT_ASSIGN_OPERATOR_LIST_NEW"] = "Обращение направлено на всех участников очереди";
+$MESS["IMOL_CHAT_NEXT_IN_QUEUE_NEW"] = "Обращение перенаправлено на #USER_TO# по правилам очереди";
+$MESS["IMOL_CHAT_NO_OPERATOR_AVAILABLE_IN_QUEUE_NEW"] = "Обращение возвращено в очередь. Нет доступных операторов";
+$MESS["IMOL_CHAT_TO_QUEUE_NEW"] = "Обращение перенаправлено по правилам очереди";
+$MESS["IMOL_CHAT_TRANSFER_M"] = "#USER_FROM# переадресовал диалог на #USER_TO#";
+$MESS["IMOL_CHAT_TRANSFER_F"] = "#USER_FROM# переадресовала диалог на #USER_TO#";
+$MESS["IMOL_CHAT_MARK_SPAM_M"] = "#USER# пометил текущий диалог как спам";
+$MESS["IMOL_CHAT_MARK_SPAM_F"] = "#USER# пометила текущий диалог как спам";
+$MESS["IMOL_CHAT_CLOSE_FOR_OPEN_M"] = "#USER# завершил текущий диалог и начал новый";
+$MESS["IMOL_CHAT_CLOSE_FOR_OPEN_F"] = "#USER# завершила текущий диалог и начала новый";
+$MESS["IMOL_CHAT_STEALTH_ON"] = "[b]Включен режим скрытой переписки.[/b][br]Все отправленные сообщения не будут видны внешнему собеседнику.";
+$MESS["IMOL_CHAT_STEALTH_OFF"] = "[b]Режим скрытой переписки выключен.[/b][br]Все отправленные сообщения будут видны внешнему собеседнику.";
+$MESS["IMOL_CHAT_LEAD_ADD"] = "В CRM был создан лид \"#LEAD_NAME#\"";
+$MESS["IMOL_CHAT_PAUSE_ON"] = "Дата автоматического закрытия перенесена на #DATE#";
+$MESS["IMOL_CHAT_PAUSE_OFF_NEW"] = "Дата автоматического закрытия выставлена по правилам очереди";
+$MESS["IMOL_CHAT_TRANSFER_LINE_M"] = "#USER_FROM# из очереди \"#LINE_FROM#\" переадресовал диалог в очередь \"#LINE_TO#\"";
+$MESS["IMOL_CHAT_TRANSFER_LINE_F"] = "#USER_FROM# из очереди \"#LINE_FROM#\" переадресовала диалог в очередь \"#LINE_TO#\"";
+$MESS["IMOL_CHAT_NOTIFY_RATING_TITLE"] = "Оценка качества обслуживания";
+$MESS["IMOL_CHAT_NOTIFY_RATING_CLIENT_LIKE_NEW"] = "Клиент оценил диалог №#NUMBER#: [b]#RATING#[/b]";
+$MESS["IMOL_CHAT_NOTIFY_RATING_CLIENT_DISLIKE_NEW"] = "Клиент оценил диалог №#NUMBER#: [b]#RATING#[/b]";
+$MESS["IMOL_CHAT_NOTIFY_RATING_HEAD_F_LIKE"] = "Руководитель #USER# оценила диалог №#NUMBER#: [b]#RATING#[/b]";
+$MESS["IMOL_CHAT_NOTIFY_RATING_HEAD_M_LIKE"] = "Руководитель #USER# оценил диалог №#NUMBER#: [b]#RATING#[/b]";
+
+$MESS["IMOL_CHAT_NOTIFY_RATING_HEAD_F_COMMENT"] = "Руководитель #USER# к диалогу №#NUMBER# оставила комментарий: [b]#COMMENT#[/b]";
+$MESS["IMOL_CHAT_NOTIFY_RATING_HEAD_M_COMMENT"] = "Руководитель #USER# к диалогу №#NUMBER# оставил комментарий: [b]#COMMENT#[/b]";
+$MESS["IMOL_CHAT_NOTIFY_RATING_HEAD_F_LIKE_AND_COMMENT"] = "Руководитель #USER# оценила диалог №#NUMBER#: [b]#RATING#[/b] и оставила комментарий: [b]#COMMENT#[/b]";
+$MESS["IMOL_CHAT_NOTIFY_RATING_HEAD_M_LIKE_AND_COMMENT"] = "Руководитель #USER# оценил диалог №#NUMBER#: [b]#RATING#[/b] и оставил комментарий: [b]#COMMENT#[/b]";
+
+$MESS["IMOL_CHAT_NOTIFY_SCHEMA_RATING_CLIENT_new"] = "Уведомление об оценке качества от клиента";
+$MESS["IMOL_CHAT_NOTIFY_SCHEMA_RATING_HEAD"] = "Уведомление об оценке качества от руководителя";
+$MESS["IMOL_CHAT_NOTIFY_RATING_VALUE_LIKE"] = "хорошо";
+$MESS["IMOL_CHAT_NOTIFY_RATING_VALUE_DISLIKE"] = "плохо";
+$MESS["IMOL_CHAT_NOTIFY_RATING_VALUE_1"] = "1";
+$MESS["IMOL_CHAT_NOTIFY_RATING_VALUE_2"] = "2";
+$MESS["IMOL_CHAT_NOTIFY_RATING_VALUE_3"] = "3";
+$MESS["IMOL_CHAT_NOTIFY_RATING_VALUE_4"] = "4";
+$MESS["IMOL_CHAT_NOTIFY_RATING_VALUE_5"] = "5";
+$MESS["IMOL_CHAT_APP_ICON_QUICK_TITLE"] = "Быстрые ответы";
+$MESS["IMOL_CHAT_APP_ICON_QUICK_DESCRIPTION"] = "Открыть базу типовых ответов";
+$MESS["IMOL_CRM_ERROR_NOT_GIVEN_CORRECT_DATA"] = "Не переданы корректные данные";
+?>

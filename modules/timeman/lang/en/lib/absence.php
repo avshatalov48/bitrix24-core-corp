@@ -1,0 +1,6 @@
+<?
+$MESS["TIMEMAN_ABSENCE_REPORT_FROM_CALENDAR"] = "Auto report. Calendar event: \"#TITLE#\"";
+$MESS["TIMEMAN_ABSENCE_CALENDAR_ENTRY_TITLE"] = "Calendar event";
+$MESS["TIMEMAN_ABSENCE_TEXT_DESKTOP_LAST_DATE"] = "Last updated: #TIME#";
+$MESS["TIMEMAN_ABSENCE_EMPTY_INFO"] = "no data";
+?>

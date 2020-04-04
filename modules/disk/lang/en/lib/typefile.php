@@ -1,0 +1,10 @@
+<?
+$MESS["DISK_TYPE_FILE_IMAGE"] = "Images";
+$MESS["DISK_TYPE_FILE_VIDEO"] = "Video";
+$MESS["DISK_TYPE_FILE_DOCUMENT"] = "Documents";
+$MESS["DISK_TYPE_FILE_ARCHIVE"] = "Archives";
+$MESS["DISK_TYPE_FILE_SCRIPT"] = "Scripts";
+$MESS["DISK_TYPE_FILE_UNKNOWN"] = "Other";
+$MESS["DISK_TYPE_FILE_AUDIO"] = "Audio";
+$MESS["DISK_TYPE_FILE_VECTOR_IMAGE"] = "Vector images";
+?>

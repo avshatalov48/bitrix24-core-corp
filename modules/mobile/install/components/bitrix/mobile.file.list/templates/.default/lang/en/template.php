@@ -1,0 +1,7 @@
+<?
+$MESS["MOBILE_MFU_DELETE"] = "Delete";
+$MESS["MOBILE_MFU_CONFIRM_TITLE"] = "Warning";
+$MESS["MOBILE_MFU_CONFIRM_MESSAGE"] = "Delete uploaded image?";
+$MESS["MOBILE_MFU_CONFIRM_YES"] = "Yes";
+$MESS["MOBILE_MFU_CONFIRM_NO"] = "No";
+?>

@@ -1,0 +1,2 @@
+<?php
+$MESS['CRM_AUTOMATION_TRIGGER_ORDER_CANCELED_NAME'] = 'Заказ отменен';

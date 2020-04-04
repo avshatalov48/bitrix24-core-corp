@@ -1,0 +1,35 @@
+<?
+$MESS["TM_TASK_STATUS_-2"] = "Новая";
+$MESS["TM_TASK_STATUS_-1"] = "Просрочена";
+$MESS["TM_TASK_STATUS_1"] = "Новая";
+$MESS["TM_TASK_STATUS_2"] = "Принята";
+$MESS["TM_TASK_STATUS_3"] = "В работе";
+$MESS["TM_TASK_STATUS_4"] = "Завершена";
+$MESS["TM_TASK_STATUS_5"] = "Закрыта";
+$MESS["TM_TASK_STATUS_6"] = "Отложена";
+$MESS["TM_TASK_STATUS_7"] = "Отклонена";
+$MESS["TM_TASK_SET_STATUS_2"] = "Возобновить";
+$MESS["TM_TASK_SET_STATUS_2_1"] = "Принять";
+$MESS["TM_TASK_SET_STATUS_3"] = "Начать выполнение";
+$MESS["TM_TASK_SET_STATUS_4"] = "Завершить";
+$MESS["TM_TASK_SET_STATUS_6"] = "Отложить";
+$MESS["TM_TASK_SET_STATUS_7"] = "Отклонить";
+$MESS["TM_TASK_STATUS"] = "Статус";
+$MESS["TM_TASK_DATE_START"] = "Старт";
+$MESS["TM_TASK_DATE_END"] = "Финиш";
+$MESS["TM_TASK_DEADLINE"] = "Крайний срок";
+$MESS["TM_TASK_CREATED_DATE"] = "Дата создания";
+$MESS["TM_TASK_CREATED_BY"] = "Постановщик";
+$MESS["TM_TASK_CREATED_BY_PL"] = "Постановщики";
+$MESS["TM_TASK_RESPONSIBLE_ID"] = "Ответственный";
+$MESS["TM_TASK_RESPONSIBLE_ID_PL"] = "Ответственные";
+$MESS["TM_TASK_AUDITORS"] = "Аудитор";
+$MESS["TM_TASK_AUDITORS_PL"] = "Аудиторы";
+$MESS["TM_TASK_ACCOMPLICES"] = "Соисполнитель";
+$MESS["TM_TASK_ACCOMPLICES_PL"] = "Соисполнители";
+$MESS["TM_CALENDAR_CHOOSE"] = "Выберите календарь";
+$MESS["TM_CONFIRM_LATE_OPEN"] = "Вы уверены, что хотите начать рабочий день в #TIME#?";
+$MESS["TM_IN"] = "через";
+$MESS["TM_TILL"] = "#today# до #time#";
+$MESS["TM_DAY_CLOSED_ADMIN"] = "Рабочий день закрыт руководителем";
+?>

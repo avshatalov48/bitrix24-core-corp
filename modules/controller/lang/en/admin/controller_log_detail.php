@@ -1,0 +1,15 @@
+<?
+$MESS ['CTRL_LOG_DETAIL_TITLE'] = "Journal record";
+$MESS ['CTRL_LOG_DETAIL_NOT_FOUND'] = "Journal record not found.";
+$MESS ['CTRL_LOG_DETAIL_ID'] = "ID";
+$MESS ['CTRL_LOG_DETAIL_TIMESTAMP_X'] = "Created";
+$MESS ['CTRL_LOG_DETAIL_CONTROLLER_MEMBER'] = "Client";
+$MESS ['CTRL_LOG_DETAIL_NAME'] = "Name";
+$MESS ['CTRL_LOG_DETAIL_DESCRIPTION'] = "Description";
+$MESS ['CTRL_LOG_DETAIL_STATUS'] = "Status";
+$MESS ['CTRL_LOG_DETAIL_STATUS_OK'] = "Success";
+$MESS ['CTRL_LOG_DETAIL_STATUS_ERR'] = "Error";
+$MESS ['CTRL_LOG_DETAIL_TASK'] = "Task";
+$MESS ['CTRL_LOG_DETAIL_USER'] = "User";
+$MESS ['CTRL_LOG_DETAIL_CLOSE'] = "Close";
+?>

@@ -1,0 +1,5 @@
+<?
+$MESS["CRM_ORDER_SHIPMENT_STATUS_DN"] = "Awaiting processing";
+$MESS["CRM_ORDER_SHIPMENT_STATUS_DF"] = "Shipped";
+$MESS["CRM_ORDER_SHIPMENT_STATUS_DD"] = "Canceled";
+?>

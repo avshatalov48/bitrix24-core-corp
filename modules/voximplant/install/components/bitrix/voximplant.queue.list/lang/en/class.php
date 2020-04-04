@@ -1,0 +1,11 @@
+<?
+$MESS["VOX_QUEUE_LIST_ID"] = "ID";
+$MESS["VOX_QUEUE_LIST_NAME"] = "Name";
+$MESS["VOX_QUEUE_LIST_TYPE"] = "Type";
+$MESS["VOX_QUEUE_LIST_TYPE_EVENLY"] = "Evenly";
+$MESS["VOX_QUEUE_LIST_TYPE_STRICTLY"] = "Exactly as enqueued";
+$MESS["VOX_QUEUE_LIST_TYPE_ALL"] = "To everybody";
+$MESS["VOX_QUEUE_LIST_CREATE_GROUP"] = "Create queue group";
+$MESS["VOX_QUEUE_LIST_EDIT"] = "Edit";
+$MESS["VOX_QUEUE_LIST_DELETE"] = "Delete";
+?>

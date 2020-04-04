@@ -1,0 +1,34 @@
+<?
+$MESS["CTRLR_TASK_FLT_CLIENT"] = "Client";
+$MESS["CTRLR_TASK_FLT_OPERATION"] = "Operation";
+$MESS["CTRLR_TASK_FLT_EXECUTED"] = "Last run";
+$MESS["CTRLR_TASK_FLT_MODYFIED"] = "Modified";
+$MESS["CTRLR_TASK_FLT_CREATED"] = "Created";
+$MESS["CTRLR_TASK_ERR_DELETE"] = "Error canceling the task";
+$MESS["CTRLR_TASK_NAV"] = "Tasks";
+$MESS["CTRLR_TASK_COLUMN_TASK"] = "Task";
+$MESS["CTRLR_TASK_COLUMN_STATUS"] = "Status";
+$MESS["CTRLR_TASK_COLUMN_EXEC"] = "Executed";
+$MESS["CTRLR_TASK_COLUMN_ARGS"] = "Argument";
+$MESS["CTRLR_TASK_COLUMN_RESULT"] = "Result";
+$MESS["CTRLR_TASK_COLUMN_URL"] = "Client URL";
+$MESS["CTRLR_TASK_COLUMN_DATE_MOD"] = "Modified";
+$MESS["CTRLR_TASK_COLUMN_DATE_CRE"] = "Created";
+$MESS["CTRLR_TASK_MENU_REPEAT"] = "Repeat";
+$MESS["CTRLR_TASK_MENU_REPEAT_CONFIRM"] = "The task will be run again. Continue?";
+$MESS["CTRLR_TASK_MENU_CANCEL"] = "Cancel";
+$MESS["CTRLR_TASK_MENU_CANCEL_CONFIRM"] = "The task will be removed. Continue?";
+$MESS["CTRLR_TASK_REPEAT"] = "Repeat";
+$MESS["CTRLR_TASK_TITLE"] = "Remote Client Tasks";
+$MESS["CTRLR_TASK_FLR_ST"] = "Execution status";
+$MESS["CTRLR_TASK_FLR_ANY"] = "(any)";
+$MESS["CTRLR_TASK_PROGRESS"] = "Task progress";
+$MESS["CTRLR_TASK_PROGRESS_BAR"] = "Done:";
+$MESS["CTRLR_TASK_PROGRESS_BAR_FROM"] = "of";
+$MESS["CTRLR_TASK_REP_DELETE"] = "Error repeating a task";
+$MESS["CTRLR_TASK_BUTTON_START"] = "Start";
+$MESS["CTRLR_TASK_ERR_LOCK"] = "Database error trying to lock the task:";
+$MESS["CTRLR_TASK_ERR_LOCK_ADVICE"] = "Please contact the database administrator to obtain permissions to run dbms_lock.";
+$MESS["CTRLR_TASK_MENU_LOG"] = "View log";
+$MESS["CTRLR_TASK_FLT_ID"] = "ID";
+?>

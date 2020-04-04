@@ -1,0 +1,7 @@
+<?
+$MESS["CRM_PRODUCT_LRP_DLG_BTN_START"] = "Run";
+$MESS["CRM_PRODUCT_LRP_DLG_BTN_STOP"] = "Stop";
+$MESS["CRM_PRODUCT_LRP_DLG_BTN_CLOSE"] = "Close";
+$MESS["CRM_PRODUCT_LRP_DLG_WAIT"] = "Please wait...";
+$MESS["CRM_PRODUCT_LRP_DLG_REQUEST_ERR"] = "Error processing the request.";
+?>

@@ -1,0 +1,69 @@
+<div id="b24-source-tracker-editor">
+	<div data-role="tracker/viewer" class="b24-source-tracker-viewer b24-source-tracker-viewer-hide">
+		<iframe data-role="tracker/viewer/frame" class="b24-source-tracker-viewer-iframe"></iframe>
+	</div>
+	<div data-role="tracker/margin" class="b24-tracker-margin"></div>
+	<div class="b24-tracker-wrapper">
+		<div class="b24-tracker-inner">
+			<div class="b24-tracker-search">
+				<div class="b24-tracker-title">%replacement%</div>
+				<div data-role="tracker/phone" class="b24-tracker-selector b24-tracker-list-closed">
+					<div data-role="tracker/phone/selected" class="b24-tracker-selected">
+						<div class="b24-tracker-item-name b24-tracker-item-name-result"></div>
+					</div>
+					<div class="b24-tracker-list">
+						<div data-role="tracker/phone/items" class="b24-tracker-list-inner"></div>
+					</div>
+				</div>
+			</div>
+			<div class="b24-tracker-channel">
+				<div class="b24-tracker-title">%viewItems%</div>
+				<div data-role="tracker/source" class="b24-tracker-selector b24-tracker-list-closed">
+					<div data-role="tracker/source/selected" class="b24-tracker-selected">
+						<div class="b24-tracker-item-name b24-tracker-item-name-empty">%notSelected%</div>
+					</div>
+					<div class="b24-tracker-list">
+						<div data-role="tracker/source/items" class="b24-tracker-list-inner"></div>
+					</div>
+				</div>
+			</div>
+			<div class="b24-tracker-btn-block">
+				<div data-role="tracker/viewer/device" class="b24-tracker-btn-device">
+					<button data-role="tracker/viewer/device/desktop" class="b24-tracker-btn-device-icon b24-tracker-btn-device-icon-desktop b24-tracker-btn-active"></button>
+					<button data-role="tracker/viewer/device/mobile" class="b24-tracker-btn-device-icon b24-tracker-btn-device-icon-mobile"></button>
+				</div>
+				<button data-role="tracker/btn/close" class="b24-tracker-btn">%endChecking%</button>
+				<div data-role="tracker/btn/switch" class="b24-tracker-switch"></div>
+			</div>
+		</div>
+
+		<div style="display: none;">
+			<div data-role="tracker/tmpl/item/simple" class="b24-tracker-item">
+				<div class="b24-tracker-item-name b24-tracker-item-name-search"></div>
+			</div>
+			<div data-role="tracker/tmpl/item/replace" class="b24-tracker-item">
+				<div class="b24-tracker-item-name b24-tracker-item-name-search">
+					<span class="b24-tracker-item-name-original">[phone from]</span>
+					<span class="b24-tracker-item-name-changed">[phone to]</span>
+				</div>
+			</div>
+			<div data-role="tracker/tmpl/item/icon" class="b24-tracker-item">
+				<div class="b24-tracker-item-name">[Source name]</div>
+			</div>
+		</div>
+	</div>
+
+	<svg data-role="tracker/shadow" class="b24-tracker-shadow" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" preserveAspectRatio="none">
+		<mask id="b24-tracker-svg-hole">
+			<defs>
+				<filter id="b24-tracker-svg-filter">
+					<feGaussianBlur stdDeviation="3"/>
+				</filter>
+			</defs>
+			<rect x="0" y="0" width="100%" height="100%" fill="white"/>
+			<rect data-role="tracker/shadow/filter" x="300" y="150" width="200" height="30" rx="20" ry="10" filter="url(#b24-tracker-svg-filter)"/>
+		</mask>
+
+		<rect x="0" y="0" width="100%" height="100%" fill="#000" mask="url(#b24-tracker-svg-hole)" opacity=".3"/>
+	</svg>
+</div>

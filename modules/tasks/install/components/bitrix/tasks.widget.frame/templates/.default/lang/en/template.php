@@ -1,0 +1,5 @@
+<?
+$MESS["TASKS_TWF_T_PINNER_HINT"] = "Pin or unpin block";
+$MESS["TASKS_TWF_T_ADDITIONAL_OPEN"] = "More";
+$MESS["TASKS_TWF_T_ADDITIONAL_CLOSE"] = "Hide";
+?>

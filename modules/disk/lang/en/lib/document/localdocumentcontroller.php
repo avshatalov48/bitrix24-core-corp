@@ -1,0 +1,14 @@
+<?
+$MESS["DISK_LOCAL_DOC_CONTROLLER_NAME"] = "Bitrix.Drive";
+$MESS["DISK_LOCAL_DOC_CONTROLLER_ERROR_COULD_NOT_ADD_VERSION"] = "Cannot add new file version.";
+$MESS["DISK_LOCAL_DOC_CONTROLLER_ERROR_COULD_NOT_FIND_VERSION"] = "Version could not be found.";
+$MESS["DISK_LOCAL_DOC_CONTROLLER_ERROR_COULD_NOT_FIND_FOLDER"] = "Folder could not be found.";
+$MESS["DISK_LOCAL_DOC_CONTROLLER_ERROR_COULD_NOT_FIND_FILE"] = "File could not be found.";
+$MESS["DISK_LOCAL_DOC_CONTROLLER_ERROR_BAD_RIGHTS"] = "Insufficient permission to handle file.";
+$MESS["DISK_LOCAL_DOC_CONTROLLER_ERROR_COULD_NOT_SAVE_FILE"] = "Unable to save file.";
+$MESS["DISK_LOCAL_DOC_CONTROLLER_ERROR_COULD_NOT_FIND_STORAGE"] = "Storage could not be found.";
+$MESS["DISK_LOCAL_DOC_CONTROLLER_ERROR_COULD_NOT_FIND_FOLDER_FOR_CREATED_FILES"] = "Cannot find a folder to save the file to.";
+$MESS["DISK_LOCAL_DOC_CONTROLLER_ERROR_COULD_NOT_CREATE_FILE"] = "Cannot create a file in a storage.";
+$MESS["DISK_LOCAL_DOC_CONTROLLER_NAME_2_WORK_WITH"] = "local applications";
+$MESS["DISK_LOCAL_DOC_CONTROLLER_NAME_3_WORK_WITH"] = "Desktop applications";
+?>

@@ -1,0 +1,106 @@
+.scheduler-row-resource {
+	position: relative;
+}
+
+.scheduler-row-resource-hover {
+	background-color: #f8f8f9;
+}
+
+.scheduler-row-event {
+	position: relative;
+}
+
+.scheduler-row-event-hover {
+	background-color: rgba(83, 92, 105, 0.06);
+}
+
+.scheduler-resource {
+	height: 32px;
+	position: relative;
+	padding: 0 5px 0 14px;
+	border-top: 1px solid #edeef0;
+	white-space: nowrap;
+	box-sizing: border-box;
+	font: normal normal 13px/32px Helvetica, Arial, sans-serif;
+}
+
+.scheduler-resource-name {
+	color: #535C69;
+	text-decoration: none;
+	vertical-align: middle;
+	cursor: pointer;
+}
+
+.scheduler-resource-name:hover {
+	text-decoration: underline;
+	color: #000;
+}
+
+.scheduler-resource-group {
+	background-color: #f2f4f5;
+	color: #000;
+}
+
+.scheduler-event {
+	position: absolute;
+	height: 23px;
+	border-radius: 2px;
+	box-sizing: border-box;
+	margin-top: 5px;
+	padding: 3px 3px 3px 5px;
+	background: #3bc8f5;
+	color: #fff;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	overflow: hidden;
+	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-size: 12px;
+	line-height: 16px;
+}
+
+.scheduler-row-event-collapsed .scheduler-event {
+	opacity: 0.7;
+	background: #00b1ef;
+}
+
+.scheduler-event-clickable {
+	cursor: pointer;
+}
+
+.scheduler-event-clickable:hover {
+	background: #6bd7f9;
+}
+
+.scheduler-event-clickable.scheduler-event-inaccessible:hover {
+	background: #cfd4dc;
+}
+
+.scheduler-event-inaccessible {
+	background: #bdc4ce;
+}
+
+.scheduler-row-event-collapsed .scheduler-event-inaccessible {
+	background: #a0aab8;
+}
+
+.scheduler-resource-arrow {
+	display: none;
+	position: absolute;
+	top: 1px;
+	left: 0;
+	width: 11px;
+	height: 29px;
+	background: url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNiIgaGVpZ2h0PSI5IiB2aWV3Qm94PSIwIDAgNiA5IiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjx0aXRsZT5QYXRoPC90aXRsZT48cGF0aCBkPSJNMy41IDQuNjM2TC43MDQgNy40MzJsLjkzMi45MzIgMy4yNjItMy4yNjIuNDY2LS40NjZMMS42MzYuOTA4bC0uOTMyLjkzMkwzLjUgNC42MzZ6IiBmaWxsPSIjNTM1QzY5IiBmaWxsLXJ1bGU9ImV2ZW5vZGQiIG9wYWNpdHk9Ii43Ii8+PC9zdmc+) 3px 10px no-repeat;
+	vertical-align: middle;
+	margin: 0 5px 0 0;
+	cursor: pointer;
+	transform: rotate(90deg);
+}
+
+.scheduler-row-resource-collapsed .scheduler-resource-arrow {
+	transform: rotate(0deg);
+}
+
+.scheduler-resource-collapsable .scheduler-resource-arrow {
+	display: block;
+}

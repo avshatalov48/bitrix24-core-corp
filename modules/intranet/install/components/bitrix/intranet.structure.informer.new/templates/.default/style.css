@@ -1,0 +1,18 @@
+.bx-new-layout-include {width: 100%;}
+.bx-new-layout-include .bx-user-info {border-bottom: solid 1px #C4C4C4; padding: 2px 0px;}
+
+.bx-new-layout-include .bx-user-info-inner .bx-user-date, .bx-new-layout-include .bx-user-info-inner .bx-user-name, .bx-new-layout-include .bx-user-info-inner .bx-user-post {margin-bottom: 2px; margin-left: 60px;}
+
+.bx-new-layout-include .bx-user-info-inner .bx-user-image {float: left; height: 50px; width: 50px; border: solid 1px #C4C4C4;}
+.bx-new-layout-include .bx-user-info-inner .bx-user-image-default {background-image: url('images/nopic_user_50_noborder.gif');}
+.bx-new-layout-include .bx-user-info-inner .bx-user-image a {display: block; height: 50px; width: 50px; text-decoration: none; text-align: center;}
+.bx-new-layout-include .bx-user-info-inner .bx-user-image img {border: 0;}
+
+.bx-new-layout-include .bx-user-info-inner, .bx-new-layout-include .bx-user-officelink {margin: 5px 0px;}
+
+.bx-new-layout-include .bx-users-delimiter {clear: both;}
+
+.bx-user-date {
+	color: #82929A;
+	font-size: 0.95em;
+}

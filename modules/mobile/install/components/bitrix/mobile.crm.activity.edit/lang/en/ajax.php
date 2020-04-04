@@ -1,0 +1,21 @@
+<?
+$MESS["CRM_ACTIVITY_EDIT_ACTION_DEFAULT_SUBJECT"] = "New activity (#DATE#)";
+$MESS["CRM_ACTIVITY_EDIT_INCOMING_CALL_ACTION_DEFAULT_SUBJECT_EXT"] = "Incoming call #TITLE#";
+$MESS["CRM_ACTIVITY_EDIT_OUTGOING_CALL_ACTION_DEFAULT_SUBJECT_EXT"] = "Outgoing call #TITLE#";
+$MESS["CRM_ACTIVITY_EDIT_MEETING_ACTION_DEFAULT_SUBJECT_EXT"] = "Meeting with #TITLE#";
+$MESS["CRM_ACTIVITY_EDIT_EMAIL_ACTION_DEFAULT_SUBJECT"] = "New e-mail (#DATE#)";
+$MESS["CRM_ACTIVITY_EDIT_EMAIL_EMPTY_FROM_FIELD"] = "Please specify the message sender.";
+$MESS["CRM_ACTIVITY_EDIT_EMAIL_EMPTY_TO_FIELD"] = "Please specify the message recipient.";
+$MESS["CRM_ACTIVITY_EDIT_INVALID_EMAIL"] = "'#VALUE#' is not a valid e-mail address.";
+$MESS["CRM_ACTIVITY_EDIT_TITLE_EMAIL_SUBJECT"] = "Subject";
+$MESS["CRM_ACTIVITY_EDIT_TITLE_EMAIL_FROM"] = "From";
+$MESS["CRM_ACTIVITY_EDIT_TITLE_EMAIL_TO"] = "To";
+$MESS["CRM_ACCESS_DENIED"] = "Access denied.";
+$MESS["CRM_ACTIVITY_OWNER_TYPE_NOT_FOUND"] = "Owner type was not found.";
+$MESS["CRM_ACTIVITY_OWNER_ID_NOT_FOUND"] = "The owner ID was not found.";
+$MESS["CRM_ACTIVITY_NOT_FOUND"] = "Cannot find activity ##ID#.";
+$MESS["CRM_ACTIVITY_COULD_NOT_DELETE"] = "The activity could not be deleted.";
+$MESS["CRM_ENTITY_TYPE_NOT_SUPPORTED"] = "TYPE_NOT_SUPPORTED: the '#ENTITY_TYPE#' is not supported in the current context. ";
+$MESS["CRM_ACTIVITY_OWNER_NOT_FOUND"] = "Unable to determine object.";
+$MESS["CRM_ACTIVITY_SELECT_COMMUNICATION"] = "Select contact";
+?>

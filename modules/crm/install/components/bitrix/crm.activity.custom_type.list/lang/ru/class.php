@@ -1,0 +1,7 @@
+<?php
+$MESS["CRM_MODULE_NOT_INSTALLED"] = "Модуль CRM не установлен.";
+$MESS["CRM_PERMISSION_DENIED"] = "Доступ запрещен";
+$MESS["CRM_COLUMN_ACT_CUST_TYPE_ID"] = "ID";
+$MESS["CRM_COLUMN_ACT_CUST_TYPE_NAME"] = "Название";
+$MESS["CRM_COLUMN_ACT_CUST_TYPE_SORT"] = "Сорт.";
+$MESS["CRM_COLUMN_ACT_CUST_TYPE_CREATED_DATE"] = "Создан";

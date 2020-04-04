@@ -1,0 +1,9 @@
+<?
+$MESS["MB_TASKS_TASKS_LIST_PULLDOWN_PULL"] = "Pull down to refresh";
+$MESS["MB_TASKS_TASKS_LIST_PULLDOWN_DOWN"] = "Release to refresh";
+$MESS["MB_TASKS_TASKS_LIST_PULLDOWN_LOADING"] = "Updating data...";
+$MESS["MB_TASKS_PANEL_TAB_ALL"] = "All";
+$MESS["MB_TASKS_PANEL_TAB_PROJECTS"] = "Projects";
+$MESS["MB_TASKS_GENERAL_TITLE"] = "Tasks";
+$MESS["MB_TASKS_ROLES_TASK_ADD"] = "New task";
+?>

@@ -1,0 +1,3 @@
+<?
+$MESS["CRM_STATUS_TYPE_SOURCE_WEBFORM"] = "CRM form";
+?>

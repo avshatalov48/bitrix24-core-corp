@@ -1,0 +1,12 @@
+table.field-types-table {width: 100%;}
+table.field-types-table tr td { background: url(images/hr.gif) no-repeat bottom left; padding-bottom: 31px;padding-top: 21px; }
+table.field-types-table tr:first-child  td{ padding-bottom: 26px;padding-top: 4px; }
+div.field-types-name {padding-bottom: 8px}
+div.field-types-name a {font-size: 18px; color: #000000;}
+div.field-types-name a:hover {color: #3d3d3d}
+div.field-types-desc {padding-bottom: 8px; color: #666666; font-size: 12px;}
+div.field-types-add  {background:url(images/add_field.gif) no-repeat 1px 0px; padding-left: 22px; padding-bottom: 5px; }
+div.field-types-add  a {font-size: 13px;}
+div.field-types-list  {background:url(images/view_fields.gif) no-repeat; padding-left: 22px; height: 20px; line-height: 18px; }
+div.field-types-list  a {font-size: 13px;}
+

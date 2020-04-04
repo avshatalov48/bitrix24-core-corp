@@ -1,0 +1,30 @@
+<?
+$MESS["TASKS_SETTINGS"] = "Настройки модуля задач";
+$MESS["TASKS_SETTINGS_TITLE"] = "Глобальные настройки модуля задач";
+$MESS["LEARNING_SITE_PATH_SITE"] = "Шаблоны путей для сайта &quot;#SITE#&quot;";
+$MESS["MAIN_OPT_SAVE_TITLE"] = "Сохранить изменения и вернуться";
+$MESS["MAIN_OPT_APPLY"] = "Применить";
+$MESS["MAIN_OPT_APPLY_TITLE"] = "Сохранить изменения и остаться в форме";
+$MESS["MAIN_OPT_CANCEL"] = "Отменить";
+$MESS["MAIN_OPT_CANCEL_TITLE"] = "Не сохранять изменения и вернуться";
+$MESS["TASKS_OPTION_PATHS"] = "Ссылки";
+$MESS["TASKS_PATHS_USER"] = "Шаблон ссылки на профиль пользователя";
+$MESS["TASKS_PATHS_TASK_USER"] = "Шаблон ссылки на список задач пользователя";
+$MESS["TASKS_PATHS_TASK_USER_ENTRY"] = "Шаблон ссылки на просмотр задачи пользователя";
+$MESS["TASKS_PATHS_TASK_USER_EDIT"] = "Шаблон ссылки на редактирование задачи пользователя";
+$MESS["TASKS_PATHS_TASK_USER_ACTION"] = "Шаблон ссылки на задачу пользователя";
+$MESS["TASKS_PATHS_TASK_GROUP"] = "Шаблон ссылки на список задач группы";
+$MESS["TASKS_PATHS_TASK_GROUP_ENTRY"] = "Шаблон ссылки на просмотр задачи группы";
+$MESS["TASKS_PATHS_TASK_GROUP_EDIT"] = "Шаблон ссылки на редактирование задачи группы";
+$MESS["TASKS_PATHS_TASK_GROUP_ACTION"] = "Шаблон ссылки на задачу группы";
+$MESS["TASKS_RESTORE_DEFAULTS"] = "По умолчанию";
+$MESS["TASKS_SUBTAB_TITLE_SITE"] = "Настройки для сайта";
+$MESS["TASKS_COMMENTS_FORUM"] = "Форум для комментариев";
+$MESS["TASKS_HTML_SANITIZE_LEVEL"] = "Уровень фильтрации описания задач HTML-санитайзером";
+$MESS["TASKS_HTML_SANITIZE_LEVEL_NONE"] = "Не использовать фильтрацию";
+$MESS["TASKS_HTML_SANITIZE_LEVEL_LOW"] = "Низкий уровень";
+$MESS["TASKS_HTML_SANITIZE_LEVEL_MIDDLE"] = "Средний уровень";
+$MESS["TASKS_HTML_SANITIZE_LEVEL_HIGH"] = "Высокий уровень";
+$MESS["TASKS_COMMENTS_ALLOW_EDIT_REMOVE"] = "Разрешить редактирование\\удаление комментариев";
+$MESS["TASKS_LIST_ALLOW_SORT_FILTER_UF"] = "Разрешить сортировку и фильтрацию по пользовательским полям в списке задач";
+?>

@@ -1,0 +1,16 @@
+.task-options-task-other tbody td {
+    -webkit-transition: background-color 0.2s linear;
+    transition: background-color 0.2s linear;
+}
+
+.task-options-task-other tr.hover-delete td {
+    background-color: #EEF2F4;
+}
+.task-options-task-other tr.invisible {
+    opacity: 0;
+}
+
+.tasks-btn-restricted .task-dashed-link-inner {
+	color: #808080;
+	border-color: #808080 !important;
+}

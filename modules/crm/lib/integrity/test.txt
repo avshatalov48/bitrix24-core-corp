@@ -1,0 +1,158 @@
+CModule::IncludeModule("crm");
+$c = new \Bitrix\Crm\Integrity\LeadDuplicateChecker();
+$a = \Bitrix\Crm\EntityAdapterFactory::create();
+$a->setFields(
+   array(
+      //'LAST_NAME' => 'Никифоров',
+      //'NAME' => 'Евгений',
+      //'SECOND_NAME' => 'Петрович',
+      //'COMPANY_TITLE' => 'Lorem Ipsum'
+      'FM' => array(
+        'EMAIL' => array(array('VALUE' => 'Lorem@example.com'))
+	//'PHONE' => array(array('VALUE' => '+7-555-555-55-55'))
+      )
+   )
+);
+ $p = new \Bitrix\Crm\Integrity\DuplicateCheckParams();
+ $dupArry = $c->findDuplicates($a, $p);
+ foreach($dupArry as $dup)
+ {
+   echo mydump($dup->getEntityArray());
+   echo('<br/>---------<br/>');
+ }
+
+CModule::IncludeModule("crm");
+ $c = new \Bitrix\Crm\Integrity\CompanyDuplicateChecker();
+ $a = \Bitrix\Crm\EntityAdapterFactory::create();
+ $a->setFields(
+   array(
+      'TITLE' => 'Young Italy Inc.'
+      'FM' => array(
+        'EMAIL' => array(array('VALUE' => 'youngitaly@example.com')),
+	    'PHONE' => array(array('VALUE' => '+7-555-555-55-55'))
+      )
+   )
+ );
+ $p = new \Bitrix\Crm\Integrity\DuplicateCheckParams();
+ $dupArry = $c->findDuplicates($a, $p);
+ foreach($dupArry as $dup)
+ {
+   echo mydump($dup->getEntityArray());
+   echo('<br/>---------<br/>');
+ }
+
+ CModule::IncludeModule("crm");
+  $c = new \Bitrix\Crm\Integrity\ContactDuplicateChecker();
+  $a = \Bitrix\Crm\EntityAdapterFactory::create();
+  $a->setFields(
+    array(
+      'LAST_NAME' => 'Garibaldi',
+      'NAME' => 'Giuseppe',
+      'SECOND_NAME' => '',
+       'FM' => array(
+         'EMAIL' => array(array('VALUE' => 'garibaldi@example.com')),
+ 	    'PHONE' => array(array('VALUE' => '+7-555-555-55-55'))
+       )
+    )
+  );
+  $p = new \Bitrix\Crm\Integrity\DuplicateCheckParams();
+  $dupArry = $c->findDuplicates($a, $p);
+  foreach($dupArry as $dup)
+  {
+    echo mydump($dup->getEntityArray());
+    echo('<br/>---------<br/>');
+  }
+
+
+
+// find duplicates by INN
+Bitrix\Main\Loader::includeModule('crm');
+
+$fields = array(
+	'RQ' => array(
+		'n0' => array(
+			'ID' => 'n0',
+			'PRESET_ID' => 1,    // If PRESET_COUNTRY_ID is set, then PRESET_ID is not required to search for duplicates
+			'PRESET_COUNTRY_ID' => 1,
+			'RQ_INN' => '9108116590'
+		)
+	)
+);
+
+$checker = new Bitrix\Crm\Integrity\CompanyDuplicateChecker();
+$checker->setStrictComparison(false);
+$adapter = Bitrix\Crm\EntityAdapterFactory::create($fields, \CCrmOwnerType::Company);
+$dups = $checker->findDuplicates($adapter, new Bitrix\Crm\Integrity\DuplicateSearchParams());
+/** @var $dup Bitrix\Crm\Integrity\Duplicate */
+foreach($dups as $dup)
+{
+	echo mydump($dup->getEntityArray());
+	echo('<br/>---------<br/>');
+}
+
+// find duplicates by account number
+Bitrix\Main\Loader::includeModule('crm');
+
+$fields = array(
+	'RQ' =>	array(
+		'n0' => array(
+			'ID' => 'n0',
+			'PRESET_ID' => 1,    // If PRESET_COUNTRY_ID is set, then PRESET_ID is not required to search for duplicates
+			'PRESET_COUNTRY_ID' => 1,
+			'BD' => array(
+				'n0' => array(
+					'ID' => 'n0',
+					'ENTITY_TYPE_ID' => 8,
+					'ENTITY_ID' => 'n0',
+					'COUNTRY_ID' => 1,
+					'RQ_ACC_NUM' => '40702810300320090107'
+				)
+			)
+		)
+	)
+);
+
+$checker = new Bitrix\Crm\Integrity\CompanyDuplicateChecker();
+$checker->setStrictComparison(false);
+$adapter = Bitrix\Crm\EntityAdapterFactory::create($fields, \CCrmOwnerType::Company);
+$dups = $checker->findDuplicates($adapter, new Bitrix\Crm\Integrity\DuplicateSearchParams());
+/** @var $dup Bitrix\Crm\Integrity\Duplicate */
+foreach($dups as $dup)
+{
+	echo mydump($dup->getEntityArray());
+	echo('<br/>---------<br/>');
+}
+
+// find duplicates by INN or account number
+Bitrix\Main\Loader::includeModule('crm');
+
+$fields = array(
+	'RQ' =>	array(
+		'n0' => array(
+			'ID' => 'n0',
+			'PRESET_ID' => 1,    // If PRESET_COUNTRY_ID is set, then PRESET_ID is not required to search for duplicates
+			'PRESET_COUNTRY_ID' => 1,
+			'RQ_INN' => '9108116590',    // INN
+			'BD' => array(
+				'n0' => array(
+					'ID' => 'n0',
+					'ENTITY_TYPE_ID' => 8,
+					'ENTITY_ID' => 'n0',
+					'COUNTRY_ID' => 1,
+					'RQ_ACC_NUM' => '40702810300320090107'    // account number
+				)
+			)
+		)
+	)
+);
+
+$checker = new Bitrix\Crm\Integrity\CompanyDuplicateChecker();
+$checker->setStrictComparison(false);
+$adapter = Bitrix\Crm\EntityAdapterFactory::create($fields, \CCrmOwnerType::Company);
+$dups = $checker->findDuplicates($adapter, new Bitrix\Crm\Integrity\DuplicateSearchParams());
+/** @var $dup Bitrix\Crm\Integrity\Duplicate */
+foreach($dups as $dup)
+{
+	echo mydump($dup->getEntityArray());
+	echo('<br/>---------<br/>');
+}

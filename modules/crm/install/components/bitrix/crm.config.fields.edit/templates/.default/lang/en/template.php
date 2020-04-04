@@ -1,0 +1,31 @@
+<?
+$MESS["CRM_FE_TOOLBAR_FIELDS"] = "Fields";
+$MESS["CRM_FE_TOOLBAR_FIELDS_TITLE"] = "View available fields";
+$MESS["CRM_FE_TOOLBAR_ADD"] = "Add Field";
+$MESS["CRM_FE_TOOLBAR_ADD_TITLE"] = "Add new field";
+$MESS["CRM_FE_TOOLBAR_DELETE"] = "Delete Field";
+$MESS["CRM_FE_TOOLBAR_DELETE_TITLE"] = "Delete a field and open fields form";
+$MESS["CRM_FE_TOOLBAR_DELETE_WARNING"] = "Are you sure you want to delete this field?";
+$MESS["CRM_FE_TAB_EDIT"] = "Settings";
+$MESS["CRM_FE_TAB_EDIT_TITLE"] = "General parameters";
+$MESS["CRM_FE_TAB_LIST"] = "List";
+$MESS["CRM_FE_TAB_LIST_TITLE"] = "List property values";
+$MESS["CRM_FE_FIELD_SORT"] = "Sorting";
+$MESS["CRM_FE_FIELD_NAME"] = "Name";
+$MESS["CRM_FE_FIELD_IS_REQUIRED"] = "Required";
+$MESS["CRM_FE_FIELD_MULTIPLE"] = "Multiple";
+$MESS["CRM_FE_FIELD_TYPE"] = "Type";
+$MESS["CRM_FE_LIST_ITEM_ADD"] = "Add";
+$MESS["CRM_FE_ENUM_IMPORT"] = "Import as list";
+$MESS["CRM_FE_SORT_UP_TITLE"] = "Up";
+$MESS["CRM_FE_SORT_DOWN_TITLE"] = "Down";
+$MESS["CRM_FE_DELETE_TITLE"] = "Delete";
+$MESS["CRM_FE_ENUM_IMPORT_HINT"] = "Each line will become a list item. If an item value is not the same as the item title, specify it in square brackets before the title. For example: \"[v1]Value 1\".";
+$MESS["CRM_FE_ENUM_DEFAULTS"] = "Default Values";
+$MESS["CRM_FE_ENUM_DEFAULT"] = "Default Value";
+$MESS["CRM_FE_ENUM_NO_DEFAULT"] = "(none)";
+$MESS["CRM_FE_FIELD_SHOW_FILTER"] = "Show in filter";
+$MESS["CRM_FE_FIELD_USE_MULTI_LANG_LABEL"] = "Assign names in all languages";
+$MESS["CRM_FE_FIELD_COMMON_LABEL"] = "Name";
+$MESS["CRM_FE_FIELD_SHOW_IN_LIST"] = "Show in list";
+?>

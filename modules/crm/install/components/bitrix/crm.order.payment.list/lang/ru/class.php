@@ -1,0 +1,23 @@
+<?
+$MESS["CRM_MODULE_NOT_INSTALLED"] = "Модуль CRM не установлен.";
+$MESS["CRM_MODULE_NOT_INSTALLED_CURRENCY"] = "Модуль currency не установлен.";
+$MESS["CRM_MODULE_NOT_INSTALLED_SALE"] = "Модуль sale не установлен.";
+$MESS["CRM_MODULE_NOT_INSTALLED_CATALOG"] = "Модуль catalog не установлен.";
+$MESS["CRM_PERMISSION_DENIED"] = "Доступ запрещен";
+$MESS['CRM_PAYMENT_HEADER_DATE_PAID'] = "Дата оплаты";
+$MESS['CRM_PAYMENT_HEADER_ID'] = "ID оплаты";
+$MESS['CRM_PAYMENT_HEADER_ORDER_ID'] = "ID заказа";
+$MESS['CRM_PAYMENT_HEADER_ACCOUNT_NUMBER'] = "Номер оплаты";
+$MESS['CRM_PAYMENT_HEADER_PAYMENT_SUMMARY'] = "Документ оплаты";
+$MESS['CRM_PAYMENT_HEADER_USER_ID'] = "Покупатель";
+$MESS['CRM_PAYMENT_HEADER_PAID'] = "Статус";
+$MESS['CRM_PAYMENT_HEADER_PAY_SYSTEM_FULL'] = "Способ оплаты";
+$MESS['CRM_PAYMENT_HEADER_PAY_SYSTEM_NAME'] = "Платежная система";
+$MESS["CRM_PAYMENT_HEADER_CURRENCY"] = "Валюта";
+$MESS['CRM_PAYMENT_HEADER_SUM'] = "Сумма";
+$MESS['CRM_PAYMENT_HEADER_PAY_VOUCHER_NUM'] = "Номер платежного документа";
+$MESS['CRM_PAYMENT_HEADER_RESPONSIBLE'] = "Ответственный";
+$MESS['CRM_PAYMENT_HEADER_DATE_PAY_BEFORE'] = "Оплатить до";
+$MESS['CRM_PAYMENT_HEADER_DATE_BILL'] = "Дата создания";
+$MESS['CRM_PAYMENT_NAME'] = "Отгрузка №#ACCOUNT_NUMBER# от #DATE_BILL#";
+$MESS['CRM_PAYMENT_DELETE_ERROR'] = "Ошибка удаления оплаты";

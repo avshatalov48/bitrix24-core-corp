@@ -1,0 +1,61 @@
+.tasks-kanban-popup {
+        display: none;
+        overflow: hidden;
+        padding: 12px 15px 6px 15px;
+        max-width: 550px;
+        color: #535c69;
+        position: relative;
+}
+
+.tasks-kanban-popup:after {
+        content: '';
+        position: absolute;
+        height: 1px;
+        bottom: 0;
+        left: 15px;
+        right: 15px;
+        background: #525c69;
+        opacity: .1;
+}
+
+.tasks-kanban-popup-title {
+        display: block;
+        overflow: hidden;
+        line-height: 18px;
+        font-size: 14px;
+        font-weight: bold;
+        margin: 0 0 17px 0;
+}
+
+.tasks-kanban-popup-text {
+        font-size: 13px;
+        line-height: 17px;
+        margin: 0 0 17px 0;
+}
+
+.tasks-kanban-popup-text-italic {
+        font-style: italic;
+}
+
+.tasks-kanban-popup-img {
+        display: block;
+        overflow: hidden;
+        max-width: 550px;
+        margin: 0 0 17px 0;
+}
+
+.tasks-kanban-popup-text-redmore:hover,
+.tasks-kanban-popup-text-redmore {
+        clear: both;
+        float: left;
+        overflow: hidden;
+        color: #0063c6;
+        padding: 0 0 1px 0;
+        margin: 0 0 15px 0;
+        border-bottom: 1px solid transparent;
+        text-decoration: none;
+}
+
+.tasks-kanban-popup-text-redmore:hover {
+        border-bottom: 1px solid #0063c6;
+}

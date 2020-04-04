@@ -1,0 +1,6 @@
+<?
+$MESS["CRM_COMPANY_ACTIVITY_STATUS_STAT_TOTAL"] = "Number of requests";
+$MESS["CRM_COMPANY_ACTIVITY_STATUS_STAT_ANSWERED_QTY"] = "Number of answered requests";
+$MESS["CRM_COMPANY_ACTIVITY_STATUS_STAT_UNANSWERED_QTY"] = "Number of unanswered requests";
+$MESS["CRM_COMPANY_ACTIVITY_STATUS_STAT_GROUP_BY_STATUS"] = "Activity status";
+?>

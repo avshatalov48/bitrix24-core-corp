@@ -1,0 +1,8 @@
+<?
+$MESS["CRM_PRODUCT_PE_PROP_TYPE_S"] = "String";
+$MESS["CRM_PRODUCT_PE_PROP_TYPE_N"] = "Number";
+$MESS["CRM_PRODUCT_PE_PROP_TYPE_L"] = "List";
+$MESS["CRM_PRODUCT_PE_PROP_TYPE_F"] = "File";
+$MESS["CRM_PRODUCT_PE_PROP_TYPE_G"] = "Bind to section";
+$MESS["CRM_PRODUCT_PE_PROP_TYPE_E"] = "Bind to element";
+?>

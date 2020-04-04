@@ -1,0 +1,10 @@
+drop table if exists b_meeting;
+drop table if exists b_meeting_users;
+drop table if exists b_meeting_files;
+drop table if exists b_meeting_item;
+drop table if exists b_meeting_item_tasks;
+drop table if exists b_meeting_item_files;
+drop table if exists b_meeting_instance;
+drop table if exists b_meeting_instance_users;
+drop table if exists b_meeting_reports;
+drop table if exists b_meeting_reports_files;

@@ -1,0 +1,5 @@
+<?
+$MESS["CRM_COMPONENT_ERROR_PERMISSION_DENIED"] = "Access denied";
+$MESS["CRM_COMPONENT_ERROR_ENTITY_NOT_FOUND"] = "Object was not found";
+$MESS["CRM_COMPONENT_ERROR_GENERAL"] = "General error.";
+?>

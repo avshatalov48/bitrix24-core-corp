@@ -1,0 +1,3 @@
+<?php
+$MESS["DOCGEN_DATAPROVIDER_ARRAY_NUMBER_TITLE"] = "Число элементов";
+$MESS["DOCGEN_DATAPROVIDER_ARRAY_INDEX_TITLE"] = "Текущий номер";

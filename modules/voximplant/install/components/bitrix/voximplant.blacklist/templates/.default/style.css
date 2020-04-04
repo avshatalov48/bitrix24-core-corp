@@ -1,0 +1,22 @@
+
+.tel-set-item-bl-rule {
+	display: flex;
+	align-items: center;
+	height: 0;
+	transition: height .5s;
+	padding: 0!important;
+	overflow: hidden;
+	margin-top: 20px;
+}
+.tel-set-item-bl-rule .tel-set-inp {
+	width: 15%;
+	text-align: center;
+	min-width: 80px;
+	margin: 0 10px;
+}
+.tel-set-item-bl-label { margin-left: 10px; }
+.tel-bl-phone-box { width: 650px; margin-top: 10px;}
+.tel-bl-phone { font-size: 16px; width: 190px; height: 20px; margin-top: 18px; display: inline-block; }
+.tel-bl-phone-text { line-height: 20px; max-width: 160px; overflow: hidden; text-overflow: ellipsis; display: inline-block; }
+.tel-bl-phone-delete { cursor:pointer; background: url(./images/sprite.png) no-repeat -3px -6px; width: 20px; height: 20px; display: inline-block; }
+.tel-bl-phone-delete:hover { background-position: -3px -41px;}

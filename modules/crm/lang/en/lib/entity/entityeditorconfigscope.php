@@ -1,0 +1,4 @@
+<?
+$MESS["CRM_ENTITY_ED_CONFIG_SCOPE_PERSONAL"] = "My form view";
+$MESS["CRM_ENTITY_ED_CONFIG_SCOPE_COMMON"] = "Common form view";
+?>

@@ -1,0 +1,1467 @@
+.diskuf-selectdialog {
+}
+
+.diskuf-selectdialog .diskuf-files-block {
+	display: none;
+	margin-bottom: 11px;
+	overflow: hidden;
+	padding: 13px 0 0 5px;
+	position: relative;
+}
+
+
+.diskuf-selectdialog .diskuf-files-block .diskuf-label {
+	font-size: 12px;
+	line-height: 20px;
+	font-weight: normal;
+	background-position: -146px -186px !important;
+	color: #000;
+	margin: 0 0 0 9px;
+	float: none;
+	top: 0;
+	left: 0;
+	overflow: visible;
+	padding: 0 0 10px 34px;
+	position: relative;
+	width: auto;
+}
+
+.feed-comments-block .diskuf-selectdialog .diskuf-files-block .diskuf-label {
+	margin-left: 0;
+}
+
+.diskuf-files-block .diskuf-label-icon {
+	background: url("images/wduf-sprite.png?5") no-repeat center 0;
+	height: 13px;
+	left: 5px;
+	top: 2px;
+	position: absolute;
+	width: 17px;
+}
+
+.diskuf-selectdialog .diskuf-placeholder {
+	padding-left: 9px;
+}
+.feed-comments-block .diskuf-selectdialog .diskuf-placeholder {
+	padding-left: 0;
+}
+
+table.files-list {
+	table-layout: fixed;
+	width: 100%;
+}
+
+table.files-list tr td {
+	color: #5c6470;
+	font-size: 13px;
+	line-height: 16px;
+	padding: 8px 0;
+	white-space: nowrap;
+	overflow: hidden;
+	vertical-align: top;
+	text-overflow: ellipsis;
+}
+
+
+table.files-list tr.error-load .f-wrap {
+	color: #bb0000;
+}
+
+table.files-list tr.error-load .error-text {
+	color: #5c6470;
+	display: inline-block;
+	font-size: 12px;
+	line-height: 14px;
+	margin: -2px 0 0 0;
+}
+.bx-ie table.files-list tr.error-load .error-text,
+.bx-firefox table.files-list tr.error-load .error-text {
+	display: inline;
+}
+table.files-list td.files-name {
+	overflow: visible;
+	padding-left: 8px;
+	white-space: normal;
+	width: 36%;
+}
+
+table.files-list .files-notification {
+	display: none;
+	font-style: italic;
+}
+
+table.files-list .files-notification .transformer-upgrade-popup {
+	border-bottom: 1px dashed;
+}
+
+table.files-list td.files-size {
+	text-align: center;
+	width: 10%;
+}
+
+table.files-list td.files-storage {
+	width: 30%;
+	white-space: normal;
+}
+
+table.files-list td.files-info {
+	font-size: 12px;
+	text-align: left;
+	width: 18%;
+	padding: 0;
+}
+
+table.files-list td.files-del-btn {
+	text-align: right;
+	vertical-align: top;
+	width: 24px;
+}
+
+.diskuf-placeholder .files-text {
+	box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	-webkit-box-sizing: border-box;
+	color: #2067b0;
+	display: inline-block;
+	padding: 0 27px 0 25px;
+	position: relative;
+	max-width: 100%;
+}
+
+.diskuf-placeholder .files-text .f-wrap {
+	display: inline-block;
+	vertical-align: top;
+	overflow: hidden;
+	word-wrap: break-word;
+	width: 100%;
+}
+
+table.files-list td.files-storage .files-path,
+table.files-list td.files-storage .files-path:visited,
+table.files-list td.files-storage .files-path:active,
+table.files-list td.files-storage .files-path:link,
+table.files-list td.files-storage .files-path:hover {
+	border-bottom: 1px dashed #5C6470;
+	display: inline-block;
+	color: #5C6470;
+	text-decoration: none;
+}
+
+table.files-list td.files-storage .files-placement,
+table.files-list td.files-storage .files-placement:visited,
+table.files-list td.files-storage .files-placement:active,
+table.files-list td.files-storage .files-placement:link,
+table.files-list td.files-storage .files-placement:hover {
+	display: inline-block;
+	color: #5C6470;
+	text-decoration: none;
+}
+
+.files-name-edit-btn {
+	background: url(images/wduf-sprite.png?5) no-repeat center -145px;
+	display: none;
+	cursor: pointer;
+	height: 25px;
+	margin-top: -12px;
+	opacity: 0.7;
+	position: absolute;
+	top: 50%;
+	right: 0;
+	width: 25px;
+}
+
+.files-text:hover .files-name-edit-btn {
+	display: block;
+}
+
+.files-name-edit-btn:hover,
+.files-name-editable .files-name-edit-btn {
+	display: block;
+	opacity: 1;
+}
+
+.diskuf-placeholder .files-name-editable,
+.files-name-editable {
+	display: block;
+}
+
+.files-name-editable .f-wrap ,
+.diskuf-placeholder .files-name-editable .f-wrap {
+	display: none;
+}
+
+.files-name-edit-inp {
+	display: none;
+	-webkit-box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	box-sizing: border-box;
+	background: #fff;
+	border: 1px solid #d4d4d4;
+	border-radius: 1px;
+	color: #2067b0;
+	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-size: 12px;
+	height: 36px;
+	margin-top: -10px;
+	padding: 0 10px;
+	width: 100%;
+}
+
+.files-name-editable  .files-name-edit-inp {
+	display: block;
+}
+
+table.files-list td.files-storage .edit-stor {
+	background: url("images/wduf-sprite.png?5") no-repeat center -20px;
+	cursor: pointer;
+	height: 15px;
+	margin-left: 5px;
+	vertical-align: middle;
+	width: 15px;
+	display: none;
+}
+
+table.files-list td.files-info .insert-btn,
+table.files-list td.files-info .insert-text {
+	background: #eaeded;
+	border-radius: 1px;
+	border: 1px solid #cccccc;
+	display: inline-block;
+	color: #818282;
+	cursor: pointer;
+	font-size: 13px;
+	height: 33px;
+	max-width: 134px;
+	text-align: center;
+	white-space: normal;
+	width: 89%;
+
+	-webkit-transition: all 0.2s linear;
+	transition: all 0.2s linear;
+}
+
+.bxec-popup table.files-list td.files-info .insert-btn {
+	width: 72px;
+}
+
+table.files-list td.files-info .insert-text {
+	background-color: #fff;
+	border-color: #bac0c8;
+	color: #8d8d8d;
+	cursor: default;
+}
+
+table.files-list td.files-info .insert-text:before,
+table.files-list td.files-info .insert-btn:before {
+	content: '';
+	display: inline-block;
+	height: 34px;
+	margin-left: -1px;
+	vertical-align: middle;
+	width: 1px;
+}
+
+.insert-btn-text {
+	display: inline-block;
+	line-height: 13px;
+	vertical-align: middle;
+}
+
+table.files-list td.files-info .insert-btn:hover {
+	border-color: #a5a3a3;
+}
+
+@media screen and (max-width: 1290px)
+{
+	.files-path {margin-left: 0 !important;}
+	.files-storage-text {display: block;}
+	table.files-list tr td,
+	.f-wrap {font-size: 12px;}
+}
+
+table.files-list td.files-del-btn .del-but {
+	background: url("images/wduf-sprite.png?5") no-repeat center -44px;
+	cursor: pointer;
+	display: inline-block;
+	margin-top: -3px;
+	height: 24px;
+	width: 24px;
+}
+
+
+.diskuf-placeholder .wd-files-icon {
+	background: url("images/files-sprite-2.png?5") no-repeat center -454px;
+	left: -3px;
+	top: 1px;
+	height: 16px;
+	position: absolute;
+	width: 16px;
+}
+
+.diskuf-placeholder .files-name-editable .wd-files-icon {
+	top: 11px;
+}
+
+.diskuf-placeholder .files-preview-wrap {
+	border: 1px solid #c9d8db;
+	cursor: pointer;
+	height: 28px;
+	margin-top: -15px;
+	left: -10px;
+	top: 50%;
+	width: 28px;
+}
+
+.diskuf-placeholder .files-preview-border {
+	background-color: #fff;
+	display: block;
+	height: 28px;
+	overflow: hidden;
+	width: 28px;
+}
+
+.diskuf-placeholder .files-preview-alignment {
+	display: inline-block;
+	margin-left: -12px;
+	text-align: center;
+	width: 51px;
+}
+
+.diskuf-placeholder .files-preview {
+	display: inline-block;
+	border: none;
+	height: 28px;
+	margin: 0;
+}
+
+.diskuf-placeholder .info-icon {
+	background: url("images/wduf-sprite.png?5") no-repeat center -110px;
+	display: inline-block;
+	height: 16px;
+	margin-right: 10px;
+	left: 0;
+	top: 2px;
+	vertical-align: middle;
+	width: 17px;
+}
+
+.diskuf-placeholder .loading-wrap {
+	display: inline-block;
+	margin-left: 15px;
+	vertical-align: middle;
+	position: relative;
+	width: 50%;
+}
+
+.diskuf-placeholder .loading {
+	background: #e3ebed;
+	display: block;
+	border: 1px solid;
+	border-top: 1px solid #bcc2c4;
+	border-left-color: #cfd7d9;
+	border-right-color: #cfd7d9;
+	border-bottom: 1px solid #dde5e6;
+	border-radius: 2px;
+	height: 17px;
+	-webkit-box-shadow: inset 0 1px 2px rgba(188, 194, 196, 0.7);
+	-moz-box-shadow: inset 0 1px 2px rgba(188, 194, 196, 0.7);
+	box-shadow: inset 0 1px 2px rgba(188, 194, 196, 0.7);
+}
+
+.diskuf-placeholder .loading .del-but {
+	background: url("images/wduf-sprite.png?5") no-repeat center -63px;
+	cursor: pointer;
+	height: 20px;
+	position: absolute;
+	right: 0;
+	top: 0;
+	width: 20px;
+}
+
+.diskuf-placeholder .load-indicator {
+	background: #40c0e9;
+	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#40c0e9', endColorstr='#2698db');
+	background: linear-gradient(top, #40c0e9, #2698db);
+	background: -moz-linear-gradient(top, #40c0e9, #2698db);
+	background: -o-linear-gradient(top, #40c0e9, #2698db);
+	background: -ms-linear-gradient(top, #40c0e9, #2698db);
+	background: -webkit-gradient(linear, left top, left bottom, from(#40c0e9), to(#2698db));
+	border-radius: 2px;
+	color: #fff;
+	font-size: 12px;
+	height: 19px;
+	text-align: center;
+	text-shadow: 0 1px 0 rgba(56, 124, 162, 1);
+	left: 0;
+	top: 0;
+	position: absolute;
+}
+
+.diskuf-placeholder .load-number {
+	display: inline-block;
+	box-sizing: border-box;
+	padding-top: 2px;
+}
+
+.diskuf-placeholder .file-edit,
+.diskuf-placeholder .file-section {
+	display: none;
+}
+
+.diskuf-selectdialog .diskuf-simple,
+.diskuf-selectdialog .diskuf-extended {
+	display: none;
+	line-height:normal;
+}
+
+.diskuf-extended {
+	position: relative;
+}
+
+.diskuf-extended-overlay {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	right: 0;
+	left: 0;
+	background: rgba(248,250,250,0.9);
+	z-index: 1;
+	border: 2px dashed #a7b0b5;
+	text-align: center;
+	display: none;
+}
+
+.diskuf-extended-overlay-inner {
+	height: 110px;
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	right: 0;
+	left: 0;
+	margin: auto;
+}
+
+.diskuf-extended-overlay-icon {
+	width: 37px;
+	height: 45px;
+	background: url("images/files-sprite.png?6") no-repeat 0 -252px;
+	display: block;
+	margin: 0 auto 15px;
+}
+
+.diskuf-extended-overlay-text {
+	font-weight: bold;
+	font-size: 18px;
+	color: rgba(83,92,105,0.7);
+}
+
+.diskuf-extended-overlay-text span {
+	font-size: 12px;
+	display: block;
+	margin-top: 8px;
+}
+
+.diskuf-selector {
+	position: relative;
+	overflow: hidden;
+}
+
+.diskuf-selector-table {
+	border: 0;
+	padding: 0;
+	width: 100%;
+	position: relative;
+}
+
+.diskuf-selector-table td.diskuf-selector,
+.diskuf-selector-table td.diskuf-selector-left {
+	border: none;
+}
+
+.diskuf-selector-table td.diskuf-selector-empty span {
+	display: inline-block;
+	overflow: hidden;
+	width: 10px;
+	height: 10px;
+}
+
+.diskuf-selector-table td .diskuf-uploader-text {
+	border: 2px dashed #f4f8f9;
+	border-radius: 5px;
+	display: block;
+	min-height: 44px;
+	margin: 0 auto;
+	padding: 8px 0 8px;
+	position: relative;
+	width: 83%;
+}
+
+.diskuf-uploader-title {
+	display: block;
+	color: #2067b0;
+	cursor: pointer;
+	font-size: 17px;
+	font-weight: bold;
+	text-align: center;
+	overflow: hidden;
+	position: relative;
+}
+
+td.diskuf-selector-hover .diskuf-uploader-text {
+	border-color: #a7b0b5;
+}
+
+.diskuf-uploader {
+	zoom: 1;
+	position: relative;
+}
+
+.diskuf-uploader input {
+	filter: alpha(opacity=0) !important;
+	font-size: 320px !important;
+	height: 105px !important;
+	right: 0 !important;
+	opacity: 0 !important;
+	position: absolute !important;
+	top: -20px !important;
+	cursor: pointer !important;
+}
+
+.diskuf-uploader-descript {
+	color: #9399a0;
+	display: block;
+	font-size: 12px;
+	text-align: center;
+}
+
+.wd-fa-add-file-light-table {
+	border: 0;
+	border-spacing: 0;
+	padding: 0;
+	width: 100%;
+}
+
+.wd-fa-add-file-light-cell {
+	background: #f8fafa;
+	border: none;
+	height: 76px;
+	padding: 10px 0;
+	vertical-align: middle;
+	width: 50%;
+}
+
+.wd-fa-add-file-form-light-separate-row,
+.wd-fa-add-file-form-light-separate-cell {
+	padding: 0;
+}
+
+.wd-fa-add-file-form-light-spacer {
+	height: 10px;
+	width: 10px;
+}
+
+.wd-fa-add-file-light {
+	display: block;
+}
+
+.wd-fa-add-file-light-text {
+	display: block;
+	margin: 0 10px;
+	position: relative;
+}
+
+.wd-fa-add-file-from-main .wd-fa-add-file-light-text {
+	border: 2px dashed transparent;
+	padding: 14px 0 0;
+
+	-webkit-transition: border-color 0.2s linear;
+	transition: border-color 0.2s linear;
+	min-height: 50px;
+}
+
+.bxu-file-input-over .diskuf-extended-overlay {
+	display: block;
+}
+.diskuf-preventer-overlay {
+	position : absolute;
+	top : 0;
+	bottom : 0;
+	left : 0;
+	right : 0;
+	width : 100%;
+	height : 100%;
+	background : orange;
+	opacity : 0.7;
+	display : none;
+	z-index : 2000;
+}
+.bxu-file-input-over .diskuf-preventer-overlay {
+	display: block;
+}
+
+.bxu-file-input-over .wd-fa-add-file-from-main .wd-fa-add-file-light-text,
+.bxu-file-input-over.wd-fa-add-file-from-main .wd-fa-add-file-light-text,
+.wd-fa-add-file-light-hover.wd-fa-add-file-from-main .wd-fa-add-file-light-text {
+	border-color: #a7b0b5;
+}
+
+.diskuf-selector-active.wd-fa-add-file-light-cell.wd-fa-add-file-from-main .wd-fa-add-file-light-text {
+	border-color: #a7b0b5;
+}
+
+.wd-fa-add-file-light-title {
+	display: block;
+	color: #0b66c3;
+	cursor: pointer;
+	font-size: 14px;
+	font-weight: bold;
+	margin-bottom: 2px;
+	text-align: center;
+	overflow: hidden;
+	position: relative;
+}
+
+.wd-fa-add-file-editor-text {
+	border-bottom: 1px dashed transparent;
+	cursor: pointer;
+	display: inline-block;
+	line-height: normal;
+
+	-webkit-transition: border-bottom-color 0.2s linear;
+	transition: border-bottom-color 0.2s linear;
+}
+
+.wd-fa-add-file-editor-text:hover {
+	border-bottom: 1px dashed;
+}
+
+.wd-fa-import-file-editor-text {
+	border-bottom: 1px dashed;
+}
+
+.wd-test-file-light-inp {
+	cursor: pointer;
+	font-size: 120px;
+	height: 85px;
+	left: -250px;
+	opacity: 0;
+	position: absolute;
+	top: -20px;
+}
+
+.wd-fa-add-file-light-descript {
+	color: #8a8b8b;
+	display: block;
+	font-size: 12px;
+	text-align: center;
+}
+
+.wd-fa-add-file-editor {
+	display: inline-block;
+	padding-right: 11px;
+	position: relative;
+}
+
+.wd-test-file-from-editors .wd-fa-add-file-light-title:hover .wd-fa-add-file-light-title-text {
+	cursor: default;
+	text-decoration: none;
+}
+
+.wd-fa-add-file-editor-text {
+	cursor: pointer;
+	display: inline-block;
+}
+
+.wd-fa-add-file-editor-arrow {
+	background: url(/bitrix/js/main/core/images/bx-viewer-icons.png) no-repeat center -2044px;
+	height: 3px;
+	top: 7px;
+	right: 0;
+	position: absolute;
+	width: 6px;
+}
+
+.wd-fa-add-file-editor-file {
+	display: block;
+	text-align: center;
+	padding-top: 8px;
+}
+
+.wd-fa-add-file-editor-link-block {
+	display: inline-block;
+	min-height: 24px;
+	margin-left: 15px;
+	text-decoration: none;
+	padding: 6px 0 0 30px;
+	position: relative;
+	vertical-align: top;
+}
+
+.wd-fa-add-file-editor-link-block:first-child {
+	margin-left: 0;
+}
+
+.wd-fa-add-file-editor-link {
+	border-bottom: 1px dashed transparent;
+	color: #0b66c3;
+	font-size: 12px;
+	padding-bottom: 1px;
+	text-decoration: none;
+
+	-webkit-transition: border-bottom-color 0.2s linear;
+	transition: border-bottom-color 0.2s linear;
+}
+
+.bx-disk  .wd-fa-add-file-editor-icon {
+	background: url("images/files-sprite.png?6") no-repeat -5px 0 !important;
+	height: 24px;
+	left: 0;
+	top: 3px;
+	position: absolute;
+	width: 18px;
+}
+
+.wd-fa-add-file-editor-icon.feed-file-icon-doc {
+	background-position: -5px 0 !important;
+}
+
+.wd-fa-add-file-editor-icon.feed-file-icon-csv {
+	background-position: -5px -46px !important;
+}
+
+.wd-fa-add-file-editor-icon.feed-file-icon-ppt {
+	background-position: -5px -94px !important;
+}
+
+.wd-fa-add-file-editor-icon.feed-file-icon-odr {
+	background-position: 0 -145px !important;
+	width: 28px;
+	height: 20px;
+}
+
+.wd-fa-add-file-editor-icon.feed-file-icon-office365 {
+	background-position: 0 -308px !important;
+	width: 23px;
+	height: 20px;
+}
+
+.wd-fa-add-file-editor-icon.feed-file-icon-gdr {
+	background-position: 0 -187px !important;
+	width: 28px;
+	height: 20px;
+}
+
+.wd-fa-add-file-editor-icon.feed-file-icon-drb {
+	background-position: 0 -226px !important;
+	width: 28px;
+	height: 20px;
+}
+
+.wd-fa-add-file-editor-link-block:hover {
+	text-decoration: none;
+}
+
+.wd-fa-add-file-editor-link-block:hover .wd-fa-add-file-editor-link {
+	border-bottom-color: #0b66c3;
+	padding-bottom: 0;
+}
+
+/*.feed-com-files-title {font-size:12px; font-weight:bold; float:left; min-width:50px;}*/
+.diskuf-files-entity .feed-com-files-cont {
+	overflow: hidden;
+	padding: 1px 0 1px 10px;
+	zoom: 1;
+}
+
+.diskuf-files-entity .feed-com-file-wrap {
+	font-size: 13px;
+	line-height: normal;
+	margin: 0;
+	padding: 2px 0 0 20px;
+	position: relative;
+}
+
+.diskuf-files-entity .feed-con-file-name-wrap {
+	display: inline-block;
+	max-width: 100%;
+	margin-right: 4px;
+	position: relative;
+	vertical-align: middle;
+	white-space: nowrap;
+}
+
+.diskuf-files-entity .feed-con-file-icon {
+	background: url("images/files-sprite-2.png?5") no-repeat 0 -454px;
+	display: block;
+	height: 16px;
+	left: 0;
+	top: 2px;
+	position: absolute;
+	width: 16px;
+}
+
+.diskuf-files-entity .feed-com-file-name-wrap {
+	font-weight: normal;
+	vertical-align: top;
+	white-space: normal;
+	word-wrap: break-word;
+	display: block;
+	max-width: 100%;
+}
+
+.diskuf-files-entity .feed-com-file-name {
+	color: #2067b0;
+	cursor: pointer;
+	font-weight: bold;
+	text-decoration: none;
+}
+
+.diskuf-files-entity .feed-com-file-name:hover {
+
+}
+
+.diskuf-files-entity .feed-com-file-size {
+	color: #7e838c;
+	font-size: 13px;
+	font-weight: normal;
+	margin: 0 0 0 4px;
+	vertical-align: middle;
+}
+
+.diskuf-files-entity .feed-com-files-photo {
+	border: 1px solid #eeeeee;
+	border-radius: 1px;
+	box-shadow: 0 0 1px #eee, inset 0 0 1px #eee;
+	display: inline-block;
+	margin: 0 8px 8px 0;
+	padding: 3px;
+	height: 69px;
+	width: 69px;
+}
+
+.diskuf-files-entity .feed-com-file-inline.feed-com-file-wrap,
+.diskuf-files-entity.feed-com-file-inline.feed-com-file-wrap {
+	box-sizing: border-box;
+	-webkit-box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	-ms-box-sizing: border-box;
+	border-bottom: none;
+	cursor: pointer;
+	display: inline-block;
+	font-size: 13px;
+	line-height: 14px;
+	margin: 0;
+	max-width: 100%;
+	vertical-align: middle;
+	padding: 1px 0 0 20px;
+	position: relative;
+	word-wrap: break-word;
+	min-height: 16px;
+}
+
+.diskuf-files-entity.feed-com-file-inline.feed-com-file-inline-image.feed-com-file-wrap {
+	padding: 1px 0 0 0px;
+}
+
+.diskuf-files-entity .feed-com-file-inline.feed-com-file-wrap:hover,
+.diskuf-files-entity.feed-com-file-inline.feed-com-file-wrap:hover {
+	text-decoration: none;
+	border-bottom: none;
+}
+
+.diskuf-files-entity .feed-com-file-inline.feed-com-file-wrap:hover .feed-com-file-name,
+.diskuf-files-entity.feed-com-file-inline.feed-com-file-wrap:hover .feed-com-file-name {
+	border-bottom: 1px solid;
+}
+
+.diskuf-files-entity .feed-com-file-inline.feed-con-file-icon,
+.diskuf-files-entity.feed-com-file-inline.feed-con-file-icon,
+.feed-com-file-icon {
+	background: url("images/files-sprite-2.png?5") no-repeat center -454px;
+	display: block;
+	height: 16px;
+	left: 0;
+	top: 0;
+	position: absolute;
+	width: 16px;
+}
+
+.diskuf-files-entity .feed-com-file-inline.feed-com-file-name,
+.diskuf-files-entity.feed-com-file-inline.feed-com-file-name {
+	color: #2067b0;
+	font-weight: bold;
+	vertical-align: top;
+	word-wrap: break-word;
+}
+
+.diskuf-files-entity .feed-com-file-inline.feed-com-file-size,
+.diskuf-files-entity.feed-com-file-inline.feed-com-file-size {
+	color: #5c6470;
+	font-size: 12px;
+	font-weight: normal;
+	margin: 0 12px 0 4px;
+	vertical-align: top;
+}
+
+.diskuf-files-entity .feed-file-icon-bmp {
+	background: url(images/files-sprite-2.png?5) no-repeat 0 -128px !important;
+}
+
+.diskuf-files-entity .feed-file-icon-css {
+	background: url(images/files-sprite-2.png?5) no-repeat 0 -32px !important;
+}
+
+.diskuf-files-entity .feed-file-icon-csv {
+	background: url(images/files-sprite-2.png?5) no-repeat 0 -224px !important;
+}
+
+.diskuf-files-entity .feed-file-icon-dib {
+	background: url(images/files-sprite-2.png?5) no-repeat 0 -32px !important;
+}
+
+.diskuf-files-entity .feed-file-icon-doc {
+	background: url(images/files-sprite-2.png?5) no-repeat 0 -288px !important;
+}
+
+.diskuf-files-entity .feed-file-icon-docp {
+	background: url(images/files-sprite-2.png?5) no-repeat 0 -288px !important;
+}
+
+.diskuf-files-entity .feed-file-icon-docx {
+	background: url(images/files-sprite-2.png?5) no-repeat 0 -288px !important;
+}
+
+.diskuf-files-entity .feed-file-icon-gif {
+	background: url(images/files-sprite-2.png?5) no-repeat 0 -128px !important;
+}
+
+.diskuf-files-entity .feed-file-icon-htm {
+	background: url(images/files-sprite-2.png?5) no-repeat 0 -32px !important;
+}
+
+.diskuf-files-entity .feed-file-icon-html {
+	background: url(images/files-sprite-2.png?5) no-repeat 0 -32px !important;
+}
+
+.diskuf-files-entity .feed-file-icon-jfif {
+	background: url(images/files-sprite-2.png?5) no-repeat 0 -128px !important;
+}
+
+.diskuf-files-entity .feed-file-icon-jpe {
+	background: url(images/files-sprite-2.png?5) no-repeat 0 -128px !important;
+}
+
+.diskuf-files-entity .feed-file-icon-jpeg {
+	background: url(images/files-sprite-2.png?5) no-repeat 0 -128px !important;
+}
+
+.diskuf-files-entity .feed-file-icon-jpg {
+	background: url(images/files-sprite-2.png?5) no-repeat 0 -128px !important;
+}
+
+.diskuf-files-entity .feed-file-icon-js {
+	background: url(images/files-sprite-2.png?5) no-repeat 0 -32px !important;
+}
+
+.diskuf-files-entity .feed-file-icon-pdf {
+	background: url(images/files-sprite-2.png?5) no-repeat 0 -415px !important;
+}
+
+.diskuf-files-entity .feed-file-icon-php {
+	background: url(images/files-sprite-2.png?5) no-repeat 0 -32px !important;
+}
+
+.diskuf-files-entity .feed-file-icon-png {
+	background: url(images/files-sprite-2.png?5) no-repeat 0 -128px !important;
+}
+
+.diskuf-files-entity .feed-file-icon-ppt {
+	background: url(images/files-sprite-2.png?5) no-repeat 0 -256px !important;
+}
+
+.diskuf-files-entity .feed-file-icon-pptp {
+	background: url(images/files-sprite-2.png?5) no-repeat 0 -256px !important;
+}
+
+.diskuf-files-entity .feed-file-icon-pptx {
+	background: url(images/files-sprite-2.png?5) no-repeat 0 -256px !important;
+}
+
+.diskuf-files-entity .feed-file-icon-rar {
+	background: url(images/files-sprite-2.png?5) no-repeat 0 -96px !important;
+}
+
+.diskuf-files-entity .feed-file-icon-rtf {
+	background: url(images/files-sprite-2.png?5) no-repeat 0 -288px !important;
+}
+
+.diskuf-files-entity .feed-file-icon-swf {
+	background: url(images/files-sprite-2.png?5) no-repeat 0 -32px !important;
+}
+
+.diskuf-files-entity .feed-file-icon-tif {
+	background: url(images/files-sprite-2.png?5) no-repeat 0 -128px !important;
+}
+
+.diskuf-files-entity .feed-file-icon-tiff {
+	background: url(images/files-sprite-2.png?5) no-repeat 0 -128px !important;
+}
+
+.diskuf-files-entity .feed-file-icon-txt {
+	background: url(images/files-sprite-2.png?5) no-repeat 0 -192px !important;
+}
+
+.diskuf-files-entity .feed-file-icon-xls {
+	background: url(images/files-sprite-2.png?5) no-repeat 0 -224px !important;
+}
+
+.diskuf-files-entity .feed-file-icon-xlsp {
+	background: url(images/files-sprite-2.png?5) no-repeat 0 -224px !important;
+}
+
+.diskuf-files-entity .feed-file-icon-xlsx {
+	background: url(images/files-sprite-2.png?5) no-repeat 0 -224px !important;
+}
+
+.diskuf-files-entity .feed-file-icon-xml {
+	background: url(images/files-sprite-2.png?5) no-repeat 0 -32px !important;
+}
+
+.diskuf-files-entity .feed-file-icon-zip {
+	background: url(images/files-sprite-2.png?5) no-repeat 0 -96px !important;
+}
+
+.feed-con-file-changes-links-wrap {
+	display: block;
+	vertical-align: top;
+	white-space: nowrap;
+}
+
+.feed-con-file-text-notice {
+	display: inline-block;
+	color: #999;
+	font-size: 11px;
+	margin-right: 4px;
+	margin-left: 4px;
+}
+
+.feed-con-file-changes-link {
+	border-bottom: 1px solid transparent;
+	display: inline-block;
+	color: #999;
+	cursor: pointer;
+	font-size: 11px;
+	margin-right: 4px;
+	margin-left: 4px;
+}
+
+.feed-con-file-changes-link:hover {
+	border-bottom: 1px solid;
+	color: #999;
+}
+
+.feed-con-file-changes-link-more {
+	margin-left: 10px;
+	margin-right: 30px;
+	position: relative;
+}
+
+.feed-con-file-changes-link-more:before {
+	background: url("images/wduf-sprite.png?5") no-repeat center -93px;
+	content: '';
+	height: 3px;
+	top: 6px;
+	right: -11px;
+	opacity: 0.7;
+	position: absolute;
+	width: 6px;
+}
+
+.feed-con-file-changes-link-more:hover:before {
+	opacity: 1;
+}
+
+.feed-con-file-revision-history {
+	color: #7F7F7F;
+	cursor: pointer;
+	display: inline-block;
+	font-size: 13px;
+	padding-bottom: 1px;
+	vertical-align: top;
+}
+
+.feed-con-file-revision-history-text {
+	border-bottom: 1px dashed #7F7F7F;
+}
+
+.feed-con-file-revision-history-text:hover {
+	border-bottom: 1px dashed #5e5e5e;
+	color: #5e5e5e;
+}
+
+.feed-con-file-rev-hist-status {
+	color: #7f7f7f;
+	display: inline-block;
+	min-height: 15px;
+	margin-left: -4px;
+	vertical-align: top;
+}
+
+.feed-file-history-popup-title {
+	color: #555555;
+	font-size: 14px;
+	font-weight: bold;
+	margin-left: 13px;
+	text-shadow: 0 1px rgba(255, 255, 255, .8);
+}
+
+.feed-file-history-cont {
+	background-color: #ffffff;
+	border: 1px solid;
+	border-color: #bcd0d5 #b7cbd1 #b2c6cc;
+	border-radius: 3px;
+	-webkit-box-shadow: 0 1px 4px rgba(88, 112, 118, .3);
+	box-shadow: 0 1px 4px rgba(88, 112, 118, .3);
+	color: #555555;
+	min-height: 255px;
+	margin: 12px 8px 11px;
+	width: 665px;
+}
+
+.feed-file-history-cont a {
+	text-decoration: underline;
+}
+
+.feed-file-history-top {
+	border-bottom: 1px solid #ccc;
+	min-height: 56px;
+	line-height: 21px;
+	padding: 13px 20px 20px 88px;
+	position: relative;
+}
+
+.feed-file-history-icon {
+	background: url(images/big-icon-files-sprite.png) no-repeat 0 0;
+	display: block;
+	height: 60px;
+	top: 19px;
+	left: 23px;
+	position: absolute;
+	width: 46px;
+}
+
+.feed-file-history-icon-txt {
+	background-position: 0 -78px;
+}
+
+.feed-file-history-icon-arch {
+	background-position: 0 -155px;
+}
+
+.feed-file-history-icon-gz {
+	background-position: 0 -155px;
+}
+
+.feed-file-history-icon-tar {
+	background-position: 0 -155px;
+}
+
+.feed-file-history-icon-bz2 {
+	background-position: 0 -155px;
+}
+
+.feed-file-history-icon-rar {
+	background-position: 0 -232px;
+}
+
+.feed-file-history-icon-zip {
+	background-position: 0 -309px;
+}
+
+.feed-file-history-icon-ppt {
+	background-position: 0 -386px;
+}
+
+.feed-file-history-icon-pptx {
+	background-position: 0 -386px;
+}
+
+.feed-file-history-icon-doc {
+	background-position: 0 -463px;
+}
+
+.feed-file-history-icon-docx {
+	background-position: 0 -463px;
+}
+
+.feed-file-history-icon-xls {
+	background-position: 0 -539px;
+}
+
+.feed-file-history-icon-xlsx {
+	background-position: 0 -539px;
+}
+
+.feed-file-history-icon-pdf {
+	background-position: 0 -616px;
+}
+
+.feed-file-history-icon-psd {
+	background-position: 0 0;
+}
+
+.feed-file-hist-name {
+	display: block;
+}
+
+.feed-file-history-cont .feed-com-file-wrap {
+	line-height: 21px;
+	margin: 0;
+	padding-left: 0;
+	white-space: normal !important;
+}
+
+.feed-file-history-cont .feed-con-file-name-wrap {
+	padding-bottom: 5px;
+}
+
+.feed-file-history-cont .feed-com-file-name {
+	font-size: 15px;
+}
+
+.feed-file-history-cont .feed-con-file-revision-history {
+	display: block;
+	border-bottom: none;
+	color: #555;
+	cursor: default;
+}
+
+.feed-file-history-cont .feed-con-file-rev-hist-status {
+	margin-left: 0;
+	padding-right: 0;
+}
+
+.feed-file-history-cont .feed-com-file-size {
+	font-size: 13px;
+}
+
+.feed-file-history-cont .feed-com-files-more {
+	margin-top: -4px;
+	padding: 0 0 0 17px;
+}
+
+.feed-com-editing-more {
+	border-bottom: 1px dashed #555;
+	display: inline-block;
+	cursor: pointer;
+	line-height: 15px;
+}
+
+.feed-com-editing-more:hover {
+	border-bottom-color: #5E5E5E;
+	color: #5e5e5e;
+}
+
+.feed-file-hist-description {
+	margin-top: 3px;
+}
+
+.feed-file-history-list {
+	padding: 18px 20px 17px;
+}
+
+.feed-file-history-list-title {
+	color: #555;
+	font-size: 15px;
+	font-weight: bold;
+	padding-bottom: 14px;
+}
+
+.feed-file-history-list-item {
+	color: #737373;
+	margin-bottom: 17px;
+}
+
+.feed-file-history-list-num {
+	display: inline-block;
+	margin-right: 4px;
+}
+
+.feed-file-history-list-link {
+	color: #2067b0;
+	font-size: 14px;
+	font-weight: bold;
+	text-decoration: underline;
+}
+
+.feed-file-history-list-text {
+	display: inline-block;
+}
+
+a.feed-file-history-list-name {
+	color: #2067b0;
+	font-weight: bold;
+	text-decoration: none;
+}
+
+.feed-file-history-list-name:hover {
+	color: #2067b0;
+	text-decoration: underline;
+}
+.feed-add-post-loading-wrap {
+	display: inline-block;
+	margin-left: 3%;
+	position: relative;
+	vertical-align: middle;
+	width: 70%;
+}
+
+.feed-add-post-loading {
+	background-color: #fff;
+	border: 1px solid #bcc2c4;
+	border-radius: 1px;
+	display: block;
+	height: 20px;
+}
+
+.feed-add-post-loading-cancel {
+	background: url(images/wduf-sprite.png?5) no-repeat 7px -45px;
+	cursor: pointer;
+	height: 21px;
+	top: 0;
+	opacity: 0.6;
+	position: absolute;
+	right: 0;
+	width: 25px;
+}
+
+.feed-add-post-loading-cancel:hover {
+	opacity: 1;
+}
+
+.feed-add-post-load-indicator {
+	background-color: #2fc7f7;
+	border-radius: 1px;
+	color: #fff;
+	font-size: 14px;
+	height: 22px;
+	left: 0;
+	position: absolute;
+	text-align: center;
+	top: 0;
+}
+
+.feed-add-post-load-number {
+	box-sizing: border-box;
+	display: inline-block;
+	padding-top: 3px;
+}
+
+.feed-com-files-title {
+	font-weight: bold;
+	color: #535c69;
+	font-size: 14px;
+	float: left;
+}
+
+.feed-com-file-wrap {
+	box-sizing: border-box;
+	display: inline-block;
+	font-size: 13px;
+	line-height: 14px;
+	margin: -2px 6px 14px 0;
+	max-width: 100%;
+	padding: 1px 0 0 20px;
+	position: relative;
+	vertical-align: middle;
+	word-wrap: break-word;
+}
+.feed-com-file-deleted-name {
+	color: #7e838c;
+	font-weight: bold;
+	text-decoration: line-through;
+	vertical-align: top;
+	word-wrap: break-word;
+	cursor: default;
+}
+
+.feed-com-file-name {
+	border-bottom: 1px solid transparent;
+	color: #1668c0;
+	vertical-align: top;
+	word-wrap: break-word;
+
+	-webkit-transition: border-bottom-color 0.2s linear;
+	transition: border-bottom-color 0.2s linear;
+}
+
+.feed-com-file-name:hover {
+	border-bottom: 1px solid;
+}
+
+.feed-con-file-size {
+	color: #8e8e8e;
+	font-size: 13px;
+	font-weight: normal;
+	margin: 0 12px 0 4px;
+	vertical-align: top;
+}
+
+.feed-com-files-more {
+	padding: 0 0 0 20px;
+}
+
+.feed-com-files-more-link {
+	color: #7f7f7f;
+	cursor: pointer;
+	display: inline-block;
+	font-size: 13px;
+	line-height: 15px;
+	text-decoration: underline;
+}
+
+.feed-com-info {
+	padding-top: 15px;
+	border-top: 1px solid #eef2f4;
+	margin-top: 10px;
+	overflow: hidden;
+}
+
+.feed-com-info-pager {}
+
+.feed-com-info-download {
+	float: right;
+}
+
+.feed-com-download-link {
+	font-size: 14px;
+	line-height: 32px;
+	margin-left: 15px;
+}
+
+.feed-com-download-link a {
+	text-decoration: underline;
+}
+
+.disk-uf-file-download-archive {
+	font-size: 11px;
+	line-height: 22px;
+	margin-top: 5px;
+}
+
+.disk-uf-file-download-archive-text {
+	display: inline-block;
+	color: #999;
+	cursor: pointer;
+	border-bottom: 1px solid transparent;
+	line-height: 13px;
+}
+
+.disk-uf-file-download-archive-text:hover {
+	border-bottom: 1px solid;
+	color: #999;
+}
+
+.disk-uf-file-download-archive-size {
+	color: #7e838c;
+}

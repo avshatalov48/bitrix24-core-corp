@@ -1,0 +1,26 @@
+<dict>
+    <key>CalDAVAccountDescription</key>
+    <string>#host# CalDAV Account</string>
+    <key>CalDAVHostName</key>
+    <string>#host#</string>
+    <key>CalDAVPassword</key>
+    <string>#password#</string>
+    <key>CalDAVPort</key>
+    <integer>#port#</integer>
+    <key>CalDAVUseSSL</key>
+    <#isSSL#/>
+    <key>CalDAVUsername</key>
+    <string>#username#</string>
+    <key>PayloadDescription</key>
+    <string>Configures a CalDAV account</string>
+    <key>PayloadDisplayName</key>
+    <string>CalDAV</string>
+    <key>PayloadIdentifier</key>
+    <string>#payloadIdentifier#caldavi</string>
+    <key>PayloadType</key>
+    <string>com.apple.caldav.account</string>
+    <key>PayloadUUID</key>
+    <string>#payloadUUID#caldavuid</string>
+    <key>PayloadVersion</key>
+    <integer>1</integer>
+</dict>

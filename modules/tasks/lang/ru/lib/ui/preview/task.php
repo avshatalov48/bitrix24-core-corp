@@ -1,0 +1,7 @@
+<?php
+$MESS["TASK_PREVIEW_FIELD_STATUS"] = "Статус"; 
+$MESS["TASK_PREVIEW_FIELD_ASSIGNER"] = "Постановщик"; 
+$MESS["TASK_PREVIEW_FIELD_RESPONSIBLE"] = "Ответственный"; 
+$MESS["TASK_PREVIEW_FIELD_DEADLINE"] = "Крайний срок";
+$MESS["TASK_PREVIEW_FIELD_DESCRIPTION"] = "Описание";
+$MESS["TASK_PREVIEW_FIELD_GROUP"] = "Проект";

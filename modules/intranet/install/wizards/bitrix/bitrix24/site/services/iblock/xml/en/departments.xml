@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="windows-1251"?>
+<CommerceInformation SchemaVersion="2.021" CreationDate="2008-12-30T17:31:12">
+	<Metadata>
+		<Id>9</Id>
+		<Title>Departments</Title>
+		<Properties>
+			<Property>
+				<Id>CML2_CODE</Id>
+				<Title>Code</Title>
+				<Multiple>false</Multiple>
+			</Property>
+			<Property>
+				<Id>CML2_SORT</Id>
+				<Title>Sort</Title>
+				<Multiple>false</Multiple>
+			</Property>
+			<Property>
+				<Id>CML2_ACTIVE_FROM</Id>
+				<Title>Start time</Title>
+				<Multiple>false</Multiple>
+			</Property>
+			<Property>
+				<Id>CML2_ACTIVE_TO</Id>
+				<Title>End time</Title>
+				<Multiple>false</Multiple>
+			</Property>
+			<Property>
+				<Id>CML2_PREVIEW_TEXT</Id>
+				<Title>Anons</Title>
+				<Multiple>false</Multiple>
+			</Property>
+			<Property>
+				<Id>CML2_PREVIEW_PICTURE</Id>
+				<Title>Preview picture</Title>
+				<Multiple>false</Multiple>
+			</Property>
+		</Properties>
+		<Sections>
+		</Sections>
+	</Metadata>
+	<Catalog>
+		<Id>9</Id>
+		<MetadataId>9</MetadataId>
+		<Title>Departments</Title>
+		<BitrixCode>departments</BitrixCode>
+		<BitrixSort>500</BitrixSort>
+		<BitrixListURL>/company/structure.php</BitrixListURL>
+		<BitrixDetailURL></BitrixDetailURL>
+		<BitrixSectionURL>/company/structure.php?set_filter_structure=Y&amp;structure_UF_DEPARTMENT=#ID#</BitrixSectionURL>
+		<BitrixPicture></BitrixPicture>
+		<BitrixIndexElements>false</BitrixIndexElements>
+		<BitrixIndexSections>true</BitrixIndexSections>
+		<BitrixWorkflow>false</BitrixWorkflow>
+		<BitrixLabels>
+			<BitrixLabel>
+				<Id>ELEMENT_NAME</Id>
+				<Value>Item</Value>
+			</BitrixLabel>
+			<BitrixLabel>
+				<Id>ELEMENTS_NAME</Id>
+				<Value>Items</Value>
+			</BitrixLabel>
+			<BitrixLabel>
+				<Id>ELEMENT_ADD</Id>
+				<Value>Add Item</Value>
+			</BitrixLabel>
+			<BitrixLabel>
+				<Id>ELEMENT_EDIT</Id>
+				<Value>Edit Item</Value>
+			</BitrixLabel>
+			<BitrixLabel>
+				<Id>ELEMENT_DELETE</Id>
+				<Value>Delete Item</Value>
+			</BitrixLabel>
+			<BitrixLabel>
+				<Id>SECTION_NAME</Id>
+				<Value>Department</Value>
+			</BitrixLabel>
+			<BitrixLabel>
+				<Id>SECTIONS_NAME</Id>
+				<Value>Departments</Value>
+			</BitrixLabel>
+			<BitrixLabel>
+				<Id>SECTION_ADD</Id>
+				<Value>Add Department</Value>
+			</BitrixLabel>
+			<BitrixLabel>
+				<Id>SECTION_EDIT</Id>
+				<Value>Edit Department</Value>
+			</BitrixLabel>
+			<BitrixLabel>
+				<Id>SECTION_DELETE</Id>
+				<Value>Delete Department</Value>
+			</BitrixLabel>
+		</BitrixLabels>
+		<Elements>
+		</Elements>
+	</Catalog>
+</CommerceInformation>

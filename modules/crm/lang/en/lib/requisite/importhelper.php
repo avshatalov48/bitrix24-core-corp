@@ -1,0 +1,33 @@
+<?
+$MESS["CRM_RQ_IMP_HLPR_ERR_INVALID_ENTITY_TYPE"] = "Incorrect details entity type";
+$MESS["CRM_RQ_IMP_HLPR_ERR_INVALID_ENTITY_ID"] = "No entity specified for use with details.";
+$MESS["CRM_RQ_IMP_HLPR_ERR_COMPANY_NOT_EXISTS"] = "Company was not found (ID: #ID#)";
+$MESS["CRM_RQ_IMP_HLPR_ERR_CONTACT_NOT_EXISTS"] = "Contact was not found (ID: #ID#)";
+$MESS["CRM_RQ_IMP_HLPR_ERR_INVALID_IMP_PRESET_ID"] = "Invalid details import template ID";
+$MESS["CRM_RQ_IMP_HLPR_ERR_IMP_PRESET_NOT_EXISTS"] = "Details import template was not found (ID: #ID#)";
+$MESS["CRM_RQ_IMP_HLPR_ERR_ACCESS_DENIED_COMPANY_UPDATE"] = "Company edit access denied (ID: #ID#)";
+$MESS["CRM_RQ_IMP_HLPR_ERR_ACCESS_DENIED_CONTACT_UPDATE"] = "Contact edit access denied (ID: #ID#)";
+$MESS["CRM_RQ_IMP_HLPR_ERR_NO_ADDRESSES_TO_IMPORT"] = "No addresses to import";
+$MESS["CRM_RQ_IMP_HLPR_ERR_IMP_PRESET_HAS_NO_ADDR_FIELD"] = "Details import template does not include the address field (ID: #ID#)";
+$MESS["CRM_RQ_IMP_HLPR_ERR_CREATE_REQUISITE"] = "Error creating #ENTITY_TYPE_NAME_GENITIVE# (ID: #ID#)";
+$MESS["CRM_RQ_IMP_HLPR_ERR_COMPANY_GENITIVE"] = "company details";
+$MESS["CRM_RQ_IMP_HLPR_ERR_CONTACT_GENITIVE"] = "contact details";
+$MESS["CRM_RQ_IMP_HLPR_ERR_EMPTY_KEY_FIELDS"] = "Key fields are missing";
+$MESS["CRM_RQ_IMP_HLPR_ERR_NEXT_ENTITY"] = "Data belong to the entity";
+$MESS["CRM_RQ_IMP_HLPR_ERR_NEXT_ROW_LIMIT"] = "Rows per entity limit exceeded: #ROW_LIMIT#.";
+$MESS["CRM_RQ_IMP_HLPR_ERR_RQ_KEY_FIELDS_NOT_PRESENT"] = "Details keywords are not specified";
+$MESS["CRM_RQ_IMP_HLPR_ERR_EMPTY_RQ_KEY_FIELDS"] = "Details key fields are missing";
+$MESS["CRM_RQ_IMP_HLPR_ERR_RQ_NAME_IS_NOT_SET"] = "Details name is not specified";
+$MESS["CRM_RQ_IMP_HLPR_ERR_PRESET_ASSOC"] = "Cannot match template to import details";
+$MESS["CRM_RQ_IMP_HLPR_ERR_UNKNOWN_ADDRESS_TYPE"] = "Unknown address type";
+$MESS["CRM_RQ_IMP_HLPR_ERR_ADDRESS_TYPE_IS_NOT_SET"] = "Address type is not specified";
+$MESS["CRM_RQ_IMP_HLPR_ERR_ADDRESS_TYPE_ALREADY_EXISTS"] = "Address type was specified but already exists in the details";
+$MESS["CRM_RQ_IMP_HLPR_ERR_BD_KEY_FIELDS_NOT_PRESENT"] = "No key fields specified for banking details";
+$MESS["CRM_RQ_IMP_HLPR_ERR_EMPTY_BD_KEY_FIELDS"] = "Bnking details key fields are missing";
+$MESS["CRM_RQ_IMP_HLPR_ERR_BD_NAME_IS_NOT_SET"] = "Banking details name is not specified";
+$MESS["CRM_RQ_IMP_HLPR_ERR_ROW_NUMBER_TEXT"] = "(row #ROW_NUMBER#)";
+$MESS["CRM_RQ_IMP_HLPR_ERR_DEF_IMP_PRESET_NOT_DEFINED"] = "Details import template #ENTITY_TYPE_NAME_GENITIVE# is not defined";
+$MESS["CRM_RQ_IMP_HLPR_ERR_UPDATE_REQUISITE"] = "Error updating details for #ENTITY_TYPE_NAME_GENITIVE# (ID: #ID#)";
+$MESS["CRM_RQ_IMP_HLPR_ERR_CREATE_BANK_DETAIL"] = "Error creating banking details for #ENTITY_TYPE_NAME_GENITIVE# (ID: #ID#)";
+$MESS["CRM_RQ_IMP_HLPR_ERR_UPDATE_BANK_DETAIL"] = "Error updating banking details for #ENTITY_TYPE_NAME_GENITIVE# (ID: #ID#)";
+?>

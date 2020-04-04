@@ -1,0 +1,6 @@
+<?
+$MESS['DISK_UF_LOCAL_DOC_CONTROLLER_ERROR_COULD_NOT_FIND_ATTACHED_OBJECT'] = "Не удалось найти прикрепленный объект.";
+$MESS["DISK_UF_LOCAL_DOC_CONTROLLER_ERROR_BAD_RIGHTS"] = "Недостаточно прав для работы с файлом.";
+$MESS["DISK_UF_LOCAL_DOC_CONTROLLER_UPLOAD_NEW_VERSION_IN_COMMENT_M"] = "Загрузил новый файл";
+$MESS["DISK_UF_LOCAL_DOC_CONTROLLER_UPLOAD_NEW_VERSION_IN_COMMENT_F"] = "Загрузила новый файл";
+?>

@@ -1,0 +1,1 @@
+<?if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();?><div class="menu-user-action menu-user-timeman menu-user-timeman-status-error" id="timeman-container"><?=GetMessage('TM_ERROR_'.$arResult['ERROR']);?></div>

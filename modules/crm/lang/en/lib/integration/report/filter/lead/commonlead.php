@@ -1,0 +1,3 @@
+<?
+$MESS["CRM_REPORT_FILTER_LAST_30_DAYS_PRESET_TITLE"] = "Last 30 days";
+?>

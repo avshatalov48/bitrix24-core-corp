@@ -1,0 +1,5 @@
+<?
+$MESS["TASKS_AUTOMATION_TRIGGER_WEBHOOK_NAME"] = "Webhook";
+$MESS["TASKS_AUTOMATION_TRIGGER_PASSWORD_TITLE"] = "External access to task automation";
+$MESS["TASKS_AUTOMATION_TRIGGER_PASSWORD_COMMENT"] = "Created by trigger";
+?>

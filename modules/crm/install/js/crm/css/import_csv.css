@@ -1,0 +1,32 @@
+.popup-window-custom-title {
+	font: bold 14px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	color: #80868e;
+	line-height: 49px;
+	padding: 0 0 0 20px;
+}
+
+.popup-window-table-col-left {
+	width: 20%;
+}
+
+.popup-window-label {
+	font: 14px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	color: #555;
+	padding-right: 10px;
+}
+
+.popup-window-custom-button {
+	width: 100%;
+	background: transparent;
+	text-align: left;
+	border: none;
+	padding: 4px 0;
+	font: 14px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	color: #555;
+	cursor: pointer;
+	outline: none;
+}
+
+.popup-window-custom-button:hover {
+	text-decoration: underline;
+}

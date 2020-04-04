@@ -1,0 +1,11 @@
+div.filter-field span.webform-field-textbox-inner {
+	width: 200px;
+	padding: 0px 20px 0px 4px;
+}
+div.filter-field input.webform-field-textbox {
+	height: 20px;
+	width: 200px;
+}
+div.filter-field a.webform-field-textbox-clear {
+	background-position: -17px 8px;
+}

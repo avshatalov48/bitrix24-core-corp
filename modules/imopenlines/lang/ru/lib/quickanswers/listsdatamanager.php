@@ -1,0 +1,20 @@
+<?php
+$MESS['IMOL_QA_IBLOCK_NAME'] = 'Быстрые ответы';
+$MESS['IMOL_QA_IBLOCK_DESCRIPTION'] = 'Список для хранения быстрых ответов открытой линии';
+$MESS['IMOL_QA_IBLOCK_ELEMENTS_NAME'] = 'Ответы';
+$MESS['IMOL_QA_IBLOCK_ELEMENT_NAME'] = 'Ответ';
+$MESS['IMOL_QA_IBLOCK_ELEMENT_ADD'] = 'Добавить ответ';
+$MESS['IMOL_QA_IBLOCK_ELEMENT_EDIT'] = 'Изменить ответ';
+$MESS['IMOL_QA_IBLOCK_ELEMENT_DELETE'] = 'Удалить ответ';
+$MESS['IMOL_QA_IBLOCK_SECTIONS_NAME'] = 'Разделы';
+$MESS['IMOL_QA_IBLOCK_SECTION_NAME'] = 'Раздел';
+$MESS['IMOL_QA_IBLOCK_SECTION_ADD'] = 'Добавить раздел';
+$MESS['IMOL_QA_IBLOCK_SECTION_EDIT'] = 'Изменить раздел';
+$MESS['IMOL_QA_IBLOCK_SECTION_DELETE'] = 'Удалить раздел';
+$MESS['IMOL_QA_IBLOCK_NAME_FIELD'] = 'Название';
+$MESS['IMOL_QA_IBLOCK_TEXT_FIELD'] = 'Текст ответа';
+$MESS['IMOL_QA_IBLOCK_RATING_FIELD'] = 'Рейтинг';
+$MESS['IMOL_QA_IBLOCK_GREETING_SECTION'] = 'Приветствие';
+$MESS['IMOL_QA_IBLOCK_PAYMENT_SECTION'] = 'Оплата';
+$MESS['IMOL_QA_IBLOCK_DELIVERY_SECTION'] = 'Доставка';
+$MESS['IMOL_QA_IBLOCK_COMMON_SECTION'] = 'Общее';

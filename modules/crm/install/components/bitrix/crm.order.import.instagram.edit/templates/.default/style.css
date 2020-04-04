@@ -1,0 +1,172 @@
+.pagetitle-inner-container .pagetitle-menu {
+	order: 5;
+	display: flex;
+}
+
+.pagetitle-inner-container .pagetitle-container {
+	display: flex;
+}
+
+.crm-order-instagram-edit-block {
+	background: #fff;
+	padding: 23px 20px 28px 24px;
+}
+
+.crm-order-instagram-edit-block + .crm-order-instagram-edit-block {
+	margin-top: 13px;
+}
+
+.crm-order-instagram-edit-block-view {
+	display: flex;
+	flex-direction: column;
+}
+
+.crm-order-instagram-edit-block .main-ui-filter-search {
+	height: 41px;
+	border: 1px solid #c8d1d6;
+	width: 100%;
+}
+
+.crm-order-instagram-edit-header {
+	display: flex;
+}
+
+.crm-order-instagram-edit-header-logo {
+	width: 97px;
+	height: 97px;
+	display: block;
+	margin-right: 20px;
+	flex-shrink: 0;
+	border-radius: 50%;
+	background: url(data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2297%22%20height%3D%2297%22%20viewBox%3D%220%200%2097%2097%22%20fill%3D%22none%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%0A%3Cpath%20fill-rule%3D%22evenodd%22%20clip-rule%3D%22evenodd%22%20d%3D%22M48.5%2097C75.2858%2097%2097%2075.2858%2097%2048.5C97%2021.7142%2075.2858%200%2048.5%200C21.7142%200%200%2021.7142%200%2048.5C0%2075.2858%2021.7142%2097%2048.5%2097Z%22%20fill%3D%22%23E85998%22/%3E%0A%3Cpath%20fill-rule%3D%22evenodd%22%20clip-rule%3D%22evenodd%22%20d%3D%22M57.2812%2036.563C57.2812%2035.364%2058.252%2034.394%2059.4502%2034.394C60.6494%2034.394%2061.6191%2035.364%2061.6191%2036.563C61.6191%2037.762%2060.6494%2038.7321%2059.4502%2038.7321C58.252%2038.7321%2057.2812%2037.762%2057.2812%2036.563ZM39.9287%2026.803H57.2812C63.8506%2026.803%2069.2109%2032.162%2069.2109%2038.7321V43.903H64.873V38.7321C64.873%2034.4901%2061.5244%2031.1411%2057.2812%2031.1411H39.9287C35.6865%2031.1411%2032.3379%2034.4901%2032.3379%2038.7321V56.084C32.3379%2060.327%2035.6865%2063.676%2039.9287%2063.676H54.2998V68.014H39.9287C33.3594%2068.014%2028%2062.6541%2028%2056.084V38.7321C28%2032.162%2033.3594%2026.803%2039.9287%2026.803ZM37.2178%2047.4081C37.2178%2041.144%2042.3418%2036.0211%2048.6045%2036.0211C53.9102%2036.0211%2058.3848%2039.7021%2059.6338%2044.6321C57.9658%2045.358%2056.5664%2046.5881%2055.6191%2048.123C55.6416%2047.889%2055.6533%2047.6501%2055.6533%2047.4081C55.6533%2043.4901%2052.5234%2040.3591%2048.6045%2040.3591C44.6865%2040.3591%2041.5557%2043.4901%2041.5557%2047.4081C41.5557%2051.3271%2044.6865%2054.457%2048.6045%2054.457C51.0244%2054.457%2053.1396%2053.2621%2054.4082%2051.4271C54.3438%2051.8541%2054.2998%2052.2881%2054.2998%2052.7321V57.246C52.6211%2058.225%2050.6787%2058.795%2048.6045%2058.795C42.3418%2058.795%2037.2178%2053.6721%2037.2178%2047.4081ZM59.8818%2057.4189H62.1396V54.338V54.2999C62.1377%2053.623%2062.124%2050.002%2066.8916%2050.002H70.3281V53.926H67.8008C67.3008%2053.926%2066.7959%2054.4429%2066.7959%2054.8279V57.405H70.3242C70.1816%2059.381%2069.8896%2061.189%2069.8896%2061.189H66.7783V72.387H62.1396V61.187H59.8818V57.4189Z%22%20fill%3D%22white%22/%3E%0A%3C/svg%3E%0A)
+				no-repeat center;
+	background-size: cover;
+}
+
+.crm-order-instagram-edit-btn {
+	margin-top: 30px;
+	font-size: 0;
+}
+
+.crm-order-instagram-edit-title {
+	color: #333;
+	font: 22px/28px 'OpenSans-Light', Helvetca, Arial, sans-sarif;
+	margin-bottom: 7px;
+}
+
+.crm-order-instagram-edit-name {
+	font-family: "OpenSans-SemiBold", "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+.crm-order-instagram-edit-desc {
+	color: #525c69;
+	display: flex;
+	flex-direction: column;
+}
+
+.crm-order-instagram-edit-decs-text:first-child {
+	margin-bottom: 4px;
+}
+
+.crm-order-instagram-edit-decs-link {
+	font: 14px/18px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	color: #0063C6;
+	text-overflow: ellipsis;
+	overflow: hidden;
+}
+
+.crm-order-instagram-edit-section {
+	color: #333;
+	font: 16px/24px 'OpenSans-Regular', Helvetca, Arial, sans-sarif;
+	border-bottom: 1px solid rgba(82, 92, 105, .1);
+	padding-bottom: 16px;
+	margin-bottom: 16px;
+}
+
+.crm-order-instagram-edit-connect,
+.crm-order-instagram-edit-disconnect {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.crm-order-instagram-edit-disconnect {
+	background: #def6fe;
+	padding: 8px 13px 8px 15px;
+	margin: 18px 0 5px;
+}
+
+.crm-order-instagram-edit-connect + .crm-order-instagram-edit-connect {
+	margin-top: 15px;
+}
+
+.crm-order-instagram-edit-content-inner {
+	width: 100%;
+}
+
+.crm-order-instagram-edit-user {
+	font-size: 14px;
+	line-height: 22px;
+	font-weight: 600;
+	color: #2066b0;
+	display: flex;
+	align-items: center;
+}
+
+.crm-order-instagram-edit-user-img {
+	border-radius: 50%;
+	background: url(data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2237%22%20height%3D%2237%22%20viewBox%3D%220%200%2037%2037%22%20fill%3D%22none%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%0A%20%20%3Cpath%20fill-rule%3D%22evenodd%22%20clip-rule%3D%22evenodd%22%20d%3D%22M18.5%2037C28.717%2037%2037%2028.717%2037%2018.5S28.717%200%2018.5%200%200%208.283%200%2018.5%208.283%2037%2018.5%2037z%22%20fill%3D%22%2380868E%22/%3E%0A%20%20%3Cpath%20fill-rule%3D%22evenodd%22%20clip-rule%3D%22evenodd%22%20d%3D%22M28.808%2030.663c0-1.429-1.58-7.471-1.58-7.471%200-.883-1.14-1.892-3.382-2.48a7.572%207.572%200%200%201-2.14-.988c-.145-.083-.123-.854-.123-.854l-.722-.112c0-.062-.062-.987-.062-.987.864-.294.776-2.03.776-2.03.548.308.906-1.066.906-1.066.649-1.91-.324-1.794-.324-1.794.17-1.166.17-2.35%200-3.516-.432-3.866-6.94-2.817-6.168-1.554-1.902-.355-1.468%204.033-1.468%204.033l.412%201.136c-.81.532-.247%201.177-.219%201.918.04%201.095.701.868.701.868.04%201.807.92%202.043.92%202.043.165%201.134.062.941.062.941l-.782.096c.01.258-.01.517-.062.77-.92.415-1.118.66-2.032%201.065-1.766.785-3.685%201.805-4.026%203.179-.341%201.374-1.355%206.803-1.355%206.803H28.808z%22%20fill%3D%22white%22/%3E%0A%3C/svg%3E%0A)
+				no-repeat center;
+	width: 37px;
+	height: 37px;
+	display: block;
+	margin-right: 9px;
+	background-size: cover;
+}
+
+.crm-order-instagram-edit-dropdown-button {
+	display: block;
+	margin: 13px 0 -23px 0;
+	padding: 20px 0;
+	border: none;
+	background: transparent;
+	font: 14px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	color: #535C69;
+	cursor: pointer;
+}
+
+.crm-order-instagram-edit-dropdown-button:after {
+	content: '';
+	display: inline-block;
+	margin: 0 0 0 6px;
+	width: 11px;
+	height: 7px;
+	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20viewBox%3D%220%200%2011%207%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Ctitle%3EPath%3C/title%3E%3Cpath%20d%3D%22M5.485%204.228L1.37.114%200%201.484l4.8%204.8.685.687%205.486-5.485L9.6.115%205.484%204.227z%22%20fill%3D%22%23535C69%22%20fill-rule%3D%22evenodd%22/%3E%3C/svg%3E');
+	background-repeat: no-repeat;
+	transition: opacity .3s;
+	opacity: .6;
+}
+
+.crm-order-instagram-edit-dropdown-button:hover:after {
+	opacity: 1;
+}
+
+.crm-order-instagram-edit-box-hidden {
+	margin: 30px 0 0;
+}
+
+.ui-alert-success-instagram-app {
+	margin: 13px 0 0;
+}
+
+.instagram-app-link {
+	border-bottom: 1px dashed rgba(39, 107, 179, .4);
+	transition: border .2s linear;
+	color: #2067b0;
+	text-decoration: none;
+	cursor: pointer;
+}
+
+.instagram-app-link:hover {
+	border-color: rgba(39, 107, 179, .8);
+}

@@ -1,0 +1,46 @@
+.disk-tabs-block {
+	border-bottom: 1px solid #c6cdd3;
+	min-height: 42px;
+}
+
+.disk-tab {
+	background-color: #eef2f4;
+	border-radius: 2px 2px 0 0;
+	color: #535c69;
+	cursor: pointer;
+	display: inline-block;
+	font-size: 14px;
+	font-weight: bold;
+	line-height: 42px;
+	height: 42px;
+	margin-right: 10px;
+	padding: 0 18px;
+	vertical-align: top;
+
+	-webkit-transition: background-color 0.2s linear;
+	transition: background-color 0.2s linear;
+}
+
+.disk-tab:hover {
+	background-color: #d6f1fb;
+}
+
+.disk-tab-active,
+.disk-tab:active {
+	background-color: #fff !important;
+	border: 1px solid #c6cdd3;
+	border-bottom-color: #fff;
+	height: 41px;
+	margin-bottom: -1px;
+	line-height: 40px;
+	padding: 0 17px;
+}
+.disk-tab-contents {
+	margin-top: 23px;
+}
+.disk-tab-content {
+	display: none;
+}
+.disk-tab-content.active {
+	display: block;
+}

@@ -1,0 +1,12 @@
+<?
+$MESS["CRM_ACTIVITY_WEBFORM_NAME"] = "CRM-форма";
+$MESS["CRM_ACTIVITY_WEBFORM_NAME_IN"] = "Входящие";
+$MESS["CRM_ACTIVITY_WEBFORM_FIELDS_LINK"] = "Адрес формы";
+$MESS["CRM_ACTIVITY_WEBFORM_STATUS_ACT"] = "Подключено";
+$MESS["CRM_ACTIVITY_WEBFORM_STATUS_INACT"] = "Подключить";
+$MESS["CRM_ACTIVITY_WEBFORM_YES"] = "Да";
+$MESS["CRM_ACTIVITY_WEBFORM_VISITED_PAGES"] = "Посещенные страницы сайта";
+$MESS["CRM_ACTIVITY_WEBFORM_NO"] = "Нет";
+$MESS["CRM_ACTIVITY_WEBFORM_IP"] = "Заполнено с IP-адреса";
+$MESS["CRM_ACTIVITY_WEBFORM_USER_CONSENT"] = "Пользовательское соглашение выведено";
+?>

@@ -1,0 +1,158 @@
+.tm-dashboard {display: inline-block;}
+.tm-dashboard-inner { display: inline-block; height: 20px; cursor: pointer; color: #3e3e3e; font:normal 11px/normal Arial, Helvetica, sans-serif; padding: 0 0 0 9px; }
+
+.tm-dashboard:hover { background: #cfcfcf;}
+.tm-dashboard:hover .tm-dashboard-title, .tm-dashboard:hover .tm-dashboard-arrow { visibility: visible; }
+
+.tm-error {color: red; margin-right: 9px;}
+
+.tm-dashboard-arrow,
+.tm-dashboard-title,
+.tm-dashboard-bell,
+.tm-dashboard-clock,
+.tm-dashboard-flag,
+.tm-dashboard-stateicon,
+.tm-dashboard-text { display: inline-block; vertical-align: top; height: 20px; }
+
+/*.tm-dashboard-arrow, .tm-dashboard-title { visibility: hidden; }*/
+.tm-dashboard-title { margin: 0 8px 0 5px; height:20px; line-height: 18px; }
+.tm-dashboard-arrow { width: 6px; background: url(images/planner-sprite.png) no-repeat -79px 4px; }
+.tm-dashboard-bell { width: 11px; background: url(images/planner-sprite.png) no-repeat 0 4px; }
+.tm-dashboard-clock { width: 10px; background: url(images/planner-sprite.png) no-repeat -22px 4px; }
+.tm-dashboard-flag { width: 10px; background: url(images/planner-sprite.png) no-repeat -44px 4px; }
+
+.tm-dashboard-text { margin: 0 12px 0 4px; height:20px; line-height: 18px; }
+.tm-dashboard-subtext { color: #878787; padding: 0 0 0 3px; }
+
+
+.planner-content .tm-info-bar {
+	border-radius: 4px;
+	border: 1px solid;
+	height: 31px;
+	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	margin: 0 0 9px;
+	position: relative;
+}
+
+
+.planner-content .tm-info-bar {
+	background-color:#abe89b;
+	background-image: -webkit-linear-gradient(top, #c1eeb5, #a5e693);
+	background-image:    -moz-linear-gradient(top, #c1eeb5, #a5e693);
+	background-image:     -ms-linear-gradient(top, #c1eeb5, #a5e693);
+	background-image:      -o-linear-gradient(top, #c1eeb5, #a5e693);
+	background-image:         linear-gradient(to bottom, #c1eeb5, #a5e693);
+	border-color: #bfe5b5 #aee1a0 #a8df99;
+}
+
+.planner-content .tm-info-bar-pause {
+	background-color: #dbdbdb;
+	background-image: -webkit-linear-gradient(top, #e6e6e6, #dadada);
+	background-image:    -moz-linear-gradient(top, #e6e6e6, #dadada);
+	background-image:     -ms-linear-gradient(top, #e6e6e6, #dadada);
+	background-image:      -o-linear-gradient(top, #e6e6e6, #dadada);
+	background-image:         linear-gradient(to bottom, #e6e6e6, #dadada);
+	border-color: #dddedd #d6d7d5 #d4d5d4;
+}
+
+
+.planner-content .tm-info-bar-btn,
+.planner-content .tm-info-bar-time,
+.planner-content .tm-info-bar-text {
+	display: inline-block;
+	vertical-align: top;
+}
+
+.planner-content .tm-info-bar-time {
+	height: 22px;
+	font-size: 12px;
+	right: 5px;
+	top: 0;
+	padding: 9px 0 0 18px;
+	position: absolute;
+	z-index: 2;
+}
+
+.planner-content .tm-info-bar-time:before {
+	background: url(/bitrix/js/timeman/images/timeman-sprite.2.1.png) no-repeat -35px -54px;
+	content: "";
+	left: 4px;
+	top: 11px;
+	height: 11px;
+	position: absolute;
+	width: 11px;
+}
+
+.planner-content .tm-info-bar-active .tm-info-bar-time {
+	background-color: #abe89b ;
+	background-image: -webkit-linear-gradient(top, #c1eeb5, #a5e693);
+	background-image:    -moz-linear-gradient(top, #c1eeb5, #a5e693);
+	background-image:     -ms-linear-gradient(top, #c1eeb5, #a5e693);
+	background-image:      -o-linear-gradient(top, #c1eeb5, #a5e693);
+	background-image:         linear-gradient(to bottom, #c1eeb5, #a5e693);
+}
+
+.planner-content .tm-info-bar-pause .tm-info-bar-time {
+	background-color: #dbdbdb;
+	background-image: -webkit-linear-gradient(top, #e6e6e6, #dadada);
+	background-image:    -moz-linear-gradient(top, #e6e6e6, #dadada);
+	background-image:     -ms-linear-gradient(top, #e6e6e6, #dadada);
+	background-image:      -o-linear-gradient(top, #e6e6e6, #dadada);
+	background-image:         linear-gradient(to bottom, #e6e6e6, #dadada);
+}
+
+.planner-content .tm-info-bar-btn {
+	background-color: #f3f3f3;
+	background-image: -webkit-linear-gradient(top, #f9f9f9, #ececec);
+	background-image:    -moz-linear-gradient(top, #f9f9f9, #ececec);
+	background-image:     -ms-linear-gradient(top, #f9f9f9, #ececec);
+	background-image:      -o-linear-gradient(top, #f9f9f9, #ececec);
+	background-image:         linear-gradient(to bottom, #f9f9f9, #ececec);
+	border-radius: 3px;
+	-webkit-box-shadow: 1px 1px 1px rgba(0, 0, 0, .07);
+	box-shadow: 1px 1px 1px rgba(0, 0, 0, .07);
+	cursor: pointer;
+	margin:3px 0 0 3px;
+	height: 25px;
+	position: relative;
+	width: 26px;
+}
+
+.planner-content .tm-info-bar-btn:before {
+	background: url(/bitrix/js/timeman/images/timeman-sprite.2.1.png) no-repeat 100px 100px;
+	content: "";
+	height: 13px;
+	left: 8px;
+	top: 7px;
+	position: absolute;
+	width: 12px;
+}
+
+.planner-content .tm-info-bar-btn-flag:before {
+	background-position: -83px -107px;
+}
+.planner-content .tm-info-bar-btn-play:before {
+	background-position: -72px -231px;
+}
+.planner-content .tm-info-bar-btn-pause:before {
+	background-position: -58px -106px;
+}
+
+.planner-content .tm-info-bar-text{
+	max-width: 275px;
+	margin: 7px 0 0 11px;
+	overflow: hidden;
+	white-space: nowrap;
+}
+
+.planner-content .tm-info-bar-active .tm-info-bar-btn-play {
+	display: none;
+}
+
+.planner-content .tm-info-bar-pause .tm-info-bar-btn-pause {
+	display: none;
+}
+
+.planner-content .tm-info-bar-closed .tm-info-bar-btn-flag {
+	display: none;
+}

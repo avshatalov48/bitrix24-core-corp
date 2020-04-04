@@ -1,0 +1,20 @@
+<?
+$MESS ['BPDCM_PD_ENTITY'] = "Куда";
+$MESS ['BPDCM_PD_ENTITY_TYPE_USER'] = "Диск пользователя";
+$MESS ['BPDCM_PD_ENTITY_TYPE_SG'] = "Диск группы соц.сети";
+$MESS ['BPDCM_PD_ENTITY_TYPE_COMMON'] = "Общий Диск";
+$MESS ['BPDCM_PD_ENTITY_TYPE_FOLDER_1'] = "Папка Диска";
+$MESS ['BPDCM_PD_SOURCE_ID'] = "Исходный объект";
+$MESS ['BPDCM_PD_SOURCE_ID_DESCR'] = "Папка или файл Диска";
+$MESS ['BPDCM_PD_OPERATION'] = "Тип операции";
+$MESS ['BPDCM_PD_OPERATION_COPY'] = "Копирование";
+$MESS ['BPDCM_PD_OPERATION_MOVE'] = "Перемещение";
+$MESS ['BPDCM_PD_ENTITY_ID_USER'] = "Пользователь";
+$MESS ['BPDCM_PD_ENTITY_ID_SG'] = "Группа";
+$MESS ['BPDCM_PD_ENTITY_ID_COMMON'] = "Диск";
+$MESS ['BPDCM_PD_ENTITY_ID_FOLDER'] = "Папка";
+$MESS ['BPDCM_PD_LABEL_CHOOSE'] = "Выберите:";
+$MESS ['BPDCM_PD_LABEL_DISK_CHOOSE_FILE'] = "Выбрать файл";
+$MESS ['BPDCM_PD_LABEL_DISK_CHOOSE_FOLDER'] = "Выбрать папку";
+$MESS ['BPDCM_PD_LABEL_DISK_EMPTY'] = "Ничего не выбрано";
+$MESS ['BPDCM_PD_OPERATOR'] = "Выполнять от имени";

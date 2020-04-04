@@ -1,0 +1,4 @@
+table.bx-interface-toolbar a.btn-edit,
+div.bx-interface-toolbar .btn-edit {
+	background-image:url("images/buttons/edit.gif");
+}

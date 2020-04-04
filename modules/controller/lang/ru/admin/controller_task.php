@@ -1,0 +1,34 @@
+<?
+$MESS["CTRLR_TASK_FLT_ID"] = "ID";
+$MESS["CTRLR_TASK_FLT_CLIENT"] = "Клиент";
+$MESS["CTRLR_TASK_FLT_OPERATION"] = "Операция";
+$MESS["CTRLR_TASK_FLT_EXECUTED"] = "Период выполнения";
+$MESS["CTRLR_TASK_FLT_MODYFIED"] = "Период изменения";
+$MESS["CTRLR_TASK_FLT_CREATED"] = "Период создания";
+$MESS["CTRLR_TASK_ERR_DELETE"] = "Ошибка отмены задачи";
+$MESS["CTRLR_TASK_NAV"] = "Задачи";
+$MESS["CTRLR_TASK_COLUMN_TASK"] = "Задача";
+$MESS["CTRLR_TASK_COLUMN_STATUS"] = "Состояние";
+$MESS["CTRLR_TASK_COLUMN_EXEC"] = "Выполнено";
+$MESS["CTRLR_TASK_COLUMN_ARGS"] = "Аргумент";
+$MESS["CTRLR_TASK_COLUMN_RESULT"] = "Результат";
+$MESS["CTRLR_TASK_COLUMN_URL"] = "URL клиента";
+$MESS["CTRLR_TASK_COLUMN_DATE_MOD"] = "Дата изменения";
+$MESS["CTRLR_TASK_COLUMN_DATE_CRE"] = "Дата создания";
+$MESS["CTRLR_TASK_MENU_REPEAT"] = "Повторить";
+$MESS["CTRLR_TASK_MENU_REPEAT_CONFIRM"] = "Задача будет повторно выполнена. Продолжить?";
+$MESS["CTRLR_TASK_MENU_CANCEL"] = "Отменить";
+$MESS["CTRLR_TASK_MENU_CANCEL_CONFIRM"] = "Задача будет удалена из списка. Продолжить?";
+$MESS["CTRLR_TASK_MENU_LOG"] = "Посмотреть журнал";
+$MESS["CTRLR_TASK_REPEAT"] = "Повторить задачу";
+$MESS["CTRLR_TASK_TITLE"] = "Задачи для выполнения на клиентах контроллера сайтов";
+$MESS["CTRLR_TASK_FLR_ST"] = "Статус выполнения";
+$MESS["CTRLR_TASK_FLR_ANY"] = "(любая)";
+$MESS["CTRLR_TASK_PROGRESS"] = "Выполнение задач.";
+$MESS["CTRLR_TASK_PROGRESS_BAR"] = "Выполнено:";
+$MESS["CTRLR_TASK_PROGRESS_BAR_FROM"] = "из";
+$MESS["CTRLR_TASK_REP_DELETE"] = "Ошибка повтора задачи";
+$MESS["CTRLR_TASK_BUTTON_START"] = "Начать выполнение";
+$MESS["CTRLR_TASK_ERR_LOCK"] = "Ошибка базы данных при блокировке задачи:";
+$MESS["CTRLR_TASK_ERR_LOCK_ADVICE"] = "Обратитесь к администратору базы данных для того, чтобы он дал права на выполнение пакета dbms_lock.";
+?>

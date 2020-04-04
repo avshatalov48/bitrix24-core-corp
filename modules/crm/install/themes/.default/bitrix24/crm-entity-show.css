@@ -1,0 +1,23 @@
+.crm-entity-info
+{
+	background-color: #f8fafb;
+}
+
+.bx-crm-view-fieldset-title
+{
+	background: url("images/crm/mini-sprite.png") repeat-x scroll 0 -200px #F8FAFB
+}
+
+.crm-navigation-prev
+{
+	background:url("images/crm/mini-sprite.png") no-repeat 0 -287px; padding-left:26px;
+}
+.crm-navigation-next
+{
+	background:url("images/crm/mini-sprite.png") no-repeat right -331px; padding-right:26px;
+}
+
+.crm-entity-info-field-person
+{
+	background-color:#EBF1F3;
+}

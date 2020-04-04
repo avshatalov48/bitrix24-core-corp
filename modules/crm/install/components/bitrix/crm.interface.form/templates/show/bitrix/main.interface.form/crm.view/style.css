@@ -1,0 +1,54 @@
+a.bx-form-menu
+{
+	display: inline-block;
+	height: 33px;
+	margin-right: 4px;
+	vertical-align: top;
+}
+
+div.bx-crm-view-tab-block a.bx-form-menu
+{
+	margin: 9px 1px 1px 1px;
+	width: 27px;
+	height: 19px;
+	float: right;
+}
+
+div.bx-crm-view-tab-block a.bx-form-menu span
+{
+	background-position: 2px 2px;
+	background-repeat: no-repeat;
+	background-image:url(images/buttons/menu.gif);
+	border: 0 none;
+	cursor: pointer;
+	display: inline-block;
+	height: 17px;
+	width:25px;
+}
+
+div.bx-crm-view-tab-block a.bx-context-button:hover
+{
+	border:1px solid #AEB6C2;
+	background-color:#DBE3F2;
+	margin: 8px 0 0 0;
+	width: 27px;
+	height: 19px;
+	float: right;
+}
+
+/* settings window */
+option.bx-section {background-color:#E8E8E8 !important;}
+
+div.bx-popup-menu td.popupmenu div.popupitem td.gutter div.form-settings
+{
+	background: url("images/buttons/settings.gif") 0 0 !important;
+}
+div.bx-popup-menu td.popupmenu div.popupitem td.gutter div.form-settings-off
+{
+	background: url("images/buttons/settings_off.gif") 0 0 !important;
+}
+div.bx-popup-menu td.popupmenu div.popupitem td.gutter div.form-settings-on
+{
+	background: url("images/buttons/settings_on.gif") 0 0 !important;
+}
+

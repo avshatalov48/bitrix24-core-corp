@@ -1,0 +1,15 @@
+.group-delete {
+	display:inline-block;
+	cursor: pointer;
+	width: 13px;
+	height:13px;
+	vertical-align:middle;
+	background:url(/bitrix/js/main/core/images/controls-sprite.png) no-repeat 0 -283px;
+}
+.group-delete:hover {
+	background: url(/bitrix/js/main/core/images/controls-sprite.png) no-repeat -17px -283px;
+}
+.checkboxes input:checked + label + label
+{
+	font-weight: bold;
+}

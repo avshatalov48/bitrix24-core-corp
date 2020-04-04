@@ -1,0 +1,80 @@
+div.its-menu{}
+table.its-menu{
+	border:none;
+	background-color:#D8E3E8;
+	width:100%;
+	padding:0px;
+	margin:0px;}
+table.its-menu td {
+	font-size:100%;
+	padding:0px;
+	margin:0px;
+	border:none;}
+table.its-menu thead, table.its-menu tfoot, 
+table.its-menu tbody td.right, table.its-menu tbody td.left,
+table.its-menu-inner div.section-separator{
+	display:none;}
+table.its-menu tbody td.center{
+	width:100%;
+	padding:4px;}
+table.its-menu div.separator {
+	width:1px; 
+	height:21px; 
+	border-left:1px solid #98B7C5; 
+	margin:0px 3px 0px 3px;}
+table.its-menu-inner td{
+	vertical-align:bottom;}
+table.its-menu-inner div.controls a{
+	border:1px solid #D8E3E8; 
+	color:#072838;}
+table.its-menu-inner div.controls a:hover {
+	border:1px solid #6290A6; 
+	background-color:#F0F5F7;}
+table.its-menu-inner div.controls a, 
+table.its-menu-inner div.controls a:visited, 
+table.its-menu-inner div.controls a:active {
+	color:#072838;}
+table.its-menu-inner{}
+/* Top Menu icons*/
+table.its-menu-inner div.sections a, table.its-menu-inner div.sections span{
+	background-image: url('images/icons/sections.gif');}
+table.its-menu-inner div.sections_add a{
+	background-image: url('images/icons/folder_new.gif');}
+table.its-menu-inner div.tasks_add a{
+	background-image: url('images/icons/task_new.gif');}
+table.its-menu-inner div.create_view a{ 
+	background-image: url('images/icons/appear_new.gif');}
+table.its-menu-inner div.edit_view a{ 
+	background-image: url('images/icons/appear_edit.gif');}
+table.its-menu-inner div.delete_view a{ 
+	background-image: url('images/icons/appear_delete.gif');}
+
+table.its-menu-inner div.meet_list a{
+	background-image: url('images/icons/element_history.gif');}
+table.its-menu-inner div.meet_search a{
+	background-image: url('images/icons/element_view.gif');}
+table.its-menu-inner div.meet_reserve a{
+	background-image: url('images/icons/element_edit.gif');}
+table.its-menu-inner div.meet_graph a{
+	background-image: url('images/icons/action.gif');}
+
+table.its-menu-inner div.up a{ 
+	background-image: url('images/icons/element_upload.gif');}
+table.its-menu-inner div.maping a{ 
+	background-image: url('images/icons/maping.gif');}
+div.its-breadcrumb-navigation{
+	padding-top:10px;}
+div.its-breadcrumb-navigation span{
+	padding:10px 0;
+	font-size:11px;
+	color:#7f7f7f;}
+div.its-breadcrumb-navigation a{
+	text-decoration:none;
+	color:#7f7f7f;}
+
+div.empty-clear{
+	clear:both; 
+	width:100%; 
+	overflow:hidden; 
+	height:1px!important;}
+

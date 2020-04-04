@@ -1,0 +1,49 @@
+table.bx-edit-table td.bx-padding {
+	padding-top: 6px!important;
+}
+
+table#tab_bizproc_edit_table td.field-name {
+	width: 26% !important;
+}
+
+table#tab_bizproc_edit_table tr:nth-of-type(2)  {
+	display: none;
+}
+
+table#tab_bizproc_edit_table tr:nth-of-type(3) td {
+	background-image: none !important;
+}
+
+.bx-crm-edit-content-location-description {
+	color: #8F8F8F;
+	font-size: 11px;
+}
+
+.bx-crm-edit-content-payer-info-edit-link
+{
+	cursor: pointer;
+	font-size: 11px;
+	border-bottom: 1px dashed #8F8F8F;
+	color: #8F8F8F;
+	display: inline-block;
+	text-decoration: none;
+}
+
+.bx-crm-dialog-input-date {
+	margin: 0 !important;
+	text-align: inherit;
+}
+
+.search-suggest.bx-crm-edit-input {
+	position: relative;
+	/*left: -4px;*/
+}
+
+.bx-crm-edit-form-wrapper .bx-crm-edit-content-block-element {
+	overflow: visible;
+}
+
+.locationpro-selector-wrapper {
+	width: 500px;
+	display: inline-block;
+}

@@ -1,0 +1,14 @@
+<?php
+$MESS["VOXIMPLANT_PERM_ROLE"]="Роль";
+$MESS["VOXIMPLANT_PERM_ADD_ACCESS_CODE"]="Добавить право доступа";
+$MESS["VOXIMPLANT_PERM_ROLE_LIST"]="Список ролей";
+$MESS["VOXIMPLANT_PERM_DELETE"]="Удалить";
+$MESS["VOXIMPLANT_PERM_EDIT"]="Редактировать";
+$MESS["VOXIMPLANT_PERM_ADD"]="Добавить";
+$MESS["VOXIMPLANT_PERM_SAVE"]="Сохранить";
+$MESS["VOXIMPLANT_PERM_ERROR"]="Ошибка";
+$MESS["VOXIMPLANT_PERM_ROLE_DELETE_ERROR"]="Ошибка удаления роли";
+$MESS["VOXIMPLANT_PERM_ROLE_DELETE"]="Удаление роли";
+$MESS["VOXIMPLANT_PERM_ROLE_DELETE_CONFIRM"]="Вы уверены, что хотите удалить роль?";
+$MESS["VOXIMPLANT_PERM_ROLE_OK"]="Ок";
+$MESS["VOXIMPLANT_PERM_ROLE_CANCEL"]="Отмена";

@@ -1,0 +1,52 @@
+table.bx-edit-table td.bx-padding {
+	padding-top: 6px!important;
+}
+
+/*---bizproc---table#tab_bizproc_edit_table td.field-name {
+	width: 26% !important;
+}
+
+table#tab_bizproc_edit_table tr:nth-of-type(2)  {
+	display: none;
+}
+
+table#tab_bizproc_edit_table tr:nth-of-type(3) td {
+	background-image: none !important;
+}*/
+
+.bx-crm-dialog-input-date {
+	margin: 0 !important;
+	text-align: inherit;
+}
+
+.bx-crm-edit-content-location-description {
+	color: #8F8F8F;
+	font-size: 11px;
+}
+
+input.search-suggest {
+	margin: 0 0 0 -2px;
+}
+.crm-offer-info-data-wrap span.bx-crm-edit-content-block-element-name {
+	padding: 0;
+}
+
+.bx-crm-dialog-activity-webdav-container { max-width: 608px; }
+div.bx-crm-dialog-activity-webdav-container .wduf-selectdialog .wduf-label { display: none; }
+
+.file-input .webform-field-upload input { margin-left: 0; }
+
+.wduf-selectdialog .wduf-placeholder .files-storage .del-but {
+	background: url("/bitrix/js/main/core/images/controls-sprite.png") no-repeat scroll 0 -280px transparent;
+	cursor: pointer;
+	display: inline-block;
+	height: 16px;
+	margin: 0 0 0 6px;
+	outline: medium none;
+	vertical-align: top;
+	width: 15px;
+}
+
+.wduf-selectdialog .wduf-placeholder .files-storage .del-but:hover {
+	background: url(/bitrix/js/main/core/images/controls-sprite.png) no-repeat -17px -280px;
+}

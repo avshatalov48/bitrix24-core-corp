@@ -1,0 +1,25 @@
+table.bx-edit-table td.bx-padding {
+	padding-top: 6px!important;
+}
+
+table#tab_bizproc_edit_table td.field-name {
+	width: 26% !important;
+}
+
+table#tab_bizproc_edit_table tr:nth-of-type(2)  {
+	display: none;
+}
+
+table#tab_bizproc_edit_table tr:nth-of-type(3) td {
+	background-image: none !important;
+}
+
+.bx-crm-edit-content-location-description {
+	color: #8F8F8F;
+	font-size: 11px;
+}
+
+.bx-crm-edit-content-block-element .search-suggest {
+	position: relative;
+	left: -4px;
+}

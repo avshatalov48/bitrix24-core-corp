@@ -1,0 +1,27 @@
+.bx-disk-404-container {
+	padding-top: 130px;
+	margin: 0 auto;
+	width: 90%;
+	max-width: 450px
+}
+
+.bx-disk-404-image {
+	text-align: center;
+	padding-bottom: 35px;
+}
+
+.bx-disk-404-title {
+	text-align: center;
+	padding-bottom: 25px;
+	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	color: #535c69;
+	font-size: 23px;
+	font-weight: bold;
+}
+
+.bx-disk-404-description {
+	color: #535c69;
+	font-size: 13px;
+	line-height: 166%;
+	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+}

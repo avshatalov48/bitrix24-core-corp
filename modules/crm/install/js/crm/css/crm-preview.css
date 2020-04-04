@@ -1,0 +1,61 @@
+.crm-preview {
+	font: 13px/19px "Helvetica Neue",Helvetica,Arial,sans-serif
+}
+
+.crm-preview-header {
+	height: 52px;
+	position: relative;
+	font-weight: bold;
+}
+
+.crm-preview-header-title {
+	position: absolute;
+	top: 50%;
+	transform: translateY(-50%);
+	-ms-transform: translateY(-50%);
+	-webkit-transform: translateY(-50%);
+	-moz-transform: translateY(-50%);
+	-o-transform: translateY(-50%);
+}
+
+.crm-preview-header-icon {
+	display: inline-block;
+	width: 40px;
+	height: 40px;
+	margin: 6px;
+	border-radius: 50%;
+	background: url(/bitrix/js/crm/css/../images/crm-control-panel-sprite-21.png) no-repeat 100px 100px #fff;
+}
+
+.crm-preview-header-icon-lead {background-position: center -3866px;}
+.crm-preview-header-icon-deal {background-position: center -4015px;}
+.crm-preview-header-icon-contact {background-position: center -4372px;}
+.crm-preview-header-icon-company {background-position: center -4275px;}
+.crm-preview-header-icon-quote {background-position: center -3678px;}
+.crm-preview-header-icon-invoice {background-position: center -3941px;}
+
+.crm-preview-header-img {
+	display: inline-block;
+	border-radius: 50%;
+	height: 33px;
+	margin: 11px 5px 0px 0px;
+	vertical-align: top;
+	overflow: hidden;
+	width: 33px;
+}
+.crm-preview-header-company-img {
+	display: inline-block;
+	border: 1px solid rgb(171, 201, 211);
+	background-color: white;
+	height: 32px;
+	margin: 8px 5px 0px 0px;
+	vertical-align: top;
+	overflow: hidden;
+	width: 32px;
+}
+
+.crm-preview-info { font-size: 0.9em; width: 100%; max-width: 450px;}
+.crm-preview-info td { padding: 4px 0 0 4px;}
+.crm-preview-info td:first-child {font-weight: bold;}
+.crm-preview-info td:nth-child(2) { padding-right: 10px;}
+.crm-preview-info-spacer { border-top: #cceffb 1px solid;}

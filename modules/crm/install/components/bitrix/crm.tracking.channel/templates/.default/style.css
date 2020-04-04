@@ -1,0 +1,45 @@
+.crm-analytics-source-block {
+	background: #fff;
+	padding: 23px 22px 29px;
+}
+
+.crm-analytics-source-header {
+	font: 22px/28px 'OpenSans-Light', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	color: #333;
+	margin: 27px 0 15px;
+}
+
+.crm-analytics-source-block + .crm-analytics-source-block {
+	margin-top: 27px;
+}
+
+.crm-analytics-source-block .crm-analytics-source-header {
+	margin-top: 0;
+}
+
+.crm-analytics-source-desc-text {
+	font-size: 14px;
+	line-height: 20px;
+	color: #525c69;
+}
+
+.crm-analytics-source-block-desc {
+	display: flex;
+	align-items: center;
+	width: 100%;
+	box-sizing: border-box;
+}
+
+.crm-analytics-source-icon {
+	display: block;
+	border-radius: 50%;
+	border: 1px solid #ececec;
+	width: 95px;
+	height: 95px;
+	margin-right: 24px;
+	flex-shrink: 0;
+}
+
+.bx-ie .crm-analytics-source-icon.ui-icon {
+	width: 95px;
+}

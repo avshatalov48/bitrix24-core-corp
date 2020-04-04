@@ -1,0 +1,31 @@
+<?
+$MESS["COMP_VI_ACCESS_DENIED"] = "Insufficient access permissions";
+$MESS["COMP_VI_WRONG_BACKUP_NUMBER"] = "Backup phone number must use international format.";
+$MESS["VI_CONFIG_CURRENT_CONNECTION"] = "current connection";
+$MESS["VI_CONFIG_EDIT_AUTO_ANSWERING_TUNE"] = "Voicemail";
+$MESS["VI_CONFIG_EDIT_AUTO_ANSWERING_TUNE_TIP"] = "This music or recording will be played to the caller when voicemail is activated. ";
+$MESS["VI_CONFIG_EDIT_ENQUEUE_TUNE"] = "Enqueue tune";
+$MESS["VI_CONFIG_EDIT_ENQUEUE_TUNE_TIP"] = "A caller will hear this tune if their call was enqueued because there were no available operators.";
+$MESS["VI_CONFIG_EDIT_HOLDING_TUNE"] = "Hold music";
+$MESS["VI_CONFIG_EDIT_HOLDING_TUNE_TIP"] = "This music or recording will be played to the caller when on hold. ";
+$MESS["VI_CONFIG_EDIT_RECORDING_TUNE"] = "\"Your call will be recorded\" tune";
+$MESS["VI_CONFIG_EDIT_RECORDING_TUNE_TIP"] = "Play this tune before starting recording";
+$MESS["VI_CONFIG_EDIT_VOTE_END_TUNE"] = "Quality assessment end tune";
+$MESS["VI_CONFIG_EDIT_VOTE_END_TUNE_TIP"] = "Play this tune after a user has given their assessment of the quality of service";
+$MESS["VI_CONFIG_EDIT_VOTE_TUNE"] = "Quality assessment start tune";
+$MESS["VI_CONFIG_EDIT_VOTE_TUNE_TIP"] = "Play this tune when the \"Assess quality of service\" option is checked";
+$MESS["VI_CONFIG_EDIT_WAITING_TUNE"] = "Wait music";
+$MESS["VI_CONFIG_EDIT_WAITING_TUNE_TIP"] = "This music or recording will be played to the caller instead of rings, before the call is answered. ";
+$MESS["VI_CONFIG_EDIT_WELCOMING_TUNE"] = "Greeting";
+$MESS["VI_CONFIG_EDIT_WELCOMING_TUNE_TIP"] = "This music or recording will be played to the caller as a greeting on incoming calls. ";
+$MESS["VOX_CONFIG_EDIT_CALLBACK_ROUTING"] = "Callback routing";
+$MESS["VOX_CONFIG_EDIT_CALL_ROUTING"] = "Inbound call routing";
+$MESS["VOX_CONFIG_EDIT_CONNECTION_SETTINGS"] = "Connection parameters";
+$MESS["VOX_CONFIG_EDIT_CRM_INTEGRATION"] = "CRM integration";
+$MESS["VOX_CONFIG_EDIT_DELETE_CONNECTION"] = "Delete connection";
+$MESS["VOX_CONFIG_EDIT_DISCONNECT_NUMBER"] = "Disconnect number";
+$MESS["VOX_CONFIG_EDIT_MELODIES"] = "Hold music";
+$MESS["VOX_CONFIG_EDIT_OTHER"] = "Other";
+$MESS["VOX_CONFIG_EDIT_RECORDING_AND_RATING"] = "Recording and rating";
+$MESS["VOX_CONFIG_EDIT_WORKTIME"] = "Working hours";
+?>

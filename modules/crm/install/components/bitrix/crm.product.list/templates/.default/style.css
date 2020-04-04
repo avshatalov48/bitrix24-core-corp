@@ -1,0 +1,172 @@
+.bx-crm-popup-title{
+	font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;
+	font-size:14px;
+	font-weight:bold;
+	line-height:30px;
+	height:30px;
+	margin-bottom:10px;
+	vertical-align:top;
+	color:#7f858d;
+}
+.bx-crm-popup-content,
+.bx-crm-popup-content-small{
+	font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;
+	font-size:16px;
+	min-width:500px;
+	padding:20px;
+	color:#000;
+	border-radius:2px;
+	background-color:#edf1f3;
+}
+.bx-crm-popup-content-small{
+	margin-bottom: 10px;
+	padding:20px 0;
+}
+.bx-crm-popup-content .bx-crm-popup-content{
+	font-size:14px;
+	padding:15px;
+	color:#535c69;
+	background-color:#f8fafa;
+}
+.bx-crm-popup-content-title{
+	font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;
+	font-size:15px;
+	font-weight:bold;
+	padding-bottom:20px;
+	color:#535b69;
+	border-bottom:1px solid #cfd4d8;
+}
+.bx-crm-popup-content-title.noborder{
+	border:none;
+}
+
+.bx-crm-popup-input {
+	display:block;
+	-webkit-box-sizing:border-box;
+	-moz-box-sizing:border-box;
+	box-sizing:border-box;
+	width:100%;
+	height:36px;
+	vertical-align:middle;
+	border:1px solid #c5cdd3;
+	border-radius:2px;
+	background-color:#fff;
+}
+
+.bx-crm-btn{
+	font-family:'Open Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+	font-size:12px;
+	font-weight:bold;
+	display:inline-block;
+	margin-bottom:10px;
+	padding:0 15px;
+	cursor:pointer;
+	-webkit-transition:background .5s ease;
+	-moz-transition:background .5s ease;
+	-ms-transition:background .5s ease;
+	-o-transition:background .5s ease;
+	transition:background .5s ease;
+	text-align:center;
+	vertical-align:middle;
+	text-decoration:none;
+	text-transform:uppercase;
+	color:#535b69;
+	border:none;
+	border-radius:2px;
+}
+.bx-crm-btn-big{
+	line-height:40px;
+	height:40px;
+}
+.bx-crm-btn-medium{
+	line-height:32px;
+	height:32px;
+}
+.bx-crm-btn-small{
+	line-height:29px;
+	height:29px;
+}
+.bx-crm-btn-gray{
+	color:#fff;
+	background-color:#868d96;
+}
+.bx-crm-btn-gray:hover{
+	color:#fff;
+	background-color:#6c7177;
+}
+.bx-crm-btn-green{
+	background-color:#bbed21;
+}
+.bx-crm-btn-green:hover{
+	color:#535b69;
+	background-color:#a9de04;
+}
+.bx-crm-btn-lightgray{
+	background-color:#d9dfe3;
+}
+.bx-crm-btn-lightgray:hover{
+	color:#535b69;
+	background-color:#cfd3d6;
+}
+.bx-crm-btn-transparent{
+	background-color:transparent;
+}
+.bx-crm-btn-transparent:hover{
+	color:#535b69;
+	background-color:#e5e8eb;
+}
+
+.bx-crm-btn-transparent.border{
+	-webkit-box-sizing:border-box;
+	-moz-box-sizing:border-box;
+	box-sizing:border-box;
+	-webkit-transition:border .5s ease, background .5s ease;
+	-moz-transition:border .5s ease, background .5s ease;
+	-ms-transition:border .5s ease, background .5s ease;
+	-o-transition:border .5s ease, background .5s ease;
+	transition:border .5s ease, background .5s ease;
+	border:1px solid #c4cace !important;
+	border-right:2px;
+}
+.bx-crm-btn-transparent.border:hover{
+	color:#535b69;
+	border-color:#9fa4ab !important;
+}
+
+.bx-crm-popup-buttons{
+	padding:20px 10px 10px;
+	text-align:center;
+}
+.bx-crm-info-popup-wrap .bx-crm-popup-buttons {
+	padding: 15px 0 10px;
+	height: 40px;
+}
+
+.popup-window.popup-window-titlebar .popup-window-top-row .popup-window-left-column,
+.popup-window.popup-window-titlebar .popup-window-top-row .popup-window-center-column,
+.popup-window.popup-window-titlebar .popup-window-top-row .popup-window-right-column,
+.popup-window.popup-window-titlebar-light .popup-window-top-row .popup-window-left-column,
+.popup-window.popup-window-titlebar-light .popup-window-top-row .popup-window-center-column,
+.popup-window.popup-window-titlebar-light .popup-window-top-row .popup-window-right-column {
+	background: none repeat scroll 0 0 rgba(0, 0, 0, 0) !important;
+	border-bottom: medium none;
+	box-shadow: none;
+}
+.bx-crm-popup-label{
+	font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;
+	font-size:14px;
+	opacity:.6;
+	color:#000;
+}
+.bx-crm-popup-input{
+	display:block;
+	-webkit-box-sizing:border-box;
+	-moz-box-sizing:border-box;
+	box-sizing:border-box;
+	width:100%;
+	height:36px;
+	vertical-align:middle;
+	border:1px solid #c5cdd3;
+	border-radius:2px;
+	background-color:#fff;
+}

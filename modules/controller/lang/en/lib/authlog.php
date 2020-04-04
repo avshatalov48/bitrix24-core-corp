@@ -1,0 +1,8 @@
+<?
+$MESS["AUTH_LOG_ENTITY_ID_FIELD"] = "Unique ID";
+$MESS["AUTH_LOG_ENTITY_TIMESTAMP_X_FIELD"] = "Record updated on";
+$MESS["AUTH_LOG_ENTITY_FROM_CONTROLLER_MEMBER_ID_FIELD"] = "Authenticated from (remote site ID)";
+$MESS["AUTH_LOG_ENTITY_TO_CONTROLLER_MEMBER_ID_FIELD"] = "Authenticated at (connected site ID)";
+$MESS["AUTH_LOG_ENTITY_USER_ID_FIELD"] = "User ID";
+$MESS["AUTH_LOG_ENTITY_STATUS_FIELD"] = "Status";
+?>

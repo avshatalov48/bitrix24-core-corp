@@ -1,0 +1,3 @@
+<?
+$MESS["TASKS_IM_CHAT_TITLE"] = "Task: #TASK_TITLE#";
+?>

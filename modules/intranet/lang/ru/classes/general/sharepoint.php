@@ -1,0 +1,31 @@
+<?
+$MESS["SP_LIST_FIELD_NAME"] = "Название";
+$MESS["SP_LIST_FIELD_SORT"] = "Сортировка";
+$MESS["SP_LIST_FIELD_ACTIVE_FROM"] = "Начало активности";
+$MESS["SP_LIST_FIELD_ACTIVE_TO"] = "Окончание активности";
+$MESS["SP_LIST_FIELD_PREVIEW_PICTURE"] = "Изображение для анонса";
+$MESS["SP_LIST_FIELD_PREVIEW_TEXT"] = "Текст анонса";
+$MESS["SP_LIST_FIELD_DETAIL_PICTURE"] = "Детальное изображение";
+$MESS["SP_LIST_FIELD_DETAIL_TEXT"] = "Детальный текст";
+$MESS["SP_LIST_FIELD_DATE_CREATE"] = "Дата создания";
+$MESS["SP_LIST_FIELD_CREATED_BY"] = "Кем создан";
+$MESS["SP_LIST_FIELD_TIMESTAMP_X"] = "Дата изменения";
+$MESS["SP_LIST_FIELD_MODIFIED_BY"] = "Кем изменен";
+$MESS["SP_LIST_FIELD_CREATE_NONE"] = "(выберите тип поля)";
+$MESS["SP_LIST_FIELD_S"] = "Строка";
+$MESS["SP_LIST_FIELD_N"] = "Число";
+$MESS["SP_LIST_FIELD_L"] = "Список";
+$MESS["SP_LIST_FIELD_F"] = "Файл";
+$MESS["SP_LIST_FIELD_G"] = "Привязка к разделам";
+$MESS["SP_LIST_FIELD_E"] = "Привязка к элементам";
+$MESS["SP_IGNORE"] = "(не выбрано)";
+$MESS["SP_ERROR_WRONG_IBLOCK_ID"] = "Неверный инфоблок";
+$MESS["SP_ERROR_WRONG_SP_LIST_ID"] = "Неверный идентификатор списка";
+$MESS["SP_ERROR_IBLOCK_EXISTS"] = "Инфоблок уже связан со списком SharePoint";
+$MESS["SP_ERROR_LIST_EXISTS"] = "Список SharePoint уже связан с инфоблоком";
+$MESS["SP_ERROR_WRONG_URL"] = "Неверный URL сервера SharePoint";
+$MESS["SP_ERROR_MODULE_NOT_INSTALLED"] = "Модуль не установлен";
+$MESS["SP_ERROR_CLASS_NOT_EXISTS"] = "Класс-обработчик не существует";
+$MESS["SP_ERROR_MAX_ERRORS"] = "Превышено максимальное количество ошибок сервиса.";
+$MESS["SP_ERROR_METHOD_NOT_EXISTS"] = "Клиент #CLASS# не поддерживает метод #METHOD#";
+?>

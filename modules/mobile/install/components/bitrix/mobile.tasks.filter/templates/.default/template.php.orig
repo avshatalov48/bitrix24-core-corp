@@ -1,0 +1,166 @@
+<?php
+if ( ( ! defined('B_PROLOG_INCLUDED') ) || (B_PROLOG_INCLUDED !== true) )
+	die();
+
+CModule::IncludeModule('tasks');
+
+$userId        = (int) $GLOBALS['USER']->GetID();
+$oFilter       = CTaskFilterCtrl::GetInstance($userId);
+$arPresetsTree = $oFilter->ListFilterPresets($bTreeMode = true);
+$curFilterId   = $oFilter->GetSelectedFilterPresetId();
+
+$GLOBALS['APPLICATION']->SetPageProperty('BodyClass', 'task-filter-page');
+
+$funcRenderPresetsTree = function($funcRenderPresetsTree, $arPresetsTree, $curFilterId, $deep = 0)
+{
+	$str = '';
+
+	foreach ($arPresetsTree as $presetId => $arPresetData)
+	{
+		$class = '';
+
+		if ($presetId === $curFilterId)
+			$class .= " tasks-filter-active-preset ";
+
+		$lineId = 'tasks_filter_preset_' . (int) $presetId;
+
+		$str .= '<div id="' . $lineId . '" class="task-filter-row ' . $class . '" '
+			. 'onclick="__MB_TASKS_TASK_FILTER_SwitchFilter(' . (int) $presetId . ')">' 
+			. str_repeat('&nbsp;', $deep * 6)
+			. htmlspecialcharsbx($arPresetData['Name']) ;
+			
+
+		// If preset is not hard-coded show delete link
+		if ($presetId > 0)
+		{
+			$str .= '<a style="position:relative; left:30px;"  
+				onclick="
+					MBTasks.CPT.Filter.RemoveFilter(\'' . $lineId . '\', ' . (int) $presetId . ', this); return(false);
+				"
+				>'
+				. 'Remove</a>';
+		}
+
+		// count of tasks $str .= '<div class="task-filter-count-wrap"><span class="task-filter-counter"></span></div>'
+		$str .= '</div>';
+
+		if (isset($arPresetData['#Children'])
+			&& count($arPresetData['#Children'])
+		)
+		{
+			$str .= $funcRenderPresetsTree(
+				$funcRenderPresetsTree, 
+				$arPresetData['#Children'],
+				$curFilterId,
+				$deep + 1
+			);
+		}
+	}
+
+	return ($str);
+};
+
+$bExtra = true;
+?>
+<script>
+	BX.message({
+		<?php
+		$notFirstLap = 0;
+		foreach ($arResult['MESSAGES'] as $phraseId)
+		{
+			// Not echo ',' at first iteration
+			if ($notFirstLap || $notFirstLap++)
+				echo ', ';
+
+			echo $phraseId . ': ' . "'" . GetMessageJS($phraseId) . "'";
+		}
+		?>,
+		MB_TASKS_TASK_FILTER_USER_SELECTOR_BTN_SELECT: '<?php echo GetMessageJS('MB_TASKS_TASK_FILTER_USER_SELECTOR_BTN_SELECT'); ?>',
+		MB_TASKS_TASK_FILTER_USER_SELECTOR_BTN_CANCEL: '<?php echo GetMessageJS('MB_TASKS_TASK_FILTER_USER_SELECTOR_BTN_CANCEL'); ?>',
+		MB_TASKS_TASK_FILTER_TEXT_OR: '<?php echo GetMessageJS('MB_TASKS_TASK_FILTER_TEXT_OR'); ?>',
+		MB_TASKS_TASK_FILTER_TEXT_AND: '<?php echo GetMessageJS('MB_TASKS_TASK_FILTER_TEXT_AND'); ?>'
+	});
+
+	if ( ! window.MBTasks )
+		MBTasks = { lastTimeUIApplicationDidBecomeActiveNotification: 0 };
+
+	if ( ! window.MBTasks.CPT )
+		MBTasks.CPT = {};
+
+	MBTasks.sessid = '<?php echo bitrix_sessid(); ?>';
+	MBTasks.site = '<?php echo CUtil::JSEscape(SITE_ID); ?>';
+	MBTasks.lang = '<?php echo CUtil::JSEscape(LANGUAGE_ID); ?>';
+	MBTasks.userId = <?php echo (int) $userId; ?>;
+	MBTasks.user_path_template = '<?php echo CUtil::JSEscape($arParams['PATH_TEMPLATE_TO_USER_PROFILE']); ?>';
+
+	MBTasks.CPT.Filter = {
+		entities: <?php echo $arResult['FILTER_ENTITIES_IN_JS_OBJ_NOTATION']; ?>,
+		counter: 0,
+		stack: []
+	};
+
+	document.addEventListener("DOMContentLoaded", function() {
+		new FastButton(
+			BX('tasks-filter-list'),
+			function(event) {
+				//alert('x');
+				event.target.click();
+			}
+		);
+	}, false);
+</script>
+<?php
+echo '<input type="hidden" id="tasks-filter-current" value="' . (int) $curFilterId . '">';
+?>
+<div class="task-title"><?php
+	echo GetMessage('MB_TASKS_TASK_FILTER_TITLE');
+?></div>
+<div id="tasks-filter-list" class="task-filter-block" onclick="">
+	<?php
+
+	// Render filter tree
+	echo $funcRenderPresetsTree($funcRenderPresetsTree, $arPresetsTree, $curFilterId);
+?>
+</div>
+<?php
+if ($bExtra)
+{
+	?>
+	<br>
+	<div id="tasks_new_filter_visualization_area_started">
+		<a href="javascript:void(0);" 
+			onclick="
+				BX('tasks_new_filter_visualization_area_pre').style.display = 'block';
+				BX('tasks_new_filter_visualization_area_post').style.display = 'block';
+				BX('tasks_new_filter_visualization_area_started').style.display = 'none';
+				BX('tasks_new_filter_visualization_area_buttons').style.display = 'block';
+				__MB_TASKS_TASK_FILTER_scrollPageBottom();
+				app.menuShow();
+			"
+		><?php echo GetMessage('MB_TASKS_TASK_FILTER_CREATE_NEW_FILTER'); ?></a><br>
+	</div>
+	<div id="tasks_new_filter_visualization_area_pre" style="display:none;">
+		<span class="tasks-filter-bracket">(</span>
+	</div>
+	<div id="tasks_new_filter_visualization_area">
+	</div>
+	<div id="tasks_new_filter_visualization_area_post" style="display:none;">
+		<input type="button" onclick="MBTasks.CPT.Filter.AddOperatorOR();" value="<?php echo GetMessage('MB_TASKS_TASK_FILTER_BTN_OR'); ?>" style="width:90px; margin-left:15px;"><br>
+		<span class="tasks-filter-bracket">)</span><br>
+		<input type="button" onclick="MBTasks.CPT.Filter.AddOperatorAND();" value="<?php echo GetMessage('MB_TASKS_TASK_FILTER_BTN_AND'); ?>" style="width:90px; margin-left:0px;">
+	</div>
+	<div id="tasks_new_filter_visualization_area_buttons" style="display:none; text-align:center;">
+		<input type="text" id="tasks_new_filter_name" 
+			value="" placeholder="<?php echo GetMessage('MB_TASKS_TASK_FILTER_NEW_FILTER_NAME'); ?>" 
+			style="width:80%; margin-top:15px;"
+			onclick="BX('tasks_new_filter_btn_create').disabled=false;"
+		><br>
+		<input type="button" 
+			id="tasks_new_filter_btn_create"
+			onclick="MBTasks.CPT.Filter.Done();" 
+			value="<?php echo GetMessage('MB_TASKS_TASK_FILTER_BTN_CREATE'); ?>" 
+			disabled="disabled" style="width:90px;">
+	</div>
+	<br><br>
+	<?php
+}

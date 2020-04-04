@@ -1,0 +1,21 @@
+.ol-stat-grid-wrap .bx-interface-grid td{vertical-align: middle;}
+.ol-stat-user-img.user-avatar {
+	background-position: 0 -1312px;
+	display: inline-block;
+	height: 30px;
+	margin-right: 11px;
+	vertical-align: middle;
+	width: 30px;
+	float:none;
+}
+.ol-stat-rating { display: inline-block; width: 20px; height: 20px; background: url(./images/rating.png); }
+.ol-stat-rating.ol-stat-rating-1 { background-position: -39px -57px; }
+.ol-stat-rating.ol-stat-rating-5 { background-position: -11px -57px; }
+
+.ol-stat-rating-head { display: inline-block; width: 105px; height: 20px; background: url(./images/rating.png) -7px -5px; }
+.ol-stat-rating-head-wrap { display: inline-block; width: 0; height: 20px; background: url(./images/rating.png) -7px -27px; }
+.ol-stat-rating-head-wrap.ol-stat-rating-head-1 { width: 20px; }
+.ol-stat-rating-head-wrap.ol-stat-rating-head-2 { width: 40px; }
+.ol-stat-rating-head-wrap.ol-stat-rating-head-3 { width: 60px; }
+.ol-stat-rating-head-wrap.ol-stat-rating-head-4 { width: 80px; }
+.ol-stat-rating-head-wrap.ol-stat-rating-head-5 { width: 100px; }

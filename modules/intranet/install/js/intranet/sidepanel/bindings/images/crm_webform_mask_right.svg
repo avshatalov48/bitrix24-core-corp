@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="278" height="1080" viewBox="0 0 278 1080">
+  <g fill="none" fill-rule="evenodd">
+    <rect width="73" height="10" x="179" y="26" fill="#9EA6AD" opacity=".2" rx="2"/>
+    <rect width="73" height="10" x="21" y="87" fill="#9EA6AD" opacity=".2" rx="2"/>
+    <rect width="144" height="10" x="21" y="385" fill="#9EA6AD" opacity=".2" rx="2"/>
+    <rect width="144" height="10" x="21" y="622" fill="#9EA6AD" opacity=".2" rx="2"/>
+    <rect width="144" height="10" x="12" y="1046" fill="#9EA6AD" opacity=".2" rx="2"/>
+    <rect width="144" height="10" x="21" y="921" fill="#9EA6AD" opacity=".2" rx="2"/>
+    <rect width="169" height="10" x="40" y="676" fill="#9EA6AD" opacity=".2" rx="2"/>
+    <rect width="169" height="10" x="40" y="854" fill="#9EA6AD" opacity=".2" rx="2"/>
+    <rect width="169" height="10" x="40" y="975" fill="#9EA6AD" opacity=".2" rx="2"/>
+    <rect width="169" height="10" x="40" y="722" fill="#9EA6AD" opacity=".2" rx="2"/>
+    <rect width="243" height="178" x="21" y="411" fill="#9EA6AD" opacity=".2" rx="2"/>
+    <rect width="277" height="1079" x=".5" y=".5" stroke="#FFFFFF" stroke-opacity="0"/>
+  </g>
+</svg>

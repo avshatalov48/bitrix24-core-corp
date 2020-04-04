@@ -1,0 +1,30 @@
+a.bx-form-menu
+{
+	display: inline-block;
+	height: 33px;
+	margin-right: 4px;
+	vertical-align: top;
+}
+
+a.bx-form-menu span
+{
+	background-position: 0px 18px;
+	background-repeat: no-repeat;
+	background-image:url(images/buttons/menu.gif);
+	border: 0 none;
+	cursor: pointer;
+	display: inline-block;
+	height: 33px;
+	width:21px;
+}
+
+td.popupmenu div.popupitem div.form-settings {
+	background-image: url("images/buttons/settings.gif");
+}
+td.popupmenu div.popupitem div.form-settings-off {
+	background-image: url("images/buttons/settings_off.gif");
+}
+td.popupmenu div.popupitem div.form-settings-on {
+	background-image: url("images/buttons/settings_on.gif");
+}
+

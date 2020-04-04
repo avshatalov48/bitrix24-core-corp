@@ -1,0 +1,687 @@
+.view-settings-menu-sort-item-checked .menu-popup-item-icon {
+	background: url(images/check.png) no-repeat center;
+}
+
+.crm-config-ps-list-wrapper {
+	line-height:17px;
+	font: normal 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	color: #535c69;
+}
+
+/* Header */
+
+.crm-config-ps-list-header {
+	margin: 33px 0 0 0;
+	font: normal 23px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	color: #535c69;
+}
+
+/* Create form */
+
+.crm-config-ps-list-createform-container {
+	width: 100%;
+	padding: 9px 0;
+	margin: 37px 0 0 0;
+	border: 2px dashed rgba(151,151,151, .5);
+	-webkit-border-radius: 2px;
+	-moz-border-radius: 2px;
+	border-radius: 2px;
+	text-align: center;
+	-webkit-transition: border .3s ease;
+	-moz-transition: border .3s ease;
+	transition: border .3s ease;
+	cursor: pointer;
+}
+
+.crm-config-ps-list-createform-container:hover {
+	border: 2px dashed rgba(151,151,151, 1);
+}
+
+.crm-config-ps-list-createform-element {
+	font: bold 15px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	color: #0b66c3;
+}
+
+.crm-config-ps-list-createform-description {
+	color: #aaafb5;
+}
+
+/* Buttons */
+
+.crm-config-ps-list-buttons-container {
+	height: 12px;
+}
+
+.crm-config-ps-list-buttons {
+	float: right;
+}
+
+.crm-config-ps-list-hamburger {
+	position: relative;
+	display: inline-block;
+	margin: 0 9px 0 0;
+	width: 12px;
+	height: 12px;
+	background: url(images/crm-config-ps-list-sprite.svg) 0 -39px;
+	cursor: pointer;
+}
+
+.crm-config-ps-list-hamburger:after,
+.crm-config-ps-list-close:after {
+	content: "";
+	position: absolute;
+	top: 0;
+	left: 0;
+	bottom: 0;
+	right: 0;
+	background: url(images/crm-config-ps-list-sprite.svg) 0 -53px;
+	opacity: 0;
+	-webkit-transition: opacity 0.5s ease;
+	-moz-transition: opacity 0.5s ease;
+	-o-transition: opacity 0.5s ease;
+	transition: opacity 0.5s ease;
+}
+
+.crm-config-ps-list-hamburger:hover:after,
+.crm-config-ps-list-close:hover:after {
+	opacity: 1;
+}
+
+.crm-config-ps-list-close {
+	position: relative;
+	display: inline-block;
+	width: 12px;
+	height: 12px;
+	background: url(images/crm-config-ps-list-sprite.svg) 0 -66px;
+	cursor: pointer;
+}
+
+.crm-config-ps-list-close:after {
+	background: url(images/crm-config-ps-list-sprite.svg) 0 -78px;
+}
+
+/* Widget */
+
+.crm-config-ps-list-widget-row {
+	margin: 16px 0;
+	padding: 10px 0 0 0;
+	max-height: 1000px;
+	border-top: 1px solid rgba(170,175,181, .2);
+	font-size: 0;
+	-webkit-transition: all .5s ease;
+	-moz-transition: all .5s ease;
+	transition: all .5s ease;
+	overflow: hidden;
+}
+
+.crm-config-ps-list-widget-row.crm-webform-row-close {
+	margin: 0;
+	max-height: 0;
+	border-top: 0;
+	opacity: 0;
+}
+
+.crm-config-ps-list-header {
+	max-height: 200px;
+	-webkit-transition: all .5s ease;
+	-moz-transition: all .5s ease;
+	transition: all .5s ease;
+	overflow: hidden;
+}
+
+.crm-config-ps-list-header.crm-webform-title-close {
+	margin: 0;
+	max-height: 0;
+	opacity: 0;
+}
+
+.crm-config-ps-list-widget-container {
+	position: relative;
+	display: inline-block;
+	width: 100%;
+	height: 100%;
+	font: normal 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	vertical-align: top;
+}
+
+.crm-config-ps-list-widget-left {
+	margin-right: 0.5%;
+	width: 49.5%;
+}
+
+.crm-config-ps-list-widget-right {
+	margin-left: 0.5%;
+	width: 49.5%;
+}
+
+/* Left block */
+
+.crm-config-ps-list-widget {
+	border-radius: 3px 3px 2px 2px;
+	-moz-box-sizing: border-box;
+	-webkit-box-sizing: border-box;
+	overflow: hidden;
+	height: 378px;
+
+	-webkit-transition: background-color .8s ease;
+	-moz-transition: background-color .8s ease;
+	transition: background-color .8s ease;
+}
+
+.crm-config-ps-list-widget.crm-config-ps-list-widget-number {
+	margin-bottom: 18px;
+	height: 160px;
+}
+/* Widget colors */
+
+.crm-config-ps-list-widget.crm-config-ps-list-widget-number.crm-config-ps-list-widget-orange-color {
+	background: #ff6602;
+}
+
+.crm-config-ps-list-widget.crm-config-ps-list-widget-number.crm-config-ps-list-widget-green-color {
+	background: #06d215;
+}
+
+.crm-config-ps-list-widget.crm-config-ps-list-widget-number:first-child {
+	margin-top: 0;
+}
+
+.crm-config-ps-list-widget-head {
+	position: relative;
+	color: #FFF;
+	font-size: 13px;
+	text-transform: uppercase;
+	padding: 0 0 0 17px;
+	background: #818992;
+	border-radius: 2px 2px 0 0;
+}
+
+.crm-widget-settings {
+	position: relative;
+	float: right;
+	height: 40px;
+	width: 32px;
+	cursor: pointer;
+}
+
+.crm-widget-settings:after {
+	content: '';
+	position: absolute;
+	width: 14px;
+	height: 14px;
+	background: url(images/crm-config-ps-list-sprite.svg) no-repeat -2px -138px;
+	top: 0;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	margin: auto;
+	-webkit-transition: opacity .3s ease;
+	-moz-transition: opacity .3s ease;
+	transition: opacity .3s ease;
+	opacity: .5;
+}
+
+.crm-widget-settings:hover:after {
+	opacity: 1;
+}
+
+.crm-config-ps-list-widget-head,
+.crm-config-ps-list-widget-number .crm-config-ps-list-widget-head {
+	background: rgba(0,0,0,0.17);
+}
+
+.red-head .crm-config-ps-list-widget-head {
+	background: #f0280b;
+}
+
+.green-head .crm-config-ps-list-widget-head {
+	background: #00713b;
+}
+
+.orange-head .crm-config-ps-list-widget-head {
+	background: #f77b00;
+}
+
+.crm-config-ps-list-widget-title-container {
+	position: relative;
+	vertical-align: middle;
+	display: block;
+	overflow: hidden;
+	white-space: nowrap;
+	padding-right: 30px;
+	font-size: 0;
+}
+
+.crm-config-ps-list-widget-title-inner {
+	display: inline-block;
+	max-width: 100%;
+	position: relative;
+	padding-right: 30px;
+	line-height: 40px;
+}
+
+.crm-config-ps-list-widget-title {
+	text-overflow: ellipsis;
+	overflow: hidden;
+	white-space: nowrap;
+	display: block;
+	font: bold 12px/40px "OpenSans", Arial, Helvetica, sans-serif;
+	color: #fff;
+	max-width: 100%;
+	-webkit-transition: color .3s ease;
+	-moz-transition: color .3s ease;
+	transition: color .3s ease;
+}
+
+.crm-config-ps-list-widget-title:hover {
+	color: rgba(255,255,255, .5);
+}
+
+.crm-config-ps-list-widget-content {
+	-webkit-box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	box-sizing: border-box;
+}
+
+div.crm-config-ps-list-widget-content {
+	padding: 0;
+}
+
+.crm-config-ps-list-widget-number .crm-config-ps-list-widget-content {
+	position: relative;
+	height: 120px;
+	border: 1px solid #b3b8be;
+	border-top: 0;
+	font-size: 0;
+}
+
+.crm-config-ps-list-widget-content img {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	-webkit-transform: translate(-50%, -50%);
+	transform: translate(-50%, -50%);
+}
+
+.crm-config-ps-list-widget-content-amt {
+	color: #fff;
+	font: 13px "OpenSans", Arial, Helvetica, sans-serif;
+	overflow: hidden;
+}
+
+.crm-config-ps-list-widget-content-image {
+	/*display: block;*/
+	/*margin: 26px auto;*/
+	/*width: 200px;*/
+	/*height: 70px;*/
+	/*background: url(images/crm-config-ps-list-logo.svg) center;*/
+	/*background-size: cover;*/
+}
+
+.crm-crm-config-ps-list-widget-content-title {
+	font: 21px/15px "OpenSans", Arial, Helvetica, sans-serif;
+}
+
+.crm-config-ps-list-widget-content-number {
+	font: bold 38px/46px "OpenSans", Arial, Helvetica, sans-serif;
+}
+
+.crm-config-ps-list-widget-content-attempt-total,
+.crm-config-ps-list-widget-content-attempt-success {
+	display: inline-block;
+}
+
+.crm-config-ps-list-widget-content-attempt-total {
+	margin: 0 24px 0 0;
+}
+
+.crm-config-ps-list-widget-content-attempt-total-number,
+.crm-config-ps-list-widget-content-attempt-success-number {
+	font: bold 16px "OpenSans", Arial, Helvetica, sans-serif;
+}
+
+/* Right block */
+
+.crm-config-ps-list-inner-info-container {
+	margin: 0 0 0 10px;
+	border-bottom: 1px solid rgba(170,175,181, .2);
+}
+
+.crm-config-ps-list-connector-container,
+.crm-config-ps-list-connector-cancel-container,
+.crm-config-ps-list-deal-container,
+.crm-config-ps-list-referrer-container,
+.crm-config-ps-list-fill-started-container {
+	position: relative;
+	padding: 0 0 16px 30px;
+}
+
+.crm-config-ps-list-text,
+.crm-config-ps-list-date,
+.crm-config-ps-list-connector-cancel-text,
+.crm-webform-deal-text,
+.crm-webform-fill-started-text {
+	display: inline-block;
+	margin: 1px 3px 0 0;
+	color: #4a4a4a;
+	vertical-align: top;
+}
+
+.crm-config-ps-list-connector-container:before,
+.crm-config-ps-list-connector-cancel-container:before,
+.crm-config-ps-list-fill-started-container:before,
+.crm-config-ps-list-referrer-container:before,
+.crm-config-ps-list-deal-container:before {
+	content: "";
+	position: absolute;
+	top: 2px;
+	left: 10px;
+	width: 13px;
+	height: 13px;
+	background: url(images/crm-config-ps-list-sprite.svg?.);
+}
+
+.crm-config-ps-list-connector-container:before {
+	background-position: 0 0;
+}
+
+.crm-config-ps-list-connector-cancel-container:before {
+	background-position: 0 -13px;
+}
+
+.crm-config-ps-list-deal-container:before {
+	background-position: 0 -26px;
+}
+
+.crm-config-ps-list-referrer-container:before {
+	background-position: 0 13px;
+}
+
+.crm-config-ps-list-url-link {
+	display: inline-block;
+	margin: 1px 3px 0 0;
+	vertical-align: top;
+}
+
+/* activate-button */
+
+/*.crm-config-ps-list-activate-wrapper {*/
+	/*display: -webkit-box;*/
+	/*display: -webkit-flex;*/
+	/*display: -ms-flexbox;*/
+	/*display: flex;*/
+/*}*/
+
+.crm-config-ps-list-activate-container {
+	position: relative;
+	display: inline-block;
+	width: 50%;
+	margin: 8px 0 0 10px;
+}
+
+.crm-config-ps-list-activate-inner {
+	display: inline-block;
+	max-width: 100%;
+	text-overflow: ellipsis;
+	overflow: hidden;
+	white-space: nowrap;
+}
+
+.crm-config-ps-list-activate-button-container {
+	position: relative;
+	display: inline-block;
+	margin: 12px 0 0 0;
+	height: 22px;
+	width: 59px;
+	-webkit-border-radius: 32px;
+	-moz-border-radius: 32px;
+	border-radius: 32px;
+	overflow: hidden;
+	cursor: pointer;
+}
+
+.crm-config-ps-list-activate-button,
+.crm-config-ps-list-not-activate-button {
+	display: inline-block;
+	position: absolute;
+	left: 0;
+	width: 59px;
+	height: 22px;
+	-webkit-border-radius: 32px;
+	-moz-border-radius: 32px;
+	border-radius: 32px;
+	background: #7ed321;
+	vertical-align: middle;
+	-webkit-transition: left .3s ease;
+	-moz-transition: left .3s ease;
+	transition: left .3s ease;
+	overflow: hidden;
+}
+
+.crm-config-ps-list-not-activate-button {
+	left: 35px;
+	background: #7ed321;
+}
+
+.crm-config-ps-list-on .crm-config-ps-list-activate-button {
+
+}
+
+.crm-config-ps-list-off .crm-config-ps-list-not-activate-button {
+	left: 0;
+	background: #c4c6cb;
+}
+
+.crm-config-ps-list-activate-button-text,
+.crm-config-ps-list-not-activate-button-text {
+	padding: 0 0 0 8px;
+	line-height: 22px;
+	font-size: 12px;
+	color: #424956;
+}
+
+.crm-config-ps-list-not-activate-button-text {
+	padding: 0 0 0 24px;
+}
+
+.crm-config-ps-list-activate-button-cursor {
+	position: absolute;
+	width: 16px;
+	height: 16px;
+	-webkit-border-radius: 50%;
+	-moz-border-radius: 50%;
+	border-radius: 50%;
+	background: #fff;
+}
+
+.crm-config-ps-list-activate-button-cursor {
+	top: 3px;
+	left: 4px;
+}
+
+.crm-config-ps-list-activate-button-item-on,
+.crm-config-ps-list-activate-button-item-off {
+	display: inline-block;
+	line-height: 20px;
+	/*max-width: 120px;*/
+	/*vertical-align: top;*/
+	white-space: nowrap;
+	opacity: 1;
+	-webkit-transition: opacity .3s .3s ease;
+	-moz-transition: opacity .3s .3s ease;
+	transition: opacity .3s .3s ease;
+	text-overflow: ellipsis;
+	overflow: hidden;
+	cursor: pointer;
+}
+
+.crm-config-ps-list-activate-button-item-off {
+	display: none;
+	color: #424956;
+	opacity: 0;
+	-webkit-transition: opacity .3s .3s ease;
+	-moz-transition: opacity .3s .3s ease;
+	transition: opacity .3s .3s ease;
+}
+
+.crm-config-ps-list-off .crm-config-ps-list-activate-button-item-on,
+.crm-config-ps-list-on .crm-config-ps-list-activate-button-item-off {
+	opacity: 0;
+}
+
+.crm-config-ps-list-on .crm-config-ps-list-activate-button-item-on,
+.crm-config-ps-list-off .crm-config-ps-list-activate-button-item-off {
+	opacity: 1;
+}
+
+/* User container */
+
+.crm-config-ps-list-activate-user-wrapper {
+	position: relative;
+	display: inline-block;
+	width: 46%;
+}
+
+.crm-config-ps-list-activate-user-container {
+	display: inline-block;
+	position: relative;
+	margin: 16px 0 0 10px;
+}
+
+.crm-config-ps-list-activate-user-inner {
+	display: inline-block;
+	max-width: calc(100% - 42px);
+}
+
+.crm-config-ps-off {
+	background: #BCBDBF;
+}
+
+.crm-config-ps-list-activate-comments {
+	position: relative;
+	width: 100%;
+	font: normal 12px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	color: #80868e;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	vertical-align: middle;
+}
+
+.crm-config-ps-list-activate-user-icon {
+	display: inline-block;
+	margin: 3px 5px 0 9px;
+	width: 24px;
+	height: 24px;
+	-webkit-border-radius: 50%;
+	-moz-border-radius: 50%;
+	border-radius: 50%;
+	background: url(http://24.avksentyev.bx/upload/resize_cache/main/d82/300_300_1/42-17948709.gif) no-repeat center;
+	background-size: cover;
+	vertical-align: top;
+}
+
+.crm-config-ps-list-activate-user-element {
+	display: inline-block;
+	width: 100%;
+	font: bold 12px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	color: #29619b;
+	vertical-align: middle;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.user-container-on {
+	position: relative;
+	-webkit-transition: opacity .3s .3s ease;
+	-moz-transition: opacity .3s .3s ease;
+	transition: opacity .3s .3s ease;
+	opacity: 1;
+}
+
+.user-container-off {
+	position: absolute;
+	top: 0;
+	left: 0;
+	-webkit-transition: opacity .3s .3s ease;
+	-moz-transition: opacity .3s .3s ease;
+	transition: opacity .3s .3s ease;
+	opacity: 0;
+}
+
+.user-container-show-now .user-container-on {
+	opacity: 0;
+}
+.user-container-show-now .user-container-off {
+	opacity: 1;
+}
+
+.crm-config-ps-list-activate-comments-act {
+	position: relative;
+	-webkit-transition: opacity .3s .3s ease;
+	-moz-transition: opacity .3s .3s ease;
+	transition: opacity .3s .3s ease;
+	opacity: 1;
+}
+.crm-config-ps-list-activate-comments-deact {
+	white-space: nowrap;
+	position: absolute;
+	top: 0;
+	left: 0;
+	-webkit-transition: opacity .3s .3s ease;
+	-moz-transition: opacity .3s .3s ease;
+	transition: opacity .3s .3s ease;
+	opacity: 0;
+}
+.user-container-show-now-deact .crm-config-ps-list-activate-comments-act {
+	opacity: 0;
+}
+.user-container-show-now-deact .crm-config-ps-list-activate-comments-deact{
+	opacity: 1;
+}
+
+.crm-config-ps-list-widget-content-item {
+	position: absolute;
+	top: 0;
+	left: 0;
+	-webkit-transition: opacity .8s ease;
+	-moz-transition: opacity .8s ease;
+	transition: opacity .8s ease;
+	opacity: 0;
+}
+
+.crm-config-ps-list-widget-content-item-show {
+	opacity: 1;
+}
+
+
+
+/* POPUPS */
+.crm-webform-edit-warning-popup-alert,
+.crm-webform-edit-warning-popup-confirm {
+	display: block;
+	padding: 60px 0;
+	border-bottom: 1px solid rgba(207,213,223, .5);
+	-webkit-border-radius: 2px;
+	-moz-border-radius: 2px;
+	border-radius: 2px;
+	font: 16px 'HelveticaNeue', Helvetica, Arial, sans-serif;
+	color: #eb314b;
+	text-align: center;
+	min-width: 400px;
+}
+
+.crm-webform-edit-warning-popup-alert:before {
+	content: '';
+	display: inline-block;
+	margin: 0 10px 3px 0;
+	width: 21px;
+	height: 18px;
+	background: url(images/crm-webform-edit-sprite.svg) -2px -371px;
+	vertical-align: middle;
+}
+
+.crm-webform-edit-warning-popup-confirm {
+	color: #535c69;
+}

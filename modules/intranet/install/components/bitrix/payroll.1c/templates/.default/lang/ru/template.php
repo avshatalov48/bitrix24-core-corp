@@ -1,0 +1,33 @@
+<?
+$MESS ['SHOW'] = "Показать";
+$MESS ['PIN'] = "Ваш пин:";
+$MESS ['DATE'] = "Месяц/год:";
+$MESS ['PIN_TYPE'] = "введите пин";
+$MESS ['PIN_TYPE_PLEASE'] = "Пожалуйста, введите пин!";
+$MESS ['ACTIVATION_CODE_TYPE_PLEASE'] = "Пожалуйста, введите код активации!";
+$MESS ['REQUEST_DATA'] = "Запросить:";
+$MESS ['ORG_LIST'] = "Организация: ";
+$MESS ['TO_PAYROLL_FORM'] = "посмотреть зарплату";
+$MESS ['PAYROLL'] = "Расчетный лист";
+$MESS ['HOLYDAY'] = "Остатки отпусков";
+$MESS ['NEW_WINDOW'] = "в отдельном окне";
+$MESS ['GET_PIN'] = "получить ПИН";
+$MESS ['ACTIVATION_CODE_TYPE'] = "Введите код активации: ";
+$MESS ['GET_PIN_FORM_TITLE'] = "Активация";
+$MESS ['REPLAY_ACTIVATION'] = "попробовать ещё раз";
+$MESS ['GET_ANOTHER_PIN'] = "получить пин";
+$MESS ['FORWARD_TO_PAYROLL_FROM'] = "перейти к просмотру зарплаты и отпусков";
+$MESS ['NO_DATA_YET'] = "К сожалению, за выбранный период расчетный лист ещё недоступен!";
+$MESS ['MONTH_1'] = "Январь";
+$MESS ['MONTH_2'] = "Февраль";
+$MESS ['MONTH_3'] = "Март";
+$MESS ['MONTH_4'] = "Апрель";
+$MESS ['MONTH_5'] = "Май";
+$MESS ['MONTH_6'] = "Июнь";
+$MESS ['MONTH_7'] = "Июль";
+$MESS ['MONTH_8'] = "Август";
+$MESS ['MONTH_9'] = "Сентябрь";
+$MESS ['MONTH_10'] = "Октябрь";
+$MESS ['MONTH_11'] = "Ноябрь";
+$MESS ['MONTH_12'] = "Декабрь";
+?>

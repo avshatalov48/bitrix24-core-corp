@@ -1,0 +1,46 @@
+fieldset.bizproc-item {
+	border: 1px solid #D8D8D8;
+	padding: 0 1.5em 1.5em 1em;}
+legend.bizproc-item-legend {
+	padding: 0 1em;
+	margin-left: 2em;
+	font-size: 110%;
+	color: #000000;}
+div.bizproc-item-description {
+	--font-style: italic;
+	margin-top: 0.3em;
+	margin-bottom: 0.3em;
+	font-size: 97%;}
+div.bizproc-item-text{
+	margin: 1em 0 0 1em;}
+div.bizproc-item-buttons{
+	margin: 1.5em 0 0 1em;}
+div.bizproc-item-buttons input {
+	margin-right:0.7em;}
+
+div.bizproc-task-document{
+	margin-bottom:1.2em;}
+div.bizproc-field label{
+	display:block;
+	width:30em;}
+span.bizproc-field-value textarea{
+	height:4em;
+	width:25em;}
+table.bizproc-task-table {
+	border:none;}
+table.bizproc-task-table td {
+	width: auto!important;}
+table.bizproc-task-table textarea
+{
+	width:100%;
+	height:5em;
+	box-sizing: border-box;
+}
+table.bizproc-task-table select
+{
+	width: 100%;
+	box-sizing: border-box;
+}
+span.required {
+	color: red;
+}

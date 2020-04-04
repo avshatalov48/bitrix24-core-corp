@@ -1,0 +1,38 @@
+table.bx-users-toolbar {margin: 20px 0px; width: 100%; border-collapse:collapse; border: solid 5px #D8E3E8; background-color: #D8E3E8;}
+table.bx-users-toolbar td {border: solid 5px #D8E3E8; padding: 1px; white-space: nowrap !important; color: black;}
+table.bx-users-toolbar td select {width: 200px;}
+table.bx-users-toolbar td.bx-users-toolbar-last {width: 100%; text-align: right;}
+table.bx-users-toolbar td.bx-users-toolbar-delimiter {width: 1px; padding: 0 1px 0 0; background-color: #98B7C5;}
+
+div.bx-calendar-layout {padding: 0px; width: 100%;}
+
+div.bx-calendar-entry {position: absolute; height: 17px; background-repeat: repeat-x; background-position: left top; white-space: nowrap; font-size: 0.7em; text-align: left; padding: 1px 0px 0px 2px; overflow: hidden; /*cursor: pointer;*/ -moz-box-sizing: border-box; box-sizing: border-box;}
+/*div.bx-calendar-entry-active {background-position: left bottom;}*/
+
+div.bx-calendar-color-default {background-image: url(images/calendar_grad_gray.gif); z-index: 900;}
+div.bx-calendar-color-ready{background-image: url(images/calendar_grad_green.gif); z-index: 910;}
+div.bx-calendar-color-text {z-index: 920;}
+
+div.bx-calendar-layout  tr.bx-calendar-currow td {background-color: #E3EEF3 !important;}
+div.bx-calendar-layout-inner {padding: 0px; margin: 0px; }
+
+div.bx-calendar-layout .bx-calendar-main-table{border-top: solid 1px #CCCCCC; border-left: solid 1px #CCCCCC; border-spacing: 0;}
+.aaa{background-color:#00FF00;}
+div.bx-calendar-layout .bx-calendar-main-table td{padding: 0px; vertical-align: middle; border-right: solid 1px #CCCCCC; border-bottom: solid 1px #CCCCCC; font-size: 0.9em;  -moz-box-sizing: border-box; }
+div.bx-calendar-layout .bx-calendar-main-table td.bx-calendar-day {font-size: 0.8em; width: 17px; text-align: center;}
+div.bx-calendar-layout .bx-calendar-main-table td.bx-calendar-holiday {background-color: #F0F5F7; color: #C30808;}
+div.bx-calendar-layout .bx-calendar-main-table td.bx-calendar-today {background-color: #F0F599;}
+
+div.bx-calendar-layout .bx-calendar-main-table td.bx-calendar-first-col div {width: 164px; white-space: nowrap; overflow: hidden; display: block; padding: 0px 0px 0px 6px; }
+div.bx-calendar-layout .bx-calendar-main-table td.bx-calendar-first-col {width: 170px; height: 20px; white-space: nowrap; overflow: hidden;}
+div.bx-calendar-layout .bx-calendar-main-table td.bx-calendar-control {width: 170px; height: 20px; background-color:#D8E3E8;}
+div.bx-calendar-layout .bx-calendar-main-table td.bx-calendar-control table.bx-calendar-control-table {width: 170px; border-collapse: collapse; border: none; margin: 0px;}
+div.bx-calendar-layout .bx-calendar-main-table td.bx-calendar-control table.bx-calendar-control-table td {border-collapse: collapse; border: none; padding: 0px;}
+div.bx-calendar-layout .bx-calendar-main-table td.bx-calendar-control table.bx-calendar-control-table td.bx-calendar-control-text {text-align: center; font-weight: bold; font-size: 0.9em; width: 92px;}
+
+div.bx-calendar-layout .bx-calendar-icon {display: block; height: 15px; width: 15px; background-repeat: no-repeat; background-image: url(images/calendar_icons.gif);}
+div.bx-calendar-layout .bx-calendar-back {background-position: 0 0; float: left; margin-left: 2px;}
+div.bx-calendar-layout .bx-calendar-bback {background-position: -30px 0; float: left; margin-left: 2px;}
+div.bx-calendar-layout .bx-calendar-fwd {background-position: -15px 0; float: right; margin-right: 2px;}
+div.bx-calendar-layout .bx-calendar-ffwd {background-position: -45px 0; float: right; margin-right: 2px;}
+

@@ -1,0 +1,4 @@
+table.bx-interface-grid tr.bx-grid-head td
+{
+	white-space: nowrap;
+}

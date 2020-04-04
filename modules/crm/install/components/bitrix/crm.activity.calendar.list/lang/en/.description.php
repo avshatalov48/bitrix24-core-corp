@@ -1,0 +1,6 @@
+<?
+$MESS["CRM_ACTIVITY_CALENDAR_LIST_NAME"] = "Calls and meetings";
+$MESS["CRM_ACTIVITY_CALENDAR_LIST_DESCRIPTION"] = "Calendar records";
+$MESS["CRM_NAME"] = "CRM";
+$MESS["CRM_ACTIVITY_NAME"] = "Activity";
+?>

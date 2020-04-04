@@ -1,0 +1,10 @@
+<?
+require($_SERVER["DOCUMENT_ROOT"]."/bitrix/header.php");
+$APPLICATION->SetTitle(GetMessage("TITLE"));
+?><?$APPLICATION->IncludeComponent(
+	"bitrix:crm.contact.webservice",
+	"",
+	Array(
+	),
+false
+);?><?require($_SERVER["DOCUMENT_ROOT"]."/bitrix/footer.php");?>

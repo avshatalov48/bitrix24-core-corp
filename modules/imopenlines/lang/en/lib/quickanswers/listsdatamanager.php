@@ -1,0 +1,21 @@
+<?
+$MESS["IMOL_QA_IBLOCK_NAME"] = "Canned responses";
+$MESS["IMOL_QA_IBLOCK_DESCRIPTION"] = "Contains canned responses for use with Open Channels";
+$MESS["IMOL_QA_IBLOCK_ELEMENTS_NAME"] = "Responses";
+$MESS["IMOL_QA_IBLOCK_ELEMENT_NAME"] = "Response";
+$MESS["IMOL_QA_IBLOCK_ELEMENT_ADD"] = "Add response";
+$MESS["IMOL_QA_IBLOCK_ELEMENT_EDIT"] = "Edit response";
+$MESS["IMOL_QA_IBLOCK_ELEMENT_DELETE"] = "Delete response";
+$MESS["IMOL_QA_IBLOCK_SECTIONS_NAME"] = "Sections";
+$MESS["IMOL_QA_IBLOCK_SECTION_NAME"] = "Section";
+$MESS["IMOL_QA_IBLOCK_SECTION_ADD"] = "Add section";
+$MESS["IMOL_QA_IBLOCK_SECTION_EDIT"] = "Edit section";
+$MESS["IMOL_QA_IBLOCK_SECTION_DELETE"] = "Delete section";
+$MESS["IMOL_QA_IBLOCK_NAME_FIELD"] = "Name";
+$MESS["IMOL_QA_IBLOCK_TEXT_FIELD"] = "Canned response text";
+$MESS["IMOL_QA_IBLOCK_RATING_FIELD"] = "Rating";
+$MESS["IMOL_QA_IBLOCK_GREETING_SECTION"] = "Welcome message";
+$MESS["IMOL_QA_IBLOCK_PAYMENT_SECTION"] = "Payment";
+$MESS["IMOL_QA_IBLOCK_DELIVERY_SECTION"] = "Delivery";
+$MESS["IMOL_QA_IBLOCK_COMMON_SECTION"] = "Common";
+?>

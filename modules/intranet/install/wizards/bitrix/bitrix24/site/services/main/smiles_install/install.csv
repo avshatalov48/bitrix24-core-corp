@@ -1,0 +1,25 @@
+TYPE;CLICKABLE;SORT;IMAGE;IMAGE_WIDTH;IMAGE_HEIGHT;IMAGE_DEFINITION;HIDDEN;IMAGE_LANG;TYPING
+S;Y;100;bx_smile_smile.png;80;80;UHD;N;SMILE_SMILE;:) :-)
+S;Y;105;bx_smile_wink.png;80;80;UHD;N;SMILE_WINK;";) ;-)"
+S;Y;110;bx_smile_biggrin.png;80;80;UHD;N;SMILE_BIGGRIN;:D :-D
+S;Y;115;bx_smile_cool.png;80;80;UHD;N;SMILE_COOL;8) 8-)
+S;Y;120;bx_smile_facepalm.png;80;80;UHD;N;SMILE_FACEPALM;:facepalm:
+S;Y;125;bx_smile_kiss.png;80;80;UHD;N;SMILE_KISS;:{} :-{}
+S;Y;130;bx_smile_sad.png;80;80;UHD;N;SMILE_SAD;:( :-(
+S;Y;135;bx_smile_neutral.png;80;80;UHD;N;SMILE_NEUTRAL;:| :-|
+S;Y;140;bx_smile_redface.png;80;80;UHD;N;SMILE_REDFACE;:oops:
+S;Y;145;bx_smile_cry.png;80;80;UHD;N;SMILE_CRY;:cry: :~(
+S;Y;150;bx_smile_evil.png;80;80;UHD;N;SMILE_EVIL;:evil: >:-<
+S;Y;155;bx_smile_eek.png;80;80;UHD;N;SMILE_EEK;:o :-o :shock:
+S;Y;160;bx_smile_confuse.png;80;80;UHD;N;SMILE_CONFUSE;:/ :-/
+S;Y;165;bx_smile_idea.png;80;80;UHD;N;SMILE_IDEA;:idea:
+S;Y;170;bx_smile_question.png;80;80;UHD;N;SMILE_QUESTION;:?:
+S;Y;175;bx_smile_exclaim.png;80;80;UHD;N;SMILE_EXCLAIM;:!:
+S;Y;180;bx_smile_like.png;80;80;UHD;N;SMILE_LIKE;:like:
+I;Y;175;bx_icon_1.gif;15;15;SD;N;ICON_NOTE;ICON_NOTE
+I;Y;180;bx_icon_2.gif;15;15;SD;N;ICON_DIRRECTION;ICON_DIRRECTION
+I;Y;185;bx_icon_3.gif;15;15;SD;N;ICON_IDEA;ICON_IDEA
+I;Y;190;bx_icon_4.gif;15;15;SD;N;ICON_ATTANSION;ICON_ATTANSION
+I;Y;195;bx_icon_5.gif;15;15;SD;N;ICON_QUESTION;ICON_QUESTION
+I;Y;200;bx_icon_6.gif;15;15;SD;N;ICON_BAD;ICON_BAD
+I;Y;205;bx_icon_7.gif;15;15;SD;N;ICON_GOOD;ICON_GOOD

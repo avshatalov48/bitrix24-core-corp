@@ -1,0 +1,30 @@
+<?
+$MESS["CRM_CH_TRACKER_WGT_DEMO_TITLE"] = "This is a demo view. Hide it to analyze your data.";
+$MESS["CRM_CH_TRACKER_WGT_ACTIVITY_DYNAMIC"] = "Communication overview";
+$MESS["CRM_CH_TRACKER_WGT_COMMUNICATION_DYNAMIC"] = "Communication load ";
+$MESS["CRM_CH_TRACKER_WGT_COMMUNICATION_DYNAMIC_TELEPHONY"] = "Telephony";
+$MESS["CRM_CH_TRACKER_WGT_COMMUNICATION_DYNAMIC_EMAIL"] = "E-mail";
+$MESS["CRM_CH_TRACKER_WGT_COMMUNICATION_DYNAMIC_OPENLINES"] = "Messengers and social services";
+$MESS["CRM_CH_TRACKER_WGT_COMMUNICATION_DYNAMIC_FORM"] = "CRM forms";
+$MESS["CRM_CH_TRACKER_WGT_PERSONAL_LOAD"] = "Manager workload";
+$MESS["CRM_CH_TRACKER_WGT_PERSONAL_LOAD_TELEPHONY"] = "Telephony";
+$MESS["CRM_CH_TRACKER_WGT_PERSONAL_LOAD_EMAIL"] = "E-mail";
+$MESS["CRM_CH_TRACKER_WGT_PERSONAL_LOAD_OPENLINES"] = "Messengers and social services";
+$MESS["CRM_CH_TRACKER_WGT_PERSONAL_LOAD_FORM"] = "CRM forms";
+$MESS["CRM_CH_TRACKER_WGT_DEAL_SUCCESS_SUM_PER_MONTH"] = "Sales this month";
+$MESS["CRM_CH_TRACKER_WGT_DEAL_SUCCESS_SUM_PER_DAY"] = "Sales today";
+$MESS["CRM_CH_TRACKER_WGT_DEAL_SUCCESS_SUM"] = "Total sales";
+$MESS["CRM_CH_TRACKER_WGT_NEW_CLIENTS"] = "New customers";
+$MESS["CRM_CH_TRACKER_WGT_NEW_CLIENTS_PER_DAY"] = "New customers today";
+$MESS["CRM_CH_TRACKER_WGT_MANAGERS_FAILS"] = "Manager counters";
+$MESS["CRM_CH_TRACKER_WGT_MANAGERS_SUCCESSES"] = "Manager sales";
+$MESS["CRM_CH_TRACKER_WGT_DEAL_PROCESS_SUM"] = "Deals in progress";
+$MESS["CRM_CH_TRACKER_WGT_AMOUNT_OF_SALE"] = "Total sales";
+$MESS["CRM_CH_TRACKER_WGT_RATING_BY_SUCCESSFUL_DEALS"] = "Rating by value of won deals";
+$MESS["CRM_CH_TRACKER_WGT_ANIMATION_1"] = "You can watch the video again by clicking this icon.";
+$MESS["CRM_CH_TRACKER_WGT_ANIMATION_2"] = "Connect more communication channels to your Bitrix24 CRM: Telephony, E-mail, Open Channels, CRM forms.";
+$MESS["CRM_CH_TRACKER_WGT_ANIMATION_3_SUPERVISOR"] = "Use counters to view your employees' current progress: completed and remaining tasks for today. Your employees perform well if there are no remaining tasks at the end of the day.";
+$MESS["CRM_CH_TRACKER_WGT_ANIMATION_3_EMPLOYEE"] = "Use your personal counter to gauge your performance: the CRM keeps track of your completed and remaining tasks for today. Your objective is to have no unfinished tasks at the end of the day.";
+$MESS["CRM_CH_TRACKER_WGT_ANIMATION_4"] = "You can enable demo view at any time.";
+$MESS["CRM_CH_TRACKER_WGT_SALE_TARGET"] = "Sales Target";
+?>

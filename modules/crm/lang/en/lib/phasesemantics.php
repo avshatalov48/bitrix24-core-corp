@@ -1,0 +1,33 @@
+<?
+$MESS['CRM_PHASE_SEMANTICS_DEAL_CAPTION'] = "Select stages";
+$MESS['CRM_PHASE_SEMANTICS_DEAL_FAILURE'] = "\"Deal lost\" stage";
+$MESS['CRM_PHASE_SEMANTICS_DEAL_GROUP_TITLE'] = "Stages";
+$MESS['CRM_PHASE_SEMANTICS_DEAL_PROCESS'] = "\"Deal in progress\" stages group";
+$MESS['CRM_PHASE_SEMANTICS_DEAL_SELECTOR_TITLE'] = "Select stage or category";
+$MESS['CRM_PHASE_SEMANTICS_DEAL_SUCCESS'] = "\"Deal won\" stage";
+$MESS['CRM_PHASE_SEMANTICS_DEAL_UNDEFINED'] = "not selected";
+$MESS['CRM_PHASE_SEMANTICS_FAILURE'] = "Failed";
+$MESS['CRM_PHASE_SEMANTICS_INVOICE_CAPTION'] = "Select statuses";
+$MESS['CRM_PHASE_SEMANTICS_INVOICE_FAILURE'] = "\"Invoice declined\" status group";
+$MESS['CRM_PHASE_SEMANTICS_INVOICE_GROUP_TITLE'] = "Statuses";
+$MESS['CRM_PHASE_SEMANTICS_INVOICE_PROCESS'] = "\"Invoice in progress\" status group";
+$MESS['CRM_PHASE_SEMANTICS_INVOICE_SELECTOR_TITLE'] = "Select status or category";
+$MESS['CRM_PHASE_SEMANTICS_INVOICE_SUCCESS'] = "\"Invoice paid\" status";
+$MESS['CRM_PHASE_SEMANTICS_INVOICE_UNDEFINED'] = "not selected";
+$MESS['CRM_PHASE_SEMANTICS_LEAD_CAPTION'] = "Select statuses";
+$MESS['CRM_PHASE_SEMANTICS_LEAD_FAILURE'] = "\"Lead failed\" status group";
+$MESS['CRM_PHASE_SEMANTICS_LEAD_GROUP_TITLE'] = "Statuses";
+$MESS['CRM_PHASE_SEMANTICS_LEAD_PROCESS'] = "\"Lead in progress\" status group";
+$MESS['CRM_PHASE_SEMANTICS_LEAD_SELECTOR_TITLE'] = "Select status or category";
+$MESS['CRM_PHASE_SEMANTICS_LEAD_SUCCESS'] = "\"Lead converted\" status";
+$MESS['CRM_PHASE_SEMANTICS_LEAD_UNDEFINED'] = "not selected";
+$MESS['CRM_PHASE_SEMANTICS_ORDER_FAILURE'] = "Status group \" #todo# \"";
+$MESS['CRM_PHASE_SEMANTICS_ORDER_PROCESS'] = "Status group \" #todo# \"";
+$MESS['CRM_PHASE_SEMANTICS_ORDER_SUCCESS'] = "Status \" #todo# \"";
+$MESS['CRM_PHASE_SEMANTICS_PROCESS'] = "In progress";
+$MESS['CRM_PHASE_SEMANTICS_QUOTE_FAILURE'] = "\"Quote Declined\" status group";
+$MESS['CRM_PHASE_SEMANTICS_QUOTE_PROCESS'] = "\"Quote Opened\" status group";
+$MESS['CRM_PHASE_SEMANTICS_QUOTE_SUCCESS'] = "\"Quote Approved\" status";
+$MESS['CRM_PHASE_SEMANTICS_SUCCESS'] = "Success";
+$MESS['CRM_PHASE_SEMANTICS_UNDEFINED'] = "not selected";
+?>

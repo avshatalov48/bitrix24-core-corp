@@ -1,0 +1,3 @@
+<?
+$MESS["CRM_DOCGEN_DATAPROVIDER_ADDRESS_TEXT_TITLE"] = "Full address";
+?>

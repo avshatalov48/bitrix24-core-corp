@@ -1,0 +1,82 @@
+body.body-popup {margin:10px;}
+div.empty {width:1px; height:1px; overflow:hidden;}
+
+/*Icon*/
+img.calendar-icon {border:0px; width:19px; height:19px; vertical-align:top; margin:1px; margin-left:2px}
+img.calendar-icon-hover {border:1px solid #AEB6C2; background-color:#DBE3F2; margin:0px; margin-left:1px}
+
+div.bx-calendar-float td, div.bx-calendar-float tr, div.bx-calendar-float table, div.bx-calendar-float tbody {font-family:Verdana,Arial,Helvetica,sans-serif !important;background:transparent !important; font-weight:normal !important; font-size:medium !important; line-height:normal !important; height:auto !important; width:auto !important; padding:0px !important; margin:0px !important; border:none !important; border-spacing:0 !important; table-layout: auto !important; text-align:left !important; text-decoration: none !important; font-variant: normal !important; font-style:normal !important; letter-spacing:normal !important;word-spacing:normal !important; text-indent:0 !important; overflow:visible !important; color:black !important; vertical-align: middle !important; text-align: left !important; }
+
+/*Calendar float form*/
+div.bx-calendar-float {width:200px; background-color:white; border:1px solid #A9A9A9;}
+div.bx-calendar-float td {padding:0px !important; font-size:11px !important;}
+div.bx-calendar-float div.bx-calendar-content {height:172px; overflow:hidden;}
+
+/*title*/
+div.bx-calendar-title {font-size:medium !important; background-color:#23468A; background-image:url(images/title_bg.gif); background-repeat:repeat-x; background-position:left top; border-bottom:1px solid #A9A9A9;}
+div.bx-calendar-title td.bx-calendar-title-text{width:100% !important; font-size:11px !important; font-weight:bold !important; color:#EEF1F7 !important; padding:3px !important; cursor:move !important; vertical-align:top !important;}
+div.bx-calendar-float a.bx-calendar-close {display:block; width:13px; height:13px; background-image:url(images/close.gif); overflow:hidden; margin-right:3px; background-repeat:no-repeat; background-position:center;}
+
+/*toolbar*/
+div.bx-calendar-float table.bx-calendar-toolbar {width:100% !important; height:22px !important; background-color:#D9D6CF !important; background-image:url(images/toolbar_bg.gif) !important; background-repeat:repeat-x !important; background-position:left top !important; border-top:1px solid #FFFFFF !important; border-bottom:1px solid #A7A7A7 !important;}
+div.bx-calendar-float table.bx-calendar-toolbar a.bx-calendar-button {border:0px; margin:1px 3px 1px 3px; display:block; height:15px; background-repeat:no-repeat; background-position:center; box-sizing:border-box; -moz-box-sizing:border-box; color:black; text-decoration:none;}
+div.bx-calendar-float table.bx-calendar-toolbar a.bx-calendar-button:hover {height:17px; margin:0px 2px 0px 2px; border:1px solid #AEB6C2; background-color:#DBE3F2; color:black;}
+div.bx-calendar-float table.bx-calendar-toolbar a.bx-calendar-left {width:15px; background-image:url(images/left.gif); background-position:4px center;}
+div.bx-calendar-float table.bx-calendar-toolbar a.bx-calendar-right {width:15px; background-image:url(images/right.gif); background-position:6px center;}
+div.bx-calendar-float table.bx-calendar-toolbar a.bx-calendar-today {width:15px; background-image:url(images/today.gif); background-position:left top;}
+div.bx-calendar-float table.bx-calendar-toolbar a.bx-calendar-arrow {width:9px; background-image:url(images/arr_down.gif); margin-left:1px;}
+div.bx-calendar-float table.bx-calendar-toolbar a.bx-calendar-menu {margin-right:1px;}
+div.bx-calendar-float table.bx-calendar-toolbar a.bx-calendar-left:hover, div.bx-calendar-float table.bx-calendar-toolbar a.bx-calendar-right:hover, div.bx-calendar-float table.bx-calendar-toolbar a.bx-calendar-today:hover {width:17px;}
+div.bx-calendar-float table.bx-calendar-toolbar a.bx-calendar-arrow:hover {width:11px; margin-left:0px;}
+div.bx-calendar-float table.bx-calendar-toolbar a.bx-calendar-menu:hover {margin-right:0px;}
+
+/*calendar*/
+div.bx-calendar-float div.bx-calendar {padding:4px 8px 4px 4px;}
+div.bx-calendar-float div.bx-calendar table {width:100% !important;}
+div.bx-calendar-float div.bx-calendar td {padding:2px 0px 0px 2px !important;}
+div.bx-calendar-float div.bx-calendar tr.bx-calendar-head td {padding-left:4px !important; padding-bottom:4px !important; border-bottom:1px solid #DBDBDB !important;}
+div.bx-calendar-float div.bx-calendar td.bx-calendar-week {border-right:1px solid #DBDBDB !important;}
+div.bx-calendar-float div.bx-calendar a {display:block; text-align:right; color:#213AA3;  text-decoration:none; width:18px; height:18px; /*padding:2px;box-sizing:border-box; -moz-box-sizing:border-box;*/ overflow:hidden;}
+div.bx-calendar-float div.bx-calendar a:hover {background-color:#DBE3F2;}
+div.bx-calendar-float td.bx-calendar-holiday a {color:#970000; }
+div.bx-calendar-float td.bx-calendar-today a {border:1px solid #FF0000; padding:1px;}
+div.bx-calendar-float td.bx-calendar-inactive a {color:#9B9B9B;}
+div.bx-calendar-float td.bx-calendar-current a {color:white; background-color:#3E67B5;}
+div.bx-calendar-float td.bx-calendar-current a:hover {color:black;}
+
+/*time toolbar*/
+div.bx-calendar-float table.bx-calendar-timebar {width:100% !important; background-color:#D9D6CF !important; background-image:url(images/toolbar_bg.gif) !important; background-repeat:repeat-x !important; background-position:left top !important; border-top:1px solid #A7A7A7 !important;}
+div.bx-calendar-float table.bx-calendar-timebar td {text-align: center !important;}
+div.bx-calendar-float table.bx-calendar-timebar a.bx-calendar-button {width:80px; height:5px; border:0px; display:block; background-color:#D6D1C9; background-repeat:no-repeat; background-position:center 1px; box-sizing:border-box; -moz-box-sizing:border-box; overflow:hidden; margin:0 auto;}
+div.bx-calendar-float table.bx-calendar-timebar a.bx-calendar-button:hover {background-color:#BFBFD9;}
+div.bx-calendar-float table.bx-calendar-timebar a.bx-calendar-arrow-down {background-image:url(images/arr_down.gif);}
+div.bx-calendar-float table.bx-calendar-timebar a.bx-calendar-arrow-up {background-image:url(images/arr_up.gif);}
+
+/*time buttons*/
+div.bx-calendar-float div.bx-calendar-time a.bx-calendar-time {border:0px; margin:1px 2px 1px 2px; display:block; width:16px; height:16px; background-repeat:no-repeat; background-position:center; box-sizing:border-box; -moz-box-sizing:border-box;}
+div.bx-calendar-float div.bx-calendar-time a.bx-calendar-time:hover {width:18px; height:18px; margin:0px 1px 0px 1px; border:1px solid #AEB6C2; background-color:#DBE3F2;}
+div.bx-calendar-float div.bx-calendar-time a.bx-calendar-set-time {background-image:url(images/set_time.gif);}
+div.bx-calendar-float div.bx-calendar-time a.bx-calendar-clear-time {background-image:url(images/clear_time.gif);}
+
+/*time block*/
+div.bx-calendar-float div.bx-calendar-time {border-top:1px solid #DBDBDB; padding:6px 0px 6px 0px;}
+div.bx-calendar-float div.bx-calendar-time td {padding:0px !important;}
+div.bx-calendar-float div.bx-calendar-time input {height:18px !important; font-size:11px !important; margin:0px 1px 0px 2px !important; font-family:Verdana,Arial,Helvetica,sans-serif !important; border:1px solid #A7A7A7 !important; width:20px !important;}
+div.bx-calendar-float a.bx-calendar-spin {width:7px; height:7px; border:0px; margin:1px; display:block; background-repeat:no-repeat; background-position:center 2px; box-sizing:border-box; -moz-box-sizing:border-box; overflow:hidden;}
+div.bx-calendar-float a.bx-calendar-spin:hover {width:9px; height:9px; margin:0px; border:1px solid #AEB6C2; background-color:#DBE3F2;}
+div.bx-calendar-float a.bx-calendar-spin-up {background-image:url(images/spin_up.gif);}
+div.bx-calendar-float a.bx-calendar-spin-down {background-image:url(images/spin_down.gif);}
+
+/* Popup menu */
+td.popupmenu {border:1px solid #B6B6B6 !important; padding:1px !important; background-color:#FCFCFC !important; background-image:url(images/menu_gutter.gif) !important; background-repeat:repeat-y !important;}
+td.popupmenu .popupitem {margin:1px !important; cursor:default !important;}
+td.popupmenu .popupitemover {margin:0px !important; border:1px solid #AEB6C2 !important; background-color:#CEDAEE !important;}
+td.popupmenu .popupitem .gutter {width:20px !important;}
+td.popupmenu .popupitem .item {padding:3px 5px 3px 9px !important; font-size:11px !important; white-space:nowrap !important;}
+td.popupmenu .popupitem .default {font-weight:bold !important;}
+td.popupmenu .popupitem .disabled {color:#939393 !important;}
+td.popupmenu .popupseparator {margin:1px 0px 1px 30px !important; background-color:#B6B6B6 !important; height:1px !important; overflow:hidden !important;}
+
+/*Common actions icons */
+td.popupmenu .popupitem .icon {width:20px !important; height:16px !important; background-position:center !important; background-repeat:no-repeat !important;}
+td.popupmenu .popupitem .checked {background-image:url(images/checkbox.gif);}

@@ -1,0 +1,19 @@
+<?
+$MESS['CRM_CURRERCY_MODULE_IS_NOT_INSTALLED'] = 'Модуль "Валюты" не найден! Пожалуйста, установите модуль "Валюты".';
+$MESS['CRM_CURRERCY_ERR_DELETION_OF_BASE_CURRENCY'] = 'Нельзя удалить базовую валюту.';
+$MESS['CRM_CURRERCY_ERR_DELETION_OF_ACCOUNTING_CURRENCY'] = 'Нельзя удалить валюту отчётов.';
+$MESS['CRM_CURRERCY_MODULE_WARNING'] = 'Внимание, для корректной работы требуется установка модуля "Валюты".';
+$MESS['CRM_CURRENCY_FIELD_CURRENCY'] = 'Валюта';
+$MESS['CRM_CURRENCY_FIELD_AMOUNT'] = 'Номинал';
+$MESS['CRM_CURRENCY_FIELD_AMOUNT_CNT'] = 'Курс обмена';
+$MESS['CRM_CURRENCY_FIELD_BASE'] = 'Базовая валюта';
+$MESS['CRM_CURRENCY_FIELD_SORT'] = 'Сортировка';
+$MESS['CRM_CURRENCY_FIELD_DATE_UPDATE'] = 'Дата изменения';
+$MESS['CRM_CURRENCY_FIELD_LID'] =  'Сайт';
+$MESS['CRM_CURRENCY_FIELD_FORMAT_STRING'] = 'Строка формата для вывода валюты';
+$MESS['CRM_CURRENCY_FIELD_FULL_NAME'] = 'Название';
+$MESS['CRM_CURRENCY_FIELD_DEC_POINT'] = 'Десятичная точка при выводе';
+$MESS['CRM_CURRENCY_FIELD_THOUSANDS_SEP'] = 'Свой разделитель тысяч при выводе';
+$MESS['CRM_CURRENCY_FIELD_DECIMALS'] = 'Количество десятичных знаков';
+$MESS['CRM_CURRENCY_FIELD_HIDE_ZERO'] = 'Не показывать незначащие нули';
+$MESS['CRM_CURRENCY_FIELD_THOUSANDS_VARIANT'] = 'Разделитель тысяч при выводе';

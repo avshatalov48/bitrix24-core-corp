@@ -1,0 +1,4 @@
+<?
+$MESS["WORKGROUPS_MENU_ARCHIVE"] = "Архив";
+$MESS["WORKGROUPS_MENU_ALL_GROUPS"] = "Все группы";
+?>

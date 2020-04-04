@@ -1,0 +1,17 @@
+<?
+$MESS["M_CRM_PRODUCT_ROW_LIST_PULL_TEXT"] = "Потяните, чтобы обновить...";
+$MESS["M_CRM_PRODUCT_ROW_LIST_DOWN_TEXT"] = "Отпустите, чтобы обновить...";
+$MESS["M_CRM_PRODUCT_ROW_LIST_LOAD_TEXT"] = "Обновление списка...";
+$MESS["M_CRM_PRODUCT_ROW_LIST_LEGEND"] = "(Товары)";
+$MESS["M_CRM_PRODUCT_ROW_LIST_SUM_TOTAL"] = "Общая сумма";
+$MESS["M_CRM_PRODUCT_ROW_LIST_SUM_TOTAL_2"] = "Сумма";
+$MESS["M_CRM_PRODUCT_ROW_LIST_PRICE"] = "Цена";
+$MESS["M_CRM_PRODUCT_ROW_LIST_QTY"] = "Количество";
+$MESS["M_CRM_PRODUCT_ROW_LIST_VAT"] = "(НДС: #VAT_RATE#%)";
+$MESS["M_CRM_PRODUCT_ROW_LIST_VAT_INCLUDED_SUM"] = "В том числе НДС";
+$MESS["M_CRM_PRODUCT_ROW_LIST_VAT_INCLUDED"] = "В том числе #TAX_NAME#";
+$MESS["M_CRM_PRODUCT_ROW_LIST_VAT_INCLUDED_PERCENTS"] = "В том числе #TAX_NAME# (#TAX_RATE#%)";
+$MESS["M_CRM_PRODUCT_ROW_DELIVERY"] = "Доставка";
+$MESS["M_CRM_PRODUCT_ROW_DISCOUNT"] = "Скидка";
+$MESS["M_CRM_PRODUCT_ROW_LIST_NOTHING_FOUND"] = "Нет товаров";
+?>

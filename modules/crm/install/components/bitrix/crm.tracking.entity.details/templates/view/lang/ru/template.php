@@ -1,0 +1,6 @@
+<?
+$MESS['CRM_TRACKING_ENTITY_DETAILS_PAGES'] = "Посещенные страницы сайта";
+$MESS['CRM_TRACKING_ENTITY_DETAILS_NO_TITLE'] = "Без названия";
+$MESS['CRM_TRACKING_ENTITY_DETAILS_ORGANIC'] = "органический трафик";
+$MESS['CRM_TRACKING_ENTITY_DETAILS_DEVICE_MOBILE'] = "Мобильный телефон";
+$MESS['CRM_TRACKING_ENTITY_DETAILS_DEVICE_DESKTOP'] = "Настольный компьютер";

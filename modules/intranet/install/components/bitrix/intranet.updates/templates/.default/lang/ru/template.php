@@ -1,0 +1,29 @@
+<?
+$MESS["SUP_ACTIVE"] = "Срок действия ключа для установки обновлений";
+$MESS["SUP_ACTIVE_PERIOD"] = "с #DATE_FROM# по #DATE_TO#";
+$MESS["SUP_ACTIVE_PERIOD_TO"] = "по #DATE_TO#";
+$MESS["SUP_SERVER"] = "Сервер обновлений";
+$MESS["SUP_SUBI_CHECK"] = "Последняя проверка обновлений";
+$MESS["SUP_SUBI_UPD"] = "Последние обновления были установлены";
+$MESS["UPDATES_BUTTON"] = "Установить обновления";
+$MESS["SUP_SU_RECOMEND"] = "Рекомендуемые обновления";
+$MESS["SUP_SU_RECOMEND_MOD"] = "для <b>#NUM#</b> модулей";
+$MESS["SUP_SU_RECOMEND_LAN"] = "для <b>#NUM#</b> языковых файлов";
+$MESS["SUP_SU_RECOMEND_NO"] = "нет";
+$MESS["UPDATES_TITLE"] = "Обновления";
+$MESS["SUP_SUBU_UPDATE"] = "Обновление системы обновлений";
+$MESS["SUP_SUBU_HINT"] = "Выпущено обновление системы SiteUpdate. Перед началом работы необходимо установить это обновление";
+$MESS["SUP_SUBU_BUTTON"] = "Обновить систему SiteUpdate";
+$MESS["SUP_SU_UPD_BUTTON"] = "Установить рекомендуемые обновления";
+$MESS["SUP_SUB_SUCCESS"] = "Обновления успешно установлены";
+$MESS["SUP_SUB_ERROR"] = "Некоторые обновления не были установлены";
+$MESS["SUP_SUB_STOP"] = "Остановить установку";
+$MESS["SUP_INITIAL"] = "Инициализация...";
+$MESS["SUP_SU_UPD_INSMED1"] = "Установка обновления";
+$MESS["SUP_SUBT_LICENCE"] = "Лицензионное соглашение";
+$MESS["SUP_SUBT_LICENCE_HINT"] = "Перед использованием системы обновлений вы должны принять новое лицензионное соглашение";
+$MESS["SUP_SUBT_LICENCE_BUTTON"] = "Открыть лицензионное соглашение";
+$MESS["SUP_SUBT_AGREE"] = "Я принимаю лицензионное соглашение";
+$MESS["SUP_APPLY"] = "Применить";
+$MESS["SUP_UPDATES_HINT"] = "Обновления устанавливаются на ваш Битрикс24. Пожалуйста, не закрывайте страницу до полной установки обновлений."
+?>

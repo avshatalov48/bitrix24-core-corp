@@ -1,0 +1,2 @@
+<?php
+$MESS['CRM_AUTOMATION_CONVERTER_DEFAULT_NAME'] = 'Без имени';

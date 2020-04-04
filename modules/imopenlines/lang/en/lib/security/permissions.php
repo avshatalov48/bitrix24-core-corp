@@ -1,0 +1,17 @@
+<?
+$MESS["IMOL_SECURITY_ENTITY_LINES"] = "Open Channels";
+$MESS["IMOL_SECURITY_ENTITY_CONNECTORS"] = "Connect communication channels";
+$MESS["IMOL_SECURITY_ENTITY_SESSION"] = "Communication statistics";
+$MESS["IMOL_SECURITY_ENTITY_HISTORY"] = "Communication history";
+$MESS["IMOL_SECURITY_ENTITY_SETTINGS"] = "Common parameters";
+$MESS["IMOL_SECURITY_ENTITY_JOIN"] = "Join conversation";
+$MESS["IMOL_SECURITY_ACTION_VIEW"] = "View";
+$MESS["IMOL_SECURITY_ACTION_MODIFY"] = "Edit";
+$MESS["IMOL_SECURITY_ACTION_PERFORM"] = "Execute";
+$MESS["IMOL_SECURITY_PERMISSION_NONE"] = "Access denied.";
+$MESS["IMOL_SECURITY_PERMISSION_SELF"] = "Personal";
+$MESS["IMOL_SECURITY_PERMISSION_DEPARTMENT"] = "Personal and department";
+$MESS["IMOL_SECURITY_PERMISSION_ANY"] = "Any";
+$MESS["IMOL_SECURITY_PERMISSION_ALLOW"] = "Access granted";
+$MESS["IMOL_SECURITY_ENTITY_VOTE_HEAD"] = "Conversation rating";
+?>

@@ -1,0 +1,203 @@
+.adm-loc-i-selector{
+	margin-bottom: 10px;
+}
+.adm-loc-i-tree-node{
+	position: relative;
+	padding-left: 25px;
+	margin-bottom: 10px;
+}
+.adm-loc-i-tree-node .adm-loc-orig-label{
+	margin-bottom: 10px;
+}
+.adm-loc-i-selector-arrow{
+	background: url(/bitrix/panel/main/images/bx-admin-sprite-small-1.png) 1px -1138px no-repeat scroll;
+	width: 20px;
+	height: 20px;
+	position: absolute;
+	top: -2px;
+	left: 0px;
+}
+.adm-loc-i-selector-arrow.bx-ui-item-tree-expander{
+	background: url(/bitrix/panel/main/images/bx-admin-sprite.png) -6px -238px no-repeat scroll;
+	background-position: -6px -238px;
+}
+.adm-loc-i-selector-arrow.bx-ui-item-tree-expander.expanded{
+	background-position: -6px -217px;
+}
+.adm-loc-i-tree-panel{
+	margin: 10px 0 10px -3px;
+	display: none;
+}
+
+.adm-loc-i-statusbar {
+	margin-top: 10px;
+	margin-bottom: -15px;
+}
+.adm-loc-i-upload-files {
+	margin: 20px 0 0 25px;
+}
+.adm-detail-content-table td{
+	width: 50%;
+}
+
+/* states */
+.bx-ui-state-mode-remote .bx-ui-load-file{
+	display: none;
+}
+.bx-ui-state-mode-file .bx-ui-load-remote{
+	display: none;
+}
+.bx-ui-state-running .bx-ui-loc-i-loader{
+	background: url(/bitrix/panel/main/images/filter-active-waiter.gif) 0px 0px no-repeat scroll;
+	width: 20px;
+	height: 20px;
+	display: inline;
+	padding: 2px 10px;
+}
+
+.bx-ui-loc-i-progressbar{
+	display: none;
+}
+.bx-ui-file-async-loader-loaded{
+	display: none;
+}
+.bx-ui-file-async-loader-success,
+.bx-ui-file-async-loader-fail,
+.bx-ui-file-async-loader-in-progress{
+	display: none;
+	margin-top: 10px;
+	padding: 0 0 2px 20px;
+}
+.bx-ui-file-async-loader-success,
+.bx-ui-file-async-loader-fail{
+	background: url(/bitrix/panel/main/images/bx-admin-sprite-small.png) 0px -2875px no-repeat scroll;
+}
+.bx-ui-file-async-loader-success{
+	background-position: 0px -2875px;
+}
+.bx-ui-file-async-loader-fail{
+	background-position: 0px -2904px;
+}
+
+.bx-ui-loc-i-delete-all-form .adm-btn-load-img-green {
+	display: none;
+}
+.bx-ui-loc-i-delete-all-form.adm-form-submitting .adm-btn-load-img-green {
+	left: 			50% !important;
+	top: 			5px !important;
+	display: 		block;
+	margin-left: 	-10px;
+}
+.bx-ui-loc-i-delete-all-form .adm-btn-wrapper {
+	position: 		relative;
+	display: 		inline-block;
+}
+
+/* component */
+.bx-sli-note {
+	border: 1px solid;
+	border-color: #ede7d9 #eae4d2 #e5dfc9;
+	border-radius: 2px;
+	-webkit-box-shadow: inset 0 1px 0 #fff;
+	box-shadow: inset 0 1px 0 #fff;
+	background-image: -webkit-linear-gradient(top, #fdfbed, #faf6d9);
+	background-image: -moz-linear-gradient(top, #fdfbed, #faf6d9);
+	background-image: -ms-linear-gradient(top, #fdfbed, #faf6d9);
+	background-image: -o-linear-gradient(top, #fdfbed, #faf6d9);
+	background-image: linear-gradient(to bottom, #fdfbed, #faf6d9);
+	color: #352c0c;
+	font-size: 13px;
+	max-width: 500px;
+	margin-top: 20px;
+	padding: 11px 15px 10px;
+}
+
+
+/* admin-like progress bar */
+.bx-sli-progressbar {
+	margin-bottom: 20px;
+
+	border: 1px solid;
+	border-color: #ede7d9 #eae4d2 #e5dfc9;
+	border-radius: 2px;
+	-webkit-box-shadow: inset 0 1px 0 #fff;
+	box-shadow: inset 0 1px 0 #fff;
+	font-size: 13px;
+	width: 505px;
+	margin-top: 20px;
+	padding: 11px 15px 10px;
+}
+.bx-import-pb-statusbar {
+	padding: 5px 2px;
+}
+
+.bx-import-progressbar .instal-progress-bar-outer
+{
+	height: 32px;
+	border:1px solid;
+	border-color:#9ba6a8 #b1bbbe #bbc5c9 #b1bbbe;
+	-webkit-box-shadow: 1px 1px 0 #fff, inset 0 2px 2px #c0cbce;
+	box-shadow: 1px 1px 0 #fff, inset 0 2px 2px #c0cbce;
+	background-color:#cdd8da;
+	background-image:-webkit-linear-gradient(top, #cdd8da, #c3ced1);
+	background-image:-moz-linear-gradient(top, #cdd8da, #c3ced1);
+	background-image:-ms-linear-gradient(top, #cdd8da, #c3ced1);
+	background-image:-o-linear-gradient(top, #cdd8da, #c3ced1);
+	background-image:linear-gradient(top, #ced9db, #c3ced1);
+	border-radius: 2px;
+	text-align: center;
+	color: #6a808e;
+	text-shadow: 0 1px rgba(255,255,255,0.85);
+	font-size: 18px;
+	line-height: 35px;
+	font-weight: bold;
+}
+
+.bx-import-progressbar .instal-progress-bar-outer .instal-progress-bar-alignment {
+	height: 28px;
+	margin: 0 2px;
+	position: relative;
+	color: #6A808E;
+	font-size: 18px;
+	font-weight: bold;
+	line-height: 35px;
+	text-align: center;
+	text-shadow: 0 1px rgba(255, 255, 255, 0.85);
+}
+
+.instal-progress-bar-alignment .instal-progress-bar-inner {
+	height: 28px;
+	border-radius: 2px;
+	border-top: solid 1px #52b9df;
+	background-color:#2396ce;
+	background-image:-webkit-linear-gradient(top, #27a8d7, #2396ce, #1c79c0);
+	background-image:-moz-linear-gradient(top, #27a8d7, #2396ce, #1c79c0);
+	background-image:-ms-linear-gradient(top, #27a8d7, #2396ce, #1c79c0);
+	background-image:-o-linear-gradient(top, #27a8d7, #2396ce, #1c79c0);
+	background-image:linear-gradient(top, #27a8d7, #2396ce, #1c79c0);
+	position: absolute;
+	overflow: hidden;
+	top: 2px;
+	left:0
+}
+
+.instal-progress-bar-inner .instal-progress-bar-inner-text {
+	color: #fff;
+	text-shadow: 0 1px rgba(0,0,0,0.2);
+	font-size: 18px;
+	line-height: 32px;
+	font-weight: bold;
+	text-align: center;
+	position: absolute;
+	left: -2px;
+	top: -2px;
+}
+
+.instal-progress-bar-alignment .instal-progress-bar-span {
+	color: #6A808E;
+	font-size: 18px;
+	font-weight: bold;
+	line-height: 35px;
+	text-align: center;
+	text-shadow: 0 1px rgba(255, 255, 255, 0.85);
+}

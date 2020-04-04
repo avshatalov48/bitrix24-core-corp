@@ -1,0 +1,8 @@
+<?
+$MESS["CRM_EVENT_ENTITY_LEAD"] = "lead";
+$MESS["CRM_EVENT_ENTITY_CONTACT"] = "contact";
+$MESS["CRM_EVENT_ENTITY_COMPANY"] = "company";
+$MESS["CRM_EVENT_ENTITY_DEAL"] = "deal";
+$MESS["CRM_EVENT_EMPTY"] = "No Records";
+$MESS["CRM_EVENT_ENTITY_QUOTE"] = "quote";
+?>

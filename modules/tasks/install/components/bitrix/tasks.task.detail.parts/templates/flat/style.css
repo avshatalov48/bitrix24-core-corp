@@ -1,0 +1,26 @@
+.hidden,
+.off .tasks-block-on,
+.on .tasks-block-off
+{
+	display: none !important;
+}
+
+.hidden-soft {
+	display: none;
+}
+
+.inline {
+	display: inline-block !important;
+}
+
+.over {
+	/*background-color: yellow !important;*/
+}
+
+.pagetitle-template-button {
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	max-width: 300px;
+	display: inline-block !important;
+}

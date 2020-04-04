@@ -1,0 +1,12 @@
+div.bx-popup-menu td.popupmenu div.popupitem td.gutter div.btn-add-call
+{
+	background: url("./images/crm/activity-sprite2.png") no-repeat -28px -60px !important;
+}
+div.bx-popup-menu td.popupmenu div.popupitem td.gutter div.btn-add-meeting
+{
+	background: url("./images/crm/activity-sprite2.png") no-repeat -30px -23px !important;
+}
+div.bx-popup-menu td.popupmenu div.popupitem td.gutter div.btn-add-subscribe
+{
+	background: url("./images/crm/activity-sprite2.png") no-repeat -28px -153px !important;
+}

@@ -1,0 +1,28 @@
+<?php
+$MESS['CRM_ACTIVITY_PLANNER_PLANNING_TITLE'] = 'Запланировать деятельность';
+$MESS['CRM_ACTIVITY_PLANNER_SAVE'] = 'Сохранить';
+$MESS['CRM_ACTIVITY_PLANNER_CANCEL'] = 'Отменить';
+$MESS["CRM_ACTIVITY_PLANNER_DISK_ATTACH_FILE"] = "Прикрепить файлы";
+$MESS["CRM_ACTIVITY_PLANNER_DISK_ATTACHED_FILES"] = "Прикрепленные файлы";
+$MESS["CRM_ACTIVITY_PLANNER_DISK_SELECT_FILE"] = "Найти в Битрикс24";
+$MESS["CRM_ACTIVITY_PLANNER_DISK_SELECT_FILE_LEGEND"] = "Открыть окно \"Битрикс24.Диск\"";
+$MESS["CRM_ACTIVITY_PLANNER_DISK_UPLOAD_FILE"] = "Загрузить файл";
+$MESS["CRM_ACTIVITY_PLANNER_DISK_UPLOAD_FILE_LEGEND"] = "Перетащить с помощью Drag'n'drop";
+$MESS['CRM_ACTIVITY_PLANNER_DEST_1'] = 'Выбрать';
+$MESS['CRM_ACTIVITY_PLANNER_DEST_2'] = 'Сменить';
+$MESS['CRM_ACTIVITY_PLANNER_NO_OWNER'] = 'Пожалуйста, заполните поле \'С кем\' или \'Сделка\'';
+$MESS["CRM_ACTIVITY_PLANNER_IMPORTANT"] = "Важное дело";
+$MESS["CRM_ACTIVITY_PLANNER_COMMUNICATION_SEARCH_NO_DATA"] = "Нет данных";
+$MESS["CRM_ACTIVITY_PLANNER_COMMUNICATION_SEARCH_TAB"] = "Поиск";
+$MESS['CRM_ACTIVITY_PLANNER_DAY1'] = "день";
+$MESS['CRM_ACTIVITY_PLANNER_DAY2'] = "дня";
+$MESS['CRM_ACTIVITY_PLANNER_DAY3'] = "дней";
+$MESS['CRM_ACTIVITY_PLANNER_HOUR1'] = "час";
+$MESS['CRM_ACTIVITY_PLANNER_HOUR2'] = "часа";
+$MESS['CRM_ACTIVITY_PLANNER_HOUR3'] = "часов";
+$MESS['CRM_ACTIVITY_PLANNER_MIN1'] = "минуту";
+$MESS['CRM_ACTIVITY_PLANNER_MIN2'] = "минуты";
+$MESS['CRM_ACTIVITY_PLANNER_MIN3'] = "минут";
+$MESS['CRM_ACTIVITY_PLANNER_DATES_ERR'] = "Дата окончания раньше даты начала события";
+$MESS['CRM_ACTIVITY_PLANNER_DURATION_ERR'] = 'Невозможно отобразить выбранный период на планировщике';
+?>

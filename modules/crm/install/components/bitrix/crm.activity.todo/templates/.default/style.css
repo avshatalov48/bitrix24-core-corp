@@ -1,0 +1,199 @@
+.crm-activity-todo-item {
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	padding: 10px 0;
+	margin: 0 0 10px 0;
+	border-bottom: 1px solid #dcdee1;
+}
+
+.crm-activity-todo-item:last-child {
+	border: none;
+	margin: 0;
+	padding-bottom: 5px;
+}
+
+.crm-activity-todo-item-completed .crm-activity-todo-link {
+        text-decoration: line-through;
+        color: #cdcdcd;
+}
+
+.crm-activity-todo-item-left {
+	-webkit-box-flex: 1;
+	-ms-flex: 1;
+	flex: 1;
+	max-width: 33px;
+	min-width: 33px;
+}
+
+.crm-activity-todo-check {
+	margin-top: 0;
+	cursor: pointer;
+}
+
+.crm-activity-todo-item-middle {
+	-webkit-box-flex: 1;
+	-ms-flex: 1;
+	flex: 1;
+	max-width: 180px;
+	padding: 0 10px 0 0;
+}
+
+.crm-activity-todo-item-right {
+	-webkit-box-flex: 1;
+	-ms-flex: 1;
+	flex: 1;
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	-webkit-box-align: start;
+	-ms-flex-align: start;
+	align-items: flex-start;
+	max-width: 60px;
+	min-width: 60px;
+	padding: 17px 0 0 0;
+}
+
+.crm-activity-todo-item-right-nopadding {
+	-webkit-box-flex: 1;
+	-ms-flex: 1;
+	flex: 1;
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	-webkit-box-align: start;
+	-ms-flex-align: start;
+	align-items: flex-start;
+	max-width: 60px;
+	min-width: 60px;
+	padding: 0;
+	margin: -2px 0 0 0;
+}
+
+.crm-activity-todo-date {
+	display: block;
+	font-size: 11px;
+	line-height: 11px;
+	color: #a5a6a8;
+	margin: 0 0 5px 0;
+}
+
+.crm-activity-todo-date-alert {
+	color: #ff6765;
+}
+
+.crm-activity-todo-date-alert:before {
+	content: '';
+	display: inline-block;
+	vertical-align: top;
+	margin: -2px 0 0 0;
+	width: 12px;
+	height: 12px;
+	background: url(data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2212%22%20height%3D%2216%22%20viewBox%3D%220%200%2012%2016%22%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Cpath%20fill%3D%22%23F16C09%22%20d%3D%22M4.29%2016C1.762%2015.073.06%2012.692%200%2010%200%205.46%204.49%201.213%207%200c-.48%204.19%205%205.287%205%2010.75C12%2014.627%207.71%2016%207.71%2016H4.29z%22/%3E%3Cpath%20fill%3D%22%23FFF%22%20d%3D%22M5%2016c-1.182-1.007-1.904-2.45-2-4%20.133-2.054%201.25-3.916%203-5%201.48%203.148%203%202.8%203%205-.003%201.573-.743%203.054-2%204H5z%22/%3E%3C/g%3E%3C/svg%3E) center center no-repeat;
+	background-size: 100% 100%;
+}
+
+a.crm-activity-todo-link,
+a.crm-activity-todo-link:hover {
+	display: block;
+	overflow: hidden;
+	font-size: 14px;
+	color: #0b66c3;
+	margin: 0 0 5px 0;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	text-decoration: none !important;
+}
+
+.crm-activity-todo-link-txt {
+	display: inline-block;
+	vertical-align: middle;
+	overflow: hidden;
+	-ms-text-overflow: ellipsis;
+	text-overflow: ellipsis;
+	max-width: calc(100% - 30px);
+}
+
+.crm-activity-todo-link-num {
+	display: inline-block;
+	vertical-align: middle;
+	justify-content: center;
+	padding: 0 7px;
+	border-radius: 30px;
+	background: #f54819;
+	font: bold 11px/16px "OpenSans-Regular", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	color: #fff;
+}
+
+.crm-activity-todo-info {
+	display: block;
+	font-size: 12px;
+	line-height: 17px;
+	color: #848a92;
+	margin: 0 0 5px 0;
+}
+
+.crm-activity-todo-event {
+    width: 100%;
+    text-align: center;
+}
+.crm-activity-todo-event,
+.crm-activity-todo-event a {
+	display: block;
+	width: 100%;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	font-size: 11px;
+	color: #a5a6a8;
+	text-transform: lowercase;
+	text-decoration: none;
+}
+
+.crm-activity-todo-event:before {
+	content: '';
+	clear: both;
+	display: block;
+	width: 30px;
+	height: 17px;
+	margin: 0 auto 5px auto;
+	background-position: center top;
+	background-repeat: no-repeat;
+	background-image: url(images/sprite.svg);
+        background-position: center -179px;
+}
+
+.crm-activity-todo-event-call-outgoing:before {
+	background-position: center 0;
+}
+
+.crm-activity-todo-event-call:before {
+	background-position: center -57px;
+}
+
+.crm-activity-todo-event-meet:before {
+	background-position: center -117px;
+}
+
+.crm-activity-todo-event-mail-send:before {
+	background-position: center -237px;
+}
+
+.crm-activity-todo-event-mail:before {
+	background-position: center -295px;
+}
+
+.crm-activity-todo-event-chat:before {
+	background-position: center -354px;
+}
+
+.crm-activity-todo-event-live-feed:before {
+	background-position: center -412px;
+}
+
+.crm-activity-todo-event-onec:before {
+	background-position: center -470px;
+}
+
+.crm-activity-todo-event-form:before {
+	background-position: center -524px;
+}

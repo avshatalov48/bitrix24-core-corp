@@ -1,0 +1,16 @@
+<?
+$MESS["CRM_MODULE_NOT_INSTALLED"] = "Модуль CRM не установлен.";
+$MESS['CRM_PERMISSION_DENIED'] = 'Доступ запрещен';
+$MESS["CRM_COLUMN_MAIL_TEMPLATE_ID"] = "ID";
+$MESS["CRM_COLUMN_MAIL_TEMPLATE_TITLE"] = "Название";
+$MESS["CRM_COLUMN_MAIL_TEMPLATE_ENTITY_TYPE"] = "Сущность";
+$MESS["CRM_COLUMN_MAIL_TEMPLATE_SCOPE"] = "Доступен";
+$MESS["CRM_COLUMN_MAIL_TEMPLATE_IS_ACTIVE"] = "Активен";
+$MESS["CRM_COLUMN_MAIL_TEMPLATE_OWNER"] = "Владелец";
+$MESS["CRM_COLUMN_MAIL_TEMPLATE_CREATED"] = "Создан";
+$MESS["CRM_COLUMN_MAIL_TEMPLATE_LAST_UPDATED"] = "Изменён";
+$MESS["CRM_COLUMN_MAIL_TEMPLATE_SORT"] = "Сорт.";
+$MESS['CRM_MAIL_TEMPLATE_DELETION_GENERAL_ERROR'] = 'При удалении почтового шаблона "#TITLE#" произошла ошибка.';
+$MESS['CRM_MAIL_TEMPLATE_UPDATE_GENERAL_ERROR'] = 'При обновлении почтового шаблона произошла ошибка.';
+$MESS['CRM_MAIL_TEMPLATE_COMMON_TEMPLATE_NAME'] = 'Общий шаблон';
+?>

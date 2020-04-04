@@ -1,0 +1,18 @@
+<?
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+	die();
+
+global $APPLICATION;
+
+$request = \Bitrix\Main\Context::getCurrent()->getRequest();
+
+$APPLICATION->IncludeComponent(
+	'bitrix:ui.sidepanel.wrapper',
+	'',
+	[
+		'POPUP_COMPONENT_NAME' => 'bitrix:crm.order.import.instagram.feedback',
+		'POPUP_COMPONENT_TEMPLATE_NAME' => '',
+		'POPUP_COMPONENT_PARAMS' => [],
+		'USE_PADDING' => false,
+	]
+);

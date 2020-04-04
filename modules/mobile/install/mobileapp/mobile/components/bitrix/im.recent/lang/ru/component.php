@@ -1,0 +1,30 @@
+<?
+$MESS["IM_REFRESH_TITLE"] = "Обновление списка...";
+$MESS["IM_LIST_EMPTY"] = "Нет текущих диалогов";
+$MESS["IM_EMPTY_TEXT_1"] = "Начните общение прямо сейчас!";
+$MESS["IM_EMPTY_TEXT_2"] = "Нажмите на карандаш в правом верхнем углу и создайте чат!";
+$MESS["IM_EMPTY_TEXT_2_2"] = "Нажмите на карандаш в правом верхнем углу и выберите сотрудника.";
+$MESS["IM_EMPTY_TEXT_APPLE"] = "Нажмите на плюс в правом верхнем углу для создания чата или выберите сотрудника.";
+$MESS["IM_EMPTY_TEXT_ANDROID"] = "Нажмите на плюс в правом нижнем углу для создания чата или выберите сотрудника.";
+$MESS["IM_EMPTY_BUTTON"] = "Начать общение";
+$MESS["IM_EMPTY_OL_TEXT_1"] = "Здесь вы найдете список чатов с вашими клиентами!";
+$MESS["IM_EMPTY_OL_TEXT_2"] = "Как только клиент напишет в открытую линию, вы мгновенно получите уведомление.";
+$MESS["OL_SECTION_WORK"] = "Неотвеченные";
+$MESS["OL_SECTION_PIN"] = "Закрепленные";
+$MESS["OL_SECTION_ANSWERED"] = "Отвеченные";
+$MESS["OL_LIST_EMPTY"] = "Нет открытых диалогов";
+$MESS["SEARCH_RECENT"] = "НЕДАВНИЙ ПОИСК";
+$MESS["U_STATUS_ONLINE"] = "В сети";
+$MESS["U_STATUS_OFFLINE"] = "Не в сети";
+$MESS["WIDGET_CHAT_CREATE_TITLE"] = "Новый чат";
+$MESS["IM_DIALOG_UNNAMED"] = "Загрузка...";
+$MESS["IM_SCOPE_USERS"] = "Сотрудники";
+$MESS["IM_SCOPE_CHATS"] = "Чаты";
+$MESS["IM_SCOPE_DEPARTMENTS"] = "Подразделения";
+$MESS['IM_B24DISK'] = "Битрикс24.Диск";
+$MESS['IM_CHOOSE_PHOTO'] = "Выбрать из галереи";
+$MESS['IM_CAMERA_ROLL'] = "Снять фото";
+$MESS['IM_CHOOSE_FILE_TITLE'] = "Файлы";
+$MESS["IM_M_TEXTAREA"] = "Написать сообщение ...";
+$MESS["IM_M_MESSAGE_SEND"] = "Отправить";
+?>

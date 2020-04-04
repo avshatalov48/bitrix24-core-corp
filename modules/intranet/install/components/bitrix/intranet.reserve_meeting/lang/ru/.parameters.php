@@ -1,0 +1,37 @@
+<?
+$MESS ['SONET_MEETING_VAR'] = "Имя переменной для идентификатора переговорной";
+$MESS ['SONET_ITEM_VAR'] = "Имя переменной для идентификатора резервирования";
+$MESS ['SONET_PAGE_VAR'] = "Имя переменной для страницы";
+$MESS ['SONET_SEF_PATH_INDEX'] = "Главная страница резервирования переговорных";
+$MESS ['SONET_SEF_PATH_VIEW_ITEM'] = "Просмотр резервирования";
+$MESS ['SONET_SEF_PATH_MEETING'] = "График переговорной";
+$MESS ['SONET_SEF_PATH_MODIFY_MEETING'] = "Изменение переговорной";
+$MESS ['SONET_SEF_PATH_RESERVE_MEETING'] = "Резервирование переговорной";
+$MESS ['SONET_SEF_PATH_SEARCH'] = "Поиск свободных переговорных";
+$MESS ['INTL_IBLOCK_TYPE'] = "Тип инфоблока";
+$MESS ['INTL_IBLOCK'] = "Инфоблок";
+$MESS ['INTL_SET_NAVCHAIN'] = "Устанавливать навигационную цепочку";
+$MESS ['INTL_USERGROUPS_MODIFY'] = "Группы пользователей, которые могут изменять переговорные";
+$MESS ['INTL_USERGROUPS_RESERVE'] = "Группы пользователей, которые могут резервировать переговорные";
+$MESS ['INTL_USERGROUPS_CLEAR'] = "Группы пользователей, которые могут снимать резервирование переговорных";
+$MESS ['INTL_P_WEEK_HOLIDAYS'] = "Выходные дни недели";
+$MESS ['INTL_P_MON_F'] = "Понедельник";
+$MESS ['INTL_P_TUE_F'] = "Вторник";
+$MESS ['INTL_P_WEN_F'] = "Среда";
+$MESS ['INTL_P_THU_F'] = "Четверг";
+$MESS ['INTL_P_FRI_F'] = "Пятница";
+$MESS ['INTL_P_SAT_F'] = "Суббота";
+$MESS ['INTL_P_SAN_F'] = "Воскресенье";
+$MESS ['INTR_IRM_PARAM_PATH_TO_USER'] = "Шаблон пути к странице пользователя";
+$MESS ['INTR_IRM_PARAM_PM_URL'] = "Страница отправки личного сообщения";
+$MESS ['INTR_IRM_PARAM_PATH_TO_VIDEO_CALL'] = "Страница видеозвонка";
+$MESS ['INTR_IRM_PARAM_PATH_TO_CONPANY_DEPARTMENT'] = "Шаблон пути к странице подразделения";
+$MESS ['INTR_IRM_PARAM_NAME_TEMPLATE'] = "Отображение имени";
+$MESS ['INTR_IRM_PARAM_NAME_TEMPLATE_DEFAULT'] = "#NOBR##LAST_NAME# #NAME##/NOBR#";
+$MESS ['INTR_IRM_PARAM_SHOW_LOGIN'] = "Показывать логин, если не задано имя";
+$MESS ['INTR_IRM_PARAM_DATE_TIME_FORMAT'] = "Формат показа даты и времени";
+$MESS ['INTR_IRM_PARAM_SHOW_YEAR'] = "Показывать год рождения";
+$MESS ['INTR_IRM_PARAM_SHOW_YEAR_VALUE_Y'] = "всем";
+$MESS ['INTR_IRM_PARAM_SHOW_YEAR_VALUE_M'] = "только мужчинам";
+$MESS ['INTR_IRM_PARAM_SHOW_YEAR_VALUE_N'] = "никому";
+?>

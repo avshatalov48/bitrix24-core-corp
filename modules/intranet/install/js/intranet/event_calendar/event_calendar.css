@@ -1,0 +1,850 @@
+/* event calendar */
+table.BXECSceleton {width:100%; height: 600px; border-collapse: collapse;}
+table.BXECSceleton  td{padding: 0;}
+
+table.BXECControls {border-collapse: collapse;}
+table.BXECControls  td{padding: 0;}
+
+table.BXECSceleton-six-rows {height: 700px !important;}
+/* Tabs    month-week-day  */
+table.BXECSceleton tr.bxec-tabs td{background-color: #FFFFFF !important; color: #879699; font-size: 14px; height: 30px;}
+table.BXECSceleton div.bxec-tabs-cnt{position: relative;height: 30px;}
+
+table.BXECSceleton div.bxec-tabs-div{width: 100%; height: 32px; background: url(/bitrix/images/intranet/event_calendar/tabs_0_bg.gif) repeat-x; position: absolute; top: 0px !important;}
+
+div.bxec-tabs-div div.bxec-tab-div {width: 150px; height: 32px; float: right; margin: 0 2px; background: #dfffdf url(/bitrix/images/intranet/event_calendar/tabs_d_bg.gif) repeat-x; cursor: pointer;}
+div.bxec-tab-div div.bxec-l, div.bxec-tab-div div.bxec-r {float: left; height: 32px; width: 4px; background-image: url(/bitrix/images/intranet/event_calendar/iconkit.gif);}
+div.bxec-tabs-div div.bxec-tab-div div.bxec-c {width: 142px; float: left; text-align: center; padding-top: 8px;}
+div.bxec-tabs-div div.bxec-tab-div-act {color: #0C283D; background: url(/bitrix/images/intranet/event_calendar/tabs_a_bg.gif) repeat-x !important; font-weight: bold;}
+
+div.bxec-tabs-div div.bxec-tab-div div.bxec-l {background-position: -162px -22px;}
+div.bxec-tabs-div div.bxec-tab-div div.bxec-r {background-position: -167px -22px;}
+div.bxec-tabs-div div.bxec-tab-div-act div.bxec-l {background-position: -152px -22px !important;}
+div.bxec-tabs-div div.bxec-tab-div-act div.bxec-r {background-position: -157px -22px !important;}
+
+div.bxec-tabs-div div.bxec-right {margin-right: 10px !important;}
+
+div.bxec-set-but{width: 18px; height: 18px; background-position: -282px 0; float: right; margin:7px 8px 0 0; cursor: pointer; border: 1px solid #B5B4B3; visibility: hidden;}
+
+table.BXECSceleton tr.bxec-title td{background-color: #F2F8D6; color: #3c3c3c; font-size: 14px; height: 25px; text-align: center; border-color: #C9C9C9; border-style: solid; border-width: 0 1px;}
+
+table.BXECSceleton td.bxec-main{ height: 505px; border-width: 0 1px 1px; border-color: #C9C9C9; border-style: solid;}
+
+table.BXECSceleton td.bxec-days-grid-td{height: 505px;}
+table.BXECSceleton-six-rows td.bxec-days-grid-td{height: 605px !important;}
+table.BXECSceleton-six-rows td.bxec-main{height: 605px !important;}
+table.BXECSceleton div.bxec-preview-calendar{width: 140px; height: 120px; border: 1px solid black;}
+
+table.BXECSceleton table.BXEC-Calendar{width:100%; height: 538px; display: none;}
+table.BXECSceleton table.BXEC-Calendar-week{width:100%; height: 538px; display: none; border-collapse: collapse;}
+
+table.BXECSceleton-six-rows  table.BXEC-Calendar{height: 590px !important;}
+
+/* DAY - WEEK - View*/
+table.BXEC-Calendar-week td {padding: 0;}
+table.BXEC-Calendar-week td.bxec-pad, table.BXEC-Calendar-week td.bxec-pad2{border-width: 0 !important;padding: 0 !important;}
+
+table.BXEC-Calendar-week td.bxec-pad {width: 40px;}
+table.BXEC-Calendar-week td.bxec-pad2 {width: 16px;}
+
+tr.bxec-days-tbl-more-ev td {border-bottom:  3px double #C9C9C9 !important;}
+
+tr.bxec-days-tbl-more-ev td.bxec-pad, tr.bxec-days-tbl-more-ev td.bxec-pad2{background: url(/bitrix/images/intranet/event_calendar/title_wd_bg.gif) repeat-x !important;}
+
+tr.bxec-days-tbl-title td.bxec-pad, tr.bxec-days-tbl-title td.bxec-pad2{background: url(/bitrix/images/intranet/event_calendar/title_wd_bg.gif) repeat-x !important;}
+
+tr.bxec-days-tbl-more-ev td.bxec-pad, tr.bxec-days-tbl-more-ev td.bxec-pad2 {background: url(/bitrix/images/intranet/event_calendar/title_wd_bg.gif) repeat-x 0 -79px !important;}
+
+tr.bxec-days-tbl-more-ev td.bxec-pad, tr.bxec-days-tbl-more-ev td.bxec-pad2 {border-bottom:  3px double #C9C9C9 !important;}
+
+table.BXEC-Calendar-week td {border-color: #C9C9C9; border-style: solid;}
+
+table.BXEC-Calendar-week tr.bxec-days-tbl-title td{
+	height: 80px;
+	background: url(/bitrix/images/intranet/event_calendar/day_bg.gif) repeat-x;
+	vertical-align: top;
+	border-width: 1px 1px 0;
+}
+
+table.BXEC-Calendar-week tr.bxec-days-tbl-more-ev td{height: 18px; border-width: 0 1px 1px;}
+
+table.BXEC-Calendar-week tr.bxec-days-tbl-more-ev td div.bxec-wdv-more-ev{display: none;}
+
+/* current day*/
+table.BXEC-Calendar-week tr.bxec-days-tbl-title td.bxec-cur-day {background: #F2F8D6 url(/bitrix/images/intranet/event_calendar/cur_day_bg.gif) repeat-x !important;}
+table.BXEC-Calendar-week tr.bxec-days-tbl-more-ev td.bxec-cur-day {background-color: #F2F8D6 !important;}
+
+table.BXEC-Calendar-week tr.bxec-days-tbl-title td a.bxec-day-link{color: #0C283D !important; text-decoration: none; margin-left: 10px;}
+table.BXEC-Calendar-week tr.bxec-days-tbl-title td.bxec-hol-day a.bxec-day-link{color: #CE070C !important; text-decoration: none; font-weight: bold;}
+table.BXEC-Calendar-week tr.bxec-days-tbl-title td a.bxec-day-link:hover{text-decoration: underline !important;}
+
+table.BXEC-Calendar-week tr.bxec-days-tbl-title td.bxec-day-t-selected {background: #FFFFC7 url(/bitrix/images/intranet/event_calendar/sel_day_bg.gif) repeat-x !important;}
+table.BXEC-Calendar-week tr.bxec-days-tbl-more-ev td.bxec-day-t-selected {background-color: #FFFFC7 !important;}
+
+table.BXEC-Calendar-week tr.bxec-days-tbl-grid td.bxec-cont{overflow: auto; overflow-x: hidden; height: 460px; border-width: 0;}
+table.BXEC-Calendar-week tr.bxec-days-tbl-grid td.bxec-cont div.bxec-timeline-div{overflow: auto; overflow-x: hidden; height: 100%; width: 100%; position: relative;}
+
+table.bxec-wdv-timeline-tbl {width: 100%; height: 800px; border-collapse: collapse; border-width: 0 !important;}
+table.bxec-wdv-timeline-tbl td {padding: 0; border: 1px solid #C9C9C9;}
+table.bxec-wdv-timeline-tbl td.bxec-time{text-align: center;color: #808080 !important;font-size: 11px !important;vertical-align: top; width: 40px; height: 40px;
+border-top-width: 0 !important;border-left-width: 0 !important;border-bottom: 1px solid #C9C9C9 !important;}
+
+table.bxec-wdv-timeline-tbl tr.bxec-half-time-row1 td, table.bxec-wdv-timeline-tbl tr.bxec-half-time-row2 td {height: 20px; border-top-width: 0 !important;}
+
+table.bxec-wdv-timeline-tbl tr.bxec-half-time-row1 td{background: #FDFDFD;border-bottom-style: dotted;}
+
+table.bxec-wdv-timeline-tbl tr.bxec-wdv-hol-row td {background: #EDF3F4 !important;}
+table.bxec-wdv-timeline-tbl tr.bxec-wdv-hol-row2 td {background: #EDF3F4 !important;}
+
+td.bxec-time-hol-c1{background: #EDF3F4 !important;}
+td.bxec-time-hol-c2 {background: #EDF3F4 !important;}
+
+td.bxec-time-cur-c1, td.bxec-time-cur-c2 {background: #E9F3C3 !important;}
+
+table.bxec-wdv-timeline-tbl tr.bxec-wdv-hol-row td.bxec-time-cur-c1{background: #D8E9A0 !important;}
+table.bxec-wdv-timeline-tbl tr.bxec-wdv-hol-row td.bxec-time-cur-c2{background: #D8E9A0 !important;}
+
+table.bxec-wdv-timeline-tbl tr.bxec-half-time-row2 td{border-top-width: 0;}
+
+table.bxec-wdv-timeline-tbl td.bxec-time-selected, table.bxec-wdv-timeline-tbl tr.bxec-wdv-hol-row2 td.bxec-time-selected, table.bxec-wdv-timeline-tbl tr.bxec-wdv-hol-row td.bxec-time-selected{background: #FFFFC7 !important;}
+
+div.bxec-st-notifier{position: absolute;font-size: 11px;color: #636363;font-weight: bold;padding: 1px 5px 1px 2px;border: 1px solid #797979 !important;background: #ffffe6 !important;}
+
+div.bxec-st-notifier img {background-position: -60px -48px; width: 16px; height: 13px; float: left; margin-right: 1px;}
+
+div.bxec-time-pointer {position: absolute; width: 200px; height: 7px; background: transparent  url(/bitrix/images/intranet/event_calendar/cur_time_bg.gif) repeat-x; top: 0; left: 0; z-index: 30; line-height: 1px;}
+div.bxec-time-pointer img {background-position: -91px -22px; width: 7px; height: 7px;}
+
+/*event holders, events, */
+div.bxec-day-t-event-holder{width: 35px; height: 5px; position: relative;}
+table.BXECSceleton div.bxec-event-holder{width: 1px; height: 1px; position: absolute; top: 0; left: 0; z-index: 15;}
+div.bxec-event{position: absolute; height: 16px; font-size: 11px; z-index: 20 !important; overflow: hidden;}
+div.bxec-dark{color: #E6E6E6!important;}
+div.bxec-event-blink{background-color: #FF6F6F !important;}
+div.bxec-event-static {position: static !important; margin: 1px !important; display: block !important;}
+div.bxec-event table {width: 100%; border-collapse: collapse;}
+table.BXEC-Calendar-week tr.bxec-days-tbl-title div.bxec-event table td, div.bxec-event table td{padding: 0; height: 16px; border-width:  0;background: transparent; vertical-align: top;}
+div.bxec-event td.bxec-event-dd-dot{width: 10px;}
+div.bxec-event td.bxec-event-dd-dot img{background-position: -50px 2px; width: 9px; height: 12px;}
+div.bxec-event td.bxec-event-ar-r {width: 10px;}
+div.bxec-event td.bxec-event-ar-r img {background-position: -60px 2px; width: 6px; height: 12px;}
+div.bxec-event td.bxec-event-ar-l {width: 10px; padding-left: 3px;}
+div.bxec-event td.bxec-event-ar-l img {background-position: -67px 2px; width: 6px; height: 12px;}
+div.bxec-event td.bxec-event-resize {width: 10px; padding-right: 3px;}
+div.bxec-event td.bxec-event-resize img {background-position: -77px 1px; width: 6px; height: 14px;}
+div.bxec-event div.bxec-event-title{width: 100%; height: 100%; overflow: hidden;}
+
+/* Event actions */
+div.bxec-event-actions{position: relative; height: 0; width: 1px; float: right; display: none;}
+div.bxec-icon-cont{position: absolute; top: -17px; left: -54px; width: 54px; height: 18px;}
+div.bxec-icon-cont-tl{position: absolute; top: 5px; left: 1px; width: 57px; height: 18px;}
+
+div.bxec-event-actions img {width: 18px; height: 18px; margin: 0 !important; cursor: pointer;}
+div.bxec-event-actions div.bxec-icon-cont-tl img {margin-bottom: 1px !important;}
+div.bxec-event-actions img.bxec-ev-view-icon {background-position: -40px -47px;}
+div.bxec-event-actions img.bxec-ev-edit-icon {background-position: -20px -47px;}
+div.bxec-event-actions img.bxec-ev-del-icon {background-position: -0px -47px;}
+
+div.bxec-event-over, div.bxec-tl-ev-hlt{background-color: #DAEC98 !important; overflow: visible !important; z-index: 30 !important;}
+div.bxec-event-over div.bxec-event-actions {display: block !important;}
+div.bxec-timeline-div div.bxec-event-over{z-index: 30 !important;}
+div.bxec-event-over div.bxec-event-title, div.bxec-event-over div{background-color: #DAEC98 !important; color: #333333!important;}
+
+/* Timeline events*/
+div.bxec-tl-event{position: absolute; font-size: 11px; z-index: 20 !important; overflow: hidden;}
+div.bxec-tl-event div{padding: 2px 0 0 3px !important;}
+div.bxec-tl-event div.bxec-event-actions{float: left !important;}
+
+.bxec-iconkit {background-image: url(/bitrix/images/intranet/event_calendar/iconkit.gif);}
+table.BXEC-Calendar tr.bxec-days-title td {height : 32px;}
+table.BXEC-Calendar tr.bxec-days-title td table.bxec-title-table{width : 100%; height : 32px; border-top: 1px solid #C9C9C9;}
+table.BXEC-Calendar tr.bxec-days-title td table.bxec-title-table tr td {background-image: url(/bitrix/images/intranet/event_calendar/days_title_bg.gif); border-right: 1px solid #C9C9C9; padding: 2px 0 0 15px; width : 14%;}
+
+table.BXEC-Calendar tr.bxec-days-title td.bxec-holiday{background-image:url(/bitrix/images/intranet/event_calendar/days_title_hol_bg.gif) !important;}
+table.BXEC-Calendar div.bxec-days-grid-cont {position: relative; width: 100%; height: 100%;}
+
+/*days grid*/
+table.BXECSceleton table.BXEC-Calendar div.bxec-days-grid-cont table.bxec-days-grid-table {width: 100%; height: 100%;}
+
+/* calendar grig*/
+table.bxec-days-grid-table td.bxec-day {border-top: 1px solid #C9C9C9; border-right: 1px solid #C9C9C9; width : 14%; background: url(/bitrix/images/intranet/event_calendar/day_bg.gif) repeat-x; vertical-align: top;}
+table.bxec-days-grid-table td.bxec-day  table td {font-size: 14px; font-weight: bold;}
+td.bxec-day table {width: 100%; height: 100%;}
+table.bxec-days-grid-table td a.bxec-day-link{color: #0C283D !important; text-decoration: none; !important;}
+a.bxec-day-link:hover{text-decoration: underline !important;}
+table.bxec-days-grid-table td.bxec-holiday table td a.bxec-day-link{color: #CE070C !important;}
+table.bxec-days-grid-table td.bxec-day-past table td a.bxec-day-link{font-weight: normal; color: #888D90 !important;}
+
+table.bxec-days-grid-table td.bxec-holiday table td{color: #CE070C;}
+table.bxec-days-grid-table td.bxec-day-past  table td{font-weight: normal; color: #888D90;}
+table.bxec-days-grid-table td.bxec-day-past-hol table td{font-weight: normal; color: #E09091;}
+/*table.BXECSceleton table.bxec-days-grid-table td.bxec-current-day{background-color: #ffead5;}*/
+table.bxec-days-grid-table td.bxec-current-day{background: #F2F8D6 url(/bitrix/images/intranet/event_calendar/cur_day_bg.gif) repeat-x;}
+table.bxec-days-grid-table td.bxec-day-over{background-color: #ffffe1;}
+
+table.bxec-days-grid-table td.bxec-day-selected {background: #FFFFC7 url(/bitrix/images/intranet/event_calendar/sel_day_bg.gif) repeat-x !important;}
+
+table.BXECSceleton td.bxec-day table.bxec-daytbl {border-collapse: collapse; height: 98px !important;}
+table.BXECSceleton td.bxec-day table.bxec-daytbl td {height: 75px; padding: 0 0 0 15px;}
+/* more events*/
+table.BXECSceleton td.bxec-day table.bxec-daytbl td.bxec-more-events {height: 18px !important; padding-left: 3px !important;}
+table.BXECSceleton td.bxec-day table.bxec-daytbl td.bxec-more-events div, div.bxec-wdv-more-ev{/*width: 90%; */height: 16px; color: #454545; font-size: 11px; font-weight: normal; text-decoration: underline !important; display: none; background: url(/bitrix/images/intranet/event_calendar/iconkit.gif) bottom right no-repeat; padding-left: 5px; cursor: pointer; margin-right: 5px !important;}
+div.bxec-more-event-dialog {position: absolute; background: #fff; border: 1px solid #e2e2e2;}
+
+/* VIEW  SELECTOR*/
+div.bxec-view-selector-cont {width: 100%; height: 35px;}
+div.bxec-view-selector-cont  table{border-collapse: collapse;}
+div.bxec-view-selector-cont  table td{padding: 0;}
+
+/* Month selector*/
+div.bxec-month-selector-cont {width: 100%; height: 28px; display: none;}
+div.bxec-month-selector-cont table {width: 530px;}
+div.bxec-month-selector-cont table td {text-align: center; font-weight: bold; padding-top: 7px;}
+div.bxec-month-selector-cont table td.bxec-cm {font-size: 16px; color: #0C283D; width: 170px; white-space: nowrap;}
+div.bxec-month-selector-cont table td.bxec-cm span{white-space: nowrap; padding: 0 15px 0 0!important;
+background: url(/bitrix/images/intranet/event_calendar/iconkit.gif) no-repeat right -69px transparent !important; cursor: pointer;}
+
+div.bxec-month-selector-cont table td.bxec-pm_nm {font-size: 14px; color: #879699; width: 70px;}
+div.bxec-month-selector-cont table td.bxec-ppm_nnm {font-size: 12px; color: #C9C9C9; width: 70px;}
+
+div.bxec-buttons-cont{width: 100px; height: 35px; position: absolute; left: 0px; top: -3px;}
+div.bxec-buttons-cont img {margin-top: 7px;}
+
+/* Week and Day  selector */
+div.bxec-wd-selector-cont{width: 85%; height: 28px; padding-top: 7px; display: none;}
+div.bxec-wd-selector-cont table td{text-align: center; font-weight: bold;}
+div.bxec-wd-selector-cont table td.bxec-cm{font-size: 16px; color: #0C283D; padding: 0 10px; width: 280px; white-space: nowrap;}
+
+table.BXECSceleton img.bxec-panel-but {background-image: url(/bitrix/images/intranet/event_calendar/iconkit.gif); width: 20px; height: 20px; margin-left: 8px; cursor: pointer;}
+table.BXECSceleton img.bxec-add-new-but{background-position: -126px 0;}
+table.BXECSceleton img.bxec-add-pl-but{background-position: -238px -40px;}
+table.BXECSceleton img.bxec-user-set-but{background-position: -104px 0;}
+
+table.BXECSceleton img.bxec-add-new-over{background-position: -104px -22px;}
+table.BXECSceleton img.bxec-m-sel-popup-over{background-position: -127px -22px;}
+
+table.BXECSceleton img.bxec-pr-m-but{background-position: 0 0; width: 20px; height: 20px;}
+table.BXECSceleton img.bxec-nx-m-but{background-position: -27px 0; width: 20px; height: 20px;}
+table.BXECSceleton img.bxec-pr-m-over{background-position: 0 -22px;}
+table.BXECSceleton img.bxec-nx-m-over{background-position: -27px -22px;}
+
+/*event dialog*/
+table.bxec-add-ed-frame {width: 100%;height: 190px;}
+table.bxec-add-ed-frame tr td {text-align: left;}
+table.bxec-add-ed-frame tr td table {width: 100%;}
+table.bxec-add-ed-frame tr td {font-size: 12px; color: black; vertical-align: top;}
+table.bxec-add-ed-frame td.bxec-ed-lp{padding-left: 7px;}
+table.bxec-add-ed-frame td.bxec-add-ed-title {font-weight: bold;}
+
+td.bxec-add-ed-per{padding: 5px 0 2px 7px; height: 25px;}
+td.bxec-add-ed-per div{height: 100%; width: 100%}
+td.bxec-add-ed-per div.bxec-cal{}
+td.bxec-add-ed-per div.bxec-txt {vertical-align: middle;}
+td.bxec-add-ed-buttons{text-align: right !important; padding: 5px 8px 0 7px; height: 25px;}
+td.bxec-add-ed-buttons input, td.bxec-add-ed-buttons a{margin: 0 3px 0 3px;}
+
+/* dialog commons */
+td.bxec-close{width: 20px;}
+td.bxec-close img {background-position: -86px 2px; width: 15px; height: 15px;}
+td.bxec-title-cell {background-color: #D8E3E8; padding-top: 5px; height: 22px; font-weight: bold;}
+td.bxec-title-cell table{height: 20px; border-collapse: collapse;}
+td.bxec-title-cell table td{padding: 0;}
+img.bxec-dd-dot{background-position: -50px 2px; width: 10px; height: 16px; cursor: move;}
+
+div.bxec-dialog {position: absolute; background-color: #fff; border: 1px solid #797979; display: none; overflow: hidden!important;}
+div.bxec-dialog input, div.bxec-dialog select, div.bxec-dialog textarea{font-family:Tahoma,Arial,Verdana,Sans-Serif !important; font-size:13px !important;}
+
+
+/*edit event dialog "new with tabs"  */
+div.bxec-d-tabset {height: 300px; width: 460px;}
+div.bxec-d-tabs{position: relative; background: url(/bitrix/images/intranet/event_calendar/dialog_tabs_0.gif) repeat-x; height: 27px; width: 100%; top: 1px;}
+div.bxec-d-tab{height: 27px; float: left; margin-right: 4px; cursor: pointer;}
+div.bxec-d-tab-dis div.bxec-c{color: #c8c8c8; cursor: not-allowed!important;}
+div.bxec-d-tab div.bxec-l, div.bxec-d-tab div.bxec-r {float: left; height: 27px; width: 5px; background-image: url(/bitrix/images/intranet/event_calendar/iconkit.gif);}
+div.bxec-d-tab div.bxec-c {background: url(/bitrix/images/intranet/event_calendar/dialog_tabs_d.gif) repeat-x; height: 100%; width: 110px; float: left; text-align: center;}
+div.bxec-d-tab div.bxec-c span{display: block; margin-top: 7px;}
+div.bxec-d-tab div.bxec-l {background-position: -117px -25px;}
+div.bxec-d-tab div.bxec-r {background-position: -124px -25px;}
+div.bxec-d-tab-act div.bxec-c{background: url(/bitrix/images/intranet/event_calendar/dialog_tabs_a.gif) repeat-x !important;}
+div.bxec-d-tab-act div.bxec-c span{display: block; margin-top: 5px;}
+div.bxec-d-tab-act div.bxec-l {background-position: -105px -25px;}
+div.bxec-d-tab-act div.bxec-r {background-position: -112px -25px;}
+div.bxec-d-tabset div.bxec-d-cont{/*height: 300px;*/width: 100%; border: 1px solid #B2B2B2;}
+
+div.bxec-d-tabset div.bxec-d-cont div.bxec-d-cont-div{margin-top: 4px; display: none; padding: 5px 8px; overflow: hidden;}
+/* Customize Light Editor*/
+div.bxec-d-tabset div.bxec-d-cont div.bxec-lhe{margin: 0!important; padding: 0!important;}
+div.bxec-lhe .lhe-button-cont{background: transparent!important;}
+div.bxec-lhe .lhe-line-begin, div.bxec-lhe .lhe-line-end{display: none!important;}
+div.bxec-lhe div.bxlhe-frame{border:1px solid #fff !important; background: #fff!important;}
+div.bxec-lhe  table.bxlhe-frame-table td.bxlhe-editor-buttons, div.bxec-lhe div.bxst-lhe-cont td.bxlhe-editor-cell{background: #fff !important;}
+div.bxec-lhe td.bxlhe-editor-cell {border-top: 1px solid #fff!important;}
+div.bxec-lhe .lhe-button{border:1px solid #fff;}
+
+table.bxec-reminder-table{border-collapse: collapse;}
+table.bxec-reminder-table td{padding: 6px 11px;}
+table.bxec-reminder-table tr.bxec-edev-ad-title td{background-color: #E8E8E8; color: black; font-weight: bold; padding:6px 11px !important;}
+a.bxec-rem-save {font-size: 12px; text-decoration: none; margin: 0 5px; display: block; visibility: hidden;}
+
+div.bxec-edev-users-nf{color: #ff0000; visibility: hidden; padding: 5px;}
+
+div.bxec-add-ex{padding: 7px 0;}
+a.bxex-add-ex-link{text-decoration: none; margin-left: 10px;}
+a.bxex-add-ex-link img{background-image: url(/bitrix/images/intranet/event_calendar/iconkit.gif); width: 12px; height: 12px; border-width: 0 !important; background-position: -186px -42px; margin: 0 3px -1px 0;}
+
+div.bxec-eeuc-notice{display: none; background: url(/bitrix/themes/.default/images/icon_warn.gif) no-repeat center left; color: #ff0000; visibility: hidden; padding: 4px 0 4px 25px; margin: 4px 2px; font-size: 11px; height: 20px;}
+
+/* guests */
+div.bxec-g-table-cont {height: 145px; overflow: auto; overflow-x: hidden; margin-bottom: 5px;}
+table.bxec-edev-guests {border-collapse: collapse; width: 400px;}
+table.bxec-edev-guests td{padding: 5px 10px;}
+
+table.bxec-edev-guests tr.bxec-guest-r1 td{background-color: #F3F3F3}
+table.bxec-edev-guests tr.bxec-guest-r2 td{background-color: #FFFFFF}
+
+div.bxec-g-title{font-weight: bold; background-color: #E8E8E8; color: black; padding: 6px 11px;}
+div.bxec-g-title a{display: none; margin-left: 170px; text-decoration: none; font-weight: normal; }
+table.bxec-edev-guests tr.bxec-g-empty td{color: #d3d3d3;}
+table.bxec-non-empty tr.bxec-g-empty td{display: none !important;}
+
+img.bxec-g-status{width: 18px; height: 18px;}
+img.bxec-guest-stat-q {background-position: 0 -26px;}
+img.bxec-guest-stat-y {background-position: -18px -26px;}
+img.bxec-g-status-y1 {background-position: -18px -21px; width: 18px; height: 18px; float: left;}
+img.bxec-guest-stat-n {background-position: -36px -26px;}
+img.bxec-g-del-but{width: 14px; height: 18px; background-position: -80px -47px; cursor: pointer;}
+img.bxec-g-del-but-d{width: 13px; height: 18px; background-position: -92px -47px; cursor: pointer;}
+
+/*edit event dialog*/
+table.bxec-edit-ed-frame {width: 100%; border-collapse: collapse;}
+table.bxec-edit-ed-frame tr td table {width: 100%;}
+table.bxec-edit-ed-frame td.bxec-ed-lp{padding: 5px 0;}
+table.bxec-edit-ed-frame td.bxec-edit-ed-title {font-weight: bold; padding-left: 7px; vertical-align: top;}
+table.bxec-edit-ed-frame td.bxec-edit-ed-title div{overflow:hidden; white-space:nowrap; width:425px;}
+
+td.bxec-edit-ed-per{padding: 10px 0 5px 7px; height: 20px;}
+td.bxec-edit-ed-buttons{text-align: right !important; padding: 5px 8px 0 7px; height: 25px;}
+td.bxec-edit-ed-buttons input{margin: 0 3px 0 3px;}
+td.bxec-edit-ed-buttons a{margin: 5px 10px 5px 5px; float: left; height: 20px; padding-top:1px;}
+table.bxec-edit-ed-frame td.bxec-close{width: 20px; vertical-align: top;}
+table.bxec-edit-ed-frame td.bxec-close img {background-position: -86px 2px; width: 15px; height: 15px;}
+td.bxec-edit-ed-repeat{padding: 5px 0 5px 0; vertical-align: top; text-align: left;}
+td.bxec-cal-sel-cel span, td.bxec-cal-sel-cel-empty span.bxec-warn, td.bxec-cal-sel-cel-empty select{display: none;}
+td.bxec-cal-sel-cel select, td.bxec-cal-sel-cel-empty span{display: inline; width: 210px;}
+tr.bxec-edit-ed-rep select{margin-bottom: 5px;}
+div.bxec-rep-week-days{width: 350px; padding-bottom: 5px;}
+div.bxec-rep-week-days input{margin: 3px 0;}
+div.bxec-rep-week-days label{margin-right: 5px;}
+div.bxec-disable-calendar-clock .calendar-icon, div.bxec-disable-calendar-clock .bx-clock-icon {display: none !important;}
+
+/*view event dialog*/
+table.bxec-view-ed-frame tr td {text-align: left;}
+table.bxec-view-ed-frame {width: 475px; border-collapse: collapse;}
+table.bxec-view-ed-frame tr td table {width: 100%;}
+table.bxec-view-ed-frame tr td {font-size: 12px; color: black; vertical-align: top;}
+table.bxec-view-ed-frame td.bxec-ed-lp{padding: 5px 0 5px 0;}
+table.bxec-view-ed-frame td.bxec-view-ed-title {font-weight: bold; padding-left: 7px;}
+div.bxec-view-ed div.bxec-desc-div {height: 50px; overflow: auto; width: 310px; vertical-align: top; border: 1px solid #797979;}
+
+div.bxec-view-ed div.bxec-desc-div pre{margin: 0;}
+
+td.bxec-view-ed-per{padding: 5px 0; height: 20px;}
+td.bxec-view-ed-buttons{text-align: right !important; padding: 5px 10px 0 10px; height: 25px;}
+td.bxec-view-ed-buttons input{margin: 0 3px;}
+td.bxec-view-ed-buttons a{margin: 5px 10px 5px 5px; float: left; height: 20px; padding-top:1px;}
+table.bxec-view-ed-frame td.bxec-close{width: 20px;}
+table.bxec-view-ed-frame td.bxec-close img {background-position: -86px 2px; width: 15px; height: 15px;}
+table.bxec-view-ed-frame tr.bxec-vev-ad-title td{background-color: #E8E8E8; color: black; font-weight: bold; padding: 6px 8px !important;}
+
+.bxec-view-name{font-weight: bold; overflow: hidden;}
+
+tr.bxec-view-ed_ext td{padding: 8px;}
+tr.bxec-view-ed_ext table {border-collapse: collapse;}
+tr.bxec-view-ed_ext table td {padding: 3px 5px;}
+img.bxec-vd-g-status-y, img.bxec-vd-g-status-n{background-image: url(/bitrix/images/intranet/event_calendar/iconkit.gif); width: 18px; height: 18px; border-width: 0 !important; }
+img.bxec-vd-g-status-y{background-position: -18px -21px;}
+img.bxec-vd-g-status-n{background-position: -36px -21px;}
+a.bxec-conf-link{text-decoration: none !important;}
+a.bxec-conf-link-h{text-decoration: none !important; color: #B2B2B2;}
+
+div.bxec-view-ed-desc-cont {margin-top: 2px;padding: 5px;width: 420px;height: 210px;overflow: auto;border-left: 5px solid #D8E3E8;}
+div.bxec-view-ed-desc-cont span.no-desc {color: #B6B6B6;}
+
+.bxec-d-cont-div tr.bxec-edev-ad-title td{background-color: #E8E8E8; color: black; font-weight: bold; padding:6px 11px !important;}
+div.bxec-vd-meet-text {width: 420px; height: 45px; padding: 5px; margin-top: 2px; overflow: auto; border-left: 5px solid #D8E3E8;}
+
+div.bxec-guests-div {width: 420px; border-left: 5px solid #D8E3E8; padding: 5px; margin-top: 2px;}
+div.bxec-many-guests {height: 50px; overflow: auto;}
+
+div.bxec-guests-div a{text-decoration: none;}
+div.bxec-guests-div a:hover{text-decoration: underline;}
+div.bxec-guests-div a.bxec-more-guests{text-decoration: underline;}
+
+a.bxec-guest-link-y{font-weight: bold;}
+a.bxec-guest-link-n{text-decoration: line-through !important;}
+
+tr.bxec-view-ed-rep{visibility: hidden;}
+td.bxec-view-ed-repeat{padding: 5px 0 5px 7px; height: 40px;}
+tr.bxec-view-ed-rep-vis{visibility: visible !important;}
+
+td.bxec-par-name {padding: 5px 0;}
+td.bxec-par-cont {padding: 5px 8px;}
+
+table td.dialog-par-name{padding: 5px 5px 5px 0; vertical-align: middle; text-align: right !important; color: black!important; font-size: 12px !important; white-space: nowrap;}
+
+/*edit calendar dialog*/
+div.bxec-edcal td.bxec-title-cell {background-color: #D8E3E8; padding-top: 5px; height: 22px;}
+div.bxec-edcal td.bxec-title-cell table{height: 20px;}
+
+table.bxec-edcal-frame tr td {text-align: left;}
+table.bxec-edcal-frame {width: 100%; border-collapse: collapse;}
+table.bxec-edcal-frame tr td table {width: 100%;}
+table.bxec-edcal-frame tr td {font-size: 12px; color: black; vertical-align: top;}
+table.bxec-edcal-frame td.bxec-ed-lp{padding: 5px 0 5px 7px;}
+table.bxec-edcal-frame td.bxec-edcal-title {font-weight: bold; padding-left: 7px;}
+
+td.bxec-edcal-per{padding: 10px 0 5px 7px; height: 20px;}
+td.bxec-edcal-buttons{text-align: right !important; padding: 5px 8px 0 7px; height: 25px;}
+td.bxec-edcal-buttons input{margin: 0 3px 0 3px;}
+td.bxec-edcal-buttons a{margin: 0 3px 0 3px; height: 20px; padding-top:1px; text-decoration: none !important; white-space: nowrap!important;}
+table.bxec-edcal-frame td.bxec-close{width: 20px;}
+table.bxec-edcal-frame td.bxec-close img {background-position: -86px 2px; width: 15px; height: 15px;}
+
+/*export calendar dialog*/
+table.bxec-excal-frame tr td {text-align: left;}
+table.bxec-excal-frame {width: 100%; border-collapse: collapse;}
+table.bxec-excal-frame tr td table {width: 100%;}
+table.bxec-excal-frame tr td {font-size: 12px; color: black; vertical-align: top;}
+table.bxec-excal-frame td.bxec-ed-lp{padding: 5px 0 5px 7px;}
+table.bxec-excal-frame td.bxec-excal-title {font-weight: bold; padding-left: 7px;}
+.bxec-excal-notice-hide div.bxec-excal-notice-outlook{display: none;}
+div.bxec-excal-notice-outlook {padding-top: 8px;}
+
+td.bxec-excal-per{padding: 10px 0 5px 7px; height: 20px;}
+td.bxec-excal-buttons{text-align: right !important; padding: 5px 8px 0 7px; height: 25px;}
+td.bxec-excal-buttons input, td.bxec-excal-buttons a{margin: 0 3px 0 3px;}
+table.bxec-excal-frame td.bxec-close{width: 20px;}
+table.bxec-excal-frame td.bxec-close img {background-position: -86px 2px; width: 15px; height: 15px;}
+div.bxec-exp-link-cont{width: 730px; overflow: auto; padding: 1px 3px; height: 65px; margin-top: 2px;}
+span.bxec-export-warning-hidden{display: none;}
+span.bxec-export-warning{display: block; color: #FF0000; padding: 4px;}
+
+/*superpose dialog*/
+table.bxec-sprpose-frame td {text-align: left;}
+table.bxec-sprpose-frame {width: 100%; border-collapse: collapse;}
+table.bxec-sprpose-frame td.bxec-title-cell table {width: 100%;}
+table.bxec-sprpose-frame td {font-size: 12px; color: black; vertical-align: top;}
+table.bxec-sprpose-frame td.bxec-ed-lp{padding: 5px 0 5px 7px;}
+table.bxec-sprpose-frame td.bxec-sprpose-title {font-weight: bold; padding-left: 7px;}
+td.bxec-sprpose-buttons{text-align: right !important; padding: 5px 8px 0 7px; height: 25px;}
+td.bxec-sprpose-buttons input, td.bxec-sprpose-buttons a{margin: 0 3px 0 3px;}
+div.bxec-sprpose-cont {height: 400px; width: 540px; border: 1px solid #E2E1E0; overflow: auto; overflow-x: hidden;}
+div.bxec-sprpose-users-nf{color: #ff0000; visibility: hidden; padding: 5px;}
+
+table.bxec-spd-group{border-collapse: collapse; width: 100%; margin-bottom: 2px;}
+table.bxec-spd-group td{padding: 0;}
+table.bxec-spd-group td.bxec-spd-group-title{background: #E2E1E0; height: 24px; cursor: pointer; vertical-align: middle;}
+img.bxec-spd-big-plus{width: 11px; height: 11px; margin: 2px 5px 0 5px; background-position: -151px 0;}
+td.bxec-spd-title-hide img.bxec-spd-big-plus{background-position: -162px 0 !important;}
+table.bxec-spd-group td.bxec-spd-group-cont{padding: 10px;}
+a.bxec-del-dyn-spgr{margin-right: 10px; text-decoration: none !important;}
+span.bxec-spd-notice{color:#c0c0c0;}
+
+table.bxec-spd-cal-sec{border-collapse: collapse; width: 100%; margin-bottom: 2px;}
+table.bxec-spd-cal-sec td{padding: 0;}
+table.bxec-spd-cal-sec td.bxec-spd-cal-sec-title{background-color: #F2F8D6; cursor: pointer; height: 18px; padding-top: 2px;}
+img.bxec-spd-small-plus{width: 9px; height: 9px; margin: 1px 5px 0 5px; background-position: -152px -11px;}
+td.bxec-cal-sec-hide img.bxec-spd-small-plus{background-position: -163px -11px !important;}
+table.bxec-spd-cal-sec td.bxec-spd-cal-sec-cont{padding: 5px 0 5px 20px;}
+img.bxec-export-sp{width: 22px; height: 16px; margin: 6px 2px 0 16px; background-position: -240px 0;}
+
+/*month selector dialog*/
+div.bxec-month-dialog {position: absolute; background-color: #fff; border: 1px solid #797979; width: 220px; height: 110px; display: none;}
+div.bxec-month-dialog table {border-collapse: collapse;}
+div.bxec-month-dialog table td{padding: 0;}
+div.bxec-month-dialog table.bxec-month-tbl{width: 100%; height: 110px;}
+div.bxec-month-dialog table.bxec-month-tbl tr.bxec-year-sel td{height: 25px;}
+div.bxec-month-dialog table.bxec-month-tbl td.bxec-months{width: 80px; padding-left: 2px;}
+div.bxec-month-dialog tr.bxec-year-sel td.bxec-cy{color: #0C283D; width: 65px; font-weight:bold;}
+div.bxec-month-dialog tr.bxec-year-sel td.bxec-py-ny{color: #879699; width: 65px; visibility: hidden;}
+div.bxec-month-dialog tr.bxec-year-sel img.bxec-prev-year{background-position: -68px -1px; width: 8px; height: 12px;}
+div.bxec-month-dialog tr.bxec-year-sel img.bxec-next-year{background-position: -58px -1px; width: 8px; height: 12px;}
+div.bxec-month-dialog div.bxec-month-div{margin: 1px; font-size: 11px; width: 70px; height: 18px !important; text-align: center; float: left;}
+
+div.bxec-month-dialog div.bxec-month-act{font-weight: bold;}
+div.bxec-month-dialog div.bxec-winter{background-color: #f2f2ff;}
+div.bxec-month-dialog div.bxec-spring{background-color: #ecfff5;}
+div.bxec-month-dialog div.bxec-summer{background-color: #ffecec;}
+div.bxec-month-dialog div.bxec-autumn{background-color: #fef8e0;}
+
+table.bxec-calendar-bar {border-collapse: collapse; border: 1px solid #C9C9C9; float: left; margin: 0 12px 12px 1px;}
+table.bxec-calendar-bar  td{padding: 1px; color: #3C3C3C;}
+table.bxec-calendar-bar tr td.bxec-calendar-title{border: 1px solid #C9C9C9; background-color: #F2F8D6;}
+table.bxec-calendar-bar tr td.bxec-calendar-title nobr{display: block; float: left; margin: 4px!important;}
+table.bxec-calendar-bar td.bxec-cal-title-ch{text-align: right; padding-right: 6px!important; border-left-width: 0!important;}
+table.bxec-calendar-bar td.bxec-cal-title-str{border-right-width: 0 !important;}
+table.bxec-calendar-bar tr.bxec-toolbar-row  td.bxec-toolbar-delimiter{width: 1px; background-color: #98B7C5; padding: 0 1px 0 0;}
+td.bxec-calendar-title img.bxec-show-arrow, td.bxec-calendar-title img.bxec-hide-arrow{width: 12px; height: 12px; margin: 4px 0 4px 4px; display: block; float: left;}
+td.bxec-calendar-title img.bxec-show-arrow{ background-position: -65px -9px;}
+td.bxec-calendar-title img.bxec-hide-arrow{background-position: -55px -9px;}
+
+img.bxec-add-cal-but{width: 20px; height: 20px; margin: 2px 0 1px 10px; cursor: pointer; background-position: -126px 0; display: block; float: left;}
+td.bxec-calendar-title img.bxec-cal-bar-check, td.bxec-calendar-title img.bxec-cal-bar-uncheck{margin: 3px 2px 0 0;}
+
+div.bxec-calendar-cont{display: none; /* width: 100%; */ padding: 2px;}
+a.bxec-add-calendar-link{margin: 10px 4px 4px 8px; display: block; text-decoration: none !important;}
+div.bxec-calendar-cont div.bxec-calendar-el{margin: 2px 1px 0 1px; padding: 0 2px; height: 21px; cursor: pointer;}
+div.bxec-calendar-cont div.bxec-cal-dark td.bxec-title{color: #E6E6E6!important;}
+
+div.bxec-calendar-cont table.bxec-tbl{border-collapse: collapse; width: 100%;}
+div.bxec-calendar-cont table.bxec-tbl td{padding: 0;}
+div.bxec-calendar-cont table.bxec-tbl td.bxec-checkbox{padding-left: 1px !important;}
+div.bxec-calendar-cont table.bxec-tbl td.bxec-checkbox img, img.bxec-cal-bar-check{width: 18px; height: 18px; background-position: -182px 0;}
+div.bxec-calendar-cont table.bxec-tbl td.bxec-checkbox-off img, img.bxec-cal-bar-uncheck{width: 18px; height: 18px; background-position: -182px -22px;}
+img.bxec-cal-bar-none{width: 18px; height: 18px; visibility: hidden;}
+
+div.bxec-calendar-cont table.bxec-tbl td.bxec-title{width: 100%; padding: 0 4px 3px 2px;}
+div.bxec-calendar-cont table.bxec-tbl td.bxec-menu{padding: 0 1px 0 2px; text-decoration: none !important;}
+
+div.bxec-calendar-cont table.bxec-tbl td.bxec-cal-menu, div.bxec-calendar-cont table.bxec-tbl td.bxec-cal-menu-dis{padding: 2px 2px 2px 2px;}
+div.bxec-calendar-cont table.bxec-tbl td.bxec-cal-menu img {width: 19px; height: 16px; background-position: -54px -30px; margin: 1px;}
+div.bxec-calendar-cont table.bxec-tbl td.bxec-cal-menu-dis img {width: 19px; height: 16px; background-position: -74px -30px; margin: 1px;}
+div.bxec-calendar-cont table.bxec-tbl td.bxec-cal-menu-over img{background-color: #F2F8D6!important; border: 1px solid #C9C9C9 !important; margin: 0 !important;}
+
+/*month selector dialog*/
+div.bxec-cal-menu-div {position: absolute; border: 1px solid #797979; display: none; z-index: 20; background: #FCFCFC url(/bitrix/images/intranet/event_calendar/menu_gutter.gif) repeat-y scroll left top; width: 200px;}
+div.bxec-cal-menu-div table.bxec-cal-menu-tbl{border-collapse: collapse; width: 200px; color: #3C3C3C;}
+div.bxec-cal-menu-div table.bxec-cal-menu-tbl td{padding: 0; text-align: left; height: 18px;}
+
+div.bxec-cal-menu-div table.bxec-cal-menu-tbl td div.bxec-cm-item{padding: 4px 0 0 0px;height: 100%; margin: 1px; font-size: 12px; white-space: nowrap;}
+div.bxec-cal-menu-div table.bxec-cal-menu-tbl td div.bxec-cm-item img {width: 18px; height: 18px; float: left; margin: 0 8px 0 1px; background-image: url(/bitrix/images/intranet/event_calendar/iconkit.gif);}
+
+div.bxec-cal-menu-div table.bxec-cal-menu-tbl td.bxec-cm-td-over div.bxec-cm-item{background-color: #F2F8D6!important; border: 1px solid #C9C9C9 !important; margin: 0 !important;}
+
+/* color selector*/
+table.bxec-color-selector{width: 136px !important; font-size: 10px;}
+table.bxec-color-selector td {padding: 2px; border: 1px solid #c0c0c0;}
+table.bxec-color-selector td.bxec-big-color {height: 34px; width: 34px; border-width: 2px; border-color: #797979 #c0c0c0 #c0c0c0 #797979;}
+div.bxec-cal-menu-div table.bxec-cal-menu-tbl td{padding: 1px;}
+
+img.bxec-addcal-sp{width: 20px; height: 16px; margin: 0 2px 0 1px; background-position: -220px -22px; float: left; border-width: 0;}
+img.bxec-delcal{width: 16px; height: 16px; margin: 0 2px 0 1px; background-position: -202px -22px; border-width: 0; float: left;}
+img.bxec-addcal{width: 20px; height: 16px; margin: 0 2px 0 1px; background-position: -201px -3px; float: left; border-width: 0;}
+
+.bxec-hide{background-position: -241px -22px;}
+.bxec-edit{background-position: -220px -2px;}
+.bxec-del{background-position: -202px -22px;}
+.bxec-export{background-position: -262px -2px;}
+.bxec-add2sp{background-position: -220px -22px;}
+.bxec-outlook{background-position: -281px -22px;}
+
+img.bxec-enc-icon{width: 10px; height: 14px; background-position: -77px -14px; cursor: pointer;}
+b.bxec-stat-q{font-size: 12px !important; margin-right:1px;}
+
+
+.bxec-edevent{background-position: -20px -46px; width: 18px; height: 19px; float: left; border-width: 0; margin: -2px 4px 0 1px;}
+.bxec-delevent{background-position: -0px -46px; width: 18px; height: 19px; float: left; border-width: 0; margin: -2px 4px 0 1px;}
+
+
+table.bxec-add-cal-link-tbl {border-collapse: collapse; width: 100%;}
+table.bxec-add-cal-link-tbl td{padding: 0;}
+
+.bxec-checkbox img, .bxec-cal-menu img, .bxec-checkbox-off img, a.bxec-add-calendar-link, div.bxec-event, img.bxec-add-new-but, img.bxec-m-sel-popup-but, td.bxec-ppm_nnm, td.bxec-pm_nm, img.bxec-pr-m-but, img.bxec-nx-m-but, div.bxec-cm-item, div.bxec-month-div, img.bxec-prev-year, img.bxec-next-year, td.bxec-close img , .bxec-cal-title-str, td.bxec-cal-title-ch img, img.bxec-export-sp{cursor: pointer;}
+
+div.bxec-add-meet-text{padding: 5px; text-align: left;}
+div.bxec-add-meet-text a, div.bxec-meet-text a{text-decoration: none;}
+div.bxec-meet-text{padding: 5px 7px; vertical-align: top; display: none;}
+div.bxec-meet-text div.bxec-mt-d{float: left; padding-right: 5px;}
+div.bxec-meet-text textarea.bxec-mt-t{width: 420px;}
+textarea.bxec-mt-t-dis{background-color: #E8E8E8;}
+
+div.bxec-mark-meeting-cont{padding-bottom: 6px; position: relative;}
+div.bxec-mark-meeting-cont div.bxec-meeting-overlay{border: 0 dashed red; width: 435px; height: 300px; position: absolute; top: 20px; background-color:#FFFFFF; filter: gray() alpha(opacity=50); -moz-opacity: 0.50; opacity: 0.5; -moz-user-select: none;}
+
+div.bxec-dialog td.bxec-edit-ed-cont, div.bxec-dialog td.bxec-view-d-cont {padding: 5px 8px !important;}
+
+/* PLANNER */
+a.bxex-planner-link{text-decoration: none; margin-left: 10px !important; font-weight: bold !important; white-space:nowrap; display: inline !important; outline: none;}
+a.bxex-planner-link img{background: url(/bitrix/images/intranet/event_calendar/iconkit2.png) -3px 0; width: 16px; height: 14px; border-width: 0 !important; margin: 0 3px -1px 0;}
+
+div.bxec-plan-cont {width: 100%; height: 100%; border: 1px solid #B2B2B2;}
+div.bxec-plan-top-cont{width: 100%;height: 55px;padding: 3px;}
+div.bxec-plan-top-cont form{margin: 0px !important; padding: 0px !important;}
+div.bxec-plan-grid-cont{width: 100%;height: 280px;}
+div.bxec-plan-bottom-cont{width: 440px;height: 45px;padding: 8px 0 0 8px;float: left;}
+table.bxec-edcal-frame tr td.bxec-plan-buttons{text-align: center;}
+div.bxec-plan-resizer{background: url(/bitrix/themes/.default/public/popup/resizer.gif);width: 20px; height: 20px; cursor: se-resize;-moz-user-select: none !important;position:absolute;}
+table.bxec-plan-grid-tbl{border-collapse: collapse; border-width: 0 0 1px 0;border-style: solid;border-color: #B2B2B2;}
+table.bxec-plan-grid-tbl tr.bxec-header  td.bxec-scale-cont{width: 170px;  height: 20px; padding: 1px 0 0 10px;}
+table.bxec-plan-grid-tbl td.bxec-scale-cont select{width: 80px; font-size: 11px !important;}
+table.bxec-plan-grid-tbl tr.bxec-header td.bxec-user{width: 170px; height: 21px; padding: 0px; color: #052635; font-weight: bold; background: transparent url(/bitrix/images/intranet/event_calendar/planner/tr_bg.gif) repeat-x 0 4px;}
+table.bxec-plan-grid-tbl tr.bxec-header td.bxec-user div{margin: 5px 0 0 10px;}
+table.bxec-plan-grid-tbl tr td{padding: 0;}
+table.bxec-plan-grid-tbl td.bxec-separator{width: 2px; background-color: #B2B2B2 !important;}
+table.bxec-plan-grid-tbl td.bxec-separator-gr{width: 2px; background: url(/bitrix/images/intranet/event_calendar/planner/td_sep_grad.gif) #B2B2B2 top left repeat-x !important;}
+
+div.bxec-planner-add-ex{padding: 3px 0; width: 440px; margin-left: -7px;}
+div.bxec-planner-add-ex a{white-space: nowrap; margin-left: 5px !important; text-decoration: none;}
+div.bxec-planner-auto-cont{width: 130px;float: right;padding: 8px; display: none;}
+div.bxec-grid-scale{background-color: #fff; width: 170px; height: 20px;}
+table.bxec-user-list{width: 180px !important; border-collapse: collapse; position: absolute; left: 0; top: 0;}
+table.bxec-user-list tr td{height: 20px; background-image: url(/bitrix/images/intranet/event_calendar/planner/tr_bg.gif);}
+table.bxec-user-list tr.bx-grey td{background-color: #F3F3F3 !important;}
+table.bxec-user-list tr td img.bxecp-del{display: none;}
+table.bxec-user-list tr td.bxex-pl-u-over img.bxecp-del{display: block; width: 10px; height: 18px; background: url(/bitrix/images/intranet/event_calendar/iconkit.gif) -81px -46px; cursor: pointer;}
+table.bxec-user-list tr td.bxex-pl-u-over img.bxecp-del-d{background: url(/bitrix/images/intranet/event_calendar/iconkit.gif) -94px -46px !important;}
+table.bxec-user-list tr td div{width: 140px; white-space: nowrap; overflow: hidden; padding: 2px 2px 0 2px; float: left;}
+table.bxec-user-list tr td div a{text-decoration: none !important;}
+
+table.bxec-grid-cont-tbl{border-collapse: collapse; position: absolute; top: 0; left: 0;}
+/*table.bxec-grid-cont-tbl td{border: 1px solid #B2B2B2;}*/
+
+table.bxec-grid-cont-tbl tr.bxec-plan-grid-day-row td{text-align: center; height: 27px; background: url(/bitrix/images/intranet/event_calendar/planner/day_title_bg.gif) -1px 10px repeat-x/* #ff0080*/; border-bottom: 1px solid #B2B2B2;}
+table.bxec-grid-cont-tbl tr.bxec-plan-grid-day-row td.cur-day{background: url(/bitrix/images/intranet/event_calendar/planner/day_title_bg.gif) -1px 5px repeat-x;}
+table.bxec-grid-cont-tbl tr.bxec-plan-grid-day-row td.hol-day{background: url(/bitrix/images/intranet/event_calendar/planner/day_title_bg_hol.gif) -1px 10px  repeat-x;}
+table.bxec-grid-cont-tbl tr.bxec-plan-grid-day-row td.cur-hol-day{background: url(/bitrix/images/intranet/event_calendar/planner/day_title_bg_hol.gif) -1px 5px  repeat-x;}
+
+tr.bxec-plan-grid-day-row td img.day-t-left{width: 3px; height: 27px; background: url(/bitrix/images/intranet/event_calendar/iconkit2.png) -25px 10px; float: left; position: relative; left: -1px;}
+tr.bxec-plan-grid-day-row td img.day-t-right{width: 3px; height: 27px; background: url(/bitrix/images/intranet/event_calendar/iconkit2.png) -30px 10px; float: right;}
+table.bxec-iehack tr.bxec-plan-grid-day-row td img.day-t-left{left: -3px !important;}
+table.bxec-iehack tr.bxec-plan-grid-day-row td img.day-t-right{position: relative !important; right: -4px !important;}
+
+tr.bxec-plan-grid-day-row td.cur-day img.day-t-left{background: url(/bitrix/images/intranet/event_calendar/iconkit2.png) -25px 5px;}
+tr.bxec-plan-grid-day-row td.cur-day img.day-t-right{background: url(/bitrix/images/intranet/event_calendar/iconkit2.png) -30px 5px;}
+
+tr.bxec-plan-grid-day-row td.hol-day img.day-t-left{background: url(/bitrix/images/intranet/event_calendar/iconkit2.png) -36px 10px;}
+tr.bxec-plan-grid-day-row td.hol-day img.day-t-right{background: url(/bitrix/images/intranet/event_calendar/iconkit2.png) -41px 10px;}
+
+tr.bxec-plan-grid-day-row td.cur-hol-day img.day-t-left{background: url(/bitrix/images/intranet/event_calendar/iconkit2.png) -36px 5px;}
+tr.bxec-plan-grid-day-row td.cur-hol-day img.day-t-right{background: url(/bitrix/images/intranet/event_calendar/iconkit2.png) -41px 5px;}
+
+
+table.bxec-grid-cont-tbl tr.bxec-plan-grid-day-row td.cur-day div,table.bxec-grid-cont-tbl tr.bxec-plan-grid-day-row td.cur-hol-day div{margin-top: 8px; font-weight: bold;}
+
+table.bxec-grid-cont-tbl tr.bxec-plan-grid-day-row td div{margin-top: 12px; float: left; font-size: 11px !important;}
+table td.bxes-plan-grid-sep{background-color: #808080 !important; padding: 0 !important; border: 1px solid #808080 !important;}
+table td.bxes-plan-grid-sep div{width: 1px !important;}
+table.bxec-grid-cont-tbl tr.bxec-pl-time-row td{height: 20px; text-align: left; background: url(/bitrix/images/intranet/event_calendar/days_title_bg.gif); border-color:#B2B2B2; border-style:solid;border-width: 0 1px 1px 0;}
+table.bxec-grid-cont-tbl tr.bxec-pl-time-row td.bxecpl-half-t-cell{border-left: 1px dashed #B2B2B2 !important;}
+table.bxec-grid-cont-tbl tr.bxec-pl-time-row td div {margin-top: 4px; font-size: 11px; white-space: nowrap; text-align: center;}
+
+table.bxec-grid-cont-tbl tr.bxecpl-s0 td div {width: 40px;}
+table.bxec-grid-cont-tbl tr.bxecpl-s1 td div {width: 40px;}
+table.bxec-grid-cont-tbl tr.bxecpl-s2 td div {width: 40px;}
+table.bxec-grid-cont-tbl tr.bxecpl-s3 td div {width: 80px;}
+
+table.bxec-grid-cont-tbl tr.bxecp-grid-row{height: 20px;}
+
+div.bxec-user-list-div{overflow: hidden; width: 100%; height: 100%; position: relative;}
+div.bxec-grid-cont-title{overflow: hidden; width: 1px; height: 46px; position: relative; border-bottom: 1px solid #B2B2B2;}
+div.bxec-grid-cont{overflow: auto; position: relative; width: 1px; height: 100%;}
+
+table.bxec-grid-bg-tbl{border-collapse: collapse;}
+table.bxec-grid-bg-tbl tr.bxecp-bg-grid-row td div{background-repeat: repeat;}
+table.bxec-grid-bg-tbl tr.bxecpl-s0 td div {background-image: url(/bitrix/images/intranet/event_calendar/planner/cell_bg_s2.gif);}
+table.bxec-grid-bg-tbl tr.bxecpl-s1 td div {background-image: url(/bitrix/images/intranet/event_calendar/planner/cell_bg_s2.gif);}
+table.bxec-grid-bg-tbl tr.bxecpl-s2 td div {background-image: url(/bitrix/images/intranet/event_calendar/planner/cell_bg_s2.gif);}
+table.bxec-grid-bg-tbl tr.bxecpl-s3 td div {background-image: url(/bitrix/images/intranet/event_calendar/planner/cell_bg_s1.gif);}
+
+a.bxex-ex-link-del img{background: url(/bitrix/images/intranet/event_calendar/iconkit.gif) -80px -49px; width: 12px; height: 12px; border-width: 0 !important; margin: 0 3px -1px 0;}
+td.bxecp-user-icon, td.bxecp-user-icon-q{width: 20px;}
+td.bxecp-user-icon img, td.bxecp-user-icon-q img{background-image: url(/bitrix/images/intranet/event_calendar/iconkit2.png); width: 18px; height: 18px; border-width: 0 !important; cursor: pointer;}
+td.bxecp-user-icon img{background-position: -2px -26px;}
+td.bxecp-user-icon-q img{background-position: -23px -26px;}
+
+div.bxecp-selection{height: 100%; position: absolute; overflow: hidden; left: 0; top: 0; background-color:#60e846; filter: alpha(opacity=50); -moz-opacity: 0.50; opacity: 0.5; z-index: 200;}
+div.bxecp-sel-deny{background-color:#FF3B3B !important;}
+
+
+div.bxecp-selection img.bxecp-sel-left, div.bxecp-selection img.bxecp-sel-right{width: 5px; height: 100%; position: absolute; top: 0; -moz-user-select: none; z-index: 200;}
+div.bxecp-selection img.bxecp-sel-left{left: 0; background: url(/bitrix/images/intranet/event_calendar/planner/sel_free_left.gif) repeat-y; cursor: e-resize;}
+div.bxecp-selection img.bxecp-sel-right{right: 0; background: url(/bitrix/images/intranet/event_calendar/planner/sel_free_right.gif) repeat-y; cursor: w-resize;}
+
+div.bxecp-sel-deny img.bxecp-sel-left{background: url(/bitrix/images/intranet/event_calendar/planner/sel_busy_left.gif) repeat-y !important;}
+div.bxecp-sel-deny img.bxecp-sel-right{background: url(/bitrix/images/intranet/event_calendar/planner/sel_busy_right.gif) repeat-y !important;}
+
+div.bxecp-selection img.bxecp-sel-mover{width: 12px; height: 15px; position: absolute; top: 0; left: 0; cursor: move; background: url(/bitrix/images/intranet/event_calendar/iconkit2.png)  -4px -76px}
+
+div.bxec-gacc-cont{position: absolute; width: 1px; height: 1px; top: 0; left: 0;}
+div.bxec-gacc-el{position: absolute; height: 19px; background-color: #dfc726; z-index: 150;}
+div.bxec-gacc-warn{background-color: #ff6f6f !important; z-index: 170 !important;}
+div.bxec-gacc-free{background-color: #CEE669 !important; z-index: 140 !important;}
+div.bxec-gacc-quest{background-color: #FFDF77 !important;}
+div.bxec-gacc-absent{background-color: #FF8C27 !important; z-index: 160 !important;}
+
+
+img.bxecpl-lock-dur{background: url(/bitrix/images/intranet/event_calendar/iconkit2.png) -48px -16px; width: 18px; height: 18px; border-width: 0; cursor: pointer;display:block;float:left;margin: 2px 0 0 2px;}
+
+img.icon-hover{background-color:#DBE3F2; border:1px solid #AEB6C2 !important; margin: 1px 0 0 1px !important;}
+img.bxecpl-lock-pushed{background-color:#DBE3F2; border:1px solid #AEB6C2 !important; margin: 1px 0 0 1px !important; background-position: -46px 2px !important;}
+img.icon-blink{background-color:#ffdfdf; border:1px solid #f00 !important; margin: 1px 0 0 1px !important; background-position: -46px 2px !important;}
+
+div.bxecpl-dur-popup{background: #fff;border: 1px solid #B2B2B2;position: absolute;width: 90px;display: none;top:21px;z-index:15;}
+div.bxecpl-dur-popup div{padding: 2px 5px; margin: 1px; cursor: default;}
+div.bxecpl-dur-popup div.bxecpldur-over{background-color:#DBE3F2;}
+
+a.bxec-pl-link {text-decoration:none; font-size: 12px !important; font-weight: normal !important;}
+
+div.bxec-planner-leg-cont{width: 200px;height: 50px;border: 1px solid red;display: none;}
+div.bxec-planner-legend{}
+
+div.bxecpl-loc-cont input{background:url(/bitrix/images/intranet/event_calendar/iconkit2.png) no-repeat right -43px transparent ; padding-right: 14px;}
+div.bxecpl-loc-cont input.ec-label{color: #808080;}
+div.bxecpl-loc-cont input.ec-no-rm{color: #000 !important; background: transparent !important;}
+
+div.bxecpl-loc-popup{background: #fff;border: 1px solid #B2B2B2;position: absolute;width: 280px; display: none;top:21px;z-index:15;}
+div.bxecpl-loc-popup div{padding: 4px 5px; margin: 1px; cursor: default; position: relative; text-align:left;}
+div.bxecpl-loc-popup div a.bxecplloc-view{padding: 2px 5px; margin: 1px; cursor: default; position: absolute; top: -1px; right: -4px; display: none;}
+div.bxecpl-loc-popup div a.bxecplloc-view img{border-width: 0 !important; background: url(/bitrix/images/intranet/event_calendar/iconkit.gif) -40px -47px; width: 18px; height: 18px; cursor: pointer;}
+div.bxecpl-loc-popup div.bxecplloc-over{background-color:#DBE3F2;}
+div.bxecpl-loc-popup div.bxecplloc-over a.bxecplloc-view{display: block !important;}
+
+table.bxec-user-list tr.bxec-mr-title td{background:#FFF url(/bitrix/images/intranet/event_calendar/planner/title_bg.gif) repeat-x 0 0; height: 40px; padding: 20px 0 0 10px;  color: #052635; font-weight: bold;}
+
+td.bxecp-mr-icon img{background:url(/bitrix/images/intranet/event_calendar/iconkit2.png) #fff no-repeat -66px 2px; width: 18px; height: 18px;}
+
+div.bxecpl-mr-stub {position: absolute; left: 0; height: 39px; z-index: 5; background:#FFF url(/bitrix/images/intranet/event_calendar/days_title_bg.gif) repeat-x scroll 0 0;}
+div.bxec-empty-list{color:#D3D3D3;font-size:12px;position:absolute;left:10px; top:10px; z-index:10; display: none;}
+div.bxec-empty-list2{color:#052635; font-size:13px;position:absolute;left:210px; top: 150px; z-index:10; display: none;}
+span.bxec-pl-clear-all{font-weight: normal !important;}
+
+div.bxecpl-empty div.bxec-empty-list, div.bxecpl-empty div.bxec-empty-list2{display: block !important;}
+div.bxecpl-empty div.bxec-grid-cont, div.bxecpl-empty table.bxec-user-list, div.bxecpl-empty div.bxecp-selection, div.bxecpl-empty span.bxec-pl-clear-all{display: none !important;}
+div.bxecpl-empty table.bxec-grid-cont-tbl td *, div.bxecpl-empty td.bxec-scale-cont *, div.bxecpl-empty div.bxec-plan-top-cont *, div.bxecpl-empty td.bxec-user{color:#B2B2B2 !important;}
+
+div.bxex-sbs {overflow: scroll; width: 60px; height: 60px; position: absolute; top: 1000px; left: 1000px;}
+/* div.bxec-tabs-div div.bxec-uset-but{position: absolute; right: 8px; top: 64px; width: 18px; height: 18px; background: url(/bitrix/images/intranet/event_calendar/iconkit.gif) -282px 0px; cursor: pointer;} */
+
+/* Outlook banner*/
+div.bxec-outlook-banner{padding:  5px;background: url(/bitrix/images/intranet/event_calendar/outlook_import.jpg) no-repeat;}
+table.bxec-banner-tbl {width: 280px;}
+table.bxec-banner-tbl img.bx-close{background-position:-86px 2px;height:15px;width:15px;}
+table.bxec-banner-tbl td.bxec-calendar-title{height: 20px;text-align: right;border-bottom-width: 0px !important;}
+div.bxec-outlook-banner div.bxec-ob-txt{padding-left: 80px; height: 65px;}
+div.bxec-outlook-banner div.bxec-ob-link{white-space: nowrap; margin-left: 5px;}
+div.bxec-outlook-banner div.bxec-ob-link a{text-decoration: none !important;}
+div.bxec-outlook-banner div.bxec-ob-link a img.bxec-outlook{border-width: 0px !important; margin-right: 5px!important;}
+div.bxec-outlook-banner div.bxec-ob-link span{font-weight: bold;}
+table.bxec-banner-tbl img.bxec-hide-arrow{background-position:-55px -9px; height:12px; width:12px; margin-left: 4px; cursor: pointer;}
+div.bxecpl-ob-popup{background: #fff;border: 1px solid #B2B2B2;position: absolute;width: 200px;display: none;top:21px;z-index:15;}
+div.bxecpl-ob-popup div{padding: 2px 5px; margin: 1px; cursor: default; text-align: left; overflow: hidden;}
+div.bxecpl-ob-popup div.bxec-ob-over{background-color: #F2F8D6 !important;}
+
+
+div.bxec-user-con {background-color:white !important; border:1px solid #797979!important;}
+div.bxec-user-con div.content {border:1px solid #B2B2B2 !important;}
+
+div.bxec-user-con div.title {background: #D8E3E8 !important; height:22px !important; padding-top:5px !important;}
+div.bxec-user-con div.title td.title-text {font-size:12px !important; font-weight:bold !important; color: #052635 !important; padding:1px 3px 3px 16px !important; cursor:default !important; vertical-align:top !important; text-align: left !important;}
+div.bxec-user-con a.close {background: url(/bitrix/components/bitrix/intranet.event_calendar/templates/.default/images/iconkit.gif) -88px 0px !important; height:15px!important; width:16px!important; margin: 0 !important;}
+
+div.bx-clock-div{z-index: 600!important;}
+div.search-popup{z-index: 2500!important;}
+
+.bx-tooltip-simple{font-size:11px; font-family: Tahoma, Arial, Verdana, Sans-Serif; color:black; padding:5px; background-color: #ffffce; border:1px solid black; overflow: visible; line-height:normal; font-weight:normal; letter-spacing:normal !important; font-variant:normal !important; font-style:normal !important; text-indent:0 !important; word-spacing:normal !important; text-align:left !important; z-index: 5000; position: absolute;}
+.bx-tooltip-simple p, .bx-tooltip-simple font, .bx-tooltip-simple span, .bx-tooltip-simple div{display: inline!important;}
+
+/*text-overflow*/
+.bxec-text-overflow{display: block; -o-text-overflow: ellipsis; text-overflow: ellipsis; -moz-binding: url('/bitrix/js/fileman/text-overflow.xml#ellipsis'); overflow:hidden; white-space: nowrap;}
+
+/* Banner with big beauty icons*/
+div.bxec-banner{border: 1px solid #DEDEDE; width: 334px; height: 127px; position: relative;}
+div.bxec-banner-elem{border: 0px solid black; width: 110px; height: 65px; display: inline-block; float: left;}
+div.bxec-banner div.bxec-banner-icon{width: 53px; height: 57px; background-image: url(/bitrix/images/intranet/event_calendar/iconkit2.png); border: 0px dashed black; margin: 5px 0 5px 20px;}
+div.bxec-banner div.bxec-ban-exch div.bxec-banner-icon{margin: 5px 0 5px 30px!important;}
+div.bxec-ban-outlook div.bxec-banner-icon{background-position: -100px -61px;}
+div.bxec-ban-mobile div.bxec-banner-icon{background-position: -50px -62px;}
+div.bxec-ban-exch{width: 130px!important;}
+div.bxec-ban-exch div.bxec-banner-icon{background-position: 3px -63px;}
+div.bxec-ban-exch div.bxec-banner-text{cursor: default!important;}
+div.bxec-banner div.bxec-banner-text{height: 60px; background: url(/bitrix/images/intranet/event_calendar/ban-bg.png) repeat-x; position: relative; top: 0; left: 0; cursor: pointer;}
+div.bxec-banner div.bxec-banner-text div{font-family: verdana!important; font-size: 11px!important; text-align: center; margin: 0 15px 0 0;}
+div.bxec-banner div.bxec-ban-over{background: url(/bitrix/images/intranet/event_calendar/ban-bg-over.png) repeat-x!important;}
+div.bxec-ban-outlook div.bxec-banner-text div{padding: 15px 0px;}
+div.bxec-ban-mobile div.bxec-banner-text div{padding: 10px 0px;}
+div.bxec-ban-exch div.bxec-banner-text div{padding: 9px 5px 0; margin: 0!important;}
+
+div.bxec-banner-status-ok, div.bxec-banner-status-warn{width:14px; height: 14px; display: block; position: absolute; top: 44px; right: 36px;}
+div.bxec-banner-status-ok{background: url(/bitrix/images/intranet/event_calendar/iconkit2.png) no-repeat -93px -1px;}
+div.bxec-banner-status-warn{background: url(/bitrix/images/intranet/event_calendar/iconkit2.png) no-repeat -114px -1px;}
+
+div.bxec-banner-sep {background: url(/bitrix/images/intranet/event_calendar/iconkit2.png) no-repeat -154px -61px; width:2px; height: 60px; display: inline-block; float: left;margin: 67px 0 0 0!important;}
+div.bxec-ban-arrow {background: url(/bitrix/images/intranet/event_calendar/iconkit.gif) no-repeat -284px -72px transparent; width:14px; height: 10px; right: 3px; top: 23px; position: absolute; padding: 0!important; margin: 0!important;}
+div.bxec-banner div.bxec-close{background: url(/bitrix/images/intranet/event_calendar/iconkit2.png) no-repeat -136px -4px transparent;   cursor: pointer; height: 9px; position: absolute; right: 4px; top: 3px; width: 11px;}
+div.bxec-ban-popup{background: #fff;border: 1px solid #B2B2B2; z-index:100; display: none;top:21px;}
+div.bxec-ban-popup div{white-space: nowrap!important; padding: 3px 0 2px 8px; margin: 2px; cursor: pointer!important;}
+div.bxec-ban-popup div.bxec-over{background-color: #F2F8D6!important; color: #000000!important;}
+
+div.bxec-dav-new{margin: 8px; display: none;}
+div.bxec-dav-new table{border-collapse: collapse;}
+div.bxec-dav-new table td{padding: 2px;}
+div.bxec-dav-new table td, div.bxec-dav-new table td input, div.bxec-dav-new table td label{font-family: verdana!important; font-size: 11px!important; color: #000; line-height: normal!important;}
+div.bxec-dav-new td.bxec-dav-lab{text-align: right;}
+div.bxec-dav-new td.bxec-dav-inp{text-align: left;}
+div.bxec-dav-new table td label{margin: 2px 2px 0 0!important;}
+
+div.bxec-dav-list{margin: 5px; padding: 0!important; height: 200px!important; overflow: auto!important;}
+div.bxec-dav-item {margin: 0; position: relative; padding: 0; border: 1px solid #fff!important; background: #F3F3F3;}
+div.bxec-dav-item-1{ background: #FFFFFF;}
+
+div.bxec-dav-list div.bxec-dav-item-name{color: #000; font-weight: bold; font-family: verdana; font-size: 12px; cursor: pointer; background: transparent; padding: 5px 0 5px 15px;}
+div.bxec-dav-item a.bxec-dav-edit, div.bxec-dav-item a.bxec-dav-del, div.bxec-dav-item a.bxec-dav-col, div.bxec-dav-item a.bxec-dav-rest{cursor: pointer;  display: none; margin: 0 0 0 10px!important; font-size: 11px!important; font-weight: normal!important;}
+
+div.bxec-dav-item div.bxec-dav-item-name div.bxec-dav-del-cal{display: none; margin: 0 0 0 10px!important; font-size: 11px!important; font-weight: normal!important; color: #000000!important; text-decoration: none!important; float: right;}
+div.bxec-dav-item div.bxec-dav-item-name div.bxec-dav-del-cal input{margin: 0 2px 0 0 !important; display: block; float: right;}
+div.bxec-dav-item div.bxec-dav-item-name div.bxec-dav-del-cal label{display: block; float: right; margin: 0 5px 0 0 !important;}
+
+
+div.bxec-dav-item div.bxec-dav-icon{width: 18px; height: 18px; margin: 0!important; cursor: pointer; display: none; position: absolute; top: 0px;}
+
+div.bxec-dav-item div.bxec-ed-icon {background-position: -20px -47px; right: 40px;}
+div.bxec-dav-item div.bxec-del-icon {background-position: -0px -47px; right: 20px;}
+/* div.bxec-dav-item-over div.bxec-dav-icon{display: block!important;} */
+div.bxec-dav-item-over a.bxec-dav-edit{display: inline!important;}
+div.bxec-dav-item-over a.bxec-dav-del{display: inline!important;}
+
+
+div.bxec-dav-item-edited{border: 1px solid #E8E8E8!important;}
+div.bxec-dav-list  div.bxec-dav-item-edited div.bxec-dav-item-name{background: #E8E8E8!important;}
+
+div.bxec-dav-item-edited div.bxec-dav-new{display: block!important;}
+div.bxec-dav-item-edited a.bxec-dav-edit{display: none!important;}
+div.bxec-dav-item-edited a.bxec-dav-col{display: inline!important;}
+div.bxec-dav-item-edited a.bxec-dav-del{display: inline!important;}
+
+a.bxec-dav-add-link{display: block; float: right; margin: 10px 10px 0 0;}
+/*
+div.bxec-dav-item-edited div.bxec-ed-icon{display: none!important;}
+div.bxec-dav-item-edited div.bxec-del-icon{display: block!important;}
+*/
+div.bxec-dav-list div.bxec-dav-item-deleted div.bxec-dav-item-name span{color: #808080!important; text-decoration: line-through!important;}
+div.bxec-dav-list div.bxec-dav-item-deleted a.bxec-dav-rest{display: inline!important;}
+div.bxec-dav-list div.bxec-dav-item-deleted div.bxec-dav-del-cal{display: block!important;}
+div.bxec-dav-list div.bxec-dav-item-deleted a.bxec-dav-edit{display: none!important;}
+div.bxec-dav-list div.bxec-dav-item-deleted a.bxec-dav-col{display: none!important;}
+div.bxec-dav-list div.bxec-dav-item-deleted a.bxec-dav-del{display: none!important;}
+input.bxec-dav-no-change{color: #808080!important; font-style:italic!important;}
+img.bxec-dav-item-status{height: 14px; width: 14px; margin: 1px 5px -3px 0; background: red; visibility: hidden;}
+img.bxec-dav-ok{background: url(/bitrix/images/intranet/event_calendar/iconkit2.png) no-repeat -93px -2px; visibility: visible;}
+img.bxec-dav-error{background: url(/bitrix/images/intranet/event_calendar/iconkit2.png) no-repeat -114px -2px; visibility: visible;}
+
+div.bxec-caldav-title{font-family: verdana; font-size: 11px; margin: 10px 0 5px 5px!important; color: #3C3C3C!important;}
+div.bxec-dav-notice{background-color: #FEFDEA!important; border: 1px solid #D7D6BA; padding: 4px 10px!important; margin: 0 8px!important; line-height: 15px!important; font-size: 11px!important; font-family: Verdana!important;}
+
+div.bxec-mobile-cont{height: 280px; margin: 0 0 0 10px; overflow: auto; padding: 0 15px 0 0;}
+div.bxec-mobile-header{color: #0C283D; font-family: verdana; font-size: 15px; font-weight: bold; margin: 10px 0 10px 30px;}
+a.bxec-mobile-link{display: block; margin: 3px 0 0 20px; outline: none!important;}
+a.bxec-mobile-link div.bxec-arrow{width: 12px; height: 12px; margin: 0 4px 0 4px; display: block; float: left; background-position: -55px -9px;}
+a.bxec-link-hidden div.bxec-arrow{background-position: -65px -9px!important;}
+span.bxec-link{padding: 1px 5px; background: #fef8cd; border: 1px dashed #ffa8a8;}
+
+
+.bx-reserve-meeting-cont {cursor: pointer; white-space: nowrap;}
+.bx-reserve-meeting-link {display: inline-block; white-space: nowrap; margin-left:6px; vertical-align: top;}
+.bx-reserve-meeting-icon{background-image: url(/bitrix/images/intranet/event_calendar/iconkit.gif); width: 20px; height: 20px; background-position: -126px 0; display: inline-block;}
+
+
+
+
+
+

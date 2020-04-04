@@ -1,0 +1,16 @@
+.tel-lock {
+	background: url('images/lock.png') -9px -7px;
+	display: inline-block;
+	width: 13px;
+	height: 14px;
+	cursor: pointer;
+}
+.tel-lock-half {
+	background-position: -63px -7px;
+}
+.tel-lock-demo {
+	background-position: -119px -7px;
+}
+.tel-lock-holder-select, .tel-lock-holder-title { display: inline-block; position: relative; padding-left: 8px; }
+.tel-lock-holder-select .tel-lock { margin-bottom: -3px; }
+.tel-lock-holder-title .tel-lock { margin-bottom: -1px; }

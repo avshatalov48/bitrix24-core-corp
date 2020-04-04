@@ -1,0 +1,26 @@
+.tel-sip-paid-before {}
+
+.tel-sip-paid-content {
+	display: flex;
+	justify-content: space-between;
+}
+
+.tel-sip-paid-left {
+	display: inline-block;
+	width: 80%;
+}
+
+.tel-sip-paid-right {
+	display: inline-block;
+}
+
+.tel-sip-notice {
+	color: #515151;
+	font-size: 12px;
+	margin-bottom: 8px;
+	margin-top: 5px;
+}
+
+.tel-sip-button {
+	/*float: right;*/
+}

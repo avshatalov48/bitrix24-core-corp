@@ -1,0 +1,22 @@
+.voximplant-queue-lock-icon {
+	display: inline-block;
+	margin: 0 0 5px 8px;
+	width: 9px;
+	height: 12px;
+	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%209%2012%22%3E%3Cpath%20fill%3D%22%23FFF%22%20fill-rule%3D%22evenodd%22%20d%3D%22M7.952%205H9v7H0V5h1.052V3.412c.063-1.86%201.59-3.335%203.45-3.335s3.387%201.475%203.45%203.335V5zm-.956%200l.012-1.588C6.903%202.077%205.836%201.022%204.5.93c-1.336.09-2.403%201.147-2.508%202.482L2.005%205h4.99zM5.02%208.88v1.286H3.98V8.88c-.192-.155-.305-.388-.305-.635%200-.456.37-.825.825-.825.456%200%20.825.37.825.825%200%20.247-.113.48-.306.634z%22/%3E%3C/svg%3E');
+	background-repeat: no-repeat;
+	vertical-align: middle;
+}
+
+.vi-queue-popup-header {
+	color: #525c69;
+	margin-bottom: 10px;
+	padding-bottom: 20px;
+	border-bottom: 1px solid #dde2e6;
+}
+
+.vi-queue-popup-usage-item {
+	display: inline-block;
+	color: #80868e;
+	margin: 5px 16px 5px 0;
+}

@@ -1,0 +1,131 @@
+/**
+ * Bitrix OpenLines widget
+ * Widget pull commands (Pull Command Handler)
+ *
+ * @package bitrix
+ * @subpackage imopenlines
+ * @copyright 2001-2019 Bitrix
+ */
+
+import {SubscriptionType, VoteType} from "./const";
+
+class WidgetImPullCommandHandler
+{
+	static create(params = {})
+	{
+		return new this(params);
+	}
+
+	getModuleId()
+	{
+		return 'im';
+	}
+
+	constructor(params)
+	{
+		this.controller = params.controller;
+		this.store = params.store;
+		this.widget = params.widget;
+	}
+
+	handleMessageChat(params, extra, command)
+	{
+		if (params.message.senderId != this.controller.getUserId())
+		{
+			this.widget.sendEvent({
+				type: SubscriptionType.operatorMessage,
+				data: params
+			});
+
+			if (!this.store.state.widget.common.showed && !this.widget.onceShowed)
+			{
+				this.widget.onceShowed = true;
+				this.widget.open();
+			}
+		}
+	}
+}
+
+class WidgetImopenlinesPullCommandHandler
+{
+	static create(params = {})
+	{
+		return new this(params);
+	}
+
+	constructor(params = {})
+	{
+		this.controller = params.controller;
+		this.store = params.store;
+		this.widget = params.widget;
+	}
+
+	getModuleId()
+	{
+		return 'imopenlines';
+	}
+
+	handleSessionStart(params, extra, command)
+	{
+		this.store.commit('widget/dialog', {
+			sessionId: params.sessionId,
+			sessionClose: false,
+			userVote: VoteType.none,
+		});
+
+		this.widget.sendEvent({
+			type: SubscriptionType.sessionStart,
+			data: {
+				sessionId: params.sessionId
+			}
+		});
+	}
+
+	handleSessionOperatorChange(params, extra, command)
+	{
+		this.store.commit('widget/dialog', {
+			operator: params.operator
+		});
+
+		this.widget.sendEvent({
+			type: SubscriptionType.sessionOperatorChange,
+			data: {
+				operator: params.operator
+			}
+		});
+	}
+
+	handleSessionFinish(params, extra, command)
+	{
+		this.store.commit('widget/dialog', {
+			sessionId: params.sessionId,
+			sessionClose: true,
+		});
+
+		this.widget.sendEvent({
+			type: SubscriptionType.sessionFinish,
+			data: {
+				sessionId: params.sessionId
+			}
+		});
+
+		if (!params.spam)
+		{
+			this.store.commit('widget/dialog', {
+				operator: {
+					name: '',
+					firstName: '',
+					lastName: '',
+					workPosition: '',
+					avatar: '',
+					online: false,
+				}
+			});
+		}
+	}
+}
+
+export {
+	WidgetImPullCommandHandler,
+	WidgetImopenlinesPullCommandHandler,
+};

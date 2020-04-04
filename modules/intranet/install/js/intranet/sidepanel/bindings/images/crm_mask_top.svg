@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1865" height="137" viewBox="0 0 1865 137">
+  <g fill="none" fill-rule="evenodd">
+    <rect width="177" height="10" x="4" y="127" fill="#9EA6AD" opacity=".2" rx="2"/>
+    <rect width="177" height="10" x="275" y="127" fill="#9EA6AD" opacity=".2" rx="2"/>
+    <rect width="177" height="10" x="557" y="127" fill="#9EA6AD" opacity=".2" rx="2"/>
+    <rect width="177" height="10" x="840" y="127" fill="#9EA6AD" opacity=".2" rx="2"/>
+    <rect width="177" height="10" x="1122" y="127" fill="#9EA6AD" opacity=".2" rx="2"/>
+    <rect width="177" height="10" x="1404" y="127" fill="#9EA6AD" opacity=".2" rx="2"/>
+    <rect width="177" height="10" x="1684" y="127" fill="#9EA6AD" opacity=".2" rx="2"/>
+    <g transform="translate(1499)">
+      <rect width="43" height="36" x=".5" y=".5" stroke="#C6CDD3" rx="2"/>
+      <rect width="43" height="36" x="56.5" y=".5" stroke="#C6CDD3" rx="2"/>
+      <rect width="22" height="10" x="11" y="13" fill="#9EA6AD" opacity=".2" rx="2"/>
+      <rect width="22" height="10" x="67" y="13" fill="#9EA6AD" opacity=".2" rx="2"/>
+      <rect width="43" height="36" x="112.5" y=".5" stroke="#C6CDD3" rx="2"/>
+      <rect width="1" height="28" x="176" y="5" fill="#868D95" opacity=".181"/>
+      <rect width="43" height="36" x="196.5" y=".5" stroke="#C6CDD3" rx="2"/>
+      <rect width="96" height="36" x="252.5" y=".5" stroke="#C6CDD3" rx="2"/>
+      <rect width="22" height="10" x="123" y="13" fill="#9EA6AD" opacity=".2" rx="2"/>
+      <rect width="22" height="10" x="207" y="13" fill="#9EA6AD" opacity=".2" rx="2"/>
+      <rect width="76" height="10" x="263" y="13" fill="#9EA6AD" opacity=".2" rx="2"/>
+    </g>
+    <rect width="1377" height="12" x="1" y="7" fill="#9EA6AD" opacity=".2" rx="2"/>
+    <rect width="1826" height="32" y="58" fill="#525C69" fill-opacity=".286" opacity=".347" rx="2"/>
+    <rect width="31" height="31" x="1833.5" y="58.5" stroke="#525C69" opacity=".347" rx="2"/>
+    <rect width="10" height="10" x="1844" y="69" fill="#9EA6AD" opacity=".2" rx="2"/>
+  </g>
+</svg>

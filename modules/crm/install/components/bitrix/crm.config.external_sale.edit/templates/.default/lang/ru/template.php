@@ -1,0 +1,32 @@
+<?
+$MESS ['BPWC_WNCT_2LIST'] = "Список интернет-магазинов";
+$MESS ['BPWC_WNCT_2SYNC'] = "Синхронизация";
+$MESS ['BPWC_WNCT_TAB1'] = "Магазин";
+$MESS ['BPWC_WNCT_TAB1T'] = "Изменение параметров";
+$MESS ['BPWC_WNCT_DATE_CREATE'] = "Дата создания";
+$MESS ['BPWC_WNCT_DATE_UPDATE'] = "Дата последнего изменения";
+$MESS ['BPWC_WNCT_NAME'] = "Название";
+$MESS ['BPWC_WNCT_ACTIVE'] = "Активность";
+$MESS ['BPWC_WNCT_URL'] = "Адрес";
+$MESS ['BPWC_WNCT_LOGIN'] = "Логин";
+$MESS ['BPWC_WNCT_PASSWORD'] = "Пароль";
+$MESS ['BPWC_WNCT_SIZE'] = "Количество заказов, загружаемых за шаг";
+$MESS ['BPWC_WNCT_IMPORT_PERIOD'] = "При первой загрузке выбрать данные за последние (дней)";
+$MESS ['BPWC_WNCT_STATUS'] = "Статус связи";
+$MESS ['BPWC_WNCT_LABEL'] = "Дата последнего загруженного заказа";
+$MESS ['BPWC_WNCT_NOTE_HINT'] = "Необходимо указать логин и пароль пользователя магазина, который имеет право редактировать заказы во всех статусах и которому разрешен экспорт 1С";
+$MESS ['BPWC_WNCT_DATA_SYNC_PERIOD'] = "Период синхронизации (в минутах, 0 - отключить)";
+$MESS ['BPWC_WNCT_TAB2'] = "Настройки";
+$MESS ['BPWC_WNCT_TAB2T'] = "Дополнительные настройки";
+$MESS ['BPWC_WNCT_IMPORT_PROBABILITY'] = "Вероятность сделки (по умолчанию), %";
+$MESS ['BPWC_WNCT_IMPORT_RESPONSIBLE'] = "Ответственный сделки (по умолчанию)";
+$MESS ['BPWC_WNCT_IMPORT_PUBLIC'] = "Сделка доступна для всех (по умолчанию)";
+$MESS ['BPWC_WNCT_IMPORT_PREFIX'] = "Префикс названия сделки";
+$MESS['BPWC_WLC_NEED_FIRST_SYNC1'] = "Требуется первый запуск импорта вручную";
+$MESS['BPWC_WLC_NEED_FIRST_SYNC1_DO'] = "Запустить импорт";
+$MESS['BPWC_WLC_NEED_FIRST_SYNC2'] = "Работает";
+$MESS['BPWC_WLC_NEED_FIRST_SYNC3'] = "Ошибка импорта: ";
+$MESS['BPWC_WNCT_LAST_STATUS_DATE'] = "Дата последней синхронизации";
+$MESS['BPWC_WNCT_IMPORT_GROUP_ID'] = "Группа для уведомлений";
+$MESS['BPWC_WNCT_DO_SELECT'] = "Выбрать";
+?>

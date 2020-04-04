@@ -1,0 +1,3 @@
+<?
+$MESS["VI_PAGE_SIP_CLOUD_TITLE"] = "SIP connector: cloud PBX";
+?>

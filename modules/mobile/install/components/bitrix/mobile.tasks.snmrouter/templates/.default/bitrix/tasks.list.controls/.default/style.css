@@ -1,0 +1,203 @@
+/* tasks list */
+.tasks-list-controls {
+	background: #f0f3f5;
+}
+.mobile-grid-field-counter.hidden, .mobile-grid-field-sub-field.hidden {
+	display : none;
+}
+.mobile-task-list {
+	position: relative;
+	font-family: "Helvetica Neue", Helvetica, sans-serif;
+	background: #f0f3f5;
+	height: 100%;
+	margin-bottom: 47px;
+}
+.mobile-task-list-title {
+	position: relative;
+	font-size: 10px;
+	color: #566573;
+	text-align: center;
+	line-height: 32px;
+	font-weight: bold;
+}
+.mobile-grid-field {
+	position: relative;
+	margin-bottom:5px;
+	background: #fff;
+	border: 1px solid;
+	-webkit-border-image: url(images/borderg.png) 2 0 2 repeat;
+	   -moz-border-image: url(images/borderg.png) 2 0 2 repeat;
+		 -o-border-image: url(images/borderg.png) 2 0 2 repeat;
+			border-image: url(images/borderg.png) 2 0 2 repeat;
+}
+.mobile-grid-field-item {
+	position: relative;
+	width: 100%;
+	display: block;
+	font-size: 17px;
+	color: #000;
+	line-height: 20px;
+	outline: none;
+	box-sizing: border-box;
+	text-decoration: none;
+	background: #fff;
+	padding: 13px 70px 13px 45px;
+}
+.mobile-grid-field-item:after{
+	position: absolute;
+	top: 50%;
+	content: '';
+	z-index: 1;
+	border-top:  2px solid #8b919d;
+	border-right:2px solid #8b919d;
+	-webkit-transform: rotate(45deg);
+	   -moz-transform: rotate(45deg);
+		-ms-transform: rotate(45deg);
+		 -o-transform: rotate(45deg);
+			transform: rotate(45deg);
+}
+.mobile-grid-field-item:after{
+	right: 20px;
+	width: 8px;
+	height:8px;
+	margin-top:-5px;
+}
+
+.mobile-grid-field-item-icon {
+	position: absolute;
+	left: 13px;
+	top: 13px;
+	bottom: 0;
+	margin: 0;
+	width: 20px;
+	height: 20px;
+	background-color: red;
+	z-index: 2;
+	background: url(images/task-list-sprite.png) no-repeat 0 0;
+	background-size: 25px;
+}
+.mobile-grid-field-item-icon-view_role_responsible {
+	background-position: center 2px;
+}
+.mobile-grid-field-item-icon-view_role_accomplice {
+	background-position: center -49px;
+}
+.mobile-grid-field-item-icon-view_role_originator {
+	background-position: center -105px;
+}
+.mobile-grid-field-item-icon-view_role_auditor {
+	background-position: center -158px;
+}
+.mobile-grid-field-item-icon-all {
+	background-position: center -78px;
+}
+.mobile-grid-field-item-icon-favorite {
+	background-position: center -132px;
+}
+.mobile-grid-field-item-icon-projects {
+	background-position: center -25px;
+}
+.mobile-grid-field-item-icon-reports {
+	background-position: center -185px;
+}
+.mobile-grid-field-item-icon-apps {
+	background-position: center -238px;
+}
+.mobile-grid-field-item-icon-more {
+	background-position: center -212px;
+}
+.mobile-grid-field-item-icon-lead {
+	background-position: center -266px;
+}
+.mobile-grid-field-item-icon-folder {
+	width: 24px;
+	height: 24px;
+	background-position: center -293px;
+	overflow: hidden;
+	margin-left: -2px;
+}
+
+.mobile-grid-field-item-icon-folder img {
+	width: 24px;
+	display: block;
+}
+
+.mobile-grid-field-counter {
+	min-width: 12px;
+	padding: 0 4px;
+	font-size: 11px;
+	height: 20px;
+	border-radius: 10px;
+	background: #f73100;
+	color: #fff;
+	text-align: center;
+	line-height: 20px;
+	position: absolute;
+	z-index: 1;
+	margin: 0;
+	right: 38px;
+	top: 13px;
+	bottom: 0;
+}
+/*SUB*/
+.mobile-grid-field-sub-field {
+	position: relative;
+}
+.mobile-grid-field-sub-container{
+	padding-left:45px;
+	position:relative;
+}
+
+.mobile-grid-field-sub-item{
+	position: relative;
+	width: 100%;
+	display: block;
+	font-size: 15px;
+	color: #566573;
+	line-height: 20px;
+	outline: none;
+	box-sizing: border-box;
+	text-decoration: none;
+	background: #fff;
+	padding: 11px 70px 11px 0;
+	border-top:.5px solid #eeeff1;
+}
+.mobile-grid-field-sub-item:after{
+	position: absolute;
+	top: 50%;
+	content: '';
+	z-index: 1;
+	border-top:  2px solid #8b919d;
+	border-right:2px solid #8b919d;
+	-webkit-transform: rotate(45deg);
+	   -moz-transform: rotate(45deg);
+		-ms-transform: rotate(45deg);
+		 -o-transform: rotate(45deg);
+			transform: rotate(45deg);
+}
+.mobile-grid-field-sub-item:after{
+	right: 20px;
+	width: 8px;
+	height:8px;
+	margin-top:-5px;
+}
+
+.mobile-grid-field-sub-counter {
+	min-width: 12px;
+	padding: 0 4px;
+	font-size: 11px;
+	height: 20px;
+	margin-top:-10px;
+	border-radius: 10px;
+	background: #f73100;
+	color: #fff;
+	text-align: center;
+	line-height: 20px;
+	position: absolute;
+	z-index: 1;
+	right: 38px;
+	top: 50%;
+	bottom: 0;
+}
+.mobile-grid-field-sub-counter.mobile-grid-field-counter-gray {background:#78848f}
+.mobile-grid-field-sub-counter.mobile-grid-field-counter-green{background:#87c722}

@@ -1,0 +1,20 @@
+<?
+$MESS["DISK_VOLUME_START_TITLE"] = "Освободите место";
+$MESS["DISK_VOLUME_START_COMMENT"] = "Битрикс24 автоматически просканирует все документы и подскажет какие из них можно безопасно удалить и очистить место.";
+$MESS["DISK_VOLUME_START_FILES_NONE"] = "Сейчас на вашем диске нет файлов, но как только вы начнете работать с диском, Битрикс24 автоматически просканирует все документы и подскажет какие из них можно безопасно удалить и очистить место.";
+$MESS["DISK_VOLUME_START_COMMENT_EXPERT"] = "Кроме того, вы сможете перейти в экспертный режим и провести детальный анализ всех файлов на вашем диске.";
+$MESS["DISK_VOLUME_START_FILES_NONE"] = "Сейчас на вашем диске нет файлов, но как только вы начнете работать с диском, Битрикс24 автоматически просканирует все документы и подскажет какие из них можно безопасно удалить и очистить место.";
+$MESS["DISK_VOLUME_MEASURE_DATA"] = "Начать сканирование";
+$MESS["DISK_VOLUME_MEASURE_TITLE"] = "Поиск файлов для безопасной очистки...";
+$MESS["DISK_VOLUME_MEASURE_PROCESS"] = "Процесс сканирования может занять достаточно длительное время.";
+//$MESS["DISK_VOLUME_EXPAND_VOLUME"] = "Добавить место";
+$MESS["DISK_VOLUME_MAY_DROP_TITLE"] = "Безопасная очистка";
+$MESS["DISK_VOLUME_MAY_DROP"] = "Найденные объекты можно удалить без потери системных и личных данных.";
+$MESS["DISK_VOLUME_MAY_DROP_TRASHCAN"] = "Корзина";
+$MESS["DISK_VOLUME_MAY_DROP_TRASHCAN_NOTE"] = "Удаленные файлы";
+$MESS["DISK_VOLUME_MAY_DROP_UNNECESSARY_VERSION"] = "Неиспользуемые";
+$MESS["DISK_VOLUME_MAY_DROP_UNNECESSARY_VERSION_NOTE"] = "Старые версии файлов";
+$MESS["DISK_VOLUME_RUN_CLEANER"] = "Выполнить очистку";
+$MESS["DISK_VOLUME_AVAILABLE_SPACE"] = "свободного места после очистки";
+$MESS["DISK_VOLUME_CANNT_DROP"] = "Объектов для безопасного удаления не найдено.";
+$MESS["DISK_VOLUME_CANCEL"] = "Отменить";

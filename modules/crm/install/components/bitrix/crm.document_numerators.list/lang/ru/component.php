@@ -1,0 +1,21 @@
+<?
+$MESS['CRM_MODULE_NOT_INSTALLED'] = 'Модуль CRM не установлен.';
+$MESS['DOCUMENTGENERATOR_MODULE_NOT_INSTALLED'] = 'Модуль Documentgenerator не установлен.';
+$MESS['CRM_PERMISSION_DENIED'] = 'Доступ запрещен';
+$MESS['CRM_NUMERATOR_LIST_INTERNAL_ERROR_TITLE'] = 'Произошла внутренняя ошибка';
+$MESS['CRM_NUMERATOR_LIST_DELETE_ERROR'] = 'Не удалось удалить нумератор "#NUMERATOR_NAME#"';
+$MESS['CRM_NUMERATOR_LIST_EDIT_ERROR'] = 'Не удалось сохранить нумератор "#NUMERATOR_NAME#"';
+$MESS['CRM_NUMERATOR_LIST_CREATE_NUMERATOR'] = 'Создать нумератор';
+$MESS['CRM_NUMERATOR_LIST_PAGE_TITLE'] = 'Нумераторы для документов';
+$MESS['CRM_COLUMN_NUMERATOR_LIST_TEMPLATE'] = 'Шаблон номера';
+$MESS['CRM_NUMERATOR_LIST_FILTER_ENTITIES'] = 'Привязка к разделу СРМ';
+$MESS['CRM_COLUMN_NUMERATOR_LIST_NAME'] = 'Название нумератора';
+$MESS['CRM_COLUMN_NUMERATOR_LIST_TEMPLATE_NAME'] = 'Шаблоны, использующие нумератор';
+$MESS['CRM_COLUMN_NUMERATOR_LIST_ID'] = 'ID';
+$MESS['CRM_COLUMN_NUMERATOR_LIST_TYPE'] = 'Тип';
+$MESS['CRM_NUMERATOR_LIST_EDIT_TITLE'] = 'Перейти к странице редактирования этого нумератора';
+$MESS['CRM_NUMERATOR_LIST_EDIT'] = 'Редактировать';
+$MESS['CRM_NUMERATOR_LIST_DELETE_TITLE'] = 'Удалить этот нумератор';
+$MESS['CRM_NUMERATOR_LIST_DELETE'] = 'Удалить нумератор';
+$MESS['CRM_NUMERATOR_LIST_DELETE_CONFIRM'] = 'Вы уверены, что хотите удалить "%s"?';
+$MESS['CRM_ALL'] = 'Всего';

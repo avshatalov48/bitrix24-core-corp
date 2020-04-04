@@ -1,0 +1,397 @@
+<?
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
+{
+	die();
+}
+
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Web\Json;
+use Bitrix\Main\UI\Extension;
+
+/** @var \CAllMain $APPLICATION */
+/** @var array $arParams */
+/** @var array $arResult */
+/** @var \CBitrixComponentTemplate $this */
+
+$bodyClass = $APPLICATION->GetPageProperty("BodyClass");
+$APPLICATION->SetPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "") . "no-all-paddings no-background");
+Extension::load(["ui.buttons", "ui.buttons.icons", "ui.alerts", "ui.icons", "ui.forms"]);
+\CJSCore::init("color_picker");
+\CJSCore::Init(['sidepanel']);
+$this->addExternalCss($this->GetFolder() . '/utm.css');
+
+$name = htmlspecialcharsbx($arResult['ROW']['NAME']);
+
+$containerId = 'crm-analytics-source-ads-editor';
+?>
+
+<script type="text/javascript">
+	BX.ready(function () {
+		top.BX.onCustomEvent(
+			top,
+			'crm-analytics-source-edit',
+			[<?=Json::encode([
+				'row' => $arResult['ROW'],
+				'enabled' => $arResult['ROW']['ID'] > 0 && $arResult['ROW']['UTM_SOURCE'],
+				'added' => $arParams['IS_ADDED'],
+			])?>]
+		);
+	});
+</script>
+
+<div id="<?=htmlspecialcharsbx($containerId)?>" class="crm-analytics-source-wrap">
+
+	<?
+	if ($arResult['ROW']['ID'])
+	{
+		$this->SetViewTarget('pagetitle');
+		?>
+		<button id="crm-tracking-expenses" type="button" class="ui-btn ui-btn-light-border">
+			<?=Loc::getMessage('CRM_TRACKING_SOURCE_EDIT_EXPENSES')?>
+		</button>
+		<?
+		$this->EndViewTarget();
+	}
+
+	$APPLICATION->IncludeComponent(
+		'bitrix:ui.feedback.form',
+		'',
+		\Bitrix\Crm\Tracking\Provider::getFeedbackParameters()
+	);
+	?>
+
+	<?if (empty($arResult['ROW']['CONFIGURABLE'])):?>
+		<div class="crm-analytics-source-block crm-analytics-source-block-desc">
+				<span class="crm-analytics-source-icon <?=htmlspecialcharsbx($arResult['ROW']['ICON_CLASS'])?>">
+					<i></i>
+				</span>
+			<?
+			$sourceDesc = Loc::getMessage('CRM_TRACKING_SOURCE_EDIT_DESC_' . strtoupper($arResult['ROW']['CODE']) . '1')
+				?: Loc::getMessage('CRM_TRACKING_SOURCE_EDIT_DESC_' . strtoupper($arResult['ROW']['CODE']))
+					?: Loc::getMessage('CRM_TRACKING_SOURCE_EDIT_AUTO_CONFIGURED');
+			?>
+			<div class="crm-analytics-source-section">
+				<div class="crm-analytics-source-header"><?=Loc::getMessage('CRM_TRACKING_SOURCE_EDIT_CONNECTED', ['%name%' => $name])?></div>
+				<div class="crm-analytics-source-desc">
+						<span class="crm-analytics-source-desc-text">
+							<?=$sourceDesc?>
+						</span>
+				</div>
+			</div>
+		</div>
+
+		<?
+		$APPLICATION->IncludeComponent(
+			'bitrix:ui.button.panel',
+			'',
+			[
+				'BUTTONS' => ['close' => $arParams['PATH_TO_LIST'],]
+			]
+		);
+		return;
+	endif;?>
+
+	<form method="post">
+		<?=bitrix_sessid_post();?>
+
+		<?if ($arResult['ROW']['CODE']):?>
+			<div data-role="crm/tracking/desc"
+				class="crm-analytics-source-block crm-analytics-source-block-desc"
+				style="<?=($arResult['HAS_AUTH'] ? 'display: none;' : '')?>"
+			>
+				<span class="crm-analytics-source-icon <?=htmlspecialcharsbx($arResult['ROW']['ICON_CLASS'])?>">
+					<i></i>
+				</span>
+				<div class="crm-analytics-source-section">
+					<div class="crm-analytics-source-header"><?=Loc::getMessage('CRM_TRACKING_SOURCE_EDIT_TITLE', ['%name%' => $name])?></div>
+					<div class="crm-analytics-source-desc">
+						<span class="crm-analytics-source-desc-text">
+							<?=Loc::getMessage('CRM_TRACKING_SOURCE_EDIT_TEXT', ['%name%' => $name])?>
+							<?if (!$arResult['AD_ACCESSIBLE']):?>
+								<br>
+								<span class="ui-alert ui-alert-warning">
+									<?=Loc::getMessage('CRM_TRACKING_SOURCE_EDIT_UNAVAILABLE')?>
+								</span>
+							<?endif;?>
+						</span>
+					</div>
+				</div>
+			</div>
+
+			<?if ($arResult['AD_ACCESSIBLE']):?>
+				<div data-role="crm/tracking/connect"
+					class="crm-analytics-source-block"
+					style="<?=($arResult['HAS_AUTH'] ? 'display: none;' : '')?>"
+				>
+					<div class="crm-analytics-source-title">
+						<span class="crm-analytics-source-title-text">
+							<?=Loc::getMessage('CRM_TRACKING_SOURCE_EDIT_AUTH', ['%name%' => $name])?>
+						</span>
+					</div>
+					<div class="crm-analytics-source-connect">
+						<span class="crm-analytics-source-desc-text">
+							<?=Loc::getMessage('CRM_TRACKING_SOURCE_EDIT_AUTH_DESC', ['%name%' => $name])?>
+						</span>
+						<div class="crm-analytics-source-connect-btn">
+							<span class="crm-analytics-source-connect-btn-icon <?=htmlspecialcharsbx($arResult['ROW']['ICON_CLASS'])?>">
+								<i></i>
+							</span>
+
+							<a  data-role="crm/tracking/connect/btn" type="button"
+								href="<?=htmlspecialcharsbx($arResult['PROVIDER']['AUTH_URL'])?>"
+								onclick="BX.util.popup(this.href, 800, 600); return false;"
+								class="ui-btn ui-btn-light-border"
+							><?=Loc::getMessage('CRM_TRACKING_SOURCE_EDIT_CONNECT')?></a>
+						</div>
+					</div>
+				</div>
+
+				<div data-role="crm/tracking/connected"
+					class="crm-analytics-source-block crm-analytics-source-block-desc"
+					style="<?=(!$arResult['HAS_AUTH'] ? 'display: none;' : '')?>"
+				>
+					<span class="crm-analytics-source-icon <?=htmlspecialcharsbx($arResult['ROW']['ICON_CLASS'])?>">
+						<i></i>
+					</span>
+					<div class="crm-analytics-source-section">
+						<div class="crm-analytics-source-header"><?=Loc::getMessage('CRM_TRACKING_SOURCE_EDIT_CONNECTED', ['%name%' => $name])?></div>
+						<div class="crm-analytics-source-desc">
+							<div class="crm-analytics-source-user">
+								<a data-role="crm/tracking/profile/link"
+									href="<?=htmlspecialcharsbx($arResult['PROVIDER']['PROFILE']['LINK'])?>"
+									target="_top" class="crm-analytics-source-user-link"
+								>
+									<span data-role="crm/tracking/profile/pic"
+										class="crm-analytics-source-user-img"
+										<?if($arResult['PROVIDER']['PROFILE']['PICTURE']):?>
+										style="background-image: url(<?=htmlspecialcharsbx($arResult['PROVIDER']['PROFILE']['PICTURE'])?>)"
+										<?endif;?>
+									></span>
+
+									<span data-role="crm/tracking/profile/name" class="crm-analytics-source-user-name">
+										<?=htmlspecialcharsbx($arResult['PROVIDER']['PROFILE']['NAME'])?>
+									</span>
+								</a>
+								<button data-role="crm/tracking/profile/disconnect" type="button"
+									class="ui-btn ui-btn-light-border ui-btn-sm"
+								><?=Loc::getMessage('CRM_TRACKING_SOURCE_EDIT_DISCONNECT')?></button>
+							</div>
+						</div>
+					</div>
+				</div>
+			<?endif;?>
+		<?else:?>
+
+			<div class="crm-analytics-source-block crm-analytics-source-block-utm">
+				<div class="crm-analytics-utm-editor-block">
+					<div class="crm-analytics-utm-editor-field">
+						<div class="crm-analytics-utm-editor-subject">
+							<span class="crm-analytics-utm-editor-subject-text"><?= Loc::getMessage("CRM_TRACKING_SOURCE_EDIT_UTM_NAME") ?></span>
+						</div>
+						<div class="crm-analytics-utm-editor-field-input-block">
+							<input class="crm-analytics-utm-editor-field-input"
+								name="NAME" type="text" placeholder=""
+								value="<?=htmlspecialcharsbx($arResult['ROW']['NAME'])?>"
+							>
+						</div>
+						<div class="crm-analytics-utm-editor-field-decs"><?= Loc::getMessage("CRM_TRACKING_SOURCE_EDIT_UTM_NAME_DESC") ?></div>
+					</div>
+				</div>
+			</div>
+
+		<?endif;?>
+
+		<?if ($arResult['AD_ACCESSIBLE'] && $arResult['PROVIDER']['HAS_ACCOUNTS'] && $arResult['ROW']['CODE']):?>
+			<div class="crm-analytics-source-block"
+				data-role="crm/tracking/ad/accounts"
+				style="<?=($arResult['HAS_AUTH'] ? '' : 'display: none;')?>"
+			>
+				<div class="crm-analytics-source-title">
+					<span class="crm-analytics-source-title-text">
+						<?=Loc::getMessage('CRM_TRACKING_SOURCE_EDIT_AD_ACCOUNT')?>
+					</span>
+				</div>
+
+				<div class="ui-ctl ui-ctl-after-icon ui-ctl-dropdown">
+					<div class="ui-ctl-after ui-ctl-icon-angle"></div>
+					<select
+						data-role="crm/tracking/ad/accounts/view"
+						class="ui-ctl-element"
+					>
+						<option><?=Loc::getMessage('CRM_TRACKING_SOURCE_EDIT_LOADING')?>...</option>
+					</select>
+					<input type="hidden"
+						name="AD_ACCOUNT_ID"
+						data-role="crm/tracking/ad/accounts/data"
+						value="<?=htmlspecialcharsbx($arResult['ROW']['AD_ACCOUNT_ID'])?>"
+					>
+				</div>
+			</div>
+		<?endif;?>
+
+		<div class="crm-analytics-source-block crm-analytics-source-block-utm">
+			<div class="crm-analytics-utm-editor-block">
+				<div class="crm-analytics-utm-editor-field">
+					<div class="crm-analytics-utm-editor-subject">
+						<span class="crm-analytics-utm-editor-subject-text"><?= Loc::getMessage("CRM_TRACKING_SOURCE_EDIT_UTM_TAGS") ?></span>
+					</div>
+					<div class="crm-analytics-utm-editor-field-input-block">
+						<div class="crm-analytics-utm-editor-field-input-decs">utm_source</div>
+						<input name="UTM_SOURCE" class="crm-analytics-utm-editor-field-input"
+							type="text" placeholder=""
+							value="<?=htmlspecialcharsbx($arResult['ROW']['UTM_SOURCE'])?>"
+						>
+					</div>
+					<div class="crm-analytics-utm-editor-field-decs"><?= Loc::getMessage("CRM_TRACKING_SOURCE_EDIT_UTM_SOURCE_DESC") ?></div>
+				</div>
+			</div>
+		</div>
+
+		<?if (!$arResult['ROW']['CODE']):?>
+			<div class="crm-analytics-source-block crm-analytics-source-block-utm">
+				<div class="crm-analytics-utm-editor-block">
+					<div class="crm-analytics-utm-editor-subject">
+							<span class="crm-analytics-utm-editor-subject-text"><?= Loc::getMessage("CRM_TRACKING_SOURCE_EDIT_ICON_COLOR") ?></span>
+					</div>
+					<div class="crm-analytics-utm-editor-field-color">
+						<span class="ui-icon ui-icon-service-universal crm-analytics-utm-editor-color-icon">
+							<i id="crm-analytics-utm-editor-color-icon-value"></i>
+						</span>
+						<span id="crm-analytics-utm-editor-color-select" class="crm-analytics-utm-editor-color-select"><?= Loc::getMessage("CRM_TRACKING_SOURCE_EDIT_ICON_COLOR_CHOOSE") ?></span>
+						<input id="crm-analytics-utm-editor-color-input"
+							type="hidden" name="ICON_COLOR"
+							value="<?=htmlspecialcharsbx($arResult['ROW']['ICON_COLOR'])?>"
+						>
+					</div>
+				</div>
+			</div>
+
+			<div class="crm-analytics-source-block">
+				<div class="crm-analytics-utm-editor-block">
+					<div class="crm-analytics-utm-editor-field">
+						<div class="crm-analytics-utm-editor-subject">
+							<span class="crm-analytics-utm-editor-subject-text"><?= Loc::getMessage("CRM_TRACKING_SOURCE_EDIT_REF_DOMAIN_NAME") ?></span>
+						</div>
+						<div class="crm-analytics-utm-editor-field-input-block">
+							<?
+							$GLOBALS['APPLICATION']->includeComponent(
+								'bitrix:ui.tile.selector',
+								'',
+								array(
+									'ID' => 'ref-domain',
+									'INPUT_NAME' => 'REF_DOMAIN',
+									'MULTIPLE' => true,
+									'LIST' => $arResult['ROW']['REF_DOMAIN'],
+									'CAN_REMOVE_TILES' => true,
+									'SHOW_BUTTON_SELECT' => true,
+									'SHOW_BUTTON_ADD' => false,
+									'BUTTON_SELECT_CAPTION' => Loc::getMessage('CRM_TRACKING_SOURCE_EDIT_REF_DOMAIN_ADD'),
+									'BUTTON_SELECT_CAPTION_MORE' => Loc::getMessage('CRM_TRACKING_SOURCE_EDIT_REF_DOMAIN_ADD'),
+								)
+							);
+							?>
+						</div>
+						<div class="crm-analytics-utm-editor-field-decs"><?= Loc::getMessage("CRM_TRACKING_SOURCE_EDIT_REF_DOMAIN_HINT") ?></div>
+					</div>
+				</div>
+			</div>
+		<?endif;?>
+
+
+		<?if ($arResult['AD_UPDATE_ACCESSIBLE'] && $arResult['ROW']['CODE']):?>
+
+			<div class="crm-analytics-source-block">
+				<div class="crm-analytics-utm-editor-block">
+					<div class="crm-analytics-utm-editor-subject">
+						<span class="crm-analytics-utm-editor-subject-text"><?= Loc::getMessage("CRM_TRACKING_SOURCE_EDIT_REPLACE_TITLE") ?></span>
+					</div>
+					<div class="crm-analytics-source-contact">
+						<div class="crm-analytics-source-desc">
+							<span class="crm-analytics-source-desc-text"><?= Loc::getMessage("CRM_TRACKING_SOURCE_EDIT_REPLACE_EXISTED") ?></span>
+						</div>
+						<div class="crm-analytics-source-contact-block">
+							<div class="crm-analytics-source-contact-item">
+								<div class="crm-analytics-source-contact-title">
+									<span class="crm-analytics-source-contact-title-icon ui-icon ui-icon-common-phone">
+										<i></i>
+									</span>
+									<span class="crm-analytics-source-contact-title-text"><?= Loc::getMessage("CRM_TRACKING_SOURCE_EDIT_REPLACE_PHONE") ?></span>
+								</div>
+								<div class="crm-analytics-source-contact-content">
+									<span class="crm-analytics-source-contact-value">63-03-03</span>
+									<span class="crm-analytics-source-contact-value">8 (952) 118-91-12</span>
+									<span class="crm-analytics-source-contact-value">8 (911) 200-66-00</span>
+								</div>
+							</div>
+							<div class="crm-analytics-source-contact-item">
+								<div class="crm-analytics-source-contact-title">
+									<span class="crm-analytics-source-contact-title-icon ui-icon ui-icon-service-email">
+										<i></i>
+									</span>
+									<span class="crm-analytics-source-contact-title-text"><?= Loc::getMessage("CRM_TRACKING_SOURCE_EDIT_REPLACE_EMAIL") ?></span>
+								</div>
+								<div class="crm-analytics-source-contact-content">
+									<span class="crm-analytics-source-contact-value">zamki39@example.com</span>
+									<span class="crm-analytics-source-contact-value">shawervma@inbox.ru</span>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="crm-analytics-source-contact crm-analytics-source-contact-replace">
+						<div class="crm-analytics-source-desc">
+							<span class="crm-analytics-source-desc-text"><?= Loc::getMessage("CRM_TRACKING_SOURCE_EDIT_REPLACE_NEW") ?></span>
+						</div>
+						<div class="crm-analytics-source-contact-block">
+							<div class="crm-analytics-source-contact-item">
+								<div class="crm-analytics-source-contact-content">
+									<span class="crm-analytics-source-contact-value">8 (911) 200-66-00</span>
+								</div>
+							</div>
+							<div class="crm-analytics-source-contact-item">
+								<div class="crm-analytics-source-contact-content">
+									<div class="crm-analytics-source-contact-notice">
+										<span class="crm-analytics-source-contact-notice-text"><?= Loc::getMessage("CRM_TRACKING_SOURCE_EDIT_REPLACE_NOT_SETUP") ?></span>
+										<a class="crm-analytics-source-contact-notice-link" href="#"><?= Loc::getMessage("CRM_TRACKING_SOURCE_EDIT_REPLACE_SETUP") ?></a>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="crm-analytics-source-contact-settings">
+						<input class="crm-analytics-source-contact-checkbox" type="checkbox" id="replace">
+						<label class="crm-analytics-source-contact-label" for="replace"><?= Loc::getMessage("CRM_TRACKING_SOURCE_EDIT_REPLACE_BUTTON") ?></label>
+					</div>
+				</div>
+			</div>
+		<?endif;?>
+
+		<?$APPLICATION->IncludeComponent('bitrix:ui.button.panel', '', [
+			'BUTTONS' => [
+				'save', 'cancel' => $arParams['PATH_TO_LIST'],
+				($arResult['ROW']['ID'] && !$arResult['ROW']['CODE']) ? [
+					'TYPE' => 'remove',
+					'NAME' => 'archive',
+					'CAPTION' => Loc::getMessage('CRM_TRACKING_SOURCE_EDIT_ARCHIVE'),
+				] : null,
+			]
+		]);?>
+
+	</form>
+
+	<script type="text/javascript">
+		BX.ready(function () {
+			BX.Crm.Tracking.Source.Editor.init(<?=Json::encode(array(
+				'containerId' => $containerId,
+				'signedParameters' => $this->getComponent()->getSignedParameters(),
+				'componentName' => $this->getComponent()->getName(),
+				'provider' => $arResult['PROVIDER'],
+				'pathToExpenses' => $arResult['PATH_TO_EXPENSES'],
+				'mess' => array(
+					'errorAction' => Loc::getMessage('CRM_ADS_RTG_ERROR_ACTION'),
+					'dlgBtnClose' => Loc::getMessage('CRM_ADS_RTG_CLOSE'),
+					'dlgBtnCancel' => Loc::getMessage('CRM_ADS_RTG_APPLY'),
+				)
+			))?>);
+		});
+	</script>
+</div>

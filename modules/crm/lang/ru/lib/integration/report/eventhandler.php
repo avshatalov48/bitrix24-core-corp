@@ -1,0 +1,50 @@
+<?php
+
+$MESS['CRM_REPORT_LEAD_ANALYTIC_BATCH_TITLE'] = 'Анализ лидов';
+$MESS['CRM_REPORT_MANAGER_EFFICIENCY_BATCH_TITLE'] = 'Эффективность менеджеров';
+$MESS['CRM_REPORT_SALES_BATCH_TITLE'] = 'Продажи';
+$MESS['CRM_REPORT_CLIENTS_BATCH_TITLE'] = 'Клиенты';
+$MESS['CRM_REPORT_CROSS_CUTTING_BATCH_TITLE'] = 'Сквозная аналитика';
+
+$MESS['CRM_REPORT_COMMON_LEAD_BOARD_TITLE'] = 'Общий анализ';
+$MESS['CRM_REPORT_NEW_LEAD_BOARD_TITLE'] = 'Первичные';
+$MESS['CRM_REPORT_REPEATED_LEAD_BOARD_TITLE'] = 'Повторные';
+
+
+$MESS['CRM_REPORT_SALES_FUNNEL_BOARD_TITLE'] = 'Воронка продаж';
+$MESS['CRM_REPORT_SALES_FUNNEL_BY_HISTORY_BOARD_TITLE'] = 'Воронка продаж (конверсионная)';
+$MESS['CRM_REPORT_SALES_TARGET_BOARD_TITLE'] = 'План продаж';
+$MESS['CRM_REPORT_SALES_DYNAMIC_BOARD_TITLE'] = 'Динамика продаж';
+
+
+$MESS['CRM_REPORT_PERIOD_COMPARE_BOARD_TITLE'] = 'Сравнение периодов';
+$MESS['CRM_REPORT_MANAGER_EFFICIENCY_BOARD_TITLE'] = 'Вклад в продажи';
+$MESS['CRM_REPORT_EFFICIENCY_DYNAMIC_BOARD_TITLE'] = 'Динамика эффективности';
+$MESS['CRM_REPORT_CONTACT_DYNAMIC_BOARD_TITLE'] = 'Динамика контактов';
+$MESS['CRM_REPORT_COMPANY_DYNAMIC_BOARD_TITLE'] = 'Динамика компаний';
+$MESS['CRM_REPORT_STABLE_CLIENTS_BOARD_TITLE'] = 'Постоянные клиенты';
+$MESS['CRM_REPORT_FINANCE_RATING_BOARD_TITLE'] = 'Финансовый рейтинг';
+$MESS['CRM_REPORT_ADVERTISE_SUM_EFFECT_BOARD_TITLE'] = 'Окупаемость рекламы';
+$MESS['CRM_REPORT_TRAFFIC_EFFECT_BOARD_TITLE'] = 'Влияние трафика на продажи';
+
+$MESS['CRM_REPORT_TRAFFIC_EFFECT_CONFIG_BUTTON_TITLE'] = 'Настройка';
+
+$MESS['CRM_REPORT_TRAFFIC_EFFECT_FUNNEL_WIDGET_TITLE'] = 'Сквозная воронка - от рекламы до продажи';
+$MESS['CRM_REPORT_TRAFFIC_EFFECT_GRID_WIDGET_TITLE'] = 'Распределение по менеджерам';
+
+$MESS['CRM_REPORT_ADVERTISE_EFFECT_FUNNEL_WIDGET_TITLE'] = 'Эффективность рекламных каналов';
+$MESS['CRM_REPORT_ADVERTISE_EFFECT_GRID_WIDGET_TITLE'] = 'Окупаемость трафика';
+
+
+$MESS['CRM_REPORT_CLIENT_BASE_LINEAR_GRAPH_WIDGET_TITLE'] = 'Рост Клиентской базы';
+$MESS['CRM_REPORT_NEW_CLIENT_NUMBER_BLOCK_WIDGET_TITLE'] = 'Количество новых клиентов';
+$MESS['CRM_REPORT_REPEATED_CLIENT_NUMBER_BLOCK_WIDGET_TITLE'] = 'Количество повторных клиентов';
+
+
+
+
+
+
+
+
+

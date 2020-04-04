@@ -1,0 +1,92 @@
+.task-section-status-wrap {
+	display: block;
+	height: 11px;
+	position: relative;
+	margin: 2px 0;
+}
+
+.task-section-status-container { }
+
+.task-section-status-container-flex {
+	position: absolute;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	left: 0;
+	display: flex;
+	height: 11px;
+	flex-direction: row;
+	align-items: stretch;
+	justify-content: flex-start;
+	flex-wrap: nowrap;
+	background: #f1f1f1;
+	-webkit-border-radius: 6px;
+	-moz-border-radius: 6px;
+	border-radius: 6px;
+}
+
+.task-section-status-step {
+	position: relative;
+	overflow: hidden;
+	flex: 1 0;
+	font-size: 0;
+	cursor: pointer;
+	border-left: 1px solid rgba(119,119,119,.2);
+}
+
+.task-section-status-step:first-child {
+	-webkit-border-radius: 6px 0 0 6px;
+	-moz-border-radius: 6px 0 0 6px;
+	border-radius: 6px 0 0 6px;
+	border: none;
+}
+
+.task-section-status-step:last-child {
+	-webkit-border-radius: 0 6px 6px 0;
+	-moz-border-radius: 0 6px 6px 0;
+	border-radius: 0 6px 6px 0;
+}
+
+.task-section-status-step-item {
+	position: relative;
+	z-index: 10;
+	box-sizing: border-box;
+	height: 32px;
+	color: #525c68;
+	vertical-align: middle;
+}
+
+.task-section-status-step-item:after {
+	position: absolute;
+	top: 0;
+	right: 0;
+	z-index: 20;
+	width: 14px;
+	height: 32px;
+	background-image: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNCIgaGVpZ2h0PSIzMiIgdmlld0JveD0iMCAwIDE0IDMyIj4gIDxwYXRoIGZpbGw9IiNFQkYxRjQiIGZpbGwtcnVsZT0iZXZlbm9kZCIgZD0iTS0wLjAwMDIwMDAwMDAwMiwwIEMxLjEwNTgsMCAyLjMwNzgsMC44NDQgMi42ODQ4LDEuODgyIEw3LjY2MTgsMTUuNjEzIEM3Ljg0OTgsMTYuMTMxIDcuODQwOCwxNi45NjQgNy42Mzk4LDE3LjQ4MiBMMi43MjU4LDMwLjEzNiBDMi4zMjU4LDMxLjE2NiAxLjExMjgsMzIgLTAuMDAwMjAwMDAwMDAyLDMyIEwxMy45NzYzMDQxLDMyIEwxMy45NzYzMDQxLDAgTC0wLjAwMDIwMDAwMDAwMiwwIFoiLz48L3N2Zz4=);
+	background-size: cover;
+	content: '';
+}
+
+.task-section-status-container .task-section-status-step:last-child .task-section-status-step-item:after { content: normal; }
+
+.task-section-status-step-item-text {
+	position: relative;
+	overflow: hidden;
+	box-sizing: border-box;
+	padding: 1px 15px 0 10px;
+	width: 100%;
+	height: 32px;
+	border-bottom: 2px solid #ccc;
+	border-radius: 2px;
+	background-color: #dae0e5;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font: 600 12px/29px "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	cursor: pointer;
+	transition: all 250ms ease;
+}
+
+.task-section-status-step-item-text-selected {
+	color: #fff;
+}

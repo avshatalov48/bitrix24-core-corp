@@ -1,0 +1,72 @@
+.crm-feed-client-more-link {
+	font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+	font-size:12px; 
+	line-height:13px; 
+	margin-top:3px; 
+	padding-left:7px;
+	text-decoration:underline;
+	color:#A8A8A8;
+	cursor:pointer;
+}
+
+.feed-activity-client-popup
+{
+    position: relative;
+    max-height: 250px;
+    width: 330px;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+/*.structure-dept-block, .structure-move-employee, */
+.feed-activity-client-popup {font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;}
+
+.feed-activity-client-popup a
+/*,.structure-dept-block a */
+{text-decoration: none; color: #2067B0;}
+.feed-activity-client-popup a:hover
+/*, .structure-dept-block a:hover */
+{text-decoration: underline; color: #2067B0;}
+
+.feed-activity-client-block {
+	height:30px; margin:8px 8px 0 9px; padding:0 0 0 34px; position:relative;
+}
+
+.feed-activity-client-avatar {
+    background:url("images/activity_sprite.png") no-repeat 1px 1px #fff;
+    border:1px solid #f6f7f7;
+    box-shadow: 0 0 3px rgba(172,172,172,0.6);
+    height:21px;
+    left:0;
+    top:0;
+    padding:1px;
+    position:absolute;
+    width:21px;
+}
+
+.feed-activity-client-name {
+	color:#000; 
+	font-size:11px; 
+	line-height:12px; 
+	margin-top:3px; 
+	overflow:hidden; 
+	text-overflow:ellipsis; 
+	white-space:nowrap; 
+	display:inline-block;
+	width:150px;
+}
+.feed-activity-client-comm {
+	color:#000; 
+	font-size:11px; 
+	line-height:12px; 
+	margin-top:3px; 
+	overflow:hidden; 
+	text-overflow:ellipsis; 
+	white-space:nowrap; 
+	display:inline-block;
+	max-width:100px;
+}
+.feed-activity-client-company {color:#5d5d5d; font-size:10px; line-height:11px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.feed-activity-client-company {
+    display:inline-block; max-width:127px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}

@@ -1,0 +1,7 @@
+<?
+$MESS["TASKS_SONET_LOG_DESCRIPTION"] = "описание";
+$MESS["TASKS_SONET_LOG_RESPONSIBLE_ID"] = "Ответственный";
+$MESS["TASKS_SONET_LOG_LABEL_TITLE"] = "Задача";
+$MESS["TASKS_SONET_LOG_STATUS_CHANGED"] = "Изменен статус задачи";
+$MESS["TASKS_SONET_LOG_STATUS"] = "Статус";
+$MESS["TASKS_SONET_LOG_TAGS"] = "Теги:";

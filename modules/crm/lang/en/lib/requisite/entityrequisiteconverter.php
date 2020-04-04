@@ -1,0 +1,3 @@
+<?
+$MESS["CRM_ENTITY_RQ_CONV_INTRO"] = "You no longer have to enter details every time you create a new invoice. Provide your contact details once and then use this data in any CRM entity. We recommend you convert old details to new ones for further use. <b>The \"address\" field will also be copied but hidden.</b> <a id=\"#EXEC_ID#\" href=\"#EXEC_URL#\">Convert Now</a> <a id=\"#SKIP_ID#\" href=\"#SKIP_URL#\">Skip</a>";
+?>

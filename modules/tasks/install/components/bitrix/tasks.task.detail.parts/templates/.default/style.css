@@ -1,0 +1,14 @@
+.task-detail-checklist-hide-completed .task-detail-checklist-item-complete {
+	display: none !important;
+}
+
+#task-detail-checklist-show-completed {
+	display: none;
+}
+
+.task-detail-checklist-hide-completed #task-detail-checklist-show-completed {
+	display: inline-block;
+}
+.task-detail-checklist-hide-completed #task-detail-checklist-hide-completed {
+	display: none;
+}

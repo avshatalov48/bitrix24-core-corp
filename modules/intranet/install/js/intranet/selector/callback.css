@@ -1,0 +1,13 @@
+.feed-add-post-destination.feed-add-post-destination-departments,
+.ui-tile-selector-item.ui-tile-selector-item-departments {
+	background-color: #e2e3e5;
+	color: #535c69!important;
+}
+
+.feed-add-post-destination.feed-add-post-destination-departments .feed-add-post-del-but {
+	background-position: -70px -61px;
+}
+
+.ui-tile-selector-item.ui-tile-selector-item-departments .ui-tile-selector-item-remove {
+	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%228%22%20height%3D%228%22%20viewBox%3D%220%200%208%208%22%3E%3Cpath%20fill%3D%22%23B7B7B7%22%20fill-rule%3D%22evenodd%22%20d%3D%22M5.073%203.657l2.12-2.12L5.778.12l-2.12%202.12L1.537.12.12%201.538l2.12%202.12-2.12%202.12%201.417%201.417%202.12-2.12%202.12%202.12%201.417-1.417-2.12-2.12z%22/%3E%3C/svg%3E');
+}

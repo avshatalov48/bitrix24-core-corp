@@ -1,0 +1,22 @@
+<?
+$MESS["DISK_VOLUME_FILE_DELETE_OK"] = "Файл удален";
+$MESS["DISK_VOLUME_GROUP_FILE_DELETE_OK"] = "Файлы удалены";
+$MESS["DISK_VOLUME_FILE_VERSION_DELETE_OK"] = "Неиспользуемые версии файла удалены";
+$MESS["DISK_VOLUME_GROUP_FILE_VERSION_DELETE_OK"] = "Неиспользуемые версии файлов удалены";
+$MESS["DISK_VOLUME_UNNECESSARY_VERSION_DELETE_OK"] = "Неиспользуемые версии удалены";
+$MESS["DISK_VOLUME_FOLDER_DELETE_OK"] = "Папка удалена";
+$MESS["DISK_VOLUME_FOLDER_EMPTY_OK"] = "Содержимое папки удалено";
+$MESS["DISK_VOLUME_NOTIFY_STORAGE_STORAGE"] = "Предупреждение! Ваш диск <a href=\"#URL#\">\"#TITLE#\"</a> занимает слишком большой объём #FILE_SIZE#. ";
+$MESS["DISK_VOLUME_NOTIFY_STORAGE_USER"] = "Предупреждение! Ваш <a href=\"#URL#\">диск</a> занимает слишком большой объём #FILE_SIZE#.";
+$MESS["DISK_VOLUME_NOTIFY_STORAGE_GROUP"] = "Предупреждение! <a href=\"#URL#\">Диск</a> вашей группы \"#TITLE#\" занимает слишком большой объём #FILE_SIZE#.";
+$MESS["DISK_VOLUME_NOTIFY_STORAGE_TRASHCAN"] = "Предупреждение! <a href=\"#URL#\">Ваша корзина</a> занимает слишком большой объём #FILE_SIZE#.";
+$MESS["DISK_VOLUME_NOTIFY_STORAGE_UPLOADED"] = "Предупреждение! Ваша папка <a href=\"#URL#\">\"Загруженные файлы#\"</a> занимает слишком большой объём #FILE_SIZE#.";
+$MESS["DISK_VOLUME_NOTIFY_FOLDER"] = "Предупреждение! Ваша папка <a href=\"#URL#\">\"#TITLE#\"</a> занимает слишком большой объём #FILE_SIZE#.";
+$MESS["DISK_VOLUME_NOTIFY_CHAT"] = "Предупреждение! Файлы вашего чата \"#TITLE#\" занимают слишком большой объём #FILE_SIZE#.";
+$MESS["DISK_VOLUME_NOTIFY_RECOMMENDATION"] = "Рекомендации: перенесите файлы в другие хранилища; выполните <a href=\"#URL_TRASHCAN#\">очистку корзины</a>; <a href=\"#URL_CLEAR#\">удалите более ненужные файлы</a>. Иначе администратор выполнит очистку на своё усмотрение.";
+$MESS["DISK_VOLUME_NOTIFICATION_SEND_OK"] = "Предупреждение отправлено";
+$MESS["DISK_VOLUME_DATA_DELETED"] = "Данные удалены";
+$MESS["DISK_VOLUME_DATA_DELETED_QUEUE"] = "Предыдущие данные удалены. Шаг #QUEUE_STEP#/#QUEUE_LENGTH#";
+$MESS["DISK_VOLUME_PERFORMING_QUEUE"] = "Сбор данных. Шаг #QUEUE_STEP#/#QUEUE_LENGTH#";
+$MESS['DISK_VOLUME_ERROR_BAD_RIGHTS_FILE'] = "Недостаточно прав для доступа к файлу.";
+$MESS['DISK_VOLUME_ERROR_BAD_RIGHTS_FOLDER'] = "Недостаточно прав для доступа к папке.";

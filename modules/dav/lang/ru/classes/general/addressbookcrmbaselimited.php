@@ -1,0 +1,3 @@
+<?php
+$MESS["DAV_EXPORT_FILTER_RESPONSIBLE"] = "Свои";
+$MESS["DAV_EXPORT_FILTER_ALL"] = "Все";

@@ -1,0 +1,5 @@
+<?
+$MESS["DISK_OFFICE365_HANDLER_NAME"] = "Office365";
+$MESS["DISK_OFFICE365_HANDLER_ERROR_COULD_NOT_VIEW_FILE"] = "Не получается просмотреть данный файл с помощью Office365";
+$MESS["DISK_OFFICE365_HANDLER_NAME_STORAGE"] = "Office365";
+?>

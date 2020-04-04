@@ -1,0 +1,681 @@
+<?php
+namespace Bitrix\ImOpenLines\Model;
+
+use \Bitrix\Main,
+	\Bitrix\Main\Loader,
+	\Bitrix\Main\UserTable,
+	\Bitrix\Main\ORM\Event,
+	\Bitrix\Main\Type\DateTime,
+	\Bitrix\Main\ORM\Query\Join,
+	\Bitrix\Main\ORM\EventResult,
+	\Bitrix\Main\Localization\Loc,
+	\Bitrix\Main\ORM\Fields\TextField,
+	\Bitrix\Main\ORM\Data\DataManager,
+	\Bitrix\Main\ORM\Fields\StringField,
+	\Bitrix\Main\ORM\Fields\IntegerField,
+	\Bitrix\Main\Entity\Validator\Length,
+	\Bitrix\Main\ORM\Fields\BooleanField,
+	\Bitrix\Main\ORM\Fields\DatetimeField,
+	\Bitrix\Main\ORM\Fields\Relations\Reference;
+
+use \Bitrix\ImOpenLines\Integrations\Report\Statistics;
+
+
+Loc::loadMessages(__FILE__);
+
+/**
+ * Class SessionTable
+ *
+ * Fields:
+ * <ul>
+ * <li> ID int mandatory
+ * <li> MODE string(255)  default 'input'
+ * <li> SOURCE string(255) optional
+ * <li> STATUS int optional
+ * <li> CONFIG_ID int optional
+ * <li> USER_ID int mandatory
+ * <li> OPERATOR_ID int mandatory
+ * <li> USER_CODE string(255) optional
+ * <li> CHAT_ID int mandatory
+ * <li> MESSAGE_COUNT int optional
+ * <li> START_ID int mandatory
+ * <li> END_ID int mandatory
+ * <li> CRM bool optional default 'N'
+ * <li> CRM_CREATE bool optional default 'N'
+ * <li> CRM_ACTIVITY_ID int optional
+ * <li> DATE_CREATE datetime optional
+ * <li> DATE_MODIFY datetime optional
+ * <li> WAIT_ANSWER bool optional default 'Y'
+ * <li> WAIT_ACTION bool optional default 'N'
+ * <li> VOTE_ACTION bool optional default 'N'
+ * <li> CLOSED bool optional default 'N'
+ * <li> PAUSE bool optional default 'N'
+ * <li> WORKTIME bool optional default 'Y'
+ * <li> QUEUE_HISTORY string optional
+ * <li> VOTE int optional
+ * <li> VOTE_HEAD int optional
+ * <li> COMMENT_HEAD text optional
+ * </ul>
+ *
+ * @package Bitrix\Imopenlines
+ **/
+
+class SessionTable extends DataManager
+{
+	/**
+	 * Returns DB table name for entity.
+	 *
+	 * @return string
+	 */
+	public static function getTableName()
+	{
+		return 'b_imopenlines_session';
+	}
+
+	/**
+	 * Returns entity map definition.
+	 *
+	 * @return array
+	 * @throws Main\SystemException
+	 */
+	public static function getMap()
+	{
+		return array(
+			new IntegerField('ID', [
+				'primary' => true,
+				'autocomplete' => true,
+				'title' => Loc::getMessage('SESSION_ENTITY_ID_FIELD'),
+			]),
+			new StringField('MODE', array(
+				'validation' => [__CLASS__, 'validateMode'],
+				'title' => Loc::getMessage('SESSION_ENTITY_MODE_FIELD'),
+				'default_value' => 'input',
+			)),
+			new StringField('SOURCE', [
+				'validation' => [__CLASS__, 'validateSource'],
+				'title' => Loc::getMessage('SESSION_ENTITY_SOURCE_FIELD'),
+			]),
+			new IntegerField('STATUS', [
+				'default_value' => '0',
+			]),
+			new IntegerField('CONFIG_ID', [
+				'title' => Loc::getMessage('SESSION_ENTITY_CONFIG_ID_FIELD'),
+				'default_value' => '0',
+			]),
+			new IntegerField('USER_ID', [
+				'required' => true,
+				'title' => Loc::getMessage('SESSION_ENTITY_USER_ID_FIELD'),
+				'default_value' => '0',
+			]),
+			new Reference(
+				'USER',
+				UserTable::class,
+				Join::on('this.USER_ID', 'ref.ID')
+			),
+			new IntegerField('OPERATOR_ID', [
+				'required' => true,
+				'title' => Loc::getMessage('SESSION_ENTITY_OPERATOR_ID_FIELD'),
+				'default_value' => '0',
+			]),
+			new Reference(
+				'OPERATOR',
+				UserTable::class,
+				Join::on('this.OPERATOR_ID', 'ref.ID')
+			),
+			new StringField('USER_CODE', [
+				'validation' => [__CLASS__, 'validateUserCode'],
+				'title' => Loc::getMessage('SESSION_ENTITY_USER_CODE_FIELD'),
+			]),
+			new IntegerField('CHAT_ID', [
+				'required' => true,
+				'title' => Loc::getMessage('SESSION_ENTITY_CHAT_ID_FIELD'),
+				'default_value' => '0',
+			]),
+			new IntegerField('MESSAGE_COUNT', [
+				'title' => Loc::getMessage('SESSION_ENTITY_MESSAGE_FIELD_NEW_NEW'),
+				'default_value' => '0',
+			]),
+			new IntegerField('LIKE_COUNT', [
+				'title' => Loc::getMessage('SESSION_ENTITY_LIKE_COUNT_FIELD'),
+				'default_value' => '0',
+			]),
+			new IntegerField('START_ID', [
+				'required' => true,
+				'title' => Loc::getMessage('SESSION_ENTITY_START_ID_FIELD'),
+				'default_value' => '0',
+			]),
+			new IntegerField('END_ID', [
+				'required' => true,
+				'title' => Loc::getMessage('SESSION_ENTITY_END_ID_FIELD'),
+				'default_value' => '0',
+			]),
+			new BooleanField('CRM', array(
+				'values' => ['N', 'Y'],
+				'title' => Loc::getMessage('SESSION_ENTITY_CRM_FIELD'),
+				'default_value' => 'N',
+			)),
+			new BooleanField('CRM_CREATE', array(
+				'values' => ['N', 'Y'],
+				'title' => Loc::getMessage('SESSION_ENTITY_CRM_CREATE_FIELD'),
+				'default_value' => 'N',
+			)),
+			new BooleanField('CRM_CREATE_LEAD', array(
+				'values' => ['N', 'Y'],
+				'title' => Loc::getMessage('SESSION_ENTITY_CRM_CREATE_LEAD'),
+				'default_value' => 'N',
+			)),
+			new BooleanField('CRM_CREATE_COMPANY', array(
+				'values' => ['N', 'Y'],
+				'title' => Loc::getMessage('SESSION_ENTITY_CRM_CREATE_COMPANY'),
+				'default_value' => 'N',
+			)),
+			new BooleanField('CRM_CREATE_CONTACT', array(
+				'values' => ['N', 'Y'],
+				'title' => Loc::getMessage('SESSION_ENTITY_CRM_CREATE_CONTACT'),
+				'default_value' => 'N',
+			)),
+			new BooleanField('CRM_CREATE_DEAL', array(
+				'values' => ['N', 'Y'],
+				'title' => Loc::getMessage('SESSION_ENTITY_CRM_CREATE_DEAL'),
+				'default_value' => 'N',
+			)),
+			new IntegerField('CRM_ACTIVITY_ID', [
+				'title' => Loc::getMessage('SESSION_ENTITY_CRM_ACTIVITY_ID_FIELD'),
+				'default_value' => '0',
+			]),
+			new TextField('CRM_TRACE_DATA', [
+				'title' => Loc::getMessage('SESSION_ENTITY_CRM_TRACE_DATA_FIELD')
+			]),
+			new DatetimeField('DATE_CREATE', [
+				'title' => Loc::getMessage('SESSION_ENTITY_DATE_CREATE_FIELD'),
+				'default_value' => [__CLASS__, 'getCurrentDate'],
+			]),
+			new DatetimeField('DATE_OPERATOR', [
+				'title' => Loc::getMessage('SESSION_ENTITY_DATE_OPERATOR_FIELD'),
+			]),
+			new DatetimeField('DATE_MODIFY', [
+				'title' => Loc::getMessage('SESSION_ENTITY_DATE_MODIFY_FIELD'),
+				'default_value' => [__CLASS__, 'getCurrentDate'],
+			]),
+			new DatetimeField('DATE_OPERATOR_ANSWER', [
+				'title' => Loc::getMessage('SESSION_ENTITY_DATE_OPERATOR_ANSWER_FIELD_NEW'),
+			]),
+			new DatetimeField('DATE_OPERATOR_CLOSE', [
+				'title' => Loc::getMessage('SESSION_ENTITY_DATE_OPERATOR_CLOSE_FIELD_NEW'),
+			]),
+			new DatetimeField('DATE_CLOSE', [
+				'title' => Loc::getMessage('SESSION_ENTITY_DATE_CLOSE_FIELD'),
+			]),
+			new DatetimeField('DATE_FIRST_ANSWER', [
+				'title' => Loc::getMessage('SESSION_ENTITY_DATE_FIRST_ANSWER_FIELD_NEW'),
+			]),
+			new DatetimeField('DATE_LAST_MESSAGE', [
+				'title' => Loc::getMessage('SESSION_ENTITY_DATE_LAST_MESSAGE_FIELD'),
+			]),
+			new IntegerField('TIME_BOT', [
+				'title' => Loc::getMessage('SESSION_ENTITY_TIME_BOT_FIELD'),
+				'default_value' => '0',
+			]),
+			new IntegerField('TIME_FIRST_ANSWER', [
+				'title' => Loc::getMessage('SESSION_ENTITY_TIME_FIRST_ANSWER_FIELD_NEW'),
+				'default_value' => '0',
+			]),
+			new IntegerField('TIME_ANSWER', [
+				'title' => Loc::getMessage('SESSION_ENTITY_TIME_ANSWER_FIELD_NEW'),
+				'default_value' => '0',
+			]),
+			new IntegerField('TIME_CLOSE', [
+				'title' => Loc::getMessage('SESSION_ENTITY_TIME_CLOSE_FIELD'),
+				'default_value' => '0',
+			]),
+			new IntegerField('TIME_DIALOG', [
+				'title' => Loc::getMessage('SESSION_ENTITY_TIME_DIALOG_FIELD'),
+				'default_value' => '0',
+			]),
+			new BooleanField('WAIT_ACTION', array(
+				'values' => ['N', 'Y'],
+				'title' => Loc::getMessage('SESSION_ENTITY_WAIT_ACTION_FIELD'),
+				'default_value' => 'N',
+			)),
+			new BooleanField('WAIT_VOTE', array(
+				'values' => ['N', 'Y'],
+				'title' => Loc::getMessage('SESSION_ENTITY_WAIT_VOTE_FIELD'),
+				'default_value' => 'N',
+			)),
+			new BooleanField('WAIT_ANSWER', array(
+				'values' => ['N', 'Y'],
+				'title' => Loc::getMessage('SESSION_ENTITY_WAIT_ANSWER_FIELD_NEW'),
+				'default_value' => 'Y',
+			)),
+			new BooleanField('CLOSED', array(
+				'values' => ['N', 'Y'],
+				'title' => Loc::getMessage('SESSION_ENTITY_CLOSED_FIELD'),
+				'default_value' => 'N',
+			)),
+			new BooleanField('PAUSE', array(
+				'values' => ['N', 'Y'],
+				'title' => Loc::getMessage('SESSION_ENTITY_PAUSE_FIELD'),
+				'default_value' => 'N',
+			)),
+			new BooleanField('SPAM', array(
+				'values' => ['N', 'Y'],
+				'title' => Loc::getMessage('SESSION_ENTITY_SPAM_FIELD'),
+				'default_value' => 'N',
+			)),
+			new BooleanField('WORKTIME', array(
+				'values' => ['N', 'Y'],
+				'title' => Loc::getMessage('SESSION_ENTITY_WORKTIME_FIELD'),
+				'default_value' => 'Y',
+			)),
+			new BooleanField('SEND_NO_ANSWER_TEXT', array(
+				'values' => ['N', 'Y'],
+				'title' => Loc::getMessage('SESSION_ENTITY_SEND_NO_ANSWER_TEXT_FIELD'),
+				'default_value' => 'N',
+			)),
+			new TextField('QUEUE_HISTORY', [
+				'title' => Loc::getMessage('SESSION_ENTITY_QUEUE_HISTORY_FIELD'),
+				'default_value' => [],
+				'serialized' => true
+			]),
+			new IntegerField('VOTE', [
+				'required' => true,
+				'title' => Loc::getMessage('SESSION_ENTITY_VOTE_FIELD'),
+				'default_value' => '0',
+			]),
+			new IntegerField('VOTE_HEAD', [
+				'required' => true,
+				'title' => Loc::getMessage('SESSION_ENTITY_VOTE_HEAD_FIELD'),
+				'default_value' => '0',
+			]),
+			new TextField('COMMENT_HEAD', [
+				'title' => Loc::getMessage('SESSION_ENTITY_COMMENT_HEAD_FIELD'),
+			]),
+			new IntegerField('CATEGORY_ID', [
+				'title' => Loc::getMessage('SESSION_ENTITY_CATEGORY_ID_FIELD'),
+				'default_value' => '0',
+			]),
+			new IntegerField('EXTRA_REGISTER', [
+				'default_value' => '0',
+			]),
+			new StringField('EXTRA_USER_LEVEL', [
+				'validation' => [__CLASS__, 'validateExtraUserLevel'],
+			]),
+			new StringField('EXTRA_PORTAL_TYPE', [
+				'validation' => [__CLASS__, 'validateExtraPortalType'],
+			]),
+			new StringField('EXTRA_TARIFF', [
+				'validation' => [__CLASS__, 'validateExtraTariff'],
+			]),
+			new StringField('EXTRA_URL', [
+				'validation' => [__CLASS__, 'validateExtraUrl'],
+			]),
+			new StringField('SEND_FORM', [
+				'validation' => [__CLASS__, 'validateSendForm'],
+				'default_value' => 'none',
+			]),
+			new BooleanField('SEND_HISTORY', array(
+				'values' => ['N', 'Y'],
+				'default_value' => 'N',
+			)),
+			new IntegerField('PARENT_ID', [
+				'default_value' => '0',
+			]),
+			(new Reference(
+				'INDEX',
+				\Bitrix\ImOpenLines\Model\SessionIndexTable::class,
+				Join::on('this.ID', 'ref.SESSION_ID')
+			))->configureJoinType('inner'),
+			new Reference(
+				'CONFIG',
+				\Bitrix\ImOpenLines\Model\ConfigTable::class,
+				Join::on('this.CONFIG_ID', 'ref.ID')
+			),
+			new Reference(
+				'CHAT',
+				\Bitrix\Im\Model\ChatTable::class,
+				Join::on('this.CHAT_ID', 'ref.ID')
+			),
+			new Reference(
+				'CHECK',
+				\Bitrix\ImOpenLines\Model\SessionCheckTable::class,
+				Join::on('this.ID', 'ref.SESSION_ID')
+			),
+			new Reference(
+				'LIVECHAT',
+				\Bitrix\ImOpenLines\Model\LivechatTable::class,
+				Join::on('this.CONFIG_ID', 'ref.CONFIG_ID')
+			),
+			new BooleanField('IS_FIRST', array(
+				'values' => ['N', 'Y'],
+			)),
+		);
+	}
+
+	/**
+	 * @return string
+	 */
+	public static function getUfId()
+	{
+		return 'IMOPENLINES_SESSION';
+	}
+
+	/**
+	 * Returns selection by entity's primary key without slow fields
+
+	 * @param mixed $id Primary key of the entity
+	 * @return Main\ORM\Query\Result
+	 * @throws Main\ArgumentException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
+	public static function getByIdPerformance($id)
+	{
+		return parent::getByPrimary($id, Array(
+			'select' => self::getSelectFieldsPerformance()
+		));
+	}
+
+	/**
+	 * Returns fields for select without slow fields
+	 *
+	 * @param string $prefix
+	 * @return array
+	 * @throws Main\SystemException
+	 */
+	public static function getSelectFieldsPerformance($prefix = '')
+	{
+		$skipList = [];
+
+		$whiteList = [];
+		$fields = self::getEntity()->getFields();
+
+		foreach ($fields as $key => $field)
+		{
+			if (in_array($key, $skipList) || $field instanceof Reference)
+			{
+				continue;
+			}
+			$whiteList[] = $prefix? $prefix.'.'.$key: $key;
+		}
+
+		$ufData = \CUserTypeEntity::GetList([], ['ENTITY_ID' => self::getUfId()]);
+
+		while($ufResult = $ufData->Fetch())
+		{
+			$whiteList[] = $prefix? $prefix.'.'.$ufResult["FIELD_NAME"]: $ufResult["FIELD_NAME"];;
+		}
+
+		return $whiteList;
+	}
+
+	/**
+	 * @param array $parameters
+	 * @return Main\ORM\Query\Result
+	 * @throws Main\ArgumentException
+	 * @throws Main\LoaderException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
+	public static function getList(array $parameters = [])
+	{
+		if(!empty($parameters['select']) && in_array('CHAT', array_map('strtoupper', $parameters['select'])))
+		{
+			Loader::includeModule('im');
+		}
+
+		return parent::getList($parameters);
+	}
+
+	/**
+	 * @param Event $event
+	 * @return EventResult|void
+	 * @throws Main\ArgumentException
+	 * @throws Main\LoaderException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
+	public static function onAfterAdd(Event $event)
+	{
+		$id = $event->getParameter("id");
+		static::indexRecord($id);
+		Statistics\EventHandler::onSessionCreate($event);
+		return new EventResult();
+	}
+
+	/**
+	 * @param Event $event
+	 */
+	public static function onBeforeUpdate(Event $event)
+	{
+		Statistics\EventHandler::onSessionBeforeUpdate($event);
+	}
+
+	/**
+	 * @param Event $event
+	 * @return EventResult|void
+	 * @throws Main\ArgumentException
+	 * @throws Main\LoaderException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
+	public static function onAfterUpdate(Event $event)
+	{
+		$primary = $event->getParameter("id");
+		$id = $primary["ID"];
+		static::indexRecord($id);
+		Statistics\EventHandler::onSessionUpdate($event);
+		return new EventResult();
+	}
+
+	/**
+	 * @param $id
+	 * @throws Main\ArgumentException
+	 * @throws Main\LoaderException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
+	public static function indexRecord($id)
+	{
+		$id = (int)$id;
+		if($id == 0)
+			return;
+
+		$select = self::getSelectFieldsPerformance();
+		$select['CONFIG_LINE_NAME'] = 'CONFIG.LINE_NAME';
+
+		$record = parent::getByPrimary($id, Array(
+			'select' => $select
+		))->fetch();
+		if(!is_array($record))
+			return;
+
+		SessionIndexTable::merge(array(
+			'SESSION_ID' => $id,
+			'SEARCH_CONTENT' => self::generateSearchContent($record)
+		));
+	}
+
+	/**
+	 * @param array $fields Record as returned by getList
+	 * @return string
+	 * @throws Main\LoaderException
+	 */
+	public static function generateSearchContent(array $fields)
+	{
+		$crmCaption = \Bitrix\ImOpenLines\Crm\Common::generateSearchContent($fields['CRM_ACTIVITY_ID']);
+
+		$userId = array();
+
+		if($fields['CHAT_ID'] > 0 && $fields['CLOSED'] == 'Y' && \Bitrix\Main\Loader::includeModule('im'))
+		{
+			$userId[$fields['OPERATOR_ID']] = $fields['OPERATOR_ID'];
+			$userId[$fields['USER_ID']] = $fields['USER_ID'];
+
+			$transcriptLines = Array();
+			$cursor = \Bitrix\Im\Model\MessageTable::getList(array(
+				'select' => Array('MESSAGE', 'AUTHOR_ID'),
+				'filter' => array(
+					'=CHAT_ID' => $fields['CHAT_ID'],
+					'>=ID' => $fields['START_ID'],
+					'<=ID' => $fields['END_ID'],
+				),
+			));
+			while ($row = $cursor->fetch())
+			{
+				if ($row['AUTHOR_ID'] == 0)
+				{
+					continue;
+				}
+				$userId[$row['AUTHOR_ID']] = $row['AUTHOR_ID'];
+				$transcriptLines[] = $row['MESSAGE'];
+			}
+
+			$transcriptLines = implode(" ", $transcriptLines);
+			$transcriptLines = \Bitrix\Im\Text::removeBbCodes($transcriptLines);
+			if (strlen($transcriptLines) > 5000000)
+			{
+				$transcriptLines = substr($transcriptLines, 0, 5000000);
+			}
+		}
+		else
+		{
+			$transcriptLines = "";
+			$userId[$fields['OPERATOR_ID']] = $fields['OPERATOR_ID'];
+			$userId[$fields['USER_ID']] = $fields['USER_ID'];
+		}
+
+		$mapBuilderManager = \Bitrix\Main\Search\MapBuilder::create();
+
+		if(!empty($userId))
+		{
+			$mapBuilderManager->addUser($userId);
+		}
+		if(!empty($crmCaption))
+		{
+			foreach ($crmCaption as $item)
+			{
+				$mapBuilderManager->addText($item);
+			}
+		}
+		if(!empty($fields['EXTRA_URL']))
+		{
+			$mapBuilderManager->addText($fields['EXTRA_URL']);
+		}
+		if(!empty($fields['ID']))
+		{
+			$mapBuilderManager->addInteger($fields['ID']);
+			$mapBuilderManager->addText('imol|'.$fields['ID']);
+		}
+		if(!empty($transcriptLines))
+		{
+			$mapBuilderManager->addText($transcriptLines);
+		}
+
+		return $mapBuilderManager->build();
+	}
+
+	/**
+	 * Returns validators for SOURCE field.
+	 *
+	 * @return array
+	 * @throws Main\ArgumentTypeException
+	 */
+	public static function validateSource()
+	{
+		return array(
+			new Length(null, 255),
+		);
+	}
+	/**
+	 * Returns validators for SOURCE field.
+	 *
+	 * @return array
+	 * @throws Main\ArgumentTypeException
+	 */
+	public static function validateMode()
+	{
+		return array(
+			new Length(null, 255),
+		);
+	}
+	/**
+	 * Returns validators for USER_CODE field.
+	 *
+	 * @return array
+	 * @throws Main\ArgumentTypeException
+	 */
+	public static function validateUserCode()
+	{
+		return array(
+			new Length(null, 255),
+		);
+	}
+	/**
+	 * Returns validators for EXTRA_TARIFF field.
+	 *
+	 * @return array
+	 * @throws Main\ArgumentTypeException
+	 */
+	public static function validateExtraTariff()
+	{
+		return array(
+			new Length(null, 255),
+		);
+	}
+	/**
+	 * Returns validators for EXTRA_USER_LEVEL field.
+	 *
+	 * @return array
+	 * @throws Main\ArgumentTypeException
+	 */
+	public static function validateExtraUserLevel()
+	{
+		return array(
+			new Length(null, 255),
+		);
+	}
+	/**
+	 * Returns validators for EXTRA_PORTAL_TYPE field.
+	 *
+	 * @return array
+	 * @throws Main\ArgumentTypeException
+	 */
+	public static function validateExtraPortalType()
+	{
+		return array(
+			new Length(null, 255),
+		);
+	}
+	/**
+	 * Returns validators for EXTRA_URL field.
+	 *
+	 * @return array
+	 * @throws Main\ArgumentTypeException
+	 */
+	public static function validateExtraUrl()
+	{
+		return array(
+			new Length(null, 255),
+		);
+	}
+	/**
+	 * Returns validators for SEND_FORM field.
+	 *
+	 * @return array
+	 * @throws Main\ArgumentTypeException
+	 */
+	public static function validateSendForm()
+	{
+		return array(
+			new Length(null, 255),
+		);
+	}
+
+	/**
+	 * Return current date for DATE_CREATE field.
+	 */
+	public static function getCurrentDate()
+	{
+		return new DateTime();
+	}
+}

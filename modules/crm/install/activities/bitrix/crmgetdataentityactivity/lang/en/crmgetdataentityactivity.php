@@ -1,0 +1,13 @@
+<?
+$MESS["CRM_ACTIVITY_LABLE_SELECT_FIELDS"] = "Select fields:";
+$MESS["CRM_ACTIVITY_LABLE_PRINTABLE_VERSION"] = "Print version:";
+$MESS["CRM_ACTIVITY_ERROR_DT"] = "Incorrect document type.";
+$MESS["CRM_ACTIVITY_ERROR_FIELD_REQUIED"] = "The field '#FIELD#' is required.";
+$MESS["CRM_ACTIVITY_ERROR_FIELD_TYPE"] = "The field '#FIELD#' specifies incorrect type.";
+$MESS["CRM_ACTIVITY_ERROR_ENTITY_ID"] = "Entity ID";
+$MESS["CRM_ACTIVITY_ERROR_ENTITY_TYPE"] = "Entity type";
+$MESS["CRM_ACTIVITY_ERROR_ENTITY_LIST_FIELDS"] = "Select entity field.";
+$MESS["CRM_ACTIVITY_FIELD_MAIN_YES"] = "Yes";
+$MESS["CRM_ACTIVITY_FIELD_MAIN_NO"] = "No";
+$MESS["CRM_ACTIVITY_FIELD_USER_TITLE"] = "(User)";
+?>

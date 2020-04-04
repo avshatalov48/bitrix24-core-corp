@@ -1,0 +1,6 @@
+<?
+$MESS["DOCGEN_CONTROLLER_TEMPLATE_DOWNLOAD_ERROR"] = "Cannot download template file";
+$MESS["DOCGEN_CONTROLLER_TEMPLATE_NOT_FOUND"] = "Template was not found";
+$MESS["DOCGEN_CONTROLLER_TEMPLATE_FILE_PREFIX"] = "Template";
+$MESS["DOCGEN_CONTROLLER_MODULE_INVALID"] = "Cannot use the module #MODULE#";
+?>

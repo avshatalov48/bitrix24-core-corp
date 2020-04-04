@@ -1,0 +1,3 @@
+<?
+$MESS["CRM_BUTTON_EDIT_BUTTON_ID"] = "Widget ID";
+?>

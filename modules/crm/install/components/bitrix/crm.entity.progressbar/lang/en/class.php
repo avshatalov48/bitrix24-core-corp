@@ -1,0 +1,8 @@
+<?
+$MESS["CRM_ENTITY_ED_PROG_ORDER_CLOSE"] = "Complete order";
+$MESS["CRM_ENTITY_ED_PROG_ORDER_SHIPMENT_CLOSE"] = "Complete shipment";
+$MESS["CRM_ENTITY_ED_PROG_CLOSE"] = "Complete";
+$MESS["CRM_ENTITY_ED_PROG_DEAL_CLOSE"] = "Close deal";
+$MESS["CRM_ENTITY_ED_PROG_LEAD_CLOSE"] = "Complete lead";
+$MESS["CRM_ENTITY_ED_PROG_QUOTE_CLOSE"] = "Complete quote";
+?>

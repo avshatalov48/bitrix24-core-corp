@@ -1,0 +1,12 @@
+.gd-contacts-absent { font-size:95%; color: #C65252; padding-left: 5px; }
+.gd-contacts-online { font-size:95%; color: #1E9100; padding-left: 5px; }
+.fullist-links {margin-top: 10px; }
+.gd-contacts-main { padding-left: 5px; vertical-align: top; }
+.gd-contacts-icon-write { padding-right: 2px;}
+.gd-contacts-message { font-size:95%; }
+.gd-contacts-image-default { height: 50px; width: 50px; border: solid 1px #C4C4C4; }
+.gd-contacts-image-a { display: block; text-align: center; width: 50px; }
+.gd-contacts-icon { padding-top: 2px; padding-left: 5px;  vertical-align: top; }
+.gd-contacts-message-top { padding-top: 2px; }
+.gd-contacts-vertical-spacer { height: 5px; width: 1px; }
+.gd-contacts-delimiter {border-bottom: solid 1px #C4C4C4; padding-top: 3px; padding-bottom: 3px; }

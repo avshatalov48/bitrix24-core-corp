@@ -1,0 +1,20 @@
+<?php
+$MESS["VOX_LINES_HEADER_ID"] = "ID";
+$MESS["VOX_LINES_HEADER_NAME"] = "Название";
+$MESS["VOX_LINES_HEADER_TYPE"] = "Тип";
+$MESS["VOX_LINES_HEADER_DESCRIPTION"] = "Описание";
+$MESS["VOX_LINES_MODE_LINK"] = "Привязанный";
+$MESS["VOX_LINES_MODE_RENT"] = "Арендованный";
+$MESS["VOX_LINES_MODE_SIP"] = "SIP подключение";
+$MESS["VOX_LINES_MODE_GROUP"] = "Группа номеров";
+$MESS["VOX_LINES_DESCRIPTION_GROUP"] = "Суммарный месячный платеж #PRICE#";
+$MESS["VOX_LINES_ACTION_PROLONG_CALLER_ID"] = "Продлить привязку номера";
+$MESS["VOX_LINES_ACTION_VERIFY_CALLER_ID"] = "Подтвердить номер";
+$MESS["VOX_LINES_ACTION_ADD_TO_GROUP"] = "Включить в группу";
+$MESS["VOX_LINES_ACTION_REMOVE_FROM_GROUP"] = "Исключить из группы";
+$MESS["VOX_LINES_ACTION_CONFIGURE"] = "Настроить";
+$MESS["VOX_LINES_ACTION_DELETE"] = "Удалить";
+$MESS["VOX_LINES_ACTION_UNGROUP"] = "Расформировать группу";
+$MESS["VOX_LINES_DISCONNECT_NUMBER"] = "Отключить номер";
+$MESS["VOX_LINES_CANCEL_NUMBER_DISCONNECT"] = "Отменить отключение номера";
+$MESS["VOX_LINES_REMOVE_CONNECTION"] = "Удалить подключение";

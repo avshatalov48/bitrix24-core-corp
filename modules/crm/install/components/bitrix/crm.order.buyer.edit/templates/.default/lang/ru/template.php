@@ -1,0 +1,9 @@
+<?
+$MESS["CRM_ORDER_BUYER_EDIT_GENERAL_TITLE"] = "Регистрационная информация";
+$MESS["CRM_ORDER_BUYER_EDIT_GROUP_TITLE"] = "Группы покупателя";
+$MESS["CRM_ORDER_BUYER_EDIT_YES"] = "Да";
+$MESS["CRM_ORDER_BUYER_EDIT_NO"] = "Нет";
+$MESS["CRM_ORDER_BUYER_EDIT_BUTTON_SAVE"] = "Сохранить";
+$MESS["CRM_ORDER_BUYER_EDIT_BUTTON_APPLY"] = "Применить";
+$MESS["CRM_ORDER_BUYER_EDIT_BUTTON_CANCEL"] = "Отменить";
+?>

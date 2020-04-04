@@ -1,0 +1,4 @@
+<?php
+$MESS['CRM_PRODUCT_SECTION_NOT_SELECTED'] = '[не выбран]';
+$MESS['CRM_PRODUCT_CATALOG_NOT_SELECTED'] = '[не выбран]';
+?>

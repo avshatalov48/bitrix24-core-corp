@@ -1,0 +1,6 @@
+<?
+$MESS["TASKS_TTDP_TEMPLATESELECTOR_NO_TEMPLATE"] = "Create on template";
+$MESS["TASKS_TTDP_TEMPLATESELECTOR_CREATE_HINT"] = "Create task based on template";
+$MESS["TASKS_TTDP_TEMPLATESELECTOR_TO_LIST"] = "All templates";
+$MESS["TASKS_TTDP_TEMPLATESELECTOR_EMPTY"] = "No templates";
+?>

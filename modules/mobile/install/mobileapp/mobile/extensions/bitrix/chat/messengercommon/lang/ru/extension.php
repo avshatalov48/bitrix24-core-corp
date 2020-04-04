@@ -1,0 +1,32 @@
+<?
+$MESS["IM_STATUS_ONLINE"] = "Онлайн";
+$MESS["IM_STATUS_BOT"] = "Чат-бот";
+$MESS["IM_STATUS_NETWORK"] = "Битрикс24.Network";
+$MESS["IM_STATUS_OFFLINE"] = "Не в сети";
+$MESS["IM_STATUS_AWAY"] = "Отсутствую";
+$MESS["IM_STATUS_AWAY_TITLE"] = "Отсутствует #TIME#";
+$MESS["IM_STATUS_DND"] = "Не беспокоить";
+$MESS["IM_STATUS_MOBILE"] = "Онлайн, с телефона";
+$MESS["IM_STATUS_NA"] = "Не доступен";
+$MESS["IM_STATUS_GUEST"] = "Не доступен";
+$MESS["IM_STATUS_LINES-ONLINE"] = "Пользователь Открытых линий";
+$MESS["IM_STATUS_VACATION"] = "В отпуске";
+$MESS["IM_STATUS_VACATION_TITLE"] = "В отпуске до #DATE#";
+$MESS["IM_M_BIRTHDAY_MESSAGE_SHORT"] = "Празднует сегодня день рождения!";
+$MESS["IM_CL_USER_LINES"] = "Пользователь Открытых линий";
+$MESS["IM_CL_USER_B24"] = "Сотрудник";
+$MESS["IM_CL_USER_EXTRANET"] = "Внешний пользователь";
+$MESS["IM_CL_BOT"] = "Чат-бот";
+$MESS["IM_CL_USER"] = "Пользователь";
+$MESS["IM_F_FILE"] = "Файл";
+$MESS["IM_F_ATTACH"] = "Вложение";
+$MESS["IM_F_RATING"] = "Рейтинг";
+$MESS["IM_M_QUOTE_BLOCK"] = "Цитата";
+$MESS["IM_M_DELETED"] = "Это сообщение было удалено.";
+$MESS["IM_M_ICON"] = "иконка";
+$MESS["IM_CHAT_CALL"] = "Телефонный звонок";
+$MESS["IM_CHAT_LINES"] = "Открытая линия";
+$MESS["IM_CHAT_GENERAL"] = "Общий чат";
+$MESS["IM_CHAT_OPEN"] = "Открытый чат";
+$MESS["IM_CHAT_GROUP"] = "Закрытый чат";
+?>

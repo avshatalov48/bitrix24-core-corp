@@ -1,0 +1,6 @@
+<?
+$MESS["GROUP_MAP_ENTITY_ID_FIELD"] = "Unique ID";
+$MESS["GROUP_MAP_ENTITY_CONTROLLER_GROUP_ID_FIELD"] = "Controller group ID";
+$MESS["GROUP_MAP_ENTITY_REMOTE_GROUP_CODE_FIELD"] = "Group code at remote site";
+$MESS["GROUP_MAP_ENTITY_LOCAL_GROUP_CODE_FIELD"] = "Group code at local site";
+?>

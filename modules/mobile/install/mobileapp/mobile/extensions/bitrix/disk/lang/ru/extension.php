@@ -1,0 +1,22 @@
+<?
+$MESS["USER_DISK_EMPTY_FOLDER"] = "Папка пуста";
+$MESS["USER_DISK_ERROR"] = "Не удалось получить список файлов, что-то пошло не так...";
+$MESS["USER_DISK_ACCESS_DENIED"] = "У вас нет прав на просмотр каких-либо файлов этого пользователя";
+$MESS["USER_DISK_REMOVE"] = "Удалить";
+$MESS["USER_DISK_GET_PUBLIC_LINK"] = "Публичная ссылка";
+$MESS["USER_DISK_OPEN"] = "Открыть";
+$MESS["USER_DISK_REMOVE_FOLDER_CONFIRM"] = "Переместить папку \"%@\" в корзину?";
+$MESS["USER_DISK_REMOVE_FILE_CONFIRM"] = "Переместить файл \"%@\" в корзину?";
+$MESS["USER_DISK_CONFIRM_YES"] = "Да";
+$MESS["USER_DISK_CONFIRM_NO"] = "Нет";
+$MESS["USER_DISK_LINK_COPIED"] = "Публичная ссылка скопирована в буфер обмена";
+$MESS["USER_DISK_LINK_COPIED_FAIL"] = "К сожалению, создать публичную ссылку не удалось. Пожалуйста, попробуйте позже.";
+$MESS["USER_DISK_PUBLIC_LINK_GETTING"] = "Создается публичная ссылка...";
+$MESS["USER_DISK_ROLLBACK"] = "Отменить удаление \"%@\"?";
+$MESS["USER_DISK_MENU_UPLOAD"] = "Загрузить файл...";
+$MESS["USER_DISK_MENU_SORT_DATE_UPDATE"] = "По дате создания";
+$MESS["USER_DISK_MENU_SORT_DATE_CREATE"] = "По дате обновления";
+$MESS["USER_DISK_MENU_SORT_TYPE"] = "По типу";
+$MESS["USER_DISK_MENU_SORT_NAME"] = "По имени";
+$MESS["USER_DISK_MENU_SORT"] = "Сортировать";
+$MESS["USER_DISK_MENU_SORT_MIX"] = "Смешанная сортировка";

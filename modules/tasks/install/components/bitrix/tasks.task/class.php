@@ -1,0 +1,1616 @@
+<?
+/**
+ * Bitrix Framework
+ * @package bitrix
+ * @subpackage sale
+ * @copyright 2001-2015 Bitrix
+ */
+
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
+
+use Bitrix\Main\Application;
+use Bitrix\Main\Loader;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Tasks;
+use Bitrix\Tasks\Integration;
+use Bitrix\Tasks\Integration\Forum\Task\Topic;
+use Bitrix\Tasks\Integration\SocialNetwork;
+use Bitrix\Tasks\Integration\SocialNetwork\Group;
+use Bitrix\Tasks\Manager;
+use Bitrix\Tasks\Manager\Task;
+use Bitrix\Tasks\UI;
+use Bitrix\Tasks\Util;
+use Bitrix\Tasks\Util\Error\Collection;
+use Bitrix\Tasks\Util\Type;
+use Bitrix\Tasks\Util\Type\Structure;
+use Bitrix\Tasks\Util\Type\StructureChecker;
+use Bitrix\Tasks\Util\User;
+
+Loc::loadMessages(__FILE__);
+
+require_once(dirname(__FILE__).'/class/formstate.php');
+
+CBitrixComponent::includeComponentClass("bitrix:tasks.base");
+
+class TasksTaskComponent extends TasksBaseComponent
+{
+	const ERROR_TYPE_TASK_SAVE_ERROR = 'TASK_SAVE_ERROR';
+
+	const DATA_SOURCE_TEMPLATE = 	'TEMPLATE';
+	const DATA_SOURCE_TASK = 		'TASK';
+
+	protected $task = 			null;
+	protected $users2Get = 		array();
+	protected $groups2Get = 	array();
+	protected $tasks2Get = 		array();
+	protected $formData = 		false;
+
+	private $success =          false;
+	private $responsibles = 	false;
+	private $eventType =        false;
+	private $eventTaskId =      false;
+	private $eventOptions =     array();
+
+	protected $hitState =          null;
+
+	protected function processExecutionStart()
+	{
+		$this->hitState = new TasksTaskHitStateStructure($this->request->toArray());
+	}
+
+	/**
+	 * Function checks if required modules installed. Also check for available features
+	 * @throws Exception
+	 * @return bool
+	 */
+	protected static function checkRequiredModules(array &$arParams, array &$arResult, Collection $errors, array $auxParams = array())
+	{
+		if(!Loader::includeModule('socialnetwork'))
+		{
+			$errors->add('SOCIALNETWORK_MODULE_NOT_INSTALLED', Loc::getMessage("TASKS_TT_SOCIALNETWORK_MODULE_NOT_INSTALLED"));
+		}
+
+		if(!Loader::includeModule('forum'))
+		{
+			$errors->add('FORUM_MODULE_NOT_INSTALLED', Loc::getMessage("TASKS_TT_FORUM_MODULE_NOT_INSTALLED"));
+		}
+
+		return $errors->checkNoFatals();
+	}
+
+	/**
+	 * Function checks if user have basic permissions to launch the component
+	 * @throws Exception
+	 * @return bool
+	 */
+	protected static function checkPermissions(array &$arParams, array &$arResult, Collection $errors, array $auxParams = array())
+	{
+		parent::checkPermissions($arParams, $arResult, $errors, $auxParams);
+		static::checkRestrictions($arParams, $arResult, $errors);
+
+		if($errors->checkNoFatals())
+		{
+			// check task access
+			$taskId = intval($arParams[static::getParameterAlias('ID')]);
+			if($taskId)
+			{
+				try
+				{
+					$arResult['TASK_INSTANCE'] = CTaskItem::getInstanceFromPool($taskId, $arResult['USER_ID']);
+					$access = $arResult['TASK_INSTANCE']->checkCanRead();
+				}
+				catch(TasksException $e)
+				{
+					$access = false;
+				}
+
+				if(!$access)
+				{
+					$errors->add('ACCESS_DENIED.NO_TASK', Loc::getMessage('TASKS_TT_NOT_FOUND_OR_NOT_ACCESSIBLE'));
+				}
+			}
+		}
+
+		return $errors->checkNoFatals();
+	}
+
+	protected static function checkRestrictions(array &$arParams, array &$arResult, Collection $errors)
+	{
+		if(!\Bitrix\Tasks\Util\Restriction::canManageTask())
+		{
+			$errors->add('ACTION_NOT_ALLOWED.RESTRICTED', Loc::getMessage('TASKS_RESTRICTED'));
+		}
+	}
+
+	/**
+	 * Function checks and prepares only the basic parameters passed
+	 */
+	protected static function checkBasicParameters(array &$arParams, array &$arResult, Collection $errors, array $auxParams = array())
+	{
+		static::tryParseIntegerParameter($arParams[static::getParameterAlias('ID')], 0, true); // parameter keeps currently chosen task ID
+
+		return $errors->checkNoFatals();
+	}
+
+	/**
+	 * Function checks and prepares all the parameters passed
+	 * @return bool
+	 */
+	protected function checkParameters()
+	{
+		parent::checkParameters();
+		if($this->arParams['USER_ID'])
+		{
+			$this->users2Get[] = $this->arParams['USER_ID'];
+		}
+
+		static::tryParseIntegerParameter($this->arParams['GROUP_ID'], 0);
+		if($this->arParams['GROUP_ID'])
+		{
+			$this->groups2Get[] = $this->arParams['GROUP_ID'];
+		}
+
+		static::tryParseArrayParameter($this->arParams['SUB_ENTITY_SELECT']);
+		static::tryParseArrayParameter($this->arParams['AUX_DATA_SELECT']);
+
+		static::tryParseBooleanParameter($this->arParams['REDIRECT_ON_SUCCESS'], true);
+		static::tryParseURIParameter($this->arParams['BACKURL']);
+
+		return $this->errors->checkNoFatals();
+	}
+
+	/**
+	 * Allows to decide which data should be passed to $this->arResult, and which should not
+	 */
+	protected function translateArResult($arResult)
+	{
+		if(isset($arResult['TASK_INSTANCE']) && $arResult['TASK_INSTANCE'] instanceof CTaskItem)
+		{
+			$this->task = $arResult['TASK_INSTANCE']; // a short-cut to the currently selected task instance
+			unset($arResult['TASK_INSTANCE']);
+		}
+
+		parent::translateArResult($arResult); // all other will merge to $this->arResult
+	}
+
+	protected function processBeforeAction($trigger = array())
+	{
+		$request = static::getRequest()->toArray();
+
+		if(Type::isIterable($request['ADDITIONAL']))
+		{
+			$this->setDataSource(
+				$request['ADDITIONAL']['DATA_SOURCE']['TYPE'],
+				$request['ADDITIONAL']['DATA_SOURCE']['ID']
+			);
+		}
+
+		// set responsible id and multiple
+		if(Type::isIterable($trigger) && Type::isIterable($trigger[0]))
+		{
+			$action =& $trigger[0];
+			$taskData =& $action['ARGUMENTS']['data'];
+
+			if(Type::isIterable($taskData))
+			{
+				$this->setResponsibles($this->extractResponsibles($taskData));
+			}
+
+			$responsibles = $this->getResponsibles();
+
+			// invite all members...
+			static::inviteUsers($responsibles, $this->errors);
+			if(array_key_exists('SE_AUDITOR', $taskData))
+			{
+				static::inviteUsers($taskData['SE_AUDITOR'], $this->errors);
+			}
+			if(array_key_exists('SE_ACCOMPLICE', $taskData))
+			{
+				static::inviteUsers($taskData['SE_ACCOMPLICE'], $this->errors);
+			}
+
+			$this->setResponsibles($responsibles);
+
+			if(!empty($responsibles))
+			{
+				$taskData =& $action['ARGUMENTS']['data'];
+
+				// create here...
+
+				if($action['OPERATION'] == 'task.add')
+				{
+					// a bit more interesting
+					if(count($responsibles) > 1)
+					{
+						$taskData['MULTITASK'] = 'Y';
+
+						// this "root" task will have current user as responsible
+						// RESPONSIBLE_ID has higher priority than SE_RESPONSIBLE, so its okay
+						$taskData['RESPONSIBLE_ID'] = $this->userId;
+					}
+				}
+			}
+		}
+
+		return $trigger;
+	}
+
+	private function getTaskActionResult()
+	{
+		return $this->arResult['ACTION_RESULT']['task_action'];
+	}
+
+	protected function processAfterAction()
+	{
+		if(Type::isIterable($this->arResult['ACTION_RESULT']['task_action']) && !empty($this->arResult['ACTION_RESULT']['task_action']))
+		{
+			$op = $this->getTaskActionResult();
+			$actionTask = false;
+
+			if($op['SUCCESS'])
+			{
+				$this->processAfterSaveAction($op);
+
+				$this->setEventType($op['OPERATION'] == 'task.add' ? 'ADD' : 'UPDATE');
+				$this->setEventTaskId(intval($op['RESULT']['DATA']['ID']));
+				$this->setEventOption('STAY_AT_PAGE', !!$this->request['STAY_AT_PAGE']);
+
+				foreach ($op['ERRORS'] as $error)
+				{
+					if ($error['CODE'] == 'SAVE_AS_TEMPLATE_ERROR')
+					{
+						$this->errors->addWarning(
+							$error['CODE'],
+							Loc::getMessage('TASKS_TT_SAVE_AS_TEMPLATE_ERROR_MESSAGE_PREFIX') . ': ' . $error['MESSAGE']
+						);
+					}
+				}
+
+				if (!$this->errors->find(array('CODE' => 'SAVE_AS_TEMPLATE_ERROR'))->isEmpty())
+				{
+					$this->setEventOption('STAY_AT_PAGE', 'Y');
+				}
+				else
+				{
+					if($this->arParams['REDIRECT_ON_SUCCESS'])
+					{
+						$url = $this->makeRedirectUrl($op);
+						LocalRedirect($url);
+					}
+				}
+
+				$this->formData = false;
+				$this->success = true;
+				$actionTask = static::getOperationTaskId($op);
+			}
+			else
+			{
+				// merge errors
+				if(!empty($op['ERRORS']))
+				{
+					$this->errors->addForeignErrors($op['ERRORS'], array('CHANGE_TYPE_TO' => static::ERROR_TYPE_TASK_SAVE_ERROR));
+				}
+
+				$this->formData = Task::normalizeData($op['ARGUMENTS']['data']);
+				$this->success = false;
+			}
+
+			$this->arResult['COMPONENT_DATA']['ACTION'] = array(
+				'SUCCESS' => $this->success,
+				'ID' => $actionTask
+			);
+		}
+	}
+
+	// here we create all subtasks by template or task being copyed
+	protected function processAfterSaveAction(array $op)
+	{
+		$this->manageSubTasks();
+		$this->manageTemplates();
+	}
+
+	private function manageSubTasks()
+	{
+		Tasks\Item\Task::enterBatchState();
+
+		$operationResult = $this->getTaskActionResult();
+		$operation = $operationResult['OPERATION'];
+
+		if($operation == 'task.add')
+		{
+			$mainTaskId = static::getOperationTaskId($operationResult);
+			$this->createSubTasks($mainTaskId);
+		}
+
+		Tasks\Item\Task::leaveBatchState();
+	}
+
+	private function manageTemplates()
+	{
+		Tasks\Item\Task\Template::enterBatchState();
+
+		$operationResult = $this->getTaskActionResult();
+		$operation = $operationResult['OPERATION'];
+
+		$isAdd = $operation == 'task.add';
+		$isUpdate = $operation == 'task.update';
+
+		if($isAdd || $isUpdate) // in add or update
+		{
+			// todo: probably, when $isUpdate, try to update an existing template
+			// todo: also, delete existing template
+
+			$mainTaskId = static::getOperationTaskId($operationResult);
+			$this->createTemplate($mainTaskId);
+		}
+		// todo: move logic from \Bitrix\Tasks\Manager\Task\Template::manageTaskReplication() here
+
+		Tasks\Item\Task\Template::leaveBatchState();
+	}
+
+	private static function getOperationTaskId(array $operation)
+	{
+		return intval($operation['RESULT']['DATA']['ID']); // task.add and task.update always return TASK_ID on success
+	}
+
+	private function makeRedirectUrl(array $operation)
+	{
+		$actionAdd = $operation['OPERATION'] == 'task.add';
+		$resultTaskId = static::getOperationTaskId($operation);
+
+		$backUrl = $this->getBackUrl();
+		$url = $backUrl != '' ? Util::secureBackUrl($backUrl) : $GLOBALS["APPLICATION"]->GetCurPageParam('');
+
+		$action = 'view'; // having default backurl after success edit we go to view ...
+
+		// .. but there are some exceptions
+		$taskId = 0;
+		if($actionAdd)
+		{
+			$taskId = $resultTaskId;
+			if($this->request['STAY_AT_PAGE'])
+			{
+				$taskId = 0;
+				$action = 'edit';
+			}
+		}
+
+		$url = UI\Task::makeActionUrl($url, $taskId, $action);
+		$url = UI\Task::cleanFireEventUrl($url);
+		$url = UI\Task::makeFireEventUrl($url, $this->getEventTaskId(), $this->getEventType(), array(
+			'STAY_AT_PAGE' => $this->getEventOption('STAY_AT_PAGE')
+		));
+
+		if($actionAdd && $this->request['STAY_AT_PAGE']) // reopen form with the same parameters as the previous one
+		{
+			$initial = $this->hitState->exportFlat('INITIAL_TASK_DATA', '.');
+			// todo: a little spike for tags, refactor that later
+			if(array_key_exists('TAGS.0', $initial))
+			{
+				$initial['TAGS[0]'] = $initial['TAGS.0'];
+				unset($initial['TAGS.0']);
+			}
+
+			$url = Util::replaceUrlParameters($url, $initial, array_keys($initial));
+		}
+
+		return $url;
+	}
+
+	private function createTemplate($taskId)
+	{
+		$request = $this->getRequest();
+		$additional = $request['ADDITIONAL'];
+		if($additional && $additional['SAVE_AS_TEMPLATE'] == 'Y') // user specified he wanted to create template by this task
+		{
+			$task = new \Bitrix\Tasks\Item\Task($taskId, $this->userId); // todo: use Task::getInstance($taskId, $this->userId) here, when ready
+			if($task['REPLICATE'] != 'Y')
+			{
+				// create template here
+				$conversionResult = $task->transformToTemplate();
+				if($conversionResult->isSuccess())
+				{
+					$template = $conversionResult->getInstance();
+					// take responsibles directly from query, because task can not have multiple responsibles
+
+					$responsibles = $this->getResponsibles();
+					$respIds = array();
+					foreach($responsibles as $user)
+					{
+						$respIds[] = intval($user['ID']);
+					}
+					$template['RESPONSIBLES'] = $respIds;
+
+					// todo: move logic from \Bitrix\Tasks\Manager\Task\Template::manageTaskReplication() here,
+					// todo: mark the entire Manager namespace as deprecated
+					// $template['REPLICATE_PARAMS'] = $operation['ARGUMENTS']['data']['SE_TEMPLATE']['REPLICATE_PARAMS'];
+
+					$saveResult = $template->save();
+					if(!$saveResult->isSuccess())
+					{
+						$conversionResult->abortConversion();
+
+						$saveResultErrorMessages = $saveResult->getErrors()->getMessages();
+						foreach ($saveResultErrorMessages as $message)
+						{
+							$this->errors->addWarning(
+								'SAVE_AS_TEMPLATE_ERROR',
+								Loc::getMessage('TASKS_TT_SAVE_AS_TEMPLATE_ERROR_MESSAGE_PREFIX') . ': ' . $message
+							);
+						}
+					}
+				}
+
+
+			}
+			// or else it was created above, inside \Bitrix\Tasks\Manager\Task\Template::manageTaskReplication()
+		}
+	}
+
+	protected function createSubTasks($taskId)
+	{
+		$responsibles = $this->getResponsibles();
+		$tasks = array(
+			$taskId
+		);
+
+		if(count($responsibles) > 1)
+		{
+			$op = $this->getTaskActionResult();
+
+			// create one more task for each responsible
+			if(!empty($op['ARGUMENTS']['data']))
+			{
+				$fields = $op['ARGUMENTS']['data'];
+
+				foreach($responsibles as $user)
+				{
+					if($fields[Task\Originator::getCode(true)]['ID'] == $user['ID'])
+					{
+						continue; // do not copy to creator
+					}
+
+					$subTask = Manager\Task::makeItem($fields, $this->userId);
+					$subTask['RESPONSIBLE_ID'] = $user['ID'];
+					$subTask['PARENT_ID'] = $taskId;
+					$subTask['MULTITASK'] = 'N';
+
+					$subResult = $subTask->transform(new Tasks\Item\Converter\Task\ToTask());
+					if($subResult->isSuccess())
+					{
+						$subResult = $subTask->save();
+						if($subResult->isSuccess())
+						{
+							$tasks[] = $subTask->getId();
+						}
+					}
+				}
+			}
+		}
+
+		foreach($tasks as $taskId)
+		{
+			$this->createSubTasksBySource($taskId);
+		}
+	}
+
+	protected function createSubTasksBySource($taskId)
+	{
+		$source = $this->getDataSource();
+
+		if(intval($source['ID']))
+		{
+			$replicator = null;
+			// clone subtasks or create them by template
+			if($source['TYPE'] == static::DATA_SOURCE_TEMPLATE)
+			{
+				$replicator = new Util\Replicator\Task\FromTemplate();
+			}
+			elseif($source['TYPE'] == static::DATA_SOURCE_TASK)
+			{
+				$replicator = new Util\Replicator\Task\FromTask();
+			}
+
+			if($replicator)
+			{
+				$replicator->produceSub($source['ID'], $taskId, array(
+					'MULTITASKING' => false,
+				), $this->userId);
+			}
+		}
+	}
+
+	/**
+	 * Allows to pass some of arParams through ajax request, according to the white-list
+	 * @return mixed[]
+	 */
+	protected static function extractParamsFromRequest($request)
+	{
+		return array('ID' => $request['ID']); // DO NOT simply pass $request to the result, its unsafe
+	}
+
+	protected function getDataDefaults()
+	{
+		$stateFlags = $this->arResult['COMPONENT_DATA']['STATE']['FLAGS'];
+
+		$rights = Task::getFullRights($this->userId);
+		$data = array(
+			'CREATED_BY' => 		$this->userId,
+			Task\Originator::getCode(true) => array('ID' => $this->userId),
+			Task\Responsible::getCode(true) => array(array('ID' => $this->arParams['USER_ID'])),
+			'PRIORITY' => 			CTasks::PRIORITY_AVERAGE,
+			'FORUM_ID' => 			CTasksTools::getForumIdForIntranet(), // obsolete
+			'REPLICATE' => 			'N',
+
+			'ALLOW_CHANGE_DEADLINE' =>  $stateFlags['ALLOW_CHANGE_DEADLINE'] ? 'Y' : 'N',
+			'ALLOW_TIME_TRACKING' => 	$stateFlags['ALLOW_TIME_TRACKING'] ? 'Y' : 'N',
+			'TASK_CONTROL' => 			$stateFlags['TASK_CONTROL'] ? 'Y' : 'N',
+			'MATCH_WORK_TIME' => 		$stateFlags['MATCH_WORK_TIME'] ? 'Y' : 'N',
+
+			'DESCRIPTION_IN_BBCODE' => 'Y', // new tasks should be always in bbcode
+			'DURATION_TYPE' => 		CTasks::TIME_UNIT_TYPE_DAY,
+			'DURATION_TYPE_ALL' =>  CTasks::TIME_UNIT_TYPE_DAY,
+
+			'SE_PARAMETER' => array(
+				array('NAME' => 'PROJECT_PLAN_FROM_SUBTASKS', 'VALUE' => 'Y')
+			),
+
+			Manager::ACT_KEY => $rights
+		);
+
+		return array('DATA' => $data, 'CAN' => array('ACTION' => $rights));
+	}
+
+	/**
+	 * Checks out for any pre-set variables in request, when open form
+	 *
+	 * @return array
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	protected function getDataRequest()
+	{
+		$this->hitState->set($this->request->toArray(), 'INITIAL_TASK_DATA');
+
+		$data = array();
+
+		// parent task
+		$parentId = $this->hitState->get('INITIAL_TASK_DATA.PARENT_ID');
+		if($parentId)
+		{
+			$data[Task\ParentTask::getCode(true)] = array('ID' => $parentId);
+		}
+
+		// responsible
+		$responsibleId = $this->hitState->get('INITIAL_TASK_DATA.RESPONSIBLE_ID');
+		if($responsibleId)
+		{
+			$data['SE_RESPONSIBLE'] = array(array('ID' => $responsibleId));
+		}
+
+		// project
+		$projectFieldCode = Task\Project::getCode(true);
+		if($projectId = $this->hitState->get('INITIAL_TASK_DATA.GROUP_ID'))
+		{
+			$data[$projectFieldCode] = array('ID' => $projectId);
+		}
+		elseif($projectId = intval($this->arParams['GROUP_ID']))
+		{
+			$data[$projectFieldCode] = array('ID' => $projectId);
+		}
+		else
+		{
+			// we can actually borrow project id from the parent task, if specified
+			if($parentId)
+			{
+				$parentTask = Bitrix\Tasks\Item\Task::getInstance($parentId, $this->userId);
+				if($parentTask['GROUP_ID'])
+				{
+					$data[$projectFieldCode] = array('ID' => $parentTask['GROUP_ID']);
+				}
+			}
+		}
+
+		// title
+		$title = $this->hitState->get('INITIAL_TASK_DATA.TITLE');
+		if($title != '')
+		{
+			$data['TITLE'] = $title;
+		}
+
+		// crm links
+		$ufCrm = Integration\CRM\UserField::getMainSysUFCode();
+		$crm = $this->hitState->get('INITIAL_TASK_DATA.'.$ufCrm);
+		if($crm != '')
+		{
+			$data[$ufCrm] = array($crm);
+		}
+
+		$ufMail = Integration\Mail\UserField::getMainSysUFCode();
+		$email = $this->hitState->get('INITIAL_TASK_DATA.'.$ufMail);
+		if ($email > 0)
+		{
+			$data[$ufMail] = array($email);
+		}
+
+		// tags
+		$tags = $this->hitState->get('INITIAL_TASK_DATA.TAGS');
+		if(is_array($tags) && !empty($tags))
+		{
+			$trans = array();
+			foreach($tags as $tag)
+			{
+				$tag = trim($tag);
+				if($tag != '')
+				{
+					$trans[] = array('NAME' => $tag);
+				}
+			}
+
+			$data[Task\Tag::getCode(true)] = $trans;
+		}
+
+		return array('DATA' => $data);
+	}
+
+	// get some data and decide what goes to arResult
+	protected function getData()
+	{
+		// todo: if we have not done any redirect after doing some actions, better re-check task accessibility here
+
+		//TasksTaskFormState::reset();
+		$this->arResult['COMPONENT_DATA']['STATE'] = static::getState();
+
+		$formSubmitted = $this->formData !== false;
+
+		if($this->task != null) // editing an existing task, get THIS task data
+		{
+			$data = Task::get($this->userId, $this->task->getId(), array(
+				'ENTITY_SELECT' => $this->arParams['SUB_ENTITY_SELECT'],
+				'ESCAPE_DATA' => static::getEscapedData(), // do not delete
+				'ERRORS' => $this->errors
+			));
+
+			if($this->errors->checkHasFatals())
+			{
+				return;
+			}
+
+			if($formSubmitted)
+			{
+				// applying form data on top, what changed
+				$data['DATA'] = Task::mergeData($this->formData, $data['DATA']);
+			}
+		}
+		else // get from other sources: default task data, or other task data, or template data
+		{
+			$data = $this->getDataDefaults();
+
+			if($formSubmitted)
+			{
+				// applying form data on top, what changed
+				$data['DATA'] = Task::mergeData($this->formData, $data['DATA']);
+			}
+			else
+			{
+				$copyErrors = new Collection();
+				$parameters = array(
+					'ENTITY_SELECT' => array_intersect($this->arParams['SUB_ENTITY_SELECT'], array('CHECKLIST', 'REMINDER', 'TAG', 'PROJECTDEPENDENCE', 'RELATEDTASK')),
+					'ESCAPE_DATA' => false,
+					'ERRORS' => $copyErrors
+				);
+
+				$error = false;
+				$sourceData = [];
+
+				try
+				{
+					if ($templateId = intval($this->request['TEMPLATE'])) // copy from template?
+					{
+						$request = Application::getInstance()->getContext()->getRequest();
+
+						$sourceData = $this->cloneDataFromTemplate($templateId);
+						$fields = ['UF_CRM_TASK', 'TAGS'];
+
+						foreach ($fields as $fieldName)
+						{
+							$fieldValue = $request->getQuery($fieldName);
+							if ($fieldValue)
+							{
+								if ($fieldName == 'TAGS')
+								{
+									$tags = explode(',', $fieldValue);
+									foreach ($tags as $tag)
+									{
+										$sourceData['DATA']['TAGS'][] = $tag;
+										$sourceData['DATA']['SE_TAG'][] = ['NAME' => $tag];
+									}
+								}
+								else if ($fieldName == 'UF_CRM_TASK')
+								{
+									$sourceData['DATA'][$fieldName][] = $fieldValue;
+								}
+							}
+						}
+
+						$driver = \Bitrix\Disk\Driver::getInstance();
+						$userFieldManager = $driver->getUserFieldManager();
+						$attachedObjects = $userFieldManager->getAttachedObjectByEntity('TASKS_TASK_TEMPLATE', $templateId, 'UF_TASK_WEBDAV_FILES');
+
+						foreach ($attachedObjects as $attachedObject)
+						{
+							$sourceData['DATA']['DISK_ATTACHED_OBJECT_ALLOW_EDIT'] = $attachedObject->getAllowEdit();
+							break;
+						}
+
+						$this->setDataSource(static::DATA_SOURCE_TEMPLATE, $this->request['TEMPLATE']);
+					}
+					elseif(intval($this->request['COPY']) || intval($this->request['_COPY'])) // copy from another task?
+					{
+						$taskIdToCopy = (intval($this->request['COPY'])?: intval($this->request['_COPY']));
+						$sourceData = $this->cloneDataFromTask($taskIdToCopy);
+
+						$this->setDataSource(static::DATA_SOURCE_TASK, $taskIdToCopy);
+					}
+					else // get some from request
+					{
+						$sourceData = $this->getDataRequest();
+					}
+				}
+				catch(TasksException $e)
+				{
+					if($e->checkOfType(TasksException::TE_ACCESS_DENIED) || $e->checkOfType(TasksException::TE_TASK_NOT_FOUND_OR_NOT_ACCESSIBLE))
+					{
+						$error = 'access';
+					}
+					else
+					{
+						$error = 'other';
+					}
+				}
+				catch(\Bitrix\Tasks\AccessDeniedException $e)
+				{
+					$error = 'access';
+				}
+				if($error === false) // no exceptions? may be error collection has any?
+				{
+					if(!$copyErrors->isEmpty())
+					{
+						$error = 'other';
+					}
+				}
+
+				if($error !== false)
+				{
+					$this->errors->add('COPY_ERROR', Loc::getMessage($error == 'access' ? 'TASKS_TT_NOT_FOUND_OR_NOT_ACCESSIBLE_COPY' : 'TASKS_TT_COPY_READ_ERROR'), Collection::TYPE_WARNING);
+				}
+
+				$data['DATA'] = Task::mergeData($sourceData['DATA'], $data['DATA']);
+
+				if ($data['DATA']['SE_ORIGINATOR']['ID'] !== $this->userId &&
+					(count($data['DATA']['SE_RESPONSIBLE']) > 1 || (count($data['DATA']['SE_RESPONSIBLE']) == 1 && $data['DATA']['SE_RESPONSIBLE'][0]['ID'] !== $this->userId)))
+				{
+					$data['DATA']['SE_ORIGINATOR']['ID'] = $this->userId;
+					$this->errors->addWarning('', Loc::getMessage('TASKS_TT_AUTO_CHANGE_ORIGINATOR'));
+				}
+			}
+		}
+
+		// kanban stages
+		if ($data['DATA']['GROUP_ID'] > 0)
+		{
+			$this->arResult['DATA']['STAGES'] = \Bitrix\Tasks\Kanban\StagesTable::getStages(
+				$data['DATA']['GROUP_ID'],
+				true
+			);
+			$data['CAN']['ACTION']['SORT'] = Loader::includeModule('socialnetwork') &&
+											SocialNetwork\Group::can(
+												$data['DATA']['GROUP_ID'],
+												SocialNetwork\Group::ACTION_SORT_TASKS
+											);
+		}
+		else
+		{
+			$this->arResult['DATA']['STAGES'] = array();
+			$data['CAN']['ACTION']['SORT'] = false;
+		}
+
+		$this->arResult['DATA']['TASK'] = $data['DATA'];
+		$this->arResult['CAN']['TASK'] = $data['CAN'];
+
+		// obtaining additional data: calendar settings, user fields
+		$this->getDataAux();
+
+		// collect related: tasks, users & groups
+		$this->collectTaskMembers();
+		$this->collectRelatedTasks();
+		$this->collectProjects();
+		$this->collectLogItems();
+	}
+
+	/**
+	 * @param $itemId
+	 * @return array
+	 *
+	 * @access private
+	 */
+	private function cloneDataFromTemplate($itemId)
+	{
+		$data = array();
+
+		$template = new Tasks\Item\Task\Template($itemId, $this->userId);
+		$result = $template->transform(new Tasks\Item\Converter\Task\Template\ToTask());
+		if($result->isSuccess())
+		{
+			$data = Task::convertFromItem($result->getInstance());
+
+			// exception for responsibles, it may be multiple in the form
+			$responsibles = array(array('ID' => $template['RESPONSIBLE_ID']));
+			if(!empty($template['RESPONSIBLES']))
+			{
+				$responsibles = array();
+				foreach($template['RESPONSIBLES'] as $userId)
+				{
+					$responsibles[] = array('ID' => $userId);
+				}
+			}
+			$data['SE_RESPONSIBLE'] = $responsibles;
+		}
+
+		return array('DATA' => $data);
+	}
+
+	/**
+	 * @param $itemId
+	 * @return array
+	 *
+	 * @access private
+	 */
+	private function cloneDataFromTask($itemId)
+	{
+		$data = array();
+
+		$task = new Tasks\Item\Task($itemId, $this->userId);
+		$result = $task->transform(new Tasks\Item\Converter\Task\ToTask());
+		if($result->isSuccess())
+		{
+			$data = Task::convertFromItem($result->getInstance());
+
+			// exception for responsibles, it may be multiple in the form
+			$data['SE_RESPONSIBLE'] = array(array('ID' => $task['RESPONSIBLE_ID']));
+		}
+
+		return array('DATA' => $data);
+	}
+
+	protected function getDataAux()
+	{
+		$this->arResult['AUX_DATA'] = array();
+		$auxSelect = array_flip($this->arParams['AUX_DATA_SELECT']);
+
+		$this->arResult['AUX_DATA']['COMPANY_WORKTIME'] = static::getCompanyWorkTime(!isset($auxSelect['COMPANY_WORKTIME']));
+
+		if(isset($auxSelect['USER_FIELDS']))
+		{
+			$this->getDataUserFields();
+		}
+		if(isset($auxSelect['TEMPLATE']))
+		{
+			$this->getDataTemplates();
+		}
+
+		$this->arResult['AUX_DATA']['HINT_STATE'] = \Bitrix\Tasks\UI::getHintState();
+		$this->arResult['AUX_DATA']['MAIL'] = array(
+			//'FORWARD' => \Bitrix\Tasks\Integration\Mail\Task::getReplyTo($this->userId, $this->arResult['DATA']['TASK']['ID'], 'dummy', SITE_ID)
+		);
+
+	}
+
+	protected function getDataTemplates()
+	{
+		// todo: use \Bitrix\Tasks\Item\Task\Template::find() here, and check rights
+		$res = CTaskTemplates::GetList(
+			array("ID" => "DESC"),
+			array('BASE_TEMPLATE_ID' => false, '!TPARAM_TYPE' => CTaskTemplates::TYPE_FOR_NEW_USER),
+			array('NAV_PARAMS' => array('nTopCount' => 10)),
+			array(
+				'USER_ID' => $this->userId,
+				'USER_IS_ADMIN' => \Bitrix\Tasks\Integration\SocialNetwork\User::isAdmin(),
+			),
+			array('ID', 'TITLE')
+		);
+
+		$templates = array();
+		while($template = $res->fetch())
+		{
+			$templates[$template['ID']] = array(
+				'ID' => $template['ID'],
+				'TITLE' => $template['TITLE']
+			);
+		}
+
+		$this->arResult['AUX_DATA']['TEMPLATE'] = $templates;
+	}
+
+	protected function getDataUserFields()
+	{
+		$this->arResult['AUX_DATA']['USER_FIELDS'] = static::getUserFields($this->task !== null ? $this->task->getId() : 0);
+
+		// restore uf values from task data
+		if(Type::isIterable($this->arResult['AUX_DATA']['USER_FIELDS']))
+		{
+			foreach($this->arResult['AUX_DATA']['USER_FIELDS'] as $ufCode => $ufDesc)
+			{
+				if(isset($this->arResult['DATA']['TASK'][$ufCode]))
+				{
+					$this->arResult['AUX_DATA']['USER_FIELDS'][$ufCode]['VALUE'] = $this->arResult['DATA']['TASK'][$ufCode];
+				}
+			}
+		}
+	}
+
+	protected function collectTaskMembers()
+	{
+		$data = $this->arResult['DATA']['TASK'];
+
+		$this->collectMembersFromArray(Task\Originator::extractPrimaryIndexes($data[Task\Originator::getCode(true)]));
+		$this->collectMembersFromArray(Task\Responsible::extractPrimaryIndexes($data[Task\Responsible::getCode(true)]));
+		$this->collectMembersFromArray(Task\Accomplice::extractPrimaryIndexes($data[Task\Accomplice::getCode(true)]));
+		$this->collectMembersFromArray(Task\Auditor::extractPrimaryIndexes($data[Task\Auditor::getCode(true)]));
+		$this->collectMembersFromArray(array(
+			$this->arResult['DATA']['TASK']['CHANGED_BY'],
+			$this->userId
+		));
+	}
+
+	protected function collectRelatedTasks()
+	{
+		if($this->arResult['DATA']['TASK']['PARENT_ID'])
+		{
+			$this->tasks2Get[] = $this->arResult['DATA']['TASK']['PARENT_ID'];
+		}
+		elseif($this->arResult['DATA']['TASK'][Task\ParentTask::getCode(true)])
+		{
+			$this->tasks2Get[] = $this->arResult['DATA']['TASK'][Task\ParentTask::getCode(true)]['ID'];
+		}
+
+		if(Type::isIterable($this->arResult['DATA']['TASK'][Task::SE_PREFIX.'PROJECTDEPENDENCE']))
+		{
+			$projdep = $this->arResult['DATA']['TASK'][Task::SE_PREFIX.'PROJECTDEPENDENCE'];
+			foreach($projdep as $dep)
+			{
+				$this->tasks2Get[] = $dep['DEPENDS_ON_ID'];
+			}
+		}
+
+		if(Type::isIterable($this->arResult['DATA']['TASK'][Task::SE_PREFIX.'RELATEDTASK']))
+		{
+			$related = $this->arResult['DATA']['TASK'][Task::SE_PREFIX.'RELATEDTASK'];
+			foreach($related as $task)
+			{
+				$this->tasks2Get[] = $task['ID'];
+			}
+		}
+	}
+
+	protected function collectProjects()
+	{
+		if($this->arResult['DATA']['TASK']['GROUP_ID'])
+		{
+			$this->groups2Get[] = $this->arResult['DATA']['TASK']['GROUP_ID'];
+		}
+		elseif($this->arResult['DATA']['TASK'][Task\Project::getCode(true)])
+		{
+			$this->groups2Get[] = $this->arResult['DATA']['TASK'][Task\Project::getCode(true)]['ID'];
+		}
+//		$this->arResult['DATA']['TASK'][Task\Project::getCode(true)]['ID'] = $this->arResult['DATA']['TASK']['GROUP_ID']; // ?
+	}
+
+	protected function collectLogItems()
+	{
+		if (!Type::isIterable($this->arResult['DATA']['TASK'][Task::SE_PREFIX.'LOG']))
+		{
+			return;
+		}
+
+		foreach ($this->arResult['DATA']['TASK'][Task::SE_PREFIX.'LOG'] as $record)
+		{
+			switch ($record['FIELD'])
+			{
+				case 'CREATED_BY':
+				case 'RESPONSIBLE_ID':
+					if ($record['FROM_VALUE'])
+					{
+						$this->users2Get[] = $record['FROM_VALUE'];
+					}
+
+					if ($record['TO_VALUE'])
+					{
+						$this->users2Get[] = $record['TO_VALUE'];
+					}
+
+					break;
+				case 'AUDITORS':
+				case 'ACCOMPLICES':
+					if ($record['FROM_VALUE'])
+					{
+						$this->collectMembersFromArray(explode(',', $record['FROM_VALUE']));
+					}
+
+					if ($record['TO_VALUE'])
+					{
+						$this->collectMembersFromArray(explode(',', $record['TO_VALUE']));
+					}
+					break;
+
+				case 'GROUP_ID':
+					if ($record['FROM_VALUE'])
+					{
+						$this->groups2Get[] = intval($record['FROM_VALUE']);
+					}
+
+					if ($record['TO_VALUE'])
+					{
+						$this->groups2Get[] = intval($record['TO_VALUE']);
+					}
+					break;
+
+				case 'PARENT_ID':
+					if ($record['FROM_VALUE'])
+					{
+						$this->tasks2Get[] = intval($record['FROM_VALUE']);
+					}
+
+					if ($record['TO_VALUE'])
+					{
+						$this->tasks2Get[] = intval($record['TO_VALUE']);
+					}
+					break;
+
+				case 'DEPENDS_ON':
+					if ($record['FROM_VALUE'])
+					{
+						$this->collectTasksFromArray(explode(',', $record['FROM_VALUE']));
+					}
+
+					if ($record['TO_VALUE'])
+					{
+						$this->collectTasksFromArray(explode(',', $record['TO_VALUE']));
+					}
+					break;
+
+				default:
+					break;
+			}
+		}
+	}
+
+	protected function collectMembersFromArray($ids)
+	{
+		if(Type::isIterable($ids) && !empty($ids))
+		{
+			$this->users2Get = array_merge($this->users2Get, $ids);
+		}
+	}
+
+	protected function collectTasksFromArray($ids)
+	{
+		if (Type::isIterable($ids) && !empty($ids))
+		{
+			$this->tasks2Get = array_merge($this->tasks2Get, $ids);
+		}
+	}
+
+	protected function getReferenceData()
+	{
+		$this->arResult['DATA']['RELATED_TASK'] = static::getTasksData($this->tasks2Get, $this->userId, $this->users2Get);
+		$this->arResult['DATA']['GROUP'] = Group::getData($this->groups2Get);
+		$this->arResult['DATA']['USER'] = User::getData($this->users2Get);
+
+		$this->arResult['DATA']['LAST_TASKS'] = static::getLastTasks();
+
+		$this->getCurrentUserData();
+	}
+
+	protected function getCurrentUserData()
+	{
+		$currentUser = array('DATA' => $this->arResult['DATA']['USER'][$this->userId]);
+
+		$currentUser['IS_SUPER_USER'] = \Bitrix\Tasks\Util\User::isSuper($this->userId);
+		$roles = array(
+			'ORIGINATOR' => false,
+			'DIRECTOR' => false, // director usually is more than just originator, according to the subordination rules
+		);
+		if($this->task !== null)
+		{
+			try
+			{
+				$roles['ORIGINATOR'] =  $this->task['CREATED_BY'] == $this->userId;
+				$roles['DIRECTOR'] =    !!$this->task->isUserRole(\CTaskItem::ROLE_DIRECTOR);
+			}
+			catch(\TasksException $e)
+			{
+			}
+		}
+		$currentUser['ROLES'] = $roles;
+
+		$this->arResult['AUX_DATA']['USER'] = $currentUser;
+	}
+
+	protected function formatData()
+	{
+		$data =& $this->arResult['DATA']['TASK'];
+
+		if(Type::isIterable($data))
+		{
+			Task::extendData($data, $this->arResult['DATA']);
+
+			// left for compatibility
+			$data[Task::SE_PREFIX.'PARENT'] = $data[Task\ParentTask::getCode(true)];
+		}
+	}
+
+	protected function doPreAction()
+	{
+		parent::doPreAction();
+
+		$this->arResult['COMPONENT_DATA']['BACKURL'] = $this->getBackUrl();
+	}
+
+	protected function doPostAction()
+	{
+		parent::doPostAction();
+
+		if($this->errors->checkNoFatals())
+		{
+			if($this->task != null)
+			{
+				// set this task as viewed and update its view time
+				CTasks::UpdateViewed($this->task->getId(), $this->userId);
+
+				$this->arResult['DATA']['EFFECTIVE'] = $this->getEffective();
+			}
+
+			$this->getEventData(); // put some data to $arResult for emitting javascript event when page loads
+			$this->arResult['COMPONENT_DATA']['HIT_STATE'] = $this->getHitState()->exportFlat();
+		}
+	}
+
+	private function getEffective()
+	{
+		$filter['IS_VIOLATION'] = 'Y';
+		$filter['TASK_ID']=$this->task->getId();
+
+		$res = Tasks\Internals\Counter\EffectiveTable::getList(array(
+			'filter' => $filter,
+			'order' => array('DATETIME' => 'DESC'),
+			'count_total' => true
+		));
+		
+		return array('COUNT'=>$res->getCount(), 'ITEMS'=> $res->fetchAll());
+	}
+
+	// this method should be called "addEventData" :(
+	protected function getEventData()
+	{
+		if($this->getEventTaskId() && ($this->formData === false || $this->success))
+		{
+			/*
+			form had not been submitted at the current hit, or submitted successfully
+			*/
+
+			$eventTaskData = false;
+			if($this->task != null && $this->task->getId() == $this->getEventTaskId())
+			{
+				$eventTaskData = static::dropSubEntitiesData($this->arResult['DATA']['TASK']);
+			}
+			else // have to get data manually
+			{
+				try
+				{
+					$eventTask = Task::get($this->userId, $this->getEventTaskId());
+					if($eventTask['ERRORS']->checkNoFatals())
+					{
+						$eventTaskData = $eventTask['DATA'];
+					}
+				}
+				catch(Tasks\Exception $e) // smth went wrong - no access or smth else. just skip, what else to do?
+				{
+				}
+			}
+
+			// happy end
+			if(Type::isIterable($eventTaskData) && !empty($eventTaskData))
+			{
+				$eventTaskData['CHILDREN_COUNT'] = 0;
+				$childrenCount = CTasks::GetChildrenCount(array(), $eventTaskData['ID'])->fetch();
+				if ($childrenCount)
+				{
+					$eventTaskData['CHILDREN_COUNT'] = $childrenCount['CNT'];
+				}
+
+				$this->arResult['DATA']['EVENT_TASK'] = $eventTaskData;
+				$this->arResult['COMPONENT_DATA']['EVENT_TYPE'] = $this->getEventType();
+
+				$sap = $this->getEventOption('STAY_AT_PAGE');
+				//TODO !!!
+				if ($this->getEventType() == 'UPDATE')
+				{
+					$sap = true;
+				}
+
+				$this->arResult['COMPONENT_DATA']['EVENT_OPTIONS'] = array(
+					'STAY_AT_PAGE' => $sap
+				);
+			}
+		}
+	}
+
+	protected static function getTasksData(array $taskIds, $userId, &$users2Get)
+	{
+		$tasks = array();
+
+		if(!empty($taskIds))
+		{
+			$taskIds = array_unique($taskIds);
+			$parsed = array();
+			foreach($taskIds as $taskId)
+			{
+				if(intval($taskId))
+				{
+					$parsed[] = $taskId;
+				}
+			}
+
+			if(!empty($parsed))
+			{
+				$select = array("ID", "TITLE", "STATUS", "START_DATE_PLAN", "END_DATE_PLAN", "DEADLINE", "RESPONSIBLE_ID");
+
+				list($list, $res) = CTaskItem::fetchList(
+					$userId,
+					array("ID" => "ASC"),
+					array("ID" => $parsed),
+					array(),
+					$select
+				);
+				$select = array_flip($select);
+
+				foreach($list as $item)
+				{
+					$data = $item->getData(false);
+					$tasks[$data['ID']] = array_intersect_key($data, $select);
+
+					$users2Get[] = $data['RESPONSIBLE_ID']; // get also these users
+				}
+			}
+		}
+
+		return $tasks;
+	}
+
+	protected function getLastTasks()
+	{
+		$lastTasks = [];
+
+		$order = ['STATUS' => 'ASC', 'DEADLINE' => 'DESC', 'PRIORITY' => 'DESC', 'ID' => 'DESC'];
+		$filter = [
+			'DOER' => User::getId(),
+			'STATUS' => [
+				CTasks::METASTATE_VIRGIN_NEW,
+				CTasks::METASTATE_EXPIRED,
+				CTasks::STATE_NEW,
+				CTasks::STATE_PENDING,
+				CTasks::STATE_IN_PROGRESS
+			]
+		];
+		$select = ['ID', 'TITLE', 'STATUS'];
+		$params = [
+			'MAKE_ACCESS_FILTER' => false,
+			'NAV_PARAMS' => ['nTopCount' => 15]
+		];
+
+		$tasksDdRes = CTasks::GetList($order, $filter, $select, $params);
+		while ($task = $tasksDdRes->Fetch())
+		{
+			$lastTasks[] = $task;
+		}
+
+		return $lastTasks;
+	}
+
+	protected static function getUserFields($entityId = 0, $entityName = 'TASKS_TASK')
+	{
+		return \Bitrix\Tasks\Util\UserField\Task::getScheme($entityId);
+	}
+
+	// dont turn it to true for new components
+	protected static function getEscapedData()
+	{
+		return false;
+	}
+
+	// temporal
+	private function dropSubEntitiesData(array $data)
+	{
+		foreach($data as $key => $value)
+		{
+			if(strpos((string) $key, Manager::SE_PREFIX) === 0)
+			{
+				unset($data[$key]);
+			}
+		}
+
+		return $data;
+	}
+
+	// todo: move the following private functions to $hitState
+
+	private function setDataSource($type, $id)
+	{
+		if(($type == static::DATA_SOURCE_TEMPLATE || $type == static::DATA_SOURCE_TASK) && intval($id))
+		{
+			$this->arResult['COMPONENT_DATA']['DATA_SOURCE'] = array(
+				'TYPE' => $type,
+				'ID' => intval($id)
+			);
+		}
+	}
+
+	private function getDataSource()
+	{
+		return $this->arResult['COMPONENT_DATA']['DATA_SOURCE'];
+	}
+
+	private function getEventType()
+	{
+		if($this->eventType === false && (string) $this->request['EVENT_TYPE'] != '')
+		{
+			$this->eventType = $this->request['EVENT_TYPE'] == 'UPDATE' ? 'UPDATE' : 'ADD';
+		}
+
+		return $this->eventType;
+	}
+
+	private function setEventType($type)
+	{
+		$this->eventType = $type;
+	}
+
+	private function getEventOption($name)
+	{
+		if(Type::isIterable($this->request['EVENT_OPTIONS']) && isset($this->request['EVENT_OPTIONS'][$name]))
+		{
+			$this->eventOptions[$name] = !!$this->request['EVENT_OPTIONS'][$name];
+		}
+
+		return $this->eventOptions[$name];
+	}
+
+	private function setEventOption($name, $value)
+	{
+		$this->eventOptions[$name] = $value;
+	}
+
+	private function getEventTaskId()
+	{
+		if(intval($this->request['EVENT_TASK_ID']))
+		{
+			$this->eventTaskId = intval($this->request['EVENT_TASK_ID']);
+		}
+
+		return $this->eventTaskId;
+	}
+
+	private function setEventTaskId($taskId)
+	{
+		$this->eventTaskId = $taskId;
+	}
+
+	private function getBackUrl()
+	{
+		if((string) $this->request['BACKURL'] != '')
+		{
+			return $this->request['BACKURL'];
+		}
+		elseif(array_key_exists('BACKURL', $this->arParams))
+		{
+			return $this->arParams['BACKURL'];
+		}
+		// or else backurl will be defined somewhere like result_modifer, see below
+
+		return false;
+	}
+
+	private function setResponsibles($users)
+	{
+		if(Type::isIterable($users))
+		{
+			$this->responsibles = \Bitrix\Tasks\Util\Type::normalizeArray($users);
+		}
+	}
+
+	private function extractResponsibles(array $data)
+	{
+		$code = Task\Responsible::getCode(true);
+
+		if(array_key_exists($code, $data))
+		{
+			return $data[$code];
+		}
+		return array();
+	}
+
+	private function getResponsibles()
+	{
+		if($this->responsibles !== false && Type::isIterable($this->responsibles))
+		{
+			return $this->responsibles;
+		}
+		else
+		{
+			return array();
+		}
+	}
+
+	private static function inviteUsers(array &$users, Collection $errors)
+	{
+		foreach($users as $i => $user)
+		{
+			if(is_array($user) && !intval($user['ID']))
+			{
+				if((string) $user['EMAIL'] != '' && \check_email($user['EMAIL']))
+				{
+					$newId = \Bitrix\Tasks\Integration\Mail\User::create($user);
+					if($newId)
+					{
+						$users[$i]['ID'] = $newId;
+						SocialNetwork::setLogDestinationLast(['U' => [$newId]]);
+					}
+					else
+					{
+						$errors->add('USER_INVITE_FAIL', 'User has not been invited');
+					}
+				}
+				elseif (\Bitrix\Tasks\Integration\SocialServices\User::isNetworkId($user['ID']))
+				{
+					$newId = \Bitrix\Tasks\Integration\SocialServices\User::create($user);
+					if($newId)
+					{
+						$users[$i]['ID'] = $newId;
+						SocialNetwork::setLogDestinationLast(['U' => [$newId]]);
+					}
+					else
+					{
+						$errors->add('USER_INVITE_FAIL', 'User has not been invited');
+					}
+				}
+				else
+				{
+					unset($users[$i]); // bad structure
+				}
+			}
+		}
+	}
+
+	// for dispatcher below
+
+	public static function getAllowedMethods()
+	{
+		return array(
+			'setState',
+			'getFiles',
+			'getFileCount'
+		);
+	}
+
+	public function getHitState()
+	{
+		return $this->hitState;
+	}
+
+	public static function setState(array $state = array())
+	{
+		TasksTaskFormState::set($state);
+	}
+
+	public static function getState()
+	{
+		return TasksTaskFormState::get();
+	}
+
+	public static function getFiles($params)
+	{
+		global $APPLICATION;
+
+		ob_start();
+		$APPLICATION->IncludeComponent(
+			"bitrix:disk.uf.comments.attached.objects",
+			".default",
+			array(
+				"MAIN_ENTITY" => array(
+					"ID" => $params["TASK_ID"]
+				),
+				"COMMENTS_MODE" => "forum",
+				"ENABLE_AUTO_BINDING_VIEWER" => false, // Viewer cannot work in the iframe (see logic.js)
+				"DISABLE_LOCAL_EDIT" => $params["PUBLIC_MODE"],
+				"COMMENTS_DATA" => array(
+					"TOPIC_ID" => $params["FORUM_TOPIC_ID"],
+					"FORUM_ID" => $params["FORUM_ID"],
+					"XML_ID" => "TASK_".$params["TASK_ID"]
+				),
+				"PUBLIC_MODE" => $params["PUBLIC_MODE"]
+			),
+			false,
+			array("HIDE_ICONS" => "Y", "ACTIVE_COMPONENT" => "Y")
+		);
+		$html = ob_get_contents();
+		ob_end_clean();
+
+		return array("html" => $html);
+	}
+
+	public static function getFileCount($params)
+	{
+		$fileCount = 0;
+		if ($params["FORUM_ID"] > 0 && $params["FORUM_TOPIC_ID"] > 0)
+		{
+			$fileCount = Topic::getFileCount($params["FORUM_TOPIC_ID"], $params["FORUM_ID"]);
+		}
+		return array("fileCount" => $fileCount);
+	}
+}
+
+if(CModule::IncludeModule('tasks'))
+{
+	final class TasksTaskHitStateStructure extends Structure
+	{
+		public function __construct($request)
+		{
+			$hitState = array();
+			if(array_key_exists('HIT_STATE', $request))
+			{
+				$hitState = $request['HIT_STATE'];
+			}
+
+			// todo: also add BACKURL, CANCELURL, DATA_SOURCE here for compatibility, to keep this data inside hit state
+
+			parent::__construct($hitState);
+		}
+
+		public function getRules()
+		{
+			return array(
+				'INITIAL_TASK_DATA' => array(
+					'VALUE' => array(
+						'PARENT_ID' => array('VALUE' => StructureChecker::TYPE_INT_POSITIVE),
+						'RESPONSIBLE_ID' => array('VALUE' => StructureChecker::TYPE_INT_POSITIVE),
+						'GROUP_ID' => array('VALUE' => StructureChecker::TYPE_INT_POSITIVE),
+						'TITLE' => array('VALUE' => StructureChecker::TYPE_STRING),
+						Integration\CRM\UserField::getMainSysUFCode() => array('VALUE' => StructureChecker::TYPE_STRING),
+						Integration\Mail\UserField::getMainSysUFCode() => array('VALUE' => StructureChecker::TYPE_INT_POSITIVE),
+						'TAGS' => array(
+							'VALUE' => StructureChecker::TYPE_ARRAY_OF_STRING,
+							'CAST' => function($value)
+							{
+								if (!is_array($value))
+								{
+									$value = array_map('trim', explode(',', $value));
+								}
+								return $value;
+							}
+						),
+					),
+					'DEFAULT' => array(),
+				),
+				'BACKURL' => array('VALUE' => StructureChecker::TYPE_STRING),
+				'CANCELURL' => array('VALUE' => StructureChecker::TYPE_STRING),
+				'DATA_SOURCE' => array(
+					'VALUE' => array(
+						'TYPE' => array('VALUE' => StructureChecker::TYPE_STRING),
+						'ID' => array('VALUE' => StructureChecker::TYPE_INT_POSITIVE),
+					),
+					'DEFAULT' => array(),
+				),
+			);
+		}
+	}
+}

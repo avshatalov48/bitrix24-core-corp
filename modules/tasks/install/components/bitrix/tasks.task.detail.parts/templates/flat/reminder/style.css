@@ -1,0 +1,387 @@
+.task-options-reminder {
+    max-width: 935px;
+}
+
+.task-options-reminder .task-dashed-link{
+    margin: 10px 0;
+}
+
+.task-options-item-open .task-options-reminder .task-dashed-link {
+    margin: 15px 0 10px;
+}
+
+.task-reminder-container {
+    display: inline-block;
+    overflow: hidden;
+    height: 30px;
+    vertical-align: middle;
+    margin: 6px 5px -1px 0;
+}
+
+.task-reminder-info {
+    position: relative;
+    padding: 0 13px 0 36px;
+    line-height: 30px;
+    display: inline-block;
+    margin: 0 0 8px 0;
+    background: #e7e9eb;
+    color: #000;
+    height: 30px;
+
+    -webkit-transition: background-color 0.2s linear;
+    transition: background-color 0.2s linear;
+}
+.task-reminder-container:hover .task-reminder-info {
+    background: #EEF2F4;
+}
+.task-reminder-container.hover-delete .task-reminder-info {
+    background: #C6CDD3;
+}
+
+.task-detail-sidebar-item-reminder {
+    position: relative;
+}
+
+.task-detail-sidebar-item-reminder .task-reminder-info {
+    display: block;
+}
+
+.task-detail-sidebar-item-reminder .task-reminder-container {
+    margin: 10px 0 0 0;
+}
+
+.task-reminder-info-text {
+    font-weight: normal;
+    max-width: 337px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: middle;
+    display: inline-block;
+}
+
+.task-detail-sidebar-item-reminder .task-reminder-info-text {
+    max-width: 190px;
+}
+
+.task-detail-sidebar-item-reminder-open .task-wrap-popup {
+    display: block;
+}
+
+.task-reminder-info:before {
+    content: '';
+    position: absolute;
+    left: 12px;
+    top: 2px;
+    bottom: 0;
+    margin: auto;
+    width: 13px;
+    height: 13px;
+    background: url(/bitrix/js/tasks/css/images/media.png) no-repeat 0 -288px;
+}
+
+.task-reminder-info-mes:before,
+.task-reminder-info.transport-j:before{
+    background-position: 0 -301px;
+}
+
+.task-options-reminder .webform-small-button {
+    display: block;
+}
+
+.task-popup-field {
+    position: relative;
+    overflow: hidden;
+    margin: 10px 0;
+    white-space: nowrap;
+}
+
+.task-reminder-inp-del {
+    width: 30px;
+    height: 30px;
+    margin: auto;
+    z-index: 1;
+    cursor: pointer;
+    display: inline-block;
+    vertical-align: middle;
+    position: relative;
+    margin-right: -13px;
+}
+
+.task-reminder-inp-del:after {
+    content: '';
+    background: url(/bitrix/js/tasks/css/images/media.png) no-repeat 0 -15px;
+    width: 10px;
+    height: 10px;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    margin: auto;
+    opacity: 0.2;
+}
+
+.task-reminder-info .task-reminder-inp-del:after {
+    width: 6px;
+    height: 6px;
+    background: url(/bitrix/js/tasks/css/images/media.png) no-repeat -2px -17px;
+}
+
+.task-popup-inp-container,
+.task-popup-inp-container-num{
+    position: relative;
+    width: 185px;
+    height: 36px;
+    line-height: 36px;
+    background: #fff;
+    border: 1px solid #c6cdd3;
+    font-size: 15px;
+    display: inline-block;
+    vertical-align: middle;
+    border-radius: 2px;
+}
+.task-popup-inp-container-num {
+    width: 50px;
+}
+
+.task-popup-inp-container-tags {
+    width: 365px;
+}
+
+.task-options-inp-int {
+    width: 50px;
+}
+
+.task-options-inp-container-unit {
+    width: 130px;
+}
+
+.task-popup-inp {
+    position: absolute;
+    line-height: 36px;
+    font-size: 15px;
+    border: none;
+    top: 0;
+    bottom: 0;
+    width: 100%;
+    box-sizing: border-box;
+    margin: auto;
+    padding: 0 8px;
+    background: transparent;
+    z-index: 2;
+    outline: none;
+    color: #535c69;
+    height: 36px;
+}
+
+select.task-popup-inp {
+    padding: 0 4px;
+}
+
+.task-reminder-date:after {
+    content: '';
+    position: absolute;
+    width: 18px;
+    height: 15px;
+    background: url(/bitrix/js/tasks/css/images/media.png) no-repeat 0 -269px;
+    right: 6px;
+    top: 0;
+    bottom: 0;
+    margin: auto;
+    z-index: 1;
+    opacity: 0.4;
+}
+
+.task-reminder-date .task-option-inp-del {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    margin: auto;
+    z-index: 2;
+    background: #fff;
+}
+
+.task-reminder-date .task-options-inp {
+    padding-right: 32px;
+}
+
+.task-popup-inp-container-buttons {
+    width: 78px;
+}
+
+.task-popup-inp-container-buttons a {
+    position: relative;
+    background: #f8f9fa;
+    width: 39px;
+    height: 36px;
+    display: inline-block;
+    -webkit-transition: background 0.3s linear;
+    transition: background 0.3s linear;
+}
+
+.task-popup-inp-container-buttons a:hover,
+.task-popup-inp-container-buttons a.task-options-reminder-link-active,
+.transport-j .task-options-reminder-link-mes,
+.transport-e .task-options-reminder-link-mail
+{
+    background: #bceefc;
+}
+
+.task-popup-inp-container-buttons a:before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    margin: auto;
+    background: url(/bitrix/js/tasks/css/images/media.png) no-repeat 0 -288px;
+    width: 13px;
+    height: 13px;
+    opacity: 0.4;
+}
+
+a.task-options-reminder-link-mes:before {
+    background-position: 0 -301px;
+}
+
+.task-field-popup-label {
+    display: inline-block;
+    font-size: 14px;
+    color: #535c69;
+    vertical-align: middle;
+    line-height: 18px;
+    margin-right: 5px;
+}
+
+.task-field-popup-label input {
+    margin: 0 5px 0 0;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.task-wrap-popup {
+    position: absolute;
+    padding: 20px;
+    font-size: 13px;
+    color: #000;
+    background: #fff;
+    z-index: 3;
+    box-shadow: 2px 6px 21px 0 rgba(83,92,106,0.15);
+    top: 65px;
+    /* display: none; */
+}
+
+.task-wrap-popup-tri {
+    position: absolute;
+    margin: auto;
+    width: 0;
+    height: 0;
+    left: 55px;
+    right: auto;
+    bottom: auto;
+    top: -10px;
+    border: 10px solid transparent;
+    border-bottom: 10px solid #fff;
+    border-top: none;
+}
+
+.task-wrap-popup .task-dashed-link {
+    display: inline-block;
+    margin: 0;
+}
+
+.task-wrap-popup .task-dashed-link:after {
+    content: '';
+    border: 4px solid transparent;
+    border-top: 4px solid #868d96;
+    border-bottom: none;
+    width: 0;
+    height: 0;
+    display: inline-block;
+    vertical-align: middle;
+    opacity: 0.7;
+    margin-left: 4px;
+}
+
+.task-wrap-popup .task-dashed-link:hover:after {
+    opacity: 1;
+}
+
+.task-popup-inp-del {
+    width: 30px;
+    height: 30px;
+    margin: auto;
+    z-index: 1;
+    cursor: pointer;;
+    position: absolute;
+    top: 0;
+    right: 0;
+}
+
+.task-popup-inp-del:after {
+    content: '';
+    width: 10px;
+    height: 10px;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    margin: auto;
+    opacity: 0.2;
+    width: 6px;
+    height: 6px;
+    background: url(/bitrix/js/tasks/css/images/media.png) no-repeat -2px -17px;
+}
+
+.task-wrap-popup .task-options-date .task-reminder-inp-del {
+    right: 0;
+}
+
+/* for js logic */
+
+.task-reminder-popup-container {
+    padding: 10px;
+}
+
+.hidden
+{
+    display: none !important;
+}
+
+.type-a .type-d-control,
+.type-d .type-a-control
+{
+    display: none;
+}
+.no-deadline .task-reminder-type-changer {
+    display: none;
+}
+.task-reminder-type-fixed {
+    display: none;
+}
+.no-deadline .task-reminder-type-fixed {
+    display: inline;
+}
+
+.mode-update .task-popup-label-add,
+.task-popup-label-update {
+    display: none;
+}
+.mode-update .task-popup-label-update {
+    display: inline;
+}
+.task-reminder-info-text {
+    cursor: pointer;
+}
+
+.task-reminder-container.invisible {
+    opacity: 0;
+    overflow: hidden;
+}
+.task-reminder-date.empty .task-option-inp-del {
+    display: none;
+}

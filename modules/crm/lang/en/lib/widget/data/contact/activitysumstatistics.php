@@ -1,0 +1,3 @@
+<?
+$MESS["CRM_CONTACT_ACTIVITY_SUM_STAT_PROVIDER_PRESET"] = "Orders total";
+?>

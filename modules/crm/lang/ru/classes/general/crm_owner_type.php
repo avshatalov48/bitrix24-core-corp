@@ -1,0 +1,31 @@
+<?
+$MESS["CRM_OWNER_TYPE_LEAD"] = "Лид";
+$MESS["CRM_OWNER_TYPE_DEAL"] = "Сделка";
+$MESS["CRM_OWNER_TYPE_CONTACT"] = "Контакт";
+$MESS["CRM_OWNER_TYPE_COMPANY"] = "Компания";
+$MESS["CRM_OWNER_TYPE_INVOICE"] = "Счёт";
+$MESS["CRM_OWNER_TYPE_QUOTE"] = "Предложение";
+$MESS["CRM_OWNER_TYPE_REQUISITE"] = "Реквизиты";
+$MESS["CRM_OWNER_TYPE_ACTIVITY"] = "Дело";
+$MESS["CRM_OWNER_TYPE_DEAL_CATEGORY"] = "Направление сделки";
+$MESS["CRM_OWNER_TYPE_RECURRING_DEAL"] = "Шаблон сделки";
+$MESS["CRM_OWNER_TYPE_CUSTOM_ACTIVITY_TYPE"] = "Пользовательский тип дела";
+$MESS["CRM_OWNER_TYPE_SYSTEM"] = "Система";
+$MESS["CRM_OWNER_TYPE_LEAD_CATEGORY"] = "Лиды";
+$MESS["CRM_OWNER_TYPE_DEAL_CATEGORY"] = "Сделки";
+$MESS["CRM_OWNER_TYPE_CONTACT_CATEGORY"] = "Контакты";
+$MESS["CRM_OWNER_TYPE_COMPANY_CATEGORY"] = "Компании";
+$MESS["CRM_OWNER_TYPE_INVOICE_CATEGORY"] = "Счета";
+$MESS["CRM_OWNER_TYPE_QUOTE_CATEGORY"] = "Предложения";
+$MESS["CRM_OWNER_TYPE_REQUISITE_CATEGORY"] = "Реквизиты";
+$MESS["CRM_OWNER_TYPE_DEAL_CATEGORY_CATEGORY"] = "Направления сделок";
+$MESS["CRM_OWNER_TYPE_CUSTOM_ACTIVITY_TYPE_CATEGORY"] = "Пользовательские типы дел";
+$MESS["CRM_OWNER_TYPE_LEAD_NOT_FOUND"] = "Лид не найден";
+$MESS["CRM_OWNER_TYPE_CONTACT_NOT_FOUND"] = "Контакт не найден";
+$MESS["CRM_OWNER_TYPE_COMPANY_NOT_FOUND"] = "Компания не найдена";
+$MESS["CRM_OWNER_TYPE_DEAL_NOT_FOUND"] = "Сделка не найдена";
+$MESS["CRM_OWNER_TYPE_INVOICE_NOT_FOUND"] = "Счёт не найден";
+$MESS["CRM_OWNER_TYPE_QUOTE_NOT_FOUND"] = "Предложение не найдено";
+$MESS["CRM_OWNER_TYPE_ORDER"] = "Заказ";
+$MESS["CRM_OWNER_TYPE_ORDER_SHIPMENT"] = "Отгрузка";
+?>

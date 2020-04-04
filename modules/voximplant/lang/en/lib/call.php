@@ -1,0 +1,12 @@
+<?
+$MESS["CALL_ENTITY_ID_FIELD"] = "ID";
+$MESS["CALL_ENTITY_SEARCH_ID_FIELD"] = "Search string";
+$MESS["CALL_ENTITY_CALL_ID_FIELD"] = "Call ID";
+$MESS["CALL_ENTITY_CALLER_ID_FIELD"] = "Calling number";
+$MESS["CALL_ENTITY_STATUS_FIELD"] = "Status";
+$MESS["CALL_ENTITY_ACCESS_URL_FIELD"] = "Call management URL";
+$MESS["CALL_ENTITY_DATE_CREATE_FIELD"] = "Call started on";
+$MESS["CALL_ENTITY_USER_ID_FIELD"] = "User identifier";
+$MESS["CALL_ENTITY_CONFIG_ID_FIELD"] = "Setting identifier";
+$MESS["CALL_ENTITY_PORTAL_USER_ID_FIELD"] = "Portal User ID";
+?>

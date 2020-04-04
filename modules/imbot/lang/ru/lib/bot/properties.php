@@ -1,0 +1,23 @@
+<?
+$MESS['IMBOT_PROPERTIES_BOT_NAME'] = 'Реквизиты контрагента';
+$MESS["IMBOT_PROPERTIES_BOT_COLOR"] = "AZURE";
+$MESS['IMBOT_PROPERTIES_BOT_EMAIL'] = 'support@bitrix24.ru';
+$MESS['IMBOT_PROPERTIES_BOT_WORK_POSITION'] = 'Этот бот поможет вам найти реквизиты организации или ИП по ИНН/ОГРН';
+$MESS['IMBOT_PROPERTIES_NOT_FOUND_MESSAGE'] = 'К сожалению, по вашему запросу ничего не найдено.';
+$MESS['IMBOT_REQUEST_INVALID'] = 'Для поиска реквизитов организации или ИП, укажите ее ИНН или ОГРН, например 7717586110';
+$MESS['IMBOT_PROPERTIES_NAME'] = 'Полное наименование';
+$MESS['IMBOT_PROPERTIES_TERMINATION_DATE'] = 'Дата прекращения деятельности';
+$MESS['IMBOT_PROPERTIES_TERMITATION_METHOD_NAME'] = 'Способ прекращения деятельности';
+$MESS['IMBOT_PROPERTIES_INN_KPP'] = 'ИНН/КПП';
+$MESS['IMBOT_PROPERTIES_OGRN'] = 'ОГРН';
+$MESS['IMBOT_PROPERTIES_MANAGER'] = 'Руководитель';
+$MESS['IMBOT_PROPERTIES_ADDRESS'] = 'Адрес';
+$MESS['IMBOT_PROPERTIES_OKVED'] = 'ОКВЭД';
+$MESS['IMBOT_PROPERTIES_STATUS'] = 'Статус';
+$MESS['IMBOT_PROPERTIES_IP'] = 'Индивидуальный предприниматель';
+$MESS['IMBOT_PROPERTIES_INN'] = 'ИНН';
+$MESS['IMBOT_PROPERTIES_OGRNIP'] = 'ОГРНИП';
+$MESS['IMBOT_PROPERTIES_WELCOME_MESSAGE'] = 'Я помогу найти реквизиты организации или ИП. Просто укажите ИНН или ОГРН и я покажу нужную информацию. Например, 7717586110.';
+$MESS['IMBOT_PROPERTIES_WELCOME_MESSAGE_CHAT'] = 'Я помогу найти реквизиты организации или ИП. Просто укажите ИНН или ОГРН и я покажу нужную информацию. [br] Для начала поиска, упомяните меня в сообщении или кликните на аватар.';
+$MESS['IMBOT_PROPERTIES_SEARCH_RESULTS'] = 'По вашему запросу нашлись следующие организации и ИП:';
+$MESS['IMBOT_PROPERTIES_SHOW_MORE'] = 'Ещё';

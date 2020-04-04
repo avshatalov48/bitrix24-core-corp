@@ -1,0 +1,27 @@
+<?
+$MESS["CRM_ORDER_PAYMENT_SHOW_TITLE"] = "Просмотреть оплату";
+$MESS["CRM_ORDER_PAYMENT_SHOW"] = "Просмотреть";
+$MESS["CRM_ORDER_PAYMENT_EDIT_TITLE"] = "Редактировать оплату";
+$MESS["CRM_ORDER_PAYMENT_EDIT"] = "Редактировать";
+$MESS["CRM_ORDER_PAYMENT_DELETE_TITLE"] = "Удалить оплату";
+$MESS["CRM_ORDER_PAYMENT_DELETE"] = "Удалить";
+$MESS["CRM_ORDER_PAYMENT_DELETE_CONFIRM"] = "Вы уверены, что хотите удалить?";
+$MESS["CRM_ORDER_PAYMENT_LIST_ADD_SHORT"] = "Оплата";
+$MESS["CRM_ORDER_PAYMENT_LIST_ADD"] = "Добавить оплату";
+$MESS["CRM_ORDER_PAYMENT_REBUILD_ACCESS_ATTRS"] = "Для правильной работы обновлённых прав доступа необходимо выполнить обновление атрибутов доступа на <a id=\"#ID#\" target=\"_blank\" href=\"#URL#\">странице управления правами</a>.";
+$MESS["CRM_ORDER_PAYMENT_LRP_DLG_BTN_START"] = "Выполнить";
+$MESS["CRM_ORDER_PAYMENT_LRP_DLG_BTN_STOP"] = "Остановить";
+$MESS["CRM_ORDER_PAYMENT_LRP_DLG_BTN_CLOSE"] = "Закрыть";
+$MESS["CRM_ORDER_PAYMENT_LRP_DLG_WAIT"] = "Пожалуйста, подождите...";
+$MESS["CRM_ORDER_PAYMENT_LRP_DLG_REQUEST_ERR"] = "При выполнении запроса произошла ошибка.";
+$MESS["CRM_ORDER_PAYMENT_LIST_FILTER_NAV_BUTTON_LIST"] = "Список";
+$MESS["CRM_ORDER_PAYMENT_LIST_CHOOSE_ACTION"] = "Выберите действие";
+$MESS["CRM_ORDER_PAYMENT_BUILD_TIMELINE_DLG_TITLE"] = "Подготовка истории оплат";
+$MESS["CRM_ORDER_PAYMENT_BUILD_TIMELINE_STATE"] = "#processed# из #total#";
+$MESS["CRM_ORDER_PAYMENT_PAID"] = "Оплачено";
+$MESS["CRM_ORDER_PAYMENT_UNPAID"] = "Не оплачено";
+$MESS["CRM_ORDER_PAYMENT_PAYMENT_SUMMARY"] = "Оплата №#ACCOUNT_NUMBER# от #DATE_BILL#";
+$MESS["CRM_ORDER_PAYMENT_ACTION_PAID"] = "Оплатить";
+$MESS["CRM_ORDER_PAYMENT_ACTION_PAID_N"] = "Отменить оплату";
+$MESS["CRM_SHOW_ROW_COUNT"] = "Показать количество";
+$MESS["CRM_ALL"] = "Всего";

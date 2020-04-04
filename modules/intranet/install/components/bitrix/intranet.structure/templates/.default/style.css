@@ -1,0 +1,19 @@
+div.bx-links-container {
+	width: 100%;
+	height: 20px;
+	text-align: right;
+}
+div.bx-links-container a {
+	padding-left: 22px;
+	padding-top: 3px;
+	padding-bottom: 2px;
+	margin-left: 10px;
+	line-height: 22px;
+	background-repeat: no-repeat;
+}
+
+a.bx-search-link {background-image: url(/bitrix/components/bitrix/intranet.structure/templates/.default/images/search.gif);}
+a.bx-outlook-link {background-image: url(/bitrix/components/bitrix/intranet.structure/templates/.default/images/import_outlook.gif);}
+a.bx-head-link {background-image: url(/bitrix/components/bitrix/intranet.structure/templates/.default/images/set_head.gif);}
+a.bx-head-link span {padding-right: 8px; background-image: url(/bitrix/components/bitrix/intranet.structure/templates/.default/images/arrow.gif); background-position: right 7px; background-repeat: no-repeat;}
+

@@ -1,0 +1,4 @@
+RewriteEngine On
+RewriteCond %{REQUEST_FILENAME} !/index_controller.php$
+RewriteCond %{REQUEST_FILENAME} !.gif$
+RewriteRule ^(.*)$ /index_controller.php [L]

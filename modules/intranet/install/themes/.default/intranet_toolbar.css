@@ -1,0 +1,16 @@
+div.bx-intranet-buttons-container {margin-bottom: 10px; float: right;}
+div.bx-intranet-button {float: left;}
+
+div.bx-intranet-button table {border-collapse: collapse; border: 0px;} 
+div.bx-intranet-button table td {border: 0px; height: 45px; padding: 0px; margin: 0px; font-size: 0.95em;} 
+div.bx-intranet-button table td.bx-intranet-button-delimiter {width: 12px; background-position: left center; background-repeat: no-repeat; background-image: url(images/intranet_toolbar/separator.gif);} 
+div.bx-intranet-button table td.bx-intranet-button-container {width: 120px; vertical-align: middle; background-position: left center; background-repeat: no-repeat; /*text-align: center;*/} 
+div.bx-intranet-button table td.bx-intranet-button-container  a {display: block; padding-left: 35px; margin-right: 12px; color: black; text-decoration: none;}
+
+.bx-intranet-add {background-image: url(images/intranet_toolbar/icon_add.gif);} 
+.bx-intranet-add-arrow {background-image: url(images/intranet_toolbar/icon_add_arrow.gif);} 
+.bx-intranet-settings {background-image: url(images/intranet_toolbar/icon_settings.gif);} 
+.bx-intranet-confirm {background-image: url(images/intranet_toolbar/icon_confirm.gif);} 
+.bx-intranet-delete {background-image: url(images/intranet_toolbar/icon_delete.gif);} 
+.bx-intranet-edit {background-image: url(images/intranet_toolbar/icon_edit.gif);} 
+.bx-intranet-import-users {background-image: url(images/intranet_toolbar/icon_import_users.gif);} 

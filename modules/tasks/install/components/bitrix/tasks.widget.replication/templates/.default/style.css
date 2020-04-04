@@ -1,0 +1,73 @@
+.task-replication-params {
+  opacity: 1;
+}
+.task-replication-params.nodisplay {
+  display: none;
+}
+.task-replication-params.invisible {
+  opacity: 0;
+}
+.task-options-repeat.period-daily .tasks-option-tab.daily,
+.task-options-repeat.period-weekly .tasks-option-tab.weekly,
+.task-options-repeat.period-monthly .tasks-option-tab.monthly,
+.task-options-repeat.period-yearly .tasks-option-tab.yearly {
+  background: #bceefc !important;
+}
+.task-replication-panel {
+  -webkit-transition: height 0.2s linear;
+  transition: height 0.2s linear;
+  overflow: hidden;
+}
+.task-options-sheduling-block .task-options-field-left {
+  display: inline-block;
+  vertical-align: top;
+  margin: 0 30px 5px 0;
+}
+.task-options-repeat .task-options-field {
+  margin: 10px 0;
+}
+.task-options-repeat .task-options-field.task-options-field-nol {
+  display: table;
+}
+.task-options-repeat .task-replication-panel .task-options-field {
+  padding: 0 0 10px 0;
+  margin: 0;
+}
+.task-options-repeat .task-options-field-left {
+  display: inline-block;
+  vertical-align: top;
+  margin: 0 15px 2px 0;
+}
+.task-main-clock-monkeyfix {
+  visibility: hidden;
+  height: 0;
+  width: 0;
+  overflow: hidden;
+  display: inline-block;
+  margin-top: -3px;
+  margin-left: -7px;
+}
+.task-options-inp-container-timer:after {
+  background: url(/bitrix/js/tasks/css/images/media.png) no-repeat 0 -315px;
+  content: '';
+  position: absolute;
+  width: 18px;
+  height: 15px;
+  right: 6px;
+  top: 0;
+  bottom: 0;
+  margin: auto;
+  z-index: 1;
+  opacity: 0.7;
+}
+.task-options-timezone-indicator {
+  background: url(/bitrix/js/tasks/css/images/media.png) no-repeat 0 -330px;
+  display: inline-block;
+  vertical-align: middle;
+  margin-left: 5px;
+  margin-top: 0;
+  width: 18px;
+  height: 19px;
+  font-size: 0;
+  cursor: help;
+}

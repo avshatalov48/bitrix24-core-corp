@@ -1,0 +1,45 @@
+#payroll-panel
+{
+
+	background:white;
+	#border-radius:3px;
+	vertical-align:middle;
+	padding:10px 10px 3px 10px;
+}
+
+#activation_code
+{
+	width:95%;
+}
+
+.payroll-input
+{
+	#border-radius:5px;
+	border:1px solid #C2C2C2;
+	fotn:normal normal normal 15px Verdana, Tahoma, Arial, sans-serif;
+	background:white;
+	padding:3px;
+	width:180px;
+
+}
+
+.payroll-date
+{
+	width:90px
+}
+
+.default-pin
+{
+	color:grey;
+}
+
+.error
+{
+	margin:10px;
+	color:red;
+}
+
+.bottom-span
+{
+	margin-top:10px;"
+}

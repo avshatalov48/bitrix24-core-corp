@@ -1,0 +1,258 @@
+/*========================================================== VOTE ======================================================*/
+.vote-note-error {
+	background: #ebc4c7;
+	font-weight: bold;
+	color: #a92f2f;
+	font-size: 12px;
+	padding: 15px 32px;
+	border: 3px solid white;
+	border-radius: 3px;
+	margin-bottom: 9px;
+}
+
+.vote-note-error p, .vote-note-error font {
+	padding: 0;
+	margin: 0;
+}
+
+.bx-vote-block {
+	position: relative;
+}
+
+.bx-vote-question-block {
+	background: #e7f2f5;
+	margin-bottom: 9px;
+	padding: 9px 12px 13px;
+	position: relative;
+}
+
+.bx-vote-question-list, .bx-vote-question-list li {
+	list-style-type: none !important;
+	padding: 0;
+	margin: 0 }
+
+.bx-vote-question-list li {
+	margin-top: 18px;
+}
+
+.bx-vote-question-list li:first-child,
+.bx-vote-question-list li:last-child {
+	margin-top: 0;
+}
+
+.bx-vote-question-title {
+	color: #555a5c;
+	font-weight: bold;
+	font-size: 12px;
+	padding: 0 0 8px 1px;
+}
+
+.bx-vote-answer-list-wrap { position: relative }
+
+.bx-vote-answer-list {
+	border-top: .5px solid #ccd6d8;
+	border-spacing: 0;
+	padding: 0;
+	width: 100%;
+	-webkit-transition: opacity 0.15s ease-in;
+	transition: opacity 0.15s ease-in;
+}
+
+.android .bx-vote-answer-list {
+	-webkit-transition: none;
+	transition: none;
+}
+
+.bx-vote-answer-list td:first-child {
+	padding: 0;
+	width: 100%;
+}
+
+.bx-vote-answer-list td:last-child {
+	border-width: 0 0 2px;
+	font-size: 11px;
+	color: #555a5c;
+	vertical-align: top;
+	text-align: left;
+	padding: 3px 0 0 7px;
+	width: 0;
+}
+
+.bx-vote-answer-result { display: none }
+
+.bx-vote-answer-result td:first-child {
+	padding: 3px 0 0;
+	width: 100%;
+	color: #839ba4;
+	font-size: 11px;
+	text-align: right;
+}
+
+.bx-vote-answer-result td:last-child {
+	font-size: 11px;
+	color: #839ba4;
+	vertical-align: top;
+	text-align: left;
+	padding: 3px 0 0 7px;
+	width: 0;
+}
+
+.bx-vote-answer-result .post-vote-color { opacity: 0 }
+
+.bx-vote-answer-wrap, .bx-vote-bar {
+	line-height: 18px;
+	padding: 3px 4px 4px 0;
+	position: relative;
+}
+
+.bx-vote-block-input-wrap {
+	display: inline-block;
+}
+
+.bx-vote-block-input-wrap input {
+	display: inline-block;
+	margin: 0 3px 0 0;
+	opacity: 1;
+	padding: 0;
+	position: relative;
+	vertical-align: middle;
+	z-index: 5;
+}
+
+.bx-vote-block-input-wrap label {
+	color: #3e4143;
+	display: inline-block;
+	font-size: 14px;
+	line-height: 20px;
+	vertical-align: middle;
+	position: relative;
+	padding: 0;
+	z-index: 2;
+}
+
+.bx-vote-answer-bg {
+	border-image: url(images/vote-item-result.png) fill  4 stretch;
+	border-width: 2px;
+	box-sizing: border-box;
+	left: 0;
+	top: 0;
+	height: 100%;
+	opacity: 0;
+	position: absolute;
+	width: 0;
+}
+
+.bx-vote-answer-bar {
+	border-image: url(images/vote-item-result-blue.png) fill  4 stretch;
+	border-width: 2px;
+	box-sizing: border-box;
+	height: 100%;
+	left: 0;
+	top: 0;
+	overflow: hidden;
+	opacity: 0;
+	position: absolute;
+	width: 0;
+	-webkit-transition: width 0.3s ease-in;
+	transition: width 0.3s ease-in;
+}
+
+.android .bx-vote-answer-bar {
+	-webkit-transition: none;
+	transition: none;
+}
+
+.bx-vote-data-percent {
+	height: 0;
+	overflow: hidden;
+	width: 0;
+}
+
+.post-vote-color { color: #839ba4 }
+
+.bx-vote-button {
+	display: inline-block;
+	vertical-align: top;
+	float: none;
+	margin: 0 5px 0 0;
+	width: auto;
+	text-decoration: none;
+}
+
+.bx-vote-loading {
+	color: #b7bdc6;
+}
+
+.bx-vote-button-vote,
+.bx-vote-button-result {
+	color: #fff;
+	display: inline-block;
+	font-size: 13px;
+	font-weight: bold;
+	height: 30px;
+	border-radius: 1px;
+	line-height: 30px;
+	margin-bottom: 14px;
+	text-decoration: none;
+	vertical-align: top;
+	text-align: center;
+	-webkit-tap-highlight-color: transparent;
+	outline: none;
+	padding: 0 19px 2px;
+}
+
+.bx-vote-button-vote {
+	background: #75c601;
+	margin-right: 7px;
+}
+
+.bx-vote-button-result {
+	background: #dce1e4;
+	color: #616a72;
+}
+
+.bx-vote-block-result .bx-vote-answer-list td:last-child {
+	border: none;
+	vertical-align: middle;
+}
+
+.bx-vote-block-result .bx-vote-answer-list td:first-child {border: none;}
+
+.bx-vote-block-result .bx-vote-answer-wrap, .bx-vote-block-result .bx-vote-bar {
+	padding-left: 8px;
+	margin-bottom: 4px;
+}
+
+/*.android .bx-vote-block-result .bx-vote-answer-wrap{padding-top:5px;}*/
+
+.bx-vote-block-result .bx-vote-block-input-wrap label {
+	color: #606060;
+	font-size: 12px;
+	line-height: 14px;
+	vertical-align: middle;
+}
+
+/*.bx-vote-block-result-view .bx-vote-block-input-wrap label{padding-left:19px}*/
+
+/*.bx-vote-block-result .bx-vote-answer-list{-webkit-border-image:none}*/
+.bx-vote-block-result .bx-vote-answer-list { border: none; }
+
+.bx-vote-block-result .bx-vote-data-percent {
+	height: auto;
+	margin-top: -3px;
+	width: auto;
+}
+
+.bx-vote-block-result .bx-vote-answer-result { display: list-item }
+
+.bx-vote-block-result .bx-vote-answer-bg {
+	opacity: 1;
+	width: 100%;
+}
+
+.bx-vote-block-result .bx-vote-answer-bar { opacity: 1 }
+.bx-vote-block-result .bx-vote-block-input-wrap input { opacity: 0 }
+.bx-vote-block-result-view .bx-vote-block-input-wrap input {opacity: 1;}
+.android .bx-vote-block-result-view .bx-vote-block-input-wrap input { top: 0 }
+
+/*=========================================================/ VOTE ======================================================*/

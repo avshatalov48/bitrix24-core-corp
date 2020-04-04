@@ -1,0 +1,5 @@
+<?
+$MESS["CRM_EXTERNAL_CHANNEL_ACTIVITY_TYPE_ACTIVITY"] = "Импорт документов";
+$MESS["CRM_EXTERNAL_CHANNEL_ACTIVITY_TYPE_AGENT"] = "Импорт компаний/контактов";
+$MESS["CRM_EXTERNAL_CHANNEL_ACTIVITY_TYPE_ACTIVITY_FACE_CARD"] = "Розничный чек из 1С Face-карт";
+?>

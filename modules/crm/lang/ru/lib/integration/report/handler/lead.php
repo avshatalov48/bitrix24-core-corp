@@ -1,0 +1,3 @@
+<?php
+
+$MESS['CRM_REPORT_LEAD_HANDLER_LEAD_COUNT_SHORT_TITLE'] = 'кол-во лидов';

@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="365" height="1165" viewBox="0 0 365 1165" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <defs>
+    <rect id="a" width="365" height="1165" x="1"/>
+    <mask id="c" width="365" height="1165" x="0" y="0" fill="white">
+      <use xlink:href="#a"/>
+    </mask>
+    <rect id="b" width="39" height="277" x="1" y="786" rx="2"/>
+    <mask id="d" width="39" height="277" x="0" y="0" fill="white">
+      <use xlink:href="#b"/>
+    </mask>
+  </defs>
+  <g fill="none" fill-rule="evenodd" transform="translate(-1)">
+    <use stroke="#979797" stroke-opacity=".05" stroke-width="2" mask="url(#c)" opacity=".05" xlink:href="#a"/>
+    <use stroke="#C6CDD3" stroke-width="2" mask="url(#d)" xlink:href="#b"/>
+    <rect width="232" height="8" x="95" y="153" fill="#9EA6AD" opacity=".2" rx="2"/>
+    <rect width="232" height="8" x="95" y="496" fill="#9EA6AD" opacity=".2" rx="2"/>
+    <rect width="232" height="8" x="95" y="178" fill="#9EA6AD" opacity=".2" rx="2"/>
+    <rect width="232" height="8" x="95" y="521" fill="#9EA6AD" opacity=".2" rx="2"/>
+    <rect width="232" height="8" x="95" y="203" fill="#9EA6AD" opacity=".2" rx="2"/>
+    <rect width="232" height="8" x="95" y="546" fill="#9EA6AD" opacity=".2" rx="2"/>
+    <rect width="232" height="8" x="95" y="227" fill="#9EA6AD" opacity=".2" rx="2"/>
+    <rect width="232" height="8" x="95" y="570" fill="#9EA6AD" opacity=".2" rx="2"/>
+    <rect width="232" height="8" x="95" y="251" fill="#9EA6AD" opacity=".2" rx="2"/>
+    <rect width="232" height="8" x="95" y="594" fill="#9EA6AD" opacity=".2" rx="2"/>
+    <rect width="232" height="8" x="95" y="275" fill="#9EA6AD" opacity=".2" rx="2"/>
+    <rect width="232" height="8" x="95" y="299" fill="#9EA6AD" opacity=".2" rx="2"/>
+    <rect width="232" height="8" x="95" y="323" fill="#9EA6AD" opacity=".2" rx="2"/>
+    <rect width="232" height="8" x="95" y="347" fill="#9EA6AD" opacity=".2" rx="2"/>
+    <rect width="232" height="8" x="95" y="371" fill="#9EA6AD" opacity=".2" rx="2"/>
+    <rect width="131" height="12" x="99" y="92" fill="#9EA6AD" opacity=".2" rx="2"/>
+    <rect width="131" height="12" x="99" y="452" fill="#9EA6AD" opacity=".2" rx="2"/>
+    <rect width="131" height="12" x="99" y="665" fill="#9EA6AD" opacity=".2" rx="2"/>
+    <rect width="131" height="12" x="99" y="791" fill="#9EA6AD" opacity=".2" rx="2"/>
+    <path fill="#9EA6AD" d="M1 108.998101C1 107.89458 1.89971268 107 2.99328744 107L28.0067126 107C29.1075748 107 30 107.886706 30 108.998101L30 113.001899C30 114.10542 29.1002873 115 28.0067126 115L1 115 1 108.998101zM1 163.998101C1 162.89458 1.89971268 162 2.99328744 162L28.0067126 162C29.1075748 162 30 162.886706 30 163.998101L30 168.001899C30 169.10542 29.1002873 170 28.0067126 170L1 170 1 163.998101zM1 127.998101C1 126.89458 1.89971268 126 2.99328744 126L28.0067126 126C29.1075748 126 30 126.886706 30 127.998101L30 132.001899C30 133.10542 29.1002873 134 28.0067126 134L1 134 1 127.998101zM1 182.998101C1 181.89458 1.89971268 181 2.99328744 181L28.0067126 181C29.1075748 181 30 181.886706 30 182.998101L30 187.001899C30 188.10542 29.1002873 189 28.0067126 189L1 189 1 182.998101zM1 146.998101C1 145.89458 1.89971268 145 2.99328744 145L28.0067126 145C29.1075748 145 30 145.886706 30 146.998101L30 151.001899C30 152.10542 29.1002873 153 28.0067126 153L1 153 1 146.998101zM1 201.998101C1 200.89458 1.89690764 200 3.00116414 200L27.99898 200C29.1041128 200 30 200.886706 30 201.998101L30 206.001899C30 207.10542 29.1002873 208 28.0067126 208L1 208 1 201.998101zM1 592.998101C1 591.89458 1.89971268 591 2.99328744 591L28.0067126 591C29.1075748 591 30 591.886706 30 592.998101L30 597.001899C30 598.10542 29.1002873 599 28.0067126 599L1 599 1 592.998101z" opacity=".2"/>
+    <rect width="109" height="12" x="34" y="31" fill="#9EA6AD" opacity=".2" rx="2"/>
+    <rect width="54" height="10" x="270" y="33" fill="#9EA6AD" opacity=".2" rx="2"/>
+    <rect width="54" height="10" x="176" y="33" fill="#9EA6AD" opacity=".2" rx="2"/>
+  </g>
+</svg>

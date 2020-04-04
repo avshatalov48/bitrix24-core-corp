@@ -1,0 +1,33 @@
+<?
+$MESS["SONET_C30_T_USER"] = "Пользователь";
+$MESS["SONET_C30_T_MESSAGE_HIDE"] = "Скрыть";
+$MESS["SONET_C30_T_MESSAGE_SHOW"] = "Показать";
+$MESS["SONET_C30_T_MESSAGE_EXPAND"] = "Развернуть";
+$MESS["SONET_C30_NO_SUBSCRIPTIONS"] = "Нет доступных подписок";
+$MESS["SONET_C30_INHERITED"] = "По умолчанию";
+$MESS["SONET_C30_DIALOG_CLOSE_BUTTON"] = "Закрыть";
+$MESS["SONET_C30_DIALOG_SUBMIT_BUTTON"] = "Сохранить";
+$MESS["SONET_C30_DIALOG_CANCEL_BUTTON"] = "Отмена";
+$MESS["SONET_C30_DIALOG_TRANSPORT_TITLE"] = "Настройка уведомлений";
+$MESS["SONET_C30_COMMENT_SUBMIT"] = "Отправить";
+$MESS["SONET_C30_MORE"] = "Ещё события";
+$MESS["SONET_C30_T_MORE_WAIT"] = "Загружаются сообщения";
+$MESS["SONET_C30_T_RELOAD_NEEDED"] = "Обновите живую ленту";
+$MESS["SONET_C30_COUNTER_TEXT_1"] = "Новых сообщений: ";
+$MESS["SONET_C30_MENU_TITLE_TRANSPORT"] = "Уведомления";
+$MESS["SONET_C30_MENU_TITLE_FAVORITES_N"] = "Добавить в избранное";
+$MESS["SONET_C30_MENU_TITLE_FAVORITES_Y"] = "Убрать из избранного";
+$MESS["SONET_C30_MENU_TITLE_LINK"] = "Ссылка на сообщение";
+$MESS["SONET_C30_MENU_TITLE_LINK2"] = "Скопировать ссылку";
+$MESS["SONET_C30_MENU_TITLE_HREF"] = "Перейти к сообщению";
+$MESS["SONET_C30_MENU_TITLE_DELETE"] = "Удалить из Живой ленты";
+$MESS["SONET_C30_MENU_TITLE_CREATETASK"] = "Создать задачу";
+$MESS["SONET_ERROR_SESSION"] = "Ваша сессия истекла. Пожалуйста, попробуйте еще раз.";
+$MESS["SONET_C30_MENU_TITLE_DELETE_CONFIRM"] = "Вы уверены, что хотите удалить запись и все её комментарии?";
+$MESS["SONET_C30_MENU_TITLE_DELETE_SUCCESS"] = "Запись удалена";
+$MESS["SONET_C30_MENU_TITLE_DELETE_FAILURE"] = "Ошибка удаления записи";
+$MESS["SONET_C30_T_RELOAD_ERROR"] = "Ошибка при обновлении живой ленты";
+$MESS["SONET_C30_T_LINK_COPIED"] = "Ссылка скопирована";
+$MESS["SONET_C30_T_EMPTY"] = "Сообщений в ленте пока нет";
+$MESS["SONET_C30_T_EMPTY_SEARCH"] = "Сообщения не найдены";
+?>

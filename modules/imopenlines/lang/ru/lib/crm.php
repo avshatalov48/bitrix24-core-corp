@@ -1,0 +1,22 @@
+<?
+$MESS["IMOL_CRM_LINE_TYPE_TELEGRAMBOT"] = "Telegram";
+$MESS["IMOL_CRM_LINE_TYPE_FACEBOOK"] = "Facebook";
+$MESS["IMOL_CRM_LINE_TYPE_VKGROUP"] = "ВКонтакте";
+$MESS["IMOL_CRM_LINE_TYPE_SKYPEBOT"] = "Skype";
+$MESS["IMOL_CRM_LINE_TYPE_LIVECHAT"] = "Онлайн-чат";
+$MESS["IMOL_CRM_LINE_TYPE_NETWORK"] = "Битрикс24.Network";
+$MESS["IMOL_CRM_CREATE_LEAD_COMMENTS_NEW"] = "Лид был создан на основе обращения пользователя в открытую линию \"#LINE_NAME#\" через канал \"#CONNECTOR_NAME#\"";
+$MESS["IMOL_CRM_CREATE_ACTIVITY_2"] = "Чат открытой линии - \"#LEAD_NAME#\" (#CONNECTOR_NAME#)";
+$MESS["IMOL_CRM_LEAD_ADD"] = "На основе контактной информации создан новый лид";
+$MESS["IMOL_CRM_LEAD_EXTEND"] = "Контактная информация сохранена в лид";
+$MESS["IMOL_CRM_CONTACT_EXTEND"] = "Контактная информация сохранена в контакт";
+$MESS["IMOL_CRM_COMPANY_EXTEND"] = "Контактная информация сохранена в компанию";
+$MESS["IMOL_CRM_BUTTON_CHANGE"] = "Сменить";
+$MESS["IMOL_CRM_BUTTON_CANCEL"] = "Отменить";
+$MESS["IMOL_CRM_ERROR_NO_SESSION"] = "Нет сессии открытой линии";
+$MESS["IMOL_CRM_ERROR_CREATING_LEAD"] = "Ошибка создания лида";
+$MESS["IMOL_CRM_ERROR_NOT_LOAD_CRM"] = "Ошибка загрузки CRM";
+$MESS["IMOL_CRM_ERROR_NOT_LOAD_IM"] = "Ошибка загрузки мессенджера";
+$MESS["IMOL_CRM_ERROR_NO_CRM_BINDINGS"] = "Нет доступных связей дела";
+$MESS["IMOL_CRM_ERROR_NO_ID_ACTIVITY"] = "Не указано id дела";
+$MESS["IMOL_CRM_ERROR_NO_REQUIRED_PARAMETERS"] = "Не переданы все обязательные параметры";

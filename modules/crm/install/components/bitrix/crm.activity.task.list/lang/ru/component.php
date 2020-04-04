@@ -1,0 +1,37 @@
+<?
+$MESS["CRM_MODULE_NOT_INSTALLED"] = "Модуль CRM не установлен.";
+$MESS["TASKS_MODULE_NOT_INSTALLED"] = "Модуль Задачи не установлен.";
+$MESS["CRM_PERMISSION_DENIED"] = "Доступ запрещен";
+$MESS["CRM_COLUMN_ID"] = "ID";
+$MESS["CRM_COLUMN_TITLE"] = "Название";
+$MESS["CRM_COLUMN_ENTITY_TYPE"] = "Тип";
+$MESS["CRM_COLUMN_ENTITY_TITLE"] = "Заголовок";
+$MESS["CRM_COLUMN_REAL_STATUS"] = "Статус";
+$MESS["CRM_COLUMN_CHANGED_BY"] = "Кем изменен";
+$MESS["CRM_COLUMN_RESPONSIBLE_BY"] = "Ответственный";
+$MESS["CRM_COLUMN_DATE_CREATE"] = "Дата создания";
+$MESS["CRM_COLUMN_DATE_MODIFY"] = "Дата изменения";
+$MESS["CRM_COLUMN_CLOSED_DATE"] = "Дата закрытия";
+$MESS["CRM_COLUMN_DATE_START"] = "Дата начала";
+$MESS["CRM_COLUMN_PRIORITY"] = "Приоритет";
+$MESS["CRM_COLUMN_UF_CRM_TASK"] = "Элемент CRM";
+$MESS["CRM_PRESET_NEW"] = "Новые задачи";
+$MESS["CRM_PRESET_CHANGE_TODAY"] = "Измененные за сегодня";
+$MESS["CRM_PRESET_CHANGE_YESTERDAY"] = "Измененные за вчера";
+$MESS["CRM_PRESET_CHANGE_MY"] = "Измененные мной";
+$MESS["CRM_PRESET_MY"] = "Мои задачи";
+$MESS["TASKS_STATUS_1"] = "Новая";
+$MESS["TASKS_STATUS_2"] = "В ожидании";
+$MESS["TASKS_STATUS_3"] = "Выполняется";
+$MESS["TASKS_STATUS_4"] = "Условно завершена";
+$MESS["TASKS_STATUS_5"] = "Завершена";
+$MESS["TASKS_STATUS_6"] = "Отложена";
+$MESS["TASKS_STATUS_7"] = "Отклонена";
+$MESS["TASKS_PRIORITY_0"] = "Низкий";
+$MESS["TASKS_PRIORITY_1"] = "Средний";
+$MESS["TASKS_PRIORITY_2"] = "Высокий";
+$MESS["CRM_ENTITY_TYPE_LEAD"] = "Лид";
+$MESS["CRM_ENTITY_TYPE_CONTACT"] = "Контакт";
+$MESS["CRM_ENTITY_TYPE_COMPANY"] = "Компания";
+$MESS["CRM_ENTITY_TYPE_DEAL"] = "Сделка";
+?>

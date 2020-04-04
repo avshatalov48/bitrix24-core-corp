@@ -1,0 +1,16 @@
+<svg width="15" height="15" viewBox="0 0 15 15" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<title>Bitmap Copy 2</title>
+<desc>Created using Figma</desc>
+<g id="Canvas" transform="translate(-4990 -197)">
+<g id="Bitmap Copy 2">
+<use xlink:href="#path0_fill" fill="url(#pattern0)" transform="translate(4990 197)"/>
+</g>
+</g>
+<defs>
+<pattern id="pattern0" patternUnits="objectBoundingBox" patternContentUnits="objectBoundingBox" width="1" height="1">
+<use xlink:href="#image0" transform="matrix(0.0666667 0 0 0.0666667 0 0)"/>
+</pattern>
+<path id="path0_fill" d="M 0 0L 15 0L 15 15L 0 15L 0 0Z"/>
+<image id="image0" width="15" height="15" preserveAspectRatio="none" xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA8AAAAPCAYAAAA71pVKAAAAAXNSR0IArs4c6QAAAadJREFUKBWNU1kvA1EU/nqr04Vo6UJ0pbEm4kFCBMFP5oEHEsSaJhJLDEZFKK0uKqXLTDvtuHco014Pzsu95/vO+c6dL2dMGg3QqMgypPg9XtJZeldgs1nR5/VgdHgQDrudlXBhYs3pbA6xkzNEQgGEg35abIOsKHhMJBG/f8DM9BT6fV6uGcVSWVvb2NIyuVemw0XuNa+trm9qH8Uix5Fr6Q7RSAhedy+vTBF3bw/GRqIQr+McT1LpDMIhP0cYgUgwgORLxgjpd8LMcdgdHGEEBMEC+maoat0Ig9isAjVHbgHbE1VVdchsNrdQxEO/NZnin2Ssekqm0efzwGQyogAZp2ZcSXHmeivznZXKFZxfXiEUGOB44nJ2Y3JiFDv7x3hIPKNeb+hF7Ew8p7C9dwRFqeL0QqQDSi0C+pIwJP9WgHhzi2wuD4ulA7WaCp/XjaFIEBeihELhHXa6PMsLs+jq7NRFfpqbko2GRhtrugAhRIfZ5N3DGCfANTdF2k+lSgUOfgVWFufwJd1e+UduFQQszc+AeSTT3ZDpj/TvyU095gUzrsflxCfoLOjHOadfZQAAAABJRU5ErkJggg=="/>
+</defs>
+</svg>

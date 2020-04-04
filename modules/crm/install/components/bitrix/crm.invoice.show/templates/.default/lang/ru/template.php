@@ -1,0 +1,37 @@
+<?
+$MESS["CRM_EDIT_BTN_TTL"] = "Кликнуть для редактирования";
+$MESS["CRM_LOCK_BTN_TTL"] = "Редактирование недоступно";
+$MESS["CRM_INVOICE_SHOW_TITLE"] = "Счёт №#ACCOUNT_NUMBER# &mdash; #ORDER_TOPIC#";
+$MESS["CRM_INVOICE_RECUR_SHOW_TITLE"] = "Регулярный счёт №#ACCOUNT_NUMBER# &mdash; #ORDER_TOPIC#";
+$MESS["CRM_INVOICE_SHOW_LEGEND"] = "счёт №#ACCOUNT_NUMBER#";
+$MESS["CRM_INVOICE_DATE_INSERT"] = "Дата создания";
+$MESS["CRM_INVOICE_DATE_BILL"] = "Дата выставления";
+$MESS["CRM_INVOICE_DATE_UPDATE"] = "Дата изменения";
+$MESS["CRM_INVOICE_DATE_PAY_BEFORE"] = "Срок оплаты";
+$MESS["CRM_INVOICE_CLIENT"] = "Контрагент";
+$MESS["CRM_INVOICE_SIDEBAR_STATUS"] = "Статус";
+$MESS["CRM_DEAL_OPENED"] = "Просмотр этой сделки доступен всем";
+$MESS["CRM_DEAL_NOT_OPENED"] = "Просмотр этой сделки ограничен";
+$MESS["CRM_DEAL_LINK"] = "Счёт по сделке";
+$MESS["CRM_QUOTE_LINK"] = "Предложение";
+$MESS["CRM_COMPANY_LINK"] = "Компания";
+$MESS["CRM_CONTACT_LINK"] = "Контактное лицо";
+$MESS["CRM_TAB_PRODUCT_ROWS"] = "Товары";
+$MESS["CRM_TAB_PRODUCT_ROWS_TITLE"] = "Товары счёта";
+$MESS["CRM_INVOICE_COMMENT"] = "Комментарий менеджера";
+$MESS["CRM_INVOICE_PRICE_SHORT"] = "Сумма";
+$MESS["CRM_DEAL_CLIENT_NOT_ASSIGNED"] = "[не установлен]";
+$MESS["INVOICE_USER_DESCRIPTION"] = "Комментарий (отобразится в счёте)";
+$MESS["CRM_INVOICE_TITLE"] = "Счет";
+$MESS["CRM_INVOICE_FIELD_PAY_VOUCHER_DATE"] = "Дата оплаты";
+$MESS["CRM_INVOICE_FIELD_PAY_VOUCHER_NUM"] = "Номер документа";
+$MESS["CRM_INVOICE_FIELD_DATE_MARKED"] = "Дата отклонения";
+$MESS["CRM_INVOICE_FIELD_REASON_MARKED"] = "Комментарий";
+$MESS["CRM_TAB_HISTORY"] = "История";
+$MESS["CRM_TAB_HISTORY_TITLE"] = "История изменений счёта";
+$MESS["CRM_TAB_1"] = "О счёте";
+$MESS["CRM_TAB_1_TITLE"] = "Свойства счёта";
+$MESS["CRM_INVOICE_PUBLIC_LINK_COPY"] = "Копировать";
+$MESS["CRM_TAB_TREE"] = "Связи";
+$MESS["CRM_TAB_TREE_TITLE"] = "Связи с другими сущностями и документами";
+?>

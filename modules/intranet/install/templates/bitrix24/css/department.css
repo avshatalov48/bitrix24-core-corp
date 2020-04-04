@@ -1,0 +1,129 @@
+.department-profile-events {
+	margin-bottom: 25px;
+	padding: 10px 6px 6px;
+	background: #fff;
+	color: #555555;
+	border: 1px solid #b5cdd1;
+}
+
+.department-profile-events-title {
+	color: #555555;
+	font-weight: bold;
+	padding: 0 0 10px 12px;
+}
+
+.department-profile-events-cont {
+	background-color: #f5f5f5;
+}
+
+.department-profile-events-item {
+	color: #555555;
+	cursor: pointer;
+	display: block;
+	margin-bottom: 2px;
+	padding: 8px 1px 6px 30px;
+	position: relative;
+	text-decoration: none;
+
+	-webkit-transition: none;
+	transition: none;
+}
+.department-profile-events-item i {
+	background: url("../images/template_sprite.png?10") no-repeat 30px 30px;
+	display: block;
+	height: 15px;
+	left: 10px;
+	position: absolute;
+	top: 10px;
+	width: 15px;
+}
+.department-profile-events-item:link, .department-profile-events-item:active, .department-profile-events-item:visited {
+	color: #555555;
+	text-decoration: none;
+}
+
+.department-profile-events-item:hover {
+	background-color: #e8eded;
+}
+
+.department-profile-item-active {
+	background: none repeat 0 0 #dbe3e6 !important;
+	color: #2466a0 !important;
+	font-weight: bold;
+	text-shadow: 0 1px 0 #ffffff;
+}
+
+.department-profile-edit i {
+	background-position: -113px -1002px !important;
+}
+.department-profile-add-sub i {
+	background-position: -162px -867px !important;
+}
+.department-profile-remove i {
+	background-position: -91px -1002px !important;
+}
+.department-profile-subsection i {
+	background-position: -106px -937px !important;
+}
+
+.department-profile {
+	color: #555555;
+	font-size: 14px;
+	line-height: 20px;
+}
+.department-unit-manager {
+	margin-bottom: 30px;
+}
+.department-unit-manager .department-titles {
+	margin-bottom: 4px;
+}
+.department-titles {
+	color: #41474f;
+	font-size: 14px;
+	font-weight: bold;
+}
+a.department-link {
+	color: #555555;
+}
+.department-subdivision-list {
+	margin-bottom: 20px;
+}
+.department-subdivision-list .department-titles {
+	padding-bottom: 10px;
+}
+.department-description {
+	padding: 0 30px 25px 0;
+}
+.department-description .department-titles {
+	margin-bottom: 5px;
+}
+.department-subdivision-table {
+	border: medium none;
+	padding: 0;
+}
+.department-subdivision-table td {
+	border: medium none;
+	padding: 0 0 3px;
+}
+td.department-subdiv-title {
+	border-bottom: 1px solid #e3ebed !important;
+	color: #5c6470;
+	font-size: 13px;
+	font-weight: bold;
+	padding-bottom: 4px;
+}
+td.department-subdiv-left {
+	padding-right: 50px;
+}
+td.department-subdiv-second {
+	padding-top: 9px;
+}
+.department-link {
+	text-decoration: underline;
+}
+.department-employee-list {
+	padding: 0 15px 0 0;
+}
+.department-employee-list .department-titles {
+	font-size: 17px;
+}
